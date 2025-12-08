@@ -243,7 +243,7 @@ pipe.setOutletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
 
 // Set boundary values
 pipe.setInletMassFlow(5.0);           // kg/s
-pipe.setoutletPressureValue(30e5);    // Pa
+pipe.setOutletPressure(30.0);         // bara
 ```
 
 | Type | Description |

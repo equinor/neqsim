@@ -51,6 +51,18 @@ public class SlugTracker implements Serializable {
   private int totalSlugsMerged;
 
   /**
+   * Cumulative liquid mass returned to Eulerian cells from exiting/dissipating slugs (kg). This
+   * enables mass conservation verification between Lagrangian and Eulerian representations.
+   */
+  private double totalMassReturnedToEulerian;
+
+  /**
+   * Cumulative liquid mass borrowed from Eulerian cells when slugs are created (kg). This enables
+   * mass conservation verification between Lagrangian and Eulerian representations.
+   */
+  private double totalMassBorrowedFromEulerian;
+
+  /**
    * Represents a single slug unit (liquid slug + Taylor bubble).
    */
   public static class SlugUnit implements Serializable {
@@ -85,6 +97,17 @@ public class SlugTracker implements Serializable {
     public double age;
     /** Local pipe inclination at slug front. */
     public double localInclination;
+    /**
+     * Liquid mass borrowed from Eulerian cells (kg). This tracks the mass that was "collected" from
+     * the stratified film region to form this slug, enabling proper mass conservation
+     * reconciliation between Lagrangian and Eulerian solvers.
+     */
+    public double borrowedLiquidMass;
+    /**
+     * Array of section indices from which liquid mass was borrowed. Used to return mass to
+     * appropriate cells when slug exits or dissipates.
+     */
+    public int[] borrowedFromSections;
 
     /**
      * Get total slug unit length (body + bubble).
@@ -112,6 +135,12 @@ public class SlugTracker implements Serializable {
   /**
    * Initialize slug from terrain-induced accumulation.
    *
+   * <p>
+   * This method creates a new slug from accumulated liquid at a terrain feature and tracks the mass
+   * "borrowed" from the Eulerian cells. This borrowed mass is recorded to enable mass conservation
+   * verification and is returned to appropriate cells when the slug exits or dissipates.
+   * </p>
+   *
    * @param characteristics Slug characteristics from accumulation tracker
    * @param sections Pipe sections
    * @return New slug unit
@@ -134,10 +163,32 @@ public class SlugTracker implements Serializable {
     slug.isTerrainInduced = true;
     slug.age = 0;
 
-    // Get local inclination
+    // Get local inclination and calculate borrowed mass
     int sectionIdx = findSectionIndex(slug.frontPosition, sections);
     if (sectionIdx >= 0) {
       slug.localInclination = sections[sectionIdx].getInclination();
+
+      // Calculate mass borrowed from Eulerian cells
+      // The slug liquid volume comes from accumulated stratified liquid
+      // Mass = ρ_L × Volume
+      double rho_L = sections[sectionIdx].getLiquidDensity();
+      slug.borrowedLiquidMass = rho_L * slug.liquidVolume;
+      totalMassBorrowedFromEulerian += slug.borrowedLiquidMass;
+
+      // Track which sections contributed (sections covered by slug)
+      int startIdx = findSectionIndex(slug.tailPosition, sections);
+      int endIdx = findSectionIndex(slug.frontPosition, sections);
+      if (startIdx < 0) {
+        startIdx = 0;
+      }
+      if (endIdx < 0) {
+        endIdx = sections.length - 1;
+      }
+      int numSections = endIdx - startIdx + 1;
+      slug.borrowedFromSections = new int[numSections];
+      for (int i = 0; i < numSections; i++) {
+        slug.borrowedFromSections[i] = startIdx + i;
+      }
     }
 
     slugs.add(slug);
@@ -191,6 +242,14 @@ public class SlugTracker implements Serializable {
       return;
     }
 
+    // Clear all section slug flags and reset slugHoldup before updating
+    // This ensures no stale holdup values are used when section leaves slug
+    for (PipeSection section : sections) {
+      section.setInSlugBody(false);
+      section.setInSlugBubble(false);
+      section.setSlugHoldup(section.getLiquidHoldup()); // Reset to base holdup
+    }
+
     // Update each slug
     for (SlugUnit slug : slugs) {
       advanceSlug(slug, sections, dt);
@@ -204,6 +263,23 @@ public class SlugTracker implements Serializable {
 
     // Update statistics
     updateStatistics();
+  }
+
+  /** Reference velocity from inlet for fallback when sections have near-zero velocity. */
+  private double referenceVelocity = 1.0; // m/s default
+
+  /** Maximum allowed slug body length (multiples of diameter). */
+  private static final double MAX_SLUG_LENGTH_DIAMETERS = 200.0;
+
+  /**
+   * Set the reference velocity for slug propagation. This is used as fallback when section mixture
+   * velocity is near zero (e.g., with constant pressure outlet BC where momentum solver gives low
+   * velocities).
+   *
+   * @param velocity Reference velocity in m/s (typically inlet mixture velocity)
+   */
+  public void setReferenceVelocity(double velocity) {
+    this.referenceVelocity = Math.max(0.1, velocity);
   }
 
   /**
@@ -232,6 +308,12 @@ public class SlugTracker implements Serializable {
     double rho_G = frontSection.getGasDensity();
     double theta = frontSection.getInclination();
 
+    // BUG FIX: Use reference velocity when section mixture velocity is too low
+    // This happens with CONSTANT_PRESSURE outlet BC where momentum solver gives ~0 velocity
+    if (Math.abs(U_M) < 0.1 && referenceVelocity > 0.1) {
+      U_M = referenceVelocity;
+    }
+
     // Distribution coefficient
     double Fr_M = U_M / Math.sqrt(GRAVITY * D);
     double C0 = (Fr_M > 3.5) ? 1.2 : 1.05 + 0.15 * Math.sin(theta);
@@ -243,9 +325,13 @@ public class SlugTracker implements Serializable {
     // Slug front velocity = C0 * U_m + U_drift
     slug.frontVelocity = C0 * U_M + U_drift;
 
-    // Slug tail velocity (shedding from back)
-    // Tail moves slower due to liquid shedding into film
-    double sheddingFactor = 0.9;
+    // BUG FIX: Tail velocity should approach front velocity for stable slugs
+    // Use dynamic shedding factor that decreases as slug grows
+    // This prevents indefinite slug growth
+    double maxSlugLength = MAX_SLUG_LENGTH_DIAMETERS * D;
+    double lengthRatio = Math.min(1.0, slug.slugBodyLength / maxSlugLength);
+    // Shedding factor increases from 0.9 to 1.0 as slug approaches max length
+    double sheddingFactor = 0.9 + 0.1 * lengthRatio;
     slug.tailVelocity = slug.frontVelocity * sheddingFactor;
 
     // Update positions
@@ -255,6 +341,10 @@ public class SlugTracker implements Serializable {
     // Update lengths
     slug.slugBodyLength = Math.max(0, slug.frontPosition - slug.tailPosition);
     slug.bubbleLength = calculateBubbleLength(slug, frontSection);
+
+    // Update slug body holdup using Gregory et al. (1978) correlation
+    // This accounts for gas entrainment at higher velocities
+    slug.bodyHoldup = calculateSlugBodyHoldup(U_M);
 
     // Check for growth/decay
     double equilibriumLength = calculateEquilibriumLength(frontSection);
@@ -279,7 +369,7 @@ public class SlugTracker implements Serializable {
    * Calculate drift velocity using Bendiksen correlation.
    */
   private double calculateDriftVelocity(double D, double theta, double deltaRho, double rho_L) {
-    if (deltaRho <= 0) {
+    if (deltaRho <= 0 || rho_L <= 0) {
       return 0;
     }
 
@@ -322,43 +412,110 @@ public class SlugTracker implements Serializable {
   }
 
   /**
-   * Calculate equilibrium slug length.
+   * Calculate equilibrium slug length using Nydal correlation.
+   *
+   * <p>
+   * References:
+   * </p>
+   * <ul>
+   * <li>Nydal, O.J. (1991) - An Experimental Investigation of Slug Flow</li>
+   * <li>Barnea, D. and Taitel, Y. (1993) - A Model for Slug Length Distribution</li>
+   * </ul>
+   *
+   * @param section pipe section with flow conditions
+   * @return equilibrium slug length [m]
    */
   private double calculateEquilibriumLength(PipeSection section) {
     double D = section.getDiameter();
     double U_M = section.getMixtureVelocity();
 
-    // Scott correlation for equilibrium slug length
+    // Nydal (1991) correlation for stable slug length
+    // L_s/D = 20 for horizontal pipe (lower bound)
+    // Longer slugs possible in developing flow
     double Fr = U_M / Math.sqrt(GRAVITY * D);
 
-    // L_s/D = 30 + 60*Fr for horizontal
-    double L_s = D * (30 + 60 * Fr);
+    // Barnea-Taitel (1993): L_s/D typically 15-40 depending on void fraction
+    // Use moderate value with weak Fr dependence
+    double L_s_D = 25 + 10 * Math.min(Fr, 2.0);
 
-    // Inclination effect
+    double L_s = D * L_s_D;
+
+    // Inclination effect - upward inclined pipes have longer slugs
     double theta = section.getInclination();
-    L_s *= (1 + 0.5 * Math.abs(Math.sin(theta)));
+    if (theta > 0) {
+      L_s *= (1 + 0.3 * Math.sin(theta));
+    }
 
     return Math.max(minimumSlugLength, L_s);
   }
 
   /**
+   * Calculate slug body holdup using Gregory et al. (1978) correlation.
+   *
+   * <p>
+   * H_LS = 1 / (1 + (U_M / 8.66)^1.39)
+   * </p>
+   * <p>
+   * This accounts for gas entrainment in the slug body at high mixture velocities.
+   * </p>
+   *
+   * @param U_M mixture velocity [m/s]
+   * @return liquid holdup in slug body (0.5 to 1.0 typically)
+   */
+  private double calculateSlugBodyHoldup(double U_M) {
+    // Gregory, Nicholson, Aziz (1978)
+    // H_LS = 1 / (1 + (U_M / 8.66)^1.39)
+    double ratio = U_M / 8.66;
+    double H_LS = 1.0 / (1.0 + Math.pow(ratio, 1.39));
+
+    // Clamp to reasonable range [0.5, 0.98]
+    return Math.max(0.5, Math.min(0.98, H_LS));
+  }
+
+  /**
    * Mark sections that are within a slug.
+   * <p>
+   * A section is marked as in slug body if it overlaps with the slug body region (between tail and
+   * front positions). Sections are marked as in slug bubble if they overlap with the bubble/film
+   * region behind the tail.
+   * </p>
+   * <p>
+   * <b>Mass Conservation Note:</b> The slug holdup represents additional liquid concentration from
+   * the slug body. The section's base holdup (from Eulerian solver) is preserved and the slug
+   * holdup is used to modify effective properties for friction/pressure calculations.
+   * </p>
    */
   private void markSlugSections(SlugUnit slug, PipeSection[] sections) {
     for (PipeSection section : sections) {
-      double pos = section.getPosition();
-      double endPos = pos + section.getLength();
+      double sectionStart = section.getPosition();
+      double sectionEnd = sectionStart + section.getLength();
 
-      // Check if section overlaps with slug body
-      if (pos <= slug.frontPosition && endPos >= slug.tailPosition) {
+      // Slug body spans from tailPosition to frontPosition
+      double slugBodyStart = slug.tailPosition;
+      double slugBodyEnd = slug.frontPosition;
+
+      // Check if section overlaps with slug body (ranges overlap if one starts before the other
+      // ends)
+      boolean overlapsBody =
+          sectionStart < slugBodyEnd && sectionEnd > slugBodyStart && slugBodyEnd > slugBodyStart;
+
+      if (overlapsBody) {
         section.setInSlugBody(true);
+        // Set slug holdup - this modifies effective properties but doesn't override
+        // the Eulerian liquid mass (which is in the conservative variables)
         section.setSlugHoldup(slug.bodyHoldup);
-      } else if (pos <= slug.tailPosition && endPos >= slug.tailPosition - slug.bubbleLength) {
+      }
+
+      // Bubble/film region is behind the tail
+      double bubbleStart = slug.tailPosition - slug.bubbleLength;
+      double bubbleEnd = slug.tailPosition;
+
+      boolean overlapsBubble =
+          sectionStart < bubbleEnd && sectionEnd > bubbleStart && bubbleEnd > bubbleStart;
+
+      if (overlapsBubble && !overlapsBody) {
         section.setInSlugBubble(true);
         section.setSlugHoldup(slug.filmHoldup);
-      } else {
-        section.setInSlugBody(false);
-        section.setInSlugBubble(false);
       }
     }
   }
@@ -388,6 +545,9 @@ public class SlugTracker implements Serializable {
         back.slugBodyLength = back.frontPosition - back.tailPosition;
         back.liquidVolume += front.liquidVolume;
 
+        // Combine borrowed mass for proper mass conservation tracking
+        back.borrowedLiquidMass += front.borrowedLiquidMass;
+
         toRemove.add(front);
         totalSlugsMerged++;
       }
@@ -397,7 +557,16 @@ public class SlugTracker implements Serializable {
   }
 
   /**
-   * Remove slugs that have exited pipe or dissipated.
+   * Remove slugs that have exited pipe or dissipated, returning mass to Eulerian cells.
+   *
+   * <p>
+   * When a slug exits the pipe or dissipates, its liquid mass is "returned" to the Eulerian
+   * representation. For slugs exiting at the outlet, the mass is considered as having left the
+   * system (outlet mass flux). For dissipating slugs, the mass is returned to the surrounding cells
+   * proportionally.
+   * </p>
+   *
+   * @param sections Pipe sections (may be modified to return mass)
    */
   private void removeInactiveSlugs(PipeSection[] sections) {
     double pipeLength = 0;
@@ -409,15 +578,80 @@ public class SlugTracker implements Serializable {
     while (iter.hasNext()) {
       SlugUnit slug = iter.next();
 
-      // Remove if exited pipe
-      if (slug.tailPosition > pipeLength) {
+      // Check if front has exited pipe
+      if (slug.frontPosition > pipeLength + minimumSlugLength) {
+        // Slug exited at outlet - mass leaves the system via outlet flux
+        // Track as returned mass for conservation verification
+        totalMassReturnedToEulerian += slug.borrowedLiquidMass;
         iter.remove();
         continue;
       }
 
-      // Remove if too short
+      // Check if slug has dissipated (too short after some time)
       if (slug.slugBodyLength < minimumSlugLength && slug.age > 10) {
+        // Dissipating slug - return mass to nearby cells
+        returnMassToEulerianCells(slug, sections);
+        totalMassReturnedToEulerian += slug.borrowedLiquidMass;
         iter.remove();
+      }
+    }
+  }
+
+  /**
+   * Return liquid mass from a dissipating slug back to Eulerian cells.
+   *
+   * <p>
+   * When a slug dissipates (becomes too short), its liquid mass is distributed back to the
+   * surrounding pipe sections. This maintains mass conservation between the Lagrangian slug
+   * tracking and Eulerian field representation.
+   * </p>
+   *
+   * @param slug The dissipating slug
+   * @param sections Pipe sections to receive the returned mass
+   */
+  private void returnMassToEulerianCells(SlugUnit slug, PipeSection[] sections) {
+    if (slug.borrowedLiquidMass <= 0 || sections.length == 0) {
+      return;
+    }
+
+    // Find sections near the slug position
+    int centerIdx = findSectionIndex((slug.frontPosition + slug.tailPosition) / 2, sections);
+    if (centerIdx < 0) {
+      centerIdx = sections.length - 1;
+    }
+
+    // Distribute mass to nearby sections (gaussian-like distribution)
+    int spreadRadius = 3; // Number of sections to spread mass over
+    int startIdx = Math.max(0, centerIdx - spreadRadius);
+    int endIdx = Math.min(sections.length - 1, centerIdx + spreadRadius);
+
+    double totalWeight = 0;
+    double[] weights = new double[endIdx - startIdx + 1];
+
+    for (int i = startIdx; i <= endIdx; i++) {
+      // Weight decreases with distance from center
+      double distance = Math.abs(i - centerIdx);
+      weights[i - startIdx] = Math.exp(-distance * distance / 2.0);
+      totalWeight += weights[i - startIdx];
+    }
+
+    // Distribute mass according to weights
+    for (int i = startIdx; i <= endIdx; i++) {
+      double massFraction = weights[i - startIdx] / totalWeight;
+      double massToReturn = slug.borrowedLiquidMass * massFraction;
+
+      // Convert mass to holdup increase
+      // Δα_L = Δm / (ρ_L × V_cell)
+      PipeSection section = sections[i];
+      double rho_L = section.getLiquidDensity();
+      double cellVolume = section.getArea() * section.getLength();
+
+      if (rho_L > 0 && cellVolume > 0) {
+        double deltaHoldup = massToReturn / (rho_L * cellVolume);
+        double newLiquidHoldup = Math.min(1.0, section.getLiquidHoldup() + deltaHoldup);
+        section.setLiquidHoldup(newLiquidHoldup);
+        section.setGasHoldup(1.0 - newLiquidHoldup);
+        section.updateDerivedQuantities();
       }
     }
   }
@@ -445,6 +679,10 @@ public class SlugTracker implements Serializable {
 
   /**
    * Find section index containing a position.
+   *
+   * @param position position along pipe (m)
+   * @param sections array of pipe sections
+   * @return section index, or -1 if not found
    */
   private int findSectionIndex(double position, PipeSection[] sections) {
     for (int i = 0; i < sections.length; i++) {
@@ -539,6 +777,15 @@ public class SlugTracker implements Serializable {
   }
 
   /**
+   * Get slug body holdup.
+   *
+   * @return Holdup in slug body (0-1)
+   */
+  public double getSlugBodyHoldup() {
+    return this.slugHoldupBody;
+  }
+
+  /**
    * Set film holdup.
    *
    * @param holdup Holdup (0-1)
@@ -557,6 +804,46 @@ public class SlugTracker implements Serializable {
     maxSlugLength = 0;
     totalSlugsGenerated = 0;
     totalSlugsMerged = 0;
+    totalMassBorrowedFromEulerian = 0;
+    totalMassReturnedToEulerian = 0;
+  }
+
+  /**
+   * Get total liquid mass borrowed from Eulerian cells when slugs are created.
+   *
+   * @return Total borrowed mass (kg)
+   */
+  public double getTotalMassBorrowedFromEulerian() {
+    return totalMassBorrowedFromEulerian;
+  }
+
+  /**
+   * Get total liquid mass returned to Eulerian cells when slugs exit or dissipate.
+   *
+   * @return Total returned mass (kg)
+   */
+  public double getTotalMassReturnedToEulerian() {
+    return totalMassReturnedToEulerian;
+  }
+
+  /**
+   * Get net mass currently held in active slugs (borrowed - returned - in_active_slugs).
+   *
+   * <p>
+   * For mass conservation verification: netMassInSlugs = totalBorrowed - totalReturned -
+   * massInActiveSlugs This should be approximately zero if mass is conserved.
+   * </p>
+   *
+   * @return Net mass discrepancy (kg), should be ~0 for conservation
+   */
+  public double getMassConservationError() {
+    double massInActiveSlugs = 0;
+    for (SlugUnit slug : slugs) {
+      massInActiveSlugs += slug.borrowedLiquidMass;
+    }
+    // Borrowed = Returned + InActiveSlugs (for conservation)
+    // Error = Borrowed - Returned - InActiveSlugs
+    return totalMassBorrowedFromEulerian - totalMassReturnedToEulerian - massInActiveSlugs;
   }
 
   /**
@@ -573,6 +860,9 @@ public class SlugTracker implements Serializable {
     sb.append(String.format("  Frequency: %.3f Hz\n", slugFrequency));
     sb.append(String.format("  Avg length: %.1f m\n", averageSlugLength));
     sb.append(String.format("  Max length: %.1f m\n", maxSlugLength));
+    sb.append(String.format("  Mass borrowed: %.3f kg\n", totalMassBorrowedFromEulerian));
+    sb.append(String.format("  Mass returned: %.3f kg\n", totalMassReturnedToEulerian));
+    sb.append(String.format("  Mass conservation error: %.6f kg\n", getMassConservationError()));
     return sb.toString();
   }
 }

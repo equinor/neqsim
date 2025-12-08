@@ -44,6 +44,7 @@ public class PipeSection implements Cloneable, Serializable {
   private double surfaceTension; // N/m
   private double gasEnthalpy; // J/kg
   private double liquidEnthalpy; // J/kg
+  private double mixtureHeatCapacity; // J/(kg·K) - Cv
 
   // Derived quantities
   private FlowRegime flowRegime;
@@ -317,6 +318,37 @@ public class PipeSection implements Cloneable, Serializable {
     return liquidHoldup;
   }
 
+  /**
+   * Get effective liquid holdup, considering slug overlay when in a slug.
+   * 
+   * @return Effective liquid holdup (dimensionless, 0-1)
+   */
+  public double getEffectiveLiquidHoldup() {
+    if (isInSlugBody || isInSlugBubble) {
+      // Guard against uninitialized or invalid slugHoldup
+      if (slugHoldup <= 0 || Double.isNaN(slugHoldup)) {
+        return liquidHoldup;
+      }
+      return slugHoldup;
+    }
+    return liquidHoldup;
+  }
+
+  /**
+   * Get effective mixture density, considering slug overlay when in a slug.
+   * 
+   * @return Effective mixture density (kg/m³)
+   */
+  public double getEffectiveMixtureDensity() {
+    double effectiveHoldup = getEffectiveLiquidHoldup();
+    double density = (1.0 - effectiveHoldup) * gasDensity + effectiveHoldup * liquidDensity;
+    // Guard against NaN - return base mixture density as fallback
+    if (Double.isNaN(density) || density <= 0) {
+      return getMixtureDensity();
+    }
+    return density;
+  }
+
   public void setLiquidHoldup(double liquidHoldup) {
     this.liquidHoldup = liquidHoldup;
   }
@@ -409,6 +441,14 @@ public class PipeSection implements Cloneable, Serializable {
     this.liquidEnthalpy = liquidEnthalpy;
   }
 
+  public double getMixtureHeatCapacity() {
+    return mixtureHeatCapacity;
+  }
+
+  public void setMixtureHeatCapacity(double mixtureHeatCapacity) {
+    this.mixtureHeatCapacity = mixtureHeatCapacity;
+  }
+
   public FlowRegime getFlowRegime() {
     return flowRegime;
   }
@@ -498,7 +538,12 @@ public class PipeSection implements Cloneable, Serializable {
   }
 
   public void setSlugHoldup(double slugHoldup) {
-    this.slugHoldup = slugHoldup;
+    // Guard against NaN/Inf to prevent numerical instability propagation
+    if (Double.isNaN(slugHoldup) || Double.isInfinite(slugHoldup)) {
+      this.slugHoldup = this.liquidHoldup; // Fallback to base holdup
+    } else {
+      this.slugHoldup = Math.max(0.0, Math.min(1.0, slugHoldup)); // Clamp to valid range
+    }
   }
 
   public double getMassTransferRate() {
@@ -507,5 +552,26 @@ public class PipeSection implements Cloneable, Serializable {
 
   public void setMassTransferRate(double massTransferRate) {
     this.massTransferRate = massTransferRate;
+  }
+
+  /**
+   * Calculate Wallis mixture sound speed.
+   *
+   * @return Mixture sound speed (m/s)
+   */
+  public double getWallisSoundSpeed() {
+    double rho_m = getMixtureDensity();
+    double termG =
+        (gasHoldup > 1e-6) ? gasHoldup / (gasDensity * gasSoundSpeed * gasSoundSpeed) : 0;
+    double termL =
+        (liquidHoldup > 1e-6) ? liquidHoldup / (liquidDensity * liquidSoundSpeed * liquidSoundSpeed)
+            : 0;
+
+    double compressibility = termG + termL;
+    if (compressibility <= 0 || rho_m <= 0) {
+      return Math.max(gasSoundSpeed, liquidSoundSpeed);
+    }
+
+    return Math.sqrt(1.0 / (rho_m * compressibility));
   }
 }

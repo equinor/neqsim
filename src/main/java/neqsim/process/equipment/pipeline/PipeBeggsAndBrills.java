@@ -14,12 +14,44 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
+ * Pipeline simulation using Beggs and Brill empirical correlations for multiphase flow.
+ *
  * <p>
- * PipeBeggsAndBrills class.
+ * This class implements the Beggs and Brill (1973) correlation for pressure drop and liquid holdup
+ * prediction in multiphase pipeline flow. It supports both single-phase and multiphase (gas-liquid)
+ * flow in horizontal, inclined, and vertical pipes.
  * </p>
  *
- * @author Even Solbraa , Sviatoslav Eroshkin
+ * <h3>Energy Equation</h3>
+ * <p>
+ * The energy balance includes three optional components:
+ * <ul>
+ * <li><b>Wall heat transfer</b> - Heat exchange with surroundings using LMTD method</li>
+ * <li><b>Joule-Thomson effect</b> - Temperature change due to gas expansion (cooling)</li>
+ * <li><b>Friction heating</b> - Viscous dissipation adding energy to the fluid</li>
+ * </ul>
+ *
+ * <h3>Usage Example</h3>
+ * 
+ * <pre>{@code
+ * PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipeline", feedStream);
+ * pipe.setDiameter(0.1524); // 6 inch
+ * pipe.setLength(5000.0); // 5 km
+ * pipe.setElevation(0.0); // horizontal
+ *
+ * // Enable enhanced energy equation
+ * pipe.setConstantSurfaceTemperature(288.15, "K");
+ * pipe.setHeatTransferCoefficient(25.0); // W/(m²·K)
+ * pipe.setIncludeJouleThomsonEffect(true);
+ * pipe.setJouleThomsonCoefficient(3.5e-6); // K/Pa
+ * pipe.setIncludeFrictionHeating(true);
+ *
+ * pipe.run();
+ * }</pre>
+ *
+ * @author Even Solbraa, Sviatoslav Eroshkin
  * @version $Id: $Id
+ * @see Pipeline
  */
 public class PipeBeggsAndBrills extends Pipeline {
   private static final long serialVersionUID = 1001;
@@ -191,6 +223,14 @@ public class PipeBeggsAndBrills extends Pipeline {
   private double heatTransferCoefficient;
 
   private String heatTransferCoefficientMethod = "Estimated";
+
+  // Joule-Thomson effect: temperature change during gas expansion
+  // When enabled, JT coefficient is calculated from gas phase thermodynamics
+  private boolean includeJouleThomsonEffect = false;
+
+  // Friction heating parameters for viscous dissipation
+  // When enabled, friction pressure losses are converted to thermal energy in the fluid
+  private boolean includeFrictionHeating = false;
 
   // Heat transfer parameters
   double Tmi; // medium temperature
@@ -1307,6 +1347,22 @@ public class PipeBeggsAndBrills extends Pipeline {
   /**
    * Calculates the heat balance for the given system.
    *
+   * <p>
+   * This method calculates the enthalpy change due to:
+   * <ul>
+   * <li>Wall heat transfer (LMTD method) - when not adiabatic</li>
+   * <li>Joule-Thomson effect - cooling/heating due to pressure change (calculated from
+   * thermodynamics)</li>
+   * <li>Friction heating - viscous dissipation</li>
+   * </ul>
+   *
+   * <p>
+   * The final PHflash operation determines the equilibrium state at the new enthalpy and pressure,
+   * which inherently accounts for heat of vaporization/condensation in two-phase flow. Phase
+   * changes (liquid evaporation or vapor condensation) are properly handled through the enthalpy
+   * balance.
+   * </p>
+   *
    * @param enthalpy the initial enthalpy of the system
    * @param system the thermodynamic system for which the heat balance is to be calculated
    * @param testOps the thermodynamic operations to be performed
@@ -1315,11 +1371,119 @@ public class PipeBeggsAndBrills extends Pipeline {
   public double calcHeatBalance(double enthalpy, SystemInterface system,
       ThermodynamicOperations testOps) {
     double Cp = system.getCp("J/kgK");
+    double massFlowRate = system.getFlowRate("kg/sec");
+
+    // 1. Wall heat transfer (LMTD-based calculation)
     if (!runAdiabatic) {
-      enthalpy = enthalpy + system.getFlowRate("kg/sec") * Cp * calcTemperatureDifference(system);
+      enthalpy = enthalpy + massFlowRate * Cp * calcTemperatureDifference(system);
     }
+
+    // 2. Joule-Thomson effect: temperature change due to pressure drop
+    // JT coefficient is calculated from gas phase thermodynamics
+    // dH_JT = m_dot * Cp * μ_JT * dP (where dP is pressure drop, positive value)
+    if (includeJouleThomsonEffect && system.hasPhaseType("gas")) {
+      try {
+        double jouleThomsonCoeff = system.getPhase("gas").getJouleThomsonCoefficient("K/Pa");
+        if (!Double.isNaN(jouleThomsonCoeff) && !Double.isInfinite(jouleThomsonCoeff)
+            && jouleThomsonCoeff > 0) {
+          double pressureDropPa = pressureDrop * 1e5; // bar to Pa
+          double dT_JT = -jouleThomsonCoeff * pressureDropPa; // Cooling for expansion
+          enthalpy = enthalpy + massFlowRate * Cp * dT_JT;
+        }
+      } catch (Exception ex) {
+        // Skip JT effect if calculation fails
+      }
+    }
+
+    // 3. Friction heating: viscous dissipation adds energy to the fluid
+    // Q_friction = dP_friction * volumetric_flow_rate
+    if (includeFrictionHeating) {
+      double frictionPressureDropPa = Math.abs(pressureDrop) * 1e5; // bar to Pa
+      double volumetricFlowRate = massFlowRate / system.getDensity("kg/m3");
+      double frictionHeat = frictionPressureDropPa * volumetricFlowRate;
+      enthalpy = enthalpy + frictionHeat;
+    }
+
+    // PHflash finds equilibrium at new enthalpy - this inherently handles
+    // heat of vaporization/condensation for two-phase flow
     testOps.PHflash(enthalpy);
     return enthalpy;
+  }
+
+  /**
+   * Sets whether to include Joule-Thomson effect in energy calculations.
+   *
+   * <p>
+   * The Joule-Thomson effect accounts for temperature change during gas expansion. For natural gas,
+   * this typically results in cooling during pressure drop. The JT coefficient is automatically
+   * calculated from the gas phase thermodynamics using NeqSim's rigorous equation of state,
+   * providing accurate values for the actual fluid composition and conditions.
+   * </p>
+   *
+   * <p>
+   * Typical Joule-Thomson coefficients (calculated automatically):
+   * <ul>
+   * <li>Methane: ~4×10⁻⁶ K/Pa (0.4 K/bar)</li>
+   * <li>Natural gas: 3-5×10⁻⁶ K/Pa</li>
+   * <li>CO2: ~10⁻⁵ K/Pa (1 K/bar)</li>
+   * </ul>
+   *
+   * @param include true to include JT effect, false otherwise
+   */
+  public void setIncludeJouleThomsonEffect(boolean include) {
+    this.includeJouleThomsonEffect = include;
+  }
+
+  /**
+   * Gets whether Joule-Thomson effect is included in energy calculations.
+   *
+   * <p>
+   * When enabled, the energy equation accounts for temperature change due to gas expansion,
+   * typically resulting in cooling for natural gas flows. The JT coefficient is automatically
+   * calculated from the gas phase thermodynamics.
+   * </p>
+   *
+   * @return true if JT effect is included in the energy balance
+   * @see #setIncludeJouleThomsonEffect(boolean)
+   */
+  public boolean isIncludeJouleThomsonEffect() {
+    return includeJouleThomsonEffect;
+  }
+
+  /**
+   * Sets whether to include friction heating in energy calculations.
+   *
+   * <p>
+   * Friction heating accounts for viscous dissipation, where mechanical energy lost to friction is
+   * converted to thermal energy in the fluid. The heat added is calculated as: Q_friction =
+   * ΔP_friction × Q_volumetric
+   * </p>
+   *
+   * <p>
+   * For typical pipeline conditions, friction heating is a small effect (typically 0.01-0.1 K per
+   * bar of friction pressure drop) compared to wall heat transfer or Joule-Thomson cooling.
+   * However, for high-velocity or long pipelines, it may become significant.
+   * </p>
+   *
+   * @param include true to include friction heating, false otherwise
+   */
+  public void setIncludeFrictionHeating(boolean include) {
+    this.includeFrictionHeating = include;
+  }
+
+  /**
+   * Gets whether friction heating is included in energy calculations.
+   *
+   * <p>
+   * When enabled, the energy equation accounts for viscous dissipation, where friction pressure
+   * losses are converted to thermal energy in the fluid.
+   * </p>
+   *
+   * @return true if friction heating is included in the energy balance
+   * @see #setIncludeFrictionHeating(boolean)
+   */
+  public boolean isIncludeFrictionHeating() {
+    return includeFrictionHeating;
   }
 
   private void initializeTransientState(UUID id) {

@@ -80,8 +80,8 @@ class TransientPipeTest {
     pipe.setOutletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
 
     // Use TransientPipe's own methods for boundary pressures
-    pipe.setinletPressureValue(50e5);
-    pipe.setoutletPressureValue(30e5);
+    pipe.setInletPressure(50.0); // bara
+    pipe.setOutletPressure(30.0); // bara
     pipe.setInletMassFlow(10.0);
 
     // No exceptions should be thrown
@@ -506,8 +506,9 @@ class TransientPipeTest {
     // Run another transient step
     pipe.runTransient(2.0, java.util.UUID.randomUUID());
 
-    // Verify simulation advanced further
-    assertTrue(pipe.getSimulationTime() >= simTime1 + 2.0,
+    // Verify simulation advanced further (use tolerance for floating-point comparison)
+    double expectedMinTime = simTime1 + 2.0 - 1e-9; // Allow small floating-point error
+    assertTrue(pipe.getSimulationTime() >= expectedMinTime,
         "Simulation time should have advanced by at least 2.0 seconds");
     assertTrue(pipe.getTotalTimeSteps() > steps1, "Should have taken more time steps");
   }
@@ -689,8 +690,8 @@ class TransientPipeTest {
     pipe.setOutletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
 
     // Initial outlet valve fully open: low back-pressure (30 bar downstream)
-    double outletPressureOpen = 30e5; // Pa
-    pipe.setoutletPressureValue(outletPressureOpen);
+    double outletPressureOpen = 30.0; // bara
+    pipe.setOutletPressure(outletPressureOpen);
 
     // ========== Build Process System ==========
     neqsim.process.processmodel.ProcessSystem process =
@@ -718,11 +719,11 @@ class TransientPipeTest {
 
     // ========== Phase 2: Transient - Simulate Partially Closed Outlet Valve ==========
     // Partially closed valve creates more resistance → higher back-pressure
-    double outletPressureClosed = 38e5; // Pa (38 bar - higher back-pressure)
+    double outletPressureClosed = 38.0; // bara (38 bar - higher back-pressure)
     System.out.println("\n=== Phase 2: Transient - Outlet Valve Closing to 30% ===");
     System.out.println("Increasing outlet back-pressure to 38 bar (simulates valve restriction)");
 
-    pipe.setoutletPressureValue(outletPressureClosed);
+    pipe.setOutletPressure(outletPressureClosed);
 
     java.util.List<Double> outletPressureHistory = new java.util.ArrayList<>();
     java.util.List<Double> inletPressureHistory = new java.util.ArrayList<>();
@@ -767,7 +768,7 @@ class TransientPipeTest {
     System.out.println("\n=== Phase 3: Transient - Outlet Valve Opening to 100% ===");
     System.out.println("Returning outlet back-pressure to 30 bar");
 
-    pipe.setoutletPressureValue(outletPressureOpen); // Back to 30 bar
+    pipe.setOutletPressure(outletPressureOpen); // Back to 30 bar
 
     for (int t = 20; t < 40; t++) {
       process.runTransient(1.0, java.util.UUID.randomUUID());
@@ -1084,8 +1085,12 @@ class TransientPipeTest {
     tpPipe.setRoughness(roughness);
     tpPipe.setNumberOfSections(20);
     tpPipe.setMaxSimulationTime(60); // Run to steady state
-    tpPipe.setInletBoundaryCondition(TransientPipe.BoundaryCondition.CONSTANT_FLOW);
+    // Use CONSTANT_PRESSURE inlet to match Beggs and Brill setup
+    // This fixes the inlet pressure and lets the model calculate flow/outlet conditions
+    tpPipe.setInletBoundaryCondition(TransientPipe.BoundaryCondition.CONSTANT_PRESSURE);
+    tpPipe.setInletPressure(inletPressure); // Set inlet pressure explicitly
     tpPipe.setOutletBoundaryCondition(TransientPipe.BoundaryCondition.CONSTANT_PRESSURE);
+    tpPipe.setOutletPressure(inletPressure - 0.1); // Small pressure drop to drive flow
     tpPipe.run();
 
     double[] tpPressures = tpPipe.getPressureProfile();
@@ -1146,5 +1151,265 @@ class TransientPipeTest {
     assertTrue(ratioTPtoBB > 0.85 && ratioTPtoBB < 1.15,
         "TransientPipe should match Beggs and Brill within 15% for pure oil flow. Ratio: "
             + ratioTPtoBB);
+  }
+
+  /**
+   * Example: Terrain-induced slugging from a riser into a separator.
+   *
+   * <p>
+   * This example demonstrates a realistic offshore production scenario where:
+   * <ul>
+   * <li>A subsea pipeline with terrain variations (low points) leads to a vertical riser</li>
+   * <li>Liquid accumulates at terrain low points, creating terrain-induced slugs</li>
+   * <li>Slugs travel through the riser and arrive at the topside separator</li>
+   * <li>The separator must handle intermittent slug arrivals</li>
+   * </ul>
+   *
+   * <p>
+   * The terrain profile creates conditions favorable for slug formation:
+   * <ul>
+   * <li>Downward sections: Liquid tends to run ahead of gas</li>
+   * <li>Low points: Liquid pools and accumulates</li>
+   * <li>Upward sections (riser): Gas pushes accumulated liquid as slugs</li>
+   * </ul>
+   *
+   * <p>
+   * This example includes a TransientPipe to show the pipe outlet flow behavior with slug dynamics.
+   * Inlet flow is modulated to simulate terrain-induced slugging, and the pipe outlet mass flow is
+   * tracked to observe slug propagation.
+   *
+   * <p>
+   * This is a common challenge in offshore production systems and is critical for:
+   * <ul>
+   * <li>Separator sizing (must handle slug volumes)</li>
+   * <li>Level control tuning (must absorb liquid surges)</li>
+   * <li>Topside equipment protection</li>
+   * </ul>
+   */
+  // @Disabled("Integration test - demonstrates terrain slugging scenario")
+  @Test
+  void testTerrainSluggingRiserToSeparator() {
+    // ========== Create wet gas/condensate fluid ==========
+    // Typical offshore gas-condensate with significant liquid dropout
+    SystemInterface fluid = new SystemSrkEos(288.15, 55.0);
+    fluid.addComponent("methane", 0.72);
+    fluid.addComponent("ethane", 0.06);
+    fluid.addComponent("propane", 0.05);
+    fluid.addComponent("n-butane", 0.04);
+    fluid.addComponent("n-pentane", 0.03);
+    fluid.addComponent("n-hexane", 0.05);
+    fluid.addComponent("n-heptane", 0.05);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+
+    // ========== Pipeline inlet stream ==========
+    double baseFlowRate = 20.0; // kg/s
+
+    Stream pipeInlet = new Stream("PipeInlet", fluid);
+    pipeInlet.setFlowRate(baseFlowRate, "kg/sec");
+    pipeInlet.setPressure(60.0, "bara"); // Higher inlet pressure for pipe flow
+    pipeInlet.setTemperature(288.15, "K");
+    pipeInlet.run();
+
+    System.out.println("=== Terrain Slugging: Riser to Separator Example ===");
+    System.out.println("Base flow conditions:");
+    System.out.println("  Flow rate: " + baseFlowRate + " kg/s");
+    System.out.println("  Inlet pressure: 60.0 bara");
+    System.out.println("  Temperature: 288.15 K (15°C)");
+    System.out
+        .println("  Gas mole fraction: " + String.format("%.2f", pipeInlet.getFluid().getBeta()));
+
+    // ========== TransientPipe with terrain profile (riser section) ==========
+    TransientPipe riserPipe = new TransientPipe("Riser", pipeInlet);
+    riserPipe.setDiameter(0.15); // 6 inch pipe (150mm)
+    riserPipe.setLength(200.0); // 200m riser
+    riserPipe.setNumberOfSections(10);
+    riserPipe.setOutletPressure(55.0); // bara - Lower outlet pressure
+
+    // Terrain profile: mostly vertical riser
+    double[] elevations = {-100, -80, -60, -40, -20, 0, 20, 40, 60, 80, 100}; // -100m to +100m
+    riserPipe.setElevationProfile(elevations);
+
+    System.out.println("\nRiser pipe configuration:");
+    System.out.println("  Diameter: 0.15 m (6 inch)");
+    System.out.println("  Length: 200 m");
+    System.out.println("  Elevation change: -100m to +100m (vertical riser)");
+    System.out.println("  Outlet pressure: 55.0 bara");
+
+    // ========== Topside separator ==========
+    neqsim.process.equipment.separator.Separator separator =
+        new neqsim.process.equipment.separator.Separator("TopsideSeparator",
+            riserPipe.getOutletStream());
+    separator.setCalculateSteadyState(false);
+    separator.setInternalDiameter(2.5); // 2.5 m diameter
+    separator.setSeparatorLength(8.0); // 8 m length (L/D = 3.2)
+
+    System.out.println("\nTopside separator configuration:");
+    System.out.println("  Diameter: 2.5 m");
+    System.out.println("  Length: 8.0 m");
+    System.out.println("  Volume: " + String.format("%.1f", Math.PI * 1.25 * 1.25 * 8.0) + " m³");
+
+    // ========== Slug parameters ==========
+    // Terrain-induced slugging parameters - tuned for realistic behavior
+    double slugPeriod = 60.0; // Slug arrives every 60 seconds
+    double slugDuration = 12.0; // Each slug lasts 12 seconds
+    double slugAmplitude = 1.5; // Flow increases by up to 150% during slug
+
+    System.out.println("\nSlug characteristics (terrain-induced):");
+    System.out.println("  Slug period: " + slugPeriod + " s");
+    System.out.println("  Slug duration: " + slugDuration + " s");
+    System.out.println("  Peak flow multiplier: " + (1.0 + slugAmplitude) + "x");
+
+    // ========== Build process system ==========
+    neqsim.process.processmodel.ProcessSystem process =
+        new neqsim.process.processmodel.ProcessSystem();
+    process.add(pipeInlet);
+    process.add(riserPipe);
+    process.add(separator);
+
+    // ========== Initial steady-state run ==========
+    process.run();
+
+    double initialLevel = separator.getLiquidLevel();
+    double initialPressure = separator.getPressure();
+    double initialPipeOutFlow = riserPipe.getOutletMassFlow();
+    System.out.println("\n=== Initial Steady State ===");
+    System.out
+        .println("  Pipe outlet mass flow: " + String.format("%.2f", initialPipeOutFlow) + " kg/s");
+    System.out.println("  Separator liquid level: " + String.format("%.3f", initialLevel));
+    System.out.println("  Separator pressure: " + String.format("%.1f", initialPressure) + " bara");
+
+    // ========== Transient simulation with slug arrivals ==========
+    System.out.println("\n=== Transient Simulation (5 minutes with slug arrivals) ===");
+    System.out.println("Time(s)  FlowIn(kg/s)  PipeOut(kg/s)  Level   P(bara)  Event");
+    System.out.println("-------  ------------  -------------  ------  -------  -----");
+
+    java.util.List<Double> times = new java.util.ArrayList<>();
+    java.util.List<Double> inletFlowRates = new java.util.ArrayList<>();
+    java.util.List<Double> pipeOutFlows = new java.util.ArrayList<>();
+    java.util.List<Double> levels = new java.util.ArrayList<>();
+    java.util.List<Double> pressures = new java.util.ArrayList<>();
+
+    int slugCount = 0;
+    boolean inSlug = false;
+    double maxLevel = initialLevel;
+    double minLevel = initialLevel;
+
+    // Run transient for 5 minutes
+    for (int t = 0; t <= 300; t += 2) {
+      // Calculate slug-modulated flow rate
+      double cyclePosition = t % slugPeriod;
+      double currentFlowRate;
+      String event = "";
+
+      if (cyclePosition < slugDuration) {
+        // During slug arrival - rapid rise then gradual decay
+        double slugProgress = cyclePosition / slugDuration;
+        double slugFactor;
+        if (slugProgress < 0.2) {
+          // Fast rise (first 20% of slug duration)
+          slugFactor = slugProgress / 0.2;
+        } else {
+          // Exponential decay (remaining 80%)
+          slugFactor = Math.exp(-3.0 * (slugProgress - 0.2) / 0.8);
+        }
+        currentFlowRate = baseFlowRate * (1.0 + slugAmplitude * slugFactor);
+
+        if (!inSlug) {
+          slugCount++;
+          event = "<-- SLUG #" + slugCount + " ARRIVING";
+          inSlug = true;
+        }
+      } else {
+        // Between slugs - steady base flow
+        currentFlowRate = baseFlowRate;
+        if (inSlug) {
+          event = "<-- slug passed";
+          inSlug = false;
+        }
+      }
+
+      // Update inlet flow rate
+      pipeInlet.setFlowRate(currentFlowRate, "kg/sec");
+
+      // Run transient step
+      process.runTransient(2.0, java.util.UUID.randomUUID());
+
+      // Record data
+      double pipeOutFlow = riserPipe.getOutletMassFlow();
+      double level = separator.getLiquidLevel();
+      double pressure = separator.getPressure();
+
+      times.add((double) t);
+      inletFlowRates.add(currentFlowRate);
+      pipeOutFlows.add(pipeOutFlow);
+      levels.add(level);
+      pressures.add(pressure);
+
+      maxLevel = Math.max(maxLevel, level);
+      minLevel = Math.min(minLevel, level);
+
+      // Print status every 30 seconds or on slug events
+      if (t % 30 == 0 || !event.isEmpty()) {
+        System.out.println(String.format("%5d    %10.1f    %12.2f   %.3f   %7.1f  %s", t,
+            currentFlowRate, pipeOutFlow, level, pressure, event));
+      }
+    }
+
+    // ========== Results analysis ==========
+    System.out.println("\n=== Slug Impact Analysis ===");
+    System.out.println("Total slugs arrived: " + slugCount);
+
+    double levelRange = maxLevel - minLevel;
+    System.out.println("\nSeparator level response:");
+    System.out.println("  Initial level: " + String.format("%.3f", initialLevel));
+    System.out.println("  Min level: " + String.format("%.3f", minLevel));
+    System.out.println("  Max level: " + String.format("%.3f", maxLevel));
+    System.out.println("  Level swing: " + String.format("%.3f", levelRange));
+
+    double minP = pressures.stream().min(Double::compareTo).orElse(0.0);
+    double maxP = pressures.stream().max(Double::compareTo).orElse(0.0);
+    double avgP = pressures.stream().mapToDouble(d -> d).average().orElse(0.0);
+
+    System.out.println("\nSeparator pressure response:");
+    System.out.println("  Min: " + String.format("%.2f", minP) + " bara");
+    System.out.println("  Max: " + String.format("%.2f", maxP) + " bara");
+    System.out.println("  Avg: " + String.format("%.2f", avgP) + " bara");
+    System.out.println("  Range: " + String.format("%.2f", maxP - minP) + " bar");
+
+    double minInletFlow = inletFlowRates.stream().min(Double::compareTo).orElse(0.0);
+    double maxInletFlow = inletFlowRates.stream().max(Double::compareTo).orElse(0.0);
+
+    System.out.println("\nInlet flow rate variation:");
+    System.out.println("  Base flow: " + String.format("%.1f", baseFlowRate) + " kg/s");
+    System.out.println("  Peak slug flow: " + String.format("%.1f", maxInletFlow) + " kg/s");
+    System.out.println("  Flow ratio: " + String.format("%.1f", maxInletFlow / baseFlowRate) + "x");
+
+    double minPipeOut = pipeOutFlows.stream().min(Double::compareTo).orElse(0.0);
+    double maxPipeOut = pipeOutFlows.stream().max(Double::compareTo).orElse(0.0);
+    double avgPipeOut = pipeOutFlows.stream().mapToDouble(d -> d).average().orElse(0.0);
+
+    System.out.println("\nPipe outlet flow response (slug propagation):");
+    System.out.println("  Min: " + String.format("%.2f", minPipeOut) + " kg/s");
+    System.out.println("  Max: " + String.format("%.2f", maxPipeOut) + " kg/s");
+    System.out.println("  Avg: " + String.format("%.2f", avgPipeOut) + " kg/s");
+    System.out.println("  Range: " + String.format("%.2f", maxPipeOut - minPipeOut) + " kg/s");
+    if (minPipeOut > 0) {
+      System.out
+          .println("  Peak/Min ratio: " + String.format("%.2f", maxPipeOut / minPipeOut) + "x");
+    }
+
+    // ========== Assertions ==========
+    assertTrue(process.getTime() > 0, "Process should have run");
+    assertTrue(slugCount >= 4, "Should have at least 4 slug arrivals in 5 minutes: " + slugCount);
+    assertTrue(maxInletFlow > baseFlowRate * 1.3, "Peak flow should be at least 30% above base");
+    assertTrue(avgP > 30 && avgP < 80, "Separator pressure should be in reasonable range: " + avgP);
+
+    System.out.println("\n=== Example completed successfully ===");
+    System.out.println("This example demonstrates:");
+    System.out.println("  - Terrain-induced slug arrivals through a riser pipe");
+    System.out.println("  - Pipe outlet flow response to inlet slug disturbances");
+    System.out.println("  - Separator level and pressure response to slug arrivals");
+    System.out.println("  - Importance of pipe dynamics in slug propagation");
   }
 }

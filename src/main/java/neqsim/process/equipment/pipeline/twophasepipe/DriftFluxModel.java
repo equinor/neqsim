@@ -140,22 +140,40 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Calculate parameters for bubble flow.
+   *
+   * @param params output structure for drift-flux parameters
+   * @param U_M mixture velocity [m/s]
+   * @param D pipe diameter [m]
+   * @param theta pipe inclination [rad]
+   * @param rho_L liquid density [kg/m³]
+   * @param rho_G gas density [kg/m³]
+   * @param sigma surface tension [N/m]
    */
   private void calculateBubbleFlowParameters(DriftFluxParameters params, double U_M, double D,
       double theta, double rho_L, double rho_G, double sigma) {
 
     // Zuber-Findlay (1965) for bubble flow
-    params.C0 = 1.2; // Typical value for turbulent flow
+    // C0 depends on void fraction and velocity profile
+    // C0 = 1.2 for turbulent pipe flow, 1.0-1.1 for low void fraction
+    params.C0 = 1.2;
 
-    // Harmathy bubble rise velocity
-    double deltaRho = rho_L - rho_G;
-    double U_bubble = 1.53 * Math.pow(GRAVITY * sigma * Math.abs(deltaRho) / (rho_L * rho_L), 0.25);
+    // Harmathy (1960) terminal rise velocity for single bubble
+    // v_inf = 1.53 * (g*sigma*delta_rho / rho_L^2)^0.25
+    double deltaRho = Math.max(rho_L - rho_G, 0.01);
+    double U_bubble = 1.53 * Math.pow(GRAVITY * sigma * deltaRho / (rho_L * rho_L), 0.25);
 
-    // Include inclination effect
-    params.driftVelocity = U_bubble * Math.sin(theta);
-    if (theta < 0) {
-      // Downward flow - bubbles still rise relative to liquid
-      params.driftVelocity = Math.abs(params.driftVelocity);
+    // Drift velocity in pipe direction
+    // Bubbles rise vertically; component in pipe direction depends on inclination
+    // For upward inclined pipe (theta > 0): v_d = v_bubble (bubbles assist flow)
+    // For downward inclined (theta < 0): v_d = v_bubble * |sin(theta)| (drift against flow)
+    // For horizontal (theta = 0): v_d approaches 0 (bubbles rise perpendicular to flow)
+    double absTheta = Math.abs(theta);
+    if (absTheta > 0.01) {
+      // Inclined pipe - bubble drift contributes to flow in pipe direction
+      params.driftVelocity = U_bubble * Math.abs(Math.sin(theta));
+    } else {
+      // Nearly horizontal - small drift due to bubble swarm effects
+      params.driftVelocity = 0.1 * U_bubble;
     }
   }
 
@@ -165,6 +183,15 @@ public class DriftFluxModel implements Serializable {
    * <p>
    * Uses Bendiksen (1984) correlation for Taylor bubble velocity.
    * </p>
+   *
+   * @param params output structure for drift-flux parameters
+   * @param U_M mixture velocity [m/s]
+   * @param D pipe diameter [m]
+   * @param theta pipe inclination [rad]
+   * @param rho_L liquid density [kg/m³]
+   * @param rho_G gas density [kg/m³]
+   * @param sigma surface tension [N/m]
+   * @param mu_L liquid viscosity [Pa.s]
    */
   private void calculateSlugFlowParameters(DriftFluxParameters params, double U_M, double D,
       double theta, double rho_L, double rho_G, double sigma, double mu_L) {
@@ -204,6 +231,14 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Calculate parameters for annular flow.
+   *
+   * @param params drift flux parameters to be calculated
+   * @param U_M mixture velocity
+   * @param D pipe diameter
+   * @param theta pipe inclination angle
+   * @param rho_L liquid density
+   * @param rho_G gas density
+   * @param sigma surface tension
    */
   private void calculateAnnularFlowParameters(DriftFluxParameters params, double U_M, double D,
       double theta, double rho_L, double rho_G, double sigma) {
@@ -224,6 +259,15 @@ public class DriftFluxModel implements Serializable {
    * <p>
    * Stratified flow doesn't follow simple drift-flux; use momentum balance.
    * </p>
+   *
+   * @param params drift flux parameters to be calculated
+   * @param U_SL superficial liquid velocity
+   * @param U_SG superficial gas velocity
+   * @param D pipe diameter
+   * @param theta pipe inclination angle
+   * @param rho_L liquid density
+   * @param rho_G gas density
+   * @param mu_L liquid viscosity
    */
   private void calculateStratifiedFlowParameters(DriftFluxParameters params, double U_SL,
       double U_SG, double D, double theta, double rho_L, double rho_G, double mu_L) {
@@ -254,6 +298,15 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Estimate liquid level in stratified flow.
+   * 
+   * @param U_SL superficial liquid velocity (m/s)
+   * @param U_SG superficial gas velocity (m/s)
+   * @param D pipe diameter (m)
+   * @param theta pipe inclination angle (rad)
+   * @param rho_L liquid density (kg/m³)
+   * @param rho_G gas density (kg/m³)
+   * @param mu_L liquid viscosity (Pa·s)
+   * @return liquid level height (m)
    */
   private double estimateStratifiedLevel(double U_SL, double U_SG, double D, double theta,
       double rho_L, double rho_G, double mu_L) {
@@ -291,6 +344,10 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Calculate holdup from liquid level in circular pipe.
+   *
+   * @param h liquid level height (m)
+   * @param D pipe diameter (m)
+   * @return liquid holdup fraction (0-1)
    */
   private double calculateHoldupFromLevel(double h, double D) {
     if (h <= 0) {
@@ -343,6 +400,11 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Calculate friction pressure gradient.
+   *
+   * @param section pipe section with flow properties
+   * @param params drift-flux model parameters
+   * @param roughness pipe wall roughness (m)
+   * @return friction pressure gradient (Pa/m)
    */
   private double calculateFrictionGradient(PipeSection section, DriftFluxParameters params,
       double roughness) {
@@ -383,6 +445,10 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Calculate friction for single-phase gas flow.
+   *
+   * @param section pipe section with gas properties
+   * @param roughness pipe wall roughness (m)
+   * @return friction factor
    */
   private double calculateSinglePhaseGasFriction(PipeSection section, double roughness) {
     double D = section.getDiameter();
@@ -407,6 +473,10 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Calculate friction for single-phase liquid flow.
+   *
+   * @param section pipe section with liquid properties
+   * @param roughness pipe wall roughness (m)
+   * @return friction factor
    */
   private double calculateSinglePhaseLiquidFriction(PipeSection section, double roughness) {
     double D = section.getDiameter();
@@ -552,5 +622,291 @@ public class DriftFluxModel implements Serializable {
     double f = Math.pow(-1.8 * Math.log10(term), -2);
 
     return Math.max(f, 0.001);
+  }
+
+  // ========== Energy Equation Methods ==========
+
+  /**
+   * Energy equation result containing temperature change and heat transfer components.
+   */
+  public static class EnergyEquationResult implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    /** New temperature after energy balance (K). */
+    public double newTemperature;
+    /** Temperature change from Joule-Thomson effect (K). */
+    public double jouleThomsonDeltaT;
+    /** Temperature change from heat transfer to surroundings (K). */
+    public double heatTransferDeltaT;
+    /** Temperature change from friction heating (K). */
+    public double frictionHeatingDeltaT;
+    /** Temperature change from elevation work (K). */
+    public double elevationWorkDeltaT;
+    /** Total heat transfer rate to surroundings (W). */
+    public double heatTransferRate;
+    /** Friction heating power (W). */
+    public double frictionHeatingPower;
+  }
+
+  /**
+   * Calculate temperature change in fluid flow using the energy equation.
+   *
+   * <p>
+   * The energy equation for steady-state pipe flow is:
+   * </p>
+   * 
+   * <pre>
+   * ṁ·Cp·dT/dx = Q̇_wall + Q̇_friction - ṁ·μ_JT·Cp·dP/dx - ṁ·g·sin(θ)·dz/dx
+   * </pre>
+   *
+   * <p>
+   * Where:
+   * </p>
+   * <ul>
+   * <li>Q̇_wall = U·A·(T_ambient - T_fluid) - heat transfer to/from surroundings</li>
+   * <li>Q̇_friction = |dP/dx|_friction · Q_vol - viscous dissipation heating</li>
+   * <li>μ_JT = Joule-Thomson coefficient (K/Pa)</li>
+   * <li>dP/dx = pressure gradient (Pa/m)</li>
+   * </ul>
+   *
+   * <p>
+   * For multiphase flow, mixture properties are used with appropriate averaging.
+   * </p>
+   *
+   * @param section Current pipe section with fluid state
+   * @param params Drift-flux parameters from calculateDriftFlux
+   * @param dt Time step (s)
+   * @param dx Spatial step (m)
+   * @param ambientTemperature Ambient temperature (K)
+   * @param overallHeatTransferCoeff Overall heat transfer coefficient U (W/(m²·K))
+   * @param jouleThomsonCoeff Joule-Thomson coefficient (K/Pa), typically ~2e-6 for gas
+   * @return EnergyEquationResult containing temperature change components
+   */
+  public EnergyEquationResult calculateEnergyEquation(PipeSection section,
+      DriftFluxParameters params, double dt, double dx, double ambientTemperature,
+      double overallHeatTransferCoeff, double jouleThomsonCoeff) {
+
+    EnergyEquationResult result = new EnergyEquationResult();
+
+    double T = section.getTemperature();
+    double D = section.getDiameter();
+    double theta = section.getInclination();
+
+    // Phase properties
+    double rho_L = section.getLiquidDensity();
+    double rho_G = section.getGasDensity();
+    double alpha_L = params.liquidHoldup;
+    double alpha_G = params.voidFraction;
+
+    // Mixture properties
+    double rho_m = alpha_L * rho_L + alpha_G * rho_G;
+    double Cp_mix = section.getMixtureHeatCapacity(); // J/(kg·K)
+    if (Cp_mix <= 0) {
+      Cp_mix = 2000.0; // Default fallback
+    }
+
+    // Velocities and flow rates
+    double A = section.getArea();
+    double U_M = section.getMixtureVelocity();
+    double massFlowRate = rho_m * A * Math.abs(U_M);
+
+    // Protect against zero mass flow
+    if (massFlowRate < 1e-10) {
+      result.newTemperature = T;
+      return result;
+    }
+
+    // 1. Heat transfer to surroundings
+    // Q̇_wall = U · π · D · dx · (T_ambient - T)
+    double wallArea = Math.PI * D * dx;
+    result.heatTransferRate = overallHeatTransferCoeff * wallArea * (ambientTemperature - T);
+
+    // Temperature change from heat transfer: dT = Q̇ · dt / (m · Cp)
+    double massInSection = rho_m * A * dx;
+    if (massInSection > 1e-10) {
+      result.heatTransferDeltaT = result.heatTransferRate * dt / (massInSection * Cp_mix);
+    }
+
+    // 2. Joule-Thomson effect (gas expansion/compression)
+    // For expansion (pressure drop), gas cools: dT_JT = μ_JT · ΔP_drop
+    // Where ΔP_drop is positive for pressure decrease along flow
+    // dP/dx is negative for flow with pressure drop, so ΔP_drop = -dP/dx * dx
+    double dPdx = calculatePressureGradient(section, params);
+    double pressureDrop = -dPdx * dx; // Positive for expansion
+
+    // Joule-Thomson effect is more significant for gas phase
+    // Scale coefficient by gas fraction for two-phase flow
+    double effectiveJT = jouleThomsonCoeff * alpha_G;
+    // JT cooling: temperature decreases with pressure drop (expansion)
+    result.jouleThomsonDeltaT = -effectiveJT * pressureDrop;
+
+    // 3. Friction heating (viscous dissipation)
+    // Q̇_friction = |dP_friction/dx| · Q_volumetric
+    double dP_friction = section.getFrictionPressureGradient();
+    double volumetricFlowRate = A * Math.abs(U_M);
+    result.frictionHeatingPower = Math.abs(dP_friction) * volumetricFlowRate;
+
+    // Temperature rise from friction: dT = Q̇_friction · dt / (m · Cp)
+    if (massInSection > 1e-10) {
+      result.frictionHeatingDeltaT = result.frictionHeatingPower * dt / (massInSection * Cp_mix);
+    }
+
+    // 4. Elevation work (potential energy change)
+    // For uphill flow: fluid does work against gravity, temperature decreases
+    // dT_elevation = -g · sin(θ) · dx / Cp
+    // This is typically small compared to other effects
+    result.elevationWorkDeltaT = -GRAVITY * Math.sin(theta) * dx / Cp_mix * (dt / dx * U_M);
+
+    // Total temperature change
+    double totalDeltaT = result.heatTransferDeltaT + result.jouleThomsonDeltaT
+        + result.frictionHeatingDeltaT + result.elevationWorkDeltaT;
+
+    // Limit temperature change per time step for stability
+    double maxDeltaT = 10.0; // Maximum 10K change per step
+    if (Math.abs(totalDeltaT) > maxDeltaT) {
+      totalDeltaT = Math.signum(totalDeltaT) * maxDeltaT;
+    }
+
+    result.newTemperature = T + totalDeltaT;
+
+    // Ensure physical bounds (100K to 500K typical range for hydrocarbon systems)
+    result.newTemperature = Math.max(100.0, Math.min(500.0, result.newTemperature));
+
+    return result;
+  }
+
+  /**
+   * Simplified energy equation for steady-state temperature profile calculation.
+   *
+   * <p>
+   * This method calculates the temperature at each section by marching from inlet to outlet,
+   * considering:
+   * </p>
+   * <ul>
+   * <li>Heat loss to surroundings (dominant effect for subsea/buried pipelines)</li>
+   * <li>Joule-Thomson cooling for gas-dominated flow</li>
+   * <li>Friction heating (usually small)</li>
+   * </ul>
+   *
+   * @param section Pipe section
+   * @param upstreamTemperature Temperature at upstream section (K)
+   * @param dx Distance from upstream section (m)
+   * @param ambientTemperature Ambient temperature (K)
+   * @param overallHeatTransferCoeff Heat transfer coefficient U (W/(m²·K))
+   * @param massFlowRate Mass flow rate (kg/s)
+   * @param jouleThomsonCoeff Joule-Thomson coefficient (K/Pa)
+   * @return New temperature at this section (K)
+   */
+  public double calculateSteadyStateTemperature(PipeSection section, double upstreamTemperature,
+      double dx, double ambientTemperature, double overallHeatTransferCoeff, double massFlowRate,
+      double jouleThomsonCoeff) {
+
+    if (massFlowRate < 1e-10) {
+      return upstreamTemperature;
+    }
+
+    double D = section.getDiameter();
+    double Cp_mix = section.getMixtureHeatCapacity();
+    if (Cp_mix <= 0) {
+      Cp_mix = 2000.0;
+    }
+
+    // Heat transfer length constant: L = ṁ·Cp / (U·π·D)
+    double heatTransferCoeff = overallHeatTransferCoeff * Math.PI * D;
+    double lengthConstant = massFlowRate * Cp_mix / heatTransferCoeff;
+
+    // Exponential temperature decay toward ambient
+    // T(x) = T_ambient + (T_inlet - T_ambient) · exp(-x/L)
+    double decayFactor = Math.exp(-dx / lengthConstant);
+    double T_afterHeatTransfer =
+        ambientTemperature + (upstreamTemperature - ambientTemperature) * decayFactor;
+
+    // Add Joule-Thomson effect
+    DriftFluxParameters params = calculateDriftFlux(section);
+    double dPdx = calculatePressureGradient(section, params);
+    double alpha_G = params.voidFraction;
+
+    // Scale JT coefficient by gas fraction
+    double effectiveJT = jouleThomsonCoeff * alpha_G;
+    double deltaT_JT = -effectiveJT * dPdx * dx;
+
+    // Add friction heating (small effect)
+    double dP_friction = section.getFrictionPressureGradient();
+    double deltaT_friction = Math.abs(dP_friction) * dx / (section.getMixtureDensity() * Cp_mix);
+
+    double newTemperature = T_afterHeatTransfer + deltaT_JT + deltaT_friction;
+
+    // Physical bounds
+    return Math.max(100.0, Math.min(500.0, newTemperature));
+  }
+
+  /**
+   * Estimate Joule-Thomson coefficient for natural gas.
+   *
+   * <p>
+   * For ideal gas, μ_JT = 0. For real gases, typical values are:
+   * </p>
+   * <ul>
+   * <li>Methane at 300K, 50 bar: ~4.5e-6 K/Pa (0.45 K/MPa)</li>
+   * <li>Natural gas mixture: 2-6e-6 K/Pa depending on composition</li>
+   * <li>Liquids: typically very small (~1e-8 K/Pa)</li>
+   * </ul>
+   *
+   * @param temperature Temperature (K)
+   * @param pressure Pressure (Pa)
+   * @param gasMolWeight Gas molecular weight (g/mol)
+   * @return Estimated Joule-Thomson coefficient (K/Pa)
+   */
+  public double estimateJouleThomsonCoefficient(double temperature, double pressure,
+      double gasMolWeight) {
+    // Approximate correlation for hydrocarbon gases
+    // μ_JT ≈ (2a/RT - b) / Cp where a, b are van der Waals constants
+    // Simplified empirical correlation for natural gas:
+    // μ_JT ≈ 0.5 × 10^-5 × (300/T) × (P/5e6)^0.5 K/Pa
+
+    double T_ref = 300.0; // Reference temperature (K)
+    double P_ref = 5e6; // Reference pressure (Pa)
+
+    double mu_JT = 0.5e-5 * (T_ref / temperature) * Math.sqrt(pressure / P_ref);
+
+    // Scale by molecular weight (heavier gases have higher JT coefficient)
+    mu_JT *= gasMolWeight / 16.0; // Normalize to methane
+
+    return Math.max(0, mu_JT);
+  }
+
+  /**
+   * Calculate mixture heat capacity for two-phase flow.
+   *
+   * <p>
+   * Uses mass-weighted average of phase heat capacities.
+   * </p>
+   *
+   * @param section Pipe section with phase properties
+   * @param params Drift-flux parameters
+   * @param Cp_gas Gas heat capacity (J/(kg·K))
+   * @param Cp_liquid Liquid heat capacity (J/(kg·K))
+   * @return Mixture heat capacity (J/(kg·K))
+   */
+  public double calculateMixtureHeatCapacity(PipeSection section, DriftFluxParameters params,
+      double Cp_gas, double Cp_liquid) {
+
+    double rho_G = section.getGasDensity();
+    double rho_L = section.getLiquidDensity();
+    double alpha_G = params.voidFraction;
+    double alpha_L = params.liquidHoldup;
+
+    double mass_G = rho_G * alpha_G;
+    double mass_L = rho_L * alpha_L;
+    double totalMass = mass_G + mass_L;
+
+    if (totalMass < 1e-10) {
+      return Cp_gas > 0 ? Cp_gas : 2000.0;
+    }
+
+    double massFraction_G = mass_G / totalMass;
+    double massFraction_L = mass_L / totalMass;
+
+    return massFraction_G * Cp_gas + massFraction_L * Cp_liquid;
   }
 }

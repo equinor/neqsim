@@ -257,6 +257,14 @@ public class FlowRegimeDetector implements Serializable {
 
   /**
    * Check if flow is in dispersed bubble regime.
+   *
+   * @param U_SL superficial liquid velocity [m/s]
+   * @param U_SG superficial gas velocity [m/s]
+   * @param D pipe diameter [m]
+   * @param rho_L liquid density [kg/m³]
+   * @param rho_G gas density [kg/m³]
+   * @param sigma surface tension [N/m]
+   * @return true if flow is in dispersed bubble regime
    */
   private boolean isDispersedBubble(double U_SL, double U_SG, double D, double rho_L, double rho_G,
       double sigma) {
@@ -357,6 +365,13 @@ public class FlowRegimeDetector implements Serializable {
 
   /**
    * Check Kelvin-Helmholtz instability for slug transition.
+   *
+   * @param U_SG superficial gas velocity
+   * @param h_L liquid height
+   * @param D pipe diameter
+   * @param rho_L liquid density
+   * @param rho_G gas density
+   * @return true if Kelvin-Helmholtz unstable condition exists
    */
   private boolean isKelvinHelmholtzUnstable(double U_SG, double h_L, double D, double rho_L,
       double rho_G) {
@@ -385,6 +400,14 @@ public class FlowRegimeDetector implements Serializable {
 
   /**
    * Check transition from smooth to wavy stratified.
+   *
+   * @param U_SG superficial gas velocity
+   * @param h_L liquid height
+   * @param D pipe diameter
+   * @param rho_L liquid density
+   * @param rho_G gas density
+   * @param mu_L liquid viscosity
+   * @return true if transition from smooth to wavy stratified occurs
    */
   private boolean isWavyTransition(double U_SG, double h_L, double D, double rho_L, double rho_G,
       double mu_L) {

@@ -3,7 +3,6 @@ package neqsim.process.equipment.pipeline.twophasepipe;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 
 /**
  * Tracks liquid accumulation in low points and riser bases.
@@ -155,52 +154,99 @@ public class LiquidAccumulationTracker implements Serializable {
 
   /**
    * Update a single accumulation zone.
+   * 
+   * <p>
+   * Terrain-induced liquid accumulation occurs when:
+   * <ul>
+   * <li>Liquid flows downhill into the low point (gravity-driven)</li>
+   * <li>Liquid velocity slows in uphill sections (slip accumulation)</li>
+   * <li>Gas-liquid slip causes liquid to settle in stratified regions</li>
+   * </ul>
    */
   private void updateZone(AccumulationZone zone, PipeSection[] sections, double dt) {
     if (!zone.isActive || zone.sectionIndices.isEmpty()) {
       return;
     }
 
-    // Calculate net liquid inflow to zone
-    double liquidInflowRate = 0;
-    double gasFlowRate = 0;
+    // Calculate liquid accumulation based on slip and gravity effects
+    double accumulationRate = 0;
 
-    // Inflow from upstream sections
-    int firstIdx = zone.sectionIndices.get(0);
-    if (firstIdx > 0) {
-      PipeSection upstream = sections[firstIdx - 1];
-      double A = upstream.getArea();
-      liquidInflowRate += upstream.getLiquidHoldup() * upstream.getLiquidVelocity() * A;
-      gasFlowRate += upstream.getGasHoldup() * upstream.getGasVelocity() * A;
+    // For each section in the zone, calculate the gravity-driven settling rate
+    for (int idx : zone.sectionIndices) {
+      PipeSection section = sections[idx];
+      double A = section.getArea();
+      double holdup = section.getLiquidHoldup();
+      double gasHoldup = section.getGasHoldup();
+
+      // Slip velocity (gas moves faster than liquid)
+      double slipVelocity = section.getGasVelocity() - section.getLiquidVelocity();
+
+      // Inclination effect: downhill sections drain into low point
+      // uphill sections after low point resist liquid outflow
+      double inclination = section.getInclination();
+      double rho_L = section.getLiquidDensity();
+      double rho_G = section.getGasDensity();
+      double rho_diff = rho_L - rho_G;
+
+      // Gravity-driven accumulation: liquid settles faster on downhill,
+      // and slower on uphill (creating a dam effect)
+      // Rate = (rho_L - rho_G) * g * sin(theta) * holdup * A * settling_factor
+      double settlingFactor = 0.01; // Empirical factor for accumulation rate
+      double gravitySettling = -rho_diff * GRAVITY * Math.sin(inclination) * holdup * gasHoldup * A
+          * settlingFactor / Math.max(rho_L, 100.0);
+
+      // Positive settling = liquid accumulates (downhill sections or stagnant uphill)
+      if (inclination < 0) {
+        // Downhill: liquid flows in faster
+        accumulationRate += Math.abs(gravitySettling);
+      } else if (inclination > 0 && slipVelocity > 0.1) {
+        // Uphill with significant slip: liquid held back
+        accumulationRate += Math.abs(gravitySettling) * 0.3;
+      }
     }
 
-    // Outflow from downstream sections
+    // Also add inflow-based accumulation (difference between liquid in and out)
+    int firstIdx = zone.sectionIndices.get(0);
     int lastIdx = zone.sectionIndices.get(zone.sectionIndices.size() - 1);
-    if (lastIdx < sections.length - 1) {
-      PipeSection downstream = sections[lastIdx + 1];
-      double A = downstream.getArea();
-      double liquidOutflow = downstream.getLiquidHoldup() * downstream.getLiquidVelocity() * A;
 
-      // Outflow limited by accumulated volume
-      zone.outflowRate = liquidOutflow;
-      zone.netInflowRate = liquidInflowRate - liquidOutflow;
-    } else {
-      zone.netInflowRate = liquidInflowRate;
-      zone.outflowRate = 0;
+    if (firstIdx > 0 && lastIdx < sections.length - 1) {
+      PipeSection upstream = sections[firstIdx - 1];
+      PipeSection downstream = sections[lastIdx + 1];
+      double A = upstream.getArea();
+
+      double liquidIn = upstream.getLiquidHoldup() * Math.max(upstream.getLiquidVelocity(), 0) * A;
+      double liquidOut =
+          downstream.getLiquidHoldup() * Math.max(downstream.getLiquidVelocity(), 0) * A;
+
+      zone.netInflowRate = liquidIn - liquidOut;
+      accumulationRate += Math.max(0, zone.netInflowRate); // Only accumulate, don't drain this way
     }
 
     // Update accumulated volume
-    zone.liquidVolume += zone.netInflowRate * dt;
-    zone.liquidVolume = Math.max(0, zone.liquidVolume);
+    zone.liquidVolume += accumulationRate * dt;
+    zone.liquidVolume = Math.max(0, Math.min(zone.liquidVolume, zone.maxVolume));
 
-    // Check for overflow/slug-out
-    zone.isOverflowing = zone.liquidVolume > 0.9 * zone.maxVolume;
+    // Also calculate actual liquid volume in zone sections based on current holdup
+    double actualLiquidInZone = 0;
+    for (int idx : zone.sectionIndices) {
+      PipeSection section = sections[idx];
+      actualLiquidInZone += section.getLiquidHoldup() * section.getArea() * section.getLength();
+    }
 
-    // Calculate liquid level and update sections
+    // Use the maximum of tracked accumulation and actual liquid in sections
+    // This ensures slug release when sections are actually full
+    zone.liquidVolume = Math.max(zone.liquidVolume, actualLiquidInZone * 0.8);
+
+    // Check for overflow/slug-out based on liquid content
+    // Zone overflows when holdup in the zone is high (>70% liquid)
+    double avgHoldupInZone = actualLiquidInZone / Math.max(zone.maxVolume, 1e-10);
+    zone.isOverflowing = zone.liquidVolume > 0.7 * zone.maxVolume || avgHoldupInZone > 0.7;
+
+    // Calculate liquid level
     double avgArea = zone.maxVolume / (zone.endPosition - zone.startPosition);
     zone.liquidLevel = zone.liquidVolume / (avgArea + 1e-10);
 
-    // Distribute liquid among zone sections
+    // Distribute accumulated liquid to actually increase section holdups
     distributeAccumulatedLiquid(zone, sections);
 
     zone.timeSinceSlug += dt;
@@ -208,6 +254,11 @@ public class LiquidAccumulationTracker implements Serializable {
 
   /**
    * Distribute accumulated liquid among sections in the zone.
+   * 
+   * <p>
+   * This method now ACTUALLY updates the section holdups, not just a separate tracking variable.
+   * This is critical for terrain-induced slug formation.
+   * </p>
    */
   private void distributeAccumulatedLiquid(AccumulationZone zone, PipeSection[] sections) {
     if (zone.sectionIndices.isEmpty() || zone.liquidVolume <= 0) {
@@ -220,8 +271,8 @@ public class LiquidAccumulationTracker implements Serializable {
       totalZoneVolume += sections[idx].getArea() * sections[idx].getLength();
     }
 
-    double avgHoldup = zone.liquidVolume / Math.max(totalZoneVolume, 1e-10);
-    avgHoldup = Math.min(avgHoldup, 0.95);
+    // Calculate holdup boost from accumulation
+    double accumulationHoldup = zone.liquidVolume / Math.max(totalZoneVolume, 1e-10);
 
     // Distribute with weighting toward lowest elevation
     double minElev = Double.MAX_VALUE;
@@ -234,19 +285,48 @@ public class LiquidAccumulationTracker implements Serializable {
     double elevRange = maxElev - minElev + 1e-6;
 
     for (int idx : zone.sectionIndices) {
-      double elev = sections[idx].getElevation();
-      // Higher holdup at lower elevations
-      double weight = 1.0 + (maxElev - elev) / elevRange;
-      double localHoldup = avgHoldup * weight;
-      localHoldup = Math.min(localHoldup, 0.98);
+      PipeSection section = sections[idx];
+      double elev = section.getElevation();
 
-      sections[idx].setAccumulatedLiquidVolume(
-          localHoldup * sections[idx].getArea() * sections[idx].getLength());
+      // Higher holdup at lower elevations
+      double weight = 1.0 + 2.0 * (maxElev - elev) / elevRange;
+      double additionalHoldup = accumulationHoldup * weight;
+
+      // Get current holdup from drift-flux calculation
+      double currentHoldup = section.getLiquidHoldup();
+
+      // Add accumulated liquid to increase the holdup
+      double newHoldup = currentHoldup + additionalHoldup;
+      newHoldup = Math.min(newHoldup, 0.95); // Cap at 95%
+
+      // ACTUALLY update the section holdup (this is the key fix!)
+      section.setLiquidHoldup(newHoldup);
+      section.setGasHoldup(1.0 - newHoldup);
+
+      // Store for tracking
+      section
+          .setAccumulatedLiquidVolume(additionalHoldup * section.getArea() * section.getLength());
+
+      // Reduce liquid velocity in accumulation zones (liquid is pooling)
+      double velocityReduction = 1.0 - 0.5 * (additionalHoldup / 0.5);
+      velocityReduction = Math.max(0.3, velocityReduction);
+      section.setLiquidVelocity(section.getLiquidVelocity() * velocityReduction);
+
+      section.updateDerivedQuantities();
     }
   }
 
   /**
    * Check if terrain-induced slug should be released.
+   *
+   * <p>
+   * Slug release occurs when:
+   * <ul>
+   * <li>Accumulated liquid exceeds zone capacity (overflow condition)</li>
+   * <li>Gas pressure is sufficient to push liquid out of the low point</li>
+   * <li>Minimum time since last slug has elapsed (prevents rapid cycling)</li>
+   * <li>Previous slug has cleared the zone exit (prevents immediate merging)</li>
+   * </ul>
    *
    * @param zone Accumulation zone
    * @param sections Pipe sections
@@ -257,28 +337,72 @@ public class LiquidAccumulationTracker implements Serializable {
       return null;
     }
 
+    // Minimum time between slug releases to prevent rapid cycling
+    double minTimeBetweenSlugs = 30.0; // seconds - longer interval for distinct slugs
+    if (zone.timeSinceSlug < minTimeBetweenSlugs) {
+      return null;
+    }
+
     // Get downstream section to check if gas can push liquid out
     int lastIdx = zone.sectionIndices.get(zone.sectionIndices.size() - 1);
     if (lastIdx >= sections.length - 1) {
       return null;
     }
 
-    PipeSection downstream = sections[lastIdx + 1];
+    // BUG FIX: Don't release a new slug if the downstream section is still in a slug body
+    // This prevents immediate merging when a previous slug hasn't cleared the zone
+    PipeSection downstreamSection = sections[lastIdx + 1];
+    if (downstreamSection.isInSlugBody()) {
+      return null;
+    }
 
-    // Check if downstream inclination allows slug propagation
-    if (downstream.getInclination() > Math.toRadians(5)) {
-      // Uphill - slug can form when liquid level exceeds pipe capacity
+    PipeSection downstream = sections[lastIdx + 1];
+    PipeSection zoneSection = sections[lastIdx];
+
+    // Calculate driving pressure from gas compression behind liquid
+    double gasPressure = zoneSection.getPressure();
+    double downstreamPressure = downstream.getPressure();
+    double pressureDiff = gasPressure - downstreamPressure;
+
+    // Calculate hydrostatic resistance for uphill downstream section
+    double elevDiff = downstream.getElevation() - zoneSection.getElevation();
+    double hydrostaticHead = zoneSection.getLiquidDensity() * GRAVITY * Math.max(elevDiff, 0);
+
+    // Slug releases when zone is overflowing AND one of:
+    // 1. Pressure difference exceeds hydrostatic resistance
+    // 2. Downstream section is going downhill (elevDiff < 0)
+    // 3. Mixture velocity is sufficient
+    // 4. Zone is critically full (>85% capacity)
+    boolean pressureDriven = pressureDiff > hydrostaticHead * 0.3;
+    boolean downhillRelease = elevDiff < -0.5; // Downhill by >0.5m
+    boolean velocityDriven = downstream.getMixtureVelocity() > 0.3; // m/s
+    boolean criticallyFull = zone.liquidVolume > 0.85 * zone.maxVolume;
+
+    if (pressureDriven || downhillRelease || velocityDriven || criticallyFull) {
       SlugCharacteristics slug = new SlugCharacteristics();
+
+      // BUG FIX: Slug should be compact when released, not span the entire zone
+      // Calculate initial slug length based on accumulated volume and pipe area
+      double pipeArea = zoneSection.getArea();
+      // Slug body holdup should be high (nearly all liquid) - typically 0.95-0.98
+      // This must be higher than the normal stratified flow holdup to show slug passage
+      double slugHoldup = 0.98; // Near-100% liquid in slug body
+      // V = L * A * holdup => L = V / (A * holdup)
+      double initialLength = zone.liquidVolume / (pipeArea * slugHoldup);
+      // Cap to reasonable range (5m to zone length)
+      initialLength = Math.max(5.0, Math.min(initialLength, zone.endPosition - zone.startPosition));
+
+      // Slug front starts at zone end, tail is behind by the slug length
       slug.frontPosition = zone.endPosition;
-      slug.tailPosition = zone.startPosition;
-      slug.length = zone.endPosition - zone.startPosition;
-      slug.holdup = 0.85; // Typical slug holdup
-      slug.velocity = downstream.getMixtureVelocity() * 1.2; // Slug moves faster
+      slug.tailPosition = zone.endPosition - initialLength;
+      slug.length = initialLength;
+      slug.holdup = slugHoldup;
+      slug.velocity = Math.max(downstream.getMixtureVelocity() * 1.2, 0.5); // At least 0.5 m/s
       slug.volume = zone.liquidVolume;
       slug.isTerrainInduced = true;
 
-      // Reset zone after slug release
-      zone.liquidVolume *= 0.3; // Some liquid remains
+      // Reset zone after slug release - retain some liquid in the low point
+      zone.liquidVolume *= 0.2; // 20% remains as film
       zone.timeSinceSlug = 0;
       zone.isOverflowing = false;
 
@@ -365,6 +489,15 @@ public class LiquidAccumulationTracker implements Serializable {
    */
   public void setCriticalHoldup(double holdup) {
     this.criticalHoldup = Math.max(0.1, Math.min(0.9, holdup));
+  }
+
+  /**
+   * Get critical holdup for slug initiation.
+   *
+   * @return Critical holdup value (0-1)
+   */
+  public double getCriticalHoldup() {
+    return this.criticalHoldup;
   }
 
   /**
