@@ -5,7 +5,7 @@ Created `TemperatureDropComparisonTest.java` - a comprehensive test suite valida
 
 **Location**: `src/test/java/neqsim/process/equipment/pipeline/twophasepipe/TemperatureDropComparisonTest.java`
 
-**Status**: ✅ All 9 tests passing
+**Status**: ✅ All 16 tests passing
 
 ## Test Methods
 
@@ -138,11 +138,15 @@ These tests complement existing pipeline tests:
 ## Future Enhancements
 
 1. ~~**Add heat transfer to TwoFluidPipe**~~: ✅ Implemented!
-2. **Joule-Thomson effect**: Currently not explicitly tested
+2. ~~**Joule-Thomson effect**~~: ✅ Implemented! (auto-enabled by default)
 3. **Compressibility effects**: Could cause small temperature changes
 4. **Transient thermal response**: Test cooling/heating during valve changes
 5. **Pressure-temperature coupling**: More realistic PVT behavior
-6. **Variable heat transfer coefficient**: Along-pipe variation of U-value
+6. ~~**Variable heat transfer coefficient**~~: ✅ Implemented! (`setHeatTransferProfile()`)
+7. ~~**Insulation presets**~~: ✅ Implemented! (`setInsulationType()`)
+8. ~~**Hydrate/wax monitoring**~~: ✅ Implemented! (`hasHydrateRisk()`, `hasWaxRisk()`)
+9. ~~**Pipe wall thermal mass**~~: ✅ Implemented! (transient wall temperature tracking)
+10. ~~**Soil thermal resistance**~~: ✅ Implemented! (`setSoilThermalResistance()`)
 
 ## References
 
@@ -155,7 +159,7 @@ These tests complement existing pipeline tests:
 
 ```
 [INFO] Running TemperatureDropComparisonTest
-[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.2 s
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.2 s
 
 ✅ testTwoFluidPipeTemperatureProfile
 ✅ testTwoFluidPipeTemperatureMonotonicity
@@ -164,8 +168,15 @@ These tests complement existing pipeline tests:
 ✅ testTemperatureReproducibility
 ✅ testTemperatureWithVaryingFlowRate
 ✅ testTemperaturePhysicalBounds
-✅ testTwoFluidPipeHeatTransfer
-✅ testTwoFluidPipeHeatTransferTemperatureDrop
+✅ testTwoFluidPipeWithHeatTransfer
+✅ testTwoFluidPipeHeatTransferComparison
+✅ testInsulationTypePresets
+✅ testTemperatureProfileUnits
+✅ testHydrateWaxRiskMonitoring
+✅ testVariableHeatTransferProfile
+✅ testSoilThermalResistance
+✅ testJouleThomsonEffect
+✅ testPipeWallProperties
 
 BUILD SUCCESS
 ```

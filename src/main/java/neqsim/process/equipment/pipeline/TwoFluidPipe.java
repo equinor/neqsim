@@ -850,7 +850,8 @@ public class TwoFluidPipe extends Pipeline {
       double Q_JT = massFlow * Cp * muJT * dP / dx; // W/m (equivalent heat)
 
       // Update wall temperature (explicit Euler)
-      double dTwall_dt = (Q_fluid_to_wall - Q_wall_to_ambient) / (wallMassPerLength * wallHeatCapacity);
+      double dTwall_dt =
+          (Q_fluid_to_wall - Q_wall_to_ambient) / (wallMassPerLength * wallHeatCapacity);
       T_wall += dTwall_dt * dt;
       wallTemperatureProfile[i] = T_wall;
 
@@ -2044,8 +2045,8 @@ public class TwoFluidPipe extends Pipeline {
    * Set insulation type using predefined U-values.
    *
    * <p>
-   * This is a convenience method that sets appropriate heat transfer coefficient based on insulation
-   * type. Automatically enables heat transfer modeling.
+   * This is a convenience method that sets appropriate heat transfer coefficient based on
+   * insulation type. Automatically enables heat transfer modeling.
    * </p>
    *
    * @param type Insulation type preset
@@ -2171,8 +2172,8 @@ public class TwoFluidPipe extends Pipeline {
    * Enable or disable Joule-Thomson effect.
    *
    * <p>
-   * When enabled, temperature drops due to pressure reduction are calculated. This is important
-   * for gas pipelines with significant pressure drop.
+   * When enabled, temperature drops due to pressure reduction are calculated. This is important for
+   * gas pipelines with significant pressure drop.
    * </p>
    *
    * @param enable true to enable J-T effect

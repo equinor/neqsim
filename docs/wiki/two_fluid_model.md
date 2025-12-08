@@ -113,6 +113,91 @@ pipe.setHeatTransferCoefficient(25.0);     // 25 W/(m²·K)
 | Buried onshore | 2-5 |
 | Exposed onshore | 50-100 |
 
+### Insulation Type Presets
+
+Convenience method for setting heat transfer coefficient based on insulation type:
+
+```java
+pipe.setInsulationType(TwoFluidPipe.InsulationType.PU_FOAM);  // 10 W/(m²·K)
+```
+
+**Available presets:**
+| InsulationType | U [W/(m²·K)] | Description |
+|----------------|-------------|-------------|
+| `NONE` | 150 | Bare steel in seawater |
+| `UNINSULATED_SUBSEA` | 25 | Typical bare subsea pipe |
+| `PU_FOAM` | 10 | Standard PU foam insulation |
+| `MULTI_LAYER` | 5 | Multi-layer insulation |
+| `PIPE_IN_PIPE` | 2 | Pipe-in-pipe system |
+| `VIT` | 0.5 | Vacuum insulated tubing |
+| `BURIED_ONSHORE` | 3 | Buried onshore pipeline |
+| `EXPOSED_ONSHORE` | 75 | Wind-cooled exposed pipe |
+
+### Variable Heat Transfer Profile
+
+Support for different U-values along the pipe (e.g., buried vs exposed sections):
+
+```java
+double[] htcProfile = new double[numSections];
+for (int i = 0; i < numSections; i++) {
+    htcProfile[i] = (i < 10) ? 5.0 : 50.0;  // First 1 km insulated, rest exposed
+}
+pipe.setHeatTransferProfile(htcProfile);
+```
+
+### Soil Thermal Resistance
+
+For buried pipelines, add soil thermal resistance:
+
+```java
+pipe.setSoilThermalResistance(0.5);  // m²·K/W
+// Effective U = 1 / (1/U + R_soil)
+```
+
+### Joule-Thomson Effect
+
+Temperature change from pressure drop (enabled by default):
+
+```java
+pipe.setEnableJouleThomson(true);   // Enable J-T cooling
+// dT = μ_JT × dP (typical: 0.4 K/bar for natural gas)
+```
+
+### Pipe Wall Thermal Mass
+
+For transient simulations, configure pipe wall properties:
+
+```java
+pipe.setWallProperties(0.025, 7850.0, 500.0);  // 25mm steel wall
+// Parameters: thickness [m], density [kg/m³], heat capacity [J/(kg·K)]
+```
+
+### Hydrate and Wax Risk Monitoring
+
+Monitor for flow assurance issues:
+
+```java
+pipe.setHydrateFormationTemperature(10.0, "C");
+pipe.setWaxAppearanceTemperature(25.0, "C");
+pipe.run();
+
+if (pipe.hasHydrateRisk()) {
+    int section = pipe.getFirstHydrateRiskSection();
+    double distance = pipe.getDistanceToHydrateRisk();
+    System.out.println("Hydrate risk at " + distance + " m");
+}
+```
+
+### Temperature Profile with Units
+
+Get temperature profile in different units:
+
+```java
+double[] tempK = pipe.getTemperatureProfile("K");   // Kelvin
+double[] tempC = pipe.getTemperatureProfile("C");   // Celsius
+double[] tempF = pipe.getTemperatureProfile("F");   // Fahrenheit
+```
+
 ## Closure Relations
 
 ### Flow Regime Detection
@@ -271,5 +356,6 @@ The model includes comprehensive unit tests:
 - Thermodynamic coupling: 40 tests
 - Three-phase extension: 28 tests
 - Integration tests: 19 tests
+- Temperature/heat transfer: 16 tests
 
-**Total: 126 tests**
+**Total: 142 tests**
