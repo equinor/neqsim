@@ -2,6 +2,7 @@ package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -159,7 +160,7 @@ class TwoPhasePressureDropValidationTest {
 
   @BeforeEach
   void setUp() {
-    System.out.println("\n" + "=".repeat(70));
+    System.out.println("\n" + StringUtils.repeat("=", 70));
   }
 
   /**
@@ -357,7 +358,7 @@ class TwoPhasePressureDropValidationTest {
     boolean monotonicWithGas = true;
 
     System.out.println("Gas Flow (kg/hr) | Liquid Flow (kg/hr) | GLR | ΔP (bar) | Trend");
-    System.out.println("-".repeat(70));
+    System.out.println(StringUtils.repeat("-", 70));
 
     for (double gasFlow : gasFlowRates) {
       try {
@@ -417,7 +418,7 @@ class TwoPhasePressureDropValidationTest {
     double[] angles = {-45, -30, -15, 0, 15, 30, 45, 60, 90};
 
     System.out.println("Angle (°) | ΔP (bar) | ΔP Hydrostatic | ΔP Friction | Comment");
-    System.out.println("-".repeat(75));
+    System.out.println(StringUtils.repeat("-", 75));
 
     double horizontalDp = 0;
 
