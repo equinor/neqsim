@@ -232,6 +232,22 @@ public class TwoFluidSection extends PipeSection {
     gasMomentumPerLength = alphaG * rhoG * vG * A;
     liquidMomentumPerLength = alphaL * rhoL * vL * A;
 
+    // For the 7-equation model, split liquid into oil and water
+    // If water cut is not set (or zero), assume all liquid is oil
+    if (waterCut > 0 && waterCut < 1.0) {
+      // Three-phase: split by water cut
+      oilMassPerLength = liquidMassPerLength * (1.0 - waterCut);
+      waterMassPerLength = liquidMassPerLength * waterCut;
+      oilMomentumPerLength = liquidMomentumPerLength * (1.0 - waterCut);
+      waterMomentumPerLength = liquidMomentumPerLength * waterCut;
+    } else {
+      // Two-phase: all liquid is oil (no water)
+      oilMassPerLength = liquidMassPerLength;
+      waterMassPerLength = 0;
+      oilMomentumPerLength = liquidMomentumPerLength;
+      waterMomentumPerLength = 0;
+    }
+
     // Total energy (internal + kinetic)
     double eG = getGasEnthalpy() - getPressure() / rhoG + 0.5 * vG * vG; // Internal + kinetic
     double eL = getLiquidEnthalpy() - getPressure() / rhoL + 0.5 * vL * vL;

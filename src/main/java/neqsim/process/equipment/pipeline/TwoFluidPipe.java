@@ -1473,10 +1473,52 @@ public class TwoFluidPipe extends Pipeline {
     // Inlet boundary
     TwoFluidSection inlet = sections[0];
     if (inletBCType == BoundaryCondition.STREAM_CONNECTED) {
-      // Use inlet stream properties
+      // Use inlet stream properties - maintain pressure, temperature, and flow
       SystemInterface inFluid = getInletStream().getFluid();
       inlet.setPressure(inFluid.getPressure("Pa"));
       inlet.setTemperature(inFluid.getTemperature("K"));
+
+      // Also maintain inlet holdups and velocities from the stream
+      // This ensures constant mass flow at the inlet
+      double massFlow = getInletStream().getFlowRate("kg/sec");
+      double area = Math.PI * diameter * diameter / 4.0;
+
+      // Get phase fractions from inlet stream
+      int numPhases = inFluid.getNumberOfPhases();
+      double alphaG = 0.5;
+      double alphaL = 0.5;
+      double rhoG = inlet.getGasDensity();
+      double rhoL = inlet.getLiquidDensity();
+
+      if (numPhases >= 2 && inFluid.hasPhaseType("gas")) {
+        double volGas = inFluid.getPhase("gas").getVolume("m3");
+        double volTotal = inFluid.getVolume("m3");
+        if (volTotal > 0) {
+          alphaG = volGas / volTotal;
+          alphaL = 1.0 - alphaG;
+        }
+        rhoG = inFluid.getPhase("gas").getDensity("kg/m3");
+        if (inFluid.hasPhaseType("oil")) {
+          rhoL = inFluid.getPhase("oil").getDensity("kg/m3");
+        } else if (inFluid.hasPhaseType("aqueous")) {
+          rhoL = inFluid.getPhase("aqueous").getDensity("kg/m3");
+        }
+      }
+
+      // Set inlet holdups
+      inlet.setGasHoldup(alphaG);
+      inlet.setLiquidHoldup(alphaL);
+
+      // Calculate velocities to maintain inlet mass flow
+      double rhoMix = alphaG * rhoG + alphaL * rhoL;
+      if (rhoMix > 0 && area > 0) {
+        double vMix = massFlow / (rhoMix * area);
+        inlet.setGasVelocity(vMix);
+        inlet.setLiquidVelocity(vMix);
+      }
+
+      // Update conservative variables for inlet
+      inlet.updateConservativeVariables();
     }
 
     // Outlet boundary
@@ -1505,6 +1547,23 @@ public class TwoFluidPipe extends Pipeline {
       ops.TPflash();
     } catch (Exception e) {
       logger.warn("Outlet flash failed: {}", e.getMessage());
+    }
+
+    // Calculate outlet mass flow rate from section state
+    double area = Math.PI * diameter * diameter / 4.0;
+    double alphaG = outlet.getGasHoldup();
+    double alphaL = outlet.getLiquidHoldup();
+    double rhoG = outlet.getGasDensity();
+    double rhoL = outlet.getLiquidDensity();
+    double vG = outlet.getGasVelocity();
+    double vL = outlet.getLiquidVelocity();
+
+    // Mass flow = (gas mass flux + liquid mass flux) * area
+    double massFlowOut = (alphaG * rhoG * vG + alphaL * rhoL * vL) * area;
+
+    // Ensure positive flow
+    if (massFlowOut > 0) {
+      outFluid.setTotalFlowRate(massFlowOut, "kg/sec");
     }
 
     getOutletStream().setFluid(outFluid);
