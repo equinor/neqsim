@@ -191,6 +191,15 @@ public class FlowRegimeDetector implements Serializable {
 
   /**
    * Calculate Martinelli parameter X.
+   *
+   * @param U_SL superficial liquid velocity [m/s]
+   * @param U_SG superficial gas velocity [m/s]
+   * @param D pipe diameter [m]
+   * @param rho_L liquid density [kg/m³]
+   * @param rho_G gas density [kg/m³]
+   * @param mu_L liquid viscosity [Pa·s]
+   * @param sigma surface tension [N/m]
+   * @return Martinelli parameter X
    */
   private double calcMartinelliParameter(double U_SL, double U_SG, double D, double rho_L,
       double rho_G, double mu_L, double sigma) {

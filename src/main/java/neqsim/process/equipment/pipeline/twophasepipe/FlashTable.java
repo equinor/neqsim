@@ -229,6 +229,13 @@ public class FlashTable implements Serializable {
 
   /**
    * Bilinear interpolation helper.
+   *
+   * @param table 2D interpolation table
+   * @param iP pressure index
+   * @param iT temperature index
+   * @param wP pressure weight
+   * @param wT temperature weight
+   * @return interpolated value
    */
   private double bilinearInterp(double[][] table, int iP, int iT, double wP, double wT) {
     double v00 = table[iP][iT];

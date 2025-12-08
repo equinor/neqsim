@@ -186,6 +186,14 @@ public class EntrainmentDeposition implements Serializable {
 
   /**
    * Check if entrainment is active using Ishii-Grolmes criterion.
+   *
+   * @param gasVelocity gas velocity [m/s]
+   * @param gasDensity gas density [kg/m³]
+   * @param liquidDensity liquid density [kg/m³]
+   * @param surfaceTension surface tension [N/m]
+   * @param diameter pipe diameter [m]
+   * @param reFilm film Reynolds number
+   * @return true if entrainment is active
    */
   private boolean isEntrainmentActive(double gasVelocity, double gasDensity, double liquidDensity,
       double surfaceTension, double diameter, double reFilm) {
@@ -199,6 +207,17 @@ public class EntrainmentDeposition implements Serializable {
 
   /**
    * Calculate entrainment rate using selected model.
+   *
+   * @param gasVelocity gas velocity [m/s]
+   * @param liquidVelocity liquid velocity [m/s]
+   * @param gasDensity gas density [kg/m³]
+   * @param liquidDensity liquid density [kg/m³]
+   * @param gasViscosity gas viscosity [Pa·s]
+   * @param liquidViscosity liquid viscosity [Pa·s]
+   * @param surfaceTension surface tension [N/m]
+   * @param diameter pipe diameter [m]
+   * @param filmThickness film thickness [m]
+   * @return entrainment rate [kg/(m²·s)]
    */
   private double calculateEntrainmentRate(double gasVelocity, double liquidVelocity,
       double gasDensity, double liquidDensity, double gasViscosity, double liquidViscosity,
@@ -438,6 +457,10 @@ public class EntrainmentDeposition implements Serializable {
 
   /**
    * Estimate film thickness from holdup.
+   *
+   * @param diameter pipe diameter [m]
+   * @param liquidHoldup liquid holdup fraction
+   * @return film thickness [m]
    */
   private double estimateFilmThickness(double diameter, double liquidHoldup) {
     // For annular flow, approximate film thickness
@@ -452,6 +475,17 @@ public class EntrainmentDeposition implements Serializable {
 
   /**
    * Estimate droplet concentration in gas core.
+   */
+  /**
+   * Estimate droplet concentration in gas core.
+   *
+   * @param liquidVelocity liquid velocity [m/s]
+   * @param liquidDensity liquid density [kg/m³]
+   * @param liquidHoldup liquid holdup fraction
+   * @param entrainmentFraction entrainment fraction
+   * @param gasVelocity gas velocity [m/s]
+   * @param diameter pipe diameter [m]
+   * @return droplet concentration [kg/m³]
    */
   private double estimateDropletConcentration(double liquidVelocity, double liquidDensity,
       double liquidHoldup, double entrainmentFraction, double gasVelocity, double diameter) {

@@ -772,7 +772,6 @@ public class TwoFluidPipe extends Pipeline {
    * <li>Wall: ρ_w * Cp_w * A_w * dT_w/dt = h_i * π * D * (T_f - T_w) - h_o * π * D_o * (T_w -
    * T_amb)</li>
    * </ul>
-   * </p>
    *
    * @param massFlow Total mass flow rate [kg/s]
    * @param area Pipe cross-sectional area [m²]
@@ -1382,6 +1381,8 @@ public class TwoFluidPipe extends Pipeline {
 
   /**
    * Calculate stable time step using CFL condition.
+   *
+   * @return stable time step [s]
    */
   private double calcStableTimeStep() {
     double maxSpeed = 1.0; // Minimum
@@ -2022,7 +2023,6 @@ public class TwoFluidPipe extends Pipeline {
    * <li>Uninsulated subsea pipe: 20-30 W/(m²·K)</li>
    * <li>Exposed/above-ground pipe: 50-100 W/(m²·K)</li>
    * </ul>
-   * </p>
    *
    * @param heatTransferCoefficient Heat transfer coefficient in W/(m²·K)
    */

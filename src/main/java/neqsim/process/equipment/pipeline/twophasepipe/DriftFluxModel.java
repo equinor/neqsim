@@ -622,6 +622,11 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Calculate Darcy friction factor using Haaland correlation.
+   *
+   * @param Re Reynolds number
+   * @param roughness pipe roughness [m]
+   * @param D pipe diameter [m]
+   * @return Darcy friction factor
    */
   private double calcFrictionFactor(double Re, double roughness, double D) {
     if (Re < 10) {
