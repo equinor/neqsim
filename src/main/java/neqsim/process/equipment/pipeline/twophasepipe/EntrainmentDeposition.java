@@ -244,6 +244,14 @@ public class EntrainmentDeposition implements Serializable {
 
   /**
    * Ishii-Mishima entrainment rate correlation.
+   *
+   * @param gasVelocity the velocity of the gas phase
+   * @param gasDensity the density of the gas phase
+   * @param liquidDensity the density of the liquid phase
+   * @param liquidViscosity the dynamic viscosity of the liquid phase
+   * @param surfaceTension the surface tension between phases
+   * @param diameter the pipe diameter
+   * @return the entrainment rate according to Ishii-Mishima correlation
    */
   private double entrainmentIshiiMishima(double gasVelocity, double gasDensity,
       double liquidDensity, double liquidViscosity, double surfaceTension, double diameter) {
@@ -265,6 +273,16 @@ public class EntrainmentDeposition implements Serializable {
 
   /**
    * Pan-Hanratty entrainment rate correlation.
+   *
+   * @param gasVelocity the velocity of the gas phase
+   * @param liquidVelocity the velocity of the liquid phase
+   * @param gasDensity the density of the gas phase
+   * @param liquidDensity the density of the liquid phase
+   * @param gasViscosity the dynamic viscosity of the gas phase
+   * @param liquidViscosity the dynamic viscosity of the liquid phase
+   * @param surfaceTension the surface tension between phases
+   * @param diameter the pipe diameter
+   * @return the entrainment rate according to Pan-Hanratty correlation
    */
   private double entrainmentPanHanratty(double gasVelocity, double liquidVelocity,
       double gasDensity, double liquidDensity, double gasViscosity, double liquidViscosity,

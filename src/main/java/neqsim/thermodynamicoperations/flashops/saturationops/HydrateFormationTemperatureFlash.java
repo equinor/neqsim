@@ -22,10 +22,10 @@ public class HydrateFormationTemperatureFlash extends ConstantDutyTemperatureFla
   static Logger logger = LogManager.getLogger(HydrateFormationTemperatureFlash.class);
 
   /**
-   * Dissociation factor for ions in hydrate calculations (NaCl -> Na+ + Cl-). CPA EOS doesn't fully
-   * account for the colligative effect of ion dissociation on water activity, so we apply this
-   * correction. Note: Glycols and alcohols are handled correctly by CPA association terms, so no
-   * additional correction is needed for them.
+   * Dissociation factor for ions in hydrate calculations (NaCl -&gt; Na+ + Cl-). CPA EOS doesn't
+   * fully account for the colligative effect of ion dissociation on water activity, so we apply
+   * this correction. Note: Glycols and alcohols are handled correctly by CPA association terms, so
+   * no additional correction is needed for them.
    */
   private static final double ION_DISSOCIATION_FACTOR = 2.0;
 

@@ -284,6 +284,10 @@ public class SlugTracker implements Serializable {
 
   /**
    * Advance a single slug.
+   *
+   * @param slug the slug unit to advance
+   * @param sections the pipe sections array
+   * @param dt the time step
    */
   private void advanceSlug(SlugUnit slug, PipeSection[] sections, double dt) {
     slug.age += dt;
