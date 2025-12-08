@@ -1961,15 +1961,15 @@ class TwoFluidVsBeggsBrillComparisonTest {
     System.out.println("Has water phase:  " + hasWater);
 
     if (hasGas) {
-      System.out.printf("Gas density:      %.2f kg/m³%n", 
+      System.out.printf("Gas density:      %.2f kg/m³%n",
           runFluid.getPhase("gas").getDensity("kg/m3"));
     }
     if (hasOil) {
-      System.out.printf("Oil density:      %.2f kg/m³%n", 
+      System.out.printf("Oil density:      %.2f kg/m³%n",
           runFluid.getPhase("oil").getDensity("kg/m3"));
     }
     if (hasWater) {
-      System.out.printf("Water density:    %.2f kg/m³%n", 
+      System.out.printf("Water density:    %.2f kg/m³%n",
           runFluid.getPhase("aqueous").getDensity("kg/m3"));
     }
 
@@ -2011,7 +2011,8 @@ class TwoFluidVsBeggsBrillComparisonTest {
     double outletP = P[nSections - 1] / 1e5;
     double deltaP = inletP - outletP;
     double avgHoldup = 0;
-    for (double h : H) avgHoldup += h;
+    for (double h : H)
+      avgHoldup += h;
     avgHoldup /= H.length;
 
     System.out.println("\n--- Summary ---");
@@ -2044,7 +2045,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
     for (double waterMole : waterMoleFractions) {
       // Adjust composition - keep total = 1.0
       double hydrocarbon = 1.0 - waterMole;
-      
+
       SystemInterface fluid = new SystemSrkEos(293.15, 40.0);
       fluid.addComponent("methane", 0.50 * hydrocarbon);
       fluid.addComponent("ethane", 0.10 * hydrocarbon);
@@ -2077,7 +2078,8 @@ class TwoFluidVsBeggsBrillComparisonTest {
       double outletP = P[nSections - 1] / 1e5;
       double deltaP = inletP - outletP;
       double avgHoldup = 0;
-      for (double h : H) avgHoldup += h;
+      for (double h : H)
+        avgHoldup += h;
       avgHoldup /= H.length;
 
       SystemInterface runFluid = inlet.getFluid();
@@ -2087,8 +2089,8 @@ class TwoFluidVsBeggsBrillComparisonTest {
         phaseStr += " (w/ water)";
       }
 
-      System.out.printf("%6.0f %%    %6.2f   %6.2f    %6.3f     %.4f    %s%n", 
-          waterMole * 100, inletP, outletP, deltaP, avgHoldup, phaseStr);
+      System.out.printf("%6.0f %%    %6.2f   %6.2f    %6.3f     %.4f    %s%n", waterMole * 100,
+          inletP, outletP, deltaP, avgHoldup, phaseStr);
 
       assertTrue(outletP > 0, "Outlet pressure should be positive");
     }
@@ -2121,12 +2123,12 @@ class TwoFluidVsBeggsBrillComparisonTest {
     double pipeLength = 3000.0;
     int nSections = 30;
     double[] elevations = new double[nSections];
-    
+
     for (int i = 0; i < nSections; i++) {
       double x = pipeLength * i / (nSections - 1);
       // Two valleys at 1/3 and 2/3 of pipe length
-      elevations[i] = 20.0 * Math.sin(2 * Math.PI * x / pipeLength) 
-                    + 10.0 * Math.sin(4 * Math.PI * x / pipeLength);
+      elevations[i] = 20.0 * Math.sin(2 * Math.PI * x / pipeLength)
+          + 10.0 * Math.sin(4 * Math.PI * x / pipeLength);
     }
 
     TwoFluidPipe pipe = new TwoFluidPipe("ThreePhase-Terrain", inlet);
@@ -2142,30 +2144,38 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     System.out.println("Position [m]  Elevation [m]  Pressure [bar]  Holdup  Note");
     System.out.println("----------------------------------------------------------------");
-    
+
     double maxHoldup = 0;
     int maxHoldupIdx = 0;
     double minHoldup = 1;
     int minHoldupIdx = 0;
-    
+
     for (int i = 0; i < nSections; i += 3) {
       double pos = pipeLength * i / (nSections - 1);
       String note = "";
-      if (elevations[i] < -15) note = "<-- VALLEY";
-      else if (elevations[i] > 20) note = "<-- PEAK";
-      
-      System.out.printf("%8.0f      %8.1f        %8.2f     %.4f  %s%n", 
-          pos, elevations[i], P[i] / 1e5, H[i], note);
-      
-      if (H[i] > maxHoldup) { maxHoldup = H[i]; maxHoldupIdx = i; }
-      if (H[i] < minHoldup) { minHoldup = H[i]; minHoldupIdx = i; }
+      if (elevations[i] < -15)
+        note = "<-- VALLEY";
+      else if (elevations[i] > 20)
+        note = "<-- PEAK";
+
+      System.out.printf("%8.0f      %8.1f        %8.2f     %.4f  %s%n", pos, elevations[i],
+          P[i] / 1e5, H[i], note);
+
+      if (H[i] > maxHoldup) {
+        maxHoldup = H[i];
+        maxHoldupIdx = i;
+      }
+      if (H[i] < minHoldup) {
+        minHoldup = H[i];
+        minHoldupIdx = i;
+      }
     }
 
     System.out.println("\n--- Analysis ---");
-    System.out.printf("Maximum holdup: %.4f at position %.0f m (elevation %.1f m)%n",
-        maxHoldup, pipeLength * maxHoldupIdx / (nSections - 1), elevations[maxHoldupIdx]);
-    System.out.printf("Minimum holdup: %.4f at position %.0f m (elevation %.1f m)%n",
-        minHoldup, pipeLength * minHoldupIdx / (nSections - 1), elevations[minHoldupIdx]);
+    System.out.printf("Maximum holdup: %.4f at position %.0f m (elevation %.1f m)%n", maxHoldup,
+        pipeLength * maxHoldupIdx / (nSections - 1), elevations[maxHoldupIdx]);
+    System.out.printf("Minimum holdup: %.4f at position %.0f m (elevation %.1f m)%n", minHoldup,
+        pipeLength * minHoldupIdx / (nSections - 1), elevations[minHoldupIdx]);
     System.out.printf("Holdup variation: %.4f%n", maxHoldup - minHoldup);
 
     // Check that holdup varies with terrain (higher in valleys)
@@ -2176,7 +2186,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
   @DisplayName("Pure water flow simulation")
   void testPureWaterFlow() {
     System.out.println("\n=== Pure Water Flow Simulation ===");
-    
+
     // Single-phase water flow
     SystemInterface fluid = new SystemSrkEos(293.15, 30.0);
     fluid.addComponent("water", 1.0);
@@ -2189,10 +2199,8 @@ class TwoFluidVsBeggsBrillComparisonTest {
     inlet.run();
 
     System.out.println("Inlet fluid properties:");
-    System.out.printf("  Density: %.1f kg/m³%n", 
-        inlet.getFluid().getDensity("kg/m3"));
-    System.out.printf("  Number of phases: %d%n", 
-        inlet.getFluid().getNumberOfPhases());
+    System.out.printf("  Density: %.1f kg/m³%n", inlet.getFluid().getDensity("kg/m3"));
+    System.out.printf("  Number of phases: %d%n", inlet.getFluid().getNumberOfPhases());
 
     TwoFluidPipe pipe = new TwoFluidPipe("Water-Pipe", inlet);
     pipe.setLength(1000.0);
@@ -2207,7 +2215,8 @@ class TwoFluidVsBeggsBrillComparisonTest {
     double inletP = P[0] / 1e5;
     double outletP = P[P.length - 1] / 1e5;
     double avgHoldup = 0;
-    for (double h : H) avgHoldup += h;
+    for (double h : H)
+      avgHoldup += h;
     avgHoldup /= H.length;
 
     System.out.printf("\nInlet pressure:   %.2f bar%n", inletP);
@@ -2223,7 +2232,7 @@ class TwoFluidVsBeggsBrillComparisonTest {
   @DisplayName("Gas-water two-phase flow (no oil)")
   void testGasWaterTwoPhaseFlow() {
     System.out.println("\n=== Gas-Water Two-Phase Flow (No Oil) ===");
-    
+
     // Gas + water only (no hydrocarbons that form oil)
     SystemInterface fluid = new SystemSrkEos(293.15, 40.0);
     fluid.addComponent("methane", 0.85);
@@ -2258,7 +2267,8 @@ class TwoFluidVsBeggsBrillComparisonTest {
     double inletP = P[0] / 1e5;
     double outletP = P[P.length - 1] / 1e5;
     double avgHoldup = 0;
-    for (double h : H) avgHoldup += h;
+    for (double h : H)
+      avgHoldup += h;
     avgHoldup /= H.length;
 
     System.out.printf("\nInlet pressure:   %.2f bar%n", inletP);

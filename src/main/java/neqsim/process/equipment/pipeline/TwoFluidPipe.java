@@ -303,11 +303,11 @@ public class TwoFluidPipe extends Pipeline {
         cG = inletFluid.getPhase("gas").getSoundSpeed();
         hG = inletFluid.getPhase("gas").getEnthalpy("J/kg");
       }
-      
+
       // Handle three-phase (gas + oil + water) or two-phase with liquid
       boolean hasOil = inletFluid.hasPhaseType("oil");
       boolean hasWater = inletFluid.hasPhaseType("aqueous");
-      
+
       if (hasOil && hasWater) {
         // Three-phase flow: combine oil and water as effective liquid
         double rhoOil = inletFluid.getPhase("oil").getDensity("kg/m3");
@@ -317,14 +317,14 @@ public class TwoFluidPipe extends Pipeline {
         double volOil = inletFluid.getPhase("oil").getVolume("m3");
         double volWater = inletFluid.getPhase("aqueous").getVolume("m3");
         double volLiquid = volOil + volWater;
-        
+
         // Water cut = water volume / total liquid volume
         double waterCut = volWater / volLiquid;
         double oilFraction = 1.0 - waterCut;
-        
+
         // Volume-weighted average liquid density
         rhoL = oilFraction * rhoOil + waterCut * rhoWater;
-        
+
         // Effective viscosity using Brinkman equation for emulsions
         if (oilFraction > 0.5) {
           // Oil continuous phase
@@ -333,20 +333,20 @@ public class TwoFluidPipe extends Pipeline {
           // Water continuous phase
           muL = muWater * Math.pow(1.0 - oilFraction, -2.5);
         }
-        
+
         // Use oil phase for other properties (approximation)
         cL = inletFluid.getPhase("oil").getSoundSpeed();
-        hL = (oilFraction * inletFluid.getPhase("oil").getEnthalpy("J/kg") 
+        hL = (oilFraction * inletFluid.getPhase("oil").getEnthalpy("J/kg")
             + waterCut * inletFluid.getPhase("aqueous").getEnthalpy("J/kg"));
-        
+
         if (inletFluid.hasPhaseType("gas")) {
           sigma = inletFluid.getInterphaseProperties()
               .getSurfaceTension(inletFluid.getPhaseIndex("gas"), inletFluid.getPhaseIndex("oil"));
         }
-        
-        logger.info("Three-phase flow detected: water cut = {:.1f}%, oil fraction = {:.1f}%", 
+
+        logger.info("Three-phase flow detected: water cut = {:.1f}%, oil fraction = {:.1f}%",
             waterCut * 100, oilFraction * 100);
-        
+
       } else if (hasOil || hasWater) {
         // Two-phase with single liquid type
         String liqPhase = hasOil ? "oil" : "aqueous";
@@ -355,8 +355,8 @@ public class TwoFluidPipe extends Pipeline {
         cL = inletFluid.getPhase(liqPhase).getSoundSpeed();
         hL = inletFluid.getPhase(liqPhase).getEnthalpy("J/kg");
         if (inletFluid.hasPhaseType("gas")) {
-          sigma = inletFluid.getInterphaseProperties()
-              .getSurfaceTension(inletFluid.getPhaseIndex("gas"), inletFluid.getPhaseIndex(liqPhase));
+          sigma = inletFluid.getInterphaseProperties().getSurfaceTension(
+              inletFluid.getPhaseIndex("gas"), inletFluid.getPhaseIndex(liqPhase));
         }
       }
 
@@ -854,11 +854,11 @@ public class TwoFluidPipe extends Pipeline {
           sec.setGasSoundSpeed(flash.getPhase("gas").getSoundSpeed());
           sec.setGasEnthalpy(flash.getPhase("gas").getEnthalpy("J/kg"));
         }
-        
+
         // Handle liquid phases (oil, water, or both)
         boolean hasOil = flash.hasPhaseType("oil");
         boolean hasWater = flash.hasPhaseType("aqueous");
-        
+
         if (hasOil && hasWater) {
           // Three-phase: combine oil and water as effective liquid
           double rhoOil = flash.getPhase("oil").getDensity("kg/m3");
@@ -868,13 +868,13 @@ public class TwoFluidPipe extends Pipeline {
           double volOil = flash.getPhase("oil").getVolume("m3");
           double volWater = flash.getPhase("aqueous").getVolume("m3");
           double volLiquid = volOil + volWater;
-          
+
           double waterCut = volLiquid > 0 ? volWater / volLiquid : 0;
           double oilFraction = 1.0 - waterCut;
-          
+
           // Volume-weighted density
           sec.setLiquidDensity(oilFraction * rhoOil + waterCut * rhoWater);
-          
+
           // Effective viscosity (Brinkman)
           double muL;
           if (oilFraction > 0.5) {
@@ -886,7 +886,7 @@ public class TwoFluidPipe extends Pipeline {
           sec.setLiquidSoundSpeed(flash.getPhase("oil").getSoundSpeed());
           sec.setLiquidEnthalpy(oilFraction * flash.getPhase("oil").getEnthalpy("J/kg")
               + waterCut * flash.getPhase("aqueous").getEnthalpy("J/kg"));
-              
+
         } else if (hasOil) {
           sec.setLiquidDensity(flash.getPhase("oil").getDensity("kg/m3"));
           sec.setLiquidViscosity(flash.getPhase("oil").getViscosity("kg/msec"));
