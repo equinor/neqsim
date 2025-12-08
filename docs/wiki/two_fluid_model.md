@@ -209,6 +209,22 @@ The `FlowRegimeDetector` uses Taitel-Dukler maps to identify:
 - Dispersed bubble
 - Churn
 
+Two detection methods are available:
+
+```java
+FlowRegimeDetector detector = new FlowRegimeDetector();
+
+// Default: Mechanistic approach (Taitel-Dukler, Barnea)
+detector.setDetectionMethod(FlowRegimeDetector.DetectionMethod.MECHANISTIC);
+
+// Alternative: Minimum slip criterion
+detector.setDetectionMethod(FlowRegimeDetector.DetectionMethod.MINIMUM_SLIP);
+// or
+detector.setUseMinimumSlipCriterion(true);
+```
+
+The **minimum slip criterion** selects the flow regime that gives the minimum slip ratio (closest to 1.0), based on the principle that the system tends toward the flow pattern with minimum phase velocity difference.
+
 ### Wall Friction
 
 `WallFriction` calculates wall shear using:

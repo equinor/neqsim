@@ -207,4 +207,58 @@ class PipeSectionTest {
     assertFalse(section.isInSlugBubble());
     assertEquals(0.9, section.getSlugHoldup());
   }
+
+  @Test
+  void testMinimumSlipCriterion() {
+    // Test that minimum slip criterion can be enabled and detects a regime
+    section.setInclination(0);
+    section.setGasHoldup(0.5);
+    section.setLiquidHoldup(0.5);
+    section.setGasVelocity(5);
+    section.setLiquidVelocity(1);
+    section.updateDerivedQuantities();
+
+    // Default is mechanistic
+    assertFalse(detector.isUseMinimumSlipCriterion());
+    assertEquals(FlowRegimeDetector.DetectionMethod.MECHANISTIC, detector.getDetectionMethod());
+
+    FlowRegime mechanisticRegime = detector.detectFlowRegime(section);
+
+    // Enable minimum slip criterion
+    detector.setUseMinimumSlipCriterion(true);
+    assertTrue(detector.isUseMinimumSlipCriterion());
+    assertEquals(FlowRegimeDetector.DetectionMethod.MINIMUM_SLIP, detector.getDetectionMethod());
+
+    FlowRegime minSlipRegime = detector.detectFlowRegime(section);
+
+    // Should return a valid two-phase flow regime
+    assertNotNull(minSlipRegime);
+    assertNotEquals(FlowRegime.SINGLE_PHASE_GAS, minSlipRegime);
+    assertNotEquals(FlowRegime.SINGLE_PHASE_LIQUID, minSlipRegime);
+
+    // Can set method directly
+    detector.setDetectionMethod(FlowRegimeDetector.DetectionMethod.MECHANISTIC);
+    assertFalse(detector.isUseMinimumSlipCriterion());
+  }
+
+  @Test
+  void testMinimumSlipCriterionUpwardFlow() {
+    // Test minimum slip for upward inclined pipe
+    section.setInclination(Math.toRadians(45));
+    section.setGasHoldup(0.3);
+    section.setLiquidHoldup(0.7);
+    section.setGasVelocity(2);
+    section.setLiquidVelocity(1);
+    section.updateDerivedQuantities();
+
+    detector.setUseMinimumSlipCriterion(true);
+    FlowRegime regime = detector.detectFlowRegime(section);
+
+    // Should return a valid regime for upward flow
+    assertNotNull(regime);
+    assertTrue(
+        regime == FlowRegime.BUBBLE || regime == FlowRegime.SLUG || regime == FlowRegime.CHURN
+            || regime == FlowRegime.ANNULAR || regime == FlowRegime.DISPERSED_BUBBLE,
+        "Expected upward flow regime but got: " + regime);
+  }
 }

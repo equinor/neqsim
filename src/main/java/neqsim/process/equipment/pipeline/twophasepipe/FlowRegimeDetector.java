@@ -11,6 +11,13 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * properties, velocities, pipe geometry and inclination.
  *
  * <p>
+ * Supports two detection methods:
+ * <ul>
+ * <li>MECHANISTIC: Uses Taitel-Dukler (1976) and Barnea (1987) transition criteria</li>
+ * <li>MINIMUM_SLIP: Selects flow regime with minimum slip ratio (closest to homogeneous)</li>
+ * </ul>
+ *
+ * <p>
  * References:
  * <ul>
  * <li>Taitel, Y. and Dukler, A.E. (1976) - A Model for Predicting Flow Regime Transitions in
@@ -27,6 +34,75 @@ public class FlowRegimeDetector implements Serializable {
   private static final long serialVersionUID = 1L;
   private static final double GRAVITY = 9.81;
   private static final double PI = Math.PI;
+
+  /**
+   * Flow regime detection method.
+   */
+  public enum DetectionMethod {
+    /** Mechanistic criteria based on Taitel-Dukler and Barnea models. */
+    MECHANISTIC,
+    /** Select flow regime that gives minimum slip ratio (closest to 1). */
+    MINIMUM_SLIP
+  }
+
+  /** Current detection method. */
+  private DetectionMethod detectionMethod = DetectionMethod.MECHANISTIC;
+
+  /** Drift flux model for slip calculations. */
+  private transient DriftFluxModel driftFluxModel;
+
+  /**
+   * Get the current detection method.
+   *
+   * @return detection method
+   */
+  public DetectionMethod getDetectionMethod() {
+    return detectionMethod;
+  }
+
+  /**
+   * Set the detection method for flow regime identification.
+   *
+   * @param method detection method to use
+   */
+  public void setDetectionMethod(DetectionMethod method) {
+    this.detectionMethod = method;
+  }
+
+  /**
+   * Check if minimum slip criterion is used for flow regime detection.
+   *
+   * @return true if minimum slip criterion is used
+   */
+  public boolean isUseMinimumSlipCriterion() {
+    return detectionMethod == DetectionMethod.MINIMUM_SLIP;
+  }
+
+  /**
+   * Enable or disable minimum slip criterion for flow regime detection.
+   *
+   * <p>
+   * When enabled, the detector calculates the slip ratio for each feasible flow regime and selects
+   * the one with minimum slip (closest to 1). This approach assumes the physical system naturally
+   * tends toward the flow pattern with minimum phase velocity difference.
+   * </p>
+   *
+   * @param useMinimumSlip true to use minimum slip criterion, false for mechanistic approach
+   */
+  public void setUseMinimumSlipCriterion(boolean useMinimumSlip) {
+    this.detectionMethod =
+        useMinimumSlip ? DetectionMethod.MINIMUM_SLIP : DetectionMethod.MECHANISTIC;
+  }
+
+  /**
+   * Get or create drift flux model for slip calculations.
+   */
+  private DriftFluxModel getDriftFluxModel() {
+    if (driftFluxModel == null) {
+      driftFluxModel = new DriftFluxModel();
+    }
+    return driftFluxModel;
+  }
 
   /**
    * Detect flow regime for a pipe section.
@@ -46,6 +122,11 @@ public class FlowRegimeDetector implements Serializable {
       return FlowRegime.SINGLE_PHASE_LIQUID;
     }
 
+    // Use minimum slip criterion if selected
+    if (detectionMethod == DetectionMethod.MINIMUM_SLIP) {
+      return detectFlowRegimeByMinimumSlip(section);
+    }
+
     double U_SL = section.getSuperficialLiquidVelocity();
     double U_SG = section.getSuperficialGasVelocity();
     double D = section.getDiameter();
@@ -62,6 +143,59 @@ public class FlowRegimeDetector implements Serializable {
     } else {
       return detectHorizontalFlowRegime(U_SL, U_SG, D, theta, rho_L, rho_G, mu_L, sigma);
     }
+  }
+
+  /**
+   * Detect flow regime using minimum slip criterion.
+   *
+   * <p>
+   * Calculates the slip ratio for each feasible flow regime and selects the one with the minimum
+   * slip (closest to 1). This approach is based on the principle that the physical system tends
+   * toward the flow pattern with minimum phase velocity difference.
+   * </p>
+   *
+   * @param section Pipe section with current state
+   * @return Flow regime with minimum slip
+   */
+  private FlowRegime detectFlowRegimeByMinimumSlip(PipeSection section) {
+    double theta = section.getInclination();
+    boolean isUpward = theta > 0;
+    boolean isNearHorizontal = Math.abs(theta) <= Math.toRadians(10);
+
+    // Candidate flow regimes based on pipe orientation
+    FlowRegime[] candidates;
+    if (isNearHorizontal) {
+      candidates = new FlowRegime[] {FlowRegime.STRATIFIED_SMOOTH, FlowRegime.STRATIFIED_WAVY,
+          FlowRegime.SLUG, FlowRegime.ANNULAR, FlowRegime.DISPERSED_BUBBLE};
+    } else if (isUpward) {
+      candidates = new FlowRegime[] {FlowRegime.BUBBLE, FlowRegime.SLUG, FlowRegime.CHURN,
+          FlowRegime.ANNULAR, FlowRegime.DISPERSED_BUBBLE};
+    } else {
+      // Downward flow
+      candidates = new FlowRegime[] {FlowRegime.STRATIFIED_SMOOTH, FlowRegime.STRATIFIED_WAVY,
+          FlowRegime.SLUG, FlowRegime.ANNULAR};
+    }
+
+    FlowRegime bestRegime = candidates[0];
+    double minSlipDeviation = Double.MAX_VALUE;
+
+    PipeSection testSection = section.clone();
+    DriftFluxModel model = getDriftFluxModel();
+
+    for (FlowRegime regime : candidates) {
+      testSection.setFlowRegime(regime);
+      DriftFluxModel.DriftFluxParameters params = model.calculateDriftFlux(testSection);
+
+      // Slip deviation from unity (homogeneous flow)
+      double slipDeviation = Math.abs(params.slipRatio - 1.0);
+
+      if (slipDeviation < minSlipDeviation) {
+        minSlipDeviation = slipDeviation;
+        bestRegime = regime;
+      }
+    }
+
+    return bestRegime;
   }
 
   /**
