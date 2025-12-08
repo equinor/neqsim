@@ -183,6 +183,15 @@ public class TwoFluidPipe extends Pipeline {
   /** Include mass transfer (flash/condensation). */
   private boolean includeMassTransfer = false;
 
+  /** Enable heat transfer from surroundings. */
+  private boolean enableHeatTransfer = false;
+
+  /** Surface temperature for heat transfer (K). */
+  private double surfaceTemperature = 288.15;
+
+  /** Heat transfer coefficient (W/(m²·K)). */
+  private double heatTransferCoefficient = 0.0;
+
   /** Enable slug tracking. */
   private boolean enableSlugTracking = true;
 
@@ -541,6 +550,11 @@ public class TwoFluidPipe extends Pipeline {
         sec.updateStratifiedGeometry();
       }
 
+      // Update temperature profile if heat transfer is enabled
+      if (enableHeatTransfer && heatTransferCoefficient > 0) {
+        updateTemperatureProfile(massFlow, area);
+      }
+
       if (maxChange < tolerance) {
         logger.info("Steady-state converged after {} iterations", iter);
         break;
@@ -549,6 +563,51 @@ public class TwoFluidPipe extends Pipeline {
 
     // Store initial profiles
     updateResultArrays();
+  }
+
+  /**
+   * Update temperature profile along the pipe accounting for heat transfer.
+   *
+   * <p>
+   * Steady-state energy balance: m_dot * Cp * dT/dx = -h * π * D * (T - T_surface)
+   * </p>
+   *
+   * @param massFlow Total mass flow rate [kg/s]
+   * @param area Pipe cross-sectional area [m²]
+   */
+  private void updateTemperatureProfile(double massFlow, double area) {
+    // Get mixture heat capacity from inlet fluid
+    double Cp = getInletStream().getFluid().getCp("J/kgK");
+    if (Cp <= 0) {
+      Cp = 2000.0; // Default if not available (gas-liquid mixture)
+    }
+
+    double pipePerimeter = Math.PI * diameter;
+
+    // March through pipe solving: dT/dx = -h*π*D*(T - T_surf) / (m_dot * Cp)
+    for (int i = 1; i < numberOfSections; i++) {
+      TwoFluidSection sec = sections[i];
+      TwoFluidSection prev = sections[i - 1];
+
+      double T_prev = prev.getTemperature();
+      double T_surface = surfaceTemperature;
+
+      // Heat transfer coefficient (W/(m²·K))
+      double h = heatTransferCoefficient;
+
+      // Exponential decay solution for segment:
+      // T(x) = T_surface + (T_inlet - T_surface) * exp(-h*π*D*x / (m_dot*Cp))
+      // For a segment of length dx:
+      // T_out = T_surface + (T_in - T_surface) * exp(-h*π*D*dx / (m_dot*Cp))
+      double exponent = -h * pipePerimeter * dx / (massFlow * Cp);
+      double T_new = surfaceTemperature + (T_prev - surfaceTemperature) * Math.exp(exponent);
+
+      // Ensure physical bounds
+      T_new = Math.max(T_new, surfaceTemperature);
+      T_new = Math.min(T_new, T_prev); // Cannot heat up if fluid is warmer than surface
+
+      sec.setTemperature(T_new);
+    }
   }
 
   /**
@@ -1547,6 +1606,100 @@ public class TwoFluidPipe extends Pipeline {
     if (equations != null) {
       equations.setIncludeEnergyEquation(include);
     }
+  }
+
+  /**
+   * Set surface temperature for heat transfer calculations.
+   *
+   * <p>
+   * Enables heat transfer modeling. The pipe loses/gains heat to reach this temperature.
+   * </p>
+   *
+   * @param temperature Surface temperature in the specified unit
+   * @param unit Temperature unit ("K" or "C")
+   */
+  public void setSurfaceTemperature(double temperature, String unit) {
+    if ("K".equals(unit)) {
+      this.surfaceTemperature = temperature;
+    } else if ("C".equals(unit)) {
+      this.surfaceTemperature = temperature + 273.15;
+    } else {
+      throw new IllegalArgumentException(
+          "Unsupported temperature unit: " + unit + ". Use 'K' or 'C'.");
+    }
+    this.enableHeatTransfer = true;
+    this.includeEnergyEquation = true;
+    if (equations != null) {
+      equations.setIncludeEnergyEquation(true);
+      equations.setSurfaceTemperature(this.surfaceTemperature);
+      equations.setEnableHeatTransfer(true);
+    }
+  }
+
+  /**
+   * Set heat transfer coefficient for convective heat transfer.
+   *
+   * <p>
+   * Heat transfer rate: Q = h * A * (T_pipe - T_surface)<br>
+   * where h = heat transfer coefficient (W/(m²·K))<br>
+   * A = pipe surface area (m²)<br>
+   * T_pipe = bulk fluid temperature (K)<br>
+   * T_surface = surrounding surface temperature (K)<br>
+   * </p>
+   *
+   * <p>
+   * Typical values:
+   * <ul>
+   * <li>Insulated subsea pipe: 5-15 W/(m²·K)</li>
+   * <li>Uninsulated subsea pipe: 20-30 W/(m²·K)</li>
+   * <li>Exposed/above-ground pipe: 50-100 W/(m²·K)</li>
+   * </ul>
+   * </p>
+   *
+   * @param heatTransferCoefficient Heat transfer coefficient in W/(m²·K)
+   */
+  public void setHeatTransferCoefficient(double heatTransferCoefficient) {
+    if (heatTransferCoefficient < 0) {
+      throw new IllegalArgumentException(
+          "Heat transfer coefficient must be non-negative: " + heatTransferCoefficient);
+    }
+    this.heatTransferCoefficient = heatTransferCoefficient;
+    this.enableHeatTransfer = heatTransferCoefficient > 0;
+    if (heatTransferCoefficient > 0) {
+      this.includeEnergyEquation = true;
+      if (equations != null) {
+        equations.setIncludeEnergyEquation(true);
+        equations.setHeatTransferCoefficient(heatTransferCoefficient);
+        equations.setEnableHeatTransfer(true);
+      }
+    }
+  }
+
+  /**
+   * Get the surface temperature used for heat transfer calculations.
+   *
+   * @return Surface temperature in Kelvin
+   */
+  public double getSurfaceTemperature() {
+    return surfaceTemperature;
+  }
+
+  /**
+   * Get the heat transfer coefficient.
+   *
+   * @return Heat transfer coefficient in W/(m²·K)
+   */
+  public double getHeatTransferCoefficient() {
+    return heatTransferCoefficient;
+  }
+
+  /**
+   * Check if heat transfer is enabled.
+   *
+   * @return true if heat transfer modeling is active
+   */
+  public boolean isHeatTransferEnabled() {
+    return enableHeatTransfer && heatTransferCoefficient > 0;
   }
 
   /**

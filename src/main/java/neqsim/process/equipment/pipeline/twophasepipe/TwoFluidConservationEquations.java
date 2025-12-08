@@ -89,6 +89,15 @@ public class TwoFluidConservationEquations implements Serializable {
   private boolean includeMassTransfer = false;
   private double massTransferCoefficient = 0.01; // kg/(m³·s·Pa)
 
+  /** Enable heat transfer to surroundings. */
+  private boolean enableHeatTransfer = false;
+
+  /** Surface temperature for heat transfer (K). */
+  private double surfaceTemperature = 288.15;
+
+  /** Heat transfer coefficient (W/(m²·K)). */
+  private double heatTransferCoefficient = 0.0;
+
   /**
    * Enable water-oil velocity slip (7-equation model). When true, oil and water have separate
    * momentum equations allowing different velocities.
@@ -474,9 +483,28 @@ public class TwoFluidConservationEquations implements Serializable {
    * @return Heat source (W/m)
    */
   private double calcHeatTransfer(TwoFluidSection sec) {
-    // Would need ambient temperature and heat transfer coefficient
-    // Q = U * pi * D * (T_ambient - T_fluid)
-    return 0; // Adiabatic by default
+    if (!enableHeatTransfer || heatTransferCoefficient <= 0) {
+      return 0.0; // Adiabatic
+    }
+
+    // Heat transfer from external surface: Q = h * A * (T_fluid - T_surface)
+    // where:
+    // h = heat transfer coefficient [W/(m²·K)]
+    // A = pipe outer surface area per unit length = π * D [m²/m]
+    // T_fluid = bulk fluid temperature [K]
+    // T_surface = surrounding surface temperature [K]
+    // Q = heat flow per unit length [W/m]
+
+    double diameter = sec.getDiameter();
+    double fluidTemperature = sec.getTemperature();
+    double pipePerimeter = Math.PI * diameter; // Surface area per unit length
+
+    // Heat transfer rate (W/m)
+    // Positive when fluid is warmer than surroundings (cooling)
+    // Negative when fluid is cooler than surroundings (heating)
+    double Q = heatTransferCoefficient * pipePerimeter * (fluidTemperature - surfaceTemperature);
+
+    return Q;
   }
 
   /**
@@ -646,5 +674,61 @@ public class TwoFluidConservationEquations implements Serializable {
 
   public MUSCLReconstructor getReconstructor() {
     return reconstructor;
+  }
+
+  /**
+   * Set surface temperature for heat transfer calculations.
+   *
+   * @param temperature Surface temperature in Kelvin
+   */
+  public void setSurfaceTemperature(double temperature) {
+    this.surfaceTemperature = temperature;
+    this.enableHeatTransfer = true;
+  }
+
+  /**
+   * Set heat transfer coefficient for convective heat transfer.
+   *
+   * @param heatTransferCoefficient Heat transfer coefficient in W/(m²·K)
+   */
+  public void setHeatTransferCoefficient(double heatTransferCoefficient) {
+    this.heatTransferCoefficient = Math.max(0, heatTransferCoefficient);
+    this.enableHeatTransfer = heatTransferCoefficient > 0;
+  }
+
+  /**
+   * Enable/disable heat transfer modeling.
+   *
+   * @param enable true to enable heat transfer
+   */
+  public void setEnableHeatTransfer(boolean enable) {
+    this.enableHeatTransfer = enable;
+  }
+
+  /**
+   * Get the surface temperature used in heat transfer calculations.
+   *
+   * @return Surface temperature in Kelvin
+   */
+  public double getSurfaceTemperature() {
+    return surfaceTemperature;
+  }
+
+  /**
+   * Get the heat transfer coefficient.
+   *
+   * @return Heat transfer coefficient in W/(m²·K)
+   */
+  public double getHeatTransferCoefficient() {
+    return heatTransferCoefficient;
+  }
+
+  /**
+   * Check if heat transfer is enabled.
+   *
+   * @return true if heat transfer modeling is active
+   */
+  public boolean isHeatTransferEnabled() {
+    return enableHeatTransfer && heatTransferCoefficient > 0;
   }
 }

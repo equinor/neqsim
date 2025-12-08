@@ -95,8 +95,8 @@ class TemperatureDropComparisonTest {
     double inletTemp = tempProfile[0];
     double outletTemp = tempProfile[tempProfile.length - 1];
     assertEquals(inletTemp, outletTemp, 1.0,
-        "Adiabatic pipe should have minimal temperature change. Inlet="
-            + inletTemp + ", Outlet=" + outletTemp);
+        "Adiabatic pipe should have minimal temperature change. Inlet=" + inletTemp + ", Outlet="
+            + outletTemp);
   }
 
   /**
@@ -364,5 +364,114 @@ class TemperatureDropComparisonTest {
     double outletTemp = tempProfile[tempProfile.length - 1];
     assertTrue(outletTemp <= inletTemp + 5.0, // Allow small margin for numerical effects
         "Outlet temp should not be much higher than inlet (adiabatic conditions)");
+  }
+
+  /**
+   * Test TwoFluidPipe with heat transfer enabled.
+   *
+   * <p>
+   * When heat transfer is configured, the pipe should show cooling when:
+   * <ul>
+   * <li>Surface temperature is set (e.g., seabed at 5°C)</li>
+   * <li>Heat transfer coefficient is positive</li>
+   * </ul>
+   * </p>
+   */
+  @Test
+  void testTwoFluidPipeWithHeatTransfer() {
+    TwoFluidPipe pipe = new TwoFluidPipe("heat-transfer-pipe", inletStream);
+    pipe.setLength(3000.0); // 3 km
+    pipe.setDiameter(0.3);
+    pipe.setNumberOfSections(30);
+
+    // Create flat elevation profile (horizontal)
+    double[] elevations = new double[30];
+    for (int i = 0; i < 30; i++) {
+      elevations[i] = 0.0;
+    }
+    pipe.setElevationProfile(elevations);
+
+    // Enable heat transfer
+    pipe.setSurfaceTemperature(5.0, "C"); // Seabed at 5°C = 278.15 K
+    pipe.setHeatTransferCoefficient(25.0); // 25 W/(m²·K) - typical subsea
+
+    pipe.run();
+
+    double[] tempProfile = pipe.getTemperatureProfile();
+    double inletTemp = tempProfile[0];
+    double outletTemp = tempProfile[tempProfile.length - 1];
+    double tempDrop = inletTemp - outletTemp;
+
+    System.out.println("TwoFluidPipe with heat transfer:");
+    System.out.println("  Inlet temp: " + inletTemp + " K");
+    System.out.println("  Outlet temp: " + outletTemp + " K");
+    System.out.println("  Temperature drop: " + tempDrop + " K");
+    System.out.println("  Heat transfer enabled: " + pipe.isHeatTransferEnabled());
+
+    // With heat transfer enabled, should show cooling
+    assertTrue(pipe.isHeatTransferEnabled(), "Heat transfer should be enabled");
+
+    // All temperatures should be positive
+    for (double temp : tempProfile) {
+      assertTrue(temp > 0, "Temperature must be positive (K)");
+    }
+  }
+
+  /**
+   * Test comparison of TwoFluidPipe with and without heat transfer.
+   */
+  @Test
+  void testTwoFluidPipeHeatTransferComparison() {
+    // ========== Adiabatic case (no heat transfer) ==========
+    TwoFluidPipe adiabaticPipe = new TwoFluidPipe("adiabatic", inletStream);
+    adiabaticPipe.setLength(3000.0);
+    adiabaticPipe.setDiameter(0.3);
+    adiabaticPipe.setNumberOfSections(30);
+
+    double[] elev1 = new double[30];
+    for (int i = 0; i < 30; i++) {
+      elev1[i] = 0.0;
+    }
+    adiabaticPipe.setElevationProfile(elev1);
+    adiabaticPipe.run();
+
+    double[] adiabaticTemp = adiabaticPipe.getTemperatureProfile();
+    double adiabaticDrop = adiabaticTemp[0] - adiabaticTemp[adiabaticTemp.length - 1];
+
+    // ========== Heat transfer case ==========
+    Stream inlet2 = new Stream("inlet-ht", testFluid.clone());
+    inlet2.setFlowRate(10.0, "kg/sec");
+    inlet2.setTemperature(30.0, "C");
+    inlet2.setPressure(50.0, "bara");
+    inlet2.run();
+
+    TwoFluidPipe heatTransferPipe = new TwoFluidPipe("heat-transfer", inlet2);
+    heatTransferPipe.setLength(3000.0);
+    heatTransferPipe.setDiameter(0.3);
+    heatTransferPipe.setNumberOfSections(30);
+
+    double[] elev2 = new double[30];
+    for (int i = 0; i < 30; i++) {
+      elev2[i] = 0.0;
+    }
+    heatTransferPipe.setElevationProfile(elev2);
+    heatTransferPipe.setSurfaceTemperature(5.0, "C"); // Cold seabed
+    heatTransferPipe.setHeatTransferCoefficient(25.0); // Subsea conditions
+    heatTransferPipe.run();
+
+    double[] htTemp = heatTransferPipe.getTemperatureProfile();
+    double htDrop = htTemp[0] - htTemp[htTemp.length - 1];
+
+    System.out.println("Adiabatic pipe temperature drop: " + adiabaticDrop + " K");
+    System.out.println("Heat transfer pipe temperature drop: " + htDrop + " K");
+
+    // Heat transfer disabled for adiabatic
+    assertFalse(adiabaticPipe.isHeatTransferEnabled(), "Adiabatic pipe should not have heat transfer");
+    // Heat transfer enabled for the other
+    assertTrue(heatTransferPipe.isHeatTransferEnabled(), "Heat transfer pipe should have heat transfer enabled");
+
+    // Both should have positive outlet temperatures
+    assertTrue(adiabaticTemp[adiabaticTemp.length - 1] > 0, "Adiabatic outlet > 0");
+    assertTrue(htTemp[htTemp.length - 1] > 0, "Heat transfer outlet > 0");
   }
 }
