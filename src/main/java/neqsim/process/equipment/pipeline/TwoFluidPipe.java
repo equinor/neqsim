@@ -558,6 +558,12 @@ public class TwoFluidPipe extends Pipeline {
     double massFlow = getInletStream().getFlowRate("kg/sec");
     double area = Math.PI * diameter * diameter / 4.0;
 
+    // Get inlet pressure - this is a boundary condition
+    double P_inlet = getInletStream().getFluid().getPressure("Pa");
+
+    // Fix inlet section pressure to boundary condition
+    sections[0].setPressure(P_inlet);
+
     // Get inlet phase fractions from first section
     double inletAlphaL = sections[0].getLiquidHoldup();
     double inletAlphaG = sections[0].getGasHoldup();
@@ -999,6 +1005,11 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Estimate pressure gradient for steady-state initialization.
    *
+   * <p>
+   * Uses Haaland equation (explicit approximation to Colebrook-White) for friction factor,
+   * consistent with AdiabaticPipe and PipeBeggsAndBrills.
+   * </p>
+   *
    * @param sec Current pipe section
    * @return Pressure gradient estimate (Pa/m)
    */
@@ -1013,12 +1024,36 @@ public class TwoFluidPipe extends Pipeline {
     // Mixture density
     double rhoMix = alphaG * rhoG + alphaL * rhoL;
 
-    // Friction gradient (simplified)
+    // Mixture velocity and viscosity
     double vMix = alphaG * vG + alphaL * vL;
-    double Re = rhoMix * Math.abs(vMix) * diameter
-        / (alphaG * sec.getGasViscosity() + alphaL * sec.getLiquidViscosity());
-    double f = 0.079 / Math.pow(Math.max(Re, 1000), 0.25);
-    double dPdx_fric = 2 * f * rhoMix * vMix * Math.abs(vMix) / diameter;
+    double muMix = alphaG * sec.getGasViscosity() + alphaL * sec.getLiquidViscosity();
+
+    // Reynolds number
+    double Re = rhoMix * Math.abs(vMix) * diameter / muMix;
+
+    // Calculate Darcy friction factor using Haaland equation (same as other pipe models)
+    double f_Darcy;
+    double relativeRoughness = roughness / diameter;
+
+    if (Re < 1e-10) {
+      f_Darcy = 0;
+    } else if (Re < 2300) {
+      // Laminar flow
+      f_Darcy = 64.0 / Re;
+    } else if (Re < 4000) {
+      // Transition region - interpolate
+      double fLaminar = 64.0 / 2300.0;
+      double fTurbulent = Math.pow(
+          1.0 / (-1.8 * Math.log10(6.9 / 4000.0 + Math.pow(relativeRoughness / 3.7, 1.11))), 2.0);
+      f_Darcy = fLaminar + (fTurbulent - fLaminar) * (Re - 2300.0) / 1700.0;
+    } else {
+      // Turbulent flow - Haaland equation
+      f_Darcy = Math
+          .pow(1.0 / (-1.8 * Math.log10(6.9 / Re + Math.pow(relativeRoughness / 3.7, 1.11))), 2.0);
+    }
+
+    // Darcy-Weisbach: dP/dx = f * rho * v^2 / (2 * D)
+    double dPdx_fric = f_Darcy * rhoMix * vMix * Math.abs(vMix) / (2.0 * diameter);
 
     // Gravity gradient
     double dPdx_grav = rhoMix * 9.81 * Math.sin(sec.getInclination());
