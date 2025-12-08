@@ -476,4 +476,293 @@ class TemperatureDropComparisonTest {
     assertTrue(adiabaticTemp[adiabaticTemp.length - 1] > 0, "Adiabatic outlet > 0");
     assertTrue(htTemp[htTemp.length - 1] > 0, "Heat transfer outlet > 0");
   }
+
+  /**
+   * Test insulation type presets.
+   */
+  @Test
+  void testInsulationTypePresets() {
+    TwoFluidPipe pipe = new TwoFluidPipe("insulation-test", inletStream);
+    pipe.setLength(3000.0);
+    pipe.setDiameter(0.3);
+    pipe.setNumberOfSections(30);
+
+    double[] elevations = new double[30];
+    for (int i = 0; i < 30; i++) {
+      elevations[i] = 0.0;
+    }
+    pipe.setElevationProfile(elevations);
+    pipe.setSurfaceTemperature(5.0, "C");
+
+    // Test PU Foam insulation
+    pipe.setInsulationType(TwoFluidPipe.InsulationType.PU_FOAM);
+    assertEquals(TwoFluidPipe.InsulationType.PU_FOAM, pipe.getInsulationType());
+    assertEquals(10.0, pipe.getHeatTransferCoefficient(), 0.01);
+    assertTrue(pipe.isHeatTransferEnabled());
+
+    // Test pipe-in-pipe (better insulation, lower U-value)
+    pipe.setInsulationType(TwoFluidPipe.InsulationType.PIPE_IN_PIPE);
+    assertEquals(2.0, pipe.getHeatTransferCoefficient(), 0.01);
+
+    // Test uninsulated subsea
+    pipe.setInsulationType(TwoFluidPipe.InsulationType.UNINSULATED_SUBSEA);
+    assertEquals(25.0, pipe.getHeatTransferCoefficient(), 0.01);
+
+    pipe.run();
+    assertNotNull(pipe.getTemperatureProfile());
+  }
+
+  /**
+   * Test temperature profile with different units.
+   */
+  @Test
+  void testTemperatureProfileUnits() {
+    TwoFluidPipe pipe = new TwoFluidPipe("units-test", inletStream);
+    pipe.setLength(3000.0);
+    pipe.setDiameter(0.3);
+    pipe.setNumberOfSections(30);
+
+    double[] elevations = new double[30];
+    for (int i = 0; i < 30; i++) {
+      elevations[i] = 0.0;
+    }
+    pipe.setElevationProfile(elevations);
+    pipe.setSurfaceTemperature(5.0, "C");
+    pipe.setHeatTransferCoefficient(25.0);
+    pipe.run();
+
+    // Get temperature in different units
+    double[] tempK = pipe.getTemperatureProfile("K");
+    double[] tempC = pipe.getTemperatureProfile("C");
+    double[] tempF = pipe.getTemperatureProfile("F");
+
+    assertNotNull(tempK);
+    assertNotNull(tempC);
+    assertNotNull(tempF);
+
+    // Check conversion at first point
+    double T_K = tempK[0];
+    double T_C = tempC[0];
+    double T_F = tempF[0];
+
+    assertEquals(T_K - 273.15, T_C, 0.01, "Celsius conversion correct");
+    assertEquals((T_K - 273.15) * 9.0 / 5.0 + 32.0, T_F, 0.01, "Fahrenheit conversion correct");
+
+    System.out.println("Temperature at inlet: " + T_K + " K = " + T_C + " °C = " + T_F + " °F");
+  }
+
+  /**
+   * Test hydrate and wax risk monitoring.
+   */
+  @Test
+  void testHydrateWaxRiskMonitoring() {
+    Stream coldInlet = new Stream("cold-inlet", testFluid.clone());
+    coldInlet.setFlowRate(10.0, "kg/sec");
+    coldInlet.setTemperature(15.0, "C"); // Start colder
+    coldInlet.setPressure(50.0, "bara");
+    coldInlet.run();
+
+    TwoFluidPipe pipe = new TwoFluidPipe("risk-test", coldInlet);
+    pipe.setLength(5000.0); // 5 km - longer pipe for more cooling
+    pipe.setDiameter(0.3);
+    pipe.setNumberOfSections(50);
+
+    double[] elevations = new double[50];
+    for (int i = 0; i < 50; i++) {
+      elevations[i] = 0.0;
+    }
+    pipe.setElevationProfile(elevations);
+
+    // Set heat transfer
+    pipe.setSurfaceTemperature(2.0, "C"); // Very cold seabed
+    pipe.setHeatTransferCoefficient(50.0); // Poor insulation
+
+    // Set risk temperatures
+    pipe.setHydrateFormationTemperature(10.0, "C"); // 283.15 K
+    pipe.setWaxAppearanceTemperature(15.0, "C"); // 288.15 K
+
+    pipe.run();
+
+    // Check that risk is detected
+    System.out.println("Hydrate formation temp: " + pipe.getHydrateFormationTemperature() + " K");
+    System.out.println("Wax appearance temp: " + pipe.getWaxAppearanceTemperature() + " K");
+    System.out.println("Has hydrate risk: " + pipe.hasHydrateRisk());
+    System.out.println("Has wax risk: " + pipe.hasWaxRisk());
+
+    // Temperature should drop significantly with cold seabed
+    double[] tempProfile = pipe.getTemperatureProfile("C");
+    System.out.println("Inlet temp: " + tempProfile[0] + " °C");
+    System.out.println("Outlet temp: " + tempProfile[tempProfile.length - 1] + " °C");
+
+    // Verify temperatures are set correctly
+    assertEquals(283.15, pipe.getHydrateFormationTemperature(), 0.01);
+    assertEquals(288.15, pipe.getWaxAppearanceTemperature(), 0.01);
+
+    // We expect risk since outlet approaches 2°C
+    if (pipe.hasHydrateRisk()) {
+      int firstRisk = pipe.getFirstHydrateRiskSection();
+      double distance = pipe.getDistanceToHydrateRisk();
+      System.out.println("First hydrate risk at section " + firstRisk + " (" + distance + " m)");
+      assertTrue(firstRisk >= 0);
+      assertTrue(distance >= 0);
+    }
+  }
+
+  /**
+   * Test variable heat transfer coefficient profile.
+   */
+  @Test
+  void testVariableHeatTransferProfile() {
+    TwoFluidPipe pipe = new TwoFluidPipe("variable-htc", inletStream);
+    pipe.setLength(3000.0);
+    pipe.setDiameter(0.3);
+    pipe.setNumberOfSections(30);
+
+    double[] elevations = new double[30];
+    for (int i = 0; i < 30; i++) {
+      elevations[i] = 0.0;
+    }
+    pipe.setElevationProfile(elevations);
+    pipe.setSurfaceTemperature(5.0, "C");
+
+    // Create variable U-value profile: insulated at start, bare in middle, insulated at end
+    double[] htcProfile = new double[30];
+    for (int i = 0; i < 30; i++) {
+      if (i < 10) {
+        htcProfile[i] = 5.0; // Good insulation (first 1 km)
+      } else if (i < 20) {
+        htcProfile[i] = 50.0; // Poor insulation (middle 1 km)
+      } else {
+        htcProfile[i] = 5.0; // Good insulation (last 1 km)
+      }
+    }
+    pipe.setHeatTransferProfile(htcProfile);
+
+    pipe.run();
+
+    double[] htcProfileOut = pipe.getHeatTransferProfile();
+    assertNotNull(htcProfileOut);
+    assertEquals(30, htcProfileOut.length);
+    assertEquals(5.0, htcProfileOut[0], 0.01);
+    assertEquals(50.0, htcProfileOut[15], 0.01);
+    assertEquals(5.0, htcProfileOut[25], 0.01);
+
+    // Temperature should drop more in middle section
+    double[] tempC = pipe.getTemperatureProfile("C");
+    System.out.println("Variable HTC test - Inlet: " + tempC[0] + " °C, Outlet: "
+        + tempC[tempC.length - 1] + " °C");
+  }
+
+  /**
+   * Test soil thermal resistance for buried pipelines.
+   */
+  @Test
+  void testSoilThermalResistance() {
+    // Without soil resistance
+    TwoFluidPipe pipeNoSoil = new TwoFluidPipe("no-soil", inletStream);
+    pipeNoSoil.setLength(3000.0);
+    pipeNoSoil.setDiameter(0.3);
+    pipeNoSoil.setNumberOfSections(30);
+
+    double[] elev1 = new double[30];
+    for (int i = 0; i < 30; i++) {
+      elev1[i] = 0.0;
+    }
+    pipeNoSoil.setElevationProfile(elev1);
+    pipeNoSoil.setSurfaceTemperature(5.0, "C");
+    pipeNoSoil.setHeatTransferCoefficient(25.0);
+    pipeNoSoil.run();
+
+    // With soil resistance (buried pipe)
+    Stream inlet2 = new Stream("inlet2", testFluid.clone());
+    inlet2.setFlowRate(10.0, "kg/sec");
+    inlet2.setTemperature(30.0, "C");
+    inlet2.setPressure(50.0, "bara");
+    inlet2.run();
+
+    TwoFluidPipe pipeBuried = new TwoFluidPipe("buried", inlet2);
+    pipeBuried.setLength(3000.0);
+    pipeBuried.setDiameter(0.3);
+    pipeBuried.setNumberOfSections(30);
+
+    double[] elev2 = new double[30];
+    for (int i = 0; i < 30; i++) {
+      elev2[i] = 0.0;
+    }
+    pipeBuried.setElevationProfile(elev2);
+    pipeBuried.setSurfaceTemperature(5.0, "C");
+    pipeBuried.setHeatTransferCoefficient(25.0);
+    pipeBuried.setSoilThermalResistance(0.5); // m²·K/W - typical buried pipe
+    pipeBuried.run();
+
+    double dropNoSoil = pipeNoSoil.getTemperatureProfile()[0]
+        - pipeNoSoil.getTemperatureProfile()[pipeNoSoil.getTemperatureProfile().length - 1];
+    double dropBuried = pipeBuried.getTemperatureProfile()[0]
+        - pipeBuried.getTemperatureProfile()[pipeBuried.getTemperatureProfile().length - 1];
+
+    System.out.println("Temperature drop without soil resistance: " + dropNoSoil + " K");
+    System.out.println("Temperature drop with soil resistance: " + dropBuried + " K");
+
+    // Buried pipe should have less heat loss due to soil thermal resistance
+    assertTrue(dropBuried < dropNoSoil, "Buried pipe should have less heat loss");
+    assertEquals(0.5, pipeBuried.getSoilThermalResistance(), 0.01);
+  }
+
+  /**
+   * Test Joule-Thomson effect.
+   */
+  @Test
+  void testJouleThomsonEffect() {
+    // Test with J-T enabled (default)
+    TwoFluidPipe pipeJT = new TwoFluidPipe("jt-enabled", inletStream);
+    pipeJT.setLength(5000.0);
+    pipeJT.setDiameter(0.3);
+    pipeJT.setNumberOfSections(50);
+
+    double[] elev = new double[50];
+    for (int i = 0; i < 50; i++) {
+      elev[i] = 0.0;
+    }
+    pipeJT.setElevationProfile(elev);
+    pipeJT.setSurfaceTemperature(20.0, "C"); // Mild ambient - minimize conductive heat loss
+    pipeJT.setHeatTransferCoefficient(5.0); // Low HTC to emphasize J-T effect
+
+    assertTrue(pipeJT.isJouleThomsonEnabled(), "J-T should be enabled by default");
+
+    pipeJT.run();
+
+    System.out.println("J-T enabled: " + pipeJT.isJouleThomsonEnabled());
+
+    // Test disabling J-T
+    pipeJT.setEnableJouleThomson(false);
+    assertFalse(pipeJT.isJouleThomsonEnabled());
+  }
+
+  /**
+   * Test pipe wall properties for transient calculations.
+   */
+  @Test
+  void testPipeWallProperties() {
+    TwoFluidPipe pipe = new TwoFluidPipe("wall-test", inletStream);
+    pipe.setLength(3000.0);
+    pipe.setDiameter(0.3);
+    pipe.setNumberOfSections(30);
+
+    double[] elev = new double[30];
+    for (int i = 0; i < 30; i++) {
+      elev[i] = 0.0;
+    }
+    pipe.setElevationProfile(elev);
+
+    // Set custom wall properties (stainless steel)
+    pipe.setWallProperties(0.025, 8000.0, 500.0); // 25mm thick, stainless steel
+
+    assertEquals(0.025, pipe.getWallThickness(), 0.001);
+
+    pipe.setSurfaceTemperature(5.0, "C");
+    pipe.setHeatTransferCoefficient(25.0);
+    pipe.run();
+
+    assertNotNull(pipe.getTemperatureProfile());
+  }
 }

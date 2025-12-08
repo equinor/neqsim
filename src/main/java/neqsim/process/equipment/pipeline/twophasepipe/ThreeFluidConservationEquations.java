@@ -49,6 +49,15 @@ public class ThreeFluidConservationEquations implements Serializable {
   /** Interfacial friction calculator. */
   private InterfacialFriction interfacialFriction;
 
+  /** Surface temperature for heat transfer (K). */
+  private double surfaceTemperature = 288.15;
+
+  /** Heat transfer coefficient (W/(m²·K)). */
+  private double heatTransferCoefficient = 0.0;
+
+  /** Enable heat transfer from surroundings. */
+  private boolean enableHeatTransfer = false;
+
   /**
    * Result container for three-fluid RHS calculation.
    */
@@ -206,8 +215,14 @@ public class ThreeFluidConservationEquations implements Serializable {
         - rhoW * G * sinTheta * areaW; // Gravity
 
     // ===== Energy equation (mixture) =====
-    // Simplified: heat conduction and phase change not included here
-    rhs.energy = 0.0;
+    // Heat transfer to surroundings: Q = h * π * D * (T_surface - T_fluid)
+    if (enableHeatTransfer && heatTransferCoefficient > 0) {
+      double T_fluid = section.getTemperature();
+      double Q_wall = heatTransferCoefficient * Math.PI * diameter * (surfaceTemperature - T_fluid);
+      rhs.energy = Q_wall; // W/m (heat gain from surroundings)
+    } else {
+      rhs.energy = 0.0;
+    }
 
     return rhs;
   }
@@ -291,5 +306,59 @@ public class ThreeFluidConservationEquations implements Serializable {
     section.setOilMomentumPerLength(state[4]);
     section.setWaterMomentumPerLength(state[5]);
     // Energy would update enthalpies
+  }
+
+  /**
+   * Set surface temperature for heat transfer calculations.
+   *
+   * @param temperature Surface temperature [K]
+   */
+  public void setSurfaceTemperature(double temperature) {
+    this.surfaceTemperature = temperature;
+  }
+
+  /**
+   * Get surface temperature.
+   *
+   * @return Surface temperature [K]
+   */
+  public double getSurfaceTemperature() {
+    return surfaceTemperature;
+  }
+
+  /**
+   * Set heat transfer coefficient.
+   *
+   * @param coefficient Heat transfer coefficient [W/(m²·K)]
+   */
+  public void setHeatTransferCoefficient(double coefficient) {
+    this.heatTransferCoefficient = coefficient;
+  }
+
+  /**
+   * Get heat transfer coefficient.
+   *
+   * @return Heat transfer coefficient [W/(m²·K)]
+   */
+  public double getHeatTransferCoefficient() {
+    return heatTransferCoefficient;
+  }
+
+  /**
+   * Enable or disable heat transfer modeling.
+   *
+   * @param enable true to enable heat transfer
+   */
+  public void setEnableHeatTransfer(boolean enable) {
+    this.enableHeatTransfer = enable;
+  }
+
+  /**
+   * Check if heat transfer is enabled.
+   *
+   * @return true if heat transfer is enabled
+   */
+  public boolean isEnableHeatTransfer() {
+    return enableHeatTransfer;
   }
 }

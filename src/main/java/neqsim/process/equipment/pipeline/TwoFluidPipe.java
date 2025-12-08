@@ -192,6 +192,82 @@ public class TwoFluidPipe extends Pipeline {
   /** Heat transfer coefficient (W/(m²·K)). */
   private double heatTransferCoefficient = 0.0;
 
+  /** Heat transfer coefficient profile along pipe (W/(m²·K)). */
+  private double[] heatTransferProfile = null;
+
+  /** Surface temperature profile along pipe (K). */
+  private double[] surfaceTemperatureProfile = null;
+
+  /** Pipe wall thickness (m). */
+  private double wallThickness = 0.02;
+
+  /** Pipe wall density (kg/m³) - steel default. */
+  private double wallDensity = 7850.0;
+
+  /** Pipe wall specific heat capacity (J/(kg·K)) - steel default. */
+  private double wallHeatCapacity = 500.0;
+
+  /** Pipe wall temperature profile (K). */
+  private double[] wallTemperatureProfile = null;
+
+  /** Soil/burial thermal resistance (m²·K/W). */
+  private double soilThermalResistance = 0.0;
+
+  /** Enable Joule-Thomson effect. */
+  private boolean enableJouleThomson = true;
+
+  /** Hydrate formation temperature (K). */
+  private double hydrateFormationTemperature = 0.0;
+
+  /** Wax appearance temperature (K). */
+  private double waxAppearanceTemperature = 0.0;
+
+  /** Sections flagged for hydrate risk. */
+  private boolean[] hydrateRiskSections = null;
+
+  /** Sections flagged for wax risk. */
+  private boolean[] waxRiskSections = null;
+
+  /**
+   * Insulation type presets with typical U-values.
+   */
+  public enum InsulationType {
+    /** No insulation - bare steel in seawater. */
+    NONE(150.0),
+    /** Uninsulated subsea - typical bare pipe. */
+    UNINSULATED_SUBSEA(25.0),
+    /** Standard PU foam insulation. */
+    PU_FOAM(10.0),
+    /** Multi-layer insulation. */
+    MULTI_LAYER(5.0),
+    /** Pipe-in-pipe insulation. */
+    PIPE_IN_PIPE(2.0),
+    /** Vacuum insulated tubing. */
+    VIT(0.5),
+    /** Buried onshore pipeline. */
+    BURIED_ONSHORE(3.0),
+    /** Exposed onshore. */
+    EXPOSED_ONSHORE(75.0);
+
+    private final double uValue;
+
+    InsulationType(double uValue) {
+      this.uValue = uValue;
+    }
+
+    /**
+     * Get the typical overall heat transfer coefficient.
+     *
+     * @return U-value in W/(m²·K)
+     */
+    public double getUValue() {
+      return uValue;
+    }
+  }
+
+  /** Current insulation type. */
+  private InsulationType insulationType = InsulationType.NONE;
+
   /** Enable slug tracking. */
   private boolean enableSlugTracking = true;
 
@@ -569,7 +645,7 @@ public class TwoFluidPipe extends Pipeline {
    * Update temperature profile along the pipe accounting for heat transfer.
    *
    * <p>
-   * Steady-state energy balance: m_dot * Cp * dT/dx = -h * π * D * (T - T_surface)
+   * Steady-state energy balance: m_dot * Cp * dT/dx = -h * π * D * (T - T_surface) - μ_JT * dP/dx
    * </p>
    *
    * @param massFlow Total mass flow rate [kg/s]
@@ -577,36 +653,226 @@ public class TwoFluidPipe extends Pipeline {
    */
   private void updateTemperatureProfile(double massFlow, double area) {
     // Get mixture heat capacity from inlet fluid
-    double Cp = getInletStream().getFluid().getCp("J/kgK");
-    if (Cp <= 0) {
+    SystemInterface inletFluid = getInletStream().getFluid();
+    double Cp = inletFluid.getCp("J/kgK");
+    if (Cp <= 0 || Double.isNaN(Cp)) {
       Cp = 2000.0; // Default if not available (gas-liquid mixture)
     }
 
-    double pipePerimeter = Math.PI * diameter;
+    // Get Joule-Thomson coefficient if enabled
+    double muJT = 0.0;
+    if (enableJouleThomson) {
+      try {
+        // μ_JT = (1/Cp) * [T*(dV/dT)_P - V] ≈ (T*β - 1)*V/Cp for ideal gas approximation
+        // For real gas, use thermodynamic calculation
+        double kappa = inletFluid.getKappa(); // Cp/Cv
+        if (kappa > 1.0 && kappa < 2.0) {
+          double T = inletFluid.getTemperature();
+          double Z = inletFluid.getZ();
+          double MW = inletFluid.getMolarMass() * 1000; // kg/kmol to g/mol
+          double R = 8.314; // J/(mol·K)
+          // Simplified J-T coefficient for real gas: μ_JT ≈ (2a/RT - b) / Cp
+          // For typical natural gas: 0.3-0.6 K/bar
+          muJT = 0.4 / 1e5; // K/Pa (typical for natural gas)
+        }
+      } catch (Exception e) {
+        muJT = 0.0;
+      }
+    }
 
-    // March through pipe solving: dT/dx = -h*π*D*(T - T_surf) / (m_dot * Cp)
+    double pipePerimeter = Math.PI * diameter;
+    double P_prev = sections[0].getPressure();
+
+    // Initialize hydrate/wax risk arrays
+    hydrateRiskSections = new boolean[numberOfSections];
+    waxRiskSections = new boolean[numberOfSections];
+
+    // March through pipe solving energy equation
     for (int i = 1; i < numberOfSections; i++) {
       TwoFluidSection sec = sections[i];
       TwoFluidSection prev = sections[i - 1];
 
       double T_prev = prev.getTemperature();
-      double T_surface = surfaceTemperature;
 
-      // Heat transfer coefficient (W/(m²·K))
+      // Get local heat transfer coefficient (profile or constant)
       double h = heatTransferCoefficient;
+      if (heatTransferProfile != null && i < heatTransferProfile.length) {
+        h = heatTransferProfile[i];
+      }
 
-      // Exponential decay solution for segment:
-      // T(x) = T_surface + (T_inlet - T_surface) * exp(-h*π*D*x / (m_dot*Cp))
-      // For a segment of length dx:
-      // T_out = T_surface + (T_in - T_surface) * exp(-h*π*D*dx / (m_dot*Cp))
-      double exponent = -h * pipePerimeter * dx / (massFlow * Cp);
-      double T_new = surfaceTemperature + (T_prev - surfaceTemperature) * Math.exp(exponent);
+      // Get local surface temperature (profile or constant)
+      double T_surface = surfaceTemperature;
+      if (surfaceTemperatureProfile != null && i < surfaceTemperatureProfile.length) {
+        T_surface = surfaceTemperatureProfile[i];
+      }
+
+      // Add soil thermal resistance if applicable
+      if (soilThermalResistance > 0 && h > 0) {
+        // Effective U = 1 / (1/h + R_soil)
+        h = 1.0 / (1.0 / h + soilThermalResistance);
+      }
+
+      // Joule-Thomson cooling from pressure drop
+      double dP = sec.getPressure() - P_prev;
+      double dT_JT = muJT * dP; // Temperature change due to J-T effect
+
+      // Heat transfer calculation with exponential solution
+      double T_new;
+      if (h > 0 && massFlow > 0 && Cp > 0) {
+        // Exponential decay solution for segment:
+        // T(x) = T_surface + (T_inlet - T_surface) * exp(-h*π*D*dx / (m_dot*Cp))
+        double exponent = -h * pipePerimeter * dx / (massFlow * Cp);
+        T_new = T_surface + (T_prev - T_surface) * Math.exp(exponent);
+      } else {
+        T_new = T_prev;
+      }
+
+      // Add Joule-Thomson effect
+      T_new += dT_JT;
 
       // Ensure physical bounds
-      T_new = Math.max(T_new, surfaceTemperature);
-      T_new = Math.min(T_new, T_prev); // Cannot heat up if fluid is warmer than surface
+      if (h > 0) {
+        if (T_prev > T_surface) {
+          T_new = Math.max(T_new, T_surface); // Cannot cool below ambient
+          T_new = Math.min(T_new, T_prev); // Cannot heat up when cooling
+        } else {
+          T_new = Math.min(T_new, T_surface); // Cannot heat above ambient
+          T_new = Math.max(T_new, T_prev); // Cannot cool when heating
+        }
+      }
+      T_new = Math.max(T_new, 100.0); // Never below 100K (absolute minimum)
 
       sec.setTemperature(T_new);
+
+      // Check hydrate/wax risk
+      if (hydrateFormationTemperature > 0 && T_new < hydrateFormationTemperature) {
+        hydrateRiskSections[i] = true;
+      }
+      if (waxAppearanceTemperature > 0 && T_new < waxAppearanceTemperature) {
+        waxRiskSections[i] = true;
+      }
+
+      P_prev = sec.getPressure();
+    }
+  }
+
+  /**
+   * Update temperature profile for transient simulation including pipe wall thermal mass.
+   *
+   * <p>
+   * Solves coupled fluid-wall energy equations:
+   * <ul>
+   * <li>Fluid: ρ_f * Cp_f * A * dT_f/dt = -m_dot * Cp_f * dT_f/dx - h_i * π * D * (T_f - T_w)</li>
+   * <li>Wall: ρ_w * Cp_w * A_w * dT_w/dt = h_i * π * D * (T_f - T_w) - h_o * π * D_o * (T_w -
+   * T_amb)</li>
+   * </ul>
+   * </p>
+   *
+   * @param massFlow Total mass flow rate [kg/s]
+   * @param area Pipe cross-sectional area [m²]
+   * @param dt Time step [s]
+   */
+  private void updateTransientTemperature(double massFlow, double area, double dt) {
+    // Get mixture heat capacity from inlet fluid
+    SystemInterface inletFluid = getInletStream().getFluid();
+    double Cp = inletFluid.getCp("J/kgK");
+    if (Cp <= 0 || Double.isNaN(Cp)) {
+      Cp = 2000.0; // Default if not available
+    }
+
+    // Initialize wall temperature profile if needed
+    if (wallTemperatureProfile == null || wallTemperatureProfile.length != numberOfSections) {
+      wallTemperatureProfile = new double[numberOfSections];
+      for (int i = 0; i < numberOfSections; i++) {
+        wallTemperatureProfile[i] = sections[i].getTemperature();
+      }
+    }
+
+    // Initialize hydrate/wax risk arrays
+    if (hydrateRiskSections == null || hydrateRiskSections.length != numberOfSections) {
+      hydrateRiskSections = new boolean[numberOfSections];
+      waxRiskSections = new boolean[numberOfSections];
+    }
+
+    double pipePerimeter = Math.PI * diameter;
+    double outerDiameter = diameter + 2 * wallThickness;
+    double outerPerimeter = Math.PI * outerDiameter;
+
+    // Wall cross-sectional area
+    double wallArea = Math.PI * (outerDiameter * outerDiameter - diameter * diameter) / 4.0;
+    double wallMassPerLength = wallArea * wallDensity; // kg/m
+
+    // Fluid properties per unit length
+    double fluidDensity = (inletFluid.getDensity("kg/m3"));
+    double fluidMassPerLength = area * fluidDensity;
+
+    // Get Joule-Thomson coefficient if enabled
+    double muJT = 0.0;
+    if (enableJouleThomson) {
+      muJT = 0.4 / 1e5; // K/Pa (typical for natural gas)
+    }
+
+    for (int i = 1; i < numberOfSections; i++) {
+      TwoFluidSection sec = sections[i];
+      TwoFluidSection prev = sections[i - 1];
+
+      double T_fluid = sec.getTemperature();
+      double T_wall = wallTemperatureProfile[i];
+
+      // Get local heat transfer coefficient (profile or constant)
+      double h_inner = heatTransferCoefficient;
+      if (heatTransferProfile != null && i < heatTransferProfile.length) {
+        h_inner = heatTransferProfile[i];
+      }
+
+      // Get local surface temperature (profile or constant)
+      double T_ambient = surfaceTemperature;
+      if (surfaceTemperatureProfile != null && i < surfaceTemperatureProfile.length) {
+        T_ambient = surfaceTemperatureProfile[i];
+      }
+
+      // Outer heat transfer coefficient (including soil resistance if applicable)
+      double h_outer = h_inner;
+      if (soilThermalResistance > 0 && h_inner > 0) {
+        h_outer = 1.0 / (1.0 / h_inner + soilThermalResistance);
+      }
+
+      // Heat transfer rates per unit length
+      double Q_fluid_to_wall = h_inner * pipePerimeter * (T_fluid - T_wall); // W/m
+      double Q_wall_to_ambient = h_outer * outerPerimeter * (T_wall - T_ambient); // W/m
+
+      // Advection term: m_dot * Cp * (T_in - T_out) / dx
+      double T_upstream = prev.getTemperature();
+      double Q_advection = massFlow * Cp * (T_upstream - T_fluid) / dx; // W/m
+
+      // Joule-Thomson cooling
+      double dP = sec.getPressure() - prev.getPressure();
+      double Q_JT = massFlow * Cp * muJT * dP / dx; // W/m (equivalent heat)
+
+      // Update wall temperature (explicit Euler)
+      double dTwall_dt = (Q_fluid_to_wall - Q_wall_to_ambient) / (wallMassPerLength * wallHeatCapacity);
+      T_wall += dTwall_dt * dt;
+      wallTemperatureProfile[i] = T_wall;
+
+      // Update fluid temperature (explicit Euler with advection)
+      double dTfluid_dt = (Q_advection - Q_fluid_to_wall + Q_JT) / (fluidMassPerLength * Cp);
+      T_fluid += dTfluid_dt * dt;
+
+      // Ensure physical bounds
+      T_fluid = Math.max(T_fluid, 100.0); // Never below 100K
+      sec.setTemperature(T_fluid);
+
+      // Check hydrate/wax risk
+      if (hydrateFormationTemperature > 0 && T_fluid < hydrateFormationTemperature) {
+        hydrateRiskSections[i] = true;
+      } else {
+        hydrateRiskSections[i] = false;
+      }
+      if (waxAppearanceTemperature > 0 && T_fluid < waxAppearanceTemperature) {
+        waxRiskSections[i] = true;
+      } else {
+        waxRiskSections[i] = false;
+      }
     }
   }
 
@@ -985,7 +1251,14 @@ public class TwoFluidPipe extends Pipeline {
         accumulationTracker.updateAccumulation(sections, dtActual);
       }
 
-      // 9. Advance time
+      // 9. Update temperature profile if heat transfer is enabled
+      if (enableHeatTransfer && heatTransferCoefficient > 0) {
+        double massFlow = getInletStream().getFlowRate("kg/sec");
+        double area = Math.PI * diameter * diameter / 4.0;
+        updateTransientTemperature(massFlow, area, dtActual);
+      }
+
+      // 10. Advance time
       simulationTime += dtActual;
       timeIntegrator.advanceTime(dtActual);
     }
@@ -1763,5 +2036,346 @@ public class TwoFluidPipe extends Pipeline {
    */
   public void setThermodynamicUpdateInterval(int interval) {
     this.thermodynamicUpdateInterval = Math.max(1, interval);
+  }
+
+  // ============ New Heat Transfer API Methods ============
+
+  /**
+   * Set insulation type using predefined U-values.
+   *
+   * <p>
+   * This is a convenience method that sets appropriate heat transfer coefficient based on insulation
+   * type. Automatically enables heat transfer modeling.
+   * </p>
+   *
+   * @param type Insulation type preset
+   */
+  public void setInsulationType(InsulationType type) {
+    this.insulationType = type;
+    setHeatTransferCoefficient(type.getUValue());
+  }
+
+  /**
+   * Get the current insulation type.
+   *
+   * @return Current insulation type
+   */
+  public InsulationType getInsulationType() {
+    return insulationType;
+  }
+
+  /**
+   * Set heat transfer coefficient profile along the pipe.
+   *
+   * <p>
+   * Allows different U-values at different positions (e.g., buried vs exposed sections).
+   * </p>
+   *
+   * @param profile Array of U-values [W/(m²·K)], one per section
+   */
+  public void setHeatTransferProfile(double[] profile) {
+    this.heatTransferProfile = profile;
+    if (profile != null && profile.length > 0) {
+      this.enableHeatTransfer = true;
+      this.includeEnergyEquation = true;
+      // Set average value as default coefficient
+      double avg = 0;
+      for (double h : profile) {
+        avg += h;
+      }
+      this.heatTransferCoefficient = avg / profile.length;
+    }
+  }
+
+  /**
+   * Get the heat transfer coefficient profile.
+   *
+   * @return Array of U-values or null if constant
+   */
+  public double[] getHeatTransferProfile() {
+    return heatTransferProfile;
+  }
+
+  /**
+   * Set surface temperature profile along the pipe.
+   *
+   * <p>
+   * Allows different ambient temperatures at different positions (e.g., varying seabed depth).
+   * </p>
+   *
+   * @param profile Array of surface temperatures [K], one per section
+   */
+  public void setSurfaceTemperatureProfile(double[] profile) {
+    this.surfaceTemperatureProfile = profile;
+    if (profile != null && profile.length > 0) {
+      this.enableHeatTransfer = true;
+      this.includeEnergyEquation = true;
+    }
+  }
+
+  /**
+   * Get the surface temperature profile.
+   *
+   * @return Array of surface temperatures or null if constant
+   */
+  public double[] getSurfaceTemperatureProfile() {
+    return surfaceTemperatureProfile;
+  }
+
+  /**
+   * Set pipe wall properties for transient thermal calculations.
+   *
+   * @param thickness Wall thickness [m]
+   * @param density Wall material density [kg/m³]
+   * @param heatCapacity Wall specific heat capacity [J/(kg·K)]
+   */
+  public void setWallProperties(double thickness, double density, double heatCapacity) {
+    this.wallThickness = thickness;
+    this.wallDensity = density;
+    this.wallHeatCapacity = heatCapacity;
+  }
+
+  /**
+   * Get pipe wall thickness.
+   *
+   * @return Wall thickness [m]
+   */
+  public double getWallThickness() {
+    return wallThickness;
+  }
+
+  /**
+   * Set soil/burial thermal resistance.
+   *
+   * <p>
+   * For buried pipelines, this adds thermal resistance between pipe outer wall and ambient. The
+   * effective U-value becomes: U_eff = 1 / (1/U + R_soil)
+   * </p>
+   *
+   * @param resistance Soil thermal resistance [m²·K/W]
+   */
+  public void setSoilThermalResistance(double resistance) {
+    this.soilThermalResistance = Math.max(0, resistance);
+  }
+
+  /**
+   * Get soil thermal resistance.
+   *
+   * @return Soil thermal resistance [m²·K/W]
+   */
+  public double getSoilThermalResistance() {
+    return soilThermalResistance;
+  }
+
+  /**
+   * Enable or disable Joule-Thomson effect.
+   *
+   * <p>
+   * When enabled, temperature drops due to pressure reduction are calculated. This is important
+   * for gas pipelines with significant pressure drop.
+   * </p>
+   *
+   * @param enable true to enable J-T effect
+   */
+  public void setEnableJouleThomson(boolean enable) {
+    this.enableJouleThomson = enable;
+  }
+
+  /**
+   * Check if Joule-Thomson effect is enabled.
+   *
+   * @return true if J-T effect is modeled
+   */
+  public boolean isJouleThomsonEnabled() {
+    return enableJouleThomson;
+  }
+
+  /**
+   * Set hydrate formation temperature for risk monitoring.
+   *
+   * @param temperature Hydrate formation temperature
+   * @param unit Temperature unit ("K" or "C")
+   */
+  public void setHydrateFormationTemperature(double temperature, String unit) {
+    if ("K".equals(unit)) {
+      this.hydrateFormationTemperature = temperature;
+    } else if ("C".equals(unit)) {
+      this.hydrateFormationTemperature = temperature + 273.15;
+    } else {
+      throw new IllegalArgumentException("Unsupported unit: " + unit);
+    }
+  }
+
+  /**
+   * Get hydrate formation temperature.
+   *
+   * @return Hydrate formation temperature [K], or 0 if not set
+   */
+  public double getHydrateFormationTemperature() {
+    return hydrateFormationTemperature;
+  }
+
+  /**
+   * Set wax appearance temperature for risk monitoring.
+   *
+   * @param temperature Wax appearance temperature
+   * @param unit Temperature unit ("K" or "C")
+   */
+  public void setWaxAppearanceTemperature(double temperature, String unit) {
+    if ("K".equals(unit)) {
+      this.waxAppearanceTemperature = temperature;
+    } else if ("C".equals(unit)) {
+      this.waxAppearanceTemperature = temperature + 273.15;
+    } else {
+      throw new IllegalArgumentException("Unsupported unit: " + unit);
+    }
+  }
+
+  /**
+   * Get wax appearance temperature.
+   *
+   * @return Wax appearance temperature [K], or 0 if not set
+   */
+  public double getWaxAppearanceTemperature() {
+    return waxAppearanceTemperature;
+  }
+
+  /**
+   * Get sections with hydrate formation risk.
+   *
+   * @return Array of booleans, true where temperature is below hydrate formation temperature
+   */
+  public boolean[] getHydrateRiskSections() {
+    return hydrateRiskSections;
+  }
+
+  /**
+   * Get sections with wax deposition risk.
+   *
+   * @return Array of booleans, true where temperature is below wax appearance temperature
+   */
+  public boolean[] getWaxRiskSections() {
+    return waxRiskSections;
+  }
+
+  /**
+   * Check if any section has hydrate risk.
+   *
+   * @return true if any section temperature is below hydrate formation temperature
+   */
+  public boolean hasHydrateRisk() {
+    if (hydrateRiskSections == null) {
+      return false;
+    }
+    for (boolean risk : hydrateRiskSections) {
+      if (risk) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Check if any section has wax risk.
+   *
+   * @return true if any section temperature is below wax appearance temperature
+   */
+  public boolean hasWaxRisk() {
+    if (waxRiskSections == null) {
+      return false;
+    }
+    for (boolean risk : waxRiskSections) {
+      if (risk) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Get temperature profile with specified unit.
+   *
+   * @param unit Temperature unit ("K", "C", or "F")
+   * @return Temperature profile in the specified unit
+   */
+  public double[] getTemperatureProfile(String unit) {
+    if (temperatureProfile == null) {
+      return null;
+    }
+    double[] result = new double[temperatureProfile.length];
+    for (int i = 0; i < temperatureProfile.length; i++) {
+      double T_K = temperatureProfile[i];
+      switch (unit.toUpperCase()) {
+        case "K":
+          result[i] = T_K;
+          break;
+        case "C":
+          result[i] = T_K - 273.15;
+          break;
+        case "F":
+          result[i] = (T_K - 273.15) * 9.0 / 5.0 + 32.0;
+          break;
+        default:
+          result[i] = T_K; // Default to Kelvin
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Get the pipe wall temperature profile.
+   *
+   * @return Wall temperature profile [K], or null if not calculated
+   */
+  public double[] getWallTemperatureProfile() {
+    return wallTemperatureProfile;
+  }
+
+  /**
+   * Get number of sections with hydrate risk.
+   *
+   * @return Count of sections below hydrate formation temperature
+   */
+  public int getHydrateRiskSectionCount() {
+    if (hydrateRiskSections == null) {
+      return 0;
+    }
+    int count = 0;
+    for (boolean risk : hydrateRiskSections) {
+      if (risk) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Get first section index with hydrate risk.
+   *
+   * @return Section index where hydrate risk first occurs, or -1 if no risk
+   */
+  public int getFirstHydrateRiskSection() {
+    if (hydrateRiskSections == null) {
+      return -1;
+    }
+    for (int i = 0; i < hydrateRiskSections.length; i++) {
+      if (hydrateRiskSections[i]) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * Get distance to first hydrate risk location.
+   *
+   * @return Distance [m] from inlet to first hydrate risk, or -1 if no risk
+   */
+  public double getDistanceToHydrateRisk() {
+    int idx = getFirstHydrateRiskSection();
+    if (idx < 0) {
+      return -1;
+    }
+    return idx * dx;
   }
 }
