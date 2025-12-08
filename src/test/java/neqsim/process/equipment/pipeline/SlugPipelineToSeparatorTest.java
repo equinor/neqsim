@@ -393,12 +393,12 @@ class SlugPipelineToSeparatorTest {
 
       // Print every 10 seconds
       if (step % 10 == 0) {
-    System.out.println(
-        String.format("%6.0f    %10.3f   %12.2f   %10.4f", time, outFlow, outletP, avgHoldup));
+        System.out.println(
+            String.format("%6.0f    %10.3f   %12.2f   %10.4f", time, outFlow, outletP, avgHoldup));
       }
     }
 
-    System.out.println(StringUtils.repeat("-", 55));    // Calculate statistics
+    System.out.println(StringUtils.repeat("-", 55)); // Calculate statistics
     double minFlow = outletFlows.stream().filter(f -> f > 0).min(Double::compareTo).orElse(0.0);
     double maxFlow = outletFlows.stream().max(Double::compareTo).orElse(0.0);
     double avgFlow = outletFlows.stream().mapToDouble(d -> d).average().orElse(0.0);
