@@ -565,7 +565,7 @@ class TwoPhasePressureDropValidationTest {
 
     System.out.println(String.format("%-30s | %8s | %8s | %8s | %8s | %6s", "Test Case", "D (mm)",
         "L (m)", "B&B ΔP", "TFP ΔP", "Ratio"));
-    System.out.println("-".repeat(85));
+    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 85));
 
     int passed = 0;
     int total = 0;
@@ -645,7 +645,7 @@ class TwoPhasePressureDropValidationTest {
       }
     }
 
-    System.out.println("-".repeat(85));
+    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 85));
     System.out.println();
     System.out.println("Summary: " + passed + "/" + total + " cases completed successfully");
     System.out.println();
@@ -815,7 +815,7 @@ class TwoPhasePressureDropValidationTest {
     double[] liquidRates = {5000, 2000, 1000, 500, 200};
 
     System.out.println("Gas (kg/hr) | Liquid (kg/hr) | GLR    | Flow Regime");
-    System.out.println("-".repeat(60));
+    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 60));
 
     for (double gasRate : gasRates) {
       for (double liquidRate : liquidRates) {

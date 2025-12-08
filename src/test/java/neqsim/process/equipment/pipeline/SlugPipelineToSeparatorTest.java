@@ -177,7 +177,7 @@ class SlugPipelineToSeparatorTest {
     // ========== TRANSIENT SIMULATION ==========
     System.out.println("\n=== Transient Simulation (60 seconds) ===");
     System.out.println("Time(s)  PipeOut(kg/s)  Level(%)  SepP(bara)");
-    System.out.println("-".repeat(50));
+    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 50));
 
     UUID simId = UUID.randomUUID();
     List<Double> levels = new ArrayList<>();
@@ -204,7 +204,7 @@ class SlugPipelineToSeparatorTest {
     }
 
     // ========== ASSERTIONS ==========
-    System.out.println("-".repeat(50));
+    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 50));
     System.out.println("\n=== Verification ===");
 
     // 1. Pipeline should produce flow
@@ -358,7 +358,7 @@ class SlugPipelineToSeparatorTest {
 
     System.out.println("\n=== Transient Simulation (2 minutes) ===");
     System.out.println("Time(s)   Flow(kg/s)   OutletP(bara)   AvgHoldup");
-    System.out.println("-".repeat(55));
+    System.out.println(org.apache.commons.lang3.StringUtils.repeat("-", 55));
 
     for (int step = 0; step <= numSteps; step++) {
       double time = step * dt;
