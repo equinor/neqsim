@@ -259,6 +259,9 @@ public class LiquidAccumulationTracker implements Serializable {
    * This method now ACTUALLY updates the section holdups, not just a separate tracking variable.
    * This is critical for terrain-induced slug formation.
    * </p>
+   *
+   * @param zone the accumulation zone to process
+   * @param sections the pipe sections array
    */
   private void distributeAccumulatedLiquid(AccumulationZone zone, PipeSection[] sections) {
     if (zone.sectionIndices.isEmpty() || zone.liquidVolume <= 0) {

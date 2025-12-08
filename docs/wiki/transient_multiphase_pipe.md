@@ -62,7 +62,11 @@ This approach maintains the drift-flux framework while properly accounting for o
 
 ### Flow Regime Detection
 
-The model uses mechanistic criteria to determine the local flow pattern:
+The model supports two methods for flow regime detection:
+
+#### Mechanistic Approach (Default)
+
+Uses mechanistic criteria to determine the local flow pattern:
 
 1. **Single-Phase Check**: If liquid holdup < 0.001 → Gas; if gas holdup < 0.001 → Liquid
 2. **Taitel-Dukler (1976)** for horizontal/near-horizontal pipes:
@@ -72,6 +76,28 @@ The model uses mechanistic criteria to determine the local flow pattern:
    - Unified model covering all inclinations
    - Bubble-slug transition at void fraction ≈ 0.25
    - Annular transition at high gas velocities
+
+#### Minimum Slip Criterion
+
+An alternative approach that selects the flow regime with the minimum slip ratio (closest to 1.0, i.e., homogeneous flow). This is based on the principle that the physical system naturally tends toward the flow pattern with minimum phase velocity difference.
+
+```java
+FlowRegimeDetector detector = new FlowRegimeDetector();
+
+// Enable minimum slip criterion
+detector.setUseMinimumSlipCriterion(true);
+
+// Or use the detection method enum
+detector.setDetectionMethod(FlowRegimeDetector.DetectionMethod.MINIMUM_SLIP);
+
+// Detect flow regime
+FlowRegime regime = detector.detectFlowRegime(section);
+```
+
+The minimum slip criterion evaluates orientation-appropriate candidate regimes:
+- **Horizontal pipes**: Stratified (smooth/wavy), Slug, Annular, Dispersed Bubble
+- **Upward inclined**: Bubble, Slug, Churn, Annular, Dispersed Bubble
+- **Downward inclined**: Stratified (smooth/wavy), Slug, Annular
 
 ### Numerical Method
 
