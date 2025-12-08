@@ -232,20 +232,37 @@ public class TwoFluidSection extends PipeSection {
     gasMomentumPerLength = alphaG * rhoG * vG * A;
     liquidMomentumPerLength = alphaL * rhoL * vL * A;
 
-    // For the 7-equation model, split liquid into oil and water
-    // If water cut is not set (or zero), assume all liquid is oil
+    // For the 7-equation model, split liquid into oil and water using proper densities
+    // waterCut is the volume fraction of water in the liquid phase
     if (waterCut > 0 && waterCut < 1.0) {
-      // Three-phase: split by water cut
-      oilMassPerLength = liquidMassPerLength * (1.0 - waterCut);
-      waterMassPerLength = liquidMassPerLength * waterCut;
-      oilMomentumPerLength = liquidMomentumPerLength * (1.0 - waterCut);
-      waterMomentumPerLength = liquidMomentumPerLength * waterCut;
+      // Three-phase: use individual phase densities for mass calculation
+      // Volume fractions within total cross-section
+      double alphaO = alphaL * (1.0 - waterCut); // Oil holdup = liquid holdup * oil fraction
+      double alphaW = alphaL * waterCut; // Water holdup = liquid holdup * water fraction
+
+      // Use phase-specific densities for mass
+      double rhoO = (oilDensity > 100) ? oilDensity : rhoL;
+      double rhoW = (waterDensity > 100) ? waterDensity : 1000.0;
+
+      oilMassPerLength = alphaO * rhoO * A;
+      waterMassPerLength = alphaW * rhoW * A;
+
+      // Recalculate total liquid mass for consistency
+      liquidMassPerLength = oilMassPerLength + waterMassPerLength;
+
+      // Split momentum using volume fractions (same velocity assumption)
+      oilMomentumPerLength = oilMassPerLength * vL;
+      waterMomentumPerLength = waterMassPerLength * vL;
+      liquidMomentumPerLength = oilMomentumPerLength + waterMomentumPerLength;
     } else {
       // Two-phase: all liquid is oil (no water)
-      oilMassPerLength = liquidMassPerLength;
+      double rhoO = (oilDensity > 100) ? oilDensity : rhoL;
+      oilMassPerLength = alphaL * rhoO * A;
       waterMassPerLength = 0;
-      oilMomentumPerLength = liquidMomentumPerLength;
+      oilMomentumPerLength = oilMassPerLength * vL;
       waterMomentumPerLength = 0;
+      liquidMassPerLength = oilMassPerLength;
+      liquidMomentumPerLength = oilMomentumPerLength;
     }
 
     // Total energy (internal + kinetic)
@@ -411,10 +428,14 @@ public class TwoFluidSection extends PipeSection {
     double A = getArea();
     double alphaL = getLiquidHoldup();
 
+    // Use default densities if not set properly
+    double rhoW = waterDensity > 100 ? waterDensity : 1000.0; // Default water density
+    double rhoO = oilDensity > 100 ? oilDensity : 700.0; // Default oil density
+
     // Calculate individual holdups from mass per length
-    if (A > 0 && waterDensity > 0 && oilDensity > 0) {
-      double alphaW = waterMassPerLength / (waterDensity * A);
-      double alphaO = oilMassPerLength / (oilDensity * A);
+    if (A > 0) {
+      double alphaW = waterMassPerLength / (rhoW * A);
+      double alphaO = oilMassPerLength / (rhoO * A);
 
       // Clamp to valid ranges
       alphaW = Math.max(0, Math.min(alphaL, alphaW));

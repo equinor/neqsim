@@ -1320,14 +1320,19 @@ public class TwoFluidPipe extends Pipeline {
         }
       }
 
-      // Ensure mass variables are non-negative
+      // Ensure mass variables are non-negative (indices 0, 1, 2 for gas, oil, water)
       U_new[i][0] = Math.max(0, U_new[i][0]); // Gas mass
-      U_new[i][1] = Math.max(0, U_new[i][1]); // Liquid mass
+      U_new[i][1] = Math.max(0, U_new[i][1]); // Oil mass
+      if (U_new[i].length > 2) {
+        U_new[i][2] = Math.max(0, U_new[i][2]); // Water mass
+      }
 
       // Limit extreme rate of change to prevent blow-up (50% per sub-step max)
       // This is a safety limit, not for physics - allows transient dynamics
       double maxChangeRatio = 0.5;
-      for (int j = 0; j < 2; j++) { // Only for mass variables
+      // Apply to all mass variables: gas (0), oil (1), water (2)
+      int numMassVars = Math.min(3, U_new[i].length);
+      for (int j = 0; j < numMassVars; j++) {
         if (U_prev[i][j] > 1e-10) {
           double ratio = U_new[i][j] / U_prev[i][j];
           if (ratio > 1 + maxChangeRatio) {
@@ -1435,6 +1440,12 @@ public class TwoFluidPipe extends Pipeline {
           double waterCut = volLiquid > 0 ? volWater / volLiquid : 0;
           double oilFraction = 1.0 - waterCut;
 
+          // Update individual phase properties for three-phase tracking
+          sec.setOilDensity(rhoOil);
+          sec.setWaterDensity(rhoWater);
+          sec.setOilViscosity(muOil);
+          sec.setWaterViscosity(muWater);
+
           // Volume-weighted density
           sec.setLiquidDensity(oilFraction * rhoOil + waterCut * rhoWater);
 
@@ -1451,12 +1462,18 @@ public class TwoFluidPipe extends Pipeline {
               + waterCut * flash.getPhase("aqueous").getEnthalpy("J/kg"));
 
         } else if (hasOil) {
-          sec.setLiquidDensity(flash.getPhase("oil").getDensity("kg/m3"));
+          double rhoOil = flash.getPhase("oil").getDensity("kg/m3");
+          sec.setLiquidDensity(rhoOil);
+          sec.setOilDensity(rhoOil);
+          sec.setOilViscosity(flash.getPhase("oil").getViscosity("kg/msec"));
           sec.setLiquidViscosity(flash.getPhase("oil").getViscosity("kg/msec"));
           sec.setLiquidSoundSpeed(flash.getPhase("oil").getSoundSpeed());
           sec.setLiquidEnthalpy(flash.getPhase("oil").getEnthalpy("J/kg"));
         } else if (hasWater) {
-          sec.setLiquidDensity(flash.getPhase("aqueous").getDensity("kg/m3"));
+          double rhoWater = flash.getPhase("aqueous").getDensity("kg/m3");
+          sec.setLiquidDensity(rhoWater);
+          sec.setWaterDensity(rhoWater);
+          sec.setWaterViscosity(flash.getPhase("aqueous").getViscosity("kg/msec"));
           sec.setLiquidViscosity(flash.getPhase("aqueous").getViscosity("kg/msec"));
           sec.setLiquidSoundSpeed(flash.getPhase("aqueous").getSoundSpeed());
           sec.setLiquidEnthalpy(flash.getPhase("aqueous").getEnthalpy("J/kg"));
@@ -1474,52 +1491,99 @@ public class TwoFluidPipe extends Pipeline {
     // Inlet boundary
     TwoFluidSection inlet = sections[0];
     if (inletBCType == BoundaryCondition.STREAM_CONNECTED) {
-      // Use inlet stream properties - maintain pressure, temperature, and flow
+      // Use inlet stream properties - maintain pressure, temperature
       SystemInterface inFluid = getInletStream().getFluid();
       inlet.setPressure(inFluid.getPressure("Pa"));
       inlet.setTemperature(inFluid.getTemperature("K"));
 
-      // Also maintain inlet holdups and velocities from the stream
-      // This ensures constant mass flow at the inlet
+      // Calculate target mass flow rates from inlet stream
       double massFlow = getInletStream().getFlowRate("kg/sec");
       double area = Math.PI * diameter * diameter / 4.0;
 
-      // Get phase fractions from inlet stream
+      // Get phase mass fractions from inlet stream (these define the BC)
+      double gasMassFraction = 0.5;
+      double oilMassFraction = 0.3;
+      double waterMassFraction = 0.2;
+
       int numPhases = inFluid.getNumberOfPhases();
-      double alphaG = 0.5;
-      double alphaL = 0.5;
+      if (numPhases >= 2) {
+        double massTotal = inFluid.getFlowRate("kg/sec");
+        if (massTotal > 0) {
+          if (inFluid.hasPhaseType("gas")) {
+            gasMassFraction = inFluid.getPhase("gas").getFlowRate("kg/sec") / massTotal;
+          }
+          if (inFluid.hasPhaseType("oil")) {
+            oilMassFraction = inFluid.getPhase("oil").getFlowRate("kg/sec") / massTotal;
+          } else {
+            oilMassFraction = 0;
+          }
+          if (inFluid.hasPhaseType("aqueous")) {
+            waterMassFraction = inFluid.getPhase("aqueous").getFlowRate("kg/sec") / massTotal;
+          } else {
+            waterMassFraction = 0;
+          }
+        }
+      }
+
+      double mDotGas = massFlow * gasMassFraction;
+      double mDotOil = massFlow * oilMassFraction;
+      double mDotWater = massFlow * waterMassFraction;
+      double mDotLiq = mDotOil + mDotWater;
+
+      // Update densities from flash for accurate velocity calculation
       double rhoG = inlet.getGasDensity();
-      double rhoL = inlet.getLiquidDensity();
+      double rhoOil = inlet.getOilDensity() > 100 ? inlet.getOilDensity() : 700.0;
+      double rhoWater = inlet.getWaterDensity() > 100 ? inlet.getWaterDensity() : 1000.0;
 
-      if (numPhases >= 2 && inFluid.hasPhaseType("gas")) {
-        double volGas = inFluid.getPhase("gas").getVolume("m3");
-        double volTotal = inFluid.getVolume("m3");
-        if (volTotal > 0) {
-          alphaG = volGas / volTotal;
-          alphaL = 1.0 - alphaG;
-        }
+      if (inFluid.hasPhaseType("gas")) {
         rhoG = inFluid.getPhase("gas").getDensity("kg/m3");
-        if (inFluid.hasPhaseType("oil")) {
-          rhoL = inFluid.getPhase("oil").getDensity("kg/m3");
-        } else if (inFluid.hasPhaseType("aqueous")) {
-          rhoL = inFluid.getPhase("aqueous").getDensity("kg/m3");
-        }
+        inlet.setGasDensity(rhoG);
+      }
+      if (inFluid.hasPhaseType("oil")) {
+        rhoOil = inFluid.getPhase("oil").getDensity("kg/m3");
+        inlet.setOilDensity(rhoOil);
+        inlet.setLiquidDensity(rhoOil);
+      }
+      if (inFluid.hasPhaseType("aqueous")) {
+        rhoWater = inFluid.getPhase("aqueous").getDensity("kg/m3");
+        inlet.setWaterDensity(rhoWater);
       }
 
-      // Set inlet holdups
-      inlet.setGasHoldup(alphaG);
-      inlet.setLiquidHoldup(alphaL);
+      // Get current inlet holdups (from solver state)
+      double alphaG = inlet.getGasHoldup();
+      double alphaL = inlet.getLiquidHoldup();
 
-      // Calculate velocities to maintain inlet mass flow
-      double rhoMix = alphaG * rhoG + alphaL * rhoL;
-      if (rhoMix > 0 && area > 0) {
-        double vMix = massFlow / (rhoMix * area);
-        inlet.setGasVelocity(vMix);
-        inlet.setLiquidVelocity(vMix);
+      // Calculate velocities to maintain inlet mass flow rates
+      // mDot = alpha * rho * v * A => v = mDot / (alpha * rho * A)
+      double vG = 10.0; // Default gas velocity
+      double vL = 2.0; // Default liquid velocity
+      double vOil = vL;
+      double vWater = vL;
+
+      if (alphaG > 0.001 && rhoG > 0.1 && area > 0) {
+        vG = mDotGas / (alphaG * rhoG * area);
+        vG = Math.min(vG, 100.0); // Limit to reasonable velocity
+      }
+      if (alphaL > 0.001 && area > 0) {
+        double rhoL = inlet.getLiquidDensity() > 100 ? inlet.getLiquidDensity() : 700.0;
+        vL = mDotLiq / (alphaL * rhoL * area);
+        vL = Math.min(vL, 50.0); // Limit to reasonable velocity
+        vOil = vL;
+        vWater = vL;
       }
 
-      // Update conservative variables for inlet
-      inlet.updateConservativeVariables();
+      inlet.setGasVelocity(vG);
+      inlet.setLiquidVelocity(vL);
+      inlet.setOilVelocity(vOil);
+      inlet.setWaterVelocity(vWater);
+
+      // Update momentum to be consistent with velocities
+      // Note: We do NOT reset the mass per length here - that would violate mass conservation
+      // The solver evolves the mass, we only set velocities for flux calculation
+      inlet.setGasMomentumPerLength(inlet.getGasMassPerLength() * inlet.getGasVelocity());
+      inlet.setOilMomentumPerLength(inlet.getOilMassPerLength() * inlet.getOilVelocity());
+      inlet.setWaterMomentumPerLength(inlet.getWaterMassPerLength() * inlet.getWaterVelocity());
+      inlet.setLiquidMomentumPerLength(inlet.getLiquidMassPerLength() * inlet.getLiquidVelocity());
     }
 
     // Outlet boundary
@@ -1598,15 +1662,49 @@ public class TwoFluidPipe extends Pipeline {
 
   /**
    * Get total liquid inventory in the pipe.
+   * 
+   * <p>
+   * Calculates inventory from conservative mass per length, converted to volume using local liquid
+   * density. This ensures consistency with the solver's mass tracking.
+   * </p>
    *
    * @param unit Volume unit ("m3", "bbl", "L")
    * @return Liquid volume
    */
   public double getLiquidInventory(String unit) {
     double volume = 0;
+    double pipeVolume = Math.PI * diameter * diameter / 4.0 * length; // Max possible volume
+
     for (TwoFluidSection sec : sections) {
-      volume += sec.getLiquidHoldup() * sec.getArea() * sec.getLength();
+      // Calculate oil volume from oil mass and oil density
+      double oilMass = sec.getOilMassPerLength() * sec.getLength();
+      // Safety check for unreasonable mass values
+      double maxMassPerSection = sec.getArea() * sec.getLength() * 1000.0; // Max: all water
+      oilMass = Math.min(oilMass, maxMassPerSection);
+
+      double rhoO = sec.getOilDensity();
+      if (rhoO > 100) {
+        volume += oilMass / rhoO;
+      } else if (sec.getLiquidDensity() > 100) {
+        volume += oilMass / sec.getLiquidDensity();
+      } else {
+        volume += oilMass / 700.0; // Default oil density
+      }
+
+      // Calculate water volume from water mass and water density
+      double waterMass = sec.getWaterMassPerLength() * sec.getLength();
+      waterMass = Math.min(waterMass, maxMassPerSection);
+
+      double rhoW = sec.getWaterDensity();
+      if (rhoW > 100) {
+        volume += waterMass / rhoW;
+      } else {
+        volume += waterMass / 1000.0; // Default water density
+      }
     }
+
+    // Sanity check: volume cannot exceed pipe volume
+    volume = Math.min(volume, pipeVolume);
 
     switch (unit.toLowerCase()) {
       case "bbl":
