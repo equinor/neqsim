@@ -466,9 +466,11 @@ class TemperatureDropComparisonTest {
     System.out.println("Heat transfer pipe temperature drop: " + htDrop + " K");
 
     // Heat transfer disabled for adiabatic
-    assertFalse(adiabaticPipe.isHeatTransferEnabled(), "Adiabatic pipe should not have heat transfer");
+    assertFalse(adiabaticPipe.isHeatTransferEnabled(),
+        "Adiabatic pipe should not have heat transfer");
     // Heat transfer enabled for the other
-    assertTrue(heatTransferPipe.isHeatTransferEnabled(), "Heat transfer pipe should have heat transfer enabled");
+    assertTrue(heatTransferPipe.isHeatTransferEnabled(),
+        "Heat transfer pipe should have heat transfer enabled");
 
     // Both should have positive outlet temperatures
     assertTrue(adiabaticTemp[adiabaticTemp.length - 1] > 0, "Adiabatic outlet > 0");

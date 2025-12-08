@@ -34,24 +34,38 @@ class TemperatureDropComparisonTest {
 [DEBUG OUTPUT]:
 Low flow temperature drop: 0.0 K
 High flow temperature drop: 0.0 K
+Adiabatic pipe temperature drop: 0.0 K
+Heat transfer pipe temperature drop: 23.35262489977532 K
 TwoFluidPipe inlet: 303.15 K
 TwoFluidPipe outlet: 303.15 K
 Beggs & Brill inlet: 303.15 K
 Beggs & Brill outlet: 278.10973638585665 K
+TwoFluidPipe with heat transfer:
+  Inlet temp: 303.15 K
+  Outlet temp: 279.79737510022443 K
+  Temperature drop: 23.35262489977555 K
+  Heat transfer enabled: true
 
 [RESULTS]:
-Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.046 s
+Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.214 s
 BUILD SUCCESS
 ```
 
 ### Physical Interpretation
 
-1. **TwoFluidPipe Behavior**:
+1. **TwoFluidPipe Adiabatic Behavior**:ehavior**:
    - Inlet temperature: 303.15 K (30°C) ✓
    - Outlet temperature: 303.15 K (no change) ✓
-   - Conclusion: Adiabatic (no heat loss to environment)
+   - Conclusion: Default adiabatic mode (no heat loss to environment)
 
-2. **PipeBeggsAndBrills Behavior**:
+2. **TwoFluidPipe with Heat Transfer**:
+   - Inlet temperature: 303.15 K (30°C) ✓
+   - Outlet temperature: 279.80 K (6.65°C) ✓
+   - Temperature drop: 23.35 K over 3 km
+   - Environmental condition: Seabed at 5°C, h = 25 W/(m²·K)
+   - Conclusion: Heat transfer matches Beggs & Brill within 7%
+
+3. **PipeBeggsAndBrills Behavior**:
    - Inlet temperature: 303.15 K (30°C) ✓
    - Outlet temperature: 278.11 K (4.95°C) ✓
    - Temperature drop: 25.04 K over 3 km
@@ -60,7 +74,7 @@ BUILD SUCCESS
 
 ## API Usage Examples
 
-### Creating a TwoFluidPipe
+### Creating a TwoFluidPipe with Heat Transfer with Heat Transfer
 
 ```java
 // 1. Create thermodynamic system
@@ -80,24 +94,39 @@ inlet.run();
 
 // 3. Create and configure pipe
 TwoFluidPipe pipe = new TwoFluidPipe("subsea-line", inlet);
-pipe.setLength(5000.0);           // 5 km
+pipe.setLength(3000.0);           // 3 km
 pipe.setDiameter(0.3);            // 300 mm
 pipe.setNumberOfSections(50);
 
-// 4. Set elevation profile (flat = horizontal)
+// 4. Configure heat transfer (NEW!)
+pipe.setSurfaceTemperature(5.0, "C");      // Seabed at 5°C
+pipe.setHeatTransferCoefficient(25.0);     // 25 W/(m²·K) - typical subsea
+
+// 5. Set elevation profile (flat = horizontal)
 double[] elevations = new double[50];
 for (int i = 0; i < 50; i++) {
   elevations[i] = 0.0;
 }
 pipe.setElevationProfile(elevations);
 
-// 5. Run simulation
+// 6. Run simulation
 pipe.run();
 
-// 6. Extract results
+// 7. Extract results
 double[] tempProfile = pipe.getTemperatureProfile();
-double inletTemp = tempProfile[0];        // 303.15 K
-double outletTemp = tempProfile[49];      // 303.15 K (adiabatic)
+double inletTemp = tempProfile[0];         // 303.15 K
+double outletTemp = tempProfile[49];       // ~279.8 K (with heat transfer)
+double tempDrop = inletTemp - outletTemp;  // ~23.4 K
+```
+
+### Heat Transfer Coefficient Guidelines
+
+| Condition | U value [W/(m²·K)] | Description |
+|-----------|-------------------|-------------|
+| Insulated subsea | 5-15 | PU foam insulation |
+| Uninsulated subsea | 20-30 | Bare steel in seawater |
+| Buried onshore | 2-5 | Soil thermal resistance |
+| Exposed onshore | 50-100 | Wind-cooled pipe |
 ```
 
 ### Creating an Inclined Pipe
@@ -255,12 +284,14 @@ pipe.setElevationProfile(elev);
 Output: Inlet = 303.15 K, Outlet = 303.15 K (no cooling)
 ```
 
-**Explanation**: This is correct! TwoFluidPipe is adiabatic by design.
+**Explanation**: This is correct if heat transfer is not configured. TwoFluidPipe is adiabatic by default.
 
-**To get heat loss**: Use `PipeBeggsAndBrills` with:
+**To enable heat transfer**: Configure surface temperature and heat transfer coefficient:
 ```java
-pipe.setConstantSurfaceTemperature(5.0, "C");  // Cold seabed
-pipe.setHeatTransferCoefficient(25.0);         // Significant h
+pipe.setSurfaceTemperature(5.0, "C");      // Cold seabed at 5°C
+pipe.setHeatTransferCoefficient(25.0);     // 25 W/(m²·K) typical subsea
+pipe.run();
+// Now outlet will show temperature drop: ~23 K over 3 km
 ```
 
 ## Integration with CI/CD
@@ -300,5 +331,5 @@ mvnw test jacoco:report
 ---
 
 **Last Updated**: December 8, 2024
-**Test Status**: ✅ All 7 tests passing
-**Coverage**: Temperature profile initialization, comparison, stability, reproducibility
+**Test Status**: ✅ All 9 tests passing
+**Coverage**: Temperature profile initialization, comparison, stability, reproducibility, heat transfer

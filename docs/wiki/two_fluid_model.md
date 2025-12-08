@@ -85,6 +85,34 @@ Where:
 ∂/∂t(E·A) + ∂/∂x((E + P)·um·A) = Q - W
 ```
 
+### Heat Transfer to Surroundings
+
+The model supports configurable heat transfer from the pipe wall using Newton's law of cooling:
+
+```
+Q_wall = U × π × D × (T_surface - T_fluid)  [W/m]
+```
+
+Where:
+- `U` = Overall heat transfer coefficient [W/(m²·K)]
+- `D` = Pipe diameter [m]
+- `T_surface` = Ambient/seabed temperature [K]
+- `T_fluid` = Fluid mixture temperature [K]
+
+**API:**
+```java
+pipe.setSurfaceTemperature(5.0, "C");      // Seabed at 5°C
+pipe.setHeatTransferCoefficient(25.0);     // 25 W/(m²·K)
+```
+
+**Typical U-values:**
+| Condition | U [W/(m²·K)] |
+|-----------|------------|
+| Insulated subsea | 5-15 |
+| Uninsulated subsea | 20-30 |
+| Buried onshore | 2-5 |
+| Exposed onshore | 50-100 |
+
 ## Closure Relations
 
 ### Flow Regime Detection
@@ -207,6 +235,10 @@ for (int i = 0; i < 100; i++) {
     elevations[i] = 50.0 * Math.sin(i * Math.PI / 50);
 }
 pipe.setElevationProfile(elevations);
+
+// Optional: Configure heat transfer to surroundings
+pipe.setSurfaceTemperature(5.0, "C");      // Seabed at 5°C
+pipe.setHeatTransferCoefficient(25.0);     // 25 W/(m²·K)
 
 // Run steady-state initialization
 pipe.run();
