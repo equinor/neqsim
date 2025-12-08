@@ -1258,9 +1258,9 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     double outletTempEnhanced = pipeEnhanced.getOutletTemperature();
 
     // Document comprehensive comparison
-    System.out.println("\n" + "=".repeat(60));
+    System.out.println("\n" + "============================================================");
     System.out.println("ENHANCED ENERGY EQUATION EVALUATION");
-    System.out.println("=".repeat(60));
+    System.out.println("============================================================");
     System.out.println("\nConditions:");
     System.out.println("  Inlet: " + String.format("%.1f", temperature - 273.15) + " °C, "
         + String.format("%.0f", pressure) + " bar");
@@ -1272,7 +1272,7 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
 
     System.out.println("\n--- Temperature Results ---");
     System.out.println(String.format("%-30s %10s %10s", "Model", "Outlet (K)", "Drop (K)"));
-    System.out.println("-".repeat(52));
+    System.out.println("----------------------------------------------------");
     System.out.println(String.format("%-30s %10.2f %10.2f", "Original (LMTD only)",
         outletTempOriginal, temperature - outletTempOriginal));
     System.out.println(String.format("%-30s %10.2f %10.2f", "Enhanced (LMTD + JT + Friction)",
