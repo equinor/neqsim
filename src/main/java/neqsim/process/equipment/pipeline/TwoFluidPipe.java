@@ -793,8 +793,63 @@ public class TwoFluidPipe extends Pipeline {
     sec.setWaterMassPerLength(alphaW * rhoWater * area);
     sec.setOilMassPerLength(alphaO * rhoOil * area);
 
+    // Calculate water-oil velocity slip
+    // In steady state, conservation of mass gives:
+    // m_dot_water = rho_w * alpha_w * A * v_w (constant)
+    // m_dot_oil = rho_o * alpha_o * A * v_o (constant)
+    // But with slip, v_w != v_o
+
+    double vL = sec.getLiquidVelocity();
+    double vOil = vL;
+    double vWater = vL;
+
+    if (isWaterOilSlipEnabled() && deltaRho > 0 && alphaL > 0.02 && alphaW > 0.005
+        && alphaO > 0.005) {
+      // Calculate slip velocity based on density difference and inclination
+      // Use simplified drift-flux model for oil-water
+      double dropletDiameter = 0.001; // 1 mm average droplet (reduced from 2mm)
+      double stokesSettling = deltaRho * g * dropletDiameter * dropletDiameter / (18 * muOil);
+
+      // Limit slip to a fraction of liquid velocity (physical constraint)
+      // In turbulent flow, slip is limited by turbulent mixing
+      double maxSlip = 0.3 * vL; // Maximum 30% of liquid velocity
+      stokesSettling = Math.min(stokesSettling, maxSlip);
+
+      // Slip is enhanced in inclined flow, but moderated
+      double slipEnhancement = 1.0;
+      if (Math.abs(sinTheta) > 0.01) {
+        // In inclined flow, slip is enhanced by gravity component
+        slipEnhancement = 1.0 + 0.3 * Math.abs(sinTheta);
+      }
+
+      double slipVelocity = stokesSettling * slipEnhancement;
+
+      // In uphill flow: water slips back (slower than oil)
+      // In downhill flow: water moves ahead (faster than oil due to density)
+      if (sinTheta > 0) {
+        // Uphill: oil faster, water slower
+        vWater = vL - slipVelocity * (1.0 - waterCut);
+        vOil = vL + slipVelocity * waterCut;
+      } else if (sinTheta < 0) {
+        // Downhill: water faster (gravity pulls heavier phase down), oil slower
+        vWater = vL + slipVelocity * (1.0 - waterCut);
+        vOil = vL - slipVelocity * waterCut;
+      }
+
+      // Ensure velocities stay positive for forward flow
+      vWater = Math.max(0.1 * vL, vWater);
+      vOil = Math.max(0.1 * vL, vOil);
+    }
+
+    sec.setOilVelocity(vOil);
+    sec.setWaterVelocity(vWater);
+
     // Update combined liquid properties based on new water cut
     sec.updateThreePhaseProperties();
+
+    // Update momentum variables
+    sec.setOilMomentumPerLength(sec.getOilMassPerLength() * vOil);
+    sec.setWaterMomentumPerLength(sec.getWaterMassPerLength() * vWater);
   }
 
   @Override
@@ -1231,6 +1286,69 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
+   * Get oil velocity profile along the pipeline.
+   *
+   * <p>
+   * When water-oil slip is enabled, this returns the independent oil velocity. Otherwise, it
+   * returns the combined liquid velocity.
+   * </p>
+   *
+   * @return Oil velocity at each section (m/s)
+   */
+  public double[] getOilVelocityProfile() {
+    if (sections == null) {
+      return new double[0];
+    }
+    double[] velocities = new double[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      velocities[i] = sections[i].getOilVelocity();
+    }
+    return velocities;
+  }
+
+  /**
+   * Get water velocity profile along the pipeline.
+   *
+   * <p>
+   * When water-oil slip is enabled, this returns the independent water velocity. Otherwise, it
+   * returns the combined liquid velocity.
+   * </p>
+   *
+   * @return Water velocity at each section (m/s)
+   */
+  public double[] getWaterVelocityProfile() {
+    if (sections == null) {
+      return new double[0];
+    }
+    double[] velocities = new double[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      velocities[i] = sections[i].getWaterVelocity();
+    }
+    return velocities;
+  }
+
+  /**
+   * Get oil-water velocity slip profile along the pipeline.
+   *
+   * <p>
+   * Returns the difference between oil and water velocities (vOil - vWater). Positive values
+   * indicate oil is flowing faster than water.
+   * </p>
+   *
+   * @return Oil-water slip velocity at each section (m/s)
+   */
+  public double[] getOilWaterSlipProfile() {
+    if (sections == null) {
+      return new double[0];
+    }
+    double[] slip = new double[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      slip[i] = sections[i].getOilVelocity() - sections[i].getWaterVelocity();
+    }
+    return slip;
+  }
+
+  /**
    * Get flow regime at each section.
    *
    * @return Array of flow regimes
@@ -1447,6 +1565,39 @@ public class TwoFluidPipe extends Pipeline {
    */
   public void setEnableSlugTracking(boolean enable) {
     this.enableSlugTracking = enable;
+  }
+
+  /**
+   * Enable water-oil velocity slip modeling.
+   *
+   * <p>
+   * When enabled, uses 7-equation model with separate oil and water momentum equations, allowing
+   * water and oil phases to flow at different velocities. This is important for:
+   * </p>
+   * <ul>
+   * <li>Uphill flow: water slips back relative to oil due to higher density</li>
+   * <li>Downhill flow: water accelerates relative to oil</li>
+   * <li>Stratified oil-water flow with shear at interface</li>
+   * </ul>
+   *
+   * @param enable true to enable 7-equation model with oil-water slip
+   */
+  public void setEnableWaterOilSlip(boolean enable) {
+    if (equations != null) {
+      equations.setEnableWaterOilSlip(enable);
+    }
+  }
+
+  /**
+   * Check if water-oil velocity slip modeling is enabled.
+   *
+   * @return true if 7-equation model is enabled
+   */
+  public boolean isWaterOilSlipEnabled() {
+    if (equations != null) {
+      return equations.isEnableWaterOilSlip();
+    }
+    return false;
   }
 
   /**

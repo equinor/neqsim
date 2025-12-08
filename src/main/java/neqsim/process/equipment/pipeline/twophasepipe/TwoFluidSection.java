@@ -120,6 +120,12 @@ public class TwoFluidSection extends PipeSection {
   /** Oil mass per unit length: α_o * ρ_o * A (kg/m). */
   private double oilMassPerLength = 0.0;
 
+  /** Water momentum per unit length: α_w * ρ_w * v_w * A (kg/s). */
+  private double waterMomentumPerLength = 0.0;
+
+  /** Oil momentum per unit length: α_o * ρ_o * v_o * A (kg/s). */
+  private double oilMomentumPerLength = 0.0;
+
   /** Water velocity (m/s). */
   private double waterVelocity = 0.0;
 
@@ -329,41 +335,47 @@ public class TwoFluidSection extends PipeSection {
   }
 
   /**
-   * Get state vector for numerical integration.
-   *
-   * @return Conservative state [gasMass, oilMass, waterMass, gasMom, liquidMom, energy]
-   */
-  public double[] getStateVector() {
-    return new double[] {gasMassPerLength, oilMassPerLength, waterMassPerLength,
-        gasMomentumPerLength, liquidMomentumPerLength, energyPerLength};
-  }
-
-  /**
-   * Get extended state vector including water momentum (7 equations).
+   * Get state vector for numerical integration (7-equation model with water-oil slip).
    *
    * @return Conservative state [gasMass, oilMass, waterMass, gasMom, oilMom, waterMom, energy]
    */
-  public double[] getExtendedStateVector() {
-    double oilMomentum = oilMassPerLength > 0 ? oilMassPerLength * oilVelocity : 0;
-    double waterMomentum = waterMassPerLength > 0 ? waterMassPerLength * waterVelocity : 0;
+  public double[] getStateVector() {
     return new double[] {gasMassPerLength, oilMassPerLength, waterMassPerLength,
-        gasMomentumPerLength, oilMomentum, waterMomentum, energyPerLength};
+        gasMomentumPerLength, oilMomentumPerLength, waterMomentumPerLength, energyPerLength};
   }
 
   /**
-   * Set state from vector.
+   * Set state from vector (7-equation model with water-oil slip).
    *
-   * @param state Conservative state [gasMass, oilMass, waterMass, gasMom, liquidMom, energy]
+   * @param state Conservative state [gasMass, oilMass, waterMass, gasMom, oilMom, waterMom, energy]
    */
   public void setStateVector(double[] state) {
-    if (state.length >= 6) {
+    if (state.length >= 7) {
+      // Full 7-equation model with water-oil slip
       gasMassPerLength = state[0];
       oilMassPerLength = state[1];
       waterMassPerLength = state[2];
-      // Keep liquidMassPerLength as sum of oil and water
+      liquidMassPerLength = oilMassPerLength + waterMassPerLength;
+      gasMomentumPerLength = state[3];
+      oilMomentumPerLength = state[4];
+      waterMomentumPerLength = state[5];
+      // Combined liquid momentum for compatibility
+      liquidMomentumPerLength = oilMomentumPerLength + waterMomentumPerLength;
+      energyPerLength = state[6];
+    } else if (state.length >= 6) {
+      // Legacy 6-equation model (combined liquid momentum)
+      gasMassPerLength = state[0];
+      oilMassPerLength = state[1];
+      waterMassPerLength = state[2];
       liquidMassPerLength = oilMassPerLength + waterMassPerLength;
       gasMomentumPerLength = state[3];
       liquidMomentumPerLength = state[4];
+      // Split momentum proportionally to mass
+      double totalLiqMass = oilMassPerLength + waterMassPerLength;
+      if (totalLiqMass > 1e-10) {
+        oilMomentumPerLength = liquidMomentumPerLength * oilMassPerLength / totalLiqMass;
+        waterMomentumPerLength = liquidMomentumPerLength * waterMassPerLength / totalLiqMass;
+      }
       energyPerLength = state[5];
     } else if (state.length >= 5) {
       // Legacy 5-variable state (no water separation)
@@ -408,6 +420,22 @@ public class TwoFluidSection extends PipeSection {
         waterCut = alphaW / alphaL;
         oilFractionInLiquid = 1.0 - waterCut;
       }
+
+      // Extract velocities from momenta (with slip)
+      if (oilMassPerLength > 1e-12) {
+        double vO = oilMomentumPerLength / oilMassPerLength;
+        vO = Math.max(-50, Math.min(50, vO)); // Clamp to physical range
+        if (!Double.isNaN(vO)) {
+          oilVelocity = vO;
+        }
+      }
+      if (waterMassPerLength > 1e-12) {
+        double vW = waterMomentumPerLength / waterMassPerLength;
+        vW = Math.max(-50, Math.min(50, vW)); // Clamp to physical range
+        if (!Double.isNaN(vW)) {
+          waterVelocity = vW;
+        }
+      }
     }
   }
 
@@ -421,8 +449,13 @@ public class TwoFluidSection extends PipeSection {
     waterMassPerLength = waterHoldup * waterDensity * A;
     oilMassPerLength = oilHoldup * oilDensity * A;
 
-    // Liquid mass is the sum
+    // Calculate water and oil momentum per length from velocities
+    waterMomentumPerLength = waterMassPerLength * waterVelocity;
+    oilMomentumPerLength = oilMassPerLength * oilVelocity;
+
+    // Combined liquid values
     liquidMassPerLength = waterMassPerLength + oilMassPerLength;
+    liquidMomentumPerLength = waterMomentumPerLength + oilMomentumPerLength;
   }
 
   /**
@@ -550,6 +583,48 @@ public class TwoFluidSection extends PipeSection {
 
   public void setInterfacialShear(double interfacialShear) {
     this.interfacialShear = interfacialShear;
+  }
+
+  /**
+   * Calculate the oil-water interfacial shear stress.
+   *
+   * <p>
+   * Models the shear between oil and water phases when they flow at different velocities. Uses a
+   * simplified model based on relative velocity and Stokes settling.
+   * </p>
+   *
+   * @return Oil-water interfacial shear stress (Pa), positive when oil flows faster than water
+   */
+  public double calcOilWaterInterfacialShear() {
+    // Only relevant for three-phase flow
+    if (waterHoldup < 0.001 || oilHoldup < 0.001) {
+      return 0.0;
+    }
+
+    // Relative velocity between oil and water
+    double deltaV = oilVelocity - waterVelocity;
+
+    // If no significant slip, no shear
+    if (Math.abs(deltaV) < 0.001) {
+      return 0.0;
+    }
+
+    // Friction factor for oil-water interface (simplified)
+    // Higher for stratified flow, lower for dispersed
+    double f_ow = 0.01;
+    if (waterHoldup > 0.1 && oilHoldup > 0.1) {
+      // Stratified regime - higher friction
+      f_ow = 0.02;
+    }
+
+    // Average density at interface
+    double rhoAvg = 0.5 * (oilDensity + waterDensity);
+
+    // Interfacial shear stress (Pa)
+    // tau_ow = f_ow * rho * |deltaV| * deltaV / 2
+    double tau_ow = f_ow * rhoAvg * Math.abs(deltaV) * deltaV / 2.0;
+
+    return tau_ow;
   }
 
   public double getGasMassSource() {
@@ -711,6 +786,22 @@ public class TwoFluidSection extends PipeSection {
 
   public void setOilMassPerLength(double oilMassPerLength) {
     this.oilMassPerLength = oilMassPerLength;
+  }
+
+  public double getWaterMomentumPerLength() {
+    return waterMomentumPerLength;
+  }
+
+  public void setWaterMomentumPerLength(double waterMomentumPerLength) {
+    this.waterMomentumPerLength = waterMomentumPerLength;
+  }
+
+  public double getOilMomentumPerLength() {
+    return oilMomentumPerLength;
+  }
+
+  public void setOilMomentumPerLength(double oilMomentumPerLength) {
+    this.oilMomentumPerLength = oilMomentumPerLength;
   }
 
   public double getWaterVelocity() {

@@ -45,10 +45,10 @@ public class TwoFluidConservationEquations implements Serializable {
   private static final double GRAVITY = 9.81;
 
   /**
-   * Number of conservation equations (6 for three-phase: gas, oil, water mass + gas, liquid
-   * momentum + energy).
+   * Number of conservation equations (7 for three-phase with water-oil slip: gas mass, oil mass,
+   * water mass, gas momentum, oil momentum, water momentum, energy).
    */
-  public static final int NUM_EQUATIONS = 6;
+  public static final int NUM_EQUATIONS = 7;
 
   /** Index for gas mass. */
   public static final int IDX_GAS_MASS = 0;
@@ -62,14 +62,17 @@ public class TwoFluidConservationEquations implements Serializable {
   /** Index for gas momentum. */
   public static final int IDX_GAS_MOMENTUM = 3;
 
-  /** Index for liquid momentum (combined oil + water). */
-  public static final int IDX_LIQUID_MOMENTUM = 4;
+  /** Index for oil momentum (separate from water for slip). */
+  public static final int IDX_OIL_MOMENTUM = 4;
+
+  /** Index for water momentum (separate for water-oil slip). */
+  public static final int IDX_WATER_MOMENTUM = 5;
 
   /** Index for energy. */
-  public static final int IDX_ENERGY = 5;
+  public static final int IDX_ENERGY = 6;
 
-  /** Legacy index for liquid mass (for compatibility). */
-  public static final int IDX_LIQUID_MASS = 1; // Use IDX_OIL_MASS + IDX_WATER_MASS
+  /** Legacy index for liquid momentum (for compatibility - uses oil momentum). */
+  public static final int IDX_LIQUID_MOMENTUM = 4;
 
   // Closure models
   private WallFriction wallFriction;
@@ -85,6 +88,12 @@ public class TwoFluidConservationEquations implements Serializable {
   private boolean includeEnergyEquation = true;
   private boolean includeMassTransfer = false;
   private double massTransferCoefficient = 0.01; // kg/(m³·s·Pa)
+
+  /**
+   * Enable water-oil velocity slip (7-equation model). When true, oil and water have separate
+   * momentum equations allowing different velocities.
+   */
+  private boolean enableWaterOilSlip = true;
 
   /**
    * Constructor.
@@ -175,8 +184,8 @@ public class TwoFluidConservationEquations implements Serializable {
    * Calculate fluxes at cell interfaces using AUSM+.
    *
    * <p>
-   * For three-phase flow, we track oil and water mass fluxes separately. Water generally moves
-   * slower than oil in upward flow due to density differences.
+   * For three-phase flow with water-oil slip, we track oil and water mass and momentum fluxes
+   * separately. Water generally moves slower than oil in upward flow due to density differences.
    * </p>
    *
    * @param sections Pipe sections
@@ -196,27 +205,29 @@ public class TwoFluidConservationEquations implements Serializable {
       // Create phase states for AUSM+
       PhaseState gasL = createGasState(left);
       PhaseState gasR = createGasState(right);
-      PhaseState liqL = createLiquidState(left);
-      PhaseState liqR = createLiquidState(right);
 
-      // Calculate phase fluxes
+      // Create separate oil and water states for slip modeling
+      PhaseState oilL = createOilState(left);
+      PhaseState oilR = createOilState(right);
+      PhaseState waterL = createWaterState(left);
+      PhaseState waterR = createWaterState(right);
+
+      // Calculate phase fluxes separately for gas, oil, and water
       PhaseFlux gasFlux = fluxCalculator.calcPhaseFlux(gasL, gasR, A);
-      PhaseFlux liqFlux = fluxCalculator.calcPhaseFlux(liqL, liqR, A);
+      PhaseFlux oilFlux = fluxCalculator.calcPhaseFlux(oilL, oilR, A);
+      PhaseFlux waterFlux = fluxCalculator.calcPhaseFlux(waterL, waterR, A);
 
-      // Assemble interface flux vector - now with separate oil and water mass
+      // Assemble interface flux vector - separate oil and water
       fluxes[i][IDX_GAS_MASS] = gasFlux.massFlux;
-
-      // Split liquid mass flux into oil and water based on local water cut
-      double avgWaterCut = 0.5 * (left.getWaterCut() + right.getWaterCut());
-      double avgOilFrac = 1.0 - avgWaterCut;
-      fluxes[i][IDX_OIL_MASS] = liqFlux.massFlux * avgOilFrac;
-      fluxes[i][IDX_WATER_MASS] = liqFlux.massFlux * avgWaterCut;
+      fluxes[i][IDX_OIL_MASS] = oilFlux.massFlux;
+      fluxes[i][IDX_WATER_MASS] = waterFlux.massFlux;
 
       fluxes[i][IDX_GAS_MOMENTUM] = gasFlux.momentumFlux;
-      fluxes[i][IDX_LIQUID_MOMENTUM] = liqFlux.momentumFlux;
+      fluxes[i][IDX_OIL_MOMENTUM] = oilFlux.momentumFlux;
+      fluxes[i][IDX_WATER_MOMENTUM] = waterFlux.momentumFlux;
 
       if (includeEnergyEquation) {
-        fluxes[i][IDX_ENERGY] = gasFlux.energyFlux + liqFlux.energyFlux;
+        fluxes[i][IDX_ENERGY] = gasFlux.energyFlux + oilFlux.energyFlux + waterFlux.energyFlux;
       }
     }
 
@@ -322,7 +333,43 @@ public class TwoFluidConservationEquations implements Serializable {
       sources[i][IDX_WATER_MASS] = Gamma_L * waterCut + waterSegregationSource;
 
       sources[i][IDX_GAS_MOMENTUM] = F_wG + F_iG + F_gG + Gamma_G * sec.getGasVelocity();
-      sources[i][IDX_LIQUID_MOMENTUM] = F_wL + F_iL + F_gL + Gamma_L * sec.getLiquidVelocity();
+
+      if (enableWaterOilSlip && NUM_EQUATIONS == 7) {
+        // Separate oil and water momentum equations
+        // Wall friction partitioned between oil and water based on holdup
+        double oilHoldupFrac = (alphaL > 0.01) ? alphaO / alphaL : 0.5;
+        double waterHoldupFrac = (alphaL > 0.01) ? alphaW / alphaL : 0.5;
+
+        double F_wO = F_wL * oilHoldupFrac;
+        double F_wW = F_wL * waterHoldupFrac;
+
+        // Gas-liquid interfacial force partitioned to the dominant liquid phase
+        // (Gas interacts primarily with oil on top for stratified oil-water flow)
+        double F_iO = F_iL * 0.8; // Oil gets most of gas-liquid interface
+        double F_iW = F_iL * 0.2;
+
+        // Oil-water interfacial shear (from TwoFluidSection calculation)
+        double tau_ow = sec.calcOilWaterInterfacialShear();
+
+        // Estimate oil-water interface length (simplified as fraction of diameter)
+        double S_ow = sec.getDiameter() * 0.5 * alphaL;
+
+        // Force on oil from oil-water interface (negative = retarded by water)
+        double F_ow_oil = -tau_ow * S_ow;
+        double F_ow_water = tau_ow * S_ow; // Opposite sign
+
+        // Assemble oil momentum source
+        sources[i][IDX_OIL_MOMENTUM] =
+            F_wO + F_iO + F_gO + F_ow_oil + Gamma_L * (1.0 - waterCut) * sec.getOilVelocity();
+
+        // Assemble water momentum source
+        sources[i][IDX_WATER_MOMENTUM] =
+            F_wW + F_iW + F_gW + F_ow_water + Gamma_L * waterCut * sec.getWaterVelocity();
+      } else {
+        // Combined liquid momentum (original 6-equation model)
+        sources[i][IDX_OIL_MOMENTUM] = F_wL + F_iL + F_gL + Gamma_L * sec.getLiquidVelocity();
+        sources[i][IDX_WATER_MOMENTUM] = 0; // Not used in 6-equation mode
+      }
 
       if (includeEnergyEquation) {
         // Energy source: heat transfer + friction work
@@ -335,7 +382,9 @@ public class TwoFluidConservationEquations implements Serializable {
       sec.setGasMassSource(Gamma_G);
       sec.setLiquidMassSource(Gamma_L);
       sec.setGasMomentumSource(sources[i][IDX_GAS_MOMENTUM]);
-      sec.setLiquidMomentumSource(sources[i][IDX_LIQUID_MOMENTUM]);
+      // Combined liquid momentum for diagnostics
+      double liquidMomSource = sources[i][IDX_OIL_MOMENTUM] + sources[i][IDX_WATER_MOMENTUM];
+      sec.setLiquidMomentumSource(liquidMomSource);
       sec.setEnergySource(sources[i][IDX_ENERGY]);
     }
 
@@ -367,6 +416,36 @@ public class TwoFluidConservationEquations implements Serializable {
     state.soundSpeed = sec.getLiquidSoundSpeed();
     state.enthalpy = sec.getLiquidEnthalpy();
     state.holdup = sec.getLiquidHoldup();
+    return state;
+  }
+
+  /**
+   * Create oil phase state for flux calculation in three-phase flow.
+   */
+  private PhaseState createOilState(TwoFluidSection sec) {
+    PhaseState state = new PhaseState();
+    state.density = sec.getOilDensity();
+    state.velocity = sec.getOilVelocity();
+    state.pressure = sec.getPressure();
+    // Use liquid sound speed for oil (simplified)
+    state.soundSpeed = sec.getLiquidSoundSpeed();
+    state.enthalpy = sec.getLiquidEnthalpy() * sec.getOilFractionInLiquid();
+    state.holdup = sec.getOilHoldup();
+    return state;
+  }
+
+  /**
+   * Create water phase state for flux calculation in three-phase flow.
+   */
+  private PhaseState createWaterState(TwoFluidSection sec) {
+    PhaseState state = new PhaseState();
+    state.density = sec.getWaterDensity();
+    state.velocity = sec.getWaterVelocity();
+    state.pressure = sec.getPressure();
+    // Use liquid sound speed for water (simplified)
+    state.soundSpeed = sec.getLiquidSoundSpeed();
+    state.enthalpy = sec.getLiquidEnthalpy() * sec.getWaterCut();
+    state.holdup = sec.getWaterHoldup();
     return state;
   }
 
@@ -441,9 +520,18 @@ public class TwoFluidConservationEquations implements Serializable {
 
       double A = sec.getArea();
 
-      // Pressure force on each phase
+      // Pressure force on gas phase
       dUdt[i][IDX_GAS_MOMENTUM] -= sec.getGasHoldup() * A * dPdx;
-      dUdt[i][IDX_LIQUID_MOMENTUM] -= sec.getLiquidHoldup() * A * dPdx;
+
+      if (enableWaterOilSlip && NUM_EQUATIONS == 7) {
+        // Separate pressure forces for oil and water
+        dUdt[i][IDX_OIL_MOMENTUM] -= sec.getOilHoldup() * A * dPdx;
+        dUdt[i][IDX_WATER_MOMENTUM] -= sec.getWaterHoldup() * A * dPdx;
+      } else {
+        // Combined liquid pressure force
+        dUdt[i][IDX_OIL_MOMENTUM] -= sec.getLiquidHoldup() * A * dPdx;
+        // IDX_WATER_MOMENTUM not used in 6-equation mode
+      }
     }
   }
 
@@ -507,6 +595,29 @@ public class TwoFluidConservationEquations implements Serializable {
 
   public void setIncludeMassTransfer(boolean includeMassTransfer) {
     this.includeMassTransfer = includeMassTransfer;
+  }
+
+  /**
+   * Check if water-oil velocity slip modeling is enabled.
+   *
+   * @return true if 7-equation model with separate oil/water momentum is enabled
+   */
+  public boolean isEnableWaterOilSlip() {
+    return enableWaterOilSlip;
+  }
+
+  /**
+   * Enable or disable water-oil velocity slip modeling.
+   *
+   * <p>
+   * When enabled, uses 7-equation model with separate oil and water momentum equations, allowing
+   * water to flow at different velocity than oil (e.g., water slipping back in uphill flow).
+   * </p>
+   *
+   * @param enableWaterOilSlip true to enable 7-equation slip model
+   */
+  public void setEnableWaterOilSlip(boolean enableWaterOilSlip) {
+    this.enableWaterOilSlip = enableWaterOilSlip;
   }
 
   public double getMassTransferCoefficient() {

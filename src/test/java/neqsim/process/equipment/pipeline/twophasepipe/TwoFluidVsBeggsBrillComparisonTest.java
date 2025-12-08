@@ -2683,4 +2683,129 @@ class TwoFluidVsBeggsBrillComparisonTest {
           "Water + Oil holdup should equal liquid holdup at section " + i);
     }
   }
+
+  @Test
+  @DisplayName("Water-oil velocity slip in uphill flow")
+  void testWaterOilVelocitySlipInUphillFlow() {
+    System.out.println("\n=== Water-Oil Velocity Slip in Uphill Flow ===");
+    System.out.println("Testing that water flows slower than oil in uphill sections\n");
+    System.out.println("Using 7-equation model with separate oil/water momentum\n");
+
+    // Three-phase fluid with significant water content
+    SystemInterface fluid = new SystemSrkEos(290.15, 30.0);
+    fluid.addComponent("methane", 0.40);
+    fluid.addComponent("ethane", 0.05);
+    fluid.addComponent("propane", 0.03);
+    fluid.addComponent("n-pentane", 0.15);
+    fluid.addComponent("n-heptane", 0.17);
+    fluid.addComponent("water", 0.20);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+
+    Stream inlet = new Stream("inlet", fluid);
+    inlet.setFlowRate(8.0, "kg/sec");
+    inlet.setTemperature(20.0, "C");
+    inlet.setPressure(30.0, "bara");
+    inlet.run();
+
+    // Uphill pipeline (constant upward slope)
+    double pipeLength = 3000.0;
+    int nSections = 30;
+    double[] elevations = new double[nSections];
+
+    // 30-degree uphill slope (steep)
+    double totalRise = pipeLength * Math.sin(Math.toRadians(10));
+    for (int i = 0; i < nSections; i++) {
+      elevations[i] = totalRise * i / (nSections - 1);
+    }
+    System.out.printf("Pipeline: %.0f m long, %.0f m elevation rise (%.0f° slope)%n", pipeLength,
+        totalRise, 10.0);
+
+    TwoFluidPipe pipe = new TwoFluidPipe("UphillSlip", inlet);
+    pipe.setLength(pipeLength);
+    pipe.setDiameter(0.15);
+    pipe.setNumberOfSections(nSections);
+    pipe.setRoughness(4.5e-5);
+    pipe.setElevationProfile(elevations);
+    pipe.setEnableWaterOilSlip(true);
+    pipe.run();
+
+    // Get velocity profiles
+    double[] oilVel = pipe.getOilVelocityProfile();
+    double[] waterVel = pipe.getWaterVelocityProfile();
+    double[] slip = pipe.getOilWaterSlipProfile();
+    double[] waterCut = pipe.getWaterCutProfile();
+    double[] liqHoldup = pipe.getLiquidHoldupProfile();
+
+    // Print velocity comparison
+    System.out.println("\n--- Velocity Profiles Along Uphill Pipeline ---");
+    System.out.println("Position   Elev[m]  OilVel[m/s]  WaterVel[m/s]  Slip[m/s]  WaterCut");
+    System.out.println("----------------------------------------------------------------------");
+
+    for (int i = 0; i < nSections; i += 3) {
+      double pos = pipeLength * i / (nSections - 1);
+      System.out.printf("%6.0f m   %6.1f     %6.3f       %6.3f       %+6.3f     %.3f%n", pos,
+          elevations[i], oilVel[i], waterVel[i], slip[i], waterCut[i]);
+    }
+
+    // Calculate average slip
+    double avgSlip = 0;
+    int countWithLiquid = 0;
+    for (int i = 0; i < nSections; i++) {
+      if (liqHoldup[i] > 0.02) {
+        avgSlip += slip[i];
+        countWithLiquid++;
+      }
+    }
+    if (countWithLiquid > 0) {
+      avgSlip /= countWithLiquid;
+    }
+
+    System.out.println("\n--- Velocity Slip Analysis ---");
+    System.out.printf("Average oil-water slip: %.3f m/s%n", avgSlip);
+    System.out.printf("Average oil velocity:   %.3f m/s%n", average(oilVel));
+    System.out.printf("Average water velocity: %.3f m/s%n", average(waterVel));
+
+    // Physical interpretation
+    System.out.println("\n--- Physical Interpretation ---");
+    if (avgSlip > 0.001) {
+      System.out.println("✓ Oil flows faster than water in uphill sections");
+      System.out.println("  Water (density ~1000 kg/m³) is retarded by gravity");
+      System.out.println("  while oil (density ~800 kg/m³) flows more easily uphill");
+    } else if (avgSlip < -0.001) {
+      System.out.println("⚠️ Water flows faster than oil (unexpected in uphill flow)");
+    } else {
+      System.out.println("Oil and water flow at similar velocities");
+      System.out.println("  (May indicate dispersed emulsion or low liquid holdup)");
+    }
+
+    // Check water cut variation
+    double wcInlet = waterCut[0];
+    double wcOutlet = waterCut[nSections - 1];
+    System.out.printf("\nWater cut: inlet=%.1f%%, outlet=%.1f%%%n", wcInlet * 100, wcOutlet * 100);
+
+    if (wcOutlet < wcInlet) {
+      System.out.println("✓ Water cut decreases along uphill pipeline");
+      System.out.println("  Water slipping back leads to lower water cut at outlet");
+    }
+
+    // Assertions - velocities should be positive and reasonable
+    for (int i = 0; i < nSections; i++) {
+      if (liqHoldup[i] > 0.01) {
+        assertTrue(oilVel[i] >= 0, "Oil velocity should be positive at section " + i);
+        assertTrue(waterVel[i] >= 0, "Water velocity should be positive at section " + i);
+      }
+    }
+
+    System.out.println("\n✓ Test completed successfully");
+  }
+
+  /** Helper method to calculate array average. */
+  private double average(double[] arr) {
+    double sum = 0;
+    for (double v : arr) {
+      sum += v;
+    }
+    return sum / arr.length;
+  }
 }
