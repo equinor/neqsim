@@ -131,7 +131,7 @@ public class TwoFluidPipe extends Pipeline {
   /** Maximum simulation time (s). */
   private double maxSimulationTime = 3600;
 
-  /** CFL number for time stepping (0 < CFL < 1). */
+  /** CFL number for time stepping (0 &lt; CFL &lt; 1). */
   private double cflNumber = 0.5;
 
   // ============ Sub-models ============
@@ -672,6 +672,9 @@ public class TwoFluidPipe extends Pipeline {
 
   /**
    * Estimate pressure gradient for steady-state initialization.
+   *
+   * @param sec Current pipe section
+   * @return Pressure gradient estimate (Pa/m)
    */
   private double estimatePressureGradient(TwoFluidSection sec) {
     double alphaG = sec.getGasHoldup();
@@ -703,12 +706,12 @@ public class TwoFluidPipe extends Pipeline {
    * <p>
    * Water is denser than oil, so it tends to accumulate in valleys (low spots) more than oil. This
    * method calculates the local water cut which can vary along the pipe based on:
+   * </p>
    * <ul>
    * <li>Gravity segregation: water settles faster in low-velocity regions</li>
    * <li>Terrain effects: water accumulates more in valleys</li>
    * <li>Slip between oil and water phases</li>
    * </ul>
-   * </p>
    *
    * @param sec Current section
    * @param prev Previous section (upstream)
@@ -1525,7 +1528,7 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Set CFL number for time stepping.
    *
-   * @param cfl CFL number (0 < cfl < 1)
+   * @param cfl CFL number (0 &lt; cfl &lt; 1)
    */
   public void setCflNumber(double cfl) {
     this.cflNumber = Math.max(0.1, Math.min(0.9, cfl));

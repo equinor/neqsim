@@ -234,7 +234,7 @@ public class AUSMPlusFluxCalculator implements Serializable {
    * AUSM+ M⁺ splitting function.
    *
    * <p>
-   * For |M| ≤ 1: M⁺ = ¼(M+1)² + β(M²-1)² For M > 1: M⁺ = ½(M + |M|) For M < -1: M⁺ = 0
+   * For |M| ≤ 1: M⁺ = ¼(M+1)² + β(M²-1)². For M &gt; 1: M⁺ = ½(M + |M|). For M &lt; -1: M⁺ = 0.
    * </p>
    *
    * @param M Mach number
@@ -254,7 +254,7 @@ public class AUSMPlusFluxCalculator implements Serializable {
    * AUSM+ M⁻ splitting function.
    *
    * <p>
-   * For |M| ≤ 1: M⁻ = -¼(M-1)² - β(M²-1)² For M < -1: M⁻ = ½(M - |M|) For M > 1: M⁻ = 0
+   * For |M| ≤ 1: M⁻ = -¼(M-1)² - β(M²-1)². For M &lt; -1: M⁻ = ½(M - |M|). For M &gt; 1: M⁻ = 0.
    * </p>
    *
    * @param M Mach number
@@ -274,7 +274,7 @@ public class AUSMPlusFluxCalculator implements Serializable {
    * AUSM+ P⁺ pressure splitting function.
    *
    * <p>
-   * For |M| ≤ 1: P⁺ = ¼(M+1)²(2-M) + α*M*(M²-1)² For M > 1: P⁺ = 1 For M < -1: P⁺ = 0
+   * For |M| ≤ 1: P⁺ = ¼(M+1)²(2-M) + α*M*(M²-1)². For M &gt; 1: P⁺ = 1. For M &lt; -1: P⁺ = 0.
    * </p>
    *
    * @param M Mach number
@@ -296,7 +296,7 @@ public class AUSMPlusFluxCalculator implements Serializable {
    * AUSM+ P⁻ pressure splitting function.
    *
    * <p>
-   * For |M| ≤ 1: P⁻ = ¼(M-1)²(2+M) - α*M*(M²-1)² For M < -1: P⁻ = 1 For M > 1: P⁻ = 0
+   * For |M| ≤ 1: P⁻ = ¼(M-1)²(2+M) - α*M*(M²-1)². For M &lt; -1: P⁻ = 1. For M &gt; 1: P⁻ = 0.
    * </p>
    *
    * @param M Mach number

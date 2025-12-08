@@ -22,7 +22,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * flow in horizontal, inclined, and vertical pipes.
  * </p>
  *
- * <h3>Energy Equation</h3>
+ * <h2>Energy Equation</h2>
  * <p>
  * The energy balance includes three optional components:
  * <ul>

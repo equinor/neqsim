@@ -76,7 +76,7 @@ public class EntrainmentDeposition implements Serializable {
     /** Deposition rate (kg/m²/s). */
     public double depositionRate;
 
-    /** Net mass transfer rate, positive = entrainment > deposition (kg/m²/s). */
+    /** Net mass transfer rate, positive when entrainment &gt; deposition (kg/m²/s). */
     public double netTransferRate;
 
     /** Entrainment fraction (fraction of liquid entrained). */
@@ -414,6 +414,11 @@ public class EntrainmentDeposition implements Serializable {
 
   /**
    * Calculate Sauter mean diameter of droplets.
+   *
+   * @param gasVelocity Gas phase velocity (m/s)
+   * @param gasDensity Gas phase density (kg/m³)
+   * @param surfaceTension Surface tension (N/m)
+   * @return Sauter mean diameter (m)
    */
   private double calculateDropletDiameter(double gasVelocity, double gasDensity,
       double surfaceTension) {

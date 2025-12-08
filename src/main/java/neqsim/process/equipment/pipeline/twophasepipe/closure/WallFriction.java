@@ -320,7 +320,7 @@ public class WallFriction implements Serializable {
    *
    * <p>
    * Explicit approximation to Colebrook-White equation, valid for turbulent flow. For laminar flow
-   * (Re < 2300), uses f = 16/Re.
+   * (Re &lt; 2300), uses f = 16/Re.
    * </p>
    *
    * @param reynolds Reynolds number

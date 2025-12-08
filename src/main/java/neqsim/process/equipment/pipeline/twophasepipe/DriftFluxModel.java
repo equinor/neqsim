@@ -501,6 +501,11 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Calculate friction for homogeneous model (bubble, slug, dispersed).
+   *
+   * @param section Pipe section
+   * @param params Drift-flux parameters
+   * @param roughness Pipe roughness (m)
+   * @return Friction factor
    */
   private double calculateHomogeneousFriction(PipeSection section, DriftFluxParameters params,
       double roughness) {
@@ -527,6 +532,11 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Calculate friction for stratified flow (two-fluid approach).
+   *
+   * @param section Pipe section
+   * @param params Drift-flux parameters
+   * @param roughness Pipe roughness (m)
+   * @return Friction factor
    */
   private double calculateStratifiedFriction(PipeSection section, DriftFluxParameters params,
       double roughness) {
@@ -573,7 +583,12 @@ public class DriftFluxModel implements Serializable {
   }
 
   /**
-   * Calculate friction for annular flow.
+   * Calculate friction for annular model.
+   *
+   * @param section Pipe section
+   * @param params Drift-flux parameters
+   * @param roughness Pipe roughness (m)
+   * @return Friction factor
    */
   private double calculateAnnularFriction(PipeSection section, DriftFluxParameters params,
       double roughness) {

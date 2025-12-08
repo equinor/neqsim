@@ -52,7 +52,7 @@ public class TimeIntegrator implements Serializable {
   /** Current integration method. */
   private Method method = Method.RK4;
 
-  /** CFL number for time step control (0 < CFL < 1). */
+  /** CFL number for time step control (0 &lt; CFL &lt; 1). */
   private double cflNumber = 0.5;
 
   /** Minimum allowed time step (s). */
@@ -354,7 +354,7 @@ public class TimeIntegrator implements Serializable {
   /**
    * Set CFL number.
    *
-   * @param cflNumber New CFL number (0 < CFL < 1)
+   * @param cflNumber New CFL number (0 &lt; CFL &lt; 1)
    */
   public void setCflNumber(double cflNumber) {
     this.cflNumber = Math.max(0.01, Math.min(0.99, cflNumber));
