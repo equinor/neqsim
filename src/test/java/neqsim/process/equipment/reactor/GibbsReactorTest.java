@@ -3,9 +3,7 @@ package neqsim.process.equipment.reactor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.thermo.system.SystemFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemPitzer;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -47,7 +45,27 @@ public class GibbsReactorTest {
     reactor.run();
 
     SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
-    outletSystem.prettyPrint();
+
+    // Check mole fractions against expected values (from reference table)
+    double z_methane = outletSystem.getComponent("methane").getz();
+    double z_oxygen = outletSystem.getComponent("oxygen").getz();
+    double z_co2 = outletSystem.getComponent("CO2").getz();
+    double z_co = outletSystem.getComponent("CO").getz();
+    double z_water = outletSystem.getComponent("water").getz();
+
+    // Expected values from the table
+    double exp_methane = 1.81814E-6;
+    double exp_oxygen = 7.27224E-1;
+    double exp_co2 = 9.09176E-2;
+    double exp_co = 7.92303E-6;
+    double exp_water = 1.81849E-1;
+
+    // Assert within reasonable absolute tolerances
+    Assertions.assertEquals(exp_methane, z_methane, 1e-8, "methane mole fraction");
+    Assertions.assertEquals(exp_oxygen, z_oxygen, 1e-3, "oxygen mole fraction");
+    Assertions.assertEquals(exp_co2, z_co2, 1e-3, "CO2 mole fraction");
+    Assertions.assertEquals(exp_co, z_co, 1e-8, "CO mole fraction");
+    Assertions.assertEquals(exp_water, z_water, 1e-4, "water mole fraction");
 
     // Assert that mass balance is converged
     Assertions.assertTrue(reactor.getMassBalanceConverged(),
@@ -100,6 +118,16 @@ public class GibbsReactorTest {
     double ppm_h2so4 = outletSystem.getComponent("sulfuric acid").getz() * 1e6;
     double ppm_water = outletSystem.getComponent("water").getz() * 1e6;
     double ppm_s = outletSystem.getComponent("S8").getz() * 1e6;
+
+    // Assert ppm values against expected results
+    Assertions.assertEquals(999989.5000303726, ppm_methane, 1e-6, "ppm_methane");
+    Assertions.assertEquals(5.999872080506604, ppm_h2s, 1e-6, "ppm_h2s");
+    Assertions.assertEquals(9.999894999481088E-7, ppm_oxygen, 1e-12, "ppm_oxygen");
+    Assertions.assertEquals(6.283934988123905E-5, ppm_so2, 1e-12, "ppm_so2");
+    Assertions.assertEquals(0.0, ppm_so3, 1e-12, "ppm_so3");
+    Assertions.assertEquals(0.0, ppm_h2so4, 1e-12, "ppm_h2so4");
+    Assertions.assertEquals(4.000033305357223, ppm_water, 1e-6, "ppm_water");
+    Assertions.assertEquals(0.5000004000363735, ppm_s, 1e-9, "ppm_s");
   }
 
 
@@ -250,317 +278,34 @@ public class GibbsReactorTest {
     Assertions.assertEquals(2.19702E-1, water, 0.01);
   }
 
+    @Test
+    public void testWaterH2O2Mix() {
+        // 600 ml water, density ~1 g/ml => 0.6 kg => ~33.3 mol
+        double waterMass = 0.6; // kg
+        double waterMolarMass = 18.015; // g/mol
+        double waterMoles = waterMass * 1000 / waterMolarMass;
 
-  /**
-   * Test GibbsReactor with a custom composition including SO2, SO3, H2SO4, HNO3, and the rest as
-   * CO2.
-   */
-  @Test
-  public void testGibbsReactorCO2WithAcidGases() {
+        double h2o2Moles = 0.0892;
 
+        SystemInterface system = new SystemSrkEos(293.15, 1.0);
+        system.addComponent("water", waterMoles);
+        system.addComponent("H2O2", h2o2Moles);
+        system.addComponent("oxygen", 0.0);
+        system.setMixingRule(2);
+        system.setMultiPhaseCheck(true);
 
-    SystemInterface system = new SystemSrkEos(298, 1.0);
-    system.addComponent("CO2", 1e6, "mole/sec");
-    system.addComponent("SO2", 0, "mole/sec");
-    system.addComponent("SO3", 0, "mole/sec");
-    system.addComponent("NO2", 0.0, "mole/sec");
-    system.addComponent("NO", 0, "mole/sec");
-    system.addComponent("water", 30, "mole/sec");
-    // system.addComponent("ammonia", 0, "mole/sec");
-    system.addComponent("H2S", 10, "mole/sec");
-    system.addComponent("oxygen", 0.0, "mole/sec");
-    system.addComponent("sulfuric acid", 0, "mole/sec");
-    system.addComponent("nitric acid", 0, "mole/sec");
-    system.addComponent("NH4NO3", 0.0, "mole/sec");
-    system.addComponent("NH4HSO4", 0, "mole/sec");
-    system.addComponent("formic acid", 0, "mole/sec");
-    system.addComponent("acetic acid", 0, "mole/sec");
-    system.addComponent("methanol", 0, "mole/sec");
-    system.addComponent("ethanol", 0, "mole/sec");
-    system.addComponent("CO", 0, "mole/sec");
-    // system.addComponent("hydrogen", 0, "mole/sec");
-    // system.addComponent("N2O3", 0, "mole/sec");
-    // system.addComponent("N2O", 0, "mole/sec");
-    // system.addComponent("nitrogen", 0, "mole/sec");
-    system.addComponent("NH2OH", 0, "mole/sec");
-    // system.addComponent("N2H4", 0, "mole/sec");
-    system.addComponent("S8", 0, "mole/sec");
-    system.addComponent("HNO2", 0, "mole/sec");
-    system.addComponent("MEG", 0.0, "mole/sec");
-    system.addComponent("DEG", 0, "mole/sec");
-    system.addComponent("TEG", 0.0, "mole/sec");
-    system.addComponent("MEA", 0, "mole/sec");
-    system.addComponent("MDEA", 0, "mole/sec");
-    system.addComponent("DEA", 0, "mole/sec");
-    // system.addComponent("methane", 0, "mole/sec");
-    system.addComponent("ethane", 0, "mole/sec");
-    system.addComponent("propane", 0, "mole/sec");
-    system.addComponent("i-butane", 0, "mole/sec");
-    system.addComponent("n-butane", 0, "mole/sec");
-    system.addComponent("i-pentane", 0, "mole/sec");
-    system.addComponent("n-pentane", 0, "mole/sec");
-    system.addComponent("ethylene", 0, "mole/sec");
-    system.addComponent("benzene", 0.0, "mole/sec");
-    system.addComponent("toluene", 0.0, "mole/sec");
-    system.addComponent("o-Xylene", 0.0, "mole/sec");
-    system.addComponent("HCN", 0, "mole/sec");
-    // system.addComponent("COS", 0, "mole/sec");
-    system.addComponent("CS2", 0, "mole/sec");
-    system.addComponent("argon", 0, "mole/sec");
-    system.addComponent("CH2O", 0, "mole/sec");
-    system.addComponent("C2H4O", 0, "mole/sec");
-    system.addComponent("C2H4", 0, "mole/sec");
+        Stream inlet = new Stream("inlet", system);
+        inlet.run();
 
+        GibbsReactor reactor = new GibbsReactor("reactor", inlet);
+        reactor.setUseAllDatabaseSpecies(false);
+        reactor.setDampingComposition(0.0005);
+        reactor.setMaxIterations(5000);
+        reactor.setConvergenceTolerance(1e-6);
+        reactor.setEnergyMode(GibbsReactor.EnergyMode.ADIABATIC);
+        reactor.run();
 
-    system.setMixingRule(2);
-
-    Stream inletStream = new Stream("Inlet Stream", system);
-    inletStream.setPressure(20, "bara");
-    inletStream.setTemperature(-25, "C");
-    inletStream.run();
-
-
-    GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
-    reactor.setUseAllDatabaseSpecies(false);
-    reactor.setDampingComposition(0.05);
-    reactor.setMaxIterations(5000);
-    reactor.setConvergenceTolerance(1e-3);
-    reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
-    reactor.run();
-
-    SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
-
-    Assertions.assertTrue(reactor.getMassBalanceConverged(),
-        "Mass balance should be converged for acid gas test");
-
-    // Optionally, print mole fractions for inspection
-    System.out.println("GibbsReactor outlet composition (mole fractions):");
-    for (int i = 0; i < outletSystem.getNumberOfComponents(); i++) {
-      if (outletSystem.getComponent(i).getz() * 1e6 > 0.1) {
-        System.out.println(outletSystem.getComponent(i).getComponentName() + ": "
-            + outletSystem.getComponent(i).getz() * 1e6);
-      }
+        SystemInterface outlet = reactor.getOutletStream().getThermoSystem();
+        outlet.prettyPrint();
     }
-  }
-
-
-
-  /**
-   * Test GibbsReactor with a custom composition including SO2, SO3, H2SO4, HNO3, and the rest as
-   * CO2.
-   */
-  @Test
-  public void testGibbsReactorCO2WithAcidGases2() {
-
-
-    SystemInterface system = new SystemSrkEos(298, 1.0);
-    system.addComponent("CO2", 1e6, "mole/sec");
-    system.addComponent("water", 100, "mole/sec");
-    system.addComponent("oxygen", 0, "mole/sec");
-    system.addComponent("H2S", 30, "mole/sec");
-    system.addComponent("SO2", 0.0, "mole/sec");
-    system.addComponent("SO3", 0.0, "mole/sec");
-    system.addComponent("NO2", 500, "mole/sec");
-    system.addComponent("H+", 0, "mole/sec");
-    system.addComponent("SO4--", 0, "mole/sec");
-    system.addComponent("OH-", 0, "mole/sec");
-    system.addComponent("NH4+", 0, "mole/sec");
-    system.addComponent("NO3-", 0, "mole/sec");
-    system.setMixingRule(2);
-
-    Stream inletStream = new Stream("Inlet Stream", system);
-    inletStream.setPressure(1, "bara");
-    inletStream.setTemperature(25, "C");
-    inletStream.run();
-
-
-    GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
-    reactor.setUseAllDatabaseSpecies(false);
-    reactor.setDampingComposition(0.1);
-    reactor.setMaxIterations(20000);
-    reactor.setConvergenceTolerance(1e-3);
-    reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
-    reactor.run();
-
-    SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
-
-    Assertions.assertTrue(reactor.getMassBalanceConverged(),
-        "Mass balance should be converged for acid gas test");
-
-    // Optionally, print mole fractions for inspection
-    System.out.println("GibbsReactor outlet composition (mole fractions):");
-    for (int i = 0; i < outletSystem.getNumberOfComponents(); i++) {
-      System.out.println(outletSystem.getComponent(i).getComponentName() + ": "
-          + outletSystem.getComponent(i).getz() * 1e6);
-    }
-  }
-
-  /**
-   * Test GibbsReactor with a custom composition including SO2, SO3, H2SO4, HNO3, and the rest as
-   * CO2.
-   */
-  @Test
-  public void testGibbsReactorCO2WithAcidGases3() {
-
-
-    SystemInterface system = new SystemPitzer(298, 1.0);
-    system.addComponent("CO2", 1e6, "mole/sec");
-    system.addComponent("water", 30, "mole/sec");
-    system.addComponent("oxygen", 10, "mole/sec");
-    system.addComponent("H2S", 10, "mole/sec");
-    system.addComponent("SO2", 0.0, "mole/sec");
-    system.addComponent("SO3", 0.0, "mole/sec");
-    system.addComponent("NO2", 450, "mole/sec");
-    system.addComponent("H+", 0, "mole/sec");
-    system.addComponent("SO4--", 0, "mole/sec");
-    system.addComponent("OH-", 0, "mole/sec");
-    system.addComponent("NH4+", 0, "mole/sec");
-    system.addComponent("NO3-", 0, "mole/sec");
-    system.setMixingRule("classic");
-
-    Stream inletStream = new Stream("Inlet Stream", system);
-    inletStream.setPressure(1, "bara");
-    inletStream.setTemperature(25, "C");
-    inletStream.run();
-
-
-    GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
-    reactor.setUseAllDatabaseSpecies(false);
-    reactor.setDampingComposition(0.1);
-    reactor.setMaxIterations(20000);
-    reactor.setConvergenceTolerance(1e-3);
-    reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
-    reactor.run();
-    reactor.getOutletStream().getFluid().setMultiPhaseCheck(true);
-    reactor.getOutletStream().run();
-
-    reactor.getOutletStream().getFluid().prettyPrint();
-
-
-
-    SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
-
-    Assertions.assertTrue(reactor.getMassBalanceConverged(),
-        "Mass balance should be converged for acid gas test");
-
-    // Optionally, print mole fractions for inspection
-    System.out.println("GibbsReactor outlet composition (mole fractions):");
-    for (int i = 0; i < outletSystem.getNumberOfComponents(); i++) {
-      System.out.println(outletSystem.getComponent(i).getComponentName() + ": "
-          + outletSystem.getComponent(i).getz() * 1e6);
-    }
-  }
-
-  /**
-   * Test GibbsReactor with a custom composition including SO2, SO3, H2SO4, HNO3, and the rest as
-   * CO2.
-   */
-  @Test
-  public void testGibbsReactorCO2WithAcidGases4() {
-
-
-    SystemInterface system = new SystemFurstElectrolyteEos(298, 1.0);
-    system.addComponent("CO2", 1e6, "mole/sec");
-    system.addComponent("water", 30, "mole/sec");
-    system.addComponent("oxygen", 0, "mole/sec");
-    system.addComponent("H2S", 0, "mole/sec");
-    system.addComponent("SO2", 0.0, "mole/sec");
-    system.addComponent("SO3", 0.0, "mole/sec");
-    system.addComponent("NO2", 0, "mole/sec");
-    system.addComponent("H+", 0, "mole/sec");
-    system.addComponent("SO4--", 0, "mole/sec");
-    system.addComponent("OH-", 0, "mole/sec");
-    system.addComponent("NH4+", 0, "mole/sec");
-    system.addComponent("NO3-", 0, "mole/sec");
-    system.setMixingRule("classic");
-    // system.setMultiPhaseCheck(true);
-
-    Stream inletStream = new Stream("Inlet Stream", system);
-    inletStream.setPressure(1, "bara");
-    inletStream.setTemperature(25, "C");
-    inletStream.run();
-
-    inletStream.getFluid().prettyPrint();
-
-
-    GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
-    reactor.setUseAllDatabaseSpecies(false);
-    reactor.setDampingComposition(0.01);
-    reactor.setMaxIterations(2000);
-    reactor.setConvergenceTolerance(1e-3);
-    reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
-    reactor.run();
-    // reactor.getOutletStream().run();
-
-    reactor.getOutletStream().getFluid().prettyPrint();
-
-
-
-    SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
-
-    Assertions.assertTrue(reactor.getMassBalanceConverged(),
-        "Mass balance should be converged for acid gas test");
-
-    // Optionally, print mole fractions for inspection
-    System.out.println("GibbsReactor outlet composition (mole fractions):");
-    for (int i = 0; i < outletSystem.getNumberOfComponents(); i++) {
-      System.out.println(outletSystem.getComponent(i).getComponentName() + ": "
-          + outletSystem.getComponent(i).getz() * 1e6);
-    }
-  }
-
-
-
-  /**
-   * Test GibbsReactor with a custom composition including SO2, SO3, H2SO4, HNO3, and the rest as
-   * CO2.
-   */
-  @Test
-  public void testGibbsReactorCO2WithAcidGases5() {
-
-
-    SystemInterface system = new SystemSrkEos(298, 100.0);
-    system.addComponent("CO2", 1e6, "mole/sec");
-    system.addComponent("SO2", 0, "mole/sec");
-    system.addComponent("SO3", 0, "mole/sec");
-    system.addComponent("NO2", 50, "mole/sec");
-    system.addComponent("NO", 0, "mole/sec");
-    system.addComponent("water", 50, "mole/sec");
-    system.addComponent("ammonia", 0, "mole/sec");
-    system.addComponent("H2S", 50, "mole/sec");
-    system.addComponent("oxygen", 0, "mole/sec");
-    system.addComponent("sulfuric acid", 0, "mole/sec");
-    system.addComponent("nitric acid", 0, "mole/sec");
-    system.addComponent("hydrogen", 0, "mole/sec");
-    system.addComponent("S8", 0, "mole/sec");
-    // system.addComponent("nitrogen", 0, "mole/sec");
-    system.addComponent("COS", 0, "mole/sec");
-    system.setMixingRule(2);
-
-    Stream inletStream = new Stream("Inlet Stream", system);
-    inletStream.setPressure(20, "bara");
-    inletStream.setTemperature(25, "C");
-    inletStream.run();
-
-
-    GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
-    reactor.setUseAllDatabaseSpecies(false);
-    reactor.setDampingComposition(0.1);
-    reactor.setMaxIterations(20000);
-    reactor.setConvergenceTolerance(1e-3);
-    reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
-    reactor.run();
-
-    SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
-
-    Assertions.assertTrue(reactor.getMassBalanceConverged(),
-        "Mass balance should be converged for acid gas test");
-
-    // Optionally, print mole fractions for inspection
-    System.out.println("GibbsReactor outlet composition (mole fractions):");
-    for (int i = 0; i < outletSystem.getNumberOfComponents(); i++) {
-      System.out.println(outletSystem.getComponent(i).getComponentName() + ": "
-          + outletSystem.getComponent(i).getz() * 1e6);
-    }
-  }
 }

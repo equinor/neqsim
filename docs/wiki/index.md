@@ -25,6 +25,7 @@ This folder holds additional documentation for the NeqSim project. Below are use
 - [Gas quality standards from tests](gas_quality_standards_from_tests.md)
 - [Java simulations from Colab notebooks](java_simulation_from_colab_notebooks.md)
 - [Distillation column algorithm](distillation_column.md)
+- [Gibbs reactor](gibbs_reactor.md)
 - [Humid air mathematics](humid_air_math.md)
 - [Flow meter models](flow_meter_models.md)
 - [Air cooler unit operation](air_cooler.md)

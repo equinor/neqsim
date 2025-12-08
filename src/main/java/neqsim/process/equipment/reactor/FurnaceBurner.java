@@ -229,6 +229,9 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
       reactor.setInletStream(mixedStream);
     }
     reactor.setUseAllDatabaseSpecies(false);
+    reactor.setDampingComposition(1e-4);
+    
+  
     reactor.setEnergyMode(GibbsReactor.EnergyMode.ADIABATIC);
     reactor.run(id);
 
