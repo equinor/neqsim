@@ -44,23 +44,32 @@ public class TwoFluidConservationEquations implements Serializable {
   private static final long serialVersionUID = 1L;
   private static final double GRAVITY = 9.81;
 
-  /** Number of conservation equations. */
-  public static final int NUM_EQUATIONS = 5;
+  /**
+   * Number of conservation equations (6 for three-phase: gas, oil, water mass + gas, liquid
+   * momentum + energy).
+   */
+  public static final int NUM_EQUATIONS = 6;
 
   /** Index for gas mass. */
   public static final int IDX_GAS_MASS = 0;
 
-  /** Index for liquid mass. */
-  public static final int IDX_LIQUID_MASS = 1;
+  /** Index for oil mass (separate from water). */
+  public static final int IDX_OIL_MASS = 1;
+
+  /** Index for water mass (separate conservation equation). */
+  public static final int IDX_WATER_MASS = 2;
 
   /** Index for gas momentum. */
-  public static final int IDX_GAS_MOMENTUM = 2;
+  public static final int IDX_GAS_MOMENTUM = 3;
 
-  /** Index for liquid momentum. */
-  public static final int IDX_LIQUID_MOMENTUM = 3;
+  /** Index for liquid momentum (combined oil + water). */
+  public static final int IDX_LIQUID_MOMENTUM = 4;
 
   /** Index for energy. */
-  public static final int IDX_ENERGY = 4;
+  public static final int IDX_ENERGY = 5;
+
+  /** Legacy index for liquid mass (for compatibility). */
+  public static final int IDX_LIQUID_MASS = 1; // Use IDX_OIL_MASS + IDX_WATER_MASS
 
   // Closure models
   private WallFriction wallFriction;
@@ -165,6 +174,11 @@ public class TwoFluidConservationEquations implements Serializable {
   /**
    * Calculate fluxes at cell interfaces using AUSM+.
    *
+   * <p>
+   * For three-phase flow, we track oil and water mass fluxes separately. Water generally moves
+   * slower than oil in upward flow due to density differences.
+   * </p>
+   *
    * @param sections Pipe sections
    * @param dx Cell size
    * @return Fluxes at interfaces [nInterfaces][NUM_EQUATIONS]
@@ -189,9 +203,15 @@ public class TwoFluidConservationEquations implements Serializable {
       PhaseFlux gasFlux = fluxCalculator.calcPhaseFlux(gasL, gasR, A);
       PhaseFlux liqFlux = fluxCalculator.calcPhaseFlux(liqL, liqR, A);
 
-      // Assemble interface flux vector
+      // Assemble interface flux vector - now with separate oil and water mass
       fluxes[i][IDX_GAS_MASS] = gasFlux.massFlux;
-      fluxes[i][IDX_LIQUID_MASS] = liqFlux.massFlux;
+
+      // Split liquid mass flux into oil and water based on local water cut
+      double avgWaterCut = 0.5 * (left.getWaterCut() + right.getWaterCut());
+      double avgOilFrac = 1.0 - avgWaterCut;
+      fluxes[i][IDX_OIL_MASS] = liqFlux.massFlux * avgOilFrac;
+      fluxes[i][IDX_WATER_MASS] = liqFlux.massFlux * avgWaterCut;
+
       fluxes[i][IDX_GAS_MOMENTUM] = gasFlux.momentumFlux;
       fluxes[i][IDX_LIQUID_MOMENTUM] = liqFlux.momentumFlux;
 
@@ -205,6 +225,11 @@ public class TwoFluidConservationEquations implements Serializable {
 
   /**
    * Calculate source terms for all cells.
+   *
+   * <p>
+   * For three-phase flow, tracks water separately from oil. Water accumulates more in valleys due
+   * to higher density.
+   * </p>
    *
    * @param sections Pipe sections
    * @return Source terms [nCells][NUM_EQUATIONS]
@@ -221,6 +246,13 @@ public class TwoFluidConservationEquations implements Serializable {
       double rhoG = sec.getGasDensity();
       double rhoL = sec.getLiquidDensity();
       double sinTheta = Math.sin(sec.getInclination());
+
+      // Get water and oil holdups
+      double waterCut = sec.getWaterCut();
+      double alphaW = sec.getWaterHoldup();
+      double alphaO = sec.getOilHoldup();
+      double rhoW = sec.getWaterDensity();
+      double rhoO = sec.getOilDensity();
 
       // Get geometry parameters
       double S_G = sec.getGasWettedPerimeter();
@@ -247,9 +279,17 @@ public class TwoFluidConservationEquations implements Serializable {
       double F_iG = -sec.getInterfacialShear() * S_i;
       double F_iL = sec.getInterfacialShear() * S_i;
 
-      // Gravity forces (N/m)
+      // Gravity forces (N/m) - calculated separately for oil and water
       double F_gG = -alphaG * rhoG * GRAVITY * A * sinTheta;
       double F_gL = -alphaL * rhoL * GRAVITY * A * sinTheta;
+
+      // Water-specific gravity source (water is heavier, accumulates more in downslopes)
+      double F_gW = 0;
+      double F_gO = 0;
+      if (rhoW > 0 && rhoO > 0) {
+        F_gW = -alphaW * rhoW * GRAVITY * A * sinTheta;
+        F_gO = -alphaO * rhoO * GRAVITY * A * sinTheta;
+      }
 
       // Mass transfer source (if enabled)
       double Gamma_G = 0;
@@ -262,9 +302,25 @@ public class TwoFluidConservationEquations implements Serializable {
         Gamma_L = massTransfer[1];
       }
 
-      // Assemble source terms
+      // Assemble source terms - now with separate oil and water mass equations
       sources[i][IDX_GAS_MASS] = Gamma_G;
-      sources[i][IDX_LIQUID_MASS] = Gamma_L;
+
+      // Oil and water mass sources (no phase change between oil/water for now)
+      // Gravity-driven segregation source term for water accumulation
+      double waterSegregationSource = 0;
+      if (rhoW > rhoO && rhoO > 0 && alphaL > 0.01 && sinTheta != 0) {
+        // Water settles in valleys (negative inclination after positive)
+        // This is a simplified model for water stratification within the liquid phase
+        double densityRatio = (rhoW - rhoO) / rhoO;
+        waterSegregationSource = 0.01 * densityRatio * alphaW * A * Math.abs(sinTheta);
+        if (sinTheta < 0) {
+          waterSegregationSource = -waterSegregationSource; // Water accumulates going downhill
+        }
+      }
+
+      sources[i][IDX_OIL_MASS] = Gamma_L * (1.0 - waterCut);
+      sources[i][IDX_WATER_MASS] = Gamma_L * waterCut + waterSegregationSource;
+
       sources[i][IDX_GAS_MOMENTUM] = F_wG + F_iG + F_gG + Gamma_G * sec.getGasVelocity();
       sources[i][IDX_LIQUID_MOMENTUM] = F_wL + F_iL + F_gL + Gamma_L * sec.getLiquidVelocity();
 
@@ -394,6 +450,10 @@ public class TwoFluidConservationEquations implements Serializable {
   /**
    * Extract state from sections into array format.
    *
+   * <p>
+   * For three-phase flow, extracts gas mass, oil mass, water mass separately.
+   * </p>
+   *
    * @param sections Pipe sections
    * @return State array [nCells][NUM_EQUATIONS]
    */
@@ -403,6 +463,7 @@ public class TwoFluidConservationEquations implements Serializable {
 
     for (int i = 0; i < nCells; i++) {
       sections[i].updateConservativeVariables();
+      sections[i].updateWaterOilConservativeVariables();
       U[i] = sections[i].getStateVector();
     }
 
@@ -411,6 +472,10 @@ public class TwoFluidConservationEquations implements Serializable {
 
   /**
    * Apply state to sections from array format.
+   *
+   * <p>
+   * For three-phase flow, updates water and oil holdups after extracting primitives.
+   * </p>
    *
    * @param sections Pipe sections
    * @param U State array [nCells][NUM_EQUATIONS]
@@ -421,6 +486,8 @@ public class TwoFluidConservationEquations implements Serializable {
     for (int i = 0; i < nCells; i++) {
       sections[i].setStateVector(U[i]);
       sections[i].extractPrimitiveVariables();
+      sections[i].updateWaterOilHoldups();
+      sections[i].updateThreePhaseProperties();
     }
   }
 

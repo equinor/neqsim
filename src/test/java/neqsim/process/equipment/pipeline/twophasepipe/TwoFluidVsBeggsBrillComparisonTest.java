@@ -2279,4 +2279,408 @@ class TwoFluidVsBeggsBrillComparisonTest {
     assertTrue(outletP > 0, "Outlet pressure should be positive");
     assertTrue(avgHoldup >= 0 && avgHoldup <= 1, "Holdup should be between 0 and 1");
   }
+
+  @Test
+  @DisplayName("Long pipeline with water accumulation in low spots")
+  void testLongPipelineWaterAccumulation() {
+    System.out.println("\n=== Long Pipeline with Water Accumulation in Low Spots ===");
+    System.out
+        .println("Simulating a 10 km pipeline with multiple valleys where water can accumulate\n");
+
+    // Three-phase fluid with significant water content
+    SystemInterface fluid = new SystemSrkEos(288.15, 60.0);
+    fluid.addComponent("methane", 0.55);
+    fluid.addComponent("ethane", 0.08);
+    fluid.addComponent("propane", 0.05);
+    fluid.addComponent("n-pentane", 0.08);
+    fluid.addComponent("n-heptane", 0.09);
+    fluid.addComponent("water", 0.15); // 15 mol% water = significant water cut
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+
+    Stream inlet = new Stream("inlet", fluid);
+    inlet.setFlowRate(8.0, "kg/sec");
+    inlet.setTemperature(15.0, "C");
+    inlet.setPressure(60.0, "bara");
+    inlet.run();
+
+    // Check inlet fluid
+    SystemInterface runFluid = inlet.getFluid();
+    System.out.println("--- Inlet Fluid Properties ---");
+    System.out.printf("Number of phases: %d%n", runFluid.getNumberOfPhases());
+    if (runFluid.hasPhaseType("gas")) {
+      System.out.printf("Gas density:   %.1f kg/m³%n",
+          runFluid.getPhase("gas").getDensity("kg/m3"));
+    }
+    if (runFluid.hasPhaseType("oil")) {
+      System.out.printf("Oil density:   %.1f kg/m³%n",
+          runFluid.getPhase("oil").getDensity("kg/m3"));
+    }
+    if (runFluid.hasPhaseType("aqueous")) {
+      System.out.printf("Water density: %.1f kg/m³%n",
+          runFluid.getPhase("aqueous").getDensity("kg/m3"));
+
+      // Calculate water cut
+      if (runFluid.hasPhaseType("oil")) {
+        double volOil = runFluid.getPhase("oil").getVolume("m3");
+        double volWater = runFluid.getPhase("aqueous").getVolume("m3");
+        System.out.printf("Water cut:     %.1f %%%n", volWater / (volOil + volWater) * 100);
+      }
+    }
+
+    // Long pipeline with multiple low spots (valleys)
+    double pipeLength = 10000.0; // 10 km
+    int nSections = 100;
+    double[] elevations = new double[nSections];
+
+    // Create terrain with 3 distinct valleys at different depths
+    // Valley 1: at 2 km, depth -30m
+    // Valley 2: at 5 km, depth -50m (deepest - most water accumulation expected)
+    // Valley 3: at 8 km, depth -25m
+    for (int i = 0; i < nSections; i++) {
+      double x = pipeLength * i / (nSections - 1);
+      double baseElevation = 0;
+
+      // Valley 1 at 2 km
+      double dist1 = Math.abs(x - 2000) / 500;
+      if (dist1 < 2) {
+        baseElevation = Math.min(baseElevation, -30 * (1 - dist1 * dist1 / 4));
+      }
+
+      // Valley 2 at 5 km (deepest)
+      double dist2 = Math.abs(x - 5000) / 600;
+      if (dist2 < 2) {
+        baseElevation = Math.min(baseElevation, -50 * (1 - dist2 * dist2 / 4));
+      }
+
+      // Valley 3 at 8 km
+      double dist3 = Math.abs(x - 8000) / 450;
+      if (dist3 < 2) {
+        baseElevation = Math.min(baseElevation, -25 * (1 - dist3 * dist3 / 4));
+      }
+
+      // Add some small undulations
+      baseElevation += 3 * Math.sin(2 * Math.PI * x / 800);
+
+      elevations[i] = baseElevation;
+    }
+
+    TwoFluidPipe pipe = new TwoFluidPipe("LongPipeline-WaterAccum", inlet);
+    pipe.setLength(pipeLength);
+    pipe.setDiameter(0.25); // 10-inch pipe
+    pipe.setNumberOfSections(nSections);
+    pipe.setRoughness(4.5e-5);
+    pipe.setElevationProfile(elevations);
+    pipe.run();
+
+    double[] P = pipe.getPressureProfile();
+    double[] H = pipe.getLiquidHoldupProfile();
+
+    System.out.println("\n--- Pipeline Profile (every 1 km) ---");
+    System.out.println("Position [km]  Elevation [m]  Pressure [bar]  Holdup   Note");
+    System.out.println("-------------------------------------------------------------------");
+
+    // Track holdup at valleys
+    double holdupValley1 = 0, holdupValley2 = 0, holdupValley3 = 0;
+    double holdupPeak = 1;
+    int valley1Idx = 20, valley2Idx = 50, valley3Idx = 80;
+
+    for (int i = 0; i < nSections; i += 10) {
+      double pos = pipeLength * i / (nSections - 1);
+      String note = "";
+
+      if (Math.abs(pos - 2000) < 200)
+        note = "<-- Valley 1";
+      else if (Math.abs(pos - 5000) < 200)
+        note = "<-- Valley 2 (deepest)";
+      else if (Math.abs(pos - 8000) < 200)
+        note = "<-- Valley 3";
+
+      System.out.printf("%8.1f       %8.1f        %8.2f     %.4f  %s%n", pos / 1000, elevations[i],
+          P[i] / 1e5, H[i], note);
+    }
+
+    // Find holdup at valley locations
+    holdupValley1 = H[valley1Idx];
+    holdupValley2 = H[valley2Idx];
+    holdupValley3 = H[valley3Idx];
+
+    // Find minimum holdup (at peaks)
+    for (int i = 0; i < nSections; i++) {
+      if (elevations[i] > -5) {
+        holdupPeak = Math.min(holdupPeak, H[i]);
+      }
+    }
+
+    System.out.println("\n--- Water/Liquid Accumulation Analysis ---");
+    System.out.printf("Holdup at Valley 1 (2 km, -30m):  %.4f%n", holdupValley1);
+    System.out.printf("Holdup at Valley 2 (5 km, -50m):  %.4f%n", holdupValley2);
+    System.out.printf("Holdup at Valley 3 (8 km, -25m):  %.4f%n", holdupValley3);
+    System.out.printf("Minimum holdup at peaks:          %.4f%n", holdupPeak);
+    System.out.printf("Holdup increase ratio (deep valley/peak): %.2f%n",
+        holdupValley2 / holdupPeak);
+
+    // Calculate liquid inventory in each valley region
+    double invValley1 = 0, invValley2 = 0, invValley3 = 0;
+    double dx = pipeLength / (nSections - 1);
+    double area = Math.PI * 0.25 * 0.25 / 4.0;
+
+    for (int i = 0; i < nSections; i++) {
+      double pos = pipeLength * i / (nSections - 1);
+      double liquidVol = H[i] * area * dx;
+
+      if (Math.abs(pos - 2000) < 500)
+        invValley1 += liquidVol;
+      else if (Math.abs(pos - 5000) < 600)
+        invValley2 += liquidVol;
+      else if (Math.abs(pos - 8000) < 450)
+        invValley3 += liquidVol;
+    }
+
+    System.out.println("\n--- Liquid Inventory by Valley ---");
+    System.out.printf("Valley 1 (2 km region): %.2f m³%n", invValley1);
+    System.out.printf("Valley 2 (5 km region): %.2f m³%n", invValley2);
+    System.out.printf("Valley 3 (8 km region): %.2f m³%n", invValley3);
+
+    // Pressure analysis
+    double inletP = P[0] / 1e5;
+    double outletP = P[nSections - 1] / 1e5;
+    System.out.println("\n--- Pressure Analysis ---");
+    System.out.printf("Inlet pressure:  %.2f bar%n", inletP);
+    System.out.printf("Outlet pressure: %.2f bar%n", outletP);
+    System.out.printf("Total ΔP:        %.2f bar%n", inletP - outletP);
+    System.out.printf("Pressure at Valley 2: %.2f bar%n", P[valley2Idx] / 1e5);
+
+    // Physical interpretation
+    System.out.println("\n--- Physical Interpretation ---");
+    if (holdupValley2 > holdupValley1 && holdupValley2 > holdupValley3) {
+      System.out.println("✓ Deepest valley (Valley 2) shows highest liquid holdup");
+      System.out.println("  This indicates water/liquid accumulation in low spots");
+    }
+    if (holdupValley2 > holdupPeak * 1.1) {
+      System.out.println("✓ Valleys have significantly higher holdup than peaks");
+      System.out.println("  The model captures terrain-induced liquid accumulation");
+    } else {
+      System.out.println("⚠️ Holdup variation between valleys and peaks is limited");
+      System.out.println("   For detailed water distribution, a 3-fluid model would be needed");
+    }
+
+    // Assertions
+    assertTrue(outletP > 0, "Outlet pressure should be positive");
+    assertTrue(holdupValley2 >= holdupPeak, "Holdup in valleys should be >= peaks");
+  }
+
+  @Test
+  @DisplayName("Effect of flow rate on water accumulation")
+  void testFlowRateEffectOnWaterAccumulation() {
+    System.out.println("\n=== Effect of Flow Rate on Water Accumulation ===");
+    System.out.println("Higher flow rates should reduce liquid accumulation in low spots\n");
+
+    // Pipeline with one valley
+    double pipeLength = 3000.0;
+    int nSections = 30;
+    double[] elevations = new double[nSections];
+
+    // Single valley at center
+    for (int i = 0; i < nSections; i++) {
+      double x = pipeLength * i / (nSections - 1);
+      double dist = Math.abs(x - 1500) / 400;
+      if (dist < 2) {
+        elevations[i] = -40 * (1 - dist * dist / 4);
+      } else {
+        elevations[i] = 0;
+      }
+    }
+
+    double[] flowRates = {2.0, 5.0, 10.0, 20.0};
+
+    System.out.println("Flow Rate  Inlet P  Outlet P  Valley Holdup  Peak Holdup  Ratio");
+    System.out.println("-------------------------------------------------------------------");
+
+    for (double flowRate : flowRates) {
+      SystemInterface fluid = new SystemSrkEos(290.15, 50.0);
+      fluid.addComponent("methane", 0.60);
+      fluid.addComponent("ethane", 0.08);
+      fluid.addComponent("propane", 0.05);
+      fluid.addComponent("n-pentane", 0.10);
+      fluid.addComponent("n-heptane", 0.07);
+      fluid.addComponent("water", 0.10);
+      fluid.setMixingRule("classic");
+      fluid.setMultiPhaseCheck(true);
+
+      Stream inlet = new Stream("inlet", fluid);
+      inlet.setFlowRate(flowRate, "kg/sec");
+      inlet.setTemperature(20.0, "C");
+      inlet.setPressure(50.0, "bara");
+      inlet.run();
+
+      TwoFluidPipe pipe = new TwoFluidPipe("FlowRateTest", inlet);
+      pipe.setLength(pipeLength);
+      pipe.setDiameter(0.15);
+      pipe.setNumberOfSections(nSections);
+      pipe.setRoughness(4.5e-5);
+      pipe.setElevationProfile(elevations);
+      pipe.run();
+
+      double[] P = pipe.getPressureProfile();
+      double[] H = pipe.getLiquidHoldupProfile();
+
+      // Find valley (center) and peak holdups
+      double valleyHoldup = H[nSections / 2];
+      double peakHoldup = Math.min(H[0], H[nSections - 1]);
+
+      System.out.printf("%6.1f     %6.2f   %6.2f      %.4f        %.4f     %.2f%n", flowRate,
+          P[0] / 1e5, P[nSections - 1] / 1e5, valleyHoldup, peakHoldup, valleyHoldup / peakHoldup);
+    }
+
+    System.out.println("\n--- Interpretation ---");
+    System.out.println("Lower flow rates: More time for liquid to settle in valleys");
+    System.out.println("Higher flow rates: Turbulent mixing carries liquid through valleys");
+  }
+
+  @Test
+  @DisplayName("Three-phase flow with varying water cut along pipeline")
+  void testVaryingWaterCutAlongPipeline() {
+    System.out.println("\n=== Three-Phase Flow with Varying Water Cut Along Pipeline ===");
+    System.out
+        .println("Testing water accumulation in valleys using the third conservation equation\n");
+
+    // Three-phase fluid with 20% water cut at inlet
+    SystemInterface fluid = new SystemSrkEos(290.15, 50.0);
+    fluid.addComponent("methane", 0.50);
+    fluid.addComponent("ethane", 0.06);
+    fluid.addComponent("propane", 0.04);
+    fluid.addComponent("n-pentane", 0.10);
+    fluid.addComponent("n-heptane", 0.10);
+    fluid.addComponent("water", 0.20); // 20 mol% water - will produce significant water cut
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+
+    Stream inlet = new Stream("inlet", fluid);
+    inlet.setFlowRate(5.0, "kg/sec");
+    inlet.setTemperature(20.0, "C");
+    inlet.setPressure(50.0, "bara");
+    inlet.run();
+
+    // Verify three-phase at inlet
+    SystemInterface runFluid = inlet.getFluid();
+    assertTrue(runFluid.getNumberOfPhases() >= 3, "Should have three phases (gas + oil + water)");
+
+    double inletWaterCut = 0;
+    if (runFluid.hasPhaseType("oil") && runFluid.hasPhaseType("aqueous")) {
+      double volOil = runFluid.getPhase("oil").getVolume("m3");
+      double volWater = runFluid.getPhase("aqueous").getVolume("m3");
+      inletWaterCut = volWater / (volOil + volWater);
+      System.out.printf("Inlet water cut: %.1f%%%n", inletWaterCut * 100);
+    }
+
+    // Pipeline with two deep valleys
+    double pipeLength = 5000.0;
+    int nSections = 50;
+    double[] elevations = new double[nSections];
+
+    // Create terrain with two valleys: one shallow, one deep
+    for (int i = 0; i < nSections; i++) {
+      double x = pipeLength * i / (nSections - 1);
+
+      // Shallow valley at 1.5 km (depth -15m)
+      double dist1 = Math.abs(x - 1500) / 350;
+      if (dist1 < 2) {
+        elevations[i] = -15 * (1 - dist1 * dist1 / 4);
+      }
+
+      // Deep valley at 3.5 km (depth -40m)
+      double dist2 = Math.abs(x - 3500) / 400;
+      if (dist2 < 2) {
+        elevations[i] = Math.min(elevations[i], -40 * (1 - dist2 * dist2 / 4));
+      }
+    }
+
+    TwoFluidPipe pipe = new TwoFluidPipe("VaryingWaterCut", inlet);
+    pipe.setLength(pipeLength);
+    pipe.setDiameter(0.20); // 8-inch pipe
+    pipe.setNumberOfSections(nSections);
+    pipe.setRoughness(4.5e-5);
+    pipe.setElevationProfile(elevations);
+    pipe.run();
+
+    // Get profiles
+    double[] P = pipe.getPressureProfile();
+    double[] H = pipe.getLiquidHoldupProfile();
+    double[] waterCutProfile = pipe.getWaterCutProfile();
+    double[] waterHoldup = pipe.getWaterHoldupProfile();
+    double[] oilHoldup = pipe.getOilHoldupProfile();
+
+    // Print profile
+    System.out.println("\n--- Water Cut Variation Along Pipeline ---");
+    System.out.println("Position  Elev[m]  Holdup  WaterCut  WaterHU  OilHU   Note");
+    System.out.println("----------------------------------------------------------------");
+
+    int valley1Idx = 15; // ~1.5 km
+    int valley2Idx = 35; // ~3.5 km
+
+    for (int i = 0; i < nSections; i += 5) {
+      double pos = pipeLength * i / (nSections - 1);
+      String note = "";
+      if (i == valley1Idx)
+        note = "<- Shallow valley";
+      else if (i == valley2Idx)
+        note = "<- Deep valley";
+      else if (i == 0)
+        note = "<- Inlet";
+      else if (i == nSections - 5)
+        note = "<- Outlet";
+
+      System.out.printf("%6.0f m  %6.1f   %.4f   %.3f     %.4f   %.4f  %s%n", pos, elevations[i],
+          H[i], waterCutProfile[i], waterHoldup[i], oilHoldup[i], note);
+    }
+
+    double wcInlet = waterCutProfile[0];
+    double wcShallowValley = waterCutProfile[valley1Idx];
+    double wcDeepValley = waterCutProfile[valley2Idx];
+    double wcOutlet = waterCutProfile[nSections - 1];
+
+    System.out.println("\n--- Water Cut Analysis ---");
+    System.out.printf("Water cut at inlet:          %.1f%%%n", wcInlet * 100);
+    System.out.printf("Water cut at shallow valley: %.1f%%%n", wcShallowValley * 100);
+    System.out.printf("Water cut at deep valley:    %.1f%%%n", wcDeepValley * 100);
+    System.out.printf("Water cut at outlet:         %.1f%%%n", wcOutlet * 100);
+
+    // Calculate variation
+    double maxWC = 0, minWC = 1;
+    for (int i = 0; i < nSections; i++) {
+      maxWC = Math.max(maxWC, waterCutProfile[i]);
+      minWC = Math.min(minWC, waterCutProfile[i]);
+    }
+    double wcVariation = maxWC - minWC;
+
+    System.out.printf("\nWater cut variation: min=%.1f%%, max=%.1f%%, range=%.1f%%%n", minWC * 100,
+        maxWC * 100, wcVariation * 100);
+
+    // Physical interpretation
+    System.out.println("\n--- Physical Interpretation ---");
+    if (wcVariation > 0.001) {
+      System.out.println("✓ Water cut varies along the pipeline!");
+      System.out.println("  This indicates water-specific accumulation in low spots");
+      if (wcDeepValley > wcInlet) {
+        System.out.println("✓ Deep valley has higher water cut than inlet");
+        System.out.println("  Water accumulates more in deep valleys due to higher density");
+      }
+    } else {
+      System.out.println("⚠️ Water cut is constant along the pipeline");
+      System.out.println("   The third conservation equation needs tuning for more variation");
+    }
+
+    // Assertions
+    assertTrue(H[valley2Idx] >= H[0], "Liquid holdup should be higher in deep valley");
+    assertTrue(waterHoldup[0] >= 0, "Water holdup should be non-negative");
+    assertTrue(oilHoldup[0] >= 0, "Oil holdup should be non-negative");
+
+    // Check that water + oil holdup approximately equals total liquid holdup
+    for (int i = 0; i < nSections; i++) {
+      double totalLiquid = waterHoldup[i] + oilHoldup[i];
+      assertTrue(Math.abs(totalLiquid - H[i]) < 0.01,
+          "Water + Oil holdup should equal liquid holdup at section " + i);
+    }
+  }
 }

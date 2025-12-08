@@ -108,6 +108,24 @@ public class TwoFluidSection extends PipeSection {
   /** Water cut (water fraction of total liquid). */
   private double waterCut = 0.0;
 
+  /** Water holdup (fraction of pipe area). α_w */
+  private double waterHoldup = 0.0;
+
+  /** Oil holdup (fraction of pipe area). α_o = α_L - α_w */
+  private double oilHoldup = 0.0;
+
+  /** Water mass per unit length: α_w * ρ_w * A (kg/m). */
+  private double waterMassPerLength = 0.0;
+
+  /** Oil mass per unit length: α_o * ρ_o * A (kg/m). */
+  private double oilMassPerLength = 0.0;
+
+  /** Water velocity (m/s). */
+  private double waterVelocity = 0.0;
+
+  /** Oil velocity (m/s). */
+  private double oilVelocity = 0.0;
+
   /** Oil density (kg/m³). */
   private double oilDensity;
 
@@ -313,20 +331,42 @@ public class TwoFluidSection extends PipeSection {
   /**
    * Get state vector for numerical integration.
    *
-   * @return Conservative state [gasMass, liquidMass, gasMom, liquidMom, energy]
+   * @return Conservative state [gasMass, oilMass, waterMass, gasMom, liquidMom, energy]
    */
   public double[] getStateVector() {
-    return new double[] {gasMassPerLength, liquidMassPerLength, gasMomentumPerLength,
-        liquidMomentumPerLength, energyPerLength};
+    return new double[] {gasMassPerLength, oilMassPerLength, waterMassPerLength,
+        gasMomentumPerLength, liquidMomentumPerLength, energyPerLength};
+  }
+
+  /**
+   * Get extended state vector including water momentum (7 equations).
+   *
+   * @return Conservative state [gasMass, oilMass, waterMass, gasMom, oilMom, waterMom, energy]
+   */
+  public double[] getExtendedStateVector() {
+    double oilMomentum = oilMassPerLength > 0 ? oilMassPerLength * oilVelocity : 0;
+    double waterMomentum = waterMassPerLength > 0 ? waterMassPerLength * waterVelocity : 0;
+    return new double[] {gasMassPerLength, oilMassPerLength, waterMassPerLength,
+        gasMomentumPerLength, oilMomentum, waterMomentum, energyPerLength};
   }
 
   /**
    * Set state from vector.
    *
-   * @param state Conservative state [gasMass, liquidMass, gasMom, liquidMom, energy]
+   * @param state Conservative state [gasMass, oilMass, waterMass, gasMom, liquidMom, energy]
    */
   public void setStateVector(double[] state) {
-    if (state.length >= 5) {
+    if (state.length >= 6) {
+      gasMassPerLength = state[0];
+      oilMassPerLength = state[1];
+      waterMassPerLength = state[2];
+      // Keep liquidMassPerLength as sum of oil and water
+      liquidMassPerLength = oilMassPerLength + waterMassPerLength;
+      gasMomentumPerLength = state[3];
+      liquidMomentumPerLength = state[4];
+      energyPerLength = state[5];
+    } else if (state.length >= 5) {
+      // Legacy 5-variable state (no water separation)
       gasMassPerLength = state[0];
       liquidMassPerLength = state[1];
       gasMomentumPerLength = state[2];
@@ -336,28 +376,89 @@ public class TwoFluidSection extends PipeSection {
   }
 
   /**
+   * Update water and oil holdups from conservative variables. Should be called after
+   * extractPrimitiveVariables.
+   */
+  public void updateWaterOilHoldups() {
+    double A = getArea();
+    double alphaL = getLiquidHoldup();
+
+    // Calculate individual holdups from mass per length
+    if (A > 0 && waterDensity > 0 && oilDensity > 0) {
+      double alphaW = waterMassPerLength / (waterDensity * A);
+      double alphaO = oilMassPerLength / (oilDensity * A);
+
+      // Clamp to valid ranges
+      alphaW = Math.max(0, Math.min(alphaL, alphaW));
+      alphaO = Math.max(0, Math.min(alphaL, alphaO));
+
+      // Normalize to match total liquid holdup
+      double totalLiqHoldup = alphaW + alphaO;
+      if (totalLiqHoldup > 1e-10 && alphaL > 1e-10) {
+        double scale = alphaL / totalLiqHoldup;
+        alphaW *= scale;
+        alphaO *= scale;
+      }
+
+      waterHoldup = alphaW;
+      oilHoldup = alphaO;
+
+      // Update water cut based on holdups
+      if (alphaL > 1e-10) {
+        waterCut = alphaW / alphaL;
+        oilFractionInLiquid = 1.0 - waterCut;
+      }
+    }
+  }
+
+  /**
+   * Update conservative variables for water and oil separately.
+   */
+  public void updateWaterOilConservativeVariables() {
+    double A = getArea();
+
+    // Calculate water and oil mass per length from holdups
+    waterMassPerLength = waterHoldup * waterDensity * A;
+    oilMassPerLength = oilHoldup * oilDensity * A;
+
+    // Liquid mass is the sum
+    liquidMassPerLength = waterMassPerLength + oilMassPerLength;
+  }
+
+  /**
    * Calculate effective liquid properties for three-phase flow.
    *
    * <p>
-   * Combines oil and water properties using volume-weighted averages.
+   * Combines oil and water properties using volume-weighted averages. Uses local water cut which
+   * may vary along the pipeline.
    * </p>
    */
   public void updateThreePhaseProperties() {
-    if (waterCut > 0 && waterCut < 1) {
+    if (waterCut > 0 && waterCut < 1 && waterDensity > 0 && oilDensity > 0) {
       // Volume-weighted density
-      double rhoL = oilFractionInLiquid * oilDensity + (1 - oilFractionInLiquid) * waterDensity;
+      double rhoL = oilFractionInLiquid * oilDensity + waterCut * waterDensity;
       setLiquidDensity(rhoL);
 
       // Viscosity - use Brinkman equation for emulsions
       double muL;
-      if (oilFractionInLiquid > 0.5) {
-        // Oil continuous
-        muL = oilViscosity * Math.pow(1 - (1 - oilFractionInLiquid), -2.5);
-      } else {
-        // Water continuous
-        muL = waterViscosity * Math.pow(1 - oilFractionInLiquid, -2.5);
+      if (oilViscosity > 0 && waterViscosity > 0) {
+        if (oilFractionInLiquid > 0.5) {
+          // Oil continuous
+          muL = oilViscosity * Math.pow(1.0 - waterCut, -2.5);
+        } else {
+          // Water continuous
+          muL = waterViscosity * Math.pow(1.0 - oilFractionInLiquid, -2.5);
+        }
+        setLiquidViscosity(muL);
       }
-      setLiquidViscosity(muL);
+    } else if (waterCut >= 1.0 && waterDensity > 0 && waterViscosity > 0) {
+      // Pure water
+      setLiquidDensity(waterDensity);
+      setLiquidViscosity(waterViscosity);
+    } else if (waterCut <= 0 && oilDensity > 0 && oilViscosity > 0) {
+      // Pure oil
+      setLiquidDensity(oilDensity);
+      setLiquidViscosity(oilViscosity);
     }
   }
 
@@ -578,6 +679,54 @@ public class TwoFluidSection extends PipeSection {
 
   public void setWaterViscosity(double waterViscosity) {
     this.waterViscosity = waterViscosity;
+  }
+
+  public double getWaterHoldup() {
+    return waterHoldup;
+  }
+
+  public void setWaterHoldup(double waterHoldup) {
+    this.waterHoldup = waterHoldup;
+  }
+
+  public double getOilHoldup() {
+    return oilHoldup;
+  }
+
+  public void setOilHoldup(double oilHoldup) {
+    this.oilHoldup = oilHoldup;
+  }
+
+  public double getWaterMassPerLength() {
+    return waterMassPerLength;
+  }
+
+  public void setWaterMassPerLength(double waterMassPerLength) {
+    this.waterMassPerLength = waterMassPerLength;
+  }
+
+  public double getOilMassPerLength() {
+    return oilMassPerLength;
+  }
+
+  public void setOilMassPerLength(double oilMassPerLength) {
+    this.oilMassPerLength = oilMassPerLength;
+  }
+
+  public double getWaterVelocity() {
+    return waterVelocity;
+  }
+
+  public void setWaterVelocity(double waterVelocity) {
+    this.waterVelocity = waterVelocity;
+  }
+
+  public double getOilVelocity() {
+    return oilVelocity;
+  }
+
+  public void setOilVelocity(double oilVelocity) {
+    this.oilVelocity = oilVelocity;
   }
 
   @Override

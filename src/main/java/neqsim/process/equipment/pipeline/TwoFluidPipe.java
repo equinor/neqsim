@@ -268,6 +268,13 @@ public class TwoFluidPipe extends Pipeline {
     double cG = 340, cL = 1200, hG = 0, hL = 0, sigma = 0.02;
     double alphaL = 0.0, alphaG = 1.0; // Default to single-phase gas
 
+    // Three-phase specific properties
+    double rhoOil = 800.0, rhoWater = 1000.0;
+    double muOil = 1e-3, muWater = 1e-3;
+    double inletWaterCut = 0.0;
+    double inletOilFraction = 1.0;
+    boolean isThreePhase = false;
+
     // Determine phase fractions based on number of phases
     int numPhases = inletFluid.getNumberOfPhases();
 
@@ -310,34 +317,35 @@ public class TwoFluidPipe extends Pipeline {
 
       if (hasOil && hasWater) {
         // Three-phase flow: combine oil and water as effective liquid
-        double rhoOil = inletFluid.getPhase("oil").getDensity("kg/m3");
-        double rhoWater = inletFluid.getPhase("aqueous").getDensity("kg/m3");
-        double muOil = inletFluid.getPhase("oil").getViscosity("kg/msec");
-        double muWater = inletFluid.getPhase("aqueous").getViscosity("kg/msec");
+        isThreePhase = true;
+        rhoOil = inletFluid.getPhase("oil").getDensity("kg/m3");
+        rhoWater = inletFluid.getPhase("aqueous").getDensity("kg/m3");
+        muOil = inletFluid.getPhase("oil").getViscosity("kg/msec");
+        muWater = inletFluid.getPhase("aqueous").getViscosity("kg/msec");
         double volOil = inletFluid.getPhase("oil").getVolume("m3");
         double volWater = inletFluid.getPhase("aqueous").getVolume("m3");
         double volLiquid = volOil + volWater;
 
         // Water cut = water volume / total liquid volume
-        double waterCut = volWater / volLiquid;
-        double oilFraction = 1.0 - waterCut;
+        inletWaterCut = volWater / volLiquid;
+        inletOilFraction = 1.0 - inletWaterCut;
 
         // Volume-weighted average liquid density
-        rhoL = oilFraction * rhoOil + waterCut * rhoWater;
+        rhoL = inletOilFraction * rhoOil + inletWaterCut * rhoWater;
 
         // Effective viscosity using Brinkman equation for emulsions
-        if (oilFraction > 0.5) {
+        if (inletOilFraction > 0.5) {
           // Oil continuous phase
-          muL = muOil * Math.pow(1.0 - waterCut, -2.5);
+          muL = muOil * Math.pow(1.0 - inletWaterCut, -2.5);
         } else {
           // Water continuous phase
-          muL = muWater * Math.pow(1.0 - oilFraction, -2.5);
+          muL = muWater * Math.pow(1.0 - inletOilFraction, -2.5);
         }
 
         // Use oil phase for other properties (approximation)
         cL = inletFluid.getPhase("oil").getSoundSpeed();
-        hL = (oilFraction * inletFluid.getPhase("oil").getEnthalpy("J/kg")
-            + waterCut * inletFluid.getPhase("aqueous").getEnthalpy("J/kg"));
+        hL = (inletOilFraction * inletFluid.getPhase("oil").getEnthalpy("J/kg")
+            + inletWaterCut * inletFluid.getPhase("aqueous").getEnthalpy("J/kg"));
 
         if (inletFluid.hasPhaseType("gas")) {
           sigma = inletFluid.getInterphaseProperties()
@@ -345,7 +353,7 @@ public class TwoFluidPipe extends Pipeline {
         }
 
         logger.info("Three-phase flow detected: water cut = {:.1f}%, oil fraction = {:.1f}%",
-            waterCut * 100, oilFraction * 100);
+            inletWaterCut * 100, inletOilFraction * 100);
 
       } else if (hasOil || hasWater) {
         // Two-phase with single liquid type
@@ -410,6 +418,29 @@ public class TwoFluidPipe extends Pipeline {
       sec.setLiquidHoldup(alphaL);
       sec.setGasVelocity(vMix);
       sec.setLiquidVelocity(vMix * 0.8); // Slip
+
+      // Three-phase specific initialization
+      if (isThreePhase) {
+        sec.setOilDensity(rhoOil);
+        sec.setWaterDensity(rhoWater);
+        sec.setOilViscosity(muOil);
+        sec.setWaterViscosity(muWater);
+        sec.setWaterCut(inletWaterCut);
+        sec.setOilFractionInLiquid(inletOilFraction);
+
+        // Initialize water and oil holdups based on inlet water cut
+        double alphaW = alphaL * inletWaterCut;
+        double alphaO = alphaL * inletOilFraction;
+        sec.setWaterHoldup(alphaW);
+        sec.setOilHoldup(alphaO);
+
+        // Initialize velocities (assume same as liquid initially, will adjust in steady-state)
+        sec.setWaterVelocity(sec.getLiquidVelocity());
+        sec.setOilVelocity(sec.getLiquidVelocity());
+
+        // Update water/oil conservative variables
+        sec.updateWaterOilConservativeVariables();
+      }
 
       // Initialize derived quantities
       sec.updateDerivedQuantities();
@@ -498,6 +529,11 @@ public class TwoFluidPipe extends Pipeline {
         if (alphaL_new > 0.001 && sec.getLiquidDensity() > 0) {
           double vL = mDotLiq / (area * alphaL_new * sec.getLiquidDensity());
           sec.setLiquidVelocity(vL);
+        }
+
+        // Update water and oil holdups for three-phase flow
+        if (sec.getWaterDensity() > 0 && sec.getOilDensity() > 0 && sec.getWaterCut() > 0) {
+          updateWaterOilHoldups(sec, prev, alphaL_new, area);
         }
 
         // Update derived quantities
@@ -659,6 +695,106 @@ public class TwoFluidPipe extends Pipeline {
     double dPdx_grav = rhoMix * 9.81 * Math.sin(sec.getInclination());
 
     return dPdx_fric + dPdx_grav;
+  }
+
+  /**
+   * Update water and oil holdups for three-phase flow with terrain effects.
+   *
+   * <p>
+   * Water is denser than oil, so it tends to accumulate in valleys (low spots) more than oil. This
+   * method calculates the local water cut which can vary along the pipe based on:
+   * <ul>
+   * <li>Gravity segregation: water settles faster in low-velocity regions</li>
+   * <li>Terrain effects: water accumulates more in valleys</li>
+   * <li>Slip between oil and water phases</li>
+   * </ul>
+   * </p>
+   *
+   * @param sec Current section
+   * @param prev Previous section (upstream)
+   * @param alphaL Total liquid holdup
+   * @param area Pipe cross-sectional area
+   */
+  private void updateWaterOilHoldups(TwoFluidSection sec, TwoFluidSection prev, double alphaL,
+      double area) {
+    double rhoOil = sec.getOilDensity();
+    double rhoWater = sec.getWaterDensity();
+    double muOil = sec.getOilViscosity();
+    double muWater = sec.getWaterViscosity();
+    double g = 9.81;
+
+    // Get previous water cut for continuity
+    double prevWaterCut = (prev != null) ? prev.getWaterCut() : sec.getWaterCut();
+    double inclination = sec.getInclination();
+    double sinTheta = Math.sin(inclination);
+
+    // Base water cut from previous section (advected with liquid)
+    double waterCut = prevWaterCut;
+
+    // Density difference drives water settling
+    double deltaRho = rhoWater - rhoOil; // Positive: water is heavier
+
+    if (deltaRho > 0 && alphaL > 0.01) {
+      // Stokes settling velocity for water droplets in oil (or vice versa)
+      // Simplified model: settling depends on local holdup and inclination
+      double dropletDiameter = 0.001; // 1 mm typical droplet size
+      double stokesVelocity = deltaRho * g * dropletDiameter * dropletDiameter / (18 * muOil);
+
+      // Terrain effect on water accumulation
+      // Negative inclination (downhill) + transition to uphill = valley = water accumulates
+      double terrainFactor = 1.0;
+
+      if (prev != null) {
+        double prevInclination = prev.getInclination();
+        double inclinationChange = inclination - prevInclination;
+
+        // Valley detection: transition from downhill to uphill
+        if (inclinationChange > 0.005 && prevInclination < -0.005) {
+          // Strong valley effect for water - water accumulates more than oil
+          terrainFactor = 1.0 + 0.3 * Math.min(inclinationChange, 0.3);
+        }
+
+        // Peak detection: transition from uphill to downhill
+        if (inclinationChange < -0.005 && prevInclination > 0.005) {
+          // Water drains from peaks faster than oil
+          terrainFactor = 1.0 - 0.2 * Math.min(Math.abs(inclinationChange), 0.3);
+        }
+      }
+
+      // In uphill sections, water tends to slip back more than oil
+      if (sinTheta > 0.01) {
+        // Uphill: water accumulates (higher water cut)
+        double upfactor = 1.0 + 0.1 * sinTheta * (stokesVelocity / sec.getLiquidVelocity());
+        terrainFactor *= Math.min(upfactor, 1.5);
+      } else if (sinTheta < -0.01) {
+        // Downhill: water flows faster (lower local water cut as it drains ahead)
+        double downFactor = 1.0 - 0.05 * Math.abs(sinTheta);
+        terrainFactor *= Math.max(downFactor, 0.7);
+      }
+
+      // Apply terrain factor to water cut
+      waterCut = prevWaterCut * terrainFactor;
+    }
+
+    // Clamp water cut to valid range
+    waterCut = Math.max(0, Math.min(1, waterCut));
+
+    // Calculate water and oil holdups from water cut and total liquid holdup
+    double alphaW = alphaL * waterCut;
+    double alphaO = alphaL * (1.0 - waterCut);
+
+    // Update section properties
+    sec.setWaterCut(waterCut);
+    sec.setOilFractionInLiquid(1.0 - waterCut);
+    sec.setWaterHoldup(alphaW);
+    sec.setOilHoldup(alphaO);
+
+    // Update water and oil mass per length
+    sec.setWaterMassPerLength(alphaW * rhoWater * area);
+    sec.setOilMassPerLength(alphaO * rhoOil * area);
+
+    // Update combined liquid properties based on new water cut
+    sec.updateThreePhaseProperties();
   }
 
   @Override
@@ -1021,6 +1157,59 @@ public class TwoFluidPipe extends Pipeline {
    */
   public double[] getLiquidHoldupProfile() {
     return liquidHoldupProfile != null ? liquidHoldupProfile.clone() : new double[0];
+  }
+
+  /**
+   * Get water cut profile along the pipeline.
+   *
+   * <p>
+   * For three-phase flow, water cut can vary along the pipeline as water accumulates in low spots
+   * (valleys) due to its higher density compared to oil.
+   * </p>
+   *
+   * @return Water cut at each section (0-1, fraction of liquid that is water)
+   */
+  public double[] getWaterCutProfile() {
+    if (sections == null) {
+      return new double[0];
+    }
+    double[] waterCuts = new double[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      waterCuts[i] = sections[i].getWaterCut();
+    }
+    return waterCuts;
+  }
+
+  /**
+   * Get water holdup profile along the pipeline.
+   *
+   * @return Water holdup at each section (0-1, fraction of pipe area occupied by water)
+   */
+  public double[] getWaterHoldupProfile() {
+    if (sections == null) {
+      return new double[0];
+    }
+    double[] waterHoldups = new double[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      waterHoldups[i] = sections[i].getWaterHoldup();
+    }
+    return waterHoldups;
+  }
+
+  /**
+   * Get oil holdup profile along the pipeline.
+   *
+   * @return Oil holdup at each section (0-1, fraction of pipe area occupied by oil)
+   */
+  public double[] getOilHoldupProfile() {
+    if (sections == null) {
+      return new double[0];
+    }
+    double[] oilHoldups = new double[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      oilHoldups[i] = sections[i].getOilHoldup();
+    }
+    return oilHoldups;
   }
 
   /**
