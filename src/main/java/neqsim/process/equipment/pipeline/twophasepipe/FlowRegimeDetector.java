@@ -96,6 +96,8 @@ public class FlowRegimeDetector implements Serializable {
 
   /**
    * Get or create drift flux model for slip calculations.
+   *
+   * @return the drift flux model instance
    */
   private DriftFluxModel getDriftFluxModel() {
     if (driftFluxModel == null) {
@@ -576,7 +578,13 @@ public class FlowRegimeDetector implements Serializable {
   }
 
   /**
-   * Calculate bubble rise velocity (Harmathy correlation).
+   * Calculate bubble rise velocity using Harmathy correlation.
+   *
+   * @param D pipe diameter (m)
+   * @param rho_L liquid density (kg/m³)
+   * @param rho_G gas density (kg/m³)
+   * @param sigma surface tension (N/m)
+   * @return bubble rise velocity (m/s)
    */
   private double calcBubbleRiseVelocity(double D, double rho_L, double rho_G, double sigma) {
     double deltaRho = rho_L - rho_G;
