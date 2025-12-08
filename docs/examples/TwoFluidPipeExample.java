@@ -9,16 +9,20 @@ import neqsim.thermo.system.SystemSrkEos;
 /**
  * Example demonstrating the two-fluid transient multiphase pipe model.
  * 
- * <p>This example simulates gas-condensate flow through a 10 km pipeline
- * with terrain undulations, demonstrating liquid accumulation in low points.</p>
+ * <p>
+ * This example simulates gas-condensate flow through a 10 km pipeline with terrain undulations,
+ * demonstrating liquid accumulation in low points.
+ * </p>
  * 
- * <p>The two-fluid model solves separate mass and momentum equations for each
- * phase, enabling accurate prediction of:</p>
+ * <p>
+ * The two-fluid model solves separate mass and momentum equations for each phase, enabling accurate
+ * prediction of:
+ * </p>
  * <ul>
- *   <li>Liquid holdup profile along the pipeline</li>
- *   <li>Slug formation and dynamics</li>
- *   <li>Pressure drop with terrain effects</li>
- *   <li>Transient ramp-up and turndown behavior</li>
+ * <li>Liquid holdup profile along the pipeline</li>
+ * <li>Slug formation and dynamics</li>
+ * <li>Pressure drop with terrain effects</li>
+ * <li>Transient ramp-up and turndown behavior</li>
  * </ul>
  * 
  * @author NeqSim Team

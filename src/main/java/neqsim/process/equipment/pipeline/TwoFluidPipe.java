@@ -263,33 +263,110 @@ public class TwoFluidPipe extends Pipeline {
     // Store reference fluid for flash calculations
     referenceFluid = inletFluid.clone();
 
-    // Calculate inlet phase properties
+    // Calculate inlet phase properties - initialize with defaults
     double rhoG = 1.0, rhoL = 800.0, muG = 1e-5, muL = 1e-3;
     double cG = 340, cL = 1200, hG = 0, hL = 0, sigma = 0.02;
-    double alphaL = 0.1, alphaG = 0.9;
+    double alphaL = 0.0, alphaG = 1.0; // Default to single-phase gas
 
-    if (inletFluid.hasPhaseType("gas")) {
-      rhoG = inletFluid.getPhase("gas").getDensity("kg/m3");
-      muG = inletFluid.getPhase("gas").getViscosity("kg/msec");
-      cG = inletFluid.getPhase("gas").getSoundSpeed();
-      hG = inletFluid.getPhase("gas").getEnthalpy("J/kg");
-    }
-    if (inletFluid.hasPhaseType("oil") || inletFluid.hasPhaseType("aqueous")) {
-      String liqPhase = inletFluid.hasPhaseType("oil") ? "oil" : "aqueous";
-      rhoL = inletFluid.getPhase(liqPhase).getDensity("kg/m3");
-      muL = inletFluid.getPhase(liqPhase).getViscosity("kg/msec");
-      cL = inletFluid.getPhase(liqPhase).getSoundSpeed();
-      hL = inletFluid.getPhase(liqPhase).getEnthalpy("J/kg");
-      sigma = inletFluid.getInterphaseProperties()
-          .getSurfaceTension(inletFluid.getPhaseIndex("gas"), inletFluid.getPhaseIndex(liqPhase));
-    }
+    // Determine phase fractions based on number of phases
+    int numPhases = inletFluid.getNumberOfPhases();
 
-    // Estimate holdup from inlet stream
-    if (inletFluid.getNumberOfPhases() > 1) {
-      double volGas = inletFluid.getPhase("gas").getVolume("m3");
-      double volTotal = inletFluid.getVolume("m3");
-      alphaG = volGas / volTotal;
-      alphaL = 1.0 - alphaG;
+    if (numPhases == 1) {
+      // Single-phase flow - determine if gas or liquid
+      if (inletFluid.hasPhaseType("gas")) {
+        alphaG = 1.0;
+        alphaL = 0.0;
+        rhoG = inletFluid.getPhase("gas").getDensity("kg/m3");
+        muG = inletFluid.getPhase("gas").getViscosity("kg/msec");
+        cG = inletFluid.getPhase("gas").getSoundSpeed();
+        hG = inletFluid.getPhase("gas").getEnthalpy("J/kg");
+        // Set liquid properties to dummy values (won't be used)
+        rhoL = rhoG;
+        muL = muG;
+      } else if (inletFluid.hasPhaseType("oil") || inletFluid.hasPhaseType("aqueous")) {
+        alphaG = 0.0;
+        alphaL = 1.0;
+        String liqPhase = inletFluid.hasPhaseType("oil") ? "oil" : "aqueous";
+        rhoL = inletFluid.getPhase(liqPhase).getDensity("kg/m3");
+        muL = inletFluid.getPhase(liqPhase).getViscosity("kg/msec");
+        cL = inletFluid.getPhase(liqPhase).getSoundSpeed();
+        hL = inletFluid.getPhase(liqPhase).getEnthalpy("J/kg");
+        // Set gas properties to dummy values (won't be used)
+        rhoG = rhoL;
+        muG = muL;
+      }
+    } else {
+      // Two-phase or multi-phase flow
+      if (inletFluid.hasPhaseType("gas")) {
+        rhoG = inletFluid.getPhase("gas").getDensity("kg/m3");
+        muG = inletFluid.getPhase("gas").getViscosity("kg/msec");
+        cG = inletFluid.getPhase("gas").getSoundSpeed();
+        hG = inletFluid.getPhase("gas").getEnthalpy("J/kg");
+      }
+      
+      // Handle three-phase (gas + oil + water) or two-phase with liquid
+      boolean hasOil = inletFluid.hasPhaseType("oil");
+      boolean hasWater = inletFluid.hasPhaseType("aqueous");
+      
+      if (hasOil && hasWater) {
+        // Three-phase flow: combine oil and water as effective liquid
+        double rhoOil = inletFluid.getPhase("oil").getDensity("kg/m3");
+        double rhoWater = inletFluid.getPhase("aqueous").getDensity("kg/m3");
+        double muOil = inletFluid.getPhase("oil").getViscosity("kg/msec");
+        double muWater = inletFluid.getPhase("aqueous").getViscosity("kg/msec");
+        double volOil = inletFluid.getPhase("oil").getVolume("m3");
+        double volWater = inletFluid.getPhase("aqueous").getVolume("m3");
+        double volLiquid = volOil + volWater;
+        
+        // Water cut = water volume / total liquid volume
+        double waterCut = volWater / volLiquid;
+        double oilFraction = 1.0 - waterCut;
+        
+        // Volume-weighted average liquid density
+        rhoL = oilFraction * rhoOil + waterCut * rhoWater;
+        
+        // Effective viscosity using Brinkman equation for emulsions
+        if (oilFraction > 0.5) {
+          // Oil continuous phase
+          muL = muOil * Math.pow(1.0 - waterCut, -2.5);
+        } else {
+          // Water continuous phase
+          muL = muWater * Math.pow(1.0 - oilFraction, -2.5);
+        }
+        
+        // Use oil phase for other properties (approximation)
+        cL = inletFluid.getPhase("oil").getSoundSpeed();
+        hL = (oilFraction * inletFluid.getPhase("oil").getEnthalpy("J/kg") 
+            + waterCut * inletFluid.getPhase("aqueous").getEnthalpy("J/kg"));
+        
+        if (inletFluid.hasPhaseType("gas")) {
+          sigma = inletFluid.getInterphaseProperties()
+              .getSurfaceTension(inletFluid.getPhaseIndex("gas"), inletFluid.getPhaseIndex("oil"));
+        }
+        
+        logger.info("Three-phase flow detected: water cut = {:.1f}%, oil fraction = {:.1f}%", 
+            waterCut * 100, oilFraction * 100);
+        
+      } else if (hasOil || hasWater) {
+        // Two-phase with single liquid type
+        String liqPhase = hasOil ? "oil" : "aqueous";
+        rhoL = inletFluid.getPhase(liqPhase).getDensity("kg/m3");
+        muL = inletFluid.getPhase(liqPhase).getViscosity("kg/msec");
+        cL = inletFluid.getPhase(liqPhase).getSoundSpeed();
+        hL = inletFluid.getPhase(liqPhase).getEnthalpy("J/kg");
+        if (inletFluid.hasPhaseType("gas")) {
+          sigma = inletFluid.getInterphaseProperties()
+              .getSurfaceTension(inletFluid.getPhaseIndex("gas"), inletFluid.getPhaseIndex(liqPhase));
+        }
+      }
+
+      // Calculate holdup from volumetric phase fractions
+      if (inletFluid.hasPhaseType("gas")) {
+        double volGas = inletFluid.getPhase("gas").getVolume("m3");
+        double volTotal = inletFluid.getVolume("m3");
+        alphaG = volGas / volTotal;
+        alphaL = 1.0 - alphaG;
+      }
     }
 
     // Create sections
@@ -357,9 +434,25 @@ public class TwoFluidPipe extends Pipeline {
    * Run steady-state initialization.
    */
   private void runSteadyState() {
-    // Simple steady-state: iterate until pressure profile converges
+    // Simple steady-state: iterate until pressure and holdup profiles converge
     int maxIter = 100;
     double tolerance = 1e-4;
+
+    // Get total mass flow rates for each phase (constant along pipe in steady state)
+    double massFlow = getInletStream().getFlowRate("kg/sec");
+    double area = Math.PI * diameter * diameter / 4.0;
+
+    // Get inlet phase fractions from first section
+    double inletAlphaL = sections[0].getLiquidHoldup();
+    double inletAlphaG = sections[0].getGasHoldup();
+    double inletRhoG = sections[0].getGasDensity();
+    double inletRhoL = sections[0].getLiquidDensity();
+
+    // Calculate phase mass flow rates (conserved in steady state)
+    double rhoMixInlet = inletAlphaG * inletRhoG + inletAlphaL * inletRhoL;
+    double gasQualityInlet = inletAlphaG * inletRhoG / rhoMixInlet;
+    double mDotGas = massFlow * gasQualityInlet;
+    double mDotLiq = massFlow * (1.0 - gasQualityInlet);
 
     for (int iter = 0; iter < maxIter; iter++) {
       double maxChange = 0;
@@ -369,7 +462,7 @@ public class TwoFluidPipe extends Pipeline {
         sec.setFlowRegime(flowRegimeDetector.detectFlowRegime(sec));
       }
 
-      // Update pressures using momentum balance (simplified)
+      // Update pressures and holdups using momentum balance
       for (int i = 1; i < numberOfSections; i++) {
         TwoFluidSection sec = sections[i];
         TwoFluidSection prev = sections[i - 1];
@@ -383,6 +476,33 @@ public class TwoFluidPipe extends Pipeline {
         maxChange = Math.max(maxChange, change);
 
         sec.setPressure(P_new);
+
+        // Update holdup using drift-flux model with terrain effects
+        double[] newHoldups = calculateLocalHoldup(sec, prev, mDotGas, mDotLiq, area);
+        double alphaL_new = newHoldups[0];
+        double alphaG_new = newHoldups[1];
+
+        // Track holdup change for convergence
+        double holdupChange = Math.abs(alphaL_new - sec.getLiquidHoldup());
+        maxChange = Math.max(maxChange, holdupChange);
+
+        // Apply new holdups
+        sec.setLiquidHoldup(alphaL_new);
+        sec.setGasHoldup(alphaG_new);
+
+        // Update velocities based on new holdups
+        if (alphaG_new > 0.001 && sec.getGasDensity() > 0) {
+          double vG = mDotGas / (area * alphaG_new * sec.getGasDensity());
+          sec.setGasVelocity(vG);
+        }
+        if (alphaL_new > 0.001 && sec.getLiquidDensity() > 0) {
+          double vL = mDotLiq / (area * alphaL_new * sec.getLiquidDensity());
+          sec.setLiquidVelocity(vL);
+        }
+
+        // Update derived quantities
+        sec.updateDerivedQuantities();
+        sec.updateStratifiedGeometry();
       }
 
       if (maxChange < tolerance) {
@@ -393,6 +513,125 @@ public class TwoFluidPipe extends Pipeline {
 
     // Store initial profiles
     updateResultArrays();
+  }
+
+  /**
+   * Calculate local liquid holdup using drift-flux model with terrain effects.
+   *
+   * <p>
+   * Uses the drift-flux model: v_G = C_0 * v_m + v_gj where:
+   * <ul>
+   * <li>C_0 = distribution coefficient (~1.0-1.2 for stratified flow)</li>
+   * <li>v_gj = drift velocity (gas rises relative to mixture)</li>
+   * </ul>
+   * Terrain effects modify slip velocity based on inclination.
+   *
+   * @param sec Current section
+   * @param prev Previous section (upstream)
+   * @param mDotGas Gas mass flow rate [kg/s]
+   * @param mDotLiq Liquid mass flow rate [kg/s]
+   * @param area Pipe cross-sectional area [m²]
+   * @return Array with [liquidHoldup, gasHoldup]
+   */
+  private double[] calculateLocalHoldup(TwoFluidSection sec, TwoFluidSection prev, double mDotGas,
+      double mDotLiq, double area) {
+
+    double rhoG = sec.getGasDensity();
+    double rhoL = sec.getLiquidDensity();
+    double sigma = sec.getSurfaceTension();
+    double inclination = sec.getInclination(); // radians
+    double g = 9.81;
+
+    // Handle single-phase cases
+    if (mDotLiq < 1e-10) {
+      return new double[] {0.0, 1.0}; // Pure gas
+    }
+    if (mDotGas < 1e-10) {
+      return new double[] {1.0, 0.0}; // Pure liquid
+    }
+
+    // Superficial velocities (based on total area)
+    double vsG = mDotGas / (area * rhoG);
+    double vsL = mDotLiq / (area * rhoL);
+    double vMix = vsG + vsL;
+
+    // No-slip holdup (input liquid fraction)
+    double lambdaL = vsL / vMix;
+
+    // Drift-flux parameters
+    // Distribution coefficient C0 depends on flow regime
+    double C0 = 1.2; // Typical for stratified/slug flow in pipes
+
+    // Drift velocity based on Bendiksen (1984) correlation for inclined pipes
+    // v_gj = v_gj0 * f(theta) where f(theta) accounts for inclination
+    double dRho = rhoL - rhoG;
+
+    // Terminal rise velocity (Harmathy, 1960)
+    double vGj0 = 1.53 * Math.pow(g * sigma * dRho / (rhoL * rhoL), 0.25);
+
+    // Inclination correction factor
+    // For uphill (positive inclination): gas rises faster -> higher slip -> more holdup
+    // For downhill (negative inclination): gravity pulls liquid down -> less holdup
+    double sinTheta = Math.sin(inclination);
+    double cosTheta = Math.cos(inclination);
+
+    // Bendiksen inclination factor for drift velocity
+    double fTheta;
+    if (inclination >= 0) {
+      // Uphill: enhanced drift velocity (liquid tends to accumulate)
+      fTheta = cosTheta + 1.2 * sinTheta;
+    } else {
+      // Downhill: reduced drift velocity (liquid drains)
+      fTheta = cosTheta + 0.3 * Math.abs(sinTheta);
+    }
+    fTheta = Math.max(0.1, fTheta); // Minimum factor
+
+    double vGj = vGj0 * fTheta;
+
+    // Pipe diameter effect on drift velocity (larger pipes -> higher drift)
+    double Eo = g * dRho * diameter * diameter / sigma; // Eötvös number
+    if (Eo > 40) {
+      // Large pipe correction (slug flow in large pipes)
+      vGj = 0.35 * Math.sqrt(g * diameter * dRho / rhoL) * fTheta;
+    }
+
+    // Froude number effect - at high velocities, slip decreases
+    double Fr = vMix / Math.sqrt(g * diameter);
+    double slipReduction = 1.0 / (1.0 + 0.1 * Fr);
+    vGj *= slipReduction;
+
+    // Calculate gas holdup from drift-flux relation
+    // v_G = C0 * v_m + v_gj
+    // alpha_G * v_G = vsG
+    // Solving: alpha_G = vsG / (C0 * vMix + vGj)
+    double alphaG = vsG / (C0 * vMix + vGj);
+    alphaG = Math.max(0.001, Math.min(0.999, alphaG));
+    double alphaL = 1.0 - alphaG;
+
+    // Terrain accumulation effect for valleys
+    // In valleys (going from downhill to uphill), liquid accumulates
+    if (prev != null) {
+      double prevInclination = prev.getInclination();
+      double inclinationChange = inclination - prevInclination;
+
+      // Transition from downhill to uphill -> valley -> liquid accumulates
+      if (inclinationChange > 0.01 && prevInclination < -0.01) {
+        // Valley effect: increase liquid holdup
+        double valleyFactor = 1.0 + 0.5 * Math.min(inclinationChange, 0.2);
+        alphaL = Math.min(0.999, alphaL * valleyFactor);
+        alphaG = 1.0 - alphaL;
+      }
+
+      // Transition from uphill to downhill -> peak -> liquid drains
+      if (inclinationChange < -0.01 && prevInclination > 0.01) {
+        // Peak effect: decrease liquid holdup
+        double peakFactor = 1.0 - 0.3 * Math.min(Math.abs(inclinationChange), 0.2);
+        alphaL = Math.max(0.001, alphaL * peakFactor);
+        alphaG = 1.0 - alphaL;
+      }
+    }
+
+    return new double[] {alphaL, alphaG};
   }
 
   /**
@@ -448,8 +687,9 @@ public class TwoFluidPipe extends Pipeline {
     double dtStable = calcStableTimeStep();
     double dtActual = Math.min(dt, dtStable);
 
-    // Number of sub-steps
+    // Number of sub-steps (use more sub-steps for stability)
     int subSteps = (int) Math.ceil(dt / dtActual);
+    subSteps = Math.max(subSteps, 2); // At least 2 sub-steps for stability
     dtActual = dt / subSteps;
 
     for (int step = 0; step < subSteps; step++) {
@@ -459,31 +699,40 @@ public class TwoFluidPipe extends Pipeline {
         updateThermodynamics();
       }
 
-      // 2. Calculate RHS and advance solution
+      // 2. Store previous state for stability check
+      double[][] U_prev = equations.extractState(sections);
+
+      // 3. Calculate RHS and advance solution
       final double dtFinal = dtActual;
-      double[][] U = equations.extractState(sections);
 
       TimeIntegrator.RHSFunction rhs = (state, t) -> {
         equations.applyState(sections, state);
         return equations.calcRHS(sections, dx);
       };
 
-      double[][] U_new = timeIntegrator.step(U, rhs, dtFinal);
+      double[][] U_new = timeIntegrator.step(U_prev, rhs, dtFinal);
+
+      // 4. Validate and correct new state before applying
+      validateAndCorrectState(U_new, U_prev);
+
       equations.applyState(sections, U_new);
 
-      // 3. Apply pressure gradient (semi-implicit for stability)
+      // 5. Apply pressure gradient (semi-implicit for stability)
       double[][] dUdt = equations.calcRHS(sections, dx);
       equations.applyPressureGradient(sections, dUdt, dx);
 
-      // 4. Apply boundary conditions
+      // 6. Apply boundary conditions
       applyBoundaryConditions();
 
-      // 5. Update accumulation tracking
+      // 7. Validate section states and fix any issues
+      validateSectionStates();
+
+      // 8. Update accumulation tracking
       if (enableSlugTracking) {
         accumulationTracker.updateAccumulation(sections, dtActual);
       }
 
-      // 6. Advance time
+      // 9. Advance time
       simulationTime += dtActual;
       timeIntegrator.advanceTime(dtActual);
     }
@@ -493,6 +742,80 @@ public class TwoFluidPipe extends Pipeline {
     updateResultArrays();
 
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Validate and correct state vector to prevent numerical instabilities.
+   * 
+   * @param U_new New state to validate
+   * @param U_prev Previous state for fallback
+   */
+  private void validateAndCorrectState(double[][] U_new, double[][] U_prev) {
+    for (int i = 0; i < U_new.length; i++) {
+      for (int j = 0; j < U_new[i].length; j++) {
+        // Check for NaN or Inf
+        if (Double.isNaN(U_new[i][j]) || Double.isInfinite(U_new[i][j])) {
+          U_new[i][j] = U_prev[i][j]; // Revert to previous value
+        }
+      }
+
+      // Ensure mass variables are non-negative
+      U_new[i][0] = Math.max(0, U_new[i][0]); // Gas mass
+      U_new[i][1] = Math.max(0, U_new[i][1]); // Liquid mass
+
+      // Limit extreme rate of change to prevent blow-up (50% per sub-step max)
+      // This is a safety limit, not for physics - allows transient dynamics
+      double maxChangeRatio = 0.5;
+      for (int j = 0; j < 2; j++) { // Only for mass variables
+        if (U_prev[i][j] > 1e-10) {
+          double ratio = U_new[i][j] / U_prev[i][j];
+          if (ratio > 1 + maxChangeRatio) {
+            U_new[i][j] = U_prev[i][j] * (1 + maxChangeRatio);
+          } else if (ratio < 1 - maxChangeRatio && ratio > 0) {
+            U_new[i][j] = U_prev[i][j] * (1 - maxChangeRatio);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Validate section states and fix any numerical issues.
+   */
+  private void validateSectionStates() {
+    // Get reference values from inlet stream
+    double refPressure = getInletStream().getFluid().getPressure("Pa");
+    double refTemperature = getInletStream().getFluid().getTemperature("K");
+
+    for (TwoFluidSection sec : sections) {
+      // Ensure holdups are valid
+      double alphaL = sec.getLiquidHoldup();
+      double alphaG = sec.getGasHoldup();
+
+      if (Double.isNaN(alphaL) || alphaL < 0 || alphaL > 1) {
+        alphaL = 0.3; // Default holdup
+      }
+      if (Double.isNaN(alphaG) || alphaG < 0 || alphaG > 1) {
+        alphaG = 1.0 - alphaL;
+      }
+
+      // Normalize
+      double total = alphaL + alphaG;
+      if (total > 0) {
+        sec.setLiquidHoldup(alphaL / total);
+        sec.setGasHoldup(alphaG / total);
+      }
+
+      // Ensure pressure is positive
+      if (sec.getPressure() <= 0 || Double.isNaN(sec.getPressure())) {
+        sec.setPressure(refPressure); // Reset to inlet pressure
+      }
+
+      // Ensure temperature is positive
+      if (sec.getTemperature() <= 0 || Double.isNaN(sec.getTemperature())) {
+        sec.setTemperature(refTemperature);
+      }
+    }
   }
 
   /**
@@ -531,12 +854,45 @@ public class TwoFluidPipe extends Pipeline {
           sec.setGasSoundSpeed(flash.getPhase("gas").getSoundSpeed());
           sec.setGasEnthalpy(flash.getPhase("gas").getEnthalpy("J/kg"));
         }
-        if (flash.hasPhaseType("oil")) {
+        
+        // Handle liquid phases (oil, water, or both)
+        boolean hasOil = flash.hasPhaseType("oil");
+        boolean hasWater = flash.hasPhaseType("aqueous");
+        
+        if (hasOil && hasWater) {
+          // Three-phase: combine oil and water as effective liquid
+          double rhoOil = flash.getPhase("oil").getDensity("kg/m3");
+          double rhoWater = flash.getPhase("aqueous").getDensity("kg/m3");
+          double muOil = flash.getPhase("oil").getViscosity("kg/msec");
+          double muWater = flash.getPhase("aqueous").getViscosity("kg/msec");
+          double volOil = flash.getPhase("oil").getVolume("m3");
+          double volWater = flash.getPhase("aqueous").getVolume("m3");
+          double volLiquid = volOil + volWater;
+          
+          double waterCut = volLiquid > 0 ? volWater / volLiquid : 0;
+          double oilFraction = 1.0 - waterCut;
+          
+          // Volume-weighted density
+          sec.setLiquidDensity(oilFraction * rhoOil + waterCut * rhoWater);
+          
+          // Effective viscosity (Brinkman)
+          double muL;
+          if (oilFraction > 0.5) {
+            muL = muOil * Math.pow(1.0 - waterCut, -2.5);
+          } else {
+            muL = muWater * Math.pow(1.0 - oilFraction, -2.5);
+          }
+          sec.setLiquidViscosity(muL);
+          sec.setLiquidSoundSpeed(flash.getPhase("oil").getSoundSpeed());
+          sec.setLiquidEnthalpy(oilFraction * flash.getPhase("oil").getEnthalpy("J/kg")
+              + waterCut * flash.getPhase("aqueous").getEnthalpy("J/kg"));
+              
+        } else if (hasOil) {
           sec.setLiquidDensity(flash.getPhase("oil").getDensity("kg/m3"));
           sec.setLiquidViscosity(flash.getPhase("oil").getViscosity("kg/msec"));
           sec.setLiquidSoundSpeed(flash.getPhase("oil").getSoundSpeed());
           sec.setLiquidEnthalpy(flash.getPhase("oil").getEnthalpy("J/kg"));
-        } else if (flash.hasPhaseType("aqueous")) {
+        } else if (hasWater) {
           sec.setLiquidDensity(flash.getPhase("aqueous").getDensity("kg/m3"));
           sec.setLiquidViscosity(flash.getPhase("aqueous").getViscosity("kg/msec"));
           sec.setLiquidSoundSpeed(flash.getPhase("aqueous").getSoundSpeed());

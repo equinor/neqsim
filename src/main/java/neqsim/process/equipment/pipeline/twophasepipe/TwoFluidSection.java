@@ -219,37 +219,91 @@ public class TwoFluidSection extends PipeSection {
    *
    * <p>
    * This is the inverse operation of updateConservativeVariables. Requires equation of state
-   * evaluation for complete solution.
+   * evaluation for complete solution. Includes stability guards to prevent NaN values.
    * </p>
    */
   public void extractPrimitiveVariables() {
     double A = getArea();
 
-    // Extract densities and holdups
-    // This requires solving coupled with EOS - simplified version here
-    if (gasMassPerLength > 1e-10 && getGasDensity() > 1e-10) {
-      double alphaG = gasMassPerLength / (getGasDensity() * A);
-      setGasHoldup(Math.max(0, Math.min(1, alphaG)));
+    // Guard against negative or NaN conservative variables
+    gasMassPerLength = Math.max(0, gasMassPerLength);
+    liquidMassPerLength = Math.max(0, liquidMassPerLength);
+    if (Double.isNaN(gasMassPerLength))
+      gasMassPerLength = 0;
+    if (Double.isNaN(liquidMassPerLength))
+      liquidMassPerLength = 0;
+    if (Double.isNaN(gasMomentumPerLength))
+      gasMomentumPerLength = 0;
+    if (Double.isNaN(liquidMomentumPerLength))
+      liquidMomentumPerLength = 0;
+    if (Double.isNaN(energyPerLength))
+      energyPerLength = 0;
+
+    // Extract holdups from mass per length
+    double rhoG = getGasDensity();
+    double rhoL = getLiquidDensity();
+
+    // Ensure valid densities
+    if (rhoG < 0.1)
+      rhoG = 1.0; // Minimum gas density
+    if (rhoL < 100)
+      rhoL = 700.0; // Minimum liquid density
+
+    double alphaG = 0;
+    double alphaL = 0;
+
+    // Calculate holdups from conservative variables
+    if (A > 0 && rhoG > 0) {
+      alphaG = gasMassPerLength / (rhoG * A);
+    }
+    if (A > 0 && rhoL > 0) {
+      alphaL = liquidMassPerLength / (rhoL * A);
     }
 
-    if (liquidMassPerLength > 1e-10 && getLiquidDensity() > 1e-10) {
-      double alphaL = liquidMassPerLength / (getLiquidDensity() * A);
-      setLiquidHoldup(Math.max(0, Math.min(1, alphaL)));
+    // Clamp holdups to valid range
+    alphaG = Math.max(0, Math.min(1, alphaG));
+    alphaL = Math.max(0, Math.min(1, alphaL));
+
+    // Normalize holdups to sum to 1
+    double total = alphaG + alphaL;
+    if (total > 1e-10) {
+      alphaG = alphaG / total;
+      alphaL = alphaL / total;
+    } else {
+      // Default to previous values or 50-50 split
+      alphaG = getGasHoldup();
+      alphaL = getLiquidHoldup();
+      if (Double.isNaN(alphaG) || Double.isNaN(alphaL)) {
+        alphaG = 0.5;
+        alphaL = 0.5;
+      }
     }
 
-    // Ensure holdups sum to 1
-    double total = getGasHoldup() + getLiquidHoldup();
-    if (total > 1e-10 && Math.abs(total - 1.0) > 1e-10) {
-      setGasHoldup(getGasHoldup() / total);
-      setLiquidHoldup(getLiquidHoldup() / total);
-    }
+    // Final validation - ensure no NaN
+    if (Double.isNaN(alphaG))
+      alphaG = 0.5;
+    if (Double.isNaN(alphaL))
+      alphaL = 0.5;
 
-    // Extract velocities
-    if (gasMassPerLength > 1e-10) {
-      setGasVelocity(gasMomentumPerLength / gasMassPerLength);
+    setGasHoldup(alphaG);
+    setLiquidHoldup(alphaL);
+
+    // Extract velocities with stability guards
+    if (gasMassPerLength > 1e-12) {
+      double vG = gasMomentumPerLength / gasMassPerLength;
+      // Limit velocity to physical range
+      vG = Math.max(-100, Math.min(100, vG));
+      if (!Double.isNaN(vG)) {
+        setGasVelocity(vG);
+      }
     }
-    if (liquidMassPerLength > 1e-10) {
-      setLiquidVelocity(liquidMomentumPerLength / liquidMassPerLength);
+    if (liquidMassPerLength > 1e-12) {
+      double vL = liquidMomentumPerLength / liquidMassPerLength;
+      // Limit velocity to physical range
+      vL = Math.max(-50, Math.min(50, vL));
+      if (!Double.isNaN(vL)) {
+        setLiquidVelocity(vL);
+      }
     }
 
     // Update derived quantities
