@@ -354,7 +354,7 @@ public class TubingPerformance extends Pipeline {
       double rhoL = workingSystem.getPhase(1).getDensity("kg/m3");
       double rhoG = workingSystem.getPhase(0).getDensity("kg/m3");
       double muL = workingSystem.getPhase(1).getViscosity("kg/msec") * 1000;
-      
+
       // Check for invalid values
       if (Double.isNaN(rhoL) || Double.isNaN(rhoG) || rhoL <= 0 || rhoG <= 0) {
         logger.warn("Invalid density in segment " + i + ", using simplified calculation");

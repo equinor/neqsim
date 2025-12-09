@@ -247,7 +247,8 @@ class TubingPerformanceTest {
     assertTrue(dp90 > 0, "Vertical tubing should have positive pressure drop");
     // The relationship between dp60 and dp90 depends on flow regime
     // Just verify both calculations complete successfully
-    assertNotEquals(dp60, dp90, 0.01, "Different inclinations should give different pressure drops");
+    assertNotEquals(dp60, dp90, 0.01,
+        "Different inclinations should give different pressure drops");
   }
 
   @Test
