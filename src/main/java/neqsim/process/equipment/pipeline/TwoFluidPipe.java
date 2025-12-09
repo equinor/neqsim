@@ -1354,22 +1354,54 @@ public class TwoFluidPipe extends Pipeline {
     double refTemperature = getInletStream().getFluid().getTemperature("K");
 
     for (TwoFluidSection sec : sections) {
-      // Ensure holdups are valid
+      // Ensure holdups are valid (non-NaN, non-negative)
       double alphaL = sec.getLiquidHoldup();
       double alphaG = sec.getGasHoldup();
+      double alphaO = sec.getOilHoldup();
+      double alphaW = sec.getWaterHoldup();
 
-      if (Double.isNaN(alphaL) || alphaL < 0 || alphaL > 1) {
-        alphaL = 0.3; // Default holdup
+      // Fix NaN or negative values
+      boolean needsRecalc = false;
+      if (Double.isNaN(alphaL) || alphaL < 0) {
+        needsRecalc = true;
       }
-      if (Double.isNaN(alphaG) || alphaG < 0 || alphaG > 1) {
+      if (Double.isNaN(alphaG) || alphaG < 0) {
+        needsRecalc = true;
+      }
+      if (Double.isNaN(alphaO) || alphaO < 0) {
+        alphaO = 0;
+        sec.setOilHoldup(0);
+      }
+      if (Double.isNaN(alphaW) || alphaW < 0) {
+        alphaW = 0;
+        sec.setWaterHoldup(0);
+      }
+
+      // If liquid or gas holdup is invalid, recalculate from oil+water
+      if (needsRecalc) {
+        alphaO = sec.getOilHoldup();
+        alphaW = sec.getWaterHoldup();
+        alphaL = alphaO + alphaW;
         alphaG = 1.0 - alphaL;
+
+        // Clamp to valid range
+        alphaL = Math.max(0, Math.min(1, alphaL));
+        alphaG = Math.max(0, Math.min(1, alphaG));
+
+        sec.setLiquidHoldup(alphaL);
+        sec.setGasHoldup(alphaG);
       }
 
-      // Normalize
-      double total = alphaL + alphaG;
-      if (total > 0) {
-        sec.setLiquidHoldup(alphaL / total);
-        sec.setGasHoldup(alphaG / total);
+      // Ensure consistency: liquidHoldup should equal oilHoldup + waterHoldup
+      // If they don't match, trust the oil+water values (from conservative variables)
+      double sumOilWater = sec.getOilHoldup() + sec.getWaterHoldup();
+      double diff = Math.abs(sec.getLiquidHoldup() - sumOilWater);
+      if (diff > 0.01) {
+        // Always enforce consistency - update liquidHoldup to match sum
+        double newLiqHL = sumOilWater > 0 ? sumOilWater : sec.getLiquidHoldup();
+        double newGasHL = Math.max(0, Math.min(1, 1.0 - newLiqHL));
+        sec.setLiquidHoldup(newLiqHL);
+        sec.setGasHoldup(newGasHL);
       }
 
       // Ensure pressure is positive
@@ -1737,10 +1769,31 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Get liquid holdup profile.
    *
+   * <p>
+   * For consistency with oil and water holdups, the liquid holdup is calculated as the sum of oil
+   * and water holdups.
+   * </p>
+   *
    * @return Holdup at each section (0-1)
    */
   public double[] getLiquidHoldupProfile() {
-    return liquidHoldupProfile != null ? liquidHoldupProfile.clone() : new double[0];
+    if (sections == null) {
+      return liquidHoldupProfile != null ? liquidHoldupProfile.clone() : new double[0];
+    }
+    // Return consistent values: liquidHoldup = oilHoldup + waterHoldup
+    double[] profile = new double[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      double oilHL = sections[i].getOilHoldup();
+      double waterHL = sections[i].getWaterHoldup();
+      double sumOilWater = oilHL + waterHL;
+      // Use sum if it's reasonable, otherwise use stored liquid holdup
+      if (sumOilWater > 0.001) {
+        profile[i] = sumOilWater;
+      } else {
+        profile[i] = sections[i].getLiquidHoldup();
+      }
+    }
+    return profile;
   }
 
   /**

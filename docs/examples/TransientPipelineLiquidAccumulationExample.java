@@ -328,6 +328,22 @@ public class TransientPipelineLiquidAccumulationExample {
     System.out.printf("  Inventory change: %.2f m³%n", finalInventory - initialInventory);
     System.out.println();
 
+    // Debug: Print detailed section info for first few sections
+    System.out.println("DEBUG: Section details (first 5 and last 5):");
+    double[] oilHL = pipe.getOilHoldupProfile();
+    double[] waterHL = pipe.getWaterHoldupProfile();
+    double[] liqHL = pipe.getLiquidHoldupProfile();
+    for (int i = 0; i < Math.min(5, oilHL.length); i++) {
+      System.out.printf("  Section %d: LiqHL=%.4f, OilHL=%.4f, WaterHL=%.4f%n", i, liqHL[i],
+          oilHL[i], waterHL[i]);
+    }
+    System.out.println("  ...");
+    for (int i = Math.max(0, oilHL.length - 5); i < oilHL.length; i++) {
+      System.out.printf("  Section %d: LiqHL=%.4f, OilHL=%.4f, WaterHL=%.4f%n", i, liqHL[i],
+          oilHL[i], waterHL[i]);
+    }
+    System.out.println();
+
     // Print holdup profile at key locations
     printHoldupProfileSummary(pipe, elevationProfile);
   }

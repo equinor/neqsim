@@ -284,9 +284,16 @@ public class TwoFluidSection extends PipeSection {
 
     // Guard against negative or NaN conservative variables
     gasMassPerLength = Math.max(0, gasMassPerLength);
-    liquidMassPerLength = Math.max(0, liquidMassPerLength);
+    oilMassPerLength = Math.max(0, oilMassPerLength);
+    waterMassPerLength = Math.max(0, waterMassPerLength);
+    liquidMassPerLength = oilMassPerLength + waterMassPerLength;
+
     if (Double.isNaN(gasMassPerLength))
       gasMassPerLength = 0;
+    if (Double.isNaN(oilMassPerLength))
+      oilMassPerLength = 0;
+    if (Double.isNaN(waterMassPerLength))
+      waterMassPerLength = 0;
     if (Double.isNaN(liquidMassPerLength))
       liquidMassPerLength = 0;
     if (Double.isNaN(gasMomentumPerLength))
@@ -298,34 +305,42 @@ public class TwoFluidSection extends PipeSection {
 
     // Extract holdups from mass per length
     double rhoG = getGasDensity();
-    double rhoL = getLiquidDensity();
-
-    // Ensure valid densities
     if (rhoG < 0.1)
       rhoG = 1.0; // Minimum gas density
-    if (rhoL < 100)
-      rhoL = 700.0; // Minimum liquid density
+
+    // Use individual phase densities for oil and water
+    double rhoO = oilDensity > 100 ? oilDensity : 700.0;
+    double rhoW = waterDensity > 100 ? waterDensity : 1000.0;
 
     double alphaG = 0;
-    double alphaL = 0;
+    double alphaO = 0;
+    double alphaW = 0;
 
-    // Calculate holdups from conservative variables
+    // Calculate holdups from conservative variables using consistent densities
     if (A > 0 && rhoG > 0) {
       alphaG = gasMassPerLength / (rhoG * A);
     }
-    if (A > 0 && rhoL > 0) {
-      alphaL = liquidMassPerLength / (rhoL * A);
+    if (A > 0) {
+      alphaO = oilMassPerLength / (rhoO * A);
+      alphaW = waterMassPerLength / (rhoW * A);
     }
 
     // Clamp holdups to valid range
     alphaG = Math.max(0, Math.min(1, alphaG));
-    alphaL = Math.max(0, Math.min(1, alphaL));
+    alphaO = Math.max(0, Math.min(1, alphaO));
+    alphaW = Math.max(0, Math.min(1, alphaW));
+
+    // Total liquid holdup is sum of oil and water holdups
+    double alphaL = alphaO + alphaW;
 
     // Normalize holdups to sum to 1
     double total = alphaG + alphaL;
     if (total > 1e-10) {
-      alphaG = alphaG / total;
-      alphaL = alphaL / total;
+      double scale = 1.0 / total;
+      alphaG *= scale;
+      alphaO *= scale;
+      alphaW *= scale;
+      alphaL = alphaO + alphaW;
     } else {
       // Default to previous values or 50-50 split
       alphaG = getGasHoldup();
@@ -334,6 +349,10 @@ public class TwoFluidSection extends PipeSection {
         alphaG = 0.5;
         alphaL = 0.5;
       }
+      // Split liquid according to water cut
+      double wc = (waterCut > 0 && waterCut < 1) ? waterCut : 0.01;
+      alphaW = alphaL * wc;
+      alphaO = alphaL * (1.0 - wc);
     }
 
     // Final validation - ensure no NaN
@@ -341,9 +360,21 @@ public class TwoFluidSection extends PipeSection {
       alphaG = 0.5;
     if (Double.isNaN(alphaL))
       alphaL = 0.5;
+    if (Double.isNaN(alphaO))
+      alphaO = alphaL * 0.99;
+    if (Double.isNaN(alphaW))
+      alphaW = alphaL * 0.01;
 
     setGasHoldup(alphaG);
     setLiquidHoldup(alphaL);
+    oilHoldup = alphaO;
+    waterHoldup = alphaW;
+
+    // Update water cut for consistency
+    if (alphaL > 1e-10) {
+      waterCut = alphaW / alphaL;
+      oilFractionInLiquid = 1.0 - waterCut;
+    }
 
     // Extract velocities with stability guards
     if (gasMassPerLength > 1e-12) {
@@ -422,56 +453,23 @@ public class TwoFluidSection extends PipeSection {
 
   /**
    * Update water and oil holdups from conservative variables. Should be called after
-   * extractPrimitiveVariables.
+   * extractPrimitiveVariables if separate tracking is needed. Note: extractPrimitiveVariables now
+   * also sets oil/water holdups, so this is mainly for velocity extraction.
    */
   public void updateWaterOilHoldups() {
-    double A = getArea();
-    double alphaL = getLiquidHoldup();
-
-    // Use default densities if not set properly
-    double rhoW = waterDensity > 100 ? waterDensity : 1000.0; // Default water density
-    double rhoO = oilDensity > 100 ? oilDensity : 700.0; // Default oil density
-
-    // Calculate individual holdups from mass per length
-    if (A > 0) {
-      double alphaW = waterMassPerLength / (rhoW * A);
-      double alphaO = oilMassPerLength / (rhoO * A);
-
-      // Clamp to valid ranges
-      alphaW = Math.max(0, Math.min(alphaL, alphaW));
-      alphaO = Math.max(0, Math.min(alphaL, alphaO));
-
-      // Normalize to match total liquid holdup
-      double totalLiqHoldup = alphaW + alphaO;
-      if (totalLiqHoldup > 1e-10 && alphaL > 1e-10) {
-        double scale = alphaL / totalLiqHoldup;
-        alphaW *= scale;
-        alphaO *= scale;
+    // Extract velocities from momenta (with slip)
+    if (oilMassPerLength > 1e-12) {
+      double vO = oilMomentumPerLength / oilMassPerLength;
+      vO = Math.max(-50, Math.min(50, vO)); // Clamp to physical range
+      if (!Double.isNaN(vO)) {
+        oilVelocity = vO;
       }
-
-      waterHoldup = alphaW;
-      oilHoldup = alphaO;
-
-      // Update water cut based on holdups
-      if (alphaL > 1e-10) {
-        waterCut = alphaW / alphaL;
-        oilFractionInLiquid = 1.0 - waterCut;
-      }
-
-      // Extract velocities from momenta (with slip)
-      if (oilMassPerLength > 1e-12) {
-        double vO = oilMomentumPerLength / oilMassPerLength;
-        vO = Math.max(-50, Math.min(50, vO)); // Clamp to physical range
-        if (!Double.isNaN(vO)) {
-          oilVelocity = vO;
-        }
-      }
-      if (waterMassPerLength > 1e-12) {
-        double vW = waterMomentumPerLength / waterMassPerLength;
-        vW = Math.max(-50, Math.min(50, vW)); // Clamp to physical range
-        if (!Double.isNaN(vW)) {
-          waterVelocity = vW;
-        }
+    }
+    if (waterMassPerLength > 1e-12) {
+      double vW = waterMomentumPerLength / waterMassPerLength;
+      vW = Math.max(-50, Math.min(50, vW)); // Clamp to physical range
+      if (!Double.isNaN(vW)) {
+        waterVelocity = vW;
       }
     }
   }
