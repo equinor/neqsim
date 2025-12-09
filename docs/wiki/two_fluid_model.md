@@ -698,6 +698,188 @@ double[] holdups = pipe.getLiquidHoldupProfile();
 double liquidInventory = pipe.getLiquidInventory("m3");
 ```
 
+## Terrain-Induced Slug Tracking
+
+The TwoFluidPipe model includes a comprehensive terrain-induced slug tracking system that detects liquid accumulation at terrain low points and tracks the formation, propagation, and arrival of slugs at the outlet.
+
+### Enabling Slug Tracking
+
+```java
+TwoFluidPipe pipe = new TwoFluidPipe("Pipeline", inlet);
+pipe.setLength(20000);        // 20 km
+pipe.setDiameter(0.3);        // 300 mm
+pipe.setNumberOfSections(100);
+pipe.setElevationProfile(terrain);
+
+// Enable slug tracking
+pipe.setEnableSlugTracking(true);
+
+// Optional: Tune accumulation threshold (default 0.25)
+pipe.getAccumulationTracker().setCriticalHoldup(0.35);
+```
+
+### How Terrain Slugging Works
+
+The slug tracking system consists of two components working together:
+
+1. **LiquidAccumulationTracker**: Identifies terrain low points and monitors liquid accumulation
+2. **SlugTracker**: Tracks individual slugs using Lagrangian tracking with Bendiksen velocity correlation
+
+```
+Terrain Profile with Slug Formation:
+                                    
+    Inlet ─────┐                ┌───── Outlet
+               │    Valley      │
+               └────────────────┘
+                    ▲
+                    │
+            Liquid accumulates here
+            When zone overflows → slug released
+```
+
+### Accumulation Zone Detection
+
+The tracker automatically identifies terrain low points where liquid accumulates:
+
+```java
+// Get accumulation zones after running
+var zones = pipe.getAccumulationTracker().getAccumulationZones();
+
+for (var zone : zones) {
+    System.out.println("Zone at position: " + zone.startPosition + " m");
+    System.out.println("  Volume: " + zone.liquidVolume + " m³");
+    System.out.println("  Max capacity: " + zone.maxVolume + " m³");
+    System.out.println("  Fill fraction: " + (zone.liquidVolume / zone.maxVolume));
+    System.out.println("  Is overflowing: " + zone.isOverflowing);
+}
+```
+
+### Slug Statistics
+
+Access comprehensive slug statistics after simulation:
+
+```java
+SlugTracker tracker = pipe.getSlugTracker();
+
+// Summary statistics
+System.out.println("Slugs generated: " + tracker.getTotalSlugsGenerated());
+System.out.println("Slugs merged: " + tracker.getTotalSlugsMerged());
+System.out.println("Active slugs: " + tracker.getSlugs().size());
+System.out.println("Slugs at outlet: " + pipe.getOutletSlugCount());
+System.out.println("Max slug length: " + tracker.getMaxSlugLength() + " m");
+System.out.println("Avg slug length: " + tracker.getAverageSlugLength() + " m");
+System.out.println("Slug frequency: " + tracker.getSlugFrequency() + " Hz");
+
+// Detailed per-slug information
+for (var slug : tracker.getSlugs()) {
+    System.out.println("Slug #" + slug.id);
+    System.out.println("  Position: " + slug.frontPosition + " m");
+    System.out.println("  Length: " + slug.slugBodyLength + " m");
+    System.out.println("  Volume: " + slug.liquidVolume + " m³");
+    System.out.println("  Velocity: " + slug.frontVelocity + " m/s");
+    System.out.println("  Age: " + slug.age + " s");
+    System.out.println("  Terrain-induced: " + slug.isTerrainInduced);
+}
+```
+
+### Complete Slug Tracking Example
+
+```java
+// Create gas-condensate fluid
+SystemInterface fluid = new SystemSrkEos(288.15, 50);
+fluid.addComponent("methane", 0.70);
+fluid.addComponent("ethane", 0.10);
+fluid.addComponent("propane", 0.05);
+fluid.addComponent("n-pentane", 0.10);
+fluid.addComponent("n-heptane", 0.05);
+fluid.setMixingRule("classic");
+fluid.setMultiPhaseCheck(true);
+
+Stream inlet = new Stream("inlet", fluid);
+inlet.setFlowRate(15, "kg/sec");
+inlet.setTemperature(15, "C");
+inlet.setPressure(50, "bara");
+inlet.run();
+
+// Create terrain with valleys
+double[] terrain = new double[100];
+for (int i = 0; i < 100; i++) {
+    double x = i * 200.0; // 20 km total
+    double xNorm = x / 20000.0;
+    terrain[i] = -20.0 * Math.exp(-Math.pow((xNorm - 0.4) / 0.1, 2));
+}
+
+TwoFluidPipe pipe = new TwoFluidPipe("SlugPipeline", inlet);
+pipe.setLength(20000);
+pipe.setDiameter(0.3);
+pipe.setNumberOfSections(100);
+pipe.setElevationProfile(terrain);
+pipe.setEnableSlugTracking(true);
+pipe.getAccumulationTracker().setCriticalHoldup(0.35);
+
+// Steady-state initialization
+pipe.run();
+
+// Transient simulation (2 hours)
+UUID id = UUID.randomUUID();
+double simTime = 2 * 60 * 60; // 2 hours
+double dt = 1.0;
+int steps = (int)(simTime / dt);
+
+for (int i = 0; i < steps; i++) {
+    pipe.runTransient(dt, id);
+    
+    // Monitor progress every 15 minutes
+    if (i % 900 == 0 && i > 0) {
+        System.out.printf("Time: %.0f min, Slugs: %d, Outlet: %d%n",
+            i / 60.0,
+            pipe.getSlugTracker().getTotalSlugsGenerated(),
+            pipe.getOutletSlugCount());
+    }
+}
+
+// Final report
+System.out.println(pipe.getSlugTrackingReport());
+```
+
+### Comparison with Drift-Flux Model (TransientPipe)
+
+Both `TwoFluidPipe` and `TransientPipe` use the same slug tracking infrastructure, but predict different slug frequencies due to their underlying physical models:
+
+| Aspect | TwoFluidPipe | TransientPipe |
+|--------|--------------|---------------|
+| **Physical Model** | 7-equation two-fluid | 4-equation drift-flux |
+| **Holdup Prediction** | Lower (mechanistic) | Higher (empirical slip) |
+| **Accumulation Rate** | Slower | Faster |
+| **Slug Frequency** | Lower | Higher (conservative) |
+| **Oil-Water Tracking** | Separate phases | Combined liquid |
+| **Computation Time** | ~3x slower | Faster |
+
+**Typical behavior comparison:**
+
+| Condition | TwoFluidPipe | TransientPipe |
+|-----------|--------------|---------------|
+| Avg liquid holdup | 0.25-0.35 | 0.90-0.95 |
+| Zone fill rate | 6-15%/hour | 70-80% quickly |
+| Time to first slug | ~2 hours | < 1 minute |
+| Slug frequency | 1 per 1-2 hours | 2-3 per minute |
+
+**When to use each:**
+
+- **TwoFluidPipe**: Three-phase systems, oil-water separation important, accurate phase slip needed
+- **TransientPipe**: Conservative slug catcher sizing, faster computation, gas-liquid systems
+
+### Tuning Slug Tracking Parameters
+
+```java
+// Lower critical holdup → earlier slug initiation
+pipe.getAccumulationTracker().setCriticalHoldup(0.20);
+
+// The overflow threshold in LiquidAccumulationTracker determines
+// when accumulated liquid is released as a slug
+// (set to 20% by default for terrain-induced slugging)
+```
+
 ## Integrated System Example: Slug Pipeline to Separator
 
 A complete example demonstrating a slugging pipeline connected to a choke valve and separator with level control is available in:
