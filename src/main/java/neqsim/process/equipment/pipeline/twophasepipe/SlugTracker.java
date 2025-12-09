@@ -360,10 +360,14 @@ public class SlugTracker implements Serializable {
       slug.isDecaying = slug.slugBodyLength > 2 * equilibriumLength;
     }
 
-    // Update liquid volume
+    // Update liquid volume with NaN protection
     double pipeArea = frontSection.getArea();
-    slug.liquidVolume = slug.slugBodyLength * pipeArea * slug.bodyHoldup
-        + slug.bubbleLength * pipeArea * slug.filmHoldup;
+    double bodyVolume = slug.slugBodyLength * pipeArea * slug.bodyHoldup;
+    double bubbleVolume = slug.bubbleLength * pipeArea * slug.filmHoldup;
+    slug.liquidVolume = bodyVolume + bubbleVolume;
+    if (Double.isNaN(slug.liquidVolume) || Double.isInfinite(slug.liquidVolume)) {
+      slug.liquidVolume = slug.slugBodyLength * pipeArea * 0.9; // Fallback estimate
+    }
 
     // Mark sections as in slug
     markSlugSections(slug, sections);

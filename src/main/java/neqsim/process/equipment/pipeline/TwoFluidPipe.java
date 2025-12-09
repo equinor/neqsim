@@ -271,6 +271,16 @@ public class TwoFluidPipe extends Pipeline {
   /** Enable slug tracking. */
   private boolean enableSlugTracking = true;
 
+  /** Outlet slug statistics. */
+  private int outletSlugCount = 0;
+  private double totalSlugVolumeAtOutlet = 0;
+  private double lastSlugArrivalTime = 0;
+  private double maxSlugLengthAtOutlet = 0;
+  private double maxSlugVolumeAtOutlet = 0;
+
+  /** Track which slugs have already been counted at outlet (by slug ID). */
+  private java.util.Set<Integer> countedOutletSlugs = new java.util.HashSet<>();
+
   /** Update thermodynamics every N steps. */
   private int thermodynamicUpdateInterval = 10;
 
@@ -331,6 +341,14 @@ public class TwoFluidPipe extends Pipeline {
     slugTracker = new SlugTracker();
 
     timeIntegrator.setCflNumber(cflNumber);
+
+    // Reset outlet slug statistics
+    outletSlugCount = 0;
+    totalSlugVolumeAtOutlet = 0;
+    lastSlugArrivalTime = 0;
+    maxSlugLengthAtOutlet = 0;
+    maxSlugVolumeAtOutlet = 0;
+    countedOutletSlugs.clear();
   }
 
   /**
@@ -1254,9 +1272,29 @@ public class TwoFluidPipe extends Pipeline {
       // 7. Validate section states and fix any issues
       validateSectionStates();
 
-      // 8. Update accumulation tracking
+      // 8. Update accumulation tracking and slug tracking
       if (enableSlugTracking) {
         accumulationTracker.updateAccumulation(sections, dtActual);
+
+        // Check for terrain-induced slug initiation from accumulation zones
+        for (LiquidAccumulationTracker.AccumulationZone zone : accumulationTracker
+            .getAccumulationZones()) {
+          LiquidAccumulationTracker.SlugCharacteristics slugChar =
+              accumulationTracker.checkForSlugRelease(zone, sections);
+          if (slugChar != null) {
+            slugTracker.initializeTerrainSlug(slugChar, sections);
+          }
+        }
+
+        // Set reference velocity for slug propagation (from inlet)
+        double inletMixtureVelocity = sections[0].getMixtureVelocity();
+        slugTracker.setReferenceVelocity(inletMixtureVelocity);
+
+        // Advance existing slugs through the pipeline
+        slugTracker.advanceSlugs(sections, dtActual);
+
+        // Track slugs arriving at outlet
+        trackOutletSlugs();
       }
 
       // 9. Update temperature profile if heat transfer is enabled
@@ -2003,6 +2041,109 @@ public class TwoFluidPipe extends Pipeline {
     return slugTracker;
   }
 
+  /**
+   * Track slugs arriving at outlet and collect statistics. Each slug is only counted once when it
+   * first reaches the outlet region.
+   */
+  private void trackOutletSlugs() {
+    if (slugTracker == null || sections == null || sections.length == 0) {
+      return;
+    }
+
+    double pipeLength = length;
+    double outletThreshold = pipeLength - sections[sections.length - 1].getLength() * 2;
+
+    for (SlugTracker.SlugUnit slug : slugTracker.getSlugs()) {
+      // Skip if already counted this slug
+      if (countedOutletSlugs.contains(slug.id)) {
+        continue;
+      }
+
+      // Check if slug front has reached outlet
+      if (slug.frontPosition >= outletThreshold) {
+        // This slug is arriving at outlet for the first time - record statistics
+        if (slug.age > 0 && slug.slugBodyLength > 0) {
+          outletSlugCount++;
+          countedOutletSlugs.add(slug.id);
+          if (!Double.isNaN(slug.liquidVolume)) {
+            totalSlugVolumeAtOutlet += slug.liquidVolume;
+            maxSlugVolumeAtOutlet = Math.max(maxSlugVolumeAtOutlet, slug.liquidVolume);
+          }
+          lastSlugArrivalTime = simulationTime;
+          maxSlugLengthAtOutlet = Math.max(maxSlugLengthAtOutlet, slug.slugBodyLength);
+        }
+      }
+    }
+  }
+
+  /**
+   * Get number of slugs that have arrived at outlet.
+   *
+   * @return Outlet slug count
+   */
+  public int getOutletSlugCount() {
+    return outletSlugCount;
+  }
+
+  /**
+   * Get total liquid volume delivered by slugs at outlet.
+   *
+   * @return Total slug volume (m³)
+   */
+  public double getTotalSlugVolumeAtOutlet() {
+    return totalSlugVolumeAtOutlet;
+  }
+
+  /**
+   * Get time of last slug arrival at outlet.
+   *
+   * @return Time (s)
+   */
+  public double getLastSlugArrivalTime() {
+    return lastSlugArrivalTime;
+  }
+
+  /**
+   * Get maximum slug length observed at outlet.
+   *
+   * @return Max length (m)
+   */
+  public double getMaxSlugLengthAtOutlet() {
+    return maxSlugLengthAtOutlet;
+  }
+
+  /**
+   * Get maximum slug volume observed at outlet.
+   *
+   * @return Max volume (m³)
+   */
+  public double getMaxSlugVolumeAtOutlet() {
+    return maxSlugVolumeAtOutlet;
+  }
+
+  /**
+   * Get slug statistics summary string.
+   *
+   * @return Statistics summary
+   */
+  public String getSlugStatisticsSummary() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Slug Statistics ===\n");
+    sb.append(String.format("Active slugs in pipe: %d\n", slugTracker.getSlugCount()));
+    sb.append(String.format("Slugs generated: %d\n", slugTracker.getTotalSlugsGenerated()));
+    sb.append(String.format("Slugs merged: %d\n", slugTracker.getTotalSlugsMerged()));
+    sb.append(String.format("Slugs at outlet: %d\n", outletSlugCount));
+    sb.append(String.format("Total slug volume at outlet: %.2f m³\n", totalSlugVolumeAtOutlet));
+    sb.append(String.format("Max slug length at outlet: %.1f m\n", maxSlugLengthAtOutlet));
+    sb.append(String.format("Max slug volume at outlet: %.3f m³\n", maxSlugVolumeAtOutlet));
+    if (outletSlugCount > 0 && simulationTime > 0) {
+      double avgFrequency = outletSlugCount / simulationTime;
+      sb.append(String.format("Average slug frequency: %.4f Hz (%.1f min between slugs)\n",
+          avgFrequency, avgFrequency > 0 ? 1.0 / (avgFrequency * 60) : 0));
+    }
+    return sb.toString();
+  }
+
   // ============ Configuration methods ============
 
   /**
@@ -2131,6 +2272,24 @@ public class TwoFluidPipe extends Pipeline {
     if (timeIntegrator != null) {
       timeIntegrator.setCflNumber(cflNumber);
     }
+  }
+
+  /**
+   * Set maximum simulation time for transient calculations.
+   *
+   * @param time Maximum simulation time in seconds
+   */
+  public void setMaxSimulationTime(double time) {
+    this.maxSimulationTime = Math.max(1.0, time);
+  }
+
+  /**
+   * Get maximum simulation time.
+   *
+   * @return Maximum simulation time in seconds
+   */
+  public double getMaxSimulationTime() {
+    return maxSimulationTime;
   }
 
   /**

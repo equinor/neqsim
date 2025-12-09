@@ -817,6 +817,28 @@ public class TwoFluidSection extends PipeSection {
   }
 
   /**
+   * Override getLiquidHoldup to return the total liquid holdup (oil + water).
+   * 
+   * <p>
+   * In TwoFluidSection, the oil and water holdups are tracked separately. This override ensures
+   * that getLiquidHoldup() returns their sum for consistent behavior with LiquidAccumulationTracker
+   * and other components that depend on total liquid holdup.
+   * </p>
+   *
+   * @return Total liquid holdup (oil + water)
+   */
+  @Override
+  public double getLiquidHoldup() {
+    // Return sum of oil and water if they're being used
+    double totalLiq = oilHoldup + waterHoldup;
+    if (totalLiq > 1e-6) {
+      return totalLiq;
+    }
+    // Fall back to parent's value
+    return super.getLiquidHoldup();
+  }
+
+  /**
    * Override setLiquidHoldup to also update oil and water holdups proportionally.
    * 
    * <p>
