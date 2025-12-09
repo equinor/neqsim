@@ -1595,6 +1595,37 @@ public class TwoFluidPipe extends Pipeline {
       inlet.setOilVelocity(vOil);
       inlet.setWaterVelocity(vWater);
 
+      // CRITICAL: Enforce inlet water cut from inlet stream
+      // The inlet section should have the water cut defined by the inlet stream,
+      // not whatever the solver computed. This is a Dirichlet BC for water cut.
+      double inletWaterCut = 0.01; // Default
+      if (mDotLiq > 0) {
+        // Calculate water cut from volume fractions
+        if (inFluid.hasPhaseType("oil") && inFluid.hasPhaseType("aqueous")) {
+          double volOil = inFluid.getPhase("oil").getVolume("m3");
+          double volWater = inFluid.getPhase("aqueous").getVolume("m3");
+          if (volOil + volWater > 0) {
+            inletWaterCut = volWater / (volOil + volWater);
+          }
+        } else if (inFluid.hasPhaseType("aqueous")) {
+          inletWaterCut = 1.0;
+        } else {
+          inletWaterCut = 0.0;
+        }
+      }
+
+      // Apply inlet water cut to redistribute oil and water holdups
+      double alphaW_target = alphaL * inletWaterCut;
+      double alphaO_target = alphaL * (1.0 - inletWaterCut);
+      inlet.setWaterCut(inletWaterCut);
+      inlet.setOilFractionInLiquid(1.0 - inletWaterCut);
+      inlet.setWaterHoldup(alphaW_target);
+      inlet.setOilHoldup(alphaO_target);
+
+      // Update mass per length to be consistent with holdups
+      inlet.setWaterMassPerLength(alphaW_target * rhoWater * area);
+      inlet.setOilMassPerLength(alphaO_target * rhoOil * area);
+
       // Update momentum to be consistent with velocities
       // Note: We do NOT reset the mass per length here - that would violate mass conservation
       // The solver evolves the mass, we only set velocities for flux calculation

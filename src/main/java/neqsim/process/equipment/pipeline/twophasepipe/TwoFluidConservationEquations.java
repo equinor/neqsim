@@ -343,28 +343,60 @@ public class TwoFluidConservationEquations implements Serializable {
       PhaseState gasL = createGasState(left);
       PhaseState gasR = createGasState(right);
 
-      // Create separate oil and water states for slip modeling
-      PhaseState oilL = createOilState(left);
-      PhaseState oilR = createOilState(right);
-      PhaseState waterL = createWaterState(left);
-      PhaseState waterR = createWaterState(right);
-
-      // Calculate phase fluxes separately for gas, oil, and water
+      // Calculate gas flux using AUSM+
       PhaseFlux gasFlux = fluxCalculator.calcPhaseFlux(gasL, gasR, A);
-      PhaseFlux oilFlux = fluxCalculator.calcPhaseFlux(oilL, oilR, A);
-      PhaseFlux waterFlux = fluxCalculator.calcPhaseFlux(waterL, waterR, A);
-
-      // Assemble interface flux vector - separate oil and water
       fluxes[i][IDX_GAS_MASS] = gasFlux.massFlux;
-      fluxes[i][IDX_OIL_MASS] = oilFlux.massFlux;
-      fluxes[i][IDX_WATER_MASS] = waterFlux.massFlux;
-
       fluxes[i][IDX_GAS_MOMENTUM] = gasFlux.momentumFlux;
-      fluxes[i][IDX_OIL_MOMENTUM] = oilFlux.momentumFlux;
-      fluxes[i][IDX_WATER_MOMENTUM] = waterFlux.momentumFlux;
+
+      // For oil and water, use coupled approach to prevent oscillations.
+      // Calculate combined liquid flux first, then split by upwind water cut.
+      // This ensures oil and water move together proportionally.
+      PhaseState liqL = createLiquidState(left);
+      PhaseState liqR = createLiquidState(right);
+      PhaseFlux liqFlux = fluxCalculator.calcPhaseFlux(liqL, liqR, A);
+
+      // Determine upwind direction for liquid
+      double cHalf = 0.5 * (liqL.soundSpeed + liqR.soundSpeed);
+      double Mhalf = liqL.velocity / cHalf + liqR.velocity / cHalf;
+      boolean upwindIsLeft = (Mhalf >= 0) || (liqL.velocity >= 0 && liqR.velocity >= 0);
+
+      // Get upwind water cut and densities for flux splitting
+      double upwindWaterCut, upwindOilFrac;
+      double rhoO, rhoW, vO, vW;
+      if (upwindIsLeft) {
+        upwindWaterCut = left.getWaterCut();
+        rhoO = left.getOilDensity() > 100 ? left.getOilDensity() : 700.0;
+        rhoW = left.getWaterDensity() > 100 ? left.getWaterDensity() : 1000.0;
+        vO = left.getOilVelocity();
+        vW = left.getWaterVelocity();
+      } else {
+        upwindWaterCut = right.getWaterCut();
+        rhoO = right.getOilDensity() > 100 ? right.getOilDensity() : 700.0;
+        rhoW = right.getWaterDensity() > 100 ? right.getWaterDensity() : 1000.0;
+        vO = right.getOilVelocity();
+        vW = right.getWaterVelocity();
+      }
+      upwindOilFrac = 1.0 - upwindWaterCut;
+
+      // Split liquid mass flux by water cut (volume-based)
+      // But account for density difference: m_oil/m_water = (1-wc)*rho_o / (wc*rho_w)
+      double totalLiqMassFlux = liqFlux.massFlux;
+      double oilMassFrac = upwindOilFrac * rhoO / (upwindOilFrac * rhoO + upwindWaterCut * rhoW);
+      double waterMassFrac = 1.0 - oilMassFrac;
+
+      fluxes[i][IDX_OIL_MASS] = totalLiqMassFlux * oilMassFrac;
+      fluxes[i][IDX_WATER_MASS] = totalLiqMassFlux * waterMassFrac;
+
+      // Split momentum flux similarly, but use individual velocities if available
+      double totalLiqMomFlux = liqFlux.momentumFlux;
+      // Approximate: momentum splits with mass but velocity may differ
+      fluxes[i][IDX_OIL_MOMENTUM] = fluxes[i][IDX_OIL_MASS] * vO
+          + upwindOilFrac * (totalLiqMomFlux - totalLiqMassFlux * liqL.velocity);
+      fluxes[i][IDX_WATER_MOMENTUM] = fluxes[i][IDX_WATER_MASS] * vW
+          + upwindWaterCut * (totalLiqMomFlux - totalLiqMassFlux * liqL.velocity);
 
       if (includeEnergyEquation) {
-        fluxes[i][IDX_ENERGY] = gasFlux.energyFlux + oilFlux.energyFlux + waterFlux.energyFlux;
+        fluxes[i][IDX_ENERGY] = gasFlux.energyFlux + liqFlux.energyFlux;
       }
     }
 
@@ -454,22 +486,72 @@ public class TwoFluidConservationEquations implements Serializable {
       sources[i][IDX_GAS_MASS] = Gamma_G;
 
       // Oil and water mass sources (no phase change between oil/water for now)
-      // Gravity-driven segregation source term for water accumulation
-      // NOTE: This term is disabled (set to 0) because it causes numerical instability
-      // in the water/oil holdup distribution. The effect is that water and oil
-      // stay well-mixed in the liquid phase. A more sophisticated approach
-      // would need implicit treatment or smaller time steps.
+      // Gravity-driven segregation source term for water accumulation in low points
+      //
+      // Physical basis: Water (denser) tends to accumulate in valleys while oil
+      // (lighter) accumulates at peaks. The settling rate depends on:
+      // - Density difference (buoyancy driving force)
+      // - Pipe inclination (gravity component)
+      // - Liquid holdup (more liquid = more stratification potential)
+      // - Residence time (slower flow = more settling)
+      //
+      // We use a relaxation approach rather than direct advection to maintain stability.
       double waterSegregationSource = 0;
-      // Disabled due to instability issues:
-      // if (rhoW > rhoO && rhoO > 0 && alphaL > 0.01 && sinTheta != 0) {
-      // double densityRatio = (rhoW - rhoO) / rhoO;
-      // waterSegregationSource = 0.001 * densityRatio * alphaW * A * Math.abs(sinTheta);
-      // if (sinTheta < 0) {
-      // waterSegregationSource = -waterSegregationSource;
-      // }
-      // }
+      double oilSegregationSource = 0;
 
-      sources[i][IDX_OIL_MASS] = Gamma_L * (1.0 - waterCut);
+      if (rhoW > rhoO && rhoO > 100 && alphaL > 0.05 && alphaW > 1e-6 && alphaO > 1e-6) {
+        // Settling velocity based on Stokes law for droplets
+        double deltaRho = rhoW - rhoO;
+        double muL_eff = sec.getLiquidViscosity();
+        if (muL_eff < 1e-6)
+          muL_eff = 1e-3; // Default viscosity
+        double dropletDiameter = 0.002; // 2 mm typical droplet
+        double stokesVelocity =
+            deltaRho * GRAVITY * dropletDiameter * dropletDiameter / (18.0 * muL_eff);
+        stokesVelocity = Math.min(stokesVelocity, 0.1); // Cap at 10 cm/s
+
+        // Settling is enhanced in inclined sections
+        // In downhill (sinTheta < 0): water moves forward faster (settles ahead)
+        // In uphill (sinTheta > 0): water slips back (accumulates)
+        double inclinationEffect = Math.abs(sinTheta);
+
+        // Detect valleys (low points) by checking if we're at a local minimum
+        // Valley = previous section going down, next section going up
+        boolean isValley = false;
+        boolean isPeak = false;
+        if (i > 0 && i < nCells - 1) {
+          double elevPrev = sections[i - 1].getElevation();
+          double elevCurr = sec.getElevation();
+          double elevNext = sections[i + 1].getElevation();
+          isValley = (elevPrev > elevCurr) && (elevNext > elevCurr);
+          isPeak = (elevPrev < elevCurr) && (elevNext < elevCurr);
+        }
+
+        // Base settling rate (kg/m/s) - proportional to density difference and gravity
+        double baseRate = 0.0001 * deltaRho * GRAVITY * A;
+
+        if (isValley) {
+          // In valleys: water accumulates, increase local water cut
+          // Rate limited by available oil and existing water content
+          double maxWaterIncrease = alphaO * rhoO * A * 0.001; // Max 0.1% per time unit
+          waterSegregationSource =
+              Math.min(baseRate * (1.0 + 5.0 * inclinationEffect), maxWaterIncrease);
+          oilSegregationSource = -waterSegregationSource * rhoO / rhoW; // Mass balance
+        } else if (isPeak) {
+          // At peaks: water drains faster, decrease local water cut
+          double maxWaterDecrease = alphaW * rhoW * A * 0.001; // Max 0.1% per time unit
+          waterSegregationSource =
+              -Math.min(baseRate * (1.0 + 3.0 * inclinationEffect), maxWaterDecrease);
+          oilSegregationSource = -waterSegregationSource * rhoO / rhoW;
+        } else if (sinTheta > 0.01) {
+          // Uphill sections: water slips back slightly
+          double slipRate = baseRate * 0.3 * sinTheta;
+          waterSegregationSource = Math.min(slipRate, alphaO * rhoO * A * 0.0005);
+          oilSegregationSource = -waterSegregationSource * rhoO / rhoW;
+        }
+      }
+
+      sources[i][IDX_OIL_MASS] = Gamma_L * (1.0 - waterCut) + oilSegregationSource;
       sources[i][IDX_WATER_MASS] = Gamma_L * waterCut + waterSegregationSource;
 
       sources[i][IDX_GAS_MOMENTUM] = F_wG + F_iG + F_gG + Gamma_G * sec.getGasVelocity();
