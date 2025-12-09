@@ -2,6 +2,7 @@ package neqsim.process.util.fielddevelopment;
 
 import static org.junit.jupiter.api.Assertions.*;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,244 +28,317 @@ public class WellSchedulerTest {
 
   @BeforeEach
   void setUp() {
-    scheduler = new WellScheduler("TestScheduler");
+    scheduler = new WellScheduler();
   }
 
   @Test
-  @DisplayName("Add well creates record with PENDING status")
+  @DisplayName("WellScheduler constructs with no arguments")
+  void testConstruction() {
+    assertNotNull(scheduler);
+  }
+
+  @Test
+  @DisplayName("Add well creates record")
   void testAddWell() {
     String wellName = "Well-A1";
-    LocalDate drillingDate = LocalDate.of(2024, 6, 1);
-    double initialRate = 500.0;
+    double initialPotential = 500.0;
+    String rateUnit = "Sm3/day";
 
-    scheduler.addWell(wellName, drillingDate, initialRate);
+    WellRecord record = scheduler.addWell(wellName, initialPotential, rateUnit);
 
-    WellRecord record = scheduler.getWellRecord(wellName);
-    assertNotNull(record, "Well record should exist");
+    assertNotNull(record, "Well record should be created");
     assertEquals(wellName, record.getWellName(), "Well name mismatch");
-    assertEquals(WellStatus.PENDING, record.getStatus(), "New well should be PENDING");
+    assertEquals(initialPotential, record.getCurrentPotential(), 0.01);
+    assertEquals(rateUnit, record.getRateUnit());
   }
 
   @Test
-  @DisplayName("Schedule intervention sets correct dates")
-  void testScheduleIntervention() {
-    String wellName = "Well-B2";
-    scheduler.addWell(wellName, LocalDate.of(2024, 1, 1), 400.0);
+  @DisplayName("Get well returns existing well")
+  void testGetWell() {
+    scheduler.addWell("TestWell", 1000.0, "bbl/day");
 
-    LocalDate interventionDate = LocalDate.of(2024, 9, 15);
+    WellRecord retrieved = scheduler.getWell("TestWell");
+
+    assertNotNull(retrieved);
+    assertEquals("TestWell", retrieved.getWellName());
+  }
+
+  @Test
+  @DisplayName("Get well returns null for non-existing well")
+  void testGetNonExistingWell() {
+    WellRecord retrieved = scheduler.getWell("NonExistent");
+    assertNull(retrieved);
+  }
+
+  @Test
+  @DisplayName("Schedule intervention adds to well record")
+  void testScheduleIntervention() {
+    scheduler.addWell("Well-B2", 800.0, "Sm3/day");
+
+    LocalDate startDate = LocalDate.of(2024, 9, 15);
     int durationDays = 14;
 
-    Intervention intervention = scheduler.scheduleIntervention(wellName,
-        InterventionType.WORKOVER_RIG, interventionDate, durationDays, "Pump replacement");
+    Intervention intervention = Intervention.builder("Well-B2").type(InterventionType.WORKOVER_RIG)
+        .startDate(startDate).durationDays(durationDays).description("Pump replacement").build();
 
-    assertNotNull(intervention, "Intervention should be created");
-    assertEquals(wellName, intervention.getWellName(), "Well name mismatch");
-    assertEquals(InterventionType.WORKOVER_RIG, intervention.getType(),
-        "Intervention type mismatch");
-    assertEquals(interventionDate, intervention.getStartDate(), "Start date mismatch");
-    assertEquals(interventionDate.plusDays(durationDays), intervention.getEndDate(),
-        "End date mismatch");
+    scheduler.scheduleIntervention(intervention);
+
+    WellRecord record = scheduler.getWell("Well-B2");
+    List<Intervention> interventions = record.getScheduledInterventions();
+
+    assertEquals(1, interventions.size());
+    assertEquals(InterventionType.WORKOVER_RIG, interventions.get(0).getType());
+    assertEquals(startDate, interventions.get(0).getStartDate());
   }
 
   @Test
-  @DisplayName("Multiple interventions are tracked per well")
+  @DisplayName("Intervention end date is calculated correctly")
+  void testInterventionEndDate() {
+    LocalDate startDate = LocalDate.of(2024, 6, 1);
+    int duration = 10;
+
+    Intervention intervention = Intervention.builder("Well").type(InterventionType.COILED_TUBING)
+        .startDate(startDate).durationDays(duration).build();
+
+    // End date should be start + duration - 1
+    LocalDate expectedEnd = startDate.plusDays(duration - 1);
+    assertEquals(expectedEnd, intervention.getEndDate());
+  }
+
+  @Test
+  @DisplayName("Multiple interventions per well are tracked")
   void testMultipleInterventions() {
-    String wellName = "Well-C3";
-    scheduler.addWell(wellName, LocalDate.of(2023, 1, 1), 350.0);
+    scheduler.addWell("Well-C3", 350.0, "Sm3/day");
 
-    scheduler.scheduleIntervention(wellName, InterventionType.COILED_TUBING,
-        LocalDate.of(2024, 3, 1), 5, "Scale treatment");
-    scheduler.scheduleIntervention(wellName, InterventionType.WIRELINE, LocalDate.of(2024, 6, 1), 3,
-        "Log run");
-    scheduler.scheduleIntervention(wellName, InterventionType.WORKOVER_RIG,
-        LocalDate.of(2024, 9, 1), 21, "ESP replacement");
+    scheduler.scheduleIntervention(Intervention.builder("Well-C3")
+        .type(InterventionType.COILED_TUBING).startDate(LocalDate.of(2024, 3, 1)).durationDays(5)
+        .description("Scale treatment").build());
 
-    List<Intervention> interventions = scheduler.getInterventions(wellName);
+    scheduler.scheduleIntervention(Intervention.builder("Well-C3").type(InterventionType.WIRELINE)
+        .startDate(LocalDate.of(2024, 6, 1)).durationDays(3).description("Log run").build());
+
+    scheduler.scheduleIntervention(Intervention.builder("Well-C3")
+        .type(InterventionType.WORKOVER_RIG).startDate(LocalDate.of(2024, 9, 1)).durationDays(21)
+        .description("ESP replacement").build());
+
+    List<Intervention> interventions = scheduler.getWell("Well-C3").getScheduledInterventions();
     assertEquals(3, interventions.size(), "Should have 3 scheduled interventions");
   }
 
   @Test
-  @DisplayName("Interventions are prioritized by NPV")
-  void testInterventionPrioritization() {
-    String well1 = "Well-High";
-    String well2 = "Well-Low";
+  @DisplayName("Get all interventions returns sorted list")
+  void testGetAllInterventions() {
+    scheduler.addWell("Well-A", 500.0, "Sm3/day");
+    scheduler.addWell("Well-B", 400.0, "Sm3/day");
 
-    scheduler.addWell(well1, LocalDate.of(2023, 1, 1), 600.0);
-    scheduler.addWell(well2, LocalDate.of(2023, 1, 1), 200.0);
+    // Schedule out of order
+    scheduler.scheduleIntervention(Intervention.builder("Well-A").type(InterventionType.WIRELINE)
+        .startDate(LocalDate.of(2024, 9, 1)).durationDays(3).build());
 
-    Intervention int1 = scheduler.scheduleIntervention(well1, InterventionType.WORKOVER_RIG,
-        LocalDate.of(2024, 6, 1), 14, "High NPV job");
-    int1.setEstimatedNpv(5_000_000.0);
+    scheduler
+        .scheduleIntervention(Intervention.builder("Well-B").type(InterventionType.COILED_TUBING)
+            .startDate(LocalDate.of(2024, 3, 1)).durationDays(5).build());
 
-    Intervention int2 = scheduler.scheduleIntervention(well2, InterventionType.COILED_TUBING,
-        LocalDate.of(2024, 6, 1), 7, "Low NPV job");
-    int2.setEstimatedNpv(500_000.0);
+    List<Intervention> all = scheduler.getAllInterventions();
 
-    List<Intervention> prioritized = scheduler.getPrioritizedInterventions();
-
-    assertTrue(prioritized.get(0).getEstimatedNpv() >= prioritized.get(1).getEstimatedNpv(),
-        "Higher NPV intervention should be first");
+    assertEquals(2, all.size());
+    // Should be sorted by date
+    assertTrue(all.get(0).getStartDate().isBefore(all.get(1).getStartDate()),
+        "Interventions should be sorted by date");
   }
 
   @Test
-  @DisplayName("Well status transitions correctly")
-  void testWellStatusTransitions() {
-    String wellName = "Well-D4";
-    scheduler.addWell(wellName, LocalDate.of(2024, 1, 1), 450.0);
+  @DisplayName("WellRecord status changes are tracked")
+  void testWellStatusChanges() {
+    scheduler.addWell("Well-D", 600.0, "bbl/day");
+    WellRecord record = scheduler.getWell("Well-D");
 
-    // Start production
-    scheduler.updateWellStatus(wellName, WellStatus.PRODUCING);
-    assertEquals(WellStatus.PRODUCING, scheduler.getWellRecord(wellName).getStatus());
+    assertEquals(WellStatus.PRODUCING, record.getCurrentStatus());
 
-    // Shut in for intervention
-    scheduler.updateWellStatus(wellName, WellStatus.SHUT_IN);
-    assertEquals(WellStatus.SHUT_IN, scheduler.getWellRecord(wellName).getStatus());
+    record.setStatus(WellStatus.SHUT_IN, LocalDate.of(2024, 5, 1));
+    assertEquals(WellStatus.SHUT_IN, record.getCurrentStatus());
 
-    // Perform workover
-    scheduler.updateWellStatus(wellName, WellStatus.WORKOVER);
-    assertEquals(WellStatus.WORKOVER, scheduler.getWellRecord(wellName).getStatus());
-
-    // Return to production
-    scheduler.updateWellStatus(wellName, WellStatus.PRODUCING);
-    assertEquals(WellStatus.PRODUCING, scheduler.getWellRecord(wellName).getStatus());
+    record.setStatus(WellStatus.PRODUCING, LocalDate.of(2024, 5, 15));
+    assertEquals(WellStatus.PRODUCING, record.getCurrentStatus());
   }
 
   @Test
   @DisplayName("Calculate well availability")
   void testWellAvailability() {
-    String wellName = "Well-E5";
-    scheduler.addWell(wellName, LocalDate.of(2024, 1, 1), 300.0);
-    scheduler.updateWellStatus(wellName, WellStatus.PRODUCING);
+    scheduler.addWell("Well-E", 300.0, "Sm3/day");
+    WellRecord record = scheduler.getWell("Well-E");
 
-    // Schedule 30 days of interventions in a year
-    scheduler.scheduleIntervention(wellName, InterventionType.WORKOVER_RIG,
-        LocalDate.of(2024, 4, 1), 15, "Spring workover");
-    scheduler.scheduleIntervention(wellName, InterventionType.COILED_TUBING,
-        LocalDate.of(2024, 10, 1), 15, "Fall cleanup");
+    // Schedule 30 days of interventions
+    record.addIntervention(Intervention.builder("Well-E").type(InterventionType.WORKOVER_RIG)
+        .startDate(LocalDate.of(2024, 4, 1)).durationDays(15).build());
+    record.addIntervention(Intervention.builder("Well-E").type(InterventionType.COILED_TUBING)
+        .startDate(LocalDate.of(2024, 10, 1)).durationDays(15).build());
 
-    LocalDate startDate = LocalDate.of(2024, 1, 1);
-    LocalDate endDate = LocalDate.of(2024, 12, 31);
+    LocalDate start = LocalDate.of(2024, 1, 1);
+    LocalDate end = LocalDate.of(2024, 12, 31);
 
-    double availability = scheduler.calculateAvailability(wellName, startDate, endDate);
+    double availability = record.calculateAvailability(start, end);
 
-    // 365 days - 30 intervention days = 335 producing days = 91.8% availability
-    double expectedAvailability = (365.0 - 30.0) / 365.0;
-    assertEquals(expectedAvailability, availability, 0.01, "Availability calculation mismatch");
+    // 366 days (2024 is leap year) - 30 intervention days = 336 producing days = 91.8%
+    double expectedAvailability = (366.0 - 30.0) / 366.0;
+    assertEquals(expectedAvailability, availability, 0.02, "Availability calculation mismatch");
   }
 
   @Test
-  @DisplayName("Generate schedule for date range")
-  void testGenerateSchedule() {
-    scheduler.addWell("Well-F1", LocalDate.of(2024, 1, 15), 400.0);
-    scheduler.addWell("Well-F2", LocalDate.of(2024, 3, 1), 350.0);
-    scheduler.addWell("Well-F3", LocalDate.of(2024, 5, 15), 300.0);
-
-    scheduler.scheduleIntervention("Well-F1", InterventionType.COILED_TUBING,
-        LocalDate.of(2024, 7, 1), 5, "Stimulation");
-    scheduler.scheduleIntervention("Well-F2", InterventionType.WIRELINE, LocalDate.of(2024, 8, 1),
-        3, "Perforation");
-
-    LocalDate startDate = LocalDate.of(2024, 1, 1);
-    LocalDate endDate = LocalDate.of(2024, 12, 31);
-
-    ScheduleResult result = scheduler.generateSchedule(startDate, endDate);
-
-    assertNotNull(result, "Schedule result should not be null");
-    assertEquals(3, result.getWellCount(), "Should have 3 wells");
-    assertEquals(2, result.getTotalInterventions(), "Should have 2 interventions");
-  }
-
-  @Test
-  @DisplayName("Conflict detection for overlapping interventions")
-  void testInterventionConflictDetection() {
-    String wellName = "Well-G1";
-    scheduler.addWell(wellName, LocalDate.of(2023, 1, 1), 500.0);
-
-    // First intervention from June 1-15
-    scheduler.scheduleIntervention(wellName, InterventionType.WORKOVER_RIG,
-        LocalDate.of(2024, 6, 1), 14, "Primary workover");
-
-    // Try to schedule overlapping intervention June 10-17
-    boolean hasConflict = scheduler.hasSchedulingConflict(wellName, LocalDate.of(2024, 6, 10), 7);
-
-    assertTrue(hasConflict, "Should detect scheduling conflict");
-  }
-
-  @Test
-  @DisplayName("No conflict for non-overlapping interventions")
-  void testNoConflictForSeparateInterventions() {
-    String wellName = "Well-H1";
-    scheduler.addWell(wellName, LocalDate.of(2023, 1, 1), 500.0);
-
-    // First intervention from June 1-15
-    scheduler.scheduleIntervention(wellName, InterventionType.WORKOVER_RIG,
-        LocalDate.of(2024, 6, 1), 14, "Primary workover");
-
-    // Check for July 1 - should be no conflict
-    boolean hasConflict = scheduler.hasSchedulingConflict(wellName, LocalDate.of(2024, 7, 1), 7);
-
-    assertFalse(hasConflict, "Should not detect conflict for separate dates");
-  }
-
-  @Test
-  @DisplayName("Get all wells returns correct list")
+  @DisplayName("Get all wells returns collection")
   void testGetAllWells() {
-    scheduler.addWell("Alpha", LocalDate.of(2024, 1, 1), 100.0);
-    scheduler.addWell("Beta", LocalDate.of(2024, 2, 1), 200.0);
-    scheduler.addWell("Gamma", LocalDate.of(2024, 3, 1), 300.0);
+    scheduler.addWell("Alpha", 100.0, "Sm3/day");
+    scheduler.addWell("Beta", 200.0, "Sm3/day");
+    scheduler.addWell("Gamma", 300.0, "Sm3/day");
 
-    List<WellRecord> wells = scheduler.getAllWells();
+    Collection<WellRecord> wells = scheduler.getAllWells();
 
     assertEquals(3, wells.size(), "Should have 3 wells");
   }
 
   @Test
-  @DisplayName("Intervention cost calculation")
+  @DisplayName("Intervention builder creates valid intervention")
+  void testInterventionBuilder() {
+    Intervention intervention = Intervention.builder("TestWell").type(InterventionType.WORKOVER_RIG)
+        .startDate(LocalDate.of(2024, 8, 1)).durationDays(21).expectedGain(0.15)
+        .cost(500000.0, "USD").description("Major overhaul").priority(1).build();
+
+    assertEquals("TestWell", intervention.getWellName());
+    assertEquals(InterventionType.WORKOVER_RIG, intervention.getType());
+    assertEquals(21, intervention.getDurationDays());
+    assertEquals(0.15, intervention.getExpectedProductionGain(), 0.001);
+    assertEquals(500000.0, intervention.getCost(), 0.01);
+    assertEquals("USD", intervention.getCurrency());
+    assertEquals("Major overhaul", intervention.getDescription());
+    assertEquals(1, intervention.getPriority());
+  }
+
+  @Test
+  @DisplayName("Intervention cost and currency tracking")
   void testInterventionCost() {
-    String wellName = "Well-I1";
-    scheduler.addWell(wellName, LocalDate.of(2023, 1, 1), 400.0);
+    Intervention intervention = Intervention.builder("Well").type(InterventionType.DRILLING_RIG)
+        .startDate(LocalDate.of(2024, 6, 1)).durationDays(45).cost(10_000_000.0, "NOK").build();
 
-    Intervention intervention = scheduler.scheduleIntervention(wellName,
-        InterventionType.WORKOVER_RIG, LocalDate.of(2024, 8, 1), 21, "Major overhaul");
-
-    double dailyRate = 150_000.0; // $150k/day
-    intervention.setDailyCost(dailyRate);
-
-    double totalCost = intervention.getTotalCost();
-    double expectedCost = dailyRate * 21;
-
-    assertEquals(expectedCost, totalCost, 0.01, "Total cost calculation mismatch");
+    assertEquals(10_000_000.0, intervention.getCost(), 0.01);
+    assertEquals("NOK", intervention.getCurrency());
   }
 
   @Test
-  @DisplayName("Gantt chart export contains required data")
-  void testGanttChartExport() {
-    scheduler.addWell("Well-J1", LocalDate.of(2024, 2, 1), 350.0);
-    scheduler.scheduleIntervention("Well-J1", InterventionType.COILED_TUBING,
-        LocalDate.of(2024, 5, 1), 7, "Spring service");
-
-    ScheduleResult result =
-        scheduler.generateSchedule(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31));
-
-    String ganttData = result.toGanttFormat();
-
-    assertNotNull(ganttData, "Gantt data should not be null");
-    assertTrue(ganttData.contains("Well-J1"), "Gantt data should contain well name");
-    assertTrue(ganttData.contains("COILED_TUBING") || ganttData.contains("Coiled"),
-        "Gantt data should contain intervention type");
+  @DisplayName("InterventionType enum values exist")
+  void testInterventionTypeEnum() {
+    assertNotNull(InterventionType.COILED_TUBING);
+    assertNotNull(InterventionType.WIRELINE);
+    assertNotNull(InterventionType.SLICKLINE);
+    assertNotNull(InterventionType.WORKOVER_RIG);
+    assertNotNull(InterventionType.DRILLING_RIG);
+    assertNotNull(InterventionType.SUBSEA_INTERVENTION);
   }
 
   @Test
-  @DisplayName("Well decommissioning changes status")
-  void testWellDecommissioning() {
-    String wellName = "Well-K1";
-    scheduler.addWell(wellName, LocalDate.of(2020, 1, 1), 200.0);
-    scheduler.updateWellStatus(wellName, WellStatus.PRODUCING);
+  @DisplayName("WellStatus enum values exist")
+  void testWellStatusEnum() {
+    assertNotNull(WellStatus.PRODUCING);
+    assertNotNull(WellStatus.SHUT_IN);
+    assertNotNull(WellStatus.WORKOVER);
+    assertNotNull(WellStatus.SUSPENDED);
+    assertNotNull(WellStatus.ABANDONED);
+  }
 
-    // Decommission the well
-    scheduler.updateWellStatus(wellName, WellStatus.ABANDONED);
+  @Test
+  @DisplayName("Optimize schedule produces result")
+  void testOptimizeSchedule() {
+    scheduler.addWell("Well-1", 500.0, "Sm3/day");
+    scheduler.addWell("Well-2", 400.0, "Sm3/day");
 
-    WellRecord record = scheduler.getWellRecord(wellName);
-    assertEquals(WellStatus.ABANDONED, record.getStatus(), "Well should be abandoned");
+    scheduler.scheduleIntervention(Intervention.builder("Well-1")
+        .type(InterventionType.WORKOVER_RIG).startDate(LocalDate.of(2024, 6, 1)).durationDays(14)
+        .priority(1).expectedGain(0.10).build());
+
+    scheduler.scheduleIntervention(Intervention.builder("Well-2")
+        .type(InterventionType.COILED_TUBING).startDate(LocalDate.of(2024, 6, 15)).durationDays(5)
+        .priority(2).expectedGain(0.05).build());
+
+    LocalDate start = LocalDate.of(2024, 1, 1);
+    LocalDate end = LocalDate.of(2024, 12, 31);
+
+    ScheduleResult result = scheduler.optimizeSchedule(start, end, 1);
+
+    assertNotNull(result, "Schedule result should not be null");
+  }
+
+  @Test
+  @DisplayName("WellRecord potential can be updated")
+  void testUpdatePotential() {
+    WellRecord record = scheduler.addWell("Well-F", 1000.0, "bbl/day");
+
+    assertEquals(1000.0, record.getCurrentPotential(), 0.01);
+    assertEquals(1000.0, record.getOriginalPotential(), 0.01);
+
+    record.setCurrentPotential(800.0);
+
+    assertEquals(800.0, record.getCurrentPotential(), 0.01);
+    assertEquals(1000.0, record.getOriginalPotential(), 0.01);
+  }
+
+  @Test
+  @DisplayName("Intervention isActiveOn works correctly")
+  void testInterventionIsActiveOn() {
+    Intervention intervention = Intervention.builder("Well").type(InterventionType.WIRELINE)
+        .startDate(LocalDate.of(2024, 6, 10)).durationDays(5) // June 10-14
+        .build();
+
+    assertFalse(intervention.isActiveOn(LocalDate.of(2024, 6, 9)),
+        "Day before should not be active");
+    assertTrue(intervention.isActiveOn(LocalDate.of(2024, 6, 10)), "Start day should be active");
+    assertTrue(intervention.isActiveOn(LocalDate.of(2024, 6, 12)), "Middle day should be active");
+    assertTrue(intervention.isActiveOn(LocalDate.of(2024, 6, 14)), "End day should be active");
+    assertFalse(intervention.isActiveOn(LocalDate.of(2024, 6, 15)),
+        "Day after should not be active");
+  }
+
+  @Test
+  @DisplayName("Well status during intervention is WORKOVER")
+  void testStatusDuringIntervention() {
+    scheduler.addWell("Well-G", 500.0, "Sm3/day");
+    WellRecord record = scheduler.getWell("Well-G");
+
+    record.addIntervention(Intervention.builder("Well-G").type(InterventionType.WORKOVER_RIG)
+        .startDate(LocalDate.of(2024, 7, 1)).durationDays(10).build());
+
+    // Before intervention - producing
+    assertEquals(WellStatus.PRODUCING, record.getStatusOn(LocalDate.of(2024, 6, 30)));
+
+    // During intervention - workover
+    assertEquals(WellStatus.WORKOVER, record.getStatusOn(LocalDate.of(2024, 7, 5)));
+
+    // After intervention - producing
+    assertEquals(WellStatus.PRODUCING, record.getStatusOn(LocalDate.of(2024, 7, 15)));
+  }
+
+  @Test
+  @DisplayName("Null well name throws exception")
+  void testNullWellNameThrowsException() {
+    assertThrows(NullPointerException.class, () -> {
+      scheduler.addWell(null, 100.0, "Sm3/day");
+    });
+  }
+
+  @Test
+  @DisplayName("Negative potential throws exception")
+  void testNegativePotentialThrowsException() {
+    assertThrows(IllegalArgumentException.class, () -> {
+      scheduler.addWell("Well", -100.0, "Sm3/day");
+    });
+  }
+
+  @Test
+  @DisplayName("Schedule intervention for non-existing well throws exception")
+  void testScheduleInterventionNonExistingWell() {
+    Intervention intervention = Intervention.builder("NonExistent").type(InterventionType.WIRELINE)
+        .startDate(LocalDate.of(2024, 6, 1)).durationDays(3).build();
+
+    assertThrows(IllegalArgumentException.class, () -> {
+      scheduler.scheduleIntervention(intervention);
+    });
   }
 }

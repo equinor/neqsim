@@ -211,8 +211,8 @@ public class TubingPerformance extends Pipeline {
 
       // Superficial velocities
       double area = Math.PI * diameter * diameter / 4.0;
-      double qL = workingSystem.getPhase(1).getVolume("m3/sec");
-      double qG = workingSystem.getPhase(0).getVolume("m3/sec");
+      double qL = workingSystem.getPhase(1).getFlowRate("m3/sec");
+      double qG = workingSystem.getPhase(0).getFlowRate("m3/sec");
       double vsL = qL / area;
       double vsG = qG / area;
       double vm = vsL + vsG;
@@ -351,8 +351,8 @@ public class TubingPerformance extends Pipeline {
       double muL = workingSystem.getPhase(1).getViscosity("kg/msec") * 1000;
 
       double area = Math.PI * diameter * diameter / 4.0;
-      double qL = workingSystem.getPhase(1).getVolume("m3/sec");
-      double qG = workingSystem.getPhase(0).getVolume("m3/sec");
+      double qL = workingSystem.getPhase(1).getFlowRate("m3/sec");
+      double qG = workingSystem.getPhase(0).getFlowRate("m3/sec");
       double vsL = qL / area;
       double vsG = qG / area;
       double vm = vsL + vsG;
@@ -435,8 +435,8 @@ public class TubingPerformance extends Pipeline {
       double rhoG = workingSystem.getPhase(0).getDensity("kg/m3");
 
       double area = Math.PI * diameter * diameter / 4.0;
-      double qL = workingSystem.getPhase(1).getVolume("m3/sec");
-      double qG = workingSystem.getPhase(0).getVolume("m3/sec");
+      double qL = workingSystem.getPhase(1).getFlowRate("m3/sec");
+      double qG = workingSystem.getPhase(0).getFlowRate("m3/sec");
       double vsL = qL / area;
       double vsG = qG / area;
       double vm = vsL + vsG;
@@ -497,8 +497,8 @@ public class TubingPerformance extends Pipeline {
       double sigma = workingSystem.getInterphaseProperties().getSurfaceTension(0, 1);
 
       double area = Math.PI * diameter * diameter / 4.0;
-      double qL = workingSystem.getPhase(1).getVolume("m3/sec");
-      double qG = workingSystem.getPhase(0).getVolume("m3/sec");
+      double qL = workingSystem.getPhase(1).getFlowRate("m3/sec");
+      double qG = workingSystem.getPhase(0).getFlowRate("m3/sec");
       double vsL = qL / area;
       double vsG = qG / area;
       double vm = vsL + vsG;
@@ -571,8 +571,8 @@ public class TubingPerformance extends Pipeline {
       double muL = workingSystem.getPhase(1).getViscosity("kg/msec") * 1000;
 
       double area = Math.PI * diameter * diameter / 4.0;
-      double qL = workingSystem.getPhase(1).getVolume("m3/sec");
-      double qG = workingSystem.getPhase(0).getVolume("m3/sec");
+      double qL = workingSystem.getPhase(1).getFlowRate("m3/sec");
+      double qG = workingSystem.getPhase(0).getFlowRate("m3/sec");
       double vsL = qL / area;
       double vsG = qG / area;
       double vm = vsL + vsG;
