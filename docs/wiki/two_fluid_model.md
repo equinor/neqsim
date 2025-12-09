@@ -234,10 +234,175 @@ The **minimum slip criterion** selects the flow regime that gives the minimum sl
 
 ### Interfacial Friction
 
-`InterfacialFriction` provides correlations for:
-- **Stratified:** Shoham-Taitel wavy interface
-- **Annular:** Wallis correlation
-- **Slug:** Slug body + film
+The `InterfacialFriction` class calculates the shear stress at the gas-liquid interface, which is a critical closure relation for the two-fluid model momentum equations. The interfacial friction affects the slip between phases and pressure drop distribution.
+
+#### General Formulation
+
+The interfacial shear stress follows the standard form:
+
+```
+τ_i = 0.5 × f_i × ρ_G × (v_G - v_L) × |v_G - v_L|
+```
+
+Where:
+- `f_i` = interfacial friction factor (dimensionless)
+- `ρ_G` = gas density (kg/m³)
+- `v_G - v_L` = slip velocity (m/s)
+
+The force per unit length appearing in the momentum equations is:
+
+```
+F_i = τ_i × S_i
+```
+
+Where `S_i` is the interfacial perimeter/width per unit length.
+
+#### Sign Convention
+
+Positive interfacial shear acts to accelerate the liquid and decelerate the gas (when gas is faster than liquid). In the momentum equations:
+- **Gas momentum:** loses `τ_i × S_i` (negative term)
+- **Liquid momentum:** gains `τ_i × S_i` (positive term)
+
+#### Flow Regime-Specific Correlations
+
+| Flow Regime | Correlation | Reference | Key Features |
+|-------------|-------------|-----------|--------------|
+| **Stratified Smooth** | Taitel-Dukler | (1976) | Treats interface as smooth wall; Blasius for turbulent: `f = 0.079/Re^0.25` |
+| **Stratified Wavy** | Andritsos-Hanratty | (1987) | Wave roughness enhancement: `f_i = f_smooth × (1 + 15√(h_L/D) × (v_G/v_G,t - 1))` |
+| **Annular** | Wallis | (1969) | Film-core interaction: `f_i = f_G × (1 + 300δ/D)` where δ is film thickness |
+| **Slug** | Oliemans | (1986) | Bubble swarm approach with Ishii-Zuber drag coefficient |
+| **Bubble/Dispersed** | Schiller-Naumann | - | Drag on individual bubbles: `C_D = (24/Re_b) × (1 + 0.15 × Re_b^0.687)` for Re < 1000 |
+| **Churn** | Enhanced Annular | - | Uses annular correlation with 1.5× enhancement factor |
+
+#### Stratified Smooth Flow (Taitel-Dukler 1976)
+
+For smooth stratified flow, the interface is treated as a smooth wall with gas-side friction:
+
+```java
+// Gas-side Reynolds number
+Re_G = ρ_G × |v_slip| × D_G / μ_G
+
+// Friction factor
+if (Re_G < 2300):
+    f_i = 16 / Re_G           // Laminar
+else:
+    f_i = 0.079 / Re_G^0.25   // Blasius (turbulent)
+```
+
+#### Stratified Wavy Flow (Andritsos-Hanratty 1987)
+
+Accounts for wave-induced roughness at the interface:
+
+```java
+// Transition gas velocity
+v_G,t = 5.0 × √(ρ_L / ρ_G)
+
+// Enhancement factor (for v_G > v_G,t)
+enhancement = 1.0 + 15 × √(h_L/D) × (v_G/v_G,t - 1)
+enhancement = min(enhancement, 20.0)  // Cap
+
+f_i = f_smooth × enhancement
+```
+
+#### Annular Flow (Wallis 1969)
+
+For gas-core / liquid-film interaction:
+
+```java
+// Film thickness
+δ = D/2 × (1 - √(1 - α_L))
+
+// Core diameter
+D_core = D - 2δ
+
+// Wallis enhancement
+enhancement = 1.0 + 300 × δ/D
+enhancement = min(enhancement, 50.0)  // Cap
+
+f_i = f_G × enhancement
+```
+
+#### Bubble/Dispersed Flow (Schiller-Naumann)
+
+For drag on individual bubbles in liquid continuum:
+
+```java
+// Bubble diameter (Hinze correlation)
+d_b = 2 × (0.725 × σ / ((ρ_L - ρ_G) × g))^0.5
+d_b = min(d_b, D/5)
+
+// Bubble Reynolds number
+Re_b = ρ_L × |v_slip| × d_b / μ_L
+
+// Drag coefficient
+if (Re_b < 0.1):
+    C_D = 240           // Stokes limit
+else if (Re_b < 1000):
+    C_D = 24/Re_b × (1 + 0.15 × Re_b^0.687)
+else:
+    C_D = 0.44          // Newton regime
+
+// Friction factor
+f_i = C_D × d_b / (4 × D)
+```
+
+#### Usage Example
+
+```java
+InterfacialFriction interfacialFriction = new InterfacialFriction();
+
+InterfacialFrictionResult result = interfacialFriction.calculate(
+    FlowRegime.STRATIFIED_WAVY,
+    gasVelocity,        // m/s
+    liquidVelocity,     // m/s
+    gasDensity,         // kg/m³
+    liquidDensity,      // kg/m³
+    gasViscosity,       // Pa·s
+    liquidViscosity,    // Pa·s
+    liquidHoldup,       // 0-1
+    diameter,           // m
+    surfaceTension      // N/m
+);
+
+double shearStress = result.interfacialShear;           // Pa
+double frictionFactor = result.frictionFactor;          // dimensionless
+double slipVelocity = result.slipVelocity;              // m/s
+double interfacialArea = result.interfacialAreaPerLength;  // m²/m
+```
+
+### Oil-Water Interfacial Friction (Three-Phase)
+
+For three-phase gas-oil-water systems, the `ThreeFluidConservationEquations` uses a simplified Froude-based correlation for oil-water interfaces:
+
+```java
+// Froude number based on relative velocity
+Fr = |v_rel| / √(g × D × |ρ_2 - ρ_1| / ρ_1)
+
+// Simplified correlation
+f_i = 0.01 × (1 + 10 × Fr²)    // capped at 0.1
+```
+
+This simplified approach is justified because:
+- Oil-water density differences are much smaller than gas-liquid (~1.0-1.2 vs 100-1000)
+- Slip velocities are typically lower
+- Wave formation is less pronounced
+
+The three-layer stratified geometry has two interfaces:
+
+```
+    ┌─────────────────┐
+    │      Gas        │  ← τ_wall,G + τ_i,GO (gas-oil)
+    ├─────────────────┤
+    │      Oil        │  ← τ_wall,O + τ_i,GO + τ_i,OW
+    ├─────────────────┤
+    │     Water       │  ← τ_wall,W + τ_i,OW (oil-water)
+    └─────────────────┘
+```
+
+Momentum exchange:
+- **Gas** gains/loses momentum via gas-oil interface (τ_i,GO)
+- **Oil** exchanges momentum with both gas (above) and water (below)
+- **Water** gains/loses momentum via oil-water interface (τ_i,OW)
 
 ### Stratified Geometry
 
@@ -308,6 +473,183 @@ For gas-oil-water systems, `ThreeFluidSection` and `ThreeFluidConservationEquati
         │     Water       │
         └─────────────────┘
 ```
+
+## Simulation Modes: Steady-State vs Transient
+
+The `TwoFluidPipe` supports two simulation modes: steady-state initialization via `run()` and incremental transient simulation via `runTransient()`.
+
+### Steady-State Simulation: `run()`
+
+The `run()` method performs a complete steady-state initialization of the pipeline. This is typically called once at the start to establish initial conditions before transient simulation.
+
+**What happens during `run()`:**
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                      run(UUID id)                            │
+├──────────────────────────────────────────────────────────────┤
+│ 1. initializeSections()                                      │
+│    ├─ Create pipe sections with uniform spacing (dx)         │
+│    ├─ Flash inlet fluid to get phase properties              │
+│    ├─ Initialize all sections with inlet conditions          │
+│    ├─ Set elevation/inclination from terrain profile         │
+│    ├─ Set outlet pressure boundary condition                 │
+│    └─ Identify liquid accumulation zones                     │
+│                                                              │
+│ 2. runSteadyState()                                          │
+│    ├─ Iterative solver (max 100 iterations)                  │
+│    │   ├─ Update flow regimes for all sections               │
+│    │   ├─ Calculate pressure gradient (momentum balance)     │
+│    │   ├─ Update local holdups using drift-flux model        │
+│    │   │   └─ Account for terrain effects (low points)       │
+│    │   ├─ Update phase velocities from mass conservation     │
+│    │   ├─ Update oil/water holdups for three-phase flow      │
+│    │   └─ Update temperature profile (if heat transfer on)   │
+│    └─ Converge when max change < tolerance (1e-4)            │
+│                                                              │
+│ 3. updateOutletStream()                                      │
+│    ├─ Flash outlet fluid at outlet P, T                      │
+│    ├─ Calculate outlet mass flow from section state          │
+│    └─ Set outlet stream properties                           │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Key characteristics:**
+- **Fixed inlet conditions:** Uses inlet stream pressure, temperature, composition
+- **Iterative convergence:** Pressure and holdup profiles converge simultaneously
+- **Terrain-aware holdups:** Liquid accumulates at low points
+- **Single call:** Establishes initial state for subsequent transient runs
+
+**Example:**
+```java
+TwoFluidPipe pipe = new TwoFluidPipe("Pipeline", inletStream);
+pipe.setLength(5000);
+pipe.setDiameter(0.3);
+pipe.setNumberOfSections(100);
+pipe.run();  // Steady-state initialization
+
+double[] pressures = pipe.getPressureProfile();
+double[] holdups = pipe.getLiquidHoldupProfile();
+```
+
+### Transient Simulation: `runTransient(dt, id)`
+
+The `runTransient()` method advances the simulation by a specified time step. It solves the full time-dependent conservation equations and is called repeatedly in a loop.
+
+**What happens during `runTransient(dt, id)`:**
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│              runTransient(double dt, UUID id)                │
+├──────────────────────────────────────────────────────────────┤
+│ 1. Calculate stable time step                                │
+│    ├─ dt_stable = CFL × dx / max(wave_speed)                 │
+│    ├─ dt_actual = min(dt, dt_stable)                         │
+│    └─ Determine number of sub-steps                          │
+│                                                              │
+│ 2. For each sub-step:                                        │
+│    ├─ Update thermodynamics (every N steps)                  │
+│    │   └─ PT flash at each section P, T                      │
+│    │                                                         │
+│    ├─ Store previous state U_prev                            │
+│    │                                                         │
+│    ├─ Time integration (RK4 by default)                      │
+│    │   ├─ Calculate RHS of conservation equations            │
+│    │   │   ├─ Mass fluxes: ∂(αρuA)/∂x                        │
+│    │   │   ├─ Momentum sources: wall friction, interfacial   │
+│    │   │   │   friction, gravity, pressure gradient          │
+│    │   │   └─ Energy: heat transfer, work terms              │
+│    │   └─ Advance state: U_new = U_prev + dt × RHS           │
+│    │                                                         │
+│    ├─ Validate and correct state                             │
+│    │   ├─ Check for NaN/Inf → revert to previous             │
+│    │   ├─ Ensure mass ≥ 0                                    │
+│    │   └─ Limit rate of change (50% per sub-step max)        │
+│    │                                                         │
+│    ├─ Apply state to sections                                │
+│    │                                                         │
+│    ├─ Apply pressure gradient (semi-implicit)                │
+│    │                                                         │
+│    ├─ Apply boundary conditions                              │
+│    │   ├─ Inlet: constant flow or constant pressure          │
+│    │   └─ Outlet: constant pressure                          │
+│    │                                                         │
+│    ├─ Validate section states                                │
+│    │   ├─ Fix invalid holdups (NaN, negative)                │
+│    │   ├─ Ensure holdup consistency (αL = αO + αW)           │
+│    │   └─ Ensure P, T are positive                           │
+│    │                                                         │
+│    ├─ Update accumulation tracking (if enabled)              │
+│    │                                                         │
+│    ├─ Update temperature (if heat transfer enabled)          │
+│    │                                                         │
+│    └─ Advance simulation time                                │
+│                                                              │
+│ 3. Update outlet stream                                      │
+│                                                              │
+│ 4. Update result arrays                                      │
+└──────────────────────────────────────────────────────────────┘
+```
+
+**Key characteristics:**
+- **Time-accurate:** Solves full transient PDEs with proper wave speeds
+- **CFL-limited:** Automatically sub-steps for numerical stability
+- **RK4 integration:** Fourth-order Runge-Kutta for accuracy
+- **Robust validation:** Prevents numerical blow-up with state limiting
+- **Incremental:** Can be called repeatedly with different time steps
+
+**Example:**
+```java
+// After steady-state initialization
+pipe.run();
+
+// Transient simulation loop
+UUID simId = UUID.randomUUID();
+for (int step = 0; step < 1000; step++) {
+    // Change boundary conditions if needed
+    if (step == 100) {
+        inletStream.setFlowRate(15.0, "kg/sec");  // Flow increase
+        inletStream.run();
+    }
+    
+    pipe.runTransient(0.1, simId);  // Advance 0.1 seconds
+    
+    // Monitor results
+    double outletFlow = pipe.getOutletMassFlow();
+    double liquidInventory = pipe.getLiquidInventory("m3");
+}
+```
+
+### Integration with ProcessSystem
+
+Both methods integrate seamlessly with `ProcessSystem` for coupled simulations:
+
+```java
+ProcessSystem process = new ProcessSystem();
+process.add(inletStream);
+process.add(pipe);
+process.add(separator);
+
+// Steady-state initialization
+process.run();
+
+// Transient loop
+for (int t = 0; t < 300; t++) {
+    process.runTransient(1.0, UUID.randomUUID());
+}
+```
+
+### Comparison Summary
+
+| Aspect | `run()` | `runTransient(dt, id)` |
+|--------|---------|------------------------|
+| **Purpose** | Initialize steady-state | Advance in time |
+| **Call frequency** | Once at start | Repeatedly in loop |
+| **Time step** | N/A (iterative) | User-specified + CFL limit |
+| **Solver** | Iterative relaxation | Runge-Kutta (RK4) |
+| **Equations** | Simplified momentum balance | Full conservation PDEs |
+| **Computation** | Moderate | Higher (per call) |
+| **Use case** | Initial conditions | Dynamic response |
 
 ## Usage Example
 
