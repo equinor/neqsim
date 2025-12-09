@@ -1,19 +1,124 @@
 package neqsim.process.equipment.reservoir;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;
 
 /**
  * <p>
- * WellFlow class.
+ * WellFlow class - Inflow Performance Relationship (IPR) model for reservoir-to-wellbore flow.
  * </p>
+ *
+ * <p>
+ * This class models the reservoir inflow into the wellbore using various IPR correlations. It
+ * calculates either the bottom-hole flowing pressure (Pwf) from a specified flow rate, or the flow
+ * rate from a specified Pwf, depending on the operating mode.
+ * </p>
+ *
+ * <h2>Supported IPR Models</h2>
+ * <ul>
+ * <li><b>PRODUCTION_INDEX</b> - Constant PI using squared-pressure drawdown: q = PI × (Pr² -
+ * Pwf²)</li>
+ * <li><b>VOGEL</b> - Solution gas drive oil wells (1968): q/qmax = 1 - 0.2(Pwf/Pr) -
+ * 0.8(Pwf/Pr)²</li>
+ * <li><b>FETKOVICH</b> - Gas well deliverability (1973): q = C × (Pr² - Pwf²)ⁿ</li>
+ * <li><b>BACKPRESSURE</b> - Non-Darcy/turbulence effects: Pr² - Pwf² = a×q + b×q²</li>
+ * <li><b>TABLE</b> - Tabulated IPR from well tests</li>
+ * </ul>
+ *
+ * <h2>Usage Example 1 - Basic Gas Well</h2>
+ * 
+ * <pre>{@code
+ * // Create reservoir stream at reservoir conditions
+ * Stream reservoirStream = new Stream("reservoir", reservoirFluid);
+ * reservoirStream.setFlowRate(5.0, "MSm3/day");
+ * reservoirStream.run();
+ *
+ * // Create WellFlow with production index
+ * WellFlow well = new WellFlow("gas producer");
+ * well.setInletStream(reservoirStream);
+ * well.setWellProductionIndex(5.0e-4); // MSm3/day/bar²
+ * well.run();
+ *
+ * System.out.println("BHP = " + well.getOutletStream().getPressure("bara") + " bara");
+ * }</pre>
+ *
+ * <h2>Usage Example 2 - Vogel IPR for Oil Well</h2>
+ * 
+ * <pre>{@code
+ * WellFlow oilWell = new WellFlow("oil producer");
+ * oilWell.setInletStream(reservoirStream);
+ *
+ * // Set Vogel parameters from well test
+ * // qTest=3000 Sm3/day at Pwf=180 bara, Pr=250 bara
+ * oilWell.setVogelParameters(3000, 180, 250);
+ * oilWell.run();
+ * }</pre>
+ *
+ * <h2>Usage Example 3 - Multi-Layer Commingled Well</h2>
+ * 
+ * <pre>{@code
+ * WellFlow commingledWell = new WellFlow("commingled producer");
+ * commingledWell.setInletStream(mainReservoirStream);
+ *
+ * // Add multiple producing layers
+ * commingledWell.addLayer("Upper Sand", upperStream, 220.0, 3.0e-4);
+ * commingledWell.addLayer("Middle Sand", middleStream, 200.0, 2.0e-4);
+ * commingledWell.addLayer("Lower Sand", lowerStream, 180.0, 1.5e-4);
+ *
+ * // Solve for commingled production at specified BHP
+ * commingledWell.setOutletPressure(150.0, "bara");
+ * commingledWell.solveFlowFromOutletPressure(true);
+ * commingledWell.run();
+ *
+ * // Get individual layer contributions
+ * double[] layerRates = commingledWell.getLayerFlowRates("Sm3/day");
+ * }</pre>
+ *
+ * <h2>Integration with Process Simulation</h2>
+ * 
+ * <pre>{@code
+ * // Create reservoir
+ * SimpleReservoir reservoir = new SimpleReservoir("Field");
+ * reservoir.setReservoirFluid(fluid, gasVol, oilVol, waterVol);
+ * StreamInterface prodStream = reservoir.addGasProducer("PROD-1");
+ * prodStream.setFlowRate(5.0, "MSm3/day");
+ *
+ * // Create well with IPR
+ * WellFlow wellIPR = new WellFlow("PROD-1 IPR");
+ * wellIPR.setInletStream(prodStream);
+ * wellIPR.setWellProductionIndex(5.0e-4);
+ *
+ * // Create tubing (VLP)
+ * PipeBeggsAndBrills tubing = new PipeBeggsAndBrills("tubing", wellIPR.getOutletStream());
+ * tubing.setLength(2500);
+ * tubing.setElevation(2500);
+ * tubing.setDiameter(0.1016);
+ *
+ * // Add to process system
+ * ProcessSystem process = new ProcessSystem();
+ * process.add(reservoir);
+ * process.add(wellIPR);
+ * process.add(tubing);
+ * process.run();
+ * }</pre>
  *
  * @author asmund
  * @version $Id: $Id
+ * @see TubingPerformance
+ * @see WellSystem
+ * @see SimpleReservoir
  */
 public class WellFlow extends TwoPortEquipment {
   /** Serialization version UID. */
@@ -55,6 +160,42 @@ public class WellFlow extends TwoPortEquipment {
   double[] inflowTablePwf = new double[0];
   double[] inflowTableRate = new double[0];
 
+  // Multi-layer support
+  private List<ReservoirLayer> layers = new ArrayList<>();
+  private boolean isMultiLayer = false;
+
+  /**
+   * Represents a single reservoir layer for commingled well production.
+   */
+  public static class ReservoirLayer {
+    /** Layer name. */
+    public String name;
+    /** Stream from this layer. */
+    public StreamInterface stream;
+    /** Reservoir pressure for this layer (bara). */
+    public double reservoirPressure;
+    /** Productivity index for this layer. */
+    public double productivityIndex;
+    /** Calculated flow rate from this layer. */
+    public double calculatedRate;
+
+    /**
+     * Create a reservoir layer.
+     *
+     * @param name layer identifier
+     * @param stream fluid stream from layer
+     * @param reservoirPressure layer reservoir pressure (bara)
+     * @param pi layer productivity index
+     */
+    public ReservoirLayer(String name, StreamInterface stream, double reservoirPressure,
+        double pi) {
+      this.name = name;
+      this.stream = stream;
+      this.reservoirPressure = reservoirPressure;
+      this.productivityIndex = pi;
+    }
+  }
+
   /**
    * <p>
    * Constructor for WellFlow.
@@ -66,9 +207,70 @@ public class WellFlow extends TwoPortEquipment {
     super(name);
   }
 
+  /**
+   * Add a reservoir layer for commingled production.
+   * 
+   * <p>
+   * Multiple layers can contribute to the total well flow. Each layer has its own reservoir
+   * pressure and productivity index. The flow from each layer is calculated based on the common
+   * bottom-hole pressure.
+   * </p>
+   *
+   * @param name layer identifier
+   * @param stream stream representing the layer fluid
+   * @param reservoirPressure layer reservoir pressure (bara)
+   * @param pi layer productivity index (Sm3/day/bar² for gas)
+   */
+  public void addLayer(String name, StreamInterface stream, double reservoirPressure, double pi) {
+    layers.add(new ReservoirLayer(name, stream, reservoirPressure, pi));
+    isMultiLayer = true;
+  }
+
+  /**
+   * Get the number of reservoir layers.
+   *
+   * @return number of layers
+   */
+  public int getNumberOfLayers() {
+    return layers.size();
+  }
+
+  /**
+   * Get flow rates from individual layers.
+   *
+   * @param unit flow rate unit ("Sm3/day", "MSm3/day", etc.)
+   * @return array of layer flow rates
+   */
+  public double[] getLayerFlowRates(String unit) {
+    double[] rates = new double[layers.size()];
+    for (int i = 0; i < layers.size(); i++) {
+      double rate = layers.get(i).calculatedRate;
+      if (unit.equalsIgnoreCase("MSm3/day")) {
+        rate /= 1.0e6;
+      }
+      rates[i] = rate;
+    }
+    return rates;
+  }
+
+  /**
+   * Get a specific layer by index.
+   *
+   * @param index layer index
+   * @return ReservoirLayer object
+   */
+  public ReservoirLayer getLayer(int index) {
+    return layers.get(index);
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (isMultiLayer) {
+      runMultiLayer(id);
+      return;
+    }
+
     thermoSystem = getInletStream().getThermoSystem().clone();
     thermoSystem.setPressure(pressureOut, pressureUnit);
     outStream.setThermoSystem(thermoSystem);
@@ -87,7 +289,8 @@ public class WellFlow extends TwoPortEquipment {
           if (disc < 0) {
             logger.error("pressure lower that 0");
             throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
-                "run:calcOutletPressure", "pressure", "- Outlet pressure is negative" + pressureOut));
+                "run:calcOutletPressure", "pressure",
+                "- Outlet pressure is negative" + pressureOut));
           }
           double x = (-b + Math.sqrt(disc)) / (2.0 * a);
           outStream.setPressure(presRes * x, "bara");
@@ -105,13 +308,14 @@ public class WellFlow extends TwoPortEquipment {
           if (Math.pow(presRes, 2.0) - delta < 0) {
             logger.error("pressure lower that 0");
             throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
-                "run:calcOutletPressure", "pressure", "- Outlet pressure is negative" + pressureOut));
+                "run:calcOutletPressure", "pressure",
+                "- Outlet pressure is negative" + pressureOut));
           }
           outStream.setPressure(Math.sqrt(Math.pow(presRes, 2.0) - delta), "bara");
         } else {
           double pwf = thermoSystem.getPressure("bara");
-          double flow = fetkovichC
-              * Math.pow(Math.pow(presRes, 2.0) - Math.pow(pwf, 2.0), fetkovichN);
+          double flow =
+              fetkovichC * Math.pow(Math.pow(presRes, 2.0) - Math.pow(pwf, 2.0), fetkovichN);
           outStream.setFlowRate(flow, "MSm3/day");
         }
         break;
@@ -122,7 +326,8 @@ public class WellFlow extends TwoPortEquipment {
           if (Math.pow(presRes, 2.0) - delta < 0) {
             logger.error("pressure lower that 0");
             throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
-                "run:calcOutletPressure", "pressure", "- Outlet pressure is negative" + pressureOut));
+                "run:calcOutletPressure", "pressure",
+                "- Outlet pressure is negative" + pressureOut));
           }
           outStream.setPressure(Math.sqrt(Math.pow(presRes, 2.0) - delta), "bara");
         } else {
@@ -150,18 +355,20 @@ public class WellFlow extends TwoPortEquipment {
         if (useWellProductionIndex) {
           if (calcpressure) {
             double presout;
-            if (Math.pow(presRes, 2.0) - getInletStream().getFlowRate("MSm3/day") / wellProductionIndex > 0) {
-              presout = Math
-                  .sqrt(Math.pow(presRes, 2.0) - getInletStream().getFlowRate("MSm3/day") / wellProductionIndex);
+            if (Math.pow(presRes, 2.0)
+                - getInletStream().getFlowRate("MSm3/day") / wellProductionIndex > 0) {
+              presout = Math.sqrt(Math.pow(presRes, 2.0)
+                  - getInletStream().getFlowRate("MSm3/day") / wellProductionIndex);
             } else {
               logger.error("pressure lower that 0");
               throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
-                  "run:calcOutletPressure", "pressure", "- Outlet pressure is negative" + pressureOut));
+                  "run:calcOutletPressure", "pressure",
+                  "- Outlet pressure is negative" + pressureOut));
             }
             outStream.setPressure(presout, "bara");
           } else {
-            double flow = wellProductionIndex * (Math.pow(presRes, 2.0)
-                - Math.pow(thermoSystem.getPressure("bara"), 2.0));
+            double flow = wellProductionIndex
+                * (Math.pow(presRes, 2.0) - Math.pow(thermoSystem.getPressure("bara"), 2.0));
             outStream.setFlowRate(flow, "MSm3/day");
           }
         } else {
@@ -170,6 +377,46 @@ public class WellFlow extends TwoPortEquipment {
         }
         break;
     }
+    outStream.run();
+  }
+
+  /**
+   * Run multi-layer commingled production calculation.
+   * 
+   * <p>
+   * For commingled wells, the flow from each layer is calculated based on the common bottom-hole
+   * pressure. The total flow is the sum of individual layer contributions.
+   * </p>
+   *
+   * @param id calculation UUID
+   */
+  private void runMultiLayer(UUID id) {
+    if (layers.isEmpty()) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
+          "runMultiLayer", "layers", "- No layers defined for multi-layer well"));
+    }
+
+    double pwf = pressureOut; // Common bottom-hole pressure
+
+    // Calculate flow from each layer
+    double totalFlow = 0.0;
+    for (ReservoirLayer layer : layers) {
+      double presRes = layer.reservoirPressure;
+      double pi = layer.productivityIndex;
+      // Using production index equation: q = PI * (Pres² - Pwf²)
+      double layerFlow = pi * (Math.pow(presRes, 2.0) - Math.pow(pwf, 2.0));
+      if (layerFlow < 0) {
+        layerFlow = 0.0; // Layer may not contribute if PWF > reservoir pressure
+      }
+      layer.calculatedRate = layerFlow;
+      totalFlow += layerFlow;
+    }
+
+    // Set up output stream with blended composition (using first layer as base)
+    thermoSystem = layers.get(0).stream.getThermoSystem().clone();
+    thermoSystem.setPressure(pwf, "bara");
+    outStream.setThermoSystem(thermoSystem);
+    outStream.setFlowRate(totalFlow, "MSm3/day");
     outStream.run();
   }
 
@@ -212,8 +459,8 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
-   * Specify the well outlet pressure to be used when solving for flow from backpressure
-   * (i.e. {@link #solveFlowFromOutletPressure(boolean)} set to true).
+   * Specify the well outlet pressure to be used when solving for flow from backpressure (i.e.
+   * {@link #solveFlowFromOutletPressure(boolean)} set to true).
    *
    * @param pressure outlet pressure
    * @param unit pressure unit
@@ -251,8 +498,8 @@ public class WellFlow extends TwoPortEquipment {
     this.inflowModel = InflowPerformanceModel.VOGEL;
     this.useWellProductionIndex = false;
     this.vogelRefPres = reservoirPressure;
-    this.vogelQmax = qTest
-        / (1.0 - 0.2 * (pwfTest / reservoirPressure) - 0.8 * Math.pow(pwfTest / reservoirPressure, 2.0));
+    this.vogelQmax = qTest / (1.0 - 0.2 * (pwfTest / reservoirPressure)
+        - 0.8 * Math.pow(pwfTest / reservoirPressure, 2.0));
   }
 
   /**
@@ -271,8 +518,9 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
-   * Use backpressure equation for gas wells: p<sub>res</sub><sup>2</sup> - p<sub>wf</sub><sup>2</sup> =
-   * a·q + b·q². Parameter {@code b} captures non-Darcy (turbulence) effects.
+   * Use backpressure equation for gas wells: p<sub>res</sub><sup>2</sup> -
+   * p<sub>wf</sub><sup>2</sup> = a·q + b·q². Parameter {@code b} captures non-Darcy (turbulence)
+   * effects.
    *
    * @param a deliverability coefficient a
    * @param b deliverability coefficient b (non-Darcy component)
@@ -294,11 +542,11 @@ public class WellFlow extends TwoPortEquipment {
    * @param flowRates flow rates corresponding to each pressure point (same unit as stream)
    */
   public void setTableInflow(double[] bottomHolePressures, double[] flowRates) {
-    if (bottomHolePressures == null || flowRates == null || bottomHolePressures.length != flowRates.length
-        || bottomHolePressures.length < 2) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
-          "setTableInflow", "table",
-          "- Provide matching pressure/flow arrays with at least two entries"));
+    if (bottomHolePressures == null || flowRates == null
+        || bottomHolePressures.length != flowRates.length || bottomHolePressures.length < 2) {
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException("WellFlow", "setTableInflow", "table",
+              "- Provide matching pressure/flow arrays with at least two entries"));
     }
 
     this.inflowModel = InflowPerformanceModel.TABLE;
@@ -311,8 +559,8 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
-   * Estimate well production index from Darcy law parameters. Units: permeability in mD,
-   * viscosity in cP and lengths in meter.
+   * Estimate well production index from Darcy law parameters. Units: permeability in mD, viscosity
+   * in cP and lengths in meter.
    *
    * @param permeability reservoir permeability
    * @param thickness reservoir thickness
@@ -397,5 +645,109 @@ public class WellFlow extends TwoPortEquipment {
         }
       }
     }
+  }
+
+  /**
+   * Load IPR curve from a CSV file.
+   *
+   * <p>
+   * The CSV file should have two columns: bottom-hole pressure (bara) and flow rate. The first row
+   * can be a header (will be skipped if non-numeric). Columns can be separated by comma, semicolon,
+   * or tab.
+   * </p>
+   *
+   * <p>
+   * Example CSV format:
+   * </p>
+   * 
+   * <pre>
+   * Pwf(bara),Rate(MSm3/day)
+   * 50,5.2
+   * 80,4.1
+   * 100,3.2
+   * 120,2.4
+   * 150,1.5
+   * 180,0.8
+   * 200,0.2
+   * </pre>
+   *
+   * @param filePath path to the CSV file
+   * @throws IOException if file cannot be read
+   */
+  public void loadIPRFromFile(String filePath) throws IOException {
+    loadIPRFromFile(Path.of(filePath));
+  }
+
+  /**
+   * Load IPR curve from a CSV file.
+   *
+   * @param filePath path to the CSV file
+   * @throws IOException if file cannot be read
+   * @see #loadIPRFromFile(String)
+   */
+  public void loadIPRFromFile(Path filePath) throws IOException {
+    List<Double> pressures = new ArrayList<>();
+    List<Double> rates = new ArrayList<>();
+
+    try (BufferedReader reader = Files.newBufferedReader(filePath)) {
+      String line;
+      boolean firstLine = true;
+
+      while ((line = reader.readLine()) != null) {
+        line = line.trim();
+        if (line.isEmpty() || line.startsWith("#")) {
+          continue; // Skip empty lines and comments
+        }
+
+        // Split by comma, semicolon, or tab
+        String[] parts = line.split("[,;\t]+");
+        if (parts.length < 2) {
+          continue;
+        }
+
+        try {
+          double pressure = Double.parseDouble(parts[0].trim());
+          double rate = Double.parseDouble(parts[1].trim());
+          pressures.add(pressure);
+          rates.add(rate);
+        } catch (NumberFormatException e) {
+          if (firstLine) {
+            // Skip header row
+            firstLine = false;
+            continue;
+          }
+          logger.warn("Skipping invalid line in IPR file: {}", line);
+        }
+        firstLine = false;
+      }
+    }
+
+    if (pressures.size() < 2) {
+      throw new IOException("IPR file must contain at least 2 valid data points: " + filePath);
+    }
+
+    double[] pwfArray = pressures.stream().mapToDouble(Double::doubleValue).toArray();
+    double[] rateArray = rates.stream().mapToDouble(Double::doubleValue).toArray();
+    setTableInflow(pwfArray, rateArray);
+
+    logger.info("Loaded IPR curve with {} points from {}", pressures.size(), filePath);
+  }
+
+  /**
+   * Get the current IPR table pressures.
+   *
+   * @return array of bottom-hole pressures (bara), or empty array if not using table IPR
+   */
+  public double[] getIPRTablePressures() {
+    return java.util.Arrays.copyOf(inflowTablePwf, inflowTablePwf.length);
+  }
+
+  /**
+   * Get the current IPR table flow rates.
+   *
+   * @return array of flow rates, or empty array if not using table IPR
+   */
+  public double[] getIPRTableRates() {
+    return java.util.Arrays.copyOf(inflowTableRate, inflowTableRate.length);
   }
 }
