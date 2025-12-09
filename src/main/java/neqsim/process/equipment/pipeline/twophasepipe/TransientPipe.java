@@ -1,6 +1,8 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.pipeline.PipeLineInterface;
@@ -131,6 +133,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public class TransientPipe extends TwoPortEquipment implements PipeLineInterface {
 
   private static final long serialVersionUID = 1L;
+  private static final Logger logger = LogManager.getLogger(TransientPipe.class);
   private static final double GRAVITY = 9.81;
 
   // Geometry
@@ -440,9 +443,23 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       U_SL = 0;
     }
 
-    sigma = fluid.getInterphaseProperties().getSurfaceTension(0, 1) * 1e-3; // mN/m to N/m
+    // Initialize interface properties before getting surface tension
+    // Determine liquid type for appropriate default IFT
+    boolean hasWater = fluid.hasPhaseType("aqueous");
+    boolean hasOil = fluid.hasPhaseType("oil");
+    // Default IFT values: gas-water ~72 mN/m, gas-oil ~20 mN/m
+    double defaultSigma = hasWater && !hasOil ? 0.072 : 0.020;
+    try {
+      fluid.getInterphaseProperties().init(fluid);
+      sigma = fluid.getInterphaseProperties().getSurfaceTension(0, 1) * 1e-3; // mN/m to N/m
+    } catch (Exception e) {
+      sigma = 0; // Will be set to default below
+    }
     if (sigma <= 0) {
-      sigma = 0.02; // Default surface tension
+      sigma = defaultSigma;
+      logger.warn(
+          "Interfacial tension calculation returned invalid value. Using default IFT: {} N/m ({})",
+          sigma, hasWater && !hasOil ? "gas-water" : "gas-oil");
     }
 
     // Calculate outlet pressure from hydrostatic and friction
@@ -1801,7 +1818,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       return;
     }
 
-    for (PipeSection section : sections) {
+    for (int i = 0; i < sections.length; i++) {
+      PipeSection section = sections[i];
       try {
         SystemInterface fluid = referenceFluid.clone();
         fluid.setPressure(section.getPressure() / 1e5); // Pa to bar
@@ -1862,7 +1880,21 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
           }
         }
 
-        section.setSurfaceTension(fluid.getInterphaseProperties().getSurfaceTension(0, 1) * 1e-3);
+        // Initialize interface properties before getting surface tension
+        fluid.getInterphaseProperties().init(fluid);
+        double sigmaCalc = fluid.getInterphaseProperties().getSurfaceTension(0, 1) * 1e-3;
+        if (sigmaCalc > 1e-6) {
+          section.setSurfaceTension(sigmaCalc);
+        } else {
+          // Use appropriate default based on liquid type
+          // Gas-water: ~72 mN/m, Gas-oil: ~20 mN/m
+          boolean isWaterOnly = fluid.hasPhaseType("aqueous") && !fluid.hasPhaseType("oil");
+          double defaultSigma = isWaterOnly ? 0.072 : 0.020;
+          section.setSurfaceTension(defaultSigma);
+          logger.warn(
+              "Interfacial tension calculation returned invalid value ({} N/m) in section {}. Using default: {} N/m",
+              sigmaCalc, i, defaultSigma);
+        }
 
         // Calculate mixture specific heat capacity (Cv)
         double totalMass = fluid.getTotalNumberOfMoles() * fluid.getMolarMass();

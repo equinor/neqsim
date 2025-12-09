@@ -451,8 +451,28 @@ public class TwoFluidPipe extends Pipeline {
             + inletWaterCut * inletFluid.getPhase("aqueous").getEnthalpy("J/kg"));
 
         if (inletFluid.hasPhaseType("gas")) {
-          sigma = inletFluid.getInterphaseProperties()
-              .getSurfaceTension(inletFluid.getPhaseIndex("gas"), inletFluid.getPhaseIndex("oil"));
+          // Initialize interfacial properties before getting surface tension
+          inletFluid.getInterphaseProperties().init(inletFluid);
+          try {
+            double sigmaCalc = inletFluid.getInterphaseProperties().getSurfaceTension(
+                inletFluid.getPhaseIndex("gas"), inletFluid.getPhaseIndex("oil"));
+            // Only use calculated value if it's reasonable (> 1e-6 N/m)
+            if (sigmaCalc > 1e-6) {
+              sigma = sigmaCalc;
+            } else {
+              // Default gas-oil IFT: ~20 mN/m (typical hydrocarbon system)
+              sigma = 0.020;
+              logger.warn(
+                  "Interfacial tension calculation returned invalid value ({} N/m). Using default gas-oil IFT: {} N/m",
+                  sigmaCalc, sigma);
+            }
+          } catch (Exception e) {
+            // Default gas-oil IFT: ~20 mN/m
+            sigma = 0.020;
+            logger.warn(
+                "Interfacial tension calculation failed. Using default gas-oil IFT: {} N/m. Error: {}",
+                sigma, e.getMessage());
+          }
         }
 
         logger.info("Three-phase flow detected: water cut = {:.1f}%, oil fraction = {:.1f}%",
@@ -466,8 +486,29 @@ public class TwoFluidPipe extends Pipeline {
         cL = inletFluid.getPhase(liqPhase).getSoundSpeed();
         hL = inletFluid.getPhase(liqPhase).getEnthalpy("J/kg");
         if (inletFluid.hasPhaseType("gas")) {
-          sigma = inletFluid.getInterphaseProperties().getSurfaceTension(
-              inletFluid.getPhaseIndex("gas"), inletFluid.getPhaseIndex(liqPhase));
+          // Initialize interfacial properties before getting surface tension
+          inletFluid.getInterphaseProperties().init(inletFluid);
+          try {
+            double sigmaCalc = inletFluid.getInterphaseProperties().getSurfaceTension(
+                inletFluid.getPhaseIndex("gas"), inletFluid.getPhaseIndex(liqPhase));
+            // Only use calculated value if it's reasonable (> 1e-6 N/m)
+            if (sigmaCalc > 1e-6) {
+              sigma = sigmaCalc;
+            } else {
+              // Use appropriate default based on liquid type
+              // Gas-water: ~72 mN/m, Gas-oil: ~20 mN/m
+              sigma = "aqueous".equals(liqPhase) ? 0.072 : 0.020;
+              logger.warn(
+                  "Interfacial tension calculation returned invalid value ({} N/m). Using default gas-{} IFT: {} N/m",
+                  sigmaCalc, liqPhase, sigma);
+            }
+          } catch (Exception e) {
+            // Use appropriate default based on liquid type
+            sigma = "aqueous".equals(liqPhase) ? 0.072 : 0.020;
+            logger.warn(
+                "Interfacial tension calculation failed. Using default gas-{} IFT: {} N/m. Error: {}",
+                liqPhase, sigma, e.getMessage());
+          }
         }
       }
 
