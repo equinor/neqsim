@@ -522,7 +522,6 @@ public class TubingPerformance extends TwoPortEquipment {
    * <li>Heat transfer between wellbore and formation</li>
    * <li>Time-dependent behavior (transient heat conduction)</li>
    * </ul>
-   * </p>
    *
    * @param depth depth from surface (m)
    * @param bhTemp bottom-hole temperature (K)

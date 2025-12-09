@@ -14,13 +14,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * WellSystem class - Integrated well model combining IPR (Inflow Performance Relationship) and VLP
  * (Vertical Lift Performance) for complete well modeling.
- * </p>
  *
  * <p>
  * This class represents a complete producing well system including:
+ * </p>
  * <ul>
  * <li>Reservoir inflow (IPR) via {@link WellFlow}</li>
  * <li>Wellbore hydraulics (VLP) via {@link TubingPerformance}</li>
@@ -29,7 +28,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li>Lift curve generation for reservoir simulator coupling</li>
  * <li>Multi-layer/commingled production support</li>
  * </ul>
- * </p>
  *
  * <h2>Architecture Overview</h2>
  * 
@@ -172,7 +170,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
     FETKOVICH,
     /** Backpressure with non-Darcy (turbulence) term. */
     BACKPRESSURE,
-    /** Jones, Blount & Glaze (1976) - Accounts for rate-dependent skin. */
+    /** Jones, Blount &amp; Glaze (1976) - Accounts for rate-dependent skin. */
     JONES_BLOUNT_GLAZE,
     /** Table-driven IPR from well test data. */
     TABLE
@@ -180,9 +178,10 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * VLP solver modes for different accuracy/speed trade-offs.
-   * 
+   *
    * <p>
    * Empirical correlations (steady-state):
+   * </p>
    * <ul>
    * <li>{@link #SIMPLIFIED} - Fast hydrostatic + friction</li>
    * <li>{@link #BEGGS_BRILL} - Beggs-Brill (1973) - all inclinations</li>
@@ -191,12 +190,14 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    * <li>{@link #HASAN_KABIR} - Hasan-Kabir (2002) - mechanistic</li>
    * <li>{@link #DUNS_ROS} - Duns-Ros (1963) - gas wells</li>
    * </ul>
+   *
+   * <p>
    * Mechanistic models:
+   * </p>
    * <ul>
    * <li>{@link #DRIFT_FLUX} - Drift-flux model for gas-liquid flow</li>
    * <li>{@link #TWO_FLUID} - Full two-fluid model (most accurate, slowest)</li>
    * </ul>
-   * </p>
    */
   public enum VLPSolverMode {
     /** Fast simplified solver using hydrostatic + friction (default). */
@@ -513,7 +514,6 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    * <li>{@link VLPSolverMode#HASAN_KABIR} - Hasan-Kabir mechanistic model</li>
    * <li>{@link VLPSolverMode#DUNS_ROS} - Duns-Ros correlation</li>
    * </ul>
-   * </p>
    *
    * @param mode VLP solver mode
    */
