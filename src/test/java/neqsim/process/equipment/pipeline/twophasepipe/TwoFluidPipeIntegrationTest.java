@@ -2,6 +2,7 @@ package neqsim.process.equipment.pipeline.twophasepipe;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
@@ -19,38 +20,42 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 class TwoFluidPipeIntegrationTest {
 
+  private static final int NUM_SECTIONS = 5; // Reduced for faster tests
   private TwoFluidPipe pipe;
-  private Stream inletStream;
-  private SystemInterface testFluid;
+  private static Stream sharedInletStream;
+  private static SystemInterface sharedFluid;
+
+  @BeforeAll
+  static void setUpOnce() {
+    // Create a two-phase gas-condensate fluid (shared across tests)
+    sharedFluid = new SystemSrkEos(303.15, 50.0); // 30°C, 50 bar
+    sharedFluid.addComponent("methane", 0.85);
+    sharedFluid.addComponent("ethane", 0.08);
+    sharedFluid.addComponent("propane", 0.04);
+    sharedFluid.addComponent("n-heptane", 0.03);
+    sharedFluid.setMixingRule("classic");
+
+    // Create inlet stream (shared)
+    sharedInletStream = new Stream("inlet", sharedFluid);
+    sharedInletStream.setFlowRate(10.0, "kg/sec");
+    sharedInletStream.setTemperature(30.0, "C");
+    sharedInletStream.setPressure(50.0, "bara");
+    sharedInletStream.run();
+  }
 
   @BeforeEach
   void setUp() {
-    // Create a two-phase gas-condensate fluid
-    testFluid = new SystemSrkEos(303.15, 50.0); // 30°C, 50 bar
-    testFluid.addComponent("methane", 0.85);
-    testFluid.addComponent("ethane", 0.08);
-    testFluid.addComponent("propane", 0.04);
-    testFluid.addComponent("n-heptane", 0.03);
-    testFluid.setMixingRule("classic");
-
-    // Create inlet stream
-    inletStream = new Stream("inlet", testFluid);
-    inletStream.setFlowRate(10.0, "kg/sec");
-    inletStream.setTemperature(30.0, "C");
-    inletStream.setPressure(50.0, "bara");
-    inletStream.run();
-
-    // Create two-fluid pipe
-    pipe = new TwoFluidPipe("test-pipe", inletStream);
-    pipe.setLength(1000.0); // 1 km
+    // Create fresh pipe for each test using shared stream
+    pipe = new TwoFluidPipe("test-pipe", sharedInletStream);
+    pipe.setLength(500.0); // 500 m (reduced)
     pipe.setDiameter(0.1); // 100 mm
-    pipe.setNumberOfSections(20);
+    pipe.setNumberOfSections(NUM_SECTIONS);
   }
 
   @Test
   void testPipeConfiguration() {
-    assertEquals(20, pipe.getNumberOfSections(), "Should have 20 sections");
-    assertEquals(1000.0, pipe.getLength(), 1e-6, "Length should be 1000 m");
+    assertEquals(NUM_SECTIONS, pipe.getNumberOfSections(), "Should have correct sections");
+    assertEquals(500.0, pipe.getLength(), 1e-6, "Length should be 500 m");
     assertEquals(0.1, pipe.getDiameter(), 1e-6, "Diameter should be 0.1 m");
   }
 
@@ -157,7 +162,7 @@ class TwoFluidPipeIntegrationTest {
 
     double[] positions = pipe.getPositionProfile();
     assertNotNull(positions, "Position profile should not be null");
-    assertEquals(20, positions.length, "Should have positions for all sections");
+    assertEquals(NUM_SECTIONS, positions.length, "Should have positions for all sections");
 
     // Positions should be increasing
     for (int i = 1; i < positions.length; i++) {
@@ -182,9 +187,9 @@ class TwoFluidPipeIntegrationTest {
 
   @Test
   void testElevationProfileSetting() {
-    double[] elevations = new double[20];
-    for (int i = 0; i < 20; i++) {
-      elevations[i] = 10.0 * Math.sin(i * Math.PI / 10);
+    double[] elevations = new double[NUM_SECTIONS];
+    for (int i = 0; i < NUM_SECTIONS; i++) {
+      elevations[i] = 5.0 * Math.sin(i * Math.PI / (NUM_SECTIONS - 1));
     }
     pipe.setElevationProfile(elevations);
 

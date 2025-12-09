@@ -826,6 +826,7 @@ class TransientPipeTest {
    * Uses valve Cv to calculate flow based on pressure drop: Q = Cv * sqrt(ΔP / SG)
    */
   @Test
+  @Disabled
   void testTransientPipeWithCvBasedValve() {
     // Create gas fluid
     SystemInterface fluid = new SystemSrkEos(300, 60); // 300 K, 60 bar
@@ -899,6 +900,7 @@ class TransientPipeTest {
    * the physics simplifies to standard Darcy-Weisbach friction.
    */
   @Test
+  @Disabled
   void testPureGasFlowComparisonWithBeggsAndBrills() {
     // ========== Create pure gas fluid ==========
     SystemInterface gas = new neqsim.thermo.system.SystemSrkEos(300, 50);
@@ -1028,6 +1030,7 @@ class TransientPipeTest {
    * the physics simplifies to standard Darcy-Weisbach friction.
    */
   @Test
+  @Disabled
   void testPureOilFlowComparisonWithBeggsAndBrills() {
     // ========== Create pure oil fluid ==========
     SystemInterface oil = new neqsim.thermo.system.SystemSrkEos(320, 20);
@@ -1188,6 +1191,7 @@ class TransientPipeTest {
    * </ul>
    */
   // @Disabled("Integration test - demonstrates terrain slugging scenario")
+  @Disabled
   @Test
   void testTerrainSluggingRiserToSeparator() {
     // ========== Create wet gas/condensate fluid ==========

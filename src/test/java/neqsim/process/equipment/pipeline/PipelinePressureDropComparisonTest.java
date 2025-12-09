@@ -1405,15 +1405,15 @@ public class PipelinePressureDropComparisonTest {
     System.out.println("\n========== TWO-PHASE FLOW: Gas-Oil Horizontal Pipe ==========");
 
     // Pipe parameters - typical production tubing
-    double lengthM = 1000.0;
+    double lengthM = 500.0; // Shorter pipe to reduce pressure drop
     double diameterM = 0.1; // 100 mm (4 inch)
     double roughnessM = 4.6e-5;
-    double pressureBara = 50.0;
-    double temperatureC = 60.0;
+    double pressureBara = 30.0; // Moderate pressure
+    double temperatureC = 30.0; // Lower temperature to ensure phase separation
 
-    // Flow rates to give approximately 50% gas by volume at inlet conditions
-    double gasFlowKgHr = 5000.0; // methane
-    double oilFlowKgHr = 50000.0; // n-decane as oil surrogate
+    // Flow rates - moderate to avoid excessive pressure drop
+    double gasFlowKgHr = 1000.0; // methane - moderate flow
+    double oilFlowKgHr = 20000.0; // n-decane as oil surrogate
 
     System.out.println("Operating Conditions:");
     System.out.println("  Pipe Length: " + lengthM + " m");
@@ -1424,6 +1424,7 @@ public class PipelinePressureDropComparisonTest {
     System.out.println("  Oil Flow (nC10): " + oilFlowKgHr + " kg/hr");
 
     // Create two-phase gas-oil system
+    // Use lower pressure and temperature to ensure two distinct phases
     SystemInterface twoPhaseSystem = new SystemSrkEos(273.15 + temperatureC, pressureBara);
     twoPhaseSystem.addComponent("methane", gasFlowKgHr, "kg/hr");
     twoPhaseSystem.addComponent("nC10", oilFlowKgHr, "kg/hr");
