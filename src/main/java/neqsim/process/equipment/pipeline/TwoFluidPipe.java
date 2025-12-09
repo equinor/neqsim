@@ -623,8 +623,17 @@ public class TwoFluidPipe extends Pipeline {
         }
 
         // Update water and oil holdups for three-phase flow
-        if (sec.getWaterDensity() > 0 && sec.getOilDensity() > 0 && sec.getWaterCut() > 0) {
-          updateWaterOilHoldups(sec, prev, alphaL_new, area);
+        // Check if this is a three-phase system (both oil and water densities set)
+        if (sec.getWaterDensity() > 0 && sec.getOilDensity() > 0) {
+          // Always update water/oil holdups when we have liquid and three-phase properties
+          if (alphaL_new > 0.001) {
+            updateWaterOilHoldups(sec, prev, alphaL_new, area);
+          } else {
+            // No liquid: set water and oil holdups to zero
+            sec.setWaterHoldup(0);
+            sec.setOilHoldup(0);
+            sec.setWaterCut(prev != null ? prev.getWaterCut() : sec.getWaterCut());
+          }
         }
 
         // Update derived quantities
@@ -865,7 +874,12 @@ public class TwoFluidPipe extends Pipeline {
       T_fluid += dTfluid_dt * dt;
 
       // Ensure physical bounds
-      T_fluid = Math.max(T_fluid, 100.0); // Never below 100K
+      // The fluid temperature cannot go below ambient due to heat exchange alone
+      // J-T cooling is separate but in real systems is limited
+      // For subsea pipelines, the minimum temperature is the seabed temperature
+      // unless there's very rapid expansion (which is not the case in steady pipeline flow)
+      T_fluid = Math.max(T_fluid, T_ambient);
+      T_fluid = Math.max(T_fluid, 100.0); // Absolute minimum: 100K
       sec.setTemperature(T_fluid);
 
       // Check hydrate/wax risk
@@ -1083,64 +1097,23 @@ public class TwoFluidPipe extends Pipeline {
     double rhoOil = sec.getOilDensity();
     double rhoWater = sec.getWaterDensity();
     double muOil = sec.getOilViscosity();
-    double muWater = sec.getWaterViscosity();
     double g = 9.81;
+    double inclination = sec.getInclination();
+    double sinTheta = Math.sin(inclination);
+    double deltaRho = rhoWater - rhoOil; // Positive: water is heavier
 
     // Get previous water cut for continuity
     double prevWaterCut = (prev != null) ? prev.getWaterCut() : sec.getWaterCut();
-    double inclination = sec.getInclination();
-    double sinTheta = Math.sin(inclination);
 
-    // Base water cut from previous section (advected with liquid)
+    // Simplified model: water cut is advected from upstream without terrain-induced settling.
+    // This assumes water and oil are well-mixed within the liquid phase.
+    // A more sophisticated model would track water/oil separation dynamics explicitly,
+    // but the terrain factor approach causes numerical instabilities.
     double waterCut = prevWaterCut;
 
-    // Density difference drives water settling
-    double deltaRho = rhoWater - rhoOil; // Positive: water is heavier
-
-    if (deltaRho > 0 && alphaL > 0.01) {
-      // Stokes settling velocity for water droplets in oil (or vice versa)
-      // Simplified model: settling depends on local holdup and inclination
-      double dropletDiameter = 0.001; // 1 mm typical droplet size
-      double stokesVelocity = deltaRho * g * dropletDiameter * dropletDiameter / (18 * muOil);
-
-      // Terrain effect on water accumulation
-      // Negative inclination (downhill) + transition to uphill = valley = water accumulates
-      double terrainFactor = 1.0;
-
-      if (prev != null) {
-        double prevInclination = prev.getInclination();
-        double inclinationChange = inclination - prevInclination;
-
-        // Valley detection: transition from downhill to uphill
-        if (inclinationChange > 0.005 && prevInclination < -0.005) {
-          // Strong valley effect for water - water accumulates more than oil
-          terrainFactor = 1.0 + 0.3 * Math.min(inclinationChange, 0.3);
-        }
-
-        // Peak detection: transition from uphill to downhill
-        if (inclinationChange < -0.005 && prevInclination > 0.005) {
-          // Water drains from peaks faster than oil
-          terrainFactor = 1.0 - 0.2 * Math.min(Math.abs(inclinationChange), 0.3);
-        }
-      }
-
-      // In uphill sections, water tends to slip back more than oil
-      if (sinTheta > 0.01) {
-        // Uphill: water accumulates (higher water cut)
-        double upfactor = 1.0 + 0.1 * sinTheta * (stokesVelocity / sec.getLiquidVelocity());
-        terrainFactor *= Math.min(upfactor, 1.5);
-      } else if (sinTheta < -0.01) {
-        // Downhill: water flows faster (lower local water cut as it drains ahead)
-        double downFactor = 1.0 - 0.05 * Math.abs(sinTheta);
-        terrainFactor *= Math.max(downFactor, 0.7);
-      }
-
-      // Apply terrain factor to water cut
-      waterCut = prevWaterCut * terrainFactor;
-    }
-
     // Clamp water cut to valid range
-    waterCut = Math.max(0, Math.min(1, waterCut));
+    waterCut = Math.max(0.001, Math.min(0.999, waterCut)); // Keep small margin to avoid numerical
+                                                           // issues
 
     // Calculate water and oil holdups from water cut and total liquid holdup
     double alphaW = alphaL * waterCut;
@@ -1397,11 +1370,24 @@ public class TwoFluidPipe extends Pipeline {
       double sumOilWater = sec.getOilHoldup() + sec.getWaterHoldup();
       double diff = Math.abs(sec.getLiquidHoldup() - sumOilWater);
       if (diff > 0.01) {
-        // Always enforce consistency - update liquidHoldup to match sum
-        double newLiqHL = sumOilWater > 0 ? sumOilWater : sec.getLiquidHoldup();
-        double newGasHL = Math.max(0, Math.min(1, 1.0 - newLiqHL));
-        sec.setLiquidHoldup(newLiqHL);
-        sec.setGasHoldup(newGasHL);
+        // Determine which source to trust
+        if (sumOilWater > 0.001) {
+          // We have oil and/or water holdups - use them as the liquid holdup
+          double newLiqHL = sumOilWater;
+          double newGasHL = Math.max(0, Math.min(1, 1.0 - newLiqHL));
+          sec.setLiquidHoldup(newLiqHL);
+          sec.setGasHoldup(newGasHL);
+        } else if (sec.getLiquidHoldup() > 0.001) {
+          // We have liquid holdup but no oil/water - distribute based on water cut
+          double waterCut = sec.getWaterCut();
+          if (waterCut <= 0 || waterCut >= 1) {
+            waterCut = 0.5; // Default to 50/50 if no valid water cut
+          }
+          double newAlphaW = sec.getLiquidHoldup() * waterCut;
+          double newAlphaO = sec.getLiquidHoldup() * (1.0 - waterCut);
+          sec.setWaterHoldup(newAlphaW);
+          sec.setOilHoldup(newAlphaO);
+        }
       }
 
       // Ensure pressure is positive

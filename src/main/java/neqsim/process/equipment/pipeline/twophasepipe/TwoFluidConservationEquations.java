@@ -455,16 +455,19 @@ public class TwoFluidConservationEquations implements Serializable {
 
       // Oil and water mass sources (no phase change between oil/water for now)
       // Gravity-driven segregation source term for water accumulation
+      // NOTE: This term is disabled (set to 0) because it causes numerical instability
+      // in the water/oil holdup distribution. The effect is that water and oil
+      // stay well-mixed in the liquid phase. A more sophisticated approach
+      // would need implicit treatment or smaller time steps.
       double waterSegregationSource = 0;
-      if (rhoW > rhoO && rhoO > 0 && alphaL > 0.01 && sinTheta != 0) {
-        // Water settles in valleys (negative inclination after positive)
-        // This is a simplified model for water stratification within the liquid phase
-        double densityRatio = (rhoW - rhoO) / rhoO;
-        waterSegregationSource = 0.01 * densityRatio * alphaW * A * Math.abs(sinTheta);
-        if (sinTheta < 0) {
-          waterSegregationSource = -waterSegregationSource; // Water accumulates going downhill
-        }
-      }
+      // Disabled due to instability issues:
+      // if (rhoW > rhoO && rhoO > 0 && alphaL > 0.01 && sinTheta != 0) {
+      // double densityRatio = (rhoW - rhoO) / rhoO;
+      // waterSegregationSource = 0.001 * densityRatio * alphaW * A * Math.abs(sinTheta);
+      // if (sinTheta < 0) {
+      // waterSegregationSource = -waterSegregationSource;
+      // }
+      // }
 
       sources[i][IDX_OIL_MASS] = Gamma_L * (1.0 - waterCut);
       sources[i][IDX_WATER_MASS] = Gamma_L * waterCut + waterSegregationSource;
