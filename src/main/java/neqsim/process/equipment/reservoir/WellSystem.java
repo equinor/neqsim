@@ -980,16 +980,19 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * Drift-flux VLP calculation.
-   * 
+   *
    * <p>
    * Uses a drift-flux model that accounts for slip between phases. More accurate than homogeneous
    * models for gas-liquid flow in vertical/inclined pipes.
    * </p>
-   * 
+   *
    * <p>
    * The drift-flux model uses: v_g = C_0 * v_m + v_d where C_0 is the distribution parameter and
    * v_d is the drift velocity.
    * </p>
+   *
+   * @param flowRate flow rate in Sm3/day
+   * @return calculated bottom-hole pressure in bara
    */
   private double calculateVLP_BHP_DriftFlux(double flowRate) {
     // Get fluid properties
@@ -1071,21 +1074,24 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * Two-fluid VLP calculation.
-   * 
+   *
    * <p>
    * Uses a simplified two-fluid model with separate momentum balances for each phase. This is the
    * most accurate approach for complex flow patterns but also the slowest.
    * </p>
-   * 
+   *
    * <p>
    * Solves coupled gas and liquid momentum equations accounting for:
+   * </p>
    * <ul>
    * <li>Interfacial friction between phases</li>
    * <li>Wall friction for each phase</li>
    * <li>Gravitational effects</li>
    * <li>Phase acceleration</li>
    * </ul>
-   * </p>
+   *
+   * @param flowRate flow rate in Sm3/day
+   * @return calculated bottom-hole pressure in bara
    */
   private double calculateVLP_BHP_TwoFluid(double flowRate) {
     // Get fluid properties
@@ -1109,12 +1115,14 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       tempFluid.initProperties();
 
       // Get phase properties
-      double rhoL = 800.0, rhoG = 50.0, muL = 0.001, muG = 1e-5;
-      double alphaL = 0.5, alphaG = 0.5;
+      double rhoL = 800.0;
+      double rhoG = 50.0;
+      double muL = 0.001;
+      double alphaL = 0.5;
+      double alphaG = 0.5;
 
       if (tempFluid.hasPhaseType("gas")) {
         rhoG = tempFluid.getPhase("gas").getDensity("kg/m3");
-        muG = tempFluid.getPhase("gas").getViscosity("kg/msec");
         alphaG = tempFluid.getPhase("gas").getBeta();
       }
       if (tempFluid.hasPhaseType("oil")) {
@@ -1136,9 +1144,8 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       double tauWG = 0.5 * 0.02 * rhoG * vsg * vsg;
       double tauWL = 0.5 * 0.02 * rhoL * vsl * vsl;
 
-      // Interfacial friction (simplified)
-      double fi = 0.005; // Interfacial friction factor
-      double tauI = 0.5 * fi * rhoG * Math.pow(vsg - vsl, 2);
+      // Interfacial friction factor (for future extension)
+      // double fi = 0.005;
 
       // Gravitational term
       double sinTheta = Math.sin(Math.toRadians(tubingInclination));
