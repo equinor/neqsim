@@ -232,20 +232,37 @@ public class TwoFluidSection extends PipeSection {
     gasMomentumPerLength = alphaG * rhoG * vG * A;
     liquidMomentumPerLength = alphaL * rhoL * vL * A;
 
-    // For the 7-equation model, split liquid into oil and water
-    // If water cut is not set (or zero), assume all liquid is oil
+    // For the 7-equation model, split liquid into oil and water using proper densities
+    // waterCut is the volume fraction of water in the liquid phase
     if (waterCut > 0 && waterCut < 1.0) {
-      // Three-phase: split by water cut
-      oilMassPerLength = liquidMassPerLength * (1.0 - waterCut);
-      waterMassPerLength = liquidMassPerLength * waterCut;
-      oilMomentumPerLength = liquidMomentumPerLength * (1.0 - waterCut);
-      waterMomentumPerLength = liquidMomentumPerLength * waterCut;
+      // Three-phase: use individual phase densities for mass calculation
+      // Volume fractions within total cross-section
+      double alphaO = alphaL * (1.0 - waterCut); // Oil holdup = liquid holdup * oil fraction
+      double alphaW = alphaL * waterCut; // Water holdup = liquid holdup * water fraction
+
+      // Use phase-specific densities for mass
+      double rhoO = (oilDensity > 100) ? oilDensity : rhoL;
+      double rhoW = (waterDensity > 100) ? waterDensity : 1000.0;
+
+      oilMassPerLength = alphaO * rhoO * A;
+      waterMassPerLength = alphaW * rhoW * A;
+
+      // Recalculate total liquid mass for consistency
+      liquidMassPerLength = oilMassPerLength + waterMassPerLength;
+
+      // Split momentum using volume fractions (same velocity assumption)
+      oilMomentumPerLength = oilMassPerLength * vL;
+      waterMomentumPerLength = waterMassPerLength * vL;
+      liquidMomentumPerLength = oilMomentumPerLength + waterMomentumPerLength;
     } else {
       // Two-phase: all liquid is oil (no water)
-      oilMassPerLength = liquidMassPerLength;
+      double rhoO = (oilDensity > 100) ? oilDensity : rhoL;
+      oilMassPerLength = alphaL * rhoO * A;
       waterMassPerLength = 0;
-      oilMomentumPerLength = liquidMomentumPerLength;
+      oilMomentumPerLength = oilMassPerLength * vL;
       waterMomentumPerLength = 0;
+      liquidMassPerLength = oilMassPerLength;
+      liquidMomentumPerLength = oilMomentumPerLength;
     }
 
     // Total energy (internal + kinetic)
@@ -267,9 +284,16 @@ public class TwoFluidSection extends PipeSection {
 
     // Guard against negative or NaN conservative variables
     gasMassPerLength = Math.max(0, gasMassPerLength);
-    liquidMassPerLength = Math.max(0, liquidMassPerLength);
+    oilMassPerLength = Math.max(0, oilMassPerLength);
+    waterMassPerLength = Math.max(0, waterMassPerLength);
+    liquidMassPerLength = oilMassPerLength + waterMassPerLength;
+
     if (Double.isNaN(gasMassPerLength))
       gasMassPerLength = 0;
+    if (Double.isNaN(oilMassPerLength))
+      oilMassPerLength = 0;
+    if (Double.isNaN(waterMassPerLength))
+      waterMassPerLength = 0;
     if (Double.isNaN(liquidMassPerLength))
       liquidMassPerLength = 0;
     if (Double.isNaN(gasMomentumPerLength))
@@ -281,42 +305,65 @@ public class TwoFluidSection extends PipeSection {
 
     // Extract holdups from mass per length
     double rhoG = getGasDensity();
-    double rhoL = getLiquidDensity();
-
-    // Ensure valid densities
     if (rhoG < 0.1)
       rhoG = 1.0; // Minimum gas density
-    if (rhoL < 100)
-      rhoL = 700.0; // Minimum liquid density
+
+    // Use individual phase densities for oil and water
+    double rhoO = oilDensity > 100 ? oilDensity : 700.0;
+    double rhoW = waterDensity > 100 ? waterDensity : 1000.0;
 
     double alphaG = 0;
-    double alphaL = 0;
+    double alphaO = 0;
+    double alphaW = 0;
 
-    // Calculate holdups from conservative variables
+    // Calculate holdups from conservative variables using consistent densities
     if (A > 0 && rhoG > 0) {
       alphaG = gasMassPerLength / (rhoG * A);
     }
-    if (A > 0 && rhoL > 0) {
-      alphaL = liquidMassPerLength / (rhoL * A);
+    if (A > 0) {
+      alphaO = oilMassPerLength / (rhoO * A);
+      alphaW = waterMassPerLength / (rhoW * A);
     }
 
     // Clamp holdups to valid range
     alphaG = Math.max(0, Math.min(1, alphaG));
-    alphaL = Math.max(0, Math.min(1, alphaL));
+    alphaO = Math.max(0, Math.min(1, alphaO));
+    alphaW = Math.max(0, Math.min(1, alphaW));
+
+    // Total liquid holdup is sum of oil and water holdups
+    double alphaL = alphaO + alphaW;
+
+    // Calculate water cut from mass values BEFORE normalization to preserve ratio
+    double calculatedWaterCut = waterCut; // Keep existing as default
+    if (alphaL > 1e-10) {
+      calculatedWaterCut = alphaW / alphaL;
+    } else if (oilMassPerLength + waterMassPerLength > 1e-12) {
+      // Calculate from mass if holdups are too small
+      calculatedWaterCut = waterMassPerLength / (oilMassPerLength + waterMassPerLength);
+    }
+    // Clamp water cut to valid range with some margin
+    calculatedWaterCut = Math.max(0.001, Math.min(0.999, calculatedWaterCut));
 
     // Normalize holdups to sum to 1
     double total = alphaG + alphaL;
     if (total > 1e-10) {
-      alphaG = alphaG / total;
-      alphaL = alphaL / total;
+      double scale = 1.0 / total;
+      alphaG *= scale;
+      alphaL *= scale;
+      // Redistribute liquid holdup between oil and water using preserved water cut
+      alphaW = alphaL * calculatedWaterCut;
+      alphaO = alphaL * (1.0 - calculatedWaterCut);
     } else {
-      // Default to previous values or 50-50 split
+      // Default to previous values
       alphaG = getGasHoldup();
       alphaL = getLiquidHoldup();
-      if (Double.isNaN(alphaG) || Double.isNaN(alphaL)) {
+      if (Double.isNaN(alphaG) || Double.isNaN(alphaL) || alphaG < 0 || alphaL < 0) {
         alphaG = 0.5;
         alphaL = 0.5;
       }
+      // Split liquid according to preserved water cut
+      alphaW = alphaL * calculatedWaterCut;
+      alphaO = alphaL * (1.0 - calculatedWaterCut);
     }
 
     // Final validation - ensure no NaN
@@ -324,9 +371,19 @@ public class TwoFluidSection extends PipeSection {
       alphaG = 0.5;
     if (Double.isNaN(alphaL))
       alphaL = 0.5;
+    if (Double.isNaN(alphaO))
+      alphaO = alphaL * (1.0 - calculatedWaterCut);
+    if (Double.isNaN(alphaW))
+      alphaW = alphaL * calculatedWaterCut;
 
     setGasHoldup(alphaG);
     setLiquidHoldup(alphaL);
+    oilHoldup = alphaO;
+    waterHoldup = alphaW;
+
+    // Update water cut for consistency - use the preserved value
+    waterCut = calculatedWaterCut;
+    oilFractionInLiquid = 1.0 - waterCut;
 
     // Extract velocities with stability guards
     if (gasMassPerLength > 1e-12) {
@@ -405,52 +462,23 @@ public class TwoFluidSection extends PipeSection {
 
   /**
    * Update water and oil holdups from conservative variables. Should be called after
-   * extractPrimitiveVariables.
+   * extractPrimitiveVariables if separate tracking is needed. Note: extractPrimitiveVariables now
+   * also sets oil/water holdups, so this is mainly for velocity extraction.
    */
   public void updateWaterOilHoldups() {
-    double A = getArea();
-    double alphaL = getLiquidHoldup();
-
-    // Calculate individual holdups from mass per length
-    if (A > 0 && waterDensity > 0 && oilDensity > 0) {
-      double alphaW = waterMassPerLength / (waterDensity * A);
-      double alphaO = oilMassPerLength / (oilDensity * A);
-
-      // Clamp to valid ranges
-      alphaW = Math.max(0, Math.min(alphaL, alphaW));
-      alphaO = Math.max(0, Math.min(alphaL, alphaO));
-
-      // Normalize to match total liquid holdup
-      double totalLiqHoldup = alphaW + alphaO;
-      if (totalLiqHoldup > 1e-10 && alphaL > 1e-10) {
-        double scale = alphaL / totalLiqHoldup;
-        alphaW *= scale;
-        alphaO *= scale;
+    // Extract velocities from momenta (with slip)
+    if (oilMassPerLength > 1e-12) {
+      double vO = oilMomentumPerLength / oilMassPerLength;
+      vO = Math.max(-50, Math.min(50, vO)); // Clamp to physical range
+      if (!Double.isNaN(vO)) {
+        oilVelocity = vO;
       }
-
-      waterHoldup = alphaW;
-      oilHoldup = alphaO;
-
-      // Update water cut based on holdups
-      if (alphaL > 1e-10) {
-        waterCut = alphaW / alphaL;
-        oilFractionInLiquid = 1.0 - waterCut;
-      }
-
-      // Extract velocities from momenta (with slip)
-      if (oilMassPerLength > 1e-12) {
-        double vO = oilMomentumPerLength / oilMassPerLength;
-        vO = Math.max(-50, Math.min(50, vO)); // Clamp to physical range
-        if (!Double.isNaN(vO)) {
-          oilVelocity = vO;
-        }
-      }
-      if (waterMassPerLength > 1e-12) {
-        double vW = waterMomentumPerLength / waterMassPerLength;
-        vW = Math.max(-50, Math.min(50, vW)); // Clamp to physical range
-        if (!Double.isNaN(vW)) {
-          waterVelocity = vW;
-        }
+    }
+    if (waterMassPerLength > 1e-12) {
+      double vW = waterMomentumPerLength / waterMassPerLength;
+      vW = Math.max(-50, Math.min(50, vW)); // Clamp to physical range
+      if (!Double.isNaN(vW)) {
+        waterVelocity = vW;
       }
     }
   }
@@ -786,6 +814,67 @@ public class TwoFluidSection extends PipeSection {
 
   public void setOilHoldup(double oilHoldup) {
     this.oilHoldup = oilHoldup;
+  }
+
+  /**
+   * Override getLiquidHoldup to return the total liquid holdup (oil + water).
+   * 
+   * <p>
+   * In TwoFluidSection, the oil and water holdups are tracked separately. This override ensures
+   * that getLiquidHoldup() returns their sum for consistent behavior with LiquidAccumulationTracker
+   * and other components that depend on total liquid holdup.
+   * </p>
+   *
+   * @return Total liquid holdup (oil + water)
+   */
+  @Override
+  public double getLiquidHoldup() {
+    // Return sum of oil and water if they're being used
+    double totalLiq = oilHoldup + waterHoldup;
+    if (totalLiq > 1e-6) {
+      return totalLiq;
+    }
+    // Fall back to parent's value
+    return super.getLiquidHoldup();
+  }
+
+  /**
+   * Override setLiquidHoldup to also update oil and water holdups proportionally.
+   * 
+   * <p>
+   * When the liquid holdup is changed (e.g., by LiquidAccumulationTracker), the oil and water
+   * holdups must be updated to maintain their relative proportions within the liquid phase.
+   * </p>
+   *
+   * @param liquidHoldup the new total liquid holdup
+   */
+  @Override
+  public void setLiquidHoldup(double liquidHoldup) {
+    double oldLiquidHoldup = getLiquidHoldup();
+    super.setLiquidHoldup(liquidHoldup);
+
+    // Update oil and water holdups proportionally
+    if (oldLiquidHoldup > 1e-10 && liquidHoldup > 1e-10) {
+      double scaleFactor = liquidHoldup / oldLiquidHoldup;
+      oilHoldup = oilHoldup * scaleFactor;
+      waterHoldup = waterHoldup * scaleFactor;
+
+      // Ensure they don't exceed the new liquid holdup
+      double totalLiqHoldup = oilHoldup + waterHoldup;
+      if (totalLiqHoldup > liquidHoldup + 1e-10) {
+        double norm = liquidHoldup / totalLiqHoldup;
+        oilHoldup *= norm;
+        waterHoldup *= norm;
+      }
+    } else if (liquidHoldup > 1e-10) {
+      // Old holdup was near zero - use water cut to distribute
+      oilHoldup = liquidHoldup * (1.0 - waterCut);
+      waterHoldup = liquidHoldup * waterCut;
+    } else {
+      // New holdup is near zero
+      oilHoldup = 0;
+      waterHoldup = 0;
+    }
   }
 
   public double getWaterMassPerLength() {

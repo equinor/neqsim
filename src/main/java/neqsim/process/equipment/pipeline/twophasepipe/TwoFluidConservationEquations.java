@@ -135,16 +135,37 @@ public class TwoFluidConservationEquations implements Serializable {
     // First pass: update flow regimes, geometry, and closure relations
     updateClosureRelations(sections);
 
-    // Calculate fluxes at each interface
+    // Calculate fluxes at each interface (nCells-1 interfaces between cells)
     double[][] fluxes = calcInterfaceFluxes(sections, dx);
 
     // Calculate source terms for each cell
     double[][] sources = calcSourceTerms(sections);
 
     // Assemble RHS: dU/dt = -1/dx * (F_{i+1/2} - F_{i-1/2}) + S
+    //
+    // Boundary treatment:
+    // - For inlet cell (i=0): Use inlet flux from cell 0 state (inlet stream sets this state)
+    // The inlet boundary condition will maintain the proper state, so we use the cell's own flux
+    // - For outlet cell (i=nCells-1): Use transmissive outlet with extrapolated flux
     for (int i = 0; i < nCells; i++) {
-      double[] fluxLeft = (i > 0) ? fluxes[i - 1] : fluxes[0];
-      double[] fluxRight = (i < nCells - 1) ? fluxes[i] : fluxes[nCells - 2];
+      double[] fluxLeft, fluxRight;
+
+      if (i == 0) {
+        // Inlet cell: Inlet BC maintains the state, so inlet flux = outlet flux from cell 0
+        // This creates a "quasi-steady" inlet where what enters = what leaves for the cell
+        // The mass is replenished by the boundary condition after each step
+        fluxLeft = calcInletFlux(sections[0]);
+        fluxRight = fluxes[0];
+      } else if (i == nCells - 1) {
+        // Outlet cell: left flux from last interface, right flux uses extrapolation
+        // For transmissive outlet, we compute the outgoing flux from the outlet cell state
+        fluxLeft = fluxes[nCells - 2];
+        fluxRight = calcOutletFlux(sections[nCells - 1]);
+      } else {
+        // Interior cells: use interface fluxes normally
+        fluxLeft = fluxes[i - 1];
+        fluxRight = fluxes[i];
+      }
 
       for (int j = 0; j < NUM_EQUATIONS; j++) {
         dUdt[i][j] = -1.0 / dx * (fluxRight[j] - fluxLeft[j]) + sources[i][j];
@@ -152,6 +173,113 @@ public class TwoFluidConservationEquations implements Serializable {
     }
 
     return dUdt;
+  }
+
+  /**
+   * Calculate inlet flux using the inlet cell state. This represents mass entering the domain from
+   * the inlet stream. Uses holdups directly (set by steady state or BC) rather than computing from
+   * mass per length to avoid feedback from cell depletion.
+   */
+  private double[] calcInletFlux(TwoFluidSection sec) {
+    double[] flux = new double[NUM_EQUATIONS];
+    double A = sec.getArea();
+
+    // Gas flux (positive velocity means flow INTO domain)
+    // Use the stored gas holdup directly, not derived from mass
+    double rhoG = sec.getGasDensity();
+    if (rhoG < 0.1)
+      rhoG = 1.0; // Default gas density
+    double vG = sec.getGasVelocity();
+    double alphaG = sec.getGasHoldup();
+    alphaG = Math.max(0.001, Math.min(0.999, alphaG));
+    flux[IDX_GAS_MASS] = alphaG * rhoG * vG * A;
+    flux[IDX_GAS_MOMENTUM] = alphaG * rhoG * vG * vG * A + alphaG * sec.getPressure() * A;
+
+    // Oil flux - use holdup directly for inlet BC stability
+    double rhoO = sec.getOilDensity();
+    if (rhoO < 100)
+      rhoO = 700.0; // Default oil density
+    double vO = sec.getOilVelocity();
+    double alphaO = sec.getOilHoldup();
+    // If oil holdup is zero but we have liquid, estimate from liquid holdup
+    if (alphaO < 1e-10 && sec.getLiquidHoldup() > 0.01) {
+      alphaO = sec.getLiquidHoldup() * sec.getOilFractionInLiquid();
+    }
+    alphaO = Math.max(0, Math.min(1 - alphaG, alphaO));
+    flux[IDX_OIL_MASS] = alphaO * rhoO * vO * A;
+    flux[IDX_OIL_MOMENTUM] = alphaO * rhoO * vO * vO * A + alphaO * sec.getPressure() * A;
+
+    // Water flux - use holdup directly for inlet BC stability
+    double rhoW = sec.getWaterDensity();
+    if (rhoW < 100)
+      rhoW = 1000.0; // Default water density
+    double vW = sec.getWaterVelocity();
+    double alphaW = sec.getWaterHoldup();
+    // If water holdup is zero but we have liquid, estimate from liquid holdup
+    if (alphaW < 1e-10 && sec.getLiquidHoldup() > 0.01) {
+      alphaW = sec.getLiquidHoldup() * sec.getWaterCut();
+    }
+    alphaW = Math.max(0, Math.min(1 - alphaG - alphaO, alphaW));
+    flux[IDX_WATER_MASS] = alphaW * rhoW * vW * A;
+    flux[IDX_WATER_MOMENTUM] = alphaW * rhoW * vW * vW * A + alphaW * sec.getPressure() * A;
+
+    // Energy flux
+    if (includeEnergyEquation) {
+      double HG = sec.getGasEnthalpy();
+      double HL = sec.getLiquidEnthalpy();
+      flux[IDX_ENERGY] =
+          (alphaG * rhoG * vG * HG + (alphaO * rhoO * vO + alphaW * rhoW * vW) * HL) * A;
+    }
+
+    return flux;
+  }
+
+  /**
+   * Calculate outlet flux using upwind scheme (transmissive boundary).
+   */
+  private double[] calcOutletFlux(TwoFluidSection sec) {
+    double[] flux = new double[NUM_EQUATIONS];
+    double A = sec.getArea();
+
+    // Gas flux (positive velocity means outflow) - use default density if not set
+    double rhoG = sec.getGasDensity();
+    if (rhoG < 0.1)
+      rhoG = 1.0; // Default gas density
+    double vG = Math.max(0, sec.getGasVelocity()); // Only outflow
+    double alphaG = sec.getGasMassPerLength() / (rhoG * A);
+    alphaG = Math.max(0, Math.min(1, alphaG));
+    flux[IDX_GAS_MASS] = alphaG * rhoG * vG * A;
+    flux[IDX_GAS_MOMENTUM] = alphaG * rhoG * vG * vG * A + alphaG * sec.getPressure() * A;
+
+    // Oil flux - use default density if not set
+    double rhoO = sec.getOilDensity();
+    if (rhoO < 100)
+      rhoO = 700.0; // Default oil density
+    double vO = Math.max(0, sec.getOilVelocity());
+    double alphaO = sec.getOilMassPerLength() / (rhoO * A);
+    alphaO = Math.max(0, Math.min(alphaG > 0.99 ? 0 : 1, alphaO));
+    flux[IDX_OIL_MASS] = alphaO * rhoO * vO * A;
+    flux[IDX_OIL_MOMENTUM] = alphaO * rhoO * vO * vO * A + alphaO * sec.getPressure() * A;
+
+    // Water flux - use default density if not set
+    double rhoW = sec.getWaterDensity();
+    if (rhoW < 100)
+      rhoW = 1000.0; // Default water density
+    double vW = Math.max(0, sec.getWaterVelocity());
+    double alphaW = sec.getWaterMassPerLength() / (rhoW * A);
+    alphaW = Math.max(0, Math.min(1 - alphaG - alphaO, alphaW));
+    flux[IDX_WATER_MASS] = alphaW * rhoW * vW * A;
+    flux[IDX_WATER_MOMENTUM] = alphaW * rhoW * vW * vW * A + alphaW * sec.getPressure() * A;
+
+    // Energy flux
+    if (includeEnergyEquation) {
+      double HG = sec.getGasEnthalpy();
+      double HL = sec.getLiquidEnthalpy();
+      flux[IDX_ENERGY] =
+          (alphaG * rhoG * vG * HG + (alphaO * rhoO * vO + alphaW * rhoW * vW) * HL) * A;
+    }
+
+    return flux;
   }
 
   /**
@@ -215,28 +343,60 @@ public class TwoFluidConservationEquations implements Serializable {
       PhaseState gasL = createGasState(left);
       PhaseState gasR = createGasState(right);
 
-      // Create separate oil and water states for slip modeling
-      PhaseState oilL = createOilState(left);
-      PhaseState oilR = createOilState(right);
-      PhaseState waterL = createWaterState(left);
-      PhaseState waterR = createWaterState(right);
-
-      // Calculate phase fluxes separately for gas, oil, and water
+      // Calculate gas flux using AUSM+
       PhaseFlux gasFlux = fluxCalculator.calcPhaseFlux(gasL, gasR, A);
-      PhaseFlux oilFlux = fluxCalculator.calcPhaseFlux(oilL, oilR, A);
-      PhaseFlux waterFlux = fluxCalculator.calcPhaseFlux(waterL, waterR, A);
-
-      // Assemble interface flux vector - separate oil and water
       fluxes[i][IDX_GAS_MASS] = gasFlux.massFlux;
-      fluxes[i][IDX_OIL_MASS] = oilFlux.massFlux;
-      fluxes[i][IDX_WATER_MASS] = waterFlux.massFlux;
-
       fluxes[i][IDX_GAS_MOMENTUM] = gasFlux.momentumFlux;
-      fluxes[i][IDX_OIL_MOMENTUM] = oilFlux.momentumFlux;
-      fluxes[i][IDX_WATER_MOMENTUM] = waterFlux.momentumFlux;
+
+      // For oil and water, use coupled approach to prevent oscillations.
+      // Calculate combined liquid flux first, then split by upwind water cut.
+      // This ensures oil and water move together proportionally.
+      PhaseState liqL = createLiquidState(left);
+      PhaseState liqR = createLiquidState(right);
+      PhaseFlux liqFlux = fluxCalculator.calcPhaseFlux(liqL, liqR, A);
+
+      // Determine upwind direction for liquid
+      double cHalf = 0.5 * (liqL.soundSpeed + liqR.soundSpeed);
+      double Mhalf = liqL.velocity / cHalf + liqR.velocity / cHalf;
+      boolean upwindIsLeft = (Mhalf >= 0) || (liqL.velocity >= 0 && liqR.velocity >= 0);
+
+      // Get upwind water cut and densities for flux splitting
+      double upwindWaterCut, upwindOilFrac;
+      double rhoO, rhoW, vO, vW;
+      if (upwindIsLeft) {
+        upwindWaterCut = left.getWaterCut();
+        rhoO = left.getOilDensity() > 100 ? left.getOilDensity() : 700.0;
+        rhoW = left.getWaterDensity() > 100 ? left.getWaterDensity() : 1000.0;
+        vO = left.getOilVelocity();
+        vW = left.getWaterVelocity();
+      } else {
+        upwindWaterCut = right.getWaterCut();
+        rhoO = right.getOilDensity() > 100 ? right.getOilDensity() : 700.0;
+        rhoW = right.getWaterDensity() > 100 ? right.getWaterDensity() : 1000.0;
+        vO = right.getOilVelocity();
+        vW = right.getWaterVelocity();
+      }
+      upwindOilFrac = 1.0 - upwindWaterCut;
+
+      // Split liquid mass flux by water cut (volume-based)
+      // But account for density difference: m_oil/m_water = (1-wc)*rho_o / (wc*rho_w)
+      double totalLiqMassFlux = liqFlux.massFlux;
+      double oilMassFrac = upwindOilFrac * rhoO / (upwindOilFrac * rhoO + upwindWaterCut * rhoW);
+      double waterMassFrac = 1.0 - oilMassFrac;
+
+      fluxes[i][IDX_OIL_MASS] = totalLiqMassFlux * oilMassFrac;
+      fluxes[i][IDX_WATER_MASS] = totalLiqMassFlux * waterMassFrac;
+
+      // Split momentum flux similarly, but use individual velocities if available
+      double totalLiqMomFlux = liqFlux.momentumFlux;
+      // Approximate: momentum splits with mass but velocity may differ
+      fluxes[i][IDX_OIL_MOMENTUM] = fluxes[i][IDX_OIL_MASS] * vO
+          + upwindOilFrac * (totalLiqMomFlux - totalLiqMassFlux * liqL.velocity);
+      fluxes[i][IDX_WATER_MOMENTUM] = fluxes[i][IDX_WATER_MASS] * vW
+          + upwindWaterCut * (totalLiqMomFlux - totalLiqMassFlux * liqL.velocity);
 
       if (includeEnergyEquation) {
-        fluxes[i][IDX_ENERGY] = gasFlux.energyFlux + oilFlux.energyFlux + waterFlux.energyFlux;
+        fluxes[i][IDX_ENERGY] = gasFlux.energyFlux + liqFlux.energyFlux;
       }
     }
 
@@ -326,19 +486,72 @@ public class TwoFluidConservationEquations implements Serializable {
       sources[i][IDX_GAS_MASS] = Gamma_G;
 
       // Oil and water mass sources (no phase change between oil/water for now)
-      // Gravity-driven segregation source term for water accumulation
+      // Gravity-driven segregation source term for water accumulation in low points
+      //
+      // Physical basis: Water (denser) tends to accumulate in valleys while oil
+      // (lighter) accumulates at peaks. The settling rate depends on:
+      // - Density difference (buoyancy driving force)
+      // - Pipe inclination (gravity component)
+      // - Liquid holdup (more liquid = more stratification potential)
+      // - Residence time (slower flow = more settling)
+      //
+      // We use a relaxation approach rather than direct advection to maintain stability.
       double waterSegregationSource = 0;
-      if (rhoW > rhoO && rhoO > 0 && alphaL > 0.01 && sinTheta != 0) {
-        // Water settles in valleys (negative inclination after positive)
-        // This is a simplified model for water stratification within the liquid phase
-        double densityRatio = (rhoW - rhoO) / rhoO;
-        waterSegregationSource = 0.01 * densityRatio * alphaW * A * Math.abs(sinTheta);
-        if (sinTheta < 0) {
-          waterSegregationSource = -waterSegregationSource; // Water accumulates going downhill
+      double oilSegregationSource = 0;
+
+      if (rhoW > rhoO && rhoO > 100 && alphaL > 0.05 && alphaW > 1e-6 && alphaO > 1e-6) {
+        // Settling velocity based on Stokes law for droplets
+        double deltaRho = rhoW - rhoO;
+        double muL_eff = sec.getLiquidViscosity();
+        if (muL_eff < 1e-6)
+          muL_eff = 1e-3; // Default viscosity
+        double dropletDiameter = 0.002; // 2 mm typical droplet
+        double stokesVelocity =
+            deltaRho * GRAVITY * dropletDiameter * dropletDiameter / (18.0 * muL_eff);
+        stokesVelocity = Math.min(stokesVelocity, 0.1); // Cap at 10 cm/s
+
+        // Settling is enhanced in inclined sections
+        // In downhill (sinTheta < 0): water moves forward faster (settles ahead)
+        // In uphill (sinTheta > 0): water slips back (accumulates)
+        double inclinationEffect = Math.abs(sinTheta);
+
+        // Detect valleys (low points) by checking if we're at a local minimum
+        // Valley = previous section going down, next section going up
+        boolean isValley = false;
+        boolean isPeak = false;
+        if (i > 0 && i < nCells - 1) {
+          double elevPrev = sections[i - 1].getElevation();
+          double elevCurr = sec.getElevation();
+          double elevNext = sections[i + 1].getElevation();
+          isValley = (elevPrev > elevCurr) && (elevNext > elevCurr);
+          isPeak = (elevPrev < elevCurr) && (elevNext < elevCurr);
+        }
+
+        // Base settling rate (kg/m/s) - proportional to density difference and gravity
+        double baseRate = 0.0001 * deltaRho * GRAVITY * A;
+
+        if (isValley) {
+          // In valleys: water accumulates, increase local water cut
+          // Rate limited by available oil and existing water content
+          double maxWaterIncrease = alphaO * rhoO * A * 0.001; // Max 0.1% per time unit
+          waterSegregationSource =
+              Math.min(baseRate * (1.0 + 5.0 * inclinationEffect), maxWaterIncrease);
+          oilSegregationSource = -waterSegregationSource * rhoO / rhoW; // Mass balance
+        } else if (isPeak) {
+          // At peaks: water drains faster, decrease local water cut
+          double maxWaterDecrease = alphaW * rhoW * A * 0.001; // Max 0.1% per time unit
+          waterSegregationSource =
+              -Math.min(baseRate * (1.0 + 3.0 * inclinationEffect), maxWaterDecrease);
+          oilSegregationSource = -waterSegregationSource * rhoO / rhoW;
+        } else if (sinTheta > 0.01) {
+          // Uphill sections: water slips back slightly
+          double slipRate = baseRate * 0.3 * sinTheta;
+          waterSegregationSource = Math.min(slipRate, alphaO * rhoO * A * 0.0005);
+          oilSegregationSource = -waterSegregationSource * rhoO / rhoW;
         }
       }
 
-      sources[i][IDX_OIL_MASS] = Gamma_L * (1.0 - waterCut);
+      sources[i][IDX_OIL_MASS] = Gamma_L * (1.0 - waterCut) + oilSegregationSource;
       sources[i][IDX_WATER_MASS] = Gamma_L * waterCut + waterSegregationSource;
 
       sources[i][IDX_GAS_MOMENTUM] = F_wG + F_iG + F_gG + Gamma_G * sec.getGasVelocity();
@@ -401,7 +614,8 @@ public class TwoFluidConservationEquations implements Serializable {
   }
 
   /**
-   * Create gas phase state for flux calculation.
+   * Create gas phase state for flux calculation. Uses true holdup from mass per length for
+   * mass-consistent flux.
    */
   private PhaseState createGasState(TwoFluidSection sec) {
     PhaseState state = new PhaseState();
@@ -410,12 +624,20 @@ public class TwoFluidConservationEquations implements Serializable {
     state.pressure = sec.getPressure();
     state.soundSpeed = sec.getGasSoundSpeed();
     state.enthalpy = sec.getGasEnthalpy();
-    state.holdup = sec.getGasHoldup();
+    // Use true holdup from conservative variables for mass-consistent flux
+    double A = sec.getArea();
+    double rhoG = state.density;
+    if (A > 0 && rhoG > 0.1) {
+      state.holdup = sec.getGasMassPerLength() / (rhoG * A);
+    } else {
+      state.holdup = sec.getGasHoldup();
+    }
     return state;
   }
 
   /**
-   * Create liquid phase state for flux calculation.
+   * Create liquid phase state for flux calculation. Uses true holdup from mass per length for
+   * mass-consistent flux.
    */
   private PhaseState createLiquidState(TwoFluidSection sec) {
     PhaseState state = new PhaseState();
@@ -424,37 +646,70 @@ public class TwoFluidConservationEquations implements Serializable {
     state.pressure = sec.getPressure();
     state.soundSpeed = sec.getLiquidSoundSpeed();
     state.enthalpy = sec.getLiquidEnthalpy();
-    state.holdup = sec.getLiquidHoldup();
+    // Use true holdup from conservative variables for mass-consistent flux
+    double A = sec.getArea();
+    double rhoL = state.density;
+    if (A > 0 && rhoL > 100) {
+      state.holdup = sec.getLiquidMassPerLength() / (rhoL * A);
+    } else {
+      state.holdup = sec.getLiquidHoldup();
+    }
     return state;
   }
 
   /**
-   * Create oil phase state for flux calculation in three-phase flow.
+   * Create oil phase state for flux calculation in three-phase flow. Uses true holdup from mass per
+   * length for mass-consistent flux.
    */
   private PhaseState createOilState(TwoFluidSection sec) {
     PhaseState state = new PhaseState();
-    state.density = sec.getOilDensity();
+    // Use default density if not properly set
+    double rhoO = sec.getOilDensity();
+    if (rhoO < 100) {
+      rhoO = 700.0; // Default oil density
+    }
+    state.density = rhoO;
     state.velocity = sec.getOilVelocity();
     state.pressure = sec.getPressure();
     // Use liquid sound speed for oil (simplified)
     state.soundSpeed = sec.getLiquidSoundSpeed();
     state.enthalpy = sec.getLiquidEnthalpy() * sec.getOilFractionInLiquid();
-    state.holdup = sec.getOilHoldup();
+    // Use true holdup from conservative variables for mass-consistent flux
+    double A = sec.getArea();
+    if (A > 0) {
+      state.holdup = sec.getOilMassPerLength() / (rhoO * A);
+      state.holdup = Math.max(0, Math.min(1, state.holdup));
+    } else {
+      state.holdup = sec.getOilHoldup();
+    }
     return state;
   }
 
   /**
-   * Create water phase state for flux calculation in three-phase flow.
+   * Create water phase state for flux calculation in three-phase flow. Uses true holdup from mass
+   * per length for mass-consistent flux.
    */
   private PhaseState createWaterState(TwoFluidSection sec) {
     PhaseState state = new PhaseState();
-    state.density = sec.getWaterDensity();
+    // Use default density if not properly set
+    double rhoW = sec.getWaterDensity();
+    if (rhoW < 100) {
+      rhoW = 1000.0; // Default water density
+    }
+    state.density = rhoW;
     state.velocity = sec.getWaterVelocity();
     state.pressure = sec.getPressure();
     // Use liquid sound speed for water (simplified)
     state.soundSpeed = sec.getLiquidSoundSpeed();
     state.enthalpy = sec.getLiquidEnthalpy() * sec.getWaterCut();
-    state.holdup = sec.getWaterHoldup();
+    // Use true holdup from conservative variables for mass-consistent flux
+    double A = sec.getArea();
+    if (A > 0) {
+      state.holdup = sec.getWaterMassPerLength() / (rhoW * A);
+      state.holdup = Math.max(0, Math.min(1, state.holdup));
+    } else {
+      state.holdup = sec.getWaterHoldup();
+    }
     return state;
   }
 
@@ -578,8 +833,12 @@ public class TwoFluidConservationEquations implements Serializable {
     double[][] U = new double[nCells][NUM_EQUATIONS];
 
     for (int i = 0; i < nCells; i++) {
-      sections[i].updateConservativeVariables();
-      sections[i].updateWaterOilConservativeVariables();
+      // DO NOT call updateConservativeVariables() here!
+      // The conservative variables should already be correct from:
+      // - Steady-state initialization (which calls updateConservativeVariables at the end)
+      // - Previous transient step (which applies state via applyState -> setStateVector)
+      // Calling updateConservativeVariables here would recalculate mass from current holdups,
+      // which can corrupt mass conservation if holdups were modified by normalization.
       U[i] = sections[i].getStateVector();
     }
 

@@ -271,6 +271,16 @@ public class TwoFluidPipe extends Pipeline {
   /** Enable slug tracking. */
   private boolean enableSlugTracking = true;
 
+  /** Outlet slug statistics. */
+  private int outletSlugCount = 0;
+  private double totalSlugVolumeAtOutlet = 0;
+  private double lastSlugArrivalTime = 0;
+  private double maxSlugLengthAtOutlet = 0;
+  private double maxSlugVolumeAtOutlet = 0;
+
+  /** Track which slugs have already been counted at outlet (by slug ID). */
+  private java.util.Set<Integer> countedOutletSlugs = new java.util.HashSet<>();
+
   /** Update thermodynamics every N steps. */
   private int thermodynamicUpdateInterval = 10;
 
@@ -331,6 +341,14 @@ public class TwoFluidPipe extends Pipeline {
     slugTracker = new SlugTracker();
 
     timeIntegrator.setCflNumber(cflNumber);
+
+    // Reset outlet slug statistics
+    outletSlugCount = 0;
+    totalSlugVolumeAtOutlet = 0;
+    lastSlugArrivalTime = 0;
+    maxSlugLengthAtOutlet = 0;
+    maxSlugVolumeAtOutlet = 0;
+    countedOutletSlugs.clear();
   }
 
   /**
@@ -433,8 +451,28 @@ public class TwoFluidPipe extends Pipeline {
             + inletWaterCut * inletFluid.getPhase("aqueous").getEnthalpy("J/kg"));
 
         if (inletFluid.hasPhaseType("gas")) {
-          sigma = inletFluid.getInterphaseProperties()
-              .getSurfaceTension(inletFluid.getPhaseIndex("gas"), inletFluid.getPhaseIndex("oil"));
+          // Initialize interfacial properties before getting surface tension
+          inletFluid.getInterphaseProperties().init(inletFluid);
+          try {
+            double sigmaCalc = inletFluid.getInterphaseProperties().getSurfaceTension(
+                inletFluid.getPhaseIndex("gas"), inletFluid.getPhaseIndex("oil"));
+            // Only use calculated value if it's reasonable (> 1e-6 N/m)
+            if (sigmaCalc > 1e-6) {
+              sigma = sigmaCalc;
+            } else {
+              // Default gas-oil IFT: ~20 mN/m (typical hydrocarbon system)
+              sigma = 0.020;
+              logger.warn(
+                  "Interfacial tension calculation returned invalid value ({} N/m). Using default gas-oil IFT: {} N/m",
+                  sigmaCalc, sigma);
+            }
+          } catch (Exception e) {
+            // Default gas-oil IFT: ~20 mN/m
+            sigma = 0.020;
+            logger.warn(
+                "Interfacial tension calculation failed. Using default gas-oil IFT: {} N/m. Error: {}",
+                sigma, e.getMessage());
+          }
         }
 
         logger.info("Three-phase flow detected: water cut = {:.1f}%, oil fraction = {:.1f}%",
@@ -448,8 +486,29 @@ public class TwoFluidPipe extends Pipeline {
         cL = inletFluid.getPhase(liqPhase).getSoundSpeed();
         hL = inletFluid.getPhase(liqPhase).getEnthalpy("J/kg");
         if (inletFluid.hasPhaseType("gas")) {
-          sigma = inletFluid.getInterphaseProperties().getSurfaceTension(
-              inletFluid.getPhaseIndex("gas"), inletFluid.getPhaseIndex(liqPhase));
+          // Initialize interfacial properties before getting surface tension
+          inletFluid.getInterphaseProperties().init(inletFluid);
+          try {
+            double sigmaCalc = inletFluid.getInterphaseProperties().getSurfaceTension(
+                inletFluid.getPhaseIndex("gas"), inletFluid.getPhaseIndex(liqPhase));
+            // Only use calculated value if it's reasonable (> 1e-6 N/m)
+            if (sigmaCalc > 1e-6) {
+              sigma = sigmaCalc;
+            } else {
+              // Use appropriate default based on liquid type
+              // Gas-water: ~72 mN/m, Gas-oil: ~20 mN/m
+              sigma = "aqueous".equals(liqPhase) ? 0.072 : 0.020;
+              logger.warn(
+                  "Interfacial tension calculation returned invalid value ({} N/m). Using default gas-{} IFT: {} N/m",
+                  sigmaCalc, liqPhase, sigma);
+            }
+          } catch (Exception e) {
+            // Use appropriate default based on liquid type
+            sigma = "aqueous".equals(liqPhase) ? 0.072 : 0.020;
+            logger.warn(
+                "Interfacial tension calculation failed. Using default gas-{} IFT: {} N/m. Error: {}",
+                liqPhase, sigma, e.getMessage());
+          }
         }
       }
 
@@ -623,8 +682,17 @@ public class TwoFluidPipe extends Pipeline {
         }
 
         // Update water and oil holdups for three-phase flow
-        if (sec.getWaterDensity() > 0 && sec.getOilDensity() > 0 && sec.getWaterCut() > 0) {
-          updateWaterOilHoldups(sec, prev, alphaL_new, area);
+        // Check if this is a three-phase system (both oil and water densities set)
+        if (sec.getWaterDensity() > 0 && sec.getOilDensity() > 0) {
+          // Always update water/oil holdups when we have liquid and three-phase properties
+          if (alphaL_new > 0.001) {
+            updateWaterOilHoldups(sec, prev, alphaL_new, area);
+          } else {
+            // No liquid: set water and oil holdups to zero
+            sec.setWaterHoldup(0);
+            sec.setOilHoldup(0);
+            sec.setWaterCut(prev != null ? prev.getWaterCut() : sec.getWaterCut());
+          }
         }
 
         // Update derived quantities
@@ -865,7 +933,12 @@ public class TwoFluidPipe extends Pipeline {
       T_fluid += dTfluid_dt * dt;
 
       // Ensure physical bounds
-      T_fluid = Math.max(T_fluid, 100.0); // Never below 100K
+      // The fluid temperature cannot go below ambient due to heat exchange alone
+      // J-T cooling is separate but in real systems is limited
+      // For subsea pipelines, the minimum temperature is the seabed temperature
+      // unless there's very rapid expansion (which is not the case in steady pipeline flow)
+      T_fluid = Math.max(T_fluid, T_ambient);
+      T_fluid = Math.max(T_fluid, 100.0); // Absolute minimum: 100K
       sec.setTemperature(T_fluid);
 
       // Check hydrate/wax risk
@@ -1083,64 +1156,23 @@ public class TwoFluidPipe extends Pipeline {
     double rhoOil = sec.getOilDensity();
     double rhoWater = sec.getWaterDensity();
     double muOil = sec.getOilViscosity();
-    double muWater = sec.getWaterViscosity();
     double g = 9.81;
+    double inclination = sec.getInclination();
+    double sinTheta = Math.sin(inclination);
+    double deltaRho = rhoWater - rhoOil; // Positive: water is heavier
 
     // Get previous water cut for continuity
     double prevWaterCut = (prev != null) ? prev.getWaterCut() : sec.getWaterCut();
-    double inclination = sec.getInclination();
-    double sinTheta = Math.sin(inclination);
 
-    // Base water cut from previous section (advected with liquid)
+    // Simplified model: water cut is advected from upstream without terrain-induced settling.
+    // This assumes water and oil are well-mixed within the liquid phase.
+    // A more sophisticated model would track water/oil separation dynamics explicitly,
+    // but the terrain factor approach causes numerical instabilities.
     double waterCut = prevWaterCut;
 
-    // Density difference drives water settling
-    double deltaRho = rhoWater - rhoOil; // Positive: water is heavier
-
-    if (deltaRho > 0 && alphaL > 0.01) {
-      // Stokes settling velocity for water droplets in oil (or vice versa)
-      // Simplified model: settling depends on local holdup and inclination
-      double dropletDiameter = 0.001; // 1 mm typical droplet size
-      double stokesVelocity = deltaRho * g * dropletDiameter * dropletDiameter / (18 * muOil);
-
-      // Terrain effect on water accumulation
-      // Negative inclination (downhill) + transition to uphill = valley = water accumulates
-      double terrainFactor = 1.0;
-
-      if (prev != null) {
-        double prevInclination = prev.getInclination();
-        double inclinationChange = inclination - prevInclination;
-
-        // Valley detection: transition from downhill to uphill
-        if (inclinationChange > 0.005 && prevInclination < -0.005) {
-          // Strong valley effect for water - water accumulates more than oil
-          terrainFactor = 1.0 + 0.3 * Math.min(inclinationChange, 0.3);
-        }
-
-        // Peak detection: transition from uphill to downhill
-        if (inclinationChange < -0.005 && prevInclination > 0.005) {
-          // Water drains from peaks faster than oil
-          terrainFactor = 1.0 - 0.2 * Math.min(Math.abs(inclinationChange), 0.3);
-        }
-      }
-
-      // In uphill sections, water tends to slip back more than oil
-      if (sinTheta > 0.01) {
-        // Uphill: water accumulates (higher water cut)
-        double upfactor = 1.0 + 0.1 * sinTheta * (stokesVelocity / sec.getLiquidVelocity());
-        terrainFactor *= Math.min(upfactor, 1.5);
-      } else if (sinTheta < -0.01) {
-        // Downhill: water flows faster (lower local water cut as it drains ahead)
-        double downFactor = 1.0 - 0.05 * Math.abs(sinTheta);
-        terrainFactor *= Math.max(downFactor, 0.7);
-      }
-
-      // Apply terrain factor to water cut
-      waterCut = prevWaterCut * terrainFactor;
-    }
-
     // Clamp water cut to valid range
-    waterCut = Math.max(0, Math.min(1, waterCut));
+    waterCut = Math.max(0.001, Math.min(0.999, waterCut)); // Keep small margin to avoid numerical
+                                                           // issues
 
     // Calculate water and oil holdups from water cut and total liquid holdup
     double alphaW = alphaL * waterCut;
@@ -1281,9 +1313,29 @@ public class TwoFluidPipe extends Pipeline {
       // 7. Validate section states and fix any issues
       validateSectionStates();
 
-      // 8. Update accumulation tracking
+      // 8. Update accumulation tracking and slug tracking
       if (enableSlugTracking) {
         accumulationTracker.updateAccumulation(sections, dtActual);
+
+        // Check for terrain-induced slug initiation from accumulation zones
+        for (LiquidAccumulationTracker.AccumulationZone zone : accumulationTracker
+            .getAccumulationZones()) {
+          LiquidAccumulationTracker.SlugCharacteristics slugChar =
+              accumulationTracker.checkForSlugRelease(zone, sections);
+          if (slugChar != null) {
+            slugTracker.initializeTerrainSlug(slugChar, sections);
+          }
+        }
+
+        // Set reference velocity for slug propagation (from inlet)
+        double inletMixtureVelocity = sections[0].getMixtureVelocity();
+        slugTracker.setReferenceVelocity(inletMixtureVelocity);
+
+        // Advance existing slugs through the pipeline
+        slugTracker.advanceSlugs(sections, dtActual);
+
+        // Track slugs arriving at outlet
+        trackOutletSlugs();
       }
 
       // 9. Update temperature profile if heat transfer is enabled
@@ -1320,14 +1372,19 @@ public class TwoFluidPipe extends Pipeline {
         }
       }
 
-      // Ensure mass variables are non-negative
+      // Ensure mass variables are non-negative (indices 0, 1, 2 for gas, oil, water)
       U_new[i][0] = Math.max(0, U_new[i][0]); // Gas mass
-      U_new[i][1] = Math.max(0, U_new[i][1]); // Liquid mass
+      U_new[i][1] = Math.max(0, U_new[i][1]); // Oil mass
+      if (U_new[i].length > 2) {
+        U_new[i][2] = Math.max(0, U_new[i][2]); // Water mass
+      }
 
       // Limit extreme rate of change to prevent blow-up (50% per sub-step max)
       // This is a safety limit, not for physics - allows transient dynamics
       double maxChangeRatio = 0.5;
-      for (int j = 0; j < 2; j++) { // Only for mass variables
+      // Apply to all mass variables: gas (0), oil (1), water (2)
+      int numMassVars = Math.min(3, U_new[i].length);
+      for (int j = 0; j < numMassVars; j++) {
         if (U_prev[i][j] > 1e-10) {
           double ratio = U_new[i][j] / U_prev[i][j];
           if (ratio > 1 + maxChangeRatio) {
@@ -1349,22 +1406,67 @@ public class TwoFluidPipe extends Pipeline {
     double refTemperature = getInletStream().getFluid().getTemperature("K");
 
     for (TwoFluidSection sec : sections) {
-      // Ensure holdups are valid
+      // Ensure holdups are valid (non-NaN, non-negative)
       double alphaL = sec.getLiquidHoldup();
       double alphaG = sec.getGasHoldup();
+      double alphaO = sec.getOilHoldup();
+      double alphaW = sec.getWaterHoldup();
 
-      if (Double.isNaN(alphaL) || alphaL < 0 || alphaL > 1) {
-        alphaL = 0.3; // Default holdup
+      // Fix NaN or negative values
+      boolean needsRecalc = false;
+      if (Double.isNaN(alphaL) || alphaL < 0) {
+        needsRecalc = true;
       }
-      if (Double.isNaN(alphaG) || alphaG < 0 || alphaG > 1) {
+      if (Double.isNaN(alphaG) || alphaG < 0) {
+        needsRecalc = true;
+      }
+      if (Double.isNaN(alphaO) || alphaO < 0) {
+        alphaO = 0;
+        sec.setOilHoldup(0);
+      }
+      if (Double.isNaN(alphaW) || alphaW < 0) {
+        alphaW = 0;
+        sec.setWaterHoldup(0);
+      }
+
+      // If liquid or gas holdup is invalid, recalculate from oil+water
+      if (needsRecalc) {
+        alphaO = sec.getOilHoldup();
+        alphaW = sec.getWaterHoldup();
+        alphaL = alphaO + alphaW;
         alphaG = 1.0 - alphaL;
+
+        // Clamp to valid range
+        alphaL = Math.max(0, Math.min(1, alphaL));
+        alphaG = Math.max(0, Math.min(1, alphaG));
+
+        sec.setLiquidHoldup(alphaL);
+        sec.setGasHoldup(alphaG);
       }
 
-      // Normalize
-      double total = alphaL + alphaG;
-      if (total > 0) {
-        sec.setLiquidHoldup(alphaL / total);
-        sec.setGasHoldup(alphaG / total);
+      // Ensure consistency: liquidHoldup should equal oilHoldup + waterHoldup
+      // If they don't match, trust the oil+water values (from conservative variables)
+      double sumOilWater = sec.getOilHoldup() + sec.getWaterHoldup();
+      double diff = Math.abs(sec.getLiquidHoldup() - sumOilWater);
+      if (diff > 0.01) {
+        // Determine which source to trust
+        if (sumOilWater > 0.001) {
+          // We have oil and/or water holdups - use them as the liquid holdup
+          double newLiqHL = sumOilWater;
+          double newGasHL = Math.max(0, Math.min(1, 1.0 - newLiqHL));
+          sec.setLiquidHoldup(newLiqHL);
+          sec.setGasHoldup(newGasHL);
+        } else if (sec.getLiquidHoldup() > 0.001) {
+          // We have liquid holdup but no oil/water - distribute based on water cut
+          double waterCut = sec.getWaterCut();
+          if (waterCut <= 0 || waterCut >= 1) {
+            waterCut = 0.5; // Default to 50/50 if no valid water cut
+          }
+          double newAlphaW = sec.getLiquidHoldup() * waterCut;
+          double newAlphaO = sec.getLiquidHoldup() * (1.0 - waterCut);
+          sec.setWaterHoldup(newAlphaW);
+          sec.setOilHoldup(newAlphaO);
+        }
       }
 
       // Ensure pressure is positive
@@ -1435,6 +1537,12 @@ public class TwoFluidPipe extends Pipeline {
           double waterCut = volLiquid > 0 ? volWater / volLiquid : 0;
           double oilFraction = 1.0 - waterCut;
 
+          // Update individual phase properties for three-phase tracking
+          sec.setOilDensity(rhoOil);
+          sec.setWaterDensity(rhoWater);
+          sec.setOilViscosity(muOil);
+          sec.setWaterViscosity(muWater);
+
           // Volume-weighted density
           sec.setLiquidDensity(oilFraction * rhoOil + waterCut * rhoWater);
 
@@ -1451,12 +1559,18 @@ public class TwoFluidPipe extends Pipeline {
               + waterCut * flash.getPhase("aqueous").getEnthalpy("J/kg"));
 
         } else if (hasOil) {
-          sec.setLiquidDensity(flash.getPhase("oil").getDensity("kg/m3"));
+          double rhoOil = flash.getPhase("oil").getDensity("kg/m3");
+          sec.setLiquidDensity(rhoOil);
+          sec.setOilDensity(rhoOil);
+          sec.setOilViscosity(flash.getPhase("oil").getViscosity("kg/msec"));
           sec.setLiquidViscosity(flash.getPhase("oil").getViscosity("kg/msec"));
           sec.setLiquidSoundSpeed(flash.getPhase("oil").getSoundSpeed());
           sec.setLiquidEnthalpy(flash.getPhase("oil").getEnthalpy("J/kg"));
         } else if (hasWater) {
-          sec.setLiquidDensity(flash.getPhase("aqueous").getDensity("kg/m3"));
+          double rhoWater = flash.getPhase("aqueous").getDensity("kg/m3");
+          sec.setLiquidDensity(rhoWater);
+          sec.setWaterDensity(rhoWater);
+          sec.setWaterViscosity(flash.getPhase("aqueous").getViscosity("kg/msec"));
           sec.setLiquidViscosity(flash.getPhase("aqueous").getViscosity("kg/msec"));
           sec.setLiquidSoundSpeed(flash.getPhase("aqueous").getSoundSpeed());
           sec.setLiquidEnthalpy(flash.getPhase("aqueous").getEnthalpy("J/kg"));
@@ -1474,52 +1588,130 @@ public class TwoFluidPipe extends Pipeline {
     // Inlet boundary
     TwoFluidSection inlet = sections[0];
     if (inletBCType == BoundaryCondition.STREAM_CONNECTED) {
-      // Use inlet stream properties - maintain pressure, temperature, and flow
+      // Use inlet stream properties - maintain pressure, temperature
       SystemInterface inFluid = getInletStream().getFluid();
       inlet.setPressure(inFluid.getPressure("Pa"));
       inlet.setTemperature(inFluid.getTemperature("K"));
 
-      // Also maintain inlet holdups and velocities from the stream
-      // This ensures constant mass flow at the inlet
+      // Calculate target mass flow rates from inlet stream
       double massFlow = getInletStream().getFlowRate("kg/sec");
       double area = Math.PI * diameter * diameter / 4.0;
 
-      // Get phase fractions from inlet stream
+      // Get phase mass fractions from inlet stream (these define the BC)
+      double gasMassFraction = 0.5;
+      double oilMassFraction = 0.3;
+      double waterMassFraction = 0.2;
+
       int numPhases = inFluid.getNumberOfPhases();
-      double alphaG = 0.5;
-      double alphaL = 0.5;
+      if (numPhases >= 2) {
+        double massTotal = inFluid.getFlowRate("kg/sec");
+        if (massTotal > 0) {
+          if (inFluid.hasPhaseType("gas")) {
+            gasMassFraction = inFluid.getPhase("gas").getFlowRate("kg/sec") / massTotal;
+          }
+          if (inFluid.hasPhaseType("oil")) {
+            oilMassFraction = inFluid.getPhase("oil").getFlowRate("kg/sec") / massTotal;
+          } else {
+            oilMassFraction = 0;
+          }
+          if (inFluid.hasPhaseType("aqueous")) {
+            waterMassFraction = inFluid.getPhase("aqueous").getFlowRate("kg/sec") / massTotal;
+          } else {
+            waterMassFraction = 0;
+          }
+        }
+      }
+
+      double mDotGas = massFlow * gasMassFraction;
+      double mDotOil = massFlow * oilMassFraction;
+      double mDotWater = massFlow * waterMassFraction;
+      double mDotLiq = mDotOil + mDotWater;
+
+      // Update densities from flash for accurate velocity calculation
       double rhoG = inlet.getGasDensity();
-      double rhoL = inlet.getLiquidDensity();
+      double rhoOil = inlet.getOilDensity() > 100 ? inlet.getOilDensity() : 700.0;
+      double rhoWater = inlet.getWaterDensity() > 100 ? inlet.getWaterDensity() : 1000.0;
 
-      if (numPhases >= 2 && inFluid.hasPhaseType("gas")) {
-        double volGas = inFluid.getPhase("gas").getVolume("m3");
-        double volTotal = inFluid.getVolume("m3");
-        if (volTotal > 0) {
-          alphaG = volGas / volTotal;
-          alphaL = 1.0 - alphaG;
-        }
+      if (inFluid.hasPhaseType("gas")) {
         rhoG = inFluid.getPhase("gas").getDensity("kg/m3");
-        if (inFluid.hasPhaseType("oil")) {
-          rhoL = inFluid.getPhase("oil").getDensity("kg/m3");
+        inlet.setGasDensity(rhoG);
+      }
+      if (inFluid.hasPhaseType("oil")) {
+        rhoOil = inFluid.getPhase("oil").getDensity("kg/m3");
+        inlet.setOilDensity(rhoOil);
+        inlet.setLiquidDensity(rhoOil);
+      }
+      if (inFluid.hasPhaseType("aqueous")) {
+        rhoWater = inFluid.getPhase("aqueous").getDensity("kg/m3");
+        inlet.setWaterDensity(rhoWater);
+      }
+
+      // Get current inlet holdups (from solver state)
+      double alphaG = inlet.getGasHoldup();
+      double alphaL = inlet.getLiquidHoldup();
+
+      // Calculate velocities to maintain inlet mass flow rates
+      // mDot = alpha * rho * v * A => v = mDot / (alpha * rho * A)
+      double vG = 10.0; // Default gas velocity
+      double vL = 2.0; // Default liquid velocity
+      double vOil = vL;
+      double vWater = vL;
+
+      if (alphaG > 0.001 && rhoG > 0.1 && area > 0) {
+        vG = mDotGas / (alphaG * rhoG * area);
+        vG = Math.min(vG, 100.0); // Limit to reasonable velocity
+      }
+      if (alphaL > 0.001 && area > 0) {
+        double rhoL = inlet.getLiquidDensity() > 100 ? inlet.getLiquidDensity() : 700.0;
+        vL = mDotLiq / (alphaL * rhoL * area);
+        vL = Math.min(vL, 50.0); // Limit to reasonable velocity
+        vOil = vL;
+        vWater = vL;
+      }
+
+      inlet.setGasVelocity(vG);
+      inlet.setLiquidVelocity(vL);
+      inlet.setOilVelocity(vOil);
+      inlet.setWaterVelocity(vWater);
+
+      // CRITICAL: Enforce inlet water cut from inlet stream
+      // The inlet section should have the water cut defined by the inlet stream,
+      // not whatever the solver computed. This is a Dirichlet BC for water cut.
+      double inletWaterCut = 0.01; // Default
+      if (mDotLiq > 0) {
+        // Calculate water cut from volume fractions
+        if (inFluid.hasPhaseType("oil") && inFluid.hasPhaseType("aqueous")) {
+          double volOil = inFluid.getPhase("oil").getVolume("m3");
+          double volWater = inFluid.getPhase("aqueous").getVolume("m3");
+          if (volOil + volWater > 0) {
+            inletWaterCut = volWater / (volOil + volWater);
+          }
         } else if (inFluid.hasPhaseType("aqueous")) {
-          rhoL = inFluid.getPhase("aqueous").getDensity("kg/m3");
+          inletWaterCut = 1.0;
+        } else {
+          inletWaterCut = 0.0;
         }
       }
 
-      // Set inlet holdups
-      inlet.setGasHoldup(alphaG);
-      inlet.setLiquidHoldup(alphaL);
+      // Apply inlet water cut to redistribute oil and water holdups
+      double alphaW_target = alphaL * inletWaterCut;
+      double alphaO_target = alphaL * (1.0 - inletWaterCut);
+      inlet.setWaterCut(inletWaterCut);
+      inlet.setOilFractionInLiquid(1.0 - inletWaterCut);
+      inlet.setWaterHoldup(alphaW_target);
+      inlet.setOilHoldup(alphaO_target);
 
-      // Calculate velocities to maintain inlet mass flow
-      double rhoMix = alphaG * rhoG + alphaL * rhoL;
-      if (rhoMix > 0 && area > 0) {
-        double vMix = massFlow / (rhoMix * area);
-        inlet.setGasVelocity(vMix);
-        inlet.setLiquidVelocity(vMix);
-      }
+      // Update mass per length to be consistent with holdups
+      inlet.setWaterMassPerLength(alphaW_target * rhoWater * area);
+      inlet.setOilMassPerLength(alphaO_target * rhoOil * area);
 
-      // Update conservative variables for inlet
-      inlet.updateConservativeVariables();
+      // Update momentum to be consistent with velocities
+      // Note: We do NOT reset the mass per length here - that would violate mass conservation
+      // The solver evolves the mass, we only set velocities for flux calculation
+      inlet.setGasMomentumPerLength(inlet.getGasMassPerLength() * inlet.getGasVelocity());
+      inlet.setOilMomentumPerLength(inlet.getOilMassPerLength() * inlet.getOilVelocity());
+      inlet.setWaterMomentumPerLength(inlet.getWaterMassPerLength() * inlet.getWaterVelocity());
+      inlet.setLiquidMomentumPerLength(inlet.getLiquidMassPerLength() * inlet.getLiquidVelocity());
     }
 
     // Outlet boundary
@@ -1598,15 +1790,49 @@ public class TwoFluidPipe extends Pipeline {
 
   /**
    * Get total liquid inventory in the pipe.
+   * 
+   * <p>
+   * Calculates inventory from conservative mass per length, converted to volume using local liquid
+   * density. This ensures consistency with the solver's mass tracking.
+   * </p>
    *
    * @param unit Volume unit ("m3", "bbl", "L")
    * @return Liquid volume
    */
   public double getLiquidInventory(String unit) {
     double volume = 0;
+    double pipeVolume = Math.PI * diameter * diameter / 4.0 * length; // Max possible volume
+
     for (TwoFluidSection sec : sections) {
-      volume += sec.getLiquidHoldup() * sec.getArea() * sec.getLength();
+      // Calculate oil volume from oil mass and oil density
+      double oilMass = sec.getOilMassPerLength() * sec.getLength();
+      // Safety check for unreasonable mass values
+      double maxMassPerSection = sec.getArea() * sec.getLength() * 1000.0; // Max: all water
+      oilMass = Math.min(oilMass, maxMassPerSection);
+
+      double rhoO = sec.getOilDensity();
+      if (rhoO > 100) {
+        volume += oilMass / rhoO;
+      } else if (sec.getLiquidDensity() > 100) {
+        volume += oilMass / sec.getLiquidDensity();
+      } else {
+        volume += oilMass / 700.0; // Default oil density
+      }
+
+      // Calculate water volume from water mass and water density
+      double waterMass = sec.getWaterMassPerLength() * sec.getLength();
+      waterMass = Math.min(waterMass, maxMassPerSection);
+
+      double rhoW = sec.getWaterDensity();
+      if (rhoW > 100) {
+        volume += waterMass / rhoW;
+      } else {
+        volume += waterMass / 1000.0; // Default water density
+      }
     }
+
+    // Sanity check: volume cannot exceed pipe volume
+    volume = Math.min(volume, pipeVolume);
 
     switch (unit.toLowerCase()) {
       case "bbl":
@@ -1639,10 +1865,31 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Get liquid holdup profile.
    *
+   * <p>
+   * For consistency with oil and water holdups, the liquid holdup is calculated as the sum of oil
+   * and water holdups.
+   * </p>
+   *
    * @return Holdup at each section (0-1)
    */
   public double[] getLiquidHoldupProfile() {
-    return liquidHoldupProfile != null ? liquidHoldupProfile.clone() : new double[0];
+    if (sections == null) {
+      return liquidHoldupProfile != null ? liquidHoldupProfile.clone() : new double[0];
+    }
+    // Return consistent values: liquidHoldup = oilHoldup + waterHoldup
+    double[] profile = new double[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      double oilHL = sections[i].getOilHoldup();
+      double waterHL = sections[i].getWaterHoldup();
+      double sumOilWater = oilHL + waterHL;
+      // Use sum if it's reasonable, otherwise use stored liquid holdup
+      if (sumOilWater > 0.001) {
+        profile[i] = sumOilWater;
+      } else {
+        profile[i] = sections[i].getLiquidHoldup();
+      }
+    }
+    return profile;
   }
 
   /**
@@ -1835,6 +2082,109 @@ public class TwoFluidPipe extends Pipeline {
     return slugTracker;
   }
 
+  /**
+   * Track slugs arriving at outlet and collect statistics. Each slug is only counted once when it
+   * first reaches the outlet region.
+   */
+  private void trackOutletSlugs() {
+    if (slugTracker == null || sections == null || sections.length == 0) {
+      return;
+    }
+
+    double pipeLength = length;
+    double outletThreshold = pipeLength - sections[sections.length - 1].getLength() * 2;
+
+    for (SlugTracker.SlugUnit slug : slugTracker.getSlugs()) {
+      // Skip if already counted this slug
+      if (countedOutletSlugs.contains(slug.id)) {
+        continue;
+      }
+
+      // Check if slug front has reached outlet
+      if (slug.frontPosition >= outletThreshold) {
+        // This slug is arriving at outlet for the first time - record statistics
+        if (slug.age > 0 && slug.slugBodyLength > 0) {
+          outletSlugCount++;
+          countedOutletSlugs.add(slug.id);
+          if (!Double.isNaN(slug.liquidVolume)) {
+            totalSlugVolumeAtOutlet += slug.liquidVolume;
+            maxSlugVolumeAtOutlet = Math.max(maxSlugVolumeAtOutlet, slug.liquidVolume);
+          }
+          lastSlugArrivalTime = simulationTime;
+          maxSlugLengthAtOutlet = Math.max(maxSlugLengthAtOutlet, slug.slugBodyLength);
+        }
+      }
+    }
+  }
+
+  /**
+   * Get number of slugs that have arrived at outlet.
+   *
+   * @return Outlet slug count
+   */
+  public int getOutletSlugCount() {
+    return outletSlugCount;
+  }
+
+  /**
+   * Get total liquid volume delivered by slugs at outlet.
+   *
+   * @return Total slug volume (m³)
+   */
+  public double getTotalSlugVolumeAtOutlet() {
+    return totalSlugVolumeAtOutlet;
+  }
+
+  /**
+   * Get time of last slug arrival at outlet.
+   *
+   * @return Time (s)
+   */
+  public double getLastSlugArrivalTime() {
+    return lastSlugArrivalTime;
+  }
+
+  /**
+   * Get maximum slug length observed at outlet.
+   *
+   * @return Max length (m)
+   */
+  public double getMaxSlugLengthAtOutlet() {
+    return maxSlugLengthAtOutlet;
+  }
+
+  /**
+   * Get maximum slug volume observed at outlet.
+   *
+   * @return Max volume (m³)
+   */
+  public double getMaxSlugVolumeAtOutlet() {
+    return maxSlugVolumeAtOutlet;
+  }
+
+  /**
+   * Get slug statistics summary string.
+   *
+   * @return Statistics summary
+   */
+  public String getSlugStatisticsSummary() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Slug Statistics ===\n");
+    sb.append(String.format("Active slugs in pipe: %d\n", slugTracker.getSlugCount()));
+    sb.append(String.format("Slugs generated: %d\n", slugTracker.getTotalSlugsGenerated()));
+    sb.append(String.format("Slugs merged: %d\n", slugTracker.getTotalSlugsMerged()));
+    sb.append(String.format("Slugs at outlet: %d\n", outletSlugCount));
+    sb.append(String.format("Total slug volume at outlet: %.2f m³\n", totalSlugVolumeAtOutlet));
+    sb.append(String.format("Max slug length at outlet: %.1f m\n", maxSlugLengthAtOutlet));
+    sb.append(String.format("Max slug volume at outlet: %.3f m³\n", maxSlugVolumeAtOutlet));
+    if (outletSlugCount > 0 && simulationTime > 0) {
+      double avgFrequency = outletSlugCount / simulationTime;
+      sb.append(String.format("Average slug frequency: %.4f Hz (%.1f min between slugs)\n",
+          avgFrequency, avgFrequency > 0 ? 1.0 / (avgFrequency * 60) : 0));
+    }
+    return sb.toString();
+  }
+
   // ============ Configuration methods ============
 
   /**
@@ -1963,6 +2313,24 @@ public class TwoFluidPipe extends Pipeline {
     if (timeIntegrator != null) {
       timeIntegrator.setCflNumber(cflNumber);
     }
+  }
+
+  /**
+   * Set maximum simulation time for transient calculations.
+   *
+   * @param time Maximum simulation time in seconds
+   */
+  public void setMaxSimulationTime(double time) {
+    this.maxSimulationTime = Math.max(1.0, time);
+  }
+
+  /**
+   * Get maximum simulation time.
+   *
+   * @return Maximum simulation time in seconds
+   */
+  public double getMaxSimulationTime() {
+    return maxSimulationTime;
   }
 
   /**

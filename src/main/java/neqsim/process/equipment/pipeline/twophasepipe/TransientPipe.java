@@ -1,6 +1,8 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.pipeline.PipeLineInterface;
@@ -131,6 +133,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public class TransientPipe extends TwoPortEquipment implements PipeLineInterface {
 
   private static final long serialVersionUID = 1L;
+  private static final Logger logger = LogManager.getLogger(TransientPipe.class);
   private static final double GRAVITY = 9.81;
 
   // Geometry
@@ -440,9 +443,23 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       U_SL = 0;
     }
 
-    sigma = fluid.getInterphaseProperties().getSurfaceTension(0, 1) * 1e-3; // mN/m to N/m
+    // Initialize interface properties before getting surface tension
+    // Determine liquid type for appropriate default IFT
+    boolean hasWater = fluid.hasPhaseType("aqueous");
+    boolean hasOil = fluid.hasPhaseType("oil");
+    // Default IFT values: gas-water ~72 mN/m, gas-oil ~20 mN/m
+    double defaultSigma = hasWater && !hasOil ? 0.072 : 0.020;
+    try {
+      fluid.getInterphaseProperties().init(fluid);
+      sigma = fluid.getInterphaseProperties().getSurfaceTension(0, 1) * 1e-3; // mN/m to N/m
+    } catch (Exception e) {
+      sigma = 0; // Will be set to default below
+    }
     if (sigma <= 0) {
-      sigma = 0.02; // Default surface tension
+      sigma = defaultSigma;
+      logger.warn(
+          "Interfacial tension calculation returned invalid value. Using default IFT: {} N/m ({})",
+          sigma, hasWater && !hasOil ? "gas-water" : "gas-oil");
     }
 
     // Calculate outlet pressure from hydrostatic and friction
@@ -820,20 +837,28 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    */
   private double calculateTimeStep() {
     double maxWaveSpeed = 0;
+    int nanCount = 0;
 
     for (PipeSection section : sections) {
       // Wave speeds: sound speed and characteristic velocities
       double c_mix = section.getWallisSoundSpeed();
       double v_gas = section.getGasVelocity();
       double v_liq = section.getLiquidVelocity();
+      double pressure = section.getPressure();
 
-      // Handle NaN velocities
-      if (Double.isNaN(v_gas)) {
-        v_gas = 0;
+      // Handle NaN velocities and detect unstable state
+      if (Double.isNaN(v_gas) || Double.isNaN(v_liq) || Double.isNaN(pressure)
+          || Double.isNaN(c_mix)) {
+        nanCount++;
+        continue; // Skip this section for wave speed calculation
       }
-      if (Double.isNaN(v_liq)) {
-        v_liq = 0;
-      }
+
+      // Limit velocities to physically reasonable range
+      v_gas = Math.max(-500, Math.min(500, v_gas));
+      v_liq = Math.max(-100, Math.min(100, v_liq));
+
+      // Ensure sound speed is reasonable (at least 10 m/s, at most 1000 m/s)
+      c_mix = Math.max(10, Math.min(1000, c_mix));
 
       // Full eigenvalue structure: |u + c| and |u - c| for both phases
       // This captures both forward and backward propagating acoustic waves
@@ -844,6 +869,11 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       if (!Double.isNaN(maxLocal) && !Double.isInfinite(maxLocal)) {
         maxWaveSpeed = Math.max(maxWaveSpeed, maxLocal);
       }
+    }
+
+    // If too many sections have NaN, reduce time step significantly
+    if (nanCount > numberOfSections / 4) {
+      return minTimeStep; // Use minimum time step when unstable
     }
 
     // Fallback if all wave speeds are invalid
@@ -1423,11 +1453,18 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     double rho_m = section.getMixtureDensity();
     double theta = section.getInclination();
 
+    // Sanity check for density
+    if (Double.isNaN(rho_m) || rho_m <= 0) {
+      rho_m = 100.0; // Default fallback (gas-dominated mixture)
+    }
+
     // Gravity source term for momentum equation: S_g = -ρ_m · g · sin(θ)
     // Units: kg/m³ × m/s² = kg/(m²·s²) = N/m³
     // Multiply by dt to get change in momentum: kg/(m²·s²) × s = kg/(m²·s)
     double S_gravity = -rho_m * GRAVITY * Math.sin(theta);
-    U[2] += S_gravity * dt;
+    if (!Double.isNaN(S_gravity)) {
+      U[2] += S_gravity * dt;
+    }
 
     // Friction source term: use only friction component (not gravity which is already added above)
     // Use effective properties for friction if in slug to be consistent with pressure profile
@@ -1444,6 +1481,14 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     double dP_total = driftFluxModel.calculatePressureGradient(frictionSection, params);
     double dP_grav = frictionSection.getGravityPressureGradient();
     double dP_friction = dP_total - dP_grav;
+
+    // Limit friction contribution to prevent runaway
+    double maxFriction = 1000.0; // Pa/m max friction gradient
+    if (Double.isNaN(dP_friction)) {
+      dP_friction = 0;
+    } else {
+      dP_friction = Math.max(-maxFriction, Math.min(maxFriction, dP_friction));
+    }
 
     // Friction decelerates the flow - add the negative pressure gradient
     U[2] += dP_friction * dt;
@@ -1479,16 +1524,39 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     double rho_G = section.getGasDensity();
     double rho_L = section.getLiquidDensity();
 
+    // Sanity check for densities - use fallback if invalid
+    if (Double.isNaN(rho_G) || rho_G <= 0) {
+      rho_G = oldSection.getGasDensity();
+    }
+    if (Double.isNaN(rho_L) || rho_L <= 0) {
+      rho_L = oldSection.getLiquidDensity();
+    }
+
     // Calculate holdups
     double alpha_G = massConc_G / rho_G;
     double alpha_L = massConc_L / rho_L;
 
-    // Normalize
+    // Normalize and enforce strict bounds [0.001, 0.999] to prevent single-phase collapse
     double total = alpha_G + alpha_L;
-    if (total > 0) {
+    if (total > 0 && !Double.isNaN(total)) {
       alpha_G /= total;
       alpha_L /= total;
+    } else {
+      // Fallback to old values if calculation failed
+      alpha_G = oldSection.getGasHoldup();
+      alpha_L = oldSection.getLiquidHoldup();
     }
+
+    // Enforce holdup bounds with relaxation toward old values for stability
+    final double minHoldup = 0.0001;
+    final double maxHoldup = 0.9999;
+    alpha_G = Math.max(minHoldup, Math.min(maxHoldup, alpha_G));
+    alpha_L = Math.max(minHoldup, Math.min(maxHoldup, alpha_L));
+
+    // Re-normalize after bounds enforcement
+    total = alpha_G + alpha_L;
+    alpha_G /= total;
+    alpha_L /= total;
 
     section.setGasHoldup(alpha_G);
     section.setLiquidHoldup(alpha_L);
@@ -1496,6 +1564,13 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     // Mixture velocity from momentum
     double rho_m = massConc_G + massConc_L;
     double u_m = momentum / Math.max(rho_m, 1e-10);
+
+    // Limit mixture velocity to physically reasonable range
+    final double maxVelocity = 200.0; // m/s - supersonic would be unrealistic
+    if (Double.isNaN(u_m) || Math.abs(u_m) > maxVelocity) {
+      u_m = oldSection.getMixtureVelocity(); // Fallback to old velocity
+    }
+    u_m = Math.max(-maxVelocity, Math.min(maxVelocity, u_m));
 
     // For single-phase flow, assign all velocity to the present phase
     // For two-phase, use drift-flux to split velocities
@@ -1524,6 +1599,14 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       double C0 = params.C0;
       double v_d = params.driftVelocity;
 
+      // Sanity check on drift-flux parameters
+      if (Double.isNaN(C0) || C0 < 0.9 || C0 > 1.5) {
+        C0 = 1.0; // Default to no-slip
+      }
+      if (Double.isNaN(v_d) || Math.abs(v_d) > 10.0) {
+        v_d = 0.0; // Default to no drift
+      }
+
       // Derived solution for v_G
       // v_G = (v_d + C0 * rho_m * u_m / rho_L) / (1 - C0 * alpha_G + C0 * rho_G * alpha_G / rho_L)
       double numerator = v_d + C0 * rho_m * u_m / rho_L;
@@ -1542,6 +1625,15 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       if (alpha_L > 1e-10) {
         v_L = (rho_m * u_m - rho_G * alpha_G * v_G) / (rho_L * alpha_L);
       } else {
+        v_L = u_m;
+      }
+
+      // Limit phase velocities to physically reasonable range
+      final double maxPhaseVelocity = 300.0; // m/s
+      if (Double.isNaN(v_G) || Math.abs(v_G) > maxPhaseVelocity) {
+        v_G = u_m;
+      }
+      if (Double.isNaN(v_L) || Math.abs(v_L) > maxPhaseVelocity) {
         v_L = u_m;
       }
 
@@ -1581,18 +1673,32 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       double rho_m_new = massConc_G + massConc_L;
       double c_mix = section.getWallisSoundSpeed();
 
+      // Sanity check for sound speed - use reasonable bounds
+      if (Double.isNaN(c_mix) || c_mix < 10 || c_mix > 1000) {
+        c_mix = 200.0; // Default to typical mixture sound speed
+      }
+
       // Acoustic pressure-density relation: dp = c² × dρ
       double dRho = rho_m_new - rho_m_old;
+
+      // Limit density change to avoid spurious pressure oscillations
+      double maxDensityChange = 0.05 * rho_m_old; // Max 5% density change per step
+      dRho = Math.max(-maxDensityChange, Math.min(maxDensityChange, dRho));
+
       double dP_acoustic = c_mix * c_mix * dRho;
 
       // Limit pressure change per time step for stability (relaxation)
-      double maxDeltaP = 0.1 * oldSection.getPressure(); // Max 10% change per step
+      double oldPressure = oldSection.getPressure();
+      if (Double.isNaN(oldPressure) || oldPressure <= 0) {
+        oldPressure = 1e6; // Default to 10 bar if invalid
+      }
+      double maxDeltaP = 0.05 * oldPressure; // Max 5% change per step (reduced from 10%)
       dP_acoustic = Math.max(-maxDeltaP, Math.min(maxDeltaP, dP_acoustic));
 
-      double newPressure = oldSection.getPressure() + dP_acoustic;
+      double newPressure = oldPressure + dP_acoustic;
 
-      // Physical bounds (prevent negative pressure)
-      newPressure = Math.max(1e4, newPressure); // Minimum 0.1 bar
+      // Physical bounds (prevent negative or extreme pressure)
+      newPressure = Math.max(1e5, Math.min(5e7, newPressure)); // 1 bar to 500 bar
 
       section.setPressure(newPressure);
     } else {
@@ -1712,7 +1818,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       return;
     }
 
-    for (PipeSection section : sections) {
+    for (int i = 0; i < sections.length; i++) {
+      PipeSection section = sections[i];
       try {
         SystemInterface fluid = referenceFluid.clone();
         fluid.setPressure(section.getPressure() / 1e5); // Pa to bar
@@ -1773,7 +1880,21 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
           }
         }
 
-        section.setSurfaceTension(fluid.getInterphaseProperties().getSurfaceTension(0, 1) * 1e-3);
+        // Initialize interface properties before getting surface tension
+        fluid.getInterphaseProperties().init(fluid);
+        double sigmaCalc = fluid.getInterphaseProperties().getSurfaceTension(0, 1) * 1e-3;
+        if (sigmaCalc > 1e-6) {
+          section.setSurfaceTension(sigmaCalc);
+        } else {
+          // Use appropriate default based on liquid type
+          // Gas-water: ~72 mN/m, Gas-oil: ~20 mN/m
+          boolean isWaterOnly = fluid.hasPhaseType("aqueous") && !fluid.hasPhaseType("oil");
+          double defaultSigma = isWaterOnly ? 0.072 : 0.020;
+          section.setSurfaceTension(defaultSigma);
+          logger.warn(
+              "Interfacial tension calculation returned invalid value ({} N/m) in section {}. Using default: {} N/m",
+              sigmaCalc, i, defaultSigma);
+        }
 
         // Calculate mixture specific heat capacity (Cv)
         double totalMass = fluid.getTotalNumberOfMoles() * fluid.getMolarMass();

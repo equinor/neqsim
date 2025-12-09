@@ -401,6 +401,23 @@ public class FlowRegimeDetector implements Serializable {
   }
 
   /**
+   * Default interfacial tension for gas-oil systems [N/m]. Typical values: 0.015-0.030 N/m for
+   * hydrocarbon systems.
+   */
+  private static final double DEFAULT_GAS_OIL_IFT = 0.020;
+
+  /**
+   * Default interfacial tension for gas-water systems [N/m]. Typical value: ~0.072 N/m at 25°C.
+   */
+  private static final double DEFAULT_GAS_WATER_IFT = 0.072;
+
+  /**
+   * Default interfacial tension for oil-water systems [N/m]. Typical values: 0.020-0.050 N/m
+   * depending on oil type.
+   */
+  private static final double DEFAULT_OIL_WATER_IFT = 0.030;
+
+  /**
    * Check if flow is in dispersed bubble regime.
    *
    * @param U_SL superficial liquid velocity [m/s]
@@ -416,11 +433,14 @@ public class FlowRegimeDetector implements Serializable {
 
     double U_M = U_SL + U_SG;
 
+    // Use default surface tension if not available (assume gas-oil for typical multiphase)
+    double sigmaEffective = sigma < 1e-6 ? DEFAULT_GAS_OIL_IFT : sigma;
+
     // Weber number criterion - turbulence breaks up bubbles
-    double We = rho_L * U_M * U_M * D / sigma;
+    double We = rho_L * U_M * U_M * D / sigmaEffective;
 
     // Critical velocity for bubble dispersion (Taitel et al.)
-    double d_crit = 2.0 * Math.sqrt(sigma / (GRAVITY * (rho_L - rho_G)));
+    double d_crit = 2.0 * Math.sqrt(sigmaEffective / (GRAVITY * (rho_L - rho_G)));
     double U_crit = 0.725 + 4.15 * Math.sqrt(U_SG);
 
     return U_M > U_crit && We > 20 && U_SG / U_M < 0.52;
@@ -428,6 +448,19 @@ public class FlowRegimeDetector implements Serializable {
 
   /**
    * Check if flow is in annular regime.
+   *
+   * <p>
+   * Uses Taitel-Dukler (1976) criterion for annular flow transition. The critical gas velocity is
+   * based on the balance between aerodynamic lift and gravity forces on the liquid film.
+   * </p>
+   *
+   * @param U_SL superficial liquid velocity [m/s]
+   * @param U_SG superficial gas velocity [m/s]
+   * @param D pipe diameter [m]
+   * @param rho_L liquid density [kg/m³]
+   * @param rho_G gas density [kg/m³]
+   * @param sigma surface tension [N/m]
+   * @return true if flow is in annular regime
    */
   private boolean isAnnularFlow(double U_SL, double U_SG, double D, double rho_L, double rho_G,
       double sigma) {
@@ -438,7 +471,15 @@ public class FlowRegimeDetector implements Serializable {
       return false;
     }
 
-    double U_SG_crit = 3.1 * Math.pow(sigma * GRAVITY * deltaRho / (rho_G * rho_G), 0.25);
+    // If surface tension is not available or very small, use a default value
+    // Typical gas-oil IFT is 0.015-0.030 N/m, gas-water is ~0.072 N/m
+    double sigmaEffective = sigma;
+    if (sigmaEffective < 1e-6) {
+      // Use typical gas-oil surface tension as default
+      sigmaEffective = DEFAULT_GAS_OIL_IFT;
+    }
+
+    double U_SG_crit = 3.1 * Math.pow(sigmaEffective * GRAVITY * deltaRho / (rho_G * rho_G), 0.25);
 
     return U_SG > U_SG_crit;
   }

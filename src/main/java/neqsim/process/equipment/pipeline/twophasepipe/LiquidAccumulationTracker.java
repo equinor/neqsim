@@ -228,9 +228,11 @@ public class LiquidAccumulationTracker implements Serializable {
 
     // Also calculate actual liquid volume in zone sections based on current holdup
     double actualLiquidInZone = 0;
+    double maxHoldupInZone = 0;
     for (int idx : zone.sectionIndices) {
       PipeSection section = sections[idx];
       actualLiquidInZone += section.getLiquidHoldup() * section.getArea() * section.getLength();
+      maxHoldupInZone = Math.max(maxHoldupInZone, section.getLiquidHoldup());
     }
 
     // Use the maximum of tracked accumulation and actual liquid in sections
@@ -238,9 +240,14 @@ public class LiquidAccumulationTracker implements Serializable {
     zone.liquidVolume = Math.max(zone.liquidVolume, actualLiquidInZone * 0.8);
 
     // Check for overflow/slug-out based on liquid content
-    // Zone overflows when holdup in the zone is high (>70% liquid)
-    double avgHoldupInZone = actualLiquidInZone / Math.max(zone.maxVolume, 1e-10);
-    zone.isOverflowing = zone.liquidVolume > 0.7 * zone.maxVolume || avgHoldupInZone > 0.7;
+    // Zone overflows when:
+    // 1. Zone volume exceeds 20% of max (lowered from 30% to trigger slugs earlier)
+    // 2. Rate of accumulation is positive and zone is significantly filled (>15%)
+    // Terrain-induced slugging occurs at lower fill levels due to wave dynamics
+    double fillFraction = zone.liquidVolume / Math.max(zone.maxVolume, 1e-10);
+    boolean volumeOverflow = fillFraction > 0.20; // Trigger at 20% full
+    boolean activeAccumulation = zone.netInflowRate > 0.001 && fillFraction > 0.15;
+    zone.isOverflowing = volumeOverflow || activeAccumulation;
 
     // Calculate liquid level
     double avgArea = zone.maxVolume / (zone.endPosition - zone.startPosition);
@@ -346,21 +353,26 @@ public class LiquidAccumulationTracker implements Serializable {
       return null;
     }
 
-    // Get downstream section to check if gas can push liquid out
+    // Get last section in zone
     int lastIdx = zone.sectionIndices.get(zone.sectionIndices.size() - 1);
-    if (lastIdx >= sections.length - 1) {
-      return null;
-    }
 
-    // BUG FIX: Don't release a new slug if the downstream section is still in a slug body
-    // This prevents immediate merging when a previous slug hasn't cleared the zone
-    PipeSection downstreamSection = sections[lastIdx + 1];
-    if (downstreamSection.isInSlugBody()) {
-      return null;
-    }
-
-    PipeSection downstream = sections[lastIdx + 1];
+    // For the last zone (near outlet), allow slug release if conditions are met
+    // even without a downstream section to check
     PipeSection zoneSection = sections[lastIdx];
+    boolean isLastZone = (lastIdx >= sections.length - 2);
+
+    if (!isLastZone) {
+      // Not the last zone - check downstream section
+      PipeSection downstreamSection = sections[lastIdx + 1];
+
+      // BUG FIX: Don't release a new slug if the downstream section is still in a slug body
+      // This prevents immediate merging when a previous slug hasn't cleared the zone
+      if (downstreamSection.isInSlugBody()) {
+        return null;
+      }
+    }
+
+    PipeSection downstream = isLastZone ? zoneSection : sections[lastIdx + 1];
 
     // Calculate driving pressure from gas compression behind liquid
     double gasPressure = zoneSection.getPressure();
@@ -368,16 +380,17 @@ public class LiquidAccumulationTracker implements Serializable {
     double pressureDiff = gasPressure - downstreamPressure;
 
     // Calculate hydrostatic resistance for uphill downstream section
-    double elevDiff = downstream.getElevation() - zoneSection.getElevation();
+    double elevDiff = isLastZone ? 0 : (downstream.getElevation() - zoneSection.getElevation());
     double hydrostaticHead = zoneSection.getLiquidDensity() * GRAVITY * Math.max(elevDiff, 0);
 
     // Slug releases when zone is overflowing AND one of:
     // 1. Pressure difference exceeds hydrostatic resistance
-    // 2. Downstream section is going downhill (elevDiff < 0)
+    // 2. Downstream section is going downhill (elevDiff < 0) or is last zone
     // 3. Mixture velocity is sufficient
     // 4. Zone is critically full (>85% capacity)
+    // 5. Peak holdup in zone exceeds 90% (definitely need to release)
     boolean pressureDriven = pressureDiff > hydrostaticHead * 0.3;
-    boolean downhillRelease = elevDiff < -0.5; // Downhill by >0.5m
+    boolean downhillRelease = elevDiff < -0.5 || isLastZone; // Last zone always releases
     boolean velocityDriven = downstream.getMixtureVelocity() > 0.3; // m/s
     boolean criticallyFull = zone.liquidVolume > 0.85 * zone.maxVolume;
 
