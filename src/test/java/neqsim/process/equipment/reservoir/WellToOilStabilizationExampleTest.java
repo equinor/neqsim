@@ -18,11 +18,20 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 public class WellToOilStabilizationExampleTest {
 
+  /** Helper method for Java 8 compatibility (String.repeat was added in Java 11). */
+  private static String repeat(String str, int count) {
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < count; i++) {
+      sb.append(str);
+    }
+    return sb.toString();
+  }
+
   @Test
   void testWellToOilStabilization() {
-    System.out.println("=".repeat(70));
+    System.out.println(repeat("=", 70));
     System.out.println("NeqSim Well-to-Oil-Stabilization Production System Example");
-    System.out.println("=".repeat(70));
+    System.out.println(repeat("=", 70));
 
     // =========================================================================
     // STEP 1: Define Reservoir Fluid
@@ -231,9 +240,9 @@ public class WellToOilStabilizationExampleTest {
     // =========================================================================
     // STEP 9: Results Summary
     // =========================================================================
-    System.out.println("\n" + "=".repeat(70));
+    System.out.println("\n" + repeat("=", 70));
     System.out.println("SIMULATION RESULTS");
-    System.out.println("=".repeat(70));
+    System.out.println(repeat("=", 70));
 
     // Wellhead (from WellSystem with IPR+VLP)
     System.out.println("\n--- WELLHEAD (IPR+VLP Solution) ---");
@@ -297,8 +306,8 @@ public class WellToOilStabilizationExampleTest {
         String.format("   Export Compressor:     %.0f kW", exportCompressor.getPower("kW")));
     System.out.println(String.format("   Total Power:           %.0f kW", totalPower));
 
-    System.out.println("\n" + "=".repeat(70));
+    System.out.println("\n" + repeat("=", 70));
     System.out.println("Simulation completed successfully!");
-    System.out.println("=".repeat(70));
+    System.out.println(repeat("=", 70));
   }
 }
