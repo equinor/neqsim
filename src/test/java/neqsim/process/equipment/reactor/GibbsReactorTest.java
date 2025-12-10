@@ -320,16 +320,13 @@ public class GibbsReactorTest {
 
     // Add N2O4 and NO2 - starting with pure N2O4
     system.addComponent("N2O4", 0.0);
-    system.addComponent("NO2", 1.0);
-    system.addComponent("N2O4", 0.0);
-    system.addComponent("oxygen", 0.0);
-    system.addComponent("NO", 0.0);
-    system.addComponent("N2O", 0.0);
+    system.addComponent("NO2", 1e6);
+
     system.setMixingRule(2);
 
     Stream inlet = new Stream("inlet", system);
     inlet.setPressure(1.01325, "bara");
-    inlet.setTemperature(318.15, "K");
+    inlet.setTemperature(403, "K");
     inlet.run();
 
     GibbsReactor reactor = new GibbsReactor("reactor", inlet);
@@ -351,8 +348,6 @@ public class GibbsReactorTest {
     double no2MoleFraction = outlet.getComponent("NO2").getz();
 
     // Calculate equilibrium constant K = (fug_NO2)^2 / (fug_N2O4)
-    outlet.init(0);
-    outlet.init(3);
 
     double fugNO2 = outlet.getPhase(0).getComponent("NO2").fugcoef(outlet.getPhase(0))
         * outlet.getPhase(0).getComponent("NO2").getz() * outlet.getPressure();
@@ -362,10 +357,11 @@ public class GibbsReactorTest {
     double K_equilibrium = (fugNO2 * fugNO2) / fugN2O4;
 
     System.out.println("Equilibrium Constant K = (fug_NO2)^2 / (fug_N2O4) = " + K_equilibrium);
-    System.out.println("Fugacity NO2: "
-        + outlet.getPhase(0).getComponent("NO2").fugcoef(outlet.getPhase(0)) + " bara");
-    System.out.println("Fugacity N2O4: "
-        + outlet.getPhase(0).getComponent("N2O4").fugcoef(outlet.getPhase(0)) + " bara");
+    System.out.println("Fugacity c NO2: "
+        + inlet.getFluid().getPhase(0).getComponent("NO2").getFugacityCoefficient());
+    System.out.println(
+        "Fugacity c N2O4: " + outlet.getPhase(0).getComponent("N2O4").getFugacityCoefficient());
+    // 38 is strange here
 
   }
 }
