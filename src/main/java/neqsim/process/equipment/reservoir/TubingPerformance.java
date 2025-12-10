@@ -16,13 +16,17 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * <p>
- * TubingPerformance class - Vertical Lift Performance (VLP) model for wellbore tubing.
+ * TubingPerformance class - Vertical Lift Performance (VLP) model for wellbore
+ * tubing.
  * </p>
  *
  * <p>
- * This class calculates the pressure drop through wellbore tubing using various multiphase flow
- * correlations. It can generate VLP curves (also known as Tubing Performance Curves or Outflow
- * Performance Relationships) for use in nodal analysis and reservoir simulation.
+ * This class calculates the pressure drop through wellbore tubing using various
+ * multiphase flow
+ * correlations. It can generate VLP curves (also known as Tubing Performance
+ * Curves or Outflow
+ * Performance Relationships) for use in nodal analysis and reservoir
+ * simulation.
  * </p>
  *
  * <h2>Supported Pressure-Drop Correlations</h2>
@@ -70,7 +74,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * tubing.setGeothermalGradient(0.03, "K/m");
  *
  * // Generate VLP curve
- * double[] flowRates = {1000, 2000, 3000, 5000, 7000, 10000}; // Sm3/day
+ * double[] flowRates = { 1000, 2000, 3000, 5000, 7000, 10000 }; // Sm3/day
  * double[][] vlpCurve = tubing.generateVLPCurve(flowRates, "Sm3/day", "bara");
  *
  * // vlpCurve[0] = flow rates
@@ -112,31 +116,36 @@ public class TubingPerformance extends TwoPortEquipment {
    */
   public enum PressureDropCorrelation {
     /**
-     * Beggs and Brill (1973) - General purpose correlation for all pipe inclinations. Recommended
+     * Beggs and Brill (1973) - General purpose correlation for all pipe
+     * inclinations. Recommended
      * for horizontal to vertical flow. Includes flow pattern correction.
      */
     BEGGS_BRILL,
 
     /**
-     * Hagedorn and Brown (1965) - Empirical correlation for vertical oil wells. Best for
+     * Hagedorn and Brown (1965) - Empirical correlation for vertical oil wells.
+     * Best for
      * liquid-dominated vertical flow.
      */
     HAGEDORN_BROWN,
 
     /**
-     * Gray (1974) - Correlation for gas wells with some liquid (condensate). Optimized for high GOR
+     * Gray (1974) - Correlation for gas wells with some liquid (condensate).
+     * Optimized for high GOR
      * wells.
      */
     GRAY,
 
     /**
-     * Hasan and Kabir (2002) - Mechanistic two-phase flow model. Physically-based model valid for
+     * Hasan and Kabir (2002) - Mechanistic two-phase flow model. Physically-based
+     * model valid for
      * all well types.
      */
     HASAN_KABIR,
 
     /**
-     * Duns and Ros (1963) - Early correlation for gas wells. Often used for gas lift optimization.
+     * Duns and Ros (1963) - Early correlation for gas wells. Often used for gas
+     * lift optimization.
      */
     DUNS_ROS
   }
@@ -146,26 +155,31 @@ public class TubingPerformance extends TwoPortEquipment {
    */
   public enum TemperatureModel {
     /**
-     * Isothermal - Constant temperature throughout tubing. Simplest assumption, use for quick
+     * Isothermal - Constant temperature throughout tubing. Simplest assumption, use
+     * for quick
      * calculations.
      */
     ISOTHERMAL,
 
     /**
-     * Linear gradient - Linear interpolation between BHP and WHP temperatures. Good approximation
+     * Linear gradient - Linear interpolation between BHP and WHP temperatures. Good
+     * approximation
      * for steady-state production.
      */
     LINEAR_GRADIENT,
 
     /**
-     * Ramey (1962) - Steady-state heat transfer with formation. Accounts for geothermal gradient,
-     * wellbore heat transfer coefficient, and time-dependent behavior. Most rigorous for production
+     * Ramey (1962) - Steady-state heat transfer with formation. Accounts for
+     * geothermal gradient,
+     * wellbore heat transfer coefficient, and time-dependent behavior. Most
+     * rigorous for production
      * wells.
      */
     RAMEY,
 
     /**
-     * Hasan-Kabir energy balance - Coupled flow and heat transfer. Includes Joule-Thomson effect
+     * Hasan-Kabir energy balance - Coupled flow and heat transfer. Includes
+     * Joule-Thomson effect
      * and friction heating.
      */
     HASAN_KABIR_ENERGY
@@ -222,7 +236,7 @@ public class TubingPerformance extends TwoPortEquipment {
   /**
    * Constructor for TubingPerformance with inlet stream.
    *
-   * @param name equipment name
+   * @param name        equipment name
    * @param inletStream inlet stream (typically from reservoir or WellFlow)
    */
   public TubingPerformance(String name, StreamInterface inletStream) {
@@ -234,7 +248,7 @@ public class TubingPerformance extends TwoPortEquipment {
    * Set tubing measured depth (along wellbore).
    *
    * @param length tubing length
-   * @param unit length unit ("m", "ft")
+   * @param unit   length unit ("m", "ft")
    */
   public void setTubingLength(double length, String unit) {
     if (unit.equalsIgnoreCase("ft")) {
@@ -248,7 +262,7 @@ public class TubingPerformance extends TwoPortEquipment {
    * Set tubing inner diameter.
    *
    * @param diameter inner diameter
-   * @param unit diameter unit ("m", "in", "mm")
+   * @param unit     diameter unit ("m", "in", "mm")
    */
   public void setTubingDiameter(double diameter, String unit) {
     switch (unit.toLowerCase()) {
@@ -267,7 +281,7 @@ public class TubingPerformance extends TwoPortEquipment {
    * Set pipe wall roughness.
    *
    * @param roughness wall roughness
-   * @param unit roughness unit ("m", "mm", "in")
+   * @param unit      roughness unit ("m", "mm", "in")
    */
   public void setWallRoughness(double roughness, String unit) {
     switch (unit.toLowerCase()) {
@@ -322,7 +336,7 @@ public class TubingPerformance extends TwoPortEquipment {
    * Set bottom-hole temperature (reservoir temperature).
    *
    * @param temperature bottom-hole temperature
-   * @param unit temperature unit ("K", "C", "F")
+   * @param unit        temperature unit ("K", "C", "F")
    */
   public void setBottomHoleTemperature(double temperature, String unit) {
     this.bottomHoleTemperature = convertTemperatureToKelvin(temperature, unit);
@@ -332,7 +346,7 @@ public class TubingPerformance extends TwoPortEquipment {
    * Set wellhead temperature.
    *
    * @param temperature wellhead temperature
-   * @param unit temperature unit ("K", "C", "F")
+   * @param unit        temperature unit ("K", "C", "F")
    */
   public void setWellheadTemperature(double temperature, String unit) {
     this.wellheadTemperature = convertTemperatureToKelvin(temperature, unit);
@@ -342,7 +356,7 @@ public class TubingPerformance extends TwoPortEquipment {
    * Set geothermal gradient for Ramey model.
    *
    * @param gradient temperature gradient
-   * @param unit gradient unit ("K/m", "C/100m", "F/100ft")
+   * @param unit     gradient unit ("K/m", "C/100m", "F/100ft")
    */
   public void setGeothermalGradient(double gradient, String unit) {
     switch (unit.toLowerCase()) {
@@ -400,7 +414,8 @@ public class TubingPerformance extends TwoPortEquipment {
    * {@inheritDoc}
    * 
    * <p>
-   * Calculates wellhead conditions from bottom-hole conditions by integrating the pressure-drop
+   * Calculates wellhead conditions from bottom-hole conditions by integrating the
+   * pressure-drop
    * correlation up the tubing.
    * </p>
    */
@@ -486,7 +501,7 @@ public class TubingPerformance extends TwoPortEquipment {
   /**
    * Calculate temperature at a given depth using the selected temperature model.
    *
-   * @param depth current depth (m from surface, 0 = surface)
+   * @param depth  current depth (m from surface, 0 = surface)
    * @param bhTemp bottom-hole temperature (K)
    * @return temperature at depth (K)
    */
@@ -523,7 +538,7 @@ public class TubingPerformance extends TwoPortEquipment {
    * <li>Time-dependent behavior (transient heat conduction)</li>
    * </ul>
    *
-   * @param depth depth from surface (m)
+   * @param depth  depth from surface (m)
    * @param bhTemp bottom-hole temperature (K)
    * @return temperature at depth (K)
    */
@@ -560,7 +575,7 @@ public class TubingPerformance extends TwoPortEquipment {
   /**
    * Calculate pressure drop for a single segment using the selected correlation.
    *
-   * @param fluid fluid at segment conditions
+   * @param fluid         fluid at segment conditions
    * @param segmentLength length of segment (m)
    * @return pressure drop (bar)
    */
@@ -833,14 +848,17 @@ public class TubingPerformance extends TwoPortEquipment {
    * Generate a VLP curve (Tubing Performance Curve).
    * 
    * <p>
-   * Calculates the required bottom-hole pressure for each flow rate to achieve a specified wellhead
-   * pressure. This is essential for nodal analysis and reservoir simulation coupling.
+   * Calculates the required bottom-hole pressure for each flow rate to achieve a
+   * specified wellhead
+   * pressure. This is essential for nodal analysis and reservoir simulation
+   * coupling.
    * </p>
    *
-   * @param flowRates array of flow rates to evaluate
-   * @param flowUnit flow rate unit ("Sm3/day", "bbl/day", "kg/sec", etc.)
+   * @param flowRates    array of flow rates to evaluate
+   * @param flowUnit     flow rate unit ("Sm3/day", "bbl/day", "kg/sec", etc.)
    * @param pressureUnit pressure unit for output ("bara", "psia", etc.)
-   * @return 2D array: [0]=flow rates, [1]=bottom-hole pressures, [2]=wellhead pressures
+   * @return 2D array: [0]=flow rates, [1]=bottom-hole pressures, [2]=wellhead
+   *         pressures
    */
   public double[][] generateVLPCurve(double[] flowRates, String flowUnit, String pressureUnit) {
     return generateVLPCurve(flowRates, flowUnit, pressureUnit, wellheadPressure);
@@ -849,11 +867,12 @@ public class TubingPerformance extends TwoPortEquipment {
   /**
    * Generate a VLP curve for a specified wellhead pressure.
    *
-   * @param flowRates array of flow rates to evaluate
-   * @param flowUnit flow rate unit
+   * @param flowRates    array of flow rates to evaluate
+   * @param flowUnit     flow rate unit
    * @param pressureUnit pressure unit for output
-   * @param targetWHP target wellhead pressure (bara)
-   * @return 2D array: [0]=flow rates, [1]=bottom-hole pressures, [2]=wellhead pressures
+   * @param targetWHP    target wellhead pressure (bara)
+   * @return 2D array: [0]=flow rates, [1]=bottom-hole pressures, [2]=wellhead
+   *         pressures
    */
   public double[][] generateVLPCurve(double[] flowRates, String flowUnit, String pressureUnit,
       double targetWHP) {
@@ -920,20 +939,21 @@ public class TubingPerformance extends TwoPortEquipment {
       vlpWellheadPressures[i] = convertPressure(targetWHP, "bara", pressureUnit);
     }
 
-    return new double[][] {vlpFlowRates, vlpBottomHolePressures, vlpWellheadPressures};
+    return new double[][] { vlpFlowRates, vlpBottomHolePressures, vlpWellheadPressures };
   }
 
   /**
    * Generate VLP curves for multiple wellhead pressures.
    * 
    * <p>
-   * This produces a family of VLP curves useful for sensitivity analysis and reservoir simulator
+   * This produces a family of VLP curves useful for sensitivity analysis and
+   * reservoir simulator
    * table generation.
    * </p>
    *
-   * @param flowRates array of flow rates
-   * @param flowUnit flow rate unit
-   * @param whPressures array of wellhead pressures
+   * @param flowRates    array of flow rates
+   * @param flowUnit     flow rate unit
+   * @param whPressures  array of wellhead pressures
    * @param pressureUnit pressure unit
    * @return List of VLP curves, one per WHP
    */
@@ -950,13 +970,14 @@ public class TubingPerformance extends TwoPortEquipment {
    * Find the operating point (intersection of IPR and VLP).
    * 
    * <p>
-   * Given a WellFlow (IPR model) and target wellhead pressure, finds the flow rate and bottom-hole
+   * Given a WellFlow (IPR model) and target wellhead pressure, finds the flow
+   * rate and bottom-hole
    * pressure where IPR = VLP.
    * </p>
    *
-   * @param iprModel WellFlow object representing the IPR
+   * @param iprModel         WellFlow object representing the IPR
    * @param wellheadPressure target wellhead pressure
-   * @param pressureUnit pressure unit
+   * @param pressureUnit     pressure unit
    * @return double[2]: [0]=operating flow rate (Sm3/day), [1]=BHP (bara)
    */
   public double[] findOperatingPoint(WellFlow iprModel, double wellheadPressure,
@@ -994,13 +1015,13 @@ public class TubingPerformance extends TwoPortEquipment {
         double fraction = diff1 / (diff1 - diff2);
         double opFlow = testFlows[i] + fraction * (testFlows[i + 1] - testFlows[i]);
         double opBHP = iprBHP1 + fraction * (iprBHP2 - iprBHP1);
-        return new double[] {opFlow, opBHP};
+        return new double[] { opFlow, opBHP };
       }
     }
 
     // No intersection found - well cannot flow at this WHP
     logger.warn("No operating point found - well may not flow at WHP = {} bara", targetWHP);
-    return new double[] {0.0, reservoirPressure};
+    return new double[] { 0.0, reservoirPressure };
   }
 
   /**
@@ -1161,21 +1182,24 @@ public class TubingPerformance extends TwoPortEquipment {
    * @return VLP curve: [0]=flow rates, [1]=BHP, [2]=WHP
    */
   public double[][] getVLPCurve() {
-    return new double[][] {vlpFlowRates, vlpBottomHolePressures, vlpWellheadPressures};
+    return new double[][] { vlpFlowRates, vlpBottomHolePressures, vlpWellheadPressures };
   }
 
   /**
    * Set VLP table data for table-based pressure drop calculation.
    *
    * <p>
-   * When using table VLP, the pressure drop is interpolated from the provided curve instead of
-   * being calculated from correlations. This is useful when you have measured or pre-calculated VLP
+   * When using table VLP, the pressure drop is interpolated from the provided
+   * curve instead of
+   * being calculated from correlations. This is useful when you have measured or
+   * pre-calculated VLP
    * data.
    * </p>
    *
-   * @param flowRates flow rates (same unit as stream flow rate)
+   * @param flowRates           flow rates (same unit as stream flow rate)
    * @param bottomHolePressures corresponding bottom-hole pressures (bara)
-   * @param wellheadPressure wellhead pressure that the curve was generated for (bara)
+   * @param wellheadPressure    wellhead pressure that the curve was generated for
+   *                            (bara)
    */
   public void setTableVLP(double[] flowRates, double[] bottomHolePressures,
       double wellheadPressure) {
@@ -1202,8 +1226,10 @@ public class TubingPerformance extends TwoPortEquipment {
    * Load VLP curve from a CSV file.
    *
    * <p>
-   * The CSV file should have two columns: flow rate and bottom-hole pressure. The wellhead pressure
-   * must be specified separately. The first row can be a header (will be skipped if non-numeric).
+   * The CSV file should have two columns: flow rate and bottom-hole pressure. The
+   * wellhead pressure
+   * must be specified separately. The first row can be a header (will be skipped
+   * if non-numeric).
    * </p>
    *
    * <p>
@@ -1220,18 +1246,18 @@ public class TubingPerformance extends TwoPortEquipment {
    * 5.0,225
    * </pre>
    *
-   * @param filePath path to the CSV file
+   * @param filePath         path to the CSV file
    * @param wellheadPressure wellhead pressure the curve was generated for (bara)
    * @throws IOException if file cannot be read
    */
   public void loadVLPFromFile(String filePath, double wellheadPressure) throws IOException {
-    loadVLPFromFile(Path.of(filePath), wellheadPressure);
+    loadVLPFromFile(java.nio.file.Paths.get(filePath), wellheadPressure);
   }
 
   /**
    * Load VLP curve from a CSV file.
    *
-   * @param filePath path to the CSV file
+   * @param filePath         path to the CSV file
    * @param wellheadPressure wellhead pressure the curve was generated for (bara)
    * @throws IOException if file cannot be read
    * @see #loadVLPFromFile(String, double)
@@ -1325,8 +1351,7 @@ public class TubingPerformance extends TwoPortEquipment {
     // Interpolate
     for (int i = 0; i < tableVLPFlowRates.length - 1; i++) {
       if (flowRate >= tableVLPFlowRates[i] && flowRate <= tableVLPFlowRates[i + 1]) {
-        double fraction =
-            (flowRate - tableVLPFlowRates[i]) / (tableVLPFlowRates[i + 1] - tableVLPFlowRates[i]);
+        double fraction = (flowRate - tableVLPFlowRates[i]) / (tableVLPFlowRates[i + 1] - tableVLPFlowRates[i]);
         return tableVLPBHP[i] + fraction * (tableVLPBHP[i + 1] - tableVLPBHP[i]);
       }
     }
