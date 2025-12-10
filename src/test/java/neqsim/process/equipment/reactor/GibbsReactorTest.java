@@ -344,14 +344,21 @@ public class GibbsReactorTest {
 
     // Print results to see the equilibrium composition
     inlet.getFluid().prettyPrint();
-    outlet.prettyPrint();
 
-    // Get mole fractions
+    // Assert equilibrium composition
     double n2o4MoleFraction = outlet.getComponent("N2O4").getz();
     double no2MoleFraction = outlet.getComponent("NO2").getz();
+    double oxygenMoleFraction = outlet.getComponent("oxygen").getz();
+    double n2oMoleFraction = outlet.getComponent("N2O").getz();
+    double noMoleFraction = outlet.getComponent("NO").getz();
 
-    // Calculate equilibrium constant K = (fug_NO2)^2 / (fug_N2O4)
+    Assertions.assertEquals(0.183733, n2o4MoleFraction, 0.001, "N2O4 mole fraction");
+    Assertions.assertEquals(0.255753, no2MoleFraction, 0.001, "NO2 mole fraction");
+    Assertions.assertEquals(0.253875, oxygenMoleFraction, 0.001, "Oxygen mole fraction");
+    Assertions.assertEquals(0.306638, n2oMoleFraction, 0.001, "N2O mole fraction");
+    Assertions.assertEquals(6.67297E-7, noMoleFraction, 1e-7, "NO mole fraction");
 
+    // Calculate and assert equilibrium constant K = (fug_NO2)^2 / (fug_N2O4)
     double fugNO2 = outlet.getPhase(0).getComponent("NO2").fugcoef(outlet.getPhase(0))
         * outlet.getPhase(0).getComponent("NO2").getz() * outlet.getPressure();
     double fugN2O4 = outlet.getPhase(0).getComponent("N2O4").fugcoef(outlet.getPhase(0))
@@ -359,12 +366,14 @@ public class GibbsReactorTest {
 
     double K_equilibrium = (fugNO2 * fugNO2) / fugN2O4;
 
-    System.out.println("Equilibrium Constant K = (fug_NO2)^2 / (fug_N2O4) = " + K_equilibrium);
-    System.out.println("Fugacity c NO2: "
-        + inlet.getFluid().getPhase(0).getComponent("NO2").getFugacityCoefficient());
-    System.out.println(
-        "Fugacity c N2O4: " + outlet.getPhase(0).getComponent("N2O4").getFugacityCoefficient());
-    // 38 is strange here
+    Assertions.assertEquals(0.3567, K_equilibrium, 0.001, "Equilibrium constant K");
+
+    // Assert fugacity coefficients are close to unity (nearly ideal gas behavior at 1 bara)
+    double fugCoefNO2 = outlet.getPhase(0).getComponent("NO2").getFugacityCoefficient();
+    double fugCoefN2O4 = outlet.getPhase(0).getComponent("N2O4").getFugacityCoefficient();
+
+    Assertions.assertEquals(0.9883, fugCoefNO2, 0.001, "NO2 fugacity coefficient");
+    Assertions.assertEquals(0.9886, fugCoefN2O4, 0.001, "N2O4 fugacity coefficient");
 
   }
 }
