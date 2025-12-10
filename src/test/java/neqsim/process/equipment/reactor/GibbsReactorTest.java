@@ -278,34 +278,85 @@ public class GibbsReactorTest {
     Assertions.assertEquals(2.19702E-1, water, 0.01);
   }
 
-    @Test
-    public void testWaterH2O2Mix() {
-        // 600 ml water, density ~1 g/ml => 0.6 kg => ~33.3 mol
-        double waterMass = 0.6; // kg
-        double waterMolarMass = 18.015; // g/mol
-        double waterMoles = waterMass * 1000 / waterMolarMass;
+  @Test
+  public void testWaterH2O2Mix() {
+    // 600 ml water, density ~1 g/ml => 0.6 kg => ~33.3 mol
+    double waterMass = 0.6; // kg
+    double waterMolarMass = 18.015; // g/mol
+    double waterMoles = waterMass * 1000 / waterMolarMass;
 
-        double h2o2Moles = 0.0892;
+    double h2o2Moles = 0.0892;
 
-        SystemInterface system = new SystemSrkEos(293.15, 1.0);
-        system.addComponent("water", waterMoles);
-        system.addComponent("H2O2", h2o2Moles);
-        system.addComponent("oxygen", 0.0);
-        system.setMixingRule(2);
-        system.setMultiPhaseCheck(true);
+    SystemInterface system = new SystemSrkEos(293.15, 1.0);
+    system.addComponent("water", waterMoles);
+    system.addComponent("H2O2", h2o2Moles);
+    system.addComponent("oxygen", 0.0);
+    system.setMixingRule(2);
+    system.setMultiPhaseCheck(true);
 
-        Stream inlet = new Stream("inlet", system);
-        inlet.run();
+    Stream inlet = new Stream("inlet", system);
+    inlet.run();
 
-        GibbsReactor reactor = new GibbsReactor("reactor", inlet);
-        reactor.setUseAllDatabaseSpecies(false);
-        reactor.setDampingComposition(0.0005);
-        reactor.setMaxIterations(5000);
-        reactor.setConvergenceTolerance(1e-6);
-        reactor.setEnergyMode(GibbsReactor.EnergyMode.ADIABATIC);
-        reactor.run();
+    GibbsReactor reactor = new GibbsReactor("reactor", inlet);
+    reactor.setUseAllDatabaseSpecies(false);
+    reactor.setDampingComposition(0.0005);
+    reactor.setMaxIterations(5000);
+    reactor.setConvergenceTolerance(1e-6);
+    reactor.setEnergyMode(GibbsReactor.EnergyMode.ADIABATIC);
+    reactor.run();
 
-        SystemInterface outlet = reactor.getOutletStream().getThermoSystem();
-        outlet.prettyPrint();
-    }
+    SystemInterface outlet = reactor.getOutletStream().getThermoSystem();
+    outlet.prettyPrint();
+  }
+
+  /**
+   * Test N2O4 ⇌ 2NO2 equilibrium reaction at 298 K and 1 bara using SRK EOS. N2O4 (dinitrogen
+   * tetroxide) dissociates to NO2 (nitrogen dioxide).
+   */
+  @Test
+  public void testN2O4_NO2_Equilibrium() {
+    // Create system at 298 K (25°C) and 1 bara
+    SystemInterface system = new SystemSrkEos(298.15, 1.0);
+
+    // Add N2O4 and NO2 - starting with pure N2O4
+    system.addComponent("N2O4", 0.0);
+    system.addComponent("NO2", 1.0);
+    system.setMixingRule(2);
+
+    Stream inlet = new Stream("inlet", system);
+    inlet.run();
+
+    GibbsReactor reactor = new GibbsReactor("reactor", inlet);
+    reactor.setUseAllDatabaseSpecies(false);
+    reactor.setDampingComposition(0.001);
+    reactor.setMaxIterations(50000);
+    reactor.setConvergenceTolerance(1e-6);
+    reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
+    reactor.run();
+
+    SystemInterface outlet = reactor.getOutletStream().getThermoSystem();
+
+    // Print results to see the equilibrium composition
+    outlet.prettyPrint();
+
+    // Get mole fractions
+    double n2o4MoleFraction = outlet.getComponent("N2O4").getz();
+    double no2MoleFraction = outlet.getComponent("NO2").getz();
+
+    // Verify equilibrium composition
+    // At 298 K and 1 bar, N2O4 dissociates: N2O4 ⇌ 2NO2
+    // Expected: N2O4 ≈ 0.675 (67.5%), NO2 ≈ 0.325 (32.5%)
+    Assertions.assertEquals(0.675471, n2o4MoleFraction, 0.01,
+        "N2O4 mole fraction should be approximately 0.675");
+    Assertions.assertEquals(0.324529, no2MoleFraction, 0.01,
+        "NO2 mole fraction should be approximately 0.325");
+
+    // Verify total mole fraction is 1
+    Assertions.assertEquals(1.0, n2o4MoleFraction + no2MoleFraction, 1e-6,
+        "Total mole fractions should sum to 1.0");
+
+    // Verify reactor converged
+    Assertions.assertTrue(reactor.hasConverged(),
+        "Gibbs reactor should have converged to equilibrium");
+  }
 }

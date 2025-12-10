@@ -908,8 +908,7 @@ public class GibbsReactor extends TwoPortEquipment {
                 coeffs.length > 10 ? coeffs[10] : Double.NaN,
                 coeffs.length > 11 ? coeffs[11] : Double.NaN);
             gibbsDatabase.add(component);
-            componentMap.put(molecule.toLowerCase(), component); // original line
-            // Add also trimmed version for robustness
+            componentMap.put(molecule.toLowerCase(), component);
             componentMap.put(molecule.trim().toLowerCase(), component);
             logger.debug("Loaded component: " + molecule);
           } catch (NumberFormatException e) {
@@ -1606,8 +1605,29 @@ public class GibbsReactor extends TwoPortEquipment {
       return null;
     }
     try {
-      // Only create SimpleMatrix objects once per call, not in a loop
+      // First try standard inversion
       SimpleMatrix ejmlMatrix = new SimpleMatrix(jacobianMatrix);
+
+      // Check condition number to detect ill-conditioned matrices
+      double conditionNumber = ejmlMatrix.conditionP2();
+      if (conditionNumber > 1e12) {
+        logger.warn("Jacobian matrix is ill-conditioned (condition number: " + conditionNumber
+            + "). Using pseudo-inverse with regularization.");
+        // Use pseudo-inverse for ill-conditioned matrices
+        SimpleMatrix inverseMatrix = ejmlMatrix.pseudoInverse();
+        int nRows = inverseMatrix.numRows();
+        int nCols = inverseMatrix.numCols();
+        double[][] result = new double[nRows][nCols];
+        double[] data = inverseMatrix.getDDRM().getData();
+        for (int i = 0; i < nRows; i++) {
+          for (int j = 0; j < nCols; j++) {
+            result[i][j] = data[i * nCols + j];
+          }
+        }
+        return result;
+      }
+
+      // Standard inversion for well-conditioned matrices
       SimpleMatrix inverseMatrix = ejmlMatrix.invert();
       int nRows = inverseMatrix.numRows();
       int nCols = inverseMatrix.numCols();
@@ -1620,8 +1640,27 @@ public class GibbsReactor extends TwoPortEquipment {
       }
       return result;
     } catch (RuntimeException e) {
-      logger.warn("Jacobian matrix is singular or nearly singular: " + e.getMessage());
-      return null;
+      logger.warn(
+          "Jacobian matrix inversion failed: " + e.getMessage() + ". Trying pseudo-inverse...");
+      // Fallback to pseudo-inverse
+      try {
+        SimpleMatrix ejmlMatrix = new SimpleMatrix(jacobianMatrix);
+        SimpleMatrix inverseMatrix = ejmlMatrix.pseudoInverse();
+        int nRows = inverseMatrix.numRows();
+        int nCols = inverseMatrix.numCols();
+        double[][] result = new double[nRows][nCols];
+        double[] data = inverseMatrix.getDDRM().getData();
+        for (int i = 0; i < nRows; i++) {
+          for (int j = 0; j < nCols; j++) {
+            result[i][j] = data[i * nCols + j];
+          }
+        }
+        logger.info("Successfully computed pseudo-inverse");
+        return result;
+      } catch (RuntimeException e2) {
+        logger.error("Pseudo-inverse also failed: " + e2.getMessage());
+        return null;
+      }
     }
   }
 
