@@ -319,14 +319,17 @@ public class GibbsReactorTest {
     SystemInterface system = new SystemSrkEos(298.15, 1.0);
 
     // Add N2O4 and NO2 - starting with pure N2O4
-    system.addComponent("N2O4", 0.0);
+    system.addComponent("N2O4", 1e6);
     system.addComponent("NO2", 1e6);
+    system.addComponent("oxygen", 1e6);
+    system.addComponent("N2O", 1e6);
+    system.addComponent("NO", 1e6);
 
     system.setMixingRule(2);
 
     Stream inlet = new Stream("inlet", system);
     inlet.setPressure(1.01325, "bara");
-    inlet.setTemperature(403, "K");
+    inlet.setTemperature(308, "K");
     inlet.run();
 
     GibbsReactor reactor = new GibbsReactor("reactor", inlet);
