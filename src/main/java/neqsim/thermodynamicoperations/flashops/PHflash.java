@@ -6,6 +6,8 @@
 
 package neqsim.thermodynamicoperations.flashops;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -19,6 +21,8 @@ import neqsim.thermo.system.SystemInterface;
 public class PHflash extends Flash {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  static Logger logger = LogManager.getLogger(PHflash.class);
 
   double Hspec = 0;
   Flash tpFlash;
@@ -65,6 +69,45 @@ public class PHflash extends Flash {
   }
 
   /**
+   * Estimates initial temperature for PHflash using Cp approximation. This provides a better
+   * starting point for the Newton-Raphson iteration, reducing the number of iterations needed.
+   *
+   * @return estimated temperature in Kelvin
+   */
+  private double estimateInitialTemperature() {
+    double currentEnthalpy = system.getEnthalpy();
+    double deltaH = Hspec - currentEnthalpy;
+
+    // If enthalpy difference is very small, current temperature is good
+    if (Math.abs(deltaH) < 1e-6 * Math.abs(Hspec)) {
+      return system.getTemperature();
+    }
+
+    // Use Cp to estimate temperature change: deltaH = Cp * deltaT
+    double cp = system.getCp();
+    if (cp > 1e-10) {
+      double deltaT = deltaH / cp;
+      // Limit the temperature change to avoid overshooting - be conservative
+      double maxDeltaT = 30.0; // Maximum 30K change in initial estimate
+      if (Math.abs(deltaT) > maxDeltaT) {
+        deltaT = Math.signum(deltaT) * maxDeltaT;
+      }
+      double estimatedTemp = system.getTemperature() + deltaT;
+      // Ensure temperature stays within reasonable bounds relative to current
+      double currentTemp = system.getTemperature();
+      double minAllowed = Math.max(50.0, currentTemp - 50.0);
+      double maxAllowed = Math.min(1000.0, currentTemp + 50.0);
+      if (estimatedTemp < minAllowed) {
+        estimatedTemp = minAllowed;
+      } else if (estimatedTemp > maxAllowed) {
+        estimatedTemp = maxAllowed;
+      }
+      return estimatedTemp;
+    }
+    return system.getTemperature();
+  }
+
+  /**
    * <p>
    * solveQ.
    * </p>
@@ -72,17 +115,32 @@ public class PHflash extends Flash {
    * @return a double
    */
   public double solveQ() {
+    // Use improved initial temperature estimate
+    system.init(2);
+    double estimatedTemp = estimateInitialTemperature();
+    system.setTemperature(estimatedTemp);
+
     double oldTemp = 1.0 / system.getTemperature();
     double nyTemp = 1.0 / system.getTemperature();
-    double iterations = 1;
+    int iterations = 1;
     double error = 1.0;
     double errorOld = 1.0e10;
     double factor = 0.8;
     double newCorr = 1.0;
+
+    // Do initial flash with estimated temperature
+    tpFlash.run();
     system.init(2);
+
     boolean correctFactor = true;
     double maxTemperature = 1e10;
     double minTemperature = 0.0;
+
+    // Check if we're already converged after initial estimate
+    error = calcdQdT();
+    if (Math.abs(error) < 1e-8) {
+      return system.getTemperature();
+    }
 
     do {
       if (Math.abs(error) > Math.abs(errorOld) && factor > 0.1 && correctFactor) {

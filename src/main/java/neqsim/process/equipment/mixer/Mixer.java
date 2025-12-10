@@ -5,6 +5,8 @@ import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import javax.swing.JDialog;
@@ -47,6 +49,10 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   double lowestPressure = Double.NEGATIVE_INFINITY;
 
   private boolean doMultiPhaseCheck = true;
+
+  /** Cached values for needRecalculation check. */
+  private double lastTotalEnthalpy = Double.NaN;
+  private double lastTotalFlow = Double.NaN;
 
   /**
    * <p>
@@ -137,7 +143,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
    * </p>
    */
   public void mixStream() {
-    int index = 0;
     lowestPressure = mixedStream.getThermoSystem().getPhase(0).getPressure();
     boolean hasAddedNewComponent = false;
     for (int k = 1; k < streams.size(); k++) {
@@ -147,6 +152,15 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     }
     for (int k = 0; k < streams.size(); k++) {
       // streams.get(k).getThermoSystem().getPhase(0).setPressure(lowestPressure);
+    }
+
+    // Build component name -> index map for O(1) lookup instead of O(n) inner loop
+    Map<String, Integer> componentIndexMap = new HashMap<>();
+    for (int p = 0; p < mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents(); p++) {
+      String name = mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName();
+      int compNum =
+          streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
+      componentIndexMap.put(name, compNum);
     }
 
     // Process ALL streams starting from k=1 (k=0 is already cloned into mixedStream)
@@ -159,28 +173,24 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
       for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0)
           .getNumberOfComponents(); i++) {
-        boolean gotComponent = false;
         String componentName =
             streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getName();
 
         double moles =
             streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getNumberOfmoles();
 
-        for (int p = 0; p < mixedStream.getThermoSystem().getPhase(0)
-            .getNumberOfComponents(); p++) {
-          if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName()
-              .equals(componentName)) {
-            gotComponent = true;
-            index =
-                streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
-          }
-        }
+        // O(1) lookup using HashMap instead of O(n) loop
+        Integer index = componentIndexMap.get(componentName);
 
-        if (gotComponent) {
+        if (index != null) {
           mixedStream.getThermoSystem().addComponent(index, moles);
         } else {
           hasAddedNewComponent = true;
           mixedStream.getThermoSystem().addComponent(componentName, moles);
+          // Add to map for future lookups within this mixing operation
+          int newIndex = mixedStream.getThermoSystem().getPhase(0).getComponent(componentName)
+              .getComponentNumber();
+          componentIndexMap.put(componentName, newIndex);
         }
       }
     }
@@ -232,6 +242,49 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
   /** {@inheritDoc} */
   @Override
+  public boolean needRecalculation() {
+    // Calculate current total enthalpy and flow from all input streams
+    double totalEnthalpy = 0.0;
+    double totalFlow = 0.0;
+    for (int k = 0; k < streams.size(); k++) {
+      if (streams.get(k).getFlowRate("kg/hr") > getMinimumFlow()) {
+        totalEnthalpy += streams.get(k).getThermoSystem().getEnthalpy();
+        totalFlow += streams.get(k).getFlowRate("kg/hr");
+      }
+    }
+
+    // Check if values have changed significantly
+    if (!Double.isNaN(lastTotalEnthalpy) && !Double.isNaN(lastTotalFlow)) {
+      // Handle zero/near-zero cases to avoid division by zero
+      if (totalFlow < 1e-10 && lastTotalFlow < 1e-10) {
+        return false; // Both are essentially zero - no recalc needed
+      }
+      if (totalFlow > 0 && lastTotalFlow > 0) {
+        double flowChange = Math.abs((totalFlow - lastTotalFlow) / lastTotalFlow);
+        if (flowChange >= 1e-6) {
+          return true; // Flow changed significantly
+        }
+      } else if (Math.abs(totalFlow - lastTotalFlow) > 1e-10) {
+        return true; // One is zero, other isn't
+      }
+
+      // Check enthalpy change (only if we have flow)
+      if (totalFlow > 0 && Math.abs(lastTotalEnthalpy) > 1e-10) {
+        double enthalpyChange = Math.abs((totalEnthalpy - lastTotalEnthalpy) / lastTotalEnthalpy);
+        if (enthalpyChange >= 1e-6) {
+          return true; // Enthalpy changed significantly
+        }
+      } else if (Math.abs(totalEnthalpy - lastTotalEnthalpy) > 1e-10) {
+        return true; // Enthalpy changed from/to zero
+      }
+
+      return false; // No significant changes
+    }
+    return true; // First run or invalid cached values
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     double enthalpy = 0.0;
     // ((Stream) streams.get(0)).getThermoSystem().display();
@@ -254,6 +307,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
       }
       mixedStream.setThermoSystem(thermoSystem2);
       isActive(false);
+      lastTotalEnthalpy = 0.0;
+      lastTotalFlow = 0.0;
       setCalculationIdentifier(id);
       return;
     }
@@ -322,6 +377,16 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
     if (inletMultiPhaseCheck) {
       mixedStream.getThermoSystem().setMultiPhaseCheck(true);
+    }
+
+    // Update cached values for needRecalculation check
+    lastTotalEnthalpy = 0.0;
+    lastTotalFlow = 0.0;
+    for (int k = 0; k < streams.size(); k++) {
+      if (streams.get(k).getFlowRate("kg/hr") > getMinimumFlow()) {
+        lastTotalEnthalpy += streams.get(k).getThermoSystem().getEnthalpy();
+        lastTotalFlow += streams.get(k).getFlowRate("kg/hr");
+      }
     }
 
     setCalculationIdentifier(id);

@@ -63,6 +63,15 @@ public class ProcessSystem extends SimulationBaseClass {
    * List of unit operations in the process system.
    */
   private List<ProcessEquipmentInterface> unitOperations = new ArrayList<>();
+  /**
+   * Pre-classified lists for performance optimization - avoid repeated instanceof checks during
+   * run().
+   */
+  private List<ProcessEquipmentInterface> setterUnits = new ArrayList<>();
+  private List<Recycle> recycleUnits = new ArrayList<>();
+  private List<Adjuster> adjusterUnits = new ArrayList<>();
+  private boolean unitClassificationDirty = true;
+
   List<MeasurementDeviceInterface> measurementDevices =
       new ArrayList<MeasurementDeviceInterface>(0);
   private ProcessAlarmManager alarmManager = new ProcessAlarmManager();
@@ -135,6 +144,8 @@ public class ProcessSystem extends SimulationBaseClass {
     if (operation instanceof ModuleInterface) {
       ((ModuleInterface) operation).initializeModule();
     }
+    // Mark classification as dirty - will be rebuilt on next run()
+    unitClassificationDirty = true;
   }
 
   /**
@@ -160,6 +171,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public void add(ProcessEquipmentInterface[] operations) {
     getUnitOperations().addAll(Arrays.asList(operations));
+    unitClassificationDirty = true;
   }
 
   /**
@@ -172,13 +184,14 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return a {@link java.lang.Boolean} object
    */
   public boolean replaceUnit(String name, ProcessEquipmentInterface newObject) {
-    try {
-      ProcessEquipmentInterface unit = getUnit(name);
-      unit = newObject;
-    } catch (Exception e) {
-      logger.error(e.getMessage(), e);
+    for (int i = 0; i < unitOperations.size(); i++) {
+      if (unitOperations.get(i).getName().equals(name)) {
+        unitOperations.set(i, newObject);
+        unitClassificationDirty = true;
+        return true;
+      }
     }
-    return true;
+    return false;
   }
 
   /**
@@ -331,6 +344,7 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < unitOperations.size(); i++) {
       if (unitOperations.get(i).getName().equals(name)) {
         unitOperations.remove(i);
+        unitClassificationDirty = true;
       }
     }
   }
@@ -342,6 +356,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public void clearAll() {
     unitOperations.clear();
+    unitClassificationDirty = true;
   }
 
   /**
@@ -440,31 +455,49 @@ public class ProcessSystem extends SimulationBaseClass {
     return processThread;
   }
 
+  /**
+   * Rebuilds the pre-classified unit lists if they are dirty. This avoids repeated instanceof
+   * checks during run().
+   */
+  private void rebuildUnitClassification() {
+    if (!unitClassificationDirty) {
+      return;
+    }
+    setterUnits.clear();
+    recycleUnits.clear();
+    adjusterUnits.clear();
+
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof Setter) {
+        setterUnits.add(unit);
+      }
+      if (unit instanceof Recycle) {
+        recycleUnits.add((Recycle) unit);
+      }
+      if (unit instanceof Adjuster) {
+        adjusterUnits.add((Adjuster) unit);
+      }
+    }
+    unitClassificationDirty = false;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    // Run setters first to set conditions
-    for (int i = 0; i < unitOperations.size(); i++) {
-      ProcessEquipmentInterface unit = unitOperations.get(i);
-      if (unit instanceof Setter) {
-        unit.run(id);
-      }
+    // Rebuild classification if dirty
+    rebuildUnitClassification();
+
+    // Run setters first to set conditions - use pre-classified list
+    for (ProcessEquipmentInterface unit : setterUnits) {
+      unit.run(id);
     }
 
-    boolean hasRecycle = false;
-    // boolean hasAdjuster = false;
+    boolean hasRecycle = !recycleUnits.isEmpty();
 
-    // Initializing recycle controller
+    // Initializing recycle controller - use pre-classified list
     recycleController.clear();
-    for (int i = 0; i < unitOperations.size(); i++) {
-      ProcessEquipmentInterface unit = unitOperations.get(i);
-      if (unit instanceof Recycle) {
-        hasRecycle = true;
-        recycleController.addRecycle((Recycle) unit);
-      }
-      if (unit instanceof Adjuster) {
-        // hasAdjuster = true;
-      }
+    for (Recycle recycle : recycleUnits) {
+      recycleController.addRecycle(recycle);
     }
     recycleController.init();
 
@@ -511,13 +544,11 @@ public class ProcessSystem extends SimulationBaseClass {
         // isConverged=true;
       }
 
-      for (int i = 0; i < unitOperations.size(); i++) {
-        ProcessEquipmentInterface unit = unitOperations.get(i);
-        if (unit instanceof Adjuster) {
-          if (!((Adjuster) unit).solved()) {
-            isConverged = false;
-            break;
-          }
+      // Check adjusters using pre-classified list
+      for (Adjuster adjuster : adjusterUnits) {
+        if (!adjuster.solved()) {
+          isConverged = false;
+          break;
         }
       }
 

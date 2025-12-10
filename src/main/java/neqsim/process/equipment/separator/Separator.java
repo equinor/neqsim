@@ -322,7 +322,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    inletStreamMixer.run(id);
+    // Check if inlet mixer needs recalculation before running it
+    if (inletStreamMixer.needRecalculation()) {
+      inletStreamMixer.run(id);
+    }
     double enthalpy = inletStreamMixer.getOutletStream().getFluid().getEnthalpy();
     double flow = inletStreamMixer.getOutletStream().getFlowRate("kg/hr");
     double pres = inletStreamMixer.getOutletStream().getPressure();

@@ -206,7 +206,25 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
   public StreamInterface getGasOutStream() {
-    return new Stream("", mixedStream.getThermoSystem().phaseToSystem(0));
+    SystemInterface thermoSys = mixedStream.getThermoSystem();
+    // Find gas phase by type, fallback to phase 0
+    for (int i = 0; i < thermoSys.getNumberOfPhases(); i++) {
+      if (thermoSys.getPhase(i).getType() == neqsim.thermo.phase.PhaseType.GAS) {
+        try {
+          return new Stream("", thermoSys.phaseToSystem(i));
+        } catch (Exception e) {
+          logger.warn("Failed to extract gas phase " + i + ", trying next", e);
+        }
+      }
+    }
+    // If no gas phase found, return phase 0 (original behavior)
+    try {
+      return new Stream("", thermoSys.phaseToSystem(0));
+    } catch (Exception e) {
+      logger.error("Failed to extract any gas phase", e);
+      // Return a stream with the full system as fallback
+      return new Stream("", thermoSys.clone());
+    }
   }
 
   /**
@@ -217,7 +235,35 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
   public StreamInterface getLiquidOutStream() {
-    return new Stream("", mixedStream.getThermoSystem().phaseToSystem(1));
+    SystemInterface thermoSys = mixedStream.getThermoSystem();
+    // Find liquid phase by type
+    for (int i = 0; i < thermoSys.getNumberOfPhases(); i++) {
+      if (thermoSys.getPhase(i).getType() == neqsim.thermo.phase.PhaseType.LIQUID
+          || thermoSys.getPhase(i).getType() == neqsim.thermo.phase.PhaseType.OIL
+          || thermoSys.getPhase(i).getType() == neqsim.thermo.phase.PhaseType.AQUEOUS) {
+        try {
+          return new Stream("", thermoSys.phaseToSystem(i));
+        } catch (Exception e) {
+          logger.warn("Failed to extract liquid phase " + i + ", trying next", e);
+        }
+      }
+    }
+    // If no liquid phase found, return phase 1 if it exists, otherwise phase 0
+    if (thermoSys.getNumberOfPhases() > 1) {
+      try {
+        return new Stream("", thermoSys.phaseToSystem(1));
+      } catch (Exception e) {
+        logger.warn("Failed to extract phase 1", e);
+      }
+    }
+    // Only one phase exists or extraction failed - return phase 0 as fallback
+    try {
+      return new Stream("", thermoSys.phaseToSystem(0));
+    } catch (Exception e) {
+      logger.error("Failed to extract any liquid phase", e);
+      // Return a stream with the full system as fallback
+      return new Stream("", thermoSys.clone());
+    }
   }
 
   /** {@inheritDoc} */
