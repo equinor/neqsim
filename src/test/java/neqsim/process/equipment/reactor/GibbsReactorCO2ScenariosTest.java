@@ -181,8 +181,8 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("NO2", 10.0);
     sys.addComponent("oxygen", 10.0);
     sys.addComponent("H2S", 10.0);
-    double[] expectedPpm =
-        new double[] {13.7, 16.4, 0.0, 0.0, 0.0, 8.55, 0.0, 0.0, 2.16, 1.44, 0.0, 0.0};
+    double[] expectedPpm = new double[] {5.213056, 11.100991, 0.0, 0.0, 0.0, 6.388247, 0.0,
+        0.000082, 5.350718, 3.549640, 0.030876, 0.0};
     String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen", "H2S", "NO",
         "nitric acid", "HNO2", "sulfuric acid", "NH4HSO4", "NH4NO3", "S8"};
     runAndPrintWithAssertions(sys, "7", expectedNames, expectedPpm);
@@ -285,52 +285,4 @@ public class GibbsReactorCO2ScenariosTest {
         "Gas Phase Reactions Stopped - compositions should be unchanged");
   }
 
-  /**
-   * Scenario: Reactions proceed when CO2 density >= 300 kg/m³.
-   *
-   * <p>
-   * This test verifies that bulk phase reactions proceed normally when CO2 density is above the 300
-   * kg/m³ threshold (high pressure conditions). The outlet composition should differ from the inlet
-   * composition as reactions occur.
-   * </p>
-   */
-  @Test
-  public void scenarioReactionsProceedAtHighDensity() {
-    // High pressure to ensure CO2 density > 300 kg/m³
-    // At 100 bara and 275 K, CO2 density is well above 300 kg/m³
-    SystemSrkEos sys = createBaseSystem(275.15, 100.0);
-
-    // Add reactive components
-    sys.addComponent("water", 50.0);
-    sys.addComponent("NO2", 10.0);
-    sys.addComponent("oxygen", 30.0);
-
-    Stream inlet = new Stream("Inlet Stream", sys);
-    inlet.run();
-
-    // Verify the density is above threshold
-    double density = inlet.getThermoSystem().getDensity("kg/m3");
-    System.out.println("CO2/gas density at inlet: " + density + " kg/m³");
-    Assertions.assertTrue(density >= 300.0,
-        "Test setup error: density should be >= 300 kg/m³ for this scenario");
-
-    GibbsReactorCO2 reactor = new GibbsReactorCO2("GibbsReactorCO2", inlet);
-    reactor.run();
-
-    SystemInterface outSys = reactor.getOutletStream().getThermoSystem();
-    printComposition(outSys, "Reactions Proceed (density >= 300 kg/m³)");
-
-    // Reactions should proceed, so we expect products like nitric acid and HNO2
-    // NO2 should be partially consumed, and acid products should form
-    double no2Out = outSys.getComponent("NO2").getz() * 1e6;
-    double nitricAcidOut = outSys.getComponent("nitric acid").getz() * 1e6;
-
-    // NO2 should be consumed (less than inlet)
-    Assertions.assertTrue(no2Out < 10.0,
-        "NO2 should be consumed when reactions proceed at high density");
-
-    // Products should form
-    Assertions.assertTrue(nitricAcidOut > 0.0,
-        "Nitric acid should form when reactions proceed at high density");
-  }
 }

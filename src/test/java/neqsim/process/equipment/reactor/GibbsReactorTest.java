@@ -278,34 +278,102 @@ public class GibbsReactorTest {
     Assertions.assertEquals(2.19702E-1, water, 0.01);
   }
 
-    @Test
-    public void testWaterH2O2Mix() {
-        // 600 ml water, density ~1 g/ml => 0.6 kg => ~33.3 mol
-        double waterMass = 0.6; // kg
-        double waterMolarMass = 18.015; // g/mol
-        double waterMoles = waterMass * 1000 / waterMolarMass;
+  @Test
+  public void testWaterH2O2Mix() {
+    // 600 ml water, density ~1 g/ml => 0.6 kg => ~33.3 mol
+    double waterMass = 0.6; // kg
+    double waterMolarMass = 18.015; // g/mol
+    double waterMoles = waterMass * 1000 / waterMolarMass;
 
-        double h2o2Moles = 0.0892;
+    double h2o2Moles = 0.0892;
 
-        SystemInterface system = new SystemSrkEos(293.15, 1.0);
-        system.addComponent("water", waterMoles);
-        system.addComponent("H2O2", h2o2Moles);
-        system.addComponent("oxygen", 0.0);
-        system.setMixingRule(2);
-        system.setMultiPhaseCheck(true);
+    SystemInterface system = new SystemSrkEos(293.15, 1.0);
+    system.addComponent("water", waterMoles);
+    system.addComponent("H2O2", h2o2Moles);
+    system.addComponent("oxygen", 0.0);
+    system.setMixingRule(2);
+    system.setMultiPhaseCheck(true);
 
-        Stream inlet = new Stream("inlet", system);
-        inlet.run();
+    Stream inlet = new Stream("inlet", system);
+    inlet.run();
 
-        GibbsReactor reactor = new GibbsReactor("reactor", inlet);
-        reactor.setUseAllDatabaseSpecies(false);
-        reactor.setDampingComposition(0.0005);
-        reactor.setMaxIterations(5000);
-        reactor.setConvergenceTolerance(1e-6);
-        reactor.setEnergyMode(GibbsReactor.EnergyMode.ADIABATIC);
-        reactor.run();
+    GibbsReactor reactor = new GibbsReactor("reactor", inlet);
+    reactor.setUseAllDatabaseSpecies(false);
+    reactor.setDampingComposition(0.0005);
+    reactor.setMaxIterations(5000);
+    reactor.setConvergenceTolerance(1e-6);
+    reactor.setEnergyMode(GibbsReactor.EnergyMode.ADIABATIC);
+    reactor.run();
 
-        SystemInterface outlet = reactor.getOutletStream().getThermoSystem();
-        outlet.prettyPrint();
-    }
+    SystemInterface outlet = reactor.getOutletStream().getThermoSystem();
+    outlet.prettyPrint();
+  }
+
+  /**
+   * Test N2O4 ⇌ 2NO2 equilibrium reaction at 298 K and 1 bara using SRK EOS. N2O4 (dinitrogen
+   * tetroxide) dissociates to NO2 (nitrogen dioxide).
+   */
+  @Test
+  public void testN2O4_NO2_Equilibrium() {
+    // Create system at 298 K (25°C) and 1 bara
+    SystemInterface system = new SystemSrkEos(298.15, 1.0);
+
+    // Add N2O4 and NO2 - starting with pure N2O4
+    system.addComponent("N2O4", 1e6);
+    system.addComponent("NO2", 1e6);
+    system.addComponent("oxygen", 1e6);
+    system.addComponent("N2O", 1e6);
+    system.addComponent("NO", 1e6);
+
+    system.setMixingRule(2);
+
+    Stream inlet = new Stream("inlet", system);
+    inlet.setPressure(1.01325, "bara");
+    inlet.setTemperature(308, "K");
+    inlet.run();
+
+    GibbsReactor reactor = new GibbsReactor("reactor", inlet);
+    reactor.setUseAllDatabaseSpecies(false);
+    reactor.setDampingComposition(0.01);
+    reactor.setMaxIterations(50000);
+    reactor.setConvergenceTolerance(1e-6);
+    reactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
+    reactor.run();
+
+    SystemInterface outlet = reactor.getOutletStream().getThermoSystem();
+
+    // Print results to see the equilibrium composition
+    inlet.getFluid().prettyPrint();
+
+    // Assert equilibrium composition
+    double n2o4MoleFraction = outlet.getComponent("N2O4").getz();
+    double no2MoleFraction = outlet.getComponent("NO2").getz();
+    double oxygenMoleFraction = outlet.getComponent("oxygen").getz();
+    double n2oMoleFraction = outlet.getComponent("N2O").getz();
+    double noMoleFraction = outlet.getComponent("NO").getz();
+
+    Assertions.assertEquals(0.183733, n2o4MoleFraction, 0.001, "N2O4 mole fraction");
+    Assertions.assertEquals(0.255753, no2MoleFraction, 0.001, "NO2 mole fraction");
+    Assertions.assertEquals(0.253875, oxygenMoleFraction, 0.001, "Oxygen mole fraction");
+    Assertions.assertEquals(0.306638, n2oMoleFraction, 0.001, "N2O mole fraction");
+    Assertions.assertEquals(6.67297E-7, noMoleFraction, 1e-7, "NO mole fraction");
+
+    // Calculate and assert equilibrium constant K = (fug_NO2)^2 / (fug_N2O4)
+    double fugNO2 = outlet.getPhase(0).getComponent("NO2").fugcoef(outlet.getPhase(0))
+        * outlet.getPhase(0).getComponent("NO2").getz() * outlet.getPressure();
+    double fugN2O4 = outlet.getPhase(0).getComponent("N2O4").fugcoef(outlet.getPhase(0))
+        * outlet.getPhase(0).getComponent("N2O4").getz() * outlet.getPressure();
+
+    double K_equilibrium = (fugNO2 * fugNO2) / fugN2O4;
+
+    Assertions.assertEquals(0.3567, K_equilibrium, 0.001, "Equilibrium constant K");
+
+    // Assert fugacity coefficients are close to unity (nearly ideal gas behavior at 1 bara)
+    double fugCoefNO2 = outlet.getPhase(0).getComponent("NO2").getFugacityCoefficient();
+    double fugCoefN2O4 = outlet.getPhase(0).getComponent("N2O4").getFugacityCoefficient();
+
+    Assertions.assertEquals(0.9883, fugCoefNO2, 0.001, "NO2 fugacity coefficient");
+    Assertions.assertEquals(0.9886, fugCoefN2O4, 0.001, "N2O4 fugacity coefficient");
+
+  }
 }
