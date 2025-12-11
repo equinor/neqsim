@@ -159,6 +159,66 @@ public class ParallelSensitivityAnalysis {
 }
 ```
 
+### Reporting Results in Completion Order
+
+When running many simulations, you may want to process results as they finish rather than waiting for all to complete. Use the built-in `newCompletionService()` method:
+
+```java
+import java.util.concurrent.CompletionService;
+
+// Create CompletionService using the convenience method
+CompletionService<Integer> completionService = NeqSimThreadPool.newCompletionService();
+
+// Submit all processes, returning their index when done
+for (int i = 0; i < processes.size(); i++) {
+    final int index = i;
+    final ProcessSystem process = processes.get(i);
+    completionService.submit(() -> {
+        process.run();
+        return index;  // Return the index so we know which one completed
+    });
+}
+
+// Process results as they complete
+for (int i = 0; i < numProcesses; i++) {
+    // take() blocks until the next result is available
+    Future<Integer> completedFuture = completionService.take();
+    int completedIndex = completedFuture.get();
+    
+    ProcessSystem process = processes.get(completedIndex);
+    Separator sep = (Separator) process.getUnit("Separator");
+    double gasFlow = sep.getGasOutStream().getFlowRate("kg/hr");
+    
+    System.out.printf("Process %d completed: gas flow = %.2f kg/hr%n", 
+        completedIndex, gasFlow);
+}
+```
+
+### Polling for Completion (Non-blocking)
+
+For non-blocking checks, poll futures with `isDone()`:
+
+```java
+boolean[] reported = new boolean[numProcesses];
+int completedCount = 0;
+
+while (completedCount < numProcesses) {
+    for (int i = 0; i < numProcesses; i++) {
+        if (!reported[i] && futures.get(i).isDone()) {
+            // This one just completed
+            ProcessSystem process = processes.get(i);
+            System.out.printf("Process %d completed!%n", i);
+            
+            reported[i] = true;
+            completedCount++;
+        }
+    }
+    
+    // Do other work here while waiting...
+    Thread.sleep(10);
+}
+```
+
 ## Python Usage (via JPype)
 
 ### Setup
@@ -239,6 +299,69 @@ for i, process in enumerate(processes):
 # Display results
 for r in results:
     print(f"P={r['pressure']} bar: Gas={r['gas_flow']:.2f}, Liquid={r['liquid_flow']:.2f} kg/hr")
+```
+
+### Reporting Results in Completion Order (Python)
+
+Use the `newCompletionService()` method to get results as they finish:
+
+```python
+from java.util.concurrent import Callable
+
+# Create CompletionService using the convenience method
+completion_service = NeqSimThreadPool.newCompletionService()
+
+# Submit tasks that return their index when complete
+@jpype.JImplements(Callable)
+class IndexedSimulation:
+    def __init__(self, index, process):
+        self.index = index
+        self.process = process
+    
+    @jpype.JOverride
+    def call(self):
+        self.process.run()
+        return self.index
+
+# Submit all processes
+for i, process in enumerate(processes):
+    completion_service.submit(IndexedSimulation(i, process))
+
+# Get results in completion order
+print("Results in completion order:")
+for _ in range(len(processes)):
+    completed_future = completion_service.take()  # Blocks until next completes
+    index = completed_future.get()
+    
+    process = processes[index]
+    sep = process.getUnit(f"Separator-{index}")
+    gas_flow = sep.getGasOutStream().getFlowRate("kg/hr")
+    
+    print(f"  Process {index} completed: gas flow = {gas_flow:.2f} kg/hr")
+```
+
+### Polling for Completion (Python)
+
+```python
+# Track completion
+reported = [False] * len(processes)
+completed = 0
+
+while completed < len(processes):
+    for i, future in enumerate(futures):
+        if not reported[i] and future.isDone():
+            process = processes[i]
+            sep = process.getUnit(f"Separator-{i}")
+            gas_flow = sep.getGasOutStream().getFlowRate("kg/hr")
+            
+            print(f"Process {i} completed: gas flow = {gas_flow:.2f} kg/hr")
+            
+            reported[i] = True
+            completed += 1
+    
+    # Do other work while waiting...
+    import time
+    time.sleep(0.01)
 ```
 
 ### Using Callable for Direct Results
@@ -380,11 +503,18 @@ for i, future in enumerate(futures):
 | `submit(Runnable task)` | Submit a task, returns `Future<?>` |
 | `submit(Callable<T> task)` | Submit a task with result, returns `Future<T>` |
 | `execute(Runnable task)` | Fire-and-forget execution |
+| `newCompletionService()` | Create a `CompletionService<T>` for completion-order results |
 | `getPool()` | Get the underlying `ExecutorService` |
 | `getPoolSize()` | Get current pool size |
 | `setPoolSize(int size)` | Set pool size (recreates pool if needed) |
 | `getDefaultPoolSize()` | Get default size (available processors) |
 | `resetPoolSize()` | Reset to default size |
+| `setMaxQueueCapacity(int)` | Set bounded queue capacity (0 = unbounded) |
+| `getMaxQueueCapacity()` | Get current queue capacity setting |
+| `setAllowCoreThreadTimeout(boolean)` | Enable/disable idle thread termination |
+| `isAllowCoreThreadTimeout()` | Check if core thread timeout is enabled |
+| `setKeepAliveTimeSeconds(long)` | Set idle thread keep-alive time |
+| `getKeepAliveTimeSeconds()` | Get current keep-alive time |
 | `shutdown()` | Orderly shutdown |
 | `shutdownNow()` | Immediate shutdown |
 | `shutdownAndAwait(timeout, unit)` | Shutdown and wait for completion |
@@ -397,6 +527,81 @@ for i, future in enumerate(futures):
 |--------|-------------|
 | `runAsTask()` | Submit to thread pool, returns `Future<?>` |
 | `runAsThread()` | **Deprecated** - Creates unmanaged thread |
+
+## Advanced Configuration
+
+### Bounded Queue for HPC
+
+For extreme load scenarios (HPC clusters with thousands of simulations), you can limit the queue size to prevent memory exhaustion:
+
+```java
+// Set bounded queue with 10,000 task capacity
+NeqSimThreadPool.setMaxQueueCapacity(10_000);
+
+// Submit tasks - will throw RejectedExecutionException if queue overflows
+try {
+    for (int i = 0; i < numSimulations; i++) {
+        process.runAsTask();
+    }
+} catch (RejectedExecutionException e) {
+    System.err.println("Queue full - consider reducing batch size");
+}
+
+// Reset to unbounded queue
+NeqSimThreadPool.setMaxQueueCapacity(0);
+```
+
+### Core Thread Timeout for Long-Running Processes
+
+By default, threads in the pool stay alive forever waiting for new tasks. For long-running Python processes or memory-constrained environments, you can enable core thread timeout so idle threads are terminated after a period of inactivity:
+
+```java
+// Enable core thread timeout (threads die after being idle)
+NeqSimThreadPool.setAllowCoreThreadTimeout(true);
+
+// Optionally set custom keep-alive time (default is 600 seconds = 10 minutes)
+NeqSimThreadPool.setKeepAliveTimeSeconds(300);  // 5 minutes
+
+// Now idle threads will be terminated after 5 minutes
+// This frees memory when the pool is not in use
+```
+
+Python example for long-running services:
+
+```python
+from neqsim.util import NeqSimThreadPool
+
+# Enable core thread timeout for memory efficiency in long-running processes
+NeqSimThreadPool.setAllowCoreThreadTimeout(True)
+NeqSimThreadPool.setKeepAliveTimeSeconds(300)  # 5 minutes
+
+# Now use the pool normally - idle threads will be cleaned up automatically
+futures = [process.runAsTask() for process in batch]
+for future in futures:
+    future.get()
+
+# After 5 minutes of no activity, all threads will be terminated
+# New tasks will create new threads as needed
+```
+
+### Exception Handling
+
+The thread pool includes an `UncaughtExceptionHandler` that logs any exceptions that escape thread execution. This prevents silent failures during simulations:
+
+```java
+// Exceptions are logged automatically
+Future<?> future = NeqSimThreadPool.submit(() -> {
+    // If this throws, it will be logged AND captured in the Future
+    riskyOperation();
+});
+
+// Check for exceptions
+try {
+    future.get();
+} catch (ExecutionException e) {
+    System.err.println("Simulation failed: " + e.getCause().getMessage());
+}
+```
 
 ## Migration from runAsThread()
 
@@ -417,3 +622,4 @@ Benefits of `runAsTask()`:
 - Better resource utilization
 - `Future` API for cancellation and timeout
 - Consistent with modern Java concurrency patterns
+- Automatic exception logging

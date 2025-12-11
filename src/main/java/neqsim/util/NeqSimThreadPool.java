@@ -1,10 +1,15 @@
 package neqsim.util;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
@@ -50,6 +55,24 @@ public final class NeqSimThreadPool {
   private static final ThreadFactory DEFAULT_FACTORY = Executors.defaultThreadFactory();
 
   /**
+   * Maximum queue capacity for bounded queue mode. Set to 0 or negative for unbounded queue
+   * (default).
+   */
+  private static int maxQueueCapacity = 0;
+
+  /**
+   * Whether to allow core threads to time out and terminate when idle. Default is false (threads
+   * stay alive forever).
+   */
+  private static boolean allowCoreThreadTimeout = false;
+
+  /**
+   * Keep-alive time for idle threads in seconds. Only applies when allowCoreThreadTimeout is true.
+   * Default is 60 seconds.
+   */
+  private static long keepAliveTimeSeconds = 600;
+
+  /**
    * Private constructor to prevent instantiation.
    */
   private NeqSimThreadPool() {
@@ -79,12 +102,41 @@ public final class NeqSimThreadPool {
    */
   private static ExecutorService createPool() {
     logger.info("Creating NeqSim thread pool with {} threads", poolSize);
-    return Executors.newFixedThreadPool(poolSize, r -> {
+
+    ThreadFactory threadFactory = r -> {
       Thread t = DEFAULT_FACTORY.newThread(r);
       t.setDaemon(true);
       t.setName("NeqSim-Worker-" + THREAD_COUNTER.getAndIncrement());
+      t.setUncaughtExceptionHandler((th, ex) -> {
+        logger.error("Uncaught exception in thread " + th.getName(), ex);
+      });
       return t;
-    });
+    };
+
+    ThreadPoolExecutor executor;
+    if (maxQueueCapacity > 0) {
+      // Bounded queue for extreme load scenarios (HPC)
+      logger.info("Using bounded queue with capacity {}", maxQueueCapacity);
+      RejectedExecutionHandler rejectionHandler = (runnable, ex) -> {
+        logger.warn("Task rejected due to queue overflow. Consider increasing queue capacity.");
+        throw new java.util.concurrent.RejectedExecutionException(
+            "Task rejected: queue capacity exceeded (" + maxQueueCapacity + ")");
+      };
+      executor = new ThreadPoolExecutor(poolSize, poolSize, keepAliveTimeSeconds, TimeUnit.SECONDS,
+          new LinkedBlockingQueue<>(maxQueueCapacity), threadFactory, rejectionHandler);
+    } else {
+      // Unbounded queue (default behavior)
+      executor = new ThreadPoolExecutor(poolSize, poolSize, keepAliveTimeSeconds, TimeUnit.SECONDS,
+          new LinkedBlockingQueue<>(), threadFactory);
+    }
+
+    // Allow core threads to timeout when idle (for memory efficiency in long-running processes)
+    if (allowCoreThreadTimeout) {
+      executor.allowCoreThreadTimeOut(true);
+      logger.info("Core thread timeout enabled with {} seconds keep-alive", keepAliveTimeSeconds);
+    }
+
+    return executor;
   }
 
   /**
@@ -123,6 +175,42 @@ public final class NeqSimThreadPool {
   }
 
   /**
+   * Creates a new {@link CompletionService} backed by the shared thread pool.
+   *
+   * <p>
+   * A CompletionService allows you to submit multiple tasks and retrieve their results in
+   * completion order (i.e., as each task finishes) rather than submission order. This is useful
+   * when you want to process results as soon as they become available.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * {@code
+   * CompletionService<Double> cs = NeqSimThreadPool.newCompletionService();
+   * for (ProcessSystem p : processes) {
+   *   cs.submit(() -> {
+   *     p.run();
+   *     return p.getResult();
+   *   });
+   * }
+   * for (int i = 0; i < processes.size(); i++) {
+   *   Double result = cs.take().get(); // Results arrive in completion order
+   *   System.out.println("Got result: " + result);
+   * }
+   * }
+   * </pre>
+   *
+   * @param <T> the type of results produced by the tasks
+   * @return a new {@link CompletionService} backed by the shared thread pool
+   */
+  public static <T> CompletionService<T> newCompletionService() {
+    return new ExecutorCompletionService<>(getPool());
+  }
+
+  /**
    * Sets the pool size. This must be called before the pool is first accessed. If called after the
    * pool has been created, it will recreate the pool with the new size (existing tasks will
    * complete).
@@ -152,6 +240,113 @@ public final class NeqSimThreadPool {
    */
   public static int getPoolSize() {
     return poolSize;
+  }
+
+  /**
+   * Sets the maximum queue capacity for bounded queue mode.
+   *
+   * <p>
+   * For HPC or extreme load scenarios, you can limit the queue size to prevent memory exhaustion.
+   * When the queue is full, new task submissions will be rejected with a
+   * {@link java.util.concurrent.RejectedExecutionException}.
+   * </p>
+   *
+   * <p>
+   * Set to 0 or negative to use unbounded queue (default). This must be called before the pool is
+   * first accessed, or the pool will be recreated.
+   * </p>
+   *
+   * @param capacity the maximum number of tasks that can wait in the queue (0 = unbounded)
+   */
+  public static void setMaxQueueCapacity(int capacity) {
+    synchronized (LOCK) {
+      maxQueueCapacity = capacity;
+      if (pool != null && !pool.isShutdown()) {
+        shutdownAndAwait(5, TimeUnit.SECONDS);
+        pool = createPool();
+        logger.info("NeqSim thread pool queue capacity set to {}",
+            capacity > 0 ? capacity : "unbounded");
+      }
+    }
+  }
+
+  /**
+   * Gets the current maximum queue capacity.
+   *
+   * @return the configured queue capacity (0 = unbounded)
+   */
+  public static int getMaxQueueCapacity() {
+    return maxQueueCapacity;
+  }
+
+  /**
+   * Enables or disables core thread timeout.
+   *
+   * <p>
+   * When enabled, idle core threads will be terminated after the keep-alive time. This is useful
+   * for long-running Python processes or when memory efficiency is important.
+   * </p>
+   *
+   * <p>
+   * By default, core threads stay alive forever. When enabled with the default keep-alive time of
+   * 60 seconds, idle threads will be freed after 60 seconds of inactivity.
+   * </p>
+   *
+   * @param allow true to allow core threads to timeout, false to keep them alive forever
+   */
+  public static void setAllowCoreThreadTimeout(boolean allow) {
+    synchronized (LOCK) {
+      allowCoreThreadTimeout = allow;
+      if (pool != null && !pool.isShutdown()) {
+        shutdownAndAwait(5, TimeUnit.SECONDS);
+        pool = createPool();
+        logger.info("Core thread timeout {}", allow ? "enabled" : "disabled");
+      }
+    }
+  }
+
+  /**
+   * Checks if core thread timeout is enabled.
+   *
+   * @return true if core threads are allowed to timeout when idle
+   */
+  public static boolean isAllowCoreThreadTimeout() {
+    return allowCoreThreadTimeout;
+  }
+
+  /**
+   * Sets the keep-alive time for idle threads.
+   *
+   * <p>
+   * This only takes effect when core thread timeout is enabled via
+   * {@link #setAllowCoreThreadTimeout(boolean)}.
+   * </p>
+   *
+   * @param seconds the time in seconds that idle threads should wait before terminating
+   * @throws IllegalArgumentException if seconds is less than 1
+   */
+  public static void setKeepAliveTimeSeconds(long seconds) {
+    if (seconds < 1) {
+      throw new IllegalArgumentException(
+          "Keep-alive time must be at least 1 second, was: " + seconds);
+    }
+    synchronized (LOCK) {
+      keepAliveTimeSeconds = seconds;
+      if (pool != null && !pool.isShutdown() && allowCoreThreadTimeout) {
+        shutdownAndAwait(5, TimeUnit.SECONDS);
+        pool = createPool();
+        logger.info("Keep-alive time set to {} seconds", seconds);
+      }
+    }
+  }
+
+  /**
+   * Gets the current keep-alive time for idle threads.
+   *
+   * @return the keep-alive time in seconds
+   */
+  public static long getKeepAliveTimeSeconds() {
+    return keepAliveTimeSeconds;
   }
 
   /**

@@ -90,6 +90,33 @@ class NeqSimThreadPoolTest {
     assertEquals(42, future.get(5, TimeUnit.SECONDS));
   }
 
+  @Test
+  void testNewCompletionService() throws Exception {
+    java.util.concurrent.CompletionService<Integer> cs = NeqSimThreadPool.newCompletionService();
+    assertNotNull(cs);
+
+    // Submit 5 tasks
+    for (int i = 1; i <= 5; i++) {
+      final int value = i;
+      cs.submit(() -> value * 10);
+    }
+
+    // Collect results as they complete
+    List<Integer> results = new ArrayList<>();
+    for (int i = 0; i < 5; i++) {
+      Future<Integer> completed = cs.take(); // Blocks until next result available
+      results.add(completed.get());
+    }
+
+    // Verify all results received (order may vary due to parallelism)
+    assertEquals(5, results.size());
+    assertTrue(results.contains(10));
+    assertTrue(results.contains(20));
+    assertTrue(results.contains(30));
+    assertTrue(results.contains(40));
+    assertTrue(results.contains(50));
+  }
+
   /**
    * Creates a process system with a feed stream, valve, and separator. Each process is independent
    * with its own fluid system.
@@ -228,5 +255,202 @@ class NeqSimThreadPoolTest {
         + " ms (using " + NeqSimThreadPool.getPoolSize() + " threads)");
     System.out
         .println("Speedup factor: " + String.format("%.2f", (double) seqDuration / parDuration));
+  }
+
+  /**
+   * Test reporting results in completion order using CompletionService. This is useful when you
+   * want to process results as soon as they become available, rather than waiting for all to
+   * complete.
+   */
+  @Test
+  void testReportResultsInCompletionOrder() throws Exception {
+    final int numProcesses = 10;
+
+    // Create processes with varying complexity (different pressures affect computation time)
+    List<ProcessSystem> processes = new ArrayList<>();
+    for (int i = 0; i < numProcesses; i++) {
+      // Reverse order so higher IDs have lower pressure (may complete in different order)
+      double pressure = 50.0 - i * 3.0;
+      ProcessSystem process = createSimpleProcess(i, pressure);
+      processes.add(process);
+    }
+
+    // Use the built-in newCompletionService() method
+    java.util.concurrent.CompletionService<Integer> completionService =
+        NeqSimThreadPool.newCompletionService();
+
+    // Submit all processes, returning their index when done
+    for (int i = 0; i < processes.size(); i++) {
+      final int index = i;
+      final ProcessSystem process = processes.get(i);
+      completionService.submit(() -> {
+        process.run();
+        return index;
+      });
+    }
+
+    System.out.println("\nResults in completion order:");
+    List<Integer> completionOrder = new ArrayList<>();
+
+    // Collect results as they complete
+    for (int i = 0; i < numProcesses; i++) {
+      // take() blocks until the next result is available
+      Future<Integer> completedFuture = completionService.take();
+      int completedIndex = completedFuture.get();
+      completionOrder.add(completedIndex);
+
+      ProcessSystem process = processes.get(completedIndex);
+      Separator sep = (Separator) process.getUnit("Separator-" + completedIndex);
+      double gasFlow = sep.getGasOutStream().getFlowRate("kg/hr");
+
+      System.out.printf("  Process %d completed: gas flow = %.2f kg/hr%n", completedIndex, gasFlow);
+    }
+
+    // Verify all processes completed
+    assertEquals(numProcesses, completionOrder.size());
+    for (ProcessSystem process : processes) {
+      assertTrue(process.solved());
+    }
+
+    System.out.println("Completion order: " + completionOrder);
+  }
+
+  /**
+   * Test polling futures to report results as they complete without blocking. This approach allows
+   * you to do other work while waiting for results.
+   */
+  @Test
+  void testPollFuturesForCompletion() throws Exception {
+    final int numProcesses = 8;
+
+    // Create processes
+    List<ProcessSystem> processes = new ArrayList<>();
+    List<Future<?>> futures = new ArrayList<>();
+
+    for (int i = 0; i < numProcesses; i++) {
+      ProcessSystem process = createSimpleProcess(i, 30.0 + i * 5);
+      processes.add(process);
+      futures.add(process.runAsTask());
+    }
+
+    // Track which have been reported
+    boolean[] reported = new boolean[numProcesses];
+    int completedCount = 0;
+
+    System.out.println("\nPolling for completed processes:");
+
+    // Poll until all complete
+    while (completedCount < numProcesses) {
+      for (int i = 0; i < numProcesses; i++) {
+        if (!reported[i] && futures.get(i).isDone()) {
+          // This one just completed - report it
+          ProcessSystem process = processes.get(i);
+          Separator sep = (Separator) process.getUnit("Separator-" + i);
+          double gasFlow = sep.getGasOutStream().getFlowRate("kg/hr");
+
+          System.out.printf("  Process %d done: gas flow = %.2f kg/hr%n", i, gasFlow);
+
+          reported[i] = true;
+          completedCount++;
+        }
+      }
+
+      // Could do other work here while waiting
+      if (completedCount < numProcesses) {
+        Thread.sleep(1); // Small sleep to avoid busy-waiting
+      }
+    }
+
+    // Verify all completed successfully
+    for (int i = 0; i < numProcesses; i++) {
+      assertTrue(processes.get(i).solved(), "Process " + i + " should be solved");
+    }
+  }
+
+  /**
+   * Test that bounded queue mode works correctly.
+   */
+  @Test
+  void testBoundedQueueMode() throws Exception {
+    // Set a bounded queue
+    NeqSimThreadPool.setMaxQueueCapacity(100);
+    assertEquals(100, NeqSimThreadPool.getMaxQueueCapacity());
+
+    // Submit some tasks - should work fine within capacity
+    List<Future<?>> futures = new ArrayList<>();
+    for (int i = 0; i < 10; i++) {
+      futures.add(NeqSimThreadPool.submit(() -> {
+        try {
+          Thread.sleep(10);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+      }));
+    }
+
+    // Wait for all to complete
+    for (Future<?> future : futures) {
+      future.get(5, TimeUnit.SECONDS);
+    }
+
+    // Reset to unbounded
+    NeqSimThreadPool.setMaxQueueCapacity(0);
+    assertEquals(0, NeqSimThreadPool.getMaxQueueCapacity());
+  }
+
+  /**
+   * Test that exceptions in tasks are logged (via UncaughtExceptionHandler for direct Thread
+   * exceptions) and captured in Future for submitted tasks.
+   */
+  @Test
+  void testExceptionHandling() throws Exception {
+    // Submit a task that throws an exception
+    Future<?> future = NeqSimThreadPool.submit(() -> {
+      throw new RuntimeException("Test exception for logging");
+    });
+
+    // The exception should be captured in the Future
+    Exception exception = assertThrows(java.util.concurrent.ExecutionException.class, () -> {
+      future.get(5, TimeUnit.SECONDS);
+    });
+
+    assertTrue(exception.getCause() instanceof RuntimeException);
+    assertEquals("Test exception for logging", exception.getCause().getMessage());
+  }
+
+  /**
+   * Test core thread timeout configuration.
+   */
+  @Test
+  void testCoreThreadTimeout() throws Exception {
+    // Default should be disabled with 600 seconds (10 minutes) keep-alive
+    assertFalse(NeqSimThreadPool.isAllowCoreThreadTimeout());
+    assertEquals(600, NeqSimThreadPool.getKeepAliveTimeSeconds());
+
+    // Enable core thread timeout
+    NeqSimThreadPool.setAllowCoreThreadTimeout(true);
+    assertTrue(NeqSimThreadPool.isAllowCoreThreadTimeout());
+
+    // Change keep-alive time
+    NeqSimThreadPool.setKeepAliveTimeSeconds(30);
+    assertEquals(30, NeqSimThreadPool.getKeepAliveTimeSeconds());
+
+    // Verify pool still works
+    Future<?> future = NeqSimThreadPool.submit(() -> {
+      // Simple task
+    });
+    future.get(5, TimeUnit.SECONDS);
+
+    // Reset to defaults
+    NeqSimThreadPool.setAllowCoreThreadTimeout(false);
+    NeqSimThreadPool.setKeepAliveTimeSeconds(600);
+    assertFalse(NeqSimThreadPool.isAllowCoreThreadTimeout());
+  }
+
+  @Test
+  void testKeepAliveTimeValidation() {
+    assertThrows(IllegalArgumentException.class, () -> NeqSimThreadPool.setKeepAliveTimeSeconds(0));
+    assertThrows(IllegalArgumentException.class,
+        () -> NeqSimThreadPool.setKeepAliveTimeSeconds(-1));
   }
 }
