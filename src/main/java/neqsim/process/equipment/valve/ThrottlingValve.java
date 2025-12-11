@@ -242,6 +242,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       return;
     }
 
+    // Initialize properties only once on the cloned system (needed for phase detection and
+    // enthalpy)
     thermoSystem.initProperties();
 
     if (thermoSystem.hasPhaseType(PhaseType.GAS) && thermoSystem.getVolumeFraction(0) > 0.5) {
@@ -254,11 +256,11 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
       calcKv();
       valveKvSet = true;
     }
-    inStream.getThermoSystem().initProperties();
+    // Use already-initialized thermoSystem for enthalpy instead of calling initProperties again on
+    // inlet
     double enthalpy = thermoSystem.getEnthalpy();
 
     double outPres = getOutletStream().getThermoSystem().getPressure();
-    double molarFlowStart = getInletStream().getThermoSystem().getFlowRate("mole/sec");
     // first estimate of flow from current outlet pressure
     // Calculate molar flow rate for gas directly here (without calling
     // calculateMolarFlowRateGas)
@@ -296,8 +298,16 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
-    if (isIsoThermal() || Math.abs(pressure - inStream.getThermoSystem().getPressure()) < 1e-6
-        || thermoSystem.getTotalNumberOfMoles() < 1e-12 || pressure == 0) {
+
+    // Calculate pressure ratio to determine if TPflash can be used as approximation
+    double inletPres = inStream.getThermoSystem().getPressure();
+    double pressureRatio = Math.abs(pressure - inletPres) / inletPres;
+
+    // Use TPflash for isothermal operation, negligible pressure change, or very small flow
+    // For small pressure changes (<0.5%), the temperature change via Joule-Thomson is minimal
+    // and TPflash provides a good approximation with much better performance
+    if (isIsoThermal() || pressureRatio < 0.005 || thermoSystem.getTotalNumberOfMoles() < 1e-12
+        || pressure == 0) {
       thermoSystem.setPressure(outPres, pressureUnit);
       thermoOps.TPflash();
     } else {
