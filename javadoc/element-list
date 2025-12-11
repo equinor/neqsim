@@ -61,6 +61,7 @@ neqsim.fluidmechanics.geometrydefinitions.pipe
 neqsim.fluidmechanics.geometrydefinitions.reactor
 neqsim.fluidmechanics.geometrydefinitions.stirredcell
 neqsim.fluidmechanics.geometrydefinitions.surrounding
+neqsim.fluidmechanics.util
 neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualization
 neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualization.onephaseflownodevisualization
 neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualization.onephaseflownodevisualization.onephasepipeflownodevisualization
@@ -136,6 +137,9 @@ neqsim.process.equipment.membrane
 neqsim.process.equipment.mixer
 neqsim.process.equipment.network
 neqsim.process.equipment.pipeline
+neqsim.process.equipment.pipeline.twophasepipe
+neqsim.process.equipment.pipeline.twophasepipe.closure
+neqsim.process.equipment.pipeline.twophasepipe.numerics
 neqsim.process.equipment.powergeneration
 neqsim.process.equipment.pump
 neqsim.process.equipment.reactor
@@ -178,8 +182,10 @@ neqsim.process.processmodel.processmodules
 neqsim.process.safety
 neqsim.process.safety.dto
 neqsim.process.util.example
+neqsim.process.util.fielddevelopment
 neqsim.process.util.fire
 neqsim.process.util.monitor
+neqsim.process.util.optimization
 neqsim.process.util.report
 neqsim.process.util.report.safety
 neqsim.process.util.scenario
