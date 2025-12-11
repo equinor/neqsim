@@ -140,7 +140,9 @@ public class ProductionProfile implements Serializable {
    * Immutable class that holds all parameters needed to calculate production rate at any point in
    * time using Arps decline curve equations.
    *
-   * <h3>Parameter Guidelines</h3>
+   * <p>
+   * <b>Parameter Guidelines</b>
+   * </p>
    * <table border="1">
    * <caption>Typical decline parameters by reservoir type</caption>
    * <tr>
