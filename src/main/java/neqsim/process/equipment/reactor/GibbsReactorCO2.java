@@ -59,7 +59,7 @@ public class GibbsReactorCO2 extends TwoPortEquipment {
   private static final double DEFAULT_DAMPING = 0.01;
 
   /** Default maximum number of iterations for convergence. */
-  private static final int DEFAULT_MAX_ITERATIONS = 15000;
+  private static final int DEFAULT_MAX_ITERATIONS = 5000;
 
   /** Default convergence tolerance for the reactor. */
   private static final double DEFAULT_TOLERANCE = 1e-3;
