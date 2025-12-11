@@ -171,12 +171,31 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
+   * Runs this module in a separate thread using the global NeqSim thread pool.
+   *
+   * <p>
+   * This method submits the module to the shared {@link neqsim.util.NeqSimThreadPool} and returns a
+   * {@link java.util.concurrent.Future} that can be used to monitor completion, cancel the task, or
+   * retrieve any exceptions that occurred.
+   * </p>
+   *
+   * @return a {@link java.util.concurrent.Future} representing the pending completion of the task
+   * @see neqsim.util.NeqSimThreadPool
+   */
+  public java.util.concurrent.Future<?> runAsTask() {
+    return neqsim.util.NeqSimThreadPool.submit(this);
+  }
+
+  /**
    * <p>
    * runAsThread.
    * </p>
    *
    * @return a {@link java.lang.Thread} object
+   * @deprecated Use {@link #runAsTask()} instead for better resource management. This method
+   *             creates a new unmanaged thread directly.
    */
+  @Deprecated
   public Thread runAsThread() {
     Thread processThread = new Thread(this);
     processThread.start();
