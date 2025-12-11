@@ -248,6 +248,8 @@ public class VotingEvaluator<T> {
 
   /**
    * Internal class to store voting input with fault status.
+   *
+   * @param <T> the type of value stored in this voting input
    */
   private static class VotingInput<T> {
     final T value;
