@@ -453,4 +453,99 @@ class NeqSimThreadPoolTest {
     assertThrows(IllegalArgumentException.class,
         () -> NeqSimThreadPool.setKeepAliveTimeSeconds(-1));
   }
+
+  /**
+   * Benchmark comparing old runAsThread() vs new runAsTask() approach.
+   * 
+   * This test demonstrates the performance difference between: - runAsThread(): Creates a new
+   * Thread for each process (unmanaged) - runAsTask(): Uses the managed thread pool (reuses
+   * threads)
+   */
+  @Test
+  @SuppressWarnings("deprecation")
+  void testRunAsThreadVsRunAsTask() throws Exception {
+    final int numProcesses = 20;
+    final int numRuns = 3; // Run multiple times to warm up and get stable results
+
+    System.out.println("\n=== Benchmark: runAsThread() vs runAsTask() ===");
+    System.out.println(
+        "Running " + numProcesses + " process simulations, " + numRuns + " iterations each\n");
+
+    long totalThreadTime = 0;
+    long totalTaskTime = 0;
+
+    for (int run = 0; run < numRuns; run++) {
+      // --- Test OLD WAY: runAsThread() ---
+      List<ProcessSystem> threadProcesses = new ArrayList<>();
+      List<Thread> threads = new ArrayList<>();
+      for (int i = 0; i < numProcesses; i++) {
+        threadProcesses.add(createSimpleProcess(i, 25.0 + i));
+      }
+
+      long threadStart = System.nanoTime();
+      for (ProcessSystem process : threadProcesses) {
+        Thread t = process.runAsThread(); // Deprecated - creates new thread each time
+        threads.add(t);
+      }
+      for (Thread t : threads) {
+        t.join(); // Wait for all threads
+      }
+      long threadDuration = (System.nanoTime() - threadStart) / 1_000_000; // Convert to ms
+      totalThreadTime += threadDuration;
+
+      // Verify all completed
+      for (ProcessSystem process : threadProcesses) {
+        assertTrue(process.solved(), "Thread-based process should be solved");
+      }
+
+      // --- Test NEW WAY: runAsTask() ---
+      List<ProcessSystem> taskProcesses = new ArrayList<>();
+      List<Future<?>> futures = new ArrayList<>();
+      for (int i = 0; i < numProcesses; i++) {
+        taskProcesses.add(createSimpleProcess(i + 1000, 25.0 + i));
+      }
+
+      long taskStart = System.nanoTime();
+      for (ProcessSystem process : taskProcesses) {
+        Future<?> future = process.runAsTask(); // Uses thread pool
+        futures.add(future);
+      }
+      for (Future<?> future : futures) {
+        future.get(60, TimeUnit.SECONDS);
+      }
+      long taskDuration = (System.nanoTime() - taskStart) / 1_000_000; // Convert to ms
+      totalTaskTime += taskDuration;
+
+      // Verify all completed
+      for (ProcessSystem process : taskProcesses) {
+        assertTrue(process.solved(), "Task-based process should be solved");
+      }
+
+      System.out.println("Run " + (run + 1) + ": runAsThread=" + threadDuration + "ms, runAsTask="
+          + taskDuration + "ms");
+    }
+
+    // Calculate averages
+    double avgThreadTime = (double) totalThreadTime / numRuns;
+    double avgTaskTime = (double) totalTaskTime / numRuns;
+    double improvement = ((avgThreadTime - avgTaskTime) / avgThreadTime) * 100;
+
+    System.out.println("\n--- Results ---");
+    System.out
+        .println("Average runAsThread() time: " + String.format("%.1f", avgThreadTime) + " ms");
+    System.out.println("Average runAsTask() time:   " + String.format("%.1f", avgTaskTime) + " ms");
+    System.out.println("Pool size: " + NeqSimThreadPool.getPoolSize() + " threads");
+
+    if (avgTaskTime < avgThreadTime) {
+      System.out.println("runAsTask() is " + String.format("%.1f", improvement) + "% faster");
+    } else if (avgTaskTime > avgThreadTime) {
+      System.out.println("runAsThread() is " + String.format("%.1f", -improvement) + "% faster");
+    } else {
+      System.out.println("Both methods performed equally");
+    }
+
+    System.out.println("\nNote: The main benefit of runAsTask() is resource management,");
+    System.out.println("      not raw speed. It prevents thread explosion and provides");
+    System.out.println("      Future API for cancellation, timeout, and exception handling.");
+  }
 }
