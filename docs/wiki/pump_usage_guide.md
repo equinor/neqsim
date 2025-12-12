@@ -333,3 +333,115 @@ if (pump.isCavitating()) {
     System.out.println("WARNING: Cavitation risk!");
 }
 ```
+
+---
+
+## Example: Pump with Suction Line (Python)
+
+This example demonstrates a realistic pump configuration where a suction line connects an upstream separator to the pump. The suction piping introduces pressure losses and static head changes that directly affect the NPSH available at the pump inlet. Properly modeling the suction line is critical for accurate cavitation assessment.
+
+### Why Model the Suction Line?
+
+In real installations, the pump does not receive fluid directly at separator conditions. The suction piping introduces:
+
+1. **Frictional pressure losses** - Depends on pipe length, diameter, roughness, flow rate, and fluid properties
+2. **Static head changes** - Elevation difference between liquid source and pump centerline
+3. **Minor losses** - Valves, elbows, filters, and other fittings (not shown in this example)
+
+These effects reduce the pressure at the pump suction flange relative to the source, directly impacting NPSHa. Ignoring suction line effects can lead to:
+- Underestimating cavitation risk
+- Pump damage in operation
+- Performance degradation and efficiency loss
+
+### Example Code
+
+```python
+import neqsim
+
+# Get the oil outlet stream from an upstream separator
+# (This would typically come from a configured process system)
+pump_feed = oseberg_process.get('main process').getUnit('3RD stage separator').getOilOutStream()
+
+# --- Suction Line Configuration ---
+# Model the piping between separator and pump using Beggs & Brill correlation
+# This accounts for friction losses and elevation effects
+
+suctionLine = neqsim.process.equipment.pipeline.PipeBeggsAndBrills("SuctionLine", pump_feed)
+suctionLine.setLength(20.0)           # Pipe length in meters
+suctionLine.setDiameter(0.2)          # Internal diameter in meters (200 mm)
+suctionLine.setPipeWallRoughness(1.0e-5)  # Internal roughness in meters (~smooth pipe)
+suctionLine.setElevation(-20)         # Pump is 20 m below separator (positive static head)
+
+suctionLine.run()
+
+# --- Pump Configuration ---
+# Create the pump taking suction from the pipe outlet
+
+pump1 = neqsim.process.equipment.pump.Pump('oil pump', suctionLine.getOutStream())
+pump1.setOutletPressure(60.0, 'bara')  # Required discharge pressure
+pump1.setCheckNPSH(True)               # Enable cavitation monitoring
+pump1.setNPSHMargin(1.3)               # Require NPSHa >= 1.3 × NPSHr
+
+# --- Pump Performance Curves ---
+# Define pump characteristic curves at the operating speed
+# These are typically from manufacturer datasheets
+
+speed = [3259]                            # Pump speed in RPM
+flow = [[1, 50, 70, 130]]                 # Flow points in m³/hr
+head = [[250, 240, 230, 180]]             # Head in meters at each flow
+eff = [[5, 40, 50, 52]]                   # Efficiency in % at each flow
+npsh = [[2.0, 4.3, 6.0, 8.0]]             # NPSHr curve in meters
+
+pump1.getPumpChart().setCurves([], speed, flow, head, eff)
+pump1.getPumpChart().setNPSHCurve(npsh)
+pump1.getPumpChart().setHeadUnit("meter")
+pump1.setSpeed(3259)
+
+pump1.run()
+
+# --- Results Analysis ---
+print("=== Pump & Suction Line Results ===")
+print(f"Flow rate (m3/hr): {pump_feed.getFlowRate('idSm3/hr')}")
+print(f"Separator outlet pressure (bara): {pump_feed.getPressure('bara')}")
+print(f"Pump inlet pressure (bara): {pump1.getInletPressure()}")
+print(f"Pump outlet pressure (bara): {pump1.getOutletPressure()}")
+print(f"Pump NPSHa (meter): {pump1.getNPSHAvailable()}")
+print(f"Pump NPSHr (meter): {pump1.getNPSHRequired()}")
+print(f"Pump power (kW): {pump1.getPower('kW')}")
+print(f"Cavitation risk: {'YES' if pump1.isCavitating() else 'NO'}")
+```
+
+### Key Points
+
+| Parameter | Purpose |
+|-----------|---------|
+| `setLength(20.0)` | Total equivalent length of suction piping including fittings |
+| `setDiameter(0.2)` | Internal pipe diameter - larger diameter reduces friction loss |
+| `setPipeWallRoughness(1.0e-5)` | Surface roughness; affects friction factor |
+| `setElevation(-20)` | Negative elevation means pump is below source (increases NPSHa) |
+| `setCheckNPSH(True)` | Enables automatic cavitation detection |
+| `setNPSHMargin(1.3)` | Safety factor; typical values 1.1–1.5 |
+| `setNPSHCurve(npsh)` | Required NPSH as function of flow from pump datasheet |
+
+### Understanding the Results
+
+- **Separator outlet pressure vs. Pump inlet pressure**: The difference shows the pressure drop across the suction line. If the pump inlet pressure is much lower than expected, consider increasing pipe diameter or reducing length.
+
+- **NPSHa vs. NPSHr**: NPSHa must exceed NPSHr by the specified margin. If `isCavitating()` returns `True`, consider:
+  - Raising the liquid level in the source vessel
+  - Lowering the pump elevation (more negative elevation)
+  - Increasing pipe diameter to reduce friction losses
+  - Reducing fluid temperature (lowers vapor pressure)
+  - Reducing pump speed (lowers NPSHr)
+
+- **Static head contribution**: With a -20 m elevation (pump below separator), the static head adds approximately 20 m × ρ × g to the suction pressure, which is beneficial for NPSHa.
+
+### Design Considerations
+
+1. **Suction pipe sizing**: Velocity in suction lines should typically be 1–2 m/s for liquids to minimize friction losses while avoiding sedimentation.
+
+2. **Elevation effects**: Locating the pump below the liquid source is the most reliable way to ensure adequate NPSHa.
+
+3. **Temperature sensitivity**: Hot liquids have higher vapor pressure, reducing NPSHa. Consider subcooling or elevated suction pressure for near-boiling liquids.
+
+4. **Transient conditions**: During startup or upset conditions, flow rates may exceed design, increasing NPSHr while simultaneously increasing suction line losses—always check NPSHa at maximum expected flow.
