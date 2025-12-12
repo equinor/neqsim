@@ -342,13 +342,14 @@ This example demonstrates a realistic pump configuration where a suction line co
 
 ### Why Model the Suction Line?
 
-In real installations, the pump does not receive fluid directly at separator conditions. The suction piping introduces:
+In real installations, the pump does not receive fluid directly at separator conditions. The suction system introduces:
 
-1. **Frictional pressure losses** - Depends on pipe length, diameter, roughness, flow rate, and fluid properties
-2. **Static head changes** - Elevation difference between liquid source and pump centerline
-3. **Minor losses** - Valves, elbows, filters, and other fittings (not shown in this example)
+1. **Valve pressure drop** - Control or isolation valves at the separator outlet cause pressure loss depending on Cv and flow rate
+2. **Frictional pressure losses** - Depends on pipe length, diameter, roughness, flow rate, and fluid properties
+3. **Static head changes** - Elevation difference between liquid source and pump centerline
+4. **Minor losses** - Elbows, filters, and other fittings
 
-These effects reduce the pressure at the pump suction flange relative to the source, directly impacting NPSHa. Ignoring suction line effects can lead to:
+These effects reduce the pressure at the pump suction flange relative to the source, directly impacting NPSHa. Ignoring suction system effects can lead to:
 - Underestimating cavitation risk
 - Pump damage in operation
 - Performance degradation and efficiency loss
@@ -362,11 +363,22 @@ import neqsim
 # (This would typically come from a configured process system)
 pump_feed = oseberg_process.get('main process').getUnit('3RD stage separator').getOilOutStream()
 
+# --- Separator Outlet Valve ---
+# Model the isolation/control valve at the separator oil outlet
+# Cv sizing: For a 6" valve (DN150) with full port, typical Cv ≈ 400-500
+# For a 4" valve (DN100), typical Cv ≈ 150-200
+
+separatorValve = neqsim.process.equipment.valve.ThrottlingValve("SeparatorOutletValve", pump_feed)
+separatorValve.setCv(350)              # Valve Cv (flow coefficient in US gpm/psi^0.5)
+separatorValve.setPercentValveOpening(80)  # 80% open - allows for control margin
+
+separatorValve.run()
+
 # --- Suction Line Configuration ---
-# Model the piping between separator and pump using Beggs & Brill correlation
+# Model the piping between separator valve and pump using Beggs & Brill correlation
 # This accounts for friction losses and elevation effects
 
-suctionLine = neqsim.process.equipment.pipeline.PipeBeggsAndBrills("SuctionLine", pump_feed)
+suctionLine = neqsim.process.equipment.pipeline.PipeBeggsAndBrills("SuctionLine", separatorValve.getOutletStream())
 suctionLine.setLength(20.0)           # Pipe length in meters
 suctionLine.setDiameter(0.2)          # Internal diameter in meters (200 mm)
 suctionLine.setPipeWallRoughness(1.0e-5)  # Internal roughness in meters (~smooth pipe)
@@ -400,9 +412,11 @@ pump1.setSpeed(3259)
 pump1.run()
 
 # --- Results Analysis ---
-print("=== Pump & Suction Line Results ===")
+print("=== Pump & Suction System Results ===")
 print(f"Flow rate (m3/hr): {pump_feed.getFlowRate('idSm3/hr')}")
 print(f"Separator outlet pressure (bara): {pump_feed.getPressure('bara')}")
+print(f"Valve outlet pressure (bara): {separatorValve.getOutletPressure()}")
+print(f"Valve pressure drop (bar): {separatorValve.getDeltaP()}")
 print(f"Pump inlet pressure (bara): {pump1.getInletPressure()}")
 print(f"Pump outlet pressure (bara): {pump1.getOutletPressure()}")
 print(f"Pump NPSHa (meter): {pump1.getNPSHAvailable()}")
@@ -415,6 +429,8 @@ print(f"Cavitation risk: {'YES' if pump1.isCavitating() else 'NO'}")
 
 | Parameter | Purpose |
 |-----------|---------|
+| `setCv(350)` | Valve flow coefficient - determines pressure drop for given flow |
+| `setPercentValveOpening(80)` | Valve position (0-100%); partially open for control margin |
 | `setLength(20.0)` | Total equivalent length of suction piping including fittings |
 | `setDiameter(0.2)` | Internal pipe diameter - larger diameter reduces friction loss |
 | `setPipeWallRoughness(1.0e-5)` | Surface roughness; affects friction factor |
