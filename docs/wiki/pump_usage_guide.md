@@ -370,6 +370,7 @@ pump_feed = oseberg_process.get('main process').getUnit('3RD stage separator').g
 
 separatorValve = neqsim.process.equipment.valve.ThrottlingValve("SeparatorOutletValve", pump_feed)
 separatorValve.setCv(350)              # Valve Cv (flow coefficient in US gpm/psi^0.5)
+separatorValve.setIsCalcOutPressure(True) 
 separatorValve.setPercentValveOpening(80)  # 80% open - allows for control margin
 
 separatorValve.run()
