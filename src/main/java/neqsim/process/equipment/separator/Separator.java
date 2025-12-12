@@ -23,6 +23,7 @@ import neqsim.process.equipment.separator.sectiontype.ValveSection;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
+import neqsim.process.mechanicaldesign.separator.primaryseparation.PrimarySeparation;
 import neqsim.process.util.monitor.SeparatorResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -148,6 +149,15 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   ArrayList<SeparatorSection> separatorSection = new ArrayList<SeparatorSection>();
 
   SeparatorMechanicalDesign separatorMechanicalDesign;
+  private PrimarySeparation primarySeparation;
+
+  // Inlet stream properties - calculated during run()
+  private double inletGasVelocity = 0.0; // m/s through nozzle
+  private double vesselGasVelocity = 0.0; // m/s through vessel
+  private double gasDensity = 0.0; // kg/m³
+  private double liquidDensity = 0.0; // kg/m³
+  private double liquidContent = 0.0; // volumetric fraction (0 to 1)
+
   private double lastEnthalpy;
   private double lastFlowRate;
   private double lastPressure;
@@ -321,6 +331,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   @Override
   public void run(UUID id) {
     inletStreamMixer.run(id);
+    updateInletProperties();
     double enthalpy = inletStreamMixer.getOutletStream().getFluid().getEnthalpy();
     double flow = inletStreamMixer.getOutletStream().getFlowRate("kg/hr");
     double pres = inletStreamMixer.getOutletStream().getPressure();
@@ -557,6 +568,156 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       }
     }
 
+  }
+
+  /**
+   * Update inlet stream properties that are cached for use in separation calculations.
+   * <p>
+   * This method calculates and stores inlet gas velocity, vessel gas velocity, gas density, liquid
+   * density, and liquid content. These values are used by the separation device calculations and
+   * should be updated whenever the inlet stream changes.
+   * </p>
+   */
+  private void updateInletProperties() {
+    if (getFeedStream() == null || getFeedStream().getThermoSystem() == null) {
+      return;
+    }
+
+    // Calculate inlet gas velocity through nozzle
+    inletGasVelocity = getInletGasVelocity();
+
+    // Calculate gas velocity through vessel
+    // Use the separator's internal diameter for vessel area calculation
+    double volumetricFlow = getInletGasVolumetricFlow();
+    if (internalDiameter > 0.0) {
+      double vesselArea = Math.PI * internalDiameter * internalDiameter / 4.0;
+      vesselGasVelocity = volumetricFlow / vesselArea;
+    } else {
+      vesselGasVelocity = 0.0;
+    }
+
+    // Store gas density
+    gasDensity = getInletGasDensity();
+
+    // Store liquid density
+    liquidDensity = getInletLiquidDensity();
+
+    // Store liquid content
+    liquidContent = getInletLiquidContent();
+  }
+
+  /**
+   * <p>
+   * Calculate the gas volumetric flow rate from the inlet stream.
+   * </p>
+   *
+   * Extracts the gas phase volumetric flow from the feed stream.
+   *
+   * @return gas volumetric flow rate in m³/s
+   */
+  public double getInletGasVolumetricFlow() {
+    if (getFeedStream() == null || getFeedStream().getThermoSystem() == null) {
+      return 0.0;
+    }
+    return getFeedStream().getThermoSystem().getPhase(0).getVolume() / 1e5; // Convert from cm³/s to
+                                                                            // m³/s
+  }
+
+  /**
+   * Calculate the gas velocity through the inlet nozzle.
+   * 
+   * Uses the inlet nozzle diameter from primary separation to calculate velocity. Velocity =
+   * volumetric flow / nozzle area.
+   *
+   * @return gas velocity through nozzle in m/s
+   */
+  public double getInletGasVelocity() {
+    if (primarySeparation == null) {
+      return 0.0;
+    }
+    double volumetricFlow = getInletGasVolumetricFlow();
+    double nozzleDiameter = primarySeparation.getInletNozzleDiameter();
+
+    if (nozzleDiameter <= 0.0) {
+      return 0.0;
+    }
+
+    double nozzleArea = Math.PI * nozzleDiameter * nozzleDiameter / 4.0;
+    return volumetricFlow / nozzleArea;
+  }
+
+  /**
+   * Get the gas density from the inlet stream.
+   * 
+   * Extracts the gas phase density and initializes physical properties if needed.
+   *
+   * @return gas density in kg/m³
+   */
+  public double getInletGasDensity() {
+    if (getFeedStream() == null || getFeedStream().getThermoSystem() == null) {
+      return 0.0;
+    }
+    SystemInterface fluid = getFeedStream().getThermoSystem();
+    if (fluid.getNumberOfPhases() > 0) {
+      fluid.initPhysicalProperties();
+      return fluid.getPhase(0).getPhysicalProperties().getDensity();
+    }
+    return 0.0;
+  }
+
+  /**
+   * Get the liquid density from the inlet stream.
+   * 
+   * Extracts the liquid phase density. For single-phase gas, returns a default liquid density.
+   *
+   * @return liquid density in kg/m³
+   */
+  public double getInletLiquidDensity() {
+    if (getFeedStream() == null || getFeedStream().getThermoSystem() == null) {
+      return 800.0; // Default liquid density
+    }
+    SystemInterface fluid = getFeedStream().getThermoSystem();
+    fluid.initPhysicalProperties();
+
+    if (fluid.getNumberOfPhases() > 1 && fluid.hasPhaseType("oil")
+        || fluid.hasPhaseType("aqueous")) {
+      return fluid.getPhase(1).getPhysicalProperties().getDensity();
+    }
+
+    // Default value if liquid phase not present
+    return 800.0;
+  }
+
+  /**
+   * Get the inlet liquid content (volumetric fraction) from the inlet stream.
+   * 
+   * Calculates the volumetric fraction of liquid in the inlet stream. Liquid content = liquid
+   * volume / total volume.
+   *
+   * @return inlet liquid content as volumetric fraction (0 to 1)
+   */
+  public double getInletLiquidContent() {
+    if (getFeedStream() == null || getFeedStream().getThermoSystem() == null) {
+      return 0.0;
+    }
+    SystemInterface fluid = getFeedStream().getThermoSystem();
+
+    double totalVolume = fluid.getVolume(); // cm³/s
+    if (totalVolume <= 0.0) {
+      return 0.0;
+    }
+
+    double liquidVolume = 0.0;
+    if (fluid.getNumberOfPhases() > 1) {
+      for (int i = 1; i < fluid.getNumberOfPhases(); i++) {
+        if (fluid.getPhase(i).getPhaseTypeName().equals("oil")
+            || fluid.getPhase(i).getPhaseTypeName().equals("aqueous")) {
+          liquidVolume += fluid.getPhase(i).getVolume();
+        }
+      }
+    }
+
+    return liquidVolume / totalVolume;
   }
 
   /**
@@ -1463,4 +1624,130 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    *
    * public SeparatorReport getReport(){ return this.new SeparatorReport(); }
    */
+
+  /**
+   * Set the primary separation device for this separator.
+   *
+   * @param primarySeparation the PrimarySeparation device
+   */
+  public void setPrimarySeparation(PrimarySeparation primarySeparation) {
+    this.primarySeparation = primarySeparation;
+    if (primarySeparation != null) {
+      primarySeparation.setSeparator(this);
+    }
+  }
+
+  /**
+   * Get the primary separation device for this separator.
+   *
+   * @return the PrimarySeparation device, or null if not set
+   */
+  public PrimarySeparation getPrimarySeparation() {
+    return primarySeparation;
+  }
+
+  /**
+   * Print information about the primary separation device.
+   * 
+   * Displays details about the inlet primary separation including type, nozzle diameter, and
+   * type-specific properties.
+   */
+  public void printPrimarySeparation() {
+    System.out.println("========================================");
+    System.out.println("Primary Separation for: " + this.getName());
+    System.out.println("========================================");
+
+    if (primarySeparation == null) {
+      System.out.println("No primary separation device configured.");
+    } else {
+      System.out.println("Type: " + primarySeparation.getClass().getSimpleName());
+      System.out.println("Name: " + primarySeparation.getName());
+      System.out
+          .println("Inlet Nozzle Diameter: " + primarySeparation.getInletNozzleDiameter() + " m");
+
+      // Print type-specific properties
+      String className = primarySeparation.getClass().getSimpleName();
+      if (className.equals("InletVane")) {
+        try {
+          double deflectionAngle = (double) primarySeparation.getClass()
+              .getMethod("getDeflectionAngle").invoke(primarySeparation);
+          System.out.println("Deflection Angle: " + deflectionAngle + "°");
+        } catch (Exception e) {
+          logger.debug("Could not retrieve deflection angle: " + e.getMessage());
+        }
+      } else if (className.equals("InletVaneWithMeshpad")) {
+        try {
+          double vaneToMeshpadDistance = (double) primarySeparation.getClass()
+              .getMethod("getVaneToMeshpadDistance").invoke(primarySeparation);
+          double freeDistanceAboveMeshpad = (double) primarySeparation.getClass()
+              .getMethod("getFreeDistanceAboveMeshpad").invoke(primarySeparation);
+          System.out.println("Vane to Meshpad Distance: " + vaneToMeshpadDistance + " m");
+          System.out.println("Free Distance Above Meshpad: " + freeDistanceAboveMeshpad + " m");
+        } catch (Exception e) {
+          logger.debug("Could not retrieve meshpad distances: " + e.getMessage());
+        }
+      } else if (className.equals("InletCyclones")) {
+        try {
+          int numberOfCyclones = (int) primarySeparation.getClass().getMethod("getNumberOfCyclones")
+              .invoke(primarySeparation);
+          double cycloneDiameter = (double) primarySeparation.getClass()
+              .getMethod("getCycloneDiameter").invoke(primarySeparation);
+          System.out.println("Number of Cyclones: " + numberOfCyclones);
+          System.out.println("Cyclone Diameter: " + cycloneDiameter + " m");
+        } catch (Exception e) {
+          logger.debug("Could not retrieve cyclone properties: " + e.getMessage());
+        }
+      }
+    }
+    System.out.println("========================================");
+  }
+
+  /**
+   * Print all deisting internals in this separator.
+   * 
+   * Displays information about each deisting internal including area, Euler number, and any special
+   * properties such as drainage efficiency.
+   */
+  public void printDemistingInternals() {
+    SeparatorMechanicalDesign mechanicalDesign = getMechanicalDesign();
+
+    if (mechanicalDesign == null) {
+      System.out.println("Mechanical design not initialized");
+      return;
+    }
+
+    int numberOfInternals = mechanicalDesign.getNumberOfDemistingInternals();
+
+    System.out.println("========================================");
+    System.out.println("Deisting Internals for: " + this.getName());
+    System.out.println("========================================");
+    System.out.println("Total number of internals: " + numberOfInternals);
+    System.out.println("Total deisting area: " + mechanicalDesign.getTotalDemistingArea() + " m²");
+    System.out.println();
+
+    if (numberOfInternals == 0) {
+      System.out.println("No deisting internals configured.");
+    } else {
+      for (int i = 0; i < numberOfInternals; i++) {
+        var internal = mechanicalDesign.getDemistingInternals().get(i);
+        System.out.println("Internal " + (i + 1) + ":");
+        System.out.println("  Type: " + internal.getClass().getSimpleName());
+        System.out.println("  Area: " + internal.getArea() + " m²");
+        System.out.println("  Euler Number: " + internal.getEuNumber());
+
+        // Check if it's a DemistingInternalWithDrainage
+        if (internal.getClass().getSimpleName().equals("DemistingInternalWithDrainage")) {
+          try {
+            double drainageEfficiency =
+                (double) internal.getClass().getMethod("getDrainageEfficiency").invoke(internal);
+            System.out.println("  Drainage Efficiency: " + drainageEfficiency);
+          } catch (Exception e) {
+            logger.debug("Could not retrieve drainage efficiency: " + e.getMessage());
+          }
+        }
+        System.out.println();
+      }
+    }
+    System.out.println("========================================");
+  }
 }

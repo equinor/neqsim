@@ -2,6 +2,8 @@ package neqsim.process.mechanicaldesign.separator;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -14,6 +16,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.designstandards.MaterialPlateDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.PressureVesselDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard;
+import neqsim.process.mechanicaldesign.separator.internals.DemistingInternal;
 
 /**
  * <p>
@@ -30,6 +33,11 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   double volumeSafetyFactor = 1.0;
   double Fg = 1.0;
   double retentionTime = 60.0;
+  double nozzleInnerDiameter = 0.0;
+
+  /** List of deisting internals in the separator. */
+  private List<DemistingInternal> demistingInternals = new ArrayList<>();
+
 
   /**
    * <p>
@@ -275,5 +283,107 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     ((SeparatorInterface) getProcessEquipment()).setInternalDiameter(innerDiameter);
     ((Separator) getProcessEquipment()).setSeparatorLength(tantanLength);
     // this method will be implemented to set calculated design...
+  }
+
+  /**
+   * Add a demisting internal to the separator.
+   *
+   * @param internal the DemistingInternal to add
+   */
+  public void addDemistingInternal(DemistingInternal internal) {
+    demistingInternals.add(internal);
+    // Set separator reference if equipment is a Separator
+    if (getProcessEquipment() instanceof neqsim.process.equipment.separator.Separator) {
+      neqsim.process.equipment.separator.Separator separator =
+          (neqsim.process.equipment.separator.Separator) getProcessEquipment();
+      internal.setSeparator(separator);
+    }
+  }
+
+  /**
+   * Remove a deisting internal from the separator.
+   *
+   * @param internal the DemistingInternal to remove
+   * @return true if the internal was removed, false otherwise
+   */
+  public boolean removeDemistingInternal(DemistingInternal internal) {
+    return demistingInternals.remove(internal);
+  }
+
+  /**
+   * Get all deisting internals in the separator.
+   *
+   * @return list of DemistingInternal objects
+   */
+  public List<DemistingInternal> getDemistingInternals() {
+    return new ArrayList<>(demistingInternals);
+  }
+
+  /**
+   * Get the number of deisting internals.
+   *
+   * @return number of internals
+   */
+  public int getNumberOfDemistingInternals() {
+    return demistingInternals.size();
+  }
+
+  /**
+   * Calculate total deisting area from all internals.
+   *
+   * @return total area in m²
+   */
+  public double getTotalDemistingArea() {
+    return demistingInternals.stream().mapToDouble(DemistingInternal::getArea).sum();
+  }
+
+  /**
+   * Calculate total liquid carry-over from all deisting internals.
+   *
+   * @param gasDensity gas density in kg/m³
+   * @param liquidDensity liquid density in kg/m³
+   * @param inletLiquidContent inlet liquid content (mass fraction)
+   * @return total liquid carry-over (mass fraction)
+   */
+  public double calcTotalLiquidCarryOver(double gasDensity, double liquidDensity,
+      double inletLiquidContent) {
+    double totalCarryOver = inletLiquidContent;
+
+    for (DemistingInternal internal : demistingInternals) {
+      double volumetricFlow =
+          ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume()
+              / 1e5;
+      double gasVelocity = internal.calcGasVelocity(volumetricFlow);
+      totalCarryOver =
+          internal.calcLiquidCarryOver(gasVelocity, gasDensity, liquidDensity, totalCarryOver);
+    }
+
+    return totalCarryOver;
+  }
+
+  /**
+   * Calculate total pressure drop across all deisting internals.
+   *
+   * @param gasDensity gas density in kg/m³
+   * @return total pressure drop in Pa
+   */
+  public double calcTotalPressureDrop(double gasDensity) {
+    double totalPressureDrop = 0.0;
+
+    double totalArea = getTotalDemistingArea();
+    if (totalArea == 0) {
+      return 0.0;
+    }
+
+    double volumetricFlow =
+        ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume()
+            / 1e5;
+
+    for (DemistingInternal internal : demistingInternals) {
+      double gasVelocity = internal.calcGasVelocity(volumetricFlow);
+      totalPressureDrop += internal.calcPressureDrop(gasDensity, gasVelocity);
+    }
+
+    return totalPressureDrop;
   }
 }
