@@ -2638,6 +2638,184 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Result container for property derivatives calculation.
+   */
+  public static class DerivativesResult {
+    /** Base property values at each point [numPoints][numProperties]. */
+    public Double[][] properties;
+    /**
+     * Derivative of each property with respect to pressure (dProp/dP) [numPoints][numProperties].
+     */
+    public Double[][] dPdP;
+    /**
+     * Derivative of each property with respect to temperature (dProp/dT)
+     * [numPoints][numProperties].
+     */
+    public Double[][] dPdT;
+    /** Error messages per point (null if successful). */
+    public String[] calculationError;
+
+    /**
+     * Constructor for DerivativesResult.
+     *
+     * @param properties Base property values
+     * @param dPdP Pressure derivatives
+     * @param dPdT Temperature derivatives
+     * @param calculationError Error messages
+     */
+    public DerivativesResult(Double[][] properties, Double[][] dPdP, Double[][] dPdT,
+        String[] calculationError) {
+      this.properties = properties;
+      this.dPdP = dPdP;
+      this.dPdT = dPdT;
+      this.calculationError = calculationError;
+    }
+  }
+
+  /**
+   * Calculate property derivatives with respect to pressure and temperature using central finite
+   * differences. This method efficiently computes numerical derivatives by running all required
+   * flash calculations (base point + stencil points) in parallel.
+   *
+   * <p>
+   * Uses central differences for 2nd order accuracy:
+   * <ul>
+   * <li>dProp/dP = (Prop(P+dP, T) - Prop(P-dP, T)) / (2*dP)</li>
+   * <li>dProp/dT = (Prop(P, T+dT) - Prop(P, T-dT)) / (2*dT)</li>
+   * </ul>
+   *
+   * @param pressures List of pressures in bar absolute
+   * @param temperatures List of temperatures in Kelvin
+   * @return DerivativesResult containing properties and their P,T derivatives
+   */
+  public DerivativesResult propertyFlashDerivatives(List<Double> pressures,
+      List<Double> temperatures) {
+    return propertyFlashDerivatives(pressures, temperatures, 0.01, 0.1, 0);
+  }
+
+  /**
+   * Calculate property derivatives with respect to pressure and temperature using central finite
+   * differences with custom step sizes.
+   *
+   * @param pressures List of pressures in bar absolute
+   * @param temperatures List of temperatures in Kelvin
+   * @param deltaP Pressure step size in bar (default 0.01)
+   * @param deltaT Temperature step size in Kelvin (default 0.1)
+   * @return DerivativesResult containing properties and their P,T derivatives
+   */
+  public DerivativesResult propertyFlashDerivatives(List<Double> pressures,
+      List<Double> temperatures, double deltaP, double deltaT) {
+    return propertyFlashDerivatives(pressures, temperatures, deltaP, deltaT, 0);
+  }
+
+  /**
+   * Calculate property derivatives with respect to pressure and temperature using central finite
+   * differences with custom step sizes and specified number of threads.
+   *
+   * @param pressures List of pressures in bar absolute
+   * @param temperatures List of temperatures in Kelvin
+   * @param deltaP Pressure step size in bar (default 0.01)
+   * @param deltaT Temperature step size in Kelvin (default 0.1)
+   * @param numThreads Number of threads to use (0 or negative = use all available CPU cores)
+   * @return DerivativesResult containing properties and their P,T derivatives
+   */
+  public DerivativesResult propertyFlashDerivatives(List<Double> pressures,
+      List<Double> temperatures, double deltaP, double deltaT, int numThreads) {
+
+    int numPoints = pressures.size();
+    int numProperties = SystemProperties.nCols;
+
+    // Build expanded lists for all stencil points
+    // Order: base, P+dP, P-dP, T+dT, T-dT (5 points per input)
+    List<Double> allPressures = new java.util.ArrayList<>(numPoints * 5);
+    List<Double> allTemperatures = new java.util.ArrayList<>(numPoints * 5);
+
+    for (int i = 0; i < numPoints; i++) {
+      double P = pressures.get(i);
+      double T = temperatures.get(i);
+
+      // Base point
+      allPressures.add(P);
+      allTemperatures.add(T);
+
+      // P + deltaP
+      allPressures.add(P + deltaP);
+      allTemperatures.add(T);
+
+      // P - deltaP
+      allPressures.add(P - deltaP);
+      allTemperatures.add(T);
+
+      // T + deltaT
+      allPressures.add(P);
+      allTemperatures.add(T + deltaT);
+
+      // T - deltaT
+      allPressures.add(P);
+      allTemperatures.add(T - deltaT);
+    }
+
+    // Run all points in parallel with a single call using specified thread count
+    CalculationResult allResults =
+        propertyFlashParallel(allPressures, allTemperatures, 1, null, null, numThreads);
+
+    // Extract results and compute derivatives
+    Double[][] properties = new Double[numPoints][numProperties];
+    Double[][] dPdP = new Double[numPoints][numProperties];
+    Double[][] dPdT = new Double[numPoints][numProperties];
+    String[] calculationError = new String[numPoints];
+
+    for (int i = 0; i < numPoints; i++) {
+      int baseIdx = i * 5;
+
+      // Check for errors in any of the 5 stencil points
+      String error = null;
+      for (int j = 0; j < 5; j++) {
+        if (allResults.calculationError[baseIdx + j] != null) {
+          error = "Derivative calculation failed: " + allResults.calculationError[baseIdx + j];
+          break;
+        }
+      }
+
+      if (error != null) {
+        calculationError[i] = error;
+        continue;
+      }
+
+      // Get stencil values
+      Double[] propBase = allResults.fluidProperties[baseIdx];
+      Double[] propPplus = allResults.fluidProperties[baseIdx + 1];
+      Double[] propPminus = allResults.fluidProperties[baseIdx + 2];
+      Double[] propTplus = allResults.fluidProperties[baseIdx + 3];
+      Double[] propTminus = allResults.fluidProperties[baseIdx + 4];
+
+      // Copy base properties
+      properties[i] = propBase;
+
+      // Compute central difference derivatives for each property
+      for (int j = 0; j < numProperties; j++) {
+        // dProp/dP using central difference
+        if (propPplus[j] != null && propPminus[j] != null && !Double.isNaN(propPplus[j])
+            && !Double.isNaN(propPminus[j])) {
+          dPdP[i][j] = (propPplus[j] - propPminus[j]) / (2.0 * deltaP);
+        } else {
+          dPdP[i][j] = Double.NaN;
+        }
+
+        // dProp/dT using central difference
+        if (propTplus[j] != null && propTminus[j] != null && !Double.isNaN(propTplus[j])
+            && !Double.isNaN(propTminus[j])) {
+          dPdT[i][j] = (propTplus[j] - propTminus[j]) / (2.0 * deltaT);
+        } else {
+          dPdT[i][j] = Double.NaN;
+        }
+      }
+    }
+
+    return new DerivativesResult(properties, dPdP, dPdT, calculationError);
+  }
+
+  /**
    * Internal result holder for parallel property flash calculations.
    */
   private static class PropertyFlashResult {

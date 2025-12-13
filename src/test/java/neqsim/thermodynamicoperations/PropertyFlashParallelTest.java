@@ -395,4 +395,399 @@ public class PropertyFlashParallelTest extends neqsim.NeqSimTest {
       Assertions.assertNull(parResult.calculationError[i], "Parallel error at " + i);
     }
   }
+
+  /**
+   * Test that property derivatives are calculated correctly.
+   */
+  @Test
+  void testPropertyFlashDerivativesProducesValidResults() {
+    int numPoints = 20;
+    List<Double> pressures = new ArrayList<>();
+    List<Double> temperatures = new ArrayList<>();
+
+    for (int i = 0; i < numPoints; i++) {
+      pressures.add(20.0 + i * 3.0); // 20 to 77 bar
+      temperatures.add(280.0 + i * 4.0); // 280 to 356 K
+    }
+
+    SystemInterface fluid = createTestFluid();
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+
+    ThermodynamicOperations.DerivativesResult result =
+        ops.propertyFlashDerivatives(pressures, temperatures);
+
+    // Verify all calculations completed without error
+    for (int i = 0; i < numPoints; i++) {
+      Assertions.assertNull(result.calculationError[i], "Derivative error at index " + i);
+      Assertions.assertNotNull(result.properties[i], "Null properties at " + i);
+      Assertions.assertNotNull(result.dPdP[i], "Null dP derivatives at " + i);
+      Assertions.assertNotNull(result.dPdT[i], "Null dT derivatives at " + i);
+
+      // Check key derivatives are finite
+      // Property 7 is density - should have valid derivatives
+      Assertions.assertNotNull(result.dPdP[i][7], "Null density dP at " + i);
+      Assertions.assertNotNull(result.dPdT[i][7], "Null density dT at " + i);
+      Assertions.assertFalse(Double.isNaN(result.dPdP[i][7]), "NaN density dP at " + i);
+      Assertions.assertFalse(Double.isNaN(result.dPdT[i][7]), "NaN density dT at " + i);
+
+      // Density should increase with pressure (positive dρ/dP for gas)
+      Assertions.assertTrue(result.dPdP[i][7] > 0,
+          "Density should increase with pressure at point " + i);
+
+      // Density should decrease with temperature (negative dρ/dT for gas)
+      Assertions.assertTrue(result.dPdT[i][7] < 0,
+          "Density should decrease with temperature at point " + i);
+    }
+  }
+
+  /**
+   * Test derivative calculation with custom step sizes.
+   */
+  @Test
+  void testPropertyFlashDerivativesCustomStepSize() {
+    List<Double> pressures = Arrays.asList(30.0, 50.0, 70.0);
+    List<Double> temperatures = Arrays.asList(300.0, 320.0, 340.0);
+
+    SystemInterface fluid = createTestFluid();
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+
+    // Test with different step sizes
+    ThermodynamicOperations.DerivativesResult result1 =
+        ops.propertyFlashDerivatives(pressures, temperatures, 0.01, 0.1);
+    ThermodynamicOperations.DerivativesResult result2 =
+        ops.propertyFlashDerivatives(pressures, temperatures, 0.1, 1.0);
+
+    // Both should complete without errors
+    for (int i = 0; i < pressures.size(); i++) {
+      Assertions.assertNull(result1.calculationError[i], "Error with small steps at " + i);
+      Assertions.assertNull(result2.calculationError[i], "Error with large steps at " + i);
+
+      // Results should be similar (within 10% for reasonable step sizes)
+      double dRhodP_1 = result1.dPdP[i][7];
+      double dRhodP_2 = result2.dPdP[i][7];
+      double relDiff =
+          Math.abs(dRhodP_1 - dRhodP_2) / Math.max(Math.abs(dRhodP_1), Math.abs(dRhodP_2));
+      Assertions.assertTrue(relDiff < 0.1,
+          "Derivatives differ too much between step sizes at " + i + " (relDiff=" + relDiff + ")");
+    }
+  }
+
+  /**
+   * Test derivatives for single-phase liquid (compressed liquid conditions).
+   */
+  @Test
+  void testDerivativesSinglePhaseLiquid() {
+    // Create a heavier hydrocarbon system that will be liquid at moderate conditions
+    SystemInterface liquid = new SystemSrkEos(273.15, 50.0);
+    liquid.addComponent("n-pentane", 0.5);
+    liquid.addComponent("n-hexane", 0.3);
+    liquid.addComponent("n-heptane", 0.2);
+    liquid.setMixingRule("classic");
+    liquid.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(liquid);
+
+    // Low temperature, high pressure -> liquid phase
+    List<Double> pressures = Arrays.asList(50.0, 60.0, 70.0, 80.0, 90.0);
+    List<Double> temperatures = Arrays.asList(280.0, 285.0, 290.0, 295.0, 300.0);
+
+    ThermodynamicOperations.DerivativesResult result =
+        ops.propertyFlashDerivatives(pressures, temperatures);
+
+    for (int i = 0; i < pressures.size(); i++) {
+      Assertions.assertNull(result.calculationError[i],
+          "Single-phase liquid derivative error at " + i);
+
+      // For liquid: density ~500-700 kg/m³
+      double density = result.properties[i][7];
+      Assertions.assertTrue(density > 400, "Density too low for liquid at " + i + ": " + density);
+
+      // Liquid compressibility is small but positive (density increases with P)
+      double dRhodP = result.dPdP[i][7];
+      Assertions.assertTrue(dRhodP > 0, "Liquid dρ/dP should be positive at " + i + ": " + dRhodP);
+
+      // Density should decrease with temperature (thermal expansion)
+      double dRhodT = result.dPdT[i][7];
+      Assertions.assertTrue(dRhodT < 0, "Liquid dρ/dT should be negative at " + i + ": " + dRhodT);
+
+      System.out.printf("Liquid [%d]: P=%.1f bar, T=%.1f K, ρ=%.2f kg/m³, dρ/dP=%.4f, dρ/dT=%.4f%n",
+          i, pressures.get(i), temperatures.get(i), density, dRhodP, dRhodT);
+    }
+  }
+
+  /**
+   * Test derivatives for two-phase vapor-liquid system.
+   */
+  @Test
+  void testDerivativesTwoPhaseVaporLiquid() {
+    // Use a system that will have vapor-liquid equilibrium
+    SystemInterface vle = new SystemSrkEos(273.15 - 50.0, 20.0);
+    vle.addComponent("methane", 0.7);
+    vle.addComponent("ethane", 0.2);
+    vle.addComponent("propane", 0.1);
+    vle.setMixingRule("classic");
+    vle.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(vle);
+
+    // Conditions likely to give two phases (near bubble/dew region)
+    List<Double> pressures = Arrays.asList(15.0, 20.0, 25.0, 30.0);
+    List<Double> temperatures = Arrays.asList(200.0, 210.0, 220.0, 230.0);
+
+    ThermodynamicOperations.DerivativesResult result =
+        ops.propertyFlashDerivatives(pressures, temperatures);
+
+    int validCount = 0;
+    for (int i = 0; i < pressures.size(); i++) {
+      Assertions.assertNull(result.calculationError[i], "Two-phase derivative error at " + i);
+
+      // Check number of phases (property index 0)
+      double numPhases = result.properties[i][0];
+      System.out.printf("VLE [%d]: P=%.1f bar, T=%.1f K, phases=%.0f, ρ=%.4f kg/m³%n", i,
+          pressures.get(i), temperatures.get(i), numPhases, result.properties[i][7]);
+
+      // Derivatives should be finite even in two-phase region
+      Assertions.assertFalse(Double.isNaN(result.dPdP[i][7]), "NaN dρ/dP in two-phase at " + i);
+      Assertions.assertFalse(Double.isNaN(result.dPdT[i][7]), "NaN dρ/dT in two-phase at " + i);
+
+      validCount++;
+    }
+    Assertions.assertEquals(pressures.size(), validCount, "All points should be valid");
+  }
+
+  /**
+   * Test derivatives for three-phase system (gas + oil + water).
+   */
+  @Test
+  void testDerivativesThreePhaseSystem() {
+    // Create a system with water that can form three phases
+    SystemInterface threePhase = new SystemSrkEos(273.15 + 50.0, 50.0);
+    threePhase.addComponent("methane", 0.80);
+    threePhase.addComponent("ethane", 0.05);
+    threePhase.addComponent("propane", 0.03);
+    threePhase.addComponent("n-pentane", 0.02);
+    threePhase.addComponent("water", 0.10);
+    threePhase.setMixingRule("classic");
+    threePhase.setMultiPhaseCheck(true);
+    threePhase.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(threePhase);
+
+    // Conditions for potential three-phase behavior
+    List<Double> pressures = Arrays.asList(30.0, 40.0, 50.0, 60.0);
+    List<Double> temperatures = Arrays.asList(300.0, 310.0, 320.0, 330.0);
+
+    ThermodynamicOperations.DerivativesResult result =
+        ops.propertyFlashDerivatives(pressures, temperatures);
+
+    for (int i = 0; i < pressures.size(); i++) {
+      Assertions.assertNull(result.calculationError[i], "Three-phase derivative error at " + i);
+
+      double numPhases = result.properties[i][0];
+      double density = result.properties[i][7];
+
+      System.out.printf(
+          "3-Phase [%d]: P=%.1f bar, T=%.1f K, phases=%.0f, ρ=%.4f, dρ/dP=%.4f, dρ/dT=%.4f%n", i,
+          pressures.get(i), temperatures.get(i), numPhases, density, result.dPdP[i][7],
+          result.dPdT[i][7]);
+
+      // Derivatives should be calculated successfully
+      Assertions.assertNotNull(result.dPdP[i][7], "Null dρ/dP at " + i);
+      Assertions.assertNotNull(result.dPdT[i][7], "Null dρ/dT at " + i);
+
+      // Properties should be valid
+      Assertions.assertTrue(density > 0, "Invalid density at " + i + ": " + density);
+    }
+  }
+
+  /**
+   * Verify numerical derivatives by comparing against manual finite differences. This validates
+   * that the derivative calculation is correct.
+   */
+  @Test
+  void testDerivativesMatchManualFiniteDifference() {
+    SystemInterface fluid = createTestFluid();
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+
+    double P = 50.0; // bar
+    double T = 300.0; // K
+    double deltaP = 0.01; // bar
+    double deltaT = 0.1; // K
+
+    // Calculate derivatives using the method
+    List<Double> pressures = Arrays.asList(P);
+    List<Double> temperatures = Arrays.asList(T);
+
+    ThermodynamicOperations.DerivativesResult derivResult =
+        ops.propertyFlashDerivatives(pressures, temperatures, deltaP, deltaT);
+
+    Assertions.assertNull(derivResult.calculationError[0], "Derivative calculation failed");
+
+    // Manually calculate finite differences for verification using same approach as propertyFlash
+    // Get base properties
+    SystemInterface baseFluid = createTestFluid();
+    baseFluid.setPressure(P);
+    baseFluid.setTemperature(T);
+    ThermodynamicOperations baseOps = new ThermodynamicOperations(baseFluid);
+    baseOps.TPflash();
+    baseFluid.init(2);
+    baseFluid.initProperties();
+    Double[] baseProps = baseFluid.getProperties().getValues();
+    double rhoBase = baseProps[7];
+
+    // Get P+deltaP properties
+    SystemInterface pPlusFluid = createTestFluid();
+    pPlusFluid.setPressure(P + deltaP);
+    pPlusFluid.setTemperature(T);
+    ThermodynamicOperations pPlusOps = new ThermodynamicOperations(pPlusFluid);
+    pPlusOps.TPflash();
+    pPlusFluid.init(2);
+    pPlusFluid.initProperties();
+    double rhoPplus = pPlusFluid.getProperties().getValues()[7];
+
+    // Get P-deltaP properties
+    SystemInterface pMinusFluid = createTestFluid();
+    pMinusFluid.setPressure(P - deltaP);
+    pMinusFluid.setTemperature(T);
+    ThermodynamicOperations pMinusOps = new ThermodynamicOperations(pMinusFluid);
+    pMinusOps.TPflash();
+    pMinusFluid.init(2);
+    pMinusFluid.initProperties();
+    double rhoPminus = pMinusFluid.getProperties().getValues()[7];
+
+    // Get T+deltaT properties
+    SystemInterface tPlusFluid = createTestFluid();
+    tPlusFluid.setPressure(P);
+    tPlusFluid.setTemperature(T + deltaT);
+    ThermodynamicOperations tPlusOps = new ThermodynamicOperations(tPlusFluid);
+    tPlusOps.TPflash();
+    tPlusFluid.init(2);
+    tPlusFluid.initProperties();
+    double rhoTplus = tPlusFluid.getProperties().getValues()[7];
+
+    // Get T-deltaT properties
+    SystemInterface tMinusFluid = createTestFluid();
+    tMinusFluid.setPressure(P);
+    tMinusFluid.setTemperature(T - deltaT);
+    ThermodynamicOperations tMinusOps = new ThermodynamicOperations(tMinusFluid);
+    tMinusOps.TPflash();
+    tMinusFluid.init(2);
+    tMinusFluid.initProperties();
+    double rhoTminus = tMinusFluid.getProperties().getValues()[7];
+
+    // Calculate manual derivatives
+    double manualDrhoDp = (rhoPplus - rhoPminus) / (2.0 * deltaP);
+    double manualDrhoDt = (rhoTplus - rhoTminus) / (2.0 * deltaT);
+
+    // Get method results
+    double methodDrhoDp = derivResult.dPdP[0][7];
+    double methodDrhoDt = derivResult.dPdT[0][7];
+
+    System.out.println("=== Derivative Verification ===");
+    System.out.printf("Base density: %.6f kg/m³%n", rhoBase);
+    System.out.printf("rho(P+dP)=%.6f, rho(P-dP)=%.6f%n", rhoPplus, rhoPminus);
+    System.out.printf("rho(T+dT)=%.6f, rho(T-dT)=%.6f%n", rhoTplus, rhoTminus);
+    System.out.printf("Manual  dρ/dP: %.6f kg/(m³·bar)%n", manualDrhoDp);
+    System.out.printf("Method  dρ/dP: %.6f kg/(m³·bar)%n", methodDrhoDp);
+    System.out.printf("Manual  dρ/dT: %.6f kg/(m³·K)%n", manualDrhoDt);
+    System.out.printf("Method  dρ/dT: %.6f kg/(m³·K)%n", methodDrhoDt);
+
+    // Verify they match very closely (should be essentially identical)
+    assertRelativeEquals(manualDrhoDp, methodDrhoDp, 1e-6, "dρ/dP should match manual calculation");
+    assertRelativeEquals(manualDrhoDt, methodDrhoDt, 1e-6, "dρ/dT should match manual calculation");
+
+    // Verify physical correctness
+    Assertions.assertTrue(methodDrhoDp > 0, "dρ/dP should be positive for gas");
+    Assertions.assertTrue(methodDrhoDt < 0, "dρ/dT should be negative for gas");
+  }
+
+  /**
+   * Test derivatives across a phase transition boundary.
+   */
+  @Test
+  void testDerivativesAcrossPhaseTransition() {
+    // Create a system and sweep across conditions that span phase transition
+    SystemInterface fluid = new SystemSrkEos(273.15, 30.0);
+    fluid.addComponent("methane", 0.9);
+    fluid.addComponent("n-butane", 0.1);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+
+    // Sweep temperature from cold (liquid-like) to hot (vapor)
+    List<Double> pressures = new ArrayList<>();
+    List<Double> temperatures = new ArrayList<>();
+
+    for (int i = 0; i < 20; i++) {
+      pressures.add(30.0); // Fixed pressure
+      temperatures.add(180.0 + i * 10.0); // 180K to 370K
+    }
+
+    ThermodynamicOperations.DerivativesResult result =
+        ops.propertyFlashDerivatives(pressures, temperatures);
+
+    System.out.println("=== Phase Transition Sweep ===");
+    for (int i = 0; i < pressures.size(); i++) {
+      Assertions.assertNull(result.calculationError[i],
+          "Derivative error at T=" + temperatures.get(i));
+
+      double phases = result.properties[i][0];
+      double density = result.properties[i][7];
+      double dRhodP = result.dPdP[i][7];
+      double dRhodT = result.dPdT[i][7];
+
+      System.out.printf("T=%.0f K: phases=%.0f, ρ=%.4f, dρ/dP=%.4f, dρ/dT=%.4f%n",
+          temperatures.get(i), phases, density, dRhodP, dRhodT);
+
+      // All derivatives should be finite
+      Assertions.assertFalse(Double.isNaN(dRhodP), "NaN dρ/dP at T=" + temperatures.get(i));
+      Assertions.assertFalse(Double.isNaN(dRhodT), "NaN dρ/dT at T=" + temperatures.get(i));
+    }
+  }
+
+  /**
+   * Test derivatives with explicit thread count specification.
+   */
+  @Test
+  void testDerivativesWithMultipleThreadCounts() {
+    int numPoints = 30;
+    List<Double> pressures = new ArrayList<>();
+    List<Double> temperatures = new ArrayList<>();
+
+    for (int i = 0; i < numPoints; i++) {
+      pressures.add(20.0 + i * 2.0);
+      temperatures.add(280.0 + i * 3.0);
+    }
+
+    SystemInterface fluid = createTestFluid();
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+
+    // Test with different thread counts
+    ThermodynamicOperations.DerivativesResult result1Thread =
+        ops.propertyFlashDerivatives(pressures, temperatures, 0.01, 0.1, 1);
+    ThermodynamicOperations.DerivativesResult result4Threads =
+        ops.propertyFlashDerivatives(pressures, temperatures, 0.01, 0.1, 4);
+    ThermodynamicOperations.DerivativesResult resultAllThreads =
+        ops.propertyFlashDerivatives(pressures, temperatures, 0.01, 0.1, 0);
+
+    // All should complete without errors
+    for (int i = 0; i < numPoints; i++) {
+      Assertions.assertNull(result1Thread.calculationError[i], "1-thread error at " + i);
+      Assertions.assertNull(result4Threads.calculationError[i], "4-thread error at " + i);
+      Assertions.assertNull(resultAllThreads.calculationError[i], "All-threads error at " + i);
+
+      // Results should match across thread counts (density derivative)
+      double d1 = result1Thread.dPdP[i][7];
+      double d4 = result4Threads.dPdP[i][7];
+      double dAll = resultAllThreads.dPdP[i][7];
+
+      // Compare 1-thread vs 4-threads
+      assertRelativeEquals(d1, d4, 1e-10, "1-thread vs 4-threads at point " + i);
+      // Compare 4-threads vs all-threads
+      assertRelativeEquals(d4, dAll, 1e-10, "4-threads vs all-threads at point " + i);
+    }
+
+    System.out.println("✓ Derivatives with 1, 4, and all threads produce identical results");
+  }
 }

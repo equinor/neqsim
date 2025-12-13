@@ -55,6 +55,210 @@ public CalculationResult propertyFlashBatch(
 )
 ```
 
+### `propertyFlashDerivatives`
+
+Calculates property derivatives with respect to pressure and temperature using efficient central finite differences. All stencil points are calculated in a single parallel call, making this method efficient for sensitivity analysis and optimization.
+
+```java
+// Default step sizes (deltaP=0.01 bar, deltaT=0.1 K), uses all CPU cores
+public DerivativesResult propertyFlashDerivatives(
+    List<Double> pressures,       // Pressures in bar absolute
+    List<Double> temperatures     // Temperatures in Kelvin
+)
+
+// Custom step sizes, uses all CPU cores
+public DerivativesResult propertyFlashDerivatives(
+    List<Double> pressures,
+    List<Double> temperatures,
+    double deltaP,                // Pressure step in bar (default 0.01)
+    double deltaT                 // Temperature step in K (default 0.1)
+)
+
+// Custom step sizes with explicit thread count
+public DerivativesResult propertyFlashDerivatives(
+    List<Double> pressures,
+    List<Double> temperatures,
+    double deltaP,
+    double deltaT,
+    int numThreads                // 0 or negative = use all CPU cores
+)
+```
+
+#### DerivativesResult Structure
+
+The method returns a `DerivativesResult` object containing **both base properties AND their derivatives** in a single efficient call:
+
+```java
+public class DerivativesResult {
+    public Double[][] properties;       // Base property values [numPoints][numProperties]
+    public Double[][] dPdP;             // dProperty/dPressure [numPoints][numProperties]
+    public Double[][] dPdT;             // dProperty/dTemperature [numPoints][numProperties]
+    public String[] calculationError;   // Error message per point (null if success)
+}
+```
+
+| Field | Description | Dimensions |
+|-------|-------------|------------|
+| `properties` | Property values at each (P,T) point - **same as `propertyFlashParallel` output** | [numPoints][70] |
+| `dPdP` | Partial derivative of each property w.r.t. pressure | [numPoints][70] |
+| `dPdT` | Partial derivative of each property w.r.t. temperature | [numPoints][70] |
+| `calculationError` | Error message if calculation failed, null if success | [numPoints] |
+
+> **Performance Tip:** If you need both properties and derivatives, use `propertyFlashDerivatives` instead of calling `propertyFlashParallel` separately. This avoids redundant calculations:
+> - `propertyFlashParallel` alone: 1 flash per point
+> - `propertyFlashDerivatives`: 5 flashes per point (includes base point)
+> - Both separately: 6 flashes per point (wasteful)
+
+#### How Derivatives Are Computed
+
+The method uses central finite differences for 2nd order accuracy:
+
+```
+dProp/dP = (Prop(P+dP, T) - Prop(P-dP, T)) / (2*dP)
+dProp/dT = (Prop(P, T+dT) - Prop(P, T-dT)) / (2*dT)
+```
+
+For each input point (P, T), the method internally evaluates 5 flash calculations:
+1. **Base point: (P, T)** → returned in `result.properties`
+2. Forward P: (P + deltaP, T)
+3. Backward P: (P - deltaP, T)
+4. Forward T: (P, T + deltaT)
+5. Backward T: (P, T - deltaT)
+
+All 5 points are calculated in a single parallel call for maximum efficiency. The base point properties are reused as the return value, so there's no redundant calculation.
+
+#### Derivative Units
+
+Derivatives have units of `[property unit] / [variable unit]`:
+
+| Property Index | Property | Base Unit | dProp/dP Unit | dProp/dT Unit |
+|----------------|----------|-----------|---------------|---------------|
+| 7 | Density | kg/m³ | kg/(m³·bar) | kg/(m³·K) |
+| 8 | Z Factor | - | 1/bar | 1/K |
+| 10 | Enthalpy | J/mol | J/(mol·bar) | J/(mol·K) = Cp |
+| 11 | Entropy | J/(mol·K) | J/(mol·K·bar) | J/(mol·K²) |
+| 5 | Molar Volume | m³/mol | m³/(mol·bar) | m³/(mol·K) |
+| 17 | Viscosity | Pa·s | Pa·s/bar | Pa·s/K |
+
+#### Physical Interpretation
+
+Typical derivative behavior for gases and liquids:
+
+| Derivative | Gas | Liquid | Physical Meaning |
+|------------|-----|--------|------------------|
+| dρ/dP | Positive (~0.5-5 kg/m³/bar) | Positive but small (~0.1-0.2) | Compressibility |
+| dρ/dT | Negative (~-0.1 to -0.5) | Negative (~-0.8 to -1.0) | Thermal expansion |
+| dH/dT | Positive (≈ Cp) | Positive (≈ Cp) | Heat capacity |
+| dZ/dP | Varies | N/A | Deviation from ideal |
+
+#### Usage Example: Get Properties AND Derivatives Together (Java)
+
+```java
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations.DerivativesResult;
+import java.util.Arrays;
+import java.util.List;
+
+// Create fluid
+SystemInterface gas = new SystemSrkEos(273.15 + 25.0, 50.0);
+gas.addComponent("methane", 0.85);
+gas.addComponent("ethane", 0.10);
+gas.addComponent("propane", 0.05);
+gas.setMixingRule("classic");
+gas.init(0);
+
+ThermodynamicOperations ops = new ThermodynamicOperations(gas);
+
+// Define evaluation points
+List<Double> pressures = Arrays.asList(20.0, 40.0, 60.0, 80.0);
+List<Double> temperatures = Arrays.asList(300.0, 310.0, 320.0, 330.0);
+
+// Get BOTH properties AND derivatives in a single optimized call
+// This is more efficient than calling propertyFlashParallel + propertyFlashDerivatives separately
+DerivativesResult result = ops.propertyFlashDerivatives(pressures, temperatures);
+
+// Access results - properties AND derivatives available from same result object
+for (int i = 0; i < pressures.size(); i++) {
+    if (result.calculationError[i] == null) {
+        double P = pressures.get(i);
+        double T = temperatures.get(i);
+        
+        // Base properties (same values as propertyFlashParallel would return)
+        double density = result.properties[i][7];      // kg/m³
+        double enthalpy = result.properties[i][10];    // J/mol
+        
+        // Pressure derivatives
+        double dRho_dP = result.dPdP[i][7];            // kg/(m³·bar)
+        double dH_dP = result.dPdP[i][10];             // J/(mol·bar)
+        
+        // Temperature derivatives
+        double dRho_dT = result.dPdT[i][7];            // kg/(m³·K)
+        double dH_dT = result.dPdT[i][10];             // J/(mol·K) ≈ Cp
+        
+        System.out.printf("P=%.0f bar, T=%.0f K:%n", P, T);
+        System.out.printf("  ρ = %.4f kg/m³, dρ/dP = %.4f, dρ/dT = %.4f%n", 
+                          density, dRho_dP, dRho_dT);
+        System.out.printf("  H = %.1f J/mol, Cp ≈ dH/dT = %.2f J/(mol·K)%n", 
+                          enthalpy, dH_dT);
+    }
+}
+```
+
+#### Usage Example: Python
+
+#### Usage Example: Python
+
+```python
+from neqsim import jneqsim
+
+# Create fluid
+gas = jneqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 50.0)
+gas.addComponent("methane", 0.85)
+gas.addComponent("ethane", 0.10)
+gas.addComponent("propane", 0.05)
+gas.setMixingRule("classic")
+gas.init(0)
+
+ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(gas)
+
+# Define points using Python lists
+pressures = [20.0, 40.0, 60.0, 80.0]
+temperatures = [300.0, 310.0, 320.0, 330.0]
+
+# Get BOTH properties AND derivatives in one call - most efficient approach
+result = ops.propertyFlashDerivatives(pressures, temperatures)
+
+# Access all results from the single call
+for i in range(len(pressures)):
+    if result.calculationError[i] is None:
+        # Base properties (same as propertyFlashParallel would return)
+        density = result.properties[i][7]      # kg/m³
+        enthalpy = result.properties[i][10]    # J/mol
+        
+        # Derivatives
+        dRho_dP = result.dPdP[i][7]            # kg/(m³·bar)
+        dRho_dT = result.dPdT[i][7]            # kg/(m³·K)
+        
+        print(f"P={pressures[i]:.0f} bar, T={temperatures[i]:.0f} K:")
+        print(f"  ρ = {density:.4f} kg/m³, H = {enthalpy:.1f} J/mol")
+        print(f"  dρ/dP = {dRho_dP:.4f} kg/(m³·bar)")
+        print(f"  dρ/dT = {dRho_dT:.4f} kg/(m³·K)")
+
+# With custom step sizes and thread count
+result = ops.propertyFlashDerivatives(pressures, temperatures, 0.01, 0.1, 4)  # 4 threads
+```
+
+#### Multi-Phase Support
+
+The derivative method works correctly for:
+- **Single-phase gas**: Typical dρ/dP ~ 0.5-2 kg/(m³·bar)
+- **Single-phase liquid**: Small dρ/dP ~ 0.1-0.2 kg/(m³·bar), larger |dρ/dT|
+- **Two-phase VLE**: Derivatives remain finite across the phase envelope
+- **Three-phase systems**: Gas + oil + water systems supported
+
+Note: Derivatives at phase boundaries may show larger values due to the discontinuity in properties. Use smaller step sizes (e.g., deltaP=0.001) near phase transitions for better accuracy.
+
 ## Flash Modes
 
 | Mode | Type | Spec1 | Spec2 | Units |
@@ -367,6 +571,124 @@ for i in range(len(result.fluidProperties)):
 3. **Handle errors** for each point independently
 4. **Warm up JVM** for benchmarking - run a few calculations before timing
 5. **Profile your workload** to find optimal thread count for your hardware
+
+## Property Derivatives
+
+The `propertyFlashDerivatives` method calculates numerical derivatives of all properties with respect to pressure and temperature. This is useful for sensitivity analysis, optimization, and building Jacobian matrices.
+
+### How It Works
+
+For each input (P, T) point, the method evaluates properties at 5 conditions:
+1. Base point: (P, T)
+2. P+dP point: (P + deltaP, T)
+3. P-dP point: (P - deltaP, T)
+4. T+dT point: (P, T + deltaT)
+5. T-dT point: (P, T - deltaT)
+
+All points are calculated in a single parallel call, then central finite differences are applied:
+
+```
+dProp/dP = (Prop(P+dP, T) - Prop(P-dP, T)) / (2 * deltaP)
+dProp/dT = (Prop(P, T+dT) - Prop(P, T-dT)) / (2 * deltaT)
+```
+
+### Example: Property Sensitivities
+
+```java
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.thermodynamicoperations.ThermodynamicOperations.DerivativesResult;
+
+import java.util.List;
+import java.util.ArrayList;
+
+// Create fluid
+SystemInterface gas = new SystemSrkEos(273.15 + 25.0, 50.0);
+gas.addComponent("methane", 0.85);
+gas.addComponent("ethane", 0.10);
+gas.addComponent("propane", 0.05);
+gas.setMixingRule("classic");
+
+ThermodynamicOperations ops = new ThermodynamicOperations(gas);
+
+// Define evaluation points
+List<Double> pressures = new ArrayList<>();
+List<Double> temperatures = new ArrayList<>();
+for (int i = 0; i < 100; i++) {
+    pressures.add(20.0 + i * 0.5);        // 20-70 bar
+    temperatures.add(273.15 + 50 + i);    // 323-423 K
+}
+
+// Calculate derivatives with default step sizes (deltaP=0.01 bar, deltaT=0.1 K)
+DerivativesResult deriv = ops.propertyFlashDerivatives(pressures, temperatures);
+
+// Print density sensitivities (property index 7 = density in kg/m³)
+for (int i = 0; i < pressures.size(); i++) {
+    if (deriv.calculationError[i] == null) {
+        double density = deriv.properties[i][7];
+        double dRho_dP = deriv.dPdP[i][7];      // kg/m³ per bar
+        double dRho_dT = deriv.dPdT[i][7];      // kg/m³ per K
+        
+        System.out.printf("P=%.1f bar, T=%.1f K: ρ=%.4f kg/m³, dρ/dP=%.4f, dρ/dT=%.4f%n",
+            pressures.get(i), temperatures.get(i), density, dRho_dP, dRho_dT);
+    }
+}
+```
+
+### Custom Step Sizes
+
+For improved accuracy or specific requirements, you can specify custom step sizes:
+
+```java
+// Use larger step sizes for noisy data
+double deltaP = 0.1;    // 0.1 bar step
+double deltaT = 1.0;    // 1.0 K step
+
+DerivativesResult deriv = ops.propertyFlashDerivatives(
+    pressures, temperatures, deltaP, deltaT
+);
+```
+
+### Python Example: Property Derivatives
+
+```python
+from neqsim import jneqsim
+
+# Create fluid
+gas = jneqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 50.0)
+gas.addComponent("methane", 0.85)
+gas.addComponent("ethane", 0.10)
+gas.addComponent("propane", 0.05)
+gas.setMixingRule("classic")
+ops = jneqsim.thermodynamicoperations.ThermodynamicOperations(gas)
+
+# Define evaluation points using Python lists
+pressures = [20.0 + i * 0.5 for i in range(100)]
+temperatures = [273.15 + 50 + i for i in range(100)]
+
+# Calculate derivatives
+deriv = ops.propertyFlashDerivatives(pressures, temperatures)
+
+# Access results
+for i in range(len(pressures)):
+    if deriv.calculationError[i] is None:
+        density = deriv.properties[i][7]
+        dRho_dP = deriv.dPdP[i][7]
+        dRho_dT = deriv.dPdT[i][7]
+        print(f"P={pressures[i]:.1f} bar: ρ={density:.4f}, dρ/dP={dRho_dP:.4f}, dρ/dT={dRho_dT:.4f}")
+```
+
+### Derivative Units
+
+Since properties are returned in their standard units, derivatives have the following units:
+
+| Property | Base Unit | dProp/dP Unit | dProp/dT Unit |
+|----------|-----------|---------------|---------------|
+| Density (7) | kg/m³ | kg/(m³·bar) | kg/(m³·K) |
+| Molar Volume (17) | m³/mol | m³/(mol·bar) | m³/(mol·K) |
+| Enthalpy (18) | J/mol | J/(mol·bar) | J/(mol·K) |
+| Compressibility (8) | - | 1/bar | 1/K |
+| Viscosity (11) | kg/(m·s) | kg/(m·s·bar) | kg/(m·s·K) |
 
 ## Large-Scale Processing (Millions of Calculations)
 
