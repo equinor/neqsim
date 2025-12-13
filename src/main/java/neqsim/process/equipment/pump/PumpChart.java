@@ -13,12 +13,76 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
+ * Pump performance curve handler for centrifugal pump simulation.
+ *
  * <p>
- * PumpChart class.
+ * This class manages manufacturer pump curves and provides interpolation/extrapolation of pump
+ * performance data. It supports:
  * </p>
+ *
+ * <h2>Performance Curves</h2>
+ * <ul>
+ * <li><b>Head vs Flow (H-Q):</b> Pump head at various flow rates</li>
+ * <li><b>Efficiency vs Flow (η-Q):</b> Pump efficiency variation</li>
+ * <li><b>NPSH vs Flow:</b> Net Positive Suction Head required</li>
+ * </ul>
+ *
+ * <h2>Affinity Laws</h2>
+ * <p>
+ * Performance scaling with speed using reduced variables:
+ * </p>
+ * <ul>
+ * <li>Reduced flow: Q_red = Q / N</li>
+ * <li>Reduced head: H_red = H / N²</li>
+ * <li>NPSH scaling: NPSH ∝ N²</li>
+ * </ul>
+ *
+ * <h2>Density Correction</h2>
+ * <p>
+ * Pump curves are typically measured with water (~998 kg/m³). When pumping different fluids, head
+ * is corrected using: H_actual = H_chart × (ρ_chart / ρ_actual)
+ * </p>
+ * <p>
+ * Set reference density via:
+ * </p>
+ * <ul>
+ * <li>5th element of chartConditions array: {@code [refMW, refT, refP, refZ, refDensity]}</li>
+ * <li>Direct setter: {@link #setReferenceDensity(double)}</li>
+ * </ul>
+ *
+ * <h2>Operating Status</h2>
+ * <p>
+ * Monitors for abnormal conditions:
+ * </p>
+ * <ul>
+ * <li><b>Surge:</b> Low flow instability (dH/dQ > 0)</li>
+ * <li><b>Stonewall:</b> Maximum flow limit exceeded</li>
+ * <li><b>Low Efficiency:</b> Operating far from BEP</li>
+ * </ul>
+ *
+ * <h2>Usage Example</h2>
+ * 
+ * <pre>{@code
+ * PumpChart chart = new PumpChart();
+ * double[] speed = {1000.0};
+ * double[][] flow = {{10, 20, 30, 40, 50}};
+ * double[][] head = {{120, 115, 108, 98, 85}};
+ * double[][] efficiency = {{65, 75, 82, 80, 72}};
+ * double[] conditions = {18.0, 298.15, 1.0, 1.0, 998.0};
+ *
+ * chart.setCurves(conditions, speed, flow, head, efficiency);
+ * chart.setHeadUnit("meter");
+ *
+ * // Get performance at operating point
+ * double headAtPoint = chart.getCorrectedHead(35.0, 1200.0, 850.0);
+ * double effAtPoint = chart.getEfficiency(35.0, 1200.0);
+ * String status = chart.getOperatingStatus(35.0, 1200.0);
+ * }</pre>
  *
  * @author asmund
  * @version $Id: $Id
+ * @see Pump
+ * @see PumpChartInterface
  */
 public class PumpChart implements PumpChartInterface, java.io.Serializable {
   /** Serialization version UID. */
@@ -65,6 +129,11 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   PolynomialFunction reducedNPSHFunc = null;
   boolean hasNPSHCurve = false;
 
+  // Reference density for density correction (kg/m³)
+  // When pump curves are measured with a specific fluid (typically water),
+  // head must be corrected for different fluid densities: H_actual = H_chart × (ρ_chart / ρ_actual)
+  private double referenceDensity = -1.0; // Negative means no correction applied
+
   /**
    * <p>
    * Constructor for PumpChart.
@@ -83,10 +152,25 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
       double[][] efficiency) {
+    this.chartConditions = chartConditions;
     this.speed = speed;
     this.head = head;
     this.efficiency = efficiency;
     this.flow = flow;
+
+    // Parse chartConditions array:
+    // [0] = refMW, [1] = refTemperature, [2] = refPressure, [3] = refZ, [4] = referenceDensity
+    // Element [4] (referenceDensity) is optional for backward compatibility
+    if (chartConditions != null && chartConditions.length >= 4) {
+      this.refMW = chartConditions[0];
+      this.refTemperature = chartConditions[1];
+      this.refPressure = chartConditions[2];
+      this.refZ = chartConditions[3];
+      if (chartConditions.length >= 5 && chartConditions[4] > 0) {
+        this.referenceDensity = chartConditions[4];
+        logger.info("Pump chart reference density set to {} kg/m³", referenceDensity);
+      }
+    }
 
     this.redhead = new double[head.length][head[0].length];
     this.redEfficiency = new double[efficiency.length][efficiency[0].length];
@@ -601,6 +685,72 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   @Override
   public String getHeadUnit() {
     return headUnit;
+  }
+
+  /**
+   * Get the reference density used for density correction.
+   *
+   * @return reference density in kg/m³, or -1.0 if not set
+   */
+  public double getReferenceDensity() {
+    return referenceDensity;
+  }
+
+  /**
+   * Set the reference density for density correction.
+   *
+   * <p>
+   * Pump curves are typically measured with water at standard conditions (~998 kg/m³). When pumping
+   * fluids with different densities, the head must be corrected:
+   * </p>
+   * <p>
+   * H_actual = H_chart × (ρ_chart / ρ_actual)
+   * </p>
+   *
+   * @param referenceDensity reference fluid density in kg/m³ (use -1.0 to disable correction)
+   */
+  public void setReferenceDensity(double referenceDensity) {
+    this.referenceDensity = referenceDensity;
+    if (referenceDensity > 0) {
+      logger.info("Pump chart reference density set to {} kg/m³", referenceDensity);
+    }
+  }
+
+  /**
+   * Check if density correction is enabled.
+   *
+   * @return true if reference density is set and correction will be applied
+   */
+  public boolean hasDensityCorrection() {
+    return referenceDensity > 0;
+  }
+
+  /**
+   * Get density-corrected head for a given flow, speed, and actual fluid density.
+   *
+   * <p>
+   * Applies the correction: H_actual = H_chart × (ρ_chart / ρ_actual)
+   * </p>
+   * <p>
+   * If no reference density is set, returns the uncorrected head.
+   * </p>
+   *
+   * @param flow flow rate in m³/hr
+   * @param speed pump speed in rpm
+   * @param actualDensity actual fluid density in kg/m³
+   * @return corrected head in the unit specified by getHeadUnit()
+   */
+  public double getCorrectedHead(double flow, double speed, double actualDensity) {
+    double chartHead = getHead(flow, speed);
+    if (referenceDensity > 0 && actualDensity > 0) {
+      double correctionFactor = referenceDensity / actualDensity;
+      if (Math.abs(correctionFactor - 1.0) > 0.01) {
+        logger.debug("Applying density correction factor {} (ref={} kg/m³, actual={} kg/m³)",
+            String.format("%.4f", correctionFactor), referenceDensity, actualDensity);
+      }
+      return chartHead * correctionFactor;
+    }
+    return chartHead;
   }
 
   /** {@inheritDoc} */

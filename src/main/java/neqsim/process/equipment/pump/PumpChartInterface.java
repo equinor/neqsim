@@ -166,4 +166,40 @@ public interface PumpChartInterface extends Cloneable {
    * @return true if NPSH curve is available
    */
   public boolean hasNPSHCurve();
+
+  /**
+   * Get the reference density used for density correction.
+   *
+   * @return reference density in kg/m³, or -1.0 if not set
+   */
+  public double getReferenceDensity();
+
+  /**
+   * Set the reference density for density correction.
+   *
+   * <p>
+   * Pump curves are typically measured with water (~998 kg/m³). When pumping fluids with different
+   * densities, the head must be corrected: H_actual = H_chart × (ρ_chart / ρ_actual)
+   * </p>
+   *
+   * @param referenceDensity reference fluid density in kg/m³ (use -1.0 to disable correction)
+   */
+  public void setReferenceDensity(double referenceDensity);
+
+  /**
+   * Check if density correction is enabled.
+   *
+   * @return true if reference density is set and correction will be applied
+   */
+  public boolean hasDensityCorrection();
+
+  /**
+   * Get density-corrected head for a given flow, speed, and actual fluid density.
+   *
+   * @param flow flow rate in m³/hr
+   * @param speed pump speed in rpm
+   * @param actualDensity actual fluid density in kg/m³
+   * @return corrected head in the unit specified by getHeadUnit()
+   */
+  public double getCorrectedHead(double flow, double speed, double actualDensity);
 }

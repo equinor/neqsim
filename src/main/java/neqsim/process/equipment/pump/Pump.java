@@ -23,12 +23,51 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
+ * Centrifugal pump simulation model for process systems.
+ *
  * <p>
- * Pump class.
+ * This class simulates a centrifugal pump using either:
  * </p>
+ * <ul>
+ * <li>Isentropic compression with specified outlet pressure and efficiency</li>
+ * <li>Manufacturer pump curves via {@link PumpChart} for realistic performance</li>
+ * </ul>
+ *
+ * <h2>Key Features</h2>
+ * <ul>
+ * <li><b>Pump Curves:</b> Support for head, efficiency, and NPSH curves with affinity law
+ * scaling</li>
+ * <li><b>Density Correction:</b> Automatic head correction when pumping fluids different from chart
+ * test fluid</li>
+ * <li><b>NPSH Monitoring:</b> Cavitation detection based on available vs required NPSH</li>
+ * <li><b>Operating Status:</b> Surge, stonewall, and efficiency monitoring</li>
+ * </ul>
+ *
+ * <h2>Usage Example</h2>
+ * 
+ * <pre>{@code
+ * // Simple usage with outlet pressure
+ * Pump pump = new Pump("MainPump", feedStream);
+ * pump.setOutletPressure(10.0, "bara");
+ * pump.setIsentropicEfficiency(0.75);
+ * pump.run();
+ *
+ * // With manufacturer pump curves
+ * double[] speed = {1000.0, 1500.0};
+ * double[][] flow = {{10, 20, 30}, {15, 30, 45}};
+ * double[][] head = {{100, 95, 85}, {225, 214, 191}};
+ * double[][] efficiency = {{70, 80, 75}, {72, 82, 77}};
+ * double[] chartConditions = {18.0, 298.15, 1.0, 1.0, 998.0}; // Include ref density
+ * pump.getPumpChart().setCurves(chartConditions, speed, flow, head, efficiency);
+ * pump.getPumpChart().setHeadUnit("meter");
+ * pump.setSpeed(1200.0);
+ * pump.run();
+ * }</pre>
  *
  * @author esol
  * @version $Id: $Id
+ * @see PumpChart
+ * @see PumpChartInterface
  */
 public class Pump extends TwoPortEquipment implements PumpInterface {
   /** Serialization version UID. */
@@ -185,14 +224,17 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
       } else if (pumpChart.isUsePumpChart()) {
         thermoSystem = inStream.getThermoSystem().clone();
         double flowRate_m3hr = inStream.getThermoSystem().getFlowRate("m3/hr");
-        double pumpHead = getPumpChart().getHead(flowRate_m3hr, getSpeed());
+        double densityInlet = inStream.getThermoSystem().getDensity("kg/m3");
+
+        // Get head with optional density correction
+        // If reference density is set, applies: H_actual = H_chart × (ρ_chart / ρ_actual)
+        double pumpHead = getPumpChart().getCorrectedHead(flowRate_m3hr, getSpeed(), densityInlet);
         double efficiencyPercent = getPumpChart().getEfficiency(flowRate_m3hr, getSpeed());
         double efficiencyDecimal = efficiencyPercent / 100.0;
         isentropicEfficiency = efficiencyPercent; // Store as percentage for consistency
 
         // Calculate pressure rise based on head unit
         double deltaP_Pa; // Pressure rise in Pa
-        double densityInlet = inStream.getThermoSystem().getDensity("kg/m3");
 
         if (getPumpChart().getHeadUnit().equals("meter")) {
           // Head in meters: ΔP = ρ·g·H

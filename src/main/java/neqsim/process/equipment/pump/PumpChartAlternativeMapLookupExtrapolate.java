@@ -89,4 +89,31 @@ public class PumpChartAlternativeMapLookupExtrapolate
     // TODO: Implement NPSH curve check for alternative pump chart
     return false;
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getReferenceDensity() {
+    // No density correction in alternative pump chart
+    return -1.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setReferenceDensity(double referenceDensity) {
+    // TODO: Implement density correction for alternative pump chart
+    logger.warn("setReferenceDensity not yet implemented for alternative pump chart");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean hasDensityCorrection() {
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCorrectedHead(double flow, double speed, double actualDensity) {
+    // No density correction - return uncorrected head
+    return getHead(flow, speed);
+  }
 }
