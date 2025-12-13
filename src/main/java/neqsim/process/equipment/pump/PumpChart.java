@@ -55,7 +55,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Monitors for abnormal conditions:
  * </p>
  * <ul>
- * <li><b>Surge:</b> Low flow instability (dH/dQ > 0)</li>
+ * <li><b>Surge:</b> Low flow instability (dH/dQ &gt; 0)</li>
  * <li><b>Stonewall:</b> Maximum flow limit exceeded</li>
  * <li><b>Low Efficiency:</b> Operating far from BEP</li>
  * </ul>
