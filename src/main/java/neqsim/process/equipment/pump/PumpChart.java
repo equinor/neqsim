@@ -134,6 +134,17 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
   // head must be corrected for different fluid densities: H_actual = H_chart × (ρ_chart / ρ_actual)
   private double referenceDensity = -1.0; // Negative means no correction applied
 
+  // Viscosity correction parameters (Hydraulic Institute method)
+  // Reference viscosity (typically water at ~20°C: 1.0 cSt)
+  private double referenceViscosity = -1.0; // cSt, negative means no correction applied
+  private boolean useViscosityCorrection = false;
+
+  // Cached viscosity correction factors
+  private double cQ = 1.0; // Flow correction factor
+  private double cH = 1.0; // Head correction factor
+  private double cEta = 1.0; // Efficiency correction factor
+  private double lastViscosity = -1.0; // Last viscosity used for calculation
+
   /**
    * <p>
    * Constructor for PumpChart.
@@ -751,6 +762,271 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
       return chartHead * correctionFactor;
     }
     return chartHead;
+  }
+
+  // ============= VISCOSITY CORRECTION (Hydraulic Institute Method) =============
+
+  /**
+   * Calculate viscosity correction factors using the Hydraulic Institute (HI) method.
+   *
+   * <p>
+   * The HI method provides correction factors for flow, head, and efficiency when pumping viscous
+   * fluids. The method is valid for:
+   * </p>
+   * <ul>
+   * <li>Kinematic viscosity: 4 to 4000 cSt</li>
+   * <li>Flow rate at BEP: up to ~760 m³/hr</li>
+   * <li>Head per stage: up to ~180 m</li>
+   * <li>Single-stage and first-stage of multistage pumps</li>
+   * </ul>
+   *
+   * <p>
+   * Reference: ANSI/HI 9.6.7-2021 "Effects of Liquid Viscosity on Rotodynamic Pump Performance"
+   * </p>
+   *
+   * @param viscosity kinematic viscosity in cSt (centistokes)
+   * @param flowBEP flow at best efficiency point in m³/hr
+   * @param headBEP head at best efficiency point in meters
+   * @param speed pump speed in rpm
+   */
+  public void calculateViscosityCorrection(double viscosity, double flowBEP, double headBEP,
+      double speed) {
+    if (viscosity <= 1.0) {
+      // Water-like viscosity, no correction needed
+      cQ = 1.0;
+      cH = 1.0;
+      cEta = 1.0;
+      lastViscosity = viscosity;
+      return;
+    }
+
+    // Parameter B (Hydraulic Institute correlation parameter)
+    // B = 26.6 × ν^0.5 × (H_BEP)^0.0625 / (Q_BEP^0.375 × N^0.25)
+    // where ν is in cSt, H in ft, Q in gpm, N in rpm
+    // Convert units: m³/hr → gpm (×4.40287), m → ft (×3.28084)
+    double Q_gpm = flowBEP * 4.40287;
+    double H_ft = headBEP * 3.28084;
+
+    if (Q_gpm <= 0 || H_ft <= 0) {
+      logger.warn("Invalid BEP parameters for viscosity correction: Q={} m³/hr, H={} m", flowBEP,
+          headBEP);
+      cQ = 1.0;
+      cH = 1.0;
+      cEta = 1.0;
+      return;
+    }
+
+    double B = 26.6 * Math.pow(viscosity, 0.5) * Math.pow(H_ft, 0.0625)
+        / (Math.pow(Q_gpm, 0.375) * Math.pow(speed, 0.25));
+
+    // Calculate correction factors based on B parameter
+    // These are empirical correlations from the HI standard
+    if (B <= 1.0) {
+      // Low B: minimal correction
+      cQ = 1.0;
+      cH = 1.0;
+      cEta = 1.0;
+    } else if (B <= 40.0) {
+      // Moderate B: use HI correlation curves
+      // Cq = 1 - 0.01 × B^0.9 (approximation)
+      cQ = Math.max(0.6, 1.0 - 0.01 * Math.pow(B, 0.9));
+
+      // Ch = 1 - 0.008 × B (at BEP, slightly less at other points)
+      cH = Math.max(0.7, 1.0 - 0.008 * B);
+
+      // C_eta follows a similar but steeper reduction
+      cEta = Math.max(0.4, 1.0 - 0.015 * Math.pow(B, 0.85));
+    } else {
+      // High B (> 40): significant degradation
+      cQ = 0.6;
+      cH = 0.7;
+      cEta = 0.4;
+      logger.warn("Viscosity parameter B={} is very high. Pump may not be suitable for this fluid.",
+          String.format("%.1f", B));
+    }
+
+    lastViscosity = viscosity;
+    useViscosityCorrection = true;
+
+    logger.info("Viscosity correction calculated for {} cSt: Cq={}, Ch={}, Cη={}",
+        String.format("%.1f", viscosity), String.format("%.3f", cQ), String.format("%.3f", cH),
+        String.format("%.3f", cEta));
+  }
+
+  /**
+   * Get the viscosity-corrected flow rate.
+   *
+   * <p>
+   * Q_viscous = Q_water × Cq
+   * </p>
+   *
+   * @param flowWater flow rate from water test in m³/hr
+   * @return corrected flow rate in m³/hr
+   */
+  public double getViscosityCorrectedFlow(double flowWater) {
+    if (!useViscosityCorrection) {
+      return flowWater;
+    }
+    return flowWater * cQ;
+  }
+
+  /**
+   * Get the viscosity-corrected head.
+   *
+   * <p>
+   * H_viscous = H_water × Ch
+   * </p>
+   *
+   * @param headWater head from water test in meters
+   * @return corrected head in meters
+   */
+  public double getViscosityCorrectedHead(double headWater) {
+    if (!useViscosityCorrection) {
+      return headWater;
+    }
+    return headWater * cH;
+  }
+
+  /**
+   * Get the viscosity-corrected efficiency.
+   *
+   * <p>
+   * η_viscous = η_water × Cη
+   * </p>
+   *
+   * @param efficiencyWater efficiency from water test in percent
+   * @return corrected efficiency in percent
+   */
+  public double getViscosityCorrectedEfficiency(double efficiencyWater) {
+    if (!useViscosityCorrection) {
+      return efficiencyWater;
+    }
+    return efficiencyWater * cEta;
+  }
+
+  /**
+   * Get head with both viscosity and density corrections applied.
+   *
+   * @param flow flow rate in m³/hr
+   * @param speed pump speed in rpm
+   * @param actualDensity actual fluid density in kg/m³
+   * @param actualViscosity actual kinematic viscosity in cSt
+   * @return fully corrected head
+   */
+  public double getFullyCorrectedHead(double flow, double speed, double actualDensity,
+      double actualViscosity) {
+    // First apply viscosity correction if needed
+    if (useViscosityCorrection && actualViscosity > 1.0) {
+      // If viscosity changed, recalculate factors
+      if (Math.abs(actualViscosity - lastViscosity) > 0.1) {
+        double flowBEP = getBestEfficiencyFlowRate();
+        double headBEP = getHead(flowBEP, referenceSpeed);
+        calculateViscosityCorrection(actualViscosity, flowBEP, headBEP, speed);
+      }
+      // Adjust flow to equivalent water flow
+      double waterEquivalentFlow = flow / cQ;
+      double waterHead = getHead(waterEquivalentFlow, speed);
+      double viscosityCorrectedHead = waterHead * cH;
+
+      // Then apply density correction
+      if (referenceDensity > 0 && actualDensity > 0) {
+        return viscosityCorrectedHead * (referenceDensity / actualDensity);
+      }
+      return viscosityCorrectedHead;
+    }
+
+    // No viscosity correction, just density
+    return getCorrectedHead(flow, speed, actualDensity);
+  }
+
+  /**
+   * Get efficiency with viscosity correction applied.
+   *
+   * @param flow flow rate in m³/hr
+   * @param speed pump speed in rpm
+   * @param actualViscosity actual kinematic viscosity in cSt
+   * @return corrected efficiency in percent
+   */
+  public double getCorrectedEfficiency(double flow, double speed, double actualViscosity) {
+    double baseEfficiency = getEfficiency(flow, speed);
+
+    if (useViscosityCorrection && actualViscosity > 1.0) {
+      // Recalculate if viscosity changed
+      if (Math.abs(actualViscosity - lastViscosity) > 0.1) {
+        double flowBEP = getBestEfficiencyFlowRate();
+        double headBEP = getHead(flowBEP, referenceSpeed);
+        calculateViscosityCorrection(actualViscosity, flowBEP, headBEP, speed);
+      }
+      return baseEfficiency * cEta;
+    }
+
+    return baseEfficiency;
+  }
+
+  /**
+   * Set the reference viscosity for viscosity correction.
+   *
+   * @param referenceViscosity reference kinematic viscosity in cSt (typically 1.0 for water)
+   */
+  public void setReferenceViscosity(double referenceViscosity) {
+    this.referenceViscosity = referenceViscosity;
+    if (referenceViscosity > 0) {
+      logger.info("Pump chart reference viscosity set to {} cSt", referenceViscosity);
+    }
+  }
+
+  /**
+   * Get the reference viscosity.
+   *
+   * @return reference viscosity in cSt
+   */
+  public double getReferenceViscosity() {
+    return referenceViscosity;
+  }
+
+  /**
+   * Enable or disable viscosity correction.
+   *
+   * @param useViscosityCorrection true to enable viscosity correction
+   */
+  public void setUseViscosityCorrection(boolean useViscosityCorrection) {
+    this.useViscosityCorrection = useViscosityCorrection;
+  }
+
+  /**
+   * Check if viscosity correction is enabled.
+   *
+   * @return true if viscosity correction is active
+   */
+  public boolean isUseViscosityCorrection() {
+    return useViscosityCorrection;
+  }
+
+  /**
+   * Get the current flow correction factor (Cq).
+   *
+   * @return flow correction factor
+   */
+  public double getFlowCorrectionFactor() {
+    return cQ;
+  }
+
+  /**
+   * Get the current head correction factor (Ch).
+   *
+   * @return head correction factor
+   */
+  public double getHeadCorrectionFactor() {
+    return cH;
+  }
+
+  /**
+   * Get the current efficiency correction factor (Cη).
+   *
+   * @return efficiency correction factor
+   */
+  public double getEfficiencyCorrectionFactor() {
+    return cEta;
   }
 
   /** {@inheritDoc} */

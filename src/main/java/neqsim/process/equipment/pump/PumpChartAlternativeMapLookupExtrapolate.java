@@ -116,4 +116,70 @@ public class PumpChartAlternativeMapLookupExtrapolate
     // No density correction - return uncorrected head
     return getHead(flow, speed);
   }
+
+  // ============= VISCOSITY CORRECTION (not implemented for alternative chart) =============
+
+  /** {@inheritDoc} */
+  @Override
+  public void calculateViscosityCorrection(double viscosity, double flowBEP, double headBEP,
+      double speed) {
+    logger.warn("calculateViscosityCorrection not implemented for alternative pump chart");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getFullyCorrectedHead(double flow, double speed, double actualDensity,
+      double actualViscosity) {
+    // No corrections - return uncorrected head
+    return getHead(flow, speed);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCorrectedEfficiency(double flow, double speed, double actualViscosity) {
+    // No viscosity correction - return base efficiency
+    return getEfficiency(flow, speed);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setReferenceViscosity(double referenceViscosity) {
+    logger.warn("setReferenceViscosity not implemented for alternative pump chart");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getReferenceViscosity() {
+    return -1.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setUseViscosityCorrection(boolean useViscosityCorrection) {
+    logger.warn("setUseViscosityCorrection not implemented for alternative pump chart");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isUseViscosityCorrection() {
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getFlowCorrectionFactor() {
+    return 1.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getHeadCorrectionFactor() {
+    return 1.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getEfficiencyCorrectionFactor() {
+    return 1.0;
+  }
 }

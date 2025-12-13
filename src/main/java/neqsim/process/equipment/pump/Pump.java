@@ -226,10 +226,45 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
         double flowRate_m3hr = inStream.getThermoSystem().getFlowRate("m3/hr");
         double densityInlet = inStream.getThermoSystem().getDensity("kg/m3");
 
-        // Get head with optional density correction
-        // If reference density is set, applies: H_actual = H_chart × (ρ_chart / ρ_actual)
-        double pumpHead = getPumpChart().getCorrectedHead(flowRate_m3hr, getSpeed(), densityInlet);
-        double efficiencyPercent = getPumpChart().getEfficiency(flowRate_m3hr, getSpeed());
+        // Get kinematic viscosity for viscosity correction (cSt = mm²/s)
+        // Dynamic viscosity (Pa·s) / density (kg/m³) × 1e6 = cSt
+        double viscosity_cSt = 1.0; // Default to water-like
+        try {
+          thermoSystem.initPhysicalProperties();
+          if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
+            int liquidPhase =
+                thermoSystem.hasPhaseType("oil") ? thermoSystem.getPhaseNumberOfPhase("oil")
+                    : thermoSystem.getPhaseNumberOfPhase("aqueous");
+            double dynViscosity =
+                thermoSystem.getPhase(liquidPhase).getPhysicalProperties().getViscosity(); // Pa·s
+            double phaseDensity = thermoSystem.getPhase(liquidPhase).getDensity("kg/m3");
+            viscosity_cSt = (dynViscosity / phaseDensity) * 1.0e6;
+          }
+        } catch (Exception e) {
+          logger.debug("Could not get viscosity, using default: " + e.getMessage());
+        }
+
+        // Get head and efficiency with optional density and viscosity corrections
+        double pumpHead;
+        double efficiencyPercent;
+
+        if (getPumpChart().isUseViscosityCorrection() && viscosity_cSt > 4.0) {
+          // Use fully corrected values for viscous fluids
+          pumpHead = getPumpChart().getFullyCorrectedHead(flowRate_m3hr, getSpeed(), densityInlet,
+              viscosity_cSt);
+          efficiencyPercent =
+              getPumpChart().getCorrectedEfficiency(flowRate_m3hr, getSpeed(), viscosity_cSt);
+          logger.debug("Using viscosity correction: ν={} cSt, Cq={}, Ch={}, Cη={}",
+              String.format("%.1f", viscosity_cSt),
+              String.format("%.3f", getPumpChart().getFlowCorrectionFactor()),
+              String.format("%.3f", getPumpChart().getHeadCorrectionFactor()),
+              String.format("%.3f", getPumpChart().getEfficiencyCorrectionFactor()));
+        } else {
+          // Only density correction (or no correction)
+          pumpHead = getPumpChart().getCorrectedHead(flowRate_m3hr, getSpeed(), densityInlet);
+          efficiencyPercent = getPumpChart().getEfficiency(flowRate_m3hr, getSpeed());
+        }
+
         double efficiencyDecimal = efficiencyPercent / 100.0;
         isentropicEfficiency = efficiencyPercent; // Store as percentage for consistency
 

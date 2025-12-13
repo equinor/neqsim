@@ -337,6 +337,203 @@ The `chartConditions` array passed to `setCurves()` contains reference condition
 
 ---
 
+## Viscosity Correction (Heavy Oil / Viscous Fluids)
+
+Pump performance is significantly affected by fluid viscosity. Curves measured with water or light oil require correction when pumping viscous fluids like heavy crude oil.
+
+### Hydraulic Institute (HI) Method
+
+NeqSim implements the Hydraulic Institute viscosity correction method for centrifugal pumps. The correction uses the B parameter:
+
+```
+B = 26.6 × ν^0.5 × H^0.0625 / (Q^0.375 × N^0.25)
+```
+
+Where:
+- ν = kinematic viscosity (cSt)
+- H = head at BEP (meters)
+- Q = flow at BEP (m³/hr)
+- N = speed (rpm)
+
+### Correction Factors
+
+| Parameter | Factor | Description |
+|-----------|--------|-------------|
+| Flow | Cq | Q_viscous = Q_water × Cq |
+| Head | Ch | H_viscous = H_water × Ch |
+| Efficiency | Cη | η_viscous = η_water × Cη |
+
+**Valid range:** 4 - 4000 cSt (below 4 cSt, water properties assumed)
+
+### Usage Example (Java)
+
+```java
+// Create pump with chart
+Pump pump = new Pump("ViscousPump", feedStream);
+pump.getPumpChart().setCurves(chartConditions, speed, flow, head, efficiency);
+
+// Enable viscosity correction
+pump.getPumpChart().setReferenceViscosity(1.0);       // Chart measured with water (1 cSt)
+pump.getPumpChart().setUseViscosityCorrection(true);  // Enable correction
+
+// Set pump parameters
+pump.getPumpChart().setReferenceFlow(100.0);          // BEP flow (m³/hr)
+pump.getPumpChart().setReferenceHead(100.0);          // BEP head (meters)
+pump.getPumpChart().setReferenceSpeed(1500.0);        // Reference speed (rpm)
+
+pump.run();
+
+// Check applied corrections
+System.out.println("Flow correction factor Cq: " + pump.getPumpChart().getFlowCorrectionFactor());
+System.out.println("Head correction factor Ch: " + pump.getPumpChart().getHeadCorrectionFactor());
+System.out.println("Efficiency correction Cη: " + pump.getPumpChart().getEfficiencyCorrectionFactor());
+```
+
+### Usage Example (Python)
+
+```python
+import neqsim
+from neqsim.process import stream, pump
+
+# Create stream with viscous oil
+oil = neqsim.thermo.system.SystemSrkEos(323.15, 5.0)
+oil.addComponent("nC20", 1.0)  # Heavy hydrocarbon
+oil.setMixingRule("classic")
+
+feed = stream.stream("ViscousOilFeed", oil)
+feed.setFlowRate(100.0, "kg/hr")
+feed.run()
+
+# Create pump with viscosity correction
+viscous_pump = pump.pump("OilBooster", feed)
+viscous_pump.getPumpChart().setReferenceViscosity(1.0)
+viscous_pump.getPumpChart().setUseViscosityCorrection(True)
+viscous_pump.setOutletPressure(10.0, "bara")
+viscous_pump.run()
+
+print(f"Actual viscosity: {feed.getFluid().getKinematicViscosity('cSt'):.1f} cSt")
+print(f"Head correction: {viscous_pump.getPumpChart().getHeadCorrectionFactor():.3f}")
+print(f"Efficiency correction: {viscous_pump.getPumpChart().getEfficiencyCorrectionFactor():.3f}")
+```
+
+---
+
+## ESP Pump (Electric Submersible Pump)
+
+The `ESPPump` class extends `Pump` for handling multiphase gas-liquid flows commonly encountered in oil well production.
+
+### Key Features
+
+- Multi-stage impeller design
+- Gas Void Fraction (GVF) calculation at pump inlet
+- Head degradation model for gassy conditions
+- Gas separator modeling
+- Surge and gas lock detection
+
+### GVF Degradation Model
+
+Head degradation follows a quadratic relationship:
+
+```
+f = 1 - A × GVF - B × GVF²
+```
+
+Where default coefficients are: A = 0.5, B = 2.0
+
+### Operating Limits
+
+| Condition | Default Threshold | Description |
+|-----------|------------------|-------------|
+| Surging | GVF > 15% | Unstable operation begins |
+| Gas Lock | GVF > 30% | Pump loses prime, flow stops |
+
+### Usage Example (Java)
+
+```java
+// Create multiphase stream (gas + liquid)
+SystemInterface fluid = new SystemSrkEos(323.15, 30.0);
+fluid.addComponent("methane", 0.05);     // 5% gas
+fluid.addComponent("n-heptane", 0.95);   // 95% liquid
+fluid.setMixingRule("classic");
+fluid.setMultiPhaseCheck(true);
+
+Stream wellStream = new Stream("WellProduction", fluid);
+wellStream.setFlowRate(1000.0, "kg/hr");
+wellStream.run();
+
+// Create ESP pump
+ESPPump esp = new ESPPump("ESP-1", wellStream);
+esp.setNumberOfStages(100);           // 100-stage pump
+esp.setHeadPerStage(10.0);            // 10 m head per stage
+
+// Configure GVF handling
+esp.setMaxGVF(0.30);                  // 30% max GVF before gas lock
+esp.setSurgingGVF(0.15);              // 15% - surging onset
+esp.setHasGasSeparator(true);         // Include rotary gas separator
+esp.setGasSeparatorEfficiency(0.60);  // 60% gas separation
+
+esp.run();
+
+// Check operating status
+System.out.println("GVF at inlet: " + (esp.getGasVoidFraction() * 100) + "%");
+System.out.println("Head degradation: " + (1 - esp.getHeadDegradationFactor()) * 100 + "% loss");
+System.out.println("Surging: " + esp.isSurging());
+System.out.println("Gas locked: " + esp.isGasLocked());
+System.out.println("Pressure boost: " + (esp.getOutletPressure() - esp.getInletPressure()) + " bara");
+```
+
+### Usage Example (Python)
+
+```python
+import neqsim
+from neqsim.thermo.system import SystemSrkEos
+from neqsim.process.equipment.pump import ESPPump
+
+# Create multiphase well fluid
+well_fluid = SystemSrkEos(353.15, 25.0)
+well_fluid.addComponent("methane", 0.08)
+well_fluid.addComponent("n-heptane", 0.92)
+well_fluid.setMixingRule("classic")
+well_fluid.setMultiPhaseCheck(True)
+
+well_stream = neqsim.process.stream.stream("WellStream", well_fluid)
+well_stream.setFlowRate(2000.0, "kg/hr")
+well_stream.run()
+
+# Create and configure ESP
+esp = ESPPump("ESP-1", well_stream)
+esp.setNumberOfStages(80)
+esp.setHeadPerStage(12.0)
+esp.setMaxGVF(0.25)
+esp.setHasGasSeparator(True)
+esp.setGasSeparatorEfficiency(0.70)
+esp.run()
+
+# Monitor performance
+print(f"Inlet GVF: {esp.getGasVoidFraction()*100:.1f}%")
+print(f"Head degradation factor: {esp.getHeadDegradationFactor():.3f}")
+print(f"Effective head: {esp.calculateTotalHead():.1f} m")
+print(f"Is surging: {esp.isSurging()}")
+```
+
+### ESPPump API Reference
+
+| Method | Description |
+|--------|-------------|
+| `setNumberOfStages(int)` | Set number of impeller stages |
+| `setHeadPerStage(double)` | Set head per stage (meters) |
+| `setMaxGVF(double)` | Set gas lock threshold (0-1) |
+| `setSurgingGVF(double)` | Set surging onset threshold (0-1) |
+| `setHasGasSeparator(boolean)` | Enable rotary gas separator |
+| `setGasSeparatorEfficiency(double)` | Set separator efficiency (0-1) |
+| `getGasVoidFraction()` | Get calculated inlet GVF |
+| `getHeadDegradationFactor()` | Get head degradation (0-1) |
+| `isSurging()` | Check if pump is surging |
+| `isGasLocked()` | Check if pump has lost prime |
+| `calculateTotalHead()` | Get total developed head |
+
+---
+
 ## Head Unit Options
 
 | Unit | Description | Pressure Calculation |
@@ -350,14 +547,18 @@ The `chartConditions` array passed to `setCurves()` contains reference condition
 
 The pump implementation includes comprehensive tests:
 
-| Test Class | Coverage |
-|------------|----------|
-| `PumpTest` | Basic pump operations |
-| `PumpChartTest` | Curve interpolation |
-| `PumpAffinityLawTest` | Affinity law scaling |
-| `PumpNPSHTest` | Cavitation detection |
-| `PumpNPSHCurveTest` | NPSH curve handling |
-| `PumpDensityCorrectionTest` | Density correction |
+| Test Class | Tests | Coverage |
+|------------|-------|----------|
+| `PumpTest` | 3 | Basic pump operations |
+| `PumpChartTest` | 3 | Curve interpolation |
+| `PumpAffinityLawTest` | 6 | Affinity law scaling |
+| `PumpNPSHTest` | 8 | Cavitation detection |
+| `PumpNPSHCurveTest` | 12 | NPSH curve handling |
+| `PumpDensityCorrectionTest` | 7 | Density correction |
+| `PumpViscosityCorrectionTest` | 12 | HI viscosity correction method |
+| `ESPPumpTest` | 12 | ESP multiphase handling |
+
+**Total: 63 tests**
 
 ---
 
