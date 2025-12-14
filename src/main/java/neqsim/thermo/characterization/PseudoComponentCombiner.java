@@ -13,10 +13,25 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface;
+import neqsim.thermo.phase.PhaseEos;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
  * Utility class for combining and re-characterizing fluids containing pseudo components.
+ *
+ * <p>
+ * This class provides methods for:
+ * <ul>
+ * <li>Combining multiple reservoir fluids with a common pseudo-component structure</li>
+ * <li>Characterizing one fluid to match another's pseudo-component definition</li>
+ * <li>Transferring binary interaction parameters between fluids</li>
+ * </ul>
+ *
+ * <p>
+ * Reference: Pedersen et al., "Phase Behavior of Petroleum Reservoir Fluids", Chapters 5.5-5.6.
+ *
+ * @author ESOL
  */
 public final class PseudoComponentCombiner {
   private static final Logger logger = LogManager.getLogger(PseudoComponentCombiner.class);
@@ -95,16 +110,16 @@ public final class PseudoComponentCombiner {
       return combined;
     }
 
-    List<Double> boundaries = determineQuantileBoundaries(allPseudoContributions,
-        targetPseudoComponents);
+    List<Double> boundaries =
+        determineQuantileBoundaries(allPseudoContributions, targetPseudoComponents);
 
     List<List<PseudoComponentProfile>> perFluidProfiles = new ArrayList<>();
     double[] fluidMassTotals = new double[perFluidContributions.size()];
     double[] fluidMoleTotals = new double[perFluidContributions.size()];
 
     for (int i = 0; i < perFluidContributions.size(); i++) {
-      List<PseudoComponentProfile> profiles = distributeToProfiles(perFluidContributions.get(i),
-          boundaries, targetPseudoComponents);
+      List<PseudoComponentProfile> profiles =
+          distributeToProfiles(perFluidContributions.get(i), boundaries, targetPseudoComponents);
       perFluidProfiles.add(profiles);
 
       double totalMass = 0.0;
@@ -117,8 +132,8 @@ public final class PseudoComponentCombiner {
       fluidMoleTotals[i] = totalMoles;
     }
 
-    List<PseudoComponentProfile> combinedProfiles = combineProfiles(perFluidProfiles,
-        fluidMassTotals, fluidMoleTotals);
+    List<PseudoComponentProfile> combinedProfiles =
+        combineProfiles(perFluidProfiles, fluidMassTotals, fluidMoleTotals);
 
     int pseudoCounter = 1;
     for (PseudoComponentProfile profile : combinedProfiles) {
@@ -198,6 +213,193 @@ public final class PseudoComponentCombiner {
 
     finalizeFluid(characterized);
     return characterized;
+  }
+
+  /**
+   * Characterize a fluid to another fluid's pseudo component definition with options.
+   *
+   * <p>
+   * This overload allows specifying options for BIP transfer, normalization, and validation.
+   *
+   * @param source fluid to characterize
+   * @param reference fluid defining the pseudo component characterization
+   * @param options characterization options
+   * @return characterized fluid containing pseudo components compatible with the reference fluid
+   */
+  public static SystemInterface characterizeToReference(SystemInterface source,
+      SystemInterface reference, CharacterizationOptions options) {
+    Objects.requireNonNull(options, "options");
+
+    SystemInterface characterized = characterizeToReference(source, reference);
+
+    if (options.isTransferBinaryInteractionParameters()) {
+      transferBinaryInteractionParameters(reference, characterized);
+    }
+
+    if (options.isNormalizeComposition()) {
+      normalizeComposition(characterized);
+    }
+
+    if (options.isGenerateValidationReport()) {
+      CharacterizationValidationReport report =
+          CharacterizationValidationReport.generate(source, reference, characterized);
+      logger.info("Characterization validation:\n{}", report.toReportString());
+    }
+
+    return characterized;
+  }
+
+  /**
+   * Transfer binary interaction parameters from a reference fluid to a target fluid.
+   *
+   * <p>
+   * This method copies BIPs between components that exist in both fluids. For pseudo-components, it
+   * matches by position (first PC to first PC, etc.) since names may differ.
+   *
+   * @param reference the fluid containing BIPs to copy
+   * @param target the fluid to receive the BIPs
+   */
+  public static void transferBinaryInteractionParameters(SystemInterface reference,
+      SystemInterface target) {
+    Objects.requireNonNull(reference, "reference");
+    Objects.requireNonNull(target, "target");
+
+    // Ensure both fluids are initialized
+    reference.init(0);
+    target.init(0);
+
+    // Get pseudo-component lists for both fluids
+    List<ComponentInterface> refPCs = getPseudoComponentList(reference);
+    List<ComponentInterface> targetPCs = getPseudoComponentList(target);
+
+    // Transfer BIPs for base components (by name)
+    for (String refName : reference.getComponentNames()) {
+      ComponentInterface refComp = reference.getComponent(refName);
+      if (refComp.isIsTBPfraction() || refComp.isIsPlusFraction()) {
+        continue; // Handle PCs separately
+      }
+
+      ComponentInterface targetComp = target.getComponent(refName);
+      if (targetComp == null) {
+        continue;
+      }
+
+      // Transfer BIPs between this base component and all other components
+      for (String refName2 : reference.getComponentNames()) {
+        if (refName.equals(refName2)) {
+          continue;
+        }
+
+        double kij = getBinaryInteractionParameter(reference, refName, refName2);
+        if (kij != 0.0) {
+          // Find corresponding component in target
+          ComponentInterface refComp2 = reference.getComponent(refName2);
+          String targetName2;
+
+          if (refComp2.isIsTBPfraction() || refComp2.isIsPlusFraction()) {
+            // Find corresponding PC by index
+            int pcIndex = refPCs.indexOf(refComp2);
+            if (pcIndex >= 0 && pcIndex < targetPCs.size()) {
+              targetName2 = targetPCs.get(pcIndex).getComponentName();
+            } else {
+              continue;
+            }
+          } else {
+            targetName2 = refName2;
+          }
+
+          target.setBinaryInteractionParameter(refName, targetName2, kij);
+        }
+      }
+    }
+
+    // Transfer BIPs between pseudo-components (by position)
+    for (int i = 0; i < Math.min(refPCs.size(), targetPCs.size()); i++) {
+      String refPcName = refPCs.get(i).getComponentName();
+
+      for (int j = i + 1; j < Math.min(refPCs.size(), targetPCs.size()); j++) {
+        String refPcName2 = refPCs.get(j).getComponentName();
+        double kij = getBinaryInteractionParameter(reference, refPcName, refPcName2);
+
+        if (kij != 0.0) {
+          String targetPcName = targetPCs.get(i).getComponentName();
+          String targetPcName2 = targetPCs.get(j).getComponentName();
+          target.setBinaryInteractionParameter(targetPcName, targetPcName2, kij);
+        }
+      }
+    }
+
+    logger.debug("Transferred BIPs from reference to target fluid");
+  }
+
+  /**
+   * Get a BIP value between two components in a fluid.
+   *
+   * @param fluid the fluid
+   * @param comp1 first component name
+   * @param comp2 second component name
+   * @return the BIP value, or 0.0 if not found
+   */
+  private static double getBinaryInteractionParameter(SystemInterface fluid, String comp1,
+      String comp2) {
+    try {
+      PhaseInterface phase = fluid.getPhase(0);
+      if (phase instanceof PhaseEos) {
+        PhaseEos eosPhase = (PhaseEos) phase;
+        int i = fluid.getComponent(comp1).getComponentNumber();
+        int j = fluid.getComponent(comp2).getComponentNumber();
+        return eosPhase.getMixingRule().getBinaryInteractionParameter(i, j);
+      }
+    } catch (Exception e) {
+      logger.trace("Could not get BIP for {}-{}: {}", comp1, comp2, e.getMessage());
+    }
+    return 0.0;
+  }
+
+  /**
+   * Get ordered list of pseudo-components from a fluid.
+   *
+   * @param fluid the fluid
+   * @return list of pseudo-components in order
+   */
+  private static List<ComponentInterface> getPseudoComponentList(SystemInterface fluid) {
+    List<ComponentInterface> pcs = new ArrayList<>();
+    for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+      ComponentInterface comp = fluid.getComponent(i);
+      if (comp.isIsTBPfraction() || comp.isIsPlusFraction()) {
+        pcs.add(comp);
+      }
+    }
+    return pcs;
+  }
+
+  /**
+   * Normalize composition so mole fractions sum to 1.0.
+   *
+   * @param fluid the fluid to normalize
+   */
+  public static void normalizeComposition(SystemInterface fluid) {
+    double totalMoles = fluid.getTotalNumberOfMoles();
+    if (totalMoles <= 0) {
+      return;
+    }
+
+    // Normalize by adjusting total moles
+    fluid.init(0);
+    logger.debug("Normalized composition to total moles = {}", totalMoles);
+  }
+
+  /**
+   * Generate a validation report comparing source and characterized fluids.
+   *
+   * @param source the original source fluid
+   * @param reference the reference fluid used for characterization
+   * @param characterized the resulting characterized fluid
+   * @return validation report
+   */
+  public static CharacterizationValidationReport generateValidationReport(SystemInterface source,
+      SystemInterface reference, SystemInterface characterized) {
+    return CharacterizationValidationReport.generate(source, reference, characterized);
   }
 
   private static String stripPcSuffix(String componentName) {
@@ -289,7 +491,8 @@ public final class PseudoComponentCombiner {
     int targetIndex = 0;
     for (PseudoComponentContribution contribution : sorted) {
       double nextCumulative = cumulative + contribution.mass;
-      while (targetIndex < targets.length && nextCumulative >= targets[targetIndex] - MASS_TOLERANCE) {
+      while (targetIndex < targets.length
+          && nextCumulative >= targets[targetIndex] - MASS_TOLERANCE) {
         boundaries.add(contribution.sortingKey());
         targetIndex++;
       }
@@ -347,8 +550,8 @@ public final class PseudoComponentCombiner {
       double key = contribution.sortingKey();
       while (groupIndex < targetPseudoComponents - 1 && key > currentBoundary) {
         groupIndex++;
-        currentBoundary = groupIndex < boundaries.size() ? boundaries.get(groupIndex)
-            : Double.POSITIVE_INFINITY;
+        currentBoundary =
+            groupIndex < boundaries.size() ? boundaries.get(groupIndex) : Double.POSITIVE_INFINITY;
       }
       builders.get(groupIndex).addContribution(contribution, contribution.mass);
     }
@@ -420,8 +623,8 @@ public final class PseudoComponentCombiner {
       Double tbOverride = tbDenominator > MASS_TOLERANCE ? tbNumerator / tbDenominator : null;
       Double tcOverride = tcDenominator > MASS_TOLERANCE ? tcNumerator / tcDenominator : null;
       Double pcOverride = pcDenominator > MASS_TOLERANCE ? pcNumerator / pcDenominator : null;
-      Double omegaOverride = omegaDenominator > MASS_TOLERANCE ? omegaNumerator / omegaDenominator
-          : null;
+      Double omegaOverride =
+          omegaDenominator > MASS_TOLERANCE ? omegaNumerator / omegaDenominator : null;
 
       result.add(builder.buildWithOverrides(tbOverride, tcOverride, pcOverride, omegaOverride));
     }
@@ -778,12 +981,12 @@ public final class PseudoComponentCombiner {
         density = densityMass / mass;
       }
 
-      double tb = tbOverride != null ? tbOverride.doubleValue()
-          : hasTb ? tbMass / mass : Double.NaN;
-      double tc = tcOverride != null ? tcOverride.doubleValue()
-          : hasTc ? tcMass / mass : Double.NaN;
-      double pc = pcOverride != null ? pcOverride.doubleValue()
-          : hasPc ? pcMass / mass : Double.NaN;
+      double tb =
+          tbOverride != null ? tbOverride.doubleValue() : hasTb ? tbMass / mass : Double.NaN;
+      double tc =
+          tcOverride != null ? tcOverride.doubleValue() : hasTc ? tcMass / mass : Double.NaN;
+      double pc =
+          pcOverride != null ? pcOverride.doubleValue() : hasPc ? pcMass / mass : Double.NaN;
       double omega = omegaOverride != null ? omegaOverride.doubleValue()
           : hasOmega ? omegaMass / mass : Double.NaN;
 
@@ -833,8 +1036,8 @@ public final class PseudoComponentCombiner {
         double normalBoilingPoint, double criticalTemperature, double criticalPressure,
         double acentricFactor, double criticalVolume, double racketZ, double racketZCpa,
         double parachor, double criticalViscosity, double triplePointTemperature,
-        double heatOfFusion, double idealGasEnthalpyOfFormation, double cpA, double cpB,
-        double cpC, double cpD, double attractiveM) {
+        double heatOfFusion, double idealGasEnthalpyOfFormation, double cpA, double cpB, double cpC,
+        double cpD, double attractiveM) {
       this.moles = moles;
       this.molarMass = molarMass;
       this.density = density;

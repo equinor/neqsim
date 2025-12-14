@@ -127,6 +127,16 @@ public class InterfacialFriction implements Serializable {
    * <p>
    * Uses Taitel-Dukler (1976) approach: treats interface as smooth wall with gas-side friction.
    * </p>
+   *
+   * @param vG gas velocity in m/s
+   * @param vL liquid velocity in m/s
+   * @param rhoG gas density in kg/m3
+   * @param rhoL liquid density in kg/m3
+   * @param muG gas viscosity in Pa.s
+   * @param muL liquid viscosity in Pa.s
+   * @param alphaL liquid holdup fraction
+   * @param D pipe diameter in m
+   * @return interfacial friction result
    */
   private InterfacialFrictionResult calcStratifiedSmooth(double vG, double vL, double rhoG,
       double rhoL, double muG, double muL, double alphaL, double D) {
