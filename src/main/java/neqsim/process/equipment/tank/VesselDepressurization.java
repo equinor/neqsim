@@ -137,7 +137,6 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * <pre>
    * vessel.setVesselMaterial(VesselMaterial.CARBON_STEEL);
    * </pre>
-   * </p>
    */
   public enum VesselMaterial {
     /** Carbon steel (SA-516 Gr. 70). */

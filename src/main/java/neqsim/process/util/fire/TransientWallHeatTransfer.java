@@ -19,7 +19,6 @@ import java.util.Arrays;
  * </pre>
  *
  * using an explicit finite difference scheme with configurable boundary conditions.
- * </p>
  *
  * <p>
  * Reference: Andreasen, A. (2021). HydDown: A Python package for calculation of hydrogen (or other
