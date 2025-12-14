@@ -330,6 +330,15 @@ public class EntrainmentDeposition implements Serializable {
 
   /**
    * Calculate equilibrium entrainment fraction.
+   *
+   * @param gasVelocity gas velocity in m/s
+   * @param gasDensity gas density in kg/m3
+   * @param liquidDensity liquid density in kg/m3
+   * @param liquidViscosity liquid viscosity in Pa.s
+   * @param surfaceTension surface tension in N/m
+   * @param diameter pipe diameter in m
+   * @param reFilm Reynolds number of liquid film
+   * @return equilibrium entrainment fraction (dimensionless, 0-1)
    */
   private double calculateEntrainmentFraction(double gasVelocity, double gasDensity,
       double liquidDensity, double liquidViscosity, double surfaceTension, double diameter,
