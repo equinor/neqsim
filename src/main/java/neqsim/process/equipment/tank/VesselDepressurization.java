@@ -2723,7 +2723,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   /**
    * Checks if current vessel temperature is below hydrate formation temperature.
    *
-   * @return True if hydrate formation risk exists (T_vessel < T_hydrate)
+   * @return True if hydrate formation risk exists (T_vessel &lt; T_hydrate)
    */
   public boolean hasHydrateRisk() {
     double hydrateTemp = getHydrateFormationTemperature();
