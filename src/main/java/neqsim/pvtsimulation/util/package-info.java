@@ -11,8 +11,6 @@
  * field, SI, and NeqSim internal units</li>
  * <li>{@link neqsim.pvtsimulation.util.PVTReportGenerator} - PVT report generation utilities for
  * CCE, CVD, DLE, and separator test results</li>
- * <li>{@link neqsim.pvtsimulation.util.MMPCalculator} - Minimum Miscibility Pressure (MMP)
- * calculation using slim-tube and key tie-line methods</li>
  * </ul>
  *
  * <h2>Black Oil Correlations Usage</h2>

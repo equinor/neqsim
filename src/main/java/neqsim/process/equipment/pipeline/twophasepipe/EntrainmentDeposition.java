@@ -363,6 +363,15 @@ public class EntrainmentDeposition implements Serializable {
 
   /**
    * Calculate deposition rate using selected model.
+   *
+   * @param dropletConcentration droplet concentration in kg/m3
+   * @param dropletDiameter droplet diameter in m
+   * @param gasDensity gas density in kg/m3
+   * @param gasViscosity gas viscosity in Pa.s
+   * @param liquidDensity liquid density in kg/m3
+   * @param gasVelocity gas velocity in m/s
+   * @param diameter pipe diameter in m
+   * @return deposition rate in kg/m2/s
    */
   private double calculateDepositionRate(double dropletConcentration, double dropletDiameter,
       double gasDensity, double gasViscosity, double liquidDensity, double gasVelocity,
@@ -389,6 +398,14 @@ public class EntrainmentDeposition implements Serializable {
 
   /**
    * McCoy-Hanratty deposition rate correlation.
+   *
+   * @param dropletConcentration droplet concentration in kg/m3
+   * @param dropletDiameter droplet diameter in m
+   * @param gasDensity gas density in kg/m3
+   * @param gasViscosity gas viscosity in Pa.s
+   * @param gasVelocity gas velocity in m/s
+   * @param diameter pipe diameter in m
+   * @return deposition rate in kg/m2/s
    */
   private double depositionMcCoyHanratty(double dropletConcentration, double dropletDiameter,
       double gasDensity, double gasViscosity, double gasVelocity, double diameter) {
@@ -421,6 +438,15 @@ public class EntrainmentDeposition implements Serializable {
 
   /**
    * Particle relaxation time deposition model.
+   *
+   * @param dropletConcentration droplet concentration in kg/m3
+   * @param dropletDiameter droplet diameter in m
+   * @param gasDensity gas density in kg/m3
+   * @param gasViscosity gas viscosity in Pa.s
+   * @param liquidDensity liquid density in kg/m3
+   * @param gasVelocity gas velocity in m/s
+   * @param diameter pipe diameter in m
+   * @return deposition rate in kg/m2/s
    */
   private double depositionRelaxation(double dropletConcentration, double dropletDiameter,
       double gasDensity, double gasViscosity, double liquidDensity, double gasVelocity,
@@ -451,6 +477,14 @@ public class EntrainmentDeposition implements Serializable {
 
   /**
    * Cousins deposition model.
+   *
+   * @param dropletConcentration droplet concentration in kg/m3
+   * @param dropletDiameter droplet diameter in m
+   * @param gasVelocity gas velocity in m/s
+   * @param gasDensity gas density in kg/m3
+   * @param gasViscosity gas viscosity in Pa.s
+   * @param diameter pipe diameter in m
+   * @return deposition rate in kg/m2/s
    */
   private double depositionCousins(double dropletConcentration, double dropletDiameter,
       double gasVelocity, double gasDensity, double gasViscosity, double diameter) {
