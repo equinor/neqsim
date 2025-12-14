@@ -30,3 +30,12 @@ This document provides an overview of the seven foundational modules that make u
 - **Location:** `process`
 - **Features:** framework for assembling flowsheets and running dynamic or steady-state process simulations that couple unit operations and property packages.
 
+## Process safety simulation
+- **Location:** `process/safety`, `process/equipment/tank`, `process/util/fire`
+- **Features:** comprehensive safety simulation capabilities including:
+  - **Depressurization:** Dynamic vessel blowdown with multiple thermodynamic modes (isothermal, isentropic, energy balance), fire case modeling, and transient wall heat transfer
+  - **Relief valve sizing:** API 520/521 compliant PSV sizing with dynamic fire scenarios
+  - **Source term generation:** Leak/rupture mass flow, jet velocity, and momentum calculations for consequence modeling (PHAST, FLACS, KFX export)
+  - **Safety envelopes:** Hydrate, WAX, CO2 freezing, and MDMT envelope calculations with operating point validation
+  - **Risk framework:** Monte Carlo and deterministic risk analysis with event trees, sensitivity analysis, and F-N curve generation
+
