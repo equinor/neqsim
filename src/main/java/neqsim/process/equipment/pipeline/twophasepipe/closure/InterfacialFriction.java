@@ -299,6 +299,16 @@ public class InterfacialFriction implements Serializable {
    * <p>
    * Uses Oliemans (1986) approach for Taylor bubble zone.
    * </p>
+   *
+   * @param vG gas velocity (m/s)
+   * @param vL liquid velocity (m/s)
+   * @param rhoG gas density (kg/m3)
+   * @param rhoL liquid density (kg/m3)
+   * @param muG gas viscosity (Pa.s)
+   * @param muL liquid viscosity (Pa.s)
+   * @param alphaL liquid holdup fraction
+   * @param D pipe diameter (m)
+   * @return interfacial friction result
    */
   private InterfacialFrictionResult calcSlug(double vG, double vL, double rhoG, double rhoL,
       double muG, double muL, double alphaL, double D) {
@@ -346,6 +356,17 @@ public class InterfacialFriction implements Serializable {
    * <p>
    * Uses enhanced annular-type correlation.
    * </p>
+   *
+   * @param vG gas velocity (m/s)
+   * @param vL liquid velocity (m/s)
+   * @param rhoG gas density (kg/m3)
+   * @param rhoL liquid density (kg/m3)
+   * @param muG gas viscosity (Pa.s)
+   * @param muL liquid viscosity (Pa.s)
+   * @param alphaL liquid holdup fraction
+   * @param D pipe diameter (m)
+   * @param sigma surface tension (N/m)
+   * @return interfacial friction result
    */
   private InterfacialFrictionResult calcChurn(double vG, double vL, double rhoG, double rhoL,
       double muG, double muL, double alphaL, double D, double sigma) {

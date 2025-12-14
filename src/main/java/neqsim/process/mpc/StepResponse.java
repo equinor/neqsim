@@ -199,8 +199,8 @@ public class StepResponse implements Serializable {
    * Fit a first-order plus dead-time (FOPDT) model to the response.
    *
    * <p>
-   * The FOPDT model is: y(t) = K * (1 - exp(-(t-θ)/τ)) for t > θ, else 0 where K is gain, τ is time
-   * constant, θ is dead time.
+   * The FOPDT model is: y(t) = K * (1 - exp(-(t-θ)/τ)) for t &gt; θ, else 0 where K is gain, τ is
+   * time constant, θ is dead time.
    * </p>
    *
    * @return this step response with fitted parameters
