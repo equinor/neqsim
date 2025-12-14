@@ -161,6 +161,9 @@ public class OnlineCalibrator implements Serializable {
 
   /**
    * Checks if any variable exceeds the deviation threshold.
+   *
+   * @param point the data point to check
+   * @return true if deviation exceeds threshold, false otherwise
    */
   private boolean checkDeviation(DataPoint point) {
     for (String variable : point.getMeasurements().keySet()) {
@@ -214,7 +217,7 @@ public class OnlineCalibrator implements Serializable {
       adjustedParams.put(param, correction);
     }
 
-    return CalibrationResult.success(adjustedParams, avgError, 0, 1);
+    return CalibrationResult.success(adjustedParams, avgError, 1, 1);
   }
 
   /**
@@ -277,6 +280,10 @@ public class OnlineCalibrator implements Serializable {
 
   /**
    * Calculates calibration quality metrics.
+   *
+   * @param samples the number of samples used
+   * @param rmse the root mean square error
+   * @return the calibration quality assessment
    */
   private CalibrationQuality calculateQuality(int samples, double rmse) {
     // Calculate R2

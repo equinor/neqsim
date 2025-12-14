@@ -1,11 +1,15 @@
 package neqsim.process.calibration;
 
 import java.io.Serializable;
-import java.time.Instant;
+import java.util.Collections;
 import java.util.Map;
 
 /**
- * Result of an online calibration operation.
+ * Represents the result of a calibration operation.
+ *
+ * <p>
+ * Contains the calibrated parameters, quality metrics, and status information.
+ * </p>
  *
  * @author ESOL
  * @version 1.0
@@ -13,67 +17,48 @@ import java.util.Map;
 public class CalibrationResult implements Serializable {
   private static final long serialVersionUID = 1000L;
 
-  private final Instant timestamp;
-  private final boolean successful;
-  private final Map<String, Double> calibratedParameters;
-  private final double objectiveValue;
-  private final double improvementPercent;
+  private final boolean success;
+  private final Map<String, Double> parameters;
+  private final double rmse;
   private final int iterations;
-  private final String message;
+  private final int samplesUsed;
+  private final String errorMessage;
 
   /**
-   * Creates a calibration result.
-   *
-   * @param successful whether calibration succeeded
-   * @param calibratedParameters the calibrated parameter values
-   * @param objectiveValue final objective function value
-   * @param improvementPercent improvement in objective function
-   * @param iterations number of iterations used
-   * @param message status message
+   * Private constructor - use factory methods.
    */
-  public CalibrationResult(boolean successful, Map<String, Double> calibratedParameters,
-      double objectiveValue, double improvementPercent, int iterations, String message) {
-    this.timestamp = Instant.now();
-    this.successful = successful;
-    this.calibratedParameters = calibratedParameters;
-    this.objectiveValue = objectiveValue;
-    this.improvementPercent = improvementPercent;
+  private CalibrationResult(boolean success, Map<String, Double> parameters, double rmse,
+      int iterations, int samplesUsed, String errorMessage) {
+    this.success = success;
+    this.parameters = parameters != null ? Collections.unmodifiableMap(parameters) : null;
+    this.rmse = rmse;
     this.iterations = iterations;
-    this.message = message;
+    this.samplesUsed = samplesUsed;
+    this.errorMessage = errorMessage;
   }
 
   /**
    * Creates a successful calibration result.
    *
-   * @param parameters calibrated parameters
-   * @param objectiveValue final objective value
-   * @param improvement improvement percentage
-   * @param iterations iterations used
-   * @return successful result
+   * @param parameters the calibrated parameters
+   * @param rmse the root mean square error achieved
+   * @param iterations number of iterations used
+   * @param samplesUsed number of samples used
+   * @return successful calibration result
    */
-  public static CalibrationResult success(Map<String, Double> parameters, double objectiveValue,
-      double improvement, int iterations) {
-    return new CalibrationResult(true, parameters, objectiveValue, improvement, iterations,
-        "Calibration successful");
+  public static CalibrationResult success(Map<String, Double> parameters, double rmse,
+      int iterations, int samplesUsed) {
+    return new CalibrationResult(true, parameters, rmse, iterations, samplesUsed, null);
   }
 
   /**
    * Creates a failed calibration result.
    *
-   * @param message failure message
-   * @return failed result
+   * @param errorMessage description of the failure
+   * @return failed calibration result
    */
-  public static CalibrationResult failure(String message) {
-    return new CalibrationResult(false, null, Double.NaN, 0, 0, message);
-  }
-
-  /**
-   * Gets the calibration timestamp.
-   *
-   * @return timestamp
-   */
-  public Instant getTimestamp() {
-    return timestamp;
+  public static CalibrationResult failure(String errorMessage) {
+    return new CalibrationResult(false, null, Double.NaN, 0, 0, errorMessage);
   }
 
   /**
@@ -81,48 +66,44 @@ public class CalibrationResult implements Serializable {
    *
    * @return true if successful
    */
-  public boolean isSuccessful() {
-    return successful;
+  public boolean isSuccess() {
+    return success;
   }
 
   /**
-   * Gets the calibrated parameter values.
+   * Alias for isSuccess() for compatibility.
    *
-   * @return map of parameter names to values
+   * @return true if successful
+   */
+  public boolean isSuccessful() {
+    return success;
+  }
+
+  /**
+   * Gets the calibrated parameters.
+   *
+   * @return map of parameter names to values, or null if failed
+   */
+  public Map<String, Double> getParameters() {
+    return parameters;
+  }
+
+  /**
+   * Alias for getParameters() for compatibility.
+   *
+   * @return map of parameter names to values, or null if failed
    */
   public Map<String, Double> getCalibratedParameters() {
-    return calibratedParameters;
+    return parameters;
   }
 
   /**
-   * Gets a specific calibrated parameter.
+   * Gets the RMSE achieved.
    *
-   * @param name parameter name
-   * @return parameter value or NaN if not found
+   * @return root mean square error
    */
-  public double getParameter(String name) {
-    if (calibratedParameters != null) {
-      return calibratedParameters.getOrDefault(name, Double.NaN);
-    }
-    return Double.NaN;
-  }
-
-  /**
-   * Gets the final objective function value.
-   *
-   * @return objective value
-   */
-  public double getObjectiveValue() {
-    return objectiveValue;
-  }
-
-  /**
-   * Gets the improvement percentage.
-   *
-   * @return improvement in percent
-   */
-  public double getImprovementPercent() {
-    return improvementPercent;
+  public double getRmse() {
+    return rmse;
   }
 
   /**
@@ -135,17 +116,39 @@ public class CalibrationResult implements Serializable {
   }
 
   /**
-   * Gets the status message.
+   * Gets the number of samples used.
    *
-   * @return message
+   * @return sample count
+   */
+  public int getSamplesUsed() {
+    return samplesUsed;
+  }
+
+  /**
+   * Gets the error message if calibration failed.
+   *
+   * @return error message or null if successful
+   */
+  public String getErrorMessage() {
+    return errorMessage;
+  }
+
+  /**
+   * Alias for getErrorMessage() for compatibility.
+   *
+   * @return error message or null if successful
    */
   public String getMessage() {
-    return message;
+    return errorMessage;
   }
 
   @Override
   public String toString() {
-    return String.format("CalibrationResult[%s, objective=%.6f, improvement=%.2f%%, iters=%d]",
-        successful ? "SUCCESS" : "FAILED", objectiveValue, improvementPercent, iterations);
+    if (success) {
+      return String.format("CalibrationResult[success, RMSE=%.4f, params=%d, samples=%d]", rmse,
+          parameters != null ? parameters.size() : 0, samplesUsed);
+    } else {
+      return String.format("CalibrationResult[failed: %s]", errorMessage);
+    }
   }
 }

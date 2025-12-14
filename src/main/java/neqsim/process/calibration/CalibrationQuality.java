@@ -1,11 +1,14 @@
 package neqsim.process.calibration;
 
 import java.io.Serializable;
-import java.time.Duration;
 import java.time.Instant;
 
 /**
- * Metrics for assessing the quality of model calibration.
+ * Represents calibration quality metrics for model validation.
+ *
+ * <p>
+ * Provides statistical measures to assess how well the calibrated model fits the measured data.
+ * </p>
  *
  * @author ESOL
  * @version 1.0
@@ -13,92 +16,83 @@ import java.time.Instant;
 public class CalibrationQuality implements Serializable {
   private static final long serialVersionUID = 1000L;
 
-  private final Instant calibrationTime;
-  private final double meanAbsoluteError;
-  private final double rootMeanSquareError;
-  private final double maxAbsoluteError;
-  private final double r2Score;
+  private final Instant timestamp;
+  private final double rmse;
+  private final double mse;
+  private final double mae;
+  private final double r2;
   private final int sampleCount;
-  private final double coveragePercent;
+  private final double coverage;
 
   /**
-   * Creates calibration quality metrics.
+   * Constructor for CalibrationQuality.
    *
-   * @param calibrationTime when calibration was performed
-   * @param mae mean absolute error
+   * @param timestamp the time of quality assessment
    * @param rmse root mean square error
-   * @param maxError maximum absolute error
-   * @param r2 R-squared score
-   * @param samples number of samples used
+   * @param mse mean square error
+   * @param mae mean absolute error
+   * @param r2 coefficient of determination
+   * @param sampleCount number of samples used
    * @param coverage percentage of operating range covered
    */
-  public CalibrationQuality(Instant calibrationTime, double mae, double rmse, double maxError,
-      double r2, int samples, double coverage) {
-    this.calibrationTime = calibrationTime;
-    this.meanAbsoluteError = mae;
-    this.rootMeanSquareError = rmse;
-    this.maxAbsoluteError = maxError;
-    this.r2Score = r2;
-    this.sampleCount = samples;
-    this.coveragePercent = coverage;
+  public CalibrationQuality(Instant timestamp, double rmse, double mse, double mae, double r2,
+      int sampleCount, double coverage) {
+    this.timestamp = timestamp;
+    this.rmse = rmse;
+    this.mse = mse;
+    this.mae = mae;
+    this.r2 = r2;
+    this.sampleCount = sampleCount;
+    this.coverage = coverage;
   }
 
   /**
-   * Gets the calibration timestamp.
+   * Gets the timestamp of quality assessment.
    *
-   * @return calibration time
+   * @return timestamp
    */
-  public Instant getCalibrationTime() {
-    return calibrationTime;
-  }
-
-  /**
-   * Gets the age of the calibration.
-   *
-   * @return duration since calibration
-   */
-  public Duration getCalibrationAge() {
-    return Duration.between(calibrationTime, Instant.now());
-  }
-
-  /**
-   * Gets the mean absolute error.
-   *
-   * @return MAE
-   */
-  public double getMeanAbsoluteError() {
-    return meanAbsoluteError;
+  public Instant getTimestamp() {
+    return timestamp;
   }
 
   /**
    * Gets the root mean square error.
    *
-   * @return RMSE
+   * @return RMSE value
    */
-  public double getRootMeanSquareError() {
-    return rootMeanSquareError;
+  public double getRmse() {
+    return rmse;
   }
 
   /**
-   * Gets the maximum absolute error.
+   * Gets the mean square error.
    *
-   * @return max error
+   * @return MSE value
    */
-  public double getMaxAbsoluteError() {
-    return maxAbsoluteError;
+  public double getMse() {
+    return mse;
   }
 
   /**
-   * Gets the R-squared score.
+   * Gets the mean absolute error.
    *
-   * @return R2 (0-1, higher is better)
+   * @return MAE value
    */
-  public double getR2Score() {
-    return r2Score;
+  public double getMae() {
+    return mae;
   }
 
   /**
-   * Gets the number of samples used for calibration.
+   * Gets the coefficient of determination (R-squared).
+   *
+   * @return R2 value (0 to 1, higher is better)
+   */
+  public double getR2() {
+    return r2;
+  }
+
+  /**
+   * Gets the number of samples used in calibration.
    *
    * @return sample count
    */
@@ -109,82 +103,60 @@ public class CalibrationQuality implements Serializable {
   /**
    * Gets the operating range coverage percentage.
    *
-   * @return coverage percent
+   * @return coverage (0 to 100)
    */
-  public double getCoveragePercent() {
-    return coveragePercent;
+  public double getCoverage() {
+    return coverage;
   }
 
   /**
    * Calculates an overall quality score (0-100).
    *
-   * @return quality score
+   * <p>
+   * Score combines R2 (higher is better) and coverage metrics.
+   * </p>
+   *
+   * @return overall score from 0 (poor) to 100 (excellent)
    */
   public double getOverallScore() {
-    double score = 0;
-
-    // R2 contribution (40%)
-    score += 40 * Math.max(0, r2Score);
-
-    // Sample count contribution (20%)
-    score += 20 * Math.min(1, sampleCount / 100.0);
-
-    // Coverage contribution (20%)
-    score += 20 * (coveragePercent / 100.0);
-
-    // Age contribution (20%) - degrades over time
-    long ageDays = getCalibrationAge().toDays();
-    if (ageDays < 7) {
-      score += 20;
-    } else if (ageDays < 30) {
-      score += 15;
-    } else if (ageDays < 90) {
-      score += 10;
-    } else {
-      score += 5;
-    }
-
-    return Math.max(0, Math.min(100, score));
+    // Weight R2 (70%) and coverage (30%) for overall score
+    double r2Score = Math.max(0, Math.min(1, r2)) * 70.0;
+    double coverageScore = Math.max(0, Math.min(100, coverage)) * 0.3;
+    return r2Score + coverageScore;
   }
 
   /**
-   * Gets a quality rating based on overall score.
+   * Gets a qualitative rating of calibration quality.
    *
-   * @return quality rating
+   * @return rating string: "Excellent", "Good", "Fair", or "Poor"
    */
-  public Rating getRating() {
+  public String getRating() {
     double score = getOverallScore();
-    if (score >= 80) {
-      return Rating.EXCELLENT;
-    } else if (score >= 60) {
-      return Rating.GOOD;
-    } else if (score >= 40) {
-      return Rating.FAIR;
+    if (score >= 90) {
+      return "Excellent";
+    } else if (score >= 70) {
+      return "Good";
+    } else if (score >= 50) {
+      return "Fair";
     } else {
-      return Rating.POOR;
+      return "Poor";
     }
   }
 
   /**
-   * Checks if recalibration is recommended.
+   * Determines if calibration quality is acceptable.
    *
-   * @return true if recalibration is needed
+   * @param r2Threshold minimum acceptable R2 value
+   * @param rmseThreshold maximum acceptable RMSE
+   * @return true if quality meets thresholds
    */
-  public boolean needsRecalibration() {
-    return getOverallScore() < 50 || getCalibrationAge().toDays() > 30;
-  }
-
-  /**
-   * Quality rating levels.
-   */
-  public enum Rating {
-    EXCELLENT, GOOD, FAIR, POOR
+  public boolean isAcceptable(double r2Threshold, double rmseThreshold) {
+    return r2 >= r2Threshold && rmse <= rmseThreshold;
   }
 
   @Override
   public String toString() {
-    return String.format(
-        "CalibrationQuality[RMSE=%.4f, R2=%.4f, samples=%d, coverage=%.1f%%, score=%.1f (%s)]",
-        rootMeanSquareError, r2Score, sampleCount, coveragePercent, getOverallScore(), getRating());
+    return String.format("CalibrationQuality[RMSE=%.4f, R2=%.4f, samples=%d, coverage=%.1f%%]",
+        rmse, r2, sampleCount, coverage);
   }
 }
