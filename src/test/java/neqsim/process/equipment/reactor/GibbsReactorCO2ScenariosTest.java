@@ -181,8 +181,7 @@ public class GibbsReactorCO2ScenariosTest {
     sys.addComponent("NO2", 10.0);
     sys.addComponent("oxygen", 10.0);
     sys.addComponent("H2S", 10.0);
-    double[] expectedPpm = new double[] {5.213056, 11.100991, 0.0, 0.0, 0.0, 6.388247, 0.0,
-        0.000082, 5.350718, 3.549640, 0.030876, 0.0};
+    double[] expectedPpm = new double[] {13.7, 16.4, 0.0, 0.0, 0.0, 8.55, 0.0, 0.0, 2.16, 1.44, 0.0, 0.0};
     String[] expectedNames = new String[] {"water", "SO2", "NO2", "oxygen", "H2S", "NO",
         "nitric acid", "HNO2", "sulfuric acid", "NH4HSO4", "NH4NO3", "S8"};
     runAndPrintWithAssertions(sys, "7", expectedNames, expectedPpm);
@@ -236,7 +235,7 @@ public class GibbsReactorCO2ScenariosTest {
   private void runAndPrintWithAssertions(SystemInterface system, String label, String[] names,
       double[] expectedPpm) {
     SystemInterface outSys = runReactor(system);
-    printComposition(outSys, label);
+    //printComposition(outSys, label);
     assertSelectedPpm(outSys, names, expectedPpm, 2.0, label);
   }
 

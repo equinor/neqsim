@@ -13,8 +13,9 @@
 - **Style & Formatting**: Java code follows Google style with project overrides from `checkstyle_neqsim.xml` and formatter profiles (`neqsim_formatter.xml`); keep indentation at two spaces and respect existing comment minimalism.
 - **Serialization & Copying**: Many equipment classes rely on Java serialization (`ProcessEquipmentBaseClass.copy()`); avoid introducing non-serializable fields or mark them `transient` to preserve cloning.
 - **External Dependencies**: Core math depends on EJML, Commons Math, JAMA, and MTJ; check numerical stability when swapping linear algebra routines, and keep JSON/YAML handling aligned with gson/jackson versions pinned in pom.xml.
-- **Java version**: NeqSSim should build and run on Java 8 and above; ensure new code is compatible with this range and avoid using deprecated APIs.
+- **Java Version**: NeqSim should build and run on Java 8 and above; ensure new code is compatible with this range and avoid using deprecated APIs.
 - **Sample Flow**:
+
 ```java
 SystemInterface gas = new SystemSrkEos(216.0, 30.0);
 gas.addComponent("methane", 0.5);
@@ -30,3 +31,9 @@ column.run();
 - **Test Authoring Tips**: Place new tests under the matching feature package (see docs/wiki/test-overview.md) and assert on physical outputs or solver residuals rather than internal arrays to keep tests resilient.
 - **Regression Safety**: When modifying solver logic or property correlations, capture baseline values in tests and drop CSV/JSON fixtures into `src/test/resources` instead of hardcoding magic numbers in code.
 - **Documentation Touchpoints**: Update README sections or docs/wiki entries when adding new models; the docs mirror the package layout and help downstream consumers understand new unit operations.
+- **Community Norms**: Engage on GitHub issues or discussions for design questions; NeqSim has an active user base familiar with thermodynamics and process simulation who can provide valuable insights.
+- **Performance Considerations**: Profile long-running simulations with Java Flight Recorder or VisualVM; optimize critical loops in thermodynamic calculations but prioritize clarity and maintainability in the codebase.
+- **JavaDoc Standards**: Document all public classes and methods with JavaDoc comments; include parameter descriptions, return values, and any exceptions thrown to aid users and maintainers. Check that JavaDoc is up to date when modifying method signatures.
+- **Java 8 Features**: All new code must be Java 8 compatible; feel free to use streams, lambdas, and `Optional` where they enhance readability without sacrificing performance.
+- **Jupyter Notebook Examples**: When creating Jupyter notebook examples, ensure they run end-to-end and reflect the latest API changes; place them in the `notebooks/` directory and link to them from the main documentation. Follow the neqsim-python direct Java API bindings as shown at https://github.com/equinor/neqsim-python?tab=readme-ov-file#4-direct-java-access-full-control
+---
