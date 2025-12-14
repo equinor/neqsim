@@ -75,7 +75,8 @@ class MultiStageSeparatorTestTest {
 
     sepTest.run();
 
-    java.util.List<Object> results = sepTest.getStageResults();
+    java.util.List<MultiStageSeparatorTest.SeparatorStageResult> results =
+        sepTest.getStageResults();
     assertNotNull(results);
     assertEquals(3, results.size());
 
@@ -94,10 +95,11 @@ class MultiStageSeparatorTestTest {
 
     sepTest.run();
 
-    java.util.List<Object> results = sepTest.getStageResults();
+    java.util.List<MultiStageSeparatorTest.SeparatorStageResult> results =
+        sepTest.getStageResults();
     assertEquals(2, results.size());
 
-    Object stage1 = results.get(0);
+    MultiStageSeparatorTest.SeparatorStageResult stage1 = results.get(0);
     assertEquals("Test Stage", stage1.getStageName());
     assertEquals(30.0, stage1.getPressure(), 0.1);
     assertEquals(35.0, stage1.getTemperature(), 0.1);
@@ -141,11 +143,12 @@ class MultiStageSeparatorTestTest {
     sepTest.setTypicalThreeStage(50.0, 40.0, 10.0, 30.0);
     sepTest.run();
 
-    java.util.List<Object> results = sepTest.getStageResults();
+    java.util.List<MultiStageSeparatorTest.SeparatorStageResult> results =
+        sepTest.getStageResults();
 
     // Cumulative GOR should increase with each stage
     double prevCumGOR = 0;
-    for (Object result : results) {
+    for (MultiStageSeparatorTest.SeparatorStageResult result : results) {
       assertTrue(result.getCumulativeGOR() >= prevCumGOR, "Cumulative GOR should increase");
       prevCumGOR = result.getCumulativeGOR();
     }
