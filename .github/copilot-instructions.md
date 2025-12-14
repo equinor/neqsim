@@ -30,3 +30,9 @@ column.run();
 - **Test Authoring Tips**: Place new tests under the matching feature package (see docs/wiki/test-overview.md) and assert on physical outputs or solver residuals rather than internal arrays to keep tests resilient.
 - **Regression Safety**: When modifying solver logic or property correlations, capture baseline values in tests and drop CSV/JSON fixtures into `src/test/resources` instead of hardcoding magic numbers in code.
 - **Documentation Touchpoints**: Update README sections or docs/wiki entries when adding new models; the docs mirror the package layout and help downstream consumers understand new unit operations.
+- **Community Norms**: Engage on GitHub issues or discussions for design questions; NeqSim has an active user base familiar with thermodynamics and process simulation who can provide valuable insights.
+- **Performance Considerations**: Profile long-running simulations with Java Flight Recorder or VisualVM; optimize critical loops in thermodynamic calculations but prioritize clarity and maintainability in the codebase.
+- **JavaDoc Standards**: Document all public classes and methods with JavaDoc comments; include parameter descriptions, return values, and any exceptions thrown to aid users and maintainers.CHeck that JavaDoc is up to date when modifying method signatures.
+- **Java 8 Features**: All new code need to be Java 8 compatible; feel free to use streams, lambdas, and `Optional` where they enhance readability without sacrificing performance.
+- WHen making jupyter notebook examples, ensure they run end-to-end and reflect the latest API changes; place them in the `notebooks/` directory and link to them from the main documentation. Follow the neqsim-python direct java API bindings as shown https://github.com/equinor/neqsim-python?tab=readme-ov-file#4-direct-java-access-full-control
+---
