@@ -110,6 +110,40 @@ public class CalibrationQuality implements Serializable {
   }
 
   /**
+   * Calculates an overall quality score (0-100).
+   *
+   * <p>
+   * Score combines R2 (higher is better) and coverage metrics.
+   * </p>
+   *
+   * @return overall score from 0 (poor) to 100 (excellent)
+   */
+  public double getOverallScore() {
+    // Weight R2 (70%) and coverage (30%) for overall score
+    double r2Score = Math.max(0, Math.min(1, r2)) * 70.0;
+    double coverageScore = Math.max(0, Math.min(100, coverage)) * 0.3;
+    return r2Score + coverageScore;
+  }
+
+  /**
+   * Gets a qualitative rating of calibration quality.
+   *
+   * @return rating string: "Excellent", "Good", "Fair", or "Poor"
+   */
+  public String getRating() {
+    double score = getOverallScore();
+    if (score >= 90) {
+      return "Excellent";
+    } else if (score >= 70) {
+      return "Good";
+    } else if (score >= 50) {
+      return "Fair";
+    } else {
+      return "Poor";
+    }
+  }
+
+  /**
    * Determines if calibration quality is acceptable.
    *
    * @param r2Threshold minimum acceptable R2 value

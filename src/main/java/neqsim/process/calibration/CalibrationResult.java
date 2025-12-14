@@ -71,11 +71,29 @@ public class CalibrationResult implements Serializable {
   }
 
   /**
+   * Alias for isSuccess() for compatibility.
+   *
+   * @return true if successful
+   */
+  public boolean isSuccessful() {
+    return success;
+  }
+
+  /**
    * Gets the calibrated parameters.
    *
    * @return map of parameter names to values, or null if failed
    */
   public Map<String, Double> getParameters() {
+    return parameters;
+  }
+
+  /**
+   * Alias for getParameters() for compatibility.
+   *
+   * @return map of parameter names to values, or null if failed
+   */
+  public Map<String, Double> getCalibratedParameters() {
     return parameters;
   }
 
@@ -112,6 +130,15 @@ public class CalibrationResult implements Serializable {
    * @return error message or null if successful
    */
   public String getErrorMessage() {
+    return errorMessage;
+  }
+
+  /**
+   * Alias for getErrorMessage() for compatibility.
+   *
+   * @return error message or null if successful
+   */
+  public String getMessage() {
     return errorMessage;
   }
 
