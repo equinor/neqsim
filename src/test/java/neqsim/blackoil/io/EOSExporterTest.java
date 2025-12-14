@@ -85,7 +85,7 @@ class EOSExporterTest {
     EclipseEOSExporter.toFile(testFluid, outputPath);
 
     assertTrue(Files.exists(outputPath), "Output file should exist");
-    String content = Files.readString(outputPath);
+    String content = new String(Files.readAllBytes(outputPath));
 
     assertTrue(content.contains("PVTO"), "File should contain PVTO keyword");
     assertTrue(content.contains("DENSITY"), "File should contain DENSITY keyword");
@@ -191,7 +191,7 @@ class EOSExporterTest {
     CMGEOSExporter.toFile(testFluid, outputPath);
 
     assertTrue(Files.exists(outputPath), "Output file should exist");
-    String content = Files.readString(outputPath);
+    String content = new String(Files.readAllBytes(outputPath));
     assertFalse(content.isEmpty(), "File content should not be empty");
   }
 
@@ -287,7 +287,7 @@ class EOSExporterTest {
 
     // Verify file was created and has content
     assertTrue(Files.exists(outputPath));
-    String content = Files.readString(outputPath);
+    String content = new String(Files.readAllBytes(outputPath));
 
     // Verify key data is present
     assertTrue(content.contains("DENSITY"));
