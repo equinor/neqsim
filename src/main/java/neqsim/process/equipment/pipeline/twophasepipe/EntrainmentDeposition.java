@@ -304,6 +304,14 @@ public class EntrainmentDeposition implements Serializable {
 
   /**
    * Oliemans entrainment rate correlation.
+   *
+   * @param gasVelocity gas velocity (m/s)
+   * @param gasDensity gas density (kg/m³)
+   * @param liquidDensity liquid density (kg/m³)
+   * @param liquidViscosity liquid viscosity (Pa·s)
+   * @param surfaceTension surface tension (N/m)
+   * @param diameter pipe diameter (m)
+   * @return entrainment rate (kg/m²/s)
    */
   private double entrainmentOliemans(double gasVelocity, double gasDensity, double liquidDensity,
       double liquidViscosity, double surfaceTension, double diameter) {

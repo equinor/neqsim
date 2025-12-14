@@ -157,7 +157,7 @@ public class UncertaintyAnalysis {
   }
 
   /**
-   * Check if parameters are significantly correlated (|r| > 0.8).
+   * Check if parameters are significantly correlated (|r| &gt; 0.8).
    *
    * @return true if high correlations exist
    */

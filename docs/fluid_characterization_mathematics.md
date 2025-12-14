@@ -18,6 +18,11 @@ This document provides detailed mathematical documentation of the fluid characte
 5. [Boiling Point Correlations](#boiling-point-correlations)
 6. [Lumping Methods](#lumping-methods)
 7. [Usage Examples](#usage-examples)
+8. [Common Fluid Characterization](#common-fluid-characterization-matching-pseudo-components)
+   - [PseudoComponentCombiner Utility](#pseudocomponentcombiner-utility)
+   - [CharacterizationOptions](#characterizationoptions)
+   - [BIP Transfer](#bip-transfer)
+   - [Validation Reports](#validation-reports)
 
 ---
 
@@ -701,6 +706,101 @@ Pressure(bara),Rs(Sm3/Sm3),Bo(m3/Sm3),OilDensity(kg/m3),GasGravity
 | 6 | Multi-objective optimization framework | ✅ Implemented |
 | 7 | Uncertainty quantification | ✅ Implemented |
 | 8 | GUI/Report generation | 🔲 Future work |
+
+---
+
+## Common Fluid Characterization (Matching Pseudo-Components)
+
+When working with multiple reservoir fluids in a simulation model (e.g., compositional reservoir simulation, commingled production), all fluids must share the same pseudo-component (PC) structure. NeqSim provides utilities for this workflow based on Pedersen et al. (Chapter 5.5-5.6).
+
+### PseudoComponentCombiner Utility
+
+The `PseudoComponentCombiner` class provides methods for matching fluid characterizations:
+
+```java
+import neqsim.thermo.characterization.PseudoComponentCombiner;
+
+// Match source fluid to reference's PC structure
+SystemInterface matched = PseudoComponentCombiner.characterizeToReference(
+    sourceFluid, referenceFluid);
+
+// Combine multiple fluids with automatic common PC structure
+SystemInterface combined = PseudoComponentCombiner.combineReservoirFluids(
+    Arrays.asList(fluid1, fluid2, fluid3),
+    Arrays.asList(0.5, 0.3, 0.2));  // volume fractions
+```
+
+### CharacterizationOptions
+
+For advanced control, use the `CharacterizationOptions` builder:
+
+```java
+import neqsim.thermo.characterization.CharacterizationOptions;
+import neqsim.thermo.characterization.CharacterizationOptions.NamingScheme;
+
+CharacterizationOptions options = CharacterizationOptions.builder()
+    .transferBinaryInteractionParameters(true)  // Copy BIPs from reference
+    .normalizeComposition(true)                 // Ensure mole fractions sum to 1.0
+    .namingScheme(NamingScheme.REFERENCE)       // Use reference component names
+    .generateValidationReport(true)             // Create before/after comparison
+    .build();
+
+SystemInterface matched = PseudoComponentCombiner.characterizeToReference(
+    sourceFluid, referenceFluid, options);
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `transferBinaryInteractionParameters` | Copy BIPs from reference fluid | `false` |
+| `normalizeComposition` | Normalize mole fractions to sum to 1.0 | `true` |
+| `namingScheme` | Use SOURCE, REFERENCE, or MERGED names | `REFERENCE` |
+| `generateValidationReport` | Generate validation report | `false` |
+
+### BIP Transfer
+
+Binary Interaction Parameters (BIPs) can be transferred between fluids:
+
+```java
+// Transfer BIPs during characterization
+PseudoComponentCombiner.transferBinaryInteractionParameters(
+    sourceFluid, referenceFluid);
+
+// Fluent API on Characterise class
+SystemInterface fluid = new SystemSrkEos(298, 50);
+fluid.addComponent("methane", 0.7);
+fluid.addPlusFraction("C7+", 0.3, 0.200, 0.85);
+fluid.getCharacterization()
+    .setTBPModel("PedersenSRK")
+    .characterize()
+    .transferBipsFrom(tunedReferenceFluid);
+```
+
+### Validation Reports
+
+The `CharacterizationValidationReport` provides before/after comparison:
+
+```java
+CharacterizationValidationReport report = 
+    PseudoComponentCombiner.generateValidationReport(sourceFluid, matchedFluid);
+
+System.out.println("Mass conserved: " + report.isMassConserved());
+System.out.println("Moles conserved: " + report.isMolesConserved());
+System.out.println("PC count before: " + report.getSourcePseudoComponentCount());
+System.out.println("PC count after: " + report.getResultPseudoComponentCount());
+System.out.println(report.toReportString());
+```
+
+### Mathematical Background
+
+When matching a source fluid to a reference PC structure:
+
+1. **Component Mapping**: Discrete components (C1, C2, CO₂, etc.) are mapped directly
+2. **PC Redistribution**: Plus fraction moles are redistributed proportionally across reference PCs:
+
+$$z_i^{matched} = z_{C7+}^{source} \cdot \frac{z_i^{ref}}{\sum_{j \in PC} z_j^{ref}}$$
+
+3. **Mass Conservation**: Total mass is preserved through the redistribution
+4. **BIP Transfer**: For EOS phases, BIPs are copied element-by-element from reference
 
 ---
 
