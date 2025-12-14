@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -166,11 +167,11 @@ class OnlineCalibratorTest {
       calibrator.recordDataPoint(measurements, predictions);
     }
 
-    var history = calibrator.exportHistory();
+    List<OnlineCalibrator.DataPoint> history = calibrator.exportHistory();
     assertEquals(5, history.size());
 
     // Check first data point
-    var first = history.get(0);
+    OnlineCalibrator.DataPoint first = history.get(0);
     assertNotNull(first.getTimestamp());
     assertEquals(0.0, first.getMeasurements().get("value"), 0.001);
   }
