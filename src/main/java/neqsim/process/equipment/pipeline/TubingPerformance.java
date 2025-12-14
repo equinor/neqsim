@@ -401,6 +401,14 @@ public class TubingPerformance extends Pipeline {
 
   /**
    * Calculate Hagedorn-Brown holdup.
+   *
+   * @param vsL superficial liquid velocity (m/s)
+   * @param vsG superficial gas velocity (m/s)
+   * @param rhoL liquid density (kg/m³)
+   * @param rhoG gas density (kg/m³)
+   * @param muL liquid viscosity (Pa·s)
+   * @param d pipe diameter (m)
+   * @return liquid holdup fraction (dimensionless)
    */
   private double calculateHBHoldup(double vsL, double vsG, double rhoL, double rhoG, double muL,
       double d) {

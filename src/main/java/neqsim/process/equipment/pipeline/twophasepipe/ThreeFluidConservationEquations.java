@@ -255,6 +255,15 @@ public class ThreeFluidConservationEquations implements Serializable {
    * <p>
    * Uses a simplified model based on relative velocity and density ratio.
    * </p>
+   *
+   * @param alpha1 phase 1 volume fraction
+   * @param alpha2 phase 2 volume fraction
+   * @param rho1 phase 1 density (kg/m³)
+   * @param rho2 phase 2 density (kg/m³)
+   * @param relVel relative velocity between phases (m/s)
+   * @param diameter pipe diameter (m)
+   * @param surfaceTension surface tension (N/m)
+   * @return interfacial friction factor (dimensionless)
    */
   private double calculateInterfacialFrictionFactor(double alpha1, double alpha2, double rho1,
       double rho2, double relVel, double diameter, double surfaceTension) {

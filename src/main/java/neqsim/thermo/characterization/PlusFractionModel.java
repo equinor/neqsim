@@ -337,17 +337,98 @@ public class PlusFractionModel implements java.io.Serializable {
     public double[] zValues;
     public double[] molarMasses;
     public double[] densities;
-    public double eta = 90; // minimum molecular weight in C7+
+    /** Minimum molecular weight (eta) in g/mol, default 90 for C7+. */
+    public double eta = 90;
+    /** Calculation model type. */
     public String model = "Whitson";
+    /** Shape parameter (alpha) of the gamma distribution. */
     public double alfa = 1.0;
+    /** Scale parameter (beta) of the gamma distribution, calculated from MPlus, eta, alfa. */
     public double betta = Double.NaN;
+    /** Density model: "UOP" (Watson K-factor) or "Soreide" (Søreide 1989 correlation). */
+    private String densityModel = "UOP";
+    /** Flag to auto-estimate alpha from fluid properties. */
+    private boolean autoEstimateAlpha = false;
 
     public WhitsonGammaModel() {
       name = "Whitson Gamma";
     }
 
+    /**
+     * Set the calculation model type.
+     *
+     * @param model calculation model name
+     */
     public void setCalculationModel(String model) {
       this.model = model;
+    }
+
+    /**
+     * Set the density correlation model.
+     *
+     * @param densityModel "UOP" for Watson K-factor or "Soreide" for Søreide (1989) correlation
+     */
+    public void setDensityModel(String densityModel) {
+      this.densityModel = densityModel;
+    }
+
+    /**
+     * Get the current density model.
+     *
+     * @return density model name
+     */
+    public String getDensityModel() {
+      return densityModel;
+    }
+
+    /**
+     * Enable or disable automatic estimation of the alpha (shape) parameter.
+     *
+     * @param autoEstimate true to auto-estimate alpha based on fluid properties
+     */
+    public void setAutoEstimateAlpha(boolean autoEstimate) {
+      this.autoEstimateAlpha = autoEstimate;
+    }
+
+    /**
+     * Estimate the gamma shape parameter (alpha) based on plus fraction properties. Typical values:
+     * - Gas condensates: 0.5 - 1.0 - Black oils: 1.0 - 2.0 - Heavy oils: 2.0 - 4.0
+     *
+     * Uses Watson K-factor as indicator of fluid character.
+     *
+     * @param Mplus plus fraction molecular weight (kg/mol)
+     * @param density plus fraction density (kg/m³)
+     * @return estimated alpha value
+     */
+    public double estimateAlpha(double Mplus, double density) {
+      // Calculate Watson characterization factor
+      // Kw = (Tb^(1/3)) / SG, but we use approximation based on M and density
+      // Higher Kw indicates more paraffinic character
+      double Kw = 4.5579 * Math.pow(Mplus * 1000, 0.15178) * Math.pow(density, -1.18241);
+
+      // Whitson (1983) suggested correlations for alpha based on fluid type
+      if (Kw >= 12.5) {
+        // Highly paraffinic (gas condensates)
+        return 0.5 + 0.1 * (Kw - 12.5);
+      } else if (Kw >= 11.5) {
+        // Mixed/intermediate (typical black oils)
+        return 1.0 + 0.5 * (Kw - 11.5);
+      } else if (Kw >= 10.5) {
+        // Naphthenic
+        return 1.5 + 0.5 * (Kw - 10.5);
+      } else {
+        // Aromatic/heavy
+        return 2.0 + 0.5 * (10.5 - Kw);
+      }
+    }
+
+    /**
+     * Get the Watson K-factor for the plus fraction.
+     *
+     * @return Watson K-factor
+     */
+    public double getWatsonKFactor() {
+      return 4.5579 * Math.pow(MPlus * 1000, 0.15178) * Math.pow(densPlus, -1.18241);
     }
 
     public void characterizePlusFractionWhitsonGamma() {}
@@ -402,9 +483,66 @@ public class PlusFractionModel implements java.io.Serializable {
       // Calculates density of the C+ function with Watson or Universal Oil Products
       // characterization factor
       // Experience has shown, that the method is not very accurate for C20+
+      // Note: densPlus is in g/cm³ (same as specific gravity), molarMasses are in kg/mol
       double Kw = 4.5579 * Math.pow(MPlus * 1000, 0.15178) * Math.pow(densPlus, -1.18241);
       for (int i = firstPlusFractionNumber; i < lastPlusFractionNumber; i++) {
-        densities[i - 1] = 6.0108 * Math.pow(molarMasses[i - 1], 0.17947) * Math.pow(Kw, -1.18241);
+        if (molarMasses[i] > 0) {
+          // Result in g/cm³ (same units as densPlus)
+          densities[i] = 6.0108 * Math.pow(molarMasses[i] * 1000, 0.17947) * Math.pow(Kw, -1.18241);
+        }
+      }
+    }
+
+    /**
+     * Calculate densities using Søreide (1989) correlation. More accurate for heavy fractions
+     * (C20+) compared to the UOP method.
+     *
+     * Reference: Søreide, I. (1989). "Improved Phase Behavior Predictions of Petroleum Reservoir
+     * Fluids from a Cubic Equation of State." Dr.Ing. Thesis, Norwegian Institute of Technology.
+     */
+    public void densitySoreide() {
+      // Søreide correlation: SG = 0.2855 + C_f * (M - 66)^0.13
+      // Where C_f is determined from plus fraction properties
+      // SG is specific gravity = density in g/cm³ relative to water
+      // Note: densPlus is already in g/cm³ (specific gravity units)
+
+      double SGplus = densPlus; // Already specific gravity
+
+      // Calculate Søreide correlation factor from plus fraction
+      double MplusGmol = MPlus * 1000; // Convert kg/mol to g/mol
+      double exponentArg = Math.max(MplusGmol - 66, 1);
+      double Cf = (SGplus - 0.2855) / Math.pow(exponentArg, 0.13);
+
+      // Ensure Cf is positive and reasonable
+      if (Cf <= 0 || Double.isNaN(Cf)) {
+        // Fall back to UOP method
+        densityUOP();
+        return;
+      }
+
+      for (int i = firstPlusFractionNumber; i < lastPlusFractionNumber; i++) {
+        if (molarMasses[i] > 0) {
+          double Mi = molarMasses[i] * 1000; // Convert kg/mol to g/mol
+          double expArg = Math.max(Mi - 66, 1);
+          double SGi = 0.2855 + Cf * Math.pow(expArg, 0.13);
+
+          // Ensure SG is in valid range (0.6 to 1.2 for petroleum fractions)
+          SGi = Math.max(0.6, Math.min(1.2, SGi));
+
+          // Store in g/cm³ (same units as densPlus)
+          densities[i] = SGi;
+        }
+      }
+    }
+
+    /**
+     * Calculate densities using the selected density model.
+     */
+    public void calculateDensities() {
+      if (densityModel.equalsIgnoreCase("Soreide")) {
+        densitySoreide();
+      } else {
+        densityUOP();
       }
     }
 
@@ -416,7 +554,23 @@ public class PlusFractionModel implements java.io.Serializable {
       double MWBL = Double.NaN;
       double sumZ = 0.0;
 
+      // Auto-estimate alpha if enabled
+      if (autoEstimateAlpha) {
+        alfa = estimateAlpha(MPlus, densPlus);
+        logger.info(
+            "Auto-estimated gamma alpha = " + alfa + " (Watson Kw = " + getWatsonKFactor() + ")");
+      }
+
+      // Calculate beta from the constraint: E[M] = eta + alpha * beta = MPlus
+      // Therefore: beta = (MPlus - eta) / alpha
       betta = (MPlus * 1000 - eta) / alfa;
+
+      if (betta <= 0) {
+        logger.error("Invalid gamma distribution parameters: beta = " + betta
+            + ". Check that MPlus > eta/1000");
+        return false;
+      }
+
       // Implement the Gamma distribution for the plus fraction
       zValues = new double[lastPlusFractionNumber];
       molarMasses = new double[lastPlusFractionNumber];
@@ -424,14 +578,17 @@ public class PlusFractionModel implements java.io.Serializable {
 
       if (model.equals("Whitson")) {
         for (int i = firstPlusFractionNumber; i < lastPlusFractionNumber; i++) {
-          if (i == 1) {
+          if (i == firstPlusFractionNumber) {
             MWBU = eta;
           }
           MWBL = MWBU;
-          MWBU = MWBL + 14;
-          if (i == lastPlusFractionNumber) {
+          MWBU = MWBL + 14; // Standard SCN increment of 14 g/mol
+
+          // For the last fraction, extend to very high MW to capture tail
+          if (i == lastPlusFractionNumber - 1) {
             MWBU = 10000.0;
           }
+
           double[] P0LP1L = P0P1(MWBL);
           double P0L = P0LP1L[0];
           double P1L = P0LP1L[1];
@@ -445,27 +602,90 @@ public class PlusFractionModel implements java.io.Serializable {
             Z = 1E-15;
           }
           zValues[i] = Z * zPlus;
-          double MWAV = eta + alfa * betta * (P1U - P1L) / (P0U - P0L);
-          molarMasses[i] = MWAV / 1000;
+
+          // Calculate average MW for this SCN using first moment of gamma distribution
+          double denom = P0U - P0L;
+          if (Math.abs(denom) < 1E-15) {
+            molarMasses[i] = (MWBL + MWBU) / 2.0 / 1000.0;
+          } else {
+            double MWAV = eta + alfa * betta * (P1U - P1L) / denom;
+            molarMasses[i] = MWAV / 1000.0;
+          }
           sumZ = sumZ + zValues[i];
         }
-        densityUOP();
+
+        // Calculate densities using selected model
+        calculateDensities();
       }
 
       // Normalize z values to ensure sumZ equals zPlus
-      for (int i = firstPlusFractionNumber; i < lastPlusFractionNumber; i++) {
-        zValues[i] *= zPlus / sumZ;
+      if (sumZ > 0) {
+        for (int i = firstPlusFractionNumber; i < lastPlusFractionNumber; i++) {
+          zValues[i] *= zPlus / sumZ;
+        }
       }
       return true;
     }
 
+    /**
+     * Set gamma distribution parameters.
+     *
+     * @param shape alpha (shape) parameter, typical values: 0.5-1.0 gas condensates, 1.0-2.0 black
+     *        oils, 2.0-4.0 heavy oils
+     * @param minMW eta (minimum molecular weight) in g/mol, typically 84-90 for C7+
+     */
     public void setGammaParameters(double shape, double minMW) {
       this.alfa = shape;
       this.eta = minMW;
     }
 
+    /**
+     * Set the gamma shape parameter (alpha).
+     *
+     * @param alpha shape parameter
+     */
+    public void setAlpha(double alpha) {
+      this.alfa = alpha;
+    }
+
+    /**
+     * Get the gamma shape parameter (alpha).
+     *
+     * @return alpha value
+     */
+    public double getAlpha() {
+      return this.alfa;
+    }
+
+    /**
+     * Set the minimum molecular weight (eta) in g/mol.
+     *
+     * @param eta minimum MW in g/mol
+     */
+    public void setEta(double eta) {
+      this.eta = eta;
+    }
+
+    /**
+     * Get the minimum molecular weight (eta) in g/mol.
+     *
+     * @return eta value in g/mol
+     */
+    public double getEta() {
+      return this.eta;
+    }
+
+    /**
+     * Get the calculated scale parameter (beta).
+     *
+     * @return beta value, or NaN if not yet calculated
+     */
+    public double getBeta() {
+      return this.betta;
+    }
+
     public double[] getGammaParameters() {
-      return new double[] {this.alfa, this.eta};
+      return new double[] {this.alfa, this.eta, this.betta};
     }
 
     /** {@inheritDoc} */
