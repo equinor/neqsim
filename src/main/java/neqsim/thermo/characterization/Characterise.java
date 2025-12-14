@@ -245,14 +245,71 @@ public class Characterise implements java.io.Serializable, Cloneable {
     }
   }
 
-  /*
-   * public boolean addPlusFraction(int start, int end) { plusFractionModel = new
-   * PlusCharacterize(system); if (TBPCharacterise.hasPlusFraction()) {
-   * TBPCharacterise.groupTBPfractions(); TBPCharacterise.generateTBPFractions(); return true; }
-   * else { System.out.println("not able to generate pluss fraction"); return false; } }
+  /**
+   * Characterize this fluid to match the pseudo-component structure of a reference fluid.
    *
-   * public boolean characterize2() { if (TBPCharacterise.groupTBPfractions()) {
-   * TBPCharacterise.solve(); return true; } else { System.out.println("not able to generate pluss
-   * fraction"); return false; } }
+   * <p>
+   * This method redistributes this fluid's pseudo-components to match the reference fluid's
+   * pseudo-component boundaries, enabling consistent compositional modeling across multiple fluid
+   * samples.
+   *
+   * <p>
+   * Example:
+   * 
+   * <pre>
+   * SystemInterface referenceFluid = ...;  // Fluid with "master" PC structure
+   * SystemInterface myFluid = ...;         // Fluid to be matched
+   *
+   * SystemInterface matched = myFluid.getCharacterization()
+   *     .characterizeToReference(referenceFluid);
+   * </pre>
+   *
+   * @param referenceFluid the fluid defining the target pseudo-component structure
+   * @return a new fluid with pseudo-components matching the reference
    */
+  public SystemInterface characterizeToReference(SystemInterface referenceFluid) {
+    return PseudoComponentCombiner.characterizeToReference(system, referenceFluid);
+  }
+
+  /**
+   * Characterize this fluid to match the pseudo-component structure of a reference fluid with
+   * options.
+   *
+   * <p>
+   * This method allows specifying options for BIP transfer, normalization, and validation.
+   *
+   * <p>
+   * Example:
+   * 
+   * <pre>
+   * CharacterizationOptions options = CharacterizationOptions.builder()
+   *     .transferBinaryInteractionParameters(true).normalizeComposition(true).build();
+   *
+   * SystemInterface matched =
+   *     myFluid.getCharacterization().characterizeToReference(referenceFluid, options);
+   * </pre>
+   *
+   * @param referenceFluid the fluid defining the target pseudo-component structure
+   * @param options characterization options
+   * @return a new fluid with pseudo-components matching the reference
+   */
+  public SystemInterface characterizeToReference(SystemInterface referenceFluid,
+      CharacterizationOptions options) {
+    return PseudoComponentCombiner.characterizeToReference(system, referenceFluid, options);
+  }
+
+  /**
+   * Transfer binary interaction parameters from a reference fluid to this fluid.
+   *
+   * <p>
+   * This copies BIPs between components that exist in both fluids. For pseudo-components, it
+   * matches by position.
+   *
+   * @param referenceFluid the fluid containing BIPs to copy
+   * @return this Characterise instance for method chaining
+   */
+  public Characterise transferBipsFrom(SystemInterface referenceFluid) {
+    PseudoComponentCombiner.transferBinaryInteractionParameters(referenceFluid, system);
+    return this;
+  }
 }
