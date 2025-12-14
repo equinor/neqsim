@@ -217,7 +217,7 @@ public class OnlineCalibrator implements Serializable {
       adjustedParams.put(param, correction);
     }
 
-    return CalibrationResult.success(adjustedParams, avgError, 0, 1);
+    return CalibrationResult.success(adjustedParams, avgError, 1, 1);
   }
 
   /**
