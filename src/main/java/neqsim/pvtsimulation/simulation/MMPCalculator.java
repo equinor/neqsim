@@ -2,6 +2,7 @@ package neqsim.pvtsimulation.simulation;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.commons.lang3.StringUtils;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -508,7 +509,7 @@ public class MMPCalculator extends BasePVTsimulation {
     if (pressures != null && recoveries != null) {
       sb.append("\nRecovery Curve:\n");
       sb.append(String.format("%-12s %-12s\n", "P (bara)", "Recovery (%)"));
-      sb.append("-".repeat(25) + "\n");
+      sb.append(StringUtils.repeat("-", 25) + "\n");
       for (int i = 0; i < pressures.length; i++) {
         sb.append(String.format("%-12.1f %-12.1f\n", pressures[i], recoveries[i] * 100));
       }

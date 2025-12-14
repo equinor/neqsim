@@ -2,6 +2,7 @@ package neqsim.pvtsimulation.simulation;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -462,7 +463,7 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
         "GOR", "Cum GOR", "ρ_oil"));
     sb.append(String.format("%-20s %10s %10s %12s %12s %12s\n", "", "", "", "(Sm3/Sm3)",
         "(Sm3/Sm3)", "(kg/m3)"));
-    sb.append("-".repeat(78) + "\n");
+    sb.append(StringUtils.repeat("-", 78) + "\n");
 
     for (SeparatorStageResult r : results) {
       sb.append(String.format("%-20s %10.1f %10.1f %12.1f %12.1f %12.1f\n", r.getStageName(),
