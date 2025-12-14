@@ -138,6 +138,83 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
+   * Set the gamma distribution shape parameter (alpha) for Whitson Gamma Model. Only applies when
+   * using "Whitson Gamma Model" as the plus fraction model.
+   *
+   * <p>
+   * Typical values:
+   * <ul>
+   * <li>Gas condensates: 0.5 - 1.0</li>
+   * <li>Black oils: 1.0 - 2.0</li>
+   * <li>Heavy oils: 2.0 - 4.0</li>
+   * </ul>
+   *
+   * @param alpha shape parameter value
+   * @return this Characterise instance for method chaining
+   */
+  public Characterise setGammaShapeParameter(double alpha) {
+    if (plusFractionModel instanceof PlusFractionModel.WhitsonGammaModel) {
+      ((PlusFractionModel.WhitsonGammaModel) plusFractionModel).setAlpha(alpha);
+    } else {
+      logger.warn("setGammaShapeParameter only applies to Whitson Gamma Model. Current model: "
+          + plusFractionModel.getName());
+    }
+    return this;
+  }
+
+  /**
+   * Set the minimum molecular weight (eta) for Whitson Gamma Model. Only applies when using
+   * "Whitson Gamma Model" as the plus fraction model.
+   *
+   * @param eta minimum molecular weight in g/mol (typically 84-90 for C7+)
+   * @return this Characterise instance for method chaining
+   */
+  public Characterise setGammaMinMW(double eta) {
+    if (plusFractionModel instanceof PlusFractionModel.WhitsonGammaModel) {
+      ((PlusFractionModel.WhitsonGammaModel) plusFractionModel).setEta(eta);
+    } else {
+      logger.warn("setGammaMinMW only applies to Whitson Gamma Model. Current model: "
+          + plusFractionModel.getName());
+    }
+    return this;
+  }
+
+  /**
+   * Enable automatic estimation of the gamma shape parameter (alpha) based on fluid properties.
+   * Only applies when using "Whitson Gamma Model" as the plus fraction model.
+   *
+   * @param autoEstimate true to enable auto-estimation
+   * @return this Characterise instance for method chaining
+   */
+  public Characterise setAutoEstimateGammaAlpha(boolean autoEstimate) {
+    if (plusFractionModel instanceof PlusFractionModel.WhitsonGammaModel) {
+      ((PlusFractionModel.WhitsonGammaModel) plusFractionModel).setAutoEstimateAlpha(autoEstimate);
+    } else {
+      logger.warn("setAutoEstimateGammaAlpha only applies to Whitson Gamma Model. Current model: "
+          + plusFractionModel.getName());
+    }
+    return this;
+  }
+
+  /**
+   * Set the density model for Whitson Gamma Model characterization. Only applies when using
+   * "Whitson Gamma Model" as the plus fraction model.
+   *
+   * @param densityModel "UOP" for Watson K-factor (default) or "Soreide" for Søreide (1989)
+   *        correlation
+   * @return this Characterise instance for method chaining
+   */
+  public Characterise setGammaDensityModel(String densityModel) {
+    if (plusFractionModel instanceof PlusFractionModel.WhitsonGammaModel) {
+      ((PlusFractionModel.WhitsonGammaModel) plusFractionModel).setDensityModel(densityModel);
+    } else {
+      logger.warn("setGammaDensityModel only applies to Whitson Gamma Model. Current model: "
+          + plusFractionModel.getName());
+    }
+    return this;
+  }
+
+  /**
    * <p>
    * Getter for the field <code>lumpingModel</code>.
    * </p>
