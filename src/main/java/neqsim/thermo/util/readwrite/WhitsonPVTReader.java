@@ -11,6 +11,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -433,7 +434,7 @@ public class WhitsonPVTReader {
   private void setComponentProperties(SystemInterface fluid, int phase, String name,
       ComponentData comp, double tcKelvin, double tbKelvin) {
     try {
-      var component = fluid.getPhase(phase).getComponent(name);
+      ComponentInterface component = fluid.getPhase(phase).getComponent(name);
       if (component == null) {
         return;
       }
