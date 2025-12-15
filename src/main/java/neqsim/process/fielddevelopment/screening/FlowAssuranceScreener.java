@@ -152,7 +152,9 @@ public class FlowAssuranceScreener {
    * evaluates all risk categories and returns a comprehensive report.
    * </p>
    *
-   * <h3>Thermodynamic Calculations</h3>
+   * <p>
+   * <b>Thermodynamic Calculations</b>
+   * </p>
    * <ul>
    * <li>Uses SystemSrkCPAstatoil for accurate hydrate calculations when water is present</li>
    * <li>Falls back to SystemSrkEos for dry gas systems</li>

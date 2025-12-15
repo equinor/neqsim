@@ -588,7 +588,9 @@ public class EconomicsEstimator {
    * <li><b>Accuracy range</b>: Uncertainty bounds for the estimate</li>
    * </ul>
    *
-   * <h3>Accuracy Considerations</h3>
+   * <p>
+   * <b>Accuracy Considerations</b>
+   * </p>
    * <p>
    * All estimates carry a ±40% accuracy range (AACE Class 5). The actual costs can vary
    * significantly based on:
@@ -600,13 +602,17 @@ public class EconomicsEstimator {
    * <li>Project schedule and execution strategy</li>
    * </ul>
    *
-   * <h3>Thread Safety</h3>
+   * <p>
+   * <b>Thread Safety</b>
+   * </p>
    * <p>
    * This class is immutable and thread-safe. All collections returned by getter methods are
    * defensive copies.
    * </p>
    *
-   * <h3>Serialization</h3>
+   * <p>
+   * <b>Serialization</b>
+   * </p>
    * <p>
    * Implements {@link Serializable} for persistence and network transfer.
    * </p>
@@ -889,7 +895,9 @@ public class EconomicsEstimator {
      * monetary values are in million USD unless otherwise specified.
      * </p>
      *
-     * <h3>Usage Example</h3>
+     * <p>
+     * <b>Usage Example</b>
+     * </p>
      * 
      * <pre>
      * EconomicsReport report = EconomicsReport.builder().facilityCapexMUSD(400).equipmentCapexMUSD(150)
