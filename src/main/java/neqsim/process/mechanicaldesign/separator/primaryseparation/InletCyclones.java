@@ -49,9 +49,13 @@ public class InletCyclones extends PrimarySeparation {
   /**
    * Set the number of cyclones.
    *
-   * @param numberOfCyclones the number of cyclones
+   * @param numberOfCyclones the number of cyclones (must be at least 1)
+   * @throws IllegalArgumentException if number of cyclones is less than 1
    */
   public void setNumberOfCyclones(int numberOfCyclones) {
+    if (numberOfCyclones < 1) {
+      throw new IllegalArgumentException("Number of cyclones must be at least 1");
+    }
     this.numberOfCyclones = numberOfCyclones;
   }
 
@@ -67,9 +71,13 @@ public class InletCyclones extends PrimarySeparation {
   /**
    * Set the cyclone diameter.
    *
-   * @param cycloneDiameter the diameter in m
+   * @param cycloneDiameter the diameter in m (must be positive)
+   * @throws IllegalArgumentException if diameter is not positive
    */
   public void setCycloneDiameter(double cycloneDiameter) {
+    if (cycloneDiameter <= 0) {
+      throw new IllegalArgumentException("Cyclone diameter must be positive");
+    }
     this.cycloneDiameter = cycloneDiameter;
   }
 

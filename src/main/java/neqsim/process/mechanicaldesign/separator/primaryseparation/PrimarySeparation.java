@@ -68,9 +68,13 @@ public class PrimarySeparation implements Serializable {
   /**
    * Set the inlet nozzle diameter.
    *
-   * @param inletNozzleDiameter the nozzle diameter in m
+   * @param inletNozzleDiameter the nozzle diameter in m (must be positive)
+   * @throws IllegalArgumentException if diameter is not positive
    */
   public void setInletNozzleDiameter(double inletNozzleDiameter) {
+    if (inletNozzleDiameter <= 0) {
+      throw new IllegalArgumentException("Inlet nozzle diameter must be positive");
+    }
     this.inletNozzleDiameter = inletNozzleDiameter;
   }
 

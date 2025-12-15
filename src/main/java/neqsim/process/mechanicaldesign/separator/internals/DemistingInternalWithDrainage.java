@@ -97,32 +97,21 @@ public class DemistingInternalWithDrainage extends DemistingInternal {
   }
 
   /**
-   * Calculate the liquid carry-over with explicit parameters (legacy support for testing).
-   *
-   * @param gasVelocity gas velocity in m/s
-   * @param gasDensity gas density in kg/m³
-   * @param liquidDensity liquid density in kg/m³
-   * @param inletLiquidContent inlet liquid content (mass fraction)
-   * @return liquid carry-over with drainage reduction
-   * @deprecated Use {@link #calcLiquidCarryOver()} instead
+   * {@inheritDoc}
+   * <p>
+   * Overrides the parent calculation to apply drainage efficiency reduction.
+   * </p>
    */
-  @Deprecated
   @Override
-  public double calcLiquidCarryOver(double gasVelocity, double gasDensity, double liquidDensity,
-      double inletLiquidContent) {
-    if (separator != null) {
-      return calcLiquidCarryOver();
-    }
+  public double calcEfficiency() {
+    // Get base efficiency from parent class
+    double baseEfficiency = super.calcEfficiency();
 
-    // Fallback for testing without separator reference
-    // Get base carry-over from parent class
-    double baseCarryOver =
-        super.calcLiquidCarryOver(gasVelocity, gasDensity, liquidDensity, inletLiquidContent);
+    // Apply drainage efficiency improvement
+    // Drainage improves efficiency by recovering more liquid
+    double improvedEfficiency = baseEfficiency + (1.0 - baseEfficiency) * drainageEfficiency;
 
-    // Apply drainage efficiency reduction
-    double carryOverWithDrainage = baseCarryOver * (1.0 - drainageEfficiency);
-
-    return carryOverWithDrainage;
+    return Math.min(improvedEfficiency, 1.0);
   }
 
   @Override

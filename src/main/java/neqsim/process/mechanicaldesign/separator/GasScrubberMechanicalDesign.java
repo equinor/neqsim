@@ -1,5 +1,7 @@
 package neqsim.process.mechanicaldesign.separator;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.SeparatorInterface;
@@ -18,11 +20,13 @@ import neqsim.process.mechanicaldesign.separator.sectiontype.SepDesignSection;
 public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-  /*double gasLoadFactor = 1.0;
-  double volumeSafetyFactor = 1.0;
-  double Fg = 1.0;
-  double retentionTime = 60.0;*/
-  
+  /** Logger object for class. */
+  private static final Logger logger = LogManager.getLogger(GasScrubberMechanicalDesign.class);
+  /*
+   * double gasLoadFactor = 1.0; double volumeSafetyFactor = 1.0; double Fg = 1.0; double
+   * retentionTime = 60.0;
+   */
+
 
   /**
    * <p>
@@ -41,8 +45,8 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     super.readDesignSpecifications();
 
     if (getDesignStandard().containsKey("gas scrubber process design")) {
-      System.out.println("gas scrubber process design: "
-          + getDesignStandard().get("gas scrubber process design").getStandardName());
+      logger.debug("gas scrubber process design: {}",
+          getDesignStandard().get("gas scrubber process design").getStandardName());
       gasLoadFactor =
           ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
               .getGasLoadFactor();
@@ -50,7 +54,7 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
           ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
               .getVolumetricDesignFactor();
     } else {
-      System.out.println("no separator process design specified......");
+      logger.debug("no gas scrubber process design specified");
     }
   }
 

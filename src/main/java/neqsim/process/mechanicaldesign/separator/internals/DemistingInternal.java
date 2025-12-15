@@ -68,9 +68,13 @@ public class DemistingInternal implements Serializable {
   /**
    * Set the internal surface area.
    *
-   * @param area the area in m²
+   * @param area the area in m² (must be positive)
+   * @throws IllegalArgumentException if area is not positive
    */
   public void setArea(double area) {
+    if (area <= 0) {
+      throw new IllegalArgumentException("Internal area must be positive");
+    }
     this.area = area;
   }
 
@@ -86,9 +90,13 @@ public class DemistingInternal implements Serializable {
   /**
    * Set the Euler number (rho v^2).
    *
-   * @param euNumber the Euler number
+   * @param euNumber the Euler number (must be non-negative)
+   * @throws IllegalArgumentException if euNumber is negative
    */
   public void setEuNumber(double euNumber) {
+    if (euNumber < 0) {
+      throw new IllegalArgumentException("Euler number cannot be negative");
+    }
     this.euNumber = euNumber;
   }
 
@@ -182,6 +190,21 @@ public class DemistingInternal implements Serializable {
     double carryOverFactor = Math.exp(-calibrationConstant * area);
 
     return carryOverFactor * inletLiquidContent;
+  }
+
+  /**
+   * Calculate the separation efficiency of this internal.
+   * 
+   * Efficiency is calculated as 1 - (carryOverFactor), representing the fraction of liquid that is
+   * successfully separated by this internal.
+   *
+   * @return separation efficiency (0 to 1)
+   */
+  public double calcEfficiency() {
+    // Efficiency increases with internal area
+    // This is a simplified model: efficiency = 1 - exp(-k * area)
+    double calibrationConstant = 0.5; // Can be adjusted based on experimental data
+    return 1.0 - Math.exp(-calibrationConstant * area);
   }
 
   @Override

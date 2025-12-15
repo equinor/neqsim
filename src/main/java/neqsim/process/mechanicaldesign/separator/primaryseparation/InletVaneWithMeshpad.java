@@ -52,9 +52,13 @@ public class InletVaneWithMeshpad extends InletVane {
   /**
    * Set the vertical distance between vane and meshpad.
    *
-   * @param vaneToMeshpadDistance the distance in m
+   * @param vaneToMeshpadDistance the distance in m (must be non-negative)
+   * @throws IllegalArgumentException if distance is negative
    */
   public void setVaneToMeshpadDistance(double vaneToMeshpadDistance) {
+    if (vaneToMeshpadDistance < 0) {
+      throw new IllegalArgumentException("Vane to meshpad distance cannot be negative");
+    }
     this.vaneToMeshpadDistance = vaneToMeshpadDistance;
   }
 
@@ -70,9 +74,13 @@ public class InletVaneWithMeshpad extends InletVane {
   /**
    * Set the free distance above the meshpad.
    *
-   * @param freeDistanceAboveMeshpad the distance in m
+   * @param freeDistanceAboveMeshpad the distance in m (must be non-negative)
+   * @throws IllegalArgumentException if distance is negative
    */
   public void setFreeDistanceAboveMeshpad(double freeDistanceAboveMeshpad) {
+    if (freeDistanceAboveMeshpad < 0) {
+      throw new IllegalArgumentException("Free distance above meshpad cannot be negative");
+    }
     this.freeDistanceAboveMeshpad = freeDistanceAboveMeshpad;
   }
 

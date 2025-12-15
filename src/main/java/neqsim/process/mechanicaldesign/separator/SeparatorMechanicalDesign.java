@@ -17,6 +17,8 @@ import neqsim.process.mechanicaldesign.designstandards.MaterialPlateDesignStanda
 import neqsim.process.mechanicaldesign.designstandards.PressureVesselDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard;
 import neqsim.process.mechanicaldesign.separator.internals.DemistingInternal;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -29,6 +31,8 @@ import neqsim.process.mechanicaldesign.separator.internals.DemistingInternal;
 public class SeparatorMechanicalDesign extends MechanicalDesign {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  private static final Logger logger = LogManager.getLogger(SeparatorMechanicalDesign.class);
   double gasLoadFactor = 1.0;
   double volumeSafetyFactor = 1.0;
   double Fg = 1.0;
@@ -59,21 +63,21 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
       ((MaterialPlateDesignStandard) getDesignStandard().get("material plate design codes"))
           .readMaterialDesignStandard("Carbon Steel Plates and Sheets", "SA-516", "55", 1);
     } else {
-      System.out.println("material plate design codes specified......");
+      logger.debug("no material plate design codes specified");
     }
     if (getDesignStandard().containsKey("pressure vessel design code")) {
-      System.out.println("pressure vessel code standard: "
-          + getDesignStandard().get("pressure vessel design code").getStandardName());
+      logger.debug("pressure vessel code standard: {}",
+          getDesignStandard().get("pressure vessel design code").getStandardName());
       wallThickness =
           ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
               .calcWallThickness();
     } else {
-      System.out.println("no pressure vessel code standard specified......");
+      logger.debug("no pressure vessel code standard specified");
     }
 
     if (getDesignStandard().containsKey("separator process design")) {
-      System.out.println("separator process design: "
-          + getDesignStandard().get("separator process design").getStandardName());
+      logger.debug("separator process design: {}",
+          getDesignStandard().get("separator process design").getStandardName());
       gasLoadFactor =
           ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
               .getGasLoadFactor();
@@ -85,7 +89,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
                              // getDesignStandard().get("separator process
                              // design")).getLiquidRetentionTime("API12J", this);
     } else {
-      System.out.println("no separator process design specified......");
+      logger.debug("no separator process design specified");
     }
   }
 
@@ -350,12 +354,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     double totalCarryOver = inletLiquidContent;
 
     for (DemistingInternal internal : demistingInternals) {
-      double volumetricFlow =
-          ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume()
-              / 1e5;
-      double gasVelocity = internal.calcGasVelocity(volumetricFlow);
-      totalCarryOver =
-          internal.calcLiquidCarryOver(gasVelocity, gasDensity, liquidDensity, totalCarryOver);
+      // Use the separator-aware carry-over calculation
+      totalCarryOver *= (1.0 - internal.calcEfficiency());
     }
 
     return totalCarryOver;

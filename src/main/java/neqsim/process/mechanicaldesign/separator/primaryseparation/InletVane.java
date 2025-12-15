@@ -42,9 +42,14 @@ public class InletVane extends PrimarySeparation {
   /**
    * Set the geometrical expansion ratio of the vane.
    *
-   * @param geometricalExpansionRatio the expansion ratio (vane open area / nozzle area)
+   * @param geometricalExpansionRatio the expansion ratio (vane open area / nozzle area, must be
+   *        positive)
+   * @throws IllegalArgumentException if expansion ratio is not positive
    */
   public void setGeometricalExpansionRatio(double geometricalExpansionRatio) {
+    if (geometricalExpansionRatio <= 0) {
+      throw new IllegalArgumentException("Expansion ratio must be positive");
+    }
     this.geometricalExpansionRatio = geometricalExpansionRatio;
   }
 
