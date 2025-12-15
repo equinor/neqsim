@@ -35,6 +35,9 @@ import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.RecycleController;
 import neqsim.process.equipment.util.Setter;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
+import neqsim.process.processmodel.graph.ProcessGraph;
+import neqsim.process.processmodel.graph.ProcessGraphBuilder;
+import neqsim.process.processmodel.graph.ProcessNode;
 import neqsim.process.util.report.Report;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -75,6 +78,14 @@ public class ProcessSystem extends SimulationBaseClass {
   private transient ProcessSystem initialStateSnapshot;
   private double massBalanceErrorThreshold = 0.1; // Default 0.1% error threshold
   private double minimumFlowForMassBalanceError = 1e-6; // Default 1e-6 kg/sec
+
+  // Graph-based execution fields
+  /** Cached process graph for topology analysis. */
+  private transient ProcessGraph cachedGraph = null;
+  /** Flag indicating if the cached graph needs to be rebuilt. */
+  private boolean graphDirty = true;
+  /** Whether to use graph-based execution order instead of insertion order. */
+  private boolean useGraphBasedExecution = false;
 
   /**
    * <p>
@@ -132,6 +143,7 @@ public class ProcessSystem extends SimulationBaseClass {
     }
 
     getUnitOperations().add(position, operation);
+    graphDirty = true; // Mark graph for rebuild when units change
     if (operation instanceof ModuleInterface) {
       ((ModuleInterface) operation).initializeModule();
     }
@@ -444,6 +456,198 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Runs the process system using parallel execution for independent equipment.
+   *
+   * <p>
+   * This method uses the process graph to identify equipment that can run in parallel (i.e.,
+   * equipment with no dependencies between them). Equipment at the same "level" in the dependency
+   * graph are executed concurrently using the NeqSim thread pool.
+   * </p>
+   *
+   * <p>
+   * Note: This method does not handle recycles or adjusters - use regular {@link #run()} for
+   * processes with recycle loops. This is suitable for feed-forward processes where maximum
+   * parallelism is desired.
+   * </p>
+   *
+   * @throws InterruptedException if the thread is interrupted while waiting for tasks
+   */
+  public void runParallel() throws InterruptedException {
+    runParallel(UUID.randomUUID());
+  }
+
+  /**
+   * Runs the process system using parallel execution for independent equipment.
+   *
+   * <p>
+   * This method uses the process graph to identify equipment that can run in parallel (i.e.,
+   * equipment with no dependencies between them). Equipment at the same "level" in the dependency
+   * graph are executed concurrently using the NeqSim thread pool.
+   * </p>
+   *
+   * @param id calculation identifier for tracking
+   * @throws InterruptedException if the thread is interrupted while waiting for tasks
+   */
+  public void runParallel(UUID id) throws InterruptedException {
+    ProcessGraph graph = buildGraph();
+    ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
+
+    // Run setters first (sequential, they set conditions)
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof Setter) {
+        unit.run(id);
+      }
+    }
+
+    // Execute each level in parallel
+    for (List<ProcessNode> level : partition.getLevels()) {
+      if (level.size() == 1) {
+        // Single unit at this level - run directly
+        ProcessEquipmentInterface unit = level.get(0).getEquipment();
+        if (!(unit instanceof Setter)) {
+          try {
+            unit.run(id);
+          } catch (Exception ex) {
+            logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+          }
+        }
+      } else if (level.size() > 1) {
+        // Multiple units at this level - run in parallel
+        List<java.util.concurrent.Future<?>> futures = new ArrayList<>();
+
+        for (ProcessNode node : level) {
+          ProcessEquipmentInterface unit = node.getEquipment();
+          if (!(unit instanceof Setter)) {
+            final ProcessEquipmentInterface unitToRun = unit;
+            final UUID calcId = id;
+            futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
+              try {
+                unitToRun.run(calcId);
+              } catch (Exception ex) {
+                logger.error("equipment: " + unitToRun.getName() + " error: " + ex.getMessage(),
+                    ex);
+              }
+            }));
+          }
+        }
+
+        // Wait for all units at this level to complete before moving to next level
+        for (java.util.concurrent.Future<?> future : futures) {
+          try {
+            future.get();
+          } catch (java.util.concurrent.ExecutionException ex) {
+            logger.error("Parallel execution error: " + ex.getMessage(), ex);
+          }
+        }
+      }
+    }
+
+    // Update calculation identifiers
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      unit.setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
+  }
+
+  /**
+   * Gets the parallel execution partition for this process.
+   *
+   * <p>
+   * This method returns information about how the process can be parallelized, including: - The
+   * number of parallel levels - Maximum parallelism (max units that can run concurrently) - Which
+   * units are at each level
+   * </p>
+   *
+   * @return parallel partition result, or null if graph cannot be built
+   */
+  public ProcessGraph.ParallelPartition getParallelPartition() {
+    ProcessGraph graph = buildGraph();
+    return graph.partitionForParallelExecution();
+  }
+
+  /**
+   * Checks if parallel execution would be beneficial for this process.
+   *
+   * <p>
+   * Parallel execution is considered beneficial when:
+   * <ul>
+   * <li>There are at least 2 units that can run in parallel (maxParallelism >= 2)</li>
+   * <li>The process has no recycle loops (which require iterative sequential execution)</li>
+   * <li>There are enough units to justify thread overhead (typically > 4 units)</li>
+   * </ul>
+   * </p>
+   *
+   * @return true if parallel execution is recommended
+   */
+  public boolean isParallelExecutionBeneficial() {
+    // Need enough units to justify parallelism overhead
+    if (unitOperations.size() < 4) {
+      return false;
+    }
+
+    // Check for recycles - they require sequential iterative execution
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof Recycle) {
+        return false;
+      }
+      if (unit instanceof Adjuster) {
+        return false;
+      }
+    }
+
+    // Check parallel partition
+    ProcessGraph.ParallelPartition partition = getParallelPartition();
+    if (partition == null) {
+      return false;
+    }
+
+    // Need at least 2 units that can run in parallel
+    return partition.getMaxParallelism() >= 2;
+  }
+
+  /**
+   * Runs the process using the optimal execution strategy.
+   *
+   * <p>
+   * This method automatically determines whether to use parallel or sequential execution based on
+   * the process structure. It will use parallel execution if:
+   * <ul>
+   * <li>The process has independent branches that can benefit from parallelism</li>
+   * <li>There are no recycle loops or adjusters requiring iterative execution</li>
+   * <li>The process is large enough to justify the thread management overhead</li>
+   * </ul>
+   * </p>
+   *
+   * <p>
+   * For processes with recycles or adjusters, this method falls back to the standard sequential
+   * {@link #run()} method which properly handles convergence iterations.
+   * </p>
+   */
+  public void runOptimal() {
+    runOptimal(UUID.randomUUID());
+  }
+
+  /**
+   * Runs the process using the optimal execution strategy with calculation ID tracking.
+   *
+   * @param id calculation identifier for tracking
+   * @see #runOptimal()
+   */
+  public void runOptimal(UUID id) {
+    if (isParallelExecutionBeneficial()) {
+      try {
+        runParallel(id);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.warn("Parallel execution interrupted, falling back to sequential", e);
+        run(id);
+      }
+    } else {
+      run(id);
+    }
+  }
+
+  /**
    * <p>
    * runAsThread.
    * </p>
@@ -462,9 +666,18 @@ public class ProcessSystem extends SimulationBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    // Determine execution order: use graph-based if enabled, otherwise use insertion order
+    List<ProcessEquipmentInterface> executionOrder;
+    if (useGraphBasedExecution) {
+      List<ProcessEquipmentInterface> topoOrder = getTopologicalOrder();
+      executionOrder = (topoOrder != null) ? topoOrder : unitOperations;
+    } else {
+      executionOrder = unitOperations;
+    }
+
     // Run setters first to set conditions
-    for (int i = 0; i < unitOperations.size(); i++) {
-      ProcessEquipmentInterface unit = unitOperations.get(i);
+    for (int i = 0; i < executionOrder.size(); i++) {
+      ProcessEquipmentInterface unit = executionOrder.get(i);
       if (unit instanceof Setter) {
         unit.run(id);
       }
@@ -475,8 +688,8 @@ public class ProcessSystem extends SimulationBaseClass {
 
     // Initializing recycle controller
     recycleController.clear();
-    for (int i = 0; i < unitOperations.size(); i++) {
-      ProcessEquipmentInterface unit = unitOperations.get(i);
+    for (int i = 0; i < executionOrder.size(); i++) {
+      ProcessEquipmentInterface unit = executionOrder.get(i);
       if (unit instanceof Recycle) {
         hasRecycle = true;
         recycleController.addRecycle((Recycle) unit);
@@ -492,8 +705,8 @@ public class ProcessSystem extends SimulationBaseClass {
     do {
       iter++;
       isConverged = true;
-      for (int i = 0; i < unitOperations.size(); i++) {
-        ProcessEquipmentInterface unit = unitOperations.get(i);
+      for (int i = 0; i < executionOrder.size(); i++) {
+        ProcessEquipmentInterface unit = executionOrder.get(i);
         if (Thread.currentThread().isInterrupted()) {
           logger.debug("Process simulation was interrupted, exiting run()..." + getName());
           break;
@@ -530,8 +743,8 @@ public class ProcessSystem extends SimulationBaseClass {
         // isConverged=true;
       }
 
-      for (int i = 0; i < unitOperations.size(); i++) {
-        ProcessEquipmentInterface unit = unitOperations.get(i);
+      for (int i = 0; i < executionOrder.size(); i++) {
+        ProcessEquipmentInterface unit = executionOrder.get(i);
         if (unit instanceof Adjuster) {
           if (!((Adjuster) unit).solved()) {
             isConverged = false;
@@ -554,8 +767,8 @@ public class ProcessSystem extends SimulationBaseClass {
     } while (((!isConverged || (iter < 2 && hasRecycle)) && iter < 100) && !runStep
         && !Thread.currentThread().isInterrupted());
 
-    for (int i = 0; i < unitOperations.size(); i++) {
-      unitOperations.get(i).setCalculationIdentifier(id);
+    for (int i = 0; i < executionOrder.size(); i++) {
+      executionOrder.get(i).setCalculationIdentifier(id);
     }
 
     setCalculationIdentifier(id);
@@ -1799,6 +2012,246 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
     return bottleneck;
+  }
+
+  // ============ GRAPH-BASED PROCESS REPRESENTATION ============
+
+  /**
+   * Builds an explicit graph representation of this process system.
+   *
+   * <p>
+   * The graph representation enables:
+   * <ul>
+   * <li>Automatic detection of calculation order (derived from topology, not insertion order)</li>
+   * <li>Partitioning for parallel execution</li>
+   * <li>AI agents to reason about flowsheet structure</li>
+   * <li>Cycle detection for recycle handling</li>
+   * <li>Graph neural network compatible representation</li>
+   * </ul>
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   *
+   * <pre>
+   * ProcessSystem system = new ProcessSystem();
+   * // ... add units ...
+   * ProcessGraph graph = system.buildGraph();
+   *
+   * // Get topology-based calculation order
+   * List&lt;ProcessEquipmentInterface&gt; order = graph.getCalculationOrder();
+   *
+   * // Partition for parallel execution
+   * ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
+   * </pre>
+   *
+   * @return the process graph
+   * @see ProcessGraph
+   * @see ProcessGraphBuilder
+   */
+  public ProcessGraph buildGraph() {
+    if (cachedGraph == null || graphDirty) {
+      cachedGraph = ProcessGraphBuilder.buildGraph(this);
+      graphDirty = false;
+    }
+    return cachedGraph;
+  }
+
+  /**
+   * Forces a rebuild of the process graph on next access.
+   *
+   * <p>
+   * Use this method when you have made structural changes to the process that the automatic
+   * detection may have missed (e.g., modifying stream connections directly).
+   * </p>
+   */
+  public void invalidateGraph() {
+    graphDirty = true;
+    cachedGraph = null;
+  }
+
+  /**
+   * Sets whether to use graph-based execution order.
+   *
+   * <p>
+   * When enabled, the run() method will execute units in topological order derived from stream
+   * connections rather than the order units were added. This can be safer when unit insertion order
+   * doesn't match the physical flow.
+   * </p>
+   *
+   * @param useGraphBased true to use topological execution order, false to use insertion order
+   */
+  public void setUseGraphBasedExecution(boolean useGraphBased) {
+    this.useGraphBasedExecution = useGraphBased;
+  }
+
+  /**
+   * Returns whether graph-based execution order is enabled.
+   *
+   * @return true if using topological execution order
+   */
+  public boolean isUseGraphBasedExecution() {
+    return useGraphBasedExecution;
+  }
+
+  /**
+   * Gets the calculation order derived from process topology.
+   *
+   * <p>
+   * This method returns units in the order they should be calculated based on stream connections,
+   * not the order they were added to the ProcessSystem. This is safer than relying on insertion
+   * order, which can lead to wrong results if units are rearranged or recycles are added late.
+   * </p>
+   *
+   * @return list of equipment in topology-derived calculation order
+   */
+  public List<ProcessEquipmentInterface> getTopologicalOrder() {
+    ProcessGraph graph = buildGraph();
+    return graph.getCalculationOrder();
+  }
+
+  /**
+   * Checks if the process has recycle loops that require iterative solving.
+   *
+   * @return true if the process contains cycles (recycles)
+   */
+  public boolean hasRecycleLoops() {
+    ProcessGraph graph = buildGraph();
+    return graph.hasCycles();
+  }
+
+  /**
+   * Gets the number of levels for parallel execution.
+   *
+   * <p>
+   * Units at the same level have no dependencies on each other and can be executed in parallel.
+   * </p>
+   *
+   * @return number of parallel execution levels
+   */
+  public int getParallelLevelCount() {
+    ProcessGraph graph = buildGraph();
+    return graph.partitionForParallelExecution().getLevelCount();
+  }
+
+  /**
+   * Gets the maximum parallelism (max units that can run simultaneously).
+   *
+   * @return maximum number of units that can execute in parallel
+   */
+  public int getMaxParallelism() {
+    ProcessGraph graph = buildGraph();
+    return graph.partitionForParallelExecution().getMaxParallelism();
+  }
+
+  /**
+   * Validates the process structure and returns any issues found.
+   *
+   * <p>
+   * Checks include:
+   * <ul>
+   * <li>Isolated units (no connections)</li>
+   * <li>Duplicate edges</li>
+   * <li>Self-loops</li>
+   * <li>Unhandled cycles</li>
+   * </ul>
+   * </p>
+   *
+   * @return list of validation issues (empty if valid)
+   */
+  public List<String> validateStructure() {
+    ProcessGraph graph = buildGraph();
+    return graph.validate();
+  }
+
+  /**
+   * Gets a summary of the process graph structure.
+   *
+   * @return summary string with node/edge counts, cycles, parallelism info
+   */
+  public String getGraphSummary() {
+    ProcessGraph graph = buildGraph();
+    return graph.getSummary();
+  }
+
+  /**
+   * Gets the strongly connected components (SCCs) in the process graph.
+   *
+   * <p>
+   * SCCs with more than one unit represent recycle loops that require iterative convergence. This
+   * method uses Tarjan's algorithm to identify these components.
+   * </p>
+   *
+   * @return list of SCCs, each containing a list of equipment in that component
+   */
+  public List<List<ProcessEquipmentInterface>> getRecycleBlocks() {
+    ProcessGraph graph = buildGraph();
+    ProcessGraph.SCCResult sccResult = graph.findStronglyConnectedComponents();
+    List<List<ProcessNode>> recycleLoops = sccResult.getRecycleLoops();
+
+    // Convert from ProcessNode lists to ProcessEquipmentInterface lists
+    List<List<ProcessEquipmentInterface>> recycleBlocks = new java.util.ArrayList<>();
+    for (List<ProcessNode> loop : recycleLoops) {
+      List<ProcessEquipmentInterface> block = new java.util.ArrayList<>();
+      for (ProcessNode node : loop) {
+        block.add(node.getEquipment());
+      }
+      recycleBlocks.add(block);
+    }
+    return recycleBlocks;
+  }
+
+  /**
+   * Gets the number of recycle blocks (cycles) in the process.
+   *
+   * @return number of strongly connected components with more than one unit
+   */
+  public int getRecycleBlockCount() {
+    return getRecycleBlocks().size();
+  }
+
+  /**
+   * Checks if a specific unit is part of a recycle loop.
+   *
+   * @param unit the unit to check
+   * @return true if the unit is in a recycle block
+   */
+  public boolean isInRecycleLoop(ProcessEquipmentInterface unit) {
+    for (List<ProcessEquipmentInterface> block : getRecycleBlocks()) {
+      if (block.contains(unit)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Gets a diagnostic report of recycle blocks for debugging.
+   *
+   * @return formatted string describing each recycle block
+   */
+  public String getRecycleBlockReport() {
+    List<List<ProcessEquipmentInterface>> blocks = getRecycleBlocks();
+    if (blocks.isEmpty()) {
+      return "No recycle blocks detected in process.";
+    }
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("Recycle Blocks Report\n");
+    sb.append("=====================\n");
+    sb.append("Total recycle blocks: ").append(blocks.size()).append("\n\n");
+
+    int blockNum = 1;
+    for (List<ProcessEquipmentInterface> block : blocks) {
+      sb.append("Block ").append(blockNum++).append(" (").append(block.size()).append(" units):\n");
+      for (ProcessEquipmentInterface unit : block) {
+        sb.append("  - ").append(unit.getName()).append(" [")
+            .append(unit.getClass().getSimpleName()).append("]\n");
+      }
+      sb.append("\n");
+    }
+    return sb.toString();
   }
 
   /*

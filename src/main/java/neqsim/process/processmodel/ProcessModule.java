@@ -369,4 +369,98 @@ public class ProcessModule extends SimulationBaseClass {
   public void run_step(UUID id) {
     run(id);
   }
+
+  // ====== Graph-Based Representation Methods ======
+
+  /**
+   * Builds a graph representation of this module and all its sub-systems.
+   *
+   * <p>
+   * The returned {@link neqsim.process.processmodel.graph.ProcessModelGraph} contains:
+   * <ul>
+   * <li>Individual graphs for each ProcessSystem</li>
+   * <li>A unified flattened graph for the entire module</li>
+   * <li>Information about inter-system connections</li>
+   * </ul>
+   * </p>
+   *
+   * @return the graph representation of this module
+   */
+  public neqsim.process.processmodel.graph.ProcessModelGraph buildModelGraph() {
+    return neqsim.process.processmodel.graph.ProcessModelGraphBuilder.buildModelGraph(this);
+  }
+
+  /**
+   * Gets the topologically-sorted calculation order for all equipment in this module.
+   *
+   * <p>
+   * This order respects stream dependencies across all sub-systems.
+   * </p>
+   *
+   * @return list of equipment in calculation order, or null if cycles prevent ordering
+   */
+  public List<ProcessEquipmentInterface> getCalculationOrder() {
+    return buildModelGraph().getCalculationOrder();
+  }
+
+  /**
+   * Checks if this module (or any sub-system) contains recycle loops.
+   *
+   * @return true if cycles exist
+   */
+  public boolean hasRecycleLoops() {
+    return buildModelGraph().hasCycles();
+  }
+
+  /**
+   * Gets the number of sub-systems in this module.
+   *
+   * @return number of ProcessSystems and nested ProcessModules
+   */
+  public int getSubSystemCount() {
+    return addedUnitOperations.size() + addedModules.size();
+  }
+
+  /**
+   * Gets a summary of the module's graph structure.
+   *
+   * @return human-readable summary string
+   */
+  public String getGraphSummary() {
+    return buildModelGraph().getSummary();
+  }
+
+  /**
+   * Validates the structural integrity of this module.
+   *
+   * @return list of validation issues, empty if valid
+   */
+  public List<String> validateStructure() {
+    List<String> issues = new ArrayList<>();
+
+    if (addedUnitOperations.isEmpty() && addedModules.isEmpty()) {
+      issues.add("Module has no unit operations or sub-modules");
+      return issues;
+    }
+
+    neqsim.process.processmodel.graph.ProcessModelGraph modelGraph = buildModelGraph();
+
+    if (modelGraph.getTotalNodeCount() == 0) {
+      issues.add("Module has no equipment nodes");
+    }
+
+    if (modelGraph.hasCycles()) {
+      neqsim.process.processmodel.graph.ProcessGraph.CycleAnalysisResult cycles =
+          modelGraph.analyzeCycles();
+      issues.add("Module contains " + cycles.getCycleCount()
+          + " cycle(s) - ensure recycle operations are properly configured");
+    }
+
+    // Check for disconnected sub-systems
+    if (modelGraph.getSubSystemCount() > 1 && modelGraph.getInterSystemConnectionCount() == 0) {
+      issues.add("Module has multiple sub-systems but no inter-system connections detected");
+    }
+
+    return issues;
+  }
 }
