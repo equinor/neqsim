@@ -37,8 +37,9 @@ public class OpenValveAction implements LogicAction {
 
   @Override
   public boolean isComplete() {
-    if (!executed)
+    if (!executed) {
       return false;
+    }
 
     // Consider complete when valve is >95% open
     return valve.getPercentValveOpening() > 95.0;

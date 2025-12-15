@@ -437,6 +437,34 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   doubleW[][] getAlphares_GERG2008();
 
   /**
+   * Get density of a phase using the EOS-CG EoS.
+   *
+   * @return density with unit kg/m3
+   */
+  public double getDensity_EOSCG();
+
+  /**
+   * Get EOS-CG properties of a phase using the EOS-CG model.
+   *
+   * @return an array of type double
+   */
+  public double[] getProperties_EOSCG();
+
+  /**
+   * Get EOS-CG ideal Helmholtz contribution and derivatives.
+   *
+   * @return matrix of the reduced ideal helmholtz free energy and its derivatives
+   */
+  doubleW[] getAlpha0_EOSCG();
+
+  /**
+   * Get EOS-CG residual Helmholtz contribution and derivatives.
+   *
+   * @return matrix of the reduced residual helmholtz free energy and its derivatives
+   */
+  doubleW[][] getAlphares_EOSCG();
+
+  /**
    * method to get Leachman density of a phase using the Leachman EoS.
    *
    * @param hydrogenType Supported types are 'normal', 'para', 'ortho'

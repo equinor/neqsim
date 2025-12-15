@@ -117,10 +117,21 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    * @return a double
    */
   public double calcWallFrictionFactor(double reynoldsNumber) {
+    if (Math.abs(reynoldsNumber) < 1e-10) {
+      flowPattern = "no-flow";
+      return 0.0;
+    }
     double relativeRoughnes = getPipeWallRoughness() / insideDiameter;
-    if (Math.abs(reynoldsNumber) < 2000) {
+    if (Math.abs(reynoldsNumber) < 2300) {
       flowPattern = "laminar";
       return 64.0 / reynoldsNumber;
+    } else if (Math.abs(reynoldsNumber) < 4000) {
+      // Transition zone - interpolate between laminar and turbulent
+      flowPattern = "transition";
+      double fLaminar = 64.0 / 2300.0;
+      double fTurbulent = Math.pow(
+          (1.0 / (-1.8 * Math.log10(6.9 / 4000.0 + Math.pow(relativeRoughnes / 3.7, 1.11)))), 2.0);
+      return fLaminar + (fTurbulent - fLaminar) * (reynoldsNumber - 2300.0) / 1700.0;
     } else {
       flowPattern = "turbulent";
       return Math.pow((1.0
@@ -139,8 +150,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
   public double calcPressureOut() {
     double area = Math.PI / 4.0 * Math.pow(insideDiameter, 2.0);
     velocity = system.getFlowRate("m3/sec") / area;
-    double supGasVel = system.getPhase(0).getFlowRate("m3/sec") / area;
-    double supoilVel = system.getPhase(0).getFlowRate("m3/sec") / area;
 
     double reynoldsNumber = velocity * insideDiameter / system.getKinematicViscosity("m2/sec");
     double frictionFactor = calcWallFrictionFactor(reynoldsNumber);
@@ -167,37 +176,102 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
    * <p>
    * calcFlow.
    * </p>
+   * 
+   * <p>
+   * Calculates the flow rate required to achieve the specified outlet pressure using bisection
+   * iteration. This method iteratively adjusts the flow rate until the calculated outlet pressure
+   * matches the target outlet pressure.
+   * </p>
    *
-   * @param pressureOut a double
-   * @return a double
+   * @param pressureOut target outlet pressure in bara
+   * @return the calculated flow rate in the current system units
    */
   public double calcFlow(double pressureOut) {
-    double averagePressue = (pressureOut + pressureOut) / 2.0;
-    system.setPressure(averagePressue);
+    // Use bisection method to find flow rate that gives target outlet pressure
+    // At low flow, pressure drop is small -> outlet pressure high
+    // At high flow, pressure drop is large -> outlet pressure low
+
+    // CRITICAL: Set inletPressure from the system's pressure - calcPressureOut() uses this field
+    inletPressure = system.getPressure();
+
+    double originalFlowRate = system.getFlowRate("kg/sec");
+    if (originalFlowRate <= 0) {
+      originalFlowRate = 1.0; // Default starting point
+    }
+
     ThermodynamicOperations testOps = new ThermodynamicOperations(system);
+
+    // Set up bounds for bisection
+    double flowLow = originalFlowRate * 0.001;
+    double flowHigh = originalFlowRate * 100.0;
+
+    // Find valid bounds
+    // At low flow, check if outlet pressure > target (we need more flow)
+    system.setTotalFlowRate(flowLow, "kg/sec");
     testOps.TPflash();
     system.initProperties();
+    double pOutLow = calcPressureOut();
 
-    double area = Math.PI / 4.0 * Math.pow(insideDiameter, 2.0);
-    double presdrop2 = Math.pow(inletPressure * 1e2, 2.0) - Math.pow(pressureOut * 1e2, 2.0);
-    double gasGravity = system.getMolarMass() / 0.028;
-    double oldReynold = 0;
-    double reynoldsNumber = -1000.0;
-    double flow = 0;
-    do {
-      oldReynold = reynoldsNumber;
-      velocity = system.getVolume("m3") / area;
-      reynoldsNumber = velocity * insideDiameter / system.getKinematicViscosity();
-      double frictionFactor = calcWallFrictionFactor(reynoldsNumber) * 4.0;
-      double temp = Math.sqrt(presdrop2 * Math.pow(insideDiameter * 1000.0, 5.0) / (gasGravity
-          * system.getZ() * system.getTemperature() * frictionFactor * length / 1000.0));
-      flow = 1.1494e-3 * 288.15 / (system.getPressure() * 100) * temp;
-      system.setTotalFlowRate(flow / 1e6, "MSm^3/day");
+    // At high flow, check if outlet pressure < target (we need less flow)
+    system.setTotalFlowRate(flowHigh, "kg/sec");
+    testOps.TPflash();
+    system.initProperties();
+    double pOutHigh = calcPressureOut();
+
+    // Expand bounds if needed
+    int boundIter = 0;
+    while (pOutLow < pressureOut && boundIter < 20) {
+      flowLow /= 10.0;
+      system.setTotalFlowRate(flowLow, "kg/sec");
       testOps.TPflash();
       system.initProperties();
-      // System.out.println("flow " + flow + " velocity " + velocity);
-    } while (Math.abs(reynoldsNumber - oldReynold) / reynoldsNumber > 1e-3);
-    return flow;
+      pOutLow = calcPressureOut();
+      boundIter++;
+    }
+
+    boundIter = 0;
+    while (pOutHigh > pressureOut && !Double.isNaN(pOutHigh) && boundIter < 20) {
+      flowHigh *= 10.0;
+      system.setTotalFlowRate(flowHigh, "kg/sec");
+      testOps.TPflash();
+      system.initProperties();
+      pOutHigh = calcPressureOut();
+      boundIter++;
+    }
+
+    // Bisection iteration
+    double flowMid = 0;
+    double pOutMid = 0;
+    int maxIter = 50;
+    double tolerance = 1e-4;
+
+    for (int i = 0; i < maxIter; i++) {
+      flowMid = (flowLow + flowHigh) / 2.0;
+      system.setTotalFlowRate(flowMid, "kg/sec");
+      testOps.TPflash();
+      system.initProperties();
+      pOutMid = calcPressureOut();
+
+      double relError = Math.abs(pOutMid - pressureOut) / pressureOut;
+      if (relError < tolerance) {
+        break;
+      }
+
+      if (pOutMid > pressureOut) {
+        // Need more pressure drop -> increase flow
+        flowLow = flowMid;
+      } else {
+        // Need less pressure drop -> decrease flow
+        flowHigh = flowMid;
+      }
+
+      // Check convergence of bounds
+      if (Math.abs(flowHigh - flowLow) / flowMid < tolerance) {
+        break;
+      }
+    }
+
+    return system.getFlowRate("kg/sec");
   }
 
   /** {@inheritDoc} */
@@ -290,7 +364,6 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
     }
     testOps = new ThermodynamicOperations(system);
     testOps.TPflash();
-    System.out.println("flow rate " + system.getFlowRate(maxflowunit));
     // system.setMultiPhaseCheck(false);
     outStream.setThermoSystem(system);
     outStream.setCalculationIdentifier(id);

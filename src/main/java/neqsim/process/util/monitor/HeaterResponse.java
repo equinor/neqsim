@@ -2,7 +2,6 @@ package neqsim.process.util.monitor;
 
 import java.util.HashMap;
 import neqsim.process.equipment.heatexchanger.Heater;
-import neqsim.process.util.monitor.Value;
 
 /**
  * <p>
@@ -36,11 +35,10 @@ public class HeaterResponse extends BaseResponse {
                 .getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
             neqsim.util.unit.Units.getSymbol("temperature")));
 
-    data.put("inlet pressure",
-        new Value(
-            Double.toString(inputHeater.getInletStream()
-                .getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
-            neqsim.util.unit.Units.getSymbol("pressure")));
+    data.put("inlet pressure", new Value(
+        Double.toString(
+            inputHeater.getInletStream().getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+        neqsim.util.unit.Units.getSymbol("pressure")));
 
     data.put("outlet temperature",
         new Value(
@@ -55,8 +53,7 @@ public class HeaterResponse extends BaseResponse {
             neqsim.util.unit.Units.getSymbol("pressure")));
 
     data.put("duty",
-        new Value(
-            Double.toString(inputHeater.getDuty(neqsim.util.unit.Units.getSymbol("duty"))),
+        new Value(Double.toString(inputHeater.getDuty(neqsim.util.unit.Units.getSymbol("duty"))),
             neqsim.util.unit.Units.getSymbol("duty")));
   }
 }

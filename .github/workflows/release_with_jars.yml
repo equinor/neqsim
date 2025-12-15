@@ -23,7 +23,7 @@ jobs:
     
     steps:
     - name: Check out neqsim java project
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
     - name: Get version number for pomJava8.xml
       id: java-8
       uses: JActions/maven-version@v1.2.0
@@ -47,7 +47,7 @@ jobs:
        
     steps:
       - name: Check out neqsim java project
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up JDK 8 environment
         uses: actions/setup-java@v5
         with:
@@ -58,7 +58,7 @@ jobs:
         run: mvn -B package --file pomJava8.xml
       - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*Java8.jar staging
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: jarfiles-java8
           path: staging
@@ -72,7 +72,7 @@ jobs:
     
     steps:
       - name: Check out neqsim java project
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up JDK 11 environment
         uses: actions/setup-java@v5
         with:
@@ -83,7 +83,7 @@ jobs:
         run: mvn -B package --file pom.xml
       - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*.jar staging
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: jarfiles-java11
           path: staging
@@ -97,7 +97,7 @@ jobs:
     
     steps:
       - name: Check out neqsim java project
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up JDK 21 environment
         uses: actions/setup-java@v5
         with:
@@ -110,7 +110,7 @@ jobs:
         run: cd target && find . -type f -name "neqsim-*.jar" -exec sh -c 'mv -f $0 ${0%.jar}-Java21.jar' {} \; && cd ..
       - name: Copy jar file to staging
         run: mkdir staging && cp target/neqsim*Java21.jar staging
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: jarfiles-java21
           path: staging
@@ -124,15 +124,15 @@ jobs:
     
     steps:
       - name: Download java 8 jar files
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: jarfiles-java8
       - name: Download java 11 jar files
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: jarfiles-java11
       - name: Download java 21 jar files
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: jarfiles-java21
         

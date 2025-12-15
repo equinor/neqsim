@@ -1,15 +1,14 @@
 package neqsim.process.util.example;
 
-import java.util.List;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ControlValve;
 import neqsim.process.equipment.valve.ESDValve;
 import neqsim.process.equipment.valve.HIPPSValve;
 import neqsim.process.logic.ProcessLogic;
-import neqsim.process.logic.esd.ESDLogic;
 import neqsim.process.logic.action.CloseValveAction;
 import neqsim.process.logic.action.EnergizeESDValveAction;
+import neqsim.process.logic.esd.ESDLogic;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.ProcessSafetyScenario;
 import neqsim.process.util.scenario.ProcessScenarioRunner;

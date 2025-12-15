@@ -20,11 +20,11 @@ import neqsim.util.serialization.NeqSimXtream;
 public class SafeSplineSurgeCurveTest {
   @Test
   public void testSurgeCurve10250() {
-    double[] flow10250 = { 9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81,
-        7799.81, 7111.75, 6480.26, 6007.91, 5607.45 };
+    double[] flow10250 = {9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81,
+        7799.81, 7111.75, 6480.26, 6007.91, 5607.45};
 
-    double[] head10250 = { 112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14,
-        148.05, 148.83, 149.54, 150.0 };
+    double[] head10250 = {112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14,
+        148.05, 148.83, 149.54, 150.0};
 
     // Initialize curve
     SafeSplineSurgeCurve curve = new SafeSplineSurgeCurve(flow10250, head10250);
@@ -104,23 +104,26 @@ public class SafeSplineSurgeCurveTest {
     cooler.setOutTemperature(20.0, "C");
     cooler.run();
 
-    Compressor firstStageCompressor = new Compressor("1st stage compressor", cooler.getOutletStream());
+    Compressor firstStageCompressor =
+        new Compressor("1st stage compressor", cooler.getOutletStream());
+    firstStageCompressor.setPolytropicMethod("detailed"); // Use detailed for precise head
+                                                          // calculations
     firstStageCompressor.setUsePolytropicCalc(true);
     firstStageCompressor.setPolytropicEfficiency(0.8);
     firstStageCompressor.setOutletPressure(12.0, "bara");
     firstStageCompressor.getCompressorChart().setHeadUnit("kJ/kg");
 
-    double[] flow10250 = { 9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81,
-        7799.81, 7111.75, 6480.26, 6007.91, 5607.45 };
+    double[] flow10250 = {9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81,
+        7799.81, 7111.75, 6480.26, 6007.91, 5607.45};
 
-    double[] head10250 = { 112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14,
-        148.05, 148.83, 149.54, 150 };
+    double[] head10250 = {112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14,
+        148.05, 148.83, 149.54, 150};
     firstStageCompressor.getCompressorChart().getSurgeCurve().setCurve(null, flow10250, head10250);
     firstStageCompressor.run();
     process1.add(firstStageCompressor);
 
     Splitter splitter1 = process1.addUnit("1st stage anti surge splitter", "splitter");
-    splitter1.setFlowRates(new double[] { -1, 1.0 }, "kg/hr");
+    splitter1.setFlowRates(new double[] {-1, 1.0}, "kg/hr");
     splitter1.run();
 
     Calculator antisurgeCalculator = process1.addUnit("anti surge calculator", "calculator");
@@ -186,13 +189,11 @@ public class SafeSplineSurgeCurveTest {
     firstStageCompressor.setOutletPressure(10.0, "bara");
 
     process1.run();
-
     assertEquals(101.9356767734, firstStageCompressor.getPolytropicFluidHead(), 0.1);
     assertEquals(9986.40678, firstStageCompressor.getInletStream().getFlowRate("m3/hr"), 0.1);
     assertEquals(9986.39679526, firstStageCompressor.getSurgeFlowRate(), 1);
     assertEquals(39429.644850, resyclestream.getFlowRate("kg/hr"), 0.1);
     assertEquals(39820.07485, firstStageCompressor.getInletStream().getFlowRate("kg/hr"), 1);
-
   }
 
   @Test
@@ -218,7 +219,8 @@ public class SafeSplineSurgeCurveTest {
     stream1.run();
     process1.add(stream1);
 
-    Stream resyclestream = new neqsim.process.equipment.stream.Stream("recycle stream", stream1.clone());
+    Stream resyclestream =
+        new neqsim.process.equipment.stream.Stream("recycle stream", stream1.clone());
     resyclestream.setFlowRate(100.0, "kg/hr");
     resyclestream.run();
     process1.add(resyclestream);
@@ -235,34 +237,39 @@ public class SafeSplineSurgeCurveTest {
     cooler.run();
     process1.add(cooler);
 
-    Compressor firstStageCompressor = new Compressor("1st stage compressor", cooler.getOutletStream());
+    Compressor firstStageCompressor =
+        new Compressor("1st stage compressor", cooler.getOutletStream());
+    firstStageCompressor.setPolytropicMethod("detailed"); // Use detailed for precise head
+                                                          // calculations
     firstStageCompressor.setUsePolytropicCalc(true);
     firstStageCompressor.setPolytropicEfficiency(0.8);
     firstStageCompressor.setOutletPressure(12.0, "bara");
     firstStageCompressor.getCompressorChart().setHeadUnit("kJ/kg");
 
-    double[] flow10250 = { 9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81,
-        7799.81, 7111.75, 6480.26, 6007.91, 5607.45 };
+    double[] flow10250 = {9758.49, 9578.11, 9397.9, 9248.64, 9006.93, 8749.97, 8508.5, 8179.81,
+        7799.81, 7111.75, 6480.26, 6007.91, 5607.45};
 
-    double[] head10250 = { 112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14,
-        148.05, 148.83, 149.54, 150 };
+    double[] head10250 = {112.65, 121.13, 127.56, 132.13, 137.29, 140.73, 142.98, 144.76, 146.14,
+        148.05, 148.83, 149.54, 150};
     firstStageCompressor.getCompressorChart().getSurgeCurve().setCurve(null, flow10250, head10250);
     firstStageCompressor.run();
     process1.add(firstStageCompressor);
 
     Splitter splitter1 = new neqsim.process.equipment.splitter.Splitter(
         "1st stage anti surge splitter", firstStageCompressor.getOutletStream());
-    splitter1.setFlowRates(new double[] { -1, 1.0 }, "kg/hr");
+    splitter1.setFlowRates(new double[] {-1, 1.0}, "kg/hr");
     splitter1.run();
     process1.add(splitter1);
 
-    Calculator antisurgeCalculator = new neqsim.process.equipment.util.Calculator("anti surge calculator");
+    Calculator antisurgeCalculator =
+        new neqsim.process.equipment.util.Calculator("anti surge calculator");
     antisurgeCalculator.addInputVariable(firstStageCompressor);
     antisurgeCalculator.setOutputVariable(splitter1);
     antisurgeCalculator.run();
     process1.add(antisurgeCalculator);
 
-    ThrottlingValve valve1 = new neqsim.process.equipment.valve.ThrottlingValve("1st stage anti surge valve");
+    ThrottlingValve valve1 =
+        new neqsim.process.equipment.valve.ThrottlingValve("1st stage anti surge valve");
     valve1.setInletStream(splitter1.getSplitStream(1));
     valve1.setOutletPressure(4.0, "bara");
     valve1.run();
@@ -327,7 +334,6 @@ public class SafeSplineSurgeCurveTest {
     assertEquals(9986.39679526, firstStageCompressor.getSurgeFlowRate(), 1);
     assertEquals(39429.6050303, resyclestream.getFlowRate("kg/hr"), 0.1);
     assertEquals(39820.03503030, firstStageCompressor.getInletStream().getFlowRate("kg/hr"), 1);
-
   }
 
   // @Test
@@ -346,5 +352,4 @@ public class SafeSplineSurgeCurveTest {
       assertTrue(false, "Failed to open neqsim model: " + e.getMessage());
     }
   }
-
 }

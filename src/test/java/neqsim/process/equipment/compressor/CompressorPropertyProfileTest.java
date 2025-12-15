@@ -33,8 +33,7 @@ class CompressorPropertyProfileTest extends neqsim.NeqSimTest {
     inletStream.setPressure(pressure_inlet, "bara");
     inletStream.setTemperature(temperature_inlet, "C");
     inletStream.setFlowRate(gasFlowRate, "MSm3/day");
-    compressor1 = new neqsim.process.equipment.compressor.Compressor("Compressor1",
-        inletStream);
+    compressor1 = new neqsim.process.equipment.compressor.Compressor("Compressor1", inletStream);
     compressor1.setOutletPressure(pressure_Out);
     compressor1.setUsePolytropicCalc(true);
     compressor1.setPolytropicEfficiency(0.89);
@@ -44,6 +43,7 @@ class CompressorPropertyProfileTest extends neqsim.NeqSimTest {
 
   @Test
   public void testRunCalculation() {
+    compressor1.setPolytropicMethod("detailed"); // Need detailed method for multi-step profile
     compressor1.setNumberOfCompressorCalcSteps(40);
     compressor1.getPropertyProfile().setActive(true);
     processOps.run();

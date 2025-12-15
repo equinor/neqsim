@@ -112,6 +112,13 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public double getMassBalance(String unit) {
+    return outStream.getThermoSystem().getFlowRate(unit)
+        - inStream.getThermoSystem().getFlowRate(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public String toJson() {
     return null;
   }

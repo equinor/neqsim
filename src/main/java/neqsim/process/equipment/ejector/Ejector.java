@@ -12,8 +12,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 /**
  * Ejector class represents an ejector in a process simulation. It mixes a motive stream with a
  * suction stream and calculates the resulting mixed stream using a quasi one-dimensional
- * formulation. The implementation combines energy and momentum balances commonly used in
- * steam-jet ejector design as summarised by Keenan et al. (1950) and ESDU 86030.
+ * formulation. The implementation combines energy and momentum balances commonly used in steam-jet
+ * ejector design as summarised by Keenan et al. (1950) and ESDU 86030.
  */
 public class Ejector extends ProcessEquipmentBaseClass {
   /** Serialization version UID. */
@@ -217,8 +217,7 @@ public class Ejector extends ProcessEquipmentBaseClass {
     ThermodynamicOperations nozzleOps = new ThermodynamicOperations(motiveNozzle);
     nozzleOps.PSflash(entropyMotive);
     double hMotiveIsentropic = motiveNozzle.getEnthalpy("J/kg");
-    double hMotiveActual =
-        hMotiveIn - efficiencyIsentropic * (hMotiveIn - hMotiveIsentropic);
+    double hMotiveActual = hMotiveIn - efficiencyIsentropic * (hMotiveIn - hMotiveIsentropic);
     nozzleOps.PHflash(hMotiveActual, "J/kg");
     motiveNozzle.init(3);
     double deltaHNozzle = Math.max(hMotiveIn - hMotiveActual, 0.0);
@@ -236,12 +235,12 @@ public class Ejector extends ProcessEquipmentBaseClass {
     double rhoSuction = Math.max(suctionAtMixing.getDensity("kg/m3"), 1.0e-9);
 
     double localDesignSuctionVelocity = designSuctionVelocityOverride ? designSuctionVelocity
-        : estimateDesignSuctionVelocity(suctionPressure, dischargePressure, rhoSuction, mDotSuction);
+        : estimateDesignSuctionVelocity(suctionPressure, dischargePressure, rhoSuction,
+            mDotSuction);
     localDesignSuctionVelocity = Math.max(localDesignSuctionVelocity, 1.0e-6);
 
     double suctionArea = mDotSuction / (rhoSuction * localDesignSuctionVelocity);
-    double velocitySuction =
-        mDotSuction / (rhoSuction * Math.max(suctionArea, 1.0e-9));
+    double velocitySuction = mDotSuction / (rhoSuction * Math.max(suctionArea, 1.0e-9));
 
     double totalEnthalpyMotive = hMotiveActual + 0.5 * velocityNozzle * velocityNozzle;
     double totalEnthalpySuction = hSuctionIn + 0.5 * velocitySuction * velocitySuction;
@@ -250,8 +249,7 @@ public class Ejector extends ProcessEquipmentBaseClass {
         (mDotMotive * velocityNozzle + mDotSuction * velocitySuction) / mDotTotal;
     double mixedTotalEnthalpy =
         (mDotMotive * totalEnthalpyMotive + mDotSuction * totalEnthalpySuction) / mDotTotal;
-    double mixedStaticEnthalpy =
-        mixedTotalEnthalpy - 0.5 * mixingVelocity * mixingVelocity;
+    double mixedStaticEnthalpy = mixedTotalEnthalpy - 0.5 * mixingVelocity * mixingVelocity;
 
     SystemInterface mixedFluid = motiveStream.getThermoSystem().clone();
     mixedFluid.addFluid(suctionStream.getThermoSystem());
@@ -272,15 +270,14 @@ public class Ejector extends ProcessEquipmentBaseClass {
     mixedFluid.init(3);
     double rhoDiffuser = Math.max(mixedFluid.getDensity("kg/m3"), 1.0e-9);
 
-    double localDesignDiffuserOutletVelocity = designDiffuserVelocityOverride
-        ? designDiffuserOutletVelocity
-        : estimateDesignDiffuserOutletVelocity(localMixingPressure, dischargePressure,
-            rhoDiffuser, mDotTotal);
+    double localDesignDiffuserOutletVelocity =
+        designDiffuserVelocityOverride ? designDiffuserOutletVelocity
+            : estimateDesignDiffuserOutletVelocity(localMixingPressure, dischargePressure,
+                rhoDiffuser, mDotTotal);
     localDesignDiffuserOutletVelocity = Math.max(localDesignDiffuserOutletVelocity, 1.0e-6);
 
     double diffuserArea = mDotTotal / (rhoDiffuser * localDesignDiffuserOutletVelocity);
-    double diffuserVelocity =
-        mDotTotal / (rhoDiffuser * Math.max(diffuserArea, 1.0e-9));
+    double diffuserVelocity = mDotTotal / (rhoDiffuser * Math.max(diffuserArea, 1.0e-9));
     double finalStaticEnthalpy =
         staticEnthalpyBeforeDiffuser - 0.5 * diffuserVelocity * diffuserVelocity;
 
@@ -299,10 +296,10 @@ public class Ejector extends ProcessEquipmentBaseClass {
 
     double localSuctionConnectionLength = suctionConnectionLengthOverride ? suctionConnectionLength
         : estimateSuctionConnectionLength(suctionDiameter, suctionPressure, dischargePressure);
-    double localDischargeConnectionLength = dischargeConnectionLengthOverride
-        ? dischargeConnectionLength
-        : estimateDischargeConnectionLength(diffuserDiameter, localMixingPressure,
-            dischargePressure);
+    double localDischargeConnectionLength =
+        dischargeConnectionLengthOverride ? dischargeConnectionLength
+            : estimateDischargeConnectionLength(diffuserDiameter, localMixingPressure,
+                dischargePressure);
 
     double bodyVolume = cylinderVolume(motiveNozzleArea, nozzleLength)
         + cylinderVolume(suctionArea, suctionLength) + cylinderVolume(mixingArea, mixingLength)
@@ -388,9 +385,8 @@ public class Ejector extends ProcessEquipmentBaseClass {
     double targetDynamic = Math.max(availableLiftPa * 0.02, 500.0);
     double baseline = Math.sqrt(2.0 * targetDynamic / density);
     double volumetricFlow = mDotSuction > 0.0 ? mDotSuction / density : 0.0;
-    double flowScaling = volumetricFlow > 0.0
-        ? 50.0 + 30.0 * Math.log10(1.0 + volumetricFlow * 5.0)
-        : 50.0;
+    double flowScaling =
+        volumetricFlow > 0.0 ? 50.0 + 30.0 * Math.log10(1.0 + volumetricFlow * 5.0) : 50.0;
     double blended = 0.6 * baseline + 0.4 * flowScaling;
     return clamp(blended, 25.0, 120.0);
   }
@@ -402,9 +398,8 @@ public class Ejector extends ProcessEquipmentBaseClass {
     double targetDynamic = Math.max(pressureRecoveryPa * 0.01, 250.0);
     double baseline = Math.sqrt(2.0 * targetDynamic / density);
     double volumetricFlow = mDotTotal > 0.0 ? mDotTotal / density : 0.0;
-    double flowScaling = volumetricFlow > 0.0
-        ? 20.0 + 15.0 * Math.log10(1.0 + volumetricFlow * 4.0)
-        : 25.0;
+    double flowScaling =
+        volumetricFlow > 0.0 ? 20.0 + 15.0 * Math.log10(1.0 + volumetricFlow * 4.0) : 25.0;
     double blended = 0.5 * baseline + 0.5 * flowScaling;
     return clamp(blended, 10.0, 60.0);
   }
@@ -414,26 +409,33 @@ public class Ejector extends ProcessEquipmentBaseClass {
     if (suctionDiameter <= 0.0) {
       return 0.0;
     }
-    double pressureRatio = dischargePressure > 0.0 && suctionPressure > 0.0
-        ? dischargePressure / suctionPressure
-        : 1.0;
+    double pressureRatio =
+        dischargePressure > 0.0 && suctionPressure > 0.0 ? dischargePressure / suctionPressure
+            : 1.0;
     double factor = 3.0 + 1.5 * clamp(pressureRatio - 1.0, 0.0, 3.0);
     return factor * suctionDiameter;
   }
 
-  private double estimateDischargeConnectionLength(double diffuserDiameter,
-      double mixingPressure, double dischargePressure) {
+  private double estimateDischargeConnectionLength(double diffuserDiameter, double mixingPressure,
+      double dischargePressure) {
     if (diffuserDiameter <= 0.0) {
       return 0.0;
     }
-    double pressureRatio = dischargePressure > 0.0 && mixingPressure > 0.0
-        ? dischargePressure / mixingPressure
-        : 1.0;
+    double pressureRatio =
+        dischargePressure > 0.0 && mixingPressure > 0.0 ? dischargePressure / mixingPressure : 1.0;
     double factor = 5.0 + 2.0 * clamp(pressureRatio - 1.0, 0.0, 3.0);
     return factor * diffuserDiameter;
   }
 
   private static double clamp(double value, double min, double max) {
     return Math.max(min, Math.min(value, max));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMassBalance(String unit) {
+    double inletFlow = motiveStream.getThermoSystem().getFlowRate(unit)
+        + suctionStream.getThermoSystem().getFlowRate(unit);
+    return mixedStream.getThermoSystem().getFlowRate(unit) - inletFlow;
   }
 }

@@ -11,7 +11,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
-import neqsim.process.util.report.ReportConfig;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessModule;
 import neqsim.process.processmodel.ProcessModuleBaseClass;

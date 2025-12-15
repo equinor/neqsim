@@ -128,10 +128,29 @@ public class ProcessModel implements Runnable {
   }
 
   /**
+   * Runs this model in a separate thread using the global NeqSim thread pool.
+   *
+   * <p>
+   * This method submits the model to the shared {@link neqsim.util.NeqSimThreadPool} and returns a
+   * {@link java.util.concurrent.Future} that can be used to monitor completion, cancel the task, or
+   * retrieve any exceptions that occurred.
+   * </p>
+   *
+   * @return a {@link java.util.concurrent.Future} representing the pending completion of the task
+   * @see neqsim.util.NeqSimThreadPool
+   */
+  public java.util.concurrent.Future<?> runAsTask() {
+    return neqsim.util.NeqSimThreadPool.submit(this);
+  }
+
+  /**
    * Starts this model in a new thread and returns that thread.
    *
    * @return a {@link java.lang.Thread} object
+   * @deprecated Use {@link #runAsTask()} instead for better resource management. This method
+   *             creates a new unmanaged thread directly.
    */
+  @Deprecated
   public Thread runAsThread() {
     Thread processThread = new Thread(this);
     processThread.start();
@@ -197,6 +216,183 @@ public class ProcessModel implements Runnable {
    */
   public Collection<ProcessSystem> getAllProcesses() {
     return processes.values();
+  }
+
+  /**
+   * Check mass balance of all unit operations in all processes.
+   *
+   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @return a map with process name and unit operation name as key and mass balance result as value
+   */
+  public Map<String, Map<String, ProcessSystem.MassBalanceResult>> checkMassBalance(String unit) {
+    Map<String, Map<String, ProcessSystem.MassBalanceResult>> allMassBalanceResults =
+        new LinkedHashMap<>();
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      String processName = entry.getKey();
+      ProcessSystem process = entry.getValue();
+      Map<String, ProcessSystem.MassBalanceResult> massBalanceResults =
+          process.checkMassBalance(unit);
+      allMassBalanceResults.put(processName, massBalanceResults);
+    }
+    return allMassBalanceResults;
+  }
+
+  /**
+   * Check mass balance of all unit operations in all processes using kg/sec.
+   *
+   * @return a map with process name and unit operation name as key and mass balance result as value
+   *         in kg/sec
+   */
+  public Map<String, Map<String, ProcessSystem.MassBalanceResult>> checkMassBalance() {
+    return checkMassBalance("kg/sec");
+  }
+
+  /**
+   * Get unit operations that failed mass balance check in all processes based on percentage error
+   * threshold.
+   *
+   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @param percentThreshold percentage error threshold (default: 0.1%)
+   * @return a map with process name and a map of failed unit operation names and their mass balance
+   *         results
+   */
+  public Map<String, Map<String, ProcessSystem.MassBalanceResult>> getFailedMassBalance(String unit,
+      double percentThreshold) {
+    Map<String, Map<String, ProcessSystem.MassBalanceResult>> allFailedResults =
+        new LinkedHashMap<>();
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      String processName = entry.getKey();
+      ProcessSystem process = entry.getValue();
+      Map<String, ProcessSystem.MassBalanceResult> failedResults =
+          process.getFailedMassBalance(unit, percentThreshold);
+      if (!failedResults.isEmpty()) {
+        allFailedResults.put(processName, failedResults);
+      }
+    }
+    return allFailedResults;
+  }
+
+  /**
+   * Get unit operations that failed mass balance check in all processes using kg/sec and default
+   * threshold.
+   *
+   * @return a map with process name and a map of failed unit operation names and their mass balance
+   *         results
+   */
+  public Map<String, Map<String, ProcessSystem.MassBalanceResult>> getFailedMassBalance() {
+    Map<String, Map<String, ProcessSystem.MassBalanceResult>> allFailedResults =
+        new LinkedHashMap<>();
+    for (ProcessSystem process : processes.values()) {
+      Map<String, ProcessSystem.MassBalanceResult> failedResults = process.getFailedMassBalance();
+      if (!failedResults.isEmpty()) {
+        allFailedResults.put(process.getName(), failedResults);
+      }
+    }
+    return allFailedResults;
+  }
+
+  /**
+   * Get unit operations that failed mass balance check in all processes using specified threshold.
+   *
+   * @param percentThreshold percentage error threshold
+   * @return a map with process name and a map of failed unit operation names and their mass balance
+   *         results in kg/sec
+   */
+  public Map<String, Map<String, ProcessSystem.MassBalanceResult>> getFailedMassBalance(
+      double percentThreshold) {
+    return getFailedMassBalance("kg/sec", percentThreshold);
+  }
+
+  /**
+   * Get a formatted mass balance report for all processes.
+   *
+   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @return a formatted string report with process name and mass balance results
+   */
+  public String getMassBalanceReport(String unit) {
+    StringBuilder report = new StringBuilder();
+    Map<String, Map<String, ProcessSystem.MassBalanceResult>> allResults = checkMassBalance(unit);
+
+    for (Map.Entry<String, Map<String, ProcessSystem.MassBalanceResult>> processEntry : allResults
+        .entrySet()) {
+      report.append("\nProcess: ").append(processEntry.getKey()).append("\n");
+      report.append(String.format("%0" + 60 + "d", 0).replace('0', '=')).append("\n");
+
+      Map<String, ProcessSystem.MassBalanceResult> unitResults = processEntry.getValue();
+      if (unitResults.isEmpty()) {
+        report.append("No unit operations found.\n");
+      } else {
+        for (Map.Entry<String, ProcessSystem.MassBalanceResult> unitEntry : unitResults
+            .entrySet()) {
+          String unitName = unitEntry.getKey();
+          ProcessSystem.MassBalanceResult result = unitEntry.getValue();
+          report.append(String.format("  %-30s: %s\n", unitName, result.toString()));
+        }
+      }
+    }
+    return report.toString();
+  }
+
+  /**
+   * Get a formatted mass balance report for all processes using kg/sec.
+   *
+   * @return a formatted string report with process name and mass balance results
+   */
+  public String getMassBalanceReport() {
+    return getMassBalanceReport("kg/sec");
+  }
+
+  /**
+   * Get a formatted report of failed mass balance checks for all processes.
+   *
+   * @param unit unit for mass flow rate (e.g., "kg/sec", "kg/hr", "mole/sec")
+   * @param percentThreshold percentage error threshold
+   * @return a formatted string report with process name and failed unit operations
+   */
+  public String getFailedMassBalanceReport(String unit, double percentThreshold) {
+    StringBuilder report = new StringBuilder();
+    Map<String, Map<String, ProcessSystem.MassBalanceResult>> failedResults =
+        getFailedMassBalance(unit, percentThreshold);
+
+    if (failedResults.isEmpty()) {
+      report.append("All unit operations passed mass balance check.\n");
+    } else {
+      for (Map.Entry<String, Map<String, ProcessSystem.MassBalanceResult>> processEntry : failedResults
+          .entrySet()) {
+        report.append("\nProcess: ").append(processEntry.getKey()).append("\n");
+        report.append(String.format("%0" + 60 + "d", 0).replace('0', '=')).append("\n");
+
+        Map<String, ProcessSystem.MassBalanceResult> unitResults = processEntry.getValue();
+        for (Map.Entry<String, ProcessSystem.MassBalanceResult> unitEntry : unitResults
+            .entrySet()) {
+          String unitName = unitEntry.getKey();
+          ProcessSystem.MassBalanceResult result = unitEntry.getValue();
+          report.append(String.format("  %-30s: %s\n", unitName, result.toString()));
+        }
+      }
+    }
+    return report.toString();
+  }
+
+  /**
+   * Get a formatted report of failed mass balance checks for all processes using kg/sec and default
+   * threshold.
+   *
+   * @return a formatted string report with process name and failed unit operations
+   */
+  public String getFailedMassBalanceReport() {
+    return getFailedMassBalanceReport("kg/sec", 0.1);
+  }
+
+  /**
+   * Get a formatted report of failed mass balance checks for all processes using specified
+   * threshold.
+   *
+   * @param percentThreshold percentage error threshold
+   * @return a formatted string report with process name and failed unit operations
+   */
+  public String getFailedMassBalanceReport(double percentThreshold) {
+    return getFailedMassBalanceReport("kg/sec", percentThreshold);
   }
 
   /**

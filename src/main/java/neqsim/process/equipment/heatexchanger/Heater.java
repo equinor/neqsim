@@ -100,6 +100,18 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     mechanicalDesign = new HeatExchangerMechanicalDesign(this);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityDuty() {
+    return getDuty();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityMax() {
+    return getMechanicalDesign().maxDesignDuty;
+  }
+
   /**
    * Returns the utility-side specification used by the mechanical design calculation.
    *
@@ -115,7 +127,8 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
    * @param specification new utility specification instance
    */
   public void setUtilitySpecification(UtilityStreamSpecification specification) {
-    this.utilitySpecification = specification != null ? specification : new UtilityStreamSpecification();
+    this.utilitySpecification =
+        specification != null ? specification : new UtilityStreamSpecification();
   }
 
   /**

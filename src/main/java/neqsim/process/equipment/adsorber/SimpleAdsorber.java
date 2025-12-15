@@ -319,6 +319,16 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  public double getMassBalance(String unit) {
+    double inletFlow = inStream[0].getThermoSystem().getFlowRate(unit)
+        + inStream[1].getThermoSystem().getFlowRate(unit);
+    double outletFlow = outStream[0].getThermoSystem().getFlowRate(unit)
+        + outStream[1].getThermoSystem().getFlowRate(unit);
+    return outletFlow - inletFlow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public AdsorberMechanicalDesign getMechanicalDesign() {
     return new AdsorberMechanicalDesign(this);
   }

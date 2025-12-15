@@ -21,6 +21,11 @@ public enum PhysicalPropertyType {
    * @return PhysicalPropertyType object
    */
   public static PhysicalPropertyType byName(String name) {
+    if (name == null || name.trim().isEmpty()) {
+      throw new RuntimeException(new InvalidInputException("PhysicalPropertyType", "byName",
+          "name", "cannot be null or empty."));
+    }
+
     // suport old names
     name = name.toUpperCase();
     if (name.equals("DENSITY")) {

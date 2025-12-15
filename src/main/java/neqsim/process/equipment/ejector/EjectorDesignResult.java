@@ -25,14 +25,32 @@ public final class EjectorDesignResult {
 
   /**
    * Creates a new design result.
+   *
+   * @param mixingPressure mixing pressure
+   * @param motiveNozzleThroatArea motive nozzle throat area
+   * @param motiveNozzleExitVelocity motive nozzle exit velocity
+   * @param suctionInletArea suction inlet area
+   * @param suctionInletVelocity suction inlet velocity
+   * @param mixingChamberArea mixing chamber area
+   * @param mixingChamberVelocity mixing chamber velocity
+   * @param diffuserOutletArea diffuser outlet area
+   * @param diffuserOutletVelocity diffuser outlet velocity
+   * @param entrainmentRatio entrainment ratio
+   * @param motiveNozzleEffectiveLength motive nozzle effective length
+   * @param suctionInletLength suction inlet length
+   * @param mixingChamberLength mixing chamber length
+   * @param diffuserOutletLength diffuser outlet length
+   * @param bodyVolume body volume
+   * @param connectedPipingVolume connected piping volume
+   * @param suctionConnectionLength suction connection length
+   * @param dischargeConnectionLength discharge connection length
    */
   public EjectorDesignResult(double mixingPressure, double motiveNozzleThroatArea,
-      double motiveNozzleExitVelocity,
-      double suctionInletArea, double suctionInletVelocity, double mixingChamberArea,
-      double mixingChamberVelocity, double diffuserOutletArea, double diffuserOutletVelocity,
-      double entrainmentRatio, double motiveNozzleEffectiveLength, double suctionInletLength,
-      double mixingChamberLength, double diffuserOutletLength, double bodyVolume,
-      double connectedPipingVolume, double suctionConnectionLength,
+      double motiveNozzleExitVelocity, double suctionInletArea, double suctionInletVelocity,
+      double mixingChamberArea, double mixingChamberVelocity, double diffuserOutletArea,
+      double diffuserOutletVelocity, double entrainmentRatio, double motiveNozzleEffectiveLength,
+      double suctionInletLength, double mixingChamberLength, double diffuserOutletLength,
+      double bodyVolume, double connectedPipingVolume, double suctionConnectionLength,
       double dischargeConnectionLength) {
     this.mixingPressure = mixingPressure;
     this.motiveNozzleThroatArea = motiveNozzleThroatArea;
@@ -56,10 +74,12 @@ public final class EjectorDesignResult {
 
   /**
    * Returns an empty design result.
+   *
+   * @return an empty ejector design result with all fields set to 0.0
    */
   public static EjectorDesignResult empty() {
-    return new EjectorDesignResult(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    return new EjectorDesignResult(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0);
   }
 
   public double getMixingPressure() {

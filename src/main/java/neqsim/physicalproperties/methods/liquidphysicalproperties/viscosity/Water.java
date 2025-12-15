@@ -88,23 +88,27 @@ public class Water extends Viscosity {
   private boolean isAqueousSaltSolution() {
     int n = liquidPhase.getPhase().getNumberOfComponents();
     int waterIndex = indexOfWater();
-    if (waterIndex < 0)
+    if (waterIndex < 0) {
       return false;
+    }
 
     // require at least some non-water mass fraction
     double ww = liquidPhase.getPhase().getWtFrac(waterIndex);
     double ws = 1.0 - ww;
-    if (ws <= 1e-12)
+    if (ws <= 1e-12) {
       return false;
+    }
 
     // Check that (almost) all non-water mass is from recognized salts
     double covered = 0.0;
     for (int i = 0; i < n; i++) {
-      if (i == waterIndex)
+      if (i == waterIndex) {
         continue;
+      }
       String key = canonicalSaltKey(liquidPhase.getPhase().getComponent(i).getComponentName());
-      if (key != null)
+      if (key != null) {
         covered += liquidPhase.getPhase().getWtFrac(i);
+      }
     }
     // tolerate tiny amounts of other species (e.g., dissolved gases)
     return covered >= 0.98 * ws;
@@ -114,10 +118,12 @@ public class Water extends Viscosity {
     int n = liquidPhase.getPhase().getNumberOfComponents();
     for (int i = 0; i < n; i++) {
       String nm = liquidPhase.getPhase().getComponent(i).getComponentName();
-      if (nm != null && nm.trim().equalsIgnoreCase("water"))
+      if (nm != null && nm.trim().equalsIgnoreCase("water")) {
         return i;
-      if (nm != null && nm.trim().equalsIgnoreCase("H2O"))
+      }
+      if (nm != null && nm.trim().equalsIgnoreCase("H2O")) {
         return i;
+      }
     }
     return -1;
   }
@@ -129,17 +135,21 @@ public class Water extends Viscosity {
    * @return the normalized salt key, or null if unknown
    */
   private String canonicalSaltKey(String name) {
-    if (name == null)
+    if (name == null) {
       return null;
+    }
     // remove whitespace, hyphens, parentheses, dots; uppercase
     String key = name.replaceAll("[\\s\\-()\\.]", "").toUpperCase(Locale.ROOT);
-    if (LALIBERTE_COEFFS.containsKey(key))
+    if (LALIBERTE_COEFFS.containsKey(key)) {
       return key;
+    }
     // simple chemical-formula normalizations
-    if ("CAC12".equals(key))
+    if ("CAC12".equals(key)) {
       key = "CACL2"; // guard against common OCR/typo
-    if (LALIBERTE_COEFFS.containsKey(key))
+    }
+    if (LALIBERTE_COEFFS.containsKey(key)) {
       return key;
+    }
     // Not found → return null
     return null;
   }
@@ -151,8 +161,9 @@ public class Water extends Viscosity {
    * @return the coefficients for the salt, or NaCl coefficients if unknown
    */
   private double[] coeffsForSaltOrDefault(String key) {
-    if (key == null)
+    if (key == null) {
       return LALIBERTE_COEFFS.get("NACL");
+    }
     double[] c = LALIBERTE_COEFFS.get(key);
     return (c != null) ? c : LALIBERTE_COEFFS.get("NACL");
   }
@@ -197,11 +208,13 @@ public class Water extends Viscosity {
     double etaMix_mPaS = Math.pow(etaW_mPaS, ww);
 
     for (int i = 0; i < n; i++) {
-      if (i == iw)
+      if (i == iw) {
         continue;
+      }
       double wi = liquidPhase.getPhase().getWtFrac(i);
-      if (wi <= 0.0)
+      if (wi <= 0.0) {
         continue;
+      }
 
       String key = canonicalSaltKey(liquidPhase.getPhase().getComponent(i).getComponentName());
       double[] v = coeffsForSaltOrDefault(key);

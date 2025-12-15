@@ -212,7 +212,6 @@ public class ImprovedVUflashQfunc extends Flash {
         if (totalError < tolerance) {
           break;
         }
-
       } catch (Exception e) {
         logger.warn("Exception in VU flash iteration " + iterations + ": " + e.getMessage());
         // Revert to initial state on exception
@@ -220,7 +219,6 @@ public class ImprovedVUflashQfunc extends Flash {
         system.setTemperature(initialTemp);
         return initialPres;
       }
-
     } while (iterations < maxIterations);
 
     if (iterations >= maxIterations) {

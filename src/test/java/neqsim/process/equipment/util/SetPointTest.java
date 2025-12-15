@@ -62,4 +62,32 @@ public class SetPointTest {
     pump1.run();
     assertEquals(20.0, pump1.getOutletStream().getPressure(), 0.01);
   }
+
+  @Test
+  public void testFlexibleSetPoint() {
+    testFluid = neqsim.thermo.FluidCreator.create("dry gas");
+
+    Stream sourceStream = new Stream("Source Stream", testFluid);
+    sourceStream.setTemperature(300.0, "K");
+    sourceStream.run();
+
+    Stream targetStream = new Stream("Target Stream", testFluid.clone());
+    targetStream.setPressure(10.0, "bara");
+    targetStream.run();
+
+    SetPoint setPoint = new SetPoint("Custom SetPoint");
+    setPoint.setSourceVariable(sourceStream);
+    setPoint.setTargetVariable(targetStream, "pressure");
+
+    // Set target pressure based on source temperature: P = T / 10.0
+    setPoint.setSourceValueCalculator((equipment) -> {
+      Stream s = (Stream) equipment;
+      return s.getTemperature("K") / 10.0;
+    });
+
+    setPoint.run();
+    targetStream.run();
+
+    assertEquals(30.0, targetStream.getPressure("bara"), 0.01);
+  }
 }

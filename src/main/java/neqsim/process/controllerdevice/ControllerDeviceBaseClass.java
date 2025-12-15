@@ -17,15 +17,12 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.util.NamedBaseClass;
 
 /**
- * Discrete PID controller implementation providing common features for process
- * control in NeqSim.
- * The class supports anti-windup clamping, derivative filtering, gain
- * scheduling, event logging and
+ * Discrete PID controller implementation providing common features for process control in NeqSim.
+ * The class supports anti-windup clamping, derivative filtering, gain scheduling, event logging and
  * performance metrics as well as auto-tuning utilities.
  *
  * <p>
- * The controller operates on a
- * {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
+ * The controller operates on a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
  * transmitter and exposes a standard PID API through
  * {@link neqsim.process.controllerdevice.ControllerDeviceInterface}.
  * </p>
@@ -56,6 +53,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private double Kp = 1.0;
   private double Ti = 300.0;
   private double Td = 0.0;
+  private StepResponseTuningMethod stepResponseTuningMethod = StepResponseTuningMethod.CLASSIC;
   // Internal state of integration contribution
   private double TintValue = 0.0;
   private double derivativeState = 0.0;
@@ -127,8 +125,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
    * {@inheritDoc}
    *
    * <p>
-   * If no engineering unit is configured, the controller falls back to the legacy
-   * percent-based
+   * If no engineering unit is configured, the controller falls back to the legacy percent-based
    * error formulation used by earlier NeqSim versions.
    * </p>
    */
@@ -208,11 +205,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
           TintValue -= TintIncrement;
         }
       }
-
     }
 
     eventLog.add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
-
     calcIdentifier = id;
   }
 
@@ -380,6 +375,20 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     }
   }
 
+  @Override
+  public void setStepResponseTuningMethod(StepResponseTuningMethod method) {
+    if (method == null) {
+      this.stepResponseTuningMethod = StepResponseTuningMethod.CLASSIC;
+    } else {
+      this.stepResponseTuningMethod = method;
+    }
+  }
+
+  @Override
+  public StepResponseTuningMethod getStepResponseTuningMethod() {
+    return stepResponseTuningMethod;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void autoTune(double ultimateGain, double ultimatePeriod) {
@@ -409,14 +418,41 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   @Override
   public void autoTuneStepResponse(double processGain, double timeConstant, double deadTime,
       boolean tuneDerivative) {
-    if (processGain != 0.0 && timeConstant > 0 && deadTime > 0) {
-      double kp = 1.2 / processGain * (timeConstant / deadTime);
-      double ti = 2.0 * deadTime;
-      double td = tuneDerivative ? 0.5 * deadTime : 0.0;
-      setControllerParameters(kp, ti, td);
-    } else {
+    if (processGain == 0.0 || timeConstant <= 0.0) {
       logger.warn("Invalid step response parameters for auto tune.");
+      return;
     }
+
+    double kp;
+    double ti;
+    double td = 0.0;
+
+    if (stepResponseTuningMethod == StepResponseTuningMethod.SIMC) {
+      double theta = Math.max(deadTime, 1.0e-6);
+      double lambda = Math.max(theta, timeConstant / 4.0);
+
+      if (tuneDerivative) {
+        double halfTheta = 0.5 * theta;
+        kp = (timeConstant + halfTheta) / (lambda + halfTheta) / processGain;
+        ti = timeConstant + halfTheta;
+        double denominator = 2.0 * timeConstant + theta;
+        td = denominator > 0.0 ? timeConstant * theta / denominator : 0.0;
+      } else {
+        kp = timeConstant / (lambda + theta) / processGain;
+        ti = Math.min(timeConstant, 4.0 * (lambda + theta));
+      }
+    } else {
+      double theta = deadTime;
+      if (theta <= 0.0) {
+        logger.warn("Invalid dead time for classic step response auto tune.");
+        return;
+      }
+      kp = 1.2 / processGain * (timeConstant / theta);
+      ti = 2.0 * theta;
+      td = tuneDerivative ? 0.5 * theta : 0.0;
+    }
+
+    setControllerParameters(kp, ti, td);
   }
 
   /** {@inheritDoc} */
@@ -477,8 +513,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
         }
       }
       if (Double.isNaN(t63)) {
-        if ((positiveChange && value >= threshold63)
-            || (!positiveChange && value <= threshold63)) {
+        if ((positiveChange && value >= threshold63) || (!positiveChange && value <= threshold63)) {
           t63 = event.getTime();
         }
       }
@@ -515,7 +550,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   /** {@inheritDoc} */
   @Override
   public void addGainSchedulePoint(double processValue, double Kp, double Ti, double Td) {
-    gainSchedule.put(processValue, new double[] { Kp, Ti, Td });
+    gainSchedule.put(processValue, new double[] {Kp, Ti, Td});
   }
 
   /** {@inheritDoc} */
@@ -552,10 +587,8 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
-   * Apply gain-scheduled controller parameters based on the current measurement
-   * value. The schedule
-   * selects the parameter set with the highest threshold not exceeding the
-   * measurement.
+   * Apply gain-scheduled controller parameters based on the current measurement value. The schedule
+   * selects the parameter set with the highest threshold not exceeding the measurement.
    *
    * @param measurement current process value
    */
@@ -573,11 +606,10 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   }
 
   /**
-   * Calculate the average value of the {@link ControllerEvent} properties for the
-   * last entries in
+   * Calculate the average value of the {@link ControllerEvent} properties for the last entries in
    * the event log.
    *
-   * @param count     number of samples to include in the average
+   * @param count number of samples to include in the average
    * @param extractor function returning the value to average from the event
    * @return average of the selected event property
    */

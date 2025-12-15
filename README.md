@@ -10,7 +10,6 @@
 [![Total Security Alerts](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/equinor/neqsim/master/.github/metrics/security-metrics.json)](https://github.com/equinor/neqsim/security)
 
 
-
 NeqSim is the main part of the [NeqSim project](https://equinor.github.io/neqsimhome/). NeqSim (Non-Equilibrium Simulator) is a Java library for estimating fluid properties and process design.
 The basis for NeqSim is a library of fundamental mathematical models related to phase behavior and physical properties of fluids.  NeqSim is easily extended with new models. NeqSim development was initiated at the [Norwegian University of Science and Technology (NTNU)](https://www.ntnu.edu/employees/even.solbraa).
 
@@ -24,6 +23,55 @@ NeqSim can be used in a Java application by adding the neqsim-x.x.x.jar found in
 
 ## Use of the NeqSim package
 NeqSim can be set up as a dependency in a Java project via the [NeqSim GitHub package distribution](https://github.com/equinor/neqsim/packages/42822).
+
+### Using NeqSim from the GitHub Maven package repository
+1. Configure authentication for the GitHub Packages repository in your Maven `settings.xml` (use a Personal Access Token with at least the `read:packages` scope):
+
+```xml
+<servers>
+  <server>
+    <id>github</id>
+    <username>YOUR_GITHUB_USERNAME</username>
+    <password>${env.GITHUB_TOKEN}</password>
+  </server>
+</servers>
+```
+
+2. Add the GitHub Packages repository and NeqSim dependency to your project's `pom.xml`:
+
+```xml
+<repositories>
+  <repository>
+    <id>github</id>
+    <url>https://maven.pkg.github.com/equinor/neqsim</url>
+  </repository>
+</repositories>
+
+<dependencies>
+  <dependency>
+    <groupId>com.equinor.neqsim</groupId>
+    <artifactId>neqsim</artifactId>
+    <version>3.1.2</version>
+  </dependency>
+</dependencies>
+```
+
+3. Build your project as normal (`mvn clean install`). Maven will fetch NeqSim from the GitHub Maven package repository using the credentials configured in step 1.
+
+### Using NeqSim from Maven Central
+If you prefer to pull NeqSim from Maven Central, you only need to declare the dependency because Maven Central is enabled by default in Maven builds:
+
+```xml
+<dependencies>
+  <dependency>
+    <groupId>com.equinor.neqsim</groupId>
+    <artifactId>neqsim</artifactId>
+    <version>3.1.2</version>
+  </dependency>
+</dependencies>
+```
+
+Run your Maven build (`mvn clean install`) and NeqSim will be resolved from the Central repository without additional repository configuration.
 
 ## Getting Started as a NeqSim Java developer
 

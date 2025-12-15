@@ -2,17 +2,15 @@ package neqsim.process.mechanicaldesign;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.Pipeline;
 import neqsim.process.equipment.separator.Separator;
-import neqsim.process.mechanicaldesign.MechanicalDesignMarginResult;
 import neqsim.process.mechanicaldesign.data.CsvMechanicalDesignDataSource;
 import neqsim.process.mechanicaldesign.pipeline.PipelineMechanicalDesign;
 import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
 
 class MechanicalDesignDataSourceTest {
   private static Path csvPath;

@@ -41,9 +41,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * Constructor for ControlValveSizing.
    * </p>
    */
-  public ControlValveSizing() {
-
-  }
+  public ControlValveSizing() {}
 
   /**
    * <p>
@@ -270,5 +268,4 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
   private double Cv_to_Kv(double Cv) {
     return Cv / KV_TO_CV_FACTOR;
   }
-
 }
