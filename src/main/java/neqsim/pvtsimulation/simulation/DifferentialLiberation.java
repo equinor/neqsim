@@ -1,5 +1,6 @@
 package neqsim.pvtsimulation.simulation;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
@@ -525,7 +526,7 @@ public class DifferentialLiberation extends BasePVTsimulation {
       report.append("Summary Table:\n");
       report.append(String.format("%-12s %-12s %-12s %-12s %-14s %-12s\n", "P (bar)", "Bo", "Rs",
           "Bg", "Oil Dens", "Z gas"));
-      report.append("-".repeat(80)).append("\n");
+      report.append(StringUtils.repeat("-", 80)).append("\n");
 
       int numRows = Math.min(pressures.length, 10); // Limit to first 10 rows
       for (int i = 0; i < numRows; i++) {

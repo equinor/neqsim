@@ -1,6 +1,7 @@
 package neqsim.pvtsimulation.simulation;
 
 import java.util.ArrayList;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.pvtsimulation.util.parameterfitting.CMEFunction;
@@ -576,7 +577,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     sb.append("Pressure Step Results:\n");
     sb.append(String.format("%10s %12s %12s %12s %12s\n", "P (bar)", "Vrel", "Density", "Z-gas",
         "Compress."));
-    sb.append("-".repeat(60) + "\n");
+    sb.append(StringUtils.repeat("-", 60) + "\n");
 
     if (pressures != null) {
       for (int i = 0; i < pressures.length; i++) {
