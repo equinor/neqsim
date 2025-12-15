@@ -149,7 +149,14 @@ mechDesign.addDemistingInternal(internal);
 double velocity = internal.calcGasVelocity(volumetricFlow);   // m³/s -> m/s
 double pressureDrop = internal.calcPressureDrop(gasDensity, velocity);  // Pa
 double carryOver = internal.calcLiquidCarryOver();
+double efficiency = internal.calcEfficiency();  // Separation efficiency (0 to 1)
 ```
+
+**Input Validation:**
+
+Setters validate input and throw `IllegalArgumentException` for invalid values:
+- `setArea(area)` - throws if `area <= 0`
+- `setEuNumber(euNumber)` - throws if `euNumber < 0`
 
 **Euler Number and Pressure Drop:**
 
