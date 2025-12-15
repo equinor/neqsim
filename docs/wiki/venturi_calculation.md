@@ -1,10 +1,13 @@
 # Venturi Flow Calculation in NeqSim
 
-This document describes the Venturi flow meter calculation methods implemented in NeqSim for computing mass flow rates from differential pressure measurements.
+This document describes the Venturi flow meter calculation methods implemented in NeqSim for computing mass flow rates from differential pressure measurements, and vice versa.
 
 ## Overview
 
-NeqSim implements Venturi flow calculations primarily in the `DifferentialPressureFlowCalculator` class, which is a utility for calculating mass flow rates from various differential pressure devices using NeqSim thermodynamic properties.
+NeqSim implements Venturi flow calculations primarily in the `DifferentialPressureFlowCalculator` class, which is a utility for calculating mass flow rates from various differential pressure devices using NeqSim thermodynamic properties. The calculator supports both:
+
+1. **Flow from dP**: Calculate mass flow rate given differential pressure
+2. **dP from Flow**: Calculate differential pressure given mass flow rate (inverse calculation)
 
 **Location:** [DifferentialPressureFlowCalculator.java](../../src/main/java/neqsim/process/equipment/diffpressure/DifferentialPressureFlowCalculator.java)
 
@@ -85,6 +88,78 @@ private static double[] calcVenturi(double[] dp, double[] p, double[] rho, doubl
 }
 ```
 
+## Inverse Calculation: Differential Pressure from Flow
+
+### Fundamental Equation
+
+To calculate the differential pressure from a known mass flow rate, we rearrange the Venturi equation:
+
+$$
+\Delta P = \frac{1}{2\rho} \left( \frac{\dot{m} \cdot \sqrt{1 - \beta^4}}{C \cdot \varepsilon \cdot A} \right)^2
+$$
+
+Where:
+- $A$ = throat area = $\frac{\pi d^2}{4}$
+
+Since the expansibility factor $\varepsilon$ depends on the differential pressure (through the pressure ratio $\tau$), an iterative solution is required.
+
+### Algorithm
+
+1. **Initial estimate** (assuming incompressible flow, $\varepsilon = 1$):
+   $$
+   \Delta P_0 = \frac{1}{2\rho} \left( \frac{\dot{m} \cdot \sqrt{1 - \beta^4}}{C \cdot A} \right)^2
+   $$
+
+2. **Iterate** until convergence:
+   - Calculate pressure ratio: $\tau = \frac{P_1}{P_1 + \Delta P}$
+   - Calculate expansibility factor $\varepsilon$ from $\tau$ and $\kappa$
+   - Update: $\Delta P_{n+1} = \frac{1}{2\rho} \left( \frac{\dot{m} \cdot \sqrt{1 - \beta^4}}{C \cdot \varepsilon \cdot A} \right)^2$
+   - Check convergence: $|\Delta P_{n+1} - \Delta P_n| < 0.01$ Pa
+
+### Implementation in NeqSim
+
+```java
+public static double calculateDpFromFlowVenturi(double massFlowKgPerHour, double pressureBara,
+    double density, double kappa, double pipeDiameterMm, double throatDiameterMm,
+    double dischargeCoefficient) {
+
+  double D = pipeDiameterMm / 1000.0;
+  double d = throatDiameterMm / 1000.0;
+  double C = dischargeCoefficient;
+  double massFlowKgPerSec = massFlowKgPerHour / 3600.0;
+
+  double beta = d / D;
+  double beta4 = Math.pow(beta, 4.0);
+  double betaTerm = Math.sqrt(Math.max(1.0 - beta4, 1e-30));
+
+  // Initial estimate (incompressible)
+  double A = Math.PI / 4.0 * d * d;
+  double dpInitial = Math.pow(massFlowKgPerSec * betaTerm / (C * A), 2) / (2.0 * density);
+
+  // Iterate to account for expansibility factor
+  double dpPa = dpInitial;
+  double pPa = pressureBara * 1.0e5;
+
+  for (int iter = 0; iter < 100; iter++) {
+    double tau = pPa / (pPa + dpPa);
+    double tau2k = Math.pow(tau, 2.0 / kappa);
+    double numerator = kappa * tau2k / (kappa - 1.0) * (1.0 - beta4)
+        / (1.0 - beta4 * tau2k) * (1.0 - Math.pow(tau, (kappa - 1.0) / kappa)) / (1.0 - tau);
+    double eps = Math.sqrt(Math.max(numerator, 1e-30));
+
+    double dpNew = Math.pow(massFlowKgPerSec * betaTerm / (C * eps * A), 2) / (2.0 * density);
+
+    if (Math.abs(dpNew - dpPa) < 0.01) {
+      dpPa = dpNew;
+      break;
+    }
+    dpPa = dpNew;
+  }
+
+  return dpPa / 100.0;  // Convert Pa to mbar
+}
+```
+
 ## Input Parameters
 
 The calculator requires the following inputs:
@@ -154,6 +229,54 @@ FlowCalculationResult result = DifferentialPressureFlowCalculator.calculate(
 
 double massFlowKgH = result.getMassFlowKgPerHour()[0];
 double stdFlowMSm3Day = result.getStandardFlowMSm3PerDay()[0];
+```
+
+### Example 2: Calculate Differential Pressure from Flow (Inverse)
+
+```java
+import neqsim.process.equipment.diffpressure.DifferentialPressureFlowCalculator;
+import java.util.Arrays;
+import java.util.List;
+
+// Known mass flow rate
+double massFlowKgPerHour = 50000.0;  // 50,000 kg/h
+
+// Operating conditions
+double pressureBarg = 50.0;          // 50 barg
+double temperatureC = 25.0;          // 25°C
+
+// Venturi geometry: D=300mm, d=200mm, Cd=0.985
+double[] flowData = {300.0, 200.0, 0.985};
+
+// Gas composition
+List<String> components = Arrays.asList("methane", "ethane", "propane");
+double[] fractions = {0.85, 0.10, 0.05};
+
+// Calculate differential pressure
+double dpMbar = DifferentialPressureFlowCalculator.calculateDpFromFlow(
+    massFlowKgPerHour, pressureBarg, temperatureC, "Venturi", flowData,
+    components, fractions, true);
+
+System.out.println("Differential pressure: " + dpMbar + " mbar");
+```
+
+### Example 3: Direct Calculation with Known Fluid Properties
+
+```java
+// If you already have fluid properties calculated
+double massFlowKgPerHour = 50000.0;
+double pressureBara = 51.0125;       // bara
+double density = 42.5;               // kg/m³
+double kappa = 1.28;                 // isentropic exponent
+double pipeDiameterMm = 300.0;       // mm
+double throatDiameterMm = 200.0;     // mm
+double Cd = 0.985;                   // discharge coefficient
+
+double dpMbar = DifferentialPressureFlowCalculator.calculateDpFromFlowVenturi(
+    massFlowKgPerHour, pressureBara, density, kappa, 
+    pipeDiameterMm, throatDiameterMm, Cd);
+
+System.out.println("Differential pressure: " + dpMbar + " mbar");
 ```
 
 ## Comparison with Other Flow Meter Types
