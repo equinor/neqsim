@@ -88,6 +88,78 @@ private static double[] calcVenturi(double[] dp, double[] p, double[] rho, doubl
 }
 ```
 
+## Inverse Calculation: Differential Pressure from Flow
+
+### Fundamental Equation
+
+To calculate the differential pressure from a known mass flow rate, we rearrange the Venturi equation:
+
+$$
+\Delta P = \frac{1}{2\rho} \left( \frac{\dot{m} \cdot \sqrt{1 - \beta^4}}{C \cdot \varepsilon \cdot A} \right)^2
+$$
+
+Where:
+- $A$ = throat area = $\frac{\pi d^2}{4}$
+
+Since the expansibility factor $\varepsilon$ depends on the differential pressure (through the pressure ratio $\tau$), an iterative solution is required.
+
+### Algorithm
+
+1. **Initial estimate** (assuming incompressible flow, $\varepsilon = 1$):
+   $$
+   \Delta P_0 = \frac{1}{2\rho} \left( \frac{\dot{m} \cdot \sqrt{1 - \beta^4}}{C \cdot A} \right)^2
+   $$
+
+2. **Iterate** until convergence:
+   - Calculate pressure ratio: $\tau = \frac{P_1}{P_1 + \Delta P}$
+   - Calculate expansibility factor $\varepsilon$ from $\tau$ and $\kappa$
+   - Update: $\Delta P_{n+1} = \frac{1}{2\rho} \left( \frac{\dot{m} \cdot \sqrt{1 - \beta^4}}{C \cdot \varepsilon \cdot A} \right)^2$
+   - Check convergence: $|\Delta P_{n+1} - \Delta P_n| < 0.01$ Pa
+
+### Implementation in NeqSim
+
+```java
+public static double calculateDpFromFlowVenturi(double massFlowKgPerHour, double pressureBara,
+    double density, double kappa, double pipeDiameterMm, double throatDiameterMm,
+    double dischargeCoefficient) {
+
+  double D = pipeDiameterMm / 1000.0;
+  double d = throatDiameterMm / 1000.0;
+  double C = dischargeCoefficient;
+  double massFlowKgPerSec = massFlowKgPerHour / 3600.0;
+
+  double beta = d / D;
+  double beta4 = Math.pow(beta, 4.0);
+  double betaTerm = Math.sqrt(Math.max(1.0 - beta4, 1e-30));
+
+  // Initial estimate (incompressible)
+  double A = Math.PI / 4.0 * d * d;
+  double dpInitial = Math.pow(massFlowKgPerSec * betaTerm / (C * A), 2) / (2.0 * density);
+
+  // Iterate to account for expansibility factor
+  double dpPa = dpInitial;
+  double pPa = pressureBara * 1.0e5;
+
+  for (int iter = 0; iter < 100; iter++) {
+    double tau = pPa / (pPa + dpPa);
+    double tau2k = Math.pow(tau, 2.0 / kappa);
+    double numerator = kappa * tau2k / (kappa - 1.0) * (1.0 - beta4)
+        / (1.0 - beta4 * tau2k) * (1.0 - Math.pow(tau, (kappa - 1.0) / kappa)) / (1.0 - tau);
+    double eps = Math.sqrt(Math.max(numerator, 1e-30));
+
+    double dpNew = Math.pow(massFlowKgPerSec * betaTerm / (C * eps * A), 2) / (2.0 * density);
+
+    if (Math.abs(dpNew - dpPa) < 0.01) {
+      dpPa = dpNew;
+      break;
+    }
+    dpPa = dpNew;
+  }
+
+  return dpPa / 100.0;  // Convert Pa to mbar
+}
+```
+
 ## Input Parameters
 
 The calculator requires the following inputs:
