@@ -13,6 +13,7 @@ import neqsim.pvtsimulation.simulation.MultiStageSeparatorTest;
 import neqsim.pvtsimulation.simulation.SaturationPressure;
 import neqsim.pvtsimulation.simulation.ViscositySim;
 import neqsim.pvtsimulation.util.PVTReportGenerator;
+import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -157,7 +158,7 @@ public class WhitsonPVTReaderTest {
     SystemInterface fluid = WhitsonPVTReader.read(tempFile.getAbsolutePath());
 
     // Find CO2 component
-    var co2 = fluid.getPhase(0).getComponent("CO2");
+    ComponentInterface co2 = fluid.getPhase(0).getComponent("CO2");
     assertNotNull(co2, "Should have CO2 component");
 
     // Verify CO2 properties
@@ -250,7 +251,7 @@ public class WhitsonPVTReaderTest {
 
     // Verify volume correction is enabled
     // Note: The actual volume correction values are set on components
-    var co2 = fluid.getPhase(0).getComponent("CO2");
+    ComponentInterface co2 = fluid.getPhase(0).getComponent("CO2");
     assertEquals(0.00191, co2.getVolumeCorrectionConst(), 0.0001, "CO2 volume shift should be set");
   }
 
