@@ -3,6 +3,7 @@ package neqsim.thermo.util.derivatives;
 import java.io.Serializable;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -154,28 +155,59 @@ public class DifferentiableFlash implements Serializable {
     }
 
     try {
+      // Identify liquid and vapor phase indices BEFORE calling init(3)
+      // NeqSim phase ordering can vary - typically phase 0 is gas after flash
+      int liquidPhaseIndex = -1;
+      int vaporPhaseIndex = -1;
+      for (int p = 0; p < system.getNumberOfPhases(); p++) {
+        if (system.getPhase(p).getType() == neqsim.thermo.phase.PhaseType.GAS) {
+          vaporPhaseIndex = p;
+        } else {
+          // Treat any non-gas phase as liquid (could be liquid, oil, or aqueous)
+          liquidPhaseIndex = p;
+        }
+      }
+
+      // Fallback if phase types not set correctly
+      if (liquidPhaseIndex < 0 || vaporPhaseIndex < 0) {
+        // Assume standard ordering: lower density phase is vapor
+        if (system.getPhase(0).getDensity() < system.getPhase(1).getDensity()) {
+          vaporPhaseIndex = 0;
+          liquidPhaseIndex = 1;
+        } else {
+          vaporPhaseIndex = 1;
+          liquidPhaseIndex = 0;
+        }
+      }
+
+      // CRITICAL: Call init(3) to compute fugacity derivatives including composition derivatives
+      // This must be called AFTER phase identification but BEFORE extracting Jacobians
+      // init(3) populates dfugdn[i][j] = ∂ln(φ_i)/∂n_j which are needed for the Jacobian
+      system.init(3);
+
       // Extract fugacity Jacobians
-      FugacityJacobian jacL = extractFugacityJacobian(0); // liquid
-      FugacityJacobian jacV = extractFugacityJacobian(1); // vapor
+      FugacityJacobian jacL = extractFugacityJacobian(liquidPhaseIndex);
+      FugacityJacobian jacV = extractFugacityJacobian(vaporPhaseIndex);
 
       cachedFugacityJacobians = new FugacityJacobian[] {jacL, jacV};
 
       // Get current state
       double[] kValues = new double[nc];
       double[] z = new double[nc];
-      double[] x = new double[nc];
-      double[] y = new double[nc];
+      double[] x = new double[nc]; // liquid composition
+      double[] y = new double[nc]; // vapor composition
       String[] componentNames = new String[nc];
 
       for (int i = 0; i < nc; i++) {
-        componentNames[i] = system.getPhase(0).getComponent(i).getComponentName();
-        x[i] = system.getPhase(0).getComponent(i).getx();
-        y[i] = system.getPhase(1).getComponent(i).getx();
+        componentNames[i] = system.getPhase(liquidPhaseIndex).getComponent(i).getComponentName();
+        x[i] = system.getPhase(liquidPhaseIndex).getComponent(i).getx();
+        y[i] = system.getPhase(vaporPhaseIndex).getComponent(i).getx();
         kValues[i] = y[i] / Math.max(x[i], 1e-20);
         z[i] = system.getComponent(i).getz();
       }
 
-      double beta = system.getBeta(); // vapor fraction
+      // getBeta() returns vapor mole fraction = moles_vapor / total_moles
+      double beta = system.getPhase(vaporPhaseIndex).getBeta();
 
       // Build Jacobian of equilibrium equations: ∂F/∂y where y = (K_1...K_nc, β)
       // F_i = ln(K_i) - ln(φ_i^L) + ln(φ_i^V) = 0
@@ -186,48 +218,72 @@ public class DifferentiableFlash implements Serializable {
       double[][] dFdP = new double[nc + 1][1];
       double[][] dFdz = new double[nc + 1][nc];
 
-      // Equilibrium equations: F_i = ln(K_i) + ln(φ_i^L) - ln(φ_i^V)
+      // Equilibrium equations: F_i = ln(K_i) - ln(φ_i^L) + ln(φ_i^V) = 0
+      // At equilibrium: ln(K_i) = ln(φ_i^L) - ln(φ_i^V)
+      //
+      // The chain rule for fugacity coefficient derivatives requires careful treatment:
+      // dfugdn returns ∂ln(φ_i)/∂n_j [units: 1/mol]
+      // We need: ∂ln(φ_i)/∂K_j = Σ_k (∂ln(φ_i)/∂n_k) * (∂n_k/∂K_j)
+      //
+      // For liquid phase: n_k^L = (1-β) * n_total * x_k
+      // For vapor phase: n_k^V = β * n_total * y_k
+      //
+      // ∂n_k^L/∂K_j = (1-β) * n_total * ∂x_k/∂K_j (at constant β)
+      // ∂n_k^V/∂K_j = β * n_total * ∂y_k/∂K_j (at constant β)
+
+      double nTotal = system.getTotalNumberOfMoles();
+      double nLiquid = system.getPhase(liquidPhaseIndex).getNumberOfMolesInPhase();
+      double nVapor = system.getPhase(vaporPhaseIndex).getNumberOfMolesInPhase();
+
       for (int i = 0; i < nc; i++) {
-        // ∂F_i/∂K_j
+        // ∂F_i/∂K_j - using chain rule through composition
         for (int j = 0; j < nc; j++) {
-          double dxdK = computeDxDK(j, z, kValues, beta);
-          double dydK = computeDyDK(j, z, kValues, beta);
+          // Derivative of ln(K_i) term
+          double dlnK_dK = (i == j) ? 1.0 / kValues[i] : 0.0;
 
-          // Chain rule through fugacity coefficients
-          double dlnPhiL_dK = 0.0;
-          double dlnPhiV_dK = 0.0;
-          for (int k = 0; k < nc; k++) {
-            dlnPhiL_dK += jacL.getDlnPhidn(i, k) * dxdK
-                * system.getPhase(0).getNumberOfMolesInPhase() * (k == j ? 1.0 : 0.0);
-            dlnPhiV_dK += jacV.getDlnPhidn(i, k) * dydK
-                * system.getPhase(1).getNumberOfMolesInPhase() * (k == j ? 1.0 : 0.0);
-          }
+          // Derivative through fugacity coefficients via composition change
+          // ∂n_k/∂K_j for liquid and vapor phases
+          double dxj_dKj = computeDxDK(j, z, kValues, beta);
+          double dyj_dKj = computeDyDK(j, z, kValues, beta);
 
-          if (i == j) {
-            dFdy[i][j] = 1.0 / kValues[i] + dlnPhiL_dK - dlnPhiV_dK;
-          } else {
-            dFdy[i][j] = dlnPhiL_dK - dlnPhiV_dK;
-          }
+          // Convert to molar derivatives: ∂n_j/∂K_j = n_phase * ∂x_j/∂K_j (at constant total moles)
+          double dnLj_dKj = nLiquid * dxj_dKj;
+          double dnVj_dKj = nVapor * dyj_dKj;
+
+          // Chain rule: ∂ln(φ_i)/∂K_j = (∂ln(φ_i)/∂n_j) * (∂n_j/∂K_j)
+          // Note: dfugdn[i][j] = ∂ln(φ_i)/∂n_j
+          double dlnPhiL_dKj = jacL.getDlnPhidn(i, j) * dnLj_dKj;
+          double dlnPhiV_dKj = jacV.getDlnPhidn(i, j) * dnVj_dKj;
+
+          // F_i = ln(K_i) - ln(φ_i^L) + ln(φ_i^V)
+          // ∂F_i/∂K_j = δ_ij/K_i - dlnPhiL_dKj + dlnPhiV_dKj
+          dFdy[i][j] = dlnK_dK - dlnPhiL_dKj + dlnPhiV_dKj;
         }
 
-        // ∂F_i/∂β
-        double dxdBeta = computeDxDBeta(i, z, kValues, beta);
-        double dydBeta = computeDyDBeta(i, z, kValues, beta);
+        // ∂F_i/∂β - composition changes with vapor fraction
         double dlnPhiL_dBeta = 0.0;
         double dlnPhiV_dBeta = 0.0;
         for (int k = 0; k < nc; k++) {
-          dlnPhiL_dBeta +=
-              jacL.getDlnPhidn(i, k) * dxdBeta * system.getPhase(0).getNumberOfMolesInPhase();
-          dlnPhiV_dBeta +=
-              jacV.getDlnPhidn(i, k) * dydBeta * system.getPhase(1).getNumberOfMolesInPhase();
+          double dxk_dBeta = computeDxDBeta(k, z, kValues, beta);
+          double dyk_dBeta = computeDyDBeta(k, z, kValues, beta);
+
+          // Convert to molar derivatives
+          double dnLk_dBeta = nLiquid * dxk_dBeta;
+          double dnVk_dBeta = nVapor * dyk_dBeta;
+
+          dlnPhiL_dBeta += jacL.getDlnPhidn(i, k) * dnLk_dBeta;
+          dlnPhiV_dBeta += jacV.getDlnPhidn(i, k) * dnVk_dBeta;
         }
-        dFdy[i][nc] = dlnPhiL_dBeta - dlnPhiV_dBeta;
+        // F_i = ln(K_i) - ln(φ_i^L) + ln(φ_i^V)
+        // ∂F_i/∂β = 0 - dlnPhiL_dBeta + dlnPhiV_dBeta
+        dFdy[i][nc] = -dlnPhiL_dBeta + dlnPhiV_dBeta;
 
-        // ∂F_i/∂T = ∂ln(φ_i^L)/∂T - ∂ln(φ_i^V)/∂T
-        dFdT[i][0] = jacL.getDlnPhidT(i) - jacV.getDlnPhidT(i);
+        // ∂F_i/∂T: F_i = ln(K_i) - ln(φ_i^L) + ln(φ_i^V)
+        // At fixed composition, ∂F_i/∂T = -∂ln(φ_i^L)/∂T + ∂ln(φ_i^V)/∂T
+        dFdT[i][0] = -jacL.getDlnPhidT(i) + jacV.getDlnPhidT(i);
 
-        // ∂F_i/∂P = ∂ln(φ_i^L)/∂P - ∂ln(φ_i^V)/∂P
-        dFdP[i][0] = jacL.getDlnPhidP(i) - jacV.getDlnPhidP(i);
+        // ∂F_i/∂P: similarly
+        dFdP[i][0] = -jacL.getDlnPhidP(i) + jacV.getDlnPhidP(i);
 
         // ∂F_i/∂z_j = 0 (feed composition doesn't directly affect fugacity at fixed x, y)
         for (int j = 0; j < nc; j++) {
@@ -317,6 +373,9 @@ public class DifferentiableFlash implements Serializable {
    * @return PropertyGradient containing derivatives
    */
   public PropertyGradient computePropertyGradient(String propertyName) {
+    // Ensure physical properties are initialized
+    system.initProperties();
+
     int nc = system.getNumberOfComponents();
     String[] componentNames = new String[nc];
     for (int i = 0; i < nc; i++) {
@@ -419,38 +478,50 @@ public class DifferentiableFlash implements Serializable {
 
   private double computeNumericalDerivativeT(String propertyName) {
     double T0 = system.getTemperature();
-    double value0 = getPropertyValue(propertyName);
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
 
     system.setTemperature(T0 + EPSILON);
+    ops.TPflash(); // Re-run flash to update equilibrium
     system.init(3);
+    system.initProperties();
     double valuePlus = getPropertyValue(propertyName);
 
     system.setTemperature(T0 - EPSILON);
+    ops.TPflash(); // Re-run flash to update equilibrium
     system.init(3);
+    system.initProperties();
     double valueMinus = getPropertyValue(propertyName);
 
     // Restore
     system.setTemperature(T0);
+    ops.TPflash(); // Re-run flash to restore original state
     system.init(3);
+    system.initProperties();
 
     return (valuePlus - valueMinus) / (2.0 * EPSILON);
   }
 
   private double computeNumericalDerivativeP(String propertyName) {
     double P0 = system.getPressure();
-    double value0 = getPropertyValue(propertyName);
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
 
     system.setPressure(P0 + EPSILON);
+    ops.TPflash(); // Re-run flash to update equilibrium
     system.init(3);
+    system.initProperties();
     double valuePlus = getPropertyValue(propertyName);
 
     system.setPressure(P0 - EPSILON);
+    ops.TPflash(); // Re-run flash to update equilibrium
     system.init(3);
+    system.initProperties();
     double valueMinus = getPropertyValue(propertyName);
 
     // Restore
     system.setPressure(P0);
+    ops.TPflash(); // Re-run flash to restore original state
     system.init(3);
+    system.initProperties();
 
     return (valuePlus - valueMinus) / (2.0 * EPSILON);
   }

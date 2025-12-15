@@ -8,7 +8,7 @@ The key classes are:
 
 - **`DifferentiableFlash`** - Computes gradients of flash calculation results using the implicit function theorem
 - **`FlashGradients`** - Container for K-value and phase fraction sensitivities
-- **`PropertyGradient`** - Container for scalar property derivatives (density, enthalpy, etc.)
+- **`PropertyGradient`** - Container for scalar property derivatives (density, enthalpy, Cp, etc.)
 - **`FugacityJacobian`** - Jacobian matrix of fugacity coefficients
 
 ## Quick Start
@@ -32,7 +32,7 @@ system.setMixingRule("classic");
 ThermodynamicOperations ops = new ThermodynamicOperations(system);
 ops.TPflash();
 
-// Compute gradients
+// Compute gradients (automatically calls init(3) for fugacity derivatives)
 DifferentiableFlash diffFlash = new DifferentiableFlash(system);
 FlashGradients grads = diffFlash.computeFlashGradients();
 
@@ -64,6 +64,15 @@ double[] dRhodz = densityGrad.getDerivativeWrtComposition(); // d(density)/dz_i
 
 System.out.println("Density = " + densityGrad.getValue() + " kg/m³");
 System.out.println("dDensity/dT = " + dRhodT + " kg/m³/K");
+
+// Compute heat capacity gradient
+PropertyGradient cpGrad = diffFlash.computePropertyGradient("Cp");
+
+double dCpdT = cpGrad.getDerivativeWrtTemperature();  // dCp/dT
+double dCpdP = cpGrad.getDerivativeWrtPressure();     // dCp/dP
+
+System.out.println("Cp = " + cpGrad.getValue() + " " + cpGrad.getUnit());
+System.out.println("dCp/dT = " + dCpdT + " J/mol/K²");
 ```
 
 ### Accessing Fugacity Jacobian
@@ -71,13 +80,17 @@ System.out.println("dDensity/dT = " + dRhodT + " kg/m³/K");
 ```java
 import neqsim.thermo.util.derivatives.FugacityJacobian;
 
+// Note: computeFlashGradients() automatically calls init(3) to compute
+// fugacity derivatives. If accessing the Jacobian directly, ensure
+// init(3) has been called on the system first.
+
 // Get fugacity derivatives for vapor phase
 FugacityJacobian jacV = diffFlash.extractFugacityJacobian(1);
 
 double[] lnPhi = jacV.getLnPhi();           // ln(φ_i)
 double[] dlnPhidT = jacV.getDlnPhidT();     // d(ln φ_i)/dT
 double[] dlnPhidP = jacV.getDlnPhidP();     // d(ln φ_i)/dP
-double[][] dlnPhidn = jacV.getDlnPhidn();   // d(ln φ_i)/dn_j
+double[][] dlnPhidn = jacV.getDlnPhidn();   // d(ln φ_i)/dn_j (composition derivatives)
 ```
 
 ## Integration with Python/JAX
@@ -169,6 +182,17 @@ $$F_{n_c+1} = \sum_i \frac{z_i(K_i - 1)}{1 + \beta(K_i - 1)} = 0 \quad \text{(Ra
 1. **Gradient computation is O(n³)** due to matrix inversion, where n is the number of components
 2. **Cache results** when computing multiple property gradients - the flash gradients only need to be computed once
 3. **Use analytical gradients** over finite differences when available - they're more accurate and often faster
+4. **init(3) is called automatically** by `computeFlashGradients()` to ensure fugacity derivatives are computed
+
+## Validation
+
+The analytical gradients have been validated against numerical finite differences with excellent agreement (ratio ≈ 1.00) for:
+- K-value gradients (∂K/∂T, ∂K/∂P)
+- Vapor fraction gradients (∂β/∂T, ∂β/∂P)
+- Density gradients (∂ρ/∂T, ∂ρ/∂P)
+- Heat capacity gradients (∂Cp/∂T, ∂Cp/∂P)
+
+See `DifferentiableFlashTest.java` for validation tests.
 
 ## See Also
 
