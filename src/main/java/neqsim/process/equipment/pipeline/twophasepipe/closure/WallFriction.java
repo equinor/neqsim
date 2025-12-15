@@ -200,6 +200,17 @@ public class WallFriction implements Serializable {
    * <p>
    * Liquid film on wall, gas in core. Film friction dominates.
    * </p>
+   *
+   * @param vG gas velocity [m/s]
+   * @param vL liquid velocity [m/s]
+   * @param rhoG gas density [kg/m3]
+   * @param rhoL liquid density [kg/m3]
+   * @param muG gas viscosity [Pa.s]
+   * @param muL liquid viscosity [Pa.s]
+   * @param alphaL liquid volume fraction [-]
+   * @param D pipe diameter [m]
+   * @param eps pipe roughness [m]
+   * @return wall friction result containing friction factors and shear stresses
    */
   private WallFrictionResult calcAnnularFriction(double vG, double vL, double rhoG, double rhoL,
       double muG, double muL, double alphaL, double D, double eps) {

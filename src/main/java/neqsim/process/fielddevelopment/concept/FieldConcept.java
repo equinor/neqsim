@@ -175,7 +175,7 @@ public final class FieldConcept implements Serializable {
   /**
    * Checks if this concept requires CO2 removal.
    *
-   * @return true if CO2 > 2%
+   * @return true if CO2 &gt; 2%
    */
   public boolean needsCO2Removal() {
     return reservoir.getCo2Percent() > 2.0;

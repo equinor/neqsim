@@ -506,6 +506,15 @@ public class FlowRegimeDetector implements Serializable {
 
   /**
    * Estimate liquid level in stratified flow.
+   *
+   * @param U_SL superficial liquid velocity [m/s]
+   * @param U_SG superficial gas velocity [m/s]
+   * @param D pipe diameter [m]
+   * @param rho_L liquid density [kg/m3]
+   * @param rho_G gas density [kg/m3]
+   * @param mu_L liquid viscosity [Pa.s]
+   * @param theta pipe inclination angle [rad]
+   * @return estimated liquid level [m]
    */
   private double estimateStratifiedLiquidLevel(double U_SL, double U_SG, double D, double rho_L,
       double rho_G, double mu_L, double theta) {
