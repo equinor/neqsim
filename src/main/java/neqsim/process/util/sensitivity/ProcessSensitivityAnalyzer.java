@@ -22,7 +22,9 @@ import org.apache.logging.log4j.Logger;
  * when possible, falling back to finite differences only when necessary.
  * </p>
  *
- * <h3>Key Features:</h3>
+ * <p>
+ * <b>Key Features:</b>
+ * </p>
  * <ul>
  * <li>Fluent API for defining input/output pairs</li>
  * <li>Automatic integration with Broyden convergence Jacobians (FREE sensitivities)</li>
@@ -30,7 +32,9 @@ import org.apache.logging.log4j.Logger;
  * <li>Direct property access for any equipment via reflection</li>
  * </ul>
  *
- * <h3>Usage Example:</h3>
+ * <p>
+ * <b>Usage Example:</b>
+ * </p>
  * 
  * <pre>
  * ProcessSensitivityAnalyzer analyzer = new ProcessSensitivityAnalyzer(process);
