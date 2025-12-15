@@ -1171,6 +1171,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * <li>CLOSED: Zero flux</li>
    * </ul>
    *
+   * @param oldSections array of pipe sections from the previous time step
    * @return 2D array of fluxes [section][conserved variable index]
    */
   private double[][] calculateFluxes(PipeSection[] oldSections) {
@@ -1448,6 +1449,9 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * 
    * These are integrated as: U[2]_new = U[2]_old + S × dt
    *
+   * @param U conserved variable array to be modified in-place
+   * @param section pipe section for which to calculate source terms
+   * @param dt time step size in seconds
    */
   private void addSourceTerms(double[] U, PipeSection section, double dt) {
     double rho_m = section.getMixtureDensity();
