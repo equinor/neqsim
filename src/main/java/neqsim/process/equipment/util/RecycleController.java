@@ -348,4 +348,251 @@ public class RecycleController implements java.io.Serializable {
   public List<Recycle> getRecycles() {
     return new ArrayList<>(recycleArray);
   }
+
+  // ============ SIMULTANEOUS MODULAR SOLVING ============
+
+  /**
+   * Performs simultaneous modular solving for all recycles at the current priority level.
+   *
+   * <p>
+   * This method collects all tear stream variables from recycles at the current priority level into
+   * a single vector and applies global Broyden acceleration. This approach can significantly
+   * improve convergence for tightly coupled recycle loops compared to solving each recycle
+   * independently.
+   *
+   * <p>
+   * The algorithm:
+   * <ol>
+   * <li>Extracts current tear stream values from all recycles at current priority</li>
+   * <li>Runs all equipment between tear streams to get updated outputs</li>
+   * <li>Applies global Broyden acceleration to the combined variable vector</li>
+   * <li>Updates all tear streams with accelerated values</li>
+   * </ol>
+   *
+   * @return true if all recycles at current priority are converged
+   */
+  public boolean runSimultaneousAcceleration() {
+    List<Recycle> currentRecycles = getRecyclesAtCurrentPriority();
+    if (currentRecycles.isEmpty()) {
+      return true;
+    }
+
+    // Calculate total dimension across all recycles
+    int totalDimension = 0;
+    int[] dimensions = new int[currentRecycles.size()];
+    for (int i = 0; i < currentRecycles.size(); i++) {
+      Recycle recycle = currentRecycles.get(i);
+      if (recycle.getOutletStream() != null
+          && recycle.getOutletStream().getThermoSystem() != null) {
+        int numComponents =
+            recycle.getOutletStream().getThermoSystem().getPhase(0).getNumberOfComponents();
+        dimensions[i] = 3 + numComponents; // T, P, flow, compositions
+        totalDimension += dimensions[i];
+      }
+    }
+
+    if (totalDimension == 0) {
+      return true;
+    }
+
+    // Initialize coordinated accelerator if needed
+    if (coordinatedAccelerator == null) {
+      coordinatedAccelerator = new BroydenAccelerator(totalDimension);
+    }
+
+    // Extract combined input vector (current tear stream values)
+    double[] combinedInput = new double[totalDimension];
+    int offset = 0;
+    for (int i = 0; i < currentRecycles.size(); i++) {
+      Recycle recycle = currentRecycles.get(i);
+      double[] values = extractRecycleInputValues(recycle);
+      if (values != null) {
+        System.arraycopy(values, 0, combinedInput, offset, values.length);
+        offset += values.length;
+      }
+    }
+
+    // Extract combined output vector (after running equipment)
+    double[] combinedOutput = new double[totalDimension];
+    offset = 0;
+    for (int i = 0; i < currentRecycles.size(); i++) {
+      Recycle recycle = currentRecycles.get(i);
+      double[] values = extractRecycleOutputValues(recycle);
+      if (values != null) {
+        System.arraycopy(values, 0, combinedOutput, offset, values.length);
+        offset += values.length;
+      }
+    }
+
+    // Apply global Broyden acceleration
+    double[] accelerated = coordinatedAccelerator.accelerate(combinedInput, combinedOutput);
+
+    // Apply accelerated values back to recycles
+    offset = 0;
+    for (int i = 0; i < currentRecycles.size(); i++) {
+      Recycle recycle = currentRecycles.get(i);
+      double[] values = new double[dimensions[i]];
+      System.arraycopy(accelerated, offset, values, 0, dimensions[i]);
+      applyAcceleratedValuesToRecycle(recycle, values);
+      offset += dimensions[i];
+    }
+
+    // Check convergence
+    return solvedCurrentPriorityLevel();
+  }
+
+  /**
+   * Extracts input values from a recycle's last iteration stream.
+   *
+   * @param recycle the recycle to extract from
+   * @return array of [temperature, pressure, flow, mole_fractions...]
+   */
+  private double[] extractRecycleInputValues(Recycle recycle) {
+    if (recycle.getOutletStream() == null || recycle.getOutletStream().getThermoSystem() == null) {
+      return null;
+    }
+
+    neqsim.thermo.system.SystemInterface fluid = recycle.getOutletStream().getThermoSystem();
+    int numComponents = fluid.getPhase(0).getNumberOfComponents();
+    double[] values = new double[3 + numComponents];
+
+    values[0] = fluid.getTemperature();
+    values[1] = fluid.getPressure();
+    values[2] = fluid.getFlowRate("mole/sec");
+
+    for (int i = 0; i < numComponents; i++) {
+      values[3 + i] = fluid.getPhase(0).getComponent(i).getx();
+    }
+    return values;
+  }
+
+  /**
+   * Extracts output values from a recycle's mixed stream (after mixing inputs).
+   *
+   * @param recycle the recycle to extract from
+   * @return array of [temperature, pressure, flow, mole_fractions...]
+   */
+  private double[] extractRecycleOutputValues(Recycle recycle) {
+    if (recycle.getThermoSystem() == null) {
+      return null;
+    }
+
+    neqsim.thermo.system.SystemInterface fluid = recycle.getThermoSystem();
+    int numComponents = fluid.getPhase(0).getNumberOfComponents();
+    double[] values = new double[3 + numComponents];
+
+    values[0] = fluid.getTemperature();
+    values[1] = fluid.getPressure();
+    values[2] = fluid.getFlowRate("mole/sec");
+
+    for (int i = 0; i < numComponents; i++) {
+      values[3 + i] = fluid.getPhase(0).getComponent(i).getx();
+    }
+    return values;
+  }
+
+  /**
+   * Applies accelerated values to a recycle's outlet stream.
+   *
+   * @param recycle the recycle to update
+   * @param values array of [temperature, pressure, flow, mole_fractions...]
+   */
+  private void applyAcceleratedValuesToRecycle(Recycle recycle, double[] values) {
+    if (recycle.getOutletStream() == null || recycle.getOutletStream().getThermoSystem() == null) {
+      return;
+    }
+
+    neqsim.thermo.system.SystemInterface fluid = recycle.getOutletStream().getThermoSystem();
+    int numComponents = fluid.getPhase(0).getNumberOfComponents();
+
+    // Apply composition changes (normalized)
+    if (values.length >= 3 + numComponents) {
+      double sum = 0.0;
+      for (int i = 0; i < numComponents; i++) {
+        values[3 + i] = Math.max(0.0, values[3 + i]); // Ensure non-negative
+        sum += values[3 + i];
+      }
+
+      if (sum > 1e-15) {
+        for (int i = 0; i < numComponents; i++) {
+          double normalizedX = values[3 + i] / sum;
+          for (int phase = 0; phase < fluid.getNumberOfPhases(); phase++) {
+            fluid.getPhase(phase).getComponent(i).setx(normalizedX);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Gets the total iteration count across all recycles.
+   *
+   * @return sum of iterations from all recycles
+   */
+  public int getTotalIterations() {
+    int total = 0;
+    for (Recycle recycle : recycleArray) {
+      total += recycle.getIterations();
+    }
+    return total;
+  }
+
+  /**
+   * Gets the maximum residual error across all recycles at current priority.
+   *
+   * @return maximum composition error
+   */
+  public double getMaxResidualError() {
+    double maxError = 0.0;
+    for (Recycle recycle : getRecyclesAtCurrentPriority()) {
+      maxError = Math.max(maxError, recycle.getErrorComposition());
+      maxError = Math.max(maxError, recycle.getErrorFlow());
+    }
+    return maxError;
+  }
+
+  /**
+   * Resets all recycles and the coordinated accelerator for a new convergence cycle.
+   */
+  public void resetAll() {
+    for (Recycle recycle : recycleArray) {
+      recycle.resetIterations();
+    }
+    if (coordinatedAccelerator != null) {
+      coordinatedAccelerator.reset();
+    }
+    init();
+  }
+
+  /**
+   * Gets convergence diagnostics for the current state.
+   *
+   * @return diagnostic string with convergence information
+   */
+  public String getConvergenceDiagnostics() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("RecycleController Diagnostics:\n");
+    sb.append("  Total recycles: ").append(recycleArray.size()).append("\n");
+    sb.append("  Current priority level: ").append(currentPriorityLevel).append("\n");
+    sb.append("  Using coordinated acceleration: ").append(useCoordinatedAcceleration).append("\n");
+
+    List<Recycle> current = getRecyclesAtCurrentPriority();
+    sb.append("  Recycles at current priority: ").append(current.size()).append("\n");
+
+    for (Recycle recycle : current) {
+      sb.append("    - ").append(recycle.getName());
+      sb.append(" [iterations=").append(recycle.getIterations());
+      sb.append(", solved=").append(recycle.solved());
+      sb.append(", errComp=").append(String.format("%.2e", recycle.getErrorComposition()));
+      sb.append(", errFlow=").append(String.format("%.2e", recycle.getErrorFlow()));
+      sb.append("]\n");
+    }
+
+    if (coordinatedAccelerator != null) {
+      sb.append("  Coordinated accelerator residual norm: ")
+          .append(String.format("%.2e", coordinatedAccelerator.getResidualNorm())).append("\n");
+    }
+
+    return sb.toString();
+  }
 }

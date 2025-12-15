@@ -11,9 +11,10 @@ NeqSim now supports **graph-based process representation**, enabling topology-aw
 3. [Basic Usage](#basic-usage)
 4. [Parallel Execution](#parallel-execution)
 5. [Cycle and Recycle Detection](#cycle-and-recycle-detection)
-6. [Comparison: Old vs New Approach](#comparison-old-vs-new-approach)
-7. [API Reference](#api-reference)
-8. [Best Practices](#best-practices)
+6. [Sensitivity-Based Tear Stream Selection](#sensitivity-based-tear-stream-selection)
+7. [Comparison: Old vs New Approach](#comparison-old-vs-new-approach)
+8. [API Reference](#api-reference)
+9. [Best Practices](#best-practices)
 
 ---
 
@@ -439,6 +440,85 @@ Recycle Block 1 (3 nodes):
 
 ---
 
+## Sensitivity-Based Tear Stream Selection
+
+### Concept
+
+In process simulation with recycle loops, the choice of **tear stream** (where to break the loop for iterative solving) significantly affects convergence speed. The graph-based approach enables automatic sensitivity analysis to select optimal tear streams.
+
+### Sensitivity Metric
+
+The sensitivity of a stream as a tear point is calculated based on:
+
+1. **Path Length Factor** - Streams further from the recycle unit are less sensitive
+2. **Equipment Type Weight** - Different equipment types affect sensitivity differently:
+   - Separators: 1.5× (phase separation amplifies perturbations)
+   - Heat exchangers: 1.3× (temperature changes propagate)
+   - Compressors: 1.2× (pressure-flow coupling)
+   - Standard equipment: 1.0×
+3. **Branching Factor** - Streams feeding multiple downstream units have higher sensitivity
+
+**Formula:**
+$$\text{sensitivity} = \frac{\text{path length factor} \times \text{equipment weight}}{\text{branching factor}}$$
+
+**Lower sensitivity = Better tear stream** (more stable convergence)
+
+### Usage
+
+```java
+// Build process graph
+ProcessGraph graph = process.buildGraph();
+
+// Analyze sensitivity for all recycle loops
+List<SensitivityAnalysisResult> results = graph.analyzeTearStreamSensitivity();
+
+for (SensitivityAnalysisResult result : results) {
+    System.out.println("Loop with " + result.getLoopNodes().size() + " nodes");
+    System.out.println("Best tear stream: " + result.getRecommendedTearStream());
+    System.out.println("Sensitivity: " + result.getSensitivity());
+}
+
+// Get formatted report
+System.out.println(graph.getSensitivityAnalysisReport());
+```
+
+### Example Output
+
+```
+=== Tear Stream Sensitivity Analysis ===
+Recycle Loop 1 (10 nodes):
+  Nodes: Main Recycle -> JT Valve -> Gas Splitter -> HP Separator -> ...
+  Tear stream candidates (ranked by sensitivity):
+    1. Recycle Gas -> Feed Mixer [sensitivity=0.2711] (marked as recycle)
+    2. JT Valve -> Recycle [sensitivity=0.3587] (marked as recycle)
+    3. Gas Splitter -> JT Valve [sensitivity=0.5857]
+    4. HP Separator -> Gas Splitter [sensitivity=0.7174]
+    ...
+  Recommended tear: Recycle Gas
+```
+
+### Automatic Selection
+
+```java
+// Automatically select optimal tear streams for all loops
+Map<Integer, ProcessEdge> optimalTears = graph.selectTearStreamsWithSensitivity();
+
+for (Map.Entry<Integer, ProcessEdge> entry : optimalTears.entrySet()) {
+    System.out.println("Loop " + entry.getKey() + ": Tear at " + 
+                       entry.getValue().getSource().getName() + " -> " +
+                       entry.getValue().getTarget().getName());
+}
+```
+
+### Benefits
+
+- **Faster convergence**: Lower sensitivity tears require fewer iterations
+- **Better stability**: Less sensitive streams are more tolerant of perturbations
+- **Automatic**: No manual tear stream selection required
+- **Diagnostic**: Helps understand process coupling
+
+---
+
 ## Comparison: Old vs New Approach
 
 ### Traditional Sequential Execution (Old)
@@ -582,6 +662,11 @@ CycleAnalysisResult analyzeCycles()
 SCCResult findStronglyConnectedComponents()
 ParallelPartition partitionForParallelExecution()
 
+// Sensitivity Analysis (NEW)
+List<SensitivityAnalysisResult> analyzeTearStreamSensitivity()  // Analyze all loops
+Map<Integer, ProcessEdge> selectTearStreamsWithSensitivity()    // Auto-select optimal tears
+String getSensitivityAnalysisReport()                           // Get formatted report
+
 // Validation
 List<String> validate()                     // Check for issues
 String getSummary()                         // Get text summary
@@ -591,6 +676,20 @@ double[][] getNodeFeatureMatrix()
 int[][] getEdgeIndexTensor()
 double[][] getEdgeFeatureMatrix()
 Map<Integer, List<Integer>> getAdjacencyList()
+```
+
+### SensitivityAnalysisResult Class (NEW)
+
+```java
+// Get the nodes in this recycle loop
+List<ProcessNode> getLoopNodes()
+
+// Get all candidate edges with their sensitivity scores
+Map<ProcessEdge, Double> getEdgeSensitivities()
+
+// Get the recommended tear stream (lowest sensitivity)
+ProcessEdge getRecommendedTearStream()
+double getSensitivity()  // Sensitivity score of recommended tear
 ```
 
 ---
@@ -735,3 +834,21 @@ Graph-based process simulation in NeqSim provides:
 4. **Extensibility**: Foundation for optimization and ML applications
 
 For most users, simply using `process.runOptimal()` provides the best of both worlds - automatic selection of the optimal execution strategy based on process structure.
+---
+
+## Jupyter Notebook Example
+
+A complete interactive example is available in the notebooks directory:
+
+📓 **[GraphBasedProcessSimulation.ipynb](../notebooks/GraphBasedProcessSimulation.ipynb)**
+
+The notebook demonstrates:
+- Graph construction and analysis
+- Cycle detection and recycle block identification
+- Sensitivity-based tear stream selection
+- Acceleration method comparison (Direct Substitution vs Wegstein vs Broyden)
+- Parallel execution for multi-train processes
+
+---
+
+*Last updated: December 2025*

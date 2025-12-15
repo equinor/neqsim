@@ -1055,6 +1055,376 @@ public class ProcessGraph implements Serializable {
     return selectTearStreams();
   }
 
+  // ============ SENSITIVITY-BASED TEAR STREAM SELECTION ============
+
+  /**
+   * Result of sensitivity analysis for tear stream selection.
+   */
+  public static class SensitivityAnalysisResult implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final Map<ProcessEdge, Double> edgeSensitivities;
+    private final List<ProcessEdge> rankedTearCandidates;
+    private final double totalSensitivity;
+
+    SensitivityAnalysisResult(Map<ProcessEdge, Double> edgeSensitivities,
+        List<ProcessEdge> rankedTearCandidates, double totalSensitivity) {
+      this.edgeSensitivities = Collections.unmodifiableMap(edgeSensitivities);
+      this.rankedTearCandidates = Collections.unmodifiableList(rankedTearCandidates);
+      this.totalSensitivity = totalSensitivity;
+    }
+
+    /**
+     * Gets the sensitivity score for each edge.
+     *
+     * @return map from edge to sensitivity score
+     */
+    public Map<ProcessEdge, Double> getEdgeSensitivities() {
+      return edgeSensitivities;
+    }
+
+    /**
+     * Gets tear candidates ranked by sensitivity (lowest first = best).
+     *
+     * @return list of edges ranked by sensitivity
+     */
+    public List<ProcessEdge> getRankedTearCandidates() {
+      return rankedTearCandidates;
+    }
+
+    /**
+     * Gets the total sensitivity across all tear candidates.
+     *
+     * @return sum of sensitivities
+     */
+    public double getTotalSensitivity() {
+      return totalSensitivity;
+    }
+
+    /**
+     * Gets the best (lowest sensitivity) tear stream candidate.
+     *
+     * @return best tear stream, or null if no candidates
+     */
+    public ProcessEdge getBestTearStream() {
+      return rankedTearCandidates.isEmpty() ? null : rankedTearCandidates.get(0);
+    }
+  }
+
+  /**
+   * Analyzes sensitivity of potential tear streams to select optimal ones.
+   *
+   * <p>
+   * This method estimates the sensitivity of each potential tear stream by analyzing how much
+   * perturbations in the tear stream values would propagate through the SCC. Lower sensitivity
+   * means faster convergence.
+   *
+   * <p>
+   * The sensitivity is estimated using graph-based heuristics:
+   * <ul>
+   * <li>Path length from tear to its re-entry point</li>
+   * <li>Number of equipment units in the recycle path</li>
+   * <li>Branching factor (flow splitting in the loop)</li>
+   * <li>Equipment type weights (separators have higher sensitivity than heaters)</li>
+   * </ul>
+   *
+   * @param scc the strongly connected component to analyze
+   * @return sensitivity analysis result
+   */
+  public SensitivityAnalysisResult analyzeTearStreamSensitivity(List<ProcessNode> scc) {
+    Set<ProcessNode> sccNodes = new HashSet<>(scc);
+    Map<ProcessEdge, Double> sensitivities = new LinkedHashMap<>();
+
+    // Find all potential tear streams (edges within SCC)
+    List<ProcessEdge> tearCandidates = new ArrayList<>();
+    for (ProcessNode node : scc) {
+      for (ProcessEdge edge : node.getOutgoingEdges()) {
+        if (sccNodes.contains(edge.getTarget())) {
+          tearCandidates.add(edge);
+        }
+      }
+    }
+
+    // Compute sensitivity for each candidate
+    for (ProcessEdge candidate : tearCandidates) {
+      double sensitivity = computeEdgeSensitivity(candidate, scc, sccNodes);
+      sensitivities.put(candidate, sensitivity);
+    }
+
+    // Rank by sensitivity (lowest first)
+    List<ProcessEdge> ranked = new ArrayList<>(tearCandidates);
+    ranked.sort((a, b) -> Double.compare(sensitivities.get(a), sensitivities.get(b)));
+
+    // Calculate total sensitivity
+    double total = 0.0;
+    for (Double s : sensitivities.values()) {
+      total += s;
+    }
+
+    return new SensitivityAnalysisResult(sensitivities, ranked, total);
+  }
+
+  /**
+   * Computes sensitivity score for a potential tear stream.
+   *
+   * <p>
+   * Lower sensitivity indicates a better tear stream candidate.
+   *
+   * @param edge the candidate tear stream
+   * @param scc the SCC containing the edge
+   * @param sccNodes set of nodes in the SCC for fast lookup
+   * @return sensitivity score
+   */
+  private double computeEdgeSensitivity(ProcessEdge edge, List<ProcessNode> scc,
+      Set<ProcessNode> sccNodes) {
+    double sensitivity = 1.0;
+
+    ProcessNode tearTarget = edge.getTarget();
+    ProcessNode tearSource = edge.getSource();
+
+    // Factor 1: Path length through SCC (longer paths = more damping = lower sensitivity)
+    int pathLength = computePathLengthInSCC(tearTarget, tearSource, sccNodes);
+    if (pathLength > 0) {
+      sensitivity *= (1.0 / Math.sqrt(pathLength));
+    }
+
+    // Factor 2: Equipment type sensitivity weights
+    double typeWeight = computeEquipmentTypeSensitivity(scc);
+    sensitivity *= typeWeight;
+
+    // Factor 3: Branching factor (more branches = more averaging = lower sensitivity)
+    double branchingFactor = computeBranchingFactor(scc, sccNodes);
+    sensitivity *= (1.0 / Math.max(1.0, branchingFactor));
+
+    // Factor 4: In-degree of tear target (higher in-degree = more mixing = lower sensitivity)
+    int inDegree = tearTarget.getIncomingEdges().size();
+    sensitivity *= (1.0 / Math.sqrt(1.0 + inDegree));
+
+    // Factor 5: Flow rate if available (lower flow = lower sensitivity)
+    if (edge.getStream() != null) {
+      try {
+        double flowRate = edge.getStream().getFlowRate("kg/hr");
+        // Normalize by a typical flow rate (1000 kg/hr)
+        sensitivity *= Math.sqrt(flowRate / 1000.0);
+      } catch (Exception e) {
+        // Flow rate not available, skip this factor
+      }
+    }
+
+    // Bonus: Prefer edges already marked as recycle
+    if (edge.isRecycle() || edge.isBackEdge()) {
+      sensitivity *= 0.5; // Lower sensitivity for user-indicated tears
+    }
+
+    return Math.max(0.01, sensitivity); // Ensure positive
+  }
+
+  /**
+   * Computes the path length from source to target within an SCC.
+   *
+   * @param source starting node
+   * @param target ending node
+   * @param sccNodes nodes in the SCC
+   * @return path length, or -1 if no path exists
+   */
+  private int computePathLengthInSCC(ProcessNode source, ProcessNode target,
+      Set<ProcessNode> sccNodes) {
+    if (source == target) {
+      return 0;
+    }
+
+    // BFS to find shortest path
+    Map<ProcessNode, Integer> distances = new HashMap<>();
+    Deque<ProcessNode> queue = new LinkedList<>();
+
+    distances.put(source, 0);
+    queue.add(source);
+
+    while (!queue.isEmpty()) {
+      ProcessNode current = queue.poll();
+      int currentDist = distances.get(current);
+
+      for (ProcessEdge edge : current.getOutgoingEdges()) {
+        ProcessNode next = edge.getTarget();
+        if (sccNodes.contains(next) && !distances.containsKey(next)) {
+          distances.put(next, currentDist + 1);
+          if (next == target) {
+            return currentDist + 1;
+          }
+          queue.add(next);
+        }
+      }
+    }
+
+    return -1; // No path found
+  }
+
+  /**
+   * Computes average equipment type sensitivity for nodes in SCC.
+   *
+   * @param scc the SCC nodes
+   * @return average sensitivity weight
+   */
+  private double computeEquipmentTypeSensitivity(List<ProcessNode> scc) {
+    double totalWeight = 0.0;
+    int count = 0;
+
+    for (ProcessNode node : scc) {
+      String type = node.getEquipmentType().toLowerCase();
+      double weight = 1.0;
+
+      // Assign sensitivity weights based on equipment type
+      if (type.contains("separator") || type.contains("flash")) {
+        weight = 2.0; // High sensitivity - phase equilibrium
+      } else if (type.contains("column") || type.contains("distillation")) {
+        weight = 3.0; // Very high sensitivity - many stages
+      } else if (type.contains("reactor")) {
+        weight = 2.5; // High sensitivity - reaction kinetics
+      } else if (type.contains("compressor") || type.contains("expander")) {
+        weight = 1.5; // Medium sensitivity - thermodynamic calculations
+      } else if (type.contains("heater") || type.contains("cooler") || type.contains("heat")) {
+        weight = 1.2; // Lower sensitivity - mostly energy balance
+      } else if (type.contains("mixer") || type.contains("splitter")) {
+        weight = 0.8; // Low sensitivity - simple mixing/splitting
+      } else if (type.contains("valve") || type.contains("pump")) {
+        weight = 0.9; // Low sensitivity - pressure change only
+      } else if (type.contains("stream")) {
+        weight = 0.5; // Very low sensitivity - just passes values
+      }
+
+      totalWeight += weight;
+      count++;
+    }
+
+    return count > 0 ? totalWeight / count : 1.0;
+  }
+
+  /**
+   * Computes the average branching factor in an SCC.
+   *
+   * @param scc the SCC nodes
+   * @param sccNodes set of SCC nodes for lookup
+   * @return average branching factor
+   */
+  private double computeBranchingFactor(List<ProcessNode> scc, Set<ProcessNode> sccNodes) {
+    int totalBranches = 0;
+    int nodesWithBranches = 0;
+
+    for (ProcessNode node : scc) {
+      int outDegreeInSCC = 0;
+      for (ProcessEdge edge : node.getOutgoingEdges()) {
+        if (sccNodes.contains(edge.getTarget())) {
+          outDegreeInSCC++;
+        }
+      }
+      if (outDegreeInSCC > 1) {
+        totalBranches += outDegreeInSCC;
+        nodesWithBranches++;
+      }
+    }
+
+    return nodesWithBranches > 0 ? (double) totalBranches / nodesWithBranches : 1.0;
+  }
+
+  /**
+   * Selects tear streams using sensitivity analysis for each SCC.
+   *
+   * <p>
+   * This method improves upon the heuristic-based selection by computing actual sensitivity
+   * estimates that predict convergence behavior.
+   *
+   * @return tear stream selection result with sensitivity-optimized tears
+   */
+  public TearStreamResult selectTearStreamsWithSensitivity() {
+    SCCResult sccResult = findStronglyConnectedComponents();
+    List<List<ProcessNode>> recycleLoops = sccResult.getRecycleLoops();
+
+    List<ProcessEdge> allTearStreams = new ArrayList<>();
+    Map<List<ProcessNode>, ProcessEdge> sccToTear = new LinkedHashMap<>();
+    int totalCycles = 0;
+
+    for (List<ProcessNode> scc : recycleLoops) {
+      if (scc.size() <= 1) {
+        continue;
+      }
+
+      // Use sensitivity analysis to select best tear
+      SensitivityAnalysisResult analysis = analyzeTearStreamSensitivity(scc);
+      ProcessEdge bestTear = analysis.getBestTearStream();
+
+      if (bestTear != null) {
+        allTearStreams.add(bestTear);
+        sccToTear.put(scc, bestTear);
+        totalCycles++;
+
+        logger.debug("SCC tear stream selected: {} with sensitivity {}", bestTear.getName(),
+            analysis.getEdgeSensitivities().get(bestTear));
+      }
+    }
+
+    return new TearStreamResult(allTearStreams, sccToTear, totalCycles);
+  }
+
+  /**
+   * Gets a detailed report of sensitivity analysis for all SCCs.
+   *
+   * @return formatted string with sensitivity analysis details
+   */
+  public String getSensitivityAnalysisReport() {
+    SCCResult sccResult = findStronglyConnectedComponents();
+    List<List<ProcessNode>> recycleLoops = sccResult.getRecycleLoops();
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Tear Stream Sensitivity Analysis ===\n\n");
+
+    if (recycleLoops.isEmpty()) {
+      sb.append("No recycle loops found in the process.\n");
+      return sb.toString();
+    }
+
+    int sccIndex = 1;
+    for (List<ProcessNode> scc : recycleLoops) {
+      if (scc.size() <= 1) {
+        continue;
+      }
+
+      sb.append("Recycle Loop ").append(sccIndex++).append(" (").append(scc.size())
+          .append(" nodes):\n");
+
+      // List nodes in SCC
+      sb.append("  Nodes: ");
+      for (int i = 0; i < scc.size(); i++) {
+        if (i > 0) {
+          sb.append(" -> ");
+        }
+        sb.append(scc.get(i).getName());
+      }
+      sb.append("\n");
+
+      // Analyze sensitivity
+      SensitivityAnalysisResult analysis = analyzeTearStreamSensitivity(scc);
+
+      sb.append("  Tear stream candidates (ranked by sensitivity):\n");
+      int rank = 1;
+      for (ProcessEdge edge : analysis.getRankedTearCandidates()) {
+        double sensitivity = analysis.getEdgeSensitivities().get(edge);
+        sb.append("    ").append(rank++).append(". ").append(edge.getSource().getName())
+            .append(" -> ").append(edge.getTarget().getName());
+        sb.append(String.format(" [sensitivity=%.4f]", sensitivity));
+        if (edge.isRecycle() || edge.isBackEdge()) {
+          sb.append(" (marked as recycle)");
+        }
+        sb.append("\n");
+      }
+
+      sb.append("  Recommended tear: ").append(
+          analysis.getBestTearStream() != null ? analysis.getBestTearStream().getName() : "none")
+          .append("\n\n");
+    }
+
+    return sb.toString();
+  }
+
   /**
    * Validates that selected tear streams break all cycles.
    *
