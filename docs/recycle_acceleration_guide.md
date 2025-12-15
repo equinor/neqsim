@@ -530,7 +530,80 @@ START
 
 ---
 
+## Free Sensitivity Analysis from Convergence
+
+One powerful advantage of using the Broyden method is that the **inverse Jacobian computed during convergence can be reused for sensitivity analysis** at no additional computational cost.
+
+### How It Works
+
+During Broyden convergence, the accelerator builds an approximation of the inverse Jacobian matrix $B^{-1}$ where:
+
+$$B \approx I - \frac{\partial g}{\partial x}$$
+
+This matrix relates input perturbations to output changes for the tear stream variables. After convergence, you can extract this for free:
+
+```java
+// After running process with coordinated acceleration
+RecycleController controller = process.getRecycleController();
+
+if (controller.hasSensitivityData()) {
+    // Get as SensitivityMatrix for named access
+    SensitivityMatrix sensMatrix = controller.getTearStreamSensitivityMatrix();
+    
+    // Query individual sensitivities
+    double dT_dP = sensMatrix.getSensitivity(
+        "recycle1.temperature", 
+        "recycle1.pressure"
+    );
+    
+    // Or get raw Jacobian for matrix operations
+    double[][] jacobian = controller.getConvergenceJacobian();
+    
+    // See variable names
+    List<String> varNames = controller.getTearStreamVariableNames();
+    // Returns: ["recycle1.temperature", "recycle1.pressure", "recycle1.flowRate", ...]
+}
+```
+
+### Comparison with Finite Differences
+
+| Method | Cost | Accuracy | Availability |
+|--------|------|----------|--------------|
+| **Broyden Jacobian** | Free (0 extra runs) | Approximate | After Broyden convergence |
+| **Finite Differences** | 2n extra simulations | Central differences | Always |
+| **Monte Carlo** | N samples × n runs | Statistical | Always |
+
+For tear stream variables, the Broyden Jacobian provides **instant sensitivity estimates** without any additional simulations.
+
+### Use Cases
+
+1. **Uncertainty Propagation**: How inlet uncertainties affect recycle convergence
+2. **Control Analysis**: Which variables most strongly affect others
+3. **Design Sensitivity**: Impact of design parameters on recycle conditions
+4. **Model Validation**: Compare against finite difference results
+
+### General Sensitivity Analysis
+
+For sensitivities beyond tear stream variables, use the `ProcessSensitivityAnalyzer`:
+
+```java
+ProcessSensitivityAnalyzer analyzer = new ProcessSensitivityAnalyzer(process);
+
+SensitivityMatrix result = analyzer
+    .withInput("feed", "temperature")
+    .withInput("feed", "flowRate", "kg/hr")
+    .withOutput("product", "temperature")
+    .compute();  // Uses Broyden Jacobian when possible, else FD
+
+String report = analyzer.generateReport(result);
+```
+
+See [Graph-Based Process Simulation - Process Sensitivity Analysis](graph_based_process_simulation.md#process-sensitivity-analysis) for full documentation.
+
+---
+
 ## API Reference
+
 
 ### Recycle Class
 
@@ -569,6 +642,31 @@ public enum AccelerationMethod {
     WEGSTEIN,             // Wegstein acceleration with bounded q
     BROYDEN               // Broyden's quasi-Newton method
 }
+```
+
+### RecycleController Class
+
+```java
+// Setup
+void addRecycle(Recycle recycle)
+void setUseCoordinatedAcceleration(boolean use)
+void init()
+
+// Running
+void runCurrentPriorityLevel()
+void runSimultaneousAcceleration()
+void runAllPriorityLevels()
+
+// Diagnostics
+int getRecycleCount()
+List<Recycle> getRecyclesAtCurrentPriority()
+String getConvergenceDiagnostics()
+
+// Sensitivity analysis (FREE from Broyden convergence)
+boolean hasSensitivityData()
+SensitivityMatrix getTearStreamSensitivityMatrix()
+double[][] getConvergenceJacobian()
+List<String> getTearStreamVariableNames()
 ```
 
 ---

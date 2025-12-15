@@ -286,4 +286,83 @@ class RecycleControllerTest {
       assertEquals(2, current.size());
     }
   }
+
+  @Nested
+  @DisplayName("Sensitivity Matrix Tests")
+  class SensitivityMatrixTests {
+
+    @Test
+    @DisplayName("No sensitivity data before convergence")
+    void testNoSensitivityBeforeConvergence() {
+      RecycleController controller = new RecycleController();
+      assertFalse(controller.hasSensitivityData());
+      assertNull(controller.getTearStreamSensitivityMatrix());
+      assertNull(controller.getConvergenceJacobian());
+    }
+
+    @Test
+    @DisplayName("Variable names are generated correctly")
+    void testTearStreamVariableNames() {
+      RecycleController controller = new RecycleController();
+
+      Recycle recycle1 = new Recycle("HP_separator");
+      recycle1.setPriority(100);
+      Recycle recycle2 = new Recycle("LP_separator");
+      recycle2.setPriority(100);
+
+      controller.addRecycle(recycle1);
+      controller.addRecycle(recycle2);
+      controller.init();
+
+      List<String> varNames = controller.getTearStreamVariableNames();
+
+      // Each recycle contributes 3 variables: temperature, pressure, flowRate
+      assertEquals(6, varNames.size());
+      assertTrue(varNames.contains("HP_separator.temperature"));
+      assertTrue(varNames.contains("HP_separator.pressure"));
+      assertTrue(varNames.contains("HP_separator.flowRate"));
+      assertTrue(varNames.contains("LP_separator.temperature"));
+      assertTrue(varNames.contains("LP_separator.pressure"));
+      assertTrue(varNames.contains("LP_separator.flowRate"));
+    }
+
+    @Test
+    @DisplayName("Sensitivity matrix available after simulated convergence")
+    void testSensitivityMatrixAfterConvergence() {
+      RecycleController controller = new RecycleController();
+
+      Recycle recycle = new Recycle("testRecycle");
+      recycle.setPriority(100);
+      controller.addRecycle(recycle);
+      controller.setUseCoordinatedAcceleration(true);
+      controller.init();
+
+      // Simulate some iterations to build Jacobian
+      BroydenAccelerator accelerator = controller.getCoordinatedAccelerator();
+      assertNotNull(accelerator);
+
+      // Feed it some mock iteration data to build Jacobian
+      double[] input1 = {300.0, 50.0, 100.0};
+      double[] output1 = {301.0, 50.1, 100.5};
+      double[] accel1 = accelerator.accelerate(input1, output1);
+      assertNotNull(accel1);
+
+      double[] input2 = accel1;
+      double[] output2 = {300.5, 50.05, 100.25};
+      double[] accel2 = accelerator.accelerate(input2, output2);
+      assertNotNull(accel2);
+
+      double[] input3 = accel2;
+      double[] output3 = {300.2, 50.02, 100.1};
+      accelerator.accelerate(input3, output3);
+
+      // Now we should have sensitivity data
+      assertTrue(controller.hasSensitivityData());
+
+      double[][] jacobian = controller.getConvergenceJacobian();
+      assertNotNull(jacobian);
+      assertEquals(3, jacobian.length);
+      assertEquals(3, jacobian[0].length);
+    }
+  }
 }
