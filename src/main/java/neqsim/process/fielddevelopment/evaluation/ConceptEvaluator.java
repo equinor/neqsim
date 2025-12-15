@@ -18,8 +18,8 @@ import neqsim.process.fielddevelopment.screening.SafetyScreener;
  *
  * <p>
  * This class is the primary entry point for the Field Development Engine. It coordinates all
- * screening analyses (flow assurance, safety, emissions, economics) and aggregates results into
- * a comprehensive {@link ConceptKPIs} object for decision support.
+ * screening analyses (flow assurance, safety, emissions, economics) and aggregates results into a
+ * comprehensive {@link ConceptKPIs} object for decision support.
  * </p>
  *
  * <h2>Evaluation Workflow</h2>
@@ -59,7 +59,7 @@ import neqsim.process.fielddevelopment.screening.SafetyScreener;
  * 
  * // Check warnings
  * kpis.getWarnings().forEach((category, message) -&gt; {
- *     System.out.println("WARNING: " + message);
+ *   System.out.println("WARNING: " + message);
  * });
  * 
  * // Get overall score
@@ -69,10 +69,9 @@ import neqsim.process.fielddevelopment.screening.SafetyScreener;
  * <h3>Evaluation with Custom Facility</h3>
  * 
  * <pre>
- * FacilityConfig facility = FacilityBuilder.builder()
- *     .addBlock(BlockConfig.of(BlockType.INLET_SEPARATION))
- *     .addBlock(BlockConfig.of(BlockType.TEG_DEHYDRATION))
- *     .build();
+ * FacilityConfig facility =
+ *     FacilityBuilder.builder().addBlock(BlockConfig.of(BlockType.INLET_SEPARATION))
+ *         .addBlock(BlockConfig.of(BlockType.TEG_DEHYDRATION)).build();
  * 
  * ConceptKPIs kpis = evaluator.evaluate(concept, facility);
  * </pre>
@@ -129,8 +128,8 @@ public class ConceptEvaluator {
    * Creates a concept evaluator with custom screeners.
    *
    * <p>
-   * Use this constructor when you need to customize screener behavior, such as using different
-   * cost factors or risk thresholds.
+   * Use this constructor when you need to customize screener behavior, such as using different cost
+   * factors or risk thresholds.
    * </p>
    *
    * @param flowAssuranceScreener custom flow assurance screener
@@ -152,8 +151,8 @@ public class ConceptEvaluator {
    *
    * <p>
    * The facility configuration is automatically generated based on the concept's reservoir
-   * properties and processing requirements. This is suitable for initial screening when
-   * detailed facility design is not yet available.
+   * properties and processing requirements. This is suitable for initial screening when detailed
+   * facility design is not yet available.
    * </p>
    *
    * @param concept field concept to evaluate (must not be null)
@@ -223,8 +222,23 @@ public class ConceptEvaluator {
   /**
    * Performs quick screening without full facility evaluation.
    *
-   * @param concept field concept
-   * @return concept KPIs (reduced fidelity)
+   * <p>
+   * This method provides a faster, lower-fidelity evaluation that skips safety screening and uses
+   * simplified facility assumptions. It's useful for:
+   * </p>
+   * <ul>
+   * <li>Initial concept filtering before detailed analysis</li>
+   * <li>Rapid sensitivity studies with many variations</li>
+   * <li>Early-phase feasibility checks</li>
+   * </ul>
+   *
+   * <p>
+   * <b>Note:</b> The results are marked with a "fidelity" note indicating reduced accuracy. Safety
+   * reports are not included in quick screening.
+   * </p>
+   *
+   * @param concept field concept to screen
+   * @return concept KPIs with reduced fidelity (no safety assessment)
    */
   public ConceptKPIs quickScreen(FieldConcept concept) {
     ConceptKPIs.Builder builder = ConceptKPIs.builder(concept.getName());
