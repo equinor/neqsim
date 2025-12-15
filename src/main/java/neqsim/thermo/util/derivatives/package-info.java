@@ -27,7 +27,7 @@
  * <pre>
  * {@code
  * # Define custom VJP for JAX
- * @jax.custom_vjp
+ * # Use @jax.custom_vjp decorator
  * def flash_density(T, P, z):
  *     # Forward: call NeqSim
  *     system = create_system(z)
