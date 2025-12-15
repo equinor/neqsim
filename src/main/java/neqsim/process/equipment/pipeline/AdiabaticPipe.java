@@ -105,10 +105,21 @@ public class AdiabaticPipe extends Pipeline {
    * @return a double
    */
   public double calcWallFrictionFactor(double reynoldsNumber) {
+    if (Math.abs(reynoldsNumber) < 1e-10) {
+      flowPattern = "no-flow";
+      return 0.0;
+    }
     double relativeRoughnes = getPipeWallRoughness() / insideDiameter;
-    if (Math.abs(reynoldsNumber) < 2000) {
+    if (Math.abs(reynoldsNumber) < 2300) {
       flowPattern = "laminar";
       return 64.0 / reynoldsNumber;
+    } else if (Math.abs(reynoldsNumber) < 4000) {
+      // Transition zone - interpolate between laminar and turbulent
+      flowPattern = "transition";
+      double fLaminar = 64.0 / 2300.0;
+      double fTurbulent = Math.pow(
+          (1.0 / (-1.8 * Math.log10(6.9 / 4000.0 + Math.pow(relativeRoughnes / 3.7, 1.11)))), 2.0);
+      return fLaminar + (fTurbulent - fLaminar) * (reynoldsNumber - 2300.0) / 1700.0;
     } else {
       flowPattern = "turbulent";
       return Math.pow((1.0
@@ -151,36 +162,96 @@ public class AdiabaticPipe extends Pipeline {
    * <p>
    * calcFlow.
    * </p>
+   * 
+   * <p>
+   * Calculates the flow rate required to achieve the specified outlet pressure using bisection
+   * iteration. This method iteratively adjusts the flow rate until the calculated outlet pressure
+   * matches the target outlet pressure (pressureOut).
+   * </p>
    *
-   * @return a double
+   * @return the calculated flow rate in the current system units
    */
   public double calcFlow() {
-    double averagePressue = (inletPressure + pressureOut) / 2.0;
-    system.setPressure(averagePressue);
-    system.init(1);
-    system.initPhysicalProperties();
+    // Use bisection method to find flow rate that gives target outlet pressure
+    // At low flow, pressure drop is small -> outlet pressure high
+    // At high flow, pressure drop is large -> outlet pressure low
 
-    double area = Math.PI / 4.0 * Math.pow(insideDiameter, 2.0);
-    double presdrop2 = Math.pow(inletPressure * 1e2, 2.0) - Math.pow(pressureOut * 1e2, 2.0);
-    double gasGravity = system.getMolarMass() / 0.028;
-    double oldReynold = 0;
-    double reynoldsNumber = -1000.0;
-    double flow = 0;
-    do {
-      oldReynold = reynoldsNumber;
-      velocity = system.getPhase(0).getTotalVolume() / area / 1.0e5;
-      reynoldsNumber = velocity * insideDiameter
-          / system.getPhase(0).getPhysicalProperties().getKinematicViscosity();
-      double frictionFactor = calcWallFrictionFactor(reynoldsNumber) * 4.0;
-      double temp = Math.sqrt(presdrop2 * Math.pow(insideDiameter * 1000.0, 5.0)
-          / (gasGravity * system.getPhase(0).getZ() * system.getTemperature() * frictionFactor
-              * length / 1000.0));
-      flow = 1.1494e-3 * 288.15 / (system.getPressure() * 100) * temp;
-      system.setTotalFlowRate(flow / 1e6, "MSm^3/day");
-      system.init(1);
-      // System.out.println("flow " + flow + " velocity " + velocity);
-    } while (Math.abs(reynoldsNumber - oldReynold) / reynoldsNumber > 1e-3);
-    return flow;
+    double originalFlowRate = system.getFlowRate("kg/sec");
+    if (originalFlowRate <= 0) {
+      originalFlowRate = 1.0; // Default starting point
+    }
+
+    // Set up bounds for bisection
+    double flowLow = originalFlowRate * 0.001;
+    double flowHigh = originalFlowRate * 100.0;
+
+    // Find valid bounds
+    // At low flow, check if outlet pressure > target (we need more flow)
+    system.setTotalFlowRate(flowLow, "kg/sec");
+    system.init(3);
+    system.initPhysicalProperties();
+    double pOutLow = calcPressureOut();
+
+    // At high flow, check if outlet pressure < target (we need less flow)
+    system.setTotalFlowRate(flowHigh, "kg/sec");
+    system.init(3);
+    system.initPhysicalProperties();
+    double pOutHigh = calcPressureOut();
+
+    // Expand bounds if needed
+    int boundIter = 0;
+    while (pOutLow < pressureOut && boundIter < 20) {
+      flowLow /= 10.0;
+      system.setTotalFlowRate(flowLow, "kg/sec");
+      system.init(3);
+      system.initPhysicalProperties();
+      pOutLow = calcPressureOut();
+      boundIter++;
+    }
+
+    boundIter = 0;
+    while (pOutHigh > pressureOut && boundIter < 20) {
+      flowHigh *= 10.0;
+      system.setTotalFlowRate(flowHigh, "kg/sec");
+      system.init(3);
+      system.initPhysicalProperties();
+      pOutHigh = calcPressureOut();
+      boundIter++;
+    }
+
+    // Bisection iteration
+    double flowMid = 0;
+    double pOutMid = 0;
+    int maxIter = 50;
+    double tolerance = 1e-4;
+
+    for (int i = 0; i < maxIter; i++) {
+      flowMid = (flowLow + flowHigh) / 2.0;
+      system.setTotalFlowRate(flowMid, "kg/sec");
+      system.init(3);
+      system.initPhysicalProperties();
+      pOutMid = calcPressureOut();
+
+      double relError = Math.abs(pOutMid - pressureOut) / pressureOut;
+      if (relError < tolerance) {
+        break;
+      }
+
+      if (pOutMid > pressureOut) {
+        // Need more pressure drop -> increase flow
+        flowLow = flowMid;
+      } else {
+        // Need less pressure drop -> decrease flow
+        flowHigh = flowMid;
+      }
+
+      // Check convergence of bounds
+      if (Math.abs(flowHigh - flowLow) / flowMid < tolerance) {
+        break;
+      }
+    }
+
+    return system.getFlowRate("kg/sec");
   }
 
   /** {@inheritDoc} */

@@ -23,9 +23,9 @@ public class AspenIP21Database
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(AspenIP21Database.class);
 
-  protected Connection databaseConnection = null;
+  protected transient Connection databaseConnection = null;
   private static String dataBaseType = "Karsto";
-  private Statement statement = null;
+  private transient Statement statement = null;
 
   /**
    * <p>

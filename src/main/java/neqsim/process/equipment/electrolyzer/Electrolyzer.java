@@ -101,6 +101,15 @@ public class Electrolyzer extends ProcessEquipmentBaseClass {
 
   /** {@inheritDoc} */
   @Override
+  public double getMassBalance(String unit) {
+    double inletFlow = waterInlet.getThermoSystem().getFlowRate(unit);
+    double outletFlow = hydrogenOutStream.getThermoSystem().getFlowRate(unit)
+        + oxygenOutStream.getThermoSystem().getFlowRate(unit);
+    return outletFlow - inletFlow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     double waterFlow = waterInlet.getFlowRate("mole/sec");
     double hydrogenFlow = waterFlow;

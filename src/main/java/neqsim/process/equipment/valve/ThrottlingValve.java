@@ -70,7 +70,6 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     super(name);
     setCalculateSteadyState(true);
     initMechanicalDesign();
-
   }
 
   /**
@@ -97,6 +96,18 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    */
   public double getDeltaPressure(String unit) {
     return inStream.getFluid().getPressure(unit) - thermoSystem.getPressure(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityDuty() {
+    return getOutStream().getFlowRate("m3/hr");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityMax() {
+    return getMechanicalDesign().maxDesignVolumeFlow;
   }
 
   /** {@inheritDoc} */
@@ -455,8 +466,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
     controllerRequest = clampValveOpening(controllerRequest);
     setTargetPercentValveOpening(controllerRequest);
-    percentValveOpening = clampValveOpening(
-        applyTravelDynamics(percentValveOpening, requestedValveOpening, dt));
+    percentValveOpening =
+        clampValveOpening(applyTravelDynamics(percentValveOpening, requestedValveOpening, dt));
     setCalculationIdentifier(id);
   }
 
@@ -476,8 +487,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
         if (Math.abs(delta) < 1e-12 || effectiveDt <= 0.0) {
           return target;
         }
-        double travelTime = delta >= 0.0 ? getEffectiveOpeningTravelTime()
-            : getEffectiveClosingTravelTime();
+        double travelTime =
+            delta >= 0.0 ? getEffectiveOpeningTravelTime() : getEffectiveClosingTravelTime();
         if (travelTime <= 0.0) {
           return target;
         }

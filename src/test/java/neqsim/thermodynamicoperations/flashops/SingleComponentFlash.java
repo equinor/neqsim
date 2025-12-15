@@ -269,7 +269,6 @@ public class SingleComponentFlash {
               + " flow rate " + feedValve.getOutletStream().getFlowRate("kg/hr") + " pressure "
               + feedValve.getOutletStream().getPressure() + " temp_out "
               + liquidValve.getOutletStream().getTemperature("C"));
-
     }
 
     liquidValve.getOutletStream().getFluid().prettyPrint();
@@ -277,10 +276,5 @@ public class SingleComponentFlash {
         + liquidValve.getOutletStream().getFlowRate("kg/hr");
     // assertTrue(finalOut < initialOut);
     // assertTrue(finalOut > 0.0);
-
-
-
   }
-
-
 }

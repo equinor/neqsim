@@ -75,7 +75,6 @@ public class SoreideWhitsonSystemTest {
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
-
   }
 
   /**
@@ -124,7 +123,6 @@ public class SoreideWhitsonSystemTest {
         ((PhaseSoreideWhitson) testSystem.getPhase(1)).getSalinityConcentration();
     org.junit.jupiter.api.Assertions.assertEquals(expectedSalinity, actualSalinity, 0.01,
         "Aqueous phase salinity concentration");
-
   }
 
   @Test

@@ -232,6 +232,12 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public double getMassBalance() {
+    return getMassBalance("kg/sec");
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public String[][] getResultTable() {
     return null;
   }

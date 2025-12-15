@@ -12,12 +12,20 @@
 	<packaging>jar</packaging>
 	<version>${revision}</version>
 
-	<properties>
-		<revision>3.0.51</revision>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
-	</properties>
+	<scm>
+		<connection>scm:git:https://github.com/equinor/neqsim.git</connection>
+		<developerConnection>scm:git:https://github.com/equinor/neqsim.git</developerConnection>
+		<url>https://github.com/equinor/neqsim</url>
+	</scm>
+
+        <properties>
+                <revision>3.1.5</revision>
+                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+                <checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
+                <skipFlattening>false</skipFlattening>
+                <argLine></argLine>
+        </properties>
 	<licenses>
 		<license>
 			<name>The Apache Software License, Version 2.0</name>
@@ -75,11 +83,11 @@
 			<version>1.2.0</version>
 			<scope>provided</scope>
 		</dependency>
-                <dependency>
-                        <groupId>org.apache.commons</groupId>
-                        <artifactId>commons-lang3</artifactId>
-                        <version>3.19.0</version>
-                </dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.20.0</version>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
@@ -123,12 +131,15 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-yaml</artifactId>
-			<version>2.20.0</version>
+			<version>2.20.1</version>
 		</dependency>
 	</dependencies>
-	<profiles>
-		<profile>
-			<id>release</id>
+        <profiles>
+                <profile>
+                        <id>release</id>
+			<properties>
+				<skipFlattening>true</skipFlattening>
+			</properties>
 			<build>
 				<plugins>
 					<plugin>
@@ -144,7 +155,7 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-source-plugin</artifactId>
-						<version>3.3.1</version>
+						<version>3.4.0</version>
 						<executions>
 							<execution>
 								<id>attach-sources</id>
@@ -220,7 +231,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>3.4.2</version>
+				<version>3.5.0</version>
 				<configuration>
 					<archive>
 						<manifest>
@@ -235,6 +246,8 @@
 				<version>1.7.3</version>
 				<configuration>
 					<updatePomFile>true</updatePomFile>
+					<flattenMode>oss</flattenMode>
+					<skip>${skipFlattening}</skip>
 				</configuration>
 				<executions>
 					<execution>
@@ -263,6 +276,26 @@
 						<goals>
 							<goal>shade</goal>
 						</goals>
+						<configuration>
+							<transformers>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass>neqsim.thermo.util.benchmark.TPflash_benchmark</mainClass>
+								</transformer>
+								<transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+							</transformers>
+							<filters>
+								<filter>
+									<artifact>*:*</artifact>
+									<excludes>
+										<exclude>META-INF/*.SF</exclude>
+										<exclude>META-INF/*.DSA</exclude>
+										<exclude>META-INF/*.RSA</exclude>
+									</excludes>
+								</filter>
+							</filters>
+							<createDependencyReducedPom>true</createDependencyReducedPom>
+							<shadedArtifactAttached>false</shadedArtifactAttached>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
@@ -299,21 +332,79 @@
 					</execution>
 				</executions>
 			</plugin>
+                        <plugin>
+                                <artifactId>maven-surefire-plugin</artifactId>
+                                <version>3.5.4</version>
+                                <configuration>
+                                        <!-- Preserve any Jacoco agent injection (${argLine}) and add required module opens for XStream reflection when running tests on JDK >= 11 -->
+                                        <argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
+                                </configuration>
+                        </plugin>
+                        <plugin>
+                                <artifactId>maven-failsafe-plugin</artifactId>
+                                <version>3.5.4</version>
+                                <configuration>
+                                        <!-- Preserve any Jacoco agent injection (${argLine}) and add required module opens for XStream reflection when running tests on JDK >= 11 -->
+                                        <argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
+                                </configuration>
+                        </plugin>
 			<plugin>
-				<artifactId>maven-surefire-plugin</artifactId>
-				<version>3.5.2</version>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>3.4.0</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>3.6.0</version>
 				<configuration>
-					<!-- Preserve any Jacoco agent injection (${argLine}) and add required module opens for XStream reflection when running tests on JDK >= 17 -->
-					<argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
+					<failsOnError>true</failsOnError>
 				</configuration>
 			</plugin>
 			<plugin>
-				<artifactId>maven-failsafe-plugin</artifactId>
-				<version>3.5.4</version>
+				<groupId>com.github.spotbugs</groupId>
+				<artifactId>spotbugs-maven-plugin</artifactId>
+				<version>4.9.8.2</version>
 				<configuration>
-					<!-- Same opens for integration tests -->
-					<argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
+					<failOnError>false</failOnError>
 				</configuration>
+				<executions>
+					<execution>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-pmd-plugin</artifactId>
+				<version>3.28.0</version>
+				<configuration>
+					<failOnViolation>false</failOnViolation>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>versions-maven-plugin</artifactId>
+				<version>2.20.1</version>
 			</plugin>
 			<plugin>
 				<groupId>org.jacoco</groupId>
@@ -348,83 +439,22 @@
 					</execution>
 				</executions>
 			</plugin>
+		</plugins>
+	</build>
+	<reporting>
+		<plugins>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>3.3.1</version>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<goals>
-							<goal>jar-no-fork</goal>
-						</goals>
-					</execution>
-				</executions>
+				<groupId>org.owasp</groupId>
+				<artifactId>dependency-check-maven</artifactId>
+				<version>12.1.9</version>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>aggregate</report>
+						</reports>
+					</reportSet>
+				</reportSets>
 			</plugin>
-                        <plugin>
-                                <groupId>org.apache.maven.plugins</groupId>
-                                <artifactId>maven-checkstyle-plugin</artifactId>
-                                <version>3.6.0</version>
-                                <configuration>
-                                        <failsOnError>true</failsOnError>
-                                </configuration>
-                        </plugin>
-                        <plugin>
-                                <groupId>com.github.spotbugs</groupId>
-                                <artifactId>spotbugs-maven-plugin</artifactId>
-                                <version>4.9.8.1</version>
-                                <configuration>
-                                        <failOnError>false</failOnError>
-                                </configuration>
-                                <executions>
-                                        <execution>
-                                                <phase>verify</phase>
-                                                <goals>
-                                                        <goal>check</goal>
-                                                </goals>
-                                        </execution>
-                                </executions>
-                        </plugin>
-                        <plugin>
-                                <groupId>org.apache.maven.plugins</groupId>
-                                <artifactId>maven-pmd-plugin</artifactId>
-                                <version>3.28.0</version>
-                                <configuration>
-                                        <failOnViolation>false</failOnViolation>
-                                </configuration>
-                                <executions>
-                                        <execution>
-                                                <phase>verify</phase>
-                                                <goals>
-                                                        <goal>check</goal>
-                                                </goals>
-                                        </execution>
-                                </executions>
-                        </plugin>
-                        <plugin>
-                                <groupId>org.codehaus.mojo</groupId>
-                                <artifactId>versions-maven-plugin</artifactId>
-                                <version>2.19.1</version>
-                        </plugin>
-                        <plugin>
-                                <groupId>org.owasp</groupId>
-                                <artifactId>dependency-check-maven</artifactId>
-                                <version>12.1.3</version>
-                                <executions>
-                                        <execution>
-                                                <goals>
-                                                        <goal>aggregate</goal>
-                                                </goals>
-                                        </execution>
-                                </executions>
-                        </plugin>
-                </plugins>
-        </build>
-	<distributionManagement>
-		<repository>
-			<id>github</id>
-			<name>GitHub Equinor Apache Maven Packages</name>
-			<url>https://maven.pkg.github.com/Equinor/neqsim</url>
-		</repository>
-	</distributionManagement>
+		</plugins>
+	</reporting>
 </project>

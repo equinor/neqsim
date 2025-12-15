@@ -23,8 +23,11 @@ public class AbsorberMechanicalDesign extends SeparatorMechanicalDesign {
 
   /** Wall thickness in mm. */
   private double wallThickness = 0.02;
+  /** Outer diameter of the absorber. */
   private double outerDiameter = 0.0;
+  /** Gas load factor for sizing calculations. */
   double gasLoadFactor = 1.0;
+  /** Volume safety factor for design margin. */
   double volumeSafetyFactor = 1.0;
 
   /**

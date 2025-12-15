@@ -1,6 +1,5 @@
 package neqsim.thermo.system;
 
-import neqsim.thermo.phase.PhasePrEosvolcor;
 import neqsim.thermo.phase.PhaseSrkEosvolcor;
 
 /**

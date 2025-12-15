@@ -25,6 +25,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
 import neqsim.process.mechanicaldesign.separator.demister.DemistingInternal;
 import neqsim.process.mechanicaldesign.separator.primaryseparation.PrimarySeparation;
+import neqsim.process.util.fire.SeparatorFireExposure;
 import neqsim.process.util.monitor.SeparatorResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -178,6 +179,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     liquidVolume = calcLiquidVolume();
     enforceHeadspace();
     setCalculateSteadyState(true);
+    initMechanicalDesign();
   }
 
   /**
@@ -568,7 +570,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         liquidOutStream.getFluid().initPhysicalProperties("density");
       }
     }
-
   }
 
   /**
@@ -876,7 +877,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     } else {
       return 0;
     }
-
   }
 
   /**
@@ -1001,7 +1001,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
     if (level <= 0) {
       return 0;
-
     } else if (level >= internalDiameter) {
       return sepCrossArea;
     }
@@ -1018,9 +1017,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         lArea = circArea - triArea;
         // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n", internalRadius, d,
         // theta, a, lArea);
-
       } else if (level > internalRadius) {
-
         double d = level - internalRadius;
         double theta = Math.acos(d / internalRadius);
         double a = internalRadius * Math.sin(theta);
@@ -1029,18 +1026,14 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         lArea = circArea + triArea;
         // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n", internalRadius, d,
         // theta, a, lArea);
-
       } else {
         lArea = 0.5 * Math.PI * Math.pow(internalRadius, 2);
-
       }
     } else if (orientation.equals("vertical")) {
-
       lArea = sepCrossArea;
     } else {
       lArea = 0;
     }
-
 
     return lArea;
   }
@@ -1057,19 +1050,13 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     double lVolume = 0.0;
 
     if (orientation.equals("horizontal")) {
-
       lVolume = liquidArea(liquidLevel) * separatorLength;
       // System.out.printf("from function: LVL %f Area %f\n", liquidLevel,
       // liquidArea(liquidLevel));
-
     } else if (orientation.equals("vertical")) {
-
       lVolume = sepCrossArea * liquidLevel;
-
     } else {
-
       lVolume = 0;
-
     }
 
     return lVolume;
@@ -1134,6 +1121,107 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       clamped = Math.max(0.0, maxHeight - epsilon);
     }
     return clamped;
+  }
+
+  /**
+   * Calculates the total inner surface area of the separator, including shell and heads.
+   *
+   * @return inner surface area in square meters
+   */
+  public double getInnerSurfaceArea() {
+    if (internalRadius <= 0.0 || separatorLength <= 0.0) {
+      return 0.0;
+    }
+    double shellArea = 2.0 * Math.PI * internalRadius * separatorLength;
+    double headArea = 2.0 * sepCrossArea;
+    return shellArea + headArea;
+  }
+
+  /**
+   * Estimates the wetted inner surface area based on current liquid level and orientation.
+   *
+   * <p>
+   * For horizontal separators, the wetted area uses the circular segment defined by the liquid
+   * level to apportion the cylindrical shell and head areas. For vertical separators, the wetted
+   * area is the side area up to the current level plus the bottom head.
+   *
+   * @return wetted area in square meters
+   */
+  public double getWettedArea() {
+    if (internalRadius <= 0.0 || separatorLength <= 0.0) {
+      return 0.0;
+    }
+
+    if (orientation.equalsIgnoreCase("horizontal")) {
+      double level = clampLiquidHeight(liquidLevel);
+      if (level <= 0.0) {
+        return 0.0;
+      }
+
+      double r = internalRadius;
+      double cappedLevel = Math.min(level, 2.0 * r);
+      double theta = 2.0 * Math.acos((r - cappedLevel) / r); // central angle of liquid segment
+
+      double wettedShellArea = r * theta * separatorLength; // arc length * length
+      double wettedHeadArea = 2.0 * liquidArea(cappedLevel);
+      return wettedShellArea + wettedHeadArea;
+    }
+
+    if (orientation.equalsIgnoreCase("vertical")) {
+      double level = clampLiquidHeight(liquidLevel);
+      if (level <= 0.0) {
+        return 0.0;
+      }
+
+      double wettedShellArea = 2.0 * Math.PI * internalRadius * level;
+      double wettedHeadArea = sepCrossArea; // bottom head is always wetted when level > 0
+      if (level >= separatorLength) {
+        wettedHeadArea += sepCrossArea; // top head becomes wetted when full
+      }
+      return wettedShellArea + wettedHeadArea;
+    }
+
+    return 0.0;
+  }
+
+  /**
+   * Estimates the unwetted (dry) area as the remaining inner area not in contact with liquid.
+   *
+   * @return unwetted area in square meters
+   */
+  public double getUnwettedArea() {
+    double wetted = getWettedArea();
+    double total = getInnerSurfaceArea();
+    if (total <= 0.0) {
+      return 0.0;
+    }
+    return Math.max(total - wetted, 0.0);
+  }
+
+  /**
+   * Evaluates fire exposure using the separator geometry and process conditions.
+   *
+   * @param config fire scenario configuration
+   * @return aggregated fire exposure result
+   */
+  public SeparatorFireExposure.FireExposureResult evaluateFireExposure(
+      SeparatorFireExposure.FireScenarioConfig config) {
+    return SeparatorFireExposure.evaluate(this, config);
+  }
+
+  /**
+   * Evaluates fire exposure using separator geometry and process conditions while accounting for
+   * flare radiation based on the real flaring heat duty.
+   *
+   * @param config fire scenario configuration
+   * @param flare flare supplying heat duty and radiation parameters
+   * @param flareGroundDistanceM horizontal distance from flare base to separator [m]
+   * @return aggregated fire exposure result
+   */
+  public SeparatorFireExposure.FireExposureResult evaluateFireExposure(
+      SeparatorFireExposure.FireScenarioConfig config, neqsim.process.equipment.flare.Flare flare,
+      double flareGroundDistanceM) {
+    return SeparatorFireExposure.evaluate(this, config, flare, flareGroundDistanceM);
   }
 
   /**
@@ -1213,11 +1301,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       }
 
       return clampLiquidHeight(limitedVolume / sepCrossArea);
-
     } else {
-
-      return 0;
-
+      return 0.0;
     }
   }
 
@@ -1346,15 +1431,17 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public double getEntropyProduction(String unit) {
     double entrop = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {
-      inletStreamMixer.getStream(i).getFluid().init(3);
-      entrop += inletStreamMixer.getStream(i).getFluid().getEntropy(unit);
+      if (inletStreamMixer.getStream(i).getFlowRate(unit) > 1e-10) {
+        inletStreamMixer.getStream(i).getFluid().init(3);
+        entrop += inletStreamMixer.getStream(i).getFluid().getEntropy();
+      }
     }
 
     double liquidEntropy = 0.0;
     if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
       try {
         getLiquidOutStream().getThermoSystem().init(3);
-        liquidEntropy = getLiquidOutStream().getThermoSystem().getEntropy(unit);
+        liquidEntropy = getLiquidOutStream().getThermoSystem().getEntropy();
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }
@@ -1363,7 +1450,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     double gasEntropy = 0.0;
     if (thermoSystem.hasPhaseType("gas")) {
       getGasOutStream().getThermoSystem().init(3);
-      gasEntropy = getGasOutStream().getThermoSystem().getEntropy(unit);
+      gasEntropy = getGasOutStream().getThermoSystem().getEntropy();
     }
 
     return liquidEntropy + gasEntropy - entrop;
@@ -1374,20 +1461,28 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public double getMassBalance(String unit) {
     double flow = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {
-      inletStreamMixer.getStream(i).getFluid().init(3);
-      flow += inletStreamMixer.getStream(i).getFluid().getFlowRate(unit);
+      if (inletStreamMixer.getStream(i).getFlowRate(unit) > 1e-10) {
+        inletStreamMixer.getStream(i).getFluid().init(3);
+        flow += inletStreamMixer.getStream(i).getFluid().getFlowRate(unit);
+      }
     }
 
     double liquidFlow = 0.0;
     if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
       getLiquidOutStream().getThermoSystem().init(3);
       liquidFlow = getLiquidOutStream().getThermoSystem().getFlowRate(unit);
+      if (liquidFlow < 1e-10) {
+        liquidFlow = 0.0;
+      }
     }
 
     double gasFlow = 0.0;
     if (thermoSystem.hasPhaseType("gas")) {
       getGasOutStream().getThermoSystem().init(3);
       gasFlow = getGasOutStream().getThermoSystem().getFlowRate(unit);
+      if (gasFlow < 1e-10) {
+        gasFlow = 0.0;
+      }
     }
 
     return liquidFlow + gasFlow - flow;
@@ -1398,8 +1493,10 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public double getExergyChange(String unit, double surroundingTemperature) {
     double exergy = 0.0;
     for (int i = 0; i < numberOfInputStreams; i++) {
-      inletStreamMixer.getStream(i).getFluid().init(3);
-      exergy += inletStreamMixer.getStream(i).getFluid().getExergy(surroundingTemperature, unit);
+      if (inletStreamMixer.getStream(i).getFlowRate(unit) > 1e-10) {
+        inletStreamMixer.getStream(i).getFluid().init(3);
+        exergy += inletStreamMixer.getStream(i).getFluid().getExergy(surroundingTemperature, unit);
+      }
     }
 
     double liquidExergy = 0.0;
@@ -1564,6 +1661,25 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   }
 
   /**
+   * Set heat duty (alias preserved for compatibility with energy-stream style naming).
+   *
+   * @param heatDuty heat duty in watts
+   */
+  public void setDuty(double heatDuty) {
+    setHeatInput(heatDuty);
+  }
+
+  /**
+   * Set heat duty with unit (alias preserved for compatibility with energy-stream style naming).
+   *
+   * @param heatDuty heat duty value
+   * @param unit heat duty unit
+   */
+  public void setDuty(double heatDuty, String unit) {
+    setHeatInput(heatDuty, unit);
+  }
+
+  /**
    * Get heat input in watts.
    *
    * @return heat input in watts
@@ -1617,6 +1733,25 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    */
   public boolean isSetHeatInput() {
     return setHeatInput;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getExergyChange(String unit) {
+    return getExergyChange(unit, 288.15);
+  }
+
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityDuty() {
+    return getGasOutStream().getFlowRate("m3/hr");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityMax() {
+    return getMechanicalDesign().getMaxDesignGassVolumeFlow();
   }
 
   /*

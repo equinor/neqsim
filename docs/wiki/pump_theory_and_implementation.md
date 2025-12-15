@@ -1,381 +1,566 @@
 # Pump Theory and Implementation in NeqSim
 
+## Overview
+
+NeqSim provides comprehensive centrifugal pump simulation through the `Pump` and `PumpChart` classes. The implementation supports:
+
+- Manufacturer pump curves with affinity law scaling
+- Head, efficiency, and NPSH curve interpolation
+- Density correction for non-standard fluids
+- Cavitation detection and operating status monitoring
+- Surge and stonewall detection
+
+Also see [pump usage guide](https://github.com/equinor/neqsim/blob/master/docs/wiki/pump_usage_guide.md).
+
+---
+
 ## Theoretical Background
 
-### 1. Euler Pump Equation
-The fundamental pump equation (Euler equation) relates the head developed by a pump to the change in angular momentum:
+### Affinity Laws (Similarity Laws)
+
+The affinity laws relate pump performance at different speeds:
+
+| Parameter | Relationship |
+|-----------|-------------|
+| Flow | Q₂/Q₁ = N₂/N₁ |
+| Head | H₂/H₁ = (N₂/N₁)² |
+| Power | P₂/P₁ = (N₂/N₁)³ |
+| NPSH | NPSH₂/NPSH₁ = (N₂/N₁)² |
+
+### Hydraulic Power and Efficiency
 
 ```
-H = (u₂·C₂ᵤ - u₁·C₁ᵤ) / g
-```
-
-Where:
-- H = pump head [m]
-- u = blade velocity [m/s]
-- Cᵤ = tangential component of absolute velocity [m/s]
-- g = gravitational acceleration [m/s²]
-
-For centrifugal pumps, this simplifies to a relationship between head, flow rate, and rotational speed.
-
-### 2. Affinity Laws (Similarity Laws)
-The affinity laws relate pump performance at different speeds and impeller sizes:
-
-**Speed variation (same impeller):**
-- Flow: Q₂/Q₁ = N₂/N₁
-- Head: H₂/H₁ = (N₂/N₁)²
-- Power: P₂/P₁ = (N₂/N₁)³
-
-**Diameter variation (same speed):**
-- Flow: Q₂/Q₁ = (D₂/D₁)³
-- Head: H₂/H₁ = (D₂/D₁)²
-- Power: P₂/P₁ = (D₂/D₁)⁵
-
-### 3. Pump Curves
-Pump performance is characterized by curves showing:
-- **Head vs. Flow (H-Q curve)**: Shows head developed at various flow rates
-- **Efficiency vs. Flow (η-Q curve)**: Shows efficiency variation with flow
-- **Power vs. Flow (P-Q curve)**: Shows power consumption with flow
-
-Typical curve characteristics:
-- Head decreases with increasing flow
-- Efficiency has a peak (best efficiency point - BEP)
-- Operating away from BEP reduces efficiency and can cause mechanical issues
-
-### 4. Hydraulic Power and Efficiency
-
-**Hydraulic power:**
-```
-P_hydraulic = ρ·g·Q·H
-```
-
-Where:
-- ρ = fluid density [kg/m³]
-- g = gravitational acceleration [m/s²]
-- Q = volumetric flow rate [m³/s]
-- H = head [m]
-
-**Alternative form using pressure:**
-```
-P_hydraulic = Q·ΔP
-```
-
-**Shaft power:**
-```
+P_hydraulic = ρ·g·Q·H = Q·ΔP
 P_shaft = P_hydraulic / η
 ```
 
-Where η is the pump efficiency (decimal, not percentage).
+### Net Positive Suction Head (NPSH)
 
-**Enthalpy rise:**
-```
-ΔH = P_shaft / ṁ = (Q·ΔP) / (ρ·Q·η) = ΔP / (ρ·η)
-```
-
-### 5. Net Positive Suction Head (NPSH)
-
-**NPSH Available (NPSHₐ):**
 ```
 NPSHₐ = (P_suction - P_vapor) / (ρ·g) + v²/(2g)
 ```
 
-**NPSH Required (NPSHᵣ):**
-- Provided by pump manufacturer
-- Function of flow rate and pump design
-- Must satisfy: NPSHₐ > NPSHᵣ (typically NPSHₐ ≥ 1.3·NPSHᵣ)
+Cavitation occurs when NPSHₐ < NPSHᵣ. A safety margin of 1.3× is typically required.
 
-Insufficient NPSH leads to cavitation, causing:
-- Performance degradation
-- Noise and vibration
-- Mechanical damage
+### Density Correction
 
-### 6. Operating Limits
+Pump curves measured with water require correction for other fluids:
 
-**Surge condition:**
-- Occurs at low flow rates
-- Characterized by flow reversal and instability
-- Identified by positive slope in H-Q curve (dH/dQ > 0)
-
-**Stonewall condition:**
-- Occurs at high flow rates
-- Maximum achievable flow limited by sonic velocity
-- Characterized by steep drop in efficiency
-
----
-
-## Current Implementation Issues
-
-### Issue 1: Inconsistent Head Unit Handling
-
-**Location:** `Pump.java`, lines 148-160
-
-**Problem:**
-```java
-if (getPumpChart().getHeadUnit().equals("meter")) {
-  deltaP = pumpHead * 1000.0 * ThermodynamicConstantsInterface.gravity / 1.0E5;
-} else {
-  double rho = inStream.getThermoSystem().getDensity("kg/m3");
-  deltaP = pumpHead * rho * 1000.0 / 1.0E5;
-}
 ```
-
-**Issues:**
-1. When headUnit = "meter", the conversion formula is incorrect:
-   - Should be: ΔP [Pa] = H [m] × ρ [kg/m³] × g [m/s²]
-   - Current: ΔP [bar] = H [m] × 1000 × g / 1.0E5
-   - The factor of 1000 suggests confusion between units
-   - Missing density term!
-
-2. When headUnit = "kJ/kg" (specific energy):
-   - Formula deltaP = pumpHead × ρ × 1000 / 1.0E5 is dimensionally incorrect
-   - kJ/kg is already specific energy (J/kg)
-   - Should be: ΔP [Pa] = specific_energy [J/kg] × ρ [kg/m³]
-
-**Correct formulas:**
-```java
-// For head in meters
-ΔP [Pa] = H [m] × ρ [kg/m³] × g [m/s²]
-
-// For specific energy in kJ/kg
-ΔP [Pa] = E [kJ/kg] × 1000 × ρ [kg/m³]
-
-// Or equivalently using pressure-enthalpy relationship
-ΔH [J/kg] = ΔP [Pa] / (ρ [kg/m³] × η)
-```
-
-### Issue 2: Efficiency Calculation Error
-
-**Location:** `Pump.java`, lines 155-158
-
-**Problem:**
-```java
-double dH = thermoSystem.getFlowRate("kg/sec") / thermoSystem.getDensity("kg/m3")
-    * (thermoSystem.getPressure("Pa") - inStream.getThermoSystem().getPressure("Pa"))
-    / (isentropicEfficiency / 100.0);
-```
-
-**Issues:**
-1. Division by `(isentropicEfficiency / 100.0)` assumes efficiency is stored as percentage
-2. But from pump chart: `getEfficiency()` already returns percentage
-3. This causes efficiency to be divided by 100 twice effectively
-4. Results in much higher power consumption than actual
-
-**Analysis of units:**
-```
-dH = (kg/s) / (kg/m³) × Pa / (η/100)
-   = m³/s × Pa / (η/100)
-   = W / (η/100)
-   = W × 100/η  <- Wrong! Should be W/η
-```
-
-**Correct approach:**
-```java
-// If efficiency is in percentage (0-100)
-double eta_decimal = isentropicEfficiency / 100.0;
-double dH = volumetricFlow * deltaP / eta_decimal;
-
-// Or if efficiency is already decimal (0-1)
-double dH = volumetricFlow * deltaP / isentropicEfficiency;
-```
-
-### Issue 3: Missing Density Correction
-
-**Problem:** Pump curves are typically measured with water at standard conditions. When pumping different fluids, corrections are needed.
-
-**Required correction:**
-```
-H_actual = H_chart × (ρ_chart / ρ_actual)  // For head in meters
-```
-
-This is not implemented in the current code.
-
-### Issue 4: Incomplete Affinity Law Implementation
-
-**Location:** `PumpChart.java`, lines 100-102, 119-121
-
-**Current implementation:**
-```java
-redflow[i][j] = flow[i][j] / speed[i];
-redEfficiency[i][j] = efficiency[i][j];
-redhead[i][j] = head[i][j] / speed[i] / speed[i];
-```
-
-**Issues:**
-1. Reduced variables are correctly calculated
-2. However, efficiency correction for speed changes is missing
-3. Fan law correction fitting is started but not fully utilized
-4. No validation that operating point is within valid range
-
-**Theory:** Efficiency typically varies slightly with speed:
-```
-η₂ ≈ η₁ - C × |N₂/N₁ - 1|
-```
-
-### Issue 5: Missing NPSH Calculations
-
-**Problem:** No NPSH checks are implemented, which means:
-- Cannot predict cavitation
-- Cannot determine minimum suction pressure
-- No warning when operating conditions may damage pump
-
-**Required additions:**
-- Calculate NPSHₐ from suction conditions
-- Read/interpolate NPSHᵣ from pump data
-- Warn when NPSHₐ < 1.3 × NPSHᵣ
-
-### Issue 6: Limited Surge and Stonewall Detection
-
-**Location:** `PumpChart.java`, lines 219-235
-
-**Current implementation:**
-```java
-public boolean checkSurge1(double flow, double head) {
-  double derivative = reducedHeadFitterFunc.polynomialDerivative().value(flow / referenceSpeed);
-  return derivative > 0.0;
-}
-```
-
-**Issues:**
-1. Surge check uses derivative but doesn't properly identify surge line
-2. No protection mechanism (e.g., minimum flow recirculation)
-3. Stonewall check only compares to maxFlow, doesn't check efficiency degradation
-4. No warnings logged during operation
-
-### Issue 7: Power Calculation Inconsistency
-
-**Location:** `Pump.java`, line 161
-
-**Problem:**
-When using pump charts, the code doesn't use the fitted curves to calculate power. Instead, it recalculates from pressure rise, which may not match the manufacturer's power curve.
-
-**Better approach:**
-Add power curve to pump chart and use it directly, or calculate from:
-```
-P_shaft = ρ × g × Q × H / η
+H_actual = H_chart × (ρ_chart / ρ_actual)
 ```
 
 ---
 
-## Recommended Improvements
+## Implementation
 
-### 1. Fix Head and Pressure Calculations
+### Class Structure
 
-Implement proper unit handling:
-```java
-double deltaP_Pa; // Pressure rise in Pa
-double densityInlet = inStream.getThermoSystem().getDensity("kg/m3");
-
-if (getPumpChart().getHeadUnit().equals("meter")) {
-  // Head in meters: ΔP = ρ·g·H
-  deltaP_Pa = pumpHead * densityInlet * ThermodynamicConstantsInterface.gravity;
-} else if (getPumpChart().getHeadUnit().equals("kJ/kg")) {
-  // Specific energy: ΔP = E·ρ
-  deltaP_Pa = pumpHead * 1000.0 * densityInlet; // Convert kJ to J
-} else {
-  throw new RuntimeException("Unsupported head unit: " + getPumpChart().getHeadUnit());
-}
-
-// Convert to bara for system
-double deltaP_bar = deltaP_Pa / 1.0e5;
-thermoSystem.setPressure(inStream.getPressure() + deltaP_bar);
+```
+Pump (PumpInterface)
+├── PumpChart (PumpChartInterface)
+│   ├── PumpCurve (individual speed curves)
+│   └── PumpChartAlternativeMapLookupExtrapolate (alternative implementation)
+└── PumpMechanicalDesign
 ```
 
-### 2. Fix Efficiency Handling
+### Key Classes
 
-Standardize efficiency as percentage in storage, decimal in calculations:
+| Class | Purpose |
+|-------|---------|
+| `Pump` | Main pump equipment model |
+| `PumpChart` | Performance curve management |
+| `PumpChartInterface` | Interface for pump chart implementations |
+
+---
+
+## Usage Guide
+
+### Basic Pump Setup
+
 ```java
-// Get efficiency as percentage from chart
-double efficiencyPercent = getPumpChart().getEfficiency(flow_m3hr, speed);
-double efficiencyDecimal = efficiencyPercent / 100.0;
+// Create fluid and stream
+SystemInterface fluid = new SystemSrkEos(298.15, 2.0);
+fluid.addComponent("water", 1.0);
+Stream feedStream = new Stream("Feed", fluid);
+feedStream.run();
 
-// Calculate hydraulic power
-double volumetricFlow = thermoSystem.getFlowRate("kg/sec") / densityInlet; // m³/s
-double hydraulicPower = volumetricFlow * deltaP_Pa; // W
+// Create pump with outlet pressure
+Pump pump = new Pump("MainPump", feedStream);
+pump.setOutletPressure(10.0, "bara");
+pump.setIsentropicEfficiency(0.75);
+pump.run();
 
-// Calculate shaft power (with losses)
-double shaftPower = hydraulicPower / efficiencyDecimal; // W
-
-// Calculate enthalpy rise
-double dH = shaftPower; // Already in W = J/s
+System.out.println("Power: " + pump.getPower("kW") + " kW");
+System.out.println("Outlet T: " + pump.getOutletTemperature() + " K");
 ```
 
-### 3. Add NPSH Calculations
+### Using Pump Curves
 
 ```java
-public double getNPSHAvailable() {
-  double P_suction = inStream.getPressure("Pa");
-  double P_vapor = inStream.getThermoSystem().getPhase(0).getPressure("Pa"); // Vapor pressure
-  double rho = inStream.getThermoSystem().getDensity("kg/m3");
-  double velocity = inStream.getVelocity(); // m/s
-  
-  return (P_suction - P_vapor) / (rho * ThermodynamicConstantsInterface.gravity)
-         + velocity * velocity / (2.0 * ThermodynamicConstantsInterface.gravity);
-}
+// Define pump curves at multiple speeds
+double[] speed = {1000.0, 1500.0};
+double[][] flow = {
+    {10, 20, 30, 40, 50},      // m³/hr at 1000 rpm
+    {15, 30, 45, 60, 75}       // m³/hr at 1500 rpm
+};
+double[][] head = {
+    {120, 115, 108, 98, 85},   // meters at 1000 rpm
+    {270, 259, 243, 220, 191}  // meters at 1500 rpm
+};
+double[][] efficiency = {
+    {65, 75, 82, 80, 72},      // % at 1000 rpm
+    {67, 77, 84, 82, 74}       // % at 1500 rpm
+};
 
-public boolean checkCavitation() {
-  double NPSHa = getNPSHAvailable();
-  double NPSHr = getNPSHRequired(flow, speed); // From pump data
-  return NPSHa < 1.3 * NPSHr;
+// chartConditions: [refMW, refTemp, refPressure, refZ, refDensity]
+double[] chartConditions = {18.0, 298.15, 1.0, 1.0, 998.0};
+
+Pump pump = new Pump("ChartPump", feedStream);
+pump.getPumpChart().setCurves(chartConditions, speed, flow, head, efficiency);
+pump.getPumpChart().setHeadUnit("meter");
+pump.setSpeed(1200.0);
+pump.run();
+```
+
+### Density Correction
+
+When pumping fluids with different density than the chart test fluid:
+
+```java
+// Option 1: Set via chartConditions (5th element)
+double[] chartConditions = {18.0, 298.15, 1.0, 1.0, 998.0}; // 998 kg/m³ reference
+pump.getPumpChart().setCurves(chartConditions, speed, flow, head, efficiency);
+
+// Option 2: Set directly
+pump.getPumpChart().setReferenceDensity(998.0);
+
+// Check if correction is active
+if (pump.getPumpChart().hasDensityCorrection()) {
+    double correctedHead = pump.getPumpChart().getCorrectedHead(flow, speed, actualDensity);
 }
 ```
 
-### 4. Improve Curve Fitting and Extrapolation
-
-- Add polynomial order selection based on data quality
-- Implement rational function fitting for better extrapolation
-- Add confidence intervals for extrapolated values
-- Warn when operating outside measured range
-
-### 5. Add Operating Envelope Validation
+### NPSH Monitoring
 
 ```java
-public PumpOperatingStatus getOperatingStatus(double flow, double speed) {
-  if (checkSurge2(flow, speed)) {
-    return PumpOperatingStatus.SURGE;
-  }
-  if (checkStoneWall(flow, speed)) {
-    return PumpOperatingStatus.STONEWALL;
-  }
-  double efficiency = getEfficiency(flow, speed);
-  if (efficiency < 0.5 * maxEfficiency) {
-    return PumpOperatingStatus.LOW_EFFICIENCY;
-  }
-  return PumpOperatingStatus.NORMAL;
-}
+// Enable NPSH checking
+pump.setCheckNPSH(true);
+pump.setNPSHMargin(1.3);  // Safety factor
+
+// Check cavitation risk
+double npshAvailable = pump.getNPSHAvailable();
+double npshRequired = pump.getNPSHRequired();
+boolean cavitating = pump.isCavitating();
+
+// Set NPSH curve from manufacturer data
+double[][] npshCurve = {
+    {2.0, 2.5, 3.2, 4.0, 5.2},  // NPSHr at 1000 rpm
+    {4.5, 5.6, 7.2, 9.0, 11.7}  // NPSHr at 1500 rpm
+};
+pump.getPumpChart().setNPSHCurve(npshCurve);
 ```
 
-### 6. Add Pump Specific Speed Calculation
+### Operating Status Monitoring
 
 ```java
-public double getSpecificSpeed() {
-  // Ns = N·√Q / H^(3/4)
-  // Used to classify pump type and check design consistency
-  double Q_BEP = getBestEfficiencyFlowRate();
-  double H_BEP = getHead(Q_BEP, referenceSpeed);
-  return referenceSpeed * Math.sqrt(Q_BEP) / Math.pow(H_BEP, 0.75);
-}
+// Check operating status
+String status = pump.getPumpChart().getOperatingStatus(flowRate, speed);
+// Returns: "OPTIMAL", "NORMAL", "LOW_EFFICIENCY", "SURGE", or "STONEWALL"
+
+// Check specific conditions
+boolean surging = pump.getPumpChart().checkSurge2(flowRate, speed);
+boolean stonewall = pump.getPumpChart().checkStoneWall(flowRate, speed);
+
+// Get best efficiency point
+double bepFlow = pump.getPumpChart().getBestEfficiencyFlowRate();
+double specificSpeed = pump.getPumpChart().getSpecificSpeed();
 ```
 
 ---
 
-## Testing Requirements
+## Complete Example: Pump with Suction System (Python)
 
-### Unit Tests Needed
+This example demonstrates a realistic pump system with:
+- Feed from an upstream separator
+- Control valve at separator outlet
+- Suction pipeline with elevation (static head)
+- Pump with manufacturer curves and NPSH monitoring
 
-1. **Affinity Law Tests**: Verify Q, H, P scale correctly with speed
-2. **Head Conversion Tests**: Test meter ↔ kJ/kg conversions with different fluids
-3. **Efficiency Tests**: Verify power calculations match theory
-4. **NPSH Tests**: Test cavitation detection with various fluids
-5. **Curve Fitting Tests**: Verify polynomial fits match input data
-6. **Extrapolation Tests**: Test behavior outside measured range
-7. **Surge Detection Tests**: Verify surge line identification
-8. **Multi-fluid Tests**: Test with water, hydrocarbons, and mixtures
+```python
+import neqsim
 
-### Integration Tests Needed
+# Get feed stream from upstream process (e.g., oil from separator)
+pump_feed = oseberg_process.get('main process').getUnit('3RD stage separator').getOilOutStream()
 
-1. Test pump in process system with recycles
-2. Test with compressor (similar equations)
-3. Test with varying inlet conditions
-4. Test transient behavior (startup, shutdown)
+# === Separator Outlet Control Valve ===
+# Controls flow from separator to pump suction
+separatorValve = neqsim.process.equipment.valve.ThrottlingValve("SeparatorOutletValve", pump_feed)
+separatorValve.setCv(200)                   # Valve Cv (flow coefficient in US gpm/psi^0.5)
+separatorValve.setPercentValveOpening(80)   # 80% open - allows for control margin
+separatorValve.setIsCalcOutPressure(True)   # Calculate outlet pressure from Cv
+separatorValve.run()
+
+# === Suction Pipeline ===
+# Models pressure drop and elevation effects on NPSH
+suctionLine = neqsim.process.equipment.pipeline.PipeBeggsAndBrills("SuctionLine", separatorValve.getOutletStream())
+suctionLine.setLength(20.0)              # Pipe length in meters
+suctionLine.setDiameter(0.2)             # Pipe inner diameter in meters
+suctionLine.setPipeWallRoughness(1.0e-5) # Internal roughness in meters
+suctionLine.setElevation(-20)            # Negative = pump is 20m below separator (adds static head)
+suctionLine.run()
+
+# === Centrifugal Pump ===
+pump1 = neqsim.process.equipment.pump.Pump('oil pump', suctionLine.getOutStream())
+pump1.setOutletPressure(60.0, 'bara')    # Target discharge pressure
+
+# Enable NPSH monitoring with 1.3x safety margin
+pump1.setCheckNPSH(True)
+pump1.setNPSHMargin(1.3)
+
+# Define manufacturer pump curves (single speed)
+speed = [3259]                           # rpm
+flow = [[1, 50, 70, 130]]               # m³/hr
+head = [[250, 240, 230, 180]]           # meters
+eff = [[5, 40, 50, 52]]                 # efficiency %
+
+# NPSHr curve (meters) - must match flow array dimensions
+npsh = [[2.0, 4.3, 6.0, 8.0]]
+
+# Configure pump chart
+pump1.getPumpChart().setCurves([], speed, flow, head, eff)
+pump1.getPumpChart().setNPSHCurve(npsh)
+pump1.getPumpChart().setHeadUnit("meter")
+pump1.setSpeed(3259)
+
+pump1.run()
+
+# === Results ===
+print("=== Pump & Suction Line Results ===")
+print(f"Flow rate (m3/hr): {pump_feed.getFlowRate('idSm3/hr'):.2f}")
+print(f"Separator outlet pressure (bara): {pump_feed.getPressure('bara'):.2f}")
+print(f"Pump inlet pressure (bara): {pump1.getInletPressure():.2f}")
+print(f"Pump outlet pressure (bara): {pump1.getOutletPressure():.2f}")
+print(f"Pump head (m): {pump1.getPumpChart().getHead(pump_feed.getFlowRate('m3/hr'), 3259):.1f}")
+print(f"Pump efficiency (%): {pump1.getPumpChart().getEfficiency(pump_feed.getFlowRate('m3/hr'), 3259):.1f}")
+print(f"Pump NPSHa (meter): {pump1.getNPSHAvailable():.2f}")
+print(f"Pump NPSHr (meter): {pump1.getNPSHRequired():.2f}")
+print(f"Pump power (kW): {pump1.getPower('kW'):.1f}")
+print(f"Cavitation risk: {'YES - INCREASE SUCTION PRESSURE' if pump1.isCavitating() else 'NO'}")
+```
+
+### Key Points
+
+1. **Suction System Design**: The suction line elevation affects NPSHₐ. Negative elevation (pump below source) adds static head, improving NPSH margin.
+
+2. **Control Valve Sizing**: The Cv value determines pressure drop at the given flow. Use `setIsCalcOutPressure(True)` to calculate outlet pressure from Cv.
+
+3. **NPSH Monitoring**: Enable with `setCheckNPSH(True)`. The pump calculates:
+   - **NPSHₐ** from suction conditions (pressure, temperature, vapor pressure)
+   - **NPSHᵣ** from the manufacturer curve (interpolated at operating flow)
+   - Warns if NPSHₐ < margin × NPSHᵣ
+
+4. **Pump Curves**: The `setCurves()` method accepts:
+   - Empty array `[]` for chartConditions (or include reference density as 5th element)
+   - Speed array (can be single or multiple speeds)
+   - 2D arrays for flow, head, efficiency (one row per speed)
+
+5. **NPSH Curve**: Must be set separately via `setNPSHCurve()` with same dimensions as flow array.
+
+---
+
+## API Reference
+
+### Pump Class
+
+#### Key Methods
+
+| Method | Description |
+|--------|-------------|
+| `setOutletPressure(double, String)` | Set target outlet pressure |
+| `setIsentropicEfficiency(double)` | Set pump efficiency (0-1) |
+| `setSpeed(double)` | Set pump speed in rpm |
+| `getPower()` | Get shaft power in watts |
+| `getPower(String)` | Get power in specified unit |
+| `getNPSHAvailable()` | Calculate available NPSH in meters |
+| `getNPSHRequired()` | Get required NPSH from chart or estimate |
+| `isCavitating()` | Check if pump is at cavitation risk |
+| `setCheckNPSH(boolean)` | Enable/disable NPSH monitoring |
+| `getPumpChart()` | Get the pump chart object |
+
+### PumpChart Class
+
+#### Curve Setup Methods
+
+| Method | Description |
+|--------|-------------|
+| `setCurves(double[], double[], double[][], double[][], double[][])` | Set complete pump curves |
+| `setHeadUnit(String)` | Set head unit: "meter" or "kJ/kg" |
+| `setNPSHCurve(double[][])` | Set NPSH required curves |
+| `setReferenceDensity(double)` | Set reference density for correction |
+
+#### Performance Query Methods
+
+| Method | Description |
+|--------|-------------|
+| `getHead(double, double)` | Get head at flow and speed |
+| `getCorrectedHead(double, double, double)` | Get density-corrected head |
+| `getEfficiency(double, double)` | Get efficiency at flow and speed |
+| `getNPSHRequired(double, double)` | Get NPSH required at flow and speed |
+| `getSpeed(double, double)` | Calculate speed for given flow and head |
+
+#### Monitoring Methods
+
+| Method | Description |
+|--------|-------------|
+| `getOperatingStatus(double, double)` | Get operating status string |
+| `checkSurge2(double, double)` | Check if in surge condition |
+| `checkStoneWall(double, double)` | Check if at stonewall |
+| `getBestEfficiencyFlowRate()` | Get flow at BEP |
+| `getSpecificSpeed()` | Calculate pump specific speed |
+| `hasDensityCorrection()` | Check if density correction is active |
+| `hasNPSHCurve()` | Check if NPSH curve is available |
+
+---
+
+## Chart Conditions Array
+
+The `chartConditions` array passed to `setCurves()` contains reference conditions:
+
+| Index | Parameter | Unit | Description |
+|-------|-----------|------|-------------|
+| 0 | refMW | kg/kmol | Reference molecular weight |
+| 1 | refTemperature | K | Reference temperature |
+| 2 | refPressure | bara | Reference pressure |
+| 3 | refZ | - | Reference compressibility |
+| 4 | refDensity | kg/m³ | Reference fluid density (optional) |
+
+**Note:** Element [4] is optional for backward compatibility. If omitted, no density correction is applied.
+
+---
+
+## Viscosity Correction (Heavy Oil / Viscous Fluids)
+
+Pump performance is significantly affected by fluid viscosity. Curves measured with water or light oil require correction when pumping viscous fluids like heavy crude oil.
+
+### Hydraulic Institute (HI) Method
+
+NeqSim implements the Hydraulic Institute viscosity correction method for centrifugal pumps. The correction uses the B parameter:
+
+```
+B = 26.6 × ν^0.5 × H^0.0625 / (Q^0.375 × N^0.25)
+```
+
+Where:
+- ν = kinematic viscosity (cSt)
+- H = head at BEP (meters)
+- Q = flow at BEP (m³/hr)
+- N = speed (rpm)
+
+### Correction Factors
+
+| Parameter | Factor | Description |
+|-----------|--------|-------------|
+| Flow | Cq | Q_viscous = Q_water × Cq |
+| Head | Ch | H_viscous = H_water × Ch |
+| Efficiency | Cη | η_viscous = η_water × Cη |
+
+**Valid range:** 4 - 4000 cSt (below 4 cSt, water properties assumed)
+
+### Usage Example (Java)
+
+```java
+// Create pump with chart
+Pump pump = new Pump("ViscousPump", feedStream);
+pump.getPumpChart().setCurves(chartConditions, speed, flow, head, efficiency);
+
+// Enable viscosity correction
+pump.getPumpChart().setReferenceViscosity(1.0);       // Chart measured with water (1 cSt)
+pump.getPumpChart().setUseViscosityCorrection(true);  // Enable correction
+
+// Set pump parameters
+pump.getPumpChart().setReferenceFlow(100.0);          // BEP flow (m³/hr)
+pump.getPumpChart().setReferenceHead(100.0);          // BEP head (meters)
+pump.getPumpChart().setReferenceSpeed(1500.0);        // Reference speed (rpm)
+
+pump.run();
+
+// Check applied corrections
+System.out.println("Flow correction factor Cq: " + pump.getPumpChart().getFlowCorrectionFactor());
+System.out.println("Head correction factor Ch: " + pump.getPumpChart().getHeadCorrectionFactor());
+System.out.println("Efficiency correction Cη: " + pump.getPumpChart().getEfficiencyCorrectionFactor());
+```
+
+### Usage Example (Python)
+
+```python
+import neqsim
+from neqsim.process import stream, pump
+
+# Create stream with viscous oil
+oil = neqsim.thermo.system.SystemSrkEos(323.15, 5.0)
+oil.addComponent("nC20", 1.0)  # Heavy hydrocarbon
+oil.setMixingRule("classic")
+
+feed = stream.stream("ViscousOilFeed", oil)
+feed.setFlowRate(100.0, "kg/hr")
+feed.run()
+
+# Create pump with viscosity correction
+viscous_pump = pump.pump("OilBooster", feed)
+viscous_pump.getPumpChart().setReferenceViscosity(1.0)
+viscous_pump.getPumpChart().setUseViscosityCorrection(True)
+viscous_pump.setOutletPressure(10.0, "bara")
+viscous_pump.run()
+
+print(f"Actual viscosity: {feed.getFluid().getKinematicViscosity('cSt'):.1f} cSt")
+print(f"Head correction: {viscous_pump.getPumpChart().getHeadCorrectionFactor():.3f}")
+print(f"Efficiency correction: {viscous_pump.getPumpChart().getEfficiencyCorrectionFactor():.3f}")
+```
+
+---
+
+## ESP Pump (Electric Submersible Pump)
+
+The `ESPPump` class extends `Pump` for handling multiphase gas-liquid flows commonly encountered in oil well production.
+
+### Key Features
+
+- Multi-stage impeller design
+- Gas Void Fraction (GVF) calculation at pump inlet
+- Head degradation model for gassy conditions
+- Gas separator modeling
+- Surge and gas lock detection
+
+### GVF Degradation Model
+
+Head degradation follows a quadratic relationship:
+
+```
+f = 1 - A × GVF - B × GVF²
+```
+
+Where default coefficients are: A = 0.5, B = 2.0
+
+### Operating Limits
+
+| Condition | Default Threshold | Description |
+|-----------|------------------|-------------|
+| Surging | GVF > 15% | Unstable operation begins |
+| Gas Lock | GVF > 30% | Pump loses prime, flow stops |
+
+### Usage Example (Java)
+
+```java
+// Create multiphase stream (gas + liquid)
+SystemInterface fluid = new SystemSrkEos(323.15, 30.0);
+fluid.addComponent("methane", 0.05);     // 5% gas
+fluid.addComponent("n-heptane", 0.95);   // 95% liquid
+fluid.setMixingRule("classic");
+fluid.setMultiPhaseCheck(true);
+
+Stream wellStream = new Stream("WellProduction", fluid);
+wellStream.setFlowRate(1000.0, "kg/hr");
+wellStream.run();
+
+// Create ESP pump
+ESPPump esp = new ESPPump("ESP-1", wellStream);
+esp.setNumberOfStages(100);           // 100-stage pump
+esp.setHeadPerStage(10.0);            // 10 m head per stage
+
+// Configure GVF handling
+esp.setMaxGVF(0.30);                  // 30% max GVF before gas lock
+esp.setSurgingGVF(0.15);              // 15% - surging onset
+esp.setHasGasSeparator(true);         // Include rotary gas separator
+esp.setGasSeparatorEfficiency(0.60);  // 60% gas separation
+
+esp.run();
+
+// Check operating status
+System.out.println("GVF at inlet: " + (esp.getGasVoidFraction() * 100) + "%");
+System.out.println("Head degradation: " + (1 - esp.getHeadDegradationFactor()) * 100 + "% loss");
+System.out.println("Surging: " + esp.isSurging());
+System.out.println("Gas locked: " + esp.isGasLocked());
+System.out.println("Pressure boost: " + (esp.getOutletPressure() - esp.getInletPressure()) + " bara");
+```
+
+### Usage Example (Python)
+
+```python
+import neqsim
+from neqsim.thermo.system import SystemSrkEos
+from neqsim.process.equipment.pump import ESPPump
+
+# Create multiphase well fluid
+well_fluid = SystemSrkEos(353.15, 25.0)
+well_fluid.addComponent("methane", 0.08)
+well_fluid.addComponent("n-heptane", 0.92)
+well_fluid.setMixingRule("classic")
+well_fluid.setMultiPhaseCheck(True)
+
+well_stream = neqsim.process.stream.stream("WellStream", well_fluid)
+well_stream.setFlowRate(2000.0, "kg/hr")
+well_stream.run()
+
+# Create and configure ESP
+esp = ESPPump("ESP-1", well_stream)
+esp.setNumberOfStages(80)
+esp.setHeadPerStage(12.0)
+esp.setMaxGVF(0.25)
+esp.setHasGasSeparator(True)
+esp.setGasSeparatorEfficiency(0.70)
+esp.run()
+
+# Monitor performance
+print(f"Inlet GVF: {esp.getGasVoidFraction()*100:.1f}%")
+print(f"Head degradation factor: {esp.getHeadDegradationFactor():.3f}")
+print(f"Effective head: {esp.calculateTotalHead():.1f} m")
+print(f"Is surging: {esp.isSurging()}")
+```
+
+### ESPPump API Reference
+
+| Method | Description |
+|--------|-------------|
+| `setNumberOfStages(int)` | Set number of impeller stages |
+| `setHeadPerStage(double)` | Set head per stage (meters) |
+| `setMaxGVF(double)` | Set gas lock threshold (0-1) |
+| `setSurgingGVF(double)` | Set surging onset threshold (0-1) |
+| `setHasGasSeparator(boolean)` | Enable rotary gas separator |
+| `setGasSeparatorEfficiency(double)` | Set separator efficiency (0-1) |
+| `getGasVoidFraction()` | Get calculated inlet GVF |
+| `getHeadDegradationFactor()` | Get head degradation (0-1) |
+| `isSurging()` | Check if pump is surging |
+| `isGasLocked()` | Check if pump has lost prime |
+| `calculateTotalHead()` | Get total developed head |
+
+---
+
+## Head Unit Options
+
+| Unit | Description | Pressure Calculation |
+|------|-------------|---------------------|
+| `"meter"` | Meters of fluid | ΔP = ρ·g·H |
+| `"kJ/kg"` | Specific energy | ΔP = E·ρ·1000 |
+
+---
+
+## Test Coverage
+
+The pump implementation includes comprehensive tests:
+
+| Test Class | Tests | Coverage |
+|------------|-------|----------|
+| `PumpTest` | 3 | Basic pump operations |
+| `PumpChartTest` | 3 | Curve interpolation |
+| `PumpAffinityLawTest` | 6 | Affinity law scaling |
+| `PumpNPSHTest` | 8 | Cavitation detection |
+| `PumpNPSHCurveTest` | 12 | NPSH curve handling |
+| `PumpDensityCorrectionTest` | 7 | Density correction |
+| `PumpViscosityCorrectionTest` | 12 | HI viscosity correction method |
+| `ESPPumpTest` | 12 | ESP multiphase handling |
+
+**Total: 63 tests**
 
 ---
 
@@ -385,4 +570,3 @@ public double getSpecificSpeed() {
 2. Pump Handbook, Igor J. Karassik, McGraw-Hill
 3. API 610 - Centrifugal Pumps for Petroleum, Petrochemical and Natural Gas Industries
 4. ISO 9906 - Rotodynamic pumps - Hydraulic performance acceptance tests
-5. Affinity Laws: https://en.wikipedia.org/wiki/Affinity_laws

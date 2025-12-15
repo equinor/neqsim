@@ -258,9 +258,6 @@ public class CompressorChartKhader2015Test {
             "PolyEff mismatch at curve " + i + ", point " + j);
       }
     }
-
-
-
   }
 
   @Test
@@ -516,5 +513,4 @@ public class CompressorChartKhader2015Test {
     Assertions.assertTrue(distanceToStoneWall > 0,
         "Distance to stone wall should be positive (stone wall above current flow)");
   }
-
 }

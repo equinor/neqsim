@@ -35,14 +35,14 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
   static {
     // Example: these entries must match how your components are named
     // in the phase, and use the correct c0..c4 from your table:
-    saltParameters.put("NaCl", new double[] {-0.00433, 0.06471, 1.0166, 0.014624, 3315.6});
-    saltParameters.put("KCl", new double[] {-0.46782, 4.308, 2.378, 0.022044, 2714.0});
-    saltParameters.put("NaBr", new double[] {109.77, 513.04, 1.5454, 0.011019, 1618.1});
-    saltParameters.put("CaCl2", new double[] {-0.63254, 0.93995, 4.2785, 0.048319, 3180.9});
-    saltParameters.put("HCOONa", new double[] {0.72701, 5.2872, 1.2768, 0.012640, 2554.3});
-    saltParameters.put("HCOOK", new double[] {13.500, 5.6764, 0.12357, 0.0055267, 2181.9});
-    saltParameters.put("KBr", new double[] {-0.0034507, 0.41086, 3.0836, 0.037482, 3202.1});
-    saltParameters.put("HCOOCs", new double[] {30.138, 8.7212, 0.094231, 0.0063516, 2139.9});
+    saltParameters.put("nacl", new double[] {-0.00433, 0.06471, 1.0166, 0.014624, 3315.6});
+    saltParameters.put("kcl", new double[] {-0.46782, 4.308, 2.378, 0.022044, 2714.0});
+    saltParameters.put("nabr", new double[] {109.77, 513.04, 1.5454, 0.011019, 1618.1});
+    saltParameters.put("cacl2", new double[] {-0.63254, 0.93995, 4.2785, 0.048319, 3180.9});
+    saltParameters.put("hcoona", new double[] {0.72701, 5.2872, 1.2768, 0.012640, 2554.3});
+    saltParameters.put("hcook", new double[] {13.500, 5.6764, 0.12357, 0.0055267, 2181.9});
+    saltParameters.put("kbr", new double[] {-0.0034507, 0.41086, 3.0836, 0.037482, 3202.1});
+    saltParameters.put("hcoocs", new double[] {30.138, 8.7212, 0.094231, 0.0063516, 2139.9});
   }
 
   /**
@@ -106,10 +106,19 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
       }
     }
 
-    // Partial volume from water:
-    double sumPartialVolumes = wH2O / rhoWater; // [m^3/kg of mixture]
+    double pressureBar = liquidPhase.getPhase().getPressure();
 
-    // 3) Now compute partial volumes of salts
+    // Partial volume contributions from all components in the aqueous phase.
+    double sumPartialVolumes = 0.0; // [m^3/kg of mixture]
+
+    // Water contribution (if present)
+    if (wH2O > 1.0e-12) {
+      sumPartialVolumes += wH2O / rhoWater;
+    }
+
+    boolean hasComponentContribution = sumPartialVolumes > 0.0;
+
+    // 3) Now compute partial volumes of salts and other solutes
     for (int i = 0; i < numComps; i++) {
       ComponentInterface comp = liquidPhase.getPhase().getComponent(i);
       String compName = comp.getName();
@@ -119,12 +128,26 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
       }
 
       // is it one of our salts?
-      if (saltParameters.containsKey(compName)) {
-        double wSalt = comp.getx() * comp.getMolarMass() / phaseMolarMass;
-        double vSalt = calcPartialVolumeSalt(compName, tempC, wSalt);
+      double[] params = saltParameters.get(compName.toLowerCase());
+      double wComponent = comp.getx() * comp.getMolarMass() / phaseMolarMass;
+      if (params != null) {
+        double vSalt = calcPartialVolumeSalt(params, tempC, wComponent);
         // partial volume contribution = mass fraction * vSalt
-        sumPartialVolumes += wSalt * vSalt;
+        sumPartialVolumes += wComponent * vSalt;
+        hasComponentContribution = true;
+        continue;
       }
+
+      // fall back to use pure component density for non-salt solutes (e.g. MEG, TEG, methanol)
+      double componentDensity = estimateComponentDensity(comp, tempK, pressureBar);
+      if (componentDensity > 0.0) {
+        sumPartialVolumes += wComponent / componentDensity;
+        hasComponentContribution = true;
+      }
+    }
+
+    if (!hasComponentContribution || sumPartialVolumes <= 0.0) {
+      return 0.0;
     }
 
     // 4) Density is inverse of sum of partial volumes
@@ -141,13 +164,12 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
    * Here T is in °C and w_i is the mass fraction of the salt.
    * </p>
    *
-   * @param saltName the name of the salt
+   * @param params correlation parameters for the salt
    * @param temperatureC temperature in Celsius
    * @param wSalt mass fraction of the salt
    * @return partial specific volume in m^3/kg
    */
-  private double calcPartialVolumeSalt(String saltName, double temperatureC, double wSalt) {
-    double[] params = saltParameters.get(saltName);
+  private double calcPartialVolumeSalt(double[] params, double temperatureC, double wSalt) {
     double c0 = params[0];
     double c1 = params[1];
     double c2 = params[2];
@@ -160,6 +182,96 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
     double denominator = (c0 * wSalt + c1) * Math.exp(1.0e-6 * Math.pow(temperatureC + c4, 2.0));
 
     return numerator / denominator; // in m^3/kg if parameters are consistent
+  }
+
+  /**
+   * Estimate density for non-salt solutes using available pure component data.
+   *
+   * @param comp component to evaluate
+   * @param temperatureK temperature [K]
+   * @param pressureBar pressure [bar]
+   * @return estimated density in kg/m^3 or {@code 0.0} if no estimate is available
+   */
+  private double estimateComponentDensity(ComponentInterface comp, double temperatureK,
+      double pressureBar) {
+    double density = 0.0;
+
+    try {
+      density = comp.getNormalLiquidDensity("kg/m3");
+    } catch (Exception ex) {
+      logger.debug("Normal liquid density not available for component {}", comp.getName(), ex);
+    }
+
+    if (density > 0.0) {
+      return density;
+    }
+
+    density = estimatePolarSolventDensity(comp.getName(), temperatureK);
+    if (density > 0.0) {
+      return density;
+    }
+
+    // fall back to using pure water density as a last resort for polar solvents
+    if (isPolarSolventFallback(comp.getName())) {
+      return calculatePureWaterDensity(temperatureK, pressureBar);
+    }
+
+    return 0.0;
+  }
+
+  private boolean isPolarSolventFallback(String componentName) {
+    String name = normalizeComponentName(componentName);
+    return name.equals("meg") || name.equals("deg") || name.equals("teg")
+        || name.equals("methanol") || name.equals("ethanol");
+  }
+
+  private String normalizeComponentName(String componentName) {
+    return componentName == null ? "" : componentName.toLowerCase().replaceAll("[^a-z0-9]", "");
+  }
+
+  private double estimatePolarSolventDensity(String componentName, double temperatureK) {
+    final double tref = 293.15; // 20 °C reference
+    final double deltaT = temperatureK - tref;
+
+    String name = normalizeComponentName(componentName);
+    double rhoRef;
+    double alpha; // volumetric thermal expansion coefficient [1/K]
+
+    switch (name) {
+      case "meg":
+      case "monoethyleneglycol":
+      case "ethyleneglycol":
+        rhoRef = 1113.2;
+        alpha = 5.4e-4;
+        break;
+      case "deg":
+      case "diethyleneglycol":
+        rhoRef = 1118.0;
+        alpha = 5.0e-4;
+        break;
+      case "teg":
+      case "triethyleneglycol":
+        rhoRef = 1125.0;
+        alpha = 4.5e-4;
+        break;
+      case "methanol":
+        rhoRef = 791.8;
+        alpha = 1.20e-3;
+        break;
+      case "ethanol":
+        rhoRef = 789.3;
+        alpha = 1.10e-3;
+        break;
+      default:
+        return 0.0;
+    }
+
+    double denom = 1.0 + alpha * deltaT;
+    if (denom <= 0.0) {
+      return 0.0;
+    }
+
+    return rhoRef / denom;
   }
 
   /**

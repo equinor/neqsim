@@ -68,16 +68,20 @@ public class ConstantDutyTemperatureFlash extends ConstantDutyFlash {
 
         double g = (lnphiV - lnphiL);
         double dg = (dlnphiVdT - dlnphiLdT);
-        if (Math.abs(dg) < tiny || Double.isNaN(dg))
+        if (Math.abs(dg) < tiny || Double.isNaN(dg)) {
           dg = Math.copySign(tiny, (dg == 0.0 ? 1.0 : dg));
+        }
 
         dT = -damp1P * (g / dg);
-        if (Double.isNaN(dT) || Double.isInfinite(dT))
+        if (Double.isNaN(dT) || Double.isInfinite(dT)) {
           dT = -1.0;
-        if (dT > maxStep)
+        }
+        if (dT > maxStep) {
           dT = maxStep;
-        if (dT < -maxStep)
+        }
+        if (dT < -maxStep) {
           dT = -maxStep;
+        }
 
         system.setTemperature(Told + dT);
         continue;
@@ -163,7 +167,8 @@ public class ConstantDutyTemperatureFlash extends ConstantDutyFlash {
           bubbleSide = Math.abs(f0) < Math.abs(f1);
         }
 
-        double g = 0.0, dg = 0.0;
+        double g = 0.0;
+        double dg = 0.0;
         if (bubbleSide) {
           // Bubble condition: Σ z_i K_i - 1 = 0
           for (int i = 0; i < nc; i++) {
@@ -187,18 +192,20 @@ public class ConstantDutyTemperatureFlash extends ConstantDutyFlash {
       }
 
       // Step-limit, update, and loop
-      if (Double.isNaN(dT) || Double.isInfinite(dT))
+      if (Double.isNaN(dT) || Double.isInfinite(dT)) {
         dT = -1.0;
-      if (dT > maxStep)
+      }
+      if (dT > maxStep) {
         dT = maxStep;
-      if (dT < -maxStep)
+      }
+      if (dT < -maxStep) {
         dT = -maxStep;
+      }
 
       system.setTemperature(Told + dT);
 
       // If you couple chemistry strongly to T, you may want:
       // if (system.isChemicalSystem()) system.getChemicalReactionOperations().solveChemEq(0);
-
     } while ((((Math.abs(dT) / Math.max(1.0, system.getTemperature())) > tolRel)
         && iterations < maxIter) || iterations < 3);
   }
