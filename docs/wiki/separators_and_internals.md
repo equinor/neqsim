@@ -444,6 +444,7 @@ public class ScrubberExample {
 - [Process Equipment Overview](getting_started.md)
 - [Pump Theory and Implementation](pump_theory_and_implementation.md)
 - [Heat Exchanger Mechanical Design](heat_exchanger_mechanical_design.md)
+- [Liquid Carry-Over Calculations](carryover_calculations.md) - Detailed technical documentation on carry-over models
 - [Separator Internals Improvements](../SEPARATOR_INTERNALS_IMPROVEMENTS.md)
 
 ## Recent Changes

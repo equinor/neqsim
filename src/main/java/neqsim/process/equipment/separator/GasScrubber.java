@@ -14,8 +14,26 @@ import neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign;
  * GasScrubber class.
  * </p>
  *
+ * A vertical separator designed primarily for gas-liquid separation in gas
+ * processing applications.
+ * Gas scrubbers are typically used upstream of compressors to remove liquid
+ * droplets from gas.
+ *
+ * <p>
+ * For detailed documentation on separator internals and carry-over
+ * calculations, see:
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/separators_and_internals.md">
+ * Separators and Internals Wiki</a> and
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/carryover_calculations.md">
+ * Carry-Over Calculations Wiki</a>
+ * </p>
+ *
  * @author Even Solbraa
  * @version $Id: $Id
+ * @see neqsim.process.equipment.separator.Separator
+ * @see neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign
  */
 public class GasScrubber extends Separator {
   /** Serialization version UID. */
@@ -36,7 +54,7 @@ public class GasScrubber extends Separator {
    * Constructor for GasScrubber.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name        a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.Stream} object
    */
   public GasScrubber(String name, StreamInterface inletStream) {

@@ -39,8 +39,28 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Separator class.
  * </p>
  *
+ * Base class for all separator equipment in NeqSim. Provides thermodynamic
+ * separation
+ * of gas/liquid/water phases with support for primary separation devices,
+ * demisting internals,
+ * and mechanical design calculations.
+ *
+ * <p>
+ * For detailed documentation on separator internals and carry-over
+ * calculations, see:
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/separators_and_internals.md">
+ * Separators and Internals Wiki</a> and
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/carryover_calculations.md">
+ * Carry-Over Calculations Wiki</a>
+ * </p>
+ *
  * @author Even Solbraa
  * @version $Id: $Id
+ * @see neqsim.process.equipment.separator.GasScrubber
+ * @see neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign
+ * @see neqsim.process.mechanicaldesign.separator.primaryseparation.PrimarySeparation
  */
 public class Separator extends ProcessEquipmentBaseClass implements SeparatorInterface {
   /**
@@ -185,8 +205,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /**
    * Constructor for Separator.
    *
-   * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param name        a {@link java.lang.String} object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
+   *                    object
    */
   public Separator(String name, StreamInterface inletStream) {
     this(name);
@@ -211,7 +232,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * setInletStream.
    * </p>
    *
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
+   *                    object
    */
   public void setInletStream(StreamInterface inletStream) {
     inletStreamMixer.addStream(inletStream);
@@ -229,7 +251,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * addStream.
    * </p>
    *
-   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface}
+   *                  object
    */
   public void addStream(StreamInterface newStream) {
     if (numberOfInputStreams == 0) {
@@ -307,11 +330,15 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * setEntrainment.
    * </p>
    *
-   * @param val a double specifying the entrainment amount
-   * @param specType a {@link java.lang.String} object describing the specification unit
-   * @param specifiedStream a {@link java.lang.String} object describing the reference stream
-   * @param phaseFrom a {@link java.lang.String} object describing the phase entrained from
-   * @param phaseTo a {@link java.lang.String} object describing the phase entrained to
+   * @param val             a double specifying the entrainment amount
+   * @param specType        a {@link java.lang.String} object describing the
+   *                        specification unit
+   * @param specifiedStream a {@link java.lang.String} object describing the
+   *                        reference stream
+   * @param phaseFrom       a {@link java.lang.String} object describing the phase
+   *                        entrained from
+   * @param phaseTo         a {@link java.lang.String} object describing the phase
+   *                        entrained to
    */
   public void setEntrainment(double val, String specType, String specifiedStream, String phaseFrom,
       String phaseTo) {
@@ -488,8 +515,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       thermoSystem.init(0);
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
         double dncomp = 0.0;
-        dncomp +=
-            inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
+        dncomp += inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
         double dniliq = 0.0;
         if (hasliq) {
           dniliq = -liquidOutStream.getThermoSystem().getComponent(i).getNumberOfmoles();
@@ -573,10 +599,13 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   }
 
   /**
-   * Update inlet stream properties that are cached for use in separation calculations.
+   * Update inlet stream properties that are cached for use in separation
+   * calculations.
    * <p>
-   * This method calculates and stores inlet gas velocity, vessel gas velocity, gas density, liquid
-   * density, and liquid content. These values are used by the separation device calculations and
+   * This method calculates and stores inlet gas velocity, vessel gas velocity,
+   * gas density, liquid
+   * density, and liquid content. These values are used by the separation device
+   * calculations and
    * should be updated whenever the inlet stream changes.
    * </p>
    */
@@ -628,7 +657,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /**
    * Calculate the gas velocity through the inlet nozzle.
    * 
-   * Uses the inlet nozzle diameter from primary separation to calculate velocity. Velocity =
+   * Uses the inlet nozzle diameter from primary separation to calculate velocity.
+   * Velocity =
    * volumetric flow / nozzle area.
    *
    * @return gas velocity through nozzle in m/s
@@ -670,7 +700,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /**
    * Get the liquid density from the inlet stream.
    * 
-   * Extracts the liquid phase density. For single-phase gas, returns a default liquid density.
+   * Extracts the liquid phase density. For single-phase gas, returns a default
+   * liquid density.
    *
    * @return liquid density in kg/m³
    */
@@ -693,7 +724,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /**
    * Get the inlet liquid content (volumetric fraction) from the inlet stream.
    * 
-   * Calculates the volumetric fraction of liquid in the inlet stream. Liquid content = liquid
+   * Calculates the volumetric fraction of liquid in the inlet stream. Liquid
+   * content = liquid
    * volume / total volume.
    *
    * @return inlet liquid content as volumetric fraction (0 to 1)
@@ -947,8 +979,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   public double getDeRatedGasLoadFactor(int phaseNum) {
     thermoSystem.initPhysicalProperties();
     double derating = 1.0;
-    double surfaceTension =
-        thermoSystem.getInterphaseProperties().getSurfaceTension(phaseNum - 1, phaseNum);
+    double surfaceTension = thermoSystem.getInterphaseProperties().getSurfaceTension(phaseNum - 1, phaseNum);
     if (surfaceTension < 10.0e-3) {
       derating = 1.0 - 0.5 * (10.0e-3 - surfaceTension) / 10.0e-3;
     }
@@ -988,7 +1019,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /**
    * <p>
-   * Calculates both gas and liquid fluid section areas for horizontal separators. Results can be
+   * Calculates both gas and liquid fluid section areas for horizontal separators.
+   * Results can be
    * used for volume calculation, gas superficial velocity, and settling time.
    * </p>
    *
@@ -1015,7 +1047,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         double triArea = a * d;
         double circArea = theta * Math.pow(internalRadius, 2);
         lArea = circArea - triArea;
-        // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n", internalRadius, d,
+        // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n",
+        // internalRadius, d,
         // theta, a, lArea);
       } else if (level > internalRadius) {
         double d = level - internalRadius;
@@ -1024,7 +1057,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         double triArea = a * d;
         double circArea = (Math.PI - theta) * Math.pow(internalRadius, 2);
         lArea = circArea + triArea;
-        // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n", internalRadius, d,
+        // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n",
+        // internalRadius, d,
         // theta, a, lArea);
       } else {
         lArea = 0.5 * Math.PI * Math.pow(internalRadius, 2);
@@ -1063,7 +1097,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   }
 
   /**
-   * Keeps cached gas/liquid holdup volumes aligned with current geometry and level.
+   * Keeps cached gas/liquid holdup volumes aligned with current geometry and
+   * level.
    */
   private void updateHoldupVolumes() {
     liquidVolume = calcLiquidVolume();
@@ -1124,7 +1159,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   }
 
   /**
-   * Calculates the total inner surface area of the separator, including shell and heads.
+   * Calculates the total inner surface area of the separator, including shell and
+   * heads.
    *
    * @return inner surface area in square meters
    */
@@ -1138,11 +1174,14 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   }
 
   /**
-   * Estimates the wetted inner surface area based on current liquid level and orientation.
+   * Estimates the wetted inner surface area based on current liquid level and
+   * orientation.
    *
    * <p>
-   * For horizontal separators, the wetted area uses the circular segment defined by the liquid
-   * level to apportion the cylindrical shell and head areas. For vertical separators, the wetted
+   * For horizontal separators, the wetted area uses the circular segment defined
+   * by the liquid
+   * level to apportion the cylindrical shell and head areas. For vertical
+   * separators, the wetted
    * area is the side area up to the current level plus the bottom head.
    *
    * @return wetted area in square meters
@@ -1185,7 +1224,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   }
 
   /**
-   * Estimates the unwetted (dry) area as the remaining inner area not in contact with liquid.
+   * Estimates the unwetted (dry) area as the remaining inner area not in contact
+   * with liquid.
    *
    * @return unwetted area in square meters
    */
@@ -1210,12 +1250,15 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   }
 
   /**
-   * Evaluates fire exposure using separator geometry and process conditions while accounting for
+   * Evaluates fire exposure using separator geometry and process conditions while
+   * accounting for
    * flare radiation based on the real flaring heat duty.
    *
-   * @param config fire scenario configuration
-   * @param flare flare supplying heat duty and radiation parameters
-   * @param flareGroundDistanceM horizontal distance from flare base to separator [m]
+   * @param config               fire scenario configuration
+   * @param flare                flare supplying heat duty and radiation
+   *                             parameters
+   * @param flareGroundDistanceM horizontal distance from flare base to separator
+   *                             [m]
    * @return aggregated fire exposure result
    */
   public SeparatorFireExposure.FireExposureResult evaluateFireExposure(
@@ -1226,7 +1269,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
 
   /**
    * <p>
-   * Estimates liquid level based on volume for horizontal separators using bisection method.
+   * Estimates liquid level based on volume for horizontal separators using
+   * bisection method.
    * Vertical separators too. tol and maxIter are bisection loop parameters.
    * </p>
    *
@@ -1235,13 +1279,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    */
   public double levelFromVolume(double volumeTarget) {
 
-
     double tol = 1e-4;
     int maxIter = 100;
 
     double headspace = getMinGasVolume();
-    double maxLiquidVolume =
-        separatorVolume > 0.0 ? Math.max(separatorVolume - headspace, 0.0) : 0.0;
+    double maxLiquidVolume = separatorVolume > 0.0 ? Math.max(separatorVolume - headspace, 0.0) : 0.0;
     double limitedVolume = Math.max(0.0, Math.min(volumeTarget, maxLiquidVolume));
 
     double a = 0.0;
@@ -1339,7 +1381,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * </p>
    *
    * @param i a int
-   * @return a {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection} object
+   * @return a
+   *         {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection}
+   *         object
    */
   public SeparatorSection getSeparatorSection(int i) {
     return separatorSection.get(i);
@@ -1351,7 +1395,9 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @return a {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection} object
+   * @return a
+   *         {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection}
+   *         object
    */
   public SeparatorSection getSeparatorSection(String name) {
     for (SeparatorSection sec : separatorSection) {
@@ -1606,7 +1652,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   }
 
   /**
-   * Set heat input to the separator (e.g., from flare radiation, external heating).
+   * Set heat input to the separator (e.g., from flare radiation, external
+   * heating).
    *
    * @param heatInput heat duty in watts
    */
@@ -1620,7 +1667,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * Set heat input to the separator with specified unit.
    *
    * @param heatInput heat duty value
-   * @param unit heat duty unit (W, kW, MW, J/s, etc.)
+   * @param unit      heat duty unit (W, kW, MW, J/s, etc.)
    */
   public void setHeatInput(double heatInput, String unit) {
     this.heatInputUnit = unit;
@@ -1654,14 +1701,15 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
    * Set heat duty with unit (alias for setHeatInput).
    *
    * @param heatDuty heat duty value
-   * @param unit heat duty unit
+   * @param unit     heat duty unit
    */
   public void setHeatDuty(double heatDuty, String unit) {
     setHeatInput(heatDuty, unit);
   }
 
   /**
-   * Set heat duty (alias preserved for compatibility with energy-stream style naming).
+   * Set heat duty (alias preserved for compatibility with energy-stream style
+   * naming).
    *
    * @param heatDuty heat duty in watts
    */
@@ -1670,10 +1718,11 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   }
 
   /**
-   * Set heat duty with unit (alias preserved for compatibility with energy-stream style naming).
+   * Set heat duty with unit (alias preserved for compatibility with energy-stream
+   * style naming).
    *
    * @param heatDuty heat duty value
-   * @param unit heat duty unit
+   * @param unit     heat duty unit
    */
   public void setDuty(double heatDuty, String unit) {
     setHeatInput(heatDuty, unit);
@@ -1741,7 +1790,6 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
     return getExergyChange(unit, 288.15);
   }
 
-
   /** {@inheritDoc} */
   @Override
   public double getCapacityDuty() {
@@ -1755,7 +1803,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   }
 
   /*
-   * private class SeparatorReport extends Object{ public Double gasLoadFactor; SeparatorReport(){
+   * private class SeparatorReport extends Object{ public Double gasLoadFactor;
+   * SeparatorReport(){
    * gasLoadFactor = getGasLoadFactor(); } }
    *
    * public SeparatorReport getReport(){ return this.new SeparatorReport(); }
@@ -1785,7 +1834,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /**
    * Print information about the primary separation device.
    * 
-   * Displays details about the inlet primary separation including type, nozzle diameter, and
+   * Displays details about the inlet primary separation including type, nozzle
+   * diameter, and
    * type-specific properties.
    */
   public void printPrimarySeparation() {
@@ -1841,7 +1891,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   /**
    * Print all deisting internals in this separator.
    * 
-   * Displays information about each deisting internal including area, Euler number, and any special
+   * Displays information about each deisting internal including area, Euler
+   * number, and any special
    * properties such as drainage efficiency.
    */
   public void printDemistingInternals() {
@@ -1874,8 +1925,8 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
         // Check if it's a DemistingInternalWithDrainage
         if (internal.getClass().getSimpleName().equals("DemistingInternalWithDrainage")) {
           try {
-            double drainageEfficiency =
-                (double) internal.getClass().getMethod("getDrainageEfficiency").invoke(internal);
+            double drainageEfficiency = (double) internal.getClass().getMethod("getDrainageEfficiency")
+                .invoke(internal);
             System.out.println("  Drainage Efficiency: " + drainageEfficiency);
           } catch (Exception e) {
             logger.debug("Could not retrieve drainage efficiency: " + e.getMessage());

@@ -5,15 +5,30 @@ package neqsim.process.mechanicaldesign.separator.primaryseparation;
  * InletVaneWithMeshpad class.
  * </p>
  * 
- * Represents an inlet vane primary separation device combined with a meshpad. This configuration
- * provides enhanced separation through both initial vane deflection and subsequent coalescence in
+ * Represents an inlet vane primary separation device combined with a meshpad.
+ * This configuration
+ * provides enhanced separation through both initial vane deflection and
+ * subsequent coalescence in
  * the meshpad.
  * 
- * Requires specification of the vertical distance between the vane and meshpad, and the free
+ * Requires specification of the vertical distance between the vane and meshpad,
+ * and the free
  * distance above the meshpad.
+ *
+ * <p>
+ * For detailed documentation on separator internals and carry-over
+ * calculations, see:
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/separators_and_internals.md">
+ * Separators and Internals Wiki</a> and
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/carryover_calculations.md">
+ * Carry-Over Calculations Wiki</a>
+ * </p>
  *
  * @author User
  * @version 1.0
+ * @see neqsim.process.mechanicaldesign.separator.primaryseparation.InletVane
  */
 public class InletVaneWithMeshpad extends InletVane {
   /** Serialization version UID. */
@@ -28,9 +43,10 @@ public class InletVaneWithMeshpad extends InletVane {
   /**
    * Constructor for InletVaneWithMeshpad.
    *
-   * @param name the name of the device
-   * @param inletNozzleDiameter the inlet nozzle diameter in m
-   * @param vaneToMeshpadDistance vertical distance between vane and meshpad in m
+   * @param name                     the name of the device
+   * @param inletNozzleDiameter      the inlet nozzle diameter in m
+   * @param vaneToMeshpadDistance    vertical distance between vane and meshpad in
+   *                                 m
    * @param freeDistanceAboveMeshpad free distance above the meshpad in m
    */
   public InletVaneWithMeshpad(String name, double inletNozzleDiameter, double vaneToMeshpadDistance,
@@ -87,11 +103,15 @@ public class InletVaneWithMeshpad extends InletVane {
   /**
    * Calculate liquid carry-over for inlet vane with meshpad configuration.
    * 
-   * This uses a specific carry-over equation for the vane-meshpad configuration. The equation
-   * accounts for: - Vane deflection efficiency - Inlet velocity effects - Vertical distance between
-   * vane and meshpad (settling time) - Free space above meshpad (coalescence volume)
+   * This uses a specific carry-over equation for the vane-meshpad configuration.
+   * The equation
+   * accounts for: - Vane deflection efficiency - Inlet velocity effects -
+   * Vertical distance between
+   * vane and meshpad (settling time) - Free space above meshpad (coalescence
+   * volume)
    * 
-   * Carry-over is reduced by both the vane deflection and the meshpad coalescence.
+   * Carry-over is reduced by both the vane deflection and the meshpad
+   * coalescence.
    *
    * @return liquid carry-over (mass fraction)
    */

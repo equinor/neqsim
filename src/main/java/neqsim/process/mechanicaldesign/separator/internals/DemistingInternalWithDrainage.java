@@ -5,12 +5,26 @@ package neqsim.process.mechanicaldesign.separator.internals;
  * DemistingInternalWithDrainage class.
  * </p>
  * 
- * Extends DemistingInternal to include drainage pipe functionality. Drainage pipes allow separated
- * liquid to be effectively removed from the deisting internal, improving separation performance and
+ * Extends DemistingInternal to include drainage pipe functionality. Drainage
+ * pipes allow separated
+ * liquid to be effectively removed from the demisting internal, improving
+ * separation performance and
  * reducing liquid carry-over.
+ *
+ * <p>
+ * For detailed documentation on separator internals and carry-over
+ * calculations, see:
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/separators_and_internals.md">
+ * Separators and Internals Wiki</a> and
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/carryover_calculations.md">
+ * Carry-Over Calculations Wiki</a>
+ * </p>
  *
  * @author User
  * @version 1.0
+ * @see neqsim.process.mechanicaldesign.separator.internals.DemistingInternal
  */
 public class DemistingInternalWithDrainage extends DemistingInternal {
   /** Serialization version UID. */
@@ -25,7 +39,7 @@ public class DemistingInternalWithDrainage extends DemistingInternal {
   /**
    * Constructor for DemistingInternalWithDrainage.
    *
-   * @param area the internal surface area in m²
+   * @param area     the internal surface area in m²
    * @param euNumber the Euler number for pressure drop calculation
    */
   public DemistingInternalWithDrainage(double area, double euNumber) {
@@ -35,10 +49,11 @@ public class DemistingInternalWithDrainage extends DemistingInternal {
   }
 
   /**
-   * Constructor for DemistingInternalWithDrainage with custom drainage efficiency.
+   * Constructor for DemistingInternalWithDrainage with custom drainage
+   * efficiency.
    *
-   * @param area the internal surface area in m²
-   * @param euNumber the Euler number for pressure drop calculation
+   * @param area               the internal surface area in m²
+   * @param euNumber           the Euler number for pressure drop calculation
    * @param drainageEfficiency drainage efficiency factor (0 to 1)
    */
   public DemistingInternalWithDrainage(double area, double euNumber, double drainageEfficiency) {
@@ -80,7 +95,8 @@ public class DemistingInternalWithDrainage extends DemistingInternal {
   /**
    * Calculate the liquid carry-over with drainage efficiency improvement.
    * 
-   * The drainage pipes reduce carry-over by the drainage efficiency factor. Carry-over with
+   * The drainage pipes reduce carry-over by the drainage efficiency factor.
+   * Carry-over with
    * drainage = base carry-over * (1 - drainage efficiency)
    *
    * @return liquid carry-over with drainage reduction

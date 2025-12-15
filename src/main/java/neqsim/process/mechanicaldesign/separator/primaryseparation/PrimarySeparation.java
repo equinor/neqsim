@@ -8,11 +8,26 @@ import neqsim.process.equipment.separator.Separator;
  * PrimarySeparation class.
  * </p>
  * 
- * Base class for primary separation devices in separators. Primary separation includes inlet
+ * Base class for primary separation devices in separators. Primary separation
+ * includes inlet
  * devices that perform initial liquid-gas separation through momentum effects.
+ *
+ * <p>
+ * For detailed documentation on separator internals and carry-over
+ * calculations, see:
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/separators_and_internals.md">
+ * Separators and Internals Wiki</a> and
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/carryover_calculations.md">
+ * Carry-Over Calculations Wiki</a>
+ * </p>
  *
  * @author User
  * @version 1.0
+ * @see neqsim.process.mechanicaldesign.separator.primaryseparation.InletVane
+ * @see neqsim.process.mechanicaldesign.separator.primaryseparation.InletVaneWithMeshpad
+ * @see neqsim.process.mechanicaldesign.separator.primaryseparation.InletCyclones
  */
 public class PrimarySeparation implements Serializable {
   /** Serialization version UID. */
@@ -30,7 +45,7 @@ public class PrimarySeparation implements Serializable {
   /**
    * Constructor for PrimarySeparation.
    *
-   * @param name the name of the primary separation device
+   * @param name                the name of the primary separation device
    * @param inletNozzleDiameter the inlet nozzle diameter in m
    */
   public PrimarySeparation(String name, double inletNozzleDiameter) {
@@ -99,10 +114,11 @@ public class PrimarySeparation implements Serializable {
   /**
    * Calculate inlet nozzle momentum.
    * 
-   * Momentum is calculated as: M = ρ * v * A where ρ is density, v is velocity, and A is nozzle
+   * Momentum is calculated as: M = ρ * v * A where ρ is density, v is velocity,
+   * and A is nozzle
    * area.
    *
-   * @param density fluid density in kg/m³
+   * @param density       fluid density in kg/m³
    * @param inletVelocity inlet velocity in m/s
    * @return nozzle momentum in kg·m/s²
    */
@@ -115,7 +131,8 @@ public class PrimarySeparation implements Serializable {
   /**
    * Calculate liquid carry-over for this primary separation device.
    * 
-   * This is a base implementation that can be overridden by subclasses. Accesses inlet properties
+   * This is a base implementation that can be overridden by subclasses. Accesses
+   * inlet properties
    * from the parent separator.
    *
    * @return liquid carry-over (mass fraction)

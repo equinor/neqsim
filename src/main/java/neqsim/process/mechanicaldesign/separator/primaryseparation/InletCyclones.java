@@ -5,12 +5,26 @@ package neqsim.process.mechanicaldesign.separator.primaryseparation;
  * InletCyclones class.
  * </p>
  * 
- * Represents an inlet cyclone primary separation device. Inlet cyclones use centrifugal force to
- * separate liquid droplets from the gas stream. This is a more aggressive primary separation
+ * Represents an inlet cyclone primary separation device. Inlet cyclones use
+ * centrifugal force to
+ * separate liquid droplets from the gas stream. This is a more aggressive
+ * primary separation
  * compared to vanes.
+ *
+ * <p>
+ * For detailed documentation on separator internals and carry-over
+ * calculations, see:
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/separators_and_internals.md">
+ * Separators and Internals Wiki</a> and
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/carryover_calculations.md">
+ * Carry-Over Calculations Wiki</a>
+ * </p>
  *
  * @author User
  * @version 1.0
+ * @see neqsim.process.mechanicaldesign.separator.primaryseparation.PrimarySeparation
  */
 public class InletCyclones extends PrimarySeparation {
   /** Serialization version UID. */
@@ -25,10 +39,10 @@ public class InletCyclones extends PrimarySeparation {
   /**
    * Constructor for InletCyclones.
    *
-   * @param name the name of the inlet cyclone system
+   * @param name                the name of the inlet cyclone system
    * @param inletNozzleDiameter the inlet nozzle diameter in m
-   * @param numberOfCyclones the number of cyclones in parallel
-   * @param cycloneDiameter the diameter of each cyclone in m
+   * @param numberOfCyclones    the number of cyclones in parallel
+   * @param cycloneDiameter     the diameter of each cyclone in m
    */
   public InletCyclones(String name, double inletNozzleDiameter, int numberOfCyclones,
       double cycloneDiameter) {
@@ -86,9 +100,9 @@ public class InletCyclones extends PrimarySeparation {
    * 
    * Uses the Stokes number and swirl intensity to estimate separation efficiency.
    *
-   * @param gasDensity gas density in kg/m³
-   * @param liquidDensity liquid density in kg/m³
-   * @param inletVelocity inlet velocity in m/s
+   * @param gasDensity      gas density in kg/m³
+   * @param liquidDensity   liquid density in kg/m³
+   * @param inletVelocity   inlet velocity in m/s
    * @param liquidViscosity liquid viscosity in Pa·s
    * @return separation efficiency (0 to 1)
    */
@@ -114,7 +128,8 @@ public class InletCyclones extends PrimarySeparation {
   /**
    * Calculate liquid carry-over for inlet cyclones.
    * 
-   * Cyclones are very effective at removing liquid droplets. Carry-over depends on the separation
+   * Cyclones are very effective at removing liquid droplets. Carry-over depends
+   * on the separation
    * efficiency and the number of cyclones.
    *
    * @return liquid carry-over (mass fraction)
@@ -130,8 +145,7 @@ public class InletCyclones extends PrimarySeparation {
 
     // Estimate separation efficiency from cyclone properties
     // Higher velocity and more cyclones = better separation
-    double cycloneSeparationEfficiency =
-        Math.min((inletVelocity / 15.0) * (numberOfCyclones / 4.0), 1.0);
+    double cycloneSeparationEfficiency = Math.min((inletVelocity / 15.0) * (numberOfCyclones / 4.0), 1.0);
 
     // Carry-over reduced by separation efficiency
     // Cyclones are very effective, so base carry-over is low

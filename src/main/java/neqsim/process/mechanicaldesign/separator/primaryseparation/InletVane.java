@@ -5,11 +5,25 @@ package neqsim.process.mechanicaldesign.separator.primaryseparation;
  * InletVane class.
  * </p>
  * 
- * Represents a basic inlet vane primary separation device. The inlet vane redirects the inlet
+ * Represents a basic inlet vane primary separation device. The inlet vane
+ * redirects the inlet
  * stream and separates liquid droplets through momentum.
+ *
+ * <p>
+ * For detailed documentation on separator internals and carry-over
+ * calculations, see:
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/separators_and_internals.md">
+ * Separators and Internals Wiki</a> and
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/carryover_calculations.md">
+ * Carry-Over Calculations Wiki</a>
+ * </p>
  *
  * @author User
  * @version 1.0
+ * @see neqsim.process.mechanicaldesign.separator.primaryseparation.PrimarySeparation
+ * @see neqsim.process.mechanicaldesign.separator.primaryseparation.InletVaneWithMeshpad
  */
 public class InletVane extends PrimarySeparation {
   /** Serialization version UID. */
@@ -21,8 +35,8 @@ public class InletVane extends PrimarySeparation {
   /**
    * Constructor for InletVane.
    *
-   * @param name the name of the inlet vane
-   * @param inletNozzleDiameter the inlet nozzle diameter in m
+   * @param name                      the name of the inlet vane
+   * @param inletNozzleDiameter       the inlet nozzle diameter in m
    * @param geometricalExpansionRatio the ratio of vane open area to nozzle area
    */
   public InletVane(String name, double inletNozzleDiameter, double geometricalExpansionRatio) {
@@ -42,8 +56,9 @@ public class InletVane extends PrimarySeparation {
   /**
    * Set the geometrical expansion ratio of the vane.
    *
-   * @param geometricalExpansionRatio the expansion ratio (vane open area / nozzle area, must be
-   *        positive)
+   * @param geometricalExpansionRatio the expansion ratio (vane open area / nozzle
+   *                                  area, must be
+   *                                  positive)
    * @throws IllegalArgumentException if expansion ratio is not positive
    */
   public void setGeometricalExpansionRatio(double geometricalExpansionRatio) {
@@ -56,8 +71,10 @@ public class InletVane extends PrimarySeparation {
   /**
    * Calculate liquid carry-over for inlet vane.
    * 
-   * [PLACEHOLDER] Simple correlation based on inlet velocity and expansion ratio. Better separation
-   * (higher expansion ratio) reduces carry-over. This should be validated against experimental
+   * [PLACEHOLDER] Simple correlation based on inlet velocity and expansion ratio.
+   * Better separation
+   * (higher expansion ratio) reduces carry-over. This should be validated against
+   * experimental
    * data.
    *
    * @return liquid carry-over (mass fraction)

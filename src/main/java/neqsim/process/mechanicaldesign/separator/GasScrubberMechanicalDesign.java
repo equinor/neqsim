@@ -14,8 +14,25 @@ import neqsim.process.mechanicaldesign.separator.sectiontype.SepDesignSection;
  * GasScrubberMechanicalDesign class.
  * </p>
  *
+ * Provides mechanical design calculations specific to gas scrubbers, extending
+ * the base
+ * SeparatorMechanicalDesign with gas scrubber design standards.
+ *
+ * <p>
+ * For detailed documentation on separator internals and carry-over
+ * calculations, see:
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/separators_and_internals.md">
+ * Separators and Internals Wiki</a> and
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/carryover_calculations.md">
+ * Carry-Over Calculations Wiki</a>
+ * </p>
+ *
  * @author esol
  * @version $Id: $Id
+ * @see neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign
+ * @see neqsim.process.equipment.separator.GasScrubber
  */
 public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   /** Serialization version UID. */
@@ -23,17 +40,18 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
   /** Logger object for class. */
   private static final Logger logger = LogManager.getLogger(GasScrubberMechanicalDesign.class);
   /*
-   * double gasLoadFactor = 1.0; double volumeSafetyFactor = 1.0; double Fg = 1.0; double
+   * double gasLoadFactor = 1.0; double volumeSafetyFactor = 1.0; double Fg = 1.0;
+   * double
    * retentionTime = 60.0;
    */
-
 
   /**
    * <p>
    * Constructor for GasScrubberMechanicalDesign.
    * </p>
    *
-   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface}
+   *                  object
    */
   public GasScrubberMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
@@ -47,12 +65,10 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     if (getDesignStandard().containsKey("gas scrubber process design")) {
       logger.debug("gas scrubber process design: {}",
           getDesignStandard().get("gas scrubber process design").getStandardName());
-      gasLoadFactor =
-          ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
-              .getGasLoadFactor();
-      volumeSafetyFactor =
-          ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
-              .getVolumetricDesignFactor();
+      gasLoadFactor = ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
+          .getGasLoadFactor();
+      volumeSafetyFactor = ((GasScrubberDesignStandard) getDesignStandard().get("gas scrubber process design"))
+          .getVolumetricDesignFactor();
     } else {
       logger.debug("no gas scrubber process design specified");
     }
@@ -121,11 +137,15 @@ public class GasScrubberMechanicalDesign extends SeparatorMechanicalDesign {
     moduleLength = tantanLength * 1.5;
     moduleHeight = innerDiameter * 2;
     /*
-     * System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() +
-     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
+     * System.out.println("wall thickness: " + separator.getName() + " " +
+     * getWallThickness() +
+     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight +
+     * " kg");
      * System.out.println("total skid weigth: " + totalSkidWeight + " kg");
-     * System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength +
-     * " height " + moduleHeight + " meter."); System.out.println("mechanical price: " +
+     * System.out.println("foot print: width:" + moduleWidth + " length " +
+     * moduleLength +
+     * " height " + moduleHeight + " meter.");
+     * System.out.println("mechanical price: " +
      * materialsCost + " kNOK");
      */
     setWeigthVesselShell(emptyVesselWeight);
