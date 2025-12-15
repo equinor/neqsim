@@ -188,7 +188,7 @@ class RLIntegrationTest {
     StateVector state = new StateVector();
     state.add("pressure", 50.0, 0.0, 100.0, "bar");
 
-    var map = state.toMap();
+    Map<String, Object> map = state.toMap();
     assertNotNull(map.get("timestamp_ms"));
     assertNotNull(map.get("features"));
   }
@@ -233,7 +233,7 @@ class RLIntegrationTest {
     assertEquals(11, lines.length); // header + 10 samples
 
     // Check statistics
-    var inputStats = collector.getInputStatistics();
+    Map<String, Map<String, Double>> inputStats = collector.getInputStatistics();
     assertTrue(inputStats.get("temp").get("mean") > 280);
     assertTrue(inputStats.get("temp").get("std") > 0);
   }
