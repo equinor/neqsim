@@ -1,12 +1,12 @@
-package neqsim.ml.examples;
+package neqsim.process.ml.examples;
 
 import java.util.HashMap;
 import java.util.Map;
-import neqsim.ml.ConstraintManager;
-import neqsim.ml.StateVector;
-import neqsim.ml.multiagent.CompressorAgent;
-import neqsim.ml.multiagent.MultiAgentEnvironment;
-import neqsim.ml.multiagent.SeparatorAgent;
+import neqsim.process.ml.ConstraintManager;
+import neqsim.process.ml.StateVector;
+import neqsim.process.ml.multiagent.CompressorAgent;
+import neqsim.process.ml.multiagent.MultiAgentEnvironment;
+import neqsim.process.ml.multiagent.SeparatorAgent;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;

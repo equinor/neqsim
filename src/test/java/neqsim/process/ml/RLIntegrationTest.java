@@ -1,16 +1,23 @@
-package neqsim.ml;
+package neqsim.process.ml;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
-import neqsim.ml.examples.SeparatorCompressorMultiAgentEnv;
-import neqsim.ml.examples.SeparatorGymEnv;
-import neqsim.ml.examples.SeparatorLevelControlEnv;
-import neqsim.ml.multiagent.MultiAgentEnvironment;
+import neqsim.process.ml.controllers.BangBangController;
+import neqsim.process.ml.controllers.Controller;
+import neqsim.process.ml.controllers.PIDController;
+import neqsim.process.ml.controllers.ProportionalController;
+import neqsim.process.ml.controllers.RandomController;
+import neqsim.process.ml.examples.SeparatorCompressorMultiAgentEnv;
+import neqsim.process.ml.examples.SeparatorGymEnv;
+import neqsim.process.ml.examples.SeparatorLevelControlEnv;
+import neqsim.process.ml.multiagent.MultiAgentEnvironment;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.separator.Separator;
@@ -430,5 +437,146 @@ class RLIntegrationTest {
     double sepReward = result.rewards.get("separator");
     double compReward = result.rewards.get("compressor");
     assertEquals(sepReward, compReward, 1e-6);
+  }
+
+  // ==================== Java Controller Tests ====================
+
+  @Test
+  void testProportionalController() {
+    // Error index 6 = level_error in SeparatorGymEnv
+    ProportionalController pController = new ProportionalController("P-Level", 6, 0.5, -0.1, 0.1);
+
+    // Positive error (level above setpoint) -> negative action (close valve)
+    double[] obs1 = new double[] {0.6, 0.5, 0.5, 0.5, 0.5, 0.5, 0.2, 0.5}; // error = 0.2
+    double[] action1 = pController.computeAction(obs1);
+    assertTrue(action1[0] < 0); // Should be negative
+
+    // Negative error (level below setpoint) -> positive action (open valve)
+    double[] obs2 = new double[] {0.4, 0.5, 0.5, 0.5, 0.5, 0.5, -0.2, 0.5}; // error = -0.2
+    double[] action2 = pController.computeAction(obs2);
+    assertTrue(action2[0] > 0); // Should be positive
+
+    // Action should be clamped
+    double[] obs3 = new double[] {0.1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.8, 0.5}; // Large error
+    double[] action3 = pController.computeAction(obs3);
+    assertEquals(-0.1, action3[0], 1e-6); // Clamped to min
+  }
+
+  @Test
+  void testPIDController() {
+    PIDController pidController = new PIDController("PID-Level", 6, 0.3, 0.05, 0.1, -0.1, 0.1, 1.0);
+
+    // First step - no derivative
+    double[] obs1 = new double[] {0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.1, 0.5};
+    double[] action1 = pidController.computeAction(obs1);
+    assertNotNull(action1);
+
+    // Second step - has derivative
+    double[] obs2 = new double[] {0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.05, 0.5};
+    double[] action2 = pidController.computeAction(obs2);
+    assertNotNull(action2);
+
+    // Reset should clear state
+    pidController.reset();
+    assertEquals(0.0, pidController.getIntegral(), 1e-6);
+  }
+
+  @Test
+  void testBangBangController() {
+    // Level index 0, setpoint 0.5, deadband 0.05
+    BangBangController bbController = new BangBangController("BB-Level", 0, 0.5, 0.05, 0.05, -0.05);
+
+    // Below setpoint - deadband -> low action (open valve)
+    double[] obs1 = new double[] {0.4, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5};
+    double[] action1 = bbController.computeAction(obs1);
+    assertEquals(0.05, action1[0], 1e-6);
+
+    // Above setpoint + deadband -> high action (close valve)
+    double[] obs2 = new double[] {0.6, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5};
+    double[] action2 = bbController.computeAction(obs2);
+    assertEquals(-0.05, action2[0], 1e-6);
+
+    // Within deadband -> maintain previous action
+    double[] obs3 = new double[] {0.52, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5};
+    double[] action3 = bbController.computeAction(obs3);
+    assertEquals(-0.05, action3[0], 1e-6); // Should maintain previous
+  }
+
+  @Test
+  void testRandomController() {
+    RandomController randController = new RandomController("Random", -0.1, 0.1);
+
+    double[] obs = new double[] {0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.0, 0.5};
+
+    // All actions should be within bounds
+    for (int i = 0; i < 100; i++) {
+      double[] action = randController.computeAction(obs);
+      assertTrue(action[0] >= -0.1 && action[0] <= 0.1);
+    }
+  }
+
+  @Test
+  void testEpisodeRunner() {
+    SeparatorGymEnv env = new SeparatorGymEnv();
+    env.setMaxEpisodeSteps(50);
+
+    EpisodeRunner runner = new EpisodeRunner(env);
+    Controller pController = new ProportionalController("P-Test", 6, 0.3, -0.1, 0.1);
+
+    EpisodeRunner.EpisodeResult result = runner.runEpisode(pController, 50);
+
+    // Should have run some steps
+    assertTrue(result.steps > 0);
+    assertTrue(result.steps <= 50);
+
+    // Should have collected history
+    assertEquals(result.steps + 1, result.observations.size()); // +1 for initial obs
+    assertEquals(result.steps, result.actions.size());
+    assertEquals(result.steps, result.rewards.size());
+
+    // Mean reward should be computable
+    double meanReward = result.getMeanReward();
+    assertFalse(Double.isNaN(meanReward));
+  }
+
+  @Test
+  void testControllerBenchmark() {
+    SeparatorGymEnv env = new SeparatorGymEnv();
+    env.setMaxEpisodeSteps(30);
+
+    EpisodeRunner runner = new EpisodeRunner(env);
+
+    Controller pController = new ProportionalController("P-Level", 6, 0.3, -0.1, 0.1);
+    EpisodeRunner.BenchmarkResult result = runner.benchmark(pController, 3, 30);
+
+    assertEquals("P-Level", result.controllerName);
+    assertEquals(3, result.numEpisodes);
+    assertFalse(Double.isNaN(result.meanReward));
+    assertFalse(Double.isNaN(result.stdReward));
+    assertTrue(result.meanLength > 0);
+  }
+
+  @Test
+  void testControllerComparison() {
+    SeparatorGymEnv env = new SeparatorGymEnv();
+    env.setMaxEpisodeSteps(30);
+
+    EpisodeRunner runner = new EpisodeRunner(env);
+
+    List<Controller> controllers = new ArrayList<>();
+    controllers.add(new ProportionalController("P-Control", 6, 0.3, -0.1, 0.1));
+    controllers.add(new PIDController("PID-Control", 6, 0.3, 0.05, 0.05, -0.1, 0.1, 1.0));
+    controllers.add(new RandomController("Random", -0.1, 0.1));
+
+    List<EpisodeRunner.BenchmarkResult> results = runner.compareControllers(controllers, 2, 30);
+
+    assertEquals(3, results.size());
+
+    // P and PID should generally outperform random
+    // (but we only check structure here, not performance)
+    for (EpisodeRunner.BenchmarkResult r : results) {
+      assertNotNull(r.controllerName);
+      assertFalse(Double.isNaN(r.meanReward));
+    }
   }
 }

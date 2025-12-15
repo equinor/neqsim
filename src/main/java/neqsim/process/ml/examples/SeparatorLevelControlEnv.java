@@ -1,10 +1,10 @@
-package neqsim.ml.examples;
+package neqsim.process.ml.examples;
 
-import neqsim.ml.ActionVector;
-import neqsim.ml.Constraint;
-import neqsim.ml.ConstraintManager;
-import neqsim.ml.RLEnvironment;
-import neqsim.ml.StateVector;
+import neqsim.process.ml.ActionVector;
+import neqsim.process.ml.Constraint;
+import neqsim.process.ml.ConstraintManager;
+import neqsim.process.ml.RLEnvironment;
+import neqsim.process.ml.StateVector;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;

@@ -5,7 +5,7 @@ This module provides infrastructure for integrating NeqSim with modern AI/ML sys
 ## Package Structure
 
 ```
-neqsim.ml/
+neqsim.process.ml/
 ├── StateVector.java           - Normalized state representation
 ├── StateVectorProvider.java   - Interface for equipment state export
 ├── ActionVector.java          - Bounded action representation
@@ -13,8 +13,15 @@ neqsim.ml/
 ├── ConstraintManager.java     - Unified constraint handling
 ├── RLEnvironment.java         - RL base class
 ├── GymEnvironment.java        - Gymnasium-compatible abstract class
+├── EpisodeRunner.java         - Java-based episode execution & benchmarking
 ├── EquipmentStateAdapter.java - Extract states from equipment
 ├── TrainingDataCollector.java - Surrogate model data export
+├── controllers/
+│   ├── Controller.java               - Controller interface
+│   ├── ProportionalController.java   - P controller
+│   ├── PIDController.java            - PID with anti-windup
+│   ├── BangBangController.java       - On-off with hysteresis
+│   └── RandomController.java         - Random baseline
 ├── examples/
 │   ├── SeparatorLevelControlEnv.java         - RL example
 │   ├── SeparatorGymEnv.java                  - Gym-compatible single agent
@@ -35,6 +42,7 @@ neqsim.ml/
 3. **Explainability** - All decisions traceable to physical constraints
 4. **Multi-fidelity** - Fast surrogates for training, full physics for deployment
 5. **Gymnasium Compatible** - Direct integration with Python RL frameworks
+6. **Java-Testable** - Test RL infrastructure without Python dependencies
 
 ## Quick Start
 
@@ -43,9 +51,9 @@ neqsim.ml/
 The `GymEnvironment` class provides a Gymnasium-compatible API that works directly with Python:
 
 ```java
-import neqsim.ml.examples.SeparatorGymEnv;
-import neqsim.ml.GymEnvironment.ResetResult;
-import neqsim.ml.GymEnvironment.StepResult;
+import neqsim.process.ml.examples.SeparatorGymEnv;
+import neqsim.process.ml.GymEnvironment.ResetResult;
+import neqsim.process.ml.GymEnvironment.StepResult;
 
 // Create environment
 SeparatorGymEnv env = new SeparatorGymEnv();
@@ -77,7 +85,7 @@ import numpy as np
 
 jpype.startJVM(classpath=['neqsim.jar'])
 
-SeparatorGymEnv = JClass('neqsim.ml.examples.SeparatorGymEnv')
+SeparatorGymEnv = JClass('neqsim.process.ml.examples.SeparatorGymEnv')
 env = SeparatorGymEnv()
 env.setMaxEpisodeSteps(500)
 
@@ -104,8 +112,8 @@ print(f"Episode reward: {total_reward}")
 For coordinated control of multiple process units:
 
 ```java
-import neqsim.ml.examples.SeparatorCompressorMultiAgentEnv;
-import neqsim.ml.multiagent.MultiAgentEnvironment;
+import neqsim.process.ml.examples.SeparatorCompressorMultiAgentEnv;
+import neqsim.process.ml.multiagent.MultiAgentEnvironment;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -151,8 +159,8 @@ while (!env.isDone()) {
 ### 3. Custom Process Agent
 
 ```java
-import neqsim.ml.multiagent.ProcessAgent;
-import neqsim.ml.StateVector;
+import neqsim.process.ml.multiagent.ProcessAgent;
+import neqsim.process.ml.StateVector;
 
 public class MyValveAgent extends ProcessAgent {
     private ThrottlingValve valve;
@@ -192,7 +200,7 @@ public class MyValveAgent extends ProcessAgent {
 ### 2. Surrogate Model Training Data
 
 ```java
-import neqsim.ml.TrainingDataCollector;
+import neqsim.process.ml.TrainingDataCollector;
 
 // Create collector
 TrainingDataCollector collector = new TrainingDataCollector("flash_model");
@@ -224,9 +232,9 @@ collector.exportCSV("training_data.csv");
 ### 3. Constraint Management
 
 ```java
-import neqsim.ml.ConstraintManager;
-import neqsim.ml.Constraint;
-import neqsim.ml.StateVector;
+import neqsim.process.ml.ConstraintManager;
+import neqsim.process.ml.Constraint;
+import neqsim.process.ml.StateVector;
 
 // Setup constraints
 ConstraintManager cm = new ConstraintManager();
@@ -258,8 +266,8 @@ from jpype.types import *
 # Start JVM with NeqSim
 jpype.startJVM(classpath=['path/to/neqsim.jar'])
 
-from neqsim.ml.examples import SeparatorLevelControlEnv
-from neqsim.ml import StateVector, ActionVector
+from neqsim.process.ml.examples import SeparatorLevelControlEnv
+from neqsim.process.ml import StateVector, ActionVector
 
 # Create environment
 env = SeparatorLevelControlEnv()
@@ -315,7 +323,7 @@ public class MyControlEnv extends RLEnvironment {
 └─────────────────────┬───────────────────────────────────┘
                       │ JPype/Py4J
 ┌─────────────────────▼───────────────────────────────────┐
-│                   neqsim.ml                             │
+│                   neqsim.process.ml                             │
 │  ┌─────────────┐  ┌─────────────┐  ┌────────────────┐  │
 │  │RLEnvironment│  │StateVector  │  │ConstraintMgr   │  │
 │  └──────┬──────┘  └──────┬──────┘  └───────┬────────┘  │
@@ -337,10 +345,11 @@ public class MyControlEnv extends RLEnvironment {
 1. ~~**Implement `StateVectorProvider`**~~ - ✅ Added to Separator, Compressor, HeatExchanger
 2. ~~**Gymnasium-compatible API**~~ - ✅ `GymEnvironment` base class
 3. ~~**Multi-agent infrastructure**~~ - ✅ `multiagent` package with cooperative/CTDE modes
-4. **Python wrapper (neqsim-gym)** - Create PyPI package wrapping Java RL environments
-5. **Dynamic simulation integration** - Connect to time-stepping solver
-6. **More example environments** - Distillation column control, heat integration
-7. **Pre-trained surrogates** - Ship common surrogate models (flash, property estimation)
+4. ~~**Java-only testing**~~ - ✅ `controllers` package with P, PID, BangBang, Random + EpisodeRunner
+5. **Python wrapper (neqsim-gym)** - Create PyPI package wrapping Java RL environments
+6. **Dynamic simulation integration** - Connect to time-stepping solver
+7. **More example environments** - Distillation column control, heat integration
+8. **Pre-trained surrogates** - Ship common surrogate models (flash, property estimation)
 
 ## Multi-Agent Architecture
 
@@ -407,6 +416,112 @@ The following equipment classes implement `StateVectorProvider`:
 | effectiveness | fraction | Thermal effectiveness |
 | hot_flow | kg/s | Hot side mass flow |
 | cold_flow | kg/s | Cold side mass flow |
+
+## Java-Only Testing (No Python Required)
+
+For testing and benchmarking RL environments without Python dependencies, NeqSim provides simple controllers and an episode runner entirely in Java.
+
+### Available Controllers
+
+The `neqsim.process.ml.controllers` package provides:
+
+| Controller | Description | Use Case |
+|------------|-------------|----------|
+| `ProportionalController` | P control: u = -Kp × error | Simple feedback |
+| `PIDController` | Full PID with anti-windup | Industrial control baseline |
+| `BangBangController` | On-off with hysteresis | Simple thermostatic control |
+| `RandomController` | Uniform random actions | Baseline for RL comparison |
+
+### Controller Interface
+
+```java
+public interface Controller {
+    String getName();
+    double[] computeAction(double[] observation);
+    void reset();
+}
+```
+
+### Example: PID Controller
+
+```java
+import neqsim.process.ml.controllers.*;
+import neqsim.process.ml.examples.SeparatorGymEnv;
+
+// Create environment
+SeparatorGymEnv env = new SeparatorGymEnv();
+
+// Create PID controller
+// Args: name, observationIndex (level error=6), Kp, Ki, Kd, actionMin, actionMax, dt
+PIDController pid = new PIDController("LevelPID", 6, 0.3, 0.1, 0.05, -0.1, 0.1, 1.0);
+
+// Run one step
+GymEnvironment.ResetResult reset = env.reset();
+double[] action = pid.computeAction(reset.observation.toNormalizedArray());
+GymEnvironment.StepResult step = env.step(action);
+```
+
+### EpisodeRunner for Benchmarking
+
+The `EpisodeRunner` class runs complete episodes and collects statistics:
+
+```java
+import neqsim.process.ml.EpisodeRunner;
+import neqsim.process.ml.EpisodeRunner.*;
+
+// Create runner
+EpisodeRunner runner = new EpisodeRunner(env);
+
+// Run single episode
+EpisodeResult result = runner.runEpisode(pid, 500);
+System.out.printf("Episode: reward=%.2f, steps=%d%n", 
+    result.totalReward, result.steps);
+
+// Benchmark with statistics
+BenchmarkResult benchmark = runner.benchmark(pid, 10, 500);
+System.out.printf("Benchmark: mean=%.2f, std=%.2f%n",
+    benchmark.meanReward, benchmark.stdReward);
+```
+
+### Comparing Controllers
+
+```java
+import java.util.*;
+
+// Create multiple controllers
+List<Controller> controllers = Arrays.asList(
+    new ProportionalController("P-only", 6, 0.5, -0.1, 0.1),
+    new PIDController("PID", 6, 0.3, 0.1, 0.05, -0.1, 0.1, 1.0),
+    new BangBangController("BangBang", 6, 0.1, 0.05, -0.05, 1.0),
+    new RandomController("Random", 1, -0.1, 0.1)
+);
+
+// Compare all controllers
+List<BenchmarkResult> results = runner.compareControllers(controllers, 10, 500);
+EpisodeRunner.printComparison(results);
+```
+
+**Sample Output:**
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                          Controller Comparison Results                        ║
+╠═══════════════╦════════════╦═══════════╦════════════╦═══════════╦════════════╣
+║ Controller    ║ Mean Reward║ Std Reward║ Mean Steps ║ Terminations ║ Best Run ║
+╠═══════════════╬════════════╬═══════════╬════════════╬═══════════╬════════════╣
+║ PID           ║    247.34  ║    12.45  ║    500.0   ║   0 / 10  ║   268.21  ║
+║ P-only        ║    189.23  ║    34.67  ║    498.2   ║   1 / 10  ║   231.45  ║
+║ BangBang      ║    156.78  ║    45.23  ║    487.5   ║   2 / 10  ║   198.34  ║
+║ Random        ║     23.45  ║    78.90  ║    234.7   ║   8 / 10  ║    89.12  ║
+╚═══════════════╩════════════╩═══════════╩════════════╩═══════════╩════════════╝
+```
+
+### Testing Without Python
+
+This enables:
+- **Unit testing** - Verify environments work correctly in pure Java
+- **Baseline comparison** - Compare RL agents against classical controllers
+- **Performance profiling** - Benchmark simulation speed without Python overhead
+- **CI/CD integration** - Run tests in Maven without Python setup
 
 ## References
 

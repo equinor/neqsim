@@ -1,7 +1,7 @@
-package neqsim.ml.multiagent;
+package neqsim.process.ml.multiagent;
 
-import neqsim.ml.Constraint;
-import neqsim.ml.StateVector;
+import neqsim.process.ml.Constraint;
+import neqsim.process.ml.StateVector;
 import neqsim.process.equipment.compressor.Compressor;
 
 /**

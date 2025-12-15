@@ -1,7 +1,7 @@
-package neqsim.ml.multiagent;
+package neqsim.process.ml.multiagent;
 
 import java.io.Serializable;
-import neqsim.ml.StateVector;
+import neqsim.process.ml.StateVector;
 
 /**
  * Interface for an individual agent in a multi-agent system.

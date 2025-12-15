@@ -1,4 +1,4 @@
-package neqsim.ml;
+package neqsim.process.ml;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -18,7 +18,7 @@ import java.util.Map;
  * import jpype
  * from jpype import JClass
  *
- * GymEnvironment = JClass('neqsim.ml.GymEnvironment')
+ * GymEnvironment = JClass('neqsim.process.ml.GymEnvironment')
  * env = MySeparatorEnv()  # extends GymEnvironment
  *
  * obs = env.reset()

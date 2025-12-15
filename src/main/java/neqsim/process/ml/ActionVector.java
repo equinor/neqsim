@@ -1,4 +1,4 @@
-package neqsim.ml;
+package neqsim.process.ml;
 
 import java.io.Serializable;
 import java.util.LinkedHashMap;

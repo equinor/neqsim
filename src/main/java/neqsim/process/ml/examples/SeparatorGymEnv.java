@@ -1,9 +1,9 @@
-package neqsim.ml.examples;
+package neqsim.process.ml.examples;
 
 import java.util.HashMap;
 import java.util.Map;
-import neqsim.ml.GymEnvironment;
-import neqsim.ml.StateVector;
+import neqsim.process.ml.GymEnvironment;
+import neqsim.process.ml.StateVector;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
@@ -50,7 +50,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * from jpype import JClass
  * import numpy as np
  *
- * SeparatorGymEnv = JClass('neqsim.ml.examples.SeparatorGymEnv')
+ * SeparatorGymEnv = JClass('neqsim.process.ml.examples.SeparatorGymEnv')
  * env = SeparatorGymEnv()
  * env.setMaxEpisodeSteps(500)
  *

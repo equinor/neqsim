@@ -5,7 +5,7 @@
  * This package contains example implementations showing how to wrap NeqSim process systems as
  * Gym-compatible RL environments:
  * <ul>
- * <li>{@link neqsim.ml.examples.SeparatorLevelControlEnv} - Separator level control</li>
+ * <li>{@link neqsim.process.ml.examples.SeparatorLevelControlEnv} - Separator level control</li>
  * </ul>
  *
  * <p>
@@ -15,4 +15,4 @@
  * @author ESOL
  * @version 1.0
  */
-package neqsim.ml.examples;
+package neqsim.process.ml.examples;

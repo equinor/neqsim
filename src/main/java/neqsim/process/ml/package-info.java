@@ -12,11 +12,11 @@
  *
  * <h2>Key Components:</h2>
  * <ul>
- * <li>{@link neqsim.ml.StateVector} - Normalized state representation</li>
- * <li>{@link neqsim.ml.ActionVector} - Bounded action representation</li>
- * <li>{@link neqsim.ml.Constraint} - Physical/safety constraints</li>
- * <li>{@link neqsim.ml.ConstraintManager} - Unified constraint handling</li>
- * <li>{@link neqsim.ml.RLEnvironment} - Base RL environment</li>
+ * <li>{@link neqsim.process.ml.StateVector} - Normalized state representation</li>
+ * <li>{@link neqsim.process.ml.ActionVector} - Bounded action representation</li>
+ * <li>{@link neqsim.process.ml.Constraint} - Physical/safety constraints</li>
+ * <li>{@link neqsim.process.ml.ConstraintManager} - Unified constraint handling</li>
+ * <li>{@link neqsim.process.ml.RLEnvironment} - Base RL environment</li>
  * </ul>
  *
  * <h2>Design Principles:</h2>
@@ -30,4 +30,4 @@
  * @author ESOL
  * @version 1.0
  */
-package neqsim.ml;
+package neqsim.process.ml;

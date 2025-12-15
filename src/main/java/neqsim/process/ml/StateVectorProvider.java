@@ -1,4 +1,4 @@
-package neqsim.ml;
+package neqsim.process.ml;
 
 /**
  * Interface for process equipment that can export standardized state vectors.

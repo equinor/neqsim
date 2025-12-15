@@ -1,6 +1,6 @@
-package neqsim.ml.examples;
+package neqsim.process.ml.examples;
 
-import neqsim.ml.TrainingDataCollector;
+import neqsim.process.ml.TrainingDataCollector;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;

@@ -1,4 +1,4 @@
-package neqsim.ml.multiagent;
+package neqsim.process.ml.multiagent;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import neqsim.ml.ConstraintManager;
-import neqsim.ml.StateVector;
+import neqsim.process.ml.ConstraintManager;
+import neqsim.process.ml.StateVector;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**

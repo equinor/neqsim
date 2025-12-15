@@ -5,10 +5,10 @@
  * This package provides infrastructure for multi-agent systems where multiple RL agents coordinate
  * to control interconnected process equipment:
  * <ul>
- * <li>{@link neqsim.ml.multiagent.Agent} - Individual agent interface</li>
- * <li>{@link neqsim.ml.multiagent.MultiAgentEnvironment} - Coordinated environment</li>
- * <li>{@link neqsim.ml.multiagent.SharedConstraintManager} - Global constraint handling</li>
- * <li>{@link neqsim.ml.multiagent.CommunicationChannel} - Inter-agent messaging</li>
+ * <li>{@link neqsim.process.ml.multiagent.Agent} - Individual agent interface</li>
+ * <li>{@link neqsim.process.ml.multiagent.MultiAgentEnvironment} - Coordinated environment</li>
+ * <li>{@link neqsim.process.ml.multiagent.SharedConstraintManager} - Global constraint handling</li>
+ * <li>{@link neqsim.process.ml.multiagent.CommunicationChannel} - Inter-agent messaging</li>
  * </ul>
  *
  * <h2>Use Cases:</h2>
@@ -21,4 +21,4 @@
  * @author ESOL
  * @version 1.0
  */
-package neqsim.ml.multiagent;
+package neqsim.process.ml.multiagent;
