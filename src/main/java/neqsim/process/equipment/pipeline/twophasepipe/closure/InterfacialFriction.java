@@ -187,6 +187,17 @@ public class InterfacialFriction implements Serializable {
    * <p>
    * Uses Andritsos-Hanratty (1987) correlation which accounts for wave-induced roughness.
    * </p>
+   *
+   * @param vG gas velocity in m/s
+   * @param vL liquid velocity in m/s
+   * @param rhoG gas density in kg/m³
+   * @param rhoL liquid density in kg/m³
+   * @param muG gas viscosity in Pa·s
+   * @param muL liquid viscosity in Pa·s
+   * @param alphaL liquid holdup (volume fraction)
+   * @param D pipe diameter in m
+   * @param sigma surface tension in N/m
+   * @return interfacial friction calculation result
    */
   private InterfacialFrictionResult calcStratifiedWavy(double vG, double vL, double rhoG,
       double rhoL, double muG, double muL, double alphaL, double D, double sigma) {
