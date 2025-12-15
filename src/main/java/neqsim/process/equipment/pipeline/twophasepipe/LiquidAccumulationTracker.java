@@ -154,7 +154,7 @@ public class LiquidAccumulationTracker implements Serializable {
 
   /**
    * Update a single accumulation zone.
-   * 
+   *
    * <p>
    * Terrain-induced liquid accumulation occurs when:
    * <ul>
@@ -162,6 +162,10 @@ public class LiquidAccumulationTracker implements Serializable {
    * <li>Liquid velocity slows in uphill sections (slip accumulation)</li>
    * <li>Gas-liquid slip causes liquid to settle in stratified regions</li>
    * </ul>
+   *
+   * @param zone the accumulation zone to update
+   * @param sections array of pipe sections
+   * @param dt time step [s]
    */
   private void updateZone(AccumulationZone zone, PipeSection[] sections, double dt) {
     if (!zone.isActive || zone.sectionIndices.isEmpty()) {
