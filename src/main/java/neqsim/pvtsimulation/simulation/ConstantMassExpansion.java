@@ -556,7 +556,6 @@ public class ConstantMassExpansion extends BasePVTsimulation {
    * <li>Density and compressibility data</li>
    * <li>Mass balance validation</li>
    * </ul>
-   * </p>
    *
    * @return formatted QC report string
    */

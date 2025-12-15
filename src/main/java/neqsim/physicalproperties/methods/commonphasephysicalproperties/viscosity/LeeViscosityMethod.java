@@ -24,7 +24,6 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * <li>T = temperature (Rankine)</li>
  * <li>ρ = density (g/cm³)</li>
  * </ul>
- * </p>
  *
  * <p>
  * Reference: Lee, A.L., Gonzalez, M.H., and Eakin, B.E., "The Viscosity of Natural Gases", Journal

@@ -24,7 +24,6 @@ public enum ReservoirFluidType {
    * <li>C7+ content: &lt; 0.7 mol%</li>
    * <li>No retrograde condensation</li>
    * </ul>
-   * </p>
    */
   DRY_GAS("Dry Gas", "> 100,000", "< 0.7"),
 
@@ -39,7 +38,6 @@ public enum ReservoirFluidType {
    * <li>C7+ content: 0.7 - 4 mol%</li>
    * <li>Reservoir T &gt; Cricondentherm</li>
    * </ul>
-   * </p>
    */
   WET_GAS("Wet Gas", "15,000 - 100,000", "0.7 - 4"),
 
@@ -54,7 +52,6 @@ public enum ReservoirFluidType {
    * <li>C7+ content: 4 - 12.5 mol%</li>
    * <li>Reservoir T between Tc and Cricondentherm</li>
    * </ul>
-   * </p>
    */
   GAS_CONDENSATE("Gas Condensate", "3,300 - 15,000", "4 - 12.5"),
 
@@ -69,7 +66,6 @@ public enum ReservoirFluidType {
    * <li>C7+ content: 12.5 - 20 mol%</li>
    * <li>Reservoir T close to Tc</li>
    * </ul>
-   * </p>
    */
   VOLATILE_OIL("Volatile Oil", "1,000 - 3,300", "12.5 - 20"),
 
@@ -84,7 +80,6 @@ public enum ReservoirFluidType {
    * <li>C7+ content: &gt; 20 mol%</li>
    * <li>Reservoir T well below Tc</li>
    * </ul>
-   * </p>
    */
   BLACK_OIL("Black Oil", "< 1,000", "> 20"),
 
@@ -98,7 +93,6 @@ public enum ReservoirFluidType {
    * <li>GOR: Very low (&lt; 200 scf/STB)</li>
    * <li>C7+ content: &gt; 30 mol%</li>
    * </ul>
-   * </p>
    */
   HEAVY_OIL("Heavy Oil", "< 200", "> 30"),
 

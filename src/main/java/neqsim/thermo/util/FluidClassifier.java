@@ -14,10 +14,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li>https://wiki.whitson.com/phase_behavior/classification/reservoir_fluid_type/</li>
  * <li>SPE Monograph "Phase Behavior" by Whitson and Brulé</li>
  * </ul>
- * </p>
  *
  * <h2>Classification Criteria:</h2>
  * <table border="1">
+ * <caption>Classification criteria for different reservoir fluid types</caption>
  * <tr>
  * <th>Fluid Type</th>
  * <th>GOR (scf/STB)</th>
@@ -200,7 +200,6 @@ public final class FluidClassifier {
    * <li>Cricondenbar and cricondentherm</li>
    * <li>Reservoir temperature relative to phase envelope</li>
    * </ul>
-   * </p>
    *
    * @param fluid the fluid system to classify
    * @param reservoirTemperatureK reservoir temperature in Kelvin

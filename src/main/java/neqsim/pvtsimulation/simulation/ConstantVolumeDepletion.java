@@ -574,7 +574,6 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
    * <li>Z-factor consistency</li>
    * <li>Material balance validation</li>
    * </ul>
-   * </p>
    *
    * @return formatted QC report string
    */
