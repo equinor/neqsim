@@ -236,8 +236,9 @@ class DifferentiableFlashTest {
 
     // Should be reasonably close (allowing for flash re-convergence effects)
     // This is a sanity check, not a strict equality test
-    assertTrue(Math.abs(analyticalDT - numericalDT) < Math.abs(numericalDT) * 0.5
-        || Math.abs(analyticalDT - numericalDT) < 1.0,
+    assertTrue(
+        Math.abs(analyticalDT - numericalDT) < Math.abs(numericalDT) * 0.5
+            || Math.abs(analyticalDT - numericalDT) < 1.0,
         "Analytical and numerical derivatives should be in same ballpark");
 
     // Restore system

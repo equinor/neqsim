@@ -74,8 +74,9 @@ public class PropertyGradient implements Serializable {
     this.dT = dT;
     this.dP = dP;
     this.dz = dz != null ? Arrays.copyOf(dz, dz.length) : new double[0];
-    this.componentNames = componentNames != null ? Arrays.copyOf(componentNames,
-        componentNames.length) : new String[0];
+    this.componentNames =
+        componentNames != null ? Arrays.copyOf(componentNames, componentNames.length)
+            : new String[0];
   }
 
   /**

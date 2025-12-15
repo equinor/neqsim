@@ -7,8 +7,8 @@ import java.util.Arrays;
  * Container for gradients of flash calculation results with respect to input parameters.
  *
  * <p>
- * Stores sensitivities of flash outputs (K-values, phase fraction, phase compositions) with
- * respect to:
+ * Stores sensitivities of flash outputs (K-values, phase fraction, phase compositions) with respect
+ * to:
  * </p>
  * <ul>
  * <li>Temperature (T)</li>
@@ -107,8 +107,9 @@ public class FlashGradients implements Serializable {
     this.dBetadT = dBetadT;
     this.dBetadP = dBetadP;
     this.dBetadz = Arrays.copyOf(dBetadz, dBetadz.length);
-    this.componentNames = componentNames != null ? Arrays.copyOf(componentNames,
-        componentNames.length) : new String[numberOfComponents];
+    this.componentNames =
+        componentNames != null ? Arrays.copyOf(componentNames, componentNames.length)
+            : new String[numberOfComponents];
     this.valid = true;
     this.errorMessage = null;
   }
@@ -366,8 +367,8 @@ public class FlashGradients implements Serializable {
    * @return flattened gradient array
    */
   public double[] toFlatArray() {
-    int size = 2 * numberOfComponents + 2 + numberOfComponents * numberOfComponents
-        + numberOfComponents;
+    int size =
+        2 * numberOfComponents + 2 + numberOfComponents * numberOfComponents + numberOfComponents;
     double[] result = new double[size];
     int idx = 0;
 

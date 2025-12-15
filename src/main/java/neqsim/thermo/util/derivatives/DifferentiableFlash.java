@@ -197,10 +197,10 @@ public class DifferentiableFlash implements Serializable {
           double dlnPhiL_dK = 0.0;
           double dlnPhiV_dK = 0.0;
           for (int k = 0; k < nc; k++) {
-            dlnPhiL_dK += jacL.getDlnPhidn(i, k) * dxdK * system.getPhase(0).getNumberOfMolesInPhase()
-                * (k == j ? 1.0 : 0.0);
-            dlnPhiV_dK += jacV.getDlnPhidn(i, k) * dydK * system.getPhase(1).getNumberOfMolesInPhase()
-                * (k == j ? 1.0 : 0.0);
+            dlnPhiL_dK += jacL.getDlnPhidn(i, k) * dxdK
+                * system.getPhase(0).getNumberOfMolesInPhase() * (k == j ? 1.0 : 0.0);
+            dlnPhiV_dK += jacV.getDlnPhidn(i, k) * dydK
+                * system.getPhase(1).getNumberOfMolesInPhase() * (k == j ? 1.0 : 0.0);
           }
 
           if (i == j) {
@@ -216,10 +216,10 @@ public class DifferentiableFlash implements Serializable {
         double dlnPhiL_dBeta = 0.0;
         double dlnPhiV_dBeta = 0.0;
         for (int k = 0; k < nc; k++) {
-          dlnPhiL_dBeta += jacL.getDlnPhidn(i, k) * dxdBeta
-              * system.getPhase(0).getNumberOfMolesInPhase();
-          dlnPhiV_dBeta += jacV.getDlnPhidn(i, k) * dydBeta
-              * system.getPhase(1).getNumberOfMolesInPhase();
+          dlnPhiL_dBeta +=
+              jacL.getDlnPhidn(i, k) * dxdBeta * system.getPhase(0).getNumberOfMolesInPhase();
+          dlnPhiV_dBeta +=
+              jacV.getDlnPhidn(i, k) * dydBeta * system.getPhase(1).getNumberOfMolesInPhase();
         }
         dFdy[i][nc] = dlnPhiL_dBeta - dlnPhiV_dBeta;
 
@@ -297,9 +297,8 @@ public class DifferentiableFlash implements Serializable {
         }
       }
 
-      cachedFlashGradients =
-          new FlashGradients(kValues, beta, dKdT, dKdP, dKdz, dBetadT, dBetadP, dBetadz,
-              componentNames);
+      cachedFlashGradients = new FlashGradients(kValues, beta, dKdT, dKdP, dKdz, dBetadT, dBetadP,
+          dBetadz, componentNames);
       gradientsComputed = true;
 
       return cachedFlashGradients;

@@ -79,8 +79,9 @@ public class FugacityJacobian implements Serializable {
     for (int i = 0; i < numberOfComponents; i++) {
       this.dlnPhidn[i] = Arrays.copyOf(dlnPhidn[i], numberOfComponents);
     }
-    this.componentNames = componentNames != null ? Arrays.copyOf(componentNames,
-        componentNames.length) : new String[numberOfComponents];
+    this.componentNames =
+        componentNames != null ? Arrays.copyOf(componentNames, componentNames.length)
+            : new String[numberOfComponents];
   }
 
   /**
