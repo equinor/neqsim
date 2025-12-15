@@ -55,6 +55,7 @@ import org.apache.logging.log4j.Logger;
  * <li>entropy - mixture entropy [J/mol/K]</li>
  * <li>Cp - heat capacity at constant pressure [J/mol/K]</li>
  * <li>compressibility - Z-factor [-]</li>
+ * <li>molarvolume - molar volume [m³/mol]</li>
  * </ul>
  *
  * @author ESOL
