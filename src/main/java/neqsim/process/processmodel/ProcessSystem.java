@@ -571,9 +571,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * <p>
    * Parallel execution is considered beneficial when:
    * <ul>
-   * <li>There are at least 2 units that can run in parallel (maxParallelism >= 2)</li>
+   * <li>There are at least 2 units that can run in parallel (maxParallelism &gt;= 2)</li>
    * <li>The process has no recycle loops (which require iterative sequential execution)</li>
-   * <li>There are enough units to justify thread overhead (typically > 4 units)</li>
+   * <li>There are enough units to justify thread overhead (typically &gt; 4 units)</li>
    * </ul>
    *
    * @return true if parallel execution is recommended

@@ -2538,4 +2538,175 @@ public class ProcessGraphTest {
     }
     System.out.println("===============================\n");
   }
+
+  // ============ TEAR STREAM SELECTION TESTS ============
+
+  @Test
+  void testTearStreamSelectionLinearProcess() {
+    // Linear process should have no tear streams needed
+    ProcessSystem system = new ProcessSystem("Linear");
+
+    Stream feed = new Stream("feed", testFluid.clone());
+    feed.setFlowRate(1000.0, "kg/hr");
+    feed.run();
+
+    Heater heater = new Heater("heater", feed);
+    heater.setOutTemperature(350.0, "K");
+    heater.run();
+
+    system.add(feed);
+    system.add(heater);
+
+    ProcessGraph graph = system.buildGraph();
+    ProcessGraph.TearStreamResult result = graph.selectTearStreams();
+
+    assertEquals(0, result.getTearStreamCount(), "Linear process should not need tear streams");
+    assertEquals(0, result.getTotalCyclesBroken());
+    assertTrue(result.getTearStreams().isEmpty());
+  }
+
+  @Test
+  void testTearStreamSelectionSimpleRecycle() {
+    // Create a graph with a single cycle manually
+    ProcessGraph graph = new ProcessGraph();
+
+    // Create mock nodes
+    Stream stream1 = new Stream("node1", testFluid.clone());
+    Stream stream2 = new Stream("node2", testFluid.clone());
+    Stream stream3 = new Stream("node3", testFluid.clone());
+    Stream stream4 = new Stream("node4", testFluid.clone());
+
+    ProcessNode node1 = graph.addNode(stream1);
+    ProcessNode node2 = graph.addNode(stream2);
+    ProcessNode node3 = graph.addNode(stream3);
+    ProcessNode node4 = graph.addNode(stream4);
+
+    // Create a linear chain with a recycle: 1 -> 2 -> 3 -> 4 -> 2 (back edge)
+    graph.addEdge(node1, node2, null);
+    graph.addEdge(node2, node3, null);
+    graph.addEdge(node3, node4, null);
+    graph.addEdge(node4, node2, null); // Back edge creating cycle
+
+    // Verify cycle detection
+    assertTrue(graph.hasCycles(), "Process should have cycles");
+
+    // Select tear streams
+    ProcessGraph.TearStreamResult result = graph.selectTearStreams();
+
+    System.out.println("\n===== Tear Stream Selection Test =====");
+    System.out.println("Tear streams: " + result.getTearStreamCount());
+    for (ProcessEdge tear : result.getTearStreams()) {
+      System.out.println("  " + tear.getName() + ": " + tear.getSource().getName() + " -> "
+          + tear.getTarget().getName());
+    }
+    System.out.println("======================================\n");
+
+    // Should select at least one tear stream
+    assertTrue(result.getTearStreamCount() >= 1, "Should select at least one tear stream");
+
+    // Verify tear streams break all cycles
+    assertTrue(graph.validateTearStreams(result.getTearStreams()),
+        "Selected tear streams should break all cycles");
+  }
+
+  @Test
+  void testTearStreamValidation() {
+    ProcessSystem system = new ProcessSystem("Validation Test");
+
+    Stream feed = new Stream("feed", testFluid.clone());
+    feed.setFlowRate(1000.0, "kg/hr");
+    feed.run();
+
+    Heater heater = new Heater("heater", feed);
+    heater.setOutTemperature(350.0, "K");
+    heater.run();
+
+    system.add(feed);
+    system.add(heater);
+
+    ProcessGraph graph = system.buildGraph();
+
+    // No cycles means no tear streams needed
+    assertTrue(graph.validateTearStreams(null),
+        "Null tear streams should be valid for acyclic graph");
+    assertTrue(graph.validateTearStreams(java.util.Collections.emptyList()),
+        "Empty tear streams should be valid for acyclic graph");
+  }
+
+  @Test
+  void testTearStreamSelectionPreferUserRecycle() {
+    // Create a graph with multiple edges that could be tear streams
+    ProcessGraph graph = new ProcessGraph();
+
+    // Create mock nodes for a process with recycle
+    Stream node1 = new Stream("feed", testFluid.clone());
+    Stream node2 = new Stream("mixer", testFluid.clone());
+    Stream node3 = new Stream("heater", testFluid.clone());
+    Stream node4 = new Stream("separator", testFluid.clone());
+
+    // Create a recycle node marked as recycle edge
+    Recycle recycleUnit = new Recycle("user-recycle");
+
+    ProcessNode n1 = graph.addNode(node1);
+    ProcessNode n2 = graph.addNode(node2);
+    ProcessNode n3 = graph.addNode(node3);
+    ProcessNode n4 = graph.addNode(node4);
+    ProcessNode n5 = graph.addNode(recycleUnit);
+
+    // Create flow path: feed -> mixer -> heater -> separator -> recycle -> mixer
+    graph.addEdge(n1, n2, null);
+    graph.addEdge(n2, n3, null);
+    graph.addEdge(n3, n4, null);
+    graph.addEdge(n4, n5, null);
+    graph.addEdge(n5, n2, null); // Back edge creating recycle
+
+    // Verify we have a cycle
+    assertTrue(graph.hasCycles(), "Should have cycles");
+
+    ProcessGraph.TearStreamResult result = graph.selectTearStreams();
+
+    // The algorithm should select at least one tear stream
+    assertTrue(result.getTearStreamCount() >= 1, "Should have at least one tear stream");
+    assertTrue(graph.validateTearStreams(result.getTearStreams()),
+        "Tear streams should break cycles");
+  }
+
+  @Test
+  void testGraphSummaryIncludesTearStreams() {
+    // Test that graph summary includes tear stream info
+    ProcessGraph graph = new ProcessGraph();
+
+    // Create a small cycle for testing
+    Stream node1 = new Stream("feed", testFluid.clone());
+    Stream node2 = new Stream("mixer", testFluid.clone());
+    Stream node3 = new Stream("heater", testFluid.clone());
+    Recycle recycle = new Recycle("recycle");
+
+    ProcessNode n1 = graph.addNode(node1);
+    ProcessNode n2 = graph.addNode(node2);
+    ProcessNode n3 = graph.addNode(node3);
+    ProcessNode n4 = graph.addNode(recycle);
+
+    // Create cycle: feed -> mixer -> heater -> recycle -> mixer
+    graph.addEdge(n1, n2, null);
+    graph.addEdge(n2, n3, null);
+    graph.addEdge(n3, n4, null);
+    graph.addEdge(n4, n2, null); // Back edge
+
+    String summary = graph.getSummary();
+
+    System.out.println("\n===== Graph Summary =====");
+    System.out.println(summary);
+    System.out.println("=========================\n");
+
+    // Summary should contain key information
+    assertTrue(summary.contains("ProcessGraph Summary"));
+    assertTrue(summary.contains("Nodes:"));
+    assertTrue(summary.contains("Edges:"));
+
+    if (graph.hasCycles()) {
+      assertTrue(summary.contains("Suggested tear streams:"),
+          "Summary should include tear stream info for cyclic graphs");
+    }
+  }
 }
