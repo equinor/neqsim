@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.processmodel.ProcessModule;
@@ -365,7 +366,7 @@ public class ProcessModelGraph implements Serializable {
   public String getSummary() {
     StringBuilder sb = new StringBuilder();
     sb.append("ProcessModelGraph: ").append(modelName).append("\n");
-    sb.append("=".repeat(50)).append("\n");
+    sb.append(StringUtils.repeat("=", 50)).append("\n");
     sb.append("Sub-systems: ").append(subSystemGraphs.size()).append("\n");
     sb.append("Total nodes: ").append(getTotalNodeCount()).append("\n");
     sb.append("Total edges: ").append(getTotalEdgeCount()).append("\n");
@@ -374,7 +375,7 @@ public class ProcessModelGraph implements Serializable {
     sb.append("\n");
 
     sb.append("Sub-system Details:\n");
-    sb.append("-".repeat(50)).append("\n");
+    sb.append(StringUtils.repeat("-", 50)).append("\n");
     for (SubSystemGraph subSystem : subSystemGraphs) {
       sb.append(String.format("  [%d] %s: %d nodes, %d edges%s\n", subSystem.getExecutionIndex(),
           subSystem.getSystemName(), subSystem.getNodeCount(), subSystem.getEdgeCount(),
@@ -383,7 +384,7 @@ public class ProcessModelGraph implements Serializable {
 
     if (!interSystemConnections.isEmpty()) {
       sb.append("\nInter-system Connections:\n");
-      sb.append("-".repeat(50)).append("\n");
+      sb.append(StringUtils.repeat("-", 50)).append("\n");
       for (InterSystemConnection conn : interSystemConnections) {
         sb.append("  ").append(conn.toString()).append("\n");
       }
@@ -391,7 +392,7 @@ public class ProcessModelGraph implements Serializable {
 
     // Add parallel execution analysis
     sb.append("\nParallel Execution Analysis:\n");
-    sb.append("-".repeat(50)).append("\n");
+    sb.append(StringUtils.repeat("-", 50)).append("\n");
     ModuleParallelPartition partition = partitionSubSystemsForParallelExecution();
     sb.append("Parallel beneficial: ").append(isParallelSubSystemExecutionBeneficial())
         .append("\n");
