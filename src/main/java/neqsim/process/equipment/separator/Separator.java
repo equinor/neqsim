@@ -23,7 +23,7 @@ import neqsim.process.equipment.separator.sectiontype.ValveSection;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
-import neqsim.process.mechanicaldesign.separator.demister.DemistingInternal;
+import neqsim.process.mechanicaldesign.separator.internals.DemistingInternal;
 import neqsim.process.mechanicaldesign.separator.primaryseparation.PrimarySeparation;
 import neqsim.process.util.fire.SeparatorFireExposure;
 import neqsim.process.util.monitor.SeparatorResponse;
