@@ -1,10 +1,13 @@
 # Venturi Flow Calculation in NeqSim
 
-This document describes the Venturi flow meter calculation methods implemented in NeqSim for computing mass flow rates from differential pressure measurements.
+This document describes the Venturi flow meter calculation methods implemented in NeqSim for computing mass flow rates from differential pressure measurements, and vice versa.
 
 ## Overview
 
-NeqSim implements Venturi flow calculations primarily in the `DifferentialPressureFlowCalculator` class, which is a utility for calculating mass flow rates from various differential pressure devices using NeqSim thermodynamic properties.
+NeqSim implements Venturi flow calculations primarily in the `DifferentialPressureFlowCalculator` class, which is a utility for calculating mass flow rates from various differential pressure devices using NeqSim thermodynamic properties. The calculator supports both:
+
+1. **Flow from dP**: Calculate mass flow rate given differential pressure
+2. **dP from Flow**: Calculate differential pressure given mass flow rate (inverse calculation)
 
 **Location:** [DifferentialPressureFlowCalculator.java](../../src/main/java/neqsim/process/equipment/diffpressure/DifferentialPressureFlowCalculator.java)
 
