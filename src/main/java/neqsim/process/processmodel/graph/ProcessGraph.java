@@ -135,7 +135,7 @@ public class ProcessGraph implements Serializable {
     }
 
     /**
-     * Gets components that represent recycle loops (size > 1).
+     * Gets components that represent recycle loops (size &gt; 1).
      *
      * @return components with more than one node
      */

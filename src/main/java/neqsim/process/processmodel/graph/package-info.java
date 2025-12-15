@@ -96,7 +96,7 @@
  *
  * // Analyze inter-system connections
  * for (ProcessModelGraph.InterSystemConnection conn : modelGraph.getInterSystemConnections()) {
- *   System.out.println(conn); // e.g., "Separation[outlet] -> Compression[feed]"
+ *   System.out.println(conn); // e.g., "Separation[outlet] -&gt; Compression[feed]"
  * }
  *
  * // Get summary
