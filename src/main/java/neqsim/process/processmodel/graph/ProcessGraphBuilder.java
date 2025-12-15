@@ -16,6 +16,7 @@ import neqsim.process.equipment.TwoPortInterface;
 import neqsim.process.equipment.expander.TurboExpanderCompressor;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchangerInterface;
+import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.MixerInterface;
 import neqsim.process.equipment.splitter.SplitterInterface;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -145,6 +146,23 @@ public final class ProcessGraphBuilder {
         }
       }
 
+      // Manifold produces split streams (N inputs -> M outputs)
+      if (unit instanceof Manifold) {
+        Manifold manifold = (Manifold) unit;
+        int numOutputs = manifold.getNumberOfOutputStreams();
+        for (int i = 0; i < numOutputs; i++) {
+          StreamInterface outStream = manifold.getSplitStream(i);
+          if (outStream != null) {
+            streamToProducer.put(outStream, unit);
+          }
+        }
+        // Also the mixed stream (intermediate)
+        StreamInterface mixedStream = manifold.getMixedStream();
+        if (mixedStream != null) {
+          streamToProducer.put(mixedStream, unit);
+        }
+      }
+
       // Also check for common outlet method patterns
       collectProducedStreams(unit, streamToProducer);
     }
@@ -205,6 +223,37 @@ public final class ProcessGraphBuilder {
         StreamInterface compressorFeed = tec.getCompressorFeedStream();
         if (compressorFeed != null) {
           createEdgeFromProducer(graph, streamToProducer, compressorFeed, unit);
+        }
+      }
+
+      // Manifold consumes multiple input streams (via internal mixer)
+      if (unit instanceof Manifold) {
+        Manifold manifold = (Manifold) unit;
+        // Access the internal mixer's streams via reflection
+        try {
+          Field mixerField = Manifold.class.getDeclaredField("localmixer");
+          mixerField.setAccessible(true);
+          Object mixer = mixerField.get(manifold);
+          if (mixer != null) {
+            // Access the streams list from the internal mixer
+            Field streamsField = findField(mixer.getClass(), "streams");
+            if (streamsField != null) {
+              streamsField.setAccessible(true);
+              Object value = streamsField.get(mixer);
+              if (value instanceof java.util.List) {
+                @SuppressWarnings("unchecked")
+                java.util.List<StreamInterface> streams = (java.util.List<StreamInterface>) value;
+                for (StreamInterface stream : streams) {
+                  if (stream != null) {
+                    // Create edge TO the manifold (not to internal mixer)
+                    createEdgeFromProducer(graph, streamToProducer, stream, unit);
+                  }
+                }
+              }
+            }
+          }
+        } catch (Exception e) {
+          logger.debug("Could not access Manifold internal mixer: {}", e.getMessage());
         }
       }
 
@@ -332,7 +381,7 @@ public final class ProcessGraphBuilder {
           || methodName.contains("mixed") || methodName.contains("discharge")
           || methodName.contains("bottom") || methodName.contains("top")
           || methodName.contains("gasout") || methodName.contains("liquidout")
-          || methodName.contains("vaporout");
+          || methodName.contains("vaporout") || methodName.contains("waterout");
 
       // Skip inlet methods
       boolean isInlet = methodName.contains("inlet") || methodName.contains("instream")

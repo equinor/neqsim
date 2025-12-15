@@ -156,6 +156,23 @@ ProcessGraph graph = ProcessGraphBuilder.buildGraph(processSystem);
 ProcessGraph graph = process.buildGraph();
 ```
 
+#### Supported Equipment Types
+
+The `ProcessGraphBuilder` automatically detects stream connections for the following equipment:
+
+| Category | Equipment | Outlets Detected |
+|----------|-----------|------------------|
+| **Two-Port** | Stream, Heater, Cooler, Pump, Compressor, Valve, etc. | Single outlet |
+| **Separators** | Separator | Gas + liquid outlets |
+| | ThreePhaseSeparator | Gas + oil + aqueous outlets |
+| **Mixers/Splitters** | Mixer | Single outlet |
+| | Splitter | Multiple split streams |
+| | Manifold | Multiple outlets (N→M routing) |
+| **Heat Exchange** | HeatExchanger | Both hot/cold side outlets |
+| | MultiStreamHeatExchanger | All stream outlets |
+| **Turbomachinery** | TurboExpanderCompressor | Expander + compressor outlets |
+| **Columns** | DistillationColumn | Condenser + reboiler outlets |
+
 ---
 
 ## Basic Usage
@@ -685,6 +702,25 @@ module.add(deethanizer);
 // Build hierarchical graph
 ProcessModelGraph modelGraph = new ProcessModelGraph(module);
 ProcessGraph flatGraph = modelGraph.getFlattenedGraph();
+
+// Get sub-system dependencies
+Map<String, Set<String>> deps = modelGraph.getSubSystemDependencies();
+
+// Check if parallel execution of sub-systems is beneficial
+if (modelGraph.isParallelSubSystemExecutionBeneficial()) {
+    // Get parallel partition of sub-systems
+    ProcessModelGraph.ModuleParallelPartition partition = 
+        modelGraph.partitionSubSystemsForParallelExecution();
+    
+    System.out.println("Parallel levels: " + partition.getLevelCount());
+    System.out.println("Max parallelism: " + partition.getMaxParallelism());
+    
+    // Each level contains independent sub-systems that can run in parallel
+    for (int i = 0; i < partition.getLevelCount(); i++) {
+        List<String> systemsAtLevel = partition.getLevels().get(i);
+        System.out.println("Level " + i + ": " + systemsAtLevel);
+    }
+}
 ```
 
 ---

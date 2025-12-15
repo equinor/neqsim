@@ -4,9 +4,13 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.processmodel.ProcessModule;
@@ -23,7 +27,6 @@ import neqsim.process.processmodel.ProcessSystem;
  * <li>A unified flattened graph for the entire model</li>
  * <li>A module-level graph showing inter-system connections</li>
  * </ul>
- * </p>
  *
  * <p>
  * <strong>Use cases:</strong>
@@ -33,7 +36,6 @@ import neqsim.process.processmodel.ProcessSystem;
  * <li>Determining calculation order across subsystems</li>
  * <li>AI/ML analysis of hierarchical process structures</li>
  * </ul>
- * </p>
  *
  * @author NeqSim
  * @version 1.0
@@ -387,6 +389,26 @@ public class ProcessModelGraph implements Serializable {
       }
     }
 
+    // Add parallel execution analysis
+    sb.append("\nParallel Execution Analysis:\n");
+    sb.append("-".repeat(50)).append("\n");
+    ModuleParallelPartition partition = partitionSubSystemsForParallelExecution();
+    sb.append("Parallel beneficial: ").append(isParallelSubSystemExecutionBeneficial())
+        .append("\n");
+    sb.append("Execution levels: ").append(partition.getLevelCount()).append("\n");
+    sb.append("Max parallelism: ").append(partition.getMaxParallelism()).append("\n");
+
+    for (int i = 0; i < partition.getLevels().size(); i++) {
+      List<SubSystemGraph> level = partition.getLevels().get(i);
+      List<String> names = new ArrayList<>();
+      for (SubSystemGraph sub : level) {
+        names.add(sub.getSystemName());
+      }
+      String parallel = level.size() > 1 ? " [parallel]" : "";
+      sb.append("  Level ").append(i).append(": ").append(String.join(", ", names)).append(parallel)
+          .append("\n");
+    }
+
     return sb.toString();
   }
 
@@ -435,7 +457,242 @@ public class ProcessModelGraph implements Serializable {
       stats.put("interSystemCouplingRatio", couplingRatio);
     }
 
+    // Parallel execution metrics
+    ModuleParallelPartition partition = partitionSubSystemsForParallelExecution();
+    stats.put("parallelLevels", partition.getLevelCount());
+    stats.put("maxSubSystemParallelism", partition.getMaxParallelism());
+    stats.put("isParallelBeneficial", isParallelSubSystemExecutionBeneficial());
+
     return stats;
+  }
+
+  /**
+   * Represents a partition of sub-systems into levels for parallel execution. Sub-systems at the
+   * same level have no inter-dependencies and can run concurrently.
+   */
+  public static class ModuleParallelPartition implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private final List<List<SubSystemGraph>> levels;
+    private final int maxParallelism;
+
+    ModuleParallelPartition(List<List<SubSystemGraph>> levels) {
+      this.levels = Collections.unmodifiableList(levels);
+      this.maxParallelism = levels.stream().mapToInt(List::size).max().orElse(0);
+    }
+
+    /**
+     * @return list of execution levels, each containing sub-systems that can run in parallel
+     */
+    public List<List<SubSystemGraph>> getLevels() {
+      return levels;
+    }
+
+    /**
+     * @return number of execution levels
+     */
+    public int getLevelCount() {
+      return levels.size();
+    }
+
+    /**
+     * @return maximum number of sub-systems that can run in parallel at any level
+     */
+    public int getMaxParallelism() {
+      return maxParallelism;
+    }
+
+    /**
+     * @return list of sub-system names at each level
+     */
+    public List<List<String>> getLevelNames() {
+      List<List<String>> result = new ArrayList<>();
+      for (List<SubSystemGraph> level : levels) {
+        List<String> names = new ArrayList<>();
+        for (SubSystemGraph subSystem : level) {
+          names.add(subSystem.getSystemName());
+        }
+        result.add(names);
+      }
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("ModuleParallelPartition: ").append(levels.size()).append(" levels, max ")
+          .append(maxParallelism).append(" parallel\n");
+      for (int i = 0; i < levels.size(); i++) {
+        sb.append("  Level ").append(i).append(": ");
+        List<String> names = new ArrayList<>();
+        for (SubSystemGraph sub : levels.get(i)) {
+          names.add(sub.getSystemName());
+        }
+        sb.append(String.join(", ", names));
+        if (levels.get(i).size() > 1) {
+          sb.append(" [parallel]");
+        }
+        sb.append("\n");
+      }
+      return sb.toString();
+    }
+  }
+
+  /**
+   * Build a dependency graph between sub-systems based on inter-system connections.
+   *
+   * @return map from sub-system name to set of sub-system names it depends on
+   */
+  public Map<String, Set<String>> getSubSystemDependencies() {
+    Map<String, Set<String>> dependencies = new HashMap<>();
+
+    // Initialize all sub-systems with empty dependency sets
+    for (SubSystemGraph subSystem : subSystemGraphs) {
+      dependencies.put(subSystem.getSystemName(), new HashSet<>());
+    }
+
+    // Add dependencies based on inter-system connections
+    for (InterSystemConnection conn : interSystemConnections) {
+      String source = conn.getSourceSystemName();
+      String target = conn.getTargetSystemName();
+      // Target depends on source (needs source output as input)
+      dependencies.get(target).add(source);
+    }
+
+    return dependencies;
+  }
+
+  /**
+   * Partition sub-systems into levels for parallel execution. Sub-systems at the same level have no
+   * dependencies between them and can execute concurrently.
+   *
+   * <p>
+   * Uses topological sorting on the sub-system dependency graph to determine execution levels.
+   *
+   * @return partition of sub-systems into parallel execution levels
+   */
+  public ModuleParallelPartition partitionSubSystemsForParallelExecution() {
+    if (subSystemGraphs.isEmpty()) {
+      return new ModuleParallelPartition(Collections.emptyList());
+    }
+
+    // Build dependency graph
+    Map<String, Set<String>> dependencies = getSubSystemDependencies();
+
+    // Calculate in-degree for each sub-system
+    Map<String, Integer> inDegree = new HashMap<>();
+    for (SubSystemGraph subSystem : subSystemGraphs) {
+      inDegree.put(subSystem.getSystemName(), dependencies.get(subSystem.getSystemName()).size());
+    }
+
+    // Map from name to SubSystemGraph
+    Map<String, SubSystemGraph> nameToSubSystem = new HashMap<>();
+    for (SubSystemGraph subSystem : subSystemGraphs) {
+      nameToSubSystem.put(subSystem.getSystemName(), subSystem);
+    }
+
+    // Build reverse dependency map (who depends on me)
+    Map<String, Set<String>> dependents = new HashMap<>();
+    for (SubSystemGraph subSystem : subSystemGraphs) {
+      dependents.put(subSystem.getSystemName(), new HashSet<>());
+    }
+    for (Map.Entry<String, Set<String>> entry : dependencies.entrySet()) {
+      String target = entry.getKey();
+      for (String source : entry.getValue()) {
+        dependents.get(source).add(target);
+      }
+    }
+
+    // Level-based topological sort (Kahn's algorithm with levels)
+    List<List<SubSystemGraph>> levels = new ArrayList<>();
+    Set<String> processed = new HashSet<>();
+
+    while (processed.size() < subSystemGraphs.size()) {
+      // Find all sub-systems with in-degree 0 that haven't been processed
+      List<SubSystemGraph> currentLevel = new ArrayList<>();
+      for (SubSystemGraph subSystem : subSystemGraphs) {
+        String name = subSystem.getSystemName();
+        if (!processed.contains(name) && inDegree.get(name) == 0) {
+          currentLevel.add(subSystem);
+        }
+      }
+
+      if (currentLevel.isEmpty()) {
+        // Cycle detected - remaining sub-systems form a cycle
+        logger.warn("Cycle detected in sub-system dependencies");
+        // Add remaining as single level
+        List<SubSystemGraph> remaining = new ArrayList<>();
+        for (SubSystemGraph subSystem : subSystemGraphs) {
+          if (!processed.contains(subSystem.getSystemName())) {
+            remaining.add(subSystem);
+          }
+        }
+        if (!remaining.isEmpty()) {
+          levels.add(remaining);
+        }
+        break;
+      }
+
+      levels.add(currentLevel);
+
+      // Update in-degrees for next level
+      for (SubSystemGraph subSystem : currentLevel) {
+        String name = subSystem.getSystemName();
+        processed.add(name);
+        for (String dependent : dependents.get(name)) {
+          inDegree.put(dependent, inDegree.get(dependent) - 1);
+        }
+      }
+    }
+
+    return new ModuleParallelPartition(levels);
+  }
+
+  /**
+   * Check if parallel execution of sub-systems would be beneficial. Returns true if there are at
+   * least 2 sub-systems that can run in parallel at some level.
+   *
+   * @return true if parallel execution would provide speedup
+   */
+  public boolean isParallelSubSystemExecutionBeneficial() {
+    if (subSystemGraphs.size() < 2) {
+      return false;
+    }
+
+    ModuleParallelPartition partition = partitionSubSystemsForParallelExecution();
+    return partition.getMaxParallelism() >= 2;
+  }
+
+  /**
+   * Get the list of sub-systems that have no dependencies (can start immediately).
+   *
+   * @return list of independent sub-systems
+   */
+  public List<SubSystemGraph> getIndependentSubSystems() {
+    List<SubSystemGraph> independent = new ArrayList<>();
+    Map<String, Set<String>> dependencies = getSubSystemDependencies();
+
+    for (SubSystemGraph subSystem : subSystemGraphs) {
+      if (dependencies.get(subSystem.getSystemName()).isEmpty()) {
+        independent.add(subSystem);
+      }
+    }
+
+    return independent;
+  }
+
+  /**
+   * Get sub-systems in topological order (respecting dependencies).
+   *
+   * @return list of sub-systems in execution order, or null if cycles exist
+   */
+  public List<SubSystemGraph> getSubSystemCalculationOrder() {
+    ModuleParallelPartition partition = partitionSubSystemsForParallelExecution();
+    List<SubSystemGraph> order = new ArrayList<>();
+    for (List<SubSystemGraph> level : partition.getLevels()) {
+      order.addAll(level);
+    }
+    return order;
   }
 
   @Override

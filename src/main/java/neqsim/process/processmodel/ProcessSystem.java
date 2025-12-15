@@ -575,7 +575,6 @@ public class ProcessSystem extends SimulationBaseClass {
    * <li>The process has no recycle loops (which require iterative sequential execution)</li>
    * <li>There are enough units to justify thread overhead (typically > 4 units)</li>
    * </ul>
-   * </p>
    *
    * @return true if parallel execution is recommended
    */
@@ -616,12 +615,10 @@ public class ProcessSystem extends SimulationBaseClass {
    * <li>There are no recycle loops or adjusters requiring iterative execution</li>
    * <li>The process is large enough to justify the thread management overhead</li>
    * </ul>
-   * </p>
    *
    * <p>
    * For processes with recycles or adjusters, this method falls back to the standard sequential
    * {@link #run()} method which properly handles convergence iterations.
-   * </p>
    */
   public void runOptimal() {
     runOptimal(UUID.randomUUID());
@@ -2028,11 +2025,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * <li>Cycle detection for recycle handling</li>
    * <li>Graph neural network compatible representation</li>
    * </ul>
-   * </p>
    *
    * <p>
    * Example usage:
-   * </p>
    *
    * <pre>
    * ProcessSystem system = new ProcessSystem();
@@ -2156,7 +2151,6 @@ public class ProcessSystem extends SimulationBaseClass {
    * <li>Self-loops</li>
    * <li>Unhandled cycles</li>
    * </ul>
-   * </p>
    *
    * @return list of validation issues (empty if valid)
    */

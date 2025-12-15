@@ -19,7 +19,6 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * <li>Graph-neural-network compatible feature vectors</li>
  * <li>Execution state tracking for topological ordering</li>
  * </ul>
- * </p>
  *
  * @author NeqSim
  * @version 1.0
@@ -210,7 +209,6 @@ public class ProcessNode implements Serializable {
    * <li>In-degree and out-degree</li>
    * <li>Operating conditions (if available)</li>
    * </ul>
-   * </p>
    *
    * @param typeMapping mapping of equipment types to indices
    * @param numTypes total number of equipment types

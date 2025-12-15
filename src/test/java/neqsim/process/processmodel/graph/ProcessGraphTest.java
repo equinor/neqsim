@@ -263,7 +263,7 @@ public class ProcessGraphTest {
     assertEquals(2, adjMatrix.length, "Adjacency matrix should be 2x2");
     assertEquals(2, adjMatrix[0].length);
 
-    var adjList = graph.getAdjacencyList();
+    java.util.Map<Integer, java.util.List<Integer>> adjList = graph.getAdjacencyList();
     assertEquals(2, adjList.size(), "Adjacency list should have 2 entries");
   }
 
@@ -319,7 +319,7 @@ public class ProcessGraphTest {
     assertNotNull(node);
 
     // Test feature vector generation
-    var typeMapping = new java.util.HashMap<String, Integer>();
+    java.util.Map<String, Integer> typeMapping = new java.util.HashMap<String, Integer>();
     typeMapping.put("Stream", 0);
     typeMapping.put("Heater", 1);
 
@@ -637,6 +637,198 @@ public class ProcessGraphTest {
     assertEquals(1, stats.get("subSystemCount"));
     assertEquals(3, stats.get("totalNodes"));
     assertNotNull(stats.get("hasCycles"));
+  }
+
+  /**
+   * Test ProcessModule parallel sub-system analysis - independent systems.
+   */
+  @Test
+  void testProcessModuleParallelAnalysisIndependent() {
+    // Create two independent ProcessSystems (no stream connections between them)
+    ProcessSystem system1 = new ProcessSystem("Train A");
+    Stream feed1 = new Stream("feedA", testFluid.clone());
+    feed1.setFlowRate(500.0, "kg/hr");
+    feed1.run();
+    Heater heater1 = new Heater("heaterA", feed1);
+    heater1.run();
+    system1.add(feed1);
+    system1.add(heater1);
+
+    ProcessSystem system2 = new ProcessSystem("Train B");
+    Stream feed2 = new Stream("feedB", testFluid.clone());
+    feed2.setFlowRate(500.0, "kg/hr");
+    feed2.run();
+    Heater heater2 = new Heater("heaterB", feed2);
+    heater2.run();
+    system2.add(feed2);
+    system2.add(heater2);
+
+    ProcessSystem system3 = new ProcessSystem("Train C");
+    Stream feed3 = new Stream("feedC", testFluid.clone());
+    feed3.setFlowRate(500.0, "kg/hr");
+    feed3.run();
+    Heater heater3 = new Heater("heaterC", feed3);
+    heater3.run();
+    system3.add(feed3);
+    system3.add(heater3);
+
+    // Add to module
+    neqsim.process.processmodel.ProcessModule module =
+        new neqsim.process.processmodel.ProcessModule("Multi-Train Plant");
+    module.add(system1);
+    module.add(system2);
+    module.add(system3);
+
+    ProcessModelGraph modelGraph = module.buildModelGraph();
+
+    System.out.println("\n===== ProcessModule Parallel Analysis (Independent) =====");
+    System.out.println(modelGraph.getSummary());
+
+    // All three systems are independent - should all be at level 0
+    assertTrue(modelGraph.isParallelSubSystemExecutionBeneficial(),
+        "Parallel should be beneficial with 3 independent systems");
+
+    ProcessModelGraph.ModuleParallelPartition partition =
+        modelGraph.partitionSubSystemsForParallelExecution();
+    assertEquals(1, partition.getLevelCount(), "All independent systems should be at same level");
+    assertEquals(3, partition.getMaxParallelism(), "Max parallelism should be 3");
+
+    // Check dependencies
+    java.util.Map<String, java.util.Set<String>> deps = modelGraph.getSubSystemDependencies();
+    assertTrue(deps.get("Train A").isEmpty(), "Train A should have no dependencies");
+    assertTrue(deps.get("Train B").isEmpty(), "Train B should have no dependencies");
+    assertTrue(deps.get("Train C").isEmpty(), "Train C should have no dependencies");
+
+    System.out.println("========================================================\n");
+  }
+
+  /**
+   * Test ProcessModule parallel sub-system analysis - sequential dependency.
+   */
+  @Test
+  void testProcessModuleParallelAnalysisSequential() {
+    // Create sequential ProcessSystems (system2 depends on system1 output)
+    ProcessSystem system1 = new ProcessSystem("Upstream");
+    Stream feed1 = new Stream("feed", testFluid.clone());
+    feed1.setFlowRate(1000.0, "kg/hr");
+    feed1.run();
+    Separator sep = new Separator("separator", feed1);
+    sep.run();
+    system1.add(feed1);
+    system1.add(sep);
+
+    ProcessSystem system2 = new ProcessSystem("Downstream");
+    // system2 uses output from system1
+    Stream gasFromSep = new Stream("gasStream", sep.getGasOutStream());
+    Heater heater = new Heater("heater", gasFromSep);
+    heater.run();
+    system2.add(gasFromSep);
+    system2.add(heater);
+
+    neqsim.process.processmodel.ProcessModule module =
+        new neqsim.process.processmodel.ProcessModule("Sequential Plant");
+    module.add(system1);
+    module.add(system2);
+
+    ProcessModelGraph modelGraph = module.buildModelGraph();
+
+    System.out.println("\n===== ProcessModule Parallel Analysis (Sequential) =====");
+    System.out.println(modelGraph.getSummary());
+
+    // Sequential dependency - cannot parallelize
+    ProcessModelGraph.ModuleParallelPartition partition =
+        modelGraph.partitionSubSystemsForParallelExecution();
+
+    // Should have 2 levels (Upstream first, then Downstream)
+    assertEquals(2, partition.getLevelCount(), "Sequential systems should have 2 levels");
+    assertEquals(1, partition.getMaxParallelism(), "Max parallelism should be 1 (sequential)");
+
+    // Check that parallel is NOT beneficial
+    assertFalse(modelGraph.isParallelSubSystemExecutionBeneficial(),
+        "Parallel should not be beneficial with sequential dependency");
+
+    // Check dependencies
+    java.util.Map<String, java.util.Set<String>> deps = modelGraph.getSubSystemDependencies();
+    assertTrue(deps.get("Upstream").isEmpty(), "Upstream should have no dependencies");
+    assertTrue(deps.get("Downstream").contains("Upstream"), "Downstream should depend on Upstream");
+
+    System.out.println("========================================================\n");
+  }
+
+  /**
+   * Test ProcessModule parallel sub-system analysis - mixed topology.
+   */
+  @Test
+  void testProcessModuleParallelAnalysisMixed() {
+    // Create a diamond pattern:
+    // Feed -> [TrainA, TrainB] -> Merge
+    // TrainA and TrainB can run in parallel
+
+    ProcessSystem feedSystem = new ProcessSystem("Feed System");
+    Stream feed = new Stream("feed", testFluid.clone());
+    feed.setFlowRate(2000.0, "kg/hr");
+    feed.run();
+    Splitter splitter = new Splitter("splitter", feed);
+    splitter.setSplitFactors(new double[] {0.5, 0.5});
+    splitter.run();
+    feedSystem.add(feed);
+    feedSystem.add(splitter);
+
+    ProcessSystem trainA = new ProcessSystem("Train A");
+    Stream streamA = new Stream("streamA", splitter.getSplitStream(0));
+    Heater heaterA = new Heater("heaterA", streamA);
+    heaterA.setOutTemperature(350.0);
+    heaterA.run();
+    trainA.add(streamA);
+    trainA.add(heaterA);
+
+    ProcessSystem trainB = new ProcessSystem("Train B");
+    Stream streamB = new Stream("streamB", splitter.getSplitStream(1));
+    Cooler coolerB = new Cooler("coolerB", streamB);
+    coolerB.setOutTemperature(280.0);
+    coolerB.run();
+    trainB.add(streamB);
+    trainB.add(coolerB);
+
+    ProcessSystem mergeSystem = new ProcessSystem("Merge System");
+    Mixer mixer = new Mixer("mixer");
+    mixer.addStream(heaterA.getOutletStream());
+    mixer.addStream(coolerB.getOutletStream());
+    mixer.run();
+    Stream product = new Stream("product", mixer.getOutletStream());
+    product.run();
+    mergeSystem.add(mixer);
+    mergeSystem.add(product);
+
+    neqsim.process.processmodel.ProcessModule module =
+        new neqsim.process.processmodel.ProcessModule("Diamond Plant");
+    module.add(feedSystem);
+    module.add(trainA);
+    module.add(trainB);
+    module.add(mergeSystem);
+
+    ProcessModelGraph modelGraph = module.buildModelGraph();
+
+    System.out.println("\n===== ProcessModule Parallel Analysis (Diamond) =====");
+    System.out.println(modelGraph.getSummary());
+
+    // Diamond pattern: Level 0 = Feed, Level 1 = [TrainA, TrainB], Level 2 = Merge
+    ProcessModelGraph.ModuleParallelPartition partition =
+        modelGraph.partitionSubSystemsForParallelExecution();
+
+    assertTrue(modelGraph.isParallelSubSystemExecutionBeneficial(),
+        "Parallel should be beneficial with diamond pattern");
+    assertEquals(3, partition.getLevelCount(), "Diamond should have 3 levels");
+    assertEquals(2, partition.getMaxParallelism(), "Max parallelism should be 2 (TrainA + TrainB)");
+
+    // Check level contents
+    java.util.List<java.util.List<String>> levelNames = partition.getLevelNames();
+    assertTrue(levelNames.get(0).contains("Feed System"), "Level 0 should contain Feed System");
+    assertTrue(levelNames.get(1).contains("Train A") && levelNames.get(1).contains("Train B"),
+        "Level 1 should contain Train A and Train B");
+    assertTrue(levelNames.get(2).contains("Merge System"), "Level 2 should contain Merge System");
+
+    System.out.println("========================================================\n");
   }
 
   @Test
@@ -2260,5 +2452,90 @@ public class ProcessGraphTest {
     System.out.println("====================================\n");
 
     assertTrue(avgTime > 0);
+  }
+
+  /**
+   * Test Manifold equipment graph support. Manifold combines N inputs -> M outputs (mixer +
+   * splitter internally).
+   */
+  @Test
+  void testManifoldGraphSupport() {
+    ProcessSystem system = new ProcessSystem("Manifold Test");
+
+    // Create two input streams
+    SystemInterface fluid1 = new SystemSrkEos(298.0, 10.0);
+    fluid1.addComponent("methane", 0.9);
+    fluid1.addComponent("ethane", 0.1);
+    fluid1.setMixingRule("classic");
+
+    Stream inlet1 = new Stream("inlet1", fluid1.clone());
+    inlet1.setFlowRate(3.0, "MSm3/day");
+    inlet1.setPressure(10.0, "bara");
+    inlet1.setTemperature(20.0, "C");
+    system.add(inlet1);
+
+    SystemInterface fluid2 = fluid1.clone();
+    Stream inlet2 = new Stream("inlet2", fluid2);
+    inlet2.setFlowRate(2.0, "MSm3/day");
+    inlet2.setPressure(10.0, "bara");
+    inlet2.setTemperature(20.0, "C");
+    system.add(inlet2);
+
+    // Create manifold (N inputs -> M outputs)
+    neqsim.process.equipment.manifold.Manifold manifold =
+        new neqsim.process.equipment.manifold.Manifold("manifold");
+    manifold.addStream(inlet1);
+    manifold.addStream(inlet2);
+    manifold.setSplitFactors(new double[] {0.3, 0.5, 0.2});
+    system.add(manifold);
+
+    // Add downstream equipment on one of the outputs
+    Heater heater = new Heater("heater", manifold.getSplitStream(0));
+    heater.setOutTemperature(350.0);
+    system.add(heater);
+
+    // Build and analyze graph
+    ProcessGraph graph = system.buildGraph();
+
+    System.out.println("\n===== Manifold Graph Test =====");
+    System.out.println("Nodes: " + graph.getNodeCount());
+    System.out.println("Edges: " + graph.getEdgeCount());
+    System.out.println("Has cycles: " + graph.hasCycles());
+
+    // Verify structure
+    assertEquals(4, graph.getNodeCount(), "Should have 4 nodes (2 inlets, manifold, heater)");
+    assertFalse(graph.hasCycles(), "Manifold process should not have cycles");
+
+    // Verify manifold node has correct connections
+    ProcessNode manifoldNode = graph.getNode(manifold);
+    assertNotNull(manifoldNode, "Manifold node should exist");
+
+    // Manifold should have incoming edges from both inlet streams
+    assertTrue(manifoldNode.getIncomingEdges().size() >= 2,
+        "Manifold should have at least 2 incoming edges");
+
+    // Verify calculation order
+    List<ProcessEquipmentInterface> order = graph.getCalculationOrder();
+    int inlet1Idx = order.indexOf(inlet1);
+    int inlet2Idx = order.indexOf(inlet2);
+    int manifoldIdx = order.indexOf(manifold);
+    int heaterIdx = order.indexOf(heater);
+
+    assertTrue(inlet1Idx < manifoldIdx, "Inlet1 should come before manifold");
+    assertTrue(inlet2Idx < manifoldIdx, "Inlet2 should come before manifold");
+    assertTrue(manifoldIdx < heaterIdx, "Manifold should come before heater");
+
+    // Run the process
+    system.run();
+
+    // Verify results
+    assertEquals(5.0, manifold.getMixedStream().getFlowRate("MSm3/day"), 0.01,
+        "Mixed flow should be sum of inputs");
+
+    System.out.println("Calculation order:");
+    for (int i = 0; i < order.size(); i++) {
+      System.out.println("  " + (i + 1) + ". " + order.get(i).getName());
+    }
+    System.out.println("===============================\n");
   }
 }

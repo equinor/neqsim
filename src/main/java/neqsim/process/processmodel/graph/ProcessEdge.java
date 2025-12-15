@@ -16,7 +16,6 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>Edge type classification (material, energy, signal)</li>
  * <li>Graph-neural-network compatible edge features</li>
  * </ul>
- * </p>
  *
  * @author NeqSim
  * @version 1.0
@@ -243,7 +242,6 @@ public class ProcessEdge implements Serializable {
    * <li>Stream properties (temperature, pressure, flow rate)</li>
    * <li>Back edge indicator</li>
    * </ul>
-   * </p>
    *
    * @return feature vector
    */

@@ -382,7 +382,6 @@ public class ProcessModule extends SimulationBaseClass {
    * <li>A unified flattened graph for the entire module</li>
    * <li>Information about inter-system connections</li>
    * </ul>
-   * </p>
    *
    * @return the graph representation of this module
    */
@@ -395,7 +394,6 @@ public class ProcessModule extends SimulationBaseClass {
    *
    * <p>
    * This order respects stream dependencies across all sub-systems.
-   * </p>
    *
    * @return list of equipment in calculation order, or null if cycles prevent ordering
    */

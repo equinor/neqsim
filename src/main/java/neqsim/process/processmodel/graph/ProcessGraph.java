@@ -31,7 +31,6 @@ import org.apache.logging.log4j.Logger;
  * <li>Graph neural network compatible representation</li>
  * <li>AI agent compatibility for flowsheet reasoning</li>
  * </ul>
- * </p>
  *
  * <p>
  * <strong>Why this matters:</strong> Without explicit graph representation:
@@ -46,7 +45,6 @@ import org.apache.logging.log4j.Logger;
  * <li>Recycles and feedback loops are explicit objects</li>
  * <li>AI agents can reason about flowsheet structure</li>
  * </ul>
- * </p>
  *
  * @author NeqSim
  * @version 1.0
@@ -465,7 +463,6 @@ public class ProcessGraph implements Serializable {
    * <p>
    * If the graph has cycles, back edges are ignored to produce a valid ordering for the acyclic
    * portion. This is essential for determining correct calculation order.
-   * </p>
    *
    * @return list of nodes in topological order
    */
@@ -522,7 +519,6 @@ public class ProcessGraph implements Serializable {
    * <p>
    * This is the primary method for deriving execution order from topology rather than insertion
    * order.
-   * </p>
    *
    * @return list of equipment in calculation order
    */
@@ -542,7 +538,6 @@ public class ProcessGraph implements Serializable {
    *
    * <p>
    * SCCs are used to identify recycle loops that need iterative solving.
-   * </p>
    *
    * @return SCC analysis result
    */
@@ -622,7 +617,6 @@ public class ProcessGraph implements Serializable {
    * <p>
    * Nodes at the same level have no dependencies on each other and can be executed in parallel.
    * This uses the longest path algorithm on the DAG (ignoring back edges).
-   * </p>
    *
    * @return parallel partition result
    */
