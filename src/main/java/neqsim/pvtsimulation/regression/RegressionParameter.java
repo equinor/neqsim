@@ -269,8 +269,8 @@ public enum RegressionParameter {
         if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
             || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
           for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
-            double currentParachor = fluid.getPhase(p).getComponent(i).getParachor();
-            fluid.getPhase(p).getComponent(i).setParachor(currentParachor * value);
+            double currentParachor = fluid.getPhase(p).getComponent(i).getParachorParameter();
+            fluid.getPhase(p).getComponent(i).setParachorParameter(currentParachor * value);
           }
         }
       }
