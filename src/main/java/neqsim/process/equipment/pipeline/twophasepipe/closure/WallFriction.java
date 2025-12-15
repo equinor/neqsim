@@ -253,6 +253,17 @@ public class WallFriction implements Serializable {
    * <p>
    * Liquid-continuous flow with dispersed gas bubbles. Use liquid properties.
    * </p>
+   *
+   * @param vG gas velocity (m/s)
+   * @param vL liquid velocity (m/s)
+   * @param rhoG gas density (kg/m³)
+   * @param rhoL liquid density (kg/m³)
+   * @param muG gas viscosity (Pa·s)
+   * @param muL liquid viscosity (Pa·s)
+   * @param alphaL liquid holdup fraction
+   * @param D pipe diameter (m)
+   * @param eps pipe roughness (m)
+   * @return wall friction result
    */
   private WallFrictionResult calcBubbleFriction(double vG, double vL, double rhoG, double rhoL,
       double muG, double muL, double alphaL, double D, double eps) {
@@ -286,16 +297,16 @@ public class WallFriction implements Serializable {
    * Similar to slug but more chaotic. Use mixture approach.
    * </p>
    *
-   * @param vG gas velocity in m/s
-   * @param vL liquid velocity in m/s
-   * @param rhoG gas density in kg/m³
-   * @param rhoL liquid density in kg/m³
-   * @param muG gas dynamic viscosity in Pa·s
-   * @param muL liquid dynamic viscosity in Pa·s
-   * @param alphaL liquid volume fraction
-   * @param D pipe diameter in meters
-   * @param eps pipe wall roughness in meters
-   * @return wall friction calculation results
+   * @param vG gas velocity (m/s)
+   * @param vL liquid velocity (m/s)
+   * @param rhoG gas density (kg/m³)
+   * @param rhoL liquid density (kg/m³)
+   * @param muG gas viscosity (Pa·s)
+   * @param muL liquid viscosity (Pa·s)
+   * @param alphaL liquid holdup fraction
+   * @param D pipe diameter (m)
+   * @param eps pipe roughness (m)
+   * @return wall friction result
    */
   private WallFrictionResult calcChurnFriction(double vG, double vL, double rhoG, double rhoL,
       double muG, double muL, double alphaL, double D, double eps) {

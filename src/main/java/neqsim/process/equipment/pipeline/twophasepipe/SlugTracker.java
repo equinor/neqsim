@@ -376,11 +376,11 @@ public class SlugTracker implements Serializable {
   /**
    * Calculate drift velocity using Bendiksen correlation.
    *
-   * @param D pipe diameter in meters
-   * @param theta pipe inclination angle in radians
-   * @param deltaRho density difference (rhoL - rhoG) in kg/m³
-   * @param rho_L liquid density in kg/m³
-   * @return drift velocity in m/s
+   * @param D pipe diameter (m)
+   * @param theta pipe inclination angle (radians)
+   * @param deltaRho density difference between liquid and gas (kg/m³)
+   * @param rho_L liquid density (kg/m³)
+   * @return drift velocity (m/s)
    */
   private double calculateDriftVelocity(double D, double theta, double deltaRho, double rho_L) {
     if (deltaRho <= 0 || rho_L <= 0) {
@@ -412,9 +412,9 @@ public class SlugTracker implements Serializable {
   /**
    * Calculate Taylor bubble/film region length.
    *
-   * @param slug the slug unit being analyzed
-   * @param section the pipe section containing the slug
-   * @return the calculated bubble length in meters
+   * @param slug the slug unit
+   * @param section the pipe section
+   * @return bubble length (m)
    */
   private double calculateBubbleLength(SlugUnit slug, PipeSection section) {
     // Bubble length based on slug frequency and unit length

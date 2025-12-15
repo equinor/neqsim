@@ -13,6 +13,8 @@ import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
+import neqsim.process.ml.StateVector;
+import neqsim.process.ml.StateVectorProvider;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -33,7 +35,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author esol
  * @version $Id: $Id
  */
-public class Compressor extends TwoPortEquipment implements CompressorInterface {
+public class Compressor extends TwoPortEquipment
+    implements CompressorInterface, StateVectorProvider {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -2114,6 +2117,61 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface 
   @Override
   public double getCapacityMax() {
     return getMechanicalDesign().maxDesignPower;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns state vector containing:
+   * <ul>
+   * <li>inlet_pressure - Inlet pressure [bar]</li>
+   * <li>outlet_pressure - Outlet pressure [bar]</li>
+   * <li>inlet_temperature - Inlet temperature [K]</li>
+   * <li>outlet_temperature - Outlet temperature [K]</li>
+   * <li>compression_ratio - Compression ratio [-]</li>
+   * <li>polytropic_efficiency - Polytropic efficiency [fraction]</li>
+   * <li>isentropic_efficiency - Isentropic efficiency [fraction]</li>
+   * <li>power - Shaft power [kW]</li>
+   * <li>speed - Rotational speed [rpm]</li>
+   * <li>surge_margin - Distance to surge [%]</li>
+   * <li>polytropic_head - Polytropic head [kJ/kg]</li>
+   * <li>inlet_flow - Inlet mass flow [kg/s]</li>
+   * </ul>
+   */
+  @Override
+  public StateVector getStateVector() {
+    StateVector state = new StateVector();
+
+    // Pressures
+    state.add("inlet_pressure", getInletStream().getPressure("bar"), 0.0, 200.0, "bar");
+    state.add("outlet_pressure", getOutletPressure(), 0.0, 500.0, "bar");
+
+    // Temperatures
+    state.add("inlet_temperature", getInletStream().getTemperature("K"), 200.0, 500.0, "K");
+    state.add("outlet_temperature", getOutletStream().getTemperature("K"), 200.0, 700.0, "K");
+
+    // Performance
+    state.add("compression_ratio", getCompressionRatio(), 1.0, 10.0, "ratio");
+    state.add("polytropic_efficiency", getPolytropicEfficiency(), 0.0, 1.0, "fraction");
+    state.add("isentropic_efficiency", getIsentropicEfficiency(), 0.0, 1.0, "fraction");
+    state.add("power", getPower("kW"), 0.0, 50000.0, "kW");
+    state.add("speed", getSpeed(), minspeed, maxspeed, "rpm");
+
+    // Surge protection
+    if (getAntiSurge() != null) {
+      // Surge fraction: 0 = at surge line, 1 = far from surge
+      double surgeFraction = getAntiSurge().getCurrentSurgeFraction();
+      state.add("surge_fraction", surgeFraction, 0.0, 2.0, "fraction");
+    }
+
+    // Head
+    state.add("polytropic_head", getPolytropicHead("kJ/kg"), 0.0, 500.0, "kJ/kg");
+
+    // Flow
+    state.add("inlet_flow", getInletStream().getFlowRate("kg/sec"), 0.0, 500.0, "kg/s");
+
+    return state;
   }
 }
 
