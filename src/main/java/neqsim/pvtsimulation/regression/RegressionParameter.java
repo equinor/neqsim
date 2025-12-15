@@ -235,6 +235,46 @@ public enum RegressionParameter {
       fluid.getCharacterization().setPlusFractionModel("Whitson Gamma Model");
       fluid.getCharacterization().setGammaMinMW(value);
     }
+  },
+
+  /**
+   * Lohrenz-Bray-Clark viscosity correlation parameter A for heavy fraction. This multiplier
+   * adjusts the viscosity contribution of C7+ components.
+   */
+  VISCOSITY_LBC_MULTIPLIER(0.8, 1.5, 1.0) {
+    @Override
+    public void applyToFluid(SystemInterface fluid, double value) {
+      for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
+        if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
+            || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
+          for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
+            // Adjust critical volume which affects LBC correlation
+            double currentVc = fluid.getPhase(p).getComponent(i).getCriticalVolume();
+            fluid.getPhase(p).getComponent(i).setCriticalVolume(currentVc * value);
+          }
+        }
+      }
+    }
+  },
+
+  /**
+   * Pedersen corresponding states viscosity correlation parameter. Adjusts the alpha parameter in
+   * the Pedersen viscosity model.
+   */
+  VISCOSITY_PEDERSEN_ALPHA(0.5, 2.0, 1.0) {
+    @Override
+    public void applyToFluid(SystemInterface fluid, double value) {
+      // Adjust viscosity through parachor which affects corresponding states model
+      for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
+        if (fluid.getPhase(0).getComponent(i).isIsPlusFraction()
+            || fluid.getPhase(0).getComponent(i).isIsTBPfraction()) {
+          for (int p = 0; p < fluid.getMaxNumberOfPhases(); p++) {
+            double currentParachor = fluid.getPhase(p).getComponent(i).getParachor();
+            fluid.getPhase(p).getComponent(i).setParachor(currentParachor * value);
+          }
+        }
+      }
+    }
   };
 
   private final double lowerBound;

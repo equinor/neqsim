@@ -943,4 +943,228 @@ public class PVTReportGenerator {
 
     return sb.toString();
   }
+
+  /**
+   * Generate CSV output for swelling test data.
+   *
+   * @return CSV formatted string
+   */
+  public String generateSwellingCSV() {
+    if (swellingData == null) {
+      return "";
+    }
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("Pressure(bara),RelativeOilVolume\n");
+
+    double[] pressures = swellingData.getPressures();
+    double[] relVol = swellingData.getRelativeOilVolume();
+
+    if (pressures != null && relVol != null) {
+      int len = Math.min(pressures.length, relVol.length);
+      for (int i = 0; i < len; i++) {
+        sb.append(String.format(Locale.US, "%.2f,%.4f\n", pressures[i], relVol[i]));
+      }
+    }
+
+    return sb.toString();
+  }
+
+  /**
+   * Generate CSV output for GOR data.
+   *
+   * @return CSV formatted string
+   */
+  public String generateGORCSV() {
+    if (gorData == null) {
+      return "";
+    }
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("Point,GOR(Sm3/Sm3),Bo(m3/Sm3)\n");
+
+    double[] gor = gorData.getGOR();
+    double[] bo = gorData.getBofactor();
+
+    if (gor != null) {
+      for (int i = 0; i < gor.length; i++) {
+        double boVal = (bo != null && i < bo.length) ? bo[i] : 0.0;
+        sb.append(String.format(Locale.US, "%d,%.2f,%.4f\n", i + 1, gor[i], boVal));
+      }
+    }
+
+    return sb.toString();
+  }
+
+  /**
+   * Generate CSV output for MMP data.
+   *
+   * @return CSV formatted string
+   */
+  public String generateMMPCSV() {
+    if (mmpData == null) {
+      return "";
+    }
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("Pressure(bara),Recovery(%)\n");
+
+    double[] pressures = mmpData.getPressures();
+    double[] recoveries = mmpData.getRecoveries();
+
+    if (pressures != null && recoveries != null) {
+      int len = Math.min(pressures.length, recoveries.length);
+      for (int i = 0; i < len; i++) {
+        sb.append(String.format(Locale.US, "%.1f,%.2f\n", pressures[i], recoveries[i] * 100));
+      }
+    }
+
+    // Add MMP value at the end
+    sb.append(String.format(Locale.US, "\nMMP(bara),%.1f\n", mmpData.getMMP()));
+
+    return sb.toString();
+  }
+
+  /**
+   * Generate lab data comparison section with AAD and ARE statistics.
+   *
+   * @return Markdown formatted comparison report
+   */
+  public String generateLabComparison() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("## Lab Data Comparison\n\n");
+
+    // CCE Comparison
+    if (!labCCE.isEmpty() && cceData != null) {
+      sb.append("### CCE Comparison\n\n");
+      sb.append(generateCCEComparison());
+    }
+
+    // DLE Comparison
+    if (!labDLE.isEmpty() && dleData != null) {
+      sb.append("### DLE Comparison\n\n");
+      sb.append(generateDLEComparison());
+    }
+
+    return sb.toString();
+  }
+
+  /**
+   * Generate CCE comparison with lab data.
+   *
+   * @return Markdown formatted table with AAD/ARE
+   */
+  private String generateCCEComparison() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("| Pressure (bara) | Property | Lab Value | Sim Value | Deviation (%) |\n");
+    sb.append("|-----------------|----------|-----------|-----------|---------------|\n");
+
+    double sumAbsDev = 0.0;
+    double sumRelDev = 0.0;
+    int count = 0;
+
+    double[] simPressures = cceData.getPressures();
+    double[] simRelVol = cceData.getRelativeVolume();
+
+    for (LabDataPoint lab : labCCE) {
+      double simValue = interpolate(simPressures, simRelVol, lab.getPressure());
+      if (!Double.isNaN(simValue) && lab.getProperty().equalsIgnoreCase("RelVol")) {
+        double dev = Math.abs(simValue - lab.getValue()) / lab.getValue() * 100;
+        sb.append(String.format(Locale.US, "| %.1f | %s | %.4f | %.4f | %.2f |\n",
+            lab.getPressure(), lab.getProperty(), lab.getValue(), simValue, dev));
+        sumAbsDev += Math.abs(simValue - lab.getValue());
+        sumRelDev += dev;
+        count++;
+      }
+    }
+
+    if (count > 0) {
+      double aad = sumAbsDev / count;
+      double are = sumRelDev / count;
+      sb.append("\n");
+      sb.append(String.format(Locale.US, "**AAD (Average Absolute Deviation):** %.4f\n", aad));
+      sb.append(String.format(Locale.US, "**ARE (Average Relative Error):** %.2f%%\n\n", are));
+    }
+
+    return sb.toString();
+  }
+
+  /**
+   * Generate DLE comparison with lab data.
+   *
+   * @return Markdown formatted table with AAD/ARE
+   */
+  private String generateDLEComparison() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("| Pressure (bara) | Property | Lab Value | Sim Value | Deviation (%) |\n");
+    sb.append("|-----------------|----------|-----------|-----------|---------------|\n");
+
+    double sumAbsDev = 0.0;
+    double sumRelDev = 0.0;
+    int count = 0;
+
+    double[] simPressures = dleData.getPressures();
+    double[] simBo = dleData.getBo();
+    double[] simRs = dleData.getRs();
+
+    for (LabDataPoint lab : labDLE) {
+      double simValue = Double.NaN;
+      if (lab.getProperty().equalsIgnoreCase("Bo")) {
+        simValue = interpolate(simPressures, simBo, lab.getPressure());
+      } else if (lab.getProperty().equalsIgnoreCase("Rs")) {
+        simValue = interpolate(simPressures, simRs, lab.getPressure());
+      }
+
+      if (!Double.isNaN(simValue)) {
+        double dev = Math.abs(simValue - lab.getValue()) / Math.abs(lab.getValue()) * 100;
+        sb.append(String.format(Locale.US, "| %.1f | %s | %.4f | %.4f | %.2f |\n",
+            lab.getPressure(), lab.getProperty(), lab.getValue(), simValue, dev));
+        sumAbsDev += Math.abs(simValue - lab.getValue());
+        sumRelDev += dev;
+        count++;
+      }
+    }
+
+    if (count > 0) {
+      double aad = sumAbsDev / count;
+      double are = sumRelDev / count;
+      sb.append("\n");
+      sb.append(String.format(Locale.US, "**AAD (Average Absolute Deviation):** %.4f\n", aad));
+      sb.append(String.format(Locale.US, "**ARE (Average Relative Error):** %.2f%%\n\n", are));
+    }
+
+    return sb.toString();
+  }
+
+  /**
+   * Linear interpolation helper.
+   *
+   * @param x X values (must be sorted)
+   * @param y Y values
+   * @param xi X value to interpolate at
+   * @return Interpolated y value, or NaN if out of range
+   */
+  private double interpolate(double[] x, double[] y, double xi) {
+    if (x == null || y == null || x.length == 0 || x.length != y.length) {
+      return Double.NaN;
+    }
+
+    // Find bracketing indices
+    for (int i = 0; i < x.length - 1; i++) {
+      if ((x[i] <= xi && xi <= x[i + 1]) || (x[i] >= xi && xi >= x[i + 1])) {
+        double t = (xi - x[i]) / (x[i + 1] - x[i]);
+        return y[i] + t * (y[i + 1] - y[i]);
+      }
+    }
+
+    // Exact match at endpoints
+    if (Math.abs(x[0] - xi) < 1e-6) {
+      return y[0];
+    }
+    if (Math.abs(x[x.length - 1] - xi) < 1e-6) {
+      return y[y.length - 1];
+    }
+
+    return Double.NaN;
+  }
 }

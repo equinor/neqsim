@@ -543,4 +543,163 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
 
     return sb.toString();
   }
+
+  /**
+   * Result of separator optimization.
+   */
+  public static class OptimizationResult {
+    private final double optimalPressure;
+    private final double optimalTemperature;
+    private final double maximumOilRecovery;
+    private final double gorAtOptimum;
+    private final double boAtOptimum;
+    private final double apiAtOptimum;
+
+    /**
+     * Create optimization result.
+     *
+     * @param optPressure Optimal separator pressure (bara)
+     * @param optTemp Optimal separator temperature (°C)
+     * @param maxRecovery Maximum oil recovery factor
+     * @param gor GOR at optimum conditions
+     * @param bo Bo at optimum conditions
+     * @param api API gravity at optimum conditions
+     */
+    public OptimizationResult(double optPressure, double optTemp, double maxRecovery, double gor,
+        double bo, double api) {
+      this.optimalPressure = optPressure;
+      this.optimalTemperature = optTemp;
+      this.maximumOilRecovery = maxRecovery;
+      this.gorAtOptimum = gor;
+      this.boAtOptimum = bo;
+      this.apiAtOptimum = api;
+    }
+
+    public double getOptimalPressure() {
+      return optimalPressure;
+    }
+
+    public double getOptimalTemperature() {
+      return optimalTemperature;
+    }
+
+    public double getMaximumOilRecovery() {
+      return maximumOilRecovery;
+    }
+
+    public double getGorAtOptimum() {
+      return gorAtOptimum;
+    }
+
+    public double getBoAtOptimum() {
+      return boAtOptimum;
+    }
+
+    public double getApiAtOptimum() {
+      return apiAtOptimum;
+    }
+
+    @Override
+    public String toString() {
+      return String.format(
+          "Optimal P=%.1f bara, T=%.1f°C, Recovery=%.4f, GOR=%.1f, Bo=%.4f, API=%.1f",
+          optimalPressure, optimalTemperature, maximumOilRecovery, gorAtOptimum, boAtOptimum,
+          apiAtOptimum);
+    }
+  }
+
+  /**
+   * Find optimal first-stage separator conditions to maximize stock tank oil recovery.
+   *
+   * <p>
+   * This method performs a grid search over pressure and temperature ranges to find the separator
+   * conditions that maximize stock tank oil volume (minimize shrinkage). The optimization uses the
+   * current multi-stage configuration with the first stage conditions varied.
+   * </p>
+   *
+   * @param minPressure Minimum separator pressure to search (bara)
+   * @param maxPressure Maximum separator pressure to search (bara)
+   * @param pressureSteps Number of pressure steps in search grid
+   * @param minTemperature Minimum separator temperature to search (°C)
+   * @param maxTemperature Maximum separator temperature to search (°C)
+   * @param temperatureSteps Number of temperature steps in search grid
+   * @return OptimizationResult containing optimal conditions and corresponding properties
+   */
+  public OptimizationResult optimizeFirstStageSeparator(double minPressure, double maxPressure,
+      int pressureSteps, double minTemperature, double maxTemperature, int temperatureSteps) {
+
+    if (stages.isEmpty()) {
+      throw new IllegalStateException("No separator stages defined. Add at least one stage first.");
+    }
+
+    // Store original first stage
+    SeparatorStage originalFirstStage = stages.get(0);
+    SystemInterface originalFluid = getThermoSystem().clone();
+
+    double bestPressure = originalFirstStage.getPressure();
+    double bestTemperature = originalFirstStage.getTemperature();
+    double bestBo = Double.MAX_VALUE; // Lower Bo = more oil at stock tank
+    double bestGOR = 0.0;
+    double bestAPI = 0.0;
+
+    double dP = (maxPressure - minPressure) / Math.max(1, pressureSteps - 1);
+    double dT = (maxTemperature - minTemperature) / Math.max(1, temperatureSteps - 1);
+
+    // Grid search
+    for (int pi = 0; pi < pressureSteps; pi++) {
+      double testPressure = minPressure + pi * dP;
+
+      for (int ti = 0; ti < temperatureSteps; ti++) {
+        double testTemperature = minTemperature + ti * dT;
+
+        // Replace first stage with test conditions
+        stages.set(0,
+            new SeparatorStage(testPressure, testTemperature, originalFirstStage.getName()));
+
+        // Reset fluid and run separator test
+        setThermoSystem(originalFluid.clone());
+        try {
+          run();
+
+          // Check if this is better (lower Bo means more oil recovery)
+          if (Bo < bestBo && Bo > 0) {
+            bestBo = Bo;
+            bestPressure = testPressure;
+            bestTemperature = testTemperature;
+            bestGOR = totalGOR;
+            bestAPI = stockTankAPIGravity;
+          }
+        } catch (Exception e) {
+          // Skip invalid conditions
+        }
+      }
+    }
+
+    // Restore original first stage and re-run with optimal conditions
+    stages.set(0, new SeparatorStage(bestPressure, bestTemperature, originalFirstStage.getName()));
+    setThermoSystem(originalFluid.clone());
+    run();
+
+    double recoveryFactor = 1.0 / bestBo; // Sm3 stock tank oil per rm3 reservoir oil
+
+    return new OptimizationResult(bestPressure, bestTemperature, recoveryFactor, bestGOR, bestBo,
+        bestAPI);
+  }
+
+  /**
+   * Find optimal separator conditions with default search ranges.
+   *
+   * <p>
+   * Uses typical separator operating ranges:
+   * </p>
+   * <ul>
+   * <li>Pressure: 5-80 bara with 16 steps</li>
+   * <li>Temperature: 20-60°C with 9 steps</li>
+   * </ul>
+   *
+   * @return OptimizationResult containing optimal conditions
+   */
+  public OptimizationResult optimizeFirstStageSeparator() {
+    return optimizeFirstStageSeparator(5.0, 80.0, 16, 20.0, 60.0, 9);
+  }
 }
