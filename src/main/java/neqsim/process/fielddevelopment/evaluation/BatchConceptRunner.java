@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import org.apache.commons.lang3.StringUtils;
 import neqsim.process.fielddevelopment.concept.FieldConcept;
 
 /**
@@ -371,10 +372,10 @@ public class BatchConceptRunner {
     public String getComparisonSummary() {
       StringBuilder sb = new StringBuilder();
       sb.append("CONCEPT COMPARISON SUMMARY\n");
-      sb.append("=".repeat(80)).append("\n");
+      sb.append(StringUtils.repeat("=", 80)).append("\n");
       sb.append(String.format("%-25s %10s %10s %12s %8s %8s\n", "Concept", "CAPEX(M$)",
           "CO2(kg/boe)", "FlowAssur", "Safety", "Score"));
-      sb.append("-".repeat(80)).append("\n");
+      sb.append(StringUtils.repeat("-", 80)).append("\n");
 
       for (ConceptKPIs kpi : getRankedResults()) {
         sb.append(String.format("%-25s %10.0f %10.1f %12s %8s %7.0f%%\n",
@@ -383,7 +384,7 @@ public class BatchConceptRunner {
             kpi.getSafetyLevel().getDisplayName(), kpi.getOverallScore() * 100));
       }
 
-      sb.append("-".repeat(80)).append("\n");
+      sb.append(StringUtils.repeat("-", 80)).append("\n");
       ConceptKPIs best = getBestConcept();
       if (best != null) {
         sb.append("RECOMMENDED: ").append(best.getConceptName());
