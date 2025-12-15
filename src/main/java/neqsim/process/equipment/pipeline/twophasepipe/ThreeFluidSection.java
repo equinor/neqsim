@@ -266,6 +266,10 @@ public class ThreeFluidSection extends TwoFluidSection implements Cloneable, Ser
 
   /**
    * Calculate liquid level from cross-sectional area using Newton iteration.
+   *
+   * @param targetArea target cross-sectional area in m²
+   * @param d pipe diameter in meters
+   * @return liquid level height in meters
    */
   private double calculateLevelFromArea(double targetArea, double d) {
     double r = d / 2.0;

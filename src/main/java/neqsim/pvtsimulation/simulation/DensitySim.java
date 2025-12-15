@@ -126,14 +126,14 @@ public class DensitySim extends BasePVTsimulation {
       waxFraction[i] = 0.0;
 
       if (getThermoSystem().hasPhaseType("gas")) {
-        gasDensity[i] = getThermoSystem().getPhase("gas").getPhysicalProperties().getViscosity();
+        gasDensity[i] = getThermoSystem().getPhase("gas").getPhysicalProperties().getDensity();
       }
       if (getThermoSystem().hasPhaseType("oil")) {
-        oilDensity[i] = getThermoSystem().getPhase("oil").getPhysicalProperties().getViscosity();
+        oilDensity[i] = getThermoSystem().getPhase("oil").getPhysicalProperties().getDensity();
       }
       if (getThermoSystem().hasPhaseType("aqueous")) {
         aqueousDensity[i] =
-            getThermoSystem().getPhase("aqueous").getPhysicalProperties().getViscosity();
+            getThermoSystem().getPhase("aqueous").getPhysicalProperties().getDensity();
       }
     }
   }

@@ -1,38 +1,148 @@
 # Viscosity Models in NeqSim
 
-NeqSim provides several methods for calculating the viscosity of fluids, ranging from standard correlations to advanced corresponding states models. This document details the primary models available, recent improvements, and how to use them in your simulations.
+NeqSim provides a comprehensive suite of methods for calculating fluid viscosity, ranging from standard empirical correlations to advanced corresponding states models and specialized pure-component equations. This document details the available models, their applications, and how to use them in simulations.
+
+## Overview
+
+NeqSim viscosity models are organized into several categories:
+
+| Category | Models | Applicability |
+|----------|--------|---------------|
+| **General Purpose** | LBC, PFCT, Friction Theory | Hydrocarbon mixtures, reservoir fluids |
+| **Pure Component** | Muzny, MethaneModel, CO2Model, KTA | Specialized high-accuracy correlations |
+| **Aqueous Systems** | Salt Water (Laliberté), polynom | Brine and water solutions |
+| **Heavy Oils** | PFCT-Heavy-Oil | Viscous crude oils, bitumen |
+
+---
 
 ## Available Models
 
 ### 1. Lohrenz-Bray-Clark (LBC)
-The **LBC** method is a widely used correlation for calculating the viscosity of reservoir fluids. It is based on the correspondence between the viscosity of a fluid and its density, using a fourth-degree polynomial in reduced density.
+The **LBC** method is the industry-standard correlation for calculating viscosity of reservoir fluids. It combines a low-pressure gas viscosity term with a dense-fluid contribution based on reduced density.
 
 *   **Keyword**: `"LBC"`
-*   **Best for**: General oil and gas systems, reservoir fluids.
-*   **Recent Improvements**:
-    *   **Whitson Consistency**: The implementation has been aligned with the standard "Whitson" interpretation of the LBC correlation.
-    *   **Heavy Oil Handling**: The critical volume mixing rule was updated to a linear summation ($\sum x_i V_{ci}$) instead of the previous cubic root rule. This significantly improves predictions for high-pressure mixtures containing heavy components (e.g., TBP fractions).
-    *   **Unit Corrections**: Internal pressure and viscosity unit conversions have been rigorously verified against literature.
+*   **Best for**: General oil and gas systems, reservoir fluids, PVT matching.
+*   **Features**:
+    *   **Tunable Parameters**: Five dense-fluid polynomial coefficients ($a_0$ to $a_4$) can be adjusted to match laboratory data.
+    *   **Whitson Consistency**: Implementation aligned with the standard "Whitson" interpretation.
+    *   **Linear Mixing Rule**: Critical volume uses linear summation ($\sum x_i V_{ci}$) for better heavy component handling.
+    *   **Unit Verified**: Internal pressure and viscosity unit conversions rigorously verified against literature.
 
-### 2. Corresponding States Principle (CSP)
-The **CSP** method (often referred to as PFCT in NeqSim) uses the Corresponding States Principle to calculate viscosity. It relates the viscosity of the mixture to that of a reference substance (typically Methane) at a corresponding state.
+### 2. Corresponding States Principle (CSP/PFCT)
+The **CSP** method (referred to as PFCT in NeqSim) uses the Corresponding States Principle to relate mixture viscosity to a reference substance (typically Methane) at corresponding thermodynamic conditions.
 
 *   **Keyword**: `"PFCT"`
 *   **Best for**: Light to medium hydrocarbon mixtures, natural gas.
-*   **Recent Improvements**:
-    *   Fixed a bug where the reference fluid state was initialized using the actual mixture temperature/pressure instead of the corresponding state temperature/pressure ($T_0, P_0$). This ensures consistent behavior across gas and liquid phases.
+*   **Features**:
+    *   Uses methane as reference fluid with well-characterized viscosity.
+    *   Includes shape factor corrections for non-spherical molecules.
 
-### 3. Corresponding States Principle for Heavy Oil (CSP-Heavy-Oil)
-A variant of the CSP model specifically tuned for heavy oil systems. It includes additional terms or modifications to better represent the viscous behavior of heavy fractions.
+### 3. Corresponding States Principle for Heavy Oil
+A variant of the CSP model specifically tuned for heavy oil systems with additional terms to represent the viscous behavior of heavy fractions.
 
 *   **Keyword**: `"PFCT-Heavy-Oil"`
-*   **Best for**: Heavy oils, systems with significant TBP fractions.
+*   **Best for**: Heavy oils, systems with significant TBP (True Boiling Point) fractions, bitumen.
 
 ### 4. Friction Theory
-The **Friction Theory** (f-theory) model links viscosity to the equation of state (EOS) by separating the total viscosity into a dilute gas contribution and a residual friction contribution. The friction contribution is correlated against the attractive and repulsive pressure terms of the EOS.
+The **Friction Theory** (f-theory) model links viscosity to the equation of state (EOS) by separating total viscosity into a dilute gas contribution and a residual friction contribution.
 
 *   **Keyword**: `"friction theory"`
-*   **Best for**: Wide range of fluids, consistent with EOS thermodynamics.
+*   **Best for**: Wide range of fluids, consistent with EOS thermodynamics, high-pressure applications.
+*   **Features**:
+    *   Thermodynamically consistent with the EOS used for phase equilibrium.
+    *   Robust near critical point and at high pressures.
+    *   Uses Chung correlation for dilute-gas contribution.
+
+### 5. Chung Method (Gas Phase)
+The **Chung** method is a corresponding states correlation for gas-phase viscosity based on the Chapman-Enskog kinetic theory with empirical corrections.
+
+*   **Keyword**: Used internally by gas phase physical properties.
+*   **Best for**: Low-density gas mixtures.
+*   **Features**:
+    *   Wilke mixing rules for multicomponent systems.
+    *   Correction factors for polar and associating molecules.
+
+### 6. Lee-Gonzalez-Eakin Correlation
+A simple empirical correlation for natural gas viscosity estimation.
+
+*   **Keyword**: Used as reference in LBC calculations.
+*   **Best for**: Quick first-order estimates for natural gas.
+*   **Reference**: Lee, Gonzalez, and Eakin, SPE-1340-PA, 1966.
+
+---
+
+## Pure Component Models
+
+### 7. Muzny Hydrogen Viscosity
+High-accuracy correlation for **pure hydrogen** viscosity based on the work of Muzny et al. Includes dilute-gas, first-density, and higher-density contributions.
+
+*   **Keyword**: `"Muzny"`
+*   **Best for**: Pure hydrogen systems across wide temperature and pressure ranges.
+*   **Limitations**: Only valid for pure hydrogen - throws error for mixtures.
+*   **Features**:
+    *   Uses Leachman equation of state for density.
+    *   Valid from gas to dense fluid phases.
+
+### 8. Muzny Modified Hydrogen Viscosity
+Extended version of the Muzny correlation with additional correction terms for improved accuracy at specific conditions.
+
+*   **Keyword**: `"Muzny_mod"`
+*   **Best for**: Pure hydrogen with enhanced accuracy at certain T-P conditions.
+
+### 9. Methane Viscosity Model
+Specialized correlation for **pure methane** viscosity using LBC as base with empirical correction terms.
+
+*   **Keyword**: `"MethaneModel"`
+*   **Best for**: Pure methane systems, LNG applications.
+*   **Limitations**: Only valid for pure methane - throws error for mixtures.
+
+### 10. CO2 Viscosity Model
+Reference-quality correlation for **pure carbon dioxide** based on Laesecke et al. (JPCRD 2017).
+
+*   **Keyword**: `"CO2Model"`
+*   **Best for**: Pure CO2 systems, CCS applications, supercritical CO2.
+*   **Limitations**: Only valid for pure CO2 - throws error for mixtures.
+*   **Features**:
+    *   Dilute-gas and residual contributions from JPCRD 2017.
+    *   Uses Span-Wagner EOS for density when needed.
+
+### 11. KTA Helium Viscosity
+Simple power-law correlation for **pure helium** viscosity.
+
+*   **Keyword**: `"KTA"`
+*   **Best for**: Pure helium systems, cryogenic applications.
+*   **Limitations**: Only valid for pure helium.
+*   **Reference**: Based on KTA (Kerntechnischer Ausschuss) standard.
+
+### 12. KTA Modified Helium Viscosity
+Extended KTA model with pressure-dependent corrections for improved high-pressure accuracy.
+
+*   **Keyword**: `"KTA_mod"`
+*   **Best for**: Pure helium at elevated pressures.
+
+---
+
+## Aqueous System Models
+
+### 13. Salt Water (Laliberté)
+Viscosity correlation for aqueous salt solutions using the Laliberté (2007) model with erratum corrections.
+
+*   **Keyword**: `"Salt Water"`
+*   **Best for**: Brine systems, produced water, salt solutions.
+*   **Supported Salts**:
+    *   NaCl (sodium chloride)
+    *   KCl (potassium chloride)
+    *   KCOOH (potassium formate)
+    *   NaBr (sodium bromide)
+    *   CaCl2 (calcium chloride)
+    *   KBr (potassium bromide)
+*   **Reference**: G. Laliberté, Ind. Eng. Chem. Res., 2007, 46, 8865-8872.
+
+### 14. Polynomial Liquid Viscosity
+General liquid viscosity calculation using the Grunberg-Nissan mixing rule with pure-component correlations.
+
+*   **Keyword**: `"polynom"`
+*   **Best for**: Liquid mixtures where component viscosity parameters are available in database.
 
 ## Usage in NeqSim
 
@@ -194,3 +304,135 @@ where:
 *   $\kappa_r, \kappa_a, \kappa_{rr}$: Friction coefficients, which are functions of temperature.
 
 This approach ensures that the viscosity model is consistent with the thermodynamic behavior predicted by the EOS, making it robust across a wide range of conditions, including high pressure and near-critical regions.
+
+### 4. Muzny Hydrogen Viscosity Model
+The Muzny correlation for pure hydrogen viscosity follows a multi-term structure:
+
+$$ \eta = \eta_0 + \eta_1 \rho + \Delta\eta(\rho_r, T_r) $$
+
+where:
+*   $\eta_0$: Dilute-gas viscosity from Chapman-Enskog theory
+*   $\eta_1$: First-density coefficient
+*   $\Delta\eta$: Higher-order density contribution
+
+The dilute-gas term is:
+
+$$ \eta_0 = \frac{0.021357 \sqrt{MT}}{\sigma^2 S^*} $$
+
+where $S^*$ is the reduced collision integral and $\sigma = 0.297$ nm is the Lennard-Jones size parameter.
+
+### 5. CO2 Viscosity Model (Laesecke JPCRD 2017)
+The CO2 viscosity correlation consists of dilute-gas and residual terms:
+
+$$ \eta = \eta_0(T) + \Delta\eta(\rho, T) $$
+
+The dilute-gas term follows an empirical correlation, and the residual term is expressed as:
+
+$$ \Delta\eta = \eta_{t,L} \left[ c_1 T_r \rho_r^3 + \frac{\rho_r^2 + \rho_r^\gamma}{T_r - c_2} \right] $$
+
+where $T_t = 216.592$ K is the triple point temperature and $\rho_{t,L} = 1178.53$ kg/m³ is the triple point liquid density.
+
+### 6. Salt Water (Laliberté Model)
+The Laliberté mixture rule for aqueous salt solutions:
+
+$$ \eta_m = \eta_w^{w_w} \prod_i \eta_i^{w_i} $$
+
+where $\eta_w$ is pure-water viscosity and $\eta_i$ are solute viscosities:
+
+$$ \eta_i = \frac{\exp\left[\frac{\nu_1(1-w_w)^{\nu_2} + \nu_3}{\nu_4 t + 1}\right]}{\nu_5(1-w_w)^{\nu_6} + 1} $$
+
+with $w_w$ = water mass fraction and $t$ = temperature in °C.
+
+---
+
+## Quick Reference Table
+
+| Model Keyword | Applicability | Phase | Multi-Component |
+|---------------|---------------|-------|-----------------|
+| `"LBC"` | Hydrocarbons, reservoir fluids | Gas/Liquid | Yes |
+| `"PFCT"` | Light-medium hydrocarbons | Gas/Liquid | Yes |
+| `"PFCT-Heavy-Oil"` | Heavy oils, bitumen | Liquid | Yes |
+| `"friction theory"` | General fluids, EOS-consistent | Gas/Liquid | Yes |
+| `"polynom"` | Liquids with database parameters | Liquid | Yes |
+| `"Muzny"` | Pure hydrogen | Gas/Liquid | No |
+| `"Muzny_mod"` | Pure hydrogen (extended) | Gas/Liquid | No |
+| `"MethaneModel"` | Pure methane | Gas/Liquid | No |
+| `"CO2Model"` | Pure CO2 | Gas/Liquid | No |
+| `"KTA"` | Pure helium | Gas | No |
+| `"KTA_mod"` | Pure helium (extended) | Gas | No |
+| `"Salt Water"` | Brine, salt solutions | Liquid | Yes (aqueous) |
+
+---
+
+## Additional Examples
+
+### Using Pure Component Models
+
+```java
+// Pure Hydrogen Viscosity
+SystemInterface h2System = new SystemSrkEos(300.0, 50.0);
+h2System.addComponent("hydrogen", 1.0);
+h2System.setMixingRule("classic");
+ThermodynamicOperations h2Ops = new ThermodynamicOperations(h2System);
+h2Ops.TPflash();
+
+h2System.getPhase(0).getPhysicalProperties().setViscosityModel("Muzny");
+h2System.initProperties();
+System.out.println("H2 Viscosity (Muzny): " + h2System.getPhase(0).getViscosity() + " Pa·s");
+
+// Pure CO2 Viscosity
+SystemInterface co2System = new SystemSrkEos(350.0, 100.0);
+co2System.addComponent("CO2", 1.0);
+co2System.setMixingRule("classic");
+ThermodynamicOperations co2Ops = new ThermodynamicOperations(co2System);
+co2Ops.TPflash();
+
+co2System.getPhase(0).getPhysicalProperties().setViscosityModel("CO2Model");
+co2System.initProperties();
+System.out.println("CO2 Viscosity (Laesecke): " + co2System.getPhase(0).getViscosity() + " Pa·s");
+```
+
+### Salt Water Viscosity
+
+```java
+// Brine viscosity calculation
+SystemInterface brine = new SystemSrkCPAstatoil(323.15, 10.0);
+brine.addComponent("water", 0.95);
+brine.addComponent("NaCl", 0.05);
+brine.setMixingRule(10); // CPA mixing rule
+
+ThermodynamicOperations brineOps = new ThermodynamicOperations(brine);
+brineOps.TPflash();
+
+// Set Laliberté salt water model
+brine.getPhase("aqueous").getPhysicalProperties().setViscosityModel("Salt Water");
+brine.initProperties();
+System.out.println("Brine Viscosity: " + brine.getPhase("aqueous").getViscosity() + " Pa·s");
+```
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+1. **"Model only supports PURE X" error**: Pure-component models (Muzny, CO2Model, MethaneModel, KTA) only work with single-component systems. Use LBC or PFCT for mixtures.
+
+2. **Unexpected viscosity values**: Ensure `initProperties()` is called after setting the viscosity model and after any flash calculations.
+
+3. **Phase selection**: Use `getPhase("oil")`, `getPhase("gas")`, or `getPhase("aqueous")` to select the correct phase, or use phase index (0, 1, 2).
+
+4. **Heavy oil predictions too low**: Try `"PFCT-Heavy-Oil"` or tune LBC parameters using `setLbcParameters()`.
+
+---
+
+## References
+
+1. Lohrenz, J., Bray, B.G., and Clark, C.R., "Calculating Viscosities of Reservoir Fluids from Their Compositions", JPT, 1964.
+2. Pedersen, K.S., and Fredenslund, A., "An Improved Corresponding States Model for the Prediction of Oil and Gas Viscosities", Chemical Engineering Science, 1987.
+3. Quiñones-Cisneros, S.E., and Deiters, U.K., "Generalization of the Friction Theory for Viscosity Modeling", J. Phys. Chem. B, 2006.
+4. Muzny, C.D., et al., "Correlation for the Viscosity of Normal Hydrogen", J. Chem. Eng. Data, 2013.
+5. Laesecke, A., and Muzny, C.D., "Reference Correlation for the Viscosity of Carbon Dioxide", JPCRD, 2017.
+6. Laliberté, M., "Model for Calculating the Viscosity of Aqueous Solutions", Ind. Eng. Chem. Res., 2007.
+7. Lee, A.L., Gonzalez, M.H., and Eakin, B.E., "The Viscosity of Natural Gases", SPE-1340-PA, 1966.
+8. Chung, T.H., et al., "Generalized Multiparameter Correlation for Nonpolar and Polar Fluid Transport Properties", Ind. Eng. Chem. Res., 1988.

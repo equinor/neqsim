@@ -229,6 +229,11 @@ public class ThreeFluidConservationEquations implements Serializable {
 
   /**
    * Calculate Colebrook-White friction factor.
+   *
+   * @param re Reynolds number
+   * @param roughness pipe wall roughness in meters
+   * @param diameter pipe inner diameter in meters
+   * @return Fanning friction factor
    */
   private double calculateFrictionFactor(double re, double roughness, double diameter) {
     if (re < 10) {

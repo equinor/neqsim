@@ -502,6 +502,9 @@ public class SlugTracker implements Serializable {
    * the slug body. The section's base holdup (from Eulerian solver) is preserved and the slug
    * holdup is used to modify effective properties for friction/pressure calculations.
    * </p>
+   *
+   * @param slug the slug unit to mark sections for
+   * @param sections array of pipe sections to check for slug overlap
    */
   private void markSlugSections(SlugUnit slug, PipeSection[] sections) {
     for (PipeSection section : sections) {
