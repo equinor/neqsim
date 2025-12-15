@@ -7,8 +7,8 @@
  * <ul>
  * <li>{@link neqsim.process.ml.multiagent.Agent} - Individual agent interface</li>
  * <li>{@link neqsim.process.ml.multiagent.MultiAgentEnvironment} - Coordinated environment</li>
- * <li>{@link neqsim.process.ml.multiagent.SharedConstraintManager} - Global constraint handling</li>
- * <li>{@link neqsim.process.ml.multiagent.CommunicationChannel} - Inter-agent messaging</li>
+ * <li>{@link neqsim.process.ml.multiagent.ProcessAgent} - Base process agent implementation</li>
+ * <li>{@link neqsim.process.ml.multiagent.SeparatorAgent} - Separator control agent</li>
  * </ul>
  *
  * <h2>Use Cases:</h2>
