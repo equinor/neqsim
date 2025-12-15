@@ -231,6 +231,54 @@ double massFlowKgH = result.getMassFlowKgPerHour()[0];
 double stdFlowMSm3Day = result.getStandardFlowMSm3PerDay()[0];
 ```
 
+### Example 2: Calculate Differential Pressure from Flow (Inverse)
+
+```java
+import neqsim.process.equipment.diffpressure.DifferentialPressureFlowCalculator;
+import java.util.Arrays;
+import java.util.List;
+
+// Known mass flow rate
+double massFlowKgPerHour = 50000.0;  // 50,000 kg/h
+
+// Operating conditions
+double pressureBarg = 50.0;          // 50 barg
+double temperatureC = 25.0;          // 25°C
+
+// Venturi geometry: D=300mm, d=200mm, Cd=0.985
+double[] flowData = {300.0, 200.0, 0.985};
+
+// Gas composition
+List<String> components = Arrays.asList("methane", "ethane", "propane");
+double[] fractions = {0.85, 0.10, 0.05};
+
+// Calculate differential pressure
+double dpMbar = DifferentialPressureFlowCalculator.calculateDpFromFlow(
+    massFlowKgPerHour, pressureBarg, temperatureC, "Venturi", flowData,
+    components, fractions, true);
+
+System.out.println("Differential pressure: " + dpMbar + " mbar");
+```
+
+### Example 3: Direct Calculation with Known Fluid Properties
+
+```java
+// If you already have fluid properties calculated
+double massFlowKgPerHour = 50000.0;
+double pressureBara = 51.0125;       // bara
+double density = 42.5;               // kg/m³
+double kappa = 1.28;                 // isentropic exponent
+double pipeDiameterMm = 300.0;       // mm
+double throatDiameterMm = 200.0;     // mm
+double Cd = 0.985;                   // discharge coefficient
+
+double dpMbar = DifferentialPressureFlowCalculator.calculateDpFromFlowVenturi(
+    massFlowKgPerHour, pressureBara, density, kappa, 
+    pipeDiameterMm, throatDiameterMm, Cd);
+
+System.out.println("Differential pressure: " + dpMbar + " mbar");
+```
+
 ## Comparison with Other Flow Meter Types
 
 ### Orifice Plate
