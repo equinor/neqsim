@@ -430,6 +430,13 @@ public class WhitsonPVTReader {
 
   /**
    * Set all component properties from the data.
+   *
+   * @param fluid The fluid system to modify
+   * @param phase The phase index
+   * @param name The component name
+   * @param comp The component data containing properties
+   * @param tcKelvin Critical temperature in Kelvin
+   * @param tbKelvin Normal boiling point in Kelvin
    */
   private void setComponentProperties(SystemInterface fluid, int phase, String name,
       ComponentData comp, double tcKelvin, double tbKelvin) {
