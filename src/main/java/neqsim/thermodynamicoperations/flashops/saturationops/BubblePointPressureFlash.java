@@ -150,7 +150,10 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
         if (ytotal < 0.5) {
           ytotal = 0.5;
         }
-        system.setPressure(system.getPressure() * ytotal);
+        // Add dampening to improve convergence, especially near critical point
+        double dampingFactor = 0.7;
+        double newPressure = system.getPressure() * (1.0 - dampingFactor + dampingFactor * ytotal);
+        system.setPressure(newPressure);
         // + 0.5*(ytotal*system.getPressure()-system.getPressure()));
         if (system.getPressure() < 0) {
           system.setPressure(oldChemPres / 2.0);
@@ -194,3 +197,5 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
   @Override
   public void printToFile(String name) {}
 }
+
+

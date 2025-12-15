@@ -35,8 +35,9 @@ public class TestWaxTuning {
 
     try {
       System.out.println("adding....");
-      int i = 0;
-      while (i < 1) {
+      int iterations = 0;
+      while (iterations < 1) {
+        iterations = iterations + 1;
         WaxFunction function = new WaxFunction();
         double[] guess = {1.074, 6.584e-4, 0.1915};
         function.setInitialGuess(guess);

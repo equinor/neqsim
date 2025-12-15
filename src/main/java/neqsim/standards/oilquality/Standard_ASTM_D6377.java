@@ -116,6 +116,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     RVP_ASTM_D323_82 = (0.752 * (100.0 * this.thermoSystem.getPressure()) + 6.07) / 100.0;
 
     SystemInterface fluid1 = this.thermoSystem.clone();
+    this.thermoSystem.setPressure(TVP * 0.9);
     if (fluid1.hasComponent("water")) {
       fluid1.removeComponent("water");
       fluid1.init(0);

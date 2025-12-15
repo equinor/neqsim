@@ -186,6 +186,12 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     double Epp =
         Math.pow(system.getPressure(), 2.0) / (R * system.getTemperature()) * system.getdVdPtn();
     Jac.set(numberOfComponents + 1, numberOfComponents + 1, Epp);
+
+    // Force pressure to be constant by setting the last row to [0...0 1] and residual to 0
+    for (int i = 0; i < numberOfComponents + 1; i++) {
+      Jac.set(numberOfComponents + 1, i, 0.0);
+    }
+    Jac.set(numberOfComponents + 1, numberOfComponents + 1, 1.0);
   }
 
   /**
@@ -207,18 +213,35 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
    * </p>
    */
   public void init() {
-    double tempBeta = system.getBeta();
+    double oldBeta = system.getBeta();
+    double tempBeta = oldBeta;
 
     for (int i = 0; i < numberOfComponents; i++) {
       tempBeta += u.get(i, 0);
     }
+
+    if (tempBeta < 1e-10) {
+      tempBeta = 1e-10;
+    }
+    if (tempBeta > 1.0 - 1e-10) {
+      tempBeta = 1.0 - 1e-10;
+    }
+
     system.setBeta(tempBeta);
 
     for (int i = 0; i < numberOfComponents; i++) {
       double v = 0.0;
       double l = 0.0;
-      v = system.getPhases()[0].getComponent(i).getx() * system.getBeta() + u.get(i, 0);
-      l = system.getPhases()[0].getComponent(i).getz() - v;
+      v = system.getPhases()[0].getComponent(i).getx() * oldBeta + u.get(i, 0);
+      double z = system.getPhases()[0].getComponent(i).getz();
+      if (v < 0) {
+        v = 1e-20;
+      }
+      if (v > z) {
+        v = z - 1e-20;
+      }
+      l = z - v;
+
       system.getPhases()[0].getComponent(i).setx(v / system.getBeta());
       system.getPhases()[1].getComponent(i).setx(l / (1.0 - system.getBeta()));
       system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getx()
@@ -232,11 +255,21 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     // system.init(1);
     // v1 = system.getVolume();
     // system.setPressure(Math.exp(u.get(numberOfComponents+1,0)));
-    logger.info("temperature: " + system.getTemperature());
-    system
-        .setTemperature(Math.exp(u.get(numberOfComponents, 0) + Math.log(system.getTemperature())));
-    system.setPressure(Math.exp(u.get(numberOfComponents + 1, 0) + Math.log(system.getPressure())));
-    logger.info("etter temperature: " + system.getTemperature());
+    // logger.info("temperature: " + system.getTemperature());
+
+    double dLnT = u.get(numberOfComponents, 0);
+    double dLnP = u.get(numberOfComponents + 1, 0);
+
+    if (Math.abs(dLnT) > 1.0) {
+      dLnT = Math.signum(dLnT) * 1.0;
+    }
+    if (Math.abs(dLnP) > 1.0) {
+      dLnP = Math.signum(dLnP) * 1.0;
+    }
+
+    system.setTemperature(Math.exp(dLnT + Math.log(system.getTemperature())));
+    system.setPressure(Math.exp(dLnP + Math.log(system.getPressure())));
+    // logger.info("etter temperature: " + system.getTemperature());
 
     system.init(3);
   }
@@ -250,22 +283,69 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
    * @return a int
    */
   public int solve(int np) {
+    if (Math.abs(system.getBeta()) < 1e-6 || Math.abs(system.getBeta() - 1.0) < 1e-6) {
+      int iterSingle = 0;
+      double err = 0.0;
+      double oldTemp = system.getTemperature();
+
+      do {
+        iterSingle++;
+        system.init(3);
+        double val = 0.0;
+        double dValdT = 0.0;
+
+        if (type == 0) { // PH Flash
+          val = system.getEnthalpy();
+          dValdT = system.getCp();
+        } else { // PS Flash
+          val = system.getEntropy();
+          dValdT = system.getCp() / system.getTemperature();
+        }
+
+        err = val - specVar;
+
+        if (Math.abs(err) < 1e-6) {
+          return 1;
+        }
+
+        double dT = err / dValdT;
+
+        // Limit step size
+        if (Math.abs(dT) > 0.2 * system.getTemperature()) {
+          dT = Math.signum(dT) * 0.2 * system.getTemperature();
+        }
+
+        system.setTemperature(system.getTemperature() - dT);
+
+        if (system.getTemperature() <= 0) {
+          system.setTemperature(oldTemp);
+          break; // Failed, go to 2-phase
+        }
+
+      } while (iterSingle < 100);
+
+      // If converged
+      if (Math.abs(err) < 1e-6) {
+        return 1;
+      }
+    }
+
     iter = 1;
     do {
       iter++;
       init();
       setfvec();
       setJac();
-      fvec.print(10, 10);
-      Jac.print(10, 10);
+      // fvec.print(10, 10);
+      // Jac.print(10, 10);
       u = Jac.solve(fvec.times(-1.0));
       // u.equals(dx.timesEquals(1.0));
-      fvec.print(10, 10);
-      logger.info("iter: " + iter);
+      // fvec.print(10, 10);
+      // logger.info("iter: " + iter);
     } while (fvec.norm2() > 1.e-10 && iter < 1000); // && Double.isNaN(dx.norm2()));
-    logger.info("iter: " + iter);
-    logger.info("temperature: " + system.getTemperature());
-    logger.info("pressure: " + system.getPressure());
+    // logger.info("iter: " + iter);
+    // logger.info("temperature: " + system.getTemperature());
+    // logger.info("pressure: " + system.getPressure());
     init();
     return iter;
   }

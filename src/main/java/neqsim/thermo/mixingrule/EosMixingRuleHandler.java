@@ -219,7 +219,6 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
                   intparamji[tempk][templ] = Double.parseDouble(dataSet.getString("cpakjix_SRK"));
                   intparamij[templ][tempk] = intparamji[tempk][templ];
-
                 } else if (phase.getClass().getName()
                     .equals("neqsim.thermo.phase.PhaseSoreideWhitson")) {
 
@@ -245,9 +244,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                           0.997 * (-1.70235 * (1 + 0.025587 * Math.pow(salinityConcentration, 0.75))
                               + 0.44338 * (1 + 0.08126 * Math.pow(salinityConcentration, 0.75))
                                   * reducedTemperaturei);
-
                     } else if (componenti.equalsIgnoreCase("CO2")) {
-
                       double multipK = 1.0;
                       if (salinityConcentration > 3.5) {
                         multipK = 0.8;
@@ -283,7 +280,6 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
                   intparamT[k][l] = 0.0;
                   intparamT[l][k] = 0.0;
-
                 }
                 if (phase.getClass().getName().equals("neqsim.thermo.phase.PhasePCSAFTRahmat")
                     || phase.getClass().getName().equals("neqsim.thermo.phase.PhasePCSAFT")
@@ -1701,7 +1697,6 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         if (componenti.equalsIgnoreCase("N2") || componenti.equalsIgnoreCase("nitrogen")) {
           kij = 0.997 * (-1.70235 * (1 + 0.025587 * Math.pow(salinityConcentration, 0.75)) + 0.44338
               * (1 + 0.08126 * Math.pow(salinityConcentration, 0.75)) * reducedTemperaturei);
-
         } else if (componenti.equalsIgnoreCase("CO2")) {
           double multipK = 1.0;
           if (salinityConcentration > 2.0) {
@@ -1728,7 +1723,6 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       }
 
       return kij;
-
     }
 
     /** {@inheritDoc} */
@@ -1910,7 +1904,6 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       }
       return A;
     }
-
   }
 
   public class SRKHuronVidal extends ClassicSRK implements HVMixingRulesInterface {

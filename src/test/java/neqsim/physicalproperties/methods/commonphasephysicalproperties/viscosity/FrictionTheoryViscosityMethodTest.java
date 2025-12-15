@@ -1,11 +1,12 @@
 package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.FrictionTheoryViscosityMethod;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class FrictionTheoryViscosityMethodTest extends neqsim.NeqSimTest {
   static neqsim.thermo.system.SystemInterface testSystem = null;

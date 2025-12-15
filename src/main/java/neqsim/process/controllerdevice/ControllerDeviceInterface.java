@@ -201,6 +201,35 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
     autoTune(ultimateGain, ultimatePeriod);
   }
 
+  /** Available tuning rules for step-response based auto-tuning. */
+  public static enum StepResponseTuningMethod {
+    /** Original Ziegler-Nichols-inspired correlations used historically in NeqSim. */
+    CLASSIC,
+    /** Skogestad Internal Model Control (SIMC) correlations. */
+    SIMC
+  }
+
+  /**
+   * <p>
+   * Select the tuning correlations that should be used when calling one of the step response
+   * auto-tuning helpers.
+   * </p>
+   *
+   * @param method tuning rule to use
+   */
+  public default void setStepResponseTuningMethod(StepResponseTuningMethod method) {}
+
+  /**
+   * <p>
+   * Retrieve the currently selected step-response tuning correlations.
+   * </p>
+   *
+   * @return the active tuning method
+   */
+  public default StepResponseTuningMethod getStepResponseTuningMethod() {
+    return StepResponseTuningMethod.CLASSIC;
+  }
+
   /**
    * <p>
    * Auto tune controller from an open-loop step response using process gain, time constant and

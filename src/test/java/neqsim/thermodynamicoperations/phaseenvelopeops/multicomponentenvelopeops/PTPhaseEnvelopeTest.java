@@ -396,7 +396,4 @@ public class PTPhaseEnvelopeTest {
     // assertTrue(bubblePointEnthalpies.length > 20);
     // assertTrue(bubblePointVolumes.length > 20);
   }
-
-
-
 }

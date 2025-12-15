@@ -33,6 +33,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
+
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -44,6 +45,30 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   private boolean isSetOutTemperature = false;
   private double outTemperature = Double.NaN;
   double lowestPressure = Double.NEGATIVE_INFINITY;
+
+  private boolean doMultiPhaseCheck = true;
+
+  /**
+   * <p>
+   * Setter for the field <code>doMultiPhaseCheck</code>.
+   * </p>
+   *
+   * @param doMultiPhaseCheck a boolean
+   */
+  public void setMultiPhaseCheck(boolean doMultiPhaseCheck) {
+    this.doMultiPhaseCheck = doMultiPhaseCheck;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>doMultiPhaseCheck</code>.
+   * </p>
+   *
+   * @return a boolean
+   */
+  public boolean isDoMultiPhaseCheck() {
+    return doMultiPhaseCheck;
+  }
 
   /**
    * <p>
@@ -113,7 +138,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
    */
   public void mixStream() {
     int index = 0;
-    String compName = new String();
     lowestPressure = mixedStream.getThermoSystem().getPhase(0).getPressure();
     boolean hasAddedNewComponent = false;
     for (int k = 1; k < streams.size(); k++) {
@@ -124,18 +148,24 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     for (int k = 0; k < streams.size(); k++) {
       // streams.get(k).getThermoSystem().getPhase(0).setPressure(lowestPressure);
     }
+
+    // Process ALL streams starting from k=1 (k=0 is already cloned into mixedStream)
+    // but ensure first stream's components are also explicitly added if needed
     for (int k = 1; k < streams.size(); k++) {
+      // Skip streams with negligible flow to avoid mixing in zero/negative moles
+      if (streams.get(k).getFlowRate("kg/hr") <= getMinimumFlow()) {
+        continue;
+      }
+
       for (int i = 0; i < streams.get(k).getThermoSystem().getPhase(0)
           .getNumberOfComponents(); i++) {
         boolean gotComponent = false;
         String componentName =
             streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getName();
-        // System.out.println("adding: " + componentName);
 
         double moles =
             streams.get(k).getThermoSystem().getPhase(0).getComponent(i).getNumberOfmoles();
-        // System.out.println("moles: " + moles + " " +
-        // mixedStream.getThermoSystem().getPhase(0).getNumberOfComponents());
+
         for (int p = 0; p < mixedStream.getThermoSystem().getPhase(0)
             .getNumberOfComponents(); p++) {
           if (mixedStream.getThermoSystem().getPhase(0).getComponent(p).getName()
@@ -143,28 +173,19 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
             gotComponent = true;
             index =
                 streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentNumber();
-            compName =
-                streams.get(0).getThermoSystem().getPhase(0).getComponent(p).getComponentName();
           }
         }
 
         if (gotComponent) {
-          // System.out.println("adding moles starting....");
           mixedStream.getThermoSystem().addComponent(index, moles);
-          // mixedStream.getThermoSystem().init_x_y();
-          // System.out.println("adding moles finished");
         } else {
           hasAddedNewComponent = true;
-          // System.out.println("ikke gaa hit");
-          mixedStream.getThermoSystem().addComponent(compName, moles);
+          mixedStream.getThermoSystem().addComponent(componentName, moles);
         }
       }
     }
     if (hasAddedNewComponent) {
       mixedStream.getThermoSystem().setMixingRule(mixedStream.getThermoSystem().getMixingRule());
-      // mixedStream.getThermoSystem().init_x_y();
-      // mixedStream.getThermoSystem().initBeta();
-      // mixedStream.getThermoSystem().init(2);
     }
   }
 
@@ -214,7 +235,34 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   public void run(UUID id) {
     double enthalpy = 0.0;
     // ((Stream) streams.get(0)).getThermoSystem().display();
+
+    // Check if all streams have zero/negligible flow
+    boolean hasFlow = false;
+    for (int k = 0; k < streams.size(); k++) {
+      if (streams.get(k).getFlowRate("kg/hr") > getMinimumFlow()) {
+        hasFlow = true;
+        break;
+      }
+    }
+
+    if (!hasFlow) {
+      // All streams have zero flow - set mixer inactive and use first stream as template
+      SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
+      // Set all component moles to zero to reflect no flow
+      for (int i = 0; i < thermoSystem2.getPhase(0).getNumberOfComponents(); i++) {
+        thermoSystem2.getPhase(0).getComponent(i).setNumberOfmoles(0.0);
+      }
+      mixedStream.setThermoSystem(thermoSystem2);
+      isActive(false);
+      setCalculationIdentifier(id);
+      return;
+    }
+
+    boolean inletMultiPhaseCheck = streams.get(0).getThermoSystem().doMultiPhaseCheck();
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
+    if (!doMultiPhaseCheck) {
+      thermoSystem2.setMultiPhaseCheck(false);
+    }
     isActive(true);
     // System.out.println("total number of moles " +
     // thermoSystem2.getTotalNumberOfMoles());
@@ -237,8 +285,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
             .equals("neqsim.thermo.system.SystemSoreideWhitson")) {
           ((SystemSoreideWhitson) mixedStream.getFluid()).setSalinity(getMixedSalinity(),
               "mole/sec");
-          mixedStream.run();
         }
+        mixedStream.run();
 
         if (isSetOutTemperature) {
           if (!Double.isNaN(getOutTemperature())) {
@@ -248,7 +296,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
           mixedStream.getThermoSystem().init(2);
         } else {
           try {
-            testOps.PHflash(enthalpy, 0);
+            testOps.PHflash(enthalpy);
           } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             if (!Double.isNaN(guessTemperature())) {
@@ -272,13 +320,10 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
       }
     }
 
-    // System.out.println("enthalpy: " +
-    // mixedStream.getThermoSystem().getEnthalpy())
-    // System.out.println("enthalpy: " + en
-    // System.out.println("temperature: " +
+    if (inletMultiPhaseCheck) {
+      mixedStream.getThermoSystem().setMultiPhaseCheck(true);
+    }
 
-    // System.out.println("beta " + mixedStream.getThermoSystem(
-    // outStream.setThermoSystem(mixedStream.getThermoSystem());
     setCalculationIdentifier(id);
   }
 
@@ -472,6 +517,21 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getMassBalance(String unit) {
+    double inletFlow = 0.0;
+    // Only count streams that have significant flow (were actually mixed)
+    // to match the logic in mixStream() which skips negligible flows
+    for (int i = 0; i < numberOfInputStreams; i++) {
+      double streamFlow = getStream(i).getFlowRate(unit);
+      if (streamFlow > getMinimumFlow()) {
+        inletFlow += streamFlow;
+      }
+    }
+    return getOutletStream().getFlowRate(unit) - inletFlow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public int hashCode() {
     final int prime = 31;
     int result = super.hashCode();
@@ -537,5 +597,9 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     MixerResponse res = new MixerResponse(this);
     res.applyConfig(cfg);
     return new GsonBuilder().create().toJson(res);
+  }
+
+  public StreamInterface getMixedStream() {
+    return mixedStream;
   }
 }

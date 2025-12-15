@@ -504,19 +504,14 @@ public class HIPPSValve extends ThrottlingValve {
     switch (votingLogic) {
       case ONE_OUT_OF_ONE:
         return totalCount >= 1 && activeCount >= 1;
-
       case ONE_OUT_OF_TWO:
         return totalCount >= 2 && activeCount >= 1;
-
       case TWO_OUT_OF_TWO:
         return totalCount >= 2 && activeCount >= 2;
-
       case TWO_OUT_OF_THREE:
         return totalCount >= 3 && activeCount >= 2;
-
       case TWO_OUT_OF_FOUR:
         return totalCount >= 4 && activeCount >= 2;
-
       default:
         return false;
     }

@@ -138,7 +138,6 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
 
     generateRealCurvesForFluid();
     setUseCompressorChart(true);
-
   }
 
   /**

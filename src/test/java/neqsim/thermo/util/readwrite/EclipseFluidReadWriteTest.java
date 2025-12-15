@@ -1,14 +1,10 @@
 package neqsim.thermo.util.readwrite;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.IOException;
-import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.compressor.AntiSurge;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorChart;
 import neqsim.process.equipment.heatexchanger.Cooler;
@@ -17,6 +13,7 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.valve.ThrottlingValve;
@@ -269,6 +266,87 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void testFluidWater222() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(fluid_water);
+    testSystem.setMultiPhaseCheck(true);
+
+    // testSystem.init(0);
+
+    double molcomp[] = new double[] {0.00010073836721612647, 0.008498223381288974,
+        0.4966714442086843, 0.17280427751505803, 0.1606550990492106, 0.08304099784638264,
+        0.031567842584520195, 0.007037046430749713, 0.008472609878881437, 0.00669797852869787,
+        0.00639411397776832, 0.0034358957032069003, 0.0009595908295842405, 0.00015500703470607276,
+        5.872676388764145e-09, 4.1608474953608437e-17, 0.01350912879136841};
+
+    testSystem.setMolarComposition(molcomp);
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(2.099970727022911, "bara");
+    testSystem.setTemperature(30.0, "C");
+    testOps.TPflash();
+
+    testSystem.prettyPrint();
+    Assertions.assertEquals(3, testSystem.getNumberOfPhases());
+  }
+
+
+  @Test
+  void testFluidWater_os_sep_test() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(fluid_water);
+
+    // testSystem.init(0);
+
+    double molcomp[] = new double[] {0.0049752318083319345, 0.009802256678856439,
+        0.6127328136798169, 0.05318413284932072, 0.022876807664082562, 0.0027497115252020565,
+        0.00583830266751484, 0.001287341207321444, 0.0016384794380879418, 0.0016725772874843416,
+        0.0020738533986531414, 0.001425440397298664, 0.0010756267985809135, 0.001450404269771801,
+        0.0007258366746739167, 0.000253086850706585, 0.276238096804296};
+
+    testSystem.setMolarComposition(molcomp);
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testSystem.setPressure(62.0, "bara");
+    testSystem.setTemperature(67.628172810359, "C");
+    testSystem.setMultiPhaseCheck(true);
+    testOps.TPflash();
+
+    testSystem.prettyPrint();
+
+    // Create stream and three-phase separator
+    Stream stream1 = new Stream("Stream1", testSystem);
+    stream1.setFlowRate(100.0, "kg/hr");
+    stream1.setTemperature(67.628172810359, "C");
+    stream1.setPressure(62.0, "bara");
+    stream1.run();
+
+    ThreePhaseSeparator separator = new ThreePhaseSeparator("ThreePhaseSeparator", stream1);
+    separator.run();
+
+    // Check mass balance
+    double massBalanceError = separator.getMassBalance("kg/hr");
+    System.out.println("Mass balance error: " + massBalanceError + " kg/hr");
+
+    double inletFlow = stream1.getFlowRate("kg/hr");
+    double gasOutFlow = separator.getGasOutStream().getFlowRate("kg/hr");
+    double oilOutFlow = separator.getOilOutStream().getFlowRate("kg/hr");
+    double waterOutFlow = separator.getWaterOutStream().getFlowRate("kg/hr");
+    double totalOutFlow = gasOutFlow + oilOutFlow + waterOutFlow;
+
+    System.out.println("Inlet flow: " + inletFlow + " kg/hr");
+    System.out.println("Gas out: " + gasOutFlow + " kg/hr");
+    System.out.println("Oil out: " + oilOutFlow + " kg/hr");
+    System.out.println("Water out: " + waterOutFlow + " kg/hr");
+    System.out.println("Total out: " + totalOutFlow + " kg/hr");
+
+    // Verify mass balance (outlet - inlet should be near zero)
+    Assertions.assertEquals(0.0, massBalanceError, 0.01, "Mass balance error should be near zero");
+    Assertions.assertEquals(inletFlow, totalOutFlow, 0.01,
+        "Total outlet flow should equal inlet flow");
+
+    Assertions.assertTrue(testSystem.hasPhaseType("oil"));
+  }
+
+  @Test
   void testFluidWater3() throws IOException {
     testSystem = EclipseFluidReadWrite.read(fluid_water);
     testSystem.setMultiPhaseCheck(true);
@@ -323,6 +401,40 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testSystem = EclipseFluidReadWrite.read(example, fluids);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
+  }
+
+  @Test
+  void testGOWRVP() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(gow);
+    testSystem.setMultiPhaseCheck(true);
+
+    double[] moleFractions = {2.416120417100702e-07, 0.00011528576517550497, 0.0008371259734404491,
+        0.004125688540309072, 0.016506471715686536, 0.007445430041947814, 0.023751140326894123,
+        0.014074464672789768, 0.022995570140592198, 0.06406911413410432, 0.13427982438504948,
+        0.14903860624984122, 0.11563770449499852, 0.22014618406983588, 0.1588584627903986,
+        0.06588672605995642, 0.0022319590269387086};
+
+    testSystem.setMolarComposition(moleFractions);
+    testSystem.setTemperature(37.0, "C");
+    testSystem.setPressure(1.01325, "bara");
+
+    Stream stream1 = new Stream("RVP Test Stream", testSystem);
+    stream1.setFlowRate(1.0, "kg/hr");
+    stream1.setTemperature(37.0, "C");
+    stream1.run();
+
+    double rvp = stream1.getRVP(37.8, "C", "bara");
+
+    System.out.println("RVP at 37C: " + rvp + " bara");
+
+    Assertions.assertEquals(0.487131521390, rvp, 0.01);
+    stream1.setPressure(rvp, "bara");
+    stream1.setTemperature(37.8, "C");
+    stream1.run();
+    stream1.getFluid().initPhysicalProperties();
+    Assertions.assertEquals(0.8, stream1.getFluid().getPhase("gas").getCorrectedVolume()
+        / stream1.getFluid().getCorrectedVolume(), 0.01);
+    stream1.getFluid().prettyPrint();
   }
 
 
@@ -387,9 +499,7 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     testOps.TPflash();
 
     Assertions.assertEquals(2, testSystem.getNumberOfPhases());
-
   }
-
 
   @Test
   void testGOW2() throws IOException {
@@ -458,7 +568,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
   @Test
   void antiSurgeTest() throws IOException {
-
     double SECOND_STAGE_PRESSURE_BARA = 7.0;
     double THIRD_STAGE_PRESSURE_BARA = 20.0;
     double SECOND_STAGE_COOLER_OUTLET_TEMP_C = 28.0;
@@ -579,16 +688,203 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // assertFalse(secondStageCompressor.isSurge(), "compressor is surge");
     // assertFalse(secondStageCompressor.isStoneWall(), "compressor is stone wall limited");
 
-    System.out
-        .println("compressor poytropic head end " + secondStageCompressor.getPolytropicFluidHead());
-
+    System.out.println(
+        "compressor polytropic head end " + secondStageCompressor.getPolytropicFluidHead());
     System.out.println("flow inlet feed compressor end "
         + firstStageScrubber2.getGasOutStream().getFluid().getFlowRate("m3/hr"));
-
     System.out.println(recycle2.toJson());
-
   }
 
+  @Test
+  void distillation_deethanizer() throws IOException {
+    testSystem = EclipseFluidReadWrite.read(gow);
+    testSystem.setMultiPhaseCheck(true);
 
+    double[] moleFractions = {1.1269232486923688e-06, 0.002642638817095049, 0.015237623814512286,
+        0.09479920295855006, 0.2664367133684378, 0.072638890369372, 0.18433074090670493,
+        0.05893425834431258, 0.07525119431180687, 0.07925100506320992, 0.0814576540555948,
+        0.04665775189490658, 0.01708982141273816, 0.004685723238493833, 5.666335741724731e-06,
+        2.608641697723448e-12, 0.0};
+
+
+    testSystem.setMolarComposition(moleFractions);
+
+    ProcessSystem processSystem = new ProcessSystem("Distillation Process");
+
+    Stream feedStream = new Stream("Deethanizer Feed", testSystem);
+    feedStream.setFlowRate(69198.0, "kg/hr");
+    feedStream.setTemperature(35.18356, "C");
+    feedStream.setPressure(14.8, "bara");
+    feedStream.run();
+    processSystem.add(feedStream);
+
+    neqsim.process.equipment.pump.Pump pump2 =
+        new neqsim.process.equipment.pump.Pump("feed pump 2", feedStream);
+    pump2.setOutletPressure(14.8, "bara");
+    pump2.run();
+    processSystem.add(pump2);
+
+    neqsim.process.equipment.splitter.ComponentSplitter waterDehydration =
+        new neqsim.process.equipment.splitter.ComponentSplitter("molsieve dehydration",
+            pump2.getOutletStream());
+    int complen = pump2.getOutletStream().getFluid().getNumberOfComponents();
+    double[] splitFactors = new double[complen];
+    for (int i = 0; i < complen - 1; i++) {
+      splitFactors[i] = 1.0;
+    }
+    splitFactors[complen - 1] = 0.0;
+    waterDehydration.setSplitFactors(splitFactors);
+    waterDehydration.run();
+    processSystem.add(waterDehydration);
+
+    neqsim.process.equipment.heatexchanger.Heater feedHeater =
+        new neqsim.process.equipment.heatexchanger.Heater("deethanizer feed heater",
+            waterDehydration.getSplitStream(0));
+    feedHeater.setOutTemperature(273.15 + 20.0);
+    feedHeater.run();
+    processSystem.add(feedHeater);
+
+    Stream lqiuidrefluc = new Stream("recycle", testSystem.clone());
+    lqiuidrefluc.setFlowRate(20000.0, "kg/hr");
+    lqiuidrefluc.setTemperature(30.0, "C");
+    lqiuidrefluc.setPressure(14.8, "bara");
+    lqiuidrefluc.run();
+    processSystem.add(lqiuidrefluc);
+
+    neqsim.process.equipment.distillation.DistillationColumn deethanizer =
+        new neqsim.process.equipment.distillation.DistillationColumn("de ethanizer column", 5, true,
+            false);
+    deethanizer.addFeedStream(feedHeater.getOutletStream(), 3);
+    deethanizer.addFeedStream(lqiuidrefluc, 5);
+    deethanizer.getReboiler().setOutTemperature(273.15 + 78.0);
+    deethanizer.setTopPressure(14.8);
+    deethanizer.setBottomPressure(14.8);
+    deethanizer.run();
+    processSystem.add(deethanizer);
+
+    Stream napthaRecycle = new Stream("recycle napht", testSystem.clone());
+    napthaRecycle.setFlowRate(8000.0, "kg/hr");
+    napthaRecycle.setTemperature(30.0, "C");
+    napthaRecycle.setPressure(14.8, "bara");
+    napthaRecycle.run();
+    processSystem.add(napthaRecycle);
+
+    Mixer gasfromDeethanizerMixer = new Mixer("gas from deethanizer mixer");
+    gasfromDeethanizerMixer.addStream(deethanizer.getGasOutStream());
+    gasfromDeethanizerMixer.addStream(napthaRecycle);
+    gasfromDeethanizerMixer.run();
+    processSystem.add(gasfromDeethanizerMixer);
+
+    Cooler gasfromDeethanizerCooler =
+        new Cooler("gas from deethanizer cooler", gasfromDeethanizerMixer.getOutletStream());
+    gasfromDeethanizerCooler.setOutTemperature(30.0, "C");
+    gasfromDeethanizerCooler.run();
+    processSystem.add(gasfromDeethanizerCooler);
+
+    Separator deethanizerSeparator =
+        new Separator("deethanizer gas separator", gasfromDeethanizerCooler.getOutletStream());
+    deethanizerSeparator.run();
+    processSystem.add(deethanizerSeparator);
+
+    Stream gasfromDeethanizerSeparator =
+        new Stream("gas from deethanizer separator", deethanizerSeparator.getGasOutStream());
+    gasfromDeethanizerSeparator.run();
+    processSystem.add(gasfromDeethanizerSeparator);
+
+    Stream liquidFromDeethanizerSeparator =
+        new Stream("liquid from deethanizer separator", deethanizerSeparator.getLiquidOutStream());
+    liquidFromDeethanizerSeparator.run();
+    processSystem.add(liquidFromDeethanizerSeparator);
+
+    Recycle deethanizerRecycle = new Recycle("ethane liquid to deethanizer recycle");
+    deethanizerRecycle.addStream(liquidFromDeethanizerSeparator);
+    deethanizerRecycle.setOutletStream(lqiuidrefluc);
+    deethanizerRecycle.setTolerance(1e-2);
+    deethanizerRecycle.run();
+    processSystem.add(deethanizerRecycle);
+
+    ThrottlingValve valveDebutanizer =
+        new ThrottlingValve("debutanizer valve", deethanizer.getLiquidOutStream());
+    valveDebutanizer.setOutletPressure(8.4, "bara");
+    valveDebutanizer.run();
+    processSystem.add(valveDebutanizer);
+
+    neqsim.process.equipment.distillation.DistillationColumn debutanizer =
+        new neqsim.process.equipment.distillation.DistillationColumn("de butanizer column", 4, true,
+            true);
+    debutanizer.addFeedStream(valveDebutanizer.getOutletStream(), 1);
+    debutanizer.getReboiler().setOutTemperature(273.15 + 120.0);
+    debutanizer.getCondenser().setRefluxRatio(0.1);
+    // debutanizer.getCondenser().setSeparation_with_liquid_reflux(true, 2000.0, "kg/hr");
+    debutanizer.getCondenser().setTotalCondenser(true);
+    debutanizer.setTopPressure(8.4);
+    debutanizer.setBottomPressure(8.4);
+    debutanizer.run();
+    processSystem.add(debutanizer);
+
+    Stream liquidFromDebutanizer =
+        new Stream("liquid from butanizer", debutanizer.getLiquidOutStream());
+    liquidFromDebutanizer.run();
+    processSystem.add(liquidFromDebutanizer);
+
+    StreamInterface lpgexport = new Stream("lpg export", debutanizer.getGasOutStream());
+    lpgexport.run();
+    processSystem.add(lpgexport);
+
+    neqsim.process.equipment.pump.Pump napthaLiquidToDethanizerPump =
+        new neqsim.process.equipment.pump.Pump("naphta liquid to deethanizer pump",
+            liquidFromDebutanizer);
+    napthaLiquidToDethanizerPump.setOutletPressure(14.8, "bara");
+    napthaLiquidToDethanizerPump.run();
+    processSystem.add(napthaLiquidToDethanizerPump);
+
+    Cooler napthaLiquidToDethanizerCooler = new Cooler("naphta liquid to deethanizer cooler",
+        napthaLiquidToDethanizerPump.getOutletStream());
+    napthaLiquidToDethanizerCooler.setOutTemperature(273.15 + 50.0);
+    napthaLiquidToDethanizerCooler.run();
+    processSystem.add(napthaLiquidToDethanizerCooler);
+
+    Splitter napthaLiquidSplitter =
+        new Splitter("butane liquid splitter", napthaLiquidToDethanizerCooler.getOutletStream(), 2);
+    napthaLiquidSplitter.setFlowRates(new double[] {-1.0, 11000.0}, "kg/hr");
+    napthaLiquidSplitter.run();
+    processSystem.add(napthaLiquidSplitter);
+
+    Stream napthaLiquidProduct =
+        new Stream("naphta liquid product", napthaLiquidSplitter.getSplitStream(0));
+    napthaLiquidProduct.run();
+    processSystem.add(napthaLiquidProduct);
+
+    Stream napthaLiquidToDeethanizer =
+        new Stream("naphta liquid to deethanizer", napthaLiquidSplitter.getSplitStream(1));
+    napthaLiquidToDeethanizer.run();
+    processSystem.add(napthaLiquidToDeethanizer);
+
+    Recycle napthaLiquidToDethanizerRecycle = new Recycle("naphta liquid to deethanizer recycle");
+    napthaLiquidToDethanizerRecycle.addStream(napthaLiquidToDeethanizer);
+    napthaLiquidToDethanizerRecycle.setOutletStream(napthaRecycle);
+    napthaLiquidToDethanizerRecycle.setTolerance(1e-2);
+    napthaLiquidToDethanizerRecycle.run();
+    processSystem.add(napthaLiquidToDethanizerRecycle);
+
+    processSystem.run_step();
+    processSystem.run_step();
+    processSystem.run_step();
+
+    Assertions.assertEquals(deethanizer.getReboiler().getDuty() / 1e6, 3.30412, 0.1,
+        "Deethanizer feed heater duty check");
+
+    Assertions.assertEquals(debutanizer.getReboiler().getDuty() / 1e6, 4.6554, 0.1,
+        "Deethanizer feed heater duty check");
+
+    Assertions.assertEquals(gasfromDeethanizerSeparator.getFlowRate("Sm3/hr"), 1095.3504, 1.1);
+    Assertions.assertEquals(napthaLiquidToDeethanizer.getFlowRate("m3/hr"), 16.60364, 1.1);
+
+    Assertions.assertEquals(gasfromDeethanizerSeparator.getFlowRate("Sm3/sec")
+        * gasfromDeethanizerSeparator.LCV() / 1e6, 17.61828466, 0.1);
+
+    Assertions.assertEquals(napthaLiquidProduct.getFlowRate("m3/hr"), 47.24077, 0.1);
+    Assertions.assertEquals(lpgexport.getFlowRate("m3/hr"), 68.2539, 0.1);
+  }
 }
 

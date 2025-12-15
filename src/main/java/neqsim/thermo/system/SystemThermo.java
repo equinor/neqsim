@@ -22,7 +22,9 @@ import neqsim.thermo.characterization.OilAssayCharacterisation;
 import neqsim.thermo.characterization.WaxCharacterise;
 import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
+import neqsim.thermo.mixingrule.MixingRulesInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhaseInterface;
@@ -2840,6 +2842,26 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double[] getWeightBasedComposition() {
+    PhaseInterface phase = this.getPhase(0);
+    double[] comp = new double[phase.getNumberOfComponents()];
+
+    double totalMass = 0.0;
+    for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
+      totalMass +=
+          phase.getComponent(compNumb).getz() * phase.getComponent(compNumb).getMolarMass();
+    }
+
+    for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
+      comp[compNumb] =
+          phase.getComponent(compNumb).getz() * phase.getComponent(compNumb).getMolarMass()
+              / totalMass;
+    }
+    return comp;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getMolarMass() {
     double tempVar = 0;
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
@@ -5060,15 +5082,18 @@ public abstract class SystemThermo implements SystemInterface {
    * @param type Type of fluid. Supports "PlusFluid", "Plus" and default.
    */
   private void setMolarFractions(double[] molefractions, String type) {
-    double totalFlow = getTotalNumberOfMoles();
-    if (totalFlow < 1e-100) {
-      String msg = "must be larger than 0 (1e-100) when setting molar composition";
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "setMolarComposition", "totalFlow", msg));
-    }
     double sum = 0;
     for (double value : molefractions) {
       sum += value;
+    }
+    if (sum <= 0) {
+      throw new IllegalArgumentException("Mole fractions must sum to a positive value.");
+    }
+
+    double totalFlow = getTotalNumberOfMoles();
+    if (totalFlow < 1e-100) {
+      throw new RuntimeException(new InvalidInputException(this, "setMolarComposition",
+          "totalFlow", "must be larger than 0 (1e-100) when setting molar composition"));
     }
     setEmptyFluid();
 
@@ -5153,6 +5178,64 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void setNumericDerivatives(boolean numericDerivatives) {
     this.numericDerivatives = numericDerivatives;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setComponentCriticalParameters(int componentIndex, double tc, double pc,
+      double acentricFactor) {
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+      PhaseInterface phase = getPhase(i);
+      if (phase != null && componentIndex < phase.getNumberOfComponents()) {
+        ComponentInterface component = phase.getComponent(componentIndex);
+        component.setTC(tc);
+        component.setPC(pc);
+        component.setAcentricFactor(acentricFactor);
+      }
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setComponentCriticalParameters(String componentName, double tc, double pc,
+      double acentricFactor) {
+    setComponentCriticalParameters(getComponentIndex(componentName), tc, pc, acentricFactor);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setComponentVolumeCorrection(int componentIndex, double volumeCorrection) {
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+      PhaseInterface phase = getPhase(i);
+      if (phase != null && componentIndex < phase.getNumberOfComponents()) {
+        phase.getComponent(componentIndex).setVolumeCorrection(volumeCorrection);
+      }
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setComponentVolumeCorrection(String componentName, double volumeCorrection) {
+    setComponentVolumeCorrection(getComponentIndex(componentName), volumeCorrection);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setBinaryInteractionParameter(int component1, int component2, double value) {
+    for (int i = 0; i < getMaxNumberOfPhases(); i++) {
+      PhaseInterface phase = getPhase(i);
+      if (phase != null && phase.getMixingRule() instanceof EosMixingRulesInterface) {
+        ((EosMixingRulesInterface) phase.getMixingRule()).setBinaryInteractionParameter(component1,
+            component2, value);
+      }
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setBinaryInteractionParameter(String component1, String component2, double value) {
+    setBinaryInteractionParameter(getComponentIndex(component1), getComponentIndex(component2),
+        value);
   }
 
   /** {@inheritDoc} */
@@ -5513,6 +5596,14 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public void setForceSinglePhase(String phasetype) {
     setForceSinglePhase(PhaseType.byName(phasetype));
+  }
+
+  private int getComponentIndex(String componentName) {
+    componentName = ComponentInterface.getComponentNameFromAlias(componentName);
+    if (!getPhase(0).hasComponent(componentName)) {
+      throw new RuntimeException("No component with name: " + componentName + " in system");
+    }
+    return getPhase(0).getComponent(componentName).getComponentNumber();
   }
 
   /**

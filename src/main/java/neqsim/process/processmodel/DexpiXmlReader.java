@@ -24,6 +24,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -232,6 +233,22 @@ public final class DexpiXmlReader {
       factory.setExpandEntityReferences(false);
       factory.setXIncludeAware(false);
       DocumentBuilder builder = factory.newDocumentBuilder();
+      builder.setErrorHandler(new org.xml.sax.ErrorHandler() {
+        @Override
+        public void warning(SAXParseException exception) throws SAXException {
+          throw exception;
+        }
+
+        @Override
+        public void error(SAXParseException exception) throws SAXException {
+          throw exception;
+        }
+
+        @Override
+        public void fatalError(SAXParseException exception) throws SAXException {
+          throw exception;
+        }
+      });
       Document document = builder.parse(inputStream);
       document.getDocumentElement().normalize();
       return document;

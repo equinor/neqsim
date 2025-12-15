@@ -12,15 +12,16 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  * <p>
- * OptimizedVUflash class with enhanced performance for transient separator simulations.
+ * OptimizedVUflash class with enhanced performance for transient separator simulations. Key
+ * optimizations:
  * </p>
- * 
- * Key optimizations:
- * - Adaptive convergence criteria based on system state
- * - Smart initial guessing using previous state
- * - Reduced thermodynamic property evaluations
- * - Early termination for well-behaved cases
- * - Optimized Newton-Raphson solver with line search
+ * <ul>
+ * <li>Adaptive convergence criteria based on system state</li>
+ * <li>Smart initial guessing using previous state</li>
+ * <li>Reduced thermodynamic property evaluations</li>
+ * <li>Early termination for well-behaved cases</li>
+ * <li>Optimized Newton-Raphson solver with line search</li>
+ * </ul>
  *
  * @author GitHub Copilot
  * @version $Id: $Id
@@ -46,7 +47,7 @@ public class OptimizedVUflash extends Flash {
   private static final int MAX_ITERATIONS = 50; // Reduced from 100
   private static final double MIN_DAMPING = 0.1;
   private static final double MAX_DAMPING = 0.8;
-  
+
   // Performance tracking
   private static double lastPressure = Double.NaN;
   private static double lastTemperature = Double.NaN;
@@ -77,7 +78,7 @@ public class OptimizedVUflash extends Flash {
       // Use previous solution as starting point for transient calculations
       double pressureDiff = Math.abs(system.getPressure() - lastPressure);
       double tempDiff = Math.abs(system.getTemperature() - lastTemperature);
-      
+
       // If we're close to the previous solution, use it as starting point
       if (pressureDiff < 0.5 * lastPressure && tempDiff < 20.0) {
         system.setPressure(lastPressure);
@@ -85,7 +86,7 @@ public class OptimizedVUflash extends Flash {
         return;
       }
     }
-    
+
     // Estimate initial guess based on ideal gas behavior
     double currentVolume = system.getVolume();
     if (currentVolume > 0) {
@@ -197,7 +198,7 @@ public class OptimizedVUflash extends Flash {
 
         system.setPressure(nyPres);
         system.setTemperature(nyTemp);
-        
+
         // Single TP flash per iteration
         tpFlash.run();
 
@@ -228,14 +229,13 @@ public class OptimizedVUflash extends Flash {
         }
 
         lastError = totalError;
-
       } while (iterations < MAX_ITERATIONS);
 
       // Update performance tracking
       if (iterations < MAX_ITERATIONS) {
         lastPressure = nyPres;
         lastTemperature = nyTemp;
-        
+
         // Consider system well-behaved if converged quickly
         if (iterations <= 10) {
           isWellBehaved = true;
@@ -244,7 +244,6 @@ public class OptimizedVUflash extends Flash {
         logger.warn("OptimizedVUflash did not converge after " + MAX_ITERATIONS + " iterations");
         isWellBehaved = false;
       }
-
     } catch (Exception e) {
       logger.warn("Exception in OptimizedVUflash: " + e.getMessage());
       isWellBehaved = false;

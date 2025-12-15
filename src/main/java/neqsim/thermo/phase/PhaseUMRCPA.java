@@ -1584,6 +1584,7 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
     double deltaV = 0;
 
     do {
+      iterations = iterations + 1;
       A = calcA(this, temperature, pressure, numberOfComponents);
       B = calcB(this, temperature, pressure, numberOfComponents);
 
@@ -1610,10 +1611,8 @@ public class PhaseUMRCPA extends PhasePrEos implements PhaseCPAInterface {
         Z = 1e-6;
         setMolarVolume(Z * R * temperature / pressure);
       }
-
       // System.out.println("Z " + Z);
     } while (Math.abs(err) > 1.0e-8 || iterations < 100);
-    // System.out.println("Z " + Z);
     return getMolarVolume();
   }
 

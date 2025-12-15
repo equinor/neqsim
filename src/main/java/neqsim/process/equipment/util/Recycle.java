@@ -621,8 +621,9 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   @Override
   public boolean solved() {
     if (getOutletStream().getFlowRate("kg/hr") < 1e-20
-        && lastIterationStream.getFlowRate("kg/hr") < 1e-20 && iterations > 1)
+        && lastIterationStream.getFlowRate("kg/hr") < 1e-20 && iterations > 1) {
       return true;
+    }
 
     if (Math.abs(this.errorComposition) < compositionTolerance
         && Math.abs(this.errorFlow) < flowTolerance
@@ -661,6 +662,16 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   public void setOutletStream(StreamInterface outletStream) {
     this.outletStream = outletStream;
     lastIterationStream = this.outletStream.clone();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMassBalance(String unit) {
+    double inletFlow = 0.0;
+    for (int i = 0; i < numberOfInputStreams; i++) {
+      inletFlow += streams.get(i).getThermoSystem().getFlowRate(unit);
+    }
+    return getOutletStream().getThermoSystem().getFlowRate(unit) - inletFlow;
   }
 
   /** {@inheritDoc} */

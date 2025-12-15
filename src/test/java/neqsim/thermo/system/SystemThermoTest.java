@@ -1,6 +1,7 @@
 package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -204,11 +205,70 @@ class SystemThermoTest extends neqsim.NeqSimTest {
     testOps.TPflash();
     testSystem.initProperties();
     // testSystem.prettyPrint();
-    double density = testSystem.getDensity("kg/m3");
+    // double density = testSystem.getDensity("kg/m3");
 
     assertEquals(1109.7640, testSystem.getPhase(PhaseType.AQUEOUS).getDensity("kg/m3"), 1e-2);
     assertEquals(1099.66150816, testSystem.getPhase(PhaseType.AQUEOUS).getWaterDensity("kg/m3"),
         1e-2);
+  }
 
+  @Test
+  void waterMegMixtureWaterDensityTest() {
+    neqsim.thermo.system.SystemSrkEos testSystem =
+        new neqsim.thermo.system.SystemSrkEos(293.15, 1.0);
+    testSystem.addComponent("MEG", 49.0);
+    testSystem.addComponent("water", 49.0);
+    testSystem.addComponent("NaCl", 2.0);
+    testSystem.setMixingRule("classic");
+    testSystem.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
+    testSystem.initProperties();
+
+    double waterDensity = testSystem.getPhase(PhaseType.AQUEOUS).getWaterDensity("kg/m3");
+
+    assertTrue(Double.isFinite(waterDensity));
+    assertEquals(1109.3, waterDensity, 2.0);
+  }
+
+  @Test
+  void waterMethanolMixtureWaterDensityTest() {
+    neqsim.thermo.system.SystemSrkEos testSystem =
+        new neqsim.thermo.system.SystemSrkEos(293.15, 1.0);
+    testSystem.addComponent("methanol", 49.0);
+    testSystem.addComponent("water", 49.0);
+    testSystem.addComponent("NaCl", 2.0);
+    testSystem.setMixingRule("classic");
+    testSystem.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
+    testSystem.initProperties();
+
+    double waterDensity = testSystem.getPhase(PhaseType.AQUEOUS).getWaterDensity("kg/m3");
+
+    assertTrue(Double.isFinite(waterDensity));
+    assertEquals(889.0, waterDensity, 5.0);
+  }
+
+  @Test
+  void waterEthanolMixtureWaterDensityTest() {
+    neqsim.thermo.system.SystemSrkEos testSystem =
+        new neqsim.thermo.system.SystemSrkEos(293.15, 1.0);
+    testSystem.addComponent("ethanol", 49.0);
+    testSystem.addComponent("water", 49.0);
+    testSystem.addComponent("NaCl", 2.0);
+    testSystem.setMixingRule("classic");
+    testSystem.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    testOps.TPflash();
+    testSystem.initProperties();
+
+    double waterDensity = testSystem.getPhase(PhaseType.AQUEOUS).getWaterDensity("kg/m3");
+
+    assertTrue(Double.isFinite(waterDensity));
+    assertEquals(836.0, waterDensity, 5.0);
   }
 }

@@ -127,7 +127,7 @@ public class CombinedModelsTest {
       logger.debug(ex.getMessage(), ex);
     }
 
-    Assertions.assertEquals(164.44139872,
+    Assertions.assertEquals(165.238244803687,
         ((Compressor) fullProcess.get("compressor process").getUnit("Compressor1"))
             .getOutletStream().getTemperature("C"),
         0.1);

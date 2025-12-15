@@ -14,24 +14,59 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
+ * Pipeline simulation using Beggs and Brill empirical correlations for multiphase flow.
+ *
  * <p>
- * PipeBeggsAndBrills class.
+ * This class implements the Beggs and Brill (1973) correlation for pressure drop and liquid holdup
+ * prediction in multiphase pipeline flow. It supports both single-phase and multiphase (gas-liquid)
+ * flow in horizontal, inclined, and vertical pipes.
  * </p>
  *
- * @author Even Solbraa , Sviatoslav Eroshkin
+ * <h2>Energy Equation</h2>
+ * <p>
+ * The energy balance includes three optional components:
+ * <ul>
+ * <li><b>Wall heat transfer</b> - Heat exchange with surroundings using LMTD method</li>
+ * <li><b>Joule-Thomson effect</b> - Temperature change due to gas expansion (cooling)</li>
+ * <li><b>Friction heating</b> - Viscous dissipation adding energy to the fluid</li>
+ * </ul>
+ *
+ * <h3>Usage Example</h3>
+ * 
+ * <pre>{@code
+ * PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipeline", feedStream);
+ * pipe.setDiameter(0.1524); // 6 inch
+ * pipe.setLength(5000.0); // 5 km
+ * pipe.setElevation(0.0); // horizontal
+ *
+ * // Enable enhanced energy equation
+ * pipe.setConstantSurfaceTemperature(288.15, "K");
+ * pipe.setHeatTransferCoefficient(25.0); // W/(m²·K)
+ * pipe.setIncludeJouleThomsonEffect(true);
+ * pipe.setJouleThomsonCoefficient(3.5e-6); // K/Pa
+ * pipe.setIncludeFrictionHeating(true);
+ *
+ * pipe.run();
+ * }</pre>
+ *
+ * @author Even Solbraa, Sviatoslav Eroshkin
  * @version $Id: $Id
+ * @see Pipeline
  */
 public class PipeBeggsAndBrills extends Pipeline {
   private static final long serialVersionUID = 1001;
 
   /** Flow regimes available in Beggs and Brill correlations. */
   public enum FlowRegime {
-    SEGREGATED,
-    INTERMITTENT,
-    DISTRIBUTED,
-    TRANSITION,
-    SINGLE_PHASE,
-    UNKNOWN
+    SEGREGATED, INTERMITTENT, DISTRIBUTED, TRANSITION, SINGLE_PHASE, UNKNOWN
+  }
+
+  /** Calculation modes for pipeline simulation. */
+  public enum CalculationMode {
+    /** Calculate outlet pressure from inlet conditions and flow rate (default). */
+    CALCULATE_OUTLET_PRESSURE,
+    /** Calculate flow rate from inlet and specified outlet pressure. */
+    CALCULATE_FLOW_RATE
   }
 
   int iteration;
@@ -48,6 +83,13 @@ public class PipeBeggsAndBrills extends Pipeline {
   // Outlet properties initialization [K] and [bar]
   protected double temperatureOut = 270;
   protected double pressureOut = 0.0;
+
+  // Calculation mode and specified outlet pressure
+  private CalculationMode calculationMode = CalculationMode.CALCULATE_OUTLET_PRESSURE;
+  private double specifiedOutletPressure = Double.NaN;
+  private String specifiedOutletPressureUnit = "bara";
+  private int maxFlowIterations = 50;
+  private double flowConvergenceTolerance = 1e-4;
 
   // Unit for maximum flow
   String maxflowunit = "kg/hr";
@@ -181,6 +223,14 @@ public class PipeBeggsAndBrills extends Pipeline {
   private double heatTransferCoefficient;
 
   private String heatTransferCoefficientMethod = "Estimated";
+
+  // Joule-Thomson effect: temperature change during gas expansion
+  // When enabled, JT coefficient is calculated from gas phase thermodynamics
+  private boolean includeJouleThomsonEffect = false;
+
+  // Friction heating parameters for viscous dissipation
+  // When enabled, friction pressure losses are converted to thermal energy in the fluid
+  private boolean includeFrictionHeating = false;
 
   // Heat transfer parameters
   double Tmi; // medium temperature
@@ -395,6 +445,88 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * Sets the specified outlet pressure and switches to flow rate calculation mode. When outlet
+   * pressure is specified, the run() method will iterate to find the flow rate that achieves the
+   * specified outlet pressure.
+   *
+   * @param pressure the desired outlet pressure in bara
+   */
+  public void setOutletPressure(double pressure) {
+    this.specifiedOutletPressure = pressure;
+    this.specifiedOutletPressureUnit = "bara";
+    this.calculationMode = CalculationMode.CALCULATE_FLOW_RATE;
+  }
+
+  /**
+   * Sets the specified outlet pressure with unit and switches to flow rate calculation mode. When
+   * outlet pressure is specified, the run() method will iterate to find the flow rate that achieves
+   * the specified outlet pressure.
+   *
+   * @param pressure the desired outlet pressure
+   * @param unit the pressure unit (e.g., "bara", "barg", "Pa", "MPa")
+   */
+  public void setOutletPressure(double pressure, String unit) {
+    this.specifiedOutletPressure = pressure;
+    this.specifiedOutletPressureUnit = unit;
+    this.calculationMode = CalculationMode.CALCULATE_FLOW_RATE;
+  }
+
+  /**
+   * Gets the specified outlet pressure.
+   *
+   * @return the specified outlet pressure in the unit set, or NaN if not specified
+   */
+  public double getSpecifiedOutletPressure() {
+    return specifiedOutletPressure;
+  }
+
+  /**
+   * Gets the specified outlet pressure unit.
+   *
+   * @return the pressure unit
+   */
+  public String getSpecifiedOutletPressureUnit() {
+    return specifiedOutletPressureUnit;
+  }
+
+  /**
+   * Sets the calculation mode for the pipeline.
+   *
+   * @param mode the calculation mode (CALCULATE_OUTLET_PRESSURE or CALCULATE_FLOW_RATE)
+   */
+  public void setCalculationMode(CalculationMode mode) {
+    this.calculationMode = mode;
+  }
+
+  /**
+   * Gets the current calculation mode.
+   *
+   * @return the calculation mode
+   */
+  public CalculationMode getCalculationMode() {
+    return calculationMode;
+  }
+
+  /**
+   * Sets the maximum number of iterations for flow rate calculation when outlet pressure is
+   * specified.
+   *
+   * @param maxIterations the maximum number of iterations
+   */
+  public void setMaxFlowIterations(int maxIterations) {
+    this.maxFlowIterations = maxIterations;
+  }
+
+  /**
+   * Sets the convergence tolerance for flow rate calculation when outlet pressure is specified.
+   *
+   * @param tolerance the relative convergence tolerance (default 1e-4)
+   */
+  public void setFlowConvergenceTolerance(double tolerance) {
+    this.flowConvergenceTolerance = tolerance;
+  }
+
+  /**
    * Converts the input values from the system measurement units to imperial units. Needed because
    * the main equations and coefficients are developed for imperial system
    * <p>
@@ -525,7 +657,8 @@ public class PipeBeggsAndBrills extends Pipeline {
         inputVolumeFractionLiquid = 0.0;
         regime = FlowRegime.SINGLE_PHASE;
       } else {
-        supLiquidVel = system.getPhase(1).getFlowRate("ft3/sec") / area;
+        // Single-phase liquid: only phase is at index 0
+        supLiquidVel = system.getPhase(0).getFlowRate("ft3/sec") / area;
         supMixVel = supLiquidVel;
         inputVolumeFractionLiquid = 1.0;
         regime = FlowRegime.SINGLE_PHASE;
@@ -598,11 +731,9 @@ public class PipeBeggsAndBrills extends Pipeline {
           + B * 0.845 * Math.pow(inputVolumeFractionLiquid, 0.5351)
               / (Math.pow(mixtureFroudeNumber, 0.0173));
     } else if (regime == FlowRegime.SINGLE_PHASE) {
-      if (inputVolumeFractionLiquid < 0.1) {
-        El = inputVolumeFractionLiquid;
-      } else {
-        El = 1.0 - inputVolumeFractionLiquid;
-      }
+      // For single-phase flow, liquid holdup equals liquid volume fraction
+      // Gas: El = 0, Liquid: El = 1
+      El = inputVolumeFractionLiquid;
     }
 
     if (regime != FlowRegime.SINGLE_PHASE) {
@@ -645,20 +776,26 @@ public class PipeBeggsAndBrills extends Pipeline {
 
       if (elevation > 0) {
         if (regime == FlowRegime.SEGREGATED) {
-          betta = (1 - inputVolumeFractionLiquid)
-              * Math.log(0.011 * Math.pow(Nvl, 3.539) / (Math.pow(inputVolumeFractionLiquid, 3.768)
-                  * Math.pow(mixtureFroudeNumber, 1.614)));
+          double logArg = 0.011 * Math.pow(Nvl, 3.539)
+              / (Math.pow(inputVolumeFractionLiquid, 3.768) * Math.pow(mixtureFroudeNumber, 1.614));
+          if (logArg > 0) {
+            betta = (1 - inputVolumeFractionLiquid) * Math.log(logArg);
+          }
         } else if (regime == FlowRegime.INTERMITTENT) {
-          betta = (1 - inputVolumeFractionLiquid)
-              * Math.log(2.96 * Math.pow(inputVolumeFractionLiquid, 0.305)
-                  * Math.pow(mixtureFroudeNumber, 0.0978) / (Math.pow(Nvl, 0.4473)));
+          double logArg = 2.96 * Math.pow(inputVolumeFractionLiquid, 0.305)
+              * Math.pow(mixtureFroudeNumber, 0.0978) / (Math.pow(Nvl, 0.4473));
+          if (logArg > 0) {
+            betta = (1 - inputVolumeFractionLiquid) * Math.log(logArg);
+          }
         } else if (regime == FlowRegime.DISTRIBUTED) {
           betta = 0;
         }
       } else {
-        betta = (1 - inputVolumeFractionLiquid)
-            * Math.log(4.70 * Math.pow(Nvl, 0.1244) / (Math.pow(inputVolumeFractionLiquid, 0.3692)
-                * Math.pow(mixtureFroudeNumber, 0.5056)));
+        double logArg = 4.70 * Math.pow(Nvl, 0.1244)
+            / (Math.pow(inputVolumeFractionLiquid, 0.3692) * Math.pow(mixtureFroudeNumber, 0.5056));
+        if (logArg > 0) {
+          betta = (1 - inputVolumeFractionLiquid) * Math.log(logArg);
+        }
       }
       betta = (betta > 0) ? betta : 0;
       BThetta = 1 + betta * (Math.sin(1.8 * angle * 0.01745329)
@@ -673,11 +810,8 @@ public class PipeBeggsAndBrills extends Pipeline {
             + system.getPhase(0).getDensity("lb/ft3") * (1 - El);
       }
     } else {
-      if (system.hasPhaseType("gas")) {
-        mixtureDensity = system.getPhase(0).getDensity("lb/ft3");
-      } else {
-        mixtureDensity = system.getPhase(1).getDensity("lb/ft3");
-      }
+      // Single-phase: only phase is at index 0
+      mixtureDensity = system.getPhase(0).getDensity("lb/ft3");
     }
     hydrostaticPressureDrop = mixtureDensity * 32.2 * elevation; // 32.2 - g
 
@@ -728,13 +862,12 @@ public class PipeBeggsAndBrills extends Pipeline {
         liquidDensityProfile.add((system.getPhase(1).getDensity("lb/ft3")) * 16.01846);
       }
     } else {
+      // Single-phase: only phase is at index 0
+      rhoNoSlip = (system.getPhase(0).getDensity("lb/ft3"));
+      muNoSlip = (system.getPhase(0).getViscosity("cP"));
       if (system.hasPhaseType("gas")) {
-        rhoNoSlip = (system.getPhase(0).getDensity("lb/ft3"));
-        muNoSlip = (system.getPhase(0).getViscosity("cP"));
         liquidDensityProfile.add(0.0);
       } else {
-        rhoNoSlip = (system.getPhase(1).getDensity("lb/ft3"));
-        muNoSlip = (system.getPhase(1).getViscosity("cP"));
         liquidDensityProfile.add(rhoNoSlip * 16.01846);
       }
     }
@@ -748,8 +881,24 @@ public class PipeBeggsAndBrills extends Pipeline {
 
     double E = pipeWallRoughness / insideDiameter;
 
-    // Haaland equation
-    frictionFactor = Math.pow(1 / (-1.8 * Math.log10((E / 3.7) + (6.9 / ReNoSlip))), 2);
+    // Calculate friction factor with proper flow regime handling
+    if (Math.abs(ReNoSlip) < 1e-10) {
+      frictionFactor = 0.0;
+    } else if (Math.abs(ReNoSlip) < 2300) {
+      // Laminar flow
+      frictionFactor = 64.0 / ReNoSlip;
+    } else if (Math.abs(ReNoSlip) < 4000) {
+      // Transition zone - interpolate between laminar and turbulent
+      double fLaminar = 64.0 / 2300.0;
+      double fTurbulent =
+          Math.pow(1 / (-1.8 * Math.log10(Math.pow(E / 3.7, 1.11) + (6.9 / 4000.0))), 2);
+      frictionFactor = fLaminar + (fTurbulent - fLaminar) * (ReNoSlip - 2300.0) / 1700.0;
+    } else {
+      // Turbulent flow - Haaland equation
+      // f = (1 / (-1.8 * log10((ε/D/3.7)^1.11 + 6.9/Re)))^2
+      frictionFactor =
+          Math.pow(1 / (-1.8 * Math.log10(Math.pow(E / 3.7, 1.11) + (6.9 / ReNoSlip))), 2);
+    }
     frictionTwoPhase = frictionFactor * Math.exp(S);
 
     frictionPressureLoss =
@@ -779,6 +928,32 @@ public class PipeBeggsAndBrills extends Pipeline {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    // Input validation
+    if (insideDiameter <= 0) {
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
+              "insideDiameter", "must be positive, got: " + insideDiameter));
+    }
+    if (numberOfIncrements <= 0) {
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
+              "numberOfIncrements", "must be positive, got: " + numberOfIncrements));
+    }
+
+    if (calculationMode == CalculationMode.CALCULATE_FLOW_RATE) {
+      runWithSpecifiedOutletPressure(id);
+    } else {
+      runWithSpecifiedFlowRate(id);
+    }
+  }
+
+  /**
+   * Run pipeline calculation with specified flow rate (calculate outlet pressure). This is the
+   * default calculation mode.
+   *
+   * @param id calculation identifier
+   */
+  private void runWithSpecifiedFlowRate(UUID id) {
     iteration = 0;
     transientInitialized = false;
 
@@ -861,6 +1036,163 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * Run pipeline calculation with specified outlet pressure (calculate flow rate). Uses bisection
+   * method to find the flow rate that achieves the target outlet pressure.
+   *
+   * @param id calculation identifier
+   */
+  private void runWithSpecifiedOutletPressure(UUID id) {
+    if (Double.isNaN(specifiedOutletPressure)) {
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
+              "specifiedOutletPressure", "must be set when using CALCULATE_FLOW_RATE mode"));
+    }
+
+    // Convert specified outlet pressure to bara
+    double targetPressure = specifiedOutletPressure;
+    if (!specifiedOutletPressureUnit.equals("bara")) {
+      // Create a temporary system to convert pressure units
+      SystemInterface tempSystem = inStream.getThermoSystem().clone();
+      tempSystem.setPressure(specifiedOutletPressure, specifiedOutletPressureUnit);
+      targetPressure = tempSystem.getPressure("bara");
+    }
+
+    double inletPressureBara = inStream.getThermoSystem().getPressure("bara");
+    if (targetPressure >= inletPressureBara) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
+          "PipeBeggsAndBrills", "run", "specifiedOutletPressure",
+          "must be less than inlet pressure (" + inletPressureBara + " bara)"));
+    }
+    if (targetPressure <= 0) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
+          "PipeBeggsAndBrills", "run", "specifiedOutletPressure", "must be positive"));
+    }
+
+    // Save original flow rate
+    String flowUnit = "kg/hr";
+    double originalFlowRate = inStream.getFlowRate(flowUnit);
+
+    // Use bisection method to find flow rate
+    // Start with a wide range
+    double flowLow = 1.0; // Minimum 1 kg/hr
+    double flowHigh = originalFlowRate * 100.0; // Up to 100x original
+
+    // First, find a valid low flow rate (where outlet pressure > target)
+    double pressureAtLowFlow = tryCalculatePressure(flowLow, flowUnit, id);
+    if (pressureAtLowFlow < targetPressure) {
+      // Even at minimum flow, can't achieve target pressure
+      inStream.setFlowRate(originalFlowRate, flowUnit);
+      inStream.run();
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
+          "PipeBeggsAndBrills", "run", "specifiedOutletPressure",
+          "cannot be achieved - pressure drop too high even at minimum flow"));
+    }
+
+    // Find a valid high flow rate (where outlet pressure < target)
+    // Start from a reasonable multiple and increase if needed
+    flowHigh = originalFlowRate * 2.0;
+    double pressureAtHighFlow = tryCalculatePressure(flowHigh, flowUnit, id);
+
+    // If pressure is still too high, increase flow rate
+    int boundSearchIter = 0;
+    while (pressureAtHighFlow > targetPressure && boundSearchIter < 20) {
+      flowHigh *= 2.0;
+      pressureAtHighFlow = tryCalculatePressure(flowHigh, flowUnit, id);
+      boundSearchIter++;
+    }
+
+    // If we couldn't find a high bound with positive pressure that gives low enough outlet pressure
+    // it means we need very high flow (or it's infeasible)
+    if (pressureAtHighFlow > targetPressure) {
+      inStream.setFlowRate(originalFlowRate, flowUnit);
+      inStream.run();
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException("PipeBeggsAndBrills", "run",
+              "specifiedOutletPressure", "cannot be achieved - requires extremely high flow rate"));
+    }
+
+    // Bisection iteration
+    double flowMid = 0;
+    double pressureMid = 0;
+    int iterCount = 0;
+
+    while (iterCount < maxFlowIterations) {
+      flowMid = (flowLow + flowHigh) / 2.0;
+      pressureMid = tryCalculatePressure(flowMid, flowUnit, id);
+
+      double relativeError = Math.abs(pressureMid - targetPressure) / targetPressure;
+
+      if (relativeError < flowConvergenceTolerance) {
+        // Converged
+        break;
+      }
+
+      if (pressureMid > targetPressure) {
+        // Need more pressure drop, increase flow
+        flowLow = flowMid;
+      } else {
+        // Need less pressure drop, decrease flow
+        flowHigh = flowMid;
+      }
+
+      // Check if bounds have converged
+      if (Math.abs(flowHigh - flowLow) / flowMid < flowConvergenceTolerance) {
+        break;
+      }
+
+      iterCount++;
+    }
+
+    // Final run with converged flow rate - already done in tryCalculatePressure
+    // Just ensure the state is set correctly
+    inStream.setFlowRate(flowMid, flowUnit);
+    inStream.run();
+    runWithSpecifiedFlowRate(id);
+  }
+
+  /**
+   * Helper method to calculate outlet pressure for a given flow rate, handling exceptions when
+   * pressure goes negative (indicating flow rate is too high).
+   *
+   * @param flowRate the flow rate to test
+   * @param flowUnit the unit for flow rate
+   * @param id calculation identifier
+   * @return the outlet pressure, or a very low value if calculation fails (pressure went negative)
+   */
+  private double tryCalculatePressure(double flowRate, String flowUnit, UUID id) {
+    inStream.setFlowRate(flowRate, flowUnit);
+    inStream.run();
+    try {
+      runWithSpecifiedFlowRate(id);
+      return getOutletPressure();
+    } catch (RuntimeException e) {
+      // If calculation fails (e.g., negative pressure), return very low pressure
+      // This helps the bisection algorithm know this flow rate is too high
+      return -1e6; // Return a very negative value to indicate "too high flow"
+    }
+  }
+
+  /**
+   * Calculates the Nusselt number using the Gnielinski correlation for turbulent pipe flow. Valid
+   * for 0.5 &lt; Pr &lt; 2000 and 3000 &lt; Re &lt; 5E6.
+   *
+   * @param Re Reynolds number
+   * @param Pr Prandtl number
+   * @return the Nusselt number
+   */
+  private double calcGnielinskiNu(double Re, double Pr) {
+    // Gnielinski correlation: Nu = (f/8)(Re-1000)Pr / (1 + 12.7*(f/8)^0.5*(Pr^(2/3)-1))
+    // Uses the friction factor already calculated
+    double f = frictionFactor;
+    if (f <= 0) {
+      // Fallback: use Petukhov friction factor approximation
+      f = Math.pow(0.790 * Math.log(Re) - 1.64, -2);
+    }
+    return ((f / 8.0) * (Re - 1000.0) * Pr)
+        / (1.0 + 12.7 * Math.pow(f / 8.0, 0.5) * (Math.pow(Pr, 2.0 / 3.0) - 1.0));
+  }
+
+  /**
    * Estimates the heat transfer coefficient for the given system.
    *
    * @param system the thermodynamic system for which the heat transfer coefficient is to be
@@ -870,16 +1202,23 @@ public class PipeBeggsAndBrills extends Pipeline {
   public double estimateHeatTransferCoefficent(SystemInterface system) {
     cp = system.getCp("J/kgK");
     thermalConductivity = system.getThermalConductivity();
+    // Prandtl number: Pr = μ * Cp / k
+    // viscosity in cP * 0.001 converts to Pa.s (kg/(m.s))
     Pr = 0.001 * system.getViscosity("cP") * cp / thermalConductivity;
-    if (ReNoSlip < 3000) {
+
+    if (ReNoSlip < 2300) {
+      // Laminar flow - constant Nusselt for fully developed pipe flow
       Nu = 3.66;
+    } else if (ReNoSlip < 3000) {
+      // Transition zone - interpolate between laminar and turbulent
+      double NuLaminar = 3.66;
+      double NuTurbulent = calcGnielinskiNu(3000, Pr);
+      Nu = NuLaminar + (NuTurbulent - NuLaminar) * (ReNoSlip - 2300) / 700.0;
     } else {
-      if (Pr < 2000 && Pr > 0.5 && ReNoSlip < 5E6) {
-        Nu = ((frictionTwoPhase / 8) * (ReNoSlip - 1000) * Pr)
-            / (1 + 12.7 * Math.pow(frictionTwoPhase, 0.5) * (Math.pow(Pr, 0.66) - 1));
-      }
+      // Turbulent flow - Gnielinski correlation (valid for 0.5 < Pr < 2000, 3000 < Re < 5E6)
+      Nu = calcGnielinskiNu(ReNoSlip, Pr);
     }
-    heatTransferCoefficient = Nu * thermalConductivity / (insideDiameter);
+    heatTransferCoefficient = Nu * thermalConductivity / insideDiameter;
 
     if (system.getNumberOfPhases() > 1) {
       X = system.getPhase(0).getFlowRate("kg/sec") / system.getFlowRate("kg/sec");
@@ -921,11 +1260,27 @@ public class PipeBeggsAndBrills extends Pipeline {
    * @return the temperature difference between the outlet and inlet
    */
   public double calcTemperatureDifference(SystemInterface system) {
-    double cp = system.getCp("J/kgK");
+    double cpLocal = system.getCp("J/kgK");
     double Tmi = system.getTemperature("C");
     double Ts = constantSurfaceTemperature - 273.15;
-    double TmoLower = Tmi; // Lower bound for Tmo
-    double TmoUpper = Ts; // Upper bound for Tmo
+
+    // Handle case where surface temperature equals inlet temperature (no heat transfer)
+    if (Math.abs(Ts - Tmi) < 0.01) {
+      return 0.0;
+    }
+
+    // Set bounds correctly for both heating and cooling cases
+    double TmoLower, TmoUpper;
+    if (Ts > Tmi) {
+      // Heating case: outlet temperature between inlet and surface
+      TmoLower = Tmi;
+      TmoUpper = Ts;
+    } else {
+      // Cooling case: outlet temperature between surface and inlet
+      TmoLower = Ts;
+      TmoUpper = Tmi;
+    }
+
     double Tmo = (TmoLower + TmoUpper) / 2; // Initial guess
     double error = 999;
     double tolerance = 0.01; // Tolerance for convergence
@@ -935,19 +1290,53 @@ public class PipeBeggsAndBrills extends Pipeline {
       heatTransferCoefficient = estimateHeatTransferCoefficent(system);
     }
 
+    // Protect against zero or negative heat transfer coefficient
+    if (heatTransferCoefficient <= 0) {
+      return 0.0;
+    }
+
     for (int i = 0; i < maxIterations; i++) {
-      double dTlm = ((Ts - Tmo) - (Ts - Tmi)) / (Math.log((Ts - Tmo) / (Ts - Tmi)));
-      error = heatTransferCoefficient - system.getFlowRate("kg/sec") * cp * (Tmo - Tmi)
-          / (3.1415 * insideDiameter * length * dTlm);
+      // Log mean temperature difference (LMTD)
+      // dTlm = ((Ts-Tmo) - (Ts-Tmi)) / ln((Ts-Tmo)/(Ts-Tmi))
+      // Protect against log of negative or zero
+      double dT1 = Ts - Tmi;
+      double dT2 = Ts - Tmo;
+
+      // Check for singularity conditions
+      if (Math.abs(dT2) < 0.001) {
+        // Tmo very close to Ts - reached maximum heat transfer
+        break;
+      }
+      if (dT1 * dT2 <= 0) {
+        // Signs differ - Tmo has crossed Ts, which shouldn't happen
+        break;
+      }
+
+      double dTlm;
+      if (Math.abs(dT1 - dT2) < 0.001) {
+        // When dT1 ≈ dT2, use arithmetic mean to avoid 0/0
+        dTlm = (dT1 + dT2) / 2.0;
+      } else {
+        dTlm = (dT1 - dT2) / Math.log(dT1 / dT2);
+      }
+
+      // Original formulation: find Tmo where h_given = h_calculated
+      // h_calculated = m_dot * Cp * (Tmo - Tmi) / (A * dTlm)
+      double heatTransferArea = Math.PI * insideDiameter * length * dTlm;
+      error = heatTransferCoefficient
+          - system.getFlowRate("kg/sec") * cpLocal * (Tmo - Tmi) / heatTransferArea;
 
       if (Math.abs(error) < tolerance) {
         break; // Converged
       }
 
+      // Bisection update
+      // error > 0 means h_given > h_calc, need more heat transfer (Tmo closer to Ts)
+      // error < 0 means h_given < h_calc, need less heat transfer (Tmo closer to Tmi)
       if (error > 0) {
-        TmoLower = Tmo; // Adjust lower bound
+        TmoLower = Tmo; // Need higher Tmo (for heating case)
       } else {
-        TmoUpper = Tmo; // Adjust upper bound
+        TmoUpper = Tmo; // Need lower Tmo (for heating case)
       }
 
       Tmo = (TmoLower + TmoUpper) / 2; // New guess
@@ -958,6 +1347,22 @@ public class PipeBeggsAndBrills extends Pipeline {
   /**
    * Calculates the heat balance for the given system.
    *
+   * <p>
+   * This method calculates the enthalpy change due to:
+   * <ul>
+   * <li>Wall heat transfer (LMTD method) - when not adiabatic</li>
+   * <li>Joule-Thomson effect - cooling/heating due to pressure change (calculated from
+   * thermodynamics)</li>
+   * <li>Friction heating - viscous dissipation</li>
+   * </ul>
+   *
+   * <p>
+   * The final PHflash operation determines the equilibrium state at the new enthalpy and pressure,
+   * which inherently accounts for heat of vaporization/condensation in two-phase flow. Phase
+   * changes (liquid evaporation or vapor condensation) are properly handled through the enthalpy
+   * balance.
+   * </p>
+   *
    * @param enthalpy the initial enthalpy of the system
    * @param system the thermodynamic system for which the heat balance is to be calculated
    * @param testOps the thermodynamic operations to be performed
@@ -966,11 +1371,119 @@ public class PipeBeggsAndBrills extends Pipeline {
   public double calcHeatBalance(double enthalpy, SystemInterface system,
       ThermodynamicOperations testOps) {
     double Cp = system.getCp("J/kgK");
+    double massFlowRate = system.getFlowRate("kg/sec");
+
+    // 1. Wall heat transfer (LMTD-based calculation)
     if (!runAdiabatic) {
-      enthalpy = enthalpy + system.getFlowRate("kg/sec") * Cp * calcTemperatureDifference(system);
+      enthalpy = enthalpy + massFlowRate * Cp * calcTemperatureDifference(system);
     }
+
+    // 2. Joule-Thomson effect: temperature change due to pressure drop
+    // JT coefficient is calculated from gas phase thermodynamics
+    // dH_JT = m_dot * Cp * μ_JT * dP (where dP is pressure drop, positive value)
+    if (includeJouleThomsonEffect && system.hasPhaseType("gas")) {
+      try {
+        double jouleThomsonCoeff = system.getPhase("gas").getJouleThomsonCoefficient("K/Pa");
+        if (!Double.isNaN(jouleThomsonCoeff) && !Double.isInfinite(jouleThomsonCoeff)
+            && jouleThomsonCoeff > 0) {
+          double pressureDropPa = pressureDrop * 1e5; // bar to Pa
+          double dT_JT = -jouleThomsonCoeff * pressureDropPa; // Cooling for expansion
+          enthalpy = enthalpy + massFlowRate * Cp * dT_JT;
+        }
+      } catch (Exception ex) {
+        // Skip JT effect if calculation fails
+      }
+    }
+
+    // 3. Friction heating: viscous dissipation adds energy to the fluid
+    // Q_friction = dP_friction * volumetric_flow_rate
+    if (includeFrictionHeating) {
+      double frictionPressureDropPa = Math.abs(pressureDrop) * 1e5; // bar to Pa
+      double volumetricFlowRate = massFlowRate / system.getDensity("kg/m3");
+      double frictionHeat = frictionPressureDropPa * volumetricFlowRate;
+      enthalpy = enthalpy + frictionHeat;
+    }
+
+    // PHflash finds equilibrium at new enthalpy - this inherently handles
+    // heat of vaporization/condensation for two-phase flow
     testOps.PHflash(enthalpy);
     return enthalpy;
+  }
+
+  /**
+   * Sets whether to include Joule-Thomson effect in energy calculations.
+   *
+   * <p>
+   * The Joule-Thomson effect accounts for temperature change during gas expansion. For natural gas,
+   * this typically results in cooling during pressure drop. The JT coefficient is automatically
+   * calculated from the gas phase thermodynamics using NeqSim's rigorous equation of state,
+   * providing accurate values for the actual fluid composition and conditions.
+   * </p>
+   *
+   * <p>
+   * Typical Joule-Thomson coefficients (calculated automatically):
+   * <ul>
+   * <li>Methane: ~4×10⁻⁶ K/Pa (0.4 K/bar)</li>
+   * <li>Natural gas: 3-5×10⁻⁶ K/Pa</li>
+   * <li>CO2: ~10⁻⁵ K/Pa (1 K/bar)</li>
+   * </ul>
+   *
+   * @param include true to include JT effect, false otherwise
+   */
+  public void setIncludeJouleThomsonEffect(boolean include) {
+    this.includeJouleThomsonEffect = include;
+  }
+
+  /**
+   * Gets whether Joule-Thomson effect is included in energy calculations.
+   *
+   * <p>
+   * When enabled, the energy equation accounts for temperature change due to gas expansion,
+   * typically resulting in cooling for natural gas flows. The JT coefficient is automatically
+   * calculated from the gas phase thermodynamics.
+   * </p>
+   *
+   * @return true if JT effect is included in the energy balance
+   * @see #setIncludeJouleThomsonEffect(boolean)
+   */
+  public boolean isIncludeJouleThomsonEffect() {
+    return includeJouleThomsonEffect;
+  }
+
+  /**
+   * Sets whether to include friction heating in energy calculations.
+   *
+   * <p>
+   * Friction heating accounts for viscous dissipation, where mechanical energy lost to friction is
+   * converted to thermal energy in the fluid. The heat added is calculated as: Q_friction =
+   * ΔP_friction × Q_volumetric
+   * </p>
+   *
+   * <p>
+   * For typical pipeline conditions, friction heating is a small effect (typically 0.01-0.1 K per
+   * bar of friction pressure drop) compared to wall heat transfer or Joule-Thomson cooling.
+   * However, for high-velocity or long pipelines, it may become significant.
+   * </p>
+   *
+   * @param include true to include friction heating, false otherwise
+   */
+  public void setIncludeFrictionHeating(boolean include) {
+    this.includeFrictionHeating = include;
+  }
+
+  /**
+   * Gets whether friction heating is included in energy calculations.
+   *
+   * <p>
+   * When enabled, the energy equation accounts for viscous dissipation, where friction pressure
+   * losses are converted to thermal energy in the fluid.
+   * </p>
+   *
+   * @return true if friction heating is included in the energy balance
+   * @see #setIncludeFrictionHeating(boolean)
+   */
+  public boolean isIncludeFrictionHeating() {
+    return includeFrictionHeating;
   }
 
   private void initializeTransientState(UUID id) {
@@ -982,7 +1495,8 @@ public class PipeBeggsAndBrills extends Pipeline {
     if (transientTemperatureProfile.size() < numberOfIncrements + 1) {
       double fallbackTemperature;
       if (!transientTemperatureProfile.isEmpty()) {
-        fallbackTemperature = transientTemperatureProfile.get(transientTemperatureProfile.size() - 1);
+        fallbackTemperature =
+            transientTemperatureProfile.get(transientTemperatureProfile.size() - 1);
       } else {
         fallbackTemperature = getInletStream().getThermoSystem().getTemperature();
       }
@@ -1012,7 +1526,8 @@ public class PipeBeggsAndBrills extends Pipeline {
       for (int i = 0; i < numberOfIncrements; i++) {
         double velocityFeetPerSecond = mixtureSuperficialVelocityProfile
             .get(Math.min(i, mixtureSuperficialVelocityProfile.size() - 1));
-        transientVelocityProfile.add(Math.max(MIN_TRANSIT_VELOCITY, velocityFeetPerSecond * 0.3048));
+        transientVelocityProfile
+            .add(Math.max(MIN_TRANSIT_VELOCITY, velocityFeetPerSecond * 0.3048));
       }
     } else {
       for (int i = 0; i < numberOfIncrements; i++) {
@@ -1041,8 +1556,7 @@ public class PipeBeggsAndBrills extends Pipeline {
         || transientTemperatureProfile.size() != numberOfIncrements + 1
         || transientMassFlowProfile == null
         || transientMassFlowProfile.size() != numberOfIncrements + 1
-        || transientVelocityProfile == null
-        || transientVelocityProfile.size() != numberOfIncrements
+        || transientVelocityProfile == null || transientVelocityProfile.size() != numberOfIncrements
         || transientDensityProfile == null
         || transientDensityProfile.size() != numberOfIncrements) {
       initializeTransientState(id);
@@ -1054,6 +1568,66 @@ public class PipeBeggsAndBrills extends Pipeline {
     if (Double.isNaN(segmentLengthMeters) || segmentLengthMeters <= 0) {
       segmentLengthMeters = totalLength / Math.max(1, numberOfIncrements);
     }
+  }
+
+  /**
+   * Calculates friction pressure drop for transient simulation. Uses simplified correlations that
+   * don't depend on steady-state flow regime detection.
+   *
+   * @param velocity mixture velocity in m/s
+   * @param density mixture density in kg/m3
+   * @param viscosity mixture viscosity in Pa.s (not cP)
+   * @param segmentLength length of segment in m
+   * @return friction pressure drop in bar
+   */
+  private double calcTransientFrictionPressureDrop(double velocity, double density,
+      double viscosity, double segmentLength) {
+    if (velocity < MIN_TRANSIT_VELOCITY || density < MIN_DENSITY || viscosity <= 0) {
+      return 0.0;
+    }
+
+    // Calculate Reynolds number
+    double Re = density * Math.abs(velocity) * insideDiameter / viscosity;
+
+    // Calculate friction factor
+    double f;
+    double E = pipeWallRoughness / insideDiameter;
+
+    if (Re < 1e-10) {
+      f = 0.0;
+    } else if (Re < 2300) {
+      // Laminar flow
+      f = 64.0 / Re;
+    } else if (Re < 4000) {
+      // Transition zone
+      double fLaminar = 64.0 / 2300.0;
+      double fTurbulent =
+          Math.pow(1 / (-1.8 * Math.log10(Math.pow(E / 3.7, 1.11) + (6.9 / 4000.0))), 2);
+      f = fLaminar + (fTurbulent - fLaminar) * (Re - 2300.0) / 1700.0;
+    } else {
+      // Turbulent flow - Haaland equation
+      f = Math.pow(1 / (-1.8 * Math.log10(Math.pow(E / 3.7, 1.11) + (6.9 / Re))), 2);
+    }
+
+    // Darcy-Weisbach: ΔP = f * (L/D) * (ρv²/2)
+    // Result in Pa, convert to bar
+    double dpFrictionPa =
+        f * (segmentLength / insideDiameter) * (density * velocity * velocity / 2.0);
+    return dpFrictionPa / 1e5; // Convert Pa to bar
+  }
+
+  /**
+   * Calculates hydrostatic pressure drop for transient simulation.
+   *
+   * @param density mixture density in kg/m3
+   * @param elevationChange elevation change in m (positive = uphill)
+   * @return hydrostatic pressure drop in bar
+   */
+  private double calcTransientHydrostaticPressureDrop(double density, double elevationChange) {
+    // ΔP_hydro = ρ * g * Δh
+    // Result in Pa, convert to bar
+    double dpHydroPa = density * 9.81 * elevationChange;
+    return dpHydroPa / 1e5; // Convert Pa to bar
   }
 
   /** {@inheritDoc} */
@@ -1074,9 +1648,13 @@ public class PipeBeggsAndBrills extends Pipeline {
     double inletTemperatureBoundary = inletSystem.getTemperature();
     double inletMassFlowBoundary = inletSystem.getFlowRate("kg/sec");
     double inletDensityBoundary = Math.max(MIN_DENSITY, inletSystem.getDensity("kg/m3"));
+    double inletViscosityBoundary = inletSystem.getViscosity("kg/msec"); // Pa.s
 
     double inletVelocity = inletMassFlowBoundary / (inletDensityBoundary * crossSectionArea);
     inletVelocity = Math.max(MIN_TRANSIT_VELOCITY, inletVelocity);
+
+    // Segment elevation change (same for all segments)
+    double segmentElevation = totalElevation / Math.max(1, numberOfIncrements);
 
     List<Double> updatedPressure = new ArrayList<>(transientPressureProfile);
     List<Double> updatedTemperature = new ArrayList<>(transientTemperatureProfile);
@@ -1084,59 +1662,100 @@ public class PipeBeggsAndBrills extends Pipeline {
     List<Double> updatedVelocity = new ArrayList<>(transientVelocityProfile);
     List<Double> updatedDensity = new ArrayList<>(transientDensityProfile);
 
+    // Store viscosity for friction calculations (estimate from density ratio)
+    List<Double> segmentViscosities = new ArrayList<>();
+    for (int i = 0; i < numberOfIncrements; i++) {
+      // Simple viscosity estimate - scale with density ratio from inlet
+      double densityRatio = transientDensityProfile.get(i) / inletDensityBoundary;
+      segmentViscosities.add(inletViscosityBoundary * Math.pow(densityRatio, 0.5));
+    }
+
     updatedPressure.set(0, inletPressureBoundary);
     updatedTemperature.set(0, inletTemperatureBoundary);
     updatedMassFlow.set(0, inletMassFlowBoundary);
 
     for (int segment = 0; segment < numberOfIncrements; segment++) {
-      double upstreamPressure = segment == 0 ? inletPressureBoundary : transientPressureProfile.get(segment);
+      // Get upstream values - use already-updated values for processed segments
+      double upstreamPressure = updatedPressure.get(segment);
+      double upstreamTemperature = updatedTemperature.get(segment);
+      double upstreamMassFlow = updatedMassFlow.get(segment);
+
+      // Get current downstream values from previous state
       double downstreamPressure = transientPressureProfile.get(segment + 1);
-
-      double upstreamTemperature = segment == 0 ? inletTemperatureBoundary
-          : transientTemperatureProfile.get(segment);
       double downstreamTemperature = transientTemperatureProfile.get(segment + 1);
-
-      double upstreamMassFlow = segment == 0 ? inletMassFlowBoundary : transientMassFlowProfile.get(segment);
       double downstreamMassFlow = transientMassFlowProfile.get(segment + 1);
 
+      // Get segment properties
       double segmentDensity = transientDensityProfile.get(segment);
-      double segmentVelocity = segment == 0 ? inletVelocity : transientVelocityProfile.get(segment);
+      double segmentVelocity = transientVelocityProfile.get(segment);
+      double segmentViscosity = segmentViscosities.get(segment);
       segmentVelocity = Math.max(MIN_TRANSIT_VELOCITY, segmentVelocity);
 
+      // Calculate transit time and relaxation factor
       double tau = segmentLengthMeters / segmentVelocity;
       double relaxation = tau > 0.0 ? Math.min(1.0, dt / tau) : 1.0;
 
-      updatedPressure.set(segment + 1,
-          downstreamPressure + relaxation * (upstreamPressure - downstreamPressure));
+      // Calculate pressure losses for this segment
+      double dpFriction = calcTransientFrictionPressureDrop(segmentVelocity, segmentDensity,
+          segmentViscosity, segmentLengthMeters);
+      double dpHydrostatic = calcTransientHydrostaticPressureDrop(segmentDensity, segmentElevation);
+      double totalSegmentDp = dpFriction + dpHydrostatic;
+
+      // Wave transport with pressure losses:
+      // The advected pressure is reduced by friction and hydrostatic losses
+      double advectedPressure = upstreamPressure - totalSegmentDp;
+
+      // Apply relaxation for wave propagation
+      double newDownstreamPressure =
+          downstreamPressure + relaxation * (advectedPressure - downstreamPressure);
+
+      // Ensure pressure doesn't go negative
+      newDownstreamPressure = Math.max(0.1, newDownstreamPressure);
+      updatedPressure.set(segment + 1, newDownstreamPressure);
+
+      // Temperature propagation (advective transport, no heat losses in simplified model)
       updatedTemperature.set(segment + 1,
           downstreamTemperature + relaxation * (upstreamTemperature - downstreamTemperature));
-      updatedMassFlow.set(segment + 1,
-          downstreamMassFlow + relaxation * (upstreamMassFlow - downstreamMassFlow));
 
-      double targetVelocity = upstreamMassFlow / (Math.max(MIN_DENSITY, segmentDensity) * crossSectionArea);
+      // Mass flow propagation - with mass conservation enforcement
+      // For incompressible/weakly compressible flow, mass flow should be continuous
+      double newMassFlow =
+          downstreamMassFlow + relaxation * (upstreamMassFlow - downstreamMassFlow);
+      updatedMassFlow.set(segment + 1, newMassFlow);
+
+      // Update velocity based on updated mass flow and density
+      double targetVelocity =
+          newMassFlow / (Math.max(MIN_DENSITY, segmentDensity) * crossSectionArea);
       double relaxedVelocity = segmentVelocity + relaxation * (targetVelocity - segmentVelocity);
-      if (segment < updatedVelocity.size()) {
-        updatedVelocity.set(segment, Math.max(MIN_TRANSIT_VELOCITY, relaxedVelocity));
-      }
+      updatedVelocity.set(segment, Math.max(MIN_TRANSIT_VELOCITY, relaxedVelocity));
 
-      double upstreamDensity = segment == 0 ? inletDensityBoundary : transientDensityProfile.get(segment - 1);
+      // Update density - use already-updated upstream density for consistency
+      double upstreamDensity;
+      if (segment == 0) {
+        upstreamDensity = inletDensityBoundary;
+      } else {
+        upstreamDensity = updatedDensity.get(segment - 1); // Use already-updated value
+      }
       double relaxedDensity = segmentDensity + relaxation * (upstreamDensity - segmentDensity);
       updatedDensity.set(segment, Math.max(MIN_DENSITY, relaxedDensity));
     }
 
+    // Update transient profiles
     transientPressureProfile = updatedPressure;
     transientTemperatureProfile = updatedTemperature;
     transientMassFlowProfile = updatedMassFlow;
     transientVelocityProfile = updatedVelocity;
     transientDensityProfile = updatedDensity;
 
+    // Update steady-state profiles for output
     pressureProfile = new ArrayList<>(transientPressureProfile);
     temperatureProfile = new ArrayList<>(transientTemperatureProfile);
 
     pressureDropProfile = new ArrayList<>();
     pressureDropProfile.add(0.0);
     for (int i = 0; i < numberOfIncrements; i++) {
-      pressureDropProfile.add(transientPressureProfile.get(i) - transientPressureProfile.get(i + 1));
+      pressureDropProfile
+          .add(transientPressureProfile.get(i) - transientPressureProfile.get(i + 1));
     }
 
     mixtureSuperficialVelocityProfile = new ArrayList<>();
@@ -1147,7 +1766,8 @@ public class PipeBeggsAndBrills extends Pipeline {
     mixtureDensityProfile = new ArrayList<>(transientDensityProfile);
 
     double outletPressure = transientPressureProfile.get(transientPressureProfile.size() - 1);
-    double outletTemperature = transientTemperatureProfile.get(transientTemperatureProfile.size() - 1);
+    double outletTemperature =
+        transientTemperatureProfile.get(transientTemperatureProfile.size() - 1);
     double outletMassFlow = transientMassFlowProfile.get(transientMassFlowProfile.size() - 1);
 
     SystemInterface outletSystem = system;

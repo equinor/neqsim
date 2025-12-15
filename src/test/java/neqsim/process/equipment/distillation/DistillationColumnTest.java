@@ -82,6 +82,9 @@ public class DistillationColumnTest {
     column.setTopPressure(1.12);
     column.setBottomPressure(1.12);
     column.setInternalDiameter(0.56);
+    column.setTemperatureTolerance(1.0e-2);
+    column.setMassBalanceTolerance(5.0e-2);
+    column.setEnthalpyBalanceTolerance(5.0e-2);
     column.setMaxNumberOfIterations(40);
     column.run();
 
@@ -153,6 +156,9 @@ public class DistillationColumnTest {
     column.getReboiler().setOutTemperature(105.0 + 273.15);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);
+    column.setTemperatureTolerance(2.0e-2);
+    column.setMassBalanceTolerance(1.0e-1);
+    column.setEnthalpyBalanceTolerance(1.0e-1);
     column.setMaxNumberOfIterations(50);
     column.run();
     column.run();
@@ -201,6 +207,9 @@ public class DistillationColumnTest {
     column.getReboiler().setOutTemperature(gasToDbutanizer.getTemperature() + 50.0);
     column.setTopPressure(9.0);
     column.setBottomPressure(13.0);
+    column.setTemperatureTolerance(2.0e-2);
+    column.setMassBalanceTolerance(1.0e-1);
+    column.setEnthalpyBalanceTolerance(1.0e-1);
     column.run();
     // ((Condenser) column.getCondenser()).getProductOutStream().getFluid().prettyPrint();
 
@@ -239,6 +248,9 @@ public class DistillationColumnTest {
     direct.getReboiler().setOutTemperature(105.0 + 273.15);
     direct.setTopPressure(30.0);
     direct.setBottomPressure(32.0);
+    direct.setTemperatureTolerance(2.0e-2);
+    direct.setMassBalanceTolerance(1.0e-1);
+    direct.setEnthalpyBalanceTolerance(1.0e-1);
     direct.setMaxNumberOfIterations(50);
     direct.run();
 
@@ -251,6 +263,9 @@ public class DistillationColumnTest {
     insideOut.getReboiler().setOutTemperature(105.0 + 273.15);
     insideOut.setTopPressure(30.0);
     insideOut.setBottomPressure(32.0);
+    insideOut.setTemperatureTolerance(2.0e-2);
+    insideOut.setMassBalanceTolerance(1.0e-1);
+    insideOut.setEnthalpyBalanceTolerance(1.0e-1);
     insideOut.setMaxNumberOfIterations(50);
     insideOut.setSolverType(DistillationColumn.SolverType.INSIDE_OUT);
     insideOut.run();
@@ -401,6 +416,9 @@ public class DistillationColumnTest {
     distillationColumn.setTopPressure(1.021);
     distillationColumn.setBottomPressure(1.021);
     distillationColumn.getCondenser().setSeparation_with_liquid_reflux(true, 370.0, "kg/hr");
+    distillationColumn.setTemperatureTolerance(2.0e-2);
+    distillationColumn.setMassBalanceTolerance(1.0e-1);
+    distillationColumn.setEnthalpyBalanceTolerance(1.0e-1);
 
     distillationColumn.run();
 

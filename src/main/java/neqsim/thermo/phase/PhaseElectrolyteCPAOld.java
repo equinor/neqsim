@@ -755,6 +755,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
     double deltaV = 0;
 
     do {
+      iterations = iterations + 1;
       A = calcA(this, temperature, pressure, numberOfComponents);
       B = calcB(this, temperature, pressure, numberOfComponents);
       double dFdV = dFdV();
@@ -782,7 +783,6 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
       }
       // System.out.println("Z " + Z);
     } while (Math.abs(err) > 1.0e-8 || iterations < 100);
-    // System.out.println("Z " + Z);
     return getMolarVolume();
   }
 

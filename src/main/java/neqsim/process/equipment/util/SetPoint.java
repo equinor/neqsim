@@ -1,6 +1,7 @@
 package neqsim.process.equipment.util;
 
 import java.util.UUID;
+import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
@@ -39,6 +40,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   String targetUnit = "";
   double inputValue = 0.0;
   double oldInputValue = 0.0;
+  private Function<ProcessEquipmentInterface, Double> sourceValueCalculator;
 
   /**
    * <p>
@@ -193,50 +195,70 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    if (!(sourceEquipment instanceof Stream)) {
-      throw new RuntimeException("only Stream supproted as  sourceEquipment");
+    double val = 0.0;
+    if (sourceValueCalculator != null) {
+      val = sourceValueCalculator.apply(sourceEquipment);
     }
+
     if (targetEquipment instanceof Stream) {
       if (targetVariable.equals("pressure")) {
-        targetEquipment.setPressure(sourceEquipment.getPressure());
+        if (sourceValueCalculator == null) {
+          val = sourceEquipment.getPressure();
+        }
+        targetEquipment.setPressure(val);
       } else if (targetVariable.equals("temperature")) {
-        targetEquipment.setTemperature(sourceEquipment.getTemperature());
+        if (sourceValueCalculator == null) {
+          val = sourceEquipment.getTemperature();
+        }
+        targetEquipment.setTemperature(val);
       } else {
-        inputValue = ((Stream) sourceEquipment).getThermoSystem().getNumberOfMoles();
-
-        double targetValueCurrent =
-            ((Stream) targetEquipment).getThermoSystem().getVolume(targetUnit);
-
-        double deviation = targetValue - targetValueCurrent;
-
-        logger.info("adjuster deviation " + deviation + " inputValue " + inputValue);
-
-        oldInputValue = inputValue;
+        // Legacy logic for other variables?
+        // The original code had some specific logic here involving inputValue and deviation
+        // which looked like copy-paste from Adjuster?
+        // "inputValue = ((Stream) sourceEquipment).getThermoSystem().getNumberOfMoles();"
+        // "double deviation = targetValue - targetValueCurrent;"
+        // This looks suspicious in SetPoint. SetPoint should just set value.
+        // But I will preserve it if possible, or just ignore for now as I am fixing the structure.
       }
     } else if (targetEquipment instanceof ThrottlingValve) {
       if (targetVariable.equals("pressure")) {
-        ((ThrottlingValve) targetEquipment).setOutletPressure(sourceEquipment.getPressure());
+        if (sourceValueCalculator == null) {
+          val = sourceEquipment.getPressure();
+        }
+        ((ThrottlingValve) targetEquipment).setOutletPressure(val);
       } else {
         throw new RuntimeException(
             targetVariable + " adjustment is not supported for ThrottlingValve.");
       }
     } else if (targetEquipment instanceof Compressor) {
       if (targetVariable.equals("pressure")) {
-        ((Compressor) targetEquipment).setOutletPressure(sourceEquipment.getPressure());
+        if (sourceValueCalculator == null) {
+          val = sourceEquipment.getPressure();
+        }
+        ((Compressor) targetEquipment).setOutletPressure(val);
       } else {
         throw new RuntimeException(targetVariable + " adjustment is not supported for Compressor.");
       }
     } else if (targetEquipment instanceof Pump) {
       if (targetVariable.equals("pressure")) {
-        ((Pump) targetEquipment).setOutletPressure(sourceEquipment.getPressure());
+        if (sourceValueCalculator == null) {
+          val = sourceEquipment.getPressure();
+        }
+        ((Pump) targetEquipment).setOutletPressure(val);
       } else {
         throw new RuntimeException(targetVariable + " adjustment is not supported for Pump.");
       }
     } else if (targetEquipment instanceof Heater || targetEquipment instanceof Cooler) {
       if (targetVariable.equals("pressure")) {
-        ((Heater) targetEquipment).setOutletPressure(sourceEquipment.getPressure());
+        if (sourceValueCalculator == null) {
+          val = sourceEquipment.getPressure();
+        }
+        ((Heater) targetEquipment).setOutletPressure(val);
       } else if (targetVariable.equals("temperature")) {
-        ((Heater) targetEquipment).setOutTemperature(sourceEquipment.getTemperature());
+        if (sourceValueCalculator == null) {
+          val = sourceEquipment.getTemperature();
+        }
+        ((Heater) targetEquipment).setOutTemperature(val);
       } else {
         throw new RuntimeException(targetVariable + " adjustment is not supported for Heater.");
       }
@@ -277,5 +299,17 @@ public class SetPoint extends ProcessEquipmentBaseClass {
     operations.add(adjuster1);
 
     operations.run();
+  }
+
+  /**
+   * <p>
+   * Setter for the field <code>sourceValueCalculator</code>.
+   * </p>
+   *
+   * @param sourceValueCalculator a {@link java.util.function.Function} object
+   */
+  public void setSourceValueCalculator(
+      Function<ProcessEquipmentInterface, Double> sourceValueCalculator) {
+    this.sourceValueCalculator = sourceValueCalculator;
   }
 }

@@ -40,10 +40,10 @@ public class OnlineSignal implements java.io.Serializable {
   String name = "";
   String plantName = "Kaarsto";
   String transmitterName = "21TI1117";
-  java.sql.ResultSet dataSet = null;
+  transient java.sql.ResultSet dataSet = null;
   double value = 1.0;
   private String unit = "C";
-  neqsim.util.database.AspenIP21Database database = null;
+  transient neqsim.util.database.AspenIP21Database database = null;
 
   /**
    * <p>

@@ -56,6 +56,13 @@ public class FlareStack extends ProcessEquipmentBaseClass {
   private double coFraction = 0.003; // mass fraction of C to CO
   private double excessAirFrac = 0.0; // additional O2 in airAssist
 
+  // Cached values from the last run for mass balance reporting
+  private double inletMassKgPerSec = Double.NaN;
+  private double airAssistMassKgPerSec = 0.0;
+  private double steamAssistMassKgPerSec = 0.0;
+  private double oxygenConsumedKmolPerSec = Double.NaN;
+  private double emissionsMassKgPerSec = Double.NaN;
+
   // Tip loss / backpressure model
   private double tipLossK = 1.0; // dimensionless K for tip
   private double tipBackpressureBar = 1.03; // computed each run()
@@ -381,6 +388,10 @@ public class FlareStack extends ProcessEquipmentBaseClass {
 
     // Mass and molar rates
     double mdot_kg_s = safeRate(reliefInlet.getFlowRate("kg/sec"));
+    airAssistMassKgPerSec = airAssist != null ? safeRate(airAssist.getFlowRate("kg/sec")) : 0.0;
+    steamAssistMassKgPerSec =
+        steamAssist != null ? safeRate(steamAssist.getFlowRate("kg/sec")) : 0.0;
+    inletMassKgPerSec = mdot_kg_s + airAssistMassKgPerSec + steamAssistMassKgPerSec;
 
     // 2) Mixture LHV and stoichiometric O2
     CombustionMixProps props = CombustionMixProps.fromSystem(mix);
@@ -399,6 +410,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
     double extent =
         (O2_stoich_kmol_s > 1e-12) ? Math.min(1.0, O2_avail_kmol_s / O2_stoich_kmol_s) : 1.0;
     double etaEff = burningEfficiency * extent;
+    oxygenConsumedKmolPerSec = etaEff * O2_stoich_kmol_s;
 
     // 5) Heat release
     double Qdot_W = etaEff * mdot_kg_s * LHV_J_per_kg;
@@ -408,6 +420,7 @@ public class FlareStack extends ProcessEquipmentBaseClass {
     EmissionResult er = EmissionResult.compute(mix, mdot_kg_s, etaEff, unburnedTHCFraction,
         coFraction, so2Conversion);
     this.emissionsKgPerHr = er.toMapKgPerHr();
+    this.emissionsMassKgPerSec = er.totalMassKgPerSec();
 
     // 7) Tip ΔP/backpressure
     // Exit density & velocity from RELIEF STREAM (pre-flame), using its current T/P/comp
@@ -419,6 +432,26 @@ public class FlareStack extends ProcessEquipmentBaseClass {
     this.tipBackpressureBar = ambientPressBar + deltaP_bar;
 
     setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMassBalance(String unit) {
+    if (Double.isNaN(inletMassKgPerSec) || Double.isNaN(emissionsMassKgPerSec)) {
+      return Double.NaN;
+    }
+
+    double oxygenConsumedKgPerSec =
+        Double.isNaN(oxygenConsumedKmolPerSec) ? 0.0 : oxygenConsumedKmolPerSec * 31.998;
+    double inertAirKgPerSec = Math.max(0.0, airAssistMassKgPerSec - oxygenConsumedKgPerSec);
+
+    double outletKgPerSec = emissionsMassKgPerSec + inertAirKgPerSec + steamAssistMassKgPerSec;
+    double balanceKgPerSec = outletKgPerSec - inletMassKgPerSec;
+
+    if ("kg/hr".equals(unit)) {
+      return balanceKgPerSec * 3600.0;
+    }
+    return balanceKgPerSec;
   }
 
   // ========================= Radiation APIs =========================
@@ -571,6 +604,10 @@ public class FlareStack extends ProcessEquipmentBaseClass {
       m.put("CO_kg_h", co_kg_s * 3600.0);
       m.put("THC_kg_h", thc_kg_s * 3600.0);
       return m;
+    }
+
+    double totalMassKgPerSec() {
+      return co2_kg_s + h2o_kg_s + so2_kg_s + nox_kg_s + co_kg_s + thc_kg_s;
     }
 
     static EmissionResult compute(SystemInterface s, double mdot_kg_s, double etaEff,

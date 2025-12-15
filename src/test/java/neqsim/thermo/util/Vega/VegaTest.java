@@ -152,7 +152,7 @@ public class VegaTest {
     pipeline.setElevation(0);
     pipeline.run();
 
-    assertEquals(13.369887240958194, pipeline.getOutletPressure(), 1e-5);
+    assertEquals(14.092057183942142, pipeline.getOutletPressure(), 1e-5);
   }
 
   @Test

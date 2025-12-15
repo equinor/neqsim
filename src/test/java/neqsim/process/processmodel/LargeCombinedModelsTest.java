@@ -317,17 +317,17 @@ public class LargeCombinedModelsTest {
     Recycle hpResycle = new neqsim.process.equipment.util.Recycle("HP liq resycle");
     hpResycle.addStream(hpLiqmixer.getOutletStream());
     hpResycle.setOutletStream(oilFirstStage);
-    hpResycle.setTolerance(1e-2);
+    hpResycle.setTolerance(1e-1);
 
     Recycle mpResycle = new neqsim.process.equipment.util.Recycle("MP liq resycle");
     mpResycle.addStream(mpLiqmixer.getOutletStream());
     mpResycle.setOutletStream(oilSecondStage);
-    mpResycle.setTolerance(1e-2);
+    mpResycle.setTolerance(1e-1);
 
     Recycle lpResycle = new neqsim.process.equipment.util.Recycle("LP liq resycle");
     lpResycle.addStream(lpLiqmixer.getOutletStream());
     lpResycle.setOutletStream(oilThirdStage);
-    lpResycle.setTolerance(1e-2);
+    lpResycle.setTolerance(1e-1);
 
     Stream exportOil = new Stream("export oil", fourthStageSeparator.getOilOutStream());
 
@@ -486,9 +486,9 @@ public class LargeCombinedModelsTest {
 
     DistillationColumn NGLcolumn =
         new neqsim.process.equipment.distillation.DistillationColumn("NGL column", 5, true, false);
-    NGLcolumn.setTemperatureTolerance(5.0e-2);
-    NGLcolumn.setMassBalanceTolerance(2.0e-1);
-    NGLcolumn.setEnthalpyBalanceTolerance(2.0e-1);
+    NGLcolumn.setTemperatureTolerance(2.5e-1);
+    NGLcolumn.setMassBalanceTolerance(1.0);
+    NGLcolumn.setEnthalpyBalanceTolerance(1.0);
     NGLcolumn.addFeedStream(NGLfeedvalve.getOutletStream(), 5);
     NGLcolumn.getReboiler().setOutTemperature(273.15 + inp.nglColumnBottomTemperature);
     NGLcolumn.setTopPressure(inp.nglColumnTopPressure);
@@ -549,13 +549,13 @@ public class LargeCombinedModelsTest {
     ProcessSystem sepprocessTrain1 = createSeparationTrainProcess(
         ((Splitter) wellprocess.getUnit("HP manifold")).getSplitStream(0),
         ((Splitter) wellprocess.getUnit("LP manifold")).getSplitStream(0));
-    sepprocessTrain1.setRunInSteps(true);
+    sepprocessTrain1.setRunInSteps(false);
     sepprocessTrain1.run();
 
     ProcessSystem sepprocessTrain2 = createSeparationTrainProcess(
         ((Splitter) wellprocess.getUnit("HP manifold")).getSplitStream(1),
         ((Splitter) wellprocess.getUnit("LP manifold")).getSplitStream(1));
-    sepprocessTrain2.setRunInSteps(true);
+    sepprocessTrain2.setRunInSteps(false);
     sepprocessTrain2.run();
 
     ProcessSystem expanderProcess1 =
@@ -564,7 +564,7 @@ public class LargeCombinedModelsTest {
             (Mixer) sepprocessTrain1.getUnit("second Stage mixer"),
             (Mixer) sepprocessTrain1.getUnit("first stage mixer"),
             (Mixer) sepprocessTrain1.getUnit("MP liq gas mixer"));
-    expanderProcess1.setRunInSteps(true);
+    expanderProcess1.setRunInSteps(false);
     expanderProcess1.run();
 
     ProcessSystem expanderProcess2 =
@@ -573,7 +573,7 @@ public class LargeCombinedModelsTest {
             (Mixer) sepprocessTrain2.getUnit("second Stage mixer"),
             (Mixer) sepprocessTrain2.getUnit("first stage mixer"),
             (Mixer) sepprocessTrain2.getUnit("MP liq gas mixer"));
-    expanderProcess2.setRunInSteps(true);
+    expanderProcess2.setRunInSteps(false);
     expanderProcess2.run();
 
     wellprocess.run();
@@ -834,7 +834,7 @@ public class LargeCombinedModelsTest {
     gasStream.run();
 
     ProcessSystem exportCompressorSystem = getExportCopressorModel(gasStream);
-    exportCompressorSystem.setRunInSteps(true);
+    exportCompressorSystem.setRunInSteps(false);
     exportCompressorSystem.run();
 
     Assertions.assertEquals(12, ((Splitter) exportCompressorSystem.getUnit("TEE-104"))

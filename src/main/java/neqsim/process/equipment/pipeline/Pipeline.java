@@ -100,6 +100,18 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getCapacityDuty() {
+    return getOutStream().getFlowRate("m3/hr");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityMax() {
+    return getMechanicalDesign().maxDesignVolumeFlow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setNumberOfNodesInLeg(int number) {
     this.numberOfNodesInLeg = number;
   }

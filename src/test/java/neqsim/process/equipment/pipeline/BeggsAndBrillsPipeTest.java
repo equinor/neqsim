@@ -85,8 +85,11 @@ public class BeggsAndBrillsPipeTest {
     double pressureOut = pipe.getOutletPressure();
     double temperatureOut = pipe.getOutletTemperature() - 273.15;
 
-    Assertions.assertEquals(pressureOut, 27.5402, 1);
-    Assertions.assertEquals(temperatureOut, 39.3374, 1);
+    // Note: assertEquals(expected, actual, tolerance) - correct parameter order
+    // Expected values updated after fixing Haaland friction factor equation
+    // (added missing ^1.11 exponent on relative roughness term)
+    Assertions.assertEquals(32.567, pressureOut, 1);
+    Assertions.assertEquals(39.3374, temperatureOut, 1);
     Assertions.assertEquals(pipe.getOutletSuperficialVelocity(),
         pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
   }
@@ -189,7 +192,8 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(pipe.getSegmentPressure(10), 34.4716898025371, 1.0);
     Assertions.assertEquals(pipe.getSegmentPressureDrop(10), 1.5468048987983438, 1.0);
     Assertions.assertEquals(pipe.getSegmentTemperature(10) - 273.15, 79.80343029302054, 1.0);
-    Assertions.assertEquals(pipe.getSegmentFlowRegime(10), PipeBeggsAndBrills.FlowRegime.INTERMITTENT);
+    Assertions.assertEquals(pipe.getSegmentFlowRegime(10),
+        PipeBeggsAndBrills.FlowRegime.INTERMITTENT);
     Assertions.assertEquals(pipe.getSegmentMixtureDensity(10), 224.31571593591167, 20.0);
     Assertions.assertEquals(pipe.getSegmentLiquidSuperficialVelocity(10), 3.357338501138603, 1.0);
     Assertions.assertEquals(pipe.getSegmentGasSuperficialVelocity(10), 7.109484383317198, 1.0);
@@ -255,7 +259,8 @@ public class BeggsAndBrillsPipeTest {
     Assertions.assertEquals(pipe.getSegmentPressure(0), 150, 1.0);
     Assertions.assertEquals(pipe.getSegmentPressureDrop(10), 2.9204245897598162, 1.0);
     Assertions.assertEquals(pipe.getSegmentTemperature(10) - 273.15, 75.07486781297496, 1.0);
-    Assertions.assertEquals(pipe.getSegmentFlowRegime(10), PipeBeggsAndBrills.FlowRegime.SINGLE_PHASE);
+    Assertions.assertEquals(pipe.getSegmentFlowRegime(10),
+        PipeBeggsAndBrills.FlowRegime.SINGLE_PHASE);
     Assertions.assertEquals(pipe.getSegmentMixtureDensity(10), 73.54613545016805, 1.0);
     Assertions.assertEquals(pipe.getSegmentLiquidSuperficialVelocity(10), 0.0, 1.0);
     Assertions.assertEquals(pipe.getSegmentGasSuperficialVelocity(10), 33.85480591912372, 1.0);
@@ -402,6 +407,9 @@ public class BeggsAndBrillsPipeTest {
     double temperatureOut = pipe.getOutletTemperature() - 273.15;
     double temperatureOut2 = pipe2.getOutletTemperature() - 273.15;
     Assertions.assertEquals(temperatureOut, 57, 5);
-    Assertions.assertEquals(temperatureOut2, 40, 5);
+    // Updated expected value after fixing Gnielinski correlation
+    // The original code had bugs that underestimated Nu (used frictionTwoPhase instead of
+    // frictionFactor/8 in denominator). With corrected correlation, heat transfer is higher.
+    Assertions.assertEquals(temperatureOut2, 52, 5);
   }
 }

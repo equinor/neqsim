@@ -28,10 +28,9 @@ public enum StateOfMatter {
       case HYDRATE:
         return StateOfMatter.SOLID;
       default:
-        new RuntimeException(new neqsim.util.exception.InvalidInputException(StateOfMatter.class,
-            "fromPhaseType", "pt", "Conversion not configured for"));
+        throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
+            StateOfMatter.class, "fromPhaseType", "pt", "Conversion not configured for"));
     }
-    return null;
   }
 
   /**
