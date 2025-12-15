@@ -165,7 +165,7 @@ public final class InfrastructureInput implements Serializable {
   }
 
   /**
-   * Checks if this is a long tieback (>20 km).
+   * Checks if this is a long tieback (&gt;20 km).
    *
    * @return true if long tieback
    */
@@ -174,7 +174,7 @@ public final class InfrastructureInput implements Serializable {
   }
 
   /**
-   * Checks if this is deep water (>500 m).
+   * Checks if this is deep water (&gt;500 m).
    *
    * @return true if deep water
    */

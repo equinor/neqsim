@@ -176,7 +176,7 @@ public final class ReservoirInput implements Serializable {
   }
 
   /**
-   * Checks if this is a sour fluid (H2S > 0.5%).
+   * Checks if this is a sour fluid (H2S &gt; 0.5%).
    *
    * @return true if sour
    */
@@ -185,7 +185,7 @@ public final class ReservoirInput implements Serializable {
   }
 
   /**
-   * Checks if this is a high-CO2 fluid (CO2 > 5%).
+   * Checks if this is a high-CO2 fluid (CO2 &gt; 5%).
    *
    * @return true if high CO2
    */
@@ -194,7 +194,7 @@ public final class ReservoirInput implements Serializable {
   }
 
   /**
-   * Checks if water handling is significant (water cut > 10%).
+   * Checks if water handling is significant (water cut &gt; 10%).
    *
    * @return true if significant water
    */

@@ -362,6 +362,12 @@ public class FlowRegimeDetector implements Serializable {
 
   /**
    * Calculate modified Froude number.
+   *
+   * @param U_SG superficial gas velocity [m/s]
+   * @param D pipe diameter [m]
+   * @param rho_L liquid density [kg/m3]
+   * @param rho_G gas density [kg/m3]
+   * @return modified Froude number [-]
    */
   private double calcFroudeNumber(double U_SG, double D, double rho_L, double rho_G) {
     double deltaRho = rho_L - rho_G;
@@ -373,6 +379,13 @@ public class FlowRegimeDetector implements Serializable {
 
   /**
    * Calculate Kelvin-Helmholtz stability parameter.
+   *
+   * @param U_SG superficial gas velocity [m/s]
+   * @param D pipe diameter [m]
+   * @param rho_L liquid density [kg/m3]
+   * @param rho_G gas density [kg/m3]
+   * @param sigma interfacial tension [N/m]
+   * @return Kelvin-Helmholtz parameter [-]
    */
   private double calcKelvinHelmholtzParameter(double U_SG, double D, double rho_L, double rho_G,
       double sigma) {
@@ -386,6 +399,13 @@ public class FlowRegimeDetector implements Serializable {
 
   /**
    * Calculate turbulence parameter T.
+   *
+   * @param U_SL superficial liquid velocity [m/s]
+   * @param D pipe diameter [m]
+   * @param rho_L liquid density [kg/m3]
+   * @param rho_G gas density [kg/m3]
+   * @param mu_L liquid viscosity [Pa.s]
+   * @return turbulence parameter T [-]
    */
   private double calcTurbulenceParameter(double U_SL, double D, double rho_L, double rho_G,
       double mu_L) {

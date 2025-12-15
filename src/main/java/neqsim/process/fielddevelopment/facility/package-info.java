@@ -21,6 +21,7 @@
  *
  * <h2>Available Block Types</h2>
  * <table border="1">
+ * <caption>Available process block types</caption>
  * <tr>
  * <th>Block Type</th>
  * <th>Description</th>

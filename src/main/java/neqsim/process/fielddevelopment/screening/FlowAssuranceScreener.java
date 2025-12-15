@@ -58,7 +58,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * // Check specific risks
  * if (report.getHydrateResult() == FlowAssuranceResult.FAIL) {
  *   System.out.println("Hydrate mitigation required: " + report.getHydrateMargin() + "°C margin");
- *   report.getMitigationOptions().forEach((k, v) -> System.out.println("  - " + v));
+ *   report.getMitigationOptions().forEach((k, v) -&gt; System.out.println("  - " + v));
  * }
  * </pre>
  *

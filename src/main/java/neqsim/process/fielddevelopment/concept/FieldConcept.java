@@ -184,7 +184,7 @@ public final class FieldConcept implements Serializable {
   /**
    * Checks if this concept requires H2S treatment.
    *
-   * @return true if H2S > 0.5%
+   * @return true if H2S &gt; 0.5%
    */
   public boolean needsH2STreatment() {
     return reservoir.isSour();
@@ -193,7 +193,7 @@ public final class FieldConcept implements Serializable {
   /**
    * Checks if this concept requires H2S removal.
    *
-   * @return true if H2S > 50 ppm (0.005%)
+   * @return true if H2S &gt; 50 ppm (0.005%)
    */
   public boolean needsH2SRemoval() {
     return reservoir.getH2SPercent() > 0.005;
