@@ -23,6 +23,7 @@ import neqsim.process.equipment.separator.sectiontype.ValveSection;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
+import neqsim.process.mechanicaldesign.separator.demister.DemistingInternal;
 import neqsim.process.mechanicaldesign.separator.primaryseparation.PrimarySeparation;
 import neqsim.process.util.monitor.SeparatorResponse;
 import neqsim.process.util.report.ReportConfig;
@@ -1729,7 +1730,7 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
       System.out.println("No deisting internals configured.");
     } else {
       for (int i = 0; i < numberOfInternals; i++) {
-        var internal = mechanicalDesign.getDemistingInternals().get(i);
+        DemistingInternal internal = mechanicalDesign.getDemistingInternals().get(i);
         System.out.println("Internal " + (i + 1) + ":");
         System.out.println("  Type: " + internal.getClass().getSimpleName());
         System.out.println("  Area: " + internal.getArea() + " m²");
