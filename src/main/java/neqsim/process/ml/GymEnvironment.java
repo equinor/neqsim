@@ -176,7 +176,11 @@ public abstract class GymEnvironment implements Serializable {
     info.put("episode_reward", episodeReward);
 
     if (terminated || truncated) {
-      info.put("episode", Map.of("r", episodeReward, "l", currentStep, "t", truncated));
+      Map<String, Object> episodeInfo = new HashMap<>();
+      episodeInfo.put("r", episodeReward);
+      episodeInfo.put("l", currentStep);
+      episodeInfo.put("t", truncated);
+      info.put("episode", episodeInfo);
     }
 
     return new StepResult(result.observation, result.reward, terminated, truncated, info);

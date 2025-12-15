@@ -329,18 +329,33 @@ public class EpisodeRunner implements Serializable {
    * @param results benchmark results to compare
    */
   public static void printComparison(List<BenchmarkResult> results) {
-    System.out.println("\n" + "=".repeat(80));
+    System.out.println("\n" + repeatString("=", 80));
     System.out.println("Controller Comparison");
-    System.out.println("=".repeat(80));
+    System.out.println(repeatString("=", 80));
     System.out.printf("%-20s %10s %10s %10s %10s%n", "Controller", "Mean", "Std", "Success%",
         "Length");
-    System.out.println("-".repeat(80));
+    System.out.println(repeatString("-", 80));
 
     for (BenchmarkResult r : results) {
       System.out.printf("%-20s %10.2f %10.2f %10.1f %10.1f%n", r.controllerName, r.meanReward,
           r.stdReward, r.successRate * 100, r.meanLength);
     }
-    System.out.println("=".repeat(80));
+    System.out.println(repeatString("=", 80));
+  }
+
+  /**
+   * Repeat a string n times (Java 8 compatible replacement for String.repeat()).
+   *
+   * @param str string to repeat
+   * @param count number of times to repeat
+   * @return repeated string
+   */
+  private static String repeatString(String str, int count) {
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < count; i++) {
+      sb.append(str);
+    }
+    return sb.toString();
   }
 
   // Helper methods

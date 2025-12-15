@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.ml.ConstraintManager;
 import neqsim.process.ml.StateVector;
 import neqsim.process.processmodel.ProcessSystem;
@@ -307,7 +308,7 @@ public class MultiAgentEnvironment implements Serializable {
     StateVector state = new StateVector();
     // Basic state from first unit
     if (process.getUnitOperations().size() > 0) {
-      var unit = process.getUnitOperations().get(0);
+      ProcessEquipmentInterface unit = process.getUnitOperations().get(0);
       if (unit.getFluid() != null) {
         state.add("pressure", unit.getFluid().getPressure("bar"), 0.0, 200.0, "bar");
         state.add("temperature", unit.getFluid().getTemperature("K"), 200.0, 500.0, "K");
