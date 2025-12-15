@@ -74,6 +74,9 @@ Base class providing:
 - Reference to parent separator
 - Momentum and carry-over calculations
 
+**Input Validation:**
+- `setInletNozzleDiameter(diameter)` - throws `IllegalArgumentException` if `diameter <= 0`
+
 ### InletVane
 
 Basic inlet vane with deflection-based separation:
@@ -84,6 +87,9 @@ separator.setPrimarySeparation(vane);
 ```
 
 The geometrical expansion ratio represents the ratio of vane open area to nozzle area. Higher ratios provide better separation efficiency.
+
+**Input Validation:**
+- `setGeometricalExpansionRatio(ratio)` - throws `IllegalArgumentException` if `ratio <= 0`
 
 ### InletVaneWithMeshpad
 
@@ -108,6 +114,10 @@ The carry-over calculation accounts for:
 - Settling time between vane and meshpad
 - Coalescence in the meshpad
 
+**Input Validation:**
+- `setVaneToMeshpadDistance(distance)` - throws `IllegalArgumentException` if `distance < 0`
+- `setFreeDistanceAboveMeshpad(distance)` - throws `IllegalArgumentException` if `distance < 0`
+
 ### InletCyclones
 
 Cyclone-based primary separation using centrifugal force:
@@ -126,6 +136,10 @@ double efficiency = cyclones.calcSeparationEfficiency(
     gasDensity, liquidDensity, inletVelocity, liquidViscosity
 );
 ```
+
+**Input Validation:**
+- `setNumberOfCyclones(n)` - throws `IllegalArgumentException` if `n < 1`
+- `setCycloneDiameter(d)` - throws `IllegalArgumentException` if `d <= 0`
 
 ## Demisting Internals
 
@@ -182,10 +196,12 @@ DemistingInternalWithDrainage internalWithDrainage = new DemistingInternalWithDr
 
 mechDesign.addDemistingInternal(internalWithDrainage);
 
-// Drainage efficiency reduces carry-over
-double carryOver = internalWithDrainage.calcLiquidCarryOver();
-// carryOver = baseCarryOver × (1 - drainageEfficiency)
+// Efficiency calculation includes drainage improvement
+double efficiency = internalWithDrainage.calcEfficiency();
+// efficiency = baseEfficiency + (1 - baseEfficiency) * drainageEfficiency * 0.5
 ```
+
+The `calcEfficiency()` method accounts for the drainage system which improves separation beyond the base demisting internal by recovering additional liquid.
 
 ### Managing Multiple Internals
 
@@ -428,3 +444,30 @@ public class ScrubberExample {
 - [Process Equipment Overview](getting_started.md)
 - [Pump Theory and Implementation](pump_theory_and_implementation.md)
 - [Heat Exchanger Mechanical Design](heat_exchanger_mechanical_design.md)
+- [Separator Internals Improvements](../SEPARATOR_INTERNALS_IMPROVEMENTS.md)
+
+## Recent Changes
+
+### Input Validation
+All primary separation devices and demisting internals now validate input parameters:
+- **PrimarySeparation**: `setInletNozzleDiameter()` rejects non-positive values
+- **InletVane**: `setGeometricalExpansionRatio()` rejects non-positive values
+- **InletVaneWithMeshpad**: `setVaneToMeshpadDistance()` and `setFreeDistanceAboveMeshpad()` reject negative values
+- **InletCyclones**: `setNumberOfCyclones()` rejects values < 1, `setCycloneDiameter()` rejects non-positive values
+- **DemistingInternal**: `setArea()` rejects non-positive values, `setEuNumber()` rejects negative values
+
+### New calcEfficiency() Method
+`DemistingInternal` and `DemistingInternalWithDrainage` now provide a `calcEfficiency()` method that returns the separation efficiency as a value between 0 and 1:
+
+```java
+DemistingInternal internal = new DemistingInternal(0.5, 2.5);
+double efficiency = internal.calcEfficiency();  // Returns separation efficiency
+```
+
+For `DemistingInternalWithDrainage`, the efficiency calculation includes the drainage improvement factor.
+
+### Logging Improvements
+Production logging has been updated to use proper Log4j2 logger calls instead of `System.out.println()`, providing:
+- Better log level control
+- Integration with logging frameworks
+- Cleaner production output
