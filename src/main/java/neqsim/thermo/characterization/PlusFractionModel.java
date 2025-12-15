@@ -442,13 +442,15 @@ public class PlusFractionModel implements java.io.Serializable {
         XX = X + 1.0;
       }
       while (XX >= 2.0) {
+        const_ *= (XX - 1.0);
         XX -= 1.0;
       }
-      const_ = XX * const_;
       XX -= 1.0;
       double Y = 1.0;
+      double XXpow = XX;
       for (int i = 1; i <= 8; i++) {
-        Y += dataB[i - 1] * XX * i;
+        Y += dataB[i - 1] * XXpow;
+        XXpow *= XX;
       }
       double GAMMA = const_ * Y;
       if (X < 1.0) {
