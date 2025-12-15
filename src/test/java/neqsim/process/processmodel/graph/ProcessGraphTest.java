@@ -2672,6 +2672,173 @@ public class ProcessGraphTest {
   }
 
   @Test
+  void testSensitivityAnalysisBasic() {
+    // Test sensitivity analysis on a simple recycle loop
+    ProcessGraph graph = new ProcessGraph();
+
+    // Create a small cycle: A -> B -> C -> A
+    Stream nodeA = new Stream("nodeA", testFluid.clone());
+    Heater nodeB = new Heater("nodeB", nodeA);
+    Separator nodeC = new Separator("nodeC", nodeB.getOutletStream());
+
+    ProcessNode nA = graph.addNode(nodeA);
+    ProcessNode nB = graph.addNode(nodeB);
+    ProcessNode nC = graph.addNode(nodeC);
+
+    graph.addEdge(nA, nB, null);
+    graph.addEdge(nB, nC, null);
+    graph.addEdge(nC, nA, null); // Back edge creates cycle
+
+    // Find SCCs
+    ProcessGraph.SCCResult sccResult = graph.findStronglyConnectedComponents();
+    List<List<ProcessNode>> recycleLoops = sccResult.getRecycleLoops();
+
+    assertTrue(recycleLoops.size() >= 1, "Should detect at least one recycle loop");
+
+    // Perform sensitivity analysis on the first SCC
+    List<ProcessNode> scc = recycleLoops.get(0);
+    ProcessGraph.SensitivityAnalysisResult analysis = graph.analyzeTearStreamSensitivity(scc);
+
+    assertNotNull(analysis);
+    assertFalse(analysis.getRankedTearCandidates().isEmpty(), "Should have tear candidates");
+    assertTrue(analysis.getTotalSensitivity() > 0, "Total sensitivity should be positive");
+
+    // Best tear stream should have lowest sensitivity
+    ProcessEdge best = analysis.getBestTearStream();
+    assertNotNull(best, "Should identify a best tear stream");
+
+    for (ProcessEdge edge : analysis.getRankedTearCandidates()) {
+      assertTrue(
+          analysis.getEdgeSensitivities().get(best) <= analysis.getEdgeSensitivities().get(edge),
+          "Best tear stream should have lowest or equal sensitivity");
+    }
+  }
+
+  @Test
+  void testSelectTearStreamsWithSensitivity() {
+    // Test the new sensitivity-based tear stream selection
+    ProcessGraph graph = new ProcessGraph();
+
+    // Create a cycle with different equipment types
+    Stream feed = new Stream("feed", testFluid.clone());
+    Heater heater = new Heater("heater", feed);
+    Separator separator = new Separator("separator", heater.getOutletStream());
+    Mixer mixer = new Mixer("mixer");
+
+    ProcessNode n1 = graph.addNode(feed);
+    ProcessNode n2 = graph.addNode(heater);
+    ProcessNode n3 = graph.addNode(separator);
+    ProcessNode n4 = graph.addNode(mixer);
+
+    graph.addEdge(n1, n2, null);
+    graph.addEdge(n2, n3, null);
+    graph.addEdge(n3, n4, null);
+    graph.addEdge(n4, n2, null); // Creates cycle
+
+    // Select tear streams with sensitivity analysis
+    ProcessGraph.TearStreamResult result = graph.selectTearStreamsWithSensitivity();
+
+    assertNotNull(result);
+    assertTrue(result.getTearStreamCount() >= 1, "Should select at least one tear stream");
+    assertTrue(graph.validateTearStreams(result.getTearStreams()),
+        "Tear streams should break all cycles");
+  }
+
+  @Test
+  void testSensitivityAnalysisReport() {
+    // Test the sensitivity analysis report generation
+    ProcessGraph graph = new ProcessGraph();
+
+    // Create a recycle loop
+    Stream feed = new Stream("feed", testFluid.clone());
+    Heater heater = new Heater("heater", feed);
+    Separator separator = new Separator("separator", heater.getOutletStream());
+
+    ProcessNode n1 = graph.addNode(feed);
+    ProcessNode n2 = graph.addNode(heater);
+    ProcessNode n3 = graph.addNode(separator);
+
+    graph.addEdge(n1, n2, null);
+    graph.addEdge(n2, n3, null);
+    graph.addEdge(n3, n1, null); // Creates cycle
+
+    String report = graph.getSensitivityAnalysisReport();
+
+    assertNotNull(report);
+    assertTrue(report.contains("Tear Stream Sensitivity Analysis"));
+    assertTrue(report.contains("Recycle Loop"));
+    assertTrue(report.contains("sensitivity="));
+    assertTrue(report.contains("Recommended tear:"));
+
+    System.out.println("\n===== Sensitivity Analysis Report =====");
+    System.out.println(report);
+    System.out.println("========================================\n");
+  }
+
+  @Test
+  void testSensitivityAnalysisNoRecycles() {
+    // Test sensitivity analysis on linear process (no recycles)
+    ProcessGraph graph = new ProcessGraph();
+
+    Stream feed = new Stream("feed", testFluid.clone());
+    Heater heater = new Heater("heater", feed);
+    Separator separator = new Separator("separator", heater.getOutletStream());
+
+    ProcessNode n1 = graph.addNode(feed);
+    ProcessNode n2 = graph.addNode(heater);
+    ProcessNode n3 = graph.addNode(separator);
+
+    graph.addEdge(n1, n2, null);
+    graph.addEdge(n2, n3, null);
+    // No back edge - linear process
+
+    String report = graph.getSensitivityAnalysisReport();
+
+    assertTrue(report.contains("No recycle loops found"),
+        "Should indicate no recycle loops for linear process");
+  }
+
+  @Test
+  void testEquipmentTypeSensitivityWeights() {
+    // Test that different equipment types have different sensitivity weights
+    ProcessGraph graph = new ProcessGraph();
+
+    // Create nodes with different equipment types
+    Stream stream = new Stream("stream", testFluid.clone());
+    Heater heater = new Heater("heater", stream);
+    Separator separator = new Separator("separator", heater.getOutletStream());
+    Mixer mixer = new Mixer("mixer");
+
+    ProcessNode streamNode = graph.addNode(stream);
+    ProcessNode heaterNode = graph.addNode(heater);
+    ProcessNode separatorNode = graph.addNode(separator);
+    ProcessNode mixerNode = graph.addNode(mixer);
+
+    // Create a cycle that includes all equipment types
+    graph.addEdge(streamNode, heaterNode, null);
+    graph.addEdge(heaterNode, separatorNode, null);
+    graph.addEdge(separatorNode, mixerNode, null);
+    graph.addEdge(mixerNode, streamNode, null);
+
+    // Get sensitivity analysis
+    ProcessGraph.SCCResult sccResult = graph.findStronglyConnectedComponents();
+    List<List<ProcessNode>> recycleLoops = sccResult.getRecycleLoops();
+
+    assertTrue(recycleLoops.size() >= 1);
+
+    ProcessGraph.SensitivityAnalysisResult analysis =
+        graph.analyzeTearStreamSensitivity(recycleLoops.get(0));
+
+    // Verify that sensitivities are computed
+    assertFalse(analysis.getEdgeSensitivities().isEmpty());
+
+    // All sensitivities should be positive
+    for (Double sensitivity : analysis.getEdgeSensitivities().values()) {
+      assertTrue(sensitivity > 0, "Sensitivity should be positive");
+    }
+  }
+
+  @Test
   void testGraphSummaryIncludesTearStreams() {
     // Test that graph summary includes tear stream info
     ProcessGraph graph = new ProcessGraph();

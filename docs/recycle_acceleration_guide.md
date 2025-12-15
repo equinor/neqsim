@@ -286,6 +286,46 @@ The `RecycleController` class provides coordinated management of multiple recycl
 - **Unified acceleration**: Apply the same method to all recycles
 - **Global convergence tracking**: Monitor overall system convergence
 - **Nested loop handling**: Properly handle recycles within recycles
+- **Simultaneous modular solving**: Accelerate multiple recycles together using shared Broyden updates
+- **Coordinated acceleration**: Treat tear streams at the same priority level as a coupled system
+
+### Simultaneous Modular Solving
+
+When multiple recycles operate at the same priority level, the controller can accelerate them *simultaneously* using a shared Broyden accelerator. This treats all tear stream variables as a single coupled system, which can dramatically improve convergence for tightly interacting recycles.
+
+```java
+RecycleController controller = new RecycleController();
+controller.addRecycle(recycle1, 100);  // Same priority
+controller.addRecycle(recycle2, 100);  // Same priority - will be accelerated together
+
+// Enable coordinated acceleration (default: true)
+controller.setUseCoordinatedAcceleration(true);
+
+// Run simultaneous acceleration for all recycles at this priority
+boolean converged = controller.runSimultaneousAcceleration(100, 1e-4, 50);
+```
+
+### Convergence Diagnostics
+
+The controller provides detailed diagnostics for troubleshooting:
+
+```java
+// Get formatted diagnostic report
+System.out.println(controller.getConvergenceDiagnostics());
+
+// Output:
+// RecycleController Diagnostics:
+//   Total recycles: 2
+//   Current priority level: 100
+//   Using coordinated acceleration: true
+//   Recycles at current priority: 2
+//     - Recycle1 [iterations=4, solved=true, errComp=1.2e-05, errFlow=3.5e-06]
+//     - Recycle2 [iterations=9, solved=true, errComp=0.0e+00, errFlow=4.1e-06]
+
+// Query aggregate metrics
+int totalIters = controller.getTotalIterations();
+double maxError = controller.getMaxResidualError();
+```
 
 ### API Reference
 
@@ -300,14 +340,23 @@ controller.removeRecycle(recycle);
 controller.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
 controller.setMaxIterations(100);
 controller.setGlobalTolerance(1e-4);
+controller.setUseCoordinatedAcceleration(true);  // Enable simultaneous solving
 
 // Execute
 controller.converge();
 
+// Simultaneous acceleration for a specific priority level
+boolean converged = controller.runSimultaneousAcceleration(priorityLevel, tolerance, maxIter);
+
 // Query status
 boolean converged = controller.isConverged();
 int totalIterations = controller.getTotalIterations();
+double maxError = controller.getMaxResidualError();
+String diagnostics = controller.getConvergenceDiagnostics();
 List<Recycle> unconverged = controller.getUnconvergedRecycles();
+
+// Reset for re-running
+controller.resetAll();
 ```
 
 ---
@@ -531,6 +580,13 @@ public enum AccelerationMethod {
 2. Broyden, C.G. (1965). "A class of methods for solving nonlinear simultaneous equations". *Mathematics of Computation*, 19(92), 577-593.
 
 3. Seader, J.D., Henley, E.J., & Roper, D.K. (2011). *Separation Process Principles*. Wiley. Chapter on sequential modular simulation.
+
+---
+
+## See Also
+
+- [Graph-Based Process Simulation](graph_based_process_simulation.md) - Detailed guide on graph algorithms and sensitivity analysis
+- 📓 [GraphBasedProcessSimulation.ipynb](../notebooks/GraphBasedProcessSimulation.ipynb) - Interactive Jupyter notebook example
 
 ---
 
