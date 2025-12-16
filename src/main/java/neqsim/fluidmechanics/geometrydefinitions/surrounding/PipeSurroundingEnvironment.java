@@ -14,7 +14,7 @@ import neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.PipeMater
  * <li>Subsea pipes with seawater convection</li>
  * </ul>
  *
- * <h3>Buried Pipe Heat Transfer</h3>
+ * <h2>Buried Pipe Heat Transfer</h2>
  * <p>
  * For buried pipes, the soil thermal resistance depends on burial depth and soil conductivity.
  * Using the shape factor method:

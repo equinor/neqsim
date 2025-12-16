@@ -16,7 +16,7 @@ import neqsim.fluidmechanics.geometrydefinitions.surrounding.PipeSurroundingEnvi
  * <li>Buried pipelines</li>
  * </ul>
  *
- * <h3>Example Usage:</h3>
+ * <h2>Example Usage</h2>
  *
  * <pre>
  * // Create an insulated carbon steel pipe

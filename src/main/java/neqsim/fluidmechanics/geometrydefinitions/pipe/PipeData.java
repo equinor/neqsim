@@ -18,7 +18,7 @@ import neqsim.fluidmechanics.geometrydefinitions.surrounding.PipeSurroundingEnvi
  * insulation, coatings) with proper cylindrical heat transfer calculations.
  * </p>
  *
- * <h3>Example Usage:</h3>
+ * <h2>Example Usage</h2>
  *
  * <pre>
  * // Simple pipe
