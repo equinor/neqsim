@@ -63,3 +63,20 @@ Checkstyle, SpotBugs, and PMD run as part of the Maven build to catch formatting
 ```
 
 These checks are configured not to fail the build by default, but contributions should address any reported problems.
+
+## Project structure and package layout
+
+Most contributions will need to add production code, automated tests, and possibly supporting resources. The high-level layout is:
+
+* **Production code:** place Java sources under `src/main/java` following the existing package hierarchy (for example, `com.equinor.neqsim.thermo` or `com.equinor.neqsim.processsimulation`). Each directory boundary should map cleanly to a cohesive module (e.g., `thermo`, `physicalproperties`, `processsimulation`).
+* **Automated tests:** place JUnit tests under `src/test/java`, mirroring the package of the code under test. Keep small test fixtures in `src/test/resources` alongside the relevant package path when possible.
+* **Shared resources:** non-test resources that ship with the library belong in `src/main/resources`. Larger sample data or notebooks should go to `data/`, `examples/`, or `notebooks/` depending on audience and usage.
+
+### Package naming and boundaries
+
+* Use the `com.equinor.neqsim` root, followed by the functional area. For example: `com.equinor.neqsim.thermo` for thermodynamics routines, `com.equinor.neqsim.processsimulation` for unit operations and flowsheets, and `com.equinor.neqsim.physicalproperties` for transport properties.
+* Avoid creating deep or overlapping packages when an existing boundary fits. Prefer adding to an established module (`thermo`, `physicalproperties`, `processsimulation`, `chemicalreactions`, `parameterfitting`) instead of inventing a parallel hierarchy.
+* Keep utilities that are reused across modules in clearly named subpackages such as `com.equinor.neqsim.util.*` so that domain packages remain focused.
+* Examples, demos, and notebooks should stay out of the production package tree. Use `examples/` for runnable samples and `notebooks/` for exploratory work.
+
+For a concise overview of where to place new files, see [docs/contributing-structure.md](docs/contributing-structure.md).

@@ -135,6 +135,8 @@ See the [getting started as a NeqSim developer](https://github.com/equinor/neqsi
 See [docs/DEVELOPER_SETUP.md](docs/DEVELOPER_SETUP.md) for a summary of how to clone the project, build it and run the tests. For more details see the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests. An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).
 Pull requests will only be accepted if all tests and `./mvnw checkstyle:check` pass.
 
+For guidance on where to place production code, tests, and resources, see [docs/contributing-structure.md](docs/contributing-structure.md).
+
 ## Discussion forum
 
 Questions related to neqsim can be posted in the [github discussion pages](https://github.com/equinor/neqsim/discussions).
