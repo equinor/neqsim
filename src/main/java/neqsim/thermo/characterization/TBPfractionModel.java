@@ -24,7 +24,8 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  *
  * <h2>Available Models</h2>
- * <table border="1" summary="TBP Model Comparison">
+ * <table border="1">
+ * <caption>Available TBP Models and Their Applications</caption>
  * <tr>
  * <th>Model</th>
  * <th>Best For</th>
@@ -159,7 +160,8 @@ import neqsim.thermo.system.SystemInterface;
  * </pre>
  *
  * <h2>Typical Property Ranges</h2>
- * <table border="1" summary="Typical Property Ranges">
+ * <table border="1">
+ * <caption>Typical Property Ranges for Petroleum Fractions</caption>
  * <tr>
  * <th>Component</th>
  * <th>MW (g/mol)</th>
@@ -242,13 +244,13 @@ public class TBPfractionModel implements java.io.Serializable {
    *
    * <p>
    * Key methods that subclasses typically override:
+   * </p>
    * <ul>
    * <li>{@link #calcTC(double, double)} - Critical temperature</li>
    * <li>{@link #calcPC(double, double)} - Critical pressure</li>
    * <li>{@link #calcTB(double, double)} - Boiling temperature</li>
    * <li>{@link #calcm(double, double)} - EOS m-parameter (for Pedersen models)</li>
    * </ul>
-   * </p>
    */
   public abstract class TBPBaseModel implements TBPModelInterface, Cloneable, java.io.Serializable {
     /** Serialization version UID. */
@@ -380,7 +382,9 @@ public class TBPfractionModel implements java.io.Serializable {
    * fractions.
    * </p>
    *
-   * <h3>Correlations</h3>
+   * <p>
+   * <b>Correlations:</b>
+   * </p>
    * <ul>
    * <li>Tc = a0·ρ + a1·ln(M) + a2·M + a3/M</li>
    * <li>Pc = exp(b0 + b1·ρ^b4 + b2/M + b3/M²)</li>
@@ -566,7 +570,9 @@ public class TBPfractionModel implements java.io.Serializable {
    * effective for light to medium petroleum fractions with molecular weights below 300 g/mol.
    * </p>
    *
-   * <h3>Key Correlations</h3>
+   * <p>
+   * <b>Key Correlations:</b>
+   * </p>
    * <p>
    * <b>Critical Temperature:</b>
    * </p>
@@ -590,14 +596,18 @@ public class TBPfractionModel implements java.io.Serializable {
    * T<sub>b</sub> = 97.58 × M<sup>0.3323</sup> × SG<sup>0.04609</sup>
    * </p>
    *
-   * <h3>Applicability</h3>
+   * <p>
+   * <b>Applicability:</b>
+   * </p>
    * <ul>
    * <li>Molecular weight: 70-300 g/mol (light to medium fractions)</li>
    * <li>Specific gravity: 0.65-0.90</li>
    * <li>Falls back to Pedersen model for MW &gt; 300 g/mol</li>
    * </ul>
    *
-   * <h3>Notes</h3>
+   * <p>
+   * <b>Notes:</b>
+   * </p>
    * <p>
    * The acentric factor is calculated using the Kesler-Lee correlation with switchover at
    * T<sub>br</sub> = 0.8. The model does not calculate the EOS m-parameter directly (calcm =
@@ -689,7 +699,9 @@ public class TBPfractionModel implements java.io.Serializable {
    * factor data is available.
    * </p>
    *
-   * <h3>Correlations</h3>
+   * <p>
+   * <b>Correlations:</b>
+   * </p>
    * <ul>
    * <li>Tc = 341.7 + 811·SG + (0.4244 + 0.1174·SG)·Tb + (0.4669 - 3.2623·SG)·10⁵/Tb</li>
    * <li>ln(Pc) = 8.3634 - 0.0566/SG - f(Tb, SG)</li>
@@ -761,7 +773,9 @@ public class TBPfractionModel implements java.io.Serializable {
    * that of the reference n-alkane.
    * </p>
    *
-   * <h3>Key Features</h3>
+   * <p>
+   * <b>Key Features:</b>
+   * </p>
    * <ul>
    * <li>Uses n-alkane reference properties</li>
    * <li>Applies perturbation corrections for SG differences</li>
@@ -917,7 +931,9 @@ public class TBPfractionModel implements java.io.Serializable {
    * approach uses Lee-Kesler as the base with API gravity adjustments.
    * </p>
    *
-   * <h3>Key Features</h3>
+   * <p>
+   * <b>Key Features:</b>
+   * </p>
    * <ul>
    * <li>Hybrid Lee-Kesler/Cavett approach for robustness</li>
    * <li>API gravity corrections for heavy fractions (API &lt; 30°)</li>
@@ -925,7 +941,9 @@ public class TBPfractionModel implements java.io.Serializable {
    * <li>Edmister acentric factor with bounds checking</li>
    * </ul>
    *
-   * <h3>Correlations</h3>
+   * <p>
+   * <b>Correlations:</b>
+   * </p>
    * <p>
    * <b>Critical Temperature (Lee-Kesler base with API correction):</b>
    * </p>
@@ -955,7 +973,9 @@ public class TBPfractionModel implements java.io.Serializable {
    * Bounded to range [0.0, 1.5] for physical validity
    * </p>
    *
-   * <h3>API Gravity Relationship</h3>
+   * <p>
+   * <b>API Gravity Relationship:</b>
+   * </p>
    * <p>
    * API = 141.5/SG - 131.5
    * </p>
@@ -965,7 +985,9 @@ public class TBPfractionModel implements java.io.Serializable {
    * <li>API &lt; 22.3°: Heavy crude (SG &gt; 0.92)</li>
    * </ul>
    *
-   * <h3>Recommended Applications</h3>
+   * <p>
+   * <b>Recommended Applications:</b>
+   * </p>
    * <ul>
    * <li>Refining industry calculations</li>
    * <li>Heavy oil characterization (API &lt; 30°)</li>
@@ -1115,7 +1137,9 @@ public class TBPfractionModel implements java.io.Serializable {
    * and wider applicability.
    * </p>
    *
-   * <h3>Key Correlations</h3>
+   * <p>
+   * <b>Key Correlations:</b>
+   * </p>
    * <p>
    * <b>Critical Temperature:</b>
    * </p>
@@ -1132,7 +1156,9 @@ public class TBPfractionModel implements java.io.Serializable {
    * M<sup>-0.8063</sup> × SG<sup>1.6015</sup>
    * </p>
    *
-   * <h3>Recommended Use Cases</h3>
+   * <p>
+   * <b>Recommended Use Cases:</b>
+   * </p>
    * <ul>
    * <li>Reservoir engineering calculations</li>
    * <li>Quick property estimates</li>
@@ -1140,7 +1166,9 @@ public class TBPfractionModel implements java.io.Serializable {
    * <li>When consistency with reservoir simulation tools is needed</li>
    * </ul>
    *
-   * <h3>Acentric Factor</h3>
+   * <p>
+   * <b>Acentric Factor:</b>
+   * </p>
    * <p>
    * Uses the Kesler-Lee correlation for acentric factor estimation, which provides good results
    * across a wide range of petroleum fractions. The correlation switches between two forms based on
@@ -1232,13 +1260,13 @@ public class TBPfractionModel implements java.io.Serializable {
    *
    * <p>
    * The Watson K-factor is used to characterize petroleum fractions:
+   * </p>
    * <ul>
    * <li>Kw &gt; 12.5: Paraffinic (gas condensates)</li>
    * <li>Kw 11.5-12.5: Mixed/intermediate</li>
    * <li>Kw 10.5-11.5: Naphthenic</li>
    * <li>Kw &lt; 10.5: Aromatic</li>
    * </ul>
-   * </p>
    *
    * @param molarMass molar mass in kg/mol
    * @param density density in g/cm³ (specific gravity)
@@ -1262,12 +1290,12 @@ public class TBPfractionModel implements java.io.Serializable {
    * <p>
    * This method analyzes the plus fraction properties (molecular weight, density, Watson K-factor)
    * and recommends the most suitable TBP correlation model. The recommendation considers:
+   * </p>
    * <ul>
    * <li>Fluid type (paraffinic, naphthenic, aromatic)</li>
    * <li>Molecular weight range (light vs heavy)</li>
    * <li>Equation of state being used (SRK vs PR)</li>
    * </ul>
-   * </p>
    *
    * @param avgMW average molecular weight of plus fraction in kg/mol
    * @param avgDensity average density/specific gravity in g/cm³
@@ -1328,6 +1356,7 @@ public class TBPfractionModel implements java.io.Serializable {
    *
    * <p>
    * Available models and their recommended use cases:
+   * </p>
    * <ul>
    * <li><b>PedersenSRK</b>: General purpose for SRK EOS, default choice</li>
    * <li><b>PedersenSRKHeavyOil</b>: SRK EOS for heavy oils (MW &gt; 500 g/mol)</li>
@@ -1340,7 +1369,6 @@ public class TBPfractionModel implements java.io.Serializable {
    * <li><b>Cavett</b>: Refining industry, API gravity based</li>
    * <li><b>Standing</b>: Simple power-law, reservoir engineering</li>
    * </ul>
-   * </p>
    *
    * @param name model name (case-sensitive)
    * @return TBPModelInterface instance, defaults to PedersenSRK if name not recognized
