@@ -14,7 +14,7 @@ package neqsim.fluidmechanics.flowsolver;
  * </p>
  *
  * <p>
- * For TVD schemes, the limiter must satisfy: 0 ≤ φ(r) ≤ min(2r, 2) for r > 0
+ * For TVD schemes, the limiter must satisfy: 0 ≤ φ(r) ≤ min(2r, 2) for r &gt; 0
  * </p>
  *
  * @author ESOL
