@@ -2,6 +2,9 @@
 
 Real reservoir fluids often contain a complex mixture of heavy hydrocarbons (C7+) that cannot be represented by standard pure components. NeqSim provides a robust characterization framework to model these fluids using TBP (True Boiling Point) fractions and Plus fractions.
 
+> **Related Documentation:**
+> - [TBP Fraction Models](tbp_fraction_models.md) - Detailed guide on all available TBP models (Pedersen, Lee-Kesler, Riazi-Daubert, Twu, Cavett, Standing), model selection, and mathematical correlations
+
 ## 1. Adding Heavy Fractions
 
 You can add heavy fractions to a system using two primary methods: `addTBPfraction` and `addPlusFraction`.
@@ -37,6 +40,24 @@ system.getCharacterization().setTBPModel("PedersenSRK");
 // Set the Plus Fraction Model (affects how the plus fraction is split)
 system.getCharacterization().setPlusFractionModel("Pedersen");
 ```
+
+#### Available TBP Models
+
+NeqSim provides 10 TBP models for estimating critical properties (Tc, Pc, ω) from molecular weight and density:
+
+| Model | Best Application |
+|-------|------------------|
+| `PedersenSRK` | General SRK EOS (default) |
+| `PedersenPR` | General Peng-Robinson EOS |
+| `PedersenSRKHeavyOil` | Heavy oils with SRK |
+| `PedersenPRHeavyOil` | Heavy oils with PR |
+| `Lee-Kesler` | General purpose, uses Watson K-factor |
+| `RiaziDaubert` | Light fractions (MW < 300 g/mol) |
+| `Twu` | Paraffinic fluids, gas condensates |
+| `Cavett` | Refining industry, API gravity corrections |
+| `Standing` | Reservoir engineering |
+
+See [TBP Fraction Models](tbp_fraction_models.md) for detailed mathematical correlations and model selection guidelines.
 
 #### Available Plus Fraction Models
 
