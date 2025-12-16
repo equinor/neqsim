@@ -12,9 +12,10 @@ NeqSim now supports **graph-based process representation**, enabling topology-aw
 4. [Parallel Execution](#parallel-execution)
 5. [Cycle and Recycle Detection](#cycle-and-recycle-detection)
 6. [Sensitivity-Based Tear Stream Selection](#sensitivity-based-tear-stream-selection)
-7. [Comparison: Old vs New Approach](#comparison-old-vs-new-approach)
-8. [API Reference](#api-reference)
-9. [Best Practices](#best-practices)
+7. [Process Sensitivity Analysis](#process-sensitivity-analysis)
+8. [Comparison: Old vs New Approach](#comparison-old-vs-new-approach)
+9. [API Reference](#api-reference)
+10. [Best Practices](#best-practices)
 
 ---
 
@@ -519,6 +520,98 @@ for (Map.Entry<Integer, ProcessEdge> entry : optimalTears.entrySet()) {
 
 ---
 
+## Process Sensitivity Analysis
+
+The `ProcessSensitivityAnalyzer` provides comprehensive sensitivity analysis for any process, computing how output properties change with respect to input properties.
+
+### Fluent API
+
+```java
+ProcessSensitivityAnalyzer analyzer = new ProcessSensitivityAnalyzer(process);
+
+SensitivityMatrix result = analyzer
+    .withInput("feed", "temperature", "C")
+    .withInput("feed", "pressure", "bara")
+    .withInput("feed", "flowRate", "kg/hr")
+    .withOutput("separator", "temperature")
+    .withOutput("compressor", "power", "kW")
+    .compute();
+
+// Query individual sensitivities
+double dT_dP = result.getSensitivity("separator.temperature", "feed.pressure");
+```
+
+### Integration with Broyden Convergence
+
+When a process has recycles using Broyden acceleration, the analyzer **automatically reuses the convergence Jacobian** for tear stream sensitivities - this is essentially free!
+
+```java
+// Run process with Broyden acceleration
+recycle.setAccelerationMethod(AccelerationMethod.BROYDEN);
+process.run();
+
+// Analyzer checks for Broyden Jacobian first
+SensitivityMatrix result = analyzer
+    .withInput("recycle1", "temperature")
+    .withOutput("recycle1", "pressure")
+    .compute();  // Uses Broyden Jacobian if available, else FD
+```
+
+### Finite Difference Options
+
+```java
+// Forward differences (default): 1 extra simulation per input
+analyzer.withCentralDifferences(false);
+
+// Central differences: 2 extra simulations per input, more accurate
+analyzer.withCentralDifferences(true);
+
+// Custom perturbation size (default: 0.001 = 0.1%)
+analyzer.withPerturbation(0.01);
+
+// Force finite differences only (ignore Broyden)
+SensitivityMatrix fdResult = analyzer.computeFiniteDifferencesOnly();
+```
+
+### Report Generation
+
+```java
+String report = analyzer.generateReport(result);
+System.out.println(report);
+```
+
+**Output:**
+```
+=== Process Sensitivity Analysis Report ===
+
+Inputs:
+  - feed.temperature [C]
+  - feed.pressure [bara]
+
+Outputs:
+  - separator.temperature
+  - compressor.power [kW]
+
+Sensitivity Matrix (d_output / d_input):
+
+                                    temperature        pressure
+        separator.temperature        1.0000e+00      -2.3400e-02
+           compressor.power          4.5600e+01       1.2300e+02
+
+Most Influential Inputs:
+  separator.temperature: feed.temperature (sensitivity: 1.0000e+00)
+  compressor.power: feed.pressure (sensitivity: 1.2300e+02)
+```
+
+### Use Cases
+
+1. **Design Optimization**: Identify which inputs most affect key outputs
+2. **Uncertainty Propagation**: Combine with input uncertainties for output bounds
+3. **Control System Design**: Understand input-output relationships
+4. **Model Validation**: Compare sensitivities against expected physics
+
+---
+
 ## Comparison: Old vs New Approach
 
 ### Traditional Sequential Execution (Old)
@@ -691,6 +784,46 @@ Map<ProcessEdge, Double> getEdgeSensitivities()
 ProcessEdge getRecommendedTearStream()
 double getSensitivity()  // Sensitivity score of recommended tear
 ```
+
+### ProcessSensitivityAnalyzer Class (NEW)
+
+A comprehensive analyzer for computing sensitivities of any output property with respect to any input property. It intelligently leverages Broyden Jacobians when available, falling back to finite differences only when necessary.
+
+```java
+// Create analyzer for a process
+ProcessSensitivityAnalyzer analyzer = new ProcessSensitivityAnalyzer(process);
+
+// Fluent API for defining inputs and outputs
+analyzer
+    .withInput("feed", "temperature", "C")      // equipment, property, unit
+    .withInput("feed", "flowRate", "kg/hr")
+    .withOutput("product", "temperature")
+    .withOutput("product", "pressure", "bara")
+    .withCentralDifferences(true)               // More accurate (2x cost)
+    .withPerturbation(0.001);                   // Relative perturbation size
+
+// Compute sensitivities (uses Broyden Jacobian if available)
+SensitivityMatrix result = analyzer.compute();
+
+// Query specific sensitivities
+double dT_dFlow = result.getSensitivity("product.temperature", "feed.flowRate");
+
+// Generate human-readable report
+String report = analyzer.generateReport(result);
+
+// Force finite differences only (ignores Broyden)
+SensitivityMatrix fdResult = analyzer.computeFiniteDifferencesOnly();
+```
+
+**Key Features:**
+
+| Feature | Description |
+|---------|-------------|
+| **Broyden Integration** | Automatically uses convergence Jacobian for tear streams (free!) |
+| **Fluent API** | Easy specification of any equipment.property pair |
+| **Unit Support** | Specify units for proper value access/setting |
+| **Central/Forward FD** | Choose accuracy vs speed tradeoff |
+| **Report Generation** | Formatted sensitivity report with most influential inputs |
 
 ---
 

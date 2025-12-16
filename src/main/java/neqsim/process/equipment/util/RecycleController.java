@@ -3,6 +3,7 @@ package neqsim.process.equipment.util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import neqsim.process.util.uncertainty.SensitivityMatrix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -594,5 +595,94 @@ public class RecycleController implements java.io.Serializable {
     }
 
     return sb.toString();
+  }
+
+  /**
+   * Gets the sensitivity matrix from the Broyden convergence Jacobian.
+   *
+   * <p>
+   * This provides sensitivities computed as a byproduct of convergence, without additional
+   * simulations. The matrix represents d(output)/d(input) for tear stream variables.
+   *
+   * @return SensitivityMatrix from convergence, or null if not available
+   */
+  public SensitivityMatrix getTearStreamSensitivityMatrix() {
+    if (coordinatedAccelerator == null) {
+      return null;
+    }
+
+    double[][] invJ = coordinatedAccelerator.getInverseJacobian();
+    if (invJ == null) {
+      return null;
+    }
+
+    // Build variable names from recycles at current priority
+    List<String> varNames = new ArrayList<>();
+    for (Recycle recycle : getRecyclesAtCurrentPriority()) {
+      String baseName = recycle.getName();
+      varNames.add(baseName + ".temperature");
+      varNames.add(baseName + ".pressure");
+      varNames.add(baseName + ".flowRate");
+    }
+
+    String[] names = varNames.toArray(new String[0]);
+    int dim = Math.min(names.length, invJ.length);
+
+    // Create sensitivity matrix - use dim x dim submatrix
+    String[] actualNames = new String[dim];
+    System.arraycopy(names, 0, actualNames, 0, dim);
+
+    SensitivityMatrix matrix = new SensitivityMatrix(actualNames, actualNames);
+
+    // The inverse Jacobian approximates -(I - dg/dx)^{-1}
+    // Sensitivity is -invJ (since B ≈ I - dg/dx, B^{-1} ≈ dx*/dg)
+    for (int i = 0; i < dim; i++) {
+      for (int j = 0; j < dim; j++) {
+        matrix.setSensitivity(actualNames[i], actualNames[j], -invJ[i][j]);
+      }
+    }
+
+    return matrix;
+  }
+
+  /**
+   * Gets the raw inverse Jacobian matrix from the Broyden accelerator.
+   *
+   * <p>
+   * This is the direct output of the Broyden update formula, useful for advanced analysis.
+   *
+   * @return inverse Jacobian matrix, or null if not available
+   */
+  public double[][] getConvergenceJacobian() {
+    if (coordinatedAccelerator == null) {
+      return null;
+    }
+    return coordinatedAccelerator.getInverseJacobian();
+  }
+
+  /**
+   * Gets the names of tear stream variables in Jacobian order.
+   *
+   * @return list of variable names corresponding to Jacobian rows/columns
+   */
+  public List<String> getTearStreamVariableNames() {
+    List<String> varNames = new ArrayList<>();
+    for (Recycle recycle : getRecyclesAtCurrentPriority()) {
+      String baseName = recycle.getName();
+      varNames.add(baseName + ".temperature");
+      varNames.add(baseName + ".pressure");
+      varNames.add(baseName + ".flowRate");
+    }
+    return varNames;
+  }
+
+  /**
+   * Checks if sensitivity data is available from convergence.
+   *
+   * @return true if Broyden Jacobian is available
+   */
+  public boolean hasSensitivityData() {
+    return coordinatedAccelerator != null && coordinatedAccelerator.getInverseJacobian() != null
+        && coordinatedAccelerator.getIterationCount() > 2;
   }
 }
