@@ -206,7 +206,8 @@ SimpleMatrix B = new SimpleMatrix(new double[][] {
 SimpleMatrix C = A.mult(B);
 
 // Solve linear system Ax = b
-SimpleMatrix b = new SimpleMatrix(new double[][] {{1}, {2}});
+double[][] bData = { {1}, {2} };
+SimpleMatrix b = new SimpleMatrix(bData);
 SimpleMatrix x = A.solve(b);
 
 // Eigenvalue decomposition

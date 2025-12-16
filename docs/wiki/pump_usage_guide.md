@@ -309,9 +309,12 @@ feed.run();
 Pump pump = new Pump("Booster Pump", feed);
 
 double[] speed = new double[] {1450.0};
-double[][] flow = new double[][] {{30, 50, 70, 90, 110, 130}};
-double[][] head = new double[][] {{45, 44, 42, 38, 32, 24}};
-double[][] eff = new double[][] {{68, 76, 82, 84, 80, 70}};
+double[] flowPoints = {30, 50, 70, 90, 110, 130};
+double[] headPoints = {45, 44, 42, 38, 32, 24};
+double[] effPoints = {68, 76, 82, 84, 80, 70};
+double[][] flow = new double[][] {flowPoints};
+double[][] head = new double[][] {headPoints};
+double[][] eff = new double[][] {effPoints};
 
 pump.getPumpChart().setCurves(new double[]{}, speed, flow, head, eff);
 pump.getPumpChart().setHeadUnit("meter");
