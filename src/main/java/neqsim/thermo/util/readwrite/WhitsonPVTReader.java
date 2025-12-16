@@ -401,7 +401,8 @@ public class WhitsonPVTReader {
 
     if (isPseudoComponent) {
       // Add as TBP fraction with properties
-      String pseudoName = name + "_PC";
+      // Avoid double suffix if name already ends with _PC
+      String pseudoName = name.endsWith("_PC") ? name : name + "_PC";
       fluid.addComponent(pseudoName, moles, tcKelvin, comp.pc, comp.accentricFactor);
 
       // Set all component properties
@@ -456,7 +457,8 @@ public class WhitsonPVTReader {
       component.setParachorParameter(comp.parachor);
 
       if (comp.sg > 0) {
-        component.setNormalLiquidDensity(comp.sg * 1000.0); // Convert to kg/m3
+        // normalLiquidDensity is stored in g/cm3 (same as specific gravity)
+        component.setNormalLiquidDensity(comp.sg);
       }
 
       // Set viscosity-related critical properties if available

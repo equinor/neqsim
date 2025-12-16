@@ -364,6 +364,10 @@ public abstract class SystemThermo implements SystemInterface {
       getPhase(i).getComponent(componentName).setTC(TC);
       getPhase(i).getComponent(componentName).setPC(PC);
       getPhase(i).getComponent(componentName).setAcentricFactor(acs);
+      // Set isPlusFraction for components with "_PC" suffix (plus fraction components)
+      if (componentName.endsWith("_PC")) {
+        getPhase(i).getComponent(componentName).setIsPlusFraction(true);
+      }
     }
     if (comNam.equals("default")) {
       componentNames.remove("default");
@@ -2853,9 +2857,8 @@ public abstract class SystemThermo implements SystemInterface {
     }
 
     for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
-      comp[compNumb] =
-          phase.getComponent(compNumb).getz() * phase.getComponent(compNumb).getMolarMass()
-              / totalMass;
+      comp[compNumb] = phase.getComponent(compNumb).getz()
+          * phase.getComponent(compNumb).getMolarMass() / totalMass;
     }
     return comp;
   }
@@ -5092,8 +5095,8 @@ public abstract class SystemThermo implements SystemInterface {
 
     double totalFlow = getTotalNumberOfMoles();
     if (totalFlow < 1e-100) {
-      throw new RuntimeException(new InvalidInputException(this, "setMolarComposition",
-          "totalFlow", "must be larger than 0 (1e-100) when setting molar composition"));
+      throw new RuntimeException(new InvalidInputException(this, "setMolarComposition", "totalFlow",
+          "must be larger than 0 (1e-100) when setting molar composition"));
     }
     setEmptyFluid();
 
