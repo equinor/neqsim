@@ -92,7 +92,7 @@ adjuster.setAdjustedValueSetter((equipment, val) -> {
 
 ## SetPoint
 
-The `SetPoint` unit operation sets the value of a variable in a target unit operation equal to the value of a variable in a source unit operation. It is used for feed-forward control or simply copying values.
+The `SetPoint` unit operation sets the value of a variable in a target unit operation equal to the value of a variable in a source unit operation. It is used for feed-forward control or copying values between equipment.
 
 ### Standard Usage
 
@@ -102,9 +102,44 @@ setPoint.setSourceVariable(sourceStream, "pressure");
 setPoint.setTargetVariable(targetStream, "pressure");
 ```
 
-### Custom Source Calculation
+### Supported Target Variables
 
-You can define a custom function to calculate the value to be set on the target equipment, based on the source equipment.
+| Equipment Type | Supported Variables |
+|----------------|---------------------|
+| `Stream` | `pressure`, `temperature` |
+| `ThrottlingValve` | `pressure` (outlet) |
+| `Compressor` | `pressure` (outlet) |
+| `Pump` | `pressure` (outlet) |
+| `Heater`/`Cooler` | `pressure`, `temperature` |
+
+### Functional Interface Mode
+
+Use `setSourceValueCalculator` to define a custom function that calculates the value to set on the target equipment. This provides full flexibility for non-linear relationships, unit conversions, or conditional logic.
+
+#### Method Signature
+
+| Method | Type | Description |
+|--------|------|-------------|
+| `setSourceValueCalculator` | `Function<ProcessEquipmentInterface, Double>` | Custom function to compute the value to set |
+
+#### Basic Example
+
+```java
+SetPoint setPoint = new SetPoint("Custom SetPoint");
+setPoint.setSourceVariable(sourceStream);
+setPoint.setTargetVariable(targetStream, "pressure");
+
+// Set target pressure based on source temperature: P = T / 10.0
+setPoint.setSourceValueCalculator((equipment) -> {
+    Stream s = (Stream) equipment;
+    return s.getTemperature("K") / 10.0;
+});
+
+setPoint.run();
+// Target pressure is now 30.0 bara (if source temp = 300 K)
+```
+
+#### Percentage Scaling Example
 
 ```java
 setPoint.setSourceValueCalculator((equipment) -> {
@@ -113,6 +148,34 @@ setPoint.setSourceValueCalculator((equipment) -> {
     return s.getPressure("bara") * 0.1;
 });
 ```
+
+#### Computed Ratio Example
+
+```java
+// Set compressor outlet pressure based on inlet conditions
+SetPoint pressureRatio = new SetPoint("Pressure Ratio Control");
+pressureRatio.setSourceVariable(compressorInlet);
+pressureRatio.setTargetVariable(compressor, "pressure");
+
+pressureRatio.setSourceValueCalculator((equipment) -> {
+    Stream inlet = (Stream) equipment;
+    double inletP = inlet.getPressure("bara");
+    double inletT = inlet.getTemperature("K");
+    // Higher inlet temperature = lower pressure ratio
+    double ratio = 4.0 - (inletT - 300.0) * 0.01;
+    return inletP * Math.max(ratio, 2.0);
+});
+```
+
+### When to Use Functional Mode
+
+| Use Case | Example |
+|----------|---------|
+| Non-linear relationships | Pressure = f(temperature, flow) |
+| Unit conversions | Convert from source units to target units |
+| Computed ratios | Set valve to percentage of max flow |
+| Conditional logic | Different values based on operating mode |
+| Multi-variable calculations | Value depends on multiple stream properties |
 
 ## Recycle
 
