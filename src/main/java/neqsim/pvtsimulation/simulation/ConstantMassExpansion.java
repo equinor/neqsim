@@ -1,6 +1,7 @@
 package neqsim.pvtsimulation.simulation;
 
 import java.util.ArrayList;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.pvtsimulation.util.parameterfitting.CMEFunction;
@@ -406,5 +407,198 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     this.pressures = pressure;
     this.temperatures = temperature;
     experimentalData = new double[temperature.length][1];
+  }
+
+  // ============================================================================
+  // QC/QA Methods per Whitson methodology (https://wiki.whitson.com/phase_behavior/pvt_exp/CCE/)
+  // ============================================================================
+
+  /**
+   * Validate mass balance consistency in CCE data.
+   *
+   * <p>
+   * Per Whitson methodology, the total mass in the CCE cell should remain constant throughout the
+   * experiment. This QC check verifies that mass = density × volume is consistent at each pressure
+   * step.
+   * </p>
+   *
+   * @param tolerance acceptable relative error (e.g., 0.01 for 1%)
+   * @return true if mass balance is satisfied within tolerance
+   */
+  public boolean validateMassBalance(double tolerance) {
+    if (relativeVolume == null || density == null || relativeVolume.length != density.length) {
+      return false;
+    }
+
+    // Calculate mass at each pressure step (mass = density * volume)
+    // For CCE, relative volume and density give: mass ~ density * relativeVolume * Vsat
+    double[] mass = new double[relativeVolume.length];
+    double referenceMass = -1.0;
+
+    for (int i = 0; i < relativeVolume.length; i++) {
+      if (density[i] > 0 && relativeVolume[i] > 0) {
+        mass[i] = density[i] * relativeVolume[i];
+        if (referenceMass < 0) {
+          referenceMass = mass[i];
+        }
+      }
+    }
+
+    if (referenceMass <= 0) {
+      return false;
+    }
+
+    // Check that mass is constant within tolerance
+    for (int i = 0; i < mass.length; i++) {
+      if (mass[i] > 0) {
+        double relativeError = Math.abs(mass[i] - referenceMass) / referenceMass;
+        if (relativeError > tolerance) {
+          logger.warn("CCE QC: Mass balance error at step " + i + ": " + (relativeError * 100)
+              + "% deviation");
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Calculate Z-factor from CCE data for gas phase.
+   *
+   * <p>
+   * For gas phase above saturation, Z-factor can be estimated from: Z = PV / (nRT)
+   * </p>
+   *
+   * <p>
+   * This QC method allows comparison with reported Z-factors to validate data consistency.
+   * </p>
+   *
+   * @return array of calculated Z-factors
+   */
+  public double[] calculateZFactorQC() {
+    if (pressures == null || relativeVolume == null) {
+      return null;
+    }
+
+    double[] zFactor = new double[pressures.length];
+    double R = 8.314; // J/(mol·K)
+    double T = !Double.isNaN(temperature) ? temperature : getThermoSystem().getTemperature();
+    double n = getThermoSystem().getTotalNumberOfMoles();
+
+    for (int i = 0; i < pressures.length; i++) {
+      if (saturationVolume > 0 && relativeVolume[i] > 0) {
+        double P = pressures[i] * 1e5; // bar to Pa
+        double V = relativeVolume[i] * saturationVolume / 1e6; // L to m³
+        zFactor[i] = (P * V) / (n * R * T);
+      }
+    }
+
+    return zFactor;
+  }
+
+  /**
+   * Compare experimental and simulated relative volumes.
+   *
+   * <p>
+   * This QC method calculates the deviation between experimental and simulated relative volumes,
+   * useful for EOS model tuning assessment.
+   * </p>
+   *
+   * @param experimentalRelVol array of experimental relative volume values
+   * @return array of deviations (simulated - experimental)
+   */
+  public double[] calculateRelativeVolumeDeviation(double[] experimentalRelVol) {
+    if (relativeVolume == null || experimentalRelVol == null
+        || relativeVolume.length != experimentalRelVol.length) {
+      return null;
+    }
+
+    double[] deviation = new double[relativeVolume.length];
+    for (int i = 0; i < relativeVolume.length; i++) {
+      deviation[i] = relativeVolume[i] - experimentalRelVol[i];
+    }
+
+    return deviation;
+  }
+
+  /**
+   * Calculate average absolute deviation (AAD) between simulated and experimental relative volumes.
+   *
+   * @param experimentalRelVol array of experimental relative volume values
+   * @return average absolute deviation as percentage
+   */
+  public double calculateAAD(double[] experimentalRelVol) {
+    if (relativeVolume == null || experimentalRelVol == null
+        || relativeVolume.length != experimentalRelVol.length) {
+      return Double.NaN;
+    }
+
+    double sum = 0.0;
+    int count = 0;
+    for (int i = 0; i < relativeVolume.length; i++) {
+      if (experimentalRelVol[i] > 0) {
+        sum += Math.abs((relativeVolume[i] - experimentalRelVol[i]) / experimentalRelVol[i]);
+        count++;
+      }
+    }
+
+    return count > 0 ? (sum / count) * 100.0 : Double.NaN;
+  }
+
+  /**
+   * Generate a CCE QC report as formatted text.
+   *
+   * <p>
+   * This method produces a comprehensive QC report following Whitson methodology, including:
+   * <ul>
+   * <li>Saturation conditions</li>
+   * <li>Relative volume at each pressure</li>
+   * <li>Density and compressibility data</li>
+   * <li>Mass balance validation</li>
+   * </ul>
+   *
+   * @return formatted QC report string
+   */
+  public String generateQCReport() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== CCE Quality Control Report ===\n\n");
+
+    // Saturation conditions
+    sb.append("Saturation Conditions:\n");
+    sb.append(String.format("  Saturation Pressure: %.2f bar\n", saturationPressure));
+    sb.append(String.format("  Saturation Volume: %.4f L\n", saturationVolume));
+    sb.append(String.format("  Z at Saturation: %.4f\n", Zsaturation));
+    sb.append(String.format("  Iso. Compressibility at Sat.: %.6f 1/bar\n",
+        saturationIsoThermalCompressibility));
+    sb.append("\n");
+
+    // Results table
+    sb.append("Pressure Step Results:\n");
+    sb.append(String.format("%10s %12s %12s %12s %12s\n", "P (bar)", "Vrel", "Density", "Z-gas",
+        "Compress."));
+    sb.append(StringUtils.repeat("-", 60) + "\n");
+
+    if (pressures != null) {
+      for (int i = 0; i < pressures.length; i++) {
+        double vrel =
+            (relativeVolume != null && i < relativeVolume.length) ? relativeVolume[i] : Double.NaN;
+        double dens = (density != null && i < density.length) ? density[i] : Double.NaN;
+        double zg = (Zgas != null && i < Zgas.length) ? Zgas[i] : Double.NaN;
+        double comp = (isoThermalCompressibility != null && i < isoThermalCompressibility.length)
+            ? isoThermalCompressibility[i]
+            : Double.NaN;
+
+        sb.append(String.format("%10.2f %12.4f %12.2f %12.4f %12.6f\n", pressures[i], vrel, dens,
+            zg, comp));
+      }
+    }
+    sb.append("\n");
+
+    // Mass balance check
+    boolean mbPassed = validateMassBalance(0.02);
+    sb.append("Mass Balance Check: " + (mbPassed ? "PASSED" : "FAILED") + "\n");
+
+    return sb.toString();
   }
 }

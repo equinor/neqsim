@@ -12,6 +12,8 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
+import neqsim.process.ml.StateVector;
+import neqsim.process.ml.StateVectorProvider;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.mixer.Mixer;
@@ -62,7 +64,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @see neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign
  * @see neqsim.process.mechanicaldesign.separator.primaryseparation.PrimarySeparation
  */
-public class Separator extends ProcessEquipmentBaseClass implements SeparatorInterface {
+public class Separator extends ProcessEquipmentBaseClass
+    implements SeparatorInterface, StateVectorProvider {
   /**
    * Initializes separator for transient calculations.
    */
@@ -1800,6 +1803,62 @@ public class Separator extends ProcessEquipmentBaseClass implements SeparatorInt
   @Override
   public double getCapacityMax() {
     return getMechanicalDesign().getMaxDesignGassVolumeFlow();
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns state vector containing:
+   * <ul>
+   * <li>pressure - Separator pressure [bar]</li>
+   * <li>temperature - Separator temperature [K]</li>
+   * <li>liquid_level - Liquid level fraction [0-1]</li>
+   * <li>gas_density - Gas phase density [kg/m³]</li>
+   * <li>liquid_density - Liquid phase density [kg/m³]</li>
+   * <li>gas_flow - Gas outlet flow [kg/s]</li>
+   * <li>liquid_flow - Liquid outlet flow [kg/s]</li>
+   * <li>gas_load_factor - Gas load factor [-]</li>
+   * </ul>
+   */
+  @Override
+  public StateVector getStateVector() {
+    StateVector state = new StateVector();
+
+    // Basic thermodynamic state
+    state.add("pressure", getPressure(), 0.0, 200.0, "bar");
+    state.add("temperature", getTemperature(), 200.0, 500.0, "K");
+
+    // Level
+    state.add("liquid_level", getLiquidLevel(), 0.0, 1.0, "fraction");
+
+    // Phase properties
+    if (thermoSystem != null) {
+      if (thermoSystem.hasPhaseType("gas")) {
+        state.add("gas_density", thermoSystem.getPhase("gas").getDensity("kg/m3"), 0.0, 300.0,
+            "kg/m3");
+      }
+      if (thermoSystem.hasPhaseType("oil")) {
+        state.add("liquid_density", thermoSystem.getPhase("oil").getDensity("kg/m3"), 400.0, 1000.0,
+            "kg/m3");
+      } else if (thermoSystem.hasPhaseType("aqueous")) {
+        state.add("liquid_density", thermoSystem.getPhase("aqueous").getDensity("kg/m3"), 900.0,
+            1100.0, "kg/m3");
+      }
+    }
+
+    // Flow rates
+    if (gasOutStream != null) {
+      state.add("gas_flow", gasOutStream.getFlowRate("kg/sec"), 0.0, 100.0, "kg/s");
+    }
+    if (liquidOutStream != null) {
+      state.add("liquid_flow", liquidOutStream.getFlowRate("kg/sec"), 0.0, 100.0, "kg/s");
+    }
+
+    // Performance indicator
+    state.add("gas_load_factor", getGasLoadFactor(), 0.0, 2.0, "factor");
+
+    return state;
   }
 
   /*

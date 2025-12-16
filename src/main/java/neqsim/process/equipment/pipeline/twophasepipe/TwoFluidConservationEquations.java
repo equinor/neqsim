@@ -179,6 +179,9 @@ public class TwoFluidConservationEquations implements Serializable {
    * Calculate inlet flux using the inlet cell state. This represents mass entering the domain from
    * the inlet stream. Uses holdups directly (set by steady state or BC) rather than computing from
    * mass per length to avoid feedback from cell depletion.
+   *
+   * @param sec the inlet pipe section
+   * @return array of flux values for each conserved variable
    */
   private double[] calcInletFlux(TwoFluidSection sec) {
     double[] flux = new double[NUM_EQUATIONS];
@@ -236,6 +239,9 @@ public class TwoFluidConservationEquations implements Serializable {
 
   /**
    * Calculate outlet flux using upwind scheme (transmissive boundary).
+   *
+   * @param sec the outlet pipe section
+   * @return array of flux values for each conserved variable
    */
   private double[] calcOutletFlux(TwoFluidSection sec) {
     double[] flux = new double[NUM_EQUATIONS];
@@ -284,6 +290,8 @@ public class TwoFluidConservationEquations implements Serializable {
 
   /**
    * Update closure relations for all sections.
+   *
+   * @param sections array of pipe sections to update
    */
   private void updateClosureRelations(TwoFluidSection[] sections) {
     for (TwoFluidSection sec : sections) {
@@ -616,6 +624,9 @@ public class TwoFluidConservationEquations implements Serializable {
   /**
    * Create gas phase state for flux calculation. Uses true holdup from mass per length for
    * mass-consistent flux.
+   *
+   * @param sec the pipe section
+   * @return gas phase state object
    */
   private PhaseState createGasState(TwoFluidSection sec) {
     PhaseState state = new PhaseState();
@@ -638,6 +649,9 @@ public class TwoFluidConservationEquations implements Serializable {
   /**
    * Create liquid phase state for flux calculation. Uses true holdup from mass per length for
    * mass-consistent flux.
+   *
+   * @param sec the pipe section
+   * @return liquid phase state object
    */
   private PhaseState createLiquidState(TwoFluidSection sec) {
     PhaseState state = new PhaseState();
@@ -660,6 +674,9 @@ public class TwoFluidConservationEquations implements Serializable {
   /**
    * Create oil phase state for flux calculation in three-phase flow. Uses true holdup from mass per
    * length for mass-consistent flux.
+   *
+   * @param sec the pipe section
+   * @return oil phase state object
    */
   private PhaseState createOilState(TwoFluidSection sec) {
     PhaseState state = new PhaseState();
@@ -688,6 +705,9 @@ public class TwoFluidConservationEquations implements Serializable {
   /**
    * Create water phase state for flux calculation in three-phase flow. Uses true holdup from mass
    * per length for mass-consistent flux.
+   *
+   * @param sec the pipe section
+   * @return water phase state object
    */
   private PhaseState createWaterState(TwoFluidSection sec) {
     PhaseState state = new PhaseState();
