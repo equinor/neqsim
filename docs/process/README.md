@@ -4,6 +4,7 @@ The `process` package provides process equipment, unit operations, controllers, 
 
 ## Table of Contents
 - [Overview](#overview)
+- [Documentation Structure](#documentation-structure)
 - [Package Structure](#package-structure)
 - [ProcessSystem](#processsystem)
 - [Equipment Categories](#equipment-categories)
@@ -23,6 +24,44 @@ The `process` package provides process equipment, unit operations, controllers, 
 - Implement control logic and adjusters
 - Simulate dynamic and steady-state processes
 - Safety system modeling (PSV, ESD, blowdown)
+
+---
+
+## Documentation Structure
+
+This documentation is organized into the following sections:
+
+| Section | Description |
+|---------|-------------|
+| [equipment/](equipment/) | Equipment documentation (separators, compressors, etc.) |
+| [processmodel/](processmodel/) | ProcessSystem and flowsheet management |
+| [safety/](safety/) | Safety systems (PSV, ESD, blowdown) |
+| [controllers.md](controllers.md) | Process controllers and logic |
+
+### Equipment Categories
+
+| Category | Documentation | Classes |
+|----------|--------------|---------|
+| Streams | [streams.md](equipment/streams.md) | Stream, EnergyStream, VirtualStream |
+| Separators | [separators.md](equipment/separators.md) | Separator, ThreePhaseSeparator, GasScrubber |
+| Heat Exchangers | [heat_exchangers.md](equipment/heat_exchangers.md) | Heater, Cooler, HeatExchanger |
+| Compressors | [compressors.md](equipment/compressors.md) | Compressor, CompressorChart |
+| Pumps | [pumps.md](equipment/pumps.md) | Pump, PumpChart |
+| Expanders | [expanders.md](equipment/expanders.md) | Expander, TurboExpanderCompressor |
+| Valves | [valves.md](equipment/valves.md) | ThrottlingValve, SafetyValve, BlowdownValve |
+| Distillation | [distillation.md](equipment/distillation.md) | DistillationColumn, SimpleTray |
+| Absorbers | [absorbers.md](equipment/absorbers.md) | SimpleAbsorber, SimpleTEGAbsorber |
+| Ejectors | [ejectors.md](equipment/ejectors.md) | Ejector |
+| Membranes | [membranes.md](equipment/membranes.md) | MembraneSeparator |
+| Flares | [flares.md](equipment/flares.md) | Flare, FlareStack |
+| Electrolyzers | [electrolyzers.md](equipment/electrolyzers.md) | Electrolyzer, CO2Electrolyzer |
+| Filters | [filters.md](equipment/filters.md) | Filter, CharCoalFilter |
+| Reactors | [reactors.md](equipment/reactors.md) | GibbsReactor |
+| Pipelines | [pipelines.md](equipment/pipelines.md) | Pipeline, AdiabaticPipe |
+| Tanks | [tanks.md](equipment/tanks.md) | Tank, VesselDepressurization |
+| Wells | [wells.md](equipment/wells.md) | Well equipment |
+| Mixers/Splitters | [mixers_splitters.md](equipment/mixers_splitters.md) | Mixer, Splitter |
+| Utility | [util/](equipment/util/) | Adjuster, Recycle, Calculator |
 
 ---
 

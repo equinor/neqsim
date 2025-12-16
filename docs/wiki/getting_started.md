@@ -22,7 +22,7 @@ cd neqsim
 ./mvnw install
 ```
 
-The command downloads dependencies, compiles the project, and runs the test suite. For environment notes and troubleshooting tips, see the [README](../../README.md) and [developer setup guide](../DEVELOPER_SETUP.md).
+The command downloads dependencies, compiles the project, and runs the test suite. For environment notes and troubleshooting tips, see the [README](../../README.md) and [developer setup guide](../development/DEVELOPER_SETUP.md).
 
 ## Fundamentals and thermodynamics
 - Read the [Thermodynamics Guide](thermodynamics_guide.md) for an overview of models, correlations, and implementation notes.
@@ -37,24 +37,24 @@ The command downloads dependencies, compiles the project, and runs the test suit
 ## Process simulation
 - Start with the [Process Simulation Guide](process_simulation.md) for steady-state modeling patterns.
 - Dive deeper into [Advanced process simulation](advanced_process_simulation.md) and [Logical unit operations](logical_unit_operations.md) for custom flowsheets.
-- Consult the [Modules overview](../modules.md) and [Process calculator](../process_calculator.md) when wiring NeqSim into larger systems.
+- Consult the [Modules overview](../modules.md) and [Process calculator](../simulation/process_calculator.md) when wiring NeqSim into larger systems.
 
 ## Dynamic behavior and process safety
-- Study dynamic blowdown and protection behavior in [ESD blowdown systems](../ESD_BLOWDOWN_SYSTEM.md), [PSV dynamic sizing](../psv_dynamic_sizing_example.md), and [HIPPS implementation](../hipps_implementation.md).
-- Review layered safety topics in [Integrated safety systems](../INTEGRATED_SAFETY_SYSTEMS.md), [HIPPS summary](../HIPPS_SUMMARY.md), and [Layered safety architecture](../layered_safety_architecture.md).
-- For alarm logic and shutdown sequencing, see [Alarm system guide](../alarm_system_guide.md), [SIS logic implementation](../sis_logic_implementation.md), and [Integration safety chain tests](../integration_safety_chain_tests.md).
+- Study dynamic blowdown and protection behavior in [ESD blowdown systems](../safety/ESD_BLOWDOWN_SYSTEM.md), [PSV dynamic sizing](../safety/psv_dynamic_sizing_example.md), and [HIPPS implementation](../safety/hipps_implementation.md).
+- Review layered safety topics in [Integrated safety systems](../safety/INTEGRATED_SAFETY_SYSTEMS.md), [HIPPS summary](../safety/HIPPS_SUMMARY.md), and [Layered safety architecture](../safety/layered_safety_architecture.md).
+- For alarm logic and shutdown sequencing, see [Alarm system guide](../safety/alarm_system_guide.md), [SIS logic implementation](../safety/sis_logic_implementation.md), and [Integration safety chain tests](../safety/integration_safety_chain_tests.md).
 
 ## Unit operations and equipment models
 - Browse individual equipment pages such as [Distillation column](distillation_column.md), [Air cooler](air_cooler.md), [Water cooler](water_cooler.md), and [Heat exchanger mechanical design](heat_exchanger_mechanical_design.md).
 - For specialized models, see [Flow meter models](flow_meter_models.md), [Battery storage unit](battery_storage.md), [Solar panel](solar_panel.md), and [Pump usage guide](pump_usage_guide.md).
-- Additional unit operations and mechanical details are covered in the [Process logic enhancements](../ProcessLogicEnhancements.md) series.
+- Additional unit operations and mechanical details are covered in the [Process logic enhancements](../simulation/ProcessLogicEnhancements.md) series.
 
 ## Integration, control, and automation
-- Connect NeqSim to control systems using the [Process control framework](process_control.md) and [Real-time integration guide](../REAL_TIME_INTEGRATION_GUIDE.md).
-- Learn about runtime flexibility in [Runtime logic flexibility](../RuntimeLogicFlexibility.md) and alarm handling in [Alarm triggered logic example](../alarm_triggered_logic_example.md).
+- Connect NeqSim to control systems using the [Process control framework](process_control.md) and [Real-time integration guide](../integration/REAL_TIME_INTEGRATION_GUIDE.md).
+- Learn about runtime flexibility in [Runtime logic flexibility](../simulation/RuntimeLogicFlexibility.md) and alarm handling in [Alarm triggered logic example](../safety/alarm_triggered_logic_example.md).
 - For scripting and hybrid workflows, see [Java simulations from Colab notebooks](java_simulation_from_colab_notebooks.md) and [Java/Python usage examples](usage_examples.md).
 
 ## Examples and tutorials
 - Work through the [Usage examples](usage_examples.md) for end-to-end flows in both Java and Python.
 - Try the [Process transient simulation guide](process_transient_simulation_guide.md) and [Process simulation using NeqSim](process_simulation.md) for hands-on modeling patterns.
-- Explore extended topics such as [Process automation and logic implementation summary](../process_logic_implementation_summary.md) and integration tests in [Test overview](test-overview.md).
+- Explore extended topics such as [Process automation and logic implementation summary](../simulation/process_logic_implementation_summary.md) and integration tests in [Test overview](test-overview.md).

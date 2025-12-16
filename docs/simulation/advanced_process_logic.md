@@ -375,9 +375,9 @@ All features are designed for real-time performance with minimal overhead.
 ## See Also
 
 - [Process Logic Framework](process_logic_framework.md) - Base architecture
-- [SIS Logic Implementation](sis_logic_implementation.md) - Safety systems
-- [HIPPS Safety Logic](hipps_safety_logic.md) - Pressure protection
-- [Layered Safety Architecture](layered_safety_architecture.md) - Defense in depth
+- [SIS Logic Implementation](../safety/sis_logic_implementation.md) - Safety systems
+- [HIPPS Safety Logic](../safety/hipps_safety_logic.md) - Pressure protection
+- [Layered Safety Architecture](../safety/layered_safety_architecture.md) - Defense in depth
 - [Advanced Process Logic Example](../src/main/java/neqsim/process/util/example/AdvancedProcessLogicExample.java) - Complete code example
 
 ---

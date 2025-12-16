@@ -227,6 +227,6 @@ for (double t = 0; t < 3600; t += 1.0) {
 ## Related Documentation
 
 - [Process Package](../README.md) - Process simulation overview
-- [ESD Blowdown System](../../ESD_BLOWDOWN_SYSTEM.md) - Detailed ESD guide
-- [HIPPS Summary](../../HIPPS_SUMMARY.md) - HIPPS overview
-- [PSV Dynamic Sizing](../../psv_dynamic_sizing_example.md) - PSV sizing example
+- [ESD Blowdown System](../../safety/ESD_BLOWDOWN_SYSTEM.md) - Detailed ESD guide
+- [HIPPS Summary](../../safety/HIPPS_SUMMARY.md) - HIPPS overview
+- [PSV Dynamic Sizing](../../safety/psv_dynamic_sizing_example.md) - PSV sizing example

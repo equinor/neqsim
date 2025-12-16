@@ -196,5 +196,5 @@ See `DifferentiableFlashTest.java` for validation tests.
 
 ## See Also
 
-- [AI Platform Integration Guide](ai_platform_integration.md) for ML workflows
-- [MPC Integration Guide](mpc_integration.md) for model predictive control
+- [AI Platform Integration Guide](../integration/ai_platform_integration.md) for ML workflows
+- [MPC Integration Guide](../integration/mpc_integration.md) for model predictive control

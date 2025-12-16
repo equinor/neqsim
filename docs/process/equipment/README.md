@@ -18,6 +18,8 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 | Separators | [separators.md](separators.md) | 2-phase and 3-phase separators, scrubbers |
 | Distillation | [distillation.md](distillation.md) | Distillation columns |
 | Absorbers | [absorbers.md](absorbers.md) | Absorption/stripping columns |
+| Membranes | [membranes.md](membranes.md) | Membrane separation units |
+| Filters | [filters.md](filters.md) | Particulate and charcoal filters |
 
 ### Heat Transfer Equipment
 
@@ -44,6 +46,19 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 | Equipment | File | Description |
 |-----------|------|-------------|
 | Reactors | [reactors.md](reactors.md) | CSTR, PFR, equilibrium reactors |
+| Electrolyzers | [electrolyzers.md](electrolyzers.md) | Water and CO₂ electrolysis |
+
+### Ejectors
+
+| Equipment | File | Description |
+|-----------|------|-------------|
+| Ejectors | [ejectors.md](ejectors.md) | Steam and gas ejectors |
+
+### Safety Equipment
+
+| Equipment | File | Description |
+|-----------|------|-------------|
+| Flares | [flares.md](flares.md) | Flare systems and combustion |
 
 ### Well/Reservoir
 
@@ -62,6 +77,14 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 | Equipment | File | Description |
 |-----------|------|-------------|
 | Tanks | [tanks.md](tanks.md) | Storage tanks, LNG boil-off |
+
+### Utility Equipment
+
+| Equipment | File | Description |
+|-----------|------|-------------|
+| Adjusters | [util/adjusters.md](util/adjusters.md) | Variable adjustment to meet specs |
+| Recycles | [util/recycles.md](util/recycles.md) | Recycle stream handling |
+| Calculators | [util/calculators.md](util/calculators.md) | Custom calculations and setters |
 
 ---
 
@@ -108,11 +131,42 @@ All equipment inherits from `ProcessEquipmentBaseClass`:
 | `getOutletStream()` | Get outlet stream |
 | `getPressure()` | Get operating pressure |
 | `getTemperature()` | Get operating temperature |
+| `getMechanicalDesign()` | Get mechanical design object |
+| `needRecalculation()` | Check if recalculation needed |
+
+---
+
+## Equipment Inheritance
+
+```
+ProcessEquipmentInterface
+    │
+    └── ProcessEquipmentBaseClass
+            │
+            ├── TwoPortEquipment (inlet/outlet pattern)
+            │       ├── Heater, Cooler
+            │       ├── Compressor, Pump, Expander
+            │       ├── ThrottlingValve
+            │       └── ...
+            │
+            ├── Separator (multi-outlet)
+            │       ├── ThreePhaseSeparator
+            │       ├── GasScrubber
+            │       └── ...
+            │
+            ├── Mixer (multi-inlet)
+            ├── Splitter (multi-outlet)
+            │
+            └── DistillationColumn
+```
 
 ---
 
 ## Related Documentation
 
 - [Process Package](../README.md) - Package overview
-- [ProcessSystem](../process_system.md) - Process system guide
+- [ProcessSystem](../processmodel/process_system.md) - Process system guide
+- [ProcessModule](../processmodel/process_module.md) - Modular process units
 - [Controllers](../controllers.md) - Control equipment
+- [Safety Systems](../safety/README.md) - Safety equipment
+

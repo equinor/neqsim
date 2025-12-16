@@ -302,4 +302,4 @@ System.out.println("Water cut: " + (waterCut * 100) + " %");
 - [Process Package](../README.md) - Package overview
 - [Valves](valves.md) - Choke valve details
 - [Separators](separators.md) - Production separators
-- [Well Simulation Guide](../../well_simulation_guide.md) - Detailed well modeling
+- [Well Simulation Guide](../../simulation/well_simulation_guide.md) - Detailed well modeling

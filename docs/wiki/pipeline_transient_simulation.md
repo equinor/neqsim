@@ -628,4 +628,4 @@ For detailed implementation, see [Water Hammer Implementation Guide](water_hamme
 - [Pipeline Pressure Drop Overview](pipeline_pressure_drop.md)
 - [Beggs & Brill Correlation](beggs_and_brill_correlation.md)
 - [Water Hammer Implementation Guide](water_hammer_implementation.md)
-- [Process Simulation Basics](../process_calculator.md)
+- [Process Simulation Basics](../simulation/process_calculator.md)

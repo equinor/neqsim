@@ -81,7 +81,6 @@ System.out.println("Compressibility: " + gas.getZ());
 docs/
 ├── README.md                      # This file - main index
 ├── modules.md                     # Module overview
-├── DEVELOPER_SETUP.md             # Development environment setup
 │
 ├── thermo/                        # Thermodynamic package
 │   ├── README.md                  # Package overview
@@ -89,46 +88,18 @@ docs/
 │   ├── phase/                     # Phase modeling
 │   ├── component/                 # Component properties
 │   ├── mixingrule/                # Mixing rules
-│   ├── characterization/          # Plus fraction handling
-│   ├── fluid_creation_guide.md
-│   ├── mixing_rules_guide.md
-│   ├── component_database_guide.md
-│   ├── inter_table_guide.md
-│   ├── flash_calculations_guide.md
-│   ├── mathematical_models.md
-│   ├── gerg2008_eoscg.md
-│   └── pvt_fluid_characterization.md
+│   └── characterization/          # Plus fraction handling
 │
 ├── thermodynamicoperations/       # Flash operations
 │   └── README.md
 │
 ├── physical_properties/           # Transport properties
-│   ├── README.md
-│   ├── viscosity_models.md
-│   ├── thermal_conductivity_models.md
-│   ├── diffusivity_models.md
-│   ├── interfacial_properties.md
-│   └── density_models.md
+│   └── README.md
 │
 ├── process/                       # Process simulation
 │   ├── README.md                  # Package overview
-│   ├── controllers.md             # Controllers and adjusters
 │   ├── equipment/                 # Equipment documentation
-│   │   ├── README.md              # Equipment index
-│   │   ├── streams.md
-│   │   ├── separators.md
-│   │   ├── heat_exchangers.md
-│   │   ├── compressors.md
-│   │   ├── pumps.md
-│   │   ├── expanders.md
-│   │   ├── valves.md
-│   │   ├── distillation.md
-│   │   ├── absorbers.md
-│   │   ├── reactors.md
-│   │   ├── wells.md
-│   │   ├── tanks.md
-│   │   ├── pipelines.md
-│   │   └── mixers_splitters.md
+│   ├── processmodel/              # ProcessSystem, modules
 │   └── safety/                    # Safety systems
 │
 ├── fluidmechanics/               # Pipe flow
@@ -144,25 +115,44 @@ docs/
 │   └── README.md
 │
 ├── standards/                    # Quality standards
-│   ├── README.md
-│   ├── iso6976_calorific_values.md
-│   ├── iso6578_lng_density.md
-│   ├── iso15403_cng_quality.md
-│   ├── dew_point_standards.md
-│   ├── astm_d6377_rvp.md
-│   └── sales_contracts.md
+│   └── README.md
 │
 ├── statistics/                   # Statistics package
-│   ├── README.md
-│   ├── parameter_fitting.md
-│   ├── monte_carlo_simulation.md
-│   └── data_analysis.md
+│   └── README.md
 │
 ├── util/                         # Utilities
 │   └── README.md
 │
 ├── mathlib/                      # Math utilities
 │   └── README.md
+│
+├── safety/                       # Safety system guides
+│   ├── ESD_BLOWDOWN_SYSTEM.md
+│   ├── HIPPS_SUMMARY.md
+│   ├── hipps_implementation.md
+│   ├── sis_logic_implementation.md
+│   ├── fire_blowdown_capabilities.md
+│   ├── psv_dynamic_sizing_example.md
+│   └── alarm_system_guide.md
+│
+├── simulation/                   # Process simulation guides
+│   ├── advanced_process_logic.md
+│   ├── graph_based_process_simulation.md
+│   ├── parallel_process_simulation.md
+│   ├── recycle_acceleration_guide.md
+│   ├── well_simulation_guide.md
+│   └── turboexpander_compressor_model.md
+│
+├── integration/                  # Integration guides
+│   ├── ai_platform_integration.md
+│   ├── ml_integration.md
+│   ├── mpc_integration.md
+│   ├── REAL_TIME_INTEGRATION_GUIDE.md
+│   └── dexpi-reader.md
+│
+├── development/                  # Developer guides
+│   ├── DEVELOPER_SETUP.md
+│   └── contributing-structure.md
 │
 ├── examples/                     # Code examples
 │   └── ...
@@ -181,72 +171,79 @@ Specialized guides for advanced features and use cases:
 
 | Guide | Description |
 |-------|-------------|
-| [ESD_BLOWDOWN_SYSTEM.md](ESD_BLOWDOWN_SYSTEM.md) | Emergency shutdown and blowdown systems |
-| [HIPPS_SUMMARY.md](HIPPS_SUMMARY.md) | High Integrity Pressure Protection Systems |
-| [hipps_implementation.md](hipps_implementation.md) | HIPPS implementation details |
-| [hipps_safety_logic.md](hipps_safety_logic.md) | HIPPS safety logic |
-| [INTEGRATED_SAFETY_SYSTEMS.md](INTEGRATED_SAFETY_SYSTEMS.md) | Integrated safety systems overview |
-| [layered_safety_architecture.md](layered_safety_architecture.md) | Layered safety architecture |
-| [sis_logic_implementation.md](sis_logic_implementation.md) | SIS logic implementation |
-| [SAFETY_SIMULATION_ROADMAP.md](SAFETY_SIMULATION_ROADMAP.md) | Safety simulation roadmap |
+| [ESD_BLOWDOWN_SYSTEM.md](safety/ESD_BLOWDOWN_SYSTEM.md) | Emergency shutdown and blowdown systems |
+| [HIPPS_SUMMARY.md](safety/HIPPS_SUMMARY.md) | High Integrity Pressure Protection Systems |
+| [hipps_implementation.md](safety/hipps_implementation.md) | HIPPS implementation details |
+| [hipps_safety_logic.md](safety/hipps_safety_logic.md) | HIPPS safety logic |
+| [INTEGRATED_SAFETY_SYSTEMS.md](safety/INTEGRATED_SAFETY_SYSTEMS.md) | Integrated safety systems overview |
+| [layered_safety_architecture.md](safety/layered_safety_architecture.md) | Layered safety architecture |
+| [sis_logic_implementation.md](safety/sis_logic_implementation.md) | SIS logic implementation |
+| [SAFETY_SIMULATION_ROADMAP.md](safety/SAFETY_SIMULATION_ROADMAP.md) | Safety simulation roadmap |
 
 ### Process Logic and Control
 
 | Guide | Description |
 |-------|-------------|
-| [process_logic_framework.md](process_logic_framework.md) | Process logic framework |
-| [ProcessLogicEnhancements.md](ProcessLogicEnhancements.md) | Logic enhancements |
-| [advanced_process_logic.md](advanced_process_logic.md) | Advanced process logic |
-| [alarm_system_guide.md](alarm_system_guide.md) | Alarm system guide |
-| [alarm_triggered_logic_example.md](alarm_triggered_logic_example.md) | Alarm-triggered logic |
-| [mpc_integration.md](mpc_integration.md) | MPC integration |
+| [process_logic_framework.md](simulation/process_logic_framework.md) | Process logic framework |
+| [ProcessLogicEnhancements.md](simulation/ProcessLogicEnhancements.md) | Logic enhancements |
+| [advanced_process_logic.md](simulation/advanced_process_logic.md) | Advanced process logic |
+| [alarm_system_guide.md](safety/alarm_system_guide.md) | Alarm system guide |
+| [alarm_triggered_logic_example.md](safety/alarm_triggered_logic_example.md) | Alarm-triggered logic |
+| [mpc_integration.md](integration/mpc_integration.md) | MPC integration |
 
 ### Dynamic Simulation
 
 | Guide | Description |
 |-------|-------------|
-| [fire_blowdown_capabilities.md](fire_blowdown_capabilities.md) | Fire and blowdown simulation |
-| [fire_heat_transfer_enhancements.md](fire_heat_transfer_enhancements.md) | Fire heat transfer |
-| [psv_dynamic_sizing_example.md](psv_dynamic_sizing_example.md) | PSV dynamic sizing |
-| [rupture_disk_dynamic_behavior.md](rupture_disk_dynamic_behavior.md) | Rupture disk behavior |
-| [turboexpander_compressor_model.md](turboexpander_compressor_model.md) | Turboexpander modeling |
+| [fire_blowdown_capabilities.md](safety/fire_blowdown_capabilities.md) | Fire and blowdown simulation |
+| [fire_heat_transfer_enhancements.md](safety/fire_heat_transfer_enhancements.md) | Fire heat transfer |
+| [psv_dynamic_sizing_example.md](safety/psv_dynamic_sizing_example.md) | PSV dynamic sizing |
+| [rupture_disk_dynamic_behavior.md](safety/rupture_disk_dynamic_behavior.md) | Rupture disk behavior |
+| [turboexpander_compressor_model.md](simulation/turboexpander_compressor_model.md) | Turboexpander modeling |
 
 ### Well and Reservoir
 
 | Guide | Description |
 |-------|-------------|
-| [well_simulation_guide.md](well_simulation_guide.md) | Well simulation guide |
-| [well_and_choke_simulation.md](well_and_choke_simulation.md) | Choke simulation |
-| [field_development_engine.md](field_development_engine.md) | Field development |
+| [well_simulation_guide.md](simulation/well_simulation_guide.md) | Well simulation guide |
+| [well_and_choke_simulation.md](simulation/well_and_choke_simulation.md) | Choke simulation |
+| [field_development_engine.md](simulation/field_development_engine.md) | Field development |
 
 ### PVT and Characterization
 
 | Guide | Description |
 |-------|-------------|
-| [pvt_workflow.md](pvt_workflow.md) | PVT workflow |
-| [blackoil_pvt_export.md](blackoil_pvt_export.md) | Black oil PVT export |
-| [whitson_pvt_reader.md](whitson_pvt_reader.md) | Whitson PVT reader |
-| [fluid_characterization_mathematics.md](fluid_characterization_mathematics.md) | Characterization math |
+| [pvt_workflow.md](pvtsimulation/pvt_workflow.md) | PVT workflow |
+| [blackoil_pvt_export.md](pvtsimulation/blackoil_pvt_export.md) | Black oil PVT export |
+| [whitson_pvt_reader.md](pvtsimulation/whitson_pvt_reader.md) | Whitson PVT reader |
+| [fluid_characterization_mathematics.md](pvtsimulation/fluid_characterization_mathematics.md) | Characterization math |
 
 ### Advanced Features
 
 | Guide | Description |
 |-------|-------------|
-| [parallel_process_simulation.md](parallel_process_simulation.md) | Parallel simulation |
-| [recycle_acceleration_guide.md](recycle_acceleration_guide.md) | Recycle convergence |
-| [graph_based_process_simulation.md](graph_based_process_simulation.md) | Graph-based simulation |
-| [differentiable_thermodynamics.md](differentiable_thermodynamics.md) | Auto-differentiation |
-| [equipment_factory.md](equipment_factory.md) | Equipment factory |
-| [dexpi-reader.md](dexpi-reader.md) | DEXPI P&ID reader |
+| [parallel_process_simulation.md](simulation/parallel_process_simulation.md) | Parallel simulation |
+| [recycle_acceleration_guide.md](simulation/recycle_acceleration_guide.md) | Recycle convergence |
+| [graph_based_process_simulation.md](simulation/graph_based_process_simulation.md) | Graph-based simulation |
+| [differentiable_thermodynamics.md](simulation/differentiable_thermodynamics.md) | Auto-differentiation |
+| [equipment_factory.md](simulation/equipment_factory.md) | Equipment factory |
+| [dexpi-reader.md](integration/dexpi-reader.md) | DEXPI P&ID reader |
 
 ### Integration
 
 | Guide | Description |
 |-------|-------------|
-| [ai_platform_integration.md](ai_platform_integration.md) | AI/ML integration |
-| [ml_integration.md](ml_integration.md) | Machine learning |
-| [REAL_TIME_INTEGRATION_GUIDE.md](REAL_TIME_INTEGRATION_GUIDE.md) | Real-time systems |
-| [QRA_INTEGRATION_GUIDE.md](QRA_INTEGRATION_GUIDE.md) | QRA integration |
+| [ai_platform_integration.md](integration/ai_platform_integration.md) | AI/ML integration |
+| [ml_integration.md](integration/ml_integration.md) | Machine learning |
+| [REAL_TIME_INTEGRATION_GUIDE.md](integration/REAL_TIME_INTEGRATION_GUIDE.md) | Real-time systems |
+| [QRA_INTEGRATION_GUIDE.md](integration/QRA_INTEGRATION_GUIDE.md) | QRA integration |
+
+### Development
+
+| Guide | Description |
+|-------|-------------|
+| [DEVELOPER_SETUP.md](development/DEVELOPER_SETUP.md) | Development environment setup |
+| [contributing-structure.md](development/contributing-structure.md) | Contributing guidelines |
 
 ---
 

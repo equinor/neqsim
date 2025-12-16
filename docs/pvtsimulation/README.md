@@ -414,6 +414,6 @@ System.out.println("Oil density at STC: " + sep.getOilDensity() + " kg/m3");
 
 ## Related Documentation
 
-- [PVT Workflow](../pvt_workflow.md) - End-to-end PVT workflow
+- [PVT Workflow](pvt_workflow.md) - End-to-end PVT workflow
 - [Fluid Characterization](../thermo/pvt_fluid_characterization.md) - Heavy end characterization
 - [Black Oil Package](../blackoil/README.md) - Black oil model export

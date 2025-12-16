@@ -463,7 +463,7 @@ All implemented safety systems comply with IEC 61511:
 
 - [HIPPS Safety Logic](hipps_safety_logic.md) - Detailed HIPPS documentation
 - [SIS Logic Implementation](sis_logic_implementation.md) - Fire and gas detection
-- [Process Logic Framework](process_logic_framework.md) - Base architecture
+- [Process Logic Framework](../simulation/process_logic_framework.md) - Base architecture
 - [ESD Blowdown System](ESD_BLOWDOWN_SYSTEM.md) - Emergency shutdown details
 - [HIPPS Summary](HIPPS_SUMMARY.md) - High-level overview
 - [HIPPS Implementation](hipps_implementation.md) - Implementation details

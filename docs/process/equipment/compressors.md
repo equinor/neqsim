@@ -106,9 +106,9 @@ Where:
 double[] speeds = {8000, 9000, 10000, 11000};  // RPM
 
 // For each speed: arrays of flow, head, efficiency
-double[][] flows = {{...}, {...}, {...}, {...}};
-double[][] heads = {{...}, {...}, {...}, {...}};
-double[][] efficiencies = {{...}, {...}, {...}, {...}};
+double[][] flows = { {flow1_curve1, flow2_curve1}, {flow1_curve2, flow2_curve2}, ... };
+double[][] heads = { {head1_curve1, head2_curve1}, {head1_curve2, head2_curve2}, ... };
+double[][] efficiencies = { {eff1_curve1, eff2_curve1}, {eff1_curve2, eff2_curve2}, ... };
 
 CompressorChartInterface chart = compressor.getCompressorChart();
 chart.setSpeedCurves(speeds, flows, heads, efficiencies);

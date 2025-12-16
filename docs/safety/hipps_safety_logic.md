@@ -393,7 +393,7 @@ Result:
 
 ## See Also
 
-- [Process Logic Framework](process_logic_framework.md) - Base architecture
+- [Process Logic Framework](../simulation/process_logic_framework.md) - Base architecture
 - [SIS Logic Implementation](sis_logic_implementation.md) - Fire and gas detection
 - [ESD Logic](ESD_BLOWDOWN_SYSTEM.md) - Emergency shutdown systems
 - [HIPPS Summary](HIPPS_SUMMARY.md) - High-level overview
