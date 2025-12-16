@@ -239,7 +239,7 @@ public class TBPfractionModelTest {
 
     System.out.println("\n=== TBP Model Comparison for C10 (MW=142 g/mol, SG=0.78) ===");
     System.out.println(String.format("%-15s %10s %10s %10s", "Model", "Tc (K)", "Pc (bar)", "ω"));
-    System.out.println("-".repeat(50));
+    System.out.println("--------------------------------------------------");
 
     for (String modelName : allModels) {
       SystemInterface thermoSystem = new SystemSrkEos(298.0, 10.0);
