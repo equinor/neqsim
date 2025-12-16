@@ -1,12 +1,19 @@
 # Fluid Mechanics Package
 
-The `fluidmechanics` package provides models for pipeline flow, pressure drop calculations, and transient flow simulation.
+The `fluidmechanics` package provides models for pipeline flow, pressure drop calculations, and transient flow simulation with rigorous non-equilibrium thermodynamic calculations for mass and heat transfer.
 
 ## Table of Contents
 - [Overview](#overview)
+- [Theoretical Foundation](#theoretical-foundation)
 - [Package Structure](#package-structure)
 - [Flow Systems](#flow-systems)
 - [Flow Nodes](#flow-nodes)
+- [Non-Equilibrium Modeling](#non-equilibrium-modeling)
+- [Mass Transfer Models](#mass-transfer-models)
+- [Heat Transfer Models](#heat-transfer-models)
+- [Two-Phase Mass Transfer](#two-phase-mass-transfer)
+- [Two-Phase Heat Transfer](#two-phase-heat-transfer)
+- [Reactive Mass Transfer](#reactive-mass-transfer)
 - [Usage Examples](#usage-examples)
 
 ---
@@ -20,7 +27,48 @@ The `fluidmechanics` package provides models for pipeline flow, pressure drop ca
 - Pressure drop calculations
 - Transient flow simulation
 - Flow regime identification
-- Heat transfer in pipelines
+- Non-equilibrium heat and mass transfer
+- Multicomponent diffusion modeling
+- Reactive absorption (e.g., CO₂ into amine solutions)
+
+---
+
+## Theoretical Foundation
+
+The fluid mechanics module in NeqSim is based on the work presented in:
+
+> **Solbraa, E. (2002).** *Equilibrium and Non-Equilibrium Thermodynamics of Natural Gas Processing.* 
+> Dr.ing. thesis, Norwegian University of Science and Technology (NTNU).
+> ISBN: 978-82-471-5541-7. [Available at NVA](https://hdl.handle.net/11250/231326)
+
+The key contributions from this work include:
+
+1. **Two-fluid model** for gas-liquid pipe flow with interphase mass and heat transfer
+2. **Multicomponent mass transfer** based on the Maxwell-Stefan equations
+3. **Film theory** with thermodynamic and finite flux corrections
+4. **Reactive mass transfer** with enhancement factors for chemical absorption
+5. **High-pressure effects** on mass transfer coefficients and equilibrium
+
+### Governing Equations
+
+The two-phase flow is modeled using separate conservation equations for each phase:
+
+**Mass Conservation (per component i):**
+$$\frac{\partial (\alpha_k \rho_k x_{i,k})}{\partial t} + \frac{\partial (\alpha_k \rho_k x_{i,k} v_k)}{\partial z} = \dot{m}_{i,k}$$
+
+**Momentum Conservation:**
+$$\frac{\partial (\alpha_k \rho_k v_k)}{\partial t} + \frac{\partial (\alpha_k \rho_k v_k^2)}{\partial z} = -\alpha_k \frac{\partial P}{\partial z} - F_{w,k} - F_{i,k} + \alpha_k \rho_k g \sin\theta$$
+
+**Energy Conservation:**
+$$\frac{\partial (\alpha_k \rho_k h_k)}{\partial t} + \frac{\partial (\alpha_k \rho_k h_k v_k)}{\partial z} = \dot{Q}_{w,k} + \dot{Q}_{i,k}$$
+
+Where:
+- $\alpha_k$ = volume fraction of phase k
+- $\rho_k$ = density
+- $v_k$ = velocity
+- $\dot{m}_{i,k}$ = interphase mass transfer rate of component i
+- $F_{w,k}$, $F_{i,k}$ = wall and interphase friction
+- $\dot{Q}_{w,k}$, $\dot{Q}_{i,k}$ = wall and interphase heat transfer
 
 ---
 
@@ -196,6 +244,310 @@ Flow nodes discretize the pipe and calculate local conditions.
 | Droplet/Mist | `DropletFlow` | Liquid droplets in gas |
 | Slug | `SlugFlow` | Intermittent gas-liquid slugs |
 | Bubble | `BubbleFlow` | Gas bubbles in liquid |
+
+---
+
+## Non-Equilibrium Modeling
+
+NeqSim distinguishes between **equilibrium** and **non-equilibrium** calculations at the gas-liquid interface. In equilibrium calculations, the phases are assumed to be at thermodynamic equilibrium at the interface. In non-equilibrium calculations, finite mass and heat transfer rates are considered.
+
+### Architecture
+
+```
+FluidBoundary (abstract)
+├── EquilibriumFluidBoundary       # Interface at equilibrium
+└── NonEquilibriumFluidBoundary    # Finite transfer rates
+    └── KrishnaStandartFilmModel   # Film theory implementation
+        └── ReactiveKrishnaStandartFilmModel  # With chemical reactions
+```
+
+### Equilibrium vs Non-Equilibrium
+
+| Aspect | Equilibrium | Non-Equilibrium |
+|--------|-------------|-----------------|
+| Interface conditions | Thermodynamic equilibrium | Finite driving forces |
+| Mass transfer | Instantaneous | Rate-limited |
+| Heat transfer | Instantaneous | Rate-limited |
+| Computation | Simpler | More rigorous |
+| Applications | Long residence times | Short contact times, absorption |
+
+### Enabling Non-Equilibrium Calculations
+
+```java
+// Get the flow node
+FlowNodeInterface node = flowSystem.getNode(i);
+
+// Enable mass and heat transfer calculations
+node.getFluidBoundary().setMassTransferCalc(true);
+node.getFluidBoundary().setHeatTransferCalc(true);
+
+// Enable thermodynamic corrections (activity coefficients)
+node.getFluidBoundary().setThermodynamicCorrections(0, true);  // Gas phase
+node.getFluidBoundary().setThermodynamicCorrections(1, true);  // Liquid phase
+
+// Enable finite flux corrections (Stefan flow)
+node.getFluidBoundary().setFiniteFluxCorrection(0, true);
+node.getFluidBoundary().setFiniteFluxCorrection(1, true);
+```
+
+---
+
+## Mass Transfer Models
+
+### Film Theory
+
+The mass transfer in NeqSim is based on the **film theory** with multicomponent extensions. The key classes are:
+
+| Class | Description |
+|-------|-------------|
+| `FluidBoundary` | Abstract base for interphase calculations |
+| `NonEquilibriumFluidBoundary` | Non-equilibrium mass/heat transfer |
+| `KrishnaStandartFilmModel` | Krishna-Standart multicomponent model |
+| `ReactiveKrishnaStandartFilmModel` | With chemical reaction enhancement |
+
+### Single-Phase (Wall) Mass Transfer
+
+For mass transfer from a flowing fluid to a wall (e.g., pipe wall, packing surface):
+
+$$Sh = \frac{k_c \cdot d}{D_{AB}} = f(Re, Sc)$$
+
+Where:
+- $Sh$ = Sherwood number
+- $k_c$ = mass transfer coefficient (m/s)
+- $d$ = characteristic length (m)
+- $D_{AB}$ = binary diffusion coefficient (m²/s)
+- $Sc = \nu / D_{AB}$ = Schmidt number
+
+**Correlations implemented:**
+
+| Flow Regime | Correlation | Range |
+|-------------|-------------|-------|
+| Laminar | $Sh = 3.66$ | $Re < 2300$ |
+| Turbulent | $Sh = 0.023 \cdot Re^{0.83} \cdot Sc^{0.33}$ | $Re > 10000$ |
+| Transition | Interpolation | $2300 < Re < 10000$ |
+
+---
+
+## Heat Transfer Models
+
+### Single-Phase Heat Transfer
+
+Heat transfer to/from pipe walls follows analogous correlations to mass transfer:
+
+$$Nu = \frac{h \cdot d}{k} = f(Re, Pr)$$
+
+Where:
+- $Nu$ = Nusselt number
+- $h$ = heat transfer coefficient (W/m²·K)
+- $k$ = thermal conductivity (W/m·K)
+- $Pr = \mu \cdot c_p / k$ = Prandtl number
+
+**Correlations implemented:**
+
+| Flow Regime | Correlation |
+|-------------|-------------|
+| Laminar | $Nu = 3.66$ (constant wall temp) |
+| Turbulent | Dittus-Boelter: $Nu = 0.023 \cdot Re^{0.8} \cdot Pr^{n}$ |
+| Transition | Gnielinski correlation |
+
+Where $n = 0.4$ for heating and $n = 0.3$ for cooling.
+
+### Heat Transfer with Phase Change
+
+When mass transfer occurs, the heat transfer is coupled:
+
+$$\dot{Q}_i = h_{eff} \cdot A \cdot (T_{bulk} - T_i) + \sum_j \dot{n}_j \cdot \Delta H_{vap,j}$$
+
+The effective heat transfer coefficient accounts for the latent heat of evaporation/condensation.
+
+---
+
+## Two-Phase Mass Transfer
+
+### Multicomponent Maxwell-Stefan Model
+
+For multicomponent systems, the mass transfer is described by the Maxwell-Stefan equations rather than Fick's law. The molar flux of component $i$ relative to the molar average velocity is:
+
+$$-c_t \nabla x_i = \sum_{j=1, j \neq i}^{n} \frac{x_i N_j - x_j N_i}{c_t D_{ij}}$$
+
+In NeqSim, this is solved using the **Krishna-Standart film model**:
+
+### Binary Mass Transfer Coefficients
+
+The binary mass transfer coefficients are calculated from:
+
+$$k_{ij} = \frac{Sh \cdot D_{ij}}{d}$$
+
+Where $D_{ij}$ is the binary diffusion coefficient calculated from:
+- **Gas phase**: Chapman-Enskog theory
+- **Liquid phase**: Wilke-Chang correlation
+
+### Mass Transfer Coefficient Matrix
+
+For multicomponent systems, the mass transfer coefficients form a matrix $[k]$:
+
+```java
+// In KrishnaStandartFilmModel
+public double calcMassTransferCoefficients(int phaseNum) {
+    int n = getNumberOfComponents() - 1;
+    
+    for (int i = 0; i < n; i++) {
+        double tempVar = 0;
+        for (int j = 0; j < getNumberOfComponents(); j++) {
+            if (i != j) {
+                tempVar += x[j] / k_binary[i][j];
+            }
+            if (j < n) {
+                K[i][j] = -x[i] * (1.0/k_binary[i][j] - 1.0/k_binary[i][n]);
+            }
+        }
+        K[i][i] = tempVar + x[i] / k_binary[i][n];
+    }
+    return K.inverse();  // [k] matrix
+}
+```
+
+### Interphase Mass Transfer
+
+The total molar flux vector is:
+
+$$\mathbf{N} = c_t [\mathbf{k}] (\mathbf{x}_{bulk} - \mathbf{x}_{interface})$$
+
+With corrections for:
+
+1. **Thermodynamic non-ideality**: Activity coefficient gradients
+2. **Finite flux (Stefan flow)**: High mass transfer rates
+3. **Film thickness variations**: Due to flow regime
+
+### Schmidt Number
+
+The Schmidt number characterizes the ratio of momentum to mass diffusivity:
+
+$$Sc_{ij} = \frac{\nu}{D_{ij}}$$
+
+```java
+// Calculation in KrishnaStandartFilmModel
+for (int i = 0; i < nComponents; i++) {
+    for (int j = 0; j < nComponents; j++) {
+        binarySchmidtNumber[phase][i][j] = 
+            kinematicViscosity / diffusionCoefficient[i][j];
+    }
+}
+```
+
+### Interphase Transport Coefficients
+
+The interphase transport coefficients depend on the flow regime:
+
+| Flow Regime | Gas-side $k_G$ | Liquid-side $k_L$ |
+|-------------|----------------|-------------------|
+| Stratified | Smooth interface correlation | Penetration theory |
+| Annular | Film correlation | Film flow correlation |
+| Droplet | Droplet correlations | Internal circulation |
+| Bubble | External mass transfer | Higbie penetration |
+
+---
+
+## Two-Phase Heat Transfer
+
+### Interphase Heat Transfer
+
+Heat transfer between gas and liquid phases occurs at the interface:
+
+$$\dot{Q}_{GL} = h_{GL} \cdot A_i \cdot (T_G - T_L)$$
+
+Where $A_i$ is the interfacial area per unit volume.
+
+### Heat Transfer Coefficient Correlations
+
+The interphase heat transfer coefficient is related to mass transfer through the Chilton-Colburn analogy:
+
+$$\frac{h}{k_c \cdot \rho \cdot c_p} = \left(\frac{Sc}{Pr}\right)^{2/3}$$
+
+**Implemented correlations by flow regime:**
+
+| Flow Regime | Correlation Type |
+|-------------|------------------|
+| Stratified | Flat interface model |
+| Annular | Film evaporation/condensation |
+| Dispersed | Droplet/bubble heat transfer |
+
+### Coupling of Heat and Mass Transfer
+
+In non-equilibrium calculations, heat and mass transfer are coupled through:
+
+1. **Latent heat effects**: Evaporation/condensation carries enthalpy
+2. **Sensible heat**: Temperature gradients drive conduction
+3. **Dufour effect**: Mass flux induces heat flux (usually negligible)
+4. **Soret effect**: Temperature gradient induces mass flux (usually negligible)
+
+The interphase heat flux includes both contributions:
+
+$$\dot{Q}_i = h \cdot (T_{bulk} - T_i) + \sum_j N_j \cdot \bar{H}_j$$
+
+Where $\bar{H}_j$ is the partial molar enthalpy of component $j$.
+
+### Wall Heat Transfer in Two-Phase Flow
+
+For heat transfer to the pipe wall in two-phase flow:
+
+```java
+// Set overall heat transfer coefficient
+pipe.setOverallHeatTransferCoefficient(10.0);  // W/(m²·K)
+
+// Or calculate from resistances
+// 1/U = 1/h_inner + ln(r_o/r_i)/(2πkL) + 1/h_outer
+```
+
+---
+
+## Reactive Mass Transfer
+
+### Enhancement Factors
+
+For absorption with chemical reaction (e.g., CO₂ into amine solutions), the mass transfer is enhanced:
+
+$$N_{CO2} = E \cdot k_L \cdot (C_{CO2,i} - C_{CO2,bulk})$$
+
+Where $E$ is the enhancement factor.
+
+### Enhancement Factor Models
+
+| Model | Description | Application |
+|-------|-------------|-------------|
+| Film theory | $E = \sqrt{1 + Ha^2}$ | Fast reactions |
+| Penetration theory | Numerical solution | Moderate reactions |
+| Danckwerts | Pseudo-first order | Industrial absorbers |
+
+The Hatta number characterizes the reaction regime:
+
+$$Ha = \frac{\sqrt{k_{rxn} \cdot D_A}}{k_L}$$
+
+### Reactive Film Model
+
+```java
+// ReactiveKrishnaStandartFilmModel extends KrishnaStandartFilmModel
+
+// Enhancement factor calculation
+EnhancementFactor enhancement = new EnhancementFactor();
+double E = enhancement.calculate(hattaNumber, reactionOrder);
+
+// Apply to mass transfer
+double N_CO2 = E * k_L * (C_interface - C_bulk);
+```
+
+### CO₂-Amine Systems
+
+NeqSim includes specific models for CO₂ absorption into:
+- **MDEA** (methyldiethanolamine)
+- **MEA** (monoethanolamine)  
+- **DEA** (diethanolamine)
+- **Activated MDEA** (with piperazine)
+
+Reaction kinetics:
+$$r_{CO2} = k_2 \cdot [CO2] \cdot [Amine]$$
+
+With temperature-dependent rate constants from experimental data.
 
 ---
 
@@ -403,10 +755,33 @@ System.out.println("Flow velocity: " + gasFlow.getFlowVelocity() + " m/s");
 3. **Validate against correlations** for your specific application
 4. **Consider elevation profile** for long pipelines
 5. **Include heat transfer** for hot fluids or cold environments
+6. **Enable non-equilibrium** for absorption and short-contact processes
+7. **Use thermodynamic corrections** for non-ideal liquid phases
+
+---
+
+## References
+
+1. **Solbraa, E. (2002).** *Equilibrium and Non-Equilibrium Thermodynamics of Natural Gas Processing.* 
+   Dr.ing. thesis, NTNU. ISBN: 978-82-471-5541-7. 
+   [Available at NVA](https://hdl.handle.net/11250/231326)
+
+2. **Krishna, R., Standart, G.L. (1976).** Mass and energy transfer in multicomponent systems. 
+   *Chemical Engineering Communications*, 3(4-5), 201-275.
+
+3. **Taylor, R., Krishna, R. (1993).** *Multicomponent Mass Transfer*. Wiley.
+
+4. **Bird, R.B., Stewart, W.E., Lightfoot, E.N. (2002).** *Transport Phenomena*. 2nd ed. Wiley.
+
+5. **Danckwerts, P.V. (1970).** *Gas-Liquid Reactions*. McGraw-Hill.
 
 ---
 
 ## Related Documentation
 
-- [Process Pipeline Equipment](../process/README.md) - Pipeline in process simulation
-- [Physical Properties](../physical_properties/README.md) - Viscosity and density models
+- [Mass Transfer Modeling](mass_transfer.md) - Detailed multicomponent mass transfer models
+- [Heat Transfer Modeling](heat_transfer.md) - Detailed heat transfer correlations and models
+- [Process Pipeline Equipment](../process/equipment/pipelines.md) - Pipeline in process simulation
+- [Physical Properties](../physical_properties/README.md) - Viscosity, diffusivity, and density models
+- [Thermodynamics](../thermo/README.md) - Equations of state and phase equilibria
+- [Transient Pipeline Simulation](../wiki/pipeline_transient_simulation.md) - Dynamic pipeline modeling
