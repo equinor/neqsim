@@ -1,0 +1,112 @@
+/* NeqSim Documentation Custom Styles */
+
+/* Code block styling */
+.md-typeset code {
+  background-color: var(--md-code-bg-color);
+  border-radius: 0.2rem;
+  padding: 0 0.3em;
+}
+
+/* Improve table styling */
+.md-typeset table:not([class]) {
+  font-size: 0.85rem;
+  border: 1px solid var(--md-typeset-table-color);
+}
+
+.md-typeset table:not([class]) th {
+  background-color: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+  font-weight: 600;
+}
+
+/* Admonition custom colors for NeqSim */
+.md-typeset .admonition.neqsim,
+.md-typeset details.neqsim {
+  border-color: #1565c0;
+}
+
+.md-typeset .neqsim > .admonition-title,
+.md-typeset .neqsim > summary {
+  background-color: rgba(21, 101, 192, 0.1);
+}
+
+.md-typeset .neqsim > .admonition-title::before,
+.md-typeset .neqsim > summary::before {
+  background-color: #1565c0;
+}
+
+/* Improve navigation readability */
+.md-nav__link {
+  font-size: 0.75rem;
+}
+
+/* Hero section styling for homepage */
+.md-typeset .hero {
+  margin: 2rem 0;
+  padding: 2rem;
+  background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+  color: white;
+  border-radius: 0.5rem;
+}
+
+.md-typeset .hero h1 {
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.md-typeset .hero p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+}
+
+/* Feature grid */
+.md-typeset .feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.md-typeset .feature-card {
+  padding: 1.5rem;
+  border: 1px solid var(--md-typeset-table-color);
+  border-radius: 0.5rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.md-typeset .feature-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* API reference styling */
+.md-typeset .api-section {
+  border-left: 4px solid var(--md-primary-fg-color);
+  padding-left: 1rem;
+  margin: 1rem 0;
+}
+
+/* Equation styling */
+.md-typeset .arithmatex {
+  overflow-x: auto;
+  padding: 0.5rem 0;
+}
+
+/* Better code annotation */
+.md-typeset .md-annotation__index {
+  background-color: var(--md-primary-fg-color);
+}
+
+/* Responsive improvements */
+@media screen and (max-width: 76.1875em) {
+  .md-typeset .feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Print styles */
+@media print {
+  .md-typeset .admonition,
+  .md-typeset details {
+    page-break-inside: avoid;
+  }
+}
