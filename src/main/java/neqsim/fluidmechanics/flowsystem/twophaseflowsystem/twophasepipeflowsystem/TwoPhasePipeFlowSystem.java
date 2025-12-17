@@ -84,6 +84,12 @@ public class TwoPhasePipeFlowSystem
   /** Pipe inclination angle in radians (positive = upward flow). */
   private double inclination = 0.0;
 
+  // ==================== MASS TRANSFER MODE ====================
+
+  /** Mass transfer mode for non-equilibrium calculations. */
+  private neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode massTransferMode =
+      neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode.BIDIRECTIONAL;
+
   /**
    * <p>
    * Constructor for TwoPhasePipeFlowSystem.
@@ -192,6 +198,8 @@ public class TwoPhasePipeFlowSystem
     flowSolver =
         new neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver(
             this, getSystemLength(), this.getTotalNumberOfNodes(), false);
+    ((neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver) flowSolver)
+        .setMassTransferMode(massTransferMode);
     flowSolver.setSolverType(type);
     flowSolver.solveTDMA();
     calcIdentifier = id;
@@ -992,6 +1000,29 @@ public class TwoPhasePipeFlowSystem
    */
   public double getAmbientTemperature() {
     return ambientTemperature;
+  }
+
+  /**
+   * <p>
+   * Sets the mass transfer mode for non-equilibrium calculations.
+   * </p>
+   *
+   * @param mode the mass transfer mode to use
+   */
+  public void setMassTransferMode(
+      neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode mode) {
+    this.massTransferMode = mode;
+  }
+
+  /**
+   * <p>
+   * Gets the current mass transfer mode.
+   * </p>
+   *
+   * @return the current mass transfer mode
+   */
+  public neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode getMassTransferMode() {
+    return this.massTransferMode;
   }
 
   /**

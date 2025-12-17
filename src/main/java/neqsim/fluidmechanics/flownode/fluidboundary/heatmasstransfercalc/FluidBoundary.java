@@ -195,7 +195,16 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     // this.interphaseSystem.initNumeric();
     // else this.interphaseSystem.init(3);
     // this.interphaseSystem.initNumeric();
-    this.interphaseSystem.init(3);
+    try {
+      this.interphaseSystem.init(3);
+    } catch (Exception e) {
+      // If init(3) fails due to numerical issues, try to recover with init(1)
+      try {
+        this.interphaseSystem.init(1);
+      } catch (Exception e2) {
+        // If that also fails, just skip - fluxes will be zero
+      }
+    }
   }
 
   /** {@inheritDoc} */

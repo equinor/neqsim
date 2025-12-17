@@ -20,6 +20,22 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TwoPhaseFixedStaggeredGridSolver.class);
+
+  /**
+   * Mass transfer mode for non-equilibrium calculations.
+   */
+  public enum MassTransferMode {
+    /** Allow both dissolution (gas to liquid) and evaporation (liquid to gas). */
+    BIDIRECTIONAL,
+    /** Only allow dissolution (positive flux = gas to liquid). */
+    DISSOLUTION_ONLY,
+    /** Only allow evaporation (negative flux = liquid to gas). */
+    EVAPORATION_ONLY
+  }
+
+  /** Current mass transfer mode. */
+  private MassTransferMode massTransferMode = MassTransferMode.BIDIRECTIONAL;
+
   Matrix diffMatrix;
   double[][] dn;
   int iter = 0;
@@ -40,6 +56,24 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    * </p>
    */
   public TwoPhaseFixedStaggeredGridSolver() {}
+
+  /**
+   * Sets the mass transfer mode for non-equilibrium calculations.
+   *
+   * @param mode the mass transfer mode to use
+   */
+  public void setMassTransferMode(MassTransferMode mode) {
+    this.massTransferMode = mode;
+  }
+
+  /**
+   * Gets the current mass transfer mode.
+   *
+   * @return the current mass transfer mode
+   */
+  public MassTransferMode getMassTransferMode() {
+    return this.massTransferMode;
+  }
 
   /**
    * <p>
@@ -126,24 +160,189 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       // Re-initialize beta and x,y based on updated moles
       pipe.getNode(i).getBulkSystem().initBeta();
       pipe.getNode(i).getBulkSystem().init_x_y();
-      pipe.getNode(i).getBulkSystem().init(3);
+
+      // Save temperature before init(3) - init may reset temperature to system default
+      double savedGasTemp = pipe.getNode(i).getBulkSystem().getPhase(0).getTemperature();
+      double savedLiqTemp = pipe.getNode(i).getBulkSystem().getPhase(1).getTemperature();
+
+      try {
+        pipe.getNode(i).getBulkSystem().init(3);
+      } catch (Exception e) {
+        // If init fails, try with init(1) to re-establish thermodynamic equilibrium
+        pipe.getNode(i).getBulkSystem().init(1);
+      }
+
+      // Restore temperature after init - temperature must be propagated along pipe, not reset
+      pipe.getNode(i).getBulkSystem().getPhase(0).setTemperature(savedGasTemp);
+      pipe.getNode(i).getBulkSystem().getPhase(1).setTemperature(savedLiqTemp);
+
       pipe.getNode(i).initFlowCalc();
       pipe.getNode(i).calcFluxes();
 
-      double liquidHeatRate = pipe.getNode(i).getFluidBoundary().getInterphaseHeatFlux(1)
-          * pipe.getNode(i).getInterphaseContactArea()
-          * (pipe.getNode(i).getGeometry().getNodeLength() / pipe.getNode(i).getVelocity(1));
-      double gasHeatRate = -pipe.getNode(i).getFluidBoundary().getInterphaseHeatFlux(0)
-          * pipe.getNode(i).getInterphaseContactArea()
-          * (pipe.getNode(i).getGeometry().getNodeLength() / pipe.getNode(i).getVelocity(0));
+      // ========================================================================
+      // SEPARATE ENERGY EQUATIONS FOR GAS AND LIQUID PHASES
+      // ========================================================================
+      //
+      // For each phase, steady-state energy balance:
+      // ṁ_phase * Cp_phase * dT_phase = Q̇_interphase + Q̇_wall_phase
+      //
+      // IMPORTANT: Interphase heat transfer must conserve energy:
+      // Q̇_interphase_gas = -Q̇_interphase_liq (what leaves gas enters liquid)
+      //
+      // The interphase heat flux from FluidBoundary is calculated as:
+      // q = -h * (T_bulk - T_interface)
+      //
+      // For stability, we use the NET interphase heat rate (gas perspective):
+      // Q̇_interphase = q_gas * A_interface
+      // This heat LEAVES the gas phase and ENTERS the liquid phase.
+      //
+      // Wall heat transfer is FLOW REGIME DEPENDENT through getWallContactLength():
+      // - Stratified: Gas contacts upper wall, liquid contacts lower wall
+      // - Annular: Liquid film contacts entire wall, gas has no wall contact
+      // - Bubble: Liquid contacts entire wall
+      //
+      // ========================================================================
 
-      double liquid_dT = liquidHeatRate / pipe.getNode(i).getBulkSystem().getPhase(1).getCp();
-      double gas_dT = gasHeatRate / pipe.getNode(i).getBulkSystem().getPhase(0).getCp();
+      // --- Get node geometry ---
+      double nodeLength = pipe.getNode(i).getGeometry().getNodeLength();
+      double pipeArea = pipe.getNode(i).getGeometry().getArea();
 
-      pipe.getNode(i + 1).getBulkSystem().getPhase(0)
-          .setTemperature(pipe.getNode(i).getBulkSystem().getPhase(0).getTemperature() + gas_dT);
-      pipe.getNode(i + 1).getBulkSystem().getPhase(1)
-          .setTemperature(pipe.getNode(i).getBulkSystem().getPhase(1).getTemperature() + liquid_dT);
+      // --- Get phase velocities ---
+      double gasVelocity = Math.max(pipe.getNode(i).getVelocity(0), 1e-10);
+      double liquidVelocity = Math.max(pipe.getNode(i).getVelocity(1), 1e-10);
+
+      // --- Get phase temperatures ---
+      double gasTemp = pipe.getNode(i).getBulkSystem().getPhase(0).getTemperature();
+      double liquidTemp = pipe.getNode(i).getBulkSystem().getPhase(1).getTemperature();
+
+      // --- Wall heat transfer parameters ---
+      double wallHeatCoeff = pipe.getNode(i).getGeometry().getWallHeatTransferCoefficient();
+      double ambientTemp =
+          pipe.getNode(i).getGeometry().getSurroundingEnvironment().getTemperature();
+
+      // --- Calculate mass flow rates and thermal capacities ---
+      double gasHoldup = 1.0 - pipe.getNode(i).getBulkSystem().getPhase(1).getBeta()
+          * pipe.getNode(i).getBulkSystem().getPhase(1).getMolarVolume()
+          / pipe.getNode(i).getBulkSystem().getMolarVolume();
+      double liquidHoldup = 1.0 - gasHoldup;
+
+      double gasFlowArea = pipeArea * gasHoldup;
+      double liquidFlowArea = pipeArea * liquidHoldup;
+
+      double gasDensity = pipe.getNode(i).getBulkSystem().getPhase(0).getDensity("kg/m3");
+      double liquidDensity = pipe.getNode(i).getBulkSystem().getPhase(1).getDensity("kg/m3");
+
+      double gasMassFlowRate = gasVelocity * gasFlowArea * gasDensity; // [kg/s]
+      double liquidMassFlowRate = liquidVelocity * liquidFlowArea * liquidDensity; // [kg/s]
+
+      double gasCp = pipe.getNode(i).getBulkSystem().getPhase(0).getCp()
+          / pipe.getNode(i).getBulkSystem().getPhase(0).getNumberOfMolesInPhase()
+          / pipe.getNode(i).getBulkSystem().getPhase(0).getMolarMass(); // [J/kg/K]
+
+      double liquidCp = pipe.getNode(i).getBulkSystem().getPhase(1).getCp()
+          / pipe.getNode(i).getBulkSystem().getPhase(1).getNumberOfMolesInPhase()
+          / pipe.getNode(i).getBulkSystem().getPhase(1).getMolarMass(); // [J/kg/K]
+
+      // --- Interphase heat transfer ---
+      // Use the gas-side flux as the reference (positive = heat INTO gas from interface)
+      // The FluidBoundary calculates: q = -h * (T_bulk - T_interface)
+      // So if T_gas > T_interface, q_gas < 0 (heat leaving gas to interface)
+      double interphaseHeatFluxGas = pipe.getNode(i).getFluidBoundary().getInterphaseHeatFlux(0);
+      double interphaseArea = pipe.getNode(i).getInterphaseContactArea();
+
+      // --- Interphase heat transfer with stability control ---
+      // The FluidBoundary calculates interphase heat flux based on interface temperature
+      // This can give large values even when phases are at similar temperatures
+      // We use a stabilized approach based on the actual phase temperature difference
+
+      double tempDiff = gasTemp - liquidTemp; // [K]
+      double heatRateGasToLiquid = 0.0; // [W]
+
+      if (Math.abs(tempDiff) > 0.5) {
+        // Significant temperature difference between phases
+        // Use interphase conductance model: Q = UA * (T_gas - T_liq)
+        // where UA is the overall interphase heat transfer coefficient * area
+
+        // Estimate interphase heat transfer coefficient from FluidBoundary flux
+        // h_interphase ≈ |q| / |T_bulk - T_interface| ≈ |q| / |ΔT|/2
+        double hInterphase = 0.0;
+        if (Math.abs(tempDiff) > 1.0) {
+          hInterphase = Math.abs(interphaseHeatFluxGas) / (Math.abs(tempDiff) / 2.0);
+        } else {
+          hInterphase = 100.0; // Default reasonable value [W/m²K]
+        }
+
+        // Limit the interphase coefficient to reasonable values
+        hInterphase = Math.min(hInterphase, 1000.0); // Max 1000 W/m²K
+
+        // Heat rate from gas to liquid (positive when gas is hotter)
+        heatRateGasToLiquid = hInterphase * interphaseArea * tempDiff;
+
+        // Additional stability limit: max heat = fraction of thermal capacity * driving force
+        double gasThermalCapRate = gasMassFlowRate * gasCp;
+        double liqThermalCapRate = liquidMassFlowRate * liquidCp;
+        double minCapRate = Math.min(gasThermalCapRate, liqThermalCapRate);
+
+        // Maximum = 30% of min thermal capacity rate * temperature difference
+        double maxInterphaseRate = 0.3 * minCapRate * Math.abs(tempDiff);
+        if (Math.abs(heatRateGasToLiquid) > maxInterphaseRate) {
+          heatRateGasToLiquid = Math.signum(heatRateGasToLiquid) * maxInterphaseRate;
+        }
+      }
+      // When phases are at similar temperature, no interphase heat transfer needed
+
+      // --- Wall heat transfer (flow regime dependent) ---
+      double gasWallPerimeter = pipe.getNode(i).getWallContactLength(0); // [m]
+      double liquidWallPerimeter = pipe.getNode(i).getWallContactLength(1); // [m]
+
+      double gasWallArea = gasWallPerimeter * nodeLength; // [m²]
+      double liquidWallArea = liquidWallPerimeter * nodeLength; // [m²]
+
+      // Wall heat loss (positive = heat leaving fluid)
+      double gasWallHeatLoss = wallHeatCoeff * gasWallArea * (gasTemp - ambientTemp); // [W]
+      double liquidWallHeatLoss = wallHeatCoeff * liquidWallArea * (liquidTemp - ambientTemp); // [W]
+
+      // --- Energy balance for each phase ---
+      // Gas: loses heat to wall, loses/gains heat to/from liquid
+      // dT_gas = (-Q̇_wall_gas - Q̇_to_liquid) / (ṁ_gas * Cp_gas)
+      double gasNetHeatRate = -gasWallHeatLoss - heatRateGasToLiquid; // [W] (into gas)
+      double gas_dT = 0.0;
+      if (gasMassFlowRate * gasCp > 1e-10) {
+        gas_dT = gasNetHeatRate / (gasMassFlowRate * gasCp); // [K]
+      }
+
+      // Liquid: loses heat to wall, gains/loses heat from/to gas
+      // dT_liq = (-Q̇_wall_liq + Q̇_from_gas) / (ṁ_liq * Cp_liq)
+      double liquidNetHeatRate = -liquidWallHeatLoss + heatRateGasToLiquid; // [W] (into liquid)
+      double liquid_dT = 0.0;
+      if (liquidMassFlowRate * liquidCp > 1e-10) {
+        liquid_dT = liquidNetHeatRate / (liquidMassFlowRate * liquidCp); // [K]
+      }
+
+      // ========================================================================
+      // APPLY TEMPERATURE CHANGES WITH STABILITY LIMITS
+      // ========================================================================
+
+      // Guard against NaN/Infinity
+      if (!Double.isFinite(gas_dT)) {
+        gas_dT = 0.0;
+      }
+      if (!Double.isFinite(liquid_dT)) {
+        liquid_dT = 0.0;
+      }
+
+      // Calculate new temperatures
+      double newGasTemp = gasTemp + gas_dT;
+      double newLiquidTemp = liquidTemp + liquid_dT;
+
+      // Physical limits: cannot cool below ambient
+      newGasTemp = Math.max(ambientTemp, newGasTemp);
+      newLiquidTemp = Math.max(ambientTemp, newLiquidTemp);
+
+      // Set next node temperatures
+      pipe.getNode(i + 1).getBulkSystem().getPhase(0).setTemperature(newGasTemp);
+      pipe.getNode(i + 1).getBulkSystem().getPhase(1).setTemperature(newLiquidTemp);
+
 
       // Calculate and apply mass transfer from this node
       for (int componentNumber = 0; componentNumber < numComponents; componentNumber++) {
@@ -151,21 +350,63 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
             pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
                 * pipe.getNode(i).getInterphaseContactArea();
 
-        // Limit transfer to 50% of available moles per node
+        // Handle transfer based on mass transfer mode
         if (transferToLiquid > 0.0) {
-          double availableInGas = pipe.getNode(i).getBulkSystem().getPhase(0)
-              .getComponent(componentNumber).getNumberOfMolesInPhase();
-          transferToLiquid = Math.min(transferToLiquid, 0.5 * Math.max(0.0, availableInGas));
+          // Positive flux = dissolution (gas to liquid)
+          if (massTransferMode == MassTransferMode.EVAPORATION_ONLY) {
+            transferToLiquid = 0.0; // Skip dissolution in evaporation-only mode
+          } else {
+            // Limit to available gas moles
+            double availableInGas = pipe.getNode(i).getBulkSystem().getPhase(0)
+                .getComponent(componentNumber).getNumberOfMolesInPhase();
+            if (massTransferMode == MassTransferMode.BIDIRECTIONAL) {
+              // Allow up to 90% transfer per node for numerical stability
+              transferToLiquid = Math.min(transferToLiquid, 0.9 * Math.max(0.0, availableInGas));
+            } else {
+              // Limit to 50% for DISSOLUTION_ONLY mode
+              transferToLiquid = Math.min(transferToLiquid, 0.5 * Math.max(0.0, availableInGas));
+            }
+          }
         } else if (transferToLiquid < 0.0) {
-          // Negative flux = evaporation from liquid to gas
-          // This can happen when driving force reverses (gas depleted, liquid saturated)
-          // For steady-state dissolution modeling, skip evaporation to prevent re-equilibration
-          transferToLiquid = 0.0;
+          // Negative flux = evaporation (liquid to gas)
+          if (massTransferMode == MassTransferMode.DISSOLUTION_ONLY) {
+            transferToLiquid = 0.0; // Skip evaporation in dissolution-only mode
+          } else {
+            // Limit to available liquid moles
+            double availableInLiquid = pipe.getNode(i).getBulkSystem().getPhase(1)
+                .getComponent(componentNumber).getNumberOfMolesInPhase();
+            if (massTransferMode == MassTransferMode.BIDIRECTIONAL) {
+              // Allow up to 90% transfer per node for numerical stability
+              transferToLiquid =
+                  -Math.min(-transferToLiquid, 0.9 * Math.max(0.0, availableInLiquid));
+            } else {
+              // Limit to 50% for EVAPORATION_ONLY mode
+              transferToLiquid =
+                  -Math.min(-transferToLiquid, 0.5 * Math.max(0.0, availableInLiquid));
+            }
+          }
         }
 
         // Apply mass transfer: gas loses, liquid gains
         pipe.getNode(i).getBulkSystem().getPhases()[0].addMoles(componentNumber, -transferToLiquid);
         pipe.getNode(i).getBulkSystem().getPhases()[1].addMoles(componentNumber, transferToLiquid);
+      }
+
+      // Ensure no negative moles (handles numerical round-off)
+      for (int phase = 0; phase < 2; phase++) {
+        for (int comp = 0; comp < numComponents; comp++) {
+          double moles = pipe.getNode(i).getBulkSystem().getPhase(phase).getComponent(comp)
+              .getNumberOfMolesInPhase();
+          if (moles < 1e-20) {
+            // Set very small positive value to keep thermodynamics stable
+            double currentMoles = pipe.getNode(i).getBulkSystem().getPhase(phase).getComponent(comp)
+                .getNumberOfMolesInPhase();
+            if (currentMoles < 1e-20) {
+              pipe.getNode(i).getBulkSystem().getPhases()[phase].addMoles(comp,
+                  1e-20 - currentMoles);
+            }
+          }
+        }
       }
 
       // Re-init after applying transfer so phaseFraction reflects new state
@@ -189,9 +430,18 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       }
     }
 
+    // Save temperature before init(3) - temperature was set during loop
+    double savedLastGasTemp = pipe.getNode(lastNode).getBulkSystem().getPhase(0).getTemperature();
+    double savedLastLiqTemp = pipe.getNode(lastNode).getBulkSystem().getPhase(1).getTemperature();
+
     pipe.getNode(lastNode).getBulkSystem().initBeta();
     pipe.getNode(lastNode).getBulkSystem().init_x_y();
     pipe.getNode(lastNode).getBulkSystem().init(3);
+
+    // Restore temperature after init
+    pipe.getNode(lastNode).getBulkSystem().getPhase(0).setTemperature(savedLastGasTemp);
+    pipe.getNode(lastNode).getBulkSystem().getPhase(1).setTemperature(savedLastLiqTemp);
+
     pipe.getNode(lastNode).initFlowCalc();
     pipe.getNode(lastNode).calcFluxes();
   }
