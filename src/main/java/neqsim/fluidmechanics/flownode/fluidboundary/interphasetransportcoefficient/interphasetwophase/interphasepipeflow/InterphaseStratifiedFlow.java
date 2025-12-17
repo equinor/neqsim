@@ -10,7 +10,7 @@ import neqsim.fluidmechanics.flownode.FlowNodeInterface;
  * <p>
  * Implements transport coefficient correlations specific to stratified flow regime, where gas flows
  * above a liquid layer with a relatively flat interface. The correlations are based on Solbraa
- * (2002) and Yih & Chen (1982) for liquid-side mass transfer.
+ * (2002) and Yih &amp; Chen (1982) for liquid-side mass transfer.
  * </p>
  *
  * @author esol
@@ -47,7 +47,7 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
    * </p>
    * <ul>
    * <li>Gas phase: Uses correlations for flow over a liquid surface</li>
-   * <li>Liquid phase: Uses Yih & Chen (1982) correlations for wavy film mass transfer</li>
+   * <li>Liquid phase: Uses Yih &amp; Chen (1982) correlations for wavy film mass transfer</li>
    * </ul>
    */
   @Override

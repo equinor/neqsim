@@ -2134,12 +2134,12 @@ public class TwoPhasePipeFlowSystem
    *
    * <p>
    * When automatic flow pattern detection is enabled, this method:
+   * </p>
    * <ul>
    * <li>Detects the current flow pattern at each node using the selected model</li>
    * <li>Creates new flow node instances if the pattern has changed</li>
    * <li>Preserves thermodynamic and flow state during transition</li>
    * </ul>
-   * </p>
    */
   public void updateFlowPatterns() {
     if (!automaticFlowPatternDetection) {

@@ -19,7 +19,6 @@ import neqsim.fluidmechanics.flownode.FlowNodeInterface;
  * <li>Dukler, A.E. and Hubbard, M.G. (1975) - Slug flow model</li>
  * <li>Andreussi, P. and Bendiksen, K.H. (1989) - Slug characteristics</li>
  * </ul>
- * </p>
  *
  * @author esol
  * @version 1.0

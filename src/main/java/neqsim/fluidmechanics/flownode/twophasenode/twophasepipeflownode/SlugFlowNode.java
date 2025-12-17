@@ -30,7 +30,6 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>Mixing zone at slug front and back</li>
  * <li>Enhanced heat and mass transfer due to slug passage</li>
  * </ul>
- * </p>
  *
  * @author esol
  * @version 1.0

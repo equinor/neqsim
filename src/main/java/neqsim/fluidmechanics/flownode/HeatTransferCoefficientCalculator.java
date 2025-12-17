@@ -8,7 +8,9 @@ package neqsim.fluidmechanics.flownode;
  * heat transfer coefficients. The correlations are based on well-established literature sources.
  * </p>
  *
- * <h3>Correlations by Flow Pattern:</h3>
+ * <p>
+ * <b>Correlations by Flow Pattern:</b>
+ * </p>
  * <ul>
  * <li><b>Stratified:</b> Nu = f(Re, Pr, geometry) - Solbraa (2002)</li>
  * <li><b>Annular:</b> Nu = f(Re_film, Pr, wave amplitude) - Hewitt &amp; Hall-Taylor</li>

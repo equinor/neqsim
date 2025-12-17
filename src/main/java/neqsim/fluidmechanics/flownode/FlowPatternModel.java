@@ -24,7 +24,7 @@ public enum FlowPatternModel {
 
   /**
    * Taitel-Dukler model - mechanistic model based on physical transition mechanisms. Applicable to
-   * horizontal and slightly inclined pipes. Reference: Taitel, Y., & Dukler, A.E. (1976).
+   * horizontal and slightly inclined pipes. Reference: Taitel, Y., &amp; Dukler, A.E. (1976).
    */
   TAITEL_DUKLER,
 
@@ -35,8 +35,8 @@ public enum FlowPatternModel {
   BARNEA,
 
   /**
-   * Beggs-Brill model - empirical correlation for all pipe inclinations. Reference: Beggs, H.D., &
-   * Brill, J.P. (1973).
+   * Beggs-Brill model - empirical correlation for all pipe inclinations. Reference: Beggs, H.D.,
+   * &amp; Brill, J.P. (1973).
    */
   BEGGS_BRILL
 }

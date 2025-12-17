@@ -16,7 +16,7 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc;
  * </ul>
  *
  * @author NeqSim development team
- * @see <a href="https://doi.org/10.1002/aic.690220215">Krishna & Standart (1976)</a>
+ * @see <a href="https://doi.org/10.1002/aic.690220215">Krishna &amp; Standart (1976)</a>
  */
 public enum MassTransferModel {
   /**

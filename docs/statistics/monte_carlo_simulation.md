@@ -492,7 +492,7 @@ for (int i = 0; i < results.length; i++) {
 // Print histogram
 for (int b = 0; b < numBins; b++) {
     double binCenter = minVal + (b + 0.5) * binWidth;
-    System.out.printf("%.4f: %s%n", binCenter, "*".repeat(histogram[b]/2));
+    System.out.printf("%.4f: %s%n", binCenter, StringUtils.repeat("*", histogram[b]/2));
 }
 ```
 

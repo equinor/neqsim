@@ -23,7 +23,6 @@ import neqsim.thermo.system.SystemInterface;
  * <li>Dispersed bubble - high liquid rate, dispersed gas bubbles</li>
  * <li>Mist/Droplet - very high gas rate, dispersed liquid droplets</li>
  * </ul>
- * </p>
  *
  * @author esol
  * @version 1.0

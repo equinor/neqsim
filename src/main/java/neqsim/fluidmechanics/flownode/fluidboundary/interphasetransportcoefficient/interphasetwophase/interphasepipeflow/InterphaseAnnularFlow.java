@@ -46,8 +46,8 @@ public class InterphaseAnnularFlow extends InterphaseStratifiedFlow {
    * </p>
    * <ul>
    * <li>Gas phase (core): Uses modified Dittus-Boelter correlation</li>
-   * <li>Liquid phase (film): Uses Hewitt & Hall-Taylor correlations accounting for film Reynolds
-   * number and wave amplitude</li>
+   * <li>Liquid phase (film): Uses Hewitt &amp; Hall-Taylor correlations accounting for film
+   * Reynolds number and wave amplitude</li>
    * </ul>
    */
   @Override

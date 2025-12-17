@@ -12,8 +12,8 @@ import org.apache.logging.log4j.Logger;
  * </p>
  *
  * <p>
- * Reference: Taitel, Y., & Dukler, A.E. (1976). "A model for predicting flow regime transitions in
- * horizontal and near horizontal gas-liquid flow." AIChE Journal, 22(1), 47-55.
+ * Reference: Taitel, Y., &amp; Dukler, A.E. (1976). "A model for predicting flow regime transitions
+ * in horizontal and near horizontal gas-liquid flow." AIChE Journal, 22(1), 47-55.
  * </p>
  *
  * @author ASMF

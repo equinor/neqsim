@@ -8,7 +8,9 @@ package neqsim.fluidmechanics.flownode;
  * transfer calculations. This class provides models for different flow patterns.
  * </p>
  *
- * <h3>Flow Pattern Models:</h3>
+ * <p>
+ * <b>Flow Pattern Models:</b>
+ * </p>
  * <ul>
  * <li><b>Stratified:</b> Flat interface: a = S_i / A where S_i is interface chord length</li>
  * <li><b>Annular:</b> Film interface with core gas flow</li>

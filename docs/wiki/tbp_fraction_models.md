@@ -398,7 +398,7 @@ public class ModelComparison {
         
         System.out.println("=== TBP Model Comparison for C10 (MW=142 g/mol, SG=0.78) ===");
         System.out.printf("%-15s %10s %10s %10s%n", "Model", "Tc (K)", "Pc (bar)", "omega");
-        System.out.println("-".repeat(50));
+        System.out.println(StringUtils.repeat("-", 50));
         
         for (String modelName : models) {
             SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);

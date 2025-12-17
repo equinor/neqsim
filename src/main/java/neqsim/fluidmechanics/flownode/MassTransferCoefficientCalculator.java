@@ -8,7 +8,9 @@ package neqsim.fluidmechanics.flownode;
  * gas-side mass transfer coefficients.
  * </p>
  *
- * <h3>Correlations by Flow Pattern:</h3>
+ * <p>
+ * <b>Correlations by Flow Pattern:</b>
+ * </p>
  * <ul>
  * <li><b>Stratified:</b> Sh = f(Re, Sc, geometry) - Solbraa (2002)</li>
  * <li><b>Annular:</b> Sh = f(Re_film, Sc, wave amplitude) - Hewitt &amp; Hall-Taylor</li>
