@@ -133,22 +133,35 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
 
       for (int componentNumber = 0; componentNumber < pipe.getNode(0).getBulkSystem().getPhases()[0]
           .getNumberOfComponents(); componentNumber++) {
-        double liquidMolarRate =
-            pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
-                * pipe.getNode(i).getInterphaseContactArea()
-                * (pipe.getNode(i).getGeometry().getNodeLength() / pipe.getNode(i).getVelocity(1));
-        double gasMolarRate =
-            -pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
-                * pipe.getNode(i).getInterphaseContactArea()
-                * (pipe.getNode(i).getGeometry().getNodeLength() / pipe.getNode(i).getVelocity(0));
+        // getInterphaseMolarFlux(...) is in mol/(m^2*s). Multiplying by interphase contact area for
+        // the node segment (m^2) gives a molar transfer rate (mol/s). The bulk system in a flow
+        // node uses phase moles as molar flow rates (mol/s), so do not multiply by residence time.
+        double transferToLiquid = pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
+            * pipe.getNode(i).getInterphaseContactArea();
+
+        // Limit transfer so we never withdraw more of a component from a phase than the phase
+        // carries as molar flow. This avoids negative phase component moles which can lead to EOS
+        // initialization failures (NaNs) in downstream nodes during profiling.
+        if (transferToLiquid > 0.0) {
+          double availableInGas =
+              pipe.getNode(i).getBulkSystem().getPhase(0).getComponent(componentNumber).getNumberOfMolesInPhase();
+          transferToLiquid = Math.min(transferToLiquid, 0.999999999 * Math.max(0.0, availableInGas));
+        } else if (transferToLiquid < 0.0) {
+          double availableInLiquid =
+              pipe.getNode(i).getBulkSystem().getPhase(1).getComponent(componentNumber).getNumberOfMolesInPhase();
+          transferToLiquid = -Math.min(-transferToLiquid, 0.999999999 * Math.max(0.0, availableInLiquid));
+        }
+
+        double liquidMolarRate = transferToLiquid;
+        double gasMolarRate = -transferToLiquid;
 
         molDiff[i][0][componentNumber] = molDiff[i - 1][0][componentNumber] + gasMolarRate;
         molDiff[i][1][componentNumber] = molDiff[i - 1][1][componentNumber] + liquidMolarRate;
 
         pipe.getNode(i + 1).getBulkSystem().getPhases()[0].addMoles(componentNumber,
-            molDiff[i - 1][0][componentNumber]);
+            molDiff[i][0][componentNumber]);
         pipe.getNode(i + 1).getBulkSystem().getPhases()[1].addMoles(componentNumber,
-            molDiff[i - 1][1][componentNumber]);
+            molDiff[i][1][componentNumber]);
       }
     }
     pipe.getNode(numberOfNodes - 1).init();
