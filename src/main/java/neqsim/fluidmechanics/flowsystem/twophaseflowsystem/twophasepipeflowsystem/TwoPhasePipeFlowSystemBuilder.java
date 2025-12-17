@@ -46,6 +46,7 @@ public class TwoPhasePipeFlowSystemBuilder {
   private boolean nonEquilibriumMassTransfer = false;
   private boolean nonEquilibriumHeatTransfer = false;
   private double roughness = 1e-5; // m
+  private double inclination = 0.0; // radians (positive = upward flow)
   private double[] legHeights = null;
   private double[] legPositions = null;
   private double[] outerTemperatures = null;
@@ -256,6 +257,54 @@ public class TwoPhasePipeFlowSystemBuilder {
   }
 
   /**
+   * Sets the pipe inclination angle.
+   *
+   * <p>
+   * Positive angles indicate upward flow (against gravity), negative angles indicate downward flow.
+   * This automatically calculates leg heights based on the length and inclination.
+   * </p>
+   *
+   * @param angle the inclination angle
+   * @param unit the angle unit ("deg", "degrees", "rad", "radians")
+   * @return this builder
+   */
+  public TwoPhasePipeFlowSystemBuilder withInclination(double angle, String unit) {
+    switch (unit.toLowerCase()) {
+      case "deg":
+      case "degrees":
+        this.inclination = Math.toRadians(angle);
+        break;
+      case "rad":
+      case "radians":
+      default:
+        this.inclination = angle;
+        break;
+    }
+    return this;
+  }
+
+  /**
+   * Sets the pipe as vertical (90 degrees upward).
+   *
+   * @param upward true for upward flow, false for downward flow
+   * @return this builder
+   */
+  public TwoPhasePipeFlowSystemBuilder vertical(boolean upward) {
+    this.inclination = upward ? Math.PI / 2.0 : -Math.PI / 2.0;
+    return this;
+  }
+
+  /**
+   * Sets the pipe as horizontal (0 degrees).
+   *
+   * @return this builder
+   */
+  public TwoPhasePipeFlowSystemBuilder horizontal() {
+    this.inclination = 0.0;
+    return this;
+  }
+
+  /**
    * Sets leg heights for elevation changes.
    *
    * @param heights array of heights at each leg end in meters
@@ -323,11 +372,18 @@ public class TwoPhasePipeFlowSystemBuilder {
     }
     pipe.setLegPositions(legPositions);
 
-    // Set leg heights (flat if not specified)
+    // Set leg heights (flat if not specified, or calculated from inclination)
     if (legHeights == null) {
       legHeights = new double[numberOfLegs + 1];
+      if (Math.abs(inclination) > 1e-10) {
+        // Calculate heights based on inclination angle
+        for (int i = 0; i <= numberOfLegs; i++) {
+          legHeights[i] = legPositions[i] * Math.sin(inclination);
+        }
+      }
     }
     pipe.setLegHeights(legHeights);
+    pipe.setInclination(inclination);
 
     // Set outer temperatures
     if (outerTemperatures == null) {

@@ -4,6 +4,7 @@ import java.util.UUID;
 import neqsim.fluidmechanics.flownode.FlowPattern;
 import neqsim.fluidmechanics.flownode.FlowPatternDetector;
 import neqsim.fluidmechanics.flownode.FlowPatternModel;
+import neqsim.fluidmechanics.flownode.HeatTransferCoefficientCalculator;
 import neqsim.fluidmechanics.flownode.WallHeatTransferModel;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -77,6 +78,11 @@ public class TwoPhasePipeFlowSystem
 
   /** Ambient temperature in Kelvin (for CONVECTIVE_BOUNDARY model). */
   private double ambientTemperature = 288.15;
+
+  // ==================== PIPE GEOMETRY AND INCLINATION ====================
+
+  /** Pipe inclination angle in radians (positive = upward flow). */
+  private double inclination = 0.0;
 
   /**
    * <p>
@@ -720,7 +726,7 @@ public class TwoPhasePipeFlowSystem
   public String[] getFlowPatternNameProfile() {
     String[] patterns = new String[getTotalNumberOfNodes()];
     for (int i = 0; i < getTotalNumberOfNodes(); i++) {
-      patterns[i] = getFlowPatternAtNode(i).getDisplayName();
+      patterns[i] = getFlowPatternAtNode(i).getName();
     }
     return patterns;
   }
@@ -828,20 +834,6 @@ public class TwoPhasePipeFlowSystem
       return FlowPattern.fromString(initFlowPattern);
     }
     return nodeFlowPatterns[nodeIndex];
-  }
-
-  /**
-   * <p>
-   * Gets the flow pattern profile along the pipe.
-   * </p>
-   *
-   * @return an array of flow patterns at each node
-   */
-  public FlowPattern[] getFlowPatternProfile() {
-    if (nodeFlowPatterns == null) {
-      detectFlowPatterns();
-    }
-    return nodeFlowPatterns.clone();
   }
 
   // ==================== WALL HEAT TRANSFER METHODS ====================
@@ -1292,6 +1284,1466 @@ public class TwoPhasePipeFlowSystem
       heatFlux[i] = calculateWallHeatFlux(i);
     }
     return heatFlux;
+  }
+
+  // ==================== INTERPHASE HEAT TRANSFER ====================
+
+  /**
+   * <p>
+   * Calculates the liquid-side interphase heat transfer coefficient at a specific node.
+   * </p>
+   *
+   * @param nodeNumber the node index
+   * @return liquid-side heat transfer coefficient h_L (W/(m²·K))
+   */
+  public double getLiquidHeatTransferCoefficientAtNode(int nodeNumber) {
+    if (flowNode == null || flowNode[nodeNumber] == null) {
+      return 0.0;
+    }
+
+    FlowPattern pattern = getFlowPatternAtNode(nodeNumber);
+    double diameter = flowNode[nodeNumber].getGeometry().getDiameter();
+    double holdup = flowNode[nodeNumber].getPhaseFraction(1);
+
+    double usg = flowNode[nodeNumber].getSuperficialVelocity(0);
+    double usl = flowNode[nodeNumber].getSuperficialVelocity(1);
+    double rhoL =
+        flowNode[nodeNumber].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+    double muL =
+        flowNode[nodeNumber].getBulkSystem().getPhase(1).getPhysicalProperties().getViscosity();
+    double cpL = flowNode[nodeNumber].getBulkSystem().getPhase(1).getCp()
+        / flowNode[nodeNumber].getBulkSystem().getPhase(1).getNumberOfMolesInPhase()
+        / flowNode[nodeNumber].getBulkSystem().getPhase(1).getMolarMass();
+    double kL =
+        flowNode[nodeNumber].getBulkSystem().getPhase(1).getPhysicalProperties().getConductivity();
+
+    // Protect against invalid values
+    if (Double.isNaN(rhoL) || rhoL <= 0 || Double.isNaN(muL) || muL <= 0) {
+      return 0.0;
+    }
+
+    return HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(pattern,
+        diameter, holdup, usg, usl, rhoL, muL, cpL, kL);
+  }
+
+  /**
+   * <p>
+   * Calculates the gas-side interphase heat transfer coefficient at a specific node.
+   * </p>
+   *
+   * @param nodeNumber the node index
+   * @return gas-side heat transfer coefficient h_G (W/(m²·K))
+   */
+  public double getGasHeatTransferCoefficientAtNode(int nodeNumber) {
+    if (flowNode == null || flowNode[nodeNumber] == null) {
+      return 0.0;
+    }
+
+    FlowPattern pattern = getFlowPatternAtNode(nodeNumber);
+    double diameter = flowNode[nodeNumber].getGeometry().getDiameter();
+    double holdup = flowNode[nodeNumber].getPhaseFraction(1);
+
+    double usg = flowNode[nodeNumber].getSuperficialVelocity(0);
+    double rhoG =
+        flowNode[nodeNumber].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double muG =
+        flowNode[nodeNumber].getBulkSystem().getPhase(0).getPhysicalProperties().getViscosity();
+    double cpG = flowNode[nodeNumber].getBulkSystem().getPhase(0).getCp()
+        / flowNode[nodeNumber].getBulkSystem().getPhase(0).getNumberOfMolesInPhase()
+        / flowNode[nodeNumber].getBulkSystem().getPhase(0).getMolarMass();
+    double kG =
+        flowNode[nodeNumber].getBulkSystem().getPhase(0).getPhysicalProperties().getConductivity();
+
+    // Protect against invalid values
+    if (Double.isNaN(rhoG) || rhoG <= 0 || Double.isNaN(muG) || muG <= 0) {
+      return 0.0;
+    }
+
+    return HeatTransferCoefficientCalculator.calculateGasHeatTransferCoefficient(pattern, diameter,
+        holdup, usg, rhoG, muG, cpG, kG);
+  }
+
+  /**
+   * <p>
+   * Calculates the overall interphase heat transfer coefficient at a specific node.
+   * </p>
+   *
+   * <p>
+   * Uses the resistance in series model: 1/U = 1/h_L + 1/h_G
+   * </p>
+   *
+   * @param nodeNumber the node index
+   * @return overall interphase heat transfer coefficient (W/(m²·K))
+   */
+  public double getOverallInterphaseHeatTransferCoefficientAtNode(int nodeNumber) {
+    double hL = getLiquidHeatTransferCoefficientAtNode(nodeNumber);
+    double hG = getGasHeatTransferCoefficientAtNode(nodeNumber);
+    return HeatTransferCoefficientCalculator.calculateOverallInterphaseCoefficient(hL, hG);
+  }
+
+  /**
+   * <p>
+   * Gets the liquid-side heat transfer coefficient profile along the pipe.
+   * </p>
+   *
+   * @return an array of h_L values (W/(m²·K)) at each node
+   */
+  public double[] getLiquidHeatTransferCoefficientProfile() {
+    double[] hL = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      hL[i] = getLiquidHeatTransferCoefficientAtNode(i);
+    }
+    return hL;
+  }
+
+  /**
+   * <p>
+   * Gets the gas-side heat transfer coefficient profile along the pipe.
+   * </p>
+   *
+   * @return an array of h_G values (W/(m²·K)) at each node
+   */
+  public double[] getGasHeatTransferCoefficientProfile() {
+    double[] hG = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      hG[i] = getGasHeatTransferCoefficientAtNode(i);
+    }
+    return hG;
+  }
+
+  /**
+   * <p>
+   * Gets the overall interphase heat transfer coefficient profile.
+   * </p>
+   *
+   * @return an array of overall U values (W/(m²·K)) at each node
+   */
+  public double[] getOverallInterphaseHeatTransferCoefficientProfile() {
+    double[] u = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      u[i] = getOverallInterphaseHeatTransferCoefficientAtNode(i);
+    }
+    return u;
+  }
+
+  /**
+   * <p>
+   * Calculates the interphase heat flux at a specific node.
+   * </p>
+   *
+   * <p>
+   * q = U_interphase * (T_gas - T_liquid) in W/m²
+   * </p>
+   *
+   * @param nodeNumber the node index
+   * @return the interphase heat flux in W/m² (positive = heat from gas to liquid)
+   */
+  public double getInterphaseHeatFluxAtNode(int nodeNumber) {
+    if (flowNode == null || flowNode[nodeNumber] == null) {
+      return 0.0;
+    }
+
+    double uInterphase = getOverallInterphaseHeatTransferCoefficientAtNode(nodeNumber);
+    double tGas = flowNode[nodeNumber].getBulkSystem().getPhase(0).getTemperature();
+    double tLiquid = flowNode[nodeNumber].getBulkSystem().getPhase(1).getTemperature();
+
+    return uInterphase * (tGas - tLiquid);
+  }
+
+  /**
+   * <p>
+   * Gets the interphase heat flux profile along the pipe.
+   * </p>
+   *
+   * @return an array of interphase heat fluxes in W/m² at each node
+   */
+  public double[] getInterphaseHeatFluxProfile() {
+    double[] flux = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      flux[i] = getInterphaseHeatFluxAtNode(i);
+    }
+    return flux;
+  }
+
+  /**
+   * <p>
+   * Calculates the volumetric interphase heat transfer coefficient (U·a) at a node.
+   * </p>
+   *
+   * <p>
+   * This is the product of the interphase heat transfer coefficient and the interfacial area per
+   * unit volume: U·a in W/(m³·K)
+   * </p>
+   *
+   * @param nodeNumber the node index
+   * @return volumetric heat transfer coefficient U·a (W/(m³·K))
+   */
+  public double getVolumetricHeatTransferCoefficientAtNode(int nodeNumber) {
+    double u = getOverallInterphaseHeatTransferCoefficientAtNode(nodeNumber);
+    double a = getSpecificInterfacialAreaAtNode(nodeNumber);
+    return u * a;
+  }
+
+  /**
+   * <p>
+   * Gets the volumetric heat transfer coefficient (U·a) profile along the pipe.
+   * </p>
+   *
+   * @return an array of U·a values (W/(m³·K)) at each node
+   */
+  public double[] getVolumetricHeatTransferCoefficientProfile() {
+    double[] ua = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      ua[i] = getVolumetricHeatTransferCoefficientAtNode(i);
+    }
+    return ua;
+  }
+
+  // ==================== DIMENSIONLESS NUMBERS ====================
+
+  /**
+   * <p>
+   * Gets the Prandtl number profile for a specific phase.
+   * </p>
+   *
+   * <p>
+   * Pr = μ·Cp / k = ν / α (momentum diffusivity / thermal diffusivity)
+   * </p>
+   *
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
+   * @return an array of Prandtl numbers at each node
+   */
+  public double[] getPrandtlNumberProfile(int phaseIndex) {
+    double[] pr = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      double mu =
+          flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getViscosity();
+      double cp = flowNode[i].getBulkSystem().getPhase(phaseIndex).getCp()
+          / flowNode[i].getBulkSystem().getPhase(phaseIndex).getNumberOfMolesInPhase()
+          / flowNode[i].getBulkSystem().getPhase(phaseIndex).getMolarMass();
+      double k = flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties()
+          .getConductivity();
+      if (k > 0) {
+        pr[i] = mu * cp / k;
+      }
+    }
+    return pr;
+  }
+
+  /**
+   * <p>
+   * Gets the Nusselt number profile for a specific phase.
+   * </p>
+   *
+   * <p>
+   * Nu = h·L / k (convective / conductive heat transfer)
+   * </p>
+   *
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
+   * @return an array of Nusselt numbers at each node
+   */
+  public double[] getNusseltNumberProfile(int phaseIndex) {
+    double[] nu = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      double h = (phaseIndex == 0) ? getGasHeatTransferCoefficientAtNode(i)
+          : getLiquidHeatTransferCoefficientAtNode(i);
+      double diameter = flowNode[i].getGeometry().getDiameter();
+      double k = flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties()
+          .getConductivity();
+      if (k > 0) {
+        nu[i] = h * diameter / k;
+      }
+    }
+    return nu;
+  }
+
+  /**
+   * <p>
+   * Gets the Schmidt number profile for a specific phase.
+   * </p>
+   *
+   * <p>
+   * Sc = μ / (ρ·D) = ν / D (momentum diffusivity / mass diffusivity)
+   * </p>
+   *
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
+   * @param diffusivity mass diffusivity in m²/s
+   * @return an array of Schmidt numbers at each node
+   */
+  public double[] getSchmidtNumberProfile(int phaseIndex, double diffusivity) {
+    double[] sc = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      double mu =
+          flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getViscosity();
+      double rho =
+          flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getDensity();
+      if (diffusivity > 0 && rho > 0) {
+        sc[i] = mu / (rho * diffusivity);
+      }
+    }
+    return sc;
+  }
+
+  /**
+   * <p>
+   * Gets the Sherwood number profile for a specific phase.
+   * </p>
+   *
+   * <p>
+   * Sh = k·L / D (convective / diffusive mass transfer)
+   * </p>
+   *
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
+   * @param diffusivity mass diffusivity in m²/s
+   * @return an array of Sherwood numbers at each node
+   */
+  public double[] getSherwoodNumberProfile(int phaseIndex, double diffusivity) {
+    double[] sh = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      double k = (phaseIndex == 0) ? getGasMassTransferCoefficientAtNode(i, diffusivity)
+          : getLiquidMassTransferCoefficientAtNode(i, diffusivity);
+      double diameter = flowNode[i].getGeometry().getDiameter();
+      if (diffusivity > 0) {
+        sh[i] = k * diameter / diffusivity;
+      }
+    }
+    return sh;
+  }
+
+  /**
+   * <p>
+   * Gets the Stanton number (heat) profile for a specific phase.
+   * </p>
+   *
+   * <p>
+   * St = Nu / (Re·Pr) = h / (ρ·u·Cp)
+   * </p>
+   *
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
+   * @return an array of Stanton numbers at each node
+   */
+  public double[] getStantonNumberHeatProfile(int phaseIndex) {
+    double[] st = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      double h = (phaseIndex == 0) ? getGasHeatTransferCoefficientAtNode(i)
+          : getLiquidHeatTransferCoefficientAtNode(i);
+      double rho =
+          flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getDensity();
+      double u = flowNode[i].getVelocity(phaseIndex);
+      double cp = flowNode[i].getBulkSystem().getPhase(phaseIndex).getCp()
+          / flowNode[i].getBulkSystem().getPhase(phaseIndex).getNumberOfMolesInPhase()
+          / flowNode[i].getBulkSystem().getPhase(phaseIndex).getMolarMass();
+
+      st[i] = HeatTransferCoefficientCalculator.calculateStantonNumber(h, rho, u, cp);
+    }
+    return st;
+  }
+
+  /**
+   * <p>
+   * Gets the Lewis number profile for a specific phase.
+   * </p>
+   *
+   * <p>
+   * Le = Sc / Pr = α / D (thermal diffusivity / mass diffusivity)
+   * </p>
+   *
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
+   * @param diffusivity mass diffusivity in m²/s
+   * @return an array of Lewis numbers at each node
+   */
+  public double[] getLewisNumberProfile(int phaseIndex, double diffusivity) {
+    double[] le = new double[getTotalNumberOfNodes()];
+    double[] sc = getSchmidtNumberProfile(phaseIndex, diffusivity);
+    double[] pr = getPrandtlNumberProfile(phaseIndex);
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      if (pr[i] > 0) {
+        le[i] = sc[i] / pr[i];
+      }
+    }
+    return le;
+  }
+
+  // ==================== ENERGY BALANCE AND PHASE CHANGE ====================
+
+  /**
+   * <p>
+   * Calculates the total interphase heat transfer rate along the pipe.
+   * </p>
+   *
+   * @return total interphase heat transfer rate in W
+   */
+  public double getTotalInterphaseHeatTransferRate() {
+    double total = 0.0;
+    for (int i = 0; i < getTotalNumberOfNodes() - 1; i++) {
+      double flux = getInterphaseHeatFluxAtNode(i);
+      double area = flowNode[i].getInterphaseContactArea();
+      total += flux * area;
+    }
+    return total;
+  }
+
+  /**
+   * <p>
+   * Calculates the overall energy balance for the pipe system.
+   * </p>
+   *
+   * <p>
+   * Returns the relative energy imbalance: (H_in - H_out - Q_wall) / H_in
+   * </p>
+   *
+   * @return relative energy imbalance (0 = perfect balance)
+   */
+  public double getEnergyBalanceError() {
+    // Inlet enthalpy
+    double hIn = flowNode[0].getBulkSystem().getEnthalpy();
+
+    // Outlet enthalpy
+    int lastNode = getTotalNumberOfNodes() - 1;
+    double hOut = flowNode[lastNode].getBulkSystem().getEnthalpy();
+
+    // Wall heat loss
+    double qWall = getTotalHeatLoss();
+
+    if (Math.abs(hIn) > 1e-10) {
+      return (hIn - hOut - qWall) / Math.abs(hIn);
+    }
+    return 0.0;
+  }
+
+  /**
+   * <p>
+   * Gets the cumulative energy loss profile along the pipe.
+   * </p>
+   *
+   * @return an array of cumulative energy losses in J at each node
+   */
+  public double[] getCumulativeEnergyLossProfile() {
+    double[] loss = new double[getTotalNumberOfNodes()];
+    double cumulative = 0.0;
+    double inletEnthalpy = flowNode[0].getBulkSystem().getEnthalpy();
+
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      double currentEnthalpy = flowNode[i].getBulkSystem().getEnthalpy();
+      loss[i] = inletEnthalpy - currentEnthalpy;
+    }
+    return loss;
+  }
+
+  /**
+   * <p>
+   * Estimates the condensation rate at a specific node.
+   * </p>
+   *
+   * <p>
+   * Condensation rate = Q_interphase / h_fg (kg/s per unit area)
+   * </p>
+   *
+   * @param nodeNumber the node index
+   * @return estimated condensation mass flux in kg/(m²·s), positive = condensation
+   */
+  public double getCondensationRateAtNode(int nodeNumber) {
+    if (flowNode == null || flowNode[nodeNumber] == null) {
+      return 0.0;
+    }
+
+    // Get interphase heat flux
+    double qInterphase = getInterphaseHeatFluxAtNode(nodeNumber);
+
+    // Estimate latent heat from enthalpy difference
+    double hGas = flowNode[nodeNumber].getBulkSystem().getPhase(0).getEnthalpy()
+        / flowNode[nodeNumber].getBulkSystem().getPhase(0).getNumberOfMolesInPhase()
+        / flowNode[nodeNumber].getBulkSystem().getPhase(0).getMolarMass();
+    double hLiq = flowNode[nodeNumber].getBulkSystem().getPhase(1).getEnthalpy()
+        / flowNode[nodeNumber].getBulkSystem().getPhase(1).getNumberOfMolesInPhase()
+        / flowNode[nodeNumber].getBulkSystem().getPhase(1).getMolarMass();
+
+    double hfg = Math.abs(hGas - hLiq);
+
+    if (hfg > 0) {
+      return qInterphase / hfg; // kg/(m²·s)
+    }
+    return 0.0;
+  }
+
+  /**
+   * <p>
+   * Gets the condensation rate profile along the pipe.
+   * </p>
+   *
+   * @return an array of condensation rates in kg/(m²·s) at each node
+   */
+  public double[] getCondensationRateProfile() {
+    double[] rate = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      rate[i] = getCondensationRateAtNode(i);
+    }
+    return rate;
+  }
+
+  /**
+   * <p>
+   * Calculates the total condensation rate along the entire pipe.
+   * </p>
+   *
+   * @return total condensation rate in kg/s
+   */
+  public double getTotalCondensationRate() {
+    double total = 0.0;
+    for (int i = 0; i < getTotalNumberOfNodes() - 1; i++) {
+      double rate = getCondensationRateAtNode(i);
+      double area = flowNode[i].getInterphaseContactArea();
+      total += rate * area;
+    }
+    return total;
+  }
+
+  /**
+   * <p>
+   * Gets the thermal conductivity profile for a specific phase.
+   * </p>
+   *
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
+   * @return an array of thermal conductivities in W/(m·K) at each node
+   */
+  public double[] getThermalConductivityProfile(int phaseIndex) {
+    double[] k = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      k[i] = flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties()
+          .getConductivity();
+    }
+    return k;
+  }
+
+  /**
+   * <p>
+   * Gets the surface tension profile along the pipe.
+   * </p>
+   *
+   * @return an array of surface tensions in N/m at each node
+   */
+  public double[] getSurfaceTensionProfile() {
+    double[] sigma = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      sigma[i] = flowNode[i].getBulkSystem().getInterphaseProperties().getSurfaceTension(0, 1);
+    }
+    return sigma;
+  }
+
+  // ==================== MASS BALANCE ====================
+
+  /**
+   * <p>
+   * Calculates the overall mass balance error for the pipe system.
+   * </p>
+   *
+   * @return relative mass balance error (0 = perfect balance)
+   */
+  public double getMassBalanceError() {
+    // Inlet mass flow
+    double massIn = 0.0;
+    for (int p = 0; p < 2; p++) {
+      massIn += flowNode[0].getMassFlowRate(p);
+    }
+
+    // Outlet mass flow
+    int lastNode = getTotalNumberOfNodes() - 1;
+    double massOut = 0.0;
+    for (int p = 0; p < 2; p++) {
+      massOut += flowNode[lastNode].getMassFlowRate(p);
+    }
+
+    if (Math.abs(massIn) > 1e-20) {
+      return (massIn - massOut) / massIn;
+    }
+    return 0.0;
+  }
+
+  /**
+   * <p>
+   * Gets the mass flow rate profile for a specific phase.
+   * </p>
+   *
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
+   * @return an array of mass flow rates in kg/s at each node
+   */
+  public double[] getMassFlowRateProfile(int phaseIndex) {
+    double[] massFlow = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      massFlow[i] = flowNode[i].getMassFlowRate(phaseIndex);
+    }
+    return massFlow;
+  }
+
+  /**
+   * <p>
+   * Gets the total (gas + liquid) mass flow rate profile.
+   * </p>
+   *
+   * @return an array of total mass flow rates in kg/s at each node
+   */
+  public double[] getTotalMassFlowRateProfile() {
+    double[] massFlow = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      massFlow[i] = flowNode[i].getMassFlowRate(0) + flowNode[i].getMassFlowRate(1);
+    }
+    return massFlow;
+  }
+
+  /**
+   * <p>
+   * Gets the gas quality (vapor mass fraction) profile along the pipe.
+   * </p>
+   *
+   * @return an array of gas quality values (0-1) at each node
+   */
+  public double[] getGasQualityProfile() {
+    double[] quality = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      double mG = flowNode[i].getMassFlowRate(0);
+      double mL = flowNode[i].getMassFlowRate(1);
+      double total = mG + mL;
+      if (total > 0) {
+        quality[i] = mG / total;
+      }
+    }
+    return quality;
+  }
+
+  /**
+   * <p>
+   * Gets the mixture density profile along the pipe.
+   * </p>
+   *
+   * <p>
+   * ρ_mix = α·ρ_G + (1-α)·ρ_L
+   * </p>
+   *
+   * @return an array of mixture densities in kg/m³ at each node
+   */
+  public double[] getMixtureDensityProfile() {
+    double[] rhoMix = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      double alpha = flowNode[i].getPhaseFraction(0); // Gas void fraction
+      double rhoG = flowNode[i].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+      double rhoL = flowNode[i].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+      rhoMix[i] = alpha * rhoG + (1.0 - alpha) * rhoL;
+    }
+    return rhoMix;
+  }
+
+  /**
+   * <p>
+   * Gets the mixture velocity profile along the pipe.
+   * </p>
+   *
+   * @return an array of mixture velocities in m/s at each node
+   */
+  public double[] getMixtureVelocityProfile() {
+    double[] uMix = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      uMix[i] = flowNode[i].getSuperficialVelocity(0) + flowNode[i].getSuperficialVelocity(1);
+    }
+    return uMix;
+  }
+
+  /**
+   * <p>
+   * Gets the slip ratio profile along the pipe.
+   * </p>
+   *
+   * <p>
+   * Slip ratio S = u_G / u_L
+   * </p>
+   *
+   * @return an array of slip ratios at each node
+   */
+  public double[] getSlipRatioProfile() {
+    double[] slip = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      double uG = flowNode[i].getVelocity(0);
+      double uL = flowNode[i].getVelocity(1);
+      if (uL > 0) {
+        slip[i] = uG / uL;
+      } else {
+        slip[i] = 1.0;
+      }
+    }
+    return slip;
+  }
+
+  // ==================== FRICTION AND PRESSURE DROP ====================
+
+  /**
+   * <p>
+   * Gets the wall friction factor profile for a specific phase.
+   * </p>
+   *
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
+   * @return an array of friction factors at each node
+   */
+  public double[] getWallFrictionFactorProfile(int phaseIndex) {
+    double[] f = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      f[i] = flowNode[i].getWallFrictionFactor(phaseIndex);
+    }
+    return f;
+  }
+
+  /**
+   * <p>
+   * Gets the interphase friction factor profile.
+   * </p>
+   *
+   * @return an array of interphase friction factors at each node
+   */
+  public double[] getInterphaseFrictionFactorProfile() {
+    double[] f = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      f[i] = flowNode[i].getInterPhaseFrictionFactor();
+    }
+    return f;
+  }
+
+  /**
+   * <p>
+   * Gets the pressure gradient profile along the pipe.
+   * </p>
+   *
+   * @return an array of pressure gradients in Pa/m at each node
+   */
+  public double[] getPressureGradientProfile() {
+    double[] dPdx = new double[getTotalNumberOfNodes()];
+    for (int i = 1; i < getTotalNumberOfNodes(); i++) {
+      double p1 = flowNode[i - 1].getBulkSystem().getPressure() * 1e5; // Pa
+      double p2 = flowNode[i].getBulkSystem().getPressure() * 1e5; // Pa
+      double dx = flowNode[i].getGeometry().getNodeLength();
+      if (dx > 0) {
+        dPdx[i] = (p1 - p2) / dx;
+      }
+    }
+    dPdx[0] = dPdx[1]; // Extrapolate to first node
+    return dPdx;
+  }
+
+  // ==================== FLOW PATTERN TRANSITION LOGIC ====================
+
+  /**
+   * <p>
+   * Updates flow patterns at all nodes based on current conditions.
+   * </p>
+   *
+   * <p>
+   * When automatic flow pattern detection is enabled, this method:
+   * <ul>
+   * <li>Detects the current flow pattern at each node using the selected model</li>
+   * <li>Creates new flow node instances if the pattern has changed</li>
+   * <li>Preserves thermodynamic and flow state during transition</li>
+   * </ul>
+   * </p>
+   */
+  public void updateFlowPatterns() {
+    if (!automaticFlowPatternDetection) {
+      return;
+    }
+
+    detectFlowPatterns();
+
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      FlowPattern currentPattern = nodeFlowPatterns[i];
+      FlowPattern previousPattern = FlowPattern.fromString(flowNode[i].getFlowNodeType());
+
+      if (currentPattern != previousPattern) {
+        transitionFlowNodeType(i, currentPattern);
+      }
+    }
+  }
+
+  /**
+   * <p>
+   * Transitions a flow node to a new flow pattern type.
+   * </p>
+   *
+   * <p>
+   * This method creates a new flow node of the appropriate type and transfers all relevant state
+   * including temperature, pressure, composition, velocities, and phase fractions.
+   * </p>
+   *
+   * @param nodeIndex the node index to transition
+   * @param newPattern the new flow pattern
+   */
+  protected void transitionFlowNodeType(int nodeIndex, FlowPattern newPattern) {
+    // Store current state
+    neqsim.thermo.system.SystemInterface currentSystem = flowNode[nodeIndex].getBulkSystem();
+    neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface geometry =
+        flowNode[nodeIndex].getGeometry();
+    double[] velocities = new double[2];
+    double[] phaseFractions = new double[2];
+
+    for (int p = 0; p < 2; p++) {
+      velocities[p] = flowNode[nodeIndex].getVelocity(p);
+      phaseFractions[p] = flowNode[nodeIndex].getPhaseFraction(p);
+    }
+
+    // Create new node of appropriate type
+    neqsim.fluidmechanics.flownode.FlowNodeInterface newNode =
+        createFlowNode(newPattern, currentSystem.clone(), geometry);
+
+    // Transfer state to new node
+    for (int p = 0; p < 2; p++) {
+      newNode.setVelocity(p, velocities[p]);
+      newNode.setPhaseFraction(p, phaseFractions[p]);
+    }
+
+    // Initialize new node
+    newNode.init();
+
+    // Replace the old node
+    flowNode[nodeIndex] = newNode;
+  }
+
+  /**
+   * <p>
+   * Creates a flow node of the specified flow pattern type.
+   * </p>
+   *
+   * @param pattern the flow pattern
+   * @param system the thermodynamic system
+   * @param geometry the pipe geometry
+   * @return the created flow node
+   */
+  protected neqsim.fluidmechanics.flownode.FlowNodeInterface createFlowNode(FlowPattern pattern,
+      neqsim.thermo.system.SystemInterface system,
+      neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface geometry) {
+    switch (pattern) {
+      case ANNULAR:
+        return new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.AnnularFlow(
+            system, geometry);
+      case SLUG:
+        return new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.SlugFlowNode(
+            system, geometry);
+      case BUBBLE:
+      case DISPERSED_BUBBLE:
+        return new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.BubbleFlowNode(
+            system, geometry);
+      case DROPLET:
+        return new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.DropletFlowNode(
+            system, geometry);
+      case STRATIFIED:
+      case STRATIFIED_WAVY:
+      case CHURN:
+      default:
+        return new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode(
+            system, geometry);
+    }
+  }
+
+  /**
+   * <p>
+   * Gets the count of flow pattern transitions along the pipe.
+   * </p>
+   *
+   * @return the number of transitions
+   */
+  public int getFlowPatternTransitionCount() {
+    if (nodeFlowPatterns == null || nodeFlowPatterns.length < 2) {
+      return 0;
+    }
+
+    int transitions = 0;
+    for (int i = 1; i < nodeFlowPatterns.length; i++) {
+      if (nodeFlowPatterns[i] != nodeFlowPatterns[i - 1]) {
+        transitions++;
+      }
+    }
+    return transitions;
+  }
+
+  /**
+   * <p>
+   * Gets the positions where flow pattern transitions occur.
+   * </p>
+   *
+   * @return an array of node indices where transitions occur
+   */
+  public int[] getFlowPatternTransitionPositions() {
+    if (nodeFlowPatterns == null || nodeFlowPatterns.length < 2) {
+      return new int[0];
+    }
+
+    java.util.List<Integer> transitions = new java.util.ArrayList<>();
+    for (int i = 1; i < nodeFlowPatterns.length; i++) {
+      if (nodeFlowPatterns[i] != nodeFlowPatterns[i - 1]) {
+        transitions.add(i);
+      }
+    }
+    return transitions.stream().mapToInt(Integer::intValue).toArray();
+  }
+
+  // ==================== PRESSURE DROP CORRELATIONS ====================
+
+  /**
+   * <p>
+   * Calculates the total pressure drop along the pipe.
+   * </p>
+   *
+   * @return the total pressure drop in bar
+   */
+  public double getTotalPressureDrop() {
+    double inletPressure = flowNode[0].getBulkSystem().getPressure();
+    double outletPressure = flowNode[getTotalNumberOfNodes() - 1].getBulkSystem().getPressure();
+    return inletPressure - outletPressure;
+  }
+
+  /**
+   * <p>
+   * Calculates the frictional pressure drop component.
+   * </p>
+   *
+   * @return the frictional pressure drop in bar
+   */
+  public double getFrictionalPressureDrop() {
+    double totalFrictional = 0.0;
+
+    for (int i = 0; i < getTotalNumberOfNodes() - 1; i++) {
+      // Two-phase friction factor
+      double fG = flowNode[i].getWallFrictionFactor(0);
+      double fL = flowNode[i].getWallFrictionFactor(1);
+
+      double rhoG = flowNode[i].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+      double rhoL = flowNode[i].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+      double uG = flowNode[i].getVelocity(0);
+      double uL = flowNode[i].getVelocity(1);
+      double alpha = flowNode[i].getPhaseFraction(0);
+
+      double diameter = flowNode[i].getGeometry().getDiameter();
+      double dx = flowNode[i].getGeometry().getNodeLength();
+
+      // Frictional pressure drop per phase
+      double dpFricG = 2.0 * fG * rhoG * uG * uG / diameter * alpha * dx;
+      double dpFricL = 2.0 * fL * rhoL * uL * uL / diameter * (1 - alpha) * dx;
+
+      totalFrictional += (dpFricG + dpFricL);
+    }
+
+    return totalFrictional / 1e5; // Convert Pa to bar
+  }
+
+  /**
+   * <p>
+   * Calculates the gravitational pressure drop component.
+   * </p>
+   *
+   * @return the gravitational pressure drop in bar
+   */
+  public double getGravitationalPressureDrop() {
+    double totalGravity = 0.0;
+    final double g = 9.81;
+
+    for (int i = 0; i < getTotalNumberOfNodes() - 1; i++) {
+      double rhoG = flowNode[i].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+      double rhoL = flowNode[i].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+      double alpha = flowNode[i].getPhaseFraction(0);
+      double rhoMix = alpha * rhoG + (1 - alpha) * rhoL;
+
+      // Height change between nodes
+      double dz = 0.0;
+      if (i + 1 < getTotalNumberOfNodes()) {
+        dz = flowNode[i + 1].getVerticalPositionOfNode() - flowNode[i].getVerticalPositionOfNode();
+      }
+
+      totalGravity += rhoMix * g * dz;
+    }
+
+    return totalGravity / 1e5; // Convert Pa to bar
+  }
+
+  /**
+   * <p>
+   * Calculates the acceleration pressure drop component.
+   * </p>
+   *
+   * @return the acceleration pressure drop in bar
+   */
+  public double getAccelerationPressureDrop() {
+    // Change in momentum flux between inlet and outlet
+    double rhoG_in = flowNode[0].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double rhoL_in = flowNode[0].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+    double uG_in = flowNode[0].getVelocity(0);
+    double uL_in = flowNode[0].getVelocity(1);
+    double alpha_in = flowNode[0].getPhaseFraction(0);
+
+    int lastNode = getTotalNumberOfNodes() - 1;
+    double rhoG_out =
+        flowNode[lastNode].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double rhoL_out =
+        flowNode[lastNode].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+    double uG_out = flowNode[lastNode].getVelocity(0);
+    double uL_out = flowNode[lastNode].getVelocity(1);
+    double alpha_out = flowNode[lastNode].getPhaseFraction(0);
+
+    // Momentum flux = ρ * u² * A * phase fraction
+    double momIn = alpha_in * rhoG_in * uG_in * uG_in + (1 - alpha_in) * rhoL_in * uL_in * uL_in;
+    double momOut =
+        alpha_out * rhoG_out * uG_out * uG_out + (1 - alpha_out) * rhoL_out * uL_out * uL_out;
+
+    return (momOut - momIn) / 1e5; // Convert Pa to bar
+  }
+
+  /**
+   * <p>
+   * Gets the pressure drop breakdown as a formatted string.
+   * </p>
+   *
+   * @return a string describing the pressure drop components
+   */
+  public String getPressureDropBreakdown() {
+    double totalDP = getTotalPressureDrop();
+    double fricDP = getFrictionalPressureDrop();
+    double gravDP = getGravitationalPressureDrop();
+    double accelDP = getAccelerationPressureDrop();
+
+    return String.format(
+        "Pressure Drop Breakdown:%n" + "  Total:        %.4f bar%n" + "  Frictional:   %.4f bar%n"
+            + "  Gravitational: %.4f bar%n" + "  Acceleration: %.4f bar%n",
+        totalDP, fricDP, gravDP, accelDP);
+  }
+
+  /**
+   * <p>
+   * Calculates the two-phase pressure drop using Lockhart-Martinelli correlation.
+   * </p>
+   *
+   * <p>
+   * Reference: Lockhart, R.W. and Martinelli, R.C. (1949). "Proposed Correlation of Data for
+   * Isothermal Two-Phase, Two-Component Flow in Pipes." Chemical Engineering Progress, 45(1),
+   * 39-48.
+   * </p>
+   *
+   * @param nodeIndex the node index
+   * @return the two-phase pressure gradient in Pa/m
+   */
+  public double getLockhartMartinelliPressureGradient(int nodeIndex) {
+    double rhoG =
+        flowNode[nodeIndex].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double rhoL =
+        flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+    double muG =
+        flowNode[nodeIndex].getBulkSystem().getPhase(0).getPhysicalProperties().getViscosity();
+    double muL =
+        flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getViscosity();
+    double usgVal = flowNode[nodeIndex].getSuperficialVelocity(0);
+    double uslVal = flowNode[nodeIndex].getSuperficialVelocity(1);
+    double diameter = flowNode[nodeIndex].getGeometry().getDiameter();
+
+    // Single-phase pressure gradients
+    double reG = rhoG * usgVal * diameter / muG;
+    double reL = rhoL * uslVal * diameter / muL;
+
+    // Friction factors (Blasius)
+    double fG = (reG > 0) ? 0.079 * Math.pow(reG, -0.25) : 0;
+    double fL = (reL > 0) ? 0.079 * Math.pow(reL, -0.25) : 0;
+
+    // Single-phase pressure gradients
+    double dPdxG = 2.0 * fG * rhoG * usgVal * usgVal / diameter;
+    double dPdxL = 2.0 * fL * rhoL * uslVal * uslVal / diameter;
+
+    // Lockhart-Martinelli parameter
+    double X = (dPdxL > 0 && dPdxG > 0) ? Math.sqrt(dPdxL / dPdxG) : 1.0;
+
+    // Two-phase multiplier (Chisholm C parameter, turbulent-turbulent = 20)
+    double C = 20.0;
+    double phi2L = 1.0 + C / X + 1.0 / (X * X);
+
+    return dPdxL * phi2L;
+  }
+
+  /**
+   * <p>
+   * Gets the Lockhart-Martinelli pressure gradient profile.
+   * </p>
+   *
+   * @return an array of pressure gradients in Pa/m at each node
+   */
+  public double[] getLockhartMartinelliPressureGradientProfile() {
+    double[] dPdx = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      dPdx[i] = getLockhartMartinelliPressureGradient(i);
+    }
+    return dPdx;
+  }
+
+  // ==================== INCLINATION AND GEOMETRY ====================
+
+  /**
+   * Sets the pipe inclination angle.
+   *
+   * @param angle the inclination angle in radians (positive = upward flow)
+   */
+  public void setInclination(double angle) {
+    this.inclination = angle;
+  }
+
+  /**
+   * Sets the pipe inclination angle with unit.
+   *
+   * @param angle the inclination angle
+   * @param unit the angle unit ("deg", "degrees", "rad", "radians")
+   */
+  public void setInclination(double angle, String unit) {
+    switch (unit.toLowerCase()) {
+      case "deg":
+      case "degrees":
+        this.inclination = Math.toRadians(angle);
+        break;
+      case "rad":
+      case "radians":
+      default:
+        this.inclination = angle;
+        break;
+    }
+  }
+
+  /**
+   * Gets the pipe inclination angle.
+   *
+   * @return the inclination angle in radians
+   */
+  public double getInclination() {
+    return inclination;
+  }
+
+  /**
+   * Gets the pipe inclination angle in degrees.
+   *
+   * @return the inclination angle in degrees
+   */
+  public double getInclinationDegrees() {
+    return Math.toDegrees(inclination);
+  }
+
+  /**
+   * Checks if the pipe is horizontal (inclination ≈ 0).
+   *
+   * @return true if horizontal
+   */
+  public boolean isHorizontal() {
+    return Math.abs(inclination) < 1e-6;
+  }
+
+  /**
+   * Checks if the pipe is vertical (|inclination| ≈ 90°).
+   *
+   * @return true if vertical
+   */
+  public boolean isVertical() {
+    return Math.abs(Math.abs(inclination) - Math.PI / 2.0) < 1e-6;
+  }
+
+  /**
+   * Checks if flow is upward (positive inclination).
+   *
+   * @return true if upward flow
+   */
+  public boolean isUpwardFlow() {
+    return inclination > 1e-6;
+  }
+
+  /**
+   * Checks if flow is downward (negative inclination).
+   *
+   * @return true if downward flow
+   */
+  public boolean isDownwardFlow() {
+    return inclination < -1e-6;
+  }
+
+  /**
+   * Gets the gravitational pressure gradient component at a node.
+   *
+   * @param nodeIndex the node index
+   * @return the gravitational pressure gradient in Pa/m (positive for upward flow)
+   */
+  public double getGravitationalPressureGradient(int nodeIndex) {
+    if (flowNode == null || flowNode[nodeIndex] == null) {
+      return 0.0;
+    }
+    // Calculate mixture density from phase densities and holdup
+    double[] gasDensity = getDensityProfile(0);
+    double[] liquidDensity = getDensityProfile(1);
+    double[] voidFraction = getVoidFractionProfile();
+    double mixtureDensity = voidFraction[nodeIndex] * gasDensity[nodeIndex]
+        + (1.0 - voidFraction[nodeIndex]) * liquidDensity[nodeIndex];
+    return mixtureDensity * 9.81 * Math.sin(inclination);
+  }
+
+  /**
+   * Gets the elevation profile along the pipe.
+   *
+   * @return an array of elevations in meters at each node
+   */
+  public double[] getElevationProfile() {
+    double[] elevation = new double[getTotalNumberOfNodes()];
+    double[] positions = getPositionProfile();
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      elevation[i] = positions[i] * Math.sin(inclination);
+    }
+    return elevation;
+  }
+
+  // ==================== CSV EXPORT ====================
+
+  /**
+   * Exports all simulation results to a CSV file.
+   *
+   * <p>
+   * The CSV file contains columns for position, temperature, pressure, velocity (gas/liquid), void
+   * fraction, density, and other calculated properties.
+   * </p>
+   *
+   * @param filePath the path to the output CSV file
+   * @throws java.io.IOException if file writing fails
+   */
+  public void exportToCSV(String filePath) throws java.io.IOException {
+    exportToCSV(filePath, ";");
+  }
+
+  /**
+   * Exports all simulation results to a CSV file with a custom delimiter.
+   *
+   * @param filePath the path to the output CSV file
+   * @param delimiter the column delimiter (e.g., "," or ";")
+   * @throws java.io.IOException if file writing fails
+   */
+  public void exportToCSV(String filePath, String delimiter) throws java.io.IOException {
+    try (java.io.PrintWriter writer =
+        new java.io.PrintWriter(new java.io.BufferedWriter(new java.io.FileWriter(filePath)))) {
+
+      // Write header
+      String[] headers = {"Position [m]", "Elevation [m]", "Temperature [K]", "Pressure [Pa]",
+          "Gas Velocity [m/s]", "Liquid Velocity [m/s]", "Superficial Gas Velocity [m/s]",
+          "Superficial Liquid Velocity [m/s]", "Void Fraction [-]", "Liquid Holdup [-]",
+          "Gas Density [kg/m3]", "Liquid Density [kg/m3]", "Mixture Density [kg/m3]",
+          "Gas Viscosity [Pa.s]", "Liquid Viscosity [Pa.s]", "Reynolds Gas [-]",
+          "Reynolds Liquid [-]", "Pressure Gradient [Pa/m]", "Flow Pattern"};
+      writer.println(String.join(delimiter, headers));
+
+      // Get all profiles
+      double[] position = getPositionProfile();
+      double[] elevation = getElevationProfile();
+      double[] temperature = getTemperatureProfile();
+      double[] pressure = getPressureProfile();
+      double[] gasVelocity = getVelocityProfile(0);
+      double[] liquidVelocity = getVelocityProfile(1);
+      double[] usg = getSuperficialVelocityProfile(0);
+      double[] usl = getSuperficialVelocityProfile(1);
+      double[] voidFraction = getVoidFractionProfile();
+      double[] liquidHoldup = getLiquidHoldupProfile();
+      double[] gasDensity = getDensityProfile(0);
+      double[] liquidDensity = getDensityProfile(1);
+      double[] mixtureDensity = getMixtureDensityProfile();
+      double[] gasViscosity = getViscosityProfile(0);
+      double[] liquidViscosity = getViscosityProfile(1);
+      double[] reGas = getReynoldsNumberProfile(0);
+      double[] reLiquid = getReynoldsNumberProfile(1);
+      double[] pressureGradient = getPressureGradientProfile();
+      FlowPattern[] patterns = getFlowPatternProfile();
+
+      // Write data rows
+      for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+        String[] values = {String.format("%.6f", position[i]), String.format("%.6f", elevation[i]),
+            String.format("%.4f", temperature[i]), String.format("%.2f", pressure[i]),
+            String.format("%.6f", gasVelocity[i]), String.format("%.6f", liquidVelocity[i]),
+            String.format("%.6f", usg[i]), String.format("%.6f", usl[i]),
+            String.format("%.6f", voidFraction[i]), String.format("%.6f", liquidHoldup[i]),
+            String.format("%.4f", gasDensity[i]), String.format("%.4f", liquidDensity[i]),
+            String.format("%.4f", mixtureDensity[i]), String.format("%.8e", gasViscosity[i]),
+            String.format("%.8e", liquidViscosity[i]), String.format("%.2f", reGas[i]),
+            String.format("%.2f", reLiquid[i]), String.format("%.4f", pressureGradient[i]),
+            patterns[i] != null ? patterns[i].getName() : "unknown"};
+        writer.println(String.join(delimiter, values));
+      }
+    }
+  }
+
+  /**
+   * Exports selected profiles to a CSV file.
+   *
+   * @param filePath the path to the output CSV file
+   * @param profiles array of profile names to export (e.g., "position", "temperature", "pressure")
+   * @throws java.io.IOException if file writing fails
+   */
+  public void exportProfilesToCSV(String filePath, String[] profiles) throws java.io.IOException {
+    exportProfilesToCSV(filePath, profiles, ";");
+  }
+
+  /**
+   * Exports selected profiles to a CSV file with a custom delimiter.
+   *
+   * @param filePath the path to the output CSV file
+   * @param profiles array of profile names to export
+   * @param delimiter the column delimiter
+   * @throws java.io.IOException if file writing fails
+   */
+  public void exportProfilesToCSV(String filePath, String[] profiles, String delimiter)
+      throws java.io.IOException {
+    try (java.io.PrintWriter writer =
+        new java.io.PrintWriter(new java.io.BufferedWriter(new java.io.FileWriter(filePath)))) {
+
+      // Build header and collect data
+      java.util.List<String> headers = new java.util.ArrayList<>();
+      java.util.List<double[]> data = new java.util.ArrayList<>();
+
+      for (String profile : profiles) {
+        switch (profile.toLowerCase()) {
+          case "position":
+            headers.add("Position [m]");
+            data.add(getPositionProfile());
+            break;
+          case "elevation":
+            headers.add("Elevation [m]");
+            data.add(getElevationProfile());
+            break;
+          case "temperature":
+            headers.add("Temperature [K]");
+            data.add(getTemperatureProfile());
+            break;
+          case "pressure":
+            headers.add("Pressure [Pa]");
+            data.add(getPressureProfile());
+            break;
+          case "gasvelocity":
+          case "gas_velocity":
+            headers.add("Gas Velocity [m/s]");
+            data.add(getVelocityProfile(0));
+            break;
+          case "liquidvelocity":
+          case "liquid_velocity":
+            headers.add("Liquid Velocity [m/s]");
+            data.add(getVelocityProfile(1));
+            break;
+          case "voidfraction":
+          case "void_fraction":
+            headers.add("Void Fraction [-]");
+            data.add(getVoidFractionProfile());
+            break;
+          case "liquidholdup":
+          case "liquid_holdup":
+            headers.add("Liquid Holdup [-]");
+            data.add(getLiquidHoldupProfile());
+            break;
+          case "gasdensity":
+          case "gas_density":
+            headers.add("Gas Density [kg/m3]");
+            data.add(getDensityProfile(0));
+            break;
+          case "liquiddensity":
+          case "liquid_density":
+            headers.add("Liquid Density [kg/m3]");
+            data.add(getDensityProfile(1));
+            break;
+          case "mixturedensity":
+          case "mixture_density":
+            headers.add("Mixture Density [kg/m3]");
+            data.add(getMixtureDensityProfile());
+            break;
+          case "pressuregradient":
+          case "pressure_gradient":
+            headers.add("Pressure Gradient [Pa/m]");
+            data.add(getPressureGradientProfile());
+            break;
+          default:
+            // Unknown profile, skip
+            break;
+        }
+      }
+
+      // Write header
+      writer.println(String.join(delimiter, headers));
+
+      // Write data rows
+      int numRows = getTotalNumberOfNodes();
+      for (int i = 0; i < numRows; i++) {
+        StringBuilder row = new StringBuilder();
+        for (int j = 0; j < data.size(); j++) {
+          if (j > 0) {
+            row.append(delimiter);
+          }
+          row.append(String.format("%.6f", data.get(j)[i]));
+        }
+        writer.println(row.toString());
+      }
+    }
+  }
+
+  /**
+   * Gets a summary report of the simulation results as a formatted string.
+   *
+   * @return a multi-line string containing the simulation summary
+   */
+  public String getSummaryReport() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Two-Phase Pipe Flow Simulation Summary ===\n\n");
+
+    // Geometry
+    sb.append("GEOMETRY:\n");
+    sb.append(String.format("  Pipe Length: %.2f m\n", getSystemLength()));
+    sb.append(String.format("  Inclination: %.2f degrees\n", getInclinationDegrees()));
+    sb.append(String.format("  Number of Nodes: %d\n", getTotalNumberOfNodes()));
+    sb.append(String.format("  Flow Direction: %s\n",
+        isUpwardFlow() ? "Upward" : (isDownwardFlow() ? "Downward" : "Horizontal")));
+    sb.append("\n");
+
+    // Inlet conditions
+    double[] temp = getTemperatureProfile();
+    double[] pres = getPressureProfile();
+    double[] usg = getSuperficialVelocityProfile(0);
+    double[] usl = getSuperficialVelocityProfile(1);
+
+    sb.append("INLET CONDITIONS:\n");
+    sb.append(String.format("  Temperature: %.2f K (%.2f °C)\n", temp[0], temp[0] - 273.15));
+    sb.append(String.format("  Pressure: %.2f Pa (%.2f bar)\n", pres[0], pres[0] / 1e5));
+    sb.append(String.format("  Superficial Gas Velocity: %.4f m/s\n", usg[0]));
+    sb.append(String.format("  Superficial Liquid Velocity: %.4f m/s\n", usl[0]));
+    sb.append("\n");
+
+    // Outlet conditions
+    int n = getTotalNumberOfNodes() - 1;
+    sb.append("OUTLET CONDITIONS:\n");
+    sb.append(String.format("  Temperature: %.2f K (%.2f °C)\n", temp[n], temp[n] - 273.15));
+    sb.append(String.format("  Pressure: %.2f Pa (%.2f bar)\n", pres[n], pres[n] / 1e5));
+    sb.append(String.format("  Superficial Gas Velocity: %.4f m/s\n", usg[n]));
+    sb.append(String.format("  Superficial Liquid Velocity: %.4f m/s\n", usl[n]));
+    sb.append("\n");
+
+    // Pressure drop
+    sb.append("PRESSURE DROP:\n");
+    double totalDp = pres[0] - pres[n];
+    sb.append(String.format("  Total Pressure Drop: %.2f Pa (%.4f bar)\n", totalDp, totalDp / 1e5));
+    sb.append(
+        String.format("  Average Pressure Gradient: %.2f Pa/m\n", totalDp / getSystemLength()));
+    sb.append("\n");
+
+    // Temperature change
+    sb.append("TEMPERATURE CHANGE:\n");
+    double deltaT = temp[n] - temp[0];
+    sb.append(String.format("  Temperature Change: %.2f K\n", deltaT));
+    sb.append(String.format("  Heat Loss Rate: %.2f W\n", getTotalHeatLoss()));
+    sb.append("\n");
+
+    // Flow patterns
+    FlowPattern[] patterns = getFlowPatternProfile();
+    java.util.Map<FlowPattern, Integer> patternCounts = new java.util.LinkedHashMap<>();
+    for (FlowPattern p : patterns) {
+      patternCounts.merge(p, 1, Integer::sum);
+    }
+    sb.append("FLOW PATTERNS:\n");
+    for (java.util.Map.Entry<FlowPattern, Integer> entry : patternCounts.entrySet()) {
+      double percentage = 100.0 * entry.getValue() / patterns.length;
+      sb.append(String.format("  %s: %.1f%%\n", entry.getKey().getName(), percentage));
+    }
+
+    return sb.toString();
   }
 
   /**
