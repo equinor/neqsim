@@ -63,7 +63,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
   public DropletFlowNode(SystemInterface system, SystemInterface interphaseSystem,
       GeometryDefinitionInterface pipe) {
     super(system, pipe);
-    this.flowNodeType = "stratified";
+    this.flowNodeType = "droplet";
     this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
     this.fluidBoundary =
         new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(

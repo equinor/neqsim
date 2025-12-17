@@ -5,8 +5,26 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * <p>
- * TwoPhasePipeFlowSystem class.
+ * TwoPhasePipeFlowSystem class for non-equilibrium two-phase pipe flow simulation.
  * </p>
+ *
+ * <p>
+ * This class implements steady-state and transient two-phase pipe flow simulation based on the
+ * non-equilibrium thermodynamics approach described in Solbraa (2002). It supports multiple flow
+ * patterns including stratified, annular, slug, droplet/mist, and bubble flow. The Krishna-Standart
+ * film model is used for mass and heat transfer calculations at the gas-liquid interface.
+ * </p>
+ *
+ * <p>
+ * Key features:
+ * </p>
+ * <ul>
+ * <li>Non-equilibrium mass transfer between phases using film theory</li>
+ * <li>Interphase heat transfer with finite flux corrections</li>
+ * <li>Momentum equations with wall and interphase friction</li>
+ * <li>Transient simulation with time-stepping capabilities</li>
+ * <li>Multiple flow pattern support with automatic flow regime transitions</li>
+ * </ul>
  *
  * @author asmund
  * @version $Id: $Id
@@ -15,6 +33,18 @@ public class TwoPhasePipeFlowSystem
     extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem.TwoPhaseFlowSystem {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  /** Time step for transient simulations in seconds. */
+  private double timeStep = 0.1;
+
+  /** Total simulation time for transient simulations in seconds. */
+  private double simulationTime = 10.0;
+
+  /** Number of time steps completed. */
+  private int numberOfTimeSteps = 0;
+
+  /** Current simulation time in seconds. */
+  private double currentTime = 0.0;
 
   /**
    * <p>
@@ -41,6 +71,18 @@ public class TwoPhasePipeFlowSystem
     } else if (initFlowPattern.equals("annular")) {
       flowNode[0] =
           new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.AnnularFlow(
+              thermoSystem, equipmentGeometry[0]);
+    } else if (initFlowPattern.equals("slug")) {
+      flowNode[0] =
+          new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.SlugFlowNode(
+              thermoSystem, equipmentGeometry[0]);
+    } else if (initFlowPattern.equals("droplet") || initFlowPattern.equals("mist")) {
+      flowNode[0] =
+          new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.DropletFlowNode(
+              thermoSystem, equipmentGeometry[0]);
+    } else if (initFlowPattern.equals("bubble")) {
+      flowNode[0] =
+          new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.BubbleFlowNode(
               thermoSystem, equipmentGeometry[0]);
     } else {
       flowNode[0] =
@@ -102,10 +144,169 @@ public class TwoPhasePipeFlowSystem
   /** {@inheritDoc} */
   @Override
   public void solveTransient(int type, UUID id) {
-    // pipeSolver pipeSolve = new pipeSolver(this, getSystemLength(),
-    // getTotalNumberOfNodes());
-    // pipeSolve.solveTDMA();
+    // Initialize time series for storing results
+    double[] times = new double[(int) (simulationTime / timeStep) + 1];
+    for (int i = 0; i < times.length; i++) {
+      times[i] = i * timeStep;
+    }
+
+    display =
+        new neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.twophaseflowvisualization.twophasepipeflowvisualization.TwoPhasePipeFlowVisualization(
+            this.getTotalNumberOfNodes(), times.length);
+    getTimeSeries().setTimes(times);
+    neqsim.thermo.system.SystemInterface[] systems = {flowNode[0].getBulkSystem()};
+    getTimeSeries().setInletThermoSystems(systems);
+    getTimeSeries().setNumberOfTimeStepsInInterval(times.length);
+    double[] outletFlowRates = {0.0, 0.0};
+    getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
+
+    // Create solver in dynamic mode
+    flowSolver =
+        new neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver(
+            this, getSystemLength(), this.getTotalNumberOfNodes(), true);
+    flowSolver.setSolverType(type);
+    flowSolver.setTimeStep(timeStep);
+
+    // Store initial state
+    getTimeSeries().init(this);
+    display.setNextData(this);
+
+    // Time stepping loop
+    currentTime = 0.0;
+    numberOfTimeSteps = 0;
+
+    while (currentTime < simulationTime) {
+      flowSolver.solveTDMA();
+      currentTime += timeStep;
+      numberOfTimeSteps++;
+
+      // Store results at each time step
+      getTimeSeries().init(this);
+      display.setNextData(this);
+    }
+
     calcIdentifier = id;
+  }
+
+  /**
+   * <p>
+   * Sets the time step for transient simulations.
+   * </p>
+   *
+   * @param timeStep the time step in seconds
+   */
+  public void setTimeStep(double timeStep) {
+    this.timeStep = timeStep;
+  }
+
+  /**
+   * <p>
+   * Gets the time step for transient simulations.
+   * </p>
+   *
+   * @return the time step in seconds
+   */
+  public double getTimeStep() {
+    return timeStep;
+  }
+
+  /**
+   * <p>
+   * Sets the total simulation time for transient simulations.
+   * </p>
+   *
+   * @param simulationTime the total simulation time in seconds
+   */
+  public void setSimulationTime(double simulationTime) {
+    this.simulationTime = simulationTime;
+  }
+
+  /**
+   * <p>
+   * Gets the total simulation time for transient simulations.
+   * </p>
+   *
+   * @return the total simulation time in seconds
+   */
+  public double getSimulationTime() {
+    return simulationTime;
+  }
+
+  /**
+   * <p>
+   * Gets the number of time steps completed.
+   * </p>
+   *
+   * @return the number of time steps
+   */
+  public int getNumberOfTimeSteps() {
+    return numberOfTimeSteps;
+  }
+
+  /**
+   * <p>
+   * Gets the current simulation time.
+   * </p>
+   *
+   * @return the current time in seconds
+   */
+  public double getCurrentTime() {
+    return currentTime;
+  }
+
+  /**
+   * <p>
+   * Enables non-equilibrium mass transfer calculation using the Krishna-Standart film model. When
+   * enabled, mass transfer fluxes are calculated based on driving forces (chemical potential
+   * differences) and mass transfer coefficients.
+   * </p>
+   */
+  public void enableNonEquilibriumMassTransfer() {
+    setEquilibriumMassTransfer(false);
+  }
+
+  /**
+   * <p>
+   * Enables non-equilibrium heat transfer calculation. When enabled, heat transfer between phases
+   * is calculated using heat transfer coefficients and temperature differences.
+   * </p>
+   */
+  public void enableNonEquilibriumHeatTransfer() {
+    setEquilibriumHeatTransfer(false);
+  }
+
+  /**
+   * <p>
+   * Calculates the total mass transfer rate for a component along the pipe.
+   * </p>
+   *
+   * @param componentIndex the component index
+   * @return the total molar mass transfer rate in mol/s
+   */
+  public double getTotalMassTransferRate(int componentIndex) {
+    return getTotalMolarMassTransferRate(componentIndex);
+  }
+
+  /**
+   * <p>
+   * Calculates the total heat transfer rate from the pipe to surroundings.
+   * </p>
+   *
+   * @return the total heat transfer rate in W
+   */
+  public double getTotalHeatLoss() {
+    double totalHeatLoss = 0.0;
+    for (int i = 0; i < getTotalNumberOfNodes() - 1; i++) {
+      double nodeLength = flowNode[i].getGeometry().getNodeLength();
+      double diameter = flowNode[i].getGeometry().getDiameter();
+      double wallArea = Math.PI * diameter * nodeLength;
+      double fluidTemp = flowNode[i].getBulkSystem().getTemperature();
+      double surroundingTemp = flowNode[i].getGeometry().getSurroundingEnvironment().getTemperature();
+      // Approximate overall heat transfer coefficient
+      double uValue = 10.0; // W/(m²·K) - simplified
+      totalHeatLoss += uValue * wallArea * (fluidTemp - surroundingTemp);
+    }
+    return totalHeatLoss;
   }
 
   /**

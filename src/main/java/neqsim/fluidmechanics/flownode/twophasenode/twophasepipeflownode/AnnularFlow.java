@@ -3,7 +3,7 @@ package neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
-import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseStratifiedFlow;
+import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseAnnularFlow;
 import neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.MaterialLayer;
@@ -52,7 +52,7 @@ public class AnnularFlow extends TwoPhaseFlowNode {
   public AnnularFlow(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "annular";
-    this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
+    this.interphaseTransportCoefficient = new InterphaseAnnularFlow(this);
     this.fluidBoundary =
         new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
             this);
@@ -72,7 +72,7 @@ public class AnnularFlow extends TwoPhaseFlowNode {
       GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "annular";
-    this.interphaseTransportCoefficient = new InterphaseStratifiedFlow(this);
+    this.interphaseTransportCoefficient = new InterphaseAnnularFlow(this);
     this.fluidBoundary =
         new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
             this);
