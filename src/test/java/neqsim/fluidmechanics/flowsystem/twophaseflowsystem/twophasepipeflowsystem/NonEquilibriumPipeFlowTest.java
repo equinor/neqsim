@@ -1062,7 +1062,9 @@ public class NonEquilibriumPipeFlowTest {
     system.addComponent("nC10", 1200.0, "kg/hr", 1);
     system.createDatabase(true);
     system.setMixingRule(2);
-    system.init(0);
+    // Do NOT call init(0) here: it sets x=z in each phase (equilibrium-like initialization) and
+    // removes the intended non-equilibrium phase split needed to generate a driving force.
+    system.initProperties();
 
     TwoPhasePipeFlowSystem bubblePipe = new TwoPhasePipeFlowSystem();
     bubblePipe.setInletThermoSystem(system);
@@ -1113,6 +1115,12 @@ public class NonEquilibriumPipeFlowTest {
     System.out.println("Inlet liquid methane fraction: " + inletLiquidMethaneFraction);
     System.out.println("Outlet liquid methane fraction: " + outletLiquidMethaneFraction);
     System.out.println("Methane mass transfer rate: " + methaneMassTransferRate + " mol/s");
+
+    // Verify we actually start out of equilibrium (gas methane rich, liquid methane poor).
+    assertTrue(inletGasMethaneFraction > 0.99,
+        "Expected methane-rich gas phase at inlet (off-equilibrium start), x=" + inletGasMethaneFraction);
+    assertTrue(inletLiquidMethaneFraction < 1.0e-6,
+        "Expected methane-lean liquid phase at inlet (off-equilibrium start), x=" + inletLiquidMethaneFraction);
 
     // Solver type 2 does not enforce full component-conservation propagation along the pipe, so
     // don't assert complete disappearance of the gas-phase methane fraction. Instead, verify that
@@ -1342,36 +1350,39 @@ public class NonEquilibriumPipeFlowTest {
    */
   @Test
   void testCompleteGasDissolutionIn1kmPipe() {
-    // Use exact same proven pattern as testMethaneDissolveIntoNDecane
-    // 313.3 K (40°C), 100 bar - conditions known to give stable two-phase flow
-    SystemInterface system = new SystemSrkEos(313.3, 100.01325);
+    // Bubble flow dissolution case: small amount of gas dissolving into excess liquid
+    // 305 K (32°C), 120 bar - high pressure promotes dissolution
+    SystemInterface system = new SystemSrkEos(305.0, 120.0);
 
-    // Use same proven ratio as working tests
+    // Small gas flow relative to liquid - promotes complete dissolution
     // Methane in gas phase (phase 0)
-    system.addComponent("methane", 1100.0, "kg/hr", 0);
+    system.addComponent("methane", 5.0, "kg/hr", 0);
 
-    // n-Decane in liquid phase (phase 1)
-    system.addComponent("nC10", 111.0, "kg/hr", 1);
+    // Large liquid flow to absorb all gas - n-Decane in liquid phase (phase 1)
+    system.addComponent("nC10", 1200.0, "kg/hr", 1);
 
+    system.createDatabase(true);
     system.setMixingRule(2);
+    // Do NOT call init(0) here: it sets x=z in each phase (equilibrium-like initialization) and
+    // removes the intended non-equilibrium phase split needed to generate a driving force.
     system.initProperties();
 
-    // Create the two-phase pipe flow system
+    // Create the two-phase pipe flow system with bubble flow pattern
     TwoPhasePipeFlowSystem dissolvePipe = new TwoPhasePipeFlowSystem();
     dissolvePipe.setInletThermoSystem(system);
-    dissolvePipe.setInitialFlowPattern("stratified"); // Use stratified for stable numerics
-    dissolvePipe.setNumberOfLegs(4);
-    dissolvePipe.setNumberOfNodesInLeg(25); // 100 nodes total for 1 km
+    dissolvePipe.setInitialFlowPattern("bubble"); // Bubble flow for high interfacial area
+    dissolvePipe.setNumberOfLegs(5);
+    dissolvePipe.setNumberOfNodesInLeg(10);
 
-    // Pipeline configuration - horizontal pipe, 1 km total length
-    double[] height = {0, 0, 0, 0, 0};
-    double[] length = {0.0, 250.0, 500.0, 750.0, 1000.0};
+    // Pipeline configuration - horizontal pipe, 1 km total length (same ratio as working 3km test)
+    double[] height = {0, 0, 0, 0, 0, 0};
+    double[] length = {0.0, 200.0, 400.0, 600.0, 800.0, 1000.0};
 
     // Isothermal conditions (same temperature as fluid)
-    double pipeTemp = 313.3;
-    double[] outerTemperature = {pipeTemp, pipeTemp, pipeTemp, pipeTemp, pipeTemp};
-    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0};
-    double[] wallHeatCoef = {20.0, 20.0, 20.0, 20.0, 20.0};
+    double pipeTemp = 305.0;
+    double[] outerTemperature = {pipeTemp, pipeTemp, pipeTemp, pipeTemp, pipeTemp, pipeTemp};
+    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {20.0, 20.0, 20.0, 20.0, 20.0, 20.0};
 
     dissolvePipe.setLegHeights(height);
     dissolvePipe.setLegPositions(length);
@@ -1379,10 +1390,10 @@ public class NonEquilibriumPipeFlowTest {
     dissolvePipe.setLegOuterHeatTransferCoefficients(outHeatCoef);
     dissolvePipe.setLegWallHeatTransferCoefficients(wallHeatCoef);
 
-    // 6-inch pipe diameter
-    GeometryDefinitionInterface[] pipeGeometry = new PipeData[5];
-    for (int i = 0; i < 5; i++) {
-      pipeGeometry[i] = new PipeData(0.15); // 150 mm (6 inch) diameter
+    // 50 mm (2 inch) pipe diameter - smaller diameter for bubble flow
+    GeometryDefinitionInterface[] pipeGeometry = new PipeData[6];
+    for (int i = 0; i < pipeGeometry.length; i++) {
+      pipeGeometry[i] = new PipeData(0.05); // 50 mm diameter
     }
     dissolvePipe.setEquipmentGeometry(pipeGeometry);
 
@@ -1409,11 +1420,11 @@ public class NonEquilibriumPipeFlowTest {
     double outletGasFraction = 1.0 - liquidHoldupProfile[numNodes - 1];
 
     // Print results
-    System.out.println("\n=== Complete Gas Dissolution in 1 km Pipeline ===");
-    System.out.println("Scenario: Methane gas dissolving into n-decane oil");
-    System.out.println("Conditions: T=313 K (40°C), P=100 bar");
-    System.out.println("Pipe: 1 km length, 150 mm diameter, horizontal");
-    System.out.println("Gas flow: 1100 kg/hr methane, Liquid: 111 kg/hr n-C10");
+    System.out.println("\n=== Complete Gas Dissolution in 1 km Pipeline (Bubble Flow) ===");
+    System.out.println("Scenario: Small methane gas bubble dissolving into excess n-decane oil");
+    System.out.println("Conditions: T=305 K (32°C), P=120 bar");
+    System.out.println("Pipe: 1 km length, 50 mm diameter, horizontal, bubble flow");
+    System.out.println("Gas flow: 5 kg/hr methane, Liquid: 1200 kg/hr n-C10");
 
     System.out.println("\nInlet conditions:");
     System.out.printf("  Temperature: %.2f K%n", temperatureProfile[0]);
@@ -1453,13 +1464,18 @@ public class NonEquilibriumPipeFlowTest {
           dissolutionNode);
     } else {
       System.out.println("Complete dissolution not achieved within 1 km");
-      // Print gas fraction profile for debugging
-      System.out.println("\nGas void fraction profile (every 10th node):");
-      for (int i = 0; i < numNodes; i += 10) {
-        double distance = i * 1000.0 / numNodes;
-        double gasFrac = 1.0 - liquidHoldupProfile[i];
-        System.out.printf("  %.0f m: %.6f%n", distance, gasFrac);
-      }
+    }
+
+    // Print complete gas fraction profile as function of length
+    System.out.println("\n=== Gas Fraction Profile Along Pipe Length ===");
+    System.out.println("Length [m]    Gas Fraction [-]   Liquid Holdup [-]");
+    System.out.println("---------------------------------------------------");
+    double pipeLength = 1000.0;
+    for (int i = 0; i < numNodes; i++) {
+      double distance = i * pipeLength / (numNodes - 1);
+      double gasFrac = 1.0 - liquidHoldupProfile[i];
+      System.out.printf("%8.1f      %.6f           %.6f%n", distance, gasFrac,
+          liquidHoldupProfile[i]);
     }
 
     // Check node-level mass transfer for insight

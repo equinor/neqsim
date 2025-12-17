@@ -100,17 +100,14 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    * </p>
    */
   public void initProfiles() {
-    // double err = 0, oldPres = 0, oldTemp = 0, dpdx = 0;
-
-    double[][][] molDiff =
-        new double[numberOfNodes][2][pipe.getNode(0).getBulkSystem().getPhases()[0]
-            .getNumberOfComponents()];
     pipe.getNode(0).getBulkSystem().initBeta();
     pipe.getNode(0).getBulkSystem().init_x_y();
     pipe.getNode(0).initFlowCalc();
     pipe.getNode(0).calcFluxes();
 
     for (int i = 1; i < numberOfNodes - 1; i++) {
+      // Re-initialize the bulk system to update molar volumes after mole changes from previous node
+      pipe.getNode(i).getBulkSystem().init(1);
       pipe.getNode(i).getBulkSystem().initBeta();
       pipe.getNode(i).getBulkSystem().init_x_y();
       pipe.getNode(i).initFlowCalc();
@@ -136,38 +133,40 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         // getInterphaseMolarFlux(...) is in mol/(m^2*s). Multiplying by interphase contact area for
         // the node segment (m^2) gives a molar transfer rate (mol/s). The bulk system in a flow
         // node uses phase moles as molar flow rates (mol/s), so do not multiply by residence time.
-        double transferToLiquid = pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
-            * pipe.getNode(i).getInterphaseContactArea();
+        double transferToLiquid =
+            pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
+                * pipe.getNode(i).getInterphaseContactArea();
 
         // Limit transfer so we never withdraw more of a component from a phase than the phase
         // carries as molar flow. This avoids negative phase component moles which can lead to EOS
         // initialization failures (NaNs) in downstream nodes during profiling.
         if (transferToLiquid > 0.0) {
-          double availableInGas =
-              pipe.getNode(i).getBulkSystem().getPhase(0).getComponent(componentNumber).getNumberOfMolesInPhase();
-          transferToLiquid = Math.min(transferToLiquid, 0.999999999 * Math.max(0.0, availableInGas));
+          double availableInGas = pipe.getNode(i).getBulkSystem().getPhase(0)
+              .getComponent(componentNumber).getNumberOfMolesInPhase();
+          transferToLiquid =
+              Math.min(transferToLiquid, 0.999999999 * Math.max(0.0, availableInGas));
         } else if (transferToLiquid < 0.0) {
-          double availableInLiquid =
-              pipe.getNode(i).getBulkSystem().getPhase(1).getComponent(componentNumber).getNumberOfMolesInPhase();
-          transferToLiquid = -Math.min(-transferToLiquid, 0.999999999 * Math.max(0.0, availableInLiquid));
+          double availableInLiquid = pipe.getNode(i).getBulkSystem().getPhase(1)
+              .getComponent(componentNumber).getNumberOfMolesInPhase();
+          transferToLiquid =
+              -Math.min(-transferToLiquid, 0.999999999 * Math.max(0.0, availableInLiquid));
         }
 
         double liquidMolarRate = transferToLiquid;
         double gasMolarRate = -transferToLiquid;
 
-        molDiff[i][0][componentNumber] = molDiff[i - 1][0][componentNumber] + gasMolarRate;
-        molDiff[i][1][componentNumber] = molDiff[i - 1][1][componentNumber] + liquidMolarRate;
-
-        pipe.getNode(i + 1).getBulkSystem().getPhases()[0].addMoles(componentNumber,
-            molDiff[i][0][componentNumber]);
+        // Apply mass transfer directly to next node (not accumulating from node 0)
+        pipe.getNode(i + 1).getBulkSystem().getPhases()[0].addMoles(componentNumber, gasMolarRate);
         pipe.getNode(i + 1).getBulkSystem().getPhases()[1].addMoles(componentNumber,
-            molDiff[i][1][componentNumber]);
+            liquidMolarRate);
       }
     }
-    pipe.getNode(numberOfNodes - 1).init();
-    pipe.getNode(numberOfNodes - 1).calcFluxes();
+    // Initialize the last node after mole changes have been applied
+    pipe.getNode(numberOfNodes - 1).getBulkSystem().init(1);
     pipe.getNode(numberOfNodes - 1).getBulkSystem().initBeta();
     pipe.getNode(numberOfNodes - 1).getBulkSystem().init_x_y();
+    pipe.getNode(numberOfNodes - 1).initFlowCalc();
+    pipe.getNode(numberOfNodes - 1).calcFluxes();
     this.initNodes();
     System.out.println("finisched initializing....");
 
@@ -1113,6 +1112,7 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    */
   public void initNodes() {
     for (int i = 0; i < numberOfNodes; i++) {
+      pipe.getNode(i).initFlowCalc();
       pipe.getNode(i).init();
     }
   }

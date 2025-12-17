@@ -191,21 +191,6 @@ public abstract class NonEquilibriumFluidBoundary
         .times(bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
             / bulkSystem.getPhases()[0].getMolarMass());
 
-    // fluxX.print(10,10);
-    // fluxY.print(10,10);
-    // totalMassTransferCoefficientMatrix[0].print(10,10);
-
-    // System.out.println("n flux");
-    // nFlux.getMatrix(0,bulkSystem.getPhases()[1].getNumberOfComponents()-2,0,0).print(10,10);
-    // System.out.println("j gas flux");
-    // fluxY.print(10,10);
-    // System.out.println("j gliq flux");
-    // fluxX.print(10,10);
-    // System.out.println("yn gas flux");
-    // y.transpose().times(totalFlux).print(10,10);
-    // System.out.println("xn gas flux");
-    // x.transpose().times(totalFlux).print(10,10);
-
     Matrix errX = nFlux.getMatrix(0, bulkSystem.getPhases()[1].getNumberOfComponents() - 2, 0, 0)
         .plus(fluxX).minus(x.transpose().times(totalFlux));
     Matrix errY = nFlux.getMatrix(0, bulkSystem.getPhases()[0].getNumberOfComponents() - 2, 0, 0)
