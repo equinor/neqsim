@@ -606,15 +606,15 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    *
    * <p>
    * This avoids solving a separate density-based "pressure" equation that can otherwise keep the
-   * pressure nearly constant in steady-state runs.
+   * pressure nearly constant in steady-state runs. Handles both single-phase and two-phase flows.
    * </p>
    */
   private void updatePressureFromMomentumBalance() {
     final double minPressureBar = 1e-3;
 
     for (int i = 1; i < numberOfNodes; i++) {
-      double dz =
-          pipe.getNode(i).getVerticalPositionOfNode() - pipe.getNode(i - 1).getVerticalPositionOfNode();
+      double dz = pipe.getNode(i).getVerticalPositionOfNode()
+          - pipe.getNode(i - 1).getVerticalPositionOfNode();
       double dx = pipe.getNode(i - 1).getGeometry().getNodeLength();
       double diameter = pipe.getNode(i - 1).getGeometry().getDiameter();
       double circumference = pipe.getNode(i - 1).getGeometry().getCircumference();
@@ -622,19 +622,50 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       double dpFricPa = 0.0;
       double rhoMix = 0.0;
 
-      for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
+      int numPhases = pipe.getNode(i - 1).getBulkSystem().getNumberOfPhases();
+
+      if (numPhases < 2) {
+        // Single-phase flow - use simple Darcy-Weisbach friction
+        int phaseNum = 0; // Only phase 0 exists
         double rho = pipe.getNode(i - 1).getBulkSystem().getPhase(phaseNum).getPhysicalProperties()
             .getDensity();
         double vel = pipe.getNode(i - 1).getVelocity(phaseNum);
-        double f = pipe.getNode(i - 1).getWallFrictionFactor(phaseNum);
-        double alpha = pipe.getNode(i - 1).getPhaseFraction(phaseNum);
-        rhoMix += alpha * rho;
+        double viscosity = pipe.getNode(i - 1).getBulkSystem().getPhase(phaseNum)
+            .getPhysicalProperties().getViscosity();
+        rhoMix = rho;
 
-        if (Double.isFinite(circumference) && circumference > 1e-20 && Double.isFinite(diameter)
-            && diameter > 1e-20) {
-          double wallContactRatio =
-              pipe.getNode(i - 1).getWallContactLength(phaseNum) / circumference;
-          dpFricPa += wallContactRatio * f * rho * vel * vel / diameter / 2.0 * dx;
+        // Calculate friction factor using Haaland equation for turbulent flow
+        double Re = rho * Math.abs(vel) * diameter / viscosity;
+        double roughness = 1e-5; // Default pipe roughness in meters
+        double f;
+        if (Re < 2300) {
+          // Laminar flow
+          f = (Re > 0) ? 64.0 / Re : 0.0;
+        } else {
+          // Turbulent flow - Haaland equation
+          double term = -1.8 * Math.log10(Math.pow(roughness / diameter / 3.7, 1.11) + 6.9 / Re);
+          f = (term != 0) ? 1.0 / (term * term) : 0.01;
+        }
+
+        if (Double.isFinite(diameter) && diameter > 1e-20) {
+          dpFricPa = f * rho * vel * Math.abs(vel) / diameter / 2.0 * dx;
+        }
+      } else {
+        // Two-phase flow - use phase-weighted friction
+        for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
+          double rho = pipe.getNode(i - 1).getBulkSystem().getPhase(phaseNum)
+              .getPhysicalProperties().getDensity();
+          double vel = pipe.getNode(i - 1).getVelocity(phaseNum);
+          double f = pipe.getNode(i - 1).getWallFrictionFactor(phaseNum);
+          double alpha = pipe.getNode(i - 1).getPhaseFraction(phaseNum);
+          rhoMix += alpha * rho;
+
+          if (Double.isFinite(circumference) && circumference > 1e-20 && Double.isFinite(diameter)
+              && diameter > 1e-20) {
+            double wallContactRatio =
+                pipe.getNode(i - 1).getWallContactLength(phaseNum) / circumference;
+            dpFricPa += wallContactRatio * f * rho * vel * vel / diameter / 2.0 * dx;
+          }
         }
       }
 
@@ -709,10 +740,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     final double maxTempK = 5000.0;
     for (int i = 0; i < numberOfNodes; i++) {
       pipe.getNode(i).init();
-      double cpMass =
-          pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getCp()
-              / pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
-              / pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getMolarMass();
+      double cpMass = pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getCp()
+          / pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
+          / pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getMolarMass();
       double dH = diffMatrix.get(i, 0);
       double deltaT = 0.0;
       if (Double.isFinite(cpMass) && cpMass > 1e-12 && Double.isFinite(dH)) {
@@ -1591,10 +1621,19 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       maxDiff = 0;
       iterTop++;
 
+      // Determine number of phases to solve for
+      int numPhasesToSolve = pipe.getNode(0).getBulkSystem().getNumberOfPhases();
+      if (numPhasesToSolve < 1) {
+        numPhasesToSolve = 1;
+      }
+      if (numPhasesToSolve > 2) {
+        numPhasesToSolve = 2;
+      }
+
       // Solve momentum equations (velocity and pressure drop)
       iter = 0;
       if (solverTypeEnum.solveMomentum()) {
-        for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
+        for (int phaseNum = 0; phaseNum < numPhasesToSolve; phaseNum++) {
           do {
             iter++;
             setImpulsMatrixTDMA(phaseNum);

@@ -9,9 +9,7 @@ import neqsim.fluidmechanics.flownode.WallHeatTransferModel;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
- * TwoPhasePipeFlowSystem class for non-equilibrium two-phase pipe flow simulation.
- * </p>
+ * Non-equilibrium two-phase pipe flow simulation system.
  *
  * <p>
  * This class implements steady-state and transient two-phase pipe flow simulation based on the
@@ -20,19 +18,146 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * film model is used for mass and heat transfer calculations at the gas-liquid interface.
  * </p>
  *
- * <p>
- * Key features:
- * </p>
+ * <h2>Key Features</h2>
  * <ul>
  * <li>Non-equilibrium mass transfer between phases using film theory</li>
  * <li>Interphase heat transfer with finite flux corrections</li>
- * <li>Momentum equations with wall and interphase friction</li>
+ * <li>Momentum equations with wall and interphase friction for pressure drop</li>
  * <li>Transient simulation with time-stepping capabilities</li>
  * <li>Multiple flow pattern support with automatic flow regime transitions</li>
+ * <li>Wall heat transfer models (constant temperature, constant flux, convective)</li>
+ * </ul>
+ *
+ * <h2>Comparison with Other Pipe Models</h2>
+ * <table border="1">
+ * <caption>NeqSim Pipe Flow Model Comparison</caption>
+ * <tr>
+ * <th>Feature</th>
+ * <th>TwoPhasePipeFlowSystem</th>
+ * <th>TwoFluidPipe</th>
+ * <th>PipeBeggsAndBrills</th>
+ * </tr>
+ * <tr>
+ * <td>Approach</td>
+ * <td>Non-equilibrium thermodynamics</td>
+ * <td>Two-fluid mechanistic</td>
+ * <td>Empirical correlation</td>
+ * </tr>
+ * <tr>
+ * <td>Mass Transfer</td>
+ * <td>Krishna-Standart film model</td>
+ * <td>Optional flash</td>
+ * <td>Equilibrium only</td>
+ * </tr>
+ * <tr>
+ * <td>Heat Transfer</td>
+ * <td>Interphase with finite flux</td>
+ * <td>Joule-Thomson + wall</td>
+ * <td>Not included</td>
+ * </tr>
+ * <tr>
+ * <td>Flow Patterns</td>
+ * <td>Stratified, annular, slug, droplet, bubble</td>
+ * <td>Auto-detected via Taitel-Dukler</td>
+ * <td>Segregated, intermittent, distributed</td>
+ * </tr>
+ * <tr>
+ * <td>Transient</td>
+ * <td>Yes (TDMA solver)</td>
+ * <td>Yes (time integrator)</td>
+ * <td>No (steady-state)</td>
+ * </tr>
+ * </table>
+ *
+ * <h2>Usage Example (Traditional API)</h2>
+ * 
+ * <pre>{@code
+ * // Create two-phase fluid
+ * SystemInterface fluid = new SystemSrkEos(295.3, 5.0);
+ * fluid.addComponent("methane", 0.1, 0); // Gas phase
+ * fluid.addComponent("water", 0.05, 1); // Liquid phase
+ * fluid.createDatabase(true);
+ * fluid.setMixingRule(2);
+ *
+ * // Configure pipe geometry
+ * FlowSystemInterface pipe = new TwoPhasePipeFlowSystem();
+ * pipe.setInletThermoSystem(fluid);
+ * pipe.setInitialFlowPattern("stratified");
+ * pipe.setNumberOfLegs(3);
+ * pipe.setNumberOfNodesInLeg(10);
+ *
+ * // Set leg geometry
+ * double[] height = {0, 0, 0, 0};
+ * double[] length = {0.0, 100.0, 200.0, 300.0};
+ * double[] outerTemp = {288.0, 288.0, 288.0, 288.0};
+ * pipe.setLegHeights(height);
+ * pipe.setLegPositions(length);
+ * pipe.setLegOuterTemperatures(outerTemp);
+ *
+ * // Set pipe diameter
+ * GeometryDefinitionInterface[] pipeGeometry = new PipeData[4];
+ * for (int i = 0; i < 4; i++) {
+ *   pipeGeometry[i] = new PipeData(0.1); // 100 mm diameter
+ * }
+ * pipe.setEquipmentGeometry(pipeGeometry);
+ *
+ * // Solve
+ * pipe.createSystem();
+ * pipe.init();
+ * pipe.solveSteadyState(2);
+ *
+ * // Get results
+ * double[] pressures = ((TwoPhasePipeFlowSystem) pipe).getPressureProfile();
+ * double[] temperatures = ((TwoPhasePipeFlowSystem) pipe).getTemperatureProfile();
+ * double pressureDrop = pressures[0] - pressures[pressures.length - 1];
+ * }</pre>
+ *
+ * <h2>Usage Example (Builder API)</h2>
+ * 
+ * <pre>{@code
+ * TwoPhasePipeFlowSystem pipe =
+ *     TwoPhasePipeFlowSystem.builder().withFluid(thermoSystem).withDiameter(0.1, "m")
+ *         .withLength(1000, "m").withNodes(100).withFlowPattern(FlowPattern.STRATIFIED).build();
+ *
+ * pipe.solveSteadyState(UUID.randomUUID());
+ * double[] pressures = pipe.getPressureProfile();
+ * }</pre>
+ *
+ * <h2>Solver Types</h2>
+ * <p>
+ * The solver type controls which conservation equations are solved:
+ * </p>
+ * <ul>
+ * <li><b>SIMPLE</b> - Only mass and heat transfer via initProfiles(). Fast but no pressure drop
+ * calculation. Use for quick phase equilibrium estimates.</li>
+ * <li><b>DEFAULT</b> - Momentum (pressure drop), phase fraction, and energy equations. Includes
+ * interphase mass and heat transfer. Good balance of completeness and performance.</li>
+ * <li><b>FULL</b> - All equations including composition changes. Complete solution but slower. Use
+ * when composition gradients along the pipe are important.</li>
+ * </ul>
+ * <p>
+ * Set the solver type before calling solveSteadyState():
+ * </p>
+ * 
+ * <pre>{@code
+ * pipeSystem.setSolverType(TwoPhaseFixedStaggeredGridSolver.SolverType.DEFAULT);
+ * pipeSystem.solveSteadyState(UUID.randomUUID());
+ * }</pre>
+ *
+ * <h2>References</h2>
+ * <ul>
+ * <li>Solbraa, E. (2002) - Measurement and Modelling of Absorption of Carbon Dioxide into
+ * Methyldiethanolamine Solutions at High Pressures. PhD Thesis, NTNU.</li>
+ * <li>Krishna, R. and Standart, G.L. (1976) - A multicomponent film model incorporating a general
+ * matrix method of solution to the Maxwell-Stefan equations.</li>
+ * <li>Taitel, Y. and Dukler, A.E. (1976) - A model for predicting flow regime transitions in
+ * horizontal and near horizontal gas-liquid flow.</li>
  * </ul>
  *
  * @author asmund
  * @version $Id: $Id
+ * @see neqsim.process.equipment.pipeline.TwoFluidPipe
+ * @see neqsim.process.equipment.pipeline.PipeBeggsAndBrills
  */
 public class TwoPhasePipeFlowSystem
     extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem.TwoPhaseFlowSystem {

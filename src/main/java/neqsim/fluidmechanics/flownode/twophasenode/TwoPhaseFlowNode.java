@@ -92,6 +92,31 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   public double initVelocity() {
     getBulkSystem().init(1);
     getBulkSystem().initPhysicalProperties();
+
+    int numPhases = getBulkSystem().getNumberOfPhases();
+
+    // Handle single-phase flow
+    if (numPhases < 2) {
+      // Single phase - assign all flow to phase 0 (the existing phase)
+      // For single phase, use the full pipe area
+      phaseFraction[0] = 1.0;
+      phaseFraction[1] = 0.0;
+
+      molarFlowRate[0] = getBulkSystem().getPhase(0).getNumberOfMolesInPhase();
+      molarFlowRate[1] = 0.0;
+      massFlowRate[0] = molarFlowRate[0] * getBulkSystem().getPhase(0).getMolarMass();
+      massFlowRate[1] = 0.0;
+      volumetricFlowRate[0] =
+          massFlowRate[0] / getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+      volumetricFlowRate[1] = 0.0;
+
+      // Single phase uses full pipe area
+      velocity[0] = volumetricFlowRate[0] / pipe.getArea();
+      velocity[1] = 0.0;
+      return velocity[0];
+    }
+
+    // Two-phase flow
     molarFlowRate[1] = getBulkSystem().getPhases()[1].getNumberOfMolesInPhase();
     molarFlowRate[0] = getBulkSystem().getPhases()[0].getNumberOfMolesInPhase();
     massFlowRate[1] = molarFlowRate[1] * getBulkSystem().getPhases()[1].getMolarMass();
@@ -100,8 +125,18 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         massFlowRate[0] / getBulkSystem().getPhases()[0].getPhysicalProperties().getDensity();
     volumetricFlowRate[1] =
         massFlowRate[1] / getBulkSystem().getPhases()[1].getPhysicalProperties().getDensity();
-    velocity[0] = volumetricFlowRate[0] / (phaseFraction[0] * pipe.getArea());
-    velocity[1] = volumetricFlowRate[1] / (phaseFraction[1] * pipe.getArea());
+
+    // Guard against zero phase fraction to avoid division by zero (Infinity velocity)
+    double gasArea = phaseFraction[0] * pipe.getArea();
+    double liquidArea = phaseFraction[1] * pipe.getArea();
+    if (gasArea < 1e-20) {
+      gasArea = 1e-20;
+    }
+    if (liquidArea < 1e-20) {
+      liquidArea = 1e-20;
+    }
+    velocity[0] = volumetricFlowRate[0] / gasArea;
+    velocity[1] = volumetricFlowRate[1] / liquidArea;
     // System.out.println("velocity " + velocity[0] + " velocity " +velocity[1]);
     return velocity[1];
   }
@@ -109,11 +144,56 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   /** {@inheritDoc} */
   @Override
   public void initFlowCalc() {
+    // Initialize phase fractions BEFORE velocity calculation to avoid division by zero
+    getBulkSystem().init(1);
+    getBulkSystem().initPhysicalProperties();
+
+    // Check if we have single-phase flow
+    int numPhases = getBulkSystem().getNumberOfPhases();
+    if (numPhases < 2) {
+      // Single-phase flow: assign all flow to the existing phase
+      int existingPhase = 0; // The phase that exists
+      phaseFraction[existingPhase] = 1.0 - 1e-10;
+      phaseFraction[1 - existingPhase] = 1e-10;
+      initVelocity();
+      init();
+      return; // Skip the two-phase holdup iteration
+    }
+
+    // Calculate volumetric phase fraction (holdup) from moles and densities
+    // This is more physically meaningful than molar fraction for flow calculations
+    double gasMoles = getBulkSystem().getPhase(0).getNumberOfMolesInPhase();
+    double liquidMoles = getBulkSystem().getPhase(1).getNumberOfMolesInPhase();
+    double gasMolarMass = getBulkSystem().getPhase(0).getMolarMass();
+    double liquidMolarMass = getBulkSystem().getPhase(1).getMolarMass();
+    double gasDensity = getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double liquidDensity = getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+
+    double gasVolume = (gasMoles * gasMolarMass) / gasDensity;
+    double liquidVolume = (liquidMoles * liquidMolarMass) / liquidDensity;
+    double totalVolume = gasVolume + liquidVolume;
+
+    if (totalVolume > 0) {
+      phaseFraction[0] = gasVolume / totalVolume;
+      phaseFraction[1] = liquidVolume / totalVolume;
+    } else {
+      phaseFraction[0] = getBulkSystem().getBeta();
+      phaseFraction[1] = 1.0 - phaseFraction[0];
+    }
+
+    // Guard against zero phase fraction (single-phase flow)
+    if (phaseFraction[0] < 1e-10) {
+      phaseFraction[0] = 1e-10;
+      phaseFraction[1] = 1.0 - phaseFraction[0];
+    }
+    if (phaseFraction[1] < 1e-10) {
+      phaseFraction[1] = 1e-10;
+      phaseFraction[0] = 1.0 - phaseFraction[1];
+    }
+
     initVelocity();
     init();
 
-    phaseFraction[0] = getBulkSystem().getBeta();
-    phaseFraction[1] = 1.0 - phaseFraction[0];
     double f = 0;
 
     double fOld = 0;
@@ -161,6 +241,13 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
       } else {
         betaOld = phaseFraction[0];
         phaseFraction[0] -= phaseFraction[0] / step;
+      }
+      // Ensure phase fractions stay within physical bounds to prevent velocity divergence
+      if (phaseFraction[0] < 0.001) {
+        phaseFraction[0] = 0.001;
+      }
+      if (phaseFraction[0] > 0.999) {
+        phaseFraction[0] = 0.999;
       }
       phaseFraction[1] = 1.0 - phaseFraction[0];
       // System.out.println("f " + f + " iterations " + iterations + " beta " + phaseFraction[0]);
@@ -257,8 +344,8 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
         }
 
         for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-          double currentMoles = getBulkSystem().getPhase(phaseNum).getComponent(i)
-              .getNumberOfMolesInPhase();
+          double currentMoles =
+              getBulkSystem().getPhase(phaseNum).getComponent(i).getNumberOfMolesInPhase();
           if (!Double.isFinite(currentMoles) || currentMoles <= 0.0) {
             continue;
           }
@@ -675,6 +762,46 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     return Math.max(1.0e-9, Math.min(1.0e-3, criticalDiameter));
   }
 
+  /**
+   * Checks if interphase mass transfer calculations are possible. Mass transfer requires at least 2
+   * phases and 2 components to form valid transfer matrices.
+   *
+   * @return true if mass transfer can be calculated, false otherwise
+   */
+  public boolean canCalculateMassTransfer() {
+    // Need at least 2 phases for interphase transfer
+    if (bulkSystem.getNumberOfPhases() < 2) {
+      return false;
+    }
+    // Need at least 2 components for transfer matrices (n-1 matrix dimension)
+    if (bulkSystem.getPhase(0).getNumberOfComponents() < 2) {
+      return false;
+    }
+    // Check that both phases have non-negligible amounts
+    double gasMoles = bulkSystem.getPhase(0).getNumberOfMolesInPhase();
+    double liquidMoles = bulkSystem.getPhase(1).getNumberOfMolesInPhase();
+    if (gasMoles < 1e-20 || liquidMoles < 1e-20) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Performs a TP flash to check for phase formation and updates the bulk system. This can be used
+   * to detect when a single-phase fluid transitions to two-phase.
+   */
+  public void checkPhaseFormation() {
+    try {
+      operations.TPflash();
+      bulkSystem.initBeta();
+      bulkSystem.init_x_y();
+      bulkSystem.init(3);
+      bulkSystem.initPhysicalProperties();
+    } catch (Exception e) {
+      logger.debug("Phase formation check failed: " + e.getMessage());
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void calcFluxes() {
@@ -682,6 +809,13 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
       // getBulkSystem().getChemicalReactionOperations().setSystem(getBulkSystem());
       // getOperations().chemicalEquilibrium();
     }
+
+    // Only perform mass transfer calculations if we have 2 phases and 2+ components
+    if (!canCalculateMassTransfer()) {
+      // Single phase or single component - no interphase mass transfer possible
+      return;
+    }
+
     fluidBoundary.solve();
     fluidBoundary.calcFluxes();
   }
@@ -689,89 +823,95 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   /** {@inheritDoc} */
   @Override
   public void update() {
-    // System.out.println("reac heat " +
-    // getBulkSystem().getChemicalReactionOperations().getDeltaReactionHeat());
-    double heatFluxGas = getFluidBoundary().getInterphaseHeatFlux(0);
-    // getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(0,
-    // getPrandtlNumber(0),
-    // this) *
-    // (getInterphaseSystem().getPhase(0).getTemperature()
-    // -
-    // getBulkSystem().getPhase(0).getTemperature())
-    // *
-    // getInterphaseContactArea();
+    // Check if we have two phases for heat/mass transfer
+    boolean hasTwoPhases = canCalculateMassTransfer();
 
-    double heatFluxLiquid = getFluidBoundary().getInterphaseHeatFlux(1);
-    // getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(1,
-    // getPrandtlNumber(1),
-    // this) *
-    // (getInterphaseSystem().getPhase(1).getTemperature()
-    // -
-    // getBulkSystem().getPhase(1).getTemperature())
-    // *
-    // getInterphaseContactArea();
-    // System.out.println("heat flux local " + heatFluxLiquid);
-    // double liquid_dT =
-    // -this.flowDirection[1]*heatFlux/1000.0/getBulkSystem().getPhase(1).getCp();
+    if (hasTwoPhases) {
+      // System.out.println("reac heat " +
+      // getBulkSystem().getChemicalReactionOperations().getDeltaReactionHeat());
+      double heatFluxGas = getFluidBoundary().getInterphaseHeatFlux(0);
+      // getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(0,
+      // getPrandtlNumber(0),
+      // this) *
+      // (getInterphaseSystem().getPhase(0).getTemperature()
+      // -
+      // getBulkSystem().getPhase(0).getTemperature())
+      // *
+      // getInterphaseContactArea();
 
-    double liquid_dT = this.flowDirection[1] * heatFluxLiquid * getGeometry().getNodeLength()
-        / getVelocity(1) / getBulkSystem().getPhase(1).getCp();
-    double gas_dT = this.flowDirection[0] * heatFluxGas * getGeometry().getNodeLength()
-        / getVelocity(0) / getBulkSystem().getPhase(0).getCp();
-    liquid_dT -= 0 * getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1, this)
-        * (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature())
-        * getWallContactLength(1) * getGeometry().getNodeLength()
-        / getBulkSystem().getPhase(1).getCp();
-    gas_dT -= 0 * getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)
-        * (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature())
-        * getWallContactLength(0) * getGeometry().getNodeLength()
-        / getBulkSystem().getPhase(0).getCp();
-    // liquid_dT +=
-    // getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)*
-    // (getBulkSystem().getPhase(0).getTemperature()-pipe.getOuterTemperature())*
-    // getWallContactLength(0) *
-    // getGeometry().getNodeLength()/getBulkSystem().getPhase(0).getCp();
-    // liquid_dT +=
-    // 10*this.flowDirection[1]*getBulkSystem().getChemicalReactionOperations().getDeltaReactionHeat()/getBulkSystem().getPhase(1).getCp();
-    // System.out.println("Cp " + getBulkSystem().getPhase(1).getCp());
-    // System.out.println("liq dT " + liquid_dT);
-    // System.out.println("gas dT " + gas_dT);
-    double fluxwallinternal =
-        getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1, this)
-            * (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature())
-            * getWallContactLength(1) * getGeometry().getNodeLength()
-            + getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)
-                * (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature())
-                * getWallContactLength(0) * getGeometry().getNodeLength();
+      double heatFluxLiquid = getFluidBoundary().getInterphaseHeatFlux(1);
+      // getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(1,
+      // getPrandtlNumber(1),
+      // this) *
+      // (getInterphaseSystem().getPhase(1).getTemperature()
+      // -
+      // getBulkSystem().getPhase(1).getTemperature())
+      // *
+      // getInterphaseContactArea();
+      // System.out.println("heat flux local " + heatFluxLiquid);
+      // double liquid_dT =
+      // -this.flowDirection[1]*heatFlux/1000.0/getBulkSystem().getPhase(1).getCp();
 
-    double JolprK = 3.14 * 0.2032 * 0.0094 * getGeometry().getNodeLength() * 7500 * 500;
-    double fluxOut = -50.0 * 3.14 * (0.2032 + 0.01) * getGeometry().getNodeLength()
-        * (pipe.getInnerWallTemperature() - pipe.getSurroundingEnvironment().getTemperature());
-    double dTwall = 0 * (fluxOut + fluxwallinternal) / JolprK;
-    pipe.setInnerWallTemperature(pipe.getInnerWallTemperature() + dTwall);
+      double liquid_dT = this.flowDirection[1] * heatFluxLiquid * getGeometry().getNodeLength()
+          / getVelocity(1) / getBulkSystem().getPhase(1).getCp();
+      double gas_dT = this.flowDirection[0] * heatFluxGas * getGeometry().getNodeLength()
+          / getVelocity(0) / getBulkSystem().getPhase(0).getCp();
+      liquid_dT -= 0 * getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1, this)
+          * (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature())
+          * getWallContactLength(1) * getGeometry().getNodeLength()
+          / getBulkSystem().getPhase(1).getCp();
+      gas_dT -= 0 * getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)
+          * (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature())
+          * getWallContactLength(0) * getGeometry().getNodeLength()
+          / getBulkSystem().getPhase(0).getCp();
+      // liquid_dT +=
+      // getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)*
+      // (getBulkSystem().getPhase(0).getTemperature()-pipe.getOuterTemperature())*
+      // getWallContactLength(0) *
+      // getGeometry().getNodeLength()/getBulkSystem().getPhase(0).getCp();
+      // liquid_dT +=
+      // 10*this.flowDirection[1]*getBulkSystem().getChemicalReactionOperations().getDeltaReactionHeat()/getBulkSystem().getPhase(1).getCp();
+      // System.out.println("Cp " + getBulkSystem().getPhase(1).getCp());
+      // System.out.println("liq dT " + liquid_dT);
+      // System.out.println("gas dT " + gas_dT);
+      double fluxwallinternal =
+          getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(1, this)
+              * (getBulkSystem().getPhase(1).getTemperature() - pipe.getInnerWallTemperature())
+              * getWallContactLength(1) * getGeometry().getNodeLength()
+              + getInterphaseTransportCoefficient().calcWallHeatTransferCoefficient(0, this)
+                  * (getBulkSystem().getPhase(0).getTemperature() - pipe.getInnerWallTemperature())
+                  * getWallContactLength(0) * getGeometry().getNodeLength();
 
-    getBulkSystem().getPhase(1)
-        .setTemperature(getBulkSystem().getPhase(1).getTemperature() + liquid_dT);
-    getBulkSystem().getPhase(0)
-        .setTemperature(getBulkSystem().getPhase(0).getTemperature() + gas_dT);
+      double JolprK = 3.14 * 0.2032 * 0.0094 * getGeometry().getNodeLength() * 7500 * 500;
+      double fluxOut = -50.0 * 3.14 * (0.2032 + 0.01) * getGeometry().getNodeLength()
+          * (pipe.getInnerWallTemperature() - pipe.getSurroundingEnvironment().getTemperature());
+      double dTwall = 0 * (fluxOut + fluxwallinternal) / JolprK;
+      pipe.setInnerWallTemperature(pipe.getInnerWallTemperature() + dTwall);
 
-    // System.out.println("pipe wall temperature " + pipe.getTemperature());
-    // System.out.println("liquid velocity " + getSuperficialVelocity(1));
-    // System.out.println("gas velocity " + getSuperficialVelocity(0));
+      getBulkSystem().getPhase(1)
+          .setTemperature(getBulkSystem().getPhase(1).getTemperature() + liquid_dT);
+      getBulkSystem().getPhase(0)
+          .setTemperature(getBulkSystem().getPhase(0).getTemperature() + gas_dT);
 
-    for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
-        .getNumberOfComponents(); componentNumber++) {
-      double liquidMolarRate =
-          getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
+      // System.out.println("pipe wall temperature " + pipe.getTemperature());
+      // System.out.println("liquid velocity " + getSuperficialVelocity(1));
+      // System.out.println("gas velocity " + getSuperficialVelocity(0));
 
-      double gasMolarRate =
-          -getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
+      for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
+          .getNumberOfComponents(); componentNumber++) {
+        double liquidMolarRate =
+            getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
 
-      // System.out.println("liquidMolarRate" + liquidMolarRate);
-      getBulkSystem().getPhase(0).addMoles(componentNumber, this.flowDirection[0] * gasMolarRate);
-      getBulkSystem().getPhase(1).addMoles(componentNumber,
-          this.flowDirection[1] * liquidMolarRate);
+        double gasMolarRate = -getFluidBoundary().getInterphaseMolarFlux(componentNumber)
+            * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
+
+        // System.out.println("liquidMolarRate" + liquidMolarRate);
+        getBulkSystem().getPhase(0).addMoles(componentNumber, this.flowDirection[0] * gasMolarRate);
+        getBulkSystem().getPhase(1).addMoles(componentNumber,
+            this.flowDirection[1] * liquidMolarRate);
+      }
     }
+    // For single-phase flow, no interphase transfer occurs - just maintain current state
 
     getBulkSystem().initBeta();
     getBulkSystem().init_x_y();
@@ -791,19 +931,23 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
    * @param deltaTime a double
    */
   public void update(double deltaTime) {
-    for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
-        .getNumberOfComponents(); componentNumber++) {
-      double liquidMolarRate =
-          getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
+    // Only apply mass transfer if we have two phases and 2+ components
+    if (canCalculateMassTransfer()) {
+      for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
+          .getNumberOfComponents(); componentNumber++) {
+        double liquidMolarRate =
+            getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
 
-      double gasMolarRate =
-          -getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
+        double gasMolarRate = -getFluidBoundary().getInterphaseMolarFlux(componentNumber)
+            * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
 
-      getBulkSystem().getPhase(0).addMoles(componentNumber,
-          this.flowDirection[0] * gasMolarRate * deltaTime);
-      getBulkSystem().getPhase(1).addMoles(componentNumber,
-          this.flowDirection[1] * liquidMolarRate * deltaTime);
+        getBulkSystem().getPhase(0).addMoles(componentNumber,
+            this.flowDirection[0] * gasMolarRate * deltaTime);
+        getBulkSystem().getPhase(1).addMoles(componentNumber,
+            this.flowDirection[1] * liquidMolarRate * deltaTime);
+      }
     }
+    // For single-phase flow, no mass transfer occurs
 
     getBulkSystem().initBeta();
     getBulkSystem().init_x_y();
