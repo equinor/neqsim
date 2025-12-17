@@ -654,6 +654,19 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    * <p>
    * setEnergyMatrixTDMA.
    * </p>
+   * 
+   * <p>
+   * This method implements the energy conservation equation for two-phase pipe flow. The energy
+   * equation includes:
+   * </p>
+   * <ul>
+   * <li>Convective enthalpy transport</li>
+   * <li>Wall heat transfer (with proper heat transfer coefficient)</li>
+   * <li>Interphase heat transfer</li>
+   * <li>Joule-Thomson effect (temperature change due to pressure drop)</li>
+   * <li>Latent heat from phase change (evaporation/condensation)</li>
+   * <li>Gravitational potential energy changes</li>
+   * </ul>
    *
    * @param phaseNum a int
    */
@@ -683,18 +696,74 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
           + (1 - fw) * (pipe.getNode(i).getVerticalPositionOfNode()
               - pipe.getNode(i - 1).getVerticalPositionOfNode());
 
-      SU = -pipe.getNode(i).getArea(phaseNum) * gravity
-          * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getDensity()
-          * pipe.getNode(i).getVelocity(phaseNum) * vertposchange
-          + pipe.getNode(i).getArea(phaseNum) * 4.0 * 0.02
-              * (278.0 - pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getTemperature())
-              / (pipe.getNode(i).getGeometry().getDiameter())
-              * pipe.getNode(i).getGeometry().getNodeLength()
-          + sign * pipe.getNode(i).getFluidBoundary().getInterphaseHeatFlux(phaseNum)
-              * pipe.getNode(i).getGeometry().getNodeLength()
+      // Get proper wall heat transfer coefficient and surrounding temperature
+      double wallHeatTransferCoeff = pipe.getNode(i).calcTotalHeatTransferCoefficient(phaseNum);
+      double surroundingTemp =
+          pipe.getNode(i).getGeometry().getSurroundingEnvironment().getTemperature();
+      double phaseTemp = pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getTemperature();
+      double nodeLength = pipe.getNode(i).getGeometry().getNodeLength();
+      double diameter = pipe.getNode(i).getGeometry().getDiameter();
+
+      // Calculate Joule-Thomson effect: dT = μ_JT * dP
+      // Pressure gradient (Pa/m): dP/dx = (P[i+1] - P[i-1]) / (2 * nodeLength)
+      double dPdx = (pipe.getNode(i + 1).getBulkSystem().getPressure()
+          - pipe.getNode(i - 1).getBulkSystem().getPressure()) * 1e5
+          / (pipe.getNode(i + 1).getGeometry().getNodeLength()
+              + pipe.getNode(i - 1).getGeometry().getNodeLength());
+      double jouleThomsonCoeff =
+          pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getJouleThomsonCoefficient();
+      // Joule-Thomson contribution to energy (J/kg): ρ * v * μ_JT * dP/dx * A * dx
+      double jouleThomsonEnergy = pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getDensity()
+          * pipe.getNode(i).getVelocity(phaseNum) * jouleThomsonCoeff * dPdx
+          * pipe.getNode(i).getArea(phaseNum) * nodeLength;
+
+      // Calculate latent heat from phase change (evaporation/condensation)
+      // This is based on the interphase mass transfer rate and enthalpy of vaporization
+      double latentHeatEnergy = 0.0;
+      if (pipe.getNode(i).getFluidBoundary() != null) {
+        // Sum latent heat contribution from all components
+        for (int comp = 0; comp < pipe.getNode(i).getBulkSystem().getPhase(phaseNum)
+            .getNumberOfComponents(); comp++) {
+          double molarFlux = pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(comp);
+          // Enthalpy difference between gas and liquid phase for this component
+          double gasEnthalpy = pipe.getNode(i).getBulkSystem().getPhase(0).getComponent(comp)
+              .getEnthalpy(pipe.getNode(i).getBulkSystem().getPhase(0).getTemperature())
+              / pipe.getNode(i).getBulkSystem().getPhase(0).getComponent(comp)
+                  .getNumberOfMolesInPhase();
+          double liquidEnthalpy = pipe.getNode(i).getBulkSystem().getPhase(1).getComponent(comp)
+              .getEnthalpy(pipe.getNode(i).getBulkSystem().getPhase(1).getTemperature())
+              / pipe.getNode(i).getBulkSystem().getPhase(1).getComponent(comp)
+                  .getNumberOfMolesInPhase();
+          double enthalpyOfVaporization = gasEnthalpy - liquidEnthalpy;
+
+          // Latent heat = mass flux * enthalpy of vaporization * contact area * residence time
+          double contactLength = pipe.getNode(i).getInterphaseContactLength(phaseNum);
+          double residenceTime = nodeLength / Math.max(pipe.getNode(i).getVelocity(phaseNum), 1e-6);
+          latentHeatEnergy += sign * molarFlux * enthalpyOfVaporization * contactLength * nodeLength
+              * residenceTime;
+        }
+      }
+
+      // Wall heat transfer: Q = U * A * (T_wall - T_fluid)
+      // Using proper heat transfer coefficient and surrounding temperature
+      double wallHeatFlux = pipe.getNode(i).getWallContactLength(phaseNum)
+          / pipe.getNode(i).getGeometry().getCircumference() * pipe.getNode(i).getArea(phaseNum)
+          * 4.0 * wallHeatTransferCoeff * (surroundingTemp - phaseTemp) / diameter * nodeLength;
+
+      // Interphase heat transfer
+      double interphaseHeatFlux =
+          sign * pipe.getNode(i).getFluidBoundary().getInterphaseHeatFlux(phaseNum) * nodeLength
               * pipe.getNode(i).getInterphaseContactLength(phaseNum)
-              * (pipe.getNode(i).getGeometry().getNodeLength()
-                  / pipe.getNode(i).getVelocity(phaseNum));
+              * (nodeLength / pipe.getNode(i).getVelocity(phaseNum));
+
+      // Potential energy change (elevation work)
+      double potentialEnergy = -pipe.getNode(i).getArea(phaseNum) * gravity
+          * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getDensity()
+          * pipe.getNode(i).getVelocity(phaseNum) * vertposchange;
+
+      // Total source term
+      SU = potentialEnergy + wallHeatFlux + interphaseHeatFlux + jouleThomsonEnergy
+          + latentHeatEnergy;
       double SP = 0;
 
       double Fw =
@@ -727,31 +796,72 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         / (pipe.getNode(i).getGeometry().getNodeLength()
             + pipe.getNode(i - 1).getGeometry().getNodeLength());
     double Ae = pipe.getNode(i).getArea(phaseNum);
-    // 1.0/((1.0-fe)/pipe.getNode(i).getGeometry().getArea() +
-    // fe/pipe.getNode(i+1).getGeometry().getArea());
     double Aw = pipe.getNode(i - 1).getArea(phaseNum);
-    // 1.0/((1.0-fw)/pipe.getNode(i).getGeometry().getArea() +
-    // fw/pipe.getNode(i-1).getGeometry().getArea());
     double vertposchange = (1 - fw) * (pipe.getNode(i).getVerticalPositionOfNode()
         - pipe.getNode(i - 1).getVerticalPositionOfNode());
 
-    SU = -pipe.getNode(i).getArea(phaseNum) * gravity
-        * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getDensity()
-        * pipe.getNode(i).getVelocity(phaseNum) * vertposchange
-        + pipe.getNode(i).getWallContactLength(phaseNum)
-            / pipe.getNode(i).getGeometry().getCircumference() * pipe.getNode(i).getArea(phaseNum)
-            * 4.0 * 0.02
-            * (278.0 - pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getTemperature())
-            / (pipe.getNode(i).getGeometry().getDiameter())
-            * pipe.getNode(i).getGeometry().getNodeLength()
-        + sign * pipe.getNode(i).getFluidBoundary().getInterphaseHeatFlux(phaseNum)
-            * pipe.getNode(i).getGeometry().getNodeLength()
+    // Get proper wall heat transfer coefficient and surrounding temperature for last node
+    double wallHeatTransferCoeffLast = pipe.getNode(i).calcTotalHeatTransferCoefficient(phaseNum);
+    double surroundingTempLast =
+        pipe.getNode(i).getGeometry().getSurroundingEnvironment().getTemperature();
+    double phaseTempLast = pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getTemperature();
+    double nodeLengthLast = pipe.getNode(i).getGeometry().getNodeLength();
+    double diameterLast = pipe.getNode(i).getGeometry().getDiameter();
+
+    // Calculate Joule-Thomson effect for last node (use backward difference)
+    double dPdxLast = (pipe.getNode(i).getBulkSystem().getPressure()
+        - pipe.getNode(i - 1).getBulkSystem().getPressure()) * 1e5
+        / pipe.getNode(i - 1).getGeometry().getNodeLength();
+    double jouleThomsonCoeffLast =
+        pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getJouleThomsonCoefficient();
+    double jouleThomsonEnergyLast = pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getDensity()
+        * pipe.getNode(i).getVelocity(phaseNum) * jouleThomsonCoeffLast * dPdxLast
+        * pipe.getNode(i).getArea(phaseNum) * nodeLengthLast;
+
+    // Calculate latent heat from phase change for last node
+    double latentHeatEnergyLast = 0.0;
+    if (pipe.getNode(i).getFluidBoundary() != null) {
+      for (int comp = 0; comp < pipe.getNode(i).getBulkSystem().getPhase(phaseNum)
+          .getNumberOfComponents(); comp++) {
+        double molarFluxLast = pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(comp);
+        double gasEnthalpyLast = pipe.getNode(i).getBulkSystem().getPhase(0).getComponent(comp)
+            .getEnthalpy(pipe.getNode(i).getBulkSystem().getPhase(0).getTemperature())
+            / pipe.getNode(i).getBulkSystem().getPhase(0).getComponent(comp)
+                .getNumberOfMolesInPhase();
+        double liquidEnthalpyLast = pipe.getNode(i).getBulkSystem().getPhase(1).getComponent(comp)
+            .getEnthalpy(pipe.getNode(i).getBulkSystem().getPhase(1).getTemperature())
+            / pipe.getNode(i).getBulkSystem().getPhase(1).getComponent(comp)
+                .getNumberOfMolesInPhase();
+        double enthalpyOfVaporizationLast = gasEnthalpyLast - liquidEnthalpyLast;
+        double contactLengthLast = pipe.getNode(i).getInterphaseContactLength(phaseNum);
+        double residenceTimeLast =
+            nodeLengthLast / Math.max(pipe.getNode(i).getVelocity(phaseNum), 1e-6);
+        latentHeatEnergyLast += sign * molarFluxLast * enthalpyOfVaporizationLast
+            * contactLengthLast * nodeLengthLast * residenceTimeLast;
+      }
+    }
+
+    // Wall heat transfer with proper coefficient for last node
+    double wallHeatFluxLast = pipe.getNode(i).getWallContactLength(phaseNum)
+        / pipe.getNode(i).getGeometry().getCircumference() * pipe.getNode(i).getArea(phaseNum) * 4.0
+        * wallHeatTransferCoeffLast * (surroundingTempLast - phaseTempLast) / diameterLast
+        * nodeLengthLast;
+
+    // Interphase heat transfer for last node
+    double interphaseHeatFluxLast =
+        sign * pipe.getNode(i).getFluidBoundary().getInterphaseHeatFlux(phaseNum) * nodeLengthLast
             * pipe.getNode(i).getInterphaseContactLength(phaseNum)
-            * (pipe.getNode(i).getGeometry().getNodeLength()
-                / pipe.getNode(i).getVelocity(phaseNum));
+            * (nodeLengthLast / pipe.getNode(i).getVelocity(phaseNum));
+
+    // Potential energy change for last node
+    double potentialEnergyLast = -pipe.getNode(i).getArea(phaseNum) * gravity
+        * pipe.getNode(i).getBulkSystem().getPhase(phaseNum).getDensity()
+        * pipe.getNode(i).getVelocity(phaseNum) * vertposchange;
+
+    // Total source term for last node
+    SU = potentialEnergyLast + wallHeatFluxLast + interphaseHeatFluxLast + jouleThomsonEnergyLast
+        + latentHeatEnergyLast;
     double SP = 0;
-    // -pipe.getNode(i).getGeometry().getArea() * 4.0 * 12.0 /
-    // (pipe.getNode(i).getGeometry().getDiameter())*pipe.getNode(i).getGeometry().getNodeLength();
 
     double Fw = Aw * pipe.getNode(i - 1).getBulkSystem().getPhase(phaseNum).getPhysicalProperties()
         .getDensity() * pipe.getNode(i).getVelocityIn(phaseNum).doubleValue();

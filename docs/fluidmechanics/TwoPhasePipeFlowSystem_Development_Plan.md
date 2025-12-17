@@ -225,18 +225,58 @@ $$N_A = E \cdot k_L \cdot (C_{A,i} - C_{A,bulk})$$
 | H₂S removal | Instantaneous reaction |
 | SO₂ absorption | Film theory with reaction |
 
-#### 6.2 Implement Pipe Insulation Model
-**Priority: Low**
+#### 6.2 Pipe Insulation and Wall Heat Transfer Model
+**Priority: Low** ✅ **Already Implemented**
 
-Multi-layer thermal resistance:
+NeqSim already has a comprehensive pipe wall and insulation infrastructure in the `geometrydefinitions.internalgeometry.wall` and `geometrydefinitions.surrounding` packages.
 
-$$R_{total} = R_{conv,in} + \sum_i R_{cond,i} + R_{conv,out}$$
+##### Existing Infrastructure
 
+**MaterialLayer.java** - Single layer with thermal properties:
 ```java
-pipe.addInsulationLayer("polyurethane", 0.05, 0.025); // material, thickness, k
-pipe.addInsulationLayer("concrete", 0.10, 1.0);
-pipe.setExternalConvectionCoefficient(500); // W/(m²·K) for seawater
+MaterialLayer layer = new MaterialLayer(PipeMaterial.POLYURETHANE_FOAM, 0.05); // 50mm insulation
+double k = layer.getThermalConductivity(); // W/(m·K)
+double R = layer.getThermalResistance(innerRadius, outerRadius); // For cylindrical geometry
 ```
+
+**PipeMaterial.java** - Enum with 30+ predefined materials:
+- Steels: CARBON_STEEL, STAINLESS_STEEL_316, DUPLEX_STEEL
+- Insulations: POLYURETHANE_FOAM, MINERAL_WOOL, AEROGEL
+- Coatings: POLYPROPYLENE, POLYETHYLENE, FUSION_BONDED_EPOXY
+- Soils: DRY_SAND, WET_SAND, CLAY, PERMAFROST
+
+**PipeWall.java** - Multi-layer cylindrical heat transfer:
+```java
+PipeWall wall = new PipeWall(innerDiameter);
+wall.addLayer(new MaterialLayer(PipeMaterial.CARBON_STEEL, 0.01));      // 10mm steel
+wall.addLayer(new MaterialLayer(PipeMaterial.POLYURETHANE_FOAM, 0.05)); // 50mm insulation
+wall.addLayer(new MaterialLayer(PipeMaterial.POLYPROPYLENE, 0.003));    // 3mm coating
+double U_inner = wall.getOverallHeatTransferCoefficient(); // W/(m²·K) based on inner surface
+```
+
+**PipeSurroundingEnvironment.java** - Factory methods for external conditions:
+```java
+// Subsea pipeline
+PipeSurroundingEnvironment env = PipeSurroundingEnvironment.subseaPipe(seawaterTemp, depth);
+double h_ext = env.getExternalHeatTransferCoefficient(); // ~500 W/(m²·K) for seawater
+
+// Buried onshore
+PipeSurroundingEnvironment env = PipeSurroundingEnvironment.buriedPipe(soilTemp, burialDepth, soilType);
+
+// Exposed to air
+PipeSurroundingEnvironment env = PipeSurroundingEnvironment.exposedToAir(airTemp, windSpeed);
+```
+
+##### Integration with TwoPhasePipeFlowSystem
+
+The FlowSystem base class already supports:
+```java
+// Set wall heat transfer coefficients per leg
+pipe.setLegWallHeatTransferCoefficients(new double[] {50.0, 50.0}); // U values
+pipe.setLegOuterHeatTransferCoefficients(new double[] {500.0, 500.0}); // h_ext values
+```
+
+For advanced wall modeling, use PipeWall to calculate overall U and pass to the flow system.
 
 ---
 
@@ -295,20 +335,20 @@ Create Jupyter notebook examples:
 1. ✅ Basic non-equilibrium mass/heat transfer (completed)
 2. ✅ Interphase area models for all flow patterns (completed - InterfacialAreaCalculator with geometric models for stratified, annular, slug, bubble, droplet, churn)
 3. ✅ Mass transfer coefficient correlations (completed - MassTransferCoefficientCalculator with Dittus-Boelter, Ranz-Marshall)
-4. ✅ Profile output methods (completed - getSpecificInterfacialAreaProfile, getLiquidMassTransferCoefficientProfile, getGasMassTransferCoefficientProfile, getVolumetricMassTransferCoefficientProfile)
-5. ✅ Comprehensive test suite (completed - 84 tests for flow pattern detection, interfacial area, mass transfer, builder)
+4. ✅ Profile output methods (completed - added getEnthalpyProfile, getTotalEnthalpyProfile, getHeatCapacityProfile, getFlowPatternProfile, getFlowPatternNameProfile)
+5. ✅ Comprehensive test suite (completed - 84+ tests for flow pattern detection, interfacial area, mass transfer, builder)
 
 ### Phase 2: Enhanced Models (Medium Priority)
 6. ✅ Wall heat transfer models (completed - WallHeatTransferModel enum)
 7. ✅ Heat transfer coefficient correlations (completed - basic Dittus-Boelter for internal heat transfer)
 8. ✅ Automatic flow pattern detection (completed - FlowPatternDetector with Taitel-Dukler, Baker, Barnea, Beggs-Brill)
 9. ✅ Builder API (completed - TwoPhasePipeFlowSystemBuilder)
-10. [ ] Energy balance improvements (enthalpy-based with latent heat)
+10. ✅ Pipe wall/insulation model (already implemented in existing PipeWall, MaterialLayer, PipeMaterial, PipeSurroundingEnvironment classes)
+11. ✅ Energy balance improvements (completed - added Joule-Thomson effect, latent heat from phase change, proper wall heat transfer coefficients)
 
 ### Phase 3: Advanced Features (Low Priority)
-11. [ ] Enhancement factors for reactive systems
-12. [ ] Pipe insulation model
-13. [ ] Mass transfer model selection
+12. [ ] Enhancement factors for reactive systems
+13. [ ] Mass transfer model selection (Krishna-Standart, Penetration Theory, Surface Renewal)
 14. [ ] Documentation and examples
 
 ---

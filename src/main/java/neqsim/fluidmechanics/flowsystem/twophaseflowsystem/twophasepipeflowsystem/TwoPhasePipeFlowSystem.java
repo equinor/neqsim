@@ -641,6 +641,90 @@ public class TwoPhasePipeFlowSystem
     return reynolds;
   }
 
+  /**
+   * <p>
+   * Gets the enthalpy profile for a specific phase along the pipe.
+   * </p>
+   *
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
+   * @return an array of specific enthalpies in J/kg at each node
+   */
+  public double[] getEnthalpyProfile(int phaseIndex) {
+    double[] enthalpy = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      double H = flowNode[i].getBulkSystem().getPhase(phaseIndex).getEnthalpy();
+      double moles = flowNode[i].getBulkSystem().getPhase(phaseIndex).getNumberOfMolesInPhase();
+      double molarMass = flowNode[i].getBulkSystem().getPhase(phaseIndex).getMolarMass();
+      if (moles > 0 && molarMass > 0) {
+        enthalpy[i] = H / (moles * molarMass); // J/kg
+      } else {
+        enthalpy[i] = 0.0;
+      }
+    }
+    return enthalpy;
+  }
+
+  /**
+   * <p>
+   * Gets the total mixture enthalpy profile along the pipe.
+   * </p>
+   *
+   * @return an array of total enthalpies in J at each node
+   */
+  public double[] getTotalEnthalpyProfile() {
+    double[] enthalpy = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      enthalpy[i] = flowNode[i].getBulkSystem().getEnthalpy();
+    }
+    return enthalpy;
+  }
+
+  /**
+   * <p>
+   * Gets the heat capacity (Cp) profile for a specific phase along the pipe.
+   * </p>
+   *
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
+   * @return an array of heat capacities in J/(mol·K) at each node
+   */
+  public double[] getHeatCapacityProfile(int phaseIndex) {
+    double[] cp = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      cp[i] = flowNode[i].getBulkSystem().getPhase(phaseIndex).getCp();
+    }
+    return cp;
+  }
+
+  /**
+   * <p>
+   * Gets the flow pattern at each node along the pipe.
+   * </p>
+   *
+   * @return an array of FlowPattern enums at each node
+   */
+  public FlowPattern[] getFlowPatternProfile() {
+    FlowPattern[] patterns = new FlowPattern[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      patterns[i] = getFlowPatternAtNode(i);
+    }
+    return patterns;
+  }
+
+  /**
+   * <p>
+   * Gets the flow pattern names at each node along the pipe.
+   * </p>
+   *
+   * @return an array of flow pattern names at each node
+   */
+  public String[] getFlowPatternNameProfile() {
+    String[] patterns = new String[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      patterns[i] = getFlowPatternAtNode(i).getDisplayName();
+    }
+    return patterns;
+  }
+
   // ==================== FLOW PATTERN DETECTION METHODS ====================
 
   /**
