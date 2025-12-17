@@ -145,8 +145,10 @@ Optimized for hydrocarbon systems (Hayduk & Minhas, 1982):
 
 ```java
 // Example: Using Hayduk-Minhas for oil system
-system.getPhase(1).getPhysicalProperties()
-    .setDiffusivityModel(new HaydukMinhasDiffusivity(system.getPhase(1)));
+PhysicalProperties physProps = system.getPhase(1).getPhysicalProperties();
+Diffusivity diffModel = new HaydukMinhasDiffusivity(physProps);
+diffModel.calcDiffusionCoefficients(0, 0);  // binaryMethod, multicomponentMethod
+double Dij = diffModel.getMaxwellStefanBinaryDiffusionCoefficient(0, 1);
 ```
 
 ##### 4. CO2-Water (Tamimi Correlation)
@@ -167,8 +169,10 @@ The correction factor accounts for increased molecular crowding at high pressure
 
 ```java
 // Example: High-pressure diffusivity
-HighPressureDiffusivity hpModel = new HighPressureDiffusivity(phase, baseLiquidModel);
-double correctionFactor = hpModel.calculatePressureCorrectionFactor(phase);
+PhysicalProperties physProps = system.getPhase(1).getPhysicalProperties();
+HighPressureDiffusivity hpModel = new HighPressureDiffusivity(physProps);
+hpModel.calcDiffusionCoefficients(0, 0);  // applies HP correction automatically
+double correctionFactor = hpModel.getPressureCorrectionFactor();
 ```
 
 ### Model Selection Guide
@@ -199,9 +203,14 @@ The `DiffusivityModelSelector` class can automatically choose the optimal model:
 
 ```java
 // Automatic model selection based on composition and conditions
-DiffusivityModelSelector selector = new DiffusivityModelSelector();
-String recommendedModel = selector.selectOptimalModel(phase);
-PhysicalPropertyModelInterface model = selector.createAutoSelectedModel(phase);
+PhaseInterface phase = system.getPhase(1);
+PhysicalProperties physProps = phase.getPhysicalProperties();
+DiffusivityModelSelector.DiffusivityModelType modelType = 
+    DiffusivityModelSelector.selectOptimalModel(phase);
+Diffusivity model = DiffusivityModelSelector.createModel(physProps, modelType);
+
+// Or use auto-selection directly:
+Diffusivity autoModel = DiffusivityModelSelector.createAutoSelectedModel(physProps);
 ```
 
 Selection criteria:

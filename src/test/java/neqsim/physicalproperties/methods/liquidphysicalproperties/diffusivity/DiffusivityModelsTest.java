@@ -3,6 +3,7 @@ package neqsim.physicalproperties.methods.liquidphysicalproperties.diffusivity;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
@@ -272,7 +273,7 @@ public class DiffusivityModelsTest {
           + hydrocarbonSystem.getPhase("oil").getPressure() + " bar");
       System.out.println(String.format("%-20s %-20s %-20s %-15s", "Component Pair", "Hayduk-Minhas",
           "Siddiqi-Lucas", "Ratio (HM/SL)"));
-      System.out.println("-".repeat(80));
+      System.out.println(StringUtils.repeat("-", 80));
 
       int validComparisons = 0;
       for (int i = 0; i < nComps; i++) {
@@ -347,7 +348,7 @@ public class DiffusivityModelsTest {
       System.out.println("\n=== Comparison: CO2-Water Diffusivity Models ===");
       System.out.println("T = " + aqueousSystem.getPhase("aqueous").getTemperature() + " K");
       System.out.println(String.format("%-25s %-20s %-20s", "Model", "D (m²/s)", "vs Literature"));
-      System.out.println("-".repeat(70));
+      System.out.println(StringUtils.repeat("-", 70));
       System.out.println(String.format("%-25s %-20.4e %-20.2f%%", "Hayduk-Minhas (Aqueous)",
           dHayduk, 100 * (dHayduk - literatureValue) / literatureValue));
       System.out.println(String.format("%-25s %-20.4e %-20.2f%%", "Siddiqi-Lucas", dSiddiqi,
@@ -388,7 +389,7 @@ public class DiffusivityModelsTest {
       System.out.println("\n=== Siddiqi-Lucas: Aqueous vs Non-Aqueous Correlations ===");
       System.out.println(String.format("%-20s %-20s %-20s %-15s", "Component Pair", "Aqueous Corr.",
           "Non-Aqueous Corr.", "Ratio"));
-      System.out.println("-".repeat(80));
+      System.out.println(StringUtils.repeat("-", 80));
 
       for (int i = 0; i < nComps; i++) {
         for (int j = 0; j < nComps; j++) {
@@ -428,7 +429,7 @@ public class DiffusivityModelsTest {
     System.out.println("System: methane/n-hexane at 10 bar");
     System.out.println(String.format("%-10s %-18s %-18s %-18s", "T (K)", "Hayduk-Minhas",
         "Siddiqi-Lucas", "Siddiqi Non-Aq"));
-    System.out.println("-".repeat(70));
+    System.out.println(StringUtils.repeat("-", 70));
 
     for (double temp : temps) {
       SystemInterface testSystem = new SystemSrkEos(temp, 10.0);
@@ -473,7 +474,7 @@ public class DiffusivityModelsTest {
     System.out.println("System: methane/n-heptane at 350 K");
     System.out.println(String.format("%-10s %-18s %-18s %-18s %-12s", "P (bar)", "Hayduk-Minhas",
         "HP-Corrected", "Siddiqi-Lucas", "HP Factor"));
-    System.out.println("-".repeat(85));
+    System.out.println(StringUtils.repeat("-", 85));
 
     for (double pressure : pressures) {
       SystemInterface testSystem = new SystemSrkEos(350.0, pressure);
