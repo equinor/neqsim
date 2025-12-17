@@ -16,9 +16,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
+ * Recycle class for handling tear streams in process simulations.
+ *
  * <p>
- * Recycle class.
- * </p>
+ * This class implements convergence acceleration methods for recycle calculations, including direct
+ * substitution, Wegstein acceleration, and Broyden's method.
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -49,6 +51,27 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   private double pressureTolerance = 1e-2;
 
   private double minimumFlow = 1e-20;
+
+  // Acceleration method settings
+  private AccelerationMethod accelerationMethod = AccelerationMethod.DIRECT_SUBSTITUTION;
+
+  // Wegstein acceleration fields
+  /** Minimum bound for Wegstein q-factor to prevent divergence. */
+  private double wegsteinQMin = -5.0;
+  /** Maximum bound for Wegstein q-factor to prevent divergence. */
+  private double wegsteinQMax = 0.0;
+  /** Delay iterations before applying Wegstein (allows system to stabilize). */
+  private int wegsteinDelayIterations = 2;
+  /** Previous iteration input values for Wegstein slope calculation. */
+  private double[] previousInputValues = null;
+  /** Previous iteration output values for Wegstein slope calculation. */
+  private double[] previousOutputValues = null;
+  /** Current Wegstein q-factor values per variable. */
+  private double[] wegsteinQFactors = null;
+
+  // Broyden acceleration
+  /** Broyden accelerator instance for multi-variable acceleration. */
+  private transient BroydenAccelerator broydenAccelerator = null;
 
   /**
    * <p>
@@ -134,6 +157,16 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
    */
   public void resetIterations() {
     iterations = 0;
+    resetAccelerationState();
+  }
+
+  /**
+   * Gets the current iteration count.
+   *
+   * @return number of iterations performed since last reset
+   */
+  public int getIterations() {
+    return iterations;
   }
 
   /** {@inheritDoc} */
@@ -375,6 +408,15 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
       testOps.TPflash();
     }
     mixedStream.setCalculationIdentifier(id);
+
+    // Apply convergence acceleration if enabled and past delay period
+    if (accelerationMethod == AccelerationMethod.WEGSTEIN && iterations > wegsteinDelayIterations
+        && lastIterationStream != null) {
+      applyWegsteinToStream();
+    } else if (accelerationMethod == AccelerationMethod.BROYDEN && lastIterationStream != null) {
+      applyBroydenToStream();
+    }
+
     setErrorCompositon(compositionBalanceCheck());
     setErrorFlow(flowBalanceCheck());
     setErrorTemperature(temperatureBalanceCheck());
@@ -505,6 +547,272 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     this.flowTolerance = tolerance;
     this.temperatureTolerance = tolerance;
     this.compositionTolerance = tolerance;
+  }
+
+  /**
+   * Gets the current acceleration method used for convergence.
+   *
+   * @return the acceleration method
+   */
+  public AccelerationMethod getAccelerationMethod() {
+    return accelerationMethod;
+  }
+
+  /**
+   * Sets the acceleration method for convergence.
+   *
+   * @param method the acceleration method to use
+   */
+  public void setAccelerationMethod(AccelerationMethod method) {
+    this.accelerationMethod = method;
+    // Reset acceleration state when method changes
+    resetAccelerationState();
+  }
+
+  /**
+   * Gets the minimum bound for Wegstein q-factor.
+   *
+   * @return the minimum q-factor
+   */
+  public double getWegsteinQMin() {
+    return wegsteinQMin;
+  }
+
+  /**
+   * Sets the minimum bound for Wegstein q-factor. Default is -5.0. More negative values allow
+   * stronger acceleration but risk instability.
+   *
+   * @param qMin the minimum q-factor
+   */
+  public void setWegsteinQMin(double qMin) {
+    this.wegsteinQMin = qMin;
+  }
+
+  /**
+   * Gets the maximum bound for Wegstein q-factor.
+   *
+   * @return the maximum q-factor
+   */
+  public double getWegsteinQMax() {
+    return wegsteinQMax;
+  }
+
+  /**
+   * Sets the maximum bound for Wegstein q-factor. Default is 0.0 (no acceleration beyond direct
+   * substitution). Positive values can help with oscillating systems.
+   *
+   * @param qMax the maximum q-factor
+   */
+  public void setWegsteinQMax(double qMax) {
+    this.wegsteinQMax = qMax;
+  }
+
+  /**
+   * Gets the number of delay iterations before Wegstein acceleration is applied.
+   *
+   * @return the delay iterations
+   */
+  public int getWegsteinDelayIterations() {
+    return wegsteinDelayIterations;
+  }
+
+  /**
+   * Sets the number of delay iterations before Wegstein acceleration is applied. This allows the
+   * system to stabilize before acceleration. Default is 2.
+   *
+   * @param delayIterations number of iterations to delay
+   */
+  public void setWegsteinDelayIterations(int delayIterations) {
+    this.wegsteinDelayIterations = delayIterations;
+  }
+
+  /**
+   * Gets the current Wegstein q-factors for each variable.
+   *
+   * @return array of q-factors, or null if not yet calculated
+   */
+  public double[] getWegsteinQFactors() {
+    return wegsteinQFactors != null ? wegsteinQFactors.clone() : null;
+  }
+
+  /**
+   * Resets the acceleration state for a new convergence cycle.
+   */
+  public void resetAccelerationState() {
+    previousInputValues = null;
+    previousOutputValues = null;
+    wegsteinQFactors = null;
+    if (broydenAccelerator != null) {
+      broydenAccelerator.reset();
+    }
+  }
+
+  /**
+   * Gets the Broyden accelerator instance, creating one if needed.
+   *
+   * @return the Broyden accelerator
+   */
+  public BroydenAccelerator getBroydenAccelerator() {
+    if (broydenAccelerator == null) {
+      broydenAccelerator = new BroydenAccelerator();
+    }
+    return broydenAccelerator;
+  }
+
+  /**
+   * Extracts the current tear stream values as an array. The array contains: [temperature,
+   * pressure, total_flow, mole_fractions...]
+   *
+   * @param stream the stream to extract values from
+   * @return array of stream property values
+   */
+  private double[] extractStreamValues(StreamInterface stream) {
+    SystemInterface fluid = stream.getThermoSystem();
+    int numComponents = fluid.getPhase(0).getNumberOfComponents();
+    double[] values = new double[3 + numComponents]; // T, P, flow, + compositions
+
+    values[0] = fluid.getTemperature();
+    values[1] = fluid.getPressure();
+    values[2] = fluid.getFlowRate("mole/sec");
+
+    for (int i = 0; i < numComponents; i++) {
+      values[3 + i] = fluid.getPhase(0).getComponent(i).getx();
+    }
+    return values;
+  }
+
+  /**
+   * Applies Wegstein acceleration to calculate accelerated values.
+   *
+   * <p>
+   * The Wegstein method uses the formula: x_{n+1} = q * g(x_n) + (1-q) * x_n where q = s / (s - 1)
+   * and s is the slope estimate.
+   *
+   * <p>
+   * The q-factor is bounded to prevent divergence: - q between qMin and qMax (typically -5 to 0) -
+   * q = 0 corresponds to direct substitution - Negative q provides acceleration for monotonic
+   * convergence
+   *
+   * @param currentInput the input values for current iteration (x_n)
+   * @param currentOutput the output values from current iteration (g(x_n))
+   * @return accelerated values for next iteration input
+   */
+  private double[] applyWegsteinAcceleration(double[] currentInput, double[] currentOutput) {
+    int n = currentInput.length;
+    double[] acceleratedValues = new double[n];
+
+    // Initialize q-factors array if needed
+    if (wegsteinQFactors == null) {
+      wegsteinQFactors = new double[n];
+    }
+
+    // Check if we have previous values for slope calculation
+    if (previousInputValues == null || previousOutputValues == null
+        || previousInputValues.length != n) {
+      // First iteration with Wegstein - use direct substitution
+      wegsteinQFactors = new double[n]; // all zeros = direct substitution
+      return currentOutput.clone();
+    }
+
+    // Calculate Wegstein acceleration for each variable
+    for (int i = 0; i < n; i++) {
+      double deltaInput = currentInput[i] - previousInputValues[i];
+      double deltaOutput = currentOutput[i] - previousOutputValues[i];
+
+      // Calculate slope s = (g(x_n) - g(x_{n-1})) / (x_n - x_{n-1})
+      double slope;
+      if (Math.abs(deltaInput) > 1e-15) {
+        slope = deltaOutput / deltaInput;
+      } else {
+        slope = 0.0; // No change, use direct substitution
+      }
+
+      // Calculate q-factor: q = s / (s - 1)
+      double q;
+      if (Math.abs(slope - 1.0) > 1e-10) {
+        q = slope / (slope - 1.0);
+      } else {
+        // slope ≈ 1 means diverging, use minimum q for maximum damping
+        q = wegsteinQMin;
+      }
+
+      // Bound the q-factor to prevent divergence
+      q = Math.max(wegsteinQMin, Math.min(wegsteinQMax, q));
+      wegsteinQFactors[i] = q;
+
+      // Apply Wegstein formula: x_{n+1} = q * g(x_n) + (1-q) * x_n
+      acceleratedValues[i] = q * currentOutput[i] + (1.0 - q) * currentInput[i];
+    }
+
+    return acceleratedValues;
+  }
+
+  /**
+   * Applies accelerated values to the mixed stream.
+   *
+   * @param values array containing [temperature, pressure, flow, mole_fractions...]
+   */
+  private void applyStreamValues(double[] values) {
+    SystemInterface fluid = mixedStream.getThermoSystem();
+    int numComponents = fluid.getPhase(0).getNumberOfComponents();
+
+    // Only apply composition changes - T, P, and flow are handled elsewhere
+    // This is because the recycle primarily needs to converge on composition
+    if (values.length >= 3 + numComponents) {
+      double[] newFractions = new double[numComponents];
+      double sum = 0.0;
+      for (int i = 0; i < numComponents; i++) {
+        newFractions[i] = Math.max(0.0, values[3 + i]); // Ensure non-negative
+        sum += newFractions[i];
+      }
+
+      // Normalize to ensure sum = 1
+      if (sum > 1e-15) {
+        for (int i = 0; i < numComponents; i++) {
+          fluid.getPhase(0).getComponent(i).setx(newFractions[i] / sum);
+          fluid.getPhase(1).getComponent(i).setx(newFractions[i] / sum);
+        }
+      }
+    }
+  }
+
+  /**
+   * Applies Wegstein acceleration to the mixed stream using previous iteration data. This method is
+   * called during run() when Wegstein acceleration is enabled.
+   */
+  private void applyWegsteinToStream() {
+    // Extract current input (from lastIterationStream) and output (from mixedStream)
+    double[] currentInput = extractStreamValues(lastIterationStream);
+    double[] currentOutput = extractStreamValues(mixedStream);
+
+    // Apply Wegstein acceleration
+    double[] accelerated = applyWegsteinAcceleration(currentInput, currentOutput);
+
+    // Apply accelerated values to stream
+    applyStreamValues(accelerated);
+
+    // Store current values for next iteration
+    previousInputValues = currentInput;
+    previousOutputValues = currentOutput;
+  }
+
+  /**
+   * Applies Broyden's quasi-Newton acceleration to the mixed stream. This method is called during
+   * run() when Broyden acceleration is enabled.
+   */
+  private void applyBroydenToStream() {
+    // Extract current input (from lastIterationStream) and output (from mixedStream)
+    double[] currentInput = extractStreamValues(lastIterationStream);
+    double[] currentOutput = extractStreamValues(mixedStream);
+
+    // Get or create Broyden accelerator
+    BroydenAccelerator accelerator = getBroydenAccelerator();
+
+    // Apply Broyden acceleration
+    double[] accelerated = accelerator.accelerate(currentInput, currentOutput);
+
+    // Apply accelerated values to stream
+    applyStreamValues(accelerated);
   }
 
   /**

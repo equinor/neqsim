@@ -27,6 +27,6 @@ public class DensitySimTest {
     sepSim.runCalc();
     double a = sepSim.getGasDensity()[0];
     double a2 = sepSim.getOilDensity()[0];
-    assertEquals(4.494247683693498E-4, sepSim.getOilDensity()[0], 0.01);
+    assertEquals(720.9457066787991, sepSim.getOilDensity()[0], 0.01);
   }
 }

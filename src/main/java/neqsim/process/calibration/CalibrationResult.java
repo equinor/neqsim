@@ -26,6 +26,13 @@ public class CalibrationResult implements Serializable {
 
   /**
    * Private constructor - use factory methods.
+   *
+   * @param success whether calibration was successful
+   * @param parameters the calibrated parameters
+   * @param rmse the root mean square error
+   * @param iterations number of iterations used
+   * @param samplesUsed number of samples used
+   * @param errorMessage error message if failed
    */
   private CalibrationResult(boolean success, Map<String, Double> parameters, double rmse,
       int iterations, int samplesUsed, String errorMessage) {
