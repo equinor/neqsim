@@ -293,17 +293,17 @@ Create Jupyter notebook examples:
 
 ### Phase 1: Core Functionality (High Priority)
 1. ✅ Basic non-equilibrium mass/heat transfer (completed)
-2. [ ] Interphase area models for all flow patterns
-3. [ ] Mass transfer coefficient correlations
-4. [ ] Profile output methods
-5. [ ] Comprehensive test suite
+2. ✅ Interphase area models for all flow patterns (completed - InterfacialAreaCalculator with geometric models for stratified, annular, slug, bubble, droplet, churn)
+3. ✅ Mass transfer coefficient correlations (completed - MassTransferCoefficientCalculator with Dittus-Boelter, Ranz-Marshall)
+4. ✅ Profile output methods (completed - getSpecificInterfacialAreaProfile, getLiquidMassTransferCoefficientProfile, getGasMassTransferCoefficientProfile, getVolumetricMassTransferCoefficientProfile)
+5. ✅ Comprehensive test suite (completed - 84 tests for flow pattern detection, interfacial area, mass transfer, builder)
 
 ### Phase 2: Enhanced Models (Medium Priority)
-6. [ ] Wall heat transfer models
-7. [ ] Heat transfer coefficient correlations
-8. [ ] Automatic flow pattern detection
-9. [ ] Builder API
-10. [ ] Energy balance improvements
+6. ✅ Wall heat transfer models (completed - WallHeatTransferModel enum)
+7. ✅ Heat transfer coefficient correlations (completed - basic Dittus-Boelter for internal heat transfer)
+8. ✅ Automatic flow pattern detection (completed - FlowPatternDetector with Taitel-Dukler, Baker, Barnea, Beggs-Brill)
+9. ✅ Builder API (completed - TwoPhasePipeFlowSystemBuilder)
+10. [ ] Energy balance improvements (enthalpy-based with latent heat)
 
 ### Phase 3: Advanced Features (Low Priority)
 11. [ ] Enhancement factors for reactive systems
@@ -328,7 +328,16 @@ Create Jupyter notebook examples:
 | Component | File Path |
 |-----------|-----------|
 | Main class | `src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystem.java` |
+| Builder | `src/main/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/TwoPhasePipeFlowSystemBuilder.java` |
 | Solver | `src/main/java/neqsim/fluidmechanics/flowsolver/twophaseflowsolver/twophasepipeflowsolver/TwoPhaseFixedStaggeredGridSolver.java` |
 | Flow nodes | `src/main/java/neqsim/fluidmechanics/flownode/twophasenode/twophasepipeflownode/` |
+| Flow pattern enum | `src/main/java/neqsim/fluidmechanics/flownode/FlowPattern.java` |
+| Flow pattern model | `src/main/java/neqsim/fluidmechanics/flownode/FlowPatternModel.java` |
+| Flow pattern detector | `src/main/java/neqsim/fluidmechanics/flownode/FlowPatternDetector.java` |
+| Wall heat transfer model | `src/main/java/neqsim/fluidmechanics/flownode/WallHeatTransferModel.java` |
+| Interfacial area model | `src/main/java/neqsim/fluidmechanics/flownode/InterfacialAreaModel.java` |
+| Interfacial area calculator | `src/main/java/neqsim/fluidmechanics/flownode/InterfacialAreaCalculator.java` |
+| Mass transfer calculator | `src/main/java/neqsim/fluidmechanics/flownode/MassTransferCoefficientCalculator.java` |
 | Fluid boundary | `src/main/java/neqsim/fluidmechanics/flownode/fluidboundary/` |
 | Tests | `src/test/java/neqsim/fluidmechanics/flowsystem/twophaseflowsystem/twophasepipeflowsystem/` |
+| Tests (flow node) | `src/test/java/neqsim/fluidmechanics/flownode/` |

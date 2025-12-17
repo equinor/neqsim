@@ -1,6 +1,10 @@
 package neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem;
 
 import java.util.UUID;
+import neqsim.fluidmechanics.flownode.FlowPattern;
+import neqsim.fluidmechanics.flownode.FlowPatternDetector;
+import neqsim.fluidmechanics.flownode.FlowPatternModel;
+import neqsim.fluidmechanics.flownode.WallHeatTransferModel;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
@@ -46,12 +50,61 @@ public class TwoPhasePipeFlowSystem
   /** Current simulation time in seconds. */
   private double currentTime = 0.0;
 
+  // ==================== FLOW PATTERN DETECTION ====================
+
+  /** Flow pattern prediction model. */
+  private FlowPatternModel flowPatternModel = FlowPatternModel.MANUAL;
+
+  /** Whether automatic flow pattern detection is enabled. */
+  private boolean automaticFlowPatternDetection = false;
+
+  /** Current flow patterns at each node. */
+  private FlowPattern[] nodeFlowPatterns;
+
+  // ==================== WALL HEAT TRANSFER ====================
+
+  /** Wall heat transfer model. */
+  private WallHeatTransferModel wallHeatTransferModel = WallHeatTransferModel.CONVECTIVE_BOUNDARY;
+
+  /** Constant wall temperature in Kelvin (for CONSTANT_WALL_TEMPERATURE model). */
+  private double constantWallTemperature = 288.15;
+
+  /** Constant heat flux in W/m² (for CONSTANT_HEAT_FLUX model). */
+  private double constantHeatFlux = 0.0;
+
+  /** Overall heat transfer coefficient in W/(m²·K) (for CONVECTIVE_BOUNDARY model). */
+  private double overallHeatTransferCoefficient = 10.0;
+
+  /** Ambient temperature in Kelvin (for CONVECTIVE_BOUNDARY model). */
+  private double ambientTemperature = 288.15;
+
   /**
    * <p>
    * Constructor for TwoPhasePipeFlowSystem.
    * </p>
    */
   public TwoPhasePipeFlowSystem() {}
+
+  /**
+   * <p>
+   * Creates a new builder for configuring a TwoPhasePipeFlowSystem.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * TwoPhasePipeFlowSystem pipe =
+   *     TwoPhasePipeFlowSystem.builder().withFluid(thermoSystem).withDiameter(0.1, "m")
+   *         .withLength(1000, "m").withNodes(100).withFlowPattern(FlowPattern.STRATIFIED).build();
+   * </pre>
+   *
+   * @return a new TwoPhasePipeFlowSystemBuilder
+   */
+  public static TwoPhasePipeFlowSystemBuilder builder() {
+    return TwoPhasePipeFlowSystemBuilder.create();
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -586,6 +639,575 @@ public class TwoPhasePipeFlowSystem
       reynolds[i] = flowNode[i].getReynoldsNumber(phaseIndex);
     }
     return reynolds;
+  }
+
+  // ==================== FLOW PATTERN DETECTION METHODS ====================
+
+  /**
+   * <p>
+   * Enables automatic flow pattern detection using the specified model.
+   * </p>
+   *
+   * @param enabled true to enable automatic detection, false to use manual specification
+   */
+  public void enableAutomaticFlowPatternDetection(boolean enabled) {
+    this.automaticFlowPatternDetection = enabled;
+    if (enabled && flowPatternModel == FlowPatternModel.MANUAL) {
+      flowPatternModel = FlowPatternModel.TAITEL_DUKLER;
+    }
+  }
+
+  /**
+   * <p>
+   * Sets the flow pattern prediction model.
+   * </p>
+   *
+   * @param model the flow pattern model to use
+   */
+  public void setFlowPatternModel(FlowPatternModel model) {
+    this.flowPatternModel = model;
+    if (model != FlowPatternModel.MANUAL) {
+      this.automaticFlowPatternDetection = true;
+    }
+  }
+
+  /**
+   * <p>
+   * Gets the current flow pattern model.
+   * </p>
+   *
+   * @return the flow pattern model
+   */
+  public FlowPatternModel getFlowPatternModel() {
+    return flowPatternModel;
+  }
+
+  /**
+   * <p>
+   * Detects and updates flow patterns at all nodes.
+   * </p>
+   */
+  public void detectFlowPatterns() {
+    if (nodeFlowPatterns == null) {
+      nodeFlowPatterns = new FlowPattern[getTotalNumberOfNodes()];
+    }
+
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      nodeFlowPatterns[i] = detectFlowPatternAtNode(i);
+    }
+  }
+
+  /**
+   * <p>
+   * Detects the flow pattern at a specific node.
+   * </p>
+   *
+   * @param nodeIndex the node index
+   * @return the detected flow pattern
+   */
+  public FlowPattern detectFlowPatternAtNode(int nodeIndex) {
+    if (flowPatternModel == FlowPatternModel.MANUAL) {
+      return FlowPattern.fromString(initFlowPattern);
+    }
+
+    // Get properties from node
+    double usg = flowNode[nodeIndex].getSuperficialVelocity(0);
+    double usl = flowNode[nodeIndex].getSuperficialVelocity(1);
+    double rhoG =
+        flowNode[nodeIndex].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double rhoL =
+        flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+    double muG =
+        flowNode[nodeIndex].getBulkSystem().getPhase(0).getPhysicalProperties().getViscosity();
+    double muL =
+        flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getViscosity();
+    double sigma =
+        flowNode[nodeIndex].getBulkSystem().getInterphaseProperties().getSurfaceTension(0, 1);
+    double diameter = flowNode[nodeIndex].getGeometry().getDiameter();
+    // Use horizontal pipe assumption (0 inclination) - leg heights can be used to estimate later
+    double inclination = 0.0;
+
+    return FlowPatternDetector.detectFlowPattern(flowPatternModel, usg, usl, rhoG, rhoL, muG, muL,
+        sigma, diameter, inclination);
+  }
+
+  /**
+   * <p>
+   * Gets the flow pattern at a specific node.
+   * </p>
+   *
+   * @param nodeIndex the node index
+   * @return the flow pattern at the node
+   */
+  public FlowPattern getFlowPatternAtNode(int nodeIndex) {
+    if (nodeFlowPatterns == null || nodeFlowPatterns[nodeIndex] == null) {
+      return FlowPattern.fromString(initFlowPattern);
+    }
+    return nodeFlowPatterns[nodeIndex];
+  }
+
+  /**
+   * <p>
+   * Gets the flow pattern profile along the pipe.
+   * </p>
+   *
+   * @return an array of flow patterns at each node
+   */
+  public FlowPattern[] getFlowPatternProfile() {
+    if (nodeFlowPatterns == null) {
+      detectFlowPatterns();
+    }
+    return nodeFlowPatterns.clone();
+  }
+
+  // ==================== WALL HEAT TRANSFER METHODS ====================
+
+  /**
+   * <p>
+   * Sets the wall heat transfer model.
+   * </p>
+   *
+   * @param model the wall heat transfer model
+   */
+  public void setWallHeatTransferModel(WallHeatTransferModel model) {
+    this.wallHeatTransferModel = model;
+  }
+
+  /**
+   * <p>
+   * Gets the wall heat transfer model.
+   * </p>
+   *
+   * @return the wall heat transfer model
+   */
+  public WallHeatTransferModel getWallHeatTransferModel() {
+    return wallHeatTransferModel;
+  }
+
+  /**
+   * <p>
+   * Sets the constant wall temperature for CONSTANT_WALL_TEMPERATURE model.
+   * </p>
+   *
+   * @param temperature the wall temperature in Kelvin
+   */
+  public void setConstantWallTemperature(double temperature) {
+    this.constantWallTemperature = temperature;
+  }
+
+  /**
+   * <p>
+   * Sets the constant wall temperature with unit.
+   * </p>
+   *
+   * @param temperature the wall temperature
+   * @param unit the temperature unit ("K", "C", or "F")
+   */
+  public void setConstantWallTemperature(double temperature, String unit) {
+    switch (unit.toUpperCase()) {
+      case "C":
+        this.constantWallTemperature = temperature + 273.15;
+        break;
+      case "F":
+        this.constantWallTemperature = (temperature - 32) * 5.0 / 9.0 + 273.15;
+        break;
+      case "K":
+      default:
+        this.constantWallTemperature = temperature;
+        break;
+    }
+  }
+
+  /**
+   * <p>
+   * Gets the constant wall temperature.
+   * </p>
+   *
+   * @return the wall temperature in Kelvin
+   */
+  public double getConstantWallTemperature() {
+    return constantWallTemperature;
+  }
+
+  /**
+   * <p>
+   * Sets the constant heat flux for CONSTANT_HEAT_FLUX model.
+   * </p>
+   *
+   * @param heatFlux the heat flux in W/m² (positive = heat into fluid)
+   */
+  public void setConstantHeatFlux(double heatFlux) {
+    this.constantHeatFlux = heatFlux;
+  }
+
+  /**
+   * <p>
+   * Gets the constant heat flux.
+   * </p>
+   *
+   * @return the heat flux in W/m²
+   */
+  public double getConstantHeatFlux() {
+    return constantHeatFlux;
+  }
+
+  /**
+   * <p>
+   * Sets the overall heat transfer coefficient for CONVECTIVE_BOUNDARY model.
+   * </p>
+   *
+   * @param coefficient the overall U-value in W/(m²·K)
+   */
+  public void setOverallHeatTransferCoefficient(double coefficient) {
+    this.overallHeatTransferCoefficient = coefficient;
+  }
+
+  /**
+   * <p>
+   * Gets the overall heat transfer coefficient.
+   * </p>
+   *
+   * @return the U-value in W/(m²·K)
+   */
+  public double getOverallHeatTransferCoefficient() {
+    return overallHeatTransferCoefficient;
+  }
+
+  /**
+   * <p>
+   * Sets the ambient temperature for CONVECTIVE_BOUNDARY model.
+   * </p>
+   *
+   * @param temperature the ambient temperature in Kelvin
+   */
+  public void setAmbientTemperature(double temperature) {
+    this.ambientTemperature = temperature;
+  }
+
+  /**
+   * <p>
+   * Sets the ambient temperature with unit.
+   * </p>
+   *
+   * @param temperature the ambient temperature
+   * @param unit the temperature unit ("K", "C", or "F")
+   */
+  public void setAmbientTemperature(double temperature, String unit) {
+    switch (unit.toUpperCase()) {
+      case "C":
+        this.ambientTemperature = temperature + 273.15;
+        break;
+      case "F":
+        this.ambientTemperature = (temperature - 32) * 5.0 / 9.0 + 273.15;
+        break;
+      case "K":
+      default:
+        this.ambientTemperature = temperature;
+        break;
+    }
+  }
+
+  /**
+   * <p>
+   * Gets the ambient temperature.
+   * </p>
+   *
+   * @return the ambient temperature in Kelvin
+   */
+  public double getAmbientTemperature() {
+    return ambientTemperature;
+  }
+
+  /**
+   * <p>
+   * Calculates the wall heat flux at a specific node based on the heat transfer model.
+   * </p>
+   *
+   * @param nodeIndex the node index
+   * @return the heat flux in W/m² (positive = heat into fluid)
+   */
+  public double calculateWallHeatFlux(int nodeIndex) {
+    switch (wallHeatTransferModel) {
+      case ADIABATIC:
+        return 0.0;
+
+      case CONSTANT_HEAT_FLUX:
+        return constantHeatFlux;
+
+      case CONSTANT_WALL_TEMPERATURE:
+        // Use internal heat transfer coefficient
+        double hInternal = estimateInternalHeatTransferCoefficient(nodeIndex);
+        double tFluid = flowNode[nodeIndex].getBulkSystem().getTemperature();
+        return hInternal * (constantWallTemperature - tFluid);
+
+      case CONVECTIVE_BOUNDARY:
+      default:
+        double tFluid2 = flowNode[nodeIndex].getBulkSystem().getTemperature();
+        return overallHeatTransferCoefficient * (ambientTemperature - tFluid2);
+    }
+  }
+
+  /**
+   * <p>
+   * Estimates the internal heat transfer coefficient at a node using Nusselt correlations.
+   * </p>
+   *
+   * @param nodeIndex the node index
+   * @return the heat transfer coefficient in W/(m²·K)
+   */
+  private double estimateInternalHeatTransferCoefficient(int nodeIndex) {
+    // Use Dittus-Boelter correlation for turbulent flow
+    // Nu = 0.023 * Re^0.8 * Pr^0.4
+    double reL = flowNode[nodeIndex].getReynoldsNumber(1);
+    double reG = flowNode[nodeIndex].getReynoldsNumber(0);
+    double re = Math.max(reL, reG);
+
+    double cpL = flowNode[nodeIndex].getBulkSystem().getPhase(1).getCp();
+    double muL =
+        flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getViscosity();
+    double kL =
+        flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getConductivity();
+
+    double pr = cpL * muL / kL;
+    pr = Math.max(0.5, Math.min(pr, 2000)); // Limit Prandtl number
+
+    double nu;
+    if (re > 10000) {
+      // Turbulent - Dittus-Boelter
+      nu = 0.023 * Math.pow(re, 0.8) * Math.pow(pr, 0.4);
+    } else if (re > 2300) {
+      // Transition - linear interpolation
+      double nuLam = 3.66;
+      double nuTurb = 0.023 * Math.pow(10000, 0.8) * Math.pow(pr, 0.4);
+      double f = (re - 2300) / (10000 - 2300);
+      nu = nuLam + f * (nuTurb - nuLam);
+    } else {
+      // Laminar - constant Nusselt for pipe
+      nu = 3.66;
+    }
+
+    double diameter = flowNode[nodeIndex].getGeometry().getDiameter();
+    return nu * kL / diameter;
+  }
+
+  // ==================== INTERFACIAL AREA AND MASS TRANSFER ====================
+
+  /**
+   * <p>
+   * Calculates the specific interfacial area (per unit volume) at a specific node using
+   * flow-pattern-specific correlations.
+   * </p>
+   *
+   * <p>
+   * This differs from {@link #getInterfacialAreaProfile()} which returns the absolute interfacial
+   * area in m². This method returns the interfacial area per unit volume (a = A/V) which is useful
+   * for mass transfer calculations.
+   * </p>
+   *
+   * @param nodeNumber the node index
+   * @return specific interfacial area (1/m)
+   */
+  public double getSpecificInterfacialAreaAtNode(int nodeNumber) {
+    if (flowNode == null || flowNode[nodeNumber] == null) {
+      return 0.0;
+    }
+
+    FlowPattern pattern = getFlowPatternAtNode(nodeNumber);
+    double diameter = flowNode[nodeNumber].getGeometry().getDiameter();
+    double holdup = flowNode[nodeNumber].getPhaseFraction(1); // Liquid holdup
+
+    // Get fluid properties
+    double rhoG = flowNode[nodeNumber].getBulkSystem().getPhase(0).getDensity();
+    double rhoL = flowNode[nodeNumber].getBulkSystem().getPhase(1).getDensity();
+    double sigma = flowNode[nodeNumber].getInterphaseContactArea();
+
+    // Get velocities
+    double usg = flowNode[nodeNumber].getSuperficialVelocity(0);
+    double usl = flowNode[nodeNumber].getSuperficialVelocity(1);
+
+    // Use default surface tension if not available
+    if (sigma <= 0) {
+      sigma = 0.03; // Default 30 mN/m for hydrocarbon systems
+    }
+
+    return neqsim.fluidmechanics.flownode.InterfacialAreaCalculator
+        .calculateInterfacialArea(pattern, diameter, holdup, rhoG, rhoL, usg, usl, sigma);
+  }
+
+  /**
+   * <p>
+   * Gets the specific interfacial area (per unit volume) profile along the pipe.
+   * </p>
+   *
+   * <p>
+   * This differs from {@link #getInterfacialAreaProfile()} which returns absolute areas in m². This
+   * method returns specific interfacial areas (1/m) useful for mass transfer calculations.
+   * </p>
+   *
+   * @return an array of specific interfacial areas (1/m) at each node
+   */
+  public double[] getSpecificInterfacialAreaProfile() {
+    double[] areas = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      areas[i] = getSpecificInterfacialAreaAtNode(i);
+    }
+    return areas;
+  }
+
+  /**
+   * <p>
+   * Calculates the liquid-side mass transfer coefficient at a specific node.
+   * </p>
+   *
+   * @param nodeNumber the node index
+   * @param diffusivity liquid diffusivity in m²/s
+   * @return liquid-side mass transfer coefficient k_L (m/s)
+   */
+  public double getLiquidMassTransferCoefficientAtNode(int nodeNumber, double diffusivity) {
+    if (flowNode == null || flowNode[nodeNumber] == null) {
+      return 0.0;
+    }
+
+    FlowPattern pattern = getFlowPatternAtNode(nodeNumber);
+    double diameter = flowNode[nodeNumber].getGeometry().getDiameter();
+    double holdup = flowNode[nodeNumber].getPhaseFraction(1);
+
+    double usg = flowNode[nodeNumber].getSuperficialVelocity(0);
+    double usl = flowNode[nodeNumber].getSuperficialVelocity(1);
+    double rhoL =
+        flowNode[nodeNumber].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+    double muL =
+        flowNode[nodeNumber].getBulkSystem().getPhase(1).getPhysicalProperties().getViscosity();
+
+    // Protect against invalid values
+    if (Double.isNaN(rhoL) || rhoL <= 0 || Double.isNaN(muL) || muL <= 0) {
+      return 0.0;
+    }
+
+    return neqsim.fluidmechanics.flownode.MassTransferCoefficientCalculator
+        .calculateLiquidMassTransferCoefficient(pattern, diameter, holdup, usg, usl, rhoL, muL,
+            diffusivity);
+  }
+
+  /**
+   * <p>
+   * Calculates the gas-side mass transfer coefficient at a specific node.
+   * </p>
+   *
+   * @param nodeNumber the node index
+   * @param diffusivity gas diffusivity in m²/s
+   * @return gas-side mass transfer coefficient k_G (m/s)
+   */
+  public double getGasMassTransferCoefficientAtNode(int nodeNumber, double diffusivity) {
+    if (flowNode == null || flowNode[nodeNumber] == null) {
+      return 0.0;
+    }
+
+    FlowPattern pattern = getFlowPatternAtNode(nodeNumber);
+    double diameter = flowNode[nodeNumber].getGeometry().getDiameter();
+    double holdup = flowNode[nodeNumber].getPhaseFraction(1);
+
+    double usg = flowNode[nodeNumber].getSuperficialVelocity(0);
+    double rhoG =
+        flowNode[nodeNumber].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double muG =
+        flowNode[nodeNumber].getBulkSystem().getPhase(0).getPhysicalProperties().getViscosity();
+
+    // Protect against invalid values
+    if (Double.isNaN(rhoG) || rhoG <= 0 || Double.isNaN(muG) || muG <= 0) {
+      return 0.0;
+    }
+
+    return neqsim.fluidmechanics.flownode.MassTransferCoefficientCalculator
+        .calculateGasMassTransferCoefficient(pattern, diameter, holdup, usg, rhoG, muG,
+            diffusivity);
+  }
+
+  /**
+   * <p>
+   * Gets the liquid-side mass transfer coefficient profile along the pipe.
+   * </p>
+   *
+   * @param diffusivity liquid diffusivity in m²/s
+   * @return an array of k_L values (m/s) at each node
+   */
+  public double[] getLiquidMassTransferCoefficientProfile(double diffusivity) {
+    double[] kL = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      kL[i] = getLiquidMassTransferCoefficientAtNode(i, diffusivity);
+    }
+    return kL;
+  }
+
+  /**
+   * <p>
+   * Gets the gas-side mass transfer coefficient profile along the pipe.
+   * </p>
+   *
+   * @param diffusivity gas diffusivity in m²/s
+   * @return an array of k_G values (m/s) at each node
+   */
+  public double[] getGasMassTransferCoefficientProfile(double diffusivity) {
+    double[] kG = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      kG[i] = getGasMassTransferCoefficientAtNode(i, diffusivity);
+    }
+    return kG;
+  }
+
+  /**
+   * <p>
+   * Calculates the overall volumetric mass transfer coefficient k_L·a at a node.
+   * </p>
+   *
+   * <p>
+   * This is the product of the liquid-side mass transfer coefficient and the interfacial area per
+   * unit volume, commonly used in mass transfer calculations:
+   * </p>
+   *
+   * <pre>
+   * ṁ = k_L·a · V · ΔC
+   * </pre>
+   *
+   * @param nodeNumber the node index
+   * @param diffusivity liquid diffusivity in m²/s
+   * @return volumetric mass transfer coefficient k_L·a (1/s)
+   */
+  public double getVolumetricMassTransferCoefficientAtNode(int nodeNumber, double diffusivity) {
+    double kL = getLiquidMassTransferCoefficientAtNode(nodeNumber, diffusivity);
+    double a = getSpecificInterfacialAreaAtNode(nodeNumber);
+    return kL * a;
+  }
+
+  /**
+   * <p>
+   * Gets the volumetric mass transfer coefficient (k_L·a) profile along the pipe.
+   * </p>
+   *
+   * @param diffusivity liquid diffusivity in m²/s
+   * @return an array of k_L·a values (1/s) at each node
+   */
+  public double[] getVolumetricMassTransferCoefficientProfile(double diffusivity) {
+    double[] kLa = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      kLa[i] = getVolumetricMassTransferCoefficientAtNode(i, diffusivity);
+    }
+    return kLa;
+  }
+
+  /**
+   * <p>
+   * Gets the wall heat flux profile along the pipe.
+   * </p>
+   *
+   * @return an array of heat fluxes in W/m² at each node
+   */
+  public double[] getWallHeatFluxProfile() {
+    double[] heatFlux = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      heatFlux[i] = calculateWallHeatFlux(i);
+    }
+    return heatFlux;
   }
 
   /**
