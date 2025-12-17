@@ -371,7 +371,7 @@ TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder()
 | `solveSteadyState(int type)` | Solve steady-state equations |
 | `solveTransient(int type)` | Solve transient equations |
 | `getTemperatureProfile()` | Temperature along pipe [K] |
-| `getPressureProfile()` | Pressure along pipe [Pa] |
+| `getPressureProfile()` | Pressure along pipe [bar] |
 | `getVelocityProfile(int phase)` | Phase velocity [m/s] |
 | `getLiquidHoldupProfile()` | Liquid holdup [-] |
 | `getTotalPressureDrop()` | Total ΔP [bar] |

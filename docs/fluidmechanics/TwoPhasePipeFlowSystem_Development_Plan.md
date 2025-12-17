@@ -192,7 +192,7 @@ Add convenient methods for extracting simulation results:
 ```java
 // Get profiles along pipe
 double[] temperatures = pipe.getTemperatureProfile();
-double[] pressures = pipe.getPressureProfile();
+double[] pressures = pipe.getPressureProfile(); // [bar]
 double[] positions = pipe.getPositionProfile();
 
 // Get composition profiles
