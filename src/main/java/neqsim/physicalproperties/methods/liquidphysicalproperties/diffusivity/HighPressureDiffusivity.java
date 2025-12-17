@@ -8,7 +8,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * <p>
  * This model applies pressure corrections to low-pressure diffusion coefficients using the
  * Mathur-Thodos correlation. It is essential for accurate predictions at reservoir conditions
- * (pressures > 100 bar).
+ * (pressures &gt; 100 bar).
  * </p>
  *
  * <p>
