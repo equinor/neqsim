@@ -105,11 +105,28 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
     pipe.getNode(0).initFlowCalc();
     pipe.getNode(0).calcFluxes();
 
+    int numComponents = pipe.getNode(0).getBulkSystem().getPhases()[0].getNumberOfComponents();
+
     for (int i = 1; i < numberOfNodes - 1; i++) {
-      // Re-initialize the bulk system to update molar volumes after mole changes from previous node
-      pipe.getNode(i).getBulkSystem().init(1);
+      // Copy mole state from previous node (i-1) to current node (i)
+      // This propagates the accumulated mass transfer through the pipe
+      for (int phase = 0; phase < 2; phase++) {
+        for (int comp = 0; comp < numComponents; comp++) {
+          double prevMoles = pipe.getNode(i - 1).getBulkSystem().getPhase(phase).getComponent(comp)
+              .getNumberOfMolesInPhase();
+          double currMoles = pipe.getNode(i).getBulkSystem().getPhase(phase).getComponent(comp)
+              .getNumberOfMolesInPhase();
+          double delta = prevMoles - currMoles;
+          if (Math.abs(delta) > 1e-20) {
+            pipe.getNode(i).getBulkSystem().getPhases()[phase].addMoles(comp, delta);
+          }
+        }
+      }
+
+      // Re-initialize beta and x,y based on updated moles
       pipe.getNode(i).getBulkSystem().initBeta();
       pipe.getNode(i).getBulkSystem().init_x_y();
+      pipe.getNode(i).getBulkSystem().init(3);
       pipe.getNode(i).initFlowCalc();
       pipe.getNode(i).calcFluxes();
 
@@ -128,79 +145,55 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       pipe.getNode(i + 1).getBulkSystem().getPhase(1)
           .setTemperature(pipe.getNode(i).getBulkSystem().getPhase(1).getTemperature() + liquid_dT);
 
-      for (int componentNumber = 0; componentNumber < pipe.getNode(0).getBulkSystem().getPhases()[0]
-          .getNumberOfComponents(); componentNumber++) {
-        // getInterphaseMolarFlux(...) is in mol/(m^2*s). Multiplying by interphase contact area for
-        // the node segment (m^2) gives a molar transfer rate (mol/s). The bulk system in a flow
-        // node uses phase moles as molar flow rates (mol/s), so do not multiply by residence time.
+      // Calculate and apply mass transfer from this node
+      for (int componentNumber = 0; componentNumber < numComponents; componentNumber++) {
         double transferToLiquid =
             pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
                 * pipe.getNode(i).getInterphaseContactArea();
 
-        // Limit transfer so we never withdraw more of a component from a phase than the phase
-        // carries as molar flow. This avoids negative phase component moles which can lead to EOS
-        // initialization failures (NaNs) in downstream nodes during profiling.
+        // Limit transfer to 50% of available moles per node
         if (transferToLiquid > 0.0) {
           double availableInGas = pipe.getNode(i).getBulkSystem().getPhase(0)
               .getComponent(componentNumber).getNumberOfMolesInPhase();
-          transferToLiquid =
-              Math.min(transferToLiquid, 0.999999999 * Math.max(0.0, availableInGas));
+          transferToLiquid = Math.min(transferToLiquid, 0.5 * Math.max(0.0, availableInGas));
         } else if (transferToLiquid < 0.0) {
-          double availableInLiquid = pipe.getNode(i).getBulkSystem().getPhase(1)
-              .getComponent(componentNumber).getNumberOfMolesInPhase();
-          transferToLiquid =
-              -Math.min(-transferToLiquid, 0.999999999 * Math.max(0.0, availableInLiquid));
+          // Negative flux = evaporation from liquid to gas
+          // This can happen when driving force reverses (gas depleted, liquid saturated)
+          // For steady-state dissolution modeling, skip evaporation to prevent re-equilibration
+          transferToLiquid = 0.0;
         }
 
-        double liquidMolarRate = transferToLiquid;
-        double gasMolarRate = -transferToLiquid;
+        // Apply mass transfer: gas loses, liquid gains
+        pipe.getNode(i).getBulkSystem().getPhases()[0].addMoles(componentNumber, -transferToLiquid);
+        pipe.getNode(i).getBulkSystem().getPhases()[1].addMoles(componentNumber, transferToLiquid);
+      }
 
-        // Apply mass transfer directly to next node (not accumulating from node 0)
-        pipe.getNode(i + 1).getBulkSystem().getPhases()[0].addMoles(componentNumber, gasMolarRate);
-        pipe.getNode(i + 1).getBulkSystem().getPhases()[1].addMoles(componentNumber,
-            liquidMolarRate);
+      // Re-init after applying transfer so phaseFraction reflects new state
+      pipe.getNode(i).getBulkSystem().initBeta();
+      pipe.getNode(i).getBulkSystem().init_x_y();
+      pipe.getNode(i).initFlowCalc();
+    }
+
+    // Handle last node - copy from previous node
+    int lastNode = numberOfNodes - 1;
+    for (int phase = 0; phase < 2; phase++) {
+      for (int comp = 0; comp < numComponents; comp++) {
+        double prevMoles = pipe.getNode(lastNode - 1).getBulkSystem().getPhase(phase)
+            .getComponent(comp).getNumberOfMolesInPhase();
+        double currMoles = pipe.getNode(lastNode).getBulkSystem().getPhase(phase).getComponent(comp)
+            .getNumberOfMolesInPhase();
+        double delta = prevMoles - currMoles;
+        if (Math.abs(delta) > 1e-20) {
+          pipe.getNode(lastNode).getBulkSystem().getPhases()[phase].addMoles(comp, delta);
+        }
       }
     }
-    // Initialize the last node after mole changes have been applied
-    pipe.getNode(numberOfNodes - 1).getBulkSystem().init(1);
-    pipe.getNode(numberOfNodes - 1).getBulkSystem().initBeta();
-    pipe.getNode(numberOfNodes - 1).getBulkSystem().init_x_y();
-    pipe.getNode(numberOfNodes - 1).initFlowCalc();
-    pipe.getNode(numberOfNodes - 1).calcFluxes();
-    this.initNodes();
-    System.out.println("finisched initializing....");
 
-    /*
-     * do{ err=0; pipe.getNode(0).init(); for(int i = 0;i<numberOfNodes-1;i++){
-     *
-     * //setting temperatures oldTemp = pipe.getNode(i+1).getBulkSystem().getTemperature(); dpdx =
-     * (pipe.getNode(i+1).getBulkSystem().getPressure()-pipe.getNode(i).
-     * getBulkSystem().getPressure())/((pipe.getNode(i+1).getGeometry().
-     * getNodeLength()+pipe.getNode(i).getGeometry().getNodeLength())*0.5);
-     * pipe.getNode(i+1).getBulkSystem().setTemperature((4.0*12.0*(278.0 -
-     * pipe.getNode(i).getBulkSystem().getPhases()[0].getTemperature())/
-     * (pipe.getNode(i+1).getBulkSystem().getPhases()[0].getCp()/pipe.getNode(i+1).
-     * getBulkSystem().getPhases()[0].getNumberOfMolesInPhase()/pipe.getNode(i+1).
-     * getBulkSystem().getPhases()[0].getMolarMass()*pipe.getNode(i+1).getVelocity()
-     * *pipe.getNode(i+1).getGeometry().getDiameter()*pipe.getNode(i+1).
-     * getBulkSystem().getPhases()[0].getDensity())+pipe.getNode(i+1).getBulkSystem(
-     * ).getPhases()[0].getJouleThomsonCoefficient()*dpdx)*(pipe.getNode(i+1).
-     * getGeometry().getNodeLength()+pipe.getNode(i).getGeometry().getNodeLength())* 0.5 +
-     * pipe.getNode(i).getBulkSystem().getTemperature()); pipe.getNode(i+1).init();
-     *
-     * // setting pressures oldPres = pipe.getNode(i+1).getBulkSystem().getPressure();
-     * pipe.getNode(i+1).getBulkSystem().setPressure(-pipe.getNode(i). getWallFrictionFactor()*
-     * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity()*pipe.velocity[i]*
-     * pipe.velocity[i]/pipe.getNode(i).getGeometry().getDiameter()/2.0*(pipe.
-     * getNode(i).getGeometry().getNodeLength())/1e5 -
-     * gravity*pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity()*(pipe.
-     * getNode(i+1).getVerticalPositionOfNode() - pipe.getNode(i).getVerticalPositionOfNode() )/1e5
-     * + pipe.getNode(i).getBulkSystem().getPressure()); err =
-     * err+(oldPres-pipe.getNode(i+1).getBulkSystem().getPressure()); pipe.getNode(i+1).init(); //
-     * pipe.velocity[i+1] = ((TwoPhasePipeFlowNode)pipe.getNode(i+1)).calcVelocity();
-     * pipe.getNode(i+1).init(); } System.out.println("err: "+ err); } while(Math.abs(err)>1);
-     * initTemperatureMatrix();
-     */
+    pipe.getNode(lastNode).getBulkSystem().initBeta();
+    pipe.getNode(lastNode).getBulkSystem().init_x_y();
+    pipe.getNode(lastNode).getBulkSystem().init(3);
+    pipe.getNode(lastNode).initFlowCalc();
+    pipe.getNode(lastNode).calcFluxes();
   }
 
   /**

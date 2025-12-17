@@ -1118,9 +1118,11 @@ public class NonEquilibriumPipeFlowTest {
 
     // Verify we actually start out of equilibrium (gas methane rich, liquid methane poor).
     assertTrue(inletGasMethaneFraction > 0.99,
-        "Expected methane-rich gas phase at inlet (off-equilibrium start), x=" + inletGasMethaneFraction);
+        "Expected methane-rich gas phase at inlet (off-equilibrium start), x="
+            + inletGasMethaneFraction);
     assertTrue(inletLiquidMethaneFraction < 1.0e-6,
-        "Expected methane-lean liquid phase at inlet (off-equilibrium start), x=" + inletLiquidMethaneFraction);
+        "Expected methane-lean liquid phase at inlet (off-equilibrium start), x="
+            + inletLiquidMethaneFraction);
 
     // Solver type 2 does not enforce full component-conservation propagation along the pipe, so
     // don't assert complete disappearance of the gas-phase methane fraction. Instead, verify that
@@ -1372,11 +1374,11 @@ public class NonEquilibriumPipeFlowTest {
     dissolvePipe.setInletThermoSystem(system);
     dissolvePipe.setInitialFlowPattern("bubble"); // Bubble flow for high interfacial area
     dissolvePipe.setNumberOfLegs(5);
-    dissolvePipe.setNumberOfNodesInLeg(10);
+    dissolvePipe.setNumberOfNodesInLeg(20); // More nodes for finer resolution
 
-    // Pipeline configuration - horizontal pipe, 1 km total length (same ratio as working 3km test)
+    // Pipeline configuration - shorter 100m pipe for dissolution test
     double[] height = {0, 0, 0, 0, 0, 0};
-    double[] length = {0.0, 200.0, 400.0, 600.0, 800.0, 1000.0};
+    double[] length = {0.0, 20.0, 40.0, 60.0, 80.0, 100.0};
 
     // Isothermal conditions (same temperature as fluid)
     double pipeTemp = 305.0;
@@ -1420,10 +1422,10 @@ public class NonEquilibriumPipeFlowTest {
     double outletGasFraction = 1.0 - liquidHoldupProfile[numNodes - 1];
 
     // Print results
-    System.out.println("\n=== Complete Gas Dissolution in 1 km Pipeline (Bubble Flow) ===");
+    System.out.println("\n=== Complete Gas Dissolution in 100 m Pipeline (Bubble Flow) ===");
     System.out.println("Scenario: Small methane gas bubble dissolving into excess n-decane oil");
     System.out.println("Conditions: T=305 K (32°C), P=120 bar");
-    System.out.println("Pipe: 1 km length, 50 mm diameter, horizontal, bubble flow");
+    System.out.println("Pipe: 100 m length, 50 mm diameter, horizontal, bubble flow");
     System.out.println("Gas flow: 5 kg/hr methane, Liquid: 1200 kg/hr n-C10");
 
     System.out.println("\nInlet conditions:");
@@ -1451,6 +1453,7 @@ public class NonEquilibriumPipeFlowTest {
     // Find where gas void fraction becomes negligible
     double negligibleGas = 1.0e-6;
     int dissolutionNode = -1;
+    double pipeLength = 100.0; // 100m pipe
     for (int i = 0; i < numNodes; i++) {
       double gasFraction = 1.0 - liquidHoldupProfile[i];
       if (gasFraction < negligibleGas) {
@@ -1459,18 +1462,17 @@ public class NonEquilibriumPipeFlowTest {
       }
     }
     if (dissolutionNode > 0) {
-      double dissolutionDistance = dissolutionNode * 1000.0 / numNodes;
+      double dissolutionDistance = dissolutionNode * pipeLength / numNodes;
       System.out.printf("Complete dissolution achieved at: %.0f m (node %d)%n", dissolutionDistance,
           dissolutionNode);
     } else {
-      System.out.println("Complete dissolution not achieved within 1 km");
+      System.out.println("Complete dissolution not achieved within 100 m");
     }
 
     // Print complete gas fraction profile as function of length
     System.out.println("\n=== Gas Fraction Profile Along Pipe Length ===");
     System.out.println("Length [m]    Gas Fraction [-]   Liquid Holdup [-]");
     System.out.println("---------------------------------------------------");
-    double pipeLength = 1000.0;
     for (int i = 0; i < numNodes; i++) {
       double distance = i * pipeLength / (numNodes - 1);
       double gasFrac = 1.0 - liquidHoldupProfile[i];
