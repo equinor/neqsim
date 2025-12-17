@@ -359,8 +359,7 @@ public class NonEquilibriumPipeFlowTest {
       double sum = gasFraction + liquidFraction;
 
       assertEquals(1.0, sum, 0.01, "Phase fractions should sum to 1 at node " + i);
-      assertTrue(gasFraction >= 0 && gasFraction <= 1,
-          "Gas fraction should be between 0 and 1");
+      assertTrue(gasFraction >= 0 && gasFraction <= 1, "Gas fraction should be between 0 and 1");
       assertTrue(liquidFraction >= 0 && liquidFraction <= 1,
           "Liquid fraction should be between 0 and 1");
     }

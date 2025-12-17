@@ -301,7 +301,8 @@ public class TwoPhasePipeFlowSystem
       double diameter = flowNode[i].getGeometry().getDiameter();
       double wallArea = Math.PI * diameter * nodeLength;
       double fluidTemp = flowNode[i].getBulkSystem().getTemperature();
-      double surroundingTemp = flowNode[i].getGeometry().getSurroundingEnvironment().getTemperature();
+      double surroundingTemp =
+          flowNode[i].getGeometry().getSurroundingEnvironment().getTemperature();
       // Approximate overall heat transfer coefficient
       double uValue = 10.0; // W/(m²·K) - simplified
       totalHeatLoss += uValue * wallArea * (fluidTemp - surroundingTemp);
