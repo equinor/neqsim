@@ -1,6 +1,7 @@
 package neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem;
 
 import static org.junit.jupiter.api.Assertions.*;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -58,9 +59,9 @@ public class NumericalDispersionAnalysisTest {
    */
   @Test
   void testAnalyticalDispersionPrediction() {
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
     System.out.println("ANALYTICAL PREDICTION OF NUMERICAL DISPERSION");
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
     System.out.println();
     System.out.println("For first-order upwind scheme:");
     System.out.println("  D_numerical = (v × Δx / 2) × (1 - CFL)");
@@ -76,7 +77,7 @@ public class NumericalDispersionAnalysisTest {
 
     System.out.println(String.format("%-8s %-10s %-12s %-15s %-15s", "Δx (m)", "L (km)",
         "D_num (m²/s)", "σ (m)", "σ/Δx"));
-    System.out.println("-".repeat(60));
+    System.out.println(StringUtils.repeat("-", 60));
 
     for (double dx : gridSizes) {
       for (double L : pipeLengths) {
@@ -94,9 +95,9 @@ public class NumericalDispersionAnalysisTest {
     System.out.println();
 
     // Grid sizing recommendation
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
     System.out.println("GRID SIZING GUIDELINE:");
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
     System.out.println("For acceptable front width σ_target:");
     System.out.println("  Δx_max = σ_target² / (L × (1 - CFL))");
     System.out.println();
@@ -122,9 +123,9 @@ public class NumericalDispersionAnalysisTest {
    */
   @Test
   void testGridRefinementConvergence() {
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
     System.out.println("GRID REFINEMENT CONVERGENCE TEST");
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
     System.out.println();
 
     double velocity = 10.0; // m/s
@@ -136,10 +137,10 @@ public class NumericalDispersionAnalysisTest {
     double[] frontWidths = new double[gridSizes.length];
 
     System.out.println("Grid refinement study (50 km pipe, v=10 m/s, CFL=0.8):");
-    System.out.println("-".repeat(60));
+    System.out.println(StringUtils.repeat("-", 60));
     System.out
         .println(String.format("%-10s %-10s %-15s %-15s", "Δx (m)", "Nodes", "σ (m)", "Reduction"));
-    System.out.println("-".repeat(60));
+    System.out.println(StringUtils.repeat("-", 60));
 
     for (int i = 0; i < gridSizes.length; i++) {
       double dx = gridSizes[i];
@@ -174,9 +175,9 @@ public class NumericalDispersionAnalysisTest {
    */
   @Test
   void testCFLOptimization() {
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
     System.out.println("CFL NUMBER OPTIMIZATION");
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
     System.out.println();
 
     double velocity = 10.0; // m/s
@@ -187,10 +188,10 @@ public class NumericalDispersionAnalysisTest {
     double[] cflNumbers = {0.1, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 0.99};
 
     System.out.println(String.format("Grid: Δx = %.0f m, Pipe: %.0f km", dx, pipeLength / 1000));
-    System.out.println("-".repeat(60));
+    System.out.println(StringUtils.repeat("-", 60));
     System.out.println(
         String.format("%-10s %-15s %-15s %-15s", "CFL", "D_num (m²/s)", "σ (m)", "Relative"));
-    System.out.println("-".repeat(60));
+    System.out.println(StringUtils.repeat("-", 60));
 
     double[] dispersionCoeffs = new double[cflNumbers.length];
 
@@ -226,9 +227,9 @@ public class NumericalDispersionAnalysisTest {
    */
   @Test
   void testPracticalGridSizing() {
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
     System.out.println("PRACTICAL GRID SIZING RECOMMENDATIONS");
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
     System.out.println();
 
     // Common pipeline scenarios
@@ -244,7 +245,7 @@ public class NumericalDispersionAnalysisTest {
 
     System.out.println(String.format("%-12s %-10s %-12s %-12s %-12s", "Pipe (km)", "v (m/s)",
         "σ_max (m)", "Δx_max (m)", "Min Nodes"));
-    System.out.println("-".repeat(70));
+    System.out.println(StringUtils.repeat("-", 70));
 
     for (double[] scenario : scenarios) {
       double L_km = scenario[0];
@@ -262,9 +263,9 @@ public class NumericalDispersionAnalysisTest {
     }
 
     System.out.println();
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
     System.out.println("SUMMARY - COMPOSITIONAL TRACKING RECOMMENDATIONS");
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
     System.out.println();
     System.out.println("1. GRID SIZING:");
     System.out.println("   Δx_max = σ_target² / (L × (1 - CFL))");
