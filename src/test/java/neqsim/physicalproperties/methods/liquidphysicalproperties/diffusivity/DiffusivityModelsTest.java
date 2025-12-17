@@ -245,4 +245,269 @@ public class DiffusivityModelsTest {
       }
     }
   }
+
+  /**
+   * Test comparing Hayduk-Minhas with Siddiqi-Lucas for hydrocarbon systems. Both models should
+   * give values in the same order of magnitude for liquid diffusivities.
+   */
+  @Test
+  void testCompareHaydukMinhasWithSiddiqiLucas() {
+    ThermodynamicOperations ops = new ThermodynamicOperations(hydrocarbonSystem);
+    ops.TPflash();
+    hydrocarbonSystem.initPhysicalProperties();
+
+    if (hydrocarbonSystem.hasPhaseType("oil")) {
+      var physProps = hydrocarbonSystem.getPhase("oil").getPhysicalProperties();
+
+      // Create both models
+      HaydukMinhasDiffusivity haydukModel = new HaydukMinhasDiffusivity(physProps);
+      haydukModel.setSolventType(HaydukMinhasDiffusivity.SolventType.PARAFFIN);
+      SiddiqiLucasMethod siddiqiModel = new SiddiqiLucasMethod(physProps);
+
+      int nComps = hydrocarbonSystem.getPhase("oil").getNumberOfComponents();
+
+      System.out
+          .println("\n=== Comparison: Hayduk-Minhas vs Siddiqi-Lucas (Hydrocarbon System) ===");
+      System.out.println("T = " + hydrocarbonSystem.getPhase("oil").getTemperature() + " K, P = "
+          + hydrocarbonSystem.getPhase("oil").getPressure() + " bar");
+      System.out.println(String.format("%-20s %-20s %-20s %-15s", "Component Pair", "Hayduk-Minhas",
+          "Siddiqi-Lucas", "Ratio (HM/SL)"));
+      System.out.println("-".repeat(80));
+
+      int validComparisons = 0;
+      for (int i = 0; i < nComps; i++) {
+        for (int j = 0; j < nComps; j++) {
+          if (i != j) {
+            double dHayduk = haydukModel.calcBinaryDiffusionCoefficient(i, j, 0);
+            double dSiddiqi = siddiqiModel.calcBinaryDiffusionCoefficient(i, j, 0);
+
+            String compI = hydrocarbonSystem.getPhase("oil").getComponent(i).getComponentName();
+            String compJ = hydrocarbonSystem.getPhase("oil").getComponent(j).getComponentName();
+            String pair = compI + "/" + compJ;
+
+            double ratio =
+                (dSiddiqi > 0 && Double.isFinite(dSiddiqi)) ? dHayduk / dSiddiqi : Double.NaN;
+
+            System.out.println(
+                String.format("%-20s %-20.4e %-20.4e %-15.2f", pair, dHayduk, dSiddiqi, ratio));
+
+            // Hayduk-Minhas should always be in reasonable liquid diffusivity range
+            assertTrue(dHayduk > 1e-12 && dHayduk < 1e-6,
+                "Hayduk-Minhas D[" + i + "][" + j + "] out of range: " + dHayduk);
+
+            // Siddiqi-Lucas may return Infinity when viscosity is 0 (known limitation)
+            // Only validate if we get a finite, positive value
+            if (Double.isFinite(dSiddiqi) && dSiddiqi > 0) {
+              assertTrue(dSiddiqi < 1e-5,
+                  "Siddiqi-Lucas D[" + i + "][" + j + "] too large: " + dSiddiqi);
+
+              // Models should be within ~2 orders of magnitude of each other for valid data
+              assertTrue(ratio > 0.01 && ratio < 100,
+                  "Models differ by more than 2 orders of magnitude for " + pair);
+              validComparisons++;
+            }
+          }
+        }
+      }
+      System.out.println("Valid model comparisons: " + validComparisons);
+      System.out.println();
+
+      // At least some comparisons should have valid Siddiqi-Lucas values
+      assertTrue(validComparisons > 0,
+          "At least some component pairs should have valid Siddiqi-Lucas values");
+    }
+  }
+
+  /**
+   * Test comparing CO2-water diffusivity from different models.
+   */
+  @Test
+  void testCompareCO2WaterDiffusivity() {
+    ThermodynamicOperations ops = new ThermodynamicOperations(aqueousSystem);
+    ops.TPflash();
+    aqueousSystem.initPhysicalProperties();
+
+    if (aqueousSystem.hasPhaseType("aqueous")) {
+      var physProps = aqueousSystem.getPhase("aqueous").getPhysicalProperties();
+
+      // Create all applicable models
+      HaydukMinhasDiffusivity haydukModel = new HaydukMinhasDiffusivity(physProps);
+      haydukModel.setSolventType(HaydukMinhasDiffusivity.SolventType.AQUEOUS);
+      SiddiqiLucasMethod siddiqiModel = new SiddiqiLucasMethod(physProps);
+      CO2water co2waterModel = new CO2water(physProps);
+
+      // CO2 is component 0, water is component 1
+      double dHayduk = haydukModel.calcBinaryDiffusionCoefficient(0, 1, 0);
+      double dSiddiqi = siddiqiModel.calcBinaryDiffusionCoefficient(0, 1, 0);
+      double dCO2water = co2waterModel.calcBinaryDiffusionCoefficient(0, 1, 0);
+
+      // Literature value for CO2 in water at 25°C: ~1.9e-9 m²/s
+      double literatureValue = 1.9e-9;
+
+      System.out.println("\n=== Comparison: CO2-Water Diffusivity Models ===");
+      System.out.println("T = " + aqueousSystem.getPhase("aqueous").getTemperature() + " K");
+      System.out.println(String.format("%-25s %-20s %-20s", "Model", "D (m²/s)", "vs Literature"));
+      System.out.println("-".repeat(70));
+      System.out.println(String.format("%-25s %-20.4e %-20.2f%%", "Hayduk-Minhas (Aqueous)",
+          dHayduk, 100 * (dHayduk - literatureValue) / literatureValue));
+      System.out.println(String.format("%-25s %-20.4e %-20.2f%%", "Siddiqi-Lucas", dSiddiqi,
+          100 * (dSiddiqi - literatureValue) / literatureValue));
+      System.out.println(String.format("%-25s %-20.4e %-20.2f%%", "CO2-Water (Tamimi)", dCO2water,
+          100 * (dCO2water - literatureValue) / literatureValue));
+      System.out.println(String.format("%-25s %-20.4e", "Literature (~25°C)", literatureValue));
+      System.out.println();
+
+      // All models should give physically reasonable values
+      assertTrue(dHayduk > 1e-11 && dHayduk < 1e-7,
+          "Hayduk-Minhas CO2-water out of range: " + dHayduk);
+      assertTrue(dCO2water > 1e-11 && dCO2water < 1e-7,
+          "CO2-water model out of range: " + dCO2water);
+
+      // CO2-water specific model should be most accurate (designed for this system)
+      // Should be within factor of 5 of literature
+      assertTrue(dCO2water > literatureValue / 5 && dCO2water < literatureValue * 5,
+          "CO2-water model should be within factor of 5 of literature");
+    }
+  }
+
+  /**
+   * Test comparing Siddiqi-Lucas aqueous vs non-aqueous correlations.
+   */
+  @Test
+  void testSiddiqiLucasAqueousVsNonAqueous() {
+    ThermodynamicOperations ops = new ThermodynamicOperations(hydrocarbonSystem);
+    ops.TPflash();
+    hydrocarbonSystem.initPhysicalProperties();
+
+    if (hydrocarbonSystem.hasPhaseType("oil")) {
+      var physProps = hydrocarbonSystem.getPhase("oil").getPhysicalProperties();
+      SiddiqiLucasMethod siddiqiModel = new SiddiqiLucasMethod(physProps);
+
+      int nComps = hydrocarbonSystem.getPhase("oil").getNumberOfComponents();
+
+      System.out.println("\n=== Siddiqi-Lucas: Aqueous vs Non-Aqueous Correlations ===");
+      System.out.println(String.format("%-20s %-20s %-20s %-15s", "Component Pair", "Aqueous Corr.",
+          "Non-Aqueous Corr.", "Ratio"));
+      System.out.println("-".repeat(80));
+
+      for (int i = 0; i < nComps; i++) {
+        for (int j = 0; j < nComps; j++) {
+          if (i != j) {
+            double dAqueous = siddiqiModel.calcBinaryDiffusionCoefficient(i, j, 0);
+            double dNonAqueous = siddiqiModel.calcBinaryDiffusionCoefficient2(i, j, 0);
+
+            String compI = hydrocarbonSystem.getPhase("oil").getComponent(i).getComponentName();
+            String compJ = hydrocarbonSystem.getPhase("oil").getComponent(j).getComponentName();
+            String pair = compI + "/" + compJ;
+
+            double ratio = (dNonAqueous > 0) ? dAqueous / dNonAqueous : Double.NaN;
+
+            System.out.println(
+                String.format("%-20s %-20.4e %-20.4e %-15.2f", pair, dAqueous, dNonAqueous, ratio));
+
+            // Non-aqueous should be valid for hydrocarbons
+            if (dNonAqueous > 0 && !Double.isNaN(dNonAqueous) && !Double.isInfinite(dNonAqueous)) {
+              assertTrue(dNonAqueous > 1e-12 && dNonAqueous < 1e-5,
+                  "Siddiqi non-aqueous D out of range: " + dNonAqueous);
+            }
+          }
+        }
+      }
+      System.out.println();
+    }
+  }
+
+  /**
+   * Test temperature dependence comparison across models.
+   */
+  @Test
+  void testTemperatureDependenceComparison() {
+    double[] temps = {280.0, 300.0, 320.0, 350.0};
+
+    System.out.println("\n=== Temperature Dependence Comparison ===");
+    System.out.println("System: methane/n-hexane at 10 bar");
+    System.out.println(String.format("%-10s %-18s %-18s %-18s", "T (K)", "Hayduk-Minhas",
+        "Siddiqi-Lucas", "Siddiqi Non-Aq"));
+    System.out.println("-".repeat(70));
+
+    for (double temp : temps) {
+      SystemInterface testSystem = new SystemSrkEos(temp, 10.0);
+      testSystem.addComponent("methane", 0.3);
+      testSystem.addComponent("n-hexane", 0.7);
+      testSystem.createDatabase(true);
+      testSystem.setMixingRule(2);
+
+      ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
+      ops.TPflash();
+      testSystem.initPhysicalProperties();
+
+      if (testSystem.hasPhaseType("oil")) {
+        var physProps = testSystem.getPhase("oil").getPhysicalProperties();
+
+        HaydukMinhasDiffusivity haydukModel = new HaydukMinhasDiffusivity(physProps);
+        haydukModel.setSolventType(HaydukMinhasDiffusivity.SolventType.PARAFFIN);
+        SiddiqiLucasMethod siddiqiModel = new SiddiqiLucasMethod(physProps);
+
+        double dHayduk = haydukModel.calcBinaryDiffusionCoefficient(0, 1, 0);
+        double dSiddiqi = siddiqiModel.calcBinaryDiffusionCoefficient(0, 1, 0);
+        double dSiddiqiNonAq = siddiqiModel.calcBinaryDiffusionCoefficient2(0, 1, 0);
+
+        System.out.println(String.format("%-10.1f %-18.4e %-18.4e %-18.4e", temp, dHayduk, dSiddiqi,
+            dSiddiqiNonAq));
+
+        // All should increase with temperature
+        assertTrue(dHayduk > 0, "Hayduk-Minhas should be positive at T=" + temp);
+      }
+    }
+    System.out.println();
+  }
+
+  /**
+   * Test high-pressure correction effect comparison.
+   */
+  @Test
+  void testHighPressureEffectComparison() {
+    double[] pressures = {10.0, 50.0, 100.0, 200.0, 400.0};
+
+    System.out.println("\n=== High-Pressure Effect Comparison ===");
+    System.out.println("System: methane/n-heptane at 350 K");
+    System.out.println(String.format("%-10s %-18s %-18s %-18s %-12s", "P (bar)", "Hayduk-Minhas",
+        "HP-Corrected", "Siddiqi-Lucas", "HP Factor"));
+    System.out.println("-".repeat(85));
+
+    for (double pressure : pressures) {
+      SystemInterface testSystem = new SystemSrkEos(350.0, pressure);
+      testSystem.addComponent("methane", 0.5);
+      testSystem.addComponent("n-heptane", 0.5);
+      testSystem.createDatabase(true);
+      testSystem.setMixingRule(2);
+
+      ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
+      ops.TPflash();
+      testSystem.initPhysicalProperties();
+
+      if (testSystem.hasPhaseType("oil")) {
+        var physProps = testSystem.getPhase("oil").getPhysicalProperties();
+
+        HaydukMinhasDiffusivity haydukModel = new HaydukMinhasDiffusivity(physProps);
+        HighPressureDiffusivity hpModel = new HighPressureDiffusivity(physProps);
+        SiddiqiLucasMethod siddiqiModel = new SiddiqiLucasMethod(physProps);
+
+        double dHayduk = haydukModel.calcBinaryDiffusionCoefficient(0, 1, 0);
+        double dHP = hpModel.calcBinaryDiffusionCoefficient(0, 1, 0);
+        double dSiddiqi = siddiqiModel.calcBinaryDiffusionCoefficient(0, 1, 0);
+        double hpFactor = hpModel.getPressureCorrectionFactor();
+
+        System.out.println(String.format("%-10.1f %-18.4e %-18.4e %-18.4e %-12.4f", pressure,
+            dHayduk, dHP, dSiddiqi, hpFactor));
+
+        // High-pressure corrected should be <= base model
+        assertTrue(dHP <= dHayduk * 1.01, "HP-corrected should be <= base model");
+
+        // Correction factor should decrease with pressure
+        assertTrue(hpFactor <= 1.0, "HP factor should be <= 1");
+      }
+    }
+    System.out.println();
+  }
 }

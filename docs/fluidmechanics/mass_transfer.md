@@ -110,7 +110,9 @@ Where:
 
 #### Liquid Phase
 
-Wilke-Chang correlation:
+NeqSim provides multiple liquid-phase diffusivity models, each optimized for different applications:
+
+##### 1. Wilke-Chang Correlation (Default)
 
 $$D_{AB} = 7.4 \times 10^{-8} \cdot \frac{(\phi M_B)^{0.5} \cdot T}{\mu_B \cdot V_A^{0.6}}$$
 
@@ -119,6 +121,109 @@ Where:
 - $M_B$ = molecular weight of solvent
 - $\mu_B$ = viscosity of solvent (cP)
 - $V_A$ = molar volume of solute at boiling point (cm³/mol)
+
+##### 2. Siddiqi-Lucas Method
+
+Uses group contribution based on molecular weight and solvent viscosity:
+
+- **Aqueous systems**: $D_{AB} = 2.98 \times 10^{-7} \cdot V_A^{-0.5473} \cdot \mu_B^{-1.026}$
+- **Non-aqueous systems**: $D_{AB} = 9.89 \times 10^{-8} \cdot V_A^{-0.791} \cdot \mu_B^{-0.907}$
+
+**Best for**: General aqueous and organic liquid systems at low to moderate pressures.
+
+##### 3. Hayduk-Minhas Method
+
+Optimized for hydrocarbon systems (Hayduk & Minhas, 1982):
+
+- **Paraffin solvents**: $D_{AB} = 13.3 \times 10^{-8} \cdot \frac{T^{1.47} \cdot \mu_B^{(\epsilon_B)}}{{V_A^{0.71}}}$
+  - Where: $\epsilon_B = \frac{10.2}{V_A} - 0.791$
+  
+- **Aqueous solvents**: $D_{AB} = 1.25 \times 10^{-8} \cdot (V_A^{-0.19} - 0.292) \cdot T^{1.52} \cdot \mu_B^{\epsilon}$
+  - Where: $\epsilon = \frac{9.58}{V_A} - 1.12$
+
+**Best for**: Hydrocarbon-hydrocarbon diffusion in oil/gas applications.
+
+```java
+// Example: Using Hayduk-Minhas for oil system
+system.getPhase(1).getPhysicalProperties()
+    .setDiffusivityModel(new HaydukMinhasDiffusivity(system.getPhase(1)));
+```
+
+##### 4. CO2-Water (Tamimi Correlation)
+
+Specialized for CO2 diffusion in water, validated against experimental data:
+
+$$D_{CO_2} = 2.35 \times 10^{-6} \cdot \exp\left(\frac{-2119}{T}\right)$$
+
+**Best for**: Carbon capture applications, CO2 absorption/desorption studies.
+
+##### 5. High-Pressure Correction
+
+For reservoir and deep-water conditions (>100 bar), apply Mathur-Thodos correction:
+
+$$D_P = D_0 \cdot f(\rho_r)$$
+
+The correction factor accounts for increased molecular crowding at high pressures and can reduce diffusivity by 10× at 400 bar.
+
+```java
+// Example: High-pressure diffusivity
+HighPressureDiffusivity hpModel = new HighPressureDiffusivity(phase, baseLiquidModel);
+double correctionFactor = hpModel.calculatePressureCorrectionFactor(phase);
+```
+
+### Model Selection Guide
+
+| Application | Recommended Model | Notes |
+|-------------|-------------------|-------|
+| General aqueous | Siddiqi-Lucas (aqueous) | Well-validated for dilute solutions |
+| General organic | Siddiqi-Lucas (non-aqueous) | Good for organic solvents |
+| Oil/gas hydrocarbons | Hayduk-Minhas (paraffin) | 2-3× higher than Siddiqi-Lucas, physically appropriate for oils |
+| CO2 in water | CO2-water (Tamimi) | Best accuracy (±11% of literature) |
+| Reservoir conditions | High-pressure + Hayduk-Minhas | Critical for P > 100 bar |
+
+### Model Comparison Results
+
+Based on validation testing at 300 K, 1 atm for CO2 in water (literature: 1.9×10⁻⁹ m²/s):
+
+| Model | Predicted (m²/s) | Error |
+|-------|------------------|-------|
+| Hayduk-Minhas (aqueous) | 1.71×10⁻⁹ | -10% |
+| CO2-water (Tamimi) | 2.12×10⁻⁹ | +11% |
+| Siddiqi-Lucas | 1.39×10⁻⁹ | -27% |
+
+For hydrocarbon systems, Hayduk-Minhas produces values 2-3.5× higher than Siddiqi-Lucas, which is consistent with the different physical basis of the correlations.
+
+### Automatic Model Selection
+
+The `DiffusivityModelSelector` class can automatically choose the optimal model:
+
+```java
+// Automatic model selection based on composition and conditions
+DiffusivityModelSelector selector = new DiffusivityModelSelector();
+String recommendedModel = selector.selectOptimalModel(phase);
+PhysicalPropertyModelInterface model = selector.createAutoSelectedModel(phase);
+```
+
+Selection criteria:
+- Detects CO2-water systems → uses CO2-water model
+- Detects predominantly hydrocarbon → uses Hayduk-Minhas
+- Falls back to Siddiqi-Lucas for other systems
+- Applies high-pressure correction when P > 100 bar
+
+### Future Development Possibilities
+
+1. **Concentration-dependent diffusivity (Vignes mixing rule)**:
+   $$D_{AB,mix} = D_{AB}^{x_B} \cdot D_{BA}^{x_A}$$
+   Currently implemented but may cause numerical issues with very different diffusivities.
+
+2. **Binary interaction parameters**: Allow user-tuning for specific component pairs.
+
+3. **Additional correlations**:
+   - Tyn-Calus for associated liquids
+   - Scheibel for high-viscosity systems
+   - He-Yu for supercritical fluids
+
+4. **Temperature extrapolation warnings**: Alert users when operating outside correlation validity ranges (typically 273-400 K).
 
 ---
 

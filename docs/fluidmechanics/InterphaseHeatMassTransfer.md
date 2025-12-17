@@ -62,6 +62,13 @@ $$-\frac{x_i}{RT}\nabla\mu_i = \sum_{j=1, j\neq i}^{n} \frac{x_i N_j - x_j N_i}{
 | $R$ | Gas constant | [J/(mol·K)] |
 | $T$ | Temperature | [K] |
 
+> **📘 Diffusivity Models:** The Maxwell-Stefan diffusivities $D_{ij}$ are calculated using correlations documented in [mass_transfer.md](mass_transfer.md). NeqSim provides multiple models:
+> - **Gas phase:** Chapman-Enskog kinetic theory
+> - **Liquid phase:** Siddiqi-Lucas, Hayduk-Minhas (hydrocarbons), CO2-water (Tamimi)
+> - **High pressure:** Mathur-Thodos correction for P > 100 bar
+> 
+> See the [Model Selection Guide](mass_transfer.md#model-selection-guide) for recommendations.
+
 ### 2.2 Matrix Formulation
 
 The Maxwell-Stefan equations can be written in matrix form:
