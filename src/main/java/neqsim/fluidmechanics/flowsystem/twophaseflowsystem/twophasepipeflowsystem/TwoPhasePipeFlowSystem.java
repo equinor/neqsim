@@ -90,6 +90,15 @@ public class TwoPhasePipeFlowSystem
   private neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode massTransferMode =
       neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode.BIDIRECTIONAL;
 
+  // ==================== SOLVER TYPE ====================
+
+  /**
+   * Solver type controlling which equations are solved. Default includes momentum (pressure drop),
+   * phase fraction, and energy equations.
+   */
+  private neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.SolverType solverTypeEnum =
+      neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.SolverType.DEFAULT;
+
   /**
    * <p>
    * Constructor for TwoPhasePipeFlowSystem.
@@ -195,17 +204,29 @@ public class TwoPhasePipeFlowSystem
     double[] outletFlowRates = {0.0, 0.0};
     getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
 
-    flowSolver =
+    neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver solver =
         new neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver(
             this, getSystemLength(), this.getTotalNumberOfNodes(), false);
-    ((neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver) flowSolver)
-        .setMassTransferMode(massTransferMode);
-    flowSolver.setSolverType(type);
+    solver.setMassTransferMode(massTransferMode);
+    // Use the stored enum solver type (ignoring the legacy int type parameter)
+    solver.setSolverType(solverTypeEnum);
+    flowSolver = solver;
     flowSolver.solveTDMA();
     calcIdentifier = id;
 
     getTimeSeries().init(this);
     display.setNextData(this);
+  }
+
+  /**
+   * <p>
+   * Solve steady state using the configured solver type enum.
+   * </p>
+   *
+   * @param id a {@link java.util.UUID} object
+   */
+  public void solveSteadyState(UUID id) {
+    solveSteadyState(solverTypeEnum.getLegacyType(), id);
   }
 
   /** {@inheritDoc} */
@@ -228,11 +249,14 @@ public class TwoPhasePipeFlowSystem
     getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
 
     // Create solver in dynamic mode
-    flowSolver =
+    neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver solver =
         new neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver(
             this, getSystemLength(), this.getTotalNumberOfNodes(), true);
-    flowSolver.setSolverType(type);
-    flowSolver.setTimeStep(timeStep);
+    solver.setMassTransferMode(massTransferMode);
+    // Use the stored enum solver type (ignoring the legacy int type parameter)
+    solver.setSolverType(solverTypeEnum);
+    solver.setTimeStep(timeStep);
+    flowSolver = solver;
 
     // Store initial state
     getTimeSeries().init(this);
@@ -253,6 +277,17 @@ public class TwoPhasePipeFlowSystem
     }
 
     calcIdentifier = id;
+  }
+
+  /**
+   * <p>
+   * Solve transient using the configured solver type enum.
+   * </p>
+   *
+   * @param id a {@link java.util.UUID} object
+   */
+  public void solveTransient(UUID id) {
+    solveTransient(solverTypeEnum.getLegacyType(), id);
   }
 
   /**
@@ -1023,6 +1058,39 @@ public class TwoPhasePipeFlowSystem
    */
   public neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode getMassTransferMode() {
     return this.massTransferMode;
+  }
+
+  /**
+   * <p>
+   * Sets the solver type using the SolverType enum.
+   * </p>
+   *
+   * <p>
+   * Available solver types:
+   * </p>
+   * <ul>
+   * <li>SIMPLE - Only mass and heat transfer via initProfiles(). Fast but no pressure drop.</li>
+   * <li>DEFAULT - Momentum, phase fraction, and energy equations. Good balance of completeness and
+   * performance.</li>
+   * <li>FULL - All equations including composition. Complete solution but slower.</li>
+   * </ul>
+   *
+   * @param type the solver type to use
+   */
+  public void setSolverType(
+      neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.SolverType type) {
+    this.solverTypeEnum = type;
+  }
+
+  /**
+   * <p>
+   * Gets the current solver type enum.
+   * </p>
+   *
+   * @return the current solver type
+   */
+  public neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.SolverType getSolverType() {
+    return this.solverTypeEnum;
   }
 
   /**

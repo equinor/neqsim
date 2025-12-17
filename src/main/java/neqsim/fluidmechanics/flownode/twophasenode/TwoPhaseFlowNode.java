@@ -240,11 +240,32 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   @Override
   public void updateMolarFlow() {
     for (int phaseNum = 0; phaseNum < 2; phaseNum++) {
-      for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
-        if (molarFlowRate[phaseNum] > 1e-100) {
-          getBulkSystem().getPhase(phaseNum).addMoles(i,
-              (getBulkSystem().getPhase(phaseNum).getComponent(i).getx() * (molarFlowRate[phaseNum]
-                  - getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase())));
+      double targetMolarFlow = molarFlowRate[phaseNum];
+      if (!Double.isFinite(targetMolarFlow) || targetMolarFlow < 0.0) {
+        continue;
+      }
+
+      double currentMolesInPhase = getBulkSystem().getPhase(phaseNum).getNumberOfMolesInPhase();
+      if (!Double.isFinite(currentMolesInPhase) || currentMolesInPhase <= 0.0) {
+        continue;
+      }
+
+      if (targetMolarFlow > 1e-100) {
+        double scale = targetMolarFlow / currentMolesInPhase;
+        if (!Double.isFinite(scale) || scale < 0.0) {
+          continue;
+        }
+
+        for (int i = 0; i < getBulkSystem().getPhases()[0].getNumberOfComponents(); i++) {
+          double currentMoles = getBulkSystem().getPhase(phaseNum).getComponent(i)
+              .getNumberOfMolesInPhase();
+          if (!Double.isFinite(currentMoles) || currentMoles <= 0.0) {
+            continue;
+          }
+          double delta = currentMoles * (scale - 1.0);
+          if (Double.isFinite(delta) && Math.abs(delta) > 0.0) {
+            getBulkSystem().getPhase(phaseNum).addMoles(i, delta);
+          }
         }
       }
     }

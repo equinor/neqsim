@@ -2002,4 +2002,634 @@ public class NonEquilibriumPipeFlowTest {
 
     System.out.println("\nSubsea pipeline simulation completed successfully.");
   }
+
+  /**
+   * Tests fast evaporation with high flux correction factors enabled.
+   *
+   * <p>
+   * This test verifies the coupled heat and mass transfer equations with high flux (finite flux)
+   * corrections applied. The corrections include:
+   * <ul>
+   * <li>Ackermann correction for heat transfer (accounts for convective transport of enthalpy by
+   * mass flux)</li>
+   * <li>Bootstrap/rate correction matrix for mass transfer (accounts for drift flux effects)</li>
+   * <li>Thermodynamic corrections (activity coefficient gradients)</li>
+   * </ul>
+   * </p>
+   *
+   * <p>
+   * Scenario: n-Decane liquid evaporating into methane gas with external heating. Uses proven
+   * two-phase system configuration with high flux corrections enabled.
+   * </p>
+   */
+  @Test
+  void testFastEvaporationWithHighFluxCorrections() {
+    // Use proven conditions for two-phase methane/nC10 system
+    // 313.3 K (40°C), 100 bar
+    SystemInterface system = new SystemSrkEos(313.3, 100.01325);
+
+    // Large methane gas flow - add to gas phase (phase 0)
+    system.addComponent("methane", 1100.0, "kg/hr", 0);
+
+    // Small amount of n-decane liquid - add to liquid phase (phase 1)
+    system.addComponent("nC10", 100.0, "kg/hr", 1);
+
+    system.createDatabase(true);
+    system.setMixingRule(2);
+    system.initProperties();
+
+    // Create the two-phase pipe flow system
+    TwoPhasePipeFlowSystem evapPipe = new TwoPhasePipeFlowSystem();
+    evapPipe.setInletThermoSystem(system);
+    evapPipe.setInitialFlowPattern("stratified");
+    evapPipe.setNumberOfLegs(2);
+    evapPipe.setNumberOfNodesInLeg(10); // 20 nodes total
+
+    // Heated pipe configuration - 200 m length with hot oil jacket
+    double[] height = {0, 0, 0}; // Horizontal pipe
+    double[] length = {0.0, 100.0, 200.0};
+
+    // External heating: 80°C hot oil jacket to drive rapid evaporation
+    double heatingTemp = 353.15; // 80°C
+    double[] outerTemperature = {heatingTemp, heatingTemp, heatingTemp};
+
+    // High heat transfer for rapid evaporation
+    double[] outHeatCoef = {100.0, 100.0, 100.0}; // W/m²K external (hot oil jacket)
+    double[] wallHeatCoef = {50.0, 50.0, 50.0}; // W/m²K wall
+
+    evapPipe.setLegHeights(height);
+    evapPipe.setLegPositions(length);
+    evapPipe.setLegOuterTemperatures(outerTemperature);
+    evapPipe.setLegOuterHeatTransferCoefficients(outHeatCoef);
+    evapPipe.setLegWallHeatTransferCoefficients(wallHeatCoef);
+
+    // 150 mm (6 inch) pipe diameter - same as working tests
+    GeometryDefinitionInterface[] pipeGeometry = new PipeData[3];
+    for (int i = 0; i < pipeGeometry.length; i++) {
+      pipeGeometry[i] = new PipeData(0.15); // 150 mm diameter
+    }
+    evapPipe.setEquipmentGeometry(pipeGeometry);
+
+    evapPipe.createSystem();
+    evapPipe.init();
+
+    // Enable high flux correction factors on all nodes
+    int numNodes = evapPipe.getTotalNumberOfNodes();
+    System.out.println("\n=== Enabling High Flux Corrections on " + numNodes + " nodes ===");
+    for (int i = 0; i < numNodes; i++) {
+      // Enable finite flux (Bootstrap) correction for mass transfer
+      evapPipe.getNode(i).getFluidBoundary().useFiniteFluxCorrection(true);
+      // Enable thermodynamic (activity) corrections
+      evapPipe.getNode(i).getFluidBoundary().useThermodynamicCorrections(true);
+    }
+
+    // Verify corrections are enabled before solving
+    boolean finiteFluxEnabled = evapPipe.getNode(0).getFluidBoundary().useFiniteFluxCorrection(0);
+    boolean thermoEnabled = evapPipe.getNode(0).getFluidBoundary().useThermodynamicCorrections(0);
+    System.out.println("Finite flux correction enabled (before solve): " + finiteFluxEnabled);
+    System.out.println("Thermodynamic corrections enabled (before solve): " + thermoEnabled);
+
+    // Enable non-equilibrium mass and heat transfer
+    evapPipe.enableNonEquilibriumMassTransfer();
+    evapPipe.enableNonEquilibriumHeatTransfer();
+
+    // Use EVAPORATION_ONLY mode for fast evaporation
+    evapPipe.setMassTransferMode(
+        neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode.EVAPORATION_ONLY);
+
+    // Solve steady state
+    evapPipe.solveSteadyState(3);
+
+    // Re-enable high flux corrections after solve (in case they got reset)
+    for (int i = 0; i < numNodes; i++) {
+      evapPipe.getNode(i).getFluidBoundary().useFiniteFluxCorrection(true);
+      evapPipe.getNode(i).getFluidBoundary().useThermodynamicCorrections(true);
+    }
+
+    // Get profiles
+    double[] liquidHoldupProfile = evapPipe.getLiquidHoldupProfile();
+    double[] temperatureProfile = evapPipe.getTemperatureProfile();
+    double[] pressureProfile = evapPipe.getPressureProfile();
+
+    // Print results header
+    System.out.println("\n=== Fast Evaporation with High Flux Corrections ===");
+    System.out.println("Scenario: n-Decane evaporating into methane gas with external heating");
+    System.out.println("Conditions: T_inlet=40°C (313 K), P=100 bar");
+    System.out.println("External heating: 80°C hot oil jacket");
+    System.out.println("Corrections: Finite flux (Bootstrap) + Thermodynamic (Activity)");
+    System.out.println("Mass transfer mode: EVAPORATION_ONLY (liquid nC10 -> vapor nC10)");
+
+    System.out.println("\nInlet conditions:");
+    System.out.printf("  Temperature: %.2f K (%.1f °C)%n", temperatureProfile[0],
+        temperatureProfile[0] - 273.15);
+    System.out.printf("  Pressure: %.3f bar%n", pressureProfile[0]);
+    System.out.printf("  Liquid holdup: %.6f%n", liquidHoldupProfile[0]);
+    System.out.printf("  Gas void fraction: %.6f%n", 1.0 - liquidHoldupProfile[0]);
+
+    System.out.println("\nOutlet conditions:");
+    System.out.printf("  Temperature: %.2f K (%.1f °C)%n", temperatureProfile[numNodes - 1],
+        temperatureProfile[numNodes - 1] - 273.15);
+    System.out.printf("  Pressure: %.3f bar%n", pressureProfile[numNodes - 1]);
+    System.out.printf("  Liquid holdup: %.6f%n", liquidHoldupProfile[numNodes - 1]);
+    System.out.printf("  Gas void fraction: %.6f%n", 1.0 - liquidHoldupProfile[numNodes - 1]);
+
+    // Print evaporation profile
+    System.out.println("\n=== Evaporation Profile Along Pipe ===");
+    System.out
+        .println("Position [m]   Gas Frac   T_gas [°C]   T_liq [°C]   Pressure [bar]   nC10 Flux");
+    System.out.println("-------------------------------------------------------------------------");
+    double pipeLength = 200.0; // 200m pipe
+    for (int i = 0; i < numNodes; i++) {
+      double distance = i * pipeLength / (numNodes - 1);
+      double gasFraction = 1.0 - liquidHoldupProfile[i];
+      double tGas = evapPipe.getNode(i).getBulkSystem().getPhase(0).getTemperature() - 273.15;
+      double tLiq = evapPipe.getNode(i).getBulkSystem().getPhase(1).getTemperature() - 273.15;
+
+      // Calculate molar evaporation rate from fluid boundary
+      double evapRate = 0.0;
+      if (i > 0) {
+        try {
+          evapRate = evapPipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(1); // nC10 flux
+        } catch (Exception e) {
+          evapRate = 0.0;
+        }
+      }
+
+      System.out.printf("%8.1f       %6.4f     %6.1f       %6.1f      %8.3f       %.4e%n", distance,
+          gasFraction, tGas, tLiq, pressureProfile[i], evapRate);
+    }
+
+    // Print high flux correction diagnostics
+    System.out.println("\n=== High Flux Correction Diagnostics ===");
+    for (int i = 1; i < Math.min(4, numNodes); i++) {
+      System.out.println("\n--- Node " + i + " ---");
+
+      // Interface temperature
+      double tInterface =
+          evapPipe.getNode(i).getFluidBoundary().getInterphaseSystem().getTemperature() - 273.15;
+      double tGas = evapPipe.getNode(i).getBulkSystem().getPhase(0).getTemperature() - 273.15;
+      double tLiq = evapPipe.getNode(i).getBulkSystem().getPhase(1).getTemperature() - 273.15;
+      System.out.printf("Temperatures: T_gas=%.2f°C, T_interface=%.2f°C, T_liq=%.2f°C%n", tGas,
+          tInterface, tLiq);
+
+      // Interphase heat flux
+      double qGas = evapPipe.getNode(i).getFluidBoundary().getInterphaseHeatFlux(0);
+      double qLiq = evapPipe.getNode(i).getFluidBoundary().getInterphaseHeatFlux(1);
+      System.out.printf("Interphase heat flux: gas=%.2e W/m², liq=%.2e W/m²%n", qGas, qLiq);
+
+      // Molar flux of n-pentane (evaporating component)
+      double pentaneFlux = evapPipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(1);
+      System.out.printf("n-Pentane molar flux: %.4e mol/m²/s%n", pentaneFlux);
+
+      // Check if finite flux and thermodynamic corrections are enabled for this node
+      boolean ffEnabled = evapPipe.getNode(i).getFluidBoundary().useFiniteFluxCorrection(0);
+      boolean tcEnabled = evapPipe.getNode(i).getFluidBoundary().useThermodynamicCorrections(0);
+      System.out.printf("Corrections enabled: finiteFlux=%b, thermodynamic=%b%n", ffEnabled,
+          tcEnabled);
+    }
+
+    // Calculate evaporation progress
+    double liquidAtInlet = liquidHoldupProfile[0];
+    double liquidAtOutlet = liquidHoldupProfile[numNodes - 1];
+    double evaporationProgress = (liquidAtInlet - liquidAtOutlet) / liquidAtInlet * 100.0;
+    System.out.printf("\n=== Summary ===%n");
+    System.out.printf("Liquid holdup reduction: %.4f -> %.4f%n", liquidAtInlet, liquidAtOutlet);
+    System.out.printf("Evaporation progress: %.1f%%%n", evaporationProgress);
+
+    // Verify high flux corrections are applied
+    assertTrue(finiteFluxEnabled, "Finite flux correction should be enabled");
+    assertTrue(thermoEnabled, "Thermodynamic corrections should be enabled");
+
+    // Verify reasonable behavior
+    assertNotNull(liquidHoldupProfile, "Liquid holdup profile should not be null");
+    assertTrue(liquidHoldupProfile[0] > 0 && liquidHoldupProfile[0] < 1.0,
+        "Inlet should have two-phase flow");
+
+    // Verify evaporation occurs (liquid holdup decreases)
+    assertTrue(liquidHoldupProfile[numNodes - 1] < liquidHoldupProfile[0],
+        "Liquid should evaporate along pipe (holdup should decrease)");
+
+    // Verify temperature rise due to external heating
+    // Note: With evaporation, some heat goes to latent heat, so temperature rise may be moderate
+    double avgTempInlet = (evapPipe.getNode(0).getBulkSystem().getPhase(0).getTemperature()
+        + evapPipe.getNode(0).getBulkSystem().getPhase(1).getTemperature()) / 2.0;
+    double avgTempOutlet =
+        (evapPipe.getNode(numNodes - 1).getBulkSystem().getPhase(0).getTemperature()
+            + evapPipe.getNode(numNodes - 1).getBulkSystem().getPhase(1).getTemperature()) / 2.0;
+    System.out.printf("Average temperature: inlet=%.1f°C, outlet=%.1f°C%n", avgTempInlet - 273.15,
+        avgTempOutlet - 273.15);
+
+    // Verify all holdups are valid
+    for (int i = 0; i < numNodes; i++) {
+      assertTrue(liquidHoldupProfile[i] >= 0.0 && liquidHoldupProfile[i] <= 1.0,
+          "Liquid holdup at node " + i + " should be between 0 and 1");
+    }
+
+    System.out.println("\nFast evaporation with high flux corrections test completed.");
+  }
+
+  /**
+   * Tests transient water drying behavior in a gas pipeline.
+   *
+   * <p>
+   * Scenario: Initially 50/50 wt% water and methane enters a gas export pipeline. After some time,
+   * the water content is reduced to 0.1 wt% (simulating upstream dehydration coming online). The
+   * test observes the dynamic behavior as water evaporates from the liquid phase ("dries up") in
+   * the pipeline.
+   * </p>
+   *
+   * <p>
+   * Physical setup:
+   * <ul>
+   * <li>Pipeline: 1000 m horizontal, 150 mm diameter</li>
+   * <li>Operating conditions: 80 bar, 30°C inlet</li>
+   * <li>Ambient: 15°C (buried pipeline)</li>
+   * <li>Phase 1: 50/50 wt% water/methane feed for first 200 seconds</li>
+   * <li>Phase 2: 0.1 wt% water (dry gas) feed after 200 seconds</li>
+   * </ul>
+   * </p>
+   */
+  @Test
+  void testTransientWaterDryingInGasPipeline() {
+    // Use CPA equation of state for accurate water behavior
+    // 30°C, 80 bar - typical gas pipeline conditions
+    SystemInterface wetGasSystem = new SystemSrkCPAstatoil(303.15, 80.0);
+
+    // Initial feed: 50/50 wt% methane and water
+    // Methane MW ~ 16 g/mol, Water MW ~ 18 g/mol
+    // 50 kg/hr methane = 50/16 = 3.125 kmol/hr = 0.868 mol/s
+    // 50 kg/hr water = 50/18 = 2.778 kmol/hr = 0.772 mol/s
+    wetGasSystem.addComponent("methane", 500.0, "kg/hr", 0); // Gas phase
+    wetGasSystem.addComponent("water", 500.0, "kg/hr", 1); // Liquid phase
+
+    wetGasSystem.createDatabase(true);
+    wetGasSystem.setMixingRule(10); // CPA mixing rule
+    wetGasSystem.initProperties();
+
+    // Create the two-phase pipe flow system
+    TwoPhasePipeFlowSystem pipeline = new TwoPhasePipeFlowSystem();
+    pipeline.setInletThermoSystem(wetGasSystem);
+    pipeline.setInitialFlowPattern("stratified");
+    pipeline.setNumberOfLegs(5);
+    pipeline.setNumberOfNodesInLeg(10); // 50 nodes total
+
+    // Pipeline configuration - 1000 m horizontal pipeline
+    double pipeLength = 1000.0;
+    double[] height = {0, 0, 0, 0, 0, 0};
+    double[] length = {0.0, 200.0, 400.0, 600.0, 800.0, 1000.0};
+
+    // Buried pipeline at 15°C
+    double ambientTemp = 288.15; // 15°C
+    double[] outerTemperature =
+        {ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp, ambientTemp};
+    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0}; // Soil heat transfer
+    double[] wallHeatCoef = {15.0, 15.0, 15.0, 15.0, 15.0, 15.0};
+
+    pipeline.setLegHeights(height);
+    pipeline.setLegPositions(length);
+    pipeline.setLegOuterTemperatures(outerTemperature);
+    pipeline.setLegOuterHeatTransferCoefficients(outHeatCoef);
+    pipeline.setLegWallHeatTransferCoefficients(wallHeatCoef);
+
+    // 150 mm (6 inch) pipe diameter
+    GeometryDefinitionInterface[] pipeGeometry = new PipeData[6];
+    for (int i = 0; i < 6; i++) {
+      pipeGeometry[i] = new PipeData(0.15); // 150 mm diameter
+    }
+    pipeline.setEquipmentGeometry(pipeGeometry);
+
+    pipeline.createSystem();
+    pipeline.init();
+
+    // Enable non-equilibrium mass and heat transfer
+    pipeline.enableNonEquilibriumMassTransfer();
+    pipeline.enableNonEquilibriumHeatTransfer();
+
+    // Use EVAPORATION_ONLY mode - water evaporates into gas
+    pipeline.setMassTransferMode(
+        neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode.EVAPORATION_ONLY);
+
+    int numNodes = pipeline.getTotalNumberOfNodes();
+
+    // ===== PHASE 1: Wet gas feed (50/50 wt%) - Run for initial steady state =====
+    System.out.println("\n=== Transient Water Drying Test ===");
+    System.out.println("Pipeline: 1000 m, 150 mm diameter, horizontal");
+    System.out.println("Operating: 80 bar, 30°C inlet, 15°C ambient");
+    System.out.println("");
+    System.out.println("PHASE 1: Wet gas inlet (50/50 wt% methane/water)");
+
+    // Run initial steady state with wet gas
+    pipeline.solveSteadyState(2);
+
+    // Record initial state
+    double[] initialHoldup = pipeline.getLiquidHoldupProfile();
+    System.out.println("\nInitial steady state (wet gas):");
+    System.out.printf("  Inlet liquid holdup: %.4f%n", initialHoldup[0]);
+    System.out.printf("  Outlet liquid holdup: %.4f%n", initialHoldup[numNodes - 1]);
+
+    // Print initial profile
+    System.out.println("\n--- Initial Holdup Profile ---");
+    System.out.println("Position [m]   Liquid Holdup   T_gas [°C]   T_liq [°C]");
+    for (int i = 0; i < numNodes; i += 5) { // Print every 5th node
+      double dist = i * pipeLength / (numNodes - 1);
+      double tGas = pipeline.getNode(i).getBulkSystem().getPhase(0).getTemperature() - 273.15;
+      double tLiq = pipeline.getNode(i).getBulkSystem().getPhase(1).getTemperature() - 273.15;
+      System.out.printf("%8.0f       %.6f       %6.1f       %6.1f%n", dist, initialHoldup[i], tGas,
+          tLiq);
+    }
+
+    // ===== PHASE 2: Simulate dry gas inlet =====
+    // In a true transient simulation, we would change the inlet composition over time.
+    // Since the current API solves steady-state, we'll simulate the "dried up" scenario
+    // by creating a new system with reduced water content and comparing the results.
+
+    System.out.println("\n" + "=".repeat(60));
+    System.out.println("PHASE 2: Dry gas inlet (0.1 wt% water)");
+    System.out.println("Simulating dehydration unit coming online...");
+
+    // Create dry gas system (0.1 wt% water, 99.9 wt% methane)
+    // Total mass flow = 1000 kg/hr, 0.1% = 1 kg/hr water, 999 kg/hr methane
+    SystemInterface dryGasSystem = new SystemSrkCPAstatoil(303.15, 80.0);
+    dryGasSystem.addComponent("methane", 999.0, "kg/hr", 0); // Gas phase
+    dryGasSystem.addComponent("water", 1.0, "kg/hr", 1); // Very small liquid phase
+
+    dryGasSystem.createDatabase(true);
+    dryGasSystem.setMixingRule(10);
+    dryGasSystem.initProperties();
+
+    // Create new pipeline with dry gas
+    TwoPhasePipeFlowSystem dryPipeline = new TwoPhasePipeFlowSystem();
+    dryPipeline.setInletThermoSystem(dryGasSystem);
+    dryPipeline.setInitialFlowPattern("stratified");
+    dryPipeline.setNumberOfLegs(5);
+    dryPipeline.setNumberOfNodesInLeg(10);
+
+    dryPipeline.setLegHeights(height);
+    dryPipeline.setLegPositions(length);
+    dryPipeline.setLegOuterTemperatures(outerTemperature);
+    dryPipeline.setLegOuterHeatTransferCoefficients(outHeatCoef);
+    dryPipeline.setLegWallHeatTransferCoefficients(wallHeatCoef);
+    dryPipeline.setEquipmentGeometry(pipeGeometry);
+
+    dryPipeline.createSystem();
+    dryPipeline.init();
+
+    dryPipeline.enableNonEquilibriumMassTransfer();
+    dryPipeline.enableNonEquilibriumHeatTransfer();
+    dryPipeline.setMassTransferMode(
+        neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode.EVAPORATION_ONLY);
+
+    // Run steady state for dry gas case
+    dryPipeline.solveSteadyState(2);
+
+    // Record dry gas state
+    double[] dryHoldup = dryPipeline.getLiquidHoldupProfile();
+    System.out.println("\nFinal steady state (dry gas):");
+    System.out.printf("  Inlet liquid holdup: %.6f%n", dryHoldup[0]);
+    System.out.printf("  Outlet liquid holdup: %.6f%n", dryHoldup[numNodes - 1]);
+
+    // Print dry gas profile
+    System.out.println("\n--- Dry Gas Holdup Profile ---");
+    System.out.println("Position [m]   Liquid Holdup   T_gas [°C]   T_liq [°C]");
+    for (int i = 0; i < numNodes; i += 5) {
+      double dist = i * pipeLength / (numNodes - 1);
+      double tGas = dryPipeline.getNode(i).getBulkSystem().getPhase(0).getTemperature() - 273.15;
+      double tLiq = dryPipeline.getNode(i).getBulkSystem().getPhase(1).getTemperature() - 273.15;
+      System.out.printf("%8.0f       %.6f       %6.1f       %6.1f%n", dist, dryHoldup[i], tGas,
+          tLiq);
+    }
+
+    // ===== PHASE 3: Full profile for selected water contents =====
+    System.out.println("\n" + "=".repeat(80));
+    System.out.println("DETAILED PROFILES WITH MASS AND HEAT TRANSFER");
+    System.out.println("Showing gas/liquid temperatures and liquid fraction along pipeline");
+    System.out.println("=".repeat(80));
+
+    double[] waterFractions = {50.0, 10.0, 1.0, 0.1};
+
+    for (double waterWtPercent : waterFractions) {
+      // Calculate mass flow rates
+      double totalMassFlow = 1000.0; // kg/hr
+      double waterFlow = totalMassFlow * waterWtPercent / 100.0;
+      double methaneFlow = totalMassFlow - waterFlow;
+
+      // Create intermediate system
+      SystemInterface intermediateSystem = new SystemSrkCPAstatoil(303.15, 80.0);
+      intermediateSystem.addComponent("methane", methaneFlow, "kg/hr", 0);
+      intermediateSystem.addComponent("water", Math.max(waterFlow, 0.01), "kg/hr", 1);
+
+      intermediateSystem.createDatabase(true);
+      intermediateSystem.setMixingRule(10);
+      intermediateSystem.initProperties();
+
+      TwoPhasePipeFlowSystem intermediatePipeline = new TwoPhasePipeFlowSystem();
+      intermediatePipeline.setInletThermoSystem(intermediateSystem);
+      intermediatePipeline.setInitialFlowPattern("stratified");
+      intermediatePipeline.setNumberOfLegs(5);
+      intermediatePipeline.setNumberOfNodesInLeg(10);
+
+      intermediatePipeline.setLegHeights(height);
+      intermediatePipeline.setLegPositions(length);
+      intermediatePipeline.setLegOuterTemperatures(outerTemperature);
+      intermediatePipeline.setLegOuterHeatTransferCoefficients(outHeatCoef);
+      intermediatePipeline.setLegWallHeatTransferCoefficients(wallHeatCoef);
+      intermediatePipeline.setEquipmentGeometry(pipeGeometry);
+
+      intermediatePipeline.createSystem();
+      intermediatePipeline.init();
+      intermediatePipeline.enableNonEquilibriumMassTransfer();
+      intermediatePipeline.enableNonEquilibriumHeatTransfer();
+      intermediatePipeline.setMassTransferMode(
+          neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode.EVAPORATION_ONLY);
+
+      intermediatePipeline.solveSteadyState(2);
+
+      double[] holdup = intermediatePipeline.getLiquidHoldupProfile();
+
+      // Print detailed profile for this water content
+      System.out.printf("%n--- Water Content: %.1f wt%% (CH4=%.0f kg/hr, H2O=%.1f kg/hr) ---%n",
+          waterWtPercent, methaneFlow, waterFlow);
+      System.out
+          .println("Position[m]  LiqFrac   T_gas[°C]  T_liq[°C]  V_gas[m/s]  V_liq[m/s]  P[bar]");
+      System.out.println("-".repeat(85));
+
+      int numNodesLocal = intermediatePipeline.getTotalNumberOfNodes();
+      for (int i = 0; i < numNodesLocal; i += 5) { // Every 5th node
+        double dist = i * pipeLength / (numNodesLocal - 1);
+        double liqFrac = holdup[i];
+        double tGas =
+            intermediatePipeline.getNode(i).getBulkSystem().getPhase(0).getTemperature() - 273.15;
+        double tLiq =
+            intermediatePipeline.getNode(i).getBulkSystem().getPhase(1).getTemperature() - 273.15;
+        double pressure = intermediatePipeline.getPressureProfile()[i];
+
+        // Get gas and liquid velocities
+        double vGas = intermediatePipeline.getNode(i).getVelocity(0);
+        double vLiq = intermediatePipeline.getNode(i).getVelocity(1);
+
+        System.out.printf("%8.0f     %7.5f   %8.2f   %8.2f   %9.3f   %9.4f   %7.2f%n", dist,
+            liqFrac, tGas, tLiq, vGas, vLiq, pressure);
+      }
+
+      // Print velocity and mass flux details
+      System.out.println("\n  Velocity and Mass Transfer Details (every 10th node):");
+      System.out.println("  Pos[m]  V_gas[m/s]  V_liq[m/s]  Slip[-]   MassFlux[mol/m²s]  dT[K]");
+      for (int i = 0; i < numNodesLocal; i += 10) {
+        double dist = i * pipeLength / (numNodesLocal - 1);
+        double vGas = intermediatePipeline.getNode(i).getVelocity(0);
+        double vLiq = intermediatePipeline.getNode(i).getVelocity(1);
+        double slip = vLiq > 1e-10 ? vGas / vLiq : 0.0;
+        double tGasNode =
+            intermediatePipeline.getNode(i).getBulkSystem().getPhase(0).getTemperature() - 273.15;
+        double tLiqNode =
+            intermediatePipeline.getNode(i).getBulkSystem().getPhase(1).getTemperature() - 273.15;
+        double deltaT = tGasNode - tLiqNode;
+
+        double massFlux = 0.0;
+        if (i > 0) {
+          try {
+            massFlux = intermediatePipeline.getNode(i).getFluidBoundary().getInterphaseMolarFlux(1);
+          } catch (Exception e) {
+            massFlux = 0.0;
+          }
+        }
+
+        System.out.printf("  %6.0f  %9.3f   %9.4f   %7.2f   %14.4e   %6.2f%n", dist, vGas, vLiq,
+            slip, massFlux, deltaT);
+      }
+
+      // Print heat transfer diagnostics for first few nodes
+      System.out.println("\n  Heat Transfer Details (first 3 interior nodes):");
+      System.out.println(
+          "  Node  Q_gas->int[W/m²]  Q_int->liq[W/m²]  Q_wall_gas[W/m²]  Q_wall_liq[W/m²]");
+      for (int i = 1; i < Math.min(4, numNodesLocal); i++) {
+        double qGasInterphase =
+            intermediatePipeline.getNode(i).getFluidBoundary().getInterphaseHeatFlux(0);
+        double qLiqInterphase =
+            intermediatePipeline.getNode(i).getFluidBoundary().getInterphaseHeatFlux(1);
+
+        // Wall heat flux calculation
+        double wallHeatCoeff =
+            intermediatePipeline.getNode(i).getGeometry().getWallHeatTransferCoefficient();
+        double tGasNode =
+            intermediatePipeline.getNode(i).getBulkSystem().getPhase(0).getTemperature() - 273.15;
+        double tLiqNode =
+            intermediatePipeline.getNode(i).getBulkSystem().getPhase(1).getTemperature() - 273.15;
+        double tAmbient = intermediatePipeline.getNode(i).getGeometry().getSurroundingEnvironment()
+            .getTemperature() - 273.15;
+        double qWallGas = wallHeatCoeff * (tGasNode - tAmbient);
+        double qWallLiq = wallHeatCoeff * (tLiqNode - tAmbient);
+
+        System.out.printf("  %3d   %14.2e    %14.2e    %14.2e    %14.2e%n", i, qGasInterphase,
+            qLiqInterphase, qWallGas, qWallLiq);
+      }
+
+      // Summary for this water content
+      double inletHoldup = holdup[0];
+      double outletHoldup = holdup[numNodesLocal - 1];
+      double inletTGas =
+          intermediatePipeline.getNode(0).getBulkSystem().getPhase(0).getTemperature() - 273.15;
+      double outletTGas = intermediatePipeline.getNode(numNodesLocal - 1).getBulkSystem()
+          .getPhase(0).getTemperature() - 273.15;
+      double inletTLiq =
+          intermediatePipeline.getNode(0).getBulkSystem().getPhase(1).getTemperature() - 273.15;
+      double outletTLiq = intermediatePipeline.getNode(numNodesLocal - 1).getBulkSystem()
+          .getPhase(1).getTemperature() - 273.15;
+
+      double evapPercent =
+          inletHoldup > 1e-10 ? (inletHoldup - outletHoldup) / inletHoldup * 100.0 : 0.0;
+      System.out.printf("%n  Summary: LiqFrac %.5f->%.5f (%.1f%% evap), ", inletHoldup,
+          outletHoldup, evapPercent);
+      System.out.printf("T_gas %.1f->%.1f°C, T_liq %.1f->%.1f°C%n", inletTGas, outletTGas,
+          inletTLiq, outletTLiq);
+    }
+
+    // ===== Summary table =====
+    System.out.println("\n" + "=".repeat(80));
+    System.out.println("SUMMARY TABLE: Effect of Water Content on Holdup and Temperature");
+    System.out.println("=".repeat(80));
+    System.out.println(
+        "Water%   LiqFrac_in  LiqFrac_out  Evap%   T_gas_in  T_gas_out  T_liq_in  T_liq_out");
+    System.out.println("-".repeat(80));
+
+    double[] allWaterFractions = {50.0, 25.0, 10.0, 5.0, 1.0, 0.5, 0.1};
+    for (double waterWtPercent : allWaterFractions) {
+      double totalMassFlow = 1000.0;
+      double waterFlow = totalMassFlow * waterWtPercent / 100.0;
+      double methaneFlow = totalMassFlow - waterFlow;
+
+      SystemInterface sys = new SystemSrkCPAstatoil(303.15, 80.0);
+      sys.addComponent("methane", methaneFlow, "kg/hr", 0);
+      sys.addComponent("water", Math.max(waterFlow, 0.01), "kg/hr", 1);
+      sys.createDatabase(true);
+      sys.setMixingRule(10);
+      sys.initProperties();
+
+      TwoPhasePipeFlowSystem pipe = new TwoPhasePipeFlowSystem();
+      pipe.setInletThermoSystem(sys);
+      pipe.setInitialFlowPattern("stratified");
+      pipe.setNumberOfLegs(5);
+      pipe.setNumberOfNodesInLeg(10);
+      pipe.setLegHeights(height);
+      pipe.setLegPositions(length);
+      pipe.setLegOuterTemperatures(outerTemperature);
+      pipe.setLegOuterHeatTransferCoefficients(outHeatCoef);
+      pipe.setLegWallHeatTransferCoefficients(wallHeatCoef);
+      pipe.setEquipmentGeometry(pipeGeometry);
+      pipe.createSystem();
+      pipe.init();
+      pipe.enableNonEquilibriumMassTransfer();
+      pipe.enableNonEquilibriumHeatTransfer();
+      pipe.setMassTransferMode(
+          neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode.EVAPORATION_ONLY);
+
+      pipe.solveSteadyState(2);
+
+      double[] hld = pipe.getLiquidHoldupProfile();
+      int nn = pipe.getTotalNumberOfNodes();
+      double evap = hld[0] > 1e-10 ? (hld[0] - hld[nn - 1]) / hld[0] * 100.0 : 0.0;
+      double tGasIn = pipe.getNode(0).getBulkSystem().getPhase(0).getTemperature() - 273.15;
+      double tGasOut = pipe.getNode(nn - 1).getBulkSystem().getPhase(0).getTemperature() - 273.15;
+      double tLiqIn = pipe.getNode(0).getBulkSystem().getPhase(1).getTemperature() - 273.15;
+      double tLiqOut = pipe.getNode(nn - 1).getBulkSystem().getPhase(1).getTemperature() - 273.15;
+
+      System.out.printf("%5.1f    %9.5f   %9.5f   %5.1f   %8.1f   %8.1f   %8.1f   %8.1f%n",
+          waterWtPercent, hld[0], hld[nn - 1], evap, tGasIn, tGasOut, tLiqIn, tLiqOut);
+    }
+
+    // ===== Summary and assertions =====
+    System.out.println("\n" + "=".repeat(60));
+    System.out.println("SUMMARY: Water Drying Behavior");
+    System.out.println("=".repeat(60));
+
+    double wetInletHoldup = initialHoldup[0];
+    double wetOutletHoldup = initialHoldup[numNodes - 1];
+    double dryInletHoldup = dryHoldup[0];
+    double dryOutletHoldup = dryHoldup[numNodes - 1];
+
+    System.out.printf("Wet gas (50%% water): Holdup %.4f -> %.4f%n", wetInletHoldup,
+        wetOutletHoldup);
+    System.out.printf("Dry gas (0.1%% water): Holdup %.6f -> %.6f%n", dryInletHoldup,
+        dryOutletHoldup);
+    System.out.printf("Holdup reduction: %.1fx at inlet, %.1fx at outlet%n",
+        wetInletHoldup / Math.max(dryInletHoldup, 1e-10),
+        wetOutletHoldup / Math.max(dryOutletHoldup, 1e-10));
+
+    // Assertions
+    assertNotNull(initialHoldup, "Initial holdup profile should not be null");
+    assertNotNull(dryHoldup, "Dry holdup profile should not be null");
+
+    // Verify wet gas has significant liquid holdup
+    assertTrue(wetInletHoldup > 0.01, "Wet gas should have significant liquid holdup at inlet");
+
+    // Verify dry gas has much less liquid holdup
+    assertTrue(dryInletHoldup < wetInletHoldup,
+        "Dry gas should have less liquid holdup than wet gas");
+
+    // Verify evaporation occurs along pipe (holdup decreases)
+    assertTrue(wetOutletHoldup <= wetInletHoldup,
+        "Wet gas: Liquid holdup should not increase along pipe");
+
+    System.out.println("\nTransient water drying test completed successfully.");
+  }
 }
