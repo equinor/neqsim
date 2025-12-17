@@ -330,6 +330,11 @@ pipe.exportToCSV("results.csv");
 System.out.println(pipe.getSummaryReport());
 ```
 
+**Pressure drop (steady-state):** The steady-state solver updates the pressure profile from an
+integrated momentum balance (friction + gravity) after solving the phase momentum equations. This
+ensures a physically consistent pressure drop along the pipe instead of keeping pressure nearly
+constant due to a density-only correction.
+
 ### 7.4 Flow Pattern Detection
 
 ```java
