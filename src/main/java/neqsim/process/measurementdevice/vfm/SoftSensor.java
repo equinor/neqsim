@@ -85,6 +85,9 @@ public class SoftSensor extends StreamMeasurementDeviceBaseClass {
 
   /**
    * Gets the default unit for a property type.
+   *
+   * @param type property descriptor
+   * @return canonical engineering unit for the property
    */
   private static String getUnitForProperty(PropertyType type) {
     switch (type) {
@@ -178,6 +181,9 @@ public class SoftSensor extends StreamMeasurementDeviceBaseClass {
 
   /**
    * Calculates the property from a flashed fluid.
+   *
+   * @param fluid equilibrated fluid instance
+   * @return property value expressed in the default unit
    */
   private double calculateProperty(SystemInterface fluid) {
     switch (propertyType) {
