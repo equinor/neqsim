@@ -107,6 +107,23 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
     return wallContactLength[0];
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For stratified flow, the interfacial area per unit volume is calculated as: a = S_i / A where
+   * S_i is the interface chord length and A is the pipe cross-sectional area.
+   * </p>
+   */
+  @Override
+  protected double calcGeometricInterfacialAreaPerVolume() {
+    if (pipe.getArea() > 0 && interphaseContactLength[0] > 0) {
+      // For stratified flow: a = S_i / A (interface chord length / cross-sectional area)
+      return interphaseContactLength[0] / pipe.getArea();
+    }
+    return 0.0;
+  }
+
   /** {@inheritDoc} */
   @Override
   public FlowNodeInterface getNextNode() {

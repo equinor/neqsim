@@ -97,6 +97,58 @@ public class InterphaseSlugFlow extends InterphaseTwoPhasePipeFlow
     this.liquidHoldupInSlug = holdup;
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For slug flow, the Sherwood number is a weighted average of contributions from:
+   * </p>
+   * <ul>
+   * <li>Taylor bubble region: Film-like mass transfer (Hewitt correlation)</li>
+   * <li>Slug body: Enhanced pipe flow mass transfer with mixing</li>
+   * <li>Slug front/back: Enhanced transfer at mixing zones</li>
+   * </ul>
+   *
+   * <p>
+   * Reference: Fernandes et al. (1983), "Hydrodynamic model for gas-liquid slug flow"
+   * </p>
+   */
+  @Override
+  public double calcSherwoodNumber(int phaseNum, double reynoldsNumber, double schmidtNumber,
+      FlowNodeInterface node) {
+    // Fraction of slug unit occupied by slug body vs Taylor bubble
+    double slugBodyFraction = 0.6;
+    double taylorBubbleFraction = 1.0 - slugBodyFraction;
+
+    if (phaseNum == 0) {
+      // Gas phase Sherwood number
+      // In slug body: dispersed bubbles - use Ranz-Marshall
+      double shSlugBody = 2.0 + 0.6 * Math.pow(reynoldsNumber, 0.5) * Math.pow(schmidtNumber, 0.33);
+
+      // In Taylor bubble: stratified-like
+      double shTaylor = 0.023 * Math.pow(reynoldsNumber, 0.83) * Math.pow(schmidtNumber, 0.33);
+
+      return slugBodyFraction * shSlugBody + taylorBubbleFraction * shTaylor;
+    } else {
+      // Liquid phase Sherwood number
+      if (reynoldsNumber < 2300) {
+        // Laminar - enhanced by slug mixing
+        double shBase = 3.66;
+        double mixingEnhancement = 1.5;
+        return shBase * mixingEnhancement;
+      } else {
+        // Turbulent - significant enhancement from slug passage
+        // Sh_slug = 0.023 * Re^0.8 * Sc^0.33 * enhancement
+        double shBase = 0.023 * Math.pow(reynoldsNumber, 0.8) * Math.pow(schmidtNumber, 0.33);
+
+        // Slug-induced mixing enhancement (1.4-2.0 typical)
+        double slugMixingEnhancement = 1.6;
+
+        return shBase * slugMixingEnhancement;
+      }
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public double calcWallFrictionFactor(int phase, FlowNodeInterface node) {

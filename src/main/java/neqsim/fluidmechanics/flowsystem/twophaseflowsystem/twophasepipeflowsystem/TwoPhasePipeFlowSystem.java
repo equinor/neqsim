@@ -310,6 +310,284 @@ public class TwoPhasePipeFlowSystem
     return totalHeatLoss;
   }
 
+  // ==================== PROFILE OUTPUT METHODS ====================
+
+  /**
+   * <p>
+   * Gets the temperature profile along the pipe.
+   * </p>
+   *
+   * @return an array of temperatures in Kelvin at each node
+   */
+  public double[] getTemperatureProfile() {
+    double[] temperatures = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      temperatures[i] = flowNode[i].getBulkSystem().getTemperature();
+    }
+    return temperatures;
+  }
+
+  /**
+   * <p>
+   * Gets the pressure profile along the pipe.
+   * </p>
+   *
+   * @return an array of pressures in bar at each node
+   */
+  public double[] getPressureProfile() {
+    double[] pressures = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      pressures[i] = flowNode[i].getBulkSystem().getPressure();
+    }
+    return pressures;
+  }
+
+  /**
+   * <p>
+   * Gets the position profile along the pipe.
+   * </p>
+   *
+   * @return an array of positions in meters from the inlet
+   */
+  public double[] getPositionProfile() {
+    double[] positions = new double[getTotalNumberOfNodes()];
+    double cumulativeLength = 0.0;
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      positions[i] = cumulativeLength;
+      cumulativeLength += flowNode[i].getGeometry().getNodeLength();
+    }
+    return positions;
+  }
+
+  /**
+   * <p>
+   * Gets the void fraction (gas volume fraction) profile along the pipe.
+   * </p>
+   *
+   * @return an array of void fractions at each node
+   */
+  public double[] getVoidFractionProfile() {
+    double[] voidFractions = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      voidFractions[i] = flowNode[i].getPhaseFraction(0);
+    }
+    return voidFractions;
+  }
+
+  /**
+   * <p>
+   * Gets the liquid holdup profile along the pipe.
+   * </p>
+   *
+   * @return an array of liquid holdups at each node
+   */
+  public double[] getLiquidHoldupProfile() {
+    double[] holdups = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      holdups[i] = flowNode[i].getPhaseFraction(1);
+    }
+    return holdups;
+  }
+
+  /**
+   * <p>
+   * Gets the velocity profile for a specific phase along the pipe.
+   * </p>
+   *
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
+   * @return an array of velocities in m/s at each node
+   */
+  public double[] getVelocityProfile(int phaseIndex) {
+    double[] velocities = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      velocities[i] = flowNode[i].getVelocity(phaseIndex);
+    }
+    return velocities;
+  }
+
+  /**
+   * <p>
+   * Gets the superficial velocity profile for a specific phase along the pipe.
+   * </p>
+   *
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
+   * @return an array of superficial velocities in m/s at each node
+   */
+  public double[] getSuperficialVelocityProfile(int phaseIndex) {
+    double[] velocities = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      velocities[i] = flowNode[i].getSuperficialVelocity(phaseIndex);
+    }
+    return velocities;
+  }
+
+  /**
+   * <p>
+   * Gets the gas phase composition profile for all components.
+   * </p>
+   *
+   * @return a 2D array [componentIndex][nodeIndex] of mole fractions
+   */
+  public double[][] getGasCompositionProfile() {
+    int numComponents = flowNode[0].getBulkSystem().getPhase(0).getNumberOfComponents();
+    double[][] composition = new double[numComponents][getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      for (int j = 0; j < numComponents; j++) {
+        composition[j][i] = flowNode[i].getBulkSystem().getPhase(0).getComponent(j).getx();
+      }
+    }
+    return composition;
+  }
+
+  /**
+   * <p>
+   * Gets the liquid phase composition profile for all components.
+   * </p>
+   *
+   * @return a 2D array [componentIndex][nodeIndex] of mole fractions
+   */
+  public double[][] getLiquidCompositionProfile() {
+    int numComponents = flowNode[0].getBulkSystem().getPhase(1).getNumberOfComponents();
+    double[][] composition = new double[numComponents][getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      for (int j = 0; j < numComponents; j++) {
+        composition[j][i] = flowNode[i].getBulkSystem().getPhase(1).getComponent(j).getx();
+      }
+    }
+    return composition;
+  }
+
+  /**
+   * <p>
+   * Gets the interfacial area profile along the pipe.
+   * </p>
+   *
+   * @return an array of interfacial areas in m² at each node
+   */
+  public double[] getInterfacialAreaProfile() {
+    double[] areas = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      areas[i] = flowNode[i].getInterphaseContactArea();
+    }
+    return areas;
+  }
+
+  /**
+   * <p>
+   * Gets the density profile for a specific phase along the pipe.
+   * </p>
+   *
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
+   * @return an array of densities in kg/m³ at each node
+   */
+  public double[] getDensityProfile(int phaseIndex) {
+    double[] densities = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      densities[i] =
+          flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getDensity();
+    }
+    return densities;
+  }
+
+  /**
+   * <p>
+   * Gets the viscosity profile for a specific phase along the pipe.
+   * </p>
+   *
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
+   * @return an array of dynamic viscosities in Pa·s at each node
+   */
+  public double[] getViscosityProfile(int phaseIndex) {
+    double[] viscosities = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      viscosities[i] =
+          flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getViscosity();
+    }
+    return viscosities;
+  }
+
+  /**
+   * <p>
+   * Gets the mass transfer profile for a specific component.
+   * </p>
+   *
+   * @param componentName the name of the component
+   * @return an array of cumulative mass transfer rates in mol/s at each node
+   */
+  public double[] getMassTransferProfile(String componentName) {
+    int componentIndex =
+        flowNode[0].getBulkSystem().getPhase(0).getComponent(componentName).getComponentNumber();
+    return getMassTransferProfile(componentIndex);
+  }
+
+  /**
+   * <p>
+   * Gets the mass transfer profile for a specific component.
+   * </p>
+   *
+   * @param componentIndex the component index
+   * @return an array of cumulative mass transfer rates in mol/s at each node
+   */
+  public double[] getMassTransferProfile(int componentIndex) {
+    double[] massTransfer = new double[getTotalNumberOfNodes()];
+    double cumulativeTransfer = 0.0;
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      double flux = flowNode[i].getFluidBoundary().getInterphaseMolarFlux(componentIndex);
+      double area = flowNode[i].getInterphaseContactArea();
+      cumulativeTransfer += flux * area;
+      massTransfer[i] = cumulativeTransfer;
+    }
+    return massTransfer;
+  }
+
+  /**
+   * <p>
+   * Calculates the component mass balance error.
+   * </p>
+   *
+   * @param componentName the name of the component
+   * @return the relative mass balance error (0 = perfect balance)
+   */
+  public double getComponentMassBalance(String componentName) {
+    int compIndex =
+        flowNode[0].getBulkSystem().getPhase(0).getComponent(componentName).getComponentNumber();
+
+    // Inlet moles (use getNumberOfMolesInPhase since it represents molar flow in the flow node)
+    double inletMoles = flowNode[0].getBulkSystem().getPhase(0).getComponent(compIndex).getx()
+        * flowNode[0].getBulkSystem().getPhase(0).getNumberOfMolesInPhase()
+        + flowNode[0].getBulkSystem().getPhase(1).getComponent(compIndex).getx()
+            * flowNode[0].getBulkSystem().getPhase(1).getNumberOfMolesInPhase();
+
+    // Outlet moles
+    int lastNode = getTotalNumberOfNodes() - 1;
+    double outletMoles =
+        flowNode[lastNode].getBulkSystem().getPhase(0).getComponent(compIndex).getx()
+            * flowNode[lastNode].getBulkSystem().getPhase(0).getNumberOfMolesInPhase()
+            + flowNode[lastNode].getBulkSystem().getPhase(1).getComponent(compIndex).getx()
+                * flowNode[lastNode].getBulkSystem().getPhase(1).getNumberOfMolesInPhase();
+
+    if (Math.abs(inletMoles) > 1e-20) {
+      return (inletMoles - outletMoles) / inletMoles;
+    }
+    return 0.0;
+  }
+
+  /**
+   * <p>
+   * Gets the Reynolds number profile for a specific phase.
+   * </p>
+   *
+   * @param phaseIndex 0 for gas phase, 1 for liquid phase
+   * @return an array of Reynolds numbers at each node
+   */
+  public double[] getReynoldsNumberProfile(int phaseIndex) {
+    double[] reynolds = new double[getTotalNumberOfNodes()];
+    for (int i = 0; i < getTotalNumberOfNodes(); i++) {
+      reynolds[i] = flowNode[i].getReynoldsNumber(phaseIndex);
+    }
+    return reynolds;
+  }
+
   /**
    * <p>
    * main.

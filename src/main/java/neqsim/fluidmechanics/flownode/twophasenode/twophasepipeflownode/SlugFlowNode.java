@@ -212,6 +212,59 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
     return interphaseContactArea;
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For slug flow, the interfacial area per unit volume is a weighted average of Taylor bubble film
+   * interface and slug body interface: a = a_Taylor * f_bubble + a_slug * (1-f_bubble)
+   * </p>
+   */
+  @Override
+  protected double calcGeometricInterfacialAreaPerVolume() {
+    double diameter = pipe.getDiameter();
+    if (diameter <= 0) {
+      return 0.0;
+    }
+
+    // Fraction of slug unit occupied by Taylor bubble vs slug body
+    double slugUnitFraction = 0.6; // Fraction occupied by slug body
+    double bubbleFraction = 1.0 - slugUnitFraction;
+
+    // Interfacial area in Taylor bubble region (annular-like film)
+    double alphaFilm = phaseFraction[1] * 0.3; // Film holdup in bubble region
+    double aTaylor = 4.0 / diameter; // Simplified annular-like interface
+
+    // Interfacial area in slug body (dispersed bubbles)
+    double alphaSlug = 0.15; // Typical gas holdup in slug body
+    double bubbleDiameter = 0.005; // Typical bubble size in slug body
+    double aSlug = 6.0 * alphaSlug / bubbleDiameter;
+
+    // Weighted average
+    return aTaylor * bubbleFraction + aSlug * slugUnitFraction;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For slug flow, uses enhanced model accounting for slug frequency and mixing effects.
+   * </p>
+   */
+  @Override
+  protected double calcEmpiricalInterfacialAreaPerVolume() {
+    double baseArea = calcGeometricInterfacialAreaPerVolume();
+
+    // Slug mixing enhancement - higher frequency leads to more interfacial renewal
+    double mixingEnhancement = 1.0;
+    if (slugFrequency > 0) {
+      // Enhancement factor based on slug frequency
+      mixingEnhancement = 1.0 + 0.5 * Math.min(slugFrequency, 2.0);
+    }
+
+    return baseArea * mixingEnhancement;
+  }
+
   /** {@inheritDoc} */
   @Override
   public FlowNodeInterface getNextNode() {

@@ -131,6 +131,52 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
     return wallContactLength[0];
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For droplet/mist flow, the interfacial area per unit volume is calculated using Sauter mean
+   * diameter: a = 6 * α_L / d_32
+   * </p>
+   */
+  @Override
+  protected double calcGeometricInterfacialAreaPerVolume() {
+    // For droplet flow: a = 6 * α_L / d_32 (Sauter mean diameter approach)
+    if (averageDropletDiameter > 0 && phaseFraction[1] > 0) {
+      return 6.0 * phaseFraction[1] / averageDropletDiameter;
+    }
+    return 0.0;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For droplet flow, uses critical Weber number to calculate maximum stable droplet size: d_max =
+   * We_crit * σ / (ρ_G * u_G²)
+   * </p>
+   */
+  @Override
+  protected double calcEmpiricalInterfacialAreaPerVolume() {
+    // Calculate maximum stable droplet size using critical Weber number
+    double surfaceTension = getBulkSystem().getInterphaseProperties().getSurfaceTension(0, 1);
+    double gasDensity = getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double gasVelocity = velocity[0];
+
+    // Critical Weber number (typically 12-22 for droplets)
+    double weCrit = 12.0;
+
+    if (gasDensity > 0 && gasVelocity > 0 && surfaceTension > 0) {
+      double dMax = weCrit * surfaceTension / (gasDensity * gasVelocity * gasVelocity);
+      // Use d_32 ≈ 0.6 * d_max for Sauter mean diameter
+      double d32 = 0.6 * dMax;
+      if (d32 > 0 && phaseFraction[1] > 0) {
+        return 6.0 * phaseFraction[1] / d32;
+      }
+    }
+    return calcGeometricInterfacialAreaPerVolume();
+  }
+
   /** {@inheritDoc} */
   @Override
   public FlowNodeInterface getNextNode() {

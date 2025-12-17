@@ -327,4 +327,177 @@ public class TwoPhasePipeFlowSystemTest {
     assertNotNull(pipe.getNode(0).getFluidBoundary(),
         "Fluid boundary should be initialized for mass transfer calculations");
   }
+
+  // ==================== PROFILE OUTPUT TESTS ====================
+
+  @Test
+  void testTemperatureProfileOutput() {
+    setupStandardPipe();
+    pipe.createSystem();
+    pipe.init();
+    pipe.solveSteadyState(2);
+
+    TwoPhasePipeFlowSystem pipeSystem = (TwoPhasePipeFlowSystem) pipe;
+    double[] temperatures = pipeSystem.getTemperatureProfile();
+
+    assertNotNull(temperatures, "Temperature profile should not be null");
+    assertEquals(pipe.getTotalNumberOfNodes(), temperatures.length,
+        "Temperature profile length should match number of nodes");
+    assertTrue(temperatures[0] > 0, "Temperatures should be positive");
+  }
+
+  @Test
+  void testPressureProfileOutput() {
+    setupStandardPipe();
+    pipe.createSystem();
+    pipe.init();
+    pipe.solveSteadyState(2);
+
+    TwoPhasePipeFlowSystem pipeSystem = (TwoPhasePipeFlowSystem) pipe;
+    double[] pressures = pipeSystem.getPressureProfile();
+
+    assertNotNull(pressures, "Pressure profile should not be null");
+    assertEquals(pipe.getTotalNumberOfNodes(), pressures.length,
+        "Pressure profile length should match number of nodes");
+    assertTrue(pressures[0] > 0, "Pressures should be positive");
+  }
+
+  @Test
+  void testPositionProfileOutput() {
+    setupStandardPipe();
+    pipe.createSystem();
+    pipe.init();
+
+    TwoPhasePipeFlowSystem pipeSystem = (TwoPhasePipeFlowSystem) pipe;
+    double[] positions = pipeSystem.getPositionProfile();
+
+    assertNotNull(positions, "Position profile should not be null");
+    assertEquals(pipe.getTotalNumberOfNodes(), positions.length,
+        "Position profile length should match number of nodes");
+    assertEquals(0.0, positions[0], 0.001, "First position should be 0");
+
+    // Positions should be monotonically increasing
+    for (int i = 1; i < positions.length; i++) {
+      assertTrue(positions[i] >= positions[i - 1], "Positions should be monotonically increasing");
+    }
+  }
+
+  @Test
+  void testVoidFractionProfileOutput() {
+    setupStandardPipe();
+    pipe.createSystem();
+    pipe.init();
+    pipe.solveSteadyState(2);
+
+    TwoPhasePipeFlowSystem pipeSystem = (TwoPhasePipeFlowSystem) pipe;
+    double[] voidFractions = pipeSystem.getVoidFractionProfile();
+
+    assertNotNull(voidFractions, "Void fraction profile should not be null");
+    assertEquals(pipe.getTotalNumberOfNodes(), voidFractions.length,
+        "Void fraction profile length should match number of nodes");
+
+    // Void fractions should be between 0 and 1
+    for (double vf : voidFractions) {
+      assertTrue(vf >= 0 && vf <= 1, "Void fraction should be between 0 and 1: " + vf);
+    }
+  }
+
+  @Test
+  void testVelocityProfileOutput() {
+    setupStandardPipe();
+    pipe.createSystem();
+    pipe.init();
+    pipe.solveSteadyState(2);
+
+    TwoPhasePipeFlowSystem pipeSystem = (TwoPhasePipeFlowSystem) pipe;
+    double[] gasVelocities = pipeSystem.getVelocityProfile(0);
+    double[] liquidVelocities = pipeSystem.getVelocityProfile(1);
+
+    assertNotNull(gasVelocities, "Gas velocity profile should not be null");
+    assertNotNull(liquidVelocities, "Liquid velocity profile should not be null");
+    assertEquals(pipe.getTotalNumberOfNodes(), gasVelocities.length);
+    assertEquals(pipe.getTotalNumberOfNodes(), liquidVelocities.length);
+  }
+
+  @Test
+  void testInterfacialAreaProfileOutput() {
+    setupStandardPipe();
+    pipe.createSystem();
+    pipe.init();
+    pipe.solveSteadyState(2);
+
+    TwoPhasePipeFlowSystem pipeSystem = (TwoPhasePipeFlowSystem) pipe;
+    double[] areas = pipeSystem.getInterfacialAreaProfile();
+
+    assertNotNull(areas, "Interfacial area profile should not be null");
+    assertEquals(pipe.getTotalNumberOfNodes(), areas.length);
+
+    // Areas should be non-negative
+    for (double area : areas) {
+      assertTrue(area >= 0, "Interfacial area should be non-negative");
+    }
+  }
+
+  @Test
+  void testDensityProfileOutput() {
+    setupStandardPipe();
+    pipe.createSystem();
+    pipe.init();
+    pipe.solveSteadyState(2);
+
+    TwoPhasePipeFlowSystem pipeSystem = (TwoPhasePipeFlowSystem) pipe;
+    double[] gasDensity = pipeSystem.getDensityProfile(0);
+    double[] liquidDensity = pipeSystem.getDensityProfile(1);
+
+    assertNotNull(gasDensity, "Gas density profile should not be null");
+    assertNotNull(liquidDensity, "Liquid density profile should not be null");
+
+    // Densities should be positive
+    assertTrue(gasDensity[0] > 0, "Gas density should be positive");
+    assertTrue(liquidDensity[0] > 0, "Liquid density should be positive");
+
+    // Liquid density should be greater than gas density
+    assertTrue(liquidDensity[0] > gasDensity[0],
+        "Liquid density should be greater than gas density");
+  }
+
+  @Test
+  void testReynoldsNumberProfileOutput() {
+    setupStandardPipe();
+    pipe.createSystem();
+    pipe.init();
+    pipe.solveSteadyState(2);
+
+    TwoPhasePipeFlowSystem pipeSystem = (TwoPhasePipeFlowSystem) pipe;
+    double[] reynolds = pipeSystem.getReynoldsNumberProfile(0);
+
+    assertNotNull(reynolds, "Reynolds number profile should not be null");
+    assertEquals(pipe.getTotalNumberOfNodes(), reynolds.length);
+  }
+
+  // ==================== HELPER METHOD ====================
+
+  private void setupStandardPipe() {
+    pipe.setInletThermoSystem(testSystem);
+    pipe.setNumberOfLegs(2);
+    pipe.setNumberOfNodesInLeg(5);
+
+    double[] height = {0, 0, 0};
+    double[] length = {0.0, 1.0, 2.0};
+    double[] outerTemperature = {295.0, 295.0, 295.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0};
+
+    pipe.setLegHeights(height);
+    pipe.setLegPositions(length);
+    pipe.setLegOuterTemperatures(outerTemperature);
+    pipe.setLegOuterHeatTransferCoefficients(outHeatCoef);
+    pipe.setLegWallHeatTransferCoefficients(wallHeatCoef);
+
+    GeometryDefinitionInterface[] pipeGeometry = new PipeData[3];
+    for (int i = 0; i < pipeGeometry.length; i++) {
+      pipeGeometry[i] = new PipeData(0.025);
+    }
+    pipe.setEquipmentGeometry(pipeGeometry);
+  }
 }

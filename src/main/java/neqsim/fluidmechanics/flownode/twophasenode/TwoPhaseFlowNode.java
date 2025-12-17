@@ -3,6 +3,7 @@ package neqsim.fluidmechanics.flownode.twophasenode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.flownode.FlowNode;
+import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.InterfacialAreaModel;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -19,6 +20,15 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(TwoPhaseFlowNode.class);
+
+  /** Interfacial area model selection. */
+  protected InterfacialAreaModel interfacialAreaModel = InterfacialAreaModel.GEOMETRIC;
+
+  /** Interfacial area per unit volume (1/m). */
+  protected double interfacialAreaPerVolume = 0.0;
+
+  /** User-defined interfacial area per unit volume (1/m) for USER_DEFINED model. */
+  protected double userDefinedInterfacialAreaPerVolume = 100.0;
 
   // public double[] molarMassTransferFlux;
   // public double[] molarMassTransfer;
@@ -275,6 +285,7 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
     this.calcHydraulicDiameter();
     this.calcReynoldNumber();
     interphaseContactArea = this.calcGasLiquidContactArea();
+    this.calcInterfacialAreaPerVolume();
 
     wallFrictionFactor[0] = interphaseTransportCoefficient.calcWallFrictionFactor(0, this);
     wallFrictionFactor[1] = interphaseTransportCoefficient.calcWallFrictionFactor(1, this);
@@ -295,6 +306,352 @@ public abstract class TwoPhaseFlowNode extends FlowNode {
   public double calcGasLiquidContactArea() {
     interphaseContactArea = pipe.getNodeLength() * interphaseContactLength[0];
     return interphaseContactArea;
+  }
+
+  /**
+   * <p>
+   * Calculates the interfacial area per unit volume (a) based on the selected model.
+   * </p>
+   *
+   * <p>
+   * The interfacial area per unit volume is critical for mass transfer calculations: N_i = k_L * a
+   * * ΔC_i
+   * </p>
+   *
+   * @return the interfacial area per unit volume in 1/m
+   */
+  public double calcInterfacialAreaPerVolume() {
+    switch (interfacialAreaModel) {
+      case GEOMETRIC:
+        interfacialAreaPerVolume = calcGeometricInterfacialAreaPerVolume();
+        break;
+      case EMPIRICAL_CORRELATION:
+        interfacialAreaPerVolume = calcEmpiricalInterfacialAreaPerVolume();
+        break;
+      case USER_DEFINED:
+        interfacialAreaPerVolume = userDefinedInterfacialAreaPerVolume;
+        break;
+      default:
+        interfacialAreaPerVolume = calcGeometricInterfacialAreaPerVolume();
+    }
+    return interfacialAreaPerVolume;
+  }
+
+  /**
+   * <p>
+   * Calculates the interfacial area per unit volume using geometric model.
+   * </p>
+   *
+   * <p>
+   * For stratified flow: a = S_i / A (interface chord length / cross-sectional area)
+   * </p>
+   *
+   * @return the geometric interfacial area per unit volume in 1/m
+   */
+  protected double calcGeometricInterfacialAreaPerVolume() {
+    // Default geometric calculation based on interface chord length
+    if (pipe.getArea() > 0 && interphaseContactLength[0] > 0) {
+      return interphaseContactLength[0] / pipe.getArea();
+    }
+    return 0.0;
+  }
+
+  /**
+   * <p>
+   * Calculates the interfacial area per unit volume using empirical correlations.
+   * </p>
+   *
+   * <p>
+   * This method should be overridden by specific flow pattern classes.
+   * </p>
+   *
+   * @return the empirical interfacial area per unit volume in 1/m
+   */
+  protected double calcEmpiricalInterfacialAreaPerVolume() {
+    // Default: fall back to geometric calculation
+    return calcGeometricInterfacialAreaPerVolume();
+  }
+
+  /**
+   * <p>
+   * Gets the current interfacial area per unit volume.
+   * </p>
+   *
+   * @return the interfacial area per unit volume in 1/m
+   */
+  public double getInterfacialAreaPerVolume() {
+    return interfacialAreaPerVolume;
+  }
+
+  /**
+   * <p>
+   * Sets the interfacial area model.
+   * </p>
+   *
+   * @param model the interfacial area model to use
+   */
+  public void setInterfacialAreaModel(InterfacialAreaModel model) {
+    this.interfacialAreaModel = model;
+  }
+
+  /**
+   * <p>
+   * Gets the current interfacial area model.
+   * </p>
+   *
+   * @return the current interfacial area model
+   */
+  public InterfacialAreaModel getInterfacialAreaModel() {
+    return interfacialAreaModel;
+  }
+
+  /**
+   * <p>
+   * Sets the user-defined interfacial area per unit volume for USER_DEFINED model.
+   * </p>
+   *
+   * @param areaPerVolume the interfacial area per unit volume in 1/m
+   */
+  public void setUserDefinedInterfacialAreaPerVolume(double areaPerVolume) {
+    this.userDefinedInterfacialAreaPerVolume = areaPerVolume;
+  }
+
+  // ==================== PHASE TRANSITION HANDLING ====================
+
+  /**
+   * Minimum phase fraction threshold to avoid numerical singularities. When a phase fraction drops
+   * below this threshold, special handling is required for near single-phase conditions.
+   */
+  public static final double MIN_PHASE_FRACTION = 1.0e-10;
+
+  /**
+   * Initial nucleation phase fraction. When condensation/boiling is initiated, this is the initial
+   * fraction of the emerging phase.
+   */
+  public static final double NUCLEATION_PHASE_FRACTION = 1.0e-6;
+
+  /**
+   * <p>
+   * Checks if the system is effectively single-phase gas (no liquid present).
+   * </p>
+   *
+   * @return true if gas fraction is greater than (1 - MIN_PHASE_FRACTION)
+   */
+  public boolean isEffectivelySinglePhaseGas() {
+    return phaseFraction[0] > (1.0 - MIN_PHASE_FRACTION) || phaseFraction[1] < MIN_PHASE_FRACTION;
+  }
+
+  /**
+   * <p>
+   * Checks if the system is effectively single-phase liquid (no gas present).
+   * </p>
+   *
+   * @return true if liquid fraction is greater than (1 - MIN_PHASE_FRACTION)
+   */
+  public boolean isEffectivelySinglePhaseLiquid() {
+    return phaseFraction[1] > (1.0 - MIN_PHASE_FRACTION) || phaseFraction[0] < MIN_PHASE_FRACTION;
+  }
+
+  /**
+   * <p>
+   * Checks if the conditions are favorable for condensation (droplet formation from gas phase).
+   * This occurs when the gas is supersaturated - temperature is below dew point.
+   * </p>
+   *
+   * @return true if condensation initiation is expected
+   */
+  public boolean isCondensationLikely() {
+    if (!isEffectivelySinglePhaseGas()) {
+      return false;
+    }
+    // Check if temperature is below dew point (supersaturated gas)
+    try {
+      // Clone system to avoid modifying the original
+      neqsim.thermo.system.SystemInterface tempSystem = getBulkSystem().clone();
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+          new neqsim.thermodynamicoperations.ThermodynamicOperations(tempSystem);
+      ops.dewPointTemperatureFlash();
+      double dewPointTemp = tempSystem.getTemperature();
+      return getBulkSystem().getTemperature() < dewPointTemp;
+    } catch (Exception e) {
+      logger.debug("Dew point calculation failed: " + e.getMessage());
+      return false;
+    }
+  }
+
+  /**
+   * <p>
+   * Checks if the conditions are favorable for bubble nucleation (gas formation from liquid phase).
+   * This occurs when the liquid is superheated - temperature is above bubble point.
+   * </p>
+   *
+   * @return true if bubble nucleation is expected
+   */
+  public boolean isBubbleNucleationLikely() {
+    if (!isEffectivelySinglePhaseLiquid()) {
+      return false;
+    }
+    // Check if temperature is above bubble point (superheated liquid)
+    try {
+      // Clone system to avoid modifying the original
+      neqsim.thermo.system.SystemInterface tempSystem = getBulkSystem().clone();
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+          new neqsim.thermodynamicoperations.ThermodynamicOperations(tempSystem);
+      ops.bubblePointTemperatureFlash();
+      double bubblePointTemp = tempSystem.getTemperature();
+      return getBulkSystem().getTemperature() > bubblePointTemp;
+    } catch (Exception e) {
+      logger.debug("Bubble point calculation failed: " + e.getMessage());
+      return false;
+    }
+  }
+
+  /**
+   * <p>
+   * Initiates condensation by setting up the liquid phase with nucleation phase fraction. This is
+   * used when transitioning from single-phase gas to two-phase flow.
+   * </p>
+   *
+   * <p>
+   * The initial droplet size is calculated based on homogeneous nucleation theory or set to a
+   * default value.
+   * </p>
+   */
+  public void initiateCondensation() {
+    // Set minimum liquid fraction to enable two-phase calculations
+    phaseFraction[1] = NUCLEATION_PHASE_FRACTION;
+    phaseFraction[0] = 1.0 - NUCLEATION_PHASE_FRACTION;
+
+    // Perform flash to equilibrate phases
+    try {
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+          new neqsim.thermodynamicoperations.ThermodynamicOperations(getBulkSystem());
+      ops.TPflash();
+      getBulkSystem().init(3);
+
+      // Update phase fractions from flash result
+      double flashedGasFraction = getBulkSystem().getVolumeFraction(0);
+      if (flashedGasFraction < 1.0 - MIN_PHASE_FRACTION) {
+        phaseFraction[0] = flashedGasFraction;
+        phaseFraction[1] = 1.0 - flashedGasFraction;
+      }
+    } catch (Exception e) {
+      logger.warn("Flash calculation failed during condensation initiation: " + e.getMessage());
+    }
+
+    logger.info("Condensation initiated - liquid fraction: " + phaseFraction[1]);
+  }
+
+  /**
+   * <p>
+   * Initiates bubble nucleation by setting up the gas phase with nucleation phase fraction. This is
+   * used when transitioning from single-phase liquid to two-phase flow.
+   * </p>
+   */
+  public void initiateBubbleNucleation() {
+    // Set minimum gas fraction to enable two-phase calculations
+    phaseFraction[0] = NUCLEATION_PHASE_FRACTION;
+    phaseFraction[1] = 1.0 - NUCLEATION_PHASE_FRACTION;
+
+    // Perform flash to equilibrate phases
+    try {
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+          new neqsim.thermodynamicoperations.ThermodynamicOperations(getBulkSystem());
+      ops.TPflash();
+      getBulkSystem().init(3);
+
+      // Update phase fractions from flash result
+      double flashedGasFraction = getBulkSystem().getVolumeFraction(0);
+      if (flashedGasFraction > MIN_PHASE_FRACTION) {
+        phaseFraction[0] = flashedGasFraction;
+        phaseFraction[1] = 1.0 - flashedGasFraction;
+      }
+    } catch (Exception e) {
+      logger.warn("Flash calculation failed during bubble nucleation: " + e.getMessage());
+    }
+
+    logger.info("Bubble nucleation initiated - gas fraction: " + phaseFraction[0]);
+  }
+
+  /**
+   * <p>
+   * Enforces minimum phase fraction limits to avoid numerical singularities in two-phase
+   * calculations. This is called during initialization to ensure stable calculations.
+   * </p>
+   */
+  public void enforceMinimumPhaseFractions() {
+    // Enforce minimum gas phase fraction
+    if (phaseFraction[0] < MIN_PHASE_FRACTION) {
+      phaseFraction[0] = MIN_PHASE_FRACTION;
+      phaseFraction[1] = 1.0 - MIN_PHASE_FRACTION;
+    }
+    // Enforce minimum liquid phase fraction
+    if (phaseFraction[1] < MIN_PHASE_FRACTION) {
+      phaseFraction[1] = MIN_PHASE_FRACTION;
+      phaseFraction[0] = 1.0 - MIN_PHASE_FRACTION;
+    }
+  }
+
+  /**
+   * <p>
+   * Checks phase equilibrium and initiates phase transitions if necessary. This method should be
+   * called at each node to handle condensation or bubble nucleation.
+   * </p>
+   *
+   * @return true if a phase transition was initiated
+   */
+  public boolean checkAndInitiatePhaseTransition() {
+    if (isCondensationLikely()) {
+      initiateCondensation();
+      return true;
+    }
+    if (isBubbleNucleationLikely()) {
+      initiateBubbleNucleation();
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * <p>
+   * Gets the initial droplet/bubble diameter for nucleation based on critical nucleation theory.
+   * </p>
+   *
+   * @param isDroplet true for condensation (droplets), false for bubbles
+   * @return the initial nucleation diameter in meters
+   */
+  public double getNucleationDiameter(boolean isDroplet) {
+    // Critical nucleation diameter from classical nucleation theory:
+    // d_crit = 4 * σ / Δp where σ is surface tension and Δp is supersaturation pressure
+    double surfaceTension = getBulkSystem().getInterphaseProperties().getSurfaceTension(0, 1);
+
+    // Estimate supersaturation from pressure difference
+    double saturationPressure;
+    try {
+      // Clone system to avoid modifying the original
+      neqsim.thermo.system.SystemInterface tempSystem = getBulkSystem().clone();
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+          new neqsim.thermodynamicoperations.ThermodynamicOperations(tempSystem);
+      if (isDroplet) {
+        ops.dewPointPressureFlash();
+      } else {
+        ops.bubblePointPressureFlash();
+      }
+      saturationPressure = tempSystem.getPressure();
+    } catch (Exception e) {
+      // Default to a reasonable nucleation diameter (1 micron)
+      return 1.0e-6;
+    }
+
+    double pressureDiff = Math.abs(getBulkSystem().getPressure() - saturationPressure) * 1e5; // Pa
+    if (pressureDiff < 1.0) {
+      pressureDiff = 1.0; // Prevent division by zero
+    }
+
+    double criticalDiameter = 4.0 * surfaceTension / pressureDiff;
+
+    // Ensure reasonable bounds (1 nm to 1 mm)
+    return Math.max(1.0e-9, Math.min(1.0e-3, criticalDiameter));
   }
 
   /** {@inheritDoc} */

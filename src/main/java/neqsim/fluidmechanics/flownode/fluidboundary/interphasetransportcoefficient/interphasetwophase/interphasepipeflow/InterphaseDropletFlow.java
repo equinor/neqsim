@@ -4,7 +4,13 @@ import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 
 /**
  * <p>
- * InterphaseDropletFlow class.
+ * InterphaseDropletFlow class for droplet/mist and bubble flow regimes.
+ * </p>
+ *
+ * <p>
+ * Implements transport coefficient correlations specific to dispersed flow regimes where one phase
+ * exists as discrete particles (bubbles or droplets) in a continuous phase. Uses Ranz-Marshall
+ * correlation for particle mass transfer: Sh = 2 + 0.6 * Re^0.5 * Sc^0.33
  * </p>
  *
  * @author esol
@@ -31,6 +37,42 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
    */
   public InterphaseDropletFlow(FlowNodeInterface node) {
     // flowNode = node;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For droplet/bubble flow, uses Ranz-Marshall correlation for mass transfer from/to spherical
+   * particles: Sh = 2 + 0.6 * Re^0.5 * Sc^0.33
+   * </p>
+   *
+   * <p>
+   * This correlation is valid for single spheres and is widely used for dispersed phase mass
+   * transfer in two-phase flows.
+   * </p>
+   */
+  @Override
+  public double calcSherwoodNumber(int phaseNum, double reynoldsNumber, double schmidtNumber,
+      FlowNodeInterface node) {
+    // Ranz-Marshall correlation for spherical particles
+    // Sh = 2 + 0.6 * Re^0.5 * Sc^0.33
+    // Valid for both bubbles (phaseNum=0) and droplets (phaseNum=1)
+    return 2.0 + 0.6 * Math.pow(reynoldsNumber, 0.5) * Math.pow(schmidtNumber, 0.33);
+  }
+
+  /**
+   * <p>
+   * Calculates the Nusselt number for droplet/bubble heat transfer using Ranz-Marshall correlation.
+   * Nu = 2 + 0.6 * Re^0.5 * Pr^0.33
+   * </p>
+   */
+  @Override
+  public double calcNusseltNumber(int phaseNum, double reynoldsNumber, double prandtlNumber,
+      FlowNodeInterface node) {
+    // Ranz-Marshall correlation for heat transfer
+    // Nu = 2 + 0.6 * Re^0.5 * Pr^0.33
+    return 2.0 + 0.6 * Math.pow(reynoldsNumber, 0.5) * Math.pow(prandtlNumber, 0.33);
   }
 
   /** {@inheritDoc} */
