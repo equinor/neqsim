@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
@@ -1186,7 +1187,7 @@ public class TwoPhasePipeFlowSystemTest {
 
     // ======== Print comparison ========
     System.out.printf("%-30s %12s%n", "Model", "Pressure Drop (bar)");
-    System.out.println("-".repeat(45));
+    System.out.println("---------------------------------------------");
     System.out.printf("%-30s %12.4f%n", "Beggs-Brill", beggsBrillsDp);
     System.out.printf("%-30s %12.4f%n", "TwoFluidPipe", twoFluidPipeDp);
     System.out.printf("%-30s %12.4f%n", "TransientPipe", transientPipeDp);
@@ -1401,7 +1402,7 @@ public class TwoPhasePipeFlowSystemTest {
 
     // ======== Print comparison ========
     System.out.printf("%-30s %12s%n", "Model", "Pressure Drop (bar)");
-    System.out.println("-".repeat(45));
+    System.out.println("---------------------------------------------");
     System.out.printf("%-30s %12.4f%n", "Beggs-Brill", beggsBrillsDp);
     System.out.printf("%-30s %12.4f%n", "TwoFluidPipe", twoFluidPipeDp);
     System.out.printf("%-30s %12.4f%n", "TransientPipe", transientPipeDp);
@@ -1585,7 +1586,7 @@ public class TwoPhasePipeFlowSystemTest {
 
     // ======== Print comparison ========
     System.out.printf("%-30s %12s%n", "Model", "Pressure Drop (bar)");
-    System.out.println("-".repeat(45));
+    System.out.println("---------------------------------------------");
     System.out.printf("%-30s %12.4f%n", "Beggs-Brill", beggsBrillsDp);
     System.out.printf("%-30s %12.4f%n", "TwoFluidPipe", twoFluidPipeDp);
     System.out.printf("%-30s %12.4f%n", "TransientPipe", transientPipeDp);
@@ -1725,7 +1726,7 @@ public class TwoPhasePipeFlowSystemTest {
     int[] nodesToCheck = {0, totalNodes / 2, totalNodes - 1};
 
     for (int nodeIdx : nodesToCheck) {
-      var node = twoPhaseFlowSystem.getNode(nodeIdx);
+      FlowNodeInterface node = twoPhaseFlowSystem.getNode(nodeIdx);
       double nodeP = node.getBulkSystem().getPressure();
       double nodeT = node.getBulkSystem().getTemperature() - 273.15;
       int numPhases = node.getBulkSystem().getNumberOfPhases();
