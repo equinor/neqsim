@@ -1,5 +1,6 @@
 package neqsim.process.equipment.reservoir.examples;
 
+import org.apache.commons.lang3.StringUtils;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -65,9 +66,9 @@ public class WellToOilStabilizationExample {
    * @param args command line arguments (not used)
    */
   public static void main(String[] args) {
-    System.out.println("=".repeat(70));
+    System.out.println(StringUtils.repeat("=", 70));
     System.out.println("NeqSim Well-to-Oil-Stabilization Production System Example");
-    System.out.println("=".repeat(70));
+    System.out.println(StringUtils.repeat("=", 70));
 
     // =========================================================================
     // STEP 1: Define Reservoir Fluid
@@ -286,9 +287,9 @@ public class WellToOilStabilizationExample {
     // =========================================================================
     // STEP 9: Results Summary
     // =========================================================================
-    System.out.println("\n" + "=".repeat(70));
+    System.out.println("\n" + StringUtils.repeat("=", 70));
     System.out.println("SIMULATION RESULTS");
-    System.out.println("=".repeat(70));
+    System.out.println(StringUtils.repeat("=", 70));
 
     // Well Performance (IPR + VLP results)
     System.out.println("\n--- WELL PERFORMANCE (IPR + VLP) ---");
@@ -352,8 +353,8 @@ public class WellToOilStabilizationExample {
         String.format("   Export Compressor:     %.0f kW", exportCompressor.getPower("kW")));
     System.out.println(String.format("   Total Power:           %.0f kW", totalPower));
 
-    System.out.println("\n" + "=".repeat(70));
+    System.out.println("\n" + StringUtils.repeat("=", 70));
     System.out.println("Simulation completed successfully!");
-    System.out.println("=".repeat(70));
+    System.out.println(StringUtils.repeat("=", 70));
   }
 }

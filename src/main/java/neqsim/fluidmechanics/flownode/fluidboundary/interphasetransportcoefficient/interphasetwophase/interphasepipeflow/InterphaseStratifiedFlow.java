@@ -4,7 +4,13 @@ import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 
 /**
  * <p>
- * InterphaseStratifiedFlow class.
+ * InterphaseStratifiedFlow class for stratified two-phase pipe flow.
+ * </p>
+ *
+ * <p>
+ * Implements transport coefficient correlations specific to stratified flow regime, where gas flows
+ * above a liquid layer with a relatively flat interface. The correlations are based on Solbraa
+ * (2002) and Yih &amp; Chen (1982) for liquid-side mass transfer.
  * </p>
  *
  * @author esol
@@ -31,6 +37,44 @@ public class InterphaseStratifiedFlow extends InterphaseTwoPhasePipeFlow
    */
   public InterphaseStratifiedFlow(FlowNodeInterface node) {
     // flowNode = node;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For stratified flow, the Sherwood number correlation depends on the flow regime in each phase.
+   * </p>
+   * <ul>
+   * <li>Gas phase: Uses correlations for flow over a liquid surface</li>
+   * <li>Liquid phase: Uses Yih &amp; Chen (1982) correlations for wavy film mass transfer</li>
+   * </ul>
+   */
+  @Override
+  public double calcSherwoodNumber(int phaseNum, double reynoldsNumber, double schmidtNumber,
+      FlowNodeInterface node) {
+    if (phaseNum == 0) {
+      // Gas phase Sherwood number
+      if (reynoldsNumber < 2300) {
+        // Laminar flow over liquid surface
+        return 3.66;
+      } else {
+        // Turbulent flow - use Chilton-Colburn analogy
+        return 0.023 * Math.pow(reynoldsNumber, 0.83) * Math.pow(schmidtNumber, 0.33);
+      }
+    } else {
+      // Liquid phase Sherwood number (Yih & Chen, 1982)
+      if (reynoldsNumber < 300) {
+        // Low Reynolds number regime
+        return 1.099e-2 * Math.pow(reynoldsNumber, 0.3955) * Math.pow(schmidtNumber, 0.5);
+      } else if (reynoldsNumber < 1600) {
+        // Transitional regime
+        return 2.995e-2 * Math.pow(reynoldsNumber, 0.2134) * Math.pow(schmidtNumber, 0.5);
+      } else {
+        // High Reynolds number regime
+        return 9.777e-4 * Math.pow(reynoldsNumber, 0.6804) * Math.pow(schmidtNumber, 0.5);
+      }
+    }
   }
 
   /** {@inheritDoc} */

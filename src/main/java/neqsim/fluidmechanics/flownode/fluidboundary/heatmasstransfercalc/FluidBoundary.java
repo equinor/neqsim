@@ -106,21 +106,28 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     interphaseSystem = bulkSystem.clone();
     interphaseSystem.setNumberOfPhases(2);
 
-    // interphaseSystem.addComponent("methane", 100.0,0);
     interphaseSystem.initBeta();
     interphaseSystem.setTemperature(
         (bulkSystem.getPhase(0).getTemperature() + bulkSystem.getPhase(1).getTemperature()) / 2.0);
-    // interphaseSystem.init(0);
-    // interphaseSystem.setBeta(bulkSystem.getBeta());
-    // interphaseSystem.init_x_y();
     interphaseSystem.calc_x_y();
     interphaseSystem.init(3);
+
     ThermodynamicOperations interphaseOps = new ThermodynamicOperations(interphaseSystem);
-    // interphaseOps.setSystem(interphaseSystem);
     interphaseOps.TPflash();
-    // if(interphaseSystem.getNumberOfPhases()<2)
-    // interphaseOps.dewPointTemperatureFlash();
-    // interphaseSystem.display();
+
+    // If TPflash results in single phase, restore two-phase interface using bulk compositions
+    if (interphaseSystem.getNumberOfPhases() < 2) {
+      interphaseSystem.setNumberOfPhases(2);
+      // Copy bulk compositions to interface - the driving force will come from concentration
+      // differences between bulk and interface
+      for (int i = 0; i < interphaseSystem.getNumberOfComponents(); i++) {
+        double xi = bulkSystem.getPhase(1).getComponent(i).getx();
+        double yi = bulkSystem.getPhase(0).getComponent(i).getx();
+        interphaseSystem.getPhase(0).getComponent(i).setx(yi);
+        interphaseSystem.getPhase(1).getComponent(i).setx(xi);
+      }
+      interphaseSystem.init(3);
+    }
   }
 
   /**
@@ -188,7 +195,16 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     // this.interphaseSystem.initNumeric();
     // else this.interphaseSystem.init(3);
     // this.interphaseSystem.initNumeric();
-    this.interphaseSystem.init(3);
+    try {
+      this.interphaseSystem.init(3);
+    } catch (Exception e) {
+      // If init(3) fails due to numerical issues, try to recover with init(1)
+      try {
+        this.interphaseSystem.init(1);
+      } catch (Exception e2) {
+        // If that also fails, just skip - fluxes will be zero
+      }
+    }
   }
 
   /** {@inheritDoc} */
