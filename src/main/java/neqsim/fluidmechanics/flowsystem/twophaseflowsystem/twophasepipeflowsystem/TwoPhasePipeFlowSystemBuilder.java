@@ -341,12 +341,11 @@ public class TwoPhasePipeFlowSystemBuilder {
    * Builds the TwoPhasePipeFlowSystem.
    *
    * @return the configured TwoPhasePipeFlowSystem
-   * @throws IllegalStateException if required parameters are not set
+   * @throws IllegalStateException if required parameters are not set or invalid
    */
   public TwoPhasePipeFlowSystem build() {
-    if (fluid == null) {
-      throw new IllegalStateException("Fluid system must be set using withFluid()");
-    }
+    // Validate required parameters
+    validateParameters();
 
     TwoPhasePipeFlowSystem pipe = new TwoPhasePipeFlowSystem();
     pipe.setInletThermoSystem(fluid);
@@ -430,6 +429,68 @@ public class TwoPhasePipeFlowSystemBuilder {
     }
 
     return pipe;
+  }
+
+  /**
+   * Validates all builder parameters before creating the pipe system.
+   *
+   * @throws IllegalStateException if any required parameter is invalid
+   */
+  private void validateParameters() {
+    // Check fluid is set
+    if (fluid == null) {
+      throw new IllegalStateException(
+          "Fluid system must be set using withFluid(). " + "Example: builder().withFluid(myFluid)");
+    }
+
+    // Provide helpful message if fluid might not be properly initialized
+    if (fluid.getNumberOfComponents() == 0) {
+      throw new IllegalStateException(
+          "Fluid system has no components. Add components before building the pipe. "
+              + "Example: fluid.addComponent(\"methane\", 0.1, 0);");
+    }
+
+    // Check geometry parameters
+    if (diameter <= 0) {
+      throw new IllegalStateException("Pipe diameter must be positive. Got: " + diameter + " m. "
+          + "Set diameter using withDiameter(value, unit).");
+    }
+
+    if (length <= 0) {
+      throw new IllegalStateException("Pipe length must be positive. Got: " + length + " m. "
+          + "Set length using withLength(value, unit).");
+    }
+
+    if (numberOfLegs < 1) {
+      throw new IllegalStateException(
+          "Number of legs must be at least 1. Got: " + numberOfLegs + ".");
+    }
+
+    if (nodesPerLeg < 1) {
+      throw new IllegalStateException("Nodes per leg must be at least 1. Got: " + nodesPerLeg + ". "
+          + "Set nodes using withNodes(n) or withLegs(legs, nodesPerLeg).");
+    }
+
+    // Warn about very coarse discretization
+    int totalNodes = numberOfLegs * nodesPerLeg;
+    if (totalNodes < 5 && length > 100) {
+      // This is just a warning - we don't throw
+      System.err.println("Warning: Only " + totalNodes + " nodes for a " + length
+          + " m pipe may give inaccurate results. " + "Consider using at least 10-20 nodes.");
+    }
+
+    // Validate temperature settings
+    if (wallHeatTransferModel == WallHeatTransferModel.CONSTANT_WALL_TEMPERATURE) {
+      if (wallTemperature <= 0) {
+        throw new IllegalStateException(
+            "Wall temperature must be positive (in Kelvin). Got: " + wallTemperature + " K.");
+      }
+    }
+
+    if (ambientTemperature <= 0) {
+      throw new IllegalStateException(
+          "Ambient temperature must be positive (in Kelvin). Got: " + ambientTemperature + " K.");
+    }
   }
 
   /**

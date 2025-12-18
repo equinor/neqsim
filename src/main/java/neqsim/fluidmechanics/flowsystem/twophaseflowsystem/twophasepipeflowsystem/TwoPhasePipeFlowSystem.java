@@ -252,6 +252,177 @@ public class TwoPhasePipeFlowSystem
     return TwoPhasePipeFlowSystemBuilder.create();
   }
 
+  // ==================== STATIC FACTORY METHODS ====================
+
+  /**
+   * Creates a horizontal pipe with default settings.
+   *
+   * <p>
+   * This is a convenience factory method for the most common use case: a horizontal pipe with
+   * stratified flow pattern. The pipe is created, initialized, and ready for solving.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.horizontalPipe(fluid, 0.1, 1000, 100);
+   * pipe.enableNonEquilibriumMassTransfer();
+   * PipeFlowResult result = pipe.solve();
+   * </pre>
+   *
+   * @param fluid the thermodynamic system (must have 2 phases)
+   * @param diameterMeters pipe inner diameter in meters
+   * @param lengthMeters pipe length in meters
+   * @param nodes number of calculation nodes
+   * @return a configured and initialized TwoPhasePipeFlowSystem
+   * @throws IllegalArgumentException if fluid is null or parameters are invalid
+   */
+  public static TwoPhasePipeFlowSystem horizontalPipe(neqsim.thermo.system.SystemInterface fluid,
+      double diameterMeters, double lengthMeters, int nodes) {
+    validateFluid(fluid);
+    validateGeometry(diameterMeters, lengthMeters, nodes);
+
+    return builder().withFluid(fluid).withDiameter(diameterMeters, "m")
+        .withLength(lengthMeters, "m").withNodes(nodes).horizontal()
+        .withFlowPattern(FlowPattern.STRATIFIED).build();
+  }
+
+  /**
+   * Creates a vertical pipe with specified flow direction.
+   *
+   * <p>
+   * For vertical pipes, the flow pattern defaults to BUBBLE for upward flow and ANNULAR for
+   * downward flow.
+   * </p>
+   *
+   * @param fluid the thermodynamic system (must have 2 phases)
+   * @param diameterMeters pipe inner diameter in meters
+   * @param lengthMeters pipe length in meters
+   * @param nodes number of calculation nodes
+   * @param upwardFlow true for upward flow, false for downward flow
+   * @return a configured and initialized TwoPhasePipeFlowSystem
+   * @throws IllegalArgumentException if fluid is null or parameters are invalid
+   */
+  public static TwoPhasePipeFlowSystem verticalPipe(neqsim.thermo.system.SystemInterface fluid,
+      double diameterMeters, double lengthMeters, int nodes, boolean upwardFlow) {
+    validateFluid(fluid);
+    validateGeometry(diameterMeters, lengthMeters, nodes);
+
+    FlowPattern defaultPattern = upwardFlow ? FlowPattern.BUBBLE : FlowPattern.ANNULAR;
+
+    return builder().withFluid(fluid).withDiameter(diameterMeters, "m")
+        .withLength(lengthMeters, "m").withNodes(nodes).vertical(upwardFlow)
+        .withFlowPattern(defaultPattern).build();
+  }
+
+  /**
+   * Creates an inclined pipe with specified angle.
+   *
+   * @param fluid the thermodynamic system (must have 2 phases)
+   * @param diameterMeters pipe inner diameter in meters
+   * @param lengthMeters pipe length in meters
+   * @param nodes number of calculation nodes
+   * @param inclinationDegrees inclination angle in degrees (positive = upward)
+   * @return a configured and initialized TwoPhasePipeFlowSystem
+   * @throws IllegalArgumentException if fluid is null or parameters are invalid
+   */
+  public static TwoPhasePipeFlowSystem inclinedPipe(neqsim.thermo.system.SystemInterface fluid,
+      double diameterMeters, double lengthMeters, int nodes, double inclinationDegrees) {
+    validateFluid(fluid);
+    validateGeometry(diameterMeters, lengthMeters, nodes);
+
+    return builder().withFluid(fluid).withDiameter(diameterMeters, "m")
+        .withLength(lengthMeters, "m").withNodes(nodes)
+        .withInclination(inclinationDegrees, "degrees").withFlowPattern(FlowPattern.STRATIFIED)
+        .build();
+  }
+
+  /**
+   * Creates a subsea pipeline with typical seawater cooling conditions.
+   *
+   * <p>
+   * This factory method sets up a horizontal pipe with convective boundary conditions typical of
+   * subsea pipelines: seawater temperature and high external heat transfer coefficient.
+   * </p>
+   *
+   * @param fluid the thermodynamic system (must have 2 phases)
+   * @param diameterMeters pipe inner diameter in meters
+   * @param lengthMeters pipe length in meters
+   * @param nodes number of calculation nodes
+   * @param seawaterTempCelsius seawater temperature in Celsius
+   * @return a configured and initialized TwoPhasePipeFlowSystem
+   * @throws IllegalArgumentException if fluid is null or parameters are invalid
+   */
+  public static TwoPhasePipeFlowSystem subseaPipe(neqsim.thermo.system.SystemInterface fluid,
+      double diameterMeters, double lengthMeters, int nodes, double seawaterTempCelsius) {
+    validateFluid(fluid);
+    validateGeometry(diameterMeters, lengthMeters, nodes);
+
+    // Typical subsea pipeline: high external heat transfer due to seawater convection
+    double seawaterHeatTransferCoeff = 500.0; // W/(m²·K) - typical for flowing seawater
+
+    return builder().withFluid(fluid).withDiameter(diameterMeters, "m")
+        .withLength(lengthMeters, "m").withNodes(nodes).horizontal()
+        .withFlowPattern(FlowPattern.STRATIFIED)
+        .withConvectiveBoundary(seawaterTempCelsius, "C", seawaterHeatTransferCoeff).build();
+  }
+
+  /**
+   * Creates a buried onshore pipeline with soil thermal conditions.
+   *
+   * <p>
+   * This factory method sets up a horizontal pipe with convective boundary conditions typical of
+   * buried onshore pipelines: ground temperature and low external heat transfer coefficient.
+   * </p>
+   *
+   * @param fluid the thermodynamic system (must have 2 phases)
+   * @param diameterMeters pipe inner diameter in meters
+   * @param lengthMeters pipe length in meters
+   * @param nodes number of calculation nodes
+   * @param groundTempCelsius ground/soil temperature in Celsius
+   * @return a configured and initialized TwoPhasePipeFlowSystem
+   * @throws IllegalArgumentException if fluid is null or parameters are invalid
+   */
+  public static TwoPhasePipeFlowSystem buriedPipe(neqsim.thermo.system.SystemInterface fluid,
+      double diameterMeters, double lengthMeters, int nodes, double groundTempCelsius) {
+    validateFluid(fluid);
+    validateGeometry(diameterMeters, lengthMeters, nodes);
+
+    // Typical buried pipeline: low external heat transfer due to soil conduction
+    double soilHeatTransferCoeff = 5.0; // W/(m²·K) - typical for buried pipe in soil
+
+    return builder().withFluid(fluid).withDiameter(diameterMeters, "m")
+        .withLength(lengthMeters, "m").withNodes(nodes).horizontal()
+        .withFlowPattern(FlowPattern.STRATIFIED)
+        .withConvectiveBoundary(groundTempCelsius, "C", soilHeatTransferCoeff).build();
+  }
+
+  /**
+   * Validates the fluid system before creating a pipe.
+   */
+  private static void validateFluid(neqsim.thermo.system.SystemInterface fluid) {
+    if (fluid == null) {
+      throw new IllegalArgumentException("Fluid system cannot be null");
+    }
+  }
+
+  /**
+   * Validates geometry parameters.
+   */
+  private static void validateGeometry(double diameter, double length, int nodes) {
+    if (diameter <= 0) {
+      throw new IllegalArgumentException("Diameter must be positive, got: " + diameter);
+    }
+    if (length <= 0) {
+      throw new IllegalArgumentException("Length must be positive, got: " + length);
+    }
+    if (nodes < 2) {
+      throw new IllegalArgumentException("Number of nodes must be at least 2, got: " + nodes);
+    }
+  }
+
   /** {@inheritDoc} */
   @Override
   public void createSystem() {
@@ -352,6 +523,85 @@ public class TwoPhasePipeFlowSystem
    */
   public void solveSteadyState(UUID id) {
     solveSteadyState(solverTypeEnum.getLegacyType(), id);
+  }
+
+  // ==================== SIMPLIFIED SOLVE API ====================
+
+  /**
+   * Solves the pipe flow system and returns a structured result object.
+   *
+   * <p>
+   * This is the recommended method for new code. It solves the system using the configured solver
+   * type and returns all results in a convenient {@link PipeFlowResult} container.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.horizontalPipe(fluid, 0.1, 1000, 100);
+   * pipe.enableNonEquilibriumMassTransfer();
+   * PipeFlowResult result = pipe.solve();
+   *
+   * System.out.println("Pressure drop: " + result.getTotalPressureDrop() + " bar");
+   * System.out.println(result); // prints summary
+   * </pre>
+   *
+   * @return a {@link PipeFlowResult} containing all simulation results
+   */
+  public PipeFlowResult solve() {
+    solveSteadyState(UUID.randomUUID());
+    return PipeFlowResult.fromPipeSystem(this);
+  }
+
+  /**
+   * Solves the pipe flow system with non-equilibrium mass transfer enabled.
+   *
+   * <p>
+   * This is a convenience method that enables non-equilibrium mass transfer, solves the system, and
+   * returns the results. Equivalent to calling:
+   * </p>
+   * 
+   * <pre>
+   * pipe.enableNonEquilibriumMassTransfer();
+   * return pipe.solve();
+   * </pre>
+   *
+   * @return a {@link PipeFlowResult} containing all simulation results
+   */
+  public PipeFlowResult solveWithMassTransfer() {
+    enableNonEquilibriumMassTransfer();
+    return solve();
+  }
+
+  /**
+   * Solves the pipe flow system with non-equilibrium heat and mass transfer enabled.
+   *
+   * <p>
+   * This is a convenience method that enables both non-equilibrium mass and heat transfer, solves
+   * the system, and returns the results.
+   * </p>
+   *
+   * @return a {@link PipeFlowResult} containing all simulation results
+   */
+  public PipeFlowResult solveWithHeatAndMassTransfer() {
+    enableNonEquilibriumMassTransfer();
+    enableNonEquilibriumHeatTransfer();
+    return solve();
+  }
+
+  /**
+   * Solves the pipe flow system using legacy integer type parameter.
+   *
+   * @param type the solver type (deprecated - use {@link #setSolverType} instead)
+   * @deprecated Use {@link #solve()} or {@link #solveSteadyState(UUID)} instead. Set the solver
+   *             type using {@link #setSolverType} before calling. This method ignores the type
+   *             parameter and uses the configured solver type enum.
+   */
+  @Deprecated
+  public void solveSteadyState(int type) {
+    solveSteadyState(type, UUID.randomUUID());
   }
 
   /** {@inheritDoc} */
