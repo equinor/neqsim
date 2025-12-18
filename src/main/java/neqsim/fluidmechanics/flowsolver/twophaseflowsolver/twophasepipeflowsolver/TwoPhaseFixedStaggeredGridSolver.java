@@ -767,6 +767,38 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
   }
 
   /**
+   * Check for phase transitions at each node by performing TPflash. Returns the maximum number of
+   * phases found across all nodes. If a new phase is detected, the node is re-initialized for
+   * two-phase flow.
+   *
+   * @return maximum number of phases found (1 or 2)
+   */
+  public int checkPhaseTransitions() {
+    int maxPhases = 1;
+    for (int i = 0; i < numberOfNodes; i++) {
+      neqsim.thermo.system.SystemInterface nodeSystem = pipe.getNode(i).getBulkSystem();
+      int prevPhases = nodeSystem.getNumberOfPhases();
+
+      // Perform TPflash to check for phase formation
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+          new neqsim.thermodynamicoperations.ThermodynamicOperations(nodeSystem);
+      ops.TPflash();
+
+      int newPhases = nodeSystem.getNumberOfPhases();
+      if (newPhases > maxPhases) {
+        maxPhases = newPhases;
+      }
+
+      // If a new phase formed, reinitialize the node for two-phase calculations
+      if (newPhases > prevPhases) {
+        nodeSystem.initPhysicalProperties();
+        pipe.getNode(i).init();
+      }
+    }
+    return Math.min(maxPhases, 2);
+  }
+
+  /**
    * <p>
    * initPhaseFraction.
    * </p>
@@ -793,7 +825,9 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         updated = maxFraction;
       }
       pipe.getNode(i).setPhaseFraction(phase, updated);
-      pipe.getNode(i).setPhaseFraction(0, 1.0 - updated);
+      // Set the complementary phase fraction (the OTHER phase)
+      int otherPhase = (phase == 0) ? 1 : 0;
+      pipe.getNode(i).setPhaseFraction(otherPhase, 1.0 - updated);
       pipe.getNode(i).init();
     }
   }
@@ -1616,47 +1650,58 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         .getNumberOfComponents()][numberOfNodes];
     initMatrix();
 
+    // Track number of phases - may change during iteration due to phase transitions
+    int numPhasesToSolve = pipe.getNode(0).getBulkSystem().getNumberOfPhases();
+    if (numPhasesToSolve < 1) {
+      numPhasesToSolve = 1;
+    }
+    if (numPhasesToSolve > 2) {
+      numPhasesToSolve = 2;
+    }
+
     do {
       // maxDiffOld = maxDiff;
       maxDiff = 0;
       iterTop++;
 
-      // Determine number of phases to solve for
-      int numPhasesToSolve = pipe.getNode(0).getBulkSystem().getNumberOfPhases();
-      if (numPhasesToSolve < 1) {
-        numPhasesToSolve = 1;
-      }
-      if (numPhasesToSolve > 2) {
-        numPhasesToSolve = 2;
-      }
-
       // Solve momentum equations (velocity and pressure drop)
       iter = 0;
       if (solverTypeEnum.solveMomentum()) {
-        for (int phaseNum = 0; phaseNum < numPhasesToSolve; phaseNum++) {
-          do {
-            iter++;
-            setImpulsMatrixTDMA(phaseNum);
-            Matrix solOld = solMatrix[phaseNum].copy();
-            d = TDMAsolve.solve(a, b, c, r);
-            solMatrix[phaseNum] = new Matrix(d, 1).transpose();
-            diffMatrix = solMatrix[phaseNum].minus(solOld);
-            // System.out.println("diff impuls: "+
-            // diffMatrix.norm2()/solMatrix[phase].norm2());
-            diff = Math.abs(diffMatrix.norm1() / solMatrix[phaseNum].norm1());
-            if (diff > maxDiff) {
-              maxDiff = diff;
-            }
-            initVelocity(phaseNum);
-          } while (diff > 1e-10 && iter < 100);
+        // For single-phase flow, skip TDMA momentum solver
+        // Velocity is constant along the pipe for incompressible flow
+        // Just calculate the pressure drop from friction
+        if (numPhasesToSolve < 2) {
+          // Single-phase: preserve initial velocity, only update pressure
+          updatePressureFromMomentumBalance();
+          maxDiff = 0; // No velocity iteration needed
+        } else {
+          // Two-phase: use full TDMA momentum solver
+          for (int phaseNum = 0; phaseNum < numPhasesToSolve; phaseNum++) {
+            do {
+              iter++;
+              setImpulsMatrixTDMA(phaseNum);
+              Matrix solOld = solMatrix[phaseNum].copy();
+              d = TDMAsolve.solve(a, b, c, r);
+              solMatrix[phaseNum] = new Matrix(d, 1).transpose();
+              diffMatrix = solMatrix[phaseNum].minus(solOld);
+              // System.out.println("diff impuls: "+
+              // diffMatrix.norm2()/solMatrix[phase].norm2());
+              diff = Math.abs(diffMatrix.norm1() / solMatrix[phaseNum].norm1());
+              if (diff > maxDiff) {
+                maxDiff = diff;
+              }
+              initVelocity(phaseNum);
+            } while (diff > 1e-10 && iter < 100);
+          }
+          // Update pressure profile based on current velocities (integrated momentum balance)
+          updatePressureFromMomentumBalance();
         }
-        // Update pressure profile based on current velocities (integrated momentum balance)
-        updatePressureFromMomentumBalance();
       }
 
       // Solve phase fraction equations
+      // Skip for single-phase flow (phase fraction is 1.0 for the existing phase)
       iter = 0;
-      if (solverTypeEnum.solvePhaseFraction()) {
+      if (solverTypeEnum.solvePhaseFraction() && numPhasesToSolve >= 2) {
         for (int phaseNum = 1; phaseNum < 2; phaseNum++) {
           do {
             iter++;
@@ -1701,6 +1746,12 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
             }
             initTemperature(phaseNum);
           } while (diff > 1e-15 && iter < 100);
+        }
+
+        // Check for phase transitions after temperature changes (TPflash)
+        // If we were in single-phase mode and a new phase forms, switch to two-phase mode
+        if (numPhasesToSolve < 2) {
+          numPhasesToSolve = checkPhaseTransitions();
         }
       }
 

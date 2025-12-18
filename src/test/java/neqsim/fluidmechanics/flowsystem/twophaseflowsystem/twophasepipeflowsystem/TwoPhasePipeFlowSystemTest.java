@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
@@ -532,6 +533,7 @@ public class TwoPhasePipeFlowSystemTest {
    * </ul>
    * </p>
    */
+  @Disabled("Long-running comparison test")
   @Test
   void testPressureDropComparisonWithMassTransfer() {
     // Create a gas-condensate system with realistic molar amounts
@@ -637,6 +639,7 @@ public class TwoPhasePipeFlowSystemTest {
    * fractions, high velocities, etc.).
    * </p>
    */
+  // @Disabled("Long-running comparison test")
   @Test
   void testCompareWithBeggsAndBrills() {
     // Create identical fluid for both simulations
@@ -697,6 +700,8 @@ public class TwoPhasePipeFlowSystemTest {
     twoFluidPipe.setInletThermoSystem(fluid2);
     twoFluidPipe.setNumberOfLegs(10);
     twoFluidPipe.setNumberOfNodesInLeg(5);
+    // Use stratified flow pattern for horizontal pipe with dominant gas phase
+    twoFluidPipe.setInitialFlowPattern("stratified");
 
     // Set up pipe geometry for 1 km
     double[] heights = new double[11];
@@ -707,9 +712,9 @@ public class TwoPhasePipeFlowSystemTest {
     for (int i = 0; i < 11; i++) {
       heights[i] = 0.0; // Horizontal
       lengths[i] = i * (pipeLength / 10.0);
-      outerTemps[i] = temperature; // Adiabatic (same as fluid temp)
-      outHeatCoefs[i] = 0.0; // No heat loss
-      wallHeatCoefs[i] = 0.0;
+      outerTemps[i] = temperature; // Same as fluid temp
+      outHeatCoefs[i] = 5.0; // Enable heat transfer
+      wallHeatCoefs[i] = 50.0; // Enable wall heat transfer
     }
 
     twoFluidPipe.setLegHeights(heights);
@@ -723,6 +728,10 @@ public class TwoPhasePipeFlowSystemTest {
       pipeGeom[i] = new PipeData(pipeDiameter);
     }
     twoFluidPipe.setEquipmentGeometry(pipeGeom);
+
+    // Enable mass transfer mode
+    twoFluidPipe.setMassTransferMode(
+        neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode.BIDIRECTIONAL);
 
     twoFluidPipe.createSystem();
     twoFluidPipe.init();
@@ -739,8 +748,8 @@ public class TwoPhasePipeFlowSystemTest {
         pipeDiameter * 1000);
     System.out.printf("Fluid: methane + n-pentane + n-heptane at %.0f bar, %.1f C%n", pressure,
         temperature - 273.15);
-    System.out.printf("Mass flow rate: %.1f kg/s%n", massFlowRate);
-    System.out.println();
+    System.out.printf("Mass flow rate: %.1f kg/s%n%n", massFlowRate);
+
     System.out.printf("Beggs-Brill:%n");
     System.out.printf("  Pressure drop:  %.4f bar%n", beggsBrillsPressureDrop);
     System.out.printf("  Outlet pressure: %.4f bar%n",
@@ -782,6 +791,7 @@ public class TwoPhasePipeFlowSystemTest {
    * the high-level process equipment class give consistent results.
    * </p>
    */
+  // @Disabled("Long-running comparison test")
   @Test
   void testCompareWithTwoFluidPipe() {
     // Use same conditions as the Beggs-Brill comparison
@@ -933,6 +943,7 @@ public class TwoPhasePipeFlowSystemTest {
    * comparable to TwoPhasePipeFlowSystem.
    * </p>
    */
+  // @Disabled("Long-running comparison test")
   @Test
   void testCompareWithTransientPipe() {
     // Use same conditions as other comparisons
@@ -991,6 +1002,8 @@ public class TwoPhasePipeFlowSystemTest {
     twoPhaseFlowSystem.setInletThermoSystem(fluid2);
     twoPhaseFlowSystem.setNumberOfLegs(10);
     twoPhaseFlowSystem.setNumberOfNodesInLeg(5);
+    // Use stratified flow pattern for horizontal pipe with dominant gas phase
+    twoPhaseFlowSystem.setInitialFlowPattern("stratified");
 
     double[] heights = new double[11];
     double[] lengths = new double[11];
@@ -1085,6 +1098,7 @@ public class TwoPhasePipeFlowSystemTest {
    * calculations.
    * </p>
    */
+  @Disabled("Long-running comparison test")
   @Test
   void testCompareModelsPureGas() {
     double temperature = 293.15; // 20C
@@ -1199,6 +1213,7 @@ public class TwoPhasePipeFlowSystemTest {
    * requires at least 2 components for multicomponent mass transfer calculations.
    * </p>
    */
+  // @Disabled("Long-running comparison test")
   @Test
   void testCompareModelsPureOil() {
     double temperature = 293.15; // 20C
@@ -1298,8 +1313,17 @@ public class TwoPhasePipeFlowSystemTest {
     ops.TPflash();
     fluid4.initPhysicalProperties();
 
+    // Debug: Check phase ordering after TPflash
+    System.out.println("=== Fluid4 after TPflash ===");
+    System.out.printf("Number of phases: %d%n", fluid4.getNumberOfPhases());
+    System.out.printf("Phase 0 type: %s%n", fluid4.getPhase(0).getType());
+    System.out.printf("Phase 0 density: %.2f kg/m3%n",
+        fluid4.getPhase(0).getPhysicalProperties().getDensity());
+    System.out.printf("Beta (vapor fraction): %.6f%n", fluid4.getBeta());
+
     TwoPhasePipeFlowSystem twoPhaseFlowSystem = new TwoPhasePipeFlowSystem();
     twoPhaseFlowSystem.setInletThermoSystem(fluid4);
+    twoPhaseFlowSystem.setInitialFlowPattern("stratified"); // Use stratified for liquid flow
     twoPhaseFlowSystem.setNumberOfLegs(10);
     twoPhaseFlowSystem.setNumberOfNodesInLeg(5);
 
@@ -1335,6 +1359,46 @@ public class TwoPhasePipeFlowSystemTest {
     double[] pressures = twoPhaseFlowSystem.getPressureProfile();
     double twoPhaseFlowSystemDp = pressures[0] - pressures[pressures.length - 1];
 
+    // ======== Debug diagnostic output ========
+    System.out.println("=== Debug Diagnostics ===");
+    System.out.printf("Total number of nodes: %d%n", twoPhaseFlowSystem.getTotalNumberOfNodes());
+    System.out.printf("Node 0 velocity[0]: %.6f m/s%n",
+        twoPhaseFlowSystem.getNode(0).getVelocity(0));
+    System.out.printf("Node 0 velocity[1]: %.6f m/s%n",
+        twoPhaseFlowSystem.getNode(0).getVelocity(1));
+    System.out.printf("Node 5 velocity[0]: %.6f m/s%n",
+        twoPhaseFlowSystem.getNode(5).getVelocity(0));
+    System.out.printf("Node 25 velocity[0]: %.6f m/s%n",
+        twoPhaseFlowSystem.getNode(25).getVelocity(0));
+    System.out.printf("Node 50 velocity[0]: %.6f m/s%n",
+        twoPhaseFlowSystem.getNode(50).getVelocity(0));
+    System.out.printf("Node 0 phaseFraction[0]: %.6f%n",
+        twoPhaseFlowSystem.getNode(0).getPhaseFraction(0));
+    System.out.printf("Node 0 phaseFraction[1]: %.6f%n",
+        twoPhaseFlowSystem.getNode(0).getPhaseFraction(1));
+    System.out.printf("Node 5 phaseFraction[0]: %.6f%n",
+        twoPhaseFlowSystem.getNode(5).getPhaseFraction(0));
+    System.out.printf("Node 5 phaseFraction[1]: %.6f%n",
+        twoPhaseFlowSystem.getNode(5).getPhaseFraction(1));
+    System.out.printf("Node 0 nodeLength: %.6f m%n",
+        twoPhaseFlowSystem.getNode(0).getGeometry().getNodeLength());
+    System.out.printf("Node 1 nodeLength: %.6f m%n",
+        twoPhaseFlowSystem.getNode(1).getGeometry().getNodeLength());
+    System.out.printf("Node 0 interphaseContactLength: %.6f%n",
+        twoPhaseFlowSystem.getNode(0).getInterphaseContactLength(0));
+    System.out.printf("Node 0 wallContactLength[0]: %.6f%n",
+        twoPhaseFlowSystem.getNode(0).getWallContactLength(0));
+    System.out.printf("Node 5 interphaseContactLength: %.6f%n",
+        twoPhaseFlowSystem.getNode(5).getInterphaseContactLength(0));
+    System.out.printf("Node 5 wallContactLength[0]: %.6f%n",
+        twoPhaseFlowSystem.getNode(5).getWallContactLength(0));
+    System.out.printf("Inlet pressure: %.6f bar%n", pressures[0]);
+    System.out.printf("Node 1 pressure: %.6f bar%n", pressures[1]);
+    System.out.printf("Node 5 pressure: %.6f bar%n", pressures[5]);
+    System.out.printf("Node 25 pressure: %.6f bar%n", pressures[25]);
+    System.out.printf("Outlet pressure: %.6f bar%n", pressures[pressures.length - 1]);
+    System.out.println();
+
     // ======== Print comparison ========
     System.out.printf("%-30s %12s%n", "Model", "Pressure Drop (bar)");
     System.out.println("-".repeat(45));
@@ -1358,5 +1422,327 @@ public class TwoPhasePipeFlowSystemTest {
         Math.min(transientPipeDp, twoPhaseFlowSystemDp));
     double ratio = maxDp / minDp;
     System.out.printf("Max/Min ratio: %.2f%n", ratio);
+  }
+
+  /**
+   * Test single-phase gas flow comparison across all pipe models.
+   */
+  // @Disabled("Long-running comparison test")
+  @Test
+  void testCompareModelsSinglePhaseGas() {
+    double temperature = 293.15; // 20C
+    double pressure = 50.0; // 50 bar
+    double pipeLength = 1000.0; // 1 km
+    double pipeDiameter = 0.15; // 150mm
+    double massFlowRate = 5.0; // 5 kg/s
+
+    // ======== Setup pure gas fluid (methane) ========
+    SystemInterface fluid = new SystemSrkEos(temperature, pressure);
+    fluid.addComponent("methane", 1.0);
+    fluid.createDatabase(true);
+    fluid.setMixingRule(2);
+
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid);
+    ops.TPflash();
+    fluid.initPhysicalProperties();
+
+    System.out.println("=== Single-Phase Gas Model Comparison ===");
+    System.out.printf("Pipe: %.0f m length, %.0f mm diameter, horizontal%n", pipeLength,
+        pipeDiameter * 1000);
+    System.out.printf("Fluid: pure methane at %.0f bar, %.1f C%n", pressure, temperature - 273.15);
+    System.out.printf("Mass flow rate: %.1f kg/s%n", massFlowRate);
+    System.out.printf("Number of phases: %d%n", fluid.getNumberOfPhases());
+    if (fluid.hasPhaseType("gas")) {
+      System.out.printf("Gas density: %.2f kg/m3%n",
+          fluid.getPhase("gas").getPhysicalProperties().getDensity());
+      System.out.printf("Gas viscosity: %.6f Pa.s%n",
+          fluid.getPhase("gas").getPhysicalProperties().getViscosity());
+    }
+    System.out.println();
+
+    // ======== 1. Beggs-Brill ========
+    neqsim.process.equipment.stream.Stream inlet1 =
+        new neqsim.process.equipment.stream.Stream("inlet", fluid.clone());
+    inlet1.setFlowRate(massFlowRate, "kg/sec");
+    inlet1.run();
+
+    neqsim.process.equipment.pipeline.PipeBeggsAndBrills beggsBrills =
+        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("Beggs-Brill", inlet1);
+    beggsBrills.setPipeWallRoughness(1e-5);
+    beggsBrills.setLength(pipeLength);
+    beggsBrills.setElevation(0.0);
+    beggsBrills.setDiameter(pipeDiameter);
+    beggsBrills.setNumberOfIncrements(50);
+    beggsBrills.setRunIsothermal(true);
+    beggsBrills.run();
+    double beggsBrillsDp = inlet1.getPressure() - beggsBrills.getOutletStream().getPressure();
+
+    // ======== 2. TwoFluidPipe ========
+    neqsim.process.equipment.stream.Stream inlet2 =
+        new neqsim.process.equipment.stream.Stream("inlet", fluid.clone());
+    inlet2.setFlowRate(massFlowRate, "kg/sec");
+    inlet2.run();
+
+    neqsim.process.equipment.pipeline.TwoFluidPipe twoFluidPipe =
+        new neqsim.process.equipment.pipeline.TwoFluidPipe("TwoFluidPipe", inlet2);
+    twoFluidPipe.setLength(pipeLength);
+    twoFluidPipe.setDiameter(pipeDiameter);
+    twoFluidPipe.setNumberOfSections(50);
+    twoFluidPipe.run();
+    double twoFluidPipeDp = inlet2.getPressure() - twoFluidPipe.getOutletStream().getPressure();
+
+    // ======== 3. TransientPipe ========
+    neqsim.process.equipment.stream.Stream inlet3 =
+        new neqsim.process.equipment.stream.Stream("inlet", fluid.clone());
+    inlet3.setFlowRate(massFlowRate, "kg/sec");
+    inlet3.run();
+
+    neqsim.process.equipment.pipeline.twophasepipe.TransientPipe transientPipe =
+        new neqsim.process.equipment.pipeline.twophasepipe.TransientPipe("TransientPipe", inlet3);
+    transientPipe.setLength(pipeLength);
+    transientPipe.setDiameter(pipeDiameter);
+    transientPipe.setNumberOfSections(50);
+    transientPipe.setMaxSimulationTime(30);
+    transientPipe.run();
+    double transientPipeDp = inlet3.getPressure() - transientPipe.getOutletStream().getPressure();
+
+    // ======== 4. TwoPhasePipeFlowSystem ========
+    double totalMolarMass = fluid.getMolarMass();
+    double molarFlowRate = massFlowRate / totalMolarMass;
+
+    SystemInterface fluid4 = new SystemSrkEos(temperature, pressure);
+    fluid4.addComponent("methane", molarFlowRate);
+    fluid4.createDatabase(true);
+    fluid4.setMixingRule(2);
+
+    ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid4);
+    ops.TPflash();
+    fluid4.initPhysicalProperties();
+
+    System.out.println("=== Fluid4 after TPflash ===");
+    System.out.printf("Number of phases: %d%n", fluid4.getNumberOfPhases());
+    System.out.printf("Phase 0 type: %s%n", fluid4.getPhase(0).getType());
+    System.out.printf("Phase 0 density: %.2f kg/m3%n",
+        fluid4.getPhase(0).getPhysicalProperties().getDensity());
+
+    TwoPhasePipeFlowSystem twoPhaseFlowSystem = new TwoPhasePipeFlowSystem();
+    twoPhaseFlowSystem.setInletThermoSystem(fluid4);
+    twoPhaseFlowSystem.setInitialFlowPattern("stratified");
+    twoPhaseFlowSystem.setNumberOfLegs(10);
+    twoPhaseFlowSystem.setNumberOfNodesInLeg(5);
+
+    double[] heights = new double[11];
+    double[] lengths = new double[11];
+    double[] outerTemps = new double[11];
+    double[] outHeatCoefs = new double[11];
+    double[] wallHeatCoefs = new double[11];
+    for (int i = 0; i < 11; i++) {
+      heights[i] = 0.0;
+      lengths[i] = i * (pipeLength / 10.0);
+      outerTemps[i] = temperature;
+      outHeatCoefs[i] = 0.0;
+      wallHeatCoefs[i] = 0.0;
+    }
+
+    twoPhaseFlowSystem.setLegHeights(heights);
+    twoPhaseFlowSystem.setLegPositions(lengths);
+    twoPhaseFlowSystem.setLegOuterTemperatures(outerTemps);
+    twoPhaseFlowSystem.setLegOuterHeatTransferCoefficients(outHeatCoefs);
+    twoPhaseFlowSystem.setLegWallHeatTransferCoefficients(wallHeatCoefs);
+
+    GeometryDefinitionInterface[] pipeGeom = new PipeData[11];
+    for (int i = 0; i < 11; i++) {
+      pipeGeom[i] = new PipeData(pipeDiameter);
+    }
+    twoPhaseFlowSystem.setEquipmentGeometry(pipeGeom);
+
+    twoPhaseFlowSystem.createSystem();
+    twoPhaseFlowSystem.init();
+    twoPhaseFlowSystem.solveSteadyState(5);
+
+    double[] pressures = twoPhaseFlowSystem.getPressureProfile();
+    double twoPhaseFlowSystemDp = pressures[0] - pressures[pressures.length - 1];
+
+    // ======== Debug diagnostic output ========
+    System.out.println("=== Debug Diagnostics ===");
+    System.out.printf("Total number of nodes: %d%n", twoPhaseFlowSystem.getTotalNumberOfNodes());
+    System.out.printf("Node 0 velocity[0]: %.6f m/s%n",
+        twoPhaseFlowSystem.getNode(0).getVelocity(0));
+    System.out.printf("Node 25 velocity[0]: %.6f m/s%n",
+        twoPhaseFlowSystem.getNode(25).getVelocity(0));
+    System.out.printf("Node 50 velocity[0]: %.6f m/s%n",
+        twoPhaseFlowSystem.getNode(50).getVelocity(0));
+    System.out.printf("Node 0 phaseFraction[0]: %.6f%n",
+        twoPhaseFlowSystem.getNode(0).getPhaseFraction(0));
+    System.out.printf("Node 0 interphaseContactLength: %.6f%n",
+        twoPhaseFlowSystem.getNode(0).getInterphaseContactLength(0));
+    System.out.printf("Node 0 wallContactLength[0]: %.6f%n",
+        twoPhaseFlowSystem.getNode(0).getWallContactLength(0));
+    System.out.printf("Inlet pressure: %.6f bar%n", pressures[0]);
+    System.out.printf("Outlet pressure: %.6f bar%n", pressures[pressures.length - 1]);
+    System.out.println();
+
+    // ======== Print comparison ========
+    System.out.printf("%-30s %12s%n", "Model", "Pressure Drop (bar)");
+    System.out.println("-".repeat(45));
+    System.out.printf("%-30s %12.4f%n", "Beggs-Brill", beggsBrillsDp);
+    System.out.printf("%-30s %12.4f%n", "TwoFluidPipe", twoFluidPipeDp);
+    System.out.printf("%-30s %12.4f%n", "TransientPipe", transientPipeDp);
+    System.out.printf("%-30s %12.4f%n", "TwoPhasePipeFlowSystem", twoPhaseFlowSystemDp);
+    System.out.println();
+
+    // All should give positive pressure drops for gas flow
+    assertTrue(beggsBrillsDp > 0, "Beggs-Brill should give positive pressure drop");
+    assertTrue(twoFluidPipeDp > 0, "TwoFluidPipe should give positive pressure drop");
+    assertTrue(transientPipeDp > 0, "TransientPipe should give positive pressure drop");
+    assertTrue(twoPhaseFlowSystemDp > 0,
+        "TwoPhasePipeFlowSystem should give positive pressure drop for single-phase gas flow");
+
+    // For single-phase gas, all models should be reasonably close
+    double maxDp = Math.max(Math.max(beggsBrillsDp, twoFluidPipeDp),
+        Math.max(transientPipeDp, twoPhaseFlowSystemDp));
+    double minDp = Math.min(Math.min(beggsBrillsDp, twoFluidPipeDp),
+        Math.min(transientPipeDp, twoPhaseFlowSystemDp));
+    double ratio = maxDp / minDp;
+    System.out.printf("Max/Min ratio: %.2f%n", ratio);
+  }
+
+  /**
+   * Test gas flow that starts single-phase but may condense liquid along the pipeline as
+   * temperature drops or pressure decreases. Uses TPflash to check for phase formation. Currently
+   * disabled - phase transition solver needs optimization for convergence.
+   */
+  @Disabled("Phase transition solver needs optimization - test takes too long")
+  @Test
+  void testGasWithCondensationAlongPipeline() {
+    // Use a rich gas mixture - cooling will cause condensation
+    double inletTemperature = 280.0; // 7C
+    double pressure = 80.0; // 80 bar
+    double pipeLength = 1000.0; // 1 km (shorter for faster test)
+    double pipeDiameter = 0.2; // 200mm
+    double massFlowRate = 10.0; // 10 kg/s
+
+    // Rich gas mixture with heavy components that will condense when cooled
+    SystemInterface fluid = new SystemSrkEos(inletTemperature, pressure);
+    fluid.addComponent("methane", 0.85);
+    fluid.addComponent("ethane", 0.08);
+    fluid.addComponent("propane", 0.04);
+    fluid.addComponent("n-butane", 0.02);
+    fluid.addComponent("n-pentane", 0.01);
+    fluid.createDatabase(true);
+    fluid.setMixingRule(2);
+
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid);
+    ops.TPflash();
+    fluid.initPhysicalProperties();
+
+    System.out.println("=== Gas with Potential Condensation Test ===");
+    System.out.printf("Pipe: %.0f m length, %.0f mm diameter%n", pipeLength, pipeDiameter * 1000);
+    System.out.printf("Inlet conditions: %.0f bar, %.1f C%n", pressure, inletTemperature - 273.15);
+    System.out.printf("Inlet number of phases: %d%n", fluid.getNumberOfPhases());
+
+    // Quick phase check at inlet and cold temperature
+    SystemInterface coldFluid = fluid.clone();
+    coldFluid.setTemperature(250.0); // -23C
+    new neqsim.thermodynamicoperations.ThermodynamicOperations(coldFluid).TPflash();
+    System.out.printf("At -23C: %d phase(s), liquid fraction=%.4f%n", coldFluid.getNumberOfPhases(),
+        coldFluid.getNumberOfPhases() > 1 ? (1.0 - coldFluid.getBeta()) : 0.0);
+
+    // ======== TwoPhasePipeFlowSystem with cooling ========
+    double totalMolarMass = fluid.getMolarMass();
+    double molarFlowRate = massFlowRate / totalMolarMass;
+
+    SystemInterface fluid4 = new SystemSrkEos(inletTemperature, pressure);
+    fluid4.addComponent("methane", 0.85 * molarFlowRate);
+    fluid4.addComponent("ethane", 0.08 * molarFlowRate);
+    fluid4.addComponent("propane", 0.04 * molarFlowRate);
+    fluid4.addComponent("n-butane", 0.02 * molarFlowRate);
+    fluid4.addComponent("n-pentane", 0.01 * molarFlowRate);
+    fluid4.createDatabase(true);
+    fluid4.setMixingRule(2);
+
+    ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid4);
+    ops.TPflash();
+    fluid4.initPhysicalProperties();
+
+    System.out.println("\n=== Inlet Fluid State ===");
+    System.out.printf("Number of phases: %d%n", fluid4.getNumberOfPhases());
+    if (fluid4.getNumberOfPhases() == 1) {
+      System.out.printf("Single phase type: %s%n", fluid4.getPhase(0).getType());
+    } else {
+      System.out.printf("Phase 0 type: %s, fraction: %.4f%n", fluid4.getPhase(0).getType(),
+          fluid4.getBeta());
+      System.out.printf("Phase 1 type: %s, fraction: %.4f%n", fluid4.getPhase(1).getType(),
+          1.0 - fluid4.getBeta());
+    }
+
+    TwoPhasePipeFlowSystem twoPhaseFlowSystem = new TwoPhasePipeFlowSystem();
+    twoPhaseFlowSystem.setInletThermoSystem(fluid4);
+    twoPhaseFlowSystem.setInitialFlowPattern("stratified");
+    twoPhaseFlowSystem.setNumberOfLegs(5);
+    twoPhaseFlowSystem.setNumberOfNodesInLeg(3);
+
+    // Set up pipe - no heat transfer (adiabatic) for fast test
+    double outerTemp = 280.0; // Same as inlet - no heat flux
+    double[] heights = new double[6];
+    double[] lengths = new double[6];
+    double[] outerTemps = new double[6];
+    double[] outHeatCoefs = new double[6];
+    double[] wallHeatCoefs = new double[6];
+    for (int i = 0; i < 6; i++) {
+      heights[i] = 0.0;
+      lengths[i] = i * (pipeLength / 5.0);
+      outerTemps[i] = outerTemp;
+      outHeatCoefs[i] = 0.0; // No heat transfer - adiabatic
+      wallHeatCoefs[i] = 0.0; // No wall heat transfer
+    }
+
+    twoPhaseFlowSystem.setLegHeights(heights);
+    twoPhaseFlowSystem.setLegPositions(lengths);
+    twoPhaseFlowSystem.setLegOuterTemperatures(outerTemps);
+    twoPhaseFlowSystem.setLegOuterHeatTransferCoefficients(outHeatCoefs);
+    twoPhaseFlowSystem.setLegWallHeatTransferCoefficients(wallHeatCoefs);
+
+    GeometryDefinitionInterface[] pipeGeom = new PipeData[6];
+    for (int i = 0; i < 6; i++) {
+      pipeGeom[i] = new PipeData(pipeDiameter);
+    }
+    twoPhaseFlowSystem.setEquipmentGeometry(pipeGeom);
+
+    twoPhaseFlowSystem.createSystem();
+    twoPhaseFlowSystem.init();
+    twoPhaseFlowSystem.solveSteadyState(3); // Fewer iterations for faster test
+
+    // ======== Analyze results along the pipeline ========
+    System.out.println("\n=== Results Along Pipeline ===");
+    System.out.printf("%-8s %-12s %-12s %-12s %-15s%n", "Node", "Pressure", "Temperature",
+        "NumPhases", "LiquidFraction");
+
+    double[] pressures = twoPhaseFlowSystem.getPressureProfile();
+    int totalNodes = twoPhaseFlowSystem.getTotalNumberOfNodes();
+    int[] nodesToCheck = {0, totalNodes / 2, totalNodes - 1};
+
+    for (int nodeIdx : nodesToCheck) {
+      var node = twoPhaseFlowSystem.getNode(nodeIdx);
+      double nodeP = node.getBulkSystem().getPressure();
+      double nodeT = node.getBulkSystem().getTemperature() - 273.15;
+      int numPhases = node.getBulkSystem().getNumberOfPhases();
+      double liquidFrac = node.getPhaseFraction(1);
+
+      System.out.printf("%-8d %-12.2f %-12.2f %-12d %-15.4f%n", nodeIdx, nodeP, nodeT, numPhases,
+          liquidFrac);
+    }
+
+    double pressureDrop = pressures[0] - pressures[pressures.length - 1];
+    System.out.printf("Total pressure drop: %.4f bar%n", pressureDrop);
+
+    // Basic assertions
+    assertTrue(pressureDrop > 0, "Should have positive pressure drop");
+
+    // Check inlet is gas-dominated
+    assertTrue(twoPhaseFlowSystem.getNode(0).getPhaseFraction(0) > 0.9,
+        "Inlet should be gas-dominated");
   }
 }

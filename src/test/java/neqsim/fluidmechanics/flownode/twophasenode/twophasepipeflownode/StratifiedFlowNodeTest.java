@@ -257,6 +257,61 @@ public class StratifiedFlowNodeTest {
     }
   }
 
+  /**
+   * Test that calcContactLength correctly computes wall contact lengths based on phase fractions.
+   */
+  @Test
+  void testCalcContactLengthTwoPhase() {
+    // Create a two-phase gas-liquid system
+    SystemInterface testSystem = new SystemSrkEos(293.15, 50.0);
+    testSystem.addComponent("methane", 0.85);
+    testSystem.addComponent("n-pentane", 0.10);
+    testSystem.addComponent("n-heptane", 0.05);
+    testSystem.createDatabase(true);
+    testSystem.setMixingRule(2);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
+    ops.TPflash();
+    testSystem.initPhysicalProperties();
+
+    // Pipe diameter 0.15m
+    PipeData pipe = new PipeData(0.15, 0.00025);
+
+    StratifiedFlowNode node = new StratifiedFlowNode(testSystem, pipe);
+    node.initFlowCalc(); // This sets phaseFraction and calls init() -> calcContactLength()
+
+    double gasFraction = node.getPhaseFraction(0);
+    double liquidFraction = node.getPhaseFraction(1);
+    double gasWallContact = node.getWallContactLength(0);
+    double liquidWallContact = node.getWallContactLength(1);
+    double totalWallContact = gasWallContact + liquidWallContact;
+    double pipeCircumference = Math.PI * pipe.getDiameter();
+
+    System.out.printf("Gas fraction: %.4f, Liquid fraction: %.4f%n", gasFraction, liquidFraction);
+    System.out.printf("Gas wall contact: %.6f m, Liquid wall contact: %.6f m%n", gasWallContact,
+        liquidWallContact);
+    System.out.printf("Total wall contact: %.6f m, Pipe circumference: %.6f m%n", totalWallContact,
+        pipeCircumference);
+
+    // Verify we have two phases
+    org.junit.jupiter.api.Assertions.assertEquals(2, testSystem.getNumberOfPhases(),
+        "Should have two phases");
+
+    // Gas fraction should be dominant (about 88%)
+    org.junit.jupiter.api.Assertions.assertTrue(gasFraction > 0.8,
+        "Gas should be the dominant phase, got " + gasFraction);
+
+    // Gas wall contact should be positive and larger than liquid wall contact
+    org.junit.jupiter.api.Assertions.assertTrue(gasWallContact > 0,
+        "Gas wall contact length should be positive, got " + gasWallContact);
+    org.junit.jupiter.api.Assertions.assertTrue(gasWallContact > liquidWallContact,
+        "Gas wall contact should be larger than liquid wall contact since gas is 93% of flow");
+
+    // Total wall contact should equal pipe circumference
+    org.junit.jupiter.api.Assertions.assertEquals(pipeCircumference, totalWallContact, 0.001,
+        "Total wall contact should equal pipe circumference");
+  }
+
   @Test
   @Disabled
   void testDisplay() {
