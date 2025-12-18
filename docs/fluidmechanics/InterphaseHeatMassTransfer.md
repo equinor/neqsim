@@ -502,7 +502,7 @@ double totalHeat = pipe.getTotalInterphaseHeatTransfer();
 ### 8.5 Complete Example
 
 ```java
-import neqsim.fluidmechanics.flowsystem.twophaseflowsystem.*;
+import neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.*;
 import neqsim.thermo.system.*;
 
 public class HeatMassTransferExample {
@@ -516,36 +516,27 @@ public class HeatMassTransferExample {
         fluid.createDatabase(true);
         fluid.setMixingRule(2);
         
-        // Build pipe with heat/mass transfer
+        // Build pipe with heat/mass transfer using builder
         TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder()
             .withFluid(fluid)
             .withDiameter(0.1, "m")
             .withLength(500, "m")
             .withNodes(100)
             .withFlowPattern(FlowPattern.ANNULAR)
-            .enableNonEquilibriumMassTransfer()
-            .enableNonEquilibriumHeatTransfer()
             .withConvectiveBoundary(278.15, "K", 15.0)  // Cold ambient
             .build();
         
-        // Set inlet conditions
-        pipe.setInletTemperature(320.0);  // Hot gas inlet
-        pipe.setInletPressure(50.0);      // 50 bar
-        pipe.setInletFlowRate(10.0);      // 10 kg/s
+        // Solve with heat and mass transfer, get structured results
+        PipeFlowResult result = pipe.solveWithHeatAndMassTransfer();
         
-        // Solve
-        pipe.solveSteadyState(2);
+        // Access results via PipeFlowResult container
+        System.out.println("Temperature change: " + result.getTemperatureChange() + " K");
+        System.out.println("Pressure drop: " + result.getTotalPressureDrop() + " bar");
+        System.out.println("Total heat loss: " + result.getTotalHeatLoss() + " W");
+        System.out.println(result);  // Formatted summary
         
-        // Extract results
-        System.out.println("Temperature drop: " + 
-            (pipe.getInletTemperature() - pipe.getOutletTemperature()) + " K");
-        System.out.println("Total condensation: " + 
-            pipe.getTotalCondensationRate() + " kg/s");
-        System.out.println("Total heat loss: " + 
-            pipe.getTotalHeatLoss() + " kW");
-        
-        // Export detailed profiles
-        pipe.exportProfilesToCSV("heat_mass_transfer_profiles.csv");
+        // Export profiles for analysis
+        Map<String, double[]> profiles = result.toMap();
     }
 }
 ```

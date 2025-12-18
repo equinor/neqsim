@@ -267,7 +267,9 @@ $$\phi_n = d'_n, \quad \phi_i = d'_i - c'_i \phi_{i+1}$$
 
 ## 7. NeqSim Implementation
 
-### 7.1 Basic Usage with Builder Pattern
+### 7.1 Simplified API (Recommended)
+
+The simplified API provides static factory methods and a structured result container for the most common use cases:
 
 ```java
 // Create fluid system
@@ -277,7 +279,45 @@ fluid.addComponent("water", 0.15, 1);
 fluid.createDatabase(true);
 fluid.setMixingRule(2);
 
-// Build pipe system
+// Create horizontal pipe using factory method
+TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.horizontalPipe(fluid, 0.15, 500, 50);
+
+// Solve and get structured results
+PipeFlowResult result = pipe.solve();
+
+// Access results via the container
+System.out.println("Pressure drop: " + result.getTotalPressureDrop() + " bar");
+System.out.println("Outlet temperature: " + result.getOutletTemperature() + " K");
+System.out.println(result);  // Prints formatted summary
+
+// Export profiles for plotting
+Map<String, double[]> data = result.toMap();
+```
+
+#### Static Factory Methods
+
+| Method | Description |
+|--------|-------------|
+| `horizontalPipe(fluid, diameter, length, nodes)` | Horizontal pipe with stratified flow |
+| `verticalPipe(fluid, diameter, length, nodes, upward)` | Vertical pipe (upward or downward flow) |
+| `inclinedPipe(fluid, diameter, length, nodes, angleDeg)` | Inclined pipe at specified angle |
+| `subseaPipe(fluid, diameter, length, nodes, seawaterTempC)` | Subsea pipeline with seawater cooling |
+| `buriedPipe(fluid, diameter, length, nodes, groundTempC)` | Buried onshore pipeline |
+
+#### Solve Methods
+
+| Method | Description |
+|--------|-------------|
+| `solve()` | Solve and return `PipeFlowResult` |
+| `solveWithMassTransfer()` | Enable mass transfer, solve, return result |
+| `solveWithHeatAndMassTransfer()` | Enable heat & mass transfer, solve, return result |
+
+### 7.2 Builder Pattern (Full Control)
+
+For advanced configurations, use the fluent builder pattern:
+
+```java
+// Build pipe system with full control
 TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder()
     .withFluid(fluid)
     .withDiameter(0.15, "m")
@@ -287,13 +327,16 @@ TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder()
     .withConvectiveBoundary(278.15, "K", 10.0)  // Ambient temp, U-value
     .build();
 
-// Solve
-pipe.solveSteadyState(2);
+// Solve using simplified API
+PipeFlowResult result = pipe.solve();
 ```
 
-### 7.2 Inclined Pipe Configuration
+### 7.3 Inclined Pipe Configuration
 
 ```java
+TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.inclinedPipe(fluid, 0.1, 1000, 100, 15.0);
+
+// Or using builder for more control
 TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder()
     .withFluid(fluid)
     .withDiameter(0.1, "m")
@@ -308,7 +351,34 @@ System.out.println("Inclination: " + pipe.getInclinationDegrees() + " degrees");
 System.out.println("Is upward flow: " + pipe.isUpwardFlow());
 ```
 
-### 7.3 Extracting Results
+### 7.4 Extracting Results
+
+#### Using PipeFlowResult (Recommended)
+
+```java
+PipeFlowResult result = pipe.solve();
+
+// Get summary values
+double pressureDrop = result.getTotalPressureDrop();
+double outletTemp = result.getOutletTemperature();
+double tempChange = result.getTemperatureChange();
+
+// Get profiles
+double[] pressure = result.getPressureProfile();
+double[] temperature = result.getTemperatureProfile();
+double[] holdup = result.getLiquidHoldupProfile();
+double[] gasVelocity = result.getGasVelocityProfile();
+double[] liquidVelocity = result.getLiquidVelocityProfile();
+
+// Export to map (for Jupyter/Python integration)
+Map<String, double[]> data = result.toMap();
+Map<String, Object> summary = result.getSummary();
+
+// Print formatted summary
+System.out.println(result);
+```
+
+#### Direct Access (Legacy)
 
 ```java
 // Get profiles
@@ -339,7 +409,7 @@ integrated momentum balance (friction + gravity) after solving the phase momentu
 ensures a physically consistent pressure drop along the pipe instead of keeping pressure nearly
 constant due to a density-only correction.
 
-### 7.4 Flow Pattern Detection
+### 7.5 Flow Pattern Detection
 
 ```java
 // Enable automatic flow pattern detection
@@ -351,9 +421,14 @@ FlowPattern[] patterns = pipe.getFlowPatternProfile();
 int transitions = pipe.getFlowPatternTransitionCount();
 ```
 
-### 7.5 Non-Equilibrium Mode
+### 7.6 Non-Equilibrium Mode
 
 ```java
+// Using simplified API
+TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.horizontalPipe(fluid, 0.1, 100, 50);
+PipeFlowResult result = pipe.solveWithHeatAndMassTransfer();
+
+// Or using builder
 TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder()
     .withFluid(fluid)
     .withDiameter(0.1, "m")
@@ -362,6 +437,8 @@ TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder()
     .enableNonEquilibriumMassTransfer()  // Enable mass transfer
     .enableNonEquilibriumHeatTransfer()  // Enable heat transfer
     .build();
+
+PipeFlowResult result = pipe.solve();
 ```
 
 ---
@@ -370,10 +447,30 @@ TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder()
 
 ### TwoPhasePipeFlowSystem
 
+#### Static Factory Methods (Recommended)
+
 | Method | Description |
 |--------|-------------|
-| `solveSteadyState(int type)` | Solve steady-state equations |
-| `solveTransient(int type)` | Solve transient equations |
+| `horizontalPipe(fluid, diam, len, nodes)` | Create horizontal pipe |
+| `verticalPipe(fluid, diam, len, nodes, up)` | Create vertical pipe |
+| `inclinedPipe(fluid, diam, len, nodes, angle)` | Create inclined pipe |
+| `subseaPipe(fluid, diam, len, nodes, seaTemp)` | Create subsea pipeline |
+| `buriedPipe(fluid, diam, len, nodes, groundTemp)` | Create buried pipeline |
+
+#### Solve Methods
+
+| Method | Description |
+|--------|-------------|
+| `solve()` | Solve and return `PipeFlowResult` |
+| `solveWithMassTransfer()` | Enable mass transfer, solve |
+| `solveWithHeatAndMassTransfer()` | Enable heat & mass transfer, solve |
+| `solveSteadyState(UUID)` | Solve steady-state equations |
+| `solveTransient(int, UUID)` | Solve transient equations |
+
+#### Result Methods
+
+| Method | Description |
+|--------|-------------|
 | `getTemperatureProfile()` | Temperature along pipe [K] |
 | `getPressureProfile()` | Pressure along pipe [bar] |
 | `getVelocityProfile(int phase)` | Phase velocity [m/s] |
@@ -381,6 +478,23 @@ TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder()
 | `getTotalPressureDrop()` | Total ΔP [bar] |
 | `exportToCSV(String path)` | Export results to CSV |
 | `getSummaryReport()` | Formatted text summary |
+
+### PipeFlowResult
+
+| Method | Description |
+|--------|-------------|
+| `getTotalPressureDrop()` | Total pressure drop [bar] |
+| `getInletPressure()` / `getOutletPressure()` | Inlet/outlet pressure [bar] |
+| `getInletTemperature()` / `getOutletTemperature()` | Inlet/outlet temperature [K] |
+| `getTemperatureChange()` | Temperature change [K] |
+| `getPressureGradient()` | Pressure gradient [bar/m] |
+| `getPressureProfile()` | Pressure array [bar] |
+| `getTemperatureProfile()` | Temperature array [K] |
+| `getLiquidHoldupProfile()` | Liquid holdup array [-] |
+| `getGasVelocityProfile()` / `getLiquidVelocityProfile()` | Velocity arrays [m/s] |
+| `getFlowPatternProfile()` | Flow pattern array |
+| `toMap()` | Export profiles to Map (Jupyter-friendly) |
+| `getSummary()` | Export summary to Map |
 
 ### TwoPhasePipeFlowSystemBuilder
 
