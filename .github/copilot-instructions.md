@@ -34,6 +34,6 @@ column.run();
 - **Community Norms**: Engage on GitHub issues or discussions for design questions; NeqSim has an active user base familiar with thermodynamics and process simulation who can provide valuable insights.
 - **Performance Considerations**: Profile long-running simulations with Java Flight Recorder or VisualVM; optimize critical loops in thermodynamic calculations but prioritize clarity and maintainability in the codebase.
 - **JavaDoc Standards**: Document all public classes and methods with JavaDoc comments; include parameter descriptions, return values, and any exceptions thrown to aid users and maintainers. Check that JavaDoc is up to date when modifying method signatures.
-- **Java 8 Features**: All new code must be Java 8 compatible; feel free to use streams, lambdas, and `Optional` where they enhance readability without sacrificing performance.
+- **Java 8 Features**: All new code must be Java 8 compatible; feel free to use streams, lambdas, and `Optional` where they enhance readability without sacrificing performance. No String.repeat() use StringUtils.repeat() from Apache Commons
 - **Jupyter Notebook Examples**: When creating Jupyter notebook examples, ensure they run end-to-end and reflect the latest API changes; place them in the `notebooks/` directory and link to them from the main documentation. Follow the neqsim-python direct Java API bindings as shown at https://github.com/equinor/neqsim-python?tab=readme-ov-file#4-direct-java-access-full-control
 ---

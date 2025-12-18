@@ -28,6 +28,17 @@ Directories:
 
 Focus on methods for viscosity, density and other property models together with flow system calculations.
 
+### Fluid Mechanics Test Files
+
+| Test File | Description |
+|-----------|-------------|
+| `TwoPhasePipeFlowSystemTest.java` | System setup, steady-state solving, mass/heat transfer, model comparisons |
+| `NonEquilibriumPipeFlowTest.java` | Non-equilibrium mass transfer, evaporation, dissolution, bidirectional transfer |
+| `FlowPatternDetectorTest.java` | Flow pattern detection (Taitel-Dukler, Baker, Barnea, Beggs-Brill) |
+| `InterfacialAreaCalculatorTest.java` | Interfacial area calculations for all flow patterns |
+| `MassTransferCoefficientCalculatorTest.java` | Mass transfer coefficient correlations |
+| `TwoPhasePipeFlowSystemBuilderTest.java` | Builder API tests |
+
 ## Chemical reactions and thermo
 
 Directories:

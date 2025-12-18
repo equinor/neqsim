@@ -89,14 +89,38 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
   @Override
   public void init() {
     inclination = 0.0;
+    // Calculate contact lengths based on current phaseFraction values
+    // phaseFraction is set by initFlowCalc() before init() is called
     this.calcContactLength();
-    // System.out.println("len " + this.calcContactLength());
     super.init();
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcContactLength() {
+    // Handle single-phase flow: no interface, full wall contact for the existing phase
+    int numPhases = getBulkSystem().getNumberOfPhases();
+    if (numPhases < 2) {
+      // Single-phase flow: the phase occupies the entire pipe
+      // No gas-liquid interface
+      interphaseContactLength[0] = 0.0;
+      interphaseContactLength[1] = 0.0;
+
+      // Determine which phase exists and give it full wall contact
+      if (phaseFraction[0] > phaseFraction[1]) {
+        // Phase 0 (could be oil or gas) fills the pipe
+        wallContactLength[0] = pi * pipe.getDiameter();
+        wallContactLength[1] = 0.0;
+      } else {
+        // Phase 1 fills the pipe
+        wallContactLength[0] = 0.0;
+        wallContactLength[1] = pi * pipe.getDiameter();
+      }
+      return wallContactLength[0] + wallContactLength[1];
+    }
+
+    // Two-phase stratified flow calculation
+    // Phase 0 = gas (upper), Phase 1 = liquid (lower)
     double phaseAngel =
         pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
             + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
@@ -104,7 +128,25 @@ public class StratifiedFlowNode extends TwoPhaseFlowNode {
     wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
     interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);
     interphaseContactLength[1] = pipe.getDiameter() * Math.sin(phaseAngel);
+
     return wallContactLength[0];
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For stratified flow, the interfacial area per unit volume is calculated as: a = S_i / A where
+   * S_i is the interface chord length and A is the pipe cross-sectional area.
+   * </p>
+   */
+  @Override
+  protected double calcGeometricInterfacialAreaPerVolume() {
+    if (pipe.getArea() > 0 && interphaseContactLength[0] > 0) {
+      // For stratified flow: a = S_i / A (interface chord length / cross-sectional area)
+      return interphaseContactLength[0] / pipe.getArea();
+    }
+    return 0.0;
   }
 
   /** {@inheritDoc} */

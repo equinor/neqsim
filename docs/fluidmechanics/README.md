@@ -4,6 +4,7 @@ The `fluidmechanics` package provides models for pipeline flow, pressure drop ca
 
 ## Table of Contents
 - [Overview](#overview)
+- [Compatibility](#compatibility)
 - [Theoretical Foundation](#theoretical-foundation)
 - [Package Structure](#package-structure)
 - [Flow Systems](#flow-systems)
@@ -30,6 +31,14 @@ The `fluidmechanics` package provides models for pipeline flow, pressure drop ca
 - Non-equilibrium heat and mass transfer
 - Multicomponent diffusion modeling
 - Reactive absorption (e.g., CO₂ into amine solutions)
+
+---
+
+## Compatibility
+
+- **Java Version:** Java 8 and above
+- **Build System:** Maven
+- All code is Java 8 compatible (no use of Java 9+ features like `var`, `String.repeat()`, etc.)
 
 ---
 
@@ -187,35 +196,59 @@ double velocity = flowSystem.getFlowVelocity();
 
 ### Two-Phase Pipe Flow
 
+#### Simplified API (Recommended)
+
 ```java
-import neqsim.fluidmechanics.flowsystem.twophaseflowsystem.pipeflowsystem.TwoPhasePipeFlowSystem;
+import neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.*;
+import neqsim.thermo.system.SystemSrkEos;
 
 // Create two-phase fluid
 SystemInterface fluid = new SystemSrkEos(300.0, 30.0);
-fluid.addComponent("methane", 0.80);
-fluid.addComponent("n-pentane", 0.15);
-fluid.addComponent("n-decane", 0.05);
-fluid.setMixingRule("classic");
+fluid.addComponent("methane", 0.80, 0);    // Gas phase
+fluid.addComponent("n-decane", 0.20, 1);   // Liquid phase
+fluid.createDatabase(true);
+fluid.setMixingRule(2);
 
-// Flash to get two phases
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
+// Create horizontal pipe using factory method
+TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.horizontalPipe(fluid, 0.15, 1000, 50);
 
-// Create two-phase flow system
-TwoPhasePipeFlowSystem twoPhaseFlow = new TwoPhasePipeFlowSystem();
-twoPhaseFlow.setInletFluid(fluid);
-twoPhaseFlow.setGeometry(pipe);
-twoPhaseFlow.setNumberOfNodes(100);
+// Solve with mass transfer and get structured results
+PipeFlowResult result = pipe.solveWithMassTransfer();
 
-// Set inclination (positive = uphill)
-twoPhaseFlow.setInclination(0.0);  // Horizontal
+// Access results
+System.out.println("Pressure drop: " + result.getTotalPressureDrop() + " bar");
+System.out.println("Outlet temperature: " + result.getOutletTemperature() + " K");
+System.out.println(result);  // Formatted summary
 
-twoPhaseFlow.init();
-twoPhaseFlow.solveTransient(1);
+// Export for plotting (e.g., in Jupyter with neqsim-python)
+Map<String, double[]> data = result.toMap();
+```
 
-// Get flow regime
-String flowRegime = twoPhaseFlow.getFlowRegime();
-System.out.println("Flow regime: " + flowRegime);
+#### Factory Methods
+
+| Method | Description |
+|--------|-------------|
+| `horizontalPipe(fluid, diam, len, nodes)` | Horizontal pipe |
+| `verticalPipe(fluid, diam, len, nodes, upward)` | Vertical pipe |
+| `inclinedPipe(fluid, diam, len, nodes, angleDeg)` | Inclined pipe |
+| `subseaPipe(fluid, diam, len, nodes, seawaterTempC)` | Subsea pipeline |
+| `buriedPipe(fluid, diam, len, nodes, groundTempC)` | Buried pipeline |
+
+#### Builder Pattern (Full Control)
+
+```java
+// For advanced configurations, use the builder
+TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder()
+    .withFluid(fluid)
+    .withDiameter(0.15, "m")
+    .withLength(1000, "m")
+    .withNodes(50)
+    .withFlowPattern(FlowPattern.STRATIFIED)
+    .withConvectiveBoundary(278.15, "K", 10.0)
+    .enableNonEquilibriumMassTransfer()
+    .build();
+
+PipeFlowResult result = pipe.solve();
 ```
 
 ---
@@ -757,6 +790,30 @@ System.out.println("Flow velocity: " + gasFlow.getFlowVelocity() + " m/s");
 5. **Include heat transfer** for hot fluids or cold environments
 6. **Enable non-equilibrium** for absorption and short-contact processes
 7. **Use thermodynamic corrections** for non-ideal liquid phases
+
+---
+
+## Test Suite
+
+The fluid mechanics package includes comprehensive unit tests:
+
+| Test File | Coverage |
+|-----------|----------|
+| `TwoPhasePipeFlowSystemTest.java` | System setup, steady-state solving, mass/heat transfer, model comparisons |
+| `NonEquilibriumPipeFlowTest.java` | Non-equilibrium mass transfer, evaporation, dissolution, bidirectional transfer |
+| `FlowPatternDetectorTest.java` | Flow pattern detection models (Taitel-Dukler, Baker, Barnea, Beggs-Brill) |
+| `InterfacialAreaCalculatorTest.java` | Interfacial area calculations for all flow patterns |
+| `MassTransferCoefficientCalculatorTest.java` | Mass transfer coefficient correlations |
+| `TwoPhasePipeFlowSystemBuilderTest.java` | Builder API tests |
+
+### Known Test Limitations
+
+Some advanced test scenarios are disabled pending solver optimization:
+- Complete phase evaporation/dissolution tests (solver timeout)
+- Transient water drying simulations (solver timeout)
+- Subsea pipeline with large temperature gradients (temperature calculation issues)
+
+See [TwoPhasePipeFlowSystem_Development_Plan.md](TwoPhasePipeFlowSystem_Development_Plan.md) for details.
 
 ---
 

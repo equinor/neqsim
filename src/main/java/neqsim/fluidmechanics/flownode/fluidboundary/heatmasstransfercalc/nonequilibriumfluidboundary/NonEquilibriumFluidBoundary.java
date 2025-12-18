@@ -191,21 +191,6 @@ public abstract class NonEquilibriumFluidBoundary
         .times(bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
             / bulkSystem.getPhases()[0].getMolarMass());
 
-    // fluxX.print(10,10);
-    // fluxY.print(10,10);
-    // totalMassTransferCoefficientMatrix[0].print(10,10);
-
-    // System.out.println("n flux");
-    // nFlux.getMatrix(0,bulkSystem.getPhases()[1].getNumberOfComponents()-2,0,0).print(10,10);
-    // System.out.println("j gas flux");
-    // fluxY.print(10,10);
-    // System.out.println("j gliq flux");
-    // fluxX.print(10,10);
-    // System.out.println("yn gas flux");
-    // y.transpose().times(totalFlux).print(10,10);
-    // System.out.println("xn gas flux");
-    // x.transpose().times(totalFlux).print(10,10);
-
     Matrix errX = nFlux.getMatrix(0, bulkSystem.getPhases()[1].getNumberOfComponents() - 2, 0, 0)
         .plus(fluxX).minus(x.transpose().times(totalFlux));
     Matrix errY = nFlux.getMatrix(0, bulkSystem.getPhases()[0].getNumberOfComponents() - 2, 0, 0)
@@ -551,6 +536,8 @@ public abstract class NonEquilibriumFluidBoundary
   @Override
   public void massTransSolve() {
     int iter = 1;
+    int maxNaNCount = 5; // Maximum consecutive NaN results before giving up
+    int nanCount = 0;
     double err = 1.0e10;
     // double oldErr = 0.0;
     double factor = 10.0;
@@ -562,14 +549,45 @@ public abstract class NonEquilibriumFluidBoundary
       init();
       setfvecMassTrans2();
       setJacMassTrans2();
-      dx = Jac.solve(fvec);
-      if (!Double.valueOf(dx.norm2()).isNaN()) {
-        uMassTrans.minusEquals(dx.times(iter / (iter + factor)));
-        err = Math.abs(dx.norm2() / uMassTrans.norm2());
+
+      // Check for singular or ill-conditioned Jacobian
+      try {
+        dx = Jac.solve(fvec);
+      } catch (RuntimeException e) {
+        // Matrix solve failed - likely singular matrix
+        logger.debug("Jacobian solve failed in mass transfer calculation: {}", e.getMessage());
+        nanCount++;
+        if (nanCount >= maxNaNCount) {
+          logger.debug("Mass transfer solver terminated after {} consecutive failures", nanCount);
+          break;
+        }
+        continue;
+      }
+
+      if (dx != null && !Double.valueOf(dx.norm2()).isNaN()) {
+        nanCount = 0; // Reset counter on successful solve
+        double uMassTransNorm = uMassTrans.norm2();
+        if (uMassTransNorm > 1e-20) {
+          uMassTrans.minusEquals(dx.times(iter / (iter + factor)));
+          err = Math.abs(dx.norm2() / uMassTransNorm);
+        } else {
+          // Avoid division by zero
+          uMassTrans.minusEquals(dx.times(iter / (iter + factor)));
+          err = Math.abs(dx.norm2());
+        }
         updateMassTrans();
         calcFluxes();
       } else {
-        System.out.println("dx: NaN in mass trans calc");
+        nanCount++;
+        if (nanCount == 1) {
+          // Only log on first occurrence to reduce noise
+          logger.debug("NaN detected in mass transfer calculation at iteration {}", iter);
+        }
+        if (nanCount >= maxNaNCount) {
+          logger.debug("Mass transfer solver terminated after {} consecutive NaN results",
+              nanCount);
+          break;
+        }
         err = 10;
       }
       // System.out.println("err " + err);

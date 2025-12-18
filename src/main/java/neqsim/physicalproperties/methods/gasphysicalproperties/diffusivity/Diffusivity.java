@@ -8,7 +8,12 @@ import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
  * <p>
- * Diffusivity class.
+ * Diffusivity class for gas phase diffusion coefficient calculations.
+ * </p>
+ *
+ * <p>
+ * Uses Chapman-Enskog kinetic theory with Lennard-Jones parameters. Valid temperature range is
+ * approximately 200-2000 K for most gas systems.
  * </p>
  *
  * @author Even Solbraa
@@ -19,6 +24,15 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Diffusivity.class);
+
+  /** Minimum validated temperature [K]. */
+  protected static final double T_MIN = 200.0;
+
+  /** Maximum validated temperature [K]. */
+  protected static final double T_MAX = 2000.0;
+
+  /** Flag to enable/disable temperature range warnings. */
+  protected boolean enableTemperatureWarnings = true;
 
   double[][] binaryDiffusionCoefficients;
   double[][] binaryLennardJonesOmega;
@@ -73,6 +87,15 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
   public double calcBinaryDiffusionCoefficient(int i, int j, int method) {
     // method - estimation method
     // if(method==? then)
+    double T = gasPhase.getPhase().getTemperature();
+
+    // Temperature range validation
+    if (enableTemperatureWarnings && (T < T_MIN || T > T_MAX)) {
+      logger.warn(
+          "Temperature {} K is outside validated range [{}-{}] for gas diffusivity calculation", T,
+          T_MIN, T_MAX);
+    }
+
     double A2 = 1.06036;
     double B2 = 0.15610;
     double C2 = 0.19300;
@@ -81,14 +104,32 @@ public class Diffusivity extends GasPhysicalPropertyMethod implements Diffusivit
     double F2 = 1.52996;
     double G2 = 1.76474;
     double H2 = 3.89411;
-    double tempVar2 = gasPhase.getPhase().getTemperature() / binaryEnergyParameter[i][j];
+    double tempVar2 = T / binaryEnergyParameter[i][j];
     binaryLennardJonesOmega[i][j] = A2 / Math.pow(tempVar2, B2) + C2 / Math.exp(D2 * tempVar2)
         + E2 / Math.exp(F2 * tempVar2) + G2 / Math.exp(H2 * tempVar2);
-    binaryDiffusionCoefficients[i][j] =
-        0.00266 * Math.pow(gasPhase.getPhase().getTemperature(), 1.5)
-            / (gasPhase.getPhase().getPressure() * Math.sqrt(binaryMolecularMass[i][j])
-                * Math.pow(binaryMolecularDiameter[i][j], 2) * binaryLennardJonesOmega[i][j]);
+    binaryDiffusionCoefficients[i][j] = 0.00266 * Math.pow(T, 1.5)
+        / (gasPhase.getPhase().getPressure() * Math.sqrt(binaryMolecularMass[i][j])
+            * Math.pow(binaryMolecularDiameter[i][j], 2) * binaryLennardJonesOmega[i][j]);
     return binaryDiffusionCoefficients[i][j] *= 1e-4;
+  }
+
+  /**
+   * Enable or disable temperature range warnings.
+   *
+   * @param enable true to enable warnings, false to disable
+   */
+  public void setEnableTemperatureWarnings(boolean enable) {
+    this.enableTemperatureWarnings = enable;
+  }
+
+  /**
+   * Check if temperature is within the validated range.
+   *
+   * @return true if temperature is within valid range
+   */
+  public boolean isTemperatureInValidRange() {
+    double T = gasPhase.getPhase().getTemperature();
+    return T >= T_MIN && T <= T_MAX;
   }
 
   /** {@inheritDoc} */

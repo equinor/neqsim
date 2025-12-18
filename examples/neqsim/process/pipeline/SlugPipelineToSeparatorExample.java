@@ -3,6 +3,7 @@ package neqsim.process.pipeline;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import org.apache.commons.lang3.StringUtils;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.separator.Separator;
@@ -113,10 +114,10 @@ public final class SlugPipelineToSeparatorExample {
    * @return simulation results with time series data
    */
   public static SimulationResult runSimulation() {
-    System.out.println("=".repeat(70));
+    System.out.println(StringUtils.repeat("=", 70));
     System.out.println("  SLUG PIPELINE TO SEPARATOR EXAMPLE");
     System.out.println("  TwoFluidPipe + Choke + Separator with Level Control");
-    System.out.println("=".repeat(70));
+    System.out.println(StringUtils.repeat("=", 70));
 
     // ========== FLUID DEFINITION ==========
     // Wet gas/condensate typical of North Sea production
@@ -296,7 +297,7 @@ public final class SlugPipelineToSeparatorExample {
     System.out.println("Simulating terrain-induced slugging...\n");
 
     System.out.println("Time(s)  PipeOut(kg/s)  Level(%)  LiqValve(%)  SepP(bara)  Event");
-    System.out.println("-".repeat(70));
+    System.out.println(StringUtils.repeat("-", 70));
 
     SimulationResult result = new SimulationResult();
     UUID simId = UUID.randomUUID();
@@ -370,7 +371,7 @@ public final class SlugPipelineToSeparatorExample {
     }
 
     // ========== SUMMARY ==========
-    System.out.println("-".repeat(70));
+    System.out.println(StringUtils.repeat("-", 70));
     System.out.println("\n=== Simulation Summary ===");
     System.out.println("Total slugs detected: " + result.getSlugCount());
 

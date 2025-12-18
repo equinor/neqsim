@@ -135,6 +135,52 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
     return wallContactLength[0];
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For bubble flow, the interfacial area per unit volume is calculated using Sauter mean diameter:
+   * a = 6 * α_G / d_32
+   * </p>
+   */
+  @Override
+  protected double calcGeometricInterfacialAreaPerVolume() {
+    // For bubble flow: a = 6 * α_G / d_32 (Sauter mean diameter approach)
+    if (averageBubbleDiameter > 0 && phaseFraction[0] > 0) {
+      return 6.0 * phaseFraction[0] / averageBubbleDiameter;
+    }
+    return 0.0;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For bubble flow, uses Hinze theory for maximum stable bubble size: d_max = 0.725 * (σ/ρ_L)^0.6
+   * * ε^(-0.4)
+   * </p>
+   */
+  @Override
+  protected double calcEmpiricalInterfacialAreaPerVolume() {
+    // Calculate maximum stable bubble size using Hinze theory
+    double surfaceTension = getBulkSystem().getInterphaseProperties().getSurfaceTension(0, 1);
+    double liquidDensity = getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+
+    // Estimate turbulent dissipation rate (simplified)
+    double mixVelocity = velocity[0] * phaseFraction[0] + velocity[1] * phaseFraction[1];
+    double epsilon = Math.pow(mixVelocity, 3) / pipe.getDiameter(); // Simplified dissipation
+
+    if (epsilon > 0 && surfaceTension > 0 && liquidDensity > 0) {
+      double dMax = 0.725 * Math.pow(surfaceTension / liquidDensity, 0.6) * Math.pow(epsilon, -0.4);
+      // Use d_32 ≈ 0.6 * d_max for Sauter mean diameter
+      double d32 = 0.6 * dMax;
+      if (d32 > 0 && phaseFraction[0] > 0) {
+        return 6.0 * phaseFraction[0] / d32;
+      }
+    }
+    return calcGeometricInterfacialAreaPerVolume();
+  }
+
   /** {@inheritDoc} */
   @Override
   public FlowNodeInterface getNextNode() {

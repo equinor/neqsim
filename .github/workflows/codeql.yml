@@ -27,21 +27,38 @@ jobs:
         with:
           distribution: temurin
           java-version: '11'
+          cache: maven
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: java
           queries: security-extended,security-and-quality
+          build-mode: manual
 
-      # Manual build ensures full dependency resolution and covers multi-module changes.
-    #  - name: Build with Maven (no tests)
-    #    run: mvn -B -q clean install -DskipTests
+      - name: Build with Maven (no tests)
+        run: >
+          ./mvnw -B -V -e -ntp
+          -DskipTests -Dmaven.test.skip=true
+          -Dfindbugs.skip=true -Dcheckstyle.skip=true -Dpmd.skip=true -Dspotbugs.skip=true
+          -Denforcer.skip=true -Dmaven.javadoc.skip=true -Dlicense.skip=true -Drat.skip=true
+          -Dspotless.check.skip=true
+          clean package
 
-    #  - name: Perform CodeQL Analysis
-    #    uses: github/codeql-action/analyze@v3
-    #    with:
-    #      category: "/language:java"
-    #     upload: true
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:java"
+          # GitHub will reject SARIF uploads from "advanced" CodeQL workflows when
+          # the repository has CodeQL "default setup" enabled.
+          # Either disable default setup in repository settings, or keep this set
+          # to false and consume the SARIF as a workflow artifact instead.
+          upload: false
+          output: codeql-results
 
-    # Optional: fail the job if any results exceed a threshold (future enhancement via SARIF parsing)
+      - name: Upload CodeQL SARIF (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: codeql-sarif
+          path: codeql-results/**/*.sarif
+          if-no-files-found: warn
