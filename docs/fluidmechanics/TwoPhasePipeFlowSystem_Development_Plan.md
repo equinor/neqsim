@@ -349,7 +349,25 @@ Create Jupyter notebook examples:
 ### Phase 3: Advanced Features (Low Priority)
 12. [ ] Enhancement factors for reactive systems
 13. [ ] Mass transfer model selection (Krishna-Standart, Penetration Theory, Surface Renewal)
-14. [ ] Documentation and examples
+14. ✅ Documentation and examples (completed - comprehensive documentation in docs/fluidmechanics/)
+
+### Known Limitations and Future Work
+
+Some advanced test scenarios are currently disabled pending solver optimization:
+
+| Test | Status | Issue |
+|------|--------|-------|
+| `testCompleteLiquidEvaporationIn1kmPipe` | Disabled | Solver timeout - needs performance optimization |
+| `testTransientWaterDryingInGasPipeline` | Disabled | Solver timeout - needs performance optimization |
+| `testSubseaGasOilPipelineWithElevationProfile` | Disabled | Temperature calculation needs improvement |
+| `testGasWithCondensationAlongPipeline` | Disabled | Phase transition solver needs optimization |
+
+These tests represent advanced use cases that require further solver development to handle:
+- Complete phase disappearance (evaporation/condensation to single phase)
+- Long transient simulations with changing inlet conditions
+- Complex temperature profiles with large gradients
+
+The steady-state solver (type 2) calculates mass transfer fluxes correctly at each node, but accumulated composition changes downstream may require more iterations or transient simulation.
 
 ---
 

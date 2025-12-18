@@ -4,6 +4,7 @@ The `fluidmechanics` package provides models for pipeline flow, pressure drop ca
 
 ## Table of Contents
 - [Overview](#overview)
+- [Compatibility](#compatibility)
 - [Theoretical Foundation](#theoretical-foundation)
 - [Package Structure](#package-structure)
 - [Flow Systems](#flow-systems)
@@ -30,6 +31,14 @@ The `fluidmechanics` package provides models for pipeline flow, pressure drop ca
 - Non-equilibrium heat and mass transfer
 - Multicomponent diffusion modeling
 - Reactive absorption (e.g., CO₂ into amine solutions)
+
+---
+
+## Compatibility
+
+- **Java Version:** Java 8 and above
+- **Build System:** Maven
+- All code is Java 8 compatible (no use of Java 9+ features like `var`, `String.repeat()`, etc.)
 
 ---
 
@@ -757,6 +766,30 @@ System.out.println("Flow velocity: " + gasFlow.getFlowVelocity() + " m/s");
 5. **Include heat transfer** for hot fluids or cold environments
 6. **Enable non-equilibrium** for absorption and short-contact processes
 7. **Use thermodynamic corrections** for non-ideal liquid phases
+
+---
+
+## Test Suite
+
+The fluid mechanics package includes comprehensive unit tests:
+
+| Test File | Coverage |
+|-----------|----------|
+| `TwoPhasePipeFlowSystemTest.java` | System setup, steady-state solving, mass/heat transfer, model comparisons |
+| `NonEquilibriumPipeFlowTest.java` | Non-equilibrium mass transfer, evaporation, dissolution, bidirectional transfer |
+| `FlowPatternDetectorTest.java` | Flow pattern detection models (Taitel-Dukler, Baker, Barnea, Beggs-Brill) |
+| `InterfacialAreaCalculatorTest.java` | Interfacial area calculations for all flow patterns |
+| `MassTransferCoefficientCalculatorTest.java` | Mass transfer coefficient correlations |
+| `TwoPhasePipeFlowSystemBuilderTest.java` | Builder API tests |
+
+### Known Test Limitations
+
+Some advanced test scenarios are disabled pending solver optimization:
+- Complete phase evaporation/dissolution tests (solver timeout)
+- Transient water drying simulations (solver timeout)
+- Subsea pipeline with large temperature gradients (temperature calculation issues)
+
+See [TwoPhasePipeFlowSystem_Development_Plan.md](TwoPhasePipeFlowSystem_Development_Plan.md) for details.
 
 ---
 

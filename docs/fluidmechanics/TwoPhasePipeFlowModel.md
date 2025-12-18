@@ -6,10 +6,14 @@ The NeqSim two-phase pipe flow model implements a **non-equilibrium thermodynami
 
 **Key Features:**
 - Non-equilibrium mass and heat transfer between phases
-- Multiple flow pattern support (stratified, annular, slug, bubble, droplet)
+- Multiple flow pattern support (stratified, annular, slug, bubble, droplet, churn)
 - Inclined and vertical pipe support
 - Wall heat transfer with multiple boundary conditions
 - Steady-state and transient simulation capabilities
+- Bidirectional mass transfer (evaporation and dissolution)
+- Java 8+ compatible
+
+**Compatibility:** Java 8 and above (no Java 9+ features used)
 
 ---
 

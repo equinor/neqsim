@@ -49,6 +49,21 @@ This documentation covers pipeline pressure drop, flow, and heat transfer calcul
 | `WaterHammerPipe` | `neqsim.process.equipment.pipeline` | Water hammer, fast pressure transients (MOC) |
 | `AdiabaticPipe` | `neqsim.process.equipment.pipeline` | Single-phase compressible gas |
 | `AdiabaticTwoPhasePipe` | `neqsim.process.equipment.pipeline` | Two-phase, horizontal |
+| `TwoFluidPipe` | `neqsim.process.equipment.pipeline` | Two-fluid model with drift-flux |
+| `TransientPipe` | `neqsim.process.equipment.pipeline` | Transient drift-flux with AUSM+ scheme |
+| `TwoPhasePipeFlowSystem` | `neqsim.fluidmechanics.flowsystem` | Low-level non-equilibrium mass/heat transfer |
+
+### Low-Level Fluid Mechanics
+
+For detailed non-equilibrium mass and heat transfer calculations, the `TwoPhasePipeFlowSystem` in the `fluidmechanics` package provides:
+
+- **Multicomponent mass transfer** using Krishna-Standart film model
+- **Flow pattern detection** (Taitel-Dukler, Baker, Barnea, Beggs-Brill)
+- **Interfacial area calculations** for all flow patterns
+- **Wall heat transfer** with multiple boundary conditions
+- **Bidirectional mass transfer** (evaporation and dissolution)
+
+See [Fluid Mechanics README](../fluidmechanics/README.md) and [Two-Phase Pipe Flow Model](../fluidmechanics/TwoPhasePipeFlowModel.md) for details.
 
 ## Common Parameters
 
@@ -95,6 +110,9 @@ This documentation covers pipeline pressure drop, flow, and heat transfer calcul
 
 ## Version History
 
+- **December 2025**: Fixed Java 8 compatibility in TwoPhasePipeFlowSystem tests
+- **December 2025**: Added bidirectional mass transfer mode
+- **December 2025**: Improved solver stability for edge cases
 - **2025**: Added calculate flow from outlet pressure mode
 - **2025**: Fixed AdiabaticPipe and AdiabaticTwoPhasePipe calcFlow() methods
 - **2024**: Added transient with friction and hydrostatic
