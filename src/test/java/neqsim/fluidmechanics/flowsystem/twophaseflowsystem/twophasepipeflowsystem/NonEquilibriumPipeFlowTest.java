@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.apache.commons.lang3.StringUtils;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
@@ -2348,7 +2349,7 @@ public class NonEquilibriumPipeFlowTest {
     // Since the current API solves steady-state, we'll simulate the "dried up" scenario
     // by creating a new system with reduced water content and comparing the results.
 
-    System.out.println("\n" + "=".repeat(60));
+    System.out.println("\n" + StringUtils.repeat("=", 60));
     System.out.println("PHASE 2: Dry gas inlet (0.1 wt% water)");
     System.out.println("Simulating dehydration unit coming online...");
 
@@ -2405,10 +2406,10 @@ public class NonEquilibriumPipeFlowTest {
     }
 
     // ===== PHASE 3: Full profile for selected water contents =====
-    System.out.println("\n" + "=".repeat(80));
+    System.out.println("\n" + StringUtils.repeat("=", 80));
     System.out.println("DETAILED PROFILES WITH MASS AND HEAT TRANSFER");
     System.out.println("Showing gas/liquid temperatures and liquid fraction along pipeline");
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
 
     double[] waterFractions = {50.0, 10.0, 1.0, 0.1};
 
@@ -2456,7 +2457,7 @@ public class NonEquilibriumPipeFlowTest {
           waterWtPercent, methaneFlow, waterFlow);
       System.out
           .println("Position[m]  LiqFrac   T_gas[°C]  T_liq[°C]  V_gas[m/s]  V_liq[m/s]  P[bar]");
-      System.out.println("-".repeat(85));
+      System.out.println(StringUtils.repeat("-", 85));
 
       int numNodesLocal = intermediatePipeline.getTotalNumberOfNodes();
       for (int i = 0; i < numNodesLocal; i += 5) { // Every 5th node
@@ -2550,12 +2551,12 @@ public class NonEquilibriumPipeFlowTest {
     }
 
     // ===== Summary table =====
-    System.out.println("\n" + "=".repeat(80));
+    System.out.println("\n" + StringUtils.repeat("=", 80));
     System.out.println("SUMMARY TABLE: Effect of Water Content on Holdup and Temperature");
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
     System.out.println(
         "Water%   LiqFrac_in  LiqFrac_out  Evap%   T_gas_in  T_gas_out  T_liq_in  T_liq_out");
-    System.out.println("-".repeat(80));
+    System.out.println(StringUtils.repeat("-", 80));
 
     double[] allWaterFractions = {50.0, 25.0, 10.0, 5.0, 1.0, 0.5, 0.1};
     for (double waterWtPercent : allWaterFractions) {
@@ -2603,9 +2604,9 @@ public class NonEquilibriumPipeFlowTest {
     }
 
     // ===== Summary and assertions =====
-    System.out.println("\n" + "=".repeat(60));
+    System.out.println("\n" + StringUtils.repeat("=", 60));
     System.out.println("SUMMARY: Water Drying Behavior");
-    System.out.println("=".repeat(60));
+    System.out.println(StringUtils.repeat("=", 60));
 
     double wetInletHoldup = initialHoldup[0];
     double wetOutletHoldup = initialHoldup[numNodes - 1];

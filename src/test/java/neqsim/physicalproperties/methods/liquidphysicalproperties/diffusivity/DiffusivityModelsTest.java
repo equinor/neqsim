@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -258,7 +259,7 @@ public class DiffusivityModelsTest {
     hydrocarbonSystem.initPhysicalProperties();
 
     if (hydrocarbonSystem.hasPhaseType("oil")) {
-      var physProps = hydrocarbonSystem.getPhase("oil").getPhysicalProperties();
+      PhysicalProperties physProps = hydrocarbonSystem.getPhase("oil").getPhysicalProperties();
 
       // Create both models
       HaydukMinhasDiffusivity haydukModel = new HaydukMinhasDiffusivity(physProps);
@@ -329,7 +330,7 @@ public class DiffusivityModelsTest {
     aqueousSystem.initPhysicalProperties();
 
     if (aqueousSystem.hasPhaseType("aqueous")) {
-      var physProps = aqueousSystem.getPhase("aqueous").getPhysicalProperties();
+      PhysicalProperties physProps = aqueousSystem.getPhase("aqueous").getPhysicalProperties();
 
       // Create all applicable models
       HaydukMinhasDiffusivity haydukModel = new HaydukMinhasDiffusivity(physProps);
@@ -381,7 +382,7 @@ public class DiffusivityModelsTest {
     hydrocarbonSystem.initPhysicalProperties();
 
     if (hydrocarbonSystem.hasPhaseType("oil")) {
-      var physProps = hydrocarbonSystem.getPhase("oil").getPhysicalProperties();
+      PhysicalProperties physProps = hydrocarbonSystem.getPhase("oil").getPhysicalProperties();
       SiddiqiLucasMethod siddiqiModel = new SiddiqiLucasMethod(physProps);
 
       int nComps = hydrocarbonSystem.getPhase("oil").getNumberOfComponents();
@@ -443,7 +444,7 @@ public class DiffusivityModelsTest {
       testSystem.initPhysicalProperties();
 
       if (testSystem.hasPhaseType("oil")) {
-        var physProps = testSystem.getPhase("oil").getPhysicalProperties();
+        PhysicalProperties physProps = testSystem.getPhase("oil").getPhysicalProperties();
 
         HaydukMinhasDiffusivity haydukModel = new HaydukMinhasDiffusivity(physProps);
         haydukModel.setSolventType(HaydukMinhasDiffusivity.SolventType.PARAFFIN);
@@ -488,7 +489,7 @@ public class DiffusivityModelsTest {
       testSystem.initPhysicalProperties();
 
       if (testSystem.hasPhaseType("oil")) {
-        var physProps = testSystem.getPhase("oil").getPhysicalProperties();
+        PhysicalProperties physProps = testSystem.getPhase("oil").getPhysicalProperties();
 
         HaydukMinhasDiffusivity haydukModel = new HaydukMinhasDiffusivity(physProps);
         HighPressureDiffusivity hpModel = new HighPressureDiffusivity(physProps);
