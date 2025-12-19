@@ -577,7 +577,7 @@ public class EstimationTestHarness implements Serializable {
       return meanCoverage;
     }
 
-    /** Gets success rate (trials with >=90% coverage). */
+    /** Gets success rate (trials with &gt;=90% coverage). */
     public double getSuccessRate() {
       return successRate;
     }

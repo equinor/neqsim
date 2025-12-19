@@ -30,20 +30,21 @@ import neqsim.thermo.system.SystemSrkEos;
  *
  * <pre>
  *                        +--------+
- *    Well 1 --> Pipe1 -->|Splitter|---> HP Manifold ----+
- *                        +--------+---> LP Manifold -+  |
+ *    Well 1 ==&gt; Pipe1 ==&gt;|Splitter|===&gt; HP Manifold ----+
+ *                        +--------+===&gt; LP Manifold -+  |
  *                                                    |  |
  *                        +--------+                  |  |
- *    Well 2 --> Pipe2 -->|Splitter|---> HP Manifold -|--+---> HP Outlet Stream
- *                        +--------+---> LP Manifold -|--+
+ *    Well 2 ==&gt; Pipe2 ==&gt;|Splitter|===&gt; HP Manifold -|--+===&gt; HP Outlet Stream
+ *                        +--------+===&gt; LP Manifold -|--+
  *                                                    |  |
  *                        +--------+                  |  |
- *    Well 3 --> Pipe3 -->|Splitter|---> HP Manifold -|--+
- *                        +--------+---> LP Manifold -+--+---> LP Outlet Stream
+ *    Well 3 ==&gt; Pipe3 ==&gt;|Splitter|===&gt; HP Manifold -|--+
+ *                        +--------+===&gt; LP Manifold -+--+===&gt; LP Outlet Stream
  *                                                       |
  *                        +--------+                     |
- *    Well 4 --> Pipe4 -->|Splitter|---> HP Manifold ----+
- *                        +--------+---> LP Manifold ----+
+ *    Well 4 ==&gt; Pipe4 ==&gt;|Splitter|===&gt; HP Manifold ----+
+ *                        +--------+===&gt; LP Manifold ----+
+ * </pre>
  * </pre>
  */
 public class FourWellManifoldWithHeatTransferAdjustmentExample {
