@@ -45,7 +45,6 @@ import neqsim.thermo.system.SystemSrkEos;
  *    Well 4 ==&gt; Pipe4 ==&gt;|Splitter|===&gt; HP Manifold ----+
  *                        +--------+===&gt; LP Manifold ----+
  * </pre>
- * </pre>
  */
 public class FourWellManifoldWithHeatTransferAdjustmentExample {
 
