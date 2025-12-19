@@ -419,6 +419,7 @@ public class NonEquilibriumPipeFlowTest {
   @Test
   void testTEGMassTransfer() {
     // Test with TEG-water-methane system (similar to notebook example)
+    // Uses reduced nodes/legs for faster execution with CPA equation of state
     SystemInterface tegSystem = new SystemSrkCPAstatoil(298.15, 50.0);
     tegSystem.addComponent("methane", 0.5, "MSm3/day", 0);
     tegSystem.addComponent("water", 0.1, "kg/hr", 0); // Some water in gas
@@ -430,14 +431,14 @@ public class NonEquilibriumPipeFlowTest {
     TwoPhasePipeFlowSystem tegPipe = new TwoPhasePipeFlowSystem();
     tegPipe.setInletThermoSystem(tegSystem);
     tegPipe.setInitialFlowPattern("stratified");
-    tegPipe.setNumberOfLegs(3);
-    tegPipe.setNumberOfNodesInLeg(10);
+    tegPipe.setNumberOfLegs(2);
+    tegPipe.setNumberOfNodesInLeg(5);
 
-    double[] height = {0, 0, 0, 0};
-    double[] length = {0.0, 1.0, 2.0, 3.0};
-    double[] outerTemperature = {298.0, 298.0, 298.0, 298.0};
-    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0};
-    double[] wallHeatCoef = {15.0, 15.0, 15.0, 15.0};
+    double[] height = {0, 0, 0};
+    double[] length = {0.0, 1.0, 2.0};
+    double[] outerTemperature = {298.0, 298.0, 298.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0};
 
     tegPipe.setLegHeights(height);
     tegPipe.setLegPositions(length);
@@ -445,8 +446,8 @@ public class NonEquilibriumPipeFlowTest {
     tegPipe.setLegOuterHeatTransferCoefficients(outHeatCoef);
     tegPipe.setLegWallHeatTransferCoefficients(wallHeatCoef);
 
-    GeometryDefinitionInterface[] pipeGeometry = new PipeData[4];
-    for (int i = 0; i < 4; i++) {
+    GeometryDefinitionInterface[] pipeGeometry = new PipeData[3];
+    for (int i = 0; i < 3; i++) {
       pipeGeometry[i] = new PipeData(0.1);
     }
     tegPipe.setEquipmentGeometry(pipeGeometry);
