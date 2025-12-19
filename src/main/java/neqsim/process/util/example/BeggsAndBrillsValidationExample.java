@@ -12,15 +12,17 @@ import neqsim.thermo.system.SystemSrkEos;
  *
  * <p>
  * This example validates:
+ * </p>
  * <ul>
  * <li>Single-phase gas pressure drop against Darcy-Weisbach equation</li>
  * <li>Single-phase liquid pressure drop against Darcy-Weisbach equation</li>
  * <li>Heat transfer against NTU-effectiveness analytical solution</li>
- * <li>Two-phase pressure drop against Beggs & Brill (1973) original correlations</li>
+ * <li>Two-phase pressure drop against Beggs and Brill (1973) original correlations</li>
  * </ul>
- * </p>
  *
- * <h2>References</h2>
+ * <p>
+ * <b>References:</b>
+ * </p>
  * <ul>
  * <li>Beggs, H.D. and Brill, J.P., "A Study of Two-Phase Flow in Inclined Pipes", Journal of
  * Petroleum Technology, May 1973, pp. 607-617</li>
@@ -370,7 +372,7 @@ public class BeggsAndBrillsValidationExample {
    * Validate two-phase flow regime detection and holdup calculation.
    *
    * <p>
-   * Tests against Beggs & Brill (1973) flow regime map boundaries and holdup correlations.
+   * Tests against Beggs and Brill (1973) flow regime map boundaries and holdup correlations.
    * </p>
    */
   private static void validateTwoPhaseFlowRegimes() {
