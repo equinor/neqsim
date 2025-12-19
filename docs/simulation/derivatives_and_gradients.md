@@ -139,9 +139,20 @@ double[][] dlnPhidn = jacV.getDlnPhidn();   // ∂ln(φ_i)/∂n_j
 | Density | `"density"` | kg/m³ | Mixture mass density |
 | Enthalpy | `"enthalpy"` | J/mol | Mixture molar enthalpy |
 | Entropy | `"entropy"` | J/mol/K | Mixture molar entropy |
-| Heat capacity | `"Cp"` | J/mol/K | Isobaric heat capacity |
-| Compressibility | `"compressibility"` | - | Z-factor |
+| Heat capacity (Cp) | `"Cp"` | J/mol/K | Isobaric heat capacity |
+| Heat capacity (Cv) | `"Cv"` | J/mol/K | Isochoric heat capacity |
+| Compressibility | `"compressibility"` or `"Z"` | - | Z-factor |
 | Molar volume | `"molarvolume"` | m³/mol | Mixture molar volume |
+| Molar mass | `"molarmass"` | kg/mol | Mixture molar mass |
+| Viscosity | `"viscosity"` | kg/m/s | Dynamic viscosity |
+| Thermal conductivity | `"thermalconductivity"` | W/m/K | Thermal conductivity |
+| Sound speed | `"soundspeed"` | m/s | Speed of sound |
+| Joule-Thomson | `"joulethomson"` | K/bar | Joule-Thomson coefficient |
+| Kappa (Cp/Cv) | `"kappa"` or `"cpcvratio"` | - | Heat capacity ratio |
+| Gamma | `"gamma"` | - | Isentropic exponent |
+| Gibbs energy | `"gibbsenergy"` | J/mol | Gibbs free energy |
+| Internal energy | `"internalenergy"` | J/mol | Internal energy |
+| Vapor fraction | `"beta"` or `"vaporfraction"` | - | Molar vapor fraction |
 
 ### 1.4 Complete Example
 
