@@ -1,5 +1,6 @@
 package neqsim.process.util.example;
 
+import org.apache.commons.lang3.StringUtils;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills.HeatTransferMode;
 import neqsim.process.equipment.stream.Stream;
@@ -97,7 +98,7 @@ public class TransientPipeHeatTransferExample {
     // ========================================
     System.out.println("=== Transient Simulation Results ===");
     System.out.println("Time(s)    Inlet T(°C)  Outlet T(°C)  ΔT(°C)    Phase");
-    System.out.println("─".repeat(70));
+    System.out.println(StringUtils.repeat("─", 70));
 
     // Disable steady-state calculation for transient mode
     pipe.setCalculateSteadyState(false);
@@ -148,7 +149,7 @@ public class TransientPipeHeatTransferExample {
       currentTime += dt;
     }
 
-    System.out.println("─".repeat(70));
+    System.out.println(StringUtils.repeat("─", 70));
     System.out.println();
 
     // ========================================

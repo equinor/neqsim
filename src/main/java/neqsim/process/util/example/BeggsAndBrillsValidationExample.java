@@ -1,5 +1,6 @@
 package neqsim.process.util.example;
 
+import org.apache.commons.lang3.StringUtils;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills.HeatTransferMode;
 import neqsim.process.equipment.stream.Stream;
@@ -398,12 +399,12 @@ public class BeggsAndBrillsValidationExample {
     double liquidFlowRate = 10000; // kg/hr liquid (constant)
 
     System.out.println("Two-Phase Flow Results:");
-    System.out.println("─".repeat(90));
+    System.out.println(StringUtils.repeat("─", 90));
     System.out.printf("%-10s %-10s %-8s %-10s %-12s %-10s %-12s %-10s%n", "Gas Flow", "Liq Flow",
         "GOR", "λ_liquid", "Flow Regime", "Holdup El", "ΔP (bar)", "ΔP/km");
     System.out.printf("%-10s %-10s %-8s %-10s %-12s %-10s %-12s %-10s%n", "(kg/hr)", "(kg/hr)",
         "(-)", "(-)", "(-)", "(-)", "(bar)", "(bar/km)");
-    System.out.println("─".repeat(90));
+    System.out.println(StringUtils.repeat("─", 90));
 
     for (double gasFlow : gasFlowRates) {
       // Create two-phase fluid (methane + nC10)
@@ -456,7 +457,7 @@ public class BeggsAndBrillsValidationExample {
       }
     }
 
-    System.out.println("─".repeat(90));
+    System.out.println(StringUtils.repeat("─", 90));
     System.out.println();
 
     // Validate against Beggs & Brill flow regime map boundaries
