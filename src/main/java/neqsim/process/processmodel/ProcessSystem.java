@@ -2248,6 +2248,211 @@ public class ProcessSystem extends SimulationBaseClass {
     return sb.toString();
   }
 
+  // ============ DIGITAL TWIN LIFECYCLE & SUSTAINABILITY ============
+
+  /**
+   * Exports the current state of this process system for checkpointing or versioning.
+   *
+   * <p>
+   * This method captures all equipment states, fluid compositions, and operating conditions into a
+   * serializable format that can be saved to disk, stored in a database, or used for model
+   * versioning in digital twin applications.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   *
+   * <pre>
+   * ProcessSystem system = new ProcessSystem();
+   * // ... configure and run ...
+   * ProcessSystemState state = system.exportState();
+   * state.saveToFile("checkpoint_v1.json");
+   * </pre>
+   *
+   * @return the current state as a serializable object
+   * @see neqsim.process.processmodel.lifecycle.ProcessSystemState
+   */
+  public neqsim.process.processmodel.lifecycle.ProcessSystemState exportState() {
+    return neqsim.process.processmodel.lifecycle.ProcessSystemState.fromProcessSystem(this);
+  }
+
+  /**
+   * Exports the current state to a JSON file for versioning or backup.
+   *
+   * @param filename the file path to save the state
+   */
+  public void exportStateToFile(String filename) {
+    exportState().saveToFile(filename);
+  }
+
+  /**
+   * Loads process state from a JSON file and applies it to this system.
+   *
+   * <p>
+   * Note: This method updates equipment states but does not recreate equipment. The process
+   * structure must match the saved state.
+   * </p>
+   *
+   * @param filename the file path to load state from
+   */
+  public void loadStateFromFile(String filename) {
+    neqsim.process.processmodel.lifecycle.ProcessSystemState state =
+        neqsim.process.processmodel.lifecycle.ProcessSystemState.loadFromFile(filename);
+    if (state != null) {
+      state.applyTo(this);
+    }
+  }
+
+  /**
+   * Calculates current emissions from all equipment in this process system.
+   *
+   * <p>
+   * Tracks CO2-equivalent emissions from:
+   * <ul>
+   * <li>Flares (combustion emissions)</li>
+   * <li>Furnaces and burners</li>
+   * <li>Compressors (electricity-based, using grid emission factor)</li>
+   * <li>Pumps (electricity-based)</li>
+   * <li>Heaters and coolers (if fuel-fired or electric)</li>
+   * </ul>
+   *
+   * <p>
+   * Example usage:
+   *
+   * <pre>
+   * ProcessSystem system = new ProcessSystem();
+   * // ... configure and run ...
+   * EmissionsReport report = system.getEmissions();
+   * System.out.println("Total CO2e: " + report.getTotalCO2e("kg/hr") + " kg/hr");
+   * report.exportToCSV("emissions_report.csv");
+   * </pre>
+   *
+   * @return emissions report with breakdown by equipment and category
+   * @see neqsim.process.sustainability.EmissionsTracker
+   */
+  public neqsim.process.sustainability.EmissionsTracker.EmissionsReport getEmissions() {
+    neqsim.process.sustainability.EmissionsTracker tracker =
+        new neqsim.process.sustainability.EmissionsTracker(this);
+    return tracker.calculateEmissions();
+  }
+
+  /**
+   * Calculates emissions using a custom grid emission factor.
+   *
+   * <p>
+   * Different regions have different electricity grid carbon intensities. Use this method to apply
+   * location-specific emission factors.
+   * </p>
+   *
+   * @param gridEmissionFactor kg CO2 per kWh of electricity (e.g., 0.05 for Norway, 0.4 for global
+   *        average)
+   * @return emissions report with equipment breakdown
+   */
+  public neqsim.process.sustainability.EmissionsTracker.EmissionsReport getEmissions(
+      double gridEmissionFactor) {
+    neqsim.process.sustainability.EmissionsTracker tracker =
+        new neqsim.process.sustainability.EmissionsTracker(this);
+    tracker.setGridEmissionFactor(gridEmissionFactor);
+    return tracker.calculateEmissions();
+  }
+
+  /**
+   * Gets total CO2-equivalent emissions from this process in kg/hr.
+   *
+   * <p>
+   * This is a convenience method for quick emission checks. For detailed breakdown, use
+   * {@link #getEmissions()}.
+   * </p>
+   *
+   * @return total CO2e emissions in kg/hr
+   */
+  public double getTotalCO2Emissions() {
+    return getEmissions().getTotalCO2e("kg/hr");
+  }
+
+  // ============ BATCH STUDY & OPTIMIZATION ============
+
+  /**
+   * Creates a batch study builder for running parallel parameter studies on this process.
+   *
+   * <p>
+   * Batch studies allow exploring the design space by running many variations of this process in
+   * parallel. Useful for concept screening, sensitivity analysis, and optimization.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   *
+   * <pre>
+   * BatchStudy study =
+   *     system.createBatchStudy().addParameter("separator1", "pressure", 30.0, 50.0, 70.0)
+   *         .addParameter("compressor1", "outletPressure", 80.0, 100.0, 120.0)
+   *         .addObjective("totalPower", true) // minimize
+   *         .withParallelism(4).build();
+   * BatchStudyResult result = study.run();
+   * </pre>
+   *
+   * @return a new batch study builder configured for this process
+   * @see neqsim.process.util.optimization.BatchStudy
+   */
+  public neqsim.process.util.optimization.BatchStudy.Builder createBatchStudy() {
+    return neqsim.process.util.optimization.BatchStudy.builder(this);
+  }
+
+  // ============ SAFETY SCENARIO GENERATION ============
+
+  /**
+   * Generates automatic safety scenarios based on equipment failure modes.
+   *
+   * <p>
+   * This method analyzes the process structure and generates scenarios for common failure modes
+   * such as:
+   * <ul>
+   * <li>Cooling system failure</li>
+   * <li>Valve stuck open/closed</li>
+   * <li>Compressor/pump trips</li>
+   * <li>Power failure</li>
+   * <li>Blocked outlets</li>
+   * </ul>
+   *
+   * <p>
+   * Example usage:
+   *
+   * <pre>
+   * List&lt;ProcessSafetyScenario&gt; scenarios = system.generateSafetyScenarios();
+   * for (ProcessSafetyScenario scenario : scenarios) {
+   *   scenario.applyTo(system.copy());
+   *   system.run();
+   *   // Check for dangerous conditions
+   * }
+   * </pre>
+   *
+   * @return list of safety scenarios for this process
+   * @see neqsim.process.safety.scenario.AutomaticScenarioGenerator
+   */
+  public List<neqsim.process.safety.ProcessSafetyScenario> generateSafetyScenarios() {
+    neqsim.process.safety.scenario.AutomaticScenarioGenerator generator =
+        new neqsim.process.safety.scenario.AutomaticScenarioGenerator(this);
+    return generator.enableAllFailureModes().generateSingleFailures();
+  }
+
+  /**
+   * Generates combination failure scenarios (multiple simultaneous failures).
+   *
+   * <p>
+   * This is useful for analyzing cascading failures and common-cause scenarios.
+   * </p>
+   *
+   * @param maxSimultaneousFailures maximum number of failures to combine (2-3 recommended)
+   * @return list of combination scenarios
+   */
+  public List<neqsim.process.safety.ProcessSafetyScenario> generateCombinationScenarios(
+      int maxSimultaneousFailures) {
+    neqsim.process.safety.scenario.AutomaticScenarioGenerator generator =
+        new neqsim.process.safety.scenario.AutomaticScenarioGenerator(this);
+    return generator.enableAllFailureModes().generateCombinations(maxSimultaneousFailures);
+  }
+
   /*
    * @XmlRootElement private class Report extends Object{ public Double name; public
    * ArrayList<ReportInterface> unitOperationsReports = new ArrayList<ReportInterface>();
