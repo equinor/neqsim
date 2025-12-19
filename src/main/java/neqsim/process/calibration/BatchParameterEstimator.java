@@ -25,24 +25,11 @@ import org.apache.logging.log4j.Logger;
  * <p>
  * <b>When to use BatchParameterEstimator vs EnKFParameterEstimator:</b>
  * </p>
- * <table border="1">
- * <tr>
- * <th>Scenario</th>
- * <th>Recommended</th>
- * </tr>
- * <tr>
- * <td>Multiple parameters, batch/historical data</td>
- * <td>BatchParameterEstimator (this class)</td>
- * </tr>
- * <tr>
- * <td>Live streaming data, uncertainty tracking</td>
- * <td>EnKFParameterEstimator</td>
- * </tr>
- * <tr>
- * <td>Single parameter tuning</td>
- * <td>Adjuster class</td>
- * </tr>
- * </table>
+ * <ul>
+ * <li><b>Multiple parameters, batch/historical data:</b> BatchParameterEstimator (this class)</li>
+ * <li><b>Live streaming data, uncertainty tracking:</b> EnKFParameterEstimator</li>
+ * <li><b>Single parameter tuning:</b> Adjuster class</li>
+ * </ul>
  *
  * <h2>Usage Example:</h2>
  * 
