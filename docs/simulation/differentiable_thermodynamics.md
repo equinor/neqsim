@@ -173,9 +173,20 @@ $$F_{n_c+1} = \sum_i \frac{z_i(K_i - 1)}{1 + \beta(K_i - 1)} = 0 \quad \text{(Ra
 | Density | `"density"` | kg/m³ |
 | Enthalpy | `"enthalpy"` | J/mol |
 | Entropy | `"entropy"` | J/mol/K |
-| Heat capacity | `"cp"` | J/mol/K |
-| Compressibility | `"compressibility"` | - |
+| Heat capacity (Cp) | `"Cp"` | J/mol/K |
+| Heat capacity (Cv) | `"Cv"` | J/mol/K |
+| Compressibility | `"compressibility"` or `"Z"` | - |
 | Molar volume | `"molarvolume"` | m³/mol |
+| Molar mass | `"molarmass"` | kg/mol |
+| Viscosity | `"viscosity"` | kg/m/s |
+| Thermal conductivity | `"thermalconductivity"` | W/m/K |
+| Sound speed | `"soundspeed"` | m/s |
+| Joule-Thomson | `"joulethomson"` | K/bar |
+| Kappa (Cp/Cv) | `"kappa"` or `"cpcvratio"` | - |
+| Gamma | `"gamma"` | - |
+| Gibbs energy | `"gibbsenergy"` | J/mol |
+| Internal energy | `"internalenergy"` | J/mol |
+| Vapor fraction | `"beta"` or `"vaporfraction"` | - |
 
 ## Performance Considerations
 
