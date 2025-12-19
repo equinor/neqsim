@@ -29,7 +29,7 @@ When deploying NeqSim process simulations as digital twins or soft sensors, mode
 | Scenario | Recommended Approach |
 |----------|---------------------|
 | Single parameter tuning | `Adjuster` class |
-| Multiple parameters, batch data | Gauss-Newton or Levenberg-Marquardt |
+| Multiple parameters, batch data | `BatchParameterEstimator` (Levenberg-Marquardt) |
 | Live streaming data, uncertainty needed | `EnKFParameterEstimator` |
 | Validate before deployment | `EstimationTestHarness` |
 
@@ -44,10 +44,12 @@ The calibration framework integrates seamlessly with existing NeqSim components:
 | Component | Purpose | Usage in Calibration |
 |-----------|---------|---------------------|
 | `ProcessVariableAccessor` | Path-based access to any process variable | Read measurements, write parameters |
-| `ProcessDerivativeCalculator` | Compute sensitivities/Jacobians | Optional: improve convergence |
+| `ProcessSensitivityAnalyzer` | Compute sensitivities/Jacobians | Optional: improve convergence |
 | `ManipulatedVariable` | Variable with bounds and rate limits | Pattern for parameter constraints |
 | `CalibrationResult` | Standard result container | Return type for API compatibility |
 | `OnlineCalibrator` | Basic online calibration | Base patterns for streaming |
+| `BatchParameterEstimator` | Levenberg-Marquardt batch optimization | Batch/historical data fitting |
+| `BatchResult` | Batch estimation result container | Contains estimates, uncertainties, statistics |
 
 ### Path Notation
 
@@ -63,6 +65,159 @@ Examples:
 - `"Pipe1.heatTransferCoefficient"` - heat transfer coefficient of Pipe1
 - `"HPManifold.outletStream.temperature"` - outlet temperature of HP manifold
 - `"Separator.gasOutStream.pressure"` - gas outlet pressure of separator
+
+---
+
+## Batch Parameter Estimator
+
+The `BatchParameterEstimator` uses the **Levenberg-Marquardt** algorithm for batch (offline) parameter estimation. This is ideal for:
+
+- **Historical/batch data**: Processes all data points simultaneously
+- **Multiple parameters**: Efficiently estimates many parameters at once
+- **Uncertainty quantification**: Provides parameter standard deviations from covariance matrix
+- **Best-fit optimization**: Minimizes weighted sum of squared residuals
+
+### Algorithm Overview
+
+The Levenberg-Marquardt algorithm combines gradient descent with Gauss-Newton methods:
+
+$$(\mathbf{J}^T \mathbf{W} \mathbf{J} + \lambda \mathbf{I}) \Delta\vec{p} = \mathbf{J}^T \mathbf{W} \vec{r}$$
+
+where:
+- $\mathbf{J}$ = Jacobian matrix of partial derivatives
+- $\mathbf{W}$ = weight matrix (diagonal, $W_{ii} = 1/\sigma_i^2$)
+- $\lambda$ = damping parameter (adapts during iteration)
+- $\vec{r}$ = residual vector
+
+The damping parameter adapts:
+- Large $\lambda$ → gradient descent (slow but stable)
+- Small $\lambda$ → Gauss-Newton (fast near minimum)
+
+### Basic Usage
+
+```java
+import neqsim.process.calibration.BatchParameterEstimator;
+import neqsim.process.calibration.BatchResult;
+import neqsim.process.processmodel.ProcessSystem;
+import java.util.Map;
+import java.util.HashMap;
+
+// 1. Create your process system
+ProcessSystem process = buildYourProcess();
+
+// 2. Create the batch estimator
+BatchParameterEstimator estimator = new BatchParameterEstimator(process);
+
+// 3. Define tunable parameters
+estimator.addTunableParameter(
+    "Pipe1.heatTransferCoefficient",  // path to parameter
+    "W/(m2·K)",                        // unit
+    1.0,                               // minimum bound
+    100.0,                             // maximum bound
+    15.0                               // initial guess
+);
+
+estimator.addTunableParameter(
+    "Pipe2.heatTransferCoefficient",
+    "W/(m2·K)",
+    1.0, 100.0, 15.0
+);
+
+// 4. Define measured variables
+estimator.addMeasuredVariable(
+    "Manifold.outletStream.temperature",  // path to measurement
+    "C",                                   // unit
+    0.5                                    // measurement noise std dev
+);
+
+// 5. Add historical data points
+for (HistoricalRecord record : historicalData) {
+    Map<String, Double> conditions = new HashMap<>();
+    conditions.put("feedStream.flowRate", record.getFlowRate());
+    conditions.put("feedStream.temperature", record.getInletTemp());
+    
+    Map<String, Double> measurements = new HashMap<>();
+    measurements.put("Manifold.outletStream.temperature", record.getOutletTemp());
+    
+    estimator.addDataPoint(conditions, measurements);
+}
+
+// 6. Configure and solve
+estimator.setMaxIterations(100);
+BatchResult result = estimator.solve();
+
+// 7. Use results
+result.printSummary();
+double[] estimates = result.getEstimates();
+double[] uncertainties = result.getUncertainties();
+double[] lowerCI = result.getConfidenceIntervalLower();
+double[] upperCI = result.getConfidenceIntervalUpper();
+
+// 8. Get statistics
+double chiSquare = result.getChiSquare();
+double rmse = result.getRMSE();
+double rSquared = result.getRSquared();
+```
+
+### Configuration Options
+
+| Method | Description | Default |
+|--------|-------------|---------|
+| `setMaxIterations(int)` | Maximum L-M iterations | 100 |
+| `setUseAnalyticalJacobian(boolean)` | Use ProcessSensitivityAnalyzer for derivatives | false |
+
+### Result Object: `BatchResult`
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `getEstimates()` | `double[]` | Optimized parameter values |
+| `getUncertainties()` | `double[]` | Standard deviations from covariance |
+| `getConfidenceIntervalLower()` | `double[]` | 95% CI lower bounds |
+| `getConfidenceIntervalUpper()` | `double[]` | 95% CI upper bounds |
+| `getChiSquare()` | `double` | Sum of squared weighted residuals |
+| `getRMSE()` | `double` | Root mean square error |
+| `getRSquared()` | `double` | Coefficient of determination |
+| `isConverged()` | `boolean` | Whether optimization converged |
+| `getIterations()` | `int` | Number of iterations used |
+| `getCovarianceMatrix()` | `double[][]` | Parameter covariance matrix |
+| `getCorrelationMatrix()` | `double[][]` | Parameter correlation matrix |
+| `toCalibrationResult()` | `CalibrationResult` | Convert to standard format |
+
+### Jacobian Computation
+
+The `BatchParameterEstimator` supports two methods for computing the Jacobian:
+
+1. **Numerical differentiation** (default): Uses Romberg extrapolation via `NumericalDerivative`
+2. **Analytical Jacobian**: Uses `ProcessSensitivityAnalyzer` which can:
+   - Reuse Broyden Jacobians from recycle convergence
+   - Apply chain rule through process structure
+   - Fall back to finite differences only when necessary
+
+To enable analytical Jacobian:
+
+```java
+estimator.setUseAnalyticalJacobian(true);
+```
+
+### Monte Carlo Uncertainty Analysis
+
+For more robust uncertainty quantification, run Monte Carlo simulation:
+
+```java
+BatchResult result = estimator.solve();
+estimator.runMonteCarloSimulation(1000);  // 1000 MC runs
+```
+
+### Comparison: BatchParameterEstimator vs EnKFParameterEstimator
+
+| Aspect | BatchParameterEstimator | EnKFParameterEstimator |
+|--------|------------------------|------------------------|
+| **Data** | Batch/historical | Streaming/sequential |
+| **Best for** | Offline calibration | Live digital twins |
+| **Algorithm** | Levenberg-Marquardt | Ensemble Kalman Filter |
+| **Uncertainty** | Covariance matrix | Ensemble-based |
+| **Drift tracking** | No | Yes |
+| **Convergence** | Full optimization | Sequential updates |
 
 ---
 
