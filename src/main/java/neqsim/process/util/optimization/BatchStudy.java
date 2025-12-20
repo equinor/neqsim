@@ -199,7 +199,7 @@ public class BatchStudy implements Serializable {
     String property = parts[1];
 
     // Find equipment and set property
-    var equipment = process.getUnit(equipmentName);
+    neqsim.process.equipment.ProcessEquipmentInterface equipment = process.getUnit(equipmentName);
     if (equipment == null) {
       return;
     }
@@ -643,7 +643,7 @@ public class BatchStudy implements Serializable {
       sb.append("Total cases: ").append(totalCases).append("\n");
       sb.append("Successful: ").append(successCount).append("\n");
       sb.append("Failed: ").append(failureCount).append("\n");
-      sb.append("Total runtime: ").append(totalRuntime.toSeconds()).append(" seconds\n");
+      sb.append("Total runtime: ").append(totalRuntime.getSeconds()).append(" seconds\n");
       sb.append("Avg per case: ").append(totalRuntime.toMillis() / Math.max(1, results.size()))
           .append(" ms\n");
 
