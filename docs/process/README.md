@@ -471,9 +471,27 @@ process.display();
 
 ---
 
+## Future Infrastructure
+
+NeqSim includes foundational infrastructure to support the future of process simulation:
+
+| Capability | Documentation | Description |
+|------------|---------------|-------------|
+| **Lifecycle Management** | [lifecycle/](lifecycle/) | Model versioning, state export/import, lifecycle tracking |
+| **Emissions Tracking** | [sustainability/](sustainability/) | CO2e accounting, regulatory reporting |
+| **Advisory Systems** | [advisory/](advisory/) | Look-ahead predictions with uncertainty |
+| **ML Integration** | [ml/](ml/) | Surrogate models, physics constraint validation |
+| **Safety Scenarios** | [safety/scenario-generation.md](safety/scenario-generation.md) | Automatic failure scenario generation |
+| **Batch Studies** | [optimization/batch-studies.md](optimization/batch-studies.md) | Parallel parameter studies |
+
+See [Future Infrastructure Overview](future-infrastructure.md) for complete documentation.
+
+---
+
 ## Related Documentation
 
 - [Equipment Documentation](equipment/) - Detailed equipment guides
 - [Process Logic Framework](../process_logic_framework.md) - Logic controllers
 - [Safety Systems](../SAFETY_SIMULATION_ROADMAP.md) - Safety simulation
 - [Alarm System](../alarm_system_guide.md) - Process alarms
+- [Future Infrastructure](future-infrastructure.md) - Digital twin, AI integration, sustainability
