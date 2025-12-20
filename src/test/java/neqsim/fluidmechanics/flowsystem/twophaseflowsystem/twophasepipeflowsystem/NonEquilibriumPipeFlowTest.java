@@ -121,6 +121,8 @@ public class NonEquilibriumPipeFlowTest {
   @Test
   void testSteadyStateWithNonEquilibriumMassTransfer() {
     // Use CPA system for water-hydrocarbon mass transfer
+    // Note: Using reduced number of nodes (2 legs x 5 nodes) to keep test execution time
+    // within reasonable bounds while still validating the non-equilibrium mass transfer setup
     SystemInterface cpaSystem = new SystemSrkCPAstatoil(298.15, 10.0);
     cpaSystem.addComponent("methane", 0.1, "MSm3/day", 0);
     cpaSystem.addComponent("water", 1.0, "kg/hr", 1);
@@ -129,14 +131,14 @@ public class NonEquilibriumPipeFlowTest {
 
     TwoPhasePipeFlowSystem pipeWithCPA = new TwoPhasePipeFlowSystem();
     pipeWithCPA.setInletThermoSystem(cpaSystem);
-    pipeWithCPA.setNumberOfLegs(3);
-    pipeWithCPA.setNumberOfNodesInLeg(10);
+    pipeWithCPA.setNumberOfLegs(2);
+    pipeWithCPA.setNumberOfNodesInLeg(5);
 
-    double[] height = {0, 0, 0, 0};
-    double[] length = {0.0, 2.0, 4.0, 6.0};
-    double[] outerTemperature = {298.0, 298.0, 298.0, 298.0};
-    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0};
-    double[] wallHeatCoef = {15.0, 15.0, 15.0, 15.0};
+    double[] height = {0, 0, 0};
+    double[] length = {0.0, 3.0, 6.0};
+    double[] outerTemperature = {298.0, 298.0, 298.0};
+    double[] outHeatCoef = {5.0, 5.0, 5.0};
+    double[] wallHeatCoef = {15.0, 15.0, 15.0};
 
     pipeWithCPA.setLegHeights(height);
     pipeWithCPA.setLegPositions(length);
@@ -144,8 +146,8 @@ public class NonEquilibriumPipeFlowTest {
     pipeWithCPA.setLegOuterHeatTransferCoefficients(outHeatCoef);
     pipeWithCPA.setLegWallHeatTransferCoefficients(wallHeatCoef);
 
-    GeometryDefinitionInterface[] pipeGeometry = new PipeData[4];
-    for (int i = 0; i < 4; i++) {
+    GeometryDefinitionInterface[] pipeGeometry = new PipeData[3];
+    for (int i = 0; i < 3; i++) {
       pipeGeometry[i] = new PipeData(0.025);
     }
     pipeWithCPA.setEquipmentGeometry(pipeGeometry);
