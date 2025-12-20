@@ -60,9 +60,23 @@ pvtsimulation/
 ├── reservoirproperties/             # Reservoir calculations
 │   └── ReservoirProperties.java
 │
-└── util/                            # Utilities
-    └── PVTUtil.java
+├── util/                            # Utilities
+│   ├── parameterfitting/            # Parameter fitting utilities
+│   │   ├── AsphalteneOnsetFunction.java
+│   │   └── AsphalteneOnsetFitting.java
+│   └── PVTUtil.java
+│
+└── flowassurance/                   # Flow assurance analysis
+    ├── AsphalteneStabilityAnalyzer.java
+    ├── DeBoerAsphalteneScreening.java
+    └── AsphalteneMethodComparison.java
 ```
+
+### Sub-packages
+
+| Package | Documentation | Description |
+|---------|---------------|-------------|
+| `flowassurance` | [flowassurance/](flowassurance/README.md) | Asphaltene stability, De Boer screening, CPA onset calculations |
 
 ---
 

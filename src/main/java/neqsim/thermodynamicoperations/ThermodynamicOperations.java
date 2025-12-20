@@ -36,6 +36,8 @@ import neqsim.thermodynamicoperations.flashops.VHflashQfunc;
 import neqsim.thermodynamicoperations.flashops.VUflashSingleComp;
 import neqsim.thermodynamicoperations.flashops.dTPflash;
 import neqsim.thermodynamicoperations.flashops.saturationops.AddIonToScaleSaturation;
+import neqsim.thermodynamicoperations.flashops.saturationops.AsphalteneOnsetPressureFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.AsphalteneOnsetTemperatureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlashDer;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointTemperatureNoDer;
@@ -2349,6 +2351,75 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
 
     return new CalculationResult(fluidProperties, calculationError);
+  }
+
+  // ==================== ASPHALTENE STABILITY METHODS ====================
+
+  /**
+   * Calculates the asphaltene onset pressure at the current system temperature.
+   *
+   * <p>
+   * The onset pressure is where asphaltenes begin to precipitate from the oil phase. This typically
+   * occurs during pressure depletion near the bubble point.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+   * double onsetP = ops.asphalteneOnsetPressure();
+   * </pre>
+   *
+   * @return onset pressure in bara, or NaN if no onset found
+   */
+  public double asphalteneOnsetPressure() {
+    AsphalteneOnsetPressureFlash flash =
+        new AsphalteneOnsetPressureFlash(system, system.getPressure(), 1.0);
+    flash.run();
+    return flash.getOnsetPressure();
+  }
+
+  /**
+   * Calculates the asphaltene onset pressure with specified pressure range.
+   *
+   * @param startPressure starting pressure for search (bara)
+   * @param minPressure minimum pressure to search to (bara)
+   * @return onset pressure in bara, or NaN if no onset found
+   */
+  public double asphalteneOnsetPressure(double startPressure, double minPressure) {
+    AsphalteneOnsetPressureFlash flash =
+        new AsphalteneOnsetPressureFlash(system, startPressure, minPressure);
+    flash.run();
+    return flash.getOnsetPressure();
+  }
+
+  /**
+   * Calculates the asphaltene onset temperature at the current system pressure.
+   *
+   * @return onset temperature in Kelvin, or NaN if no onset found
+   */
+  public double asphalteneOnsetTemperature() {
+    AsphalteneOnsetTemperatureFlash flash = new AsphalteneOnsetTemperatureFlash(system);
+    flash.run();
+    return flash.getOnsetTemperature();
+  }
+
+  /**
+   * Calculates the asphaltene onset temperature with specified temperature range.
+   *
+   * @param startTemperature starting temperature for search (K)
+   * @param minTemperature minimum temperature to search to (K)
+   * @param maxTemperature maximum temperature to search to (K)
+   * @return onset temperature in Kelvin, or NaN if no onset found
+   */
+  public double asphalteneOnsetTemperature(double startTemperature, double minTemperature,
+      double maxTemperature) {
+    AsphalteneOnsetTemperatureFlash flash = new AsphalteneOnsetTemperatureFlash(system,
+        startTemperature, minTemperature, maxTemperature);
+    flash.run();
+    return flash.getOnsetTemperature();
   }
 
   /**
