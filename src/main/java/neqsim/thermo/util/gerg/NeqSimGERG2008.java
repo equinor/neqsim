@@ -23,6 +23,7 @@ public class NeqSimGERG2008 {
   double[] notNormalizedGERGComposition = new double[21 + 1];
   PhaseInterface phase = null;
   GERG2008 GERG2008 = new GERG2008();
+  private GERG2008Type modelType = GERG2008Type.STANDARD;
 
   /**
    * <p>
@@ -39,9 +40,61 @@ public class NeqSimGERG2008 {
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public NeqSimGERG2008(PhaseInterface phase) {
+    this(phase, GERG2008Type.STANDARD);
+  }
+
+  /**
+   * <p>
+   * Constructor for NeqSimGERG2008 with specified model type.
+   * </p>
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   * @param modelType the GERG-2008 model variant to use (STANDARD or HYDROGEN_ENHANCED)
+   */
+  public NeqSimGERG2008(PhaseInterface phase, GERG2008Type modelType) {
+    this.modelType = modelType;
+    this.GERG2008 = createGERGModel(modelType);
     this.setPhase(phase);
     if (Double.isNaN(GERG2008.RGERG) || GERG2008.RGERG == 0) {
       GERG2008.SetupGERG();
+    }
+  }
+
+  /**
+   * Creates the appropriate GERG model instance based on the specified type.
+   *
+   * @param type the GERG-2008 model variant
+   * @return a GERG2008 instance (standard or H2-enhanced)
+   */
+  private static GERG2008 createGERGModel(GERG2008Type type) {
+    switch (type) {
+      case HYDROGEN_ENHANCED:
+        return new GERG2008H2();
+      case STANDARD:
+      default:
+        return new GERG2008();
+    }
+  }
+
+  /**
+   * Get the current GERG-2008 model type.
+   *
+   * @return the model type
+   */
+  public GERG2008Type getModelType() {
+    return modelType;
+  }
+
+  /**
+   * Set the GERG-2008 model type. This will recreate the internal GERG model.
+   *
+   * @param modelType the GERG-2008 model variant to use
+   */
+  public void setModelType(GERG2008Type modelType) {
+    if (this.modelType != modelType) {
+      this.modelType = modelType;
+      this.GERG2008 = createGERGModel(modelType);
+      this.GERG2008.SetupGERG();
     }
   }
 
@@ -401,7 +454,7 @@ public class NeqSimGERG2008 {
 
     // Call the GERG2008 function to fill in the ar array. The first two
     // arguments specify the highest order of \u03c4- and \u03b4-derivatives to
-    // return.  Thermodynamic consistency requires mixed temperature/volume
+    // return. Thermodynamic consistency requires mixed temperature/volume
     // derivatives as well as up to third-order volume derivatives, so request
     // \u03c4-derivatives up to second order and \u03b4-derivatives up to third
     // order.
