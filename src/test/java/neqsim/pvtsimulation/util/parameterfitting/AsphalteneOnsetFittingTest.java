@@ -3,6 +3,7 @@ package neqsim.pvtsimulation.util.parameterfitting;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -123,9 +124,9 @@ public class AsphalteneOnsetFittingTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Test workflow documentation")
   void testWorkflowDocumentation() {
-    System.out.println("=".repeat(70));
+    System.out.println(StringUtils.repeat("=", 70));
     System.out.println("ASPHALTENE ONSET FITTING - WORKFLOW DEMONSTRATION");
-    System.out.println("=".repeat(70));
+    System.out.println(StringUtils.repeat("=", 70));
     System.out.println();
 
     System.out.println("Step 1: Create fluid system with asphaltene component");
@@ -164,7 +165,7 @@ public class AsphalteneOnsetFittingTest extends neqsim.NeqSimTest {
     System.out.println("  double onsetP = fitter.calculateOnsetPressure(400.0);  // T=400K");
     System.out.println();
 
-    System.out.println("=".repeat(70));
+    System.out.println(StringUtils.repeat("=", 70));
 
     // Verify the documentation matches actual API
     AsphalteneOnsetFitting fitter = new AsphalteneOnsetFitting(baseSystem);
@@ -181,9 +182,9 @@ public class AsphalteneOnsetFittingTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("Test typical asphaltene parameter ranges")
   void testTypicalParameterRanges() {
-    System.out.println("=".repeat(70));
+    System.out.println(StringUtils.repeat("=", 70));
     System.out.println("TYPICAL CPA PARAMETERS FOR ASPHALTENE");
-    System.out.println("=".repeat(70));
+    System.out.println(StringUtils.repeat("=", 70));
     System.out.println();
 
     System.out.println("Based on literature (Li & Firoozabadi, Vargas et al.):");

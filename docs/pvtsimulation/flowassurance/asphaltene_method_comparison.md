@@ -417,9 +417,9 @@ public class AsphalteneStudy {
         // Generate reports
         System.out.println(comparison.runComparison());
         
-        System.out.println("\n" + "=".repeat(50));
+        System.out.println("\n" + StringUtils.repeat("=", 50));
         System.out.println("QUICK REFERENCE");
-        System.out.println("=".repeat(50));
+        System.out.println(StringUtils.repeat("=", 50));
         System.out.println(comparison.getQuickSummary());
     }
 }
