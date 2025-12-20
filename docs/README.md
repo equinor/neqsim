@@ -53,6 +53,12 @@ System.out.println("Compressibility: " + gas.getZ());
 | `neqsim.pvtsimulation` | [pvtsimulation/](pvtsimulation/README.md) | PVT experiments: CME, CVD, DL, separator tests, swelling tests |
 | `neqsim.blackoil` | [blackoil/](blackoil/README.md) | Black oil model, PVT tables, Rs, Bo, Bg correlations |
 
+### Flow Assurance
+
+| Package | Documentation | Description |
+|---------|---------------|-------------|
+| `neqsim.pvtsimulation.flowassurance` | [pvtsimulation/flowassurance/](pvtsimulation/flowassurance/README.md) | Asphaltene stability, De Boer screening, CPA-based onset calculations |
+
 ### Chemical Reactions
 
 | Package | Documentation | Description |
@@ -106,7 +112,15 @@ docs/
 │   └── README.md
 │
 ├── pvtsimulation/                # PVT experiments
-│   └── README.md
+│   ├── README.md
+│   └── flowassurance/            # Flow assurance (asphaltene, wax, hydrates)
+│       ├── README.md
+│       ├── asphaltene_modeling.md
+│       ├── asphaltene_cpa_calculations.md
+│       ├── asphaltene_deboer_screening.md
+│       ├── asphaltene_parameter_fitting.md
+│       ├── asphaltene_method_comparison.md
+│       └── asphaltene_validation.md
 │
 ├── blackoil/                     # Black oil model
 │   └── README.md
