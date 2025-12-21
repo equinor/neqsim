@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.component.ComponentSrkCPAMM;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.util.constants.IonParametersMM;
 
 /**
@@ -97,6 +98,17 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    */
   public PhaseElectrolyteCPAMM() {
     super();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
+      double beta) {
+    super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+    // Initialize electrolyte properties after parent init
+    if (initType >= 1 && numberOfMolesInPhase > 1e-50 && getMolarVolume() > 1e-50) {
+      initElectrolyteProperties();
+    }
   }
 
   /** {@inheritDoc} */
