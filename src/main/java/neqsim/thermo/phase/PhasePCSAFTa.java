@@ -233,84 +233,7 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
     return -1.0 / 2.0 * hcpatotdTdT;
   }
 
-  /**
-   * <p>
-   * calc_hCPA.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_hCPA() {
-    double htot = 0.0;
-    double tot = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      htot = 0.0;
-      for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-        htot += (1.0 - ((ComponentPCSAFTa) getComponent(i)).getXsite()[j]);
-      }
-      tot += getComponent(i).getNumberOfMolesInPhase() * htot;
-    }
-    // System.out.println("tot " +tot );
-    return tot;
-  }
-
-  /**
-   * <p>
-   * calc_hCPAdT.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_hCPAdT() {
-    double htot = 0.0;
-    double tot = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      for (int k = 0; k < numberOfComponents; k++) {
-        htot = 0.0;
-        for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-          for (int l = 0; l < getComponent(k).getNumberOfAssociationSites(); l++) {
-            htot += ((ComponentPCSAFTa) getComponent(i)).getXsite()[j]
-                * ((ComponentPCSAFTa) getComponent(k)).getXsite()[l]
-                * cpamix.calcDeltadT(j, l, i, k, this, temperature, pressure, numberOfComponents);
-          }
-        }
-
-        tot += getComponent(i).getNumberOfMolesInPhase() * getComponent(k).getNumberOfMolesInPhase()
-            * htot;
-      }
-    }
-    // System.out.println("tot " +tot );
-    return tot / getTotalVolume();
-  }
-
-  /**
-   * <p>
-   * calc_hCPAdTdT.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_hCPAdTdT() {
-    double htot = 0.0;
-    double tot = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      for (int k = 0; k < numberOfComponents; k++) {
-        htot = 0.0;
-        for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-          for (int l = 0; l < getComponent(k).getNumberOfAssociationSites(); l++) {
-            htot += ((ComponentPCSAFTa) getComponent(i)).getXsite()[j]
-                * ((ComponentPCSAFTa) getComponent(k)).getXsite()[l]
-                * cpamix.calcDeltadTdT(j, l, i, k, this, temperature, pressure, numberOfComponents);
-          }
-        }
-
-        tot += getComponent(i).getNumberOfMolesInPhase() * getComponent(k).getNumberOfMolesInPhase()
-            * htot;
-      }
-    }
-    // System.out.println("tot " +tot );
-    return tot / getTotalVolume();
-  }
+  // calc_hCPA, calc_hCPAdT, calc_hCPAdTdT methods are now provided by PhaseCPAInterface
 
   /**
    * <p>
@@ -476,11 +399,34 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
-  public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
-    if (comp1 == comp2) {
-      return selfAccociationScheme[comp1][site1][site2];
-    }
-    return crossAccociationScheme[comp1][comp2][site1][site2];
+  public int[] getMoleculeNumber() {
+    return null; // Not used in this implementation
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int[] getAssSiteNumber() {
+    return null; // Not used in this implementation
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[][] getCpaDelta() {
+    return null; // Not used in this implementation
+  }
+
+  // getCrossAssosiationScheme method is now provided by PhaseCPAInterface default implementation
+
+  /** {@inheritDoc} */
+  @Override
+  public int[][][] getSelfAccociationScheme() {
+    return selfAccociationScheme;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int[][][][] getCrossAccociationScheme() {
+    return crossAccociationScheme;
   }
 
   /** {@inheritDoc} */

@@ -701,106 +701,8 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     return new double[] {-tot1, -tot4};
   }
 
-  /**
-   * <p>
-   * calc_hCPA.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_hCPA() {
-    double htot = 0.0;
-    double tot = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      htot = 0.0;
-      for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
-        htot += (1.0 - ((ComponentSrkCPA) componentArray[i]).getXsite()[j]);
-      }
-      tot += componentArray[i].getNumberOfMolesInPhase() * htot;
-    }
-    return tot;
-  }
-
-  /**
-   * <p>
-   * calc_g.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_g() {
-    tempTotVol = getMolarVolume();
-    double temp = 1.0 - getb() / 4.0 / tempTotVol;
-    return (2.0 - getb() / 4.0 / tempTotVol) / (2.0 * temp * temp * temp);
-  }
-
-  /**
-   * <p>
-   * calc_lngV.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_lngV() {
-    tempTotVol = getTotalVolume();
-    double b = getB();
-    double t = tempTotVol;
-    double t2 = t * t;
-    double bOver4t = b / (4.0 * t);
-    double factor = b / (4.0 * t2);
-    return factor / (2.0 - bOver4t) - 3.0 * factor / (1.0 - bOver4t);
-  }
-
-  /**
-   * <p>
-   * calc_lngVV.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_lngVV() {
-    tempTotVol = getTotalVolume();
-    double b = getB();
-    double t = tempTotVol;
-    double t2 = t * t;
-    double t3 = t2 * t;
-    double b2 = b * b;
-    double b3 = b2 * b;
-    double denom1 = 8.0 * t - b;
-    double denom1Sq = denom1 * denom1;
-    double denom2 = 4.0 * t - b;
-    double denom2Sq = denom2 * denom2;
-    double term = 640.0 * t3 - 216.0 * b * t2 + 24.0 * b2 * t - b3;
-    return 2.0 * term * b / t2 / denom1Sq / denom2Sq;
-  }
-
-  /**
-   * <p>
-   * calc_lngVVV.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_lngVVV() {
-    tempTotVol = getTotalVolume();
-    double b = getB();
-    double t = tempTotVol;
-    double t2 = t * t;
-    double t3 = t2 * t;
-    double t4 = t3 * t;
-    double t5 = t4 * t;
-    double b2 = b * b;
-    double b3 = b2 * b;
-    double b4 = b3 * b;
-    double b5 = b4 * b;
-    double term =
-        b5 + 17664.0 * t4 * b - 4192.0 * t3 * b2 + 528.0 * b3 * t2 - 36.0 * t * b4 - 30720.0 * t5;
-    double denom1 = b - 8.0 * t;
-    double denom1Cubed = denom1 * denom1 * denom1;
-    double denom2 = b - 4.0 * t;
-    double denom2Cubed = denom2 * denom2 * denom2;
-    return 4.0 * term * b / t3 / denom1Cubed / denom2Cubed;
-  }
+  // calc_hCPA, calc_g, calc_lngV, calc_lngVV, calc_lngVVV methods are now provided by
+  // PhaseCPAInterface default implementation
 
   /**
    * <p>
@@ -944,47 +846,7 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     return true;
   }
 
-  /**
-   * <p>
-   * solveX2.
-   * </p>
-   *
-   * @param maxIter a int
-   * @return a boolean
-   */
-  public boolean solveX2(int maxIter) {
-    double err = .0;
-    double totalVolume = getTotalVolume();
-    int iter = 0;
-    // if (delta == null) {
-    // initCPAMatrix(1);
-    double old = 0.0;
-    double neeval = 0.0;
-    // }
-    do {
-      iter++;
-      err = 0.0;
-      for (int i = 0; i < totalNumberOfAccociationSites; i++) {
-        old = ((ComponentSrkCPA) componentArray[moleculeNumber[i]]).getXsite()[assSiteNumber[i]];
-        neeval = 0.0;
-        for (int j = 0; j < totalNumberOfAccociationSites; j++) {
-          neeval += componentArray[moleculeNumber[j]].getNumberOfMolesInPhase() * delta[i][j]
-              * ((ComponentSrkCPA) componentArray[moleculeNumber[j]]).getXsite()[assSiteNumber[j]];
-        }
-        neeval = 1.0 / (1.0 + 1.0 / totalVolume * neeval);
-        ((ComponentSrkCPA) componentArray[moleculeNumber[i]]).setXsite(assSiteNumber[i], neeval);
-        err += Math.abs((old - neeval) / neeval);
-      }
-    } while (Math.abs(err) > 1e-12 && iter < maxIter);
-    // System.out.println("iter " + iter);
-    if (Math.abs(err) < 1e-12) {
-      return true;
-    } else {
-      // System.out.println("did not solve for Xi in iterations: " + iter);
-      // System.out.println("error: " + err);
-      return false;
-    }
-  }
+  // solveX2 method is now provided by PhaseCPAInterface default implementation
 
   /**
    * <p>
@@ -1057,8 +919,10 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       gcpavv = calc_lngVV();
       gcpavvv = calc_lngVVV();
 
+      int solveXIter = 0;
       do {
-      } while (!solveX());
+        solveXIter++;
+      } while (!solveX() && solveXIter < 50);
 
       h = BonV - Btemp / numberOfMolesInPhase * dFdV()
           - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
@@ -1458,6 +1322,24 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
 
   /** {@inheritDoc} */
   @Override
+  public int[] getMoleculeNumber() {
+    return moleculeNumber;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int[] getAssSiteNumber() {
+    return assSiteNumber;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[][] getCpaDelta() {
+    return delta;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double calcPressure() {
     gcpa = calc_g();
     // lngcpa =
@@ -1472,14 +1354,18 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
     return super.calcPressure();
   }
 
+  // getCrossAssosiationScheme method is now provided by PhaseCPAInterface default implementation
+
   /** {@inheritDoc} */
   @Override
-  public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
-    if (comp1 == comp2) {
-      return selfAccociationScheme[comp1][site1][site2];
-    } else {
-      return crossAccociationScheme[comp1][comp2][site1][site2];
-    }
+  public int[][][] getSelfAccociationScheme() {
+    return selfAccociationScheme;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int[][][][] getCrossAccociationScheme() {
+    return crossAccociationScheme;
   }
 
   /**

@@ -493,7 +493,8 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
 
   /**
    * <p>
-   * calc_lngij.
+   * calc_lngij. Calculates the derivative of ln(g) with respect to moles of component j, where g is
+   * the radial distribution function.
    * </p>
    *
    * @param j a int
@@ -503,8 +504,16 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   public double calc_lngij(int j, PhaseInterface phase) {
     double V = phase.getTotalVolume();
     double B = phase.getB();
-    double denom = (8.0 * V - B) * (4.0 * V - B);
-    return 2.0 * getBij(j) * (10.0 * V - B) / denom;
+    double temp1 = 8.0 * V - B;
+    double temp2 = 4.0 * V - B;
+    double temp3 = 10.0 * V - B;
+    double temp = temp3 / (temp1 * temp2);
+    double temp1sq = temp1 * temp1;
+    double temp2sq = temp2 * temp2;
+    double biJ = ((ComponentEosInterface) phase.getComponent(j)).getBi();
+    // Chain rule: d(ln g)/dnj = (∂ln g/∂Bij)*dBij/dnj + (∂ln g/∂B)*dB/dnj
+    double tempj = (-biJ * temp1 * temp2 + biJ * temp3 * (temp1 + temp2)) / (temp1sq * temp2sq);
+    return 2.0 * (getBij(j) * temp + getBi() * tempj);
   }
 
   /** {@inheritDoc} */

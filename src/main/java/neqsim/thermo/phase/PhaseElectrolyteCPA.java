@@ -620,25 +620,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
      */
   }
 
-  /**
-   * <p>
-   * calc_hCPA.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_hCPA() {
-    double htot = 0.0;
-    double tot = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      htot = 0.0;
-      for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-        htot += (1.0 - ((ComponentCPAInterface) getComponent(i)).getXsite()[j]);
-      }
-      tot += getComponent(i).getNumberOfMolesInPhase() * htot;
-    }
-    return tot;
-  }
+  // calc_hCPA method is now provided by PhaseCPAInterface default implementation
 
   /**
    * <p>
@@ -761,49 +743,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     return true;
   }
 
-  /**
-   * <p>
-   * solveX2.
-   * </p>
-   *
-   * @param maxIter a int
-   * @return a boolean
-   */
-  public boolean solveX2(int maxIter) {
-    double err = .0;
-    int iter = 0;
-    // if (delta == null) {
-    // initCPAMatrix(1);
-    double old = 0.0;
-    double neeval = 0.0;
-    // }
-    do {
-      iter++;
-      err = 0.0;
-      for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
-        old =
-            ((ComponentCPAInterface) getComponent(moleculeNumber[i])).getXsite()[assSiteNumber[i]];
-        neeval = 0;
-        for (int j = 0; j < getTotalNumberOfAccociationSites(); j++) {
-          neeval += getComponent(moleculeNumber[j]).getNumberOfMolesInPhase() * delta[i][j]
-              * ((ComponentCPAInterface) getComponent(moleculeNumber[j]))
-                  .getXsite()[assSiteNumber[j]];
-        }
-        neeval = 1.0 / (1.0 + 1.0 / getTotalVolume() * neeval);
-        ((ComponentCPAInterface) getComponent(moleculeNumber[i])).setXsite(assSiteNumber[i],
-            neeval);
-        err += Math.abs((old - neeval) / neeval);
-      }
-    } while (Math.abs(err) > 1e-10 && iter < maxIter);
-    // System.out.println("iter " + iter);
-    // if (Math.abs(err)
-    // < 1e-12) {
-    // return true;
-    // } else {
-    // System.out.println("did not solve for Xi in iterations: " + iter);
-    // System.out.println("error: " + err);
-    return false;
-  }
+  // solveX2 method is now provided by PhaseCPAInterface default implementation
 
   /** {@inheritDoc} */
   @Override
@@ -863,8 +803,10 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       gcpavv = calc_lngVV();
       gcpavvv = calc_lngVVV();
       volInit();
+      int solveXIter = 0;
       do {
-      } while (!solveX());
+        solveXIter++;
+      } while (!solveX() && solveXIter < 50);
 
       h = BonV - Btemp / numberOfMolesInPhase * dFdV()
           - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
@@ -1320,6 +1262,24 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
 
   /** {@inheritDoc} */
   @Override
+  public int[] getMoleculeNumber() {
+    return moleculeNumber;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int[] getAssSiteNumber() {
+    return assSiteNumber;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[][] getCpaDelta() {
+    return delta;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double calcPressure() {
     gcpa = calc_g();
     // lngcpa =
@@ -1334,14 +1294,18 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     return super.calcPressure();
   }
 
+  // getCrossAssosiationScheme method is now provided by PhaseCPAInterface default implementation
+
   /** {@inheritDoc} */
   @Override
-  public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
-    if (comp1 == comp2) {
-      return selfAccociationScheme[comp1][site1][site2];
-    } else {
-      return crossAccociationScheme[comp1][comp2][site1][site2];
-    }
+  public int[][][] getSelfAccociationScheme() {
+    return selfAccociationScheme;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int[][][][] getCrossAccociationScheme() {
+    return crossAccociationScheme;
   }
 
   /**

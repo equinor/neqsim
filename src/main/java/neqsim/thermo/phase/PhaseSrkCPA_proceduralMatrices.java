@@ -717,95 +717,8 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
      */
   }
 
-  /**
-   * <p>
-   * calc_hCPA.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_hCPA() {
-    double htot = 0.0;
-    double tot = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      htot = 0.0;
-      for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-        htot += (1.0 - ((ComponentSrkCPA) getComponent(i)).getXsite()[j]);
-      }
-      tot += getComponent(i).getNumberOfMolesInPhase() * htot;
-    }
-    return tot;
-  }
-
-  /**
-   * <p>
-   * calc_g.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_g() {
-    double temp = 1.0 - getb() / 4.0 / getMolarVolume();
-    double g = (2.0 - getb() / 4.0 / getMolarVolume()) / (2.0 * temp * temp * temp);
-    return g;
-  }
-
-  /**
-   * <p>
-   * calc_lngV.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_lngV() {
-    double gv2 = 0.0;
-    // gv = -2.0 * getB() * (10.0 * getTotalVolume() - getB()) / getTotalVolume() /
-    // ((8.0 * getTotalVolume() - getB()) * (4.0 * getTotalVolume() - getB()));
-
-    gv2 = 1.0 / (2.0 - getB() / (4.0 * getTotalVolume())) * getB()
-        / (4.0 * getTotalVolume() * getTotalVolume())
-        - 3.0 / (1.0 - getB() / (4.0 * getTotalVolume())) * getB()
-            / (4.0 * getTotalVolume() * getTotalVolume());
-    return gv2;
-  }
-
-  /**
-   * <p>
-   * calc_lngVV.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_lngVV() {
-    double gvv = 2.0
-        * (640.0 * Math.pow(getTotalVolume(), 3.0)
-            - 216.0 * getB() * getTotalVolume() * getTotalVolume()
-            + 24.0 * Math.pow(getB(), 2.0) * getTotalVolume() - Math.pow(getB(), 3.0))
-        * getB() / (getTotalVolume() * getTotalVolume())
-        / Math.pow(8.0 * getTotalVolume() - getB(), 2.0)
-        / Math.pow(4.0 * getTotalVolume() - getB(), 2.0);
-    return gvv;
-  }
-
-  /**
-   * <p>
-   * calc_lngVVV.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_lngVVV() {
-    double gvvv = 4.0
-        * (Math.pow(getB(), 5.0) + 17664.0 * Math.pow(getTotalVolume(), 4.0) * getB()
-            - 4192.0 * Math.pow(getTotalVolume(), 3.0) * Math.pow(getB(), 2.0)
-            + 528.0 * Math.pow(getB(), 3.0) * getTotalVolume() * getTotalVolume()
-            - 36.0 * getTotalVolume() * Math.pow(getB(), 4.0)
-            - 30720.0 * Math.pow(getTotalVolume(), 5.0))
-        * getB() / (Math.pow(getTotalVolume(), 3.0))
-        / Math.pow(-8.0 * getTotalVolume() + getB(), 3.0)
-        / Math.pow(-4.0 * getTotalVolume() + getB(), 3.0);
-    return gvvv;
-  }
+  // calc_hCPA, calc_g, calc_lngV, calc_lngVV, calc_lngVVV methods are now provided by
+  // PhaseCPAInterface default implementation
 
   /**
    * <p>
@@ -929,47 +842,7 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     return true;
   }
 
-  /**
-   * <p>
-   * solveX2.
-   * </p>
-   *
-   * @param maxIter a int
-   * @return a boolean
-   */
-  public boolean solveX2(int maxIter) {
-    double err = .0;
-    int iter = 0;
-    // if (delta == null) {
-    // initCPAMatrix(1);
-    double old = 0.0;
-    double neeval = 0.0;
-    // }
-    do {
-      iter++;
-      err = 0.0;
-      for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
-        old = ((ComponentSrkCPA) getComponent(moleculeNumber[i])).getXsite()[assSiteNumber[i]];
-        neeval = 0;
-        for (int j = 0; j < getTotalNumberOfAccociationSites(); j++) {
-          neeval += getComponent(moleculeNumber[j]).getNumberOfMolesInPhase() * delta[i][j]
-              * ((ComponentSrkCPA) getComponent(moleculeNumber[j])).getXsite()[assSiteNumber[j]];
-        }
-        neeval = 1.0 / (1.0 + 1.0 / getTotalVolume() * neeval);
-        ((ComponentCPAInterface) getComponent(moleculeNumber[i])).setXsite(assSiteNumber[i],
-            neeval);
-        err += Math.abs((old - neeval) / neeval);
-      }
-    } while (Math.abs(err) > 1e-10 && iter < maxIter);
-    // System.out.println("iter " + iter);
-    // if (Math.abs(err)
-    // < 1e-12) {
-    // return true;
-    // } else {
-    // System.out.println("did not solve for Xi in iterations: " + iter);
-    // System.out.println("error: " + err);
-    return false;
-  }
+  // solveX2 method is now provided by PhaseCPAInterface default implementation
 
   /** {@inheritDoc} */
   @Override
@@ -1031,8 +904,10 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
       gcpavv = calc_lngVV();
       gcpavvv = calc_lngVVV();
 
+      int solveXIter = 0;
       do {
-      } while (!solveX());
+        solveXIter++;
+      } while (!solveX() && solveXIter < 50);
 
       h = BonV - Btemp / numberOfMolesInPhase * dFdV()
           - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
@@ -1418,6 +1293,24 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
 
   /** {@inheritDoc} */
   @Override
+  public int[] getMoleculeNumber() {
+    return moleculeNumber;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int[] getAssSiteNumber() {
+    return assSiteNumber;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[][] getCpaDelta() {
+    return delta;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double calcPressure() {
     gcpa = calc_g();
     // lngcpa =
@@ -1432,14 +1325,18 @@ public class PhaseSrkCPA_proceduralMatrices extends PhaseSrkEos implements Phase
     return super.calcPressure();
   }
 
+  // getCrossAssosiationScheme method is now provided by PhaseCPAInterface default implementation
+
   /** {@inheritDoc} */
   @Override
-  public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
-    if (comp1 == comp2) {
-      return selfAccociationScheme[comp1][site1][site2];
-    } else {
-      return crossAccociationScheme[comp1][comp2][site1][site2];
-    }
+  public int[][][] getSelfAccociationScheme() {
+    return selfAccociationScheme;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int[][][][] getCrossAccociationScheme() {
+    return crossAccociationScheme;
   }
 
   /**

@@ -82,9 +82,10 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA {
     double B = phase.getB();
     double temp = V - 0.475 * B;
     double temp2 = temp * temp;
-    // System.out.println("B " + phase.getB() + " Bi " + getBi() + " bij " +
-    // getBij(j));
-    return 0.475 * getBij(j) * 0 / temp - 0.475 * getBi() * 1.0 / temp2
-        * (-0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi());
+    double Bj = ((ComponentEosInterface) phase.getComponent(j)).getBi();
+    // Derivative of ln(g) with respect to nj
+    // First term: contribution from Bij (cross co-volume derivative)
+    // Second term: contribution from Bi and volume change
+    return 0.475 * getBij(j) / temp + 0.475 * getBi() * 0.475 * Bj / temp2;
   }
 }

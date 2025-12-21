@@ -89,10 +89,12 @@ public class LinearProgrammingChemicalEquilibrium
         // System.out.println("sorting....." + components[i].getComponentNumber());
       }
     } else {
+      int shiftIter = 0;
       do {
+        shiftIter++;
         System.out.println("shifting primary components.....");
         this.changePrimaryComponents();
-      } while (operations.calcChemRefPot(phaseNum) == null);
+      } while (operations.calcChemRefPot(phaseNum) == null && shiftIter < 100);
       // System.out.println("shifting components....." );
       System.arraycopy(operations.calcChemRefPot(phaseNum), 0, this.chemRefPot, 0,
           this.chemRefPot.length);

@@ -230,97 +230,8 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
     return -1.0 / 2.0 * hcpatotdTdT;
   }
 
-  /**
-   * <p>
-   * calc_hCPA.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_hCPA() {
-    double htot = 0.0;
-    double tot = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      htot = 0.0;
-      for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-        htot += (1.0 - ((ComponentSrkCPA) getComponent(i)).getXsite()[j]);
-      }
-      tot += getComponent(i).getNumberOfMolesInPhase() * htot;
-    }
-    // System.out.println("tot " +tot );
-    return tot;
-  }
-
-  /**
-   * <p>
-   * calc_hCPAdT.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_hCPAdT() {
-    double htot = 0.0;
-    double tot = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      for (int k = 0; k < numberOfComponents; k++) {
-        htot = 0.0;
-        for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-          for (int l = 0; l < getComponent(k).getNumberOfAssociationSites(); l++) {
-            htot += ((ComponentSrkCPA) getComponent(i)).getXsite()[j]
-                * ((ComponentSrkCPA) getComponent(k)).getXsite()[l]
-                * cpamix.calcDeltadT(j, l, i, k, this, temperature, pressure, numberOfComponents);
-          }
-        }
-
-        tot += getComponent(i).getNumberOfMolesInPhase() * getComponent(k).getNumberOfMolesInPhase()
-            * htot;
-      }
-    }
-    // System.out.println("tot " +tot );
-    return tot / getTotalVolume();
-  }
-
-  /**
-   * <p>
-   * calc_hCPAdTdT.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_hCPAdTdT() {
-    double htot = 0.0;
-    double tot = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      for (int k = 0; k < numberOfComponents; k++) {
-        htot = 0.0;
-        for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-          for (int l = 0; l < getComponent(k).getNumberOfAssociationSites(); l++) {
-            htot += ((ComponentSrkCPA) getComponent(i)).getXsite()[j]
-                * ((ComponentSrkCPA) getComponent(k)).getXsite()[l]
-                * cpamix.calcDeltadTdT(j, l, i, k, this, temperature, pressure, numberOfComponents);
-          }
-        }
-
-        tot += getComponent(i).getNumberOfMolesInPhase() * getComponent(k).getNumberOfMolesInPhase()
-            * htot;
-      }
-    }
-    // System.out.println("tot " +tot );
-    return tot / getTotalVolume();
-  }
-
-  /**
-   * <p>
-   * calc_g.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_g() {
-    double g = (2.0 - getb() / 4.0 / getMolarVolume())
-        / (2.0 * Math.pow(1.0 - getb() / 4.0 / getMolarVolume(), 3.0));
-    return g;
-  }
+  // calc_hCPA, calc_hCPAdT, calc_hCPAdTdT, calc_g, calc_lngV, calc_lngVV, calc_lngVVV methods
+  // are now provided by PhaseCPAInterface default implementation
 
   /**
    * <p>
@@ -332,70 +243,6 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
    */
   public double calc_lngni(int comp) {
     return 0;
-  }
-
-  /**
-   * <p>
-   * calc_lngV.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_lngV() {
-    double gv = 0.0;
-    gv = -2.0 * getB() * (10.0 * getTotalVolume() - getB()) / getTotalVolume()
-        / ((8.0 * getTotalVolume() - getB()) * (4.0 * getTotalVolume() - getB()));
-
-    // double gv2 =
-    // 1.0/(2.0-getB()/(4.0*getTotalVolume()))*getB()/(4.0*Math.pow(getTotalVolume()
-    // ,2.0))
-    // - 3.0/(1.0-getB()/(4.0*getTotalVolume()))*getB()/(4.0*Math.pow(getTotalVolume() ,2.0));
-
-    // System.out.println("err gv " + (100.0-gv/gv2*100));
-    // -2.0*getB()*(10.0*getTotalVolume()-getB())/getTotalVolume()/((8.0*getTotalVolume()-getB())*(4.0*getTotalVolume()-getB()));
-    // System.out.println("gv " + gv);
-
-    return gv;
-  }
-
-  /**
-   * <p>
-   * calc_lngVV.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_lngVV() {
-    double gvv = 0.0;
-    gvv = 2.0
-        * (640.0 * Math.pow(getTotalVolume(), 3.0)
-            - 216.0 * getB() * getTotalVolume() * getTotalVolume()
-            + 24.0 * Math.pow(getB(), 2.0) * getTotalVolume() - Math.pow(getB(), 3.0))
-        * getB() / (getTotalVolume() * getTotalVolume())
-        / Math.pow(8.0 * getTotalVolume() - getB(), 2.0)
-        / Math.pow(4.0 * getTotalVolume() - getB(), 2.0);
-    return gvv;
-  }
-
-  /**
-   * <p>
-   * calc_lngVVV.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_lngVVV() {
-    double gvvv = 0.0;
-    gvvv = 4.0
-        * (Math.pow(getB(), 5.0) + 17664.0 * Math.pow(getTotalVolume(), 4.0) * getB()
-            - 4192.0 * Math.pow(getTotalVolume(), 3.0) * Math.pow(getB(), 2.0)
-            + 528.0 * Math.pow(getB(), 3.0) * getTotalVolume() * getTotalVolume()
-            - 36.0 * getTotalVolume() * Math.pow(getB(), 4.0)
-            - 30720.0 * Math.pow(getTotalVolume(), 5.0))
-        * getB() / (Math.pow(getTotalVolume(), 3.0))
-        / Math.pow(-8.0 * getTotalVolume() + getB(), 3.0)
-        / Math.pow(-4.0 * getTotalVolume() + getB(), 3.0);
-    return gvvv;
   }
 
   /**
@@ -465,13 +312,18 @@ public class PhasePrCPA extends PhasePrEos implements PhaseCPAInterface {
     return cpamix;
   }
 
+  // getCrossAssosiationScheme method is now provided by PhaseCPAInterface default implementation
+
   /** {@inheritDoc} */
   @Override
-  public int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2) {
-    if (comp1 == comp2) {
-      return selfAccociationScheme[comp1][site1][site2];
-    }
-    return crossAccociationScheme[comp1][comp2][site1][site2];
+  public int[][][] getSelfAccociationScheme() {
+    return selfAccociationScheme;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int[][][][] getCrossAccociationScheme() {
+    return crossAccociationScheme;
   }
 
   /** {@inheritDoc} */

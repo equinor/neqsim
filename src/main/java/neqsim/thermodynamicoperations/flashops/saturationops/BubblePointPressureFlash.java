@@ -66,6 +66,8 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
 
     double oldPres = 0;
     double oldChemPres = 1;
+    double initialPressure = system.getPressure(); // Track initial pressure for absolute bounds
+    double maxAllowedPressure = Math.max(1000.0, initialPressure * 1000); // Reasonable upper bound
     if (system.isChemicalSystem()) {
       system.getChemicalReactionOperations().solveChemEq(1, 0);
       system.getChemicalReactionOperations().solveChemEq(1, 1);
@@ -103,7 +105,9 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
         oldPres = system.getPressure();
         ktot = 0.0;
         for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
+          int innerIter = 0;
           do {
+            innerIter++;
             yold = system.getPhases()[0].getComponent(i).getx();
             if (!Double.isNaN(
                 Math.exp(Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient())
@@ -123,7 +127,9 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
                 * system.getPhases()[1].getComponent(i).getz());
             // logger.info("y err " +
             // Math.abs(system.getPhases()[0].getComponent(i).getx()-yold));
-          } while (Math.abs(system.getPhases()[0].getComponent(i).getx() - yold) / yold > 1e-8);
+          } while (yold > 1e-50
+              && Math.abs(system.getPhases()[0].getComponent(i).getx() - yold) / yold > 1e-8
+              && innerIter < 50);
           ktot += Math.abs(system.getPhases()[1].getComponent(i).getK() - 1.0);
         }
         for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
@@ -163,6 +169,11 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
           system.setPressure(oldChemPres * 5);
           continue chemLoop;
         }
+        // Absolute pressure cap to prevent runaway
+        if (system.getPressure() > maxAllowedPressure) {
+          system.setPressure(maxAllowedPressure);
+          logger.warn("Bubble point pressure capped at maximum: " + maxAllowedPressure + " bar");
+        }
         // logger.info("iter in bub calc " + iterations + " pres " +
         // system.getPressure()+ " ytot " + ytotal + " chem iter " + chemIter);
       } while (((((Math.abs(ytotal - 1.0)) > 1e-7)
@@ -171,6 +182,13 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
 
       if (system.isChemicalSystem()) { // && (iterations%3)==0 && iterations<50){
         chemSolved = system.getChemicalReactionOperations().solveChemEq(1, 1);
+        // If chemical equilibrium didn't converge, try with fresh initial estimates
+        if (!chemSolved) {
+          chemSolved = system.getChemicalReactionOperations().solveChemEq(1, 0);
+          if (chemSolved) {
+            chemSolved = system.getChemicalReactionOperations().solveChemEq(1, 1);
+          }
+        }
         system.setBeta(1, 1.0 - 1e-10);
         system.setBeta(0, 1e-10);
       }

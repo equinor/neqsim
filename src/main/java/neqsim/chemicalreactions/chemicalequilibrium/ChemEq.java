@@ -35,6 +35,8 @@ public class ChemEq implements java.io.Serializable {
   double[] b_element;
 
   int NNOT = 4;
+  // Note: These instance variables for loop counters (i, j, k) are not thread-safe.
+  // TODO: Refactor to use local variables in methods for better thread safety.
   int i;
   int j;
   int k;
@@ -149,7 +151,11 @@ public class ChemEq implements java.io.Serializable {
     for (k = 0; k < NSPEC; k++) {
       n_t += n_mol[k];
     }
-    System.out.println("n_total: " + n_t);
+
+    // Guard against zero total moles
+    if (n_t < 1e-30) {
+      n_t = 1e-30;
+    }
 
     for (i = 0; i < NELE; i++) {
       second_term[i] = 0;
@@ -157,8 +163,12 @@ public class ChemEq implements java.io.Serializable {
     }
 
     for (i = 0; i < NSPEC; i++) {
-      chem_pot[i] = chem_ref[i] + Math.log(Math.abs(n_mol[i] / n_t));
-      System.out.println("chempot: " + i + "  = " + chem_pot[i]);
+      // Guard against log of zero/negative
+      double moleFraction = Math.abs(n_mol[i] / n_t);
+      if (moleFraction < 1e-30) {
+        moleFraction = 1e-30;
+      }
+      chem_pot[i] = chem_ref[i] + Math.log(moleFraction);
     }
 
     sum = 0;
@@ -199,16 +209,11 @@ public class ChemEq implements java.io.Serializable {
 
     for (i = 0; i < NNOT; i++) {
       btest[i][0] = b_vector[i];
-
-      for (j = 0; j < NNOT; j++) {
-        System.out.println("matrix: " + i + " " + j + " " + matrix[i][j]);
-      }
     }
 
     Matrix matrixA = new Matrix(matrix);
     Matrix matrixb = new Matrix(btest);
     Matrix solved = matrixA.solve(matrixb);
-    solved.print(5, 3);
 
     for (j = 0; j < NELE; j++) {
       b_vector[j] = solved.get(j, 0);
@@ -222,9 +227,7 @@ public class ChemEq implements java.io.Serializable {
       for (k = 0; k < NELE; k++) {
         sum += A_matrix[k][j] * phi[k];
       }
-      // System.out.println("j : " +j);
       d_n[j] = n_mol[j] * (sum + u_u - chem_pot[j]);
-      System.out.println("nj  " + j + " " + d_n[j]);
       sum = 0;
     }
   }
@@ -364,22 +367,22 @@ public class ChemEq implements java.io.Serializable {
     }
 
     phi = new double[NELE];
-    phi[0] = -9.7851;
-    phi[1] = -12.969;
-    phi[2] = -15.222;
-    phi[3] = -10;
-    phi[4] = -10;
+    // Initialize phi values - these may need adjustment based on system
+    for (int idx = 0; idx < NELE && idx < 5; idx++) {
+      if (idx == 0) {
+        phi[idx] = -9.7851;
+      } else if (idx == 1) {
+        phi[idx] = -12.969;
+      } else if (idx == 2) {
+        phi[idx] = -15.222;
+      } else {
+        phi[idx] = -10;
+      }
+    }
 
     for (j = 0; j < NSPEC; j++) {
       d_n[j] = 0;
-      // System.out.println("HEI" + b_element[j]);
-      // b_element[4] = 0.5;
     }
-    System.out.println("HEI" + b_element[0]);
-    System.out.println("HEI" + b_element[1]);
-    System.out.println("HEI" + b_element[2]);
-    System.out.println("HEI" + b_element[3]);
-    System.out.println("HEI" + b_element[4]);
 
     solve();
   }
@@ -398,28 +401,25 @@ public class ChemEq implements java.io.Serializable {
       chemSolve();
 
       for (i = 0; i < NSPEC; i++) {
-        System.out.println(n_mol[i] + "  prove korreksjon  " + step * d_n[i]);
+        // Guard against division by zero
+        if (Math.abs(n_mol[i]) > 1e-30) {
+          error += Math.abs(d_n[i] / n_mol[i]);
+        }
 
-        error += d_n[i] / n_mol[i];
-
-        if (Math.abs(d_n[i] / n_mol[i]) > 0.00001) {
+        if (Math.abs(n_mol[i]) > 1e-30 && Math.abs(d_n[i] / n_mol[i]) > 0.00001) {
           step = step();
-          // n_mol[i] = n_mol[i] + step*d_n[i];
-          // System.out.println("mol: " + n_mol[i]);
           Gibbs = 0;
-          for (i = 0; i < NSPEC; i++) {
-            n_mol[i] += step * d_n[i];
-            Gibbs += n_mol[i] * chem_pot[i];
+          for (int ii = 0; ii < NSPEC; ii++) {
+            n_mol[ii] += step * d_n[ii];
+            if (n_mol[ii] < 1e-30) {
+              n_mol[ii] = 1e-30; // Prevent negative/zero moles
+            }
+            Gibbs += n_mol[ii] * chem_pot[ii];
           }
-          System.out.println("Gibbs: " + Gibbs);
           solve();
           return;
         }
       }
     } while (error > 0.00005);
-
-    for (j = 0; j < NSPEC; j++) {
-      System.out.println(" SVAR : " + n_mol[j] + "   " + (d_n[j] / n_mol[j]) + " GIBBS : " + Gibbs);
-    }
   }
 }

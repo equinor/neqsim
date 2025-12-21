@@ -444,7 +444,23 @@ public class ChemicalReactionOperations
         logger.error(ex.getMessage(), ex);
         // todo: Will this crash below?
       }
-      return solver.solve();
+      boolean converged = solver.solve();
+
+      // If Newton-Raphson didn't converge well, try with fresh initial estimates
+      if (!converged) {
+        try {
+          calcInertMoles(phaseNum);
+          newMoles = initCalc.generateInitialEstimates(system, bVector, inertMoles, phaseNum);
+          if (newMoles != null) {
+            updateMoles(phaseNum);
+            solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phaseNum);
+            converged = solver.solve();
+          }
+        } catch (Exception ex) {
+          logger.debug("Retry with initial estimates failed: " + ex.getMessage());
+        }
+      }
+      return converged;
     }
   }
 
