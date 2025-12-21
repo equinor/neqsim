@@ -16,13 +16,16 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentGEInterface;
+import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseGE;
 import neqsim.thermo.phase.PhaseGENRTLmodifiedHV;
 import neqsim.thermo.phase.PhaseGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifacPSRK;
 import neqsim.thermo.phase.PhaseGEUnifacUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhasePrCPA;
 import neqsim.thermo.phase.PhaseSoreideWhitson;
+import neqsim.thermo.phase.PhaseSrkCPA;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.database.NeqSimDataBase;
@@ -204,15 +207,13 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                   intparam[k][l] = Double.parseDouble(dataSet.getString("kijsrk"));
                   intparamT[k][l] = Double.parseDouble(dataSet.getString("KIJTSRK"));
                 }
-                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhasePrCPA")) {
+                // Use instanceof to check for CPA phases - covers all subclasses automatically
+                if (phase instanceof PhasePrCPA) {
                   intparam[k][l] = Double.parseDouble(dataSet.getString("cpakij_PR"));
                   intparamT[k][l] = 0.0;
-                } else if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
-                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
-                    || phase.getClass().getName()
-                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")
-                    || phase.getClass().getName()
-                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPA")) {
+                } else if (phase instanceof PhaseSrkCPA) {
+                  // Covers PhaseSrkCPA, PhaseSrkCPAs, PhaseElectrolyteCPAMM, and any future
+                  // subclasses
                   intparam[k][l] = Double.parseDouble(dataSet.getString("cpakij_SRK"));
                   intparamT[k][l] = Double.parseDouble(dataSet.getString("cpakijT_SRK"));
 
@@ -221,8 +222,11 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
                   intparamji[tempk][templ] = Double.parseDouble(dataSet.getString("cpakjix_SRK"));
                   intparamij[templ][tempk] = intparamji[tempk][templ];
-                } else if (phase.getClass().getName()
-                    .equals("neqsim.thermo.phase.PhaseSoreideWhitson")) {
+                } else if (phase instanceof PhaseCPAInterface) {
+                  // Fallback for other CPA implementations (e.g., PhaseElectrolyteCPA)
+                  intparam[k][l] = Double.parseDouble(dataSet.getString("cpakij_SRK"));
+                  intparamT[k][l] = Double.parseDouble(dataSet.getString("cpakijT_SRK"));
+                } else if (phase instanceof PhaseSoreideWhitson) {
 
                   intparam[k][l] = Double.parseDouble(dataSet.getString("KIJWhitsonSoriede"));
                   intparam[l][k] = intparam[k][l];
@@ -374,10 +378,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                   || (component_name2.equals("water") && phase.getComponent(k).isIsTBPfraction())) {
                 intparam[k][l] = 0.2;
 
-                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
-                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
-                    || phase.getClass().getName()
-                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
+                if (phase instanceof PhaseSrkCPA) {
+                  // Covers PhaseSrkCPA, PhaseSrkCPAs, PhaseElectrolyteCPAMM, and any future
+                  // subclasses
                   // intparam[k][l] = -0.0685; // taken from Riaz et a. 2012
 
                   double molmassPC = phase.getComponent(l).getMolarMass();
@@ -394,10 +397,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                   || (component_name2.equals("MEG")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.2;
-                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
-                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
-                    || phase.getClass().getName()
-                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
+                if (phase instanceof PhaseSrkCPA) {
+                  // Covers PhaseSrkCPA, PhaseSrkCPAs, PhaseElectrolyteCPAMM, and any future
+                  // subclasses
                   double molmassPC = phase.getComponent(l).getMolarMass();
                   if (phase.getComponents()[k].isIsTBPfraction()) {
                     molmassPC = phase.getComponents()[k].getMolarMass();
@@ -413,10 +415,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                   || (component_name2.equals("ethanol")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.0;
-                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
-                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
-                    || phase.getClass().getName()
-                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
+                if (phase instanceof PhaseSrkCPA) {
+                  // Covers PhaseSrkCPA, PhaseSrkCPAs, PhaseElectrolyteCPAMM, and any future
+                  // subclasses
                   intparam[k][l] = -0.05;
                   intparamT[k][l] = 0.0;
                   if (phase.getComponents()[k].getMolarMass() > (200.0 / 1000.0)
@@ -429,10 +430,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                   || (component_name2.equals("methanol")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.0;
-                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
-                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
-                    || phase.getClass().getName()
-                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
+                if (phase instanceof PhaseSrkCPA) {
+                  // Covers PhaseSrkCPA, PhaseSrkCPAs, PhaseElectrolyteCPAMM, and any future
+                  // subclasses
                   intparam[k][l] = -0.1;
                   intparamT[k][l] = 0.0;
                   if (phase.getComponents()[k].getMolarMass() > (200.0 / 1000.0)
@@ -444,10 +444,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                   || (component_name2.equals("TEG")
                       && phase.getComponents()[k].isIsTBPfraction())) {
                 intparam[k][l] = 0.12;
-                if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
-                    || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
-                    || phase.getClass().getName()
-                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
+                if (phase instanceof PhaseSrkCPA) {
+                  // Covers PhaseSrkCPA, PhaseSrkCPAs, PhaseElectrolyteCPAMM, and any future
+                  // subclasses
                   intparam[k][l] = 0.12;
                   intparamT[k][l] = 0.0;
                 }

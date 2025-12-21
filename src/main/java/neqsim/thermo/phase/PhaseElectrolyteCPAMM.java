@@ -401,28 +401,28 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   // ==================== Helmholtz Free Energy Terms ====================
 
   /**
-   * Debye-Hückel contribution to reduced Helmholtz free energy. From Maribo-Mogensen Eq. 4.19:
+   * Debye-Hückel contribution to Helmholtz free energy (extensive). From Maribo-Mogensen Eq. 4.19,
+   * converted to extensive form:
    *
    * <pre>
-   * F^DH = A^DH / (n*R*T) = -κ³V / (12π * n * R * T * N_A)
-   *      = -(κ³ * V_m) / (12π * R * T * N_A)
+   * F^DH = -κ³V / (12π * R * T * N_A)
    * </pre>
    *
-   * where V_m is molar volume [m³/mol] and the factor comes from the Debye charging process.
+   * where V is the total volume [m³]. This is extensive (scales with n).
    *
-   * @return F^DH contribution to reduced Helmholtz energy [-]
+   * @return F^DH contribution to Helmholtz energy [-]
    */
   public double FDebyeHuckel() {
     if (kappa < 1e-30) {
       return 0.0;
     }
-    double Vm = getMolarVolume() * 1e-5; // m³/mol
+    double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // Total volume in m³
     double kappa3 = kappa * kappa * kappa;
-    return -kappa3 * Vm / (12.0 * Math.PI * R * temperature * AVOGADRO);
+    return -kappa3 * V / (12.0 * Math.PI * R * temperature * AVOGADRO);
   }
 
   /**
-   * Temperature derivative of Debye-Hückel term at constant V. dF^DH/dT = ∂(A^DH/nRT)/∂T
+   * Temperature derivative of Debye-Hückel term at constant V. dF^DH/dT
    *
    * @return dF^DH/dT [-/K]
    */
@@ -430,13 +430,13 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     if (kappa < 1e-30) {
       return 0.0;
     }
-    double Vm = getMolarVolume() * 1e-5;
+    double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // Total volume in m³
     double kappa3 = kappa * kappa * kappa;
     double dKappa3dT = 3.0 * kappa * kappa * kappadT;
 
-    // F = -κ³Vm/(12πRT*N_A), so dF/dT = -Vm/(12πR*N_A) * [dκ³/dT * 1/T - κ³/T²]
-    double term1 = -Vm / (12.0 * Math.PI * R * AVOGADRO) * dKappa3dT / temperature;
-    double term2 = Vm / (12.0 * Math.PI * R * AVOGADRO) * kappa3 / (temperature * temperature);
+    // F = -κ³V/(12πRT*N_A), so dF/dT = -V/(12πR*N_A) * [dκ³/dT * 1/T - κ³/T²]
+    double term1 = -V / (12.0 * Math.PI * R * AVOGADRO) * dKappa3dT / temperature;
+    double term2 = V / (12.0 * Math.PI * R * AVOGADRO) * kappa3 / (temperature * temperature);
     return term1 + term2;
   }
 
@@ -449,21 +449,20 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     if (kappa < 1e-30) {
       return 0.0;
     }
-    // Simplified: assuming κ doesn't change with V significantly at constant composition
-    // F = -κ³Vm/(12πRT*N_A), so dF/dV = -κ³/(12πRT*N_A * n)
+    // F = -κ³V/(12πRT*N_A), so dF/dV = -κ³/(12πRT*N_A)
     double kappa3 = kappa * kappa * kappa;
-    return -kappa3 * 1e-5 / (12.0 * Math.PI * R * temperature * AVOGADRO * numberOfMolesInPhase);
+    return -kappa3 * 1e-5 / (12.0 * Math.PI * R * temperature * AVOGADRO);
   }
 
   /**
-   * Born solvation contribution to reduced Helmholtz free energy. From Maribo-Mogensen Eq. 4.23:
+   * Born solvation contribution to Helmholtz free energy (extensive). From Maribo-Mogensen Eq.
+   * 4.23, converted to extensive form:
    *
    * <pre>
-   * F^Born = A^Born / (n*R*T)
-   *        = (N_A * e² / (8π * ε₀ * R * T)) * (1/ε_r - 1) * X_Born / n
+   * F^Born = (N_A * e² / (8π * ε₀ * R * T)) * (1/ε_r - 1) * X_Born
    * </pre>
    *
-   * where X_Born = Σ(n_i * z_i² / R_Born,i)
+   * where X_Born = Σ(n_i * z_i² / R_Born,i). This is extensive (scales with n).
    *
    * @return F^Born contribution [-]
    */
@@ -474,7 +473,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE
         / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * temperature);
     double solventTerm = 1.0 / solventPermittivity - 1.0;
-    return prefactor * solventTerm * bornX / numberOfMolesInPhase;
+    return prefactor * solventTerm * bornX;
   }
 
   /**
@@ -486,8 +485,8 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     if (bornX < 1e-30) {
       return 0.0;
     }
-    double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE
-        / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * numberOfMolesInPhase);
+    double prefactor =
+        AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R);
     double solventTerm = 1.0 / solventPermittivity - 1.0;
     double dSolventTermdT = -solventPermittivitydT / (solventPermittivity * solventPermittivity);
 
@@ -537,12 +536,12 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     if (kappa < 1e-30) {
       return 0.0;
     }
-    double Vm = getMolarVolume() * 1e-5;
+    double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // Total volume in m³
     double kappa3 = kappa * kappa * kappa;
 
     // Simplified: main contribution from 1/T² dependence
-    // F = -κ³Vm/(12πRT*N_A), dF/dT ∝ κ³/T², d²F/dT² ∝ -2κ³/T³
-    return -2.0 * Vm / (12.0 * Math.PI * R * AVOGADRO) * kappa3
+    // F = -κ³V/(12πRT*N_A), dF/dT ∝ κ³/T², d²F/dT² ∝ -2κ³/T³
+    return -2.0 * V / (12.0 * Math.PI * R * AVOGADRO) * kappa3
         / (temperature * temperature * temperature);
   }
 
@@ -556,9 +555,9 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
       return 0.0;
     }
     double kappa3 = kappa * kappa * kappa;
-    // d/dV of dF/dT: dF/dT has Vm term, so d²F/dTdV = d/dV(Vm/T² * κ³/(12πR*N_A))
-    return kappa3 * 1e-5
-        / (12.0 * Math.PI * R * AVOGADRO * temperature * temperature * numberOfMolesInPhase);
+    // d/dV of dF/dT: F = -κ³V/(12πRT*N_A), so dF/dT has V term
+    // d²F/dTdV = d/dV(κ³V/(12πRT²*N_A)) = κ³/(12πRT²*N_A)
+    return kappa3 * 1e-5 / (12.0 * Math.PI * R * AVOGADRO * temperature * temperature);
   }
 
   /**
@@ -570,8 +569,8 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     if (bornX < 1e-30) {
       return 0.0;
     }
-    double prefactor = AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE
-        / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R * numberOfMolesInPhase);
+    double prefactor =
+        AVOGADRO * ELECTRON_CHARGE * ELECTRON_CHARGE / (8.0 * Math.PI * VACUUM_PERMITTIVITY * R);
     double solventTerm = 1.0 / solventPermittivity - 1.0;
     double dSolventTermdT = -solventPermittivitydT / (solventPermittivity * solventPermittivity);
     double d2SolventTermdT2 = -solventPermittivitydTdT / (solventPermittivity * solventPermittivity)

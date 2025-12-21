@@ -253,12 +253,16 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
    * Debye-Hückel contribution to dF/dN_i.
    *
    * <p>
-   * For the Debye-Hückel term: F^DH = -κ³V_m / (12πRT)
+   * For the Debye-Hückel term: F^DH = -κ³V / (12πRT·N_A)
    * </p>
    *
    * <p>
-   * Taking the derivative with respect to n_i: dF^DH/dn_i = ∂F^DH/∂κ · ∂κ/∂n_i + ∂F^DH/∂V_m ·
-   * ∂V_m/∂n_i + ∂F^DH/∂n_T
+   * The full derivative at constant T, P is: dF^DH/dn_i = (∂F^DH/∂κ)(∂κ/∂n_i) + (∂F^DH/∂V)(∂V/∂n_i)
+   * </p>
+   *
+   * <p>
+   * For ions: ∂κ/∂n_i has contribution from z_i² term. For all components: adding moles changes V
+   * which affects κ through the dilution effect.
    * </p>
    *
    * @param phase the phase
@@ -281,36 +285,52 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
 
     double Vm = phase.getMolarVolume() * 1e-5; // m³/mol
     double nT = phase.getNumberOfMolesInPhase();
-    double kappa3 = kappa * kappa * kappa;
+    double V = Vm * nT; // total volume in m³
     double z = getIonicCharge();
     double eps = mmPhase.getMixturePermittivity();
 
-    // Calculate dκ/dn_i
-    // κ² = (e²N_A)/(ε₀εk_BTV) * Σ(n_j z_j²)
-    // Let S = Σ(n_j z_j²), then κ² = C * S / V where C = e²N_A/(ε₀εk_BT)
-    // dκ²/dn_i = C * z_i² / V for ions, = 0 for solvents
-    // dκ/dn_i = dκ²/dn_i / (2κ)
-    double C = E_CHARGE * E_CHARGE * N_A / (EPSILON_0 * eps * K_B * temperature);
-    double V = Vm * nT; // total volume in m³
-    double dkappa2dni = C * z * z / V;
-    double dkappaDni = (kappa > 1e-30) ? dkappa2dni / (2.0 * kappa) : 0.0;
-
-    // F^DH = -κ³V_m/(12πRT*N_A)
-    // = -κ³V/(12πRT*N_A*n_T)
-    // dF^DH/dn_i = -V/(12πRT*N_A*n_T) * 3κ² * dκ/dn_i + κ³V/(12πRT*N_A*n_T²)
-    // = -3κ²V/(12πRT*N_A*n_T) * dκ/dn_i + κ³V/(12πRT*N_A*n_T²)
+    // F^DH = -κ³V/(12πRT*N_A) (extensive form)
+    // ∂F^DH/∂κ = -3κ²V/(12πRT*N_A)
+    // ∂F^DH/∂V = -κ³/(12πRT*N_A)
     double factor = 1.0 / (12.0 * Math.PI * R * temperature * N_A);
-    double term1 = -3.0 * kappa * kappa * V * factor / nT * dkappaDni;
-    double term2 = kappa3 * V * factor / (nT * nT);
+    double dFdkappa = -3.0 * kappa * kappa * V * factor;
+    double dFdV = -kappa * kappa * kappa * factor;
 
-    return term1 + term2;
+    // κ² = (e²N_A)/(ε₀εk_BT) * (1/V) * Σ(n_j z_j²)
+    // Let S = Σ(n_j z_j²), C = (e²N_A)/(ε₀εk_BT)
+    // κ² = C * S / V
+    // ∂κ²/∂n_i = C * z_i² / V - C * S * (∂V/∂n_i) / V²
+    // At constant T, P: ∂V/∂n_i ≈ Vm (partial molar volume, using ideal approximation)
+    double C = E_CHARGE * E_CHARGE * N_A / (EPSILON_0 * eps * K_B * temperature);
+
+    // Calculate S = Σ(n_j z_j²)
+    double S = 0.0;
+    for (int j = 0; j < numberOfComponents; j++) {
+      double zj = phase.getComponent(j).getIonicCharge();
+      if (zj != 0) {
+        S += phase.getComponent(j).getNumberOfMolesInPhase() * zj * zj;
+      }
+    }
+
+    // ∂κ²/∂n_i = C/V * (z_i² - S*Vm/V) = C/V * (z_i² - κ²V/(C*Vm) * Vm/V)
+    // Simplify: ∂κ²/∂n_i = C*z_i²/V - κ²*Vm/V² = C*z_i²/V - κ²/(nT*Vm)
+    double dkappa2dni = C * z * z / V - kappa * kappa * Vm / V;
+
+    // ∂κ/∂n_i = ∂κ²/∂n_i / (2κ)
+    double dkappaDni = dkappa2dni / (2.0 * kappa);
+
+    // ∂V/∂n_i = Vm (at constant T, P, assuming ideal mixing for volume)
+    double dVdni = Vm;
+
+    // dF^DH/dn_i = ∂F/∂κ * ∂κ/∂n_i + ∂F/∂V * ∂V/∂n_i
+    return dFdkappa * dkappaDni + dFdV * dVdni;
   }
 
   /**
    * Born contribution to dF/dN_i.
    *
    * <p>
-   * For the Born term: F^Born = (N_Ae²/8πε₀RT) * (1/ε - 1) * X_Born / n_T
+   * For the extensive Born term: F^Born = (N_Ae²/8πε₀RT) * (1/ε - 1) * X_Born
    * </p>
    *
    * @param phase the phase
@@ -331,7 +351,6 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
       return 0.0;
     }
 
-    double nT = phase.getNumberOfMolesInPhase();
     double prefactor = N_A * E_CHARGE * E_CHARGE / (8.0 * Math.PI * EPSILON_0 * R * temperature);
     double solventTerm = 1.0 / eps - 1.0;
 
@@ -343,10 +362,9 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
       dXBorndni = z * z / (bornRadius * 1e-10); // Convert Å to m
     }
 
-    // F^Born = prefactor * solventTerm * X_Born / nT
-    // dF^Born/dn_i = prefactor * solventTerm * (dX_Born/dn_i / nT - X_Born / nT²)
-    double XBorn = mmPhase.getBornX();
-    return prefactor * solventTerm * (dXBorndni / nT - XBorn / (nT * nT));
+    // F^Born = prefactor * solventTerm * X_Born (extensive)
+    // dF^Born/dn_i = prefactor * solventTerm * dX_Born/dn_i
+    return prefactor * solventTerm * dXBorndni;
   }
 
   /**
@@ -398,7 +416,6 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
       return 0.0;
     }
 
-    double nT = phase.getNumberOfMolesInPhase();
     double prefactor = N_A * E_CHARGE * E_CHARGE / (8.0 * Math.PI * EPSILON_0 * R);
     double solventTerm = 1.0 / eps - 1.0;
     double dSolventTermdT = -epsdT / (eps * eps);
@@ -408,13 +425,13 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     if (bornRadius > 0 && z != 0) {
       dXBorndni = z * z / (bornRadius * 1e-10);
     }
-    double XBorn = mmPhase.getBornX();
 
-    // F^Born_n = prefactor/T * solventTerm * (dX/dn / nT - X / nT²)
-    // dF^Born_n/dT = -prefactor/T² * solventTerm * (...) + prefactor/T * dSolventTerm/dT * (...)
-    double bracket = dXBorndni / nT - XBorn / (nT * nT);
-    double term1 = -prefactor / (temperature * temperature) * solventTerm * bracket;
-    double term2 = prefactor / temperature * dSolventTermdT * bracket;
+    // F^Born = prefactor/T * solventTerm * X_Born (extensive form)
+    // dF/dn_i = prefactor/T * solventTerm * dX/dn_i
+    // d(dF/dn_i)/dT = -prefactor/T² * solventTerm * dX/dn_i + prefactor/T * dSolventTerm/dT *
+    // dX/dn_i
+    double term1 = -prefactor / (temperature * temperature) * solventTerm * dXBorndni;
+    double term2 = prefactor / temperature * dSolventTermdT * dXBorndni;
     return term1 + term2;
   }
 
@@ -442,7 +459,6 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     double Vm = phase.getMolarVolume() * 1e-5;
     double nT = phase.getNumberOfMolesInPhase();
     double V = Vm * nT;
-    double kappa3 = kappa * kappa * kappa;
     double z = getIonicCharge();
     double eps = mmPhase.getMixturePermittivity();
 
@@ -454,24 +470,21 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     double C = E_CHARGE * E_CHARGE * N_A / (EPSILON_0 * eps * K_B * temperature);
     double dkappaDni = (z != 0 && kappa > 1e-30) ? C * z * z / (2.0 * kappa * V) : 0.0;
 
-    // d²κ/(dn_i dV) = -C * z_i² / (2κV²) + C * z_i² * dκ/dV / (2κ²V)
+    // d²κ/(dn_i dV) = d/dV[C * z_i² / (2κV)]
     double d2kappaDniDV = 0.0;
     if (z != 0 && kappa > 1e-30) {
-      d2kappaDniDV =
-          -C * z * z / (2.0 * kappa * V * V) + C * z * z * dkappadV / (2.0 * kappa * kappa * V);
+      // = -C*z²/(2κV²) - C*z²*dκ/dV/(2κ²V) = -C*z²/(2κV²) + C*z²/(4κ²V²)
+      d2kappaDniDV = -C * z * z / (2.0 * kappa * V * V) + C * z * z / (4.0 * kappa * kappa * V * V);
     }
 
-    // F^DH = -κ³V/(12πRT*N_A*n_T)
-    // dF/dn_i involves κ, dκ/dn_i, V, n_T
-    // d²F/(dn_i dV) is complex; use chain rule approximation
-    double factor = 1.0 / (12.0 * Math.PI * R * temperature * N_A * nT);
+    // F^DH = -κ³V/(12πRT*N_A) (extensive)
+    // dF/dn_i = -3κ²V/(12πRT*N_A) * dκ/dn_i
+    // d²F/(dn_i dV) = -3/(12πRT*N_A) * [2κ*dκ/dV*V*dκ/dn_i + κ²*dκ/dn_i + κ²*V*d²κ/(dn_i dV)]
+    double factor = 1.0 / (12.0 * Math.PI * R * temperature * N_A);
 
-    // Term from dκ³/dV * dκ/dn_i
-    double term1 = -3.0 * kappa * kappa * dkappadV * factor * V * dkappaDni;
-    // Term from d(dκ/dn_i)/dV
-    double term2 = -3.0 * kappa * kappa * factor * (dkappaDni + V * d2kappaDniDV);
-    // Term from dV/dV = 1 in κ³V term
-    double term3 = -3.0 * kappa * kappa * dkappaDni * factor;
+    double term1 = -3.0 * 2.0 * kappa * dkappadV * V * factor * dkappaDni;
+    double term2 = -3.0 * kappa * kappa * factor * dkappaDni;
+    double term3 = -3.0 * kappa * kappa * V * factor * d2kappaDniDV;
 
     return 1e-5 * (term1 + term2 + term3); // Scale factor for V in m³
   }
@@ -516,7 +529,6 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     double Vm = phase.getMolarVolume() * 1e-5;
     double nT = phase.getNumberOfMolesInPhase();
     double V = Vm * nT;
-    double kappa3 = kappa * kappa * kappa;
     double zi = getIonicCharge();
     double zj = phase.getComponent(j).getIonicCharge();
     double eps = mmPhase.getMixturePermittivity();
@@ -533,22 +545,12 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
       d2kappaDniDnj = -C * zi * zi * dkappaDnj / (2.0 * kappa * kappa * V);
     }
 
-    // F^DH = -κ³V/(12πRT*N_A*n_T)
-    // dF/dn_i = -3κ²V/(12πRT*N_A*n_T) * dκ/dn_i + κ³V/(12πRT*N_A*n_T²)
-    // d²F/(dn_i dn_j) needs chain rule
+    // F^DH = -κ³V/(12πRT*N_A) (extensive form)
+    // dF/dn_i = -3κ²V/(12πRT*N_A) * dκ/dn_i
+    // d²F/(dn_i dn_j) = -V/(12πRT*N_A) * (6κ * dκ/dn_i * dκ/dn_j + 3κ² * d²κ/(dn_i dn_j))
     double factor = V / (12.0 * Math.PI * R * temperature * N_A);
 
-    // Term 1: derivative of -3κ²/n_T * dκ/dn_i with respect to n_j
-    double term1 =
-        -factor / nT * (6.0 * kappa * dkappaDnj * dkappaDni + 3.0 * kappa * kappa * d2kappaDniDnj);
-    // Term 2: derivative of -3κ²/n_T * dκ/dn_i w.r.t n_T (from n_j)
-    double term2 = factor / (nT * nT) * 3.0 * kappa * kappa * dkappaDni;
-    // Term 3: derivative of κ³/n_T² w.r.t κ
-    double term3 = factor / (nT * nT) * 3.0 * kappa * kappa * dkappaDnj;
-    // Term 4: derivative of κ³/n_T² w.r.t n_T
-    double term4 = -factor / (nT * nT * nT) * 2.0 * kappa3;
-
-    return term1 + term2 + term3 + term4;
+    return -factor * (6.0 * kappa * dkappaDni * dkappaDnj + 3.0 * kappa * kappa * d2kappaDniDnj);
   }
 
   /**
@@ -563,43 +565,11 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
    */
   public double dFBorndNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    PhaseElectrolyteCPAMM mmPhase = getMMPhase(phase);
-    if (mmPhase == null) {
-      return 0.0;
-    }
-
-    double eps = mmPhase.getMixturePermittivity();
-    if (eps < 1.0) {
-      return 0.0;
-    }
-
-    double nT = phase.getNumberOfMolesInPhase();
-    double prefactor = N_A * E_CHARGE * E_CHARGE / (8.0 * Math.PI * EPSILON_0 * R * temperature);
-    double solventTerm = 1.0 / eps - 1.0;
-
-    double zi = getIonicCharge();
-    double dXBorndni = 0.0;
-    if (bornRadius > 0 && zi != 0) {
-      dXBorndni = zi * zi / (bornRadius * 1e-10);
-    }
-
-    ComponentSrkCPAMM compJ = null;
-    if (phase.getComponent(j) instanceof ComponentSrkCPAMM) {
-      compJ = (ComponentSrkCPAMM) phase.getComponent(j);
-    }
-    double zj = phase.getComponent(j).getIonicCharge();
-    double dXBorndnj = 0.0;
-    if (compJ != null && compJ.getBornRadius() > 0 && zj != 0) {
-      dXBorndnj = zj * zj / (compJ.getBornRadiusMeters());
-    }
-
-    double XBorn = mmPhase.getBornX();
-
-    // F^Born_n = prefactor * solventTerm * (dX/dn_i / nT - X / nT²)
-    // d/dn_j [F^Born_n] = prefactor * solventTerm * (-dX/dn_i / nT² + dX/dn_j / nT² + 2X / nT³)
-    // = prefactor * solventTerm * [(-dXBorndni + dXBorndnj)/nT² + 2XBorn/nT³]
-    return prefactor * solventTerm
-        * ((-dXBorndni + dXBorndnj) / (nT * nT) + 2.0 * XBorn / (nT * nT * nT));
+    // F^Born = prefactor * solventTerm * X_Born (extensive form)
+    // where X_Born = Σ n_k z_k²/r_k
+    // dF/dn_i = prefactor * solventTerm * dX/dn_i = prefactor * solventTerm * z_i²/r_i
+    // d²F/(dn_i dn_j) = 0 since dX/dn_i doesn't depend on n_j
+    return 0.0;
   }
 
   // ==================== Override dFdN Methods ====================
