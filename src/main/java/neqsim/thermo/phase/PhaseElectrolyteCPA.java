@@ -73,6 +73,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
   DMatrixRMaj corr2Matrix = null;
   DMatrixRMaj corr3Matrix = null;
   DMatrixRMaj corr4Matrix = null;
+  private double[] lngi;
 
   /**
    * <p>
@@ -168,6 +169,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         deltadTdT =
             new double[getTotalNumberOfAccociationSites()][getTotalNumberOfAccociationSites()];
         QMatksiksiksi = new SimpleMatrix(getTotalNumberOfAccociationSites(), 1);
+        lngi = new double[numberOfComponents];
       }
       oldTotalNumberOfAccociationSites = getTotalNumberOfAccociationSites();
 
@@ -218,11 +220,11 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
    * </p>
    */
   public void calcDelta() {
-    for (int i = 0; i < totalNumberOfAccociationSites; i++) {
-      for (int j = i; j < totalNumberOfAccociationSites; j++) {
+    for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
+      for (int j = i; j < getTotalNumberOfAccociationSites(); j++) {
         deltaNog[i][j] = cpamix.calcDeltaNog(assSiteNumber[i], assSiteNumber[j], moleculeNumber[i],
             moleculeNumber[j], this, getTemperature(), getPressure(), numberOfComponents);
-        deltaNog[j][i] = delta[i][j];
+        deltaNog[j][i] = deltaNog[i][j];
       }
     }
   }
@@ -235,7 +237,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
    * @param type a int
    */
   public void initCPAMatrix(int type) {
-    if (getTotalNumberOfAccociationSites() == 0) {
+    if (totalNumberOfAccociationSites == 0) {
       FCPA = 0.0;
       dFCPAdTdV = 0.0;
       dFCPAdTdT = 0.0;
@@ -243,32 +245,37 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       dFCPAdV = 0;
       dFCPAdVdV = 0.0;
       dFCPAdVdVdV = 0.0;
-
       return;
     }
 
     int temp = 0;
+    double tempVar1;
+    double tempVar2;
     for (int i = 0; i < numberOfComponents; i++) {
-      for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-        uMatrix.set(temp + j, 0,
-            Math.log(ksiMatrix.get(temp + j, 0)) - ksiMatrix.get(temp + j, 0) + 1.0);
-        gvector[temp + j][0] = mVector.get(temp + j, 0) * udotMatrix.get(temp + j, 0);
-      }
-      temp += getComponent(i).getNumberOfAssociationSites();
-    }
-    for (int i = 0; i < getNumberOfComponents(); i++) {
-      for (int j = 0; j < getTotalNumberOfAccociationSites(); j++) {
-        if (moleculeNumber[j] == i) {
-          udotTimesmiMatrix.set(i, j, udotMatrix.get(j, 0));
+      for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
+        tempVar1 = ksiMatrix.get(temp + j, 0);
+        tempVar2 = udotMatrix.get(temp + j, 0);
+        uMatrix.set(temp + j, 0, Math.log(tempVar1) - tempVar1 + 1.0);
+        gvector[temp + j][0] = mVector.get(temp + j, 0) * tempVar2;
+
+        if (moleculeNumber[temp + j] == i) {
+          udotTimesmiMatrix.set(i, temp + j, tempVar2);
         } else {
-          udotTimesmiMatrix.set(i, j, 0.0);
+          udotTimesmiMatrix.set(i, temp + j, 0.0);
         }
+      }
+      temp += componentArray[i].getNumberOfAssociationSites();
+    }
+
+    if (type > 2) {
+      for (int p = 0; p < numberOfComponents; p++) {
+        lngi[p] = ((ComponentElectrolyteCPA) componentArray[p]).calc_lngi(this);
       }
     }
 
-    for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
-      for (int j = i; j < getTotalNumberOfAccociationSites(); j++) {
-        delta[i][j] = deltaNog[i][j] * getGcpa();
+    for (int i = 0; i < totalNumberOfAccociationSites; i++) {
+      for (int j = i; j < totalNumberOfAccociationSites; j++) {
+        delta[i][j] = deltaNog[i][j] * gcpa;
         delta[j][i] = delta[i][j];
         if (type > 1) {
           deltadT[i][j] = cpamix.calcDeltadT(assSiteNumber[i], assSiteNumber[j], moleculeNumber[i],
@@ -283,43 +290,50 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       }
     }
 
-    double gdv1 = getGcpav() - 1.0 / getTotalVolume();
+    double totalVolume = getTotalVolume();
+    double totalVolume2 = totalVolume * totalVolume;
+    double totalVolume3 = totalVolume2 * totalVolume;
+    double gdv1 = gcpav - 1.0 / totalVolume;
     double gdv2 = gdv1 * gdv1;
     double gdv3 = gdv2 * gdv1;
-    double totVol = getTotalVolume();
-    for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
-      for (int j = i; j < getTotalNumberOfAccociationSites(); j++) {
-        KlkVMatrix.set(i, j, KlkMatrix.get(i, j) * gdv1);
-        KlkVMatrix.set(j, i, KlkVMatrix.get(i, j));
+    double Klk = 0.0;
+    double tempVar;
+    double tempKsiRead = 0.0;
+    for (int i = 0; i < totalNumberOfAccociationSites; i++) {
+      for (int j = i; j < totalNumberOfAccociationSites; j++) {
+        Klk = KlkMatrix.get(i, j);
+        tempVar = Klk * gdv1;
+        KlkVMatrix.set(i, j, tempVar);
+        KlkVMatrix.set(j, i, tempVar);
 
-        KlkVVMatrix.set(i, j, KlkMatrix.get(i, j) * gdv2
-            + KlkMatrix.get(i, j) * (gcpavv + 1.0 / getTotalVolume() / getTotalVolume()));
-        KlkVVMatrix.set(j, i, KlkVVMatrix.get(i, j));
+        tempVar = Klk * gdv2 + Klk * (gcpavv + 1.0 / totalVolume2);
+        KlkVVMatrix.set(i, j, tempVar);
+        KlkVVMatrix.set(j, i, tempVar);
 
-        KlkVVVMatrix.set(i, j,
-            KlkMatrix.get(i, j) * gdv3
-                + 3.0 * KlkMatrix.get(i, j) * (getGcpav() - 1.0 / getTotalVolume())
-                    * (gcpavv + 1.0 / (totVol * totVol))
-                + KlkMatrix.get(i, j) * (gcpavvv - 2.0 / (totVol * totVol * totVol)));
-        KlkVVVMatrix.set(j, i, KlkVVVMatrix.get(i, j));
+        tempVar =
+            Klk * gdv3 + 3.0 * Klk * (gcpav - 1.0 / totalVolume) * (gcpavv + 1.0 / totalVolume2)
+                + Klk * (gcpavvv - 2.0 / totalVolume3);
+        KlkVVVMatrix.set(i, j, tempVar);
+        KlkVVVMatrix.set(j, i, tempVar);
 
         if (type > 1) {
-          double tempVar = deltadT[i][j] / delta[i][j];
-          double tempVardT = deltadTdT[i][j] / delta[i][j]
-              - (deltadT[i][j] * deltadT[i][j]) / (delta[i][j] * delta[i][j]);
+          tempVar = deltadT[i][j] / delta[i][j];
 
-          if (!Double.isNaN(tempVar)) {
-            // KlkdT[i][j] = KlkMatrix.getMatrix().unsafe_get(i, j) * tempVar;
-            // KlkdT[j][i] = KlkdT[i][j];
+          if (Math.abs(tempVar) > 1e-50) {
+            double tempVardT = deltadTdT[i][j] / delta[i][j]
+                - (deltadT[i][j] * deltadT[i][j]) / (delta[i][j] * delta[i][j]);
 
-            KlkTMatrix.set(i, j, KlkMatrix.get(i, j) * tempVar);
-            KlkTMatrix.set(j, i, KlkTMatrix.get(i, j));
+            tempVar2 = Klk * tempVar;
+            KlkTMatrix.set(i, j, tempVar2);
+            KlkTMatrix.set(j, i, tempVar2);
 
-            KlkTVMatrix.set(i, j, KlkMatrix.get(i, j) * tempVar * (gcpav - 1.0 / getTotalVolume()));
-            KlkTVMatrix.set(j, i, KlkTVMatrix.get(i, j));
+            tempVar2 = Klk * tempVar * (gcpav - 1.0 / totalVolume);
+            KlkTVMatrix.set(i, j, tempVar2);
+            KlkTVMatrix.set(j, i, tempVar2);
 
-            KlkTTMatrix.set(i, j, KlkMatrix.get(i, j) * (tempVar * tempVar + tempVardT));
-            KlkTTMatrix.set(j, i, KlkTTMatrix.get(i, j));
+            tempVar2 = Klk * (tempVar * tempVar + tempVardT);
+            KlkTTMatrix.set(i, j, tempVar2);
+            KlkTTMatrix.set(j, i, tempVar2);
           }
 
           if (type > 2) {
@@ -332,15 +346,14 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
               if (moleculeNumber[j] == p) {
                 t2 = 1.0 / mVector.get(j, 0);
               }
-              Klkni[p][i][j] = KlkMatrix.get(i, j)
-                  * (t1 + t2 + ((ComponentElectrolyteCPA) getComponent(p)).calc_lngi(this));
+              Klkni[p][i][j] = Klk * (t1 + t2 + lngi[p]);
               Klkni[p][j][i] = Klkni[p][i][j];
             }
           }
         }
       }
-      QMatksiksiksi.set(i, 0, 2.0 * mVector.get(i, 0)
-          / (ksiMatrix.get(i, 0) * ksiMatrix.get(i, 0) * ksiMatrix.get(i, 0)));
+      tempKsiRead = ksiMatrix.get(i, 0);
+      QMatksiksiksi.set(i, 0, 2.0 * mVector.get(i, 0) / (tempKsiRead * tempKsiRead * tempKsiRead));
     }
 
     SimpleMatrix ksiMatrixTranspose = ksiMatrix.transpose();
@@ -622,26 +635,6 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
 
   /**
    * <p>
-   * calc_hCPA.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_hCPA() {
-    double htot = 0.0;
-    double tot = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      htot = 0.0;
-      for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-        htot += (1.0 - ((ComponentCPAInterface) getComponent(i)).getXsite()[j]);
-      }
-      tot += getComponent(i).getNumberOfMolesInPhase() * htot;
-    }
-    return tot;
-  }
-
-  /**
-   * <p>
    * calcXsitedV.
    * </p>
    */
@@ -663,101 +656,95 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
       return true;
     }
 
-    boolean solvedX = solveX2(5);
-    if (solvedX) {
-      // return true;
-    }
+    boolean solvedX = solveX2(15);
 
-    DMatrixRMaj mat1 = KlkMatrix.getMatrix();
-    DMatrixRMaj mat2 = ksiMatrix.getMatrix();
-    // second order method not working correctly and not used t the moment b ecause of numerical
-    // stability
+    DMatrixRMaj mVectorMat = mVector.getMatrix();
+    DMatrixRMaj ksiMatrixMat = ksiMatrix.getMatrix();
+
     int temp = 0;
     int iter = 0;
     for (int i = 0; i < numberOfComponents; i++) {
-      for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-        mVector.set(temp + j, 0, getComponent(i).getNumberOfMolesInPhase());
+      for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
+        mVectorMat.unsafe_set(temp + j, 0, componentArray[i].getNumberOfMolesInPhase());
       }
-      temp += getComponent(i).getNumberOfAssociationSites();
+      temp += componentArray[i].getNumberOfAssociationSites();
     }
+
+    DMatrixRMaj mat1 = KlkMatrix.getMatrix();
     double Klk = 0.0;
     double totvolume = getTotalVolume();
+    double tempVari;
+    double tempVarj;
     for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
+      tempVari = mVectorMat.unsafe_get(i, 0);
       for (int j = i; j < getTotalNumberOfAccociationSites(); j++) {
-        Klk = mVector.get(i, 0) * mVector.get(j, 0) / totvolume * delta[i][j];
-        KlkMatrix.set(i, j, Klk);
-        KlkMatrix.set(j, i, Klk);
+        tempVarj = mVectorMat.unsafe_get(j, 0);
+        Klk = tempVari * tempVarj / totvolume * delta[i][j];
+        mat1.unsafe_set(i, j, Klk);
+        mat1.unsafe_set(j, i, Klk);
       }
     }
     boolean solved = true;
-    // SimpleMatrix corrMatrix = null;
     do {
       solved = true;
       iter++;
       temp = 0;
+      double ksi = 0;
+      double temp1;
+      double temp2;
       for (int i = 0; i < numberOfComponents; i++) {
-        for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-          ksiMatrix.set(temp + j, 0, ((ComponentCPAInterface) getComponent(i)).getXsite()[j]);
-          // ksiMatrix.getMatrix().unsafe_set(temp + j, 0,
-          // ksiMatrix.getMatrix().unsafe_get(temp + j, 0));
-          udotMatrix.set(temp + j, 0, 1.0 / ksiMatrix.get(temp + j, 0) - 1.0);
-          udotTimesmMatrix.set(temp + j, 0, mVector.get(temp + j, 0) * udotMatrix.get(temp + j, 0));
+        temp1 = componentArray[i].getNumberOfMolesInPhase();
+        for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
+          ksi = ((ComponentCPAInterface) componentArray[i]).getXsite()[j];
+          ksiMatrixMat.unsafe_set(temp + j, 0, ksi);
+          tempVari = 1.0 / ksi - 1.0;
+          udotMatrix.set(temp + j, 0, tempVari);
+          udotTimesmMatrix.set(temp + j, 0, temp1 * tempVari);
         }
-        temp += getComponent(i).getNumberOfAssociationSites();
+        temp += componentArray[i].getNumberOfAssociationSites();
       }
 
+      int krondelt;
       for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
+        temp1 = mVectorMat.unsafe_get(i, 0);
+        temp2 = ksiMatrix.get(i, 0);
         for (int j = i; j < getTotalNumberOfAccociationSites(); j++) {
-          int krondelt = 0;
-          if (i == j) {
-            krondelt = 1;
-          }
-          hessianMatrix.set(i, j,
-              -mVector.get(i, 0) / (ksiMatrix.get(i, 0) * ksiMatrix.get(i, 0)) * krondelt
-                  - KlkMatrix.get(i, j));
-          hessianMatrix.set(j, i, hessianMatrix.get(i, j));
+          krondelt = (i == j) ? 1 : 0;
+          tempVari = -temp1 / (temp2 * temp2) * krondelt - mat1.unsafe_get(i, j);
+          hessianMatrix.set(i, j, tempVari);
+          hessianMatrix.set(j, i, tempVari);
         }
       }
 
-      // ksiMatrix = new SimpleMatrix(ksi);
-      // SimpleMatrix hessianMatrix = new SimpleMatrix(hessian);
       try {
         hessianInvers = hessianMatrix.invert();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
         return false;
       }
+      if (solvedX) {
+        return true;
+      }
 
+      DMatrixRMaj mat2 = ksiMatrix.getMatrix();
       CommonOps_DDRM.mult(mat1, mat2, corr2Matrix);
       CommonOps_DDRM.subtract(udotTimesmMatrix.getDDRM(), corr2Matrix, corr3Matrix);
       CommonOps_DDRM.mult(hessianInvers.getDDRM(), corr3Matrix, corr4Matrix);
-      // SimpleMatrix gMatrix = udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix));
-      // corrMatrix =
-      // hessianInvers.mult(udotTimesmMatrix.minus(KlkMatrix.mult(ksiMatrix))); //.scale(-1.0);
+
       temp = 0;
-      // System.out.println("print SimpleMatrix ...");
-      // corrMatrix.print(10, 10);
-      // SimpleMatrix simp = new SimpleMatrix(corr4Matrix);
-      // System.out.println("print CommonOps ...");
-      // simp.print(10,10);
+      double newX;
       for (int i = 0; i < numberOfComponents; i++) {
-        for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
-          double newX = ksiMatrix.get(temp + j, 0) - corr4Matrix.unsafe_get((temp + j), 0);
+        for (int j = 0; j < componentArray[i].getNumberOfAssociationSites(); j++) {
+          newX = ksiMatrix.get(temp + j, 0) - corr4Matrix.unsafe_get((temp + j), 0);
           if (newX < 0) {
             newX = 1e-10;
             solved = false;
           }
-          ((ComponentCPAInterface) getComponent(i)).setXsite(j, newX);
+          ((ComponentCPAInterface) componentArray[i]).setXsite(j, newX);
         }
-        temp += getComponent(i).getNumberOfAssociationSites();
+        temp += componentArray[i].getNumberOfAssociationSites();
       }
-      // System.out.println("corrmatrix error " );
-      // System.out.println("error " + corrMatrix.norm1());
     } while ((NormOps_DDRM.normF(corr4Matrix) > 1e-12 || !solved) && iter < 100);
 
-    // System.out.println("iter " + iter + " error " + NormOps.normF(corr4Matrix));
-    // // corrMatrix.print(10, 10);
-    // ksiMatrix.print(10, 10);
     return true;
   }
 
@@ -770,39 +757,30 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
    * @return a boolean
    */
   public boolean solveX2(int maxIter) {
-    double err = .0;
+    double err = 0.0;
+    double totalVolume = getTotalVolume();
     int iter = 0;
-    // if (delta == null) {
-    // initCPAMatrix(1);
     double old = 0.0;
     double neeval = 0.0;
-    // }
     do {
       iter++;
       err = 0.0;
       for (int i = 0; i < getTotalNumberOfAccociationSites(); i++) {
-        old =
-            ((ComponentCPAInterface) getComponent(moleculeNumber[i])).getXsite()[assSiteNumber[i]];
-        neeval = 0;
+        old = ((ComponentCPAInterface) componentArray[moleculeNumber[i]])
+            .getXsite()[assSiteNumber[i]];
+        neeval = 0.0;
         for (int j = 0; j < getTotalNumberOfAccociationSites(); j++) {
-          neeval += getComponent(moleculeNumber[j]).getNumberOfMolesInPhase() * delta[i][j]
-              * ((ComponentCPAInterface) getComponent(moleculeNumber[j]))
+          neeval += componentArray[moleculeNumber[j]].getNumberOfMolesInPhase() * delta[i][j]
+              * ((ComponentCPAInterface) componentArray[moleculeNumber[j]])
                   .getXsite()[assSiteNumber[j]];
         }
-        neeval = 1.0 / (1.0 + 1.0 / getTotalVolume() * neeval);
-        ((ComponentCPAInterface) getComponent(moleculeNumber[i])).setXsite(assSiteNumber[i],
+        neeval = 1.0 / (1.0 + 1.0 / totalVolume * neeval);
+        ((ComponentCPAInterface) componentArray[moleculeNumber[i]]).setXsite(assSiteNumber[i],
             neeval);
         err += Math.abs((old - neeval) / neeval);
       }
-    } while (Math.abs(err) > 1e-10 && iter < maxIter);
-    // System.out.println("iter " + iter);
-    // if (Math.abs(err)
-    // < 1e-12) {
-    // return true;
-    // } else {
-    // System.out.println("did not solve for Xi in iterations: " + iter);
-    // System.out.println("error: " + err);
-    return false;
+    } while (Math.abs(err) > 1e-12 && iter < maxIter);
+    return Math.abs(err) < 1e-12;
   }
 
   /** {@inheritDoc} */
@@ -1381,74 +1359,5 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
   @Override
   public void setTotalNumberOfAccociationSites(int totalNumberOfAccociationSites) {
     this.totalNumberOfAccociationSites = totalNumberOfAccociationSites;
-  }
-
-  /**
-   * <p>
-   * calc_g.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_g() {
-    double x = 1.9 / 4.0 * getB() / getTotalVolume();
-    double g = 1.0 / (1.0 - x);
-    // System.out.println("g " + g);
-    return g;
-  }
-
-  /**
-   * <p>
-   * calc_lngV.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_lngV() {
-    double x = 1.9 / 4.0 * getB() / getTotalVolume();
-    double gv = (x / getTotalVolume()) / (1.0 - x);
-    return -gv;
-  }
-
-  /**
-   * <p>
-   * calc_lngVV.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_lngVV() {
-    double x = 1.9 / 4.0 * getB() / getTotalVolume();
-    double xV = -1.9 / 4.0 * getB() / (getTotalVolume() * getTotalVolume());
-    double u = 1.0 - x;
-
-    double val = -x / (getTotalVolume() * getTotalVolume() * u) + xV / (getTotalVolume() * u)
-        - x / (getTotalVolume() * u * u) * (-1.0) * xV;
-    return -val;
-
-    // double gvv
-    // =0.225625/Math.pow(1.0-0.475*getB()/getTotalVolume(),2.0)*Math.pow(getB(),2.0)/(Math.pow(getTotalVolume(),4.0))+0.95/(1.0-0.475*getB()/getTotalVolume())*getB()/(Math.pow(getTotalVolume(),3.0));
-    // System.out.println("val2 " + gvv);
-    // return gvv;
-  }
-
-  /**
-   * <p>
-   * calc_lngVVV.
-   * </p>
-   *
-   * @return a double
-   */
-  public double calc_lngVVV() {
-    double totVol = getTotalVolume();
-    double totVol4 = totVol * totVol * totVol * totVol;
-    double totVol5 = totVol4 * totVol;
-
-    double temp1 = 1.0 - 0.475 * getB() / getTotalVolume();
-    double gvv =
-        -0.21434375 / (temp1 * temp1 * temp1) * getB() * getB() * getB() / (totVol5 * totVol)
-            - 0.135375E1 / (temp1 * temp1) * getB() * getB() / (totVol5)
-            - 0.285E1 / (temp1) * getB() / (totVol4);
-    return gvv;
   }
 }

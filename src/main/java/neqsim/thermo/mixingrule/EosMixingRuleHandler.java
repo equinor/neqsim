@@ -210,7 +210,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                 } else if (phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPA")
                     || phase.getClass().getName().equals("neqsim.thermo.phase.PhaseSrkCPAs")
                     || phase.getClass().getName()
-                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")) {
+                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPAstatoil")
+                    || phase.getClass().getName()
+                        .equals("neqsim.thermo.phase.PhaseElectrolyteCPA")) {
                   intparam[k][l] = Double.parseDouble(dataSet.getString("cpakij_SRK"));
                   intparamT[k][l] = Double.parseDouble(dataSet.getString("cpakijT_SRK"));
 
