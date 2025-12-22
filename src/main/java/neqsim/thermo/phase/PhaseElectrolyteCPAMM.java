@@ -80,18 +80,38 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   protected double kappadT = 0.0;
   /** Born X factor: Σ(n_i * z_i² / R_Born,i) [mol/m]. */
   protected double bornX = 0.0;
-  /** Ion-solvent short-range interaction parameter W [J·m³/mol²]. */
+  /**
+   * Ion-solvent short-range interaction parameter W [J/mol]. Calculated from wij mixing rule
+   * parameters which are populated from ΔU_iw values.
+   */
   protected double ionSolventW = 0.0;
-  /** Temperature derivative of W [J·m³/(mol²·K)]. */
+  /** Temperature derivative of W [J/(mol·K)]. */
   protected double ionSolventWdT = 0.0;
+
+  /**
+   * Ion-solvent binary interaction parameters wij. These are populated from the ΔU_iw parameters
+   * from Maribo-Mogensen thesis Table 6.11. Format: wij[i][j] where i is ion index and j is solvent
+   * index. Units: Kelvin (energy/R).
+   */
+  protected double[][] wij = null;
+
+  /**
+   * Temperature derivatives of ion-solvent wij parameters. wijT[i][j] = d(wij)/dT. Units: K/K
+   * (dimensionless).
+   */
+  protected double[][] wijT = null;
 
   // Control flags for electrolyte terms
   /** Flag to enable/disable Debye-Hückel term. */
   protected boolean debyeHuckelOn = true;
   /** Flag to enable/disable Born term. */
   protected boolean bornOn = true;
-  /** Flag to enable/disable short-range ion-solvent term. */
-  protected boolean shortRangeOn = true;
+  /**
+   * Flag to enable/disable short-range ion-solvent term. Disabled by default as ion-solvent
+   * short-range interactions are typically handled through the CPA mixing rule binary interaction
+   * parameters. Enable this for experimental testing of explicit short-range terms.
+   */
+  protected boolean shortRangeOn = false;
 
   /**
    * Constructor for PhaseElectrolyteCPAMM.
@@ -142,6 +162,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    * Initialize volume-dependent electrolyte properties. Called during molar volume iteration.
    */
   public void initElectrolyteProperties() {
+    initMixingRuleWij(); // Initialize wij from component ΔU_iw parameters
     solventPermittivity = calcSolventPermittivity(temperature);
     solventPermittivitydT = calcSolventPermittivitydT(temperature);
     solventPermittivitydTdT = calcSolventPermittivitydTdT(temperature);
@@ -151,6 +172,82 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     bornX = calcBornX();
     ionSolventW = calcIonSolventW();
     ionSolventWdT = calcIonSolventWdT();
+  }
+
+  /**
+   * Initialize the ion-solvent wij mixing rule parameters from component ΔU_iw values.
+   *
+   * <p>
+   * Following the Maribo-Mogensen thesis, the ion-solvent short-range interaction is parameterized
+   * as: ΔU_iw(T) = u⁰_iw + uᵀ_iw × (T - 298.15)
+   * </p>
+   *
+   * <p>
+   * These are stored in the wij/wijT arrays which follow the standard mixing rule convention. The W
+   * parameter used in the short-range Helmholtz term is then calculated as: W = Σ_i Σ_j (n_i × n_j
+   * × wij(T)) for ion i and solvent j.
+   * </p>
+   */
+  public void initMixingRuleWij() {
+    if (wij == null || wij.length != numberOfComponents) {
+      wij = new double[numberOfComponents][numberOfComponents];
+      wijT = new double[numberOfComponents][numberOfComponents];
+    }
+
+    // Populate wij from component ΔU_iw parameters
+    for (int i = 0; i < numberOfComponents; i++) {
+      for (int j = 0; j < numberOfComponents; j++) {
+        wij[i][j] = 0.0;
+        wijT[i][j] = 0.0;
+
+        // Ion-solvent pairs: ion at i, solvent at j
+        if (componentArray[i].getIonicCharge() != 0 && componentArray[j].getIonicCharge() == 0) {
+          if (componentArray[i] instanceof ComponentSrkCPAMM) {
+            ComponentSrkCPAMM ionComp = (ComponentSrkCPAMM) componentArray[i];
+            // wij(T) = ΔU_iw(T) = u⁰_iw + uᵀ_iw × (T - 298.15)
+            wij[i][j] = ionComp.getIonSolventInteractionEnergy(temperature);
+            wijT[i][j] = ionComp.getIonSolventInteractionEnergydT();
+          }
+        }
+        // Solvent-ion pairs: solvent at i, ion at j (symmetric)
+        else if (componentArray[i].getIonicCharge() == 0
+            && componentArray[j].getIonicCharge() != 0) {
+          if (componentArray[j] instanceof ComponentSrkCPAMM) {
+            ComponentSrkCPAMM ionComp = (ComponentSrkCPAMM) componentArray[j];
+            wij[i][j] = ionComp.getIonSolventInteractionEnergy(temperature);
+            wijT[i][j] = ionComp.getIonSolventInteractionEnergydT();
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Get the ion-solvent interaction parameter wij at current temperature.
+   *
+   * @param i first component index
+   * @param j second component index
+   * @return wij value [K]
+   */
+  public double getWij(int i, int j) {
+    if (wij == null || i >= wij.length || j >= wij[i].length) {
+      return 0.0;
+    }
+    return wij[i][j];
+  }
+
+  /**
+   * Get the temperature derivative of ion-solvent interaction parameter wij.
+   *
+   * @param i first component index
+   * @param j second component index
+   * @return dwij/dT [K/K]
+   */
+  public double getWijT(int i, int j) {
+    if (wijT == null || i >= wijT.length || j >= wijT[i].length) {
+      return 0.0;
+    }
+    return wijT[i][j];
   }
 
   /**
@@ -340,38 +437,41 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   }
 
   /**
-   * Calculate ion-solvent short-range interaction parameter W. From Maribo-Mogensen Eq. 6.8:
+   * Calculate ion-solvent short-range interaction parameter W using wij mixing rule parameters.
+   *
+   * <p>
+   * Following the standard mixing rule convention, W is calculated as:
+   * </p>
    *
    * <pre>
-   * W = Σ_i Σ_j (n_i * n_j * ΔU_ij / V)
+   * W = Σ_i Σ_j (n_i × n_j × wij(T) × R / V)
    * </pre>
    *
-   * where ΔU_ij(T) = u⁰_ij + uᵀ_ij * (T - 298.15)
+   * <p>
+   * where wij contains the ΔU_iw values from Maribo-Mogensen thesis Table 6.11, populated via
+   * {@link #initMixingRuleWij()}.
+   * </p>
    *
    * @return W [J/mol]
    */
   public double calcIonSolventW() {
+    if (wij == null) {
+      return 0.0;
+    }
     double sum = 0.0;
     double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // m³
     if (V < 1e-30) {
       return 0.0;
     }
 
-    // Sum over ion-solvent pairs
+    // Sum over all pairs using wij mixing rule parameters
     for (int i = 0; i < numberOfComponents; i++) {
-      if (componentArray[i].getIonicCharge() != 0
-          && componentArray[i] instanceof ComponentSrkCPAMM) {
-        ComponentSrkCPAMM ionComp = (ComponentSrkCPAMM) componentArray[i];
-        double ni = ionComp.getNumberOfMolesInPhase();
-        double deltaU_iw = ionComp.getIonSolventInteractionEnergy(temperature);
-
-        // Sum over solvents
-        for (int j = 0; j < numberOfComponents; j++) {
-          if (componentArray[j].getIonicCharge() == 0) {
-            double nj = componentArray[j].getNumberOfMolesInPhase();
-            // W contribution: n_i * n_j * ΔU_iw * R / V
-            sum += ni * nj * deltaU_iw * ThermodynamicConstantsInterface.R / V;
-          }
+      double ni = componentArray[i].getNumberOfMolesInPhase();
+      for (int j = 0; j < numberOfComponents; j++) {
+        if (wij[i][j] != 0.0) {
+          double nj = componentArray[j].getNumberOfMolesInPhase();
+          // W contribution: n_i * n_j * wij * R / V
+          sum += ni * nj * wij[i][j] * ThermodynamicConstantsInterface.R / V;
         }
       }
     }
@@ -379,31 +479,27 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
   }
 
   /**
-   * Calculate temperature derivative of W.
+   * Calculate temperature derivative of W using wijT mixing rule parameters.
    *
    * @return dW/dT [J/(mol·K)]
    */
   public double calcIonSolventWdT() {
+    if (wijT == null) {
+      return 0.0;
+    }
     double sum = 0.0;
     double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // m³
     if (V < 1e-30) {
       return 0.0;
     }
 
-    // Sum over ion-solvent pairs
+    // Sum over all pairs using wijT mixing rule parameters
     for (int i = 0; i < numberOfComponents; i++) {
-      if (componentArray[i].getIonicCharge() != 0
-          && componentArray[i] instanceof ComponentSrkCPAMM) {
-        ComponentSrkCPAMM ionComp = (ComponentSrkCPAMM) componentArray[i];
-        double ni = ionComp.getNumberOfMolesInPhase();
-        double deltaU_iwdT = ionComp.getIonSolventInteractionEnergydT();
-
-        // Sum over solvents
-        for (int j = 0; j < numberOfComponents; j++) {
-          if (componentArray[j].getIonicCharge() == 0) {
-            double nj = componentArray[j].getNumberOfMolesInPhase();
-            sum += ni * nj * deltaU_iwdT * ThermodynamicConstantsInterface.R / V;
-          }
+      double ni = componentArray[i].getNumberOfMolesInPhase();
+      for (int j = 0; j < numberOfComponents; j++) {
+        if (wijT[i][j] != 0.0) {
+          double nj = componentArray[j].getNumberOfMolesInPhase();
+          sum += ni * nj * wijT[i][j] * ThermodynamicConstantsInterface.R / V;
         }
       }
     }
@@ -518,6 +614,128 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     return 0.0;
   }
 
+  // ==================== Short-Range Ion-Solvent Term ====================
+
+  /**
+   * Short-range ion-solvent contribution to Helmholtz free energy. Following Maribo-Mogensen, the
+   * ion-solvent short-range term is:
+   *
+   * <pre>
+   * F^SR = W / (V * (1 - η))
+   * </pre>
+   *
+   * where W = Σ_i Σ_s (n_i * n_s * ΔU_is) for ion i and solvent s, and η is the packing fraction.
+   * Simplified here as F^SR = W for now (excluding packing fraction correction).
+   *
+   * @return F^SR contribution [-]
+   */
+  public double FShortRange() {
+    if (!shortRangeOn || ionSolventW == 0.0) {
+      return 0.0;
+    }
+    double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // m³
+    if (V < 1e-30) {
+      return 0.0;
+    }
+    // F^SR = W / (R * T) where W already includes R factor
+    return ionSolventW / (R * temperature);
+  }
+
+  /**
+   * Temperature derivative of short-range term. dF^SR/dT
+   *
+   * @return dF^SR/dT [-/K]
+   */
+  public double dFShortRangedT() {
+    if (!shortRangeOn || ionSolventW == 0.0) {
+      return 0.0;
+    }
+    // F = W / (RT), dF/dT = (dW/dT) / (RT) - W / (RT²)
+    return ionSolventWdT / (R * temperature) - ionSolventW / (R * temperature * temperature);
+  }
+
+  /**
+   * Volume derivative of short-range term. dF^SR/dV
+   *
+   * @return dF^SR/dV [1/m³]
+   */
+  public double dFShortRangedV() {
+    if (!shortRangeOn || ionSolventW == 0.0) {
+      return 0.0;
+    }
+    double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // m³
+    if (V < 1e-30) {
+      return 0.0;
+    }
+    // W ∝ 1/V, so dW/dV = -W/V and d(W/RT)/dV = -W/(RT*V)
+    return -ionSolventW / (R * temperature * V) * 1e-5;
+  }
+
+  /**
+   * Second volume derivative of short-range term. d²F^SR/dV²
+   *
+   * @return d²F^SR/dV² [1/m⁶]
+   */
+  public double dFShortRangedVdV() {
+    if (!shortRangeOn || ionSolventW == 0.0) {
+      return 0.0;
+    }
+    double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // m³
+    if (V < 1e-30) {
+      return 0.0;
+    }
+    // d²(W/RT)/dV² = 2W/(RT*V²)
+    return 2.0 * ionSolventW / (R * temperature * V * V) * 1e-10;
+  }
+
+  /**
+   * Third volume derivative of short-range term. d³F^SR/dV³
+   *
+   * @return d³F^SR/dV³ [1/m⁹]
+   */
+  public double dFShortRangedVdVdV() {
+    if (!shortRangeOn || ionSolventW == 0.0) {
+      return 0.0;
+    }
+    double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // m³
+    if (V < 1e-30) {
+      return 0.0;
+    }
+    // d³(W/RT)/dV³ = -6W/(RT*V³)
+    return -6.0 * ionSolventW / (R * temperature * V * V * V) * 1e-15;
+  }
+
+  /**
+   * Second temperature derivative of short-range term. d²F^SR/dT²
+   *
+   * @return d²F^SR/dT² [-/K²]
+   */
+  public double dFShortRangedTdT() {
+    if (!shortRangeOn || ionSolventW == 0.0) {
+      return 0.0;
+    }
+    // F = W / (RT), dF/dT = WdT/RT - W/RT², d²F/dT² ≈ 2W/RT³ (ignoring WdTdT)
+    return 2.0 * ionSolventW / (R * temperature * temperature * temperature)
+        - 2.0 * ionSolventWdT / (R * temperature * temperature);
+  }
+
+  /**
+   * Mixed temperature-volume derivative of short-range term. d²F^SR/dTdV
+   *
+   * @return d²F^SR/dTdV [1/(m³·K)]
+   */
+  public double dFShortRangedTdV() {
+    if (!shortRangeOn || ionSolventW == 0.0) {
+      return 0.0;
+    }
+    double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // m³
+    if (V < 1e-30) {
+      return 0.0;
+    }
+    // d²/dTdV[W/RT] = W/(RT²V)
+    return ionSolventW / (R * temperature * temperature * V) * 1e-5;
+  }
+
   /**
    * Second volume derivative of Debye-Hückel term. d²F^DH/dV²
    *
@@ -609,6 +827,9 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     if (bornOn) {
       F += FBorn();
     }
+    if (shortRangeOn) {
+      F += FShortRange();
+    }
     return F;
   }
 
@@ -621,6 +842,9 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     }
     if (bornOn) {
       dFdT += dFBorndT();
+    }
+    if (shortRangeOn) {
+      dFdT += dFShortRangedT();
     }
     return dFdT;
   }
@@ -635,6 +859,9 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     if (bornOn) {
       dFdV += dFBorndV();
     }
+    if (shortRangeOn) {
+      dFdV += dFShortRangedV();
+    }
     return dFdV;
   }
 
@@ -645,6 +872,9 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     if (debyeHuckelOn) {
       dFdVdV += dFDebyeHuckeldVdV();
     }
+    if (shortRangeOn) {
+      dFdVdV += dFShortRangedVdV();
+    }
     return dFdVdV;
   }
 
@@ -654,6 +884,9 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     double dFdVdVdV = super.dFdVdVdV();
     if (debyeHuckelOn) {
       dFdVdVdV += dFDebyeHuckeldVdVdV();
+    }
+    if (shortRangeOn) {
+      dFdVdVdV += dFShortRangedVdVdV();
     }
     return dFdVdVdV;
   }
@@ -668,6 +901,9 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     if (bornOn) {
       dFdTdT += dFBorndTdT();
     }
+    if (shortRangeOn) {
+      dFdTdT += dFShortRangedTdT();
+    }
     return dFdTdT;
   }
 
@@ -677,6 +913,9 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     double dFdTdV = super.dFdTdV();
     if (debyeHuckelOn) {
       dFdTdV += dFDebyeHuckeldTdV();
+    }
+    if (shortRangeOn) {
+      dFdTdV += dFShortRangedTdV();
     }
     return dFdTdV;
   }
@@ -867,5 +1106,14 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
    */
   public void setShortRangeOn(boolean on) {
     this.shortRangeOn = on;
+  }
+
+  /**
+   * Check if short-range ion-solvent term is enabled.
+   *
+   * @return true if short-range term is enabled
+   */
+  public boolean isShortRangeOn() {
+    return shortRangeOn;
   }
 }
