@@ -2898,32 +2898,189 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
       int numbcomp = phase.getNumberOfComponents();
 
-      // System.out.println("numb comp " + numbcomp);
+      // Calculate solvent mole fractions for composition-dependent blending
+      double totalSolventMoles = 0.0;
+      double waterMoles = 0.0;
+      double megMoles = 0.0;
+      double meohMoles = 0.0;
+
+      for (int k = 0; k < numbcomp; k++) {
+        String name = compArray[k].getComponentName();
+        double moles = compArray[k].getNumberOfMolesInPhase();
+        if (compArray[k].getIonicCharge() == 0) { // Only count neutral solvents
+          totalSolventMoles += moles;
+          if (name.equals("water")) {
+            waterMoles = moles;
+          } else if (name.equals("MEG") || name.equals("ethylene glycol")) {
+            megMoles = moles;
+          } else if (name.equals("methanol")) {
+            meohMoles = moles;
+          } else if (name.equals("TEG") || name.equals("triethylene glycol")) {
+            megMoles += moles; // Treat TEG like MEG
+          }
+        }
+      }
+
+      // Calculate mole fractions in solvent (excluding ions)
+      double xWater = (totalSolventMoles > 0) ? waterMoles / totalSolventMoles : 1.0;
+      double xMEG = (totalSolventMoles > 0) ? megMoles / totalSolventMoles : 0.0;
+      double xMeOH = (totalSolventMoles > 0) ? meohMoles / totalSolventMoles : 0.0;
+
       for (int i = 0; i < numbcomp; i++) {
+        // Handle cations
         if (compArray[i].getIonicCharge() > 0) {
+          double stokesDiam = compArray[i].getStokesCationicDiameter();
+          int ionicCharge = (int) Math.round(compArray[i].getIonicCharge());
+          boolean isDivalent = (ionicCharge >= 2);
+
           for (int j = 0; j < numbcomp; j++) {
             if (wijCalcOrFitted[i][j] == 0) {
-              if (compArray[j].getComponentName().equals("water")
-                  || compArray[j].getComponentName().equals("MDEA")
-                  || compArray[j].getComponentName().equals("Piperazine")) { // compArray[j].getIonicCharge()==0){
-                wij[0][i][j] =
-                    neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParam(2)
-                        * compArray[i].getStokesCationicDiameter()
-                        + neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParam(3);
+              String solventName = compArray[j].getComponentName();
+
+              // Cation-solvent interaction - select parameters based on solvent type
+              if (solventName.equals("water")) {
+                // Water: use water-fitted CPA parameters
+                if (isDivalent) {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamCPA(6)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamCPA(7);
+                } else {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamCPA(2)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamCPA(3);
+                }
+              } else if (solventName.equals("MDEA")) {
+                // MDEA: use MDEA-specific parameters
+                if (isDivalent) {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMDEA(6)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamMDEA(7);
+                } else {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMDEA(2)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamMDEA(3);
+                }
+              } else if (solventName.equals("Piperazine")) {
+                // Piperazine: use water parameters as approximation (no specific data)
+                if (isDivalent) {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamCPA(6)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamCPA(7);
+                } else {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamCPA(2)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamCPA(3);
+                }
+              } else if (solventName.equals("MEG") || solventName.equals("ethylene glycol")) {
+                // MEG: use MEG-specific parameters
+                if (isDivalent) {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMEG(6)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamMEG(7);
+                } else {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMEG(2)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamMEG(3);
+                }
+              } else if (solventName.equals("methanol")) {
+                // Methanol: use methanol-specific parameters
+                if (isDivalent) {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMeOH(6)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamMeOH(7);
+                } else {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMeOH(2)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamMeOH(3);
+                }
+              } else if (solventName.equals("TEG") || solventName.equals("triethylene glycol")) {
+                // TEG: use MEG parameters as approximation (similar glycol structure)
+                if (isDivalent) {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMEG(6)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamMEG(7);
+                } else {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMEG(2)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamMEG(3);
+                }
+              } else if (solventName.equals("ethanol")) {
+                // Ethanol: use ethanol-specific parameters
+                if (isDivalent) {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamEtOH(6)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamEtOH(7);
+                } else {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamEtOH(2)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamEtOH(3);
+                }
+              } else if (solventName.equals("MEA")) {
+                // MEA (monoethanolamine): use MEA-specific parameters
+                if (isDivalent) {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMEA(6)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamMEA(7);
+                } else {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMEA(2)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamMEA(3);
+                }
               }
-              // if(compArray[j].getComponentName().equals("MDEA")){
-              // wij[0][i][j] =
-              // (thermo.util.constants.FurstElectrolyteConstants.getFurstParamMDEA(2)
-              // *
-              // compArray[i].getStokesCationicDiameter() +
-              // thermo.util.constants.FurstElectrolyteConstants.getFurstParamMDEA(3));
-              // }
+
+              // Cation-anion interaction: use water parameters (ion-ion interaction
+              // is relatively independent of solvent)
               if (compArray[j].getIonicCharge() < -0.01) {
-                wij[0][i][j] =
-                    neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParam(4)
-                        * Math.pow(compArray[i].getStokesCationicDiameter()
-                            + compArray[j].getPaulingAnionicDiameter(), 4.0)
-                        + neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParam(5);
+                double paulingDiam = compArray[j].getPaulingAnionicDiameter();
+                double diamSum4 = Math.pow(stokesDiam + paulingDiam, 4.0);
+
+                if (isDivalent) {
+                  // Divalent cation-anion
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamCPA(8)
+                          * diamSum4
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamCPA(9);
+                } else {
+                  // Monovalent cation-anion: use water-fitted parameters
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamCPA(4)
+                          * diamSum4
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamCPA(5);
+                }
               }
               wij[0][j][i] = wij[0][i][j];
             }
