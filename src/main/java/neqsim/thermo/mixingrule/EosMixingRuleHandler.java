@@ -2882,6 +2882,13 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
+    /**
+     * Flag to enable predictive descriptor-based Wij model. When true, uses solvent dielectric
+     * constant to compute Wij parameters universally. When false (default), uses solvent-specific
+     * fitted parameter tables.
+     */
+    private boolean usePredictiveModel = false;
+
     /** {@inheritDoc} */
     @Override
     public String getName() {
@@ -2890,6 +2897,25 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
     public ElectrolyteMixRule(PhaseInterface phase) {
       calcWij(phase);
+    }
+
+    /**
+     * Enable or disable the predictive descriptor-based Wij model.
+     *
+     * @param usePredictive true to use predictive model based on dielectric constant, false to use
+     *        solvent-specific fitted parameters
+     */
+    public void setUsePredictiveModel(boolean usePredictive) {
+      this.usePredictiveModel = usePredictive;
+    }
+
+    /**
+     * Check if predictive model is enabled.
+     *
+     * @return true if using predictive model
+     */
+    public boolean isUsePredictiveModel() {
+      return usePredictiveModel;
     }
 
     /** {@inheritDoc} */
@@ -3058,6 +3084,32 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                           + neqsim.thermo.util.constants.FurstElectrolyteConstants
                               .getFurstParamMEA(3);
                 }
+              } else if (solventName.equals("TEG")) {
+                // TEG (triethylene glycol): use TEG-specific parameters
+                if (isDivalent) {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTEG(6)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamTEG(7);
+                } else {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTEG(2)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamTEG(3);
+                }
+              } else if (compArray[j].getIonicCharge() == 0) {
+                // Unknown neutral solvent: use predictive model based on dielectric constant
+                // Get solvent dielectric constant at 298.15 K (reference temperature)
+                double solventEpsilon = compArray[j].getDiElectricConstant(298.15);
+                if (solventEpsilon < 1.0) {
+                  // Fallback for components without dielectric data: use water parameters
+                  solventEpsilon =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.EPSILON_WATER_REF;
+                }
+                wij[0][i][j] = neqsim.thermo.util.constants.FurstElectrolyteConstants
+                    .getPredictiveWij(solventEpsilon, stokesDiam, isDivalent);
               }
 
               // Cation-anion interaction: use water parameters (ion-ion interaction
@@ -3073,6 +3125,17 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                           * diamSum4
                           + neqsim.thermo.util.constants.FurstElectrolyteConstants
                               .getFurstParamCPA(9);
+                  // Temperature-dependent terms for divalent cation-anion
+                  wij[1][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTDep(12)
+                          * diamSum4
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamTDep(13);
+                  wij[2][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTDep(14)
+                          * diamSum4
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamTDep(15);
                 } else {
                   // Monovalent cation-anion: use water-fitted parameters
                   wij[0][i][j] =
@@ -3080,9 +3143,47 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                           * diamSum4
                           + neqsim.thermo.util.constants.FurstElectrolyteConstants
                               .getFurstParamCPA(5);
+                  // Temperature-dependent terms for monovalent cation-anion
+                  wij[1][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTDep(4)
+                          * diamSum4
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamTDep(5);
+                  wij[2][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTDep(6)
+                          * diamSum4
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamTDep(7);
+                }
+              } else if (compArray[j].getIonicCharge() == 0) {
+                // Cation-solvent: add temperature-dependent terms
+                if (isDivalent) {
+                  wij[1][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTDep(8)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamTDep(9);
+                  wij[2][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTDep(10)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamTDep(11);
+                } else {
+                  wij[1][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTDep(0)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamTDep(1);
+                  wij[2][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTDep(2)
+                          * stokesDiam
+                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                              .getFurstParamTDep(3);
                 }
               }
               wij[0][j][i] = wij[0][i][j];
+              wij[1][j][i] = wij[1][i][j];
+              wij[2][j][i] = wij[2][i][j];
             }
           }
         }

@@ -26,59 +26,33 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
 
   /**
    * Enum for selecting dielectric constant mixing rules for mixed solvents.
+   *
+   * <p>
+   * <b>Warning:</b> Only MOLAR_AVERAGE is fully thermodynamically consistent. VOLUME_AVERAGE and
+   * LOOYENGA provide correct dielectric constant values but have incomplete composition derivatives
+   * (dε/dn), which may cause issues with fugacity coefficient calculations and phase equilibrium.
+   * Use MOLAR_AVERAGE (default) for rigorous thermodynamic calculations.
+   * </p>
    */
   public enum DielectricMixingRule {
-    /** Molar average: eps_mix = sum(x_i * eps_i). Standard NeqSim approach. */
+    /** Molar average: eps_mix = sum(x_i * eps_i). Standard NeqSim approach. Fully consistent. */
     MOLAR_AVERAGE,
     /**
      * Volume average: eps_mix = sum(phi_i * eps_i). Better for water-glycol mixtures (2.4% avg
-     * error vs 4.2% for molar).
+     * error vs 4.2% for molar). <b>Warning:</b> Composition derivatives not implemented - use for
+     * property estimation only, not phase equilibrium.
      */
     VOLUME_AVERAGE,
     /**
      * Looyenga: eps_mix^(1/3) = sum(phi_i * eps_i^(1/3)). Theoretical basis for polar mixtures.
+     * <b>Warning:</b> Composition derivatives not implemented - use for property estimation only,
+     * not phase equilibrium.
      */
     LOOYENGA
   }
 
   /** The dielectric constant mixing rule to use for mixed solvents. */
   private DielectricMixingRule dielectricMixingRule = DielectricMixingRule.MOLAR_AVERAGE;
-
-  /**
-   * Reference dielectric constant for pure water at 298.15 K. Used for mixed-solvent enhancement
-   * calculations.
-   */
-  private static final double EPSILON_WATER_REF = 78.4;
-
-  /**
-   * Enhancement factor exponent for mixed-solvent electrolyte terms. When the solvent dielectric
-   * constant is lower than pure water, the electrolyte contributions (MSA, Born, SR2) are
-   * multiplied by a factor of (eps_water_ref / eps_solvent)^mixedSolventEnhancementExponent.
-   *
-   * <p>
-   * This correction was developed to match experimental osmotic coefficient data in ethylene
-   * glycol-water mixtures (Ma et al., J. Chem. Eng. Data 2010, 55, 1573-1579). The standard
-   * electrolyte CPA model overpredicts ion-ion interactions in lower dielectric media, leading to
-   * systematic underestimation of water activity and osmotic coefficients.
-   * </p>
-   *
-   * <p>
-   * Negative exponents reduce the electrolyte contributions in mixed solvents, counteracting the
-   * model's tendency to overpredict interaction strength. Empirically, an exponent of approximately
-   * -50 provides optimal fit for EG-water mixtures at 0-40 wt% EG.
-   * </p>
-   *
-   * <p>
-   * Default value of 0.0 disables the correction. For EG-water mixed solvent calculations, use a
-   * value around -50 via {@link #setMixedSolventEnhancementExponent(double)}.
-   * </p>
-   */
-  private double mixedSolventEnhancementExponent = 0.0;
-
-  /**
-   * Cached enhancement factor calculated from current solvent dielectric constant.
-   */
-  private double mixedSolventEnhancementFactor = 1.0;
 
   double gammaold = 0;
   double alphaLRdTdV = 0;
@@ -193,17 +167,6 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     solventDiElectricConstant = calcSolventDiElectricConstant(temperature);
     solventDiElectricConstantdT = calcSolventDiElectricConstantdT(temperature);
     solventDiElectricConstantdTdT = calcSolventDiElectricConstantdTdT(temperature);
-
-    // Calculate mixed-solvent enhancement factor for electrolyte terms
-    // In lower dielectric media, ion-ion interactions are stronger
-    // Positive exponent enhances terms, negative exponent reduces them
-    if (Math.abs(mixedSolventEnhancementExponent) > 1e-10
-        && solventDiElectricConstant < EPSILON_WATER_REF) {
-      mixedSolventEnhancementFactor =
-          Math.pow(EPSILON_WATER_REF / solventDiElectricConstant, mixedSolventEnhancementExponent);
-    } else {
-      mixedSolventEnhancementFactor = 1.0;
-    }
 
     diElectricConstant = calcDiElectricConstant(temperature);
     diElectricConstantdT = calcDiElectricConstantdT(temperature);
@@ -393,6 +356,12 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   /**
    * Set the dielectric constant mixing rule for mixed solvents.
    *
+   * <p>
+   * <b>Warning:</b> Only MOLAR_AVERAGE is thermodynamically consistent with complete composition
+   * derivatives. VOLUME_AVERAGE and LOOYENGA are suitable for dielectric constant estimation but
+   * may cause fugacity coefficient inconsistencies in phase equilibrium calculations.
+   * </p>
+   *
    * @param rule The mixing rule to use (MOLAR_AVERAGE, VOLUME_AVERAGE, or LOOYENGA)
    */
   public void setDielectricMixingRule(DielectricMixingRule rule) {
@@ -406,56 +375,6 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    */
   public DielectricMixingRule getDielectricMixingRule() {
     return dielectricMixingRule;
-  }
-
-  /**
-   * Set the mixed-solvent enhancement exponent for electrolyte terms.
-   *
-   * <p>
-   * This parameter controls how much the electrolyte contributions (MSA long-range and Born
-   * solvation terms) are enhanced in mixed solvents with lower dielectric constant than pure water.
-   * The enhancement factor is calculated as (eps_water_ref / eps_solvent)^exponent.
-   * </p>
-   *
-   * <p>
-   * Physical basis: In lower dielectric media, ion-ion electrostatic interactions are less
-   * shielded, leading to stronger effective interactions. Additionally, the reduced solvation in
-   * mixed organic-aqueous solvents means ions have stronger effects on solvent activity.
-   * </p>
-   *
-   * <p>
-   * Guidelines for setting this parameter:
-   * </p>
-   * <ul>
-   * <li>0.0 (default): No enhancement, original model behavior</li>
-   * <li>0.5-1.0: Moderate enhancement, physically reasonable for EG-water mixtures</li>
-   * <li>1.0-2.0: Strong enhancement, may be needed for very low dielectric solvents</li>
-   * </ul>
-   *
-   * @param exponent The enhancement exponent (positive to enhance, negative to reduce, 0 to
-   *        disable)
-   */
-  public void setMixedSolventEnhancementExponent(double exponent) {
-    this.mixedSolventEnhancementExponent = exponent;
-  }
-
-  /**
-   * Get the mixed-solvent enhancement exponent for electrolyte terms.
-   *
-   * @return The enhancement exponent
-   */
-  public double getMixedSolventEnhancementExponent() {
-    return mixedSolventEnhancementExponent;
-  }
-
-  /**
-   * Get the current mixed-solvent enhancement factor. This is calculated as (eps_water_ref /
-   * eps_solvent)^exponent and applied to MSA and Born terms.
-   *
-   * @return The enhancement factor (1.0 in pure water or when enhancement is disabled)
-   */
-  public double getMixedSolventEnhancementFactor() {
-    return mixedSolventEnhancementFactor;
   }
 
   /**
@@ -1062,11 +981,6 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * FLR. MSA long-range ion-ion interaction contribution to Helmholtz free energy.
    * </p>
    *
-   * <p>
-   * In mixed solvents, this term is enhanced by mixedSolventEnhancementFactor to account for the
-   * stronger electrostatic interactions in lower dielectric media.
-   * </p>
-   *
    * @return a double
    */
   public double FLR() {
@@ -1074,7 +988,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     ans -= (1.0 / (4.0 * pi) * getAlphaLR2() * getXLR());
     ans += (numberOfMolesInPhase * getMolarVolume() * 1e-5 * Math.pow(getShieldingParameter(), 3.0))
         / (3.0 * pi * avagadroNumber);
-    return ans * mixedSolventEnhancementFactor;
+    return ans;
   }
 
   /**
@@ -1101,7 +1015,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     double term2 = numberOfMolesInPhase * getMolarVolume() * 1e-5 / (3.0 * pi * avagadroNumber)
         * 3.0 * Math.pow(getShieldingParameter(), 2.0) * shieldingParameterdT;
 
-    return (term1 + term2) * mixedSolventEnhancementFactor;
+    return (term1 + term2);
   }
 
   /**
@@ -1112,7 +1026,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double dFLRdTdV() {
-    return (dFdAlphaLR() * alphaLRdTdV) * 1e-5 * mixedSolventEnhancementFactor;
+    return (dFdAlphaLR() * alphaLRdTdV) * 1e-5;
   }
 
   /**
@@ -1130,7 +1044,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     double term1 = -1.0 / (4.0 * pi) * alphaLRdTdT * getXLR();
     // Add the cross term: -2/(4π) * dαLR/dT * dXLR/dT
     double crossTerm = -2.0 / (4.0 * pi) * alphaLRdT * XLRdT;
-    return (term1 + crossTerm) * mixedSolventEnhancementFactor;
+    return (term1 + crossTerm);
   }
 
   /**
@@ -1141,7 +1055,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double dFLRdV() {
-    return (FLRV() + dFdAlphaLR() * alphaLRdV) * 1e-5 * mixedSolventEnhancementFactor;
+    return (FLRV() + dFdAlphaLR() * alphaLRdV) * 1e-5;
   }
 
   /**
@@ -1152,7 +1066,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double dFLRdVdV() {
-    return (dFdAlphaLR() * alphaLRdVdV) * 1e-10 * mixedSolventEnhancementFactor;
+    return (dFdAlphaLR() * alphaLRdVdV) * 1e-10;
   }
 
   /**
@@ -1176,7 +1090,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FLRXLR() {
-    return -getAlphaLR2() / (4.0 * pi) * mixedSolventEnhancementFactor;
+    return -getAlphaLR2() / (4.0 * pi);
   }
 
   /**
@@ -1188,8 +1102,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    */
   public double FLRGammaLR() {
     return 3.0 * numberOfMolesInPhase * getMolarVolume() * 1e-5
-        * Math.pow(getShieldingParameter(), 2.0) / (3.0 * pi * avagadroNumber)
-        * mixedSolventEnhancementFactor;
+        * Math.pow(getShieldingParameter(), 2.0) / (3.0 * pi * avagadroNumber);
   }
 
   /**
@@ -1200,7 +1113,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double dFdAlphaLR() {
-    return -1.0 / (4.0 * pi) * XLR * mixedSolventEnhancementFactor;
+    return -1.0 / (4.0 * pi) * XLR;
   }
 
   /**
@@ -1222,7 +1135,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double dFdAlphaLRdX() {
-    return -1.0 / (4.0 * pi) * mixedSolventEnhancementFactor;
+    return -1.0 / (4.0 * pi);
   }
 
   /**
@@ -1244,8 +1157,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FLRV() {
-    return Math.pow(getShieldingParameter(), 3.0) / (3.0 * pi * avagadroNumber)
-        * mixedSolventEnhancementFactor;
+    return Math.pow(getShieldingParameter(), 3.0) / (3.0 * pi * avagadroNumber);
   }
 
   /**
@@ -1328,16 +1240,10 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * FSR2. Short-range ion-solvent and ion-ion interaction contribution to Helmholtz free energy.
    * </p>
    *
-   * <p>
-   * In mixed solvents, this term is enhanced by mixedSolventEnhancementFactor to account for the
-   * stronger electrostatic interactions in lower dielectric media.
-   * </p>
-   *
    * @return a double
    */
   public double FSR2() {
-    double baseSR2 = getW() / (getMolarVolume() * 1e-5 * numberOfMolesInPhase * (1.0 - eps));
-    return baseSR2 * mixedSolventEnhancementFactor;
+    return getW() / (getMolarVolume() * 1e-5 * numberOfMolesInPhase * (1.0 - eps));
   }
 
   /**
@@ -1417,8 +1323,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FSR2W() {
-    double base = 1.0 / (getMolarVolume() * 1e-5 * numberOfMolesInPhase * (1.0 - eps));
-    return base * mixedSolventEnhancementFactor;
+    return 1.0 / (getMolarVolume() * 1e-5 * numberOfMolesInPhase * (1.0 - eps));
   }
 
   /**
@@ -1429,9 +1334,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FSR2V() {
-    double base =
-        -W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 2.0) * (1.0 - eps));
-    return base * mixedSolventEnhancementFactor;
+    return -W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 2.0) * (1.0 - eps));
   }
 
   /**
@@ -1464,8 +1367,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FSR2eps() {
-    double base = W / ((getMolarVolume() * 1e-5 * numberOfMolesInPhase) * Math.pow(1.0 - eps, 2.0));
-    return base * mixedSolventEnhancementFactor;
+    return W / ((getMolarVolume() * 1e-5 * numberOfMolesInPhase) * Math.pow(1.0 - eps, 2.0));
   }
 
   // second order derivatives
@@ -1588,9 +1490,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FSR2VV() {
-    double base =
-        2.0 * W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 3.0) * (1.0 - eps));
-    return base * mixedSolventEnhancementFactor;
+    return 2.0 * W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 3.0) * (1.0 - eps));
   }
 
   /**
@@ -1601,9 +1501,8 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FSR2epsV() {
-    double base = -W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 2.0)
+    return -W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 2.0)
         * Math.pow((1.0 - eps), 2.0));
-    return base * mixedSolventEnhancementFactor;
   }
 
   /**
@@ -1614,8 +1513,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FSR2epsW() {
-    double base = 1.0 / (getMolarVolume() * 1e-5 * numberOfMolesInPhase * Math.pow(1.0 - eps, 2.0));
-    return base * mixedSolventEnhancementFactor;
+    return 1.0 / (getMolarVolume() * 1e-5 * numberOfMolesInPhase * Math.pow(1.0 - eps, 2.0));
   }
 
   /**
@@ -1637,9 +1535,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FSR2VW() {
-    double base =
-        -1.0 / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 2.0) * (1.0 - eps));
-    return base * mixedSolventEnhancementFactor;
+    return -1.0 / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 2.0) * (1.0 - eps));
   }
 
   /**
@@ -1650,9 +1546,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FSR2epseps() {
-    double base =
-        2.0 * W / ((getMolarVolume() * 1e-5 * numberOfMolesInPhase) * Math.pow(1.0 - eps, 3.0));
-    return base * mixedSolventEnhancementFactor;
+    return 2.0 * W / ((getMolarVolume() * 1e-5 * numberOfMolesInPhase) * Math.pow(1.0 - eps, 3.0));
   }
 
   /**
@@ -1663,9 +1557,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FSR2VVV() {
-    double base =
-        -6.0 * W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 4.0) * (1.0 - eps));
-    return base * mixedSolventEnhancementFactor;
+    return -6.0 * W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 4.0) * (1.0 - eps));
   }
 
   // third order derivatives
@@ -1677,9 +1569,8 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FSR2epsepsV() {
-    double base = -2.0 * W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 2.0)
+    return -2.0 * W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 2.0)
         * Math.pow((1 - eps), 3.0));
-    return base * mixedSolventEnhancementFactor;
   }
 
   /**
@@ -1690,9 +1581,8 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FSR2VVeps() {
-    double base = 2.0 * W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 3.0)
+    return 2.0 * W / (Math.pow(getMolarVolume() * 1e-5 * numberOfMolesInPhase, 3.0)
         * Math.pow((1 - eps), 2.0));
-    return base * mixedSolventEnhancementFactor;
   }
 
   /**
@@ -1703,9 +1593,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FSR2epsepseps() {
-    double base =
-        6.0 * W / ((getMolarVolume() * 1e-5 * numberOfMolesInPhase) * Math.pow(1.0 - eps, 4.0));
-    return base * mixedSolventEnhancementFactor;
+    return 6.0 * W / ((getMolarVolume() * 1e-5 * numberOfMolesInPhase) * Math.pow(1.0 - eps, 4.0));
   }
 
   // Born term equations and derivatives
@@ -1714,18 +1602,12 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * FBorn. Born solvation contribution to Helmholtz free energy.
    * </p>
    *
-   * <p>
-   * In mixed solvents, this term is enhanced by mixedSolventEnhancementFactor to account for the
-   * stronger electrostatic interactions in lower dielectric media.
-   * </p>
-   *
    * @return a double
    */
   public double FBorn() {
-    double baseBorn = (avagadroNumber * electronCharge * electronCharge
+    return (avagadroNumber * electronCharge * electronCharge
         / (4.0 * pi * vacumPermittivity * R * temperature))
         * (1.0 / getSolventDiElectricConstant() - 1.0) * bornX;
-    return baseBorn * mixedSolventEnhancementFactor;
   }
 
   /**
@@ -1736,7 +1618,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double dFBorndT() {
-    return (FBornT() + FBornD() * solventDiElectricConstantdT) * mixedSolventEnhancementFactor;
+    return (FBornT() + FBornD() * solventDiElectricConstantdT);
   }
 
   /**
@@ -1747,7 +1629,7 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double dFBorndTdT() {
-    return (FBornTT() + FBornTD() * solventDiElectricConstantdT) * mixedSolventEnhancementFactor;
+    return (FBornTT() + FBornTD() * solventDiElectricConstantdT);
   }
 
   // first order derivatives
@@ -1759,10 +1641,9 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FBornT() {
-    double base = -(avagadroNumber * electronCharge * electronCharge
+    return -(avagadroNumber * electronCharge * electronCharge
         / (4.0 * pi * vacumPermittivity * R * temperature * temperature))
         * (1.0 / getSolventDiElectricConstant() - 1.0) * bornX;
-    return base * mixedSolventEnhancementFactor;
   }
 
   /**
@@ -1773,10 +1654,9 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FBornX() {
-    double base = (avagadroNumber * electronCharge * electronCharge
+    return (avagadroNumber * electronCharge * electronCharge
         / (4.0 * pi * vacumPermittivity * R * temperature))
         * (1.0 / getSolventDiElectricConstant() - 1.0);
-    return base * mixedSolventEnhancementFactor;
   }
 
   /**
@@ -1787,10 +1667,9 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FBornD() {
-    double base = -(avagadroNumber * electronCharge * electronCharge
+    return -(avagadroNumber * electronCharge * electronCharge
         / (4.0 * pi * vacumPermittivity * R * temperature)) * 1.0
         / Math.pow(getSolventDiElectricConstant(), 2.0) * bornX;
-    return base * mixedSolventEnhancementFactor;
   }
 
   // second order derivatives
@@ -1803,11 +1682,10 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FBornTT() {
-    double base = 2.0
+    return 2.0
         * (avagadroNumber * electronCharge * electronCharge
             / (4.0 * pi * vacumPermittivity * R * temperature * temperature * temperature))
         * (1.0 / getSolventDiElectricConstant() - 1.0) * bornX;
-    return base * mixedSolventEnhancementFactor;
   }
 
   /**
@@ -1818,10 +1696,9 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FBornTD() {
-    double base = (avagadroNumber * electronCharge * electronCharge
+    return (avagadroNumber * electronCharge * electronCharge
         / (4.0 * pi * vacumPermittivity * R * temperature * temperature)) * 1.0
         / Math.pow(getSolventDiElectricConstant(), 2.0) * bornX;
-    return base * mixedSolventEnhancementFactor;
   }
 
   /**
@@ -1832,10 +1709,9 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FBornTX() {
-    double base = -(avagadroNumber * electronCharge * electronCharge
+    return -(avagadroNumber * electronCharge * electronCharge
         / (4.0 * pi * vacumPermittivity * R * temperature * temperature))
         * (1.0 / getSolventDiElectricConstant() - 1.0);
-    return base * mixedSolventEnhancementFactor;
   }
 
   /**
@@ -1846,11 +1722,10 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FBornDD() {
-    double base = 2.0
+    return 2.0
         * (avagadroNumber * electronCharge * electronCharge
             / (4.0 * pi * vacumPermittivity * R * temperature))
         * 1.0 / Math.pow(getSolventDiElectricConstant(), 3.0) * bornX;
-    return base * mixedSolventEnhancementFactor;
   }
 
   /**
@@ -1861,10 +1736,9 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * @return a double
    */
   public double FBornDX() {
-    double base = -(avagadroNumber * electronCharge * electronCharge
+    return -(avagadroNumber * electronCharge * electronCharge
         / (4.0 * pi * vacumPermittivity * R * temperature)) * 1.0
         / Math.pow(getSolventDiElectricConstant(), 2.0);
-    return base * mixedSolventEnhancementFactor;
   }
 
   /**
