@@ -41,7 +41,8 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
   public void run() {
     double ksp = 0.0;
 
-    resultTable = new String[10][3];
+    // Increased from 10 to 25 to handle all salts in COMPSALT database
+    resultTable = new String[25][3];
     double stoc1 = 1e-20;
     double stoc2 = 1e-20;
     String saltName = "";
@@ -49,7 +50,7 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
     String name2 = "";
     int numb = 0;
 
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 25; i++) {
       for (int j = 0; j < 3; j++) {
         resultTable[i][j] = "";
       }
@@ -78,17 +79,21 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
 
         stoc1 = Double.parseDouble(dataSet.getString("stoc1"));
         stoc2 = Double.parseDouble(dataSet.getString("stoc2"));
-        double temperatureC = system.getPhase(phaseNumber).getTemperature();
-        double lnKsp = Double.parseDouble(dataSet.getString("Kspwater")) / temperatureC
+        // Temperature in Kelvin from system
+        double temperatureK = system.getPhase(phaseNumber).getTemperature();
+        double temperatureC = temperatureK - 273.15;
+        // Ksp correlation: lnKsp = A/T + B + C*ln(T) + D*T + E/T² (T in Kelvin)
+        double lnKsp = Double.parseDouble(dataSet.getString("Kspwater")) / temperatureK
             + Double.parseDouble(dataSet.getString("Kspwater2"))
-            + Math.log(temperatureC) * Double.parseDouble(dataSet.getString("Kspwater3"))
-            + temperatureC * Double.parseDouble(dataSet.getString("Kspwater4"))
-            + Double.parseDouble(dataSet.getString("Kspwater5")) / (temperatureC * temperatureC);
+            + Math.log(temperatureK) * Double.parseDouble(dataSet.getString("Kspwater3"))
+            + temperatureK * Double.parseDouble(dataSet.getString("Kspwater4"))
+            + Double.parseDouble(dataSet.getString("Kspwater5")) / (temperatureK * temperatureK);
         ksp = Math.exp(lnKsp);
 
         if (saltName.equals("NaCl")) {
-          ksp = -814.18 + 7.4685 * temperatureC - 2.3262e-2 * temperatureC * temperatureC
-              + 3.0536e-5 * Math.pow(temperatureC, 3.0) - 1.4573e-8 * Math.pow(temperatureC, 4.0);
+          // NaCl Ksp correlation using temperature in Kelvin
+          ksp = -814.18 + 7.4685 * temperatureK - 2.3262e-2 * temperatureK * temperatureK
+              + 3.0536e-5 * Math.pow(temperatureK, 3.0) - 1.4573e-8 * Math.pow(temperatureK, 4.0);
         }
         if (saltName.equals("FeS")) {
           int waterompNumb =
