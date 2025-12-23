@@ -219,74 +219,34 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     // M_Jama_matrix.print(5,5);
     y_solve = A_solve.det();
     // System.out.println("Determinant "+y_solve);
-
-    // Check for near-singular matrix and apply regularization if needed
-    boolean needsRegularization = (y_solve < 1e-38 && y_solve > -1e-38) || y_solve < -1e70
-        || Double.isNaN(y_solve) || Double.isInfinite(y_solve);
-
-    if (needsRegularization) {
-      // Apply Tikhonov regularization to stabilize the matrix
-      double regParam = 1e-10;
-      for (int reg = 0; reg < NELE; reg++) {
-        A_solve.set(reg, reg, A_solve.get(reg, reg) + regParam);
-      }
-      y_solve = A_solve.det();
+    if ((y_solve < 1e-38 && y_solve > -1e-38) || y_solve < -1e70) {
+      // A_solve.print(5,5);
+      y_solve = AMA_matrix.det();
+      // System.out.println("AMA det "+y_solve);
+      y_solve = A_solve.rank();
+      // System.out.println("Rank " + y_solve);
+      // M_Jama_matrix.print(5,5);
+      // b_solve.print(5,5);
+      // System.out.println("det A " + A_solve.rank());
     }
 
     // try catch block added by Neeraj
     try {
       x_solve = A_solve.solve(b_solve);
-
-      // Validate the solution - check for NaN/Inf
-      boolean validSolution = true;
-      for (int row = 0; row <= NELE; row++) {
-        if (Double.isNaN(x_solve.get(row, 0)) || Double.isInfinite(x_solve.get(row, 0))) {
-          validSolution = false;
-          break;
-        }
-      }
-
-      if (!validSolution) {
-        // Use a small perturbation approach - set Lagrange multipliers to zero
-        for (int row = 0; row <= NELE; row++) {
-          x_solve.set(row, 0, 0.0);
-        }
-      }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
-      // Initialize x_solve to zeros as fallback
-      x_solve = new Matrix(NELE + 1, 1);
+      // System.out.println("\nError x " +
+      // system.getPhase(phasenumb).getComponent(0).getx());
+      // System.out.println("Error T " + system.getTemperature());
     }
     // d_n_t = x_solve.get(NELE,0)*n_t;
 
-    // Equation 3.115 from Smith & Missen
-    // dn = M^{-1} * (A^T * pi - mu) + n * s
-    // where pi are Lagrange multipliers and s is the scaling factor
-    try {
-      dn_matrix = M_Jama_matrix.inverse()
-          .times((A_Jama_matrix.transpose().times(x_solve.getMatrix(0, NELE - 1, 0, 0)))
-              .minus(chem_pot_Jama_Matrix.transpose()))
-          .plus(new Matrix(n_mol, 1).transpose().times(x_solve.get(NELE, 0)));
-
-      // Validate dn_matrix - limit extreme changes
-      double maxRelativeChange = 10.0; // Maximum 1000% change in one step
-      for (int i = 0; i < NSPEC; i++) {
-        double dn = dn_matrix.get(i, 0);
-        if (Double.isNaN(dn) || Double.isInfinite(dn)) {
-          dn_matrix.set(i, 0, 0.0);
-        } else if (n_mol[i] > 1e-20 && Math.abs(dn) > maxRelativeChange * n_mol[i]) {
-          // Limit extreme steps
-          dn_matrix.set(i, 0, Math.signum(dn) * maxRelativeChange * n_mol[i]);
-        }
-      }
-
-      d_n = dn_matrix.transpose().getArray()[0];
-    } catch (Exception ex) {
-      logger.error("Error in dn_matrix calculation: " + ex.getMessage());
-      // Set zero step as fallback
-      dn_matrix = new Matrix(NSPEC, 1);
-      d_n = new double[NSPEC];
-    }
+    // Equation 3.115
+    dn_matrix = M_Jama_matrix.inverse()
+        .times((A_Jama_matrix.transpose().times(x_solve.getMatrix(0, NELE - 1, 0, 0)))
+            .minus(chem_pot_Jama_Matrix.transpose()))
+        .plus(new Matrix(n_mol, 1).transpose().times(x_solve.get(NELE, 0)));
+    d_n = dn_matrix.transpose().getArray()[0];
   }
 
   /**
@@ -296,24 +256,19 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    */
   public void updateMoles() {
     upMoles++;
-    // Minimum mole threshold to prevent numerical issues with log calculations
-    double minMoles = 1e-20;
     // double changeMoles = 0.0;
     for (int i = 0; i < components.length; i++) {
-      double currentMoles =
-          system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-              .getNumberOfMolesInPhase();
-      double targetMoles = n_mol[i];
-
-      // Ensure target moles is above minimum threshold
-      if (targetMoles < minMoles) {
-        targetMoles = minMoles;
-      }
-
-      // Only update if there's a meaningful change
-      double deltaMoles = targetMoles - currentMoles;
-      if (Math.abs(deltaMoles) > 1e-30) {
-        system.addComponent(components[i].getComponentNumber(), deltaMoles, phasenumb);
+      if (n_mol[i] > 0) {
+        system.addComponent(components[i].getComponentNumber(),
+            (n_mol[i]
+                - system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+                    .getNumberOfMolesInPhase()),
+            phasenumb);
+      } else {
+        system.addComponent(components[i].getComponentNumber(),
+            (-0.99 * system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+                .getNumberOfMolesInPhase()),
+            phasenumb);
       }
 
       // changeMoles += n_mol[i] -
@@ -328,231 +283,81 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * <p>
    * solve.
    * </p>
-   * 
-   * Solves the chemical equilibrium using the Lagrangian method from Smith & Missen with
-   * Greiner-Rand step size control.
    *
-   * @return a boolean indicating if convergence was achieved
+   * @return a boolean
    */
   public boolean solve() {
     double error = 1e10;
     double errOld = 1e10;
-    int p = 0;
-    double maxError = 1e-6;
-    double maxErrorRelaxed = maxError;
+    double thisError = 0;
+    double p = 1.0;
+    // boolean negN = false;
+    double maxError = 1e-8;
     upMoles = 0;
-    int stagnationCount = 0;
-
-    // Damping factor - start with moderate step and adjust
-    double damping = 0.5;
-
+    // double old = 0;
     try {
       do {
         p++;
         errOld = error;
+        error = 0.0;
         this.chemSolve();
-
-        // Calculate equilibrium residual: ||μ - A^T*π|| / NSPEC
-        // At equilibrium, each species should satisfy: μ_i = sum_j(A_ji * π_j)
-        error = calcEquilibriumResidual();
-
-        // Get the step size from the Greiner-Rand method
+        // Commented out by Neeraj
         double step1 = step();
-
-        // Validate and clamp step
-        if (Double.isNaN(step1) || Double.isInfinite(step1) || step1 <= 0) {
-          step1 = 0.1;
-        } else if (step1 > 1.0) {
-          step1 = 1.0;
-        }
-
-        // Apply damping for robustness
-        step1 *= damping;
-        if (step1 < 1e-10) {
-          step1 = 1e-10;
-        }
-
-        // Line search: try progressively smaller steps if needed
-        boolean stepAccepted = false;
-        int lineSearchIter = 0;
-        double[] n_mol_new = new double[NSPEC];
-        double newError = error;
-
-        // Save the original moles before trying any steps (BUG FIX: must save BEFORE the loop)
-        double[] n_mol_original = new double[NSPEC];
+        // System.out.println("step " + step1);
+        // Changed by Neeraj
+        // double step1 = 1.0; //leads to negative b error
         for (int i = 0; i < NSPEC; i++) {
-          n_mol_original[i] = system.getPhase(phasenumb)
-              .getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
-        }
-
-        while (!stepAccepted && lineSearchIter < 10) {
-          lineSearchIter++;
-
-          // Calculate new moles with step FROM ORIGINAL (not current, which may have been modified)
-          for (int i = 0; i < NSPEC; i++) {
-            double dn = dn_matrix.get(i, 0);
-            n_mol_new[i] = n_mol_original[i] + dn * step1;
-
-            // Ensure non-negative moles with minimum threshold
-            if (n_mol_new[i] < 1e-20) {
-              n_mol_new[i] = 1e-20;
-            }
-          }
-
-          // Verify element balance before accepting step
-          boolean elementBalanceOK = checkElementBalance(n_mol_new);
-
-          if (elementBalanceOK) {
-            // Tentatively accept and check if error decreases
-            for (int i = 0; i < NSPEC; i++) {
-              n_mol[i] = n_mol_new[i];
-            }
-            updateMoles();
-            system.init(1, phasenumb);
-            calcRefPot();
-
-            // Recalculate error with new moles
-            this.chemSolve();
-            newError = calcEquilibriumResidual();
-
-            // Accept if error decreased or we've tried enough times
-            if (newError < error * 1.5 || lineSearchIter >= 6) {
-              stepAccepted = true;
-              error = newError;
-            } else {
-              // Revert to original moles before trying smaller step
-              for (int i = 0; i < NSPEC; i++) {
-                n_mol[i] = n_mol_original[i];
-              }
-              updateMoles();
-              system.init(1, phasenumb);
-              calcRefPot();
-              step1 *= 0.5;
-            }
-          } else {
-            // Element balance violated - reduce step size
-            step1 *= 0.5;
+          if (Math.abs(dn_matrix.get(i, 0))
+              / system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+                  .getNumberOfMolesInPhase() > 1e-15) {
+            thisError = Math.abs(dn_matrix.get(i, 0)) / system.getPhase(phasenumb)
+                .getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
+            error += Math.abs(thisError);
+            n_mol[i] = dn_matrix.get(i, 0) * step1 + system.getPhase(phasenumb)
+                .getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
+            // n_mol[i] = dn_matrix.get(i,0) +
+            // system.getPhase(phasenumb).getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
           }
         }
-
-        if (stepAccepted) {
-          // Adaptive damping based on convergence behavior
-          if (error > errOld * 0.95 && p > 3) {
-            stagnationCount++;
-            damping *= 0.9;
-            if (damping < 0.05) {
-              damping = 0.05;
-            }
-          } else if (error < errOld * 0.5) {
-            // Good progress - increase damping
-            damping = Math.min(0.9, damping * 1.2);
-            stagnationCount = 0;
-          } else if (error < errOld) {
-            stagnationCount = 0;
-          }
-        } else {
-          // Could not find acceptable step - increase stagnation counter
-          stagnationCount++;
-          damping *= 0.8;
-          if (damping < 0.05) {
-            damping = 0.05;
-          }
+        if (error <= errOld) {
+          updateMoles();
+          system.init(1, phasenumb);
+          calcRefPot();
         }
-
-        // If stagnating for too long, break out
-        if (stagnationCount > 30) {
-          break;
+        if (p > 25) {
+          maxError *= 2;
         }
-
-        // Relax tolerance after many iterations
-        if (p == 80) {
-          maxErrorRelaxed = maxError * 10;
-        }
-        if (p == 120) {
-          maxErrorRelaxed = maxError * 100;
-        }
-
-      } while ((error > maxErrorRelaxed && p < 150) || p < 3);
+        // Print statement added by Neeraj
+        // System.out.println("Error " + error);
+      } while (((errOld > maxError && Math.abs(error) > maxError) && p < 350) || p < 2);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
       return false;
     }
-
-    if (p >= 145) {
-      logger.debug("iter " + p + " residual " + error + " P " + system.getPressure());
+    // System.out.println("iter " + p);
+    if (p > 345) {
+      System.out.println("iter " + p + " err " + error); // return false;
+    }
+    if (p >= 1000) {
+      System.out.println("Too many iterations in chemical equilibrium " + error);
+      System.out.println("P " + system.getPressure());
+      System.out.println("T " + system.getTemperature());
+    }
+    if (Double.isNaN(error)) {
+      System.out.println("error . NaN in chemSolve() ");
+      System.out.println("pressure " + system.getPressure());
     }
 
+    // Print added by Neeraj
+    /*
+     * System.out.println("n[1] "+n_mol[0]); System.out.println("n[2] "+n_mol[1]);
+     * System.out.println("n[3] "+n_mol[2]); System.out.println("n[4] "+n_mol[3]);
+     * System.out.println("n[5] "+n_mol[4]);
+     */
+    // system.initBeta();
     system.init(1, phasenumb);
-    return error < maxError * 10; // Allow 10x tolerance for "converged" status
-  }
-
-  /**
-   * Calculates the equilibrium residual based on the KKT conditions. At equilibrium: μ_i = A^T * π
-   * for all species The residual is ||μ - A^T*π|| normalized by number of species.
-   *
-   * @return the normalized equilibrium residual
-   */
-  private double calcEquilibriumResidual() {
-    // Check all required matrices are initialized
-    if (x_solve == null || chem_pot == null || A_Jama_matrix == null || NSPEC <= 0) {
-      return 1e10;
-    }
-
-    double residual = 0.0;
-    try {
-      // Calculate A^T * π (Lagrange multipliers)
-      Matrix AtPi = A_Jama_matrix.transpose().times(x_solve.getMatrix(0, NELE - 1, 0, 0));
-
-      for (int i = 0; i < NSPEC; i++) {
-        double diff = chem_pot[i] - AtPi.get(i, 0);
-        // Guard against NaN/Inf in chemical potentials
-        if (Double.isNaN(diff) || Double.isInfinite(diff)) {
-          return 1e10;
-        }
-        residual += diff * diff;
-      }
-      residual = Math.sqrt(residual / NSPEC);
-
-      // Guard against NaN result
-      if (Double.isNaN(residual) || Double.isInfinite(residual)) {
-        return 1e10;
-      }
-    } catch (Exception ex) {
-      residual = 1e10;
-    }
-
-    return residual;
-  }
-
-  /**
-   * Checks if element balance is maintained within tolerance. The element balance constraint is A *
-   * n = b.
-   * 
-   * @param n_trial Trial mole numbers to check
-   * @return true if element balance is satisfied within tolerance
-   */
-  private boolean checkElementBalance(double[] n_trial) {
-    // Use a more relaxed tolerance since numerical errors accumulate
-    // and we're using minimum mole thresholds
-    double tolerance = 1e-3;
-
-    // Calculate A * n_trial and compare with b_element
-    for (int j = 0; j < NELE; j++) {
-      double elementSum = 0.0;
-      for (int i = 0; i < NSPEC; i++) {
-        elementSum += A_matrix[j][i] * n_trial[i];
-      }
-      double absError = Math.abs(elementSum - b_element[j]);
-      double relError = absError;
-      if (b_element[j] > 1e-10) {
-        relError = absError / b_element[j];
-      }
-      // Accept if either absolute or relative error is small
-      if (relError > tolerance && absError > 1e-10) {
-        return false;
-      }
-    }
-    return true;
+    // printComp(); //system.init(0)
+    return error < maxError;
   }
 
   /**
@@ -662,18 +467,15 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         // G_0 +=
         // (chem_pot[i]-Alambda_matrix.get(i,0))*d_n[i]*(M_Jama_matrix.get(i,i)-1/n_t);
       }
-      // Guard against division by zero
-      double denominator = G_0 - G_1;
-      if (Math.abs(denominator) > 1e-30) {
-        step = G_0 / denominator;
-      }
+      step = G_0 / (G_0 - G_1);
       // System.out.println("step G " + step);
     }
 
     step = innerStep(i, n_omega, check, step, false);
     // System.out.println("step ... " + step);
 
-    return step;
+    // return step;
+    return 1.0;
   }
 
   /**
@@ -688,24 +490,17 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * @param test a boolean
    * @return a double
    */
-  public double innerStep(int speciesIndex, double[] n_omega, int check, double step,
-      boolean test) {
+  public double innerStep(int i, double[] n_omega, int check, double step, boolean test) {
     if (test) {
-      // Guard against division by zero
-      if (Math.abs(d_n[speciesIndex]) > 1e-30) {
-        agemo = (-n_mol[speciesIndex] / d_n[speciesIndex]) * (1.0 - 0.03);
-      } else {
-        agemo = 1.0; // Default step if change is negligible
-      }
+      agemo = (-n_mol[i] / d_n[i]) * (1.0 - 0.03);
 
-      // Use separate loop variable to avoid overwriting method parameter
-      for (int j = check; j < NSPEC; j++) {
-        n_omega[j] = n_mol[j] + d_n[j];
+      for (i = check; i < NSPEC; i++) {
+        n_omega[i] = n_mol[i] + d_n[i];
 
-        if (n_omega[j] < 0 && Math.abs(d_n[j]) > 1e-30) {
-          double tempStep = (-n_mol[j] / d_n[j]) * (1.0 - 0.03);
-          if (tempStep < agemo) {
-            agemo = tempStep;
+        if (n_omega[i] < 0) {
+          step = (-n_mol[i] / d_n[i]) * (1.0 - 0.03);
+          if (step < agemo) {
+            agemo = step;
           }
         }
       }
@@ -714,10 +509,6 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
       if (step > 1) {
         step = 1.0;
-      }
-      // Ensure minimum step size to prevent stagnation
-      if (step < 1e-6 && step >= 0) {
-        step = 1e-6;
       }
     }
     return step;
