@@ -3188,6 +3188,45 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
           }
         }
       }
+
+      // Handle gas-ion interactions for salting out effect
+      // CO2 and CH4 have specific interaction parameters with ions
+      for (int i = 0; i < numbcomp; i++) {
+        String nameI = compArray[i].getComponentName();
+        boolean isCO2 = nameI.equals("CO2") || nameI.equalsIgnoreCase("carbon dioxide");
+        boolean isCH4 = nameI.equals("methane") || nameI.equalsIgnoreCase("CH4");
+
+        if (isCO2 || isCH4) {
+          for (int j = 0; j < numbcomp; j++) {
+            if (wijCalcOrFitted[i][j] == 0) {
+              double ionCharge = compArray[j].getIonicCharge();
+
+              // Gas-cation interaction
+              if (ionCharge > 0.01) {
+                if (isCO2) {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamGasIon(0);
+                } else { // CH4
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamGasIon(2);
+                }
+                wij[0][j][i] = wij[0][i][j];
+              }
+              // Gas-anion interaction
+              else if (ionCharge < -0.01) {
+                if (isCO2) {
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamGasIon(1);
+                } else { // CH4
+                  wij[0][i][j] =
+                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamGasIon(3);
+                }
+                wij[0][j][i] = wij[0][i][j];
+              }
+            }
+          }
+        }
+      }
     }
 
     /** {@inheritDoc} */
