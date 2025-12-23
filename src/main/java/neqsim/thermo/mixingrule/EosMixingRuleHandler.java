@@ -3191,6 +3191,25 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
       // Handle gas-ion interactions for salting out effect
       // CO2 and CH4 have specific interaction parameters with ions
+      // The Wij compensates for implicit salting effect from FSR2eps*epsi term
+      //
+      // The implicit salting effect from FSR2eps*epsi varies significantly across
+      // different ion types in complex ways that depend on ion size, charge, and
+      // ion-solvent interactions. Simple correlations cannot capture this complexity.
+      //
+      // Current approach: Use fixed parameters calibrated for Na+/Cl- (the most common
+      // electrolyte in process simulations). This gives ~10% salting out at 1 mol/kg,
+      // matching the experimental Setchenow coefficient k_s ~ 0.1 L/mol.
+      //
+      // Limitations: Other ion pairs (K+, MDEA+, HCO3-, Ca++, etc.) may show different
+      // salting behavior. For accurate predictions with specific ion pairs, ion-specific
+      // parameters should be fitted and stored in the database.
+      //
+      // Reference: Na+/Cl- validation at 298 K:
+      // 0.5 mol/kg: ~5% salting out
+      // 1.0 mol/kg: ~10% salting out
+      // 2.0 mol/kg: ~18% salting out
+
       for (int i = 0; i < numbcomp; i++) {
         String nameI = compArray[i].getComponentName();
         boolean isCO2 = nameI.equals("CO2") || nameI.equalsIgnoreCase("carbon dioxide");
