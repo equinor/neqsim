@@ -1,8 +1,6 @@
 package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseElectrolyteCPAstatoil;
-import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
-import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.util.constants.FurstElectrolyteConstants;
 
 /**
@@ -44,24 +42,6 @@ public class SystemElectrolyteCPAstatoil extends SystemFurstElectrolyteEos {
     }
     FurstElectrolyteConstants.setFurstParams("electrolyteCPA");
     this.useVolumeCorrection(true);
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Override to set phase 0 as AQUEOUS for electrolyte systems. This ensures the molar volume
-   * solver uses a liquid-like initial guess and finds the correct liquid root at low pressures,
-   * which is essential for accurate activity coefficient calculations in aqueous electrolyte
-   * solutions.
-   * </p>
-   */
-  @Override
-  public void reInitPhaseType() {
-    phaseType[0] = PhaseType.AQUEOUS;
-    phaseType[1] = PhaseType.LIQUID;
-    phaseType[2] = PhaseType.LIQUID;
-    phaseType[3] = PhaseType.LIQUID;
   }
 
   /** {@inheritDoc} */

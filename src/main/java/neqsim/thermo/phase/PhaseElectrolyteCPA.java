@@ -855,7 +855,7 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
           }
         } else {
           solvedBonVHigh = (BonV + BonVold) / 2.0;
-          if (pt == PhaseType.LIQUID) {
+          if (pt == PhaseType.LIQUID || pt == PhaseType.AQUEOUS) {
             break;
           }
         }
@@ -885,9 +885,13 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
   public double molarVolume2(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV =
-        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+    double BonV;
+    // Use liquid-like initial guess for LIQUID or AQUEOUS phases
+    if (pt == PhaseType.LIQUID || pt == PhaseType.AQUEOUS) {
+      BonV = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+    } else {
+      BonV = pressure * getB() / (numberOfMolesInPhase * temperature * R);
+    }
     if (BonV < 0) {
       BonV = 1.0e-8;
     }
@@ -950,8 +954,14 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         BonV += d2;
         double hnew = h + d2 * dh;
         if (Math.abs(hnew) > Math.abs(h)) {
-          BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-              : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          // Reset to appropriate initial guess based on phase type
+          if (pt == PhaseType.GAS) {
+            BonV = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+          } else if (pt == PhaseType.AQUEOUS || pt == PhaseType.LIQUID) {
+            BonV = 0.99;
+          } else {
+            BonV = pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          }
         }
       } else {
         BonV += 0.5 * d1;
@@ -964,8 +974,14 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         if (iterations < 3) {
           BonV = (BonVold + BonV) / 2.0;
         } else {
-          BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-              : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          // Reset to appropriate initial guess based on phase type
+          if (pt == PhaseType.GAS) {
+            BonV = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+          } else if (pt == PhaseType.AQUEOUS || pt == PhaseType.LIQUID) {
+            BonV = 0.99;
+          } else {
+            BonV = pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          }
         }
       }
 
@@ -973,8 +989,14 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         if (iterations < 3) {
           BonV = Math.abs(BonVold + BonV) / 2.0;
         } else {
-          BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-              : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          // Reset to appropriate initial guess based on phase type
+          if (pt == PhaseType.GAS) {
+            BonV = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+          } else if (pt == PhaseType.AQUEOUS || pt == PhaseType.LIQUID) {
+            BonV = 0.99;
+          } else {
+            BonV = pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          }
         }
       }
 
@@ -1011,8 +1033,17 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
-        : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+    // For AQUEOUS and LIQUID phases, use a liquid-like initial guess (high BonV)
+    // For GAS phase, use a gas-like initial guess (low BonV)
+    double BonV;
+    if (pt == PhaseType.GAS) {
+      BonV = pressure * getB() / (numberOfMolesInPhase * temperature * R);
+    } else if (pt == PhaseType.AQUEOUS || pt == PhaseType.LIQUID) {
+      // Use high BonV for liquid-like phases to find the liquid root
+      BonV = 0.99;
+    } else {
+      BonV = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+    }
     BonV = Math.max(1.0e-8, Math.min(1.0 - 1.0e-8, BonV));
     double BonVold;
     double h = 0;
@@ -1069,8 +1100,15 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         BonV += d2;
         double hnew = h + d2 * dh;
         if (Math.abs(hnew) > Math.abs(h)) {
-          BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-              : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          // Reset to appropriate initial guess based on phase type
+          if (pt == PhaseType.GAS) {
+            BonV = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+          } else if (pt == PhaseType.AQUEOUS || pt == PhaseType.LIQUID) {
+            // For aqueous/liquid phases, reset to liquid-like guess
+            BonV = 0.99;
+          } else {
+            BonV = pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          }
         }
       } else {
         BonV += 0.5 * d1;
@@ -1212,8 +1250,14 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         BonV += d2;
         double hnew = h + d2 * dh;
         if (Math.abs(hnew) > Math.abs(h)) {
-          BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-              : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          // Reset to appropriate initial guess based on phase type
+          if (pt == PhaseType.GAS) {
+            BonV = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+          } else if (pt == PhaseType.AQUEOUS || pt == PhaseType.LIQUID) {
+            BonV = 0.99;
+          } else {
+            BonV = pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          }
         }
       } else {
         BonV += 0.5 * d1;
@@ -1226,8 +1270,14 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         if (iterations < 3) {
           BonV = (BonVold + BonV) / 2.0;
         } else {
-          BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-              : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          // Reset to appropriate initial guess based on phase type
+          if (pt == PhaseType.GAS) {
+            BonV = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+          } else if (pt == PhaseType.AQUEOUS || pt == PhaseType.LIQUID) {
+            BonV = 0.99;
+          } else {
+            BonV = pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          }
         }
       }
 
@@ -1235,8 +1285,14 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
         if (iterations < 3) {
           BonV = Math.abs(BonVold + BonV) / 2.0;
         } else {
-          BonV = pt == PhaseType.GAS ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-              : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          // Reset to appropriate initial guess based on phase type
+          if (pt == PhaseType.GAS) {
+            BonV = 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
+          } else if (pt == PhaseType.AQUEOUS || pt == PhaseType.LIQUID) {
+            BonV = 0.99;
+          } else {
+            BonV = pressure * getB() / (numberOfMolesInPhase * temperature * R);
+          }
         }
       }
 
