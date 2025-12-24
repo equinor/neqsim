@@ -103,6 +103,8 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
         oldPres = system.getPressure();
         ktot = 0.0;
         for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
+          int kIter = 0;
+          int maxKIter = 100;
           do {
             yold = system.getPhases()[0].getComponent(i).getx();
             if (!Double.isNaN(
@@ -123,7 +125,9 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
                 * system.getPhases()[1].getComponent(i).getz());
             // logger.info("y err " +
             // Math.abs(system.getPhases()[0].getComponent(i).getx()-yold));
-          } while (Math.abs(system.getPhases()[0].getComponent(i).getx() - yold) / yold > 1e-8);
+            kIter++;
+          } while (Math.abs(system.getPhases()[0].getComponent(i).getx() - yold) / yold > 1e-8
+              && kIter < maxKIter);
           ktot += Math.abs(system.getPhases()[1].getComponent(i).getK() - 1.0);
         }
         for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {

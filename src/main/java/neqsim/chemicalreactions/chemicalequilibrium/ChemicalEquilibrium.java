@@ -231,13 +231,31 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     }
 
     // try catch block added by Neeraj
+    // Enhanced with SVD pseudo-inverse fallback for rank-deficient matrices
     try {
       x_solve = A_solve.solve(b_solve);
+
+      // Check if solution is valid (no NaN or Inf)
+      boolean validSolution = true;
+      for (int i = 0; i <= NELE && validSolution; i++) {
+        double val = x_solve.get(i, 0);
+        if (Double.isNaN(val) || Double.isInfinite(val)) {
+          validSolution = false;
+        }
+      }
+
+      if (!validSolution) {
+        // Try pseudo-inverse for numerically unstable cases
+        x_solve = solveLeastSquares(A_solve, b_solve);
+      }
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
-      // System.out.println("\nError x " +
-      // system.getPhase(phasenumb).getComponent(0).getx());
-      // System.out.println("Error T " + system.getTemperature());
+      // Matrix is singular or near-singular, use pseudo-inverse
+      try {
+        x_solve = solveLeastSquares(A_solve, b_solve);
+      } catch (Exception ex2) {
+        logger.error("Both regular and least-squares solve failed: " + ex2.getMessage());
+        x_solve = new Matrix(NELE + 1, 1); // Zero solution as fallback
+      }
     }
     // d_n_t = x_solve.get(NELE,0)*n_t;
 
@@ -555,4 +573,39 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * //System.out.println("f_omega "+f_omega); //System.out.println("fs "+fs);
    * //System.out.println("step " + step); //if (step > 0.5) step = 0.5; return step; }
    */
+
+  /**
+   * Solve least-squares problem using SVD pseudo-inverse.
+   * 
+   * <p>
+   * For rank-deficient or ill-conditioned matrices, this provides a more robust solution than
+   * direct inversion. Uses SVD decomposition: A = U * S * V^T, then x = V * S^(-1) * U^T * b.
+   * </p>
+   *
+   * @param A the coefficient matrix
+   * @param b the right-hand side vector
+   * @return the least-squares solution x
+   */
+  private Matrix solveLeastSquares(Matrix A, Matrix b) {
+    Jama.SingularValueDecomposition svd = A.svd();
+    Matrix U = svd.getU();
+    Matrix S = svd.getS();
+    Matrix V = svd.getV();
+
+    // Compute pseudo-inverse of S (diagonal matrix)
+    int n = S.getColumnDimension();
+    double tol = 1e-12 * svd.norm2(); // Tolerance for singular values
+    Matrix Sinv = new Matrix(n, n);
+    for (int i = 0; i < n; i++) {
+      double sval = S.get(i, i);
+      if (Math.abs(sval) > tol) {
+        Sinv.set(i, i, 1.0 / sval);
+      } else {
+        Sinv.set(i, i, 0.0); // Truncate small singular values
+      }
+    }
+
+    // x = V * Sinv * U^T * b
+    return V.times(Sinv.times(U.transpose().times(b)));
+  }
 }
