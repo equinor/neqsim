@@ -66,6 +66,24 @@ public class ChemicalReactionOperations
     int old = system.getPhase(0).getNumberOfComponents();
     this.system = system;
 
+    // Select which phase the chemical equilibrium is solved in.
+    // Historically NeqSim used phase index 1 (typically the liquid/aqueous phase).
+    // If an explicit aqueous phase type exists, use it. Otherwise prefer phase 1 when available.
+    // For true single-phase systems, fall back to phase 0.
+    int selectedPhase = system.getNumberOfPhases() > 1 ? 1 : 0;
+    try {
+      int aqueousPhase = system.getPhaseNumberOfPhase("aqueous");
+      if (aqueousPhase >= 0) {
+        selectedPhase = aqueousPhase;
+      }
+    } catch (Exception ex) {
+      // ignore and use default selectedPhase
+    }
+    if (selectedPhase < 0 || selectedPhase >= system.getNumberOfPhases()) {
+      selectedPhase = 0;
+    }
+    this.phase = selectedPhase;
+
     do {
       // if statement added by Procede
       if (!newcomps) {
@@ -85,13 +103,13 @@ public class ChemicalReactionOperations
     components = new ComponentInterface[allComponentNames.length];
     if (components.length > 0) {
       setReactiveComponents();
-      reactionList.checkReactions(system.getPhase(1));
-      chemRefPot = calcChemRefPot(1);
+      reactionList.checkReactions(system.getPhase(phase));
+      chemRefPot = calcChemRefPot(phase);
       elements = getAllElements();
 
       try {
         initCalc =
-            new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, 1);
+            new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, phase);
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }

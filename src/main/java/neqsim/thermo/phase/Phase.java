@@ -2066,10 +2066,15 @@ public abstract class Phase implements PhaseInterface {
   public double getpH_old() {
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getName().equals("H3O+")) {
-        // return -Math.log10(componentArray[i].getx()
-        // * getActivityCoefficient(i));
-        return -Math.log10(componentArray[i].getx() * getActivityCoefficient(i)
-            / (0.01802 * neqsim.thermo.util.empiric.Water.waterDensity(temperature) / 1000.0));
+        int watNumb = -1;
+        if (hasComponent("water")) {
+          watNumb = getComponent("water").getComponentNumber();
+        }
+
+        double gamma =
+            watNumb >= 0 ? getActivityCoefficient(i, watNumb) : getActivityCoefficient(i);
+
+        return -Math.log10(componentArray[i].getx() * gamma);
       }
     }
     logger.info("no H3Oplus");
