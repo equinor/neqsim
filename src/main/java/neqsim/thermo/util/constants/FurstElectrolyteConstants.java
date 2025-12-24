@@ -176,8 +176,8 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    *
    * <p>
    * Parameters fitted 2024-12 for multiple ions (Na+, K+, Li+, Ca++, Mg++, Ba++) at 30 mol%
-   * methanol. Validated for Cl- and Br- salts. Uses positive slope similar to MEG to balance
-   * across ion sizes.
+   * methanol. Validated for Cl- and Br- salts. Uses positive slope similar to MEG to balance across
+   * ion sizes.
    * </p>
    *
    * <p>
