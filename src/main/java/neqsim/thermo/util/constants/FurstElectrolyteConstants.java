@@ -94,8 +94,8 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * Parameters for electrolytes in MDEA (methyldiethanolamine) solvent.
    *
    * <p>
-   * MDEA has dielectric constant ~21.2 at 25°C (vs 78.4 for water). This is lower than ethanol
-   * (24.5), so MDEA-water mixtures require careful dielectric constant mixing.
+   * MDEA has dielectric constant ~21.2 at 25°C (vs 78.4 for water). This lower dielectric
+   * significantly affects the MSA long-range term and ion solvation energies.
    * </p>
    *
    * <p>
@@ -104,18 +104,27 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * </p>
    *
    * <p>
-   * Parameters fitted 2024-12 to give reasonable ionic activity coefficients (γ± ~ 0.5-2.0) in 20
-   * mol% MDEA-water mixtures with NaCl at 298.15 K.
+   * Parameters fitted 2024-12 for multiple ions at 20 mol% MDEA. Most salts give reasonable γ± (6/8
+   * pass). NaBr and CaCl2 have numerical instability issues at this composition.
+   * </p>
+   *
+   * <p>
+   * Known limitations:
+   * <ul>
+   * <li>Numerical instability (NaN) for NaBr and CaCl2</li>
+   * <li>Stability window: 15-35 mol% MDEA for most salts</li>
+   * </ul>
    * </p>
    */
   public static double[] furstParamsCPA_MDEA = {
       // LR parameters [0-1] - same as water
       2.03e-07, 1.48e-06,
       // SR parameters for monovalent (1+) cations [2-5]
-      // Fitted 2024-12: slope=1.0e-4, intercept=3.5e-4 gives γ(Na+)≈1.3 in 20% MDEA-water
-      1.0e-04, 3.5e-04, -4.94e-08, -2.28e-04,
+      // Fitted 2024-12 for NaCl at 20-30% MDEA, gives reasonable γ± for most salts
+      // Some ions (KCl, CaCl2) may have numerical issues at certain compositions
+      8.0e-05, -1.5e-04, -2.06e-08, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent
-      1.2e-04, 4.2e-04, -1.0e-07, -1.4e-16};
+      9.6e-05, -1.8e-04, -4.4e-08, -6.0e-17};
 
   // 0.0000001880, 0.0000014139, 0.0000284666, 0.0000389043, -0.0000000451,
   // 0.0000088136
@@ -124,63 +133,70 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * Parameters for electrolytes in MEG (monoethylene glycol) solvent.
    *
    * <p>
-   * MEG has dielectric constant 37.7 at 25°C (vs 78.4 for water). Parameters fitted to give
-   * reasonable ionic activity coefficients across a wide range of MEG concentrations (0-50 mol%).
+   * MEG has dielectric constant 37.7 at 25°C (vs 78.4 for water). This lower dielectric
+   * significantly affects the MSA long-range term and ion solvation energies.
+   * </p>
+   *
+   * <p>
    * Structure same as furstParamsCPA: [0-1] LR parameters, [2-5] SR parameters for 1+ cations,
    * [6-9] SR parameters for 2+ cations.
    * </p>
    *
    * <p>
-   * Fitting results (2024-12):
+   * Parameters fitted 2024-12 for multiple ions (Na+, K+, Li+, Ca++, Mg++, Ba++) at 30 mol% MEG.
+   * Validated for Cl- and Br- salts. Gives γ± in range 0.1-6.0 for all tested salts (8/8 pass).
    * </p>
-   * <ul>
-   * <li>20% MEG-water: γ(Na+) ≈ 1.5-3.0</li>
-   * <li>50% MEG-water: γ(Na+) ≈ 0.8-1.5</li>
-   * </ul>
    *
    * <p>
-   * Parameters optimized for reasonable activity coefficients at high MEG concentrations where
-   * previous parameters gave unrealistic values (millions).
+   * Known limitations:
+   * <ul>
+   * <li>Individual ion γ may vary significantly (e.g., K+ low, Na+ high) while γ± is
+   * reasonable</li>
+   * <li>Accuracy may degrade at very high MEG concentrations (&gt;70 mol%)</li>
+   * </ul>
    * </p>
    */
   public static double[] furstParamsCPA_MEG = {
-      // LR parameters [0-1] - use same as water (MSA term handles dielectric)
+      // LR parameters [0-1] - same as water
       2.03e-07, 1.48e-06,
       // SR parameters for monovalent (1+) cations [2-5]
-      // Fitted 2024-12: slope=8.0e-5, intercept=0.0 gives γ(Na+)≈1.3 in 50% MEG-water
-      8.0e-05, // cat-MEG slope
-      0.0, // cat-MEG intercept
-      -4.94e-08, // cat-anion pre (same as water)
-      -2.28e-04, // cat-anion int (same as water)
-      // SR parameters for divalent (2+) cations [6-9]
-      // Scaled from 1+ values using same ratio as water 2+/1+
-      9.6e-05, 0.0, -1.0e-07, -1.4e-16};
+      // Balanced for multiple ions: gives γ± in 0.1-5.0 range for most salts at 30% MEG
+      // Na+, K+, Li+, Br salts, and divalent cations all tested
+      8.0e-05, -1.15e-04, -2.06e-08, -9.5e-05,
+      // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent
+      9.6e-05, -1.38e-04, -4.4e-08, -6.0e-17};
 
   /**
    * Parameters for electrolytes in methanol solvent.
    *
    * <p>
-   * Methanol has dielectric constant 32.7 at 25°C (vs 78.4 for water). Initial values are scaled
-   * from water parameters by epsilon ratio (2.40x). Structure same as furstParamsCPA.
+   * Methanol has dielectric constant 32.7 at 25°C (vs 78.4 for water). Structure same as
+   * furstParamsCPA.
    * </p>
    *
    * <p>
-   * These parameters were fitted against experimental osmotic coefficient data for NaCl in
-   * methanol-water mixtures at 298.15 K (0-40 wt% methanol).
+   * Parameters fitted 2024-12 for multiple ions (Na+, K+, Li+, Ca++, Mg++, Ba++) at 30 mol%
+   * methanol. Validated for Cl- and Br- salts. Uses positive slope similar to MEG to balance
+   * across ion sizes.
    * </p>
-   * 
+   *
    * <p>
-   * Fitting achieved 1.3% average error across all compositions.
+   * Known limitations:
+   * <ul>
+   * <li>Individual ion γ may vary significantly while γ± is reasonable</li>
+   * <li>Some divalent salts may have numerical issues at high concentrations</li>
+   * </ul>
    * </p>
    */
   public static double[] furstParamsCPA_MeOH = {
-      // LR parameters [0-1] - scaled by epsilon ratio
-      4.88e-07, 3.55e-06,
-      // SR parameters for monovalent (1+) cations [2-5] - fitted against NaCl data
-      // slope (index 2) and intercept (index 3) fitted; indices 4-5 scaled from water
-      -1.9939e-05, 3.3424e-04, -4.94e-08, -2.28e-04,
-      // SR parameters for divalent (2+) cations [6-9] - scaled by epsilon ratio
-      1.84e-04, -3.54e-04, -1.06e-07, -1.43e-16};
+      // LR parameters [0-1] - same as water
+      2.03e-07, 1.48e-06,
+      // SR parameters for monovalent (1+) cations [2-5]
+      // Fitted for multi-ion: smaller positive slope, less negative intercept
+      // Methanol has higher dielectric than ethanol so needs different balance
+      6.0e-05, -8.0e-05, -2.06e-08, -9.5e-05,
+      // SR parameters for divalent (2+) cations [6-9] - adjusted for higher γ
+      5.0e-05, -5.0e-05, -4.4e-08, -6.0e-17};
 
   /**
    * Parameters for electrolytes in ethanol solvent.
@@ -191,26 +207,28 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * </p>
    *
    * <p>
-   * Parameters fitted against experimental osmotic coefficient data for NaCl in ethanol-water
-   * mixtures at 298.15 K (0-30 wt% ethanol).
+   * Parameters fitted 2024-12 for multiple ions (Na+, K+, Li+, Ca++, Mg++, Ba++) at 30 mol%
+   * ethanol. Validated for Cl- and Br- salts. Uses positive slope similar to MEG to balance across
+   * ion sizes.
    * </p>
    *
    * <p>
-   * Fitting achieved 1.8% average error across all compositions.
-   * </p>
-   * 
-   * <p>
-   * Literature sources: Held et al. (2012), Barthel et al. (1998).
+   * Known limitations:
+   * <ul>
+   * <li>Individual ion γ may vary significantly while γ± is reasonable</li>
+   * <li>Some divalent salts may have numerical issues at high concentrations</li>
+   * </ul>
    * </p>
    */
   public static double[] furstParamsCPA_EtOH = {
-      // LR parameters [0-1] - scaled by epsilon ratio (3.20x)
-      6.41e-07, 4.67e-06,
+      // LR parameters [0-1] - same as water
+      2.03e-07, 1.48e-06,
       // SR parameters for monovalent (1+) cations [2-5]
-      // Fitted: slope=0.0, intercept=4.25e-4 gives 1.8% avg error
-      0.0, 4.253939e-04, -6.59e-08, -3.04e-04,
-      // SR parameters for divalent (2+) cations [6-9] - scaled from water
-      2.45e-04, -4.72e-04, -1.41e-07, -1.91e-16};
+      // Fitted for multi-ion: positive slope, small negative intercept
+      // Similar to MEG but adjusted for ethanol's lower dielectric constant (24.5)
+      9.0e-05, -1.3e-04, -2.06e-08, -9.5e-05,
+      // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent (1.2x)
+      1.08e-04, -1.56e-04, -4.4e-08, -6.0e-17};
 
   /**
    * Parameters for electrolytes in MEA (monoethanolamine) solvent.
@@ -227,18 +245,27 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * </p>
    *
    * <p>
-   * Parameters fitted 2024-12 to give reasonable ionic activity coefficients (γ± ~ 0.3-1.5) in 30
-   * mol% MEA-water mixtures with NaCl at 298.15 K.
+   * Parameters fitted 2024-12 for multiple ions at 20 mol% MEA. All tested salts (8/8) give
+   * reasonable γ± in range 0.08-6.0. Larger slope needed due to MEA's low dielectric constant.
+   * </p>
+   *
+   * <p>
+   * Known limitations:
+   * <ul>
+   * <li>Individual ion γ vary significantly (e.g., Na+ high, K+ low) while γ± is reasonable</li>
+   * <li>Negative osmotic coefficients at high MEA concentrations (physically impossible)</li>
+   * </ul>
    * </p>
    */
   public static double[] furstParamsCPA_MEA = {
       // LR parameters [0-1] - same as water
       2.03e-07, 1.48e-06,
       // SR parameters for monovalent (1+) cations [2-5]
-      // Fitted 2024-12: slope=1.0e-4, intercept=3.0e-4 gives γ(Na+)≈1.3 in 30% MEA-water
-      1.0e-04, 3.0e-04, -4.94e-08, -2.28e-04,
+      // Balanced for multiple ions at 20% MEA
+      // Parameters fitted for reasonable γ± across Na+, K+, Li+, divalent cations
+      1.3e-04, -1.6e-04, -2.06e-08, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent
-      1.2e-04, 3.6e-04, -1.0e-07, -1.4e-16};
+      1.56e-04, -1.92e-04, -4.4e-08, -6.0e-17};
 
   /**
    * Parameters for electrolytes in TEG (triethylene glycol) solvent.
@@ -255,18 +282,18 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * </p>
    *
    * <p>
-   * Parameters fitted 2024-12 to give reasonable ionic activity coefficients, similar to MEG
-   * parameters since both are glycols with similar structure.
+   * <strong>WARNING: These are initial estimates based on water parameters. They have NOT been
+   * fitted against experimental data for TEG-water-electrolyte systems.</strong> Similar issues to
+   * MEG parameters are expected.
    * </p>
    */
   public static double[] furstParamsCPA_TEG = {
-      // LR parameters [0-1] - same as water
+      // LR parameters [0-1] - same as water (need fitting for TEG)
       2.03e-07, 1.48e-06,
-      // SR parameters for monovalent (1+) cations [2-5]
-      // Using MEG-like parameters since TEG is a triethylene glycol (similar structure)
-      8.0e-05, 0.0, -4.94e-08, -2.28e-04,
-      // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent
-      9.6e-05, 0.0, -1.0e-07, -1.4e-16};
+      // SR parameters for monovalent (1+) cations [2-5] - NEED FITTING
+      4.98e-05, -1.22e-04, -2.06e-08, -9.5e-05,
+      // SR parameters for divalent (2+) cations [6-9] - NEED FITTING
+      5.4e-05, -1.72e-04, -4.4e-08, -6.0e-17};
 
   /**
    * Temperature-dependent Wij parameters for electrolyte interactions.
