@@ -55,6 +55,69 @@ public class ChemicalReactionOperations
   LinearProgrammingChemicalEquilibrium initCalc;
 
   /**
+   * Chemical reactions are only solved in the aqueous phase.
+   *
+   * <p>
+   * By convention in NeqSim phase ordering, the aqueous phase is the heaviest and therefore the
+   * last phase in the system. This method resolves the reactive phase dynamically so the chemical
+   * equilibrium algorithm works for 1-phase, gas+aqueous, oil+aqueous, and gas+oil+aqueous systems.
+   * </p>
+   *
+   * @return index of the reactive (aqueous) phase
+   */
+  private int getReactivePhaseIndex() {
+    int nPhases = system.getNumberOfPhases();
+    if (nPhases <= 0) {
+      return 0;
+    }
+
+    // Prefer an explicit aqueous phase if it exists.
+    try {
+      int aqueousPhase = system.getPhaseNumberOfPhase("aqueous");
+      if (aqueousPhase >= 0 && aqueousPhase < nPhases) {
+        return aqueousPhase;
+      }
+    } catch (Exception ex) {
+      // ignore and fall back to last phase
+    }
+
+    // Fallback to the last phase (heaviest).
+    return nPhases - 1;
+  }
+
+  /**
+   * Re-initialize equilibrium helpers for the selected reactive phase.
+   *
+   * <p>
+   * The internal matrices (A, b, initial-estimate solver) depend on which phase is treated as the
+   * reactive phase. When the system changes between 1/2/3-phase configurations during a flash, the
+   * reactive phase index can change and we must rebuild these structures.
+   * </p>
+   *
+   * @param phaseNum phase index to use as reactive phase
+   */
+  private void reinitializeForReactivePhase(int phaseNum) {
+    this.phase = phaseNum;
+    setReactiveComponents(phaseNum);
+    reactionList.checkReactions(system.getPhase(phaseNum));
+    chemRefPot = calcChemRefPot(phaseNum);
+    elements = getAllElements();
+    try {
+      initCalc =
+          new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, phase);
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
+    }
+    setComponents(phaseNum);
+    if (initCalc != null) {
+      Amatrix = initCalc.getA();
+    }
+    nVector = calcNVector();
+    bVector = calcBVector();
+    firsttime = true;
+  }
+
+  /**
    * <p>
    * Constructor for ChemicalReactionOperations.
    * </p>
@@ -66,23 +129,8 @@ public class ChemicalReactionOperations
     int old = system.getPhase(0).getNumberOfComponents();
     this.system = system;
 
-    // Select which phase the chemical equilibrium is solved in.
-    // Historically NeqSim used phase index 1 (typically the liquid/aqueous phase).
-    // If an explicit aqueous phase type exists, use it. Otherwise prefer phase 1 when available.
-    // For true single-phase systems, fall back to phase 0.
-    int selectedPhase = system.getNumberOfPhases() > 1 ? 1 : 0;
-    try {
-      int aqueousPhase = system.getPhaseNumberOfPhase("aqueous");
-      if (aqueousPhase >= 0) {
-        selectedPhase = aqueousPhase;
-      }
-    } catch (Exception ex) {
-      // ignore and use default selectedPhase
-    }
-    if (selectedPhase < 0 || selectedPhase >= system.getNumberOfPhases()) {
-      selectedPhase = 0;
-    }
-    this.phase = selectedPhase;
+    // Solve chemical equilibrium only in aqueous phase (heaviest/last phase).
+    this.phase = getReactivePhaseIndex();
 
     do {
       // if statement added by Procede
@@ -102,6 +150,7 @@ public class ChemicalReactionOperations
 
     components = new ComponentInterface[allComponentNames.length];
     if (components.length > 0) {
+      this.phase = getReactivePhaseIndex();
       setReactiveComponents();
       reactionList.checkReactions(system.getPhase(phase));
       chemRefPot = calcChemRefPot(phase);
@@ -152,6 +201,7 @@ public class ChemicalReactionOperations
    * </p>
    */
   public void setComponents() {
+    this.phase = getReactivePhaseIndex();
     for (int j = 0; j < components.length; j++) {
       system.getPhase(phase).getComponents()[components[j].getComponentNumber()] = components[j];
     }
@@ -190,6 +240,7 @@ public class ChemicalReactionOperations
    * </p>
    */
   public void setReactiveComponents() {
+    this.phase = getReactivePhaseIndex();
     int k = 0;
     for (int j = 0; j < componentNames.length; j++) {
       // System.out.println("component " + componentNames[j]);
@@ -407,7 +458,7 @@ public class ChemicalReactionOperations
    * @return a boolean
    */
   public boolean solveChemEq(int type) {
-    return solveChemEq(1, type);
+    return solveChemEq(getReactivePhaseIndex(), type);
   }
 
   /**
@@ -420,11 +471,17 @@ public class ChemicalReactionOperations
    * @return a boolean
    */
   public boolean solveChemEq(int phaseNum, int type) {
+    // Enforce aqueous-only chemistry: always solve in heaviest/last phase.
+    int reactivePhase = getReactivePhaseIndex();
+    if (phaseNum != reactivePhase) {
+      phaseNum = reactivePhase;
+    }
     if (this.phase != phaseNum) {
-      setReactiveComponents(phaseNum);
+      reinitializeForReactivePhase(phaseNum);
+    } else {
+      // Keep chem ref potentials updated for the current reactive phase.
       chemRefPot = calcChemRefPot(phaseNum);
     }
-    this.phase = phaseNum;
     if (!system.isChemicalSystem()) {
       System.out.println("no chemical reactions will occur...continue");
       return false;
