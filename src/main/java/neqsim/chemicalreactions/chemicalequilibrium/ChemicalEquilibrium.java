@@ -412,7 +412,144 @@ public class ChemicalEquilibrium implements java.io.Serializable {
       logger.debug("Chemical equilibrium: failed to reinitialize system: " + ex.getMessage());
     }
 
-    return !Double.isNaN(error) && !Double.isInfinite(error) && error < maxError;
+    // Ensure ionic species have physically reasonable values
+    // Do this regardless of convergence status, as the solver may converge
+    // with unrealistic ion concentrations
+    enforceMinimumIonConcentrations();
+
+    boolean converged = !Double.isNaN(error) && !Double.isInfinite(error) && error < maxError;
+    return converged;
+  }
+
+  /**
+   * Enforce minimum physically reasonable concentrations for ionic species.
+   * 
+   * <p>
+   * When the chemical equilibrium solver fails to converge, ionic species like H3O+ and OH- can be
+   * left at unrealistically low values. This method checks the water auto-ionization equilibrium
+   * (Kw = [H3O+][OH-]) and corrects unrealistic values while respecting legitimate acidic or
+   * alkaline conditions.
+   * </p>
+   * 
+   * <p>
+   * The method only intervenes when both H3O+ and OH- are unrealistically low (violating Kw), not
+   * when the solution is legitimately acidic (high H3O+, low OH-) or alkaline (low H3O+, high OH-).
+   * </p>
+   */
+  private void enforceMinimumIonConcentrations() {
+    // Find H3O+, OH-, and water indices
+    int h3oIndex = -1;
+    int ohIndex = -1;
+    int waterIndex = -1;
+
+    for (int i = 0; i < components.length; i++) {
+      String name = components[i].getComponentName();
+      if (name.equals("H3O+")) {
+        h3oIndex = i;
+      } else if (name.equals("OH-")) {
+        ohIndex = i;
+      } else if (name.equals("water")) {
+        waterIndex = i;
+      }
+    }
+
+    if (h3oIndex < 0 || waterIndex < 0) {
+      return; // No H3O+ or water in system
+    }
+
+    double totalMoles = system.getPhase(phasenumb).getNumberOfMolesInPhase();
+    if (totalMoles <= 0) {
+      return;
+    }
+
+    double currentH3OMoles =
+        system.getPhase(phasenumb).getComponents()[components[h3oIndex].getComponentNumber()]
+            .getNumberOfMolesInPhase();
+    double currentH3OMoleFraction = currentH3OMoles / totalMoles;
+
+    double currentOHMoles = 0;
+    double currentOHMoleFraction = 0;
+    if (ohIndex >= 0) {
+      currentOHMoles =
+          system.getPhase(phasenumb).getComponents()[components[ohIndex].getComponentNumber()]
+              .getNumberOfMolesInPhase();
+      currentOHMoleFraction = currentOHMoles / totalMoles;
+    }
+
+    // Water auto-ionization: Kw = [H3O+][OH-] ≈ 10^-14 at 25°C
+    // In mole fraction terms for aqueous phase (~55.5 mol/L water):
+    // x(H3O+) * x(OH-) ≈ (10^-14) / (55.5)^2 ≈ 3.2e-18
+    // Minimum physically reasonable: either x(H3O+) or x(OH-) should be > ~10^-15
+    // for extreme pH cases (pH 0-1 or pH 13-14)
+
+    double minIonMoleFraction = 1e-15; // Absolute minimum for any ion
+    double neutralH3OMoleFraction = 1e-9; // ~pH 7 in mole fraction terms
+
+    // Check if the water equilibrium is violated (both ions unrealistically low)
+    boolean h3oTooLow = currentH3OMoleFraction < minIonMoleFraction;
+    boolean ohTooLow = ohIndex >= 0 && currentOHMoleFraction < minIonMoleFraction;
+
+    // Only intervene if BOTH are too low - this indicates solver failure
+    // If only one is low, it could be a legitimate acidic/alkaline solution
+    if (h3oTooLow && ohTooLow) {
+      // Both are unrealistically low - solver failed to establish water equilibrium
+      // Set to neutral pH as a reasonable default
+      double targetH3OMoles = neutralH3OMoleFraction * totalMoles;
+      double molesToAdd = targetH3OMoles - currentH3OMoles;
+
+      if (molesToAdd > 0) {
+        system.addComponent(components[h3oIndex].getComponentNumber(), molesToAdd, phasenumb);
+
+        // Set OH- to maintain Kw ≈ 10^-14 (x_H3O * x_OH ≈ 3.2e-18)
+        if (ohIndex >= 0) {
+          double targetOHMoleFraction = 3.2e-18 / neutralH3OMoleFraction;
+          double targetOHMoles = targetOHMoleFraction * totalMoles;
+          if (targetOHMoles > currentOHMoles) {
+            system.addComponent(components[ohIndex].getComponentNumber(),
+                targetOHMoles - currentOHMoles, phasenumb);
+          }
+        }
+
+        reinitializeAfterIonAdjustment();
+        logger.debug("Chemical equilibrium: enforced water equilibrium (both ions were too low)"
+            + ", old x(H3O+)=" + currentH3OMoleFraction + ", new x(H3O+)="
+            + neutralH3OMoleFraction);
+      }
+    } else if (h3oTooLow && !ohTooLow) {
+      // Only H3O+ is too low but OH- is reasonable - could be alkaline solution
+      // Calculate what H3O+ should be based on Kw and current OH-
+      // x_H3O = Kw_molfrac / x_OH ≈ 3.2e-18 / x_OH
+      double targetH3OMoleFraction = 3.2e-18 / currentOHMoleFraction;
+
+      // Only enforce if H3O+ is MUCH lower than what Kw predicts (factor of 1000)
+      if (currentH3OMoleFraction < targetH3OMoleFraction * 1e-3) {
+        double targetH3OMoles = targetH3OMoleFraction * totalMoles;
+        double molesToAdd = targetH3OMoles - currentH3OMoles;
+        if (molesToAdd > 0) {
+          system.addComponent(components[h3oIndex].getComponentNumber(), molesToAdd, phasenumb);
+          reinitializeAfterIonAdjustment();
+          logger
+              .debug("Chemical equilibrium: adjusted H3O+ for alkaline solution" + ", old x(H3O+)="
+                  + currentH3OMoleFraction + ", new x(H3O+)=" + targetH3OMoleFraction);
+        }
+      }
+    }
+    // If OH- is too low but H3O+ is reasonable (acidic solution), don't intervene
+    // The solution is legitimately acidic
+  }
+
+  /**
+   * Reinitialize the system after ion concentration adjustment.
+   */
+  private void reinitializeAfterIonAdjustment() {
+    try {
+      system.initBeta();
+      system.init_x_y();
+      system.init(1, phasenumb);
+    } catch (Exception ex) {
+      logger.debug(
+          "Chemical equilibrium: failed to reinitialize after ion adjustment: " + ex.getMessage());
+    }
   }
 
   /**
