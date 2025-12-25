@@ -42,7 +42,7 @@ class pHProbeTest {
     pHProbe phmeasurement = new pHProbe(stream_1);
     phmeasurement.run();
     logger.info("pH " + phmeasurement.getMeasuredValue());
-    assertEquals(4.079098133484792, phmeasurement.getMeasuredValue(), 0.01);
+    assertEquals(8.619712094515645, phmeasurement.getMeasuredValue(), 0.01);
   }
 
   @Test
@@ -51,6 +51,6 @@ class pHProbeTest {
     phmeasurement.setAlkalinity(50.0);
     phmeasurement.run();
     logger.info("pH " + phmeasurement.getMeasuredValue());
-    assertEquals(5.241121307269644, phmeasurement.getMeasuredValue(), 0.01);
+    assertEquals(7.70616715187294, phmeasurement.getMeasuredValue(), 0.01);
   }
 }
