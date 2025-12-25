@@ -2067,14 +2067,33 @@ public abstract class Phase implements PhaseInterface {
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getName().equals("H3O+")) {
         int watNumb = -1;
+        double xWater = 1.0; // Default if no water component
         if (hasComponent("water")) {
           watNumb = getComponent("water").getComponentNumber();
+          xWater = getComponent("water").getx();
         }
 
         double gamma =
             watNumb >= 0 ? getActivityCoefficient(i, watNumb) : getActivityCoefficient(i);
 
-        return -Math.log10(componentArray[i].getx() * gamma);
+        double xH3O = componentArray[i].getx();
+
+        // Convert mole fraction to molality (mol/kg water)
+        // m_H3O+ = (x_H3O+ / x_water) * (1000 / M_water)
+        // where M_water = 18.015 g/mol
+        // This gives molality in mol/kg water
+        double molality = (xH3O / xWater) * (1000.0 / 18.015);
+
+        // pH = -log10(activity) where activity = molality * gamma
+        // Note: activity coefficient gamma is already on molality scale for electrolytes
+        double activity = molality * gamma;
+
+        // Clamp activity to avoid log of zero or negative values
+        if (activity <= 0) {
+          return 14.0; // Very basic if no H3O+
+        }
+
+        return -Math.log10(activity);
       }
     }
     logger.info("no H3Oplus");
