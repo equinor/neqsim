@@ -95,6 +95,9 @@ public class ChemicalReactionOperations
   /**
    * Check if a phase is actually aqueous (not just liquid). This is stricter than
    * getReactivePhaseIndex() which also accepts liquid.
+   *
+   * @param phaseNum the phase number to check
+   * @return true if the phase is aqueous, false otherwise
    */
   private boolean isPhaseAqueous(int phaseNum) {
     if (phaseNum < 0 || phaseNum >= system.getNumberOfPhases()) {
