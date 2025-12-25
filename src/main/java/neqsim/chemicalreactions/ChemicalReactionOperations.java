@@ -44,6 +44,11 @@ public class ChemicalReactionOperations
   double[] nVector;
   int iter = 0;
   double[] bVector;
+  /**
+   * Original bVector calculated at initialization (type=0). Element totals must be conserved, so
+   * this is stored and reused in subsequent calls to solveChemEq with type=1.
+   */
+  double[] originalBVector;
   int phase = 1;
   double[] chemRefPot;
   double[] newMoles;
@@ -543,6 +548,8 @@ public class ChemicalReactionOperations
       try {
         nVector = calcNVector();
         bVector = calcBVector();
+        // Save the original bVector for element conservation in subsequent calls
+        originalBVector = bVector.clone();
 
         calcInertMoles(phaseNum);
         newMoles = initCalc.generateInitialEstimates(system, bVector, inertMoles, phaseNum);
@@ -563,8 +570,14 @@ public class ChemicalReactionOperations
 
       try {
         nVector = calcNVector();
-        bVector = calcBVector();
-        // System.out.println("Recalculated bVector: " + java.util.Arrays.toString(bVector));
+        // Use the original bVector for element conservation - do NOT recalculate!
+        if (originalBVector != null) {
+          bVector = originalBVector;
+        } else {
+          // Fallback: recalculate if original was never set (shouldn't happen in normal flow)
+          bVector = calcBVector();
+          logger.warn("Chemical equilibrium: originalBVector was null, recalculating bVector");
+        }
         solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phaseNum);
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
