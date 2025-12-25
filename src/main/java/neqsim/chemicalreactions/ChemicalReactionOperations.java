@@ -58,31 +58,31 @@ public class ChemicalReactionOperations
    * Chemical reactions are only solved in the aqueous phase.
    *
    * <p>
-   * By convention in NeqSim phase ordering, the aqueous phase is the heaviest and therefore the
-   * last phase in the system. This method resolves the reactive phase dynamically so the chemical
-   * equilibrium algorithm works for 1-phase, gas+aqueous, oil+aqueous, and gas+oil+aqueous systems.
+   * Chemical equilibrium calculations (e.g., water dissociation for pH) are only meaningful in an
+   * aqueous phase. This method returns the index of the aqueous phase if one exists, or -1 if no
+   * aqueous phase is present.
    * </p>
    *
-   * @return index of the reactive (aqueous) phase
+   * @return index of the reactive (aqueous) phase, or -1 if no aqueous phase exists
    */
   private int getReactivePhaseIndex() {
     int nPhases = system.getNumberOfPhases();
     if (nPhases <= 0) {
-      return 0;
+      return -1;
     }
 
-    // Prefer an explicit aqueous phase if it exists.
+    // Only return aqueous phase index - no fallback to non-aqueous phases.
     try {
       int aqueousPhase = system.getPhaseNumberOfPhase("aqueous");
       if (aqueousPhase >= 0 && aqueousPhase < nPhases) {
         return aqueousPhase;
       }
     } catch (Exception ex) {
-      // ignore and fall back to last phase
+      // No aqueous phase found
     }
 
-    // Fallback to the last phase (heaviest).
-    return nPhases - 1;
+    // No aqueous phase - return -1 to signal chemical equilibrium should be skipped.
+    return -1;
   }
 
   /**
@@ -129,8 +129,10 @@ public class ChemicalReactionOperations
     int old = system.getPhase(0).getNumberOfComponents();
     this.system = system;
 
-    // Solve chemical equilibrium only in aqueous phase (heaviest/last phase).
-    this.phase = getReactivePhaseIndex();
+    // During initialization, use the reactive phase if available, else default to phase 0.
+    // Actual chemical equilibrium solving will only occur on aqueous phases.
+    int reactivePhase = getReactivePhaseIndex();
+    this.phase = reactivePhase >= 0 ? reactivePhase : 0;
 
     do {
       // if statement added by Procede
@@ -150,7 +152,8 @@ public class ChemicalReactionOperations
 
     components = new ComponentInterface[allComponentNames.length];
     if (components.length > 0) {
-      this.phase = getReactivePhaseIndex();
+      reactivePhase = getReactivePhaseIndex();
+      this.phase = reactivePhase >= 0 ? reactivePhase : 0;
       setReactiveComponents();
       reactionList.checkReactions(system.getPhase(phase));
       chemRefPot = calcChemRefPot(phase);
@@ -201,7 +204,11 @@ public class ChemicalReactionOperations
    * </p>
    */
   public void setComponents() {
-    this.phase = getReactivePhaseIndex();
+    int reactivePhase = getReactivePhaseIndex();
+    if (reactivePhase < 0) {
+      return; // No aqueous phase - nothing to set
+    }
+    this.phase = reactivePhase;
     for (int j = 0; j < components.length; j++) {
       system.getPhase(phase).getComponents()[components[j].getComponentNumber()] = components[j];
     }
@@ -240,7 +247,11 @@ public class ChemicalReactionOperations
    * </p>
    */
   public void setReactiveComponents() {
-    this.phase = getReactivePhaseIndex();
+    int reactivePhase = getReactivePhaseIndex();
+    if (reactivePhase < 0) {
+      return; // No aqueous phase - nothing to set
+    }
+    this.phase = reactivePhase;
     int k = 0;
     for (int j = 0; j < componentNames.length; j++) {
       // System.out.println("component " + componentNames[j]);
@@ -458,7 +469,12 @@ public class ChemicalReactionOperations
    * @return a boolean
    */
   public boolean solveChemEq(int type) {
-    return solveChemEq(getReactivePhaseIndex(), type);
+    int reactivePhase = getReactivePhaseIndex();
+    if (reactivePhase < 0) {
+      // No aqueous phase - skip chemical equilibrium
+      return false;
+    }
+    return solveChemEq(reactivePhase, type);
   }
 
   /**
@@ -471,8 +487,12 @@ public class ChemicalReactionOperations
    * @return a boolean
    */
   public boolean solveChemEq(int phaseNum, int type) {
-    // Enforce aqueous-only chemistry: always solve in heaviest/last phase.
+    // Enforce aqueous-only chemistry: only solve in aqueous phase.
     int reactivePhase = getReactivePhaseIndex();
+    if (reactivePhase < 0) {
+      // No aqueous phase - skip chemical equilibrium
+      return false;
+    }
     if (phaseNum != reactivePhase) {
       phaseNum = reactivePhase;
     }
