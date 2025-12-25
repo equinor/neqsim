@@ -164,6 +164,7 @@ public class ChemicalReactionOperations
       componentNames = system.getComponentNames();
       reactionList.readReactions(system);
       reactionList.removeJunkReactions(componentNames);
+      reactionList.removeDependentReactions();
       allComponentNames = reactionList.getAllComponents();
       this.addNewComponents();
       if (system.getPhase(0).getNumberOfComponents() == old) {
@@ -561,11 +562,83 @@ public class ChemicalReactionOperations
       // Recalculating would pick up erroneous values after init(1) redistributes phases.
 
       try {
+        nVector = calcNVector();
+        bVector = calcBVector();
+        // System.out.println("Recalculated bVector: " + java.util.Arrays.toString(bVector));
         solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phaseNum);
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }
-      return solver.solve();
+      boolean solved = solver.solve();
+      checkAndCorrectMassBalance(phaseNum, bVector);
+      return solved;
+    }
+  }
+
+  /**
+   * Checks and enforces element conservation (mass balance).
+   * 
+   * @param phaseNum the phase index
+   * @param targetBVector the target element abundance vector
+   */
+  private void checkAndCorrectMassBalance(int phaseNum, double[] targetBVector) {
+    double[] currentN = calcNVector();
+
+    Matrix A = new Matrix(Amatrix);
+    Matrix N = new Matrix(currentN, 1);
+    Matrix currentB = A.times(N.transpose()).transpose();
+    double[] currentBArr = currentB.getArray()[0];
+
+    double[] error = new double[targetBVector.length];
+    boolean needsCorrection = false;
+    double maxError = 0.0;
+
+    for (int i = 0; i < targetBVector.length; i++) {
+      error[i] = targetBVector[i] - currentBArr[i];
+      if (Math.abs(error[i]) > 1e-9) { // Tolerance
+        needsCorrection = true;
+      }
+      if (Math.abs(error[i]) > maxError)
+        maxError = Math.abs(error[i]);
+    }
+
+    if (needsCorrection) {
+      // logger.warn("Mass balance violation detected (max error=" + maxError + "). Correcting...");
+      // System.out.println("Mass balance violation detected (max error=" + maxError + ").
+      // Correcting...");
+
+      // Correction: deltaN = A^T * (A A^T)^-1 * error
+      Matrix E = new Matrix(error, 1).transpose();
+      Matrix AAT = A.times(A.transpose());
+
+      try {
+        Matrix lambda = AAT.solve(E);
+        Matrix deltaN = A.transpose().times(lambda);
+        double[] deltaNArr = deltaN.transpose().getArray()[0];
+
+        double changeMoles = 0.0;
+        for (int i = 0; i < components.length; i++) {
+          double currentMoles =
+              system.getPhase(phaseNum).getComponents()[components[i].getComponentNumber()]
+                  .getNumberOfMolesInPhase();
+          double newMoles = currentMoles + deltaNArr[i];
+          if (newMoles < 1e-15)
+            newMoles = 1e-15; // Avoid negative moles
+
+          double diff = newMoles - currentMoles;
+          system.addComponent(components[i].getComponentNumber(), diff, phaseNum);
+          changeMoles += diff;
+        }
+        // System.out.println("Mass balance corrected. Total moles change: " + changeMoles);
+
+        system.initTotalNumberOfMoles(changeMoles);
+        system.initBeta();
+        system.init_x_y();
+        system.init(1);
+
+      } catch (Exception ex) {
+        logger.error("Failed to correct mass balance: " + ex.getMessage());
+      }
     }
   }
 
@@ -607,6 +680,17 @@ public class ChemicalReactionOperations
 
   /**
    * <p>
+   * getComponents.
+   * </p>
+   *
+   * @return an array of {@link neqsim.thermo.component.ComponentInterface} objects
+   */
+  public ComponentInterface[] getComponents() {
+    return components;
+  }
+
+  /**
+   * <p>
    * reacHeat.
    * </p>
    *
@@ -641,12 +725,12 @@ public class ChemicalReactionOperations
   // return getReactionList().calcReacRates(system.getPhase(phaseNum), components);
   // }
 
-  // /** Setter for property reactionList.
-  // * @param reactionList New value of property reactionList.
-  // */
-  // public void
-  // setReactionList(chemicalReactions.chemicalReaction.ChemicalReactionList
-  // reactionList) {
-  // this.reactionList = reactionList;
-  // }
+  /**
+   * Setter for property reactionList.
+   *
+   * @param reactionList New value of property reactionList.
+   */
+  public void setReactionList(ChemicalReactionList reactionList) {
+    this.reactionList = reactionList;
+  }
 }

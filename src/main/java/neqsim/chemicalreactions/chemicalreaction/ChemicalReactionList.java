@@ -168,6 +168,55 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
 
   /**
    * <p>
+   * removeDependentReactions.
+   * </p>
+   */
+  public void removeDependentReactions() {
+    if (chemicalReactionList.size() == 0) {
+      return;
+    }
+
+    // Ensure reactiveComponentList is populated
+    getAllComponents();
+
+    ArrayList<ChemicalReaction> independentReactions = new ArrayList<>();
+
+    // We need to map component names to indices
+    ArrayList<String> compList = new ArrayList<>(Arrays.asList(reactiveComponentList));
+
+    for (ChemicalReaction reaction : chemicalReactionList) {
+      // Try adding this reaction to the independent set
+      independentReactions.add(reaction);
+
+      // Build matrix for current set
+      double[][] matrixData = new double[independentReactions.size()][compList.size()];
+      for (int i = 0; i < independentReactions.size(); i++) {
+        ChemicalReaction r = independentReactions.get(i);
+        String[] rNames = r.getNames();
+        double[] rCoefs = r.getStocCoefs();
+        for (int j = 0; j < rNames.length; j++) {
+          int colIndex = compList.indexOf(rNames[j]);
+          if (colIndex >= 0) {
+            matrixData[i][colIndex] = rCoefs[j];
+          }
+        }
+      }
+
+      Matrix mat = new Matrix(matrixData);
+      int rank = mat.rank();
+
+      if (rank < independentReactions.size()) {
+        // Rank didn't increase (or is less than rows), so this reaction is dependent
+        independentReactions.remove(independentReactions.size() - 1);
+        logger.info("Removed dependent reaction: " + reaction.getName());
+      }
+    }
+
+    chemicalReactionList = independentReactions;
+  }
+
+  /**
+   * <p>
    * checkReactions.
    * </p>
    *
@@ -237,8 +286,8 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     Iterator<ChemicalReaction> e = chemicalReactionList.iterator();
     ChemicalReaction reaction;
     int reactionNumber = 0;
-    reacMatrix = new double[chemicalReactionList.size()][reactiveComponentList.length];
-    reacGMatrix = new double[chemicalReactionList.size()][reactiveComponentList.length + 1];
+    reacMatrix = new double[chemicalReactionList.size()][components.length];
+    reacGMatrix = new double[chemicalReactionList.size()][components.length + 1];
     try {
       while (e.hasNext()) {
         reaction = e.next();
@@ -314,21 +363,63 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
    * @return an array of type double
    */
   public double[] calcReferencePotentials() {
-    Matrix reacMatr = new Matrix(reacGMatrix);
-    Matrix Amatrix = reacMatr.copy().getMatrix(0, chemicalReactionList.size() - 1, 0,
-        chemicalReactionList.size() - 1); // new Matrix(reacGMatrix);
-    Matrix Bmatrix = reacMatr.copy().getMatrix(0, chemicalReactionList.size() - 1,
-        reacGMatrix[0].length - 1, reacGMatrix[0].length - 1); // new Matrix(reacGMatrix);
-
-    if (Amatrix.rank() < chemicalReactionList.size()) {
-      System.out.println("rank of A matrix too low !!" + Amatrix.rank());
-      return null;
-    } else {
-      Matrix solv = Amatrix.solve(Bmatrix.timesEquals(-1.0)); // Solves for A*X = -B
-      // System.out.println("ref pots");
-      // solv.print(10,3);
-      return solv.transpose().getArrayCopy()[0];
+    int nRows = chemicalReactionList.size();
+    if (nRows == 0) {
+      return new double[0];
     }
+    int nCols = reacGMatrix[0].length - 1;
+
+    // Get B matrix (last column)
+    double[][] bData = new double[nRows][1];
+    for (int i = 0; i < nRows; i++) {
+      bData[i][0] = reacGMatrix[i][nCols];
+    }
+    Matrix Bmatrix = new Matrix(bData);
+
+    // Find independent columns
+    ArrayList<Integer> independentColumns = new ArrayList<>();
+    Matrix currentMat = null;
+
+    for (int j = 0; j < nCols; j++) {
+      // Create a candidate matrix with the new column added
+      Matrix nextMat;
+      if (currentMat == null) {
+        nextMat = new Matrix(nRows, 1);
+        for (int i = 0; i < nRows; i++) {
+          nextMat.set(i, 0, reacGMatrix[i][j]);
+        }
+      } else {
+        nextMat = new Matrix(nRows, currentMat.getColumnDimension() + 1);
+        nextMat.setMatrix(0, nRows - 1, 0, currentMat.getColumnDimension() - 1, currentMat);
+        for (int i = 0; i < nRows; i++) {
+          nextMat.set(i, currentMat.getColumnDimension(), reacGMatrix[i][j]);
+        }
+      }
+
+      int currentRank = (currentMat == null) ? 0 : currentMat.rank();
+      if (nextMat.rank() > currentRank) {
+        currentMat = nextMat;
+        independentColumns.add(j);
+        if (independentColumns.size() == nRows) {
+          break;
+        }
+      }
+    }
+
+    if (independentColumns.size() < nRows) {
+      logger.error("Rank of reaction matrix too low: " + independentColumns.size() + " < " + nRows);
+      return null;
+    }
+
+    // Solve A * x = -B
+    Matrix solv = currentMat.solve(Bmatrix.times(-1.0));
+
+    double[] result = new double[nCols];
+    for (int i = 0; i < nRows; i++) {
+      result[independentColumns.get(i)] = solv.get(i, 0);
+    }
+
+    return result;
   }
 
   /**

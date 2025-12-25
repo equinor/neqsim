@@ -122,7 +122,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // SR parameters for monovalent (1+) cations [2-5]
       // Fitted 2024-12 for NaCl at 20-30% MDEA, gives reasonable γ± for most salts
       // Some ions (KCl, CaCl2) may have numerical issues at certain compositions
-      8.0e-05, -1.5e-04, -2.06e-08, -9.5e-05,
+      8.0e-05, -1.5e-04, 1.0e-07, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent
       9.6e-05, -1.8e-04, -4.4e-08, -6.0e-17};
 

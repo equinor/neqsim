@@ -3138,11 +3138,19 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                               .getFurstParamTDep(15);
                 } else {
                   // Monovalent cation-anion: use water-fitted parameters
-                  wij[0][i][j] =
-                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamCPA(4)
-                          * diamSum4
-                          + neqsim.thermo.util.constants.FurstElectrolyteConstants
-                              .getFurstParamCPA(5);
+                  if (compArray[i].getComponentName().equals("MDEA+")) {
+                    wij[0][i][j] =
+                        neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamMDEA(4)
+                            * diamSum4
+                            + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                                .getFurstParamMDEA(5);
+                  } else {
+                    wij[0][i][j] =
+                        neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamCPA(4)
+                            * diamSum4
+                            + neqsim.thermo.util.constants.FurstElectrolyteConstants
+                                .getFurstParamCPA(5);
+                  }
                   // Temperature-dependent terms for monovalent cation-anion
                   wij[1][i][j] =
                       neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTDep(4)
@@ -3157,7 +3165,10 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                 }
               } else if (compArray[j].getIonicCharge() == 0) {
                 // Cation-solvent: add temperature-dependent terms
-                if (isDivalent) {
+                if (compArray[i].getComponentName().equals("MDEA+")) {
+                  wij[1][i][j] = 0.0;
+                  wij[2][i][j] = 0.0;
+                } else if (isDivalent) {
                   wij[1][i][j] =
                       neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamTDep(8)
                           * stokesDiam
