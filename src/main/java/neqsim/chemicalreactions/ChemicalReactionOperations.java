@@ -395,19 +395,22 @@ public class ChemicalReactionOperations
    * <p>
    * calcNVector.
    * </p>
+   * 
+   * <p>
+   * Calculate the mole vector for reactive species in the reactive phase. This reads from the
+   * current phase state to get the actual moles in the aqueous/reactive phase where chemical
+   * equilibrium takes place.
+   * </p>
    *
-   * @return an array of type double
+   * @return an array of type double containing moles of each reactive species in reactive phase
    */
   public double[] calcNVector() {
-    // FIX: Read moles directly from the current phase state, not from cached component references.
-    // The components array can become stale if phase components are recreated during init.
     int reactivePhase = getReactivePhaseIndex();
     if (reactivePhase < 0) {
       reactivePhase = 0; // fallback
     }
     double[] nvec = new double[components.length];
     for (int i = 0; i < components.length; i++) {
-      // Get the component from the current phase by component number, not from cached reference
       int compNum = components[i].getComponentNumber();
       nvec[i] = system.getPhase(reactivePhase).getComponent(compNum).getNumberOfMolesInPhase();
     }
