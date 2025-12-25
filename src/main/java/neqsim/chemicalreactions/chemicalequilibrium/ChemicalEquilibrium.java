@@ -32,9 +32,8 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   private static final int STAGNATION_LIMIT = 10;
 
   /**
-   * Flag to enable fugacity coefficient derivatives in M_matrix.
-   * When true, uses init(3) for derivative calculations and includes
-   * dln(fugacity)/dN terms for more accurate Newton steps.
+   * Flag to enable fugacity coefficient derivatives in M_matrix. When true, uses init(3) for
+   * derivative calculations and includes dln(fugacity)/dN terms for more accurate Newton steps.
    * Default is false for backward compatibility and performance.
    */
   private boolean useFugacityDerivatives = false;
@@ -186,8 +185,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
           try {
             int compNumI = components[i].getComponentNumber();
             int compNumK = components[k].getComponentNumber();
-            double dfugdN = system.getPhase(phasenumb).getComponent(compNumI)
-                .getdfugdn(compNumK);
+            double dfugdN = system.getPhase(phasenumb).getComponent(compNumI).getdfugdn(compNumK);
             if (!Double.isNaN(dfugdN) && !Double.isInfinite(dfugdN)) {
               M_matrix[i][k] += dfugdN;
             }
@@ -605,9 +603,9 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * Enable or disable fugacity coefficient derivatives in M_matrix calculation.
    *
    * <p>
-   * When enabled, the solver uses init(3, phase) to calculate fugacity derivatives
-   * and includes dln(fugacity)/dN terms in the M_matrix for more accurate Newton steps.
-   * This can improve convergence for non-ideal mixtures but is computationally more expensive.
+   * When enabled, the solver uses init(3, phase) to calculate fugacity derivatives and includes
+   * dln(fugacity)/dN terms in the M_matrix for more accurate Newton steps. This can improve
+   * convergence for non-ideal mixtures but is computationally more expensive.
    * </p>
    *
    * @param useFugacityDerivatives true to enable, false to disable
