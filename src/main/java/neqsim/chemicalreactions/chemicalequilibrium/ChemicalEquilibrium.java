@@ -31,6 +31,14 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   /** Counter for consecutive non-improving iterations to detect stagnation. */
   private static final int STAGNATION_LIMIT = 10;
 
+  /**
+   * Flag to enable fugacity coefficient derivatives in M_matrix.
+   * When true, uses init(3) for derivative calculations and includes
+   * dln(fugacity)/dN terms for more accurate Newton steps.
+   * Default is false for backward compatibility and performance.
+   */
+  private boolean useFugacityDerivatives = false;
+
   SystemInterface system;
   double[] nVector;
   double[] n_mol;
@@ -145,6 +153,15 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     // Protect against n_t = 0 which would cause division by zero in chem_pot calculation
     n_t = Math.max(MIN_MOLES, system.getPhase(phasenumb).getNumberOfMolesInPhase());
 
+    // If using fugacity derivatives, need init(3) for derivative calculations
+    if (useFugacityDerivatives) {
+      try {
+        system.init(3, phasenumb);
+      } catch (Exception ex) {
+        logger.debug("Failed to init(3) for derivatives, falling back to simple M_matrix");
+      }
+    }
+
     for (int i = 0; i < NSPEC; i++) {
       n_mol[i] = system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
           .getNumberOfMolesInPhase();
@@ -162,7 +179,22 @@ public class ChemicalEquilibrium implements java.io.Serializable {
             system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
                 .getNumberOfMolesInPhase());
         M_matrix[i][k] = kronDelt / molesForDiv;
-        // +system.getPhase(phasenumb).getComponent(i).logfugcoefdNi(system.getPhase(phasenumb),k);
+
+        // Add fugacity coefficient derivative if enabled
+        // This gives the full Hessian for more accurate Newton steps
+        if (useFugacityDerivatives) {
+          try {
+            int compNumI = components[i].getComponentNumber();
+            int compNumK = components[k].getComponentNumber();
+            double dfugdN = system.getPhase(phasenumb).getComponent(compNumI)
+                .getdfugdn(compNumK);
+            if (!Double.isNaN(dfugdN) && !Double.isInfinite(dfugdN)) {
+              M_matrix[i][k] += dfugdN;
+            }
+          } catch (Exception ex) {
+            // Derivative not available, use ideal term only
+          }
+        }
 
         // System.out.println("dfugdn "
         // +system.getPhase(phasenumb).getComponent(i).logfugcoefdNi(this.system.getPhase(phasenumb),
@@ -558,6 +590,30 @@ public class ChemicalEquilibrium implements java.io.Serializable {
       logger.debug(
           "Chemical equilibrium: failed to reinitialize after ion adjustment: " + ex.getMessage());
     }
+  }
+
+  /**
+   * Check if fugacity coefficient derivatives are used in the M_matrix calculation.
+   *
+   * @return true if fugacity derivatives are enabled
+   */
+  public boolean isUseFugacityDerivatives() {
+    return useFugacityDerivatives;
+  }
+
+  /**
+   * Enable or disable fugacity coefficient derivatives in M_matrix calculation.
+   *
+   * <p>
+   * When enabled, the solver uses init(3, phase) to calculate fugacity derivatives
+   * and includes dln(fugacity)/dN terms in the M_matrix for more accurate Newton steps.
+   * This can improve convergence for non-ideal mixtures but is computationally more expensive.
+   * </p>
+   *
+   * @param useFugacityDerivatives true to enable, false to disable
+   */
+  public void setUseFugacityDerivatives(boolean useFugacityDerivatives) {
+    this.useFugacityDerivatives = useFugacityDerivatives;
   }
 
   /**

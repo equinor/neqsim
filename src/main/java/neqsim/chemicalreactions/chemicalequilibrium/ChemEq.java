@@ -19,6 +19,9 @@ public class ChemEq implements java.io.Serializable {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ChemEq.class);
 
+  /** Minimum moles to prevent log(0) and division by zero. */
+  private static final double MIN_MOLES = 1e-30;
+
   int NSPEC = 10;
   int NELE = 3;
   double R = ThermodynamicConstantsInterface.R;
@@ -181,7 +184,10 @@ public class ChemEq implements java.io.Serializable {
     }
 
     for (int i = 0; i < NSPEC; i++) {
-      chem_pot[i] = chem_ref[i] + Math.log(Math.abs(n_mol[i] / n_t));
+      // Protect against log(0) and n_t = 0
+      double safeMoles = Math.max(MIN_MOLES, Math.abs(n_mol[i]));
+      double safeNt = Math.max(MIN_MOLES, n_t);
+      chem_pot[i] = chem_ref[i] + Math.log(safeMoles / safeNt);
       logger.debug("chempot: " + i + "  = " + chem_pot[i]);
     }
 
@@ -279,8 +285,12 @@ public class ChemEq implements java.io.Serializable {
         logger.debug("step2 ... " + step);
         return step;
       } else {
-        chem_pot_omega[i] = R * T * (chem_ref[i] + Math.log(n_omega[i] / n_t));
-        chem_pot[i] = R * T * (chem_ref[i] + Math.log(n_mol[i] / n_t));
+        // Protect against log(0)
+        double safeOmega = Math.max(MIN_MOLES, n_omega[i]);
+        double safeMoles = Math.max(MIN_MOLES, n_mol[i]);
+        double safeNt = Math.max(MIN_MOLES, n_t);
+        chem_pot_omega[i] = R * T * (chem_ref[i] + Math.log(safeOmega / safeNt));
+        chem_pot[i] = R * T * (chem_ref[i] + Math.log(safeMoles / safeNt));
       }
     }
 
@@ -295,7 +305,11 @@ public class ChemEq implements java.io.Serializable {
       for (i = 0; i < NSPEC; i++) {
         G_0 += chem_pot[i] * d_n[i];
       }
-      step = G_0 / (G_0 - G_1);
+      // Protect against division by zero when G_0 ≈ G_1
+      double denominator = G_0 - G_1;
+      if (Math.abs(denominator) > 1e-30) {
+        step = G_0 / denominator;
+      }
       // System.out.println("step4 ... " + step);
     }
 
