@@ -5358,10 +5358,11 @@ public abstract class SystemThermo implements SystemInterface {
     this.solidPhaseCheck = true;
     init(0);
 
-    for (int phaseNum = 0; phaseNum < getMaxNumberOfPhases(); phaseNum++) {
+    for (int phaseNum = 0; phaseNum < numberOfPhases; phaseNum++) {
       try {
-        getPhase(phaseNum).getComponent(solidComponent).setSolidCheck(true);
-        getPhase(3).getComponent(solidComponent).setSolidCheck(true);
+        if (getPhase(phaseNum) != null && getPhase(phaseNum).hasComponent(solidComponent)) {
+          getPhase(phaseNum).getComponent(solidComponent).setSolidCheck(true);
+        }
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }
