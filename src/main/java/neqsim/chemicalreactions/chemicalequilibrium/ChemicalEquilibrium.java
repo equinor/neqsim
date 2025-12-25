@@ -21,6 +21,16 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ChemicalEquilibrium.class);
 
+  // ============ STABILITY CONSTANTS ============
+  /** Minimum moles to prevent log(0) and division by zero. */
+  private static final double MIN_MOLES = 1e-30;
+
+  /** Maximum iterations allowed for chemical equilibrium solver. */
+  private static final int MAX_ITERATIONS = 50;
+
+  /** Counter for consecutive non-improving iterations to detect stagnation. */
+  private static final int STAGNATION_LIMIT = 10;
+
   SystemInterface system;
   double[] nVector;
   double[] n_mol;
@@ -132,7 +142,8 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * </p>
    */
   public void chemSolve() {
-    n_t = system.getPhase(phasenumb).getNumberOfMolesInPhase();
+    // Protect against n_t = 0 which would cause division by zero in chem_pot calculation
+    n_t = Math.max(MIN_MOLES, system.getPhase(phasenumb).getNumberOfMolesInPhase());
 
     for (int i = 0; i < NSPEC; i++) {
       n_mol[i] = system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
@@ -146,9 +157,11 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         }
         // definition of M_matrix changed by Neeraj. Initially only 1st term was
         // included
-        M_matrix[i][k] = kronDelt
-            / system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-                .getNumberOfMolesInPhase();
+        // Protect against division by zero using MIN_MOLES
+        double molesForDiv = Math.max(MIN_MOLES,
+            system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+                .getNumberOfMolesInPhase());
+        M_matrix[i][k] = kronDelt / molesForDiv;
         // +system.getPhase(phasenumb).getComponent(i).logfugcoefdNi(system.getPhase(phasenumb),k);
 
         // System.out.println("dfugdn "
@@ -179,10 +192,11 @@ public class ChemicalEquilibrium implements java.io.Serializable {
       // components[waterNumb].getComponentNumber());
 
       // calculates the reduced chemical potential mu/RT
-      chem_pot[i] = chem_ref[i]
-          + Math.log(system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-              .getNumberOfMolesInPhase())
-          - Math.log(n_t) + logactivity;
+      // Protect against log(0) by ensuring minimum moles
+      double molesInPhase = Math.max(MIN_MOLES,
+          system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+              .getNumberOfMolesInPhase());
+      chem_pot[i] = chem_ref[i] + Math.log(molesInPhase) - Math.log(n_t) + logactivity;
       // System.out.println("chem ref pot " + chem_pot[i]);
     }
 
@@ -297,12 +311,6 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     system.init_x_y();
   }
 
-  /** Maximum iterations allowed for chemical equilibrium solver. */
-  private static final int MAX_ITERATIONS = 100;
-
-  /** Counter for consecutive non-improving iterations to detect stagnation. */
-  private static final int STAGNATION_LIMIT = 20;
-
   /**
    * <p>
    * solve.
@@ -341,7 +349,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
                   .getNumberOfMolesInPhase();
 
           // Skip if moles are too small to avoid division issues
-          if (molesInPhase < 1e-30) {
+          if (molesInPhase < MIN_MOLES) {
             continue;
           }
 
@@ -390,8 +398,8 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         }
 
         // Gradually relax tolerance for difficult convergence cases
-        if (p > 25) {
-          maxError *= 2;
+        if (p > 15) {
+          maxError *= 1.5;
         }
       } while (((errOld > maxError && Math.abs(error) > maxError) && p < MAX_ITERATIONS) || p < 2);
     } catch (Exception ex) {
@@ -613,28 +621,32 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
         if (system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
             .getReferenceStateType().equals("solvent")) {
+          // Protect against log(0) with MIN_MOLES
+          double molesInPhase = Math.max(MIN_MOLES,
+              system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+                  .getNumberOfMolesInPhase());
           chem_pot[i] = R * system.getPhase(phasenumb).getTemperature()
-              * (chem_ref[i] + Math.log(
-                  system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-                      .getNumberOfMolesInPhase())
-                  - Math.log(n_t) + logactivityVec[i]);
+              * (chem_ref[i] + Math.log(molesInPhase) - Math.log(n_t) + logactivityVec[i]);
           // system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(),components[waterNumb].getComponentNumber())));
           // System.out.println("solvent activ: "+ i + " " +
           // system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugacityCoefficient()
           // / chem_pot_pure[i]);
         } else {
+          // Protect against log(0) with MIN_MOLES
+          double molesInPhase = Math.max(MIN_MOLES,
+              system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+                  .getNumberOfMolesInPhase());
           chem_pot[i] = R * system.getPhase(phasenumb).getTemperature()
-              * (chem_ref[i] + Math.log(
-                  system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-                      .getNumberOfMolesInPhase())
-                  - Math.log(n_t) + logactivityVec[i]);
+              * (chem_ref[i] + Math.log(molesInPhase) - Math.log(n_t) + logactivityVec[i]);
           // system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(),components[waterNumb].getComponentNumber())));
           // System.out.println("solute activ : " + i + " " +
           // system.getPhases()[1].getComponents()[components[i].getComponentNumber()].getFugacityCoefficient()
           // / chem_pot_dilute[i]);
         }
+        // Protect n_omega against log(0) with MIN_MOLES
+        double n_omega_safe = Math.max(MIN_MOLES, n_omega[i]);
         chem_pot_omega[i] = R * system.getPhase(phasenumb).getTemperature()
-            * (chem_ref[i] + Math.log(n_omega[i]) - Math.log(n_t) + logactivityVec[i]);
+            * (chem_ref[i] + Math.log(n_omega_safe) - Math.log(n_t) + logactivityVec[i]);
       }
     }
     // Added by Neeraj
@@ -644,7 +656,9 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     for (i = 0; i < NSPEC; i++) {
       // G_1 += chem_pot_omega[i] * d_n[i];
       // Added by Neeraj
-      G_1 += (chem_pot_omega[i] - Alambda_matrix.get(i, 0)) * d_n[i] * (1 / n_omega[i] - 1 / n_t);
+      // Protect against division by zero
+      double n_omega_safe = Math.max(MIN_MOLES, n_omega[i]);
+      G_1 += (chem_pot_omega[i] - Alambda_matrix.get(i, 0)) * d_n[i] * (1 / n_omega_safe - 1 / n_t);
     }
     // System.out.println("G1 " +G_1);
 
@@ -653,21 +667,28 @@ public class ChemicalEquilibrium implements java.io.Serializable {
       for (i = 0; i < NSPEC; i++) {
         // G_0 += chem_pot[i]*d_n[i];
         // Added by Neeraj
-        G_0 += (chem_pot[i] - Alambda_matrix.get(i, 0)) * d_n[i]
-            * (1 / system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-                .getNumberOfMolesInPhase() - 1 / n_t);
+        // Protect against division by zero
+        double molesInPhase = Math.max(MIN_MOLES,
+            system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+                .getNumberOfMolesInPhase());
+        G_0 += (chem_pot[i] - Alambda_matrix.get(i, 0)) * d_n[i] * (1 / molesInPhase - 1 / n_t);
         // G_0 +=
         // (chem_pot[i]-Alambda_matrix.get(i,0))*d_n[i]*(M_Jama_matrix.get(i,i)-1/n_t);
       }
-      step = G_0 / (G_0 - G_1);
+      // Protect against division by zero when G_0 ≈ G_1
+      double denominator = G_0 - G_1;
+      if (Math.abs(denominator) > 1e-30) {
+        step = G_0 / denominator;
+      }
       // System.out.println("step G " + step);
     }
 
     step = innerStep(i, n_omega, check, step, false);
     // System.out.println("step ... " + step);
 
-    // return step;
-    return 1.0;
+    // BUG FIX: Return the calculated step instead of always 1.0
+    // The calculated step provides damping to prevent overshooting during Newton iterations
+    return step;
   }
 
   /**

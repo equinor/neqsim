@@ -570,7 +570,8 @@ public class ChemicalReactionOperations
         logger.error(ex.getMessage(), ex);
       }
       boolean solved = solver.solve();
-      checkAndCorrectMassBalance(phaseNum, bVector);
+      // Disabled checkAndCorrectMassBalance - causes convergence issues at higher pressures
+      // checkAndCorrectMassBalance(phaseNum, bVector);
       return solved;
     }
   }
