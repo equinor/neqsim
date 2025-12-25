@@ -297,6 +297,12 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     system.init_x_y();
   }
 
+  /** Maximum iterations allowed for chemical equilibrium solver. */
+  private static final int MAX_ITERATIONS = 100;
+
+  /** Counter for consecutive non-improving iterations to detect stagnation. */
+  private static final int STAGNATION_LIMIT = 20;
+
   /**
    * <p>
    * solve.
@@ -308,74 +314,105 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     double error = 1e10;
     double errOld = 1e10;
     double thisError = 0;
-    double p = 1.0;
-    // boolean negN = false;
+    int p = 0;
     double maxError = 1e-8;
     upMoles = 0;
-    // double old = 0;
+    int stagnationCount = 0;
+    double bestError = Double.MAX_VALUE;
+
     try {
       do {
         p++;
         errOld = error;
         error = 0.0;
         this.chemSolve();
-        // Commented out by Neeraj
+
+        // Early exit if chemSolve produced invalid results
+        if (dn_matrix == null) {
+          logger.warn("Chemical equilibrium: dn_matrix is null at iteration " + p);
+          break;
+        }
+
         double step1 = step();
-        // System.out.println("step " + step1);
-        // Changed by Neeraj
-        // double step1 = 1.0; //leads to negative b error
+
         for (int i = 0; i < NSPEC; i++) {
-          if (Math.abs(dn_matrix.get(i, 0))
-              / system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-                  .getNumberOfMolesInPhase() > 1e-15) {
-            thisError = Math.abs(dn_matrix.get(i, 0)) / system.getPhase(phasenumb)
-                .getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
+          double molesInPhase =
+              system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+                  .getNumberOfMolesInPhase();
+
+          // Skip if moles are too small to avoid division issues
+          if (molesInPhase < 1e-30) {
+            continue;
+          }
+
+          double dnValue = dn_matrix.get(i, 0);
+
+          // Check for NaN or Infinite values
+          if (Double.isNaN(dnValue) || Double.isInfinite(dnValue)) {
+            logger.debug("Chemical equilibrium: NaN/Inf detected in dn_matrix at iteration " + p);
+            error = Double.NaN;
+            break;
+          }
+
+          if (Math.abs(dnValue) / molesInPhase > 1e-15) {
+            thisError = Math.abs(dnValue) / molesInPhase;
             error += Math.abs(thisError);
-            n_mol[i] = dn_matrix.get(i, 0) * step1 + system.getPhase(phasenumb)
-                .getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
-            // n_mol[i] = dn_matrix.get(i,0) +
-            // system.getPhase(phasenumb).getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
+            n_mol[i] = dnValue * step1 + molesInPhase;
           }
         }
+
+        // Exit immediately if NaN detected
+        if (Double.isNaN(error) || Double.isInfinite(error)) {
+          logger.debug("Chemical equilibrium: NaN/Inf error at iteration " + p + ", P="
+              + system.getPressure() + " bara, T=" + system.getTemperature() + " K");
+          break;
+        }
+
+        // Track best error and detect stagnation
+        if (error < bestError) {
+          bestError = error;
+          stagnationCount = 0;
+        } else {
+          stagnationCount++;
+        }
+
+        // Exit if solver is stagnating (not making progress)
+        if (stagnationCount >= STAGNATION_LIMIT) {
+          logger.debug(
+              "Chemical equilibrium: stagnation detected at iteration " + p + ", error=" + error);
+          break;
+        }
+
         if (error <= errOld) {
           updateMoles();
           system.init(1, phasenumb);
           calcRefPot();
         }
+
+        // Gradually relax tolerance for difficult convergence cases
         if (p > 25) {
           maxError *= 2;
         }
-        // Print statement added by Neeraj
-        // System.out.println("Error " + error);
-      } while (((errOld > maxError && Math.abs(error) > maxError) && p < 350) || p < 2);
+      } while (((errOld > maxError && Math.abs(error) > maxError) && p < MAX_ITERATIONS) || p < 2);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      logger.error("Chemical equilibrium solver exception: " + ex.getMessage(), ex);
       return false;
     }
-    // System.out.println("iter " + p);
-    if (p > 345) {
-      System.out.println("iter " + p + " err " + error); // return false;
-    }
-    if (p >= 1000) {
-      System.out.println("Too many iterations in chemical equilibrium " + error);
-      System.out.println("P " + system.getPressure());
-      System.out.println("T " + system.getTemperature());
-    }
-    if (Double.isNaN(error)) {
-      System.out.println("error . NaN in chemSolve() ");
-      System.out.println("pressure " + system.getPressure());
+
+    if (p >= MAX_ITERATIONS) {
+      logger.debug("Chemical equilibrium: max iterations (" + MAX_ITERATIONS + ") reached"
+          + ", error=" + error + ", P=" + system.getPressure() + " bara" + ", T="
+          + system.getTemperature() + " K");
     }
 
-    // Print added by Neeraj
-    /*
-     * System.out.println("n[1] "+n_mol[0]); System.out.println("n[2] "+n_mol[1]);
-     * System.out.println("n[3] "+n_mol[2]); System.out.println("n[4] "+n_mol[3]);
-     * System.out.println("n[5] "+n_mol[4]);
-     */
-    // system.initBeta();
-    system.init(1, phasenumb);
-    // printComp(); //system.init(0)
-    return error < maxError;
+    // Always try to reinitialize system even if convergence failed
+    try {
+      system.init(1, phasenumb);
+    } catch (Exception ex) {
+      logger.debug("Chemical equilibrium: failed to reinitialize system: " + ex.getMessage());
+    }
+
+    return !Double.isNaN(error) && !Double.isInfinite(error) && error < maxError;
   }
 
   /**
