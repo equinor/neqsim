@@ -32,11 +32,30 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   private static final int STAGNATION_LIMIT = 10;
 
   /**
+   * Iteration threshold to switch from simple to derivative-based iterations. First iterations use
+   * simple M_matrix (cheap), then switch to derivatives for faster quadratic convergence near the
+   * solution.
+   */
+  private static final int DERIVATIVE_SWITCH_ITERATION = 5;
+
+  /**
+   * Error threshold to switch to derivative-based iterations. When relative error falls below this,
+   * use derivatives for faster convergence.
+   */
+  private static final double DERIVATIVE_SWITCH_ERROR = 1e-3;
+
+  /**
    * Flag to enable fugacity coefficient derivatives in M_matrix. When true, uses init(3) for
    * derivative calculations and includes dln(fugacity)/dN terms for more accurate Newton steps.
    * Default is false for backward compatibility and performance.
    */
   private boolean useFugacityDerivatives = false;
+
+  /**
+   * Flag to enable automatic switching to derivatives after initial iterations. When true, starts
+   * with simple iterations then switches to derivatives for faster convergence.
+   */
+  private boolean useAdaptiveDerivatives = false;
 
   SystemInterface system;
   double[] nVector;
@@ -180,14 +199,19 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         M_matrix[i][k] = kronDelt / molesForDiv;
 
         // Add fugacity coefficient derivative if enabled
-        // This gives the full Hessian for more accurate Newton steps
+        // dfugdn contains: δ_ij/n_i - 1/n_t + ∂ln(φ_i)/∂n_j
+        // The original M_matrix is just δ_ij/n_i (ideal, no mixing term)
+        // To add non-ideal effects, we need ∂ln(φ_i)/∂n_j = dfugdn - δ_ij/n_i + 1/n_t
         if (useFugacityDerivatives) {
           try {
             int compNumI = components[i].getComponentNumber();
             int compNumK = components[k].getComponentNumber();
             double dfugdN = system.getPhase(phasenumb).getComponent(compNumI).getdfugdn(compNumK);
             if (!Double.isNaN(dfugdN) && !Double.isInfinite(dfugdN)) {
-              M_matrix[i][k] += dfugdN;
+              // Extract just the non-ideal part: ∂ln(φ)/∂n = dfugdn - δ/n + 1/n_t
+              double idealPart = (i == k ? 1.0 / molesForDiv : 0.0) - 1.0 / n_t;
+              double nonIdealPart = dfugdN - idealPart;
+              M_matrix[i][k] += nonIdealPart;
             }
           } catch (Exception ex) {
             // Derivative not available, use ideal term only
@@ -358,11 +382,29 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     int stagnationCount = 0;
     double bestError = Double.MAX_VALUE;
 
+    // Save original derivative setting for adaptive mode
+    boolean originalDerivativeSetting = useFugacityDerivatives;
+    if (useAdaptiveDerivatives) {
+      // Start without derivatives (cheaper, good for initial convergence)
+      useFugacityDerivatives = false;
+    }
+
     try {
       do {
         p++;
         errOld = error;
         error = 0.0;
+
+        // Adaptive derivative switching: enable derivatives after initial iterations
+        // or when error is small enough for quadratic convergence to help
+        if (useAdaptiveDerivatives && !useFugacityDerivatives) {
+          if (p >= DERIVATIVE_SWITCH_ITERATION || errOld < DERIVATIVE_SWITCH_ERROR) {
+            useFugacityDerivatives = true;
+            logger.debug("Chemical equilibrium: switching to derivatives at iteration " + p
+                + ", error=" + errOld);
+          }
+        }
+
         this.chemSolve();
 
         // Early exit if chemSolve produced invalid results
@@ -434,7 +476,16 @@ public class ChemicalEquilibrium implements java.io.Serializable {
       } while (((errOld > maxError && Math.abs(error) > maxError) && p < MAX_ITERATIONS) || p < 2);
     } catch (Exception ex) {
       logger.error("Chemical equilibrium solver exception: " + ex.getMessage(), ex);
+      // Restore original derivative setting
+      if (useAdaptiveDerivatives) {
+        useFugacityDerivatives = originalDerivativeSetting;
+      }
       return false;
+    }
+
+    // Restore original derivative setting after solve
+    if (useAdaptiveDerivatives) {
+      useFugacityDerivatives = originalDerivativeSetting;
     }
 
     if (p >= MAX_ITERATIONS) {
@@ -612,6 +663,36 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    */
   public void setUseFugacityDerivatives(boolean useFugacityDerivatives) {
     this.useFugacityDerivatives = useFugacityDerivatives;
+  }
+
+  /**
+   * Check if adaptive derivative switching is enabled.
+   *
+   * @return true if adaptive derivatives are enabled
+   */
+  public boolean isUseAdaptiveDerivatives() {
+    return useAdaptiveDerivatives;
+  }
+
+  /**
+   * Enable or disable adaptive derivative switching.
+   *
+   * <p>
+   * When enabled, the solver starts with simple iterations (without fugacity derivatives) for the
+   * first few iterations, then automatically switches to derivative-based iterations for faster
+   * quadratic convergence near the solution. This combines the robustness of simple iterations with
+   * the speed of derivative-based methods.
+   * </p>
+   *
+   * <p>
+   * The switch occurs after {@code DERIVATIVE_SWITCH_ITERATION} iterations or when the error falls
+   * below {@code DERIVATIVE_SWITCH_ERROR}.
+   * </p>
+   *
+   * @param useAdaptiveDerivatives true to enable adaptive switching, false to disable
+   */
+  public void setUseAdaptiveDerivatives(boolean useAdaptiveDerivatives) {
+    this.useAdaptiveDerivatives = useAdaptiveDerivatives;
   }
 
   /**
