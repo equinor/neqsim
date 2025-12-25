@@ -71,18 +71,37 @@ public class ChemicalReactionOperations
       return -1;
     }
 
-    // Only return aqueous phase index - no fallback to non-aqueous phases.
-    try {
-      int aqueousPhase = system.getPhaseNumberOfPhase("aqueous");
-      if (aqueousPhase >= 0 && aqueousPhase < nPhases) {
-        return aqueousPhase;
+    // Look for aqueous phase by checking actual phase type, not just asking system
+    // (system.getPhaseNumberOfPhase returns 0 as default if not found, which is wrong)
+    for (int i = 0; i < nPhases; i++) {
+      String phaseTypeName = system.getPhase(i).getPhaseTypeName();
+      if ("aqueous".equalsIgnoreCase(phaseTypeName)) {
+        return i;
       }
-    } catch (Exception ex) {
-      // No aqueous phase found
     }
 
-    // No aqueous phase - return -1 to signal chemical equilibrium should be skipped.
+    // Fallback: look for liquid phase (used during initialization before flash assigns phase types)
+    for (int i = 0; i < nPhases; i++) {
+      String phaseTypeName = system.getPhase(i).getPhaseTypeName();
+      if ("liquid".equalsIgnoreCase(phaseTypeName) || "oil".equalsIgnoreCase(phaseTypeName)) {
+        return i;
+      }
+    }
+
+    // No aqueous/liquid phase found - return -1 to signal chemical equilibrium should be skipped.
     return -1;
+  }
+
+  /**
+   * Check if a phase is actually aqueous (not just liquid). This is stricter than
+   * getReactivePhaseIndex() which also accepts liquid.
+   */
+  private boolean isPhaseAqueous(int phaseNum) {
+    if (phaseNum < 0 || phaseNum >= system.getNumberOfPhases()) {
+      return false;
+    }
+    String phaseTypeName = system.getPhase(phaseNum).getPhaseTypeName();
+    return "aqueous".equalsIgnoreCase(phaseTypeName);
   }
 
   /**
@@ -248,8 +267,9 @@ public class ChemicalReactionOperations
    */
   public void setReactiveComponents() {
     int reactivePhase = getReactivePhaseIndex();
+    // Fall back to phase 0 if no reactive phase found (needed for initialization)
     if (reactivePhase < 0) {
-      return; // No aqueous phase - nothing to set
+      reactivePhase = 0;
     }
     this.phase = reactivePhase;
     int k = 0;
@@ -379,10 +399,17 @@ public class ChemicalReactionOperations
    * @return an array of type double
    */
   public double[] calcNVector() {
+    // FIX: Read moles directly from the current phase state, not from cached component references.
+    // The components array can become stale if phase components are recreated during init.
+    int reactivePhase = getReactivePhaseIndex();
+    if (reactivePhase < 0) {
+      reactivePhase = 0; // fallback
+    }
     double[] nvec = new double[components.length];
     for (int i = 0; i < components.length; i++) {
-      nvec[i] = components[i].getNumberOfMolesInPhase();
-      // System.out.println("nvec: " + nvec[i]);
+      // Get the component from the current phase by component number, not from cached reference
+      int compNum = components[i].getComponentNumber();
+      nvec[i] = system.getPhase(reactivePhase).getComponent(compNum).getNumberOfMolesInPhase();
     }
     return nvec;
   }
@@ -439,25 +466,25 @@ public class ChemicalReactionOperations
   public void updateMoles(int phaseNum) {
     double changeMoles = 0.0;
     for (int i = 0; i < components.length; i++) {
-      if (Math.abs(newMoles[i]) > 1e-45) {
-        changeMoles += (newMoles[i]
-            - system.getPhase(phaseNum).getComponents()[components[i].getComponentNumber()]
-                .getNumberOfMolesInPhase());
-        // System.out.println("update moles first " + (components[i].getComponentName()
-        // + " moles " + components[i].getNumberOfMolesInPhase()));
-        system.getPhase(phaseNum).addMolesChemReac(components[i].getComponentNumber(),
-            (newMoles[i]
-                - system.getPhase(phaseNum).getComponents()[components[i].getComponentNumber()]
-                    .getNumberOfMolesInPhase()));
-        // System.out.println("update moles after " + (components[i].getComponentName()
-        // + " moles " + components[i].getNumberOfMolesInPhase()));
-      }
+      // BUG FIX: Always update moles, not just when newMoles[i] > 1e-45
+      // The old code skipped components when newMoles[i] was 0, which meant
+      // consumed reactants (like CO2 in amine reactions) were never zeroed out.
+      double currentMoles =
+          system.getPhase(phaseNum).getComponents()[components[i].getComponentNumber()]
+              .getNumberOfMolesInPhase();
+      double targetMoles = Math.max(newMoles[i], 1e-45); // Ensure small positive value for
+                                                         // numerical stability
+      double delta = targetMoles - currentMoles;
+
+      changeMoles += delta;
+      system.getPhase(phaseNum).addMolesChemReac(components[i].getComponentNumber(), delta);
     }
-    // System.out.println("change " + changeMoles);
-    system.initTotalNumberOfMoles(changeMoles); // x_solve.get(NELE,0)*n_t);
-    system.initBeta(); // this was added for mass trans calc
+    system.initTotalNumberOfMoles(changeMoles);
+    system.initBeta();
     system.init_x_y();
     system.init(1);
+  }
+
   }
 
   /**
@@ -470,7 +497,7 @@ public class ChemicalReactionOperations
    */
   public boolean solveChemEq(int type) {
     int reactivePhase = getReactivePhaseIndex();
-    if (reactivePhase < 0) {
+    if (reactivePhase < 0 || !isPhaseAqueous(reactivePhase)) {
       // No aqueous phase - skip chemical equilibrium
       return false;
     }
@@ -487,9 +514,9 @@ public class ChemicalReactionOperations
    * @return a boolean
    */
   public boolean solveChemEq(int phaseNum, int type) {
-    // Enforce aqueous-only chemistry: only solve in aqueous phase.
+    // Enforce aqueous-only chemistry: only solve in true aqueous phase (not just liquid).
     int reactivePhase = getReactivePhaseIndex();
-    if (reactivePhase < 0) {
+    if (reactivePhase < 0 || !isPhaseAqueous(reactivePhase)) {
       // No aqueous phase - skip chemical equilibrium
       return false;
     }
@@ -503,26 +530,20 @@ public class ChemicalReactionOperations
       chemRefPot = calcChemRefPot(phaseNum);
     }
     if (!system.isChemicalSystem()) {
-      System.out.println("no chemical reactions will occur...continue");
       return false;
     }
 
-    // System.out.println("pressure1");
     calcChemRefPot(phaseNum);
-    // System.out.println("pressure2");
     if (firsttime || type == 0) {
       try {
-        // System.out.println("Calculating initial estimates");
         nVector = calcNVector();
         bVector = calcBVector();
+
         calcInertMoles(phaseNum);
         newMoles = initCalc.generateInitialEstimates(system, bVector, inertMoles, phaseNum);
-        // Print statement added by Neeraj
-        // for (i=0;i<5;i++)
-        // System.out.println("new moles "+newMoles[i]);
+
         updateMoles(phaseNum);
-        // System.out.println("finished iniT estimtes ");
-        // system.display();
+
         firsttime = false;
         return true;
       } catch (Exception ex) {
@@ -531,13 +552,14 @@ public class ChemicalReactionOperations
         return solver.solve();
       }
     } else {
-      nVector = calcNVector();
-      bVector = calcBVector();
+      // NOTE: Do NOT recalculate bVector here!
+      // The element totals (bVector) must be conserved from the initial calculation.
+      // Recalculating would pick up erroneous values after init(1) redistributes phases.
+
       try {
         solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phaseNum);
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
-        // todo: Will this crash below?
       }
       return solver.solve();
     }

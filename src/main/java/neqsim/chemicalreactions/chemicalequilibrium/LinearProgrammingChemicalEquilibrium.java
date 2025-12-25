@@ -353,11 +353,14 @@ public class LinearProgrammingChemicalEquilibrium
     LinearObjectiveFunction f = new LinearObjectiveFunction(v, 0.0);
     List<LinearConstraint> cons = new ArrayList<LinearConstraint>();
     for (j = 0; j < bVector.length; j++) {
+      // BUG FIX: Create a fresh array for each constraint to avoid v[0] contamination
+      double[] constraintCoeffs = new double[components.length + 1];
+      constraintCoeffs[0] = 0.0; // Explicitly set to 0 - this variable is not used
       for (i = 0; i < components.length; i++) {
-        v[i + 1] = Amatrix[j][i];
+        constraintCoeffs[i + 1] = Amatrix[j][i];
       }
       rhs = bVector[j];
-      cons.add(new LinearConstraint(v, Relationship.EQ, rhs));
+      cons.add(new LinearConstraint(constraintCoeffs, Relationship.EQ, rhs));
     }
 
     NonNegativeConstraint nonneg = new NonNegativeConstraint(true);
@@ -377,6 +380,7 @@ public class LinearProgrammingChemicalEquilibrium
     int compNumb = system.getPhase(phaseNum).getNumberOfComponents();
     double[] lp_solution = new double[compNumb];
     double[] temp = optimal.getPoint();
+
     for (i = 0; i < compNumb - (compNumb - components.length); i++) {
       lp_solution[i] = temp[i + 1];
     }
