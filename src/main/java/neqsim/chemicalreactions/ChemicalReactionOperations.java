@@ -495,8 +495,8 @@ public class ChemicalReactionOperations
    */
   public boolean solveChemEq(int type) {
     int reactivePhase = getReactivePhaseIndex();
-    if (reactivePhase < 0 || !isPhaseAqueous(reactivePhase)) {
-      // No aqueous phase - skip chemical equilibrium
+    if (reactivePhase < 0) {
+      // No aqueous/liquid phase - skip chemical equilibrium
       return false;
     }
     return solveChemEq(reactivePhase, type);
@@ -512,10 +512,10 @@ public class ChemicalReactionOperations
    * @return a boolean
    */
   public boolean solveChemEq(int phaseNum, int type) {
-    // Enforce aqueous-only chemistry: only solve in true aqueous phase (not just liquid).
+    // Get the reactive phase - this finds aqueous or liquid phases
     int reactivePhase = getReactivePhaseIndex();
-    if (reactivePhase < 0 || !isPhaseAqueous(reactivePhase)) {
-      // No aqueous phase - skip chemical equilibrium
+    if (reactivePhase < 0) {
+      // No aqueous/liquid phase - skip chemical equilibrium
       return false;
     }
     if (phaseNum != reactivePhase) {
