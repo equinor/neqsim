@@ -110,11 +110,11 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    *
    * <p>
    * Known limitations:
+   * </p>
    * <ul>
    * <li>Numerical instability (NaN) for NaBr and CaCl2</li>
    * <li>Stability window: 15-35 mol% MDEA for most salts</li>
    * </ul>
-   * </p>
    */
   public static double[] furstParamsCPA_MDEA = {
       // LR parameters [0-1] - same as water
@@ -149,12 +149,12 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    *
    * <p>
    * Known limitations:
+   * </p>
    * <ul>
    * <li>Individual ion γ may vary significantly (e.g., K+ low, Na+ high) while γ± is
    * reasonable</li>
    * <li>Accuracy may degrade at very high MEG concentrations (&gt;70 mol%)</li>
    * </ul>
-   * </p>
    */
   public static double[] furstParamsCPA_MEG = {
       // LR parameters [0-1] - same as water
@@ -182,11 +182,11 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    *
    * <p>
    * Known limitations:
+   * </p>
    * <ul>
    * <li>Individual ion γ may vary significantly while γ± is reasonable</li>
    * <li>Some divalent salts may have numerical issues at high concentrations</li>
    * </ul>
-   * </p>
    */
   public static double[] furstParamsCPA_MeOH = {
       // LR parameters [0-1] - same as water
@@ -214,11 +214,11 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    *
    * <p>
    * Known limitations:
+   * </p>
    * <ul>
    * <li>Individual ion γ may vary significantly while γ± is reasonable</li>
    * <li>Some divalent salts may have numerical issues at high concentrations</li>
    * </ul>
-   * </p>
    */
   public static double[] furstParamsCPA_EtOH = {
       // LR parameters [0-1] - same as water
@@ -251,11 +251,11 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    *
    * <p>
    * Known limitations:
+   * </p>
    * <ul>
    * <li>Individual ion γ vary significantly (e.g., Na+ high, K+ low) while γ± is reasonable</li>
    * <li>Negative osmotic coefficients at high MEA concentrations (physically impossible)</li>
    * </ul>
-   * </p>
    */
   public static double[] furstParamsCPA_MEA = {
       // LR parameters [0-1] - same as water
