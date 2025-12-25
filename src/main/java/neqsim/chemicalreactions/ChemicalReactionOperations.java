@@ -485,8 +485,6 @@ public class ChemicalReactionOperations
     system.init(1);
   }
 
-  }
-
   /**
    * <p>
    * solveChemEq.
