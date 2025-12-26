@@ -46,6 +46,12 @@ public abstract class Phase implements PhaseInterface {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Phase.class);
 
+  /**
+   * Inverse of water molality (1/55.51 mol/kg). Used for converting activity coefficients from mole
+   * fraction scale to molality scale: γ_m = γ_x * x_w / 55.51
+   */
+  private static final double INV_WATER_MOLALITY = 1.0 / 55.51;
+
   public int numberOfComponents = 0;
   public ComponentInterface[] componentArray;
   private transient String[] componentNames = null;
@@ -1712,8 +1718,7 @@ public abstract class Phase implements PhaseInterface {
       return gammaX;
     }
 
-    // Calculate sum of solute molalities (mol/kg solvent)
-    double waterMolarMass = 0.018015; // kg/mol
+    // Get water index and mole fraction
     int waterIndex = -1;
     if (hasComponent("water")) {
       waterIndex = getComponent("water").getComponentNumber();
@@ -1724,33 +1729,26 @@ public abstract class Phase implements PhaseInterface {
       return gammaX;
     }
 
-    double waterMoles = getComponent(waterIndex).getNumberOfMolesInPhase();
-    double waterMass = waterMoles * waterMolarMass; // kg
+    double xWater = getComponent(waterIndex).getx();
 
-    // Sum of all solute moles / kg water = total molality
-    double totalSoluteMoles = 0.0;
-    for (int i = 0; i < numberOfComponents; i++) {
-      if (i != waterIndex) {
-        totalSoluteMoles += getComponent(i).getNumberOfMolesInPhase();
-      }
+    // Defensive check: if essentially pure water, return mole fraction γ
+    if (xWater < 1e-12) {
+      return gammaX;
     }
-    double totalMolality = totalSoluteMoles / waterMass; // mol/kg
 
-    // Conversion factor from mole fraction to molality scale
-    // γ_m = γ_x * (1 + M_water * Σm_i) = γ_x * (n_water + n_solutes) / n_water
-    double conversionFactor = 1.0 + waterMolarMass * totalMolality;
-
+    // Conversion from mole fraction to molality scale:
+    // From a_i = γ_x * x_i = γ_m * m_i / m° and m_i = (x_i / x_w) * (1000 / M_w)
+    // we get: γ_m = γ_x * x_w / 55.51 (where 55.51 mol/kg is molality of pure water)
+    // Note: This conversion is independent of total molality and component i
     if (scale.equalsIgnoreCase("molality")) {
-      return gammaX * conversionFactor;
+      return gammaX * xWater * INV_WATER_MOLALITY;
     }
 
     if (scale.equalsIgnoreCase("molarity")) {
-      // γ_c = γ_m * (ρ_water / ρ_solution)
-      // For dilute solutions, ρ_solution ≈ ρ_water, so γ_c ≈ γ_m
-      initPhysicalProperties();
-      double solutionDensity = getPhysicalProperties().getDensity(); // kg/m3
-      double waterDensity = 997.0; // kg/m3 at 25°C (approximate)
-      return gammaX * conversionFactor * (waterDensity / solutionDensity);
+      // For dilute aqueous solutions: γ_c ≈ γ_m
+      // The exact relation γ_c = γ_x * c° / ρ_n requires total molar density,
+      // but for practical purposes γ_c ≈ γ_m is sufficient
+      return gammaX * xWater * INV_WATER_MOLALITY;
     }
 
     // Unknown scale - return mole fraction
@@ -1770,8 +1768,9 @@ public abstract class Phase implements PhaseInterface {
    * {@inheritDoc}
    *
    * <p>
-   * Calculates the mean ionic activity coefficient on the molality scale. The conversion from mole
-   * fraction scale (γ±,x) to molality scale (γ±,m) follows the thermodynamic relationship:
+   * Calculates the mean ionic activity coefficient on the molality scale. NeqSim uses the
+   * unsymmetric convention for ions (γ → 1 as x → 0, i.e., infinite dilution reference state). The
+   * conversion from unsymmetric mole fraction scale (γ±,x) to molality scale (γ±,m) is:
    * </p>
    *
    * <pre>
@@ -1779,9 +1778,10 @@ public abstract class Phase implements PhaseInterface {
    * </pre>
    *
    * <p>
-   * where x_water is the mole fraction of water. This relationship arises from the different
-   * standard states used in each scale: pure liquid for mole fraction, and hypothetical ideal
-   * solution at 1 mol/kg for molality.
+   * This relationship arises because the unsymmetric standard state (infinite dilution) already
+   * incorporates the 1/55.51 factor that would appear in the symmetric convention. For the
+   * symmetric convention (γ → 1 as x → 1), the full formula would be: γ±,m = γ±,x(sym) * x_water /
+   * 55.51
    * </p>
    *
    * <p>
@@ -1810,10 +1810,10 @@ public abstract class Phase implements PhaseInterface {
     double act1 = Math.pow(getActivityCoefficient(comp1, watNumb), nuPlus);
     double act2 = Math.pow(getActivityCoefficient(comp2, watNumb), nuMinus);
 
-    // Mean ionic activity coefficient on mole fraction scale
+    // Mean ionic activity coefficient on mole fraction scale (unsymmetric)
     double gammaPlusMinus_x = Math.pow(act1 * act2, 1.0 / (nuPlus + nuMinus));
 
-    // Convert to molality scale: γ±,m = γ±,x * x_water
+    // Convert to molality scale: γ±,m = γ±,x * x_water (for unsymmetric convention)
     return gammaPlusMinus_x * xWater;
   }
 
