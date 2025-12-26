@@ -339,29 +339,56 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * <p>
    * updateMoles.
    * </p>
+   * 
+   * <p>
+   * Updates the moles in the reactive phase based on the calculated n_mol values from the Newton
+   * solver. Uses Phase.addMolesChemReac with totdn=0 to only affect phase moles without corrupting
+   * the total system moles (which would violate element conservation).
+   * </p>
    */
   public void updateMoles() {
     upMoles++;
-    // double changeMoles = 0.0;
     for (int i = 0; i < components.length; i++) {
+      int compNum = components[i].getComponentNumber();
+      double currentMoles =
+          system.getPhase(phasenumb).getComponents()[compNum].getNumberOfMolesInPhase();
+      double targetMoles;
       if (n_mol[i] > 0) {
-        system.addComponent(components[i].getComponentNumber(),
-            (n_mol[i]
-                - system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-                    .getNumberOfMolesInPhase()),
-            phasenumb);
+        targetMoles = n_mol[i];
       } else {
-        system.addComponent(components[i].getComponentNumber(),
-            (-0.99 * system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-                .getNumberOfMolesInPhase()),
-            phasenumb);
+        targetMoles = 0.01 * currentMoles; // Keep small positive value
       }
+      double dn = targetMoles - currentMoles;
 
-      // changeMoles += n_mol[i] -
-      // system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
-      // .getNumberOfMolesInPhase();
+      // Use Phase.addMolesChemReac with totdn=0 to only change phase moles
+      // This preserves total system moles and element conservation
+      system.getPhase(phasenumb).addMolesChemReac(compNum, dn, 0);
     }
-    system.initBeta(); // this was added for mass trans calc
+
+    // Update phase total moles to match sum of component moles
+    double phaseTotalMoles = 0;
+    for (int i = 0; i < components.length; i++) {
+      phaseTotalMoles +=
+          system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
+              .getNumberOfMolesInPhase();
+    }
+    // Also include any non-reactive components
+    for (int i = 0; i < system.getPhase(phasenumb).getNumberOfComponents(); i++) {
+      boolean isReactive = false;
+      for (int j = 0; j < components.length; j++) {
+        if (components[j].getComponentNumber() == i) {
+          isReactive = true;
+          break;
+        }
+      }
+      if (!isReactive) {
+        phaseTotalMoles += system.getPhase(phasenumb).getComponent(i).getNumberOfMolesInPhase();
+      }
+    }
+    ((neqsim.thermo.phase.Phase) system.getPhase(phasenumb)).numberOfMolesInPhase =
+        phaseTotalMoles;
+
+    system.initBeta();
     system.init_x_y();
   }
 
@@ -465,7 +492,29 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
         if (error <= errOld) {
           updateMoles();
+          
+          // Save the correct moles before init(1) might corrupt them
+          double[] savedMolesInPhase = new double[components.length];
+          for (int i = 0; i < components.length; i++) {
+            savedMolesInPhase[i] = system.getPhase(phasenumb)
+                .getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
+          }
+          
           system.init(1, phasenumb);
+          
+          // Restore the correct moles after init(1)
+          for (int i = 0; i < components.length; i++) {
+            double currentMoles = system.getPhase(phasenumb)
+                .getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
+            if (Math.abs(currentMoles - savedMolesInPhase[i]) > 1e-15) {
+              // Moles were corrupted by init(1), restore them
+              double diff = savedMolesInPhase[i] - currentMoles;
+              system.getPhase(phasenumb).addMolesChemReac(
+                  components[i].getComponentNumber(), diff);
+            }
+          }
+          system.init_x_y(); // Recalculate x values to match restored moles
+          
           calcRefPot();
         }
 

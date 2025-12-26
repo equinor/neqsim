@@ -472,15 +472,17 @@ public class ChemicalReactionOperations
    * <p>
    * updateMoles.
    * </p>
+   * 
+   * <p>
+   * Updates moles in the reactive phase based on the LP solver solution. Uses
+   * Phase.addMolesChemReac with totdn=0 to only affect phase moles without corrupting the total
+   * system moles (which would violate element conservation).
+   * </p>
    *
    * @param phaseNum a int
    */
   public void updateMoles(int phaseNum) {
-    double changeMoles = 0.0;
     for (int i = 0; i < components.length; i++) {
-      // BUG FIX: Always update moles, not just when newMoles[i] > 1e-45
-      // The old code skipped components when newMoles[i] was 0, which meant
-      // consumed reactants (like CO2 in amine reactions) were never zeroed out.
       double currentMoles =
           system.getPhase(phaseNum).getComponents()[components[i].getComponentNumber()]
               .getNumberOfMolesInPhase();
@@ -488,39 +490,10 @@ public class ChemicalReactionOperations
                                                          // numerical stability
       double delta = targetMoles - currentMoles;
 
-      changeMoles += delta;
-      system.getPhase(phaseNum).addMolesChemReac(components[i].getComponentNumber(), delta);
-    }
-
-    // Save the correct moles from the reactive phase BEFORE any re-initialization
-    // that might corrupt them
-    double[] correctMolesInPhase = new double[components.length];
-    double[] correctNumberOfMoles = new double[components.length];
-    for (int i = 0; i < components.length; i++) {
-      int compNum = components[i].getComponentNumber();
-      correctMolesInPhase[i] =
-          system.getPhase(phaseNum).getComponent(compNum).getNumberOfMolesInPhase();
-      correctNumberOfMoles[i] = system.getPhase(phaseNum).getComponent(compNum).getNumberOfmoles();
-    }
-
-    // Update total moles in system
-    system.initTotalNumberOfMoles(changeMoles);
-    system.initBeta();
-    system.init_x_y();
-    system.init(1);
-
-    // RESTORE the correct moles from chemical equilibrium after init(1) potentially corrupted them
-    // init(1) recalculates numberOfMolesInPhase from x values, which may not reflect
-    // the chemical equilibrium solution correctly
-    for (int i = 0; i < components.length; i++) {
-      int compNum = components[i].getComponentNumber();
-      // Restore molesInPhase for the reactive phase
-      system.getPhase(phaseNum).getComponent(compNum)
-          .setNumberOfMolesInPhase(correctMolesInPhase[i]);
-      // Sync numberOfMoles to all phases
-      for (int p = 0; p < system.getNumberOfPhases(); p++) {
-        system.getPhase(p).getComponent(compNum).setNumberOfmoles(correctNumberOfMoles[i]);
-      }
+      // Use addMolesChemReac(component, dn, 0) to ONLY change phase moles
+      // NOT system total moles - this preserves element conservation
+      system.getPhase(phaseNum).addMolesChemReac(
+          components[i].getComponentNumber(), delta, 0);
     }
 
     // Update phase total moles to match sum of component moles
@@ -530,7 +503,8 @@ public class ChemicalReactionOperations
     }
     ((neqsim.thermo.phase.Phase) system.getPhase(phaseNum)).numberOfMolesInPhase = phaseTotalMoles;
 
-    // Recalculate x values to be consistent with restored moles
+    // Recalculate mole fractions to be consistent with new moles
+    system.initBeta();
     system.init_x_y();
   }
 
@@ -585,6 +559,7 @@ public class ChemicalReactionOperations
       try {
         nVector = calcNVector();
         bVector = calcBVector();
+        
         // Save the original bVector for element conservation in subsequent calls
         originalBVector = bVector.clone();
 
@@ -606,7 +581,6 @@ public class ChemicalReactionOperations
       // Recalculating would pick up erroneous values after init(1) redistributes phases.
 
       try {
-        nVector = calcNVector();
         // Use the original bVector for element conservation - do NOT recalculate!
         if (originalBVector != null) {
           bVector = originalBVector;
@@ -615,19 +589,49 @@ public class ChemicalReactionOperations
           bVector = calcBVector();
           logger.warn("Chemical equilibrium: originalBVector was null, recalculating bVector");
         }
+        
+        // CRITICAL: Restore the LP solution moles to the reactive phase before Newton solve
+        // The phase split during TPflash has corrupted the moles - restore them
+        if (newMoles != null) {
+          for (int i = 0; i < components.length; i++) {
+            double currentMoles = system.getPhase(phaseNum)
+                .getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
+            double targetMoles = newMoles[i];
+            double diff = targetMoles - currentMoles;
+            if (Math.abs(diff) > 1e-15) {
+              system.getPhase(phaseNum).addMolesChemReac(
+                  components[i].getComponentNumber(), diff);
+            }
+          }
+          // Update phase total moles
+          double phaseTotalMoles = 0;
+          for (int i = 0; i < components.length; i++) {
+            phaseTotalMoles += system.getPhase(phaseNum)
+                .getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
+          }
+          ((neqsim.thermo.phase.Phase) system.getPhase(phaseNum)).numberOfMolesInPhase = phaseTotalMoles;
+          system.init_x_y();
+        }
+        
+        nVector = calcNVector();
+        
         solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phaseNum);
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }
       boolean solved = solver.solve();
-      // Apply mass balance correction after the solver is done to enforce element conservation
-      checkAndCorrectMassBalance(phaseNum, bVector);
+      
       return solved;
     }
   }
 
   /**
    * Checks and enforces element conservation (mass balance).
+   * 
+   * <p>
+   * Uses Phase.addMolesChemReac with totdn=0 to only affect phase moles without corrupting total
+   * system moles.
+   * </p>
    * 
    * @param phaseNum the phase index
    * @param targetBVector the target element abundance vector
@@ -654,10 +658,6 @@ public class ChemicalReactionOperations
     }
 
     if (needsCorrection) {
-      // logger.warn("Mass balance violation detected (max error=" + maxError + "). Correcting...");
-      // System.out.println("Mass balance violation detected (max error=" + maxError + ").
-      // Correcting...");
-
       // Correction: deltaN = A^T * (A A^T)^-1 * error
       Matrix E = new Matrix(error, 1).transpose();
       Matrix AAT = A.times(A.transpose());
@@ -667,7 +667,6 @@ public class ChemicalReactionOperations
         Matrix deltaN = A.transpose().times(lambda);
         double[] deltaNArr = deltaN.transpose().getArray()[0];
 
-        double changeMoles = 0.0;
         for (int i = 0; i < components.length; i++) {
           double currentMoles =
               system.getPhase(phaseNum).getComponents()[components[i].getComponentNumber()]
@@ -677,15 +676,21 @@ public class ChemicalReactionOperations
             newMoles = 1e-15; // Avoid negative moles
 
           double diff = newMoles - currentMoles;
-          system.addComponent(components[i].getComponentNumber(), diff, phaseNum);
-          changeMoles += diff;
+          // Use Phase.addMolesChemReac with totdn=0 to preserve total system moles
+          system.getPhase(phaseNum).addMolesChemReac(
+              components[i].getComponentNumber(), diff, 0);
         }
-        // System.out.println("Mass balance corrected. Total moles change: " + changeMoles);
 
-        system.initTotalNumberOfMoles(changeMoles);
+        // Update phase total moles
+        double phaseTotalMoles = 0;
+        for (int i = 0; i < system.getPhase(phaseNum).getNumberOfComponents(); i++) {
+          phaseTotalMoles += system.getPhase(phaseNum).getComponent(i).getNumberOfMolesInPhase();
+        }
+        ((neqsim.thermo.phase.Phase) system.getPhase(phaseNum)).numberOfMolesInPhase =
+            phaseTotalMoles;
+
         system.initBeta();
         system.init_x_y();
-        system.init(1);
 
       } catch (Exception ex) {
         logger.error("Failed to correct mass balance: " + ex.getMessage());

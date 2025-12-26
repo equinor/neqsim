@@ -96,9 +96,11 @@ public class PhasePCSAFTa extends PhasePCSAFT implements PhaseCPAInterface {
         }
       }
     }
+    int solveXAttempts = 0;
     do {
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
-    } while (!solveX());
+      solveXAttempts++;
+    } while (!solveX() && solveXAttempts < 50);
   }
 
   /** {@inheritDoc} */

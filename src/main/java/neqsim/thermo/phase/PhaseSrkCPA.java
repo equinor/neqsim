@@ -955,8 +955,15 @@ public class PhaseSrkCPA extends PhaseSrkEos implements PhaseCPAInterface {
       gcpavv = calc_lngVV();
       gcpavvv = calc_lngVVV();
 
-      do {
-      } while (!solveX());
+      int solveXAttempts = 0;
+      while (!solveX() && solveXAttempts < 50) {
+        solveXAttempts++;
+      }
+      if (solveXAttempts >= 50) {
+        // solveX failed to converge, skip this BonV value
+        oldh = h;
+        continue;
+      }
 
       h = BonV - Btemp / numberOfMolesInPhase * dFdV()
           - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
