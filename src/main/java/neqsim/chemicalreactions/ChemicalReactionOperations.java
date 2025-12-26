@@ -491,10 +491,47 @@ public class ChemicalReactionOperations
       changeMoles += delta;
       system.getPhase(phaseNum).addMolesChemReac(components[i].getComponentNumber(), delta);
     }
+
+    // Save the correct moles from the reactive phase BEFORE any re-initialization
+    // that might corrupt them
+    double[] correctMolesInPhase = new double[components.length];
+    double[] correctNumberOfMoles = new double[components.length];
+    for (int i = 0; i < components.length; i++) {
+      int compNum = components[i].getComponentNumber();
+      correctMolesInPhase[i] =
+          system.getPhase(phaseNum).getComponent(compNum).getNumberOfMolesInPhase();
+      correctNumberOfMoles[i] = system.getPhase(phaseNum).getComponent(compNum).getNumberOfmoles();
+    }
+
+    // Update total moles in system
     system.initTotalNumberOfMoles(changeMoles);
     system.initBeta();
     system.init_x_y();
     system.init(1);
+
+    // RESTORE the correct moles from chemical equilibrium after init(1) potentially corrupted them
+    // init(1) recalculates numberOfMolesInPhase from x values, which may not reflect
+    // the chemical equilibrium solution correctly
+    for (int i = 0; i < components.length; i++) {
+      int compNum = components[i].getComponentNumber();
+      // Restore molesInPhase for the reactive phase
+      system.getPhase(phaseNum).getComponent(compNum)
+          .setNumberOfMolesInPhase(correctMolesInPhase[i]);
+      // Sync numberOfMoles to all phases
+      for (int p = 0; p < system.getNumberOfPhases(); p++) {
+        system.getPhase(p).getComponent(compNum).setNumberOfmoles(correctNumberOfMoles[i]);
+      }
+    }
+
+    // Update phase total moles to match sum of component moles
+    double phaseTotalMoles = 0;
+    for (int i = 0; i < system.getPhase(phaseNum).getNumberOfComponents(); i++) {
+      phaseTotalMoles += system.getPhase(phaseNum).getComponent(i).getNumberOfMolesInPhase();
+    }
+    ((neqsim.thermo.phase.Phase) system.getPhase(phaseNum)).numberOfMolesInPhase = phaseTotalMoles;
+
+    // Recalculate x values to be consistent with restored moles
+    system.init_x_y();
   }
 
   /**
@@ -583,8 +620,8 @@ public class ChemicalReactionOperations
         logger.error(ex.getMessage(), ex);
       }
       boolean solved = solver.solve();
-      // Disabled checkAndCorrectMassBalance - causes convergence issues at higher pressures
-      // checkAndCorrectMassBalance(phaseNum, bVector);
+      // Apply mass balance correction after the solver is done to enforce element conservation
+      checkAndCorrectMassBalance(phaseNum, bVector);
       return solved;
     }
   }
