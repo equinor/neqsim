@@ -62,14 +62,14 @@ class BIPEstimatorTest {
     fluid.addTBPfraction("C10", 0.1, 140.0 / 1000.0, 0.78);
     fluid.createDatabase(true);
 
-    double kij = BIPEstimator.estimateKatzFiroozabadi(fluid.getComponent("methane"),
-        fluid.getComponent("C10"));
+    // Access TBP fraction by index since addTBPfraction generates a modified name
+    double kij = BIPEstimator.estimateKatzFiroozabadi(fluid.getPhase(0).getComponent(0),
+        fluid.getPhase(0).getComponent(1));
 
     // Katz-Firoozabadi returns positive values for methane-C7+ pairs
-    // If TBP component doesn't have expected MW, it may fall back to Chueh-Prausnitz
-    // In that case, it should still be non-negative
+    // For MW=140 g/mol: kij = 0.0289 + 0.0429 * sqrt(140-86) ≈ 0.34
     assertTrue(kij >= 0.0, "Katz-Firoozabadi BIP should be non-negative, got: " + kij);
-    assertTrue(kij < 0.2, "Katz-Firoozabadi BIP should be less than 0.2");
+    assertTrue(kij < 0.5, "Katz-Firoozabadi BIP should be less than 0.5 for C10");
   }
 
   @Test

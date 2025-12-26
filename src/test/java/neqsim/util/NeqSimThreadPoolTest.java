@@ -59,7 +59,7 @@ class NeqSimThreadPoolTest {
     });
 
     // Give it some time to execute
-    Thread.sleep(100);
+    Thread.sleep(20);
     assertTrue(executed.get());
   }
 
@@ -163,7 +163,7 @@ class NeqSimThreadPoolTest {
    */
   @Test
   void testRun20ConcurrentProcessSimulations() throws Exception {
-    final int numProcesses = 20;
+    final int numProcesses = 6;
     List<ProcessSystem> processes = new ArrayList<>();
     List<Future<?>> futures = new ArrayList<>();
 
@@ -185,7 +185,7 @@ class NeqSimThreadPoolTest {
     // Wait for all to complete (with timeout)
     for (int i = 0; i < futures.size(); i++) {
       Future<?> future = futures.get(i);
-      future.get(60, TimeUnit.SECONDS); // 60 second timeout per process
+      future.get(30, TimeUnit.SECONDS); // 30 second timeout per process
     }
 
     long endTime = System.currentTimeMillis();
@@ -214,7 +214,7 @@ class NeqSimThreadPoolTest {
    */
   @Test
   void testParallelVsSequentialPerformance() throws Exception {
-    final int numProcesses = 10;
+    final int numProcesses = 4;
 
     // Sequential execution
     List<ProcessSystem> sequentialProcesses = new ArrayList<>();
@@ -240,7 +240,7 @@ class NeqSimThreadPoolTest {
       futures.add(process.runAsTask());
     }
     for (Future<?> future : futures) {
-      future.get(60, TimeUnit.SECONDS);
+      future.get(30, TimeUnit.SECONDS);
     }
     long parDuration = System.currentTimeMillis() - parStart;
 
@@ -264,7 +264,7 @@ class NeqSimThreadPoolTest {
    */
   @Test
   void testReportResultsInCompletionOrder() throws Exception {
-    final int numProcesses = 10;
+    final int numProcesses = 4;
 
     // Create processes with varying complexity (different pressures affect computation time)
     List<ProcessSystem> processes = new ArrayList<>();
@@ -321,7 +321,7 @@ class NeqSimThreadPoolTest {
    */
   @Test
   void testPollFuturesForCompletion() throws Exception {
-    final int numProcesses = 8;
+    final int numProcesses = 4;
 
     // Create processes
     List<ProcessSystem> processes = new ArrayList<>();

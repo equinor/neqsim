@@ -45,16 +45,23 @@ public class CalcLngijTest {
     comp0.Bij[1] = 0.05;
     comp1.Bi = 0.3;
     PhaseSrkEos phase = createPhase(3.0, 0.7, comp0, comp1);
-    double expected = 2.0 * comp0.getBij(1) * (10.0 * phase.getTotalVolume() - phase.getB())
-        / ((8.0 * phase.getTotalVolume() - phase.getB())
-            * (4.0 * phase.getTotalVolume() - phase.getB()));
+    double V = phase.getTotalVolume();
+    double B = phase.getB();
+    double temp1 = 8.0 * V - B;
+    double temp2 = 4.0 * V - B;
+    double temp3 = 10.0 * V - B;
+    double temp = temp3 / (temp1 * temp2);
+    double temp1sq = temp1 * temp1;
+    double temp2sq = temp2 * temp2;
+    double biJ = comp1.getBi();
+    double tempj = (-biJ * temp1 * temp2 + biJ * temp3 * (temp1 + temp2)) / (temp1sq * temp2sq);
+    double expected = 2.0 * (comp0.getBij(1) * temp + comp0.getBi() * tempj);
     assertEquals(expected, comp0.calc_lngij(1, phase), 1e-12);
   }
 
   @Test
   public void testComponentElectrolyteCPAstatoil() throws Exception {
-    ComponentElectrolyteCPAstatoil comp0 =
-        new ComponentElectrolyteCPAstatoil(0, 100, 10, 0, 0, 1);
+    ComponentElectrolyteCPAstatoil comp0 = new ComponentElectrolyteCPAstatoil(0, 100, 10, 0, 0, 1);
     ComponentSrkCPA comp1 = new ComponentSrkCPA(1, 100, 10, 0, 0, 1, new PhaseSrkEos());
     comp0.Bi = 0.2;
     comp0.Bij[1] = 0.05;

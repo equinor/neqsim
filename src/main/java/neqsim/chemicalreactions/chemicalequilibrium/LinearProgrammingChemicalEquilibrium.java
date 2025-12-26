@@ -41,6 +41,9 @@ public class LinearProgrammingChemicalEquilibrium
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(LinearProgrammingChemicalEquilibrium.class);
 
+  /** Minimum moles to prevent log(0) and division by zero. */
+  private static final double MIN_MOLES = 1e-30;
+
   double[] xEts = null;
   double[][] Amatrix;
   double[] chemRefPot;
@@ -89,10 +92,13 @@ public class LinearProgrammingChemicalEquilibrium
         // System.out.println("sorting....." + components[i].getComponentNumber());
       }
     } else {
+      int refPotIter = 0;
+      int maxRefPotIter = 100;
       do {
         System.out.println("shifting primary components.....");
         this.changePrimaryComponents();
-      } while (operations.calcChemRefPot(phaseNum) == null);
+        refPotIter++;
+      } while (operations.calcChemRefPot(phaseNum) == null && refPotIter < maxRefPotIter);
       // System.out.println("shifting components....." );
       System.arraycopy(operations.calcChemRefPot(phaseNum), 0, this.chemRefPot, 0,
           this.chemRefPot.length);
@@ -350,11 +356,14 @@ public class LinearProgrammingChemicalEquilibrium
     LinearObjectiveFunction f = new LinearObjectiveFunction(v, 0.0);
     List<LinearConstraint> cons = new ArrayList<LinearConstraint>();
     for (j = 0; j < bVector.length; j++) {
+      // BUG FIX: Create a fresh array for each constraint to avoid v[0] contamination
+      double[] constraintCoeffs = new double[components.length + 1];
+      constraintCoeffs[0] = 0.0; // Explicitly set to 0 - this variable is not used
       for (i = 0; i < components.length; i++) {
-        v[i + 1] = Amatrix[j][i];
+        constraintCoeffs[i + 1] = Amatrix[j][i];
       }
       rhs = bVector[j];
-      cons.add(new LinearConstraint(v, Relationship.EQ, rhs));
+      cons.add(new LinearConstraint(constraintCoeffs, Relationship.EQ, rhs));
     }
 
     NonNegativeConstraint nonneg = new NonNegativeConstraint(true);
@@ -371,11 +380,14 @@ public class LinearProgrammingChemicalEquilibrium
       return null;
     }
 
-    int compNumb = system.getPhase(phaseNum).getNumberOfComponents();
-    double[] lp_solution = new double[compNumb];
+    // Extract solution - we only care about reactive component moles
+    // The LP solution array is [slack, n_1, n_2, ..., n_components]
     double[] temp = optimal.getPoint();
-    for (i = 0; i < compNumb - (compNumb - components.length); i++) {
-      lp_solution[i] = temp[i + 1];
+    double[] lp_solution = new double[components.length];
+
+    for (i = 0; i < components.length; i++) {
+      // temp[i+1] because temp[0] is the slack variable
+      lp_solution[i] = Math.max(MIN_MOLES, temp[i + 1]);
     }
 
     return lp_solution;

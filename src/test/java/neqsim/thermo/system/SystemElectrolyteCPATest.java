@@ -69,7 +69,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
   @Test
   public void testDensity() {
     assertEquals(6.594232943612613, thermoSystem.getPhase(PhaseType.GAS).getDensity("kg/m3"), 0.01);
-    assertEquals(996.5046667778549, thermoSystem.getPhase(PhaseType.AQUEOUS).getDensity("kg/m3"),
+    assertEquals(995.6733065538307, thermoSystem.getPhase(PhaseType.AQUEOUS).getDensity("kg/m3"),
         0.01);
   }
 

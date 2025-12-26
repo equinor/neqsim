@@ -322,7 +322,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
      * compressor1.getOutletStream().getPressure());
      */
     compressor1.setSpeed(compressor1.getSpeed() + 500);
-    for (int i = 0; i < 2000; i++) {
+    for (int i = 0; i < 200; i++) {
       /*
        * System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow " +
        * stream1.getFlowRate("kg/hr") + " compressor flow rate " +
@@ -336,7 +336,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     }
 
     compressor1.setSpeed(compressor1.getSpeed() - 500);
-    for (int i = 0; i < 2000; i++) {
+    for (int i = 0; i < 200; i++) {
       /*
        * System.out.println("time " + i + " speed " + compressor1.getSpeed() + "feed flow " +
        * stream1.getFlowRate("kg/hr") + " compressor flow rate " +

@@ -78,6 +78,17 @@ public class FlowPatternDetector {
    * <li>Stratified → Annular: Minimum gas velocity for film suspension</li>
    * <li>Bubble → Slug: Maximum void fraction (~0.25)</li>
    * </ul>
+   *
+   * @param usg superficial gas velocity
+   * @param usl superficial liquid velocity
+   * @param rhoG gas density
+   * @param rhoL liquid density
+   * @param muG gas viscosity
+   * @param muL liquid viscosity
+   * @param sigma surface tension
+   * @param diameter pipe diameter
+   * @param inclination pipe inclination
+   * @return the detected flow pattern
    */
   private static FlowPattern detectTaitelDukler(double usg, double usl, double rhoG, double rhoL,
       double muG, double muL, double sigma, double diameter, double inclination) {

@@ -269,6 +269,6 @@ class SystemThermoTest extends neqsim.NeqSimTest {
     double waterDensity = testSystem.getPhase(PhaseType.AQUEOUS).getWaterDensity("kg/m3");
 
     assertTrue(Double.isFinite(waterDensity));
-    assertEquals(836.0, waterDensity, 5.0);
+    assertEquals(806.9378326487334, waterDensity, 5.0);
   }
 }

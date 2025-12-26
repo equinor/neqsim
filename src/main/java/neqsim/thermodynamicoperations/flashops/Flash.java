@@ -373,7 +373,7 @@ public abstract class Flash extends BaseOperation {
       try {
         stabilityAnalysis();
       } catch (Exception ex) {
-        logger.error("error ", ex);
+        logger.debug("Stability analysis did not converge: {}", ex.getMessage());
       }
     }
     if (tm[0] > tmLimit && tm[1] > tmLimit || system.getPhase(0).getNumberOfComponents() == 1) {

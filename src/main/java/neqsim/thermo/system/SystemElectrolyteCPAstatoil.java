@@ -4,7 +4,8 @@ import neqsim.thermo.phase.PhaseElectrolyteCPAstatoil;
 import neqsim.thermo.util.constants.FurstElectrolyteConstants;
 
 /**
- * This class defines a thermodynamic system using the electrolyte CPA EoS Statoil model.
+ * This class defines a thermodynamic system using the electrolyte CPA EoS
+ * Statoil model.
  *
  * @author Even Solbraa
  * @version $Id: $Id

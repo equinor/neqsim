@@ -96,30 +96,42 @@ public class TPmultiflash extends TPflash {
    * </p>
    */
   public void setXY() {
+    // For non-chemical (molecular) systems, use fast path without ion checks
+    boolean isChemicalSystem = system.isChemicalSystem();
+
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
+      boolean isAqueous = isChemicalSystem && system.getPhase(k).getType() == PhaseType.AQUEOUS;
+
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
         if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-          double newX = system.getPhase(0).getComponent(i).getz() / Erow[i]
-              / system.getPhase(k).getComponent(i).getFugacityCoefficient();
-          if (!Double.isFinite(newX) || newX <= 0.0) {
-            newX = Math.max(system.getPhase(0).getComponent(i).getz(), 1.0e-30);
+          // Check for ions only in chemical systems
+          if (isChemicalSystem && (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+              || system.getPhase(0).getComponent(i).isIsIon())) {
+            // Ions only exist in aqueous phases, near-zero in gas/oil
+            if (isAqueous) {
+              // In aqueous phase, calculate ion x from moles
+              double totalMoles = system.getPhase(k).getNumberOfMolesInPhase();
+              if (totalMoles > 1e-100) {
+                system.getPhase(k).getComponent(i)
+                    .setx(system.getPhase(k).getComponent(i).getNumberOfmoles() / totalMoles);
+              } else {
+                system.getPhase(k).getComponent(i).setx(system.getPhase(0).getComponent(i).getz());
+              }
+            } else {
+              // No ions in gas or oil phases
+              system.getPhase(k).getComponent(i).setx(1e-50);
+            }
+          } else {
+            // Non-ionic components: normal flash calculation
+            double newX = system.getPhase(0).getComponent(i).getz() / Erow[i]
+                / system.getPhase(k).getComponent(i).getFugacityCoefficient();
+            if (!Double.isFinite(newX) || newX <= 0.0) {
+              newX = Math.max(system.getPhase(0).getComponent(i).getz(), 1.0e-30);
+            }
+            system.getPhase(k).getComponent(i).setx(newX);
           }
-          system.getPhase(k).getComponent(i).setx(newX);
-        }
-        if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            || system.getPhase(0).getComponent(i).isIsIon()
-                && system.getPhase(k).getType() != PhaseType.AQUEOUS) {
-          system.getPhase(k).getComponent(i).setx(1e-50);
-        }
-        if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            || system.getPhase(0).getComponent(i).isIsIon()
-                && system.getPhase(k).getType() == PhaseType.AQUEOUS) {
-          system.getPhase(k).getComponent(i)
-              .setx(system.getPhase(k).getComponent(i).getNumberOfmoles()
-                  / system.getPhase(k).getNumberOfMolesInPhase());
         }
       }
-
 
       system.getPhase(k).normalize();
     }
@@ -1426,6 +1438,98 @@ public class TPmultiflash extends TPflash {
     return true;
   }
 
+  /**
+   * Ensures only one aqueous phase exists in the system. The aqueous phase is the one with the
+   * highest aqueous component content (water, MEG, TEG, DEG, methanol, ethanol, and ions). Other
+   * liquid phases are reclassified as OIL by moving their aqueous components (water, glycols, ions)
+   * to the true aqueous phase and keeping hydrocarbons in the oil phase. This method only applies
+   * to chemical/electrolyte systems where ions must be confined to the aqueous phase.
+   */
+  private void ensureSingleAqueousPhase() {
+    // Only needed for chemical/electrolyte systems - skip for molecular systems
+    if (!system.isChemicalSystem() || system.getNumberOfPhases() < 2) {
+      return;
+    }
+
+    // Count how many non-gas phases are classified as AQUEOUS
+    int aqueousCount = 0;
+    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      if (system.getPhase(phase).getType() == PhaseType.AQUEOUS) {
+        aqueousCount++;
+      }
+    }
+
+    if (aqueousCount <= 1) {
+      return; // Already have at most one aqueous phase
+    }
+
+    // Find the phase with highest aqueous component content - this will be the true aqueous phase
+    int bestAqueousPhase = -1;
+    double maxAqueousContent = 0.0;
+
+    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      if (system.getPhase(phase).getType() == PhaseType.GAS) {
+        continue;
+      }
+
+      double aqueousContent = 0.0;
+      for (int comp = 0; comp < system.getPhase(phase).getNumberOfComponents(); comp++) {
+        ComponentInterface component = system.getPhase(phase).getComponent(comp);
+        String name = component.getComponentName().toLowerCase();
+        // Count water, glycols, alcohols, and ions as aqueous components
+        if (name.equals("water") || name.equals("meg") || name.equals("teg") || name.equals("deg")
+            || name.equals("methanol") || name.equals("ethanol") || component.getIonicCharge() != 0
+            || component.isIsIon()) {
+          aqueousContent += component.getx();
+        }
+      }
+
+      if (aqueousContent > maxAqueousContent) {
+        maxAqueousContent = aqueousContent;
+        bestAqueousPhase = phase;
+      }
+    }
+
+    if (bestAqueousPhase < 0) {
+      return;
+    }
+
+    // For phases that are AQUEOUS but not the best aqueous phase:
+    // Move hydrocarbons to dominate, set aqueous components and ions to trace
+    // This will cause init() to reclassify them as OIL
+    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      if (phase == bestAqueousPhase || system.getPhase(phase).getType() == PhaseType.GAS) {
+        continue;
+      }
+
+      if (system.getPhase(phase).getType() == PhaseType.AQUEOUS) {
+        // This phase should become OIL - adjust compositions
+        // Set ions and most aqueous components to trace amounts
+        for (int comp = 0; comp < system.getPhase(phase).getNumberOfComponents(); comp++) {
+          ComponentInterface component = system.getPhase(phase).getComponent(comp);
+          String name = component.getComponentName().toLowerCase();
+
+          if (component.getIonicCharge() != 0 || component.isIsIon()) {
+            // Ions only in aqueous phase
+            component.setx(1e-50);
+          } else if (name.equals("water")) {
+            // Reduce water significantly but keep trace for solubility
+            component.setx(Math.min(component.getx() * 0.01, 1e-4));
+          } else if (name.equals("meg") || name.equals("teg") || name.equals("deg")
+              || name.equals("methanol") || name.equals("ethanol")) {
+            // Reduce glycols/alcohols
+            component.setx(Math.min(component.getx() * 0.1, 1e-3));
+          }
+          // Hydrocarbons keep their current x values
+        }
+        system.getPhase(phase).normalize();
+      }
+    }
+
+    // Reinitialize - phase types will be recalculated based on new compositions
+    system.init(1);
+  }
+
 
   private boolean seedHydrocarbonLiquidFromFeed() {
     if (!system.doMultiPhaseCheck()) {
@@ -1460,11 +1564,19 @@ public class TPmultiflash extends TPflash {
         heavyHydrocarbonTotal += component.getz();
       }
     }
-    if (heavyHydrocarbonTotal < 5.0e-3 || heavyHydrocarbonTotal <= waterZ) {
+    // Seed oil phase if there's significant heavy hydrocarbon content
+    // For electrolyte/chemical systems, allow seeding even when water > hydrocarbons
+    // because oil-water separation is physically expected
+    boolean shouldSeedOil = heavyHydrocarbonTotal >= 5.0e-3;
+    if (!system.isChemicalSystem()) {
+      // For non-chemical systems, also require hydrocarbons > water
+      shouldSeedOil = shouldSeedOil && heavyHydrocarbonTotal > waterZ;
+    }
+    if (!shouldSeedOil) {
       return false;
     }
 
-    system.addPhase();
+    system.addPhase();;
     int phaseIndex = system.getNumberOfPhases() - 1;
     system.setPhaseType(phaseIndex, PhaseType.OIL);
 
@@ -1501,6 +1613,30 @@ public class TPmultiflash extends TPflash {
     int aqueousPhaseNumber = 0;
     // logger.info("Starting multiphase-flash....");
 
+    // For electrolyte systems, temporarily remove ions before stability analysis
+    // This allows proper oil-water-gas phase separation without ion interference
+    // Ions will be restored to aqueous phase(s) after stability analysis
+    double[] ionicZ = null;
+    boolean hasIons = false;
+    if (system.isChemicalSystem()) {
+      ionicZ = new double[system.getPhase(0).getNumberOfComponents()];
+      for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+        if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+          ionicZ[i] = system.getPhase(0).getComponent(i).getz();
+          if (ionicZ[i] > 1e-100) {
+            hasIons = true;
+          }
+          // Temporarily set ion z to near-zero for stability analysis
+          for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+            system.getPhase(phase).getComponent(i).setz(1e-100);
+          }
+        }
+      }
+      if (hasIons) {
+        system.init(1);
+      }
+    }
+
     // system.setNumberOfPhases(system.getNumberOfPhases()+1);
     if (doStabilityAnalysis) {
       stabilityAnalysis();
@@ -1515,14 +1651,48 @@ public class TPmultiflash extends TPflash {
     }
     // system.orderByDensity();
     doStabilityAnalysis = true;
+
+    // Debug: Check phases after stability analysis (before ion restoration)
+    if (hasIons) {
+      logger.debug("After stability analysis (ions removed): {} phases",
+          system.getNumberOfPhases());
+      for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+        logger.debug("  Phase {} type: {}", phase, system.getPhase(phase).getType());
+      }
+    }
+
+    // Restore ions to aqueous phase(s) after stability analysis
+    if (hasIons && ionicZ != null) {
+      aqueousPhaseNumber =
+          system.hasPhaseType(PhaseType.AQUEOUS) ? system.getPhaseNumberOfPhase("aqueous") : -1;
+      for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+        if (system.getPhase(0).getComponent(i).getIonicCharge() != 0 && ionicZ[i] > 1e-100) {
+          // Restore z values
+          for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+            system.getPhase(phase).getComponent(i).setz(ionicZ[i]);
+            // Set ions only in aqueous phase, near-zero in others
+            if (system.getPhase(phase).getType() == PhaseType.AQUEOUS) {
+              system.getPhase(phase).getComponent(i).setx(ionicZ[i]);
+            } else {
+              system.getPhase(phase).getComponent(i).setx(1e-50);
+            }
+          }
+        }
+      }
+      // Normalize aqueous phase and reinitialize
+      for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+        system.getPhase(phase).normalize();
+      }
+      system.init(1);
+    }
+
     // system.init(1);
     // system.display();
-    aqueousPhaseNumber = system.getPhaseNumberOfPhase("aqueous");
-    if (system.isChemicalSystem()) {
-      system.getChemicalReactionOperations().solveChemEq(system.getPhaseNumberOfPhase("aqueous"),
-          0);
-      system.getChemicalReactionOperations().solveChemEq(system.getPhaseNumberOfPhase("aqueous"),
-          1);
+    aqueousPhaseNumber =
+        system.hasPhaseType(PhaseType.AQUEOUS) ? system.getPhaseNumberOfPhase("aqueous") : -1;
+    if (system.isChemicalSystem() && aqueousPhaseNumber >= 0) {
+      system.getChemicalReactionOperations().solveChemEq(aqueousPhaseNumber, 0);
+      system.getChemicalReactionOperations().solveChemEq(aqueousPhaseNumber, 1);
     }
 
     int iterations = 0;
@@ -1536,32 +1706,29 @@ public class TPmultiflash extends TPflash {
 
       do {
         iterOut++;
-        if (system.isChemicalSystem()) {
-          if (system.getPhaseNumberOfPhase("aqueous") != aqueousPhaseNumber) {
-            aqueousPhaseNumber = system.getPhaseNumberOfPhase("aqueous");
-            system.getChemicalReactionOperations()
-                .solveChemEq(system.getPhaseNumberOfPhase("aqueous"), 0);
-            // system.getChemicalReactionOperations().solveChemEq(system.getPhaseNumberOfPhase("aqueous"),
-            // 1);
+        if (system.isChemicalSystem() && system.hasPhaseType(PhaseType.AQUEOUS)) {
+          int currentAqueousPhase = system.getPhaseNumberOfPhase("aqueous");
+          if (currentAqueousPhase != aqueousPhaseNumber) {
+            aqueousPhaseNumber = currentAqueousPhase;
+            system.getChemicalReactionOperations().solveChemEq(aqueousPhaseNumber, 0);
           }
 
-          for (int phaseNum = system.getPhaseNumberOfPhase("aqueous"); phaseNum < system
-              .getPhaseNumberOfPhase("aqueous") + 1; phaseNum++) {
+          if (aqueousPhaseNumber >= 0 && aqueousPhaseNumber < system.getNumberOfPhases()) {
             chemdev = 0.0;
-            double[] xchem = new double[system.getPhase(phaseNum).getNumberOfComponents()];
+            double[] xchem =
+                new double[system.getPhase(aqueousPhaseNumber).getNumberOfComponents()];
 
             for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              xchem[i] = system.getPhase(phaseNum).getComponent(i).getx();
+              xchem[i] = system.getPhase(aqueousPhaseNumber).getComponent(i).getx();
             }
 
             system.init(1);
-            system.getChemicalReactionOperations()
-                .solveChemEq(system.getPhaseNumberOfPhase("aqueous"), 1);
+            system.getChemicalReactionOperations().solveChemEq(aqueousPhaseNumber, 1);
 
             for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              chemdev += Math.abs(xchem[i] - system.getPhase(phaseNum).getComponent(i).getx());
+              chemdev +=
+                  Math.abs(xchem[i] - system.getPhase(aqueousPhaseNumber).getComponent(i).getx());
             }
-            // logger.info("chemdev: " + chemdev);
           }
         }
         setDoubleArrays();
@@ -1588,7 +1755,7 @@ public class TPmultiflash extends TPflash {
           diff = this.solveBeta();
         }
       } while ((Math.abs(chemdev) > 1e-10 && iterOut < 100)
-          || (iterOut < 3 && system.isChemicalSystem()));
+          || (iterOut < 3 && system.isChemicalSystem() && system.hasPhaseType(PhaseType.AQUEOUS)));
 
       // Check if water is present and if an aqueous phase should be seeded
       // Only try to seed aqueous phase once per flash operation (not on recursive calls)
@@ -1642,6 +1809,13 @@ public class TPmultiflash extends TPflash {
           multiPhaseTest = true;
           doStabilityAnalysis = false;
         }
+      }
+
+      // For electrolyte systems: ensure only one aqueous phase - the one with most aqueous content
+      // Other phases classified as AQUEOUS should be reclassified as OIL with ions removed
+      // This is skipped for molecular (non-chemical) systems for performance
+      if (system.isChemicalSystem()) {
+        ensureSingleAqueousPhase();
       }
 
       boolean hasRemovedPhase = false;

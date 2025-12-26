@@ -464,6 +464,11 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
    * calc_lngi.
    * </p>
    *
+   * <p>
+   * Uses standard Carnahan-Starling formula to match PhaseCPAInterface.calc_g() and
+   * ComponentSrkCPA.calc_lngi().
+   * </p>
+   *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
@@ -476,6 +481,10 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   /**
    * <p>
    * calc_lngidV.
+   * </p>
+   *
+   * <p>
+   * Uses standard Carnahan-Starling formula to match ComponentSrkCPA.calc_lngidV().
    * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -496,6 +505,10 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
    * calc_lngij.
    * </p>
    *
+   * <p>
+   * Uses standard Carnahan-Starling formula to match ComponentSrkCPA.calc_lngij().
+   * </p>
+   *
    * @param j a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -503,8 +516,15 @@ public class ComponentElectrolyteCPA extends ComponentModifiedFurstElectrolyteEo
   public double calc_lngij(int j, PhaseInterface phase) {
     double V = phase.getTotalVolume();
     double B = phase.getB();
-    double denom = (8.0 * V - B) * (4.0 * V - B);
-    return 2.0 * getBij(j) * (10.0 * V - B) / denom;
+    double temp1 = 8.0 * V - B;
+    double temp2 = 4.0 * V - B;
+    double temp3 = 10.0 * V - B;
+    double temp = temp3 / (temp1 * temp2);
+    double temp1sq = temp1 * temp1;
+    double temp2sq = temp2 * temp2;
+    double biJ = ((ComponentEosInterface) phase.getComponent(j)).getBi();
+    double tempj = (-biJ * temp1 * temp2 + biJ * temp3 * (temp1 + temp2)) / (temp1sq * temp2sq);
+    return 2.0 * (getBij(j) * temp + getBi() * tempj);
   }
 
   /** {@inheritDoc} */
