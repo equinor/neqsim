@@ -220,11 +220,11 @@ public class TVfractionFlash extends Flash {
     reportedUncountableState = true;
 
     if (componentName != null) {
-      logger.error(
+      logger.debug(
           "Solution contains uncountable numbers: {} for component '{}' in phase {} (value={})",
           field, componentName, phaseIndex, value);
     } else {
-      logger.error("Solution contains uncountable numbers: {} in phase {} (value={})", field,
+      logger.debug("Solution contains uncountable numbers: {} in phase {} (value={})", field,
           phaseIndex, value);
     }
   }
