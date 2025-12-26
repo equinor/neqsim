@@ -482,6 +482,12 @@ public class ChemicalReactionOperations
    * @param phaseNum a int
    */
   public void updateMoles(int phaseNum) {
+    // Guard against null newMoles - can happen if LP solver failed
+    if (newMoles == null) {
+      logger.debug("updateMoles called with null newMoles, skipping");
+      return;
+    }
+
     for (int i = 0; i < components.length; i++) {
       double currentMoles =
           system.getPhase(phaseNum).getComponents()[components[i].getComponentNumber()]
@@ -492,8 +498,7 @@ public class ChemicalReactionOperations
 
       // Use addMolesChemReac(component, dn, 0) to ONLY change phase moles
       // NOT system total moles - this preserves element conservation
-      system.getPhase(phaseNum).addMolesChemReac(
-          components[i].getComponentNumber(), delta, 0);
+      system.getPhase(phaseNum).addMolesChemReac(components[i].getComponentNumber(), delta, 0);
     }
 
     // Update phase total moles to match sum of component moles
@@ -554,22 +559,28 @@ public class ChemicalReactionOperations
       return false;
     }
 
-    calcChemRefPot(phaseNum);
+    // Note: calcChemRefPot was already called above, no need to call again
     if (firsttime || type == 0) {
       try {
         nVector = calcNVector();
         bVector = calcBVector();
-        
+
         // Save the original bVector for element conservation in subsequent calls
         originalBVector = bVector.clone();
 
         calcInertMoles(phaseNum);
         newMoles = initCalc.generateInitialEstimates(system, bVector, inertMoles, phaseNum);
 
-        updateMoles(phaseNum);
-
-        firsttime = false;
-        return true;
+        if (newMoles != null) {
+          updateMoles(phaseNum);
+          firsttime = false;
+          return true;
+        } else {
+          // LP solver failed - fall through to Newton solver
+          logger.debug("LP initial estimate failed, falling back to Newton solver");
+          solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phaseNum);
+          return solver.solve();
+        }
       } catch (Exception ex) {
         logger.error("error in chem eq", ex);
         solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phaseNum);
@@ -589,7 +600,7 @@ public class ChemicalReactionOperations
           bVector = calcBVector();
           logger.warn("Chemical equilibrium: originalBVector was null, recalculating bVector");
         }
-        
+
         // CRITICAL: Restore the LP solution moles to the reactive phase before Newton solve
         // The phase split during TPflash has corrupted the moles - restore them
         if (newMoles != null) {
@@ -599,8 +610,7 @@ public class ChemicalReactionOperations
             double targetMoles = newMoles[i];
             double diff = targetMoles - currentMoles;
             if (Math.abs(diff) > 1e-15) {
-              system.getPhase(phaseNum).addMolesChemReac(
-                  components[i].getComponentNumber(), diff);
+              system.getPhase(phaseNum).addMolesChemReac(components[i].getComponentNumber(), diff);
             }
           }
           // Update phase total moles
@@ -609,18 +619,19 @@ public class ChemicalReactionOperations
             phaseTotalMoles += system.getPhase(phaseNum)
                 .getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
           }
-          ((neqsim.thermo.phase.Phase) system.getPhase(phaseNum)).numberOfMolesInPhase = phaseTotalMoles;
+          ((neqsim.thermo.phase.Phase) system.getPhase(phaseNum)).numberOfMolesInPhase =
+              phaseTotalMoles;
           system.init_x_y();
         }
-        
+
         nVector = calcNVector();
-        
+
         solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phaseNum);
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }
       boolean solved = solver.solve();
-      
+
       return solved;
     }
   }
@@ -677,8 +688,7 @@ public class ChemicalReactionOperations
 
           double diff = newMoles - currentMoles;
           // Use Phase.addMolesChemReac with totdn=0 to preserve total system moles
-          system.getPhase(phaseNum).addMolesChemReac(
-              components[i].getComponentNumber(), diff, 0);
+          system.getPhase(phaseNum).addMolesChemReac(components[i].getComponentNumber(), diff, 0);
         }
 
         // Update phase total moles

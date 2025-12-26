@@ -41,6 +41,9 @@ public class LinearProgrammingChemicalEquilibrium
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(LinearProgrammingChemicalEquilibrium.class);
 
+  /** Minimum moles to prevent log(0) and division by zero. */
+  private static final double MIN_MOLES = 1e-30;
+
   double[] xEts = null;
   double[][] Amatrix;
   double[] chemRefPot;
@@ -377,12 +380,14 @@ public class LinearProgrammingChemicalEquilibrium
       return null;
     }
 
-    int compNumb = system.getPhase(phaseNum).getNumberOfComponents();
-    double[] lp_solution = new double[compNumb];
+    // Extract solution - we only care about reactive component moles
+    // The LP solution array is [slack, n_1, n_2, ..., n_components]
     double[] temp = optimal.getPoint();
+    double[] lp_solution = new double[components.length];
 
-    for (i = 0; i < compNumb - (compNumb - components.length); i++) {
-      lp_solution[i] = temp[i + 1];
+    for (i = 0; i < components.length; i++) {
+      // temp[i+1] because temp[0] is the slack variable
+      lp_solution[i] = Math.max(MIN_MOLES, temp[i + 1]);
     }
 
     return lp_solution;

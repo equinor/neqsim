@@ -190,8 +190,9 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         } else {
           kronDelt = 0.0;
         }
-        // definition of M_matrix changed by Neeraj. Initially only 1st term was
-        // included
+        // M_matrix definition: M_ij = δ_ij/n_i for the simplified ideal case
+        // Note: The full Smith-Missen formulation includes -1/n_t, but this implementation
+        // uses the simplified form which has proven more stable for the Newton iterations.
         // Protect against division by zero using MIN_MOLES
         double molesForDiv = Math.max(MIN_MOLES,
             system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
@@ -256,9 +257,13 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
     chem_pot_Jama_Matrix = new Matrix(chem_pot, 1);
 
-    AMA_matrix = A_Jama_matrix.times(M_Jama_matrix.inverse().times(A_Jama_matrix.transpose()));
-    AMU_matrix =
-        A_Jama_matrix.times(M_Jama_matrix.inverse().times(chem_pot_Jama_Matrix.transpose()));
+    // Use solve() instead of inverse() for numerical stability and efficiency
+    // M * X = A^T -> X = M.solve(A^T), then AMA = A * X
+    Matrix M_inv_AT = M_Jama_matrix.solve(A_Jama_matrix.transpose());
+    AMA_matrix = A_Jama_matrix.times(M_inv_AT);
+    // Similarly for AMU: M * Y = mu^T -> Y = M.solve(mu^T), then AMU = A * Y
+    Matrix M_inv_mu = M_Jama_matrix.solve(chem_pot_Jama_Matrix.transpose());
+    AMU_matrix = A_Jama_matrix.times(M_inv_mu);
     Matrix nmol = new Matrix(n_mol, 1);
     nmu = nmol.times(chem_pot_Jama_Matrix.transpose());
     // AMA_matrix.pr
@@ -327,11 +332,12 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     }
     // d_n_t = x_solve.get(NELE,0)*n_t;
 
-    // Equation 3.115
-    dn_matrix = M_Jama_matrix.inverse()
-        .times((A_Jama_matrix.transpose().times(x_solve.getMatrix(0, NELE - 1, 0, 0)))
-            .minus(chem_pot_Jama_Matrix.transpose()))
-        .plus(new Matrix(n_mol, 1).transpose().times(x_solve.get(NELE, 0)));
+    // Equation 3.115 (Smith-Missen): dn = M^-1 * (A^T * lambda - mu) + n * tau
+    // Use solve() instead of inverse() for numerical stability
+    Matrix lambdaTerms = A_Jama_matrix.transpose().times(x_solve.getMatrix(0, NELE - 1, 0, 0));
+    Matrix rhs = lambdaTerms.minus(chem_pot_Jama_Matrix.transpose());
+    Matrix M_inv_rhs = M_Jama_matrix.solve(rhs);
+    dn_matrix = M_inv_rhs.plus(new Matrix(n_mol, 1).transpose().times(x_solve.get(NELE, 0)));
     d_n = dn_matrix.transpose().getArray()[0];
   }
 
@@ -385,8 +391,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         phaseTotalMoles += system.getPhase(phasenumb).getComponent(i).getNumberOfMolesInPhase();
       }
     }
-    ((neqsim.thermo.phase.Phase) system.getPhase(phasenumb)).numberOfMolesInPhase =
-        phaseTotalMoles;
+    ((neqsim.thermo.phase.Phase) system.getPhase(phasenumb)).numberOfMolesInPhase = phaseTotalMoles;
 
     system.initBeta();
     system.init_x_y();
@@ -492,16 +497,16 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
         if (error <= errOld) {
           updateMoles();
-          
+
           // Save the correct moles before init(1) might corrupt them
           double[] savedMolesInPhase = new double[components.length];
           for (int i = 0; i < components.length; i++) {
             savedMolesInPhase[i] = system.getPhase(phasenumb)
                 .getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
           }
-          
+
           system.init(1, phasenumb);
-          
+
           // Restore the correct moles after init(1)
           for (int i = 0; i < components.length; i++) {
             double currentMoles = system.getPhase(phasenumb)
@@ -509,12 +514,11 @@ public class ChemicalEquilibrium implements java.io.Serializable {
             if (Math.abs(currentMoles - savedMolesInPhase[i]) > 1e-15) {
               // Moles were corrupted by init(1), restore them
               double diff = savedMolesInPhase[i] - currentMoles;
-              system.getPhase(phasenumb).addMolesChemReac(
-                  components[i].getComponentNumber(), diff);
+              system.getPhase(phasenumb).addMolesChemReac(components[i].getComponentNumber(), diff);
             }
           }
           system.init_x_y(); // Recalculate x values to match restored moles
-          
+
           calcRefPot();
         }
 
@@ -968,23 +972,25 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   private Matrix solveLeastSquares(Matrix A, Matrix b) {
     Jama.SingularValueDecomposition svd = A.svd();
     Matrix U = svd.getU();
-    Matrix S = svd.getS();
+    double[] singularValues = svd.getSingularValues();
     Matrix V = svd.getV();
 
-    // Compute pseudo-inverse of S (diagonal matrix)
-    int n = S.getColumnDimension();
-    double tol = 1e-12 * svd.norm2(); // Tolerance for singular values
-    Matrix Sinv = new Matrix(n, n);
-    for (int i = 0; i < n; i++) {
-      double sval = S.get(i, i);
-      if (Math.abs(sval) > tol) {
-        Sinv.set(i, i, 1.0 / sval);
-      } else {
-        Sinv.set(i, i, 0.0); // Truncate small singular values
+    // Compute pseudo-inverse: A+ = V * S+ * U^T
+    // S+ is the pseudo-inverse of the diagonal matrix of singular values
+    int m = A.getRowDimension();
+    int n = A.getColumnDimension();
+    int minDim = Math.min(m, n);
+    double tol = 1e-12 * (singularValues.length > 0 ? singularValues[0] : 1.0);
+
+    // Create S+ with dimensions n x m (transpose of S dimensions)
+    Matrix Sinv = new Matrix(n, m);
+    for (int i = 0; i < minDim; i++) {
+      if (Math.abs(singularValues[i]) > tol) {
+        Sinv.set(i, i, 1.0 / singularValues[i]);
       }
     }
 
-    // x = V * Sinv * U^T * b
+    // x = V * S+ * U^T * b
     return V.times(Sinv.times(U.transpose().times(b)));
   }
 }
