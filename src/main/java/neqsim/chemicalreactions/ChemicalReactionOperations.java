@@ -15,6 +15,7 @@ import neqsim.chemicalreactions.chemicalequilibrium.ChemicalEquilibrium;
 import neqsim.chemicalreactions.chemicalequilibrium.LinearProgrammingChemicalEquilibrium;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionList;
 import neqsim.chemicalreactions.kinetics.Kinetics;
+import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -44,11 +45,6 @@ public class ChemicalReactionOperations
   double[] nVector;
   int iter = 0;
   double[] bVector;
-  /**
-   * Original bVector calculated at initialization (type=0). Element totals must be conserved, so
-   * this is stored and reused in subsequent calls to solveChemEq with type=1.
-   */
-  double[] originalBVector;
   int phase = 1;
   double[] chemRefPot;
   double[] newMoles;
@@ -129,6 +125,8 @@ public class ChemicalReactionOperations
     reactionList.checkReactions(system.getPhase(phaseNum));
     chemRefPot = calcChemRefPot(phaseNum);
     elements = getAllElements();
+    initCalc = null;
+    Amatrix = null;
     try {
       initCalc =
           new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, phase);
@@ -136,9 +134,7 @@ public class ChemicalReactionOperations
       logger.error(ex.getMessage(), ex);
     }
     setComponents(phaseNum);
-    if (initCalc != null) {
-      Amatrix = initCalc.getA();
-    }
+    Amatrix = calcAmatrix();
     nVector = calcNVector();
     bVector = calcBVector();
     firsttime = true;
@@ -184,6 +180,7 @@ public class ChemicalReactionOperations
       this.phase = reactivePhase >= 0 ? reactivePhase : 0;
       setReactiveComponents();
       reactionList.checkReactions(system.getPhase(phase));
+      reactionList.createReactionMatrix(system.getPhase(phase), components);
       chemRefPot = calcChemRefPot(phase);
       elements = getAllElements();
 
@@ -194,7 +191,7 @@ public class ChemicalReactionOperations
         logger.error(ex.getMessage(), ex);
       }
       setComponents();
-      Amatrix = initCalc.getA();
+      Amatrix = calcAmatrix();
       nVector = calcNVector();
       bVector = calcBVector();
     } else {
@@ -339,6 +336,14 @@ public class ChemicalReactionOperations
    * <p>
    * addNewComponents.
    * </p>
+   * 
+   * <p>
+   * Adds new reactive components (typically ionic species from chemical reactions) to the system.
+   * Components are initialized with a small but numerically reasonable amount to enable the
+   * chemical equilibrium solver to converge. Ionic species are initialized with a higher minimum to
+   * provide a reasonable starting point for acid-base equilibria and help the Newton solver find
+   * physically meaningful solutions.
+   * </p>
    */
   public void addNewComponents() {
     boolean newComp;
@@ -354,8 +359,14 @@ public class ChemicalReactionOperations
         }
       }
       if (newComp) {
-        system.addComponent(name, 1.0e-40);
-        // System.out.println("new component added: " + name);
+        // Use initial amounts close to neutral pH equilibrium
+        // For pure water at 25C: [H3O+] = [OH-] = 1e-7 M
+        // In ~10 mol water (~0.18 L): n(H3O+) = n(OH-) ≈ 1.8e-8 mol
+        // Using 1e-8 mol as a conservative starting point that works for most systems
+        // The Newton solver will adjust these to the correct equilibrium values
+        double initialMoles = 1.0e-8;
+        system.addComponent(name, initialMoles);
+        // System.out.println("new component added: " + name + " with " + initialMoles + " mol");
       }
     }
   }
@@ -446,26 +457,71 @@ public class ChemicalReactionOperations
 
   /**
    * <p>
+   * calcAmatrix.
+   * </p>
+   * 
+   * <p>
+   * Calculates the stoichiometry matrix (A) based on the components and elements in the system.
+   * This ensures the matrix is available even if the LP solver fails to initialize.
+   * </p>
+   *
+   * @return the stoichiometry matrix A (elements x components)
+   */
+  public double[][] calcAmatrix() {
+    if (components == null || elements == null) {
+      return null;
+    }
+    double[][] A = new double[elements.length][components.length];
+    for (int j = 0; j < components.length; j++) {
+      String[] compElements = components[j].getElements().getElementNames();
+      double[] compCoefs = components[j].getElements().getElementCoefs();
+      for (int i = 0; i < elements.length; i++) {
+        for (int k = 0; k < compElements.length; k++) {
+          if (compElements[k].equals(elements[i])) {
+            A[i][j] = compCoefs[k];
+            break;
+          }
+        }
+      }
+    }
+    return A;
+  }
+
+  /**
+   * <p>
    * calcChemRefPot.
+   * </p>
+   *
+   * <p>
+   * Calculates reference potentials for the chemical equilibrium solver. The reference potentials
+   * are derived from reaction equilibrium constants (via -RT*ln(K)) and determine the equilibrium
+   * composition. For components not appearing in any reaction, Gibbs energy of formation is used as
+   * a fallback.
    * </p>
    *
    * @param phaseNum a int
    * @return an array of type double
    */
   public double[] calcChemRefPot(int phaseNum) {
-    double[] referencePotentials = new double[components.length];
-    reactionList.createReactionMatrix(system.getPhase(phaseNum), components);
-    double[] newreferencePotentials =
+    // Delegate to ChemicalReactionList to calculate consistent reference potentials
+    // using matrix algebra (solving sum(nu_i * mu_i) = -RT*ln(K)).
+    double[] potentials =
         reactionList.updateReferencePotentials(system.getPhase(phaseNum), components);
-    if (newreferencePotentials != null) {
-      for (int i = 0; i < newreferencePotentials.length; i++) {
-        referencePotentials[i] = newreferencePotentials[i];
-        components[i].setReferencePotential(referencePotentials[i]);
+
+    // Fallback if calculation failed (e.g. rank deficiency)
+    if (potentials == null) {
+      potentials = new double[components.length];
+      for (int i = 0; i < components.length; i++) {
+        potentials[i] = components[i].getGibbsEnergyOfFormation();
       }
-      return referencePotentials;
-    } else {
-      return null;
     }
+
+    // Set reference potentials on components
+    for (int i = 0; i < components.length; i++) {
+      components[i].setReferencePotential(potentials[i]);
+    }
+
+    return potentials;
   }
 
   /**
@@ -559,152 +615,46 @@ public class ChemicalReactionOperations
       return false;
     }
 
-    // Note: calcChemRefPot was already called above, no need to call again
+    if (Amatrix == null) {
+      Amatrix = calcAmatrix();
+    }
+    if (Amatrix == null) {
+      return false;
+    }
+
+    // Always calculate current element abundance based on current phase composition.
+    // This ensures that if mass transfer (Flash) has occurred, we respect the new element balance.
+    nVector = calcNVector();
+    bVector = calcBVector();
+
     if (firsttime || type == 0) {
       try {
-        nVector = calcNVector();
-        bVector = calcBVector();
-
-        // Save the original bVector for element conservation in subsequent calls
-        originalBVector = bVector.clone();
-
         calcInertMoles(phaseNum);
-        newMoles = initCalc.generateInitialEstimates(system, bVector, inertMoles, phaseNum);
+        if (initCalc != null) {
+          newMoles = initCalc.generateInitialEstimates(system, bVector, inertMoles, phaseNum);
+        }
 
         if (newMoles != null) {
           updateMoles(phaseNum);
           firsttime = false;
-          return true;
+          // LP provides initial estimate - now fall through to Newton solver for refinement
         } else {
           // LP solver failed - fall through to Newton solver
           logger.debug("LP initial estimate failed, falling back to Newton solver");
-          solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phaseNum);
-          return solver.solve();
         }
       } catch (Exception ex) {
         logger.error("error in chem eq", ex);
-        solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phaseNum);
-        return solver.solve();
       }
-    } else {
-      // NOTE: Do NOT recalculate bVector here!
-      // The element totals (bVector) must be conserved from the initial calculation.
-      // Recalculating would pick up erroneous values after init(1) redistributes phases.
-
-      try {
-        // Use the original bVector for element conservation - do NOT recalculate!
-        if (originalBVector != null) {
-          bVector = originalBVector;
-        } else {
-          // Fallback: recalculate if original was never set (shouldn't happen in normal flow)
-          bVector = calcBVector();
-          logger.warn("Chemical equilibrium: originalBVector was null, recalculating bVector");
-        }
-
-        // CRITICAL: Restore the LP solution moles to the reactive phase before Newton solve
-        // The phase split during TPflash has corrupted the moles - restore them
-        if (newMoles != null) {
-          for (int i = 0; i < components.length; i++) {
-            double currentMoles = system.getPhase(phaseNum)
-                .getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
-            double targetMoles = newMoles[i];
-            double diff = targetMoles - currentMoles;
-            if (Math.abs(diff) > 1e-15) {
-              system.getPhase(phaseNum).addMolesChemReac(components[i].getComponentNumber(), diff);
-            }
-          }
-          // Update phase total moles
-          double phaseTotalMoles = 0;
-          for (int i = 0; i < components.length; i++) {
-            phaseTotalMoles += system.getPhase(phaseNum)
-                .getComponent(components[i].getComponentNumber()).getNumberOfMolesInPhase();
-          }
-          ((neqsim.thermo.phase.Phase) system.getPhase(phaseNum)).numberOfMolesInPhase =
-              phaseTotalMoles;
-          system.init_x_y();
-        }
-
-        nVector = calcNVector();
-
-        solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phaseNum);
-      } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
-      }
-      boolean solved = solver.solve();
-
-      return solved;
-    }
-  }
-
-  /**
-   * Checks and enforces element conservation (mass balance).
-   * 
-   * <p>
-   * Uses Phase.addMolesChemReac with totdn=0 to only affect phase moles without corrupting total
-   * system moles.
-   * </p>
-   * 
-   * @param phaseNum the phase index
-   * @param targetBVector the target element abundance vector
-   */
-  private void checkAndCorrectMassBalance(int phaseNum, double[] targetBVector) {
-    double[] currentN = calcNVector();
-
-    Matrix A = new Matrix(Amatrix);
-    Matrix N = new Matrix(currentN, 1);
-    Matrix currentB = A.times(N.transpose()).transpose();
-    double[] currentBArr = currentB.getArray()[0];
-
-    double[] error = new double[targetBVector.length];
-    boolean needsCorrection = false;
-    double maxError = 0.0;
-
-    for (int i = 0; i < targetBVector.length; i++) {
-      error[i] = targetBVector[i] - currentBArr[i];
-      if (Math.abs(error[i]) > 1e-9) { // Tolerance
-        needsCorrection = true;
-      }
-      if (Math.abs(error[i]) > maxError)
-        maxError = Math.abs(error[i]);
     }
 
-    if (needsCorrection) {
-      // Correction: deltaN = A^T * (A A^T)^-1 * error
-      Matrix E = new Matrix(error, 1).transpose();
-      Matrix AAT = A.times(A.transpose());
-
-      try {
-        Matrix lambda = AAT.solve(E);
-        Matrix deltaN = A.transpose().times(lambda);
-        double[] deltaNArr = deltaN.transpose().getArray()[0];
-
-        for (int i = 0; i < components.length; i++) {
-          double currentMoles =
-              system.getPhase(phaseNum).getComponents()[components[i].getComponentNumber()]
-                  .getNumberOfMolesInPhase();
-          double newMoles = currentMoles + deltaNArr[i];
-          if (newMoles < 1e-15)
-            newMoles = 1e-15; // Avoid negative moles
-
-          double diff = newMoles - currentMoles;
-          // Use Phase.addMolesChemReac with totdn=0 to preserve total system moles
-          system.getPhase(phaseNum).addMolesChemReac(components[i].getComponentNumber(), diff, 0);
-        }
-
-        // Update phase total moles
-        double phaseTotalMoles = 0;
-        for (int i = 0; i < system.getPhase(phaseNum).getNumberOfComponents(); i++) {
-          phaseTotalMoles += system.getPhase(phaseNum).getComponent(i).getNumberOfMolesInPhase();
-        }
-        ((neqsim.thermo.phase.Phase) system.getPhase(phaseNum)).numberOfMolesInPhase =
-            phaseTotalMoles;
-
-        system.initBeta();
-        system.init_x_y();
-
-      } catch (Exception ex) {
-        logger.error("Failed to correct mass balance: " + ex.getMessage());
-      }
+    // Newton solver (ChemicalEquilibrium)
+    // We start from the current phase composition (possibly improved by LP initial estimate).
+    try {
+      solver = new ChemicalEquilibrium(Amatrix, bVector, system, components, phaseNum);
+      return solver.solve();
+    } catch (Exception ex) {
+      logger.error("Error in chemical equilibrium solver", ex);
+      return false;
     }
   }
 
