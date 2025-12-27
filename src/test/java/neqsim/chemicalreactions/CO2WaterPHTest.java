@@ -63,9 +63,11 @@ public class CO2WaterPHTest {
 
     // Print reaction list
     System.out.println("\nLoaded reactions:");
-    neqsim.chemicalreactions.chemicalreaction.ChemicalReactionList reactionList = system.getChemicalReactionOperations().getReactionList();
+    neqsim.chemicalreactions.chemicalreaction.ChemicalReactionList reactionList =
+        system.getChemicalReactionOperations().getReactionList();
     for (int r = 0; r < reactionList.getChemicalReactionList().size(); r++) {
-      neqsim.chemicalreactions.chemicalreaction.ChemicalReaction reaction = reactionList.getReaction(r);
+      neqsim.chemicalreactions.chemicalreaction.ChemicalReaction reaction =
+          reactionList.getReaction(r);
       System.out.println("  Reaction " + r + ": " + reaction.getName() + ", K = "
           + reaction.getK(system.getPhase(0)));
       String[] names = reaction.getNames();

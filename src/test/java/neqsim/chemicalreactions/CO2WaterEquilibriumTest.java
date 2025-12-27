@@ -275,7 +275,8 @@ public class CO2WaterEquilibriumTest {
     system.init(0);
 
     // Get the chemical equilibrium solver
-    neqsim.chemicalreactions.ChemicalReactionOperations chemOps = system.getChemicalReactionOperations();
+    neqsim.chemicalreactions.ChemicalReactionOperations chemOps =
+        system.getChemicalReactionOperations();
     assertNotNull(chemOps, "Chemical reaction operations should not be null");
 
     // Solve chemical equilibrium
