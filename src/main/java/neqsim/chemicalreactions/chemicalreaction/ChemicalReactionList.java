@@ -304,8 +304,9 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
             }
           }
         }
+        // Store -RT*ln(K) to match equilibrium relationship: Σ(ν_i * μ_i) = -RT*ln(K)
         reacGMatrix[reactionNumber][components.length] =
-            R * phase.getTemperature() * Math.log(reaction.getK(phase));
+            -R * phase.getTemperature() * Math.log(reaction.getK(phase));
         reactionNumber++;
       }
     } catch (Exception ex) {
@@ -331,8 +332,10 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   public double[] updateReferencePotentials(PhaseInterface phase, ComponentInterface[] components) {
     this.refPotComponents = components; // Store for use in calcReferencePotentials
     for (int i = 0; i < chemicalReactionList.size(); i++) {
+      // Store -RT*ln(K) to match equilibrium relationship: Σ(ν_i * μ_i) = -RT*ln(K)
+      // Must be consistent with createReactionMatrix()
       reacGMatrix[i][components.length] =
-          R * phase.getTemperature() * Math.log((chemicalReactionList.get(i)).getK(phase));
+          -R * phase.getTemperature() * Math.log((chemicalReactionList.get(i)).getK(phase));
     }
     return calcReferencePotentials();
   }
@@ -478,17 +481,17 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
           }
 
           if (allOthersKnown) {
-            // Calculate: mu_dep = (-RT*ln(K) - sum(nu_i * mu_i for i != dep)) / nu_dep
-            double rtLnK = reacGMatrix[r][nCols];
+            // Calculate: mu_dep = (B - sum(nu_i * mu_i for i != dep)) / nu_dep
+            // where B = -RT*ln(K) is stored in reacGMatrix
+            double negRTlnK = reacGMatrix[r][nCols];
             double sumOthers = 0.0;
-            StringBuilder calcDebug = new StringBuilder();
             for (int j = 0; j < nCols; j++) {
               if (j != depCol) {
                 double term = reacGMatrix[r][j] * result[j];
                 sumOthers += term;
               }
             }
-            result[depCol] = (-rtLnK - sumOthers) / nuDep;
+            result[depCol] = (negRTlnK - sumOthers) / nuDep;
             computed[depCol] = true;
             progress = true;
             break; // Found reference potential for this component
