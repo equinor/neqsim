@@ -23,10 +23,10 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
   // ============ STABILITY CONSTANTS ============
   /** Minimum moles to prevent log(0) and division by zero. */
-  private static final double MIN_MOLES = 1e-30;
+  private static final double MIN_MOLES = 1e-60;
 
   /** Maximum iterations allowed for chemical equilibrium solver. */
-  private static final int MAX_ITERATIONS = 50;
+  private static final int MAX_ITERATIONS = 100;
 
   /** Counter for consecutive non-improving iterations to detect stagnation. */
   private static final int STAGNATION_LIMIT = 10;
@@ -128,6 +128,12 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     // chem_pot_pure = new double[NSPEC];
     M_matrix = new double[NSPEC][NSPEC];
     d_n = new double[NSPEC];
+    if (A_matrix != null) {
+      A_Jama_matrix = new Matrix(A_matrix);
+    }
+    if (b_element != null) {
+      b_matrix = new Matrix(b_element, 1);
+    }
 
     for (int i = 0; i < components.length; i++) {
       if (components[i].getComponentName().equals("water")) {
@@ -230,8 +236,6 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     // printComp();
 
     M_Jama_matrix = new Matrix(M_matrix);
-    A_Jama_matrix = new Matrix(A_matrix);
-    b_matrix = new Matrix(b_element, 1);
 
     // M_Jama_matrix.print(10, 10);
     // Following 5 statements added by Neeraj
@@ -259,10 +263,20 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
     // Use solve() instead of inverse() for numerical stability and efficiency
     // M * X = A^T -> X = M.solve(A^T), then AMA = A * X
-    Matrix M_inv_AT = M_Jama_matrix.solve(A_Jama_matrix.transpose());
+    Matrix M_inv_AT;
+    try {
+      M_inv_AT = M_Jama_matrix.solve(A_Jama_matrix.transpose());
+    } catch (Exception e) {
+      M_inv_AT = solveLeastSquares(M_Jama_matrix, A_Jama_matrix.transpose());
+    }
     AMA_matrix = A_Jama_matrix.times(M_inv_AT);
     // Similarly for AMU: M * Y = mu^T -> Y = M.solve(mu^T), then AMU = A * Y
-    Matrix M_inv_mu = M_Jama_matrix.solve(chem_pot_Jama_Matrix.transpose());
+    Matrix M_inv_mu;
+    try {
+      M_inv_mu = M_Jama_matrix.solve(chem_pot_Jama_Matrix.transpose());
+    } catch (Exception e) {
+      M_inv_mu = solveLeastSquares(M_Jama_matrix, chem_pot_Jama_Matrix.transpose());
+    }
     AMU_matrix = A_Jama_matrix.times(M_inv_mu);
     Matrix nmol = new Matrix(n_mol, 1);
     nmu = nmol.times(chem_pot_Jama_Matrix.transpose());
@@ -336,7 +350,12 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     // Use solve() instead of inverse() for numerical stability
     Matrix lambdaTerms = A_Jama_matrix.transpose().times(x_solve.getMatrix(0, NELE - 1, 0, 0));
     Matrix rhs = lambdaTerms.minus(chem_pot_Jama_Matrix.transpose());
-    Matrix M_inv_rhs = M_Jama_matrix.solve(rhs);
+    Matrix M_inv_rhs;
+    try {
+      M_inv_rhs = M_Jama_matrix.solve(rhs);
+    } catch (Exception e) {
+      M_inv_rhs = solveLeastSquares(M_Jama_matrix, rhs);
+    }
     dn_matrix = M_inv_rhs.plus(new Matrix(n_mol, 1).transpose().times(x_solve.get(NELE, 0)));
     d_n = dn_matrix.transpose().getArray()[0];
   }
@@ -873,6 +892,12 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
     step = innerStep(i, n_omega, check, step, false);
     // System.out.println("step ... " + step);
+
+    // Clamp step to valid range [0, 1] for Newton iterations
+    // Negative steps or steps > 1 can cause divergence and element conservation violations
+    if (step < 0 || step > 1 || Double.isNaN(step) || Double.isInfinite(step)) {
+      step = 1.0;
+    }
 
     // BUG FIX: Return the calculated step instead of always 1.0
     // The calculated step provides damping to prevent overshooting during Newton iterations

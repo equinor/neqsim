@@ -123,6 +123,7 @@ public class ChemicalReactionOperations
     this.phase = phaseNum;
     setReactiveComponents(phaseNum);
     reactionList.checkReactions(system.getPhase(phaseNum));
+    reactionList.createReactionMatrix(system.getPhase(phaseNum), components);
     chemRefPot = calcChemRefPot(phaseNum);
     elements = getAllElements();
     initCalc = null;
@@ -359,14 +360,12 @@ public class ChemicalReactionOperations
         }
       }
       if (newComp) {
-        // Use initial amounts close to neutral pH equilibrium
-        // For pure water at 25C: [H3O+] = [OH-] = 1e-7 M
-        // In ~10 mol water (~0.18 L): n(H3O+) = n(OH-) ≈ 1.8e-8 mol
-        // Using 1e-8 mol as a conservative starting point that works for most systems
-        // The Newton solver will adjust these to the correct equilibrium values
-        double initialMoles = 1.0e-8;
+        // Add with a small non-zero initial amount for numerical stability.
+        // The equilibrium solver will redistribute moles according to reaction equilibrium.
+        // Using 1e-10 mol which is negligible compared to typical component amounts
+        // but large enough for the LP/Newton solvers to work numerically.
+        double initialMoles = 1.0e-10;
         system.addComponent(name, initialMoles);
-        // System.out.println("new component added: " + name + " with " + initialMoles + " mol");
       }
     }
   }
@@ -462,16 +461,19 @@ public class ChemicalReactionOperations
    * 
    * <p>
    * Calculates the stoichiometry matrix (A) based on the components and elements in the system.
-   * This ensures the matrix is available even if the LP solver fails to initialize.
+   * This matrix includes an additional row for ionic charge balance (electroneutrality constraint),
+   * which ensures that the sum of positive and negative charges in the solution equals zero.
    * </p>
    *
-   * @return the stoichiometry matrix A (elements x components)
+   * @return the stoichiometry matrix A (elements + 1 x components), where the last row contains
+   *         ionic charges for electroneutrality
    */
   public double[][] calcAmatrix() {
     if (components == null || elements == null) {
       return null;
     }
-    double[][] A = new double[elements.length][components.length];
+    // Add one extra row for ionic charge balance (electroneutrality)
+    double[][] A = new double[elements.length + 1][components.length];
     for (int j = 0; j < components.length; j++) {
       String[] compElements = components[j].getElements().getElementNames();
       double[] compCoefs = components[j].getElements().getElementCoefs();
@@ -483,6 +485,11 @@ public class ChemicalReactionOperations
           }
         }
       }
+    }
+    // Add ionic charge row for electroneutrality constraint
+    // This ensures sum(n_i * z_i) = 0 where z_i is the ionic charge of component i
+    for (int j = 0; j < components.length; j++) {
+      A[elements.length][j] = components[j].getIonicCharge();
     }
     return A;
   }
@@ -703,6 +710,23 @@ public class ChemicalReactionOperations
    */
   public ComponentInterface[] getComponents() {
     return components;
+  }
+
+  /**
+   * <p>
+   * getAmatrix.
+   * </p>
+   * 
+   * <p>
+   * Returns the stoichiometry matrix (A) that relates components to elements. The matrix has
+   * dimensions (elements.length + 1) x components.length, where the last row contains ionic charges
+   * for the electroneutrality constraint.
+   * </p>
+   *
+   * @return the stoichiometry matrix A
+   */
+  public double[][] getAmatrix() {
+    return Amatrix;
   }
 
   /**
