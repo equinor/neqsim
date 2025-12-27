@@ -161,6 +161,14 @@ public class FlowPatternDetector {
    * <p>
    * Uses dimensionless groups based on superficial mass fluxes.
    * </p>
+   *
+   * @param usg superficial gas velocity [m/s]
+   * @param usl superficial liquid velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param rhoL liquid density [kg/m³]
+   * @param muL liquid dynamic viscosity [Pa·s]
+   * @param sigma surface tension [N/m]
+   * @return detected flow pattern
    */
   private static FlowPattern detectBakerChart(double usg, double usl, double rhoG, double rhoL,
       double muL, double sigma) {

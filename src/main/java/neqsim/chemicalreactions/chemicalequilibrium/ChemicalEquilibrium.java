@@ -23,10 +23,10 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
   // ============ STABILITY CONSTANTS ============
   /** Minimum moles to prevent log(0) and division by zero. */
-  private static final double MIN_MOLES = 1e-30;
+  private static final double MIN_MOLES = 1e-60;
 
   /** Maximum iterations allowed for chemical equilibrium solver. */
-  private static final int MAX_ITERATIONS = 50;
+  private static final int MAX_ITERATIONS = 100;
 
   /** Counter for consecutive non-improving iterations to detect stagnation. */
   private static final int STAGNATION_LIMIT = 10;
@@ -56,6 +56,31 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * with simple iterations then switches to derivatives for faster convergence.
    */
   private boolean useAdaptiveDerivatives = false;
+
+  /**
+   * Flag to enable the full Smith-Missen M-matrix with the -1/n_t coupling term. When true, uses
+   * M_ij = δ_ij/n_i - 1/n_t instead of the simplified M_ij = δ_ij/n_i. The full form provides
+   * better quadratic convergence near the solution but may be less stable for some systems. Default
+   * is false for backward compatibility and stability.
+   */
+  private boolean useFullMMatrix = false;
+
+  // ============ CONFIGURABLE SOLVER PARAMETERS ============
+  /** Maximum iterations allowed (configurable). Default is MAX_ITERATIONS. */
+  private int maxIterations = MAX_ITERATIONS;
+
+  /** Convergence tolerance for relative mole change. Default is 1e-8. */
+  private double convergenceTolerance = 1e-8;
+
+  // ============ SOLVER METRICS (from last solve) ============
+  /** Number of iterations from the last solve() call. */
+  private int lastIterationCount = 0;
+
+  /** Final relative error from the last solve() call. */
+  private double lastError = Double.NaN;
+
+  /** Whether the last solve() call converged successfully. */
+  private boolean lastConverged = false;
 
   SystemInterface system;
   double[] nVector;
@@ -128,6 +153,12 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     // chem_pot_pure = new double[NSPEC];
     M_matrix = new double[NSPEC][NSPEC];
     d_n = new double[NSPEC];
+    if (A_matrix != null) {
+      A_Jama_matrix = new Matrix(A_matrix);
+    }
+    if (b_element != null) {
+      b_matrix = new Matrix(b_element, 1);
+    }
 
     for (int i = 0; i < components.length; i++) {
       if (components[i].getComponentName().equals("water")) {
@@ -191,13 +222,19 @@ public class ChemicalEquilibrium implements java.io.Serializable {
           kronDelt = 0.0;
         }
         // M_matrix definition: M_ij = δ_ij/n_i for the simplified ideal case
-        // Note: The full Smith-Missen formulation includes -1/n_t, but this implementation
-        // uses the simplified form which has proven more stable for the Newton iterations.
+        // The full Smith-Missen formulation uses M_ij = δ_ij/n_i - 1/n_t
+        // The -1/n_t term couples all species through total moles and improves convergence
+        // near the solution, but may be less stable for some systems.
         // Protect against division by zero using MIN_MOLES
         double molesForDiv = Math.max(MIN_MOLES,
             system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()]
                 .getNumberOfMolesInPhase());
         M_matrix[i][k] = kronDelt / molesForDiv;
+
+        // Add the -1/n_t coupling term if full M-matrix is enabled
+        if (useFullMMatrix) {
+          M_matrix[i][k] -= 1.0 / Math.max(MIN_MOLES, n_t);
+        }
 
         // Add fugacity coefficient derivative if enabled
         // dfugdn contains: δ_ij/n_i - 1/n_t + ∂ln(φ_i)/∂n_j
@@ -230,8 +267,6 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     // printComp();
 
     M_Jama_matrix = new Matrix(M_matrix);
-    A_Jama_matrix = new Matrix(A_matrix);
-    b_matrix = new Matrix(b_element, 1);
 
     // M_Jama_matrix.print(10, 10);
     // Following 5 statements added by Neeraj
@@ -259,10 +294,20 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
     // Use solve() instead of inverse() for numerical stability and efficiency
     // M * X = A^T -> X = M.solve(A^T), then AMA = A * X
-    Matrix M_inv_AT = M_Jama_matrix.solve(A_Jama_matrix.transpose());
+    Matrix M_inv_AT;
+    try {
+      M_inv_AT = M_Jama_matrix.solve(A_Jama_matrix.transpose());
+    } catch (Exception e) {
+      M_inv_AT = solveLeastSquares(M_Jama_matrix, A_Jama_matrix.transpose());
+    }
     AMA_matrix = A_Jama_matrix.times(M_inv_AT);
     // Similarly for AMU: M * Y = mu^T -> Y = M.solve(mu^T), then AMU = A * Y
-    Matrix M_inv_mu = M_Jama_matrix.solve(chem_pot_Jama_Matrix.transpose());
+    Matrix M_inv_mu;
+    try {
+      M_inv_mu = M_Jama_matrix.solve(chem_pot_Jama_Matrix.transpose());
+    } catch (Exception e) {
+      M_inv_mu = solveLeastSquares(M_Jama_matrix, chem_pot_Jama_Matrix.transpose());
+    }
     AMU_matrix = A_Jama_matrix.times(M_inv_mu);
     Matrix nmol = new Matrix(n_mol, 1);
     nmu = nmol.times(chem_pot_Jama_Matrix.transpose());
@@ -336,7 +381,12 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     // Use solve() instead of inverse() for numerical stability
     Matrix lambdaTerms = A_Jama_matrix.transpose().times(x_solve.getMatrix(0, NELE - 1, 0, 0));
     Matrix rhs = lambdaTerms.minus(chem_pot_Jama_Matrix.transpose());
-    Matrix M_inv_rhs = M_Jama_matrix.solve(rhs);
+    Matrix M_inv_rhs;
+    try {
+      M_inv_rhs = M_Jama_matrix.solve(rhs);
+    } catch (Exception e) {
+      M_inv_rhs = solveLeastSquares(M_Jama_matrix, rhs);
+    }
     dn_matrix = M_inv_rhs.plus(new Matrix(n_mol, 1).transpose().times(x_solve.get(NELE, 0)));
     d_n = dn_matrix.transpose().getArray()[0];
   }
@@ -359,10 +409,12 @@ public class ChemicalEquilibrium implements java.io.Serializable {
       double currentMoles =
           system.getPhase(phasenumb).getComponents()[compNum].getNumberOfMolesInPhase();
       double targetMoles;
-      if (n_mol[i] > 0) {
+      if (n_mol[i] > MIN_MOLES) {
         targetMoles = n_mol[i];
       } else {
-        targetMoles = 0.01 * currentMoles; // Keep small positive value
+        // Use MIN_MOLES to maintain element balance while avoiding zero/negative moles
+        // This is more consistent than arbitrary scaling which violates conservation
+        targetMoles = MIN_MOLES;
       }
       double dn = targetMoles - currentMoles;
 
@@ -409,7 +461,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     double errOld = 1e10;
     double thisError = 0;
     int p = 0;
-    double maxError = 1e-8;
+    double maxError = convergenceTolerance; // Use configurable tolerance
     upMoles = 0;
     int stagnationCount = 0;
     double bestError = Double.MAX_VALUE;
@@ -526,7 +578,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
         if (p > 15) {
           maxError *= 1.5;
         }
-      } while (((errOld > maxError && Math.abs(error) > maxError) && p < MAX_ITERATIONS) || p < 2);
+      } while (((errOld > maxError && Math.abs(error) > maxError) && p < maxIterations) || p < 2);
     } catch (Exception ex) {
       logger.error("Chemical equilibrium solver exception: " + ex.getMessage(), ex);
       // Restore original derivative setting
@@ -541,8 +593,8 @@ public class ChemicalEquilibrium implements java.io.Serializable {
       useFugacityDerivatives = originalDerivativeSetting;
     }
 
-    if (p >= MAX_ITERATIONS) {
-      logger.debug("Chemical equilibrium: max iterations (" + MAX_ITERATIONS + ") reached"
+    if (p >= maxIterations) {
+      logger.debug("Chemical equilibrium: max iterations (" + maxIterations + ") reached"
           + ", error=" + error + ", P=" + system.getPressure() + " bara" + ", T="
           + system.getTemperature() + " K");
     }
@@ -560,6 +612,12 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     enforceMinimumIonConcentrations();
 
     boolean converged = !Double.isNaN(error) && !Double.isInfinite(error) && error < maxError;
+
+    // Store convergence metrics for external access
+    lastIterationCount = p;
+    lastError = error;
+    lastConverged = converged;
+
     return converged;
   }
 
@@ -749,6 +807,101 @@ public class ChemicalEquilibrium implements java.io.Serializable {
   }
 
   /**
+   * Check if full Smith-Missen M-matrix is enabled.
+   *
+   * @return true if full M-matrix with -1/n_t term is enabled
+   */
+  public boolean isUseFullMMatrix() {
+    return useFullMMatrix;
+  }
+
+  /**
+   * Enable or disable the full Smith-Missen M-matrix.
+   *
+   * <p>
+   * When enabled, the M-matrix uses the full form M_ij = δ_ij/n_i - 1/n_t instead of the simplified
+   * form M_ij = δ_ij/n_i. The -1/n_t term couples all species through total moles and can improve
+   * quadratic convergence near the solution, but may be less stable for some systems.
+   * </p>
+   *
+   * @param useFullMMatrix true to enable full M-matrix, false to use simplified form
+   */
+  public void setUseFullMMatrix(boolean useFullMMatrix) {
+    this.useFullMMatrix = useFullMMatrix;
+  }
+
+  // ============ CONFIGURABLE SOLVER PARAMETERS GETTERS/SETTERS ============
+
+  /**
+   * Get the maximum number of iterations allowed for the solver.
+   *
+   * @return maximum iterations
+   */
+  public int getMaxIterations() {
+    return maxIterations;
+  }
+
+  /**
+   * Set the maximum number of iterations allowed for the solver.
+   *
+   * @param maxIterations maximum iterations (must be positive)
+   */
+  public void setMaxIterations(int maxIterations) {
+    if (maxIterations > 0) {
+      this.maxIterations = maxIterations;
+    }
+  }
+
+  /**
+   * Get the convergence tolerance for relative mole change.
+   *
+   * @return convergence tolerance
+   */
+  public double getConvergenceTolerance() {
+    return convergenceTolerance;
+  }
+
+  /**
+   * Set the convergence tolerance for relative mole change.
+   *
+   * @param convergenceTolerance tolerance value (must be positive)
+   */
+  public void setConvergenceTolerance(double convergenceTolerance) {
+    if (convergenceTolerance > 0) {
+      this.convergenceTolerance = convergenceTolerance;
+    }
+  }
+
+  // ============ SOLVER METRICS GETTERS ============
+
+  /**
+   * Get the number of iterations from the last solve() call.
+   *
+   * @return iteration count from last solve
+   */
+  public int getLastIterationCount() {
+    return lastIterationCount;
+  }
+
+  /**
+   * Get the final relative error from the last solve() call.
+   *
+   * @return final error from last solve (NaN if solve() not yet called)
+   */
+  public double getLastError() {
+    return lastError;
+  }
+
+  /**
+   * Check if the last solve() call converged successfully.
+   *
+   * @return true if last solve converged, false otherwise
+   */
+  public boolean isLastConverged() {
+    return lastConverged;
+  }
+
+  /**
    * <p>
    * printComp.
    * </p>
@@ -873,6 +1026,12 @@ public class ChemicalEquilibrium implements java.io.Serializable {
 
     step = innerStep(i, n_omega, check, step, false);
     // System.out.println("step ... " + step);
+
+    // Clamp step to valid range [0, 1] for Newton iterations
+    // Negative steps or steps > 1 can cause divergence and element conservation violations
+    if (step < 0 || step > 1 || Double.isNaN(step) || Double.isInfinite(step)) {
+      step = 1.0;
+    }
 
     // BUG FIX: Return the calculated step instead of always 1.0
     // The calculated step provides damping to prevent overshooting during Newton iterations

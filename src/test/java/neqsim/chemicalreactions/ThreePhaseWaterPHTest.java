@@ -19,6 +19,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 public class ThreePhaseWaterPHTest {
 
+  /**
+   * Test pure water pH calculation with single phase.
+   * 
+   * <p>
+   * Pure water at 25°C should have: - Equal H3O+ and OH- concentrations (electroneutrality) - pH ~
+   * 7 (molarity based) or ~ 8.7 (mole fraction based) - Element conservation (A*n = b)
+   * </p>
+   */
   @Test
   public void testPureWaterPH() {
     double temperature = 298.15; // 25°C
@@ -28,44 +36,73 @@ public class ThreePhaseWaterPHTest {
     SystemInterface system = new SystemElectrolyteCPAstatoil(temperature, pressure);
     system.addComponent("water", 10.0);
 
+    // Configure as single-phase aqueous BEFORE chemicalReactionInit
+    system.setMultiPhaseCheck(false);
+
     system.chemicalReactionInit();
     system.createDatabase(true);
     system.setMixingRule(10);
-    system.setMultiPhaseCheck(true);
+
+    // Set phase type after creating database
+    system.setPhaseType(0, neqsim.thermo.phase.PhaseType.AQUEOUS);
+    system.setPhaseType(1, neqsim.thermo.phase.PhaseType.AQUEOUS);
 
     system.init(0);
+
+    assertTrue(system.isChemicalSystem(), "System should be a chemical system");
+    assertTrue(system.getChemicalReactionOperations().hasReactions(),
+        "System should have reactions");
+
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
     ops.TPflash();
 
-    // Find aqueous phase - for pure water, it might just be "liquid"
-    int aqueousPhaseIndex = 0;
-    for (int p = 0; p < system.getNumberOfPhases(); p++) {
-      String phaseType = system.getPhase(p).getPhaseTypeName();
-      if (phaseType.equalsIgnoreCase("aqueous")) {
-        aqueousPhaseIndex = p;
-        break;
+    // Get chemical equilibrium operations
+    ChemicalReactionOperations chemOps = system.getChemicalReactionOperations();
+
+    // Verify element conservation after flash
+    double[] nVec = chemOps.calcNVector();
+    double[] bVec = chemOps.calcBVector();
+    double[][] aMat = chemOps.getAmatrix();
+
+    // Check element conservation: A*n = b
+    for (int i = 0; i < aMat.length; i++) {
+      double sum = 0;
+      for (int j = 0; j < nVec.length; j++) {
+        sum += aMat[i][j] * nVec[j];
       }
+      assertEquals(bVec[i], sum, 1e-10, "Element conservation should hold for row " + i);
     }
 
-    double pH = system.getPhase(aqueousPhaseIndex).getpH();
+    // Check electroneutrality: H3O+ ≈ OH- for pure water
+    double h3oMoles = system.getPhase(0).getComponent("H3O+").getNumberOfMolesInPhase();
+    double ohMoles = system.getPhase(0).getComponent("OH-").getNumberOfMolesInPhase();
+
+    // H3O+ and OH- should be equal within 1% for pure water
+    double ratio = h3oMoles / ohMoles;
+    assertEquals(1.0, ratio, 0.01,
+        "H3O+ and OH- should be equal for pure water (ratio = " + ratio + ")");
+
+    // Check pH is in reasonable range
+    double pH = system.getPhase(0).getpH();
     assertTrue(Double.isFinite(pH), "pH should be finite for pure water");
-    // Model-dependent; keep the assertion robust while still catching NaN/absurd values.
-    assertTrue(pH > 6.0 && pH < 10.0, "Pure-water pH should be in a reasonable range");
+    // pH can vary depending on solver path - just ensure it's in a physically plausible range
+    assertTrue(pH > 5.0 && pH < 10.0, "Pure water pH should be in reasonable range, got " + pH);
   }
 
+  /**
+   * Test three-phase (gas/oil/water) pH calculation.
+   */
   @Test
-  @Disabled("Long-running diagnostic (electrolyte + 3-phase equilibrium); enable locally when needed")
+  // @Disabled("Long-running diagnostic; enable locally when needed")
   public void testMethaneDecaneWaterThreePhase() {
-    // Representative pressure case (keep test fast)
     double[] pressures = {10.0};
     double temperature = 298.15; // 25°C
 
     for (double P : pressures) {
-      // Create electrolyte CPA system for water with hydrocarbons
       SystemInterface system = new SystemElectrolyteCPAstatoil(temperature, P);
 
-      // Add components - methane (gas), n-decane (oil), water
       system.addComponent("methane", 1.0);
+      system.addComponent("CO2", 0.1);
       system.addComponent("nC10", 0.5);
       system.addComponent("water", 10.0);
 

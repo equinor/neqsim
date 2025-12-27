@@ -46,6 +46,12 @@ public abstract class Phase implements PhaseInterface {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Phase.class);
 
+  /**
+   * Inverse of water molality (1/55.51 mol/kg). Used for converting activity coefficients from mole
+   * fraction scale to molality scale: γ_m = γ_x * x_w / 55.51
+   */
+  private static final double INV_WATER_MOLALITY = 1.0 / 55.51;
+
   public int numberOfComponents = 0;
   public ComponentInterface[] componentArray;
   private transient String[] componentNames = null;
@@ -1705,6 +1711,52 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getActivityCoefficient(int k, String scale) {
+    double gammaX = getActivityCoefficient(k); // mole fraction scale
+
+    if (scale.equalsIgnoreCase("molefraction")) {
+      return gammaX;
+    }
+
+    // Get water index and mole fraction
+    int waterIndex = -1;
+    if (hasComponent("water")) {
+      waterIndex = getComponent("water").getComponentNumber();
+    }
+
+    if (waterIndex < 0) {
+      // No water - return mole fraction activity coefficient
+      return gammaX;
+    }
+
+    double xWater = getComponent(waterIndex).getx();
+
+    // Defensive check: if essentially pure water, return mole fraction γ
+    if (xWater < 1e-12) {
+      return gammaX;
+    }
+
+    // Conversion from mole fraction to molality scale:
+    // From a_i = γ_x * x_i = γ_m * m_i / m° and m_i = (x_i / x_w) * (1000 / M_w)
+    // we get: γ_m = γ_x * x_w / 55.51 (where 55.51 mol/kg is molality of pure water)
+    // Note: This conversion is independent of total molality and component i
+    if (scale.equalsIgnoreCase("molality")) {
+      return gammaX * xWater * INV_WATER_MOLALITY;
+    }
+
+    if (scale.equalsIgnoreCase("molarity")) {
+      // For dilute aqueous solutions: γ_c ≈ γ_m
+      // The exact relation γ_c = γ_x * c° / ρ_n requires total molar density,
+      // but for practical purposes γ_c ≈ γ_m is sufficient
+      return gammaX * xWater * INV_WATER_MOLALITY;
+    }
+
+    // Unknown scale - return mole fraction
+    return gammaX;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getActivityCoefficientUnSymetric(int k) {
     double fug = 0.0;
     double oldFug = getComponent(k).getLogFugacityCoefficient();
@@ -1712,32 +1764,57 @@ public abstract class Phase implements PhaseInterface {
     return Math.exp(oldFug - fug);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Calculates the mean ionic activity coefficient on the molality scale. NeqSim uses the
+   * unsymmetric convention for ions (γ → 1 as x → 0, i.e., infinite dilution reference state). The
+   * conversion from unsymmetric mole fraction scale (γ±,x) to molality scale (γ±,m) is:
+   * </p>
+   *
+   * <pre>
+   * γ±,m = γ±,x * x_water
+   * </pre>
+   *
+   * <p>
+   * This relationship arises because the unsymmetric standard state (infinite dilution) already
+   * incorporates the 1/55.51 factor that would appear in the symmetric convention. For the
+   * symmetric convention (γ → 1 as x → 1), the full formula would be: γ±,m = γ±,x(sym) * x_water /
+   * 55.51
+   * </p>
+   *
+   * <p>
+   * Reference: Robinson, R.A. and Stokes, R.H. "Electrolyte Solutions", 2nd ed., Butterworths,
+   * London, 1965, Appendix 8.10.
+   * </p>
+   */
   @Override
   public double getMolalMeanIonicActivity(int comp1, int comp2) {
     int watNumb = 0;
-    // double vminus = 0.0, vplus = 0.0;
-    double ions = 0.0;
-    for (int j = 0; j < this.numberOfComponents; j++) {
-      if (getComponent(j).getIonicCharge() != 0) {
-        ions += getComponent(j).getx();
-      }
-    }
-
-    double val = ions / getComponent("water").getx();
     for (int j = 0; j < this.numberOfComponents; j++) {
       if (getComponent(j).getComponentName().equals("water")) {
         watNumb = j;
+        break;
       }
     }
 
-    double act1 = Math.pow(getActivityCoefficient(comp1, watNumb),
-        Math.abs(getComponent(comp2).getIonicCharge()));
-    double act2 = Math.pow(getActivityCoefficient(comp2, watNumb),
-        Math.abs(getComponent(comp1).getIonicCharge()));
+    double xWater = getComponent(watNumb).getx();
 
-    return Math.pow(act1 * act2, 1.0 / (Math.abs(getComponent(comp1).getIonicCharge())
-        + Math.abs(getComponent(comp2).getIonicCharge()))) * 1.0 / (1.0 + val);
+    // Get activity coefficients on mole fraction scale, raised to stoichiometric powers
+    // For electrolyte C_ν+ A_ν-: γ± = (γ+^ν+ * γ-^ν-)^(1/(ν+ + ν-))
+    double nuPlus = Math.abs(getComponent(comp2).getIonicCharge()); // stoichiometric coeff of comp1
+    double nuMinus = Math.abs(getComponent(comp1).getIonicCharge()); // stoichiometric coeff of
+                                                                     // comp2
+
+    double act1 = Math.pow(getActivityCoefficient(comp1, watNumb), nuPlus);
+    double act2 = Math.pow(getActivityCoefficient(comp2, watNumb), nuMinus);
+
+    // Mean ionic activity coefficient on mole fraction scale (unsymmetric)
+    double gammaPlusMinus_x = Math.pow(act1 * act2, 1.0 / (nuPlus + nuMinus));
+
+    // Convert to molality scale: γ±,m = γ±,x * x_water (for unsymmetric convention)
+    return gammaPlusMinus_x * xWater;
   }
 
   /** {@inheritDoc} */
@@ -1752,7 +1829,30 @@ public abstract class Phase implements PhaseInterface {
     return getOsmoticCoefficient(watNumb);
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   * 
+   * <p>
+   * Calculates the osmotic coefficient using the Robinson &amp; Stokes (1965) definition on the
+   * molality scale. The formula used is mathematically equivalent to:
+   * </p>
+   * 
+   * <pre>
+   * φ = -ln(a_w) / (M_w * Σm_i)
+   * </pre>
+   * 
+   * <p>
+   * but is expressed in terms of mole fractions for computational convenience:
+   * </p>
+   * 
+   * <pre>
+   * φ = -x_w * ln(a_w) / Σx_i
+   * </pre>
+   * 
+   * <p>
+   * where a_w is water activity, x_w is water mole fraction, and Σx_i is sum of ion mole fractions.
+   * </p>
+   */
   @Override
   public double getOsmoticCoefficient(int watNumb) {
     double oldFug = getComponent(watNumb).getFugacityCoefficient();
@@ -1767,23 +1867,47 @@ public abstract class Phase implements PhaseInterface {
         / ions;
   }
 
-  // public double getOsmoticCoefficient(int watNumb, String refState){
-  // if(refState.equals("molality")){
-  // double oldFug = getComponent(watNumb).getFugacityCoefficient();
-  // double pureFug = getPureComponentFugacity(watNumb);system.getPhase(i).
-  // double ions=0.0;
-  // for(int j=0;j<this.numberOfComponents;j++){
-  // if(getComponent(j).getIonicCharge()!=0) ions +=
-  // getComponent(j).getNumberOfMolesInPhase() /
-  // getComponent(watNumb).getNumberOfMolesInPhase()/getComponent(watNumb).getMolarMass();
-  // //*Math.abs(getComponent(j).getIonicCharge());
-  // }
-  // double val = - Math.log(oldFug*getComponent(watNumb).getx()/pureFug) *
-  // 1.0/ions/getComponent(watNumb).getMolarMass();
-  // return val;
-  // }
-  // else return getOsmoticCoefficient(watNumb);
-  // }
+  /** {@inheritDoc} */
+  @Override
+  public double getOsmoticCoefficientOfWaterMolality() {
+    int watNumb = -1;
+    for (int j = 0; j < this.numberOfComponents; j++) {
+      if (getComponent(j).getComponentName().equals("water")) {
+        watNumb = j;
+        break;
+      }
+    }
+    if (watNumb < 0) {
+      return Double.NaN; // No water found
+    }
+
+    // Calculate water activity: a_w = x_w * gamma_w = x_w * (phi_w / phi_w_pure)
+    double fugCoeff = getComponent(watNumb).getFugacityCoefficient();
+    double pureFug = getPureComponentFugacity(watNumb);
+    double xWater = getComponent(watNumb).getx();
+    double waterActivity = fugCoeff * xWater / pureFug;
+
+    // Calculate sum of ion molalities: m_i = n_i / (n_water * M_water)
+    // where M_water is in kg/mol
+    double molarMassWater = getComponent(watNumb).getMolarMass(); // kg/mol
+    double molesWater = getComponent(watNumb).getNumberOfMolesInPhase();
+    double massWaterKg = molesWater * molarMassWater;
+
+    double sumIonMolality = 0.0;
+    for (int j = 0; j < this.numberOfComponents; j++) {
+      if (getComponent(j).getIonicCharge() != 0) {
+        double molesIon = getComponent(j).getNumberOfMolesInPhase();
+        sumIonMolality += molesIon / massWaterKg; // mol/kg
+      }
+    }
+
+    if (sumIonMolality <= 0.0) {
+      return 1.0; // Pure water, osmotic coefficient = 1
+    }
+
+    // Robinson & Stokes definition: phi = -ln(a_w) / (M_w * sum(m_i))
+    return -Math.log(waterActivity) / (molarMassWater * sumIonMolality);
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -2039,31 +2163,120 @@ public abstract class Phase implements PhaseInterface {
     throw new UnsupportedOperationException("Unimplemented method 'getdPdVTn'");
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   * 
+   * <p>
+   * Default uses activity-based pH since NeqSim's chemical reaction equilibrium constants are
+   * defined on the mole fraction scale.
+   * </p>
+   */
   @Override
   public double getpH() {
-    return getpH_old();
-    // System.out.println("ph - old " + getpH_old());
-    // initPhysicalProperties();
-    // for(int i = 0; i<numberOfComponents; i++) {
-    // if(componentArray[i].getName().equals("H3O+")){
-    // return
-    // -Math.log10(componentArray[i].getNumberOfMolesInPhase()*getPhysicalProperties().getDensity()
-    // / (numberOfMolesInPhase*getMolarMass())*1e-3);
-    // }
-    // }
-    // System.out.println("no H3Oplus");
-    // return 7.0;
+    return getpH("activity");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getpH(String method) {
+    // pH is only meaningful for aqueous phases
+    if (!getPhaseTypeName().equals("aqueous")) {
+      logger.debug("getpH called on non-aqueous phase ({}), returning NaN", getPhaseTypeName());
+      return Double.NaN;
+    }
+    if (method.equalsIgnoreCase("molarity")) {
+      return getpH_molarity();
+    }
+    if (method.equalsIgnoreCase("molality")) {
+      return getpH_molality();
+    }
+    if (method.equalsIgnoreCase("activity")) {
+      return getpH_activity();
+    }
+    // Default to activity (consistent with mole fraction-based equilibrium constants)
+    return getpH_activity();
   }
 
   /**
-   * <p>
-   * getpH_old.
-   * </p>
+   * Calculate pH based on molarity (mol/L) with molarity-scale activity coefficient.
    *
-   * @return a double
+   * @return pH value: -log10(gamma_c * [H3O+]) where [H3O+] is in mol/L
    */
-  public double getpH_old() {
+  private double getpH_molarity() {
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (componentArray[i].getName().equals("H3O+")) {
+        initPhysicalProperties();
+        double h3oMoles = componentArray[i].getNumberOfMolesInPhase();
+        double density = getPhysicalProperties().getDensity(); // kg/m3
+        double molarMass = getMolarMass(); // kg/mol
+        double volume = numberOfMolesInPhase * molarMass / density; // m3
+        double h3oConcentration = h3oMoles / (volume * 1000.0); // mol/L (relative to c° = 1 mol/L)
+        double gammaMolarity = getActivityCoefficient(i, "molarity");
+        double activity = gammaMolarity * h3oConcentration;
+        if (activity <= 1e-20) {
+          logger.debug("H3O+ molarity activity {} is too small for meaningful pH", activity);
+          return Double.NaN;
+        }
+        double pH = -Math.log10(activity);
+        if (pH < -2.0 || pH > 16.0) {
+          logger.debug("Calculated molarity pH {} is outside realistic range [-2, 16]", pH);
+          return Double.NaN;
+        }
+        return pH;
+      }
+    }
+    logger.info("no H3Oplus");
+    return 7.0;
+  }
+
+  /**
+   * Calculate pH based on molality (IUPAC standard: mol H3O+ / kg water) with molality-scale
+   * activity coefficient.
+   *
+   * @return pH value: -log10(gamma_m * m_H3O+ / m_standard) where m_standard = 1 mol/kg
+   */
+  private double getpH_molality() {
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (componentArray[i].getName().equals("H3O+")) {
+        int waterIndex = -1;
+        if (hasComponent("water")) {
+          waterIndex = getComponent("water").getComponentNumber();
+        }
+        if (waterIndex < 0) {
+          logger.info("no water component for molality pH");
+          return 7.0;
+        }
+
+        double h3oMoles = componentArray[i].getNumberOfMolesInPhase();
+        double waterMoles = getComponent(waterIndex).getNumberOfMolesInPhase();
+        double waterMolarMass = 0.018015; // kg/mol
+        double waterMass = waterMoles * waterMolarMass; // kg
+
+        double h3oMolality = h3oMoles / waterMass; // mol/kg (relative to m° = 1 mol/kg)
+        double gammaMolality = getActivityCoefficient(i, "molality");
+        double activity = gammaMolality * h3oMolality;
+        if (activity <= 1e-20) {
+          logger.debug("H3O+ molality activity {} is too small for meaningful pH", activity);
+          return Double.NaN;
+        }
+        double pH = -Math.log10(activity);
+        if (pH < -2.0 || pH > 16.0) {
+          logger.debug("Calculated molality pH {} is outside realistic range [-2, 16]", pH);
+          return Double.NaN;
+        }
+        return pH;
+      }
+    }
+    logger.info("no H3Oplus");
+    return 7.0;
+  }
+
+  /**
+   * Calculate pH based on activity (mole fraction * activity coefficient).
+   *
+   * @return pH value based on H3O+ activity, or NaN if result is physically unrealistic
+   */
+  private double getpH_activity() {
     for (int i = 0; i < numberOfComponents; i++) {
       if (componentArray[i].getName().equals("H3O+")) {
         int watNumb = -1;
@@ -2074,7 +2287,19 @@ public abstract class Phase implements PhaseInterface {
         double gamma =
             watNumb >= 0 ? getActivityCoefficient(i, watNumb) : getActivityCoefficient(i);
 
-        return -Math.log10(componentArray[i].getx() * gamma);
+        double activity = componentArray[i].getx() * gamma;
+        // Check for numerically invalid activity (essentially zero or numerical noise)
+        if (activity <= 1e-20) {
+          logger.debug("H3O+ activity {} is too small for meaningful pH", activity);
+          return Double.NaN;
+        }
+        double pH = -Math.log10(activity);
+        // Clamp to physically realistic range
+        if (pH < -2.0 || pH > 16.0) {
+          logger.debug("Calculated pH {} is outside realistic range [-2, 16]", pH);
+          return Double.NaN;
+        }
+        return pH;
       }
     }
     logger.info("no H3Oplus");

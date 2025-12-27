@@ -20,7 +20,7 @@ public class ChemEq implements java.io.Serializable {
   static Logger logger = LogManager.getLogger(ChemEq.class);
 
   /** Minimum moles to prevent log(0) and division by zero. */
-  private static final double MIN_MOLES = 1e-30;
+  private static final double MIN_MOLES = 1e-60;
 
   int NSPEC = 10;
   int NELE = 3;
@@ -426,37 +426,60 @@ public class ChemEq implements java.io.Serializable {
    * <p>
    * solve.
    * </p>
+   * 
+   * <p>
+   * Iteratively solves the chemical equilibrium using Newton-Raphson method. Continues until
+   * relative change in moles is below tolerance or max iterations reached.
+   * </p>
    */
   public void solve() {
-    double error = 0;
+    double error;
     double Gibbs = 0;
-    double step = 1.0; // Local step variable
+    double step;
+    int maxIterations = 100;
+    int iteration = 0;
+    double tolerance = 0.00001;
+    double overallTolerance = 0.00005;
 
     do {
+      iteration++;
       error = 0;
       chemSolve();
 
+      // Check if any component needs updating
+      boolean needsUpdate = false;
       for (int i = 0; i < NSPEC; i++) {
-        logger.trace(n_mol[i] + "  prove korreksjon  " + step * d_n[i]);
-
-        error += d_n[i] / n_mol[i];
-
-        if (Math.abs(d_n[i] / n_mol[i]) > 0.00001) {
-          step = step();
-          Gibbs = 0;
-          for (int j = 0; j < NSPEC; j++) {
-            n_mol[j] += step * d_n[j];
-            Gibbs += n_mol[j] * chem_pot[j];
-          }
-          logger.debug("Gibbs: " + Gibbs);
-          solve();
-          return;
+        double safeMoles = Math.max(MIN_MOLES, Math.abs(n_mol[i]));
+        double relChange = Math.abs(d_n[i]) / safeMoles;
+        error += relChange;
+        if (relChange > tolerance) {
+          needsUpdate = true;
         }
+        logger.trace(n_mol[i] + "  prove korreksjon  " + d_n[i]);
       }
-    } while (error > 0.00005);
+
+      if (needsUpdate) {
+        step = step();
+        Gibbs = 0;
+        for (int j = 0; j < NSPEC; j++) {
+          n_mol[j] += step * d_n[j];
+          // Ensure positive moles
+          n_mol[j] = Math.max(MIN_MOLES, n_mol[j]);
+          Gibbs += n_mol[j] * chem_pot[j];
+        }
+        logger.debug("Iteration " + iteration + ", Gibbs: " + Gibbs + ", error: " + error);
+      }
+
+    } while (error > overallTolerance && iteration < maxIterations);
+
+    if (iteration >= maxIterations) {
+      logger
+          .debug("ChemEq.solve(): max iterations (" + maxIterations + ") reached, error: " + error);
+    }
 
     for (int j = 0; j < NSPEC; j++) {
-      logger.debug(" SVAR : " + n_mol[j] + "   " + (d_n[j] / n_mol[j]) + " GIBBS : " + Gibbs);
+      double safeMoles = Math.max(MIN_MOLES, Math.abs(n_mol[j]));
+      logger.debug(" SVAR : " + n_mol[j] + "   " + (d_n[j] / safeMoles) + " GIBBS : " + Gibbs);
     }
   }
 }
