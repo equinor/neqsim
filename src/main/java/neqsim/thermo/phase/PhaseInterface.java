@@ -862,6 +862,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    *
    * <p>
    * Available methods:
+   * </p>
    * <ul>
    * <li><b>activity</b> (default): pH = -log10(gamma_x * x_H3O+) - consistent with mole
    * fraction-based equilibrium constants</li>
@@ -870,7 +871,6 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * <li><b>molarity</b>: pH = -log10([H3O+]) where [H3O+] is in mol/L - ignores activity
    * coefficient</li>
    * </ul>
-   * </p>
    *
    * @param method The calculation method: "activity" (default), "molality", or "molarity"
    * @return pH value

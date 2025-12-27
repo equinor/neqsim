@@ -343,6 +343,15 @@ public class MassTransferCoefficientCalculator {
 
   /**
    * Calculates gas-side mass transfer coefficient for annular flow.
+   *
+   * @param diameter pipe diameter [m]
+   * @param voidFraction void fraction [-]
+   * @param uG gas velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param muG gas dynamic viscosity [Pa·s]
+   * @param diffG gas diffusivity [m²/s]
+   * @param scG gas Schmidt number [-]
+   * @return gas-side mass transfer coefficient [m/s]
    */
   private static double calculateAnnularKG(double diameter, double voidFraction, double uG,
       double rhoG, double muG, double diffG, double scG) {
@@ -361,6 +370,14 @@ public class MassTransferCoefficientCalculator {
 
   /**
    * Calculates gas-side mass transfer coefficient for bubble flow.
+   *
+   * @param diameter pipe diameter [m]
+   * @param uG gas velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param muG gas dynamic viscosity [Pa·s]
+   * @param diffG gas diffusivity [m²/s]
+   * @param scG gas Schmidt number [-]
+   * @return gas-side mass transfer coefficient [m/s]
    */
   private static double calculateBubbleKG(double diameter, double uG, double rhoG, double muG,
       double diffG, double scG) {
@@ -377,6 +394,14 @@ public class MassTransferCoefficientCalculator {
 
   /**
    * Calculates gas-side mass transfer coefficient for droplet flow.
+   *
+   * @param diameter pipe diameter [m]
+   * @param uG gas velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param muG gas dynamic viscosity [Pa·s]
+   * @param diffG gas diffusivity [m²/s]
+   * @param scG gas Schmidt number [-]
+   * @return gas-side mass transfer coefficient [m/s]
    */
   private static double calculateDropletKG(double diameter, double uG, double rhoG, double muG,
       double diffG, double scG) {
