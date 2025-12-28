@@ -70,27 +70,47 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       this.solveComposition = solveComposition;
     }
 
-    /** Get the legacy integer solver type for backward compatibility. */
+    /**
+     * Get the legacy integer solver type for backward compatibility.
+     *
+     * @return the legacy solver type as integer
+     */
     public int getLegacyType() {
       return legacyType;
     }
 
-    /** Check if momentum (velocity/pressure) equations should be solved. */
+    /**
+     * Check if momentum (velocity/pressure) equations should be solved.
+     *
+     * @return true if momentum equations should be solved
+     */
     public boolean solveMomentum() {
       return solveMomentum;
     }
 
-    /** Check if phase fraction equations should be solved. */
+    /**
+     * Check if phase fraction equations should be solved.
+     *
+     * @return true if phase fraction equations should be solved
+     */
     public boolean solvePhaseFraction() {
       return solvePhaseFraction;
     }
 
-    /** Check if energy equations should be solved. */
+    /**
+     * Check if energy equations should be solved.
+     *
+     * @return true if energy equations should be solved
+     */
     public boolean solveEnergy() {
       return solveEnergy;
     }
 
-    /** Check if composition equations should be solved. */
+    /**
+     * Check if composition equations should be solved.
+     *
+     * @return true if composition equations should be solved
+     */
     public boolean solveComposition() {
       return solveComposition;
     }

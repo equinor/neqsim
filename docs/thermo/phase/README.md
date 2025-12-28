@@ -234,6 +234,91 @@ if (fluid.hasWax()) {
 }
 ```
 
+### Asphaltene Phases
+
+NeqSim supports two approaches for modeling asphaltene precipitation:
+
+1. **Solid Asphaltene (`PhaseType.ASPHALTENE`)**: Traditional approach where precipitated asphaltene is treated as a solid phase with literature-based physical properties.
+
+2. **Liquid Asphaltene (`PhaseType.LIQUID_ASPHALTENE`)**: Pedersen's approach where asphaltene is modeled as a liquid phase using cubic EOS (SRK/PR), enabling liquid-liquid equilibrium calculations.
+
+#### Solid Asphaltene Approach
+
+```java
+// Enable solid phase check for asphaltene
+fluid.setSolidPhaseCheck("asphaltene");
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPflash();
+
+// Check for asphaltene phase using PhaseType
+if (fluid.hasPhaseType(PhaseType.ASPHALTENE)) {
+    PhaseInterface asphaltene = fluid.getPhaseOfType("asphaltene");
+    double asphalteneFraction = asphaltene.getBeta();
+    double density = asphaltene.getDensity("kg/m3");  // ~1150 kg/m³
+    double viscosity = asphaltene.getViscosity("Pa*s"); // ~10,000 Pa·s
+}
+```
+
+#### Pedersen's Liquid Asphaltene Approach
+
+Pedersen's method treats asphaltene as a heavy liquid component using cubic EOS with estimated critical properties. This allows liquid-liquid equilibrium (LLE) calculations.
+
+```java
+import neqsim.thermo.characterization.PedersenAsphalteneCharacterization;
+
+// Create fluid system
+SystemInterface fluid = new SystemSrkEos(373.15, 50.0);
+fluid.addComponent("methane", 0.30);
+fluid.addComponent("n-pentane", 0.25);  // Precipitant
+fluid.addComponent("n-heptane", 0.20);
+fluid.addComponent("nC10", 0.15);
+
+// Create and configure asphaltene characterization
+PedersenAsphalteneCharacterization asphChar = new PedersenAsphalteneCharacterization();
+asphChar.setAsphalteneMW(750.0);     // g/mol
+asphChar.setAsphalteneDensity(1.10); // g/cm³
+
+// Add asphaltene as pseudo-component (before mixing rule)
+asphChar.addAsphalteneToSystem(fluid, 0.10);  // 10 mol%
+fluid.setMixingRule("classic");
+
+// Perform TPflash with automatic asphaltene detection
+boolean hasAsphaltene = PedersenAsphalteneCharacterization.TPflash(fluid);
+
+// Check for asphaltene-rich liquid phase
+if (fluid.hasPhaseType(PhaseType.LIQUID_ASPHALTENE)) {
+    PhaseInterface asphLiquid = fluid.getPhaseOfType("asphaltene liquid");
+    System.out.println("Asphaltene liquid fraction: " + asphLiquid.getBeta());
+}
+```
+
+#### Detecting Asphaltene-Rich Phases
+
+```java
+// Check if any phase is asphaltene-rich (works for both approaches)
+for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+    PhaseInterface phase = fluid.getPhase(i);
+    if (phase.isAsphalteneRich()) {
+        System.out.println("Phase " + i + " is asphaltene-rich");
+    }
+}
+
+// Using StateOfMatter helper
+import neqsim.thermo.phase.StateOfMatter;
+boolean isAsph = StateOfMatter.isAsphaltene(phase.getType());
+```
+
+**Asphaltene Phase Properties:**
+
+| Property | Solid Approach | Liquid (Pedersen) | Unit |
+|----------|----------------|-------------------|------|
+| Density | ~1150 (literature) | EOS-calculated | kg/m³ |
+| Heat Capacity (Cp) | ~0.9 (literature) | EOS-calculated | kJ/kgK |
+| Thermal Conductivity | ~0.20 (literature) | EOS-calculated | W/mK |
+| Viscosity | ~10,000 (literature) | EOS-calculated | Pa·s |
+| Speed of Sound | ~1745 (literature) | EOS-calculated | m/s |
+
 ---
 
 ## Phase Identification
@@ -242,13 +327,34 @@ if (fluid.hasWax()) {
 
 ```java
 // Get phase type
-String type = phase.getPhaseTypeName();  // "gas", "oil", "aqueous", etc.
+String type = phase.getPhaseTypeName();  // "gas", "oil", "aqueous", "asphaltene", etc.
 
-// Check phase type
+// Check phase type using enum
 boolean isGas = phase.getType() == PhaseType.GAS;
 boolean isLiquid = phase.getType() == PhaseType.LIQUID;
 boolean isAqueous = phase.getType() == PhaseType.AQUEOUS;
+boolean isAsphaltene = phase.getType() == PhaseType.ASPHALTENE;
+boolean isSolid = phase.getType() == PhaseType.SOLID;
+
+// Check using string-based lookup (convenient API)
+boolean hasGas = fluid.hasPhaseType("gas");
+boolean hasAsphaltene = fluid.hasPhaseType("asphaltene");
 ```
+
+### Available PhaseType Values
+
+| PhaseType | Description | Value | StateOfMatter |
+|-----------|-------------|-------|---------------|
+| `GAS` | Gas phase | 1 | GAS |
+| `LIQUID` | Generic liquid | 0 | LIQUID |
+| `OIL` | Oil/hydrocarbon liquid | 2 | LIQUID |
+| `AQUEOUS` | Water-rich liquid | 3 | LIQUID |
+| `HYDRATE` | Gas hydrate solid | 4 | SOLID |
+| `WAX` | Wax solid | 5 | SOLID |
+| `SOLID` | Generic solid | 6 | SOLID |
+| `SOLIDCOMPLEX` | Complex solid | 7 | SOLID |
+| `ASPHALTENE` | Asphaltene solid | 8 | SOLID |
+| `LIQUID_ASPHALTENE` | Asphaltene liquid (Pedersen) | 9 | LIQUID |
 
 ### Stability Analysis
 

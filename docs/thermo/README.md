@@ -22,10 +22,10 @@ thermo/
 | Subpackage | Description | Documentation |
 |------------|-------------|---------------|
 | system | Equations of state implementations | [system/README.md](system/README.md) |
-| phase | Phase modeling (gas, liquid, solid) | [phase/README.md](phase/README.md) |
+| phase | Phase modeling (gas, liquid, solid, asphaltene) | [phase/README.md](phase/README.md) |
 | component | Component property calculations | [component/README.md](component/README.md) |
 | mixingrule | Binary interaction parameters | [mixingrule/README.md](mixingrule/README.md) |
-| characterization | Plus fraction characterization | [characterization/README.md](characterization/README.md) |
+| characterization | Plus fraction and asphaltene characterization | [characterization/README.md](characterization/README.md) |
 
 ---
 
@@ -36,6 +36,7 @@ thermo/
 - [Fluid Creation Guide](fluid_creation_guide.md): **Comprehensive guide** to creating fluids in NeqSim, including all available equations of state, mixing rules, and model selection guidelines.
 - [Mixing Rules Guide](mixing_rules_guide.md): **Detailed documentation** on mixing rules, including mathematical formulations, binary interaction parameters, and usage examples for different applications.
 - [Flash Calculations Guide](flash_calculations_guide.md): **Comprehensive documentation** of flash calculations available via ThermodynamicOperations, including TP, PH, PS, VU flashes, saturation calculations, and hydrate equilibria.
+- [Hydrate Models Guide](hydrate_models.md): **Comprehensive documentation** of gas hydrate thermodynamic models, including van der Waals-Platteeuw theory, Structure I/II hydrates, CPA and PVTsim implementations, and inhibitor modeling.
 
 ### Database Documentation
 

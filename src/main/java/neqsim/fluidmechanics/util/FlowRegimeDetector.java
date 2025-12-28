@@ -208,6 +208,15 @@ public class FlowRegimeDetector {
 
   /**
    * Calculates the Lockhart-Martinelli parameter.
+   *
+   * @param uSG superficial gas velocity [m/s]
+   * @param uSL superficial liquid velocity [m/s]
+   * @param d pipe diameter [m]
+   * @param rhoG gas density [kg/m³]
+   * @param rhoL liquid density [kg/m³]
+   * @param muG gas viscosity [Pa·s]
+   * @param muL liquid viscosity [Pa·s]
+   * @return Lockhart-Martinelli parameter [-]
    */
   private static double calculateLockhartMartinelli(double uSG, double uSL, double d, double rhoG,
       double rhoL, double muG, double muL) {
@@ -228,6 +237,14 @@ public class FlowRegimeDetector {
 
   /**
    * Checks if flow is dispersed bubble regime.
+   *
+   * @param frL liquid Froude number
+   * @param frMix mixture Froude number
+   * @param rhoL liquid density [kg/m³]
+   * @param rhoG gas density [kg/m³]
+   * @param sigma surface tension [N/m]
+   * @param d pipe diameter [m]
+   * @return true if dispersed bubble flow
    */
   private static boolean isDispersedBubble(double frL, double frMix, double rhoL, double rhoG,
       double sigma, double d) {
@@ -238,6 +255,11 @@ public class FlowRegimeDetector {
 
   /**
    * Checks if flow is annular/mist regime.
+   *
+   * @param kuG gas Kutateladze number
+   * @param frG gas Froude number
+   * @param lambda gas void fraction (no-slip)
+   * @return true if annular or mist flow
    */
   private static boolean isAnnularMist(double kuG, double frG, double lambda) {
     // Taitel-Dukler criterion: gas can support liquid film on wall
@@ -246,6 +268,15 @@ public class FlowRegimeDetector {
 
   /**
    * Checks if flow is stratified (vs intermittent).
+   *
+   * @param frG gas Froude number
+   * @param x Lockhart-Martinelli parameter
+   * @param d pipe diameter [m]
+   * @param rhoG gas density [kg/m³]
+   * @param rhoL liquid density [kg/m³]
+   * @param muG gas viscosity [Pa·s]
+   * @param muL liquid viscosity [Pa·s]
+   * @return true if stratified flow
    */
   private static boolean isStratified(double frG, double x, double d, double rhoG, double rhoL,
       double muG, double muL) {
@@ -261,6 +292,11 @@ public class FlowRegimeDetector {
 
   /**
    * Checks if stratified flow has waves.
+   *
+   * @param frG gas Froude number
+   * @param rhoG gas density [kg/m³]
+   * @param rhoL liquid density [kg/m³]
+   * @return true if stratified wavy flow
    */
   private static boolean isStratifiedWavy(double frG, double rhoG, double rhoL) {
     // Kelvin-Helmholtz instability criterion

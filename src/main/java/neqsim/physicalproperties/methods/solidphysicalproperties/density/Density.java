@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.methods.methodinterface.DensityInterface;
 import neqsim.physicalproperties.methods.solidphysicalproperties.SolidPhysicalPropertyMethod;
 import neqsim.physicalproperties.system.PhysicalProperties;
+import neqsim.thermo.phase.PhaseType;
 
 /**
  * <p>
@@ -54,6 +55,15 @@ public class Density extends SolidPhysicalPropertyMethod implements DensityInter
   /** {@inheritDoc} */
   @Override
   public double calcDensity() {
+    PhaseType phaseType = solidPhase.getPhase().getType();
+
+    // For asphaltene phases, use the phase's getDensity() which has
+    // literature-based values since EOS gives unrealistic densities
+    if (phaseType == PhaseType.ASPHALTENE) {
+      return solidPhase.getPhase().getDensity();
+    }
+
+    // For wax, hydrate and other solid phases, use the EOS-based calculation
     double tempVar = 0.0;
     if (solidPhase.getPhase().useVolumeCorrection()) {
       for (int i = 0; i < solidPhase.getPhase().getNumberOfComponents(); i++) {
@@ -63,7 +73,6 @@ public class Density extends SolidPhysicalPropertyMethod implements DensityInter
                     * (solidPhase.getPhase().getTemperature() - 288.15));
       }
     }
-    // System.out.println("density correction tempvar " + tempVar);
     return 1.0 / (solidPhase.getPhase().getMolarVolume() - tempVar)
         * solidPhase.getPhase().getMolarMass() * 1e5;
   }

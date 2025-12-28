@@ -225,22 +225,38 @@ public class EnKFParameterEstimator implements Serializable {
       this.rmse = Math.sqrt(sumSq / measurements.length);
     }
 
-    /** Gets the update step number. */
+    /**
+     * Gets the update step number.
+     *
+     * @return the step number
+     */
     public int getStep() {
       return step;
     }
 
-    /** Gets parameter estimates. */
+    /**
+     * Gets parameter estimates.
+     *
+     * @return array of parameter estimates
+     */
     public double[] getEstimates() {
       return estimates.clone();
     }
 
-    /** Gets parameter uncertainties (standard deviations). */
+    /**
+     * Gets parameter uncertainties (standard deviations).
+     *
+     * @return array of parameter standard deviations
+     */
     public double[] getUncertainties() {
       return uncertainties.clone();
     }
 
-    /** Gets 95% confidence interval lower bounds. */
+    /**
+     * Gets 95% confidence interval lower bounds.
+     *
+     * @return array of lower confidence bounds
+     */
     public double[] getConfidenceIntervalLower() {
       double[] lower = new double[estimates.length];
       for (int i = 0; i < estimates.length; i++) {
@@ -249,7 +265,11 @@ public class EnKFParameterEstimator implements Serializable {
       return lower;
     }
 
-    /** Gets 95% confidence interval upper bounds. */
+    /**
+     * Gets 95% confidence interval upper bounds.
+     *
+     * @return array of upper confidence bounds
+     */
     public double[] getConfidenceIntervalUpper() {
       double[] upper = new double[estimates.length];
       for (int i = 0; i < estimates.length; i++) {
@@ -258,22 +278,38 @@ public class EnKFParameterEstimator implements Serializable {
       return upper;
     }
 
-    /** Gets the measurements used in this update. */
+    /**
+     * Gets the measurements used in this update.
+     *
+     * @return array of measurement values
+     */
     public double[] getMeasurements() {
       return measurements.clone();
     }
 
-    /** Gets the model predictions. */
+    /**
+     * Gets the model predictions.
+     *
+     * @return array of model predictions
+     */
     public double[] getPredictions() {
       return predictions.clone();
     }
 
-    /** Gets the RMSE of predictions vs measurements. */
+    /**
+     * Gets the RMSE of predictions vs measurements.
+     *
+     * @return the root mean square error
+     */
     public double getRMSE() {
       return rmse;
     }
 
-    /** Returns true if anomaly was detected. */
+    /**
+     * Returns true if anomaly was detected.
+     *
+     * @return true if anomaly was detected
+     */
     public boolean isAnomalyDetected() {
       return anomalyDetected;
     }
@@ -421,6 +457,10 @@ public class EnKFParameterEstimator implements Serializable {
 
   /**
    * Clips a value to parameter bounds.
+   *
+   * @param value the value to clip
+   * @param spec the parameter specification with bounds
+   * @return the clipped value within bounds
    */
   private double clipToBounds(double value, TunableParameterSpec spec) {
     return Math.max(spec.minValue, Math.min(spec.maxValue, value));
@@ -428,6 +468,9 @@ public class EnKFParameterEstimator implements Serializable {
 
   /**
    * Runs simulation with given parameters and returns measured outputs.
+   *
+   * @param parameters array of parameter values to use in simulation
+   * @return array of measured output values from the simulation
    */
   private double[] simulate(double[] parameters) {
     // Set parameters in process
@@ -606,6 +649,9 @@ public class EnKFParameterEstimator implements Serializable {
 
   /**
    * Simple matrix inversion (for small matrices).
+   *
+   * @param matrix the matrix to invert
+   * @return the inverted matrix
    */
   private double[][] invertMatrix(double[][] matrix) {
     int n = matrix.length;

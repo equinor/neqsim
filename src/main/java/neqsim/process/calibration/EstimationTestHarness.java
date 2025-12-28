@@ -557,12 +557,20 @@ public class EstimationTestHarness implements Serializable {
       this.successRate = (double) successCount / numTrials;
     }
 
-    /** Gets mean RMSE across all trials. */
+    /**
+     * Gets mean RMSE across all trials.
+     *
+     * @return the mean RMSE value
+     */
     public double getMeanRMSE() {
       return meanRMSE;
     }
 
-    /** Gets standard deviation of RMSE. */
+    /**
+     * Gets standard deviation of RMSE.
+     *
+     * @return the standard deviation of RMSE
+     */
     public double getStdRMSE() {
       return stdRMSE;
     }

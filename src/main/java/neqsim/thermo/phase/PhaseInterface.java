@@ -2198,6 +2198,44 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public boolean hasComponent(String name, boolean normalized);
 
   /**
+   * Check if this phase is rich in asphaltene components.
+   *
+   * <p>
+   * This method detects asphaltene-rich phases regardless of whether the phase is modeled as solid
+   * (PhaseType.ASPHALTENE) or liquid (PhaseType.LIQUID_ASPHALTENE, Pedersen's liquid-liquid
+   * approach). A phase is considered asphaltene-rich if:
+   * </p>
+   * <ul>
+   * <li>The phase type is ASPHALTENE or LIQUID_ASPHALTENE, or</li>
+   * <li>The total mole fraction of asphaltene components exceeds 0.5</li>
+   * </ul>
+   *
+   * <p>
+   * Asphaltene components are identified by name containing "asphaltene" (case-insensitive).
+   * </p>
+   *
+   * @return true if the phase is asphaltene-rich
+   */
+  public default boolean isAsphalteneRich() {
+    // Check if phase type is asphaltene (solid or liquid)
+    if (StateOfMatter.isAsphaltene(getType())) {
+      return true;
+    }
+
+    // Check for asphaltene components by name
+    double asphalteneFraction = 0.0;
+    for (int i = 0; i < getNumberOfComponents(); i++) {
+      ComponentInterface comp = getComponent(i);
+      String compName = comp.getComponentName();
+      if (compName != null && compName.toLowerCase().contains("asphaltene")) {
+        asphalteneFraction += comp.getx();
+      }
+    }
+
+    return asphalteneFraction > 0.5;
+  }
+
+  /**
    * <p>
    * getLogActivityCoefficient.
    * </p>

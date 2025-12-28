@@ -46,6 +46,10 @@ public class CalibrationFrameworkExample {
 
   /**
    * Creates well fluid.
+   *
+   * @param temperature the well temperature [°C]
+   * @param pressure the well pressure [Pa]
+   * @return the initialized thermodynamic system
    */
   private SystemInterface createWellFluid(double temperature, double pressure) {
     SystemInterface fluid = new SystemSrkEos(273.15 + temperature, pressure);
@@ -114,6 +118,8 @@ public class CalibrationFrameworkExample {
 
   /**
    * Sets up the EnKF estimator.
+   *
+   * @return the configured EnKFParameterEstimator
    */
   public EnKFParameterEstimator createEstimator() {
     EnKFParameterEstimator estimator = new EnKFParameterEstimator(process);
@@ -282,6 +288,8 @@ public class CalibrationFrameworkExample {
 
   /**
    * Main entry point.
+   *
+   * @param args command line arguments (unused)
    */
   public static void main(String[] args) {
     System.out.println("╔══════════════════════════════════════════════════════════════════════╗");

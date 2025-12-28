@@ -24,6 +24,30 @@ oil.setMixingRule(2);
 - **Plus-fraction splitting**: Use `splitTBPfraction` to subdivide heavy cuts using predefined distillation curves.
 - **Viscosity tuning**: Adjust heavy-end Watson K or user-defined viscosity correlations when matching lab rheology.
 
+## Asphaltene Modeling
+
+For fluids with asphaltene precipitation risk, use the `PedersenAsphalteneCharacterization` class:
+
+```java
+import neqsim.thermo.characterization.PedersenAsphalteneCharacterization;
+
+// Create asphaltene characterization
+PedersenAsphalteneCharacterization asphChar = new PedersenAsphalteneCharacterization();
+asphChar.setAsphalteneMW(750.0);     // Molecular weight g/mol
+asphChar.setAsphalteneDensity(1.10); // Density g/cm³
+
+// Add asphaltene as pseudo-component (before mixing rule)
+asphChar.addAsphalteneToSystem(oil, 0.02);  // 2 mol% asphaltene
+oil.setMixingRule("classic");
+
+// Perform TPflash with asphaltene detection
+boolean hasAsphaltene = PedersenAsphalteneCharacterization.TPflash(oil);
+```
+
+NeqSim supports two asphaltene phase types:
+- `PhaseType.ASPHALTENE`: Solid asphaltene with literature-based properties
+- `PhaseType.LIQUID_ASPHALTENE`: Pedersen's liquid approach using cubic EOS
+
 ## PVT Reports
 After running `ThermodynamicOperations.TPflash()`, collect standard PVT outputs:
 ```java

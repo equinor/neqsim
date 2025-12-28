@@ -71,6 +71,8 @@ public class PipeFlowResult implements Serializable {
 
   /**
    * Private constructor - use {@link Builder} to create instances.
+   *
+   * @param builder the builder instance with configured flow result data
    */
   private PipeFlowResult(Builder builder) {
     this.positions = builder.positions;
