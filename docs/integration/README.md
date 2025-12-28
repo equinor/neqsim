@@ -16,6 +16,7 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 
 | Document | Description |
 |----------|-------------|
+| [ai_validation_framework.md](ai_validation_framework.md) | **AI-friendly validation framework with structured error handling** |
 | [ai_platform_integration.md](ai_platform_integration.md) | AI platform integration guide |
 | [ml_integration.md](ml_integration.md) | Machine learning integration |
 
