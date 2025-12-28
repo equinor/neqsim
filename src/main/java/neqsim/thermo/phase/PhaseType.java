@@ -8,9 +8,18 @@ import neqsim.util.exception.InvalidInputException;
  * @author ASMF
  */
 public enum PhaseType {
-  LIQUID("liquid", 0), GAS("gas", 1), OIL("oil", 2), AQUEOUS("aqueous", 3), HYDRATE("hydrate",
-      4), WAX("wax",
-          5), SOLID("solid", 6), SOLIDCOMPLEX("solidComplex", 7), ASPHALTENE("asphaltene", 8),
+  LIQUID("liquid", 0), GAS("gas", 1), OIL("oil", 2), AQUEOUS("aqueous", 3),
+  /**
+   * Gas hydrate phase type.
+   *
+   * <p>
+   * Gas hydrates are crystalline solid compounds formed when water molecules create a cage-like
+   * structure around small guest molecules (hydrate formers) such as methane, ethane, propane, CO2,
+   * H2S, etc. Structure I and Structure II hydrates are supported.
+   * </p>
+   */
+  HYDRATE("gas hydrate", 4), WAX("wax", 5), SOLID("solid", 6), SOLIDCOMPLEX("solidComplex",
+      7), ASPHALTENE("asphaltene", 8),
   /**
    * Asphaltene-rich liquid phase for Pedersen's liquid-liquid approach.
    *

@@ -185,6 +185,15 @@ public class MassTransferCoefficientCalculator {
 
   /**
    * Calculates liquid-side mass transfer coefficient for stratified flow.
+   *
+   * @param diameter pipe diameter [m]
+   * @param liquidHoldup liquid holdup fraction [-]
+   * @param usl superficial liquid velocity [m/s]
+   * @param rhoL liquid density [kg/m³]
+   * @param muL liquid viscosity [Pa·s]
+   * @param diffL liquid diffusivity [m²/s]
+   * @param scL liquid Schmidt number [-]
+   * @return liquid-side mass transfer coefficient [m/s]
    */
   private static double calculateStratifiedKL(double diameter, double liquidHoldup, double usl,
       double rhoL, double muL, double diffL, double scL) {

@@ -1737,6 +1737,45 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   }
 
   /**
+   * Check if the system contains a hydrate phase.
+   *
+   * @return True if system contains a hydrate phase
+   */
+  public default boolean hasHydratePhase() {
+    return hasPhaseType(PhaseType.HYDRATE);
+  }
+
+  /**
+   * Get the mole fraction of the hydrate phase.
+   *
+   * <p>
+   * Returns the beta value (phase fraction) for the hydrate phase if it exists, otherwise returns
+   * 0.0.
+   * </p>
+   *
+   * @return the hydrate phase mole fraction, or 0.0 if no hydrate phase exists
+   */
+  public default double getHydrateFraction() {
+    int hydratePhaseNum = getPhaseNumberOfPhase(PhaseType.HYDRATE);
+    if (hydratePhaseNum >= 0 && hydratePhaseNum < getNumberOfPhases()) {
+      return getBeta(hydratePhaseNum);
+    }
+    return 0.0;
+  }
+
+  /**
+   * Get the hydrate phase if it exists.
+   *
+   * @return the hydrate phase, or null if no hydrate phase exists
+   */
+  public default PhaseInterface getHydratePhase() {
+    if (hasHydratePhase()) {
+      return getPhase(PhaseType.HYDRATE);
+    }
+    return null;
+  }
+
+  /**
    * method to calculate thermodynamic properties of the fluid. The temperature, pressure, number of
    * phases and composition of the phases will be used as basis for calculation.
    *

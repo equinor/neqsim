@@ -1,0 +1,471 @@
+/*
+ * TPHydrateFlash.java
+ *
+ * Created for hydrate fraction calculation at given T and P
+ */
+
+package neqsim.thermodynamicoperations.flashops;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.thermo.component.ComponentHydrate;
+import neqsim.thermo.phase.PhaseHydrate;
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+/**
+ * TPHydrateFlash performs a TP flash that includes hydrate phase equilibrium calculation.
+ *
+ * <p>
+ * This class extends TPflash to calculate the fraction of hydrate at given temperature and pressure
+ * conditions. It uses the CPA EOS approach (Statoil/Equinor model) for hydrate fugacity calculation
+ * with proper cavity occupancy.
+ * </p>
+ *
+ * <p>
+ * The hydrate model supports both Structure I and Structure II hydrates, automatically selecting
+ * the most stable structure based on fugacity minimization.
+ * </p>
+ *
+ * @author NeqSim development team
+ * @version 1.0
+ */
+public class TPHydrateFlash extends TPflash {
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  static Logger logger = LogManager.getLogger(TPHydrateFlash.class);
+
+  /** Maximum iterations for hydrate fraction calculation. */
+  private static final int MAX_HYDRATE_ITERATIONS = 100;
+
+  /** Convergence tolerance for hydrate fugacity matching. */
+  private static final double HYDRATE_TOLERANCE = 1e-8;
+
+  /** Minimum hydrate fraction to consider hydrate formation. */
+  private static final double MIN_HYDRATE_FRACTION = 1e-12;
+
+  /** Flag to indicate if hydrate has formed. */
+  private boolean hydrateFormed = false;
+
+  /** The calculated hydrate fraction. */
+  private double hydrateFraction = 0.0;
+
+  /** The stable hydrate structure (1 or 2). */
+  private int stableHydrateStructure = 1;
+
+  /**
+   * Constructor for TPHydrateFlash.
+   *
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   */
+  public TPHydrateFlash(SystemInterface system) {
+    super(system);
+  }
+
+  /**
+   * Constructor for TPHydrateFlash.
+   *
+   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param checkForSolids Set true to do solid phase check and calculations
+   */
+  public TPHydrateFlash(SystemInterface system, boolean checkForSolids) {
+    super(system, checkForSolids);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void run() {
+    // First ensure hydrate check is enabled
+    if (!system.getHydrateCheck()) {
+      system.setHydrateCheck(true);
+    }
+
+    // Do the regular TP flash first (gas/liquid/aqueous equilibrium)
+    super.run();
+
+    // Now perform hydrate equilibrium calculation
+    calculateHydrateEquilibrium();
+  }
+
+  /**
+   * Calculate hydrate phase equilibrium after the regular TP flash.
+   *
+   * <p>
+   * This method checks if hydrate would form at the current T,P conditions and calculates the
+   * hydrate fraction if formation occurs.
+   * </p>
+   */
+  private void calculateHydrateEquilibrium() {
+    // Check if water is present in the system
+    int waterIndex = system.getPhase(0).getComponent("water") != null
+        ? system.getPhase(0).getComponent("water").getComponentNumber()
+        : -1;
+
+    if (waterIndex < 0) {
+      logger.debug("No water component found - hydrate cannot form");
+      hydrateFormed = false;
+      hydrateFraction = 0.0;
+      return;
+    }
+
+    // Check if any hydrate formers are present
+    boolean hasHydrateFormers = false;
+    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+      if (system.getPhase(0).getComponent(i).isHydrateFormer()) {
+        hasHydrateFormers = true;
+        break;
+      }
+    }
+
+    if (!hasHydrateFormers) {
+      logger.debug("No hydrate formers found - hydrate cannot form");
+      hydrateFormed = false;
+      hydrateFraction = 0.0;
+      return;
+    }
+
+    // Initialize the hydrate phase (phase index 4 when setHydrateCheck is true)
+    PhaseInterface hydratePhase = system.getPhase(4);
+    if (!(hydratePhase instanceof PhaseHydrate)) {
+      logger.warn("Hydrate phase not properly initialized");
+      return;
+    }
+
+    // Set up reference fugacities for hydrate calculation
+    setHydrateFugacities();
+
+    // Calculate hydrate fugacity and compare with fluid phases
+    double hydrateWaterFugacity = calculateHydrateWaterFugacity();
+
+    // Find the aqueous or liquid phase with water
+    int waterPhaseIndex = findWaterPhase();
+    if (waterPhaseIndex < 0) {
+      logger.debug("No water-bearing phase found");
+      hydrateFormed = false;
+      hydrateFraction = 0.0;
+      return;
+    }
+
+    double fluidWaterFugacity = system.getPhase(waterPhaseIndex).getFugacity("water");
+
+    // Check if hydrate would form (hydrate fugacity < fluid fugacity)
+    double fugacityRatio = hydrateWaterFugacity / fluidWaterFugacity;
+
+    if (fugacityRatio < 1.0) {
+      // Hydrate is stable - calculate the hydrate fraction
+      hydrateFormed = true;
+      calculateHydrateFraction(waterPhaseIndex, waterIndex);
+    } else {
+      hydrateFormed = false;
+      hydrateFraction = 0.0;
+      logger.debug("Hydrate not stable at current conditions. Fugacity ratio: {}", fugacityRatio);
+    }
+  }
+
+  /**
+   * Set up the reference fugacities for all components in the hydrate phase.
+   */
+  private void setHydrateFugacities() {
+    PhaseInterface hydratePhase = system.getPhase(4);
+
+    // Use gas phase or highest pressure phase as reference
+    int refPhaseIndex = 0;
+    for (int i = 0; i < system.getNumberOfPhases(); i++) {
+      if (system.getPhase(i).getType() == PhaseType.GAS) {
+        refPhaseIndex = i;
+        break;
+      }
+    }
+
+    // Set reference fugacities for each component
+    for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
+      for (int j = 0; j < hydratePhase.getNumberOfComponents(); j++) {
+        if (hydratePhase.getComponent(j).isHydrateFormer()
+            || hydratePhase.getComponent(j).getName().equals("water")) {
+          double refFugacity = system.getPhase(refPhaseIndex).getFugacity(j);
+          ((ComponentHydrate) hydratePhase.getComponent(i)).setRefFug(j, refFugacity);
+        } else {
+          ((ComponentHydrate) hydratePhase.getComponent(i)).setRefFug(j, 0);
+        }
+      }
+    }
+
+    // Set water mole fraction to 1 in hydrate phase (structural water)
+    hydratePhase.getComponent("water").setx(1.0);
+
+    // Initialize the hydrate phase with updated fugacities
+    hydratePhase.init(hydratePhase.getNumberOfMolesInPhase(), hydratePhase.getNumberOfComponents(),
+        1, PhaseType.HYDRATE, 1.0);
+  }
+
+  /**
+   * Calculate the hydrate water fugacity using the CPA model.
+   *
+   * @return the water fugacity in the hydrate phase
+   */
+  private double calculateHydrateWaterFugacity() {
+    PhaseInterface hydratePhase = system.getPhase(4);
+
+    // Calculate fugacity coefficient for water in hydrate
+    hydratePhase.getComponent("water").fugcoef(hydratePhase);
+
+    return hydratePhase.getFugacity("water");
+  }
+
+  /**
+   * Find the phase index that contains the most water.
+   *
+   * @return the phase index with the highest water content, or -1 if no water phase found
+   */
+  private int findWaterPhase() {
+    int waterPhaseIndex = -1;
+    double maxWaterFraction = 0.0;
+
+    for (int i = 0; i < system.getNumberOfPhases(); i++) {
+      if (system.getPhase(i).hasComponent("water")) {
+        double waterFraction = system.getPhase(i).getComponent("water").getx();
+        if (waterFraction > maxWaterFraction) {
+          maxWaterFraction = waterFraction;
+          waterPhaseIndex = i;
+        }
+      }
+    }
+
+    return waterPhaseIndex;
+  }
+
+  /**
+   * Calculate the hydrate fraction using iterative fugacity matching.
+   *
+   * @param waterPhaseIndex the index of the water-bearing phase
+   * @param waterIndex the component index of water
+   */
+  private void calculateHydrateFraction(int waterPhaseIndex, int waterIndex) {
+    // Get total water in the system
+    double totalWaterMoles =
+        system.getPhase(0).getComponent(waterIndex).getz() * system.getTotalNumberOfMoles();
+
+    // Initial guess for hydrate fraction based on fugacity difference
+    double hydrateWaterFug = system.getPhase(4).getFugacity("water");
+    double fluidWaterFug = system.getPhase(waterPhaseIndex).getFugacity("water");
+
+    // Use secant method to find hydrate fraction
+    double beta1 = 0.01; // Initial guess
+    double beta2 = 0.5;
+
+    double f1 = calculateHydrateObjective(beta1, waterPhaseIndex, waterIndex);
+    double f2 = calculateHydrateObjective(beta2, waterPhaseIndex, waterIndex);
+
+    for (int iter = 0; iter < MAX_HYDRATE_ITERATIONS; iter++) {
+      if (Math.abs(f2 - f1) < 1e-20) {
+        break;
+      }
+
+      double betaNew = beta2 - f2 * (beta2 - beta1) / (f2 - f1);
+
+      // Bound the solution
+      if (betaNew < MIN_HYDRATE_FRACTION) {
+        betaNew = MIN_HYDRATE_FRACTION;
+      }
+      if (betaNew > 0.99) {
+        betaNew = 0.99;
+      }
+
+      beta1 = beta2;
+      f1 = f2;
+      beta2 = betaNew;
+      f2 = calculateHydrateObjective(beta2, waterPhaseIndex, waterIndex);
+
+      if (Math.abs(f2) < HYDRATE_TOLERANCE) {
+        break;
+      }
+    }
+
+    // Set the calculated hydrate fraction
+    hydrateFraction = beta2;
+
+    // Update the system with hydrate phase
+    if (hydrateFraction > MIN_HYDRATE_FRACTION) {
+      updateSystemWithHydrate(waterPhaseIndex, waterIndex);
+    }
+  }
+
+  /**
+   * Calculate the objective function for hydrate fraction iteration.
+   *
+   * <p>
+   * The objective is to match the water fugacity between fluid and hydrate phases.
+   * </p>
+   *
+   * @param beta the current hydrate fraction guess
+   * @param waterPhaseIndex the index of the water phase
+   * @param waterIndex the component index of water
+   * @return the fugacity difference (should be zero at equilibrium)
+   */
+  private double calculateHydrateObjective(double beta, int waterPhaseIndex, int waterIndex) {
+    // Update reference fugacities based on current beta
+    setHydrateFugacities();
+
+    // Recalculate hydrate fugacity
+    double hydrateWaterFug = calculateHydrateWaterFugacity();
+    double fluidWaterFug = system.getPhase(waterPhaseIndex).getFugacity("water");
+
+    // Objective: ln(f_hydrate/f_fluid) = 0 at equilibrium
+    return Math.log(hydrateWaterFug / fluidWaterFug);
+  }
+
+  /**
+   * Update the system to include the hydrate phase with calculated fraction.
+   *
+   * @param waterPhaseIndex the index of the water-bearing phase
+   * @param waterIndex the component index of water
+   */
+  private void updateSystemWithHydrate(int waterPhaseIndex, int waterIndex) {
+    // Add hydrate phase to the active phases
+    system.setNumberOfPhases(system.getNumberOfPhases() + 1);
+    system.setPhaseIndex(system.getNumberOfPhases() - 1, 4);
+
+    // Set the hydrate phase fraction
+    system.setBeta(system.getNumberOfPhases() - 1, hydrateFraction);
+
+    // Set hydrate composition based on cavity occupancy
+    updateHydrateComposition();
+
+    // Normalize phase fractions
+    system.initBeta();
+    system.init(1);
+
+    // Order phases by density (hydrate will be at bottom as heaviest)
+    system.orderByDensity();
+    system.init(1);
+  }
+
+  /**
+   * Update the hydrate phase composition based on cavity occupancy calculations.
+   */
+  private void updateHydrateComposition() {
+    PhaseInterface hydratePhase = system.getPhase(4);
+
+    // Calculate mole fractions based on cavity occupancy
+    // Water is the host, hydrate formers occupy cavities
+    double totalMoles = 0.0;
+    double[] moleFractions = new double[hydratePhase.getNumberOfComponents()];
+
+    // Water makes up about 85-87% of hydrate (depending on structure)
+    // Structure I: 46 water molecules per unit cell, 8 guest sites
+    // Structure II: 136 water molecules per unit cell, 24 guest sites
+    double waterFraction = (stableHydrateStructure == 1) ? 46.0 / 54.0 : 136.0 / 160.0;
+
+    int waterCompNum = hydratePhase.getComponent("water").getComponentNumber();
+    moleFractions[waterCompNum] = waterFraction;
+    totalMoles += waterFraction;
+
+    // Distribute remaining fraction among hydrate formers based on cavity occupancy
+    double guestFraction = 1.0 - waterFraction;
+    double totalOccupancy = 0.0;
+
+    for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
+      if (hydratePhase.getComponent(i).isHydrateFormer()) {
+        // Get cavity occupancy (YKI) for this component
+        double yki = ((ComponentHydrate) hydratePhase.getComponent(i))
+            .calcYKI(stableHydrateStructure - 1, 0, hydratePhase);
+        totalOccupancy += yki;
+      }
+    }
+
+    if (totalOccupancy > 0) {
+      for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
+        if (hydratePhase.getComponent(i).isHydrateFormer()) {
+          double yki = ((ComponentHydrate) hydratePhase.getComponent(i))
+              .calcYKI(stableHydrateStructure - 1, 0, hydratePhase);
+          moleFractions[i] = guestFraction * (yki / totalOccupancy);
+          totalMoles += moleFractions[i];
+        }
+      }
+    }
+
+    // Normalize and set mole fractions
+    for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
+      hydratePhase.getComponent(i).setx(moleFractions[i] / totalMoles);
+    }
+  }
+
+  /**
+   * Check if hydrate has formed at the current conditions.
+   *
+   * @return true if hydrate has formed, false otherwise
+   */
+  public boolean isHydrateFormed() {
+    return hydrateFormed;
+  }
+
+  /**
+   * Get the calculated hydrate phase fraction.
+   *
+   * @return the hydrate fraction (mole basis)
+   */
+  public double getHydrateFraction() {
+    return hydrateFraction;
+  }
+
+  /**
+   * Get the stable hydrate structure type.
+   *
+   * @return 1 for Structure I, 2 for Structure II
+   */
+  public int getStableHydrateStructure() {
+    return stableHydrateStructure;
+  }
+
+  /**
+   * Get the cavity occupancy for a specific component.
+   *
+   * @param componentName the name of the component
+   * @param structure the hydrate structure (1 or 2)
+   * @param cavityType the cavity type (0=small, 1=large)
+   * @return the cavity occupancy fraction
+   */
+  public double getCavityOccupancy(String componentName, int structure, int cavityType) {
+    PhaseInterface hydratePhase = system.getPhase(4);
+    if (hydratePhase.hasComponent(componentName)) {
+      ComponentHydrate comp = (ComponentHydrate) hydratePhase.getComponent(componentName);
+      return comp.calcYKI(structure - 1, cavityType, hydratePhase);
+    }
+    return 0.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if (!super.equals(obj)) {
+      return false;
+    }
+    if (getClass() != obj.getClass()) {
+      return false;
+    }
+    TPHydrateFlash other = (TPHydrateFlash) obj;
+    if (hydrateFormed != other.hydrateFormed) {
+      return false;
+    }
+    if (Double.compare(hydrateFraction, other.hydrateFraction) != 0) {
+      return false;
+    }
+    return true;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = super.hashCode();
+    result = prime * result + (hydrateFormed ? 1231 : 1237);
+    result = prime * result + Double.hashCode(hydrateFraction);
+    return result;
+  }
+}

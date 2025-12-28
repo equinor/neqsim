@@ -218,6 +218,17 @@ public class FlowPatternDetector {
    * <p>
    * Extension of Taitel-Dukler for all pipe inclinations.
    * </p>
+   *
+   * @param usg superficial gas velocity [m/s]
+   * @param usl superficial liquid velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param rhoL liquid density [kg/m³]
+   * @param muG gas viscosity [Pa·s]
+   * @param muL liquid viscosity [Pa·s]
+   * @param sigma surface tension [N/m]
+   * @param diameter pipe diameter [m]
+   * @param inclination pipe inclination angle [rad]
+   * @return the detected flow pattern
    */
   private static FlowPattern detectBarnea(double usg, double usl, double rhoG, double rhoL,
       double muG, double muL, double sigma, double diameter, double inclination) {
@@ -271,6 +282,14 @@ public class FlowPatternDetector {
    * <p>
    * Empirical correlation for all pipe inclinations.
    * </p>
+   *
+   * @param usg superficial gas velocity [m/s]
+   * @param usl superficial liquid velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param rhoL liquid density [kg/m³]
+   * @param diameter pipe diameter [m]
+   * @param inclination pipe inclination angle [rad]
+   * @return the detected flow pattern
    */
   private static FlowPattern detectBeggsBrill(double usg, double usl, double rhoG, double rhoL,
       double diameter, double inclination) {
