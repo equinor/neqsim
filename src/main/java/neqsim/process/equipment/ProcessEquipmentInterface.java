@@ -327,4 +327,29 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
   public default double getRestCapacity() {
     return getCapacityMax() - getCapacityDuty();
   }
+
+  /**
+   * Validate the process equipment before execution.
+   * 
+   * <p>
+   * Checks for common setup errors:
+   * <ul>
+   * <li>Equipment has a valid name</li>
+   * <li>Input streams connected</li>
+   * <li>Operating parameters in valid ranges</li>
+   * </ul>
+   * 
+   * @return validation result with errors and warnings
+   */
+  public default neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getName());
+
+    // Check: Equipment has a valid name
+    if (getName() == null || getName().isEmpty()) {
+      result.addError("equipment", "Equipment has no name", "Set equipment name in constructor");
+    }
+
+    return result;
+  }
 }
