@@ -641,10 +641,7 @@ public class EnKFParameterEstimator implements Serializable {
 
     // Create result
     EnKFResult result = new EnKFResult(updateCount, ensembleMean.clone(), ensembleStd.clone(),
-    
-   * @param matrix the matrix to invert
-   * @return the inverted matrix
-   *    measArray, lastPrediction.clone(), anomaly);
+        measArray, lastPrediction.clone(), anomaly);
     history.add(result);
 
     return result;
@@ -652,6 +649,9 @@ public class EnKFParameterEstimator implements Serializable {
 
   /**
    * Simple matrix inversion (for small matrices).
+   *
+   * @param matrix the matrix to invert
+   * @return the inverted matrix
    */
   private double[][] invertMatrix(double[][] matrix) {
     int n = matrix.length;
