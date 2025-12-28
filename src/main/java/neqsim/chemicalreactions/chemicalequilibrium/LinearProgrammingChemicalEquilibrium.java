@@ -42,7 +42,7 @@ public class LinearProgrammingChemicalEquilibrium
   static Logger logger = LogManager.getLogger(LinearProgrammingChemicalEquilibrium.class);
 
   /** Minimum moles to prevent log(0) and division by zero. */
-  private static final double MIN_MOLES = 1e-30;
+  private static final double MIN_MOLES = 1e-60;
 
   double[] xEts = null;
   double[][] Amatrix;
@@ -387,7 +387,14 @@ public class LinearProgrammingChemicalEquilibrium
 
     for (i = 0; i < components.length; i++) {
       // temp[i+1] because temp[0] is the slack variable
-      lp_solution[i] = Math.max(MIN_MOLES, temp[i + 1]);
+      double value = temp[i + 1];
+      // Validate result: check for NaN, Inf, or negative values
+      if (Double.isNaN(value) || Double.isInfinite(value) || value < 0) {
+        logger.warn("LP solution contains invalid value at index " + i + ": " + value
+            + ", using MIN_MOLES");
+        value = MIN_MOLES;
+      }
+      lp_solution[i] = Math.max(MIN_MOLES, value);
     }
 
     return lp_solution;

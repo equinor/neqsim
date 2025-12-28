@@ -639,13 +639,18 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public boolean hasTBPFraction();
 
   /**
+   * Calculates the mean ionic activity coefficient on the molality scale for an electrolyte defined
+   * by two ionic species. The conversion from mole fraction scale (γ±,x) to molality scale (γ±,m)
+   * follows: γ±,m = γ±,x * x_water
+   *
    * <p>
-   * getMolalMeanIonicActivity.
+   * Reference: Robinson, R.A. and Stokes, R.H. "Electrolyte Solutions", 2nd ed., Butterworths,
+   * London, 1965.
    * </p>
    *
-   * @param comp1 a int
-   * @param comp2 a int
-   * @return a double
+   * @param comp1 component index of the first ion (e.g., cation)
+   * @param comp2 component index of the second ion (e.g., anion)
+   * @return mean ionic activity coefficient on the molality scale
    */
   public double getMolalMeanIonicActivity(int comp1, int comp2);
 
@@ -821,6 +826,16 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public double getActivityCoefficient(int k, int p);
 
   /**
+   * Get activity coefficient on a specified concentration scale.
+   *
+   * @param k component index
+   * @param scale concentration scale: "molefraction" (default), "molality" (mol/kg solvent), or
+   *        "molarity" (mol/L solution)
+   * @return activity coefficient on the specified scale
+   */
+  public double getActivityCoefficient(int k, String scale);
+
+  /**
    * <p>
    * Set the pressure in bara (absolute pressure in bar).
    * </p>
@@ -830,13 +845,37 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public void setPressure(double pres);
 
   /**
+   * Calculate pH of the aqueous phase using the IUPAC standard definition.
+   *
    * <p>
-   * getpH.
+   * Uses activity-based pH calculation since NeqSim's chemical reaction equilibrium constants are
+   * defined on the mole fraction scale: pH = -log10(gamma_x * x_H3O+) where gamma_x is the activity
+   * coefficient and x_H3O+ is the mole fraction of H3O+.
    * </p>
    *
-   * @return a double
+   * @return pH value
    */
   public double getpH();
+
+  /**
+   * Calculate pH of the phase using specified method.
+   *
+   * <p>
+   * Available methods:
+   * </p>
+   * <ul>
+   * <li><b>activity</b> (default): pH = -log10(gamma_x * x_H3O+) - consistent with mole
+   * fraction-based equilibrium constants</li>
+   * <li><b>molality</b> (IUPAC standard): pH = -log10(gamma_m * m_H3O+) - correct for all
+   * concentrations</li>
+   * <li><b>molarity</b>: pH = -log10([H3O+]) where [H3O+] is in mol/L - ignores activity
+   * coefficient</li>
+   * </ul>
+   *
+   * @param method The calculation method: "activity" (default), "molality", or "molarity"
+   * @return pH value
+   */
+  public double getpH(String method);
 
   /**
    * Normalize property <code>x</code>.
@@ -1946,6 +1985,25 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * @return a double
    */
   public double getOsmoticCoefficient(int watNumb);
+
+  /**
+   * Get the osmotic coefficient of water on the molality scale. This is the definition used by
+   * Robinson and Stokes (1965):
+   * 
+   * <pre>
+   * φ = -ln(a_w) / (M_w * Σm_i)
+   * </pre>
+   * 
+   * where:
+   * <ul>
+   * <li>a_w = water activity</li>
+   * <li>M_w = molar mass of water (kg/mol)</li>
+   * <li>Σm_i = sum of ion molalities (mol/kg solvent)</li>
+   * </ul>
+   *
+   * @return osmotic coefficient on molality scale
+   */
+  public double getOsmoticCoefficientOfWaterMolality();
 
   /**
    * <p>

@@ -8,6 +8,88 @@ The electrolyte CPA (Cubic Plus Association) model in NeqSim extends the standar
 2. **Fürst electrostatic contribution** for ion-ion and ion-solvent interactions
 3. **Short-range Wij parameters** for specific ion-solvent and ion-ion correlations
 
+## Implementation Classes
+
+### SystemElectrolyteCPAstatoil (Recommended)
+
+The **Statoil (now Equinor) implementation** of the electrolyte CPA model:
+
+```java
+import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
+
+SystemElectrolyteCPAstatoil system = new SystemElectrolyteCPAstatoil(298.15, 1.01325);
+system.addComponent("water", 55.5);
+system.addComponent("Na+", 1.0);
+system.addComponent("Cl-", 1.0);
+system.chemicalReactionInit();
+system.createDatabase(true);
+system.setMixingRule(10);  // Required: CPA mixing rule with temperature/composition dependency
+```
+
+### Key Features of the Statoil Implementation
+
+| Feature | Description |
+|---------|-------------|
+| **Model Name** | `Electrolyte-CPA-EOS-statoil` |
+| **Base Class** | Extends `SystemFurstElectrolyteEos` |
+| **Phase Class** | `PhaseElectrolyteCPAstatoil` |
+| **Component Class** | `ComponentElectrolyteCPAstatoil` |
+| **Attractive Term** | Term 15 (Mathias-Copeman alpha function) |
+| **Volume Correction** | Enabled by default |
+| **Fürst Parameters** | Uses `electrolyteCPA` parameter set |
+
+### Class Hierarchy
+
+```
+SystemThermo
+  └── SystemSrkEos
+        └── SystemFurstElectrolyteEos
+              └── SystemElectrolyteCPAstatoil
+                    ├── PhaseElectrolyteCPAstatoil (phase calculations)
+                    └── ComponentElectrolyteCPAstatoil (component properties)
+```
+
+## Mixing Rule 10 - CPA with Temperature/Composition Dependency
+
+### Overview
+
+Mixing rule 10 is the **recommended mixing rule** for all CPA and electrolyte CPA systems. It automatically selects the appropriate sub-type based on the binary interaction parameters:
+
+```java
+system.setMixingRule(10);  // Automatically selects optimal sub-type
+```
+
+### Automatic Sub-Type Selection
+
+The mixing rule analyzes the binary interaction parameter matrices and selects:
+
+| Condition | Sub-Type | Class | Description |
+|-----------|----------|-------|-------------|
+| Symmetric kij, no T-dependency | `classic-CPA` | `ClassicSRK` | Simple symmetric mixing |
+| Symmetric kij, with T-dependency | `classic-CPA_T` | `ClassicSRKT2` | Temperature-dependent symmetric |
+| Asymmetric kij (kij ≠ kji) | `classic-CPA_Tx` | `ClassicSRKT2x` | Full asymmetric + T-dependent |
+
+### Mathematical Formulation
+
+The `a` parameter mixing rule:
+
+$$a = \sum_i \sum_j x_i x_j \sqrt{a_i a_j} (1 - k_{ij})$$
+
+For asymmetric mixing (ClassicSRKT2x):
+
+$$k_{ij} \neq k_{ji}$$
+
+Temperature dependency:
+
+$$k_{ij}(T) = k_{ij,0} + k_{ij,T} \cdot T$$
+
+### Why Mixing Rule 10?
+
+1. **Automatic optimization**: Selects the simplest sufficient mixing rule
+2. **Temperature dependency**: Captures T-dependent phase behavior
+3. **Asymmetric parameters**: Handles non-symmetric ion-solvent interactions
+4. **Database integration**: Uses binary parameters from NeqSim database
+
 ## Theoretical Background
 
 ### Helmholtz Energy Decomposition
@@ -231,6 +313,76 @@ Separate Wij parameters are available for each solvent system.
 3. **VOLUME_AVERAGE/LOOYENGA mixing rules**: Incomplete composition derivatives
 4. **Temperature range**: Parameters fitted at 25°C, extrapolation accuracy may vary
 
+## Comparison: CPA vs Electrolyte CPA
+
+| Feature | SystemSrkCPAstatoil | SystemElectrolyteCPAstatoil |
+|---------|---------------------|------------------------------|
+| **Use Case** | Non-ionic associating systems | Aqueous electrolyte solutions |
+| **Electrostatics** | None | MSA + Born solvation |
+| **Ions** | Not supported | Na+, K+, Ca++, Mg++, Cl-, etc. |
+| **Mixing Rule** | 10 (recommended) | 10 (required) |
+| **Chemical Reactions** | Optional | Recommended (pH, speciation) |
+| **Phase Class** | `PhaseSrkCPAs` | `PhaseElectrolyteCPAstatoil` |
+
+## Quick Start Examples
+
+### Simple NaCl Solution
+
+```java
+SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 1.01325);
+system.addComponent("water", 55.5);
+system.addComponent("Na+", 0.5);
+system.addComponent("Cl-", 0.5);
+system.createDatabase(true);
+system.setMixingRule(10);
+system.init(0);
+system.init(1);
+
+// Get mean activity coefficient
+double gammaMean = system.getPhase(0).getMeanIonicActivityCoefficient("Na+", "Cl-");
+```
+
+### With Chemical Reactions (pH Calculation)
+
+```java
+SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 1.01325);
+system.addComponent("water", 55.5);
+system.addComponent("CO2", 0.01);
+system.addComponent("Na+", 0.1);
+system.addComponent("Cl-", 0.1);
+system.chemicalReactionInit();  // Enable pH and speciation
+system.createDatabase(true);
+system.setMixingRule(10);
+
+ThermodynamicOperations ops = new ThermodynamicOperations(system);
+ops.TPflash();
+
+// Access aqueous phase
+int aq = system.getPhaseNumberOfPhase("aqueous");
+double pH = -Math.log10(system.getPhase(aq).getComponent("H3O+").getx() * 55.5);
+```
+
+### Gas-Liquid Equilibrium with Electrolytes
+
+```java
+SystemInterface system = new SystemElectrolyteCPAstatoil(323.15, 50.0);
+system.addComponent("methane", 10.0);
+system.addComponent("water", 100.0);
+system.addComponent("MEG", 20.0);
+system.addComponent("Na+", 1.0);
+system.addComponent("Cl-", 1.0);
+system.createDatabase(true);
+system.setMixingRule(10);
+
+ThermodynamicOperations ops = new ThermodynamicOperations(system);
+ops.TPflash();
+
+// Check phase compositions
+for (int i = 0; i < system.getNumberOfPhases(); i++) {
+    System.out.println("Phase " + i + ": " + system.getPhase(i).getType());
+}
+```
+
 ## References
 
 1. Solbraa, E. (2002). "Measurement and Modelling of Absorption of Carbon Dioxide into Methyldiethanolamine Solutions at High Pressures." PhD Thesis, Norwegian University of Science and Technology.
@@ -241,6 +393,8 @@ Separate Wij parameters are available for each solvent system.
 
 4. Kontogeorgis, G.M., & Folas, G.K. (2010). "Thermodynamic Models for Industrial Applications." Wiley.
 
+5. Michelsen, M.L., & Mollerup, J.M. (2007). "Thermodynamic Models: Fundamentals & Computational Aspects." Tie-Line Publications.
+
 ## Parameter History
 
 | Date | Change | Impact |
@@ -248,11 +402,36 @@ Separate Wij parameters are available for each solvent system.
 | 2002 | Initial parameters from Solbraa thesis | Baseline model |
 | 2024 | Refitted monovalent parameters to Robinson & Stokes | γ± error: 2.8% |
 | Dec 2024 | Refitted divalent cation parameters [6-9] | CaCl₂: 16%→7%, MgCl₂: 22%→10% |
+| Dec 2024 | Updated chemical equilibrium solver | Improved pH accuracy |
 
 ## Source Code References
 
-- Parameters: `FurstElectrolyteConstants.java`
-- Mixing rules: `EosMixingRuleHandler.java` (lines 2950-3150)
-- Phase calculations: `PhaseModifiedFurstElectrolyteEos.java`
-- Thermodynamic consistency tests: `ElectrolyteCPAThermodynamicConsistencyTest.java`
-- Validation tests: `ElectrolyteCPARobinsonValidationTest.java`
+### System Classes
+- `SystemElectrolyteCPAstatoil.java` - Main system class (Statoil implementation)
+- `SystemElectrolyteCPA.java` - Generic electrolyte CPA system
+- `SystemSrkCPAstatoil.java` - Non-electrolyte CPA (for comparison)
+
+### Phase Classes  
+- `PhaseElectrolyteCPAstatoil.java` - Phase calculations (Statoil g-function)
+- `PhaseElectrolyteCPA.java` - Base electrolyte CPA phase
+- `PhaseModifiedFurstElectrolyteEos.java` - Fürst electrostatic contributions
+
+### Component Classes
+- `ComponentElectrolyteCPAstatoil.java` - Component properties
+- `ComponentElectrolyteCPA.java` - Base electrolyte CPA component
+
+### Mixing Rules
+- `EosMixingRuleHandler.java` - Mixing rule selection (line 552 for rule 10)
+- `CPAMixingRuleHandler.java` - CPA association mixing rules
+
+### Parameters
+- `FurstElectrolyteConstants.java` - Wij correlation parameters
+
+### Tests
+- `SystemElectrolyteCPATest.java` - Basic electrolyte CPA tests
+- `ElectrolyteCPAThermodynamicConsistencyTest.java` - Thermodynamic consistency
+- `ElectrolyteCPARobinsonValidationTest.java` - Validation against experimental data
+
+---
+
+*Last updated: December 27, 2024*
