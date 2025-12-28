@@ -390,9 +390,6 @@ public class MassTransferCoefficientCalculator {
    * @param diffG gas diffusivity [m²/s]
    * @param scG gas Schmidt number [-]
    * @return gas-side mass transfer coefficient [m/s]
-   *
-   * @param diameter pipe diameter [m]
-   * @param voidFraction void fraction [-]
    * @param uG gas velocity [m/s]
    * @param rhoG gas density [kg/m³]
    * @param muG gas dynamic viscosity [Pa·s]
@@ -492,14 +489,6 @@ public class MassTransferCoefficientCalculator {
 
   /**
    * Calculates gas-side mass transfer coefficient for churn flow.
-   *
-   * @param diameter pipe diameter [m]
-   * @param uG gas velocity [m/s]
-   * @param rhoG gas density [kg/m³]
-   * @param muG gas dynamic viscosity [Pa·s]
-   * @param diffG gas diffusivity [m²/s]
-   * @param scG gas Schmidt number [-]
-   * @return gas-side mass transfer coefficient [m/s]
    *
    * @param diameter pipe diameter [m]
    * @param uG gas velocity [m/s]

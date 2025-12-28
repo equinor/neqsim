@@ -495,6 +495,10 @@ public class TwoPhasePipeFlowSystemBuilder {
 
   /**
    * Converts length to meters.
+   *
+   * @param value the length value in the specified unit
+   * @param unit the unit of the input value ("m", "cm", "inch", "ft", etc.)
+   * @return the converted length in meters
    */
   private double convertLength(double value, String unit) {
     switch (unit.toLowerCase()) {
@@ -518,6 +522,10 @@ public class TwoPhasePipeFlowSystemBuilder {
 
   /**
    * Converts temperature to Kelvin.
+   *
+   * @param value the temperature value in the specified unit
+   * @param unit the unit of the input value ("C", "F", "K")
+   * @return the converted temperature in Kelvin
    */
   private double convertTemperature(double value, String unit) {
     switch (unit.toUpperCase()) {

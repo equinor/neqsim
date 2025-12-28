@@ -570,7 +570,7 @@ public class PedersenAsphalteneCharacterization {
    *
    * <p>
    * This method should be called after a flash calculation to identify and mark liquid phases that
-   * are rich in asphaltene components (> 50 mol% asphaltene). This is useful for the Pedersen
+   * are rich in asphaltene components (&gt; 50 mol% asphaltene). This is useful for the Pedersen
    * liquid-liquid approach where asphaltene precipitation is modeled as a phase split between light
    * and heavy liquid phases.
    * </p>

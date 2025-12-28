@@ -401,6 +401,9 @@ public class TwoPhasePipeFlowSystem
 
   /**
    * Validates the fluid system before creating a pipe.
+   *
+   * @param fluid the thermodynamic system to validate
+   * @throws IllegalArgumentException if fluid is null
    */
   private static void validateFluid(neqsim.thermo.system.SystemInterface fluid) {
     if (fluid == null) {
@@ -410,6 +413,11 @@ public class TwoPhasePipeFlowSystem
 
   /**
    * Validates geometry parameters.
+   *
+   * @param diameter the pipe diameter [m]
+   * @param length the pipe length [m]
+   * @param nodes the number of computational nodes
+   * @throws IllegalArgumentException if any geometry parameter is invalid
    */
   private static void validateGeometry(double diameter, double length, int nodes) {
     if (diameter <= 0) {
