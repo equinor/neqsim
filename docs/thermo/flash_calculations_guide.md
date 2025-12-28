@@ -571,27 +571,73 @@ void PSflashVega(double Sspec)
 
 ## Hydrate Calculations
 
-NeqSim provides specialized calculations for gas hydrate formation.
+NeqSim provides comprehensive calculations for gas hydrate formation, including multi-phase equilibrium with hydrate, inhibitor effects, and cavity occupancy calculations.
 
-**Formation temperature:**
+> **📚 Detailed Documentation:**
+> - [Hydrate Models](hydrate_models.md) - Thermodynamic models (vdWP, CPA, PVTsim)
+> - [Hydrate Flash Operations](../thermodynamicoperations/hydrate_flash_operations.md) - Complete flash API
+
+### Hydrate TPflash
+
+Calculate phase equilibrium including hydrate at given T and P:
+
+```java
+SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 5.0, 100.0);
+fluid.addComponent("methane", 0.85);
+fluid.addComponent("ethane", 0.08);
+fluid.addComponent("propane", 0.04);
+fluid.addComponent("water", 0.03);
+fluid.setMixingRule(10);
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.hydrateTPflash();
+
+// Check phases: GAS, AQUEOUS, HYDRATE
+fluid.prettyPrint();
+```
+
+### Gas-Hydrate Equilibrium (No Aqueous)
+
+For systems with trace water where all water can be consumed by hydrate:
+
+```java
+SystemInterface fluid = new SystemSrkCPAstatoil(273.15 - 15.0, 250.0);
+fluid.addComponent("methane", 0.9998);
+fluid.addComponent("water", 0.0002);  // 200 ppm water
+fluid.setMixingRule(10);
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.gasHydrateTPflash();  // Targets gas-hydrate equilibrium
+
+// Result: GAS + HYDRATE phases (no AQUEOUS)
+```
+
+### Formation Temperature
+
 ```java
 void hydrateFormationTemperature()
 void hydrateFormationTemperature(double initialGuess)
 void hydrateFormationTemperature(int structure)  // 0=ice, 1=sI, 2=sII
 ```
 
-**Formation pressure:**
+### Formation Pressure
+
 ```java
 void hydrateFormationPressure()
+void hydrateFormationPressure(int structure)
 ```
 
-**Inhibitor calculations:**
+### Inhibitor Calculations
+
 ```java
 void hydrateInhibitorConcentration(String inhibitor, double targetT)
 void hydrateInhibitorConcentrationSet(String inhibitor, double wtFrac)
 ```
 
-**Example:**
+**Supported inhibitors:** MEG, TEG, methanol, ethanol
+
+### Complete Example
+
 ```java
 SystemInterface gas = new SystemSrkCPAstatoil(280.0, 100.0);
 gas.addComponent("methane", 0.9);
@@ -602,9 +648,33 @@ gas.setMixingRule(10);
 gas.setHydrateCheck(true);
 
 ThermodynamicOperations ops = new ThermodynamicOperations(gas);
-ops.hydrateFormationTemperature();
 
+// Calculate hydrate formation temperature
+ops.hydrateFormationTemperature();
 System.out.println("Hydrate formation T: " + gas.getTemperature("C") + " °C");
+
+// Check if hydrate forms at 5°C
+gas.setTemperature(273.15 + 5.0);
+ops.hydrateTPflash();
+if (gas.hasHydratePhase()) {
+    System.out.println("Hydrate fraction: " + gas.getBeta(PhaseType.HYDRATE));
+}
+```
+
+### Four-Phase Equilibrium (Gas-Oil-Aqueous-Hydrate)
+
+```java
+SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 4.0, 100.0);
+fluid.addComponent("methane", 0.70);
+fluid.addComponent("ethane", 0.08);
+fluid.addComponent("propane", 0.05);
+fluid.addComponent("n-hexane", 0.02);
+fluid.addComponent("n-heptane", 0.05);
+fluid.addComponent("water", 0.10);
+fluid.setMixingRule(10);
+
+ops.hydrateTPflash();
+// Phases: GAS, OIL, AQUEOUS, HYDRATE
 ```
 
 ---

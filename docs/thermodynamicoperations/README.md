@@ -207,15 +207,23 @@ double TwaterDew = fluid.getTemperature();
 
 ### Hydrate Equilibrium
 
+> **📚 See [Hydrate Flash Operations](hydrate_flash_operations.md) for complete documentation**
+
 ```java
-// Hydrate equilibrium temperature
-ops.hydrateEquilibriumTemperature();
+// Hydrate formation temperature
+ops.hydrateFormationTemperature();
 double Thyd = fluid.getTemperature();
 
-// Hydrate equilibrium pressure
+// Hydrate formation pressure
 fluid.setTemperature(278.15);
-ops.hydrateEquilibriumPressure();
+ops.hydrateFormationPressure();
 double Phyd = fluid.getPressure();
+
+// Hydrate TPflash (phase equilibrium with hydrate)
+ops.hydrateTPflash();
+
+// Gas-Hydrate equilibrium (no aqueous phase)
+ops.gasHydrateTPflash();
 ```
 
 ---
@@ -227,6 +235,7 @@ double Phyd = fluid.getPressure();
 ```java
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.calcPTphaseEnvelope();
+
 
 // Get results
 double[][] envelope = ops.getOperation().get2DData();
