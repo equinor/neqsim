@@ -323,6 +323,14 @@ public class MassTransferCoefficientCalculator {
 
   /**
    * Calculates liquid-side mass transfer coefficient for droplet flow.
+   *
+   * @param diameter pipe diameter [m]
+   * @param usg superficial gas velocity [m/s]
+   * @param rhoL liquid density [kg/mA3]
+   * @param muL liquid viscosity [PaAús]
+   * @param diffL liquid diffusivity [mAı/s]
+   * @param scL liquid Schmidt number [-]
+   * @return liquid-side mass transfer coefficient [m/s]
    */
   private static double calculateDropletKL(double diameter, double usg, double rhoL, double muL,
       double diffL, double scL) {
