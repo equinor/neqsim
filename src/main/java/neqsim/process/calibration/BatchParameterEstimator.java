@@ -376,6 +376,8 @@ public class BatchParameterEstimator implements Serializable {
 
   /**
    * Builds the ProcessSimulationFunction.
+   *
+   * @return the constructed ProcessSimulationFunction
    */
   private ProcessSimulationFunction buildFunction() {
     ProcessSimulationFunction func = new ProcessSimulationFunction(processSystem);
@@ -410,6 +412,8 @@ public class BatchParameterEstimator implements Serializable {
 
   /**
    * Builds the SampleSet for the optimizer.
+   *
+   * @return the constructed SampleSet
    */
   private SampleSet buildSampleSet() {
     List<SampleValue> samples = new ArrayList<>();
@@ -447,6 +451,8 @@ public class BatchParameterEstimator implements Serializable {
 
   /**
    * Builds the result from the optimizer output.
+   *
+   * @return the constructed BatchResult
    */
   private BatchResult buildResult() {
     // Get parameter names
@@ -496,6 +502,8 @@ public class BatchParameterEstimator implements Serializable {
 
   /**
    * Gets the chi-square value from the optimizer.
+   *
+   * @return the chi-square value
    */
   private double getChiSquareFromOptimizer() {
     try {
@@ -510,6 +518,8 @@ public class BatchParameterEstimator implements Serializable {
 
   /**
    * Computes chi-square from the sample set.
+   *
+   * @return the computed chi-square value
    */
   private double computeChiSquare() {
     double chiSquare = 0;
@@ -526,6 +536,8 @@ public class BatchParameterEstimator implements Serializable {
 
   /**
    * Gets parameter standard deviations from the optimizer.
+   *
+   * @return array of parameter standard deviations
    */
   private double[] getParameterStandardDeviations() {
     try {
@@ -540,6 +552,8 @@ public class BatchParameterEstimator implements Serializable {
 
   /**
    * Gets the covariance matrix from the optimizer.
+   *
+   * @return the covariance matrix
    */
   private double[][] getCoVarianceMatrix() {
     try {
@@ -559,6 +573,8 @@ public class BatchParameterEstimator implements Serializable {
 
   /**
    * Gets the correlation matrix from the optimizer.
+   *
+   * @return the correlation matrix
    */
   private double[][] getCorrelationMatrix() {
     try {
@@ -579,6 +595,8 @@ public class BatchParameterEstimator implements Serializable {
 
   /**
    * Computes additional statistics: [MAD, bias, R-squared].
+   *
+   * @return array of additional statistics
    */
   private double[] computeAdditionalStatistics() {
     double sumAbsDev = 0;
