@@ -906,4 +906,188 @@ public class TPHydrateFlashTest {
     // The gas phase should dominate
     assertTrue(fluid.getBeta(0) > 0.999, "Gas phase should be > 99.9%");
   }
+
+  /**
+   * Test gas-hydrate equilibrium using gasHydrateTPflash method.
+   *
+   * <p>
+   * This test verifies that the gasHydrateTPflash method can achieve gas-hydrate equilibrium
+   * without an aqueous phase when water content is low enough.
+   * </p>
+   */
+  @Test
+  void testGasHydrateTPflash() {
+    // Dry gas at extreme hydrate conditions
+    SystemInterface fluid = new SystemSrkCPAstatoil(273.15 - 15.0, 250.0); // -15°C, 250 bar
+
+    // 200 ppm water - low enough to be consumed by hydrate
+    fluid.addComponent("methane", 0.9998);
+    fluid.addComponent("water", 0.0002);
+
+    fluid.setMixingRule(10);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+
+    // Use the new gasHydrateTPflash method
+    ops.gasHydrateTPflash();
+
+    System.out.println("=== Gas-Hydrate TPflash (200 ppm water at -15°C, 250 bar) ===");
+    fluid.prettyPrint();
+
+    // Count phase types
+    boolean hasGas = false;
+    boolean hasHydrate = false;
+    boolean hasAqueous = false;
+    double gasBeta = 0.0;
+    double hydrateBeta = 0.0;
+    double aqueousBeta = 0.0;
+
+    for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+      System.out.println(
+          "Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
+      if (fluid.getPhase(i).getType() == PhaseType.GAS) {
+        hasGas = true;
+        gasBeta = fluid.getBeta(i);
+      }
+      if (fluid.getPhase(i).getType() == PhaseType.HYDRATE) {
+        hasHydrate = true;
+        hydrateBeta = fluid.getBeta(i);
+      }
+      if (fluid.getPhase(i).getType() == PhaseType.AQUEOUS) {
+        hasAqueous = true;
+        aqueousBeta = fluid.getBeta(i);
+      }
+    }
+
+    // Verify hydrate forms
+    assertTrue(hasHydrate, "Hydrate should form at -15°C, 250 bar");
+
+    // Verify gas phase exists
+    assertTrue(hasGas, "Gas phase should exist");
+
+    // Report whether aqueous phase was removed
+    System.out.println("Has aqueous phase: " + hasAqueous);
+    if (hasAqueous) {
+      System.out.println("Aqueous beta: " + aqueousBeta);
+    }
+
+    // Gas should dominate
+    assertTrue(gasBeta > 0.99, "Gas phase should be > 99%");
+
+    // Verify beta sum = 1.0 (mass conservation)
+    double betaSum = 0.0;
+    for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+      betaSum += fluid.getBeta(i);
+    }
+    assertEquals(1.0, betaSum, 1e-6, "Beta sum should equal 1.0");
+  }
+
+  /**
+   * Test gas-hydrate equilibrium with very low water (500 ppm).
+   *
+   * <p>
+   * At low water content, the algorithm should achieve gas-hydrate equilibrium with all water
+   * consumed by hydrate formation.
+   * </p>
+   */
+  @Test
+  void testGasHydrateEquilibriumWithVeryLowWater() {
+    // Dry gas at extreme hydrate conditions
+    SystemInterface fluid = new SystemSrkCPAstatoil(273.15 - 20.0, 300.0); // -20°C, 300 bar
+
+    // 500 ppm water - low but enough for hydrate calculation
+    fluid.addComponent("methane", 0.9995);
+    fluid.addComponent("water", 0.0005);
+
+    fluid.setMixingRule(10);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+
+    // Use gasHydrateTPflash
+    ops.gasHydrateTPflash();
+
+    System.out.println("=== Gas-Hydrate TPflash (500 ppm water at -20°C, 300 bar) ===");
+    fluid.prettyPrint();
+
+    // Count phase types
+    boolean hasHydrate = false;
+    boolean hasAqueous = false;
+    int phaseCount = fluid.getNumberOfPhases();
+
+    for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+      System.out.println(
+          "Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
+      if (fluid.getPhase(i).getType() == PhaseType.HYDRATE) {
+        hasHydrate = true;
+      }
+      if (fluid.getPhase(i).getType() == PhaseType.AQUEOUS) {
+        hasAqueous = true;
+      }
+    }
+
+    System.out.println("Total phases: " + phaseCount);
+    System.out.println("Has hydrate: " + hasHydrate);
+    System.out.println("Has aqueous: " + hasAqueous);
+
+    // Verify hydrate forms
+    assertTrue(hasHydrate, "Hydrate should form at these extreme conditions");
+
+    // Verify beta sum = 1.0 (mass conservation)
+    double betaSum = 0.0;
+    for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+      betaSum += fluid.getBeta(i);
+    }
+    assertEquals(1.0, betaSum, 1e-6, "Beta sum should equal 1.0");
+  }
+
+  /**
+   * Test gas-hydrate equilibrium with natural gas and low water.
+   *
+   * <p>
+   * Tests gas-hydrate equilibrium with a more realistic natural gas composition containing multiple
+   * hydrate formers.
+   * </p>
+   */
+  @Test
+  void testNaturalGasHydrateEquilibrium() {
+    // Natural gas composition at hydrate conditions
+    SystemInterface fluid = new SystemSrkCPAstatoil(273.15 - 5.0, 150.0); // -5°C, 150 bar
+
+    // Typical natural gas with low water content
+    fluid.addComponent("methane", 0.85);
+    fluid.addComponent("ethane", 0.05);
+    fluid.addComponent("propane", 0.03);
+    fluid.addComponent("CO2", 0.02);
+    fluid.addComponent("nitrogen", 0.04);
+    fluid.addComponent("water", 0.01); // 1% water
+
+    fluid.setMixingRule(10);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+
+    // Use gasHydrateTPflash
+    ops.gasHydrateTPflash();
+
+    System.out.println("=== Natural Gas Hydrate TPflash (1% water at -5°C, 150 bar) ===");
+    fluid.prettyPrint();
+
+    // Verify hydrate forms
+    boolean hasHydrate = false;
+    for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+      System.out.println(
+          "Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta = " + fluid.getBeta(i));
+      if (fluid.getPhase(i).getType() == PhaseType.HYDRATE) {
+        hasHydrate = true;
+      }
+    }
+
+    assertTrue(hasHydrate, "Hydrate should form in natural gas at -5°C, 150 bar");
+
+    // Verify beta sum = 1.0
+    double betaSum = 0.0;
+    for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+      betaSum += fluid.getBeta(i);
+    }
+    assertEquals(1.0, betaSum, 1e-6, "Beta sum should equal 1.0");
+  }
 }

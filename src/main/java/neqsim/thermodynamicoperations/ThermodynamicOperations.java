@@ -311,6 +311,41 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Perform a TP flash targeting gas-hydrate equilibrium without aqueous phase.
+   *
+   * <p>
+   * This method calculates equilibrium between gas and hydrate phases, attempting to eliminate the
+   * aqueous phase when water content is low enough. This is useful for modeling scenarios where
+   * trace water in gas is entirely consumed by hydrate formation.
+   * </p>
+   *
+   * <p>
+   * Example usage for gas-hydrate equilibrium:
+   * </p>
+   *
+   * <pre>
+   * SystemInterface fluid = new SystemSrkCPAstatoil(273.15 - 10.0, 200.0);
+   * fluid.addComponent("methane", 0.9999);
+   * fluid.addComponent("water", 0.0001); // 100 ppm water
+   * fluid.setMixingRule(10);
+   *
+   * ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+   * ops.gasHydrateTPflash(); // Targets gas-hydrate equilibrium
+   *
+   * fluid.prettyPrint(); // May show only GAS and HYDRATE phases
+   * </pre>
+   *
+   * @see #hydrateTPflash()
+   */
+  public void gasHydrateTPflash() {
+    neqsim.thermodynamicoperations.flashops.TPHydrateFlash hydrateFlash =
+        new neqsim.thermodynamicoperations.flashops.TPHydrateFlash(system);
+    hydrateFlash.setGasHydrateOnlyMode(true);
+    operation = hydrateFlash;
+    getOperation().run();
+  }
+
+  /**
    * <p>
    * TPgradientFlash.
    * </p>

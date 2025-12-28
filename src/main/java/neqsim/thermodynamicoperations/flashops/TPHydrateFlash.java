@@ -57,6 +57,12 @@ public class TPHydrateFlash extends TPflash {
   private int stableHydrateStructure = 1;
 
   /**
+   * Flag to enable gas-hydrate only mode. When true, the algorithm will try to achieve gas-hydrate
+   * equilibrium without an aqueous phase if all water can be consumed by hydrate.
+   */
+  private boolean gasHydrateOnlyMode = false;
+
+  /**
    * Constructor for TPHydrateFlash.
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
@@ -95,7 +101,8 @@ public class TPHydrateFlash extends TPflash {
    *
    * <p>
    * This method checks if hydrate would form at the current T,P conditions and calculates the
-   * hydrate fraction if formation occurs.
+   * hydrate fraction if formation occurs. When gasHydrateOnlyMode is enabled and water content is
+   * low enough, it will calculate gas-hydrate equilibrium without an aqueous phase.
    * </p>
    */
   private void calculateHydrateEquilibrium() {
@@ -140,13 +147,29 @@ public class TPHydrateFlash extends TPflash {
     // Calculate hydrate fugacity and compare with fluid phases
     double hydrateWaterFugacity = calculateHydrateWaterFugacity();
 
-    // Find the aqueous or liquid phase with water
+    // Find the phase with water (aqueous or gas phase)
     int waterPhaseIndex = findWaterPhase();
-    if (waterPhaseIndex < 0) {
+
+    // Check if we should attempt gas-hydrate-only equilibrium
+    double waterZFraction = system.getPhase(0).getComponent(waterIndex).getz();
+    boolean attemptGasHydrateOnly = shouldAttemptGasHydrateOnly(waterZFraction);
+
+    if (waterPhaseIndex < 0 && !attemptGasHydrateOnly) {
       logger.debug("No water-bearing phase found");
       hydrateFormed = false;
       hydrateFraction = 0.0;
       return;
+    }
+
+    // If no aqueous phase but we have gas phase with water, use gas phase
+    if (waterPhaseIndex < 0 && attemptGasHydrateOnly) {
+      waterPhaseIndex = findGasPhaseWithWater();
+      if (waterPhaseIndex < 0) {
+        logger.debug("No water-bearing phase found for gas-hydrate equilibrium");
+        hydrateFormed = false;
+        hydrateFraction = 0.0;
+        return;
+      }
     }
 
     double fluidWaterFugacity = system.getPhase(waterPhaseIndex).getFugacity("water");
@@ -158,6 +181,11 @@ public class TPHydrateFlash extends TPflash {
       // Hydrate is stable - calculate the hydrate fraction
       hydrateFormed = true;
       calculateHydrateFraction(waterPhaseIndex, waterIndex);
+
+      // For gas-hydrate only mode with low water, try to remove aqueous phase
+      if (attemptGasHydrateOnly) {
+        attemptRemoveAqueousPhase(waterIndex);
+      }
     } else {
       hydrateFormed = false;
       hydrateFraction = 0.0;
@@ -235,6 +263,155 @@ public class TPHydrateFlash extends TPflash {
     }
 
     return waterPhaseIndex;
+  }
+
+  /**
+   * Find the gas phase index that contains water.
+   *
+   * @return the gas phase index with water, or -1 if not found
+   */
+  private int findGasPhaseWithWater() {
+    for (int i = 0; i < system.getNumberOfPhases(); i++) {
+      if (system.getPhase(i).getType() == PhaseType.GAS
+          && system.getPhase(i).hasComponent("water")) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * Check if gas-hydrate-only equilibrium should be attempted.
+   *
+   * <p>
+   * This returns true when water content is low enough that all water can potentially be consumed
+   * by hydrate formation, allowing for gas-hydrate equilibrium without an aqueous phase.
+   * </p>
+   *
+   * @param waterZFraction the total water mole fraction in the system
+   * @return true if gas-hydrate-only mode should be attempted
+   */
+  private boolean shouldAttemptGasHydrateOnly(double waterZFraction) {
+    // If gas-hydrate only mode is explicitly enabled, use it
+    if (gasHydrateOnlyMode) {
+      return true;
+    }
+
+    // For very low water content (< 1%), automatically attempt gas-hydrate only
+    // This is the regime where water can be entirely consumed by hydrate
+    return waterZFraction < 0.01;
+  }
+
+  /**
+   * Attempt to remove the aqueous phase when all water is consumed by hydrate.
+   *
+   * <p>
+   * When water content is very low and hydrate has formed, this method checks if the aqueous phase
+   * fraction is negligible (smaller than the hydrate fraction) and removes it to achieve true
+   * gas-hydrate equilibrium.
+   * </p>
+   *
+   * @param waterIndex the component index of water
+   */
+  private void attemptRemoveAqueousPhase(int waterIndex) {
+    // Find aqueous phase index
+    int aqueousPhaseIndex = -1;
+    for (int i = 0; i < system.getNumberOfPhases(); i++) {
+      if (system.getPhase(i).getType() == PhaseType.AQUEOUS) {
+        aqueousPhaseIndex = i;
+        break;
+      }
+    }
+
+    if (aqueousPhaseIndex < 0) {
+      // No aqueous phase - already gas-hydrate only
+      return;
+    }
+
+    double aqueousBeta = system.getBeta(aqueousPhaseIndex);
+    double waterZFraction = system.getPhase(0).getComponent(waterIndex).getz();
+
+    // Calculate the maximum water that can be in hydrate
+    double waterFractionInHydrate = (stableHydrateStructure == 1) ? 46.0 / 54.0 : 136.0 / 160.0;
+    double waterInHydrate = hydrateFraction * waterFractionInHydrate;
+
+    // Check if hydrate can consume all water (with some tolerance)
+    // If water in hydrate >= total water, remove aqueous phase
+    double waterBalance = waterInHydrate - waterZFraction;
+
+    if (waterBalance >= -1e-8 || aqueousBeta < 1e-10) {
+      // All water is in hydrate - remove aqueous phase
+      removeAqueousPhase(aqueousPhaseIndex);
+      logger.debug("Removed aqueous phase - gas-hydrate equilibrium achieved");
+    } else if (aqueousBeta < waterZFraction * 0.01) {
+      // Aqueous phase is tiny compared to total water - remove it
+      // Redistribute water to hydrate
+      removeAqueousPhase(aqueousPhaseIndex);
+      logger.debug("Removed trace aqueous phase - gas-hydrate equilibrium achieved");
+    }
+  }
+
+  /**
+   * Remove the aqueous phase from the system and redistribute its content to hydrate.
+   *
+   * @param aqueousPhaseIndex the index of the aqueous phase to remove
+   */
+  private void removeAqueousPhase(int aqueousPhaseIndex) {
+    double aqueousBeta = system.getBeta(aqueousPhaseIndex);
+
+    // Store phase information
+    int currentNumPhases = system.getNumberOfPhases();
+    double[] newBetas = new double[currentNumPhases - 1];
+    int[] newPhaseIndices = new int[currentNumPhases - 1];
+
+    // Copy phases except aqueous
+    int newPhaseCount = 0;
+    int hydratePhaseNewIndex = -1;
+    for (int i = 0; i < currentNumPhases; i++) {
+      if (i != aqueousPhaseIndex) {
+        newBetas[newPhaseCount] = system.getBeta(i);
+        newPhaseIndices[newPhaseCount] = system.getPhaseIndex(i);
+        if (system.getPhase(i).getType() == PhaseType.HYDRATE) {
+          hydratePhaseNewIndex = newPhaseCount;
+        }
+        newPhaseCount++;
+      }
+    }
+
+    // Add aqueous beta to hydrate
+    if (hydratePhaseNewIndex >= 0) {
+      newBetas[hydratePhaseNewIndex] += aqueousBeta;
+      hydrateFraction = newBetas[hydratePhaseNewIndex];
+    }
+
+    // Normalize betas to sum to 1.0
+    double sum = 0.0;
+    for (int i = 0; i < newPhaseCount; i++) {
+      sum += newBetas[i];
+    }
+    for (int i = 0; i < newPhaseCount; i++) {
+      newBetas[i] /= sum;
+    }
+
+    // Update system with new phase configuration
+    system.setNumberOfPhases(newPhaseCount);
+    for (int i = 0; i < newPhaseCount; i++) {
+      system.setPhaseIndex(i, newPhaseIndices[i]);
+      system.setBeta(i, newBetas[i]);
+    }
+
+    // Reinitialize the system
+    system.init(1);
+    system.orderByDensity();
+    system.init(1);
+
+    // Update hydrate fraction
+    for (int i = 0; i < system.getNumberOfPhases(); i++) {
+      if (system.getPhase(i).getType() == PhaseType.HYDRATE) {
+        hydrateFraction = system.getBeta(i);
+        break;
+      }
+    }
   }
 
   /**
@@ -487,6 +664,34 @@ public class TPHydrateFlash extends TPflash {
     return 0.0;
   }
 
+  /**
+   * Check if gas-hydrate only mode is enabled.
+   *
+   * <p>
+   * When enabled, the algorithm will try to achieve gas-hydrate equilibrium without an aqueous
+   * phase when water content is low enough.
+   * </p>
+   *
+   * @return true if gas-hydrate only mode is enabled
+   */
+  public boolean isGasHydrateOnlyMode() {
+    return gasHydrateOnlyMode;
+  }
+
+  /**
+   * Enable or disable gas-hydrate only mode.
+   *
+   * <p>
+   * When enabled, the algorithm will try to achieve gas-hydrate equilibrium without an aqueous
+   * phase when water content is low enough for all water to be consumed by hydrate formation.
+   * </p>
+   *
+   * @param gasHydrateOnlyMode true to enable gas-hydrate only mode
+   */
+  public void setGasHydrateOnlyMode(boolean gasHydrateOnlyMode) {
+    this.gasHydrateOnlyMode = gasHydrateOnlyMode;
+  }
+
   /** {@inheritDoc} */
   @Override
   public boolean equals(Object obj) {
@@ -506,6 +711,9 @@ public class TPHydrateFlash extends TPflash {
     if (Double.compare(hydrateFraction, other.hydrateFraction) != 0) {
       return false;
     }
+    if (gasHydrateOnlyMode != other.gasHydrateOnlyMode) {
+      return false;
+    }
     return true;
   }
 
@@ -516,6 +724,7 @@ public class TPHydrateFlash extends TPflash {
     int result = super.hashCode();
     result = prime * result + (hydrateFormed ? 1231 : 1237);
     result = prime * result + Double.hashCode(hydrateFraction);
+    result = prime * result + (gasHydrateOnlyMode ? 1231 : 1237);
     return result;
   }
 }
