@@ -390,6 +390,15 @@ public class MassTransferCoefficientCalculator {
    * @param diffG gas diffusivity [m²/s]
    * @param scG gas Schmidt number [-]
    * @return gas-side mass transfer coefficient [m/s]
+   *
+   * @param diameter pipe diameter [m]
+   * @param voidFraction void fraction [-]
+   * @param uG gas velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param muG gas dynamic viscosity [Pa·s]
+   * @param diffG gas diffusivity [m²/s]
+   * @param scG gas Schmidt number [-]
+   * @return gas-side mass transfer coefficient [m/s]
    */
   private static double calculateStratifiedKG(double diameter, double voidFraction, double uG,
       double rhoG, double muG, double diffG, double scG) {
@@ -491,6 +500,14 @@ public class MassTransferCoefficientCalculator {
    * @param diffG gas diffusivity [m²/s]
    * @param scG gas Schmidt number [-]
    * @return gas-side mass transfer coefficient [m/s]
+   *
+   * @param diameter pipe diameter [m]
+   * @param uG gas velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param muG gas dynamic viscosity [Pa·s]
+   * @param diffG gas diffusivity [m²/s]
+   * @param scG gas Schmidt number [-]
+   * @return gas-side mass transfer coefficient [m/s]
    */
   private static double calculateChurnKG(double diameter, double uG, double rhoG, double muG,
       double diffG, double scG) {
@@ -505,6 +522,10 @@ public class MassTransferCoefficientCalculator {
 
   /**
    * Calculates hydraulic diameter for liquid phase in stratified flow.
+   *
+   * @param diameter pipe diameter [m]
+   * @param liquidHoldup liquid holdup fraction [-]
+   * @return hydraulic diameter for liquid phase [m]
    *
    * @param diameter pipe diameter [m]
    * @param liquidHoldup liquid holdup fraction [-]
@@ -526,6 +547,10 @@ public class MassTransferCoefficientCalculator {
 
   /**
    * Calculates hydraulic diameter for gas phase in stratified flow.
+   *
+   * @param diameter pipe diameter [m]
+   * @param voidFraction void fraction [-]
+   * @return hydraulic diameter for gas phase [m]
    *
    * @param diameter pipe diameter [m]
    * @param voidFraction void fraction [-]

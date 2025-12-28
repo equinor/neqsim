@@ -125,6 +125,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
 
   /**
    * Checks if this solid phase is predominantly asphaltene (> 50 mol% asphaltene).
+   * Checks if this solid phase is predominantly asphaltene (&gt; 50 mol% asphaltene).
    *
    * @return true if phase contains majority asphaltene
    */
