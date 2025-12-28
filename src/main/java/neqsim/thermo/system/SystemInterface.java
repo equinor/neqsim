@@ -1756,9 +1756,13 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return the hydrate phase mole fraction, or 0.0 if no hydrate phase exists
    */
   public default double getHydrateFraction() {
-    int hydratePhaseNum = getPhaseNumberOfPhase(PhaseType.HYDRATE);
-    if (hydratePhaseNum >= 0 && hydratePhaseNum < getNumberOfPhases()) {
-      return getBeta(hydratePhaseNum);
+    if (!hasHydratePhase()) {
+      return 0.0;
+    }
+    for (int i = 0; i < getNumberOfPhases(); i++) {
+      if (getPhase(i).getType() == PhaseType.HYDRATE) {
+        return getBeta(i);
+      }
     }
     return 0.0;
   }
