@@ -248,91 +248,85 @@ public class EnKFParameterEstimator implements Serializable {
      *
      * @return array of parameter standard deviations
      */
-    pub*Gets 95%
+    public double[] getUncertainties() {
+      return uncertainties.clone();
+    }
 
-    confidence interval
-    lower bounds.**@return
-    array of
-    lower confidence bounds
-
-    return uncertainties.clone();
-  }
-
-  /** Gets 95% confidence interval lower bounds. */
+    /**
+     * Gets 95% confidence interval lower bounds.
+     *
+     * @return array of lower confidence bounds
+     */
     public double[] getConfidenceIntervalLower() {
       double[] lower = new double[estimates.length];
       for (int i = 0; i < estimates.length; i++) {
         lower[i] = estimates[i] - 1.96 * uncertainties[i];
       }
-     * Gets 95% confidence interval upper bounds.
-     *
-     * @return array of upper confidence bounds
-    
       return lower;
     }
 
-  /** Gets 95% confidence interval upper bounds. */
-  pub*
+    /**
+     * Gets 95% confidence interval upper bounds.
+     *
+     * @return array of upper confidence bounds
+     */
+    public double[] getConfidenceIntervalUpper() {
+      double[] upper = new double[estimates.length];
+      for (int i = 0; i < estimates.length; i++) {
+        upper[i] = estimates[i] + 1.96 * uncertainties[i];
+      }
+      return upper;
+    }
 
-  Gets the
-  measurements used in this update.**@return
-  array of
-  measurement values
-
-  double[] upper = new double[estimates.length];for(
-  int i = 0;i<estimates.length;i++)
-  {
-    upper[i] = estimates[i] + 1.96 * uncertainties[i];
-  }r*
-  Gets the
-  model predictions.**@return
-  array of
-  model predictions
-
-  }
-
-  /** Gets the measurements used in this update. */
+    /**
+     * Gets the measurements used in this update.
+     *
+     * @return array of measurement values
+     */
     public double[] getMeasurements() {
-      r
+      return measurements.clone();
+    }
+
+    /**
+     * Gets the model predictions.
+     *
+     * @return array of model predictions
+     */
+    public double[] getPredictions() {
+      return predictions.clone();
+    }
+
+    /**
      * Gets the RMSE of predictions vs measurements.
      *
      * @return the root mean square error
-    
+     */
+    public double getRMSE() {
+      return rmse;
     }
 
-  /** Gets the model predictions. */
-    public double[] getPredictions() {
-      r
+    /**
      * Returns true if anomaly was detected.
      *
      * @return true if anomaly was detected
-    
+     */
+    public boolean isAnomalyDetected() {
+      return anomalyDetected;
     }
 
-  /** Gets the RMSE of predictions vs measurements. */
-  public double getRMSE() {
-    return rmse;
-  }
-
-  /** Returns true if anomaly was detected. */
-  public boolean isAnomalyDetected() {
-    return anomalyDetected;
-  }
-
-  /**
-   * Converts to a CalibrationResult for compatibility with existing API.
-   *
-   * @param parameterNames names for the parameters
-   * @return CalibrationResult
-   */
-  public CalibrationResult toCalibrationResult(String[] parameterNames) {
-    Map<String, Double> params = new HashMap<>();
-    for (int i = 0; i < parameterNames.length && i < estimates.length; i++) {
-      params.put(parameterNames[i], estimates[i]);
+    /**
+     * Converts to a CalibrationResult for compatibility with existing API.
+     *
+     * @param parameterNames names for the parameters
+     * @return CalibrationResult
+     */
+    public CalibrationResult toCalibrationResult(String[] parameterNames) {
+      Map<String, Double> params = new HashMap<>();
+      for (int i = 0; i < parameterNames.length && i < estimates.length; i++) {
+        params.put(parameterNames[i], estimates[i]);
+      }
+      return CalibrationResult.success(params, rmse, step, 1);
     }
-    return CalibrationResult.success(params, rmse, step, 1);
-  }
-
   }
 
   /**
