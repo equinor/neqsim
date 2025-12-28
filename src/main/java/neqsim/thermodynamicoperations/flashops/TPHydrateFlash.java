@@ -244,9 +244,18 @@ public class TPHydrateFlash extends TPflash {
    * @param waterIndex the component index of water
    */
   private void calculateHydrateFraction(int waterPhaseIndex, int waterIndex) {
-    // Get total water in the system
-    double totalWaterMoles =
-        system.getPhase(0).getComponent(waterIndex).getz() * system.getTotalNumberOfMoles();
+    // Get total water mole fraction in the system
+    double waterZFraction = system.getPhase(0).getComponent(waterIndex).getz();
+
+    // Calculate maximum hydrate fraction based on available water
+    // Hydrate is ~85% water by mole, so max hydrate = water / 0.85
+    double waterFractionInHydrate = (stableHydrateStructure == 1) ? 46.0 / 54.0 : 136.0 / 160.0;
+    double maxHydrateFraction = waterZFraction / waterFractionInHydrate;
+
+    // Cap at 99% to leave some gas phase
+    if (maxHydrateFraction > 0.99) {
+      maxHydrateFraction = 0.99;
+    }
 
     // Initial guess for hydrate fraction based on fugacity difference
     double hydrateWaterFug = system.getPhase(4).getFugacity("water");
@@ -254,7 +263,7 @@ public class TPHydrateFlash extends TPflash {
 
     // Use secant method to find hydrate fraction
     double beta1 = 0.01; // Initial guess
-    double beta2 = 0.5;
+    double beta2 = Math.min(0.5, maxHydrateFraction);
 
     double f1 = calculateHydrateObjective(beta1, waterPhaseIndex, waterIndex);
     double f2 = calculateHydrateObjective(beta2, waterPhaseIndex, waterIndex);
@@ -270,8 +279,8 @@ public class TPHydrateFlash extends TPflash {
       if (betaNew < MIN_HYDRATE_FRACTION) {
         betaNew = MIN_HYDRATE_FRACTION;
       }
-      if (betaNew > 0.99) {
-        betaNew = 0.99;
+      if (betaNew > maxHydrateFraction) {
+        betaNew = maxHydrateFraction;
       }
 
       beta1 = beta2;
@@ -284,8 +293,15 @@ public class TPHydrateFlash extends TPflash {
       }
     }
 
-    // Set the calculated hydrate fraction
-    hydrateFraction = beta2;
+    // For very low water content, use the maximum possible hydrate fraction
+    // This ensures all water goes to hydrate when water content is limiting
+    if (waterZFraction < 0.01) {
+      // Low water - use max hydrate that consumes all water
+      hydrateFraction = maxHydrateFraction;
+    } else {
+      // Normal case - use calculated fraction
+      hydrateFraction = beta2;
+    }
 
     // Update the system with hydrate phase
     if (hydrateFraction > MIN_HYDRATE_FRACTION) {
@@ -324,18 +340,45 @@ public class TPHydrateFlash extends TPflash {
    * @param waterIndex the component index of water
    */
   private void updateSystemWithHydrate(int waterPhaseIndex, int waterIndex) {
+    // Get water content in the system
+    double waterZFraction = system.getPhase(0).getComponent(waterIndex).getz();
+
+    // Check if initial state has aqueous phase
+    boolean hasInitialAqueous = false;
+    for (int i = 0; i < system.getNumberOfPhases(); i++) {
+      if (system.getPhase(i).getType() == PhaseType.AQUEOUS) {
+        hasInitialAqueous = true;
+        break;
+      }
+    }
+
+    // Store current phase information
+    int currentNumPhases = system.getNumberOfPhases();
+    double[] originalBetas = new double[currentNumPhases];
+    double sumOriginalBetas = 0.0;
+    for (int i = 0; i < currentNumPhases; i++) {
+      originalBetas[i] = system.getBeta(i);
+      sumOriginalBetas += originalBetas[i];
+    }
+
     // Add hydrate phase to the active phases
-    system.setNumberOfPhases(system.getNumberOfPhases() + 1);
-    system.setPhaseIndex(system.getNumberOfPhases() - 1, 4);
+    system.setNumberOfPhases(currentNumPhases + 1);
+    system.setPhaseIndex(currentNumPhases, 4);
+
+    // Scale down existing betas to make room for hydrate fraction
+    // Total should remain 1.0: sum(scaledBetas) + hydrateFraction = 1.0
+    double scaleFactor = (1.0 - hydrateFraction) / sumOriginalBetas;
+    for (int i = 0; i < currentNumPhases; i++) {
+      system.setBeta(i, originalBetas[i] * scaleFactor);
+    }
 
     // Set the hydrate phase fraction
-    system.setBeta(system.getNumberOfPhases() - 1, hydrateFraction);
+    system.setBeta(currentNumPhases, hydrateFraction);
 
     // Set hydrate composition based on cavity occupancy
     updateHydrateComposition();
 
-    // Normalize phase fractions
-    system.initBeta();
+    // Initialize the system with updated phase fractions
     system.init(1);
 
     // Order phases by density (hydrate will be at bottom as heaviest)
@@ -351,7 +394,6 @@ public class TPHydrateFlash extends TPflash {
 
     // Calculate mole fractions based on cavity occupancy
     // Water is the host, hydrate formers occupy cavities
-    double totalMoles = 0.0;
     double[] moleFractions = new double[hydratePhase.getNumberOfComponents()];
 
     // Water makes up about 85-87% of hydrate (depending on structure)
@@ -361,7 +403,6 @@ public class TPHydrateFlash extends TPflash {
 
     int waterCompNum = hydratePhase.getComponent("water").getComponentNumber();
     moleFractions[waterCompNum] = waterFraction;
-    totalMoles += waterFraction;
 
     // Distribute remaining fraction among hydrate formers based on cavity occupancy
     double guestFraction = 1.0 - waterFraction;
@@ -382,14 +423,23 @@ public class TPHydrateFlash extends TPflash {
           double yki = ((ComponentHydrate) hydratePhase.getComponent(i))
               .calcYKI(stableHydrateStructure - 1, 0, hydratePhase);
           moleFractions[i] = guestFraction * (yki / totalOccupancy);
-          totalMoles += moleFractions[i];
         }
       }
     }
 
-    // Normalize and set mole fractions
+    // Normalize to ensure sum = 1.0
+    double sum = 0.0;
     for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
-      hydratePhase.getComponent(i).setx(moleFractions[i] / totalMoles);
+      sum += moleFractions[i];
+    }
+
+    // Set normalized mole fractions
+    for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
+      if (sum > 0) {
+        hydratePhase.getComponent(i).setx(moleFractions[i] / sum);
+      } else {
+        hydratePhase.getComponent(i).setx(0.0);
+      }
     }
   }
 
