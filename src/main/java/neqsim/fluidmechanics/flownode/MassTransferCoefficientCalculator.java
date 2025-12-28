@@ -220,6 +220,15 @@ public class MassTransferCoefficientCalculator {
 
   /**
    * Calculates liquid-side mass transfer coefficient for annular flow.
+   *
+   * @param diameter pipe diameter [m]
+   * @param liquidHoldup liquid holdup fraction [-]
+   * @param usl superficial liquid velocity [m/s]
+   * @param rhoL liquid density [kg/mA3]
+   * @param muL liquid viscosity [PaAús]
+   * @param diffL liquid diffusivity [mAı/s]
+   * @param scL liquid Schmidt number [-]
+   * @return liquid-side mass transfer coefficient [m/s]
    */
   private static double calculateAnnularKL(double diameter, double liquidHoldup, double usl,
       double rhoL, double muL, double diffL, double scL) {
@@ -246,6 +255,16 @@ public class MassTransferCoefficientCalculator {
 
   /**
    * Calculates liquid-side mass transfer coefficient for slug flow.
+   *
+   * @param diameter pipe diameter [m]
+   * @param liquidHoldup liquid holdup fraction [-]
+   * @param usg superficial gas velocity [m/s]
+   * @param usl superficial liquid velocity [m/s]
+   * @param rhoL liquid density [kg/mA3]
+   * @param muL liquid viscosity [PaAús]
+   * @param diffL liquid diffusivity [mAı/s]
+   * @param scL liquid Schmidt number [-]
+   * @return liquid-side mass transfer coefficient [m/s]
    */
   private static double calculateSlugKL(double diameter, double liquidHoldup, double usg,
       double usl, double rhoL, double muL, double diffL, double scL) {
@@ -269,6 +288,16 @@ public class MassTransferCoefficientCalculator {
 
   /**
    * Calculates liquid-side mass transfer coefficient for bubble flow.
+   *
+   * @param diameter pipe diameter [m]
+   * @param liquidHoldup liquid holdup fraction [-]
+   * @param usg superficial gas velocity [m/s]
+   * @param usl superficial liquid velocity [m/s]
+   * @param rhoL liquid density [kg/mA3]
+   * @param muL liquid viscosity [PaAús]
+   * @param diffL liquid diffusivity [mAı/s]
+   * @param scL liquid Schmidt number [-]
+   * @return liquid-side mass transfer coefficient [m/s]
    */
   private static double calculateBubbleKL(double diameter, double liquidHoldup, double usg,
       double usl, double rhoL, double muL, double diffL, double scL) {
