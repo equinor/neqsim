@@ -199,15 +199,37 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
    * @return true if solid asphaltene phase exists
    */
   private boolean checkForAsphaltenePrecipitation() {
-    if (system.hasPhaseType("solid")) {
+    // Check for asphaltene phase (PhaseType.ASPHALTENE)
+    if (system.hasPhaseType("asphaltene")) {
       try {
-        if (system.getPhaseOfType("solid").getNumberOfMolesInPhase() > 1e-10) {
+        if (system.getPhaseOfType("asphaltene").getNumberOfMolesInPhase() > 1e-10) {
           return true;
         }
       } catch (Exception e) {
         // Phase type check failed
       }
     }
+
+    // Also check for generic solid phase that may contain asphaltene
+    if (system.hasPhaseType("solid")) {
+      // Verify it contains asphaltene component
+      try {
+        neqsim.thermo.phase.PhaseInterface solidPhase = system.getPhaseOfType("solid");
+        if (solidPhase.getNumberOfMolesInPhase() > 1e-10) {
+          // Check if solid phase contains asphaltene component
+          for (int i = 0; i < solidPhase.getNumberOfComponents(); i++) {
+            String name = solidPhase.getComponent(i).getComponentName().toLowerCase();
+            if ((name.contains("asphaltene") || name.contains("asphalten"))
+                && solidPhase.getComponent(i).getNumberOfMolesInPhase() > 1e-10) {
+              return true;
+            }
+          }
+        }
+      } catch (Exception e) {
+        // Phase type check failed
+      }
+    }
+
     return false;
   }
 

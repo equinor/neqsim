@@ -54,14 +54,31 @@ public class Conductivity extends SolidPhysicalPropertyMethod implements Conduct
     return properties;
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Thermal conductivity of organic solids is typically 0.15-0.35 W/mK. Values based on: -
+   * Asphaltene: ~0.17-0.22 W/mK (similar to bitumen) - Wax/Paraffin: ~0.20-0.25 W/mK - Hydrate:
+   * ~0.50-0.60 W/mK (ice-like structure)
+   * </p>
+   */
   @Override
   public double calcConductivity() {
-    // using default value of parafin wax
-    if (solidPhase.getPhase().getType() == PhaseType.WAX) {
+    PhaseType phaseType = solidPhase.getPhase().getType();
+
+    if (phaseType == PhaseType.WAX) {
+      // Paraffin wax thermal conductivity
       conductivity = 0.25;
+    } else if (phaseType == PhaseType.HYDRATE) {
+      // Gas hydrate thermal conductivity (ice-like)
+      conductivity = 0.55;
+    } else if (phaseType == PhaseType.ASPHALTENE) {
+      // Asphaltene thermal conductivity (similar to bitumen)
+      conductivity = 0.20;
     } else {
-      conductivity = 2.18;
+      // Default for generic solids
+      conductivity = 0.25;
     }
 
     return conductivity;

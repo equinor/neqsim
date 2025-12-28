@@ -124,6 +124,7 @@ public class PhysicalPropertyHandler implements Cloneable, java.io.Serializable 
       case HYDRATE:
       case SOLID:
       case SOLIDCOMPLEX:
+      case ASPHALTENE:
         return solidPhysicalProperties;
       default:
         return gasPhysicalProperties;

@@ -9,7 +9,18 @@ import neqsim.util.exception.InvalidInputException;
  */
 public enum PhaseType {
   LIQUID("liquid", 0), GAS("gas", 1), OIL("oil", 2), AQUEOUS("aqueous", 3), HYDRATE("hydrate",
-      4), WAX("wax", 5), SOLID("solid", 6), SOLIDCOMPLEX("solidComplex", 7);
+      4), WAX("wax",
+          5), SOLID("solid", 6), SOLIDCOMPLEX("solidComplex", 7), ASPHALTENE("asphaltene", 8),
+  /**
+   * Asphaltene-rich liquid phase for Pedersen's liquid-liquid approach.
+   *
+   * <p>
+   * This phase type is used when modeling asphaltene precipitation as a liquid-liquid equilibrium
+   * (Pedersen's classical cubic EOS approach) rather than as a solid precipitate. The
+   * LIQUID_ASPHALTENE phase behaves like a heavy oil phase with EOS-calculated properties.
+   * </p>
+   */
+  LIQUID_ASPHALTENE("asphaltene liquid", 9);
 
   /** Holder for old style integer pt. */
   private final int value;

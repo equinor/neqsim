@@ -212,14 +212,18 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
   /**
    * Checks if asphaltene precipitation has occurred.
    *
-   * @return true if solid asphaltene phase exists
+   * <p>
+   * Supports both solid asphaltene (PhaseType.ASPHALTENE) and liquid-liquid split
+   * (PhaseType.LIQUID_ASPHALTENE) for Pedersen's approach.
+   * </p>
+   *
+   * @return true if asphaltene-rich phase exists
    */
   private boolean checkForAsphaltenePrecipitation() {
-    // Check for solid phase
-    if (system.hasPhaseType("solid")) {
-      // Verify it contains asphaltene
+    // Check for solid asphaltene phase (PhaseType.ASPHALTENE)
+    if (system.hasPhaseType("asphaltene")) {
       try {
-        if (system.getPhaseOfType("solid").getNumberOfMolesInPhase() > 1e-10) {
+        if (system.getPhaseOfType("asphaltene").getNumberOfMolesInPhase() > 1e-10) {
           return true;
         }
       } catch (Exception e) {
@@ -227,19 +231,74 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
       }
     }
 
-    // Alternative: check component fugacity ratio indicating instability
-    // This would require more sophisticated stability analysis
+    // Check for liquid asphaltene phase (Pedersen's method - PhaseType.LIQUID_ASPHALTENE)
+    if (system.hasPhaseType("asphaltene liquid")) {
+      try {
+        if (system.getPhaseOfType("asphaltene liquid").getNumberOfMolesInPhase() > 1e-10) {
+          return true;
+        }
+      } catch (Exception e) {
+        // Phase type check failed
+      }
+    }
+
+    // Check for asphaltene-rich liquid phases using isAsphalteneRich()
+    for (int p = 0; p < system.getNumberOfPhases(); p++) {
+      if (system.getPhase(p).isAsphalteneRich()) {
+        return true;
+      }
+    }
+
+    // Also check for generic solid phase that may contain asphaltene
+    if (system.hasPhaseType("solid")) {
+      // Verify it contains asphaltene component
+      try {
+        neqsim.thermo.phase.PhaseInterface solidPhase = system.getPhaseOfType("solid");
+        if (solidPhase.getNumberOfMolesInPhase() > 1e-10) {
+          // Check if solid phase contains asphaltene component
+          for (int i = 0; i < solidPhase.getNumberOfComponents(); i++) {
+            String name = solidPhase.getComponent(i).getComponentName().toLowerCase();
+            if ((name.contains("asphaltene") || name.contains("asphalten"))
+                && solidPhase.getComponent(i).getNumberOfMolesInPhase() > 1e-10) {
+              return true;
+            }
+          }
+        }
+      } catch (Exception e) {
+        // Phase type check failed
+      }
+    }
+
     return false;
   }
 
   /**
    * Calculates the fraction of asphaltene that has precipitated.
    *
-   * @return mole fraction of asphaltene in solid phase
+   * <p>
+   * Supports both solid asphaltene precipitation and liquid-liquid split (Pedersen's method).
+   * </p>
+   *
+   * @return mole fraction of asphaltene in precipitated phase
    */
   private double calculatePrecipitatedFraction() {
-    if (!system.hasPhaseType("solid")) {
-      return 0.0;
+    // Check for asphaltene, liquid asphaltene, or solid phase
+    boolean hasAsphaltenePhase = system.hasPhaseType("asphaltene");
+    boolean hasLiquidAsphaltenePhase = system.hasPhaseType("asphaltene liquid");
+    boolean hasSolidPhase = system.hasPhaseType("solid");
+
+    if (!hasAsphaltenePhase && !hasLiquidAsphaltenePhase && !hasSolidPhase) {
+      // Also check for asphaltene-rich liquid phases
+      boolean hasAsphalteneRichPhase = false;
+      for (int p = 0; p < system.getNumberOfPhases(); p++) {
+        if (system.getPhase(p).isAsphalteneRich()) {
+          hasAsphalteneRichPhase = true;
+          break;
+        }
+      }
+      if (!hasAsphalteneRichPhase) {
+        return 0.0;
+      }
     }
 
     double totalAsphaltene = 0.0;
@@ -247,13 +306,27 @@ public class AsphalteneOnsetPressureFlash extends ConstantDutyFlash {
 
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       String name = system.getPhase(0).getComponent(i).getComponentName().toLowerCase();
-      if (name.contains("asphaltene")) {
+      if (name.contains("asphaltene") || name.contains("asphalten")) {
         totalAsphaltene =
             system.getPhase(0).getComponent(i).getz() * system.getTotalNumberOfMoles();
 
-        if (system.hasPhaseType("solid")) {
+        if (hasAsphaltenePhase) {
+          precipitatedAsphaltene =
+              system.getPhaseOfType("asphaltene").getComponent(i).getNumberOfMolesInPhase();
+        } else if (hasLiquidAsphaltenePhase) {
+          precipitatedAsphaltene =
+              system.getPhaseOfType("asphaltene liquid").getComponent(i).getNumberOfMolesInPhase();
+        } else if (hasSolidPhase) {
           precipitatedAsphaltene =
               system.getPhaseOfType("solid").getComponent(i).getNumberOfMolesInPhase();
+        } else {
+          // Check for asphaltene-rich liquid phases
+          for (int p = 0; p < system.getNumberOfPhases(); p++) {
+            if (system.getPhase(p).isAsphalteneRich()) {
+              precipitatedAsphaltene = system.getPhase(p).getComponent(i).getNumberOfMolesInPhase();
+              break;
+            }
+          }
         }
         break;
       }

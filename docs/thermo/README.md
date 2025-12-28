@@ -22,10 +22,10 @@ thermo/
 | Subpackage | Description | Documentation |
 |------------|-------------|---------------|
 | system | Equations of state implementations | [system/README.md](system/README.md) |
-| phase | Phase modeling (gas, liquid, solid) | [phase/README.md](phase/README.md) |
+| phase | Phase modeling (gas, liquid, solid, asphaltene) | [phase/README.md](phase/README.md) |
 | component | Component property calculations | [component/README.md](component/README.md) |
 | mixingrule | Binary interaction parameters | [mixingrule/README.md](mixingrule/README.md) |
-| characterization | Plus fraction characterization | [characterization/README.md](characterization/README.md) |
+| characterization | Plus fraction and asphaltene characterization | [characterization/README.md](characterization/README.md) |
 
 ---
 

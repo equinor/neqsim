@@ -1,11 +1,12 @@
 # Characterization Package
 
-Documentation for plus fraction characterization in NeqSim.
+Documentation for plus fraction and asphaltene characterization in NeqSim.
 
 ## Table of Contents
 - [Overview](#overview)
 - [Plus Fraction Methods](#plus-fraction-methods)
 - [Characterization Approaches](#characterization-approaches)
+- [Asphaltene Characterization](#asphaltene-characterization)
 - [TBP Methods](#tbp-methods)
 - [Examples](#examples)
 
@@ -15,10 +16,11 @@ Documentation for plus fraction characterization in NeqSim.
 
 **Location:** `neqsim.thermo.characterization`
 
-The characterization package handles petroleum plus fraction characterization:
+The characterization package handles petroleum plus fraction and asphaltene characterization:
 - Converting C7+ (or other plus fractions) into pseudo-components
 - Estimating critical properties from correlations
 - Splitting heavy ends into discrete pseudo-components
+- Characterizing asphaltene components for precipitation modeling
 
 ---
 
@@ -100,6 +102,84 @@ For pseudo-components, critical properties are estimated using correlations:
 | Lee-Kesler | Tc, Pc, omega from Tb, SG |
 | Riazi-Daubert | Tb from MW, SG |
 | Pedersen | Tc, Pc, omega for petroleum |
+
+---
+
+## Asphaltene Characterization
+
+### Pedersen's Asphaltene Method
+
+The `PedersenAsphalteneCharacterization` class implements Pedersen's approach for treating asphaltene as a heavy liquid pseudo-component. This enables liquid-liquid equilibrium (LLE) calculations for asphaltene precipitation.
+
+```java
+import neqsim.thermo.characterization.PedersenAsphalteneCharacterization;
+import neqsim.thermo.system.SystemSrkEos;
+
+// Create fluid system
+SystemInterface fluid = new SystemSrkEos(373.15, 50.0);
+fluid.addComponent("methane", 0.40);
+fluid.addComponent("n-pentane", 0.25);
+fluid.addComponent("n-heptane", 0.20);
+fluid.addComponent("nC10", 0.10);
+
+// Create and configure asphaltene characterization
+PedersenAsphalteneCharacterization asphChar = new PedersenAsphalteneCharacterization();
+asphChar.setAsphalteneMW(750.0);     // Molecular weight g/mol
+asphChar.setAsphalteneDensity(1.10); // Density g/cm³
+
+// Add asphaltene pseudo-component (BEFORE setting mixing rule)
+asphChar.addAsphalteneToSystem(fluid, 0.05);  // 5 mol% asphaltene
+
+// Set mixing rule (AFTER adding all components)
+fluid.setMixingRule("classic");
+
+// Print estimated critical properties
+System.out.println(asphChar.toString());
+```
+
+### Critical Property Correlations
+
+Pedersen's method estimates critical properties from molecular weight (MW) and liquid density (ρ):
+
+| Property | Correlation |
+|----------|-------------|
+| Critical Temperature (Tc) | f(MW, ρ) |
+| Critical Pressure (Pc) | f(MW, ρ) |
+| Acentric Factor (ω) | f(MW, ρ) |
+| Normal Boiling Point (Tb) | f(MW, ρ) |
+
+Typical values for asphaltene (MW=750 g/mol, ρ=1.10 g/cm³):
+
+| Property | Value | Unit |
+|----------|-------|------|
+| Tc | 996 | K |
+| Pc | 16.3 | bar |
+| ω | 0.925 | - |
+| Tb | 838 | K |
+
+### TPflash with Automatic Asphaltene Detection
+
+The class provides static methods for TPflash with automatic detection of asphaltene-rich phases:
+
+```java
+// Static TPflash - marks asphaltene-rich liquid phases as LIQUID_ASPHALTENE
+boolean hasAsphaltene = PedersenAsphalteneCharacterization.TPflash(fluid);
+
+// With explicit T,P specification
+boolean hasAsphaltene = PedersenAsphalteneCharacterization.TPflash(fluid, 373.15, 50.0);
+
+// Check result
+if (hasAsphaltene) {
+    System.out.println("Asphaltene-rich liquid phase detected");
+    fluid.prettyPrint();  // Shows "ASPHALTENE LIQUID" column
+}
+```
+
+### Asphaltene Detection Criteria
+
+A liquid phase is marked as `PhaseType.LIQUID_ASPHALTENE` when:
+- The phase contains an "Asphaltene" component, AND
+- The asphaltene mole fraction in that phase exceeds 0.5 (50%)
 
 ---
 

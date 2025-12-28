@@ -246,21 +246,58 @@ Converged to tolerance --> Report onset pressure
 
 ### Solid Phase Check
 
+NeqSim uses `PhaseType.ASPHALTENE` to distinguish asphaltene precipitation from other solid phases (wax, hydrate). This enables accurate phase identification in multi-phase flash calculations.
+
 ```java
-// After flash calculation
-if (fluid.getNumberOfPhases() > 2 || hasSolidPhase(fluid)) {
-    // Asphaltene precipitation detected
+import neqsim.thermo.phase.PhaseType;
+
+// After flash calculation - check for asphaltene precipitation
+// Method 1: Using PhaseType enum (recommended)
+if (fluid.hasPhaseType(PhaseType.ASPHALTENE)) {
+    PhaseInterface asphaltene = fluid.getPhaseOfType("asphaltene");
+    double precipitatedFraction = asphaltene.getBeta();
+    System.out.println("Asphaltene precipitated: " + (precipitatedFraction * 100) + "%");
 }
 
-private boolean hasSolidPhase(SystemInterface fluid) {
-    for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-        String phaseType = fluid.getPhase(i).getPhaseTypeName();
-        if (phaseType.contains("solid") || phaseType.contains("wax")) {
-            return true;
+// Method 2: Using string-based lookup
+if (fluid.hasPhaseType("asphaltene")) {
+    PhaseInterface asphaltene = fluid.getPhaseOfType("asphaltene");
+    // Access asphaltene phase properties
+    double density = asphaltene.getDensity("kg/m3");       // ~1150 kg/m³
+    double viscosity = asphaltene.getViscosity("Pa*s");    // ~10,000 Pa·s
+    double thermalCond = asphaltene.getThermalConductivity("W/mK"); // ~0.20 W/mK
+}
+
+// Method 3: Legacy approach (also checks for generic solid)
+private boolean hasAsphaltenePhase(SystemInterface fluid) {
+    // Check for specific asphaltene phase type
+    if (fluid.hasPhaseType("asphaltene")) {
+        return true;
+    }
+    // Fallback: check solid phase for asphaltene component
+    if (fluid.hasPhaseType("solid")) {
+        PhaseInterface solid = fluid.getPhaseOfType("solid");
+        for (int i = 0; i < solid.getNumberOfComponents(); i++) {
+            if (solid.getComponent(i).getComponentName().toLowerCase().contains("asphaltene")) {
+                return true;
+            }
         }
     }
     return false;
 }
+```
+
+### Asphaltene Phase Properties
+
+When asphaltene precipitates, it forms a distinct phase with `PhaseType.ASPHALTENE`. The physical properties are calculated using literature-based correlations:
+
+| Property | Value | Unit | Notes |
+|----------|-------|------|-------|
+| Density | ~1150 | kg/m³ | Literature-based, temperature-independent |
+| Heat Capacity (Cp) | ~0.9 | kJ/kgK | EOS-based calculation |
+| Thermal Conductivity | 0.20 | W/mK | Typical for organic solids |
+| Viscosity | ~10,000 | Pa·s | Arrhenius correlation at 350K |
+| Speed of Sound | ~1745 | m/s | EOS-based calculation |
 ```
 
 ## Tuning to Experimental Data

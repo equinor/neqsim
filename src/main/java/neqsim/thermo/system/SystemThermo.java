@@ -1509,7 +1509,7 @@ public abstract class SystemThermo implements SystemInterface {
     }
     table[0][1] = "total";
     for (int i = 0; i < numberOfPhases; i++) {
-      table[0][i + 2] = getPhase(i).getType().toString();
+      table[0][i + 2] = getPhase(i).getType().getDesc().toUpperCase();
     }
 
     StringBuffer buf = new StringBuffer();
@@ -3149,6 +3149,18 @@ public abstract class SystemThermo implements SystemInterface {
       if (getPhase(i).getType() == pt) {
         return i;
       }
+      // ASPHALTENE and LIQUID_ASPHALTENE are asphaltene-related phases, match when looking for
+      // either
+      if (pt == PhaseType.ASPHALTENE && getPhase(i).getType() == PhaseType.LIQUID_ASPHALTENE) {
+        return i;
+      }
+      if (pt == PhaseType.LIQUID_ASPHALTENE && getPhase(i).getType() == PhaseType.ASPHALTENE) {
+        return i;
+      }
+      // ASPHALTENE is a solid-like phase, so also match when looking for SOLID
+      if (pt == PhaseType.SOLID && getPhase(i).getType() == PhaseType.ASPHALTENE) {
+        return i;
+      }
     }
     return 0;
   }
@@ -3521,6 +3533,17 @@ public abstract class SystemThermo implements SystemInterface {
         continue;
       }
       if (getPhase(i).getType() == pt) {
+        return true;
+      }
+      // ASPHALTENE and LIQUID_ASPHALTENE are asphaltene-related phases
+      if (pt == PhaseType.ASPHALTENE && getPhase(i).getType() == PhaseType.LIQUID_ASPHALTENE) {
+        return true;
+      }
+      if (pt == PhaseType.LIQUID_ASPHALTENE && getPhase(i).getType() == PhaseType.ASPHALTENE) {
+        return true;
+      }
+      // ASPHALTENE is a solid-like phase, so also match when looking for SOLID
+      if (pt == PhaseType.SOLID && getPhase(i).getType() == PhaseType.ASPHALTENE) {
         return true;
       }
       if (getPhase(i).getPhaseTypeName().equals(pt.getDesc())) {
@@ -4123,8 +4146,13 @@ public abstract class SystemThermo implements SystemInterface {
         } catch (Exception ex) {
           logger.error(ex.getMessage());
         }
-        if (getPhase(i).getPhysicalProperties().calcDensity() < getPhase(i - 1)
-            .getPhysicalProperties().calcDensity()) {
+
+        // Get effective density for comparison
+        // Solid phases (SOLID, ASPHALTENE, WAX, HYDRATE) should always be last (densest)
+        double density1 = getEffectiveDensityForOrdering(i - 1);
+        double density2 = getEffectiveDensityForOrdering(i);
+
+        if (density2 < density1) {
           int tempIndex1 = getPhaseIndex(i - 1);
           int tempIndex2 = getPhaseIndex(i);
           setPhaseIndex(i, tempIndex1);
@@ -4133,6 +4161,26 @@ public abstract class SystemThermo implements SystemInterface {
         }
       }
     } while (change);
+  }
+
+  /**
+   * Get effective density for phase ordering. Solid-like phases (SOLID, ASPHALTENE, WAX, HYDRATE)
+   * return a very high density to ensure they sort to the end.
+   *
+   * @param phaseNum phase number
+   * @return effective density for ordering purposes
+   */
+  private double getEffectiveDensityForOrdering(int phaseNum) {
+    PhaseType pt = getPhase(phaseNum).getType();
+    // Solid-like phases should always be ordered last (highest density)
+    if (pt == PhaseType.SOLID || pt == PhaseType.ASPHALTENE || pt == PhaseType.WAX
+        || pt == PhaseType.HYDRATE || pt == PhaseType.SOLIDCOMPLEX) {
+      // Return very high density to ensure solid phases sort to end
+      // Use actual density if positive, otherwise use 2000 kg/m3 as fallback
+      double actualDensity = getPhase(phaseNum).getPhysicalProperties().calcDensity();
+      return actualDensity > 0 ? actualDensity : 2000.0;
+    }
+    return getPhase(phaseNum).getPhysicalProperties().calcDensity();
   }
 
   /** {@inheritDoc} */

@@ -128,11 +128,37 @@ Rigorous equation of state approach. See [CPA Calculations](asphaltene_cpa_calcu
 - Predicts onset pressure/temperature
 - Captures compositional effects
 - Can model inhibitor effectiveness
+- Uses `PhaseType.ASPHALTENE` for accurate phase identification
 
 **Limitations:**
 - Requires fluid characterization
 - More computationally intensive
 - Needs tuning to experimental data
+
+### PhaseType.ASPHALTENE
+
+NeqSim uses a dedicated `PhaseType.ASPHALTENE` enum value to distinguish precipitated asphaltenes from other solid phases (wax, hydrate). This enables:
+
+- **Accurate phase identification** in multi-phase flash calculations
+- **Correct physical property calculations** using asphaltene-specific correlations
+- **Proper phase ordering** (asphaltene as heaviest phase)
+- **Easy API access** via `fluid.hasPhaseType("asphaltene")`
+
+```java
+import neqsim.thermo.phase.PhaseType;
+
+// Check for asphaltene precipitation
+if (fluid.hasPhaseType(PhaseType.ASPHALTENE)) {
+    PhaseInterface asphaltene = fluid.getPhaseOfType("asphaltene");
+    
+    // Access asphaltene phase properties
+    double density = asphaltene.getDensity("kg/m3");        // ~1150 kg/m³
+    double Cp = asphaltene.getCp("kJ/kgK");                 // ~0.9 kJ/kgK
+    double viscosity = asphaltene.getViscosity("Pa*s");     // ~10,000 Pa·s
+    double thermalCond = asphaltene.getThermalConductivity("W/mK"); // ~0.20 W/mK
+    double soundSpeed = asphaltene.getSoundSpeed("m/s");    // ~1745 m/s
+}
+```
 
 ### 3. Pedersen Classical Cubic EOS Approach
 

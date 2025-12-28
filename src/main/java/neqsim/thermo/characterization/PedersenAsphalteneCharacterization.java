@@ -3,6 +3,9 @@ package neqsim.thermo.characterization;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.phase.PhaseSolid;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -497,12 +500,100 @@ public class PedersenAsphalteneCharacterization {
     int liquidPhases = 0;
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       String phaseType = system.getPhase(i).getPhaseTypeName();
-      if (phaseType.contains("oil") || phaseType.contains("liquid")
-          || phaseType.contains("aqueous")) {
+      if (phaseType.contains("oil") || phaseType.contains("liquid") || phaseType.contains("aqueous")
+          || phaseType.contains("Asphaltene")) {
         liquidPhases++;
       }
     }
     return liquidPhases;
+  }
+
+  /**
+   * Performs a TPflash and automatically marks asphaltene-rich liquid phases.
+   *
+   * <p>
+   * This is a convenience method that combines the TPflash operation with automatic detection and
+   * marking of asphaltene-rich liquid phases (PhaseType.LIQUID_ASPHALTENE). Use this method instead
+   * of calling TPflash directly when working with Pedersen's liquid-liquid asphaltene approach.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * {@code
+   * // Setup fluid with asphaltene
+   * PedersenAsphalteneCharacterization asphChar = new PedersenAsphalteneCharacterization();
+   * asphChar.addAsphalteneToSystem(fluid, 0.05);
+   * fluid.setMixingRule("classic");
+   * fluid.init(0);
+   *
+   * // Perform flash with automatic asphaltene detection
+   * boolean hasAsphaltene = PedersenAsphalteneCharacterization.TPflash(fluid);
+   * if (hasAsphaltene) {
+   *   System.out.println("Asphaltene-rich phase detected!");
+   * }
+   * }
+   * </pre>
+   *
+   * @param system the thermodynamic system to flash
+   * @return true if an asphaltene-rich liquid phase was detected
+   */
+  public static boolean TPflash(SystemInterface system) {
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    ops.TPflash();
+    return markAsphalteneRichLiquidPhases(system);
+  }
+
+  /**
+   * Performs a TPflash at specified conditions and automatically marks asphaltene-rich phases.
+   *
+   * <p>
+   * This is a convenience method that sets the temperature and pressure, performs a TPflash, and
+   * automatically marks asphaltene-rich liquid phases.
+   * </p>
+   *
+   * @param system the thermodynamic system to flash
+   * @param temperature temperature in Kelvin
+   * @param pressure pressure in bar
+   * @return true if an asphaltene-rich liquid phase was detected
+   */
+  public static boolean TPflash(SystemInterface system, double temperature, double pressure) {
+    system.setTemperature(temperature);
+    system.setPressure(pressure);
+    return TPflash(system);
+  }
+
+  /**
+   * Marks asphaltene-rich liquid phases with PhaseType.LIQUID_ASPHALTENE.
+   *
+   * <p>
+   * This method should be called after a flash calculation to identify and mark liquid phases that
+   * are rich in asphaltene components (> 50 mol% asphaltene). This is useful for the Pedersen
+   * liquid-liquid approach where asphaltene precipitation is modeled as a phase split between light
+   * and heavy liquid phases.
+   * </p>
+   *
+   * @param system the thermodynamic system to update
+   * @return true if an asphaltene-rich liquid phase was found and marked
+   */
+  public static boolean markAsphalteneRichLiquidPhases(SystemInterface system) {
+    boolean foundAsphaltene = false;
+    for (int i = 0; i < system.getNumberOfPhases(); i++) {
+      PhaseInterface phase = system.getPhase(i);
+      // Skip solid phases - those use PhaseType.ASPHALTENE
+      if (phase instanceof PhaseSolid) {
+        continue;
+      }
+      // Check if this liquid phase is asphaltene-rich
+      if (phase.isAsphalteneRich()) {
+        phase.setType(PhaseType.LIQUID_ASPHALTENE);
+        foundAsphaltene = true;
+        logger.info("Marked phase {} as LIQUID_ASPHALTENE", i);
+      }
+    }
+    return foundAsphaltene;
   }
 
   /**
@@ -928,5 +1019,67 @@ public class PedersenAsphalteneCharacterization {
       sb.append(String.format("  kij adjustment: %.4f%n", kijAdjustment));
     }
     return sb.toString();
+  }
+
+  /**
+   * Main method demonstrating Pedersen's asphaltene TPflash.
+   *
+   * @param args command line arguments (not used)
+   */
+  public static void main(String[] args) {
+    // Create SRK system - liquid conditions (high pressure, moderate temp)
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemSrkEos(323.15, 200.0); // 50°C, 200 bar
+
+    // Add light oil and precipitant components
+    fluid.addComponent("methane", 0.30); // Gas dissolved in oil
+    fluid.addComponent("n-pentane", 0.25); // Asphaltene precipitant
+    fluid.addComponent("n-heptane", 0.20);
+    fluid.addComponent("nC10", 0.10);
+    fluid.addComponent("nC20", 0.05);
+
+    // Create and configure asphaltene characterization
+    PedersenAsphalteneCharacterization asphChar = new PedersenAsphalteneCharacterization();
+    asphChar.setAsphalteneMW(750.0); // Molecular weight g/mol
+    asphChar.setAsphalteneDensity(1.10); // Density g/cm³
+
+    // Add significant asphaltene content (BEFORE setting mixing rule)
+    asphChar.addAsphalteneToSystem(fluid, 0.10); // 10% asphaltene
+
+    // Set mixing rule and initialize (AFTER adding all components)
+    fluid.setMixingRule("classic");
+
+    // Enable multi-phase flash for potential liquid-liquid equilibrium
+    fluid.setMultiPhaseCheck(true);
+    fluid.setNumberOfPhases(3);
+    fluid.init(0);
+
+    System.out.println("=== Pedersen Asphaltene TPflash Demo ===\n");
+    System.out.println(asphChar.toString());
+
+    // Perform TPflash with automatic asphaltene detection
+    boolean hasAsphaltene = PedersenAsphalteneCharacterization.TPflash(fluid);
+
+    System.out.println("\n=== Flash Results ===");
+    System.out.println("Temperature: " + (fluid.getTemperature() - 273.15) + " C");
+    System.out.println("Pressure: " + fluid.getPressure() + " bar");
+    System.out.println("Number of phases: " + fluid.getNumberOfPhases());
+    System.out.println("Asphaltene-rich liquid phase detected: " + hasAsphaltene);
+
+    // Print phase types and asphaltene content
+    System.out.println("\n=== Phase Analysis ===");
+    for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
+      double asphMoleFrac = 0.0;
+      if (fluid.getPhase(i).hasComponent("Asphaltene_PC")) {
+        asphMoleFrac = fluid.getPhase(i).getComponent("Asphaltene_PC").getx();
+      }
+      System.out.println("Phase " + i + ": " + fluid.getPhase(i).getType().getDesc().toUpperCase()
+          + " (beta=" + String.format("%.4f", fluid.getPhase(i).getBeta()) + ", asph.x="
+          + String.format("%.4f", asphMoleFrac) + ", density="
+          + String.format("%.1f", fluid.getPhase(i).getDensity("kg/m3")) + " kg/m3)");
+    }
+
+    System.out.println("\n=== Detailed Results ===");
+    fluid.prettyPrint();
   }
 }

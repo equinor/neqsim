@@ -119,6 +119,27 @@ NeqSim includes a pre-defined asphaltene pseudo-component with CPA parameters su
 
 These parameters can be tuned to match specific experimental data using the `AsphalteneOnsetFitting` class.
 
+## PhaseType.ASPHALTENE
+
+When asphaltene precipitates, NeqSim identifies it using the dedicated `PhaseType.ASPHALTENE` enum value. This enables:
+
+- **Accurate phase identification** - Distinguish asphaltene from wax or hydrate
+- **Correct physical properties** - Asphaltene-specific density (~1150 kg/m³), viscosity (~10,000 Pa·s), thermal conductivity (~0.20 W/mK)
+- **Easy API access** - Use `fluid.hasPhaseType("asphaltene")` to detect precipitation
+
+```java
+import neqsim.thermo.phase.PhaseType;
+
+// After flash calculation
+if (fluid.hasPhaseType(PhaseType.ASPHALTENE)) {
+    PhaseInterface asphaltene = fluid.getPhaseOfType("asphaltene");
+    System.out.println("Asphaltene density: " + asphaltene.getDensity("kg/m3") + " kg/m³");
+    System.out.println("Asphaltene fraction: " + (asphaltene.getBeta() * 100) + "%");
+}
+```
+
+See [Asphaltene Modeling](asphaltene_modeling.md) for more details on `PhaseType.ASPHALTENE`.
+
 ## Related Topics
 
 - [Thermodynamic Models](../../thermo/README.md) - Equation of state fundamentals
