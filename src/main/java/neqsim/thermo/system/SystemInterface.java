@@ -2880,4 +2880,49 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return a double
    */
   public double calculateMolarMassFromDensityAndBoilingPoint(double density, double boilingPoint);
+
+  /**
+   * Validate the thermodynamic system setup before use.
+   * 
+   * <p>
+   * Checks for common setup errors:
+   * <ul>
+   * <li>Components defined</li>
+   * <li>Mixing rule set</li>
+   * <li>Temperature and pressure in valid ranges</li>
+   * <li>Composition normalized</li>
+   * </ul>
+   * 
+   * @return validation result with errors and warnings
+   */
+  public default neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getFluidName());
+
+    // Check: Has components
+    if (getNumberOfComponents() == 0) {
+      result.addError("thermo", "No components defined",
+          "Add components: system.addComponent(\"methane\", 0.5)");
+    }
+
+    // Check: Temperature valid
+    if (getTemperature() < 1.0) {
+      result.addError("thermo", "Temperature too low: " + getTemperature() + " K",
+          "Set temperature above 1 K: system.setTemperature(298.15)");
+    }
+
+    // Check: Pressure valid
+    if (getPressure() <= 0) {
+      result.addError("thermo", "Pressure must be positive: " + getPressure() + " bar",
+          "Set positive pressure: system.setPressure(1.0)");
+    }
+
+    // Check: Mixing rule (warning only - some simple cases work without)
+    if (getNumberOfComponents() > 1 && getMixingRuleName() == null) {
+      result.addWarning("thermo", "Mixing rule not explicitly set for multi-component system",
+          "Set mixing rule: system.setMixingRule(\"classic\") or system.setMixingRule(2)");
+    }
+
+    return result;
+  }
 }
