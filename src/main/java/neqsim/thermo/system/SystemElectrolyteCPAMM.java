@@ -6,8 +6,11 @@
 
 package neqsim.thermo.system;
 
+import neqsim.thermo.mixingrule.HVMixingRulesInterface;
+import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.phase.PhaseElectrolyteCPAMM;
 import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.util.constants.IonParametersMM;
 
 /**
  * Thermodynamic system class using the Maribo-Mogensen electrolyte CPA (e-CPA) equation of state.
@@ -175,5 +178,130 @@ public class SystemElectrolyteCPAMM extends SystemSrkCPA {
       return ((PhaseElectrolyteCPAMM) phaseArray[phaseNumber]).getMixturePermittivity();
     }
     return Double.NaN;
+  }
+
+  /**
+   * Set the dielectric constant mixing rule for all phases.
+   *
+   * <p>
+   * Available mixing rules:
+   * </p>
+   * <ul>
+   * <li>{@code MOLAR_AVERAGE} - Simple molar-weighted average (default)</li>
+   * <li>{@code VOLUME_AVERAGE} - Volume-weighted average, better for water-glycol</li>
+   * <li>{@code LOOYENGA} - Theoretical basis for polar mixtures</li>
+   * <li>{@code OSTER} - Designed for water-alcohol mixtures</li>
+   * <li>{@code LICHTENECKER} - Logarithmic mixing rule</li>
+   * </ul>
+   *
+   * @param rule the dielectric mixing rule to use
+   */
+  public void setDielectricMixingRule(PhaseElectrolyteCPAMM.DielectricMixingRule rule) {
+    for (int i = 0; i < numberOfPhases; i++) {
+      if (phaseArray[i] instanceof PhaseElectrolyteCPAMM) {
+        ((PhaseElectrolyteCPAMM) phaseArray[i]).setDielectricMixingRule(rule);
+      }
+    }
+  }
+
+  /**
+   * Set the dielectric constant mixing rule by name for all phases.
+   *
+   * @param ruleName the name of the mixing rule: "MOLAR_AVERAGE", "VOLUME_AVERAGE", "LOOYENGA",
+   *        "OSTER", or "LICHTENECKER"
+   */
+  public void setDielectricMixingRule(String ruleName) {
+    PhaseElectrolyteCPAMM.DielectricMixingRule rule =
+        PhaseElectrolyteCPAMM.DielectricMixingRule.valueOf(ruleName.toUpperCase());
+    setDielectricMixingRule(rule);
+  }
+
+  /**
+   * Enable or disable the short-range ion-solvent term.
+   *
+   * @param on true to enable, false to disable
+   */
+  public void setShortRangeOn(boolean on) {
+    for (int i = 0; i < numberOfPhases; i++) {
+      if (phaseArray[i] instanceof PhaseElectrolyteCPAMM) {
+        ((PhaseElectrolyteCPAMM) phaseArray[i]).setShortRangeOn(on);
+      }
+    }
+  }
+
+  /**
+   * Initialize Huron-Vidal parameters for ion-solvent interactions.
+   *
+   * <p>
+   * This method sets up the NRTL parameters in the Huron-Vidal mixing rule using the ion-solvent
+   * interaction parameters from the Maribo-Mogensen thesis (Table 6.11). Call this method AFTER
+   * setting mixing rule 4 or 7 (Huron-Vidal).
+   * </p>
+   *
+   * <p>
+   * The ion-solvent interaction energy follows: τ_iw = u0_iw + uT_iw × (T - 298.15) where u0 and uT
+   * are from IonParametersMM.
+   * </p>
+   *
+   * @param alphaValue the NRTL non-randomness parameter (typically 0.2 for electrolytes)
+   */
+  public void initHuronVidalIonParameters(double alphaValue) {
+    for (int phaseNum = 0; phaseNum < numberOfPhases; phaseNum++) {
+      if (!(phaseArray[phaseNum] instanceof PhaseEos)) {
+        continue;
+      }
+      PhaseEos phase = (PhaseEos) phaseArray[phaseNum];
+      if (!(phase.getEosMixingRule() instanceof HVMixingRulesInterface)) {
+        continue;
+      }
+      HVMixingRulesInterface hvRule = (HVMixingRulesInterface) phase.getEosMixingRule();
+
+      int nComp = phase.getNumberOfComponents();
+      for (int i = 0; i < nComp; i++) {
+        String name_i = phase.getComponent(i).getComponentName();
+        int charge_i = (int) Math.round(phase.getComponent(i).getIonicCharge());
+
+        for (int j = 0; j < nComp; j++) {
+          String name_j = phase.getComponent(j).getComponentName();
+          int charge_j = (int) Math.round(phase.getComponent(j).getIonicCharge());
+
+          // Set ion-solvent parameters (ion i with solvent j)
+          if (charge_i != 0 && charge_j == 0) {
+            IonParametersMM.IonData ionData = IonParametersMM.getIonData(name_i);
+            if (ionData != null) {
+              // Get solvent-specific parameters if available
+              double u0 = IonParametersMM.getU0(name_i, name_j);
+              double uT = IonParametersMM.getUT(name_i, name_j);
+
+              // Set Huron-Vidal parameters: Dij = u0, DijT = uT
+              hvRule.setHVDijParameter(i, j, u0);
+              hvRule.setHVDijTParameter(i, j, uT);
+              hvRule.setHValphaParameter(i, j, alphaValue);
+            }
+          }
+          // Set solvent-ion parameters (solvent i with ion j)
+          else if (charge_i == 0 && charge_j != 0) {
+            IonParametersMM.IonData ionData = IonParametersMM.getIonData(name_j);
+            if (ionData != null) {
+              // Get solvent-specific parameters if available
+              double u0 = IonParametersMM.getU0(name_j, name_i);
+              double uT = IonParametersMM.getUT(name_j, name_i);
+
+              // Set Huron-Vidal parameters: Dij = u0, DijT = uT
+              hvRule.setHVDijParameter(i, j, u0);
+              hvRule.setHVDijTParameter(i, j, uT);
+              hvRule.setHValphaParameter(i, j, alphaValue);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Initialize Huron-Vidal parameters with default alpha = 0.2.
+   */
+  public void initHuronVidalIonParameters() {
+    initHuronVidalIonParameters(0.2);
   }
 }

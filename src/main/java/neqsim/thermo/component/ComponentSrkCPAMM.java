@@ -81,6 +81,17 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   /**
    * Initialize Maribo-Mogensen parameters from the ion database.
    *
+   * <p>
+   * For ions, the following parameters are set:
+   * </p>
+   * <ul>
+   * <li>Ion-solvent interaction energy ΔU_iw from MM thesis Table 6.11</li>
+   * <li>Born radius from empirical correlations</li>
+   * <li>Lennard-Jones diameter σ</li>
+   * <li>SRK b parameter: b = (α × σ³ + β) following Furst correlation</li>
+   * <li>SRK a parameter: set to ~0 for ions (no van der Waals attraction)</li>
+   * </ul>
+   *
    * @param name component name
    */
   private void initMMParameters(String name) {
@@ -94,6 +105,17 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
       // Override Lennard-Jones diameter if we have better data
       if (ionData.sigma > 0) {
         this.setLennardJonesMolecularDiameter(ionData.sigma);
+
+        // Calculate ion b parameter from ionic diameter (same approach as Furst)
+        // b = α × σ³ + β, using FurstElectrolyteConstants for CPA
+        double sigma = ionData.sigma;
+        double ionB = (neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParamsCPA[0]
+            * Math.pow(sigma, 3.0)
+            + neqsim.thermo.util.constants.FurstElectrolyteConstants.furstParamsCPA[1]) * 1e5;
+        this.setb(ionB);
+
+        // Ion a parameter is essentially zero (no van der Waals attraction)
+        this.seta(1.0e-35);
       }
     } else if (getIonicCharge() != 0) {
       // For ions without specific parameters, use empirical Born radius
@@ -289,10 +311,10 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     double z = getIonicCharge();
     double eps = mmPhase.getMixturePermittivity();
 
-    // F^DH = -κ³V/(12πRT*N_A) (extensive form)
-    // ∂F^DH/∂κ = -3κ²V/(12πRT*N_A)
-    // ∂F^DH/∂V = -κ³/(12πRT*N_A)
-    double factor = 1.0 / (12.0 * Math.PI * R * temperature * N_A);
+    // F^DH = -κ³V/(12π N_A) (extensive form, dimensionless)
+    // ∂F^DH/∂κ = -3κ²V/(12π N_A)
+    // ∂F^DH/∂V = -κ³/(12π N_A)
+    double factor = 1.0 / (12.0 * Math.PI * N_A);
     double dFdkappa = -3.0 * kappa * kappa * V * factor;
     double dFdV = -kappa * kappa * kappa * factor;
 
@@ -333,6 +355,10 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
    * For the extensive Born term: F^Born = (N_Ae²/8πε₀RT) * (1/ε - 1) * X_Born
    * </p>
    *
+   * <p>
+   * The complete derivative is: dF^Born/dn_i = (∂F/∂X_Born) × (∂X_Born/∂n_i) + (∂F/∂ε) × (∂ε/∂n_i)
+   * </p>
+   *
    * @param phase the phase
    * @param numberOfComponents number of components
    * @param temperature temperature in K
@@ -346,25 +372,28 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
       return 0.0;
     }
 
-    double eps = mmPhase.getMixturePermittivity();
+    double eps = mmPhase.getSolventPermittivity();
     if (eps < 1.0) {
       return 0.0;
     }
 
-    double prefactor = N_A * E_CHARGE * E_CHARGE / (8.0 * Math.PI * EPSILON_0 * R * temperature);
-    double solventTerm = 1.0 / eps - 1.0;
-
-    // X_Born = Σ(n_j * z_j² / R_Born,j)
-    // dX_Born/dn_i = z_i² / R_Born,i for ions
+    // Term 1: ∂F/∂X_Born × ∂X_Born/∂n_i
+    // dX_Born/dn_i = z_i² / R_Born,i for ions, 0 for solvents
     double z = getIonicCharge();
     double dXBorndni = 0.0;
     if (bornRadius > 0 && z != 0) {
       dXBorndni = z * z / (bornRadius * 1e-10); // Convert Å to m
     }
+    double FBornXTerm = mmPhase.FBornX() * dXBorndni;
 
-    // F^Born = prefactor * solventTerm * X_Born (extensive)
-    // dF^Born/dn_i = prefactor * solventTerm * dX_Born/dn_i
-    return prefactor * solventTerm * dXBorndni;
+    // Term 2: ∂F/∂ε × ∂ε/∂n_i (dielectric change term)
+    // ∂ε/∂n_i is non-zero for solvent components (changing solvent composition)
+    double dEpsdni = mmPhase.calcSolventPermittivitydn(this.getComponentNumber(), temperature);
+    double FBornDTerm = mmPhase.FBornD() * dEpsdni;
+
+    // Total: both terms contribute for solvents (only FBornD term since dX_Born/dn_i = 0)
+    // For ions: FBornX term + FBornD term (if dielectric changes with ion concentration)
+    return FBornXTerm + FBornDTerm;
   }
 
   /**
@@ -397,6 +426,11 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   /**
    * Temperature derivative of Born contribution to dF/dN_i.
    *
+   * <p>
+   * The full derivative d²F^Born/(dn_i dT) includes temperature derivatives of both the FBornX term
+   * and the FBornD term.
+   * </p>
+   *
    * @param phase the phase
    * @param numberOfComponents number of components
    * @param temperature temperature in K
@@ -426,13 +460,24 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
       dXBorndni = z * z / (bornRadius * 1e-10);
     }
 
-    // F^Born = prefactor/T * solventTerm * X_Born (extensive form)
-    // dF/dn_i = prefactor/T * solventTerm * dX/dn_i
-    // d(dF/dn_i)/dT = -prefactor/T² * solventTerm * dX/dn_i + prefactor/T * dSolventTerm/dT *
-    // dX/dn_i
+    // Term 1: d/dT of [FBornX * dX/dn_i]
+    // FBornX = prefactor/T * (1/ε - 1)
+    // d(FBornX)/dT = -prefactor/T² * (1/ε - 1) + prefactor/T * (-dε/dT/ε²)
     double term1 = -prefactor / (temperature * temperature) * solventTerm * dXBorndni;
     double term2 = prefactor / temperature * dSolventTermdT * dXBorndni;
-    return term1 + term2;
+
+    // Term 2: d/dT of [FBornD * dε/dn_i]
+    // FBornD = -prefactor/T * X_Born / ε²
+    // For simplicity, use product rule approximation
+    double dEpsdni = mmPhase.calcSolventPermittivitydn(this.getComponentNumber(), temperature);
+    double dEpsdnidT = mmPhase.calcSolventPermittivitydndT(this.getComponentNumber(), temperature);
+    double bornX = mmPhase.getBornX();
+    // d(FBornD)/dT = prefactor/T² * X_Born / ε² - prefactor/T * X_Born * (-2/ε³) * dε/dT
+    double dFBornDdT = prefactor / (temperature * temperature) * bornX / (eps * eps)
+        + prefactor / temperature * bornX * 2.0 * epsdT / (eps * eps * eps);
+    double term3 = dFBornDdT * dEpsdni + mmPhase.FBornD() * dEpsdnidT;
+
+    return term1 + term2 + term3;
   }
 
   /**
@@ -556,6 +601,10 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
   /**
    * Composition derivative of Born contribution to dF/dN_i.
    *
+   * <p>
+   * d²F^Born/(dn_i dn_j) includes cross derivatives of FBornX and FBornD terms.
+   * </p>
+   *
    * @param j index of second component
    * @param phase the phase
    * @param numberOfComponents number of components
@@ -565,11 +614,54 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
    */
   public double dFBorndNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
       double pressure) {
-    // F^Born = prefactor * solventTerm * X_Born (extensive form)
-    // where X_Born = Σ n_k z_k²/r_k
-    // dF/dn_i = prefactor * solventTerm * dX/dn_i = prefactor * solventTerm * z_i²/r_i
-    // d²F/(dn_i dn_j) = 0 since dX/dn_i doesn't depend on n_j
-    return 0.0;
+    PhaseElectrolyteCPAMM mmPhase = getMMPhase(phase);
+    if (mmPhase == null) {
+      return 0.0;
+    }
+
+    double eps = mmPhase.getSolventPermittivity();
+    if (eps < 1.0) {
+      return 0.0;
+    }
+
+    // dF/dn_i = FBornX * dXBorn/dn_i + FBornD * dε/dn_i
+    // d²F/(dn_i dn_j) includes:
+    // 1. FBornDD * dε/dn_i * dε/dn_j (from FBornD depending on ε)
+    // 2. FBornDX * dXBorn/dn_i * dε/dn_j (cross term)
+    // 3. FBornDX * dε/dn_i * dXBorn/dn_j (cross term)
+    // 4. FBornD * d²ε/(dn_i dn_j) (from dε/dn_i depending on n_j)
+    // Note: d²XBorn/(dn_i dn_j) = 0 since dXBorn/dn_i = z_i²/r_i is independent of n_j
+
+    double dXBorndni = 0.0;
+    double z = getIonicCharge();
+    if (bornRadius > 0 && z != 0) {
+      dXBorndni = z * z / (bornRadius * 1e-10);
+    }
+
+    double dXBorndnj = 0.0;
+    ComponentSrkCPAMM compJ = null;
+    if (phase.getComponent(j) instanceof ComponentSrkCPAMM) {
+      compJ = (ComponentSrkCPAMM) phase.getComponent(j);
+      double zj = compJ.getIonicCharge();
+      double rj = compJ.getBornRadius();
+      if (rj > 0 && zj != 0) {
+        dXBorndnj = zj * zj / (rj * 1e-10);
+      }
+    }
+
+    double dEpsdni = mmPhase.calcSolventPermittivitydn(this.getComponentNumber(), temperature);
+    double dEpsdnj = mmPhase.calcSolventPermittivitydn(j, temperature);
+
+    // Second derivative of dielectric (assuming molar average: d²ε/(dn_i dn_j) exists)
+    double d2Epsdnidnj =
+        mmPhase.calcSolventPermittivitydndn(this.getComponentNumber(), j, temperature);
+
+    double term1 = mmPhase.FBornDD() * dEpsdni * dEpsdnj;
+    double term2 = mmPhase.FBornDX() * dXBorndni * dEpsdnj;
+    double term3 = mmPhase.FBornDX() * dEpsdni * dXBorndnj;
+    double term4 = mmPhase.FBornD() * d2Epsdnidnj;
+
+    return term1 + term2 + term3 + term4;
   }
 
   // ==================== Short-Range Ion-Solvent Methods ====================
@@ -599,29 +691,52 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
       return 0.0;
     }
 
-    double Vm = phase.getMolarVolume() * 1e-5; // m³/mol
+    // New formula: F^SR = W / (nT * T * (1-η))
+    // dF/dn_k = (1/(nT*T*(1-η))) * [2*Σ_j(n_j*w_kj) - W/nT + W/(1-η) * dη/dn_k]
     double nT = phase.getNumberOfMolesInPhase();
-    double V = Vm * nT; // Total volume in m³
-    if (V < 1e-30) {
+    if (nT < 1e-30) {
       return 0.0;
     }
 
-    int k = getComponentNumber();
-    double sum = 0.0;
+    double eta = mmPhase.getPackingFraction();
+    double oneMinusEta = 1.0 - eta;
+    if (oneMinusEta < 1e-10) {
+      oneMinusEta = 1e-10;
+    }
 
-    // Sum over all components using wij mixing rule parameters
-    for (int j = 0; j < numberOfComponents; j++) {
-      double nj = phase.getComponent(j).getNumberOfMolesInPhase();
-      // Contribution from wij[k][j] (this component is first index)
-      double wkj = mmPhase.getWij(k, j);
-      // Contribution from wij[j][k] (this component is second index)
-      double wjk = mmPhase.getWij(j, k);
-      if (wkj != 0.0 || wjk != 0.0) {
-        sum += nj * (wkj + wjk) / (temperature * V);
+    int k = getComponentNumber();
+
+    // Calculate W = Σ_i Σ_j n_i n_j w_ij
+    double W = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      double ni = phase.getComponent(i).getNumberOfMolesInPhase();
+      for (int j = 0; j < numberOfComponents; j++) {
+        double nj = phase.getComponent(j).getNumberOfMolesInPhase();
+        W += ni * nj * mmPhase.getWij(i, j);
       }
     }
 
-    return sum;
+    // Calculate dW/dn_k = 2 * Σ_j n_j w_kj
+    double dWdnk = 0.0;
+    for (int j = 0; j < numberOfComponents; j++) {
+      double nj = phase.getComponent(j).getNumberOfMolesInPhase();
+      dWdnk += nj * mmPhase.getWij(k, j);
+    }
+    dWdnk *= 2.0;
+
+    // Calculate dη/dn_k = (πN_A/6V) * σ_k³
+    double sigma = getLennardJonesMolecularDiameter() * 1e-10; // convert Å to m
+    double V = phase.getMolarVolume() * 1e-5 * nT; // m³
+    double dEtadnk =
+        (Math.PI * neqsim.thermo.ThermodynamicConstantsInterface.avagadroNumber / (6 * V)) * sigma
+            * sigma * sigma;
+
+    double prefactor = 1.0 / (nT * temperature * oneMinusEta);
+
+    // dF/dn_k = prefactor * [dW/dn_k - W/nT + W * dη/dn_k / (1-η)]
+    double result = prefactor * (dWdnk - W / nT + W * dEtadnk / oneMinusEta);
+
+    return result;
   }
 
   /**
