@@ -422,6 +422,125 @@ public class CompressorChartMWInterpolationTest {
   }
 
   @Test
+  void testSingleSpeedCurveWithMW() {
+    // Test single-speed curve with (MW, speed, flow, head, polyEff)
+    CompressorChartMWInterpolation singleSpeedChart = new CompressorChartMWInterpolation();
+    singleSpeedChart.setHeadUnit("kJ/kg");
+
+    double speed = 10000;
+    double[] flow = {3000, 3500, 4000, 4500, 5000};
+    double[] head = {120, 115, 108, 98, 85};
+    double[] eff = {75, 78, 80, 78, 73};
+
+    // Add single-speed map at MW = 18
+    singleSpeedChart.addMapAtMW(18.0, speed, flow, head, eff);
+
+    // Add single-speed map at MW = 22
+    double[] head22 = {100, 96, 90, 82, 71};
+    double[] eff22 = {73, 76, 78, 76, 71};
+    singleSpeedChart.addMapAtMW(22.0, speed, flow, head22, eff22);
+
+    assertEquals(2, singleSpeedChart.getNumberOfMaps());
+
+    // Test interpolation at MW = 20
+    singleSpeedChart.setOperatingMW(20.0);
+    double headAt20 = singleSpeedChart.getPolytropicHead(3500.0, speed);
+    double effAt20 = singleSpeedChart.getPolytropicEfficiency(3500.0, speed);
+
+    assertTrue(headAt20 > 0, "Head should be positive");
+    assertTrue(effAt20 > 0 && effAt20 <= 100, "Efficiency should be between 0 and 100");
+
+    // Head at MW=20 should be between MW=18 and MW=22 values
+    double head18 = singleSpeedChart.getChartAtMW(18.0).getPolytropicHead(3500.0, speed);
+    double headMW22 = singleSpeedChart.getChartAtMW(22.0).getPolytropicHead(3500.0, speed);
+    assertTrue(headAt20 <= head18 && headAt20 >= headMW22,
+        "Head at MW=20 should be between MW=18 and MW=22");
+  }
+
+  @Test
+  void testSingleSpeedCurveWithSeparateFlowArrays() {
+    // Test single-speed curve with (MW, speed, flow, head, flowEff, polyEff)
+    CompressorChartMWInterpolation singleSpeedChart = new CompressorChartMWInterpolation();
+    singleSpeedChart.setHeadUnit("kJ/kg");
+
+    double speed = 10000;
+    double[] flowHead = {3000, 3500, 4000, 4500, 5000};
+    double[] head = {120, 115, 108, 98, 85};
+    // Efficiency at different flow points
+    double[] flowEff = {3100, 3600, 4100};
+    double[] eff = {76, 79, 77};
+
+    // Add map with separate flow arrays
+    singleSpeedChart.addMapAtMW(20.0, speed, flowHead, head, flowEff, eff);
+
+    assertEquals(1, singleSpeedChart.getNumberOfMaps());
+
+    singleSpeedChart.setOperatingMW(20.0);
+    double headVal = singleSpeedChart.getPolytropicHead(3500.0, speed);
+    double effVal = singleSpeedChart.getPolytropicEfficiency(3500.0, speed);
+
+    assertTrue(headVal > 0, "Head should be positive");
+    assertTrue(effVal > 0 && effVal <= 100, "Efficiency should be between 0 and 100");
+  }
+
+  @Test
+  void testMultiSpeedCurveWithoutChartConditions() {
+    // Test multi-speed curve with (MW, speed[], flow[][], head[][], polyEff[][])
+    CompressorChartMWInterpolation multiSpeedChart = new CompressorChartMWInterpolation();
+    multiSpeedChart.setHeadUnit("kJ/kg");
+
+    double[] speeds = {10000, 11000, 12000};
+
+    // Add map at MW = 18 without chartConditions
+    multiSpeedChart.addMapAtMW(18.0, speeds, flow18, head18, polyEff18);
+
+    // Add map at MW = 22 without chartConditions
+    multiSpeedChart.addMapAtMW(22.0, speeds, flow22, head22, polyEff22);
+
+    assertEquals(2, multiSpeedChart.getNumberOfMaps());
+
+    // Test interpolation at MW = 20
+    multiSpeedChart.setOperatingMW(20.0);
+    double headAt20 = multiSpeedChart.getPolytropicHead(3500.0, 10000);
+    double effAt20 = multiSpeedChart.getPolytropicEfficiency(3500.0, 10000);
+
+    assertTrue(headAt20 > 0, "Head should be positive");
+    assertTrue(effAt20 > 0 && effAt20 <= 100, "Efficiency should be between 0 and 100");
+
+    // Head at MW=20 should be between MW=18 and MW=22 values
+    double headMW18 = multiSpeedChart.getChartAtMW(18.0).getPolytropicHead(3500.0, 10000);
+    double headMW22 = multiSpeedChart.getChartAtMW(22.0).getPolytropicHead(3500.0, 10000);
+    assertTrue(headAt20 <= headMW18 && headAt20 >= headMW22,
+        "Head at MW=20 should be between MW=18 and MW=22");
+  }
+
+  @Test
+  void testMultiSpeedCurveWithSeparateFlowArraysNoChartConditions() {
+    // Test multi-speed with (MW, speed[], flow[][], head[][], flowEff[][], polyEff[][])
+    CompressorChartMWInterpolation multiSpeedChart = new CompressorChartMWInterpolation();
+    multiSpeedChart.setHeadUnit("kJ/kg");
+
+    double[] speeds = {10000, 11000};
+    double[][] flowHead = {{3000, 3500, 4000, 4500}, {3300, 3800, 4300, 4800}};
+    double[][] heads = {{120, 115, 108, 98}, {138, 132, 124, 113}};
+    // Efficiency at different flow points
+    double[][] flowEff = {{3100, 3600, 4100}, {3400, 3900, 4400}};
+    double[][] effs = {{76, 79, 77}, {75, 78, 76}};
+
+    // Add map without chartConditions
+    multiSpeedChart.addMapAtMW(20.0, speeds, flowHead, heads, flowEff, effs);
+
+    assertEquals(1, multiSpeedChart.getNumberOfMaps());
+
+    multiSpeedChart.setOperatingMW(20.0);
+    double headVal = multiSpeedChart.getPolytropicHead(3500.0, 10000);
+    double effVal = multiSpeedChart.getPolytropicEfficiency(3500.0, 10000);
+
+    assertTrue(headVal > 0, "Head should be positive");
+    assertTrue(effVal > 0 && effVal <= 100, "Efficiency should be between 0 and 100");
+  }
+
+  @Test
   void testSurgeHeadInterpolation() {
     chart.generateAllSurgeCurves();
     chart.setOperatingMW(20.0);

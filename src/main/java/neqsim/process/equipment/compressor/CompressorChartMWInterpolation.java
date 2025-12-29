@@ -92,6 +92,87 @@ public class CompressorChartMWInterpolation extends CompressorChart {
   }
 
   /**
+   * Add a multi-speed compressor map at a specific molecular weight.
+   *
+   * <p>
+   * Convenience method without chartConditions - uses default conditions based on MW.
+   * </p>
+   *
+   * @param molecularWeight the molecular weight (g/mol) at which this map was measured
+   * @param speed array of speed values (RPM)
+   * @param flow 2D array of flow values for each speed curve (m³/hr)
+   * @param head 2D array of head values for each speed curve (kJ/kg or meter)
+   * @param polyEff 2D array of polytropic efficiency values for each speed curve (%)
+   */
+  public void addMapAtMW(double molecularWeight, double[] speed, double[][] flow, double[][] head,
+      double[][] polyEff) {
+    addMapAtMW(molecularWeight, speed, flow, head, flow, polyEff);
+  }
+
+  /**
+   * Add a multi-speed compressor map at a specific molecular weight with separate flow arrays.
+   *
+   * <p>
+   * Convenience method without chartConditions - uses default conditions based on MW.
+   * </p>
+   *
+   * @param molecularWeight the molecular weight (g/mol) at which this map was measured
+   * @param speed array of speed values (RPM)
+   * @param flow 2D array of flow values for head curves (m³/hr)
+   * @param head 2D array of head values for each speed curve (kJ/kg or meter)
+   * @param flowPolyEff 2D array of flow values for efficiency curves (m³/hr)
+   * @param polyEff 2D array of polytropic efficiency values for each speed curve (%)
+   */
+  public void addMapAtMW(double molecularWeight, double[] speed, double[][] flow, double[][] head,
+      double[][] flowPolyEff, double[][] polyEff) {
+    // Default chart conditions if not specified
+    double[] defaultConditions = new double[] {25.0, 50.0, 50.0, molecularWeight};
+    addMapAtMW(molecularWeight, defaultConditions, speed, flow, head, flowPolyEff, polyEff);
+  }
+
+  /**
+   * Add a single-speed compressor map at a specific molecular weight.
+   *
+   * <p>
+   * This is a convenience method for single-speed compressors where flow, head, and efficiency are
+   * 1D arrays for a single speed curve.
+   * </p>
+   *
+   * @param molecularWeight the molecular weight (g/mol) at which this map was measured
+   * @param speed the compressor speed (RPM)
+   * @param flow array of flow values (m³/hr)
+   * @param head array of head values (kJ/kg or meter)
+   * @param polyEff array of polytropic efficiency values (%)
+   */
+  public void addMapAtMW(double molecularWeight, double speed, double[] flow, double[] head,
+      double[] polyEff) {
+    addMapAtMW(molecularWeight, speed, flow, head, flow, polyEff);
+  }
+
+  /**
+   * Add a single-speed compressor map at a specific molecular weight with separate flow arrays.
+   *
+   * <p>
+   * This is a convenience method for single-speed compressors where efficiency is measured at
+   * different flow points than head.
+   * </p>
+   *
+   * @param molecularWeight the molecular weight (g/mol) at which this map was measured
+   * @param speed the compressor speed (RPM)
+   * @param flow array of flow values for head curve (m³/hr)
+   * @param head array of head values (kJ/kg or meter)
+   * @param flowPolyEff array of flow values for efficiency curve (m³/hr)
+   * @param polyEff array of polytropic efficiency values (%)
+   */
+  public void addMapAtMW(double molecularWeight, double speed, double[] flow, double[] head,
+      double[] flowPolyEff, double[] polyEff) {
+    // Default chart conditions if not specified
+    double[] defaultConditions = new double[] {25.0, 50.0, 50.0, molecularWeight};
+    addMapAtMW(molecularWeight, defaultConditions, new double[] {speed}, new double[][] {flow},
+        new double[][] {head}, new double[][] {flowPolyEff}, new double[][] {polyEff});
+  }
+
+  /**
    * Add a compressor map at a specific molecular weight.
    *
    * <p>

@@ -506,6 +506,104 @@ System.out.println("Distance to surge: " + (distanceToSurge * 100) + "%");
 System.out.println("Distance to stone wall: " + (distanceToStoneWall * 100) + "%");
 ```
 
+### Simplified Method Signatures
+
+For convenience, you can omit `chartConditions` - default conditions will be generated automatically based on the MW:
+
+#### Multi-Speed Compressor (without chartConditions)
+
+```java
+// Simplest form: (MW, speed[], flow[][], head[][], efficiency[][])
+chart.addMapAtMW(18.0, speeds, flow18, head18, polyEff18);
+chart.addMapAtMW(22.0, speeds, flow22, head22, polyEff22);
+
+// With separate flow arrays: (MW, speed[], flow[][], head[][], flowEff[][], efficiency[][])
+chart.addMapAtMW(20.0, speeds, flowHead, heads, flowEff, effs);
+```
+
+**Complete multi-speed example:**
+
+```java
+CompressorChartMWInterpolation chart = new CompressorChartMWInterpolation();
+chart.setHeadUnit("kJ/kg");
+chart.setAutoGenerateSurgeCurves(true);
+chart.setAutoGenerateStoneWallCurves(true);
+
+double[] speeds = {10000, 11000, 12000};  // Multiple speeds (RPM)
+
+// Map at MW = 18 g/mol
+double[][] flow18 = {{3000, 3500, 4000, 4500, 5000}, 
+                     {3300, 3800, 4300, 4800, 5300},
+                     {3600, 4100, 4600, 5100, 5600}};
+double[][] head18 = {{120, 115, 108, 98, 85}, 
+                     {138, 132, 124, 113, 98},
+                     {158, 151, 142, 130, 113}};
+double[][] eff18 = {{75, 78, 80, 78, 73}, 
+                    {74, 77, 79, 77, 72},
+                    {73, 76, 78, 76, 71}};
+chart.addMapAtMW(18.0, speeds, flow18, head18, eff18);  // No chartConditions needed!
+
+// Map at MW = 22 g/mol
+double[][] flow22 = {{2800, 3300, 3800, 4300, 4800}, 
+                     {3100, 3600, 4100, 4600, 5100},
+                     {3400, 3900, 4400, 4900, 5400}};
+double[][] head22 = {{100, 96, 90, 82, 71}, 
+                     {115, 110, 103, 94, 82},
+                     {132, 126, 118, 108, 94}};
+double[][] eff22 = {{73, 76, 78, 76, 71}, 
+                    {72, 75, 77, 75, 70},
+                    {71, 74, 76, 74, 69}};
+chart.addMapAtMW(22.0, speeds, flow22, head22, eff22);
+
+// Use with compressor
+Compressor comp = new Compressor("K-100", inletStream);
+comp.setCompressorChart(chart);
+comp.setSpeed(11000);
+comp.run();
+```
+
+#### Single-Speed Compressor (without chartConditions)
+
+For single-speed compressors, you can use simplified method signatures with 1D arrays:
+
+```java
+// Simplest form: (MW, speed, flow[], head[], efficiency[])
+chart.addMapAtMW(18.0, 10000, flow, head, polyEff);
+chart.addMapAtMW(22.0, 10000, flow22, head22, polyEff22);
+
+// With separate flow arrays for efficiency: (MW, speed, flow[], head[], flowEff[], efficiency[])
+chart.addMapAtMW(20.0, 10000, flowHead, head, flowEff, polyEff);
+```
+
+**Complete single-speed example:**
+
+```java
+CompressorChartMWInterpolation chart = new CompressorChartMWInterpolation();
+chart.setHeadUnit("kJ/kg");
+chart.setAutoGenerateSurgeCurves(true);
+chart.setAutoGenerateStoneWallCurves(true);
+
+double speed = 10000;  // Single speed (RPM)
+
+// Map at MW = 18 g/mol
+double[] flow18 = {3000, 3500, 4000, 4500, 5000};
+double[] head18 = {120, 115, 108, 98, 85};
+double[] eff18 = {75, 78, 80, 78, 73};
+chart.addMapAtMW(18.0, speed, flow18, head18, eff18);
+
+// Map at MW = 22 g/mol
+double[] flow22 = {2800, 3300, 3800, 4300, 4800};
+double[] head22 = {100, 96, 90, 82, 71};
+double[] eff22 = {73, 76, 78, 76, 71};
+chart.addMapAtMW(22.0, speed, flow22, head22, eff22);
+
+// Use with compressor
+Compressor comp = new Compressor("K-100", inletStream);
+comp.setCompressorChart(chart);
+comp.setSpeed(speed);
+comp.run();
+```
+
 ### Separate Flow Arrays for Head and Efficiency
 
 When efficiency is measured at different flow points than head:
@@ -994,8 +1092,12 @@ double controlFactor = antiSurge.getSurgeControlFactor();
 
 | Method | Description |
 |--------|-------------|
-| `addMapAtMW(mw, chartConditions, speed, flow, head, polyEff)` | Add map at specific MW (same flow for head/eff) |
-| `addMapAtMW(mw, chartConditions, speed, flow, head, flowPolyEff, polyEff)` | Add map with separate flow arrays |
+| `addMapAtMW(mw, chartConditions, speed[], flow[][], head[][], polyEff[][])` | Add multi-speed map with chart conditions |
+| `addMapAtMW(mw, chartConditions, speed[], flow[][], head[][], flowPolyEff[][], polyEff[][])` | Add multi-speed map with chart conditions and separate flow arrays |
+| `addMapAtMW(mw, speed[], flow[][], head[][], polyEff[][])` | Add multi-speed map (default conditions) |
+| `addMapAtMW(mw, speed[], flow[][], head[][], flowPolyEff[][], polyEff[][])` | Add multi-speed map with separate flow arrays (default conditions) |
+| `addMapAtMW(mw, speed, flow[], head[], polyEff[])` | Add single-speed map (default conditions) |
+| `addMapAtMW(mw, speed, flow[], head[], flowPolyEff[], polyEff[])` | Add single-speed map with separate flow arrays |
 | `setOperatingMW(mw)` | Set current operating molecular weight |
 | `getOperatingMW()` | Get current operating molecular weight |
 | `setInletStream(stream)` | Set inlet stream for auto MW detection |
