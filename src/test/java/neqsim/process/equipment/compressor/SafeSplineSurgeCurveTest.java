@@ -336,6 +336,44 @@ public class SafeSplineSurgeCurveTest {
     assertEquals(39820.03503030, firstStageCompressor.getInletStream().getFlowRate("kg/hr"), 1);
   }
 
+  /**
+   * Test single-point surge curve for single-speed compressors. For a single-speed compressor, the
+   * surge condition is a single point (minimum flow at that speed), not a curve.
+   */
+  @Test
+  public void testSinglePointSurge() {
+    // Single point surge for a single-speed compressor
+    double[] singleFlow = {5607.45}; // Minimum flow point
+    double[] singleHead = {150.0}; // Corresponding head
+
+    // Create single-point surge curve
+    SafeSplineSurgeCurve curve = new SafeSplineSurgeCurve(singleFlow, singleHead);
+
+    // Should be active
+    assertTrue(curve.isActive());
+
+    // Should be marked as single-point surge
+    assertTrue(curve.isSinglePointSurge());
+
+    // Surge flow should be constant regardless of head
+    assertEquals(5607.45, curve.getSurgeFlow(100.0), 0.001);
+    assertEquals(5607.45, curve.getSurgeFlow(150.0), 0.001);
+    assertEquals(5607.45, curve.getSurgeFlow(200.0), 0.001);
+
+    // Surge head should be constant regardless of flow
+    assertEquals(150.0, curve.getSurgeHead(4000.0), 0.001);
+    assertEquals(150.0, curve.getSurgeHead(5607.45), 0.001);
+    assertEquals(150.0, curve.getSurgeHead(8000.0), 0.001);
+
+    // Verify getter methods
+    assertEquals(5607.45, curve.getSingleSurgeFlow(), 0.001);
+    assertEquals(150.0, curve.getSingleSurgeHead(), 0.001);
+
+    // Test isSurge - flow below surge point should be in surge
+    assertTrue(curve.isSurge(150.0, 5000.0)); // Flow < surge flow -> in surge
+    assertTrue(!curve.isSurge(150.0, 6000.0)); // Flow > surge flow -> not in surge
+  }
+
   // @Test
   public void testSurgeCurve3() {
     try {
