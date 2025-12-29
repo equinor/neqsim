@@ -308,6 +308,11 @@ public class Compressor extends TwoPortEquipment
 
     isActive(true);
 
+    // Update compressor chart with inlet stream for automatic MW detection
+    if (compressorChart != null) {
+      compressorChart.setInletStream(inStream);
+    }
+
     if (inStream.getFlowRate("kg/hr") < getMinimumFlow()) {
       isActive(false);
       thermoSystem.setPressure(pressure, pressureUnit);
@@ -1047,6 +1052,12 @@ public class Compressor extends TwoPortEquipment
       increaseTime(dt);
       return;
     }
+
+    // Update compressor chart with inlet stream for automatic MW detection
+    if (compressorChart != null) {
+      compressorChart.setInletStream(inStream);
+    }
+
     runController(dt, id);
 
     inStream.getThermoSystem().init(3);

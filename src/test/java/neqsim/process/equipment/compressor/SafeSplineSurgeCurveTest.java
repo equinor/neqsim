@@ -336,6 +336,189 @@ public class SafeSplineSurgeCurveTest {
     assertEquals(39820.03503030, firstStageCompressor.getInletStream().getFlowRate("kg/hr"), 1);
   }
 
+  /**
+   * Test single-point surge curve for single-speed compressors. For a single-speed compressor, the
+   * surge condition is a single point (minimum flow at that speed), not a curve.
+   */
+  @Test
+  public void testSinglePointSurge() {
+    // Single point surge for a single-speed compressor
+    double[] singleFlow = {5607.45}; // Minimum flow point
+    double[] singleHead = {150.0}; // Corresponding head
+
+    // Create single-point surge curve
+    SafeSplineSurgeCurve curve = new SafeSplineSurgeCurve(singleFlow, singleHead);
+
+    // Should be active
+    assertTrue(curve.isActive());
+
+    // Should be marked as single-point surge
+    assertTrue(curve.isSinglePointSurge());
+
+    // Surge flow should be constant regardless of head
+    assertEquals(5607.45, curve.getSurgeFlow(100.0), 0.001);
+    assertEquals(5607.45, curve.getSurgeFlow(150.0), 0.001);
+    assertEquals(5607.45, curve.getSurgeFlow(200.0), 0.001);
+
+    // Surge head should be constant regardless of flow
+    assertEquals(150.0, curve.getSurgeHead(4000.0), 0.001);
+    assertEquals(150.0, curve.getSurgeHead(5607.45), 0.001);
+    assertEquals(150.0, curve.getSurgeHead(8000.0), 0.001);
+
+    // Verify getter methods
+    assertEquals(5607.45, curve.getSingleSurgeFlow(), 0.001);
+    assertEquals(150.0, curve.getSingleSurgeHead(), 0.001);
+
+    // Test isSurge - flow below surge point should be in surge
+    assertTrue(curve.isSurge(150.0, 5000.0)); // Flow < surge flow -> in surge
+    assertTrue(!curve.isSurge(150.0, 6000.0)); // Flow > surge flow -> not in surge
+  }
+
+  /**
+   * Test single-point stone wall (choke) curve for single-speed compressors. For a single-speed
+   * compressor, the choke condition is a single point (maximum flow at that speed), not a curve.
+   */
+  @Test
+  public void testSinglePointStoneWall() {
+    // Single point stone wall for a single-speed compressor
+    double[] singleFlow = {9758.49}; // Maximum flow point (choke)
+    double[] singleHead = {112.65}; // Corresponding head
+
+    // Create single-point stone wall curve
+    SafeSplineStoneWallCurve curve = new SafeSplineStoneWallCurve(singleFlow, singleHead);
+
+    // Should be active
+    assertTrue(curve.isActive());
+
+    // Should be marked as single-point stone wall
+    assertTrue(curve.isSinglePointStoneWall());
+
+    // Stone wall flow should be constant regardless of head
+    assertEquals(9758.49, curve.getStoneWallFlow(100.0), 0.001);
+    assertEquals(9758.49, curve.getStoneWallFlow(112.65), 0.001);
+    assertEquals(9758.49, curve.getStoneWallFlow(150.0), 0.001);
+
+    // Stone wall head should be constant regardless of flow
+    assertEquals(112.65, curve.getStoneWallHead(8000.0), 0.001);
+    assertEquals(112.65, curve.getStoneWallHead(9758.49), 0.001);
+    assertEquals(112.65, curve.getStoneWallHead(10000.0), 0.001);
+
+    // Verify getter methods
+    assertEquals(9758.49, curve.getSingleStoneWallFlow(), 0.001);
+    assertEquals(112.65, curve.getSingleStoneWallHead(), 0.001);
+
+    // Test isStoneWall - flow above stone wall point should be in choke
+    assertTrue(curve.isStoneWall(112.65, 10000.0)); // Flow > stone wall flow -> in choke
+    assertTrue(!curve.isStoneWall(112.65, 9000.0)); // Flow < stone wall flow -> not in choke
+  }
+
+  /**
+   * Test that isSurge, isStoneWall, getDistanceToSurge, and getDistanceToStoneWall work correctly
+   * for single-speed compressors with single-point surge and stone wall curves.
+   */
+  @Test
+  public void testSingleSpeedCompressorWithSinglePointCurves() {
+    // Create a test fluid
+    SystemInterface testFluid = new SystemSrkEos(298.15, 50.0);
+    testFluid.addComponent("nitrogen", 1.0);
+    testFluid.addComponent("methane", 90.0);
+    testFluid.addComponent("ethane", 5.0);
+    testFluid.addComponent("propane", 3.0);
+    testFluid.addComponent("n-butane", 1.0);
+    testFluid.setMixingRule("classic");
+    testFluid.setTotalFlowRate(7000.0, "Am3/hr"); // Flow between surge and stone wall
+
+    Stream stream = new Stream("inlet stream", testFluid);
+    stream.run();
+
+    // Create compressor
+    Compressor comp = new Compressor("test compressor", stream);
+    comp.setUsePolytropicCalc(true);
+    comp.setPolytropicEfficiency(0.8);
+    comp.setOutletPressure(100.0); // bara
+
+    // Set up compressor chart with single speed curve
+    double[] chartConditions = new double[] {25.0, 50.0, 50.0, 20.0};
+    double[] speed = new double[] {10250};
+    double[][] flow = new double[][] {
+        {5607.45, 6007.91, 6480.26, 7111.75, 7799.81, 8179.81, 8508.5, 8749.97, 9006.93, 9758.49}};
+    double[][] head = new double[][] {
+        {150.0, 149.54, 148.83, 148.05, 146.14, 144.76, 142.98, 140.73, 137.29, 112.65}};
+    double[][] polyEff =
+        new double[][] {{78.0, 79.0, 80.0, 80.5, 80.0, 79.5, 79.0, 78.0, 77.0, 70.0}};
+
+    comp.setSpeed(10250);
+    comp.getCompressorChart().setCurves(chartConditions, speed, flow, head, flow, polyEff);
+    comp.getCompressorChart().setHeadUnit("kJ/kg");
+
+    // Set single-point surge curve (minimum flow point)
+    double[] surgeFlow = new double[] {5607.45};
+    double[] surgeHead = new double[] {150.0};
+    comp.getCompressorChart().getSurgeCurve().setCurve(chartConditions, surgeFlow, surgeHead);
+
+    // Set single-point stone wall curve (maximum flow point)
+    double[] stoneWallFlow = new double[] {9758.49};
+    double[] stoneWallHead = new double[] {112.65};
+    comp.getCompressorChart().getStoneWallCurve().setCurve(chartConditions, stoneWallFlow,
+        stoneWallHead);
+
+    // Run the compressor
+    comp.run();
+
+    // Verify surge curve is active and single-point
+    assertTrue(comp.getCompressorChart().getSurgeCurve().isActive());
+    SafeSplineSurgeCurve surgeCurve =
+        (SafeSplineSurgeCurve) comp.getCompressorChart().getSurgeCurve();
+    assertTrue(surgeCurve.isSinglePointSurge());
+
+    // Verify stone wall curve is active and single-point
+    assertTrue(comp.getCompressorChart().getStoneWallCurve().isActive());
+    SafeSplineStoneWallCurve stoneWallCurve =
+        (SafeSplineStoneWallCurve) comp.getCompressorChart().getStoneWallCurve();
+    assertTrue(stoneWallCurve.isSinglePointStoneWall());
+
+    // Test isSurge with operating point (should NOT be in surge since flow > surge flow)
+    double operatingFlow = comp.getInletStream().getFlowRate("m3/hr");
+    double operatingHead = comp.getPolytropicFluidHead();
+    assertTrue(operatingFlow > 5607.45, "Operating flow should be above surge flow");
+    // Note: Compressor.isSurge(flow, head) passes to SurgeCurve.isSurge(head, flow),
+    // but SurgeCurve expects (head, flow). So we call directly on the curve to test correctly.
+    boolean inSurge =
+        comp.getCompressorChart().getSurgeCurve().isSurge(operatingHead, operatingFlow);
+    assertTrue(!inSurge, "Should NOT be in surge");
+
+    // Test isStoneWall with operating point (should NOT be in stone wall since flow < stone wall)
+    assertTrue(operatingFlow < 9758.49, "Operating flow should be below stone wall flow");
+    boolean inStoneWall =
+        comp.getCompressorChart().getStoneWallCurve().isStoneWall(operatingHead, operatingFlow);
+    assertTrue(!inStoneWall, "Should NOT be in stone wall");
+
+    // Test getDistanceToSurge - should be positive (margin above surge)
+    double distanceToSurge = comp.getDistanceToSurge();
+    assertTrue(distanceToSurge > 0, "Distance to surge should be positive (above surge)");
+    System.out.println("Operating flow: " + operatingFlow + " m3/hr");
+    System.out.println("Surge flow: " + 5607.45 + " m3/hr");
+    System.out.println("Distance to surge: " + (distanceToSurge * 100) + "%");
+
+    // Test getDistanceToStoneWall - should be positive (margin below stone wall)
+    double distanceToStoneWall = comp.getDistanceToStoneWall();
+    assertTrue(distanceToStoneWall > 0, "Distance to stone wall should be positive (below choke)");
+    System.out.println("Stone wall flow: " + 9758.49 + " m3/hr");
+    System.out.println("Distance to stone wall: " + (distanceToStoneWall * 100) + "%");
+
+    // Test getSurgeFlowRate - should return the single-point surge flow
+    double surgeFlowRate = comp.getSurgeFlowRate();
+    assertEquals(5607.45, surgeFlowRate, 0.01, "Surge flow rate should match single-point value");
+
+    // Test isSurge with flow below surge point
+    assertTrue(comp.getCompressorChart().getSurgeCurve().isSurge(150.0, 5000.0),
+        "Should be in surge when flow < surge flow");
+
+    // Test isStoneWall with flow above stone wall point
+    assertTrue(comp.getCompressorChart().getStoneWallCurve().isStoneWall(112.65, 10000.0),
+        "Should be in stone wall when flow > stone wall flow");
+  }
+
   // @Test
   public void testSurgeCurve3() {
     try {

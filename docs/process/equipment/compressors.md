@@ -7,7 +7,12 @@ Documentation for compression equipment in NeqSim process simulation.
 - [Compressor Types](#compressor-types)
 - [Calculation Methods](#calculation-methods)
 - [Performance Curves](#performance-curves)
+- [Surge and Stone Wall](#surge-and-stone-wall)
 - [Usage Examples](#usage-examples)
+
+> **📖 Detailed Curve Documentation:** For comprehensive information on compressor curves, 
+> including multi-speed vs single-speed handling, surge curves, and stone wall curves, 
+> see [Compressor Curves and Performance Maps](compressor_curves.md).
 
 ---
 
@@ -99,6 +104,8 @@ Where:
 
 ## Performance Curves
 
+NeqSim supports detailed compressor performance maps with multiple speed curves. For comprehensive documentation, see [Compressor Curves and Performance Maps](compressor_curves.md).
+
 ### Setting Compressor Map
 
 ```java
@@ -111,8 +118,9 @@ double[][] heads = { {head1_curve1, head2_curve1}, {head1_curve2, head2_curve2},
 double[][] efficiencies = { {eff1_curve1, eff2_curve1}, {eff1_curve2, eff2_curve2}, ... };
 
 CompressorChartInterface chart = compressor.getCompressorChart();
-chart.setSpeedCurves(speeds, flows, heads, efficiencies);
-compressor.setUseCompressorChart(true);
+chart.setCurves(chartConditions, speeds, flows, heads, flows, efficiencies);
+chart.setHeadUnit("kJ/kg");
+compressor.setSpeed(10000);  // Operating speed
 ```
 
 ### Operating Point
@@ -126,17 +134,49 @@ double head = compressor.getPolytropicHead("kJ/kg");
 double efficiency = compressor.getPolytropicEfficiency();
 ```
 
-### Surge and Choke
+---
+
+## Surge and Stone Wall
+
+### Multi-Speed vs Single-Speed Compressors
+
+| Compressor Type | Surge/Stone Wall | Setting Method |
+|-----------------|------------------|----------------|
+| Multi-speed (≥2 speeds) | Curves (interpolated) | Multiple flow/head points |
+| Single-speed (1 speed) | Single points (constant) | Single flow/head point |
+
+### Checking Operating Limits
 
 ```java
-boolean isSurge = compressor.isSurge();
-boolean isChoke = compressor.isChoke();
-double surgeMargin = compressor.getSurgeMargin();
+// Distance to surge (positive = above surge, safe)
+double distanceToSurge = compressor.getDistanceToSurge();
 
-if (isSurge) {
-    System.out.println("WARNING: Operating in surge!");
-}
+// Distance to stone wall (positive = below choke, safe)
+double distanceToStoneWall = compressor.getDistanceToStoneWall();
+
+// Check if in surge
+boolean isSurge = compressor.getCompressorChart().getSurgeCurve().isSurge(head, flow);
+
+// Get surge flow rate
+double surgeFlow = compressor.getSurgeFlowRate();
 ```
+
+### Single-Speed Compressor Example
+
+```java
+// For single-speed compressors, surge is a single point
+double[] surgeFlow = {5607.45};  // Single value
+double[] surgeHead = {150.0};   // Single value
+compressor.getCompressorChart().getSurgeCurve().setCurve(chartConditions, surgeFlow, surgeHead);
+
+// Stone wall is also a single point
+double[] stoneWallFlow = {9758.49};
+double[] stoneWallHead = {112.65};
+compressor.getCompressorChart().getStoneWallCurve().setCurve(chartConditions, stoneWallFlow, stoneWallHead);
+```
+
+> **📖 See Also:** [Compressor Curves and Performance Maps](compressor_curves.md) for detailed
+> documentation on curve setup, interpolation methods, and Python examples.
 
 ---
 
@@ -285,6 +325,7 @@ System.out.println("Total power: " + totalPower + " MW");
 
 ## Related Documentation
 
+- [Compressor Curves](compressor_curves.md) - Detailed curve documentation
 - [Process Package](../README.md) - Package overview
 - [Expanders](expanders.md) - Expansion equipment
 - [Pumps](pumps.md) - Liquid compression

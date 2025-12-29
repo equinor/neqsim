@@ -25,6 +25,18 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
   private transient UnivariateFunction flowFromHead; // flow = f(head)
 
   /**
+   * Flag indicating single-point stone wall (for single-speed compressors). When true, stone wall
+   * flow is constant regardless of head.
+   */
+  private boolean isSinglePoint = false;
+
+  /** Single stone wall flow value used when isSinglePoint is true. */
+  private double singleStoneWallFlow = 0.0;
+
+  /** Single stone wall head value used when isSinglePoint is true. */
+  private double singleStoneWallHead = 0.0;
+
+  /**
    * Default constructor.
    */
   public SafeSplineStoneWallCurve() {}
@@ -64,11 +76,31 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
   /** {@inheritDoc} */
   @Override
   public void setCurve(double[] chartConditions, double[] flow, double[] head) {
-    if (flow.length != head.length || flow.length < 2) {
-      throw new IllegalArgumentException(
-          "Flow and head arrays must have the same length and at least 2 points.");
+    if (flow.length != head.length) {
+      throw new IllegalArgumentException("Flow and head arrays must have the same length.");
+    }
+    if (flow.length < 1) {
+      throw new IllegalArgumentException("Flow and head arrays must have at least 1 point.");
     }
 
+    // Handle single-point stone wall for single-speed compressors
+    if (flow.length == 1) {
+      this.isSinglePoint = true;
+      this.singleStoneWallFlow = flow[0];
+      this.singleStoneWallHead = head[0];
+      this.flow = new double[] {flow[0]};
+      this.head = new double[] {head[0]};
+      this.sortedFlow = new double[] {flow[0]};
+      this.sortedHead = new double[] {head[0]};
+      this.chartConditions =
+          chartConditions == null ? null : Arrays.copyOf(chartConditions, chartConditions.length);
+      this.headFromFlow = null;
+      this.flowFromHead = null;
+      setActive(true);
+      return;
+    }
+
+    this.isSinglePoint = false;
     int n = flow.length;
 
     Double[][] flowHeadPairs = new Double[n][2];
@@ -121,6 +153,11 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
   public double getFlow(double headValue) {
     if (!isActive()) {
       return 0.0;
+    }
+
+    // For single-point stone wall (single-speed compressors), return constant stone wall flow
+    if (isSinglePoint) {
+      return singleStoneWallFlow;
     }
 
     if (flowFromHead == null) {
@@ -176,6 +213,11 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
       return 0.0;
     }
 
+    // For single-point stone wall (single-speed compressors), return constant stone wall head
+    if (isSinglePoint) {
+      return singleStoneWallHead;
+    }
+
     if (headFromFlow == null) {
       setCurve(chartConditions, flow, head);
     }
@@ -220,6 +262,33 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
    */
   public boolean isStoneWall(double headValue, double flowValue) {
     return isLimit(headValue, flowValue);
+  }
+
+  /**
+   * Check if this stone wall curve represents a single-point (for single-speed compressors).
+   *
+   * @return true if this is a single-point stone wall curve
+   */
+  public boolean isSinglePointStoneWall() {
+    return isSinglePoint;
+  }
+
+  /**
+   * Get the single stone wall flow value for single-speed compressors.
+   *
+   * @return the single stone wall flow value, or 0.0 if not a single-point stone wall
+   */
+  public double getSingleStoneWallFlow() {
+    return singleStoneWallFlow;
+  }
+
+  /**
+   * Get the single stone wall head value for single-speed compressors.
+   *
+   * @return the single stone wall head value, or 0.0 if not a single-point stone wall
+   */
+  public double getSingleStoneWallHead() {
+    return singleStoneWallHead;
   }
 }
 

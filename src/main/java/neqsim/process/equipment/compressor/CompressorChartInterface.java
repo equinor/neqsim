@@ -268,4 +268,46 @@ public interface CompressorChartInterface extends Cloneable {
    *         or Double.NaN if no curves exist
    */
   public double getStoneWallHeadAtSpeed(double speed);
+
+  /**
+   * Set the inlet stream reference for automatic MW detection.
+   *
+   * <p>
+   * For charts that support MW interpolation (e.g., CompressorChartMWInterpolation), this allows
+   * the chart to automatically update the operating molecular weight from the inlet stream's fluid
+   * during calculations.
+   * </p>
+   *
+   * @param stream the inlet stream
+   */
+  public default void setInletStream(neqsim.process.equipment.stream.StreamInterface stream) {
+    // Default implementation does nothing - override in charts that support MW interpolation
+  }
+
+  /**
+   * Get the inlet stream reference.
+   *
+   * @return the inlet stream, or null if not set
+   */
+  public default neqsim.process.equipment.stream.StreamInterface getInletStream() {
+    return null;
+  }
+
+  /**
+   * Set the current operating molecular weight for charts that support MW interpolation.
+   *
+   * @param mw the molecular weight in g/mol
+   */
+  public default void setOperatingMW(double mw) {
+    // Default implementation does nothing - override in charts that support MW interpolation
+  }
+
+  /**
+   * Get the current operating molecular weight.
+   *
+   * @return the molecular weight in g/mol, or NaN if not set
+   */
+  public default double getOperatingMW() {
+    return Double.NaN;
+  }
 }

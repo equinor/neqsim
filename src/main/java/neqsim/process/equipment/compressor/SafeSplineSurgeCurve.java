@@ -25,6 +25,18 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
   private transient UnivariateFunction flowFromHead; // flow = f(head)
 
   /**
+   * Flag indicating single-point surge (for single-speed compressors). When true, surge flow is
+   * constant regardless of head.
+   */
+  private boolean isSinglePoint = false;
+
+  /** Single surge flow value used when isSinglePoint is true. */
+  private double singleSurgeFlow = 0.0;
+
+  /** Single surge head value used when isSinglePoint is true. */
+  private double singleSurgeHead = 0.0;
+
+  /**
    * Default constructor.
    */
   public SafeSplineSurgeCurve() {}
@@ -64,11 +76,31 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
   /** {@inheritDoc} */
   @Override
   public void setCurve(double[] chartConditions, double[] flow, double[] head) {
-    if (flow.length != head.length || flow.length < 2) {
-      throw new IllegalArgumentException(
-          "Flow and head arrays must have the same length and at least 2 points.");
+    if (flow.length != head.length) {
+      throw new IllegalArgumentException("Flow and head arrays must have the same length.");
+    }
+    if (flow.length < 1) {
+      throw new IllegalArgumentException("Flow and head arrays must have at least 1 point.");
     }
 
+    // Handle single-point surge for single-speed compressors
+    if (flow.length == 1) {
+      this.isSinglePoint = true;
+      this.singleSurgeFlow = flow[0];
+      this.singleSurgeHead = head[0];
+      this.flow = new double[] {flow[0]};
+      this.head = new double[] {head[0]};
+      this.sortedFlow = new double[] {flow[0]};
+      this.sortedHead = new double[] {head[0]};
+      this.chartConditions =
+          chartConditions == null ? null : Arrays.copyOf(chartConditions, chartConditions.length);
+      this.headFromFlow = null;
+      this.flowFromHead = null;
+      setActive(true);
+      return;
+    }
+
+    this.isSinglePoint = false;
     int n = flow.length;
 
     Double[][] flowHeadPairs = new Double[n][2];
@@ -121,6 +153,11 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
   public double getFlow(double headValue) {
     if (!isActive()) {
       return 0.0;
+    }
+
+    // For single-point surge (single-speed compressors), return constant surge flow
+    if (isSinglePoint) {
+      return singleSurgeFlow;
     }
 
     if (flowFromHead == null) {
@@ -176,6 +213,11 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
       return 0.0;
     }
 
+    // For single-point surge (single-speed compressors), return constant surge head
+    if (isSinglePoint) {
+      return singleSurgeHead;
+    }
+
     if (headFromFlow == null) {
       setCurve(chartConditions, flow, head);
     }
@@ -220,6 +262,33 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
    */
   public boolean isSurge(double headValue, double flowValue) {
     return isLimit(headValue, flowValue);
+  }
+
+  /**
+   * Check if this surge curve represents a single-point surge (for single-speed compressors).
+   *
+   * @return true if this is a single-point surge curve
+   */
+  public boolean isSinglePointSurge() {
+    return isSinglePoint;
+  }
+
+  /**
+   * Get the single surge flow value for single-speed compressors.
+   *
+   * @return the single surge flow value, or 0.0 if not a single-point surge
+   */
+  public double getSingleSurgeFlow() {
+    return singleSurgeFlow;
+  }
+
+  /**
+   * Get the single surge head value for single-speed compressors.
+   *
+   * @return the single surge head value, or 0.0 if not a single-point surge
+   */
+  public double getSingleSurgeHead() {
+    return singleSurgeHead;
   }
 }
 
