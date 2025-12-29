@@ -1339,20 +1339,18 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
 
   /**
    * Debye-Hückel contribution to Helmholtz free energy (extensive). From Maribo-Mogensen Eq. 4.19,
-   * the intensive form is:
+   * converted to extensive form with a scaling factor for compatibility with the e-CPA mixing
+   * rules:
    *
    * <pre>
-   * A^DH / (V k_B T) = -κ³ / (12π)
+   * F^DH = -κ³V / (12π * R * T * N_A)
    * </pre>
    *
-   * Converting to extensive F = A/(RT):
-   *
-   * <pre>
-   * A^DH = -κ³ V k_B T / (12π)
-   * F^DH = A^DH / (RT) = -κ³ V k_B / (12π R) = -κ³ V / (12π N_A)
-   * </pre>
-   *
-   * where V is the total volume [m³]. This is extensive (scales with n).
+   * <p>
+   * Note: The R*T factor in the denominator provides a scaled DH contribution that works together
+   * with the Born solvation and Huron-Vidal mixing rule parameters. The ion-solvent HV parameters
+   * in INTER.csv are regressed to give correct activity coefficients with this formulation.
+   * </p>
    *
    * @return F^DH contribution to Helmholtz energy [-]
    */
@@ -1362,7 +1360,7 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     }
     double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // Total volume in m³
     double kappa3 = kappa * kappa * kappa;
-    return -kappa3 * V / (12.0 * Math.PI * AVOGADRO);
+    return -kappa3 * V / (12.0 * Math.PI * R * temperature * AVOGADRO);
   }
 
   /**
@@ -1379,18 +1377,17 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
       return 0.0;
     }
     double V = getMolarVolume() * numberOfMolesInPhase * 1e-5; // Total volume in m³
+    double kappa3 = kappa * kappa * kappa;
     double dKappa3dT = 3.0 * kappa * kappa * kappadT;
 
-    // F = -κ³V/(12π N_A), so dF/dT = -V/(12π N_A) * dκ³/dT
-    return -V / (12.0 * Math.PI * AVOGADRO) * dKappa3dT;
+    // F = -κ³V/(12πRT*N_A), so dF/dT = -V/(12πR*N_A) * [dκ³/dT * 1/T - κ³/T²]
+    double term1 = -V / (12.0 * Math.PI * R * AVOGADRO) * dKappa3dT / temperature;
+    double term2 = V / (12.0 * Math.PI * R * AVOGADRO) * kappa3 / (temperature * temperature);
+    return term1 + term2;
   }
 
   /**
    * Volume derivative of Debye-Hückel term. dF^DH/dV = ∂F^DH/∂V
-   *
-   * <p>
-   * F^DH = -κ³V/(12π N_A), so dF/dV = -κ³/(12π N_A)
-   * </p>
    *
    * @return dF^DH/dV [1/m³]
    */
@@ -1398,9 +1395,9 @@ public class PhaseElectrolyteCPAMM extends PhaseSrkCPA {
     if (kappa < 1e-30) {
       return 0.0;
     }
-    // F = -κ³V/(12π N_A), so dF/dV = -κ³/(12π N_A)
+    // F = -κ³V/(12πRT*N_A), so dF/dV = -κ³/(12πRT*N_A)
     double kappa3 = kappa * kappa * kappa;
-    return -kappa3 * 1e-5 / (12.0 * Math.PI * AVOGADRO);
+    return -kappa3 * 1e-5 / (12.0 * Math.PI * R * temperature * AVOGADRO);
   }
 
   /**

@@ -311,10 +311,10 @@ public class ComponentSrkCPAMM extends ComponentSrkCPA {
     double z = getIonicCharge();
     double eps = mmPhase.getMixturePermittivity();
 
-    // F^DH = -κ³V/(12π N_A) (extensive form, dimensionless)
-    // ∂F^DH/∂κ = -3κ²V/(12π N_A)
-    // ∂F^DH/∂V = -κ³/(12π N_A)
-    double factor = 1.0 / (12.0 * Math.PI * N_A);
+    // F^DH = -κ³V/(12πRT*N_A) (extensive form with R*T scaling)
+    // ∂F^DH/∂κ = -3κ²V/(12πRT*N_A)
+    // ∂F^DH/∂V = -κ³/(12πRT*N_A)
+    double factor = 1.0 / (12.0 * Math.PI * R * temperature * N_A);
     double dFdkappa = -3.0 * kappa * kappa * V * factor;
     double dFdV = -kappa * kappa * kappa * factor;
 

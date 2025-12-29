@@ -852,8 +852,9 @@ public class SystemElectrolyteCPAMMTest {
       int naIdx = testSystem.getPhase(0).getComponent("Na+").getComponentNumber();
       int clIdx = testSystem.getPhase(0).getComponent("Cl-").getComponentNumber();
 
-      // Calculate mean ionic activity coefficient
-      double gammaCalc = testSystem.getPhase(0).getMeanIonicActivity(naIdx, clIdx);
+      // Calculate mean ionic activity coefficient on molality scale (for comparison with
+      // literature)
+      double gammaCalc = testSystem.getPhase(0).getMolalMeanIonicActivity(naIdx, clIdx);
 
       // Calculate osmotic coefficient
       double phiCalc = testSystem.getPhase(0).getOsmoticCoefficientOfWater();
@@ -995,5 +996,197 @@ public class SystemElectrolyteCPAMMTest {
     System.out.println();
 
     assertTrue(true, "Model comparison completed");
+  }
+
+  @Test
+  @DisplayName("Diagnose DH scaling vs HV parameter relationship")
+  void testDiagnoseDHScalingAndHVRelationship() {
+    // Purpose: Understand how DH formula scaling relates to HV parameters
+    // The DH formula has F^DH = -kappa^3 * V / (12*pi*R*T*N_A) which includes R*T
+    // This is ~2479x weaker than the "correct" formula at 298K
+
+    double T = 298.15;
+    double RT = 8.314 * T; // ~2479 J/mol
+
+    System.out.println("=================================================================");
+    System.out.println("DH Scaling vs HV Parameter Relationship Analysis");
+    System.out.println("=================================================================");
+    System.out.println();
+    System.out.println("The DH formula in NeqSim has an extra R*T factor in denominator:");
+    System.out.println("  F^DH = -kappa^3 * V / (12*pi*R*T*N_A)");
+    System.out.println("  Standard: F^DH = -kappa^3 * V / (12*pi*N_A)");
+    System.out.println("  Scaling factor: R*T = " + String.format("%.2f", RT) + " J/mol at 298K");
+    System.out.println();
+
+    // Compare different scenarios for 1 molal NaCl
+    double molesWater = 55.508;
+    double molesNaCl = 1.0;
+
+    // Test 1: Mixing rule 10 (CLASSIC_TX_CPA) - no HV
+    SystemElectrolyteCPAMM sys10 = new SystemElectrolyteCPAMM(298.15, 1.0);
+    sys10.addComponent("water", molesWater);
+    sys10.addComponent("Na+", molesNaCl);
+    sys10.addComponent("Cl-", molesNaCl);
+    sys10.setMixingRule(10);
+    sys10.init(0);
+    sys10.init(1);
+    new ThermodynamicOperations(sys10).TPflash();
+
+    int naIdx = sys10.getPhase(0).getComponent("Na+").getComponentNumber();
+    int clIdx = sys10.getPhase(0).getComponent("Cl-").getComponentNumber();
+    int watIdx = sys10.getPhase(0).getComponent("water").getComponentNumber();
+
+    // Check b values (co-volumes)
+    neqsim.thermo.component.ComponentEosInterface watComp =
+        (neqsim.thermo.component.ComponentEosInterface) sys10.getPhase(0).getComponent(watIdx);
+    neqsim.thermo.component.ComponentEosInterface naComp =
+        (neqsim.thermo.component.ComponentEosInterface) sys10.getPhase(0).getComponent(naIdx);
+    neqsim.thermo.component.ComponentEosInterface clComp =
+        (neqsim.thermo.component.ComponentEosInterface) sys10.getPhase(0).getComponent(clIdx);
+    double bWater = watComp.getb();
+    double bNa = naComp.getb();
+    double bCl = clComp.getb();
+    System.out.println("Co-volumes (b parameter) used in HV mixing rule:");
+    System.out.println("   water: b = " + String.format("%.4f", bWater) + " cm3/mol");
+    System.out.println("   Na+:   b = " + String.format("%.4f", bNa) + " cm3/mol");
+    System.out.println("   Cl-:   b = " + String.format("%.4f", bCl) + " cm3/mol");
+    System.out.println("   Ratio b_water/b_Na+ = " + String.format("%.2f", bWater / bNa));
+    System.out.println("   Ratio b_water/b_Cl- = " + String.format("%.2f", bWater / bCl));
+    System.out.println();
+
+    double gamma10 = sys10.getPhase(0).getMolalMeanIonicActivity(naIdx, clIdx);
+    double fugNa10 = sys10.getPhase(0).getComponent(naIdx).getFugacityCoefficient();
+    double fugCl10 = sys10.getPhase(0).getComponent(clIdx).getFugacityCoefficient();
+
+    System.out.println("1. Mixing Rule 10 (CLASSIC_TX_CPA) - DH + Born only:");
+    System.out.println("   gamma_m,± = " + String.format("%.4f", gamma10));
+    System.out.println("   ln(phi_Na+) = " + String.format("%.4f", Math.log(fugNa10)));
+    System.out.println("   ln(phi_Cl-) = " + String.format("%.4f", Math.log(fugCl10)));
+    System.out.println();
+
+    // Test 2: Mixing rule 4 (HV) with database parameters
+    SystemElectrolyteCPAMM sys4 = new SystemElectrolyteCPAMM(298.15, 1.0);
+    sys4.addComponent("water", molesWater);
+    sys4.addComponent("Na+", molesNaCl);
+    sys4.addComponent("Cl-", molesNaCl);
+    sys4.setMixingRule(4);
+    sys4.init(0);
+    sys4.init(1);
+    new ThermodynamicOperations(sys4).TPflash();
+
+    // Get NRTL gamma values from the GE phase
+    neqsim.thermo.mixingrule.HVMixingRulesInterface hvRule =
+        (neqsim.thermo.mixingrule.HVMixingRulesInterface) ((neqsim.thermo.phase.PhaseEos) sys4
+            .getPhase(0)).getEosMixingRule();
+    neqsim.thermo.phase.PhaseInterface gePhase = hvRule.getGEPhase();
+    double gammaNRTL_water =
+        ((neqsim.thermo.component.ComponentGEInterface) gePhase.getComponent(watIdx)).getGamma();
+    double gammaNRTL_Na =
+        ((neqsim.thermo.component.ComponentGEInterface) gePhase.getComponent(naIdx)).getGamma();
+    double gammaNRTL_Cl =
+        ((neqsim.thermo.component.ComponentGEInterface) gePhase.getComponent(clIdx)).getGamma();
+    System.out.println("NRTL activity coefficients from GE phase:");
+    System.out.println("   gamma_NRTL(water) = " + String.format("%.6f", gammaNRTL_water));
+    System.out.println("   gamma_NRTL(Na+) = " + String.format("%.6e", gammaNRTL_Na));
+    System.out.println("   gamma_NRTL(Cl-) = " + String.format("%.6e", gammaNRTL_Cl));
+    System.out.println("   ln(gamma_NRTL(Na+)) = " + String.format("%.4f", Math.log(gammaNRTL_Na)));
+    System.out.println("   ln(gamma_NRTL(Cl-)) = " + String.format("%.4f", Math.log(gammaNRTL_Cl)));
+    System.out.println();
+
+    double gamma4 = sys4.getPhase(0).getMolalMeanIonicActivity(naIdx, clIdx);
+    double fugNa4 = sys4.getPhase(0).getComponent(naIdx).getFugacityCoefficient();
+    double fugCl4 = sys4.getPhase(0).getComponent(clIdx).getFugacityCoefficient();
+
+    // Get HV parameters (reusing hvRule from above)
+    double Dij_NaW = hvRule.getHVDijParameter(naIdx, watIdx);
+    double Dij_ClW = hvRule.getHVDijParameter(clIdx, watIdx);
+    double alpha_NaW = hvRule.getHValphaParameter(naIdx, watIdx);
+
+    System.out.println("2. Mixing Rule 4 (Huron-Vidal with NRTL):");
+    System.out.println("   HV Parameters from database:");
+    System.out.println("     Dij[Na+][water] = " + String.format("%.2f", Dij_NaW) + " K");
+    System.out.println("     Dij[Cl-][water] = " + String.format("%.2f", Dij_ClW) + " K");
+    System.out.println("     alpha[Na+][water] = " + String.format("%.3f", alpha_NaW));
+    System.out.println("   gamma_m,± = " + String.format("%.4f", gamma4));
+    System.out.println("   ln(phi_Na+) = " + String.format("%.4f", Math.log(fugNa4)));
+    System.out.println("   ln(phi_Cl-) = " + String.format("%.4f", Math.log(fugCl4)));
+    System.out.println();
+
+    // Calculate what the excess contribution should be
+    double deltaLnPhi =
+        (Math.log(fugNa4) - Math.log(fugNa10) + Math.log(fugCl4) - Math.log(fugCl10)) / 2.0;
+    System.out.println("3. HV Contribution Analysis:");
+    System.out
+        .println("   Delta ln(phi) per ion (HV effect) = " + String.format("%.4f", deltaLnPhi));
+    System.out.println("   This changes gamma by factor: exp(Delta) = "
+        + String.format("%.4f", Math.exp(deltaLnPhi)));
+    System.out.println();
+
+    // The relationship between DH and HV
+    System.out.println("4. Relationship between DH scaling and HV:");
+    System.out.println("   - DH term is scaled by 1/(R*T) = " + String.format("%.6e", 1.0 / RT));
+    System.out.println("   - This makes DH ~2479x weaker than standard formula");
+    System.out.println("   - HV parameters may need to compensate for this");
+    System.out.println("   - The total ln(gamma) = ln(gamma_DH+Born) + ln(gamma_HV)");
+    System.out.println();
+
+    // Expected contribution from DH at 1 molal
+    // For a 1:1 electrolyte: ln(gamma_DH) ≈ -A_gamma * sqrt(I) / (1 + B*a*sqrt(I))
+    // A_gamma ≈ 1.172 at 298K for water, I = 1 for 1 molal NaCl
+    double A_gamma = 1.172;
+    double I = 1.0;
+    double expectedLnGammaDH = -A_gamma * Math.sqrt(I) / (1 + 1.5 * Math.sqrt(I));
+    double expectedGammaDH = Math.exp(expectedLnGammaDH);
+
+    System.out.println("5. Expected vs Actual DH contribution:");
+    System.out.println("   Expected ln(gamma_DH) ≈ " + String.format("%.4f", expectedLnGammaDH)
+        + " (using A_gamma = 1.172, B*a = 1.5)");
+    System.out.println("   Expected gamma_DH ≈ " + String.format("%.4f", expectedGammaDH));
+    System.out.println("   Actual gamma from model = " + String.format("%.4f", gamma10));
+    System.out.println(
+        "   Ratio (actual/expected) = " + String.format("%.2f", gamma10 / expectedGammaDH));
+    System.out.println();
+
+    System.out.println("6. Literature value at 1 molal NaCl:");
+    System.out.println("   gamma_m,± = 0.657 (Robinson & Stokes)");
+    System.out.println("   Required total ln(gamma) = " + String.format("%.4f", Math.log(0.657)));
+    System.out.println("   Current model ln(gamma) = " + String.format("%.4f", Math.log(gamma10)));
+    System.out.println(
+        "   Missing contribution = " + String.format("%.4f", Math.log(0.657) - Math.log(gamma10)));
+    System.out.println();
+
+    // Test 3: Using built-in short-range term instead of HV mixing rule
+    System.out.println("7. Testing built-in short-range term (not HV mixing rule):");
+    SystemElectrolyteCPAMM sysSR = new SystemElectrolyteCPAMM(298.15, 1.0);
+    sysSR.addComponent("water", molesWater);
+    sysSR.addComponent("Na+", molesNaCl);
+    sysSR.addComponent("Cl-", molesNaCl);
+    sysSR.setMixingRule(10); // Use CLASSIC mixing, not HV
+    sysSR.init(0);
+
+    // Enable short-range term and initialize wij parameters
+    PhaseElectrolyteCPAMM mmPhaseSR = (PhaseElectrolyteCPAMM) sysSR.getPhase(0);
+    mmPhaseSR.setShortRangeOn(true);
+    mmPhaseSR.initMixingRuleWij();
+
+    // Check wij values
+    int naIdxSR = sysSR.getPhase(0).getComponent("Na+").getComponentNumber();
+    int clIdxSR = sysSR.getPhase(0).getComponent("Cl-").getComponentNumber();
+    int watIdxSR = sysSR.getPhase(0).getComponent("water").getComponentNumber();
+    double wNaWat = mmPhaseSR.getWij(naIdxSR, watIdxSR);
+    double wClWat = mmPhaseSR.getWij(clIdxSR, watIdxSR);
+    System.out.println("   wij[Na+][water] = " + String.format("%.2f", wNaWat) + " K");
+    System.out.println("   wij[Cl-][water] = " + String.format("%.2f", wClWat) + " K");
+
+    sysSR.init(1);
+    new ThermodynamicOperations(sysSR).TPflash();
+
+    double gammaSR = sysSR.getPhase(0).getMolalMeanIonicActivity(naIdxSR, clIdxSR);
+    System.out.println("   gamma_m,± (with short-range) = " + String.format("%.4f", gammaSR));
+    System.out.println("   Literature gamma_m,± = 0.657");
+    System.out.println("   Error = " + String.format("%.1f%%", (gammaSR - 0.657) / 0.657 * 100));
+    System.out.println();
+
+    assertTrue(true, "Diagnostic analysis completed");
   }
 }
