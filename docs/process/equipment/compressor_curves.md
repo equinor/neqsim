@@ -523,6 +523,7 @@ chart.addMapAtMW(20.0, speeds, flowHead, heads, flowEff, effs);
 
 **Complete multi-speed example:**
 
+{% raw %}
 ```java
 CompressorChartMWInterpolation chart = new CompressorChartMWInterpolation();
 chart.setHeadUnit("kJ/kg");
@@ -561,6 +562,7 @@ comp.setCompressorChart(chart);
 comp.setSpeed(11000);
 comp.run();
 ```
+{% endraw %}
 
 #### Single-Speed Compressor (without chartConditions)
 
@@ -608,6 +610,7 @@ comp.run();
 
 When efficiency is measured at different flow points than head:
 
+{% raw %}
 ```java
 double[] speeds = {10000, 11000};
 
@@ -622,6 +625,7 @@ double[][] effs = {{76, 79, 77}, {75, 78, 76}};
 // Use the 6-argument version of addMapAtMW
 chart.addMapAtMW(20.0, chartConditions, speeds, flowHead, heads, flowEff, effs);
 ```
+{% endraw %}
 
 ### Python Example
 

@@ -135,7 +135,7 @@ Uses group contribution based on molecular weight and solvent viscosity:
 
 Optimized for hydrocarbon systems (Hayduk & Minhas, 1982):
 
-- **Paraffin solvents**: $D_{AB} = 13.3 \times 10^{-8} \cdot \frac{T^{1.47} \cdot \mu_B^{(\epsilon_B)}}{{V_A^{0.71}}}$
+- **Paraffin solvents**: $D_{AB} = 13.3 \times 10^{-8} \cdot \frac{T^{1.47} \cdot \mu_B^{(\epsilon_B)}}{V_A^{0.71}}$
   - Where: $\epsilon_B = \frac{10.2}{V_A} - 0.791$
   
 - **Aqueous solvents**: $D_{AB} = 1.25 \times 10^{-8} \cdot (V_A^{-0.19} - 0.292) \cdot T^{1.52} \cdot \mu_B^{\epsilon}$
