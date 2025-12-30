@@ -22,7 +22,7 @@ import java.util.Map;
  * electrolyte systems.
  * </p>
  *
- * <h3>Ion-Solvent Interaction Energy</h3>
+ * <h2>Ion-Solvent Interaction Energy</h2>
  * <p>
  * The ion-solvent interaction energy follows a linear temperature dependence:
  * </p>
@@ -31,13 +31,13 @@ import java.util.Map;
  * ΔU_iw(T) = u⁰_iw + uᵀ_iw × (T - 298.15)
  * </pre>
  *
- * <h3>Born Radius Correlations (Maribo-Mogensen Table 6.6)</h3>
+ * <h2>Born Radius Correlations (Maribo-Mogensen Table 6.6)</h2>
  * <ul>
  * <li>Cations: R_Born = 0.5σ + 0.1 Å</li>
  * <li>Anions: R_Born = 0.5σ + 0.85 Å</li>
  * </ul>
  *
- * <h3>Supported Solvents</h3>
+ * <h2>Supported Solvents</h2>
  * <ul>
  * <li>Water (default)</li>
  * <li>Methanol</li>
@@ -48,7 +48,7 @@ import java.util.Map;
  * <li>MDEA (methyldiethanolamine)</li>
  * </ul>
  *
- * <h3>References</h3>
+ * <h2>References</h2>
  * <ul>
  * <li>Maribo-Mogensen, B. (2014). PhD Thesis, DTU Chemical Engineering.</li>
  * <li>Maribo-Mogensen et al., Ind. Eng. Chem. Res. 2012, 51, 5353-5363</li>
