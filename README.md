@@ -1,5 +1,16 @@
 ![NeqSim Logo](https://github.com/equinor/neqsim/blob/master/docs/wiki/neqsimlogocircleflatsmall.png)
 
+<!-- BRANCH-ONLY-START: Remove this section before merging to master -->
+> **⚠️ Branch: `scrubber-updates`**
+> 
+> This branch contains enhancements to separator and scrubber mechanical design, including:
+> - Primary separation devices (`InletVane`, `InletVaneWithMeshpad`, `InletCyclones`)
+> - Demisting internals with carry-over calculations (`DemistingInternal`, `DemistingInternalWithDrainage`)
+> - Documentation: [Separators and Internals](docs/wiki/separators_and_internals.md) | [Carry-Over Calculations](docs/wiki/carryover_calculations.md)
+> 
+> Related PR: [#1766](https://github.com/equinor/neqsim/pull/1766)
+<!-- BRANCH-ONLY-END -->
+
 <!-- Badges -->
 [![Azure DevOps Build](https://neqsim.visualstudio.com/neqsim_cicd/_apis/build/status/neqsim_build?branchName=master)](https://neqsim.visualstudio.com/neqsim_cicd/_build/latest?definitionId=1&branchName=master)
 [![GitHub CI Build](https://github.com/equinor/neqsim/actions/workflows/verify_build.yml/badge.svg?branch=master)](https://github.com/equinor/neqsim/actions/workflows/verify_build.yml?query=branch%3Amaster)

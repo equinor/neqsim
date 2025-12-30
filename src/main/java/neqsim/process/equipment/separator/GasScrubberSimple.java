@@ -146,7 +146,7 @@ public class GasScrubberSimple extends Separator {
     for (int i = 0; i < separatorSection.size(); i++) {
       ktotal *= (1.0 - separatorSection.get(i).getEfficiency());
     }
-    System.out.println("Ktot " + (1.0 - ktotal));
+    logger.debug("Ktot {}", (1.0 - ktotal));
     double area = getInternalDiameter() * getInternalDiameter() / 4.0 * 3.14;
     double gasVel =
         thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarVolume() / 1e5 / area;
