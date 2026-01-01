@@ -214,6 +214,19 @@ public class ProcessModel implements Runnable {
   }
 
   /**
+   * Get the maximum error across all variables (flow, temperature, pressure).
+   *
+   * <p>
+   * This is the largest relative error from the last iteration, useful for quick convergence check.
+   * </p>
+   *
+   * @return maximum relative error across all variables
+   */
+  public double getError() {
+    return Math.max(lastMaxFlowError, Math.max(lastMaxTemperatureError, lastMaxPressureError));
+  }
+
+  /**
    * Adds a process to the model.
    *
    * @param name a {@link java.lang.String} object
