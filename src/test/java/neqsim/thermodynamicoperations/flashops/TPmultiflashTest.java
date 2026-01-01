@@ -144,8 +144,8 @@ class TPmultiflashTest {
             if (presBar > maxPressureThreePhase) {
               maxPressureThreePhase = presBar;
             }
-            System.out.println(
-                "Three phases found at T=" + (tempK - 273.15) + " C, P=" + presBar + " bar");
+            // System.out.println(
+            // "Three phases found at T=" + (tempK - 273.15) + " C, P=" + presBar + " bar");
           }
         } catch (Exception e) {
           // Some conditions may fail near critical or unstable regions
