@@ -171,12 +171,12 @@ public class ProcessModel implements Runnable {
    *
    * <p>
    * This method provides insight into how each ProcessSystem will be executed, including:
+   * </p>
    * <ul>
    * <li>Whether each system has recycle loops</li>
    * <li>Number of units and parallel levels</li>
    * <li>Which execution strategy will be used</li>
    * </ul>
-   * </p>
    *
    * @return combined execution partition info for all ProcessSystems
    */
