@@ -9,7 +9,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.TwoPortInterface;
+import neqsim.process.equipment.mixer.MixerInterface;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
@@ -59,6 +62,25 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    */
   public Adjuster(String name) {
     super(name);
+  }
+
+  /**
+   * Helper method to get a StreamInterface from equipment. If the equipment is a StreamInterface,
+   * returns it directly. Otherwise, tries to get the outlet stream from TwoPortInterface or
+   * MixerInterface.
+   *
+   * @param equipment the equipment to get stream from
+   * @return StreamInterface or null if not available
+   */
+  private StreamInterface getStreamFromEquipment(ProcessEquipmentInterface equipment) {
+    if (equipment instanceof StreamInterface) {
+      return (StreamInterface) equipment;
+    } else if (equipment instanceof TwoPortInterface) {
+      return ((TwoPortInterface) equipment).getOutletStream();
+    } else if (equipment instanceof MixerInterface) {
+      return ((MixerInterface) equipment).getOutletStream();
+    }
+    return null;
   }
 
   /**
@@ -211,33 +233,52 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   public void run(UUID id) {
     oldError = error;
 
+    // Get streams from equipment (handles both Stream and other equipment types)
+    StreamInterface adjustedStream = getStreamFromEquipment(adjustedEquipment);
+    StreamInterface targetStream = getStreamFromEquipment(targetEquipment);
+
+    if (adjustedStream == null) {
+      logger.error("Adjuster: Cannot get stream from adjusted equipment: "
+          + (adjustedEquipment != null ? adjustedEquipment.getName() : "null"));
+      setCalculationIdentifier(id);
+      return;
+    }
+
     if (adjustedValueGetter != null) {
       inputValue = adjustedValueGetter.apply(adjustedEquipment);
     } else if (adjustedVariable.equals("mass flow")) {
-      inputValue = ((Stream) adjustedEquipment).getThermoSystem().getFlowRate("kg/hr");
-    } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
-      inputValue = ((Stream) adjustedEquipment).getThermoSystem().getFlowRate(adjustedVariableUnit);
-    } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null) {
-      inputValue = ((Stream) adjustedEquipment).getPressure(adjustedVariableUnit);
-    } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null) {
+      inputValue = adjustedStream.getThermoSystem().getFlowRate("kg/hr");
+    } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null
+        && !adjustedVariableUnit.isEmpty()) {
+      inputValue = adjustedStream.getThermoSystem().getFlowRate(adjustedVariableUnit);
+    } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null
+        && !adjustedVariableUnit.isEmpty()) {
+      inputValue = adjustedStream.getPressure(adjustedVariableUnit);
+    } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null
+        && !adjustedVariableUnit.isEmpty()) {
+      inputValue = adjustedStream.getTemperature(adjustedVariableUnit);
     } else {
-      inputValue = ((Stream) adjustedEquipment).getThermoSystem().getNumberOfMoles();
+      inputValue = adjustedStream.getThermoSystem().getNumberOfMoles();
     }
 
     double targetValueCurrent = 0.0;
     if (targetValueCalculator != null) {
       targetValueCurrent = targetValueCalculator.apply(targetEquipment);
+    } else if (targetStream == null) {
+      logger.error("Adjuster: Cannot get stream from target equipment: "
+          + (targetEquipment != null ? targetEquipment.getName() : "null"));
+      setCalculationIdentifier(id);
+      return;
     } else if (targetVariable.equals("mass fraction") && !targetPhase.equals("")
         && !targetComponent.equals("")) {
-      targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getPhase(targetPhase)
-          .getWtFrac(targetComponent);
+      targetValueCurrent =
+          targetStream.getThermoSystem().getPhase(targetPhase).getWtFrac(targetComponent);
     } else if (targetVariable.equals("gasVolumeFlow")) {
-    } else if (targetVariable.equals("gasVolumeFlow")) {
-      targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getFlowRate(targetUnit);
+      targetValueCurrent = targetStream.getThermoSystem().getFlowRate(targetUnit);
     } else if (targetVariable.equals("pressure")) {
-      targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getPressure(targetUnit);
+      targetValueCurrent = targetStream.getThermoSystem().getPressure(targetUnit);
     } else {
-      targetValueCurrent = ((Stream) targetEquipment).getThermoSystem().getVolume(targetUnit);
+      targetValueCurrent = targetStream.getThermoSystem().getVolume(targetUnit);
     }
 
     if (activateWhenLess && targetValueCurrent > targetValue) {
@@ -268,20 +309,19 @@ public class Adjuster extends ProcessEquipmentBaseClass {
         }
         adjustedValueSetter.accept(adjustedEquipment, inputValue + perturbation);
       } else if (adjustedVariable.equals("mass flow")) {
-        ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation,
-            "kg/hr");
-      } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
-        ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(
+        adjustedStream.getThermoSystem().setTotalFlowRate(inputValue + deviation, "kg/hr");
+      } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null
+          && !adjustedVariableUnit.isEmpty()) {
+        adjustedStream.getThermoSystem().setTotalFlowRate(
             inputValue + Math.signum(deviation) * inputValue / 100.0, adjustedVariableUnit);
-      } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null) {
-        ((Stream) adjustedEquipment).setPressure(inputValue + deviation / 10.0,
-            adjustedVariableUnit);
-      } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null) {
-        ((Stream) adjustedEquipment).setTemperature(inputValue + deviation / 10.0,
-            adjustedVariableUnit);
+      } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null
+          && !adjustedVariableUnit.isEmpty()) {
+        adjustedStream.setPressure(inputValue + deviation / 10.0, adjustedVariableUnit);
+      } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null
+          && !adjustedVariableUnit.isEmpty()) {
+        adjustedStream.setTemperature(inputValue + deviation / 10.0, adjustedVariableUnit);
       } else {
-        ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue + deviation,
-            "mol/sec");
+        adjustedStream.getThermoSystem().setTotalFlowRate(inputValue + deviation, "mol/sec");
       }
     } else {
       double derivate = (error - oldError) / (inputValue - oldInputValue);
@@ -305,18 +345,19 @@ public class Adjuster extends ProcessEquipmentBaseClass {
       if (adjustedValueSetter != null) {
         adjustedValueSetter.accept(adjustedEquipment, inputValue - newVal);
       } else if (adjustedVariable.equals("mass flow")) {
-        ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
-            "kg/hr");
-      } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null) {
-        ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
+        adjustedStream.getThermoSystem().setTotalFlowRate(inputValue - newVal, "kg/hr");
+      } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null
+          && !adjustedVariableUnit.isEmpty()) {
+        adjustedStream.getThermoSystem().setTotalFlowRate(inputValue - newVal,
             adjustedVariableUnit);
-      } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null) {
-        ((Stream) adjustedEquipment).setPressure(inputValue - newVal, adjustedVariableUnit);
-      } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null) {
-        ((Stream) adjustedEquipment).setTemperature(inputValue - newVal, adjustedVariableUnit);
+      } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null
+          && !adjustedVariableUnit.isEmpty()) {
+        adjustedStream.setPressure(inputValue - newVal, adjustedVariableUnit);
+      } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null
+          && !adjustedVariableUnit.isEmpty()) {
+        adjustedStream.setTemperature(inputValue - newVal, adjustedVariableUnit);
       } else {
-        ((Stream) adjustedEquipment).getThermoSystem().setTotalFlowRate(inputValue - newVal,
-            "mol/sec");
+        adjustedStream.getThermoSystem().setTotalFlowRate(inputValue - newVal, "mol/sec");
       }
     }
 

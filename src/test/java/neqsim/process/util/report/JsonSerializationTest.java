@@ -794,7 +794,8 @@ public class JsonSerializationTest {
     assertNotNull(json, "ProcessModel JSON should not be null");
 
     // Check mass balance
-    var massBalanceResults = model.checkMassBalance("kg/hr");
+    Map<String, Map<String, ProcessSystem.MassBalanceResult>> massBalanceResults =
+        model.checkMassBalance("kg/hr");
     assertNotNull(massBalanceResults, "Mass balance results should not be null");
 
     // Get mass balance report
