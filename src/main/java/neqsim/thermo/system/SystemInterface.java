@@ -593,6 +593,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public boolean doMultiPhaseCheck();
 
   /**
+   * Check if enhanced stability analysis is enabled. When enabled, the flash calculation uses
+   * Wilson K-value initial guesses and tests both vapor-like and liquid-like trial phases for more
+   * robust detection of multiple liquid phases (e.g., liquid-liquid-vapor equilibria in sour gas or
+   * CO2 systems).
+   *
+   * @return true if enhanced stability analysis is enabled
+   */
+  public boolean doEnhancedMultiPhaseCheck();
+
+  /**
    * <p>
    * doSolidPhaseCheck.
    * </p>
@@ -2485,6 +2495,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *        check for gas and multiple liquid phases (eg. gas-oil-aqueous).
    */
   public void setMultiPhaseCheck(boolean doMultiPhaseCheck);
+
+  /**
+   * Enable or disable enhanced stability analysis for flash calculations. When enabled, uses Wilson
+   * K-value initial guesses and tests both vapor-like and liquid-like trial phases. This is more
+   * robust for detecting liquid-liquid equilibria in complex mixtures (e.g., sour gas, CO2 systems)
+   * but adds computational overhead. Default is false (disabled).
+   *
+   * @param enhancedMultiPhaseCheck true to enable enhanced multi-phase detection
+   */
+  public void setEnhancedMultiPhaseCheck(boolean enhancedMultiPhaseCheck);
 
   /**
    * <p>
