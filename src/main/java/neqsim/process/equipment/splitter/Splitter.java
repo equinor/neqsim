@@ -348,7 +348,8 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new SplitterResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new SplitterResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -359,7 +360,7 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     }
     SplitterResponse res = new SplitterResponse(this);
     res.applyConfig(cfg);
-    return new GsonBuilder().create().toJson(res);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 
   /** {@inheritDoc} */

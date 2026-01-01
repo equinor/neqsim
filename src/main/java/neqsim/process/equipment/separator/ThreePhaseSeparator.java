@@ -779,7 +779,8 @@ public class ThreePhaseSeparator extends Separator {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new SeparatorResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new SeparatorResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -790,6 +791,6 @@ public class ThreePhaseSeparator extends Separator {
     }
     SeparatorResponse res = new SeparatorResponse(this);
     res.applyConfig(cfg);
-    return new GsonBuilder().create().toJson(res);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 }

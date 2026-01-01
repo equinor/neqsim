@@ -498,7 +498,8 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new HeaterResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new HeaterResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -509,6 +510,6 @@ public class Heater extends TwoPortEquipment implements HeaterInterface {
     }
     HeaterResponse res = new HeaterResponse(this);
     res.applyConfig(cfg);
-    return new GsonBuilder().create().toJson(res);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 }

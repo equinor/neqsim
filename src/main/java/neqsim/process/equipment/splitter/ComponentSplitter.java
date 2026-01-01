@@ -171,7 +171,8 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new ComponentSplitterResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new ComponentSplitterResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -182,7 +183,7 @@ public class ComponentSplitter extends ProcessEquipmentBaseClass {
     }
     ComponentSplitterResponse res = new ComponentSplitterResponse(this);
     res.applyConfig(cfg);
-    return new GsonBuilder().create().toJson(res);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 
   /** {@inheritDoc} */

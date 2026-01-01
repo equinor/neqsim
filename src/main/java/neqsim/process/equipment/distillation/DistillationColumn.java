@@ -1992,7 +1992,8 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new DistillationColumnResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new DistillationColumnResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -2003,7 +2004,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
     DistillationColumnResponse res = new DistillationColumnResponse(this);
     res.applyConfig(cfg);
-    return new GsonBuilder().create().toJson(res);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 
   /**

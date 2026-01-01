@@ -1963,7 +1963,8 @@ public class Compressor extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new CompressorResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new CompressorResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -1974,7 +1975,7 @@ public class Compressor extends TwoPortEquipment
     }
     CompressorResponse res = new CompressorResponse(this);
     res.applyConfig(cfg);
-    return new GsonBuilder().create().toJson(res);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 
   /**

@@ -793,7 +793,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new ValveResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new ValveResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -804,7 +805,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
     ValveResponse res = new ValveResponse(this);
     res.applyConfig(cfg);
-    return new GsonBuilder().create().toJson(res);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 
   /**
