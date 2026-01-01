@@ -86,9 +86,56 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
     super("Standard_ASTM_D6377", "Standard_ASTM_D6377", thermoSystem);
   }
 
+  /**
+   * Checks if the fluid composition is suitable for RVP (Reid Vapor Pressure) calculation.
+   *
+   * <p>
+   * RVP is only meaningful for fluids that can form a liquid phase at reference conditions (37.8°C,
+   * ~1 bara). Light gas mixtures dominated by methane/ethane will not have a bubble point and
+   * cannot have RVP calculated.
+   * </p>
+   *
+   * @return true if the fluid is suitable for RVP calculation, false otherwise
+   */
+  public boolean isSuitableForRVP() {
+    if (thermoSystem == null || thermoSystem.getNumberOfComponents() == 0) {
+      return false;
+    }
+
+    // Check molar mass - fluids lighter than ~44 g/mol (propane) are unlikely to form liquid
+    // at RVP conditions. Use a threshold slightly below propane to allow for some margin.
+    double molarMass = thermoSystem.getMolarMass("kg/mol") * 1000.0; // convert to g/mol
+    if (molarMass < 35.0) {
+      logger.debug("Fluid too light for RVP calculation (molar mass: {} g/mol)", molarMass);
+      return false;
+    }
+
+    // Check for presence of components heavier than ethane (C3+)
+    // If fluid is >90% methane+ethane, RVP is not meaningful
+    double lightFraction = 0.0;
+    for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
+      String compName = thermoSystem.getComponent(i).getComponentName().toLowerCase();
+      if (compName.equals("methane") || compName.equals("ethane") || compName.equals("nitrogen")
+          || compName.equals("co2") || compName.equals("hydrogen")) {
+        lightFraction += thermoSystem.getComponent(i).getz();
+      }
+    }
+    if (lightFraction > 0.95) {
+      logger.debug("Fluid composition too light for RVP (light gas fraction: {})", lightFraction);
+      return false;
+    }
+
+    return true;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void calculate() {
+    // Skip calculation if fluid is not suitable for RVP
+    if (!isSuitableForRVP()) {
+      return;
+    }
+
     this.thermoSystem.setTemperature(referenceTemperature, "C");
     this.thermoSystem.setPressure(ThermodynamicConstantsInterface.referencePressure);
     this.thermoOps = new ThermodynamicOperations(thermoSystem);
