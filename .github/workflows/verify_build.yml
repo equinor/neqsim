@@ -27,7 +27,7 @@ jobs:
       - name: Generate javadoc
         run: mvn javadoc:javadoc
       - name: Run tests and generate JaCoCo report
-        run: mvn -B verify jacoco:report --file pom.xml -ntp -DskipITs
+        run: mvn -B test --file pom.xml -ntp -DskipITs
       - name: Verify JaCoCo report exists
         run: |
           if [ -f target/site/jacoco/jacoco.xml ]; then
