@@ -456,6 +456,342 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Runs the process system using the optimal execution strategy based on topology analysis.
+   *
+   * <p>
+   * This method automatically selects the best execution mode:
+   * <ul>
+   * <li>For processes WITHOUT recycles: uses parallel execution for maximum speed</li>
+   * <li>For processes WITH recycles: uses graph-based execution with optimized ordering</li>
+   * </ul>
+   * </p>
+   *
+   * <p>
+   * This is the recommended method for most use cases as it provides the best performance without
+   * requiring manual configuration.
+   * </p>
+   */
+  public void runOptimized() {
+    runOptimized(UUID.randomUUID());
+  }
+
+  /**
+   * Runs the process system using the optimal execution strategy based on topology analysis.
+   *
+   * <p>
+   * This method automatically selects the best execution mode:
+   * <ul>
+   * <li>For processes WITHOUT recycles: uses parallel execution for maximum speed</li>
+   * <li>For processes WITH recycles: uses hybrid execution - parallel for feed-forward sections,
+   * then graph-based iteration for recycle sections</li>
+   * </ul>
+   * </p>
+   *
+   * @param id calculation identifier for tracking
+   */
+  public void runOptimized(UUID id) {
+    if (hasRecycleLoops()) {
+      // Process has recycles - use hybrid execution:
+      // 1. Run feed-forward units (before first recycle dependency) in parallel
+      // 2. Run recycle section with graph-based iteration
+      try {
+        runHybrid(id);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.warn("Hybrid execution interrupted, falling back to graph-based run");
+        boolean previousSetting = useGraphBasedExecution;
+        useGraphBasedExecution = true;
+        run(id);
+        useGraphBasedExecution = previousSetting;
+      }
+    } else {
+      // Feed-forward process - use parallel execution for maximum speed
+      // Units at the same level (no dependencies) run concurrently
+      try {
+        runParallel(id);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.warn("Parallel execution interrupted, falling back to regular run");
+        run(id);
+      }
+    }
+  }
+
+  /**
+   * Runs the process using hybrid execution strategy.
+   *
+   * <p>
+   * This method partitions the process into:
+   * <ul>
+   * <li>Feed-forward section: Units at the beginning with no recycle dependencies - run in
+   * parallel</li>
+   * <li>Recycle section: Units that are part of or depend on recycle loops - run with graph-based
+   * iteration</li>
+   * </ul>
+   * </p>
+   *
+   * @param id calculation identifier for tracking
+   * @throws InterruptedException if thread is interrupted during parallel execution
+   */
+  public void runHybrid(UUID id) throws InterruptedException {
+    ProcessGraph graph = buildGraph();
+    ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
+    java.util.Set<ProcessNode> recycleNodes = graph.getNodesInRecycleLoops();
+
+    // Build set of units in recycle loops for fast lookup
+    java.util.Set<ProcessEquipmentInterface> recycleUnits = new java.util.HashSet<>();
+    for (ProcessNode node : recycleNodes) {
+      recycleUnits.add(node.getEquipment());
+    }
+
+    // Run setters first (sequential, they set conditions)
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof Setter) {
+        unit.run(id);
+      }
+    }
+
+    // Phase 1: Run feed-forward levels in parallel (before any recycle units)
+    int firstRecycleLevel = -1;
+    List<List<ProcessNode>> levels = partition.getLevels();
+
+    for (int levelIdx = 0; levelIdx < levels.size(); levelIdx++) {
+      List<ProcessNode> level = levels.get(levelIdx);
+      boolean hasRecycleUnit = false;
+      for (ProcessNode node : level) {
+        if (recycleNodes.contains(node)) {
+          hasRecycleUnit = true;
+          break;
+        }
+      }
+      if (hasRecycleUnit) {
+        firstRecycleLevel = levelIdx;
+        break;
+      }
+
+      // This level is feed-forward - run in parallel
+      if (level.size() == 1) {
+        ProcessEquipmentInterface unit = level.get(0).getEquipment();
+        if (!(unit instanceof Setter)) {
+          try {
+            unit.run(id);
+          } catch (Exception ex) {
+            logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+          }
+        }
+      } else if (level.size() > 1) {
+        List<java.util.concurrent.Future<?>> futures = new ArrayList<>();
+        for (ProcessNode node : level) {
+          ProcessEquipmentInterface unit = node.getEquipment();
+          if (!(unit instanceof Setter)) {
+            final ProcessEquipmentInterface unitToRun = unit;
+            final UUID calcId = id;
+            futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
+              try {
+                unitToRun.run(calcId);
+              } catch (Exception ex) {
+                logger.error("equipment: " + unitToRun.getName() + " error: " + ex.getMessage(),
+                    ex);
+              }
+            }));
+          }
+        }
+        for (java.util.concurrent.Future<?> future : futures) {
+          try {
+            future.get();
+          } catch (java.util.concurrent.ExecutionException ex) {
+            logger.error("Parallel execution error: " + ex.getMessage(), ex);
+          }
+        }
+      }
+    }
+
+    // Phase 2: Run recycle section with graph-based iteration
+    if (firstRecycleLevel >= 0) {
+      // Build list of remaining units in topological order
+      List<ProcessEquipmentInterface> recycleSection = new ArrayList<>();
+      for (int levelIdx = firstRecycleLevel; levelIdx < levels.size(); levelIdx++) {
+        for (ProcessNode node : levels.get(levelIdx)) {
+          recycleSection.add(node.getEquipment());
+        }
+      }
+
+      // Initialize recycle controller for these units
+      recycleController.clear();
+      for (ProcessEquipmentInterface unit : recycleSection) {
+        if (unit instanceof Recycle) {
+          recycleController.addRecycle((Recycle) unit);
+        }
+      }
+      recycleController.init();
+
+      // Iterate until convergence
+      boolean isConverged = true;
+      int iter = 0;
+      do {
+        iter++;
+        isConverged = true;
+
+        for (ProcessEquipmentInterface unit : recycleSection) {
+          if (Thread.currentThread().isInterrupted()) {
+            logger.debug("Process simulation was interrupted, exiting runHybrid()..." + getName());
+            break;
+          }
+          if (!(unit instanceof Recycle)) {
+            try {
+              if (iter == 1 || unit.needRecalculation()) {
+                unit.run(id);
+              }
+            } catch (Exception ex) {
+              logger.error("error running unit operation " + unit.getName() + " " + ex.getMessage(),
+                  ex);
+            }
+          }
+          if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
+            try {
+              unit.run(id);
+            } catch (Exception ex) {
+              logger.error(ex.getMessage(), ex);
+            }
+          }
+        }
+
+        if (!recycleController.solvedAll() || recycleController.hasHigherPriorityLevel()) {
+          isConverged = false;
+        }
+        if (recycleController.solvedCurrentPriorityLevel()) {
+          recycleController.nextPriorityLevel();
+        } else if (recycleController.hasLoverPriorityLevel() && !recycleController.solvedAll()) {
+          recycleController.resetPriorityLevel();
+        }
+
+        for (ProcessEquipmentInterface unit : recycleSection) {
+          if (unit instanceof Adjuster) {
+            if (!((Adjuster) unit).solved()) {
+              isConverged = false;
+              break;
+            }
+          }
+        }
+      } while ((!isConverged || (iter < 2)) && iter < 100
+          && !Thread.currentThread().isInterrupted());
+    }
+
+    // Update calculation identifiers
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      unit.setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
+  }
+
+  /**
+   * Gets a description of how the process will be partitioned for execution.
+   *
+   * <p>
+   * This method analyzes the process topology and returns information about:
+   * <ul>
+   * <li>Whether the process has recycle loops</li>
+   * <li>Number of parallel execution levels</li>
+   * <li>Maximum parallelism achievable</li>
+   * <li>Which units are in recycle loops</li>
+   * </ul>
+   * </p>
+   *
+   * @return description of the execution partitioning
+   */
+  public String getExecutionPartitionInfo() {
+    ProcessGraph graph = buildGraph();
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Execution Partition Analysis ===\n");
+    sb.append("Total units: ").append(unitOperations.size()).append("\n");
+    sb.append("Has recycle loops: ").append(hasRecycleLoops()).append("\n");
+
+    ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
+    sb.append("Parallel levels: ").append(partition.getLevelCount()).append("\n");
+    sb.append("Max parallelism: ").append(partition.getMaxParallelism()).append("\n");
+
+    // Show units in recycle loops
+    java.util.Set<ProcessNode> recycleNodes = graph.getNodesInRecycleLoops();
+    if (!recycleNodes.isEmpty()) {
+      sb.append("Units in recycle loops: ").append(recycleNodes.size()).append("\n");
+      for (ProcessNode node : recycleNodes) {
+        sb.append("  - ").append(node.getName()).append("\n");
+      }
+    }
+
+    // Calculate hybrid partition info
+    List<List<ProcessNode>> levels = partition.getLevels();
+    int feedForwardLevels = 0;
+    int feedForwardUnits = 0;
+    int recycleSectionLevels = 0;
+    int recycleSectionUnits = 0;
+    boolean inRecycleSection = false;
+
+    for (List<ProcessNode> level : levels) {
+      boolean hasRecycleUnit = false;
+      for (ProcessNode node : level) {
+        if (recycleNodes.contains(node)) {
+          hasRecycleUnit = true;
+          break;
+        }
+      }
+      if (hasRecycleUnit) {
+        inRecycleSection = true;
+      }
+      if (inRecycleSection) {
+        recycleSectionLevels++;
+        recycleSectionUnits += level.size();
+      } else {
+        feedForwardLevels++;
+        feedForwardUnits += level.size();
+      }
+    }
+
+    sb.append("\n=== Hybrid Execution Strategy ===\n");
+    sb.append("Phase 1 (Parallel): ").append(feedForwardLevels).append(" levels, ")
+        .append(feedForwardUnits).append(" units\n");
+    sb.append("Phase 2 (Iterative): ").append(recycleSectionLevels).append(" levels, ")
+        .append(recycleSectionUnits).append(" units\n");
+
+    // Show execution levels
+    sb.append("\nExecution levels:\n");
+    int levelNum = 0;
+    inRecycleSection = false;
+    for (java.util.List<ProcessNode> level : partition.getLevels()) {
+      boolean hasRecycleUnit = false;
+      for (ProcessNode node : level) {
+        if (recycleNodes.contains(node)) {
+          hasRecycleUnit = true;
+          break;
+        }
+      }
+      if (hasRecycleUnit && !inRecycleSection) {
+        inRecycleSection = true;
+        sb.append("  --- Recycle Section Start (iterative) ---\n");
+      }
+
+      sb.append("  Level ").append(levelNum++);
+      if (!inRecycleSection) {
+        sb.append(" [PARALLEL]");
+      }
+      sb.append(": ");
+      for (int i = 0; i < level.size(); i++) {
+        if (i > 0) {
+          sb.append(", ");
+        }
+        ProcessNode node = level.get(i);
+        sb.append(node.getName());
+        if (recycleNodes.contains(node)) {
+          sb.append(" [RECYCLE]");
+        }
+      }
+      sb.append("\n");
+    }
+
+    return sb.toString();
+  }
+
+  /**
    * Runs the process system using parallel execution for independent equipment.
    *
    * <p>

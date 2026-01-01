@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.expander.Expander;
@@ -1281,5 +1282,129 @@ public class LargeCombinedModelsTest {
         ((Compressor) fullProcess.get("compressor process B").getUnit("KA27841")).getOutletStream()
             .getPressure("bara"),
         0.5);
+  }
+
+  /**
+   * Benchmark test comparing regular vs graph-based vs parallel execution. This test measures the
+   * performance improvement from different execution strategies.
+   */
+  @Test
+  public void testExecutionModePerformance() {
+    // Create the separation train process (HAS RECYCLES)
+    ProcessSystem process = getWellStreamAndManifoldModel(wellFluid);
+
+    ProcessSystem sepprocessTrain1 =
+        createSeparationTrainProcess(((Splitter) process.getUnit("HP manifold")).getSplitStream(0),
+            ((Splitter) process.getUnit("LP manifold")).getSplitStream(0));
+    sepprocessTrain1.setRunInSteps(false);
+
+    // Count recycles in the separation train
+    int recycleCount = 0;
+    for (ProcessEquipmentInterface unit : sepprocessTrain1.getUnitOperations()) {
+      if (unit instanceof Recycle) {
+        recycleCount++;
+      }
+    }
+    System.out.println("\n=== Process Configuration ===");
+    System.out.println("Well/Manifold has recycles: " + process.hasRecycleLoops());
+    System.out.println("Separation train has recycles: " + sepprocessTrain1.hasRecycleLoops());
+    System.out.println("Separation train recycle count: " + recycleCount);
+    System.out.println(
+        "Separation train equipment units: " + sepprocessTrain1.getUnitOperations().size());
+
+    // Warm up run
+    process.run();
+    sepprocessTrain1.run();
+
+    // Test 1: Regular execution (baseline)
+    long startRegular = System.currentTimeMillis();
+    for (int i = 0; i < 5; i++) {
+      process.run();
+      sepprocessTrain1.run();
+    }
+    long regularTime = System.currentTimeMillis() - startRegular;
+
+    // Capture results from regular execution
+    double regularGasFlow = ((Separator) sepprocessTrain1.getUnit("dew point scrubber 2"))
+        .getGasOutStream().getFlowRate("MSm3/day");
+    double regularOilFlow = ((Stream) sepprocessTrain1.getUnit("export oil")).getFlowRate("kg/hr");
+    double regularTemp = ((Separator) sepprocessTrain1.getUnit("dew point scrubber 2"))
+        .getGasOutStream().getTemperature("C");
+
+    // Test 2: Graph-based execution (handles recycles properly)
+    process.setUseGraphBasedExecution(true);
+    sepprocessTrain1.setUseGraphBasedExecution(true);
+
+    long startGraph = System.currentTimeMillis();
+    for (int i = 0; i < 5; i++) {
+      process.run();
+      sepprocessTrain1.run();
+    }
+    long graphTime = System.currentTimeMillis() - startGraph;
+
+    // Capture results from graph-based execution
+    double graphGasFlow = ((Separator) sepprocessTrain1.getUnit("dew point scrubber 2"))
+        .getGasOutStream().getFlowRate("MSm3/day");
+    double graphOilFlow = ((Stream) sepprocessTrain1.getUnit("export oil")).getFlowRate("kg/hr");
+    double graphTemp = ((Separator) sepprocessTrain1.getUnit("dew point scrubber 2"))
+        .getGasOutStream().getTemperature("C");
+
+    process.setUseGraphBasedExecution(false);
+    sepprocessTrain1.setUseGraphBasedExecution(false);
+
+    // Test 3: runOptimized() - automatically selects best strategy
+    long startOptimized = System.currentTimeMillis();
+    for (int i = 0; i < 5; i++) {
+      process.runOptimized(); // Auto-detects no recycles -> uses parallel
+      sepprocessTrain1.runOptimized(); // Auto-detects recycles -> uses graph-based
+    }
+    long optimizedTime = System.currentTimeMillis() - startOptimized;
+
+    // Capture results from optimized execution
+    double optimizedGasFlow = ((Separator) sepprocessTrain1.getUnit("dew point scrubber 2"))
+        .getGasOutStream().getFlowRate("MSm3/day");
+    double optimizedOilFlow =
+        ((Stream) sepprocessTrain1.getUnit("export oil")).getFlowRate("kg/hr");
+    double optimizedTemp = ((Separator) sepprocessTrain1.getUnit("dew point scrubber 2"))
+        .getGasOutStream().getTemperature("C");
+
+    System.out.println("\n=== Execution Mode Performance (5 runs each) ===");
+    System.out.println("Regular execution:              " + regularTime + " ms");
+    System.out.println("Graph-based execution:          " + graphTime + " ms");
+    System.out.println("runOptimized() (auto-detect):   " + optimizedTime + " ms");
+    System.out.println("Graph speedup:      "
+        + String.format("%.1f%%", (1.0 - (double) graphTime / regularTime) * 100));
+    System.out.println("Optimized speedup:  "
+        + String.format("%.1f%%", (1.0 - (double) optimizedTime / regularTime) * 100));
+
+    System.out.println("\n=== Result Verification (all modes should match) ===");
+    System.out.println("Gas flow (MSm3/day): Regular=" + String.format("%.6f", regularGasFlow)
+        + ", Graph=" + String.format("%.6f", graphGasFlow) + ", Optimized="
+        + String.format("%.6f", optimizedGasFlow));
+    System.out.println("Oil flow (kg/hr):    Regular=" + String.format("%.2f", regularOilFlow)
+        + ", Graph=" + String.format("%.2f", graphOilFlow) + ", Optimized="
+        + String.format("%.2f", optimizedOilFlow));
+    System.out.println("Temperature (C):     Regular=" + String.format("%.4f", regularTemp)
+        + ", Graph=" + String.format("%.4f", graphTemp) + ", Optimized="
+        + String.format("%.4f", optimizedTemp));
+
+    // Verify all execution modes give the same results
+    Assertions.assertEquals(regularGasFlow, graphGasFlow, 1e-6,
+        "Graph-based execution should give same gas flow as regular");
+    Assertions.assertEquals(regularGasFlow, optimizedGasFlow, 1e-6,
+        "Optimized execution should give same gas flow as regular");
+    Assertions.assertEquals(regularOilFlow, graphOilFlow, 1e-3,
+        "Graph-based execution should give same oil flow as regular");
+    Assertions.assertEquals(regularOilFlow, optimizedOilFlow, 1e-3,
+        "Optimized execution should give same oil flow as regular");
+    Assertions.assertEquals(regularTemp, graphTemp, 1e-6,
+        "Graph-based execution should give same temperature as regular");
+    Assertions.assertEquals(regularTemp, optimizedTemp, 1e-6,
+        "Optimized execution should give same temperature as regular");
+
+    System.out.println("\n=== All execution modes produce IDENTICAL results ===");
+
+    // Show execution partition info
+    System.out.println("\n" + sepprocessTrain1.getExecutionPartitionInfo());
   }
 }
