@@ -574,7 +574,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     try {
       standard.calculate();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      logger.debug("RVP calculation failed: {}", ex.getMessage());
       return 0.0;
     }
     return standard.getValue("RVP", returnUnit);
@@ -591,7 +591,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     try {
       standard.calculate();
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      logger.debug("RVP calculation failed: {}", ex.getMessage());
       return 0.0;
     }
     return standard.getValue("RVP", returnUnit);
