@@ -15,15 +15,6 @@ public class EjectorResponse extends BaseResponse {
   /** Data map containing ejector properties. */
   public HashMap<String, Value> data = new HashMap<String, Value>();
 
-  /** Motive stream response. */
-  public StreamResponse motiveStream;
-
-  /** Suction stream response. */
-  public StreamResponse suctionStream;
-
-  /** Mixed (outlet) stream response. */
-  public StreamResponse mixedStream;
-
   /**
    * <p>
    * Constructor for EjectorResponse.
@@ -34,13 +25,27 @@ public class EjectorResponse extends BaseResponse {
   public EjectorResponse(Ejector ejector) {
     super(ejector);
     if (ejector.getMotiveStream() != null) {
-      motiveStream = new StreamResponse(ejector.getMotiveStream());
+      data.put("motive mass flow", new Value(
+          Double.toString(
+              ejector.getMotiveStream().getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+          neqsim.util.unit.Units.getSymbol("mass flow")));
+      data.put("motive pressure", new Value(
+          Double.toString(
+              ejector.getMotiveStream().getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+          neqsim.util.unit.Units.getSymbol("pressure")));
     }
     if (ejector.getSuctionStream() != null) {
-      suctionStream = new StreamResponse(ejector.getSuctionStream());
+      data.put("suction mass flow",
+          new Value(
+              Double.toString(ejector.getSuctionStream()
+                  .getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+              neqsim.util.unit.Units.getSymbol("mass flow")));
+      data.put("suction pressure", new Value(
+          Double.toString(
+              ejector.getSuctionStream().getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+          neqsim.util.unit.Units.getSymbol("pressure")));
     }
     if (ejector.getMixedStream() != null) {
-      mixedStream = new StreamResponse(ejector.getMixedStream());
       data.put("discharge mass flow", new Value(
           Double.toString(
               ejector.getMixedStream().getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),

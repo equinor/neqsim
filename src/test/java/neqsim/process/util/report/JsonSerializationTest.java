@@ -802,5 +802,88 @@ public class JsonSerializationTest {
     assertNotNull(massBalanceReport, "Mass balance report should not be null");
     System.out.println("Mass balance report:\n" + massBalanceReport);
   }
-}
 
+  @Test
+  @DisplayName("Filter should serialize to JSON")
+  void testFilterToJson() {
+    Stream inlet = new Stream("filter inlet", testFluid.clone());
+    inlet.setPressure(50.0, "bara");
+    inlet.setTemperature(25.0, "C");
+    inlet.setFlowRate(1000.0, "kg/hr");
+    inlet.run();
+
+    neqsim.process.equipment.filter.Filter filter =
+        new neqsim.process.equipment.filter.Filter("test filter", inlet);
+    filter.setDeltaP(0.5);
+    filter.run();
+
+    String json = filter.toJson();
+    assertNotNull(json, "Filter.toJson() should not return null");
+    assertTrue(json.contains("filter") || json.contains("pressure"),
+        "JSON should contain filter data");
+  }
+
+  @Test
+  @DisplayName("Ejector should serialize to JSON")
+  void testEjectorToJson() {
+    Stream motiveStream = new Stream("motive stream", testFluid.clone());
+    motiveStream.setPressure(50.0, "bara");
+    motiveStream.setTemperature(25.0, "C");
+    motiveStream.setFlowRate(500.0, "kg/hr");
+    motiveStream.run();
+
+    Stream suctionStream = new Stream("suction stream", testFluid.clone());
+    suctionStream.setPressure(10.0, "bara");
+    suctionStream.setTemperature(25.0, "C");
+    suctionStream.setFlowRate(300.0, "kg/hr");
+    suctionStream.run();
+
+    neqsim.process.equipment.ejector.Ejector ejector =
+        new neqsim.process.equipment.ejector.Ejector("test ejector", motiveStream, suctionStream);
+    ejector.setDischargePressure(15.0);
+    ejector.run();
+
+    String json = ejector.toJson();
+    assertNotNull(json, "Ejector.toJson() should not return null");
+    assertTrue(json.contains("ejector") || json.contains("efficiency"),
+        "JSON should contain ejector data");
+  }
+
+  @Test
+  @DisplayName("Flare should serialize to JSON")
+  void testFlareToJson() {
+    Stream inlet = new Stream("flare inlet", testFluid.clone());
+    inlet.setPressure(10.0, "bara");
+    inlet.setTemperature(25.0, "C");
+    inlet.setFlowRate(100.0, "kg/hr");
+    inlet.run();
+
+    neqsim.process.equipment.flare.Flare flare =
+        new neqsim.process.equipment.flare.Flare("test flare", inlet);
+    // Note: Not running the flare as it requires element database for CO2 calculation
+    // Just testing that toJson() works without throwing an exception
+
+    String json = flare.toJson();
+    assertNotNull(json, "Flare.toJson() should not return null");
+    assertTrue(json.contains("flare") || json.contains("name"), "JSON should contain flare data");
+  }
+
+  @Test
+  @DisplayName("Pipeline should serialize to JSON")
+  void testPipelineToJson() {
+    Stream inlet = new Stream("pipeline inlet", testFluid.clone());
+    inlet.setPressure(50.0, "bara");
+    inlet.setTemperature(25.0, "C");
+    inlet.setFlowRate(1000.0, "kg/hr");
+    inlet.run();
+
+    neqsim.process.equipment.pipeline.Pipeline pipeline =
+        new neqsim.process.equipment.pipeline.Pipeline("test pipeline", inlet);
+    // Note: Pipeline needs more setup for full run, just test basic serialization
+
+    String json = pipeline.toJson();
+    assertNotNull(json, "Pipeline.toJson() should not return null");
+    assertTrue(json.contains("pipeline") || json.contains("inlet"),
+        "JSON should contain pipeline data");
+  }
+}

@@ -15,12 +15,6 @@ public class PipelineResponse extends BaseResponse {
   /** Data map containing pipeline properties. */
   public HashMap<String, Value> data = new HashMap<String, Value>();
 
-  /** Inlet stream response. */
-  public StreamResponse inlet;
-
-  /** Outlet stream response. */
-  public StreamResponse outlet;
-
   /**
    * <p>
    * Constructor for PipelineResponse.
@@ -31,7 +25,6 @@ public class PipelineResponse extends BaseResponse {
   public PipelineResponse(Pipeline pipeline) {
     super(pipeline);
     if (pipeline.getInletStream() != null) {
-      inlet = new StreamResponse(pipeline.getInletStream());
       data.put("inlet mass flow", new Value(
           Double.toString(
               pipeline.getInletStream().getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
@@ -47,7 +40,6 @@ public class PipelineResponse extends BaseResponse {
           neqsim.util.unit.Units.getSymbol("pressure")));
     }
     if (pipeline.getOutletStream() != null) {
-      outlet = new StreamResponse(pipeline.getOutletStream());
       data.put("outlet temperature",
           new Value(
               Double.toString(pipeline.getOutletStream()

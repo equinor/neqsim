@@ -15,9 +15,6 @@ public class FlareResponse extends BaseResponse {
   /** Data map containing flare properties. */
   public HashMap<String, Value> data = new HashMap<String, Value>();
 
-  /** Inlet stream response. */
-  public StreamResponse inlet;
-
   /**
    * <p>
    * Constructor for FlareResponse.
@@ -28,7 +25,6 @@ public class FlareResponse extends BaseResponse {
   public FlareResponse(Flare flare) {
     super(flare);
     if (flare.getInletStream() != null) {
-      inlet = new StreamResponse(flare.getInletStream());
       data.put("mass flow", new Value(
           Double.toString(
               flare.getInletStream().getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
