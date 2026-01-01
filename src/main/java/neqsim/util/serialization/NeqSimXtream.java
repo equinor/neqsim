@@ -13,6 +13,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider;
+import com.thoughtworks.xstream.mapper.MapperWrapper;
 import com.thoughtworks.xstream.security.AnyTypePermission;
 
 /**
@@ -82,7 +83,38 @@ public class NeqSimXtream {
   }
 
   private static XStream createConfiguredXStream() {
-    XStream xstream = new XStream(new PureJavaReflectionProvider());
+    XStream xstream = new XStream(new PureJavaReflectionProvider()) {
+      @Override
+      protected MapperWrapper wrapMapper(MapperWrapper next) {
+        return new MapperWrapper(next) {
+          @Override
+          public boolean shouldSerializeMember(Class definedIn, String fieldName) {
+            // Skip ThreadLocal fields - they cannot be serialized
+            try {
+              java.lang.reflect.Field field = definedIn.getDeclaredField(fieldName);
+              if (ThreadLocal.class.isAssignableFrom(field.getType())) {
+                return false;
+              }
+            } catch (NoSuchFieldException e) {
+              // Field not found in this class, check parent classes
+              Class<?> parent = definedIn.getSuperclass();
+              while (parent != null) {
+                try {
+                  java.lang.reflect.Field field = parent.getDeclaredField(fieldName);
+                  if (ThreadLocal.class.isAssignableFrom(field.getType())) {
+                    return false;
+                  }
+                  break;
+                } catch (NoSuchFieldException ex) {
+                  parent = parent.getSuperclass();
+                }
+              }
+            }
+            return super.shouldSerializeMember(definedIn, fieldName);
+          }
+        };
+      }
+    };
     xstream.setMode(XStream.ID_REFERENCES);
     xstream.addPermission(AnyTypePermission.ANY);
     return xstream;

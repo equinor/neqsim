@@ -42,13 +42,14 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  */
 public final class DexpiXmlWriter {
   private static final Pattern NON_IDENTIFIER = Pattern.compile("[^A-Za-z0-9_-]");
-  private static final ThreadLocal<DecimalFormat> DECIMAL_FORMAT = ThreadLocal.withInitial(() -> {
-    DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.ROOT);
-    DecimalFormat format = new DecimalFormat("0.############", symbols);
-    format.setMaximumFractionDigits(12);
-    format.setGroupingUsed(false);
-    return format;
-  });
+  private static final transient ThreadLocal<DecimalFormat> DECIMAL_FORMAT =
+      ThreadLocal.withInitial(() -> {
+        DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.ROOT);
+        DecimalFormat format = new DecimalFormat("0.############", symbols);
+        format.setMaximumFractionDigits(12);
+        format.setGroupingUsed(false);
+        return format;
+      });
 
   private DexpiXmlWriter() {}
 
@@ -117,16 +118,16 @@ public final class DexpiXmlWriter {
 
   private static Document createDocument() throws IOException {
     try {
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-    factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-    factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-    factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-    factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-    factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-    factory.setNamespaceAware(false);
-    factory.setExpandEntityReferences(false);
-    factory.setXIncludeAware(false);
+      DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+      factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+      factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+      factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+      factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+      factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+      factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+      factory.setNamespaceAware(false);
+      factory.setExpandEntityReferences(false);
+      factory.setXIncludeAware(false);
       DocumentBuilder builder = factory.newDocumentBuilder();
       return builder.newDocument();
     } catch (ParserConfigurationException e) {
@@ -137,8 +138,8 @@ public final class DexpiXmlWriter {
   private static Element createPlantInformation(Document document) {
     Element plantInformation = document.createElement("PlantInformation");
     plantInformation.setAttribute("Application", "NeqSim");
-    plantInformation.setAttribute("ApplicationVersion", ProcessSystem.class.getPackage()
-        .getImplementationVersion() == null ? "1.0"
+    plantInformation.setAttribute("ApplicationVersion",
+        ProcessSystem.class.getPackage().getImplementationVersion() == null ? "1.0"
             : ProcessSystem.class.getPackage().getImplementationVersion());
     LocalDate date = LocalDate.now();
     LocalTime time = LocalTime.now();
@@ -161,11 +162,10 @@ public final class DexpiXmlWriter {
     String elementName = isPipingComponent ? "PipingComponent" : "Equipment";
     Element element = document.createElement(elementName);
 
-    String componentClass = firstNonBlank(processUnit.getDexpiClass(),
-        defaultComponentClass(mapped, elementName));
+    String componentClass =
+        firstNonBlank(processUnit.getDexpiClass(), defaultComponentClass(mapped, elementName));
     element.setAttribute("ComponentClass", componentClass);
-    element.setAttribute("ID",
-        uniqueIdentifier(elementName, processUnit.getName(), usedIds));
+    element.setAttribute("ID", uniqueIdentifier(elementName, processUnit.getName(), usedIds));
 
     Element genericAttributes = document.createElement("GenericAttributes");
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.TAG_NAME,
@@ -212,8 +212,7 @@ public final class DexpiXmlWriter {
     Element segmentElement = document.createElement("PipingNetworkSegment");
     String componentClass = firstNonBlank(stream.getDexpiClass(), "PipingNetworkSegment");
     segmentElement.setAttribute("ComponentClass", componentClass);
-    segmentElement.setAttribute("ID",
-        uniqueIdentifier("Segment", stream.getName(), usedIds));
+    segmentElement.setAttribute("ID", uniqueIdentifier("Segment", stream.getName(), usedIds));
 
     Element genericAttributes = document.createElement("GenericAttributes");
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.SEGMENT_NUMBER,
