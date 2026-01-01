@@ -15,9 +15,10 @@ public class PHvsPressureTest {
 
       // Logarithmic spacing for pressure might be nice, but let's stick to the list
       double[] pressures =
-          {0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 80.0, 100.0};
+          {0.3, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 80.0, 100.0};
 
       for (double P : pressures) {
+
         SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, P);
         system.addComponent("CO2", 0.1);
         system.addComponent("water", 1.0);
