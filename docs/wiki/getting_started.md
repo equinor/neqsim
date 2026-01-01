@@ -127,7 +127,9 @@ public class FirstProcess {
         process.add(feed);
         process.add(valve);
         process.add(separator);
-        process.run();
+        
+        // Use runOptimized() for best performance (auto-selects strategy)
+        process.runOptimized();
         
         // 5. Results
         System.out.println("Gas rate: " + separator.getGasOutStream().getFlowRate("kg/hr") + " kg/hr");
@@ -135,6 +137,27 @@ public class FirstProcess {
     }
 }
 ```
+
+### Execution Strategies
+
+NeqSim provides optimized execution strategies for complex process simulations:
+
+| Method | Best For | Speedup |
+|--------|----------|---------|
+| `run()` | Simple processes | baseline |
+| `runOptimized()` | **Recommended** | 28-40% |
+| `runParallel()` | Feed-forward (no recycles) | 40-57% |
+| `runHybrid()` | Complex recycle processes | 38% |
+
+```java
+// Recommended - auto-selects best strategy based on process topology
+process.runOptimized();
+
+// Analyze process structure
+System.out.println(process.getExecutionPartitionInfo());
+```
+
+See [ProcessSystem documentation](../process/processmodel/process_system.md) for details.
 
 ---
 

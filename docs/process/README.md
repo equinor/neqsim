@@ -247,8 +247,8 @@ process.add(valve);
 Separator separator = new Separator("HP Separator", valve.getOutletStream());
 process.add(separator);
 
-// Run process
-process.run();
+// Run process (recommended - auto-optimized)
+process.runOptimized();
 
 // Get results
 System.out.println("Separator gas rate: " + 
@@ -257,14 +257,50 @@ System.out.println("Separator liquid rate: " +
     separator.getLiquidOutStream().getFlowRate("kg/hr") + " kg/hr");
 ```
 
+### Execution Strategies
+
+NeqSim provides multiple execution strategies for optimal performance:
+
+| Method | Best For | Speedup |
+|--------|----------|---------|
+| `run()` | General use | baseline |
+| `runOptimized()` | **Recommended** | 28-40% |
+| `runParallel()` | Feed-forward (no recycles) | 40-57% |
+| `runHybrid()` | Complex recycle processes | 38% |
+
+```java
+// Recommended - auto-selects best strategy
+process.runOptimized();
+
+// Or use specific strategies:
+process.run();           // Sequential (default)
+process.runParallel();   // Parallel (feed-forward only)
+process.runHybrid();     // Hybrid (parallel + iterative)
+```
+
+### Analyze Process Topology
+
+```java
+// Check for recycles
+boolean hasRecycles = process.hasRecycleLoops();
+
+// Get detailed execution analysis
+System.out.println(process.getExecutionPartitionInfo());
+```
+
 ### Key ProcessSystem Methods
 
 | Method | Description |
 |--------|-------------|
 | `add(equipment)` | Add equipment to process |
-| `run()` | Run steady-state simulation |
+| `run()` | Run sequential simulation |
+| `runOptimized()` | Run with auto-optimized strategy |
+| `runParallel()` | Run with parallel execution |
+| `runHybrid()` | Run with hybrid execution |
 | `runTransient(time, dt)` | Run transient simulation |
 | `getUnit(name)` | Get equipment by name |
+| `hasRecycleLoops()` | Check for recycle loops |
+| `getExecutionPartitionInfo()` | Get execution analysis |
 | `copy()` | Clone the process system |
 | `getReport()` | Get process report |
 | `display()` | Display process summary |

@@ -83,15 +83,93 @@ Stream stream2 = new Stream("Feed-2", fluid2);
 
 ## Running Simulations
 
+### Execution Methods Overview
+
+| Method | Best For | Description |
+|--------|----------|-------------|
+| `run()` | General use | Sequential execution in insertion order |
+| `runOptimized()` | **Recommended** | Auto-selects best strategy based on topology |
+| `runParallel()` | Feed-forward processes | Maximum parallelism for no-recycle processes |
+| `runHybrid()` | Complex processes | Parallel feed-forward + iterative recycle |
+
+### Recommended: runOptimized()
+
+The `runOptimized()` method automatically analyzes your process and selects the best execution strategy:
+
+```java
+// Recommended - auto-selects best strategy
+process.runOptimized();
+
+// With calculation ID for tracking
+UUID calcId = UUID.randomUUID();
+process.runOptimized(calcId);
+```
+
+**How it works:**
+- **No recycles detected**: Uses `runParallel()` for maximum speed
+- **Recycles detected**: Uses `runHybrid()` which runs feed-forward sections in parallel, then iterates on recycle sections
+
+**Performance gains** (typical separation train with 40 units, 3 recycles):
+| Mode | Time | Speedup |
+|------|------|---------|
+| Regular `run()` | 464 ms | baseline |
+| Graph-based | 336 ms | 28% |
+| `runOptimized()` | 286 ms | **38%** |
+
 ### Steady-State Simulation
 
 ```java
-// Run until converged
+// Basic sequential execution
 process.run();
 
 // Run with calculation ID for tracking
 UUID calcId = UUID.randomUUID();
 process.run(calcId);
+```
+
+### Parallel Execution
+
+For feed-forward processes (no recycles), parallel execution runs independent units simultaneously:
+
+```java
+// Run independent units in parallel
+try {
+    process.runParallel();
+} catch (InterruptedException e) {
+    Thread.currentThread().interrupt();
+}
+```
+
+**Note:** `runParallel()` does not handle recycles or adjusters. Use `runOptimized()` for processes with recycles.
+
+### Hybrid Execution
+
+For processes with recycles, hybrid execution combines parallel and iterative strategies:
+
+```java
+// Hybrid: parallel feed-forward + iterative recycle
+try {
+    process.runHybrid();
+} catch (InterruptedException e) {
+    Thread.currentThread().interrupt();
+}
+```
+
+**How hybrid works:**
+1. **Phase 1 (Parallel)**: Run feed-forward units (before recycles) in parallel
+2. **Phase 2 (Iterative)**: Run recycle section with graph-based iteration until convergence
+
+### Graph-Based Execution
+
+Enable graph-based execution for optimized unit ordering:
+
+```java
+// Enable graph-based execution order
+process.setUseGraphBasedExecution(true);
+process.run();
+
+// Or use runOptimized() which handles this automatically
+process.runOptimized();
 ```
 
 ### Transient Simulation
@@ -121,6 +199,64 @@ process.runTransient(dt, (time) -> {
         bdv.setOpen(true);
     }
 });
+```
+
+---
+
+## Execution Strategy Analysis
+
+### Check Process Topology
+
+```java
+// Check if process has recycles
+boolean hasRecycles = process.hasRecycleLoops();
+
+// Check if parallel execution would be beneficial
+boolean useParallel = process.isParallelExecutionBeneficial();
+
+// Get detailed partition analysis
+String partitionInfo = process.getExecutionPartitionInfo();
+System.out.println(partitionInfo);
+```
+
+**Example output:**
+```
+=== Execution Partition Analysis ===
+Total units: 40
+Has recycle loops: true
+Parallel levels: 29
+Max parallelism: 6
+Units in recycle loops: 30
+
+=== Hybrid Execution Strategy ===
+Phase 1 (Parallel): 4 levels, 8 units
+Phase 2 (Iterative): 25 levels, 32 units
+
+Execution levels:
+  Level 0 [PARALLEL]: feed TP setter, first stage oil reflux, LP stream temp controller
+  Level 1 [PARALLEL]: 1st stage separator
+  Level 2 [PARALLEL]: oil depres valve
+  Level 3 [PARALLEL]: 
+  --- Recycle Section Start (iterative) ---
+  Level 4: oil heater second stage [RECYCLE]
+  Level 5: 2nd stage separator [RECYCLE]
+  ...
+```
+
+### Get Parallel Partition Details
+
+```java
+// Get parallel partition
+ProcessGraph.ParallelPartition partition = process.getParallelPartition();
+
+// Number of execution levels
+int levels = partition.getLevelCount();
+
+// Maximum units that can run simultaneously
+int maxParallelism = partition.getMaxParallelism();
+
+System.out.println("Execution levels: " + levels);
+System.out.println("Max parallelism: " + maxParallelism);
 ```
 
 ---
@@ -250,25 +386,43 @@ assert originalT == ((Stream) process.getUnit("Feed")).getTemperature("C");
 
 ## Advanced Features
 
-### Execution Order Control
+### Execution Strategy Selection
 
 ```java
-// Force specific execution order
-process.setExecutionOrder(Arrays.asList(
-    "Feed",
-    "Heater",
-    "Separator",
-    "Gas Compressor",
-    "Liquid Pump"
-));
+// Use optimized execution (recommended)
+process.runOptimized();  // Auto-selects best strategy
+
+// Or manually choose strategy:
+
+// 1. Sequential (default)
+process.run();
+
+// 2. Graph-based ordering
+process.setUseGraphBasedExecution(true);
+process.run();
+
+// 3. Parallel execution (no recycles)
+process.runParallel();
+
+// 4. Hybrid execution (recycle processes)
+process.runHybrid();
 ```
 
-### Parallel Execution
+### Asynchronous Execution
 
 ```java
-// Enable parallel execution for independent units
-process.setParallelExecution(true);
-process.setNumberOfThreads(4);
+// Run in background thread
+Future<?> task = process.runAsTask();
+
+// Do other work...
+
+// Wait for completion
+task.get();
+
+// Or check if done
+if (task.isDone()) {
+    System.out.println("Simulation complete");
+}
 ```
 
 ### Convergence Settings

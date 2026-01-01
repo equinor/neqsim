@@ -4,9 +4,10 @@ Documentation for graph-based execution in NeqSim.
 
 ## Table of Contents
 - [Overview](#overview)
+- [Execution Strategies](#execution-strategies)
 - [ProcessGraph Class](#processgraph-class)
 - [Graph Construction](#graph-construction)
-- [Execution Strategies](#execution-strategies)
+- [Graph Analysis](#graph-analysis)
 - [Usage Examples](#usage-examples)
 
 ---
@@ -20,6 +21,8 @@ Documentation for graph-based execution in NeqSim.
 |-------|-------------|
 | `ProcessGraph` | Graph representation of process |
 | `ProcessGraphBuilder` | Builder for constructing graphs |
+| `ProcessNode` | Node representing equipment |
+| `ProcessEdge` | Edge representing stream connection |
 
 Graph-based simulation represents the process as a directed graph where:
 - **Nodes** represent equipment
@@ -29,8 +32,158 @@ Graph-based simulation represents the process as a directed graph where:
 Benefits:
 - Automatic dependency resolution
 - Parallel execution of independent units
-- Better handling of complex flowsheets
-- Visual representation of process structure
+- Optimal handling of recycle loops
+- 28-40% speedup on complex processes
+
+---
+
+## Execution Strategies
+
+### Quick Start - Use runOptimized()
+
+The recommended approach is to use `runOptimized()` which automatically selects the best strategy:
+
+```java
+// Auto-selects best execution strategy
+process.runOptimized();
+```
+
+### Execution Strategy Comparison
+
+| Strategy | Method | Best For | Speedup |
+|----------|--------|----------|---------|
+| Sequential | `run()` | Simple processes | baseline |
+| Graph-based | `setUseGraphBasedExecution(true)` | Complex ordering | 28% |
+| Parallel | `runParallel()` | Feed-forward (no recycles) | 40-57% |
+| Hybrid | `runHybrid()` | Processes with recycles | 38% |
+| **Optimized** | `runOptimized()` | **All processes** | **best available** |
+
+### Sequential Execution (Default)
+
+Standard execution in insertion order:
+
+```java
+process.run();
+```
+
+### Graph-Based Execution
+
+Uses topological ordering for optimal execution sequence:
+
+```java
+// Enable graph-based ordering
+process.setUseGraphBasedExecution(true);
+process.run();
+```
+
+### Parallel Execution
+
+Executes independent units simultaneously using thread pool:
+
+```java
+// For feed-forward processes (no recycles)
+try {
+    process.runParallel();
+} catch (InterruptedException e) {
+    Thread.currentThread().interrupt();
+}
+```
+
+**How it works:**
+1. Builds dependency graph
+2. Partitions into execution levels
+3. Runs units at each level in parallel
+4. Waits for level completion before next level
+
+### Hybrid Execution
+
+Combines parallel and iterative execution for processes with recycles:
+
+```java
+// For processes with recycles
+try {
+    process.runHybrid();
+} catch (InterruptedException e) {
+    Thread.currentThread().interrupt();
+}
+```
+
+**How it works:**
+1. **Phase 1 (Parallel)**: Run feed-forward units in parallel
+2. **Phase 2 (Iterative)**: Run recycle section with convergence iteration
+
+### Optimized Execution (Recommended)
+
+Automatically selects the best strategy based on process topology:
+
+```java
+// Auto-selects: runParallel() or runHybrid()
+process.runOptimized();
+```
+
+**Decision logic:**
+- No recycles → `runParallel()` for maximum speed
+- Has recycles → `runHybrid()` for parallel + iteration
+
+---
+
+## Analyzing Execution Strategy
+
+### Check Process Topology
+
+```java
+// Check if process has recycle loops
+boolean hasRecycles = process.hasRecycleLoops();
+
+// Check if parallel execution would be beneficial
+boolean beneficial = process.isParallelExecutionBeneficial();
+
+// Get detailed partition analysis
+System.out.println(process.getExecutionPartitionInfo());
+```
+
+### Example Partition Analysis Output
+
+```
+=== Execution Partition Analysis ===
+Total units: 40
+Has recycle loops: true
+Parallel levels: 29
+Max parallelism: 6
+Units in recycle loops: 30
+  - 1st stage compressor
+  - 2nd stage separator
+  ...
+
+=== Hybrid Execution Strategy ===
+Phase 1 (Parallel): 4 levels, 8 units
+Phase 2 (Iterative): 25 levels, 32 units
+
+Execution levels:
+  Level 0 [PARALLEL]: feed TP setter, first stage oil reflux, export oil
+  Level 1 [PARALLEL]: 1st stage separator
+  Level 2 [PARALLEL]: oil depres valve
+  Level 3 [PARALLEL]: 
+  --- Recycle Section Start (iterative) ---
+  Level 4: oil heater second stage [RECYCLE]
+  Level 5: 2nd stage separator [RECYCLE]
+  ...
+```
+
+### Get Parallel Partition
+
+```java
+// Get detailed partition info
+ProcessGraph.ParallelPartition partition = process.getParallelPartition();
+
+System.out.println("Execution levels: " + partition.getLevelCount());
+System.out.println("Max parallelism: " + partition.getMaxParallelism());
+
+// Iterate through levels
+for (List<ProcessNode> level : partition.getLevels()) {
+    System.out.println("Level has " + level.size() + " units");
+}
+```
 
 ---
 
@@ -94,55 +247,10 @@ graph.addEdge(heater, separator);
 
 ```java
 // Add node with properties
-graph.addNode(compressor, Map.of(
-    "criticality", "high",
-    "maintainPriority", 1
-));
-
-// Add edge with properties
-graph.addEdge(stream1, mixer, Map.of(
-    "streamType", "recycle",
-    "flowDirection", "forward"
-));
-```
-
----
-
-## Execution Strategies
-
-### Sequential Execution
-
-Default topological ordering:
-
-```java
-graph.setExecutionStrategy(ExecutionStrategy.SEQUENTIAL);
-graph.execute();
-```
-
-### Parallel Execution
-
-Execute independent nodes in parallel:
-
-```java
-graph.setExecutionStrategy(ExecutionStrategy.PARALLEL);
-graph.setNumberOfThreads(4);
-graph.execute();
-```
-
-### Level-Based Execution
-
-Execute by levels (all nodes at same depth together):
-
-```java
-graph.setExecutionStrategy(ExecutionStrategy.LEVEL_BASED);
-graph.execute();
-
-// Get execution levels
-List<List<ProcessEquipmentInterface>> levels = graph.getExecutionLevels();
-for (int i = 0; i < levels.size(); i++) {
-    System.out.println("Level " + i + ": " + 
-        levels.get(i).stream().map(e -> e.getName()).collect(Collectors.toList()));
-}
+Map<String, Object> props = new HashMap<>();
+props.put("criticality", "high");
+props.put("maintainPriority", 1);
+graph.addNode(compressor, props);
 ```
 
 ---

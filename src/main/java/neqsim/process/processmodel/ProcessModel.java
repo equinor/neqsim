@@ -21,6 +21,7 @@ public class ProcessModel implements Runnable {
 
   private boolean runStep = false;
   private int maxIterations = 50;
+  private boolean useOptimizedExecution = true;
 
   /**
    * Checks if the model is running in step mode.
@@ -38,6 +39,35 @@ public class ProcessModel implements Runnable {
    */
   public void setRunStep(boolean runStep) {
     this.runStep = runStep;
+  }
+
+  /**
+   * Check if optimized execution is enabled for individual ProcessSystems.
+   *
+   * <p>
+   * When enabled (default), each ProcessSystem uses {@link ProcessSystem#runOptimized()} which
+   * auto-selects the best execution strategy based on topology.
+   * </p>
+   *
+   * @return true if optimized execution is enabled
+   */
+  public boolean isUseOptimizedExecution() {
+    return useOptimizedExecution;
+  }
+
+  /**
+   * Enable or disable optimized execution for individual ProcessSystems.
+   *
+   * <p>
+   * When enabled (default), each ProcessSystem uses {@link ProcessSystem#runOptimized()} which
+   * auto-selects the best execution strategy (parallel for feed-forward, hybrid for recycle
+   * processes). When disabled, uses standard sequential {@link ProcessSystem#run()}.
+   * </p>
+   *
+   * @param useOptimizedExecution true to enable optimized execution
+   */
+  public void setUseOptimizedExecution(boolean useOptimizedExecution) {
+    this.useOptimizedExecution = useOptimizedExecution;
   }
 
   /**
@@ -89,6 +119,11 @@ public class ProcessModel implements Runnable {
    * - If runStep == true, each process is run in "step" mode exactly once. - Otherwise (continuous
    * mode), it loops up to maxIterations or until all processes are finished (isFinished() == true).
    * </p>
+   *
+   * <p>
+   * When {@link #isUseOptimizedExecution()} is true (default), each ProcessSystem uses
+   * {@link ProcessSystem#runOptimized()} for best performance.
+   * </p>
    */
   @Override
   public void run() {
@@ -116,7 +151,11 @@ public class ProcessModel implements Runnable {
             return;
           }
           try {
-            process.run(); // the process's continuous run
+            if (useOptimizedExecution) {
+              process.runOptimized(); // Use optimized execution strategy
+            } else {
+              process.run(); // Use standard sequential execution
+            }
           } catch (Exception e) {
             System.err.println("Error running process: " + e.getMessage());
             e.printStackTrace();
@@ -125,6 +164,44 @@ public class ProcessModel implements Runnable {
         iterations++;
       }
     }
+  }
+
+  /**
+   * Gets a combined execution partition analysis for all ProcessSystems.
+   *
+   * <p>
+   * This method provides insight into how each ProcessSystem will be executed, including:
+   * <ul>
+   * <li>Whether each system has recycle loops</li>
+   * <li>Number of units and parallel levels</li>
+   * <li>Which execution strategy will be used</li>
+   * </ul>
+   * </p>
+   *
+   * @return combined execution partition info for all ProcessSystems
+   */
+  public String getExecutionPartitionInfo() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== ProcessModel Execution Analysis ===\n");
+    sb.append("Total ProcessSystems: ").append(processes.size()).append("\n");
+    sb.append("Optimized execution: ").append(useOptimizedExecution ? "enabled" : "disabled")
+        .append("\n\n");
+
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      sb.append("--- ProcessSystem: ").append(entry.getKey()).append(" ---\n");
+      ProcessSystem process = entry.getValue();
+      sb.append("Units: ").append(process.getUnitOperations().size()).append("\n");
+      sb.append("Has recycles: ").append(process.hasRecycleLoops()).append("\n");
+      if (useOptimizedExecution) {
+        sb.append("Strategy: ")
+            .append(process.hasRecycleLoops() ? "Hybrid (parallel + iterative)" : "Parallel")
+            .append("\n");
+      } else {
+        sb.append("Strategy: Sequential\n");
+      }
+      sb.append("\n");
+    }
+    return sb.toString();
   }
 
   /**

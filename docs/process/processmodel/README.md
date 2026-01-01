@@ -6,9 +6,9 @@ This folder contains documentation for process system and flowsheet management i
 
 | Document | Description |
 |----------|-------------|
-| [ProcessSystem](process_system.md) | Main process system class |
+| [ProcessSystem](process_system.md) | Main process system class and execution strategies |
 | [ProcessModule](process_module.md) | Modular process units |
-| [Graph-Based Simulation](graph_simulation.md) | Graph-based execution |
+| [Graph-Based Simulation](graph_simulation.md) | Graph-based execution and optimization |
 
 ---
 
@@ -19,6 +19,23 @@ The `processmodel` package provides the framework for building and executing pro
 - **ProcessSystem**: Container for process equipment and execution engine
 - **ProcessModule**: Encapsulated process modules for reuse
 - **ProcessGraph**: Graph-based execution for complex flowsheets
+
+---
+
+## Execution Strategies
+
+NeqSim provides multiple execution strategies optimized for different process types:
+
+| Method | Best For | Description |
+|--------|----------|-------------|
+| `run()` | General use | Sequential execution in insertion order |
+| `runOptimized()` | **Recommended** | Auto-selects best strategy based on topology |
+| `runParallel()` | Feed-forward processes | Maximum parallelism for no-recycle processes |
+| `runHybrid()` | Complex processes | Parallel feed-forward + iterative recycle |
+
+**Typical performance improvements:**
+- Feed-forward processes: 40-57% speedup with parallel execution
+- Processes with recycles: 28-38% speedup with hybrid execution
 
 ---
 
@@ -37,11 +54,23 @@ process.add(feedStream);
 process.add(separator);
 process.add(compressor);
 
-// Run simulation
-process.run();
+// Run simulation (recommended - auto-optimized)
+process.runOptimized();
 
 // Get results
 process.display();
+```
+
+---
+
+## Analyzing Process Topology
+
+```java
+// Check if process has recycles
+boolean hasRecycles = process.hasRecycleLoops();
+
+// Get execution partition analysis
+System.out.println(process.getExecutionPartitionInfo());
 ```
 
 ---
