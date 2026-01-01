@@ -326,14 +326,14 @@ public class ProcessModel implements Runnable {
 
         // Check if model has converged
         boolean allProcessesSolved = isFinished();
-        boolean valuesConverged = lastMaxFlowError < flowTolerance
-            && lastMaxTemperatureError < temperatureTolerance
-            && lastMaxPressureError < pressureTolerance;
+        boolean valuesConverged =
+            lastMaxFlowError < flowTolerance && lastMaxTemperatureError < temperatureTolerance
+                && lastMaxPressureError < pressureTolerance;
 
         if (logger.isDebugEnabled()) {
-          logger.debug("Iteration " + iterations + ": flowErr=" + lastMaxFlowError
-              + ", tempErr=" + lastMaxTemperatureError + ", pressErr=" + lastMaxPressureError
-              + ", allSolved=" + allProcessesSolved + ", valuesConverged=" + valuesConverged);
+          logger.debug("Iteration " + iterations + ": flowErr=" + lastMaxFlowError + ", tempErr="
+              + lastMaxTemperatureError + ", pressErr=" + lastMaxPressureError + ", allSolved="
+              + allProcessesSolved + ", valuesConverged=" + valuesConverged);
         }
 
         // Converged if all processes solved AND values are not changing
@@ -350,8 +350,8 @@ public class ProcessModel implements Runnable {
 
       if (!modelConverged && iterations >= maxIterations) {
         logger.warn("ProcessModel reached max iterations (" + maxIterations
-            + ") without full convergence. Flow error: " + lastMaxFlowError
-            + ", Temp error: " + lastMaxTemperatureError);
+            + ") without full convergence. Flow error: " + lastMaxFlowError + ", Temp error: "
+            + lastMaxTemperatureError);
       }
     }
   }
@@ -434,15 +434,13 @@ public class ProcessModel implements Runnable {
     sb.append("Iterations: ").append(lastIterationCount).append(" / ").append(maxIterations)
         .append("\n");
     sb.append("\nFinal Errors (relative):\n");
-    sb.append(String.format("  Flow rate:    %.2e (tolerance: %.2e) %s\n",
-        lastMaxFlowError, flowTolerance,
-        lastMaxFlowError < flowTolerance ? "OK" : "NOT CONVERGED"));
-    sb.append(String.format("  Temperature:  %.2e (tolerance: %.2e) %s\n",
-        lastMaxTemperatureError, temperatureTolerance,
+    sb.append(String.format("  Flow rate:    %.2e (tolerance: %.2e) %s\n", lastMaxFlowError,
+        flowTolerance, lastMaxFlowError < flowTolerance ? "OK" : "NOT CONVERGED"));
+    sb.append(String.format("  Temperature:  %.2e (tolerance: %.2e) %s\n", lastMaxTemperatureError,
+        temperatureTolerance,
         lastMaxTemperatureError < temperatureTolerance ? "OK" : "NOT CONVERGED"));
-    sb.append(String.format("  Pressure:     %.2e (tolerance: %.2e) %s\n",
-        lastMaxPressureError, pressureTolerance,
-        lastMaxPressureError < pressureTolerance ? "OK" : "NOT CONVERGED"));
+    sb.append(String.format("  Pressure:     %.2e (tolerance: %.2e) %s\n", lastMaxPressureError,
+        pressureTolerance, lastMaxPressureError < pressureTolerance ? "OK" : "NOT CONVERGED"));
 
     sb.append("\nProcess Status:\n");
     for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
