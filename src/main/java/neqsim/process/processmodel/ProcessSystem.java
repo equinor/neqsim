@@ -460,11 +460,11 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * <p>
    * This method automatically selects the best execution mode:
+   * </p>
    * <ul>
    * <li>For processes WITHOUT recycles: uses parallel execution for maximum speed</li>
    * <li>For processes WITH recycles: uses graph-based execution with optimized ordering</li>
    * </ul>
-   * </p>
    *
    * <p>
    * This is the recommended method for most use cases as it provides the best performance without
@@ -480,12 +480,12 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * <p>
    * This method automatically selects the best execution mode:
+   * </p>
    * <ul>
    * <li>For processes WITHOUT recycles: uses parallel execution for maximum speed</li>
    * <li>For processes WITH recycles: uses hybrid execution - parallel for feed-forward sections,
    * then graph-based iteration for recycle sections</li>
    * </ul>
-   * </p>
    *
    * @param id calculation identifier for tracking
    */
@@ -522,13 +522,13 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * <p>
    * This method partitions the process into:
+   * </p>
    * <ul>
    * <li>Feed-forward section: Units at the beginning with no recycle dependencies - run in
    * parallel</li>
    * <li>Recycle section: Units that are part of or depend on recycle loops - run with graph-based
    * iteration</li>
    * </ul>
-   * </p>
    *
    * @param id calculation identifier for tracking
    * @throws InterruptedException if thread is interrupted during parallel execution
@@ -689,13 +689,13 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * <p>
    * This method analyzes the process topology and returns information about:
+   * </p>
    * <ul>
    * <li>Whether the process has recycle loops</li>
    * <li>Number of parallel execution levels</li>
    * <li>Maximum parallelism achievable</li>
    * <li>Which units are in recycle loops</li>
    * </ul>
-   * </p>
    *
    * @return description of the execution partitioning
    */
