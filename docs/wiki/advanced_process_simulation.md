@@ -1,8 +1,97 @@
 # Advanced Process Simulation
 
-This guide covers advanced features of NeqSim's process simulation capabilities, including recycles, control systems, and dynamic simulation.
+This guide covers advanced features of NeqSim's process simulation capabilities, including execution optimization, recycles, control systems, and dynamic simulation.
 
-## 1. Recycles
+## 1. Execution Optimization
+
+NeqSim provides multiple execution strategies to optimize simulation performance. The recommended approach is to use `runOptimized()` which automatically analyzes your process and selects the best strategy.
+
+### Execution Strategies
+
+| Method | Best For | Typical Speedup |
+|--------|----------|-----------------|
+| `run()` | Simple processes | baseline |
+| `runOptimized()` | **All processes (recommended)** | 28-40% |
+| `runParallel()` | Feed-forward (no recycles) | 40-57% |
+| `runHybrid()` | Complex recycle processes | 38% |
+
+### Quick Start
+
+```java
+// Recommended - auto-selects best strategy
+process.runOptimized();
+```
+
+### How runOptimized() Works
+
+The method analyzes your process topology and selects the appropriate strategy:
+
+1. **No recycles detected** → Uses `runParallel()` for maximum speed
+2. **Recycles detected** → Uses `runHybrid()` which:
+   - **Phase 1**: Runs feed-forward units in parallel
+   - **Phase 2**: Iterates on recycle section until convergence
+
+### Analyzing Process Topology
+
+```java
+// Check if process has recycles
+boolean hasRecycles = process.hasRecycleLoops();
+
+// Get detailed execution partition analysis
+System.out.println(process.getExecutionPartitionInfo());
+```
+
+Example output:
+```
+=== Execution Partition Analysis ===
+Total units: 40
+Has recycle loops: true
+Parallel levels: 29
+Max parallelism: 6
+Units in recycle loops: 30
+
+=== Hybrid Execution Strategy ===
+Phase 1 (Parallel): 4 levels, 8 units
+Phase 2 (Iterative): 25 levels, 32 units
+
+Execution levels:
+  Level 0 [PARALLEL]: feed TP setter, first stage oil reflux
+  Level 1 [PARALLEL]: 1st stage separator
+  --- Recycle Section Start (iterative) ---
+  Level 4: oil heater second stage [RECYCLE]
+  ...
+```
+
+### Graph-Based Execution
+
+For complex processes, graph-based execution optimizes unit ordering:
+
+```java
+// Enable graph-based execution
+process.setUseGraphBasedExecution(true);
+process.run();
+
+// Or use runOptimized() which handles this automatically
+process.runOptimized();
+```
+
+### Asynchronous Execution
+
+Run simulations in background threads:
+
+```java
+// Run in background
+Future<?> task = process.runAsTask();
+
+// Do other work...
+
+// Wait for completion
+task.get();
+```
+
+---
+
+## 2. Recycles
 
 In process simulation, a recycle loop occurs when a downstream stream is fed back to an upstream unit. NeqSim handles this using the `Recycle` class, which iterates until the properties of the recycled stream converge.
 
@@ -55,7 +144,7 @@ recycle.setTolerance(1e-6);
 recycle.setMaximumIterations(50);
 ```
 
-## 2. Controllers (PID)
+## 3. Controllers (PID)
 
 NeqSim allows you to add PID controllers to automate the operation of equipment, such as valves or compressors, to maintain a specific setpoint (e.g., pressure, flow, level).
 
@@ -101,7 +190,7 @@ process.add(flowTransmitter); // Transmitter must be added to system
 process.run();
 ```
 
-## 3. Dynamic Simulation
+## 4. Dynamic Simulation
 
 NeqSim supports dynamic (transient) simulation, allowing you to model how the process changes over time. This is useful for studying startup/shutdown, control system tuning, and buffer tank sizing.
 
@@ -144,7 +233,7 @@ for (int i = 0; i < 100; i++) {
 *   `process.runTransient()`: Advances the simulation by one time step.
 *   `unit.setCalculateSteadyState(boolean)`: Toggles between steady-state (mass balance) and dynamic (accumulation) modes for specific equipment.
 
-## 4. Combining Process Systems (ProcessModel)
+## 5. Combining Process Systems (ProcessModel)
 
 For large simulations, it is often better to split the plant into smaller, manageable `ProcessSystem` objects (e.g., "Inlet Separation", "Gas Compression", "Oil Stabilization") and then combine them into a single `ProcessModel`.
 
@@ -152,6 +241,7 @@ For large simulations, it is often better to split the plant into smaller, manag
 *   **Modularity**: Develop and test sections independently.
 *   **Organization**: Keeps large flowsheets structured.
 *   **Execution Control**: The `ProcessModel` manages the execution of sub-systems.
+*   **Optimized Execution**: By default, each ProcessSystem uses `runOptimized()` for best performance.
 
 ### Example
 
@@ -179,13 +269,41 @@ ProcessModel plantModel = new ProcessModel();
 plantModel.add("Inlet", inletSystem);
 plantModel.add("Compression", compressionSystem);
 
-// 4. Run the Full Model
+// 4. Run the Full Model (uses optimized execution by default)
+plantModel.run();
+
+// Or disable optimized execution if needed
+plantModel.setUseOptimizedExecution(false);
 plantModel.run();
 ```
 
-The `ProcessModel` will execute the added systems in the order they were added (or based on internal logic if configured). It ensures that data flows correctly between the connected systems.
+The `ProcessModel` will execute the added systems in the order they were added. By default, each `ProcessSystem` uses `runOptimized()` which auto-selects the best execution strategy (parallel for feed-forward, hybrid for recycle processes).
 
-## 5. Reusable templates and composition helpers
+### Analyzing ProcessModel Execution
+
+```java
+// Get execution analysis for all ProcessSystems
+System.out.println(plantModel.getExecutionPartitionInfo());
+```
+
+Example output:
+```
+=== ProcessModel Execution Analysis ===
+Total ProcessSystems: 2
+Optimized execution: enabled
+
+--- ProcessSystem: Inlet ---
+Units: 15
+Has recycles: true
+Strategy: Hybrid (parallel + iterative)
+
+--- ProcessSystem: Compression ---
+Units: 8
+Has recycles: false
+Strategy: Parallel
+```
+
+## 6. Reusable templates and composition helpers
 
 To reduce boilerplate when assembling larger flowsheets, reuse the `Recycle`, controller, and `ProcessModel` patterns as pre-made building blocks. The following templates can be copied as-is or combined inside a `ProcessModel` catalog to let automated agents stitch together flowsheets without rewiring every unit manually.
 

@@ -42,6 +42,7 @@ public class TPmultiflash extends TPflash {
   boolean checkOneRemove = false;
   boolean secondTime = false;
   boolean aqueousPhaseSeedAttempted = false;
+  boolean postFlashStabilityChecked = false;
 
   double[] multTerm;
   double[] multTerm2;
@@ -324,6 +325,8 @@ public class TPmultiflash extends TPflash {
      * if(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents
      * ()[k].getIonicCharge()!=0) d[k]=0; } //logger.info("dk: " + d[k]); }
      */
+
+    // Calculate reference fugacities d[k] = ln(x_k) + ln(phi_k) for feed phase
     for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) {
       if (system.getPhase(0).getComponent(k).getx() > 1e-100) {
         d[k] = Math.log(system.getPhase(0).getComponent(k).getx())
@@ -333,9 +336,10 @@ public class TPmultiflash extends TPflash {
       }
     }
 
+    // Initialize logWi array (will be overwritten for each pure component trial)
     for (int j = 0; j < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); j++) {
       if (system.getPhase(0).getComponent(j).getz() > 1e-100) {
-        logWi[j] = 1.0;
+        logWi[j] = 0.0;
       } else {
         logWi[j] = -10000.0;
       }
@@ -384,9 +388,19 @@ public class TPmultiflash extends TPflash {
       }
       double nomb = 0.0;
       for (int cc = 0; cc < system.getPhase(0).getNumberOfComponents(); cc++) {
+        // Pure component trial phase: component j = 1.0, others = trace
         nomb = cc == j ? 1.0 : 1.0e-12;
         if (system.getPhase(0).getComponent(cc).getz() < 1e-100) {
           nomb = 0.0;
+        }
+
+        // Initialize logWi to match pure component trial phase (Michelsen's algorithm)
+        // For pure component j trial: Wi[j] = 1.0, Wi[others] = trace
+        // So logWi[j] = 0, logWi[others] = log(1e-12) ≈ -27.6
+        if (system.getPhase(0).getComponent(cc).getz() > 1e-100) {
+          logWi[cc] = Math.log(Math.max(nomb, 1e-100));
+        } else {
+          logWi[cc] = -10000.0;
         }
 
         if (clonedSystem.get(0).isPhase(1)) {
@@ -640,6 +654,267 @@ public class TPmultiflash extends TPflash {
     // logger.info("STABILITY ANALYSIS: ");
     // logger.info("tm1: " + tm[0] + " tm2: " + tm[1]);
     // system.display();
+  }
+
+  /**
+   * Enhanced stability analysis that uses Wilson K-values for initial guesses and tests multiple
+   * trial phase compositions. This method is more robust for detecting liquid-liquid equilibria and
+   * three-phase systems (e.g., CO2/H2S/hydrocarbon mixtures).
+   *
+   * <p>
+   * Key improvements over basic stabilityAnalysis():
+   * </p>
+   * <ul>
+   * <li>Uses Wilson K-value correlation for vapor-liquid equilibrium (VLE) detection</li>
+   * <li>Tests vapor-like trial (K), liquid-like trial (1/K), and LLE-specific trial phases</li>
+   * <li>LLE trial uses acentric factor-based perturbation (polarity proxy) since Wilson K-values
+   * are derived from vapor pressure correlations and may not capture activity coefficient-driven
+   * liquid-liquid splits</li>
+   * <li>Does not skip non-hydrocarbon components (important for CO2, H2S systems)</li>
+   * <li>Tests stability against all existing phases, not just phase 0</li>
+   * <li>Includes Wegstein acceleration for faster convergence</li>
+   * </ul>
+   */
+  public void stabilityAnalysisEnhanced() {
+    int numComponents = system.getPhase(0).getNumberOfComponents();
+    double[] logWi = new double[numComponents];
+    double[] Wi = new double[numComponents];
+    double[] oldlogw = new double[numComponents];
+    double[] oldoldlogw = new double[numComponents];
+    double[] deltalogWi = new double[numComponents];
+    double[] oldDeltalogWi = new double[numComponents];
+    double[] x = new double[numComponents];
+    tm = new double[numComponents];
+
+    // Initialize all tm values to stable (positive)
+    for (int i = 0; i < numComponents; i++) {
+      tm[i] = 10.0;
+    }
+
+    // Clone system once - reuse for all tests
+    SystemInterface clonedSystem = system.clone();
+
+    // Calculate Wilson K-values for each component once
+    // K = (Pc/P) * exp(5.373 * (1 + omega) * (1 - Tc/T))
+    double[] wilsonK = new double[numComponents];
+    double[] logWilsonK = new double[numComponents];
+    double tempK = system.getTemperature();
+    double presBar = system.getPressure();
+
+    // Pre-calculate which components are valid (z > threshold and not ionic)
+    boolean[] validComponent = new boolean[numComponents];
+    int validCount = 0;
+    for (int j = 0; j < numComponents; j++) {
+      double z = system.getPhase(0).getComponent(j).getz();
+      boolean isIon = system.getPhase(0).getComponent(j).getIonicCharge() != 0;
+      validComponent[j] = z > 1e-100 && !isIon;
+      if (validComponent[j]) {
+        validCount++;
+        double tc = system.getPhase(0).getComponent(j).getTC();
+        double pc = system.getPhase(0).getComponent(j).getPC();
+        double omega = system.getPhase(0).getComponent(j).getAcentricFactor();
+        double kVal = (pc / presBar) * Math.exp(5.373 * (1.0 + omega) * (1.0 - tc / tempK));
+        wilsonK[j] = Math.max(kVal, 1e-20);
+        logWilsonK[j] = Math.log(wilsonK[j]);
+      } else {
+        wilsonK[j] = 1.0;
+        logWilsonK[j] = 0.0;
+      }
+    }
+
+    // Early exit if no valid components
+    if (validCount == 0) {
+      system.normalizeBeta();
+      return;
+    }
+
+    int numPhases = system.getNumberOfPhases();
+
+    // Pre-calculate reference fugacities for all phases
+    double[][] dRef = new double[numPhases][numComponents];
+    for (int refPhase = 0; refPhase < numPhases; refPhase++) {
+      for (int k = 0; k < numComponents; k++) {
+        double xk = system.getPhase(refPhase).getComponent(k).getx();
+        if (xk > 1e-100) {
+          dRef[refPhase][k] =
+              Math.log(xk) + system.getPhase(refPhase).getComponent(k).getLogFugacityCoefficient();
+        }
+      }
+    }
+
+    // Test stability for EACH existing phase as reference phase
+    for (int refPhase = 0; refPhase < numPhases; refPhase++) {
+      double[] d = dRef[refPhase];
+
+      // Test with three different initial guesses:
+      // trialType = 1: Vapor-like trial phase (use Wilson K directly) - for VLE gas detection
+      // trialType = -1: Liquid-like trial phase (use 1/Wilson K) - for VLE liquid detection
+      // trialType = 0: LLE trial (composition perturbation) - for liquid-liquid equilibrium
+      // Wilson K-values are based on vapor pressure and work well for VLE,
+      // but LLE is driven by activity coefficient differences (polarity, H-bonding),
+      // so we use a different initialization strategy for LLE detection.
+      for (int trialType = 1; trialType >= -1; trialType--) {
+
+        // Initialize logWi based on trial type
+        for (int j = 0; j < numComponents; j++) {
+          if (!validComponent[j]) {
+            logWi[j] = -10000.0;
+            Wi[j] = 0.0;
+          } else if (trialType == 1) {
+            // Vapor-like: use Wilson K (volatile components enriched)
+            logWi[j] = logWilsonK[j];
+            Wi[j] = Math.exp(logWi[j]);
+          } else if (trialType == -1) {
+            // Liquid-like: use 1/K (heavy components enriched)
+            logWi[j] = -logWilsonK[j];
+            Wi[j] = Math.exp(logWi[j]);
+          } else {
+            // LLE trial (trialType == 0): perturb based on polarity/activity
+            // Use component properties to create polar vs non-polar split
+            // Components with high acentric factor or polar nature go one way
+            double omega = system.getPhase(0).getComponent(j).getAcentricFactor();
+            double z = system.getPhase(0).getComponent(j).getz();
+            // Alternate enrichment based on acentric factor (proxy for polarity)
+            // Higher omega -> more polar/associating -> enrich in one liquid phase
+            double perturbFactor = (omega > 0.15) ? 2.0 : 0.5;
+            Wi[j] = z * perturbFactor;
+            logWi[j] = Math.log(Math.max(Wi[j], 1e-100));
+          }
+          oldlogw[j] = logWi[j];
+          oldoldlogw[j] = logWi[j];
+          deltalogWi[j] = 0.0;
+          oldDeltalogWi[j] = 0.0;
+        }
+
+        // Set initial trial phase composition
+        for (int cc = 0; cc < numComponents; cc++) {
+          if (clonedSystem.isPhase(1)) {
+            clonedSystem.getPhase(1).getComponent(cc).setx(validComponent[cc] ? Wi[cc] : 1e-50);
+          }
+        }
+
+        // Successive substitution iterations with acceleration
+        int iter = 0;
+        double err = 1.0e10;
+        double errOld = 1.0e100;
+        int maxiter = 150; // Reduced from 200 - Wilson init converges faster
+        boolean useAcceleration = true;
+
+        do {
+          errOld = err;
+          iter++;
+          err = 0;
+
+          // Store old values for acceleration
+          for (int i = 0; i < numComponents; i++) {
+            oldoldlogw[i] = oldlogw[i];
+            oldlogw[i] = logWi[i];
+            oldDeltalogWi[i] = deltalogWi[i];
+          }
+
+          clonedSystem.init(1, 1);
+
+          // Update logWi from fugacity coefficients
+          for (int i = 0; i < numComponents; i++) {
+            if (validComponent[i]) {
+              double logFugCoeff =
+                  clonedSystem.getPhase(1).getComponent(i).getLogFugacityCoefficient();
+              if (!Double.isInfinite(logFugCoeff)) {
+                logWi[i] = d[i] - logFugCoeff;
+              }
+            }
+            deltalogWi[i] = logWi[i] - oldlogw[i];
+            err += Math.abs(deltalogWi[i]);
+            Wi[i] = safeExp(logWi[i]);
+          }
+
+          // Wegstein/GDEM acceleration every 7th iteration
+          if (iter % 7 == 0 && iter > 7 && useAcceleration && err < errOld) {
+            double prod1 = 0.0;
+            double prod2 = 0.0;
+            for (int i = 0; i < numComponents; i++) {
+              if (validComponent[i]) {
+                double vec1 = deltalogWi[i] * oldDeltalogWi[i];
+                double vec2 = oldDeltalogWi[i] * oldDeltalogWi[i];
+                prod1 += vec1;
+                prod2 += vec2;
+              }
+            }
+            if (prod2 > 1e-20) {
+              double lambda = prod1 / prod2;
+              if (lambda > 0.0 && lambda < 1.0) {
+                double accelFactor = lambda / (1.0 - lambda);
+                for (int i = 0; i < numComponents; i++) {
+                  if (validComponent[i]) {
+                    logWi[i] += accelFactor * deltalogWi[i];
+                    Wi[i] = safeExp(logWi[i]);
+                  }
+                }
+              }
+            }
+          }
+
+          // Disable acceleration if error is increasing
+          if (iter > 2 && err > errOld) {
+            useAcceleration = false;
+          }
+
+          // Update trial phase compositions
+          for (int i = 0; i < numComponents; i++) {
+            clonedSystem.getPhase(1).getComponent(i).setx(validComponent[i] ? Wi[i] : 1e-50);
+          }
+        } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
+
+        // Calculate tangent plane distance
+        double tmVal = 1.0;
+        for (int i = 0; i < numComponents; i++) {
+          if (validComponent[i]) {
+            tmVal -= Wi[i];
+          }
+          x[i] = clonedSystem.getPhase(1).getComponent(i).getx();
+        }
+
+        // Check for trivial solution (trial phase same as any existing phase)
+        boolean isTrivial = false;
+        for (int existingPhase = 0; existingPhase < numPhases; existingPhase++) {
+          double xTrivialCheck = 0.0;
+          for (int i = 0; i < numComponents; i++) {
+            xTrivialCheck += Math.abs(x[i] - system.getPhase(existingPhase).getComponent(i).getx());
+          }
+          if (xTrivialCheck < 1e-4) {
+            isTrivial = true;
+            break;
+          }
+        }
+
+        // If unstable and non-trivial, add new phase and return
+        if (!isTrivial && tmVal < -1e-8) {
+          system.addPhase();
+          int newPhaseIdx = system.getNumberOfPhases() - 1;
+          for (int i = 0; i < numComponents; i++) {
+            system.getPhase(newPhaseIdx).getComponent(i).setx(x[i]);
+          }
+          system.getPhases()[newPhaseIdx].normalize();
+          multiPhaseTest = true;
+
+          // Set initial beta based on dominant component
+          int dominantComp = 0;
+          double maxX = 0;
+          for (int i = 0; i < numComponents; i++) {
+            if (x[i] > maxX) {
+              maxX = x[i];
+              dominantComp = i;
+            }
+          }
+          system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());
+          system.init(1);
+          system.normalizeBeta();
+          return;
+        }
+      }
+    }
+
+    system.normalizeBeta();
   }
 
   /**
@@ -1640,6 +1915,13 @@ public class TPmultiflash extends TPflash {
     // system.setNumberOfPhases(system.getNumberOfPhases()+1);
     if (doStabilityAnalysis) {
       stabilityAnalysis();
+      // If enhanced stability check is enabled and standard analysis didn't find additional
+      // phases, try enhanced version which uses Wilson K-value initial guesses and tests both
+      // vapor-like and liquid-like trial phases for more robust detection of liquid-liquid
+      // equilibria (e.g., sour gas, CO2 systems)
+      if (system.doEnhancedMultiPhaseCheck() && !multiPhaseTest && system.getNumberOfPhases() < 3) {
+        stabilityAnalysisEnhanced();
+      }
     }
     if (!multiPhaseTest && seedAdditionalPhaseFromFeed()) {
       multiPhaseTest = true;
@@ -1756,6 +2038,22 @@ public class TPmultiflash extends TPflash {
         }
       } while ((Math.abs(chemdev) > 1e-10 && iterOut < 100)
           || (iterOut < 3 && system.isChemicalSystem() && system.hasPhaseType(PhaseType.AQUEOUS)));
+
+      // After flash converges, check for additional phases (three-phase detection)
+      // This is particularly important for systems like CO2/H2S/hydrocarbon mixtures
+      // that may exhibit vapor-liquid-liquid equilibrium
+      if (system.doMultiPhaseCheck() && system.getNumberOfPhases() >= 2
+          && system.getNumberOfPhases() < 3 && !postFlashStabilityChecked) {
+        postFlashStabilityChecked = true;
+        int oldNumPhases = system.getNumberOfPhases();
+        stabilityAnalysisEnhanced();
+        if (system.getNumberOfPhases() > oldNumPhases) {
+          // Found a third phase - re-run the flash calculation
+          multiPhaseTest = true;
+          doStabilityAnalysis = false;
+          run();
+        }
+      }
 
       // Check if water is present and if an aqueous phase should be seeded
       // Only try to seed aqueous phase once per flash operation (not on recursive calls)

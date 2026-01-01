@@ -420,8 +420,10 @@ public class TPflash extends Flash {
     }
     system.init(1);
 
-    int accelerateInterval = 7;
-    int newtonLimit = 20;
+    // Reduced acceleration interval for faster convergence
+    int accelerateInterval = 5;
+    // Adaptive Newton limit: switch earlier when close to convergence
+    int newtonLimit = 15;
     int timeFromLastGibbsFail = 0;
 
     double chemdev = 0;

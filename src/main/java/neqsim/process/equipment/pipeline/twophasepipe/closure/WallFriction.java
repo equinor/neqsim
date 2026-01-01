@@ -130,6 +130,17 @@ public class WallFriction implements Serializable {
    * <p>
    * Each phase uses its hydraulic diameter for friction calculation.
    * </p>
+   *
+   * @param vG gas velocity [m/s]
+   * @param vL liquid velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param rhoL liquid density [kg/m³]
+   * @param muG gas dynamic viscosity [Pa·s]
+   * @param muL liquid dynamic viscosity [Pa·s]
+   * @param alphaL liquid holdup fraction [-]
+   * @param D pipe diameter [m]
+   * @param eps pipe wall roughness [m]
+   * @return wall friction result containing shear stresses and friction factors
    */
   private WallFrictionResult calcStratifiedFriction(double vG, double vL, double rhoG, double rhoL,
       double muG, double muL, double alphaL, double D, double eps) {
@@ -164,6 +175,17 @@ public class WallFriction implements Serializable {
    * <p>
    * Uses mixture properties in slug body, stratified approach in film region.
    * </p>
+   *
+   * @param vG gas velocity [m/s]
+   * @param vL liquid velocity [m/s]
+   * @param rhoG gas density [kg/m³]
+   * @param rhoL liquid density [kg/m³]
+   * @param muG gas dynamic viscosity [Pa·s]
+   * @param muL liquid dynamic viscosity [Pa·s]
+   * @param alphaL liquid holdup fraction [-]
+   * @param D pipe diameter [m]
+   * @param eps pipe wall roughness [m]
+   * @return wall friction result containing shear stresses and friction factors
    */
   private WallFrictionResult calcSlugFriction(double vG, double vL, double rhoG, double rhoL,
       double muG, double muL, double alphaL, double D, double eps) {
