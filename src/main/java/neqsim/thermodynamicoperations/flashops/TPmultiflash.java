@@ -325,6 +325,8 @@ public class TPmultiflash extends TPflash {
      * if(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents
      * ()[k].getIonicCharge()!=0) d[k]=0; } //logger.info("dk: " + d[k]); }
      */
+
+    // Calculate reference fugacities d[k] = ln(x_k) + ln(phi_k) for feed phase
     for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) {
       if (system.getPhase(0).getComponent(k).getx() > 1e-100) {
         d[k] = Math.log(system.getPhase(0).getComponent(k).getx())
@@ -334,9 +336,10 @@ public class TPmultiflash extends TPflash {
       }
     }
 
+    // Initialize logWi array (will be overwritten for each pure component trial)
     for (int j = 0; j < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); j++) {
       if (system.getPhase(0).getComponent(j).getz() > 1e-100) {
-        logWi[j] = 1.0;
+        logWi[j] = 0.0;
       } else {
         logWi[j] = -10000.0;
       }
@@ -385,9 +388,19 @@ public class TPmultiflash extends TPflash {
       }
       double nomb = 0.0;
       for (int cc = 0; cc < system.getPhase(0).getNumberOfComponents(); cc++) {
+        // Pure component trial phase: component j = 1.0, others = trace
         nomb = cc == j ? 1.0 : 1.0e-12;
         if (system.getPhase(0).getComponent(cc).getz() < 1e-100) {
           nomb = 0.0;
+        }
+
+        // Initialize logWi to match pure component trial phase (Michelsen's algorithm)
+        // For pure component j trial: Wi[j] = 1.0, Wi[others] = trace
+        // So logWi[j] = 0, logWi[others] = log(1e-12) ≈ -27.6
+        if (system.getPhase(0).getComponent(cc).getz() > 1e-100) {
+          logWi[cc] = Math.log(Math.max(nomb, 1e-100));
+        } else {
+          logWi[cc] = -10000.0;
         }
 
         if (clonedSystem.get(0).isPhase(1)) {
@@ -652,8 +665,11 @@ public class TPmultiflash extends TPflash {
    * Key improvements over basic stabilityAnalysis():
    * </p>
    * <ul>
-   * <li>Uses Wilson K-value correlation for better initial guess</li>
-   * <li>Tests both vapor-like and liquid-like trial phases</li>
+   * <li>Uses Wilson K-value correlation for vapor-liquid equilibrium (VLE) detection</li>
+   * <li>Tests vapor-like trial (K), liquid-like trial (1/K), and LLE-specific trial phases</li>
+   * <li>LLE trial uses acentric factor-based perturbation (polarity proxy) since Wilson K-values
+   * are derived from vapor pressure correlations and may not capture activity coefficient-driven
+   * liquid-liquid splits</li>
    * <li>Does not skip non-hydrocarbon components (important for CO2, H2S systems)</li>
    * <li>Tests stability against all existing phases, not just phase 0</li>
    * <li>Includes Wegstein acceleration for faster convergence</li>
@@ -730,23 +746,47 @@ public class TPmultiflash extends TPflash {
     for (int refPhase = 0; refPhase < numPhases; refPhase++) {
       double[] d = dRef[refPhase];
 
-      // Test with two different initial guesses:
-      // 1. Vapor-like trial phase (use Wilson K directly)
-      // 2. Liquid-like trial phase (use 1/Wilson K)
-      for (int trialType = 1; trialType >= -1; trialType -= 2) {
-        double trialSign = trialType;
+      // Test with three different initial guesses:
+      // trialType = 1: Vapor-like trial phase (use Wilson K directly) - for VLE gas detection
+      // trialType = -1: Liquid-like trial phase (use 1/Wilson K) - for VLE liquid detection
+      // trialType = 0: LLE trial (composition perturbation) - for liquid-liquid equilibrium
+      // Wilson K-values are based on vapor pressure and work well for VLE,
+      // but LLE is driven by activity coefficient differences (polarity, H-bonding),
+      // so we use a different initialization strategy for LLE detection.
+      for (int trialType = 1; trialType >= -1; trialType--) {
 
         // Initialize logWi based on trial type
         for (int j = 0; j < numComponents; j++) {
-          logWi[j] = validComponent[j] ? trialSign * logWilsonK[j] : -10000.0;
-          Wi[j] = validComponent[j] ? Math.exp(logWi[j]) : 0.0;
+          if (!validComponent[j]) {
+            logWi[j] = -10000.0;
+            Wi[j] = 0.0;
+          } else if (trialType == 1) {
+            // Vapor-like: use Wilson K (volatile components enriched)
+            logWi[j] = logWilsonK[j];
+            Wi[j] = Math.exp(logWi[j]);
+          } else if (trialType == -1) {
+            // Liquid-like: use 1/K (heavy components enriched)
+            logWi[j] = -logWilsonK[j];
+            Wi[j] = Math.exp(logWi[j]);
+          } else {
+            // LLE trial (trialType == 0): perturb based on polarity/activity
+            // Use component properties to create polar vs non-polar split
+            // Components with high acentric factor or polar nature go one way
+            double omega = system.getPhase(0).getComponent(j).getAcentricFactor();
+            double z = system.getPhase(0).getComponent(j).getz();
+            // Alternate enrichment based on acentric factor (proxy for polarity)
+            // Higher omega -> more polar/associating -> enrich in one liquid phase
+            double perturbFactor = (omega > 0.15) ? 2.0 : 0.5;
+            Wi[j] = z * perturbFactor;
+            logWi[j] = Math.log(Math.max(Wi[j], 1e-100));
+          }
           oldlogw[j] = logWi[j];
           oldoldlogw[j] = logWi[j];
           deltalogWi[j] = 0.0;
           oldDeltalogWi[j] = 0.0;
         }
 
-        // Set initial trial phase composition based on Wilson K
+        // Set initial trial phase composition
         for (int cc = 0; cc < numComponents; cc++) {
           if (clonedSystem.isPhase(1)) {
             clonedSystem.getPhase(1).getComponent(cc).setx(validComponent[cc] ? Wi[cc] : 1e-50);
