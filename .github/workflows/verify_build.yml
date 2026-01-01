@@ -36,6 +36,7 @@ jobs:
           files: target/site/jacoco/jacoco.xml
           name: codecov
           token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
 
   test_java_8:
     name: Assert tests with Java 8 on Ubuntu
