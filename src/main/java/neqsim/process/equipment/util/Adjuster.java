@@ -237,7 +237,8 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     StreamInterface adjustedStream = getStreamFromEquipment(adjustedEquipment);
     StreamInterface targetStream = getStreamFromEquipment(targetEquipment);
 
-    if (adjustedStream == null) {
+    // Only require adjustedStream when NOT using custom functional interfaces
+    if (adjustedStream == null && adjustedValueGetter == null) {
       logger.error("Adjuster: Cannot get stream from adjusted equipment: "
           + (adjustedEquipment != null ? adjustedEquipment.getName() : "null"));
       setCalculationIdentifier(id);

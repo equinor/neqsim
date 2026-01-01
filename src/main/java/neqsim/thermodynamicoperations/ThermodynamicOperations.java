@@ -26,11 +26,14 @@ import neqsim.thermodynamicoperations.flashops.PSFlashGERG2008;
 import neqsim.thermodynamicoperations.flashops.PSFlashLeachman;
 import neqsim.thermodynamicoperations.flashops.PSFlashVega;
 import neqsim.thermodynamicoperations.flashops.PSflashSingleComp;
+import neqsim.thermodynamicoperations.flashops.PVflash;
 import neqsim.thermodynamicoperations.flashops.PVrefluxflash;
 import neqsim.thermodynamicoperations.flashops.SaturateWithWater;
 import neqsim.thermodynamicoperations.flashops.SolidFlash1;
+import neqsim.thermodynamicoperations.flashops.THflash;
 import neqsim.thermodynamicoperations.flashops.TPgradientFlash;
 import neqsim.thermodynamicoperations.flashops.TSFlash;
+import neqsim.thermodynamicoperations.flashops.TUflash;
 import neqsim.thermodynamicoperations.flashops.TVflash;
 import neqsim.thermodynamicoperations.flashops.VHflashQfunc;
 import neqsim.thermodynamicoperations.flashops.VUflashSingleComp;
@@ -820,6 +823,123 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   public void TVflash(double Vspec) {
     operation = new TVflash(system, Vspec);
     getOperation().run();
+  }
+
+  /**
+   * Performs a Temperature-Enthalpy (TH) flash calculation.
+   *
+   * <p>
+   * Given temperature T and enthalpy H, solves for pressure P. Uses Newton iteration with the
+   * thermodynamic derivative (∂H/∂P)_T.
+   * </p>
+   *
+   * @param Hspec specified enthalpy in J
+   */
+  public void THflash(double Hspec) {
+    operation = new THflash(system, Hspec);
+    getOperation().run();
+  }
+
+  /**
+   * Performs a Temperature-Enthalpy (TH) flash calculation with unit specification.
+   *
+   * @param Hspec specified enthalpy
+   * @param unit Supported units are J, J/mol, J/kg, kJ/kg
+   */
+  public void THflash(double Hspec, String unit) {
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "J":
+        conversionFactor = 1.0;
+        break;
+      case "J/mol":
+        conversionFactor = 1.0 / system.getTotalNumberOfMoles();
+        break;
+      case "J/kg":
+        conversionFactor = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
+        break;
+      case "kJ/kg":
+        conversionFactor = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+        break;
+      default:
+        break;
+    }
+    THflash(Hspec / conversionFactor);
+  }
+
+  /**
+   * Performs a Temperature-Internal Energy (TU) flash calculation.
+   *
+   * <p>
+   * Given temperature T and internal energy U, solves for pressure P. Uses Newton iteration with
+   * the thermodynamic derivative (∂U/∂P)_T.
+   * </p>
+   *
+   * @param Uspec specified internal energy in J
+   */
+  public void TUflash(double Uspec) {
+    operation = new TUflash(system, Uspec);
+    getOperation().run();
+  }
+
+  /**
+   * Performs a Temperature-Internal Energy (TU) flash calculation with unit specification.
+   *
+   * @param Uspec specified internal energy
+   * @param unit Supported units are J, J/mol, J/kg, kJ/kg
+   */
+  public void TUflash(double Uspec, String unit) {
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "J":
+        conversionFactor = 1.0;
+        break;
+      case "J/mol":
+        conversionFactor = 1.0 / system.getTotalNumberOfMoles();
+        break;
+      case "J/kg":
+        conversionFactor = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
+        break;
+      case "kJ/kg":
+        conversionFactor = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+        break;
+      default:
+        break;
+    }
+    TUflash(Uspec / conversionFactor);
+  }
+
+  /**
+   * Performs a Pressure-Volume (PV) flash calculation.
+   *
+   * <p>
+   * Given pressure P and volume V, solves for temperature T. Uses Newton iteration with the
+   * thermodynamic derivative (∂V/∂T)_P.
+   * </p>
+   *
+   * @param Vspec specified volume in m³
+   */
+  public void PVflash(double Vspec) {
+    operation = new PVflash(system, Vspec);
+    getOperation().run();
+  }
+
+  /**
+   * Performs a Pressure-Volume (PV) flash calculation with unit specification.
+   *
+   * @param Vspec specified volume
+   * @param unit Supported units are m3
+   */
+  public void PVflash(double Vspec, String unit) {
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "m3":
+        conversionFactor = 1.0e5;
+        break;
+      default:
+        break;
+    }
+    PVflash(Vspec * conversionFactor);
   }
 
   /**

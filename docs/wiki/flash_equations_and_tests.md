@@ -25,3 +25,67 @@ To mirror the test configuration:
 - Reinitialize properties to obtain enthalpy, densities, and phase fractions for validation.
 
 The enthalpy checks in `testRun2` and `testRun3` highlight that the flash solution must satisfy both material balance and the caloric EOS relationships at the specified state points.【F:src/test/java/neqsim/thermodynamicoperations/flashops/TPFlashTest.java†L43-L82】 If discrepancies appear in your own models, align your setup with the tested recipe before exploring alternative property packages.
+
+## Q-Function Flash Testing
+
+`QfuncFlashTest` provides comprehensive testing for state-function based flash calculations following Michelsen's (1999) Q-function methodology. The test class validates multiple flash specifications:
+
+### Single-Variable Q-Function Flashes
+
+These flashes solve for one unknown (T or P) given a state function constraint:
+
+| Test | Flash Type | Specification | Validates |
+|------|------------|---------------|-----------|
+| `testTSFlash_*` | TSflash | Temperature, Entropy | Pressure convergence |
+| `testTHFlash_*` | THflash | Temperature, Enthalpy | Pressure convergence |
+| `testTUFlash_*` | TUflash | Temperature, Internal Energy | Pressure convergence |
+| `testTVFlash_*` | TVflash | Temperature, Volume | Pressure convergence |
+| `testPVFlash_*` | PVflash | Pressure, Volume | Temperature convergence |
+
+### Two-Variable Q-Function Flashes
+
+These flashes solve for both T and P simultaneously:
+
+| Test | Flash Type | Specification | Validates |
+|------|------------|---------------|-----------|
+| `testVUFlash_*` | VUflash | Volume, Internal Energy | T, P convergence |
+| `testVHFlash_*` | VHflash | Volume, Enthalpy | T, P convergence |
+| `testVSFlash_*` | VSflash | Volume, Entropy | T, P convergence |
+
+### Test Methodology
+
+Each Q-function flash test follows this pattern:
+
+1. Create a fluid system and run TPflash at known conditions
+2. Store the target state function value (H, S, U, or V)
+3. Perturb the system (change T or P)
+4. Run the Q-function flash with the stored specification
+5. Verify the state function converges to the original value within tolerance
+
+Example from the test suite:
+```java
+// Store enthalpy at initial conditions
+ops.TPflash();
+double targetH = system.getEnthalpy();
+
+// Change temperature (perturb the system)
+system.setTemperature(newTemperature);
+
+// Flash should find pressure that recovers original enthalpy
+ops.THflash(targetH);
+
+assertEquals(targetH, system.getEnthalpy(), tolerance);
+```
+
+### Thermodynamic Derivatives
+
+The Q-function flashes use analytical derivatives computed via `system.init(3)`:
+
+- `getdVdTpn()` returns $-(\partial V/\partial T)_P$
+- `getdVdPtn()` returns $(\partial V/\partial P)_T$
+
+These are combined to form the Newton iteration Jacobians for each flash type.
+
+### Reference
+
+Michelsen, M.L. (1999). "State function based flash specifications." *Fluid Phase Equilibria*, 158-160, 617-626.

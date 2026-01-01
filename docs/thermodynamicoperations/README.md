@@ -46,16 +46,20 @@ thermodynamicoperations/
 │   ├── PHflash.java                 # Pressure-Enthalpy flash
 │   ├── PSFlash.java                 # Pressure-Entropy flash
 │   ├── TVflash.java                 # Temperature-Volume flash
-│   ├── VUflash.java                 # Volume-Internal Energy flash
-│   ├── VHflash.java                 # Volume-Enthalpy flash
-│   ├── VSflash.java                 # Volume-Entropy flash
-│   ├── TSFlash.java                 # Temperature-Entropy flash
+│   ├── TSFlash.java                 # Temperature-Entropy flash (Q-function)
+│   ├── THflash.java                 # Temperature-Enthalpy flash (Q-function)
+│   ├── TUflash.java                 # Temperature-Internal Energy flash (Q-function)
+│   ├── PVflash.java                 # Pressure-Volume flash (Q-function)
+│   ├── VUflash.java                 # Volume-Internal Energy flash (Q-function)
+│   ├── VHflash.java                 # Volume-Enthalpy flash (Q-function)
+│   ├── VSflash.java                 # Volume-Entropy flash (Q-function)
 │   ├── PUflash.java                 # Pressure-Internal Energy flash
 │   ├── TVfractionFlash.java         # Temperature-Vapor fraction flash
 │   ├── dTPflash.java                # Dual temperature flash
 │   ├── TPmultiflash.java            # Multiphase TP flash
 │   ├── SolidFlash.java              # Flash with solids
 │   ├── CriticalPointFlash.java      # Critical point calculation
+│   ├── QfuncFlash.java              # Base class for Q-function flashes
 │   ├── RachfordRice.java            # Rachford-Rice solver
 │   └── saturationops/               # Saturation calculations
 │       ├── BubblePointPressureFlash.java
@@ -90,12 +94,15 @@ thermodynamicoperations/
 | TP | `TPflash()` | T, P | Phase amounts, compositions |
 | PH | `PHflash(H)` | P, H | T, phase amounts, compositions |
 | PS | `PSflash(S)` | P, S | T, phase amounts, compositions |
+| PU | `PUflash(U)` | P, U | T, phase amounts, compositions |
 | TV | `TVflash(V)` | T, V | P, phase amounts, compositions |
+| TS | `TSflash(S)` | T, S | P, phase amounts, compositions |
+| TH | `THflash(H)` | T, H | P, phase amounts, compositions |
+| TU | `TUflash(U)` | T, U | P, phase amounts, compositions |
+| PV | `PVflash(V)` | P, V | T, phase amounts, compositions |
 | VU | `VUflash(V, U)` | V, U | T, P, phase amounts |
 | VH | `VHflash(V, H)` | V, H | T, P, phase amounts |
 | VS | `VSflash(V, S)` | V, S | T, P, phase amounts |
-| TS | `TSflash(S)` | T, S | P, phase amounts, compositions |
-| PU | `PUflash(U)` | P, U | T, phase amounts, compositions |
 
 ### TP Flash
 
