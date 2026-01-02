@@ -28,9 +28,17 @@ import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.ejector.Ejector;
+import neqsim.process.equipment.expander.TurboExpanderCompressor;
+import neqsim.process.equipment.flare.FlareStack;
 import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.reactor.FurnaceBurner;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchangerInterface;
+import neqsim.process.equipment.mixer.MixerInterface;
 import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.splitter.Manifold;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Recycle;
@@ -93,7 +101,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Whether to use optimized execution (parallel/hybrid) by default when run() is called. When
    * true, run() delegates to runOptimized() which automatically selects the best strategy. When
    * false, run() uses sequential execution in insertion order (legacy behavior). Default is true
-   * for best performance.
+   * for optimal performance - runOptimized() automatically falls back to sequential execution for
+   * processes with multi-input equipment (mixers, heat exchangers, etc.) to preserve correct mass
+   * balance.
    */
   private boolean useOptimizedExecution = true;
 
@@ -504,6 +514,10 @@ public class ProcessSystem extends SimulationBaseClass {
       // Process has Recycle units - use sequential execution for full convergence
       // This ensures all units are re-evaluated in each iteration using insertion order
       runSequential(id);
+    } else if (hasMultiInputEquipment()) {
+      // Process has multi-input equipment (Mixer, Manifold, TurboExpanderCompressor) - these
+      // require sequential execution to ensure correct mass balance
+      runSequential(id);
     } else if (hasAdjusters()) {
       // Process has adjusters but no recycles - use hybrid execution
       // Adjusters need iteration but feed-forward sections can run in parallel
@@ -554,6 +568,30 @@ public class ProcessSystem extends SimulationBaseClass {
   public boolean hasRecycles() {
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Recycle) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Checks if the process contains any multi-input equipment.
+   *
+   * <p>
+   * Multi-input equipment (Mixer, Manifold, TurboExpanderCompressor, Ejector, HeatExchanger,
+   * MultiStreamHeatExchanger) require sequential execution to ensure correct mass balance. Parallel
+   * execution can change the order in which input streams are processed, leading to incorrect
+   * results.
+   * </p>
+   *
+   * @return true if there are multi-input equipment units in the process
+   */
+  public boolean hasMultiInputEquipment() {
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof MixerInterface || unit instanceof Manifold
+          || unit instanceof TurboExpanderCompressor || unit instanceof Ejector
+          || unit instanceof HeatExchanger || unit instanceof MultiStreamHeatExchangerInterface
+          || unit instanceof FurnaceBurner || unit instanceof FlareStack) {
         return true;
       }
     }
@@ -1098,6 +1136,13 @@ public class ProcessSystem extends SimulationBaseClass {
         return false;
       }
       if (unit instanceof Adjuster) {
+        return false;
+      }
+      // Multi-input equipment requires sequential execution for correct mass balance
+      if (unit instanceof MixerInterface || unit instanceof Manifold
+          || unit instanceof TurboExpanderCompressor || unit instanceof Ejector
+          || unit instanceof HeatExchanger || unit instanceof MultiStreamHeatExchangerInterface
+          || unit instanceof FurnaceBurner || unit instanceof FlareStack) {
         return false;
       }
     }

@@ -13,8 +13,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortInterface;
+import neqsim.process.equipment.ejector.Ejector;
 import neqsim.process.equipment.expander.TurboExpanderCompressor;
+import neqsim.process.equipment.flare.FlareStack;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
+import neqsim.process.equipment.reactor.FurnaceBurner;
 import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchangerInterface;
 import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.MixerInterface;
@@ -146,6 +149,27 @@ public final class ProcessGraphBuilder {
         }
       }
 
+      // Ejector produces mixed outlet stream from motive and suction streams
+      if (unit instanceof Ejector) {
+        Ejector ejector = (Ejector) unit;
+        StreamInterface mixedOut = ejector.getMixedStream();
+        if (mixedOut != null) {
+          streamToProducer.put(mixedOut, unit);
+        }
+      }
+
+      // FurnaceBurner produces outlet stream from fuel and air combustion
+      if (unit instanceof FurnaceBurner) {
+        FurnaceBurner burner = (FurnaceBurner) unit;
+        StreamInterface outStream = burner.getOutletStream();
+        if (outStream != null) {
+          streamToProducer.put(outStream, unit);
+        }
+      }
+
+      // FlareStack has no outlet stream - it combusts relief gas to atmosphere
+      // No producer streams to register for FlareStack
+
       // Manifold produces split streams (N inputs -> M outputs)
       if (unit instanceof Manifold) {
         Manifold manifold = (Manifold) unit;
@@ -223,6 +247,49 @@ public final class ProcessGraphBuilder {
         StreamInterface compressorFeed = tec.getCompressorFeedStream();
         if (compressorFeed != null) {
           createEdgeFromProducer(graph, streamToProducer, compressorFeed, unit);
+        }
+      }
+
+      // Ejector consumes motive and suction streams
+      if (unit instanceof Ejector) {
+        Ejector ejector = (Ejector) unit;
+        StreamInterface motiveStream = ejector.getMotiveStream();
+        if (motiveStream != null) {
+          createEdgeFromProducer(graph, streamToProducer, motiveStream, unit);
+        }
+        StreamInterface suctionStream = ejector.getSuctionStream();
+        if (suctionStream != null) {
+          createEdgeFromProducer(graph, streamToProducer, suctionStream, unit);
+        }
+      }
+
+      // FurnaceBurner consumes fuel inlet and air inlet streams
+      if (unit instanceof FurnaceBurner) {
+        FurnaceBurner burner = (FurnaceBurner) unit;
+        StreamInterface fuelInlet = burner.getFuelInlet();
+        if (fuelInlet != null) {
+          createEdgeFromProducer(graph, streamToProducer, fuelInlet, unit);
+        }
+        StreamInterface airInlet = burner.getAirInlet();
+        if (airInlet != null) {
+          createEdgeFromProducer(graph, streamToProducer, airInlet, unit);
+        }
+      }
+
+      // FlareStack consumes relief inlet, air assist, and steam assist streams
+      if (unit instanceof FlareStack) {
+        FlareStack flare = (FlareStack) unit;
+        StreamInterface reliefInlet = flare.getReliefInlet();
+        if (reliefInlet != null) {
+          createEdgeFromProducer(graph, streamToProducer, reliefInlet, unit);
+        }
+        StreamInterface airAssist = flare.getAirAssist();
+        if (airAssist != null) {
+          createEdgeFromProducer(graph, streamToProducer, airAssist, unit);
+        }
+        StreamInterface steamAssist = flare.getSteamAssist();
+        if (steamAssist != null) {
+          createEdgeFromProducer(graph, streamToProducer, steamAssist, unit);
         }
       }
 
