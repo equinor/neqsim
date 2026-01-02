@@ -25,9 +25,9 @@ jobs:
           java-version: '11'
           cache: 'maven'
       - name: Generate javadoc
-        run: mvn javadoc:javadoc
+        run: mvn javadoc:javadoc -Daether.connector.basic.retries=5
       - name: Run tests and generate JaCoCo report
-        run: mvn -B test --file pom.xml -ntp -DskipITs
+        run: mvn -B test --file pom.xml -ntp -DskipITs -Daether.connector.basic.retries=5
       - name: Verify JaCoCo report exists
         run: |
           if [ -f target/site/jacoco/jacoco.xml ]; then
@@ -62,7 +62,7 @@ jobs:
           java-version: '8'
           cache: 'maven'
       - name: Run tests
-        run: mvn -B test --file pomJava8.xml -ntp
+        run: mvn -B test --file pomJava8.xml -ntp -Daether.connector.basic.retries=5
 
   test_java_21:
     name: Assert tests with Java 21 on Ubuntu
@@ -77,7 +77,7 @@ jobs:
           java-version: '21'
           cache: 'maven'
       - name: Run tests
-        run: mvn -B test --file pomJava21.xml -ntp
+        run: mvn -B test --file pomJava21.xml -ntp -Daether.connector.basic.retries=5
 
   test_java_11_windows:
     name: Assert tests with Java 11 on Windows
@@ -91,7 +91,7 @@ jobs:
           java-version: '11'
           cache: 'maven'
       - name: Run tests
-        run: mvn -B test --file pom.xml -ntp
+        run: mvn -B test --file pom.xml -ntp -Daether.connector.basic.retries=5
 
   test_java_8_windows:
     name: Assert tests with Java 8 on Windows
@@ -106,7 +106,7 @@ jobs:
           java-version: '8'
           cache: 'maven'
       - name: Run tests
-        run: mvn -B test --file pomJava8.xml -ntp
+        run: mvn -B test --file pomJava8.xml -ntp -Daether.connector.basic.retries=5
 
   test_java_21_windows:
     name: Assert tests with Java 21 on Windows
@@ -121,4 +121,4 @@ jobs:
           java-version: '21'
           cache: 'maven'
       - name: Run tests
-        run: mvn -B test --file pomJava21.xml -ntp
+        run: mvn -B test --file pomJava21.xml -ntp -Daether.connector.basic.retries=5
