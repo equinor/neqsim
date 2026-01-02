@@ -245,8 +245,8 @@ public class MultiStreamHeatExchanger2Test {
 
     assertEquals(63.0, solvedHot1OutletTemp, 1.0);
 
-    // Check UA and calculated pinch
-    assertEquals(10.0, heatEx.getCalculatedPinch(), 1);
+    // Check UA and approach temp
+    assertEquals(10.0, heatEx.getTemperatureApproach(), 1);
     assertEquals(21825, heatEx.getUA(), 1.0);
 
     // Composite Curve Points for Ploting
@@ -471,7 +471,7 @@ public class MultiStreamHeatExchanger2Test {
     assertEquals(55.48, valve1.getOutletStream().getTemperature("C"), 0.1);
 
     // ΔTmin (pinch) and UA check
-    assertEquals(10.0, heatEx.getCalculatedPinch(), 1.0);
+    assertEquals(10.0, heatEx.getTemperatureApproach(), 1.0);
 
     /* 4. (Optional) get composite-curve data for plotting */
     heatEx.getCompositeCurve();
