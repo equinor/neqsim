@@ -1358,8 +1358,54 @@ public class ProcessSystem extends SimulationBaseClass {
     setTimeStep(dt);
     increaseTime(dt);
 
-    for (int i = 0; i < unitOperations.size(); i++) {
-      unitOperations.get(i).runTransient(dt, id);
+    // Use graph-based parallel execution for independent branches
+    ProcessGraph graph = buildGraph();
+    ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
+    List<List<ProcessNode>> levels = partition.getLevels();
+
+    for (List<ProcessNode> level : levels) {
+      // Group nodes that share input streams to run them sequentially
+      List<List<ProcessNode>> groups = groupNodesBySharedInputStreams(level);
+
+      if (groups.size() == 1) {
+        // Single group - run sequentially to avoid race conditions
+        for (ProcessNode node : groups.get(0)) {
+          ProcessEquipmentInterface unit = node.getEquipment();
+          try {
+            unit.runTransient(dt, id);
+          } catch (Exception ex) {
+            logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+          }
+        }
+      } else {
+        // Multiple independent groups - run groups in parallel
+        List<java.util.concurrent.Future<?>> futures = new ArrayList<>();
+        for (List<ProcessNode> group : groups) {
+          final List<ProcessNode> groupToRun = group;
+          final double timeStep = dt;
+          final UUID calcId = id;
+          futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
+            for (ProcessNode node : groupToRun) {
+              ProcessEquipmentInterface unit = node.getEquipment();
+              try {
+                unit.runTransient(timeStep, calcId);
+              } catch (Exception ex) {
+                logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+              }
+            }
+          }));
+        }
+        for (java.util.concurrent.Future<?> future : futures) {
+          try {
+            future.get();
+          } catch (java.util.concurrent.ExecutionException ex) {
+            logger.error("Parallel transient execution error: " + ex.getMessage(), ex);
+          } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            logger.error("Parallel transient execution interrupted: " + ex.getMessage(), ex);
+          }
+        }
+      }
     }
 
     timeStepNumber++;
