@@ -111,6 +111,18 @@ public class SimpleAdsorber extends ProcessEquipmentBaseClass {
 
   /**
    * <p>
+   * Getter for the field <code>inStream</code>.
+   * </p>
+   *
+   * @param i a int
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
+  public StreamInterface getInStream(int i) {
+    return inStream[i];
+  }
+
+  /**
+   * <p>
    * setOutTemperature.
    * </p>
    *
