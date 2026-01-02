@@ -623,31 +623,39 @@ public class ProcessSystem extends SimulationBaseClass {
       }
 
       // This level is feed-forward - run in parallel
-      if (level.size() == 1) {
-        ProcessEquipmentInterface unit = level.get(0).getEquipment();
-        if (!(unit instanceof Setter)) {
-          try {
-            unit.run(id);
-          } catch (Exception ex) {
-            logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
-          }
-        }
-      } else if (level.size() > 1) {
-        List<java.util.concurrent.Future<?>> futures = new ArrayList<>();
-        for (ProcessNode node : level) {
+      // Group nodes that share input streams to run them sequentially
+      List<List<ProcessNode>> groups = groupNodesBySharedInputStreams(level);
+
+      if (groups.size() == 1) {
+        // Single group - run sequentially to avoid race conditions
+        for (ProcessNode node : groups.get(0)) {
           ProcessEquipmentInterface unit = node.getEquipment();
           if (!(unit instanceof Setter)) {
-            final ProcessEquipmentInterface unitToRun = unit;
-            final UUID calcId = id;
-            futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
-              try {
-                unitToRun.run(calcId);
-              } catch (Exception ex) {
-                logger.error("equipment: " + unitToRun.getName() + " error: " + ex.getMessage(),
-                    ex);
-              }
-            }));
+            try {
+              unit.run(id);
+            } catch (Exception ex) {
+              logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+            }
           }
+        }
+      } else {
+        // Multiple independent groups - run groups in parallel
+        List<java.util.concurrent.Future<?>> futures = new ArrayList<>();
+        for (List<ProcessNode> group : groups) {
+          final List<ProcessNode> groupToRun = group;
+          final UUID calcId = id;
+          futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
+            for (ProcessNode node : groupToRun) {
+              ProcessEquipmentInterface unit = node.getEquipment();
+              if (!(unit instanceof Setter)) {
+                try {
+                  unit.run(calcId);
+                } catch (Exception ex) {
+                  logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+                }
+              }
+            }
+          }));
         }
         for (java.util.concurrent.Future<?> future : futures) {
           try {
