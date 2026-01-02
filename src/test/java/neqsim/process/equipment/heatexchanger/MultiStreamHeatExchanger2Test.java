@@ -245,7 +245,7 @@ public class MultiStreamHeatExchanger2Test {
 
     assertEquals(63.0, solvedHot1OutletTemp, 1.0);
 
-    // Check UA and pinch
+    // Check UA and approach temp
     assertEquals(10.0, heatEx.getTemperatureApproach(), 1);
     assertEquals(21825, heatEx.getUA(), 1.0);
 
