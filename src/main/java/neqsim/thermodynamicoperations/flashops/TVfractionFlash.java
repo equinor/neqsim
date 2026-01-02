@@ -231,7 +231,7 @@ public class TVfractionFlash extends Flash {
     double initialPressure = system.getPressure();
     int phaseSearchAttempts = 0;
     final int MAX_PHASE_SEARCH_ATTEMPTS = 20;
-    
+
     tpFlash.run();
 
     // Check for initial flash failure
@@ -246,29 +246,29 @@ public class TVfractionFlash extends Flash {
       while (phaseSearchAttempts < MAX_PHASE_SEARCH_ATTEMPTS) {
         phaseSearchAttempts++;
         system.setPressure(system.getPressure() * 0.9);
-        
+
         // Check for pressure getting too low
         if (system.getPressure() < 1e-6) {
           logger.debug("TVfractionFlash: pressure too low during phase search, aborting");
           system.setPressure(initialPressure);
           return;
         }
-        
+
         tpFlash.run();
-        
+
         if (stateHasUncountableNumbers(system)) {
           logger.debug("TVfractionFlash: invalid state during phase search, aborting");
           system.setPressure(initialPressure);
           return;
         }
-        
+
         if (system.getNumberOfPhases() > 1 && system.hasPhaseType("gas")) {
           break;
         }
       }
-      
+
       if (phaseSearchAttempts >= MAX_PHASE_SEARCH_ATTEMPTS) {
-        logger.debug("TVfractionFlash: could not establish two-phase state after {} attempts", 
+        logger.debug("TVfractionFlash: could not establish two-phase state after {} attempts",
             MAX_PHASE_SEARCH_ATTEMPTS);
         system.setPressure(initialPressure);
         return;
