@@ -7,6 +7,7 @@ Documentation for the ProcessSystem class in NeqSim.
 - [Creating a Process](#creating-a-process)
 - [Adding Equipment](#adding-equipment)
 - [Running Simulations](#running-simulations)
+  - [Thread Safety: Shared Stream Handling](#thread-safety-shared-stream-handling)
 - [Results and Reporting](#results-and-reporting)
 - [Advanced Features](#advanced-features)
 - [Examples](#examples)
@@ -142,6 +143,55 @@ try {
 
 **Note:** `runParallel()` does not handle recycles or adjusters. Use `runOptimized()` for processes with recycles.
 
+### Thread Safety: Shared Stream Handling
+
+When multiple units share the same input stream (e.g., a splitter/manifold feeding parallel branches), NeqSim automatically groups them to prevent race conditions.
+
+**How it works:**
+1. Units at the same execution level are analyzed for shared input streams
+2. Units sharing an input stream are grouped together using a Union-Find algorithm
+3. Groups with shared streams run **sequentially** within the group
+4. Independent groups (no shared streams) run **in parallel**
+
+**Example - Parallel Pipelines:**
+```java
+// Three pipelines fed by the same manifold
+Stream feedStream = new Stream("feed", fluid);
+Splitter manifold = new Splitter("manifold", feedStream, 3);
+
+AdiabaticPipe pipe1 = new AdiabaticPipe("pipe1", manifold.getSplitStream(0));
+AdiabaticPipe pipe2 = new AdiabaticPipe("pipe2", manifold.getSplitStream(1));
+AdiabaticPipe pipe3 = new AdiabaticPipe("pipe3", manifold.getSplitStream(2));
+
+process.add(feedStream);
+process.add(manifold);
+process.add(pipe1);
+process.add(pipe2);
+process.add(pipe3);
+
+// Safe: Each pipe has its own split stream (different objects)
+// Pipes run in parallel without race conditions
+process.runParallel();
+```
+
+**Example - Shared Input Stream (handled automatically):**
+```java
+// Two units explicitly sharing the same input stream object
+Stream sharedInput = valve.getOutletStream();
+
+Heater heater1 = new Heater("heater1", sharedInput);  // Same stream object
+Heater heater2 = new Heater("heater2", sharedInput);  // Same stream object
+
+// NeqSim detects shared input and runs heater1 and heater2 sequentially
+// Other independent units at this level still run in parallel
+process.runParallel();
+```
+
+**Applies to:**
+- `runParallel()` - Groups by shared input streams
+- `runHybrid()` - Groups in Phase 1 (feed-forward section)
+- `runTransient()` - Groups at each time step
+
 ### Hybrid Execution
 
 For processes with recycles, hybrid execution combines parallel and iterative strategies:
@@ -173,6 +223,8 @@ process.runOptimized();
 ```
 
 ### Transient Simulation
+
+Transient simulations use graph-based parallel execution for independent branches, applying the same shared-stream grouping as steady-state methods.
 
 ```java
 // Set time step
