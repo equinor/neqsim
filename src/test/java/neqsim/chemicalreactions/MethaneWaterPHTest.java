@@ -1,5 +1,6 @@
 package neqsim.chemicalreactions;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
@@ -8,6 +9,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 /**
  * Test pH calculation for methane-water system at 50 bara and 20°C.
  */
+@Tag("slow")
 public class MethaneWaterPHTest {
 
   @Test

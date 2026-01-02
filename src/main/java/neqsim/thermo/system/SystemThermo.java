@@ -1398,7 +1398,7 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public SystemThermo clone() {
+  public synchronized SystemThermo clone() {
     SystemThermo clonedSystem = null;
     try {
       clonedSystem = (SystemThermo) super.clone();
@@ -1419,6 +1419,7 @@ public abstract class SystemThermo implements SystemInterface {
       // interfaceProp.clone();
     }
     clonedSystem.characterization = characterization.clone();
+    clonedSystem.characterization.setThermoSystem(clonedSystem);
     if (waxCharacterisation != null) {
       clonedSystem.waxCharacterisation = waxCharacterisation.clone();
     }

@@ -99,15 +99,35 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
    */
   public EosMixingRulesInterface getMixingRule(int mr) {
     if (mr == 1) {
+      mixingRuleName = "no (kij=0)";
       return new ClassicVdW();
     } else if (mr == 2) {
+      mixingRuleName = "classic";
       return new ClassicSRK();
     } else if (mr == 3) {
+      mixingRuleName = "HV";
       return new ClassicVdW();
+    } else if (mr == 5) {
+      mixingRuleName = "classic-T";
+      return new ClassicSRKT(1);
+    } else if (mr == 6) {
+      mixingRuleName = "classic-Tx";
+      return new ClassicSRKT2x();
+    } else if (mr == 10) {
+      mixingRuleName = "classic-CPA";
+      return new ClassicSRK();
+    } else if (mr == 11) {
+      mixingRuleName = "Whitson-Soreide Mixing Rule";
+      return new WhitsonSoreideMixingRule();
+    } else if (mr == 12) {
+      mixingRuleName = "Temperature dependent classic";
+      return new ClassicSRKT(1);
     } else {
-      // TODO: not matching the initialization in getMixingRule(int mr, PhaseInterface
-      // phase)
-      return new ClassicVdW();
+      // For mixing rules that require phase initialization (4, 7, 8, 9),
+      // fall back to ClassicSRK. These will be properly initialized
+      // when setMixingRule is called on the phase.
+      mixingRuleName = "classic";
+      return new ClassicSRK();
     }
   }
 
@@ -579,24 +599,150 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
   /** {@inheritDoc} */
   @Override
-  public EosMixingRuleHandler clone() {
+  public synchronized EosMixingRuleHandler clone() {
     EosMixingRuleHandler clonedSystem = null;
     try {
       clonedSystem = (EosMixingRuleHandler) super.clone();
-    } catch (Exception ex) {
+    } catch (CloneNotSupportedException ex) {
       logger.error("Cloning failed.", ex);
+      throw new RuntimeException("Cloning EosMixingRuleHandler failed", ex);
     }
 
-    // clonedSystem.intparam = (double[][]) intparam.clone();
-    // clonedSystem.wij = (double[][][]) wij.clone();
-    // clonedSystem.WSintparam = (double[][]) WSintparam.clone() ;
-    // clonedSystem.HVDij = (double[][]) HVDij.clone();
-    // clonedSystem.HValpha = (double[][]) HValpha.clone();
-    // clonedSystem.HVDijT = (double[][]) HVDijT.clone();
-    // clonedSystem.NRTLDij = (double[][]) NRTLDij.clone();
-    // clonedSystem.NRTLalpha = (double[][]) NRTLalpha.clone();
-    // clonedSystem.NRTLDijT = (double[][]) NRTLDijT.clone();
-    // clonedSystem.classicOrHV = (String[][]) classicOrHV.clone();
+    // Deep copy 2D arrays to ensure thread safety
+    if (intparam != null) {
+      clonedSystem.intparam = new double[intparam.length][];
+      for (int i = 0; i < intparam.length; i++) {
+        if (intparam[i] != null) {
+          clonedSystem.intparam[i] = intparam[i].clone();
+        }
+      }
+    }
+    if (intparamT != null) {
+      clonedSystem.intparamT = new double[intparamT.length][];
+      for (int i = 0; i < intparamT.length; i++) {
+        if (intparamT[i] != null) {
+          clonedSystem.intparamT[i] = intparamT[i].clone();
+        }
+      }
+    }
+    if (intparamij != null) {
+      clonedSystem.intparamij = new double[intparamij.length][];
+      for (int i = 0; i < intparamij.length; i++) {
+        if (intparamij[i] != null) {
+          clonedSystem.intparamij[i] = intparamij[i].clone();
+        }
+      }
+    }
+    if (intparamji != null) {
+      clonedSystem.intparamji = new double[intparamji.length][];
+      for (int i = 0; i < intparamji.length; i++) {
+        if (intparamji[i] != null) {
+          clonedSystem.intparamji[i] = intparamji[i].clone();
+        }
+      }
+    }
+    if (intparamTType != null) {
+      clonedSystem.intparamTType = new int[intparamTType.length][];
+      for (int i = 0; i < intparamTType.length; i++) {
+        if (intparamTType[i] != null) {
+          clonedSystem.intparamTType[i] = intparamTType[i].clone();
+        }
+      }
+    }
+    if (WSintparam != null) {
+      clonedSystem.WSintparam = new double[WSintparam.length][];
+      for (int i = 0; i < WSintparam.length; i++) {
+        if (WSintparam[i] != null) {
+          clonedSystem.WSintparam[i] = WSintparam[i].clone();
+        }
+      }
+    }
+    if (HVDij != null) {
+      clonedSystem.HVDij = new double[HVDij.length][];
+      for (int i = 0; i < HVDij.length; i++) {
+        if (HVDij[i] != null) {
+          clonedSystem.HVDij[i] = HVDij[i].clone();
+        }
+      }
+    }
+    if (HVDijT != null) {
+      clonedSystem.HVDijT = new double[HVDijT.length][];
+      for (int i = 0; i < HVDijT.length; i++) {
+        if (HVDijT[i] != null) {
+          clonedSystem.HVDijT[i] = HVDijT[i].clone();
+        }
+      }
+    }
+    if (HValpha != null) {
+      clonedSystem.HValpha = new double[HValpha.length][];
+      for (int i = 0; i < HValpha.length; i++) {
+        if (HValpha[i] != null) {
+          clonedSystem.HValpha[i] = HValpha[i].clone();
+        }
+      }
+    }
+    if (NRTLDij != null) {
+      clonedSystem.NRTLDij = new double[NRTLDij.length][];
+      for (int i = 0; i < NRTLDij.length; i++) {
+        if (NRTLDij[i] != null) {
+          clonedSystem.NRTLDij[i] = NRTLDij[i].clone();
+        }
+      }
+    }
+    if (NRTLDijT != null) {
+      clonedSystem.NRTLDijT = new double[NRTLDijT.length][];
+      for (int i = 0; i < NRTLDijT.length; i++) {
+        if (NRTLDijT[i] != null) {
+          clonedSystem.NRTLDijT[i] = NRTLDijT[i].clone();
+        }
+      }
+    }
+    if (NRTLalpha != null) {
+      clonedSystem.NRTLalpha = new double[NRTLalpha.length][];
+      for (int i = 0; i < NRTLalpha.length; i++) {
+        if (NRTLalpha[i] != null) {
+          clonedSystem.NRTLalpha[i] = NRTLalpha[i].clone();
+        }
+      }
+    }
+    // Deep copy 3D array
+    if (wij != null) {
+      clonedSystem.wij = new double[wij.length][][];
+      for (int i = 0; i < wij.length; i++) {
+        if (wij[i] != null) {
+          clonedSystem.wij[i] = new double[wij[i].length][];
+          for (int j = 0; j < wij[i].length; j++) {
+            if (wij[i][j] != null) {
+              clonedSystem.wij[i][j] = wij[i][j].clone();
+            }
+          }
+        }
+      }
+    }
+    if (wijCalcOrFitted != null) {
+      clonedSystem.wijCalcOrFitted = new int[wijCalcOrFitted.length][];
+      for (int i = 0; i < wijCalcOrFitted.length; i++) {
+        if (wijCalcOrFitted[i] != null) {
+          clonedSystem.wijCalcOrFitted[i] = wijCalcOrFitted[i].clone();
+        }
+      }
+    }
+    if (classicOrHV != null) {
+      clonedSystem.classicOrHV = new String[classicOrHV.length][];
+      for (int i = 0; i < classicOrHV.length; i++) {
+        if (classicOrHV[i] != null) {
+          clonedSystem.classicOrHV[i] = classicOrHV[i].clone();
+        }
+      }
+    }
+    if (classicOrWS != null) {
+      clonedSystem.classicOrWS = new String[classicOrWS.length][];
+      for (int i = 0; i < classicOrWS.length; i++) {
+        if (classicOrWS[i] != null) {
+          clonedSystem.classicOrWS[i] = classicOrWS[i].clone();
+        }
+      }
+    }
     return clonedSystem;
   }
 

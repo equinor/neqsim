@@ -44,7 +44,7 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
 
   /** {@inheritDoc} */
   @Override
-  public PhaseEos clone() {
+  public synchronized PhaseEos clone() {
     PhaseEos clonedPhase = null;
     try {
       clonedPhase = (PhaseEos) super.clone();
@@ -52,8 +52,12 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       logger.error("Cloning failed.", ex);
     }
 
-    // clonedPhase.mixSelect = (EosMixingRules) mixSelect.clone();
-    // clonedPhase.mixRule = (EosMixingRulesInterface) mixRule.clone();
+    // Note: This is a shallow copy for mixSelect and mixRule.
+    // The cloned phase shares the same mixing rule handler as the original.
+    // For thread-safe parallel execution, synchronization must be used when
+    // accessing shared mixing rule state.
+    // Deep copy was attempted but caused issues with CPA mixing rules where
+    // getMixingRule(int) doesn't fully initialize the mixing rule parameters.
     return clonedPhase;
   }
 

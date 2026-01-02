@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
@@ -24,6 +25,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * simplified 4-well production network using synthetic measurements.
  * </p>
  */
+@Tag("slow")
 class EnKFParameterEstimatorTest {
 
   private static final int NUM_WELLS = 4;

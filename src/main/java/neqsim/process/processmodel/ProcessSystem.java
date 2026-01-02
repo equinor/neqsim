@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -27,14 +28,24 @@ import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.ejector.Ejector;
+import neqsim.process.equipment.expander.TurboExpanderCompressor;
+import neqsim.process.equipment.flare.FlareStack;
 import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.reactor.FurnaceBurner;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchangerInterface;
+import neqsim.process.equipment.manifold.Manifold;
+import neqsim.process.equipment.mixer.MixerInterface;
 import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Recycle;
 import neqsim.process.equipment.util.RecycleController;
 import neqsim.process.equipment.util.Setter;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
+import neqsim.process.processmodel.graph.ProcessEdge;
 import neqsim.process.processmodel.graph.ProcessGraph;
 import neqsim.process.processmodel.graph.ProcessGraphBuilder;
 import neqsim.process.processmodel.graph.ProcessNode;
@@ -90,7 +101,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * Whether to use optimized execution (parallel/hybrid) by default when run() is called. When
    * true, run() delegates to runOptimized() which automatically selects the best strategy. When
    * false, run() uses sequential execution in insertion order (legacy behavior). Default is true
-   * for best performance.
+   * for optimal performance - runOptimized() automatically falls back to sequential execution for
+   * processes with multi-input equipment (mixers, heat exchangers, etc.) to preserve correct mass
+   * balance.
    */
   private boolean useOptimizedExecution = true;
 
@@ -501,6 +514,10 @@ public class ProcessSystem extends SimulationBaseClass {
       // Process has Recycle units - use sequential execution for full convergence
       // This ensures all units are re-evaluated in each iteration using insertion order
       runSequential(id);
+    } else if (hasMultiInputEquipment()) {
+      // Process has multi-input equipment (Mixer, Manifold, TurboExpanderCompressor) - these
+      // require sequential execution to ensure correct mass balance
+      runSequential(id);
     } else if (hasAdjusters()) {
       // Process has adjusters but no recycles - use hybrid execution
       // Adjusters need iteration but feed-forward sections can run in parallel
@@ -551,6 +568,30 @@ public class ProcessSystem extends SimulationBaseClass {
   public boolean hasRecycles() {
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Recycle) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Checks if the process contains any multi-input equipment.
+   *
+   * <p>
+   * Multi-input equipment (Mixer, Manifold, TurboExpanderCompressor, Ejector, HeatExchanger,
+   * MultiStreamHeatExchanger) require sequential execution to ensure correct mass balance. Parallel
+   * execution can change the order in which input streams are processed, leading to incorrect
+   * results.
+   * </p>
+   *
+   * @return true if there are multi-input equipment units in the process
+   */
+  public boolean hasMultiInputEquipment() {
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof MixerInterface || unit instanceof Manifold
+          || unit instanceof TurboExpanderCompressor || unit instanceof Ejector
+          || unit instanceof HeatExchanger || unit instanceof MultiStreamHeatExchangerInterface
+          || unit instanceof FurnaceBurner || unit instanceof FlareStack) {
         return true;
       }
     }
@@ -620,31 +661,39 @@ public class ProcessSystem extends SimulationBaseClass {
       }
 
       // This level is feed-forward - run in parallel
-      if (level.size() == 1) {
-        ProcessEquipmentInterface unit = level.get(0).getEquipment();
-        if (!(unit instanceof Setter)) {
-          try {
-            unit.run(id);
-          } catch (Exception ex) {
-            logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
-          }
-        }
-      } else if (level.size() > 1) {
-        List<java.util.concurrent.Future<?>> futures = new ArrayList<>();
-        for (ProcessNode node : level) {
+      // Group nodes that share input streams to run them sequentially
+      List<List<ProcessNode>> groups = groupNodesBySharedInputStreams(level);
+
+      if (groups.size() == 1) {
+        // Single group - run sequentially to avoid race conditions
+        for (ProcessNode node : groups.get(0)) {
           ProcessEquipmentInterface unit = node.getEquipment();
           if (!(unit instanceof Setter)) {
-            final ProcessEquipmentInterface unitToRun = unit;
-            final UUID calcId = id;
-            futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
-              try {
-                unitToRun.run(calcId);
-              } catch (Exception ex) {
-                logger.error("equipment: " + unitToRun.getName() + " error: " + ex.getMessage(),
-                    ex);
-              }
-            }));
+            try {
+              unit.run(id);
+            } catch (Exception ex) {
+              logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+            }
           }
+        }
+      } else {
+        // Multiple independent groups - run groups in parallel
+        List<java.util.concurrent.Future<?>> futures = new ArrayList<>();
+        for (List<ProcessNode> group : groups) {
+          final List<ProcessNode> groupToRun = group;
+          final UUID calcId = id;
+          futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
+            for (ProcessNode node : groupToRun) {
+              ProcessEquipmentInterface unit = node.getEquipment();
+              if (!(unit instanceof Setter)) {
+                try {
+                  unit.run(calcId);
+                } catch (Exception ex) {
+                  logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+                }
+              }
+            }
+          }));
         }
         for (java.util.concurrent.Future<?> future : futures) {
           try {
@@ -894,7 +943,7 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
 
-    // Execute each level in parallel
+    // Execute each level
     for (List<ProcessNode> level : partition.getLevels()) {
       if (level.size() == 1) {
         // Single unit at this level - run directly
@@ -907,26 +956,49 @@ public class ProcessSystem extends SimulationBaseClass {
           }
         }
       } else if (level.size() > 1) {
-        // Multiple units at this level - run in parallel
+        // Multiple units at this level - group by shared input streams
+        // Units that share the same input stream must run sequentially to avoid race conditions
+        List<List<ProcessNode>> parallelGroups = groupNodesBySharedInputStreams(level);
+
+        // Run each group - groups can run in parallel, but units within a group run sequentially
         List<java.util.concurrent.Future<?>> futures = new ArrayList<>();
 
-        for (ProcessNode node : level) {
-          ProcessEquipmentInterface unit = node.getEquipment();
-          if (!(unit instanceof Setter)) {
-            final ProcessEquipmentInterface unitToRun = unit;
+        for (List<ProcessNode> group : parallelGroups) {
+          if (group.size() == 1) {
+            // Single unit in group - can run in parallel with other groups
+            ProcessEquipmentInterface unit = group.get(0).getEquipment();
+            if (!(unit instanceof Setter)) {
+              final ProcessEquipmentInterface unitToRun = unit;
+              final UUID calcId = id;
+              futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
+                try {
+                  unitToRun.run(calcId);
+                } catch (Exception ex) {
+                  logger.error("equipment: " + unitToRun.getName() + " error: " + ex.getMessage(),
+                      ex);
+                }
+              }));
+            }
+          } else {
+            // Multiple units share input streams - run them sequentially as a group
+            final List<ProcessNode> groupToRun = group;
             final UUID calcId = id;
             futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
-              try {
-                unitToRun.run(calcId);
-              } catch (Exception ex) {
-                logger.error("equipment: " + unitToRun.getName() + " error: " + ex.getMessage(),
-                    ex);
+              for (ProcessNode node : groupToRun) {
+                ProcessEquipmentInterface unit = node.getEquipment();
+                if (!(unit instanceof Setter)) {
+                  try {
+                    unit.run(calcId);
+                  } catch (Exception ex) {
+                    logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+                  }
+                }
               }
             }));
           }
         }
 
-        // Wait for all units at this level to complete before moving to next level
+        // Wait for all groups at this level to complete before moving to next level
         for (java.util.concurrent.Future<?> future : futures) {
           try {
             future.get();
@@ -942,6 +1014,85 @@ public class ProcessSystem extends SimulationBaseClass {
       unit.setCalculationIdentifier(id);
     }
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Groups nodes by shared input streams for parallel execution safety.
+   *
+   * <p>
+   * Units that share the same input stream cannot safely run in parallel because they would
+   * concurrently read from the same thermo system. This method uses Union-Find to group nodes that
+   * share any input stream, so they can be run sequentially within their group while different
+   * groups run in parallel.
+   * </p>
+   *
+   * @param nodes list of nodes at the same execution level
+   * @return list of groups, where each group contains nodes that share input streams
+   */
+  private List<List<ProcessNode>> groupNodesBySharedInputStreams(List<ProcessNode> nodes) {
+    // Use Union-Find to group nodes that share input streams
+    // Map each node to its group representative
+    Map<ProcessNode, ProcessNode> parent = new IdentityHashMap<>();
+    for (ProcessNode node : nodes) {
+      parent.put(node, node);
+    }
+
+    // Find with path compression
+    java.util.function.Function<ProcessNode, ProcessNode> find =
+        new java.util.function.Function<ProcessNode, ProcessNode>() {
+          @Override
+          public ProcessNode apply(ProcessNode node) {
+            if (parent.get(node) != node) {
+              parent.put(node, this.apply(parent.get(node)));
+            }
+            return parent.get(node);
+          }
+        };
+
+    // Union operation
+    java.util.function.BiConsumer<ProcessNode, ProcessNode> union = (a, b) -> {
+      ProcessNode rootA = find.apply(a);
+      ProcessNode rootB = find.apply(b);
+      if (rootA != rootB) {
+        parent.put(rootA, rootB);
+      }
+    };
+
+    // Build a map from input stream to nodes that use it
+    Map<StreamInterface, List<ProcessNode>> streamToNodes = new IdentityHashMap<>();
+    for (ProcessNode node : nodes) {
+      for (ProcessEdge edge : node.getIncomingEdges()) {
+        StreamInterface stream = edge.getStream();
+        if (stream != null) {
+          if (!streamToNodes.containsKey(stream)) {
+            streamToNodes.put(stream, new ArrayList<>());
+          }
+          streamToNodes.get(stream).add(node);
+        }
+      }
+    }
+
+    // Union nodes that share the same input stream
+    for (List<ProcessNode> nodesWithSameStream : streamToNodes.values()) {
+      if (nodesWithSameStream.size() > 1) {
+        ProcessNode first = nodesWithSameStream.get(0);
+        for (int i = 1; i < nodesWithSameStream.size(); i++) {
+          union.accept(first, nodesWithSameStream.get(i));
+        }
+      }
+    }
+
+    // Group nodes by their root representative
+    Map<ProcessNode, List<ProcessNode>> groups = new IdentityHashMap<>();
+    for (ProcessNode node : nodes) {
+      ProcessNode root = find.apply(node);
+      if (!groups.containsKey(root)) {
+        groups.put(root, new ArrayList<>());
+      }
+      groups.get(root).add(node);
+    }
+
+    return new ArrayList<>(groups.values());
   }
 
   /**
@@ -985,6 +1136,13 @@ public class ProcessSystem extends SimulationBaseClass {
         return false;
       }
       if (unit instanceof Adjuster) {
+        return false;
+      }
+      // Multi-input equipment requires sequential execution for correct mass balance
+      if (unit instanceof MixerInterface || unit instanceof Manifold
+          || unit instanceof TurboExpanderCompressor || unit instanceof Ejector
+          || unit instanceof HeatExchanger || unit instanceof MultiStreamHeatExchangerInterface
+          || unit instanceof FurnaceBurner || unit instanceof FlareStack) {
         return false;
       }
     }

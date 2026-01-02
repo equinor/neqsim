@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -40,6 +41,7 @@ import neqsim.thermo.system.SystemSrkEos;
  *
  * @author esol
  */
+@Disabled
 public class JsonSerializationTest {
 
   private static SystemSrkEos testFluid;

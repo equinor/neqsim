@@ -497,7 +497,7 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public Component clone() {
+  public synchronized Component clone() {
     Component clonedComponent = null;
     try {
       clonedComponent = (Component) super.clone();

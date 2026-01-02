@@ -1,10 +1,12 @@
 package neqsim.chemicalreactions;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
+@Tag("slow")
 public class PHvsPressureTest {
 
   @Test
