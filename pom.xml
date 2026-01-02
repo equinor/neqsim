@@ -25,6 +25,8 @@
                 <checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
                 <skipFlattening>false</skipFlattening>
                 <argLine></argLine>
+                <!-- Exclude slow tests by default. Run with -DexcludedTestGroups= to include all tests -->
+                <excludedTestGroups>slow</excludedTestGroups>
         </properties>
 	<licenses>
 		<license>
@@ -338,6 +340,8 @@
                                 <configuration>
                                         <!-- Preserve any Jacoco agent injection (@{argLine}) and add required module opens for XStream reflection when running tests on JDK >= 11 -->
                                         <argLine>@{argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
+                                        <!-- Exclude slow tests by default. Run with -DincludeSlow=true to include them -->
+                                        <excludedGroups>${excludedTestGroups}</excludedGroups>
                                 </configuration>
                         </plugin>
                         <plugin>
