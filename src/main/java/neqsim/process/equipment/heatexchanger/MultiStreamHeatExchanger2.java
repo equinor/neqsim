@@ -873,20 +873,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
    * getTemperatureApproach.
    * </p>
    *
-   * @return the temperature approach setpoint in degrees Celsius
+   * @return a double
    */
   public double getTemperatureApproach() {
-    return approachTemperature;
-  }
-
-  /**
-   * <p>
-   * getCalculatedPinch.
-   * </p>
-   *
-   * @return the calculated pinch temperature difference in degrees Celsius
-   */
-  public double getCalculatedPinch() {
     return pinch();
   }
 
