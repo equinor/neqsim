@@ -95,8 +95,17 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   // Thread-local reusable system for fugacity calculations to minimize cloning
-  private final ThreadLocal<neqsim.thermo.system.SystemInterface> tempFugacitySystem =
+  private transient ThreadLocal<neqsim.thermo.system.SystemInterface> tempFugacitySystem =
       new ThreadLocal<>();
+
+  /**
+   * Ensures tempFugacitySystem is initialized (handles deserialization case).
+   */
+  private void ensureTempFugacitySystemInitialized() {
+    if (tempFugacitySystem == null) {
+      tempFugacitySystem = new ThreadLocal<>();
+    }
+  }
 
   /**
    * Get the cumulative enthalpy of reaction (sum of dH for all iterations).
@@ -981,6 +990,8 @@ public class GibbsReactor extends TwoPortEquipment {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    // Ensure thread-local is initialized (handles deserialization case)
+    ensureTempFugacitySystemInitialized();
     // Clear thread-local temp system to avoid cross-test contamination
     tempFugacitySystem.remove();
     system = getInletStream().getThermoSystem().clone();

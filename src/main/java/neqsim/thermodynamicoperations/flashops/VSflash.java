@@ -101,6 +101,22 @@ public class VSflash extends Flash {
   }
 
   /**
+   * Calculate the cross-derivative d²Q/dTdP for coupled Newton solver. This improves convergence by
+   * accounting for T-P coupling.
+   *
+   * @return cross derivative d²Q/dTdP
+   */
+  public double calcdQdTP() {
+    double R = neqsim.thermo.ThermodynamicConstantsInterface.R;
+    double T = system.getTemperature();
+    // Cross derivative includes dV/dT contribution
+    double dVdT = system.getdVdTpn();
+    double dQdTP = system.getPressure() * dVdT / (R * T)
+        - system.getPressure() * (system.getVolume() - Vspec) / (R * T * T);
+    return dQdTP;
+  }
+
+  /**
    * <p>
    * solveQ.
    * </p>
@@ -108,30 +124,73 @@ public class VSflash extends Flash {
    * @return a double
    */
   public double solveQ() {
-    double oldPres = system.getPressure(), nyPres = system.getPressure(),
-        nyTemp = system.getTemperature(), oldTemp = system.getTemperature();
-    double iterations = 1;
-    // logger.info("Sspec: " + Sspec);
+    double oldPres = system.getPressure();
+    double nyPres = system.getPressure();
+    double nyTemp = system.getTemperature();
+    double oldTemp = system.getTemperature();
+    int iterations = 0;
+
     do {
       iterations++;
       oldPres = nyPres;
       oldTemp = nyTemp;
       system.init(3);
-      // logger.info("Sentr: " + system.getEntropy());
-      // logger.info("calcdQdT(): " + calcdQdT());
-      // logger.info("dQdP: " + calcdQdP());
-      // logger.info("dQdT: " + calcdQdT());
-      nyPres = oldPres - (iterations) / (iterations + 10.0) * calcdQdP() / calcdQdPP();
-      nyTemp = oldTemp - (iterations) / (iterations + 10.0) * calcdQdT() / calcdQdTT();
-      // logger.info("volume: " + system.getVolume());
-      // logger.info("inernaleng: " + system.getInternalEnergy());
+
+      double dQdP = calcdQdP();
+      double dQdT = calcdQdT();
+      double dQdPP = calcdQdPP();
+      double dQdTT = calcdQdTT();
+      double dQdTP = calcdQdTP();
+
+      // Solve coupled 2x2 Newton system:
+      // [dQdTT dQdTP] [deltaT] [-dQdT]
+      // [dQdTP dQdPP] [deltaP] = [-dQdP]
+      double det = dQdTT * dQdPP - dQdTP * dQdTP;
+
+      double deltaT;
+      double deltaP;
+
+      if (Math.abs(det) > 1e-20) {
+        // Coupled Newton solve
+        deltaT = (-dQdT * dQdPP + dQdP * dQdTP) / det;
+        deltaP = (-dQdP * dQdTT + dQdT * dQdTP) / det;
+      } else {
+        // Fall back to independent updates if matrix is singular
+        deltaT = (Math.abs(dQdTT) > 1e-20) ? -dQdT / dQdTT : 0.0;
+        deltaP = (Math.abs(dQdPP) > 1e-20) ? -dQdP / dQdPP : 0.0;
+      }
+
+      // Apply damping factor that increases with iterations
+      double factor = (double) iterations / (iterations + 5.0);
+
+      // Limit step sizes for stability
+      double maxDeltaT = 0.2 * oldTemp;
+      double maxDeltaP = 0.3 * oldPres;
+
+      if (Math.abs(deltaT) > maxDeltaT) {
+        deltaT = Math.signum(deltaT) * maxDeltaT;
+      }
+      if (Math.abs(deltaP) > maxDeltaP) {
+        deltaP = Math.signum(deltaP) * maxDeltaP;
+      }
+
+      nyTemp = oldTemp + factor * deltaT;
+      nyPres = oldPres + factor * deltaP;
+
+      // Ensure T and P stay positive and within physical bounds
+      if (nyTemp <= 0 || nyTemp > 2000) {
+        nyTemp = (nyTemp <= 0) ? oldTemp * 0.9 : oldTemp * 1.1;
+      }
+      if (nyPres <= 0 || nyPres > 1000) {
+        nyPres = (nyPres <= 0) ? oldPres * 0.9 : oldPres * 1.1;
+      }
+
       system.setPressure(nyPres);
       system.setTemperature(nyTemp);
       tpFlash.run();
-      // logger.info("error1: " + (Math.abs((nyPres - oldPres) / (nyPres))));
-      // logger.info("error2: " + (Math.abs((nyTemp - oldTemp) / (nyTemp))));
-    } while (Math.abs((nyPres - oldPres) / (nyPres))
-        + Math.abs((nyTemp - oldTemp) / (nyTemp)) > 1e-9 && iterations < 1000);
+    } while ((Math.abs((nyPres - oldPres) / nyPres) + Math.abs((nyTemp - oldTemp) / nyTemp) > 1e-9)
+        && iterations < 500);
+
     return nyPres;
   }
 

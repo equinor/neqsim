@@ -12,9 +12,13 @@ This guide provides comprehensive documentation of flash calculations available 
   - [PU Flash (Pressure-Internal Energy)](#pu-flash-pressure-internal-energy)
   - [TV Flash (Temperature-Volume)](#tv-flash-temperature-volume)
   - [TS Flash (Temperature-Entropy)](#ts-flash-temperature-entropy)
+  - [TH Flash (Temperature-Enthalpy)](#th-flash-temperature-enthalpy)
+  - [TU Flash (Temperature-Internal Energy)](#tu-flash-temperature-internal-energy)
+  - [PV Flash (Pressure-Volume)](#pv-flash-pressure-volume)
   - [VH Flash (Volume-Enthalpy)](#vh-flash-volume-enthalpy)
   - [VU Flash (Volume-Internal Energy)](#vu-flash-volume-internal-energy)
   - [VS Flash (Volume-Entropy)](#vs-flash-volume-entropy)
+- [Q-Function Flash Methodology](#q-function-flash-methodology)
 - [Saturation Calculations](#saturation-calculations)
   - [Bubble Point](#bubble-point)
   - [Dew Point](#dew-point)
@@ -87,7 +91,7 @@ System.out.println("Pressure: " + fluid.getPressure("bara") + " bara");
 
 ### TP Flash (Temperature-Pressure)
 
-The most common flash type. Given temperature and pressure, find phase split and compositions.
+The most common flash type. Given temperature and pressure, find phase split and compositions. NeqSim implements the classical Michelsen flash algorithm with stability analysis.
 
 **Method signatures:**
 ```java
@@ -115,6 +119,62 @@ double liquidDensity = fluid.getPhase("oil").getDensity("kg/m3");
 fluid.setSolidPhaseCheck(true);
 ops.TPflash(true);  // Includes solid equilibrium
 ```
+
+#### Multi-Phase Checking
+
+By default, NeqSim checks for two-phase (gas-liquid) equilibrium. For systems that may form multiple liquid phases (VLLE, LLE), enable multi-phase checking:
+
+```java
+fluid.setMultiPhaseCheck(true);
+ops.TPflash();
+// Will detect gas + multiple liquid phases (e.g., oil, aqueous)
+```
+
+#### Enhanced Stability Analysis
+
+For complex mixtures where standard stability analysis may miss additional phases (e.g., sour gas with CO₂/H₂S, LLE systems), enable enhanced stability analysis:
+
+```java
+fluid.setMultiPhaseCheck(true);
+fluid.setEnhancedMultiPhaseCheck(true);  // Enable enhanced phase detection
+ops.TPflash();
+```
+
+The enhanced stability analysis:
+- Uses **Wilson K-value initial guesses** for robust vapor-liquid detection
+- Tests **both vapor-like and liquid-like trial phases** to find LLE
+- Uses **acentric factor-based perturbation** to detect liquid-liquid splits driven by polarity differences
+- Tests stability **against all existing phases**, not just the reference phase
+- Includes **Wegstein acceleration** for faster convergence
+
+**Example - Sour Gas Three-Phase Detection:**
+```java
+// Sour gas mixture: methane/CO2/H2S at low temperature
+SystemInterface sourGas = new SystemPrEos(210.0, 55.0);  // ~-63°C, 55 bar
+sourGas.addComponent("methane", 49.88);
+sourGas.addComponent("CO2", 9.87);
+sourGas.addComponent("H2S", 40.22);
+
+sourGas.setMixingRule("classic");
+sourGas.setMultiPhaseCheck(true);
+sourGas.setEnhancedMultiPhaseCheck(true);  // Critical for finding 3 phases
+
+ThermodynamicOperations ops = new ThermodynamicOperations(sourGas);
+ops.TPflash();
+sourGas.initProperties();
+
+System.out.println("Number of phases: " + sourGas.getNumberOfPhases());
+// May find: vapor + CO2-rich liquid + H2S-rich liquid
+```
+
+**When to use enhanced stability analysis:**
+- Sour gas systems (methane/CO₂/H₂S mixtures)
+- CO₂ injection/sequestration systems
+- Systems with polar/non-polar liquid-liquid equilibria
+- Near-critical conditions where phase detection is difficult
+- Any system where standard flash misses expected phases
+
+**Note:** Enhanced stability analysis adds computational overhead. For simple VLE systems, the standard analysis is sufficient.
 
 ---
 
@@ -257,13 +317,137 @@ System.out.println("New pressure: " + fluid.getPressure("bara") + " bara");
 
 ### TS Flash (Temperature-Entropy)
 
-Given temperature and entropy, find pressure and phase split.
+Given temperature and entropy, find pressure and phase split. Uses the Q-function methodology based on Michelsen (1999).
 
 **Method signatures:**
 ```java
 void TSflash(double Sspec)                    // S in J/K
 void TSflash(double Sspec, String unit)       // Supported: J/K, J/molK, J/kgK, kJ/kgK
 ```
+
+**Thermodynamic derivative:**
+$$\left(\frac{\partial S}{\partial P}\right)_T = -\left(\frac{\partial V}{\partial T}\right)_P$$
+
+---
+
+### TH Flash (Temperature-Enthalpy)
+
+Given temperature and enthalpy, find pressure and phase split. Uses the Q-function methodology with Newton iteration.
+
+**Applications:**
+- Heat exchanger design at fixed temperature
+- Isenthalpic processes with temperature constraint
+- Process simulation where T and H are specified independently
+
+**Method signatures:**
+```java
+void THflash(double Hspec)                    // H in J
+void THflash(double Hspec, String unit)       // Supported: J, J/mol, J/kg, kJ/kg
+```
+
+**Example:**
+```java
+SystemInterface fluid = new SystemSrkEos(300.0, 50.0);
+fluid.addComponent("methane", 0.9);
+fluid.addComponent("ethane", 0.1);
+fluid.setMixingRule("classic");
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPflash();
+
+// Store enthalpy at initial pressure
+double H_target = fluid.getEnthalpy("J");
+
+// Change temperature (enthalpy will change)
+fluid.setTemperature(280.0, "K");
+
+// Find pressure that gives same enthalpy at new temperature
+ops.THflash(H_target);
+System.out.println("Pressure for same H at new T: " + fluid.getPressure("bara") + " bara");
+```
+
+**Thermodynamic derivative:**
+$$\left(\frac{\partial H}{\partial P}\right)_T = V - T\left(\frac{\partial V}{\partial T}\right)_P$$
+
+---
+
+### TU Flash (Temperature-Internal Energy)
+
+Given temperature and internal energy, find pressure and phase split. Uses the Q-function methodology with Newton iteration.
+
+**Applications:**
+- Isochoric (constant volume) combustion processes
+- Fixed temperature, constant internal energy processes
+- Closed system thermodynamic analysis
+
+**Method signatures:**
+```java
+void TUflash(double Uspec)                    // U in J
+void TUflash(double Uspec, String unit)       // Supported: J, J/mol, J/kg, kJ/kg
+```
+
+**Example:**
+```java
+SystemInterface fluid = new SystemSrkEos(350.0, 20.0);
+fluid.addComponent("methane", 1.0);
+fluid.setMixingRule("classic");
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPflash();
+
+// Store internal energy
+double U_target = fluid.getInternalEnergy("J");
+
+// Change temperature
+fluid.setTemperature(300.0, "K");
+
+// Find pressure that maintains same internal energy
+ops.TUflash(U_target);
+System.out.println("Pressure for same U at new T: " + fluid.getPressure("bara") + " bara");
+```
+
+**Thermodynamic derivative:**
+$$\left(\frac{\partial U}{\partial P}\right)_T = -T\left(\frac{\partial V}{\partial T}\right)_P - P\left(\frac{\partial V}{\partial P}\right)_T$$
+
+---
+
+### PV Flash (Pressure-Volume)
+
+Given pressure and volume, find temperature and phase split. Uses the Q-function methodology with Newton iteration.
+
+**Applications:**
+- Fixed volume vessels at constant pressure
+- Density specifications (since V = m/ρ for known mass)
+- Process simulation where P and V are specified independently
+
+**Method signatures:**
+```java
+void PVflash(double Vspec)                    // V in m³
+void PVflash(double Vspec, String unit)       // Supported: m3
+```
+
+**Example:**
+```java
+SystemInterface fluid = new SystemSrkEos(300.0, 50.0);
+fluid.addComponent("nitrogen", 1.0);
+fluid.setMixingRule("classic");
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPflash();
+
+// Store volume at initial conditions
+double V_target = fluid.getVolume("m3");
+
+// Change pressure
+fluid.setPressure(100.0, "bara");
+
+// Find temperature that gives same volume at new pressure
+ops.PVflash(V_target);
+System.out.println("Temperature for same V at new P: " + fluid.getTemperature("C") + " °C");
+```
+
+**Thermodynamic derivative:**
+$$\left(\frac{\partial V}{\partial T}\right)_P$$
 
 ---
 
@@ -332,6 +516,75 @@ Given volume and entropy, find temperature, pressure, and phase split.
 void VSflash(double Vspec, double Sspec)
 void VSflash(double V, double S, String unitV, String unitS)
 ```
+
+---
+
+## Q-Function Flash Methodology
+
+Several flash types in NeqSim use the Q-function methodology described by Michelsen (1999). This approach is particularly effective for state function specifications (entropy, enthalpy, internal energy, volume) where the flash must solve for temperature and/or pressure.
+
+### Theory
+
+The Q-function method uses a nested iteration approach:
+1. **Outer loop**: Newton iteration on the state function residual (e.g., $S - S_{spec}$)
+2. **Inner loop**: TP flash to determine phase equilibrium at each T,P guess
+
+The key advantage is that the inner TP flash handles all the phase equilibrium complexity, while the outer loop only needs to adjust T or P based on the state function derivative.
+
+### Thermodynamic Derivatives
+
+The Q-function flashes use analytical thermodynamic derivatives computed via `init(3)`:
+
+| Flash | Specification | Solved | Derivative Used |
+|-------|--------------|--------|-----------------|
+| TSflash | T, S | P | $\left(\frac{\partial S}{\partial P}\right)_T = -\left(\frac{\partial V}{\partial T}\right)_P$ |
+| THflash | T, H | P | $\left(\frac{\partial H}{\partial P}\right)_T = V - T\left(\frac{\partial V}{\partial T}\right)_P$ |
+| TUflash | T, U | P | $\left(\frac{\partial U}{\partial P}\right)_T = -T\left(\frac{\partial V}{\partial T}\right)_P - P\left(\frac{\partial V}{\partial P}\right)_T$ |
+| TVflash | T, V | P | $\left(\frac{\partial V}{\partial P}\right)_T$ |
+| PVflash | P, V | T | $\left(\frac{\partial V}{\partial T}\right)_P$ |
+| VUflash | V, U | T, P | 2D Newton with $\frac{\partial U}{\partial T}$, $\frac{\partial U}{\partial P}$, $\frac{\partial V}{\partial T}$, $\frac{\partial V}{\partial P}$ |
+| VHflash | V, H | T, P | 2D Newton with $\frac{\partial H}{\partial T}$, $\frac{\partial H}{\partial P}$, $\frac{\partial V}{\partial T}$, $\frac{\partial V}{\partial P}$ |
+| VSflash | V, S | T, P | 2D Newton with $\frac{\partial S}{\partial T}$, $\frac{\partial S}{\partial P}$, $\frac{\partial V}{\partial T}$, $\frac{\partial V}{\partial P}$ |
+
+### Implementation Pattern
+
+All Q-function flashes follow a similar pattern:
+
+```java
+// Example: TH flash pseudocode
+public double solveQ() {
+    do {
+        system.init(3);  // Calculate derivatives
+        
+        double residual = system.getEnthalpy() - Hspec;
+        
+        // Analytical derivative: (dH/dP)_T = V - T*(dV/dT)_P
+        double V = system.getVolume();
+        double T = system.getTemperature();
+        double dVdT = -system.getdVdTpn();  // Note sign convention
+        double dHdP = (V - T * dVdT) * 1e5;  // Convert to J/bar
+        
+        // Newton step with damping
+        double deltaP = -factor * residual / dHdP;
+        
+        nyPres = oldPres + deltaP;
+        system.setPressure(nyPres);
+        tpFlash.run();
+        
+    } while (error > tolerance && iterations < maxIter);
+}
+```
+
+### NeqSim Sign Conventions
+
+Note the sign conventions used in NeqSim for thermodynamic derivatives:
+- `getdVdTpn()` returns $-\left(\frac{\partial V}{\partial T}\right)_P$
+- `getdVdPtn()` returns $\left(\frac{\partial V}{\partial P}\right)_T$
+
+### References
+
+1. Michelsen, M.L. (1999). "State function based flash specifications." *Fluid Phase Equilibria*, 158-160, 617-626.
+2. Michelsen, M.L. and Mollerup, J.M. (2007). *Thermodynamic Models: Fundamentals & Computational Aspects*, 2nd Edition. Tie-Line Publications.
 
 ---
 

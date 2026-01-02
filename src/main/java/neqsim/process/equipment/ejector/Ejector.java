@@ -438,4 +438,80 @@ public class Ejector extends ProcessEquipmentBaseClass {
         + suctionStream.getThermoSystem().getFlowRate(unit);
     return mixedStream.getThermoSystem().getFlowRate(unit) - inletFlow;
   }
+
+  /**
+   * <p>
+   * Getter for the field <code>motiveStream</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
+  public StreamInterface getMotiveStream() {
+    return motiveStream;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>suctionStream</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
+  public StreamInterface getSuctionStream() {
+    return suctionStream;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>mixedStream</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
+  public StreamInterface getMixedStream() {
+    return mixedStream;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>efficiencyIsentropic</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getEfficiencyIsentropic() {
+    return efficiencyIsentropic;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>diffuserEfficiency</code>.
+   * </p>
+   *
+   * @return a double
+   */
+  public double getDiffuserEfficiency() {
+    return diffuserEfficiency;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new neqsim.process.util.monitor.EjectorResponse(this));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson(neqsim.process.util.report.ReportConfig cfg) {
+    if (cfg != null && cfg
+        .getDetailLevel(getName()) == neqsim.process.util.report.ReportConfig.DetailLevel.HIDE) {
+      return null;
+    }
+    neqsim.process.util.monitor.EjectorResponse res =
+        new neqsim.process.util.monitor.EjectorResponse(this);
+    res.applyConfig(cfg);
+    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(res);
+  }
 }

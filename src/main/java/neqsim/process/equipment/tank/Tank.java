@@ -474,7 +474,8 @@ public class Tank extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new TankResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new TankResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -485,6 +486,6 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
     TankResponse res = new TankResponse(this);
     res.applyConfig(cfg);
-    return new GsonBuilder().create().toJson(res);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 }

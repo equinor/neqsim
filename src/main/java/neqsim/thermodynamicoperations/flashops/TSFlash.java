@@ -61,26 +61,96 @@ public class TSFlash extends QfuncFlash {
     return dQ;
   }
 
+  /**
+   * Calculate the gradient of Q with respect to pressure for TS-flash. For isentropic flash at
+   * fixed T, we solve for P such that S(T,P) = Sspec. Q = Sspec - S, so dQ/dP = -dS/dP. By Maxwell
+   * relation: (dS/dP)_T = -(dV/dT)_P Therefore: dQ/dP = -(-dV/dT) = dV/dT
+   *
+   * @return gradient dQ/dP
+   */
+  public double calcdQdP() {
+    // By Maxwell relation: (dS/dP)_T = -(dV/dT)_P
+    // Q = Sspec - S, so dQ/dP = -dS/dP = dV/dT
+    return system.getdVdTpn();
+  }
+
+  /**
+   * Calculate the second derivative of Q with respect to pressure for TS-flash. d²Q/dP² =
+   * d(dV/dT)/dP This approximation uses finite differencing concept for stability.
+   *
+   * @return second derivative d²Q/dP²
+   */
+  public double calcdQdPP() {
+    // Use a numerical approximation for the second derivative
+    // d²Q/dP² ≈ d(dV/dT)/dP
+    // For an ideal gas: dV/dT = nR/P, so d²(dV/dT)/dP² = -nR/P²
+    // For real gases, use scaled volume derivative
+    double dVdT = system.getdVdTpn();
+    double P = system.getPressure();
+
+    // Approximate second derivative based on typical pressure scaling
+    // The key insight is that dV/dT scales roughly as 1/P for gases
+    if (Math.abs(dVdT) > 1e-20) {
+      return -dVdT / P;
+    }
+    // Fallback using volume derivative for stability
+    double dVdP = system.getdVdPtn();
+    double T = system.getTemperature();
+    return dVdP / T;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double solveQ() {
-    // this method is not yet implemented
-    double oldTemp = system.getPressure(), nyTemp = system.getPressure();
-    int iterations = 1;
-    double error = 1.0, errorOld = 10.0e10;
+    double oldPres = system.getPressure();
+    double nyPres = system.getPressure();
+    int iterations = 0;
+    double residual = 1.0;
+    double factor = 1.0;
+
     do {
       iterations++;
-      oldTemp = system.getPressure();
-      system.init(2);
+      oldPres = nyPres;
+      system.init(3);
 
-      nyTemp = oldTemp - calcdQdT() / 10.0;
+      // Residual: r = S(T,P) - Sspec (we want r = 0)
+      residual = system.getEntropy() - Sspec;
 
-      system.setPressure(nyTemp);
+      // By Maxwell relation: dS/dP at constant T = -(dV/dT) at constant P
+      double dSdP = -system.getdVdTpn();
+
+      // Avoid division by zero
+      if (Math.abs(dSdP) < 1e-20) {
+        dSdP = (dSdP >= 0) ? 1e-20 : -1e-20;
+      }
+
+      // Newton step: P_new = P_old - residual / (d residual / dP)
+      double deltaP = -residual / dSdP;
+
+      // Limit step size to avoid divergence
+      double maxDeltaP = 0.3 * oldPres;
+      if (Math.abs(deltaP) > maxDeltaP) {
+        deltaP = Math.signum(deltaP) * maxDeltaP;
+      }
+
+      // Apply damping factor that increases with iterations
+      factor = (double) iterations / (iterations + 5.0);
+      nyPres = oldPres + factor * deltaP;
+
+      // Ensure pressure stays positive and physical
+      if (nyPres <= 0.01) {
+        nyPres = 0.01;
+      }
+      if (nyPres > 1000) {
+        nyPres = oldPres * 0.9;
+      }
+
+      system.setPressure(nyPres);
       tpFlash.run();
-      errorOld = error;
-      error = Math.abs(calcdQdT());
-    } while (((error + errorOld) > 1e-8 || iterations < 3) && iterations < 200);
-    return nyTemp;
+
+    } while (Math.abs(residual) > 1e-8 && iterations < 200);
+
+    return nyPres;
   }
 
   /**

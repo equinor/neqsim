@@ -132,7 +132,8 @@ public class Manifold extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new ManifoldResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new ManifoldResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -143,6 +144,6 @@ public class Manifold extends ProcessEquipmentBaseClass {
     }
     ManifoldResponse res = new ManifoldResponse(this);
     res.applyConfig(cfg);
-    return new GsonBuilder().create().toJson(res);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 }

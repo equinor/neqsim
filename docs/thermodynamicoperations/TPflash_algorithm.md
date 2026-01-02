@@ -32,6 +32,7 @@ NeqSim implements the classical Michelsen flash algorithm with stability analysi
    - [3.0 Complete TPmultiflash Algorithm Flow](#30-complete-tpmultiflash-algorithm-flow)
    - [3.0.1 Stability Analysis Detailed Flow](#301-stability-analysis-detailed-flow)
    - [3.0.2 Multiphase Stability Analysis Additional Details](#302-multiphase-stability-analysis-additional-details)
+   - [3.0.3 Enhanced Stability Analysis](#303-enhanced-stability-analysis)
    - [3.1 Multiphase Equilibrium Formulation](#31-multiphase-equilibrium-formulation)
    - [3.2 Q-Function Minimization](#32-q-function-minimization)
    - [3.3 Phase Addition and Removal](#33-phase-addition-and-removal)
@@ -959,6 +960,135 @@ if (hasRemovedPhase && !secondTime) {
     run();  // Recursive call
 }
 ```
+
+### 3.0.3 Enhanced Stability Analysis
+
+When `system.setEnhancedMultiPhaseCheck(true)` is enabled, an additional stability analysis is performed using Wilson K-value based initialization. This is particularly useful for detecting liquid-liquid equilibria in complex mixtures such as sour gas systems (methane/CO₂/H₂S).
+
+#### Motivation
+
+The standard stability analysis may fail to detect additional phases in certain systems because:
+
+1. **Pure component initialization** may not provide good starting points for LLE
+2. **Wilson K-values** are vapor-pressure based and work well for VLE but not LLE
+3. Some systems require testing both **vapor-like** and **liquid-like** trial phases
+4. **Polarity-driven LLE** requires different initialization strategies
+
+#### Enhanced Algorithm
+
+The enhanced stability analysis (`stabilityAnalysisEnhanced()`) addresses these limitations:
+
+```
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                stabilityAnalysisEnhanced() ALGORITHM FLOW                      ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ STEP 1: WILSON K-VALUE CALCULATION                                              │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  FOR each valid component i (z > 1e-100, not ionic):                           │
+│     K[i] = (Pc[i] / P) × exp[5.373 × (1 + ω[i]) × (1 - Tc[i]/T)]              │
+│     log(K[i]) = ln(K[i])                                                        │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                        ↓
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ STEP 2: PRE-CALCULATE REFERENCE FUGACITIES                                      │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  FOR each existing phase p = 0 to numPhases-1:                                 │
+│     FOR each component k:                                                       │
+│        d_ref[p][k] = ln(x[p][k]) + ln(φ[p][k])                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                        ↓
+   ╔═════════════════════════════════════════════════════════════════════════════╗
+   ║  FOR EACH EXISTING PHASE AS REFERENCE (p = 0 to numPhases-1):               ║
+   ╠═════════════════════════════════════════════════════════════════════════════╣
+   ║  FOR EACH TRIAL TYPE (vapor-like, liquid-like, LLE):                        ║
+   ╚═════════════════════════════════════════════════════════════════════════════╝
+                                        ↓
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ STEP 3: TRIAL PHASE INITIALIZATION                                              │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  trialType = 1:  VAPOR-LIKE (VLE gas detection)                                │
+│     W[i] = exp(ln(K[i]))  → volatile components enriched                       │
+│                                                                                 │
+│  trialType = -1: LIQUID-LIKE (VLE liquid detection)                            │
+│     W[i] = exp(-ln(K[i])) = 1/K[i]  → heavy components enriched               │
+│                                                                                 │
+│  trialType = 0:  LLE TRIAL (polarity-based perturbation)                       │
+│     perturbFactor = 2.0 if ω[i] > 0.15 (polar), else 0.5 (non-polar)          │
+│     W[i] = z[i] × perturbFactor                                                │
+│                                                                                 │
+│  Note: LLE uses acentric factor as polarity proxy since Wilson K-values       │
+│  are derived from vapor pressure and don't capture activity coefficient-       │
+│  driven liquid-liquid splits.                                                   │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                        ↓
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ STEP 4: SSI LOOP WITH WEGSTEIN ACCELERATION                                     │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  FOR iter = 1 to maxIter (300):                                                │
+│     Calculate fugacity coefficients at normalized w[i]                         │
+│     Update: ln(W[i]) = d_ref[p] - ln(φ[i])                                     │
+│                                                                                 │
+│     IF iter % 5 == 0 AND iter > 5 (Wegstein acceleration):                     │
+│        λ = Σ(Δln(W)^n × Δln(W)^n-1) / Σ(Δln(W)^n-1)²                          │
+│        λ = clamp(λ, -0.5, 0.9)                                                 │
+│        ln(W[i]) += λ/(1-λ) × Δln(W[i])                                         │
+│                                                                                 │
+│     Check convergence: err = Σ|ln(W[i])^n - ln(W[i])^n-1|                      │
+│     IF err < 1e-10: BREAK                                                       │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                        ↓
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ STEP 5: STABILITY CHECK AND PHASE ADDITION                                      │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  tm = 1 - Σ W[i]                                                               │
+│                                                                                 │
+│  Check for trivial solution (composition too close to existing phase)          │
+│                                                                                 │
+│  IF tm < -1e-8 AND NOT trivial:                                                │
+│     → Add new phase with composition w[i] = W[i]/ΣW[j]                         │
+│     → multiPhaseTest = true                                                     │
+│     → RETURN                                                                    │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Key Differences from Standard Stability Analysis
+
+| Feature | Standard Analysis | Enhanced Analysis |
+|---------|-------------------|-------------------|
+| Initial guess | Pure component | Wilson K-values |
+| Trial types | Single | Vapor-like, Liquid-like, LLE |
+| Reference phase | Phase 0 only | All existing phases |
+| LLE detection | Component-based | Polarity perturbation |
+| Acceleration | DEM every 7 iterations | Wegstein every 5 iterations |
+| Hydrocarbon filtering | Yes (only heaviest/lightest) | No (all components tested) |
+
+#### When to Enable Enhanced Stability Analysis
+
+Enable `setEnhancedMultiPhaseCheck(true)` for:
+
+- **Sour gas systems**: Methane/CO₂/H₂S mixtures at low temperatures
+- **CO₂ systems**: CO₂ injection, sequestration, EOR applications
+- **Near-critical systems**: Where standard analysis may miss phase splits
+- **LLE detection**: Systems with polar/non-polar liquid-liquid equilibria
+
+**Example usage:**
+```java
+SystemInterface fluid = new SystemPrEos(210.0, 55.0);  // Low T, moderate P
+fluid.addComponent("methane", 49.88);
+fluid.addComponent("CO2", 9.87);
+fluid.addComponent("H2S", 40.22);
+fluid.setMixingRule("classic");
+fluid.setMultiPhaseCheck(true);
+fluid.setEnhancedMultiPhaseCheck(true);  // Enable enhanced detection
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPflash();
+// May find vapor + CO2-rich liquid + H2S-rich liquid
+```
+
+**Note:** Enhanced stability analysis adds computational overhead. For simple VLE systems, the standard analysis is sufficient and more efficient.
 
 ### 3.1 Multiphase Equilibrium Formulation
 

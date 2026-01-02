@@ -731,8 +731,8 @@ public class TurboExpanderCompressor extends Expander {
   }
 
   /**
-   * Calculate the IGV (Inlet Guide Vane) opening using the current flow conditions and last computed
-   * stage enthalpy drop.
+   * Calculate the IGV (Inlet Guide Vane) opening using the current flow conditions and last
+   * computed stage enthalpy drop.
    *
    * @return IGV opening (fraction of max area, capped at 1.0)
    */
@@ -875,7 +875,8 @@ public class TurboExpanderCompressor extends Expander {
    */
   public void setMaximumIGVArea(double maximumIGVArea) {
     this.maximumIGVArea = maximumIGVArea;
-    double activeArea = usingExpandedIGVArea ? maximumIGVArea * igvAreaIncreaseFactor : maximumIGVArea;
+    double activeArea =
+        usingExpandedIGVArea ? maximumIGVArea * igvAreaIncreaseFactor : maximumIGVArea;
     currentIGVArea = IGVopening * activeArea;
   }
 
@@ -886,7 +887,8 @@ public class TurboExpanderCompressor extends Expander {
   public void setIgvAreaIncreaseFactor(double igvAreaIncreaseFactor) {
     double factor = igvAreaIncreaseFactor < 1.0 ? 1.0 : igvAreaIncreaseFactor;
     this.igvAreaIncreaseFactor = factor;
-    double activeArea = usingExpandedIGVArea ? maximumIGVArea * this.igvAreaIncreaseFactor : maximumIGVArea;
+    double activeArea =
+        usingExpandedIGVArea ? maximumIGVArea * this.igvAreaIncreaseFactor : maximumIGVArea;
     currentIGVArea = IGVopening * activeArea;
   }
 
@@ -1284,7 +1286,8 @@ public class TurboExpanderCompressor extends Expander {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new TurboExpanderCompressorResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new TurboExpanderCompressorResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -1295,7 +1298,7 @@ public class TurboExpanderCompressor extends Expander {
     }
     TurboExpanderCompressorResponse res = new TurboExpanderCompressorResponse(this);
     res.applyConfig(cfg);
-    return new GsonBuilder().create().toJson(res);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 
   /**
@@ -1349,13 +1352,13 @@ public class TurboExpanderCompressor extends Expander {
     double compressorBalance = 0.0;
 
     if (expanderFeedStream != null && expanderOutletStream != null) {
-      expanderBalance = expanderOutletStream.getFlowRate(unit)
-          - expanderFeedStream.getFlowRate(unit);
+      expanderBalance =
+          expanderOutletStream.getFlowRate(unit) - expanderFeedStream.getFlowRate(unit);
     }
 
     if (compressorFeedStream != null && compressorOutletStream != null) {
-      compressorBalance = compressorOutletStream.getFlowRate(unit)
-          - compressorFeedStream.getFlowRate(unit);
+      compressorBalance =
+          compressorOutletStream.getFlowRate(unit) - compressorFeedStream.getFlowRate(unit);
     }
 
     return expanderBalance + compressorBalance;

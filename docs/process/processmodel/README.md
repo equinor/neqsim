@@ -28,10 +28,19 @@ NeqSim provides multiple execution strategies optimized for different process ty
 
 | Method | Best For | Description |
 |--------|----------|-------------|
-| `run()` | General use | Sequential execution in insertion order |
+| `run()` | General use | Sequential execution (or optimized if enabled) |
 | `runOptimized()` | **Recommended** | Auto-selects best strategy based on topology |
 | `runParallel()` | Feed-forward processes | Maximum parallelism for no-recycle processes |
 | `runHybrid()` | Complex processes | Parallel feed-forward + iterative recycle |
+
+### Enabling Optimized Execution by Default
+
+For best performance, enable optimized execution so `run()` automatically uses the best strategy:
+
+```java
+process.setUseOptimizedExecution(true);
+process.run();  // Now uses runOptimized() internally
+```
 
 **Typical performance improvements:**
 - Feed-forward processes: 40-57% speedup with parallel execution

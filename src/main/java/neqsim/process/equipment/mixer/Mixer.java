@@ -585,7 +585,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new MixerResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new MixerResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -596,7 +597,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     }
     MixerResponse res = new MixerResponse(this);
     res.applyConfig(cfg);
-    return new GsonBuilder().create().toJson(res);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 
   public StreamInterface getMixedStream() {

@@ -343,4 +343,25 @@ public class Pipeline extends TwoPortEquipment implements PipeLineInterface {
   public double getOutletPressure(String unit) {
     return outStream.getPressure(unit);
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new neqsim.process.util.monitor.PipelineResponse(this));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson(neqsim.process.util.report.ReportConfig cfg) {
+    if (cfg != null && cfg
+        .getDetailLevel(getName()) == neqsim.process.util.report.ReportConfig.DetailLevel.HIDE) {
+      return null;
+    }
+    neqsim.process.util.monitor.PipelineResponse res =
+        new neqsim.process.util.monitor.PipelineResponse(this);
+    res.applyConfig(cfg);
+    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(res);
+  }
 }

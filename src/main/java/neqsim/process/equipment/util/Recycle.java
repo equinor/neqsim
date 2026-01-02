@@ -1003,7 +1003,8 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new RecycleResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new RecycleResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -1014,6 +1015,6 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     }
     RecycleResponse res = new RecycleResponse(this);
     res.applyConfig(cfg);
-    return new GsonBuilder().create().toJson(res);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 }

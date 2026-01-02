@@ -210,7 +210,7 @@ public class StreamResponse extends BaseResponse {
                       inputStream.getTVP(37.8, "C", neqsim.util.unit.Units.getSymbol("pressure"))),
                   neqsim.util.unit.Units.getSymbol("pressure")));
         } catch (Exception ex) {
-          logger.error(ex.getMessage());
+          logger.debug("TVP calculation failed: {}", ex.getMessage());
         }
         try {
           newdata.put("RVP",
@@ -222,7 +222,7 @@ public class StreamResponse extends BaseResponse {
               Double.toString(inputStream.getFluid().getPhase(name).getDensity("kg/m3") / 1000.0),
               "-"));
         } catch (Exception ex) {
-          logger.error(ex.getMessage());
+          logger.debug("RVP calculation failed: {}", ex.getMessage());
         }
       } else if (name.equals("gas")) {
         Standard_ISO6976 standard = inputStream.getISO6976("volume", 15.0, 15.0);
