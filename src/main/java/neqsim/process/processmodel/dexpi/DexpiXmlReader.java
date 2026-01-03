@@ -1,4 +1,4 @@
-package neqsim.process.processmodel;
+package neqsim.process.processmodel.dexpi;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,11 +27,22 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Utility for reading DEXPI XML files and converting them into NeqSim process models.
+ *
+ * <p>
+ * This reader recognises major equipment such as pumps, heat exchangers, tanks and control valves
+ * as well as complex reactors, compressors and inline analysers. Piping segments are imported as
+ * runnable {@link DexpiStream} units tagged with the source line number.
+ * </p>
+ *
+ * @author NeqSim
+ * @version 1.0
+ * @see <a href="https://dexpi.org/">DEXPI Standard</a>
  */
 public final class DexpiXmlReader {
   private static final Logger logger = LogManager.getLogger(DexpiXmlReader.class);

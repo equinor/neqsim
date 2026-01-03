@@ -1,4 +1,4 @@
-package neqsim.process.processmodel;
+package neqsim.process.processmodel.dexpi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -11,15 +11,17 @@ import java.io.PrintStream;
 import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.processmodel.ProcessSystem;
 
 
 /**
- * 
  * Tests for {@link DexpiXmlReader}.
- * 
+ *
+ * @author NeqSim
+ * @version 1.0
  */
-
 public class DexpiXmlReaderTest extends NeqSimTest {
+
   @Test
   public void testRead() throws IOException, DexpiXmlReaderException {
     // Create a simple DEXPI XML file for testing

@@ -1,4 +1,4 @@
-package neqsim.process.processmodel;
+package neqsim.process.processmodel.dexpi;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,21 +24,32 @@ import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.processmodel.ProcessSystem;
 
 /**
  * Utility for exporting {@link ProcessSystem}s created from DEXPI data back into a lightweight
  * DEXPI XML representation.
+ *
+ * <p>
+ * The writer groups all discovered {@link DexpiStream} segments by line number (or fluid code when
+ * a line is not available) to generate simple {@code <PipingNetworkSystem>} elements with
+ * associated {@code <PipingNetworkSegment>} children.
+ * </p>
+ *
+ * @author NeqSim
+ * @version 1.0
+ * @see <a href="https://dexpi.org/">DEXPI Standard</a>
  */
 public final class DexpiXmlWriter {
   private static final Pattern NON_IDENTIFIER = Pattern.compile("[^A-Za-z0-9_-]");

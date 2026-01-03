@@ -9,6 +9,8 @@ This folder contains documentation for process system and flowsheet management i
 | [ProcessSystem](process_system.md) | Main process system class and execution strategies |
 | [ProcessModule](process_module.md) | Modular process units |
 | [Graph-Based Simulation](graph_simulation.md) | Graph-based execution and optimization |
+| [PFD Diagram Export](diagram_export.md) | Professional process flow diagram generation |
+| [Architecture & DEXPI](DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY.md) | Diagram architecture and DEXPI integration |
 
 ---
 
@@ -89,3 +91,4 @@ System.out.println(process.getExecutionPartitionInfo());
 - [Equipment Overview](../equipment/README.md) - Process equipment
 - [Controllers](../controllers.md) - Control systems
 - [Safety Systems](../safety/README.md) - Safety equipment
+- [DEXPI Integration](../../integration/dexpi-reader.md) - DEXPI P&ID data exchange

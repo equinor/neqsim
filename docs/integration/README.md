@@ -38,7 +38,7 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 
 | Document | Description |
 |----------|-------------|
-| [dexpi-reader.md](dexpi-reader.md) | DEXPI P&ID reader |
+| [dexpi-reader.md](dexpi-reader.md) | DEXPI P&ID import/export and diagram generation |
 
 ---
 
@@ -46,4 +46,5 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 
 - [Process Package](../process/README.md) - Process simulation
 - [Simulation Guides](../simulation/README.md) - Advanced simulation
+- [PFD Diagram Export](../process/processmodel/diagram_export.md) - Professional diagram generation
 

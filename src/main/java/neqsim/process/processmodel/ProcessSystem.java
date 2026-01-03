@@ -3064,6 +3064,99 @@ public class ProcessSystem extends SimulationBaseClass {
     return generator.enableAllFailureModes().generateCombinations(maxSimultaneousFailures);
   }
 
+  // ============ DIAGRAM EXPORT ============
+
+  /**
+   * Exports the process as a DOT format diagram string.
+   *
+   * <p>
+   * Generates a professional oil &amp; gas style process flow diagram (PFD) following industry
+   * conventions:
+   * </p>
+   * <ul>
+   * <li>Gravity logic - Gas equipment at top, liquid at bottom</li>
+   * <li>Phase-aware styling - Streams colored by vapor/liquid fraction</li>
+   * <li>Separator semantics - Gas exits top, liquid exits bottom</li>
+   * <li>Equipment shapes matching P&amp;ID symbols</li>
+   * </ul>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   *
+   * <pre>
+   * String dot = process.toDOT();
+   * Files.writeString(Path.of("process.dot"), dot);
+   * // Render with: dot -Tsvg process.dot -o process.svg
+   * </pre>
+   *
+   * @return Graphviz DOT format string
+   * @see neqsim.process.processmodel.diagram.ProcessDiagramExporter
+   */
+  public String toDOT() {
+    return new neqsim.process.processmodel.diagram.ProcessDiagramExporter(this).toDOT();
+  }
+
+  /**
+   * Exports the process as a DOT format diagram with specified detail level.
+   *
+   * @param detailLevel the level of detail to include (CONCEPTUAL, ENGINEERING, DEBUG)
+   * @return Graphviz DOT format string
+   * @see neqsim.process.processmodel.diagram.DiagramDetailLevel
+   */
+  public String toDOT(neqsim.process.processmodel.diagram.DiagramDetailLevel detailLevel) {
+    return new neqsim.process.processmodel.diagram.ProcessDiagramExporter(this)
+        .setDetailLevel(detailLevel).toDOT();
+  }
+
+  /**
+   * Creates a diagram exporter for this process with full configuration options.
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   *
+   * <pre>
+   * process.createDiagramExporter().setTitle("Gas Processing Plant")
+   *     .setDetailLevel(DiagramDetailLevel.ENGINEERING).setVerticalLayout(true)
+   *     .exportSVG(Path.of("diagram.svg"));
+   * </pre>
+   *
+   * @return a new ProcessDiagramExporter configured for this process
+   * @see neqsim.process.processmodel.diagram.ProcessDiagramExporter
+   */
+  public neqsim.process.processmodel.diagram.ProcessDiagramExporter createDiagramExporter() {
+    return new neqsim.process.processmodel.diagram.ProcessDiagramExporter(this);
+  }
+
+  /**
+   * Exports the process diagram to SVG format.
+   *
+   * <p>
+   * Requires Graphviz (dot) to be installed and available in PATH.
+   * </p>
+   *
+   * @param path the output file path
+   * @throws java.io.IOException if export fails
+   */
+  public void exportDiagramSVG(java.nio.file.Path path) throws java.io.IOException {
+    new neqsim.process.processmodel.diagram.ProcessDiagramExporter(this).exportSVG(path);
+  }
+
+  /**
+   * Exports the process diagram to PNG format.
+   *
+   * <p>
+   * Requires Graphviz (dot) to be installed and available in PATH.
+   * </p>
+   *
+   * @param path the output file path
+   * @throws java.io.IOException if export fails
+   */
+  public void exportDiagramPNG(java.nio.file.Path path) throws java.io.IOException {
+    new neqsim.process.processmodel.diagram.ProcessDiagramExporter(this).exportPNG(path);
+  }
+
   /*
    * @XmlRootElement private class Report extends Object{ public Double name; public
    * ArrayList<ReportInterface> unitOperationsReports = new ArrayList<ReportInterface>();
