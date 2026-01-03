@@ -915,7 +915,7 @@ public class PFDLayoutPolicy implements Serializable {
       }
 
       // Check if upstream is a separator - determine which outlet
-      ProcessNode sourceNode = edge.getSourceNode();
+      ProcessNode sourceNode = edge.getSource();
       if (sourceNode != null) {
         ProcessEquipmentInterface upstreamEquip = sourceNode.getEquipment();
         if (upstreamEquip != null) {
@@ -999,7 +999,7 @@ public class PFDLayoutPolicy implements Serializable {
       }
 
       // Check if upstream is a separator - if so, check which outlet we're connected to
-      ProcessNode sourceNode = edge.getSourceNode();
+      ProcessNode sourceNode = edge.getSource();
       if (sourceNode != null) {
         ProcessEquipmentInterface upstreamEquip = sourceNode.getEquipment();
         if (upstreamEquip != null) {
