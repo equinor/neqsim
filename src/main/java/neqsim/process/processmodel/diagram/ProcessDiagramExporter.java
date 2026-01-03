@@ -371,17 +371,30 @@ public class ProcessDiagramExporter implements Serializable {
       }
     }
 
-    // Create ordering edges (invisible, no weight on horizontal flow)
+    // Create ordering edges with weight to enforce vertical positioning
+    // In LR mode, these invisible edges create vertical separation (perpendicular to flow)
     if (gasRep != null && oilRep != null) {
       sb.append("  \"").append(escapeString(gasRep.getName())).append("\" -> \"");
       sb.append(escapeString(oilRep.getName()));
-      sb.append("\" [style=invis, constraint=false];\n");
+      sb.append("\" [style=invis, weight=10];\n");
     }
 
     if (oilRep != null && waterRep != null) {
       sb.append("  \"").append(escapeString(oilRep.getName())).append("\" -> \"");
       sb.append(escapeString(waterRep.getName()));
-      sb.append("\" [style=invis, constraint=false];\n");
+      sb.append("\" [style=invis, weight=10];\n");
+    }
+
+    // Also add same-rank groupings within each phase zone
+    for (Map.Entry<PFDLayoutPolicy.PhaseZone, List<ProcessNode>> entry : phaseGroups.entrySet()) {
+      List<ProcessNode> nodes = entry.getValue();
+      if (nodes.size() > 1) {
+        sb.append("  { rank=same; ");
+        for (ProcessNode node : nodes) {
+          sb.append("\"").append(escapeString(node.getName())).append("\"; ");
+        }
+        sb.append("}\n");
+      }
     }
 
     sb.append("\n");
