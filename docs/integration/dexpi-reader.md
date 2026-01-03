@@ -41,7 +41,7 @@ invoked without requiring downstream tooling to remap metadata.
 
 ### Metadata conventions
 
-Both the reader and writer share the [`DexpiMetadata`](../src/main/java/neqsim/process/processmodel/DexpiMetadata.java)
+Both the reader and writer share the [`DexpiMetadata`](../../src/main/java/neqsim/process/processmodel/dexpi/DexpiMetadata.java)
 constants that describe the recommended generic attributes for DEXPI exchanges. Equipment exports
 include tag names, line numbers and fluid codes, while piping segments also carry segment numbers
 and operating pressure/temperature/flow triples (together with their units). Downstream tools can
@@ -77,7 +77,7 @@ or Graphviz exports—can easily recreate line-centric layouts without additiona
 ### Round-trip profile
 
 To codify the minimal metadata required for reliable imports/exports NeqSim exposes the
-[`DexpiRoundTripProfile`](../src/main/java/neqsim/process/processmodel/DexpiRoundTripProfile.java)
+[`DexpiRoundTripProfile`](../../src/main/java/neqsim/process/processmodel/dexpi/DexpiRoundTripProfile.java)
 utility. The `minimalRunnableProfile` validates that a process contains runnable `DexpiStream`
 segments (with line/fluid references and operating conditions), tagged equipment and at least one
 piece of equipment alongside the piping network. Regression tests enforce this profile on the

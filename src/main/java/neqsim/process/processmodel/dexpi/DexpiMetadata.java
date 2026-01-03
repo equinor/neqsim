@@ -1,4 +1,4 @@
-package neqsim.process.processmodel;
+package neqsim.process.processmodel.dexpi;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,11 +50,10 @@ public final class DexpiMetadata {
   /** Default volumetric flow unit written to DEXPI documents. */
   public static final String DEFAULT_FLOW_UNIT = "MSm3/day";
 
-  private static final Set<String> RECOMMENDED_STREAM_ATTRIBUTES =
-      Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(LINE_NUMBER, FLUID_CODE,
-          SEGMENT_NUMBER, OPERATING_PRESSURE_VALUE, OPERATING_PRESSURE_UNIT,
-          OPERATING_TEMPERATURE_VALUE, OPERATING_TEMPERATURE_UNIT, OPERATING_FLOW_VALUE,
-          OPERATING_FLOW_UNIT)));
+  private static final Set<String> RECOMMENDED_STREAM_ATTRIBUTES = Collections
+      .unmodifiableSet(new LinkedHashSet<>(Arrays.asList(LINE_NUMBER, FLUID_CODE, SEGMENT_NUMBER,
+          OPERATING_PRESSURE_VALUE, OPERATING_PRESSURE_UNIT, OPERATING_TEMPERATURE_VALUE,
+          OPERATING_TEMPERATURE_UNIT, OPERATING_FLOW_VALUE, OPERATING_FLOW_UNIT)));
 
   private static final Set<String> RECOMMENDED_EQUIPMENT_ATTRIBUTES = Collections
       .unmodifiableSet(new LinkedHashSet<>(Arrays.asList(TAG_NAME, LINE_NUMBER, FLUID_CODE)));
