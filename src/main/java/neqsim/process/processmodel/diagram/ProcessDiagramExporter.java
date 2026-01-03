@@ -15,11 +15,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.processmodel.dexpi.DexpiProcessUnit;
+import neqsim.process.processmodel.dexpi.DexpiStream;
 import neqsim.process.processmodel.graph.ProcessEdge;
 import neqsim.process.processmodel.graph.ProcessGraph;
 import neqsim.process.processmodel.graph.ProcessGraphBuilder;
 import neqsim.process.processmodel.graph.ProcessNode;
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -95,6 +97,9 @@ public class ProcessDiagramExporter implements Serializable {
 
   /** Whether to show control equipment (adjusters, calculators). */
   private boolean showControlEquipment = true;
+
+  /** Whether to show DEXPI metadata (tag names, line numbers, fluid codes). */
+  private boolean showDexpiMetadata = true;
 
   /**
    * Creates a new diagram exporter for a process system.
@@ -554,8 +559,8 @@ public class ProcessDiagramExporter implements Serializable {
     String name = node.getName();
     String type = node.getEquipmentType();
 
-    // Get visual style
-    EquipmentVisualStyle style = EquipmentVisualStyle.getStyle(type);
+    // Get visual style - use getStyleForEquipment for DEXPI-aware styling
+    EquipmentVisualStyle style = EquipmentVisualStyle.getStyleForEquipment(equipment);
 
     // Build label based on detail level
     String label = buildNodeLabel(equipment, name, type);
@@ -607,9 +612,55 @@ public class ProcessDiagramExporter implements Serializable {
           // Ignore
         }
       }
+
+      // Add DEXPI metadata if enabled
+      if (showDexpiMetadata) {
+        appendDexpiMetadata(label, equipment);
+      }
     }
 
     return label.toString();
+  }
+
+  /**
+   * Appends DEXPI metadata (tag names, line numbers, fluid codes) to a label.
+   *
+   * <p>
+   * This enriches diagram labels with P&amp;ID reference information for equipment imported from
+   * DEXPI XML files.
+   * </p>
+   *
+   * @param label the label builder to append to
+   * @param equipment the equipment to check for DEXPI metadata
+   */
+  private void appendDexpiMetadata(StringBuilder label, ProcessEquipmentInterface equipment) {
+    if (equipment instanceof DexpiProcessUnit) {
+      DexpiProcessUnit dexpiUnit = (DexpiProcessUnit) equipment;
+      String lineNumber = dexpiUnit.getLineNumber();
+      String fluidCode = dexpiUnit.getFluidCode();
+
+      if (lineNumber != null && !lineNumber.trim().isEmpty()) {
+        label.append("\\n");
+        label.append("Line: ").append(lineNumber);
+      }
+      if (fluidCode != null && !fluidCode.trim().isEmpty()) {
+        label.append("\\n");
+        label.append("Fluid: ").append(fluidCode);
+      }
+    } else if (equipment instanceof DexpiStream) {
+      DexpiStream dexpiStream = (DexpiStream) equipment;
+      String lineNumber = dexpiStream.getLineNumber();
+      String fluidCode = dexpiStream.getFluidCode();
+
+      if (lineNumber != null && !lineNumber.trim().isEmpty()) {
+        label.append("\\n");
+        label.append("Line: ").append(lineNumber);
+      }
+      if (fluidCode != null && !fluidCode.trim().isEmpty()) {
+        label.append("\\n");
+        label.append("Fluid: ").append(fluidCode);
+      }
+    }
   }
 
   /**
@@ -1097,6 +1148,22 @@ public class ProcessDiagramExporter implements Serializable {
    */
   public ProcessDiagramExporter setShowControlEquipment(boolean showControlEquipment) {
     this.showControlEquipment = showControlEquipment;
+    return this;
+  }
+
+  /**
+   * Sets whether to show DEXPI metadata (tag names, line numbers, fluid codes) in labels.
+   *
+   * <p>
+   * When enabled, equipment imported from DEXPI XML files will have their P&amp;ID reference
+   * information (line numbers, fluid codes) displayed in the diagram labels.
+   * </p>
+   *
+   * @param showDexpiMetadata true to show DEXPI metadata
+   * @return this exporter for chaining
+   */
+  public ProcessDiagramExporter setShowDexpiMetadata(boolean showDexpiMetadata) {
+    this.showDexpiMetadata = showDexpiMetadata;
     return this;
   }
 }

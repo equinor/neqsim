@@ -293,18 +293,20 @@ The PFD diagram system integrates cleanly:
 - Follows NeqSim patterns (Serializable, Java 8 compatible)
 - Provides convenience methods on `ProcessSystem` (facade pattern)
 
-### DEXPI Synergy: High Potential
+### DEXPI Synergy: ✅ Implemented
 
-| Synergy Area | Effort | Impact | Priority |
-|--------------|--------|--------|----------|
-| EquipmentEnum unification | Low | High | P1 |
-| DEXPI metadata in labels | Medium | Medium | P2 |
-| Layout coordinate exchange | High | High | P3 |
-| ISO 10628 symbol mapping | Medium | Medium | P4 |
+| Synergy Area | Status | Implementation |
+|--------------|--------|----------------|
+| EquipmentEnum unification | ✅ Complete | `EquipmentVisualStyle.getStyle(EquipmentEnum)` |
+| DEXPI metadata in labels | ✅ Complete | `appendDexpiMetadata()`, `setShowDexpiMetadata()` |
+| DexpiDiagramBridge | ✅ Complete | `DexpiDiagramBridge` class with round-trip support |
+| ISO 10628 symbol mapping | ⏳ Future | Planned for P&ID compliance |
 
-### Recommended Next Steps
+### Available Features
 
-1. **Immediate**: Add `EquipmentEnum` overload to `EquipmentVisualStyle.getStyle()`
-2. **Short-term**: Detect DEXPI units and enrich diagram labels with tag/line info
-3. **Medium-term**: Create `DexpiDiagramBridge` for bidirectional integration
-4. **Long-term**: ISO 10628 symbol standardization for full P&ID compliance
+1. **`EquipmentVisualStyle.getStyle(EquipmentEnum)`** - Unified styling via canonical enum
+2. **`EquipmentVisualStyle.getStyleForEquipment(equipment)`** - Auto-detects DEXPI units
+3. **`ProcessDiagramExporter.setShowDexpiMetadata(true)`** - Display line numbers/fluid codes
+4. **`DexpiDiagramBridge.createExporter(system)`** - Pre-configured DEXPI-aware exporter
+5. **`DexpiDiagramBridge.importAndCreateExporter(path)`** - One-step DEXPI → diagram
+6. **`DexpiDiagramBridge.roundTrip(input, dotOutput, dexpiOutput)`** - Full import/simulate/export

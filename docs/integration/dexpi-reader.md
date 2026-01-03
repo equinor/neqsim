@@ -74,6 +74,34 @@ Each piping network is also labelled with a `NeqSimGroupingKey` generic attribut
 visualisation libraries—such as [pyDEXPI](https://github.com/process-intelligence-research/pyDEXPI)
 or Graphviz exports—can easily recreate line-centric layouts without additional heuristics.
 
+### Generating PFD diagrams from DEXPI
+
+The `DexpiDiagramBridge` class provides seamless integration between DEXPI imports and NeqSim's
+PFD diagram generation system. This allows you to import P&ID data and immediately produce
+professional process flow diagrams.
+
+```java
+// One-step: import DEXPI and create diagram exporter
+ProcessDiagramExporter exporter = DexpiDiagramBridge.importAndCreateExporter(
+    Paths.get("plant.xml"));
+exporter.exportAsDOT(Paths.get("diagram.dot"));
+exporter.exportAsSVG(Paths.get("diagram.svg"));  // Requires Graphviz
+
+// Full round-trip: import → simulate → diagram → export
+ProcessSystem system = DexpiDiagramBridge.roundTrip(
+    Paths.get("input.xml"),     // Input DEXPI
+    Paths.get("diagram.dot"),   // Output DOT diagram
+    Paths.get("output.xml"));   // Re-exported DEXPI with simulation results
+
+// Create optimized exporter for existing DEXPI-imported process
+ProcessDiagramExporter exporter = DexpiDiagramBridge.createExporter(system);
+exporter.setShowDexpiMetadata(true);  // Show line numbers and fluid codes in labels
+```
+
+The bridge automatically configures the diagram exporter to display DEXPI metadata (tag names, line
+numbers, fluid codes) alongside equipment labels, making it easy to cross-reference the generated
+PFD with the original P&ID source.
+
 ### Round-trip profile
 
 To codify the minimal metadata required for reliable imports/exports NeqSim exposes the

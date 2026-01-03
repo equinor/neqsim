@@ -16,15 +16,17 @@ String dot = process.toDOT();
 // Or use the diagram exporter for more control
 process.createDiagramExporter()
     .setTitle("Gas Processing Plant")
-    .setDetailLevel(DiagramDetailLevel.ENGINEERING)
-    .exportSVG(Path.of("diagram.svg"));
+    .setDetailLevel(DiagramDetailLevel.STANDARD)
+    .exportAsSVG(Path.of("diagram.svg"));
 ```
 
 ## Features
 
 ### Gravity-Based Layout
 
-The diagram layout follows oil & gas conventions:
+The diagram layout follows oil & gas conventions with left-to-right flow:
+- **Feed streams** enter from the **left**
+- **Products** exit from the **right**
 - **Gas equipment** positioned at **top** (compressors, gas coolers)
 - **Separators** positioned at **center** (anchor points)
 - **Liquid equipment** positioned at **bottom** (pumps, liquid heaters)
@@ -227,21 +229,22 @@ process.exportDiagramPNG(Path.of("diagram.png"));
 ```java
 ProcessDiagramExporter exporter = new ProcessDiagramExporter(process)
     .setTitle("My Process")
-    .setDetailLevel(DiagramDetailLevel.ENGINEERING)
-    .setVerticalLayout(true)    // TB layout (gas top, liquid bottom)
+    .setDetailLevel(DiagramDetailLevel.STANDARD)
+    .setVerticalLayout(false)   // LR layout (left-to-right flow) - default
     .setUseClusters(true)       // Group equipment by role
     .setShowLegend(true)        // Include legend
     .setShowStreamValues(true)  // Show T/P/F on streams
     .setUseStreamTables(false)  // Use HTML tables (true) or text (false)
     .setHighlightRecycles(true) // Highlight recycle streams
-    .setShowControlEquipment(true); // Show/hide control equipment
+    .setShowControlEquipment(true)  // Show/hide control equipment
+    .setShowDexpiMetadata(true);    // Show DEXPI line numbers/fluid codes
 
 // Export options
 String dot = exporter.toDOT();
-exporter.exportDOT(Path.of("diagram.dot"));
-exporter.exportSVG(Path.of("diagram.svg"));  // Requires Graphviz
-exporter.exportPNG(Path.of("diagram.png"));  // Requires Graphviz
-exporter.exportPDF(Path.of("diagram.pdf"));  // Requires Graphviz
+exporter.exportAsDOT(Path.of("diagram.dot"));
+exporter.exportAsSVG(Path.of("diagram.svg"));  // Requires Graphviz
+exporter.exportAsPNG(Path.of("diagram.png"));  // Requires Graphviz
+exporter.exportAsPDF(Path.of("diagram.pdf"));  // Requires Graphviz
 ```
 
 
@@ -425,6 +428,57 @@ This generates a PFD with:
 - Recycle equipment visible (or hidden with `setShowControlEquipment(false)`)
 - Legend includes recycle stream indicator
 
+## DEXPI Integration
+
+The diagram system integrates with DEXPI (Data Exchange in the Process Industry) for importing
+P&ID data and generating PFD diagrams from industry-standard data exchange files.
+
+### One-Step Import and Diagram
+
+```java
+// Import DEXPI XML and create pre-configured diagram exporter
+ProcessDiagramExporter exporter = DexpiDiagramBridge.importAndCreateExporter(
+    Paths.get("plant.xml"));
+
+// DEXPI metadata (line numbers, fluid codes) shown in labels by default
+exporter.exportAsDOT(Paths.get("diagram.dot"));
+exporter.exportAsSVG(Paths.get("diagram.svg"));  // Requires Graphviz
+```
+
+### Full Round-Trip Workflow
+
+```java
+// Import DEXPI → run simulation → generate diagram → export enriched DEXPI
+ProcessSystem system = DexpiDiagramBridge.roundTrip(
+    Paths.get("input.xml"),     // Input DEXPI P&ID file
+    Paths.get("diagram.dot"),   // Output diagram
+    Paths.get("output.xml"));   // Re-exported DEXPI with simulation results
+```
+
+### DEXPI Metadata in Labels
+
+Equipment imported from DEXPI files displays P&ID reference information:
+- **Line numbers** - Cross-reference to P&ID line designations
+- **Fluid codes** - Process fluid identification
+- **Tag names** - Equipment tag from original P&ID
+
+```java
+// Enable/disable DEXPI metadata display
+exporter.setShowDexpiMetadata(true);
+```
+
+### Creating Exporters for DEXPI-Imported Processes
+
+```java
+// Standard exporter with DEXPI features enabled
+ProcessDiagramExporter exporter = DexpiDiagramBridge.createExporter(system);
+
+// Detailed exporter with full operating conditions
+ProcessDiagramExporter detailed = DexpiDiagramBridge.createDetailedExporter(system);
+```
+
+See [DEXPI XML Reader](../../integration/dexpi-reader.md) for complete DEXPI import/export documentation.
+
 ## Customization
 
 ### Custom Layout Policy
@@ -453,7 +507,8 @@ The diagram export system consists of:
 2. **PFDLayoutPolicy** - Layout intelligence layer with gravity logic
 3. **EquipmentRole** - Classification of equipment by function
 4. **DiagramDetailLevel** - Control over information density
-5. **EquipmentVisualStyle** - Visual styling for equipment types
+5. **EquipmentVisualStyle** - Visual styling for equipment types (unified with EquipmentEnum)
+6. **DexpiDiagramBridge** - Integration bridge for DEXPI P&ID data exchange
 
 ## Design Philosophy
 
