@@ -849,13 +849,115 @@ public class PFDLayoutPolicy implements Serializable {
         // Try to distinguish oil vs water processing
         return classifyLiquidZone(node);
 
+      case MIXED:
+      case CONTROL:
+      case UNKNOWN:
+        // For mixed/control/unknown equipment, trace upstream to determine zone
+        return classifyByUpstreamPhase(node);
+
       default:
         return PhaseZone.UNKNOWN;
     }
   }
 
   /**
+   * Classifies a node's phase zone by tracing its upstream connections.
+   *
+   * <p>
+   * This method is used for equipment that could handle any phase (mixers, heaters, coolers, valves
+   * etc.) by examining what streams feed into it.
+   * </p>
+   *
+   * @param node the process node
+   * @return the phase zone based on upstream connections
+   */
+  private PhaseZone classifyByUpstreamPhase(ProcessNode node) {
+    // Check equipment name for hints first
+    String name = node.getName().toLowerCase();
+    if (name.contains("gas") || name.contains("vapor")) {
+      return PhaseZone.GAS_TOP;
+    }
+    if (isWaterRelatedName(name)) {
+      return PhaseZone.WATER_BOTTOM;
+    }
+    if (name.contains("oil") || name.contains("crude") || name.contains("condensate")) {
+      return PhaseZone.OIL_MIDDLE;
+    }
+
+    // Check inlet streams
+    List<ProcessEdge> incomingEdges = node.getIncomingEdges();
+    for (ProcessEdge edge : incomingEdges) {
+      if (edge.getStream() != null) {
+        // Check stream name
+        String streamName = edge.getStream().getName().toLowerCase();
+        if (streamName.contains("gas") || streamName.contains("vapor")) {
+          return PhaseZone.GAS_TOP;
+        }
+        if (isWaterRelatedName(streamName)) {
+          return PhaseZone.WATER_BOTTOM;
+        }
+        if (streamName.contains("oil") || streamName.contains("condensate")
+            || streamName.contains("crude")) {
+          return PhaseZone.OIL_MIDDLE;
+        }
+
+        // Check stream phase from thermodynamic properties
+        StreamPhase phase = classifyStreamPhase(edge.getStream());
+        if (phase == StreamPhase.GAS) {
+          return PhaseZone.GAS_TOP;
+        }
+        if (phase == StreamPhase.AQUEOUS) {
+          return PhaseZone.WATER_BOTTOM;
+        }
+        if (phase == StreamPhase.OIL) {
+          return PhaseZone.OIL_MIDDLE;
+        }
+      }
+
+      // Check if upstream is a separator - determine which outlet
+      ProcessNode sourceNode = edge.getSource();
+      if (sourceNode != null) {
+        ProcessEquipmentInterface upstreamEquip = sourceNode.getEquipment();
+        if (upstreamEquip != null) {
+          EquipmentRole upstreamRole = classifyEquipment(upstreamEquip);
+          if (upstreamRole == EquipmentRole.SEPARATOR) {
+            // Determine which outlet based on stream phase
+            if (edge.getStream() != null) {
+              StreamPhase phase = classifyStreamPhase(edge.getStream());
+              if (phase == StreamPhase.GAS) {
+                return PhaseZone.GAS_TOP;
+              }
+              if (phase == StreamPhase.AQUEOUS) {
+                return PhaseZone.WATER_BOTTOM;
+              }
+              if (phase == StreamPhase.OIL || phase == StreamPhase.LIQUID) {
+                return PhaseZone.OIL_MIDDLE;
+              }
+            }
+          }
+
+          // Inherit zone from upstream gas or liquid equipment
+          if (upstreamRole == EquipmentRole.GAS) {
+            return PhaseZone.GAS_TOP;
+          }
+          if (upstreamRole == EquipmentRole.LIQUID) {
+            return classifyLiquidZone(sourceNode);
+          }
+        }
+      }
+    }
+
+    // Default to separation center for truly mixed equipment
+    return PhaseZone.SEPARATION_CENTER;
+  }
+
+  /**
    * Classifies a liquid processing node as oil or water zone.
+   *
+   * <p>
+   * This method traces the stream back to determine if it originates from a separator's oil or
+   * water outlet, ensuring proper vertical positioning in the PFD.
+   * </p>
    *
    * @param node the process node
    * @return OIL_MIDDLE or WATER_BOTTOM
@@ -863,17 +965,30 @@ public class PFDLayoutPolicy implements Serializable {
   private PhaseZone classifyLiquidZone(ProcessNode node) {
     // Check equipment name for hints
     String name = node.getName().toLowerCase();
-    if (name.contains("water") || name.contains("aqueous") || name.contains("brine")) {
+    if (isWaterRelatedName(name)) {
       return PhaseZone.WATER_BOTTOM;
     }
     if (name.contains("oil") || name.contains("crude") || name.contains("condensate")) {
       return PhaseZone.OIL_MIDDLE;
     }
 
-    // Check inlet stream phase if available
+    // Check inlet stream phase and trace back to separator outlet
     List<ProcessEdge> incomingEdges = node.getIncomingEdges();
     for (ProcessEdge edge : incomingEdges) {
+      // First check the stream name for separator outlet hints
       if (edge.getStream() != null) {
+        String streamName = edge.getStream().getName().toLowerCase();
+        // Check for water/aqueous outlet naming patterns
+        if (isWaterRelatedName(streamName)) {
+          return PhaseZone.WATER_BOTTOM;
+        }
+        // Check for oil outlet naming patterns
+        if (streamName.contains("oil") || streamName.contains("liquid out")
+            || streamName.contains("condensate") || streamName.contains("crude")) {
+          return PhaseZone.OIL_MIDDLE;
+        }
+
+        // Check stream phase from thermodynamic properties
         StreamPhase phase = classifyStreamPhase(edge.getStream());
         if (phase == StreamPhase.AQUEOUS) {
           return PhaseZone.WATER_BOTTOM;
@@ -882,10 +997,57 @@ public class PFDLayoutPolicy implements Serializable {
           return PhaseZone.OIL_MIDDLE;
         }
       }
+
+      // Check if upstream is a separator - if so, check which outlet we're connected to
+      ProcessNode sourceNode = edge.getSource();
+      if (sourceNode != null) {
+        ProcessEquipmentInterface upstreamEquip = sourceNode.getEquipment();
+        if (upstreamEquip != null) {
+          EquipmentRole upstreamRole = classifyEquipment(upstreamEquip);
+          if (upstreamRole == EquipmentRole.SEPARATOR) {
+            // This node is downstream of a separator
+            // Check the stream name or phase to determine oil vs water outlet
+            if (edge.getStream() != null) {
+              StreamPhase phase = classifyStreamPhase(edge.getStream());
+              if (phase == StreamPhase.AQUEOUS) {
+                return PhaseZone.WATER_BOTTOM;
+              }
+              // Non-aqueous liquid from separator = oil
+              if (phase == StreamPhase.OIL || phase == StreamPhase.LIQUID) {
+                return PhaseZone.OIL_MIDDLE;
+              }
+            }
+            // Default: liquid from separator without clear phase = oil
+            return PhaseZone.OIL_MIDDLE;
+          }
+
+          // If upstream is also liquid processing, inherit its zone
+          if (upstreamRole == EquipmentRole.LIQUID) {
+            PhaseZone upstreamZone = classifyPhaseZone(sourceNode);
+            if (upstreamZone == PhaseZone.WATER_BOTTOM || upstreamZone == PhaseZone.OIL_MIDDLE) {
+              return upstreamZone;
+            }
+          }
+        }
+      }
     }
 
     // Default to oil/middle for generic liquid
     return PhaseZone.OIL_MIDDLE;
+  }
+
+  /**
+   * Checks if a name contains water-related keywords.
+   *
+   * @param name the name to check (should be lowercase)
+   * @return true if the name indicates water/aqueous processing
+   */
+  private boolean isWaterRelatedName(String name) {
+    return name.contains("water") || name.contains("aqueous") || name.contains("brine")
+        || name.contains("produced water") || name.contains("wastewater")
+        || name.contains("waste water") || name.contains("hydrate") || name.contains("dehydrat")
+        || name.contains("glycol") || name.contains("meg") || name.contains("deg")
+        || name.contains("teg");
   }
 
   /**
