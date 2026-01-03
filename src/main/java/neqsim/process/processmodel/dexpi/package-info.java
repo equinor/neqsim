@@ -1,5 +1,5 @@
 /**
- * DEXPI integration layer for importing and exporting P&ID data.
+ * DEXPI integration layer for importing and exporting P&amp;ID data.
  *
  * <p>
  * This package provides utilities for working with DEXPI (Data Exchange in the Process Industry)
@@ -8,9 +8,9 @@
  *
  * <h2>Key Components</h2>
  * <ul>
- * <li>{@link neqsim.process.processmodel.dexpi.DexpiXmlReader} - Import DEXPI P&ID XML →
+ * <li>{@link neqsim.process.processmodel.dexpi.DexpiXmlReader} - Import DEXPI P&amp;ID XML to
  * ProcessSystem</li>
- * <li>{@link neqsim.process.processmodel.dexpi.DexpiXmlWriter} - Export ProcessSystem → DEXPI
+ * <li>{@link neqsim.process.processmodel.dexpi.DexpiXmlWriter} - Export ProcessSystem to DEXPI
  * XML</li>
  * <li>{@link neqsim.process.processmodel.dexpi.DexpiProcessUnit} - Lightweight placeholder for
  * imported equipment</li>
