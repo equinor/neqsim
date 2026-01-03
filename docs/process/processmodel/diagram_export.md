@@ -229,7 +229,7 @@ process.exportDiagramPNG(Path.of("diagram.png"));
 ```java
 ProcessDiagramExporter exporter = new ProcessDiagramExporter(process)
     .setTitle("My Process")
-    .setDetailLevel(DiagramDetailLevel.STANDARD)
+    .setDetailLevel(DiagramDetailLevel.ENGINEERING)
     .setVerticalLayout(false)   // LR layout (left-to-right flow) - default
     .setUseClusters(true)       // Group equipment by role
     .setShowLegend(true)        // Include legend
@@ -241,10 +241,10 @@ ProcessDiagramExporter exporter = new ProcessDiagramExporter(process)
 
 // Export options
 String dot = exporter.toDOT();
-exporter.exportAsDOT(Path.of("diagram.dot"));
-exporter.exportAsSVG(Path.of("diagram.svg"));  // Requires Graphviz
-exporter.exportAsPNG(Path.of("diagram.png"));  // Requires Graphviz
-exporter.exportAsPDF(Path.of("diagram.pdf"));  // Requires Graphviz
+exporter.exportDOT(Path.of("diagram.dot"));
+exporter.exportSVG(Path.of("diagram.svg"));  // Requires Graphviz
+exporter.exportPNG(Path.of("diagram.png"));  // Requires Graphviz
+exporter.exportPDF(Path.of("diagram.pdf"));  // Requires Graphviz
 ```
 
 
@@ -441,8 +441,8 @@ ProcessDiagramExporter exporter = DexpiDiagramBridge.importAndCreateExporter(
     Paths.get("plant.xml"));
 
 // DEXPI metadata (line numbers, fluid codes) shown in labels by default
-exporter.exportAsDOT(Paths.get("diagram.dot"));
-exporter.exportAsSVG(Paths.get("diagram.svg"));  // Requires Graphviz
+exporter.exportDOT(Paths.get("diagram.dot"));
+exporter.exportSVG(Paths.get("diagram.svg"));  // Requires Graphviz
 ```
 
 ### Full Round-Trip Workflow

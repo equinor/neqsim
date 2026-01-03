@@ -84,10 +84,10 @@ professional process flow diagrams.
 // One-step: import DEXPI and create diagram exporter
 ProcessDiagramExporter exporter = DexpiDiagramBridge.importAndCreateExporter(
     Paths.get("plant.xml"));
-exporter.exportAsDOT(Paths.get("diagram.dot"));
-exporter.exportAsSVG(Paths.get("diagram.svg"));  // Requires Graphviz
+exporter.exportDOT(Paths.get("diagram.dot"));
+exporter.exportSVG(Paths.get("diagram.svg"));  // Requires Graphviz
 
-// Full round-trip: import → simulate → diagram → export
+// Full round-trip: import, simulate, diagram, export
 ProcessSystem system = DexpiDiagramBridge.roundTrip(
     Paths.get("input.xml"),     // Input DEXPI
     Paths.get("diagram.dot"),   // Output DOT diagram

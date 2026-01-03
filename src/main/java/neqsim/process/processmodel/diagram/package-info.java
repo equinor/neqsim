@@ -32,7 +32,7 @@
  * String dot = exporter.toDOT();
  *
  * // Export to SVG (requires Graphviz installed)
- * exporter.exportAsSVG(Path.of("diagram.svg"));
+ * exporter.exportSVG(Path.of("diagram.svg"));
  *
  * // Export directly from ProcessSystem
  * String dot = processSystem.toDOT();
@@ -44,9 +44,9 @@
  * // Import DEXPI P&amp;ID and create diagram
  * ProcessDiagramExporter exporter =
  *     DexpiDiagramBridge.importAndCreateExporter(Paths.get("plant.xml"));
- * exporter.exportAsDOT(Paths.get("diagram.dot"));
+ * exporter.exportDOT(Paths.get("diagram.dot"));
  *
- * // Full round-trip: DEXPI → simulate → diagram → DEXPI
+ * // Full round-trip: DEXPI to simulate to diagram to DEXPI
  * DexpiDiagramBridge.roundTrip(Paths.get("input.xml"), Paths.get("diagram.dot"),
  *     Paths.get("output.xml"));
  * </pre>
