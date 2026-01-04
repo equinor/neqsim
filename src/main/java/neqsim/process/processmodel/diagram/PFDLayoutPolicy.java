@@ -822,7 +822,7 @@ public class PFDLayoutPolicy implements Serializable {
    * </p>
    * <ul>
    * <li>Gas processing equipment → GAS_TOP</li>
-   * <li>Separators → SEPARATION_CENTER</li>
+   * <li>Separators → OIL_MIDDLE (part of oil processing)</li>
    * <li>Liquid/oil processing → OIL_MIDDLE</li>
    * <li>Water processing → WATER_BOTTOM</li>
    * </ul>
@@ -843,7 +843,8 @@ public class PFDLayoutPolicy implements Serializable {
         return PhaseZone.GAS_TOP;
 
       case SEPARATOR:
-        return PhaseZone.SEPARATION_CENTER;
+        // Separators are part of oil processing cluster
+        return PhaseZone.OIL_MIDDLE;
 
       case LIQUID:
         // Try to distinguish oil vs water processing

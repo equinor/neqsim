@@ -162,51 +162,52 @@ public class EquipmentVisualStyle implements Serializable {
     STYLE_CACHE.put("esppump",
         new EquipmentVisualStyle("circle", "#4169E1", "#00008B", "white", "0.9", "0.9", "filled"));
 
-    // ========== HEAT EXCHANGERS (Rectangle, Orange/Yellow tones) ==========
+    // ========== HEAT EXCHANGERS (Circle with arrow for heaters/coolers) ==========
     STYLE_CACHE.put("heatexchanger", new EquipmentVisualStyle("rect", "#FFD700", "#FF8C00", "black",
         "1.5", "0.6", "filled,rounded"));
-    STYLE_CACHE.put("cooler", new EquipmentVisualStyle("rect", "#87CEEB", "#4682B4", "black", "1.2",
-        "0.5", "filled,rounded"));
-    STYLE_CACHE.put("aircooler", new EquipmentVisualStyle("rect", "#87CEEB", "#4682B4", "black",
-        "1.4", "0.5", "filled,rounded"));
-    STYLE_CACHE.put("watercooler", new EquipmentVisualStyle("rect", "#87CEEB", "#4682B4", "black",
-        "1.2", "0.5", "filled,rounded"));
-    STYLE_CACHE.put("heater", new EquipmentVisualStyle("rect", "#FF6347", "#8B0000", "white", "1.2",
-        "0.5", "filled,rounded"));
-    STYLE_CACHE.put("steamheater", new EquipmentVisualStyle("rect", "#FF6347", "#8B0000", "white",
-        "1.2", "0.5", "filled,rounded"));
-    STYLE_CACHE.put("condenser", new EquipmentVisualStyle("rect", "#87CEEB", "#4682B4", "black",
-        "1.2", "0.5", "filled,rounded"));
-    STYLE_CACHE.put("reboiler", new EquipmentVisualStyle("rect", "#FF6347", "#8B0000", "white",
-        "1.2", "0.5", "filled,rounded"));
+    STYLE_CACHE.put("cooler",
+        new EquipmentVisualStyle("circle", "#87CEEB", "#4682B4", "black", "0.5", "0.5", "filled"));
+    STYLE_CACHE.put("aircooler",
+        new EquipmentVisualStyle("circle", "#87CEEB", "#4682B4", "black", "0.5", "0.5", "filled"));
+    STYLE_CACHE.put("watercooler",
+        new EquipmentVisualStyle("circle", "#87CEEB", "#4682B4", "black", "0.5", "0.5", "filled"));
+    STYLE_CACHE.put("heater",
+        new EquipmentVisualStyle("circle", "#FF6347", "#8B0000", "white", "0.5", "0.5", "filled"));
+    STYLE_CACHE.put("steamheater",
+        new EquipmentVisualStyle("circle", "#FF6347", "#8B0000", "white", "0.5", "0.5", "filled"));
+    STYLE_CACHE.put("condenser",
+        new EquipmentVisualStyle("circle", "#87CEEB", "#4682B4", "black", "0.5", "0.5", "filled"));
+    STYLE_CACHE.put("reboiler",
+        new EquipmentVisualStyle("circle", "#FF6347", "#8B0000", "white", "0.5", "0.5", "filled"));
     STYLE_CACHE.put("multistreamheatexchanger", new EquipmentVisualStyle("rect", "#FFD700",
         "#FF8C00", "black", "2.0", "1.0", "filled,rounded"));
 
-    // ========== VALVES (Diamond, Pink tones) ==========
-    STYLE_CACHE.put("valve",
-        new EquipmentVisualStyle("diamond", "#FFB6C1", "#FF69B4", "black", "0.6", "0.6", "filled"));
-    STYLE_CACHE.put("throttlingvalve",
-        new EquipmentVisualStyle("diamond", "#FFB6C1", "#FF69B4", "black", "0.6", "0.6", "filled"));
-    STYLE_CACHE.put("controlvalve",
-        new EquipmentVisualStyle("diamond", "#FFB6C1", "#FF69B4", "black", "0.7", "0.7", "filled"));
-    STYLE_CACHE.put("safetyvalve",
-        new EquipmentVisualStyle("diamond", "#FF6347", "#8B0000", "white", "0.6", "0.6", "filled"));
-    STYLE_CACHE.put("esdvalve",
-        new EquipmentVisualStyle("diamond", "#FF0000", "#8B0000", "white", "0.7", "0.7", "filled"));
-    STYLE_CACHE.put("blowdownvalve",
-        new EquipmentVisualStyle("diamond", "#FF4500", "#8B0000", "white", "0.6", "0.6", "filled"));
-    STYLE_CACHE.put("checkvalve",
-        new EquipmentVisualStyle("diamond", "#DDA0DD", "#8B008B", "black", "0.5", "0.5", "filled"));
-    STYLE_CACHE.put("hippsvalve",
-        new EquipmentVisualStyle("diamond", "#FF0000", "#8B0000", "white", "0.7", "0.7", "filled"));
-    STYLE_CACHE.put("psdvalve",
-        new EquipmentVisualStyle("diamond", "#FF4500", "#8B0000", "white", "0.6", "0.6", "filled"));
-    STYLE_CACHE.put("levelcontrolvalve",
-        new EquipmentVisualStyle("diamond", "#FFB6C1", "#FF69B4", "black", "0.6", "0.6", "filled"));
-    STYLE_CACHE.put("pressurecontrolvalve",
-        new EquipmentVisualStyle("diamond", "#FFB6C1", "#FF69B4", "black", "0.6", "0.6", "filled"));
-    STYLE_CACHE.put("rupturedisc",
-        new EquipmentVisualStyle("diamond", "#FF6347", "#8B0000", "white", "0.5", "0.5", "filled"));
+    // ========== VALVES (Bowtie/Butterfly shape, Pink tones) ==========
+    // Using polygon with 4 sides and orientation for butterfly valve appearance
+    STYLE_CACHE.put("valve", new EquipmentVisualStyle("polygon", "#FFB6C1", "#FF69B4", "black",
+        "0.3", "0.25", "filled"));
+    STYLE_CACHE.put("throttlingvalve", new EquipmentVisualStyle("polygon", "#FFB6C1", "#FF69B4",
+        "black", "0.3", "0.25", "filled"));
+    STYLE_CACHE.put("controlvalve", new EquipmentVisualStyle("polygon", "#FFB6C1", "#FF69B4",
+        "black", "0.35", "0.3", "filled"));
+    STYLE_CACHE.put("safetyvalve", new EquipmentVisualStyle("polygon", "#FF6347", "#8B0000",
+        "white", "0.3", "0.25", "filled"));
+    STYLE_CACHE.put("esdvalve", new EquipmentVisualStyle("polygon", "#FF0000", "#8B0000", "white",
+        "0.35", "0.3", "filled"));
+    STYLE_CACHE.put("blowdownvalve", new EquipmentVisualStyle("polygon", "#FF4500", "#8B0000",
+        "white", "0.3", "0.25", "filled"));
+    STYLE_CACHE.put("checkvalve", new EquipmentVisualStyle("polygon", "#DDA0DD", "#8B008B", "black",
+        "0.25", "0.2", "filled"));
+    STYLE_CACHE.put("hippsvalve", new EquipmentVisualStyle("polygon", "#FF0000", "#8B0000", "white",
+        "0.35", "0.3", "filled"));
+    STYLE_CACHE.put("psdvalve", new EquipmentVisualStyle("polygon", "#FF4500", "#8B0000", "white",
+        "0.3", "0.25", "filled"));
+    STYLE_CACHE.put("levelcontrolvalve", new EquipmentVisualStyle("polygon", "#FFB6C1", "#FF69B4",
+        "black", "0.3", "0.25", "filled"));
+    STYLE_CACHE.put("pressurecontrolvalve", new EquipmentVisualStyle("polygon", "#FFB6C1",
+        "#FF69B4", "black", "0.3", "0.25", "filled"));
+    STYLE_CACHE.put("rupturedisc", new EquipmentVisualStyle("polygon", "#FF6347", "#8B0000",
+        "white", "0.25", "0.2", "filled"));
 
     // ========== STREAMS (Ellipse, White) ==========
     STYLE_CACHE.put("stream",
@@ -487,6 +488,15 @@ public class EquipmentVisualStyle implements Serializable {
     sb.append(", fontsize=").append(FONT_SIZE);
     sb.append(", width=").append(width);
     sb.append(", height=").append(height);
+
+    // Add polygon-specific attributes for bow-tie/hourglass valve shape
+    // Creates classic valve symbol: two triangles meeting at center (⧓)
+    if ("polygon".equals(shape)) {
+      sb.append(", sides=4");
+      sb.append(", skew=0.6"); // Skew creates the hourglass/bow-tie pinch effect
+      sb.append(", orientation=0"); // Keep horizontal alignment
+    }
+
     sb.append("]");
     return sb.toString();
   }

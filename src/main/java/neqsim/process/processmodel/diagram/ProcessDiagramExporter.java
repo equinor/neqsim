@@ -18,6 +18,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.dexpi.DexpiProcessUnit;
 import neqsim.process.processmodel.dexpi.DexpiStream;
+import neqsim.process.processmodel.diagram.EquipmentRole;
 import neqsim.process.processmodel.graph.ProcessEdge;
 import neqsim.process.processmodel.graph.ProcessGraph;
 import neqsim.process.processmodel.graph.ProcessGraphBuilder;
@@ -259,8 +260,8 @@ public class ProcessDiagramExporter implements Serializable {
    * Creates a layout where:
    * </p>
    * <ul>
-   * <li>Feed streams are on the LEFT (same horizontal rank)</li>
-   * <li>Product streams are on the RIGHT (same horizontal rank)</li>
+   * <li>Feed streams are on the LEFT (rank=min)</li>
+   * <li>Product streams are on the RIGHT (rank=max)</li>
    * <li>Gas processing is at TOP (min vertical position)</li>
    * <li>Oil processing is in MIDDLE</li>
    * <li>Water processing is at BOTTOM (max vertical position)</li>
@@ -274,60 +275,138 @@ public class ProcessDiagramExporter implements Serializable {
       ProcessGraph graph) {
     sb.append("  // Industry PFD layout: left-to-right flow with vertical phase zones\n\n");
 
-    // Get source and sink nodes
-    List<ProcessNode> sourceNodes = graph.getSourceNodes();
-    List<ProcessNode> sinkNodes = graph.getSinkNodes();
+    // Identify feed nodes (left side) and product nodes (right side)
+    List<ProcessNode> feedNodes = new ArrayList<>();
+    List<ProcessNode> productNodes = new ArrayList<>();
 
-    // Force feed streams to be on the left (same rank)
-    if (!sourceNodes.isEmpty()) {
-      sb.append("  // Feed streams (left side)\n");
-      sb.append("  { rank=same; ");
-      for (ProcessNode node : sourceNodes) {
-        if (shouldIncludeNode(node)) {
-          sb.append("\"").append(escapeString(node.getName())).append("\"; ");
-        }
+    for (ProcessNode node : graph.getNodes()) {
+      if (!shouldIncludeNode(node)) {
+        continue;
+      }
+      String name = node.getName().toLowerCase();
+
+      // Keywords that indicate product/exit equipment
+      boolean hasProductKeyword =
+          name.contains("export") || name.contains("disposal") || name.contains("vent")
+              || name.contains("product") || name.contains("outlet") || name.contains("out")
+              || name.contains("rich") || name.contains("sweet") || name.contains("treated");
+
+      // Keywords that indicate feed/inlet equipment
+      boolean hasFeedKeyword = name.contains("feed") || name.contains("inlet")
+          || name.contains("well") || name.contains("lean") || name.contains("sour")
+          || name.contains("raw") || name.contains("untreated");
+
+      // Sink nodes (no outputs) go to the RIGHT - these are terminal equipment
+      if (node.isSink()) {
+        productNodes.add(node);
+      }
+      // Source nodes (no inputs) that aren't product-named go to the LEFT
+      else if (node.isSource() && !hasProductKeyword) {
+        feedNodes.add(node);
+      }
+      // Product-keyword nodes also go to the RIGHT
+      else if (hasProductKeyword && !hasFeedKeyword) {
+        productNodes.add(node);
+      }
+    }
+
+    // Remove duplicates (some may match both criteria)
+    productNodes.removeAll(feedNodes);
+
+    // Force feed equipment to be on the left (rank=min)
+    if (!feedNodes.isEmpty()) {
+      sb.append("  // Feed streams/equipment (left side)\n");
+      sb.append("  { rank=min; ");
+      for (ProcessNode node : feedNodes) {
+        sb.append("\"").append(escapeString(node.getName())).append("\"; ");
       }
       sb.append("}\n");
     }
 
-    // Force product streams to be on the right (same rank)
-    if (!sinkNodes.isEmpty()) {
-      sb.append("  // Product streams (right side)\n");
-      sb.append("  { rank=same; ");
-      for (ProcessNode node : sinkNodes) {
-        if (shouldIncludeNode(node)) {
-          sb.append("\"").append(escapeString(node.getName())).append("\"; ");
-        }
+    // Force product/exit equipment to be on the right (rank=max)
+    if (!productNodes.isEmpty()) {
+      sb.append("  // Product/Export streams (right side)\n");
+      sb.append("  { rank=max; ");
+      for (ProcessNode node : productNodes) {
+        sb.append("\"").append(escapeString(node.getName())).append("\"; ");
       }
       sb.append("}\n");
+    }
+
+    // Add invisible edges to enforce horizontal ordering
+    // From feed nodes to first processing equipment
+    if (!feedNodes.isEmpty() && !productNodes.isEmpty()) {
+      sb.append("\n  // Invisible edges to enforce left-to-right ordering\n");
+      // Find a central processing node (separator or first non-feed/product)
+      ProcessNode centralNode = findCentralProcessingNode(graph, feedNodes, productNodes);
+      if (centralNode != null) {
+        for (ProcessNode feed : feedNodes) {
+          sb.append("  \"").append(escapeString(feed.getName())).append("\" -> \"")
+              .append(escapeString(centralNode.getName())).append("\" [style=invis, weight=0];\n");
+        }
+        for (ProcessNode product : productNodes) {
+          sb.append("  \"").append(escapeString(centralNode.getName())).append("\" -> \"")
+              .append(escapeString(product.getName())).append("\" [style=invis, weight=0];\n");
+        }
+      }
     }
 
     sb.append("\n");
 
     // Group processing equipment by phase zone for vertical ordering
-    appendPhaseZoneOrdering(sb, graph, sourceNodes, sinkNodes);
+    appendPhaseZoneOrdering(sb, graph, feedNodes, productNodes);
+  }
+
+  /**
+   * Finds a central processing node (typically a separator) to anchor the layout.
+   *
+   * @param graph the process graph
+   * @param feedNodes feed nodes to exclude
+   * @param productNodes product nodes to exclude
+   * @return a central processing node, or null if none found
+   */
+  private ProcessNode findCentralProcessingNode(ProcessGraph graph, List<ProcessNode> feedNodes,
+      List<ProcessNode> productNodes) {
+    // Look for a separator first (they're typically central)
+    for (ProcessNode node : graph.getNodes()) {
+      if (feedNodes.contains(node) || productNodes.contains(node)) {
+        continue;
+      }
+      EquipmentRole role = layoutPolicy.classifyEquipment(node.getEquipment());
+      if (role == EquipmentRole.SEPARATOR) {
+        return node;
+      }
+    }
+    // Otherwise return the first non-feed/product node
+    for (ProcessNode node : graph.getNodes()) {
+      if (!feedNodes.contains(node) && !productNodes.contains(node) && shouldIncludeNode(node)) {
+        return node;
+      }
+    }
+    return null;
   }
 
   /**
    * Appends vertical ordering constraints based on phase zones.
    *
    * <p>
-   * Uses invisible edges to enforce vertical ordering: Gas → Oil → Water
+   * Uses invisible edges to enforce vertical ordering: Gas → Separation → Oil → Water
    * </p>
    *
    * @param sb the string builder
    * @param graph the process graph
    * @param sourceNodes feed streams (excluded from phase ordering)
-   * @param sinkNodes product streams (excluded from phase ordering)
+   * @param sinkNodes product streams (included for water zone vertical positioning)
    */
   private void appendPhaseZoneOrdering(StringBuilder sb, ProcessGraph graph,
       List<ProcessNode> sourceNodes, List<ProcessNode> sinkNodes) {
-    // Collect nodes by phase zone (excluding feeds and products)
+    // Collect nodes by phase zone - include sinks for vertical positioning
     Map<PFDLayoutPolicy.PhaseZone, List<ProcessNode>> phaseGroups = new HashMap<>();
 
     for (ProcessNode node : graph.getNodes()) {
-      if (sourceNodes.contains(node) || sinkNodes.contains(node)) {
-        continue; // Skip feeds and products - they use horizontal positioning only
+      // Skip only true feed streams
+      if (sourceNodes.contains(node)) {
+        continue;
       }
       if (!shouldIncludeNode(node)) {
         continue;
@@ -351,16 +430,10 @@ public class ProcessDiagramExporter implements Serializable {
       }
     }
 
-    if (phaseGroups.containsKey(PFDLayoutPolicy.PhaseZone.OIL_MIDDLE)
-        || phaseGroups.containsKey(PFDLayoutPolicy.PhaseZone.SEPARATION_CENTER)) {
+    if (phaseGroups.containsKey(PFDLayoutPolicy.PhaseZone.OIL_MIDDLE)) {
       List<ProcessNode> oilNodes = phaseGroups.get(PFDLayoutPolicy.PhaseZone.OIL_MIDDLE);
-      if (oilNodes != null && !oilNodes.isEmpty()) {
+      if (!oilNodes.isEmpty()) {
         oilRep = oilNodes.get(0);
-      } else {
-        List<ProcessNode> sepNodes = phaseGroups.get(PFDLayoutPolicy.PhaseZone.SEPARATION_CENTER);
-        if (sepNodes != null && !sepNodes.isEmpty()) {
-          oilRep = sepNodes.get(0);
-        }
       }
     }
 
@@ -371,17 +444,27 @@ public class ProcessDiagramExporter implements Serializable {
       }
     }
 
-    // Create ordering edges (invisible, no weight on horizontal flow)
-    if (gasRep != null && oilRep != null) {
-      sb.append("  \"").append(escapeString(gasRep.getName())).append("\" -> \"");
+    // Create ordering edges (invisible but constrained for vertical layout)
+    // Order: Gas (top) → Oil (middle) → Water (bottom)
+    // In LR mode, edge A -> B places B ABOVE A, so: water -> oil -> gas
+    // Use only representative nodes to avoid too many constraints
+    if (waterRep != null && oilRep != null) {
+      sb.append("  \"").append(escapeString(waterRep.getName())).append("\" -> \"");
       sb.append(escapeString(oilRep.getName()));
-      sb.append("\" [style=invis, constraint=false];\n");
+      sb.append("\" [style=invis, constraint=true, minlen=1];\n");
     }
 
-    if (oilRep != null && waterRep != null) {
+    if (oilRep != null && gasRep != null) {
       sb.append("  \"").append(escapeString(oilRep.getName())).append("\" -> \"");
-      sb.append(escapeString(waterRep.getName()));
-      sb.append("\" [style=invis, constraint=false];\n");
+      sb.append(escapeString(gasRep.getName()));
+      sb.append("\" [style=invis, constraint=true, minlen=1];\n");
+    }
+
+    if (waterRep != null && gasRep != null) {
+      // Direct water -> gas edge for stronger constraint
+      sb.append("  \"").append(escapeString(waterRep.getName())).append("\" -> \"");
+      sb.append(escapeString(gasRep.getName()));
+      sb.append("\" [style=invis, constraint=true, minlen=2];\n");
     }
 
     sb.append("\n");
@@ -443,12 +526,19 @@ public class ProcessDiagramExporter implements Serializable {
     // Group by phase zone for proper vertical ordering
     Map<PFDLayoutPolicy.PhaseZone, List<ProcessNode>> zoneGroups = new HashMap<>();
     List<ProcessNode> sourceNodes = graph.getSourceNodes();
-    List<ProcessNode> sinkNodes = graph.getSinkNodes();
 
     for (ProcessNode node : graph.getNodes()) {
-      // Skip feeds and products - they're positioned by rank constraints
-      if (sourceNodes.contains(node) || sinkNodes.contains(node)) {
-        continue;
+      // Skip feed streams only - they're positioned by rank constraints at left
+      // Include sinks (products) in phase zone clusters for proper vertical positioning
+      if (sourceNodes.contains(node)) {
+        String name = node.getName().toLowerCase();
+        // But allow source nodes that are product-named to be in clusters
+        boolean isProduct =
+            name.contains("export") || name.contains("disposal") || name.contains("vent")
+                || name.contains("product") || name.contains("outlet") || name.contains("out");
+        if (!isProduct) {
+          continue; // Skip true feed streams
+        }
       }
       if (!shouldIncludeNode(node)) {
         continue;
@@ -458,60 +548,95 @@ public class ProcessDiagramExporter implements Serializable {
       zoneGroups.computeIfAbsent(zone, k -> new ArrayList<>()).add(node);
     }
 
-    sb.append("  // Phase zone clusters (Gas top → Oil middle → Water bottom)\n");
+    sb.append("  // Phase zone clusters - ordered top to bottom: Gas, Oil, Water\n");
 
-    // Gas processing cluster (top)
+    // Create invisible anchor nodes for each cluster to enforce vertical ordering
+    List<String> clusterAnchors = new ArrayList<>();
+
+    // GAS cluster (TOP - first in order)
     if (zoneGroups.containsKey(PFDLayoutPolicy.PhaseZone.GAS_TOP)) {
+      String anchorName = "_gas_anchor";
+      clusterAnchors.add(anchorName);
       sb.append("  subgraph cluster_gas {\n");
       sb.append("    label=\"Gas Processing\"\n");
       sb.append("    style=dashed\n");
       sb.append("    color=\"#87CEEB\"\n");
       sb.append("    bgcolor=\"#F0F8FF\"\n");
-      sb.append("    rank=min\n"); // Force to top
+      // Invisible anchor for ordering
+      sb.append("    \"").append(anchorName)
+          .append("\" [style=invis, width=0, height=0, label=\"\"];\n");
       for (ProcessNode node : zoneGroups.get(PFDLayoutPolicy.PhaseZone.GAS_TOP)) {
         sb.append("    \"").append(escapeString(node.getName())).append("\";\n");
       }
       sb.append("  }\n\n");
     }
 
-    // Separation cluster (center anchor)
-    if (zoneGroups.containsKey(PFDLayoutPolicy.PhaseZone.SEPARATION_CENTER)) {
-      sb.append("  subgraph cluster_separation {\n");
-      sb.append("    label=\"Separation\"\n");
-      sb.append("    style=dashed\n");
-      sb.append("    color=\"#FFD700\"\n");
-      sb.append("    bgcolor=\"#FFFACD\"\n");
-      for (ProcessNode node : zoneGroups.get(PFDLayoutPolicy.PhaseZone.SEPARATION_CENTER)) {
-        sb.append("    \"").append(escapeString(node.getName())).append("\";\n");
-      }
-      sb.append("  }\n\n");
-    }
-
-    // Oil processing cluster (middle)
+    // OIL cluster (MIDDLE - separators are here)
     if (zoneGroups.containsKey(PFDLayoutPolicy.PhaseZone.OIL_MIDDLE)) {
+      String anchorName = "_oil_anchor";
+      clusterAnchors.add(anchorName);
       sb.append("  subgraph cluster_oil {\n");
       sb.append("    label=\"Oil Processing\"\n");
       sb.append("    style=dashed\n");
       sb.append("    color=\"#8B4513\"\n");
       sb.append("    bgcolor=\"#FAEBD7\"\n");
+      // Invisible anchor for ordering
+      sb.append("    \"").append(anchorName)
+          .append("\" [style=invis, width=0, height=0, label=\"\"];\n");
       for (ProcessNode node : zoneGroups.get(PFDLayoutPolicy.PhaseZone.OIL_MIDDLE)) {
         sb.append("    \"").append(escapeString(node.getName())).append("\";\n");
       }
       sb.append("  }\n\n");
     }
 
-    // Water processing cluster (bottom)
+    // SEPARATION cluster (if separate from oil)
+    if (zoneGroups.containsKey(PFDLayoutPolicy.PhaseZone.SEPARATION_CENTER)) {
+      String anchorName = "_sep_anchor";
+      clusterAnchors.add(anchorName);
+      sb.append("  subgraph cluster_separation {\n");
+      sb.append("    label=\"Separation\"\n");
+      sb.append("    style=dashed\n");
+      sb.append("    color=\"#FFD700\"\n");
+      sb.append("    bgcolor=\"#FFFACD\"\n");
+      // Invisible anchor for ordering
+      sb.append("    \"").append(anchorName)
+          .append("\" [style=invis, width=0, height=0, label=\"\"];\n");
+      for (ProcessNode node : zoneGroups.get(PFDLayoutPolicy.PhaseZone.SEPARATION_CENTER)) {
+        sb.append("    \"").append(escapeString(node.getName())).append("\";\n");
+      }
+      sb.append("  }\n\n");
+    }
+
+    // WATER cluster (BOTTOM - last in order)
     if (zoneGroups.containsKey(PFDLayoutPolicy.PhaseZone.WATER_BOTTOM)) {
+      String anchorName = "_water_anchor";
+      clusterAnchors.add(anchorName);
       sb.append("  subgraph cluster_water {\n");
       sb.append("    label=\"Water Processing\"\n");
       sb.append("    style=dashed\n");
       sb.append("    color=\"#1E90FF\"\n");
       sb.append("    bgcolor=\"#F0F8FF\"\n");
-      sb.append("    rank=max\n"); // Force to bottom
+      // Invisible anchor for ordering
+      sb.append("    \"").append(anchorName)
+          .append("\" [style=invis, width=0, height=0, label=\"\"];\n");
       for (ProcessNode node : zoneGroups.get(PFDLayoutPolicy.PhaseZone.WATER_BOTTOM)) {
         sb.append("    \"").append(escapeString(node.getName())).append("\";\n");
       }
       sb.append("  }\n\n");
+    }
+
+    // Add invisible edges between cluster anchors to enforce vertical order
+    // In rankdir=LR, edge direction A -> B places B ABOVE A
+    // So reverse: water -> sep -> oil -> gas to get gas on top
+    if (clusterAnchors.size() > 1) {
+      sb.append("  // Force vertical cluster ordering (gas top, water bottom)\n");
+      // Chain the anchors in reverse order - target goes above source
+      for (int i = clusterAnchors.size() - 1; i > 0; i--) {
+        sb.append("  \"").append(clusterAnchors.get(i)).append("\" -> \"")
+            .append(clusterAnchors.get(i - 1))
+            .append("\" [style=invis, constraint=true, weight=1000];\n");
+      }
+      sb.append("\n");
     }
   }
 
@@ -558,16 +683,144 @@ public class ProcessDiagramExporter implements Serializable {
     ProcessEquipmentInterface equipment = node.getEquipment();
     String name = node.getName();
     String type = node.getEquipmentType();
+    String lowerType = type.toLowerCase();
+
+    // Check for special equipment types that need HTML rendering
+    if (lowerType.contains("heater") || lowerType.contains("reboiler")
+        || lowerType.contains("cooler") || lowerType.contains("condenser")
+        || lowerType.contains("heatexchanger")) {
+      appendHeatExchangerNode(sb, node, name, type, lowerType);
+      return;
+    }
+
+    if (lowerType.contains("pump")) {
+      appendPumpNode(sb, name);
+      return;
+    }
+
+    if (lowerType.contains("column") || lowerType.contains("absorber")
+        || lowerType.contains("stripper") || lowerType.contains("regenerator")
+        || lowerType.contains("distillation")) {
+      appendColumnNode(sb, name, type);
+      return;
+    }
 
     // Get visual style - use getStyleForEquipment for DEXPI-aware styling
     EquipmentVisualStyle style = EquipmentVisualStyle.getStyleForEquipment(equipment);
 
-    // Build label based on detail level
+    // Build label based on detail level and equipment type
     String label = buildNodeLabel(equipment, name, type);
 
     sb.append("  \"").append(escapeString(name)).append("\" ");
     sb.append(style.toGraphvizAttributes(label));
     sb.append(";\n");
+  }
+
+  /**
+   * Appends a heat exchanger (heater/cooler) node with HTML table format.
+   *
+   * @param sb the string builder
+   * @param node the process node
+   * @param name the equipment name
+   * @param type the equipment type
+   * @param lowerType the lowercase equipment type
+   */
+  private void appendHeatExchangerNode(StringBuilder sb, ProcessNode node, String name, String type,
+      String lowerType) {
+    // Determine if heating or cooling
+    boolean isHeating = lowerType.contains("heater") || lowerType.contains("reboiler");
+    String bgColor = isHeating ? "#FF6347" : "#87CEEB"; // Red for heater, blue for cooler
+    String borderColor = isHeating ? "#8B0000" : "#4682B4";
+    String fontColor = isHeating ? "white" : "black";
+    String hxType = isHeating ? "Heater" : "Cooler";
+
+    sb.append("  \"").append(escapeString(name)).append("\" [\n");
+    sb.append("    label=<\n");
+    sb.append("      <TABLE BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"4\" ");
+    sb.append("BGCOLOR=\"").append(bgColor).append("\" COLOR=\"").append(borderColor)
+        .append("\">\n");
+    sb.append("        <TR>\n");
+    sb.append("          <TD WIDTH=\"70\" HEIGHT=\"35\" ALIGN=\"CENTER\">\n");
+    sb.append("            <FONT POINT-SIZE=\"9\" COLOR=\"").append(fontColor).append("\">");
+    sb.append(escapeHtml(name)).append("</FONT><BR/>\n");
+    sb.append("            <FONT POINT-SIZE=\"7\" COLOR=\"").append(fontColor).append("\">");
+    sb.append(hxType).append("</FONT>\n");
+    sb.append("          </TD>\n");
+    sb.append("        </TR>\n");
+    sb.append("      </TABLE>\n");
+    sb.append("    >,\n");
+    sb.append("    shape=plaintext\n");
+    sb.append("  ];\n");
+  }
+
+  /**
+   * Appends a pump node with circle and triangle (impeller) symbol.
+   *
+   * @param sb the string builder
+   * @param name the pump name
+   */
+  private void appendPumpNode(StringBuilder sb, String name) {
+    sb.append("  \"").append(escapeString(name)).append("\" [\n");
+    sb.append("    label=<\n");
+    sb.append("      <TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\">\n");
+    sb.append("        <TR><TD>\n");
+    // Circle with triangle inside (pump symbol)
+    sb.append("          <TABLE BORDER=\"2\" CELLBORDER=\"0\" CELLSPACING=\"0\" ");
+    sb.append("CELLPADDING=\"8\" BGCOLOR=\"#4169E1\" COLOR=\"#00008B\" STYLE=\"ROUNDED\">\n");
+    sb.append("            <TR><TD ALIGN=\"CENTER\">\n");
+    sb.append("              <FONT POINT-SIZE=\"14\" COLOR=\"white\">&#9654;</FONT>\n");
+    sb.append("            </TD></TR>\n");
+    sb.append("          </TABLE>\n");
+    sb.append("        </TD></TR>\n");
+    sb.append("        <TR><TD ALIGN=\"CENTER\">\n");
+    sb.append("          <FONT POINT-SIZE=\"8\">").append(escapeHtml(name)).append("</FONT>\n");
+    sb.append("        </TD></TR>\n");
+    sb.append("      </TABLE>\n");
+    sb.append("    >,\n");
+    sb.append("    shape=plaintext\n");
+    sb.append("  ];\n");
+  }
+
+  /**
+   * Appends a column node (absorber, stripper, distillation) with tray visualization.
+   *
+   * @param sb the string builder
+   * @param name the column name
+   * @param type the column type
+   */
+  private void appendColumnNode(StringBuilder sb, String name, String type) {
+    sb.append("  \"").append(escapeString(name)).append("\" [\n");
+    sb.append("    label=<\n");
+    sb.append("      <TABLE BORDER=\"2\" CELLBORDER=\"0\" CELLSPACING=\"0\" ");
+    sb.append("CELLPADDING=\"2\" BGCOLOR=\"#E8E8E8\" COLOR=\"#404040\">\n");
+    // Top section
+    sb.append("        <TR><TD WIDTH=\"50\" HEIGHT=\"15\" BGCOLOR=\"#D0D0D0\"></TD></TR>\n");
+    // Tray sections (simulate internal trays)
+    for (int i = 0; i < 4; i++) {
+      sb.append("        <TR><TD HEIGHT=\"8\"><HR/></TD></TR>\n");
+      sb.append("        <TR><TD HEIGHT=\"12\"></TD></TR>\n");
+    }
+    // Bottom section
+    sb.append("        <TR><TD HEIGHT=\"15\" BGCOLOR=\"#D0D0D0\"></TD></TR>\n");
+    sb.append("      </TABLE>\n");
+    sb.append("    >,\n");
+    sb.append("    shape=plaintext,\n");
+    sb.append("    xlabel=<<FONT POINT-SIZE=\"9\">").append(escapeHtml(name));
+    sb.append("</FONT>>\n");
+    sb.append("  ];\n");
+  }
+
+  /**
+   * Escapes special characters for HTML labels.
+   *
+   * @param text the text to escape
+   * @return the escaped text
+   */
+  private String escapeHtml(String text) {
+    if (text == null) {
+      return "";
+    }
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
   }
 
   /**
@@ -712,11 +965,27 @@ public class ProcessDiagramExporter implements Serializable {
       }
     }
 
-    // Port positioning for separator outlets
+    // Port positioning for separator outlets - routes gas up, oil right, water down
     if (isSeparator(edge.getSource().getEquipment()) && edge.getStream() != null) {
       PFDLayoutPolicy.SeparatorOutlet outlet =
           layoutPolicy.classifySeparatorOutlet(edge.getSource().getEquipment(), edge.getStream());
       sb.append(", tailport=").append(outlet.getPort());
+
+      // Add corresponding headport for proper routing
+      switch (outlet) {
+        case GAS_TOP:
+          sb.append(", headport=s"); // Gas enters target from bottom (coming from above)
+          break;
+        case WATER_BOTTOM:
+          sb.append(", headport=n"); // Water enters target from top (coming from below)
+          break;
+        case OIL_MIDDLE:
+        case LIQUID_BOTTOM:
+          sb.append(", headport=w"); // Oil/liquid enters target from left (horizontal flow)
+          break;
+        default:
+          break;
+      }
     }
 
     sb.append("];\n");
@@ -829,19 +1098,6 @@ public class ProcessDiagramExporter implements Serializable {
 
     html.append("</TABLE>");
     return html.toString();
-  }
-
-  /**
-   * Escapes special characters for HTML labels.
-   *
-   * @param s the string
-   * @return the escaped string
-   */
-  private String escapeHtml(String s) {
-    if (s == null) {
-      return "";
-    }
-    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
   }
 
   /**
