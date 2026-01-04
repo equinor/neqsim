@@ -442,6 +442,9 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /**
    * Check if a component is inert.
+   *
+   * @param componentName the name of the component to check
+   * @return true if the component is inert, false otherwise
    */
   public boolean isComponentInert(String componentName) {
     return componentName != null && inertComponents.contains(componentName.toLowerCase());

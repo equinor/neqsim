@@ -72,6 +72,9 @@ public class ProcessDiagramExporter implements Serializable {
   /** The layout policy for determining equipment positions. */
   private final PFDLayoutPolicy layoutPolicy;
 
+  /** Diagram style (NEQSIM, HYSYS, PROII, ASPEN_PLUS). */
+  private DiagramStyle diagramStyle = DiagramStyle.NEQSIM;
+
   /** Detail level for the diagram. */
   private DiagramDetailLevel detailLevel = DiagramDetailLevel.ENGINEERING;
 
@@ -204,21 +207,22 @@ public class ProcessDiagramExporter implements Serializable {
    * @param sb the string builder
    */
   private void appendGraphAttributes(StringBuilder sb) {
-    sb.append("  // Graph attributes - Industry PFD conventions\n");
+    sb.append("  // Graph attributes - ").append(diagramStyle.getDisplayName())
+        .append(" style PFD\n");
     sb.append("  // Left-to-right flow with vertical phase stratification\n");
     sb.append("  graph [\n");
     // Always use LR for industry-standard left-to-right flow
     // Vertical stratification is handled via subgraphs and ordering
     sb.append("    rankdir=LR\n");
-    sb.append("    splines=ortho\n"); // Orthogonal routing like P&IDs
+    sb.append("    splines=").append(diagramStyle.getSplineType()).append("\n");
     sb.append("    nodesep=0.8\n");
     sb.append("    ranksep=1.2\n"); // Increased for clearer horizontal separation
-    sb.append("    fontname=\"Arial\"\n");
+    sb.append("    fontname=\"").append(diagramStyle.getFontName()).append("\"\n");
     sb.append("    fontsize=12\n");
     sb.append("    label=\"").append(escapeString(title)).append("\"\n");
     sb.append("    labelloc=t\n");
     sb.append("    labeljust=c\n");
-    sb.append("    bgcolor=white\n");
+    sb.append("    bgcolor=\"").append(diagramStyle.getBackgroundColor()).append("\"\n");
     sb.append("    pad=0.5\n");
     sb.append("    newrank=true\n"); // Enable new rank algorithm for better control
     sb.append("    ordering=out\n"); // Maintain edge ordering
@@ -226,15 +230,24 @@ public class ProcessDiagramExporter implements Serializable {
 
     sb.append("  // Default node attributes\n");
     sb.append("  node [\n");
-    sb.append("    fontname=\"Arial\"\n");
-    sb.append("    fontsize=10\n");
+    sb.append("    fontname=\"").append(diagramStyle.getFontName()).append("\"\n");
+    sb.append("    fontsize=").append(diagramStyle.getFontSize()).append("\n");
+    sb.append("    fontcolor=\"").append(diagramStyle.getFontColor()).append("\"\n");
+    sb.append("    penwidth=").append(diagramStyle.getPenWidth()).append("\n");
     sb.append("  ];\n\n");
 
     sb.append("  // Default edge attributes\n");
     sb.append("  edge [\n");
-    sb.append("    fontname=\"Arial\"\n");
+    sb.append("    fontname=\"").append(diagramStyle.getFontName()).append("\"\n");
     sb.append("    fontsize=8\n");
     sb.append("    arrowsize=0.7\n");
+    sb.append("    arrowhead=").append(diagramStyle.getArrowStyle()).append("\n");
+    sb.append("    style=").append(diagramStyle.getEdgeStyle()).append("\n");
+    sb.append("    penwidth=").append(diagramStyle.getStreamWidth()).append("\n");
+    // Use style-specific stream color
+    if (diagramStyle != DiagramStyle.NEQSIM) {
+      sb.append("    color=\"").append(diagramStyle.getStreamColor()).append("\"\n");
+    }
     sb.append("  ];\n\n");
   }
 
@@ -705,8 +718,32 @@ public class ProcessDiagramExporter implements Serializable {
       return;
     }
 
+    // Check for mixer/splitter - use special triangle rendering
+    if (lowerType.contains("mixer") || lowerType.contains("splitter")
+        || lowerType.contains("manifold")) {
+      appendMixerSplitterNode(sb, name, lowerType.contains("splitter"));
+      return;
+    }
+
+    // Check for valve - use special bowtie rendering
+    if (lowerType.contains("valve")) {
+      appendValveNode(sb, name, lowerType);
+      return;
+    }
+
     // Get visual style - use getStyleForEquipment for DEXPI-aware styling
     EquipmentVisualStyle style = EquipmentVisualStyle.getStyleForEquipment(equipment);
+
+    // Apply diagram style overrides if not using default NEQSIM style
+    if (diagramStyle != DiagramStyle.NEQSIM) {
+      String styleFillColor = diagramStyle.getEquipmentFillColor(type);
+      if (styleFillColor != null) {
+        // Create a new style with the diagram style colors
+        style = new EquipmentVisualStyle(style.getShape(), styleFillColor,
+            diagramStyle.getEquipmentOutlineColor(), diagramStyle.getFontColor(), style.getWidth(),
+            style.getHeight(), style.getStyle());
+      }
+    }
 
     // Build label based on detail level and equipment type
     String label = buildNodeLabel(equipment, name, type);
@@ -717,7 +754,68 @@ public class ProcessDiagramExporter implements Serializable {
   }
 
   /**
-   * Appends a heat exchanger (heater/cooler) node with HTML table format.
+   * Appends a mixer or splitter node with triangle shape. Mixer: right-pointing (▶) - multiple
+   * inlets, single outlet Splitter: left-pointing (◀) - single inlet, multiple outlets
+   *
+   * @param sb the string builder
+   * @param name the equipment name
+   * @param isSplitter true if splitter, false if mixer
+   */
+  private void appendMixerSplitterNode(StringBuilder sb, String name, boolean isSplitter) {
+    String borderColor = diagramStyle.getEquipmentOutlineColor();
+    // Mixer points right (270°), Splitter points left (90°)
+    int orientation = isSplitter ? 90 : 270;
+
+    sb.append("  \"").append(escapeString(name)).append("\" [\n");
+    sb.append("    label=\"").append(escapeString(name)).append("\",\n");
+    sb.append("    shape=triangle,\n");
+    sb.append("    orientation=").append(orientation).append(",\n");
+    sb.append("    width=0.5,\n");
+    sb.append("    height=0.5,\n");
+    sb.append("    style=filled,\n");
+    sb.append("    fillcolor=\"#E8E8E8\",\n");
+    sb.append("    color=\"").append(borderColor).append("\",\n");
+    sb.append("    fontsize=7\n");
+    sb.append("  ];\n");
+  }
+
+  /**
+   * Appends a valve node with bowtie symbol like HYSYS. Classic PFD valve symbol with two triangles
+   * tip-to-tip.
+   *
+   * @param sb the string builder
+   * @param name the valve name
+   * @param lowerType the lowercase valve type for color selection
+   */
+  private void appendValveNode(StringBuilder sb, String name, String lowerType) {
+    String borderColor = diagramStyle.getEquipmentOutlineColor();
+
+    // Bowtie valve symbol with ports for stream connections at triangle centers
+    // Using single cell with both triangles to eliminate spacing
+    sb.append("  \"").append(escapeString(name)).append("\" [\n");
+    sb.append("    label=<\n");
+    sb.append("      <TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"0\">\n");
+    sb.append("        <TR>\n");
+    // Both triangles in one cell, touching tip-to-tip
+    sb.append("          <TD PORT=\"in\"></TD>\n");
+    sb.append("          <TD ALIGN=\"CENTER\"><FONT POINT-SIZE=\"20\" COLOR=\"");
+    sb.append(borderColor).append("\">&#x25B6;&#x25C0;</FONT></TD>\n");
+    sb.append("          <TD PORT=\"out\"></TD>\n");
+    sb.append("        </TR>\n");
+    // Name below
+    sb.append("        <TR><TD COLSPAN=\"3\" ALIGN=\"CENTER\"><FONT POINT-SIZE=\"8\">");
+    sb.append(escapeHtml(name)).append("</FONT></TD></TR>\n");
+    sb.append("      </TABLE>\n");
+    sb.append("    >,\n");
+    sb.append("    shape=plaintext,\n");
+    sb.append("    width=0,\n");
+    sb.append("    height=0,\n");
+    sb.append("    margin=\"0,0\"\n");
+    sb.append("  ];\n");
+  }
+
+  /**
+   * Appends a heat exchanger (heater/cooler) node with circle shape.
    *
    * @param sb the string builder
    * @param node the process node
@@ -727,51 +825,59 @@ public class ProcessDiagramExporter implements Serializable {
    */
   private void appendHeatExchangerNode(StringBuilder sb, ProcessNode node, String name, String type,
       String lowerType) {
-    // Determine if heating or cooling
-    boolean isHeating = lowerType.contains("heater") || lowerType.contains("reboiler");
-    String bgColor = isHeating ? "#FF6347" : "#87CEEB"; // Red for heater, blue for cooler
-    String borderColor = isHeating ? "#8B0000" : "#4682B4";
-    String fontColor = isHeating ? "white" : "black";
-    String hxType = isHeating ? "Heater" : "Cooler";
+    // Use diagram style colors
+    String borderColor = diagramStyle.getEquipmentOutlineColor();
 
+    // Circle symbol for heaters/coolers (like HYSYS style)
+    // Same symbol for both heating and cooling (function indicated by label)
     sb.append("  \"").append(escapeString(name)).append("\" [\n");
-    sb.append("    label=<\n");
-    sb.append("      <TABLE BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"4\" ");
-    sb.append("BGCOLOR=\"").append(bgColor).append("\" COLOR=\"").append(borderColor)
-        .append("\">\n");
-    sb.append("        <TR>\n");
-    sb.append("          <TD WIDTH=\"70\" HEIGHT=\"35\" ALIGN=\"CENTER\">\n");
-    sb.append("            <FONT POINT-SIZE=\"9\" COLOR=\"").append(fontColor).append("\">");
-    sb.append(escapeHtml(name)).append("</FONT><BR/>\n");
-    sb.append("            <FONT POINT-SIZE=\"7\" COLOR=\"").append(fontColor).append("\">");
-    sb.append(hxType).append("</FONT>\n");
-    sb.append("          </TD>\n");
-    sb.append("        </TR>\n");
-    sb.append("      </TABLE>\n");
-    sb.append("    >,\n");
-    sb.append("    shape=plaintext\n");
+    sb.append("    label=\"").append(escapeString(name)).append("\",\n");
+    sb.append("    shape=circle,\n");
+    sb.append("    style=filled,\n");
+    sb.append("    fillcolor=\"#FFFFFF\",\n");
+    sb.append("    color=\"").append(borderColor).append("\",\n");
+    sb.append("    penwidth=1,\n");
+    sb.append("    width=0.4,\n");
+    sb.append("    height=0.4,\n");
+    sb.append("    fontsize=8\n");
     sb.append("  ];\n");
   }
 
   /**
-   * Appends a pump node with circle and triangle (impeller) symbol.
+   * Appends a pump node with circle on triangle (standard PFD pump symbol). Circle represents the
+   * casing, small circle inside represents impeller, triangle below represents the discharge
+   * direction.
    *
    * @param sb the string builder
    * @param name the pump name
    */
   private void appendPumpNode(StringBuilder sb, String name) {
+    // Use diagram style colors if available
+    String styleFillColor = diagramStyle.getEquipmentFillColor("Pump");
+    String bgColor = styleFillColor != null ? styleFillColor : "#FFFFFF";
+    String borderColor = diagramStyle.getEquipmentOutlineColor();
+
     sb.append("  \"").append(escapeString(name)).append("\" [\n");
     sb.append("    label=<\n");
-    sb.append("      <TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\">\n");
+    sb.append("      <TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"0\">\n");
+    // Circle with small circle inside (pump casing with impeller)
     sb.append("        <TR><TD>\n");
-    // Circle with triangle inside (pump symbol)
     sb.append("          <TABLE BORDER=\"2\" CELLBORDER=\"0\" CELLSPACING=\"0\" ");
-    sb.append("CELLPADDING=\"8\" BGCOLOR=\"#4169E1\" COLOR=\"#00008B\" STYLE=\"ROUNDED\">\n");
+    sb.append("CELLPADDING=\"12\" BGCOLOR=\"").append(bgColor).append("\" COLOR=\"");
+    sb.append(borderColor).append("\" STYLE=\"ROUNDED\">\n");
     sb.append("            <TR><TD ALIGN=\"CENTER\">\n");
-    sb.append("              <FONT POINT-SIZE=\"14\" COLOR=\"white\">&#9654;</FONT>\n");
+    // Small circle representing impeller
+    sb.append("              <FONT POINT-SIZE=\"8\" COLOR=\"").append(borderColor)
+        .append("\">&#9675;</FONT>\n");
     sb.append("            </TD></TR>\n");
     sb.append("          </TABLE>\n");
     sb.append("        </TD></TR>\n");
+    // Triangle below (discharge direction)
+    sb.append("        <TR><TD ALIGN=\"CENTER\">\n");
+    sb.append("          <FONT POINT-SIZE=\"18\" COLOR=\"").append(borderColor)
+        .append("\">&#9660;</FONT>\n");
+    sb.append("        </TD></TR>\n");
+    // Name below
     sb.append("        <TR><TD ALIGN=\"CENTER\">\n");
     sb.append("          <FONT POINT-SIZE=\"8\">").append(escapeHtml(name)).append("</FONT>\n");
     sb.append("        </TD></TR>\n");
@@ -789,25 +895,64 @@ public class ProcessDiagramExporter implements Serializable {
    * @param type the column type
    */
   private void appendColumnNode(StringBuilder sb, String name, String type) {
+    // Use diagram style colors if available
+    String styleFillColor = diagramStyle.getEquipmentFillColor("Column");
+    String bgColor = styleFillColor != null ? styleFillColor : "#E8E8E8";
+    String headerColor = styleFillColor != null ? adjustBrightness(styleFillColor, -20) : "#D0D0D0";
+    String trayColor = styleFillColor != null ? adjustBrightness(styleFillColor, -10) : "#C8C8C8";
+    String borderColor = diagramStyle.getEquipmentOutlineColor();
+
     sb.append("  \"").append(escapeString(name)).append("\" [\n");
     sb.append("    label=<\n");
     sb.append("      <TABLE BORDER=\"2\" CELLBORDER=\"0\" CELLSPACING=\"0\" ");
-    sb.append("CELLPADDING=\"2\" BGCOLOR=\"#E8E8E8\" COLOR=\"#404040\">\n");
+    sb.append("CELLPADDING=\"0\" BGCOLOR=\"").append(bgColor).append("\" COLOR=\"");
+    sb.append(borderColor).append("\">\n");
     // Top section
-    sb.append("        <TR><TD WIDTH=\"50\" HEIGHT=\"15\" BGCOLOR=\"#D0D0D0\"></TD></TR>\n");
-    // Tray sections (simulate internal trays)
+    sb.append("        <TR><TD WIDTH=\"50\" HEIGHT=\"15\" BGCOLOR=\"").append(headerColor);
+    sb.append("\"></TD></TR>\n");
+    // Tray sections (simulate internal trays with thin colored rows)
     for (int i = 0; i < 4; i++) {
-      sb.append("        <TR><TD HEIGHT=\"8\"><HR/></TD></TR>\n");
-      sb.append("        <TR><TD HEIGHT=\"12\"></TD></TR>\n");
+      // Tray line (thin dark row)
+      sb.append("        <TR><TD HEIGHT=\"3\" BGCOLOR=\"").append(trayColor);
+      sb.append("\"></TD></TR>\n");
+      // Space between trays
+      sb.append("        <TR><TD HEIGHT=\"10\"></TD></TR>\n");
     }
     // Bottom section
-    sb.append("        <TR><TD HEIGHT=\"15\" BGCOLOR=\"#D0D0D0\"></TD></TR>\n");
+    sb.append("        <TR><TD HEIGHT=\"15\" BGCOLOR=\"").append(headerColor);
+    sb.append("\"></TD></TR>\n");
     sb.append("      </TABLE>\n");
     sb.append("    >,\n");
     sb.append("    shape=plaintext,\n");
     sb.append("    xlabel=<<FONT POINT-SIZE=\"9\">").append(escapeHtml(name));
     sb.append("</FONT>>\n");
     sb.append("  ];\n");
+  }
+
+  /**
+   * Adjusts the brightness of a hex color.
+   *
+   * @param hexColor the hex color (e.g., "#FF6347")
+   * @param amount the brightness adjustment (-255 to 255)
+   * @return the adjusted hex color
+   */
+  private String adjustBrightness(String hexColor, int amount) {
+    if (hexColor == null || !hexColor.startsWith("#") || hexColor.length() < 7) {
+      return hexColor;
+    }
+    try {
+      int r = Integer.parseInt(hexColor.substring(1, 3), 16);
+      int g = Integer.parseInt(hexColor.substring(3, 5), 16);
+      int b = Integer.parseInt(hexColor.substring(5, 7), 16);
+
+      r = Math.max(0, Math.min(255, r + amount));
+      g = Math.max(0, Math.min(255, g + amount));
+      b = Math.max(0, Math.min(255, b + amount));
+
+      return String.format("#%02X%02X%02X", r, g, b);
+    } catch (NumberFormatException e) {
+      return hexColor;
+    }
   }
 
   /**
@@ -926,6 +1071,10 @@ public class ProcessDiagramExporter implements Serializable {
     String sourceName = edge.getSource().getName();
     String targetName = edge.getTarget().getName();
 
+    // Check if source or target is a valve (for seamless inline connection)
+    boolean sourceIsValve = isValve(edge.getSource().getEquipment());
+    boolean targetIsValve = isValve(edge.getTarget().getEquipment());
+
     // Get phase-based styling
     PFDLayoutPolicy.StreamPhase phase = layoutPolicy.classifyEdgePhase(edge);
 
@@ -938,19 +1087,23 @@ public class ProcessDiagramExporter implements Serializable {
 
     // Edge color based on phase (or special for recycle)
     if (isRecycle && highlightRecycles) {
-      sb.append("color=\"#9932CC\""); // Dark Orchid for recycles
+      sb.append("color=\"").append(diagramStyle.getRecycleColor()).append("\"");
+    } else if (diagramStyle != DiagramStyle.NEQSIM) {
+      // Use diagram style's stream color
+      sb.append("color=\"").append(diagramStyle.getStreamColor()).append("\"");
     } else {
+      // Use phase-based color for NeqSim style
       sb.append("color=\"").append(phase.getColor()).append("\"");
     }
 
     // Edge style based on phase or recycle
     if (isRecycle && highlightRecycles) {
-      sb.append(", style=\"dashed,bold\", penwidth=2");
+      sb.append(", style=\"dashed,bold\", penwidth=").append(diagramStyle.getStreamWidth() + 0.5);
       sb.append(", constraint=false"); // Allow recycles to go backwards
     } else if ("dashed".equals(phase.getLineStyle())) {
       sb.append(", style=dashed");
     } else if ("bold".equals(phase.getLineStyle())) {
-      sb.append(", style=bold, penwidth=2");
+      sb.append(", style=bold, penwidth=").append(diagramStyle.getStreamWidth());
     }
 
     // Stream value label
@@ -986,6 +1139,14 @@ public class ProcessDiagramExporter implements Serializable {
         default:
           break;
       }
+    }
+
+    // For valve connections: use ports at center of triangle sides
+    if (targetIsValve) {
+      sb.append(", arrowhead=none, headport=\"in:w\"");
+    }
+    if (sourceIsValve) {
+      sb.append(", arrowtail=none, tailport=\"out:e\"");
     }
 
     sb.append("];\n");
@@ -1112,6 +1273,20 @@ public class ProcessDiagramExporter implements Serializable {
   }
 
   /**
+   * Checks if equipment is a valve type.
+   *
+   * @param equipment the equipment
+   * @return true if valve
+   */
+  private boolean isValve(ProcessEquipmentInterface equipment) {
+    if (equipment == null) {
+      return false;
+    }
+    String typeName = equipment.getClass().getSimpleName().toLowerCase();
+    return typeName.contains("valve") || typeName.contains("throttl");
+  }
+
+  /**
    * Appends a legend to the diagram.
    *
    * @param sb the string builder
@@ -1164,8 +1339,9 @@ public class ProcessDiagramExporter implements Serializable {
       sb.append("    \n");
       sb.append("    legend_recycle [label=\"Recycle Stream\" shape=plaintext];\n");
       sb.append("    legend_recycle_line [label=\"\" shape=point width=0];\n");
-      sb.append(
-          "    legend_recycle -> legend_recycle_line [style=\"dashed,bold\", color=\"#9932CC\", penwidth=2, arrowhead=none];\n");
+      sb.append("    legend_recycle -> legend_recycle_line [style=\"dashed,bold\", color=\"")
+          .append(diagramStyle.getRecycleColor()).append("\", penwidth=")
+          .append(diagramStyle.getStreamWidth() + 0.5).append(", arrowhead=none];\n");
     }
 
     sb.append("  }\n");
@@ -1323,6 +1499,39 @@ public class ProcessDiagramExporter implements Serializable {
   public ProcessDiagramExporter setDetailLevel(DiagramDetailLevel detailLevel) {
     this.detailLevel = detailLevel;
     return this;
+  }
+
+  /**
+   * Sets the diagram style to use for rendering.
+   *
+   * <p>
+   * Available styles include:
+   * <ul>
+   * <li>{@link DiagramStyle#NEQSIM} - Default NeqSim style with colored zones</li>
+   * <li>{@link DiagramStyle#HYSYS} - AspenTech HYSYS-like style with blue streams</li>
+   * <li>{@link DiagramStyle#PROII} - PRO/II style with gray background</li>
+   * <li>{@link DiagramStyle#ASPEN_PLUS} - Aspen Plus style</li>
+   * </ul>
+   *
+   * @param style the diagram style
+   * @return this exporter for chaining
+   */
+  public ProcessDiagramExporter setDiagramStyle(DiagramStyle style) {
+    this.diagramStyle = style;
+    // Apply style-specific settings
+    if (!style.showClusters()) {
+      this.useClusters = false;
+    }
+    return this;
+  }
+
+  /**
+   * Gets the current diagram style.
+   *
+   * @return the diagram style
+   */
+  public DiagramStyle getDiagramStyle() {
+    return diagramStyle;
   }
 
   /**
