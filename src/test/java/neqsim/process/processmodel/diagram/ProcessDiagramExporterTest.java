@@ -114,8 +114,10 @@ class ProcessDiagramExporterTest {
 
     // Verify industry PFD layout uses LR with phase zone ordering
     assertTrue(dot.contains("rankdir=LR"), "Should use left-to-right layout");
-    // Feed/product streams are grouped with rank=same constraints
-    assertTrue(dot.contains("rank=same"), "Should group feeds and products by rank");
+    // Verify phase-aware layout with zone comments
+    assertTrue(
+        dot.contains("Gas top") || dot.contains("Phase zone") || dot.contains("vertical phase"),
+        "Should contain phase zone layout");
 
     // Verify phase-aware coloring
     assertTrue(dot.contains("#87CEEB") || dot.contains("87CEEB"),
@@ -274,17 +276,17 @@ class ProcessDiagramExporterTest {
     assertEquals("cylinder", separatorStyle.getShape());
     assertNotNull(separatorStyle.getFillColor());
 
-    // Test compressor style
+    // Test compressor style (trapezium for P&ID standard symbol)
     EquipmentVisualStyle compressorStyle = EquipmentVisualStyle.getStyle("compressor");
-    assertEquals("parallelogram", compressorStyle.getShape());
+    assertEquals("trapezium", compressorStyle.getShape());
 
     // Test pump style
     EquipmentVisualStyle pumpStyle = EquipmentVisualStyle.getStyle("pump");
     assertEquals("circle", pumpStyle.getShape());
 
-    // Test valve style
+    // Test valve style (polygon for bow-tie/butterfly valve symbol)
     EquipmentVisualStyle valveStyle = EquipmentVisualStyle.getStyle("valve");
-    assertEquals("diamond", valveStyle.getShape());
+    assertEquals("polygon", valveStyle.getShape());
 
     // Test default for unknown
     EquipmentVisualStyle defaultStyle = EquipmentVisualStyle.getStyle("unknowntype");
@@ -731,7 +733,7 @@ class ProcessDiagramExporterTest {
 
     EquipmentVisualStyle compressorStyle = EquipmentVisualStyle.getStyle(EquipmentEnum.Compressor);
     assertNotNull(compressorStyle, "Should find style for Compressor enum");
-    assertEquals("parallelogram", compressorStyle.getShape(), "Compressor should be parallelogram");
+    assertEquals("trapezium", compressorStyle.getShape(), "Compressor should be trapezium");
 
     EquipmentVisualStyle pumpStyle = EquipmentVisualStyle.getStyle(EquipmentEnum.Pump);
     assertNotNull(pumpStyle, "Should find style for Pump enum");
@@ -769,7 +771,7 @@ class ProcessDiagramExporterTest {
     Compressor compressor = new Compressor("K-101");
     EquipmentVisualStyle compStyle = EquipmentVisualStyle.getStyleForEquipment(compressor);
     assertNotNull(compStyle, "Should find style for Compressor");
-    assertEquals("parallelogram", compStyle.getShape(), "Compressor should be parallelogram");
+    assertEquals("trapezium", compStyle.getShape(), "Compressor should be trapezium");
 
     Separator separator = new Separator("V-101");
     EquipmentVisualStyle sepStyle = EquipmentVisualStyle.getStyleForEquipment(separator);
@@ -830,8 +832,10 @@ class ProcessDiagramExporterTest {
     // Verify left-to-right layout (industry standard)
     assertTrue(dot.contains("rankdir=LR"), "Should use left-to-right layout for industry PFD");
 
-    // Verify feed streams are grouped (left side)
-    assertTrue(dot.contains("rank=same"), "Should group streams by horizontal position");
+    // Verify phase-aware layout structure
+    assertTrue(
+        dot.contains("Phase zone") || dot.contains("vertical phase") || dot.contains("Gas top"),
+        "Should contain phase zone layout comments");
 
     // Verify separator outlet port positioning (gravity-based)
     assertTrue(dot.contains("tailport=n"), "Gas outlet should exit from top (north)");

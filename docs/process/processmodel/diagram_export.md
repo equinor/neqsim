@@ -76,41 +76,41 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | WaterStripperColumn | Rectangle | Light Green |
 
 #### Compressors & Expanders
-| Equipment | Shape | Color |
-|-----------|-------|-------|
-| Compressor | Parallelogram | Light Blue |
-| CompressorModule | Parallelogram | Light Blue |
-| Expander | Inverted Trapezium | Light Blue |
-| TurbineExpander | Inverted Trapezium | Light Blue |
+| Equipment | Shape | Symbol |
+|-----------|-------|--------|
+| Compressor | Trapezoid | Standard P&ID trapezoid |
+| CompressorModule | Trapezoid | Standard P&ID trapezoid |
+| Expander | Inverted Trapezium | Inverted trapezoid |
+| TurbineExpander | Inverted Trapezium | Inverted trapezoid |
 
 #### Pumps
-| Equipment | Shape | Color |
-|-----------|-------|-------|
-| Pump | Circle | Dark Blue |
-| PumpModule | Circle | Dark Blue |
-| ESP (Electrical Submersible Pump) | Circle | Slate Blue |
+| Equipment | Shape | Symbol |
+|-----------|-------|--------|
+| Pump | Circle with impeller | Circle on triangle base |
+| PumpModule | Circle with impeller | Circle on triangle base |
+| ESP (Electrical Submersible Pump) | Circle with impeller | Circle on triangle base |
 
 #### Heat Exchangers
-| Equipment | Shape | Color |
-|-----------|-------|-------|
-| HeatExchanger | Rectangle | Yellow |
-| Cooler | Rectangle | Light Blue |
-| Heater | Rectangle | Light Coral |
-| Condenser | Rectangle | Light Blue |
-| Reboiler | Rectangle | Light Coral |
-| MultiStreamHeatExchanger | Rectangle | Gold |
-| DirectContactHeater | Rectangle | Light Coral |
+| Equipment | Shape | Symbol |
+|-----------|-------|--------|
+| HeatExchanger | Circle | Simple circle |
+| Cooler | Circle | Simple circle |
+| Heater | Circle | Simple circle |
+| Condenser | Circle | Simple circle |
+| Reboiler | Circle | Simple circle |
+| MultiStreamHeatExchanger | Circle | Simple circle |
+| DirectContactHeater | Circle | Simple circle |
 
 #### Valves
-| Equipment | Shape | Color |
-|-----------|-------|-------|
-| ThrottlingValve | Diamond | Pink |
-| ValveMoV | Diamond | Yellow |
-| ControlValve | Diamond | Plum |
-| SafetyValve | Diamond | Red |
-| PressureReliefValve | Diamond | Red |
-| ESDValve | Octagon | Red |
-| HIPPSValve | Octagon | Dark Red |
+| Equipment | Shape | Symbol |
+|-----------|-------|--------|
+| ThrottlingValve | Bowtie (▶◀) | Two triangles tip-to-tip |
+| ValveMoV | Bowtie (▶◀) | Two triangles tip-to-tip |
+| ControlValve | Bowtie (▶◀) | Two triangles tip-to-tip |
+| SafetyValve | Bowtie (▶◀) | Two triangles tip-to-tip |
+| PressureReliefValve | Bowtie (▶◀) | Two triangles tip-to-tip |
+| ESDValve | Bowtie (▶◀) | Two triangles tip-to-tip |
+| HIPPSValve | Bowtie (▶◀) | Two triangles tip-to-tip |
 
 #### Reactors
 | Equipment | Shape | Color |
@@ -143,6 +143,38 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | Calculator | Rectangle (dashed) | Light Blue |
 | Controller | Rectangle (dashed) | Light Yellow |
 | SetPoint | Rectangle (dashed) | Light Gray |
+
+### Diagram Styles
+
+Four diagram styles are available to match different simulator conventions:
+
+```java
+import neqsim.process.processmodel.diagram.DiagramStyle;
+
+ProcessDiagramExporter exporter = new ProcessDiagramExporter(process);
+exporter.setDiagramStyle(DiagramStyle.HYSYS);
+```
+
+| Style | Description | Stream Color | Background |
+|-------|-------------|--------------|------------|
+| `NEQSIM` | Default NeqSim style with phase-based coloring | Phase-dependent | White |
+| `HYSYS` | HYSYS/UniSim style | Blue (#0066CC) | Light Cyan |
+| `PROII` | PRO/II style | Dark Blue (#003366) | White |
+| `ASPEN_PLUS` | Aspen Plus style | Blue (#0066FF) | Light Gray |
+
+### Equipment Symbols (PFD Standard)
+
+Equipment symbols follow oil & gas PFD conventions:
+
+| Equipment | Symbol | Description |
+|-----------|--------|-------------|
+| **Valve** | ▶◀ | Bowtie - two triangles tip-to-tip |
+| **Heater/Cooler** | ○ | Simple circle |
+| **Pump** | ○ on ▽ | Circle with impeller on triangle |
+| **Compressor** | ⌂ | Trapezoid shape |
+| **Mixer** | ▶ | Right-pointing triangle |
+| **Splitter** | ◀ | Left-pointing triangle |
+| **Separator** | ▭ | Vertical cylinder |
 
 ### Recycle Stream Highlighting
 
@@ -229,6 +261,7 @@ process.exportDiagramPNG(Path.of("diagram.png"));
 ```java
 ProcessDiagramExporter exporter = new ProcessDiagramExporter(process)
     .setTitle("My Process")
+    .setDiagramStyle(DiagramStyle.HYSYS)  // NEQSIM, HYSYS, PROII, ASPEN_PLUS
     .setDetailLevel(DiagramDetailLevel.ENGINEERING)
     .setVerticalLayout(false)   // LR layout (left-to-right flow) - default
     .setUseClusters(true)       // Group equipment by role

@@ -136,17 +136,18 @@ public class EquipmentVisualStyle implements Serializable {
     STYLE_CACHE.put("adsorber", new EquipmentVisualStyle("cylinder", "#D3D3D3", "#696969", "black",
         "1.2", "2.0", "filled"));
 
-    // ========== COMPRESSORS (Parallelogram, Blue tones) ==========
-    STYLE_CACHE.put("compressor", new EquipmentVisualStyle("parallelogram", "#87CEEB", "#4682B4",
-        "black", "1.5", "0.8", "filled"));
-    STYLE_CACHE.put("singlestagecompressor", new EquipmentVisualStyle("parallelogram", "#87CEEB",
-        "#4682B4", "black", "1.5", "0.8", "filled"));
-    STYLE_CACHE.put("multistagecompressor", new EquipmentVisualStyle("parallelogram", "#ADD8E6",
-        "#4682B4", "black", "1.8", "1.0", "filled"));
-    STYLE_CACHE.put("compressormodule", new EquipmentVisualStyle("parallelogram", "#B0E0E6",
-        "#4682B4", "black", "2.0", "1.2", "filled"));
+    // ========== COMPRESSORS (Trapezium - short side inlet left, long side outlet right) ==========
+    STYLE_CACHE.put("compressor", new EquipmentVisualStyle("trapezium", "#87CEEB", "#4682B4",
+        "black", "1.2", "0.8", "filled"));
+    STYLE_CACHE.put("singlestagecompressor", new EquipmentVisualStyle("trapezium", "#87CEEB",
+        "#4682B4", "black", "1.2", "0.8", "filled"));
+    STYLE_CACHE.put("multistagecompressor", new EquipmentVisualStyle("trapezium", "#ADD8E6",
+        "#4682B4", "black", "1.5", "1.0", "filled"));
+    STYLE_CACHE.put("compressormodule", new EquipmentVisualStyle("trapezium", "#B0E0E6", "#4682B4",
+        "black", "1.8", "1.2", "filled"));
 
-    // ========== EXPANDERS & TURBINES (Inverted trapezoid, Blue) ==========
+    // ========== EXPANDERS & TURBINES (Inverted trapezoid - long side inlet, short side outlet)
+    // ==========
     STYLE_CACHE.put("expander", new EquipmentVisualStyle("invtrapezium", "#87CEFA", "#4169E1",
         "black", "1.5", "0.8", "filled"));
     STYLE_CACHE.put("turboexpander", new EquipmentVisualStyle("invtrapezium", "#87CEFA", "#4169E1",
@@ -219,19 +220,20 @@ public class EquipmentVisualStyle implements Serializable {
     STYLE_CACHE.put("energystream",
         new EquipmentVisualStyle("ellipse", "#FFD700", "#FF8C00", "black", "1.0", "0.4", "filled"));
 
-    // ========== MIXERS & SPLITTERS (Triangle shapes, Purple) ==========
-    STYLE_CACHE.put("mixer", new EquipmentVisualStyle("invtriangle", "#DDA0DD", "#8B008B", "black",
-        "0.8", "0.6", "filled"));
-    STYLE_CACHE.put("staticmixer", new EquipmentVisualStyle("invtriangle", "#DDA0DD", "#8B008B",
-        "black", "0.8", "0.6", "filled"));
-    STYLE_CACHE.put("phasemixer", new EquipmentVisualStyle("invtriangle", "#DDA0DD", "#8B008B",
-        "black", "0.8", "0.6", "filled"));
-    STYLE_CACHE.put("splitter", new EquipmentVisualStyle("triangle", "#DDA0DD", "#8B008B", "black",
-        "0.8", "0.6", "filled"));
-    STYLE_CACHE.put("componentsplitter", new EquipmentVisualStyle("triangle", "#DDA0DD", "#8B008B",
-        "black", "0.8", "0.6", "filled"));
-    STYLE_CACHE.put("manifold", new EquipmentVisualStyle("triangle", "#DDA0DD", "#8B008B", "black",
-        "0.8", "0.6", "filled"));
+    // ========== MIXERS & SPLITTERS (Triangle shapes pointing right for L-R flow) ==========
+    // Both mixers and splitters use right-pointing triangles for left-to-right flow
+    STYLE_CACHE.put("mixer", new EquipmentVisualStyle("triangle", "#E8E8E8", "#000000", "black",
+        "0.5", "0.5", "filled"));
+    STYLE_CACHE.put("staticmixer", new EquipmentVisualStyle("triangle", "#E8E8E8", "#000000",
+        "black", "0.5", "0.5", "filled"));
+    STYLE_CACHE.put("phasemixer", new EquipmentVisualStyle("triangle", "#E8E8E8", "#000000",
+        "black", "0.5", "0.5", "filled"));
+    STYLE_CACHE.put("splitter", new EquipmentVisualStyle("triangle", "#E8E8E8", "#000000", "black",
+        "0.5", "0.5", "filled"));
+    STYLE_CACHE.put("componentsplitter", new EquipmentVisualStyle("triangle", "#E8E8E8", "#000000",
+        "black", "0.5", "0.5", "filled"));
+    STYLE_CACHE.put("manifold", new EquipmentVisualStyle("triangle", "#E8E8E8", "#000000", "black",
+        "0.5", "0.5", "filled"));
 
     // ========== REACTORS (Hexagon, Orange) ==========
     STYLE_CACHE.put("reactor",
@@ -496,6 +498,9 @@ public class EquipmentVisualStyle implements Serializable {
       sb.append(", skew=0.6"); // Skew creates the hourglass/bow-tie pinch effect
       sb.append(", orientation=0"); // Keep horizontal alignment
     }
+
+    // Triangle shapes (mixer/splitter) - no fixed orientation
+    // Graphviz will handle edge connections; orientation set by diagram exporter based on flow
 
     sb.append("]");
     return sb.toString();
