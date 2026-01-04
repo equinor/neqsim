@@ -75,6 +75,13 @@ public class AUSMPlusFluxCalculator implements Serializable {
 
     /**
      * Constructor with all fields.
+     *
+     * @param density phase density (kg/m3)
+     * @param velocity phase velocity (m/s)
+     * @param pressure phase pressure (Pa)
+     * @param soundSpeed speed of sound (m/s)
+     * @param enthalpy specific enthalpy (J/kg)
+     * @param holdup volume fraction (0-1)
      */
     public PhaseState(double density, double velocity, double pressure, double soundSpeed,
         double enthalpy, double holdup) {

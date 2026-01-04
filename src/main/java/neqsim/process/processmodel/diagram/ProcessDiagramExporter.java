@@ -780,8 +780,8 @@ public class ProcessDiagramExporter implements Serializable {
   }
 
   /**
-   * Appends a valve node with bowtie symbol (⋈) like HYSYS. Classic P&ID valve symbol: crossed
-   * triangles.
+   * Appends a valve node with bowtie symbol like HYSYS. Classic PFD valve symbol with two triangles
+   * tip-to-tip.
    *
    * @param sb the string builder
    * @param name the valve name
@@ -844,7 +844,7 @@ public class ProcessDiagramExporter implements Serializable {
   }
 
   /**
-   * Appends a pump node with circle on triangle (standard P&ID pump symbol). Circle represents the
+   * Appends a pump node with circle on triangle (standard PFD pump symbol). Circle represents the
    * casing, small circle inside represents impeller, triangle below represents the discharge
    * direction.
    *

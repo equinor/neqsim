@@ -58,6 +58,9 @@ public class EquipmentValidator {
 
   /**
    * Separator-specific validation.
+   *
+   * @param builder the validation builder to add results to
+   * @param separator the separator to validate
    */
   private static void validateSeparator(ValidationBuilder builder, Separator separator) {
     // Check: Inlet present
@@ -99,6 +102,9 @@ public class EquipmentValidator {
 
   /**
    * Distillation column-specific validation.
+   *
+   * @param builder the validation builder to add results to
+   * @param column the distillation column to validate
    */
   private static void validateDistillationColumn(ValidationBuilder builder,
       DistillationColumn column) {
@@ -147,6 +153,9 @@ public class EquipmentValidator {
 
   /**
    * Heater-specific validation.
+   *
+   * @param builder the validation builder to add results to
+   * @param heater the heater to validate
    */
   private static void validateHeater(ValidationBuilder builder, Heater heater) {
     // Check: Inlet present (Heater extends TwoPortEquipment)
@@ -184,6 +193,9 @@ public class EquipmentValidator {
 
   /**
    * Cooler-specific validation.
+   *
+   * @param builder the validation builder to add results to
+   * @param cooler the cooler to validate
    */
   private static void validateCooler(ValidationBuilder builder, Cooler cooler) {
     // Check: Inlet present (Cooler extends TwoPortEquipment)

@@ -530,10 +530,6 @@ public class MassTransferCoefficientCalculator {
    * @param diameter pipe diameter [m]
    * @param voidFraction void fraction [-]
    * @return hydraulic diameter for gas phase [m]
-   *
-   * @param diameter pipe diameter [m]
-   * @param voidFraction void fraction [-]
-   * @return hydraulic diameter for gas phase [m]
    */
   private static double calculateGasHydraulicDiameter(double diameter, double voidFraction) {
     return calculateLiquidHydraulicDiameter(diameter, 1.0 - voidFraction);
