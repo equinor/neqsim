@@ -49,6 +49,7 @@ NeqSim supports comprehensive compressor performance modeling through compressor
 | `SafeSplineSurgeCurve` | Spline-based surge curve with safe extrapolation |
 | `SafeSplineStoneWallCurve` | Spline-based stone wall (choke) curve |
 | `CompressorCurve` | Individual speed curve (flow, head, efficiency) |
+| `CompressorMechanicalLosses` | **Seal gas and bearing loss calculations** (API 692/617) |
 
 ### Compressor Operating Envelope
 

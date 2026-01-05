@@ -8,6 +8,7 @@ Documentation for compression equipment in NeqSim process simulation.
 - [Calculation Methods](#calculation-methods)
 - [Performance Curves](#performance-curves)
 - [Surge and Stone Wall](#surge-and-stone-wall)
+- [Mechanical Losses and Seal Gas](#mechanical-losses-and-seal-gas) ⭐ NEW
 - [Usage Examples](#usage-examples)
 
 > **📖 Detailed Curve Documentation:** For comprehensive information on compressor curves, 
@@ -367,6 +368,200 @@ comp.run();
 
 > **📖 Detailed Documentation:** See [Compressor Curves - Automatic Generation](compressor_curves.md#automatic-curve-generation) 
 > for complete API reference, advanced corrections, and examples.
+
+---
+
+## Mechanical Losses and Seal Gas
+
+NeqSim supports modeling of compressor mechanical losses and seal gas consumption per **API 617** (bearings) and **API 692** (dry gas seals).
+
+### Overview
+
+The `CompressorMechanicalLosses` class models:
+
+| Component | Standard | Description |
+|-----------|----------|-------------|
+| **Dry Gas Seals** | API 692 | Primary/secondary leakage, buffer gas, separation gas |
+| **Bearings** | API 617 | Radial and thrust bearing friction losses |
+| **Lube Oil System** | API 614 | Oil flow requirements and cooler duty |
+
+### Quick Start
+
+```java
+// Create and run compressor
+Compressor compressor = new Compressor("K-100", inletStream);
+compressor.setOutletPressure(100.0, "bara");
+compressor.setSpeed(10000);
+compressor.run();
+
+// Initialize mechanical losses with shaft diameter (mm)
+compressor.initMechanicalLosses(120.0);
+
+// Get results
+double sealGas = compressor.getSealGasConsumption();  // Nm³/hr total
+double bearingLoss = compressor.getBearingLoss();     // kW
+double mechEfficiency = compressor.getMechanicalEfficiency();  // 0-1
+
+System.out.println("Seal gas consumption: " + sealGas + " Nm³/hr");
+System.out.println("Bearing power loss: " + bearingLoss + " kW");
+System.out.println("Mechanical efficiency: " + (mechEfficiency * 100) + "%");
+```
+
+### Seal Types
+
+```java
+CompressorMechanicalLosses losses = compressor.getMechanicalLosses();
+
+// Available seal types
+losses.setSealType(CompressorMechanicalLosses.SealType.DRY_GAS_TANDEM);  // Most common
+losses.setSealType(CompressorMechanicalLosses.SealType.DRY_GAS_DOUBLE);  // Lower leakage
+losses.setSealType(CompressorMechanicalLosses.SealType.DRY_GAS_SINGLE);  // Higher leakage
+losses.setSealType(CompressorMechanicalLosses.SealType.LABYRINTH);       // Non-contacting
+losses.setSealType(CompressorMechanicalLosses.SealType.OIL_FILM);        // Legacy
+```
+
+### Seal Gas Flows (API 692)
+
+| Flow Type | Description | Typical Range |
+|-----------|-------------|---------------|
+| **Primary Leakage** | Gas escaping past primary seal | 0.5-5 Nm³/hr per seal |
+| **Secondary Leakage** | Gas past secondary seal (tandem) | 10-30% of primary |
+| **Buffer Gas** | Clean gas between seals | 2-10 Nm³/hr per seal |
+| **Separation Gas** | N₂ to prevent oil mist ingress | 1-5 Nm³/hr per seal |
+
+```java
+// Individual seal gas flows
+double primaryLeak = losses.calculatePrimarySealLeakage();    // Nm³/hr
+double secondaryLeak = losses.calculateSecondarySealLeakage(); // Nm³/hr  
+double bufferGas = losses.calculateBufferGasFlow();           // Nm³/hr
+double separationGas = losses.calculateSeparationGasFlow();   // Nm³/hr
+
+// Total consumption
+double total = losses.getTotalSealGasConsumption();  // Nm³/hr
+```
+
+### Bearing Types
+
+```java
+// Available bearing types
+losses.setBearingType(CompressorMechanicalLosses.BearingType.TILTING_PAD);    // Standard
+losses.setBearingType(CompressorMechanicalLosses.BearingType.PLAIN_SLEEVE);   // Higher loss
+losses.setBearingType(CompressorMechanicalLosses.BearingType.MAGNETIC_ACTIVE); // Very low loss
+losses.setBearingType(CompressorMechanicalLosses.BearingType.GAS_FOIL);       // Oil-free
+```
+
+### Bearing and Lube Oil Calculations (API 617)
+
+```java
+// Bearing losses
+double radialLoss = losses.calculateRadialBearingLoss();  // kW
+double thrustLoss = losses.calculateThrustBearingLoss();  // kW
+double totalBearingLoss = losses.getTotalBearingLoss();   // kW
+
+// Lube oil system
+losses.setLubeOilInletTemp(40.0);   // °C
+losses.setLubeOilOutletTemp(55.0);  // °C
+
+double oilFlow = losses.calculateLubeOilFlowRate();       // L/min
+double coolerDuty = losses.calculateLubeOilCoolerDuty();  // kW
+```
+
+### Configuration Options
+
+```java
+CompressorMechanicalLosses losses = compressor.initMechanicalLosses(100.0);
+
+// Seal configuration
+losses.setSealType(CompressorMechanicalLosses.SealType.DRY_GAS_TANDEM);
+losses.setNumberOfSeals(2);  // Typically 2 for single-shaft
+losses.setSealGasSupplyPressure(105.0);  // bara
+losses.setSealGasSupplyTemperature(40.0);  // °C
+
+// Bearing configuration  
+losses.setBearingType(CompressorMechanicalLosses.BearingType.TILTING_PAD);
+losses.setNumberOfRadialBearings(2);
+
+// Compressor updates operating conditions automatically
+compressor.updateMechanicalLosses();
+```
+
+### Complete Example
+
+```java
+// Natural gas compressor with mechanical losses
+SystemInterface gas = new SystemSrkEos(298.0, 50.0);
+gas.addComponent("methane", 0.9);
+gas.addComponent("ethane", 0.1);
+gas.setMixingRule("classic");
+
+Stream inlet = new Stream("inlet", gas);
+inlet.setFlowRate(5000.0, "kg/hr");
+inlet.run();
+
+// Create and configure compressor
+Compressor comp = new Compressor("HP Compressor", inlet);
+comp.setOutletPressure(150.0, "bara");
+comp.setPolytropicEfficiency(0.78);
+comp.setSpeed(12000);
+comp.run();
+
+// Configure mechanical losses
+CompressorMechanicalLosses losses = comp.initMechanicalLosses(120.0);
+losses.setSealType(CompressorMechanicalLosses.SealType.DRY_GAS_TANDEM);
+losses.setBearingType(CompressorMechanicalLosses.BearingType.TILTING_PAD);
+
+// Print summary
+System.out.println("=== Compressor Results ===");
+System.out.println("Power: " + comp.getPower("kW") + " kW");
+System.out.println("Polytropic head: " + comp.getPolytropicHead("kJ/kg") + " kJ/kg");
+System.out.println();
+System.out.println("=== Mechanical Losses ===");
+System.out.println("Seal gas consumption: " + comp.getSealGasConsumption() + " Nm³/hr");
+System.out.println("  - Primary leakage: " + losses.calculatePrimarySealLeakage() + " Nm³/hr");
+System.out.println("  - Buffer gas: " + losses.calculateBufferGasFlow() + " Nm³/hr");
+System.out.println("Bearing loss: " + comp.getBearingLoss() + " kW");
+System.out.println("Mechanical efficiency: " + (comp.getMechanicalEfficiency() * 100) + "%");
+System.out.println();
+System.out.println("=== Lube Oil System ===");
+System.out.println("Oil flow: " + losses.calculateLubeOilFlowRate() + " L/min");
+System.out.println("Cooler duty: " + losses.calculateLubeOilCoolerDuty() + " kW");
+```
+
+### Python Example
+
+```python
+from jpype import JImplements, JOverride
+from neqsim.thermo import fluid
+from neqsim.process import compressor, stream
+
+# Create gas and stream
+gas = fluid('srk')
+gas.addComponent('methane', 0.9)
+gas.addComponent('ethane', 0.1)
+gas.setMixingRule('classic')
+
+inlet = stream(gas)
+inlet.setFlowRate(5000.0, 'kg/hr')
+inlet.setTemperature(25.0, 'C')
+inlet.setPressure(50.0, 'bara')
+inlet.run()
+
+# Create compressor
+comp = compressor(inlet)
+comp.setOutletPressure(150.0)
+comp.setPolytropicEfficiency(0.78)
+comp.setSpeed(12000)
+comp.run()
+
+# Initialize mechanical losses (120mm shaft)
+losses = comp.initMechanicalLosses(120.0)
+losses.setSealType(losses.SealType.DRY_GAS_TANDEM)
+
+# Get results
+print(f"Seal gas consumption: {comp.getSealGasConsumption():.2f} Nm³/hr")
+print(f"Bearing power loss: {comp.getBearingLoss():.2f} kW")
+print(f"Mechanical efficiency: {comp.getMechanicalEfficiency()*100:.1f}%")
+```
 
 ---
 

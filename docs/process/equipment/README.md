@@ -31,7 +31,7 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Compressors | [compressors.md](compressors.md) | Gas compression |
+| Compressors | [compressors.md](compressors.md) | Gas compression, mechanical losses, seal gas |
 | Pumps | [pumps.md](pumps.md) | Liquid pumping |
 | Expanders | [expanders.md](expanders.md) | Power recovery, turboexpanders |
 
@@ -133,6 +133,15 @@ All equipment inherits from `ProcessEquipmentBaseClass`:
 | `getTemperature()` | Get operating temperature |
 | `getMechanicalDesign()` | Get mechanical design object |
 | `needRecalculation()` | Check if recalculation needed |
+
+### Compressor-Specific Methods
+
+| Method | Description |
+|--------|-------------|
+| `initMechanicalLosses(shaftDiameter)` | Initialize seal gas and bearing loss model |
+| `getSealGasConsumption()` | Get total seal gas consumption (Nm³/hr) |
+| `getBearingLoss()` | Get total bearing power loss (kW) |
+| `getMechanicalEfficiency()` | Get mechanical efficiency (0-1) |
 
 ---
 

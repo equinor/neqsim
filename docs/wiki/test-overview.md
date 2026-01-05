@@ -20,6 +20,20 @@ Directory: `src/test/java/neqsim/process`
 
 Tests of the dynamic process models and process equipment. Examples include separator, compressor and process controller behaviour.
 
+### Compressor Test Files
+
+| Test File | Description |
+|-----------|-------------|
+| `CompressorTest.java` | Core compressor calculations, polytropic method, efficiency |
+| `CompressorChartTest.java` | Performance curve interpolation, surge/stone wall |
+| `CompressorChartGeneratorTest.java` | Automatic curve generation from templates |
+| `CompressorChartMWInterpolationTest.java` | Multi-map MW interpolation |
+| `CompressorChartKhader2015Test.java` | Khader 2015 method with fan law scaling |
+| `CompressorMechanicalLossesTest.java` | Seal gas consumption (API 692) and bearing losses (API 617) |
+| `ASMEPTC10ValidationTest.java` | Validation against ASME PTC 10 standard |
+| `CompressorDynamicSimulationTest.java` | Dynamic simulation, startup/shutdown profiles |
+| `SafeSplineSurgeCurveTest.java` | Spline-based surge curve with safe extrapolation |
+
 ## Physical properties and fluid mechanics
 
 Directories:

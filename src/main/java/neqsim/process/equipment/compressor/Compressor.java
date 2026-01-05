@@ -115,6 +115,9 @@ public class Compressor extends TwoPortEquipment
 
   CompressorMechanicalDesign mechanicalDesign;
 
+  /** Mechanical losses model for seal gas and bearing calculations. */
+  private CompressorMechanicalLosses mechanicalLosses = null;
+
   private String pressureUnit = "bara";
   private String polytropicMethod = "schultz";
 
@@ -166,6 +169,108 @@ public class Compressor extends TwoPortEquipment
   @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new CompressorMechanicalDesign(this);
+  }
+
+  /**
+   * Get the mechanical losses model for seal gas and bearing calculations.
+   *
+   * @return mechanical losses model, or null if not configured
+   */
+  public CompressorMechanicalLosses getMechanicalLosses() {
+    return mechanicalLosses;
+  }
+
+  /**
+   * Set the mechanical losses model.
+   *
+   * @param mechanicalLosses the mechanical losses model
+   */
+  public void setMechanicalLosses(CompressorMechanicalLosses mechanicalLosses) {
+    this.mechanicalLosses = mechanicalLosses;
+  }
+
+  /**
+   * Initialize a default mechanical losses model based on current compressor configuration.
+   *
+   * <p>
+   * This creates a mechanical losses model with typical parameters for a centrifugal compressor
+   * with dry gas seals and tilting pad bearings.
+   * </p>
+   *
+   * @return the initialized mechanical losses model
+   */
+  public CompressorMechanicalLosses initMechanicalLosses() {
+    mechanicalLosses = new CompressorMechanicalLosses();
+    return mechanicalLosses;
+  }
+
+  /**
+   * Initialize a mechanical losses model with specified shaft diameter.
+   *
+   * @param shaftDiameterMm shaft diameter in mm
+   * @return the initialized mechanical losses model
+   */
+  public CompressorMechanicalLosses initMechanicalLosses(double shaftDiameterMm) {
+    mechanicalLosses = new CompressorMechanicalLosses(shaftDiameterMm);
+    return mechanicalLosses;
+  }
+
+  /**
+   * Update mechanical losses model with current operating conditions.
+   *
+   * <p>
+   * Call this after running the compressor to update seal gas consumption and bearing losses.
+   * </p>
+   */
+  public void updateMechanicalLosses() {
+    if (mechanicalLosses == null) {
+      return;
+    }
+    double suctionP = getInletStream().getPressure("bara");
+    double dischargeP = getOutletStream().getPressure("bara");
+    double gasMW = getInletStream().getFluid().getMolarMass() * 1000.0; // kg/kmol
+    double gasZ = getInletStream().getFluid().getZ();
+
+    mechanicalLosses.setOperatingConditions(suctionP, dischargeP, speed, gasMW, gasZ);
+  }
+
+  /**
+   * Get total seal gas consumption including primary leakage, buffer gas, and separation gas.
+   *
+   * @return seal gas consumption in Nm³/hr, or 0.0 if mechanical losses not configured
+   */
+  public double getSealGasConsumption() {
+    if (mechanicalLosses == null) {
+      return 0.0;
+    }
+    updateMechanicalLosses();
+    return mechanicalLosses.getTotalSealGasConsumption();
+  }
+
+  /**
+   * Get total bearing power loss.
+   *
+   * @return bearing power loss in kW, or 0.0 if mechanical losses not configured
+   */
+  public double getBearingLoss() {
+    if (mechanicalLosses == null) {
+      return 0.0;
+    }
+    updateMechanicalLosses();
+    return mechanicalLosses.getTotalBearingLoss();
+  }
+
+  /**
+   * Get mechanical efficiency accounting for bearing and seal friction losses.
+   *
+   * @return mechanical efficiency (0-1), or 0.98 if mechanical losses not configured
+   */
+  public double getMechanicalEfficiency() {
+    if (mechanicalLosses == null) {
+      return 0.98; // Default assumption
+    }
+    updateMechanicalLosses();
+    return mechanicalLosses.getMechanicalEfficiency(getPower("kW"));
   }
 
   /** {@inheritDoc} */
