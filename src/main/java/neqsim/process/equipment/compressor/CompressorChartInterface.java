@@ -310,4 +310,178 @@ public interface CompressorChartInterface extends Cloneable {
   public default double getOperatingMW() {
     return Double.NaN;
   }
+
+  /**
+   * Get the speed values for all compressor curves.
+   *
+   * @return an array of speed values in RPM, or null if not set
+   */
+  public double[] getSpeeds();
+
+  /**
+   * Get the flow values for all compressor curves.
+   *
+   * @return a 2D array where each row corresponds to a speed and contains flow values in m3/hr, or
+   *         null if not set
+   */
+  public double[][] getFlows();
+
+  /**
+   * Get the head values for all compressor curves.
+   *
+   * @return a 2D array where each row corresponds to a speed and contains head values in the unit
+   *         specified by getHeadUnit(), or null if not set
+   */
+  public double[][] getHeads();
+
+  /**
+   * Get the polytropic efficiency values for all compressor curves.
+   *
+   * @return a 2D array where each row corresponds to a speed and contains polytropic efficiency
+   *         values in %, or null if not set
+   */
+  public double[][] getPolytropicEfficiencies();
+
+  /**
+   * Get the chart conditions (e.g., reference molecular weight).
+   *
+   * @return an array of chart condition values, or null if not set
+   */
+  public double[] getChartConditions();
+
+  /**
+   * Get the power values for all compressor curves.
+   *
+   * <p>
+   * Power is calculated from: P = mass_flow * head / efficiency. This curve is critical for driver
+   * selection and energy analysis.
+   * </p>
+   *
+   * @return a 2D array where each row corresponds to a speed and contains power values in kW, or
+   *         null if not available
+   */
+  public default double[][] getPowers() {
+    return null;
+  }
+
+  /**
+   * Get the pressure ratio values for all compressor curves.
+   *
+   * <p>
+   * Pressure ratio is calculated from polytropic head and gas properties. Useful for process design
+   * and control system configuration.
+   * </p>
+   *
+   * @return a 2D array where each row corresponds to a speed and contains pressure ratio values
+   *         (dimensionless), or null if not available
+   */
+  public default double[][] getPressureRatios() {
+    return null;
+  }
+
+  /**
+   * Set the reference density for power and pressure ratio calculations.
+   *
+   * @param density the reference gas density in kg/m3
+   */
+  public default void setReferenceDensity(double density) {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Get the reference density used for calculations.
+   *
+   * @return the reference density in kg/m3, or NaN if not set
+   */
+  public default double getReferenceDensity() {
+    return Double.NaN;
+  }
+
+  /**
+   * Set the inlet pressure for pressure ratio calculations.
+   *
+   * @param pressure the inlet pressure in bara
+   */
+  public default void setInletPressure(double pressure) {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Get the inlet pressure.
+   *
+   * @return the inlet pressure in bara, or NaN if not set
+   */
+  public default double getInletPressure() {
+    return Double.NaN;
+  }
+
+  /**
+   * Set the polytropic exponent for pressure ratio calculations.
+   *
+   * @param exponent the polytropic exponent (n)
+   */
+  public default void setPolytropicExponent(double exponent) {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Get the polytropic exponent.
+   *
+   * @return the polytropic exponent, or NaN if not set
+   */
+  public default double getPolytropicExponent() {
+    return Double.NaN;
+  }
+
+  /**
+   * Get the discharge temperature values for all compressor curves.
+   *
+   * <p>
+   * Discharge temperature is calculated from inlet temperature, pressure ratio, and polytropic
+   * efficiency using: T2 = T1 * PR^((n-1)/n) where n is related to efficiency and heat capacity
+   * ratio. This is important for downstream equipment design and material temperature limits.
+   * </p>
+   *
+   * @return a 2D array where each row corresponds to a speed and contains discharge temperature
+   *         values in Kelvin, or null if not available
+   */
+  public default double[][] getDischargeTemperatures() {
+    return null;
+  }
+
+  /**
+   * Set the inlet temperature for discharge temperature calculations.
+   *
+   * @param temperature the inlet temperature in Kelvin
+   */
+  public default void setInletTemperature(double temperature) {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Get the inlet temperature.
+   *
+   * @return the inlet temperature in Kelvin, or NaN if not set
+   */
+  public default double getInletTemperature() {
+    return Double.NaN;
+  }
+
+  /**
+   * Set the heat capacity ratio (gamma = Cp/Cv) for temperature calculations.
+   *
+   * @param gamma the heat capacity ratio (typically 1.2-1.4 for gases)
+   */
+  public default void setGamma(double gamma) {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Get the heat capacity ratio.
+   *
+   * @return the heat capacity ratio, or NaN if not set
+   */
+  public default double getGamma() {
+    return Double.NaN;
+  }
 }

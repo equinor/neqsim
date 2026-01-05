@@ -2051,6 +2051,160 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
+   * Generates a compressor chart based on the current operating point.
+   *
+   * <p>
+   * This is a convenience method that creates a single-speed compressor chart using the
+   * compressor's current speed and operating conditions. The chart type will match the compressor's
+   * current chart type setting.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   *
+   * <pre>
+   * compressor.setSpeed(10000);
+   * compressor.run();
+   * compressor.generateCompressorChart(); // Generates chart at current speed
+   * </pre>
+   */
+  public void generateCompressorChart() {
+    generateCompressorChart("normal curves", 1);
+  }
+
+  /**
+   * Generates a compressor chart with multiple speed curves.
+   *
+   * <p>
+   * Creates a multi-speed compressor chart centered around the current speed. The speeds are
+   * distributed from 80% to 120% of the current speed.
+   * </p>
+   *
+   * @param numberOfSpeeds Number of speed curves to generate (must be at least 1)
+   */
+  public void generateCompressorChart(int numberOfSpeeds) {
+    generateCompressorChart("normal curves", numberOfSpeeds);
+  }
+
+  /**
+   * Generates a compressor chart with specified options.
+   *
+   * <p>
+   * Available generation options:
+   * </p>
+   * <ul>
+   * <li>"normal curves" - Standard 5-point curves with surge, design, and stonewall points</li>
+   * <li>"mid range" - 3-point simplified curves</li>
+   * </ul>
+   *
+   * @param generationOption The generation option to use
+   */
+  public void generateCompressorChart(String generationOption) {
+    generateCompressorChart(generationOption, 1);
+  }
+
+  /**
+   * Generates a compressor chart with specified options and number of speeds.
+   *
+   * <p>
+   * This is the main chart generation method that provides full control over the generated chart.
+   * The generated chart will automatically use the compressor's current chart type (simple,
+   * interpolate, or interpolate and extrapolate).
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   *
+   * <pre>
+   * // Generate 5-speed chart with normal curves
+   * compressor.generateCompressorChart("normal curves", 5);
+   *
+   * // Generate 3-speed chart with simplified curves
+   * compressor.generateCompressorChart("mid range", 3);
+   * </pre>
+   *
+   * @param generationOption The generation option: "normal curves" or "mid range"
+   * @param numberOfSpeeds Number of speed curves to generate (must be at least 1)
+   */
+  public void generateCompressorChart(String generationOption, int numberOfSpeeds) {
+    CompressorChartGenerator generator = new CompressorChartGenerator(this);
+    // Use the current chart type
+    String chartType = getCompressorChartType();
+    generator.setChartType(chartType);
+    CompressorChartInterface newChart =
+        generator.generateCompressorChart(generationOption, numberOfSpeeds);
+    this.compressorChart = newChart;
+  }
+
+  /**
+   * Generates a compressor chart from a predefined template.
+   *
+   * <p>
+   * Templates provide realistic compressor curve shapes based on typical compressor
+   * characteristics. Available templates:
+   * </p>
+   * <ul>
+   * <li>"CENTRIFUGAL_STANDARD" - Standard centrifugal compressor curves</li>
+   * <li>"CENTRIFUGAL_HIGH_FLOW" - High flow, lower head compressor</li>
+   * <li>"CENTRIFUGAL_HIGH_HEAD" - High head, narrower operating range</li>
+   * </ul>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   *
+   * <pre>
+   * compressor.generateCompressorChartFromTemplate("CENTRIFUGAL_STANDARD", 9);
+   * </pre>
+   *
+   * @param templateName Name of the template to use
+   * @param numberOfSpeeds Number of speed curves to generate
+   */
+  public void generateCompressorChartFromTemplate(String templateName, int numberOfSpeeds) {
+    CompressorChartGenerator generator = new CompressorChartGenerator(this);
+    String chartType = getCompressorChartType();
+    generator.setChartType(chartType);
+    CompressorChartInterface newChart =
+        generator.generateFromTemplate(templateName, numberOfSpeeds);
+    this.compressorChart = newChart;
+  }
+
+  /**
+   * Generates a compressor chart with specific speed values.
+   *
+   * <p>
+   * This method allows precise control over which speeds are included in the chart.
+   * </p>
+   *
+   * @param generationOption The generation option: "normal curves" or "mid range"
+   * @param speeds Array of speed values in RPM
+   */
+  public void generateCompressorChart(String generationOption, double[] speeds) {
+    CompressorChartGenerator generator = new CompressorChartGenerator(this);
+    String chartType = getCompressorChartType();
+    generator.setChartType(chartType);
+    CompressorChartInterface newChart = generator.generateCompressorChart(generationOption, speeds);
+    this.compressorChart = newChart;
+  }
+
+  /**
+   * Gets the current compressor chart type as a string.
+   *
+   * @return The chart type: "simple", "interpolate", or "interpolate and extrapolate"
+   */
+  public String getCompressorChartType() {
+    if (compressorChart instanceof CompressorChartAlternativeMapLookupExtrapolate) {
+      return "interpolate and extrapolate";
+    } else if (compressorChart instanceof CompressorChartAlternativeMapLookup) {
+      return "interpolate";
+    } else {
+      return "simple";
+    }
+  }
+
+  /**
    * <p>
    * isSolveSpeed.
    * </p>

@@ -323,9 +323,56 @@ System.out.println("Total power: " + totalPower + " MW");
 
 ---
 
+## Automatic Curve Generation
+
+When manufacturer performance data is not available, NeqSim can automatically generate realistic compressor curves using predefined templates.
+
+### Quick Start
+
+```java
+// 1. Create and run compressor to establish design point
+Compressor comp = new Compressor("K-100", inletStream);
+comp.setOutletPressure(100.0, "bara");
+comp.setPolytropicEfficiency(0.78);
+comp.setSpeed(10000);
+comp.run();
+
+// 2. Generate curves from template
+CompressorChartGenerator generator = new CompressorChartGenerator(comp);
+CompressorChartInterface chart = generator.generateFromTemplate("PIPELINE", 5);
+
+// 3. Apply and use
+comp.setCompressorChart(chart);
+comp.run();
+```
+
+### Available Templates
+
+| Category | Templates |
+|----------|-----------|
+| **Basic** | `CENTRIFUGAL_STANDARD`, `CENTRIFUGAL_HIGH_FLOW`, `CENTRIFUGAL_HIGH_HEAD` |
+| **Application** | `PIPELINE`, `EXPORT`, `INJECTION`, `GAS_LIFT`, `REFRIGERATION`, `BOOSTER` |
+| **Type** | `SINGLE_STAGE`, `MULTISTAGE_INLINE`, `INTEGRALLY_GEARED`, `OVERHUNG` |
+
+### Template Selection
+
+| Use Case | Recommended Template |
+|----------|---------------------|
+| Gas transmission | `PIPELINE` |
+| Offshore export | `EXPORT` |
+| Gas injection/EOR | `INJECTION` |
+| Artificial lift | `GAS_LIFT` |
+| LNG/refrigeration | `REFRIGERATION` |
+| General purpose | `CENTRIFUGAL_STANDARD` |
+
+> **📖 Detailed Documentation:** See [Compressor Curves - Automatic Generation](compressor_curves.md#automatic-curve-generation) 
+> for complete API reference, advanced corrections, and examples.
+
+---
+
 ## Related Documentation
 
-- [Compressor Curves](compressor_curves.md) - Detailed curve documentation
+- [Compressor Curves](compressor_curves.md) - Detailed curve documentation, templates, and MW correction
 - [Process Package](../README.md) - Package overview
 - [Expanders](expanders.md) - Expansion equipment
 - [Pumps](pumps.md) - Liquid compression

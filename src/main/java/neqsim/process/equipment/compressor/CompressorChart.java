@@ -98,6 +98,30 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CompressorChart.class);
 
+  /** Reference gas density in kg/m3 for power calculations. */
+  private double referenceDensity = Double.NaN;
+
+  /** Inlet pressure in bara for pressure ratio calculations. */
+  private double inletPressure = Double.NaN;
+
+  /** Polytropic exponent for pressure ratio calculations. */
+  private double polytropicExponent = Double.NaN;
+
+  /** Inlet temperature in Kelvin for discharge temperature calculations. */
+  private double inletTemperature = Double.NaN;
+
+  /** Heat capacity ratio (gamma = Cp/Cv) for temperature calculations. */
+  private double gamma = Double.NaN;
+
+  /** Calculated power curves [speed][points] in kW. */
+  private double[][] powerCurves = null;
+
+  /** Calculated pressure ratio curves [speed][points]. */
+  private double[][] pressureRatioCurves = null;
+
+  /** Calculated discharge temperature curves [speed][points] in Kelvin. */
+  private double[][] dischargeTemperatureCurves = null;
+
   ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
   ArrayList<Double> chartSpeeds = new ArrayList<Double>();
   SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve();
@@ -774,5 +798,301 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
       }
     }
     return closestCurve.head[maxFlowIdx];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[] getSpeeds() {
+    return speed;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[][] getFlows() {
+    return flow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[][] getHeads() {
+    return head;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[][] getPolytropicEfficiencies() {
+    return polytropicEfficiency;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[] getChartConditions() {
+    return chartConditions;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setReferenceDensity(double density) {
+    this.referenceDensity = density;
+    // Recalculate power curves if data is available
+    if (flow != null && head != null && polytropicEfficiency != null) {
+      calculatePowerCurves();
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getReferenceDensity() {
+    return referenceDensity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setInletPressure(double pressure) {
+    this.inletPressure = pressure;
+    // Recalculate pressure ratio curves if data is available
+    if (flow != null && head != null && !Double.isNaN(polytropicExponent)) {
+      calculatePressureRatioCurves();
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getInletPressure() {
+    return inletPressure;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPolytropicExponent(double exponent) {
+    this.polytropicExponent = exponent;
+    // Recalculate pressure ratio curves if data is available
+    if (flow != null && head != null && !Double.isNaN(inletPressure)) {
+      calculatePressureRatioCurves();
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getPolytropicExponent() {
+    return polytropicExponent;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[][] getPowers() {
+    if (powerCurves == null && flow != null) {
+      calculatePowerCurves();
+    }
+    return powerCurves;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[][] getPressureRatios() {
+    if (pressureRatioCurves == null && flow != null) {
+      calculatePressureRatioCurves();
+    }
+    return pressureRatioCurves;
+  }
+
+  /**
+   * Calculate power curves from flow, head, and efficiency.
+   *
+   * <p>
+   * Power is calculated as: P = (density * volumeFlow * head) / efficiency where volumeFlow is in
+   * m3/hr, head is in kJ/kg (or converted from meters), and efficiency is in fraction (0-1).
+   * </p>
+   */
+  private void calculatePowerCurves() {
+    if (flow == null || head == null || polytropicEfficiency == null) {
+      return;
+    }
+
+    // Use reference density if set, otherwise use a default or estimate
+    double density = Double.isNaN(referenceDensity) ? 50.0 : referenceDensity; // Default ~50 kg/m3
+                                                                               // for natural gas
+
+    powerCurves = new double[flow.length][];
+
+    for (int i = 0; i < flow.length; i++) {
+      powerCurves[i] = new double[flow[i].length];
+      for (int j = 0; j < flow[i].length; j++) {
+        double volumeFlow = flow[i][j]; // m3/hr
+        double headValue = head[i][j]; // kJ/kg or meter
+
+        // Convert head from meters to kJ/kg if needed
+        double headKJperKg = headValue;
+        if ("meter".equalsIgnoreCase(headUnit) || "m".equalsIgnoreCase(headUnit)) {
+          headKJperKg = headValue * 9.81 / 1000.0; // m * g / 1000 = kJ/kg
+        }
+
+        // Efficiency as fraction (input is in %)
+        double effFraction = polytropicEfficiency[i][j] / 100.0;
+        if (effFraction <= 0) {
+          effFraction = 0.75; // Default if invalid
+        }
+
+        // Power = density * volumeFlow * head / efficiency
+        // Units: kg/m3 * m3/hr * kJ/kg / 1 = kJ/hr
+        // Convert to kW: kJ/hr / 3600 = kW
+        double massFlow = density * volumeFlow / 3600.0; // kg/s
+        powerCurves[i][j] = massFlow * headKJperKg / effFraction; // kW
+      }
+    }
+  }
+
+  /**
+   * Calculate pressure ratio curves from head and gas properties.
+   *
+   * <p>
+   * Pressure ratio is calculated from polytropic head using: PR = [1 + (n-1)/n * H /
+   * (Z*R*T/MW)]^(n/(n-1)) Simplified: PR = exp(n/(n-1) * ln(1 + (n-1)/n * H * MW / (Z*R*T)))
+   * </p>
+   */
+  private void calculatePressureRatioCurves() {
+    if (flow == null || head == null) {
+      return;
+    }
+
+    // Use reference values if available
+    double n = Double.isNaN(polytropicExponent) ? 1.3 : polytropicExponent;
+    double zRT_MW = 8314.0 * (refTemperature > 0 ? refTemperature : 300.0)
+        / (refMW > 0 ? refMW : 20.0) * (refZ > 0 ? refZ : 0.9); // J/kg = m2/s2
+
+    pressureRatioCurves = new double[flow.length][];
+
+    for (int i = 0; i < flow.length; i++) {
+      pressureRatioCurves[i] = new double[flow[i].length];
+      for (int j = 0; j < flow[i].length; j++) {
+        double headValue = head[i][j]; // kJ/kg or meter
+
+        // Convert head to J/kg
+        double headJperKg;
+        if ("meter".equalsIgnoreCase(headUnit) || "m".equalsIgnoreCase(headUnit)) {
+          headJperKg = headValue * 9.81; // m * g = J/kg
+        } else {
+          headJperKg = headValue * 1000.0; // kJ/kg * 1000 = J/kg
+        }
+
+        // Polytropic head relation: H = n/(n-1) * Z*R*T/MW * [(P2/P1)^((n-1)/n) - 1]
+        // Solving for pressure ratio: PR = [1 + (n-1)/n * H / (Z*R*T/MW)]^(n/(n-1))
+        double exponentRatio = (n - 1.0) / n;
+        double term = 1.0 + exponentRatio * headJperKg / zRT_MW;
+
+        if (term > 0) {
+          pressureRatioCurves[i][j] = Math.pow(term, 1.0 / exponentRatio);
+        } else {
+          pressureRatioCurves[i][j] = 1.0; // Invalid, return unity
+        }
+      }
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setInletTemperature(double temperature) {
+    this.inletTemperature = temperature;
+    // Recalculate discharge temperature curves if data is available
+    if (flow != null && pressureRatioCurves != null) {
+      calculateDischargeTemperatureCurves();
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getInletTemperature() {
+    return inletTemperature;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setGamma(double gamma) {
+    this.gamma = gamma;
+    // Recalculate discharge temperature curves if data is available
+    if (flow != null && pressureRatioCurves != null) {
+      calculateDischargeTemperatureCurves();
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getGamma() {
+    return gamma;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[][] getDischargeTemperatures() {
+    if (dischargeTemperatureCurves == null && flow != null) {
+      // Ensure pressure ratio curves are calculated first
+      if (pressureRatioCurves == null) {
+        calculatePressureRatioCurves();
+      }
+      calculateDischargeTemperatureCurves();
+    }
+    return dischargeTemperatureCurves;
+  }
+
+  /**
+   * Calculate discharge temperature curves from pressure ratio and gas properties.
+   *
+   * <p>
+   * Discharge temperature is calculated using the polytropic process relation: T2 = T1 *
+   * PR^((n-1)/n) where PR is pressure ratio and n is polytropic exponent related to efficiency:
+   * (n-1)/n = (gamma-1)/gamma / eta_polytropic
+   * </p>
+   *
+   * <p>
+   * This is critical for:
+   * </p>
+   * <ul>
+   * <li>Downstream equipment design</li>
+   * <li>Material temperature limits</li>
+   * <li>Intercooler requirements</li>
+   * </ul>
+   */
+  private void calculateDischargeTemperatureCurves() {
+    if (flow == null || pressureRatioCurves == null) {
+      return;
+    }
+
+    // Use inlet temperature if set, otherwise use reference or default
+    double t1 = Double.isNaN(inletTemperature) ? (refTemperature > 0 ? refTemperature : 300.0)
+        : inletTemperature;
+
+    // Use gamma if set, otherwise estimate from polytropic exponent or default
+    double k = Double.isNaN(gamma) ? 1.3 : gamma;
+
+    dischargeTemperatureCurves = new double[flow.length][];
+
+    for (int i = 0; i < flow.length; i++) {
+      dischargeTemperatureCurves[i] = new double[flow[i].length];
+      for (int j = 0; j < flow[i].length; j++) {
+        double pr = pressureRatioCurves[i][j];
+
+        // Get efficiency at this point
+        double effFraction = 0.75; // Default
+        if (polytropicEfficiency != null && polytropicEfficiency[i] != null
+            && j < polytropicEfficiency[i].length) {
+          effFraction = polytropicEfficiency[i][j] / 100.0;
+          if (effFraction <= 0 || effFraction > 1.0) {
+            effFraction = 0.75;
+          }
+        }
+
+        // Calculate polytropic exponent from efficiency and gamma
+        // (n-1)/n = (k-1)/k / eta_p
+        double isentropicExponent = (k - 1.0) / k;
+        double polytropicExp = isentropicExponent / effFraction;
+
+        // T2 = T1 * PR^((n-1)/n)
+        if (pr > 0) {
+          dischargeTemperatureCurves[i][j] = t1 * Math.pow(pr, polytropicExp);
+        } else {
+          dischargeTemperatureCurves[i][j] = t1; // No compression
+        }
+      }
+    }
   }
 }

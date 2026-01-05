@@ -201,6 +201,14 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
       double[][] flowPolyEff, double[][] polyEff) {
+    this.chartConditions = chartConditions;
+    // Store arrays for base class methods (power, pressure ratio calculations)
+    this.speed = speed;
+    this.flow = flow;
+    this.head = head;
+    this.polytropicEfficiency = polyEff;
+    this.flowPolytropicEfficiency = flowPolyEff;
+
     for (int i = 0; i < speed.length; i++) {
       CompressorCurve curve =
           new CompressorCurve(speed[i], flow[i], head[i], flowPolyEff[i], polyEff[i]);
@@ -615,6 +623,8 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart
   public void setHeadUnit(String headUnit) {
     if (headUnit.equals("meter") || headUnit.equals("kJ/kg")) {
       this.headUnit = headUnit;
+      // Also update base class headUnit for power/pressure ratio calculations
+      super.setHeadUnit(headUnit);
     } else {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
           "setHeadUnit", "headUnit", "does not support value " + headUnit));
@@ -724,4 +734,93 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart
   public ArrayList<CompressorCurve> getChartValues() {
     return chartValues;
   }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns the speed values from the chartValues curves.
+   * </p>
+   */
+  @Override
+  public double[] getSpeeds() {
+    if (chartValues == null || chartValues.isEmpty()) {
+      return null;
+    }
+    double[] speeds = new double[chartValues.size()];
+    for (int i = 0; i < chartValues.size(); i++) {
+      speeds[i] = chartValues.get(i).speed;
+    }
+    return speeds;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns the flow values from the chartValues curves.
+   * </p>
+   */
+  @Override
+  public double[][] getFlows() {
+    if (chartValues == null || chartValues.isEmpty()) {
+      return null;
+    }
+    double[][] flows = new double[chartValues.size()][];
+    for (int i = 0; i < chartValues.size(); i++) {
+      flows[i] = chartValues.get(i).flow.clone();
+    }
+    return flows;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns the head values from the chartValues curves.
+   * </p>
+   */
+  @Override
+  public double[][] getHeads() {
+    if (chartValues == null || chartValues.isEmpty()) {
+      return null;
+    }
+    double[][] heads = new double[chartValues.size()][];
+    for (int i = 0; i < chartValues.size(); i++) {
+      heads[i] = chartValues.get(i).head.clone();
+    }
+    return heads;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns the polytropic efficiency values from the chartValues curves.
+   * </p>
+   */
+  @Override
+  public double[][] getPolytropicEfficiencies() {
+    if (chartValues == null || chartValues.isEmpty()) {
+      return null;
+    }
+    double[][] effs = new double[chartValues.size()][];
+    for (int i = 0; i < chartValues.size(); i++) {
+      effs[i] = chartValues.get(i).polytropicEfficiency.clone();
+    }
+    return effs;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns the chart conditions.
+   * </p>
+   */
+  @Override
+  public double[] getChartConditions() {
+    return chartConditions;
+  }
 }
+

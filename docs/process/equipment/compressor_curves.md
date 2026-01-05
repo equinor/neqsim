@@ -1,6 +1,6 @@
 # Compressor Curves and Performance Maps
 
-Detailed documentation for compressor performance curves in NeqSim, including multi-speed and single-speed compressor handling.
+Detailed documentation for compressor performance curves in NeqSim, including multi-speed and single-speed compressor handling, automatic curve generation, and predefined templates.
 
 ## Table of Contents
 - [Overview](#overview)
@@ -15,6 +15,14 @@ Detailed documentation for compressor performance curves in NeqSim, including mu
 - [Anti-Surge Control](#anti-surge-control)
 - [API Reference](#api-reference)
 - [Python Examples](#python-examples)
+- [**Automatic Curve Generation**](#automatic-curve-generation) ⭐ NEW
+- [**Compressor Curve Templates**](#compressor-curve-templates) ⭐ NEW
+  - [Basic Centrifugal Templates](#basic-centrifugal-templates)
+  - [Application-Based Templates](#application-based-templates)
+  - [Compressor Type Templates](#compressor-type-templates)
+- [Template Selection Guide](#template-selection-guide)
+- [Using the CompressorChartGenerator](#using-the-compressorchart-generator)
+- [Template API Reference](#template-api-reference)
 
 ---
 
@@ -27,6 +35,8 @@ NeqSim supports comprehensive compressor performance modeling through compressor
 | `CompressorChart` | Standard compressor chart with polynomial interpolation |
 | `CompressorChartKhader2015` | Advanced chart with Khader 2015 method and fan law scaling |
 | `CompressorChartMWInterpolation` | Multi-map chart with MW interpolation between maps |
+| `CompressorChartGenerator` | **Automatic curve generation** from templates |
+| `CompressorCurveTemplate` | **Predefined curve templates** (12 available) |
 | `SafeSplineSurgeCurve` | Spline-based surge curve with safe extrapolation |
 | `SafeSplineStoneWallCurve` | Spline-based stone wall (choke) curve |
 | `CompressorCurve` | Individual speed curve (flow, head, efficiency) |
@@ -1309,6 +1319,491 @@ compressor.run()
 print(f"\nAfter adding CO2:")
 print(f"New fluid MW: {operating_fluid.getMolarMass('kg/mol') * 1000:.1f} g/mol")
 print(f"Polytropic head: {compressor.getPolytropicHead('kJ/kg'):.2f} kJ/kg")
+```
+
+---
+
+## Automatic Curve Generation
+
+When you don't have manufacturer performance data, NeqSim can **automatically generate realistic compressor curves** using the `CompressorChartGenerator` class and predefined curve templates.
+
+### Quick Start
+
+```java
+// Create and run compressor to establish design point
+Compressor compressor = new Compressor("K-100", inletStream);
+compressor.setOutletPressure(100.0, "bara");
+compressor.setPolytropicEfficiency(0.78);
+compressor.setSpeed(10000);
+compressor.run();
+
+// Generate curves automatically
+CompressorChartGenerator generator = new CompressorChartGenerator(compressor);
+CompressorChartInterface chart = generator.generateFromTemplate("PIPELINE", 5);
+
+// Apply and use
+compressor.setCompressorChart(chart);
+compressor.run();
+```
+
+### Why Use Automatic Generation?
+
+| Use Case | Benefit |
+|----------|---------|
+| **Early design studies** | Estimate performance before vendor data available |
+| **Sensitivity analysis** | Quickly evaluate different compressor configurations |
+| **Education/training** | Realistic curves without proprietary data |
+| **Default behavior** | Reasonable performance when no map is provided |
+
+---
+
+## Compressor Curve Templates
+
+NeqSim provides **12 predefined templates** organized into three categories, each representing typical compressor characteristics for different applications.
+
+### Template Categories Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    COMPRESSOR CURVE TEMPLATES                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────┐ │
+│  │   BASIC (3)         │  │  APPLICATION (6)    │  │  TYPE (4)   │ │
+│  │                     │  │                     │  │             │ │
+│  │  • STANDARD         │  │  • PIPELINE         │  │ • SINGLE    │ │
+│  │  • HIGH_FLOW        │  │  • EXPORT           │  │   _STAGE    │ │
+│  │  • HIGH_HEAD        │  │  • INJECTION        │  │ • MULTI     │ │
+│  │                     │  │  • GAS_LIFT         │  │   STAGE     │ │
+│  │                     │  │  • REFRIGERATION    │  │ • INTEGRAL  │ │
+│  │                     │  │  • BOOSTER          │  │   _GEARED   │ │
+│  │                     │  │                     │  │ • OVERHUNG  │ │
+│  └─────────────────────┘  └─────────────────────┘  └─────────────┘ │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Basic Centrifugal Templates
+
+Generic centrifugal compressor characteristics for general use.
+
+| Template | Peak η | Flow Range | Head | Best For |
+|----------|--------|------------|------|----------|
+| `CENTRIFUGAL_STANDARD` | ~78% | Medium | Medium | General purpose, default choice |
+| `CENTRIFUGAL_HIGH_FLOW` | ~78% | Wide | Lower | High throughput, low pressure ratio |
+| `CENTRIFUGAL_HIGH_HEAD` | ~78% | Narrow | High | High pressure ratio, multiple stages |
+
+### Application-Based Templates
+
+Optimized for specific oil & gas applications.
+
+| Template | Peak η | Typical Use | Key Characteristics |
+|----------|--------|-------------|---------------------|
+| `PIPELINE` | **82-85%** | Gas transmission | High capacity, flat curves, wide turndown (~40%) |
+| `EXPORT` | ~80% | Offshore gas export | High pressure, stable operation, 6-8 stages |
+| `INJECTION` | ~77% | Gas injection/EOR | Very high pressure ratio, lower capacity |
+| `GAS_LIFT` | ~75% | Artificial lift | Wide surge margin (~35%), liquid tolerant |
+| `REFRIGERATION` | ~78% | LNG/process cooling | Wide operating range, part-load efficiency |
+| `BOOSTER` | ~76% | Process plant | Moderate pressure ratio (2-4), balanced design |
+
+### Compressor Type Templates
+
+Based on mechanical design characteristics.
+
+| Template | Peak η | Pressure Ratio | Design Features |
+|----------|--------|----------------|-----------------|
+| `SINGLE_STAGE` | ~75% | 1.5-2.5 | Simple, wide flow range, cost-effective |
+| `MULTISTAGE_INLINE` | ~78% | 5-15 | Barrel type, 4-8 stages, O&G standard |
+| `INTEGRALLY_GEARED` | **82%** | Flexible | Multiple pinions, air separation, optimized |
+| `OVERHUNG` | ~74% | Low-medium | Cantilever, simple maintenance |
+
+---
+
+## Template Selection Guide
+
+### Decision Flowchart
+
+```
+                          ┌─────────────────────────┐
+                          │ What is the application?│
+                          └───────────┬─────────────┘
+                                      │
+           ┌──────────────┬───────────┼───────────┬──────────────┐
+           ▼              ▼           ▼           ▼              ▼
+    ┌────────────┐ ┌────────────┐ ┌─────────┐ ┌─────────┐ ┌────────────┐
+    │Gas Pipeline│ │ Offshore   │ │  EOR /  │ │Gas Lift │ │Refriger.   │
+    │Transmission│ │   Export   │ │Injection│ │         │ │ / LNG      │
+    └─────┬──────┘ └─────┬──────┘ └────┬────┘ └────┬────┘ └─────┬──────┘
+          │              │             │           │             │
+          ▼              ▼             ▼           ▼             ▼
+      PIPELINE        EXPORT      INJECTION    GAS_LIFT    REFRIGERATION
+
+
+                          ┌─────────────────────────┐
+                          │  What type of machine?  │
+                          └───────────┬─────────────┘
+                                      │
+           ┌──────────────┬───────────┴───────────┬──────────────┐
+           ▼              ▼                       ▼              ▼
+    ┌────────────┐ ┌────────────┐         ┌────────────┐ ┌────────────┐
+    │   Simple   │ │   Barrel   │         │ Integrally │ │  Overhung  │
+    │Single Stage│ │ Multistage │         │   Geared   │ │ Cantilever │
+    └─────┬──────┘ └─────┬──────┘         └─────┬──────┘ └─────┬──────┘
+          │              │                      │              │
+          ▼              ▼                      ▼              ▼
+    SINGLE_STAGE   MULTISTAGE_INLINE    INTEGRALLY_GEARED   OVERHUNG
+```
+
+### Quick Selection Matrix
+
+| Your Requirement | Recommended Template |
+|------------------|---------------------|
+| Default / don't know | `CENTRIFUGAL_STANDARD` |
+| Large capacity, moderate PR | `PIPELINE` |
+| High discharge pressure | `EXPORT` or `INJECTION` |
+| Variable inlet conditions | `GAS_LIFT` |
+| Process cooling/LNG | `REFRIGERATION` |
+| Simple, low PR | `SINGLE_STAGE` |
+| High PR, compact | `MULTISTAGE_INLINE` |
+| Highest efficiency | `INTEGRALLY_GEARED` |
+| Small duty, easy maintenance | `OVERHUNG` |
+
+---
+
+## Using the CompressorChartGenerator
+
+### Basic Usage
+
+```java
+// Create generator from compressor
+CompressorChartGenerator generator = new CompressorChartGenerator(compressor);
+
+// Option 1: Generate from template (recommended)
+CompressorChartInterface chart = generator.generateFromTemplate("PIPELINE", 5);
+
+// Option 2: Generate "normal curves" from operating point
+CompressorChartInterface chart = generator.generateCompressorChart("normal curves", 5);
+
+// Option 3: Single speed curve
+CompressorChartInterface chart = generator.generateCompressorChart("normal curves");
+```
+
+### Setting Chart Type
+
+The generator supports three output chart types:
+
+```java
+generator.setChartType("interpolate and extrapolate");  // Default, most flexible
+generator.setChartType("interpolate");                  // No extrapolation
+generator.setChartType("simple");                       // Basic fan law scaling
+```
+
+| Chart Type | Class | Use Case |
+|------------|-------|----------|
+| `interpolate and extrapolate` | `CompressorChartAlternativeMapLookupExtrapolate` | Production, wide operating range |
+| `interpolate` | `CompressorChartAlternativeMapLookup` | Stay within measured envelope |
+| `simple` | `CompressorChart` | Basic calculations, teaching |
+
+### Specifying Custom Speeds
+
+```java
+// Using number of speeds (auto-distributed)
+CompressorChartInterface chart = generator.generateFromTemplate("EXPORT", 5);
+// → Generates 5 curves from 70% to 100% of design speed
+
+// Using specific speed values
+double[] speeds = {7000, 8000, 9000, 10000, 10500};
+CompressorChartInterface chart = generator.generateCompressorChart("normal curves", speeds);
+```
+
+### Advanced Corrections
+
+Enable industry-standard corrections for more accurate off-design performance:
+
+```java
+CompressorChartGenerator generator = new CompressorChartGenerator(compressor);
+
+// Individual corrections
+generator.setUseReynoldsCorrection(true);      // Efficiency correction for Re
+generator.setUseMachCorrection(true);          // Choke flow limitation
+generator.setUseMultistageSurgeCorrection(true); // Surge line shift at low speeds
+generator.setNumberOfStages(6);
+generator.setImpellerDiameter(0.35);
+
+// Or enable all at once
+generator.enableAdvancedCorrections(6);  // 6 stages
+
+CompressorChartInterface chart = generator.generateFromTemplate("MULTISTAGE_INLINE", 5);
+```
+
+#### Correction Effects
+
+| Correction | Effect | When Important |
+|------------|--------|----------------|
+| **Reynolds** | Adjusts η at low Re (high viscosity, low speed) | Heavy gases, low-speed operation |
+| **Mach** | Limits stonewall flow based on sonic velocity | Light gases (H₂), high speed |
+| **Multistage Surge** | Shifts surge to higher flow at reduced speed | Variable speed, >3 stages |
+
+---
+
+## Template API Reference
+
+### Listing Available Templates
+
+```java
+// Get all templates
+String[] all = CompressorCurveTemplate.getAvailableTemplates();
+// → ["CENTRIFUGAL_STANDARD", "CENTRIFUGAL_HIGH_FLOW", ..., "OVERHUNG"]
+
+// Get by category
+String[] basic = CompressorCurveTemplate.getTemplatesByCategory("basic");
+// → ["CENTRIFUGAL_STANDARD", "CENTRIFUGAL_HIGH_FLOW", "CENTRIFUGAL_HIGH_HEAD"]
+
+String[] application = CompressorCurveTemplate.getTemplatesByCategory("application");
+// → ["PIPELINE", "EXPORT", "INJECTION", "GAS_LIFT", "REFRIGERATION", "BOOSTER"]
+
+String[] type = CompressorCurveTemplate.getTemplatesByCategory("type");
+// → ["SINGLE_STAGE", "MULTISTAGE_INLINE", "INTEGRALLY_GEARED", "OVERHUNG"]
+```
+
+### Template Name Matching
+
+The `getTemplate()` method is flexible with naming:
+
+```java
+// All of these return the same template:
+CompressorCurveTemplate.getTemplate("GAS_LIFT");
+CompressorCurveTemplate.getTemplate("gas-lift");
+CompressorCurveTemplate.getTemplate("gas lift");
+CompressorCurveTemplate.getTemplate("gaslift");
+
+// Abbreviations work too:
+CompressorCurveTemplate.getTemplate("igc");     // → INTEGRALLY_GEARED
+CompressorCurveTemplate.getTemplate("barrel");  // → MULTISTAGE_INLINE
+CompressorCurveTemplate.getTemplate("LNG");     // → REFRIGERATION
+```
+
+### Working Directly with Templates
+
+```java
+// Get template object
+CompressorCurveTemplate template = CompressorCurveTemplate.PIPELINE;
+
+// Get unscaled original chart
+CompressorChartInterface originalChart = template.getOriginalChart();
+
+// Scale to specific speed
+CompressorChartInterface scaledChart = template.scaleToSpeed(8000);
+
+// Scale to design point
+CompressorChartInterface chart = template.scaleToDesignPoint(
+    10000,   // designSpeed (RPM)
+    5000,    // designFlow (m³/hr)
+    85.0,    // designHead (kJ/kg)
+    5        // numberOfSpeeds
+);
+
+// Get template metadata
+String name = template.getName();
+double refSpeed = template.getReferenceSpeed();
+double[] speedRatios = template.getSpeedRatios();
+```
+
+---
+
+## Complete Java Example
+
+```java
+import neqsim.process.equipment.compressor.*;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemSrkEos;
+
+public class CompressorCurveGenerationExample {
+    public static void main(String[] args) {
+        // 1. Create fluid and inlet stream
+        SystemSrkEos gas = new SystemSrkEos(298.15, 50.0);
+        gas.addComponent("methane", 0.85);
+        gas.addComponent("ethane", 0.10);
+        gas.addComponent("propane", 0.05);
+        gas.setMixingRule("classic");
+        
+        Stream inlet = new Stream("inlet", gas);
+        inlet.setFlowRate(15000.0, "kg/hr");
+        inlet.setTemperature(25.0, "C");
+        inlet.setPressure(40.0, "bara");
+        inlet.run();
+        
+        // 2. Create compressor at design point
+        Compressor comp = new Compressor("K-100", inlet);
+        comp.setOutletPressure(120.0, "bara");
+        comp.setUsePolytropicCalc(true);
+        comp.setPolytropicEfficiency(0.78);
+        comp.setSpeed(9500);
+        comp.run();
+        
+        System.out.println("=== Design Point ===");
+        System.out.println("Flow: " + String.format("%.1f", inlet.getFlowRate("m3/hr")) + " m³/hr");
+        System.out.println("Head: " + String.format("%.1f", comp.getPolytropicFluidHead()) + " kJ/kg");
+        System.out.println("Power: " + String.format("%.1f", comp.getPower("kW")) + " kW");
+        
+        // 3. Generate curves using EXPORT template (offshore gas export)
+        CompressorChartGenerator generator = new CompressorChartGenerator(comp);
+        generator.setChartType("interpolate and extrapolate");
+        generator.enableAdvancedCorrections(6);  // 6-stage compressor
+        
+        CompressorChartInterface chart = generator.generateFromTemplate("EXPORT", 5);
+        
+        // 4. Apply chart and verify
+        comp.setCompressorChart(chart);
+        comp.run();
+        
+        System.out.println("\n=== With Generated Chart ===");
+        System.out.println("Speeds available: " + chart.getSpeeds().length);
+        System.out.println("Efficiency from chart: " + 
+            String.format("%.1f", comp.getPolytropicEfficiency() * 100) + "%");
+        System.out.println("Distance to surge: " + 
+            String.format("%.1f", comp.getDistanceToSurge() * 100) + "%");
+        
+        // 5. Test at different operating point
+        inlet.setFlowRate(12000.0, "kg/hr");
+        inlet.run();
+        comp.run();
+        
+        System.out.println("\n=== Turndown Operation ===");
+        System.out.println("Flow: " + String.format("%.1f", inlet.getFlowRate("m3/hr")) + " m³/hr");
+        System.out.println("Efficiency: " + 
+            String.format("%.1f", comp.getPolytropicEfficiency() * 100) + "%");
+        System.out.println("Distance to surge: " + 
+            String.format("%.1f", comp.getDistanceToSurge() * 100) + "%");
+    }
+}
+```
+
+---
+
+## Python Example
+
+```python
+from neqsim import jNeqSim
+from neqsim.process import stream, compressor
+
+# Import Java classes
+SystemSrkEos = jNeqSim.thermo.system.SystemSrkEos
+Stream = jNeqSim.process.equipment.stream.Stream
+Compressor = jNeqSim.process.equipment.compressor.Compressor
+CompressorChartGenerator = jNeqSim.process.equipment.compressor.CompressorChartGenerator
+CompressorCurveTemplate = jNeqSim.process.equipment.compressor.CompressorCurveTemplate
+
+# Create fluid
+gas = SystemSrkEos(298.15, 50.0)
+gas.addComponent("methane", 0.90)
+gas.addComponent("ethane", 0.07)
+gas.addComponent("propane", 0.03)
+gas.setMixingRule("classic")
+
+# Create stream
+inlet = Stream("inlet", gas)
+inlet.setFlowRate(20000.0, "kg/hr")
+inlet.setTemperature(30.0, "C")
+inlet.setPressure(45.0, "bara")
+inlet.run()
+
+# Create compressor
+comp = Compressor("K-100", inlet)
+comp.setOutletPressure(150.0, "bara")
+comp.setUsePolytropicCalc(True)
+comp.setPolytropicEfficiency(0.77)
+comp.setSpeed(10000)
+comp.run()
+
+# List available templates
+print("Available templates:")
+for cat in ["basic", "application", "type"]:
+    templates = CompressorCurveTemplate.getTemplatesByCategory(cat)
+    print(f"  {cat}: {list(templates)}")
+
+# Generate chart using INJECTION template (high pressure application)
+generator = CompressorChartGenerator(comp)
+generator.setChartType("interpolate and extrapolate")
+generator.enableAdvancedCorrections(8)  # 8-stage injection compressor
+
+chart = generator.generateFromTemplate("INJECTION", 5)
+comp.setCompressorChart(chart)
+comp.run()
+
+print(f"\nDesign efficiency: {comp.getPolytropicEfficiency() * 100:.1f}%")
+print(f"Design head: {comp.getPolytropicFluidHead():.1f} kJ/kg")
+print(f"Power: {comp.getPower('MW'):.2f} MW")
+print(f"Surge margin: {comp.getDistanceToSurge() * 100:.1f}%")
+```
+
+---
+
+## Template Technical Specifications
+
+### PIPELINE Template
+
+```
+Application: Natural gas transmission (30-50 MW class)
+Reference Speed: 5500 RPM (large direct-drive or gear-driven)
+Peak Efficiency: 85%
+Turndown: ~40%
+
+Curve Characteristics:
+        Head
+         ↑
+    79 ──┼────╮
+         │     ╲   Flat curve
+    65 ──┼──────╲──  for pipeline
+         │       ╲   stability
+    53 ──┼────────╲─
+         │         ╲
+         └──────────┴────→ Flow
+           30k    70k m³/hr
+```
+
+### INJECTION Template
+
+```
+Application: Gas injection/EOR (very high pressure)
+Reference Speed: 11000 RPM
+Peak Efficiency: 77%
+Pressure Ratio: 50-200 (overall, with intercooling)
+
+Curve Characteristics:
+        Head
+         ↑
+   245 ──┼──╮
+         │   ╲   Steep curve
+   165 ──┼────╲──  (high head
+         │     ╲    per stage)
+   130 ──┼──────╲
+         │       ╲
+         └────────┴────→ Flow
+           2.5k   6k m³/hr
+           (lower capacity)
+```
+
+### INTEGRALLY_GEARED Template
+
+```
+Application: Air separation, process air
+Reference Speed: 20000 RPM (pinion speed)
+Peak Efficiency: 82% (highest of all templates)
+
+Design Features:
+  - Bull gear drives multiple pinions
+  - Each pinion has optimized impeller
+  - Intercooling between stages
+
+┌─────────────────────────┐
+│     BULL GEAR           │
+│    ╭───────╮            │
+│   ╱  ●   ●  ╲           │  ● = Pinion with impeller
+│  │  ●     ●  │          │
+│   ╲  ●   ●  ╱           │
+│    ╰───────╯            │
+└─────────────────────────┘
 ```
 
 ---
