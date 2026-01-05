@@ -15,7 +15,6 @@ import org.apache.logging.log4j.Logger;
  * <li>Seal oil system requirements (for oil seals)</li>
  * <li>Buffer gas requirements</li>
  * </ul>
- * </p>
  *
  * <p>
  * References:
@@ -24,7 +23,6 @@ import org.apache.logging.log4j.Logger;
  * <li>API 617 - Axial and Centrifugal Compressors and Expander-compressors</li>
  * <li>API 614 - Lubrication, Shaft-Sealing and Oil-Control Systems</li>
  * </ul>
- * </p>
  *
  * @author NeqSim Development Team
  * @version 1.0
@@ -181,7 +179,6 @@ public class CompressorMechanicalLosses implements Serializable {
    * <li>Gas properties (MW, Z-factor)</li>
    * <li>Seal design (gap, face geometry)</li>
    * </ul>
-   * </p>
    *
    * <p>
    * Typical primary seal leakage: 0.5-3.0 Nm³/hr per seal for properly functioning DGS.
@@ -347,7 +344,6 @@ public class CompressorMechanicalLosses implements Serializable {
    * <li>Oil viscosity</li>
    * <li>Bearing geometry</li>
    * </ul>
-   * </p>
    *
    * @return radial bearing power loss in kW (total for all radial bearings)
    */

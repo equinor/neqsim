@@ -136,6 +136,10 @@ public class ProcessVariableAccessor {
 
   /**
    * Find a method with no parameters.
+   *
+   * @param clazz the class to search for the method
+   * @param name the method name to find
+   * @return the Method object if found, null otherwise
    */
   private Method findMethodNoParams(Class<?> clazz, String name) {
     try {
@@ -292,6 +296,9 @@ public class ProcessVariableAccessor {
 
   /**
    * Parse a path into components.
+   *
+   * @param path the dot-separated path string to parse
+   * @return array of path components
    */
   private String[] parsePath(String path) {
     return path.split("\\.");
@@ -299,6 +306,10 @@ public class ProcessVariableAccessor {
 
   /**
    * Resolve the target object for a path.
+   *
+   * @param parts array of path components
+   * @param depth number of path components to navigate (excluding the property)
+   * @return the resolved target object
    */
   private Object resolveTarget(String[] parts, int depth) {
     // First part is always the unit name
@@ -346,6 +357,11 @@ public class ProcessVariableAccessor {
 
   /**
    * Find a method by name and parameter types.
+   *
+   * @param clazz the class to search for the method
+   * @param name the method name to find
+   * @param paramTypes the parameter types of the method
+   * @return the Method object if found, null otherwise
    */
   private Method findMethod(Class<?> clazz, String name, Class<?>... paramTypes) {
     try {
