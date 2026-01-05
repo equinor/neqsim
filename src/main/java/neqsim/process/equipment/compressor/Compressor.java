@@ -569,11 +569,21 @@ public class Compressor extends TwoPortEquipment
     if (compressorChart.isUseCompressorChart()) {
       if (solveSpeed) {
         double targetPressure = getOutletPressure(); // Desired outlet pressure
-        double tolerance = 1e-3; // Tolerance for pressure difference
+        double tolerance = 1e-3; // Tolerance for pressure difference (0.001 bar)
         double minSpeed = getMinimumSpeed(); // Minimum speed for the compressor
         double maxSpeed = getMaximumSpeed(); // Maximum speed for the compressor
         double currentSpeed = getSpeed(); // Initial guess for speed
-        double maxIterations = 100; // Maximum number of iterations
+
+        // Improve initial guess: if starting speed is far from chart range, use chart reference
+        // speed as initial guess to avoid polynomial extrapolation issues
+        double chartMinSpeed = getCompressorChart().getMinSpeedCurve();
+        double chartMaxSpeed = getCompressorChart().getMaxSpeedCurve();
+        double chartRefSpeed = (chartMinSpeed + chartMaxSpeed) / 2.0;
+        if (currentSpeed < chartMinSpeed * 0.5 || currentSpeed > chartMaxSpeed * 2.0) {
+          currentSpeed = chartRefSpeed;
+        }
+
+        double maxIterations = 200; // Maximum number of iterations
         double deltaSpeed = 100.0; // Small increment for numerical derivative
         int iteration = 1;
 
