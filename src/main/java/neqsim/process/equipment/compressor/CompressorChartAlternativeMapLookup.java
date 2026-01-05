@@ -798,7 +798,47 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart
   /** {@inheritDoc} */
   @Override
   public double getFlow(double head, double speed, double guessFlow) {
-    return 0.0;
+    // Use Newton-Raphson iteration to find flow that gives the specified head at the given speed
+    if (head <= 0.0 || speed <= 0.0) {
+      return guessFlow > 0.0 ? guessFlow : 1.0;
+    }
+
+    int maxIter = 100;
+    double tolerance = 1e-6;
+    double newflow = guessFlow > 0.0 ? guessFlow : 1000.0; // Start with guess or default
+    double oldflow = newflow * 1.1;
+    double oldhead = getPolytropicHead(oldflow, speed);
+    double olderror = oldhead - head;
+
+    for (int iter = 0; iter < maxIter; iter++) {
+      double newhead = getPolytropicHead(newflow, speed);
+      double efficiency = getPolytropicEfficiency(newflow, speed);
+      if (efficiency > 0.0) {
+        newhead = newhead / (efficiency / 100.0);
+      }
+      double error = newhead - head;
+
+      if (Math.abs(error) < tolerance) {
+        return Math.max(0.0, newflow);
+      }
+
+      double derrordflow = (error - olderror) / (newflow - oldflow);
+      if (Math.abs(derrordflow) < 1e-10) {
+        break; // Avoid division by zero
+      }
+
+      oldflow = newflow;
+      olderror = error;
+      newflow -= error / derrordflow;
+
+      // Prevent negative flow during iteration
+      if (newflow < 0.0) {
+        newflow = guessFlow * 0.1;
+      }
+    }
+
+    // Return best estimate, ensuring non-negative
+    return newflow > 0.0 ? newflow : (guessFlow > 0.0 ? guessFlow : 1.0);
   }
 
   /** {@inheritDoc} */

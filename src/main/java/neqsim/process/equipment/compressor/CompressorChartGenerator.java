@@ -528,8 +528,16 @@ public class CompressorChartGenerator {
     // Set reference conditions for the chart
     compChart.setReferenceConditions(molarMass, temperature, inletPressure, zFactor);
 
-    // Generate surge and stonewall curves from the chart data
-    compChart.generateSurgeCurve();
+    // Generate surge curve using explicit flow/speed ranges for proper interpolation
+    double minSpeedForSurge = isNormalCurves ? refSpeed * 0.75 : refSpeed / 2.0;
+    double maxSpeedForSurge = isNormalCurves ? refSpeed * 1.05 : refSpeed * 2.0;
+    double minFlowForSurge = refFlow / 2.0;
+    double maxFlowForSurge = refFlow * 2.0;
+    SafeSplineSurgeCurve surgeCurve = createSurgeCurve(compChart, refFlow, refSpeed,
+        minFlowForSurge, maxFlowForSurge, minSpeedForSurge, maxSpeedForSurge, isNormalCurves);
+    compChart.setSurgeCurve(surgeCurve);
+
+    // Generate stonewall curve from the chart data
     compChart.generateStoneWallCurve();
 
     return compChart;
@@ -587,6 +595,42 @@ public class CompressorChartGenerator {
    */
   public String getChartType() {
     return chartType;
+  }
+
+  /**
+   * Creates a surge curve with proper interpolation points.
+   *
+   * <p>
+   * This method generates a 3-point surge curve that represents the relationship between surge flow
+   * and head across different operating conditions. This allows for meaningful interpolation when
+   * querying surge flow at different head values.
+   * </p>
+   *
+   * @param compChart the compressor chart object
+   * @param refFlow the reference flow rate
+   * @param refSpeed the reference speed
+   * @param minFlow the minimum flow rate
+   * @param maxFlow the maximum flow rate
+   * @param minSpeed the minimum speed
+   * @param maxSpeed the maximum speed
+   * @param isNormalCurves whether to generate normal curves
+   * @return a {@link SafeSplineSurgeCurve} object representing the surge curve
+   */
+  private SafeSplineSurgeCurve createSurgeCurve(CompressorChartInterface compChart, double refFlow,
+      double refSpeed, double minFlow, double maxFlow, double minSpeed, double maxSpeed,
+      boolean isNormalCurves) {
+    double minSurgeFlow = 0.7 * refFlow;
+    double refSurgeFlow = isNormalCurves ? refFlow / 1.3 : 0.8 * refFlow;
+    double maxSurgeFlow = 0.9 * refFlow;
+
+    double headSurgeMin = compChart.getPolytropicHead(minFlow, minSpeed);
+    double headSurgeRef = compChart.getPolytropicHead(refSurgeFlow, refSpeed);
+    double headSurgeMax = compChart.getPolytropicHead(maxSurgeFlow, maxSpeed);
+
+    SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve();
+    surgeCurve.setCurve(new double[3], new double[] {minSurgeFlow, refSurgeFlow, maxSurgeFlow},
+        new double[] {headSurgeMin, headSurgeRef, headSurgeMax});
+    return surgeCurve;
   }
 }
 

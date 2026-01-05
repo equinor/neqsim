@@ -656,15 +656,23 @@ public class Compressor extends TwoPortEquipment
 
           double dPressure_dSpeed = (pressureNew - currentPressure) / deltaSpeed;
 
-          if (dPressure_dSpeed < 1e-6) {
-            setSpeed(getSpeed() * 1.1);
-            dPressure_dSpeed = Math.signum(dPressure_dSpeed) * 1e-6;
+          // Handle case where derivative is too small or wrong sign
+          if (Math.abs(dPressure_dSpeed) < 1e-6) {
+            // Derivative too small - use a reasonable default based on typical compressor behavior
+            // Pressure typically increases with speed, so assume positive relationship
+            dPressure_dSpeed = 0.01; // Approximate 0.01 bar per RPM
           }
 
           // Update speed using Newton-Raphson method
           double relaxationFactor = Math.min(0.8, iteration / (iteration + 3.0));
 
           double speedUpdate = (targetPressure - currentPressure) / dPressure_dSpeed;
+
+          // Limit speed update to avoid large oscillations
+          double maxSpeedUpdate = Math.max(500.0, 0.2 * currentSpeed);
+          if (Math.abs(speedUpdate) > maxSpeedUpdate) {
+            speedUpdate = Math.signum(speedUpdate) * maxSpeedUpdate;
+          }
 
           currentSpeed += relaxationFactor * speedUpdate;
           if (currentSpeed < 0) {
@@ -713,8 +721,10 @@ public class Compressor extends TwoPortEquipment
         }
 
         if (iteration == maxIterations) {
-          throw new RuntimeException(
-              "Newton-Raphson method did not converge within the maximum iterations.");
+          // Did not converge, but use the best estimate and log a warning
+          logger.warn("Newton-Raphson speed solver did not fully converge after " + maxIterations
+              + " iterations. Using best estimate speed: " + currentSpeed);
+          setSpeed(currentSpeed);
         }
       } else {
         do {
