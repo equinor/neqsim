@@ -623,7 +623,8 @@ public class CompressorChartGenerator {
     double refSurgeFlow = isNormalCurves ? refFlow / 1.3 : 0.8 * refFlow;
     double maxSurgeFlow = 0.9 * refFlow;
 
-    double headSurgeMin = compChart.getPolytropicHead(minFlow, minSpeed);
+    // Use surge flow values (not min/max flow from parameters) to get heads at corresponding speeds
+    double headSurgeMin = compChart.getPolytropicHead(minSurgeFlow, minSpeed);
     double headSurgeRef = compChart.getPolytropicHead(refSurgeFlow, refSpeed);
     double headSurgeMax = compChart.getPolytropicHead(maxSurgeFlow, maxSpeed);
 
