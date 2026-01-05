@@ -77,6 +77,42 @@ public class Compressor extends TwoPortEquipment
   private boolean limitSpeed = false;
   private boolean useEnergyEfficiencyChart = false;
 
+  // Dynamic simulation fields
+  private CompressorState operatingState = CompressorState.STOPPED;
+  private CompressorDriver driver = null;
+  private CompressorOperatingHistory operatingHistory = null;
+  private StartupProfile startupProfile = null;
+  private ShutdownProfile shutdownProfile = null;
+  private transient java.util.List<CompressorEventListener> eventListeners =
+      new java.util.ArrayList<>();
+
+  // Inertia and acceleration modeling
+  private double rotationalInertia = 10.0; // kg⋅m² combined rotor inertia
+  private double maxAccelerationRate = 100.0; // RPM/s maximum acceleration
+  private double maxDecelerationRate = 200.0; // RPM/s maximum deceleration
+  private double targetSpeed = 0.0; // Target speed for dynamic control
+  private boolean autoSpeedMode = false; // Automatically calculate speed from operating point
+
+  // Performance degradation modeling
+  private double degradationFactor = 1.0; // 1.0 = new, <1.0 = degraded
+  private double foulingFactor = 0.0; // Head reduction due to fouling (0-1)
+  private double operatingHours = 0.0; // Total operating hours
+
+  // Surge margin thresholds for warnings/alarms
+  private double surgeWarningThreshold = 0.15; // 15% margin triggers warning
+  private double surgeCriticalThreshold = 0.05; // 5% margin triggers critical
+  private double stoneWallWarningThreshold = 0.10; // 10% margin to stone wall
+
+  // Startup/shutdown tracking
+  private double startupElapsedTime = 0.0;
+  private double shutdownElapsedTime = 0.0;
+  private double speedAtShutdownStart = 0.0;
+
+  // Event tracking flags
+  private boolean surgeWarningActive = false;
+  private boolean surgeCriticalActive = false;
+  private boolean speedLimitWarningActive = false;
+
   CompressorMechanicalDesign mechanicalDesign;
 
   private String pressureUnit = "bara";
@@ -2483,5 +2519,814 @@ public class Compressor extends TwoPortEquipment
 
     return state;
   }
-}
 
+  // ================================================================================
+  // Dynamic Simulation Methods
+  // ================================================================================
+
+  /**
+   * Get the current operating state of the compressor.
+   *
+   * @return the current CompressorState
+   */
+  public CompressorState getOperatingState() {
+    return operatingState;
+  }
+
+  /**
+   * Set the operating state of the compressor.
+   *
+   * @param state the new operating state
+   */
+  public void setOperatingState(CompressorState state) {
+    CompressorState oldState = this.operatingState;
+    this.operatingState = state;
+    if (oldState != state) {
+      fireStateChangeEvent(oldState, state);
+    }
+  }
+
+  /**
+   * Get the compressor driver model.
+   *
+   * @return the driver model, or null if not set
+   */
+  public CompressorDriver getDriver() {
+    return driver;
+  }
+
+  /**
+   * Set the compressor driver model.
+   *
+   * @param driver the driver model
+   */
+  public void setDriver(CompressorDriver driver) {
+    this.driver = driver;
+  }
+
+  /**
+   * Create and set a new driver with specified type and rated power.
+   *
+   * @param type driver type
+   * @param ratedPower rated power in kW
+   */
+  public void setDriver(DriverType type, double ratedPower) {
+    this.driver = new CompressorDriver(type, ratedPower);
+  }
+
+  /**
+   * Get the operating history tracker.
+   *
+   * @return the operating history, or null if not enabled
+   */
+  public CompressorOperatingHistory getOperatingHistory() {
+    return operatingHistory;
+  }
+
+  /**
+   * Enable operating history tracking.
+   */
+  public void enableOperatingHistory() {
+    if (operatingHistory == null) {
+      operatingHistory = new CompressorOperatingHistory();
+    }
+  }
+
+  /**
+   * Disable operating history tracking.
+   */
+  public void disableOperatingHistory() {
+    operatingHistory = null;
+  }
+
+  /**
+   * Record the current operating point to history.
+   *
+   * @param time simulation time in seconds
+   */
+  public void recordOperatingPoint(double time) {
+    if (operatingHistory != null) {
+      operatingHistory.recordOperatingPoint(time, this);
+    }
+  }
+
+  /**
+   * Get the startup profile.
+   *
+   * @return the startup profile, or null if not set
+   */
+  public StartupProfile getStartupProfile() {
+    return startupProfile;
+  }
+
+  /**
+   * Set the startup profile.
+   *
+   * @param profile the startup profile
+   */
+  public void setStartupProfile(StartupProfile profile) {
+    this.startupProfile = profile;
+  }
+
+  /**
+   * Get the shutdown profile.
+   *
+   * @return the shutdown profile, or null if not set
+   */
+  public ShutdownProfile getShutdownProfile() {
+    return shutdownProfile;
+  }
+
+  /**
+   * Set the shutdown profile.
+   *
+   * @param profile the shutdown profile
+   */
+  public void setShutdownProfile(ShutdownProfile profile) {
+    this.shutdownProfile = profile;
+  }
+
+  /**
+   * Add an event listener for compressor events.
+   *
+   * @param listener the event listener to add
+   */
+  public void addEventListener(CompressorEventListener listener) {
+    if (eventListeners == null) {
+      eventListeners = new java.util.ArrayList<>();
+    }
+    if (listener != null && !eventListeners.contains(listener)) {
+      eventListeners.add(listener);
+    }
+  }
+
+  /**
+   * Remove an event listener.
+   *
+   * @param listener the event listener to remove
+   */
+  public void removeEventListener(CompressorEventListener listener) {
+    if (eventListeners != null) {
+      eventListeners.remove(listener);
+    }
+  }
+
+  /**
+   * Get the rotational inertia of the compressor rotor.
+   *
+   * @return inertia in kg⋅m²
+   */
+  public double getRotationalInertia() {
+    return rotationalInertia;
+  }
+
+  /**
+   * Set the rotational inertia of the compressor rotor.
+   *
+   * @param inertia inertia in kg⋅m²
+   */
+  public void setRotationalInertia(double inertia) {
+    this.rotationalInertia = inertia;
+  }
+
+  /**
+   * Get the maximum acceleration rate.
+   *
+   * @return max acceleration in RPM/s
+   */
+  public double getMaxAccelerationRate() {
+    return maxAccelerationRate;
+  }
+
+  /**
+   * Set the maximum acceleration rate.
+   *
+   * @param rate max acceleration in RPM/s
+   */
+  public void setMaxAccelerationRate(double rate) {
+    this.maxAccelerationRate = rate;
+  }
+
+  /**
+   * Get the maximum deceleration rate.
+   *
+   * @return max deceleration in RPM/s
+   */
+  public double getMaxDecelerationRate() {
+    return maxDecelerationRate;
+  }
+
+  /**
+   * Set the maximum deceleration rate.
+   *
+   * @param rate max deceleration in RPM/s
+   */
+  public void setMaxDecelerationRate(double rate) {
+    this.maxDecelerationRate = rate;
+  }
+
+  /**
+   * Get the target speed for dynamic control.
+   *
+   * @return target speed in RPM
+   */
+  public double getTargetSpeed() {
+    return targetSpeed;
+  }
+
+  /**
+   * Set the target speed for dynamic control.
+   *
+   * @param speed target speed in RPM
+   */
+  public void setTargetSpeed(double speed) {
+    this.targetSpeed = speed;
+  }
+
+  /**
+   * Check if auto-speed mode is enabled.
+   *
+   * <p>
+   * In auto-speed mode, the compressor automatically calculates the required speed from the current
+   * operating point (flow and head) using the compressor chart.
+   * </p>
+   *
+   * @return true if auto-speed mode is enabled
+   */
+  public boolean isAutoSpeedMode() {
+    return autoSpeedMode;
+  }
+
+  /**
+   * Enable or disable auto-speed mode.
+   *
+   * @param enabled true to enable auto-speed mode
+   */
+  public void setAutoSpeedMode(boolean enabled) {
+    this.autoSpeedMode = enabled;
+  }
+
+  /**
+   * Get the performance degradation factor.
+   *
+   * @return degradation factor (1.0 = new, less than 1.0 = degraded)
+   */
+  public double getDegradationFactor() {
+    return degradationFactor;
+  }
+
+  /**
+   * Set the performance degradation factor.
+   *
+   * @param factor degradation factor (1.0 = new, less than 1.0 = degraded)
+   */
+  public void setDegradationFactor(double factor) {
+    this.degradationFactor = Math.max(0.0, Math.min(1.0, factor));
+  }
+
+  /**
+   * Get the fouling factor.
+   *
+   * @return fouling factor (0 = clean, higher = more fouled)
+   */
+  public double getFoulingFactor() {
+    return foulingFactor;
+  }
+
+  /**
+   * Set the fouling factor.
+   *
+   * @param factor fouling factor (0 = clean, higher = more fouled)
+   */
+  public void setFoulingFactor(double factor) {
+    this.foulingFactor = Math.max(0.0, factor);
+  }
+
+  /**
+   * Get the total operating hours.
+   *
+   * @return operating hours
+   */
+  public double getOperatingHours() {
+    return operatingHours;
+  }
+
+  /**
+   * Set the total operating hours.
+   *
+   * @param hours operating hours
+   */
+  public void setOperatingHours(double hours) {
+    this.operatingHours = hours;
+  }
+
+  /**
+   * Add operating time.
+   *
+   * @param hours hours to add
+   */
+  public void addOperatingHours(double hours) {
+    this.operatingHours += hours;
+  }
+
+  /**
+   * Get the surge warning threshold.
+   *
+   * @return threshold as ratio (e.g., 0.15 = 15% margin)
+   */
+  public double getSurgeWarningThreshold() {
+    return surgeWarningThreshold;
+  }
+
+  /**
+   * Set the surge warning threshold.
+   *
+   * @param threshold threshold as ratio
+   */
+  public void setSurgeWarningThreshold(double threshold) {
+    this.surgeWarningThreshold = threshold;
+  }
+
+  /**
+   * Get the surge critical threshold.
+   *
+   * @return threshold as ratio (e.g., 0.05 = 5% margin)
+   */
+  public double getSurgeCriticalThreshold() {
+    return surgeCriticalThreshold;
+  }
+
+  /**
+   * Set the surge critical threshold.
+   *
+   * @param threshold threshold as ratio
+   */
+  public void setSurgeCriticalThreshold(double threshold) {
+    this.surgeCriticalThreshold = threshold;
+  }
+
+  /**
+   * Get the stone wall warning threshold.
+   *
+   * @return threshold as ratio
+   */
+  public double getStoneWallWarningThreshold() {
+    return stoneWallWarningThreshold;
+  }
+
+  /**
+   * Set the stone wall warning threshold.
+   *
+   * @param threshold threshold as ratio
+   */
+  public void setStoneWallWarningThreshold(double threshold) {
+    this.stoneWallWarningThreshold = threshold;
+  }
+
+  /**
+   * Check surge margin and fire events if thresholds are crossed.
+   */
+  public void checkSurgeMargin() {
+    double surgeMargin = getDistanceToSurge();
+
+    // Check for critical threshold
+    if (surgeMargin <= surgeCriticalThreshold) {
+      if (!surgeCriticalActive) {
+        surgeCriticalActive = true;
+        fireSurgeApproachEvent(surgeMargin, true);
+      }
+    } else if (surgeMargin <= surgeWarningThreshold) {
+      if (!surgeWarningActive) {
+        surgeWarningActive = true;
+        surgeCriticalActive = false;
+        fireSurgeApproachEvent(surgeMargin, false);
+      }
+    } else {
+      surgeWarningActive = false;
+      surgeCriticalActive = false;
+    }
+
+    // Check for actual surge
+    if (surgeMargin < 0) {
+      fireSurgeOccurredEvent(surgeMargin);
+      setOperatingState(CompressorState.SURGE_PROTECTION);
+    }
+  }
+
+  /**
+   * Check stone wall margin and fire events if threshold is crossed.
+   */
+  public void checkStoneWallMargin() {
+    double stoneWallMargin = getDistanceToStoneWall();
+    if (stoneWallMargin <= stoneWallWarningThreshold) {
+      fireStoneWallApproachEvent(stoneWallMargin);
+    }
+  }
+
+  /**
+   * Check speed limits and fire events if limits are exceeded.
+   */
+  public void checkSpeedLimits() {
+    if (isHigherThanMaxSpeed()) {
+      if (!speedLimitWarningActive) {
+        speedLimitWarningActive = true;
+        fireSpeedLimitExceededEvent(getSpeed(), getRatioToMaxSpeed());
+      }
+      setOperatingState(CompressorState.SPEED_LIMITED);
+    } else if (isLowerThanMinSpeed() && operatingState.isOperational()) {
+      fireSpeedBelowMinimumEvent(getSpeed(), getRatioToMinSpeed());
+    } else {
+      speedLimitWarningActive = false;
+    }
+  }
+
+  /**
+   * Check driver power limits and fire events if limits are exceeded.
+   */
+  public void checkPowerLimits() {
+    if (driver != null) {
+      double currentPower = getPower("kW");
+      double maxPower = driver.getMaxAvailablePower();
+      if (currentPower > maxPower) {
+        firePowerLimitExceededEvent(currentPower, maxPower);
+      }
+    }
+  }
+
+  /**
+   * Start the compressor following the startup profile.
+   *
+   * @param targetOperatingSpeed the final target speed in RPM
+   */
+  public void startCompressor(double targetOperatingSpeed) {
+    if (!operatingState.canStart()) {
+      logger.warn("Cannot start compressor from state: {}", operatingState);
+      return;
+    }
+
+    this.targetSpeed = targetOperatingSpeed;
+    this.startupElapsedTime = 0.0;
+    setOperatingState(CompressorState.STARTING);
+
+    if (startupProfile == null) {
+      startupProfile = new StartupProfile();
+    }
+
+    // Open antisurge valve if required
+    if (startupProfile.isRequireAntisurgeOpen() && antiSurge != null) {
+      antiSurge.setActive(true);
+    }
+  }
+
+  /**
+   * Stop the compressor following the shutdown profile.
+   *
+   * @param type the type of shutdown
+   */
+  public void stopCompressor(ShutdownProfile.ShutdownType type) {
+    if (operatingState == CompressorState.STOPPED || operatingState == CompressorState.SHUTDOWN) {
+      return;
+    }
+
+    this.speedAtShutdownStart = getSpeed();
+    this.shutdownElapsedTime = 0.0;
+    setOperatingState(CompressorState.SHUTDOWN);
+
+    if (shutdownProfile == null) {
+      shutdownProfile = new ShutdownProfile(type, speedAtShutdownStart);
+    } else {
+      shutdownProfile.setShutdownType(type, speedAtShutdownStart);
+    }
+  }
+
+  /**
+   * Normal shutdown.
+   */
+  public void stopCompressor() {
+    stopCompressor(ShutdownProfile.ShutdownType.NORMAL);
+  }
+
+  /**
+   * Emergency shutdown (ESD).
+   */
+  public void emergencyShutdown() {
+    stopCompressor(ShutdownProfile.ShutdownType.EMERGENCY);
+    setOperatingState(CompressorState.TRIPPED);
+  }
+
+  /**
+   * Update the compressor state during a transient simulation step.
+   *
+   * <p>
+   * This method should be called during dynamic simulation to update the compressor speed, state,
+   * and fire appropriate events.
+   * </p>
+   *
+   * @param timeStep the time step in seconds
+   */
+  public void updateDynamicState(double timeStep) {
+    // Update operating hours if running
+    if (operatingState.isOperational()) {
+      addOperatingHours(timeStep / 3600.0);
+    }
+
+    // Handle state-specific updates
+    switch (operatingState) {
+      case STARTING:
+        updateStartup(timeStep);
+        break;
+      case SHUTDOWN:
+      case DEPRESSURIZING:
+        updateShutdown(timeStep);
+        break;
+      case RUNNING:
+      case SURGE_PROTECTION:
+        // Check limits during normal operation
+        checkSurgeMargin();
+        checkStoneWallMargin();
+        checkSpeedLimits();
+        checkPowerLimits();
+
+        // Update speed if in auto-speed mode
+        if (autoSpeedMode) {
+          updateAutoSpeed();
+        }
+        break;
+      default:
+        break;
+    }
+
+    // Record to history if enabled
+    recordOperatingPoint(operatingHours * 3600.0);
+  }
+
+  /**
+   * Update startup sequence.
+   *
+   * @param timeStep time step in seconds
+   */
+  private void updateStartup(double timeStep) {
+    startupElapsedTime += timeStep;
+
+    if (startupProfile != null) {
+      double targetSpd = startupProfile.getTargetSpeedAtTime(startupElapsedTime, targetSpeed);
+      updateSpeedWithInertia(targetSpd, timeStep);
+
+      if (startupProfile.isStartupComplete(startupElapsedTime, getSpeed(), targetSpeed, 10.0)) {
+        setOperatingState(CompressorState.RUNNING);
+        fireStartupCompleteEvent();
+      }
+    } else {
+      // Simple linear ramp if no profile
+      updateSpeedWithInertia(targetSpeed, timeStep);
+      if (Math.abs(getSpeed() - targetSpeed) < 10.0) {
+        setOperatingState(CompressorState.RUNNING);
+        fireStartupCompleteEvent();
+      }
+    }
+  }
+
+  /**
+   * Update shutdown sequence.
+   *
+   * @param timeStep time step in seconds
+   */
+  private void updateShutdown(double timeStep) {
+    shutdownElapsedTime += timeStep;
+
+    if (shutdownProfile != null) {
+      double targetSpd =
+          shutdownProfile.getTargetSpeedAtTime(shutdownElapsedTime, speedAtShutdownStart);
+      updateSpeedWithInertia(targetSpd, timeStep);
+
+      // Open antisurge if needed
+      if (shutdownProfile.shouldOpenAntisurge(shutdownElapsedTime) && antiSurge != null) {
+        antiSurge.setActive(true);
+      }
+
+      if (shutdownProfile.isShutdownComplete(shutdownElapsedTime, getSpeed())) {
+        setSpeed(0.0);
+        setOperatingState(CompressorState.STOPPED);
+        fireShutdownCompleteEvent();
+      }
+    } else {
+      // Simple linear ramp down if no profile
+      updateSpeedWithInertia(0.0, timeStep);
+      if (getSpeed() < 10.0) {
+        setSpeed(0.0);
+        setOperatingState(CompressorState.STOPPED);
+        fireShutdownCompleteEvent();
+      }
+    }
+  }
+
+  /**
+   * Update speed considering inertia constraints.
+   *
+   * @param targetSpd target speed in RPM
+   * @param timeStep time step in seconds
+   */
+  private void updateSpeedWithInertia(double targetSpd, double timeStep) {
+    double currentSpd = getSpeed();
+    double speedDiff = targetSpd - currentSpd;
+
+    if (Math.abs(speedDiff) < 0.1) {
+      setSpeed(targetSpd);
+      return;
+    }
+
+    double maxChange;
+    if (driver != null) {
+      // Use driver model for acceleration limits
+      double newSpeed =
+          driver.calculateSpeedChange(currentSpd, targetSpd, getPower("kW"), timeStep);
+      setSpeed(newSpeed);
+    } else {
+      // Use simple rate limits
+      if (speedDiff > 0) {
+        maxChange = maxAccelerationRate * timeStep;
+        setSpeed(currentSpd + Math.min(speedDiff, maxChange));
+      } else {
+        maxChange = maxDecelerationRate * timeStep;
+        setSpeed(currentSpd + Math.max(speedDiff, -maxChange));
+      }
+    }
+  }
+
+  /**
+   * Update speed automatically based on operating point.
+   */
+  private void updateAutoSpeed() {
+    if (compressorChart != null && compressorChart.isUseCompressorChart()) {
+      double flow = getInletStream().getFlowRate("m3/hr");
+      double head = getPolytropicFluidHead();
+      double calculatedSpeed = compressorChart.getSpeed(flow, head);
+      if (!Double.isNaN(calculatedSpeed) && calculatedSpeed > 0) {
+        setTargetSpeed(calculatedSpeed);
+      }
+    }
+  }
+
+  /**
+   * Get the effective polytropic head accounting for degradation.
+   *
+   * @return effective head in kJ/kg
+   */
+  public double getEffectivePolytropicHead() {
+    return polytropicFluidHead * degradationFactor * (1.0 - foulingFactor);
+  }
+
+  /**
+   * Get the effective efficiency accounting for degradation.
+   *
+   * @return effective polytropic efficiency
+   */
+  public double getEffectivePolytropicEfficiency() {
+    return polytropicEfficiency * degradationFactor;
+  }
+
+  // Event firing methods
+
+  /**
+   * Fire surge approach event to all listeners.
+   *
+   * @param surgeMargin current surge margin
+   * @param isCritical true if critical threshold
+   */
+  private void fireSurgeApproachEvent(double surgeMargin, boolean isCritical) {
+    if (eventListeners != null) {
+      for (CompressorEventListener listener : eventListeners) {
+        listener.onSurgeApproach(this, surgeMargin, isCritical);
+      }
+    }
+  }
+
+  /**
+   * Fire surge occurred event.
+   *
+   * @param surgeMargin current surge margin
+   */
+  private void fireSurgeOccurredEvent(double surgeMargin) {
+    if (eventListeners != null) {
+      for (CompressorEventListener listener : eventListeners) {
+        listener.onSurgeOccurred(this, surgeMargin);
+      }
+    }
+  }
+
+  /**
+   * Fire speed limit exceeded event.
+   *
+   * @param currentSpeed current speed
+   * @param ratio ratio to max speed
+   */
+  private void fireSpeedLimitExceededEvent(double currentSpeed, double ratio) {
+    if (eventListeners != null) {
+      for (CompressorEventListener listener : eventListeners) {
+        listener.onSpeedLimitExceeded(this, currentSpeed, ratio);
+      }
+    }
+  }
+
+  /**
+   * Fire speed below minimum event.
+   *
+   * @param currentSpeed current speed
+   * @param ratio ratio to min speed
+   */
+  private void fireSpeedBelowMinimumEvent(double currentSpeed, double ratio) {
+    if (eventListeners != null) {
+      for (CompressorEventListener listener : eventListeners) {
+        listener.onSpeedBelowMinimum(this, currentSpeed, ratio);
+      }
+    }
+  }
+
+  /**
+   * Fire power limit exceeded event.
+   *
+   * @param currentPower current power in kW
+   * @param maxPower max available power in kW
+   */
+  private void firePowerLimitExceededEvent(double currentPower, double maxPower) {
+    if (eventListeners != null) {
+      for (CompressorEventListener listener : eventListeners) {
+        listener.onPowerLimitExceeded(this, currentPower, maxPower);
+      }
+    }
+  }
+
+  /**
+   * Fire state change event.
+   *
+   * @param oldState previous state
+   * @param newState new state
+   */
+  private void fireStateChangeEvent(CompressorState oldState, CompressorState newState) {
+    if (eventListeners != null) {
+      for (CompressorEventListener listener : eventListeners) {
+        listener.onStateChange(this, oldState, newState);
+      }
+    }
+  }
+
+  /**
+   * Fire stone wall approach event.
+   *
+   * @param stoneWallMargin margin to stone wall
+   */
+  private void fireStoneWallApproachEvent(double stoneWallMargin) {
+    if (eventListeners != null) {
+      for (CompressorEventListener listener : eventListeners) {
+        listener.onStoneWallApproach(this, stoneWallMargin);
+      }
+    }
+  }
+
+  /**
+   * Fire startup complete event.
+   */
+  private void fireStartupCompleteEvent() {
+    if (eventListeners != null) {
+      for (CompressorEventListener listener : eventListeners) {
+        listener.onStartupComplete(this);
+      }
+    }
+  }
+
+  /**
+   * Fire shutdown complete event.
+   */
+  private void fireShutdownCompleteEvent() {
+    if (eventListeners != null) {
+      for (CompressorEventListener listener : eventListeners) {
+        listener.onShutdownComplete(this);
+      }
+    }
+  }
+
+  /**
+   * Acknowledge a tripped compressor to allow restart.
+   */
+  public void acknowledgeTrip() {
+    if (operatingState == CompressorState.TRIPPED) {
+      setOperatingState(CompressorState.STANDBY);
+    }
+  }
+
+  /**
+   * Reset all dynamic simulation state.
+   */
+  public void resetDynamicState() {
+    operatingState = CompressorState.STOPPED;
+    startupElapsedTime = 0.0;
+    shutdownElapsedTime = 0.0;
+    speedAtShutdownStart = 0.0;
+    surgeWarningActive = false;
+    surgeCriticalActive = false;
+    speedLimitWarningActive = false;
+    if (driver != null) {
+      driver.resetOverloadTimer();
+    }
+  }
+}

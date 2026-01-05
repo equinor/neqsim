@@ -24,6 +24,14 @@ Detailed documentation for compressor performance curves in NeqSim, including mu
 - [Template Selection Guide](#template-selection-guide)
 - [Using the CompressorChartGenerator](#using-the-compressorchart-generator)
 - [Template API Reference](#template-api-reference)
+- [**Dynamic Simulation Features**](#dynamic-simulation-features) ⭐ NEW
+  - [Compressor States](#compressor-states)
+  - [Event Listeners](#event-listeners)
+  - [Driver Modeling](#driver-modeling)
+  - [Startup/Shutdown Profiles](#startupshutdown-profiles)
+  - [Anti-Surge Control Strategies](#anti-surge-control-strategies)
+  - [Operating History Analysis](#operating-history-analysis)
+  - [Performance Degradation](#performance-degradation)
 
 ---
 
@@ -1976,6 +1984,393 @@ Design Features:
 │   ╲  ●   ●  ╱           │
 │    ╰───────╯            │
 └─────────────────────────┘
+```
+
+---
+
+## Dynamic Simulation Features ⭐ NEW
+
+NeqSim now provides comprehensive dynamic simulation capabilities for compressors, including state machines, event-driven control, driver modeling, and startup/shutdown sequences.
+
+### Overview
+
+The dynamic simulation features enable realistic transient simulations including:
+
+- **Compressor State Machine**: Track operating states (STOPPED, STARTING, RUNNING, SURGE_PROTECTION, etc.)
+- **Event-Driven Control**: Listeners for surge approach, speed limits, power limits, state changes
+- **Driver Modeling**: Electric motors, gas turbines, steam turbines with power limits and efficiency curves
+- **Inertia Modeling**: Realistic acceleration/deceleration with rate limits
+- **Startup/Shutdown Profiles**: Sequenced startup and shutdown procedures
+- **Operating History**: Track and export operating points for post-simulation analysis
+- **Performance Degradation**: Model fouling and performance reduction over time
+
+### Compressor States
+
+The `CompressorState` enum defines the possible operating states:
+
+| State | Description | Can Start? | Is Operational? |
+|-------|-------------|------------|-----------------|
+| `STOPPED` | Compressor is not running | Yes | No |
+| `STARTING` | Startup sequence in progress | No | No |
+| `RUNNING` | Normal operation | No | Yes |
+| `SURGE_PROTECTION` | Near or in surge, recycle active | No | Yes |
+| `SPEED_LIMITED` | At max/min speed limit | No | Yes |
+| `SHUTDOWN` | Shutdown sequence in progress | No | No |
+| `DEPRESSURIZING` | Pressure settling after shutdown | No | No |
+| `TRIPPED` | Emergency shutdown, requires acknowledgment | No | No |
+| `STANDBY` | Ready to start after trip acknowledgment | Yes | No |
+
+### Basic Dynamic Simulation Setup
+
+```java
+// Create compressor with dynamic features
+Compressor comp = new Compressor("K-100", inletStream);
+comp.setOutletPressure(100.0, "bara");
+comp.setSpeed(10000);
+comp.run();
+
+// Enable dynamic simulation features
+comp.enableOperatingHistory();
+comp.setRotationalInertia(15.0);  // kg⋅m² combined rotor inertia
+comp.setMaxAccelerationRate(100.0);  // RPM/s
+comp.setMaxDecelerationRate(200.0);  // RPM/s
+
+// Set surge margin thresholds
+comp.setSurgeWarningThreshold(0.15);   // 15% margin triggers warning
+comp.setSurgeCriticalThreshold(0.05);  // 5% margin triggers critical alarm
+
+// Configure anti-surge controller
+AntiSurge antiSurge = comp.getAntiSurge();
+antiSurge.setControlStrategy(AntiSurge.ControlStrategy.PID);
+antiSurge.setPIDParameters(2.0, 0.5, 0.1);
+antiSurge.setValveResponseTime(2.0);  // seconds
+
+// Start compressor with startup profile
+comp.startCompressor(10000);  // Target speed
+```
+
+### Event Listeners
+
+Listen for compressor events during dynamic simulation:
+
+```java
+// Create event listener
+CompressorEventListener listener = new CompressorEventListener() {
+    @Override
+    public void onSurgeApproach(Compressor compressor, double surgeMargin, boolean isCritical) {
+        if (isCritical) {
+            System.out.println("CRITICAL: Surge margin only " + surgeMargin * 100 + "%");
+        } else {
+            System.out.println("WARNING: Approaching surge, margin = " + surgeMargin * 100 + "%");
+        }
+    }
+
+    @Override
+    public void onSurgeOccurred(Compressor compressor, double surgeMargin) {
+        System.out.println("ALARM: Compressor in surge!");
+    }
+
+    @Override
+    public void onSpeedLimitExceeded(Compressor compressor, double currentSpeed, double ratio) {
+        System.out.println("Speed limit exceeded: " + currentSpeed + " RPM (" + ratio * 100 + "% of max)");
+    }
+
+    @Override
+    public void onSpeedBelowMinimum(Compressor compressor, double currentSpeed, double ratio) {
+        System.out.println("Speed below minimum: " + currentSpeed + " RPM");
+    }
+
+    @Override
+    public void onPowerLimitExceeded(Compressor compressor, double currentPower, double maxPower) {
+        System.out.println("Power limit exceeded: " + currentPower + " kW > " + maxPower + " kW");
+    }
+
+    @Override
+    public void onStateChange(Compressor compressor, CompressorState oldState, CompressorState newState) {
+        System.out.println("State change: " + oldState + " -> " + newState);
+    }
+
+    @Override
+    public void onStoneWallApproach(Compressor compressor, double stoneWallMargin) {
+        System.out.println("Approaching stone wall, margin = " + stoneWallMargin * 100 + "%");
+    }
+
+    @Override
+    public void onStartupComplete(Compressor compressor) {
+        System.out.println("Startup complete!");
+    }
+
+    @Override
+    public void onShutdownComplete(Compressor compressor) {
+        System.out.println("Shutdown complete!");
+    }
+};
+
+// Register listener
+comp.addEventListener(listener);
+```
+
+### Driver Modeling
+
+Model driver (motor, turbine) characteristics:
+
+```java
+// Create driver model
+CompressorDriver driver = new CompressorDriver(DriverType.GAS_TURBINE, 5000);  // 5000 kW gas turbine
+driver.setMaxPower(5500);  // 110% overload capacity
+driver.setInertia(25.0);   // kg⋅m² combined inertia
+driver.setMaxAcceleration(80.0);   // RPM/s
+driver.setMaxDeceleration(150.0);  // RPM/s
+
+// For gas turbines: ambient temperature derating
+driver.setAmbientTemperature(308.15);  // 35°C
+driver.setTemperatureDerateFactor(0.005);  // 0.5% power reduction per °C above ISO
+
+// For VFD motors: efficiency vs speed curve
+CompressorDriver vfdDriver = new CompressorDriver(DriverType.VFD_MOTOR, 3000);
+vfdDriver.setVfdEfficiencyCoefficients(0.90, 0.05, -0.02);  // η = a + b*(N/Nrated) + c*(N/Nrated)²
+
+// Apply driver to compressor
+comp.setDriver(driver);
+```
+
+### Driver Types
+
+| Driver Type | Typical Efficiency | Response Time | Characteristics |
+|-------------|-------------------|---------------|-----------------|
+| `ELECTRIC_MOTOR` | 95% | 1 s | Fixed speed, constant torque |
+| `VFD_MOTOR` | 93% | 5 s | Variable speed, high efficiency |
+| `GAS_TURBINE` | 35% | 30 s | Variable speed, ambient temp dependent |
+| `STEAM_TURBINE` | 40% | 20 s | Variable speed, steam supply dependent |
+| `RECIPROCATING_ENGINE` | 42% | 15 s | High efficiency, limited speed range |
+| `EXPANDER_DRIVE` | 85% | 5 s | Direct drive from process expander |
+
+### Startup/Shutdown Profiles
+
+Define sequenced startup and shutdown procedures:
+
+```java
+// Create startup profile
+StartupProfile startup = new StartupProfile();
+startup.setMinimumIdleSpeed(3000);      // RPM
+startup.setIdleHoldTime(60.0);           // seconds at idle
+startup.setWarmupRampRate(50.0);         // RPM/s during warmup
+startup.setNormalRampRate(100.0);        // RPM/s during normal ramp
+startup.setRequireAntisurgeOpen(true);
+startup.setAntisurgeOpeningDuration(10.0);  // seconds before start
+
+// Or use predefined profiles
+StartupProfile fastStartup = StartupProfile.createFastProfile(10000);  // Emergency restart
+StartupProfile slowStartup = StartupProfile.createSlowProfile(10000, 3000);  // Cold start
+
+comp.setStartupProfile(startup);
+
+// Create shutdown profile
+ShutdownProfile shutdown = new ShutdownProfile(ShutdownProfile.ShutdownType.NORMAL, 10000);
+shutdown.setNormalRampRate(100.0);       // RPM/s
+shutdown.setIdleRundownTime(30.0);       // seconds at idle before stop
+shutdown.setOpenAntisurgeOnShutdown(true);
+
+comp.setShutdownProfile(shutdown);
+
+// Start/stop compressor
+comp.startCompressor(10000);  // Start with target speed
+comp.stopCompressor();        // Normal shutdown
+comp.emergencyShutdown();     // Emergency shutdown (trips compressor)
+```
+
+### Anti-Surge Control Strategies
+
+The enhanced `AntiSurge` class supports multiple control strategies:
+
+| Strategy | Description | Best For |
+|----------|-------------|----------|
+| `ON_OFF` | Simple on/off based on surge line | Simple systems, teaching |
+| `PROPORTIONAL` | Linear valve opening based on margin | Most applications |
+| `PID` | Full PID control with anti-windup | Precise control, variable load |
+| `PREDICTIVE` | Uses rate-of-change prediction | Rapid load changes |
+| `DUAL_LOOP` | Separate surge and capacity loops | Complex systems |
+
+```java
+AntiSurge antiSurge = comp.getAntiSurge();
+
+// Select control strategy
+antiSurge.setControlStrategy(AntiSurge.ControlStrategy.PID);
+
+// Configure PID
+antiSurge.setPIDParameters(2.0, 0.5, 0.1);  // Kp, Ki, Kd
+antiSurge.setPIDSetpoint(0.10);              // 10% surge margin setpoint
+
+// Configure predictive control
+antiSurge.setControlStrategy(AntiSurge.ControlStrategy.PREDICTIVE);
+antiSurge.setPredictiveHorizon(5.0);         // 5 second look-ahead
+
+// Valve dynamics
+antiSurge.setValveResponseTime(2.0);         // First-order time constant
+antiSurge.setValveRateLimit(0.5);            // Max 50% per second
+antiSurge.setMinimumRecycleFlow(500.0);      // Minimum flow m³/hr
+antiSurge.setMaximumRecycleFlow(3000.0);     // Maximum flow m³/hr
+
+// Surge cycle trip protection
+antiSurge.setMaxSurgeCyclesBeforeTrip(3);    // Trip after 3 surge cycles
+```
+
+### Dynamic Simulation Loop
+
+Update compressor state during transient simulation:
+
+```java
+double dt = 0.1;  // 100 ms time step
+double simTime = 0.0;
+
+// Startup compressor
+comp.startCompressor(10000);
+
+while (simTime < 600.0) {  // 10 minute simulation
+    // Update inlet conditions (from upstream process)
+    inletStream.run();
+    
+    // Run compressor
+    comp.run();
+    
+    // Update dynamic state (handles startup/shutdown, checks limits)
+    comp.updateDynamicState(dt);
+    
+    // Update anti-surge controller
+    double surgeMargin = comp.getDistanceToSurge();
+    comp.getAntiSurge().updateController(surgeMargin, dt);
+    
+    // Record to history
+    comp.recordOperatingPoint(simTime);
+    
+    simTime += dt;
+}
+
+// Export operating history
+comp.getOperatingHistory().exportToCSV("compressor_history.csv");
+System.out.println(comp.getOperatingHistory().generateSummary());
+```
+
+### Operating History Analysis
+
+Track and analyze operating history:
+
+```java
+// Enable history tracking
+comp.enableOperatingHistory();
+
+// ... run simulation ...
+
+// Get history summary
+CompressorOperatingHistory history = comp.getOperatingHistory();
+System.out.println("Total points recorded: " + history.getPointCount());
+System.out.println("Surge events: " + history.getSurgeEventCount());
+System.out.println("Time in surge: " + history.getTimeInSurge() + " s");
+System.out.println("Minimum surge margin: " + history.getMinimumSurgeMargin() * 100 + "%");
+System.out.println("Average efficiency: " + history.getAverageEfficiency() * 100 + "%");
+
+// Get peak values
+CompressorOperatingHistory.OperatingPoint peakPower = history.getPeakPower();
+System.out.println("Peak power: " + peakPower.getPower() + " kW at t=" + peakPower.getTime() + " s");
+
+// Export to CSV for plotting
+history.exportToCSV("compressor_history.csv");
+
+// Full summary report
+System.out.println(history.generateSummary());
+```
+
+### Performance Degradation
+
+Model compressor performance degradation over time:
+
+```java
+// Set degradation factor (1.0 = new, <1.0 = degraded)
+comp.setDegradationFactor(0.95);  // 5% degradation
+
+// Set fouling factor (head reduction)
+comp.setFoulingFactor(0.03);  // 3% head reduction due to fouling
+
+// Track operating hours
+comp.setOperatingHours(25000);  // Initial operating hours
+comp.addOperatingHours(100);    // Add 100 hours
+
+// Get effective performance
+double effectiveHead = comp.getEffectivePolytropicHead();  // Accounts for degradation
+double effectiveEff = comp.getEffectivePolytropicEfficiency();  // Accounts for degradation
+```
+
+### Auto-Speed Mode
+
+Automatically calculate speed from operating point:
+
+```java
+// Enable auto-speed mode
+comp.setAutoSpeedMode(true);
+
+// During simulation, speed is calculated from flow and head
+comp.run();  // Speed automatically adjusted based on chart
+```
+
+### Python Example - Dynamic Simulation
+
+```python
+from neqsim import jNeqSim
+from jpype import JClass
+
+# Import classes
+Compressor = jNeqSim.process.equipment.compressor.Compressor
+CompressorState = JClass('neqsim.process.equipment.compressor.CompressorState')
+CompressorDriver = JClass('neqsim.process.equipment.compressor.CompressorDriver')
+DriverType = JClass('neqsim.process.equipment.compressor.DriverType')
+AntiSurge = jNeqSim.process.equipment.compressor.AntiSurge
+StartupProfile = JClass('neqsim.process.equipment.compressor.StartupProfile')
+ShutdownProfile = JClass('neqsim.process.equipment.compressor.ShutdownProfile')
+
+# Create compressor (assuming inlet stream exists)
+comp = Compressor("K-100", inlet_stream)
+comp.setOutletPressure(100.0, "bara")
+comp.setSpeed(10000)
+comp.run()
+
+# Configure dynamic features
+comp.enableOperatingHistory()
+comp.setRotationalInertia(15.0)
+comp.setSurgeWarningThreshold(0.15)
+comp.setSurgeCriticalThreshold(0.05)
+
+# Set up gas turbine driver
+driver = CompressorDriver(DriverType.GAS_TURBINE, 5000)
+driver.setAmbientTemperature(308.15)  # 35°C
+comp.setDriver(driver)
+
+# Configure anti-surge
+anti_surge = comp.getAntiSurge()
+anti_surge.setControlStrategy(AntiSurge.ControlStrategy.PID)
+anti_surge.setPIDParameters(2.0, 0.5, 0.1)
+
+# Run dynamic simulation
+dt = 0.1  # 100 ms
+sim_time = 0.0
+
+comp.startCompressor(10000)
+
+while sim_time < 300.0:
+    inlet_stream.run()
+    comp.run()
+    comp.updateDynamicState(dt)
+    
+    # Print state periodically
+    if int(sim_time) % 10 == 0 and sim_time == int(sim_time):
+        print(f"t={sim_time:.0f}s: State={comp.getOperatingState()}, "
+              f"Speed={comp.getSpeed():.0f} RPM, "
+              f"Surge margin={comp.getDistanceToSurge()*100:.1f}%")
+    
+    sim_time += dt
+
+# Export results
+comp.getOperatingHistory().exportToCSV("compressor_dynamic.csv")
+print(str(comp.getOperatingHistory().generateSummary()))
 ```
 
 ---
