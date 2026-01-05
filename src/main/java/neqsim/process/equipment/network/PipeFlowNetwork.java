@@ -268,6 +268,13 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
 
   /**
    * Create and configure a pipeline.
+   *
+   * @param name the pipeline name
+   * @param inletStream the inlet stream
+   * @param length the pipeline length in meters
+   * @param diameter the pipeline diameter in meters
+   * @param numberOfNodes the number of computational nodes
+   * @return the configured pipeline
    */
   private OnePhasePipeLine createPipeline(String name, StreamInterface inletStream, double length,
       double diameter, int numberOfNodes) {
@@ -400,6 +407,8 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
 
   /**
    * Get execution order for manifolds (topological sort).
+   *
+   * @return list of manifold nodes in execution order
    */
   private List<ManifoldNode> getExecutionOrder() {
     List<ManifoldNode> order = new ArrayList<>();

@@ -176,6 +176,31 @@ public interface CompressorChartInterface extends Cloneable {
   public int getSpeed(double flow, double head);
 
   /**
+   * Calculate the speed required to achieve a given head at a given flow rate.
+   *
+   * <p>
+   * This method returns the speed as a double for full precision. It uses a robust algorithm that
+   * works both within and outside the defined speed curve range by using fan law extrapolation.
+   * </p>
+   *
+   * <p>
+   * The algorithm uses:
+   * <ul>
+   * <li>Fan-law based initial guess: N ∝ √H at constant Q/N</li>
+   * <li>Damped Newton-Raphson iteration for fast convergence</li>
+   * <li>Bounds protection to prevent divergence</li>
+   * <li>Bisection fallback for guaranteed convergence</li>
+   * </ul>
+   *
+   * @param flow the volumetric flow rate in m³/hr
+   * @param head the required polytropic head in the chart's head unit
+   * @return the calculated speed in RPM as a double
+   */
+  public default double getSpeedValue(double flow, double head) {
+    return (double) getSpeed(flow, head);
+  }
+
+  /**
    * <p>
    * plot.
    * </p>
@@ -207,9 +232,102 @@ public interface CompressorChartInterface extends Cloneable {
    * Getter for the field <code>minSpeedCurve</code>.
    * </p>
    *
-   * @return a double
+   * @return the minimum speed curve value in RPM
    */
   public double getMinSpeedCurve();
+
+  /**
+   * <p>
+   * Getter for the field <code>maxSpeedCurve</code>.
+   * </p>
+   *
+   * @return the maximum speed curve value in RPM
+   */
+  public double getMaxSpeedCurve();
+
+  /**
+   * Check if the calculated speed is higher than the maximum speed in the compressor curves.
+   *
+   * <p>
+   * This method is useful for detecting when the compressor operation requires extrapolation beyond
+   * the defined performance curves, which may indicate that the compressor is undersized or
+   * operating outside its design envelope.
+   * </p>
+   *
+   * @param calculatedSpeed the speed to check in RPM
+   * @return true if the calculated speed exceeds the maximum curve speed, false otherwise
+   */
+  public default boolean isHigherThanMaxSpeed(double calculatedSpeed) {
+    return calculatedSpeed > getMaxSpeedCurve();
+  }
+
+  /**
+   * Get the ratio of the calculated speed to the maximum speed in the compressor curves.
+   *
+   * <p>
+   * A ratio greater than 1.0 indicates the speed exceeds the maximum curve speed. This is useful
+   * for quantifying how far outside the design envelope the compressor is operating.
+   * </p>
+   *
+   * @param calculatedSpeed the speed to compare in RPM
+   * @return the ratio calculatedSpeed/maxSpeedCurve (dimensionless)
+   */
+  public default double getRatioToMaxSpeed(double calculatedSpeed) {
+    double maxSpeed = getMaxSpeedCurve();
+    if (maxSpeed <= 0) {
+      return Double.NaN;
+    }
+    return calculatedSpeed / maxSpeed;
+  }
+
+  /**
+   * Check if the calculated speed is lower than the minimum speed in the compressor curves.
+   *
+   * <p>
+   * This method is useful for detecting when the compressor operation requires extrapolation below
+   * the defined performance curves, which may indicate turndown issues or that the compressor is
+   * oversized for the current operating conditions.
+   * </p>
+   *
+   * @param calculatedSpeed the speed to check in RPM
+   * @return true if the calculated speed is below the minimum curve speed, false otherwise
+   */
+  public default boolean isLowerThanMinSpeed(double calculatedSpeed) {
+    return calculatedSpeed < getMinSpeedCurve();
+  }
+
+  /**
+   * Get the ratio of the calculated speed to the minimum speed in the compressor curves.
+   *
+   * <p>
+   * A ratio less than 1.0 indicates the speed is below the minimum curve speed. This is useful for
+   * quantifying how far below the design envelope the compressor is operating.
+   * </p>
+   *
+   * @param calculatedSpeed the speed to compare in RPM
+   * @return the ratio calculatedSpeed/minSpeedCurve (dimensionless)
+   */
+  public default double getRatioToMinSpeed(double calculatedSpeed) {
+    double minSpeed = getMinSpeedCurve();
+    if (minSpeed <= 0) {
+      return Double.NaN;
+    }
+    return calculatedSpeed / minSpeed;
+  }
+
+  /**
+   * Check if the calculated speed is within the defined compressor curve speed range.
+   *
+   * <p>
+   * This is a convenience method that checks both minimum and maximum speed limits.
+   * </p>
+   *
+   * @param calculatedSpeed the speed to check in RPM
+   * @return true if the speed is within [minSpeedCurve, maxSpeedCurve], false otherwise
+   */
+  public default boolean isSpeedWithinRange(double calculatedSpeed) {
+    return !isLowerThanMinSpeed(calculatedSpeed) && !isHigherThanMaxSpeed(calculatedSpeed);
+  }
 
   /**
    * <p>
@@ -308,6 +426,180 @@ public interface CompressorChartInterface extends Cloneable {
    * @return the molecular weight in g/mol, or NaN if not set
    */
   public default double getOperatingMW() {
+    return Double.NaN;
+  }
+
+  /**
+   * Get the speed values for all compressor curves.
+   *
+   * @return an array of speed values in RPM, or null if not set
+   */
+  public double[] getSpeeds();
+
+  /**
+   * Get the flow values for all compressor curves.
+   *
+   * @return a 2D array where each row corresponds to a speed and contains flow values in m3/hr, or
+   *         null if not set
+   */
+  public double[][] getFlows();
+
+  /**
+   * Get the head values for all compressor curves.
+   *
+   * @return a 2D array where each row corresponds to a speed and contains head values in the unit
+   *         specified by getHeadUnit(), or null if not set
+   */
+  public double[][] getHeads();
+
+  /**
+   * Get the polytropic efficiency values for all compressor curves.
+   *
+   * @return a 2D array where each row corresponds to a speed and contains polytropic efficiency
+   *         values in %, or null if not set
+   */
+  public double[][] getPolytropicEfficiencies();
+
+  /**
+   * Get the chart conditions (e.g., reference molecular weight).
+   *
+   * @return an array of chart condition values, or null if not set
+   */
+  public double[] getChartConditions();
+
+  /**
+   * Get the power values for all compressor curves.
+   *
+   * <p>
+   * Power is calculated from: P = mass_flow * head / efficiency. This curve is critical for driver
+   * selection and energy analysis.
+   * </p>
+   *
+   * @return a 2D array where each row corresponds to a speed and contains power values in kW, or
+   *         null if not available
+   */
+  public default double[][] getPowers() {
+    return null;
+  }
+
+  /**
+   * Get the pressure ratio values for all compressor curves.
+   *
+   * <p>
+   * Pressure ratio is calculated from polytropic head and gas properties. Useful for process design
+   * and control system configuration.
+   * </p>
+   *
+   * @return a 2D array where each row corresponds to a speed and contains pressure ratio values
+   *         (dimensionless), or null if not available
+   */
+  public default double[][] getPressureRatios() {
+    return null;
+  }
+
+  /**
+   * Set the reference density for power and pressure ratio calculations.
+   *
+   * @param density the reference gas density in kg/m3
+   */
+  public default void setReferenceDensity(double density) {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Get the reference density used for calculations.
+   *
+   * @return the reference density in kg/m3, or NaN if not set
+   */
+  public default double getReferenceDensity() {
+    return Double.NaN;
+  }
+
+  /**
+   * Set the inlet pressure for pressure ratio calculations.
+   *
+   * @param pressure the inlet pressure in bara
+   */
+  public default void setInletPressure(double pressure) {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Get the inlet pressure.
+   *
+   * @return the inlet pressure in bara, or NaN if not set
+   */
+  public default double getInletPressure() {
+    return Double.NaN;
+  }
+
+  /**
+   * Set the polytropic exponent for pressure ratio calculations.
+   *
+   * @param exponent the polytropic exponent (n)
+   */
+  public default void setPolytropicExponent(double exponent) {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Get the polytropic exponent.
+   *
+   * @return the polytropic exponent, or NaN if not set
+   */
+  public default double getPolytropicExponent() {
+    return Double.NaN;
+  }
+
+  /**
+   * Get the discharge temperature values for all compressor curves.
+   *
+   * <p>
+   * Discharge temperature is calculated from inlet temperature, pressure ratio, and polytropic
+   * efficiency using: T2 = T1 * PR^((n-1)/n) where n is related to efficiency and heat capacity
+   * ratio. This is important for downstream equipment design and material temperature limits.
+   * </p>
+   *
+   * @return a 2D array where each row corresponds to a speed and contains discharge temperature
+   *         values in Kelvin, or null if not available
+   */
+  public default double[][] getDischargeTemperatures() {
+    return null;
+  }
+
+  /**
+   * Set the inlet temperature for discharge temperature calculations.
+   *
+   * @param temperature the inlet temperature in Kelvin
+   */
+  public default void setInletTemperature(double temperature) {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Get the inlet temperature.
+   *
+   * @return the inlet temperature in Kelvin, or NaN if not set
+   */
+  public default double getInletTemperature() {
+    return Double.NaN;
+  }
+
+  /**
+   * Set the heat capacity ratio (gamma = Cp/Cv) for temperature calculations.
+   *
+   * @param gamma the heat capacity ratio (typically 1.2-1.4 for gases)
+   */
+  public default void setGamma(double gamma) {
+    // Default implementation does nothing
+  }
+
+  /**
+   * Get the heat capacity ratio.
+   *
+   * @return the heat capacity ratio, or NaN if not set
+   */
+  public default double getGamma() {
     return Double.NaN;
   }
 }

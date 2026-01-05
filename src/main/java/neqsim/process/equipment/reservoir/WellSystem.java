@@ -666,6 +666,8 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * Run single-layer well (standard case).
+   *
+   * @param id calculation identifier UUID
    */
   private void runSingleLayer(UUID id) {
     // Update reservoir pressure from stream
@@ -747,6 +749,8 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * Estimate maximum flow rate based on IPR model (AOF - Absolute Open Flow).
+   *
+   * @return estimated maximum flow rate in Sm3/day
    */
   private double estimateMaxFlowRate() {
     switch (iprModel) {
@@ -762,6 +766,8 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * Run multi-layer commingled well.
+   *
+   * @param id calculation identifier UUID
    */
   private void runMultiLayer(UUID id) {
     // For commingled wells, all layers produce to a common BHP
@@ -822,6 +828,9 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * Calculate bottom-hole pressure from IPR at a given flow rate.
+   *
+   * @param flowRate flow rate in Sm3/day
+   * @return bottom-hole pressure in bara
    */
   private double calculateIPR_BHP(double flowRate) {
     switch (iprModel) {
@@ -861,6 +870,9 @@ public class WellSystem extends ProcessEquipmentBaseClass {
   /**
    * Calculate required bottom-hole pressure from VLP to achieve target WHP. Uses either simplified
    * or full multiphase correlation based on vlpSolverMode.
+   *
+   * @param flowRate flow rate in Sm3/day
+   * @return bottom-hole pressure in bara
    */
   private double calculateVLP_BHP(double flowRate) {
     if (flowRate <= 0)

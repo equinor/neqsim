@@ -1418,6 +1418,8 @@ public class GibbsReactor extends TwoPortEquipment {
   /**
    * Build objective vector matching the optimization variables (variableComponents) and active
    * element balances. This excludes inert components from the variable part but keeps balances.
+   *
+   * @return the objective vector for optimization variables
    */
   private double[] getObjectiveVectorForVariables() {
     List<Integer> activeElements = findActiveElements();

@@ -195,6 +195,9 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
 
   /**
    * Splits a path like "Equipment.property" into parts.
+   *
+   * @param path the property path to split
+   * @return string array with equipment name and property name
    */
   private String[] splitPath(String path) {
     int dotIndex = path.indexOf('.');
@@ -251,6 +254,8 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
 
   /**
    * Applies operating conditions for a data point.
+   *
+   * @param conditions map of property paths to values
    */
   private void applyConditions(Map<String, Double> conditions) {
     for (Map.Entry<String, Double> entry : conditions.entrySet()) {
@@ -317,6 +322,11 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
 
   /**
    * Invokes a getter method on an object.
+   *
+   * @param obj the object to invoke getter on
+   * @param property the property name
+   * @return the property value
+   * @throws Exception if reflection fails
    */
   private Object invokeGetter(Object obj, String property) throws Exception {
     // Try getProperty() first
@@ -342,6 +352,11 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
 
   /**
    * Invokes a setter method on an object.
+   *
+   * @param obj the object to invoke setter on
+   * @param property the property name
+   * @param value the value to set
+   * @throws Exception if reflection fails
    */
   private void invokeSetter(Object obj, String property, double value) throws Exception {
     String setterName = "set" + Character.toUpperCase(property.charAt(0)) + property.substring(1);

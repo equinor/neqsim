@@ -95,6 +95,9 @@ public class StreamValidator {
 
   /**
    * Validate stream composition (helper for validateStream).
+   *
+   * @param builder the validation builder to add results to
+   * @param phase the phase object to validate composition for
    */
   private static void validateComposition(ValidationBuilder builder, Object phase) {
     // This is a simplified check due to varying phase implementations
@@ -141,6 +144,10 @@ public class StreamValidator {
   /**
    * Validate state consistency between two streams (e.g., outlet of equipment A matches inlet of
    * equipment B).
+   *
+   * @param outlet the outlet stream
+   * @param inlet the inlet stream
+   * @return validation result with any errors or warnings
    */
   public static ValidationResult validateStreamConnection(StreamInterface outlet,
       StreamInterface inlet) {
@@ -182,6 +189,9 @@ public class StreamValidator {
 
   /**
    * Helper: Check if stream appears ready.
+   *
+   * @param stream the stream to check
+   * @return true if stream is ready
    */
   public static boolean isStreamReady(StreamInterface stream) {
     ValidationResult result = validateStream(stream);
@@ -190,6 +200,9 @@ public class StreamValidator {
 
   /**
    * Helper: Check if stream has been executed.
+   *
+   * @param stream the stream to check
+   * @return true if stream has been run
    */
   public static boolean hasStreamBeenRun(StreamInterface stream) {
     ValidationResult result = validateStreamHasRun(stream);

@@ -194,6 +194,8 @@ public class ValidationFramework {
 
     /**
      * Get a human-readable name for this object (used in error messages).
+     *
+     * @return the validation name
      */
     String getValidationName();
   }
@@ -320,6 +322,9 @@ public class ValidationFramework {
 
   /**
    * Convenience method for creating a validation builder.
+   *
+   * @param objectName the name of the object being validated
+   * @return a new ValidationBuilder instance
    */
   public static ValidationBuilder validate(String objectName) {
     return new ValidationBuilder(objectName);

@@ -582,6 +582,10 @@ public class TubingPerformance extends TwoPortEquipment {
 
   /**
    * Beggs and Brill (1973) pressure drop calculation.
+   *
+   * @param fluid the fluid system
+   * @param segmentLength the segment length in meters
+   * @return pressure drop in bar
    */
   private double calculateBeggsBrillPressureDrop(SystemInterface fluid, double segmentLength) {
     double area = Math.PI * Math.pow(tubingDiameter / 2.0, 2);
@@ -818,6 +822,10 @@ public class TubingPerformance extends TwoPortEquipment {
 
   /**
    * Duns and Ros (1963) pressure drop - for gas wells.
+   *
+   * @param fluid the fluid system
+   * @param segmentLength the segment length in meters
+   * @return pressure drop in bar
    */
   private double calculateDunsRosPressureDrop(SystemInterface fluid, double segmentLength) {
     // Similar to Gray but with different empirical coefficients
@@ -826,6 +834,9 @@ public class TubingPerformance extends TwoPortEquipment {
 
   /**
    * Calculate Darcy friction factor using Colebrook-White equation.
+   *
+   * @param Re Reynolds number
+   * @return Darcy friction factor
    */
   private double calculateFrictionFactor(double Re) {
     if (Re < 2300) {
@@ -1017,6 +1028,11 @@ public class TubingPerformance extends TwoPortEquipment {
 
   /**
    * Calculate IPR pressure for a given flow rate using the WellFlow model.
+   *
+   * @param iprModel the WellFlow IPR model
+   * @param flowRate the flow rate
+   * @param reservoirPressure the reservoir pressure in bar
+   * @return the calculated bottom-hole pressure in bar
    */
   private double calculateIPRPressure(WellFlow iprModel, double flowRate,
       double reservoirPressure) {

@@ -134,6 +134,14 @@ public class EstimationTestHarness implements Serializable {
 
     /**
      * Constructor.
+     *
+     * @param testName the name of the test
+     * @param numSteps the number of estimation steps
+     * @param finalEstimates the final parameter estimates
+     * @param trueValues the true parameter values
+     * @param finalUncertainties the final uncertainties
+     * @param estimateHistory history of estimates at each step
+     * @param rmseHistory history of RMSE values at each step
      */
     public TestReport(String testName, int numSteps, double[] finalEstimates, double[] trueValues,
         double[] finalUncertainties, List<double[]> estimateHistory, List<double[]> rmseHistory) {
@@ -189,42 +197,74 @@ public class EstimationTestHarness implements Serializable {
       return numSteps; // Didn't converge
     }
 
-    /** Gets the test name. */
+    /**
+     * Gets the test name.
+     *
+     * @return the test name
+     */
     public String getTestName() {
       return testName;
     }
 
-    /** Gets the RMSE of final estimates. */
+    /**
+     * Gets the RMSE of final estimates.
+     *
+     * @return the RMSE value
+     */
     public double getRMSE() {
       return rmse;
     }
 
-    /** Gets mean absolute error. */
+    /**
+     * Gets mean absolute error.
+     *
+     * @return the mean absolute error
+     */
     public double getMeanAbsoluteError() {
       return meanAbsoluteError;
     }
 
-    /** Gets maximum error. */
+    /**
+     * Gets maximum error.
+     *
+     * @return the maximum error
+     */
     public double getMaxError() {
       return maxError;
     }
 
-    /** Gets steps to convergence. */
+    /**
+     * Gets steps to convergence.
+     *
+     * @return the number of steps to converge
+     */
     public int getStepsToConverge() {
       return stepsToConverge;
     }
 
-    /** Gets coverage rate (fraction of true values in 95% CI). */
+    /**
+     * Gets coverage rate (fraction of true values in 95% CI).
+     *
+     * @return the coverage rate
+     */
     public double getCoverageRate() {
       return coverageRate;
     }
 
-    /** Gets final estimates. */
+    /**
+     * Gets final estimates.
+     *
+     * @return the final estimates array
+     */
     public double[] getFinalEstimates() {
       return finalEstimates.clone();
     }
 
-    /** Gets true values. */
+    /**
+     * Gets true values.
+     *
+     * @return the true values array
+     */
     public double[] getTrueValues() {
       return trueValues.clone();
     }
@@ -575,17 +615,29 @@ public class EstimationTestHarness implements Serializable {
       return stdRMSE;
     }
 
-    /** Gets 95th percentile RMSE. */
+    /**
+     * Gets 95th percentile RMSE.
+     *
+     * @return the 95th percentile RMSE
+     */
     public double getPercentile95RMSE() {
       return percentile95RMSE;
     }
 
-    /** Gets mean coverage rate. */
+    /**
+     * Gets mean coverage rate.
+     *
+     * @return the mean coverage rate
+     */
     public double getMeanCoverage() {
       return meanCoverage;
     }
 
-    /** Gets success rate (trials with &gt;=90% coverage). */
+    /**
+     * Gets success rate (trials with &gt;=90% coverage).
+     *
+     * @return the success rate
+     */
     public double getSuccessRate() {
       return successRate;
     }

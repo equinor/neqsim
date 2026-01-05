@@ -1,6 +1,6 @@
 # Compressor Curves and Performance Maps
 
-Detailed documentation for compressor performance curves in NeqSim, including multi-speed and single-speed compressor handling.
+Detailed documentation for compressor performance curves in NeqSim, including multi-speed and single-speed compressor handling, automatic curve generation, and predefined templates.
 
 ## Table of Contents
 - [Overview](#overview)
@@ -12,9 +12,26 @@ Detailed documentation for compressor performance curves in NeqSim, including mu
 - [Stone Wall (Choke) Curves](#stone-wall-choke-curves)
 - [Setting Curves Manually](#setting-curves-manually)
 - [Distance to Operating Limits](#distance-to-operating-limits)
+- [**Speed Calculation from Operating Point**](#speed-calculation-from-operating-point) ⭐ NEW
 - [Anti-Surge Control](#anti-surge-control)
 - [API Reference](#api-reference)
 - [Python Examples](#python-examples)
+- [**Automatic Curve Generation**](#automatic-curve-generation) ⭐ NEW
+- [**Compressor Curve Templates**](#compressor-curve-templates) ⭐ NEW
+  - [Basic Centrifugal Templates](#basic-centrifugal-templates)
+  - [Application-Based Templates](#application-based-templates)
+  - [Compressor Type Templates](#compressor-type-templates)
+- [Template Selection Guide](#template-selection-guide)
+- [Using the CompressorChartGenerator](#using-the-compressorchart-generator)
+- [Template API Reference](#template-api-reference)
+- [**Dynamic Simulation Features**](#dynamic-simulation-features) ⭐ NEW
+  - [Compressor States](#compressor-states)
+  - [Event Listeners](#event-listeners)
+  - [Driver Modeling](#driver-modeling)
+  - [Startup/Shutdown Profiles](#startupshutdown-profiles)
+  - [Anti-Surge Control Strategies](#anti-surge-control-strategies)
+  - [Operating History Analysis](#operating-history-analysis)
+  - [Performance Degradation](#performance-degradation)
 
 ---
 
@@ -27,9 +44,12 @@ NeqSim supports comprehensive compressor performance modeling through compressor
 | `CompressorChart` | Standard compressor chart with polynomial interpolation |
 | `CompressorChartKhader2015` | Advanced chart with Khader 2015 method and fan law scaling |
 | `CompressorChartMWInterpolation` | Multi-map chart with MW interpolation between maps |
+| `CompressorChartGenerator` | **Automatic curve generation** from templates |
+| `CompressorCurveTemplate` | **Predefined curve templates** (12 available) |
 | `SafeSplineSurgeCurve` | Spline-based surge curve with safe extrapolation |
 | `SafeSplineStoneWallCurve` | Spline-based stone wall (choke) curve |
 | `CompressorCurve` | Individual speed curve (flow, head, efficiency) |
+| `CompressorMechanicalLosses` | **Seal gas and bearing loss calculations** (API 692/617) |
 
 ### Compressor Operating Envelope
 
@@ -1036,6 +1056,130 @@ Distance to Stone Wall = (Single Stone Wall Flow Point / Operating Flow) - 1
 
 ---
 
+## Speed Calculation from Operating Point
+
+When you need to determine the compressor speed required to achieve a specific operating point (flow and head), NeqSim provides a robust algorithm that works both within the defined curve range and with extrapolation beyond it.
+
+### The `getSpeed()` and `getSpeedValue()` Methods
+
+```java
+// Get speed as integer (legacy method)
+int speed = chart.getSpeed(flow, head);
+
+// Get speed as double for full precision
+double preciseSpeed = chart.getSpeedValue(flow, head);
+```
+
+### Algorithm Details
+
+The speed calculation uses a hybrid approach for robustness:
+
+1. **Fan-law Initial Guess**: Uses the relationship $H \propto N^2$ to estimate:
+   $$N_{guess} = N_{ref} \times \sqrt{\frac{H_{target}}{H_{ref}}}$$
+
+2. **Damped Newton-Raphson Iteration**: Fast convergence with safeguards:
+   - 70% damping factor to prevent oscillation
+   - Maximum 30% step change per iteration
+   - Automatic gradient estimation using finite differences
+   - Fallback to fan-law derivative when gradient is near zero
+
+3. **Bounds Protection**: Prevents divergence:
+   - Lower bound: 50% of minimum curve speed
+   - Upper bound: 150% of maximum curve speed
+
+4. **Bisection Fallback**: Guaranteed convergence if Newton-Raphson fails:
+   - Automatic bounds extension if needed
+   - Binary search to find the root
+
+### Speed Limit Checking
+
+The compressor chart and compressor classes provide methods to check if the calculated speed is within the defined curve range:
+
+```java
+// Using the compressor chart directly
+CompressorChartInterface chart = compressor.getCompressorChart();
+double speed = chart.getSpeedValue(flow, head);
+
+// Check speed limits on chart
+boolean tooHigh = chart.isHigherThanMaxSpeed(speed);
+boolean tooLow = chart.isLowerThanMinSpeed(speed);
+boolean inRange = chart.isSpeedWithinRange(speed);
+
+// Get ratios (useful for warnings)
+double ratioToMax = chart.getRatioToMaxSpeed(speed);  // >1.0 means above max
+double ratioToMin = chart.getRatioToMinSpeed(speed);  // <1.0 means below min
+
+// Using the compressor (uses current operating speed)
+compressor.run();
+boolean currentSpeedTooHigh = compressor.isHigherThanMaxSpeed();
+boolean currentSpeedTooLow = compressor.isLowerThanMinSpeed();
+double currentRatioToMax = compressor.getRatioToMaxSpeed();
+
+// Or check a specific speed
+boolean testSpeedTooHigh = compressor.isHigherThanMaxSpeed(12000);
+```
+
+### When Speed is Outside Curve Range
+
+When the calculated speed falls outside the defined performance curves, the algorithm uses fan-law extrapolation:
+
+- **Head scaling**: $H \propto N^2$ (head scales with speed squared)
+- **Flow scaling**: $Q \propto N$ (flow scales linearly with speed)
+
+This allows reasonable estimates for speeds up to 50% beyond the curve boundaries.
+
+### Example: Speed Calculation with Limit Checking
+
+```java
+// Set up compressor
+Compressor comp = new Compressor("K-100", inlet);
+comp.setOutletPressure(120.0, "bara");
+comp.setCompressorChart(chart);
+
+// Run and check speed limits
+comp.run();
+
+// Get the calculated speed
+double speed = comp.getSpeed();
+
+// Check if operating within design envelope
+if (comp.isHigherThanMaxSpeed()) {
+    double ratio = comp.getRatioToMaxSpeed();
+    System.out.println("WARNING: Speed " + ratio * 100 + "% of max curve speed");
+    System.out.println("Compressor may be undersized for this duty");
+} else if (comp.isLowerThanMinSpeed()) {
+    double ratio = comp.getRatioToMinSpeed();
+    System.out.println("WARNING: Speed " + ratio * 100 + "% of min curve speed");
+    System.out.println("Compressor may be oversized - turndown issues");
+} else {
+    System.out.println("Operating within design envelope");
+}
+```
+
+### Python Example
+
+```python
+# Get calculated speed
+speed = chart.getSpeedValue(flow, head)
+
+# Check speed limits
+if chart.isHigherThanMaxSpeed(speed):
+    ratio = chart.getRatioToMaxSpeed(speed)
+    print(f"Speed {speed:.0f} RPM is {ratio:.1%} of max curve speed")
+elif chart.isLowerThanMinSpeed(speed):
+    ratio = chart.getRatioToMinSpeed(speed)
+    print(f"Speed {speed:.0f} RPM is {ratio:.1%} of min curve speed")
+else:
+    print(f"Speed {speed:.0f} RPM is within curve range")
+
+# Using compressor methods with current operating speed
+comp.run()
+if comp.isHigherThanMaxSpeed():
+    print(f"Current speed exceeds max by {(comp.getRatioToMaxSpeed() - 1) * 100:.1f}%")
+```
+
+---
+
 ## Anti-Surge Control
 
 ### Surge Control Factor
@@ -1065,6 +1209,43 @@ double controlFactor = antiSurge.getSurgeControlFactor();
 ---
 
 ## API Reference
+
+### CompressorChartInterface Methods
+
+#### Speed Calculation and Limits
+
+| Method | Description |
+|--------|-------------|
+| `getSpeed(flow, head)` | Calculate speed for given flow and head (returns int) |
+| `getSpeedValue(flow, head)` | Calculate speed for given flow and head (returns double for precision) |
+| `getMinSpeedCurve()` | Get minimum speed from defined curves (RPM) |
+| `getMaxSpeedCurve()` | Get maximum speed from defined curves (RPM) |
+| `isHigherThanMaxSpeed(speed)` | Check if speed exceeds maximum curve speed |
+| `isLowerThanMinSpeed(speed)` | Check if speed is below minimum curve speed |
+| `isSpeedWithinRange(speed)` | Check if speed is within [min, max] range |
+| `getRatioToMaxSpeed(speed)` | Get ratio speed/maxSpeed (>1.0 means above max) |
+| `getRatioToMinSpeed(speed)` | Get ratio speed/minSpeed (<1.0 means below min) |
+
+#### Performance Lookup
+
+| Method | Description |
+|--------|-------------|
+| `getPolytropicHead(flow, speed)` | Get head at given flow and speed |
+| `getPolytropicEfficiency(flow, speed)` | Get efficiency at given flow and speed |
+| `getFlow(head, speed, guessFlow)` | Get flow for given head and speed |
+
+#### Surge and Stone Wall
+
+| Method | Description |
+|--------|-------------|
+| `getSurgeCurve()` | Get the surge curve object |
+| `getStoneWallCurve()` | Get the stone wall curve object |
+| `generateSurgeCurve()` | Auto-generate surge curve from performance curves |
+| `generateStoneWallCurve()` | Auto-generate stone wall curve from performance curves |
+| `getSurgeFlowAtSpeed(speed)` | Get surge flow at given speed |
+| `getSurgeHeadAtSpeed(speed)` | Get surge head at given speed |
+| `getStoneWallFlowAtSpeed(speed)` | Get stone wall flow at given speed |
+| `getStoneWallHeadAtSpeed(speed)` | Get stone wall head at given speed |
 
 ### SafeSplineSurgeCurve
 
@@ -1141,6 +1322,16 @@ double controlFactor = antiSurge.getSurgeControlFactor();
 | `getSurgeFlowRateMargin()` | Flow margin above surge (m³/hr) |
 | `isSurge(flow, head)` | Check if in surge |
 | `isStoneWall()` | Check if at stone wall |
+| `isHigherThanMaxSpeed()` | Check if current speed exceeds max curve speed |
+| `isHigherThanMaxSpeed(speed)` | Check if given speed exceeds max curve speed |
+| `isLowerThanMinSpeed()` | Check if current speed is below min curve speed |
+| `isLowerThanMinSpeed(speed)` | Check if given speed is below min curve speed |
+| `isSpeedWithinRange()` | Check if current speed is within curve range |
+| `isSpeedWithinRange(speed)` | Check if given speed is within curve range |
+| `getRatioToMaxSpeed()` | Get ratio of current speed to max speed |
+| `getRatioToMaxSpeed(speed)` | Get ratio of given speed to max speed |
+| `getRatioToMinSpeed()` | Get ratio of current speed to min speed |
+| `getRatioToMinSpeed(speed)` | Get ratio of given speed to min speed |
 
 ---
 
@@ -1309,6 +1500,878 @@ compressor.run()
 print(f"\nAfter adding CO2:")
 print(f"New fluid MW: {operating_fluid.getMolarMass('kg/mol') * 1000:.1f} g/mol")
 print(f"Polytropic head: {compressor.getPolytropicHead('kJ/kg'):.2f} kJ/kg")
+```
+
+---
+
+## Automatic Curve Generation
+
+When you don't have manufacturer performance data, NeqSim can **automatically generate realistic compressor curves** using the `CompressorChartGenerator` class and predefined curve templates.
+
+### Quick Start
+
+```java
+// Create and run compressor to establish design point
+Compressor compressor = new Compressor("K-100", inletStream);
+compressor.setOutletPressure(100.0, "bara");
+compressor.setPolytropicEfficiency(0.78);
+compressor.setSpeed(10000);
+compressor.run();
+
+// Generate curves automatically
+CompressorChartGenerator generator = new CompressorChartGenerator(compressor);
+CompressorChartInterface chart = generator.generateFromTemplate("PIPELINE", 5);
+
+// Apply and use
+compressor.setCompressorChart(chart);
+compressor.run();
+```
+
+### Why Use Automatic Generation?
+
+| Use Case | Benefit |
+|----------|---------|
+| **Early design studies** | Estimate performance before vendor data available |
+| **Sensitivity analysis** | Quickly evaluate different compressor configurations |
+| **Education/training** | Realistic curves without proprietary data |
+| **Default behavior** | Reasonable performance when no map is provided |
+
+---
+
+## Compressor Curve Templates
+
+NeqSim provides **12 predefined templates** organized into three categories, each representing typical compressor characteristics for different applications.
+
+### Template Categories Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    COMPRESSOR CURVE TEMPLATES                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────┐ │
+│  │   BASIC (3)         │  │  APPLICATION (6)    │  │  TYPE (4)   │ │
+│  │                     │  │                     │  │             │ │
+│  │  • STANDARD         │  │  • PIPELINE         │  │ • SINGLE    │ │
+│  │  • HIGH_FLOW        │  │  • EXPORT           │  │   _STAGE    │ │
+│  │  • HIGH_HEAD        │  │  • INJECTION        │  │ • MULTI     │ │
+│  │                     │  │  • GAS_LIFT         │  │   STAGE     │ │
+│  │                     │  │  • REFRIGERATION    │  │ • INTEGRAL  │ │
+│  │                     │  │  • BOOSTER          │  │   _GEARED   │ │
+│  │                     │  │                     │  │ • OVERHUNG  │ │
+│  └─────────────────────┘  └─────────────────────┘  └─────────────┘ │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Basic Centrifugal Templates
+
+Generic centrifugal compressor characteristics for general use.
+
+| Template | Peak η | Flow Range | Head | Best For |
+|----------|--------|------------|------|----------|
+| `CENTRIFUGAL_STANDARD` | ~78% | Medium | Medium | General purpose, default choice |
+| `CENTRIFUGAL_HIGH_FLOW` | ~78% | Wide | Lower | High throughput, low pressure ratio |
+| `CENTRIFUGAL_HIGH_HEAD` | ~78% | Narrow | High | High pressure ratio, multiple stages |
+
+### Application-Based Templates
+
+Optimized for specific oil & gas applications.
+
+| Template | Peak η | Typical Use | Key Characteristics |
+|----------|--------|-------------|---------------------|
+| `PIPELINE` | **82-85%** | Gas transmission | High capacity, flat curves, wide turndown (~40%) |
+| `EXPORT` | ~80% | Offshore gas export | High pressure, stable operation, 6-8 stages |
+| `INJECTION` | ~77% | Gas injection/EOR | Very high pressure ratio, lower capacity |
+| `GAS_LIFT` | ~75% | Artificial lift | Wide surge margin (~35%), liquid tolerant |
+| `REFRIGERATION` | ~78% | LNG/process cooling | Wide operating range, part-load efficiency |
+| `BOOSTER` | ~76% | Process plant | Moderate pressure ratio (2-4), balanced design |
+
+### Compressor Type Templates
+
+Based on mechanical design characteristics.
+
+| Template | Peak η | Pressure Ratio | Design Features |
+|----------|--------|----------------|-----------------|
+| `SINGLE_STAGE` | ~75% | 1.5-2.5 | Simple, wide flow range, cost-effective |
+| `MULTISTAGE_INLINE` | ~78% | 5-15 | Barrel type, 4-8 stages, O&G standard |
+| `INTEGRALLY_GEARED` | **82%** | Flexible | Multiple pinions, air separation, optimized |
+| `OVERHUNG` | ~74% | Low-medium | Cantilever, simple maintenance |
+
+---
+
+## Template Selection Guide
+
+### Decision Flowchart
+
+```
+                          ┌─────────────────────────┐
+                          │ What is the application?│
+                          └───────────┬─────────────┘
+                                      │
+           ┌──────────────┬───────────┼───────────┬──────────────┐
+           ▼              ▼           ▼           ▼              ▼
+    ┌────────────┐ ┌────────────┐ ┌─────────┐ ┌─────────┐ ┌────────────┐
+    │Gas Pipeline│ │ Offshore   │ │  EOR /  │ │Gas Lift │ │Refriger.   │
+    │Transmission│ │   Export   │ │Injection│ │         │ │ / LNG      │
+    └─────┬──────┘ └─────┬──────┘ └────┬────┘ └────┬────┘ └─────┬──────┘
+          │              │             │           │             │
+          ▼              ▼             ▼           ▼             ▼
+      PIPELINE        EXPORT      INJECTION    GAS_LIFT    REFRIGERATION
+
+
+                          ┌─────────────────────────┐
+                          │  What type of machine?  │
+                          └───────────┬─────────────┘
+                                      │
+           ┌──────────────┬───────────┴───────────┬──────────────┐
+           ▼              ▼                       ▼              ▼
+    ┌────────────┐ ┌────────────┐         ┌────────────┐ ┌────────────┐
+    │   Simple   │ │   Barrel   │         │ Integrally │ │  Overhung  │
+    │Single Stage│ │ Multistage │         │   Geared   │ │ Cantilever │
+    └─────┬──────┘ └─────┬──────┘         └─────┬──────┘ └─────┬──────┘
+          │              │                      │              │
+          ▼              ▼                      ▼              ▼
+    SINGLE_STAGE   MULTISTAGE_INLINE    INTEGRALLY_GEARED   OVERHUNG
+```
+
+### Quick Selection Matrix
+
+| Your Requirement | Recommended Template |
+|------------------|---------------------|
+| Default / don't know | `CENTRIFUGAL_STANDARD` |
+| Large capacity, moderate PR | `PIPELINE` |
+| High discharge pressure | `EXPORT` or `INJECTION` |
+| Variable inlet conditions | `GAS_LIFT` |
+| Process cooling/LNG | `REFRIGERATION` |
+| Simple, low PR | `SINGLE_STAGE` |
+| High PR, compact | `MULTISTAGE_INLINE` |
+| Highest efficiency | `INTEGRALLY_GEARED` |
+| Small duty, easy maintenance | `OVERHUNG` |
+
+---
+
+## Using the CompressorChartGenerator
+
+### Basic Usage
+
+```java
+// Create generator from compressor
+CompressorChartGenerator generator = new CompressorChartGenerator(compressor);
+
+// Option 1: Generate from template (recommended)
+CompressorChartInterface chart = generator.generateFromTemplate("PIPELINE", 5);
+
+// Option 2: Generate "normal curves" from operating point
+CompressorChartInterface chart = generator.generateCompressorChart("normal curves", 5);
+
+// Option 3: Single speed curve
+CompressorChartInterface chart = generator.generateCompressorChart("normal curves");
+```
+
+### Setting Chart Type
+
+The generator supports three output chart types:
+
+```java
+generator.setChartType("interpolate and extrapolate");  // Default, most flexible
+generator.setChartType("interpolate");                  // No extrapolation
+generator.setChartType("simple");                       // Basic fan law scaling
+```
+
+| Chart Type | Class | Use Case |
+|------------|-------|----------|
+| `interpolate and extrapolate` | `CompressorChartAlternativeMapLookupExtrapolate` | Production, wide operating range |
+| `interpolate` | `CompressorChartAlternativeMapLookup` | Stay within measured envelope |
+| `simple` | `CompressorChart` | Basic calculations, teaching |
+
+### Specifying Custom Speeds
+
+```java
+// Using number of speeds (auto-distributed)
+CompressorChartInterface chart = generator.generateFromTemplate("EXPORT", 5);
+// → Generates 5 curves from 70% to 100% of design speed
+
+// Using specific speed values
+double[] speeds = {7000, 8000, 9000, 10000, 10500};
+CompressorChartInterface chart = generator.generateCompressorChart("normal curves", speeds);
+```
+
+### Advanced Corrections
+
+Enable industry-standard corrections for more accurate off-design performance:
+
+```java
+CompressorChartGenerator generator = new CompressorChartGenerator(compressor);
+
+// Individual corrections
+generator.setUseReynoldsCorrection(true);      // Efficiency correction for Re
+generator.setUseMachCorrection(true);          // Choke flow limitation
+generator.setUseMultistageSurgeCorrection(true); // Surge line shift at low speeds
+generator.setNumberOfStages(6);
+generator.setImpellerDiameter(0.35);
+
+// Or enable all at once
+generator.enableAdvancedCorrections(6);  // 6 stages
+
+CompressorChartInterface chart = generator.generateFromTemplate("MULTISTAGE_INLINE", 5);
+```
+
+#### Correction Effects
+
+| Correction | Effect | When Important |
+|------------|--------|----------------|
+| **Reynolds** | Adjusts η at low Re (high viscosity, low speed) | Heavy gases, low-speed operation |
+| **Mach** | Limits stonewall flow based on sonic velocity | Light gases (H₂), high speed |
+| **Multistage Surge** | Shifts surge to higher flow at reduced speed | Variable speed, >3 stages |
+
+---
+
+## Template API Reference
+
+### Listing Available Templates
+
+```java
+// Get all templates
+String[] all = CompressorCurveTemplate.getAvailableTemplates();
+// → ["CENTRIFUGAL_STANDARD", "CENTRIFUGAL_HIGH_FLOW", ..., "OVERHUNG"]
+
+// Get by category
+String[] basic = CompressorCurveTemplate.getTemplatesByCategory("basic");
+// → ["CENTRIFUGAL_STANDARD", "CENTRIFUGAL_HIGH_FLOW", "CENTRIFUGAL_HIGH_HEAD"]
+
+String[] application = CompressorCurveTemplate.getTemplatesByCategory("application");
+// → ["PIPELINE", "EXPORT", "INJECTION", "GAS_LIFT", "REFRIGERATION", "BOOSTER"]
+
+String[] type = CompressorCurveTemplate.getTemplatesByCategory("type");
+// → ["SINGLE_STAGE", "MULTISTAGE_INLINE", "INTEGRALLY_GEARED", "OVERHUNG"]
+```
+
+### Template Name Matching
+
+The `getTemplate()` method is flexible with naming:
+
+```java
+// All of these return the same template:
+CompressorCurveTemplate.getTemplate("GAS_LIFT");
+CompressorCurveTemplate.getTemplate("gas-lift");
+CompressorCurveTemplate.getTemplate("gas lift");
+CompressorCurveTemplate.getTemplate("gaslift");
+
+// Abbreviations work too:
+CompressorCurveTemplate.getTemplate("igc");     // → INTEGRALLY_GEARED
+CompressorCurveTemplate.getTemplate("barrel");  // → MULTISTAGE_INLINE
+CompressorCurveTemplate.getTemplate("LNG");     // → REFRIGERATION
+```
+
+### Working Directly with Templates
+
+```java
+// Get template object
+CompressorCurveTemplate template = CompressorCurveTemplate.PIPELINE;
+
+// Get unscaled original chart
+CompressorChartInterface originalChart = template.getOriginalChart();
+
+// Scale to specific speed
+CompressorChartInterface scaledChart = template.scaleToSpeed(8000);
+
+// Scale to design point
+CompressorChartInterface chart = template.scaleToDesignPoint(
+    10000,   // designSpeed (RPM)
+    5000,    // designFlow (m³/hr)
+    85.0,    // designHead (kJ/kg)
+    5        // numberOfSpeeds
+);
+
+// Get template metadata
+String name = template.getName();
+double refSpeed = template.getReferenceSpeed();
+double[] speedRatios = template.getSpeedRatios();
+```
+
+---
+
+## Complete Java Example
+
+```java
+import neqsim.process.equipment.compressor.*;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemSrkEos;
+
+public class CompressorCurveGenerationExample {
+    public static void main(String[] args) {
+        // 1. Create fluid and inlet stream
+        SystemSrkEos gas = new SystemSrkEos(298.15, 50.0);
+        gas.addComponent("methane", 0.85);
+        gas.addComponent("ethane", 0.10);
+        gas.addComponent("propane", 0.05);
+        gas.setMixingRule("classic");
+        
+        Stream inlet = new Stream("inlet", gas);
+        inlet.setFlowRate(15000.0, "kg/hr");
+        inlet.setTemperature(25.0, "C");
+        inlet.setPressure(40.0, "bara");
+        inlet.run();
+        
+        // 2. Create compressor at design point
+        Compressor comp = new Compressor("K-100", inlet);
+        comp.setOutletPressure(120.0, "bara");
+        comp.setUsePolytropicCalc(true);
+        comp.setPolytropicEfficiency(0.78);
+        comp.setSpeed(9500);
+        comp.run();
+        
+        System.out.println("=== Design Point ===");
+        System.out.println("Flow: " + String.format("%.1f", inlet.getFlowRate("m3/hr")) + " m³/hr");
+        System.out.println("Head: " + String.format("%.1f", comp.getPolytropicFluidHead()) + " kJ/kg");
+        System.out.println("Power: " + String.format("%.1f", comp.getPower("kW")) + " kW");
+        
+        // 3. Generate curves using EXPORT template (offshore gas export)
+        CompressorChartGenerator generator = new CompressorChartGenerator(comp);
+        generator.setChartType("interpolate and extrapolate");
+        generator.enableAdvancedCorrections(6);  // 6-stage compressor
+        
+        CompressorChartInterface chart = generator.generateFromTemplate("EXPORT", 5);
+        
+        // 4. Apply chart and verify
+        comp.setCompressorChart(chart);
+        comp.run();
+        
+        System.out.println("\n=== With Generated Chart ===");
+        System.out.println("Speeds available: " + chart.getSpeeds().length);
+        System.out.println("Efficiency from chart: " + 
+            String.format("%.1f", comp.getPolytropicEfficiency() * 100) + "%");
+        System.out.println("Distance to surge: " + 
+            String.format("%.1f", comp.getDistanceToSurge() * 100) + "%");
+        
+        // 5. Test at different operating point
+        inlet.setFlowRate(12000.0, "kg/hr");
+        inlet.run();
+        comp.run();
+        
+        System.out.println("\n=== Turndown Operation ===");
+        System.out.println("Flow: " + String.format("%.1f", inlet.getFlowRate("m3/hr")) + " m³/hr");
+        System.out.println("Efficiency: " + 
+            String.format("%.1f", comp.getPolytropicEfficiency() * 100) + "%");
+        System.out.println("Distance to surge: " + 
+            String.format("%.1f", comp.getDistanceToSurge() * 100) + "%");
+    }
+}
+```
+
+---
+
+## Python Example
+
+```python
+from neqsim import jNeqSim
+from neqsim.process import stream, compressor
+
+# Import Java classes
+SystemSrkEos = jNeqSim.thermo.system.SystemSrkEos
+Stream = jNeqSim.process.equipment.stream.Stream
+Compressor = jNeqSim.process.equipment.compressor.Compressor
+CompressorChartGenerator = jNeqSim.process.equipment.compressor.CompressorChartGenerator
+CompressorCurveTemplate = jNeqSim.process.equipment.compressor.CompressorCurveTemplate
+
+# Create fluid
+gas = SystemSrkEos(298.15, 50.0)
+gas.addComponent("methane", 0.90)
+gas.addComponent("ethane", 0.07)
+gas.addComponent("propane", 0.03)
+gas.setMixingRule("classic")
+
+# Create stream
+inlet = Stream("inlet", gas)
+inlet.setFlowRate(20000.0, "kg/hr")
+inlet.setTemperature(30.0, "C")
+inlet.setPressure(45.0, "bara")
+inlet.run()
+
+# Create compressor
+comp = Compressor("K-100", inlet)
+comp.setOutletPressure(150.0, "bara")
+comp.setUsePolytropicCalc(True)
+comp.setPolytropicEfficiency(0.77)
+comp.setSpeed(10000)
+comp.run()
+
+# List available templates
+print("Available templates:")
+for cat in ["basic", "application", "type"]:
+    templates = CompressorCurveTemplate.getTemplatesByCategory(cat)
+    print(f"  {cat}: {list(templates)}")
+
+# Generate chart using INJECTION template (high pressure application)
+generator = CompressorChartGenerator(comp)
+generator.setChartType("interpolate and extrapolate")
+generator.enableAdvancedCorrections(8)  # 8-stage injection compressor
+
+chart = generator.generateFromTemplate("INJECTION", 5)
+comp.setCompressorChart(chart)
+comp.run()
+
+print(f"\nDesign efficiency: {comp.getPolytropicEfficiency() * 100:.1f}%")
+print(f"Design head: {comp.getPolytropicFluidHead():.1f} kJ/kg")
+print(f"Power: {comp.getPower('MW'):.2f} MW")
+print(f"Surge margin: {comp.getDistanceToSurge() * 100:.1f}%")
+```
+
+---
+
+## Template Technical Specifications
+
+### PIPELINE Template
+
+```
+Application: Natural gas transmission (30-50 MW class)
+Reference Speed: 5500 RPM (large direct-drive or gear-driven)
+Peak Efficiency: 85%
+Turndown: ~40%
+
+Curve Characteristics:
+        Head
+         ↑
+    79 ──┼────╮
+         │     ╲   Flat curve
+    65 ──┼──────╲──  for pipeline
+         │       ╲   stability
+    53 ──┼────────╲─
+         │         ╲
+         └──────────┴────→ Flow
+           30k    70k m³/hr
+```
+
+### INJECTION Template
+
+```
+Application: Gas injection/EOR (very high pressure)
+Reference Speed: 11000 RPM
+Peak Efficiency: 77%
+Pressure Ratio: 50-200 (overall, with intercooling)
+
+Curve Characteristics:
+        Head
+         ↑
+   245 ──┼──╮
+         │   ╲   Steep curve
+   165 ──┼────╲──  (high head
+         │     ╲    per stage)
+   130 ──┼──────╲
+         │       ╲
+         └────────┴────→ Flow
+           2.5k   6k m³/hr
+           (lower capacity)
+```
+
+### INTEGRALLY_GEARED Template
+
+```
+Application: Air separation, process air
+Reference Speed: 20000 RPM (pinion speed)
+Peak Efficiency: 82% (highest of all templates)
+
+Design Features:
+  - Bull gear drives multiple pinions
+  - Each pinion has optimized impeller
+  - Intercooling between stages
+
+┌─────────────────────────┐
+│     BULL GEAR           │
+│    ╭───────╮            │
+│   ╱  ●   ●  ╲           │  ● = Pinion with impeller
+│  │  ●     ●  │          │
+│   ╲  ●   ●  ╱           │
+│    ╰───────╯            │
+└─────────────────────────┘
+```
+
+---
+
+## Dynamic Simulation Features ⭐ NEW
+
+NeqSim now provides comprehensive dynamic simulation capabilities for compressors, including state machines, event-driven control, driver modeling, and startup/shutdown sequences.
+
+### Overview
+
+The dynamic simulation features enable realistic transient simulations including:
+
+- **Compressor State Machine**: Track operating states (STOPPED, STARTING, RUNNING, SURGE_PROTECTION, etc.)
+- **Event-Driven Control**: Listeners for surge approach, speed limits, power limits, state changes
+- **Driver Modeling**: Electric motors, gas turbines, steam turbines with power limits and efficiency curves
+- **Inertia Modeling**: Realistic acceleration/deceleration with rate limits
+- **Startup/Shutdown Profiles**: Sequenced startup and shutdown procedures
+- **Operating History**: Track and export operating points for post-simulation analysis
+- **Performance Degradation**: Model fouling and performance reduction over time
+
+### Compressor States
+
+The `CompressorState` enum defines the possible operating states:
+
+| State | Description | Can Start? | Is Operational? |
+|-------|-------------|------------|-----------------|
+| `STOPPED` | Compressor is not running | Yes | No |
+| `STARTING` | Startup sequence in progress | No | No |
+| `RUNNING` | Normal operation | No | Yes |
+| `SURGE_PROTECTION` | Near or in surge, recycle active | No | Yes |
+| `SPEED_LIMITED` | At max/min speed limit | No | Yes |
+| `SHUTDOWN` | Shutdown sequence in progress | No | No |
+| `DEPRESSURIZING` | Pressure settling after shutdown | No | No |
+| `TRIPPED` | Emergency shutdown, requires acknowledgment | No | No |
+| `STANDBY` | Ready to start after trip acknowledgment | Yes | No |
+
+### Basic Dynamic Simulation Setup
+
+```java
+// Create compressor with dynamic features
+Compressor comp = new Compressor("K-100", inletStream);
+comp.setOutletPressure(100.0, "bara");
+comp.setSpeed(10000);
+comp.run();
+
+// Enable dynamic simulation features
+comp.enableOperatingHistory();
+comp.setRotationalInertia(15.0);  // kg⋅m² combined rotor inertia
+comp.setMaxAccelerationRate(100.0);  // RPM/s
+comp.setMaxDecelerationRate(200.0);  // RPM/s
+
+// Set surge margin thresholds
+comp.setSurgeWarningThreshold(0.15);   // 15% margin triggers warning
+comp.setSurgeCriticalThreshold(0.05);  // 5% margin triggers critical alarm
+
+// Configure anti-surge controller
+AntiSurge antiSurge = comp.getAntiSurge();
+antiSurge.setControlStrategy(AntiSurge.ControlStrategy.PID);
+antiSurge.setPIDParameters(2.0, 0.5, 0.1);
+antiSurge.setValveResponseTime(2.0);  // seconds
+
+// Start compressor with startup profile
+comp.startCompressor(10000);  // Target speed
+```
+
+### Event Listeners
+
+Listen for compressor events during dynamic simulation:
+
+```java
+// Create event listener
+CompressorEventListener listener = new CompressorEventListener() {
+    @Override
+    public void onSurgeApproach(Compressor compressor, double surgeMargin, boolean isCritical) {
+        if (isCritical) {
+            System.out.println("CRITICAL: Surge margin only " + surgeMargin * 100 + "%");
+        } else {
+            System.out.println("WARNING: Approaching surge, margin = " + surgeMargin * 100 + "%");
+        }
+    }
+
+    @Override
+    public void onSurgeOccurred(Compressor compressor, double surgeMargin) {
+        System.out.println("ALARM: Compressor in surge!");
+    }
+
+    @Override
+    public void onSpeedLimitExceeded(Compressor compressor, double currentSpeed, double ratio) {
+        System.out.println("Speed limit exceeded: " + currentSpeed + " RPM (" + ratio * 100 + "% of max)");
+    }
+
+    @Override
+    public void onSpeedBelowMinimum(Compressor compressor, double currentSpeed, double ratio) {
+        System.out.println("Speed below minimum: " + currentSpeed + " RPM");
+    }
+
+    @Override
+    public void onPowerLimitExceeded(Compressor compressor, double currentPower, double maxPower) {
+        System.out.println("Power limit exceeded: " + currentPower + " kW > " + maxPower + " kW");
+    }
+
+    @Override
+    public void onStateChange(Compressor compressor, CompressorState oldState, CompressorState newState) {
+        System.out.println("State change: " + oldState + " -> " + newState);
+    }
+
+    @Override
+    public void onStoneWallApproach(Compressor compressor, double stoneWallMargin) {
+        System.out.println("Approaching stone wall, margin = " + stoneWallMargin * 100 + "%");
+    }
+
+    @Override
+    public void onStartupComplete(Compressor compressor) {
+        System.out.println("Startup complete!");
+    }
+
+    @Override
+    public void onShutdownComplete(Compressor compressor) {
+        System.out.println("Shutdown complete!");
+    }
+};
+
+// Register listener
+comp.addEventListener(listener);
+```
+
+### Driver Modeling
+
+Model driver (motor, turbine) characteristics:
+
+```java
+// Create driver model
+CompressorDriver driver = new CompressorDriver(DriverType.GAS_TURBINE, 5000);  // 5000 kW gas turbine
+driver.setMaxPower(5500);  // 110% overload capacity
+driver.setInertia(25.0);   // kg⋅m² combined inertia
+driver.setMaxAcceleration(80.0);   // RPM/s
+driver.setMaxDeceleration(150.0);  // RPM/s
+
+// For gas turbines: ambient temperature derating
+driver.setAmbientTemperature(308.15);  // 35°C
+driver.setTemperatureDerateFactor(0.005);  // 0.5% power reduction per °C above ISO
+
+// For VFD motors: efficiency vs speed curve
+CompressorDriver vfdDriver = new CompressorDriver(DriverType.VFD_MOTOR, 3000);
+vfdDriver.setVfdEfficiencyCoefficients(0.90, 0.05, -0.02);  // η = a + b*(N/Nrated) + c*(N/Nrated)²
+
+// Apply driver to compressor
+comp.setDriver(driver);
+```
+
+### Driver Types
+
+| Driver Type | Typical Efficiency | Response Time | Characteristics |
+|-------------|-------------------|---------------|-----------------|
+| `ELECTRIC_MOTOR` | 95% | 1 s | Fixed speed, constant torque |
+| `VFD_MOTOR` | 93% | 5 s | Variable speed, high efficiency |
+| `GAS_TURBINE` | 35% | 30 s | Variable speed, ambient temp dependent |
+| `STEAM_TURBINE` | 40% | 20 s | Variable speed, steam supply dependent |
+| `RECIPROCATING_ENGINE` | 42% | 15 s | High efficiency, limited speed range |
+| `EXPANDER_DRIVE` | 85% | 5 s | Direct drive from process expander |
+
+### Startup/Shutdown Profiles
+
+Define sequenced startup and shutdown procedures:
+
+```java
+// Create startup profile
+StartupProfile startup = new StartupProfile();
+startup.setMinimumIdleSpeed(3000);      // RPM
+startup.setIdleHoldTime(60.0);           // seconds at idle
+startup.setWarmupRampRate(50.0);         // RPM/s during warmup
+startup.setNormalRampRate(100.0);        // RPM/s during normal ramp
+startup.setRequireAntisurgeOpen(true);
+startup.setAntisurgeOpeningDuration(10.0);  // seconds before start
+
+// Or use predefined profiles
+StartupProfile fastStartup = StartupProfile.createFastProfile(10000);  // Emergency restart
+StartupProfile slowStartup = StartupProfile.createSlowProfile(10000, 3000);  // Cold start
+
+comp.setStartupProfile(startup);
+
+// Create shutdown profile
+ShutdownProfile shutdown = new ShutdownProfile(ShutdownProfile.ShutdownType.NORMAL, 10000);
+shutdown.setNormalRampRate(100.0);       // RPM/s
+shutdown.setIdleRundownTime(30.0);       // seconds at idle before stop
+shutdown.setOpenAntisurgeOnShutdown(true);
+
+comp.setShutdownProfile(shutdown);
+
+// Start/stop compressor
+comp.startCompressor(10000);  // Start with target speed
+comp.stopCompressor();        // Normal shutdown
+comp.emergencyShutdown();     // Emergency shutdown (trips compressor)
+```
+
+### Anti-Surge Control Strategies
+
+The enhanced `AntiSurge` class supports multiple control strategies:
+
+| Strategy | Description | Best For |
+|----------|-------------|----------|
+| `ON_OFF` | Simple on/off based on surge line | Simple systems, teaching |
+| `PROPORTIONAL` | Linear valve opening based on margin | Most applications |
+| `PID` | Full PID control with anti-windup | Precise control, variable load |
+| `PREDICTIVE` | Uses rate-of-change prediction | Rapid load changes |
+| `DUAL_LOOP` | Separate surge and capacity loops | Complex systems |
+
+```java
+AntiSurge antiSurge = comp.getAntiSurge();
+
+// Select control strategy
+antiSurge.setControlStrategy(AntiSurge.ControlStrategy.PID);
+
+// Configure PID
+antiSurge.setPIDParameters(2.0, 0.5, 0.1);  // Kp, Ki, Kd
+antiSurge.setPIDSetpoint(0.10);              // 10% surge margin setpoint
+
+// Configure predictive control
+antiSurge.setControlStrategy(AntiSurge.ControlStrategy.PREDICTIVE);
+antiSurge.setPredictiveHorizon(5.0);         // 5 second look-ahead
+
+// Valve dynamics
+antiSurge.setValveResponseTime(2.0);         // First-order time constant
+antiSurge.setValveRateLimit(0.5);            // Max 50% per second
+antiSurge.setMinimumRecycleFlow(500.0);      // Minimum flow m³/hr
+antiSurge.setMaximumRecycleFlow(3000.0);     // Maximum flow m³/hr
+
+// Surge cycle trip protection
+antiSurge.setMaxSurgeCyclesBeforeTrip(3);    // Trip after 3 surge cycles
+```
+
+### Dynamic Simulation Loop
+
+Update compressor state during transient simulation:
+
+```java
+double dt = 0.1;  // 100 ms time step
+double simTime = 0.0;
+
+// Startup compressor
+comp.startCompressor(10000);
+
+while (simTime < 600.0) {  // 10 minute simulation
+    // Update inlet conditions (from upstream process)
+    inletStream.run();
+    
+    // Run compressor
+    comp.run();
+    
+    // Update dynamic state (handles startup/shutdown, checks limits)
+    comp.updateDynamicState(dt);
+    
+    // Update anti-surge controller
+    double surgeMargin = comp.getDistanceToSurge();
+    comp.getAntiSurge().updateController(surgeMargin, dt);
+    
+    // Record to history
+    comp.recordOperatingPoint(simTime);
+    
+    simTime += dt;
+}
+
+// Export operating history
+comp.getOperatingHistory().exportToCSV("compressor_history.csv");
+System.out.println(comp.getOperatingHistory().generateSummary());
+```
+
+### Operating History Analysis
+
+Track and analyze operating history:
+
+```java
+// Enable history tracking
+comp.enableOperatingHistory();
+
+// ... run simulation ...
+
+// Get history summary
+CompressorOperatingHistory history = comp.getOperatingHistory();
+System.out.println("Total points recorded: " + history.getPointCount());
+System.out.println("Surge events: " + history.getSurgeEventCount());
+System.out.println("Time in surge: " + history.getTimeInSurge() + " s");
+System.out.println("Minimum surge margin: " + history.getMinimumSurgeMargin() * 100 + "%");
+System.out.println("Average efficiency: " + history.getAverageEfficiency() * 100 + "%");
+
+// Get peak values
+CompressorOperatingHistory.OperatingPoint peakPower = history.getPeakPower();
+System.out.println("Peak power: " + peakPower.getPower() + " kW at t=" + peakPower.getTime() + " s");
+
+// Export to CSV for plotting
+history.exportToCSV("compressor_history.csv");
+
+// Full summary report
+System.out.println(history.generateSummary());
+```
+
+### Performance Degradation
+
+Model compressor performance degradation over time:
+
+```java
+// Set degradation factor (1.0 = new, <1.0 = degraded)
+comp.setDegradationFactor(0.95);  // 5% degradation
+
+// Set fouling factor (head reduction)
+comp.setFoulingFactor(0.03);  // 3% head reduction due to fouling
+
+// Track operating hours
+comp.setOperatingHours(25000);  // Initial operating hours
+comp.addOperatingHours(100);    // Add 100 hours
+
+// Get effective performance
+double effectiveHead = comp.getEffectivePolytropicHead();  // Accounts for degradation
+double effectiveEff = comp.getEffectivePolytropicEfficiency();  // Accounts for degradation
+```
+
+### Auto-Speed Mode
+
+Automatically calculate speed from operating point:
+
+```java
+// Enable auto-speed mode
+comp.setAutoSpeedMode(true);
+
+// During simulation, speed is calculated from flow and head
+comp.run();  // Speed automatically adjusted based on chart
+```
+
+### Python Example - Dynamic Simulation
+
+```python
+from neqsim import jNeqSim
+from jpype import JClass
+
+# Import classes
+Compressor = jNeqSim.process.equipment.compressor.Compressor
+CompressorState = JClass('neqsim.process.equipment.compressor.CompressorState')
+CompressorDriver = JClass('neqsim.process.equipment.compressor.CompressorDriver')
+DriverType = JClass('neqsim.process.equipment.compressor.DriverType')
+AntiSurge = jNeqSim.process.equipment.compressor.AntiSurge
+StartupProfile = JClass('neqsim.process.equipment.compressor.StartupProfile')
+ShutdownProfile = JClass('neqsim.process.equipment.compressor.ShutdownProfile')
+
+# Create compressor (assuming inlet stream exists)
+comp = Compressor("K-100", inlet_stream)
+comp.setOutletPressure(100.0, "bara")
+comp.setSpeed(10000)
+comp.run()
+
+# Configure dynamic features
+comp.enableOperatingHistory()
+comp.setRotationalInertia(15.0)
+comp.setSurgeWarningThreshold(0.15)
+comp.setSurgeCriticalThreshold(0.05)
+
+# Set up gas turbine driver
+driver = CompressorDriver(DriverType.GAS_TURBINE, 5000)
+driver.setAmbientTemperature(308.15)  # 35°C
+comp.setDriver(driver)
+
+# Configure anti-surge
+anti_surge = comp.getAntiSurge()
+anti_surge.setControlStrategy(AntiSurge.ControlStrategy.PID)
+anti_surge.setPIDParameters(2.0, 0.5, 0.1)
+
+# Run dynamic simulation
+dt = 0.1  # 100 ms
+sim_time = 0.0
+
+comp.startCompressor(10000)
+
+while sim_time < 300.0:
+    inlet_stream.run()
+    comp.run()
+    comp.updateDynamicState(dt)
+    
+    # Print state periodically
+    if int(sim_time) % 10 == 0 and sim_time == int(sim_time):
+        print(f"t={sim_time:.0f}s: State={comp.getOperatingState()}, "
+              f"Speed={comp.getSpeed():.0f} RPM, "
+              f"Surge margin={comp.getDistanceToSurge()*100:.1f}%")
+    
+    sim_time += dt
+
+# Export results
+comp.getOperatingHistory().exportToCSV("compressor_dynamic.csv")
+print(str(comp.getOperatingHistory().generateSummary()))
 ```
 
 ---
