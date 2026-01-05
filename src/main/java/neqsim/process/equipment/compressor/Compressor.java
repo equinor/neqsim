@@ -1125,7 +1125,8 @@ public class Compressor extends TwoPortEquipment
     if (actualFlowRateNew < 0.0 || Double.isNaN(actualFlowRateNew)) {
       logger.error(
           "actual flow rate is negative or NaN and would lead to failure of calculation: actual flow rate "
-              + actualFlowRateNew);
+              + actualFlowRateNew + ", using previous flow rate: " + guessFlow);
+      actualFlowRateNew = guessFlow > 0.0 ? guessFlow : 1.0; // Use previous flow or fallback
     }
     inStream.setFlowRate(actualFlowRateNew, "Am3/hr");
 
@@ -1144,6 +1145,9 @@ public class Compressor extends TwoPortEquipment
 
     polytropicEfficiency =
         compressorChart.getPolytropicEfficiency(inStream.getFlowRate("m3/hr"), speed) / 100.0;
+    if (polytropicEfficiency <= 0.0) {
+      polytropicEfficiency = 0.0001; // Prevent division by zero
+    }
     polytropicFluidHead = head * polytropicEfficiency;
     dH = polytropicFluidHead * 1000.0 * thermoSystem.getMolarMass() / getPolytropicEfficiency()
         * inStream.getThermoSystem().getTotalNumberOfMoles();
