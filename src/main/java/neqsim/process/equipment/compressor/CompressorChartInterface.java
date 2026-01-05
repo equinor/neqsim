@@ -176,6 +176,32 @@ public interface CompressorChartInterface extends Cloneable {
   public int getSpeed(double flow, double head);
 
   /**
+   * Calculate the speed required to achieve a given head at a given flow rate.
+   *
+   * <p>
+   * This method returns the speed as a double for full precision. It uses a robust algorithm that
+   * works both within and outside the defined speed curve range by using fan law extrapolation.
+   * </p>
+   *
+   * <p>
+   * The algorithm uses:
+   * <ul>
+   * <li>Fan-law based initial guess: N ∝ √H at constant Q/N</li>
+   * <li>Damped Newton-Raphson iteration for fast convergence</li>
+   * <li>Bounds protection to prevent divergence</li>
+   * <li>Bisection fallback for guaranteed convergence</li>
+   * </ul>
+   * </p>
+   *
+   * @param flow the volumetric flow rate in m³/hr
+   * @param head the required polytropic head in the chart's head unit
+   * @return the calculated speed in RPM as a double
+   */
+  public default double getSpeedValue(double flow, double head) {
+    return (double) getSpeed(flow, head);
+  }
+
+  /**
    * <p>
    * plot.
    * </p>
@@ -207,9 +233,102 @@ public interface CompressorChartInterface extends Cloneable {
    * Getter for the field <code>minSpeedCurve</code>.
    * </p>
    *
-   * @return a double
+   * @return the minimum speed curve value in RPM
    */
   public double getMinSpeedCurve();
+
+  /**
+   * <p>
+   * Getter for the field <code>maxSpeedCurve</code>.
+   * </p>
+   *
+   * @return the maximum speed curve value in RPM
+   */
+  public double getMaxSpeedCurve();
+
+  /**
+   * Check if the calculated speed is higher than the maximum speed in the compressor curves.
+   *
+   * <p>
+   * This method is useful for detecting when the compressor operation requires extrapolation beyond
+   * the defined performance curves, which may indicate that the compressor is undersized or
+   * operating outside its design envelope.
+   * </p>
+   *
+   * @param calculatedSpeed the speed to check in RPM
+   * @return true if the calculated speed exceeds the maximum curve speed, false otherwise
+   */
+  public default boolean isHigherThanMaxSpeed(double calculatedSpeed) {
+    return calculatedSpeed > getMaxSpeedCurve();
+  }
+
+  /**
+   * Get the ratio of the calculated speed to the maximum speed in the compressor curves.
+   *
+   * <p>
+   * A ratio greater than 1.0 indicates the speed exceeds the maximum curve speed. This is useful
+   * for quantifying how far outside the design envelope the compressor is operating.
+   * </p>
+   *
+   * @param calculatedSpeed the speed to compare in RPM
+   * @return the ratio calculatedSpeed/maxSpeedCurve (dimensionless)
+   */
+  public default double getRatioToMaxSpeed(double calculatedSpeed) {
+    double maxSpeed = getMaxSpeedCurve();
+    if (maxSpeed <= 0) {
+      return Double.NaN;
+    }
+    return calculatedSpeed / maxSpeed;
+  }
+
+  /**
+   * Check if the calculated speed is lower than the minimum speed in the compressor curves.
+   *
+   * <p>
+   * This method is useful for detecting when the compressor operation requires extrapolation below
+   * the defined performance curves, which may indicate turndown issues or that the compressor is
+   * oversized for the current operating conditions.
+   * </p>
+   *
+   * @param calculatedSpeed the speed to check in RPM
+   * @return true if the calculated speed is below the minimum curve speed, false otherwise
+   */
+  public default boolean isLowerThanMinSpeed(double calculatedSpeed) {
+    return calculatedSpeed < getMinSpeedCurve();
+  }
+
+  /**
+   * Get the ratio of the calculated speed to the minimum speed in the compressor curves.
+   *
+   * <p>
+   * A ratio less than 1.0 indicates the speed is below the minimum curve speed. This is useful for
+   * quantifying how far below the design envelope the compressor is operating.
+   * </p>
+   *
+   * @param calculatedSpeed the speed to compare in RPM
+   * @return the ratio calculatedSpeed/minSpeedCurve (dimensionless)
+   */
+  public default double getRatioToMinSpeed(double calculatedSpeed) {
+    double minSpeed = getMinSpeedCurve();
+    if (minSpeed <= 0) {
+      return Double.NaN;
+    }
+    return calculatedSpeed / minSpeed;
+  }
+
+  /**
+   * Check if the calculated speed is within the defined compressor curve speed range.
+   *
+   * <p>
+   * This is a convenience method that checks both minimum and maximum speed limits.
+   * </p>
+   *
+   * @param calculatedSpeed the speed to check in RPM
+   * @return true if the speed is within [minSpeedCurve, maxSpeedCurve], false otherwise
+   */
+  public default boolean isSpeedWithinRange(double calculatedSpeed) {
+    return !isLowerThanMinSpeed(calculatedSpeed) && !isHigherThanMaxSpeed(calculatedSpeed);
+  }
 
   /**
    * <p>

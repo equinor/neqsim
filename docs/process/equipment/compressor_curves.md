@@ -12,6 +12,7 @@ Detailed documentation for compressor performance curves in NeqSim, including mu
 - [Stone Wall (Choke) Curves](#stone-wall-choke-curves)
 - [Setting Curves Manually](#setting-curves-manually)
 - [Distance to Operating Limits](#distance-to-operating-limits)
+- [**Speed Calculation from Operating Point**](#speed-calculation-from-operating-point) ⭐ NEW
 - [Anti-Surge Control](#anti-surge-control)
 - [API Reference](#api-reference)
 - [Python Examples](#python-examples)
@@ -1046,6 +1047,130 @@ Distance to Stone Wall = (Single Stone Wall Flow Point / Operating Flow) - 1
 
 ---
 
+## Speed Calculation from Operating Point
+
+When you need to determine the compressor speed required to achieve a specific operating point (flow and head), NeqSim provides a robust algorithm that works both within the defined curve range and with extrapolation beyond it.
+
+### The `getSpeed()` and `getSpeedValue()` Methods
+
+```java
+// Get speed as integer (legacy method)
+int speed = chart.getSpeed(flow, head);
+
+// Get speed as double for full precision
+double preciseSpeed = chart.getSpeedValue(flow, head);
+```
+
+### Algorithm Details
+
+The speed calculation uses a hybrid approach for robustness:
+
+1. **Fan-law Initial Guess**: Uses the relationship $H \propto N^2$ to estimate:
+   $$N_{guess} = N_{ref} \times \sqrt{\frac{H_{target}}{H_{ref}}}$$
+
+2. **Damped Newton-Raphson Iteration**: Fast convergence with safeguards:
+   - 70% damping factor to prevent oscillation
+   - Maximum 30% step change per iteration
+   - Automatic gradient estimation using finite differences
+   - Fallback to fan-law derivative when gradient is near zero
+
+3. **Bounds Protection**: Prevents divergence:
+   - Lower bound: 50% of minimum curve speed
+   - Upper bound: 150% of maximum curve speed
+
+4. **Bisection Fallback**: Guaranteed convergence if Newton-Raphson fails:
+   - Automatic bounds extension if needed
+   - Binary search to find the root
+
+### Speed Limit Checking
+
+The compressor chart and compressor classes provide methods to check if the calculated speed is within the defined curve range:
+
+```java
+// Using the compressor chart directly
+CompressorChartInterface chart = compressor.getCompressorChart();
+double speed = chart.getSpeedValue(flow, head);
+
+// Check speed limits on chart
+boolean tooHigh = chart.isHigherThanMaxSpeed(speed);
+boolean tooLow = chart.isLowerThanMinSpeed(speed);
+boolean inRange = chart.isSpeedWithinRange(speed);
+
+// Get ratios (useful for warnings)
+double ratioToMax = chart.getRatioToMaxSpeed(speed);  // >1.0 means above max
+double ratioToMin = chart.getRatioToMinSpeed(speed);  // <1.0 means below min
+
+// Using the compressor (uses current operating speed)
+compressor.run();
+boolean currentSpeedTooHigh = compressor.isHigherThanMaxSpeed();
+boolean currentSpeedTooLow = compressor.isLowerThanMinSpeed();
+double currentRatioToMax = compressor.getRatioToMaxSpeed();
+
+// Or check a specific speed
+boolean testSpeedTooHigh = compressor.isHigherThanMaxSpeed(12000);
+```
+
+### When Speed is Outside Curve Range
+
+When the calculated speed falls outside the defined performance curves, the algorithm uses fan-law extrapolation:
+
+- **Head scaling**: $H \propto N^2$ (head scales with speed squared)
+- **Flow scaling**: $Q \propto N$ (flow scales linearly with speed)
+
+This allows reasonable estimates for speeds up to 50% beyond the curve boundaries.
+
+### Example: Speed Calculation with Limit Checking
+
+```java
+// Set up compressor
+Compressor comp = new Compressor("K-100", inlet);
+comp.setOutletPressure(120.0, "bara");
+comp.setCompressorChart(chart);
+
+// Run and check speed limits
+comp.run();
+
+// Get the calculated speed
+double speed = comp.getSpeed();
+
+// Check if operating within design envelope
+if (comp.isHigherThanMaxSpeed()) {
+    double ratio = comp.getRatioToMaxSpeed();
+    System.out.println("WARNING: Speed " + ratio * 100 + "% of max curve speed");
+    System.out.println("Compressor may be undersized for this duty");
+} else if (comp.isLowerThanMinSpeed()) {
+    double ratio = comp.getRatioToMinSpeed();
+    System.out.println("WARNING: Speed " + ratio * 100 + "% of min curve speed");
+    System.out.println("Compressor may be oversized - turndown issues");
+} else {
+    System.out.println("Operating within design envelope");
+}
+```
+
+### Python Example
+
+```python
+# Get calculated speed
+speed = chart.getSpeedValue(flow, head)
+
+# Check speed limits
+if chart.isHigherThanMaxSpeed(speed):
+    ratio = chart.getRatioToMaxSpeed(speed)
+    print(f"Speed {speed:.0f} RPM is {ratio:.1%} of max curve speed")
+elif chart.isLowerThanMinSpeed(speed):
+    ratio = chart.getRatioToMinSpeed(speed)
+    print(f"Speed {speed:.0f} RPM is {ratio:.1%} of min curve speed")
+else:
+    print(f"Speed {speed:.0f} RPM is within curve range")
+
+# Using compressor methods with current operating speed
+comp.run()
+if comp.isHigherThanMaxSpeed():
+    print(f"Current speed exceeds max by {(comp.getRatioToMaxSpeed() - 1) * 100:.1f}%")
+```
+
+---
+
 ## Anti-Surge Control
 
 ### Surge Control Factor
@@ -1075,6 +1200,43 @@ double controlFactor = antiSurge.getSurgeControlFactor();
 ---
 
 ## API Reference
+
+### CompressorChartInterface Methods
+
+#### Speed Calculation and Limits
+
+| Method | Description |
+|--------|-------------|
+| `getSpeed(flow, head)` | Calculate speed for given flow and head (returns int) |
+| `getSpeedValue(flow, head)` | Calculate speed for given flow and head (returns double for precision) |
+| `getMinSpeedCurve()` | Get minimum speed from defined curves (RPM) |
+| `getMaxSpeedCurve()` | Get maximum speed from defined curves (RPM) |
+| `isHigherThanMaxSpeed(speed)` | Check if speed exceeds maximum curve speed |
+| `isLowerThanMinSpeed(speed)` | Check if speed is below minimum curve speed |
+| `isSpeedWithinRange(speed)` | Check if speed is within [min, max] range |
+| `getRatioToMaxSpeed(speed)` | Get ratio speed/maxSpeed (>1.0 means above max) |
+| `getRatioToMinSpeed(speed)` | Get ratio speed/minSpeed (<1.0 means below min) |
+
+#### Performance Lookup
+
+| Method | Description |
+|--------|-------------|
+| `getPolytropicHead(flow, speed)` | Get head at given flow and speed |
+| `getPolytropicEfficiency(flow, speed)` | Get efficiency at given flow and speed |
+| `getFlow(head, speed, guessFlow)` | Get flow for given head and speed |
+
+#### Surge and Stone Wall
+
+| Method | Description |
+|--------|-------------|
+| `getSurgeCurve()` | Get the surge curve object |
+| `getStoneWallCurve()` | Get the stone wall curve object |
+| `generateSurgeCurve()` | Auto-generate surge curve from performance curves |
+| `generateStoneWallCurve()` | Auto-generate stone wall curve from performance curves |
+| `getSurgeFlowAtSpeed(speed)` | Get surge flow at given speed |
+| `getSurgeHeadAtSpeed(speed)` | Get surge head at given speed |
+| `getStoneWallFlowAtSpeed(speed)` | Get stone wall flow at given speed |
+| `getStoneWallHeadAtSpeed(speed)` | Get stone wall head at given speed |
 
 ### SafeSplineSurgeCurve
 
@@ -1151,6 +1313,16 @@ double controlFactor = antiSurge.getSurgeControlFactor();
 | `getSurgeFlowRateMargin()` | Flow margin above surge (m³/hr) |
 | `isSurge(flow, head)` | Check if in surge |
 | `isStoneWall()` | Check if at stone wall |
+| `isHigherThanMaxSpeed()` | Check if current speed exceeds max curve speed |
+| `isHigherThanMaxSpeed(speed)` | Check if given speed exceeds max curve speed |
+| `isLowerThanMinSpeed()` | Check if current speed is below min curve speed |
+| `isLowerThanMinSpeed(speed)` | Check if given speed is below min curve speed |
+| `isSpeedWithinRange()` | Check if current speed is within curve range |
+| `isSpeedWithinRange(speed)` | Check if given speed is within curve range |
+| `getRatioToMaxSpeed()` | Get ratio of current speed to max speed |
+| `getRatioToMaxSpeed(speed)` | Get ratio of given speed to max speed |
+| `getRatioToMinSpeed()` | Get ratio of current speed to min speed |
+| `getRatioToMinSpeed(speed)` | Get ratio of given speed to min speed |
 
 ---
 

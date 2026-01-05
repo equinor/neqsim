@@ -318,26 +318,144 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   /** {@inheritDoc} */
   @Override
   public int getSpeed(double flow, double head) {
-    int iter = 1;
-    double error = 1.0;
-    double derrordspeed = 1.0;
-    double newspeed = referenceSpeed;
-    double newhead = 0.0;
-    double oldspeed = newspeed + 1.0;
+    return (int) Math.round(getSpeedValue(flow, head));
+  }
+
+  /**
+   * Calculate the speed required to achieve a given head at a given flow rate.
+   *
+   * <p>
+   * This method uses fan law relationships: Head ∝ Speed². The algorithm uses a robust
+   * Newton-Raphson method with:
+   * <ul>
+   * <li>Fan-law based initial guess for fast convergence</li>
+   * <li>Bounds protection to prevent divergence</li>
+   * <li>Damped updates for stability</li>
+   * <li>Bisection fallback if Newton-Raphson fails</li>
+   * </ul>
+   * </p>
+   *
+   * <p>
+   * The method works both within and outside the defined speed curve range by using the underlying
+   * fan law extrapolation of the compressor map.
+   * </p>
+   *
+   * @param flow the volumetric flow rate in m³/hr
+   * @param head the required polytropic head in the chart's head unit (kJ/kg or meter)
+   * @return the calculated speed in RPM (as double for precision)
+   */
+  public double getSpeedValue(double flow, double head) {
+    // Fan law: H = f(Q/N) * N², so N = sqrt(H / f(Q/N))
+    // For initial guess, use reference speed scaled by sqrt of head ratio
+    double refHead = getPolytropicHead(flow, referenceSpeed);
+    double initialGuess;
+    if (refHead > 0 && head > 0) {
+      // Fan law scaling: N2/N1 = sqrt(H2/H1) at constant Q/N
+      initialGuess = referenceSpeed * Math.sqrt(head / refHead);
+    } else {
+      initialGuess = referenceSpeed;
+    }
+
+    // Bounds for speed search (allow 50% extrapolation beyond curve range)
+    double speedLowerBound = minSpeedCurve * 0.5;
+    double speedUpperBound = maxSpeedCurve * 1.5;
+    if (speedLowerBound <= 0) {
+      speedLowerBound = 100; // Minimum reasonable speed
+    }
+
+    // Clamp initial guess to reasonable bounds
+    double newspeed = Math.max(speedLowerBound, Math.min(speedUpperBound, initialGuess));
+
+    // Newton-Raphson with damping and bounds protection
+    int maxIter = 50;
+    double tolerance = 1e-6;
+    double dampingFactor = 0.7; // Damping to improve stability
+
+    double oldspeed = newspeed * 1.01; // Slightly different for gradient calculation
     double oldhead = getPolytropicHead(flow, oldspeed);
     double olderror = oldhead - head;
-    do {
-      iter++;
-      newhead = getPolytropicHead(flow, newspeed);
-      error = newhead - head;
-      derrordspeed = (error - olderror) / (newspeed - oldspeed);
-      newspeed -= error / derrordspeed;
-      // System.out.println("speed " + newspeed);
-    } while (Math.abs(error) > 1e-6 && iter < 100);
 
-    // change speed to minimize
-    // Math.abs(head - reducedHeadFitterFunc.value(flow / speed) * speed * speed);
-    return (int) Math.round(newspeed);
+    for (int iter = 0; iter < maxIter; iter++) {
+      double newhead = getPolytropicHead(flow, newspeed);
+      double error = newhead - head;
+
+      // Check convergence
+      if (Math.abs(error) < tolerance) {
+        return newspeed;
+      }
+
+      // Calculate gradient (dError/dSpeed)
+      double derrordspeed = (error - olderror) / (newspeed - oldspeed);
+
+      // Protect against zero or very small gradient
+      if (Math.abs(derrordspeed) < 1e-10) {
+        // Use fan law derivative: dH/dN = 2*H/N
+        derrordspeed = 2.0 * newhead / newspeed;
+        if (Math.abs(derrordspeed) < 1e-10) {
+          break; // Cannot compute gradient, exit to fallback
+        }
+      }
+
+      // Calculate Newton-Raphson update with damping
+      double speedUpdate = dampingFactor * error / derrordspeed;
+
+      // Limit step size to prevent large jumps
+      double maxStep = 0.3 * newspeed; // Max 30% change per iteration
+      speedUpdate = Math.max(-maxStep, Math.min(maxStep, speedUpdate));
+
+      // Store old values for next gradient calculation
+      oldspeed = newspeed;
+      olderror = error;
+
+      // Update speed with bounds protection
+      newspeed = newspeed - speedUpdate;
+      newspeed = Math.max(speedLowerBound, Math.min(speedUpperBound, newspeed));
+
+      // Check for stagnation
+      if (Math.abs(newspeed - oldspeed) < 1e-10) {
+        break;
+      }
+    }
+
+    // Fallback: bisection method if Newton-Raphson didn't converge well
+    double headAtLower = getPolytropicHead(flow, speedLowerBound);
+    double headAtUpper = getPolytropicHead(flow, speedUpperBound);
+
+    // Extend bounds if target head is outside current range
+    if (head < headAtLower && head < headAtUpper) {
+      // Need lower speed - extend lower bound
+      speedLowerBound = speedLowerBound * 0.5;
+      speedUpperBound = (headAtLower < headAtUpper) ? speedLowerBound * 2 : speedUpperBound;
+    } else if (head > headAtLower && head > headAtUpper) {
+      // Need higher speed - extend upper bound
+      speedUpperBound = speedUpperBound * 2.0;
+    }
+
+    // Bisection search
+    for (int iter = 0; iter < 50; iter++) {
+      double midspeed = (speedLowerBound + speedUpperBound) / 2.0;
+      double midhead = getPolytropicHead(flow, midspeed);
+
+      if (Math.abs(midhead - head) < tolerance) {
+        return midspeed;
+      }
+
+      // Determine which half contains the solution
+      // Head increases with speed (fan law), so:
+      if (midhead < head) {
+        speedLowerBound = midspeed; // Need higher speed
+      } else {
+        speedUpperBound = midspeed; // Need lower speed
+      }
+
+      // Check convergence
+      if (speedUpperBound - speedLowerBound < 1.0) {
+        return midspeed;
+      }
+    }
+
+    // Return best estimate
+    return (speedLowerBound + speedUpperBound) / 2.0;
   }
 
   /** {@inheritDoc} */

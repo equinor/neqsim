@@ -1537,6 +1537,150 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
+   * Check if the current compressor speed is higher than the maximum speed in the compressor
+   * curves.
+   *
+   * <p>
+   * This method is useful for detecting when the compressor is operating outside its design
+   * envelope (requires speed extrapolation beyond the defined curves).
+   * </p>
+   *
+   * @return true if the current speed exceeds the maximum curve speed, false otherwise
+   */
+  public boolean isHigherThanMaxSpeed() {
+    if (getCompressorChart() == null) {
+      return false;
+    }
+    return getCompressorChart().isHigherThanMaxSpeed(getSpeed());
+  }
+
+  /**
+   * Check if a calculated speed is higher than the maximum speed in the compressor curves.
+   *
+   * @param calculatedSpeed the speed to check in RPM
+   * @return true if the calculated speed exceeds the maximum curve speed, false otherwise
+   */
+  public boolean isHigherThanMaxSpeed(double calculatedSpeed) {
+    if (getCompressorChart() == null) {
+      return false;
+    }
+    return getCompressorChart().isHigherThanMaxSpeed(calculatedSpeed);
+  }
+
+  /**
+   * Get the ratio of the current compressor speed to the maximum speed in the compressor curves.
+   *
+   * <p>
+   * A ratio greater than 1.0 indicates the speed exceeds the maximum curve speed.
+   * </p>
+   *
+   * @return the ratio speed/maxSpeedCurve (dimensionless), or NaN if chart not set
+   */
+  public double getRatioToMaxSpeed() {
+    if (getCompressorChart() == null) {
+      return Double.NaN;
+    }
+    return getCompressorChart().getRatioToMaxSpeed(getSpeed());
+  }
+
+  /**
+   * Get the ratio of a calculated speed to the maximum speed in the compressor curves.
+   *
+   * @param calculatedSpeed the speed to compare in RPM
+   * @return the ratio calculatedSpeed/maxSpeedCurve (dimensionless), or NaN if chart not set
+   */
+  public double getRatioToMaxSpeed(double calculatedSpeed) {
+    if (getCompressorChart() == null) {
+      return Double.NaN;
+    }
+    return getCompressorChart().getRatioToMaxSpeed(calculatedSpeed);
+  }
+
+  /**
+   * Check if the current compressor speed is lower than the minimum speed in the compressor curves.
+   *
+   * <p>
+   * This method is useful for detecting when the compressor is operating below its design envelope
+   * (requires speed extrapolation below the defined curves), which may indicate turndown issues.
+   * </p>
+   *
+   * @return true if the current speed is below the minimum curve speed, false otherwise
+   */
+  public boolean isLowerThanMinSpeed() {
+    if (getCompressorChart() == null) {
+      return false;
+    }
+    return getCompressorChart().isLowerThanMinSpeed(getSpeed());
+  }
+
+  /**
+   * Check if a calculated speed is lower than the minimum speed in the compressor curves.
+   *
+   * @param calculatedSpeed the speed to check in RPM
+   * @return true if the calculated speed is below the minimum curve speed, false otherwise
+   */
+  public boolean isLowerThanMinSpeed(double calculatedSpeed) {
+    if (getCompressorChart() == null) {
+      return false;
+    }
+    return getCompressorChart().isLowerThanMinSpeed(calculatedSpeed);
+  }
+
+  /**
+   * Get the ratio of the current compressor speed to the minimum speed in the compressor curves.
+   *
+   * <p>
+   * A ratio less than 1.0 indicates the speed is below the minimum curve speed.
+   * </p>
+   *
+   * @return the ratio speed/minSpeedCurve (dimensionless), or NaN if chart not set
+   */
+  public double getRatioToMinSpeed() {
+    if (getCompressorChart() == null) {
+      return Double.NaN;
+    }
+    return getCompressorChart().getRatioToMinSpeed(getSpeed());
+  }
+
+  /**
+   * Get the ratio of a calculated speed to the minimum speed in the compressor curves.
+   *
+   * @param calculatedSpeed the speed to compare in RPM
+   * @return the ratio calculatedSpeed/minSpeedCurve (dimensionless), or NaN if chart not set
+   */
+  public double getRatioToMinSpeed(double calculatedSpeed) {
+    if (getCompressorChart() == null) {
+      return Double.NaN;
+    }
+    return getCompressorChart().getRatioToMinSpeed(calculatedSpeed);
+  }
+
+  /**
+   * Check if the current compressor speed is within the defined compressor curve speed range.
+   *
+   * @return true if the speed is within [minSpeedCurve, maxSpeedCurve], false otherwise
+   */
+  public boolean isSpeedWithinRange() {
+    if (getCompressorChart() == null) {
+      return true; // No chart means no range constraints
+    }
+    return getCompressorChart().isSpeedWithinRange(getSpeed());
+  }
+
+  /**
+   * Check if a calculated speed is within the defined compressor curve speed range.
+   *
+   * @param calculatedSpeed the speed to check in RPM
+   * @return true if the speed is within [minSpeedCurve, maxSpeedCurve], false otherwise
+   */
+  public boolean isSpeedWithinRange(double calculatedSpeed) {
+    if (getCompressorChart() == null) {
+      return true; // No chart means no range constraints
+    }
+    return getCompressorChart().isSpeedWithinRange(calculatedSpeed);
+  }
+
+  /**
    * <p>
    * Setter for the field <code>speed</code>.
    * </p>
