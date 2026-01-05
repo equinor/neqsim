@@ -191,7 +191,6 @@ public interface CompressorChartInterface extends Cloneable {
    * <li>Bounds protection to prevent divergence</li>
    * <li>Bisection fallback for guaranteed convergence</li>
    * </ul>
-   * </p>
    *
    * @param flow the volumetric flow rate in m³/hr
    * @param head the required polytropic head in the chart's head unit

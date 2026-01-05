@@ -84,6 +84,9 @@ public class ThermoValidator {
 
   /**
    * Validate that system is ready for equilibrium calculations (flash, VLE, etc.).
+   *
+   * @param system the thermodynamic system to validate
+   * @return validation result with any errors or warnings
    */
   public static ValidationResult validateForEquilibrium(SystemInterface system) {
     ValidationBuilder builder = new ValidationBuilder("SystemInterface (equilibrium mode)");
@@ -112,6 +115,9 @@ public class ThermoValidator {
 
   /**
    * Validate specific EOS implementations (SrkEos, CPA, etc.).
+   *
+   * @param system the SRK-EOS system to validate
+   * @return validation result with any errors or warnings
    */
   public static ValidationResult validateSrkEos(SystemInterface system) {
     ValidationBuilder builder = new ValidationBuilder("SystemSrkEos");
@@ -141,6 +147,9 @@ public class ThermoValidator {
 
   /**
    * Validate CPA (Associating) systems for polar molecules.
+   *
+   * @param system the CPA system to validate
+   * @return validation result with any errors or warnings
    */
   public static ValidationResult validateCpAeos(SystemInterface system) {
     ValidationBuilder builder = new ValidationBuilder("SystemSrkCPAstatoil");
@@ -175,6 +184,9 @@ public class ThermoValidator {
 
   /**
    * Helper: Check if system appears to be properly initialized.
+   *
+   * @param system the system to check
+   * @return true if system is ready
    */
   public static boolean isSystemReady(SystemInterface system) {
     ValidationResult result = validateSystem(system);

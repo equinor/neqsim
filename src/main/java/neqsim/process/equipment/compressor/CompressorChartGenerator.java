@@ -298,6 +298,13 @@ public class CompressorChartGenerator {
 
   /**
    * Scale a template to specific speed values.
+   *
+   * @param template the compressor curve template
+   * @param designSpeed the design speed in RPM
+   * @param designFlow the design flow in m3/hr
+   * @param designHead the design head in kJ/kg
+   * @param targetSpeeds array of target speeds
+   * @return the scaled compressor chart
    */
   private CompressorChartInterface scaleTemplateWithSpeeds(CompressorCurveTemplate template,
       double designSpeed, double designFlow, double designHead, double[] targetSpeeds) {

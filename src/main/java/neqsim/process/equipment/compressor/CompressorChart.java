@@ -333,7 +333,6 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
    * <li>Damped updates for stability</li>
    * <li>Bisection fallback if Newton-Raphson fails</li>
    * </ul>
-   * </p>
    *
    * <p>
    * The method works both within and outside the defined speed curve range by using the underlying

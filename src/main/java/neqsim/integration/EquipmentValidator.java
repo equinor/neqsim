@@ -233,6 +233,9 @@ public class EquipmentValidator {
 
   /**
    * Helper: Check if equipment appears ready.
+   *
+   * @param equipment the equipment to check
+   * @return true if equipment is ready
    */
   public static boolean isEquipmentReady(ProcessEquipmentBaseClass equipment) {
     ValidationResult result = validateEquipment(equipment);
@@ -241,6 +244,9 @@ public class EquipmentValidator {
 
   /**
    * Validate a sequence of equipment (checks inter-dependencies).
+   *
+   * @param sequence the sequence of equipment to validate
+   * @return validation result with any errors or warnings
    */
   public static ValidationResult validateSequence(ProcessEquipmentBaseClass... sequence) {
     ValidationBuilder builder = new ValidationBuilder("Equipment Sequence");

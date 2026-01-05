@@ -440,6 +440,10 @@ public class WellRoutingEstimationExample {
 
   /**
    * Prints current estimates.
+   *
+   * @param estimates the current parameter estimates
+   * @param uncertainties the uncertainties for each parameter
+   * @param prefix the prefix to print before estimates
    */
   private void printEstimates(double[] estimates, double[] uncertainties, String prefix) {
     StringBuilder sb = new StringBuilder(prefix + "Estimates: [");
@@ -455,6 +459,8 @@ public class WellRoutingEstimationExample {
 
   /**
    * Prints final summary comparing estimates to true values.
+   *
+   * @param estimator the EnKF parameter estimator with results
    */
   private void printFinalSummary(EnKFParameterEstimator estimator) {
     System.out.println();
@@ -509,6 +515,9 @@ public class WellRoutingEstimationExample {
 
   /**
    * Creates a separator string.
+   *
+   * @param length the length of the separator
+   * @return a string of dashes of the specified length
    */
   private String createSeparator(int length) {
     char[] chars = new char[length];
