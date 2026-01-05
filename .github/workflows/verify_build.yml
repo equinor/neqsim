@@ -42,6 +42,7 @@ jobs:
             exit 1
           fi
       - name: Upload jacoco coverage reports to Codecov
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: codecov/codecov-action@v5
         with:
           files: target/site/jacoco/jacoco.xml
