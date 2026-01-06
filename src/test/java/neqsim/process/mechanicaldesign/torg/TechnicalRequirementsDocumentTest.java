@@ -16,9 +16,9 @@ class TechnicalRequirementsDocumentTest {
 
   @Test
   void testBuilderCreatesDocument() {
-    TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder()
-        .projectId("TEST-001").projectName("Test Project").companyIdentifier("TestCo")
-        .revision("1").issueDate("2024-01-01").build();
+    TechnicalRequirementsDocument torg =
+        TechnicalRequirementsDocument.builder().projectId("TEST-001").projectName("Test Project")
+            .companyIdentifier("TestCo").revision("1").issueDate("2024-01-01").build();
 
     assertNotNull(torg);
     assertEquals("TEST-001", torg.getProjectId());
@@ -30,11 +30,11 @@ class TechnicalRequirementsDocumentTest {
 
   @Test
   void testAddStandardToCategory() {
-    TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder()
-        .projectId("TEST-002")
-        .addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1)
-        .addStandard("separator process design", StandardType.API_12J)
-        .addStandard("pipeline design codes", StandardType.NORSOK_L_001).build();
+    TechnicalRequirementsDocument torg =
+        TechnicalRequirementsDocument.builder().projectId("TEST-002")
+            .addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1)
+            .addStandard("separator process design", StandardType.API_12J)
+            .addStandard("pipeline design codes", StandardType.NORSOK_L_001).build();
 
     List<StandardType> pvStandards = torg.getStandardsForCategory("pressure vessel design code");
     assertEquals(1, pvStandards.size());
@@ -48,8 +48,7 @@ class TechnicalRequirementsDocumentTest {
   @Test
   void testAddMultipleStandardsToSameCategory() {
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder()
-        .projectId("TEST-003")
-        .addStandard("separator process design", StandardType.API_12J)
+        .projectId("TEST-003").addStandard("separator process design", StandardType.API_12J)
         .addStandard("separator process design", StandardType.NORSOK_P_001).build();
 
     List<StandardType> standards = torg.getStandardsForCategory("separator process design");
@@ -61,8 +60,7 @@ class TechnicalRequirementsDocumentTest {
   @Test
   void testSetStandardsReplacesExisting() {
     TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder()
-        .projectId("TEST-004")
-        .addStandard("pipeline design codes", StandardType.NORSOK_L_001)
+        .projectId("TEST-004").addStandard("pipeline design codes", StandardType.NORSOK_L_001)
         .setStandards("pipeline design codes",
             Arrays.asList(StandardType.DNV_ST_F101, StandardType.ISO_13623))
         .build();
@@ -171,9 +169,9 @@ class TechnicalRequirementsDocumentTest {
 
   @Test
   void testHasStandardsForCategory() {
-    TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder()
-        .projectId("TEST-012").addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1)
-        .build();
+    TechnicalRequirementsDocument torg =
+        TechnicalRequirementsDocument.builder().projectId("TEST-012")
+            .addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1).build();
 
     assertTrue(torg.hasStandardsForCategory("pressure vessel design code"));
     assertFalse(torg.hasStandardsForCategory("pipeline design codes"));
@@ -181,10 +179,10 @@ class TechnicalRequirementsDocumentTest {
 
   @Test
   void testGetDefinedCategories() {
-    TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder()
-        .projectId("TEST-013")
-        .addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1)
-        .addStandard("separator process design", StandardType.API_12J).build();
+    TechnicalRequirementsDocument torg =
+        TechnicalRequirementsDocument.builder().projectId("TEST-013")
+            .addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1)
+            .addStandard("separator process design", StandardType.API_12J).build();
 
     java.util.Set<String> categories = torg.getDefinedCategories();
     assertEquals(2, categories.size());
