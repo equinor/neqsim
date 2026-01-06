@@ -3,6 +3,8 @@ package neqsim.process.equipment.expander;
 import java.util.UUID;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.expander.ExpanderMechanicalDesign;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -17,6 +19,9 @@ public class Expander extends Compressor implements ExpanderInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  /** Mechanical design for the expander. */
+  private ExpanderMechanicalDesign expanderMechanicalDesign;
+
   /**
    * Constructor for Expander.
    *
@@ -24,6 +29,7 @@ public class Expander extends Compressor implements ExpanderInterface {
    */
   public Expander(String name) {
     super(name);
+    initExpanderMechanicalDesign();
   }
 
   /**
@@ -36,6 +42,23 @@ public class Expander extends Compressor implements ExpanderInterface {
    */
   public Expander(String name, StreamInterface inletStream) {
     super(name, inletStream);
+    initExpanderMechanicalDesign();
+  }
+
+  /**
+   * Get the expander-specific mechanical design.
+   *
+   * @return expander mechanical design
+   */
+  public ExpanderMechanicalDesign getExpanderMechanicalDesign() {
+    return expanderMechanicalDesign;
+  }
+
+  /**
+   * Initialize the expander mechanical design.
+   */
+  private void initExpanderMechanicalDesign() {
+    expanderMechanicalDesign = new ExpanderMechanicalDesign(this);
   }
 
   /** {@inheritDoc} */

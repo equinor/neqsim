@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.pump.PumpMechanicalDesign;
 import neqsim.process.util.monitor.PumpResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -75,6 +76,9 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Pump.class);
 
+  /** Mechanical design for the pump. */
+  private PumpMechanicalDesign mechanicalDesign;
+
   SystemInterface thermoSystem;
   double dH = 0.0;
   double pressure = 0.0;
@@ -100,6 +104,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    */
   public Pump(String name) {
     super(name);
+    initMechanicalDesign();
   }
 
   /**
@@ -111,7 +116,20 @@ public class Pump extends TwoPortEquipment implements PumpInterface {
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Pump(String name, StreamInterface inletStream) {
-    super(name, inletStream);
+    this(name);
+    setInletStream(inletStream);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public PumpMechanicalDesign getMechanicalDesign() {
+    return mechanicalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initMechanicalDesign() {
+    mechanicalDesign = new PumpMechanicalDesign(this);
   }
 
   /** {@inheritDoc} */
