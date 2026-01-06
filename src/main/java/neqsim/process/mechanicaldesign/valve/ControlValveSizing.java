@@ -118,11 +118,11 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * </p>
    *
    * <p>
-   * Calculates valve flow coefficient Kv using IEC 60534 formulas:
+   * Calculates valve flow coefficient Kv using simplified formulas:
    * </p>
    * <ul>
    * <li>For liquids: Kv = Q / sqrt(deltaP / SG) where SG = rho/1000</li>
-   * <li>For gases: Kv = Q / (N9 * P1 * Y) * sqrt(MW * T * Z / x) per IEC 60534</li>
+   * <li>For gases: Uses simplified IEC 60534 formula with expansion factor</li>
    * </ul>
    *
    * @param percentOpening valve opening percentage (0-100)
@@ -144,30 +144,44 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     double Kv;
 
     if (!valve.isGasValve()) {
-      // Liquid: standard Kv formula
-      // Kv = Q * sqrt(SG / deltaP) where SG = rho/1000
-      double density = fluid.getDensity("kg/m3") / 1000.0;
+      // Liquid formula: Kv = Q * sqrt(SG / deltaP)
+      // where SG = specific gravity = rho / 1000
+      double density = fluid.getDensity("kg/m3") / 1000.0; // Convert to SG
       double flowM3hr = valve.getInletStream().getFlowRate("m3/hr");
       Kv = flowM3hr / Math.sqrt(deltaP / density);
     } else {
-      // Gas: IEC 60534 formula
-      // Kv = Q / (N9 * P1 * Y) * sqrt(MW * T * Z / x)
-      double N9 = 24.6; // IEC 60534 constant for Kv with Q in m3/hr, P in kPa
-      double flowM3hr = valve.getInletStream().getFlowRate("m3/hr");
-      double T = fluid.getTemperature();
+      // Simplified gas formula based on IEC 60534:
+      // Kv = Q / (N9 * P1 * Y) * sqrt(M * T * Z / x)
+      // N9 = 24.6 for actual flow in m3/h, P in kPa, T in K
+      double N9 = 24.6; // IEC 60534 constant for actual m3/h, P in kPa, T in K
+      // Use actual volumetric flow at inlet conditions (same as IEC 60534)
+      double flowM3sec = fluid.getFlowRate("m3/sec");
+      double flowM3hr = flowM3sec * 3600.0;
+      double T = fluid.getTemperature(); // Kelvin
       double MW = fluid.getMolarMass("gr/mol");
       double Z = fluid.getZ();
       double gamma = fluid.getGamma2();
 
+      // P1 in kPa (IEC 60534 uses kPa)
       double P1_kPa = P1 * 100.0;
-      double x = deltaP / P1;
+      double P2_kPa = P2 * 100.0;
+      double dP_kPa = P1_kPa - P2_kPa;
+      double x = dP_kPa / P1_kPa; // pressure ratio
       double Fgamma = gamma / 1.40;
       double xChoked = Fgamma * xT;
 
+      // Check for choked flow
       boolean choked = x >= xChoked;
-      double xEffective = choked && allowChoked ? xChoked : x;
+      double xEffective = x;
+      if (choked && allowChoked) {
+        xEffective = xChoked; // Limit to choked condition
+      }
+
+      // Expansion factor Y (simplified)
       double Y = Math.max(1.0 - xEffective / (3.0 * Fgamma * xT), 2.0 / 3.0);
 
+      // Gas Kv formula (IEC 60534 simplified)
+      // For choked flow, use xT*Fgamma instead of x
       if (choked && allowChoked) {
         Kv = flowM3hr / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / (xT * Fgamma));
       } else {
@@ -213,15 +227,16 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     double P2 = outStream.getPressure("bara");
     double deltaP = P1 - P2;
 
-    double flow_m3_hr;
+    double flow_m3_s;
 
     if (!valve.isGasValve()) {
-      // Liquid: Q = Kv * sqrt(deltaP / SG)
-      double density = fluid.getDensity("kg/m3") / 1000.0; // specific gravity
-      flow_m3_hr = actualKv * Math.sqrt(deltaP / density);
+      // Liquid formula: Q = Kv * sqrt(deltaP / SG)
+      double density = fluid.getDensity("kg/m3") / 1000.0; // Convert to SG
+      double flow_m3_hr = actualKv * Math.sqrt(deltaP / density);
+      flow_m3_s = flow_m3_hr / 3600.0;
     } else {
-      // Gas: Inverse of IEC 60534 formula
-      // Q = Kv * N9 * P1 * Y / sqrt(MW * T * Z / x)
+      // IEC 60534 gas formula (inverse of calcKv):
+      // Q = Kv * N9 * P1 * Y / sqrt(M * T * Z / x)
       double N9 = 24.6;
       double T = fluid.getTemperature();
       double MW = fluid.getMolarMass("gr/mol");
@@ -229,22 +244,27 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
       double gamma = fluid.getGamma2();
 
       double P1_kPa = P1 * 100.0;
-      double x = deltaP / P1;
+      double P2_kPa = P2 * 100.0;
+      double dP_kPa = P1_kPa - P2_kPa;
+      double x = dP_kPa / P1_kPa;
       double Fgamma = gamma / 1.40;
       double xChoked = Fgamma * xT;
 
       boolean choked = x >= xChoked;
       double xEffective = choked && allowChoked ? xChoked : x;
+
       double Y = Math.max(1.0 - xEffective / (3.0 * Fgamma * xT), 2.0 / 3.0);
 
+      double denominator;
       if (choked && allowChoked) {
-        flow_m3_hr = actualKv * N9 * P1_kPa * Y / Math.sqrt(MW * T * Z / (xT * Fgamma));
+        denominator = Math.sqrt(MW * T * Z / (xT * Fgamma));
       } else {
-        flow_m3_hr = actualKv * N9 * P1_kPa * Y / Math.sqrt(MW * T * Z / x);
+        denominator = Math.sqrt(MW * T * Z / x);
       }
-    }
 
-    double flow_m3_s = flow_m3_hr / 3600.0;
+      double flow_m3_hr = actualKv * N9 * P1_kPa * Y / denominator;
+      flow_m3_s = flow_m3_hr / 3600.0;
+    }
 
     return flow_m3_s;
   }
