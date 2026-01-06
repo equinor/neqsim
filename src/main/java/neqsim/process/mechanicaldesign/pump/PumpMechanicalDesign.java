@@ -880,4 +880,29 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     dialog.setSize(400, 350);
     dialog.setVisible(true);
   }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns a pump-specific response with additional fields for hydraulic data, driver sizing, and
+   * NPSH requirements.
+   * </p>
+   */
+  @Override
+  public PumpMechanicalDesignResponse getResponse() {
+    return new PumpMechanicalDesignResponse(this);
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns JSON with pump-specific fields.
+   * </p>
+   */
+  @Override
+  public String toJson() {
+    return getResponse().toJson();
+  }
 }

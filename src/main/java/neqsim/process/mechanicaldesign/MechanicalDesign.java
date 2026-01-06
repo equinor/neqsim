@@ -1356,6 +1356,58 @@ public class MechanicalDesign implements java.io.Serializable {
     return defaultLiquidViscosity;
   }
 
+  /**
+   * Export mechanical design data to JSON format.
+   *
+   * <p>
+   * This method creates a {@link MechanicalDesignResponse} object and serializes it to JSON using
+   * Gson. The JSON includes equipment identification, weight breakdown, design conditions,
+   * dimensions, and materials information.
+   * </p>
+   *
+   * <p>
+   * Usage example:
+   * </p>
+   * 
+   * <pre>
+   * {@code
+   * MechanicalDesign mecDesign = separator.getMechanicalDesign();
+   * mecDesign.calcDesign();
+   * String json = mecDesign.toJson();
+   * }
+   * </pre>
+   *
+   * @return JSON string representation of the mechanical design
+   */
+  public String toJson() {
+    MechanicalDesignResponse response = new MechanicalDesignResponse(this);
+    return response.toJson();
+  }
+
+  /**
+   * Export mechanical design data to compact JSON format (no pretty printing).
+   *
+   * @return compact JSON string
+   */
+  public String toCompactJson() {
+    MechanicalDesignResponse response = new MechanicalDesignResponse(this);
+    return response.toCompactJson();
+  }
+
+  /**
+   * Get the mechanical design response object.
+   *
+   * <p>
+   * This method returns a {@link MechanicalDesignResponse} object that can be further customized or
+   * combined with other data before serialization.
+   * </p>
+   *
+   * @return MechanicalDesignResponse object
+   */
+  public MechanicalDesignResponse getResponse() {
+    return new MechanicalDesignResponse(this);
+  }
+
   /** {@inheritDoc} */
   @Override
   public int hashCode() {

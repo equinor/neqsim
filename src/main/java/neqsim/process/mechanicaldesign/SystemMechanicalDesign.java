@@ -778,10 +778,12 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   }
 
   /**
-   * Generate a JSON-format summary.
+   * Generate a JSON-format summary (legacy method).
    *
    * @return JSON string
+   * @deprecated Use {@link #toJson()} instead for proper Gson serialization
    */
+  @Deprecated
   public String generateJsonSummary() {
     StringBuilder sb = new StringBuilder();
     sb.append("{\n");
@@ -813,6 +815,59 @@ public class SystemMechanicalDesign implements java.io.Serializable {
 
     sb.append("}\n");
     return sb.toString();
+  }
+
+  /**
+   * Export mechanical design data to JSON format.
+   *
+   * <p>
+   * This method creates a {@link MechanicalDesignResponse} object and serializes it to JSON using
+   * Gson. The JSON includes system-level totals, weight breakdowns by type and discipline, utility
+   * requirements, and an equipment list with key design parameters.
+   * </p>
+   *
+   * <p>
+   * Usage example:
+   * </p>
+   * 
+   * <pre>
+   * {@code
+   * SystemMechanicalDesign mecDesign = new SystemMechanicalDesign(process);
+   * mecDesign.runDesignCalculation();
+   * String json = mecDesign.toJson();
+   * // json contains properly formatted JSON with all design data
+   * }
+   * </pre>
+   *
+   * @return JSON string representation of the mechanical design
+   */
+  public String toJson() {
+    MechanicalDesignResponse response = new MechanicalDesignResponse(this);
+    return response.toJson();
+  }
+
+  /**
+   * Export mechanical design data to compact JSON format (no pretty printing).
+   *
+   * @return compact JSON string
+   */
+  public String toCompactJson() {
+    MechanicalDesignResponse response = new MechanicalDesignResponse(this);
+    return response.toCompactJson();
+  }
+
+  /**
+   * Get the mechanical design response object.
+   *
+   * <p>
+   * This method returns a {@link MechanicalDesignResponse} object that can be further customized or
+   * combined with other data before serialization.
+   * </p>
+   *
+   * @return MechanicalDesignResponse object
+   */
+  public MechanicalDesignResponse getResponse() {
+    return new MechanicalDesignResponse(this);
   }
 
   /**

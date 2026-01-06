@@ -610,6 +610,96 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     return designTemperature;
   }
 
+  /**
+   * Get the valve type description.
+   *
+   * @return valve type (Globe, Ball, Butterfly, etc.)
+   */
+  public String getValveType() {
+    return valveType;
+  }
+
+  /**
+   * Get the maximum valve Cv.
+   *
+   * @return maximum Cv at full open
+   */
+  public double getValveCvMax() {
+    return valveCvMax;
+  }
+
+  /**
+   * Get the body weight.
+   *
+   * @return body weight in kg
+   */
+  public double getBodyWeight() {
+    return bodyWeight;
+  }
+
+  /**
+   * Get the stem diameter.
+   *
+   * @return stem diameter in mm
+   */
+  public double getStemDiameter() {
+    return stemDiameter;
+  }
+
+  /**
+   * Get the flange type.
+   *
+   * @return flange type (RF, RTJ, FF)
+   */
+  public String getFlangeType() {
+    return flangeType;
+  }
+
+  /**
+   * Get the inlet pressure.
+   *
+   * @return inlet pressure in bara
+   */
+  public double getInletPressure() {
+    return inletPressure;
+  }
+
+  /**
+   * Get the outlet pressure.
+   *
+   * @return outlet pressure in bara
+   */
+  public double getOutletPressure() {
+    return outletPressure;
+  }
+
+  /**
+   * Get the pressure drop across the valve.
+   *
+   * @return pressure drop in bar
+   */
+  public double getDp() {
+    return dP;
+  }
+
+  /**
+   * Get the pressure recovery factor (FL).
+   *
+   * @return FL factor
+   */
+  public double getFL() {
+    return FL;
+  }
+
+  /**
+   * Get the pressure ratio factor (xT).
+   *
+   * @return xT factor
+   */
+  public double getxT() {
+    return xT;
+  }
+
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport
@@ -707,5 +797,30 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     dialogContentPane.add(scrollpane);
     dialog.setSize(800, 600);
     dialog.setVisible(true);
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns a valve-specific response with additional fields for sizing data, actuator
+   * requirements, and flow characteristics.
+   * </p>
+   */
+  @Override
+  public ValveMechanicalDesignResponse getResponse() {
+    return new ValveMechanicalDesignResponse(this);
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns JSON with valve-specific fields.
+   * </p>
+   */
+  @Override
+  public String toJson() {
+    return getResponse().toJson();
   }
 }
