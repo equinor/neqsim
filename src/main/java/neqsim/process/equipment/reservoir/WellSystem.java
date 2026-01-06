@@ -894,6 +894,9 @@ public class WellSystem extends ProcessEquipmentBaseClass {
   /**
    * Simplified VLP calculation using hydrostatic + friction. Fast but less accurate for complex
    * multiphase flow.
+   *
+   * @param flowRate flow rate in Sm3/day
+   * @return calculated bottom-hole pressure in bara
    */
   private double calculateVLP_BHP_Simplified(double flowRate) {
     // Get fluid properties at average conditions (approximate)
@@ -944,6 +947,9 @@ public class WellSystem extends ProcessEquipmentBaseClass {
   /**
    * Full VLP calculation using TubingPerformance with selected multiphase correlation. More
    * accurate but slower.
+   *
+   * @param flowRate flow rate in Sm3/day
+   * @return calculated bottom-hole pressure in bara
    */
   private double calculateVLP_BHP_Full(double flowRate) {
     // Create temporary tubing model
@@ -1179,6 +1185,8 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * Estimate initial flow rate for iteration.
+   *
+   * @return estimated initial flow rate in Sm3/day
    */
   private double estimateInitialFlowRate() {
     switch (iprModel) {
@@ -1213,6 +1221,9 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * Calculate flow rate from IPR at a given BHP.
+   *
+   * @param bhp bottom-hole pressure in bara
+   * @return calculated flow rate in Sm3/day
    */
   private double calculateFlowFromIPR(double bhp) {
     switch (iprModel) {
