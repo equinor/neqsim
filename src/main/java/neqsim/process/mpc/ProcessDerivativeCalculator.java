@@ -137,6 +137,9 @@ public class ProcessDerivativeCalculator {
 
     /**
      * Infer variable type from path for optimal step sizing.
+     *
+     * @param path the variable path to analyze
+     * @return the inferred variable type
      */
     private VariableType inferVariableType(String path) {
       String lowerPath = path.toLowerCase();
@@ -204,6 +207,9 @@ public class ProcessDerivativeCalculator {
 
     /**
      * Constructor for valid result.
+     *
+     * @param value the calculated derivative value
+     * @param stepSize the step size used for calculation
      */
     public DerivativeResult(double value, double stepSize) {
       this.value = value;
@@ -214,6 +220,8 @@ public class ProcessDerivativeCalculator {
 
     /**
      * Constructor for invalid result.
+     *
+     * @param errorMessage the error message describing the failure
      */
     public DerivativeResult(String errorMessage) {
       this.value = Double.NaN;
@@ -650,6 +658,10 @@ public class ProcessDerivativeCalculator {
 
   /**
    * Calculate optimal step size based on variable type and value.
+   *
+   * @param spec the variable specification
+   * @param value the current value of the variable
+   * @return the calculated optimal step size
    */
   private double calculateStepSize(VariableSpec spec, double value) {
     // Use custom step if specified
@@ -721,6 +733,8 @@ public class ProcessDerivativeCalculator {
 
   /**
    * Evaluate all output variables at current process state.
+   *
+   * @return array of output variable values
    */
   private double[] evaluateOutputs() {
     double[] outputs = new double[outputVariables.size()];

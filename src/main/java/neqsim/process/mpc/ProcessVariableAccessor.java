@@ -106,6 +106,11 @@ public class ProcessVariableAccessor {
 
   /**
    * Extract numeric value from method result.
+   *
+   * @param result the result object from method invocation
+   * @param arrayIndex the array index if result is an array, -1 otherwise
+   * @param path the variable path for error messages
+   * @return the extracted numeric value
    */
   private double extractNumericValue(Object result, int arrayIndex, String path) {
     if (result instanceof Double) {
@@ -123,6 +128,9 @@ public class ProcessVariableAccessor {
 
   /**
    * Get default unit for a property name.
+   *
+   * @param propertyName the property name to look up
+   * @return the default unit string, or empty string if unknown
    */
   private String getDefaultUnit(String propertyName) {
     String lowerName = propertyName.toLowerCase();
@@ -406,6 +414,9 @@ public class ProcessVariableAccessor {
 
   /**
    * Capitalize first letter.
+   *
+   * @param s the string to capitalize
+   * @return the string with first letter capitalized, or original if null/empty
    */
   private String capitalize(String s) {
     if (s == null || s.isEmpty()) {

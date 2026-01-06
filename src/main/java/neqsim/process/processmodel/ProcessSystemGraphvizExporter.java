@@ -29,16 +29,14 @@ public class ProcessSystemGraphvizExporter {
 
   private static final String[] OUTLET_KEYWORDS = {"out", "product", "split", "mixed", "export",
       "from", "vent", "discharge", "residue", "bottom", "top", "vapor", "vapour", "to"};
-  private static final String[] INLET_KEYWORDS = {"inlet", "feed", "inflow", "suction", "source",
-      "supply", "import", "makeup", "recycle"};
+  private static final String[] INLET_KEYWORDS =
+      {"inlet", "feed", "inflow", "suction", "source", "supply", "import", "makeup", "recycle"};
   private static final int MAX_INDEXED_STREAMS = 16;
   private static final Class<?> INACCESSIBLE_OBJECT_EXCEPTION_CLASS =
       resolveClass("java.lang.reflect.InaccessibleObjectException");
 
   private enum StreamRole {
-    INLET,
-    OUTLET,
-    UNKNOWN
+    INLET, OUTLET, UNKNOWN
   }
 
   private static final class StreamReference {
@@ -81,8 +79,7 @@ public class ProcessSystemGraphvizExporter {
   public static final class GraphvizExportOptions {
     /** Placement of the optional stream property table. */
     public enum TablePlacement {
-      ABOVE,
-      BELOW
+      ABOVE, BELOW
     }
 
     private final boolean includeStreamTemperatures;
@@ -111,12 +108,20 @@ public class ProcessSystemGraphvizExporter {
       this.flowRateUnit = builder.flowRateUnit;
     }
 
-    /** Create a builder for the export options. */
+    /**
+     * Create a builder for the export options.
+     *
+     * @return a new Builder instance
+     */
     public static Builder builder() {
       return new Builder();
     }
 
-    /** Default export options. */
+    /**
+     * Default export options.
+     *
+     * @return the default GraphvizExportOptions
+     */
     public static GraphvizExportOptions defaults() {
       return builder().build();
     }
@@ -456,7 +461,8 @@ public class ProcessSystemGraphvizExporter {
             Throwable cause = ex.getCause();
             if (cause instanceof IndexOutOfBoundsException
                 || cause instanceof ArrayIndexOutOfBoundsException
-                || cause instanceof IllegalArgumentException || cause instanceof NullPointerException) {
+                || cause instanceof IllegalArgumentException
+                || cause instanceof NullPointerException) {
               break;
             }
           } catch (IllegalAccessException ex) {
@@ -470,8 +476,7 @@ public class ProcessSystemGraphvizExporter {
   }
 
   private void collectStreamReferencesFromFields(ProcessEquipmentInterface unit,
-      StreamReferences references, Object target, String descriptorPrefix,
-      Set<Object> visited) {
+      StreamReferences references, Object target, String descriptorPrefix, Set<Object> visited) {
     if (target == null || visited.contains(target)) {
       return;
     }
@@ -484,22 +489,22 @@ public class ProcessSystemGraphvizExporter {
         if (Modifier.isStatic(field.getModifiers())) {
           continue;
         }
-        
+
         boolean needsAccessOverride = !Modifier.isPublic(field.getModifiers())
             || !Modifier.isPublic(field.getDeclaringClass().getModifiers());
-        
+
         try {
           if (needsAccessOverride && !field.isAccessible()) {
             field.setAccessible(true);
           }
         } catch (SecurityException ex) {
-          logger.debug("Skipping field {} due to inaccessible module or security restrictions", field,
-              ex);
+          logger.debug("Skipping field {} due to inaccessible module or security restrictions",
+              field, ex);
           continue;
         } catch (RuntimeException ex) {
           if (isInaccessibleModuleAccess(ex)) {
-            logger.debug("Skipping field {} due to inaccessible module or security restrictions", field,
-                ex);
+            logger.debug("Skipping field {} due to inaccessible module or security restrictions",
+                field, ex);
             continue;
           }
           throw ex;
@@ -516,8 +521,8 @@ public class ProcessSystemGraphvizExporter {
           continue;
         }
 
-        String descriptor = descriptorPrefix == null ? field.getName()
-            : descriptorPrefix + "." + field.getName();
+        String descriptor =
+            descriptorPrefix == null ? field.getName() : descriptorPrefix + "." + field.getName();
 
         if (value instanceof StreamInterface) {
           addStreamReference(unit, references, value, inferStreamRole(descriptor), descriptor);
@@ -558,8 +563,8 @@ public class ProcessSystemGraphvizExporter {
     }
   }
 
-  private void addStreamReference(ProcessEquipmentInterface unit,
-      StreamReferences references, Method method, Object stream, String suffix) {
+  private void addStreamReference(ProcessEquipmentInterface unit, StreamReferences references,
+      Method method, Object stream, String suffix) {
     if (!(stream instanceof StreamInterface)) {
       return;
     }
@@ -573,8 +578,8 @@ public class ProcessSystemGraphvizExporter {
     addStreamReference(unit, references, stream, role, descriptor);
   }
 
-  private void addStreamReference(ProcessEquipmentInterface unit,
-      StreamReferences references, Object stream, StreamRole role, String descriptor) {
+  private void addStreamReference(ProcessEquipmentInterface unit, StreamReferences references,
+      Object stream, StreamRole role, String descriptor) {
     if (!(stream instanceof StreamInterface)) {
       return;
     }
@@ -750,8 +755,7 @@ public class ProcessSystemGraphvizExporter {
     String label = buildStreamLabel(source, sink, options);
     StringBuilder edgeBuilder = new StringBuilder();
     edgeBuilder.append("  \"").append(escapeGraphviz(source.unit.getName())).append("\"")
-        .append(" -> ")
-        .append("\"").append(escapeGraphviz(sink.unit.getName())).append("\"");
+        .append(" -> ").append("\"").append(escapeGraphviz(sink.unit.getName())).append("\"");
     if (label != null && !label.isEmpty()) {
       edgeBuilder.append(" [label=\"").append(escapeGraphviz(label)).append("\"]");
     }
@@ -851,8 +855,7 @@ public class ProcessSystemGraphvizExporter {
     }
 
     StringBuilder builder = new StringBuilder();
-    builder.append(label).append("=")
-        .append(String.format(Locale.ROOT, "%.2f", value));
+    builder.append(label).append("=").append(String.format(Locale.ROOT, "%.2f", value));
     if (unit != null && !unit.isEmpty()) {
       builder.append(" ").append(unit);
     }
@@ -889,7 +892,8 @@ public class ProcessSystemGraphvizExporter {
     builder.append("<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\">");
     builder.append("<TR><TD><B>Stream</B></TD>");
     if (includeTemperature) {
-      builder.append("<TD><B>Temperature (" + escapeHtml(options.getTemperatureUnit()) + ")</B></TD>");
+      builder
+          .append("<TD><B>Temperature (" + escapeHtml(options.getTemperatureUnit()) + ")</B></TD>");
     }
     if (includePressure) {
       builder.append("<TD><B>Pressure (" + escapeHtml(options.getPressureUnit()) + ")</B></TD>");

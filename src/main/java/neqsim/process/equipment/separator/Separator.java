@@ -451,7 +451,24 @@ public class Separator extends ProcessEquipmentBaseClass
         initializeTransientCalculation();
       }
       inletStreamMixer.run(id);
-      thermoSystem.init(2);
+
+      // Check if separator has enough moles for calculation
+      if (thermoSystem.getTotalNumberOfMoles() < 1e-10) {
+        // Separator is essentially empty - just update time and return
+        increaseTime(dt);
+        setCalculationIdentifier(id);
+        return;
+      }
+
+      try {
+        thermoSystem.init(2);
+      } catch (Exception e) {
+        // If init fails due to low moles, skip this step
+        logger.debug("Separator init(2) failed, likely due to low moles: " + e.getMessage());
+        increaseTime(dt);
+        setCalculationIdentifier(id);
+        return;
+      }
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       try {
         gasOutStream.getThermoSystem().init(2);
@@ -487,8 +504,21 @@ public class Separator extends ProcessEquipmentBaseClass
         }
         dncomp += -gasOutStream.getThermoSystem().getComponent(i).getNumberOfmoles() + dniliq;
 
-        thermoSystem.addComponent(i, dncomp * dt);
+        double molesChange = dncomp * dt;
+        double currentMoles = thermoSystem.getComponent(i).getNumberOfmoles();
+        // Prevent negative moles - limit removal to what's available
+        if (currentMoles + molesChange < 1e-20) {
+          molesChange = -currentMoles + 1e-20;
+        }
+        thermoSystem.addComponent(i, molesChange);
       }
+
+      // Skip VU flash if system has too few moles (essentially empty separator)
+      if (thermoSystem.getTotalNumberOfMoles() < 1e-10) {
+        setCalculationIdentifier(id);
+        return;
+      }
+
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
       thermoOps.VUflash(gasVolume + liquidVolume, newEnergy, "m3", "J");
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);

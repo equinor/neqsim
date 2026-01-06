@@ -257,6 +257,11 @@ public class WellProductionAllocator implements Serializable {
 
   /**
    * Allocates based on well test data.
+   *
+   * @param oilRates map to store allocated oil rates by well name
+   * @param gasRates map to store allocated gas rates by well name
+   * @param waterRates map to store allocated water rates by well name
+   * @param uncertainties map to store allocation uncertainties by well name
    */
   private void allocateByWellTest(Map<String, Double> oilRates, Map<String, Double> gasRates,
       Map<String, Double> waterRates, Map<String, Double> uncertainties) {

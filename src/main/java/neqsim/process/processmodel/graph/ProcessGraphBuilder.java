@@ -334,6 +334,9 @@ public final class ProcessGraphBuilder {
   /**
    * Collects split streams from a Splitter via reflection. Uses the splitStream field or
    * getSplitStream(int) method.
+   *
+   * @param unit the splitter unit to collect streams from
+   * @param streamToProducer map to store stream to producer associations
    */
   private static void collectSplitStreams(ProcessEquipmentInterface unit,
       Map<Object, ProcessEquipmentInterface> streamToProducer) {
@@ -374,6 +377,10 @@ public final class ProcessGraphBuilder {
   /**
    * Collects input streams from a Mixer and creates edges. Uses reflection since getStream(int) is
    * not in MixerInterface.
+   *
+   * @param unit the mixer unit to collect streams from
+   * @param graph the process graph to add edges to
+   * @param streamToProducer map of stream to producer associations
    */
   private static void collectMixerInputStreamsAndCreateEdges(ProcessEquipmentInterface unit,
       ProcessGraph graph, Map<Object, ProcessEquipmentInterface> streamToProducer) {

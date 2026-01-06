@@ -1454,6 +1454,12 @@ public class ProcessGraph implements Serializable {
 
   /**
    * DFS helper to detect cycles ignoring specified tear streams.
+   *
+   * @param node the current node to check
+   * @param visited set of already visited nodes
+   * @param inStack set of nodes currently in the recursion stack
+   * @param tearSet set of tear edges to ignore
+   * @return true if a cycle is detected, false otherwise
    */
   private boolean hasCycleWithoutTears(ProcessNode node, Set<ProcessNode> visited,
       Set<ProcessNode> inStack, Set<ProcessEdge> tearSet) {

@@ -201,11 +201,23 @@ process/
 ├── calibration/                     # Equipment calibration
 ├── conditionmonitor/                # Condition monitoring
 ├── costestimation/                  # Cost estimation
-├── mechanicaldesign/                # Mechanical design
+├── mechanicaldesign/                # Mechanical design calculations
+│   ├── separator/                   # Separator vessel design
+│   ├── compressor/                  # Compressor design (API 617)
+│   ├── valve/                       # Valve body, sizing, actuator
+│   └── designstandards/             # ASME, API, IEC standards
 ├── mpc/                             # Model predictive control
 ├── ml/                              # Machine learning
 └── streaming/                       # Data streaming
 ```
+
+### Mechanical Design Documentation
+
+| Equipment | Documentation | Standards |
+|-----------|--------------|-----------|
+| Separators | See SeparatorMechanicalDesign | ASME, BS 5500 |
+| Compressors | [CompressorMechanicalDesign.md](CompressorMechanicalDesign.md) | API 617, API 672 |
+| Valves | [ValveMechanicalDesign.md](ValveMechanicalDesign.md) | IEC 60534, ANSI/ISA-75, ASME B16.34 |
 
 ---
 

@@ -6,6 +6,9 @@ Documentation for valve equipment in NeqSim process simulation.
 - [Overview](#overview)
 - [Valve Types](#valve-types)
 - [Sizing and Cv](#sizing-and-cv)
+- [Valve Characteristics](#valve-characteristics)
+- [Sizing Standards](#sizing-standards)
+- [Mechanical Design](#mechanical-design)
 - [Usage Examples](#usage-examples)
 
 ---
@@ -15,9 +18,18 @@ Documentation for valve equipment in NeqSim process simulation.
 **Location:** `neqsim.process.equipment.valve`
 
 **Classes:**
-- `ThrottlingValve` - Joule-Thomson throttling valve
+- `ThrottlingValve` - Joule-Thomson throttling valve (control valve)
 - `ValveInterface` - Valve interface
 - `SafetyValve` - Pressure relief valve
+- `SafetyReliefValve` - Full PSV with API sizing
+- `BlowdownValve` - Emergency blowdown valve
+- `ControlValve` - Specialized control valve
+
+**Mechanical Design:** `neqsim.process.mechanicaldesign.valve`
+- `ValveMechanicalDesign` - Body sizing, weight, actuator calculations
+- `ControlValveSizing` - IEC 60534 Cv/Kv calculations
+- `ControlValveSizing_IEC_60534` - Full IEC implementation
+- `ControlValveSizing_simple` - Production choke sizing
 
 ---
 
@@ -92,6 +104,149 @@ double Pin = inletStream.getPressure("bara");
 double Pout = valve.getOutletStream().getPressure("bara");
 double deltaP = Pin - Pout;
 ```
+
+---
+
+## Valve Characteristics
+
+Control valves have inherent flow characteristics that define how Cv varies with valve opening.
+
+### Available Characteristics
+
+| Characteristic | Description | Best Application |
+|----------------|-------------|------------------|
+| **Linear** | Flow proportional to opening | Constant ΔP systems, bypass valves |
+| **Equal Percentage** | Equal opening increments = equal % flow change | Variable ΔP, most process control |
+| **Quick Opening** | Large flow change at small openings | On/off service, safety applications |
+| **Modified Parabolic** | Compromise between linear and equal % | General purpose |
+
+### Setting Valve Characteristic
+
+```java
+import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
+
+ValveMechanicalDesign mechDesign = (ValveMechanicalDesign) valve.getMechanicalDesign();
+mechDesign.setValveCharacterization("equal percentage");
+```
+
+### Characteristic Curves
+
+```
+         │
+   100%  │                    ●─── Quick Opening
+         │               ●───●
+   Flow  │          ●───●    ●── Linear
+   (Cv)  │     ●───●        ●
+         │ ●───●        ●───── Equal Percentage
+         │●        ●───●
+    0%   └────────────────────
+         0%    Opening    100%
+```
+
+---
+
+## Sizing Standards
+
+NeqSim supports multiple valve sizing standards for different applications.
+
+### Available Standards
+
+| Standard | Code | Description |
+|----------|------|-------------|
+| Default | `default` | Simplified IEC 60534 for gas, standard for liquid |
+| IEC 60534 | `IEC 60534` | Full IEC 60534-2-1 implementation |
+| Extended | `IEC 60534 full` | IEC 60534 with all correction factors |
+| Prod Choke | `prod choke` | Production choke with discharge coefficient |
+
+### Setting Sizing Standard
+
+```java
+ValveMechanicalDesign mechDesign = (ValveMechanicalDesign) valve.getMechanicalDesign();
+mechDesign.setValveSizingStandard("IEC 60534");
+```
+
+### IEC 60534 Gas Sizing
+
+For compressible fluids (gas/vapor):
+
+$$K_v = \frac{Q}{N_9 \cdot P_1 \cdot Y} \sqrt{\frac{M \cdot T \cdot Z}{x}}$$
+
+Where:
+- $Q$ = actual volumetric flow at inlet (m³/h)
+- $N_9$ = 24.6 (SI constant)
+- $P_1$ = inlet pressure (kPa abs)
+- $Y$ = expansion factor
+- $M$ = molecular weight (g/mol)
+- $T$ = temperature (K)
+- $Z$ = compressibility factor
+- $x$ = $\Delta P / P_1$
+
+### Choked Flow Detection
+
+Flow becomes choked when:
+$$x \geq F_\gamma \cdot x_T$$
+
+Where:
+- $F_\gamma = \gamma / 1.40$ (specific heat ratio factor)
+- $x_T$ = pressure drop ratio at choking (valve-specific, typically 0.13-0.80)
+
+---
+
+## Mechanical Design
+
+Complete mechanical design calculations are available for valve body sizing, weight estimation, and actuator requirements.
+
+### Accessing Mechanical Design
+
+```java
+ValveMechanicalDesign mechDesign = (ValveMechanicalDesign) valve.getMechanicalDesign();
+mechDesign.calcDesign();
+```
+
+### Design Results
+
+| Property | Method | Unit |
+|----------|--------|------|
+| ANSI Pressure Class | `getAnsiPressureClass()` | - |
+| Nominal Size | `getNominalSizeInches()` | inches |
+| Face-to-Face | `getFaceToFace()` | mm |
+| Body Wall Thickness | `getBodyWallThickness()` | mm |
+| Design Pressure | `getDesignPressure()` | bara |
+| Design Temperature | `getDesignTemperature()` | °C |
+| Actuator Thrust | `getRequiredActuatorThrust()` | N |
+| Actuator Weight | `getActuatorWeight()` | kg |
+| Total Weight | `getWeightTotal()` | kg |
+
+### Example: Full Mechanical Design
+
+```java
+// Create and run valve
+ThrottlingValve valve = new ThrottlingValve("PCV-101", gasStream);
+valve.setOutletPressure(60.0, "bara");
+valve.run();
+
+// Calculate mechanical design
+ValveMechanicalDesign mechDesign = (ValveMechanicalDesign) valve.getMechanicalDesign();
+mechDesign.calcDesign();
+
+// Print results
+System.out.println("=== VALVE MECHANICAL DESIGN ===");
+System.out.println("Cv: " + valve.getCv());
+System.out.println("ANSI Class: " + mechDesign.getAnsiPressureClass());
+System.out.println("Size: " + mechDesign.getNominalSizeInches() + " inches");
+System.out.println("Face-to-Face: " + mechDesign.getFaceToFace() + " mm");
+System.out.println("Wall Thickness: " + mechDesign.getBodyWallThickness() + " mm");
+System.out.println("Total Weight: " + mechDesign.getWeightTotal() + " kg");
+System.out.println("Actuator Thrust: " + mechDesign.getRequiredActuatorThrust() + " N");
+```
+
+### Detailed Documentation
+
+See [Valve Mechanical Design](../ValveMechanicalDesign.md) for complete documentation including:
+- ANSI pressure class selection criteria
+- Wall thickness calculations per ASME B16.34
+- Actuator sizing methodology
+- Weight estimation correlations
 
 ---
 
@@ -235,6 +390,8 @@ double muJT = inletStream.getJouleThomsonCoefficient();  // K/bar
 
 ## Related Documentation
 
+- [Valve Mechanical Design](../ValveMechanicalDesign.md) - Complete mechanical design calculations
+- [Compressor Mechanical Design](../CompressorMechanicalDesign.md) - Similar approach for compressors
 - [Process Package](../README.md) - Package overview
 - [Separators](separators.md) - Separation equipment
 - [Safety Systems](../safety/) - Safety valve sizing

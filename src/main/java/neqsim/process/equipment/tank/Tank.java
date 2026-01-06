@@ -8,6 +8,7 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.tank.TankMechanicalDesign;
 import neqsim.process.util.monitor.TankResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -28,6 +29,9 @@ public class Tank extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Tank.class);
+
+  /** Mechanical design for the tank. */
+  private TankMechanicalDesign mechanicalDesign;
 
   SystemInterface thermoSystem;
   SystemInterface gasSystem;
@@ -63,6 +67,7 @@ public class Tank extends ProcessEquipmentBaseClass {
   public Tank(String name) {
     super(name);
     setCalculateSteadyState(true);
+    initMechanicalDesign();
   }
 
   /**
@@ -76,6 +81,18 @@ public class Tank extends ProcessEquipmentBaseClass {
   public Tank(String name, StreamInterface inletStream) {
     this(name);
     setInletStream(inletStream);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public TankMechanicalDesign getMechanicalDesign() {
+    return mechanicalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initMechanicalDesign() {
+    mechanicalDesign = new TankMechanicalDesign(this);
   }
 
   /**

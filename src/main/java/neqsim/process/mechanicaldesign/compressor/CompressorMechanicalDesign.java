@@ -705,6 +705,15 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
+   * Get driver margin factor.
+   *
+   * @return driver margin factor
+   */
+  public double getDriverMargin() {
+    return driverMargin;
+  }
+
+  /**
    * Get maximum continuous speed.
    *
    * @return max continuous speed in rpm
@@ -816,5 +825,30 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   @Override
   public void setOuterDiameter(double outerDiameter) {
     this.outerDiameter = outerDiameter;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns a compressor-specific response with additional fields for staging, driver sizing, and
+   * rotordynamic data.
+   * </p>
+   */
+  @Override
+  public CompressorMechanicalDesignResponse getResponse() {
+    return new CompressorMechanicalDesignResponse(this);
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns JSON with compressor-specific fields.
+   * </p>
+   */
+  @Override
+  public String toJson() {
+    return getResponse().toJson();
   }
 }
