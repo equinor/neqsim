@@ -23,7 +23,7 @@ import org.apache.logging.log4j.Logger;
  * This implementation supports two CSV file formats:
  * </p>
  *
- * <h3>Format 1: Standards-focused (standards.csv)</h3>
+ * <h2>Format 1: Standards-focused (standards.csv)</h2>
  * 
  * <pre>
  * PROJECT_ID,PROJECT_NAME,COMPANY,DESIGN_CATEGORY,STANDARD_CODE,VERSION,PRIORITY
@@ -32,7 +32,7 @@ import org.apache.logging.log4j.Logger;
  * PROJ-001,Offshore Platform,Equinor,pipeline design codes,NORSOK-L-001,Rev 6,1
  * </pre>
  *
- * <h3>Format 2: Full TORG (torg_master.csv)</h3>
+ * <h2>Format 2: Full TORG (torg_master.csv)</h2>
  * 
  * <pre>
  * PROJECT_ID,PROJECT_NAME,COMPANY,REVISION,ISSUE_DATE,MIN_AMBIENT_TEMP,MAX_AMBIENT_TEMP,...

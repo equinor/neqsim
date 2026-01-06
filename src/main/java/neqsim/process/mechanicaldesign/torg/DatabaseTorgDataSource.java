@@ -19,7 +19,7 @@ import org.apache.logging.log4j.Logger;
  * following tables:
  * </p>
  *
- * <h3>TORG_Projects table</h3>
+ * <h2>TORG_Projects table</h2>
  * 
  * <pre>
  * CREATE TABLE TORG_Projects (
@@ -39,7 +39,7 @@ import org.apache.logging.log4j.Logger;
  * );
  * </pre>
  *
- * <h3>TORG_Standards table</h3>
+ * <h2>TORG_Standards table</h2>
  * 
  * <pre>
  * CREATE TABLE TORG_Standards (

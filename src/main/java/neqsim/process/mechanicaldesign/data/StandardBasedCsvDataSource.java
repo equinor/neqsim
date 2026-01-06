@@ -24,7 +24,7 @@ import org.apache.logging.log4j.Logger;
  * This data source supports two CSV formats:
  * </p>
  *
- * <h3>Standard Format (with STANDARD_CODE column):</h3>
+ * <h2>Standard Format (with STANDARD_CODE column):</h2>
  * 
  * <pre>
  * STANDARD_CODE,STANDARD_VERSION,EQUIPMENTTYPE,SPECIFICATION,MINVALUE,MAXVALUE,UNIT,DESCRIPTION
@@ -32,7 +32,7 @@ import org.apache.logging.log4j.Logger;
  * ASME-VIII-Div1,2021,Separator,MaxPressure,0,150,barg,Maximum design pressure
  * </pre>
  *
- * <h3>Company Format (legacy compatibility):</h3>
+ * <h2>Company Format (legacy compatibility):</h2>
  * 
  * <pre>
  * EQUIPMENTTYPE,COMPANY,MAXPRESSURE,MINPRESSURE,MAXTEMPERATURE,MINTEMPERATURE,CORROSIONALLOWANCE,JOINTEFFICIENCY

@@ -30,7 +30,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <li>Report generation</li>
  * </ul>
  *
- * <h3>Usage Example:</h3>
+ * <h2>Usage Example:</h2>
  * 
  * <pre>
  * {@code
