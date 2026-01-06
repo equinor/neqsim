@@ -1,0 +1,24 @@
+PROJECT_ID,PROJECT_NAME,COMPANY,REVISION,ISSUE_DATE,DESIGN_CATEGORY,STANDARD_CODE,VERSION,PRIORITY,MIN_AMBIENT_TEMP,MAX_AMBIENT_TEMP,SEAWATER_TEMP,SEISMIC_ZONE
+OFFSHORE-001,North Sea Gas Platform,Equinor,2,2024-01-15,pressure vessel design code,ASME-VIII-Div1,2021,1,-40,45,4,0
+OFFSHORE-001,North Sea Gas Platform,Equinor,2,2024-01-15,separator process design,API-12J,8th Ed,1,-40,45,4,0
+OFFSHORE-001,North Sea Gas Platform,Equinor,2,2024-01-15,separator process design,NORSOK-P-001,Rev 5,2,-40,45,4,0
+OFFSHORE-001,North Sea Gas Platform,Equinor,2,2024-01-15,pipeline design codes,NORSOK-L-001,Rev 6,1,-40,45,4,0
+OFFSHORE-001,North Sea Gas Platform,Equinor,2,2024-01-15,compressor design codes,API-617,8th Ed,1,-40,45,4,0
+OFFSHORE-001,North Sea Gas Platform,Equinor,2,2024-01-15,material plate design codes,ASTM-A516,2021,1,-40,45,4,0
+OFFSHORE-001,North Sea Gas Platform,Equinor,2,2024-01-15,material pipe design codes,API-5L,46th Ed,1,-40,45,4,0
+SUBSEA-002,Subsea Tie-Back Project,Equinor,1,2024-03-20,pipeline design codes,DNV-ST-F101,2021,1,-46,35,4,0
+SUBSEA-002,Subsea Tie-Back Project,Equinor,1,2024-03-20,material pipe design codes,NORSOK-M-630,Rev 7,1,-46,35,4,0
+ONSHORE-003,Onshore Gas Processing,TotalEnergies,1,2023-11-01,pressure vessel design code,EN-13445,2021,1,-20,50,NA,1
+ONSHORE-003,Onshore Gas Processing,TotalEnergies,1,2023-11-01,separator process design,API-12J,8th Ed,1,-20,50,NA,1
+ONSHORE-003,Onshore Gas Processing,TotalEnergies,1,2023-11-01,pipeline design codes,ASME-B31.3,2022,1,-20,50,NA,1
+ONSHORE-003,Onshore Gas Processing,TotalEnergies,1,2023-11-01,compressor design codes,API-617,8th Ed,1,-20,50,NA,1
+LNG-004,LNG Export Terminal,Shell,3,2024-06-01,pressure vessel design code,ASME-VIII-Div2,2021,1,-196,45,10,2
+LNG-004,LNG Export Terminal,Shell,3,2024-06-01,separator process design,API-12J,8th Ed,1,-196,45,10,2
+LNG-004,LNG Export Terminal,Shell,3,2024-06-01,pipeline design codes,ASME-B31.3,2022,1,-196,45,10,2
+LNG-004,LNG Export Terminal,Shell,3,2024-06-01,heat exchanger design codes,API-660,9th Ed,1,-196,45,10,2
+LNG-004,LNG Export Terminal,Shell,3,2024-06-01,material plate design codes,ASTM-A516,2021,1,-196,45,10,2
+REFINERY-005,Refinery Upgrade Project,BP,1,2024-02-15,pressure vessel design code,ASME-VIII-Div1,2021,1,-29,55,NA,0
+REFINERY-005,Refinery Upgrade Project,BP,1,2024-02-15,separator process design,API-12J,8th Ed,1,-29,55,NA,0
+REFINERY-005,Refinery Upgrade Project,BP,1,2024-02-15,pipeline design codes,ASME-B31.3,2022,1,-29,55,NA,0
+REFINERY-005,Refinery Upgrade Project,BP,1,2024-02-15,heat exchanger design codes,API-660,9th Ed,1,-29,55,NA,0
+REFINERY-005,Refinery Upgrade Project,BP,1,2024-02-15,heat exchanger design codes,API-661,7th Ed,2,-29,55,NA,0
