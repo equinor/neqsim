@@ -3562,7 +3562,7 @@ public class Compressor extends TwoPortEquipment
     /**
      * Sets the compression ratio (outlet/inlet pressure).
      *
-     * @param ratio compression ratio (must be > 1.0)
+     * @param ratio compression ratio (must be {@code >} 1.0)
      * @return this builder for chaining
      */
     public Builder compressionRatio(double ratio) {
