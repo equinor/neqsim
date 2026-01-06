@@ -38,6 +38,12 @@ This documentation is organized into the following sections:
 | [safety/](safety/) | Safety systems (PSV, ESD, blowdown) |
 | [controllers.md](controllers.md) | Process controllers and logic |
 
+### Process Design Guide
+
+| Document | Description |
+|----------|-------------|
+| [process_design_guide.md](process_design_guide.md) | **Complete guide to process design workflow using NeqSim** |
+
 ### Mechanical Design Documentation
 
 | Document | Description |
