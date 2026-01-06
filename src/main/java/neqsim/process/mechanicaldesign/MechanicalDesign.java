@@ -25,6 +25,8 @@ import neqsim.process.mechanicaldesign.designstandards.MaterialPlateDesignStanda
 import neqsim.process.mechanicaldesign.designstandards.PipelineDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.PressureVesselDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard;
+import neqsim.process.mechanicaldesign.designstandards.StandardRegistry;
+import neqsim.process.mechanicaldesign.designstandards.StandardType;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
@@ -724,6 +726,117 @@ public class MechanicalDesign implements java.io.Serializable {
     }
     hasSetCompanySpecificDesignStandards = true;
     initMechanicalDesign();
+  }
+
+  /**
+   * Set a design standard using an international standard type.
+   *
+   * <p>
+   * This method allows setting design standards based on international standards like NORSOK, ASME,
+   * API, DNV, ISO, ASTM, etc. The standard is placed in the appropriate category based on its type.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * equipment.getMechanicalDesign().setDesignStandard(StandardType.ASME_VIII_DIV1);
+   * equipment.getMechanicalDesign().setDesignStandard(StandardType.NORSOK_P_001);
+   * </pre>
+   *
+   * @param standardType the international standard type to use
+   * @throws IllegalArgumentException if standardType is null
+   */
+  public void setDesignStandard(StandardType standardType) {
+    if (standardType == null) {
+      throw new IllegalArgumentException("standardType cannot be null");
+    }
+    DesignStandard standard = StandardRegistry.createStandard(standardType, this);
+    String category = standardType.getDesignStandardCategory();
+    getDesignStandard().put(category, standard);
+    hasSetCompanySpecificDesignStandards = true;
+  }
+
+  /**
+   * Set a design standard using an international standard type with a specific version.
+   *
+   * @param standardType the international standard type to use
+   * @param version the specific version of the standard (e.g., "2021", "Rev 6")
+   * @throws IllegalArgumentException if standardType is null
+   */
+  public void setDesignStandard(StandardType standardType, String version) {
+    if (standardType == null) {
+      throw new IllegalArgumentException("standardType cannot be null");
+    }
+    DesignStandard standard = StandardRegistry.createStandard(standardType, version, this);
+    String category = standardType.getDesignStandardCategory();
+    getDesignStandard().put(category, standard);
+    hasSetCompanySpecificDesignStandards = true;
+  }
+
+  /**
+   * Set multiple design standards using international standard types.
+   *
+   * <p>
+   * Each standard is placed in its appropriate category. If multiple standards have the same
+   * category, the last one in the list takes precedence.
+   * </p>
+   *
+   * @param standardTypes the list of standard types to apply
+   */
+  public void setDesignStandards(List<StandardType> standardTypes) {
+    if (standardTypes == null) {
+      return;
+    }
+    for (StandardType type : standardTypes) {
+      if (type != null) {
+        setDesignStandard(type);
+      }
+    }
+  }
+
+  /**
+   * Get a list of applicable international standards for this equipment type.
+   *
+   * @return list of applicable StandardType values
+   */
+  public List<StandardType> getApplicableStandards() {
+    String equipmentType = resolveEquipmentType();
+    return StandardRegistry.getApplicableStandards(equipmentType);
+  }
+
+  /**
+   * Get recommended standards for this equipment type organized by category.
+   *
+   * @return map of category name to list of applicable standards
+   */
+  public java.util.Map<String, List<StandardType>> getRecommendedStandards() {
+    String equipmentType = resolveEquipmentType();
+    return StandardRegistry.getRecommendedStandards(equipmentType);
+  }
+
+  /**
+   * Set a design standard for a specific category.
+   *
+   * <p>
+   * This method allows direct assignment of a DesignStandard instance to a specific design
+   * category. It is used internally by the TorgManager and can be used for custom standard
+   * configurations.
+   * </p>
+   *
+   * @param category the design category (e.g., "pressure vessel design code")
+   * @param standard the DesignStandard instance to set
+   */
+  public void setDesignStandard(String category, DesignStandard standard) {
+    if (category == null || category.isEmpty()) {
+      throw new IllegalArgumentException("category cannot be null or empty");
+    }
+    if (standard == null) {
+      throw new IllegalArgumentException("standard cannot be null");
+    }
+    getDesignStandard().put(category, standard);
+    hasSetCompanySpecificDesignStandards = true;
   }
 
   /**
