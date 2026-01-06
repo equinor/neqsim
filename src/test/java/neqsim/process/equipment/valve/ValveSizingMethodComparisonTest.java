@@ -73,7 +73,7 @@ public class ValveSizingMethodComparisonTest {
     // Print comparison table
     System.out.println("--- COMPARISON TABLE (Gas) ---");
     System.out.println(String.format("%-15s %12s %12s %12s", "Method", "Kv", "Cv", "Ratio to IEC"));
-    System.out.println("-".repeat(55));
+    System.out.println("-------------------------------------------------------");
     for (int i = 0; i < methods.length; i++) {
       double ratio = kvResults[i] / kvResults[1]; // ratio to IEC 60534
       System.out.println(String.format("%-15s %12.4f %12.4f %12.2f", methods[i], kvResults[i],
