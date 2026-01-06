@@ -118,11 +118,11 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * </p>
    *
    * <p>
-   * Calculates valve flow coefficient Kv using simplified formulas:
+   * Calculates valve flow coefficient Kv using IEC 60534 formulas:
    * </p>
    * <ul>
    * <li>For liquids: Kv = Q / sqrt(deltaP / SG) where SG = rho/1000</li>
-   * <li>For gases: Uses simplified IEC 60534 formula with expansion factor</li>
+   * <li>For gases: Kv = Q / (N9 * P1 * Y) * sqrt(MW * T * Z / x) per IEC 60534</li>
    * </ul>
    *
    * @param percentOpening valve opening percentage (0-100)
@@ -141,17 +141,39 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     double openingFactor =
         valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
 
-    // Use consistent simple formula for both gas and liquid:
-    // Kv = Q / sqrt(deltaP / rho)
-    // For liquids: use specific gravity (rho/1000)
-    // For gases: use full density in kg/m3
-    double density = fluid.getDensity("kg/m3");
-    if (!valve.isGasValve()) {
-      density = density / 1000.0; // Convert to specific gravity for liquids
-    }
+    double Kv;
 
-    double flowM3hr = valve.getInletStream().getFlowRate("m3/hr");
-    double Kv = flowM3hr / Math.sqrt(deltaP / density);
+    if (!valve.isGasValve()) {
+      // Liquid: standard Kv formula
+      // Kv = Q * sqrt(SG / deltaP) where SG = rho/1000
+      double density = fluid.getDensity("kg/m3") / 1000.0;
+      double flowM3hr = valve.getInletStream().getFlowRate("m3/hr");
+      Kv = flowM3hr / Math.sqrt(deltaP / density);
+    } else {
+      // Gas: IEC 60534 formula
+      // Kv = Q / (N9 * P1 * Y) * sqrt(MW * T * Z / x)
+      double N9 = 24.6; // IEC 60534 constant for Kv with Q in m3/hr, P in kPa
+      double flowM3hr = valve.getInletStream().getFlowRate("m3/hr");
+      double T = fluid.getTemperature();
+      double MW = fluid.getMolarMass("gr/mol");
+      double Z = fluid.getZ();
+      double gamma = fluid.getGamma2();
+
+      double P1_kPa = P1 * 100.0;
+      double x = deltaP / P1;
+      double Fgamma = gamma / 1.40;
+      double xChoked = Fgamma * xT;
+
+      boolean choked = x >= xChoked;
+      double xEffective = choked && allowChoked ? xChoked : x;
+      double Y = Math.max(1.0 - xEffective / (3.0 * Fgamma * xT), 2.0 / 3.0);
+
+      if (choked && allowChoked) {
+        Kv = flowM3hr / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / (xT * Fgamma));
+      } else {
+        Kv = flowM3hr / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / x);
+      }
+    }
 
     return Kv / openingFactor;
   }
@@ -174,7 +196,7 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * </p>
    *
    * <p>
-   * Calculates flow rate from valve Kv using consistent simple formula.
+   * Calculates flow rate from valve Kv using IEC 60534 formulas.
    * </p>
    *
    * @param actualKv the valve flow coefficient at the current opening
@@ -191,16 +213,37 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
     double P2 = outStream.getPressure("bara");
     double deltaP = P1 - P2;
 
-    // Use consistent simple formula for both gas and liquid:
-    // Q = Kv * sqrt(deltaP / rho)
-    // For liquids: use specific gravity (rho/1000)
-    // For gases: use full density in kg/m3
-    double density = fluid.getDensity("kg/m3");
+    double flow_m3_hr;
+
     if (!valve.isGasValve()) {
-      density = density / 1000.0; // Convert to specific gravity for liquids
+      // Liquid: Q = Kv * sqrt(deltaP / SG)
+      double density = fluid.getDensity("kg/m3") / 1000.0; // specific gravity
+      flow_m3_hr = actualKv * Math.sqrt(deltaP / density);
+    } else {
+      // Gas: Inverse of IEC 60534 formula
+      // Q = Kv * N9 * P1 * Y / sqrt(MW * T * Z / x)
+      double N9 = 24.6;
+      double T = fluid.getTemperature();
+      double MW = fluid.getMolarMass("gr/mol");
+      double Z = fluid.getZ();
+      double gamma = fluid.getGamma2();
+
+      double P1_kPa = P1 * 100.0;
+      double x = deltaP / P1;
+      double Fgamma = gamma / 1.40;
+      double xChoked = Fgamma * xT;
+
+      boolean choked = x >= xChoked;
+      double xEffective = choked && allowChoked ? xChoked : x;
+      double Y = Math.max(1.0 - xEffective / (3.0 * Fgamma * xT), 2.0 / 3.0);
+
+      if (choked && allowChoked) {
+        flow_m3_hr = actualKv * N9 * P1_kPa * Y / Math.sqrt(MW * T * Z / (xT * Fgamma));
+      } else {
+        flow_m3_hr = actualKv * N9 * P1_kPa * Y / Math.sqrt(MW * T * Z / x);
+      }
     }
 
-    double flow_m3_hr = actualKv * Math.sqrt(deltaP / density);
     double flow_m3_s = flow_m3_hr / 3600.0;
 
     return flow_m3_s;
