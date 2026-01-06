@@ -84,6 +84,8 @@ public final class CalculatorLibrary {
   /**
    * Create an energy-balance calculator. The output stream is flashed at its current pressure so
    * that its enthalpy equals the sum of the input stream enthalpies.
+   *
+   * @return a calculator function that performs energy balance
    */
   public static BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface>
       energyBalance() {
@@ -121,6 +123,7 @@ public final class CalculatorLibrary {
    * small positive margin can be applied to stay above dew point.
    *
    * @param marginKelvin temperature margin to add to the dew point (K)
+   * @return a calculator function that performs dew point targeting
    */
   public static BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface>
       dewPointTargeting(double marginKelvin) {
@@ -140,6 +143,8 @@ public final class CalculatorLibrary {
 
   /**
    * Create a dew-point targeting calculator with zero temperature margin.
+   *
+   * @return a calculator function that performs dew point targeting
    */
   public static BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface>
       dewPointTargeting() {

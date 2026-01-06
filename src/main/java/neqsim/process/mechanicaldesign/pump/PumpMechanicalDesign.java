@@ -53,13 +53,13 @@ public class PumpMechanicalDesign extends MechanicalDesign {
   /** Gravity constant [m/s²]. */
   private static final double GRAVITY = 9.81;
 
-  /** Driver sizing margin for small pumps (< 22 kW) per API 610. */
+  /** Driver sizing margin for small pumps (&lt; 22 kW) per API 610. */
   private static final double DRIVER_MARGIN_SMALL = 1.25;
 
   /** Driver sizing margin for medium pumps (22-55 kW) per API 610. */
   private static final double DRIVER_MARGIN_MEDIUM = 1.15;
 
-  /** Driver sizing margin for large pumps (> 55 kW) per API 610. */
+  /** Driver sizing margin for large pumps (&gt; 55 kW) per API 610. */
   private static final double DRIVER_MARGIN_LARGE = 1.10;
 
   /** Design pressure margin factor. */

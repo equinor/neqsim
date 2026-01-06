@@ -77,7 +77,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   /** Weight breakdown by equipment type (e.g., "Separator", "Compressor", "Valve"). */
   private Map<String, Double> weightByEquipmentType = new LinkedHashMap<String, Double>();
 
-  /** Weight breakdown by discipline (Mechanical, Piping, E&I, Structural). */
+  /** Weight breakdown by discipline (Mechanical, Piping, E and I, Structural). */
   private Map<String, Double> weightByDiscipline = new LinkedHashMap<String, Double>();
 
   /** Equipment count by type. */

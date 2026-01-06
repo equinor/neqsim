@@ -111,12 +111,20 @@ public class ProcessSystemGraphvizExporter {
       this.flowRateUnit = builder.flowRateUnit;
     }
 
-    /** Create a builder for the export options. */
+    /**
+     * Create a builder for the export options.
+     *
+     * @return a new Builder instance
+     */
     public static Builder builder() {
       return new Builder();
     }
 
-    /** Default export options. */
+    /**
+     * Default export options.
+     *
+     * @return the default GraphvizExportOptions
+     */
     public static GraphvizExportOptions defaults() {
       return builder().build();
     }

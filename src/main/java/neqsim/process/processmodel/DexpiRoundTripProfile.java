@@ -99,12 +99,20 @@ public final class DexpiRoundTripProfile {
       this.violations = violations;
     }
 
-    /** Indicates whether validation succeeded. */
+    /**
+     * Indicates whether validation succeeded.
+     *
+     * @return true if validation passed, false otherwise
+     */
     public boolean isSuccessful() {
       return successful;
     }
 
-    /** Detailed violations preventing the process from satisfying the profile. */
+    /**
+     * Detailed violations preventing the process from satisfying the profile.
+     *
+     * @return list of violation messages
+     */
     public List<String> getViolations() {
       return violations;
     }

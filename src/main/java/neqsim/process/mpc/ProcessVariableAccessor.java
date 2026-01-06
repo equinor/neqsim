@@ -414,6 +414,9 @@ public class ProcessVariableAccessor {
 
   /**
    * Capitalize first letter.
+   *
+   * @param s the string to capitalize
+   * @return the string with first letter capitalized, or original if null/empty
    */
   private String capitalize(String s) {
     if (s == null || s.isEmpty()) {
