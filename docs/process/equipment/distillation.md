@@ -6,6 +6,7 @@ Documentation for distillation column equipment in NeqSim process simulation.
 - [Overview](#overview)
 - [Column Types](#column-types)
 - [Configuration](#configuration)
+- [Builder Pattern](#builder-pattern)
 - [Solver Options](#solver-options)
 - [Usage Examples](#usage-examples)
 
@@ -39,6 +40,58 @@ column.run();
 Stream overhead = column.getGasOutStream();
 Stream bottoms = column.getLiquidOutStream();
 ```
+
+---
+
+## Builder Pattern
+
+For complex column configurations, use the fluent Builder API:
+
+```java
+import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.distillation.DistillationColumn.SolverType;
+
+// Build column with fluent API
+DistillationColumn column = DistillationColumn.builder("Deethanizer")
+    .numberOfTrays(15)
+    .withCondenserAndReboiler()
+    .topPressure(25.0, "bara")
+    .bottomPressure(26.0, "bara")
+    .temperatureTolerance(0.001)
+    .massBalanceTolerance(0.01)
+    .maxIterations(100)
+    .solverType(SolverType.INSIDE_OUT)
+    .internalDiameter(2.5)
+    .addFeedStream(feedStream, 8)
+    .build();
+
+column.run();
+```
+
+### Builder Methods
+
+| Method | Description |
+|--------|-------------|
+| `numberOfTrays(int)` | Set number of simple trays (excluding condenser/reboiler) |
+| `withCondenser()` | Add condenser at top |
+| `withReboiler()` | Add reboiler at bottom |
+| `withCondenserAndReboiler()` | Add both |
+| `topPressure(double, String)` | Set top pressure with unit |
+| `bottomPressure(double, String)` | Set bottom pressure with unit |
+| `pressure(double, String)` | Set same pressure top and bottom |
+| `temperatureTolerance(double)` | Convergence tolerance for temperature |
+| `massBalanceTolerance(double)` | Convergence tolerance for mass balance |
+| `tolerance(double)` | Set all tolerances at once |
+| `maxIterations(int)` | Maximum solver iterations |
+| `solverType(SolverType)` | Set solver algorithm |
+| `directSubstitution()` | Use direct substitution solver |
+| `dampedSubstitution()` | Use damped substitution solver |
+| `insideOut()` | Use inside-out solver |
+| `relaxationFactor(double)` | Damping factor for solver |
+| `internalDiameter(double)` | Column internal diameter (meters) |
+| `multiPhaseCheck(boolean)` | Enable/disable multi-phase check |
+| `addFeedStream(Stream, int)` | Add feed stream to specified tray |
+| `build()` | Build the configured column |
 
 ---
 
