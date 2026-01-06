@@ -49,8 +49,8 @@ public final class CalculatorLibrary {
       throw new IllegalArgumentException("Preset name cannot be null");
     }
 
-    String normalized = presetName.trim().toUpperCase(Locale.ROOT).replace(" ", "_")
-        .replace("-", "_");
+    String normalized =
+        presetName.trim().toUpperCase(Locale.ROOT).replace(" ", "_").replace("-", "_");
     if ("DEWPOINTTARGETING".equals(normalized)) {
       normalized = "DEW_POINT_TARGETING";
     } else if ("ENERGYBALANCE".equals(normalized)) {
@@ -87,8 +87,7 @@ public final class CalculatorLibrary {
    *
    * @return a calculator function that performs energy balance
    */
-  public static BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface>
-      energyBalance() {
+  public static BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface> energyBalance() {
     return (inputs, output) -> {
       Stream targetStream = requireStream(output, "energy balance output");
 
@@ -125,15 +124,14 @@ public final class CalculatorLibrary {
    * @param marginKelvin temperature margin to add to the dew point (K)
    * @return a calculator function that performs dew point targeting
    */
-  public static BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface>
-      dewPointTargeting(double marginKelvin) {
+  public static BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface> dewPointTargeting(
+      double marginKelvin) {
     return (inputs, output) -> {
       Stream sourceStream = requireFirstStream(inputs, "dew point source");
       Stream targetStream = requireStream(output, "dew point target");
 
       double referencePressure = targetStream.getThermoSystem().getPressure("bara");
-      double dewPointK =
-          sourceStream.getHydrocarbonDewPoint("K", referencePressure, "bara");
+      double dewPointK = sourceStream.getHydrocarbonDewPoint("K", referencePressure, "bara");
 
       targetStream.setPressure(referencePressure, "bara");
       targetStream.setTemperature(dewPointK + marginKelvin, "K");
@@ -146,8 +144,7 @@ public final class CalculatorLibrary {
    *
    * @return a calculator function that performs dew point targeting
    */
-  public static BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface>
-      dewPointTargeting() {
+  public static BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface> dewPointTargeting() {
     return dewPointTargeting(0.0);
   }
 
@@ -158,7 +155,8 @@ public final class CalculatorLibrary {
     throw new IllegalArgumentException("Expected a Stream for " + role);
   }
 
-  private static Stream requireFirstStream(ArrayList<ProcessEquipmentInterface> inputs, String role) {
+  private static Stream requireFirstStream(ArrayList<ProcessEquipmentInterface> inputs,
+      String role) {
     if (inputs == null || inputs.isEmpty()) {
       throw new IllegalArgumentException("Expected at least one input stream for " + role);
     }

@@ -35,14 +35,15 @@ public final class DexpiRoundTripProfile {
     Objects.requireNonNull(processSystem, "processSystem");
     List<String> violations = new ArrayList<>();
 
-    long streamCount = processSystem.getUnitOperations().stream()
-        .filter(DexpiStream.class::isInstance).count();
+    long streamCount =
+        processSystem.getUnitOperations().stream().filter(DexpiStream.class::isInstance).count();
     if (streamCount == 0) {
       violations.add("Process must contain at least one DexpiStream");
     }
 
-    List<DexpiStream> streams = processSystem.getUnitOperations().stream()
-        .filter(DexpiStream.class::isInstance).map(DexpiStream.class::cast).collect(Collectors.toList());
+    List<DexpiStream> streams =
+        processSystem.getUnitOperations().stream().filter(DexpiStream.class::isInstance)
+            .map(DexpiStream.class::cast).collect(Collectors.toList());
     for (DexpiStream stream : streams) {
       if (isBlank(stream.getName())) {
         violations.add("DexpiStream is missing a name");
@@ -52,10 +53,12 @@ public final class DexpiRoundTripProfile {
             + " requires a line number or fluid code to preserve connectivity");
       }
       if (Double.isNaN(stream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT))) {
-        violations.add("DexpiStream " + stream.getName() + " is missing operating pressure metadata");
+        violations
+            .add("DexpiStream " + stream.getName() + " is missing operating pressure metadata");
       }
       if (Double.isNaN(stream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT))) {
-        violations.add("DexpiStream " + stream.getName() + " is missing operating temperature metadata");
+        violations
+            .add("DexpiStream " + stream.getName() + " is missing operating temperature metadata");
       }
       if (Double.isNaN(stream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT))) {
         violations.add("DexpiStream " + stream.getName() + " is missing operating flow metadata");
@@ -65,9 +68,9 @@ public final class DexpiRoundTripProfile {
       }
     }
 
-    List<DexpiProcessUnit> units = processSystem.getUnitOperations().stream()
-        .filter(DexpiProcessUnit.class::isInstance).map(DexpiProcessUnit.class::cast)
-        .collect(Collectors.toList());
+    List<DexpiProcessUnit> units =
+        processSystem.getUnitOperations().stream().filter(DexpiProcessUnit.class::isInstance)
+            .map(DexpiProcessUnit.class::cast).collect(Collectors.toList());
     for (DexpiProcessUnit unit : units) {
       if (isBlank(unit.getName())) {
         violations.add("DexpiProcessUnit is missing a tag");
@@ -76,7 +79,8 @@ public final class DexpiRoundTripProfile {
         violations.add("DexpiProcessUnit " + unit.getName() + " lacks a mapped equipment enum");
       }
       if (isBlank(unit.getDexpiClass())) {
-        violations.add("DexpiProcessUnit " + unit.getName() + " does not expose its original DEXPI class");
+        violations.add(
+            "DexpiProcessUnit " + unit.getName() + " does not expose its original DEXPI class");
       }
     }
 
