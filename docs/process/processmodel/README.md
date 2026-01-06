@@ -7,6 +7,7 @@ This folder contains documentation for process system and flowsheet management i
 | Document | Description |
 |----------|-------------|
 | [ProcessSystem](process_system.md) | Main process system class and execution strategies |
+| [ProcessModel](process_model.md) | Multi-process coordination and management |
 | [ProcessModule](process_module.md) | Modular process units |
 | [Graph-Based Simulation](graph_simulation.md) | Graph-based execution and optimization |
 | [PFD Diagram Export](diagram_export.md) | Professional process flow diagram generation |

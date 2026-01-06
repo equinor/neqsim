@@ -505,4 +505,57 @@ public class Tank extends ProcessEquipmentBaseClass {
     res.applyConfig(cfg);
     return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Validates the tank setup before execution. Checks that:
+   * <ul>
+   * <li>Equipment has a valid name</li>
+   * <li>At least one inlet stream is connected</li>
+   * <li>Tank volume is positive</li>
+   * <li>Liquid level is within valid range</li>
+   * </ul>
+   *
+   * @return validation result with errors and warnings
+   */
+  @Override
+  public neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getName());
+
+    // Check: Equipment has a valid name
+    if (getName() == null || getName().trim().isEmpty()) {
+      result.addError("equipment", "Tank has no name",
+          "Set tank name in constructor: new Tank(\"MyTank\")");
+    }
+
+    // Check: At least one inlet stream is connected (via addStream or setInletStream)
+    // thermoSystem is set when setInletStream() is called
+    if (thermoSystem == null && numberOfInputStreams == 0) {
+      result.addError("stream", "No inlet stream connected",
+          "Connect inlet stream: tank.setInletStream(stream) or tank.addStream(stream)");
+    }
+
+    // Check: Tank volume is positive
+    if (volume <= 0) {
+      result.addError("dimensions", "Tank volume must be positive: " + volume + " m3",
+          "Set positive volume: tank.setVolume(100.0)");
+    }
+
+    // Check: Liquid level is in valid range (0-1)
+    if (liquidLevel < 0 || liquidLevel > 1) {
+      result.addWarning("level", "Liquid level outside 0-1 range: " + liquidLevel,
+          "Liquid level should be between 0 and 1 (fraction)");
+    }
+
+    // Check: Efficiency is in valid range
+    if (efficiency < 0 || efficiency > 1) {
+      result.addError("efficiency", "Efficiency must be between 0 and 1: " + efficiency,
+          "Set valid efficiency value");
+    }
+
+    return result;
+  }
 }

@@ -77,7 +77,107 @@ ValidationResult post = contract.checkPostconditions(system);
 - `SeparatorContract` - Validates Separator equipment
 - `ProcessSystemContract` - Validates ProcessSystem
 
-### 4. AIIntegrationHelper
+### 4. Equipment-Level Validation
+
+All process equipment classes implement `validateSetup()` to check equipment-specific configuration:
+
+```java
+// Validate individual equipment
+Separator separator = new Separator("V-100");
+ValidationResult result = separator.validateSetup();
+
+if (!result.isValid()) {
+    System.out.println("Configuration issues:");
+    result.getErrors().forEach(System.out::println);
+}
+```
+
+**Equipment Validation Checks:**
+
+| Equipment | Validations |
+|-----------|-------------|
+| **Stream** | Fluid set, temperature > 0 K |
+| **Separator** | Inlet stream connected |
+| **Mixer** | At least one inlet stream added |
+| **Splitter** | Inlet stream connected, split fractions sum to 1.0 |
+| **Tank** | Has fluid or input stream connected |
+| **DistillationColumn** | Feed streams connected, condenser/reboiler configured |
+| **Recycle** | Inlet and outlet streams set, tolerance > 0 |
+| **Adjuster** | Target and adjustment variables set, tolerance > 0 |
+| **TwoPortEquipment** | Inlet stream connected |
+
+### 5. ProcessSystem Validation
+
+ProcessSystem provides aggregate validation across all equipment:
+
+```java
+ProcessSystem process = new ProcessSystem();
+process.add(feed);
+process.add(separator);
+process.add(compressor);
+
+// Quick check before running
+if (process.isReadyToRun()) {
+    process.run();
+} else {
+    // Get combined validation result
+    ValidationResult result = process.validateSetup();
+    System.out.println(result.getReport());
+}
+
+// Get per-equipment validation
+Map<String, ValidationResult> allResults = process.validateAll();
+for (Map.Entry<String, ValidationResult> entry : allResults.entrySet()) {
+    if (!entry.getValue().isValid()) {
+        System.out.println(entry.getKey() + ": " + entry.getValue().getErrors());
+    }
+}
+```
+
+**ProcessSystem Validation Methods:**
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `validateSetup()` | `ValidationResult` | Combined result for all equipment |
+| `validateAll()` | `Map<String, ValidationResult>` | Per-equipment results |
+| `isReadyToRun()` | `boolean` | True if no CRITICAL errors |
+
+### 5b. ProcessModel Validation
+
+ProcessModel provides aggregate validation across all contained ProcessSystems:
+
+```java
+ProcessModel model = new ProcessModel();
+model.add("GasProcessing", gasProcess);
+model.add("OilProcessing", oilProcess);
+
+// Quick check before running
+if (model.isReadyToRun()) {
+    model.run();
+} else {
+    // Get formatted validation report
+    System.out.println(model.getValidationReport());
+}
+
+// Get per-process validation
+Map<String, ValidationResult> allResults = model.validateAll();
+for (Map.Entry<String, ValidationResult> entry : allResults.entrySet()) {
+    if (!entry.getValue().isValid()) {
+        System.out.println(entry.getKey() + ": " + entry.getValue().getErrors());
+    }
+}
+```
+
+**ProcessModel Validation Methods:**
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `validateSetup()` | `ValidationResult` | Combined result for all processes |
+| `validateAll()` | `Map<String, ValidationResult>` | Per-process results |
+| `isReadyToRun()` | `boolean` | True if no CRITICAL errors |
+| `getValidationReport()` | `String` | Human-readable formatted report |
+
+### 6. AIIntegrationHelper
 
 Unified entry point connecting validation with RL/ML infrastructure:
 
@@ -97,7 +197,7 @@ String docs = helper.getAPIDocumentation();
 RLEnvironment env = helper.createRLEnvironment();
 ```
 
-### 5. AI Annotations
+### 7. AI Annotations
 
 Annotations for exposing methods to AI agents:
 
@@ -115,7 +215,7 @@ public void addComponent(
 ) { ... }
 ```
 
-### 6. AISchemaDiscovery
+### 8. AISchemaDiscovery
 
 Discovers annotated methods via reflection:
 
@@ -240,16 +340,18 @@ All components have comprehensive unit tests:
 | ModuleContractTest | 14 | Contract implementations |
 | AISchemaDiscoveryTest | 13 | Annotation discovery |
 | AIIntegrationHelperTest | 15 | Integration helper |
+| EquipmentValidationTest | 41 | Equipment and ProcessModel validateSetup() methods |
 
 Run tests:
 ```bash
-./mvnw test -Dtest="ValidationResultTest,SimulationValidatorTest,ModuleContractTest,AISchemaDiscoveryTest,AIIntegrationHelperTest"
+./mvnw test -Dtest="ValidationResultTest,SimulationValidatorTest,ModuleContractTest,AISchemaDiscoveryTest,AIIntegrationHelperTest,EquipmentValidationTest"
 ```
 
 ## Future Enhancements
 
-1. **Apply @AIExposable annotations** to core NeqSim methods (addComponent, setMixingRule, TPflash, etc.)
-2. **MPC validation contracts** for ProcessLinkedMPC
-3. **Surrogate model validation** integration with SurrogateModelRegistry
-4. **Real-time validation** during simulation stepping
-5. **Custom validation rules** via pluggable validators
+1. ~~**Standardize validateSetup()** across all ProcessEquipmentBaseClass subclasses~~ ✅ Implemented
+2. **Apply @AIExposable annotations** to core NeqSim methods (addComponent, setMixingRule, TPflash, etc.)
+3. **MPC validation contracts** for ProcessLinkedMPC
+4. **Surrogate model validation** integration with SurrogateModelRegistry
+5. **Real-time validation** during simulation stepping
+6. **Custom validation rules** via pluggable validators

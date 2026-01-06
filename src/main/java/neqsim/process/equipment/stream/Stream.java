@@ -784,4 +784,63 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     res.applyConfig(cfg);
     return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Validates the stream setup before execution. Checks that:
+   * <ul>
+   * <li>Equipment has a valid name</li>
+   * <li>Thermodynamic system is set and valid</li>
+   * <li>Temperature and pressure are in valid ranges</li>
+   * </ul>
+   *
+   * @return validation result with errors and warnings
+   */
+  @Override
+  public neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getName());
+
+    // Check: Equipment has a valid name
+    if (getName() == null || getName().trim().isEmpty()) {
+      result.addError("equipment", "Stream has no name",
+          "Set stream name in constructor: new Stream(\"MyStream\", thermoSystem)");
+    }
+
+    // Check: Thermodynamic system is set
+    SystemInterface fluid = getFluid();
+    if (fluid == null) {
+      result.addError("thermo", "Stream has no thermodynamic system",
+          "Create stream with fluid: new Stream(\"name\", thermoSystem)");
+      return result; // Can't check further without fluid
+    }
+
+    // Check: Has components
+    if (fluid.getNumberOfComponents() == 0) {
+      result.addError("thermo", "Stream fluid has no components",
+          "Add components: thermoSystem.addComponent(\"methane\", 1.0)");
+    }
+
+    // Check: Temperature is valid
+    if (fluid.getTemperature() < 1.0) {
+      result.addError("thermo", "Stream temperature too low: " + fluid.getTemperature() + " K",
+          "Set temperature above 1 K: stream.setTemperature(298.15, \"K\")");
+    }
+
+    // Check: Pressure is valid
+    if (fluid.getPressure() <= 0) {
+      result.addError("thermo", "Stream pressure must be positive: " + fluid.getPressure() + " bar",
+          "Set positive pressure: stream.setPressure(1.0, \"bar\")");
+    }
+
+    // Check: Mixing rule for multi-component systems
+    if (fluid.getNumberOfComponents() > 1 && fluid.getMixingRuleName() == null) {
+      result.addWarning("thermo", "Mixing rule not set for multi-component stream",
+          "Set mixing rule: thermoSystem.setMixingRule(\"classic\")");
+    }
+
+    return result;
+  }
 }

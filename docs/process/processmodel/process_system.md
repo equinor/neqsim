@@ -10,6 +10,7 @@ Documentation for the ProcessSystem class in NeqSim.
   - [Thread Safety: Shared Stream Handling](#thread-safety-shared-stream-handling)
 - [Results and Reporting](#results-and-reporting)
 - [Advanced Features](#advanced-features)
+- [Validation](#validation)
 - [Examples](#examples)
 
 ---
@@ -498,6 +499,127 @@ process.addModule(compressorTrain);
 compressorTrain.setInletStream(feedGas);
 Stream compressed = compressorTrain.getOutletStream();
 ```
+
+---
+
+## Validation
+
+ProcessSystem provides comprehensive validation to check that all equipment is properly configured before running a simulation. This helps catch configuration errors early and provides actionable error messages.
+
+### Quick Check: isReadyToRun()
+
+The simplest way to validate a process before execution:
+
+```java
+ProcessSystem process = new ProcessSystem();
+process.add(feed);
+process.add(separator);
+process.add(compressor);
+
+// Quick check - returns true if no CRITICAL errors
+if (process.isReadyToRun()) {
+    process.run();
+} else {
+    System.out.println("Process not ready to run");
+    ValidationResult result = process.validateSetup();
+    result.getErrors().forEach(System.out::println);
+}
+```
+
+### Detailed Validation: validateSetup()
+
+Get a combined `ValidationResult` for the entire process system:
+
+```java
+ValidationResult result = process.validateSetup();
+
+if (!result.isValid()) {
+    System.out.println("Validation issues found:");
+    System.out.println(result.getReport());
+    
+    // Iterate through specific issues
+    for (ValidationIssue issue : result.getIssues()) {
+        System.out.println(issue.getSeverity() + ": " + issue.getMessage());
+        System.out.println("  Fix: " + issue.getRemediation());
+    }
+}
+```
+
+**Severity Levels:**
+| Level | Description |
+|-------|-------------|
+| `CRITICAL` | Blocks execution - must be fixed |
+| `MAJOR` | Likely to cause errors during simulation |
+| `MINOR` | May affect accuracy of results |
+| `INFO` | Informational warnings |
+
+### Per-Equipment Validation: validateAll()
+
+Get individual validation results for each piece of equipment:
+
+```java
+Map<String, ValidationResult> allResults = process.validateAll();
+
+for (Map.Entry<String, ValidationResult> entry : allResults.entrySet()) {
+    String equipmentName = entry.getKey();
+    ValidationResult equipResult = entry.getValue();
+    
+    if (!equipResult.isValid()) {
+        System.out.println(equipmentName + " has issues:");
+        equipResult.getErrors().forEach(e -> System.out.println("  - " + e));
+    }
+}
+```
+
+### Equipment-Level Validation
+
+Each equipment class implements `validateSetup()` to check equipment-specific requirements:
+
+| Equipment | Validates |
+|-----------|-----------|
+| Stream | Has fluid set, temperature > 0 K |
+| Separator | Inlet stream connected |
+| Mixer | At least one inlet stream |
+| Splitter | Inlet stream connected, split fractions sum to 1.0 |
+| Tank | Has fluid or input stream |
+| DistillationColumn | Feed streams connected, condenser/reboiler configured |
+| Recycle | Inlet and outlet streams connected, tolerance > 0 |
+| Adjuster | Target and adjustment variables set, tolerance > 0 |
+| TwoPortEquipment | Inlet stream connected |
+
+**Example - Individual Equipment Validation:**
+
+```java
+Separator separator = new Separator("V-100");
+// Forgot to set inlet stream
+
+ValidationResult result = separator.validateSetup();
+if (!result.isValid()) {
+    // Will report: "Separator 'V-100' has no inlet stream connected"
+    System.out.println(result.getReport());
+}
+```
+
+### Validation in AI/ML Workflows
+
+For AI agents and automated workflows, validation provides structured feedback:
+
+```java
+AIIntegrationHelper helper = AIIntegrationHelper.forProcess(process);
+
+if (helper.isReady()) {
+    ExecutionResult result = helper.safeRun();
+} else {
+    // Get issues as structured text for AI to parse
+    String[] issues = helper.getIssuesAsText();
+    for (String issue : issues) {
+        // AI can parse and fix these issues
+        System.out.println(issue);
+    }
+}
+```
+
+See [AI Validation Framework](../../integration/ai_validation_framework.md) for more details on AI integration.
 
 ---
 

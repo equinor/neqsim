@@ -2017,4 +2017,93 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public int getNumerOfTrays() {
     return numberOfTrays;
   }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Validates the distillation column setup before execution. Checks that:
+   * <ul>
+   * <li>Equipment has a valid name</li>
+   * <li>At least one feed stream is connected</li>
+   * <li>Number of trays is positive</li>
+   * <li>Solver parameters are valid</li>
+   * </ul>
+   *
+   * @return validation result with errors and warnings
+   */
+  @Override
+  public neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getName());
+
+    // Check: Equipment has a valid name
+    if (getName() == null || getName().trim().isEmpty()) {
+      result.addError("equipment", "Distillation column has no name",
+          "Set column name in constructor: new DistillationColumn(\"MyColumn\", 10, true, true)");
+    }
+
+    // Check: At least one feed stream is connected
+    if (feedStreams.isEmpty() && unassignedFeedStreams.isEmpty()) {
+      result.addError("stream", "No feed streams connected",
+          "Add feed stream: column.addFeedStream(feedStream, trayNumber)");
+    }
+
+    // Check: Number of trays is positive
+    if (numberOfTrays <= 0) {
+      result.addError("trays", "Number of trays must be positive: " + numberOfTrays,
+          "Specify trays in constructor: new DistillationColumn(\"name\", 10, true, true)");
+    }
+
+    // Check: Trays list is properly initialized
+    if (trays.isEmpty()) {
+      result.addError("trays", "No trays initialized",
+          "Ensure column is constructed with proper number of trays");
+    }
+
+    // Check: Condenser and reboiler configuration
+    if (!hasCondenser && !hasReboiler) {
+      result.addWarning("configuration", "Column has neither condenser nor reboiler",
+          "Consider adding condenser and/or reboiler for typical distillation");
+    }
+
+    // Check: Pressure settings
+    if (topTrayPressure > 0 && bottomTrayPressure > 0 && topTrayPressure > bottomTrayPressure) {
+      result.addWarning(
+          "pressure", "Top pressure (" + topTrayPressure + " bar) > bottom pressure ("
+              + bottomTrayPressure + " bar)",
+          "Typically bottom pressure >= top pressure in distillation columns");
+    }
+
+    // Check: Solver tolerances are positive
+    if (temperatureTolerance <= 0) {
+      result.addError("solver", "Temperature tolerance must be positive: " + temperatureTolerance,
+          "Set positive tolerance: column.setTemperatureTolerance(0.01)");
+    }
+
+    if (massBalanceTolerance <= 0) {
+      result.addError("solver", "Mass balance tolerance must be positive: " + massBalanceTolerance,
+          "Set positive tolerance");
+    }
+
+    // Check: Max iterations is reasonable
+    if (maxNumberOfIterations <= 0) {
+      result.addError("solver", "Max iterations must be positive: " + maxNumberOfIterations,
+          "Set positive max iterations: column.setMaxNumberOfIterations(50)");
+    } else if (maxNumberOfIterations < 10) {
+      result.addWarning("solver",
+          "Max iterations (" + maxNumberOfIterations + ") may be too low for convergence",
+          "Consider increasing max iterations to at least 50");
+    }
+
+    // Check: Relaxation factor in valid range for damped solver
+    if (solverType == SolverType.DAMPED_SUBSTITUTION
+        && (relaxationFactor <= 0 || relaxationFactor > 1)) {
+      result.addWarning("solver",
+          "Relaxation factor outside typical range (0,1]: " + relaxationFactor,
+          "Set relaxation factor between 0 and 1: column.setRelaxationFactor(0.5)");
+    }
+
+    return result;
+  }
 }

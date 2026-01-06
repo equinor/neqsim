@@ -595,4 +595,72 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   public void setAdjustedValueSetter(Consumer<Double> adjustedValueSetter) {
     this.adjustedValueSetter = (eq, val) -> adjustedValueSetter.accept(val);
   }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Validates the adjuster setup before execution. Checks that:
+   * <ul>
+   * <li>Equipment has a valid name</li>
+   * <li>Adjusted equipment is set</li>
+   * <li>Target equipment or value is set</li>
+   * <li>Tolerance is positive</li>
+   * </ul>
+   *
+   * @return validation result with errors and warnings
+   */
+  @Override
+  public neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getName());
+
+    // Check: Equipment has a valid name
+    if (getName() == null || getName().trim().isEmpty()) {
+      result.addError("equipment", "Adjuster has no name",
+          "Set adjuster name in constructor: new Adjuster(\"MyAdjuster\")");
+    }
+
+    // Check: Adjusted equipment is set
+    if (adjustedEquipment == null) {
+      result.addError("adjusted", "No adjusted equipment set",
+          "Set adjusted equipment: adjuster.setAdjustedVariable(equipment, \"variableName\")");
+    }
+
+    // Check: Target equipment or calculator is set
+    if (targetEquipment == null && targetValueCalculator == null) {
+      result.addWarning("target", "No target equipment or value calculator set",
+          "Set target: adjuster.setTargetVariable(equipment, \"variableName\", targetValue)");
+    }
+
+    // Check: Adjusted variable is specified (if not using custom getter/setter)
+    if (adjustedEquipment != null && adjustedValueGetter == null
+        && (adjustedVariable == null || adjustedVariable.trim().isEmpty())) {
+      result.addWarning("adjusted", "Adjusted variable name not specified",
+          "Specify variable: adjuster.setAdjustedVariable(equipment, \"variableName\")");
+    }
+
+    // Check: Target variable is specified (if not using custom calculator)
+    if (targetEquipment != null && targetValueCalculator == null
+        && (targetVariable == null || targetVariable.trim().isEmpty())) {
+      result.addWarning("target", "Target variable name not specified",
+          "Specify variable: adjuster.setTargetVariable(equipment, \"variableName\", value)");
+    }
+
+    // Check: Tolerance is positive
+    if (tolerance <= 0) {
+      result.addError("tolerance", "Tolerance must be positive: " + tolerance,
+          "Set positive tolerance: adjuster.setTolerance(1e-6)");
+    }
+
+    // Check: Min/max adjusted value bounds are consistent
+    if (maxAdjustedValue <= minAdjustedValue) {
+      result.addWarning("bounds",
+          "Max adjusted value (" + maxAdjustedValue + ") <= min adjusted value (" + minAdjustedValue
+              + ")",
+          "Set consistent bounds: adjuster.setMaxAdjustedValue(max); adjuster.setMinAdjustedValue(min)");
+    }
+
+    return result;
+  }
 }

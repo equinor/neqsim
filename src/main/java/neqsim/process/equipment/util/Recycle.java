@@ -1017,4 +1017,79 @@ public class Recycle extends ProcessEquipmentBaseClass implements MixerInterface
     res.applyConfig(cfg);
     return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Validates the recycle setup before execution. Checks that:
+   * <ul>
+   * <li>Equipment has a valid name</li>
+   * <li>At least one input stream is connected</li>
+   * <li>Outlet stream is set</li>
+   * <li>Tolerance values are positive</li>
+   * </ul>
+   *
+   * @return validation result with errors and warnings
+   */
+  @Override
+  public neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getName());
+
+    // Check: Equipment has a valid name
+    if (getName() == null || getName().trim().isEmpty()) {
+      result.addError("equipment", "Recycle has no name",
+          "Set recycle name in constructor: new Recycle(\"MyRecycle\")");
+    }
+
+    // Check: At least one input stream is connected
+    if (numberOfInputStreams == 0 || streams.isEmpty()) {
+      result.addError("stream", "No input streams connected",
+          "Add input stream: recycle.addStream(stream)");
+    }
+
+    // Check: Outlet stream is set
+    if (outletStream == null) {
+      result.addWarning("stream", "Outlet stream not set",
+          "Set outlet stream: recycle.setOutletStream(stream)");
+    }
+
+    // Check: Mixed stream is initialized
+    if (mixedStream == null) {
+      result.addWarning("stream", "Mixed stream not initialized",
+          "Ensure streams are added before running");
+    }
+
+    // Check: Tolerance values are positive
+    if (flowTolerance <= 0) {
+      result.addError("tolerance", "Flow tolerance must be positive: " + flowTolerance,
+          "Set positive tolerance: recycle.setFlowTolerance(1e-2)");
+    }
+
+    if (compositionTolerance <= 0) {
+      result.addError("tolerance",
+          "Composition tolerance must be positive: " + compositionTolerance,
+          "Set positive tolerance: recycle.setCompositionTolerance(1e-2)");
+    }
+
+    if (temperatureTolerance <= 0) {
+      result.addError("tolerance",
+          "Temperature tolerance must be positive: " + temperatureTolerance,
+          "Set positive tolerance: recycle.setTemperatureTolerance(1e-2)");
+    }
+
+    if (pressureTolerance <= 0) {
+      result.addError("tolerance", "Pressure tolerance must be positive: " + pressureTolerance,
+          "Set positive tolerance: recycle.setPressureTolerance(1e-2)");
+    }
+
+    // Check: Max iterations is reasonable
+    if (maxIterations <= 0) {
+      result.addError("iterations", "Max iterations must be positive: " + maxIterations,
+          "Set positive max iterations: recycle.setMaxIterations(10)");
+    }
+
+    return result;
+  }
 }

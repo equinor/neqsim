@@ -1688,4 +1688,75 @@ public class Separator extends ProcessEquipmentBaseClass
    *
    * public SeparatorReport getReport(){ return this.new SeparatorReport(); }
    */
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Validates the separator setup before execution. Checks that:
+   * <ul>
+   * <li>Equipment has a valid name</li>
+   * <li>At least one inlet stream is connected</li>
+   * <li>Separator dimensions are positive</li>
+   * <li>Liquid level is within valid range</li>
+   * </ul>
+   *
+   * @return validation result with errors and warnings
+   */
+  @Override
+  public neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getName());
+
+    // Check: Equipment has a valid name (from interface default)
+    if (getName() == null || getName().trim().isEmpty()) {
+      result.addError("equipment", "Separator has no name",
+          "Set separator name in constructor: new Separator(\"MySeparator\")");
+    }
+
+    // Check: At least one inlet stream is connected
+    if (numberOfInputStreams == 0) {
+      result.addError("stream", "No inlet stream connected",
+          "Connect inlet stream: separator.setInletStream(stream) or separator.addStream(stream)");
+    }
+
+    // Check: Inlet stream has valid fluid
+    if (numberOfInputStreams > 0 && thermoSystem == null) {
+      result.addError("stream", "Inlet stream has no fluid system",
+          "Ensure inlet stream has a valid thermodynamic system");
+    }
+
+    // Check: Separator dimensions are positive
+    if (separatorLength <= 0) {
+      result.addError("dimensions", "Separator length must be positive: " + separatorLength + " m",
+          "Set positive length: separator.setSeparatorLength(5.0)");
+    }
+
+    if (internalDiameter <= 0) {
+      result.addError("dimensions",
+          "Separator diameter must be positive: " + internalDiameter + " m",
+          "Set positive diameter: separator.setInternalDiameter(1.0)");
+    }
+
+    // Check: Liquid level is within valid range (0-1)
+    if (liquidLevel < 0 || liquidLevel > internalDiameter) {
+      result.addWarning("level", "Liquid level may be outside valid range: " + liquidLevel
+          + " m (diameter: " + internalDiameter + " m)",
+          "Set liquid level between 0 and separator diameter");
+    }
+
+    // Check: Pressure drop is non-negative
+    if (pressureDrop < 0) {
+      result.addWarning("pressure", "Negative pressure drop: " + pressureDrop + " bar",
+          "Pressure drop should typically be >= 0");
+    }
+
+    // Check: Efficiency is in valid range
+    if (efficiency < 0 || efficiency > 1) {
+      result.addError("efficiency", "Efficiency must be between 0 and 1: " + efficiency,
+          "Set valid efficiency: separator.setEfficiency(0.95)");
+    }
+
+    return result;
+  }
 }
