@@ -3458,4 +3458,353 @@ public class Compressor extends TwoPortEquipment
       driver.resetOverloadTimer();
     }
   }
+
+  /**
+   * Creates a new Builder for constructing a Compressor with a fluent API.
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * Compressor comp = Compressor.builder("K-100").inletStream(feed).outletPressure(50.0, "bara")
+   *     .polytropicEfficiency(0.75).speed(8000).build();
+   * </pre>
+   *
+   * @param name the name of the compressor
+   * @return a new Builder instance
+   */
+  public static Builder builder(String name) {
+    return new Builder(name);
+  }
+
+  /**
+   * Builder class for constructing Compressor instances with a fluent API.
+   *
+   * <p>
+   * Provides a readable and maintainable way to construct complex compressor configurations. All
+   * configuration options available through setters on Compressor are accessible via builder
+   * methods.
+   * </p>
+   *
+   * @author NeqSim
+   * @version 1.0
+   */
+  public static class Builder {
+    private final String name;
+    private StreamInterface inletStream = null;
+    private double outletPressure = -1.0;
+    private String pressureUnit = "bara";
+    private double compressionRatio = -1.0;
+    private double isentropicEfficiency = 1.0;
+    private double polytropicEfficiency = 1.0;
+    private boolean usePolytropicCalc = false;
+    private double speed = 3000;
+    private double maxSpeed = 30000;
+    private double minSpeed = 0;
+    private double outTemperature = -1.0;
+    private boolean useOutTemperature = false;
+    private double maxOutletPressure = -1.0;
+    private boolean useCompressorChart = false;
+    private String polytropicMethod = "schultz";
+    private boolean useRigorousPolytropicMethod = false;
+    private boolean useGERG2008 = false;
+    private boolean useLeachman = false;
+    private boolean useVega = false;
+    private int numberOfCompressorCalcSteps = 40;
+    private boolean interpolateMapLookup = false;
+
+    /**
+     * Creates a new Builder with the specified compressor name.
+     *
+     * @param name the name of the compressor
+     */
+    public Builder(String name) {
+      this.name = name;
+    }
+
+    /**
+     * Sets the inlet stream for the compressor.
+     *
+     * @param stream the inlet stream
+     * @return this builder for chaining
+     */
+    public Builder inletStream(StreamInterface stream) {
+      this.inletStream = stream;
+      return this;
+    }
+
+    /**
+     * Sets the outlet pressure in bara.
+     *
+     * @param pressure outlet pressure value in bara
+     * @return this builder for chaining
+     */
+    public Builder outletPressure(double pressure) {
+      this.outletPressure = pressure;
+      this.pressureUnit = "bara";
+      return this;
+    }
+
+    /**
+     * Sets the outlet pressure with unit specification.
+     *
+     * @param pressure outlet pressure value
+     * @param unit pressure unit (e.g., "bara", "barg", "psia")
+     * @return this builder for chaining
+     */
+    public Builder outletPressure(double pressure, String unit) {
+      this.outletPressure = pressure;
+      this.pressureUnit = unit;
+      return this;
+    }
+
+    /**
+     * Sets the compression ratio (outlet/inlet pressure).
+     *
+     * @param ratio compression ratio (must be > 1.0)
+     * @return this builder for chaining
+     */
+    public Builder compressionRatio(double ratio) {
+      this.compressionRatio = ratio;
+      return this;
+    }
+
+    /**
+     * Sets the isentropic efficiency.
+     *
+     * @param efficiency efficiency value (0.0-1.0)
+     * @return this builder for chaining
+     */
+    public Builder isentropicEfficiency(double efficiency) {
+      this.isentropicEfficiency = efficiency;
+      this.usePolytropicCalc = false;
+      return this;
+    }
+
+    /**
+     * Sets the polytropic efficiency.
+     *
+     * @param efficiency efficiency value (0.0-1.0)
+     * @return this builder for chaining
+     */
+    public Builder polytropicEfficiency(double efficiency) {
+      this.polytropicEfficiency = efficiency;
+      this.usePolytropicCalc = true;
+      return this;
+    }
+
+    /**
+     * Sets the compressor speed in RPM.
+     *
+     * @param speed speed in RPM
+     * @return this builder for chaining
+     */
+    public Builder speed(double speed) {
+      this.speed = speed;
+      return this;
+    }
+
+    /**
+     * Sets the maximum allowed speed in RPM.
+     *
+     * @param maxSpeed maximum speed in RPM
+     * @return this builder for chaining
+     */
+    public Builder maxSpeed(double maxSpeed) {
+      this.maxSpeed = maxSpeed;
+      return this;
+    }
+
+    /**
+     * Sets the minimum allowed speed in RPM.
+     *
+     * @param minSpeed minimum speed in RPM
+     * @return this builder for chaining
+     */
+    public Builder minSpeed(double minSpeed) {
+      this.minSpeed = minSpeed;
+      return this;
+    }
+
+    /**
+     * Sets the target outlet temperature (used for back-calculating efficiency).
+     *
+     * @param temperature outlet temperature in Kelvin
+     * @return this builder for chaining
+     */
+    public Builder outletTemperature(double temperature) {
+      this.outTemperature = temperature;
+      this.useOutTemperature = true;
+      return this;
+    }
+
+    /**
+     * Sets the outlet temperature with unit specification.
+     *
+     * @param temperature outlet temperature value
+     * @param unit temperature unit ("K", "C", "F")
+     * @return this builder for chaining
+     */
+    public Builder outletTemperature(double temperature, String unit) {
+      if ("C".equalsIgnoreCase(unit)) {
+        this.outTemperature = temperature + 273.15;
+      } else if ("F".equalsIgnoreCase(unit)) {
+        this.outTemperature = (temperature - 32.0) * 5.0 / 9.0 + 273.15;
+      } else {
+        this.outTemperature = temperature;
+      }
+      this.useOutTemperature = true;
+      return this;
+    }
+
+    /**
+     * Sets the maximum outlet pressure limit.
+     *
+     * @param pressure maximum outlet pressure in bara
+     * @return this builder for chaining
+     */
+    public Builder maxOutletPressure(double pressure) {
+      this.maxOutletPressure = pressure;
+      return this;
+    }
+
+    /**
+     * Enables use of a compressor performance chart.
+     *
+     * @return this builder for chaining
+     */
+    public Builder useCompressorChart() {
+      this.useCompressorChart = true;
+      return this;
+    }
+
+    /**
+     * Enables interpolated map lookup for compressor chart.
+     *
+     * @return this builder for chaining
+     */
+    public Builder interpolateMapLookup() {
+      this.interpolateMapLookup = true;
+      return this;
+    }
+
+    /**
+     * Sets the polytropic calculation method.
+     *
+     * @param method method name ("schultz", "mallen", or "huntington")
+     * @return this builder for chaining
+     */
+    public Builder polytropicMethod(String method) {
+      this.polytropicMethod = method;
+      return this;
+    }
+
+    /**
+     * Enables the rigorous polytropic calculation method with many steps.
+     *
+     * @return this builder for chaining
+     */
+    public Builder useRigorousPolytropicMethod() {
+      this.useRigorousPolytropicMethod = true;
+      return this;
+    }
+
+    /**
+     * Sets the number of calculation steps for polytropic calculations.
+     *
+     * @param steps number of steps (default is 40)
+     * @return this builder for chaining
+     */
+    public Builder numberOfCompressorCalcSteps(int steps) {
+      this.numberOfCompressorCalcSteps = steps;
+      return this;
+    }
+
+    /**
+     * Enables GERG-2008 equation of state for calculations.
+     *
+     * @return this builder for chaining
+     */
+    public Builder useGERG2008() {
+      this.useGERG2008 = true;
+      return this;
+    }
+
+    /**
+     * Enables Leachman equation of state for hydrogen calculations.
+     *
+     * @return this builder for chaining
+     */
+    public Builder useLeachman() {
+      this.useLeachman = true;
+      return this;
+    }
+
+    /**
+     * Enables VEGA equation of state for helium calculations.
+     *
+     * @return this builder for chaining
+     */
+    public Builder useVega() {
+      this.useVega = true;
+      return this;
+    }
+
+    /**
+     * Builds and returns the configured Compressor instance.
+     *
+     * @return a new Compressor instance with the specified configuration
+     * @throws IllegalStateException if required parameters are missing
+     */
+    public Compressor build() {
+      Compressor compressor;
+      if (interpolateMapLookup) {
+        compressor = new Compressor(name, true);
+      } else {
+        compressor = new Compressor(name);
+      }
+
+      if (inletStream != null) {
+        compressor.setInletStream(inletStream);
+      }
+
+      if (outletPressure > 0) {
+        compressor.setOutletPressure(outletPressure, pressureUnit);
+      }
+
+      if (compressionRatio > 0) {
+        compressor.setCompressionRatio(compressionRatio);
+      }
+
+      compressor.setIsentropicEfficiency(isentropicEfficiency);
+      compressor.setPolytropicEfficiency(polytropicEfficiency);
+      compressor.setUsePolytropicCalc(usePolytropicCalc);
+      compressor.setSpeed(speed);
+      compressor.setMaximumSpeed(maxSpeed);
+      compressor.setMinimumSpeed(minSpeed);
+
+      if (useOutTemperature && outTemperature > 0) {
+        compressor.setOutTemperature(outTemperature);
+      }
+
+      if (maxOutletPressure > 0) {
+        compressor.setMaxOutletPressure(maxOutletPressure);
+        compressor.setIsSetMaxOutletPressure(true);
+      }
+
+      if (useCompressorChart) {
+        compressor.getCompressorChart().setUseCompressorChart(true);
+      }
+
+      compressor.setPolytropicMethod(polytropicMethod);
+      compressor.setUseRigorousPolytropicMethod(useRigorousPolytropicMethod);
+      compressor.setNumberOfCompressorCalcSteps(numberOfCompressorCalcSteps);
+      compressor.setUseGERG2008(useGERG2008);
+      compressor.setUseLeachman(useLeachman);
+      compressor.setUseVega(useVega);
+
+      return compressor;
+    }
+  }
 }

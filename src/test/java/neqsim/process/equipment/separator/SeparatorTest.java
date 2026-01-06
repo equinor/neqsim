@@ -147,8 +147,7 @@ class SeparatorTest extends neqsim.NeqSimTest {
     entrainmentSeparator.run();
 
     double toleranceGas = Math.max(1e-8, Math.abs(expectedGasMoles) * 1e-6);
-    double toleranceLiquid = Math.max(1e-8,
-        Math.abs(expectedOilMoles + expectedWaterMoles) * 1e-6);
+    double toleranceLiquid = Math.max(1e-8, Math.abs(expectedOilMoles + expectedWaterMoles) * 1e-6);
     double toleranceGasInLiquid = Math.max(1e-8, Math.abs(expectedGasInLiquidMoles) * 1e-6);
 
     Assertions.assertEquals(expectedGasMoles,
@@ -168,8 +167,8 @@ class SeparatorTest extends neqsim.NeqSimTest {
     baselineSeparator.run();
 
     Stream zeroEntrainmentFeed = createEntrainmentFeed("zeroEntrainmentFeed");
-    Separator zeroEntrainmentSeparator = new Separator("zero entrainment separator",
-        zeroEntrainmentFeed);
+    Separator zeroEntrainmentSeparator =
+        new Separator("zero entrainment separator", zeroEntrainmentFeed);
     zeroEntrainmentSeparator.setEntrainment(0.0, "mole", "feed", "oil", "gas");
     zeroEntrainmentSeparator.setEntrainment(0.0, "mole", "feed", "aqueous", "gas");
     zeroEntrainmentSeparator.setEntrainment(0.0, "mole", "feed", "gas", "liquid");
@@ -225,18 +224,104 @@ class SeparatorTest extends neqsim.NeqSimTest {
       if (liquidTotal > 0.0) {
         double oilShare = oilMoles / liquidTotal;
         double waterShare = waterMoles / liquidTotal;
-        workingFluid.addPhaseFractionToPhase(gasToLiquidFraction * oilShare, "mole", "feed",
-            "gas", "oil");
+        workingFluid.addPhaseFractionToPhase(gasToLiquidFraction * oilShare, "mole", "feed", "gas",
+            "oil");
         workingFluid.addPhaseFractionToPhase(gasToLiquidFraction * waterShare, "mole", "feed",
             "gas", "aqueous");
       }
     } else if (workingFluid.hasPhaseType("oil")) {
       workingFluid.addPhaseFractionToPhase(gasToLiquidFraction, "mole", "feed", "gas", "oil");
     } else if (workingFluid.hasPhaseType("aqueous")) {
-      workingFluid.addPhaseFractionToPhase(gasToLiquidFraction, "mole", "feed", "gas",
-          "aqueous");
+      workingFluid.addPhaseFractionToPhase(gasToLiquidFraction, "mole", "feed", "gas", "aqueous");
     }
 
     return workingFluid;
   }
+
+  /**
+   * Test the Builder pattern for creating separators.
+   */
+  @Test
+  void testBuilderPattern() {
+    neqsim.thermo.system.SystemSrkEos fluid = new neqsim.thermo.system.SystemSrkEos(300.0, 50.0);
+    fluid.addComponent("methane", 70.0);
+    fluid.addComponent("ethane", 10.0);
+    fluid.addComponent("n-heptane", 15.0);
+    fluid.addComponent("water", 5.0);
+    fluid.setMixingRule(2);
+    fluid.setMultiPhaseCheck(true);
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setTemperature(40.0, "C");
+    feed.setFlowRate(1000.0, "kg/hr");
+    feed.run();
+
+    Separator sep = Separator.builder("V-100").inletStream(feed).horizontal().length(6.0)
+        .diameter(2.0).liquidLevel(1.0).pressureDrop(0.1).efficiency(0.98).build();
+
+    sep.run();
+
+    Assertions.assertEquals("V-100", sep.getName());
+    Assertions.assertEquals(6.0, sep.getSeparatorLength(), 0.001);
+    Assertions.assertEquals(2.0, sep.getInternalDiameter(), 0.001);
+    Assertions.assertEquals(0.98, sep.getEfficiency(), 0.001);
+    // Verify separation occurred
+    Assertions.assertNotNull(sep.getGasOutStream());
+    Assertions.assertNotNull(sep.getLiquidOutStream());
+  }
+
+  /**
+   * Test the Builder pattern with vertical orientation.
+   */
+  @Test
+  void testBuilderVerticalSeparator() {
+    neqsim.thermo.system.SystemSrkEos fluid = new neqsim.thermo.system.SystemSrkEos(300.0, 30.0);
+    fluid.addComponent("methane", 80.0);
+    fluid.addComponent("n-pentane", 20.0);
+    fluid.setMixingRule(2);
+    fluid.setMultiPhaseCheck(true);
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setTemperature(25.0, "C");
+    feed.setFlowRate(500.0, "kg/hr");
+    feed.run();
+
+    Separator sep = Separator.builder("V-101").inletStream(feed).vertical().length(4.0)
+        .diameter(1.5).designLiquidLevelFraction(0.6).build();
+
+    sep.run();
+
+    Assertions.assertEquals("V-101", sep.getName());
+    Assertions.assertEquals("vertical", sep.getOrientation());
+    Assertions.assertEquals(4.0, sep.getSeparatorLength(), 0.001);
+  }
+
+  /**
+   * Test the Builder pattern with entrainment specifications.
+   */
+  @Test
+  void testBuilderWithEntrainment() {
+    neqsim.thermo.system.SystemSrkEos fluid = new neqsim.thermo.system.SystemSrkEos(300.0, 40.0);
+    fluid.addComponent("methane", 60.0);
+    fluid.addComponent("n-hexane", 30.0);
+    fluid.addComponent("water", 10.0);
+    fluid.setMixingRule(2);
+    fluid.setMultiPhaseCheck(true);
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setTemperature(35.0, "C");
+    feed.setFlowRate(800.0, "kg/hr");
+    feed.run();
+
+    Separator sep =
+        Separator.builder("V-102").inletStream(feed).horizontal().length(5.0).diameter(1.8)
+            .oilInGas(0.001, "mole").waterInGas(0.0005, "mole").gasInLiquid(0.002, "mole").build();
+
+    sep.run();
+
+    Assertions.assertEquals("V-102", sep.getName());
+    // Verify streams are created
+    Assertions.assertTrue(sep.getGasOutStream().getFlowRate("kg/hr") > 0);
+  }
 }
+

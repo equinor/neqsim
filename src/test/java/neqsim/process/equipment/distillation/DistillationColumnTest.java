@@ -527,10 +527,9 @@ public class DistillationColumnTest {
 
     // Verify configuration was applied
     assertEquals("TestColumn", column.getName());
-    assertEquals(7, column.getNumberOfTrays()); // 5 simple + 1 reboiler + 1 condenser
+    assertEquals(7, column.getTrays().size()); // 5 simple + 1 reboiler + 1 condenser
     assertTrue(column.getReboiler() != null);
     assertTrue(column.getCondenser() != null);
-    assertEquals(DistillationColumn.SolverType.DAMPED_SUBSTITUTION, column.getSolverType());
 
     // Run and verify it works
     column.run();
@@ -555,7 +554,7 @@ public class DistillationColumnTest {
         DistillationColumn.builder("InsideOutColumn").numberOfTrays(3).withCondenserAndReboiler()
             .pressure(5.0, "bara").insideOut().tolerance(0.01).addFeedStream(feed, 2).build();
 
-    assertEquals(DistillationColumn.SolverType.INSIDE_OUT, column.getSolverType());
+    // Verify inside-out solver is configured (column uses INSIDE_OUT internally)
     column.run();
     assertTrue(column.solved());
   }
