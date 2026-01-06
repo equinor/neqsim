@@ -1181,6 +1181,15 @@ public class MechanicalDesign implements java.io.Serializable {
   }
 
   /**
+   * Check if this mechanical design has any design standards assigned.
+   *
+   * @return true if at least one design standard is assigned
+   */
+  public boolean hasDesignStandard() {
+    return designStandard != null && !designStandard.isEmpty();
+  }
+
+  /**
    * <p>
    * Getter for the field <code>maxDesignVolumeFlow</code>.
    * </p>

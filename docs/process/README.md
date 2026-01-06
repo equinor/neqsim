@@ -38,6 +38,15 @@ This documentation is organized into the following sections:
 | [safety/](safety/) | Safety systems (PSV, ESD, blowdown) |
 | [controllers.md](controllers.md) | Process controllers and logic |
 
+### Mechanical Design Documentation
+
+| Document | Description |
+|----------|-------------|
+| [mechanical_design_standards.md](mechanical_design_standards.md) | Design standards (NORSOK, ASME, API, DNV, etc.) |
+| [mechanical_design_database.md](mechanical_design_database.md) | Data sources, database schemas, and CSV configuration |
+| [torg_integration.md](torg_integration.md) | Technical Requirements Documents (TORG) integration |
+| [field_development_orchestration.md](field_development_orchestration.md) | Complete design workflow orchestration |
+
 ### Equipment Categories
 
 | Category | Documentation | Classes |
