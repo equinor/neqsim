@@ -90,10 +90,22 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
 
   /** {@inheritDoc} */
   public Map<String, Object> calcValveSize(double percentOpening) {
-
+    ThrottlingValve valve = (ThrottlingValve) valveMechanicalDesign.getProcessEquipment();
     Map<String, Object> result = valveMechanicalDesign.fullOutput ? new HashMap<>() : null;
     double Kv = calcKv(percentOpening);
-    result.put("choked", false);
+
+    // Check for choked flow in gas valves
+    boolean choked = false;
+    if (valve.isGasValve()) {
+      double P1 = valve.getInletStream().getPressure("bara");
+      double P2 = valve.getOutletStream().getPressure("bara");
+      double x = (P1 - P2) / P1;
+      double gamma = valve.getInletStream().getFluid().getGamma2();
+      double Fgamma = gamma / 1.40;
+      choked = x >= Fgamma * xT;
+    }
+
+    result.put("choked", choked);
     result.put("Kv", Kv);
     result.put("Cv", Kv_to_Cv(Kv));
     result.put("Cg", Kv_to_Cv(Kv) * 1360);
@@ -105,32 +117,79 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * calcKv.
    * </p>
    *
-   * @param percentOpening a double
-   * @return a double
+   * <p>
+   * Calculates valve flow coefficient Kv using simplified formulas:
+   * </p>
+   * <ul>
+   * <li>For liquids: Kv = Q / sqrt(deltaP / SG) where SG = rho/1000</li>
+   * <li>For gases: Uses simplified IEC 60534 formula with expansion factor</li>
+   * </ul>
+   *
+   * @param percentOpening valve opening percentage (0-100)
+   * @return the calculated Kv value
    */
   public double calcKv(double percentOpening) {
 
-    SystemInterface fluid =
-        ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream().getFluid();
+    ThrottlingValve valve = (ThrottlingValve) valveMechanicalDesign.getProcessEquipment();
+    SystemInterface fluid = valve.getInletStream().getFluid();
 
-    Map<String, Object> result = valveMechanicalDesign.fullOutput ? new HashMap<>() : null;
     fluid.initPhysicalProperties("density");
-    double density = fluid.getDensity("kg/m3");
-    double Y = 1.0;
 
-    if (!((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).isGasValve()) {
-      density = fluid.getDensity("kg/m3") / 1000.0;
+    double P1 = valve.getInletStream().getPressure("bara");
+    double P2 = valve.getOutletStream().getPressure("bara");
+    double deltaP = P1 - P2;
+    double openingFactor =
+        valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
+
+    double Kv;
+
+    if (!valve.isGasValve()) {
+      // Liquid formula: Kv = Q * sqrt(SG / deltaP)
+      // where SG = specific gravity = rho / 1000
+      double density = fluid.getDensity("kg/m3") / 1000.0; // Convert to SG
+      double flowM3hr = valve.getInletStream().getFlowRate("m3/hr");
+      Kv = flowM3hr / Math.sqrt(deltaP / density);
+    } else {
+      // Simplified gas formula based on IEC 60534:
+      // Kv = Q / (N9 * P1 * Y) * sqrt(M * T * Z / x)
+      // N9 = 24.6 for actual flow in m3/h, P in kPa, T in K
+      double N9 = 24.6; // IEC 60534 constant for actual m3/h, P in kPa, T in K
+      // Use actual volumetric flow at inlet conditions (same as IEC 60534)
+      double flowM3sec = fluid.getFlowRate("m3/sec");
+      double flowM3hr = flowM3sec * 3600.0;
+      double T = fluid.getTemperature(); // Kelvin
+      double MW = fluid.getMolarMass("gr/mol");
+      double Z = fluid.getZ();
+      double gamma = fluid.getGamma2();
+
+      // P1 in kPa (IEC 60534 uses kPa)
+      double P1_kPa = P1 * 100.0;
+      double P2_kPa = P2 * 100.0;
+      double dP_kPa = P1_kPa - P2_kPa;
+      double x = dP_kPa / P1_kPa; // pressure ratio
+      double Fgamma = gamma / 1.40;
+      double xChoked = Fgamma * xT;
+
+      // Check for choked flow
+      boolean choked = x >= xChoked;
+      double xEffective = x;
+      if (choked && allowChoked) {
+        xEffective = xChoked; // Limit to choked condition
+      }
+
+      // Expansion factor Y (simplified)
+      double Y = Math.max(1.0 - xEffective / (3.0 * Fgamma * xT), 2.0 / 3.0);
+
+      // Gas Kv formula (IEC 60534 simplified)
+      // For choked flow, use xT*Fgamma instead of x
+      if (choked && allowChoked) {
+        Kv = flowM3hr / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / (xT * Fgamma));
+      } else {
+        Kv = flowM3hr / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / x);
+      }
     }
 
-
-    return ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream()
-        .getFlowRate("m3/hr")
-        / Math.sqrt((((ThrottlingValve) valveMechanicalDesign.getProcessEquipment())
-            .getInletStream().getPressure("bara")
-            - ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getOutletStream()
-                .getPressure("bara"))
-            / density)
-        / valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
+    return Kv / openingFactor;
   }
 
   /**
@@ -150,23 +209,62 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * calculateMolarFlow.
    * </p>
    *
-   * @param actualKv a double
-   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
-   * @param outStream a {@link neqsim.process.equipment.stream.StreamInterface} object
-   * @return a double
+   * <p>
+   * Calculates flow rate from valve Kv using IEC 60534 formulas.
+   * </p>
+   *
+   * @param actualKv the valve flow coefficient at the current opening
+   * @param inStream inlet stream
+   * @param outStream outlet stream
+   * @return volumetric flow rate in m3/s
    */
   public double calculateMolarFlow(double actualKv, StreamInterface inStream,
       StreamInterface outStream) {
-    // Convert ΔP from Pa to bar for consistency with Kv in m3/h/√bar
+    ThrottlingValve valve = (ThrottlingValve) valveMechanicalDesign.getProcessEquipment();
+    SystemInterface fluid = inStream.getFluid();
 
-    double density = inStream.getFluid().getDensity("kg/m3");
-    if (!((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).isGasValve()) {
-      density = inStream.getFluid().getDensity("kg/m3") / 1000.0;
+    double P1 = inStream.getPressure("bara");
+    double P2 = outStream.getPressure("bara");
+    double deltaP = P1 - P2;
+
+    double flow_m3_s;
+
+    if (!valve.isGasValve()) {
+      // Liquid formula: Q = Kv * sqrt(deltaP / SG)
+      double density = fluid.getDensity("kg/m3") / 1000.0; // Convert to SG
+      double flow_m3_hr = actualKv * Math.sqrt(deltaP / density);
+      flow_m3_s = flow_m3_hr / 3600.0;
+    } else {
+      // IEC 60534 gas formula (inverse of calcKv):
+      // Q = Kv * N9 * P1 * Y / sqrt(M * T * Z / x)
+      double N9 = 24.6;
+      double T = fluid.getTemperature();
+      double MW = fluid.getMolarMass("gr/mol");
+      double Z = fluid.getZ();
+      double gamma = fluid.getGamma2();
+
+      double P1_kPa = P1 * 100.0;
+      double P2_kPa = P2 * 100.0;
+      double dP_kPa = P1_kPa - P2_kPa;
+      double x = dP_kPa / P1_kPa;
+      double Fgamma = gamma / 1.40;
+      double xChoked = Fgamma * xT;
+
+      boolean choked = x >= xChoked;
+      double xEffective = choked && allowChoked ? xChoked : x;
+
+      double Y = Math.max(1.0 - xEffective / (3.0 * Fgamma * xT), 2.0 / 3.0);
+
+      double denominator;
+      if (choked && allowChoked) {
+        denominator = Math.sqrt(MW * T * Z / (xT * Fgamma));
+      } else {
+        denominator = Math.sqrt(MW * T * Z / x);
+      }
+
+      double flow_m3_hr = actualKv * N9 * P1_kPa * Y / denominator;
+      flow_m3_s = flow_m3_hr / 3600.0;
     }
-
-    // Mass flow in kg/s
-    double flow_m3_s = (actualKv / 3600.0)
-        * Math.sqrt((inStream.getPressure("bara") - outStream.getPressure("bara")) / density);
 
     return flow_m3_s;
   }
@@ -240,25 +338,83 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * calculateOutletPressure.
    * </p>
    *
-   * @param KvAdjusted a double
-   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
-   * @return a double
+   * <p>
+   * Calculates outlet pressure for a given Kv and inlet conditions using IEC 60534 formulas. Uses
+   * bisection search for gas valves due to the complex relationship between Kv and pressure.
+   * </p>
+   *
+   * @param KvAdjusted the adjusted Kv (at current valve opening)
+   * @param inStream inlet stream
+   * @return outlet pressure in Pa
    */
   public double calculateOutletPressure(double KvAdjusted, StreamInterface inStream) {
-    // Fluid properties
-    double density = inStream.getFluid().getDensity("kg/m3"); // kg/m³
-    double molarMass = inStream.getFluid().getMolarMass("kg/mol"); // kg/mol
-    double molarFlow = inStream.getFlowRate("mole/sec"); // mol/s
-    double Q_m3_s = (molarFlow * molarMass) / density; // m³/s
-    if (!((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).isGasValve()) {
-      density = density / 1000.0; // use relative density for liquids
+    ThrottlingValve valve = (ThrottlingValve) valveMechanicalDesign.getProcessEquipment();
+    SystemInterface fluid = inStream.getFluid();
+
+    double P1 = inStream.getPressure("bara");
+    double Q_m3_s = fluid.getFlowRate("m3/sec");
+
+    if (!valve.isGasValve()) {
+      // Liquid formula: P2 = P1 - (Q / Kv)^2 / SG
+      double density = fluid.getDensity("kg/m3") / 1000.0; // Convert to SG
+      double Q_m3_hr = Q_m3_s * 3600.0;
+      double dP_bar = Math.pow(Q_m3_hr / KvAdjusted, 2) * density;
+      return (P1 - dP_bar) * 1e5;
+    } else {
+      // Gas valve: use bisection to find P2 such that calcKv gives the target Kv
+      // This is needed because the gas Kv formula is not easily invertible
+      double N9 = 24.6;
+      double T = fluid.getTemperature();
+      double MW = fluid.getMolarMass("gr/mol");
+      double Z = fluid.getZ();
+      double gamma = fluid.getGamma2();
+      double Fgamma = gamma / 1.40;
+      double Q_m3_hr = Q_m3_s * 3600.0;
+
+      // Bisection search for P2
+      double P2_low = 0.1; // bara
+      double P2_high = P1 - 0.001; // Just below P1
+      double P2_mid = (P2_low + P2_high) / 2.0;
+      double tolerance = 1e-6;
+      int maxIter = 100;
+
+      for (int i = 0; i < maxIter; i++) {
+        P2_mid = (P2_low + P2_high) / 2.0;
+
+        // Calculate Kv at this P2 using IEC 60534 formula
+        double P1_kPa = P1 * 100.0;
+        double P2_kPa = P2_mid * 100.0;
+        double dP_kPa = P1_kPa - P2_kPa;
+        double x = dP_kPa / P1_kPa;
+        double xChoked = Fgamma * xT;
+
+        boolean choked = x >= xChoked;
+        double xEffective = choked && allowChoked ? xChoked : x;
+        double Y = Math.max(1.0 - xEffective / (3.0 * Fgamma * xT), 2.0 / 3.0);
+
+        double calcKv;
+        if (choked && allowChoked) {
+          calcKv = Q_m3_hr / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / (xT * Fgamma));
+        } else {
+          calcKv = Q_m3_hr / (N9 * P1_kPa * Y) * Math.sqrt(MW * T * Z / x);
+        }
+
+        if (Math.abs(calcKv - KvAdjusted) / KvAdjusted < tolerance) {
+          break;
+        }
+
+        // If calculated Kv is too high, we need lower P2 (more pressure drop)
+        // Higher Kv means the valve is "too small" for current conditions
+        // If calculated Kv is too low, we need higher P2 (less pressure drop)
+        if (calcKv > KvAdjusted) {
+          P2_high = P2_mid;
+        } else {
+          P2_low = P2_mid;
+        }
+      }
+
+      return P2_mid * 1e5; // Convert bara to Pa
     }
-
-    // Rearranged Kv equation to get ΔP [bar]
-    double dP_bar = Math.pow((Q_m3_s * 3600.0) / KvAdjusted, 2) * density;
-
-    // Return outlet pressure [Pa]
-    return (inStream.getPressure("bara") - dP_bar) * 1e5;
   }
 
   private double Kv_to_Cv(double Kv) {
