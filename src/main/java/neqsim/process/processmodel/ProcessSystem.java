@@ -353,6 +353,124 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Validates the process system setup before execution.
+   *
+   * <p>
+   * This method validates:
+   * <ul>
+   * <li>The process system has at least one unit operation</li>
+   * <li>Each unit operation passes its own validateSetup() check</li>
+   * <li>Feed streams are defined</li>
+   * <li>Equipment names are unique (warning)</li>
+   * </ul>
+   *
+   * @return validation result with errors and warnings for all equipment
+   */
+  public neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getName());
+
+    // Check: Has unit operations
+    if (unitOperations.isEmpty()) {
+      result.addError("process", "No unit operations in process system",
+          "Add equipment: processSystem.add(stream); processSystem.add(separator);");
+      return result;
+    }
+
+    // Validate each unit operation
+    int feedStreamCount = 0;
+    java.util.Set<String> names = new java.util.HashSet<>();
+    for (int i = 0; i < unitOperations.size(); i++) {
+      ProcessEquipmentInterface equipment = unitOperations.get(i);
+
+      if (equipment == null) {
+        result.addError("unit[" + i + "]", "Null equipment at index " + i,
+            "Ensure all equipment is properly initialized before adding");
+        continue;
+      }
+
+      // Check for duplicate names
+      String name = equipment.getName();
+      if (name != null && !name.isEmpty()) {
+        if (names.contains(name)) {
+          result.addWarning("unit." + name, "Duplicate equipment name: " + name,
+              "Use unique names for each equipment for easier debugging");
+        }
+        names.add(name);
+      }
+
+      // Count feed streams
+      if (equipment.getClass().getSimpleName().contains("Stream")) {
+        feedStreamCount++;
+      }
+
+      // Validate individual equipment
+      neqsim.util.validation.ValidationResult equipResult = equipment.validateSetup();
+      for (neqsim.util.validation.ValidationResult.ValidationIssue issue : equipResult
+          .getIssues()) {
+        String equipName = (name != null && !name.isEmpty()) ? name : "unit[" + i + "]";
+        if (issue.getSeverity() == neqsim.util.validation.ValidationResult.Severity.CRITICAL) {
+          result.addError(equipName + "." + issue.getCategory(), issue.getMessage(),
+              issue.getRemediation());
+        } else if (issue.getSeverity() == neqsim.util.validation.ValidationResult.Severity.MAJOR) {
+          result.addWarning(equipName + "." + issue.getCategory(), issue.getMessage(),
+              issue.getRemediation());
+        }
+      }
+    }
+
+    // Check: Has at least one feed stream
+    if (feedStreamCount == 0) {
+      result.addWarning("feeds", "No obvious feed streams detected",
+          "Ensure process has input streams with defined compositions");
+    }
+
+    return result;
+  }
+
+  /**
+   * Validates all equipment in the process system and returns individual results.
+   *
+   * <p>
+   * Unlike {@link #validateSetup()} which returns a combined result, this method returns a map of
+   * equipment names to their individual validation results, making it easier to identify specific
+   * issues.
+   * </p>
+   *
+   * @return map of equipment names to their validation results
+   */
+  public java.util.Map<String, neqsim.util.validation.ValidationResult> validateAll() {
+    java.util.Map<String, neqsim.util.validation.ValidationResult> results =
+        new java.util.LinkedHashMap<>();
+
+    for (int i = 0; i < unitOperations.size(); i++) {
+      ProcessEquipmentInterface equipment = unitOperations.get(i);
+      if (equipment != null) {
+        String name = equipment.getName();
+        if (name == null || name.isEmpty()) {
+          name = "unit[" + i + "]";
+        }
+        results.put(name, equipment.validateSetup());
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Checks if the process system is ready to run.
+   *
+   * <p>
+   * Convenience method that returns true if validateSetup() finds no critical errors.
+   * </p>
+   *
+   * @return true if process system passes validation, false otherwise
+   */
+  public boolean isReadyToRun() {
+    return validateSetup().isValid();
+  }
+
+  /**
    * <p>
    * removeUnit.
    * </p>

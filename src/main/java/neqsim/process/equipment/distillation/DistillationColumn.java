@@ -2017,4 +2017,447 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   public int getNumerOfTrays() {
     return numberOfTrays;
   }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Validates the distillation column setup before execution. Checks that:
+   * <ul>
+   * <li>Equipment has a valid name</li>
+   * <li>At least one feed stream is connected</li>
+   * <li>Number of trays is positive</li>
+   * <li>Solver parameters are valid</li>
+   * </ul>
+   *
+   * @return validation result with errors and warnings
+   */
+  @Override
+  public neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getName());
+
+    // Check: Equipment has a valid name
+    if (getName() == null || getName().trim().isEmpty()) {
+      result.addError("equipment", "Distillation column has no name",
+          "Set column name in constructor: new DistillationColumn(\"MyColumn\", 10, true, true)");
+    }
+
+    // Check: At least one feed stream is connected
+    if (feedStreams.isEmpty() && unassignedFeedStreams.isEmpty()) {
+      result.addError("stream", "No feed streams connected",
+          "Add feed stream: column.addFeedStream(feedStream, trayNumber)");
+    }
+
+    // Check: Number of trays is positive
+    if (numberOfTrays <= 0) {
+      result.addError("trays", "Number of trays must be positive: " + numberOfTrays,
+          "Specify trays in constructor: new DistillationColumn(\"name\", 10, true, true)");
+    }
+
+    // Check: Trays list is properly initialized
+    if (trays.isEmpty()) {
+      result.addError("trays", "No trays initialized",
+          "Ensure column is constructed with proper number of trays");
+    }
+
+    // Check: Condenser and reboiler configuration
+    if (!hasCondenser && !hasReboiler) {
+      result.addWarning("configuration", "Column has neither condenser nor reboiler",
+          "Consider adding condenser and/or reboiler for typical distillation");
+    }
+
+    // Check: Pressure settings
+    if (topTrayPressure > 0 && bottomTrayPressure > 0 && topTrayPressure > bottomTrayPressure) {
+      result.addWarning(
+          "pressure", "Top pressure (" + topTrayPressure + " bar) > bottom pressure ("
+              + bottomTrayPressure + " bar)",
+          "Typically bottom pressure >= top pressure in distillation columns");
+    }
+
+    // Check: Solver tolerances are positive
+    if (temperatureTolerance <= 0) {
+      result.addError("solver", "Temperature tolerance must be positive: " + temperatureTolerance,
+          "Set positive tolerance: column.setTemperatureTolerance(0.01)");
+    }
+
+    if (massBalanceTolerance <= 0) {
+      result.addError("solver", "Mass balance tolerance must be positive: " + massBalanceTolerance,
+          "Set positive tolerance");
+    }
+
+    // Check: Max iterations is reasonable
+    if (maxNumberOfIterations <= 0) {
+      result.addError("solver", "Max iterations must be positive: " + maxNumberOfIterations,
+          "Set positive max iterations: column.setMaxNumberOfIterations(50)");
+    } else if (maxNumberOfIterations < 10) {
+      result.addWarning("solver",
+          "Max iterations (" + maxNumberOfIterations + ") may be too low for convergence",
+          "Consider increasing max iterations to at least 50");
+    }
+
+    // Check: Relaxation factor in valid range for damped solver
+    if (solverType == SolverType.DAMPED_SUBSTITUTION
+        && (relaxationFactor <= 0 || relaxationFactor > 1)) {
+      result.addWarning("solver",
+          "Relaxation factor outside typical range (0,1]: " + relaxationFactor,
+          "Set relaxation factor between 0 and 1: column.setRelaxationFactor(0.5)");
+    }
+
+    return result;
+  }
+
+  /**
+   * Creates a new Builder for constructing DistillationColumn instances.
+   *
+   * <p>
+   * The builder pattern provides a fluent API for configuring complex distillation columns with
+   * many optional parameters. This is especially useful when configuring columns with multiple feed
+   * streams, custom tolerances, or specific solver settings.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * DistillationColumn column = DistillationColumn.builder("Deethanizer").numberOfTrays(15)
+   *     .withCondenser().withReboiler().topPressure(25.0, "bara").bottomPressure(26.0, "bara")
+   *     .solverType(SolverType.INSIDE_OUT).temperatureTolerance(0.001).addFeedStream(feedStream, 8)
+   *     .build();
+   * </pre>
+   *
+   * @param name the name of the distillation column
+   * @return a new Builder instance
+   */
+  public static Builder builder(String name) {
+    return new Builder(name);
+  }
+
+  /**
+   * Builder class for creating DistillationColumn instances with a fluent API.
+   *
+   * <p>
+   * Provides a readable and maintainable way to construct complex distillation columns. All
+   * configuration options available through setters on DistillationColumn are accessible via
+   * builder methods.
+   * </p>
+   *
+   * @author NeqSim
+   * @version 1.0
+   */
+  public static class Builder {
+    private final String name;
+    private int numberOfTrays = 10;
+    private boolean hasCondenser = false;
+    private boolean hasReboiler = false;
+    private double topPressure = -1.0;
+    private double bottomPressure = -1.0;
+    private double temperatureTolerance = 5.0e-3;
+    private double massBalanceTolerance = 2.0e-2;
+    private double enthalpyBalanceTolerance = 2.0e-2;
+    private int maxIterations = 50;
+    private SolverType solverType = SolverType.DIRECT_SUBSTITUTION;
+    private double relaxationFactor = 0.5;
+    private double internalDiameter = 1.0;
+    private boolean doMultiPhaseCheck = true;
+    private List<FeedStreamConfig> feedStreams = new ArrayList<FeedStreamConfig>();
+
+    /** Feed stream configuration holder. */
+    private static class FeedStreamConfig {
+      StreamInterface stream;
+      int trayNumber;
+
+      FeedStreamConfig(StreamInterface stream, int trayNumber) {
+        this.stream = stream;
+        this.trayNumber = trayNumber;
+      }
+    }
+
+    /**
+     * Creates a new Builder with the specified column name.
+     *
+     * @param name the name of the distillation column
+     */
+    public Builder(String name) {
+      this.name = name;
+    }
+
+    /**
+     * Sets the number of trays (excluding condenser and reboiler).
+     *
+     * @param numberOfTrays number of simple trays
+     * @return this builder for chaining
+     */
+    public Builder numberOfTrays(int numberOfTrays) {
+      this.numberOfTrays = numberOfTrays;
+      return this;
+    }
+
+    /**
+     * Configures the column with a condenser at the top.
+     *
+     * @return this builder for chaining
+     */
+    public Builder withCondenser() {
+      this.hasCondenser = true;
+      return this;
+    }
+
+    /**
+     * Configures the column with a reboiler at the bottom.
+     *
+     * @return this builder for chaining
+     */
+    public Builder withReboiler() {
+      this.hasReboiler = true;
+      return this;
+    }
+
+    /**
+     * Configures the column with both condenser and reboiler.
+     *
+     * @return this builder for chaining
+     */
+    public Builder withCondenserAndReboiler() {
+      this.hasCondenser = true;
+      this.hasReboiler = true;
+      return this;
+    }
+
+    /**
+     * Sets the top tray pressure.
+     *
+     * @param pressure pressure value
+     * @param unit pressure unit (e.g., "bara", "barg", "psia")
+     * @return this builder for chaining
+     */
+    public Builder topPressure(double pressure, String unit) {
+      if ("bara".equalsIgnoreCase(unit)) {
+        this.topPressure = pressure;
+      } else if ("barg".equalsIgnoreCase(unit)) {
+        this.topPressure = pressure + 1.01325;
+      } else if ("psia".equalsIgnoreCase(unit)) {
+        this.topPressure = pressure * 0.0689476;
+      } else {
+        this.topPressure = pressure;
+      }
+      return this;
+    }
+
+    /**
+     * Sets the bottom tray pressure.
+     *
+     * @param pressure pressure value
+     * @param unit pressure unit (e.g., "bara", "barg", "psia")
+     * @return this builder for chaining
+     */
+    public Builder bottomPressure(double pressure, String unit) {
+      if ("bara".equalsIgnoreCase(unit)) {
+        this.bottomPressure = pressure;
+      } else if ("barg".equalsIgnoreCase(unit)) {
+        this.bottomPressure = pressure + 1.01325;
+      } else if ("psia".equalsIgnoreCase(unit)) {
+        this.bottomPressure = pressure * 0.0689476;
+      } else {
+        this.bottomPressure = pressure;
+      }
+      return this;
+    }
+
+    /**
+     * Sets both top and bottom pressure to the same value (isobaric column).
+     *
+     * @param pressure pressure value
+     * @param unit pressure unit
+     * @return this builder for chaining
+     */
+    public Builder pressure(double pressure, String unit) {
+      topPressure(pressure, unit);
+      bottomPressure(pressure, unit);
+      return this;
+    }
+
+    /**
+     * Sets the temperature convergence tolerance.
+     *
+     * @param tolerance temperature tolerance in Kelvin
+     * @return this builder for chaining
+     */
+    public Builder temperatureTolerance(double tolerance) {
+      this.temperatureTolerance = tolerance;
+      return this;
+    }
+
+    /**
+     * Sets the mass balance convergence tolerance.
+     *
+     * @param tolerance relative mass balance tolerance
+     * @return this builder for chaining
+     */
+    public Builder massBalanceTolerance(double tolerance) {
+      this.massBalanceTolerance = tolerance;
+      return this;
+    }
+
+    /**
+     * Sets the enthalpy balance convergence tolerance.
+     *
+     * @param tolerance relative enthalpy balance tolerance
+     * @return this builder for chaining
+     */
+    public Builder enthalpyBalanceTolerance(double tolerance) {
+      this.enthalpyBalanceTolerance = tolerance;
+      return this;
+    }
+
+    /**
+     * Sets all tolerances to the same value.
+     *
+     * @param tolerance tolerance value for all convergence checks
+     * @return this builder for chaining
+     */
+    public Builder tolerance(double tolerance) {
+      this.temperatureTolerance = tolerance;
+      this.massBalanceTolerance = tolerance;
+      this.enthalpyBalanceTolerance = tolerance;
+      return this;
+    }
+
+    /**
+     * Sets the maximum number of solver iterations.
+     *
+     * @param maxIterations maximum iterations
+     * @return this builder for chaining
+     */
+    public Builder maxIterations(int maxIterations) {
+      this.maxIterations = maxIterations;
+      return this;
+    }
+
+    /**
+     * Sets the solver type.
+     *
+     * @param solverType the solver algorithm to use
+     * @return this builder for chaining
+     */
+    public Builder solverType(SolverType solverType) {
+      this.solverType = solverType;
+      return this;
+    }
+
+    /**
+     * Configures the solver to use direct substitution (default).
+     *
+     * @return this builder for chaining
+     */
+    public Builder directSubstitution() {
+      this.solverType = SolverType.DIRECT_SUBSTITUTION;
+      return this;
+    }
+
+    /**
+     * Configures the solver to use damped substitution.
+     *
+     * @return this builder for chaining
+     */
+    public Builder dampedSubstitution() {
+      this.solverType = SolverType.DAMPED_SUBSTITUTION;
+      return this;
+    }
+
+    /**
+     * Configures the solver to use inside-out method.
+     *
+     * @return this builder for chaining
+     */
+    public Builder insideOut() {
+      this.solverType = SolverType.INSIDE_OUT;
+      return this;
+    }
+
+    /**
+     * Sets the relaxation factor for damped solvers.
+     *
+     * @param factor relaxation factor (0 &lt; factor &lt;= 1)
+     * @return this builder for chaining
+     */
+    public Builder relaxationFactor(double factor) {
+      this.relaxationFactor = factor;
+      return this;
+    }
+
+    /**
+     * Sets the internal diameter of the column.
+     *
+     * @param diameter diameter in meters
+     * @return this builder for chaining
+     */
+    public Builder internalDiameter(double diameter) {
+      this.internalDiameter = diameter;
+      return this;
+    }
+
+    /**
+     * Enables or disables multi-phase checking.
+     *
+     * @param enable true to enable multi-phase check
+     * @return this builder for chaining
+     */
+    public Builder multiPhaseCheck(boolean enable) {
+      this.doMultiPhaseCheck = enable;
+      return this;
+    }
+
+    /**
+     * Adds a feed stream to the specified tray.
+     *
+     * @param stream the feed stream
+     * @param trayNumber the tray number (0-based) for the feed
+     * @return this builder for chaining
+     */
+    public Builder addFeedStream(StreamInterface stream, int trayNumber) {
+      this.feedStreams.add(new FeedStreamConfig(stream, trayNumber));
+      return this;
+    }
+
+    /**
+     * Builds and returns the configured DistillationColumn.
+     *
+     * @return the constructed DistillationColumn
+     */
+    public DistillationColumn build() {
+      DistillationColumn column =
+          new DistillationColumn(name, numberOfTrays, hasReboiler, hasCondenser);
+
+      // Set pressures
+      if (topPressure > 0) {
+        column.setTopPressure(topPressure);
+      }
+      if (bottomPressure > 0) {
+        column.setBottomPressure(bottomPressure);
+      }
+
+      // Set tolerances
+      column.setTemperatureTolerance(temperatureTolerance);
+      column.setMassBalanceTolerance(massBalanceTolerance);
+      column.setEnthalpyBalanceTolerance(enthalpyBalanceTolerance);
+
+      // Set solver settings
+      column.setMaxNumberOfIterations(maxIterations);
+      column.setSolverType(solverType);
+      column.setRelaxationFactor(relaxationFactor);
+
+      // Set physical properties
+      column.setInternalDiameter(internalDiameter);
+      column.setMultiPhaseCheck(doMultiPhaseCheck);
+
+      // Add feed streams
+      for (FeedStreamConfig feedConfig : feedStreams) {
+        column.addFeedStream(feedConfig.stream, feedConfig.trayNumber);
+      }
+
+      return column;
+    }
+  }
 }

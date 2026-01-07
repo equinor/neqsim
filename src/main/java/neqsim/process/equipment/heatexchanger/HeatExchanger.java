@@ -816,4 +816,192 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
 
     return state;
   }
+
+  /**
+   * Creates a new Builder for constructing a HeatExchanger with a fluent API.
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * HeatExchanger hx = HeatExchanger.builder("E-100").hotStream(hotFeed).coldStream(coldFeed)
+   *     .UAvalue(5000.0).flowArrangement("counterflow").build();
+   * </pre>
+   *
+   * @param name the name of the heat exchanger
+   * @return a new Builder instance
+   */
+  public static Builder builder(String name) {
+    return new Builder(name);
+  }
+
+  /**
+   * Builder class for constructing HeatExchanger instances with a fluent API.
+   *
+   * <p>
+   * Provides a readable and maintainable way to construct heat exchangers with hot and cold stream
+   * configurations, thermal specifications, and flow arrangements.
+   * </p>
+   *
+   * @author NeqSim
+   * @version 1.0
+   */
+  public static class Builder {
+    private final String name;
+    private StreamInterface hotStream = null;
+    private StreamInterface coldStream = null;
+    private double uaValue = 500.0;
+    private double thermalEffectiveness = -1.0;
+    private double deltaT = -1.0;
+    private double outTemperature = -1.0;
+    private String outTemperatureUnit = "K";
+    private int outStreamSpecificationNumber = -1;
+    private String flowArrangement = "concentric tube counterflow";
+    private double guessOutTemperature = 273.15 + 130.0;
+    private String guessOutTemperatureUnit = "K";
+
+    /**
+     * Creates a new Builder with the specified heat exchanger name.
+     *
+     * @param name the name of the heat exchanger
+     */
+    public Builder(String name) {
+      this.name = name;
+    }
+
+    /**
+     * Sets the hot side inlet stream (stream index 0).
+     *
+     * @param stream the hot side inlet stream
+     * @return this builder for chaining
+     */
+    public Builder hotStream(StreamInterface stream) {
+      this.hotStream = stream;
+      return this;
+    }
+
+    /**
+     * Sets the cold side inlet stream (stream index 1).
+     *
+     * @param stream the cold side inlet stream
+     * @return this builder for chaining
+     */
+    public Builder coldStream(StreamInterface stream) {
+      this.coldStream = stream;
+      return this;
+    }
+
+    /**
+     * Sets the overall heat transfer coefficient times area (UA value) in W/K.
+     *
+     * @param ua the UA value in W/K
+     * @return this builder for chaining
+     */
+    public Builder UAvalue(double ua) {
+      this.uaValue = ua;
+      return this;
+    }
+
+    /**
+     * Sets the thermal effectiveness (0.0-1.0).
+     *
+     * @param effectiveness thermal effectiveness fraction
+     * @return this builder for chaining
+     */
+    public Builder thermalEffectiveness(double effectiveness) {
+      this.thermalEffectiveness = effectiveness;
+      return this;
+    }
+
+    /**
+     * Sets the approach temperature difference (minimum temperature difference).
+     *
+     * @param deltaT temperature difference in Kelvin
+     * @return this builder for chaining
+     */
+    public Builder deltaT(double deltaT) {
+      this.deltaT = deltaT;
+      return this;
+    }
+
+    /**
+     * Sets the outlet temperature for a specified stream.
+     *
+     * @param temperature outlet temperature value
+     * @param unit temperature unit ("K", "C", or "F")
+     * @param streamNumber 0 for hot stream, 1 for cold stream
+     * @return this builder for chaining
+     */
+    public Builder outTemperature(double temperature, String unit, int streamNumber) {
+      this.outTemperature = temperature;
+      this.outTemperatureUnit = unit;
+      this.outStreamSpecificationNumber = streamNumber;
+      return this;
+    }
+
+    /**
+     * Sets the flow arrangement type.
+     *
+     * @param arrangement flow arrangement (e.g., "counterflow", "parallel flow", "concentric tube
+     *        counterflow", "cross flow")
+     * @return this builder for chaining
+     */
+    public Builder flowArrangement(String arrangement) {
+      this.flowArrangement = arrangement;
+      return this;
+    }
+
+    /**
+     * Sets an initial guess for outlet temperature to help convergence.
+     *
+     * @param temperature guess temperature value
+     * @param unit temperature unit ("K", "C", or "F")
+     * @return this builder for chaining
+     */
+    public Builder guessOutTemperature(double temperature, String unit) {
+      this.guessOutTemperature = temperature;
+      this.guessOutTemperatureUnit = unit;
+      return this;
+    }
+
+    /**
+     * Builds and returns the configured HeatExchanger instance.
+     *
+     * @return a new HeatExchanger instance with the specified configuration
+     * @throws IllegalStateException if required streams are not set
+     */
+    public HeatExchanger build() {
+      if (hotStream == null) {
+        throw new IllegalStateException("Hot stream must be set. Use hotStream(stream)");
+      }
+
+      HeatExchanger hx;
+      if (coldStream != null) {
+        hx = new HeatExchanger(name, hotStream, coldStream);
+      } else {
+        hx = new HeatExchanger(name, hotStream);
+      }
+
+      hx.setUAvalue(uaValue);
+      hx.setFlowArrangement(flowArrangement);
+      hx.guessOutTemperature = guessOutTemperature;
+      hx.guessOutTemperatureUnit = guessOutTemperatureUnit;
+
+      if (thermalEffectiveness > 0) {
+        hx.setThermalEffectiveness(thermalEffectiveness);
+      }
+
+      if (deltaT > 0) {
+        hx.setUseDeltaT(true);
+        hx.setDeltaT(deltaT);
+      }
+
+      if (outStreamSpecificationNumber >= 0 && outTemperature > 0) {
+        hx.setOutTemperature(outTemperature);
+      }
+
+      return hx;
+    }
+  }
 }

@@ -22,7 +22,7 @@ public class MixerResponse extends BaseResponse {
     data.put("feed mass flow",
         new Value(
             Double.toString(
-                mixer.getMixedStream().getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+                mixer.getOutletStream().getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
             neqsim.util.unit.Units.getSymbol("mass flow")));
     data.put("outlet mass flow",
         new Value(

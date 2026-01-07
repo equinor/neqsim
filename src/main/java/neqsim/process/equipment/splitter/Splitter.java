@@ -367,4 +367,75 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   @Override
   @ExcludeFromJacocoGeneratedReport
   public void displayResult() {}
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Validates the splitter setup before execution. Checks that:
+   * <ul>
+   * <li>Equipment has a valid name</li>
+   * <li>Inlet stream is connected</li>
+   * <li>Split factors are valid (sum to 1.0, all non-negative)</li>
+   * <li>At least one split outlet is defined</li>
+   * </ul>
+   *
+   * @return validation result with errors and warnings
+   */
+  @Override
+  public neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getName());
+
+    // Check: Equipment has a valid name
+    if (getName() == null || getName().trim().isEmpty()) {
+      result.addError("equipment", "Splitter has no name",
+          "Set splitter name in constructor: new Splitter(\"MySplitter\")");
+    }
+
+    // Check: Inlet stream is connected
+    if (inletStream == null) {
+      result.addError("stream", "No inlet stream connected",
+          "Set inlet stream: splitter.setInletStream(stream) or use constructor");
+    } else if (inletStream.getThermoSystem() == null) {
+      result.addError("stream", "Inlet stream has no fluid system",
+          "Ensure inlet stream has a valid thermodynamic system");
+    }
+
+    // Check: At least one split outlet
+    if (splitNumber <= 0) {
+      result.addError("split", "No split outlets defined (splitNumber=" + splitNumber + ")",
+          "Set number of splits: splitter.setSplitNumber(2)");
+    }
+
+    // Check: Split factors are valid
+    if (splitFactor != null && splitFactor.length > 0) {
+      double sum = 0.0;
+      boolean hasNegative = false;
+      for (int i = 0; i < splitFactor.length; i++) {
+        if (splitFactor[i] < 0) {
+          hasNegative = true;
+        }
+        sum += splitFactor[i];
+      }
+
+      if (hasNegative) {
+        result.addError("split", "Split factors contain negative values",
+            "All split factors must be >= 0: splitter.setSplitFactors(new double[]{0.5, 0.5})");
+      }
+
+      if (Math.abs(sum - 1.0) > 1e-6 && flowRates == null) {
+        result.addWarning("split", "Split factors sum to " + sum + " (expected 1.0)",
+            "Split factors are normalized automatically, but verify intended distribution");
+      }
+    }
+
+    // Check: Split streams are initialized
+    if (splitStream == null || splitStream.length != splitNumber) {
+      result.addWarning("stream", "Split streams not fully initialized",
+          "Call setInletStream() to initialize split streams");
+    }
+
+    return result;
+  }
 }

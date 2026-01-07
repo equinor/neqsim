@@ -9,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.report.Report;
+import neqsim.util.validation.ValidationResult;
 
 /**
  * <p>
@@ -778,5 +779,154 @@ public class ProcessModel implements Runnable {
    */
   public String getReport_json() {
     return new Report(this).generateJsonReport();
+  }
+
+  /**
+   * Validates the setup of all processes in this model.
+   *
+   * <p>
+   * This method iterates through all ProcessSystems and validates each one. The results are
+   * aggregated into a single ValidationResult. Use this method before running the model to identify
+   * configuration issues.
+   * </p>
+   *
+   * @return a {@link neqsim.util.validation.ValidationResult} containing all validation issues
+   *         across all processes
+   */
+  public ValidationResult validateSetup() {
+    ValidationResult result = new ValidationResult();
+
+    // Check if model has any processes
+    if (processes.isEmpty()) {
+      result.addError("ProcessModel", "ProcessModel has no processes added",
+          "Add at least one ProcessSystem using add(name, process)");
+    }
+
+    // Validate each ProcessSystem
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      String processName = entry.getKey();
+      ProcessSystem process = entry.getValue();
+      ValidationResult processResult = process.validateSetup();
+
+      // Add all issues from the process, prefixed with process name
+      for (ValidationResult.ValidationIssue issue : processResult.getIssues()) {
+        if (issue.getSeverity() == ValidationResult.Severity.CRITICAL) {
+          result.addError("[" + processName + "] " + issue.getCategory(), issue.getMessage(),
+              issue.getRemediation());
+        } else {
+          result.addWarning("[" + processName + "] " + issue.getCategory(), issue.getMessage(),
+              issue.getRemediation());
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Validates all processes and returns results organized by process name.
+   *
+   * <p>
+   * This method provides detailed validation results for each ProcessSystem separately, making it
+   * easier to identify which process has issues.
+   * </p>
+   *
+   * @return a {@link java.util.Map} mapping process names to their validation results
+   */
+  public Map<String, ValidationResult> validateAll() {
+    Map<String, ValidationResult> results = new LinkedHashMap<>();
+
+    // Add ProcessModel-level validation
+    ValidationResult modelResult = new ValidationResult();
+    if (processes.isEmpty()) {
+      modelResult.addError("ProcessModel", "ProcessModel has no processes added",
+          "Add at least one ProcessSystem using add(name, process)");
+    }
+    results.put("ProcessModel", modelResult);
+
+    // Validate each ProcessSystem
+    for (Map.Entry<String, ProcessSystem> entry : processes.entrySet()) {
+      String processName = entry.getKey();
+      ProcessSystem process = entry.getValue();
+      results.put(processName, process.validateSetup());
+    }
+
+    return results;
+  }
+
+  /**
+   * Checks if all processes in the model are ready to run.
+   *
+   * <p>
+   * This is a convenience method that returns true if no CRITICAL validation errors exist across
+   * all processes. Use this for a quick go/no-go check before running the model.
+   * </p>
+   *
+   * @return true if no critical validation errors exist, false otherwise
+   */
+  public boolean isReadyToRun() {
+    ValidationResult result = validateSetup();
+    // Check if there are any CRITICAL errors
+    for (ValidationResult.ValidationIssue issue : result.getIssues()) {
+      if (issue.getSeverity() == ValidationResult.Severity.CRITICAL) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Get a formatted validation report for all processes.
+   *
+   * <p>
+   * This method provides a human-readable summary of all validation issues across all processes in
+   * the model.
+   * </p>
+   *
+   * @return a formatted validation report string
+   */
+  public String getValidationReport() {
+    StringBuilder report = new StringBuilder();
+    report.append("=== ProcessModel Validation Report ===\n\n");
+
+    Map<String, ValidationResult> allResults = validateAll();
+
+    int totalIssues = 0;
+    int criticalCount = 0;
+    int majorCount = 0;
+
+    for (Map.Entry<String, ValidationResult> entry : allResults.entrySet()) {
+      String name = entry.getKey();
+      ValidationResult result = entry.getValue();
+
+      if (!result.getIssues().isEmpty()) {
+        report.append("--- ").append(name).append(" ---\n");
+        for (ValidationResult.ValidationIssue issue : result.getIssues()) {
+          report.append("  [").append(issue.getSeverity()).append("] ");
+          report.append(issue.getMessage()).append("\n");
+          if (issue.getRemediation() != null && !issue.getRemediation().isEmpty()) {
+            report.append("    Fix: ").append(issue.getRemediation()).append("\n");
+          }
+          totalIssues++;
+          if (issue.getSeverity() == ValidationResult.Severity.CRITICAL) {
+            criticalCount++;
+          } else if (issue.getSeverity() == ValidationResult.Severity.MAJOR) {
+            majorCount++;
+          }
+        }
+        report.append("\n");
+      }
+    }
+
+    if (totalIssues == 0) {
+      report.append("No validation issues found. Model is ready to run.\n");
+    } else {
+      report.append("Summary: ").append(totalIssues).append(" issue(s) found");
+      report.append(" (").append(criticalCount).append(" critical, ");
+      report.append(majorCount).append(" major)\n");
+      report.append("Ready to run: ").append(criticalCount == 0 ? "YES" : "NO").append("\n");
+    }
+
+    return report.toString();
   }
 }
