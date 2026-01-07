@@ -183,10 +183,14 @@ neqsim.process.mechanicaldesign.compressor
 neqsim.process.mechanicaldesign.data
 neqsim.process.mechanicaldesign.designstandards
 neqsim.process.mechanicaldesign.ejector
+neqsim.process.mechanicaldesign.expander
 neqsim.process.mechanicaldesign.heatexchanger
 neqsim.process.mechanicaldesign.pipeline
+neqsim.process.mechanicaldesign.pump
 neqsim.process.mechanicaldesign.separator
 neqsim.process.mechanicaldesign.separator.sectiontype
+neqsim.process.mechanicaldesign.tank
+neqsim.process.mechanicaldesign.torg
 neqsim.process.mechanicaldesign.valve
 neqsim.process.ml
 neqsim.process.ml.controllers
@@ -195,6 +199,8 @@ neqsim.process.ml.multiagent
 neqsim.process.ml.surrogate
 neqsim.process.mpc
 neqsim.process.processmodel
+neqsim.process.processmodel.dexpi
+neqsim.process.processmodel.diagram
 neqsim.process.processmodel.graph
 neqsim.process.processmodel.lifecycle
 neqsim.process.processmodel.processmodules
