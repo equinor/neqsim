@@ -113,6 +113,10 @@ public class Compressor extends TwoPortEquipment
   private boolean surgeCriticalActive = false;
   private boolean speedLimitWarningActive = false;
 
+  // State memory for improved chart convergence
+  private double previousActualFlow = 0.0;
+  private double previousPolyHead = 0.0;
+
   CompressorMechanicalDesign mechanicalDesign;
 
   /** Mechanical losses model for seal gas and bearing calculations. */
@@ -1225,7 +1229,17 @@ public class Compressor extends TwoPortEquipment
     outStream.getThermoSystem().init(3);
     double head = (outStream.getThermoSystem().getEnthalpy("kJ/kg")
         - inStream.getThermoSystem().getEnthalpy("kJ/kg"));
-    double guessFlow = inStream.getFluid().getFlowRate("m3/hr");
+
+    // Use state memory for better initial guess - improves reversibility
+    double guessFlow;
+    if (previousActualFlow > 0.0) {
+      // Use previous converged solution as initial guess
+      guessFlow = previousActualFlow;
+    } else {
+      // Fallback to current stream flow
+      guessFlow = inStream.getFluid().getFlowRate("m3/hr");
+    }
+
     double actualFlowRateNew = getCompressorChart().getFlow(head, getSpeed(), guessFlow);
     if (actualFlowRateNew < 0.0 || Double.isNaN(actualFlowRateNew)) {
       logger.error(
@@ -1233,6 +1247,11 @@ public class Compressor extends TwoPortEquipment
               + actualFlowRateNew + ", using previous flow rate: " + guessFlow);
       actualFlowRateNew = guessFlow > 0.0 ? guessFlow : 1.0; // Use previous flow or fallback
     }
+
+    // Store state for next iteration
+    previousActualFlow = actualFlowRateNew;
+    previousPolyHead = head;
+
     inStream.setFlowRate(actualFlowRateNew, "Am3/hr");
 
     inStream.getThermoSystem().init(3);
@@ -1853,6 +1872,12 @@ public class Compressor extends TwoPortEquipment
    * @param speed a int
    */
   public void setSpeed(double speed) {
+    if (Math.abs(this.speed - speed) > 1.0) {
+      // Speed changed significantly - reset state memory to avoid using
+      // flow rates from previous operating point as initial guess
+      previousActualFlow = 0.0;
+      previousPolyHead = 0.0;
+    }
     this.speed = speed;
   }
 

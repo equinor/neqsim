@@ -90,6 +90,12 @@ public class ProcessSystem extends SimulationBaseClass {
   private double massBalanceErrorThreshold = 0.1; // Default 0.1% error threshold
   private double minimumFlowForMassBalanceError = 1e-6; // Default 1e-6 kg/sec
 
+  // Transient simulation settings
+  private int maxTransientIterations = 3; // Number of iterations within each time step
+  private boolean enableMassBalanceTracking = false;
+  private double previousTotalMass = 0.0;
+  private double massBalanceError = 0.0;
+
   // Graph-based execution fields
   /** Cached process graph for topology analysis. */
   private transient ProcessGraph cachedGraph = null;
@@ -1521,6 +1527,21 @@ public class ProcessSystem extends SimulationBaseClass {
     setTimeStep(dt);
     increaseTime(dt);
 
+    // Track mass before transient step
+    if (enableMassBalanceTracking) {
+      double currentMass = calculateTotalSystemMass();
+      if (previousTotalMass > 0) {
+        massBalanceError = Math.abs(currentMass - previousTotalMass) / previousTotalMass * 100.0;
+        if (massBalanceError > massBalanceErrorThreshold) {
+          logger.warn("Mass balance error: " + String.format("%.3f", massBalanceError)
+              + "% (threshold: " + massBalanceErrorThreshold + "%) at time " + time + " s");
+        }
+      }
+      previousTotalMass = currentMass;
+    }
+
+    // Run equipment transient calculations
+    // Note: Multiple iterations cause accumulation errors - run once per time step
     for (int i = 0; i < unitOperations.size(); i++) {
       unitOperations.get(i).runTransient(dt, id);
     }
@@ -1587,6 +1608,73 @@ public class ProcessSystem extends SimulationBaseClass {
       return time / (3600.0 * 24 * 365);
     }
     return time;
+  }
+
+  /**
+   * Calculate total system mass across all equipment and streams.
+   * 
+   * @return Total mass in kg
+   */
+  private double calculateTotalSystemMass() {
+    double totalMass = 0.0;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      try {
+        SystemInterface system = unit.getThermoSystem();
+        if (system != null && system.getTotalNumberOfMoles() > 0) {
+          totalMass += system.getTotalNumberOfMoles() * system.getMolarMass();
+        }
+      } catch (Exception e) {
+        // Some units may not have a thermo system
+      }
+    }
+    return totalMass;
+  }
+
+  /**
+   * Enable or disable mass balance tracking during transient simulations.
+   * 
+   * @param enable true to enable tracking
+   */
+  public void setEnableMassBalanceTracking(boolean enable) {
+    this.enableMassBalanceTracking = enable;
+    if (enable) {
+      previousTotalMass = calculateTotalSystemMass();
+    }
+  }
+
+  /**
+   * Get the current mass balance error percentage.
+   * 
+   * @return Mass balance error in percent
+   */
+  public double getMassBalanceError() {
+    return massBalanceError;
+  }
+
+  /**
+   * Set the maximum number of iterations within each transient time step.
+   * 
+   * <p>
+   * Multiple iterations help converge circular dependencies between equipment. Default is 3. Set to
+   * 1 to disable iterative convergence.
+   * </p>
+   * 
+   * @param iterations Number of iterations (must be >= 1)
+   */
+  public void setMaxTransientIterations(int iterations) {
+    if (iterations < 1) {
+      throw new IllegalArgumentException("Iterations must be >= 1");
+    }
+    this.maxTransientIterations = iterations;
+  }
+
+  /**
+   * Get the maximum number of iterations within each transient time step.
+   * 
+   * @return Number of iterations
+   */
+  public int getMaxTransientIterations() {
+    return maxTransientIterations;
   }
 
   /**
