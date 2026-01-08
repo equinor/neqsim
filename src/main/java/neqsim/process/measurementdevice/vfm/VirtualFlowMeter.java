@@ -255,6 +255,10 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
 
   /**
    * Determines result quality based on operating conditions and calibration.
+   *
+   * @param pressure current operating pressure in bara
+   * @param temperature current operating temperature in Kelvin
+   * @return quality indicator based on calibration range and age
    */
   private VFMResult.Quality determineQuality(double pressure, double temperature) {
     if (calibrationHistory.isEmpty()) {

@@ -423,6 +423,10 @@ public final class ProcessGraphBuilder {
 
   /**
    * Finds a field in the class hierarchy.
+   *
+   * @param clazz the class to search in (including superclasses)
+   * @param fieldName the name of the field to find
+   * @return the Field object, or null if not found
    */
   private static Field findField(Class<?> clazz, String fieldName) {
     Class<?> type = clazz;
@@ -438,6 +442,9 @@ public final class ProcessGraphBuilder {
 
   /**
    * Collects streams produced by a unit via common getter methods.
+   *
+   * @param unit the process equipment unit to analyze
+   * @param streamToProducer map to store stream-to-producer relationships
    */
   private static void collectProducedStreams(ProcessEquipmentInterface unit,
       Map<Object, ProcessEquipmentInterface> streamToProducer) {
@@ -488,6 +495,10 @@ public final class ProcessGraphBuilder {
 
   /**
    * Collects streams consumed by a unit and creates edges.
+   *
+   * @param unit the process equipment unit to analyze
+   * @param graph the process graph to add edges to
+   * @param streamToProducer map of stream-to-producer relationships
    */
   private static void collectConsumedStreamsAndCreateEdges(ProcessEquipmentInterface unit,
       ProcessGraph graph, Map<Object, ProcessEquipmentInterface> streamToProducer) {
@@ -530,6 +541,11 @@ public final class ProcessGraphBuilder {
 
   /**
    * Scans fields for inlet streams.
+   *
+   * @param unit the process equipment unit to scan
+   * @param graph the process graph to add edges to
+   * @param streamToProducer map of stream-to-producer relationships
+   * @param visited set of already visited streams to avoid duplicates
    */
   private static void scanFieldsForInletStreams(ProcessEquipmentInterface unit, ProcessGraph graph,
       Map<Object, ProcessEquipmentInterface> streamToProducer, Set<Object> visited) {
@@ -609,6 +625,11 @@ public final class ProcessGraphBuilder {
 
   /**
    * Creates an edge from the producer of a stream to the consumer.
+   *
+   * @param graph the process graph to add the edge to
+   * @param streamToProducer map of stream-to-producer relationships
+   * @param stream the stream object connecting producer to consumer
+   * @param consumer the consuming process equipment unit
    */
   private static void createEdgeFromProducer(ProcessGraph graph,
       Map<Object, ProcessEquipmentInterface> streamToProducer, Object stream,

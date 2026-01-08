@@ -406,6 +406,10 @@ public class ProcessVariableAccessor {
 
   /**
    * Check if types are boxed equivalents.
+   *
+   * @param a first class type to compare
+   * @param b second class type to compare
+   * @return true if a and b are boxed/unboxed equivalents (e.g., int and Integer)
    */
   private boolean isBoxedEquivalent(Class<?> a, Class<?> b) {
     return (a == double.class && b == Double.class) || (a == Double.class && b == double.class)

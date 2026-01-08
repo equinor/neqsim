@@ -1659,7 +1659,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * 1 to disable iterative convergence.
    * </p>
    * 
-   * @param iterations Number of iterations (must be >= 1)
+   * @param iterations Number of iterations (must be &gt;= 1)
    */
   public void setMaxTransientIterations(int iterations) {
     if (iterations < 1) {
