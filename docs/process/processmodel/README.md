@@ -12,6 +12,7 @@ This folder contains documentation for process system and flowsheet management i
 | [Graph-Based Simulation](graph_simulation.md) | Graph-based execution and optimization |
 | [PFD Diagram Export](diagram_export.md) | Professional process flow diagram generation |
 | [Architecture & DEXPI](DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY.md) | Diagram architecture and DEXPI integration |
+| [Process Serialization](../../simulation/process_serialization.md) | Saving and loading process models |
 
 ---
 
@@ -87,9 +88,30 @@ System.out.println(process.getExecutionPartitionInfo());
 
 ---
 
+## Saving and Loading
+
+ProcessSystem and ProcessModel support saving to compressed `.neqsim` files and JSON state files:
+
+```java
+// Save process
+process.saveToNeqsim("my_process.neqsim");
+
+// Load process
+ProcessSystem loaded = ProcessSystem.loadFromNeqsim("my_process.neqsim");
+
+// Save multi-process model
+model.saveToNeqsim("field_model.neqsim");
+ProcessModel loaded = ProcessModel.loadFromNeqsim("field_model.neqsim");
+```
+
+For full documentation, see [Process Serialization Guide](../../simulation/process_serialization.md).
+
+---
+
 ## Related Documentation
 
 - [Equipment Overview](../equipment/README.md) - Process equipment
 - [Controllers](../controllers.md) - Control systems
 - [Safety Systems](../safety/README.md) - Safety equipment
+- [Process Serialization](../../simulation/process_serialization.md) - Save/load processes
 - [DEXPI Integration](../../integration/dexpi-reader.md) - DEXPI P&ID data exchange

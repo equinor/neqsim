@@ -187,36 +187,51 @@ double H_kJ = fluid.getEnthalpy("kJ/kg");
 
 ## Serialization
 
-### SerializationManager
-
-Save and load NeqSim objects.
-
-```java
-import neqsim.util.serialization.SerializationManager;
-
-// Save fluid to file
-SystemInterface fluid = new SystemSrkEos(300.0, 50.0);
-fluid.addComponent("methane", 0.9);
-fluid.addComponent("ethane", 0.1);
-
-SerializationManager.save(fluid, "myfluid.neqsim");
-
-// Load fluid from file
-SystemInterface loadedFluid = SerializationManager.load("myfluid.neqsim");
-```
+NeqSim provides multiple serialization options for saving and loading simulations.
 
 ### Process System Serialization
 
 ```java
-// Save process system
-ProcessSystem process = new ProcessSystem();
+// Save process system to compressed .neqsim file
+ProcessSystem process = new ProcessSystem("My Process");
 // ... add equipment ...
+process.saveToNeqsim("myprocess.neqsim");
 
-// Save to file
-process.save("myprocess.neqsim");
+// Load from file (auto-runs after loading)
+ProcessSystem loaded = ProcessSystem.loadFromNeqsim("myprocess.neqsim");
 
-// Load from file
-ProcessSystem loaded = ProcessSystem.load("myprocess.neqsim");
+// Auto-detect format by extension
+process.saveAuto("myprocess.neqsim");  // Compressed
+process.saveAuto("myprocess.json");    // JSON state
+```
+
+### Process Model Serialization (Multi-Process)
+
+```java
+// Save ProcessModel containing multiple ProcessSystems
+ProcessModel model = new ProcessModel();
+model.add("upstream", upstreamProcess);
+model.add("downstream", downstreamProcess);
+
+model.saveToNeqsim("field_model.neqsim");
+
+// Load (auto-runs after loading)
+ProcessModel loaded = ProcessModel.loadFromNeqsim("field_model.neqsim");
+```
+
+### JSON State for Version Control
+
+```java
+// Export to Git-friendly JSON format
+ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
+state.setVersion("1.0.0");
+state.saveToFile("process_v1.0.0.json");
+
+// Load and validate
+ProcessSystemState loaded = ProcessSystemState.loadFromFile("process_v1.0.0.json");
+if (loaded.validate().isValid()) {
+    ProcessSystem restored = loaded.toProcessSystem();
+}
 ```
 
 ### Deep Copy via Serialization
@@ -228,6 +243,8 @@ SystemInterface clone = fluid.clone();
 // Or for process equipment
 ProcessEquipmentInterface copy = equipment.copy();
 ```
+
+**For full documentation:** See [Process Serialization Guide](../simulation/process_serialization.md)
 
 ---
 

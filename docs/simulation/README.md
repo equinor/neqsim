@@ -27,6 +27,7 @@ This folder contains guides for advanced process simulation topics including pro
 
 | Document | Description |
 |----------|-------------|
+| [process_serialization.md](process_serialization.md) | **Saving and loading process models** |
 | [parallel_process_simulation.md](parallel_process_simulation.md) | Parallel and multi-threaded simulation |
 | [graph_based_process_simulation.md](graph_based_process_simulation.md) | Graph-based process simulation |
 | [recycle_acceleration_guide.md](recycle_acceleration_guide.md) | Recycle convergence acceleration |

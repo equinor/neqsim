@@ -297,8 +297,34 @@ if (model.isReadyToRun()) {
 
 ---
 
+## Saving and Loading
+
+ProcessModel supports saving and loading to/from compressed `.neqsim` files and JSON state files for version control.
+
+```java
+// Save to compressed .neqsim file
+model.saveToNeqsim("field_model.neqsim");
+
+// Load (auto-runs after loading)
+ProcessModel loaded = ProcessModel.loadFromNeqsim("field_model.neqsim");
+
+// Auto-detect format by extension
+model.saveAuto("field_model.neqsim");  // Compressed
+model.saveAuto("field_model.json");    // JSON state
+
+// JSON state export for version control
+ProcessModelState state = model.exportState();
+state.setVersion("1.0.0");
+state.saveToFile("field_model_v1.0.0.json");
+```
+
+For full documentation on serialization options, see [Process Serialization Guide](../../simulation/process_serialization.md).
+
+---
+
 ## Related Documentation
 
 - [ProcessSystem](process_system.md) - Individual process flowsheets
 - [ProcessModule](process_module.md) - Modular process units
+- [Process Serialization](../../simulation/process_serialization.md) - Save/load processes
 - [AI Validation Framework](../../integration/ai_validation_framework.md) - Validation integration
