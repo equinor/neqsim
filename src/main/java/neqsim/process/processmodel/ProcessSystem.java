@@ -3120,6 +3120,129 @@ public class ProcessSystem extends SimulationBaseClass {
     }
   }
 
+  // ============ NEQSIM FILE SERIALIZATION ============
+
+  /**
+   * Saves this process system to a compressed .neqsim file using XStream serialization.
+   *
+   * <p>
+   * This is the recommended format for production use, providing compact storage with full process
+   * state preservation. The file can be loaded with {@link #loadFromNeqsim(String)}.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   *
+   * <pre>
+   * ProcessSystem process = new ProcessSystem();
+   * // ... configure and run ...
+   * process.saveToNeqsim("my_model.neqsim");
+   * </pre>
+   *
+   * @param filename the file path to save to (recommended extension: .neqsim)
+   * @return true if save was successful, false otherwise
+   */
+  public boolean saveToNeqsim(String filename) {
+    return neqsim.util.serialization.NeqSimXtream.saveNeqsim(this, filename);
+  }
+
+  /**
+   * Loads a process system from a compressed .neqsim file.
+   *
+   * <p>
+   * After loading, the process is automatically run to reinitialize calculations. This ensures the
+   * internal state is consistent.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   *
+   * <pre>
+   * ProcessSystem loaded = ProcessSystem.loadFromNeqsim("my_model.neqsim");
+   * // Process is already run and ready to use
+   * Stream outlet = (Stream) loaded.getUnit("outlet");
+   * </pre>
+   *
+   * @param filename the file path to load from
+   * @return the loaded ProcessSystem, or null if loading fails
+   */
+  public static ProcessSystem loadFromNeqsim(String filename) {
+    try {
+      Object loaded = neqsim.util.serialization.NeqSimXtream.openNeqsim(filename);
+      if (loaded instanceof ProcessSystem) {
+        ProcessSystem process = (ProcessSystem) loaded;
+        process.run();
+        return process;
+      } else {
+        logger.error("Loaded object is not a ProcessSystem: "
+            + (loaded != null ? loaded.getClass().getName() : "null"));
+        return null;
+      }
+    } catch (java.io.IOException e) {
+      logger.error("Failed to load process from file: " + filename, e);
+      return null;
+    }
+  }
+
+  /**
+   * Saves the current state to a file with automatic format detection.
+   *
+   * <p>
+   * File format is determined by extension:
+   * <ul>
+   * <li>.neqsim → XStream compressed XML (full serialization)</li>
+   * <li>.json → JSON state (lightweight, Git-friendly)</li>
+   * <li>other → Java binary serialization (legacy)</li>
+   * </ul>
+   *
+   * @param filename the file path to save to
+   * @return true if save was successful
+   */
+  public boolean saveAuto(String filename) {
+    String lowerName = filename.toLowerCase();
+    if (lowerName.endsWith(".neqsim")) {
+      return saveToNeqsim(filename);
+    } else if (lowerName.endsWith(".json")) {
+      try {
+        exportStateToFile(filename);
+        return true;
+      } catch (Exception e) {
+        logger.error("Failed to save JSON state: " + filename, e);
+        return false;
+      }
+    } else {
+      try {
+        save(filename);
+        return true;
+      } catch (Exception e) {
+        logger.error("Failed to save process: " + filename, e);
+        return false;
+      }
+    }
+  }
+
+  /**
+   * Loads a process system from a file with automatic format detection.
+   *
+   * <p>
+   * File format is determined by extension:
+   * <ul>
+   * <li>.neqsim → XStream compressed XML</li>
+   * <li>other → Java binary serialization (legacy)</li>
+   * </ul>
+   *
+   * @param filename the file path to load from
+   * @return the loaded ProcessSystem, or null if loading fails
+   */
+  public static ProcessSystem loadAuto(String filename) {
+    String lowerName = filename.toLowerCase();
+    if (lowerName.endsWith(".neqsim")) {
+      return loadFromNeqsim(filename);
+    } else {
+      return open(filename);
+    }
+  }
+
   /**
    * Calculates current emissions from all equipment in this process system.
    *

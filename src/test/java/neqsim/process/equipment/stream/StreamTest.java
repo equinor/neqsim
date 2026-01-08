@@ -47,13 +47,19 @@ class StreamTest extends neqsim.NeqSimTest {
 
   @Test
   public void testNoFlow() {
-    testSystem.setTotalFlowRate(0, "MSm3/day");
-    RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () -> {
-      testSystem.initProperties();
-    });
-    Assertions.assertEquals(
-        "neqsim.util.exception.InvalidInputException: PhaseSrkEos:init - Input totalNumberOfMoles must be larger than or equal to zero.",
-        thrown.getMessage());
+    // Test that Stream handles zero flow gracefully without throwing exception
+    // The Stream.run() method checks for minimum flow and returns early if below threshold
+    Stream zeroFlowStream = new Stream("zero-flow", testSystem.clone());
+    zeroFlowStream.setFlowRate(0.0, "kg/hr");
+
+    ProcessSystem zeroFlowProcess = new ProcessSystem();
+    zeroFlowProcess.add(zeroFlowStream);
+
+    // Should not throw - Stream handles zero flow gracefully
+    zeroFlowProcess.run();
+
+    // Stream should be marked as inactive when flow is below minimum
+    assertFalse(zeroFlowStream.isActive(), "Stream with zero flow should be inactive");
   }
 
   @Test

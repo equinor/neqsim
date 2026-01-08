@@ -125,23 +125,31 @@ NeqSimExperimentDatabase.getExperimentData("VLE_CH4_CO2");
 
 ## Unit Conversion
 
-### Units Class
+For comprehensive unit conversion documentation, see **[Unit Conversion Guide](unit_conversion.md)**.
+
+### Quick Reference
 
 ```java
 import neqsim.util.unit.Units;
+import neqsim.util.unit.PressureUnit;
+import neqsim.util.unit.TemperatureUnit;
 
-// Temperature conversions
-double tempK = Units.temperatureToKelvin(25.0, "C");      // 298.15 K
-double tempC = Units.temperatureFromKelvin(298.15, "C");  // 25.0 °C
-double tempF = Units.temperatureFromKelvin(298.15, "F");  // 77.0 °F
+// Direct unit conversion
+PressureUnit pu = new PressureUnit(50.0, "bara");
+double p_psia = pu.getValue("psia");
 
-// Pressure conversions
-double pressPa = Units.pressureToPascal(10.0, "bara");    // 1e6 Pa
-double pressBara = Units.pressureFromPascal(1e6, "bara"); // 10.0 bar
+TemperatureUnit tu = new TemperatureUnit(25.0, "C");
+double t_K = tu.getValue("K");
 
-// Flow rate conversions
-double flowKgH = Units.flowRateToSI(1000.0, "kg/hr");     // kg/s
-double flowMSm3 = Units.flowRateFromSI(10.0, "MSm3/day"); // MSm³/day
+// In fluid properties
+double T_C = fluid.getTemperature("C");
+fluid.setTemperature(25.0, "C");
+
+double P_bara = fluid.getPressure("bara");
+fluid.setPressure(50.0, "bara");
+
+double flow = stream.getFlowRate("kg/hr");
+stream.setFlowRate(1000.0, "kg/hr");
 ```
 
 ### Supported Units
@@ -157,28 +165,6 @@ double flowMSm3 = Units.flowRateFromSI(10.0, "MSm3/day"); // MSm³/day
 | Energy | J, kJ, MJ, cal, BTU |
 | Power | W, kW, MW, hp |
 
-### In Fluid Properties
-
-```java
-// Temperature
-double T_C = fluid.getTemperature("C");
-double T_K = fluid.getTemperature("K");
-fluid.setTemperature(25.0, "C");
-
-// Pressure
-double P_bara = fluid.getPressure("bara");
-double P_psia = fluid.getPressure("psia");
-fluid.setPressure(50.0, "bara");
-
-// Flow rate
-double flow_kghr = stream.getFlowRate("kg/hr");
-double flow_Sm3 = stream.getFlowRate("Sm3/hr");
-stream.setFlowRate(1000.0, "kg/hr");
-
-// Density
-double rho = fluid.getDensity("kg/m3");
-double rho_lbft3 = fluid.getDensity("lb/ft3");
-
 // Enthalpy
 double H_kJ = fluid.getEnthalpy("kJ/kg");
 ```
@@ -187,36 +173,51 @@ double H_kJ = fluid.getEnthalpy("kJ/kg");
 
 ## Serialization
 
-### SerializationManager
-
-Save and load NeqSim objects.
-
-```java
-import neqsim.util.serialization.SerializationManager;
-
-// Save fluid to file
-SystemInterface fluid = new SystemSrkEos(300.0, 50.0);
-fluid.addComponent("methane", 0.9);
-fluid.addComponent("ethane", 0.1);
-
-SerializationManager.save(fluid, "myfluid.neqsim");
-
-// Load fluid from file
-SystemInterface loadedFluid = SerializationManager.load("myfluid.neqsim");
-```
+NeqSim provides multiple serialization options for saving and loading simulations.
 
 ### Process System Serialization
 
 ```java
-// Save process system
-ProcessSystem process = new ProcessSystem();
+// Save process system to compressed .neqsim file
+ProcessSystem process = new ProcessSystem("My Process");
 // ... add equipment ...
+process.saveToNeqsim("myprocess.neqsim");
 
-// Save to file
-process.save("myprocess.neqsim");
+// Load from file (auto-runs after loading)
+ProcessSystem loaded = ProcessSystem.loadFromNeqsim("myprocess.neqsim");
 
-// Load from file
-ProcessSystem loaded = ProcessSystem.load("myprocess.neqsim");
+// Auto-detect format by extension
+process.saveAuto("myprocess.neqsim");  // Compressed
+process.saveAuto("myprocess.json");    // JSON state
+```
+
+### Process Model Serialization (Multi-Process)
+
+```java
+// Save ProcessModel containing multiple ProcessSystems
+ProcessModel model = new ProcessModel();
+model.add("upstream", upstreamProcess);
+model.add("downstream", downstreamProcess);
+
+model.saveToNeqsim("field_model.neqsim");
+
+// Load (auto-runs after loading)
+ProcessModel loaded = ProcessModel.loadFromNeqsim("field_model.neqsim");
+```
+
+### JSON State for Version Control
+
+```java
+// Export to Git-friendly JSON format
+ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
+state.setVersion("1.0.0");
+state.saveToFile("process_v1.0.0.json");
+
+// Load and validate
+ProcessSystemState loaded = ProcessSystemState.loadFromFile("process_v1.0.0.json");
+if (loaded.validate().isValid()) {
+    ProcessSystem restored = loaded.toProcessSystem();
+}
 ```
 
 ### Deep Copy via Serialization
@@ -228,6 +229,8 @@ SystemInterface clone = fluid.clone();
 // Or for process equipment
 ProcessEquipmentInterface copy = equipment.copy();
 ```
+
+**For full documentation:** See [Process Serialization Guide](../simulation/process_serialization.md)
 
 ---
 

@@ -155,6 +155,87 @@ public class ProcessSystemStateTest {
   }
 
   @Test
+  void testSaveAndLoadCompressedFile(@TempDir File tempDir) {
+    ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
+    state.setVersion("4.0.0");
+    state.setDescription("Compressed state test");
+
+    File compressedFile = new File(tempDir, "process_state.neqsim");
+    state.saveToCompressedFile(compressedFile);
+
+    assertTrue(compressedFile.exists());
+
+    // Compressed file should be smaller than uncompressed
+    File uncompressedFile = new File(tempDir, "process_state.json");
+    state.saveToFile(uncompressedFile);
+    assertTrue(compressedFile.length() < uncompressedFile.length());
+
+    ProcessSystemState loaded = ProcessSystemState.loadFromCompressedFile(compressedFile);
+
+    assertNotNull(loaded);
+    assertEquals(state.getName(), loaded.getName());
+    assertEquals(state.getVersion(), loaded.getVersion());
+    assertEquals(state.getDescription(), loaded.getDescription());
+  }
+
+  @Test
+  void testSaveAndLoadCompressedFileWithStringPath(@TempDir File tempDir) {
+    ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
+    state.setVersion("4.1.0");
+    state.setDescription("Compressed state test with String path");
+
+    String compressedPath = new File(tempDir, "process_state_string.neqsim").getAbsolutePath();
+    state.saveToCompressedFile(compressedPath);
+
+    ProcessSystemState loaded = ProcessSystemState.loadFromCompressedFile(compressedPath);
+
+    assertNotNull(loaded);
+    assertEquals(state.getName(), loaded.getName());
+    assertEquals(state.getVersion(), loaded.getVersion());
+    assertEquals(state.getDescription(), loaded.getDescription());
+  }
+
+  @Test
+  void testSaveToFileAutoCompressed(@TempDir File tempDir) {
+    ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
+    state.setVersion("5.0.0");
+
+    File compressedFile = new File(tempDir, "auto_compressed.neqsim");
+    state.saveToFileAuto(compressedFile);
+
+    assertTrue(compressedFile.exists());
+
+    ProcessSystemState loaded = ProcessSystemState.loadFromFileAuto(compressedFile);
+
+    assertNotNull(loaded);
+    assertEquals(state.getVersion(), loaded.getVersion());
+  }
+
+  @Test
+  void testSaveToFileAutoUncompressed(@TempDir File tempDir) {
+    ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
+    state.setVersion("6.0.0");
+
+    File uncompressedFile = new File(tempDir, "auto_uncompressed.json");
+    state.saveToFileAuto(uncompressedFile);
+
+    assertTrue(uncompressedFile.exists());
+
+    ProcessSystemState loaded = ProcessSystemState.loadFromFileAuto(uncompressedFile);
+
+    assertNotNull(loaded);
+    assertEquals(state.getVersion(), loaded.getVersion());
+  }
+
+  @Test
+  void testLoadNonExistentCompressedFile() {
+    ProcessSystemState loaded =
+        ProcessSystemState.loadFromCompressedFile("/non/existent/path.neqsim");
+
+    assertNull(loaded);
+  }
+
+  @Test
   void testLoadNonExistentFile() {
     ProcessSystemState loaded = ProcessSystemState.loadFromFile("/non/existent/path.json");
 

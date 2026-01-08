@@ -1,15 +1,25 @@
 package neqsim.process.processmodel.lifecycle;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
@@ -53,7 +63,17 @@ import neqsim.thermo.system.SystemInterface;
  * @version 1.0
  */
 public class ProcessSystemState implements Serializable {
-  private static final long serialVersionUID = 1000L;
+  private static final long serialVersionUID = 1001L;
+
+  /** Current schema version for JSON format compatibility. */
+  private static final String CURRENT_SCHEMA_VERSION = "1.1";
+
+  /** Logger for this class. */
+  private static final org.apache.logging.log4j.Logger logger =
+      org.apache.logging.log4j.LogManager.getLogger(ProcessSystemState.class);
+
+  /** Schema version of this state (for migration support). */
+  private String schemaVersion = CURRENT_SCHEMA_VERSION;
 
   private String name;
   private String version;
@@ -63,6 +83,7 @@ public class ProcessSystemState implements Serializable {
   private String createdBy;
   private ModelMetadata metadata;
   private List<EquipmentState> equipmentStates;
+  private List<ConnectionState> connectionStates;
   private Map<String, Object> customProperties;
   private String checksum;
 
@@ -73,6 +94,7 @@ public class ProcessSystemState implements Serializable {
     this.createdAt = Instant.now();
     this.lastModifiedAt = Instant.now();
     this.equipmentStates = new ArrayList<>();
+    this.connectionStates = new ArrayList<>();
     this.customProperties = new HashMap<>();
     this.metadata = new ModelMetadata();
   }
@@ -95,10 +117,68 @@ public class ProcessSystemState implements Serializable {
       state.equipmentStates.add(eqState);
     }
 
+    // Capture stream connections
+    state.captureConnections(process);
+
     // Generate checksum for integrity verification
     state.updateChecksum();
 
     return state;
+  }
+
+  /**
+   * Captures stream connections between equipment in the process.
+   *
+   * @param process the process system to analyze
+   */
+  private void captureConnections(ProcessSystem process) {
+    for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
+      // Capture input streams
+      if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
+        // Streams don't have upstream connections in the same way
+        continue;
+      }
+
+      // For equipment with output streams, capture connections
+      try {
+        // Check for common output stream patterns
+        if (equipment instanceof neqsim.process.equipment.separator.Separator) {
+          neqsim.process.equipment.separator.Separator sep =
+              (neqsim.process.equipment.separator.Separator) equipment;
+          if (sep.getGasOutStream() != null) {
+            connectionStates.add(new ConnectionState(equipment.getName(), "gasOutStream",
+                sep.getGasOutStream().getName(), "inlet"));
+          }
+          if (sep.getLiquidOutStream() != null) {
+            connectionStates.add(new ConnectionState(equipment.getName(), "liquidOutStream",
+                sep.getLiquidOutStream().getName(), "inlet"));
+          }
+        } else if (equipment instanceof neqsim.process.equipment.heatexchanger.Heater) {
+          neqsim.process.equipment.heatexchanger.Heater heater =
+              (neqsim.process.equipment.heatexchanger.Heater) equipment;
+          if (heater.getOutletStream() != null) {
+            connectionStates.add(new ConnectionState(equipment.getName(), "outletStream",
+                heater.getOutletStream().getName(), "inlet"));
+          }
+        } else if (equipment instanceof neqsim.process.equipment.valve.ThrottlingValve) {
+          neqsim.process.equipment.valve.ThrottlingValve valve =
+              (neqsim.process.equipment.valve.ThrottlingValve) equipment;
+          if (valve.getOutletStream() != null) {
+            connectionStates.add(new ConnectionState(equipment.getName(), "outletStream",
+                valve.getOutletStream().getName(), "inlet"));
+          }
+        } else if (equipment instanceof neqsim.process.equipment.compressor.Compressor) {
+          neqsim.process.equipment.compressor.Compressor comp =
+              (neqsim.process.equipment.compressor.Compressor) equipment;
+          if (comp.getOutletStream() != null) {
+            connectionStates.add(new ConnectionState(equipment.getName(), "outletStream",
+                comp.getOutletStream().getName(), "inlet"));
+          }
+        }
+      } catch (Exception e) {
+        logger.debug("Could not capture connections for equipment: " + equipment.getName(), e);
+      }
+    }
   }
 
   /**
@@ -137,6 +217,15 @@ public class ProcessSystemState implements Serializable {
   }
 
   /**
+   * Saves this state to a JSON file.
+   *
+   * @param file the output file
+   */
+  public void saveToFile(File file) {
+    saveToFile(file.getAbsolutePath());
+  }
+
+  /**
    * Loads a state from a JSON file.
    *
    * @param filePath path to the input file
@@ -145,10 +234,140 @@ public class ProcessSystemState implements Serializable {
   public static ProcessSystemState loadFromFile(String filePath) {
     Gson gson = createGson();
     try (FileReader reader = new FileReader(filePath)) {
-      return gson.fromJson(reader, ProcessSystemState.class);
+      ProcessSystemState state = gson.fromJson(reader, ProcessSystemState.class);
+      return migrateIfNeeded(state, filePath);
     } catch (IOException e) {
+      logger.warn("Failed to load state from file: " + filePath, e);
       return null;
     }
+  }
+
+  /**
+   * Loads a state from a JSON file.
+   *
+   * @param file the input file
+   * @return the loaded ProcessSystemState, or null if loading fails
+   */
+  public static ProcessSystemState loadFromFile(File file) {
+    return loadFromFile(file.getAbsolutePath());
+  }
+
+  /**
+   * Saves this state to a GZIP-compressed JSON file.
+   *
+   * <p>
+   * Compressed files typically achieve 5-20x size reduction compared to plain JSON, making them
+   * ideal for large process models with many equipment states.
+   * </p>
+   *
+   * @param filePath path to the output file (recommended extension: .neqsim)
+   */
+  public void saveToCompressedFile(String filePath) {
+    this.lastModifiedAt = Instant.now();
+    updateChecksum();
+
+    Gson gson = createGson();
+    try (BufferedOutputStream fout = new BufferedOutputStream(new FileOutputStream(filePath));
+        GZIPOutputStream gzout = new GZIPOutputStream(fout);
+        OutputStreamWriter writer = new OutputStreamWriter(gzout, StandardCharsets.UTF_8)) {
+      gson.toJson(this, writer);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to save compressed state to file: " + filePath, e);
+    }
+  }
+
+  /**
+   * Loads a state from a GZIP-compressed JSON file.
+   *
+   * @param filePath path to the compressed input file (.neqsim)
+   * @return the loaded ProcessSystemState, or null if loading fails
+   */
+  public static ProcessSystemState loadFromCompressedFile(String filePath) {
+    Gson gson = createGson();
+    try (BufferedInputStream fin = new BufferedInputStream(new FileInputStream(filePath));
+        GZIPInputStream gzin = new GZIPInputStream(fin);
+        InputStreamReader reader = new InputStreamReader(gzin, StandardCharsets.UTF_8)) {
+      ProcessSystemState state = gson.fromJson(reader, ProcessSystemState.class);
+      return migrateIfNeeded(state, filePath);
+    } catch (IOException e) {
+      logger.warn("Failed to load compressed state from file: " + filePath, e);
+      return null;
+    }
+  }
+
+  /**
+   * Saves this state to a GZIP-compressed JSON file.
+   *
+   * @param file the output file (recommended extension: .neqsim)
+   */
+  public void saveToCompressedFile(File file) {
+    saveToCompressedFile(file.getAbsolutePath());
+  }
+
+  /**
+   * Loads a state from a GZIP-compressed JSON file.
+   *
+   * @param file the compressed input file (.neqsim)
+   * @return the loaded ProcessSystemState, or null if loading fails
+   */
+  public static ProcessSystemState loadFromCompressedFile(File file) {
+    return loadFromCompressedFile(file.getAbsolutePath());
+  }
+
+  /**
+   * Saves this state to a file, automatically detecting whether to use compression.
+   *
+   * <p>
+   * If the file path ends with ".neqsim", the file will be GZIP-compressed. Otherwise, it will be
+   * saved as plain JSON.
+   * </p>
+   *
+   * @param filePath path to the output file
+   */
+  public void saveToFileAuto(String filePath) {
+    if (filePath.toLowerCase().endsWith(".neqsim")) {
+      saveToCompressedFile(filePath);
+    } else {
+      saveToFile(filePath);
+    }
+  }
+
+  /**
+   * Loads a state from a file, automatically detecting whether it is compressed.
+   *
+   * <p>
+   * If the file path ends with ".neqsim", it will be read as a GZIP-compressed file. Otherwise, it
+   * will be read as plain JSON.
+   * </p>
+   *
+   * @param filePath path to the input file
+   * @return the loaded ProcessSystemState, or null if loading fails
+   */
+  public static ProcessSystemState loadFromFileAuto(String filePath) {
+    if (filePath.toLowerCase().endsWith(".neqsim")) {
+      return loadFromCompressedFile(filePath);
+    } else {
+      return loadFromFile(filePath);
+    }
+  }
+
+  /**
+   * Saves this state to a file, automatically detecting whether to use compression.
+   *
+   * @param file the output file
+   */
+  public void saveToFileAuto(File file) {
+    saveToFileAuto(file.getAbsolutePath());
+  }
+
+  /**
+   * Loads a state from a file, automatically detecting whether it is compressed.
+   *
+   * @param file the input file
+   * @return the loaded ProcessSystemState, or null if loading fails
+   */
+  public static ProcessSystemState loadFromFileAuto(File file) {
+    return loadFromFileAuto(file.getAbsolutePath());
   }
 
   /**
@@ -195,6 +414,41 @@ public class ProcessSystemState implements Serializable {
         .registerTypeAdapter(Instant.class, new InstantAdapter()).create();
   }
 
+  /**
+   * Migrates a loaded state to the current schema version if needed.
+   *
+   * @param state the loaded state
+   * @param filePath the source file path (for logging)
+   * @return the migrated state
+   */
+  private static ProcessSystemState migrateIfNeeded(ProcessSystemState state, String filePath) {
+    if (state == null) {
+      return null;
+    }
+
+    // Handle states from older versions without schemaVersion field
+    if (state.schemaVersion == null) {
+      state.schemaVersion = "1.0";
+      logger
+          .info("Migrating state from version 1.0 to " + CURRENT_SCHEMA_VERSION + ": " + filePath);
+    }
+
+    // Add migration logic for future versions here
+    // Example:
+    // if ("1.0".equals(state.schemaVersion)) {
+    // // Migrate from 1.0 to 1.1
+    // state.connectionStates = new ArrayList<>();
+    // state.schemaVersion = "1.1";
+    // }
+
+    // Initialize connectionStates if null (for backward compatibility)
+    if (state.connectionStates == null) {
+      state.connectionStates = new ArrayList<>();
+    }
+
+    return state;
+  }
+
   private void updateChecksum() {
     // Simple checksum based on content
     String content = name + version + equipmentStates.size() + lastModifiedAt;
@@ -214,7 +468,121 @@ public class ProcessSystemState implements Serializable {
     return valid;
   }
 
+  /**
+   * Validates that this state is compatible with the current NeqSim version.
+   *
+   * <p>
+   * Checks for:
+   * <ul>
+   * <li>Schema version compatibility</li>
+   * <li>Known equipment types</li>
+   * <li>Required fields present</li>
+   * </ul>
+   *
+   * @return a ValidationResult containing any warnings or errors
+   */
+  public ValidationResult validate() {
+    java.util.List<String> warnings = new ArrayList<>();
+    java.util.List<String> errors = new ArrayList<>();
+
+    // Check schema version
+    if (schemaVersion == null) {
+      warnings.add("No schema version found - state may be from an older NeqSim version");
+    }
+
+    // Check for required fields
+    if (name == null || name.trim().isEmpty()) {
+      errors.add("Process name is missing");
+    }
+
+    // Check equipment states
+    if (equipmentStates == null || equipmentStates.isEmpty()) {
+      warnings.add("No equipment states found in saved state");
+    } else {
+      for (EquipmentState eq : equipmentStates) {
+        if (eq.getName() == null || eq.getName().trim().isEmpty()) {
+          errors.add("Equipment with missing name found");
+        }
+      }
+    }
+
+    return new ValidationResult(errors.isEmpty(), errors, warnings);
+  }
+
+  /**
+   * Result of state validation.
+   */
+  public static class ValidationResult {
+    private final boolean valid;
+    private final java.util.List<String> errors;
+    private final java.util.List<String> warnings;
+
+    /**
+     * Creates a validation result.
+     *
+     * @param valid whether the state is valid
+     * @param errors list of validation errors
+     * @param warnings list of validation warnings
+     */
+    public ValidationResult(boolean valid, java.util.List<String> errors,
+        java.util.List<String> warnings) {
+      this.valid = valid;
+      this.errors = errors;
+      this.warnings = warnings;
+    }
+
+    /**
+     * Returns whether the state is valid.
+     *
+     * @return true if valid
+     */
+    public boolean isValid() {
+      return valid;
+    }
+
+    /**
+     * Returns the list of validation errors.
+     *
+     * @return list of errors
+     */
+    public java.util.List<String> getErrors() {
+      return errors;
+    }
+
+    /**
+     * Returns the list of validation warnings.
+     *
+     * @return list of warnings
+     */
+    public java.util.List<String> getWarnings() {
+      return warnings;
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("ValidationResult{valid=").append(valid);
+      if (!errors.isEmpty()) {
+        sb.append(", errors=").append(errors);
+      }
+      if (!warnings.isEmpty()) {
+        sb.append(", warnings=").append(warnings);
+      }
+      sb.append("}");
+      return sb.toString();
+    }
+  }
+
   // Getters and setters
+
+  /**
+   * Gets the schema version of this state.
+   *
+   * @return the schema version
+   */
+  public String getSchemaVersion() {
+    return schemaVersion;
+  }
 
   public String getName() {
     return name;
@@ -287,6 +655,15 @@ public class ProcessSystemState implements Serializable {
 
   public List<EquipmentState> getEquipmentStates() {
     return equipmentStates;
+  }
+
+  /**
+   * Gets the connection states capturing stream topology.
+   *
+   * @return list of connection states
+   */
+  public List<ConnectionState> getConnectionStates() {
+    return connectionStates;
   }
 
   public Map<String, Object> getCustomProperties() {
@@ -400,6 +777,16 @@ public class ProcessSystemState implements Serializable {
         state.numericProperties.put("outletTemperature", cooler.getOutletTemperature());
       }
 
+      // Heat Exchangers
+      if (equipment instanceof neqsim.process.equipment.heatexchanger.HeatExchanger) {
+        neqsim.process.equipment.heatexchanger.HeatExchanger hx =
+            (neqsim.process.equipment.heatexchanger.HeatExchanger) equipment;
+        state.numericProperties.put("duty", hx.getDuty());
+        state.numericProperties.put("uAvalue", hx.getUAvalue());
+        state.numericProperties.put("hotOutTemperature", hx.getOutStream(0).getTemperature());
+        state.numericProperties.put("coldOutTemperature", hx.getOutStream(1).getTemperature());
+      }
+
       // Separators
       if (equipment instanceof neqsim.process.equipment.separator.Separator) {
         neqsim.process.equipment.separator.Separator sep =
@@ -409,6 +796,40 @@ public class ProcessSystemState implements Serializable {
         state.numericProperties.put("liquidLevel", sep.getLiquidLevel());
       }
 
+      // Three-Phase Separators
+      if (equipment instanceof neqsim.process.equipment.separator.ThreePhaseSeparator) {
+        neqsim.process.equipment.separator.ThreePhaseSeparator sep3 =
+            (neqsim.process.equipment.separator.ThreePhaseSeparator) equipment;
+        state.numericProperties.put("waterLevel", sep3.getWaterLevel());
+      }
+
+      // Mixers
+      if (equipment instanceof neqsim.process.equipment.mixer.Mixer) {
+        neqsim.process.equipment.mixer.Mixer mixer =
+            (neqsim.process.equipment.mixer.Mixer) equipment;
+        state.numericProperties.put("numberOfInputStreams",
+            (double) mixer.getNumberOfInputStreams());
+      }
+
+      // Splitters
+      if (equipment instanceof neqsim.process.equipment.splitter.Splitter) {
+        neqsim.process.equipment.splitter.Splitter splitter =
+            (neqsim.process.equipment.splitter.Splitter) equipment;
+        double[] fractions = splitter.getSplitFactors();
+        if (fractions != null) {
+          for (int i = 0; i < fractions.length; i++) {
+            state.numericProperties.put("splitFactor_" + i, fractions[i]);
+          }
+        }
+      }
+
+      // Absorbers/Columns
+      if (equipment instanceof neqsim.process.equipment.absorber.SimpleTEGAbsorber) {
+        neqsim.process.equipment.absorber.SimpleTEGAbsorber absorber =
+            (neqsim.process.equipment.absorber.SimpleTEGAbsorber) equipment;
+        state.numericProperties.put("numberOfStages", (double) absorber.getNumberOfStages());
+      }
+
       // Streams
       if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
         neqsim.process.equipment.stream.StreamInterface stream =
@@ -416,6 +837,24 @@ public class ProcessSystemState implements Serializable {
         state.numericProperties.put("temperature", stream.getTemperature());
         state.numericProperties.put("pressure", stream.getPressure());
         state.numericProperties.put("flowRate", stream.getFlowRate("kg/hr"));
+        state.numericProperties.put("molarFlowRate", stream.getFlowRate("mole/sec"));
+      }
+
+      // Adjusters - capture max/min adjusted values
+      if (equipment instanceof neqsim.process.equipment.util.Adjuster) {
+        neqsim.process.equipment.util.Adjuster adjuster =
+            (neqsim.process.equipment.util.Adjuster) equipment;
+        state.numericProperties.put("maxAdjustedValue", adjuster.getMaxAdjustedValue());
+        state.numericProperties.put("minAdjustedValue", adjuster.getMinAdjustedValue());
+      }
+
+      // Recycles - capture error values
+      if (equipment instanceof neqsim.process.equipment.util.Recycle) {
+        neqsim.process.equipment.util.Recycle recycle =
+            (neqsim.process.equipment.util.Recycle) equipment;
+        state.numericProperties.put("errorFlow", recycle.getErrorFlow());
+        state.numericProperties.put("errorTemperature", recycle.getErrorTemperature());
+        state.numericProperties.put("errorPressure", recycle.getErrorPressure());
       }
     }
 
@@ -502,6 +941,85 @@ public class ProcessSystemState implements Serializable {
   }
 
   /**
+   * Represents a connection between two pieces of equipment.
+   *
+   * <p>
+   * Captures the stream topology of the process for reconstruction and visualization.
+   * </p>
+   */
+  public static class ConnectionState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private String sourceEquipmentName;
+    private String sourcePortName;
+    private String targetEquipmentName;
+    private String targetPortName;
+
+    /**
+     * Default constructor.
+     */
+    public ConnectionState() {}
+
+    /**
+     * Creates a connection state.
+     *
+     * @param sourceEquipmentName name of the source equipment
+     * @param sourcePortName name of the output port (e.g., "gasOutStream")
+     * @param targetEquipmentName name of the target equipment
+     * @param targetPortName name of the input port (e.g., "inlet")
+     */
+    public ConnectionState(String sourceEquipmentName, String sourcePortName,
+        String targetEquipmentName, String targetPortName) {
+      this.sourceEquipmentName = sourceEquipmentName;
+      this.sourcePortName = sourcePortName;
+      this.targetEquipmentName = targetEquipmentName;
+      this.targetPortName = targetPortName;
+    }
+
+    /**
+     * Gets the source equipment name.
+     *
+     * @return the source equipment name
+     */
+    public String getSourceEquipmentName() {
+      return sourceEquipmentName;
+    }
+
+    /**
+     * Gets the source port name.
+     *
+     * @return the source port name
+     */
+    public String getSourcePortName() {
+      return sourcePortName;
+    }
+
+    /**
+     * Gets the target equipment name.
+     *
+     * @return the target equipment name
+     */
+    public String getTargetEquipmentName() {
+      return targetEquipmentName;
+    }
+
+    /**
+     * Gets the target port name.
+     *
+     * @return the target port name
+     */
+    public String getTargetPortName() {
+      return targetPortName;
+    }
+
+    @Override
+    public String toString() {
+      return sourceEquipmentName + "." + sourcePortName + " -> " + targetEquipmentName + "."
+          + targetPortName;
+    }
+  }
+
+  /**
    * Gson adapter for Instant serialization.
    */
   private static class InstantAdapter extends TypeAdapter<Instant> {
@@ -516,8 +1034,12 @@ public class ProcessSystemState implements Serializable {
 
     @Override
     public Instant read(JsonReader in) throws IOException {
+      if (in.peek() == com.google.gson.stream.JsonToken.NULL) {
+        in.nextNull();
+        return null;
+      }
       String value = in.nextString();
-      return value == null ? null : Instant.parse(value);
+      return value == null || value.isEmpty() ? null : Instant.parse(value);
     }
   }
 }

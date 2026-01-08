@@ -2,6 +2,7 @@ package neqsim.util.serialization;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -11,29 +12,53 @@ import java.io.OutputStreamWriter;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.reflection.PureJavaReflectionProvider;
 import com.thoughtworks.xstream.mapper.MapperWrapper;
 import com.thoughtworks.xstream.security.AnyTypePermission;
 
 /**
+ * NeqSimXtream class for serializing and deserializing NeqSim objects.
+ *
  * <p>
- * NeqSimXtream class.
+ * Provides compressed XML serialization using XStream with ZIP compression. The resulting .neqsim
+ * files are compact and portable.
  * </p>
  *
+ * <p>
+ * Features:
+ * <ul>
+ * <li>Automatic ThreadLocal field exclusion</li>
+ * <li>ZIP compression for compact storage</li>
+ * <li>Full object graph preservation with ID references</li>
+ * </ul>
+ *
  * @author esol
+ * @version 1.0
  */
 public class NeqSimXtream {
+  /** Logger for this class. */
+  private static final Logger logger = LogManager.getLogger(NeqSimXtream.class);
+
   /**
-   * <p>
-   * openNeqsim.
-   * </p>
+   * Opens and deserializes an object from a compressed .neqsim file.
    *
-   * @param filename a {@link java.lang.String} object
-   * @return a {@link java.lang.Object} object
-   * @throws java.io.IOException if any.
+   * @param filename the path to the .neqsim file
+   * @return the deserialized object
+   * @throws IOException if the file cannot be read or is not a valid .neqsim file
+   * @throws FileNotFoundException if the file does not exist or process.xml is not found in ZIP
    */
   public static Object openNeqsim(String filename) throws IOException {
+    File file = new File(filename);
+    if (!file.exists()) {
+      throw new FileNotFoundException("File not found: " + filename);
+    }
+    if (!file.canRead()) {
+      throw new IOException("Cannot read file (permission denied): " + filename);
+    }
+
     XStream xstream = createConfiguredXStream();
     xstream.addPermission(AnyTypePermission.ANY);
 
@@ -43,24 +68,47 @@ public class NeqSimXtream {
       while ((entry = zin.getNextEntry()) != null) {
         if ("process.xml".equals(entry.getName())) {
           try (InputStreamReader reader = new InputStreamReader(zin, "UTF-8")) {
-            return xstream.fromXML(reader);
+            Object result = xstream.fromXML(reader);
+            logger.debug("Successfully loaded object from: " + filename);
+            return result;
           }
         }
       }
-      throw new FileNotFoundException("process.xml not found in zip file.");
+      throw new FileNotFoundException("process.xml not found in zip file: " + filename);
     }
   }
 
   /**
+   * Saves an object to a compressed .neqsim file.
+   *
    * <p>
-   * saveNeqsim.
+   * The object is serialized to XML using XStream and compressed using ZIP compression.
    * </p>
    *
-   * @param javaobject a {@link java.lang.Object} object
-   * @param filename a {@link java.lang.String} object
-   * @return a boolean
+   * @param javaobject the object to serialize (typically ProcessSystem or ProcessModel)
+   * @param filename the path to save to (recommended extension: .neqsim)
+   * @return true if save was successful, false otherwise
    */
   public static boolean saveNeqsim(Object javaobject, String filename) {
+    if (javaobject == null) {
+      logger.error("Cannot save null object");
+      return false;
+    }
+    if (filename == null || filename.trim().isEmpty()) {
+      logger.error("Invalid filename: " + filename);
+      return false;
+    }
+
+    // Ensure parent directory exists
+    File file = new File(filename);
+    File parentDir = file.getParentFile();
+    if (parentDir != null && !parentDir.exists()) {
+      if (!parentDir.mkdirs()) {
+        logger.error("Failed to create directory: " + parentDir.getAbsolutePath());
+        return false;
+      }
+    }
+
     XStream xstream = createConfiguredXStream();
     xstream.allowTypesByWildcard(new String[] {"neqsim.**"});
 
@@ -74,10 +122,10 @@ public class NeqSimXtream {
       writer.flush();
 
       zout.closeEntry();
-      // writer and zout will be closed automatically by try-with-resources
+      logger.debug("Successfully saved object to: " + filename);
       return true;
     } catch (Exception e) {
-      System.err.println("[saveNeqsim] Error saving file: " + e);
+      logger.error("Error saving to file: " + filename, e);
       return false;
     }
   }

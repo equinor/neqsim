@@ -758,8 +758,35 @@ System.out.println("Product rate: " + product.getFlowRate("kg/hr") + " kg/hr");
 
 ---
 
+## Saving and Loading
+
+ProcessSystem supports saving and loading to/from compressed `.neqsim` files and JSON state files for version control.
+
+```java
+// Save to compressed .neqsim file (recommended)
+process.saveToNeqsim("my_process.neqsim");
+
+// Load (auto-runs after loading)
+ProcessSystem loaded = ProcessSystem.loadFromNeqsim("my_process.neqsim");
+
+// Auto-detect format by extension
+process.saveAuto("my_process.neqsim");  // Compressed XStream XML
+process.saveAuto("my_process.json");    // JSON state export
+
+// JSON state for version control
+ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
+state.setVersion("1.0.0");
+state.saveToFile("my_process_v1.0.0.json");
+```
+
+For full documentation on serialization options, see [Process Serialization Guide](../../simulation/process_serialization.md).
+
+---
+
 ## Related Documentation
 
+- [ProcessModel](process_model.md) - Multi-process container
 - [ProcessModule](process_module.md) - Modular process units
+- [Process Serialization](../../simulation/process_serialization.md) - Save/load processes
 - [Graph Simulation](graph_simulation.md) - Graph-based execution
 - [Equipment Overview](../equipment/README.md) - Process equipment
