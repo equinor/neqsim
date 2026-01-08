@@ -148,12 +148,20 @@ public class SystemMechanicalDesign implements java.io.Serializable {
       this.type = type;
     }
 
-    /** Get equipment name. @return name */
+    /**
+     * Get equipment name.
+     *
+     * @return name
+     */
     public String getName() {
       return name;
     }
 
-    /** Get equipment type. @return type */
+    /**
+     * Get equipment type.
+     *
+     * @return type
+     */
     public String getType() {
       return type;
     }

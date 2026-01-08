@@ -439,6 +439,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
 
     try {
+      // Preserve inlet composition by keeping component mole fractions
+      // before setting total moles to zero
       thermoSystem.setTotalNumberOfMoles(0.0);
       thermoSystem.init(0);
     } catch (Exception ex) {
