@@ -65,18 +65,40 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 | Equipment | File | Description |
 |-----------|------|-------------|
 | Wells | [wells.md](wells.md) | Production wells, chokes |
+| Reservoirs | [reservoirs.md](reservoirs.md) | Material balance reservoir modeling |
+| Subsea Systems | [subsea_systems.md](subsea_systems.md) | Subsea wells and flowlines |
 
-### Pipeline
+### Pipeline/Network
 
 | Equipment | File | Description |
 |-----------|------|-------------|
 | Pipelines | [pipelines.md](pipelines.md) | Pipe flow, pressure drop |
+| Networks | [networks.md](networks.md) | Pipeline network modeling |
+| Manifolds | [manifolds.md](manifolds.md) | Multi-stream routing |
+
+### Flow Measurement
+
+| Equipment | File | Description |
+|-----------|------|-------------|
+| Differential Pressure | [differential_pressure.md](differential_pressure.md) | Orifice plates, flow measurement |
 
 ### Storage
 
 | Equipment | File | Description |
 |-----------|------|-------------|
 | Tanks | [tanks.md](tanks.md) | Storage tanks, LNG boil-off |
+
+### Gas Treatment
+
+| Equipment | File | Description |
+|-----------|------|-------------|
+| Adsorbers | [adsorbers.md](adsorbers.md) | CO₂ and gas adsorption |
+
+### Power Generation
+
+| Equipment | File | Description |
+|-----------|------|-------------|
+| Power Equipment | [power_generation.md](power_generation.md) | Gas turbines, fuel cells, renewables |
 
 ### Utility Equipment
 

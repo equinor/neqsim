@@ -125,23 +125,31 @@ NeqSimExperimentDatabase.getExperimentData("VLE_CH4_CO2");
 
 ## Unit Conversion
 
-### Units Class
+For comprehensive unit conversion documentation, see **[Unit Conversion Guide](unit_conversion.md)**.
+
+### Quick Reference
 
 ```java
 import neqsim.util.unit.Units;
+import neqsim.util.unit.PressureUnit;
+import neqsim.util.unit.TemperatureUnit;
 
-// Temperature conversions
-double tempK = Units.temperatureToKelvin(25.0, "C");      // 298.15 K
-double tempC = Units.temperatureFromKelvin(298.15, "C");  // 25.0 °C
-double tempF = Units.temperatureFromKelvin(298.15, "F");  // 77.0 °F
+// Direct unit conversion
+PressureUnit pu = new PressureUnit(50.0, "bara");
+double p_psia = pu.getValue("psia");
 
-// Pressure conversions
-double pressPa = Units.pressureToPascal(10.0, "bara");    // 1e6 Pa
-double pressBara = Units.pressureFromPascal(1e6, "bara"); // 10.0 bar
+TemperatureUnit tu = new TemperatureUnit(25.0, "C");
+double t_K = tu.getValue("K");
 
-// Flow rate conversions
-double flowKgH = Units.flowRateToSI(1000.0, "kg/hr");     // kg/s
-double flowMSm3 = Units.flowRateFromSI(10.0, "MSm3/day"); // MSm³/day
+// In fluid properties
+double T_C = fluid.getTemperature("C");
+fluid.setTemperature(25.0, "C");
+
+double P_bara = fluid.getPressure("bara");
+fluid.setPressure(50.0, "bara");
+
+double flow = stream.getFlowRate("kg/hr");
+stream.setFlowRate(1000.0, "kg/hr");
 ```
 
 ### Supported Units
@@ -156,28 +164,6 @@ double flowMSm3 = Units.flowRateFromSI(10.0, "MSm3/day"); // MSm³/day
 | Viscosity | Pa.s, cP, mPa.s |
 | Energy | J, kJ, MJ, cal, BTU |
 | Power | W, kW, MW, hp |
-
-### In Fluid Properties
-
-```java
-// Temperature
-double T_C = fluid.getTemperature("C");
-double T_K = fluid.getTemperature("K");
-fluid.setTemperature(25.0, "C");
-
-// Pressure
-double P_bara = fluid.getPressure("bara");
-double P_psia = fluid.getPressure("psia");
-fluid.setPressure(50.0, "bara");
-
-// Flow rate
-double flow_kghr = stream.getFlowRate("kg/hr");
-double flow_Sm3 = stream.getFlowRate("Sm3/hr");
-stream.setFlowRate(1000.0, "kg/hr");
-
-// Density
-double rho = fluid.getDensity("kg/m3");
-double rho_lbft3 = fluid.getDensity("lb/ft3");
 
 // Enthalpy
 double H_kJ = fluid.getEnthalpy("kJ/kg");
