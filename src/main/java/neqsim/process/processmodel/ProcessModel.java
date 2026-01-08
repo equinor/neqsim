@@ -1,5 +1,7 @@
 package neqsim.process.processmodel;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -16,9 +18,16 @@ import neqsim.util.validation.ValidationResult;
  * ProcessModel class. Manages a collection of processes that can be run in steps or continuously.
  * </p>
  *
+ * <p>
+ * This class supports serialization via {@link #saveToNeqsim(String)} and
+ * {@link #loadFromNeqsim(String)} for full model persistence.
+ * </p>
+ *
  * @author ESOL
+ * @version 1.0
  */
-public class ProcessModel implements Runnable {
+public class ProcessModel implements Runnable, Serializable {
+  private static final long serialVersionUID = 1001L;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ProcessModel.class);
   private Map<String, ProcessSystem> processes = new LinkedHashMap<>();
@@ -928,5 +937,205 @@ public class ProcessModel implements Runnable {
     }
 
     return report.toString();
+  }
+
+  // ============ NEQSIM FILE SERIALIZATION ============
+
+  /**
+   * Saves this ProcessModel (with all ProcessSystems) to a compressed .neqsim file.
+   *
+   * <p>
+   * This is the recommended format for production use, providing compact storage with full model
+   * state preservation including all ProcessSystems. The file can be loaded with
+   * {@link #loadFromNeqsim(String)}.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   *
+   * <pre>
+   * ProcessModel model = new ProcessModel();
+   * model.add("upstream", upstreamProcess);
+   * model.add("downstream", downstreamProcess);
+   * model.run();
+   * model.saveToNeqsim("multi_process_model.neqsim");
+   * </pre>
+   *
+   * @param filename the file path to save to (recommended extension: .neqsim)
+   * @return true if save was successful, false otherwise
+   */
+  public boolean saveToNeqsim(String filename) {
+    boolean success = neqsim.util.serialization.NeqSimXtream.saveNeqsim(this, filename);
+    if (success) {
+      logger.info("ProcessModel saved to: " + filename);
+    } else {
+      logger.error("Failed to save ProcessModel to: " + filename);
+    }
+    return success;
+  }
+
+  /**
+   * Loads a ProcessModel from a compressed .neqsim file.
+   *
+   * <p>
+   * After loading, the model is automatically run to reinitialize calculations. This ensures the
+   * internal state is consistent for all ProcessSystems.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   *
+   * <pre>
+   * ProcessModel loaded = ProcessModel.loadFromNeqsim("multi_process_model.neqsim");
+   * // Model is already run and ready to use
+   * ProcessSystem upstream = loaded.get("upstream");
+   * </pre>
+   *
+   * @param filename the file path to load from
+   * @return the loaded ProcessModel, or null if loading fails
+   */
+  public static ProcessModel loadFromNeqsim(String filename) {
+    try {
+      Object loaded = neqsim.util.serialization.NeqSimXtream.openNeqsim(filename);
+      if (loaded instanceof ProcessModel) {
+        ProcessModel model = (ProcessModel) loaded;
+        model.run();
+        logger.info("ProcessModel loaded from: " + filename);
+        return model;
+      } else {
+        logger.error("Loaded object is not a ProcessModel: "
+            + (loaded != null ? loaded.getClass().getName() : "null"));
+        return null;
+      }
+    } catch (IOException e) {
+      logger.error("Failed to load ProcessModel from file: " + filename, e);
+      return null;
+    }
+  }
+
+  /**
+   * Saves this ProcessModel with automatic format detection based on file extension.
+   *
+   * <p>
+   * File format is determined by extension:
+   * <ul>
+   * <li>.neqsim → XStream compressed XML (full serialization)</li>
+   * <li>.json → JSON state (lightweight, Git-friendly, requires ProcessModelState)</li>
+   * <li>other → Java binary serialization (legacy)</li>
+   * </ul>
+   *
+   * @param filename the file path to save to
+   * @return true if save was successful
+   */
+  public boolean saveAuto(String filename) {
+    if (filename.endsWith(".neqsim")) {
+      return saveToNeqsim(filename);
+    } else if (filename.endsWith(".json")) {
+      return saveStateToFile(filename);
+    } else {
+      // Legacy binary serialization
+      try (java.io.ObjectOutputStream oos =
+          new java.io.ObjectOutputStream(new java.io.FileOutputStream(filename))) {
+        oos.writeObject(this);
+        logger.info("ProcessModel saved (binary) to: " + filename);
+        return true;
+      } catch (IOException e) {
+        logger.error("Failed to save ProcessModel to: " + filename, e);
+        return false;
+      }
+    }
+  }
+
+  /**
+   * Loads a ProcessModel with automatic format detection based on file extension.
+   *
+   * <p>
+   * File format is determined by extension:
+   * <ul>
+   * <li>.neqsim → XStream compressed XML (full serialization)</li>
+   * <li>.json → JSON state (requires matching ProcessSystems already configured)</li>
+   * <li>other → Java binary serialization (legacy)</li>
+   * </ul>
+   *
+   * @param filename the file path to load from
+   * @return the loaded ProcessModel, or null if loading fails
+   */
+  public static ProcessModel loadAuto(String filename) {
+    if (filename.endsWith(".neqsim")) {
+      return loadFromNeqsim(filename);
+    } else if (filename.endsWith(".json")) {
+      return loadStateFromFile(filename);
+    } else {
+      // Legacy binary serialization
+      try (java.io.ObjectInputStream ois =
+          new java.io.ObjectInputStream(new java.io.FileInputStream(filename))) {
+        ProcessModel model = (ProcessModel) ois.readObject();
+        model.run();
+        logger.info("ProcessModel loaded (binary) from: " + filename);
+        return model;
+      } catch (IOException | ClassNotFoundException e) {
+        logger.error("Failed to load ProcessModel from: " + filename, e);
+        return null;
+      }
+    }
+  }
+
+  // ============ JSON STATE SERIALIZATION ============
+
+  /**
+   * Exports the current state of this ProcessModel to a JSON file.
+   *
+   * <p>
+   * This exports state for all ProcessSystems in the model. The JSON format is Git-friendly and
+   * human-readable, suitable for version control and diffing.
+   * </p>
+   *
+   * @param filename the file path to save to (recommended extension: .json)
+   * @return true if save was successful
+   */
+  public boolean saveStateToFile(String filename) {
+    try {
+      neqsim.process.processmodel.lifecycle.ProcessModelState state =
+          neqsim.process.processmodel.lifecycle.ProcessModelState.fromProcessModel(this);
+      state.saveToFile(filename);
+      logger.info("ProcessModel state saved to: " + filename);
+      return true;
+    } catch (Exception e) {
+      logger.error("Failed to save ProcessModel state to: " + filename, e);
+      return false;
+    }
+  }
+
+  /**
+   * Loads ProcessModel state from a JSON file.
+   *
+   * <p>
+   * Note: This returns a new ProcessModel with ProcessSystems initialized from the saved state.
+   * Full reconstruction requires the original equipment configuration.
+   * </p>
+   *
+   * @param filename the file path to load from
+   * @return the loaded ProcessModel, or null if loading fails
+   */
+  public static ProcessModel loadStateFromFile(String filename) {
+    try {
+      neqsim.process.processmodel.lifecycle.ProcessModelState state =
+          neqsim.process.processmodel.lifecycle.ProcessModelState.loadFromFile(filename);
+      ProcessModel model = state.toProcessModel();
+      logger.info("ProcessModel state loaded from: " + filename);
+      return model;
+    } catch (Exception e) {
+      logger.error("Failed to load ProcessModel state from: " + filename, e);
+      return null;
+    }
+  }
+
+  /**
+   * Exports the current state of this ProcessModel for inspection or modification.
+   *
+   * @return a ProcessModelState snapshot of the current model
+   */
+  public neqsim.process.processmodel.lifecycle.ProcessModelState exportState() {
+    return neqsim.process.processmodel.lifecycle.ProcessModelState.fromProcessModel(this);
   }
 }
