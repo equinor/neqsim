@@ -2,6 +2,54 @@
 
 This document maps all 230+ documentation files to the reference manual structure. Use this as a comprehensive table of contents and navigation guide.
 
+**NeqSim Homepage:** [https://equinor.github.io/neqsimhome/](https://equinor.github.io/neqsimhome/)
+
+---
+
+## About NeqSim
+
+NeqSim is an open-source library for calculation of fluid behavior, phase equilibrium, and process simulation. It is used for fluids such as oil and gas, carbon dioxide, refrigerants, hydrogen, ammonia, water, and chemicals.
+
+NeqSim is distributed under the Apache-2.0 license and can be used via:
+- **Java** - Core library
+- **Python** - Via neqsim-python package
+- **MATLAB** - Via NeqSim MATLAB toolbox
+- **.NET/Excel** - Via NeqSim.NET
+- **Cape-Open** - For integration with process simulators
+- **Web Application** - Browser-based interface
+
+### NeqSim Toolboxes
+
+| Toolbox | Repository | Description |
+|---------|------------|-------------|
+| NeqSim Java | [equinor/neqsim](https://github.com/equinor/neqsim) | Core Java library |
+| NeqSim Python | [equinor/neqsimpython](https://github.com/equinor/neqsimpython) | Python bindings |
+| NeqSim MATLAB | [equinor/neqsimmatlab](https://github.com/equinor/neqsimmatlab) | MATLAB toolbox |
+| NeqSim .NET | [equinor/neqsimNET](https://github.com/equinor/neqsimNET) | .NET/C# integration |
+| NeqSim Cape-Open | [equinor/neqsimcapeopen](https://github.com/equinor/neqsimcapeopen) | Cape-Open/Excel interface |
+| NeqSim Native | [equinor/neqsim-native](https://github.com/equinor/neqsim-native) | Native compilation via GraalVM |
+
+### Web Applications & APIs
+
+| Application | Link | Description |
+|-------------|------|-------------|
+| NeqSim Web App | [neqsim.streamlit.app](https://neqsim.streamlit.app/) | Browser-based calculations |
+| NeqSim Colab | [NeqSim-Colab](https://github.com/EvenSol/NeqSim-Colab) | Jupyter/Colab notebook examples |
+| NeqSimLive API | [NeqSimAPI](https://github.com/equinor/NeqSimAPI) | Container-based APIs for digital twins |
+| Process Models | [neqsimprocess](https://github.com/equinor/neqsimprocess) | Pre-built process model library |
+
+### AI & Optimization
+
+| Project | Repository | Description |
+|---------|------------|-------------|
+| RL Agents | [NeqSim-Process-RL-Agents](https://github.com/equinor/NeqSim-Process-RL-Agents) | Multi-agent reinforcement learning for process optimization |
+
+### Support & Community
+
+- **Discussions:** [GitHub Discussions](https://github.com/equinor/neqsim/discussions)
+- **Academic Support:** [NTNU Energy and Process Engineering](https://www.ntnu.edu/employees/even.solbraa)
+- **Benchmark:** [Performance benchmarks](https://equinor.github.io/neqsimhome/benchmark.html)
+
 ---
 
 ## Part I: Getting Started
@@ -25,6 +73,16 @@ This document maps all 230+ documentation files to the reference manual structur
 | Usage Examples | [docs/wiki/usage_examples.md](wiki/usage_examples.md) | Basic usage patterns |
 | FAQ | [docs/wiki/faq.md](wiki/faq.md) | Frequently asked questions |
 | Wiki Index | [docs/wiki/index.md](wiki/index.md) | Wiki documentation index |
+
+### External Getting Started Guides
+
+| Platform | Guide |
+|----------|-------|
+| Java | [Getting started in Java](https://github.com/equinor/neqsim/wiki/Getting-started-with-NeqSim-and-Github) |
+| Python | [Getting started in Python](https://github.com/equinor/neqsimpython/wiki/Getting-started-with-NeqSim-in-Python) |
+| MATLAB | [Getting started in MATLAB](https://github.com/equinor/neqsimmatlab/wiki/Getting-started-with-NeqSim-in-Matlab) |
+| Excel | [Getting started in Excel](https://github.com/equinor/neqsim.NET/wiki/Getting-started-with-NeqSim-in-Excel) |
+| Google Colab | [Demo notebook](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/examples_of_NeqSim_in_Colab.ipynb) |
 
 ---
 
