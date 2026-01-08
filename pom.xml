@@ -11,6 +11,7 @@
 	<url>https://github.com/equinor/neqsim</url>
 	<packaging>jar</packaging>
 	<version>${revision}</version>
+	
 
 	<scm>
 		<connection>scm:git:https://github.com/equinor/neqsim.git</connection>
