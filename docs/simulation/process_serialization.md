@@ -28,7 +28,7 @@ NeqSim provides multiple ways to persist and restore process simulations:
 |--------|--------|-------------|----------|
 | `NeqSimXtream.saveNeqsim()` | XML in ZIP | ✅ Yes | Production - compact storage |
 | `save_xml()` / `open_xml()` | Plain XML | ❌ No | Debugging - human-readable |
-| `ProcessSystemState` | JSON | ❌ No | Version control - Git-friendly |
+| `ProcessSystemState` | JSON | ✅ Optional (.neqsim) | Version control - Git-friendly |
 
 The underlying serialization technology is [XStream](https://x-stream.github.io/), a powerful Java library that converts objects to XML and back without requiring any modifications to the objects.
 
@@ -155,6 +155,7 @@ NeqSim provides a `ProcessSystemState` class for JSON-based state management, id
 ```java
 import neqsim.process.processmodel.lifecycle.ProcessSystemState;
 import neqsim.process.processmodel.ProcessSystem;
+import java.io.File;
 
 // Create a state snapshot from existing process
 ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
@@ -163,11 +164,13 @@ ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
 state.setVersion("1.2.3");
 state.setDescription("Post-commissioning tuned model");
 
-// Save to JSON file
+// Save to JSON file (uncompressed) - using String path or File
 state.saveToFile("asset_model_v1.2.3.json");
+state.saveToFile(new File("asset_model_v1.2.3.json"));
 
-// Later: Load the state
+// Later: Load the state - using String path or File
 ProcessSystemState loadedState = ProcessSystemState.loadFromFile("asset_model_v1.2.3.json");
+ProcessSystemState loadedState = ProcessSystemState.loadFromFile(new File("asset_model_v1.2.3.json"));
 
 // Convert to ProcessSystem (limited reconstruction)
 ProcessSystem restoredProcess = loadedState.toProcessSystem();
@@ -175,6 +178,39 @@ ProcessSystem restoredProcess = loadedState.toProcessSystem();
 // Or apply state to existing process with matching structure
 loadedState.applyTo(existingProcess);
 ```
+
+#### Compressed State Files
+
+For large process models, use GZIP compression to reduce file sizes (typically 5-20x reduction):
+
+```java
+// Save to compressed file (.neqsim) - using String path or File
+state.saveToCompressedFile("asset_model_v1.2.3.neqsim");
+state.saveToCompressedFile(new File("asset_model_v1.2.3.neqsim"));
+
+// Load from compressed file - using String path or File
+ProcessSystemState loadedState = ProcessSystemState.loadFromCompressedFile("asset_model_v1.2.3.neqsim");
+ProcessSystemState loadedState = ProcessSystemState.loadFromCompressedFile(new File("asset_model_v1.2.3.neqsim"));
+
+// Auto-detect compression based on file extension - using String path or File
+state.saveToFileAuto("asset_model.neqsim");  // Compressed
+state.saveToFileAuto("asset_model.json");    // Uncompressed
+state.saveToFileAuto(new File("asset_model.neqsim"));  // Also works with File
+
+ProcessSystemState loaded = ProcessSystemState.loadFromFileAuto("asset_model.neqsim");
+ProcessSystemState loaded = ProcessSystemState.loadFromFileAuto(new File("asset_model.neqsim"));
+```
+
+**When to use compressed state files (.neqsim):**
+- Large process models with many equipment units
+- Storage-constrained environments
+- Archiving historical model versions
+- Network transfer of state files
+
+**When to use plain JSON (.json):**
+- Version control (Git) - human-readable diffs
+- Debugging and manual inspection
+- Small to medium-sized models
 
 #### JSON State Export/Import
 

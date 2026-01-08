@@ -1,15 +1,25 @@
 package neqsim.process.processmodel.lifecycle;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
@@ -137,6 +147,15 @@ public class ProcessSystemState implements Serializable {
   }
 
   /**
+   * Saves this state to a JSON file.
+   *
+   * @param file the output file
+   */
+  public void saveToFile(File file) {
+    saveToFile(file.getAbsolutePath());
+  }
+
+  /**
    * Loads a state from a JSON file.
    *
    * @param filePath path to the input file
@@ -149,6 +168,132 @@ public class ProcessSystemState implements Serializable {
     } catch (IOException e) {
       return null;
     }
+  }
+
+  /**
+   * Loads a state from a JSON file.
+   *
+   * @param file the input file
+   * @return the loaded ProcessSystemState, or null if loading fails
+   */
+  public static ProcessSystemState loadFromFile(File file) {
+    return loadFromFile(file.getAbsolutePath());
+  }
+
+  /**
+   * Saves this state to a GZIP-compressed JSON file.
+   *
+   * <p>
+   * Compressed files typically achieve 5-20x size reduction compared to plain JSON, making them
+   * ideal for large process models with many equipment states.
+   * </p>
+   *
+   * @param filePath path to the output file (recommended extension: .neqsim)
+   */
+  public void saveToCompressedFile(String filePath) {
+    this.lastModifiedAt = Instant.now();
+    updateChecksum();
+
+    Gson gson = createGson();
+    try (BufferedOutputStream fout = new BufferedOutputStream(new FileOutputStream(filePath));
+        GZIPOutputStream gzout = new GZIPOutputStream(fout);
+        OutputStreamWriter writer = new OutputStreamWriter(gzout, StandardCharsets.UTF_8)) {
+      gson.toJson(this, writer);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to save compressed state to file: " + filePath, e);
+    }
+  }
+
+  /**
+   * Loads a state from a GZIP-compressed JSON file.
+   *
+   * @param filePath path to the compressed input file (.neqsim)
+   * @return the loaded ProcessSystemState, or null if loading fails
+   */
+  public static ProcessSystemState loadFromCompressedFile(String filePath) {
+    Gson gson = createGson();
+    try (BufferedInputStream fin = new BufferedInputStream(new FileInputStream(filePath));
+        GZIPInputStream gzin = new GZIPInputStream(fin);
+        InputStreamReader reader = new InputStreamReader(gzin, StandardCharsets.UTF_8)) {
+      return gson.fromJson(reader, ProcessSystemState.class);
+    } catch (IOException e) {
+      return null;
+    }
+  }
+
+  /**
+   * Saves this state to a GZIP-compressed JSON file.
+   *
+   * @param file the output file (recommended extension: .neqsim)
+   */
+  public void saveToCompressedFile(File file) {
+    saveToCompressedFile(file.getAbsolutePath());
+  }
+
+  /**
+   * Loads a state from a GZIP-compressed JSON file.
+   *
+   * @param file the compressed input file (.neqsim)
+   * @return the loaded ProcessSystemState, or null if loading fails
+   */
+  public static ProcessSystemState loadFromCompressedFile(File file) {
+    return loadFromCompressedFile(file.getAbsolutePath());
+  }
+
+  /**
+   * Saves this state to a file, automatically detecting whether to use compression.
+   *
+   * <p>
+   * If the file path ends with ".neqsim", the file will be GZIP-compressed. Otherwise, it will be
+   * saved as plain JSON.
+   * </p>
+   *
+   * @param filePath path to the output file
+   */
+  public void saveToFileAuto(String filePath) {
+    if (filePath.toLowerCase().endsWith(".neqsim")) {
+      saveToCompressedFile(filePath);
+    } else {
+      saveToFile(filePath);
+    }
+  }
+
+  /**
+   * Loads a state from a file, automatically detecting whether it is compressed.
+   *
+   * <p>
+   * If the file path ends with ".neqsim", it will be read as a GZIP-compressed file. Otherwise, it
+   * will be read as plain JSON.
+   * </p>
+   *
+   * @param filePath path to the input file
+   * @return the loaded ProcessSystemState, or null if loading fails
+   */
+  public static ProcessSystemState loadFromFileAuto(String filePath) {
+    if (filePath.toLowerCase().endsWith(".neqsim")) {
+      return loadFromCompressedFile(filePath);
+    } else {
+      return loadFromFile(filePath);
+    }
+  }
+
+  /**
+   * Saves this state to a file, automatically detecting whether to use compression.
+   *
+   * @param file the output file
+   */
+  public void saveToFileAuto(File file) {
+    saveToFileAuto(file.getAbsolutePath());
+  }
+
+  /**
+   * Loads a state from a file, automatically detecting whether it is compressed.
+   *
+   * @param file the input file
+   * @return the loaded ProcessSystemState, or null if loading fails
+   */
+  public static ProcessSystemState loadFromFileAuto(File file) {
+    return loadFromFileAuto(file.getAbsolutePath());
   }
 
   /**
