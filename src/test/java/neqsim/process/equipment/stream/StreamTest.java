@@ -47,16 +47,19 @@ class StreamTest extends neqsim.NeqSimTest {
 
   @Test
   public void testNoFlow() {
-    testSystem.setTotalFlowRate(0, "MSm3/day");
-    RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () -> {
-      testSystem.initProperties();
-    });
-    // Exception type may vary - either InvalidInputException for zero moles check
-    // or IsNaNException when calculations proceed and hit NaN values
-    assertTrue(
-        thrown.getMessage().contains("InvalidInputException")
-            || thrown.getMessage().contains("IsNaNException"),
-        "Expected InvalidInputException or IsNaNException but got: " + thrown.getMessage());
+    // Test that Stream handles zero flow gracefully without throwing exception
+    // The Stream.run() method checks for minimum flow and returns early if below threshold
+    Stream zeroFlowStream = new Stream("zero-flow", testSystem.clone());
+    zeroFlowStream.setFlowRate(0.0, "kg/hr");
+
+    ProcessSystem zeroFlowProcess = new ProcessSystem();
+    zeroFlowProcess.add(zeroFlowStream);
+
+    // Should not throw - Stream handles zero flow gracefully
+    zeroFlowProcess.run();
+
+    // Stream should be marked as inactive when flow is below minimum
+    assertFalse(zeroFlowStream.isActive(), "Stream with zero flow should be inactive");
   }
 
   @Test
