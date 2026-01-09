@@ -391,6 +391,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | PVT Workflow Module | [docs/pvtsimulation/pvt_workflow.md](pvtsimulation/pvt_workflow.md) | PVT workflow module |
 | Property Flash | [docs/wiki/property_flash_workflows.md](wiki/property_flash_workflows.md) | Property flash workflows |
 | Whitson Reader | [docs/pvtsimulation/whitson_pvt_reader.md](pvtsimulation/whitson_pvt_reader.md) | Whitson PVT reader |
+| Solution Gas-Water Ratio | [docs/pvtsimulation/SolutionGasWaterRatio.md](pvtsimulation/SolutionGasWaterRatio.md) | Rsw calculation methods (McCain, Søreide-Whitson, Electrolyte CPA) |
 
 ### Chapter 36: Black Oil Models
 | Document | Path | Description |
