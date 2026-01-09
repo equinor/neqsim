@@ -506,8 +506,11 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 ### Chapter 48: Field Development
 | Document | Path | Description |
 |----------|------|-------------|
+| **Integrated Framework** | [docs/fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md) | PVT→Reservoir→Well→Process integration guide |
+| **Strategy** | [docs/fielddevelopment/FIELD_DEVELOPMENT_STRATEGY.md](fielddevelopment/FIELD_DEVELOPMENT_STRATEGY.md) | Field development strategy and roadmap |
 | Field Planning | [docs/wiki/field_development_planning.md](wiki/field_development_planning.md) | Field development planning |
 | Field Engine | [docs/simulation/field_development_engine.md](simulation/field_development_engine.md) | Field development engine |
+| **Economics** | [docs/process/economics/README.md](process/economics/README.md) | Economics module: NPV, IRR, tax models, decline curves |
 
 ---
 
