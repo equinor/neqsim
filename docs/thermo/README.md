@@ -33,10 +33,12 @@ thermo/
 
 ### Core Guides
 
+- [Thermodynamic Models Guide](thermodynamic_models.md): **Comprehensive overview** of all thermodynamic models in NeqSim, including equations of state, CPA, reference equations (GERG-2008, EOS-CG), activity coefficient models, electrolyte models, and the auto-select feature. Covers theory, usage, and model selection guidelines.
 - [Fluid Creation Guide](fluid_creation_guide.md): **Comprehensive guide** to creating fluids in NeqSim, including all available equations of state, mixing rules, and model selection guidelines.
 - [Mixing Rules Guide](mixing_rules_guide.md): **Detailed documentation** on mixing rules, including mathematical formulations, binary interaction parameters, and usage examples for different applications.
 - [Flash Calculations Guide](flash_calculations_guide.md): **Comprehensive documentation** of flash calculations available via ThermodynamicOperations, including TP, PH, PS, VU flashes, saturation calculations, and hydrate equilibria.
 - [Hydrate Models Guide](hydrate_models.md): **Comprehensive documentation** of gas hydrate thermodynamic models, including van der Waals-Platteeuw theory, Structure I/II hydrates, CPA and PVTsim implementations, and inhibitor modeling.
+- [Electrolyte CPA Model](ElectrolyteCPAModel.md): **Detailed documentation** of the electrolyte CPA model, including Fürst electrostatic contributions, validation data, and usage examples.
 
 ### Database Documentation
 

@@ -106,6 +106,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 ### Chapter 6: Equations of State
 | Document | Path | Description |
 |----------|------|-------------|
+| Thermodynamic Models | [docs/thermo/thermodynamic_models.md](thermo/thermodynamic_models.md) | **Comprehensive guide** to all thermodynamic models (EoS, CPA, GERG, electrolytes, GE models) with theory and usage |
 | GERG-2008 | [docs/thermo/gerg2008_eoscg.md](thermo/gerg2008_eoscg.md) | GERG-2008 equation of state |
 | Mixing Rules | [docs/thermo/mixing_rules_guide.md](thermo/mixing_rules_guide.md) | Mixing rules and BIPs |
 | Mixing Rule Package | [docs/thermo/mixingrule/README.md](thermo/mixingrule/README.md) | Mixing rule implementations |
