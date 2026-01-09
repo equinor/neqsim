@@ -19,15 +19,21 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  */
 public class SolutionGasWaterRatioVerificationTest {
 
+  // Java 8 compatible separator strings (instead of String.repeat())
+  private static final String SEPARATOR_EQUALS =
+      "================================================================================";
+  private static final String SEPARATOR_DASH =
+      "--------------------------------------------------------------------------------";
+
   /**
    * Compare all three methods at typical reservoir conditions. This test prints a comparison table
    * for visual verification.
    */
   @Test
   public void compareAllMethodsAtReservoirConditions() {
-    System.out.println("\n" + "=".repeat(80));
+    System.out.println("\n" + SEPARATOR_EQUALS);
     System.out.println("SOLUTION GAS-WATER RATIO (Rsw) - METHOD COMPARISON");
-    System.out.println("=".repeat(80));
+    System.out.println(SEPARATOR_EQUALS);
 
     // Create a typical reservoir gas (mostly methane)
     SystemInterface gas = new SystemSrkCPAstatoil(373.15, 200.0);
@@ -47,7 +53,7 @@ public class SolutionGasWaterRatioVerificationTest {
 
     System.out.println("\nConditions: T = 100°C (373.15 K), Pure Water (salinity = 0)");
     System.out.println("Gas composition: 90% CH4, 5% C2H6, 5% CO2");
-    System.out.println("-".repeat(80));
+    System.out.println(SEPARATOR_DASH);
 
     // Calculate for pure water (salinity = 0)
     rswCalc.setSalinity(0.0);
@@ -72,7 +78,7 @@ public class SolutionGasWaterRatioVerificationTest {
     System.out.printf("%-12s %-15s %-15s %-15s%n", "P (bara)", "McCain", "Soreide-Whitson",
         "Electrolyte-CPA");
     System.out.printf("%-12s %-15s %-15s %-15s%n", "", "(Sm3/Sm3)", "(Sm3/Sm3)", "(Sm3/Sm3)");
-    System.out.println("-".repeat(80));
+    System.out.println(SEPARATOR_DASH);
 
     for (int i = 0; i < pressures.length; i++) {
       System.out.printf("%-12.1f %-15.6f %-15.6f %-15.6f%n", pressures[i], rswMcCain[i],
@@ -91,9 +97,9 @@ public class SolutionGasWaterRatioVerificationTest {
    */
   @Test
   public void compareSalinityEffectAllMethods() {
-    System.out.println("\n" + "=".repeat(80));
+    System.out.println("\n" + SEPARATOR_EQUALS);
     System.out.println("SALINITY EFFECT ON Rsw - METHOD COMPARISON");
-    System.out.println("=".repeat(80));
+    System.out.println(SEPARATOR_EQUALS);
 
     // Create a methane-rich gas
     SystemInterface gas = new SystemSrkCPAstatoil(350.0, 100.0);
@@ -113,12 +119,12 @@ public class SolutionGasWaterRatioVerificationTest {
 
     System.out.println("\nConditions: T = 76.85°C (350 K), P = 100 bara");
     System.out.println("Gas composition: 95% CH4, 5% CO2");
-    System.out.println("-".repeat(80));
+    System.out.println(SEPARATOR_DASH);
     System.out.printf("%-15s %-15s %-15s %-15s%n", "Salinity", "McCain", "Soreide-Whitson",
         "Electrolyte-CPA");
     System.out.printf("%-15s %-15s %-15s %-15s%n", "(wt% NaCl)", "(Sm3/Sm3)", "(Sm3/Sm3)",
         "(Sm3/Sm3)");
-    System.out.println("-".repeat(80));
+    System.out.println(SEPARATOR_DASH);
 
     for (double sal : salinities) {
       rswCalc.setSalinity(sal, "wt%");
@@ -158,11 +164,11 @@ public class SolutionGasWaterRatioVerificationTest {
    */
   @Test
   public void verifyMcCainAgainstLiterature() {
-    System.out.println("\n" + "=".repeat(80));
+    System.out.println("\n" + SEPARATOR_EQUALS);
     System.out.println("McCAIN CORRELATION VERIFICATION AGAINST LITERATURE");
-    System.out.println("=".repeat(80));
+    System.out.println(SEPARATOR_EQUALS);
     System.out.println("Reference: Culberson & McKetta (1951), McCain (1990)");
-    System.out.println("-".repeat(80));
+    System.out.println(SEPARATOR_DASH);
 
     // Create pure methane system
     SystemInterface methane = new SystemSrkCPAstatoil(310.93, 68.9);
@@ -185,7 +191,7 @@ public class SolutionGasWaterRatioVerificationTest {
     System.out.printf("%-12s %-12s %-18s %-18s %-10s%n", "T (°F)", "P (psia)", "Expected Range",
         "Calculated", "Status");
     System.out.printf("%-12s %-12s %-18s %-18s %-10s%n", "", "", "(scf/STB)", "(scf/STB)", "");
-    System.out.println("-".repeat(80));
+    System.out.println(SEPARATOR_DASH);
 
     for (double[] point : testPoints) {
       double tempK = point[0];
@@ -222,9 +228,9 @@ public class SolutionGasWaterRatioVerificationTest {
    */
   @Test
   public void compareTemperatureEffect() {
-    System.out.println("\n" + "=".repeat(80));
+    System.out.println("\n" + SEPARATOR_EQUALS);
     System.out.println("TEMPERATURE EFFECT ON Rsw");
-    System.out.println("=".repeat(80));
+    System.out.println(SEPARATOR_EQUALS);
 
     // Create methane gas
     SystemInterface gas = new SystemSrkCPAstatoil(300.0, 100.0);
@@ -243,10 +249,10 @@ public class SolutionGasWaterRatioVerificationTest {
     rswCalc.setTemperaturesAndPressures(temps, pressures);
 
     System.out.println("\nConditions: P = 100 bara, Pure Water, Pure Methane");
-    System.out.println("-".repeat(80));
+    System.out.println(SEPARATOR_DASH);
     System.out.printf("%-12s %-12s %-15s %-15s %-15s%n", "T (K)", "T (°C)", "McCain",
         "Soreide-Whitson", "Electrolyte-CPA");
-    System.out.println("-".repeat(80));
+    System.out.println(SEPARATOR_DASH);
 
     // McCain
     rswCalc.setCalculationMethod(SolutionGasWaterRatio.CalculationMethod.MCCAIN);
@@ -282,9 +288,9 @@ public class SolutionGasWaterRatioVerificationTest {
    */
   @Test
   public void compareCO2RichGas() {
-    System.out.println("\n" + "=".repeat(80));
+    System.out.println("\n" + SEPARATOR_EQUALS);
     System.out.println("CO2-RICH GAS - Rsw COMPARISON");
-    System.out.println("=".repeat(80));
+    System.out.println(SEPARATOR_EQUALS);
 
     // Create CO2-rich gas
     SystemInterface gas = new SystemSrkCPAstatoil(323.15, 50.0);
@@ -301,10 +307,10 @@ public class SolutionGasWaterRatioVerificationTest {
 
     System.out.println("\nConditions: T = 50°C (323.15 K), Pure Water");
     System.out.println("Gas composition: 50% CO2, 50% CH4");
-    System.out.println("-".repeat(80));
+    System.out.println(SEPARATOR_DASH);
     System.out.printf("%-12s %-15s %-15s %-15s%n", "P (bara)", "McCain*", "Soreide-Whitson",
         "Electrolyte-CPA");
-    System.out.println("-".repeat(80));
+    System.out.println(SEPARATOR_DASH);
 
     // McCain
     rswCalc.setCalculationMethod(SolutionGasWaterRatio.CalculationMethod.MCCAIN);
@@ -342,9 +348,9 @@ public class SolutionGasWaterRatioVerificationTest {
    */
   @Test
   public void consistencyCheck() {
-    System.out.println("\n" + "=".repeat(80));
+    System.out.println("\n" + SEPARATOR_EQUALS);
     System.out.println("CONSISTENCY CHECK - ALL METHODS");
-    System.out.println("=".repeat(80));
+    System.out.println(SEPARATOR_EQUALS);
 
     SystemInterface gas = new SystemSrkCPAstatoil(350.0, 100.0);
     gas.addComponent("methane", 0.90);
@@ -413,8 +419,8 @@ public class SolutionGasWaterRatioVerificationTest {
         salinityTest ? "PASS" : "FAIL");
 
     // Summary
-    System.out.println("\n" + "-".repeat(80));
+    System.out.println("\n" + SEPARATOR_DASH);
     System.out.printf("CONSISTENCY CHECK SUMMARY: %d/%d tests passed%n", passCount, totalTests);
-    System.out.println("=".repeat(80));
+    System.out.println(SEPARATOR_EQUALS);
   }
 }
