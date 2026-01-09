@@ -41,22 +41,32 @@ Benefits:
 
 ### Quick Start - Use runOptimized()
 
-The recommended approach is to use `runOptimized()` which automatically selects the best strategy:
+The recommended approach is to use `runOptimized()` which automatically analyzes your process and selects the best strategy:
 
 ```java
-// Auto-selects best execution strategy
+// Auto-selects best execution strategy based on process topology
 process.runOptimized();
+
+// With calculation ID for tracking
+UUID calcId = UUID.randomUUID();
+process.runOptimized(calcId);
 ```
+
+The method inspects the process for:
+- **Recycle units** → Sequential execution for convergence
+- **Multi-input equipment** (Mixer, Manifold, HeatExchanger, etc.) → Sequential for correct mass balance
+- **Adjuster units** → Hybrid execution (parallel feed-forward + iteration)
+- **Feed-forward only** → Full parallel execution for maximum speed
 
 ### Execution Strategy Comparison
 
-| Strategy | Method | Best For | Speedup |
-|----------|--------|----------|---------|
-| Sequential | `run()` | Simple processes | baseline |
-| Graph-based | `setUseGraphBasedExecution(true)` | Complex ordering | 28% |
-| Parallel | `runParallel()` | Feed-forward (no recycles) | 40-57% |
-| Hybrid | `runHybrid()` | Processes with recycles | 38% |
-| **Optimized** | `runOptimized()` | **All processes** | **best available** |
+| Strategy | Method | Best For | When Used by runOptimized() |
+|----------|--------|----------|----------------------------|
+| Sequential | `run()` or `runSequential()` | Recycles, multi-input equipment | Has Recycle units or Mixer/HeatExchanger/etc. |
+| Graph-based | `setUseGraphBasedExecution(true)` | Complex ordering | Manual configuration only |
+| Parallel | `runParallel()` | Feed-forward (no recycles) | No recycles, no multi-input, no adjusters |
+| Hybrid | `runHybrid()` | Processes with adjusters | Has adjusters but no recycles/multi-input |
+| **Optimized** | `runOptimized()` | **All processes** | **Auto-selects from above** |
 
 ### Sequential Execution (Default)
 
@@ -117,13 +127,26 @@ try {
 Automatically selects the best strategy based on process topology:
 
 ```java
-// Auto-selects: runParallel() or runHybrid()
+// Auto-selects best execution strategy
 process.runOptimized();
 ```
 
-**Decision logic:**
-- No recycles → `runParallel()` for maximum speed
-- Has recycles → `runHybrid()` for parallel + iteration
+**Decision logic (in order of priority):**
+
+| Condition | Strategy | Reason |
+|-----------|----------|--------|
+| Has `Recycle` units | `runSequential()` | Recycles require full iterative convergence |
+| Has multi-input equipment | `runSequential()` | Mixer, Manifold, etc. need correct stream ordering |
+| Has `Adjuster` units | `runHybrid()` | Adjusters need iteration but feed-forward can parallelize |
+| Feed-forward only | `runParallel()` | Maximum speed with no dependencies |
+
+**Multi-input equipment includes:**
+- `Mixer`, `Manifold`
+- `TurboExpanderCompressor`, `Ejector`
+- `HeatExchanger`, `MultiStreamHeatExchanger`
+- `FurnaceBurner`, `FlareStack`
+
+**Note:** `hasRecycles()` checks for explicit `Recycle` unit operations, not graph-based cycle detection.
 
 ---
 
@@ -132,14 +155,36 @@ process.runOptimized();
 ### Check Process Topology
 
 ```java
-// Check if process has recycle loops
-boolean hasRecycles = process.hasRecycleLoops();
+// Check if process has Recycle units (requires iterative execution)
+boolean hasRecycles = process.hasRecycles();
 
-// Check if parallel execution would be beneficial
+// Check if process has Adjuster units (requires iteration)
+boolean hasAdjusters = process.hasAdjusters();
+
+// Check if process has multi-input equipment (requires sequential)
+// Includes: Mixer, Manifold, HeatExchanger, TurboExpanderCompressor, etc.
+boolean hasMultiInput = process.hasMultiInputEquipment();
+
+// Check if parallel execution would be beneficial (graph-based)
 boolean beneficial = process.isParallelExecutionBeneficial();
 
 // Get detailed partition analysis
 System.out.println(process.getExecutionPartitionInfo());
+```
+
+### Understanding runOptimized() Selection
+
+```java
+// What will runOptimized() do for my process?
+if (process.hasRecycles()) {
+    System.out.println("Will use: runSequential() - Recycle units detected");
+} else if (process.hasMultiInputEquipment()) {
+    System.out.println("Will use: runSequential() - Multi-input equipment detected");
+} else if (process.hasAdjusters()) {
+    System.out.println("Will use: runHybrid() - Adjusters with parallel feed-forward");
+} else {
+    System.out.println("Will use: runParallel() - Full parallel execution");
+}
 ```
 
 ### Example Partition Analysis Output
@@ -443,5 +488,60 @@ compressionGraph.execute();
 ## Related Documentation
 
 - [ProcessSystem](process_system.md) - Process system management
+- [ProcessModel](process_model.md) - Multi-process model management
 - [ProcessModule](process_module.md) - Modular process units
 - [Parallel Simulation](../../parallel_process_simulation.md) - Parallel execution guide
+
+---
+
+## ProcessModel Execution
+
+When combining multiple `ProcessSystem` instances into a `ProcessModel`, execution follows a similar pattern:
+
+### Running ProcessModel
+
+```java
+import neqsim.process.processmodel.ProcessModel;
+
+// Create and populate model
+ProcessModel model = new ProcessModel();
+model.add("Upstream", upstreamProcess);
+model.add("Compression", compressionProcess);
+model.add("Export", exportProcess);
+
+// Run until convergence (uses optimized execution internally)
+model.run();
+
+// Check convergence
+if (model.isModelConverged()) {
+    System.out.println("Converged in " + model.getLastIterationCount() + " iterations");
+}
+```
+
+### Execution Options
+
+```java
+// Continuous mode (default) - iterates until convergence
+model.setRunStep(false);
+model.run();
+
+// Step mode - run one iteration at a time
+model.setRunStep(true);
+model.run();  // One step for each ProcessSystem
+model.run();  // Next step...
+
+// Asynchronous execution
+Future<?> task = model.runAsTask();
+// ... do other work ...
+task.get();  // Wait for completion
+```
+
+### Optimized Execution in ProcessModel
+
+Each `ProcessSystem` within a `ProcessModel` uses `runOptimized()` by default:
+
+```java
+// Enable/disable optimized execution for contained ProcessSystems
+model.setUseOptimizedExecution(true);  // Default
+model.run();
+```
