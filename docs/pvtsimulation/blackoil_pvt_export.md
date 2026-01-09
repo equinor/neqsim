@@ -282,6 +282,80 @@ public class PVTExportExample {
 }
 ```
 
+## E300 Compositional EOS Export
+
+In addition to black-oil PVT tables, NeqSim can export the full compositional EOS model to Eclipse E300 format. This is useful when you need to preserve all EOS parameters for compositional reservoir simulation.
+
+### Basic Usage
+
+```java
+import neqsim.thermo.util.readwrite.EclipseFluidReadWrite;
+
+// Export fluid to E300 compositional format
+EclipseFluidReadWrite.write(fluid, "RESERVOIR_FLUID.e300", 100.0);  // 100°C reservoir temp
+
+// Get as string for inspection
+String e300Content = EclipseFluidReadWrite.toE300String(fluid, 100.0);
+```
+
+### E300 File Keywords
+
+The exported E300 file contains all EOS parameters needed for compositional simulation:
+
+| Keyword | Description | Units |
+|---------|-------------|-------|
+| `NCOMPS` | Number of components | - |
+| `EOS` | Equation of state type | SRK/PR |
+| `RTEMP` | Reservoir temperature | °C |
+| `STCOND` | Standard conditions | °C, bara |
+| `CNAMES` | Component names | - |
+| `TCRIT` | Critical temperatures | K |
+| `PCRIT` | Critical pressures | bar |
+| `ACF` | Acentric factors | - |
+| `MW` | Molecular weights | g/mol |
+| `TBOIL` | Normal boiling points | K |
+| `VCRIT` | Critical volumes | m³/kmol |
+| `SSHIFT` | Volume translation | - |
+| `PARACHOR` | Parachor values | - |
+| `ZI` | Mole fractions | - |
+| `BIC` | Binary interaction coefficients | - |
+
+### Round-Trip: Export and Import
+
+```java
+import neqsim.thermo.util.readwrite.EclipseFluidReadWrite;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+// Create and tune fluid
+SystemInterface tunedFluid = /* ... your tuned fluid ... */;
+
+// Export to E300 file
+EclipseFluidReadWrite.write(tunedFluid, "TUNED.e300", 100.0);
+
+// Read it back (e.g., in another session or application)
+SystemInterface importedFluid = EclipseFluidReadWrite.read("TUNED.e300");
+
+// Use the imported fluid
+importedFluid.setPressure(200.0, "bara");
+importedFluid.setTemperature(100.0, "C");
+new ThermodynamicOperations(importedFluid).TPflash();
+```
+
+### Python Usage
+
+```python
+from jpype import JClass
+
+EclipseFluidReadWrite = JClass('neqsim.thermo.util.readwrite.EclipseFluidReadWrite')
+
+# Export to E300 file
+EclipseFluidReadWrite.write(fluid, "tuned_fluid.e300", 100.0)
+
+# Read back
+imported_fluid = EclipseFluidReadWrite.read("tuned_fluid.e300")
+```
+
 ## Integration with Whitson PVT Workflows
 
 The export functionality enables seamless integration with PVT software like whitsonPVT:
@@ -300,7 +374,17 @@ EclipseEOSExporter.toFile(tunedFluid, Path.of("TUNED_PVT.INC"));
 
 ## API Reference
 
-### EclipseEOSExporter
+### EclipseFluidReadWrite (Compositional EOS)
+
+| Method | Description |
+|--------|-------------|
+| `read(String)` | Read E300 file into NeqSim fluid |
+| `write(SystemInterface, String)` | Write fluid to E300 file |
+| `write(SystemInterface, String, double)` | Write with reservoir temp (°C) |
+| `toE300String(SystemInterface)` | Export to E300 format string |
+| `toE300String(SystemInterface, double)` | Export with reservoir temp |
+
+### EclipseEOSExporter (Black-Oil PVT)
 
 | Method | Description |
 |--------|-------------|

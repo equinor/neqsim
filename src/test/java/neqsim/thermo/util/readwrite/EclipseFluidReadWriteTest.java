@@ -893,5 +893,96 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(napthaLiquidProduct.getFlowRate("m3/hr"), 47.24077, 0.1);
     Assertions.assertEquals(lpgexport.getFlowRate("m3/hr"), 68.2539, 0.1);
   }
+
+  /**
+   * Test writing a fluid to E300 format and reading it back.
+   */
+  @Test
+  void testWriteAndReadRoundTrip() throws IOException {
+    // Create a test fluid
+    SystemInterface originalFluid = new neqsim.thermo.system.SystemSrkEos(373.15, 200.0);
+    originalFluid.addComponent("nitrogen", 0.5);
+    originalFluid.addComponent("CO2", 2.0);
+    originalFluid.addComponent("methane", 75.0);
+    originalFluid.addComponent("ethane", 8.0);
+    originalFluid.addComponent("propane", 5.0);
+    originalFluid.addComponent("i-butane", 1.0);
+    originalFluid.addComponent("n-butane", 2.0);
+    originalFluid.addComponent("i-pentane", 0.8);
+    originalFluid.addComponent("n-pentane", 1.0);
+    originalFluid.addComponent("n-hexane", 1.2);
+    originalFluid.addTBPfraction("C7", 1.5, 0.092, 0.732);
+    originalFluid.addTBPfraction("C10", 2.0, 0.140, 0.800);
+    originalFluid.setMixingRule("classic");
+    originalFluid.useVolumeCorrection(true);
+    originalFluid.init(0);
+
+    // Flash at reservoir conditions
+    originalFluid.setPressure(200.0, "bara");
+    originalFluid.setTemperature(100.0, "C");
+    ThermodynamicOperations ops1 = new ThermodynamicOperations(originalFluid);
+    ops1.TPflash();
+    originalFluid.initPhysicalProperties();
+
+    // Write to E300 file
+    String outputFile = file.getAbsolutePath() + "/roundtrip_test.e300";
+    EclipseFluidReadWrite.write(originalFluid, outputFile, 100.0);
+
+    // Read it back
+    EclipseFluidReadWrite.pseudoName = "";
+    SystemInterface importedFluid = EclipseFluidReadWrite.read(outputFile);
+
+    // Set same conditions
+    importedFluid.setPressure(200.0, "bara");
+    importedFluid.setTemperature(100.0, "C");
+    ThermodynamicOperations ops2 = new ThermodynamicOperations(importedFluid);
+    ops2.TPflash();
+    importedFluid.initPhysicalProperties();
+
+    // Compare number of components
+    assertEquals(originalFluid.getNumberOfComponents(), importedFluid.getNumberOfComponents(),
+        "Number of components should match");
+
+    // Compare gas density (should be close)
+    if (originalFluid.hasPhaseType("gas") && importedFluid.hasPhaseType("gas")) {
+      double origGasDens = originalFluid.getGasPhase().getDensity("kg/m3");
+      double impGasDens = importedFluid.getGasPhase().getDensity("kg/m3");
+      assertEquals(origGasDens, impGasDens, origGasDens * 0.05, "Gas density should be within 5%");
+    }
+
+    // Clean up test file
+    java.nio.file.Files.deleteIfExists(java.nio.file.Path.of(outputFile));
+  }
+
+  /**
+   * Test toE300String method.
+   */
+  @Test
+  void testToE300String() {
+    SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(373.15, 100.0);
+    fluid.addComponent("methane", 0.80);
+    fluid.addComponent("ethane", 0.10);
+    fluid.addComponent("propane", 0.05);
+    fluid.addComponent("n-butane", 0.05);
+    fluid.setMixingRule("classic");
+    fluid.init(0);
+
+    String e300Content = EclipseFluidReadWrite.toE300String(fluid, 80.0);
+
+    // Verify key sections are present
+    Assertions.assertTrue(e300Content.contains("METRIC"), "Should contain METRIC keyword");
+    Assertions.assertTrue(e300Content.contains("NCOMPS"), "Should contain NCOMPS keyword");
+    Assertions.assertTrue(e300Content.contains("EOS"), "Should contain EOS keyword");
+    Assertions.assertTrue(e300Content.contains("SRK"), "Should contain SRK for SRK fluid");
+    Assertions.assertTrue(e300Content.contains("CNAMES"), "Should contain CNAMES keyword");
+    Assertions.assertTrue(e300Content.contains("TCRIT"), "Should contain TCRIT keyword");
+    Assertions.assertTrue(e300Content.contains("PCRIT"), "Should contain PCRIT keyword");
+    Assertions.assertTrue(e300Content.contains("ACF"), "Should contain ACF keyword");
+    Assertions.assertTrue(e300Content.contains("MW"), "Should contain MW keyword");
+    Assertions.assertTrue(e300Content.contains("ZI"), "Should contain ZI keyword");
+    Assertions.assertTrue(e300Content.contains("BIC"), "Should contain BIC keyword");
+    Assertions.assertTrue(e300Content.contains("C1"), "Should contain C1 for methane");
+    Assertions.assertTrue(e300Content.contains("80.00"), "Should contain reservoir temp 80°C");
+  }
 }
 
