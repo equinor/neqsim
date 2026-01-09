@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -132,6 +133,9 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> PARACHOR = new ArrayList<Double>();
       ArrayList<Double> ZI = new ArrayList<Double>();
       ArrayList<Double> BIC = new ArrayList<Double>();
+      ArrayList<Double> BICS = new ArrayList<Double>();
+      ArrayList<Double> LBCCOEF = new ArrayList<Double>();
+      boolean usePedersen = false;
       String EOS;
       while ((st = br.readLine()) != null) {
         st = st.trim();
@@ -301,6 +305,26 @@ public class EclipseFluidReadWrite {
             }
           }
         }
+        if (st.trim().equals("LBCCOEF")) {
+          String line;
+          while ((line = br.readLine()) != null) {
+            line = line.trim().replace("/", "").trim();
+            if (line.startsWith("--") || line.isEmpty()) {
+              break;
+            }
+            try {
+              // LBCCOEF may be on a single line with 5 values
+              String[] values = line.split("\\s+");
+              for (String val : values) {
+                if (!val.isEmpty()) {
+                  LBCCOEF.add(Double.parseDouble(val));
+                }
+              }
+            } catch (NumberFormatException e) {
+              logger.debug("Error parsing LBCCOEF value: " + e.getMessage());
+            }
+          }
+        }
       }
       for (int counter = 0; counter < names.size(); counter++) {
         String name = names.get(counter);
@@ -384,6 +408,18 @@ public class EclipseFluidReadWrite {
           }
         }
       }
+
+      // Apply LBC viscosity model if LBCCOEF was found
+      if (LBCCOEF.size() >= 5) {
+        double[] lbcParams = new double[5];
+        for (int i = 0; i < 5; i++) {
+          lbcParams[i] = LBCCOEF.get(i);
+        }
+        applyLBCViscosityModel(fluid, lbcParams);
+      } else if (usePedersen) {
+        // Apply Pedersen (PFCT) viscosity model if PEDERSEN keyword was found
+        applyPFCTViscosityModel(fluid);
+      }
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -421,6 +457,9 @@ public class EclipseFluidReadWrite {
       ArrayList<Double> PARACHOR = new ArrayList<Double>();
       ArrayList<Double> ZI = new ArrayList<Double>();
       ArrayList<Double> BIC = new ArrayList<Double>();
+      ArrayList<Double> BICS = new ArrayList<Double>();
+      ArrayList<Double> LBCCOEF = new ArrayList<Double>();
+      boolean usePedersen = false;
       String EOS;
       while ((st = br.readLine()) != null) {
         st = st.trim();
@@ -570,6 +609,56 @@ public class EclipseFluidReadWrite {
             }
           }
         }
+        if (st.trim().equals("BICS")) {
+          // Parse BICS the same way as BIC - lower triangular matrix
+          st = st.trim();
+          int addedComps2 = 0;
+          int lengthLastLine2 = 0;
+          List<String> list2 = new ArrayList<String>();
+          while ((st = br.readLine().replace("/", "")) != null && addedComps2 < names.size() - 1) {
+            st = st.trim();
+            if (st.startsWith("--") || st.isEmpty() || st.trim().startsWith("/")
+                || st.trim().startsWith(" ")) {
+              break;
+            }
+            String[] arr2 = st.trim().split("\\s+");
+            List<String> templist2 = new ArrayList<String>(Arrays.asList(arr2));
+            list2.addAll(templist2);
+            list2.removeAll(Arrays.asList("", null));
+            if (lengthLastLine2 >= list2.size()) {
+              continue;
+            }
+            lengthLastLine2 = list2.size();
+            for (int i = 0; i < list2.size(); i++) {
+              BICS.add(Double.parseDouble(list2.get(i)));
+            }
+            addedComps2++;
+            list2.clear();
+          }
+        }
+        if (st.trim().equals("PEDERSEN")) {
+          usePedersen = true;
+        }
+        if (st.trim().equals("LBCCOEF")) {
+          String line;
+          while ((line = br.readLine()) != null) {
+            line = line.trim().replace("/", "").trim();
+            if (line.startsWith("--") || line.isEmpty()) {
+              break;
+            }
+            try {
+              // LBCCOEF may be on a single line with 5 values
+              String[] values = line.split("\\s+");
+              for (String val : values) {
+                if (!val.isEmpty()) {
+                  LBCCOEF.add(Double.parseDouble(val));
+                }
+              }
+            } catch (NumberFormatException e) {
+              logger.debug("Error parsing LBCCOEF value: " + e.getMessage());
+            }
+          }
+        }
       }
 
       for (String fluidName : fluidNames) {
@@ -677,6 +766,18 @@ public class EclipseFluidReadWrite {
                 .setBinaryInteractionParameter(j, i, kijVal);
           }
         }
+      }
+
+      // Apply LBC viscosity model if LBCCOEF was found
+      if (LBCCOEF.size() >= 5) {
+        double[] lbcParams = new double[5];
+        for (int i = 0; i < 5; i++) {
+          lbcParams[i] = LBCCOEF.get(i);
+        }
+        applyLBCViscosityModel(fluid, lbcParams);
+      } else if (usePedersen) {
+        // Apply Pedersen (PFCT) viscosity model if PEDERSEN keyword was found
+        applyPFCTViscosityModel(fluid);
       }
     } catch (
 
@@ -806,7 +907,7 @@ public class EclipseFluidReadWrite {
    * @throws IOException if writing fails
    */
   public static void write(SystemInterface fluid, String outputFile) throws IOException {
-    write(fluid, Path.of(outputFile), 100.0);
+    write(fluid, Paths.get(outputFile), 100.0);
   }
 
   /**
@@ -819,7 +920,7 @@ public class EclipseFluidReadWrite {
    */
   public static void write(SystemInterface fluid, String outputFile, double reservoirTempC)
       throws IOException {
-    write(fluid, Path.of(outputFile), reservoirTempC);
+    write(fluid, Paths.get(outputFile), reservoirTempC);
   }
 
   /**
@@ -907,6 +1008,11 @@ public class EclipseFluidReadWrite {
     String eosType = getEOSType(fluid);
     writer.write(eosType + " /\n");
 
+    // PRCORR keyword for Peng-Robinson EOS
+    if ("PR".equals(eosType)) {
+      writer.write("PRCORR\n");
+    }
+
     // Reservoir temperature
     writer.write("-- Reservoir temperature (C)\n");
     writer.write("RTEMP\n");
@@ -951,6 +1057,24 @@ public class EclipseFluidReadWrite {
     }
     writer.write("/\n");
 
+    // OmegaA EOS parameter
+    writer.write("-- OmegaA\n");
+    writer.write("OMEGAA\n");
+    double omegaA = "PR".equals(eosType) ? 0.45724 : 0.42748;
+    for (int i = 0; i < nComps; i++) {
+      writer.write(String.format(java.util.Locale.US, "     %.5f\n", omegaA));
+    }
+    writer.write("/\n");
+
+    // OmegaB EOS parameter
+    writer.write("-- OmegaB\n");
+    writer.write("OMEGAB\n");
+    double omegaB = "PR".equals(eosType) ? 0.07780 : 0.08664;
+    for (int i = 0; i < nComps; i++) {
+      writer.write(String.format(java.util.Locale.US, "     %.5f\n", omegaB));
+    }
+    writer.write("/\n");
+
     // Molecular weights (g/mol)
     writer.write("-- Molecular Weight (g/mol)\n");
     writer.write("MW\n");
@@ -975,6 +1099,19 @@ public class EclipseFluidReadWrite {
     for (int i = 0; i < nComps; i++) {
       writer.write(String.format(java.util.Locale.US, "   %.6f\n",
           fluid.getComponent(i).getCriticalVolume()));
+    }
+    writer.write("/\n");
+
+    // Critical Z-factors
+    writer.write("-- Critical Z-factors\n");
+    writer.write("ZCRIT\n");
+    for (int i = 0; i < nComps; i++) {
+      // Zcrit = Pc * Vc / (R * Tc) where R = 8.314 J/(mol·K)
+      double pc = fluid.getComponent(i).getPC() * 1e5; // bar to Pa
+      double vc = fluid.getComponent(i).getCriticalVolume() / 1000.0; // m3/kmol to m3/mol
+      double tc = fluid.getComponent(i).getTC();
+      double zcrit = pc * vc / (8.314 * tc);
+      writer.write(String.format(java.util.Locale.US, "   %.5f\n", zcrit));
     }
     writer.write("/\n");
 
@@ -1016,6 +1153,65 @@ public class EclipseFluidReadWrite {
       writer.write(line.toString() + "\n");
     }
     writer.write("/\n");
+
+    // BIC at surface conditions (same as BIC for now)
+    writer.write("-- Binary Interaction Coefficients at surface conditions (lower triangular)\n");
+    writer.write("BICS\n");
+    for (int i = 1; i < nComps; i++) {
+      StringBuilder line = new StringBuilder();
+      for (int j = 0; j < i; j++) {
+        line.append(String.format(java.util.Locale.US, "  %.6f", kij[i][j]));
+      }
+      writer.write(line.toString() + "\n");
+    }
+    writer.write("/\n");
+
+    // Check if PFCT (Pedersen) viscosity model is used
+    if (isPFCTViscosityModelActive(fluid)) {
+      writer.write("-- Viscosity correlation\n");
+      writer.write("PEDERSEN\n");
+    }
+
+    // Volume shift at surface conditions (SSHIFTS)
+    writer.write("-- Volume translation at surface conditions\n");
+    writer.write("SSHIFTS\n");
+    for (int i = 0; i < nComps; i++) {
+      writer.write(String.format(java.util.Locale.US, "   %.6f\n",
+          fluid.getComponent(i).getVolumeCorrectionConst()));
+    }
+    writer.write("/\n");
+
+    // LBC Viscosity Coefficients (if using LBC model)
+    double[] lbcParams = getLBCParametersFromFluid(fluid);
+    if (lbcParams != null && lbcParams.length >= 5) {
+      writer.write("-- LBC coefficients\n");
+      writer.write("LBCCOEF\n");
+      StringBuilder lbcLine = new StringBuilder("  ");
+      for (int i = 0; i < 5; i++) {
+        lbcLine.append(String.format(java.util.Locale.US, " %.7f ", lbcParams[i]));
+      }
+      writer.write(lbcLine.toString().trim() + " /\n");
+    }
+  }
+
+  /**
+   * Check if PFCT (Pedersen) viscosity model is active on any phase.
+   *
+   * @param fluid the fluid
+   * @return true if PFCT viscosity model is active
+   */
+  private static boolean isPFCTViscosityModelActive(SystemInterface fluid) {
+    try {
+      for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+        if (fluid.getPhase(phase).getPhysicalProperties() != null
+            && fluid.getPhase(phase).getPhysicalProperties().isPFCTViscosityModel()) {
+          return true;
+        }
+      }
+    } catch (Exception e) {
+      logger.debug("Could not check PFCT viscosity model: " + e.getMessage());
+    }
+    return false;
   }
 
   /**
@@ -1088,5 +1284,58 @@ public class EclipseFluidReadWrite {
       }
     }
     return kij;
+  }
+
+  /**
+   * Apply LBC viscosity model with custom parameters to fluid.
+   *
+   * @param fluid the fluid to configure
+   * @param lbcParams array of 5 LBC dense contribution parameters
+   */
+  private static void applyLBCViscosityModel(SystemInterface fluid, double[] lbcParams) {
+    for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+      try {
+        fluid.getPhase(phase).getPhysicalProperties().setViscosityModel("LBC");
+        fluid.getPhase(phase).getPhysicalProperties().setLbcParameters(lbcParams);
+      } catch (Exception e) {
+        logger.debug("Could not set LBC model for phase " + phase + ": " + e.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Apply PFCT (Pedersen) viscosity model to all phases.
+   *
+   * @param fluid the fluid to configure
+   */
+  private static void applyPFCTViscosityModel(SystemInterface fluid) {
+    for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+      try {
+        fluid.getPhase(phase).getPhysicalProperties().setViscosityModel("PFCT");
+      } catch (Exception e) {
+        logger.debug("Could not set PFCT model for phase " + phase + ": " + e.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Get LBC parameters from fluid if LBC viscosity model is active.
+   *
+   * @param fluid the fluid
+   * @return array of 5 LBC parameters, or null if not using LBC model
+   */
+  private static double[] getLBCParametersFromFluid(SystemInterface fluid) {
+    try {
+      // Check if LBC model is active on any phase
+      for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
+        if (fluid.getPhase(phase).getPhysicalProperties() != null
+            && fluid.getPhase(phase).getPhysicalProperties().isLBCViscosityModel()) {
+          return fluid.getPhase(phase).getPhysicalProperties().getLbcParameters();
+        }
+      }
+    } catch (Exception e) {
+      logger.debug("Could not get LBC parameters: " + e.getMessage());
+    }
+    return null;
   }
 }

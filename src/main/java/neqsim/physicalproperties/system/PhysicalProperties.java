@@ -269,6 +269,37 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
   }
 
   /**
+   * Get LBC dense-fluid contribution coefficients from the viscosity correlation.
+   *
+   * @return array of five LBC dense contribution parameters, or null if not using LBC model
+   */
+  public double[] getLbcParameters() {
+    if (viscosityCalc instanceof LBCViscosityMethod) {
+      return ((LBCViscosityMethod) viscosityCalc).getDenseContributionParameters();
+    }
+    return null;
+  }
+
+  /**
+   * Check if the current viscosity model is LBC.
+   *
+   * @return true if using LBC viscosity model
+   */
+  public boolean isLBCViscosityModel() {
+    return viscosityCalc instanceof LBCViscosityMethod;
+  }
+
+  /**
+   * Check if the current viscosity model is PFCT (Pedersen corresponding states).
+   *
+   * @return true if using PFCT viscosity model
+   */
+  public boolean isPFCTViscosityModel() {
+    return viscosityCalc instanceof PFCTViscosityMethodMod86
+        || viscosityCalc instanceof PFCTViscosityMethodHeavyOil;
+  }
+
+  /**
    * <p>
    * setDiffusionCoefficientModel.
    * </p>
