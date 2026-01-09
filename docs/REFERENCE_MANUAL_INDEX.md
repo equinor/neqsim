@@ -398,7 +398,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 |----------|------|-------------|
 | Black Oil Overview | [docs/blackoil/README.md](blackoil/README.md) | Black oil module |
 | Flash Playbook | [docs/wiki/black_oil_flash_playbook.md](wiki/black_oil_flash_playbook.md) | Black oil flash playbook |
-| Black Oil Export | [docs/pvtsimulation/blackoil_pvt_export.md](pvtsimulation/blackoil_pvt_export.md) | Black oil PVT export |
+| Black Oil Export | [docs/pvtsimulation/blackoil_pvt_export.md](pvtsimulation/blackoil_pvt_export.md) | Black oil PVT export and E300 compositional export |
 
 ### Chapter 37: Flow Assurance
 | Document | Path | Description |

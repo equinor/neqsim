@@ -379,6 +379,53 @@ The exporter produces standard Eclipse keywords:
 | METRIC | bar | kg/m³ | Sm³/Sm³ | mPa·s |
 | FIELD | psia | lb/ft³ | scf/stb | cp |
 
+### Export Compositional EOS to E300 Format
+
+In addition to black-oil PVT tables, you can export the full compositional EOS model to Eclipse E300 format. This preserves all component properties and binary interaction coefficients:
+
+```java
+import neqsim.thermo.util.readwrite.EclipseFluidReadWrite;
+
+// Export tuned fluid to E300 compositional format
+EclipseFluidReadWrite.write(tunedFluid, "TUNED_FLUID.e300", 100.0);  // reservoir temp in °C
+
+// Or get as string for inspection
+String e300Content = EclipseFluidReadWrite.toE300String(tunedFluid, 100.0);
+System.out.println(e300Content);
+```
+
+The E300 compositional file includes:
+
+| Keyword | Description |
+|---------|-------------|
+| `NCOMPS` | Number of components |
+| `EOS` | Equation of state (SRK, PR) |
+| `RTEMP` | Reservoir temperature |
+| `CNAMES` | Component names |
+| `TCRIT` | Critical temperatures (K) |
+| `PCRIT` | Critical pressures (bar) |
+| `ACF` | Acentric factors |
+| `MW` | Molecular weights (g/mol) |
+| `TBOIL` | Normal boiling points (K) |
+| `VCRIT` | Critical volumes (m³/kmol) |
+| `SSHIFT` | Volume translation parameters |
+| `PARACHOR` | Parachor values for IFT |
+| `ZI` | Mole fractions |
+| `BIC` | Binary interaction coefficients |
+
+### Read E300 File Back into NeqSim
+
+```java
+// Read the E300 file back into a NeqSim fluid
+SystemInterface importedFluid = EclipseFluidReadWrite.read("TUNED_FLUID.e300");
+
+// Set conditions and run flash
+importedFluid.setPressure(200.0, "bara");
+importedFluid.setTemperature(100.0, "C");
+ThermodynamicOperations ops = new ThermodynamicOperations(importedFluid);
+ops.TPflash();
+```
+
 ## Step 7: Export CSV for Other Applications
 
 Generate CSV files for spreadsheet analysis or other simulators:
