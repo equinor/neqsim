@@ -1,22 +1,24 @@
 ---
 layout: null
+permalink: /search-index.json
 ---
 [
-  {% assign pages = site.pages | where_exp: "page", "page.url contains '.html' or page.url contains '.md'" %}
-  {% assign all_docs = pages | concat: site.documents %}
-  {% for doc in all_docs %}
-    {% unless doc.url contains '/assets/' or doc.url contains '/search-index' %}
-      {% assign content_text = doc.content | strip_html | strip_newlines | replace: '"', '\"' | replace: '\', '\\' | truncate: 5000 %}
-      {% assign title = doc.title | default: doc.name | default: doc.url | replace: '"', '\"' %}
-      {% assign description = doc.description | default: '' | replace: '"', '\"' %}
-      {% assign tags = doc.tags | default: '' | join: ' ' | replace: '"', '\"' %}
-      {
-        "url": "{{ doc.url | relative_url }}",
-        "title": "{{ title }}",
-        "description": "{{ description }}",
-        "content": "{{ content_text }}",
-        "tags": "{{ tags }}"
-      }{% unless forloop.last %},{% endunless %}
-    {% endunless %}
-  {% endfor %}
+{%- assign all_pages = site.pages | where_exp: "page", "page.url != '/search-index.json'" -%}
+{%- assign filtered_pages = "" | split: "" -%}
+{%- for page in all_pages -%}
+  {%- unless page.url contains '/assets/' or page.url contains '.xml' or page.url contains '.json' -%}
+    {%- assign filtered_pages = filtered_pages | push: page -%}
+  {%- endunless -%}
+{%- endfor -%}
+{%- for doc in filtered_pages -%}
+  {%- assign content_text = doc.content | strip_html | strip_newlines | replace: '"', '\"' | replace: '\', '\\' | replace: '	', ' ' | truncate: 3000 -%}
+  {%- assign title = doc.title | default: doc.name | default: doc.url | replace: '"', '\"' -%}
+  {%- assign description = doc.description | default: '' | replace: '"', '\"' -%}
+  {
+    "url": "{{ doc.url | relative_url }}",
+    "title": "{{ title }}",
+    "description": "{{ description }}",
+    "content": "{{ content_text }}"
+  }{%- unless forloop.last -%},{%- endunless -%}
+{%- endfor -%}
 ]

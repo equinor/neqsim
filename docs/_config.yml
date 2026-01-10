@@ -35,6 +35,8 @@ include:
   - _includes
   - "*.md"
   - "*.html"
+  - "*.json"
+  - search-index.json
 
 # Exclude from processing
 exclude:
