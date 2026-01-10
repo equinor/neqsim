@@ -563,6 +563,13 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Selective Logic | [docs/examples/selective-logic-execution.md](examples/selective-logic-execution.md) | Selective logic execution |
 | Comparison Quickstart | [docs/examples/comparesimulations_quickstart.md](examples/comparesimulations_quickstart.md) | Simulation comparison |
 
+### Chapter 52: Documentation Infrastructure
+| Document | Path | Description |
+|----------|------|-------------|
+| **GitHub Pages Setup** | [docs/GITHUB_PAGES_SETUP.md](GITHUB_PAGES_SETUP.md) | **NEW** Enable GitHub Pages for hosted documentation |
+| Reference Manual | [docs/manual/neqsim_reference_manual.html](manual/neqsim_reference_manual.html) | Interactive reference manual |
+| Documentation Index | [docs/index.md](index.md) | GitHub Pages home page |
+
 ---
 
 ## Appendices
@@ -612,11 +619,11 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Pipeline/Flow | 15 |
 | PVT/Reservoir | 15 |
 | Standards | 6 |
-| Development | 5 |
+| Development | 8 |
 | Statistics | 4 |
 | Examples | 3 |
 | Other | 24 |
-| **Total** | **242** |
+| **Total** | **245** |
 
 ---
 

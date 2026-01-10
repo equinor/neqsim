@@ -1,0 +1,85 @@
+# NeqSim Documentation - GitHub Pages Configuration
+# See: https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll
+
+# Site settings
+title: NeqSim Documentation
+description: >-
+  Comprehensive Java library for thermodynamic, physical property, and process simulation.
+  NeqSim provides tools for PVT analysis, phase equilibria, transport properties, and
+  full process simulation.
+baseurl: "/neqsim" # the subpath of your site, e.g. /neqsim for https://equinor.github.io/neqsim
+url: "https://equinor.github.io" # the base hostname & protocol for your site
+
+# Repository information
+repository: equinor/neqsim
+
+# Build settings
+theme: jekyll-theme-cayman
+markdown: kramdown
+highlighter: rouge
+
+# Kramdown settings for better code highlighting
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: 'highlight'
+
+# Include these file extensions
+include:
+  - _pages
+  - "*.md"
+  - "*.html"
+
+# Exclude from processing
+exclude:
+  - generate_manual.py
+  - "*.py"
+  - __pycache__
+  - "*.pyc"
+
+# Navigation structure (for themes that support it)
+nav:
+  - title: Home
+    url: /
+  - title: Getting Started
+    url: /wiki/getting_started
+  - title: Thermodynamics
+    url: /thermo/
+  - title: Process Simulation
+    url: /process/
+  - title: Examples
+    url: /examples/
+  - title: Reference Manual
+    url: /manual/neqsim_reference_manual.html
+  - title: API Reference
+    url: /REFERENCE_MANUAL_INDEX
+
+# Collections for organizing documentation
+collections:
+  wiki:
+    output: true
+    permalink: /wiki/:name
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: "wiki"
+    values:
+      layout: "default"
+
+# Enable GitHub metadata
+plugins:
+  - jekyll-github-metadata
+  - jekyll-relative-links
+  - jekyll-seo-tag
+
+# Relative links plugin settings
+relative_links:
+  enabled: true
+  collections: true
