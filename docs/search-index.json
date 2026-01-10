@@ -1,0 +1,22 @@
+---
+layout: null
+---
+[
+  {% assign pages = site.pages | where_exp: "page", "page.url contains '.html' or page.url contains '.md'" %}
+  {% assign all_docs = pages | concat: site.documents %}
+  {% for doc in all_docs %}
+    {% unless doc.url contains '/assets/' or doc.url contains '/search-index' %}
+      {% assign content_text = doc.content | strip_html | strip_newlines | replace: '"', '\"' | replace: '\', '\\' | truncate: 5000 %}
+      {% assign title = doc.title | default: doc.name | default: doc.url | replace: '"', '\"' %}
+      {% assign description = doc.description | default: '' | replace: '"', '\"' %}
+      {% assign tags = doc.tags | default: '' | join: ' ' | replace: '"', '\"' %}
+      {
+        "url": "{{ doc.url | relative_url }}",
+        "title": "{{ title }}",
+        "description": "{{ description }}",
+        "content": "{{ content_text }}",
+        "tags": "{{ tags }}"
+      }{% unless forloop.last %},{% endunless %}
+    {% endunless %}
+  {% endfor %}
+]
