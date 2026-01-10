@@ -44,6 +44,9 @@ GITHUB_PAGES_SCRIPT = """
     // Detect if we're on GitHub Pages
     var isGitHubPages = window.location.hostname.endsWith('.github.io');
     
+    // Get the base path for the docs (manual is in /neqsim/manual/)
+    var docsBasePath = '/neqsim/';
+    
     // Handle all clicks on links
     document.addEventListener('click', function(e) {
         var target = e.target.closest('a');
@@ -57,8 +60,19 @@ GITHUB_PAGES_SCRIPT = """
             e.preventDefault();
             
             if (isGitHubPages) {
-                // On GitHub Pages, remove .md extension (Jekyll converts to .html)
+                // Remove .md extension
                 var newHref = href.replace(/\\.md$/, '');
+                
+                // Handle relative paths from /manual/ directory
+                if (newHref.startsWith('../')) {
+                    // Count how many levels up we go
+                    var upCount = (newHref.match(/\\.\\.\\//g) || []).length;
+                    // Remove the ../ prefixes
+                    newHref = newHref.replace(/^(\\.\\.\\/)+ /, '');
+                    // Build absolute path from docs root
+                    newHref = docsBasePath + newHref;
+                }
+                
                 window.location.href = newHref;
             } else {
                 // For local file viewing, open on GitHub
