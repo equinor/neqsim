@@ -538,9 +538,12 @@ public class MonteCarloRunner implements Serializable {
         result.setNpv(cfResult.getNpv());
         result.setIrr(cfResult.getIrr());
         result.setPaybackYears(cfResult.getPaybackYears());
-        result.setProfitabilityIndex(cfResult.getProfitabilityIndex());
+        // Profitability Index = NPV / CAPEX + 1
+        double totalCapex = cfResult.getTotalCapex();
+        double pi = totalCapex > 0 ? (cfResult.getNpv() / totalCapex) + 1.0 : 0.0;
+        result.setProfitabilityIndex(pi);
         result.setConverged(true);
-        convergedCount++;
+        convergedCount++;;
       } catch (Exception e) {
         logger.debug("Iteration {} failed: {}", i, e.getMessage());
         result.setConverged(false);
@@ -568,9 +571,11 @@ public class MonteCarloRunner implements Serializable {
     } else if (lowerName.contains("gasprice") || lowerName.contains("gas_price")) {
       cashFlowEngine.setGasPrice(value);
     } else if (lowerName.contains("capex")) {
-      cashFlowEngine.setCapex(value);
+      // Apply CAPEX multiplier to year 0 as default
+      cashFlowEngine.setCapex(value, 0);
     } else if (lowerName.contains("opex")) {
-      cashFlowEngine.setOpex(value);
+      // Use opex percent of capex - assume value is a percentage
+      cashFlowEngine.setOpexPercentOfCapex(value);
     } else if (lowerName.contains("production") || lowerName.contains("rate")) {
       // For production rate scaling, we'd need to adjust the profile
       // This is a placeholder for custom implementations

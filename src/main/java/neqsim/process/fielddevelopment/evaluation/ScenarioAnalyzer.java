@@ -161,7 +161,7 @@ public class ScenarioAnalyzer implements Serializable {
     double totalPower = 0.0;
 
     for (int i = 0; i < processSystem.size(); i++) {
-      Object unit = processSystem.getUnit(i);
+      Object unit = processSystem.getUnitOperations().get(i);
       if (unit instanceof Compressor) {
         totalPower += ((Compressor) unit).getPower("MW");
       } else if (unit instanceof Pump) {
@@ -200,7 +200,7 @@ public class ScenarioAnalyzer implements Serializable {
     double totalDuty = 0.0;
 
     for (int i = 0; i < processSystem.size(); i++) {
-      Object unit = processSystem.getUnit(i);
+      Object unit = processSystem.getUnitOperations().get(i);
       if (unit instanceof Heater) {
         double duty = ((Heater) unit).getDuty("MW");
         if (duty > 0) {
@@ -221,7 +221,7 @@ public class ScenarioAnalyzer implements Serializable {
     double totalDuty = 0.0;
 
     for (int i = 0; i < processSystem.size(); i++) {
-      Object unit = processSystem.getUnit(i);
+      Object unit = processSystem.getUnitOperations().get(i);
       if (unit instanceof Heater) {
         double duty = ((Heater) unit).getDuty("MW");
         if (duty < 0) {
