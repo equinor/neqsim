@@ -1,0 +1,291 @@
+/* NeqSim Documentation Custom Styles */
+
+/* Navigation Cards Grid */
+.nav-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.nav-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border: 1px solid #e1e4e8;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.nav-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-color: #159957;
+}
+
+.nav-card h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #159957;
+  color: #24292e;
+  font-size: 1.25rem;
+}
+
+.nav-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-card li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.nav-card li:last-child {
+  border-bottom: none;
+}
+
+.nav-card a {
+  color: #155799;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.nav-card a:hover {
+  color: #159957;
+}
+
+.nav-card .description {
+  color: #6a737d;
+  font-size: 0.9rem;
+  margin-left: 0.25rem;
+}
+
+/* Feature Highlights */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.feature-item {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e1e4e8;
+  transition: all 0.2s ease;
+}
+
+.feature-item:hover {
+  background: #f6f8fa;
+  border-color: #159957;
+}
+
+.feature-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.feature-item h4 {
+  margin: 0.5rem 0;
+  color: #24292e;
+}
+
+.feature-item p {
+  margin: 0;
+  color: #6a737d;
+  font-size: 0.875rem;
+}
+
+/* Hero Section Enhancement */
+.hero-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+/* Quick Start Code Block Enhancement */
+.code-example {
+  background: #24292e;
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 1.5rem 0;
+}
+
+.code-example .code-header {
+  background: #1f2428;
+  padding: 0.5rem 1rem;
+  color: #e1e4e8;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #444d56;
+}
+
+/* Section Dividers */
+.section-divider {
+  border: none;
+  height: 2px;
+  background: linear-gradient(to right, transparent, #159957, transparent);
+  margin: 3rem 0;
+}
+
+/* Call to Action Buttons */
+.cta-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.cta-button.primary {
+  background: #159957;
+  color: white;
+}
+
+.cta-button.primary:hover {
+  background: #127a45;
+  transform: translateY(-2px);
+}
+
+.cta-button.secondary {
+  background: #fff;
+  color: #24292e;
+  border: 2px solid #e1e4e8;
+}
+
+.cta-button.secondary:hover {
+  border-color: #159957;
+  color: #159957;
+}
+
+/* Documentation Table Enhancement */
+.doc-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  margin: 1.5rem 0;
+}
+
+.doc-table th {
+  background: linear-gradient(135deg, #159957 0%, #127a45 100%);
+  color: white;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+}
+
+.doc-table td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid #e1e4e8;
+  background: #fff;
+}
+
+.doc-table tr:hover td {
+  background: #f6f8fa;
+}
+
+.doc-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Resources Section */
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.resource-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #24292e;
+  transition: all 0.2s ease;
+}
+
+.resource-link:hover {
+  border-color: #159957;
+  background: #f6f8fa;
+  color: #159957;
+}
+
+.resource-link .icon {
+  font-size: 1.5rem;
+}
+
+/* Footer Enhancement */
+.doc-footer {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e1e4e8;
+  text-align: center;
+  color: #6a737d;
+}
+
+.doc-footer a {
+  color: #159957;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .nav-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .cta-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .cta-button {
+    justify-content: center;
+  }
+}
+
+/* Animation for cards */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.nav-card {
+  animation: fadeInUp 0.4s ease forwards;
+}
+
+.nav-card:nth-child(1) { animation-delay: 0.1s; }
+.nav-card:nth-child(2) { animation-delay: 0.2s; }
+.nav-card:nth-child(3) { animation-delay: 0.3s; }
+.nav-card:nth-child(4) { animation-delay: 0.4s; }
