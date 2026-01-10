@@ -16,7 +16,7 @@ title: NeqSim Documentation
 </div>
 
 <div class="cta-buttons" style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin: 2rem 0;">
-  <a href="wiki/getting_started.md" class="cta-button primary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #159957; color: white;">🚀 Get Started</a>
+  <a href="wiki/getting_started.html" class="cta-button primary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #159957; color: white;">🚀 Get Started</a>
   <a href="https://github.com/equinor/neqsim" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">⭐ Star on GitHub</a>
   <a href="manual/neqsim_reference_manual.html" class="cta-button secondary" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 6px; text-decoration: none; font-weight: 600; background: #fff; color: #24292e; border: 2px solid #e1e4e8;">📖 Reference Manual</a>
 </div>
@@ -30,36 +30,36 @@ title: NeqSim Documentation
 <div class="nav-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border: 1px solid #e1e4e8; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
 <h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #159957; color: #24292e; font-size: 1.25rem;">📚 Core Documentation</h3>
 <ul style="list-style: none; padding: 0; margin: 0;">
-<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="wiki/getting_started.md" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Getting Started</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Installation and first steps</span></li>
-<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="modules.md" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Modules Overview</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Architecture and package structure</span></li>
-<li style="padding: 0.5rem 0;"><a href="REFERENCE_MANUAL_INDEX.md" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Reference Manual</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Complete API documentation</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="wiki/getting_started.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Getting Started</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Installation and first steps</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="modules.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Modules Overview</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Architecture and package structure</span></li>
+<li style="padding: 0.5rem 0;"><a href="REFERENCE_MANUAL_INDEX.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Reference Manual</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Complete API documentation</span></li>
 </ul>
 </div>
 
 <div class="nav-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border: 1px solid #e1e4e8; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
 <h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #2196f3; color: #24292e; font-size: 1.25rem;">🔬 Thermodynamics</h3>
 <ul style="list-style: none; padding: 0; margin: 0;">
-<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="thermo/README.md" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Thermo Package</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Equations of state, mixing rules, fluids</span></li>
-<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="thermodynamicoperations/README.md" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Thermodynamic Operations</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Flash calculations, phase envelopes</span></li>
-<li style="padding: 0.5rem 0;"><a href="physical_properties/README.md" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Physical Properties</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Viscosity, conductivity, diffusivity</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="thermo/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Thermo Package</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Equations of state, mixing rules, fluids</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="thermodynamicoperations/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Thermodynamic Operations</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Flash calculations, phase envelopes</span></li>
+<li style="padding: 0.5rem 0;"><a href="physical_properties/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Physical Properties</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Viscosity, conductivity, diffusivity</span></li>
 </ul>
 </div>
 
 <div class="nav-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border: 1px solid #e1e4e8; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
 <h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #ff9800; color: #24292e; font-size: 1.25rem;">🏭 Process Simulation</h3>
 <ul style="list-style: none; padding: 0; margin: 0;">
-<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="process/README.md" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Process Equipment</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Separators, compressors, heat exchangers</span></li>
-<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="fluidmechanics/README.md" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Fluid Mechanics</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Pipeline flow, pressure drop</span></li>
-<li style="padding: 0.5rem 0;"><a href="safety/README.md" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Safety Systems</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Relief valves, flare systems</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="process/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Process Equipment</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Separators, compressors, heat exchangers</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="fluidmechanics/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Fluid Mechanics</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Pipeline flow, pressure drop</span></li>
+<li style="padding: 0.5rem 0;"><a href="safety/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Safety Systems</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Relief valves, flare systems</span></li>
 </ul>
 </div>
 
 <div class="nav-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border: 1px solid #e1e4e8; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
 <h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #9c27b0; color: #24292e; font-size: 1.25rem;">📊 Applications</h3>
 <ul style="list-style: none; padding: 0; margin: 0;">
-<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="pvtsimulation/README.md" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>PVT Simulation</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Reservoir fluid characterization</span></li>
-<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="blackoil/README.md" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Black Oil Models</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Simplified correlations</span></li>
-<li style="padding: 0.5rem 0;"><a href="fielddevelopment/README.md" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Field Development</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Integrated workflows</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="pvtsimulation/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>PVT Simulation</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Reservoir fluid characterization</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="blackoil/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Black Oil Models</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Simplified correlations</span></li>
+<li style="padding: 0.5rem 0;"><a href="fielddevelopment/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Field Development</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Integrated workflows</span></li>
 </ul>
 </div>
 
@@ -109,13 +109,13 @@ System.out.println("Compressibility: " + gas.getZ());
 </tr>
 </thead>
 <tbody>
-<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="thermo/README.md">🧪 Thermodynamics</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Equations of state, phase behavior, component properties</td></tr>
-<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="process/README.md">⚙️ Process Simulation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Unit operations, process systems, controllers</td></tr>
-<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="physical_properties/README.md">📊 Physical Properties</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Transport properties, interfacial tension</td></tr>
-<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="pvtsimulation/README.md">🛢️ PVT Simulation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Reservoir fluid characterization, tuning</td></tr>
-<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="fluidmechanics/README.md">🌊 Fluid Mechanics</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Pipeline flow, multiphase modeling</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="thermo/README.html">🧪 Thermodynamics</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Equations of state, phase behavior, component properties</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="process/README.html">⚙️ Process Simulation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Unit operations, process systems, controllers</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="physical_properties/README.html">📊 Physical Properties</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Transport properties, interfacial tension</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="pvtsimulation/README.html">🛢️ PVT Simulation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Reservoir fluid characterization, tuning</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="fluidmechanics/README.html">🌊 Fluid Mechanics</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Pipeline flow, multiphase modeling</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="examples/">💡 Examples</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Tutorials and code samples</td></tr>
-<tr><td style="padding: 0.875rem 1rem; background: #fff;"><a href="development/README.md">🔧 Development</a></td><td style="padding: 0.875rem 1rem; background: #fff;">Contributing guidelines, developer setup</td></tr>
+<tr><td style="padding: 0.875rem 1rem; background: #fff;"><a href="development/README.html">🔧 Development</a></td><td style="padding: 0.875rem 1rem; background: #fff;">Contributing guidelines, developer setup</td></tr>
 </tbody>
 </table>
 </div>
