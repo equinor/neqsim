@@ -38,7 +38,7 @@ GITHUB_PAGES_SCRIPT = """
 <script>
 // GitHub Pages Link Handler
 // Converts .md links to open on GitHub where they render correctly
-(function() {
+document.addEventListener('DOMContentLoaded', function() {
     'use strict';
     
     // GitHub repository info
@@ -55,6 +55,7 @@ GITHUB_PAGES_SCRIPT = """
         // Only handle relative .md links
         if (href.endsWith('.md') && !href.startsWith('http')) {
             e.preventDefault();
+            e.stopPropagation();
             
             // Resolve relative paths (remove ../ and get clean path)
             var resolvedPath = href;
@@ -64,8 +65,9 @@ GITHUB_PAGES_SCRIPT = """
             
             // Always open on GitHub - this guarantees the markdown renders correctly
             window.open(githubBase + resolvedPath, '_blank');
+            return false;
         }
-    });
+    }, true); // Use capture phase to intercept before default behavior
     
     // Add visual indicator for .md links
     var links = document.querySelectorAll('a[href$=".md"]');
@@ -75,7 +77,9 @@ GITHUB_PAGES_SCRIPT = """
             link.title = 'Opens on GitHub';
         }
     });
-})();
+    
+    console.log('NeqSim link handler loaded. Found ' + links.length + ' .md links.');
+});
 </script>
 """
 
