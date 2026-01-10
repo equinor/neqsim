@@ -25,7 +25,6 @@ import org.apache.logging.log4j.Logger;
  * <li>Production rate uncertainty</li>
  * <li>NPV risk assessment (P10, P50, P90)</li>
  * </ul>
- * </p>
  *
  * <p>
  * Example usage:

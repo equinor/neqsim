@@ -61,7 +61,6 @@ import java.util.List;
  * @author ESOL
  * @version 1.0
  * @see ArtificialLiftScreener
- * @see ESPCalculator
  */
 public class GasLiftCalculator implements Serializable {
   private static final long serialVersionUID = 1000L;

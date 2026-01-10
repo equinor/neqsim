@@ -129,7 +129,7 @@ public class CashFlowEngine implements Serializable {
   // INSTANCE VARIABLES - CAPEX
   // ============================================================================
 
-  /** CAPEX by year (year -> amount in MUSD). */
+  /** CAPEX by year (year to amount in MUSD). */
   private Map<Integer, Double> capexByYear = new LinkedHashMap<Integer, Double>();
 
   /** Total CAPEX for depreciation calculation. */
@@ -152,13 +152,13 @@ public class CashFlowEngine implements Serializable {
   // INSTANCE VARIABLES - PRODUCTION
   // ============================================================================
 
-  /** Annual oil production by year (year -> barrels). */
+  /** Annual oil production by year (year to barrels). */
   private Map<Integer, Double> oilProductionByYear = new LinkedHashMap<Integer, Double>();
 
-  /** Annual gas production by year (year -> Sm3). */
+  /** Annual gas production by year (year to Sm3). */
   private Map<Integer, Double> gasProductionByYear = new LinkedHashMap<Integer, Double>();
 
-  /** Annual NGL production by year (year -> barrels). */
+  /** Annual NGL production by year (year to barrels). */
   private Map<Integer, Double> nglProductionByYear = new LinkedHashMap<Integer, Double>();
 
   // ============================================================================

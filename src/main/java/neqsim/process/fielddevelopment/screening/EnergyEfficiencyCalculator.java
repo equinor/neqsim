@@ -25,6 +25,7 @@ import neqsim.process.fielddevelopment.facility.FacilityConfig;
  *
  * <h2>Energy Efficiency Metrics</h2>
  * <table border="1">
+ * <caption>Energy Efficiency Metrics</caption>
  * <tr>
  * <th>Metric</th>
  * <th>Definition</th>

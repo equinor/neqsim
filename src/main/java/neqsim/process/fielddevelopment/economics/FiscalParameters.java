@@ -38,8 +38,8 @@ import java.io.Serializable;
  *
  * @author ESOL
  * @version 1.0
- * @see FiscalRegime
- * @see FiscalRegimeRegistry
+ * @see TaxModel
+ * @see TaxModelRegistry
  */
 public final class FiscalParameters implements Serializable {
   private static final long serialVersionUID = 1000L;

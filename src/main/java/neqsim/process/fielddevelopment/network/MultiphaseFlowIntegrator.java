@@ -23,7 +23,7 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <h2>Capabilities</h2>
  * <ul>
- * <li>Pipeline pressure drop calculation using Beggs & Brill</li>
+ * <li>Pipeline pressure drop calculation using Beggs &amp; Brill</li>
  * <li>Two-phase flow regime identification</li>
  * <li>Liquid holdup and velocity profiles</li>
  * <li>Arrival temperature prediction</li>

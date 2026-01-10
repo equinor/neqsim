@@ -33,6 +33,7 @@ import java.util.List;
  *
  * <h2>Operating Envelope Limits</h2>
  * <table border="1">
+ * <caption>Operating Envelope Limits by Method</caption>
  * <tr>
  * <th>Method</th>
  * <th>Max Depth (m)</th>
@@ -110,7 +111,6 @@ import java.util.List;
  * @author ESOL
  * @version 1.0
  * @see GasLiftCalculator
- * @see ESPCalculator
  */
 public class ArtificialLiftScreener implements Serializable {
   private static final long serialVersionUID = 1000L;

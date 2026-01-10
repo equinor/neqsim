@@ -22,6 +22,7 @@ import java.util.Map;
  *
  * <h2>Emission Categories</h2>
  * <table border="1">
+ * <caption>Emission Categories</caption>
  * <tr>
  * <th>Category</th>
  * <th>Sources</th>
