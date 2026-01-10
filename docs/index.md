@@ -3,8 +3,6 @@ layout: default
 title: NeqSim Documentation
 ---
 
-<link rel="stylesheet" href="assets/css/custom.css">
-
 # NeqSim Documentation
 
 **NeqSim** (Non-Equilibrium Simulator) is a comprehensive Java library for thermodynamic, physical property, and process simulation developed by [Equinor](https://www.equinor.com/).

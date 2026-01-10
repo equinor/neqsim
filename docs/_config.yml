@@ -18,7 +18,7 @@ theme: jekyll-theme-cayman
 markdown: kramdown
 highlighter: rouge
 
-# Kramdown settings for better code highlighting
+# Kramdown settings for better code highlighting and math support
 kramdown:
   input: GFM
   syntax_highlighter: rouge
@@ -26,10 +26,13 @@ kramdown:
     css_class: 'highlight'
   auto_ids: true
   hard_wrap: false
+  math_engine: null  # Disable kramdown's math engine, use KaTeX via JavaScript instead
 
 # Include these file extensions
 include:
   - _pages
+  - _layouts
+  - _includes
   - "*.md"
   - "*.html"
 
