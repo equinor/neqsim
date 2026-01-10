@@ -6,6 +6,874 @@ This document describes how NeqSim integrates PVT, reservoir, well, and process 
 into a unified field development workflow. The framework supports progressive refinement
 from early feasibility studies through detailed design, with increasing fidelity at each stage.
 
+This framework is designed to support education and industry workflows aligned with academic
+programs such as NTNU's **TPG4230 - Underground reservoirs fluid production and injection**
+course, covering the complete lifecycle from discovery through operations.
+
+---
+
+## TPG4230 Course Topic Mapping
+
+The following table maps key course topics to their NeqSim implementations:
+
+| Course Topic | NeqSim Implementation | Key Classes |
+|--------------|----------------------|-------------|
+| **Field Lifecycle Management** | `FieldDevelopmentWorkflow` with `StudyPhase` enum (DISCOVERY→FEASIBILITY→CONCEPT_SELECT→FEED→OPERATIONS) | `FieldDevelopmentWorkflow`, `FidelityLevel`, `StudyPhase` |
+| **PVT Characterization & EOS Tuning** | Equation of state selection, plus-fraction characterization, regression to lab data | `SystemSrkEos`, `SystemPrEos`, `Characterization`, `PVTRegression`, `SaturationPressure` |
+| **Reservoir Material Balance** | Tank model with production/injection tracking, pressure depletion, voidage replacement | `SimpleReservoir`, `InjectionStrategy`, `InjectionStrategy.InjectionResult` |
+| **Well Performance (IPR/VLP)** | Inflow performance relationships (Vogel, Fetkovich), vertical lift performance, nodal analysis | `WellFlow`, `WellSystem`, `TubingPerformance`, `WellSystem.IPRModel` |
+| **Production Network Optimization** | Multi-well gathering systems, manifold pressure-rate equilibrium, rate allocation | `NetworkSolver`, `NetworkResult`, `SolutionMode` |
+| **Economic Evaluation** | NPV, IRR, payback, country-specific tax models (Norway, UK, Brazil, etc.), Monte Carlo uncertainty | `CashFlowEngine`, `TaxModel`, `NorwegianTaxModel`, `SensitivityAnalyzer` |
+| **Flow Assurance Screening** | Hydrate formation temperature, wax appearance, corrosion, scaling, erosion risk assessment | `FlowAssuranceScreener`, `FlowAssuranceReport`, `FlowAssuranceResult` |
+| **Process Facility Design** | Process simulation with heat/mass balance, equipment sizing, power calculations | `ProcessSystem`, `Separator`, `Compressor`, `HeatExchanger` |
+| **Mechanical Design** | Pressure vessel sizing, wall thickness (ASME VIII), weight estimation, module footprint | `SystemMechanicalDesign`, `SeparatorMechanicalDesign`, `CompressorMechanicalDesign` |
+| **Power & Sustainability** | Power consumption, CO2 emissions, emission intensity (kg/boe), electrification scenarios | `EmissionsTracker`, `EmissionsReport`, `WorkflowResult.totalPowerMW` |
+| **Subsea Production Systems** | Subsea wells, flowlines, manifolds, tieback analysis, subsea CAPEX estimation, flow assurance | `SubseaProductionSystem`, `SubseaWell`, `SimpleFlowLine`, `TiebackAnalyzer`, `TiebackReport` |
+
+### Detailed Topic Coverage
+
+#### 1. Field Lifecycle Management (Discovery → Operations)
+
+NeqSim's `FieldDevelopmentWorkflow` class provides a unified orchestrator that supports all
+phases of field development with appropriate fidelity levels:
+
+```java
+// Create workflow and set study phase
+FieldDevelopmentWorkflow workflow = new FieldDevelopmentWorkflow("My Field");
+workflow.setStudyPhase(StudyPhase.FEASIBILITY);
+workflow.setFidelityLevel(FidelityLevel.SCREENING);  // ±50% accuracy
+
+// Progress to concept selection
+workflow.setStudyPhase(StudyPhase.CONCEPT_SELECT);
+workflow.setFidelityLevel(FidelityLevel.CONCEPTUAL);  // ±30% accuracy
+workflow.setFluid(tunedEosFluid);  // Add tuned EOS model
+
+// Progress to FEED
+workflow.setStudyPhase(StudyPhase.FEED);
+workflow.setFidelityLevel(FidelityLevel.DETAILED);   // ±20% accuracy
+workflow.setProcessSystem(fullProcessModel);
+workflow.setMonteCarloIterations(1000);
+```
+
+| Study Phase | Typical Fidelity | NeqSim Features Used |
+|-------------|------------------|---------------------|
+| Discovery | SCREENING | PVT lab simulation, volumetrics, analogs |
+| Feasibility (DG1) | SCREENING | Flow assurance screening, cost correlations, Arps decline |
+| Concept (DG2) | CONCEPTUAL | EOS tuning, IPR/VLP, process simulation |
+| FEED (DG3/4) | DETAILED | Full process, reservoir coupling, Monte Carlo |
+| Operations | DETAILED | History matching, optimization, debottlenecking |
+
+#### 2. PVT Characterization with EOS Tuning
+
+NeqSim provides comprehensive PVT modeling capabilities:
+
+```java
+// Create fluid with plus-fraction
+SystemInterface fluid = new SystemSrkEos(373.15, 250.0);
+fluid.addComponent("methane", 0.60);
+fluid.addComponent("ethane", 0.08);
+fluid.addTBPfraction("C7+", 0.20, 220.0, 0.85);  // mole frac, MW, SG
+fluid.setMixingRule("classic");
+
+// Characterize plus-fraction using Pedersen method
+fluid.getCharacterization().characterisePlusFraction();
+
+// Run PVT experiments
+SaturationPressure satP = new SaturationPressure(fluid);
+satP.runCalc();  // Bubble/dew point
+
+DifferentialLiberation dle = new DifferentialLiberation(fluid);
+dle.runCalc();   // Bo, Rs, viscosity vs pressure
+```
+
+#### 3. Reservoir Material Balance with Injection
+
+The `SimpleReservoir` and `InjectionStrategy` classes support pressure maintenance:
+
+```java
+// Create reservoir with injection wells
+SimpleReservoir reservoir = new SimpleReservoir("Main Reservoir");
+reservoir.setReservoirFluid(fluid, giip, thickness, area);
+reservoir.addOilProducer("P1");
+reservoir.addWaterInjector("I1");
+
+// Calculate voidage replacement injection rates
+InjectionStrategy strategy = InjectionStrategy.waterInjection(1.0);  // VRR = 1.0
+InjectionResult injection = strategy.calculateInjection(
+    reservoir, oilRate, gasRate, waterRate
+);
+System.out.println("Required water injection: " + injection.waterInjectionRate + " Sm3/d");
+System.out.println("Achieved VRR: " + injection.achievedVRR);
+```
+
+#### 4. Well Performance (IPR/VLP)
+
+Nodal analysis with inflow and outflow curves:
+
+```java
+// Configure well with IPR model
+WellSystem well = new WellSystem("Producer-1", reservoirStream);
+well.setIPRModel(WellSystem.IPRModel.VOGEL);
+well.setVogelParameters(qTest, pwfTest, pRes);
+
+// Configure VLP (tubing performance)
+well.setTubingLength(2500.0, "m");
+well.setTubingDiameter(4.0, "in");
+well.setPressureDropCorrelation(TubingPerformance.PressureDropCorrelation.BEGGS_BRILL);
+well.setWellheadPressure(50.0, "bara");
+
+// Find operating point
+well.run();
+double rate = well.getOperatingFlowRate("Sm3/day");
+double bhp = well.getOperatingBHP("bara");
+```
+
+#### 5. Production Network Optimization
+
+Multi-well gathering network solver:
+
+```java
+// Create network with multiple wells
+NetworkSolver network = new NetworkSolver("Gathering System");
+network.addWell(well1, 3.0);   // 3 km flowline
+network.addWell(well2, 5.5);   // 5.5 km flowline
+network.addWell(well3, 8.0);   // 8 km flowline
+
+// Solve for rates given manifold pressure
+network.setSolutionMode(SolutionMode.FIXED_MANIFOLD_PRESSURE);
+network.setManifoldPressure(60.0);
+NetworkResult result = network.solve();
+
+// Or find manifold pressure for target rate
+network.setSolutionMode(SolutionMode.FIXED_TOTAL_RATE);
+network.setTargetTotalRate(15.0e6);  // Sm3/day
+result = network.solve();
+System.out.println("Required manifold pressure: " + result.manifoldPressure);
+```
+
+#### 6. Economic Evaluation with Country-Specific Tax Models
+
+Comprehensive economics with tax regime modeling:
+
+```java
+// Create cash flow engine with Norwegian tax model
+CashFlowEngine engine = new CashFlowEngine("NO");
+engine.setCapex(500.0, 2025);       // MUSD
+engine.setOpexPercentOfCapex(0.04); // 4% of CAPEX/year
+engine.setOilPrice(70.0);           // USD/bbl
+engine.setGasPrice(0.30);           // USD/Sm3
+
+// Add production profile
+for (int year = 2027; year <= 2045; year++) {
+    engine.addAnnualProduction(year, oilSm3[year], gasSm3[year], 0);
+}
+
+// Calculate with 8% discount rate
+CashFlowResult result = engine.calculate(0.08);
+System.out.println("NPV: " + result.getNpv() + " MUSD");
+System.out.println("IRR: " + (result.getIrr() * 100) + "%");
+System.out.println("Payback: " + result.getPaybackYears() + " years");
+
+// Monte Carlo uncertainty analysis
+SensitivityAnalyzer analyzer = new SensitivityAnalyzer(engine);
+MonteCarloResult mcResult = analyzer.runMonteCarlo(1000);
+System.out.println("P10 NPV: " + mcResult.getPercentile(10));
+System.out.println("P50 NPV: " + mcResult.getPercentile(50));
+System.out.println("P90 NPV: " + mcResult.getPercentile(90));
+```
+
+#### 7. Flow Assurance Screening (Hydrates, Wax, Corrosion)
+
+Risk-based flow assurance assessment:
+
+```java
+// Create screener and run assessment
+FlowAssuranceScreener screener = new FlowAssuranceScreener();
+FlowAssuranceReport report = screener.screen(concept, minTempC, operatingPressure);
+
+// Check individual risks
+System.out.println("Hydrate: " + report.getHydrateResult());    // PASS/MARGINAL/FAIL
+System.out.println("Wax: " + report.getWaxResult());
+System.out.println("Corrosion: " + report.getCorrosionResult());
+System.out.println("Overall: " + report.getOverallResult());
+
+// Get mitigation recommendations
+Map<String, String> mitigations = report.getMitigationOptions();
+```
+
+---
+
+## Mathematical Foundations
+
+This section provides the mathematical basis for the engineering and economic calculations
+used in the field development framework.
+
+### Economics Mathematics
+
+#### Net Present Value (NPV)
+
+The Net Present Value discounts future cash flows to present value:
+
+$$NPV = \sum_{t=0}^{n} \frac{CF_t}{(1+r)^t}$$
+
+where:
+- $CF_t$ = Cash flow in year $t$ (Revenue - OPEX - Tax - CAPEX)
+- $r$ = Discount rate (typically 8-12% for oil & gas)
+- $n$ = Project lifetime in years
+
+The cash flow for each year is calculated as:
+
+$$CF_t = (R_t - OPEX_t) \times (1 - \tau) + D_t \times \tau - CAPEX_t$$
+
+where:
+- $R_t$ = Revenue = $q_{oil,t} \times P_{oil} + q_{gas,t} \times P_{gas}$
+- $OPEX_t$ = Operating expenditure
+- $\tau$ = Effective tax rate
+- $D_t$ = Depreciation (tax shield)
+
+#### Internal Rate of Return (IRR)
+
+The IRR is the discount rate that makes NPV equal to zero:
+
+$$NPV = \sum_{t=0}^{n} \frac{CF_t}{(1+IRR)^t} = 0$$
+
+Solved iteratively using Newton-Raphson or bisection method.
+
+#### Norwegian Petroleum Tax Model
+
+Norway has a two-tier tax system:
+
+$$Tax_{total} = Tax_{corporate} + Tax_{petroleum}$$
+
+**Corporate Tax (22%):**
+$$Tax_{corporate} = \max(0, (R - OPEX - D) \times 0.22)$$
+
+**Petroleum Tax (71.8% marginal, 49.8% net after deductions):**
+$$Tax_{petroleum} = \max(0, (R - OPEX - D - U) \times 0.498)$$
+
+where:
+- $D$ = Depreciation (6-year straight-line for offshore)
+- $U$ = Uplift deduction (5.2% of CAPEX for 4 years)
+
+**Uplift Calculation:**
+$$U_t = CAPEX \times 0.052 \quad \text{for } t = 1,2,3,4$$
+
+**Effective Government Take:**
+$$\text{Gov Take} = \frac{Tax_{corporate} + Tax_{petroleum}}{R - OPEX} \approx 78\%$$
+
+#### Production Decline Curves (Arps)
+
+**Exponential Decline:**
+$$q(t) = q_i \times e^{-D_i \times t}$$
+
+**Hyperbolic Decline:**
+$$q(t) = \frac{q_i}{(1 + b \times D_i \times t)^{1/b}}$$
+
+**Harmonic Decline (b=1):**
+$$q(t) = \frac{q_i}{1 + D_i \times t}$$
+
+where:
+- $q_i$ = Initial production rate
+- $D_i$ = Initial decline rate (1/year)
+- $b$ = Decline exponent (0 = exponential, 0-1 = hyperbolic, 1 = harmonic)
+
+**Cumulative Production:**
+
+For exponential decline:
+$$N_p(t) = \frac{q_i}{D_i}(1 - e^{-D_i \times t})$$
+
+For hyperbolic decline:
+$$N_p(t) = \frac{q_i}{D_i(1-b)}\left[1 - (1 + b \times D_i \times t)^{(1-1/b)}\right]$$
+
+#### Monte Carlo Uncertainty Analysis
+
+For uncertainty quantification, input parameters are sampled from probability distributions:
+
+- **Oil Price:** $P_{oil} \sim \text{LogNormal}(\mu, \sigma)$
+- **CAPEX:** $CAPEX \sim \text{Triangular}(min, mode, max)$
+- **Reserves:** $GIIP \sim \text{Normal}(\mu, \sigma)$
+
+The NPV distribution is built from $N$ simulations (typically 1000-10000):
+
+$$\{NPV_1, NPV_2, ..., NPV_N\}$$
+
+Key statistics extracted:
+- **P10** = 10th percentile (downside case)
+- **P50** = Median (base case)
+- **P90** = 90th percentile (upside case)
+- **P(NPV > 0)** = Probability of positive returns
+
+---
+
+### Engineering Mathematics
+
+#### Inflow Performance Relationship (IPR)
+
+**Darcy's Law (Linear, undersaturated oil):**
+$$q = J \times (P_r - P_{wf})$$
+
+where:
+- $q$ = Flow rate (Sm³/d)
+- $J$ = Productivity index (Sm³/d/bar)
+- $P_r$ = Reservoir pressure (bar)
+- $P_{wf}$ = Bottom-hole flowing pressure (bar)
+
+**Vogel's Equation (Solution gas drive, below bubble point):**
+$$\frac{q}{q_{max}} = 1 - 0.2\left(\frac{P_{wf}}{P_r}\right) - 0.8\left(\frac{P_{wf}}{P_r}\right)^2$$
+
+Rearranged:
+$$q = q_{max} \times \left[1 - 0.2\left(\frac{P_{wf}}{P_r}\right) - 0.8\left(\frac{P_{wf}}{P_r}\right)^2\right]$$
+
+**Fetkovich's Equation (Gas wells):**
+$$q = C \times (P_r^2 - P_{wf}^2)^n$$
+
+where:
+- $C$ = Deliverability coefficient
+- $n$ = Exponent (0.5-1.0, typically ~0.8)
+
+#### Vertical Lift Performance (VLP)
+
+**Single-Phase Pressure Drop:**
+$$\frac{dP}{dL} = \frac{\rho g \sin\theta}{1000} + \frac{f \rho v^2}{2D}$$
+
+where:
+- $\rho$ = Fluid density (kg/m³)
+- $g$ = Gravitational acceleration (9.81 m/s²)
+- $\theta$ = Well inclination from horizontal
+- $f$ = Friction factor (from Moody diagram or correlation)
+- $v$ = Fluid velocity (m/s)
+- $D$ = Tubing inner diameter (m)
+
+**Beggs-Brill Correlation (Two-phase flow):**
+
+Pressure gradient consists of three components:
+$$\left(\frac{dP}{dL}\right)_{total} = \left(\frac{dP}{dL}\right)_{elevation} + \left(\frac{dP}{dL}\right)_{friction} + \left(\frac{dP}{dL}\right)_{acceleration}$$
+
+**Elevation term:**
+$$\left(\frac{dP}{dL}\right)_{elevation} = \rho_m g \sin\theta$$
+
+where mixture density:
+$$\rho_m = \rho_L H_L + \rho_G (1 - H_L)$$
+
+**Liquid holdup $H_L$** is calculated from flow regime correlations.
+
+#### Nodal Analysis
+
+The operating point is found where IPR and VLP curves intersect:
+
+$$q_{IPR}(P_{wf}) = q_{VLP}(P_{wf})$$
+
+Solved iteratively by finding $P_{wf}$ such that:
+$$f(P_{wf}) = q_{IPR}(P_{wf}) - q_{VLP}(P_{wf}) = 0$$
+
+#### Material Balance (Tank Model)
+
+**General Material Balance Equation:**
+$$N_p[B_o + (R_p - R_s)B_g] = N B_{oi}\left[\frac{(B_o - B_{oi}) + (R_{si} - R_s)B_g}{B_{oi}} + \frac{mB_{oi}(B_g - B_{gi})}{B_{gi}} + \frac{(1+m)B_{oi}(c_w S_{wi} + c_f)\Delta P}{1 - S_{wi}}\right] + W_e + W_{inj}B_w + G_{inj}B_g$$
+
+For a **solution gas drive** reservoir (no aquifer, no injection):
+$$N = \frac{N_p[B_o + (R_p - R_s)B_g]}{(B_o - B_{oi}) + (R_{si} - R_s)B_g}$$
+
+#### Voidage Replacement Ratio (VRR)
+
+$$VRR = \frac{\text{Injection Volume at Reservoir Conditions}}{\text{Production Voidage at Reservoir Conditions}}$$
+
+$$VRR = \frac{W_{inj} \times B_w + G_{inj} \times B_g}{N_p \times B_o + (G_p - N_p \times R_s) \times B_g + W_p \times B_w}$$
+
+where:
+- $W_{inj}$ = Water injection rate (Sm³/d)
+- $G_{inj}$ = Gas injection rate (Sm³/d)
+- $B_w$ = Water formation volume factor (~1.02)
+- $B_g$ = Gas formation volume factor
+- $B_o$ = Oil formation volume factor
+- $R_s$ = Solution gas-oil ratio
+
+**VRR = 1.0** maintains reservoir pressure.
+
+#### Formation Volume Factors
+
+**Oil Formation Volume Factor:**
+$$B_o = \frac{V_{oil,reservoir}}{V_{oil,standard}} \approx 1.0 + 0.00013 \times R_s$$
+
+**Gas Formation Volume Factor (real gas):**
+$$B_g = \frac{P_{std}}{P} \times \frac{T}{T_{std}} \times Z = \frac{1.01325}{P} \times \frac{T}{288.15} \times Z$$
+
+where $Z$ is the compressibility factor from EOS.
+
+#### Network Solver (Multi-well Gathering)
+
+For a network of $N$ wells connected to a common manifold:
+
+**Conservation of mass:**
+$$q_{total} = \sum_{i=1}^{N} q_i$$
+
+**Pressure balance for each well:**
+$$P_{wh,i} - \Delta P_{flowline,i} = P_{manifold}$$
+
+**Flowline pressure drop (simplified Beggs-Brill):**
+$$\Delta P_{flowline} = \frac{f L \rho_m v^2}{2 D} + \rho_m g \Delta h$$
+
+**Iterative solution (successive substitution):**
+1. Assume manifold pressure $P_m$
+2. For each well, calculate $P_{wh,i}$ from VLP
+3. Calculate flowline pressure drop $\Delta P_i$
+4. Check: $P_{wh,i} - \Delta P_i = P_m$ ?
+5. Update rates and iterate until convergence
+
+Convergence criterion:
+$$\left|\frac{q_{total}^{k+1} - q_{total}^k}{q_{total}^k}\right| < \epsilon$$
+
+#### Hydrate Formation Temperature
+
+**Simplified Hammerschmidt Correlation:**
+$$\Delta T = \frac{K_H \times w}{M(100-w)}$$
+
+where:
+- $\Delta T$ = Hydrate depression temperature (°C)
+- $K_H$ = Constant (2335 for methanol, 1297 for MEG)
+- $w$ = Inhibitor concentration (wt%)
+- $M$ = Inhibitor molecular weight (32 for methanol, 62 for MEG)
+
+**Hydrate formation condition (gas specific gravity method):**
+$$T_{hyd} = 8.9 \times P^{0.285} \times \gamma_g^{0.5}$$
+
+where:
+- $T_{hyd}$ = Hydrate formation temperature (°C)
+- $P$ = Pressure (bar)
+- $\gamma_g$ = Gas specific gravity
+
+#### Wax Appearance Temperature (WAT)
+
+**Coutinho Model (simplified):**
+$$\ln(x_i^L \gamma_i^L) = \frac{\Delta H_{fus,i}}{R}\left(\frac{1}{T_m} - \frac{1}{T}\right)$$
+
+For screening, empirical correlations based on n-paraffin content:
+$$WAT \approx 30 + 0.5 \times (C_{20+} \text{ content, wt\%})$$
+
+#### Erosion Velocity
+
+**API RP 14E Erosion Velocity Limit:**
+$$V_e = \frac{C}{\sqrt{\rho_m}}$$
+
+where:
+- $V_e$ = Erosional velocity (m/s)
+- $C$ = Empirical constant (100-150 for continuous service)
+- $\rho_m$ = Mixture density (kg/m³)
+
+---
+
+### Mechanical Design Mathematics
+
+#### Pressure Vessel Wall Thickness (ASME VIII)
+
+**Cylindrical shell under internal pressure:**
+$$t = \frac{P \times R}{S \times E - 0.6 \times P} + CA$$
+
+where:
+- $t$ = Required wall thickness (mm)
+- $P$ = Design pressure (MPa)
+- $R$ = Inside radius (mm)
+- $S$ = Allowable stress (MPa)
+- $E$ = Joint efficiency (0.7-1.0)
+- $CA$ = Corrosion allowance (typically 3-6 mm)
+
+#### Separator Sizing (API 12J)
+
+**Gas capacity (Souders-Brown):**
+$$V_{gas,max} = K \sqrt{\frac{\rho_L - \rho_G}{\rho_G}}$$
+
+where:
+- $V_{gas,max}$ = Maximum gas velocity (m/s)
+- $K$ = Souders-Brown factor (typically 0.05-0.15 m/s)
+- $\rho_L$ = Liquid density (kg/m³)
+- $\rho_G$ = Gas density (kg/m³)
+
+**Vessel diameter from gas capacity:**
+$$D = \sqrt{\frac{4 Q_g}{\pi V_{gas,max}}}$$
+
+**Liquid retention time:**
+$$t_{ret} = \frac{V_{liq}}{Q_L}$$
+
+Typical retention times: 2-5 minutes for 2-phase, 5-10 minutes for 3-phase.
+
+#### Compressor Sizing (API 617)
+
+**Polytropic head:**
+$$H_p = \frac{Z_{avg} R T_1}{M_w} \times \frac{n}{n-1} \times \left[\left(\frac{P_2}{P_1}\right)^{\frac{n-1}{n}} - 1\right]$$
+
+where:
+- $H_p$ = Polytropic head (kJ/kg)
+- $Z_{avg}$ = Average compressibility factor
+- $R$ = Gas constant (8.314 J/mol·K)
+- $T_1$ = Suction temperature (K)
+- $M_w$ = Molecular weight (kg/kmol)
+- $n$ = Polytropic exponent
+- $P_1, P_2$ = Suction and discharge pressures
+
+**Polytropic power:**
+$$W_p = \dot{m} \times H_p / \eta_p$$
+
+where:
+- $W_p$ = Polytropic power (kW)
+- $\dot{m}$ = Mass flow rate (kg/s)
+- $\eta_p$ = Polytropic efficiency (typically 0.75-0.85)
+
+**Number of stages:**
+$$N_{stages} = \lceil H_p / H_{max,stage} \rceil$$
+
+Typical maximum head per stage: 25-35 kJ/kg.
+
+#### Pipeline Wall Thickness (ASME B31.8 / DNV-ST-F101)
+
+**Barlow formula (internal pressure):**
+$$t = \frac{P \times D}{2 \times S \times F \times E \times T}$$
+
+where:
+- $t$ = Wall thickness (mm)
+- $P$ = Design pressure (bar)
+- $D$ = Outside diameter (mm)
+- $S$ = Specified Minimum Yield Strength (MPa)
+- $F$ = Design factor (0.72 typical for offshore)
+- $E$ = Longitudinal joint factor (1.0 for seamless)
+- $T$ = Temperature derating factor
+
+**DNV-ST-F101 collapse pressure (subsea):**
+$$P_c = \frac{2 t}{D} \times S \times \alpha_u$$
+
+where:
+- $\alpha_u$ = Material strength factor (0.96 for NCS)
+
+---
+
+### Power & CO2 Emissions Calculations
+
+#### Power Consumption Estimation
+
+**Total facility power:**
+$$P_{total} = P_{compression} + P_{pumping} + P_{heating} + P_{utilities}$$
+
+**Compression power (from EOS):**
+$$P_{comp} = \frac{\dot{m} \times H_p}{\eta_p \times \eta_{driver}}$$
+
+where $\eta_{driver}$ = 0.95-0.98 for electric, 0.30-0.40 for gas turbine.
+
+#### CO2 Emission Factors
+
+| Power Source | Emission Factor |
+|-------------|-----------------|
+| Gas turbine (simple cycle) | 500 kg CO2/MWh |
+| Gas turbine (combined cycle) | 350 kg CO2/MWh |
+| Power from shore (Nordic grid) | 50 kg CO2/MWh |
+| Power from shore (UK grid) | 200 kg CO2/MWh |
+| Diesel generator | 600 kg CO2/MWh |
+
+**Annual CO2 emissions:**
+$$CO2_{annual} = P_{total} \times t_{op} \times EF$$
+
+where:
+- $P_{total}$ = Total power (MW)
+- $t_{op}$ = Operating hours (typically 8000 hr/year)
+- $EF$ = Emission factor (kg CO2/MWh)
+
+**CO2 intensity:**
+$$I_{CO2} = \frac{CO2_{annual}}{Q_{annual,boe}}$$
+
+where:
+- $I_{CO2}$ = CO2 intensity (kg CO2/boe)
+- $Q_{annual,boe}$ = Annual production (boe/year)
+
+Industry targets: < 10 kg CO2/boe for low-emission facilities.
+
+---
+
+## Process Modeling & Mechanical Design Integration
+
+The `FieldDevelopmentWorkflow` class integrates process simulation, mechanical design, and
+sustainability calculations into a unified workflow:
+
+```java
+// Configure workflow with mechanical design and emissions
+FieldDevelopmentWorkflow workflow = new FieldDevelopmentWorkflow("Barents Sea Discovery");
+workflow.setConcept(concept)
+    .setFluid(tunedFluid)
+    .setProcessSystem(processModel)           // Full process simulation
+    .setFidelityLevel(FidelityLevel.DETAILED)
+    .setRunMechanicalDesign(true)             // Enable mechanical design
+    .setCalculateEmissions(true)              // Enable CO2 calculations
+    .setPowerSupplyType("POWER_FROM_SHORE")   // Electrification
+    .setGridEmissionFactor(0.05)              // Nordic grid
+    .setDesignStandard("Equinor");            // Company standards
+
+// Run workflow
+WorkflowResult result = workflow.run();
+
+// Access mechanical design results
+System.out.println("Equipment weight: " + result.totalEquipmentWeightTonnes + " tonnes");
+System.out.println("Module footprint: " + result.totalFootprintM2 + " m²");
+
+// Access power and emissions
+System.out.println("Total power: " + result.totalPowerMW + " MW");
+System.out.println("Annual CO2: " + result.annualCO2eKtonnes + " ktonnes/yr");
+System.out.println("CO2 intensity: " + result.co2IntensityKgPerBoe + " kg/boe");
+
+// Power breakdown
+for (Map.Entry<String, Double> entry : result.powerBreakdownMW.entrySet()) {
+    System.out.println("  " + entry.getKey() + ": " + entry.getValue() + " MW");
+}
+```
+
+### Equipment-Level Mechanical Design
+
+Each process equipment class has an associated mechanical design class:
+
+| Equipment | Mechanical Design Class | Design Standard |
+|-----------|------------------------|-----------------|
+| Separator | `SeparatorMechanicalDesign` | ASME VIII, API 12J |
+| Compressor | `CompressorMechanicalDesign` | API 617 |
+| Pump | `PumpMechanicalDesign` | API 610 |
+| Valve | `ValveMechanicalDesign` | IEC 60534 |
+| Heat Exchanger | `HeatExchangerMechanicalDesign` | TEMA |
+| Pipeline | `PipelineMechanicalDesign` | ASME B31.3/B31.8 |
+| Tank | `TankMechanicalDesign` | API 650/620 |
+
+```java
+// Individual equipment mechanical design
+Separator separator = new Separator("V-100", inletStream);
+separator.run();
+
+MechanicalDesign mecDesign = separator.getMechanicalDesign();
+mecDesign.setCompanySpecificDesignStandards("Equinor");
+mecDesign.calcDesign();
+
+// Access results
+double weight = mecDesign.getWeightTotal();           // kg
+double wallThickness = mecDesign.getWallThickness();  // mm
+double innerDiameter = mecDesign.getInnerDiameter();  // m
+
+// Export to JSON
+String json = mecDesign.toJson();
+```
+
+### System-Wide Design Aggregation
+
+```java
+// Create process system
+ProcessSystem process = new ProcessSystem();
+process.add(feed);
+process.add(separator);
+process.add(compressor);
+process.add(cooler);
+process.run();
+
+// Create system mechanical design
+SystemMechanicalDesign sysMecDesign = new SystemMechanicalDesign(process);
+sysMecDesign.setCompanySpecificDesignStandards("Equinor");
+sysMecDesign.runDesignCalculation();
+
+// Aggregated results
+double totalWeight = sysMecDesign.getTotalWeight();       // kg
+double totalVolume = sysMecDesign.getTotalVolume();       // m³
+double plotSpace = sysMecDesign.getTotalPlotSpace();      // m²
+double powerRequired = sysMecDesign.getTotalPowerRequired();  // kW
+
+// Get breakdown by type
+Map<String, Double> weightByType = sysMecDesign.getWeightByEquipmentType();
+System.out.println("Separators: " + weightByType.get("Separator") + " kg");
+System.out.println("Compressors: " + weightByType.get("Compressor") + " kg");
+```
+
+### Emissions Tracking Integration
+
+```java
+// Process-level emissions tracking
+import neqsim.process.sustainability.EmissionsTracker;
+
+EmissionsTracker tracker = new EmissionsTracker(process);
+tracker.setGridEmissionFactor(0.05);  // Nordic grid: 50 g CO2/kWh
+tracker.setIncludeIndirectEmissions(true);
+
+EmissionsReport report = tracker.calculateEmissions();
+
+// Results by category
+System.out.println("Total CO2e: " + report.getTotalCO2e("ton/yr") + " ton/yr");
+System.out.println("Compression: " + report.getEmissionsByCategory().get("COMPRESSION"));
+System.out.println("Pumping: " + report.getEmissionsByCategory().get("PUMPING"));
+
+// Export for regulatory reporting
+report.exportToCSV("emissions_report.csv");
+```
+
+---
+
+## Subsea Production System Integration
+
+The `SubseaProductionSystem` class provides a unified abstraction for modeling subsea developments,
+integrating wells, flowlines, manifolds, and tieback analysis into the field development workflow.
+
+### Subsea Architecture Types
+
+| Architecture | Description | Use Case |
+|--------------|-------------|----------|
+| `DIRECT_TIEBACK` | Wells tied directly to host | Short distances (<10km), few wells |
+| `MANIFOLD_CLUSTER` | Wells grouped at subsea manifold | Standard development, 4-8 wells |
+| `DAISY_CHAIN` | Wells connected in series | Long, narrow reservoir |
+| `TEMPLATE` | Multiple wells from single structure | Compact field development |
+
+### Subsea System Configuration
+
+```java
+import neqsim.process.fielddevelopment.subsea.SubseaProductionSystem;
+import neqsim.process.fielddevelopment.tieback.HostFacility;
+import neqsim.process.fielddevelopment.tieback.TiebackAnalyzer;
+
+// Create subsea production system
+SubseaProductionSystem subsea = new SubseaProductionSystem("Marginal Gas Satellite");
+subsea.setArchitecture(SubseaProductionSystem.SubseaArchitecture.MANIFOLD_CLUSTER)
+    .setWaterDepthM(350.0)
+    .setTiebackDistanceKm(25.0)
+    .setWellCount(4)
+    .setRatePerWell(1.5e6)                    // Sm3/day per well
+    .setWellheadConditions(180.0, 80.0)       // bara, °C
+    .setFlowlineDiameterInches(12.0)
+    .setSeabedTemperatureC(4.0)
+    .setFlowlineMaterial("Carbon Steel")
+    .setReservoirFluid(gasCondensateFluid);   // NeqSim fluid
+
+// Build and run
+subsea.build();
+subsea.run();
+
+// Get results
+SubseaProductionSystem.SubseaSystemResult result = subsea.getResult();
+System.out.println("Arrival pressure: " + result.getArrivalPressureBara() + " bara");
+System.out.println("Arrival temperature: " + result.getArrivalTemperatureC() + " °C");
+System.out.println("Subsea CAPEX: " + result.getTotalSubseaCapexMusd() + " MUSD");
+
+// CAPEX breakdown
+System.out.println("  Subsea trees: " + result.getSubseaTreeCostMusd() + " MUSD");
+System.out.println("  Manifold: " + result.getManifoldCostMusd() + " MUSD");
+System.out.println("  Pipeline: " + result.getPipelineCostMusd() + " MUSD");
+System.out.println("  Umbilical: " + result.getUmbilicalCostMusd() + " MUSD");
+```
+
+### Tieback Analysis to Multiple Hosts
+
+```java
+// Define potential host facilities
+HostFacility host1 = HostFacility.builder("Platform A")
+    .location(60.5, 2.3)
+    .waterDepth(120)
+    .gasCapacity(15.0, "MSm3/d")
+    .gasUtilization(0.75)
+    .minTieInPressure(80)
+    .build();
+
+HostFacility host2 = HostFacility.builder("FPSO B")
+    .location(60.8, 2.1)
+    .waterDepth(350)
+    .gasCapacity(25.0, "MSm3/d")
+    .gasUtilization(0.60)
+    .build();
+
+// Analyze tieback options
+TiebackAnalyzer analyzer = new TiebackAnalyzer();
+TiebackReport report = analyzer.analyze(concept, Arrays.asList(host1, host2), 60.6, 2.5);
+
+// Review results
+System.out.println("Best option: " + report.getBestFeasibleOption().getHostName());
+System.out.println("NPV: " + report.getBestFeasibleOption().getNpvMusd() + " MUSD");
+
+// Print comparison
+for (TiebackOption opt : report.getFeasibleOptions()) {
+    System.out.println(opt.getHostName() + ": " + opt.getDistanceKm() + " km, " 
+        + opt.getTotalCapexMusd() + " MUSD CAPEX");
+}
+```
+
+### Integrated Subsea Workflow
+
+The subsea system integrates seamlessly with the `FieldDevelopmentWorkflow`:
+
+```java
+// Configure workflow with subsea tieback
+FieldDevelopmentWorkflow workflow = new FieldDevelopmentWorkflow("Satellite Field");
+workflow.setConcept(FieldConcept.gasTieback("Satellite", 25.0, 4, 1.5))
+    .setFluid(gasFluid)
+    .setFidelityLevel(FidelityLevel.CONCEPTUAL)
+    .setRunSubseaAnalysis(true)               // Enable subsea analysis
+    .setWaterDepthM(350.0)
+    .setTiebackDistanceKm(25.0)
+    .setSubseaArchitecture(SubseaProductionSystem.SubseaArchitecture.MANIFOLD_CLUSTER)
+    .addHostFacility(host1)
+    .addHostFacility(host2)
+    .setCountryCode("NO");
+
+// Or provide a pre-configured subsea system
+workflow.setSubseaSystem(subsea);
+
+// Run workflow
+WorkflowResult result = workflow.run();
+
+// Access subsea results
+System.out.println("Subsea CAPEX: " + result.subseaCapexMusd + " MUSD");
+System.out.println("Arrival pressure: " + result.arrivalPressureBara + " bara");
+System.out.println("Selected host: " + result.selectedTiebackOption.getHostName());
+
+// Full subsea system result
+if (result.subseaSystemResult != null) {
+    System.out.println(result.subseaSystemResult.getSummary());
+}
+```
+
+### Subsea Cost Estimation Model
+
+The subsea CAPEX model uses parametric cost estimation:
+
+| Component | Base Cost | Scaling |
+|-----------|-----------|---------|
+| Subsea tree | 25 MUSD/well | Fixed per well |
+| Manifold/template | 35 MUSD | Per manifold |
+| Pipeline | 2.5 MUSD/km | Diameter^1.3 × depth factor |
+| Umbilical | 1.0 MUSD/km | Length × 1.05 for routing |
+| Control system | 3 MUSD/well + 5 MUSD | Includes SCM, HPU |
+
+**Water Depth Factors:**
+- < 500m: 1.0
+- 500-1000m: 1.0 + (depth - 500) / 1000
+- > 1000m: 1.5 + (depth - 1000) / 500
+
+**Material Factors:**
+- Carbon Steel: 1.0
+- CRA (13% Cr): 2.5
+- Flexible: 3.0
+
+### Subsea Flow Assurance Integration
+
+The subsea system integrates with NeqSim's flow assurance capabilities:
+
+```java
+// The subsea system uses actual thermodynamic calculations
+subsea.setReservoirFluid(gasCondensateFluid);
+subsea.build();
+subsea.run();
+
+// Arrival conditions reflect actual pressure/temperature drop
+double arrivalT = subsea.getArrivalTemperatureC();
+double seabedT = 4.0;
+
+// Check hydrate margin
+ThermodynamicOperations ops = new ThermodynamicOperations(gasCondensateFluid.clone());
+double hydrateT = ops.hydrateFormationTemperature(arrivalP);
+double margin = arrivalT - hydrateT;
+
+if (margin < 5.0) {
+    System.out.println("WARNING: Hydrate margin is only " + margin + " °C");
+    System.out.println("Consider MEG injection or insulation");
+}
+```
+
+---
+
 ## Field Development Lifecycle
 
 ```
@@ -433,17 +1301,17 @@ each topic maps to NeqSim capabilities:
 | **Project economic evaluation** | `CashFlowEngine`, `TaxModel`, NPV/IRR | ✅ 15+ countries |
 | **Offshore field architectures** | `FieldConcept`, `InfrastructureInput` | ✅ Complete |
 | **Production systems** | `WellSystem` (IPR+VLP), `TubingPerformance` | ✅ Complete |
-| **Injection systems** | `WellFlow` with injection mode | ✅ Basic |
+| **Injection systems** | `InjectionWellModel`, injectivity index, Hall plot | ✅ Complete |
 | **Reservoir depletion** | `SimpleReservoir`, material balance | ✅ Tank model |
 | **Field performance** | `ProductionProfile`, decline curves | ✅ Complete |
 | **Production scheduling** | `FieldProductionScheduler`, `WellScheduler` | ✅ Complete |
 | **Flow assurance** | `FlowAssuranceScreener`, hydrate/wax/corrosion | ✅ Complete |
-| **Boosting (ESP, gas lift)** | `WellsInput.artificialLift()` | ✅ Screening |
+| **Boosting (ESP, gas lift)** | `GasLiftCalculator`, `ArtificialLiftScreener` (6 methods) | ✅ Complete |
 | **Field processing** | `ProcessSystem`, separators, compressors | ✅ Complete |
 | **Export product control** | `ProcessSystem` export streams | ✅ Complete |
 | **Integrated asset modeling** | `SimpleReservoir` + `ProcessSystem` | ✅ Complete |
-| **Energy efficiency** | `EmissionsTracker` CO2 intensity | ✅ Screening |
-| **Emissions to air/sea** | `EmissionsTracker` | ✅ Screening |
+| **Energy efficiency** | `EnergyEfficiencyCalculator`, SEC/EEI benchmarking | ✅ Complete |
+| **Emissions to air/sea** | `DetailedEmissionsCalculator`, Scope 1/2/3 | ✅ Complete |
 
 ---
 

@@ -7,6 +7,10 @@ import neqsim.process.fielddevelopment.economics.SensitivityAnalyzer;
 import neqsim.process.fielddevelopment.evaluation.ConceptKPIs;
 import neqsim.process.fielddevelopment.screening.EconomicsEstimator;
 import neqsim.process.fielddevelopment.screening.FlowAssuranceReport;
+import neqsim.process.fielddevelopment.subsea.SubseaProductionSystem;
+import neqsim.process.fielddevelopment.tieback.TiebackOption;
+import neqsim.process.fielddevelopment.tieback.TiebackReport;
+import neqsim.process.mechanicaldesign.SystemMechanicalDesign;
 
 /**
  * Result container for field development workflow execution.
@@ -87,6 +91,65 @@ public class WorkflowResult implements Serializable {
   /** Concept KPIs - only for CONCEPTUAL and DETAILED. */
   public ConceptKPIs conceptKPIs;
 
+  // ============================================================================
+  // MECHANICAL DESIGN, POWER & EMISSIONS - only for DETAILED
+  // ============================================================================
+
+  /** System mechanical design results - only for DETAILED. */
+  public SystemMechanicalDesign mechanicalDesign;
+
+  /** Total equipment weight [tonnes]. */
+  public double totalEquipmentWeightTonnes;
+
+  /** Total module footprint [m2]. */
+  public double totalFootprintM2;
+
+  /** Total power consumption [MW]. */
+  public double totalPowerMW;
+
+  /** Power breakdown by equipment type. */
+  public Map<String, Double> powerBreakdownMW;
+
+  /** Annual CO2 emissions [ktonnes/year]. */
+  public double annualCO2eKtonnes;
+
+  /** CO2 intensity [kg CO2e/boe]. */
+  public double co2IntensityKgPerBoe;
+
+  /** Emission breakdown by category. */
+  public Map<String, Double> emissionBreakdown;
+
+  /** Power supply type (used for emission calculation). */
+  public String powerSupplyType;
+
+  /** Grid emission factor [kg CO2/kWh]. */
+  public double gridEmissionFactor;
+
+  // ============================================================================
+  // SUBSEA SYSTEM RESULTS
+  // ============================================================================
+
+  /** Subsea production system result. */
+  public SubseaProductionSystem.SubseaSystemResult subseaSystemResult;
+
+  /** Tieback analysis report (multiple host comparison). */
+  public TiebackReport tiebackReport;
+
+  /** Selected tieback option (best feasible). */
+  public TiebackOption selectedTiebackOption;
+
+  /** Total subsea CAPEX [MUSD]. */
+  public double subseaCapexMusd;
+
+  /** Arrival pressure at host facility [bara]. */
+  public double arrivalPressureBara;
+
+  /** Arrival temperature at host facility [°C]. */
+  public double arrivalTemperatureC;
+
+  /** Subsea simulation error message (if simulation failed). */
+  public String subseaSimulationError;
+
   /**
    * Creates a new workflow result.
    *
@@ -159,6 +222,90 @@ public class WorkflowResult implements Serializable {
       sb.append(String.format("- P(NPV > 0): %.1f%%\n",
           monteCarloResult.getProbabilityPositiveNpv() * 100));
       sb.append(String.format("- NPV range: %.0f to %.0f MUSD\n", npvP10, npvP90));
+      sb.append("\n");
+    }
+
+    // Mechanical design and power summary
+    if (totalPowerMW > 0 || totalEquipmentWeightTonnes > 0) {
+      sb.append("## Process & Mechanical Design\n\n");
+      sb.append("| Parameter | Value |\n");
+      sb.append("|-----------|-------|\n");
+      if (totalEquipmentWeightTonnes > 0) {
+        sb.append(
+            String.format("| Equipment Weight | %.0f tonnes |\n", totalEquipmentWeightTonnes));
+      }
+      if (totalFootprintM2 > 0) {
+        sb.append(String.format("| Module Footprint | %.0f m² |\n", totalFootprintM2));
+      }
+      if (totalPowerMW > 0) {
+        sb.append(String.format("| Total Power | %.1f MW |\n", totalPowerMW));
+      }
+      sb.append("\n");
+    }
+
+    // CO2 emissions summary
+    if (annualCO2eKtonnes > 0) {
+      sb.append("## CO2 Emissions\n\n");
+      sb.append("| Metric | Value |\n");
+      sb.append("|--------|-------|\n");
+      sb.append(String.format("| Power Supply | %s |\n",
+          powerSupplyType != null ? powerSupplyType : "N/A"));
+      sb.append(String.format("| Annual CO2e | %.1f ktonnes/yr |\n", annualCO2eKtonnes));
+      sb.append(String.format("| CO2 Intensity | %.1f kg/boe |\n", co2IntensityKgPerBoe));
+      sb.append("\n");
+    }
+
+    // Subsea system summary
+    if (subseaSystemResult != null || subseaCapexMusd > 0) {
+      sb.append("## Subsea Production System\n\n");
+      sb.append("| Parameter | Value |\n");
+      sb.append("|-----------|-------|\n");
+
+      if (subseaSystemResult != null) {
+        sb.append(String.format("| Architecture | %s |\n",
+            subseaSystemResult.getClass().getSimpleName()));
+        sb.append(String.format("| Arrival Pressure | %.1f bara |\n",
+            subseaSystemResult.getArrivalPressureBara()));
+        sb.append(String.format("| Arrival Temperature | %.1f °C |\n",
+            subseaSystemResult.getArrivalTemperatureC()));
+        sb.append(String.format("| Subsea CAPEX | %.0f MUSD |\n",
+            subseaSystemResult.getTotalSubseaCapexMusd()));
+      } else {
+        if (arrivalPressureBara > 0) {
+          sb.append(String.format("| Arrival Pressure | %.1f bara |\n", arrivalPressureBara));
+        }
+        if (arrivalTemperatureC > 0) {
+          sb.append(String.format("| Arrival Temperature | %.1f °C |\n", arrivalTemperatureC));
+        }
+        if (subseaCapexMusd > 0) {
+          sb.append(String.format("| Subsea CAPEX | %.0f MUSD |\n", subseaCapexMusd));
+        }
+      }
+
+      if (selectedTiebackOption != null) {
+        sb.append(String.format("| Selected Host | %s |\n", selectedTiebackOption.getHostName()));
+        sb.append(String.format("| Tieback Distance | %.1f km |\n",
+            selectedTiebackOption.getDistanceKm()));
+      }
+
+      sb.append("\n");
+
+      if (subseaSimulationError != null) {
+        sb.append("**Note:** Subsea simulation encountered an error: ");
+        sb.append(subseaSimulationError).append("\n\n");
+      }
+    }
+
+    // Tieback comparison (if multiple hosts evaluated)
+    if (tiebackReport != null && tiebackReport.getOptionCount() > 1) {
+      sb.append("## Tieback Options Comparison\n\n");
+      sb.append("| Host | Distance (km) | NPV (MUSD) | Feasible |\n");
+      sb.append("|------|---------------|------------|----------|\n");
+
+      for (TiebackOption opt : tiebackReport.getOptions()) {
+        sb.append(String.format("| %s | %.1f | %.0f | %s |\n", opt.getHostName(),
+            opt.getDistanceKm(), opt.getNpvMusd(), opt.isFeasible() ? "✓" : "✗"));
+      }
       sb.append("\n");
     }
 

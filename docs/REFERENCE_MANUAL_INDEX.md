@@ -511,6 +511,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Field Planning | [docs/wiki/field_development_planning.md](wiki/field_development_planning.md) | Field development planning |
 | Field Engine | [docs/simulation/field_development_engine.md](simulation/field_development_engine.md) | Field development engine |
 | **Economics** | [docs/process/economics/README.md](process/economics/README.md) | Economics module: NPV, IRR, tax models, decline curves |
+| **Subsea Systems** | [docs/process/equipment/subsea_systems.md](process/equipment/subsea_systems.md) | Subsea production systems, tieback analysis |
 
 ---
 

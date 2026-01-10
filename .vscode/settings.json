@@ -18,5 +18,6 @@
   "[json]": {
     "editor.tabSize": 4,
     "editor.insertSpaces": true
-  }
+  },
+  "chat.agent.maxRequests": 2500
 }
