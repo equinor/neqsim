@@ -130,12 +130,7 @@ System.out.println("Compressibility: " + gas.getZ());
 
 ## 🐍 Python Integration
 
-<p>NeqSim is also available for Python through <a href="https://github.com/equinor/neqsim-python"><strong>neqsim-python</strong></a>:</p>
-
-<div style="background: #1e1e1e; border-radius: 8px; overflow: hidden; margin: 1.5rem 0;">
-<div style="background: #2d2d2d; padding: 0.5rem 1rem; color: #ccc; font-size: 0.875rem; border-bottom: 1px solid #444;">
-🐍 Python Example
-</div>
+NeqSim is also available for Python through [**neqsim-python**](https://github.com/equinor/neqsim-python):
 
 ```python
 from neqsim.thermo import TPflash, fluid
@@ -150,7 +145,6 @@ gas.setPressure(50.0, "bara")
 TPflash(gas)
 print(f"Gas density: {gas.getDensity('kg/m3'):.2f} kg/m³")
 ```
-</div>
 
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
 
