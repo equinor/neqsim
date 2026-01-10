@@ -506,8 +506,36 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 ### Chapter 48: Field Development
 | Document | Path | Description |
 |----------|------|-------------|
+| **Digital Field Twin** | [docs/fielddevelopment/DIGITAL_FIELD_TWIN.md](fielddevelopment/DIGITAL_FIELD_TWIN.md) | **NEW** Comprehensive architecture for lifecycle consistency |
+| **Mathematical Reference** | [docs/fielddevelopment/MATHEMATICAL_REFERENCE.md](fielddevelopment/MATHEMATICAL_REFERENCE.md) | **NEW** Mathematical foundations for all calculations |
+| **API Guide** | [docs/fielddevelopment/API_GUIDE.md](fielddevelopment/API_GUIDE.md) | **NEW** Detailed usage examples for all components |
+| **Integrated Framework** | [docs/fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md) | PVT→Reservoir→Well→Process integration guide |
+| **Strategy** | [docs/fielddevelopment/FIELD_DEVELOPMENT_STRATEGY.md](fielddevelopment/FIELD_DEVELOPMENT_STRATEGY.md) | Field development strategy and roadmap |
 | Field Planning | [docs/wiki/field_development_planning.md](wiki/field_development_planning.md) | Field development planning |
 | Field Engine | [docs/simulation/field_development_engine.md](simulation/field_development_engine.md) | Field development engine |
+| **Economics** | [docs/process/economics/README.md](process/economics/README.md) | Economics module: NPV, IRR, tax models, decline curves |
+| **Subsea Systems** | [docs/process/equipment/subsea_systems.md](process/equipment/subsea_systems.md) | Subsea production systems, tieback analysis |
+
+#### Digital Field Twin Lifecycle Components
+| Lifecycle Phase | Documentation | Key Capabilities |
+|----------------|---------------|------------------|
+| Screening (DG0-DG1) | DIGITAL_FIELD_TWIN §3 | Concept comparison, flow assurance screening, tieback analysis |
+| Selection (DG2) | MATHEMATICAL_REFERENCE §4-5 | NPV calculation, MCDA ranking, Norwegian tax model |
+| Definition (DG3) | API_GUIDE §5-6 | Process system auto-generation, network modeling |
+| Execution (DG4) | DIGITAL_FIELD_TWIN §4 | VFP table export, reservoir coupling |
+| Operations | DIGITAL_FIELD_TWIN §5 | Real-time optimization, Monte Carlo uncertainty |
+| Late-Life | LATE_LIFE_OPERATIONS | Turndown, debottlenecking, decommissioning timing |
+
+#### New Classes in This PR
+| Class | Package | Purpose |
+|-------|---------|---------|
+| `PortfolioOptimizer` | `economics` | Multi-project investment optimization |
+| `DevelopmentOptionRanker` | `evaluation` | MCDA-based concept ranking |
+| `MonteCarloRunner` | `evaluation` | Probabilistic uncertainty analysis |
+| `ConceptToProcessLinker` | `facility` | Auto-generate ProcessSystem from concept |
+| `MultiphaseFlowIntegrator` | `network` | Pipeline hydraulics integration |
+| `ReservoirCouplingExporter` | `reservoir` | VFP tables and ECLIPSE keywords |
+| `TiebackAnalyzer` | `tieback` | Tieback feasibility screening |
 
 ---
 
@@ -579,6 +607,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Thermodynamics | 25 |
 | Process Simulation | 45 |
 | Safety Systems | 18 |
+| Field Development | 10 |
 | Integration/AI | 12 |
 | Pipeline/Flow | 15 |
 | PVT/Reservoir | 15 |
@@ -587,7 +616,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Statistics | 4 |
 | Examples | 3 |
 | Other | 24 |
-| **Total** | **232** |
+| **Total** | **242** |
 
 ---
 
