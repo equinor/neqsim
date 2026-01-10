@@ -1,6 +1,149 @@
 /* NeqSim Documentation Custom Styles */
 
-/* Navigation Cards Grid */
+/* ========================================
+   Code Block Copy Button
+   ======================================== */
+
+.code-block-wrapper {
+  position: relative;
+}
+
+.copy-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.4rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease, background 0.2s ease;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.code-block-wrapper:hover .copy-button {
+  opacity: 1;
+}
+
+.copy-button:hover {
+  background: #f0f0f0;
+}
+
+.copy-button.copied {
+  background: #d4edda;
+  border-color: #28a745;
+  color: #28a745;
+}
+
+.copy-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ========================================
+   Table of Contents
+   ======================================== */
+
+.toc {
+  background: #f8f9fa;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  max-width: 300px;
+  float: right;
+  margin-left: 2rem;
+  margin-bottom: 1rem;
+}
+
+.toc-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #24292e;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.toc-item {
+  margin: 0.25rem 0;
+}
+
+.toc-item a {
+  color: #586069;
+  text-decoration: none;
+  font-size: 0.85rem;
+  display: block;
+  padding: 0.2rem 0;
+  transition: color 0.15s ease;
+}
+
+.toc-item a:hover {
+  color: #159957;
+}
+
+.toc-item a.active {
+  color: #159957;
+  font-weight: 500;
+}
+
+.toc-h3 {
+  padding-left: 1rem;
+}
+
+.toc-h3 a {
+  font-size: 0.8rem;
+}
+
+/* Hide TOC on mobile */
+@media (max-width: 900px) {
+  .toc {
+    float: none;
+    max-width: 100%;
+    margin-left: 0;
+  }
+}
+
+/* ========================================
+   Edit Link
+   ======================================== */
+
+.edit-link {
+  margin-bottom: 1rem;
+}
+
+.edit-link a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #586069;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.15s ease;
+}
+
+.edit-link a:hover {
+  color: #159957;
+}
+
+.edit-link svg {
+  flex-shrink: 0;
+}
+
+/* ========================================
+   Navigation Cards Grid
+   ======================================== */
+
 .nav-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
