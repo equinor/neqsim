@@ -41,7 +41,7 @@ The documentation home page with:
 
 1. **Jekyll Processing**: GitHub Pages uses Jekyll to process Markdown files into HTML
 2. **Theme**: The Cayman theme provides a clean, responsive design
-3. **Relative Links**: The `jekyll-relative-links` plugin ensures internal `.md` links work correctly
+3. **Relative Links**: The `jekyll-relative-links` and `jekyll-optional-front-matter` plugins ensure internal links work correctly
 4. **Automatic Build**: Every push to the `/docs` folder triggers a rebuild
 
 ---
@@ -53,10 +53,13 @@ Once enabled, documentation will be accessible at:
 | Local Path | GitHub Pages URL |
 |------------|------------------|
 | `docs/index.md` | `https://equinor.github.io/neqsim/` |
-| `docs/thermo/README.md` | `https://equinor.github.io/neqsim/thermo/` |
-| `docs/process/README.md` | `https://equinor.github.io/neqsim/process/` |
+| `docs/thermo/README.md` | `https://equinor.github.io/neqsim/thermo/README` |
+| `docs/process/README.md` | `https://equinor.github.io/neqsim/process/README` |
+| `docs/safety/SAFETY_SIMULATION_ROADMAP.md` | `https://equinor.github.io/neqsim/safety/SAFETY_SIMULATION_ROADMAP` |
 | `docs/manual/neqsim_reference_manual.html` | `https://equinor.github.io/neqsim/manual/neqsim_reference_manual.html` |
 | `docs/wiki/getting_started.md` | `https://equinor.github.io/neqsim/wiki/getting_started` |
+
+**Important**: Jekyll converts `.md` files to `.html`. Links should **not** include the `.md` extension when hosted.
 
 ---
 

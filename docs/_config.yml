@@ -24,6 +24,8 @@ kramdown:
   syntax_highlighter: rouge
   syntax_highlighter_opts:
     css_class: 'highlight'
+  auto_ids: true
+  hard_wrap: false
 
 # Include these file extensions
 include:
@@ -37,6 +39,8 @@ exclude:
   - "*.py"
   - __pycache__
   - "*.pyc"
+  - Gemfile
+  - Gemfile.lock
 
 # Navigation structure (for themes that support it)
 nav:
@@ -61,7 +65,7 @@ collections:
     output: true
     permalink: /wiki/:name
 
-# Defaults
+# Defaults - Apply default front matter to all markdown files
 defaults:
   - scope:
       path: ""
@@ -69,7 +73,23 @@ defaults:
     values:
       layout: "default"
   - scope:
+      path: "**/*.md"
+    values:
+      layout: "default"
+  - scope:
       path: "wiki"
+    values:
+      layout: "default"
+  - scope:
+      path: "thermo"
+    values:
+      layout: "default"
+  - scope:
+      path: "process"
+    values:
+      layout: "default"
+  - scope:
+      path: "safety"
     values:
       layout: "default"
 
@@ -78,6 +98,7 @@ plugins:
   - jekyll-github-metadata
   - jekyll-relative-links
   - jekyll-seo-tag
+  - jekyll-optional-front-matter
 
 # Relative links plugin settings
 relative_links:

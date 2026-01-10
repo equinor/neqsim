@@ -33,6 +33,69 @@ MathJax = {
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
 """
 
+# GitHub Pages link handler - converts .md links to work correctly
+GITHUB_PAGES_SCRIPT = """
+<script>
+// GitHub Pages Link Handler
+// Converts .md links to work correctly on GitHub Pages
+(function() {
+    'use strict';
+    
+    // Detect if we're on GitHub Pages
+    var isGitHubPages = window.location.hostname.endsWith('.github.io');
+    
+    // Handle all clicks on links
+    document.addEventListener('click', function(e) {
+        var target = e.target.closest('a');
+        if (!target) return;
+        
+        var href = target.getAttribute('href');
+        if (!href) return;
+        
+        // Only handle relative .md links
+        if (href.endsWith('.md') && !href.startsWith('http')) {
+            e.preventDefault();
+            
+            if (isGitHubPages) {
+                // On GitHub Pages, remove .md extension (Jekyll converts to .html)
+                var newHref = href.replace(/\\.md$/, '');
+                window.location.href = newHref;
+            } else {
+                // For local file viewing, open on GitHub
+                var basePath = 'https://github.com/equinor/neqsim/blob/master/docs/';
+                
+                // Resolve relative paths
+                var resolvedPath = href;
+                if (href.startsWith('../')) {
+                    // Remove ../ and adjust path
+                    resolvedPath = href.replace(/^(\\.\\.\\/)+/, '');
+                }
+                
+                window.open(basePath + resolvedPath, '_blank');
+            }
+        }
+    });
+    
+    // Add visual indicator that links will open externally when viewing locally
+    if (!isGitHubPages && window.location.protocol === 'file:') {
+        var links = document.querySelectorAll('a[href$=".md"]');
+        links.forEach(function(link) {
+            if (!link.querySelector('.external-icon')) {
+                link.insertAdjacentHTML('beforeend', ' <span class="external-icon" style="font-size:0.8em;opacity:0.6;">↗</span>');
+                link.title = 'Opens on GitHub (external link)';
+            }
+        });
+        
+        // Add info banner
+        var banner = document.createElement('div');
+        banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#0066cc;color:white;padding:10px 20px;font-size:14px;text-align:center;z-index:1000;';
+        banner.innerHTML = '📄 Viewing locally - Documentation links will open on GitHub. <a href="https://equinor.github.io/neqsim/manual/neqsim_reference_manual.html" style="color:#fff;text-decoration:underline;">View hosted version</a> for seamless navigation.';
+        document.body.appendChild(banner);
+    }
+})();
+</script>
+"""
+
 # CSS for professional PDF-ready styling
 CSS_STYLE = """
 <style>
@@ -433,6 +496,8 @@ def generate_manual(sections, title, subtitle, version, output_file):
         html_parts.append(markdown_to_html(content))
         html_parts.append('</div>')
     
+    # Add GitHub Pages link handler script before closing body
+    html_parts.append(GITHUB_PAGES_SCRIPT)
     html_parts.extend(['</body>', '</html>'])
     
     # Write output
