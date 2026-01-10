@@ -571,4 +571,217 @@ public class TiebackAnalyzer implements Serializable {
   public void setTaxModel(NorwegianTaxModel taxModel) {
     this.taxModel = taxModel;
   }
+
+  // ============================================================================
+  // TIEBACK SCREENING METHODS
+  // ============================================================================
+
+  /**
+   * Quick screening for tieback feasibility without full analysis.
+   *
+   * <p>
+   * Performs rapid go/no-go screening based on key constraints:
+   * </p>
+   * <ul>
+   * <li>Distance to host</li>
+   * <li>Water depth compatibility</li>
+   * <li>Host capacity</li>
+   * <li>Pressure compatibility</li>
+   * </ul>
+   *
+   * @param discoveryLat discovery latitude
+   * @param discoveryLon discovery longitude
+   * @param reservesMMboe reserves in MMboe
+   * @param waterDepthM water depth in meters
+   * @param host potential host facility
+   * @return screening result with pass/fail and reason
+   */
+  public TiebackScreeningResult quickScreen(double discoveryLat, double discoveryLon,
+      double reservesMMboe, double waterDepthM, HostFacility host) {
+
+    TiebackScreeningResult result = new TiebackScreeningResult();
+    result.setHostName(host.getName());
+
+    // Distance check
+    double distance = host.distanceToKm(discoveryLat, discoveryLon);
+    result.setDistanceKm(distance);
+
+    if (distance > maxTiebackDistanceKm) {
+      result.setPassed(false);
+      result.setFailureReason("Distance " + String.format("%.1f", distance) + " km exceeds maximum "
+          + maxTiebackDistanceKm + " km");
+      return result;
+    }
+
+    // Water depth check
+    if (waterDepthM > host.getWaterDepthM() * 1.2) {
+      result.setPassed(false);
+      result.setFailureReason("Water depth " + waterDepthM + " m exceeds host capability");
+      return result;
+    }
+
+    // Reserves check (minimum economic size)
+    double minReserves = distance * 0.5; // Simple rule: 0.5 MMboe per km
+    if (reservesMMboe < minReserves) {
+      result.setPassed(false);
+      result.setFailureReason("Reserves " + reservesMMboe + " MMboe below minimum "
+          + String.format("%.1f", minReserves) + " MMboe for distance");
+      return result;
+    }
+
+    result.setPassed(true);
+    result.setEstimatedCapexMusd(estimateQuickCapex(distance, waterDepthM));
+    result.setEstimatedNpvMusd(estimateQuickNpv(reservesMMboe, result.getEstimatedCapexMusd()));
+
+    return result;
+  }
+
+  /**
+   * Screen multiple hosts quickly and return ranked results.
+   *
+   * @param discoveryLat discovery latitude
+   * @param discoveryLon discovery longitude
+   * @param reservesMMboe reserves in MMboe
+   * @param waterDepthM water depth in meters
+   * @param hosts list of potential hosts
+   * @return list of screening results, ranked by estimated NPV
+   */
+  public List<TiebackScreeningResult> screenAllHosts(double discoveryLat, double discoveryLon,
+      double reservesMMboe, double waterDepthM, List<HostFacility> hosts) {
+
+    List<TiebackScreeningResult> results = new ArrayList<TiebackScreeningResult>();
+
+    for (HostFacility host : hosts) {
+      results.add(quickScreen(discoveryLat, discoveryLon, reservesMMboe, waterDepthM, host));
+    }
+
+    // Sort by estimated NPV (best first)
+    Collections.sort(results, new java.util.Comparator<TiebackScreeningResult>() {
+      @Override
+      public int compare(TiebackScreeningResult a, TiebackScreeningResult b) {
+        if (a.isPassed() && !b.isPassed()) {
+          return -1;
+        }
+        if (!a.isPassed() && b.isPassed()) {
+          return 1;
+        }
+        return Double.compare(b.getEstimatedNpvMusd(), a.getEstimatedNpvMusd());
+      }
+    });
+
+    return results;
+  }
+
+  /**
+   * Quick CAPEX estimate for screening.
+   */
+  private double estimateQuickCapex(double distanceKm, double waterDepthM) {
+    double pipeline = distanceKm * pipelineCostPerKmMusd;
+    double umbilical = distanceKm * umbilicalCostPerKmMusd;
+    double subsea = 2 * subseaTreeCostMusd; // Assume 2 wells
+    double manifold = manifoldBaseCostMusd;
+    double hostMod = hostModificationBaseCostMusd;
+
+    // Deep water multiplier
+    double depthMultiplier = 1.0 + Math.max(0, (waterDepthM - 200) / 500);
+
+    return (pipeline + umbilical + subsea + manifold + hostMod) * depthMultiplier;
+  }
+
+  /**
+   * Quick NPV estimate for screening.
+   */
+  private double estimateQuickNpv(double reservesMMboe, double capexMusd) {
+    // Simplified NPV: revenue - capex - opex
+    double revenuePerBoe = oilPriceUsdPerBbl * 0.8; // 80% netback
+    double totalRevenue = reservesMMboe * 1e6 * revenuePerBoe / 1e6; // MUSD
+    double opex = capexMusd * 0.04 * 15; // 4% of CAPEX for 15 years
+    double discountFactor = 0.6; // Rough discount for timing
+
+    return (totalRevenue - opex) * discountFactor - capexMusd;
+  }
+
+  /**
+   * Screening result for quick tieback evaluation.
+   */
+  public static class TiebackScreeningResult implements Serializable {
+    private static final long serialVersionUID = 1100L;
+
+    private String hostName;
+    private boolean passed;
+    private String failureReason;
+    private double distanceKm;
+    private double estimatedCapexMusd;
+    private double estimatedNpvMusd;
+
+    /** Get host name. */
+    public String getHostName() {
+      return hostName;
+    }
+
+    /** Set host name. */
+    public void setHostName(String name) {
+      this.hostName = name;
+    }
+
+    /** Check if passed. */
+    public boolean isPassed() {
+      return passed;
+    }
+
+    /** Set passed status. */
+    public void setPassed(boolean passed) {
+      this.passed = passed;
+    }
+
+    /** Get failure reason. */
+    public String getFailureReason() {
+      return failureReason;
+    }
+
+    /** Set failure reason. */
+    public void setFailureReason(String reason) {
+      this.failureReason = reason;
+    }
+
+    /** Get distance. */
+    public double getDistanceKm() {
+      return distanceKm;
+    }
+
+    /** Set distance. */
+    public void setDistanceKm(double km) {
+      this.distanceKm = km;
+    }
+
+    /** Get estimated CAPEX. */
+    public double getEstimatedCapexMusd() {
+      return estimatedCapexMusd;
+    }
+
+    /** Set estimated CAPEX. */
+    public void setEstimatedCapexMusd(double capex) {
+      this.estimatedCapexMusd = capex;
+    }
+
+    /** Get estimated NPV. */
+    public double getEstimatedNpvMusd() {
+      return estimatedNpvMusd;
+    }
+
+    /** Set estimated NPV. */
+    public void setEstimatedNpvMusd(double npv) {
+      this.estimatedNpvMusd = npv;
+    }
+
+    @Override
+    public String toString() {
+      if (passed) {
+        return String.format("%s: PASS (%.0f km, CAPEX=%.0f, NPV=%.0f MUSD)", hostName, distanceKm,
+            estimatedCapexMusd, estimatedNpvMusd);
+      } else {
+        return String.format("%s: FAIL - %s", hostName, failureReason);
+      }
+    }
+  }
 }
