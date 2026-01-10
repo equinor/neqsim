@@ -67,11 +67,6 @@ title: NeqSim Documentation
 
 ## ⚡ Quick Start Example
 
-<div style="background: #1e1e1e; border-radius: 8px; overflow: hidden; margin: 1.5rem 0;">
-<div style="background: #2d2d2d; padding: 0.5rem 1rem; color: #ccc; font-size: 0.875rem; border-bottom: 1px solid #444;">
-☕ Java Example
-</div>
-
 ```java
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -92,7 +87,6 @@ ops.TPflash();
 System.out.println("Density: " + gas.getDensity("kg/m3") + " kg/m³");
 System.out.println("Compressibility: " + gas.getZ());
 ```
-</div>
 
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
 
