@@ -537,31 +537,6 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | `ReservoirCouplingExporter` | `reservoir` | VFP tables and ECLIPSE keywords |
 | `TiebackAnalyzer` | `tieback` | Tieback feasibility screening |
 
-### Chapter 49: TPG4230 Course Support
-| Document | Path | Description |
-|----------|------|-------------|
-| **TPG4230 Support Guide** | [docs/fielddevelopment/TPG4230_SUPPORT_GUIDE.md](fielddevelopment/TPG4230_SUPPORT_GUIDE.md) | How NeqSim supports TPG4230 Field Development & Operations course |
-| **Class Mapping** | [docs/fielddevelopment/TPG4230_CLASS_MAPPING.md](fielddevelopment/TPG4230_CLASS_MAPPING.md) | Complete class-to-topic mapping with method signatures |
-| **Code Examples** | [docs/fielddevelopment/TPG4230_EXAMPLES.md](fielddevelopment/TPG4230_EXAMPLES.md) | 13 complete runnable examples for all major topics |
-| **Late-Life Operations** | [docs/fielddevelopment/LATE_LIFE_OPERATIONS.md](fielddevelopment/LATE_LIFE_OPERATIONS.md) | Late-life challenges, turndown, decommissioning timing |
-
-#### TPG4230 Topic Coverage
-| Topic | Primary Documentation | Key Classes |
-|-------|----------------------|-------------|
-| Field Lifecycle (DG0-DG4) | TPG4230_SUPPORT_GUIDE | `FieldDevelopmentWorkflow`, `StudyPhase` |
-| Reservoir & Production | INTEGRATED_FRAMEWORK | `ProductionProfile`, `DeclineType` |
-| Bottlenecking | TPG4230_CLASS_MAPPING | `BottleneckAnalyzer`, `EquipmentType` |
-| Oil & Gas Processing | TPG4230_EXAMPLES | `ProcessSystem`, `ThreePhaseSeparator` |
-| Separator Design | TPG4230_EXAMPLES | `SeparatorSizingCalculator` |
-| Flow Assurance | TPG4230_CLASS_MAPPING | `FlowAssuranceScreener`, `FlowAssuranceReport` |
-| Production Scheduling | TPG4230_EXAMPLES | `ScenarioAnalyzer`, `ScenarioParameters` |
-| Economics & NPV | TPG4230_CLASS_MAPPING | `CashFlowEngine`, `NorwegianTaxModel` |
-| Uncertainty & Risk | TPG4230_CLASS_MAPPING | `MonteCarloRunner`, `DistributionType` |
-| Environmental & Emissions | TPG4230_EXAMPLES | `EnvironmentalReporter` |
-| Decommissioning | LATE_LIFE_OPERATIONS | `DecommissioningEstimator` |
-| Water Treatment | TPG4230_CLASS_MAPPING | `ProducedWaterTreatmentTrain` |
-| Metering & Allocation | TPG4230_CLASS_MAPPING | `ProductionAllocator` |
-
 ---
 
 ## Part IX: Developer Guide
