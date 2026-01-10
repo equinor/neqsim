@@ -1,6 +1,7 @@
 package neqsim.process.fielddevelopment.economics;
 
 import static org.junit.jupiter.api.Assertions.*;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -99,7 +100,7 @@ class PortfolioOptimizerTest {
     optimizer.addProject("Field B", 80.0, 100.0, ProjectType.TIEBACK, 0.85);
     optimizer.addProject("Field C", 120.0, 180.0, ProjectType.IOR, 0.7);
 
-    var results = optimizer.compareStrategies();
+    Map<OptimizationStrategy, PortfolioResult> results = optimizer.compareStrategies();
 
     assertNotNull(results);
     assertTrue(results.containsKey(OptimizationStrategy.GREEDY_NPV_RATIO));
