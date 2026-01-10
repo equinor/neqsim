@@ -375,7 +375,7 @@ public class PortfolioOptimizer implements Serializable {
   /** List of candidate projects. */
   private List<Project> projects;
 
-  /** Annual budget constraints (year -> budget in MUSD). */
+  /** Annual budget constraints (year to budget in MUSD). */
   private Map<Integer, Double> annualBudgets;
 
   /** Total budget constraint (across all years). */

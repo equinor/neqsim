@@ -624,9 +624,9 @@ public class GasLiftOptimizer implements Serializable {
    * <ol>
    * <li>Bracket the common marginal response λ between [0, max_slope]</li>
    * <li>Binary search: for each λ, find gas allocation per well where slope = λ</li>
-   * <li>If total allocation > available, increase λ (less gas per well)</li>
-   * <li>If total allocation < available, decrease λ (more gas per well)</li>
-   * <li>Converge when |total - available| / available < tolerance</li>
+   * <li>If total allocation is greater than available, increase λ (less gas per well)</li>
+   * <li>If total allocation is less than available, decrease λ (more gas per well)</li>
+   * <li>Converge when |total - available| / available is less than tolerance</li>
    * </ol>
    *
    * @param totalGas total available gas (Sm³/d)

@@ -43,13 +43,13 @@ public class WorkflowResult implements Serializable {
   public EconomicsEstimator.EconomicsReport economicsReport;
 
   // Production
-  /** Gas production profile (year -> Sm3/day). */
+  /** Gas production profile (year to Sm3/day). */
   public Map<Integer, Double> gasProfile;
 
-  /** Oil production profile (year -> bbl/day). */
+  /** Oil production profile (year to bbl/day). */
   public Map<Integer, Double> oilProfile;
 
-  /** Water production profile (year -> Sm3/day). */
+  /** Water production profile (year to Sm3/day). */
   public Map<Integer, Double> waterProfile;
 
   // Cash flow
@@ -352,7 +352,7 @@ public class WorkflowResult implements Serializable {
   /**
    * Checks if the project is economically viable.
    *
-   * @return true if NPV > 0 and IRR > hurdle rate (typically 8%)
+   * @return true if NPV is positive and IRR exceeds hurdle rate (typically 8%)
    */
   public boolean isViable() {
     return npv > 0 && irr > 0.08;
@@ -362,7 +362,7 @@ public class WorkflowResult implements Serializable {
    * Checks if the project is viable with confidence.
    *
    * @param minProbability minimum probability of positive NPV (0-1)
-   * @return true if P(NPV>0) >= minProbability
+   * @return true if probability of positive NPV is at least minProbability
    */
   public boolean isViableWithConfidence(double minProbability) {
     if (monteCarloResult == null) {

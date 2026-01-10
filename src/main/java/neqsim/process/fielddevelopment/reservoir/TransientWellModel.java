@@ -534,7 +534,7 @@ public class TransientWellModel implements Serializable {
    * Uses the dimensionless pressure function with logarithmic approximation for late time:
    * </p>
    * <p>
-   * <code>p_D = 0.5 × [ln(t_D) + 0.80907 + 2S]</code> for t_D > 25
+   * {@code p_D = 0.5 × [ln(t_D) + 0.80907 + 2S]} for t_D greater than 25
    * </p>
    * <p>
    * Or the exponential integral for early time:
@@ -638,8 +638,9 @@ public class TransientWellModel implements Serializable {
    * For negative arguments (transient flow), this is computed using:
    * </p>
    * <ul>
-   * <li><b>Small |x| (< 1):</b> Series expansion: Ei(-x) = -γ - ln(x) + x - x²/(2·2!) + x³/(3·3!) -
-   * ...</li>
+   * <li><b>Small |x| (less than 1):</b> Series expansion:
+   * {@code Ei(-x) = -γ - ln(x) + x - x²/(2·2!) + x³/(3·3!) -
+   * ...}</li>
    * <li><b>Large |x| (≥ 1):</b> Asymptotic expansion: Ei(-x) ≈ -(e^(-x)/x) × [1 - 1/x + 2!/x² -
    * ...]</li>
    * </ul>

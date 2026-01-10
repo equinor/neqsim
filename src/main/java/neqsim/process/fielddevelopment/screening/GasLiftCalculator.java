@@ -483,7 +483,6 @@ public class GasLiftCalculator implements Serializable {
    * <li>Subsequent valves: Spaced for progressive unloading</li>
    * <li>Operating valve: Deepest valve, typically near perforations</li>
    * </ul>
-   * </p>
    */
   private void calculateValvePositions() {
     valvePositions.clear();

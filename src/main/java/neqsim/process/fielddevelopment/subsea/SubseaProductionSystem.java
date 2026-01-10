@@ -434,7 +434,7 @@ public class SubseaProductionSystem implements Serializable {
   }
 
   /**
-   * Builds direct tieback architecture (wells -> individual flowlines -> host).
+   * Builds direct tieback architecture (wells to individual flowlines to host).
    */
   private void buildDirectTieback() {
     for (int i = 0; i < wellCount; i++) {
@@ -472,7 +472,7 @@ public class SubseaProductionSystem implements Serializable {
   }
 
   /**
-   * Builds manifold cluster architecture (wells -> manifold -> trunk flowline -> host).
+   * Builds manifold cluster architecture (wells to manifold to trunk flowline to host).
    */
   private void buildManifoldCluster() {
     // Calculate wells per manifold
