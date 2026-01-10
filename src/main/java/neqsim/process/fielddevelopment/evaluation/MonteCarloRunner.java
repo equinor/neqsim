@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.function.DoubleSupplier;
 import neqsim.process.fielddevelopment.economics.CashFlowEngine;
-import neqsim.process.fielddevelopment.economics.CashFlowResult;
+import neqsim.process.fielddevelopment.economics.CashFlowEngine.CashFlowResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
