@@ -13,7 +13,7 @@ import markdown2
 
 # Configuration
 DOCS_DIR = Path(__file__).parent
-OUTPUT_DIR = DOCS_DIR / "output"
+OUTPUT_DIR = DOCS_DIR / "manual"
 
 # MathJax configuration for equation rendering
 MATHJAX_CONFIG = """
