@@ -261,10 +261,17 @@
       e.preventDefault();
       var prev = Math.max(currentIndex - 1, 0);
       setActiveResult(items, prev);
-    } else if (e.key === 'Enter' && current) {
+    } else if (e.key === 'Enter') {
       e.preventDefault();
-      var link = current.querySelector('a');
-      if (link) link.click();
+      // If a result is selected, go to it
+      if (current) {
+        var link = current.querySelector('a');
+        if (link) link.click();
+      } else if (items.length > 0) {
+        // Otherwise go to the first result
+        var firstLink = items[0].querySelector('a');
+        if (firstLink) firstLink.click();
+      }
     }
   }
 
