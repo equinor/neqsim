@@ -39,11 +39,13 @@ include:
 # Exclude from processing
 exclude:
   - generate_manual.py
+  - convert_notebooks.py
   - "*.py"
   - __pycache__
   - "*.pyc"
   - Gemfile
   - Gemfile.lock
+  - "*.ipynb"  # Jupyter notebooks - use converted .md versions instead
 
 # Navigation structure (for themes that support it)
 nav:
@@ -93,6 +95,10 @@ defaults:
       layout: "default"
   - scope:
       path: "safety"
+    values:
+      layout: "default"
+  - scope:
+      path: "examples"
     values:
       layout: "default"
 
