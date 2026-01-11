@@ -88,7 +88,18 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   z-index: 1000;
   padding: 0.5rem 0;
-  margin-top: 0.25rem;
+  /* Use padding-top on content instead of margin to prevent gap */
+  padding-top: 0.75rem;
+}
+
+/* Invisible bridge to prevent gap between button and dropdown */
+.nav-dropdown-content::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  height: 10px;
 }
 
 .nav-dropdown:hover .nav-dropdown-content {
