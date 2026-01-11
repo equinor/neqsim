@@ -1,6 +1,7 @@
 /**
  * NeqSim Documentation Search
  * Client-side search using Lunr.js
+ * Compatible with iOS Safari and all modern browsers
  */
 
 (function() {
@@ -11,6 +12,19 @@
   var searchInput = null;
   var searchResults = null;
   var searchOverlay = null;
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  // Polyfill for Element.closest (for older iOS versions)
+  if (!Element.prototype.closest) {
+    Element.prototype.closest = function(s) {
+      var el = this;
+      do {
+        if (el.matches(s)) return el;
+        el = el.parentElement || el.parentNode;
+      } while (el !== null && el.nodeType === 1);
+      return null;
+    };
+  }
 
   // Initialize search when DOM is ready
   document.addEventListener('DOMContentLoaded', function() {
@@ -26,33 +40,44 @@
     // Load search index
     loadSearchIndex();
 
-    // Set up event listeners
-    searchInput.addEventListener('input', debounce(performSearch, 200));
-    searchInput.addEventListener('focus', showResults);
-    
-    // Close results when clicking outside
-    document.addEventListener('click', function(e) {
-      if (!e.target.closest('.search-container')) {
-        hideResults();
+    // Set up event listeners - use 'input' event for real-time search
+    searchInput.addEventListener('input', debounce(performSearch, 250));
+    searchInput.addEventListener('focus', function() {
+      if (searchInput.value.trim().length >= 2) {
+        performSearch();
       }
     });
+    
+    // iOS-friendly touch handling - close results when tapping outside
+    document.addEventListener('click', handleOutsideClick);
+    document.addEventListener('touchend', handleOutsideClick);
 
     // Keyboard navigation
     searchInput.addEventListener('keydown', handleKeyboard);
 
-    // Keyboard shortcut: Ctrl+K or / to focus search
-    document.addEventListener('keydown', function(e) {
-      if ((e.ctrlKey && e.key === 'k') || (e.key === '/' && !isInputFocused())) {
-        e.preventDefault();
-        searchInput.focus();
-        searchInput.select();
-      }
-      if (e.key === 'Escape') {
-        hideResults();
-        searchInput.blur();
-      }
-    });
+    // Keyboard shortcut: Ctrl+K or / to focus search (desktop only)
+    if (!isIOS) {
+      document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey && e.key === 'k') || (e.key === '/' && !isInputFocused())) {
+          e.preventDefault();
+          searchInput.focus();
+          searchInput.select();
+        }
+        if (e.key === 'Escape') {
+          hideResults();
+          searchInput.blur();
+        }
+      });
+    }
   });
+
+  function handleOutsideClick(e) {
+    var target = e.target;
+    var searchContainer = document.querySelector('.search-container');
+    if (searchContainer && !searchContainer.contains(target)) {
+      hideResults();
+    }
+  }
 
   function isInputFocused() {
     var active = document.activeElement;
@@ -240,12 +265,22 @@
     if (searchResults.innerHTML) {
       searchResults.classList.add('visible');
       if (searchOverlay) searchOverlay.classList.add('visible');
+      
+      // iOS Safari fix: force repaint for position:fixed elements
+      if (isIOS) {
+        searchResults.style.transform = 'translateZ(0)';
+      }
     }
   }
 
   function hideResults() {
     searchResults.classList.remove('visible');
     if (searchOverlay) searchOverlay.classList.remove('visible');
+    
+    // iOS Safari: blur input to hide keyboard when closing results
+    if (isIOS && document.activeElement === searchInput) {
+      // Don't blur on iOS - let user control keyboard
+    }
   }
 
   function handleKeyboard(e) {
@@ -277,10 +312,20 @@
 
   function setActiveResult(items, index) {
     items.forEach(function(item, i) {
-      item.classList.toggle('active', i === index);
+      if (i === index) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
     });
+    // Use simpler scroll for iOS compatibility
     if (items[index]) {
-      items[index].scrollIntoView({ block: 'nearest' });
+      try {
+        items[index].scrollIntoView({ block: 'nearest', behavior: 'auto' });
+      } catch (e) {
+        // Fallback for older browsers
+        items[index].scrollIntoView(false);
+      }
     }
   }
 

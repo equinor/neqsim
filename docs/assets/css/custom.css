@@ -599,11 +599,12 @@
   display: block;
 }
 
-/* Mobile adjustments */
+/* Mobile and iOS adjustments */
 @media (max-width: 768px) {
   .search-container {
     max-width: 100%;
     margin: 0.75rem 0;
+    position: relative;
   }
   
   .search-shortcut {
@@ -611,9 +612,34 @@
   }
   
   #search-results {
-    position: fixed;
-    left: 1rem;
-    right: 1rem;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
     max-height: 60vh;
+    max-height: 60dvh; /* Dynamic viewport height for iOS */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    transform: translateZ(0); /* Force GPU layer for iOS */
+  }
+  
+  #search-input {
+    font-size: 16px; /* Prevent iOS zoom on focus */
+  }
+  
+  .search-results-list {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .search-result-item a {
+    padding: 1rem; /* Larger touch targets */
   }
 }
+
+/* iOS-specific fixes using @supports */
+@supports (-webkit-touch-callout: none) {
+  #search-results.visible {
+    transform: translateZ(0);
+  }
+  
+  .search-results-list {
+    -webkit-overflow-scrolling: touch;
