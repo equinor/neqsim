@@ -203,6 +203,15 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   private boolean isConverged = false;
   private int totalTimeSteps = 0;
 
+  // Mechanical design fields
+  private transient neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator mechanicalDesignCalculator;
+  private double designPressure = 0.0;
+  private double designTemperature = 273.15 + 50.0;
+  private String materialGrade = "X65";
+  private String designCode = "ASME_B31_8";
+  private int locationClass = 1;
+  private double corrosionAllowance = 0.003;
+
   /**
    * Boundary condition types for inlet and outlet.
    *
@@ -2085,6 +2094,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    *
    * @return Pipe length in meters
    */
+  @Override
   public double getLength() {
     return length;
   }
@@ -2103,6 +2113,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    *
    * @return Inner diameter in meters
    */
+  @Override
   public double getDiameter() {
     return diameter;
   }
@@ -2121,6 +2132,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    *
    * @return Wall thickness in meters
    */
+  @Override
   public double getWallThickness() {
     return wallThickness;
   }
@@ -2163,26 +2175,14 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     this.includeHeatTransfer = include;
   }
 
-  /**
-   * Get ambient temperature for heat transfer calculations.
-   *
-   * @return Ambient temperature in Kelvin
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getAmbientTemperature() {
     return ambientTemperature;
   }
 
-  /**
-   * Set ambient temperature for heat transfer calculations.
-   *
-   * <p>
-   * This is the external temperature used for heat loss/gain calculations. For subsea pipelines,
-   * this would be seawater temperature (~277-283 K). For buried onshore pipelines, this would be
-   * soil temperature.
-   * </p>
-   *
-   * @param temperature Ambient temperature in Kelvin
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setAmbientTemperature(double temperature) {
     this.ambientTemperature = temperature;
   }
@@ -2469,6 +2469,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     this.outStream = stream;
   }
 
+  /** {@inheritDoc} */
+  @Override
   public double[] getPressureProfile() {
     return pressureProfile;
   }
@@ -2478,6 +2480,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    *
    * @return Array of temperatures (K) at each section, or null if not run
    */
+  @Override
   public double[] getTemperatureProfile() {
     return temperatureProfile;
   }
@@ -2491,6 +2494,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    *
    * @return Array of liquid holdups (dimensionless) at each section, or null if not run
    */
+  @Override
   public double[] getLiquidHoldupProfile() {
     return liquidHoldupProfile;
   }
@@ -2720,5 +2724,664 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   @Override
   public StreamInterface getInletStream() {
     return inStream;
+  }
+
+  // ========== Additional PipeLineInterface methods ==========
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPipeWallRoughness(double roughness) {
+    this.roughness = roughness;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getPipeWallRoughness() {
+    return roughness;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setElevation(double elevation) {
+    // Set a linear elevation profile from 0 to elevation
+    if (elevationProfile != null) {
+      for (int i = 0; i < elevationProfile.length; i++) {
+        elevationProfile[i] = elevation * i / (elevationProfile.length - 1);
+      }
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getElevation() {
+    if (elevationProfile != null && elevationProfile.length > 0) {
+      return elevationProfile[elevationProfile.length - 1] - elevationProfile[0];
+    }
+    return 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setInletElevation(double inletElevation) {
+    // Adjust elevation profile
+    if (elevationProfile != null && elevationProfile.length > 0) {
+      double offset = inletElevation - elevationProfile[0];
+      for (int i = 0; i < elevationProfile.length; i++) {
+        elevationProfile[i] += offset;
+      }
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getInletElevation() {
+    return (elevationProfile != null && elevationProfile.length > 0) ? elevationProfile[0] : 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setOutletElevation(double outletElevation) {
+    // Adjust elevation profile
+    if (elevationProfile != null && elevationProfile.length > 1) {
+      double currentOutletElevation = elevationProfile[elevationProfile.length - 1];
+      double scale =
+          (outletElevation - elevationProfile[0]) / (currentOutletElevation - elevationProfile[0]);
+      for (int i = 1; i < elevationProfile.length; i++) {
+        elevationProfile[i] =
+            elevationProfile[0] + (elevationProfile[i] - elevationProfile[0]) * scale;
+      }
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getOutletElevation() {
+    return (elevationProfile != null && elevationProfile.length > 0)
+        ? elevationProfile[elevationProfile.length - 1]
+        : 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int getNumberOfLegs() {
+    return 1;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setNumberOfIncrements(int numberOfIncrements) {
+    setNumberOfSections(numberOfIncrements);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int getNumberOfIncrements() {
+    return numberOfSections;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setOutPressure(double pressure) {
+    setOutletPressure(pressure);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setOutTemperature(double temperature) {
+    // Not directly supported - temperature is calculated
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getPressureDrop() {
+    if (pressureProfile != null && pressureProfile.length >= 2) {
+      return (pressureProfile[0] - pressureProfile[pressureProfile.length - 1]) / 1e5;
+    }
+    return 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getOutletPressure(String unit) {
+    if (outStream != null) {
+      return outStream.getPressure(unit);
+    }
+    return 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getOutletTemperature(String unit) {
+    if (outStream != null) {
+      return outStream.getTemperature(unit);
+    }
+    return 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getVelocity() {
+    if (gasVelocityProfile != null && gasVelocityProfile.length > 0) {
+      return gasVelocityProfile[gasVelocityProfile.length - 1];
+    }
+    return 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSuperficialVelocity(int phaseNumber) {
+    if (phaseNumber == 0 && gasVelocityProfile != null && gasVelocityProfile.length > 0) {
+      return gasVelocityProfile[gasVelocityProfile.length - 1];
+    } else if (phaseNumber == 1 && liquidVelocityProfile != null
+        && liquidVelocityProfile.length > 0) {
+      return liquidVelocityProfile[liquidVelocityProfile.length - 1];
+    }
+    return 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getFlowRegime() {
+    if (flowRegimeDetector != null && sections != null && sections.length > 0) {
+      PipeSection.FlowRegime regime = sections[sections.length - 1].getFlowRegime();
+      return regime != null ? regime.toString() : "UNKNOWN";
+    }
+    return "UNKNOWN";
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getLiquidHoldup() {
+    if (liquidHoldupProfile != null && liquidHoldupProfile.length > 0) {
+      return liquidHoldupProfile[liquidHoldupProfile.length - 1];
+    }
+    return 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getReynoldsNumber() {
+    // Calculate average Reynolds number if available
+    return 0; // Not tracked in this model
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getFrictionFactor() {
+    // Return average friction factor
+    return 0; // Not tracked in this model
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setHeatTransferCoefficient(double coefficient) {
+    this.overallHeatTransferCoeff = coefficient;
+    this.includeHeatTransfer = (coefficient > 0);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getHeatTransferCoefficient() {
+    return overallHeatTransferCoeff;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setConstantSurfaceTemperature(double temperature) {
+    this.ambientTemperature = temperature;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isAdiabatic() {
+    return !includeHeatTransfer;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setAdiabatic(boolean adiabatic) {
+    this.includeHeatTransfer = !adiabatic;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPipeSpecification(double nominalDiameter, String specification) {
+    setDiameter(nominalDiameter / 1000.0);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setWallThickness(double thickness) {
+    this.wallThickness = thickness;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getAngle() {
+    if (inclinationProfile != null && inclinationProfile.length > 0) {
+      return Math.toDegrees(inclinationProfile[0]);
+    }
+    return 0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setAngle(double angle) {
+    double radians = Math.toRadians(angle);
+    if (inclinationProfile == null || inclinationProfile.length == 0) {
+      inclinationProfile = new double[numberOfSections];
+    }
+    for (int i = 0; i < inclinationProfile.length; i++) {
+      inclinationProfile[i] = radians;
+    }
+  }
+
+  // ============================================================================
+  // MECHANICAL BUILDUP METHODS - Default implementations
+  // ============================================================================
+
+  /** Pipe material. */
+  private String pipeMaterial = "carbon steel";
+  /** Pipe schedule. */
+  private String pipeSchedule = "STD";
+  /** Pipe wall thermal conductivity in W/(m·K). */
+  private double pipeWallConductivity = 45.0;
+  /** Insulation thickness in meters. */
+  private double insulationThickness = 0.0;
+  /** Insulation thermal conductivity in W/(m·K). */
+  private double insulationConductivity = 0.04;
+  /** Insulation type. */
+  private String insulationType = "none";
+  /** Coating thickness in meters. */
+  private double coatingThickness = 0.0;
+  /** Coating thermal conductivity in W/(m·K). */
+  private double coatingConductivity = 0.2;
+  /** Inner heat transfer coefficient. */
+  private double innerHeatTransferCoefficient = 1000.0;
+  /** Outer heat transfer coefficient. */
+  private double outerHeatTransferCoefficient = 10.0;
+  /** Burial depth in meters. */
+  private double burialDepth = 0.0;
+  /** Soil thermal conductivity. */
+  private double soilConductivity = 1.5;
+  /** Flag for buried pipe. */
+  private boolean buried = false;
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPipeMaterial(String material) {
+    this.pipeMaterial = material;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getPipeMaterial() {
+    return pipeMaterial;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPipeSchedule(String schedule) {
+    this.pipeSchedule = schedule;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getPipeSchedule() {
+    return pipeSchedule;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setInsulationThickness(double thickness) {
+    this.insulationThickness = thickness;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getInsulationThickness() {
+    return insulationThickness;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setInsulationConductivity(double conductivity) {
+    this.insulationConductivity = conductivity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getInsulationConductivity() {
+    return insulationConductivity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setInsulationType(String insulationType) {
+    this.insulationType = insulationType;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getInsulationType() {
+    return insulationType;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setCoatingThickness(double thickness) {
+    this.coatingThickness = thickness;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCoatingThickness() {
+    return coatingThickness;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setCoatingConductivity(double conductivity) {
+    this.coatingConductivity = conductivity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCoatingConductivity() {
+    return coatingConductivity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPipeWallConductivity(double conductivity) {
+    this.pipeWallConductivity = conductivity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getPipeWallConductivity() {
+    return pipeWallConductivity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setOuterHeatTransferCoefficient(double coefficient) {
+    this.outerHeatTransferCoefficient = coefficient;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getOuterHeatTransferCoefficient() {
+    return outerHeatTransferCoefficient;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setInnerHeatTransferCoefficient(double coefficient) {
+    this.innerHeatTransferCoefficient = coefficient;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getInnerHeatTransferCoefficient() {
+    return innerHeatTransferCoefficient;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setOuterHeatTransferCoefficients(double[] coefficients) {
+    // Not supported - use setOuterHeatTransferCoefficient for uniform value
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setWallHeatTransferCoefficients(double[] coefficients) {
+    // Not supported - use setInnerHeatTransferCoefficient for uniform value
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setAmbientTemperatures(double[] temperatures) {
+    // Not supported - use setAmbientTemperature for uniform value
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calculateOverallHeatTransferCoefficient() {
+    // Simple calculation - could be enhanced
+    double ri = diameter / 2.0;
+    double ro = ri + wallThickness;
+    double rins = ro + insulationThickness;
+
+    double R_inner = 1.0 / innerHeatTransferCoefficient;
+    double R_wall = (wallThickness > 0) ? ri * Math.log(ro / ri) / pipeWallConductivity : 0.0;
+    double R_insulation =
+        (insulationThickness > 0) ? ri * Math.log(rins / ro) / insulationConductivity : 0.0;
+    double R_outer =
+        (outerHeatTransferCoefficient > 0) ? ri / (rins * outerHeatTransferCoefficient) : 0.0;
+
+    double R_total = R_inner + R_wall + R_insulation + R_outer;
+    return (R_total > 0) ? 1.0 / R_total : 0.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setBurialDepth(double depth) {
+    this.burialDepth = depth;
+    if (depth > 0) {
+      this.buried = true;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getBurialDepth() {
+    return burialDepth;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setSoilConductivity(double conductivity) {
+    this.soilConductivity = conductivity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSoilConductivity() {
+    return soilConductivity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isBuried() {
+    return buried;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setBuried(boolean buried) {
+    this.buried = buried;
+  }
+
+  // ============================================================================
+  // MECHANICAL DESIGN
+  // ============================================================================
+
+  /**
+   * Get or create the mechanical design calculator.
+   *
+   * @return the mechanical design calculator instance
+   */
+  private neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator getOrCreateCalculator() {
+    if (mechanicalDesignCalculator == null) {
+      mechanicalDesignCalculator =
+          new neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator();
+      mechanicalDesignCalculator.setOuterDiameter(diameter + 2 * wallThickness);
+      mechanicalDesignCalculator.setDesignPressure(designPressure / 10.0); // bar to MPa
+      mechanicalDesignCalculator.setDesignTemperature(designTemperature - 273.15); // K to C
+      mechanicalDesignCalculator.setMaterialGrade(materialGrade);
+      mechanicalDesignCalculator.setLocationClass(locationClass);
+      mechanicalDesignCalculator.setCorrosionAllowance(corrosionAllowance);
+    }
+    return mechanicalDesignCalculator;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public neqsim.process.mechanicaldesign.pipeline.PipeMechanicalDesignCalculator getMechanicalDesignCalculator() {
+    return getOrCreateCalculator();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setDesignPressure(double pressure) {
+    this.designPressure = pressure;
+    if (mechanicalDesignCalculator != null) {
+      mechanicalDesignCalculator.setDesignPressure(pressure / 10.0); // bar to MPa
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getDesignPressure() {
+    return designPressure;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setDesignPressure(double pressure, String unit) {
+    if ("MPa".equalsIgnoreCase(unit)) {
+      this.designPressure = pressure * 10.0;
+    } else if ("psi".equalsIgnoreCase(unit)) {
+      this.designPressure = pressure * 0.0689476;
+    } else {
+      this.designPressure = pressure;
+    }
+    if (mechanicalDesignCalculator != null) {
+      mechanicalDesignCalculator.setDesignPressure(this.designPressure / 10.0);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setDesignTemperature(double temperature) {
+    this.designTemperature = temperature;
+    if (mechanicalDesignCalculator != null) {
+      mechanicalDesignCalculator.setDesignTemperature(temperature - 273.15);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getDesignTemperature() {
+    return designTemperature;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setMaterialGrade(String grade) {
+    this.materialGrade = grade;
+    if (mechanicalDesignCalculator != null) {
+      mechanicalDesignCalculator.setMaterialGrade(grade);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getMaterialGrade() {
+    return materialGrade;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setDesignCode(String code) {
+    this.designCode = code;
+    if (mechanicalDesignCalculator != null) {
+      mechanicalDesignCalculator.setDesignCode(code);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getDesignCode() {
+    return designCode;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setLocationClass(int locClass) {
+    this.locationClass = Math.max(1, Math.min(4, locClass));
+    if (mechanicalDesignCalculator != null) {
+      mechanicalDesignCalculator.setLocationClass(this.locationClass);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int getLocationClass() {
+    return locationClass;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setCorrosionAllowance(double allowance) {
+    this.corrosionAllowance = allowance;
+    if (mechanicalDesignCalculator != null) {
+      mechanicalDesignCalculator.setCorrosionAllowance(allowance);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCorrosionAllowance() {
+    return corrosionAllowance;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calculateMinimumWallThickness() {
+    return getOrCreateCalculator().calculateMinimumWallThickness();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calculateMAOP() {
+    return getOrCreateCalculator().calculateMAOP();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMAOP(String unit) {
+    return getOrCreateCalculator().getMaop(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calculateTestPressure() {
+    return getOrCreateCalculator().calculateTestPressure();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calculateHoopStress() {
+    return getOrCreateCalculator().calculateHoopStress(designPressure / 10.0);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double calculateVonMisesStress(double deltaT) {
+    return getOrCreateCalculator().calculateVonMisesStress(designPressure / 10.0, deltaT, true);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isMechanicalDesignSafe() {
+    return getOrCreateCalculator().isDesignSafe();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String generateMechanicalDesignReport() {
+    return getOrCreateCalculator().toJson();
   }
 }

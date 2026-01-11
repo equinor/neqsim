@@ -340,7 +340,7 @@ public class PipelinePressureDropComparisonTest {
     assertTrue(pressureDrop > 0, "Pressure drop should be positive");
     assertTrue(outletPressure > 0, "Outlet pressure should be positive");
     assertTrue(outletPressure < INLET_PRESSURE, "Outlet pressure should be less than inlet");
-    assertEquals(PipeBeggsAndBrills.FlowRegime.SINGLE_PHASE, pipe.getFlowRegime());
+    assertEquals(PipeBeggsAndBrills.FlowRegime.SINGLE_PHASE, pipe.getFlowRegimeEnum());
   }
 
   @Test
@@ -1487,7 +1487,7 @@ public class PipelinePressureDropComparisonTest {
     beggsBrills.run();
 
     double dpBeggsBar = pressureBara - beggsBrills.getOutletPressure();
-    PipeBeggsAndBrills.FlowRegime flowRegime = beggsBrills.getFlowRegime();
+    PipeBeggsAndBrills.FlowRegime flowRegime = beggsBrills.getFlowRegimeEnum();
     double liquidHoldup = beggsBrills.getSegmentLiquidHoldup(beggsBrills.getNumberOfIncrements());
 
     System.out.println("\n=== RESULTS: Two-Phase Horizontal Flow ===");
@@ -1587,7 +1587,7 @@ public class PipelinePressureDropComparisonTest {
     beggsBrills.run();
 
     double dpBeggsBar = pressureBara - beggsBrills.getOutletPressure();
-    PipeBeggsAndBrills.FlowRegime flowRegime = beggsBrills.getFlowRegime();
+    PipeBeggsAndBrills.FlowRegime flowRegime = beggsBrills.getFlowRegimeEnum();
     double liquidHoldup = beggsBrills.getSegmentLiquidHoldup(beggsBrills.getNumberOfIncrements());
 
     // Estimate hydrostatic component
@@ -1663,7 +1663,7 @@ public class PipelinePressureDropComparisonTest {
     beggsBrills.run();
 
     double dpBeggsBar = pressureBara - beggsBrills.getOutletPressure();
-    PipeBeggsAndBrills.FlowRegime flowRegime = beggsBrills.getFlowRegime();
+    PipeBeggsAndBrills.FlowRegime flowRegime = beggsBrills.getFlowRegimeEnum();
     double liquidHoldup = beggsBrills.getSegmentLiquidHoldup(beggsBrills.getNumberOfIncrements());
     double mixtureDensity =
         beggsBrills.getSegmentMixtureDensity(beggsBrills.getNumberOfIncrements());
@@ -1752,7 +1752,7 @@ public class PipelinePressureDropComparisonTest {
     beggsBrills.run();
 
     double dpBeggsBar = pressureBara - beggsBrills.getOutletPressure();
-    PipeBeggsAndBrills.FlowRegime flowRegime = beggsBrills.getFlowRegime();
+    PipeBeggsAndBrills.FlowRegime flowRegime = beggsBrills.getFlowRegimeEnum();
     double liquidHoldup = beggsBrills.getSegmentLiquidHoldup(beggsBrills.getNumberOfIncrements());
     double mixtureDensity =
         beggsBrills.getSegmentMixtureDensity(beggsBrills.getNumberOfIncrements());
@@ -1831,7 +1831,7 @@ public class PipelinePressureDropComparisonTest {
       beggsBrills.run();
 
       double dpBar = pressureBara - beggsBrills.getOutletPressure();
-      PipeBeggsAndBrills.FlowRegime regime = beggsBrills.getFlowRegime();
+      PipeBeggsAndBrills.FlowRegime regime = beggsBrills.getFlowRegimeEnum();
       double holdup = beggsBrills.getSegmentLiquidHoldup(beggsBrills.getNumberOfIncrements());
       double vsg =
           beggsBrills.getSegmentGasSuperficialVelocity(beggsBrills.getNumberOfIncrements());
@@ -2036,8 +2036,8 @@ public class PipelinePressureDropComparisonTest {
     double transientDp = 0;
     for (int step = 0; step < 500; step++) {
       pipelineTransient.runTransient(dt, id);
-      transientDp = pipelineTransient.getPressureProfile().get(0) - pipelineTransient
-          .getPressureProfile().get(pipelineTransient.getPressureProfile().size() - 1);
+      double[] pressureProfile = pipelineTransient.getPressureProfile();
+      transientDp = pressureProfile[0] - pressureProfile[pressureProfile.length - 1];
     }
 
     System.out.println("\nTransient Results (after 500 seconds):");
@@ -2114,8 +2114,8 @@ public class PipelinePressureDropComparisonTest {
 
     for (int step = 0; step < 300; step++) {
       pipelineT.runTransient(dt, id);
-      transientDp = pipelineT.getPressureProfile().get(0)
-          - pipelineT.getPressureProfile().get(pipelineT.getPressureProfile().size() - 1);
+      double[] pressureProfile = pipelineT.getPressureProfile();
+      transientDp = pressureProfile[0] - pressureProfile[pressureProfile.length - 1];
 
       if (step > 10
           && Math.abs(transientDp - prevDp) / Math.max(0.001, Math.abs(transientDp)) < 0.001) {

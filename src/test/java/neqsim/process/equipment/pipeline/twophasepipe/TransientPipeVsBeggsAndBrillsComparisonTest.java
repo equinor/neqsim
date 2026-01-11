@@ -251,9 +251,9 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     double outletPressureBB = pipeBB.getOutletStream().getPressure("bara");
 
     // Get liquid holdup from Beggs & Brill
-    java.util.List<Double> holdupProfileBB = pipeBB.getLiquidHoldupProfile();
-    double avgHoldupBB = holdupProfileBB.isEmpty() ? 0.0
-        : holdupProfileBB.stream().mapToDouble(d -> d).average().orElse(0.0);
+    double[] holdupProfileBB = pipeBB.getLiquidHoldupProfile();
+    double avgHoldupBB = (holdupProfileBB == null || holdupProfileBB.length == 0) ? 0.0
+        : java.util.Arrays.stream(holdupProfileBB).average().orElse(0.0);
 
     // Set up TransientPipe
     SystemInterface systemTP = createGasCondensateSystem(temperature, pressure);
@@ -932,7 +932,7 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     processBB.add(pipeBB);
     processBB.run();
 
-    java.util.List<Double> tempProfileBB = pipeBB.getTemperatureProfile();
+    double[] tempProfileBB = pipeBB.getTemperatureProfile();
 
     // Set up TransientPipe
     SystemInterface systemTP = createGasSystem(temperature, pressure);
@@ -972,14 +972,14 @@ public class TransientPipeVsBeggsAndBrillsComparisonTest {
     double dx = 3000.0 / nSections;
     for (int i = 0; i < nSections; i += 4) {
       double position = i * dx;
-      double tempBB = tempProfileBB.get(i) - 273.15;
+      double tempBB = tempProfileBB[i] - 273.15;
       double tempTP = tempProfileTP[i] - 273.15;
       System.out.println(String.format("%12.0f | %8.2f | %18.2f", position, tempBB, tempTP));
     }
 
     // Print outlet
     System.out.println(String.format("%12.0f | %8.2f | %18.2f", 3000.0,
-        tempProfileBB.get(tempProfileBB.size() - 1) - 273.15,
+        tempProfileBB[tempProfileBB.length - 1] - 273.15,
         tempProfileTP[tempProfileTP.length - 1] - 273.15));
 
     // Both profiles should show temperature decreasing toward ambient

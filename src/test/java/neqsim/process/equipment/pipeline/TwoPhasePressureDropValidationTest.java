@@ -838,7 +838,7 @@ class TwoPhasePressureDropValidationTest {
           pipe.setNumberOfIncrements(10);
           pipe.run();
 
-          PipeBeggsAndBrills.FlowRegime regime = pipe.getFlowRegime();
+          PipeBeggsAndBrills.FlowRegime regime = pipe.getFlowRegimeEnum();
           double glr = gasRate / liquidRate;
 
           System.out.printf("%11.0f | %14.0f | %6.2f | %s%n", gasRate, liquidRate, glr, regime);

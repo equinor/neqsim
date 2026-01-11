@@ -7,20 +7,33 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
+ * Simple pipeline model with specified outlet temperature and pressure.
+ *
  * <p>
- * SimpleTPoutPipeline class.
+ * This class provides a simple pipeline model where outlet conditions are directly specified rather
+ * than calculated from flow correlations. Useful for preliminary calculations or when detailed
+ * pressure drop modeling is not required.
  * </p>
  *
+ * <h2>Example Usage</h2>
+ *
+ * <pre>{@code
+ * SimpleTPoutPipeline pipe = new SimpleTPoutPipeline("simple_pipe", inletStream);
+ * pipe.setOutTemperature(300.0); // 300 K
+ * pipe.setOutPressure(50.0); // 50 bara
+ * pipe.run();
+ * }</pre>
+ *
  * @author Even Solbraa
- * @version $Id: $Id
+ * @version 2.0
  */
 public class SimpleTPoutPipeline extends Pipeline {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
   boolean setTemperature = false;
-  protected double temperatureOut = 0;
-  protected double pressureOut = 0.0;
+  protected double temperatureOutValue = 0;
+  protected double pressureOutValue = 0.0;
   double dH = 0.0;
 
   /**
@@ -30,6 +43,7 @@ public class SimpleTPoutPipeline extends Pipeline {
    */
   public SimpleTPoutPipeline(String name) {
     super(name);
+    this.adiabatic = false;
   }
 
   /**
@@ -40,42 +54,36 @@ public class SimpleTPoutPipeline extends Pipeline {
    */
   public SimpleTPoutPipeline(String name, StreamInterface inStream) {
     super(name, inStream);
+    this.adiabatic = false;
   }
 
-  /**
-   * <p>
-   * setOutTemperature.
-   * </p>
-   *
-   * @param temperature a double
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setOutTemperature(double temperature) {
-    this.temperatureOut = temperature;
+    this.temperatureOutValue = temperature;
   }
 
-  /**
-   * <p>
-   * setOutPressure.
-   * </p>
-   *
-   * @param pressure a double
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setOutPressure(double pressure) {
-    this.pressureOut = pressure;
+    this.pressureOutValue = pressure;
   }
 
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
     system = inStream.getThermoSystem().clone();
-    // system.setMultiPhaseCheck(true);
-    system.setTemperature(this.temperatureOut);
-    system.setPressure(this.pressureOut);
+    double inletPressure = system.getPressure();
+    system.setTemperature(this.temperatureOutValue);
+    system.setPressure(this.pressureOutValue);
     ThermodynamicOperations testOps = new ThermodynamicOperations(system);
     testOps.TPflash();
-    // system.setMultiPhaseCheck(false);
     outStream.setThermoSystem(system);
     outStream.getThermoSystem().initProperties();
+
+    // Calculate pressure drop
+    pressureDrop = inletPressure - this.pressureOutValue;
+
     setCalculationIdentifier(id);
   }
 
@@ -85,9 +93,9 @@ public class SimpleTPoutPipeline extends Pipeline {
   public void displayResult() {
     outStream.getThermoSystem().display(name);
     outStream.getThermoSystem().initPhysicalProperties();
-    System.out.println("Superficial velocity out gas : " + getSuperficialVelocity(0, 1));
-    System.out.println("Superficial velocity out condensate : " + getSuperficialVelocity(1, 1));
-    System.out.println("Superficial velocity out MEG/water : " + getSuperficialVelocity(2, 1));
+    System.out.println("Superficial velocity out gas : " + getSuperficialVelocity(0));
+    System.out.println("Superficial velocity out condensate : " + getSuperficialVelocity(1));
+    System.out.println("Superficial velocity out MEG/water : " + getSuperficialVelocity(2));
   }
 
   /** {@inheritDoc} */
@@ -98,5 +106,7 @@ public class SimpleTPoutPipeline extends Pipeline {
 
   /** {@inheritDoc} */
   @Override
-  public void setInitialFlowPattern(String flowPattern) {}
+  public void setInitialFlowPattern(String flowPattern) {
+    // Not applicable for simple T-P out pipeline
+  }
 }

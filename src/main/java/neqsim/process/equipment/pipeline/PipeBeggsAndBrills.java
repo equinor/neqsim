@@ -652,35 +652,20 @@ public class PipeBeggsAndBrills extends Pipeline {
     return outStream.getThermoSystem();
   }
 
-  /**
-   * <p>
-   * Setter for the field <code>elevation</code>.
-   * </p>
-   *
-   * @param elevation a double
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setElevation(double elevation) {
     this.totalElevation = elevation;
   }
 
-  /**
-   * <p>
-   * Setter for the field <code>length</code>.
-   * </p>
-   *
-   * @param length the length to set
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setLength(double length) {
     this.totalLength = length;
   }
 
-  /**
-   * <p>
-   * setDiameter.
-   * </p>
-   *
-   * @param diameter the diameter to set
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setDiameter(double diameter) {
     insideDiameter = diameter;
   }
@@ -2535,48 +2520,37 @@ public class PipeBeggsAndBrills extends Pipeline {
     return angle;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>length</code>.
-   * </p>
-   *
-   * @return total length of the pipe in m
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getLength() {
     return cumulativeLength;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>elevation</code>.
-   * </p>
-   *
-   * @return total elevation of the pipe in m
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getElevation() {
     return cumulativeElevation;
   }
 
-  /**
-   * <p>
-   * getDiameter.
-   * </p>
-   *
-   * @return the diameter
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getDiameter() {
     return insideDiameter;
   }
 
   /**
-   * <p>
-   * getFlowRegime.
-   * </p>
+   * Get the flow regime as an enum.
    *
-   * @return flow regime
+   * @return flow regime enum value
    */
-  public FlowRegime getFlowRegime() {
+  public FlowRegime getFlowRegimeEnum() {
     return regime;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getFlowRegime() {
+    return regime != null ? regime.toString() : "UNKNOWN";
   }
 
   /**
@@ -2590,25 +2564,31 @@ public class PipeBeggsAndBrills extends Pipeline {
     return pressureDrop;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>totalPressureDrop</code>.
-   * </p>
-   *
-   * @return total pressure drop
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getPressureDrop() {
     return totalPressureDrop;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double[] getPressureProfile() {
+    if (pressureProfile == null) {
+      return new double[0];
+    }
+    double[] result = new double[pressureProfile.size()];
+    for (int i = 0; i < pressureProfile.size(); i++) {
+      result[i] = pressureProfile.get(i);
+    }
+    return result;
+  }
+
   /**
-   * <p>
-   * Getter for the field <code>PressureProfile</code>.
-   * </p>
+   * Get the pressure profile as a list.
    *
-   * @return a list double
+   * @return list of pressure values
    */
-  public List<Double> getPressureProfile() {
+  public List<Double> getPressureProfileList() {
     return new ArrayList<>(pressureProfile);
   }
 
@@ -2653,14 +2633,25 @@ public class PipeBeggsAndBrills extends Pipeline {
     }
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double[] getTemperatureProfile() {
+    if (temperatureProfile == null) {
+      return new double[0];
+    }
+    double[] result = new double[temperatureProfile.size()];
+    for (int i = 0; i < temperatureProfile.size(); i++) {
+      result[i] = temperatureProfile.get(i);
+    }
+    return result;
+  }
+
   /**
-   * <p>
-   * Getter for the field <code>temperatureProfile</code>.
-   * </p>
+   * Get the temperature profile as a list.
    *
    * @return list of temperatures
    */
-  public List<Double> getTemperatureProfile() {
+  public List<Double> getTemperatureProfileList() {
     return new ArrayList<>(temperatureProfile);
   }
 
@@ -2687,7 +2678,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    *
    * @return list of flow regime names
    */
-  public List<FlowRegime> getFlowRegimeProfile() {
+  public List<FlowRegime> getFlowRegimeProfileList() {
     return new ArrayList<>(flowRegimeProfile);
   }
 
@@ -2773,14 +2764,25 @@ public class PipeBeggsAndBrills extends Pipeline {
     return new ArrayList<>(liquidDensityProfile);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double[] getLiquidHoldupProfile() {
+    if (liquidHoldupProfile == null) {
+      return new double[0];
+    }
+    double[] result = new double[liquidHoldupProfile.size()];
+    for (int i = 0; i < liquidHoldupProfile.size(); i++) {
+      result[i] = liquidHoldupProfile.get(i);
+    }
+    return result;
+  }
+
   /**
-   * <p>
-   * Getter for the field <code>liquidHoldupProfile</code>.
-   * </p>
+   * Get the liquid holdup profile as a list.
    *
-   * @return list of hold-up
+   * @return list of hold-up values
    */
-  public List<Double> getLiquidHoldupProfile() {
+  public List<Double> getLiquidHoldupProfileList() {
     return new ArrayList<>(liquidHoldupProfile);
   }
 
