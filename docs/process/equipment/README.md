@@ -73,6 +73,7 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 | Equipment | File | Description |
 |-----------|------|-------------|
 | Pipelines | [pipelines.md](pipelines.md) | Pipe flow, pressure drop |
+| **Risers** | [pipelines.md#risers](pipelines.md#risers) | **SCR, TTR, Flexible, Lazy-Wave risers** |
 | Networks | [networks.md](networks.md) | Pipeline network modeling |
 | Manifolds | [manifolds.md](manifolds.md) | Multi-stream routing |
 

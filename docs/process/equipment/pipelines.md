@@ -13,6 +13,7 @@ Documentation for pipeline equipment in NeqSim.
 - [Overview](#overview)
 - [Pipe Segment](#pipe-segment)
 - [Pipeline](#pipeline)
+- [Risers](#risers)
 - [Pressure Drop](#pressure-drop)
 - [Heat Transfer](#heat-transfer)
 - [Examples](#examples)
@@ -30,6 +31,7 @@ Documentation for pipeline equipment in NeqSim.
 | `AdiabaticPipe` | Adiabatic pipe segment |
 | `OnePhasePipe` | Single-phase pipe |
 | `TwoPhasePipeLine` | Two-phase pipeline |
+| `Riser` | Subsea risers (SCR, TTR, Flexible, Lazy-Wave) |
 
 For detailed pipe flow modeling, see also [Fluid Mechanics](../../fluidmechanics/README.md).
 
@@ -91,6 +93,149 @@ pipeline.run();
 double[] pressure = pipeline.getPressureProfile();
 double[] temperature = pipeline.getTemperatureProfile();
 double[] holdup = pipeline.getLiquidHoldupProfile();
+```
+
+---
+
+## Risers
+
+The `Riser` class provides specialized modeling for subsea risers with support for various riser configurations and dedicated mechanical design calculations.
+
+### Riser Types
+
+| Type | Description | Key Features |
+|------|-------------|--------------|
+| `STEEL_CATENARY_RISER` (SCR) | Free-hanging catenary from FPSO | Touchdown point stress, catenary mechanics |
+| `TOP_TENSIONED_RISER` (TTR) | Tensioned from platform | Stroke requirements, tension variation |
+| `FLEXIBLE_RISER` | Unbonded flexible pipe | Bend radius limits, fatigue |
+| `LAZY_WAVE` | SCR with buoyancy modules | Reduces touchdown stress |
+| `STEEP_WAVE` | Steep wave configuration | Compact footprint |
+| `HYBRID_RISER` | Jumper + tower riser | Deep water applications |
+| `FREE_STANDING` | Tower riser | Ultra-deep water |
+| `VERTICAL` | Vertical tensioned | TLP applications |
+
+### Factory Methods
+
+```java
+import neqsim.process.equipment.pipeline.Riser;
+
+// Steel Catenary Riser
+Riser scr = Riser.createSCR("Production SCR", inletStream, 800.0);  // 800m water depth
+
+// Top Tensioned Riser
+Riser ttr = Riser.createTTR("Export TTR", inletStream, 500.0);
+
+// Lazy-Wave Riser
+Riser lazyWave = Riser.createLazyWave("Gas Export", inletStream, 1200.0, 400.0);  // buoyancy at 400m
+
+// Flexible Riser
+Riser flexible = Riser.createFlexible("Water Injection", inletStream, 300.0);
+
+// Hybrid Riser
+Riser hybrid = Riser.createHybrid("Deepwater Export", inletStream, 2000.0);
+```
+
+### Riser Configuration
+
+```java
+Riser riser = new Riser("Production Riser", inletStream);
+riser.setRiserType(Riser.RiserType.STEEL_CATENARY_RISER);
+riser.setWaterDepth(800.0);            // Water depth in meters
+riser.setTopAngle(12.0);               // Angle from vertical at top (degrees)
+riser.setDepartureAngle(18.0);         // Angle from horizontal at seabed
+riser.setDiameter(0.254);              // Inner diameter in meters (10 inch)
+
+// Environmental conditions
+riser.setCurrentVelocity(0.8);         // Mid-depth current (m/s)
+riser.setSeabedCurrentVelocity(0.3);   // Seabed current (m/s)
+riser.setSignificantWaveHeight(4.0);   // Hs in meters
+riser.setPeakWavePeriod(12.0);         // Tp in seconds
+riser.setPlatformHeaveAmplitude(3.0);  // Heave motion (m)
+
+// TTR specific
+riser.setAppliedTopTension(2000.0);    // Top tension in kN
+
+// Lazy-wave specific
+riser.setBuoyancyModuleDepth(400.0);   // Depth of buoyancy section
+riser.setBuoyancyModuleLength(150.0);  // Length of buoyancy section
+
+riser.run();
+```
+
+### Riser Mechanical Design
+
+The `RiserMechanicalDesign` class provides riser-specific mechanical design calculations per DNV-OS-F201, DNV-RP-F204, and API RP 2RD.
+
+```java
+Riser riser = Riser.createSCR("Export Riser", inletStream, 1000.0);
+riser.setDiameter(0.3048);  // 12 inch
+riser.setCurrentVelocity(0.6);
+riser.setSignificantWaveHeight(3.5);
+riser.run();
+
+// Get mechanical design
+RiserMechanicalDesign design = riser.getRiserMechanicalDesign();
+design.setMaxOperationPressure(150.0);
+design.setMaterialGrade("X65");
+design.setDesignStandardCode("DNV-OS-F201");
+design.setCompanySpecificDesignStandards("Equinor");
+
+design.readDesignSpecifications();
+design.calcDesign();
+
+// Get riser-specific results
+RiserMechanicalDesignCalculator calc = design.getRiserCalculator();
+
+// Top tension (catenary/TTR)
+double topTension = calc.getTopTension();         // kN
+double minTension = calc.getMinTopTension();      // kN
+double maxTension = calc.getMaxTopTension();      // kN
+
+// Touchdown point analysis
+double tdpStress = calc.getTouchdownPointStress();     // MPa
+double tdpRadius = calc.getTouchdownCurvatureRadius(); // m
+double tdpLength = calc.getTouchdownZoneLength();      // m
+
+// VIV response
+double vivFreq = calc.getVortexSheddingFrequency();   // Hz
+double natFreq = calc.getNaturalFrequency();          // Hz
+double vivAmp = calc.getVIVAmplitude();               // A/D ratio
+boolean lockIn = calc.isVIVLockIn();
+
+// Dynamic response
+double waveStress = calc.getWaveInducedStress();      // MPa
+double heaveStress = calc.getHeaveInducedStress();    // MPa
+double strokeReq = calc.getStrokeRequirement();       // m (TTR)
+
+// Fatigue analysis
+double fatigueLife = calc.getRiserFatigueLife();      // years
+double vivDamage = calc.getVIVFatigueDamage();        // per year
+
+// Check design
+boolean acceptable = design.isDesignAcceptable();
+```
+
+### Riser Design Standards
+
+Parameters are loaded from the NeqSim design database:
+
+| Standard | Parameters |
+|----------|------------|
+| **DNV-OS-F201** | Usage factor, safety class factors, DAF, max utilization |
+| **DNV-RP-F204** | Fatigue design factor, S-N curve parameters, SCF |
+| **DNV-RP-C203** | S-N curve parameters (seawater, air) |
+| **DNV-RP-C205** | Strouhal number, drag/lift/added mass coefficients |
+| **API RP 2RD** | Design factor, dynamic load factor |
+| **API RP 17B** | Min bend radius, max axial strain (flexible) |
+
+### JSON Export
+
+```java
+// Full design report
+String json = design.toJson();
+
+// Calculator results
+String calcJson = calc.toJson();
 ```
 
 ---
@@ -257,24 +402,60 @@ double hdtTemp = pipeline.getOutletStream().getFluid().getHydrateTemperature();
 System.out.println("Hydrate temperature: " + (hdtTemp - 273.15) + " °C");
 ```
 
-### Example 4: Riser with Elevation
+### Example 4: Steel Catenary Riser
 
 ```java
-// Gas lift production
+import neqsim.process.equipment.pipeline.Riser;
+import neqsim.process.mechanicaldesign.pipeline.RiserMechanicalDesign;
+
+// Production stream
 Stream production = new Stream("Production", wellFluid);
 production.setFlowRate(10000.0, "kg/hr");
 production.run();
 
-// Riser (500m water depth)
-PipeBeggsAndBrills riser = new PipeBeggsAndBrills("Riser", production);
-riser.setLength(550.0, "m");  // Account for catenary
-riser.setDiameter(0.2, "m");
-riser.setElevationChange(500.0, "m");  // Rise from seabed
+// Steel Catenary Riser (800m water depth)
+Riser riser = Riser.createSCR("Production Riser", production, 800.0);
+riser.setDiameter(0.254);              // 10 inch
+riser.setTopAngle(12.0);               // 12 degrees from vertical
+riser.setCurrentVelocity(0.6);         // 0.6 m/s current
+riser.setSignificantWaveHeight(3.5);   // Hs = 3.5m
 riser.run();
 
 System.out.println("Bottom P: " + production.getPressure("bara") + " bara");
 System.out.println("Top P: " + riser.getOutletStream().getPressure("bara") + " bara");
 System.out.println("Flow regime: " + riser.getFlowRegime());
+System.out.println("Riser length: " + riser.getLength() + " m");
+
+// Mechanical design
+RiserMechanicalDesign design = riser.getRiserMechanicalDesign();
+design.setMaxOperationPressure(100.0);
+design.setMaterialGrade("X65");
+design.readDesignSpecifications();
+design.calcDesign();
+
+System.out.println("Top tension: " + design.getRiserCalculator().getTopTension() + " kN");
+System.out.println("Fatigue life: " + design.getRiserCalculator().getRiserFatigueLife() + " years");
+System.out.println("VIV lock-in: " + design.getRiserCalculator().isVIVLockIn());
+```
+
+### Example 5: Top Tensioned Riser
+
+```java
+// TTR for TLP
+Riser ttr = Riser.createTTR("Export TTR", production, 500.0);
+ttr.setDiameter(0.3048);  // 12 inch
+ttr.setAppliedTopTension(2500.0);  // 2500 kN applied tension
+ttr.setTensionVariationFactor(0.15);  // 15% variation from heave
+ttr.setPlatformHeaveAmplitude(2.5);
+ttr.run();
+
+RiserMechanicalDesign ttrDesign = ttr.getRiserMechanicalDesign();
+ttrDesign.setMaxOperationPressure(200.0);
+ttrDesign.setMaterialGrade("X65");
+ttrDesign.calcDesign();
+
+System.out.println("TTR tension: " + ttrDesign.getRiserCalculator().getTopTension() + " kN");
+System.out.println("Stroke requirement: " + ttrDesign.getRiserCalculator().getStrokeRequirement() + " m");
 ```
 
 ---
@@ -283,4 +464,6 @@ System.out.println("Flow regime: " + riser.getFlowRegime());
 
 - [Equipment Index](README.md) - All equipment
 - [Fluid Mechanics](../../fluidmechanics/README.md) - Detailed pipe flow
+- [Pipeline Mechanical Design](../pipeline_mechanical_design.md) - Wall thickness, stress, costs
+- [Riser Mechanical Design](../riser_mechanical_design.md) - Riser-specific design
 - [Valves](valves.md) - Flow control

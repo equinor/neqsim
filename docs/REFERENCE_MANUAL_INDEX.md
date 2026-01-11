@@ -248,7 +248,8 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Wells | [docs/process/equipment/wells.md](process/equipment/wells.md) | Well equipment |
 | Well Simulation | [docs/simulation/well_simulation_guide.md](simulation/well_simulation_guide.md) | Well simulation guide |
 | Well & Choke | [docs/simulation/well_and_choke_simulation.md](simulation/well_and_choke_simulation.md) | Choke valve simulation |
-| Pipelines | [docs/process/equipment/pipelines.md](process/equipment/pipelines.md) | Pipeline models |
+| Pipelines | [docs/process/equipment/pipelines.md](process/equipment/pipelines.md) | Pipeline and riser models |
+| **Risers** | [docs/process/equipment/pipelines.md#risers](process/equipment/pipelines.md#risers) | **SCR, TTR, Flexible, Lazy-Wave risers** |
 | Beggs & Brill | [docs/process/PipeBeggsAndBrills.md](process/PipeBeggsAndBrills.md) | Beggs & Brill correlation |
 | Networks | [docs/process/equipment/networks.md](process/equipment/networks.md) | Pipeline network modeling |
 | Reservoirs | [docs/process/equipment/reservoirs.md](process/equipment/reservoirs.md) | Reservoir modeling |
@@ -277,6 +278,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Design Standards | [docs/process/mechanical_design_standards.md](process/mechanical_design_standards.md) | Design standards |
 | Design Database | [docs/process/mechanical_design_database.md](process/mechanical_design_database.md) | Design database |
 | **Pipeline Mechanical Design** | [docs/process/pipeline_mechanical_design.md](process/pipeline_mechanical_design.md) | **Comprehensive pipeline mechanical design with wall thickness, stress analysis, cost estimation** |
+| **Riser Mechanical Design** | [docs/process/riser_mechanical_design.md](process/riser_mechanical_design.md) | **Riser design with catenary mechanics, VIV, fatigue per DNV-OS-F201** |
 | **Pipeline Design Math** | [docs/process/pipeline_mechanical_design_math.md](process/pipeline_mechanical_design_math.md) | **Mathematical methods and formulas for pipeline design** |
 | TORG Integration | [docs/process/torg_integration.md](process/torg_integration.md) | TORG integration |
 | Field Development | [docs/process/field_development_orchestration.md](process/field_development_orchestration.md) | Field development orchestration |
