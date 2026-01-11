@@ -7,12 +7,15 @@ Documentation for pipeline equipment in NeqSim.
 > For detailed documentation on all pipeline types, the `PipeLineInterface`, flow regime detection, heat transfer, profile methods, and complete examples, see:
 > - [Pipeline Simulation Guide](pipeline_simulation.md) - Complete simulation documentation
 > - [Pipeline Mechanical Design](../pipeline_mechanical_design.md) - Wall thickness, stress analysis, cost estimation
+> - [Topside Piping Design](../topside_piping_design.md) - **Platform piping with velocity, support spacing, vibration (AIV/FIV)**
+> - [Riser Mechanical Design](../riser_mechanical_design.md) - Riser design with catenary, VIV, fatigue
 > - [Pipeline Mechanical Design Math](../pipeline_mechanical_design_math.md) - Mathematical formulas reference
 
 ## Table of Contents
 - [Overview](#overview)
 - [Pipe Segment](#pipe-segment)
 - [Pipeline](#pipeline)
+- [Topside Piping](#topside-piping)
 - [Risers](#risers)
 - [Pressure Drop](#pressure-drop)
 - [Heat Transfer](#heat-transfer)
@@ -31,6 +34,7 @@ Documentation for pipeline equipment in NeqSim.
 | `AdiabaticPipe` | Adiabatic pipe segment |
 | `OnePhasePipe` | Single-phase pipe |
 | `TwoPhasePipeLine` | Two-phase pipeline |
+| `TopsidePiping` | Topside/platform piping with service types and mechanical design |
 | `Riser` | Subsea risers (SCR, TTR, Flexible, Lazy-Wave) |
 
 For detailed pipe flow modeling, see also [Fluid Mechanics](../../fluidmechanics/README.md).
@@ -93,6 +97,98 @@ pipeline.run();
 double[] pressure = pipeline.getPressureProfile();
 double[] temperature = pipeline.getTemperatureProfile();
 double[] holdup = pipeline.getLiquidHoldupProfile();
+```
+
+---
+
+## Topside Piping
+
+The `TopsidePiping` class provides specialized modeling for offshore platform and onshore facility piping with service type configuration and comprehensive mechanical design.
+
+> **📘 Complete Documentation:** [Topside Piping Design](../topside_piping_design.md)
+
+### Service Types
+
+| Type | Description | Velocity Factor |
+|------|-------------|-----------------|
+| `PROCESS_GAS` | Hydrocarbon gas | 1.0 |
+| `PROCESS_LIQUID` | Hydrocarbon liquid | 1.0 |
+| `MULTIPHASE` | Two-phase flow | 0.8 |
+| `STEAM` | Steam service | 1.2 |
+| `FLARE` | Flare headers | 1.5 |
+| `FUEL_GAS` | Fuel gas system | 0.9 |
+| `COOLING_WATER` | Cooling water | 1.0 |
+| `CHEMICAL_INJECTION` | Chemical injection | 0.8 |
+
+### Factory Methods
+
+```java
+import neqsim.process.equipment.pipeline.TopsidePiping;
+
+// Gas process header
+TopsidePiping gasHeader = TopsidePiping.createProcessGas("Gas Header", feed);
+gasHeader.setLength(50.0);
+gasHeader.setDiameter(0.2032);  // 8 inch
+
+// Flare header
+TopsidePiping flareHeader = TopsidePiping.createFlareHeader("HP Flare", feed);
+
+// Steam line
+TopsidePiping steamLine = TopsidePiping.createSteamLine("HP Steam", feed);
+
+// Cooling water
+TopsidePiping cwLine = TopsidePiping.createCoolingWater("CW Supply", feed);
+```
+
+### Configuration
+
+```java
+TopsidePiping pipe = new TopsidePiping("Process Gas Header", feed);
+pipe.setServiceType(TopsidePiping.ServiceType.PROCESS_GAS);
+pipe.setPipeSchedule(TopsidePiping.PipeSchedule.SCH_40);
+pipe.setLength(50.0);
+pipe.setDiameter(0.2032);              // 8 inch ID
+pipe.setElevation(0.0);
+
+// Set operating envelope
+pipe.setOperatingEnvelope(5.0, 80.0,   // Min/max pressure (bara)
+                          -10.0, 60.0); // Min/max temperature (°C)
+
+// Set fittings
+pipe.setFittings(4, 2, 1, 2);  // 4 elbows, 2 tees, 1 reducer, 2 valves
+
+// Set insulation
+pipe.setInsulation(TopsidePiping.InsulationType.MINERAL_WOOL, 0.05);  // 50mm
+
+// Set flange rating
+pipe.setFlangeRating(300);  // ASME B16.5 Class 300
+
+pipe.run();
+```
+
+### Mechanical Design
+
+```java
+// Get mechanical design
+TopsidePipingMechanicalDesign design = pipe.getTopsideMechanicalDesign();
+design.setMaxOperationPressure(80.0);
+design.setMaterialGrade("A106-B");
+design.setDesignStandardCode("ASME-B31.3");
+design.setCompanySpecificDesignStandards("Equinor");
+
+// Run design calculations
+design.readDesignSpecifications();
+design.calcDesign();
+
+// Get results
+TopsidePipingMechanicalDesignCalculator calc = design.getTopsideCalculator();
+System.out.println("Support spacing: " + calc.getSupportSpacing() + " m");
+System.out.println("Velocity OK: " + calc.isVelocityCheckPassed());
+System.out.println("Vibration OK: " + calc.isVibrationCheckPassed());
+System.out.println("Stress OK: " + calc.isStressCheckPassed());
+
+// Export JSON report
+String json = design.toJson();
 ```
 
 ---

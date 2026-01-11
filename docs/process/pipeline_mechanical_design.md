@@ -2,10 +2,10 @@
 
 Comprehensive documentation for pipeline mechanical design in NeqSim, including wall thickness calculations, stress analysis, cost estimation, and detailed design per industry standards.
 
-> **📘 See Also: Riser Mechanical Design**
+> **📘 See Also: Related Design Documentation**
 > 
-> For riser-specific calculations including catenary mechanics, VIV analysis, fatigue life, and dynamic response, see:
-> - [Riser Mechanical Design](riser_mechanical_design.md) - Complete riser design documentation
+> - [Topside Piping Design](topside_piping_design.md) - Topside/platform piping with velocity, support spacing, vibration (AIV/FIV), stress analysis per ASME B31.3
+> - [Riser Mechanical Design](riser_mechanical_design.md) - Riser design with catenary mechanics, VIV analysis, fatigue life per DNV-OS-F201
 
 ## Table of Contents
 

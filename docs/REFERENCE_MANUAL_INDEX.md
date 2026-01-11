@@ -278,6 +278,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Design Standards | [docs/process/mechanical_design_standards.md](process/mechanical_design_standards.md) | Design standards |
 | Design Database | [docs/process/mechanical_design_database.md](process/mechanical_design_database.md) | Design database |
 | **Pipeline Mechanical Design** | [docs/process/pipeline_mechanical_design.md](process/pipeline_mechanical_design.md) | **Comprehensive pipeline mechanical design with wall thickness, stress analysis, cost estimation** |
+| **Topside Piping Design** | [docs/process/topside_piping_design.md](process/topside_piping_design.md) | **Topside piping design with velocity, support spacing, vibration (AIV/FIV), stress analysis per ASME B31.3** |
 | **Riser Mechanical Design** | [docs/process/riser_mechanical_design.md](process/riser_mechanical_design.md) | **Riser design with catenary mechanics, VIV, fatigue per DNV-OS-F201** |
 | **Pipeline Design Math** | [docs/process/pipeline_mechanical_design_math.md](process/pipeline_mechanical_design_math.md) | **Mathematical methods and formulas for pipeline design** |
 | TORG Integration | [docs/process/torg_integration.md](process/torg_integration.md) | TORG integration |
