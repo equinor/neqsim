@@ -255,6 +255,115 @@ String json = sysMecDesign.toJson();
 */
 ```
 
+### Comprehensive Mechanical Design Report (JSON)
+
+The `MechanicalDesignReport` class provides a combined JSON output that includes all mechanical design data for a process system, similar to how `Report.generateJsonReport()` works for process simulation:
+
+```java
+// Create comprehensive mechanical design report
+MechanicalDesignReport mechReport = new MechanicalDesignReport(process);
+mechReport.runDesignCalculations();
+
+// Generate combined JSON with all mechanical design data
+String json = mechReport.toJson();
+
+// Write to file
+mechReport.writeJsonReport("mechanical_design_report.json");
+
+// Example output structure:
+/*
+{
+  "processName": "Gas Processing Unit",
+  "reportType": "MechanicalDesignReport",
+  "generatedAt": "2026-01-11T10:30:00Z",
+  "systemSummary": {
+    "totalEquipmentWeight_kg": 185000.0,
+    "totalPipingWeight_kg": 35000.0,
+    "totalWeight_kg": 220000.0,
+    "totalVolume_m3": 450.5,
+    "totalPlotSpace_m2": 1200.0,
+    "equipmentCount": 12
+  },
+  "utilityRequirements": {
+    "totalPowerRequired_kW": 2500.0,
+    "totalPowerRecovered_kW": 150.0,
+    "netPowerRequirement_kW": 2350.0,
+    "totalHeatingDuty_kW": 500.0,
+    "totalCoolingDuty_kW": 1800.0
+  },
+  "weightByEquipmentType": {
+    "Separator": 45000.0,
+    "Compressor": 85000.0,
+    "HeatExchanger": 25000.0,
+    "Valve": 5000.0,
+    "Pump": 12000.0
+  },
+  "weightByDiscipline": {
+    "Mechanical": 120000.0,
+    "Piping": 35000.0,
+    "E&I": 18000.0,
+    "Structural": 12000.0
+  },
+  "equipment": [
+    {
+      "name": "V-100",
+      "type": "Separator",
+      "mechanicalDesign": {
+        "designPressure": 55.0,
+        "designTemperature": 80.0,
+        "wallThickness": 28.5,
+        "weight": 15420.5,
+        ...
+      }
+    },
+    ...
+  ],
+  "pipingDesign": {
+    "totalLength_m": 450.0,
+    "totalWeight_kg": 35000.0,
+    "valveWeight_kg": 8500.0,
+    "flangeWeight_kg": 4200.0,
+    "fittingWeight_kg": 3100.0,
+    "weightBySize": {
+      "4 inch": 5200.0,
+      "6 inch": 8400.0,
+      "8 inch": 12300.0,
+      ...
+    },
+    "pipeSegments": [
+      {
+        "fromEquipment": "V-100",
+        "toEquipment": "K-100",
+        "nominalSizeInch": 8.0,
+        "outsideDiameter_mm": 219.1,
+        "wallThickness_mm": 8.18,
+        "schedule": "40",
+        "length_m": 25.0,
+        "weight_kg": 1050.0,
+        "designPressure_bara": 55.0,
+        "material": "A106-B",
+        "isGasService": true
+      },
+      ...
+    ]
+  }
+}
+*/
+```
+
+#### Comparison: Process Simulation vs Mechanical Design JSON
+
+| Use Case | Class | Method |
+|----------|-------|--------|
+| Process simulation results | `Report` | `generateJsonReport()` |
+| System mechanical design only | `SystemMechanicalDesign` | `toJson()` |
+| **Complete mechanical design with piping** | `MechanicalDesignReport` | `toJson()` |
+
+The `MechanicalDesignReport.toJson()` method provides the most comprehensive output, combining:
+- System-level aggregation from `SystemMechanicalDesign`
+- Individual equipment mechanical design data
+- Piping interconnection design from `ProcessInterconnectionDesign`
+
 ### Using Specialized Response Classes
 
 For equipment-specific data, use the typed response:

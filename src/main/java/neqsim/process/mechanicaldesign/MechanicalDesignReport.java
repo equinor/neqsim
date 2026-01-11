@@ -4,7 +4,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.mechanicaldesign.SystemMechanicalDesign.EquipmentDesignSummary;
 import neqsim.process.processmodel.ProcessSystem;
@@ -338,6 +345,187 @@ public class MechanicalDesignReport implements java.io.Serializable {
     sb.append(systemDesign.generateSummaryReport());
 
     return sb.toString();
+  }
+
+  // ============================================================================
+  // JSON Export Methods
+  // ============================================================================
+
+  /**
+   * Generate combined JSON report for all mechanical design data.
+   *
+   * <p>
+   * This method creates a comprehensive JSON output combining:
+   * </p>
+   * <ul>
+   * <li>System-level totals (weights, utilities, plot space)</li>
+   * <li>Equipment list with individual mechanical design data</li>
+   * <li>Piping interconnection design data</li>
+   * <li>Weight breakdowns by type and discipline</li>
+   * </ul>
+   *
+   * <p>
+   * Usage example:
+   * </p>
+   * 
+   * <pre>
+   * {@code
+   * MechanicalDesignReport report = new MechanicalDesignReport(process);
+   * report.runDesignCalculations();
+   * String json = report.toJson();
+   * }
+   * </pre>
+   *
+   * @return JSON string with all mechanical design data
+   */
+  public String toJson() {
+    if (systemDesign == null || pipingDesign == null) {
+      runDesignCalculations();
+    }
+
+    JsonObject root = new JsonObject();
+
+    // Add process info
+    root.addProperty("processName", processSystem.getName());
+    root.addProperty("reportType", "MechanicalDesignReport");
+    root.addProperty("generatedAt", java.time.Instant.now().toString());
+
+    // Add system-level summary
+    JsonObject systemSummary = new JsonObject();
+    systemSummary.addProperty("totalEquipmentWeight_kg", systemDesign.getTotalWeight());
+    systemSummary.addProperty("totalPipingWeight_kg", pipingDesign.getTotalPipingWeight());
+    systemSummary.addProperty("totalWeight_kg",
+        systemDesign.getTotalWeight() + pipingDesign.getTotalPipingWeight());
+    systemSummary.addProperty("totalVolume_m3", systemDesign.getTotalVolume());
+    systemSummary.addProperty("totalPlotSpace_m2", systemDesign.getTotalPlotSpace());
+    systemSummary.addProperty("equipmentCount", systemDesign.getTotalNumberOfModules());
+    root.add("systemSummary", systemSummary);
+
+    // Add utility requirements
+    JsonObject utilities = new JsonObject();
+    utilities.addProperty("totalPowerRequired_kW", systemDesign.getTotalPowerRequired());
+    utilities.addProperty("totalPowerRecovered_kW", systemDesign.getTotalPowerRecovered());
+    utilities.addProperty("netPowerRequirement_kW", systemDesign.getNetPowerRequirement());
+    utilities.addProperty("totalHeatingDuty_kW", systemDesign.getTotalHeatingDuty());
+    utilities.addProperty("totalCoolingDuty_kW", systemDesign.getTotalCoolingDuty());
+    root.add("utilityRequirements", utilities);
+
+    // Add weight by equipment type
+    JsonObject weightByType = new JsonObject();
+    for (Map.Entry<String, Double> entry : systemDesign.getWeightByEquipmentType().entrySet()) {
+      weightByType.addProperty(entry.getKey(), entry.getValue());
+    }
+    root.add("weightByEquipmentType", weightByType);
+
+    // Add weight by discipline
+    JsonObject weightByDiscipline = new JsonObject();
+    for (Map.Entry<String, Double> entry : systemDesign.getWeightByDiscipline().entrySet()) {
+      weightByDiscipline.addProperty(entry.getKey(), entry.getValue());
+    }
+    root.add("weightByDiscipline", weightByDiscipline);
+
+    // Add equipment list with individual designs
+    JsonArray equipmentArray = new JsonArray();
+    for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
+      JsonObject equipJson = new JsonObject();
+      equipJson.addProperty("name", unit.getName());
+      equipJson.addProperty("type", unit.getClass().getSimpleName());
+
+      // Try to get mechanical design JSON for this equipment
+      try {
+        MechanicalDesign mechDesign = unit.getMechanicalDesign();
+        if (mechDesign != null) {
+          String mechJson = mechDesign.toJson();
+          if (mechJson != null && !mechJson.isEmpty()) {
+            JsonObject mechObj = JsonParser.parseString(mechJson).getAsJsonObject();
+            equipJson.add("mechanicalDesign", mechObj);
+          }
+        }
+      } catch (Exception e) {
+        // Equipment doesn't have mechanical design, skip
+      }
+
+      equipmentArray.add(equipJson);
+    }
+    root.add("equipment", equipmentArray);
+
+    // Add piping design data
+    JsonObject pipingJson = new JsonObject();
+    pipingJson.addProperty("totalLength_m", pipingDesign.getTotalPipingLength());
+    pipingJson.addProperty("totalWeight_kg", pipingDesign.getTotalPipingWeight());
+    pipingJson.addProperty("valveWeight_kg", pipingDesign.getValveWeight());
+    pipingJson.addProperty("flangeWeight_kg", pipingDesign.getFlangeWeight());
+    pipingJson.addProperty("fittingWeight_kg", pipingDesign.getFittingWeight());
+
+    // Weight by pipe size
+    JsonObject weightBySize = new JsonObject();
+    for (Map.Entry<String, Double> entry : pipingDesign.getWeightBySize().entrySet()) {
+      weightBySize.addProperty(entry.getKey(), entry.getValue());
+    }
+    pipingJson.add("weightBySize", weightBySize);
+
+    // Length by pipe size
+    JsonObject lengthBySize = new JsonObject();
+    for (Map.Entry<String, Double> entry : pipingDesign.getLengthBySize().entrySet()) {
+      lengthBySize.addProperty(entry.getKey(), entry.getValue());
+    }
+    pipingJson.add("lengthBySize", lengthBySize);
+
+    // Pipe segments
+    JsonArray segmentsArray = new JsonArray();
+    for (ProcessInterconnectionDesign.PipeSegment seg : pipingDesign.getPipeSegments()) {
+      JsonObject segJson = new JsonObject();
+      segJson.addProperty("fromEquipment", seg.getFromEquipment());
+      segJson.addProperty("toEquipment", seg.getToEquipment());
+      segJson.addProperty("nominalSizeInch", seg.getNominalSizeInch());
+      segJson.addProperty("outsideDiameter_mm", seg.getOutsideDiameterMm());
+      segJson.addProperty("wallThickness_mm", seg.getWallThicknessMm());
+      segJson.addProperty("schedule", seg.getSchedule());
+      segJson.addProperty("length_m", seg.getLengthM());
+      segJson.addProperty("weight_kg", seg.getWeightKg());
+      segJson.addProperty("designPressure_bara", seg.getDesignPressureBara());
+      segJson.addProperty("designTemperature_C", seg.getDesignTemperatureC());
+      segJson.addProperty("material", seg.getMaterial());
+      segJson.addProperty("isGasService", seg.isGasService());
+      segmentsArray.add(segJson);
+    }
+    pipingJson.add("pipeSegments", segmentsArray);
+
+    root.add("pipingDesign", pipingJson);
+
+    // Serialize with pretty printing and NaN/Infinity support
+    Gson gson =
+        new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+    return gson.toJson(root);
+  }
+
+  /**
+   * Generate compact JSON report (no pretty printing).
+   *
+   * @return compact JSON string
+   */
+  public String toCompactJson() {
+    if (systemDesign == null || pipingDesign == null) {
+      runDesignCalculations();
+    }
+
+    // Generate full JSON and re-serialize without pretty printing
+    String prettyJson = toJson();
+    JsonObject parsed = JsonParser.parseString(prettyJson).getAsJsonObject();
+    Gson compactGson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
+    return compactGson.toJson(parsed);
+  }
+
+  /**
+   * Write JSON report to file.
+   *
+   * @param filePath path to output file
+   * @throws IOException if file cannot be written
+   */
+  public void writeJsonReport(String filePath) throws IOException {
+    try (PrintWriter writer = new PrintWriter(new FileWriter(filePath))) {
+      writer.print(toJson());
+    }
   }
 
   // ============================================================================

@@ -274,7 +274,8 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 ### Chapter 22: Mechanical Design
 | Document | Path | Description |
 |----------|------|-------------|
-| Mechanical Design | [docs/process/mechanical_design.md](process/mechanical_design.md) | Mechanical design overview |
+| Mechanical Design | [docs/process/mechanical_design.md](process/mechanical_design.md) | Mechanical design overview and JSON export |
+| **Mechanical Design Report** | [docs/process/mechanical_design.md#comprehensive-mechanical-design-report-json](process/mechanical_design.md#comprehensive-mechanical-design-report-json) | **Combined JSON output for all mechanical design data (equipment + piping)** |
 | Design Standards | [docs/process/mechanical_design_standards.md](process/mechanical_design_standards.md) | Design standards |
 | Design Database | [docs/process/mechanical_design_database.md](process/mechanical_design_database.md) | Design database |
 | **Pipeline Mechanical Design** | [docs/process/pipeline_mechanical_design.md](process/pipeline_mechanical_design.md) | **Comprehensive pipeline mechanical design with wall thickness, stress analysis, cost estimation** |
