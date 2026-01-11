@@ -2523,8 +2523,40 @@ public class TwoFluidPipe extends Pipeline {
    *
    * @return Current insulation type
    */
-  public InsulationType getInsulationType() {
+  public InsulationType getInsulationTypeEnum() {
     return insulationType;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getInsulationType() {
+    return insulationType != null ? insulationType.name() : "NONE";
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setInsulationType(String type) {
+    try {
+      this.insulationType = InsulationType.valueOf(type.toUpperCase().replace(" ", "_"));
+      setHeatTransferCoefficient(this.insulationType.getUValue());
+    } catch (IllegalArgumentException e) {
+      // Try to match common names
+      if (type.toLowerCase().contains("polyurethane") || type.toLowerCase().contains("pu")) {
+        this.insulationType = InsulationType.PU_FOAM;
+      } else if (type.toLowerCase().contains("pipe-in-pipe")
+          || type.toLowerCase().contains("pip")) {
+        this.insulationType = InsulationType.PIPE_IN_PIPE;
+      } else if (type.toLowerCase().contains("vit") || type.toLowerCase().contains("vacuum")) {
+        this.insulationType = InsulationType.VIT;
+      } else if (type.toLowerCase().contains("buried")) {
+        this.insulationType = InsulationType.BURIED_ONSHORE;
+      } else if (type.toLowerCase().contains("multi")) {
+        this.insulationType = InsulationType.MULTI_LAYER;
+      } else {
+        this.insulationType = InsulationType.NONE;
+      }
+      setHeatTransferCoefficient(this.insulationType.getUValue());
+    }
   }
 
   /**

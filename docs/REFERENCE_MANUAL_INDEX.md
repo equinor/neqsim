@@ -248,7 +248,8 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Wells | [docs/process/equipment/wells.md](process/equipment/wells.md) | Well equipment |
 | Well Simulation | [docs/simulation/well_simulation_guide.md](simulation/well_simulation_guide.md) | Well simulation guide |
 | Well & Choke | [docs/simulation/well_and_choke_simulation.md](simulation/well_and_choke_simulation.md) | Choke valve simulation |
-| Pipelines | [docs/process/equipment/pipelines.md](process/equipment/pipelines.md) | Pipeline models |
+| Pipelines | [docs/process/equipment/pipelines.md](process/equipment/pipelines.md) | Pipeline and riser models |
+| **Risers** | [docs/process/equipment/pipelines.md#risers](process/equipment/pipelines.md#risers) | **SCR, TTR, Flexible, Lazy-Wave risers** |
 | Beggs & Brill | [docs/process/PipeBeggsAndBrills.md](process/PipeBeggsAndBrills.md) | Beggs & Brill correlation |
 | Networks | [docs/process/equipment/networks.md](process/equipment/networks.md) | Pipeline network modeling |
 | Reservoirs | [docs/process/equipment/reservoirs.md](process/equipment/reservoirs.md) | Reservoir modeling |
@@ -273,9 +274,15 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 ### Chapter 22: Mechanical Design
 | Document | Path | Description |
 |----------|------|-------------|
-| Mechanical Design | [docs/process/mechanical_design.md](process/mechanical_design.md) | Mechanical design overview |
+| Mechanical Design | [docs/process/mechanical_design.md](process/mechanical_design.md) | Mechanical design overview and JSON export |
+| **Mechanical Design Report** | [docs/process/mechanical_design.md#comprehensive-mechanical-design-report-json](process/mechanical_design.md#comprehensive-mechanical-design-report-json) | **Combined JSON output for all mechanical design data (equipment + piping)** |
 | Design Standards | [docs/process/mechanical_design_standards.md](process/mechanical_design_standards.md) | Design standards |
 | Design Database | [docs/process/mechanical_design_database.md](process/mechanical_design_database.md) | Design database |
+| **Pipeline Mechanical Design** | [docs/process/pipeline_mechanical_design.md](process/pipeline_mechanical_design.md) | **Comprehensive pipeline mechanical design with wall thickness, stress analysis, cost estimation** |
+| **Topside Piping Design** | [docs/process/topside_piping_design.md](process/topside_piping_design.md) | **Topside piping design with velocity, support spacing, vibration (AIV/FIV), stress analysis per ASME B31.3** |
+| **Manifold Mechanical Design** | [docs/process/equipment/manifold_design.md](process/equipment/manifold_design.md) | **Manifold design for topside, onshore, and subsea with velocity limits, reinforcement, support per ASME B31.3 and DNV-ST-F101** |
+| **Riser Mechanical Design** | [docs/process/riser_mechanical_design.md](process/riser_mechanical_design.md) | **Riser design with catenary mechanics, VIV, fatigue per DNV-OS-F201** |
+| **Pipeline Design Math** | [docs/process/pipeline_mechanical_design_math.md](process/pipeline_mechanical_design_math.md) | **Mathematical methods and formulas for pipeline design** |
 | TORG Integration | [docs/process/torg_integration.md](process/torg_integration.md) | TORG integration |
 | Field Development | [docs/process/field_development_orchestration.md](process/field_development_orchestration.md) | Field development orchestration |
 
@@ -293,6 +300,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 |----------|------|-------------|
 | Fluid Mechanics Overview | [docs/fluidmechanics/README.md](fluidmechanics/README.md) | Fluid mechanics module |
 | Pipeline Index | [docs/wiki/pipeline_index.md](wiki/pipeline_index.md) | Pipeline documentation index |
+| **Pipeline Simulation** | [docs/process/equipment/pipeline_simulation.md](process/equipment/pipeline_simulation.md) | **Comprehensive pipeline simulation guide with PipeLineInterface, all pipe types, flow regimes, heat transfer** |
 | Flow Equations | [docs/wiki/pipeline_flow_equations.md](wiki/pipeline_flow_equations.md) | Pipeline flow equations |
 | Single Phase Flow | [docs/fluidmechanics/single_phase_pipe_flow.md](fluidmechanics/single_phase_pipe_flow.md) | Single phase pipe flow |
 

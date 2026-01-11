@@ -342,6 +342,8 @@ exportLine.getPipeline().setLength(15000.0);
 
 - [Reservoirs](reservoirs.md) - Reservoir modeling
 - [Pipelines](pipelines.md) - Pipeline flow models
+- [Risers](pipelines.md#risers) - Riser types (SCR, TTR, Flexible, Lazy-Wave)
+- [Riser Mechanical Design](../riser_mechanical_design.md) - Riser mechanical design
 - [Valves](valves.md) - Choke valves
 - [Manifolds](manifolds.md) - Subsea manifolds
 - [Networks](networks.md) - Pipeline networks

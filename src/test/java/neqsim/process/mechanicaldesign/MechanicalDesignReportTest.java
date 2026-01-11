@@ -194,4 +194,40 @@ public class MechanicalDesignReportTest {
     System.out.println("System Summary Report:");
     System.out.println(summary);
   }
+
+  @Test
+  public void testToJson() {
+    report.runDesignCalculations();
+    String json = report.toJson();
+
+    assertNotNull(json, "JSON should not be null");
+    assertTrue(json.length() > 0, "JSON should have content");
+
+    // Verify key sections are present
+    assertTrue(json.contains("\"processName\""), "Should have process name");
+    assertTrue(json.contains("\"reportType\""), "Should have report type");
+    assertTrue(json.contains("\"systemSummary\""), "Should have system summary");
+    assertTrue(json.contains("\"utilityRequirements\""), "Should have utility requirements");
+    assertTrue(json.contains("\"weightByEquipmentType\""), "Should have weight by type");
+    assertTrue(json.contains("\"weightByDiscipline\""), "Should have weight by discipline");
+    assertTrue(json.contains("\"equipment\""), "Should have equipment list");
+    assertTrue(json.contains("\"pipingDesign\""), "Should have piping design");
+    assertTrue(json.contains("\"pipeSegments\""), "Should have pipe segments");
+
+    System.out.println("JSON Report (first 2000 chars):");
+    System.out.println(json.substring(0, Math.min(2000, json.length())));
+  }
+
+  @Test
+  public void testToCompactJson() {
+    report.runDesignCalculations();
+    String json = report.toJson();
+    String compactJson = report.toCompactJson();
+
+    assertNotNull(compactJson, "Compact JSON should not be null");
+    assertTrue(compactJson.length() > 0, "Compact JSON should have content");
+    assertTrue(compactJson.length() < json.length(), "Compact should be shorter than pretty");
+    // Compact JSON should not have newlines with indentation
+    assertTrue(!compactJson.contains("\n  "), "Should not have formatted indentation");
+  }
 }

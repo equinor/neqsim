@@ -50,6 +50,9 @@ This documentation is organized into the following sections:
 |----------|-------------|
 | [mechanical_design_standards.md](mechanical_design_standards.md) | Design standards (NORSOK, ASME, API, DNV, etc.) |
 | [mechanical_design_database.md](mechanical_design_database.md) | Data sources, database schemas, and CSV configuration |
+| [pipeline_mechanical_design.md](pipeline_mechanical_design.md) | Pipeline mechanical design (wall thickness, stress, buckling) |
+| [topside_piping_design.md](topside_piping_design.md) | **Topside piping design (velocity, support, vibration per ASME B31.3)** |
+| [riser_mechanical_design.md](riser_mechanical_design.md) | Riser design (catenary, VIV, fatigue per DNV-OS-F201) |
 | [torg_integration.md](torg_integration.md) | Technical Requirements Documents (TORG) integration |
 | [field_development_orchestration.md](field_development_orchestration.md) | Complete design workflow orchestration |
 
@@ -72,7 +75,7 @@ This documentation is organized into the following sections:
 | Electrolyzers | [electrolyzers.md](equipment/electrolyzers.md) | Electrolyzer, CO2Electrolyzer |
 | Filters | [filters.md](equipment/filters.md) | Filter, CharCoalFilter |
 | Reactors | [reactors.md](equipment/reactors.md) | GibbsReactor |
-| Pipelines | [pipelines.md](equipment/pipelines.md) | Pipeline, AdiabaticPipe |
+| Pipelines | [pipelines.md](equipment/pipelines.md) | Pipeline, AdiabaticPipe, TopsidePiping, Riser |
 | Tanks | [tanks.md](equipment/tanks.md) | Tank, VesselDepressurization |
 | Wells | [wells.md](equipment/wells.md) | Well equipment |
 | Mixers/Splitters | [mixers_splitters.md](equipment/mixers_splitters.md) | Mixer, Splitter |

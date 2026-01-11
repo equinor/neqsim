@@ -496,7 +496,7 @@ class TemperatureDropComparisonTest {
 
     // Test PU Foam insulation
     pipe.setInsulationType(TwoFluidPipe.InsulationType.PU_FOAM);
-    assertEquals(TwoFluidPipe.InsulationType.PU_FOAM, pipe.getInsulationType());
+    assertEquals(TwoFluidPipe.InsulationType.PU_FOAM, pipe.getInsulationTypeEnum());
     assertEquals(10.0, pipe.getHeatTransferCoefficient(), 0.01);
     assertTrue(pipe.isHeatTransferEnabled());
 

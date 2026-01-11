@@ -8,6 +8,7 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.manifold.ManifoldMechanicalDesign;
 import neqsim.process.util.monitor.ManifoldResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -27,6 +28,9 @@ public class Manifold extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Manifold.class);
+
+  /** Mechanical design for the manifold. */
+  private ManifoldMechanicalDesign mechanicalDesign;
 
   protected Mixer localmixer = new Mixer("tmpName");
   protected Splitter localsplitter = new Splitter("tmpName");
@@ -145,5 +149,17 @@ public class Manifold extends ProcessEquipmentBaseClass {
     ManifoldResponse res = new ManifoldResponse(this);
     res.applyConfig(cfg);
     return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initMechanicalDesign() {
+    mechanicalDesign = new ManifoldMechanicalDesign(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ManifoldMechanicalDesign getMechanicalDesign() {
+    return mechanicalDesign;
   }
 }

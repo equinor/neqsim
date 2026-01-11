@@ -440,9 +440,9 @@ public class BeggsAndBrillsValidationExample {
         process.run();
 
         double pressureDrop = pipe.getPressureDrop();
-        double holdup =
-            pipe.getLiquidHoldupProfile().isEmpty() ? 0 : pipe.getLiquidHoldupProfile().get(0);
-        String regime = pipe.getFlowRegime().toString();
+        double[] holdupProfile = pipe.getLiquidHoldupProfile();
+        double holdup = (holdupProfile == null || holdupProfile.length == 0) ? 0 : holdupProfile[0];
+        String regime = pipe.getFlowRegime();
 
         // Calculate input liquid volume fraction (λ)
         double lambda = liquidFlowRate / totalFlow; // mass fraction approximation

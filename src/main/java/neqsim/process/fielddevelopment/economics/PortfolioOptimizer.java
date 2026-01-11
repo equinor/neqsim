@@ -544,6 +544,8 @@ public class PortfolioOptimizer implements Serializable {
 
   /**
    * Optimize using greedy NPV/CAPEX ratio selection.
+   *
+   * @return optimized portfolio result
    */
   private PortfolioResult optimizeGreedyNpvRatio() {
     List<Project> sorted = new ArrayList<Project>(projects);
@@ -558,6 +560,8 @@ public class PortfolioOptimizer implements Serializable {
 
   /**
    * Optimize using greedy absolute NPV selection.
+   *
+   * @return optimized portfolio result
    */
   private PortfolioResult optimizeGreedyAbsoluteNpv() {
     List<Project> sorted = new ArrayList<Project>(projects);
@@ -572,6 +576,8 @@ public class PortfolioOptimizer implements Serializable {
 
   /**
    * Optimize using risk-weighted NPV ratio.
+   *
+   * @return optimized portfolio result
    */
   private PortfolioResult optimizeRiskWeighted() {
     List<Project> sorted = new ArrayList<Project>(projects);
@@ -586,6 +592,8 @@ public class PortfolioOptimizer implements Serializable {
 
   /**
    * Optimize using expected monetary value.
+   *
+   * @return optimized portfolio result
    */
   private PortfolioResult optimizeEmv() {
     List<Project> sorted = new ArrayList<Project>(projects);
@@ -600,6 +608,8 @@ public class PortfolioOptimizer implements Serializable {
 
   /**
    * Optimize with balanced allocation across project types.
+   *
+   * @return optimized portfolio result
    */
   private PortfolioResult optimizeBalanced() {
     // Group projects by type
@@ -644,6 +654,10 @@ public class PortfolioOptimizer implements Serializable {
 
   /**
    * Select projects respecting budget constraints.
+   *
+   * @param ranked list of projects ranked by selection priority
+   * @param strategy the optimization strategy being used
+   * @return optimized portfolio result with selected projects
    */
   private PortfolioResult selectProjects(List<Project> ranked, OptimizationStrategy strategy) {
     PortfolioResult result = new PortfolioResult();
