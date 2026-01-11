@@ -95,6 +95,76 @@ public class PipeMechanicalDesignCalculator implements Serializable {
   /** Weld joint efficiency. */
   private double weldJointEfficiency = 1.0;
 
+  // ============ Pipeline Physical Properties ============
+  /** Pipeline length in meters. */
+  private double pipelineLength = 1000.0;
+  /** Steel density in kg/m3. */
+  private double steelDensity = 7850.0;
+  /** Number of pipe joints (12m standard length). */
+  private int numberOfJoints = 0;
+  /** Number of field welds. */
+  private int numberOfFieldWelds = 0;
+
+  // ============ Coating and Insulation ============
+  /** External coating type (e.g., "3LPE", "FBE", "CTE"). */
+  private String coatingType = "3LPE";
+  /** External coating thickness in meters. */
+  private double coatingThickness = 0.003; // 3mm default
+  /** Coating density in kg/m3. */
+  private double coatingDensity = 950.0; // PE density
+  /** Insulation type (e.g., "PUF", "mineral wool", "none"). */
+  private String insulationType = "none";
+  /** Insulation thickness in meters. */
+  private double insulationThickness = 0.0;
+  /** Insulation density in kg/m3. */
+  private double insulationDensity = 80.0;
+  /** Insulation thermal conductivity in W/(m·K). */
+  private double insulationConductivity = 0.025;
+
+  // ============ Concrete Weight Coating (Subsea) ============
+  /** Concrete weight coating thickness in meters. */
+  private double concreteCoatingThickness = 0.0;
+  /** Concrete density in kg/m3. */
+  private double concreteDensity = 3040.0; // Standard subsea concrete
+  /** Required negative buoyancy in N/m. */
+  private double requiredNegativeBuoyancy = 0.0;
+
+  // ============ Installation Parameters ============
+  /** Installation method (e.g., "S-lay", "J-lay", "Reel-lay", "Onshore"). */
+  private String installationMethod = "Onshore";
+  /** Water depth in meters. */
+  private double waterDepth = 0.0;
+  /** Burial depth in meters. */
+  private double burialDepth = 1.0;
+  /** Ambient temperature in Celsius. */
+  private double ambientTemperature = 15.0;
+  /** Seawater density in kg/m3. */
+  private double seawaterDensity = 1025.0;
+
+  // ============ Support and Expansion ============
+  /** Pipe support spacing in meters. */
+  private double supportSpacing = 6.0;
+  /** Number of pipe supports. */
+  private int numberOfSupports = 0;
+  /** Expansion loop length in meters. */
+  private double expansionLoopLength = 0.0;
+  /** Number of expansion loops required. */
+  private int numberOfExpansionLoops = 0;
+  /** Anchor spacing in meters. */
+  private double anchorSpacing = 100.0;
+  /** Number of anchors. */
+  private int numberOfAnchors = 0;
+
+  // ============ Flanges and Connections ============
+  /** Flange class per ASME B16.5. */
+  private int flangeClass = 300;
+  /** Number of flange pairs. */
+  private int numberOfFlangePairs = 0;
+  /** Number of valves. */
+  private int numberOfValves = 0;
+  /** Valve type (e.g., "Ball", "Gate", "Check"). */
+  private String valveType = "Ball";
+
   // ============ Calculated Results ============
   /** Calculated minimum wall thickness in meters. */
   private double minimumWallThickness = 0.0;
@@ -107,8 +177,127 @@ public class PipeMechanicalDesignCalculator implements Serializable {
   /** Calculated von Mises stress in MPa. */
   private double vonMisesStress = 0.0;
 
+  // ============ Additional Detailed Design Results ============
+  /** External pressure at seabed in MPa. */
+  private double externalPressure = 0.0;
+  /** Collapse pressure in MPa. */
+  private double collapsePressure = 0.0;
+  /** Propagation buckling pressure in MPa. */
+  private double propagationBucklingPressure = 0.0;
+  /** Upheaval buckling force in N. */
+  private double upheavalBucklingForce = 0.0;
+  /** Lateral buckling force in N. */
+  private double lateralBucklingForce = 0.0;
+  /** Span length for free spans in meters. */
+  private double allowableSpanLength = 0.0;
+  /** Fatigue life in years. */
+  private double fatigueLife = 0.0;
+  /** Bending radius for field bends in meters. */
+  private double minimumBendRadius = 0.0;
+
+  // ============ Weight and Buoyancy Results ============
+  /** Pipe steel weight per meter in kg/m. */
+  private double steelWeightPerMeter = 0.0;
+  /** Coating weight per meter in kg/m. */
+  private double coatingWeightPerMeter = 0.0;
+  /** Insulation weight per meter in kg/m. */
+  private double insulationWeightPerMeter = 0.0;
+  /** Concrete weight per meter in kg/m. */
+  private double concreteWeightPerMeter = 0.0;
+  /** Total dry weight per meter in kg/m. */
+  private double totalDryWeightPerMeter = 0.0;
+  /** Content weight per meter in kg/m. */
+  private double contentWeightPerMeter = 0.0;
+  /** Submerged weight per meter in kg/m (negative = buoyant). */
+  private double submergedWeightPerMeter = 0.0;
+  /** Total pipeline dry weight in kg. */
+  private double totalPipelineWeight = 0.0;
+
+  // ============ Surface Area Results ============
+  /** External surface area per meter in m2/m. */
+  private double externalSurfaceAreaPerMeter = 0.0;
+  /** Internal surface area per meter in m2/m. */
+  private double internalSurfaceAreaPerMeter = 0.0;
+  /** Total external surface area in m2. */
+  private double totalExternalSurfaceArea = 0.0;
+
+  // ============ Cost Estimation Parameters ============
+  /** Steel price in USD/kg. */
+  private double steelPricePerKg = 1.50;
+  /** Coating price in USD/m2. */
+  private double coatingPricePerM2 = 25.0;
+  /** Insulation price in USD/m3. */
+  private double insulationPricePerM3 = 150.0;
+  /** Concrete price in USD/m3. */
+  private double concretePricePerM3 = 200.0;
+  /** Field weld cost in USD per weld. */
+  private double fieldWeldCost = 2500.0;
+  /** Flange pair cost in USD. */
+  private double flangePairCost = 5000.0;
+  /** Valve cost in USD. */
+  private double valveCost = 10000.0;
+  /** Support cost in USD each. */
+  private double supportCost = 500.0;
+  /** Anchor cost in USD each. */
+  private double anchorCost = 2000.0;
+  /** Installation cost in USD/m (varies by method). */
+  private double installationCostPerMeter = 500.0;
+  /** Testing and commissioning cost percentage. */
+  private double testingCostPercentage = 0.05;
+  /** Engineering and design cost percentage. */
+  private double engineeringCostPercentage = 0.10;
+  /** Contingency percentage. */
+  private double contingencyPercentage = 0.15;
+
+  // ============ Cost Estimation Results ============
+  /** Steel material cost in USD. */
+  private double steelMaterialCost = 0.0;
+  /** Coating cost in USD. */
+  private double coatingCost = 0.0;
+  /** Insulation cost in USD. */
+  private double insulationCost = 0.0;
+  /** Concrete coating cost in USD. */
+  private double concreteCost = 0.0;
+  /** Welding cost in USD. */
+  private double weldingCost = 0.0;
+  /** Flanges and fittings cost in USD. */
+  private double flangesAndFittingsCost = 0.0;
+  /** Valves cost in USD. */
+  private double valvesCost = 0.0;
+  /** Supports and anchors cost in USD. */
+  private double supportsAndAnchorsCost = 0.0;
+  /** Installation cost in USD. */
+  private double installationCost = 0.0;
+  /** Total direct cost in USD. */
+  private double totalDirectCost = 0.0;
+  /** Engineering cost in USD. */
+  private double engineeringCost = 0.0;
+  /** Testing cost in USD. */
+  private double testingCost = 0.0;
+  /** Contingency cost in USD. */
+  private double contingencyCost = 0.0;
+  /** Total project cost in USD. */
+  private double totalProjectCost = 0.0;
+
+  // ============ Labor Estimation ============
+  /** Welding manhours per joint. */
+  private double weldingManhoursPerJoint = 8.0;
+  /** Installation manhours per meter. */
+  private double installationManhoursPerMeter = 2.0;
+  /** Total labor manhours. */
+  private double totalLaborManhours = 0.0;
+
   /** Map of API 5L material grades to SMYS (MPa). */
   private static final Map<String, double[]> API_5L_GRADES;
+
+  /** Map of nominal pipe sizes to OD in meters (API 5L / ASME B36.10). */
+  private static final Map<String, Double> STANDARD_PIPE_SIZES;
+
+  /** Map of ASME B16.5 flange pressure-temperature ratings at 38°C in MPa. */
+  private static final Map<Integer, Double> FLANGE_CLASS_RATINGS;
+
+  /** Standard pipe joint length in meters. */
+  private static final double STANDARD_JOINT_LENGTH = 12.2; // 40 feet
 
   static {
     API_5L_GRADES = new HashMap<String, double[]>();
@@ -127,6 +316,41 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     API_5L_GRADES.put("X90", new double[] {620, 695}); // 90000 psi yield - ultra high strength
     API_5L_GRADES.put("X100", new double[] {690, 760}); // 100000 psi yield - maximum strength
     API_5L_GRADES.put("X120", new double[] {827, 931}); // 120000 psi yield - extreme applications
+
+    // Standard pipe sizes per API 5L / ASME B36.10 (NPS -> OD in meters)
+    STANDARD_PIPE_SIZES = new HashMap<String, Double>();
+    STANDARD_PIPE_SIZES.put("2", 0.0603); // 2"
+    STANDARD_PIPE_SIZES.put("3", 0.0889); // 3"
+    STANDARD_PIPE_SIZES.put("4", 0.1143); // 4"
+    STANDARD_PIPE_SIZES.put("6", 0.1683); // 6"
+    STANDARD_PIPE_SIZES.put("8", 0.2191); // 8"
+    STANDARD_PIPE_SIZES.put("10", 0.2731); // 10"
+    STANDARD_PIPE_SIZES.put("12", 0.3239); // 12"
+    STANDARD_PIPE_SIZES.put("14", 0.3556); // 14"
+    STANDARD_PIPE_SIZES.put("16", 0.4064); // 16"
+    STANDARD_PIPE_SIZES.put("18", 0.4572); // 18"
+    STANDARD_PIPE_SIZES.put("20", 0.5080); // 20"
+    STANDARD_PIPE_SIZES.put("24", 0.6096); // 24"
+    STANDARD_PIPE_SIZES.put("26", 0.6604); // 26"
+    STANDARD_PIPE_SIZES.put("28", 0.7112); // 28"
+    STANDARD_PIPE_SIZES.put("30", 0.7620); // 30"
+    STANDARD_PIPE_SIZES.put("32", 0.8128); // 32"
+    STANDARD_PIPE_SIZES.put("34", 0.8636); // 34"
+    STANDARD_PIPE_SIZES.put("36", 0.9144); // 36"
+    STANDARD_PIPE_SIZES.put("40", 1.0160); // 40"
+    STANDARD_PIPE_SIZES.put("42", 1.0668); // 42"
+    STANDARD_PIPE_SIZES.put("44", 1.1176); // 44"
+    STANDARD_PIPE_SIZES.put("48", 1.2192); // 48"
+
+    // ASME B16.5 flange class ratings at 38°C (100°F) in MPa for carbon steel
+    FLANGE_CLASS_RATINGS = new HashMap<Integer, Double>();
+    FLANGE_CLASS_RATINGS.put(150, 1.93); // 280 psi
+    FLANGE_CLASS_RATINGS.put(300, 5.07); // 735 psi
+    FLANGE_CLASS_RATINGS.put(400, 6.76); // 980 psi
+    FLANGE_CLASS_RATINGS.put(600, 10.13); // 1470 psi
+    FLANGE_CLASS_RATINGS.put(900, 15.20); // 2205 psi
+    FLANGE_CLASS_RATINGS.put(1500, 25.33); // 3675 psi
+    FLANGE_CLASS_RATINGS.put(2500, 42.22); // 6125 psi
   }
 
   /**
@@ -346,6 +570,666 @@ public class PipeMechanicalDesignCalculator implements Serializable {
       calculateVonMisesStress(designPressure, 0, true);
     }
     return (smys - vonMisesStress) / smys;
+  }
+
+  // ============================================================================
+  // WEIGHT AND SURFACE AREA CALCULATIONS
+  // ============================================================================
+
+  /**
+   * Calculate all weight and surface area values.
+   *
+   * <p>
+   * This method calculates steel weight, coating weight, insulation weight, concrete weight,
+   * surface areas, and buoyancy for subsea applications.
+   * </p>
+   */
+  public void calculateWeightsAndAreas() {
+    double wallThick = nominalWallThickness > 0 ? nominalWallThickness : minimumWallThickness;
+    if (wallThick <= 0) {
+      calculateMinimumWallThickness();
+      wallThick = minimumWallThickness;
+    }
+
+    double id = outerDiameter - 2.0 * wallThick;
+
+    // Steel weight per meter
+    double steelArea = Math.PI * (outerDiameter * outerDiameter - id * id) / 4.0;
+    steelWeightPerMeter = steelArea * steelDensity;
+
+    // External surface area per meter
+    externalSurfaceAreaPerMeter = Math.PI * outerDiameter;
+    internalSurfaceAreaPerMeter = Math.PI * id;
+
+    // Coating weight (external coating)
+    double coatingOD = outerDiameter + 2.0 * coatingThickness;
+    double coatingArea = Math.PI * (coatingOD * coatingOD - outerDiameter * outerDiameter) / 4.0;
+    coatingWeightPerMeter = coatingArea * coatingDensity;
+
+    // Insulation weight
+    if (insulationThickness > 0) {
+      double insulationOD = coatingOD + 2.0 * insulationThickness;
+      double insulationArea = Math.PI * (insulationOD * insulationOD - coatingOD * coatingOD) / 4.0;
+      insulationWeightPerMeter = insulationArea * insulationDensity;
+    } else {
+      insulationWeightPerMeter = 0.0;
+    }
+
+    // Concrete weight coating (subsea)
+    if (concreteCoatingThickness > 0) {
+      double baseOD = outerDiameter + 2.0 * coatingThickness + 2.0 * insulationThickness;
+      double concreteOD = baseOD + 2.0 * concreteCoatingThickness;
+      double concreteArea = Math.PI * (concreteOD * concreteOD - baseOD * baseOD) / 4.0;
+      concreteWeightPerMeter = concreteArea * concreteDensity;
+    } else {
+      concreteWeightPerMeter = 0.0;
+    }
+
+    // Total dry weight
+    totalDryWeightPerMeter = steelWeightPerMeter + coatingWeightPerMeter + insulationWeightPerMeter
+        + concreteWeightPerMeter;
+
+    // Total surface areas
+    totalExternalSurfaceArea = externalSurfaceAreaPerMeter * pipelineLength;
+
+    // Total pipeline weight
+    totalPipelineWeight = totalDryWeightPerMeter * pipelineLength;
+  }
+
+  /**
+   * Calculate submerged weight for subsea pipelines.
+   *
+   * @param contentDensity density of pipe contents in kg/m3
+   * @return submerged weight per meter in kg/m (negative = buoyant)
+   */
+  public double calculateSubmergedWeight(double contentDensity) {
+    calculateWeightsAndAreas();
+
+    double wallThick = nominalWallThickness > 0 ? nominalWallThickness : minimumWallThickness;
+    double id = outerDiameter - 2.0 * wallThick;
+
+    // Content weight
+    double contentArea = Math.PI * id * id / 4.0;
+    contentWeightPerMeter = contentArea * contentDensity;
+
+    // Total outer diameter with all coatings
+    double totalOD = outerDiameter + 2.0 * coatingThickness + 2.0 * insulationThickness
+        + 2.0 * concreteCoatingThickness;
+
+    // Displaced water weight (buoyancy)
+    double displacedVolume = Math.PI * totalOD * totalOD / 4.0;
+    double buoyancyPerMeter = displacedVolume * seawaterDensity;
+
+    // Submerged weight = dry weight + contents - buoyancy
+    submergedWeightPerMeter = totalDryWeightPerMeter + contentWeightPerMeter - buoyancyPerMeter;
+
+    return submergedWeightPerMeter;
+  }
+
+  /**
+   * Calculate required concrete coating thickness for on-bottom stability.
+   *
+   * @param contentDensity density of pipe contents in kg/m3
+   * @param targetSubmergedWeight target submerged weight in kg/m
+   * @return required concrete coating thickness in meters
+   */
+  public double calculateRequiredConcreteThickness(double contentDensity,
+      double targetSubmergedWeight) {
+    // Iterative calculation for concrete thickness
+    double testThickness = 0.0;
+    double step = 0.005; // 5mm steps
+
+    for (int i = 0; i < 100; i++) {
+      this.concreteCoatingThickness = testThickness;
+      double submerged = calculateSubmergedWeight(contentDensity);
+
+      if (submerged >= targetSubmergedWeight) {
+        return testThickness;
+      }
+      testThickness += step;
+    }
+
+    return testThickness; // Max thickness reached
+  }
+
+  /**
+   * Calculate number of pipe joints and welds.
+   */
+  public void calculateJointsAndWelds() {
+    numberOfJoints = (int) Math.ceil(pipelineLength / STANDARD_JOINT_LENGTH);
+    numberOfFieldWelds = numberOfJoints - 1; // One less weld than joints
+  }
+
+  // ============================================================================
+  // DETAILED DESIGN CALCULATIONS
+  // ============================================================================
+
+  /**
+   * Calculate pipe support spacing for above-ground pipelines.
+   *
+   * <p>
+   * Based on beam deflection limits and stress criteria per ASME B31.3.
+   * </p>
+   *
+   * @param maxDeflection maximum allowable deflection in meters
+   * @return recommended support spacing in meters
+   */
+  public double calculateSupportSpacing(double maxDeflection) {
+    calculateWeightsAndAreas();
+
+    double wallThick = nominalWallThickness > 0 ? nominalWallThickness : minimumWallThickness;
+    double id = outerDiameter - 2.0 * wallThick;
+
+    // Moment of inertia for pipe cross-section
+    double momentOfInertia = Math.PI * (Math.pow(outerDiameter, 4) - Math.pow(id, 4)) / 64.0;
+
+    // Total weight per meter including contents (assume water for hydrostatic test)
+    double totalWeight = totalDryWeightPerMeter + (Math.PI * id * id / 4.0) * 1000.0;
+    double w = totalWeight * 9.81; // Convert to N/m
+
+    // Maximum span based on deflection: delta = 5*w*L^4 / (384*E*I)
+    // Solving for L: L = (384*E*I*delta / (5*w))^0.25
+    double E = youngsModulus * 1e6; // Convert MPa to Pa
+    supportSpacing = Math.pow(384.0 * E * momentOfInertia * maxDeflection / (5.0 * w), 0.25);
+
+    // Limit to practical values
+    if (supportSpacing > 12.0) {
+      supportSpacing = 12.0;
+    }
+    if (supportSpacing < 1.0) {
+      supportSpacing = 1.0;
+    }
+
+    numberOfSupports = (int) Math.ceil(pipelineLength / supportSpacing) + 1;
+
+    return supportSpacing;
+  }
+
+  /**
+   * Calculate expansion loop length for thermal expansion.
+   *
+   * @param deltaT temperature change from installation in Celsius
+   * @param loopType "U-loop", "Z-loop", or "L-loop"
+   * @return required loop leg length in meters
+   */
+  public double calculateExpansionLoopLength(double deltaT, String loopType) {
+    // Thermal expansion
+    double expansion = thermalExpansion * deltaT * anchorSpacing;
+
+    // Allowable bending stress (typically 0.67 * SMYS)
+    double allowableStress = 0.67 * smys * 1e6; // Pa
+
+    double wallThick = nominalWallThickness > 0 ? nominalWallThickness : minimumWallThickness;
+    double E = youngsModulus * 1e6; // Pa
+
+    // For U-loop: L = sqrt(3 * E * D * delta / allowableStress)
+    if ("U-loop".equalsIgnoreCase(loopType)) {
+      expansionLoopLength = Math.sqrt(3.0 * E * outerDiameter * expansion / allowableStress);
+    } else if ("Z-loop".equalsIgnoreCase(loopType)) {
+      expansionLoopLength = Math.sqrt(2.0 * E * outerDiameter * expansion / allowableStress);
+    } else {
+      // L-loop
+      expansionLoopLength = Math.sqrt(1.5 * E * outerDiameter * expansion / allowableStress);
+    }
+
+    // Calculate number of expansion loops
+    numberOfExpansionLoops = (int) Math.ceil(pipelineLength / anchorSpacing);
+    numberOfAnchors = numberOfExpansionLoops + 1;
+
+    return expansionLoopLength;
+  }
+
+  /**
+   * Calculate minimum bend radius for field bends.
+   *
+   * @return minimum bend radius in meters
+   */
+  public double calculateMinimumBendRadius() {
+    // Per API 5L and ASME B31.8: minimum radius = 18 * D for cold bends
+    // Hot bends: minimum radius = 5 * D
+    minimumBendRadius = 18.0 * outerDiameter;
+    return minimumBendRadius;
+  }
+
+  /**
+   * Select appropriate flange class based on design conditions.
+   *
+   * @return selected flange class per ASME B16.5
+   */
+  public int selectFlangeClass() {
+    // Find minimum class that meets pressure requirement
+    int[] classes = {150, 300, 400, 600, 900, 1500, 2500};
+
+    for (int cls : classes) {
+      Double rating = FLANGE_CLASS_RATINGS.get(cls);
+      if (rating != null && rating >= designPressure) {
+        flangeClass = cls;
+        return cls;
+      }
+    }
+
+    flangeClass = 2500; // Maximum available
+    return flangeClass;
+  }
+
+  /**
+   * Calculate external pressure at seabed.
+   *
+   * @return external pressure in MPa
+   */
+  public double calculateExternalPressure() {
+    // P = rho * g * h
+    externalPressure = seawaterDensity * 9.81 * waterDepth / 1e6; // MPa
+    return externalPressure;
+  }
+
+  /**
+   * Calculate collapse pressure per DNV-OS-F101.
+   *
+   * <p>
+   * Uses the elastic-plastic collapse formula for combined external pressure and bending.
+   * </p>
+   *
+   * @return collapse pressure in MPa
+   */
+  public double calculateCollapsePressure() {
+    double wallThick = nominalWallThickness > 0 ? nominalWallThickness : minimumWallThickness;
+    double t = wallThick * fabricationTolerance;
+    double dOverT = outerDiameter / t;
+
+    // Elastic collapse pressure
+    double E = youngsModulus; // MPa
+    double Pel = 2.0 * E * Math.pow(t / outerDiameter, 3) / (1.0 - poissonsRatio * poissonsRatio);
+
+    // Plastic collapse pressure
+    double Pp = 2.0 * smys * t / outerDiameter;
+
+    // Combined collapse (DNV formula)
+    // (Pc - Pel) * (Pc^2 - Pp^2) = Pc * Pel * Pp * fo
+    // Simplified: Pc ≈ Pel for high D/t, Pc ≈ Pp for low D/t
+    if (dOverT > 30) {
+      collapsePressure = Pel * 0.85; // Elastic dominated
+    } else if (dOverT < 15) {
+      collapsePressure = Pp * 0.85; // Plastic dominated
+    } else {
+      // Transition region
+      collapsePressure = 0.85 * Math.sqrt(Pel * Pp);
+    }
+
+    return collapsePressure;
+  }
+
+  /**
+   * Calculate propagation buckling pressure.
+   *
+   * @return propagation buckling pressure in MPa
+   */
+  public double calculatePropagationBucklingPressure() {
+    double wallThick = nominalWallThickness > 0 ? nominalWallThickness : minimumWallThickness;
+    double t = wallThick * fabricationTolerance;
+
+    // Propagation pressure per DNV-OS-F101
+    // Pp = 35 * SMYS * (t/D)^2.5
+    propagationBucklingPressure = 35.0 * smys * Math.pow(t / outerDiameter, 2.5);
+
+    return propagationBucklingPressure;
+  }
+
+  /**
+   * Calculate allowable free span length for subsea pipelines.
+   *
+   * @param currentVelocity current velocity in m/s
+   * @return maximum allowable span length in meters
+   */
+  public double calculateAllowableSpanLength(double currentVelocity) {
+    calculateWeightsAndAreas();
+
+    double wallThick = nominalWallThickness > 0 ? nominalWallThickness : minimumWallThickness;
+    double id = outerDiameter - 2.0 * wallThick;
+
+    // Moment of inertia
+    double momentOfInertia = Math.PI * (Math.pow(outerDiameter, 4) - Math.pow(id, 4)) / 64.0;
+
+    // Effective mass per unit length (steel + added mass)
+    double addedMass = Math.PI * outerDiameter * outerDiameter * seawaterDensity / 4.0;
+    double effectiveMass = steelWeightPerMeter + addedMass;
+
+    // Natural frequency for simply supported beam
+    // fn = (pi/2) * sqrt(E*I / (m*L^4))
+    // For Strouhal number St = 0.2, vortex shedding frequency fv = St * V / D
+    // Avoid resonance: fn > 1.3 * fv
+
+    double St = 0.2;
+    double fv = St * currentVelocity / outerDiameter;
+    double targetFn = 1.3 * fv;
+
+    // Solving for L: L = (pi^2 * E * I / (4 * m * fn^2))^0.25
+    double E = youngsModulus * 1e6; // Pa
+    if (targetFn > 0) {
+      allowableSpanLength = Math.pow(
+          Math.PI * Math.PI * E * momentOfInertia / (4.0 * effectiveMass * targetFn * targetFn),
+          0.25);
+    } else {
+      allowableSpanLength = 50.0; // Default maximum
+    }
+
+    // Limit to practical values
+    if (allowableSpanLength > 100.0) {
+      allowableSpanLength = 100.0;
+    }
+
+    return allowableSpanLength;
+  }
+
+  /**
+   * Estimate fatigue life based on DNV-RP-C203.
+   *
+   * @param stressRange stress range per cycle in MPa
+   * @param numberOfCycles expected number of cycles per year
+   * @return estimated fatigue life in years
+   */
+  public double estimateFatigueLife(double stressRange, double numberOfCycles) {
+    // S-N curve parameters for seawater with cathodic protection (DNV-RP-C203, D curve)
+    double logA = 11.764;
+    double m = 3.0;
+
+    // N = 10^(logA) / S^m
+    double N = Math.pow(10.0, logA) / Math.pow(stressRange, m);
+
+    // Fatigue life in years
+    fatigueLife = N / numberOfCycles;
+
+    return fatigueLife;
+  }
+
+  /**
+   * Calculate insulation thickness for heat loss control.
+   *
+   * @param inletTemperature fluid inlet temperature in Celsius
+   * @param minArrivalTemperature minimum arrival temperature in Celsius
+   * @param massFlowRate mass flow rate in kg/s
+   * @param specificHeat fluid specific heat in J/(kg·K)
+   * @return required insulation thickness in meters
+   */
+  public double calculateInsulationThickness(double inletTemperature, double minArrivalTemperature,
+      double massFlowRate, double specificHeat) {
+    // Allowable heat loss per meter
+    double deltaT = inletTemperature - minArrivalTemperature;
+    double allowableHeatLoss = massFlowRate * specificHeat * deltaT / pipelineLength;
+
+    // Heat transfer: Q = U * A * LMTD
+    // For cylindrical pipe: U = k / (r * ln(r2/r1))
+    // Simplified: find thickness where heat loss equals allowable
+
+    double r1 = outerDiameter / 2.0 + coatingThickness;
+    double k = insulationConductivity;
+    double LMTD =
+        (inletTemperature - ambientTemperature + minArrivalTemperature - ambientTemperature) / 2.0;
+
+    // Iterative solution
+    double thickness = 0.025; // Start with 25mm
+    for (int i = 0; i < 20; i++) {
+      double r2 = r1 + thickness;
+      double U = k / (r2 * Math.log(r2 / r1));
+      double heatLoss = U * 2.0 * Math.PI * r2 * LMTD;
+
+      if (heatLoss <= allowableHeatLoss) {
+        break;
+      }
+      thickness += 0.025;
+    }
+
+    insulationThickness = thickness;
+    return insulationThickness;
+  }
+
+  // ============================================================================
+  // COST ESTIMATION CALCULATIONS
+  // ============================================================================
+
+  /**
+   * Calculate complete project cost estimate.
+   *
+   * <p>
+   * This method calculates all cost components including materials, fabrication, installation,
+   * engineering, testing, and contingency.
+   * </p>
+   *
+   * @return total project cost in USD
+   */
+  public double calculateProjectCost() {
+    // Ensure weights and quantities are calculated
+    calculateWeightsAndAreas();
+    calculateJointsAndWelds();
+    selectFlangeClass();
+
+    // Support spacing if above ground
+    if ("Onshore".equalsIgnoreCase(installationMethod) && waterDepth <= 0) {
+      calculateSupportSpacing(0.01); // 10mm deflection limit
+    }
+
+    // Material costs
+    steelMaterialCost = totalPipelineWeight * steelPricePerKg;
+    coatingCost = totalExternalSurfaceArea * coatingPricePerM2;
+
+    if (insulationThickness > 0) {
+      double insulationVolume = Math.PI
+          * ((outerDiameter + 2 * coatingThickness + 2 * insulationThickness)
+              * (outerDiameter + 2 * coatingThickness + 2 * insulationThickness)
+              - (outerDiameter + 2 * coatingThickness) * (outerDiameter + 2 * coatingThickness))
+          / 4.0 * pipelineLength;
+      insulationCost = insulationVolume * insulationPricePerM3;
+    } else {
+      insulationCost = 0.0;
+    }
+
+    if (concreteCoatingThickness > 0) {
+      double concreteVolume = concreteWeightPerMeter / concreteDensity * pipelineLength;
+      concreteCost = concreteVolume * concretePricePerM3;
+    } else {
+      concreteCost = 0.0;
+    }
+
+    // Fabrication costs
+    weldingCost = numberOfFieldWelds * fieldWeldCost;
+    flangesAndFittingsCost = numberOfFlangePairs * flangePairCost;
+    valvesCost = numberOfValves * valveCost;
+    supportsAndAnchorsCost = numberOfSupports * supportCost + numberOfAnchors * anchorCost;
+
+    // Installation costs
+    updateInstallationCostPerMeter();
+    installationCost = pipelineLength * installationCostPerMeter;
+
+    // Total direct cost
+    totalDirectCost = steelMaterialCost + coatingCost + insulationCost + concreteCost + weldingCost
+        + flangesAndFittingsCost + valvesCost + supportsAndAnchorsCost + installationCost;
+
+    // Indirect costs
+    engineeringCost = totalDirectCost * engineeringCostPercentage;
+    testingCost = totalDirectCost * testingCostPercentage;
+    contingencyCost = totalDirectCost * contingencyPercentage;
+
+    // Total project cost
+    totalProjectCost = totalDirectCost + engineeringCost + testingCost + contingencyCost;
+
+    return totalProjectCost;
+  }
+
+  /**
+   * Update installation cost per meter based on installation method.
+   */
+  private void updateInstallationCostPerMeter() {
+    if ("S-lay".equalsIgnoreCase(installationMethod)) {
+      installationCostPerMeter = 800.0 + waterDepth * 2.0;
+    } else if ("J-lay".equalsIgnoreCase(installationMethod)) {
+      installationCostPerMeter = 1200.0 + waterDepth * 3.0;
+    } else if ("Reel-lay".equalsIgnoreCase(installationMethod)) {
+      installationCostPerMeter = 600.0 + waterDepth * 1.5;
+    } else if ("HDD".equalsIgnoreCase(installationMethod)) {
+      // Horizontal Directional Drilling
+      installationCostPerMeter = 1500.0;
+    } else {
+      // Onshore conventional
+      installationCostPerMeter = 300.0;
+      if (burialDepth > 0) {
+        installationCostPerMeter += burialDepth * 50.0;
+      }
+    }
+
+    // Adjust for pipe size
+    double diameterFactor = outerDiameter / 0.5; // Normalize to 20" pipe
+    installationCostPerMeter *= diameterFactor;
+  }
+
+  /**
+   * Calculate labor manhours estimate.
+   *
+   * @return total labor manhours
+   */
+  public double calculateLaborManhours() {
+    calculateJointsAndWelds();
+
+    double weldingHours = numberOfFieldWelds * weldingManhoursPerJoint;
+    double installationHours = pipelineLength * installationManhoursPerMeter;
+    double supportHours = numberOfSupports * 4.0; // 4 hours per support
+    double testingHours = pipelineLength * 0.5; // 0.5 hours per meter
+
+    totalLaborManhours = weldingHours + installationHours + supportHours + testingHours;
+
+    return totalLaborManhours;
+  }
+
+  /**
+   * Select standard nominal pipe size.
+   *
+   * @return standard NPS size string
+   */
+  public String selectStandardPipeSize() {
+    String selectedSize = "";
+    double minDiff = Double.MAX_VALUE;
+
+    for (Map.Entry<String, Double> entry : STANDARD_PIPE_SIZES.entrySet()) {
+      double diff = Math.abs(entry.getValue() - outerDiameter);
+      if (diff < minDiff) {
+        minDiff = diff;
+        selectedSize = entry.getKey();
+      }
+    }
+
+    // Update OD to standard size if within 5%
+    if (minDiff / outerDiameter < 0.05) {
+      outerDiameter = STANDARD_PIPE_SIZES.get(selectedSize);
+    }
+
+    return selectedSize;
+  }
+
+  /**
+   * Generate Bill of Materials (BOM).
+   *
+   * @return list of BOM items as maps
+   */
+  public java.util.List<Map<String, Object>> generateBillOfMaterials() {
+    calculateWeightsAndAreas();
+    calculateJointsAndWelds();
+    selectFlangeClass();
+    calculateSupportSpacing(0.01);
+
+    java.util.List<Map<String, Object>> bom = new java.util.ArrayList<Map<String, Object>>();
+
+    // Line pipe
+    Map<String, Object> pipe = new java.util.LinkedHashMap<String, Object>();
+    pipe.put("item", "Line Pipe");
+    pipe.put("description",
+        String.format("API 5L %s, OD %.0fmm x %.1fmm WT", materialGrade, outerDiameter * 1000,
+            (nominalWallThickness > 0 ? nominalWallThickness : minimumWallThickness) * 1000));
+    pipe.put("quantity", numberOfJoints);
+    pipe.put("unit", "joints");
+    pipe.put("weight_kg", totalPipelineWeight);
+    pipe.put("unitCost_USD", steelPricePerKg * steelWeightPerMeter * STANDARD_JOINT_LENGTH);
+    pipe.put("totalCost_USD", steelMaterialCost);
+    bom.add(pipe);
+
+    // Coating
+    Map<String, Object> coating = new java.util.LinkedHashMap<String, Object>();
+    coating.put("item", "External Coating");
+    coating.put("description",
+        String.format("%s coating, %.1fmm thick", coatingType, coatingThickness * 1000));
+    coating.put("quantity", totalExternalSurfaceArea);
+    coating.put("unit", "m2");
+    coating.put("unitCost_USD", coatingPricePerM2);
+    coating.put("totalCost_USD", coatingCost);
+    bom.add(coating);
+
+    // Insulation (if applicable)
+    if (insulationThickness > 0) {
+      Map<String, Object> insulation = new java.util.LinkedHashMap<String, Object>();
+      insulation.put("item", "Insulation");
+      insulation.put("description",
+          String.format("%s insulation, %.0fmm thick", insulationType, insulationThickness * 1000));
+      insulation.put("quantity", pipelineLength);
+      insulation.put("unit", "m");
+      insulation.put("totalCost_USD", insulationCost);
+      bom.add(insulation);
+    }
+
+    // Concrete coating (if applicable)
+    if (concreteCoatingThickness > 0) {
+      Map<String, Object> concrete = new java.util.LinkedHashMap<String, Object>();
+      concrete.put("item", "Concrete Weight Coating");
+      concrete.put("description",
+          String.format("CWC, %.0fmm thick", concreteCoatingThickness * 1000));
+      concrete.put("quantity", pipelineLength);
+      concrete.put("unit", "m");
+      concrete.put("totalCost_USD", concreteCost);
+      bom.add(concrete);
+    }
+
+    // Flanges
+    if (numberOfFlangePairs > 0) {
+      Map<String, Object> flanges = new java.util.LinkedHashMap<String, Object>();
+      flanges.put("item", "Flanges");
+      flanges.put("description", String.format("ASME B16.5 Class %d WN flanges", flangeClass));
+      flanges.put("quantity", numberOfFlangePairs * 2);
+      flanges.put("unit", "each");
+      flanges.put("totalCost_USD", flangesAndFittingsCost);
+      bom.add(flanges);
+    }
+
+    // Valves
+    if (numberOfValves > 0) {
+      Map<String, Object> valves = new java.util.LinkedHashMap<String, Object>();
+      valves.put("item", "Valves");
+      valves.put("description", String.format("%s valve, Class %d", valveType, flangeClass));
+      valves.put("quantity", numberOfValves);
+      valves.put("unit", "each");
+      valves.put("totalCost_USD", valvesCost);
+      bom.add(valves);
+    }
+
+    // Supports
+    if (numberOfSupports > 0) {
+      Map<String, Object> supports = new java.util.LinkedHashMap<String, Object>();
+      supports.put("item", "Pipe Supports");
+      supports.put("description", "Steel pipe supports with saddles");
+      supports.put("quantity", numberOfSupports);
+      supports.put("unit", "each");
+      supports.put("totalCost_USD", numberOfSupports * supportCost);
+      bom.add(supports);
+    }
+
+    // Anchors
+    if (numberOfAnchors > 0) {
+      Map<String, Object> anchors = new java.util.LinkedHashMap<String, Object>();
+      anchors.put("item", "Pipe Anchors");
+      anchors.put("description", "Fixed anchor points");
+      anchors.put("quantity", numberOfAnchors);
+      anchors.put("unit", "each");
+      anchors.put("totalCost_USD", numberOfAnchors * anchorCost);
+      bom.add(anchors);
+    }
+
+    return bom;
   }
 
   // ============================================================================
@@ -992,6 +1876,520 @@ public class PipeMechanicalDesignCalculator implements Serializable {
   }
 
   // ============================================================================
+  // GETTERS AND SETTERS - PIPELINE PHYSICAL PROPERTIES
+  // ============================================================================
+
+  /**
+   * Get pipeline length.
+   *
+   * @return pipeline length in meters
+   */
+  public double getPipelineLength() {
+    return pipelineLength;
+  }
+
+  /**
+   * Set pipeline length.
+   *
+   * @param pipelineLength pipeline length in meters
+   */
+  public void setPipelineLength(double pipelineLength) {
+    this.pipelineLength = pipelineLength;
+  }
+
+  /**
+   * Get steel density.
+   *
+   * @return steel density in kg/m3
+   */
+  public double getSteelDensity() {
+    return steelDensity;
+  }
+
+  /**
+   * Set steel density.
+   *
+   * @param steelDensity steel density in kg/m3
+   */
+  public void setSteelDensity(double steelDensity) {
+    this.steelDensity = steelDensity;
+  }
+
+  // ============================================================================
+  // GETTERS AND SETTERS - COATING AND INSULATION
+  // ============================================================================
+
+  /**
+   * Get external coating type.
+   *
+   * @return coating type
+   */
+  public String getCoatingType() {
+    return coatingType;
+  }
+
+  /**
+   * Set external coating type.
+   *
+   * @param coatingType coating type (e.g., "3LPE", "FBE", "CTE")
+   */
+  public void setCoatingType(String coatingType) {
+    this.coatingType = coatingType;
+  }
+
+  /**
+   * Get external coating thickness.
+   *
+   * @return coating thickness in meters
+   */
+  public double getCoatingThickness() {
+    return coatingThickness;
+  }
+
+  /**
+   * Set external coating thickness.
+   *
+   * @param coatingThickness coating thickness in meters
+   */
+  public void setCoatingThickness(double coatingThickness) {
+    this.coatingThickness = coatingThickness;
+  }
+
+  /**
+   * Get insulation type.
+   *
+   * @return insulation type
+   */
+  public String getInsulationType() {
+    return insulationType;
+  }
+
+  /**
+   * Set insulation type.
+   *
+   * @param insulationType insulation type (e.g., "PUF", "mineral wool", "none")
+   */
+  public void setInsulationType(String insulationType) {
+    this.insulationType = insulationType;
+  }
+
+  /**
+   * Get insulation thickness.
+   *
+   * @return insulation thickness in meters
+   */
+  public double getInsulationThickness() {
+    return insulationThickness;
+  }
+
+  /**
+   * Set insulation thickness.
+   *
+   * @param insulationThickness insulation thickness in meters
+   */
+  public void setInsulationThickness(double insulationThickness) {
+    this.insulationThickness = insulationThickness;
+  }
+
+  /**
+   * Get concrete weight coating thickness.
+   *
+   * @return concrete coating thickness in meters
+   */
+  public double getConcreteCoatingThickness() {
+    return concreteCoatingThickness;
+  }
+
+  /**
+   * Set concrete weight coating thickness.
+   *
+   * @param concreteCoatingThickness concrete coating thickness in meters
+   */
+  public void setConcreteCoatingThickness(double concreteCoatingThickness) {
+    this.concreteCoatingThickness = concreteCoatingThickness;
+  }
+
+  // ============================================================================
+  // GETTERS AND SETTERS - INSTALLATION PARAMETERS
+  // ============================================================================
+
+  /**
+   * Get installation method.
+   *
+   * @return installation method
+   */
+  public String getInstallationMethod() {
+    return installationMethod;
+  }
+
+  /**
+   * Set installation method.
+   *
+   * @param installationMethod installation method (e.g., "S-lay", "J-lay", "Reel-lay", "Onshore")
+   */
+  public void setInstallationMethod(String installationMethod) {
+    this.installationMethod = installationMethod;
+  }
+
+  /**
+   * Get water depth.
+   *
+   * @return water depth in meters
+   */
+  public double getWaterDepth() {
+    return waterDepth;
+  }
+
+  /**
+   * Set water depth.
+   *
+   * @param waterDepth water depth in meters
+   */
+  public void setWaterDepth(double waterDepth) {
+    this.waterDepth = waterDepth;
+  }
+
+  /**
+   * Get burial depth.
+   *
+   * @return burial depth in meters
+   */
+  public double getBurialDepth() {
+    return burialDepth;
+  }
+
+  /**
+   * Set burial depth.
+   *
+   * @param burialDepth burial depth in meters
+   */
+  public void setBurialDepth(double burialDepth) {
+    this.burialDepth = burialDepth;
+  }
+
+  /**
+   * Get ambient temperature.
+   *
+   * @return ambient temperature in Celsius
+   */
+  public double getAmbientTemperature() {
+    return ambientTemperature;
+  }
+
+  /**
+   * Set ambient temperature.
+   *
+   * @param ambientTemperature ambient temperature in Celsius
+   */
+  public void setAmbientTemperature(double ambientTemperature) {
+    this.ambientTemperature = ambientTemperature;
+  }
+
+  // ============================================================================
+  // GETTERS AND SETTERS - FLANGES AND VALVES
+  // ============================================================================
+
+  /**
+   * Get flange class.
+   *
+   * @return flange class per ASME B16.5
+   */
+  public int getFlangeClass() {
+    return flangeClass;
+  }
+
+  /**
+   * Set flange class.
+   *
+   * @param flangeClass flange class (150, 300, 600, 900, 1500, 2500)
+   */
+  public void setFlangeClass(int flangeClass) {
+    this.flangeClass = flangeClass;
+  }
+
+  /**
+   * Get number of flange pairs.
+   *
+   * @return number of flange pairs
+   */
+  public int getNumberOfFlangePairs() {
+    return numberOfFlangePairs;
+  }
+
+  /**
+   * Set number of flange pairs.
+   *
+   * @param numberOfFlangePairs number of flange pairs
+   */
+  public void setNumberOfFlangePairs(int numberOfFlangePairs) {
+    this.numberOfFlangePairs = numberOfFlangePairs;
+  }
+
+  /**
+   * Get number of valves.
+   *
+   * @return number of valves
+   */
+  public int getNumberOfValves() {
+    return numberOfValves;
+  }
+
+  /**
+   * Set number of valves.
+   *
+   * @param numberOfValves number of valves
+   */
+  public void setNumberOfValves(int numberOfValves) {
+    this.numberOfValves = numberOfValves;
+  }
+
+  /**
+   * Get valve type.
+   *
+   * @return valve type
+   */
+  public String getValveType() {
+    return valveType;
+  }
+
+  /**
+   * Set valve type.
+   *
+   * @param valveType valve type (e.g., "Ball", "Gate", "Check")
+   */
+  public void setValveType(String valveType) {
+    this.valveType = valveType;
+  }
+
+  // ============================================================================
+  // GETTERS AND SETTERS - SUPPORTS AND EXPANSION
+  // ============================================================================
+
+  /**
+   * Get anchor spacing.
+   *
+   * @return anchor spacing in meters
+   */
+  public double getAnchorSpacing() {
+    return anchorSpacing;
+  }
+
+  /**
+   * Set anchor spacing.
+   *
+   * @param anchorSpacing anchor spacing in meters
+   */
+  public void setAnchorSpacing(double anchorSpacing) {
+    this.anchorSpacing = anchorSpacing;
+  }
+
+  // ============================================================================
+  // GETTERS AND SETTERS - COST ESTIMATION RATES
+  // ============================================================================
+
+  /**
+   * Get steel price per kg.
+   *
+   * @return steel price in USD/kg
+   */
+  public double getSteelPricePerKg() {
+    return steelPricePerKg;
+  }
+
+  /**
+   * Set steel price per kg.
+   *
+   * @param steelPricePerKg steel price in USD/kg
+   */
+  public void setSteelPricePerKg(double steelPricePerKg) {
+    this.steelPricePerKg = steelPricePerKg;
+  }
+
+  /**
+   * Get coating price per m2.
+   *
+   * @return coating price in USD/m2
+   */
+  public double getCoatingPricePerM2() {
+    return coatingPricePerM2;
+  }
+
+  /**
+   * Set coating price per m2.
+   *
+   * @param coatingPricePerM2 coating price in USD/m2
+   */
+  public void setCoatingPricePerM2(double coatingPricePerM2) {
+    this.coatingPricePerM2 = coatingPricePerM2;
+  }
+
+  /**
+   * Get field weld cost.
+   *
+   * @return field weld cost in USD per weld
+   */
+  public double getFieldWeldCost() {
+    return fieldWeldCost;
+  }
+
+  /**
+   * Set field weld cost.
+   *
+   * @param fieldWeldCost field weld cost in USD per weld
+   */
+  public void setFieldWeldCost(double fieldWeldCost) {
+    this.fieldWeldCost = fieldWeldCost;
+  }
+
+  /**
+   * Get contingency percentage.
+   *
+   * @return contingency percentage (e.g., 0.15 for 15%)
+   */
+  public double getContingencyPercentage() {
+    return contingencyPercentage;
+  }
+
+  /**
+   * Set contingency percentage.
+   *
+   * @param contingencyPercentage contingency percentage (e.g., 0.15 for 15%)
+   */
+  public void setContingencyPercentage(double contingencyPercentage) {
+    this.contingencyPercentage = contingencyPercentage;
+  }
+
+  // ============================================================================
+  // GETTERS - CALCULATED RESULTS (Read-Only)
+  // ============================================================================
+
+  /**
+   * Get steel weight per meter.
+   *
+   * @return steel weight in kg/m
+   */
+  public double getSteelWeightPerMeter() {
+    return steelWeightPerMeter;
+  }
+
+  /**
+   * Get total dry weight per meter.
+   *
+   * @return total dry weight in kg/m
+   */
+  public double getTotalDryWeightPerMeter() {
+    return totalDryWeightPerMeter;
+  }
+
+  /**
+   * Get submerged weight per meter.
+   *
+   * @return submerged weight in kg/m (negative = buoyant)
+   */
+  public double getSubmergedWeightPerMeter() {
+    return submergedWeightPerMeter;
+  }
+
+  /**
+   * Get total pipeline weight.
+   *
+   * @return total pipeline dry weight in kg
+   */
+  public double getTotalPipelineWeight() {
+    return totalPipelineWeight;
+  }
+
+  /**
+   * Get total external surface area.
+   *
+   * @return total external surface area in m2
+   */
+  public double getTotalExternalSurfaceArea() {
+    return totalExternalSurfaceArea;
+  }
+
+  /**
+   * Get number of pipe joints.
+   *
+   * @return number of pipe joints
+   */
+  public int getNumberOfJoints() {
+    return numberOfJoints;
+  }
+
+  /**
+   * Get number of field welds.
+   *
+   * @return number of field welds
+   */
+  public int getNumberOfFieldWelds() {
+    return numberOfFieldWelds;
+  }
+
+  /**
+   * Get support spacing.
+   *
+   * @return support spacing in meters
+   */
+  public double getSupportSpacing() {
+    return supportSpacing;
+  }
+
+  /**
+   * Get number of supports.
+   *
+   * @return number of supports
+   */
+  public int getNumberOfSupports() {
+    return numberOfSupports;
+  }
+
+  /**
+   * Get collapse pressure.
+   *
+   * @return collapse pressure in MPa
+   */
+  public double getCollapsePressure() {
+    return collapsePressure;
+  }
+
+  /**
+   * Get fatigue life.
+   *
+   * @return fatigue life in years
+   */
+  public double getFatigueLife() {
+    return fatigueLife;
+  }
+
+  /**
+   * Get total project cost.
+   *
+   * @return total project cost in USD
+   */
+  public double getTotalProjectCost() {
+    return totalProjectCost;
+  }
+
+  /**
+   * Get total direct cost.
+   *
+   * @return total direct cost in USD
+   */
+  public double getTotalDirectCost() {
+    return totalDirectCost;
+  }
+
+  /**
+   * Get total labor manhours.
+   *
+   * @return total labor manhours
+   */
+  public double getTotalLaborManhours() {
+    return totalLaborManhours;
+  }
+
+  // ============================================================================
   // JSON EXPORT
   // ============================================================================
 
@@ -1035,6 +2433,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     result.put("equipmentType", "Pipeline");
     result.put("designCode", designCode);
     result.put("materialGrade", materialGrade);
+    result.put("pipelineLength_m", pipelineLength);
 
     // Design parameters
     Map<String, Object> designParams = new java.util.LinkedHashMap<String, Object>();
@@ -1054,6 +2453,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     material.put("youngsModulus_MPa", youngsModulus);
     material.put("poissonsRatio", poissonsRatio);
     material.put("thermalExpansion_perK", thermalExpansion);
+    material.put("steelDensity_kgm3", steelDensity);
     result.put("materialProperties", material);
 
     // Design factors
@@ -1065,7 +2465,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     factors.put("locationClass", locationClass);
     result.put("designFactors", factors);
 
-    // Calculated results
+    // Calculated results - Basic Design
     Map<String, Object> results = new java.util.LinkedHashMap<String, Object>();
     results.put("minimumWallThickness_mm", minimumWallThickness * 1000);
     results.put("nominalWallThickness_mm", nominalWallThickness * 1000);
@@ -1084,6 +2484,119 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     }
     results.put("designIsSafe", isDesignSafe());
     result.put("calculatedResults", results);
+
+    // Coating and Insulation
+    Map<String, Object> coatingData = new java.util.LinkedHashMap<String, Object>();
+    coatingData.put("coatingType", coatingType);
+    coatingData.put("coatingThickness_mm", coatingThickness * 1000);
+    coatingData.put("insulationType", insulationType);
+    coatingData.put("insulationThickness_mm", insulationThickness * 1000);
+    coatingData.put("concreteCoatingThickness_mm", concreteCoatingThickness * 1000);
+    result.put("coatingAndInsulation", coatingData);
+
+    // Weight and Buoyancy
+    Map<String, Object> weightData = new java.util.LinkedHashMap<String, Object>();
+    weightData.put("steelWeight_kgm", steelWeightPerMeter);
+    weightData.put("coatingWeight_kgm", coatingWeightPerMeter);
+    weightData.put("insulationWeight_kgm", insulationWeightPerMeter);
+    weightData.put("concreteWeight_kgm", concreteWeightPerMeter);
+    weightData.put("totalDryWeight_kgm", totalDryWeightPerMeter);
+    weightData.put("contentWeight_kgm", contentWeightPerMeter);
+    weightData.put("submergedWeight_kgm", submergedWeightPerMeter);
+    weightData.put("totalPipelineWeight_kg", totalPipelineWeight);
+    result.put("weightAndBuoyancy", weightData);
+
+    // Surface Areas
+    Map<String, Object> surfaceData = new java.util.LinkedHashMap<String, Object>();
+    surfaceData.put("externalSurfaceArea_m2m", externalSurfaceAreaPerMeter);
+    surfaceData.put("internalSurfaceArea_m2m", internalSurfaceAreaPerMeter);
+    surfaceData.put("totalExternalSurfaceArea_m2", totalExternalSurfaceArea);
+    result.put("surfaceAreas", surfaceData);
+
+    // Joints and Welds
+    Map<String, Object> jointsData = new java.util.LinkedHashMap<String, Object>();
+    jointsData.put("numberOfJoints", numberOfJoints);
+    jointsData.put("numberOfFieldWelds", numberOfFieldWelds);
+    jointsData.put("standardJointLength_m", STANDARD_JOINT_LENGTH);
+    result.put("jointsAndWelds", jointsData);
+
+    // Flanges and Connections
+    Map<String, Object> connectionsData = new java.util.LinkedHashMap<String, Object>();
+    connectionsData.put("flangeClass", flangeClass);
+    connectionsData.put("numberOfFlangePairs", numberOfFlangePairs);
+    connectionsData.put("numberOfValves", numberOfValves);
+    connectionsData.put("valveType", valveType);
+    result.put("flangesAndConnections", connectionsData);
+
+    // Supports and Expansion
+    Map<String, Object> supportsData = new java.util.LinkedHashMap<String, Object>();
+    supportsData.put("supportSpacing_m", supportSpacing);
+    supportsData.put("numberOfSupports", numberOfSupports);
+    supportsData.put("expansionLoopLength_m", expansionLoopLength);
+    supportsData.put("numberOfExpansionLoops", numberOfExpansionLoops);
+    supportsData.put("anchorSpacing_m", anchorSpacing);
+    supportsData.put("numberOfAnchors", numberOfAnchors);
+    result.put("supportsAndExpansion", supportsData);
+
+    // Detailed Design Results
+    Map<String, Object> detailedDesign = new java.util.LinkedHashMap<String, Object>();
+    detailedDesign.put("minimumBendRadius_m", minimumBendRadius);
+    detailedDesign.put("externalPressure_MPa", externalPressure);
+    detailedDesign.put("collapsePressure_MPa", collapsePressure);
+    detailedDesign.put("propagationBucklingPressure_MPa", propagationBucklingPressure);
+    detailedDesign.put("allowableSpanLength_m", allowableSpanLength);
+    detailedDesign.put("fatigueLife_years", fatigueLife);
+    result.put("detailedDesignResults", detailedDesign);
+
+    // Installation Parameters
+    Map<String, Object> installData = new java.util.LinkedHashMap<String, Object>();
+    installData.put("installationMethod", installationMethod);
+    installData.put("waterDepth_m", waterDepth);
+    installData.put("burialDepth_m", burialDepth);
+    installData.put("ambientTemperature_C", ambientTemperature);
+    result.put("installationParameters", installData);
+
+    // Cost Estimation
+    Map<String, Object> costData = new java.util.LinkedHashMap<String, Object>();
+    costData.put("steelMaterialCost_USD", steelMaterialCost);
+    costData.put("coatingCost_USD", coatingCost);
+    costData.put("insulationCost_USD", insulationCost);
+    costData.put("concreteCost_USD", concreteCost);
+    costData.put("weldingCost_USD", weldingCost);
+    costData.put("flangesAndFittingsCost_USD", flangesAndFittingsCost);
+    costData.put("valvesCost_USD", valvesCost);
+    costData.put("supportsAndAnchorsCost_USD", supportsAndAnchorsCost);
+    costData.put("installationCost_USD", installationCost);
+    costData.put("totalDirectCost_USD", totalDirectCost);
+    costData.put("engineeringCost_USD", engineeringCost);
+    costData.put("testingCost_USD", testingCost);
+    costData.put("contingencyCost_USD", contingencyCost);
+    costData.put("totalProjectCost_USD", totalProjectCost);
+    result.put("costEstimation", costData);
+
+    // Labor Estimation
+    Map<String, Object> laborData = new java.util.LinkedHashMap<String, Object>();
+    laborData.put("weldingManhoursPerJoint", weldingManhoursPerJoint);
+    laborData.put("installationManhoursPerMeter", installationManhoursPerMeter);
+    laborData.put("totalLaborManhours", totalLaborManhours);
+    result.put("laborEstimation", laborData);
+
+    // Cost Rate Assumptions
+    Map<String, Object> rateData = new java.util.LinkedHashMap<String, Object>();
+    rateData.put("steelPrice_USDkg", steelPricePerKg);
+    rateData.put("coatingPrice_USDm2", coatingPricePerM2);
+    rateData.put("insulationPrice_USDm3", insulationPricePerM3);
+    rateData.put("concretePrice_USDm3", concretePricePerM3);
+    rateData.put("fieldWeldCost_USD", fieldWeldCost);
+    rateData.put("flangePairCost_USD", flangePairCost);
+    rateData.put("valveCost_USD", valveCost);
+    rateData.put("supportCost_USD", supportCost);
+    rateData.put("anchorCost_USD", anchorCost);
+    rateData.put("installationCostPerMeter_USD", installationCostPerMeter);
+    rateData.put("engineeringCostPercentage", engineeringCostPercentage);
+    rateData.put("testingCostPercentage", testingCostPercentage);
+    rateData.put("contingencyPercentage", contingencyPercentage);
+    result.put("costRateAssumptions", rateData);
 
     return result;
   }

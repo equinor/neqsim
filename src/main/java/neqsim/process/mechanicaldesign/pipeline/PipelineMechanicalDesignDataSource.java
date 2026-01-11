@@ -269,6 +269,80 @@ public class PipelineMechanicalDesignDataSource {
   }
 
   /**
+   * Load parameters from the design standards tables based on design code.
+   *
+   * @param designCode the design code (e.g., "ASME-B31.8", "DNV-ST-F101")
+   * @param equipmentType the equipment type (e.g., "Pipeline", "MultiphasePipe")
+   * @param factors design factors to update with loaded values
+   */
+  public void loadFromStandardsTable(String designCode, String equipmentType,
+      PipeDesignFactors factors) {
+    if (designCode == null || designCode.isEmpty()) {
+      return;
+    }
+
+    // Determine which standards table to query based on the design code
+    String tableName;
+    if (designCode.toUpperCase(Locale.ROOT).contains("API")) {
+      tableName = "api_standards";
+    } else if (designCode.toUpperCase(Locale.ROOT).contains("ASME")) {
+      tableName = "asme_standards";
+    } else if (designCode.toUpperCase(Locale.ROOT).contains("DNV")
+        || designCode.toUpperCase(Locale.ROOT).contains("ISO")
+        || designCode.toUpperCase(Locale.ROOT).contains("EN")) {
+      tableName = "dnv_iso_en_standards";
+    } else if (designCode.toUpperCase(Locale.ROOT).contains("NORSOK")) {
+      tableName = "norsok_standards";
+    } else if (designCode.toUpperCase(Locale.ROOT).contains("ASTM")) {
+      tableName = "astm_standards";
+    } else {
+      return; // Unknown standard
+    }
+
+    String query = String.format(Locale.ROOT,
+        "SELECT SPECIFICATION, MINVALUE, MAXVALUE FROM %s WHERE STANDARD_CODE='%s' AND EQUIPMENTTYPE='%s'",
+        tableName, designCode, equipmentType);
+
+    try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
+        ResultSet dataSet = database.getResultSet(query)) {
+      while (dataSet.next()) {
+        String specification = dataSet.getString("SPECIFICATION");
+        double maxValue = parseDouble(dataSet.getString("MAXVALUE"));
+
+        if (specification == null) {
+          continue;
+        }
+
+        // Map specification names to design factor fields
+        String specLower = specification.toLowerCase(Locale.ROOT);
+        if (specLower.contains("designfactor") || specLower.contains("usagefactor")) {
+          if (!Double.isNaN(maxValue)) {
+            factors.designFactor = maxValue;
+          }
+        } else if (specLower.contains("jointefficiency") || specLower.contains("jointfactor")) {
+          if (!Double.isNaN(maxValue)) {
+            factors.jointFactor = maxValue;
+          }
+        } else if (specLower.contains("corrosionallowance")) {
+          if (!Double.isNaN(maxValue)) {
+            factors.corrosionAllowance = maxValue;
+          }
+        } else if (specLower.contains("fabricationtolerance")) {
+          if (!Double.isNaN(maxValue)) {
+            factors.fabricationTolerance = 1.0 - maxValue; // Convert 0.125 to 0.875
+          }
+        } else if (specLower.contains("temperaturederat")) {
+          if (!Double.isNaN(maxValue)) {
+            // Temperature derating is stored in the standard
+          }
+        }
+      }
+    } catch (Exception ex) {
+      logger.debug("Could not load from standards table " + tableName + ": " + ex.getMessage());
+    }
+  }
+
+  /**
    * Load all pipeline mechanical design data.
    *
    * @param materialGrade API 5L material grade
@@ -277,11 +351,25 @@ public class PipelineMechanicalDesignDataSource {
    */
   public void loadIntoCalculator(String materialGrade, String companyIdentifier,
       PipeMechanicalDesignCalculator calculator) {
+    loadIntoCalculator(materialGrade, companyIdentifier, null, "Pipeline", calculator);
+  }
+
+  /**
+   * Load all pipeline mechanical design data including standards-based parameters.
+   *
+   * @param materialGrade API 5L material grade
+   * @param companyIdentifier company identifier
+   * @param designCode design code (e.g., "ASME-B31.8", "DNV-ST-F101")
+   * @param equipmentType equipment type (e.g., "Pipeline", "MultiphasePipe")
+   * @param calculator calculator to update with loaded values
+   */
+  public void loadIntoCalculator(String materialGrade, String companyIdentifier, String designCode,
+      String equipmentType, PipeMechanicalDesignCalculator calculator) {
     if (calculator == null) {
       return;
     }
 
-    // Load material properties
+    // Load material properties from MaterialPipeProperties table
     Optional<PipeMaterialData> materialOpt = loadMaterialProperties(materialGrade);
     if (materialOpt.isPresent()) {
       PipeMaterialData material = materialOpt.get();
@@ -292,8 +380,15 @@ public class PipelineMechanicalDesignDataSource {
       calculator.setMaterialGrade(materialGrade);
     }
 
-    // Load design factors
+    // Load design factors from TechnicalRequirements_Process table
     PipeDesignFactors factors = loadDesignFactors(companyIdentifier);
+
+    // Also load from standards tables if design code is specified
+    if (designCode != null && !designCode.isEmpty()) {
+      loadFromStandardsTable(designCode, equipmentType, factors);
+    }
+
+    // Apply loaded factors to calculator
     calculator.setDesignFactor(factors.designFactor);
     calculator.setJointFactor(factors.jointFactor);
     calculator.setCorrosionAllowance(factors.corrosionAllowance / 1000.0); // mm to m

@@ -2,6 +2,13 @@
 
 Documentation for pipeline equipment in NeqSim.
 
+> **📘 Comprehensive Documentation Available**
+> 
+> For detailed documentation on all pipeline types, the `PipeLineInterface`, flow regime detection, heat transfer, profile methods, and complete examples, see:
+> - [Pipeline Simulation Guide](pipeline_simulation.md) - Complete simulation documentation
+> - [Pipeline Mechanical Design](../pipeline_mechanical_design.md) - Wall thickness, stress analysis, cost estimation
+> - [Pipeline Mechanical Design Math](../pipeline_mechanical_design_math.md) - Mathematical formulas reference
+
 ## Table of Contents
 - [Overview](#overview)
 - [Pipe Segment](#pipe-segment)

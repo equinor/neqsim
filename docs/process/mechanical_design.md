@@ -2,6 +2,15 @@
 
 NeqSim provides a comprehensive mechanical design framework for sizing and specifying process equipment according to industry standards. This document describes the architecture, usage patterns, and JSON export capabilities.
 
+> **📘 Equipment-Specific Documentation**
+>
+> | Equipment | Documentation |
+> |-----------|---------------|
+> | **Pipelines** | [Pipeline Mechanical Design](pipeline_mechanical_design.md) - Wall thickness, stress analysis, cost estimation |
+> | **Mathematical Methods** | [Pipeline Design Math](pipeline_mechanical_design_math.md) - Complete formula reference |
+> | **Design Standards** | [Mechanical Design Standards](mechanical_design_standards.md) - Industry standards reference |
+> | **Database** | [Mechanical Design Database](mechanical_design_database.md) - Material properties, design factors |
+
 ## Overview
 
 The mechanical design system calculates:
@@ -10,6 +19,8 @@ The mechanical design system calculates:
 - **Design conditions** - Pressure and temperature with appropriate margins
 - **Module dimensions** - Plot space requirements for installation planning
 - **Utility requirements** - Power consumption, heating/cooling duties
+- **Cost estimation** - Material, fabrication, installation, and project costs
+- **Bill of Materials** - Complete BOM with quantities and costs
 
 ## Architecture
 
@@ -25,12 +36,30 @@ MechanicalDesign (base class)
 ├── ExpanderMechanicalDesign       → API 617
 ├── TankMechanicalDesign           → API 650/620
 ├── HeatExchangerMechanicalDesign  → TEMA
-├── PipelineMechanicalDesign       → ASME B31.3
+├── PipelineMechanicalDesign       → ASME B31.3/B31.4/B31.8, DNV-OS-F101, API 5L
+│   └── PipeMechanicalDesignCalculator (wall thickness, stress, cost)
 ├── AdsorberMechanicalDesign       → ASME VIII
 ├── AbsorberMechanicalDesign       → ASME VIII
 ├── EjectorMechanicalDesign        → HEI
 └── SafetyValveMechanicalDesign    → API 520/521
 ```
+
+### Pipeline Mechanical Design Features
+
+The `PipelineMechanicalDesign` class provides comprehensive pipeline design including:
+
+| Feature | Description |
+|---------|-------------|
+| **Wall Thickness** | ASME B31.3/B31.4/B31.8, DNV-OS-F101 calculations |
+| **Stress Analysis** | Hoop, longitudinal, von Mises stress |
+| **External Pressure** | Collapse and propagation buckling |
+| **Weight/Buoyancy** | Steel, coating, concrete, contents |
+| **Thermal Design** | Expansion loops, insulation sizing |
+| **Structural Design** | Support spacing, spans, bend radius |
+| **Fatigue Analysis** | S-N curves per DNV-RP-C203 |
+| **Cost Estimation** | Complete project cost with BOM |
+
+See [Pipeline Mechanical Design](pipeline_mechanical_design.md) for details.
 
 ### Response Classes for JSON Export
 

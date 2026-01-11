@@ -276,6 +276,8 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Mechanical Design | [docs/process/mechanical_design.md](process/mechanical_design.md) | Mechanical design overview |
 | Design Standards | [docs/process/mechanical_design_standards.md](process/mechanical_design_standards.md) | Design standards |
 | Design Database | [docs/process/mechanical_design_database.md](process/mechanical_design_database.md) | Design database |
+| **Pipeline Mechanical Design** | [docs/process/pipeline_mechanical_design.md](process/pipeline_mechanical_design.md) | **Comprehensive pipeline mechanical design with wall thickness, stress analysis, cost estimation** |
+| **Pipeline Design Math** | [docs/process/pipeline_mechanical_design_math.md](process/pipeline_mechanical_design_math.md) | **Mathematical methods and formulas for pipeline design** |
 | TORG Integration | [docs/process/torg_integration.md](process/torg_integration.md) | TORG integration |
 | Field Development | [docs/process/field_development_orchestration.md](process/field_development_orchestration.md) | Field development orchestration |
 
@@ -293,6 +295,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 |----------|------|-------------|
 | Fluid Mechanics Overview | [docs/fluidmechanics/README.md](fluidmechanics/README.md) | Fluid mechanics module |
 | Pipeline Index | [docs/wiki/pipeline_index.md](wiki/pipeline_index.md) | Pipeline documentation index |
+| **Pipeline Simulation** | [docs/process/equipment/pipeline_simulation.md](process/equipment/pipeline_simulation.md) | **Comprehensive pipeline simulation guide with PipeLineInterface, all pipe types, flow regimes, heat transfer** |
 | Flow Equations | [docs/wiki/pipeline_flow_equations.md](wiki/pipeline_flow_equations.md) | Pipeline flow equations |
 | Single Phase Flow | [docs/fluidmechanics/single_phase_pipe_flow.md](fluidmechanics/single_phase_pipe_flow.md) | Single phase pipe flow |
 
