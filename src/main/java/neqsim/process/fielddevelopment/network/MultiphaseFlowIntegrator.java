@@ -480,6 +480,10 @@ public class MultiphaseFlowIntegrator implements Serializable {
 
   /**
    * Estimate liquid holdup using simplified Beggs-Brill.
+   *
+   * @param fluid the fluid system
+   * @param mixVel the mixture velocity in m/s
+   * @return estimated liquid holdup as fraction (0-1)
    */
   private double estimateLiquidHoldup(SystemInterface fluid, double mixVel) {
     // Simplified correlation

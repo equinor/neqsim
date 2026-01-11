@@ -231,6 +231,11 @@ public class ConceptToProcessLinker implements Serializable {
 
   /**
    * Generate oil processing train.
+   *
+   * @param process the process system to add equipment to
+   * @param inlet the inlet stream
+   * @param concept the field concept with production parameters
+   * @param fidelity the model fidelity level
    */
   private void generateOilProcessing(ProcessSystem process, Stream inlet, FieldConcept concept,
       FidelityLevel fidelity) {
@@ -288,6 +293,11 @@ public class ConceptToProcessLinker implements Serializable {
 
   /**
    * Generate gas processing train.
+   *
+   * @param process the process system to add equipment to
+   * @param inlet the inlet stream
+   * @param concept the field concept with production parameters
+   * @param fidelity the model fidelity level
    */
   private void generateGasProcessing(ProcessSystem process, StreamInterface inlet,
       FieldConcept concept, FidelityLevel fidelity) {
@@ -321,6 +331,11 @@ public class ConceptToProcessLinker implements Serializable {
 
   /**
    * Generate gas condensate processing train.
+   *
+   * @param process the process system to add equipment to
+   * @param inlet the inlet stream
+   * @param concept the field concept with production parameters
+   * @param fidelity the model fidelity level
    */
   private void generateGasCondensateProcessing(ProcessSystem process, Stream inlet,
       FieldConcept concept, FidelityLevel fidelity) {

@@ -55,8 +55,8 @@ import neqsim.process.mechanicaldesign.pipeline.RiserMechanicalDesign;
  *
  * @author ASMF
  * @version 1.0
- * @see RiserMechanicalDesign
- * @see RiserMechanicalDesignCalculator
+ * @see neqsim.process.mechanicaldesign.pipeline.RiserMechanicalDesign
+ * @see neqsim.process.mechanicaldesign.pipeline.RiserMechanicalDesignCalculator
  */
 public class Riser extends PipeBeggsAndBrills {
 

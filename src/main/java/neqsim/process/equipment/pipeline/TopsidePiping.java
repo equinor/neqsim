@@ -54,8 +54,8 @@ import neqsim.process.mechanicaldesign.pipeline.TopsidePipingMechanicalDesign;
  *
  * @author ASMF
  * @version 1.0
- * @see TopsidePipingMechanicalDesign
- * @see TopsidePipingMechanicalDesignCalculator
+ * @see neqsim.process.mechanicaldesign.pipeline.TopsidePipingMechanicalDesign
+ * @see neqsim.process.mechanicaldesign.pipeline.TopsidePipingMechanicalDesignCalculator
  */
 public class TopsidePiping extends PipeBeggsAndBrills {
 
