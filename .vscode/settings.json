@@ -19,5 +19,7 @@
     "editor.tabSize": 4,
     "editor.insertSpaces": true
   },
+  "github.copilot.chat.autoCommit.enabled": false,
+  "github.copilot.chat.confirmEditGeneration": true,
   "chat.agent.maxRequests": 2500
 }
