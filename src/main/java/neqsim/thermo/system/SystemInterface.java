@@ -1736,6 +1736,28 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public boolean hasPlusFraction();
 
   /**
+   * Check if the system contains ionic components (e.g., Na+, Cl-, Ca+2).
+   *
+   * <p>
+   * This method scans all components in the system and returns true if any component has a non-zero
+   * ionic charge or is marked as an ion. This is useful for determining whether special ion
+   * handling is required during flash calculations, regardless of whether chemical reactions are
+   * enabled.
+   * </p>
+   *
+   * @return true if the system contains at least one ionic component, false otherwise
+   */
+  public default boolean hasIons() {
+    for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
+      if (getPhase(0).getComponent(i).getIonicCharge() != 0
+          || getPhase(0).getComponent(i).isIsIon()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * <p>
    * hasSolidPhase.
    * </p>

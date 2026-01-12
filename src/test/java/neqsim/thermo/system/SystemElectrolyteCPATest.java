@@ -126,4 +126,27 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
   public void checkFugacityCoefficientsDn2() {
     assertTrue(testModel.checkFugacityCoefficientsDn2());
   }
+
+  /**
+   * Test hasIons method returns true for electrolyte systems.
+   */
+  @Test
+  @DisplayName("test hasIons returns true for system with ionic components")
+  public void testHasIonsWithElectrolytes() {
+    assertTrue(thermoSystem.hasIons(), "System with Na+ and Cl- should return hasIons() = true");
+  }
+
+  /**
+   * Test hasIons method returns false for systems without ions.
+   */
+  @Test
+  @DisplayName("test hasIons returns false for system without ionic components")
+  public void testHasIonsWithoutElectrolytes() {
+    SystemInterface nonIonicSystem = new SystemSrkEos(298.15, 10.0);
+    nonIonicSystem.addComponent("methane", 0.5);
+    nonIonicSystem.addComponent("water", 0.5);
+    nonIonicSystem.setMixingRule("classic");
+    assertEquals(false, nonIonicSystem.hasIons(),
+        "System without ions should return hasIons() = false");
+  }
 }

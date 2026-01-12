@@ -1452,6 +1452,25 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   public int getNumberOfComponents();
 
   /**
+   * Check if the phase contains ionic components (e.g., Na+, Cl-, Ca+2).
+   *
+   * <p>
+   * This method scans all components in the phase and returns true if any component has a non-zero
+   * ionic charge or is marked as an ion.
+   * </p>
+   *
+   * @return true if the phase contains at least one ionic component, false otherwise
+   */
+  public default boolean hasIons() {
+    for (int i = 0; i < getNumberOfComponents(); i++) {
+      if (getComponent(i).getIonicCharge() != 0 || getComponent(i).isIsIon()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * <p>
    * setNumberOfComponents.
    * </p>
