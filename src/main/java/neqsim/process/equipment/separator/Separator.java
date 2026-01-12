@@ -2026,6 +2026,9 @@ public class Separator extends ProcessEquipmentBaseClass
       }
     }
     System.out.println("========================================");
+  }
+
+  /**
    * {@inheritDoc}
    *
    * <p>
@@ -2041,8 +2044,7 @@ public class Separator extends ProcessEquipmentBaseClass
    */
   @Override
   public neqsim.util.validation.ValidationResult validateSetup() {
-    neqsim.util.validation.ValidationResult result =
-        new neqsim.util.validation.ValidationResult(getName());
+    neqsim.util.validation.ValidationResult result = new neqsim.util.validation.ValidationResult(getName());
 
     // Check: Equipment has a valid name (from interface default)
     if (getName() == null || getName().trim().isEmpty()) {
@@ -2119,7 +2121,8 @@ public class Separator extends ProcessEquipmentBaseClass
    * Builder class for constructing Separator instances with a fluent API.
    *
    * <p>
-   * Provides a readable and maintainable way to construct separators with geometry, orientation,
+   * Provides a readable and maintainable way to construct separators with
+   * geometry, orientation,
    * efficiency, and entrainment specifications.
    * </p>
    *
@@ -2291,7 +2294,7 @@ public class Separator extends ProcessEquipmentBaseClass
      * Sets oil entrainment in gas phase.
      *
      * @param value entrainment value
-     * @param spec specification type ("mole", "mass", "volume")
+     * @param spec  specification type ("mole", "mass", "volume")
      * @return this builder for chaining
      */
     public Builder oilInGas(double value, String spec) {
@@ -2304,7 +2307,7 @@ public class Separator extends ProcessEquipmentBaseClass
      * Sets water entrainment in gas phase.
      *
      * @param value entrainment value
-     * @param spec specification type ("mole", "mass", "volume")
+     * @param spec  specification type ("mole", "mass", "volume")
      * @return this builder for chaining
      */
     public Builder waterInGas(double value, String spec) {
@@ -2317,7 +2320,7 @@ public class Separator extends ProcessEquipmentBaseClass
      * Sets gas entrainment in liquid phase.
      *
      * @param value entrainment value
-     * @param spec specification type ("mole", "mass", "volume")
+     * @param spec  specification type ("mole", "mass", "volume")
      * @return this builder for chaining
      */
     public Builder gasInLiquid(double value, String spec) {

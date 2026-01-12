@@ -400,10 +400,14 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     }
 
     return totalPressureDrop;
+  }
+
+  /**
    * {@inheritDoc}
    *
    * <p>
-   * Returns a separator-specific response with additional fields for vessel sizing, internals, and
+   * Returns a separator-specific response with additional fields for vessel
+   * sizing, internals, and
    * process design data.
    * </p>
    */
