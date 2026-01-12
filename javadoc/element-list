@@ -155,12 +155,19 @@ neqsim.process.equipment.subsea
 neqsim.process.equipment.tank
 neqsim.process.equipment.util
 neqsim.process.equipment.valve
+neqsim.process.equipment.watertreatment
 neqsim.process.equipment.well.allocation
 neqsim.process.fielddevelopment
 neqsim.process.fielddevelopment.concept
+neqsim.process.fielddevelopment.economics
 neqsim.process.fielddevelopment.evaluation
 neqsim.process.fielddevelopment.facility
+neqsim.process.fielddevelopment.network
+neqsim.process.fielddevelopment.reservoir
 neqsim.process.fielddevelopment.screening
+neqsim.process.fielddevelopment.subsea
+neqsim.process.fielddevelopment.tieback
+neqsim.process.fielddevelopment.workflow
 neqsim.process.integration.ml
 neqsim.process.logic
 neqsim.process.logic.action
@@ -185,6 +192,7 @@ neqsim.process.mechanicaldesign.designstandards
 neqsim.process.mechanicaldesign.ejector
 neqsim.process.mechanicaldesign.expander
 neqsim.process.mechanicaldesign.heatexchanger
+neqsim.process.mechanicaldesign.manifold
 neqsim.process.mechanicaldesign.pipeline
 neqsim.process.mechanicaldesign.pump
 neqsim.process.mechanicaldesign.separator
