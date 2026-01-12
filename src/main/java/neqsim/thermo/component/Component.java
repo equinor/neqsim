@@ -564,8 +564,14 @@ public abstract class Component implements ComponentInterface {
       return;
     }
     if (initType == 0) {
-      K = Math.exp(Math.log(criticalPressure / pressure)
-          + 5.373 * (1.0 + srkacentricFactor) * (1.0 - criticalTemperature / temperature));
+      // Ions have no vapor pressure and must remain in liquid phase
+      // Set K to very small value to prevent ion partitioning to gas
+      if (ionicCharge != 0 || isIsIon()) {
+        K = 1.0e-40;
+      } else {
+        K = Math.exp(Math.log(criticalPressure / pressure)
+            + 5.373 * (1.0 + srkacentricFactor) * (1.0 - criticalTemperature / temperature));
+      }
       z = numberOfMoles / totalNumberOfMoles;
       x = z;
       // System.out.println("K " + K);

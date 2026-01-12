@@ -282,6 +282,72 @@ $$T_b = 2 \times 10^{-6} M^3 - 0.0035 M^2 + 2.4003 M + 171.74$$
 
 ## Lumping Methods
 
+Lumping reduces computational cost by grouping many SCN (Single Carbon Number) pseudo-components into fewer lumped components while preserving bulk properties.
+
+### Available Lumping Models in NeqSim
+
+| Model Name | API Name | Description |
+|------------|----------|-------------|
+| PVT Lumping Model | `"PVTlumpingModel"` | Default. Preserves TBP fractions (C6-C9) as separate pseudo-components, only lumps the plus fraction (C10+) |
+| Standard Lumping Model | `"standard"` | Lumps **all** TBP fractions and plus fractions together starting from C6 |
+| No Lumping | `"no lumping"` | Keeps all individual SCN components (C6, C7, ... C80) |
+
+### Configuration Parameters
+
+The lumping model has two key parameters:
+
+| Parameter | Method | What it Controls |
+|-----------|--------|------------------|
+| numberOfPseudoComponents | `setNumberOfPseudoComponents(n)` | **Total** number of pseudo-components (TBP + lumped) |
+| numberOfLumpedComponents | `setNumberOfLumpedComponents(n)` | Number of groups created from the **plus fraction only** |
+
+### Recommended Method by Model
+
+| Model | Recommended Method | Reason |
+|-------|-------------------|--------|
+| `"standard"` | `setNumberOfPseudoComponents(n)` | Directly controls total pseudo-components |
+| `"PVTlumpingModel"` | `setNumberOfLumpedComponents(n)` | Directly controls C10+ grouping without side effects |
+
+### Quick Reference
+
+| I want to... | Model | Method |
+|--------------|-------|--------|
+| Get exactly N total pseudo-components (lumping from C6) | `"standard"` | `setNumberOfPseudoComponents(N)` |
+| Keep C6-C9 separate, lump C10+ into N groups | `"PVTlumpingModel"` | `setNumberOfLumpedComponents(N)` |
+| Keep all SCN components (C6-C80) | `"no lumping"` | N/A |
+
+---
+
+### PVTlumpingModel Behavior
+
+The PVT lumping model keeps TBP fractions (e.g., C6, C7, C8, C9) as individual pseudo-components and only lumps the characterized plus fraction (C10 through C80).
+
+The relationship between parameters:
+
+$$\text{numberOfLumpedComponents} = \text{numberOfPseudoComponents} - \text{numberOfDefinedTBPComponents}$$
+
+**⚠️ Gotcha**: If the calculated `numberOfLumpedComponents` is less than the current value (default 7), the model **overrides** your setting to ensure sufficient lumping groups.
+
+**Example** with 4 TBP fractions (C6-C9):
+
+| You Set | Calculation | Final Result |
+|---------|-------------|--------------|
+| `setNumberOfPseudoComponents(12)` | 12 - 4 = 8 lumped | 4 TBP + 8 lumped = **12 total** |
+| `setNumberOfLumpedComponents(8)` | 4 + 8 = 12 total | 4 TBP + 8 lumped = **12 total** |
+| `setNumberOfPseudoComponents(5)` | 5 - 4 = 1, but 1 < 7 (default) → override | 4 + 7 = **11 total** (not 5!) |
+
+**Recommendation**: Use `setNumberOfLumpedComponents()` for `PVTlumpingModel` to avoid unexpected overrides.
+
+---
+
+### Standard Lumping Model Behavior
+
+The standard model lumps **all** heavy components (TBP fractions + plus fraction) into equal-weight groups:
+
+$$w_{target} = \frac{\sum_{i=C6}^{C80} z_i \cdot M_i}{N}$$
+
+where $N$ is `numberOfPseudoComponents`.
+
 ### Standard Weight-Based Lumping
 
 SCN pseudo-components are grouped into $N$ lumps with approximately equal weight fractions:
@@ -358,15 +424,39 @@ System.out.println("Estimated alpha: " + alpha);
 System.out.println("Watson K-factor: " + watsonK);
 ```
 
-### Pedersen Model with Lumping
+### PVTlumpingModel - Preserve TBP Fractions
 
 ```java
-fluid.getCharacterization()
-    .setPlusFractionModel("Pedersen")
-    .setLumpingModel("Standard");
+// Fluid with C6-C9 TBP fractions and C10+ plus fraction
+fluid.getCharacterization().setTBPModel("PedersenSRK");
+fluid.addTBPfraction("C6", 1.0, 0.086, 0.66);
+fluid.addTBPfraction("C7", 2.0, 0.092, 0.73);
+fluid.addTBPfraction("C8", 2.0, 0.104, 0.76);
+fluid.addTBPfraction("C9", 1.0, 0.118, 0.78);
+fluid.addPlusFraction("C10+", 15.0, 0.280, 0.84);
 
-fluid.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(6);
+fluid.getCharacterization().setPlusFractionModel("Pedersen");
+fluid.getCharacterization().setLumpingModel("PVTlumpingModel");
+
+// Control number of groups from C10+ (C6-C9 remain separate)
+fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(5);
+
 fluid.getCharacterization().characterisePlusFraction();
+// Result: C6_PC, C7_PC, C8_PC, C9_PC + 5 lumped groups = 9 total pseudo-components
+```
+
+### Standard Lumping - Lump Everything from C6
+
+```java
+// Use standard model to lump ALL heavy fractions together
+fluid.getCharacterization().setPlusFractionModel("Pedersen");
+fluid.getCharacterization().setLumpingModel("standard");
+
+// Total 6 pseudo-components covering C6 through C80
+fluid.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(6);
+
+fluid.getCharacterization().characterisePlusFraction();
+// Result: PC1, PC2, PC3, PC4, PC5, PC6 covering entire C6-C80 range
 ```
 
 ### Accessing Characterized Data

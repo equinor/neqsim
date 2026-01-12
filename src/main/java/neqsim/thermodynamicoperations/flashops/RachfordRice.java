@@ -94,7 +94,13 @@ public class RachfordRice implements Serializable {
     double g0 = -1.0;
     double g1 = 1.0;
 
+    // Skip ionic components (K < 1e-30) as they don't participate in VLE.
+    // Ions stay entirely in the liquid phase and should not affect the
+    // Rachford-Rice phase fraction calculation.
     for (i = 0; i < K.length; i++) {
+      if (K[i] < 1e-30) {
+        continue; // Skip ions
+      }
       midler = (K[i] * z[i] - 1.0) / (K[i] - 1.0);
       if ((midler > minBeta) && (K[i] > 1.0)) {
         minBeta = midler;
@@ -119,6 +125,9 @@ public class RachfordRice implements Serializable {
     double nybeta = (minBeta + maxBeta) / 2.0;
     double gtest = 0.0;
     for (i = 0; i < K.length; i++) {
+      if (K[i] < 1e-30) {
+        continue; // Skip ions
+      }
       gtest += z[i] * (K[i] - 1.0) / (1.0 - nybeta + nybeta * K[i]);
     }
 
@@ -147,6 +156,9 @@ public class RachfordRice implements Serializable {
         gbeta = 0.0;
 
         for (i = 0; i < K.length; i++) {
+          if (K[i] < 1e-30) {
+            continue; // Skip ions
+          }
           double temp1 = (K[i] - 1.0);
           double temp2 = 1.0 + temp1 * nybeta;
           deriv += -(z[i] * temp1 * temp1) / (temp2 * temp2);
@@ -171,6 +183,9 @@ public class RachfordRice implements Serializable {
         gbeta = 0.0;
 
         for (i = 0; i < K.length; i++) {
+          if (K[i] < 1e-30) {
+            continue; // Skip ions
+          }
           deriv -= (z[i] * (K[i] - 1.0) * (1.0 - K[i])) / Math.pow((betal + (1 - betal) * K[i]), 2);
           gbeta += z[i] * (K[i] - 1.0) / (betal + (-betal + 1.0) * K[i]);
         }
@@ -234,7 +249,13 @@ public class RachfordRice implements Serializable {
     double g0 = -1.0;
     double g1 = 1.0;
 
+    // Skip ionic components (K < 1e-30) as they don't participate in VLE.
+    // Ions stay entirely in the liquid phase and should not affect the
+    // Rachford-Rice phase fraction calculation.
     for (int i = 0; i < K.length; i++) {
+      if (K[i] < 1e-30) {
+        continue; // Skip ions
+      }
       g0 += z[i] * K[i];
       g1 += -z[i] / K[i];
     }
@@ -250,23 +271,44 @@ public class RachfordRice implements Serializable {
     double h = 0.0;
 
     for (int i = 0; i < K.length; i++) {
+      if (K[i] < 1e-30) {
+        continue; // Skip ions
+      }
       h += z[i] * (K[i] - 1.0) / (1.0 + V * (K[i] - 1.0));
     }
     if (h > 0) {
       for (int i = 0; i < K.length; i++) {
+        if (K[i] < 1e-30) {
+          continue; // Skip ions
+        }
         K[i] = 1.0 / K[i];
       }
     }
 
-    double Kmax = K[0];
-    double Kmin = K[0];
+    double Kmax = 0.0;
+    double Kmin = Double.MAX_VALUE;
+    boolean foundNonIon = false;
 
-    for (int i = 1; i < K.length; i++) {
-      if (K[i] < Kmin) {
-        Kmin = K[i];
-      } else if (K[i] > Kmax) {
-        Kmax = K[i];
+    for (int i = 0; i < K.length; i++) {
+      if (K[i] < 1e-30) {
+        continue; // Skip ions
       }
+      if (!foundNonIon) {
+        Kmax = K[i];
+        Kmin = K[i];
+        foundNonIon = true;
+      } else {
+        if (K[i] < Kmin) {
+          Kmin = K[i];
+        } else if (K[i] > Kmax) {
+          Kmax = K[i];
+        }
+      }
+    }
+
+    // If no non-ion components, return single phase
+    if (!foundNonIon) {
+      return phaseFractionMinimumLimit;
     }
 
     double alphaMin = 1.0 / (1.0 - Kmax);
@@ -282,6 +324,11 @@ public class RachfordRice implements Serializable {
       d = new double[K.length];
     }
     for (int i = 0; i < K.length; i++) {
+      if (K[i] < 1e-30) {
+        c[i] = 0.0;
+        d[i] = 0.0;
+        continue; // Skip ions
+      }
       double Ki = K[i];
       if (Ki < 1e-25) {
         Ki = 1e-25;
@@ -312,6 +359,9 @@ public class RachfordRice implements Serializable {
       hb = 0.0;
       double hbder = 0.0;
       for (int i = 0; i < K.length; i++) {
+        if (K[i] < 1e-30) {
+          continue; // Skip ions
+        }
         funk -= z[i] * a * (1.0 + a) / (d[i] + a * (1.0 + d[i]));
         funkder -=
             z[i] * (a * a + (1.0 + a) * (1.0 + a) * d[i]) / Math.pow(d[i] + a * (1.0 + d[i]), 2.0);

@@ -45,7 +45,7 @@ public class PhaseHydrate extends Phase {
     if (fluidModel.isEmpty()) {
       hydrateModel = "PVTsimHydrateModel";
     } else if (fluidModel.equals("CPAs-SRK-EOS-statoil") || fluidModel.equals("CPAs-SRK-EOS")
-        || fluidModel.equals("CPA-SRK-EOS")) {
+        || fluidModel.equals("CPA-SRK-EOS") || fluidModel.equals("Electrolyte-CPA-EOS-statoil")) {
       hydrateModel = "CPAHydrateModel";
     } else {
       hydrateModel = "PVTsimHydrateModel";
