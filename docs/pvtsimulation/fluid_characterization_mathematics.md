@@ -292,7 +292,36 @@ Lumping reduces computational cost by grouping many SCN (Single Carbon Number) p
 | Standard Lumping Model | `"standard"` | Lumps **all** TBP fractions and plus fractions together starting from C6 |
 | No Lumping | `"no lumping"` | Keeps all individual SCN components (C6, C7, ... C80) |
 
-### Configuration Parameters
+### Fluent Configuration API (Recommended)
+
+NeqSim provides a fluent builder API for configuring lumping, which makes the intent clearer and avoids confusion between parameters:
+
+```java
+// PVTlumpingModel: keep C6-C9 separate, lump C10+ into 5 groups
+fluid.getCharacterization().configureLumping()
+    .model("PVTlumpingModel")
+    .plusFractionGroups(5)
+    .build();
+
+// Standard model: create exactly 6 total pseudo-components from C6+
+fluid.getCharacterization().configureLumping()
+    .model("standard")
+    .totalPseudoComponents(6)
+    .build();
+
+// No lumping: keep all individual SCN components
+fluid.getCharacterization().configureLumping()
+    .noLumping()
+    .build();
+
+// Custom boundaries: match specific PVT lab report groupings
+// Creates groups: C6, C7-C9, C10-C14, C15-C19, C20+
+fluid.getCharacterization().configureLumping()
+    .customBoundaries(6, 7, 10, 15, 20)
+    .build();
+```
+
+### Legacy Configuration Parameters
 
 The lumping model has two key parameters:
 
@@ -301,20 +330,45 @@ The lumping model has two key parameters:
 | numberOfPseudoComponents | `setNumberOfPseudoComponents(n)` | **Total** number of pseudo-components (TBP + lumped) |
 | numberOfLumpedComponents | `setNumberOfLumpedComponents(n)` | Number of groups created from the **plus fraction only** |
 
+> ⚠️ **Deprecation Notice**: For `PVTlumpingModel`, the method `setNumberOfPseudoComponents()` is deprecated. Use `setNumberOfLumpedComponents()` or the fluent API `plusFractionGroups()` instead.
+
 ### Recommended Method by Model
 
-| Model | Recommended Method | Reason |
-|-------|-------------------|--------|
-| `"standard"` | `setNumberOfPseudoComponents(n)` | Directly controls total pseudo-components |
-| `"PVTlumpingModel"` | `setNumberOfLumpedComponents(n)` | Directly controls C10+ grouping without side effects |
+| Model | Fluent API Method | Legacy Method |
+|-------|------------------|---------------|
+| `"standard"` | `totalPseudoComponents(n)` | `setNumberOfPseudoComponents(n)` |
+| `"PVTlumpingModel"` | `plusFractionGroups(n)` | `setNumberOfLumpedComponents(n)` |
+| Custom grouping | `customBoundaries(...)` | `setCustomBoundaries(int[])` |
 
 ### Quick Reference
 
-| I want to... | Model | Method |
-|--------------|-------|--------|
-| Get exactly N total pseudo-components (lumping from C6) | `"standard"` | `setNumberOfPseudoComponents(N)` |
-| Keep C6-C9 separate, lump C10+ into N groups | `"PVTlumpingModel"` | `setNumberOfLumpedComponents(N)` |
-| Keep all SCN components (C6-C80) | `"no lumping"` | N/A |
+| I want to... | Model | Fluent API |
+|--------------|-------|------------|
+| Get exactly N total pseudo-components (lumping from C6) | `"standard"` | `.model("standard").totalPseudoComponents(N)` |
+| Keep C6-C9 separate, lump C10+ into N groups | `"PVTlumpingModel"` | `.model("PVTlumpingModel").plusFractionGroups(N)` |
+| Match PVT lab report groupings (e.g., C6, C7-C9, C10+) | Any | `.customBoundaries(6, 7, 10)` |
+| Keep all SCN components (C6-C80) | `"no lumping"` | `.noLumping()` |
+
+---
+
+### Custom Carbon Number Boundaries
+
+When matching specific PVT lab report groupings, use custom boundaries to specify exactly which carbon numbers start each group:
+
+```java
+// Match a PVT report with groups: C6, C7-C9, C10-C14, C15-C19, C20+
+fluid.getCharacterization().configureLumping()
+    .customBoundaries(6, 7, 10, 15, 20)
+    .build();
+```
+
+Each value represents the **starting carbon number** for a group. The final group extends to the heaviest component (typically C80).
+
+| Boundary Array | Resulting Groups |
+|----------------|------------------|
+| `[6, 10, 20]` | C6-C9, C10-C19, C20+ |
+| `[6, 7, 10, 15, 20]` | C6, C7-C9, C10-C14, C15-C19, C20+ |
+| `[7, 12, 20, 30]` | C7-C11, C12-C19, C20-C29, C30+ |
 
 ---
 
@@ -324,19 +378,24 @@ The PVT lumping model keeps TBP fractions (e.g., C6, C7, C8, C9) as individual p
 
 The relationship between parameters:
 
-$$\text{numberOfLumpedComponents} = \text{numberOfPseudoComponents} - \text{numberOfDefinedTBPComponents}$$
+$$n_{\text{lumped}} = n_{\text{pseudo}} - n_{\text{TBP}}$$
 
-**⚠️ Gotcha**: If the calculated `numberOfLumpedComponents` is less than the current value (default 7), the model **overrides** your setting to ensure sufficient lumping groups.
+where:
+- $n_{\text{lumped}}$ = number of lumped component groups from plus fraction
+- $n_{\text{pseudo}}$ = total number of pseudo-components
+- $n_{\text{TBP}}$ = number of defined TBP fractions (e.g., 4 for C6-C9)
+
+**⚠️ Override Behavior**: If the calculated `numberOfLumpedComponents` is less than the current value (default 7), the model **overrides** your setting to ensure sufficient lumping groups. A warning is logged when this occurs.
 
 **Example** with 4 TBP fractions (C6-C9):
 
 | You Set | Calculation | Final Result |
 |---------|-------------|--------------|
-| `setNumberOfPseudoComponents(12)` | 12 - 4 = 8 lumped | 4 TBP + 8 lumped = **12 total** |
-| `setNumberOfLumpedComponents(8)` | 4 + 8 = 12 total | 4 TBP + 8 lumped = **12 total** |
-| `setNumberOfPseudoComponents(5)` | 5 - 4 = 1, but 1 < 7 (default) → override | 4 + 7 = **11 total** (not 5!) |
+| `plusFractionGroups(8)` | Direct: 8 lumped | 4 TBP + 8 lumped = **12 total** |
+| `totalPseudoComponents(12)` | 12 - 4 = 8 lumped | 4 TBP + 8 lumped = **12 total** |
+| `totalPseudoComponents(5)` | 5 - 4 = 1 < 7 (default) → **override** | 4 + 7 = **11 total** (not 5!) |
 
-**Recommendation**: Use `setNumberOfLumpedComponents()` for `PVTlumpingModel` to avoid unexpected overrides.
+**Recommendation**: Use `plusFractionGroups()` or `setNumberOfLumpedComponents()` for `PVTlumpingModel` to avoid unexpected overrides.
 
 ---
 
@@ -344,19 +403,20 @@ $$\text{numberOfLumpedComponents} = \text{numberOfPseudoComponents} - \text{numb
 
 The standard model lumps **all** heavy components (TBP fractions + plus fraction) into equal-weight groups:
 
-$$w_{target} = \frac{\sum_{i=C6}^{C80} z_i \cdot M_i}{N}$$
+$$w_{\text{target}} = \frac{\sum_{i=C_6}^{C_{80}} z_i \cdot M_i}{N}$$
 
-where $N$ is `numberOfPseudoComponents`.
+where $N$ is the total number of pseudo-components.
 
-### Standard Weight-Based Lumping
+### Weight-Based Lumping Algorithm
 
 SCN pseudo-components are grouped into $N$ lumps with approximately equal weight fractions:
 
-$$w_{target} = \frac{\sum_i z_i \cdot M_i}{N}$$
+$$w_{\text{target}} = \frac{\sum_i z_i \cdot M_i}{N}$$
 
 For each lump $k$, the properties are averaged:
 
 #### Mole Fraction
+
 $$z_k = \sum_{i \in k} z_i$$
 
 #### Molecular Weight
@@ -436,10 +496,12 @@ fluid.addTBPfraction("C9", 1.0, 0.118, 0.78);
 fluid.addPlusFraction("C10+", 15.0, 0.280, 0.84);
 
 fluid.getCharacterization().setPlusFractionModel("Pedersen");
-fluid.getCharacterization().setLumpingModel("PVTlumpingModel");
 
-// Control number of groups from C10+ (C6-C9 remain separate)
-fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(5);
+// Fluent API (Recommended): Control number of groups from C10+
+fluid.getCharacterization().configureLumping()
+    .model("PVTlumpingModel")
+    .plusFractionGroups(5)  // C6-C9 remain separate
+    .build();
 
 fluid.getCharacterization().characterisePlusFraction();
 // Result: C6_PC, C7_PC, C8_PC, C9_PC + 5 lumped groups = 9 total pseudo-components
@@ -450,13 +512,29 @@ fluid.getCharacterization().characterisePlusFraction();
 ```java
 // Use standard model to lump ALL heavy fractions together
 fluid.getCharacterization().setPlusFractionModel("Pedersen");
-fluid.getCharacterization().setLumpingModel("standard");
 
-// Total 6 pseudo-components covering C6 through C80
-fluid.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(6);
+// Fluent API (Recommended): Total 6 pseudo-components covering C6 through C80
+fluid.getCharacterization().configureLumping()
+    .model("standard")
+    .totalPseudoComponents(6)
+    .build();
 
 fluid.getCharacterization().characterisePlusFraction();
 // Result: PC1, PC2, PC3, PC4, PC5, PC6 covering entire C6-C80 range
+```
+
+### Custom Boundaries - Match PVT Lab Report
+
+```java
+// Match specific PVT lab report groupings
+fluid.getCharacterization().setPlusFractionModel("Pedersen");
+
+// Creates groups: C6, C7-C9, C10-C14, C15-C19, C20+
+fluid.getCharacterization().configureLumping()
+    .customBoundaries(6, 7, 10, 15, 20)
+    .build();
+
+fluid.getCharacterization().characterisePlusFraction();
 ```
 
 ### Accessing Characterized Data

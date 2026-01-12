@@ -24,6 +24,8 @@ public class LumpingModel implements java.io.Serializable {
   double[] fractionOfHeavyEnd = null;
   String name = "";
   SystemInterface system = null;
+  /** Custom carbon number boundaries for lumping. */
+  int[] customBoundaries = null;
 
   /**
    * <p>
@@ -90,6 +92,28 @@ public class LumpingModel implements java.io.Serializable {
     @Override
     public String[] getLumpedComponentNames() {
       return lumpedComponentNames;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void setCustomBoundaries(int[] boundaries) {
+      customBoundaries = boundaries != null ? boundaries.clone() : null;
+      if (boundaries != null) {
+        numberOfLumpedComponents = boundaries.length;
+        logger.info("Custom carbon number boundaries set: {} groups", boundaries.length);
+      }
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public int[] getCustomBoundaries() {
+      return customBoundaries != null ? customBoundaries.clone() : null;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean hasCustomBoundaries() {
+      return customBoundaries != null;
     }
 
     /** {@inheritDoc} */
@@ -218,7 +242,8 @@ public class LumpingModel implements java.io.Serializable {
 
   /**
    * PVTLumpingModel distributes the pseudo components into equal weight fractions starting with the
-   * plus fractions.
+   * plus fractions. This model keeps TBP fractions (C6-C9) as separate pseudo-components and only
+   * lumps the characterized plus fraction (C10+).
    *
    * @author Even Solbraa
    * @version 1.0
@@ -227,7 +252,34 @@ public class LumpingModel implements java.io.Serializable {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
 
+    /** Original requested numberOfPseudoComponents for warning purposes. */
+    private int requestedPseudoComponents = -1;
+
     public PVTLumpingModel() {}
+
+    /**
+     * Set the total number of pseudo-components.
+     *
+     * <p>
+     * <strong>Warning:</strong> For PVTlumpingModel, use {@link #setNumberOfLumpedComponents(int)}
+     * instead. This method calculates numberOfLumpedComponents as (numberOfPseudoComponents -
+     * numberOfTBPfractions), which may lead to unexpected results if the calculated value is less
+     * than the current numberOfLumpedComponents.
+     * </p>
+     *
+     * @param lumpedNumb total number of pseudo-components
+     * @deprecated Use {@link #setNumberOfLumpedComponents(int)} for PVTlumpingModel to directly
+     *             control the number of plus fraction groups without side effects.
+     */
+    @Deprecated
+    @Override
+    public void setNumberOfPseudoComponents(int lumpedNumb) {
+      requestedPseudoComponents = lumpedNumb;
+      logger.warn("setNumberOfPseudoComponents({}) called on PVTlumpingModel. "
+          + "Consider using setNumberOfLumpedComponents() instead to directly control "
+          + "plus fraction grouping without potential override behavior.", lumpedNumb);
+      super.setNumberOfPseudoComponents(lumpedNumb);
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -248,11 +300,28 @@ public class LumpingModel implements java.io.Serializable {
         }
       }
 
+      // Validation and warning for potential override (item 4)
+      int originalLumpedComponents = numberOfLumpedComponents;
       if ((numberOfPseudocomponents - numberOfDefinedTBPcomponents) <= numberOfLumpedComponents) {
         numberOfPseudocomponents = numberOfDefinedTBPcomponents + numberOfLumpedComponents;
       }
 
-      numberOfLumpedComponents = numberOfPseudocomponents - numberOfDefinedTBPcomponents;
+      int calculatedLumpedComponents = numberOfPseudocomponents - numberOfDefinedTBPcomponents;
+      if (requestedPseudoComponents > 0
+          && calculatedLumpedComponents != (requestedPseudoComponents
+              - numberOfDefinedTBPcomponents)
+          && (requestedPseudoComponents
+              - numberOfDefinedTBPcomponents) < originalLumpedComponents) {
+        logger.warn(
+            "PVTlumpingModel override: Requested {} total pseudo-components would result in {} "
+                + "lumped groups (less than minimum {}). Using {} lumped groups instead. "
+                + "Final total: {} pseudo-components.",
+            requestedPseudoComponents, requestedPseudoComponents - numberOfDefinedTBPcomponents,
+            originalLumpedComponents, calculatedLumpedComponents,
+            numberOfDefinedTBPcomponents + calculatedLumpedComponents);
+      }
+
+      numberOfLumpedComponents = calculatedLumpedComponents;
       lumpedComponentNames = new String[numberOfLumpedComponents];
       fractionOfHeavyEnd = new double[numberOfLumpedComponents];
       double[] zPlus = new double[numberOfLumpedComponents];
@@ -448,10 +517,13 @@ public class LumpingModel implements java.io.Serializable {
    */
   public LumpingModelInterface getModel(String modelName) {
     if (modelName.equals("PVTlumpingModel")) {
+      name = "PVTlumpingModel";
       return new PVTLumpingModel();
     } else if (modelName.equals("no lumping")) {
+      name = "no lumping";
       return new NoLumpingModel();
     } else {
+      name = "standard";
       return new StandardLumpingModel();
     }
   }

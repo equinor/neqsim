@@ -226,6 +226,37 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
+   * Create a builder for configuring lumping settings with a fluent API.
+   *
+   * <p>
+   * This method provides a clear and intuitive way to configure lumping, avoiding confusion between
+   * the different parameter methods.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   *
+   * <pre>
+   * // For PVTlumpingModel: keep C6-C9 separate, lump C10+ into 5 groups
+   * fluid.getCharacterization().configureLumping().model("PVTlumpingModel").plusFractionGroups(5)
+   *     .build();
+   *
+   * // For standard model: create exactly 6 total pseudo-components from C6+
+   * fluid.getCharacterization().configureLumping().model("standard").totalPseudoComponents(6)
+   *     .build();
+   *
+   * // No lumping: keep all individual SCN components
+   * fluid.getCharacterization().configureLumping().noLumping().build();
+   * </pre>
+   *
+   * @return a {@link neqsim.thermo.characterization.LumpingConfigBuilder} for fluent configuration
+   */
+  public LumpingConfigBuilder configureLumping() {
+    return new LumpingConfigBuilder(this);
+  }
+
+  /**
    * <p>
    * characterisePlusFraction.
    * </p>

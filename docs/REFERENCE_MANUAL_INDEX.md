@@ -123,14 +123,17 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Thermo Ops Overview | [docs/thermodynamicoperations/README.md](thermodynamicoperations/README.md) | Thermodynamic operations module |
 
 ### Chapter 8: Fluid Characterization
+
+Fluid characterization handles plus fraction splitting, property estimation, and lumping. **New:** A fluent API (`configureLumping()`) makes lumping configuration clearer - see the mathematics document for details.
+
 | Document | Path | Description |
 |----------|------|-------------|
-| Characterization | [docs/wiki/fluid_characterization.md](wiki/fluid_characterization.md) | Fluid characterization methods |
+| Characterization | [docs/wiki/fluid_characterization.md](wiki/fluid_characterization.md) | Fluid characterization guide with lumping API |
 | TBP Fractions | [docs/wiki/tbp_fraction_models.md](wiki/tbp_fraction_models.md) | TBP fraction modeling |
-| PVT Characterization | [docs/thermo/pvt_fluid_characterization.md](thermo/pvt_fluid_characterization.md) | PVT fluid characterization |
+| PVT Characterization | [docs/thermo/pvt_fluid_characterization.md](thermo/pvt_fluid_characterization.md) | PVT fluid characterization with lumping |
 | Characterization Package | [docs/thermo/characterization/README.md](thermo/characterization/README.md) | Characterization module |
 | Combining Methods | [docs/thermo/characterization/fluid_characterization_combining.md](thermo/characterization/fluid_characterization_combining.md) | Fluid combining methods |
-| Char Mathematics | [docs/pvtsimulation/fluid_characterization_mathematics.md](pvtsimulation/fluid_characterization_mathematics.md) | Characterization mathematics |
+| Char Mathematics | [docs/pvtsimulation/fluid_characterization_mathematics.md](pvtsimulation/fluid_characterization_mathematics.md) | Characterization mathematics with lumping equations |
 
 ### Chapter 9: Physical Properties
 | Document | Path | Description |

@@ -24,6 +24,46 @@ oil.setMixingRule(2);
 - **Plus-fraction splitting**: Use `splitTBPfraction` to subdivide heavy cuts using predefined distillation curves.
 - **Viscosity tuning**: Adjust heavy-end Watson K or user-defined viscosity correlations when matching lab rheology.
 
+## Lumping Models
+
+After plus-fraction splitting generates many single-carbon-number (SCN) components, lumping groups them for computational efficiency.
+
+### Fluent API (Recommended)
+
+```java
+// PVTlumpingModel: Preserve C6-C9 TBP fractions, lump only C10+ into 6 groups
+oil.getCharacterization().configureLumping()
+    .model("PVTlumpingModel")
+    .plusFractionGroups(6)
+    .build();
+
+// Standard model: Lump all heavy fractions (C6-C80) into 5 pseudo-components
+oil.getCharacterization().configureLumping()
+    .model("standard")
+    .totalPseudoComponents(5)
+    .build();
+
+// Custom boundaries: Match PVT lab report groupings (C6, C7-C9, C10-C19, C20+)
+oil.getCharacterization().configureLumping()
+    .customBoundaries(6, 7, 10, 20)
+    .build();
+
+// No lumping: Keep all individual SCN components (for detailed studies)
+oil.getCharacterization().configureLumping()
+    .noLumping()
+    .build();
+```
+
+### Lumping Model Comparison
+
+| Model | Behavior | Use Case |
+|-------|----------|----------|
+| `PVTlumpingModel` | Preserves C6-C9 as individual pseudo-components, lumps only C10+ | Standard PVT matching |
+| `standard` | Lumps all heavy fractions from C6 onwards | Minimal components for fast simulation |
+| `no lumping` | Keeps all individual SCN components | Detailed compositional studies |
+
+For more details on the mathematical background, see [Fluid Characterization Mathematics](../pvtsimulation/fluid_characterization_mathematics.md).
+
 ## Asphaltene Modeling
 
 For fluids with asphaltene precipitation risk, use the `PedersenAsphalteneCharacterization` class:

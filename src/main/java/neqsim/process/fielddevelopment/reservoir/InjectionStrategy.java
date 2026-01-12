@@ -13,7 +13,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * strategies. Supports water injection, gas injection, and WAG (water-alternating-gas).
  * </p>
  *
- * <h3>Voidage Replacement</h3>
+ * <p>
+ * <b>Voidage Replacement:</b>
+ * </p>
  * <p>
  * Voidage replacement ratio (VRR) is defined as: VRR = (Injection Volume) / (Production Voidage)
  * where production voidage is the reservoir volume of produced fluids. VRR = 1.0 maintains

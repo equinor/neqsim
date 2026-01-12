@@ -620,7 +620,9 @@ public class GasLiftOptimizer implements Serializable {
    * to find λ such that the total gas allocation equals the available gas.
    * </p>
    *
-   * <h3>Algorithm:</h3>
+   * <p>
+   * <b>Algorithm:</b>
+   * </p>
    * <ol>
    * <li>Bracket the common marginal response λ between [0, max_slope]</li>
    * <li>Binary search: for each λ, find gas allocation per well where slope = λ</li>
