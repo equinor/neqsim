@@ -25,6 +25,8 @@ import neqsim.process.equipment.separator.sectiontype.ValveSection;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
+import neqsim.process.mechanicaldesign.separator.internals.DemistingInternal;
+import neqsim.process.mechanicaldesign.separator.primaryseparation.PrimarySeparation;
 import neqsim.process.util.fire.SeparatorFireExposure;
 import neqsim.process.util.monitor.SeparatorResponse;
 import neqsim.process.util.report.ReportConfig;
@@ -39,8 +41,28 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Separator class.
  * </p>
  *
+ * Base class for all separator equipment in NeqSim. Provides thermodynamic
+ * separation
+ * of gas/liquid/water phases with support for primary separation devices,
+ * demisting internals,
+ * and mechanical design calculations.
+ *
+ * <p>
+ * For detailed documentation on separator internals and carry-over
+ * calculations, see:
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/separators_and_internals.md">
+ * Separators and Internals Wiki</a> and
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/carryover_calculations.md">
+ * Carry-Over Calculations Wiki</a>
+ * </p>
+ *
  * @author Even Solbraa
  * @version $Id: $Id
+ * @see neqsim.process.equipment.separator.GasScrubber
+ * @see neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign
+ * @see neqsim.process.mechanicaldesign.separator.primaryseparation.PrimarySeparation
  */
 public class Separator extends ProcessEquipmentBaseClass
     implements SeparatorInterface, StateVectorProvider {
@@ -152,6 +174,15 @@ public class Separator extends ProcessEquipmentBaseClass
   ArrayList<SeparatorSection> separatorSection = new ArrayList<SeparatorSection>();
 
   SeparatorMechanicalDesign separatorMechanicalDesign;
+  private PrimarySeparation primarySeparation;
+
+  // Inlet stream properties - calculated during run()
+  private double inletGasVelocity = 0.0; // m/s through nozzle
+  private double vesselGasVelocity = 0.0; // m/s through vessel
+  private double gasDensity = 0.0; // kg/m³
+  private double liquidDensity = 0.0; // kg/m³
+  private double liquidContent = 0.0; // volumetric fraction (0 to 1)
+
   private double lastEnthalpy;
   private double lastFlowRate;
   private double lastPressure;
@@ -177,8 +208,9 @@ public class Separator extends ProcessEquipmentBaseClass
   /**
    * Constructor for Separator.
    *
-   * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param name        a {@link java.lang.String} object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
+   *                    object
    */
   public Separator(String name, StreamInterface inletStream) {
     this(name);
@@ -203,7 +235,8 @@ public class Separator extends ProcessEquipmentBaseClass
    * setInletStream.
    * </p>
    *
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
+   *                    object
    */
   public void setInletStream(StreamInterface inletStream) {
     inletStreamMixer.addStream(inletStream);
@@ -221,7 +254,8 @@ public class Separator extends ProcessEquipmentBaseClass
    * addStream.
    * </p>
    *
-   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface}
+   *                  object
    */
   public void addStream(StreamInterface newStream) {
     if (numberOfInputStreams == 0) {
@@ -299,11 +333,15 @@ public class Separator extends ProcessEquipmentBaseClass
    * setEntrainment.
    * </p>
    *
-   * @param val a double specifying the entrainment amount
-   * @param specType a {@link java.lang.String} object describing the specification unit
-   * @param specifiedStream a {@link java.lang.String} object describing the reference stream
-   * @param phaseFrom a {@link java.lang.String} object describing the phase entrained from
-   * @param phaseTo a {@link java.lang.String} object describing the phase entrained to
+   * @param val             a double specifying the entrainment amount
+   * @param specType        a {@link java.lang.String} object describing the
+   *                        specification unit
+   * @param specifiedStream a {@link java.lang.String} object describing the
+   *                        reference stream
+   * @param phaseFrom       a {@link java.lang.String} object describing the phase
+   *                        entrained from
+   * @param phaseTo         a {@link java.lang.String} object describing the phase
+   *                        entrained to
    */
   public void setEntrainment(double val, String specType, String specifiedStream, String phaseFrom,
       String phaseTo) {
@@ -326,6 +364,7 @@ public class Separator extends ProcessEquipmentBaseClass
   @Override
   public void run(UUID id) {
     inletStreamMixer.run(id);
+    updateInletProperties();
     double enthalpy = inletStreamMixer.getOutletStream().getFluid().getEnthalpy();
     double flow = inletStreamMixer.getOutletStream().getFlowRate("kg/hr");
     double pres = inletStreamMixer.getOutletStream().getPressure();
@@ -496,8 +535,7 @@ public class Separator extends ProcessEquipmentBaseClass
       thermoSystem.init(0);
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
         double dncomp = 0.0;
-        dncomp +=
-            inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
+        dncomp += inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
         double dniliq = 0.0;
         if (hasliq) {
           dniliq = -liquidOutStream.getThermoSystem().getComponent(i).getNumberOfmoles();
@@ -591,6 +629,162 @@ public class Separator extends ProcessEquipmentBaseClass
         liquidOutStream.getFluid().initPhysicalProperties("density");
       }
     }
+  }
+
+  /**
+   * Update inlet stream properties that are cached for use in separation
+   * calculations.
+   * <p>
+   * This method calculates and stores inlet gas velocity, vessel gas velocity,
+   * gas density, liquid
+   * density, and liquid content. These values are used by the separation device
+   * calculations and
+   * should be updated whenever the inlet stream changes.
+   * </p>
+   */
+  private void updateInletProperties() {
+    if (getFeedStream() == null || getFeedStream().getThermoSystem() == null) {
+      return;
+    }
+
+    // Calculate inlet gas velocity through nozzle
+    inletGasVelocity = getInletGasVelocity();
+
+    // Calculate gas velocity through vessel
+    // Use the separator's internal diameter for vessel area calculation
+    double volumetricFlow = getInletGasVolumetricFlow();
+    if (internalDiameter > 0.0) {
+      double vesselArea = Math.PI * internalDiameter * internalDiameter / 4.0;
+      vesselGasVelocity = volumetricFlow / vesselArea;
+    } else {
+      vesselGasVelocity = 0.0;
+    }
+
+    // Store gas density
+    gasDensity = getInletGasDensity();
+
+    // Store liquid density
+    liquidDensity = getInletLiquidDensity();
+
+    // Store liquid content
+    liquidContent = getInletLiquidContent();
+  }
+
+  /**
+   * <p>
+   * Calculate the gas volumetric flow rate from the inlet stream.
+   * </p>
+   *
+   * Extracts the gas phase volumetric flow from the feed stream.
+   *
+   * @return gas volumetric flow rate in m³/s
+   */
+  public double getInletGasVolumetricFlow() {
+    if (getFeedStream() == null || getFeedStream().getThermoSystem() == null) {
+      return 0.0;
+    }
+    return getFeedStream().getThermoSystem().getPhase(0).getVolume() / 1e5; // Convert from cm³/s to
+                                                                            // m³/s
+  }
+
+  /**
+   * Calculate the gas velocity through the inlet nozzle.
+   * 
+   * Uses the inlet nozzle diameter from primary separation to calculate velocity.
+   * Velocity =
+   * volumetric flow / nozzle area.
+   *
+   * @return gas velocity through nozzle in m/s
+   */
+  public double getInletGasVelocity() {
+    if (primarySeparation == null) {
+      return 0.0;
+    }
+    double volumetricFlow = getInletGasVolumetricFlow();
+    double nozzleDiameter = primarySeparation.getInletNozzleDiameter();
+
+    if (nozzleDiameter <= 0.0) {
+      return 0.0;
+    }
+
+    double nozzleArea = Math.PI * nozzleDiameter * nozzleDiameter / 4.0;
+    return volumetricFlow / nozzleArea;
+  }
+
+  /**
+   * Get the gas density from the inlet stream.
+   * 
+   * Extracts the gas phase density and initializes physical properties if needed.
+   *
+   * @return gas density in kg/m³
+   */
+  public double getInletGasDensity() {
+    if (getFeedStream() == null || getFeedStream().getThermoSystem() == null) {
+      return 0.0;
+    }
+    SystemInterface fluid = getFeedStream().getThermoSystem();
+    if (fluid.getNumberOfPhases() > 0) {
+      fluid.initPhysicalProperties();
+      return fluid.getPhase(0).getPhysicalProperties().getDensity();
+    }
+    return 0.0;
+  }
+
+  /**
+   * Get the liquid density from the inlet stream.
+   * 
+   * Extracts the liquid phase density. For single-phase gas, returns a default
+   * liquid density.
+   *
+   * @return liquid density in kg/m³
+   */
+  public double getInletLiquidDensity() {
+    if (getFeedStream() == null || getFeedStream().getThermoSystem() == null) {
+      return 800.0; // Default liquid density
+    }
+    SystemInterface fluid = getFeedStream().getThermoSystem();
+    fluid.initPhysicalProperties();
+
+    if (fluid.getNumberOfPhases() > 1 && fluid.hasPhaseType("oil")
+        || fluid.hasPhaseType("aqueous")) {
+      return fluid.getPhase(1).getPhysicalProperties().getDensity();
+    }
+
+    // Default value if liquid phase not present
+    return 800.0;
+  }
+
+  /**
+   * Get the inlet liquid content (volumetric fraction) from the inlet stream.
+   * 
+   * Calculates the volumetric fraction of liquid in the inlet stream. Liquid
+   * content = liquid
+   * volume / total volume.
+   *
+   * @return inlet liquid content as volumetric fraction (0 to 1)
+   */
+  public double getInletLiquidContent() {
+    if (getFeedStream() == null || getFeedStream().getThermoSystem() == null) {
+      return 0.0;
+    }
+    SystemInterface fluid = getFeedStream().getThermoSystem();
+
+    double totalVolume = fluid.getVolume(); // cm³/s
+    if (totalVolume <= 0.0) {
+      return 0.0;
+    }
+
+    double liquidVolume = 0.0;
+    if (fluid.getNumberOfPhases() > 1) {
+      for (int i = 1; i < fluid.getNumberOfPhases(); i++) {
+        if (fluid.getPhase(i).getPhaseTypeName().equals("oil")
+            || fluid.getPhase(i).getPhaseTypeName().equals("aqueous")) {
+          liquidVolume += fluid.getPhase(i).getVolume();
+        }
+      }
+    }
+
+    return liquidVolume / totalVolume;
   }
 
   /**
@@ -818,8 +1012,7 @@ public class Separator extends ProcessEquipmentBaseClass
   public double getDeRatedGasLoadFactor(int phaseNum) {
     thermoSystem.initPhysicalProperties();
     double derating = 1.0;
-    double surfaceTension =
-        thermoSystem.getInterphaseProperties().getSurfaceTension(phaseNum - 1, phaseNum);
+    double surfaceTension = thermoSystem.getInterphaseProperties().getSurfaceTension(phaseNum - 1, phaseNum);
     if (surfaceTension < 10.0e-3) {
       derating = 1.0 - 0.5 * (10.0e-3 - surfaceTension) / 10.0e-3;
     }
@@ -859,7 +1052,8 @@ public class Separator extends ProcessEquipmentBaseClass
 
   /**
    * <p>
-   * Calculates both gas and liquid fluid section areas for horizontal separators. Results can be
+   * Calculates both gas and liquid fluid section areas for horizontal separators.
+   * Results can be
    * used for volume calculation, gas superficial velocity, and settling time.
    * </p>
    *
@@ -886,7 +1080,8 @@ public class Separator extends ProcessEquipmentBaseClass
         double triArea = a * d;
         double circArea = theta * Math.pow(internalRadius, 2);
         lArea = circArea - triArea;
-        // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n", internalRadius, d,
+        // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n",
+        // internalRadius, d,
         // theta, a, lArea);
       } else if (level > internalRadius) {
         double d = level - internalRadius;
@@ -895,7 +1090,8 @@ public class Separator extends ProcessEquipmentBaseClass
         double triArea = a * d;
         double circArea = (Math.PI - theta) * Math.pow(internalRadius, 2);
         lArea = circArea + triArea;
-        // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n", internalRadius, d,
+        // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n",
+        // internalRadius, d,
         // theta, a, lArea);
       } else {
         lArea = 0.5 * Math.PI * Math.pow(internalRadius, 2);
@@ -934,7 +1130,8 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Keeps cached gas/liquid holdup volumes aligned with current geometry and level.
+   * Keeps cached gas/liquid holdup volumes aligned with current geometry and
+   * level.
    */
   private void updateHoldupVolumes() {
     liquidVolume = calcLiquidVolume();
@@ -995,7 +1192,8 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Calculates the total inner surface area of the separator, including shell and heads.
+   * Calculates the total inner surface area of the separator, including shell and
+   * heads.
    *
    * @return inner surface area in square meters
    */
@@ -1009,11 +1207,14 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Estimates the wetted inner surface area based on current liquid level and orientation.
+   * Estimates the wetted inner surface area based on current liquid level and
+   * orientation.
    *
    * <p>
-   * For horizontal separators, the wetted area uses the circular segment defined by the liquid
-   * level to apportion the cylindrical shell and head areas. For vertical separators, the wetted
+   * For horizontal separators, the wetted area uses the circular segment defined
+   * by the liquid
+   * level to apportion the cylindrical shell and head areas. For vertical
+   * separators, the wetted
    * area is the side area up to the current level plus the bottom head.
    *
    * @return wetted area in square meters
@@ -1056,7 +1257,8 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Estimates the unwetted (dry) area as the remaining inner area not in contact with liquid.
+   * Estimates the unwetted (dry) area as the remaining inner area not in contact
+   * with liquid.
    *
    * @return unwetted area in square meters
    */
@@ -1081,12 +1283,15 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Evaluates fire exposure using separator geometry and process conditions while accounting for
+   * Evaluates fire exposure using separator geometry and process conditions while
+   * accounting for
    * flare radiation based on the real flaring heat duty.
    *
-   * @param config fire scenario configuration
-   * @param flare flare supplying heat duty and radiation parameters
-   * @param flareGroundDistanceM horizontal distance from flare base to separator [m]
+   * @param config               fire scenario configuration
+   * @param flare                flare supplying heat duty and radiation
+   *                             parameters
+   * @param flareGroundDistanceM horizontal distance from flare base to separator
+   *                             [m]
    * @return aggregated fire exposure result
    */
   public SeparatorFireExposure.FireExposureResult evaluateFireExposure(
@@ -1097,7 +1302,8 @@ public class Separator extends ProcessEquipmentBaseClass
 
   /**
    * <p>
-   * Estimates liquid level based on volume for horizontal separators using bisection method.
+   * Estimates liquid level based on volume for horizontal separators using
+   * bisection method.
    * Vertical separators too. tol and maxIter are bisection loop parameters.
    * </p>
    *
@@ -1106,13 +1312,11 @@ public class Separator extends ProcessEquipmentBaseClass
    */
   public double levelFromVolume(double volumeTarget) {
 
-
     double tol = 1e-4;
     int maxIter = 100;
 
     double headspace = getMinGasVolume();
-    double maxLiquidVolume =
-        separatorVolume > 0.0 ? Math.max(separatorVolume - headspace, 0.0) : 0.0;
+    double maxLiquidVolume = separatorVolume > 0.0 ? Math.max(separatorVolume - headspace, 0.0) : 0.0;
     double limitedVolume = Math.max(0.0, Math.min(volumeTarget, maxLiquidVolume));
 
     double a = 0.0;
@@ -1210,7 +1414,9 @@ public class Separator extends ProcessEquipmentBaseClass
    * </p>
    *
    * @param i a int
-   * @return a {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection} object
+   * @return a
+   *         {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection}
+   *         object
    */
   public SeparatorSection getSeparatorSection(int i) {
     return separatorSection.get(i);
@@ -1222,7 +1428,9 @@ public class Separator extends ProcessEquipmentBaseClass
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @return a {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection} object
+   * @return a
+   *         {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection}
+   *         object
    */
   public SeparatorSection getSeparatorSection(String name) {
     for (SeparatorSection sec : separatorSection) {
@@ -1478,7 +1686,8 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Set heat input to the separator (e.g., from flare radiation, external heating).
+   * Set heat input to the separator (e.g., from flare radiation, external
+   * heating).
    *
    * @param heatInput heat duty in watts
    */
@@ -1492,7 +1701,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * Set heat input to the separator with specified unit.
    *
    * @param heatInput heat duty value
-   * @param unit heat duty unit (W, kW, MW, J/s, etc.)
+   * @param unit      heat duty unit (W, kW, MW, J/s, etc.)
    */
   public void setHeatInput(double heatInput, String unit) {
     this.heatInputUnit = unit;
@@ -1526,14 +1735,15 @@ public class Separator extends ProcessEquipmentBaseClass
    * Set heat duty with unit (alias for setHeatInput).
    *
    * @param heatDuty heat duty value
-   * @param unit heat duty unit
+   * @param unit     heat duty unit
    */
   public void setHeatDuty(double heatDuty, String unit) {
     setHeatInput(heatDuty, unit);
   }
 
   /**
-   * Set heat duty (alias preserved for compatibility with energy-stream style naming).
+   * Set heat duty (alias preserved for compatibility with energy-stream style
+   * naming).
    *
    * @param heatDuty heat duty in watts
    */
@@ -1542,10 +1752,11 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Set heat duty with unit (alias preserved for compatibility with energy-stream style naming).
+   * Set heat duty with unit (alias preserved for compatibility with energy-stream
+   * style naming).
    *
    * @param heatDuty heat duty value
-   * @param unit heat duty unit
+   * @param unit     heat duty unit
    */
   public void setDuty(double heatDuty, String unit) {
     setHeatInput(heatDuty, unit);
@@ -1612,7 +1823,6 @@ public class Separator extends ProcessEquipmentBaseClass
   public double getExergyChange(String unit) {
     return getExergyChange(unit, 288.15);
   }
-
 
   /** {@inheritDoc} */
   @Override
@@ -1683,11 +1893,140 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /*
-   * private class SeparatorReport extends Object{ public Double gasLoadFactor; SeparatorReport(){
+   * private class SeparatorReport extends Object{ public Double gasLoadFactor;
+   * SeparatorReport(){
    * gasLoadFactor = getGasLoadFactor(); } }
    *
    * public SeparatorReport getReport(){ return this.new SeparatorReport(); }
    */
+
+  /**
+   * Set the primary separation device for this separator.
+   *
+   * @param primarySeparation the PrimarySeparation device
+   */
+  public void setPrimarySeparation(PrimarySeparation primarySeparation) {
+    this.primarySeparation = primarySeparation;
+    if (primarySeparation != null) {
+      primarySeparation.setSeparator(this);
+    }
+  }
+
+  /**
+   * Get the primary separation device for this separator.
+   *
+   * @return the PrimarySeparation device, or null if not set
+   */
+  public PrimarySeparation getPrimarySeparation() {
+    return primarySeparation;
+  }
+
+  /**
+   * Print information about the primary separation device.
+   * 
+   * Displays details about the inlet primary separation including type, nozzle
+   * diameter, and
+   * type-specific properties.
+   */
+  public void printPrimarySeparation() {
+    System.out.println("========================================");
+    System.out.println("Primary Separation for: " + this.getName());
+    System.out.println("========================================");
+
+    if (primarySeparation == null) {
+      System.out.println("No primary separation device configured.");
+    } else {
+      System.out.println("Type: " + primarySeparation.getClass().getSimpleName());
+      System.out.println("Name: " + primarySeparation.getName());
+      System.out
+          .println("Inlet Nozzle Diameter: " + primarySeparation.getInletNozzleDiameter() + " m");
+
+      // Print type-specific properties
+      String className = primarySeparation.getClass().getSimpleName();
+      if (className.equals("InletVane")) {
+        try {
+          double deflectionAngle = (double) primarySeparation.getClass()
+              .getMethod("getDeflectionAngle").invoke(primarySeparation);
+          System.out.println("Deflection Angle: " + deflectionAngle + "°");
+        } catch (Exception e) {
+          logger.debug("Could not retrieve deflection angle: " + e.getMessage());
+        }
+      } else if (className.equals("InletVaneWithMeshpad")) {
+        try {
+          double vaneToMeshpadDistance = (double) primarySeparation.getClass()
+              .getMethod("getVaneToMeshpadDistance").invoke(primarySeparation);
+          double freeDistanceAboveMeshpad = (double) primarySeparation.getClass()
+              .getMethod("getFreeDistanceAboveMeshpad").invoke(primarySeparation);
+          System.out.println("Vane to Meshpad Distance: " + vaneToMeshpadDistance + " m");
+          System.out.println("Free Distance Above Meshpad: " + freeDistanceAboveMeshpad + " m");
+        } catch (Exception e) {
+          logger.debug("Could not retrieve meshpad distances: " + e.getMessage());
+        }
+      } else if (className.equals("InletCyclones")) {
+        try {
+          int numberOfCyclones = (int) primarySeparation.getClass().getMethod("getNumberOfCyclones")
+              .invoke(primarySeparation);
+          double cycloneDiameter = (double) primarySeparation.getClass()
+              .getMethod("getCycloneDiameter").invoke(primarySeparation);
+          System.out.println("Number of Cyclones: " + numberOfCyclones);
+          System.out.println("Cyclone Diameter: " + cycloneDiameter + " m");
+        } catch (Exception e) {
+          logger.debug("Could not retrieve cyclone properties: " + e.getMessage());
+        }
+      }
+    }
+    System.out.println("========================================");
+  }
+
+  /**
+   * Print all deisting internals in this separator.
+   * 
+   * Displays information about each deisting internal including area, Euler
+   * number, and any special
+   * properties such as drainage efficiency.
+   */
+  public void printDemistingInternals() {
+    SeparatorMechanicalDesign mechanicalDesign = getMechanicalDesign();
+
+    if (mechanicalDesign == null) {
+      System.out.println("Mechanical design not initialized");
+      return;
+    }
+
+    int numberOfInternals = mechanicalDesign.getNumberOfDemistingInternals();
+
+    System.out.println("========================================");
+    System.out.println("Deisting Internals for: " + this.getName());
+    System.out.println("========================================");
+    System.out.println("Total number of internals: " + numberOfInternals);
+    System.out.println("Total deisting area: " + mechanicalDesign.getTotalDemistingArea() + " m²");
+    System.out.println();
+
+    if (numberOfInternals == 0) {
+      System.out.println("No deisting internals configured.");
+    } else {
+      for (int i = 0; i < numberOfInternals; i++) {
+        DemistingInternal internal = mechanicalDesign.getDemistingInternals().get(i);
+        System.out.println("Internal " + (i + 1) + ":");
+        System.out.println("  Type: " + internal.getClass().getSimpleName());
+        System.out.println("  Area: " + internal.getArea() + " m²");
+        System.out.println("  Euler Number: " + internal.getEuNumber());
+
+        // Check if it's a DemistingInternalWithDrainage
+        if (internal.getClass().getSimpleName().equals("DemistingInternalWithDrainage")) {
+          try {
+            double drainageEfficiency = (double) internal.getClass().getMethod("getDrainageEfficiency")
+                .invoke(internal);
+            System.out.println("  Drainage Efficiency: " + drainageEfficiency);
+          } catch (Exception e) {
+            logger.debug("Could not retrieve drainage efficiency: " + e.getMessage());
+          }
+        }
+        System.out.println();
+      }
+    }
+    System.out.println("========================================");
+  }
 
   /**
    * {@inheritDoc}
@@ -1705,8 +2044,7 @@ public class Separator extends ProcessEquipmentBaseClass
    */
   @Override
   public neqsim.util.validation.ValidationResult validateSetup() {
-    neqsim.util.validation.ValidationResult result =
-        new neqsim.util.validation.ValidationResult(getName());
+    neqsim.util.validation.ValidationResult result = new neqsim.util.validation.ValidationResult(getName());
 
     // Check: Equipment has a valid name (from interface default)
     if (getName() == null || getName().trim().isEmpty()) {
@@ -1783,7 +2121,8 @@ public class Separator extends ProcessEquipmentBaseClass
    * Builder class for constructing Separator instances with a fluent API.
    *
    * <p>
-   * Provides a readable and maintainable way to construct separators with geometry, orientation,
+   * Provides a readable and maintainable way to construct separators with
+   * geometry, orientation,
    * efficiency, and entrainment specifications.
    * </p>
    *
@@ -1955,7 +2294,7 @@ public class Separator extends ProcessEquipmentBaseClass
      * Sets oil entrainment in gas phase.
      *
      * @param value entrainment value
-     * @param spec specification type ("mole", "mass", "volume")
+     * @param spec  specification type ("mole", "mass", "volume")
      * @return this builder for chaining
      */
     public Builder oilInGas(double value, String spec) {
@@ -1968,7 +2307,7 @@ public class Separator extends ProcessEquipmentBaseClass
      * Sets water entrainment in gas phase.
      *
      * @param value entrainment value
-     * @param spec specification type ("mole", "mass", "volume")
+     * @param spec  specification type ("mole", "mass", "volume")
      * @return this builder for chaining
      */
     public Builder waterInGas(double value, String spec) {
@@ -1981,7 +2320,7 @@ public class Separator extends ProcessEquipmentBaseClass
      * Sets gas entrainment in liquid phase.
      *
      * @param value entrainment value
-     * @param spec specification type ("mole", "mass", "volume")
+     * @param spec  specification type ("mole", "mass", "volume")
      * @return this builder for chaining
      */
     public Builder gasInLiquid(double value, String spec) {

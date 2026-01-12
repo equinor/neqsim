@@ -2,6 +2,8 @@ package neqsim.process.mechanicaldesign.separator;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -14,29 +16,56 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.designstandards.MaterialPlateDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.PressureVesselDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard;
+import neqsim.process.mechanicaldesign.separator.internals.DemistingInternal;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
  * SeparatorMechanicalDesign class.
  * </p>
  *
+ * Provides mechanical design calculations for separators including sizing, wall
+ * thickness,
+ * weight estimation, and management of demisting internals.
+ *
+ * <p>
+ * For detailed documentation on separator internals and carry-over
+ * calculations, see:
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/separators_and_internals.md">
+ * Separators and Internals Wiki</a> and
+ * <a href=
+ * "https://github.com/equinor/neqsim/blob/master/docs/wiki/carryover_calculations.md">
+ * Carry-Over Calculations Wiki</a>
+ * </p>
+ *
  * @author esol
  * @version $Id: $Id
+ * @see neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign
+ * @see neqsim.process.mechanicaldesign.separator.internals.DemistingInternal
  */
 public class SeparatorMechanicalDesign extends MechanicalDesign {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  private static final Logger logger = LogManager.getLogger(SeparatorMechanicalDesign.class);
   double gasLoadFactor = 1.0;
   double volumeSafetyFactor = 1.0;
   double Fg = 1.0;
   double retentionTime = 60.0;
+  double nozzleInnerDiameter = 0.0;
+
+  /** List of deisting internals in the separator. */
+  private List<DemistingInternal> demistingInternals = new ArrayList<>();
 
   /**
    * <p>
    * Constructor for SeparatorMechanicalDesign.
    * </p>
    *
-   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface}
+   *                  object
    */
   public SeparatorMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
@@ -51,33 +80,30 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
       ((MaterialPlateDesignStandard) getDesignStandard().get("material plate design codes"))
           .readMaterialDesignStandard("Carbon Steel Plates and Sheets", "SA-516", "55", 1);
     } else {
-      System.out.println("material plate design codes specified......");
+      logger.debug("no material plate design codes specified");
     }
     if (getDesignStandard().containsKey("pressure vessel design code")) {
-      System.out.println("pressure vessel code standard: "
-          + getDesignStandard().get("pressure vessel design code").getStandardName());
-      wallThickness =
-          ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
-              .calcWallThickness();
+      logger.debug("pressure vessel code standard: {}",
+          getDesignStandard().get("pressure vessel design code").getStandardName());
+      wallThickness = ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
+          .calcWallThickness();
     } else {
-      System.out.println("no pressure vessel code standard specified......");
+      logger.debug("no pressure vessel code standard specified");
     }
 
     if (getDesignStandard().containsKey("separator process design")) {
-      System.out.println("separator process design: "
-          + getDesignStandard().get("separator process design").getStandardName());
-      gasLoadFactor =
-          ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
-              .getGasLoadFactor();
+      logger.debug("separator process design: {}",
+          getDesignStandard().get("separator process design").getStandardName());
+      gasLoadFactor = ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
+          .getGasLoadFactor();
       Fg = ((SeparatorDesignStandard) getDesignStandard().get("separator process design")).getFg();
-      volumeSafetyFactor =
-          ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
-              .getVolumetricDesignFactor();
+      volumeSafetyFactor = ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
+          .getVolumetricDesignFactor();
       retentionTime = 120.0; // ((SeparatorDesignStandard)
                              // getDesignStandard().get("separator process
                              // design")).getLiquidRetentionTime("API12J", this);
     } else {
-      System.out.println("no separator process design specified......");
+      logger.debug("no separator process design specified");
     }
   }
 
@@ -88,7 +114,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = {"Name", "Value", "Unit"};
+    String[] names = { "Name", "Value", "Unit" };
     String[][] table = new String[16][3]; // createTable(getProcessEquipment().getName());
 
     table[1][0] = "Separator Inner Diameter";
@@ -197,8 +223,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     // alternative design
     double bubbleDiameter = 250.0e-6;
-    double bubVelocity =
-        9.82 * Math.pow(bubbleDiameter, 2.0) * (liqDensity - gasDensity) / 18.0 / liqViscosity;
+    double bubVelocity = 9.82 * Math.pow(bubbleDiameter, 2.0) * (liqDensity - gasDensity) / 18.0 / liqViscosity;
     double Ar = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getLiquidVolume()
         / 1e5 / bubVelocity;
     double Daim = Math.sqrt(Ar / 4.0);
@@ -234,11 +259,15 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     // }
 
     /*
-     * System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() +
-     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
+     * System.out.println("wall thickness: " + separator.getName() + " " +
+     * getWallThickness() +
+     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight +
+     * " kg");
      * System.out.println("total skid weigth: " + totalSkidWeight + " kg");
-     * System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength +
-     * " height " + moduleHeight + " meter."); System.out.println("mechanical price: " +
+     * System.out.println("foot print: width:" + moduleWidth + " length " +
+     * moduleLength +
+     * " height " + moduleHeight + " meter.");
+     * System.out.println("mechanical price: " +
      * materialsCost + " kNOK");
      */
     setWeigthVesselShell(emptyVesselWeight);
@@ -278,10 +307,107 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
+   * Add a demisting internal to the separator.
+   *
+   * @param internal the DemistingInternal to add
+   */
+  public void addDemistingInternal(DemistingInternal internal) {
+    demistingInternals.add(internal);
+    // Set separator reference if equipment is a Separator
+    if (getProcessEquipment() instanceof neqsim.process.equipment.separator.Separator) {
+      neqsim.process.equipment.separator.Separator separator = (neqsim.process.equipment.separator.Separator) getProcessEquipment();
+      internal.setSeparator(separator);
+    }
+  }
+
+  /**
+   * Remove a deisting internal from the separator.
+   *
+   * @param internal the DemistingInternal to remove
+   * @return true if the internal was removed, false otherwise
+   */
+  public boolean removeDemistingInternal(DemistingInternal internal) {
+    return demistingInternals.remove(internal);
+  }
+
+  /**
+   * Get all deisting internals in the separator.
+   *
+   * @return list of DemistingInternal objects
+   */
+  public List<DemistingInternal> getDemistingInternals() {
+    return new ArrayList<>(demistingInternals);
+  }
+
+  /**
+   * Get the number of deisting internals.
+   *
+   * @return number of internals
+   */
+  public int getNumberOfDemistingInternals() {
+    return demistingInternals.size();
+  }
+
+  /**
+   * Calculate total deisting area from all internals.
+   *
+   * @return total area in m²
+   */
+  public double getTotalDemistingArea() {
+    return demistingInternals.stream().mapToDouble(DemistingInternal::getArea).sum();
+  }
+
+  /**
+   * Calculate total liquid carry-over from all deisting internals.
+   *
+   * @param gasDensity         gas density in kg/m³
+   * @param liquidDensity      liquid density in kg/m³
+   * @param inletLiquidContent inlet liquid content (mass fraction)
+   * @return total liquid carry-over (mass fraction)
+   */
+  public double calcTotalLiquidCarryOver(double gasDensity, double liquidDensity,
+      double inletLiquidContent) {
+    double totalCarryOver = inletLiquidContent;
+
+    for (DemistingInternal internal : demistingInternals) {
+      // Use the separator-aware carry-over calculation
+      totalCarryOver *= (1.0 - internal.calcEfficiency());
+    }
+
+    return totalCarryOver;
+  }
+
+  /**
+   * Calculate total pressure drop across all deisting internals.
+   *
+   * @param gasDensity gas density in kg/m³
+   * @return total pressure drop in Pa
+   */
+  public double calcTotalPressureDrop(double gasDensity) {
+    double totalPressureDrop = 0.0;
+
+    double totalArea = getTotalDemistingArea();
+    if (totalArea == 0) {
+      return 0.0;
+    }
+
+    double volumetricFlow = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getPhase(0).getVolume()
+        / 1e5;
+
+    for (DemistingInternal internal : demistingInternals) {
+      double gasVelocity = internal.calcGasVelocity(volumetricFlow);
+      totalPressureDrop += internal.calcPressureDrop(gasDensity, gasVelocity);
+    }
+
+    return totalPressureDrop;
+  }
+
+  /**
    * {@inheritDoc}
    *
    * <p>
-   * Returns a separator-specific response with additional fields for vessel sizing, internals, and
+   * Returns a separator-specific response with additional fields for vessel
+   * sizing, internals, and
    * process design data.
    * </p>
    */
