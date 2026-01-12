@@ -144,6 +144,10 @@ public abstract class Flash extends BaseOperation {
     sumw[1] = 0.0;
     sumw[0] = 0.0;
     for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
+      // Skip ions in sumw calculation - they don't participate in VLE
+      if (clonedSystem.getPhase(0).getComponent(i).getK() < 1e-30) {
+        continue;
+      }
       sumw[1] += clonedSystem.getPhase(0).getComponent(i).getz()
           / clonedSystem.getPhase(0).getComponent(i).getK();
       if (clonedSystem.getPhase(0).getComponent(i).getz() > 0) {
@@ -163,6 +167,13 @@ public abstract class Flash extends BaseOperation {
     }
 
     for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
+      // For ions (K < 1e-30), keep them entirely in liquid phase
+      if (clonedSystem.getPhase(0).getComponent(i).getK() < 1e-30) {
+        clonedSystem.getPhase(1).getComponent(i)
+            .setx(clonedSystem.getPhase(0).getComponent(i).getz());
+        clonedSystem.getPhase(0).getComponent(i).setx(1e-50);
+        continue;
+      }
       clonedSystem.getPhase(1).getComponent(i).setx(clonedSystem.getPhase(0).getComponent(i).getz()
           / clonedSystem.getPhase(0).getComponent(i).getK() / sumw[1]);
       clonedSystem.getPhase(0).getComponent(i).setx(clonedSystem.getPhase(0).getComponent(i).getK()

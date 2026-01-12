@@ -328,6 +328,10 @@ public class TPflash extends Flash {
       dgonRT = -1.0;
     } else {
       for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+        // Skip ions in TPD calculation - they don't participate in VLE
+        if (system.getPhase(0).getComponent(i).getK() < 1e-30) {
+          continue;
+        }
         if (system.getComponent(i).getz() > 1e-50) {
           tpdy += system.getPhase(0).getComponent(i).getx()
               * (Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient())
@@ -344,6 +348,10 @@ public class TPflash extends Flash {
       if (dgonRT > 0) {
         if (tpdx < 0) {
           for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+            // Preserve ion K-values - they don't participate in VLE
+            if (system.getPhase(0).getComponent(i).getK() < 1e-30) {
+              continue;
+            }
             system.getPhase(0).getComponent(i)
                 .setK(Math.exp(Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient())
                     - minGibsLogFugCoef[i]) * presdiff);
@@ -351,6 +359,10 @@ public class TPflash extends Flash {
           }
         } else if (tpdy < 0) {
           for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+            // Preserve ion K-values - they don't participate in VLE
+            if (system.getPhase(0).getComponent(i).getK() < 1e-30) {
+              continue;
+            }
             system.getPhase(0).getComponent(i)
                 .setK(Math
                     .exp(minGibsLogFugCoef[i]
