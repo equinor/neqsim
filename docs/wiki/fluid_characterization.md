@@ -152,6 +152,47 @@ The lumping model has two configuration parameters:
 
 ---
 
+### 3.3 Fluent Configuration API (Recommended)
+
+NeqSim provides a fluent builder API that makes lumping configuration clearer and less error-prone:
+
+```java
+// PVTlumpingModel: keep C6-C9 separate, lump C10+ into 5 groups
+fluid.getCharacterization().configureLumping()
+    .model("PVTlumpingModel")
+    .plusFractionGroups(5)
+    .build();
+
+// Standard model: create exactly 6 total pseudo-components from C6+
+fluid.getCharacterization().configureLumping()
+    .model("standard")
+    .totalPseudoComponents(6)
+    .build();
+
+// No lumping: keep all individual SCN components
+fluid.getCharacterization().configureLumping()
+    .noLumping()
+    .build();
+```
+
+#### Custom Carbon Number Boundaries
+
+Match specific PVT lab report groupings by specifying carbon number boundaries:
+
+```java
+// Creates groups: C6, C7-C9, C10-C14, C15-C19, C20+
+fluid.getCharacterization().configureLumping()
+    .customBoundaries(6, 7, 10, 15, 20)
+    .build();
+```
+
+| Boundary Array | Resulting Groups |
+|----------------|------------------|
+| `[6, 10, 20]` | C6-C9, C10-C19, C20+ |
+| `[6, 7, 10, 15, 20]` | C6, C7-C9, C10-C14, C15-C19, C20+ |
+
+---
+
 #### Behavior in `"standard"` Lumping Model
 
 In the **standard** model, use `setNumberOfPseudoComponents(n)` to specify the **total** number of pseudo-components created from all heavy fractions (C6 through C80). All TBP fractions and plus fractions are combined and redistributed into equal-weight groups.
@@ -217,20 +258,20 @@ fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(5);
 
 | Scenario | Recommended Model | Configuration |
 |----------|-------------------|---------------|
-| Standard PVT simulation | `"PVTlumpingModel"` | `setNumberOfLumpedComponents(6-8)` |
-| Minimal components for speed | `"standard"` | `setNumberOfPseudoComponents(3-5)` |
-| Detailed compositional study | `"no lumping"` | N/A |
-| Match specific software output | Depends on software | Check documentation |
+| Standard PVT simulation | `"PVTlumpingModel"` | `configureLumping().plusFractionGroups(6-8)` |
+| Minimal components for speed | `"standard"` | `configureLumping().totalPseudoComponents(3-5)` |
+| Detailed compositional study | `"no lumping"` | `configureLumping().noLumping()` |
+| Match specific software output | Use custom boundaries | `configureLumping().customBoundaries(...)` |
 
 ### 3.5 Full Examples
 
-#### Example 1: PVTlumpingModel (preserve TBP fractions)
+#### Example 1: PVTlumpingModel with Fluent API (Recommended)
 
 ```java
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-public class PVTLumpingExample {
+public class FluentLumpingExample {
     public static void main(String[] args) {
         SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
         fluid.addComponent("methane", 60.0);
@@ -247,10 +288,12 @@ public class PVTLumpingExample {
         fluid.addPlusFraction("C10+", 15.0, 0.280, 0.84);
         
         fluid.getCharacterization().setPlusFractionModel("Pedersen");
-        fluid.getCharacterization().setLumpingModel("PVTlumpingModel");
         
-        // Lump C10+ into 5 groups (C6-C9 remain separate)
-        fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(5);
+        // Fluent API: Lump C10+ into 5 groups (C6-C9 remain separate)
+        fluid.getCharacterization().configureLumping()
+            .model("PVTlumpingModel")
+            .plusFractionGroups(5)
+            .build();
         
         fluid.getCharacterization().characterisePlusFraction();
         // Result: C6_PC, C7_PC, C8_PC, C9_PC + 5 lumped groups = 9 pseudo-components
@@ -263,7 +306,7 @@ public class PVTLumpingExample {
 }
 ```
 
-#### Example 2: Standard model (lump everything from C6)
+#### Example 2: Standard model with Fluent API
 
 ```java
 import neqsim.thermo.system.SystemPrEos;
@@ -286,9 +329,11 @@ public class StandardLumpingExample {
         
         fluid.getCharacterization().setPlusFractionModel("Pedersen");
         
-        // Use standard model to lump ALL heavy fractions (C6 through C80)
-        fluid.getCharacterization().setLumpingModel("standard");
-        fluid.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(5);
+        // Fluent API: Lump ALL heavy fractions (C6 through C80) into 5 pseudo-components
+        fluid.getCharacterization().configureLumping()
+            .model("standard")
+            .totalPseudoComponents(5)
+            .build();
         
         fluid.getCharacterization().characterisePlusFraction();
         // Result: 5 pseudo-components covering C6-C80 (PC1, PC2, PC3, PC4, PC5)
@@ -301,7 +346,45 @@ public class StandardLumpingExample {
 }
 ```
 
-#### Example 3: Python (neqsim-python)
+#### Example 3: Custom Boundaries (Match PVT Report Groupings)
+
+```java
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+public class CustomBoundariesExample {
+    public static void main(String[] args) {
+        SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
+        fluid.addComponent("methane", 60.0);
+        fluid.addComponent("ethane", 5.0);
+        fluid.addComponent("propane", 3.0);
+        
+        fluid.getCharacterization().setTBPModel("PedersenSRK");
+        
+        fluid.addTBPfraction("C6", 1.0, 0.086, 0.66);
+        fluid.addTBPfraction("C7", 2.0, 0.092, 0.73);
+        fluid.addTBPfraction("C8", 2.0, 0.104, 0.76);
+        fluid.addTBPfraction("C9", 1.0, 0.118, 0.78);
+        fluid.addPlusFraction("C10+", 15.0, 0.280, 0.84);
+        
+        fluid.getCharacterization().setPlusFractionModel("Pedersen");
+        
+        // Custom boundaries to match PVT lab report: C6, C7-C9, C10-C14, C15-C19, C20+
+        fluid.getCharacterization().configureLumping()
+            .customBoundaries(6, 7, 10, 15, 20)
+            .build();
+        
+        fluid.getCharacterization().characterisePlusFraction();
+        
+        fluid.setMixingRule("classic");
+        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+        ops.TPflash();
+        fluid.prettyPrint();
+    }
+}
+```
+
+#### Example 4: Python (neqsim-python)
 
 ```python
 from neqsim.thermo.thermoTools import TPflash, printFrame, fluid
@@ -322,13 +405,26 @@ fluid1.addPlusFraction("C10", 11.0, 290.0 / 1000.0, 0.82)
 
 fluid1.getCharacterization().setPlusFractionModel("Pedersen")
 
-# Option A: PVTlumpingModel - keeps C6-C9 separate
-fluid1.getCharacterization().setLumpingModel("PVTlumpingModel")
-fluid1.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(6)
+# Option A: Fluent API (Recommended) - PVTlumpingModel with 6 plus fraction groups
+fluid1.getCharacterization().configureLumping() \
+    .model("PVTlumpingModel") \
+    .plusFractionGroups(6) \
+    .build()
 
-# Option B: standard - lumps everything from C6
-# fluid1.getCharacterization().setLumpingModel("standard")
-# fluid1.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(5)
+# Option B: Legacy API - PVTlumpingModel keeps C6-C9 separate
+# fluid1.getCharacterization().setLumpingModel("PVTlumpingModel")
+# fluid1.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(6)
+
+# Option C: Fluent API - standard model lumps everything from C6
+# fluid1.getCharacterization().configureLumping() \
+#     .model("standard") \
+#     .totalPseudoComponents(5) \
+#     .build()
+
+# Option D: Custom boundaries to match lab report groupings
+# fluid1.getCharacterization().configureLumping() \
+#     .customBoundaries(6, 10, 15, 20) \  # C6-C9, C10-C14, C15-C19, C20+
+#     .build()
 
 fluid1.getCharacterization().characterisePlusFraction()
 
@@ -344,7 +440,8 @@ printFrame(fluid1)
 
 *   **Heavy Oil**: For very heavy oils, use `setPlusFractionModel("Pedersen Heavy Oil")`.
 *   **Whitson Gamma**: Use `setPlusFractionModel("Whitson Gamma")` if you have specific gamma distribution parameters.
-*   **No Lumping**: To keep all individual carbon number components (C6, C7... C80), use `setLumpingModel("no lumping")`. Note that this will result in a system with many components, which is slower to simulate.
+*   **No Lumping**: To keep all individual carbon number components (C6, C7... C80), use `configureLumping().noLumping().build()` or `setLumpingModel("no lumping")`. Note that this will result in a system with many components, which is slower to simulate.
+*   **Custom Boundaries**: Match PVT lab report groupings with `configureLumping().customBoundaries(6, 10, 20).build()`.
 
 ## 5. Common Issues and Solutions
 
@@ -352,11 +449,19 @@ printFrame(fluid1)
 
 **Problem**: Setting `setNumberOfPseudoComponents(5)` with `PVTlumpingModel` results in more than 5 components.
 
-**Cause**: With `PVTlumpingModel`, the TBP fractions (C6-C9) are preserved separately. If you have 4 TBP fractions and request 5 total, that leaves only 1 lumped component for C10+. However, the default `numberOfLumpedComponents` is 7, so the model overrides your setting.
+**Cause**: With `PVTlumpingModel`, the TBP fractions (C6-C9) are preserved separately. If you have 4 TBP fractions and request 5 total, that leaves only 1 lumped component for C10+. However, the default `numberOfLumpedComponents` is 7, so the model overrides your setting. A warning is now logged when this occurs.
 
-**Solution**: Either:
-1. Use `setNumberOfLumpedComponents()` directly to control C10+ grouping
-2. Use `"standard"` lumping model to control total pseudo-components
+**Solution**: Use the fluent API or `setNumberOfLumpedComponents()`:
+```java
+// Fluent API (recommended)
+fluid.getCharacterization().configureLumping()
+    .model("PVTlumpingModel")
+    .plusFractionGroups(5)  // Directly controls C10+ grouping
+    .build();
+
+// Or legacy API
+fluid.getCharacterization().getLumpingModel().setNumberOfLumpedComponents(5);
+```
 
 ### Issue: Want to start lumping from C6 or C7
 
@@ -364,6 +469,31 @@ printFrame(fluid1)
 
 **Solution**: Use the `"standard"` lumping model:
 ```java
+// Fluent API (recommended)
+fluid.getCharacterization().configureLumping()
+    .model("standard")
+    .totalPseudoComponents(6)
+    .build();
+
+// Or legacy API
 fluid.getCharacterization().setLumpingModel("standard");
 fluid.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(6);
 ```
+
+### Issue: Need to match specific PVT lab report groupings
+
+**Problem**: Your PVT report uses groupings like C6, C7-C9, C10-C14, C15-C19, C20+ and you need to match exactly.
+
+**Solution**: Use custom boundaries:
+```java
+fluid.getCharacterization().configureLumping()
+    .customBoundaries(6, 7, 10, 15, 20)
+    .build();
+```
+
+## 6. API Deprecation Notice
+
+> ⚠️ **Deprecation**: For `PVTlumpingModel`, the method `setNumberOfPseudoComponents()` is deprecated because it can lead to unexpected override behavior. Use one of these alternatives:
+>
+> - **Fluent API**: `configureLumping().plusFractionGroups(n).build()`
+> - **Legacy API**: `getLumpingModel().setNumberOfLumpedComponents(n)`

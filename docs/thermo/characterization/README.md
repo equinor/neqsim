@@ -6,6 +6,7 @@ Documentation for plus fraction and asphaltene characterization in NeqSim.
 - [Overview](#overview)
 - [Plus Fraction Methods](#plus-fraction-methods)
 - [Characterization Approaches](#characterization-approaches)
+- [Lumping Configuration](#lumping-configuration)
 - [Asphaltene Characterization](#asphaltene-characterization)
 - [TBP Methods](#tbp-methods)
 - [Examples](#examples)
@@ -102,6 +103,57 @@ For pseudo-components, critical properties are estimated using correlations:
 | Lee-Kesler | Tc, Pc, omega from Tb, SG |
 | Riazi-Daubert | Tb from MW, SG |
 | Pedersen | Tc, Pc, omega for petroleum |
+
+---
+
+## Lumping Configuration
+
+After plus fraction splitting, lumping reduces the number of pseudo-components for computational efficiency. NeqSim provides a fluent API for clear, explicit configuration.
+
+### Fluent API (Recommended)
+
+```java
+// PVTlumpingModel: Preserve C6-C9, lump C10+ into 5 groups
+fluid.getCharacterization().configureLumping()
+    .model("PVTlumpingModel")
+    .plusFractionGroups(5)
+    .build();
+
+// Standard model: Lump all from C6 into 6 pseudo-components
+fluid.getCharacterization().configureLumping()
+    .model("standard")
+    .totalPseudoComponents(6)
+    .build();
+
+// Custom boundaries to match PVT lab report
+fluid.getCharacterization().configureLumping()
+    .customBoundaries(6, 7, 10, 15, 20)  // C6, C7-C9, C10-C14, C15-C19, C20+
+    .build();
+
+// No lumping: keep all SCN components
+fluid.getCharacterization().configureLumping()
+    .noLumping()
+    .build();
+```
+
+### Lumping Models Comparison
+
+| Model | Behavior | Use Case |
+|-------|----------|----------|
+| `PVTlumpingModel` | Preserves TBP fractions (C6-C9), lumps only C10+ | Standard PVT matching |
+| `standard` | Lumps all heavy fractions from C6 | Minimal components for fast simulation |
+| `no lumping` | Keeps all individual SCN components | Detailed compositional studies |
+
+### Quick Reference
+
+| I want to... | Fluent API |
+|--------------|------------|
+| Keep C6-C9 separate, lump C10+ into N groups | `.model("PVTlumpingModel").plusFractionGroups(N)` |
+| Get exactly N total pseudo-components | `.model("standard").totalPseudoComponents(N)` |
+| Match specific PVT lab groupings | `.customBoundaries(6, 10, 20)` |
+| Keep all SCN components | `.noLumping()` |
+
+For complete mathematical details, see [Fluid Characterization Mathematics](../../pvtsimulation/fluid_characterization_mathematics.md#lumping-methods).
 
 ---
 
