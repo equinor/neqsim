@@ -8,12 +8,43 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
+ * Single-phase adiabatic pipe model.
+ *
  * <p>
- * AdiabaticPipe class.
+ * This class models a simple adiabatic (no heat transfer) pipe for single-phase flow using basic
+ * gas flow equations. It calculates pressure drop from friction and elevation changes.
  * </p>
  *
+ * <h2>Calculation Modes</h2>
+ * <ul>
+ * <li><b>Calculate outlet pressure</b> - Given inlet conditions and flow rate</li>
+ * <li><b>Calculate flow rate</b> - Given inlet and outlet pressures (when outlet pressure is
+ * set)</li>
+ * </ul>
+ *
+ * <h2>Example Usage</h2>
+ *
+ * <pre>{@code
+ * // Create gas stream
+ * SystemInterface gas = new SystemSrkEos(278.15, 220.0);
+ * gas.addComponent("methane", 24.0, "MSm^3/day");
+ * gas.setMixingRule("classic");
+ *
+ * Stream inlet = new Stream("inlet", gas);
+ * inlet.run();
+ *
+ * // Create adiabatic pipe
+ * AdiabaticPipe pipe = new AdiabaticPipe("pipeline", inlet);
+ * pipe.setLength(700000.0); // 700 km
+ * pipe.setDiameter(0.7112); // ~28 inches
+ * pipe.setPipeWallRoughness(5e-6);
+ * pipe.run();
+ *
+ * System.out.println("Outlet pressure: " + pipe.getOutletPressure("bara") + " bara");
+ * }</pre>
+ *
  * @author Even Solbraa
- * @version $Id: $Id
+ * @version 2.0
  */
 public class AdiabaticPipe extends Pipeline {
   /** Serialization version UID. */
@@ -21,22 +52,16 @@ public class AdiabaticPipe extends Pipeline {
 
   double inletPressure = 0;
   boolean setTemperature = false;
-
   boolean setPressureOut = false;
-
   protected double temperatureOut = 270;
-
   protected double pressureOut = 0.0;
-
-  double length = 100.0;
-  double insideDiameter = 0.1;
-  double velocity = 1.0;
-  double pipeWallRoughness = 1e-5;
-  private double inletElevation = 0;
-  private double outletElevation = 0;
   double dH = 0.0;
-  String flowPattern = "unknown";
   String pipeSpecification = "AP02";
+
+  // Use parent's length, diameter, roughness, inletElevation, outletElevation
+  // Override with local insideDiameter for backward compatibility
+  double insideDiameter = 0.1;
+  double pipeWallRoughnessLocal = 1e-5;
 
   /**
    * Constructor for AdiabaticPipe.
@@ -45,6 +70,7 @@ public class AdiabaticPipe extends Pipeline {
    */
   public AdiabaticPipe(String name) {
     super(name);
+    this.adiabatic = true;
   }
 
   /**
@@ -59,69 +85,114 @@ public class AdiabaticPipe extends Pipeline {
     outStream = inStream.clone();
   }
 
-  /**
-   * <p>
-   * Setter for the field <code>pipeSpecification</code>.
-   * </p>
-   *
-   * @param nominalDiameter a double
-   * @param pipeSec a {@link java.lang.String} object
-   */
+  /** {@inheritDoc} */
+  @Override
+  public void setLength(double length) {
+    super.setLength(length);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getLength() {
+    return super.getLength();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setDiameter(double diameter) {
+    super.setDiameter(diameter);
+    this.insideDiameter = diameter;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getDiameter() {
+    return insideDiameter;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPipeWallRoughness(double roughness) {
+    super.setPipeWallRoughness(roughness);
+    this.pipeWallRoughnessLocal = roughness;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getPipeWallRoughness() {
+    return pipeWallRoughnessLocal;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setInletElevation(double inletElevation) {
+    super.setInletElevation(inletElevation);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getInletElevation() {
+    return super.getInletElevation();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setOutletElevation(double outletElevation) {
+    super.setOutletElevation(outletElevation);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getOutletElevation() {
+    return super.getOutletElevation();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setPipeSpecification(double nominalDiameter, String pipeSec) {
     pipeSpecification = pipeSec;
     insideDiameter = nominalDiameter / 1000.0;
+    super.setDiameter(insideDiameter);
   }
 
-  /**
-   * <p>
-   * setOutTemperature.
-   * </p>
-   *
-   * @param temperature a double
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setOutTemperature(double temperature) {
     setTemperature = true;
     this.temperatureOut = temperature;
   }
 
-  /**
-   * <p>
-   * setOutPressure.
-   * </p>
-   *
-   * @param pressure a double
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setOutPressure(double pressure) {
     setPressureOut = true;
     this.pressureOut = pressure;
   }
 
   /**
-   * <p>
-   * calcWallFrictionFactor.
-   * </p>
+   * Calculate the wall friction factor using the Haaland equation.
    *
-   * @param reynoldsNumber a double
-   * @return a double
+   * @param reynoldsNumber the Reynolds number
+   * @return the Darcy friction factor
    */
   public double calcWallFrictionFactor(double reynoldsNumber) {
     if (Math.abs(reynoldsNumber) < 1e-10) {
-      flowPattern = "no-flow";
+      flowRegime = "no-flow";
       return 0.0;
     }
     double relativeRoughnes = getPipeWallRoughness() / insideDiameter;
     if (Math.abs(reynoldsNumber) < 2300) {
-      flowPattern = "laminar";
+      flowRegime = "laminar";
       return 64.0 / reynoldsNumber;
     } else if (Math.abs(reynoldsNumber) < 4000) {
       // Transition zone - interpolate between laminar and turbulent
-      flowPattern = "transition";
+      flowRegime = "transition";
       double fLaminar = 64.0 / 2300.0;
       double fTurbulent = Math.pow(
           (1.0 / (-1.8 * Math.log10(6.9 / 4000.0 + Math.pow(relativeRoughnes / 3.7, 1.11)))), 2.0);
       return fLaminar + (fTurbulent - fLaminar) * (reynoldsNumber - 2300.0) / 1700.0;
     } else {
-      flowPattern = "turbulent";
+      flowRegime = "turbulent";
       return Math.pow((1.0
           / (-1.8 * Math.log10(6.9 / reynoldsNumber + Math.pow(relativeRoughnes / 3.7, 1.11)))),
           2.0);
@@ -129,29 +200,22 @@ public class AdiabaticPipe extends Pipeline {
   }
 
   /**
-   * <p>
-   * calcPressureOut.
-   * </p>
+   * Calculate the outlet pressure based on friction and elevation losses.
    *
-   * @return a double
+   * @return the outlet pressure in bara
    */
   public double calcPressureOut() {
     double area = Math.PI / 4.0 * Math.pow(insideDiameter, 2.0);
     velocity = system.getPhase(0).getTotalVolume() / area / 1.0e5;
-    double reynoldsNumber = velocity * insideDiameter
+    reynoldsNumber = velocity * insideDiameter
         / system.getPhase(0).getPhysicalProperties().getKinematicViscosity();
-    double frictionFactor = calcWallFrictionFactor(reynoldsNumber);
+    frictionFactor = calcWallFrictionFactor(reynoldsNumber);
     double dp = Math
         .pow(4.0 * system.getPhase(0).getNumberOfMolesInPhase() * system.getPhase(0).getMolarMass()
             / neqsim.thermo.ThermodynamicConstantsInterface.pi, 2.0)
         * frictionFactor * length * system.getPhase(0).getZ()
         * neqsim.thermo.ThermodynamicConstantsInterface.R / system.getPhase(0).getMolarMass()
         * system.getTemperature() / Math.pow(insideDiameter, 5.0);
-    // \\System.out.println("friction fact" + frictionFactor + " velocity " +
-    // velocity + " reynolds number " + reynoldsNumber);
-    // System.out.println("dp gravity "
-    // + system.getDensity("kg/m3") * neqsim.thermo.ThermodynamicConstantsInterface.gravity
-    // * (inletElevation - outletElevation) / 1.0e5);
     double dp_gravity =
         system.getDensity("kg/m3") * neqsim.thermo.ThermodynamicConstantsInterface.gravity
             * (inletElevation - outletElevation);
@@ -159,46 +223,33 @@ public class AdiabaticPipe extends Pipeline {
   }
 
   /**
+   * Calculate the flow rate required to achieve the specified outlet pressure.
+   *
    * <p>
-   * calcFlow.
-   * </p>
-   * 
-   * <p>
-   * Calculates the flow rate required to achieve the specified outlet pressure using bisection
-   * iteration. This method iteratively adjusts the flow rate until the calculated outlet pressure
-   * matches the target outlet pressure (pressureOut).
+   * Uses bisection iteration to find the flow rate that achieves the target outlet pressure.
    * </p>
    *
    * @return the calculated flow rate in the current system units
    */
   public double calcFlow() {
-    // Use bisection method to find flow rate that gives target outlet pressure
-    // At low flow, pressure drop is small -> outlet pressure high
-    // At high flow, pressure drop is large -> outlet pressure low
-
     double originalFlowRate = system.getFlowRate("kg/sec");
     if (originalFlowRate <= 0) {
-      originalFlowRate = 1.0; // Default starting point
+      originalFlowRate = 1.0;
     }
 
-    // Set up bounds for bisection
     double flowLow = originalFlowRate * 0.001;
     double flowHigh = originalFlowRate * 100.0;
 
-    // Find valid bounds
-    // At low flow, check if outlet pressure > target (we need more flow)
     system.setTotalFlowRate(flowLow, "kg/sec");
     system.init(3);
     system.initPhysicalProperties();
     double pOutLow = calcPressureOut();
 
-    // At high flow, check if outlet pressure < target (we need less flow)
     system.setTotalFlowRate(flowHigh, "kg/sec");
     system.init(3);
     system.initPhysicalProperties();
     double pOutHigh = calcPressureOut();
 
-    // Expand bounds if needed
     int boundIter = 0;
     while (pOutLow < pressureOut && boundIter < 20) {
       flowLow /= 10.0;
@@ -219,7 +270,6 @@ public class AdiabaticPipe extends Pipeline {
       boundIter++;
     }
 
-    // Bisection iteration
     double flowMid = 0;
     double pOutMid = 0;
     int maxIter = 50;
@@ -238,14 +288,11 @@ public class AdiabaticPipe extends Pipeline {
       }
 
       if (pOutMid > pressureOut) {
-        // Need more pressure drop -> increase flow
         flowLow = flowMid;
       } else {
-        // Need less pressure drop -> decrease flow
         flowHigh = flowMid;
       }
 
-      // Check convergence of bounds
       if (Math.abs(flowHigh - flowLow) / flowMid < tolerance) {
         break;
       }
@@ -259,7 +306,6 @@ public class AdiabaticPipe extends Pipeline {
   public void run(UUID id) {
     system = inStream.getThermoSystem().clone();
     inletPressure = system.getPressure();
-    // system.setMultiPhaseCheck(true);
     if (setTemperature) {
       system.setTemperature(this.temperatureOut);
     }
@@ -284,7 +330,10 @@ public class AdiabaticPipe extends Pipeline {
     if (setPressureOut) {
       inStream.getThermoSystem().setTotalFlowRate(system.getFlowRate("kg/sec"), "kg/sec");
     }
-    // system.setMultiPhaseCheck(false);
+
+    // Calculate pressure drop
+    pressureDrop = inletPressure - system.getPressure();
+
     outStream.setThermoSystem(system);
     outStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
@@ -305,124 +354,44 @@ public class AdiabaticPipe extends Pipeline {
 
   /** {@inheritDoc} */
   @Override
-  public void setInitialFlowPattern(String flowPattern) {}
+  public void setInitialFlowPattern(String flowPattern) {
+    // Not applicable for single-phase adiabatic pipe
+  }
 
-  /**
-   * <p>
-   * Getter for the field <code>length</code>.
-   * </p>
-   *
-   * @return the length
-   */
-  public double getLength() {
-    return length;
+  /** {@inheritDoc} */
+  @Override
+  public double getPressureDrop() {
+    return pressureDrop;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getFlowRegime() {
+    return flowRegime;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getVelocity() {
+    return velocity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getReynoldsNumber() {
+    return reynoldsNumber;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getFrictionFactor() {
+    return frictionFactor;
   }
 
   /**
-   * <p>
-   * Setter for the field <code>length</code>.
-   * </p>
+   * Main method for testing.
    *
-   * @param length the length to set
-   */
-  public void setLength(double length) {
-    this.length = length;
-  }
-
-  /**
-   * <p>
-   * getDiameter.
-   * </p>
-   *
-   * @return the diameter
-   */
-  public double getDiameter() {
-    return insideDiameter;
-  }
-
-  /**
-   * <p>
-   * setDiameter.
-   * </p>
-   *
-   * @param diameter the diameter to set
-   */
-  public void setDiameter(double diameter) {
-    this.insideDiameter = diameter;
-  }
-
-  /**
-   * <p>
-   * Getter for the field <code>pipeWallRoughness</code>.
-   * </p>
-   *
-   * @return the pipeWallRoughness
-   */
-  public double getPipeWallRoughness() {
-    return pipeWallRoughness;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>pipeWallRoughness</code>.
-   * </p>
-   *
-   * @param pipeWallRoughness the pipeWallRoughness to set
-   */
-  public void setPipeWallRoughness(double pipeWallRoughness) {
-    this.pipeWallRoughness = pipeWallRoughness;
-  }
-
-  /**
-   * <p>
-   * Getter for the field <code>inletElevation</code>.
-   * </p>
-   *
-   * @return the inletElevation
-   */
-  public double getInletElevation() {
-    return inletElevation;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>inletElevation</code>.
-   * </p>
-   *
-   * @param inletElevation the inletElevation to set
-   */
-  public void setInletElevation(double inletElevation) {
-    this.inletElevation = inletElevation;
-  }
-
-  /**
-   * <p>
-   * Getter for the field <code>outletElevation</code>.
-   * </p>
-   *
-   * @return the outletElevation
-   */
-  public double getOutletElevation() {
-    return outletElevation;
-  }
-
-  /**
-   * <p>
-   * Setter for the field <code>outletElevation</code>.
-   * </p>
-   *
-   * @param outletElevation the outletElevation to set
-   */
-  public void setOutletElevation(double outletElevation) {
-    this.outletElevation = outletElevation;
-  }
-
-  /**
-   * <p>
-   * main.
-   * </p>
-   *
-   * @param name an array of {@link java.lang.String} objects
+   * @param name command line arguments
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] name) {

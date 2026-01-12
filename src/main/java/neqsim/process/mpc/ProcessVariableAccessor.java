@@ -106,6 +106,11 @@ public class ProcessVariableAccessor {
 
   /**
    * Extract numeric value from method result.
+   *
+   * @param result the result object from method invocation
+   * @param arrayIndex the array index if result is an array, -1 otherwise
+   * @param path the variable path for error messages
+   * @return the extracted numeric value
    */
   private double extractNumericValue(Object result, int arrayIndex, String path) {
     if (result instanceof Double) {
@@ -123,6 +128,9 @@ public class ProcessVariableAccessor {
 
   /**
    * Get default unit for a property name.
+   *
+   * @param propertyName the property name to look up
+   * @return the default unit string, or empty string if unknown
    */
   private String getDefaultUnit(String propertyName) {
     String lowerName = propertyName.toLowerCase();
@@ -136,6 +144,10 @@ public class ProcessVariableAccessor {
 
   /**
    * Find a method with no parameters.
+   *
+   * @param clazz the class to search for the method
+   * @param name the method name to find
+   * @return the Method object if found, null otherwise
    */
   private Method findMethodNoParams(Class<?> clazz, String name) {
     try {
@@ -292,6 +304,9 @@ public class ProcessVariableAccessor {
 
   /**
    * Parse a path into components.
+   *
+   * @param path the dot-separated path string to parse
+   * @return array of path components
    */
   private String[] parsePath(String path) {
     return path.split("\\.");
@@ -299,6 +314,10 @@ public class ProcessVariableAccessor {
 
   /**
    * Resolve the target object for a path.
+   *
+   * @param parts array of path components
+   * @param depth number of path components to navigate (excluding the property)
+   * @return the resolved target object
    */
   private Object resolveTarget(String[] parts, int depth) {
     // First part is always the unit name
@@ -346,6 +365,11 @@ public class ProcessVariableAccessor {
 
   /**
    * Find a method by name and parameter types.
+   *
+   * @param clazz the class to search for the method
+   * @param name the method name to find
+   * @param paramTypes the parameter types of the method
+   * @return the Method object if found, null otherwise
    */
   private Method findMethod(Class<?> clazz, String name, Class<?>... paramTypes) {
     try {
@@ -382,6 +406,10 @@ public class ProcessVariableAccessor {
 
   /**
    * Check if types are boxed equivalents.
+   *
+   * @param a first class type to compare
+   * @param b second class type to compare
+   * @return true if a and b are boxed/unboxed equivalents (e.g., int and Integer)
    */
   private boolean isBoxedEquivalent(Class<?> a, Class<?> b) {
     return (a == double.class && b == Double.class) || (a == Double.class && b == double.class)
@@ -390,6 +418,9 @@ public class ProcessVariableAccessor {
 
   /**
    * Capitalize first letter.
+   *
+   * @param s the string to capitalize
+   * @return the string with first letter capitalized, or original if null/empty
    */
   private String capitalize(String s) {
     if (s == null || s.isEmpty()) {

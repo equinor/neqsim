@@ -201,16 +201,52 @@ public class EconomicsEstimator {
    */
   private static final double POWER_COST_PER_MW_YEAR = 0.5;
 
+  // ============================================================================
+  // INSTANCE VARIABLES
+  // ============================================================================
+
+  /** Regional cost adjustment factors. */
+  private RegionalCostFactors regionalFactors;
+
+  // ============================================================================
+  // CONSTRUCTORS
+  // ============================================================================
+
   /**
-   * Creates a new economics estimator instance.
+   * Creates a new economics estimator with NCS baseline costs.
    *
    * <p>
    * The estimator uses built-in cost factors calibrated to Norwegian Continental Shelf benchmarks.
-   * No configuration is required.
+   * Use {@link #EconomicsEstimator(String)} or {@link #setRegion(String)} to adjust for other
+   * regions.
    * </p>
    */
   public EconomicsEstimator() {
-    // Default constructor - uses built-in cost factors
+    this.regionalFactors = RegionalCostFactors.forRegion("NO");
+  }
+
+  /**
+   * Creates a new economics estimator for a specific region.
+   *
+   * @param regionCode region code (e.g., "BR", "US-GOM", "AU")
+   * @throws IllegalArgumentException if region not found
+   */
+  public EconomicsEstimator(String regionCode) {
+    this.regionalFactors = RegionalCostFactors.forRegion(regionCode);
+    if (this.regionalFactors == null) {
+      throw new IllegalArgumentException(
+          "Unknown region: " + regionCode + ". Use RegionalCostFactors.getAllRegions() for list.");
+    }
+  }
+
+  /**
+   * Creates a new economics estimator with custom cost factors.
+   *
+   * @param regionalFactors custom regional cost factors
+   */
+  public EconomicsEstimator(RegionalCostFactors regionalFactors) {
+    this.regionalFactors =
+        regionalFactors != null ? regionalFactors : RegionalCostFactors.forRegion("NO");
   }
 
   // ============================================================================
@@ -244,23 +280,28 @@ public class EconomicsEstimator {
   public EconomicsReport estimate(FieldConcept concept, FacilityConfig facilityConfig) {
     EconomicsReport.Builder builder = EconomicsReport.builder();
 
-    // Facility CAPEX
-    double facilityCAPEX = estimateFacilityCAPEX(concept, facilityConfig);
+    // Get regional adjustment factors
+    double capexFactor = regionalFactors != null ? regionalFactors.getCapexFactor() : 1.0;
+    double opexFactor = regionalFactors != null ? regionalFactors.getOpexFactor() : 1.0;
+    double wellFactor = regionalFactors != null ? regionalFactors.getWellCostFactor() : 1.0;
+
+    // Facility CAPEX (NCS baseline, then adjusted)
+    double facilityCAPEX = estimateFacilityCAPEX(concept, facilityConfig) * capexFactor;
     builder.facilityCapexMUSD(facilityCAPEX);
     builder.addCapexItem("facility", facilityCAPEX);
 
     // Process equipment CAPEX
-    double equipmentCAPEX = estimateEquipmentCAPEX(concept, facilityConfig);
+    double equipmentCAPEX = estimateEquipmentCAPEX(concept, facilityConfig) * capexFactor;
     builder.equipmentCapexMUSD(equipmentCAPEX);
     builder.addCapexItem("equipment", equipmentCAPEX);
 
-    // Well CAPEX
-    double wellCAPEX = estimateWellCAPEX(concept);
+    // Well CAPEX (uses well-specific factor)
+    double wellCAPEX = estimateWellCAPEX(concept) * wellFactor;
     builder.wellCapexMUSD(wellCAPEX);
     builder.addCapexItem("wells", wellCAPEX);
 
     // Infrastructure CAPEX
-    double infraCAPEX = estimateInfrastructureCAPEX(concept);
+    double infraCAPEX = estimateInfrastructureCAPEX(concept) * capexFactor;
     builder.infrastructureCapexMUSD(infraCAPEX);
     builder.addCapexItem("infrastructure", infraCAPEX);
 
@@ -268,9 +309,9 @@ public class EconomicsEstimator {
     double totalCAPEX = facilityCAPEX + equipmentCAPEX + wellCAPEX + infraCAPEX;
     builder.totalCapexMUSD(totalCAPEX);
 
-    // OPEX estimation
-    double baseOPEX = totalCAPEX * OPEX_PERCENT_OF_CAPEX;
-    double powerOPEX = estimatePowerOPEX(concept, facilityConfig);
+    // OPEX estimation (adjusted by OPEX factor)
+    double baseOPEX = totalCAPEX * OPEX_PERCENT_OF_CAPEX * opexFactor;
+    double powerOPEX = estimatePowerOPEX(concept, facilityConfig) * opexFactor;
     double totalOPEX = baseOPEX + powerOPEX;
     builder.annualOpexMUSD(totalOPEX);
     builder.addOpexItem("maintenance", baseOPEX);
@@ -315,6 +356,61 @@ public class EconomicsEstimator {
    */
   public EconomicsReport quickEstimate(FieldConcept concept) {
     return estimate(concept, null);
+  }
+
+  // ============================================================================
+  // REGION CONFIGURATION
+  // ============================================================================
+
+  /**
+   * Sets the region for cost adjustment.
+   *
+   * @param regionCode region code (e.g., "BR", "US-GOM", "AU")
+   * @throws IllegalArgumentException if region not found
+   */
+  public void setRegion(String regionCode) {
+    this.regionalFactors = RegionalCostFactors.forRegion(regionCode);
+    if (this.regionalFactors == null) {
+      throw new IllegalArgumentException(
+          "Unknown region: " + regionCode + ". Use RegionalCostFactors.getAllRegions() for list.");
+    }
+  }
+
+  /**
+   * Sets custom regional cost factors.
+   *
+   * @param factors custom regional cost factors
+   */
+  public void setRegionalFactors(RegionalCostFactors factors) {
+    this.regionalFactors = factors != null ? factors : RegionalCostFactors.forRegion("NO");
+  }
+
+  /**
+   * Gets the current regional cost factors.
+   *
+   * @return regional cost factors
+   */
+  public RegionalCostFactors getRegionalFactors() {
+    return regionalFactors;
+  }
+
+  /**
+   * Gets the current region code.
+   *
+   * @return region code
+   */
+  public String getRegionCode() {
+    return regionalFactors != null ? regionalFactors.getRegionCode() : "NO";
+  }
+
+  /**
+   * Gets the current region name.
+   *
+   * @return region name
+   */
+  public String getRegionName() {
+    return regionalFactors != null ? regionalFactors.getRegionName()
+        : "Norwegian Continental Shelf";
   }
 
   // ============================================================================

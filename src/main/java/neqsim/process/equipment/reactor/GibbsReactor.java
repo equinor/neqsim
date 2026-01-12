@@ -95,8 +95,17 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   // Thread-local reusable system for fugacity calculations to minimize cloning
-  private final ThreadLocal<neqsim.thermo.system.SystemInterface> tempFugacitySystem =
+  private transient ThreadLocal<neqsim.thermo.system.SystemInterface> tempFugacitySystem =
       new ThreadLocal<>();
+
+  /**
+   * Ensures tempFugacitySystem is initialized (handles deserialization case).
+   */
+  private void ensureTempFugacitySystemInitialized() {
+    if (tempFugacitySystem == null) {
+      tempFugacitySystem = new ThreadLocal<>();
+    }
+  }
 
   /**
    * Get the cumulative enthalpy of reaction (sum of dH for all iterations).
@@ -433,6 +442,9 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /**
    * Check if a component is inert.
+   *
+   * @param componentName the name of the component to check
+   * @return true if the component is inert, false otherwise
    */
   public boolean isComponentInert(String componentName) {
     return componentName != null && inertComponents.contains(componentName.toLowerCase());
@@ -981,6 +993,8 @@ public class GibbsReactor extends TwoPortEquipment {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    // Ensure thread-local is initialized (handles deserialization case)
+    ensureTempFugacitySystemInitialized();
     // Clear thread-local temp system to avoid cross-test contamination
     tempFugacitySystem.remove();
     system = getInletStream().getThermoSystem().clone();
@@ -1404,6 +1418,8 @@ public class GibbsReactor extends TwoPortEquipment {
   /**
    * Build objective vector matching the optimization variables (variableComponents) and active
    * element balances. This excludes inert components from the variable part but keeps balances.
+   *
+   * @return the objective vector for optimization variables
    */
   private double[] getObjectiveVectorForVariables() {
     List<Integer> activeElements = findActiveElements();

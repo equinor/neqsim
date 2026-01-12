@@ -25,17 +25,30 @@ jobs:
           java-version: '11'
           cache: 'maven'
       - name: Generate javadoc
-        run: mvn javadoc:javadoc
-      - name: Run tests
-        run: mvn -B test --file pom.xml -ntp
-      - name: Create coverage report from jacoco execution data
-        run: mvn -B jacoco:report -ntp
+        run: mvn javadoc:javadoc "-Daether.connector.basic.retries=5"
+      - name: Run tests and generate JaCoCo report
+        run: mvn -B test --file pom.xml -ntp -DskipITs "-Daether.connector.basic.retries=5"
+      - name: Verify JaCoCo report exists
+        run: |
+          if [ -f target/site/jacoco/jacoco.xml ]; then
+            echo "JaCoCo report found"
+            head -20 target/site/jacoco/jacoco.xml
+          else
+            echo "ERROR: JaCoCo report not found!"
+            echo "Checking for jacoco.exec..."
+            ls -la target/ | grep -i jacoco || echo "No jacoco files in target/"
+            echo "Checking target/site/jacoco/..."
+            ls -la target/site/jacoco/ 2>/dev/null || echo "Directory does not exist"
+            exit 1
+          fi
       - name: Upload jacoco coverage reports to Codecov
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: codecov/codecov-action@v5
         with:
           files: target/site/jacoco/jacoco.xml
           name: codecov
           token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
 
   test_java_8:
     name: Assert tests with Java 8 on Ubuntu
@@ -50,7 +63,7 @@ jobs:
           java-version: '8'
           cache: 'maven'
       - name: Run tests
-        run: mvn -B test --file pomJava8.xml -ntp
+        run: mvn -B test --file pomJava8.xml -ntp "-Daether.connector.basic.retries=5"
 
   test_java_21:
     name: Assert tests with Java 21 on Ubuntu
@@ -65,7 +78,7 @@ jobs:
           java-version: '21'
           cache: 'maven'
       - name: Run tests
-        run: mvn -B test --file pomJava21.xml -ntp
+        run: mvn -B test --file pomJava21.xml -ntp "-Daether.connector.basic.retries=5"
 
   test_java_11_windows:
     name: Assert tests with Java 11 on Windows
@@ -79,7 +92,7 @@ jobs:
           java-version: '11'
           cache: 'maven'
       - name: Run tests
-        run: mvn -B test --file pom.xml -ntp
+        run: mvn -B test --file pom.xml -ntp "-Daether.connector.basic.retries=5"
 
   test_java_8_windows:
     name: Assert tests with Java 8 on Windows
@@ -94,7 +107,7 @@ jobs:
           java-version: '8'
           cache: 'maven'
       - name: Run tests
-        run: mvn -B test --file pomJava8.xml -ntp
+        run: mvn -B test --file pomJava8.xml -ntp "-Daether.connector.basic.retries=5"
 
   test_java_21_windows:
     name: Assert tests with Java 21 on Windows
@@ -109,4 +122,4 @@ jobs:
           java-version: '21'
           cache: 'maven'
       - name: Run tests
-        run: mvn -B test --file pomJava21.xml -ntp
+        run: mvn -B test --file pomJava21.xml -ntp "-Daether.connector.basic.retries=5"

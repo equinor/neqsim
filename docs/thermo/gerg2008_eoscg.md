@@ -85,7 +85,90 @@ public class GergExample {
 
 ---
 
-## 3. EOS-CG
+## 3. GERG-2008-H2 (Hydrogen Enhanced)
+
+**Full Name:** Extension of the equation of state for natural gases GERG-2008 with improved hydrogen parameters.  
+**Authors:** R. Beckmüller, M. Thol, I. Sampson, E.W. Lemmon, R. Span (Ruhr-Universität Bochum, NIST).
+
+### Application
+GERG-2008-H2 is an extension of GERG-2008 with **improved hydrogen binary interaction parameters**. This extension is particularly important for:
+- Hydrogen-rich natural gas blends (power-to-gas applications)
+- Hydrogen transport in existing natural gas pipelines
+- CO₂-H₂ mixtures in CCS with hydrogen
+
+### Key Improvements
+The GERG-2008-H2 model includes:
+- Updated binary reducing parameters for hydrogen with methane, nitrogen, CO₂, and other hydrocarbons
+- **New departure function** for N₂-H₂ (Model 8)
+- **New departure function** for CO₂-H₂ (Model 9)
+- Extended validation range for hydrogen-containing mixtures
+
+### Expected Differences from GERG-2008
+| Binary System | Typical Density Difference |
+|---------------|---------------------------|
+| CH₄-H₂        | ~0.1-0.25%               |
+| N₂-H₂         | ~0.05-0.5%               |
+| CO₂-H₂        | ~1-1.5% (largest)        |
+| C₂H₆-H₂       | ~0.5-0.8%                |
+
+Differences increase with:
+- Higher hydrogen content
+- Higher pressure
+- Lower temperature
+
+### Usage in NeqSim
+
+The GERG-2008-H2 model is available through `SystemGERG2008Eos` by enabling the hydrogen-enhanced mode:
+
+```java
+import neqsim.thermo.system.SystemGERG2008Eos;
+import neqsim.thermo.util.gerg.GERG2008Type;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+public class Gerg2008H2Example {
+    public static void main(String[] args) {
+        // Create system with GERG-2008
+        SystemGERG2008Eos fluid = new SystemGERG2008Eos(300.0, 50.0); // T in K, P in bara
+        
+        // Add hydrogen-rich mixture
+        fluid.addComponent("methane", 0.7);
+        fluid.addComponent("hydrogen", 0.3);
+        
+        // Enable GERG-2008-H2 model with improved hydrogen parameters
+        fluid.useHydrogenEnhancedModel();
+        // or equivalently:
+        // fluid.setGergModelType(GERG2008Type.HYDROGEN_ENHANCED);
+        
+        // Flash calculation
+        ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+        ops.TPflash();
+        
+        // Retrieve properties
+        double density = fluid.getPhase(0).getDensity();
+        System.out.println("Density (GERG-2008-H2): " + density + " kg/m3");
+        System.out.println("Model: " + fluid.getModelName()); // "GERG2008-H2-EOS"
+        
+        // Check which model is active
+        if (fluid.isUsingHydrogenEnhancedModel()) {
+            System.out.println("Using hydrogen-enhanced GERG-2008-H2 model");
+        }
+    }
+}
+```
+
+### API Methods
+
+| Method | Description |
+|--------|-------------|
+| `useHydrogenEnhancedModel()` | Enable GERG-2008-H2 model |
+| `setGergModelType(GERG2008Type.STANDARD)` | Use standard GERG-2008 |
+| `setGergModelType(GERG2008Type.HYDROGEN_ENHANCED)` | Use GERG-2008-H2 |
+| `getGergModelType()` | Get current model type |
+| `isUsingHydrogenEnhancedModel()` | Check if H2 model is active |
+
+---
+
+## 4. EOS-CG
 
 **Full Name:** EOS-CG: A Helmholtz energy equation of state for combustion gases and CCS mixtures.  
 **Authors:** J. Gernert and R. Span (Ruhr-Universität Bochum).
@@ -140,7 +223,8 @@ public class EosCgExample {
 
 ---
 
-## 4. Literature References
+## 5. Literature References
 
 1.  **GERG-2008:** Kunz, O., & Wagner, W. (2012). *The GERG-2008 Wide-Range Equation of State for Natural Gases and Other Mixtures: An Expansion of GERG-2004*. Journal of Chemical & Engineering Data, 57(11), 3032–3091.
-2.  **EOS-CG:** Gernert, J., & Span, R. (2016). *EOS-CG: A Helmholtz energy equation of state for combustion gases and CCS mixtures*. The Journal of Chemical Thermodynamics, 93, 274–293.
+2.  **GERG-2008-H2:** Beckmüller, R., Thol, M., Sampson, I., Lemmon, E.W., & Span, R. (2022). *Extension of the equation of state for natural gases GERG-2008 with improved hydrogen parameters*. Fluid Phase Equilibria, 557, 113411.
+3.  **EOS-CG:** Gernert, J., & Span, R. (2016). *EOS-CG: A Helmholtz energy equation of state for combustion gases and CCS mixtures*. The Journal of Chemical Thermodynamics, 93, 274–293.

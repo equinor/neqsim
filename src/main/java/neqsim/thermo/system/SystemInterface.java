@@ -593,6 +593,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public boolean doMultiPhaseCheck();
 
   /**
+   * Check if enhanced stability analysis is enabled. When enabled, the flash calculation uses
+   * Wilson K-value initial guesses and tests both vapor-like and liquid-like trial phases for more
+   * robust detection of multiple liquid phases (e.g., liquid-liquid-vapor equilibria in sour gas or
+   * CO2 systems).
+   *
+   * @return true if enhanced stability analysis is enabled
+   */
+  public boolean doEnhancedMultiPhaseCheck();
+
+  /**
    * <p>
    * doSolidPhaseCheck.
    * </p>
@@ -1726,6 +1736,28 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public boolean hasPlusFraction();
 
   /**
+   * Check if the system contains ionic components (e.g., Na+, Cl-, Ca+2).
+   *
+   * <p>
+   * This method scans all components in the system and returns true if any component has a non-zero
+   * ionic charge or is marked as an ion. This is useful for determining whether special ion
+   * handling is required during flash calculations, regardless of whether chemical reactions are
+   * enabled.
+   * </p>
+   *
+   * @return true if the system contains at least one ionic component, false otherwise
+   */
+  public default boolean hasIons() {
+    for (int i = 0; i < getPhase(0).getNumberOfComponents(); i++) {
+      if (getPhase(0).getComponent(i).getIonicCharge() != 0
+          || getPhase(0).getComponent(i).isIsIon()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * <p>
    * hasSolidPhase.
    * </p>
@@ -1734,6 +1766,49 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    */
   public default boolean hasSolidPhase() {
     return hasPhaseType(PhaseType.SOLID); // || hasPhaseType(PhaseType.SOLIDCOMPLEX);
+  }
+
+  /**
+   * Check if the system contains a hydrate phase.
+   *
+   * @return True if system contains a hydrate phase
+   */
+  public default boolean hasHydratePhase() {
+    return hasPhaseType(PhaseType.HYDRATE);
+  }
+
+  /**
+   * Get the mole fraction of the hydrate phase.
+   *
+   * <p>
+   * Returns the beta value (phase fraction) for the hydrate phase if it exists, otherwise returns
+   * 0.0.
+   * </p>
+   *
+   * @return the hydrate phase mole fraction, or 0.0 if no hydrate phase exists
+   */
+  public default double getHydrateFraction() {
+    if (!hasHydratePhase()) {
+      return 0.0;
+    }
+    for (int i = 0; i < getNumberOfPhases(); i++) {
+      if (getPhase(i).getType() == PhaseType.HYDRATE) {
+        return getBeta(i);
+      }
+    }
+    return 0.0;
+  }
+
+  /**
+   * Get the hydrate phase if it exists.
+   *
+   * @return the hydrate phase, or null if no hydrate phase exists
+   */
+  public default PhaseInterface getHydratePhase() {
+    if (hasHydratePhase()) {
+      return getPhase(PhaseType.HYDRATE);
+    }
+    return null;
   }
 
   /**
@@ -2444,6 +2519,16 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   public void setMultiPhaseCheck(boolean doMultiPhaseCheck);
 
   /**
+   * Enable or disable enhanced stability analysis for flash calculations. When enabled, uses Wilson
+   * K-value initial guesses and tests both vapor-like and liquid-like trial phases. This is more
+   * robust for detecting liquid-liquid equilibria in complex mixtures (e.g., sour gas, CO2 systems)
+   * but adds computational overhead. Default is false (disabled).
+   *
+   * @param enhancedMultiPhaseCheck true to enable enhanced multi-phase detection
+   */
+  public void setEnhancedMultiPhaseCheck(boolean enhancedMultiPhaseCheck);
+
+  /**
    * <p>
    * setMultiphaseWaxCheck.
    * </p>
@@ -2837,4 +2922,49 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * @return a double
    */
   public double calculateMolarMassFromDensityAndBoilingPoint(double density, double boilingPoint);
+
+  /**
+   * Validate the thermodynamic system setup before use.
+   * 
+   * <p>
+   * Checks for common setup errors:
+   * <ul>
+   * <li>Components defined</li>
+   * <li>Mixing rule set</li>
+   * <li>Temperature and pressure in valid ranges</li>
+   * <li>Composition normalized</li>
+   * </ul>
+   * 
+   * @return validation result with errors and warnings
+   */
+  public default neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getFluidName());
+
+    // Check: Has components
+    if (getNumberOfComponents() == 0) {
+      result.addError("thermo", "No components defined",
+          "Add components: system.addComponent(\"methane\", 0.5)");
+    }
+
+    // Check: Temperature valid
+    if (getTemperature() < 1.0) {
+      result.addError("thermo", "Temperature too low: " + getTemperature() + " K",
+          "Set temperature above 1 K: system.setTemperature(298.15)");
+    }
+
+    // Check: Pressure valid
+    if (getPressure() <= 0) {
+      result.addError("thermo", "Pressure must be positive: " + getPressure() + " bar",
+          "Set positive pressure: system.setPressure(1.0)");
+    }
+
+    // Check: Mixing rule (warning only - some simple cases work without)
+    if (getNumberOfComponents() > 1 && getMixingRuleName() == null) {
+      result.addWarning("thermo", "Mixing rule not explicitly set for multi-component system",
+          "Set mixing rule: system.setMixingRule(\"classic\") or system.setMixingRule(2)");
+    }
+
+    return result;
+  }
 }

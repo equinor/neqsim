@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang | default: 'en-US' }}">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="baseurl" content="{{ site.baseurl }}">
+
+{% seo %}
+    <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
+    
+    <!-- KaTeX CSS for math rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+    
+    <!-- Custom NeqSim styles -->
+    <link rel="stylesheet" href="{{ '/assets/css/custom.css' | relative_url }}">
+    
+    <style>
+    /* Math equation styling */
+    .katex-display {
+      margin: 1.5em 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 0.5em 0;
+    }
+    .katex { font-size: 1.1em; }
+    .katex-display > .katex { max-width: 100%; text-align: center; }
+    @media (max-width: 768px) {
+      .katex-display { font-size: 0.9em; }
+      .katex-display > .katex { max-width: 100%; overflow-x: auto; }
+    }
+    </style>
+  </head>
+  <body>
+    <a id="skip-to-content" href="#content">Skip to the content.</a>
+
+    <header class="page-header" role="banner">
+      <!-- Navigation Bar -->
+      <nav class="site-nav">
+        <a href="{{ '/' | relative_url }}" class="nav-link nav-home">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          Home
+        </a>
+        
+        <div class="nav-dropdown">
+          <button class="nav-dropdown-btn">
+            Documentation
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="nav-dropdown-content">
+            <a href="{{ '/thermo/' | relative_url }}">Thermodynamics</a>
+            <a href="{{ '/process/' | relative_url }}">Process Simulation</a>
+            <a href="{{ '/pvtsimulation/' | relative_url }}">PVT Simulation</a>
+            <a href="{{ '/physical_properties/' | relative_url }}">Physical Properties</a>
+            <a href="{{ '/fluidmechanics/' | relative_url }}">Fluid Mechanics</a>
+            <a href="{{ '/standards/' | relative_url }}">Standards</a>
+          </div>
+        </div>
+        
+        <div class="nav-dropdown">
+          <button class="nav-dropdown-btn">
+            Guides
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div class="nav-dropdown-content">
+            <a href="{{ '/examples/' | relative_url }}">Examples</a>
+            <a href="{{ '/simulation/' | relative_url }}">Simulation Guides</a>
+            <a href="{{ '/integration/' | relative_url }}">Integration</a>
+            <a href="{{ '/fielddevelopment/' | relative_url }}">Field Development</a>
+            <a href="{{ '/safety/' | relative_url }}">Safety Systems</a>
+            <a href="{{ '/development/' | relative_url }}">Development</a>
+          </div>
+        </div>
+        
+        <a href="{{ site.github.repository_url }}" class="nav-link nav-github" target="_blank">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+          </svg>
+          GitHub
+        </a>
+      </nav>
+      
+      <h1 class="project-name">{{ page.title | default: site.title | default: site.github.repository_name }}</h1>
+      <h2 class="project-tagline">{{ page.description | default: site.description | default: site.github.project_tagline }}</h2>
+      
+      <!-- Search Bar -->
+      <div class="search-container">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <input type="text" id="search-input" placeholder="Search documentation..." autocomplete="off">
+          <span class="search-shortcut">Ctrl+K</span>
+        </div>
+        <div id="search-results"></div>
+      </div>
+      <div id="search-overlay"></div>
+    </header>
+
+    <main id="content" class="main-content" role="main">
+      {{ content }}
+
+      <footer class="site-footer">
+        {% if site.github.is_project_page %}
+          <span class="site-footer-owner"><a href="{{ site.github.repository_url }}">{{ site.github.repository_name }}</a> is maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a>.</span>
+        {% endif %}
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a>.</span>
+      </footer>
+    </main>
+    
+    <!-- KaTeX JavaScript - loaded at end of body for better performance -->
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement(document.body, {
+          delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "$", right: "$", display: false},
+            {left: "\\[", right: "\\]", display: true},
+            {left: "\\(", right: "\\)", display: false}
+          ],
+          throwOnError: false,
+          trust: true,
+          strict: false
+        });
+      });
+    </script>
+    
+    <!-- Lunr.js for client-side search -->
+    <script src="https://cdn.jsdelivr.net/npm/lunr@2.3.9/lunr.min.js"></script>
+    <script src="{{ '/assets/js/search.js' | relative_url }}"></script>
+    
+    <!-- Documentation enhancements: copy button, TOC, edit link -->
+    <script src="{{ '/assets/js/enhancements.js' | relative_url }}"></script>
+  </body>
+</html>

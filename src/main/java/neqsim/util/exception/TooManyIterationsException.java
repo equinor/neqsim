@@ -12,6 +12,8 @@ public class TooManyIterationsException extends neqsim.util.exception.ThermoExce
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
+  private final long maxIterations;
+
   /**
    * Constructs a <code>TooManyIterationsException</code> with a standard error message.
    *
@@ -21,6 +23,7 @@ public class TooManyIterationsException extends neqsim.util.exception.ThermoExce
    */
   public TooManyIterationsException(String className, String methodName, long maxIterations) {
     super(className, methodName, "Exceeded maximum iterations " + maxIterations);
+    this.maxIterations = maxIterations;
   }
 
   /**
@@ -32,5 +35,23 @@ public class TooManyIterationsException extends neqsim.util.exception.ThermoExce
    */
   public TooManyIterationsException(Object obj, String methodName, long maxIterations) {
     this(obj.getClass().getSimpleName(), methodName, maxIterations);
+  }
+
+  /**
+   * Get remediation advice for this exception.
+   * 
+   * <p>
+   * Returns a hint on how to fix convergence issues. AI agents can use this to self-correct.
+   * </p>
+   * 
+   * @return remediation advice string
+   */
+  public String getRemediation() {
+    return "Solver did not converge within " + maxIterations + " iterations. Try:\n"
+        + "1. Check initial conditions are physically reasonable\n"
+        + "2. Simplify the fluid composition (fewer components)\n"
+        + "3. Use a different equation of state\n"
+        + "4. Increase max iterations if close to convergence\n"
+        + "5. For distillation: use DAMPED solver instead of SEQUENTIAL";
   }
 }

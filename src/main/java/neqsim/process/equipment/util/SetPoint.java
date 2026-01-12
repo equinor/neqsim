@@ -254,7 +254,7 @@ public class SetPoint extends ProcessEquipmentBaseClass {
           val = sourceEquipment.getPressure();
         }
         ((Heater) targetEquipment).setOutletPressure(val);
-      } else if (targetVariable.equals("temperature")) {
+      } else if (targetVariable.equals("temperature") || targetVariable.equals("outTemperature")) {
         if (sourceValueCalculator == null) {
           val = sourceEquipment.getTemperature();
         }

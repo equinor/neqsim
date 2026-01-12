@@ -1,10 +1,12 @@
 package neqsim.process.equipment.distillation;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.distillation.DistillationColumn.SolverType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 
+@Tag("slow")
 public class DistillationSpeedTest {
 
   @Test

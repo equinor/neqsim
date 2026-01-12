@@ -273,7 +273,7 @@ The PSD valve integrates with NeqSim's process safety features:
 
 ## See Also
 
-- [Safety Valve Dynamic Sizing](psv_dynamic_sizing_example.md)
-- [Rupture Disk Behavior](rupture_disk_dynamic_behavior.md)
+- [Safety Valve Dynamic Sizing](../safety/psv_dynamic_sizing_example.md)
+- [Rupture Disk Behavior](../safety/rupture_disk_dynamic_behavior.md)
 - [Process Control Overview](process_control.md)
-- [Alarm System Documentation](../alarm/)
+- [Alarm System Documentation](../safety/alarm_system_guide.md)

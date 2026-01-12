@@ -1,0 +1,1634 @@
+package neqsim.process.processmodel.diagram;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.processmodel.dexpi.DexpiProcessUnit;
+import neqsim.process.processmodel.dexpi.DexpiStream;
+import neqsim.process.processmodel.diagram.EquipmentRole;
+import neqsim.process.processmodel.graph.ProcessEdge;
+import neqsim.process.processmodel.graph.ProcessGraph;
+import neqsim.process.processmodel.graph.ProcessGraphBuilder;
+import neqsim.process.processmodel.graph.ProcessNode;
+import neqsim.thermo.system.SystemInterface;
+
+/**
+ * Exports ProcessSystem as professional oil &amp; gas style process flow diagrams.
+ *
+ * <p>
+ * This class generates PFDs that follow industry conventions:
+ * </p>
+ * <ul>
+ * <li><b>Gravity logic</b> - Gas flows upward, liquids flow downward</li>
+ * <li><b>Functional zoning</b> - Separation center, gas processing upper, liquid lower</li>
+ * <li><b>Equipment semantics</b> - Separator outlets positioned correctly</li>
+ * <li><b>Phase-aware styling</b> - Stream colors based on phase</li>
+ * <li><b>Stable layout</b> - Same model produces same diagram every time</li>
+ * </ul>
+ *
+ * <p>
+ * Supported output formats:
+ * </p>
+ * <ul>
+ * <li><b>DOT</b> - Graphviz DOT format (text)</li>
+ * <li><b>SVG</b> - Scalable Vector Graphics (requires Graphviz installed)</li>
+ * <li><b>PNG</b> - Portable Network Graphics (requires Graphviz installed)</li>
+ * <li><b>PDF</b> - Portable Document Format (requires Graphviz installed)</li>
+ * </ul>
+ *
+ * <p>
+ * Usage:
+ * </p>
+ *
+ * <pre>
+ * ProcessDiagramExporter exporter = new ProcessDiagramExporter(processSystem);
+ * String dot = exporter.toDOT();
+ * exporter.exportSVG(Path.of("diagram.svg"));
+ * </pre>
+ *
+ * @author NeqSim
+ * @version 1.0
+ */
+public class ProcessDiagramExporter implements Serializable {
+  private static final long serialVersionUID = 1000L;
+  private static final Logger logger = LogManager.getLogger(ProcessDiagramExporter.class);
+
+  /** The process system to export. */
+  private final ProcessSystem processSystem;
+
+  /** The layout policy for determining equipment positions. */
+  private final PFDLayoutPolicy layoutPolicy;
+
+  /** Diagram style (NEQSIM, HYSYS, PROII, ASPEN_PLUS). */
+  private DiagramStyle diagramStyle = DiagramStyle.NEQSIM;
+
+  /** Detail level for the diagram. */
+  private DiagramDetailLevel detailLevel = DiagramDetailLevel.ENGINEERING;
+
+  /** Graph title. */
+  private String title = "Process Flow Diagram";
+
+  /** Whether to use vertical (top-down) layout. */
+  private boolean verticalLayout = true;
+
+  /** Whether to group equipment by role into clusters. */
+  private boolean useClusters = true;
+
+  /** Whether to show the legend. */
+  private boolean showLegend = true;
+
+  /** Whether to show stream values on edges. */
+  private boolean showStreamValues = true;
+
+  /** Whether to show stream values as tables (HTML labels). */
+  private boolean useStreamTables = false;
+
+  /** Whether to highlight recycle streams with special styling. */
+  private boolean highlightRecycles = true;
+
+  /** Whether to show control equipment (adjusters, calculators). */
+  private boolean showControlEquipment = true;
+
+  /** Whether to show DEXPI metadata (tag names, line numbers, fluid codes). */
+  private boolean showDexpiMetadata = true;
+
+  /**
+   * Creates a new diagram exporter for a process system.
+   *
+   * @param processSystem the process system to export
+   */
+  public ProcessDiagramExporter(ProcessSystem processSystem) {
+    this.processSystem = processSystem;
+    this.layoutPolicy = new PFDLayoutPolicy();
+  }
+
+  /**
+   * Creates a new diagram exporter with custom layout policy.
+   *
+   * @param processSystem the process system
+   * @param layoutPolicy the layout policy to use
+   */
+  public ProcessDiagramExporter(ProcessSystem processSystem, PFDLayoutPolicy layoutPolicy) {
+    this.processSystem = processSystem;
+    this.layoutPolicy = layoutPolicy;
+  }
+
+  /**
+   * Exports the process system as a DOT format string.
+   *
+   * @return Graphviz DOT format string
+   */
+  public String toDOT() {
+    ProcessGraph graph = ProcessGraphBuilder.buildGraph(processSystem);
+    return generateDOT(graph);
+  }
+
+  /**
+   * Generates DOT format from a ProcessGraph.
+   *
+   * @param graph the process graph
+   * @return DOT format string
+   */
+  private String generateDOT(ProcessGraph graph) {
+    StringBuilder sb = new StringBuilder();
+
+    // Graph header
+    sb.append("digraph ProcessFlowDiagram {\n");
+    sb.append("  // Generated by NeqSim ProcessDiagramExporter\n");
+    sb.append("  // ").append(title).append("\n\n");
+
+    // Graph attributes (always uses LR for industry-standard left-to-right flow)
+    appendGraphAttributes(sb);
+
+    // Rank groups for gravity-based layout
+    Map<Integer, List<ProcessNode>> rankGroups = groupNodesByRank(graph);
+
+    // Generate industry PFD layout: left-to-right with vertical phase zones
+    appendRankSubgraphs(sb, rankGroups, graph);
+
+    // Generate clusters if enabled
+    if (useClusters) {
+      appendClusters(sb, graph);
+    }
+
+    // Generate nodes
+    sb.append("  // Equipment Nodes\n");
+    for (ProcessNode node : graph.getNodes()) {
+      if (shouldIncludeNode(node)) {
+        appendNode(sb, node);
+      }
+    }
+    sb.append("\n");
+
+    // Generate edges
+    sb.append("  // Stream Connections\n");
+    for (ProcessEdge edge : graph.getEdges()) {
+      if (shouldIncludeEdge(edge)) {
+        appendEdge(sb, edge);
+      }
+    }
+    sb.append("\n");
+
+    // Legend
+    if (showLegend) {
+      appendLegend(sb);
+    }
+
+    sb.append("}\n");
+    return sb.toString();
+  }
+
+  /**
+   * Appends graph-level attributes for professional appearance.
+   *
+   * <p>
+   * Industry-standard oil &amp; gas PFD layout:
+   * </p>
+   * <ul>
+   * <li>Left-to-right process flow (rankdir=LR)</li>
+   * <li>Vertical phase stratification via subgraphs and ordering</li>
+   * <li>Feed streams enter from left, products exit right</li>
+   * <li>Gas at top, oil in middle, water at bottom</li>
+   * </ul>
+   *
+   * @param sb the string builder
+   */
+  private void appendGraphAttributes(StringBuilder sb) {
+    sb.append("  // Graph attributes - ").append(diagramStyle.getDisplayName())
+        .append(" style PFD\n");
+    sb.append("  // Left-to-right flow with vertical phase stratification\n");
+    sb.append("  graph [\n");
+    // Always use LR for industry-standard left-to-right flow
+    // Vertical stratification is handled via subgraphs and ordering
+    sb.append("    rankdir=LR\n");
+    sb.append("    splines=").append(diagramStyle.getSplineType()).append("\n");
+    sb.append("    nodesep=0.8\n");
+    sb.append("    ranksep=1.2\n"); // Increased for clearer horizontal separation
+    sb.append("    fontname=\"").append(diagramStyle.getFontName()).append("\"\n");
+    sb.append("    fontsize=12\n");
+    sb.append("    label=\"").append(escapeString(title)).append("\"\n");
+    sb.append("    labelloc=t\n");
+    sb.append("    labeljust=c\n");
+    sb.append("    bgcolor=\"").append(diagramStyle.getBackgroundColor()).append("\"\n");
+    sb.append("    pad=0.5\n");
+    sb.append("    newrank=true\n"); // Enable new rank algorithm for better control
+    sb.append("    ordering=out\n"); // Maintain edge ordering
+    sb.append("  ];\n\n");
+
+    sb.append("  // Default node attributes\n");
+    sb.append("  node [\n");
+    sb.append("    fontname=\"").append(diagramStyle.getFontName()).append("\"\n");
+    sb.append("    fontsize=").append(diagramStyle.getFontSize()).append("\n");
+    sb.append("    fontcolor=\"").append(diagramStyle.getFontColor()).append("\"\n");
+    sb.append("    penwidth=").append(diagramStyle.getPenWidth()).append("\n");
+    sb.append("  ];\n\n");
+
+    sb.append("  // Default edge attributes\n");
+    sb.append("  edge [\n");
+    sb.append("    fontname=\"").append(diagramStyle.getFontName()).append("\"\n");
+    sb.append("    fontsize=8\n");
+    sb.append("    arrowsize=0.7\n");
+    sb.append("    arrowhead=").append(diagramStyle.getArrowStyle()).append("\n");
+    sb.append("    style=").append(diagramStyle.getEdgeStyle()).append("\n");
+    sb.append("    penwidth=").append(diagramStyle.getStreamWidth()).append("\n");
+    // Use style-specific stream color
+    if (diagramStyle != DiagramStyle.NEQSIM) {
+      sb.append("    color=\"").append(diagramStyle.getStreamColor()).append("\"\n");
+    }
+    sb.append("  ];\n\n");
+  }
+
+  /**
+   * Groups nodes by their rank level for vertical layout.
+   *
+   * @param graph the process graph
+   * @return map of rank level to nodes
+   */
+  private Map<Integer, List<ProcessNode>> groupNodesByRank(ProcessGraph graph) {
+    Map<Integer, List<ProcessNode>> rankGroups = new HashMap<>();
+    for (ProcessNode node : graph.getNodes()) {
+      int rank = layoutPolicy.getRankLevel(node);
+      rankGroups.computeIfAbsent(rank, k -> new ArrayList<>()).add(node);
+    }
+    return rankGroups;
+  }
+
+  /**
+   * Appends rank and ordering constraints for industry PFD layout.
+   *
+   * <p>
+   * Creates a layout where:
+   * </p>
+   * <ul>
+   * <li>Feed streams are on the LEFT (rank=min)</li>
+   * <li>Product streams are on the RIGHT (rank=max)</li>
+   * <li>Gas processing is at TOP (min vertical position)</li>
+   * <li>Oil processing is in MIDDLE</li>
+   * <li>Water processing is at BOTTOM (max vertical position)</li>
+   * </ul>
+   *
+   * @param sb the string builder
+   * @param rankGroups the rank groups (by phase)
+   * @param graph the process graph
+   */
+  private void appendRankSubgraphs(StringBuilder sb, Map<Integer, List<ProcessNode>> rankGroups,
+      ProcessGraph graph) {
+    sb.append("  // Industry PFD layout: left-to-right flow with vertical phase zones\n\n");
+
+    // Identify feed nodes (left side) and product nodes (right side)
+    List<ProcessNode> feedNodes = new ArrayList<>();
+    List<ProcessNode> productNodes = new ArrayList<>();
+
+    for (ProcessNode node : graph.getNodes()) {
+      if (!shouldIncludeNode(node)) {
+        continue;
+      }
+      String name = node.getName().toLowerCase();
+
+      // Keywords that indicate product/exit equipment
+      boolean hasProductKeyword =
+          name.contains("export") || name.contains("disposal") || name.contains("vent")
+              || name.contains("product") || name.contains("outlet") || name.contains("out")
+              || name.contains("rich") || name.contains("sweet") || name.contains("treated");
+
+      // Keywords that indicate feed/inlet equipment
+      boolean hasFeedKeyword = name.contains("feed") || name.contains("inlet")
+          || name.contains("well") || name.contains("lean") || name.contains("sour")
+          || name.contains("raw") || name.contains("untreated");
+
+      // Sink nodes (no outputs) go to the RIGHT - these are terminal equipment
+      if (node.isSink()) {
+        productNodes.add(node);
+      }
+      // Source nodes (no inputs) that aren't product-named go to the LEFT
+      else if (node.isSource() && !hasProductKeyword) {
+        feedNodes.add(node);
+      }
+      // Product-keyword nodes also go to the RIGHT
+      else if (hasProductKeyword && !hasFeedKeyword) {
+        productNodes.add(node);
+      }
+    }
+
+    // Remove duplicates (some may match both criteria)
+    productNodes.removeAll(feedNodes);
+
+    // Force feed equipment to be on the left (rank=min)
+    if (!feedNodes.isEmpty()) {
+      sb.append("  // Feed streams/equipment (left side)\n");
+      sb.append("  { rank=min; ");
+      for (ProcessNode node : feedNodes) {
+        sb.append("\"").append(escapeString(node.getName())).append("\"; ");
+      }
+      sb.append("}\n");
+    }
+
+    // Force product/exit equipment to be on the right (rank=max)
+    if (!productNodes.isEmpty()) {
+      sb.append("  // Product/Export streams (right side)\n");
+      sb.append("  { rank=max; ");
+      for (ProcessNode node : productNodes) {
+        sb.append("\"").append(escapeString(node.getName())).append("\"; ");
+      }
+      sb.append("}\n");
+    }
+
+    // Add invisible edges to enforce horizontal ordering
+    // From feed nodes to first processing equipment
+    if (!feedNodes.isEmpty() && !productNodes.isEmpty()) {
+      sb.append("\n  // Invisible edges to enforce left-to-right ordering\n");
+      // Find a central processing node (separator or first non-feed/product)
+      ProcessNode centralNode = findCentralProcessingNode(graph, feedNodes, productNodes);
+      if (centralNode != null) {
+        for (ProcessNode feed : feedNodes) {
+          sb.append("  \"").append(escapeString(feed.getName())).append("\" -> \"")
+              .append(escapeString(centralNode.getName())).append("\" [style=invis, weight=0];\n");
+        }
+        for (ProcessNode product : productNodes) {
+          sb.append("  \"").append(escapeString(centralNode.getName())).append("\" -> \"")
+              .append(escapeString(product.getName())).append("\" [style=invis, weight=0];\n");
+        }
+      }
+    }
+
+    sb.append("\n");
+
+    // Group processing equipment by phase zone for vertical ordering
+    appendPhaseZoneOrdering(sb, graph, feedNodes, productNodes);
+  }
+
+  /**
+   * Finds a central processing node (typically a separator) to anchor the layout.
+   *
+   * @param graph the process graph
+   * @param feedNodes feed nodes to exclude
+   * @param productNodes product nodes to exclude
+   * @return a central processing node, or null if none found
+   */
+  private ProcessNode findCentralProcessingNode(ProcessGraph graph, List<ProcessNode> feedNodes,
+      List<ProcessNode> productNodes) {
+    // Look for a separator first (they're typically central)
+    for (ProcessNode node : graph.getNodes()) {
+      if (feedNodes.contains(node) || productNodes.contains(node)) {
+        continue;
+      }
+      EquipmentRole role = layoutPolicy.classifyEquipment(node.getEquipment());
+      if (role == EquipmentRole.SEPARATOR) {
+        return node;
+      }
+    }
+    // Otherwise return the first non-feed/product node
+    for (ProcessNode node : graph.getNodes()) {
+      if (!feedNodes.contains(node) && !productNodes.contains(node) && shouldIncludeNode(node)) {
+        return node;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Appends vertical ordering constraints based on phase zones.
+   *
+   * <p>
+   * Uses invisible edges to enforce vertical ordering: Gas → Separation → Oil → Water
+   * </p>
+   *
+   * @param sb the string builder
+   * @param graph the process graph
+   * @param sourceNodes feed streams (excluded from phase ordering)
+   * @param sinkNodes product streams (included for water zone vertical positioning)
+   */
+  private void appendPhaseZoneOrdering(StringBuilder sb, ProcessGraph graph,
+      List<ProcessNode> sourceNodes, List<ProcessNode> sinkNodes) {
+    // Collect nodes by phase zone - include sinks for vertical positioning
+    Map<PFDLayoutPolicy.PhaseZone, List<ProcessNode>> phaseGroups = new HashMap<>();
+
+    for (ProcessNode node : graph.getNodes()) {
+      // Skip only true feed streams
+      if (sourceNodes.contains(node)) {
+        continue;
+      }
+      if (!shouldIncludeNode(node)) {
+        continue;
+      }
+
+      PFDLayoutPolicy.PhaseZone zone = layoutPolicy.classifyPhaseZone(node);
+      phaseGroups.computeIfAbsent(zone, k -> new ArrayList<>()).add(node);
+    }
+
+    sb.append("  // Vertical phase zone ordering (Gas top → Oil middle → Water bottom)\n");
+
+    // Create invisible edges between zone representative nodes to enforce vertical order
+    ProcessNode gasRep = null;
+    ProcessNode oilRep = null;
+    ProcessNode waterRep = null;
+
+    if (phaseGroups.containsKey(PFDLayoutPolicy.PhaseZone.GAS_TOP)) {
+      List<ProcessNode> gasNodes = phaseGroups.get(PFDLayoutPolicy.PhaseZone.GAS_TOP);
+      if (!gasNodes.isEmpty()) {
+        gasRep = gasNodes.get(0);
+      }
+    }
+
+    if (phaseGroups.containsKey(PFDLayoutPolicy.PhaseZone.OIL_MIDDLE)) {
+      List<ProcessNode> oilNodes = phaseGroups.get(PFDLayoutPolicy.PhaseZone.OIL_MIDDLE);
+      if (!oilNodes.isEmpty()) {
+        oilRep = oilNodes.get(0);
+      }
+    }
+
+    if (phaseGroups.containsKey(PFDLayoutPolicy.PhaseZone.WATER_BOTTOM)) {
+      List<ProcessNode> waterNodes = phaseGroups.get(PFDLayoutPolicy.PhaseZone.WATER_BOTTOM);
+      if (!waterNodes.isEmpty()) {
+        waterRep = waterNodes.get(0);
+      }
+    }
+
+    // Create ordering edges (invisible but constrained for vertical layout)
+    // Order: Gas (top) → Oil (middle) → Water (bottom)
+    // In LR mode, edge A -> B places B ABOVE A, so: water -> oil -> gas
+    // Use only representative nodes to avoid too many constraints
+    if (waterRep != null && oilRep != null) {
+      sb.append("  \"").append(escapeString(waterRep.getName())).append("\" -> \"");
+      sb.append(escapeString(oilRep.getName()));
+      sb.append("\" [style=invis, constraint=true, minlen=1];\n");
+    }
+
+    if (oilRep != null && gasRep != null) {
+      sb.append("  \"").append(escapeString(oilRep.getName())).append("\" -> \"");
+      sb.append(escapeString(gasRep.getName()));
+      sb.append("\" [style=invis, constraint=true, minlen=1];\n");
+    }
+
+    if (waterRep != null && gasRep != null) {
+      // Direct water -> gas edge for stronger constraint
+      sb.append("  \"").append(escapeString(waterRep.getName())).append("\" -> \"");
+      sb.append(escapeString(gasRep.getName()));
+      sb.append("\" [style=invis, constraint=true, minlen=2];\n");
+    }
+
+    sb.append("\n");
+  }
+
+  /**
+   * Appends rank subgraphs for enforcing vertical ordering (legacy method).
+   *
+   * <p>
+   * Deprecated: Use {@link #appendRankSubgraphs(StringBuilder, Map, ProcessGraph)} instead.
+   * </p>
+   *
+   * @param sb the string builder
+   * @param rankGroups the rank groups
+   */
+  @SuppressWarnings("unused")
+  private void appendRankSubgraphsLegacy(StringBuilder sb,
+      Map<Integer, List<ProcessNode>> rankGroups) {
+    sb.append("  // Rank enforcement for gravity-based layout\n");
+
+    // Gas equipment at top (rank 0)
+    if (rankGroups.containsKey(0)) {
+      sb.append("  { rank=min; ");
+      for (ProcessNode node : rankGroups.get(0)) {
+        sb.append("\"").append(escapeString(node.getName())).append("\"; ");
+      }
+      sb.append("}\n");
+    }
+
+    // Liquid equipment at bottom (rank 2)
+    if (rankGroups.containsKey(2)) {
+      sb.append("  { rank=max; ");
+      for (ProcessNode node : rankGroups.get(2)) {
+        sb.append("\"").append(escapeString(node.getName())).append("\"; ");
+      }
+      sb.append("}\n");
+    }
+
+    sb.append("\n");
+  }
+
+  /**
+   * Appends cluster subgraphs for grouping equipment by phase zone.
+   *
+   * <p>
+   * Creates visual clusters with vertical ordering:
+   * </p>
+   * <ul>
+   * <li>Gas Processing (top) - light blue background</li>
+   * <li>Separation (center anchor) - yellow/gold background</li>
+   * <li>Oil Processing (middle) - tan/brown background</li>
+   * <li>Water Processing (bottom) - blue background</li>
+   * </ul>
+   *
+   * @param sb the string builder
+   * @param graph the process graph
+   */
+  private void appendClusters(StringBuilder sb, ProcessGraph graph) {
+    // Group by phase zone for proper vertical ordering
+    Map<PFDLayoutPolicy.PhaseZone, List<ProcessNode>> zoneGroups = new HashMap<>();
+    List<ProcessNode> sourceNodes = graph.getSourceNodes();
+
+    for (ProcessNode node : graph.getNodes()) {
+      // Skip feed streams only - they're positioned by rank constraints at left
+      // Include sinks (products) in phase zone clusters for proper vertical positioning
+      if (sourceNodes.contains(node)) {
+        String name = node.getName().toLowerCase();
+        // But allow source nodes that are product-named to be in clusters
+        boolean isProduct =
+            name.contains("export") || name.contains("disposal") || name.contains("vent")
+                || name.contains("product") || name.contains("outlet") || name.contains("out");
+        if (!isProduct) {
+          continue; // Skip true feed streams
+        }
+      }
+      if (!shouldIncludeNode(node)) {
+        continue;
+      }
+
+      PFDLayoutPolicy.PhaseZone zone = layoutPolicy.classifyPhaseZone(node);
+      zoneGroups.computeIfAbsent(zone, k -> new ArrayList<>()).add(node);
+    }
+
+    sb.append("  // Phase zone clusters - ordered top to bottom: Gas, Oil, Water\n");
+
+    // Create invisible anchor nodes for each cluster to enforce vertical ordering
+    List<String> clusterAnchors = new ArrayList<>();
+
+    // GAS cluster (TOP - first in order)
+    if (zoneGroups.containsKey(PFDLayoutPolicy.PhaseZone.GAS_TOP)) {
+      String anchorName = "_gas_anchor";
+      clusterAnchors.add(anchorName);
+      sb.append("  subgraph cluster_gas {\n");
+      sb.append("    label=\"Gas Processing\"\n");
+      sb.append("    style=dashed\n");
+      sb.append("    color=\"#87CEEB\"\n");
+      sb.append("    bgcolor=\"#F0F8FF\"\n");
+      // Invisible anchor for ordering
+      sb.append("    \"").append(anchorName)
+          .append("\" [style=invis, width=0, height=0, label=\"\"];\n");
+      for (ProcessNode node : zoneGroups.get(PFDLayoutPolicy.PhaseZone.GAS_TOP)) {
+        sb.append("    \"").append(escapeString(node.getName())).append("\";\n");
+      }
+      sb.append("  }\n\n");
+    }
+
+    // OIL cluster (MIDDLE - separators are here)
+    if (zoneGroups.containsKey(PFDLayoutPolicy.PhaseZone.OIL_MIDDLE)) {
+      String anchorName = "_oil_anchor";
+      clusterAnchors.add(anchorName);
+      sb.append("  subgraph cluster_oil {\n");
+      sb.append("    label=\"Oil Processing\"\n");
+      sb.append("    style=dashed\n");
+      sb.append("    color=\"#8B4513\"\n");
+      sb.append("    bgcolor=\"#FAEBD7\"\n");
+      // Invisible anchor for ordering
+      sb.append("    \"").append(anchorName)
+          .append("\" [style=invis, width=0, height=0, label=\"\"];\n");
+      for (ProcessNode node : zoneGroups.get(PFDLayoutPolicy.PhaseZone.OIL_MIDDLE)) {
+        sb.append("    \"").append(escapeString(node.getName())).append("\";\n");
+      }
+      sb.append("  }\n\n");
+    }
+
+    // SEPARATION cluster (if separate from oil)
+    if (zoneGroups.containsKey(PFDLayoutPolicy.PhaseZone.SEPARATION_CENTER)) {
+      String anchorName = "_sep_anchor";
+      clusterAnchors.add(anchorName);
+      sb.append("  subgraph cluster_separation {\n");
+      sb.append("    label=\"Separation\"\n");
+      sb.append("    style=dashed\n");
+      sb.append("    color=\"#FFD700\"\n");
+      sb.append("    bgcolor=\"#FFFACD\"\n");
+      // Invisible anchor for ordering
+      sb.append("    \"").append(anchorName)
+          .append("\" [style=invis, width=0, height=0, label=\"\"];\n");
+      for (ProcessNode node : zoneGroups.get(PFDLayoutPolicy.PhaseZone.SEPARATION_CENTER)) {
+        sb.append("    \"").append(escapeString(node.getName())).append("\";\n");
+      }
+      sb.append("  }\n\n");
+    }
+
+    // WATER cluster (BOTTOM - last in order)
+    if (zoneGroups.containsKey(PFDLayoutPolicy.PhaseZone.WATER_BOTTOM)) {
+      String anchorName = "_water_anchor";
+      clusterAnchors.add(anchorName);
+      sb.append("  subgraph cluster_water {\n");
+      sb.append("    label=\"Water Processing\"\n");
+      sb.append("    style=dashed\n");
+      sb.append("    color=\"#1E90FF\"\n");
+      sb.append("    bgcolor=\"#F0F8FF\"\n");
+      // Invisible anchor for ordering
+      sb.append("    \"").append(anchorName)
+          .append("\" [style=invis, width=0, height=0, label=\"\"];\n");
+      for (ProcessNode node : zoneGroups.get(PFDLayoutPolicy.PhaseZone.WATER_BOTTOM)) {
+        sb.append("    \"").append(escapeString(node.getName())).append("\";\n");
+      }
+      sb.append("  }\n\n");
+    }
+
+    // Add invisible edges between cluster anchors to enforce vertical order
+    // In rankdir=LR, edge direction A -> B places B ABOVE A
+    // So reverse: water -> sep -> oil -> gas to get gas on top
+    if (clusterAnchors.size() > 1) {
+      sb.append("  // Force vertical cluster ordering (gas top, water bottom)\n");
+      // Chain the anchors in reverse order - target goes above source
+      for (int i = clusterAnchors.size() - 1; i > 0; i--) {
+        sb.append("  \"").append(clusterAnchors.get(i)).append("\" -> \"")
+            .append(clusterAnchors.get(i - 1))
+            .append("\" [style=invis, constraint=true, weight=1000];\n");
+      }
+      sb.append("\n");
+    }
+  }
+
+  /**
+   * Determines if a node should be included in the diagram.
+   *
+   * @param node the process node
+   * @return true if the node should be included
+   */
+  private boolean shouldIncludeNode(ProcessNode node) {
+    if (showControlEquipment) {
+      return true;
+    }
+
+    // Filter out control equipment if not shown
+    EquipmentRole role = layoutPolicy.classifyEquipment(node.getEquipment());
+    return role != EquipmentRole.CONTROL;
+  }
+
+  /**
+   * Determines if an edge should be included in the diagram.
+   *
+   * @param edge the process edge
+   * @return true if the edge should be included
+   */
+  private boolean shouldIncludeEdge(ProcessEdge edge) {
+    if (showControlEquipment) {
+      return true;
+    }
+
+    // Filter out edges connected to control equipment if not shown
+    EquipmentRole sourceRole = layoutPolicy.classifyEquipment(edge.getSource().getEquipment());
+    EquipmentRole targetRole = layoutPolicy.classifyEquipment(edge.getTarget().getEquipment());
+    return sourceRole != EquipmentRole.CONTROL && targetRole != EquipmentRole.CONTROL;
+  }
+
+  /**
+   * Appends a node definition to the DOT output.
+   *
+   * @param sb the string builder
+   * @param node the process node
+   */
+  private void appendNode(StringBuilder sb, ProcessNode node) {
+    ProcessEquipmentInterface equipment = node.getEquipment();
+    String name = node.getName();
+    String type = node.getEquipmentType();
+    String lowerType = type.toLowerCase();
+
+    // Check for special equipment types that need HTML rendering
+    if (lowerType.contains("heater") || lowerType.contains("reboiler")
+        || lowerType.contains("cooler") || lowerType.contains("condenser")
+        || lowerType.contains("heatexchanger")) {
+      appendHeatExchangerNode(sb, node, name, type, lowerType);
+      return;
+    }
+
+    if (lowerType.contains("pump")) {
+      appendPumpNode(sb, name);
+      return;
+    }
+
+    if (lowerType.contains("column") || lowerType.contains("absorber")
+        || lowerType.contains("stripper") || lowerType.contains("regenerator")
+        || lowerType.contains("distillation")) {
+      appendColumnNode(sb, name, type);
+      return;
+    }
+
+    // Check for mixer/splitter - use special triangle rendering
+    if (lowerType.contains("mixer") || lowerType.contains("splitter")
+        || lowerType.contains("manifold")) {
+      appendMixerSplitterNode(sb, name, lowerType.contains("splitter"));
+      return;
+    }
+
+    // Check for valve - use special bowtie rendering
+    if (lowerType.contains("valve")) {
+      appendValveNode(sb, name, lowerType);
+      return;
+    }
+
+    // Get visual style - use getStyleForEquipment for DEXPI-aware styling
+    EquipmentVisualStyle style = EquipmentVisualStyle.getStyleForEquipment(equipment);
+
+    // Apply diagram style overrides if not using default NEQSIM style
+    if (diagramStyle != DiagramStyle.NEQSIM) {
+      String styleFillColor = diagramStyle.getEquipmentFillColor(type);
+      if (styleFillColor != null) {
+        // Create a new style with the diagram style colors
+        style = new EquipmentVisualStyle(style.getShape(), styleFillColor,
+            diagramStyle.getEquipmentOutlineColor(), diagramStyle.getFontColor(), style.getWidth(),
+            style.getHeight(), style.getStyle());
+      }
+    }
+
+    // Build label based on detail level and equipment type
+    String label = buildNodeLabel(equipment, name, type);
+
+    sb.append("  \"").append(escapeString(name)).append("\" ");
+    sb.append(style.toGraphvizAttributes(label));
+    sb.append(";\n");
+  }
+
+  /**
+   * Appends a mixer or splitter node with triangle shape. Mixer: right-pointing (▶) - multiple
+   * inlets, single outlet Splitter: left-pointing (◀) - single inlet, multiple outlets
+   *
+   * @param sb the string builder
+   * @param name the equipment name
+   * @param isSplitter true if splitter, false if mixer
+   */
+  private void appendMixerSplitterNode(StringBuilder sb, String name, boolean isSplitter) {
+    String borderColor = diagramStyle.getEquipmentOutlineColor();
+    // Mixer points right (270°), Splitter points left (90°)
+    int orientation = isSplitter ? 90 : 270;
+
+    sb.append("  \"").append(escapeString(name)).append("\" [\n");
+    sb.append("    label=\"").append(escapeString(name)).append("\",\n");
+    sb.append("    shape=triangle,\n");
+    sb.append("    orientation=").append(orientation).append(",\n");
+    sb.append("    width=0.5,\n");
+    sb.append("    height=0.5,\n");
+    sb.append("    style=filled,\n");
+    sb.append("    fillcolor=\"#E8E8E8\",\n");
+    sb.append("    color=\"").append(borderColor).append("\",\n");
+    sb.append("    fontsize=7\n");
+    sb.append("  ];\n");
+  }
+
+  /**
+   * Appends a valve node with bowtie symbol like HYSYS. Classic PFD valve symbol with two triangles
+   * tip-to-tip.
+   *
+   * @param sb the string builder
+   * @param name the valve name
+   * @param lowerType the lowercase valve type for color selection
+   */
+  private void appendValveNode(StringBuilder sb, String name, String lowerType) {
+    String borderColor = diagramStyle.getEquipmentOutlineColor();
+
+    // Bowtie valve symbol with ports for stream connections at triangle centers
+    // Using single cell with both triangles to eliminate spacing
+    sb.append("  \"").append(escapeString(name)).append("\" [\n");
+    sb.append("    label=<\n");
+    sb.append("      <TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"0\">\n");
+    sb.append("        <TR>\n");
+    // Both triangles in one cell, touching tip-to-tip
+    sb.append("          <TD PORT=\"in\"></TD>\n");
+    sb.append("          <TD ALIGN=\"CENTER\"><FONT POINT-SIZE=\"20\" COLOR=\"");
+    sb.append(borderColor).append("\">&#x25B6;&#x25C0;</FONT></TD>\n");
+    sb.append("          <TD PORT=\"out\"></TD>\n");
+    sb.append("        </TR>\n");
+    // Name below
+    sb.append("        <TR><TD COLSPAN=\"3\" ALIGN=\"CENTER\"><FONT POINT-SIZE=\"8\">");
+    sb.append(escapeHtml(name)).append("</FONT></TD></TR>\n");
+    sb.append("      </TABLE>\n");
+    sb.append("    >,\n");
+    sb.append("    shape=plaintext,\n");
+    sb.append("    width=0,\n");
+    sb.append("    height=0,\n");
+    sb.append("    margin=\"0,0\"\n");
+    sb.append("  ];\n");
+  }
+
+  /**
+   * Appends a heat exchanger (heater/cooler) node with circle shape.
+   *
+   * @param sb the string builder
+   * @param node the process node
+   * @param name the equipment name
+   * @param type the equipment type
+   * @param lowerType the lowercase equipment type
+   */
+  private void appendHeatExchangerNode(StringBuilder sb, ProcessNode node, String name, String type,
+      String lowerType) {
+    // Use diagram style colors
+    String borderColor = diagramStyle.getEquipmentOutlineColor();
+
+    // Circle symbol for heaters/coolers (like HYSYS style)
+    // Same symbol for both heating and cooling (function indicated by label)
+    sb.append("  \"").append(escapeString(name)).append("\" [\n");
+    sb.append("    label=\"").append(escapeString(name)).append("\",\n");
+    sb.append("    shape=circle,\n");
+    sb.append("    style=filled,\n");
+    sb.append("    fillcolor=\"#FFFFFF\",\n");
+    sb.append("    color=\"").append(borderColor).append("\",\n");
+    sb.append("    penwidth=1,\n");
+    sb.append("    width=0.4,\n");
+    sb.append("    height=0.4,\n");
+    sb.append("    fontsize=8\n");
+    sb.append("  ];\n");
+  }
+
+  /**
+   * Appends a pump node with circle on triangle (standard PFD pump symbol). Circle represents the
+   * casing, small circle inside represents impeller, triangle below represents the discharge
+   * direction.
+   *
+   * @param sb the string builder
+   * @param name the pump name
+   */
+  private void appendPumpNode(StringBuilder sb, String name) {
+    // Use diagram style colors if available
+    String styleFillColor = diagramStyle.getEquipmentFillColor("Pump");
+    String bgColor = styleFillColor != null ? styleFillColor : "#FFFFFF";
+    String borderColor = diagramStyle.getEquipmentOutlineColor();
+
+    sb.append("  \"").append(escapeString(name)).append("\" [\n");
+    sb.append("    label=<\n");
+    sb.append("      <TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"0\">\n");
+    // Circle with small circle inside (pump casing with impeller)
+    sb.append("        <TR><TD>\n");
+    sb.append("          <TABLE BORDER=\"2\" CELLBORDER=\"0\" CELLSPACING=\"0\" ");
+    sb.append("CELLPADDING=\"12\" BGCOLOR=\"").append(bgColor).append("\" COLOR=\"");
+    sb.append(borderColor).append("\" STYLE=\"ROUNDED\">\n");
+    sb.append("            <TR><TD ALIGN=\"CENTER\">\n");
+    // Small circle representing impeller
+    sb.append("              <FONT POINT-SIZE=\"8\" COLOR=\"").append(borderColor)
+        .append("\">&#9675;</FONT>\n");
+    sb.append("            </TD></TR>\n");
+    sb.append("          </TABLE>\n");
+    sb.append("        </TD></TR>\n");
+    // Triangle below (discharge direction)
+    sb.append("        <TR><TD ALIGN=\"CENTER\">\n");
+    sb.append("          <FONT POINT-SIZE=\"18\" COLOR=\"").append(borderColor)
+        .append("\">&#9660;</FONT>\n");
+    sb.append("        </TD></TR>\n");
+    // Name below
+    sb.append("        <TR><TD ALIGN=\"CENTER\">\n");
+    sb.append("          <FONT POINT-SIZE=\"8\">").append(escapeHtml(name)).append("</FONT>\n");
+    sb.append("        </TD></TR>\n");
+    sb.append("      </TABLE>\n");
+    sb.append("    >,\n");
+    sb.append("    shape=plaintext\n");
+    sb.append("  ];\n");
+  }
+
+  /**
+   * Appends a column node (absorber, stripper, distillation) with tray visualization.
+   *
+   * @param sb the string builder
+   * @param name the column name
+   * @param type the column type
+   */
+  private void appendColumnNode(StringBuilder sb, String name, String type) {
+    // Use diagram style colors if available
+    String styleFillColor = diagramStyle.getEquipmentFillColor("Column");
+    String bgColor = styleFillColor != null ? styleFillColor : "#E8E8E8";
+    String headerColor = styleFillColor != null ? adjustBrightness(styleFillColor, -20) : "#D0D0D0";
+    String trayColor = styleFillColor != null ? adjustBrightness(styleFillColor, -10) : "#C8C8C8";
+    String borderColor = diagramStyle.getEquipmentOutlineColor();
+
+    sb.append("  \"").append(escapeString(name)).append("\" [\n");
+    sb.append("    label=<\n");
+    sb.append("      <TABLE BORDER=\"2\" CELLBORDER=\"0\" CELLSPACING=\"0\" ");
+    sb.append("CELLPADDING=\"0\" BGCOLOR=\"").append(bgColor).append("\" COLOR=\"");
+    sb.append(borderColor).append("\">\n");
+    // Top section
+    sb.append("        <TR><TD WIDTH=\"50\" HEIGHT=\"15\" BGCOLOR=\"").append(headerColor);
+    sb.append("\"></TD></TR>\n");
+    // Tray sections (simulate internal trays with thin colored rows)
+    for (int i = 0; i < 4; i++) {
+      // Tray line (thin dark row)
+      sb.append("        <TR><TD HEIGHT=\"3\" BGCOLOR=\"").append(trayColor);
+      sb.append("\"></TD></TR>\n");
+      // Space between trays
+      sb.append("        <TR><TD HEIGHT=\"10\"></TD></TR>\n");
+    }
+    // Bottom section
+    sb.append("        <TR><TD HEIGHT=\"15\" BGCOLOR=\"").append(headerColor);
+    sb.append("\"></TD></TR>\n");
+    sb.append("      </TABLE>\n");
+    sb.append("    >,\n");
+    sb.append("    shape=plaintext,\n");
+    sb.append("    xlabel=<<FONT POINT-SIZE=\"9\">").append(escapeHtml(name));
+    sb.append("</FONT>>\n");
+    sb.append("  ];\n");
+  }
+
+  /**
+   * Adjusts the brightness of a hex color.
+   *
+   * @param hexColor the hex color (e.g., "#FF6347")
+   * @param amount the brightness adjustment (-255 to 255)
+   * @return the adjusted hex color
+   */
+  private String adjustBrightness(String hexColor, int amount) {
+    if (hexColor == null || !hexColor.startsWith("#") || hexColor.length() < 7) {
+      return hexColor;
+    }
+    try {
+      int r = Integer.parseInt(hexColor.substring(1, 3), 16);
+      int g = Integer.parseInt(hexColor.substring(3, 5), 16);
+      int b = Integer.parseInt(hexColor.substring(5, 7), 16);
+
+      r = Math.max(0, Math.min(255, r + amount));
+      g = Math.max(0, Math.min(255, g + amount));
+      b = Math.max(0, Math.min(255, b + amount));
+
+      return String.format("#%02X%02X%02X", r, g, b);
+    } catch (NumberFormatException e) {
+      return hexColor;
+    }
+  }
+
+  /**
+   * Escapes special characters for HTML labels.
+   *
+   * @param text the text to escape
+   * @return the escaped text
+   */
+  private String escapeHtml(String text) {
+    if (text == null) {
+      return "";
+    }
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+  }
+
+  /**
+   * Builds a node label based on the detail level.
+   *
+   * @param equipment the equipment
+   * @param name the equipment name
+   * @param type the equipment type
+   * @return the formatted label
+   */
+  private String buildNodeLabel(ProcessEquipmentInterface equipment, String name, String type) {
+    StringBuilder label = new StringBuilder();
+
+    if (detailLevel.useCompactLabels()) {
+      label.append(name);
+    } else {
+      label.append(name).append("\\n");
+      label.append("(").append(type).append(")");
+
+      if (detailLevel.showConditions()) {
+        try {
+          SystemInterface fluid = equipment.getFluid();
+          if (fluid != null) {
+            label.append("\\n");
+            label.append(String.format("%.1f °C / %.1f bar", fluid.getTemperature("C"),
+                fluid.getPressure("bara")));
+          }
+        } catch (Exception e) {
+          // Ignore - conditions not available
+        }
+      }
+
+      if (detailLevel.showFlowRates()) {
+        try {
+          if (equipment instanceof StreamInterface) {
+            StreamInterface stream = (StreamInterface) equipment;
+            double flowRate = stream.getFlowRate("kg/hr");
+            label.append("\\n");
+            label.append(String.format("%.1f kg/hr", flowRate));
+          }
+        } catch (Exception e) {
+          // Ignore
+        }
+      }
+
+      // Add DEXPI metadata if enabled
+      if (showDexpiMetadata) {
+        appendDexpiMetadata(label, equipment);
+      }
+    }
+
+    return label.toString();
+  }
+
+  /**
+   * Appends DEXPI metadata (tag names, line numbers, fluid codes) to a label.
+   *
+   * <p>
+   * This enriches diagram labels with P&amp;ID reference information for equipment imported from
+   * DEXPI XML files.
+   * </p>
+   *
+   * @param label the label builder to append to
+   * @param equipment the equipment to check for DEXPI metadata
+   */
+  private void appendDexpiMetadata(StringBuilder label, ProcessEquipmentInterface equipment) {
+    if (equipment instanceof DexpiProcessUnit) {
+      DexpiProcessUnit dexpiUnit = (DexpiProcessUnit) equipment;
+      String lineNumber = dexpiUnit.getLineNumber();
+      String fluidCode = dexpiUnit.getFluidCode();
+
+      if (lineNumber != null && !lineNumber.trim().isEmpty()) {
+        label.append("\\n");
+        label.append("Line: ").append(lineNumber);
+      }
+      if (fluidCode != null && !fluidCode.trim().isEmpty()) {
+        label.append("\\n");
+        label.append("Fluid: ").append(fluidCode);
+      }
+    } else if (equipment instanceof DexpiStream) {
+      DexpiStream dexpiStream = (DexpiStream) equipment;
+      String lineNumber = dexpiStream.getLineNumber();
+      String fluidCode = dexpiStream.getFluidCode();
+
+      if (lineNumber != null && !lineNumber.trim().isEmpty()) {
+        label.append("\\n");
+        label.append("Line: ").append(lineNumber);
+      }
+      if (fluidCode != null && !fluidCode.trim().isEmpty()) {
+        label.append("\\n");
+        label.append("Fluid: ").append(fluidCode);
+      }
+    }
+  }
+
+  /**
+   * Appends an edge definition to the DOT output.
+   *
+   * @param sb the string builder
+   * @param edge the process edge
+   */
+  private void appendEdge(StringBuilder sb, ProcessEdge edge) {
+    String sourceName = edge.getSource().getName();
+    String targetName = edge.getTarget().getName();
+
+    // Check if source or target is a valve (for seamless inline connection)
+    boolean sourceIsValve = isValve(edge.getSource().getEquipment());
+    boolean targetIsValve = isValve(edge.getTarget().getEquipment());
+
+    // Get phase-based styling
+    PFDLayoutPolicy.StreamPhase phase = layoutPolicy.classifyEdgePhase(edge);
+
+    sb.append("  \"").append(escapeString(sourceName)).append("\" -> \"");
+    sb.append(escapeString(targetName)).append("\" ");
+    sb.append("[");
+
+    // Check if this is a recycle stream
+    boolean isRecycle = edge.isBackEdge() || edge.isRecycle();
+
+    // Edge color based on phase (or special for recycle)
+    if (isRecycle && highlightRecycles) {
+      sb.append("color=\"").append(diagramStyle.getRecycleColor()).append("\"");
+    } else if (diagramStyle != DiagramStyle.NEQSIM) {
+      // Use diagram style's stream color
+      sb.append("color=\"").append(diagramStyle.getStreamColor()).append("\"");
+    } else {
+      // Use phase-based color for NeqSim style
+      sb.append("color=\"").append(phase.getColor()).append("\"");
+    }
+
+    // Edge style based on phase or recycle
+    if (isRecycle && highlightRecycles) {
+      sb.append(", style=\"dashed,bold\", penwidth=").append(diagramStyle.getStreamWidth() + 0.5);
+      sb.append(", constraint=false"); // Allow recycles to go backwards
+    } else if ("dashed".equals(phase.getLineStyle())) {
+      sb.append(", style=dashed");
+    } else if ("bold".equals(phase.getLineStyle())) {
+      sb.append(", style=bold, penwidth=").append(diagramStyle.getStreamWidth());
+    }
+
+    // Stream value label
+    if (showStreamValues && edge.getStream() != null) {
+      String label = buildStreamLabel(edge.getStream(), isRecycle);
+      if (!label.isEmpty()) {
+        if (useStreamTables) {
+          sb.append(", label=<").append(label).append(">");
+        } else {
+          sb.append(", label=\"").append(escapeString(label)).append("\"");
+        }
+      }
+    }
+
+    // Port positioning for separator outlets - routes gas up, oil right, water down
+    if (isSeparator(edge.getSource().getEquipment()) && edge.getStream() != null) {
+      PFDLayoutPolicy.SeparatorOutlet outlet =
+          layoutPolicy.classifySeparatorOutlet(edge.getSource().getEquipment(), edge.getStream());
+      sb.append(", tailport=").append(outlet.getPort());
+
+      // Add corresponding headport for proper routing
+      switch (outlet) {
+        case GAS_TOP:
+          sb.append(", headport=s"); // Gas enters target from bottom (coming from above)
+          break;
+        case WATER_BOTTOM:
+          sb.append(", headport=n"); // Water enters target from top (coming from below)
+          break;
+        case OIL_MIDDLE:
+        case LIQUID_BOTTOM:
+          sb.append(", headport=w"); // Oil/liquid enters target from left (horizontal flow)
+          break;
+        default:
+          break;
+      }
+    }
+
+    // For valve connections: use ports at center of triangle sides
+    if (targetIsValve) {
+      sb.append(", arrowhead=none, headport=\"in:w\"");
+    }
+    if (sourceIsValve) {
+      sb.append(", arrowtail=none, tailport=\"out:e\"");
+    }
+
+    sb.append("];\n");
+  }
+
+  /**
+   * Builds a stream label based on display settings.
+   *
+   * @param stream the stream
+   * @param isRecycle whether this is a recycle stream
+   * @return the label string (plain text or HTML)
+   */
+  private String buildStreamLabel(StreamInterface stream, boolean isRecycle) {
+    try {
+      if (useStreamTables) {
+        return buildStreamTableLabel(stream, isRecycle);
+      } else {
+        return buildStreamTextLabel(stream, isRecycle);
+      }
+    } catch (Exception e) {
+      return stream.getName();
+    }
+  }
+
+  /**
+   * Builds a simple text label for a stream.
+   *
+   * @param stream the stream
+   * @param isRecycle whether this is a recycle stream
+   * @return the text label
+   */
+  private String buildStreamTextLabel(StreamInterface stream, boolean isRecycle) {
+    StringBuilder label = new StringBuilder();
+    label.append(stream.getName());
+
+    if (isRecycle) {
+      label.append(" (R)");
+    }
+
+    if (detailLevel.showConditions()) {
+      try {
+        SystemInterface fluid = stream.getFluid();
+        if (fluid != null) {
+          label.append("\\n");
+          label.append(String.format("%.1f°C, %.1f bar", fluid.getTemperature("C"),
+              fluid.getPressure("bara")));
+        }
+      } catch (Exception e) {
+        // Ignore
+      }
+    }
+
+    if (detailLevel.showFlowRates()) {
+      try {
+        double flowRate = stream.getFlowRate("kg/hr");
+        label.append("\\n");
+        label.append(String.format("%.0f kg/hr", flowRate));
+      } catch (Exception e) {
+        // Ignore
+      }
+    }
+
+    return label.toString();
+  }
+
+  /**
+   * Builds an HTML table label for a stream (professional engineering style).
+   *
+   * @param stream the stream
+   * @param isRecycle whether this is a recycle stream
+   * @return the HTML table label
+   */
+  private String buildStreamTableLabel(StreamInterface stream, boolean isRecycle) {
+    StringBuilder html = new StringBuilder();
+    html.append("<TABLE BORDER=\"1\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"2\"");
+    html.append(" BGCOLOR=\"white\">");
+
+    // Stream name header
+    html.append("<TR><TD COLSPAN=\"2\" BGCOLOR=\"#E0E0E0\"><B>");
+    html.append(escapeHtml(stream.getName()));
+    if (isRecycle) {
+      html.append(" <FONT COLOR=\"#9932CC\">(R)</FONT>");
+    }
+    html.append("</B></TD></TR>");
+
+    try {
+      SystemInterface fluid = stream.getFluid();
+      if (fluid != null && detailLevel.showConditions()) {
+        // Temperature row
+        html.append("<TR><TD ALIGN=\"LEFT\">T:</TD><TD ALIGN=\"RIGHT\">");
+        html.append(String.format("%.1f °C", fluid.getTemperature("C")));
+        html.append("</TD></TR>");
+
+        // Pressure row
+        html.append("<TR><TD ALIGN=\"LEFT\">P:</TD><TD ALIGN=\"RIGHT\">");
+        html.append(String.format("%.1f bar", fluid.getPressure("bara")));
+        html.append("</TD></TR>");
+      }
+
+      if (detailLevel.showFlowRates()) {
+        // Flow rate row
+        double flowRate = stream.getFlowRate("kg/hr");
+        html.append("<TR><TD ALIGN=\"LEFT\">F:</TD><TD ALIGN=\"RIGHT\">");
+        html.append(String.format("%.0f kg/hr", flowRate));
+        html.append("</TD></TR>");
+      }
+    } catch (Exception e) {
+      // Ignore
+    }
+
+    html.append("</TABLE>");
+    return html.toString();
+  }
+
+  /**
+   * Checks if equipment is a separator type.
+   *
+   * @param equipment the equipment
+   * @return true if separator
+   */
+  private boolean isSeparator(ProcessEquipmentInterface equipment) {
+    EquipmentRole role = layoutPolicy.classifyEquipment(equipment);
+    return role == EquipmentRole.SEPARATOR;
+  }
+
+  /**
+   * Checks if equipment is a valve type.
+   *
+   * @param equipment the equipment
+   * @return true if valve
+   */
+  private boolean isValve(ProcessEquipmentInterface equipment) {
+    if (equipment == null) {
+      return false;
+    }
+    String typeName = equipment.getClass().getSimpleName().toLowerCase();
+    return typeName.contains("valve") || typeName.contains("throttl");
+  }
+
+  /**
+   * Appends a legend to the diagram.
+   *
+   * @param sb the string builder
+   */
+  private void appendLegend(StringBuilder sb) {
+    sb.append("  // Legend\n");
+    sb.append("  subgraph cluster_legend {\n");
+    sb.append("    label=\"Legend\"\n");
+    sb.append("    style=rounded\n");
+    sb.append("    color=gray\n");
+    sb.append("    fontsize=10\n");
+    sb.append("    \n");
+
+    // Gas stream
+    sb.append("    legend_gas [label=\"Gas Stream\" shape=plaintext];\n");
+    sb.append("    legend_gas_line [label=\"\" shape=point width=0];\n");
+    sb.append(
+        "    legend_gas -> legend_gas_line [style=dashed, color=\"#87CEEB\", arrowhead=none];\n");
+    sb.append("    \n");
+
+    // Oil stream
+    sb.append("    legend_oil [label=\"Oil Stream\" shape=plaintext];\n");
+    sb.append("    legend_oil_line [label=\"\" shape=point width=0];\n");
+    sb.append(
+        "    legend_oil -> legend_oil_line [style=solid, color=\"#8B4513\", arrowhead=none];\n");
+    sb.append("    \n");
+
+    // Liquid stream
+    sb.append("    legend_liquid [label=\"Liquid Stream\" shape=plaintext];\n");
+    sb.append("    legend_liquid_line [label=\"\" shape=point width=0];\n");
+    sb.append(
+        "    legend_liquid -> legend_liquid_line [style=solid, color=\"#4169E1\", arrowhead=none];\n");
+    sb.append("    \n");
+
+    // Water/Aqueous stream
+    sb.append("    legend_water [label=\"Water Stream\" shape=plaintext];\n");
+    sb.append("    legend_water_line [label=\"\" shape=point width=0];\n");
+    sb.append(
+        "    legend_water -> legend_water_line [style=solid, color=\"#00CED1\", arrowhead=none];\n");
+    sb.append("    \n");
+
+    // Mixed stream
+    sb.append("    legend_mixed [label=\"Mixed Stream\" shape=plaintext];\n");
+    sb.append("    legend_mixed_line [label=\"\" shape=point width=0];\n");
+    sb.append(
+        "    legend_mixed -> legend_mixed_line [style=bold, color=\"#FFD700\", penwidth=2, arrowhead=none];\n");
+
+    // Recycle stream (if enabled)
+    if (highlightRecycles) {
+      sb.append("    \n");
+      sb.append("    legend_recycle [label=\"Recycle Stream\" shape=plaintext];\n");
+      sb.append("    legend_recycle_line [label=\"\" shape=point width=0];\n");
+      sb.append("    legend_recycle -> legend_recycle_line [style=\"dashed,bold\", color=\"")
+          .append(diagramStyle.getRecycleColor()).append("\", penwidth=")
+          .append(diagramStyle.getStreamWidth() + 0.5).append(", arrowhead=none];\n");
+    }
+
+    sb.append("  }\n");
+  }
+
+  /**
+   * Escapes a string for use in DOT format.
+   *
+   * @param s the string
+   * @return escaped string
+   */
+  private String escapeString(String s) {
+    if (s == null) {
+      return "";
+    }
+    return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
+  }
+
+  /**
+   * Exports the diagram to a file in DOT format.
+   *
+   * @param path the output file path
+   * @throws IOException if writing fails
+   */
+  public void exportDOT(Path path) throws IOException {
+    String dot = toDOT();
+    Files.write(path, dot.getBytes(StandardCharsets.UTF_8));
+    logger.info("Exported DOT diagram to: {}", path);
+  }
+
+  /**
+   * Exports the diagram to SVG format using Graphviz.
+   *
+   * <p>
+   * Requires Graphviz (dot) to be installed and in PATH.
+   * </p>
+   *
+   * @param path the output file path
+   * @throws IOException if export fails
+   */
+  public void exportSVG(Path path) throws IOException {
+    exportWithGraphviz(path, "svg");
+  }
+
+  /**
+   * Exports the diagram to PNG format using Graphviz.
+   *
+   * <p>
+   * Requires Graphviz (dot) to be installed and in PATH.
+   * </p>
+   *
+   * @param path the output file path
+   * @throws IOException if export fails
+   */
+  public void exportPNG(Path path) throws IOException {
+    exportWithGraphviz(path, "png");
+  }
+
+  /**
+   * Exports the diagram to PDF format using Graphviz.
+   *
+   * <p>
+   * Requires Graphviz (dot) to be installed and in PATH.
+   * </p>
+   *
+   * @param path the output file path
+   * @throws IOException if export fails
+   */
+  public void exportPDF(Path path) throws IOException {
+    exportWithGraphviz(path, "pdf");
+  }
+
+  /**
+   * Exports using Graphviz command-line tool.
+   *
+   * @param path output path
+   * @param format output format (svg, png, pdf)
+   * @throws IOException if export fails
+   */
+  private void exportWithGraphviz(Path path, String format) throws IOException {
+    String dot = toDOT();
+
+    // Write temporary DOT file
+    Path tempDot = Files.createTempFile("neqsim_pfd_", ".dot");
+    try {
+      Files.write(tempDot, dot.getBytes(StandardCharsets.UTF_8));
+
+      // Run Graphviz
+      ProcessBuilder pb =
+          new ProcessBuilder("dot", "-T" + format, tempDot.toString(), "-o", path.toString());
+      pb.redirectErrorStream(true);
+
+      Process process = pb.start();
+
+      // Read output for error handling
+      StringBuilder output = new StringBuilder();
+      try (BufferedReader reader =
+          new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+        String line;
+        while ((line = reader.readLine()) != null) {
+          output.append(line).append("\n");
+        }
+      }
+
+      int exitCode = process.waitFor();
+      if (exitCode != 0) {
+        throw new IOException("Graphviz failed with exit code " + exitCode + ": " + output);
+      }
+
+      logger.info("Exported {} diagram to: {}", format.toUpperCase(), path);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new IOException("Graphviz execution interrupted", e);
+    } finally {
+      Files.deleteIfExists(tempDot);
+    }
+  }
+
+  /**
+   * Checks if Graphviz is available on the system.
+   *
+   * @return true if Graphviz (dot) is available
+   */
+  public static boolean isGraphvizAvailable() {
+    try {
+      ProcessBuilder pb = new ProcessBuilder("dot", "-V");
+      pb.redirectErrorStream(true);
+      Process process = pb.start();
+      int exitCode = process.waitFor();
+      return exitCode == 0;
+    } catch (Exception e) {
+      return false;
+    }
+  }
+
+  // Setters for configuration
+
+  /**
+   * Sets the diagram title.
+   *
+   * @param title the title
+   * @return this exporter for chaining
+   */
+  public ProcessDiagramExporter setTitle(String title) {
+    this.title = title;
+    return this;
+  }
+
+  /**
+   * Sets the detail level.
+   *
+   * @param detailLevel the detail level
+   * @return this exporter for chaining
+   */
+  public ProcessDiagramExporter setDetailLevel(DiagramDetailLevel detailLevel) {
+    this.detailLevel = detailLevel;
+    return this;
+  }
+
+  /**
+   * Sets the diagram style to use for rendering.
+   *
+   * <p>
+   * Available styles include:
+   * <ul>
+   * <li>{@link DiagramStyle#NEQSIM} - Default NeqSim style with colored zones</li>
+   * <li>{@link DiagramStyle#HYSYS} - AspenTech HYSYS-like style with blue streams</li>
+   * <li>{@link DiagramStyle#PROII} - PRO/II style with gray background</li>
+   * <li>{@link DiagramStyle#ASPEN_PLUS} - Aspen Plus style</li>
+   * </ul>
+   *
+   * @param style the diagram style
+   * @return this exporter for chaining
+   */
+  public ProcessDiagramExporter setDiagramStyle(DiagramStyle style) {
+    this.diagramStyle = style;
+    // Apply style-specific settings
+    if (!style.showClusters()) {
+      this.useClusters = false;
+    }
+    return this;
+  }
+
+  /**
+   * Gets the current diagram style.
+   *
+   * @return the diagram style
+   */
+  public DiagramStyle getDiagramStyle() {
+    return diagramStyle;
+  }
+
+  /**
+   * Sets whether to use vertical (top-down) layout.
+   *
+   * @param verticalLayout true for vertical, false for horizontal
+   * @return this exporter for chaining
+   */
+  public ProcessDiagramExporter setVerticalLayout(boolean verticalLayout) {
+    this.verticalLayout = verticalLayout;
+    return this;
+  }
+
+  /**
+   * Sets whether to group equipment into clusters.
+   *
+   * @param useClusters true to use clusters
+   * @return this exporter for chaining
+   */
+  public ProcessDiagramExporter setUseClusters(boolean useClusters) {
+    this.useClusters = useClusters;
+    return this;
+  }
+
+  /**
+   * Sets whether to show the legend.
+   *
+   * @param showLegend true to show legend
+   * @return this exporter for chaining
+   */
+  public ProcessDiagramExporter setShowLegend(boolean showLegend) {
+    this.showLegend = showLegend;
+    return this;
+  }
+
+  /**
+   * Sets whether to show stream values on edges.
+   *
+   * @param showStreamValues true to show values
+   * @return this exporter for chaining
+   */
+  public ProcessDiagramExporter setShowStreamValues(boolean showStreamValues) {
+    this.showStreamValues = showStreamValues;
+    return this;
+  }
+
+  /**
+   * Sets whether to use HTML tables for stream values.
+   *
+   * <p>
+   * When true, stream values are displayed in professional table format with temperature, pressure,
+   * and flow rate. When false, values are shown as simple text labels.
+   * </p>
+   *
+   * @param useStreamTables true to use tables
+   * @return this exporter for chaining
+   */
+  public ProcessDiagramExporter setUseStreamTables(boolean useStreamTables) {
+    this.useStreamTables = useStreamTables;
+    return this;
+  }
+
+  /**
+   * Sets whether to highlight recycle streams.
+   *
+   * @param highlightRecycles true to highlight recycles
+   * @return this exporter for chaining
+   */
+  public ProcessDiagramExporter setHighlightRecycles(boolean highlightRecycles) {
+    this.highlightRecycles = highlightRecycles;
+    return this;
+  }
+
+  /**
+   * Sets whether to show control equipment (adjusters, calculators, recycles).
+   *
+   * @param showControlEquipment true to show control equipment
+   * @return this exporter for chaining
+   */
+  public ProcessDiagramExporter setShowControlEquipment(boolean showControlEquipment) {
+    this.showControlEquipment = showControlEquipment;
+    return this;
+  }
+
+  /**
+   * Sets whether to show DEXPI metadata (tag names, line numbers, fluid codes) in labels.
+   *
+   * <p>
+   * When enabled, equipment imported from DEXPI XML files will have their P&amp;ID reference
+   * information (line numbers, fluid codes) displayed in the diagram labels.
+   * </p>
+   *
+   * @param showDexpiMetadata true to show DEXPI metadata
+   * @return this exporter for chaining
+   */
+  public ProcessDiagramExporter setShowDexpiMetadata(boolean showDexpiMetadata) {
+    this.showDexpiMetadata = showDexpiMetadata;
+    return this;
+  }
+}

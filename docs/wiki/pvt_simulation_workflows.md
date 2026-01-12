@@ -1,35 +1,201 @@
-# PVT simulation workflows backed by regression tests
+# PVT Simulation Workflows
 
-The PVT simulation tests under `src/test/java/neqsim/pvtsimulation/simulation` capture end-to-end recipes for assembling fluids, configuring experiments, and validating outputs. This guide extracts the tested setups so you can reproduce them in your own studies.
+This guide covers PVT simulation workflows in NeqSim, backed by regression tests under `src/test/java/neqsim/pvtsimulation/simulation`. Use these tested setups to reproduce experiments in your own studies.
 
-## Constant-volume depletion (CVD)
+---
 
-`ConstantVolumeDepletionTest` builds a lean-gas condensate fluid with TBP fractions, sets the SRK mixing rule, and drives a pressure staircase while keeping temperature fixed.【F:src/test/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletionTest.java†L14-L41】 After `runCalc()`, the simulation exposes relative volumes and phase properties that can be compared to laboratory measurements via `setExperimentalData(...)`. The test asserts that the calculated relative volume at a mid-range pressure (index 4) matches 2.1981, demonstrating how NeqSim preserves the reservoir volume constraint during depletion.【F:src/test/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletionTest.java†L31-L41】 A second test reads an Eclipse deck, flashes it to saturation pressure, and verifies that phase densities computed after `runCalc()` remain consistent when phases are split and re-flashed independently.【F:src/test/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletionTest.java†L43-L74】 Use this workflow when calibrating CVD curves or comparing simulator results to PVT lab data.
+## Constant Volume Depletion (CVD)
 
-**Setup checklist**
+CVD simulation maintains reservoir volume constant while reducing pressure, measuring the liquid dropout from gas condensate reservoirs.
 
-1. Create a `SystemInterface` with EOS and add components/TBP fractions.
-2. Enable database use and select a mixing rule.
-3. Initialize the system (state 0 and 1) before constructing `ConstantVolumeDepletion`.
-4. Call `setTemperature(...)`, `setPressures(...)`, and `runCalc()`.
-5. Optionally load experimental matrices for regression and retrieve arrays such as `getRelativeVolume()`.
+### Basic CVD Setup
 
-## Differential liberation
+```java
+import neqsim.pvtsimulation.simulation.ConstantVolumeDepletion;
+import neqsim.thermo.system.SystemSrkEos;
 
-`DifferentialLiberationTest` prepares a rich oil system with extensive TBP characterization, including lumping of the plus fraction into 12 pseudo-components.【F:src/test/java/neqsim/pvtsimulation/simulation/DifferentialLiberationTest.java†L11-L37】 The test first computes saturation pressure at 97.5 °C, then steps down through 15 pressure stages while tracking formation volume factor (\(B_o\)), solution gas–oil ratio (\(R_s\)), gas formation volume factor (\(B_g\)), and oil density.【F:src/test/java/neqsim/pvtsimulation/simulation/DifferentialLiberationTest.java†L38-L65】 Assertions span early, mid, and late pressures, confirming that flash results translate into monotonic \(B_o\) shrinkage and degassed densities as expected from the core differential liberation equations.
+// Create fluid with TBP fractions
+SystemSrkEos fluid = new SystemSrkEos(97.5 + 273.15, 300.0);  // T(K), P(bara)
+fluid.addComponent("nitrogen", 0.34);
+fluid.addComponent("CO2", 3.59);
+fluid.addComponent("methane", 67.42);
+fluid.addComponent("ethane", 9.02);
+fluid.addComponent("propane", 4.31);
+fluid.addComponent("i-butane", 0.93);
+fluid.addComponent("n-butane", 1.71);
+fluid.addComponent("i-pentane", 0.74);
+fluid.addComponent("n-pentane", 0.85);
+fluid.addTBPfraction("C6", 1.38, 86.0 / 1000, 0.664);
+fluid.addTBPfraction("C7", 1.57, 96.0 / 1000, 0.738);
+fluid.addTBPfraction("C8", 1.73, 107.0 / 1000, 0.765);
+fluid.addTBPfraction("C9", 1.40, 121.0 / 1000, 0.781);
+fluid.addTBPfraction("C10+", 5.01, 230.0 / 1000, 0.820);
 
-**Interpreting the outputs**
+fluid.setMixingRule("classic");
+fluid.useVolumeCorrection(true);
+fluid.init(0);
+fluid.init(1);
 
-- \(B_o\) in the test is computed as \(V_{oil,\,res}/V_{oil,\,stock}\) for each pressure step; values trend from 1.69 toward 1.05 as pressure decreases, consistent with expanding shrinkage.
-- \(R_s\) (standard gas dissolved in stock-tank barrels of oil) declines to zero by the final stage, aligning with complete gas liberation.
-- \(B_g\) is reported in reservoir volume per standard volume; the late-stage value of ~0.056 m³/Sm³ illustrates the increasing compressibility of liberated gas.
+// Configure CVD simulation
+ConstantVolumeDepletion cvd = new ConstantVolumeDepletion(fluid);
+cvd.setTemperature(97.5, "C");
+cvd.setPressures(new double[] {300, 250, 200, 150, 100, 50});  // bara
 
-Follow the same staged pressure list and temperature target to benchmark your own differential liberation runs against the regression suite.
+// Run simulation
+cvd.runCalc();
 
-## General simulation hygiene
+// Get results
+double[] relativeVolume = cvd.getRelativeVolume();
+double[] liquidVolumeFraction = cvd.getLiquidVolume();
+double[] Zgas = cvd.getZgas();
+```
 
-The tests highlight a few recurring best practices:
+### CVD Setup Checklist
 
-- Always set a mixing rule and initialize the system before running a PVT simulation to avoid inconsistent pseudo-component properties.【F:src/test/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletionTest.java†L26-L31】
-- Use `ThermodynamicOperations` flashes to reinitialize separated phases when comparing densities or re-flashing isolated phases, as shown in the CVD Eclipse example.【F:src/test/java/neqsim/pvtsimulation/simulation/ConstantVolumeDepletionTest.java†L54-L73】
-- Keep temperature explicit on each simulation (`setTemperature`) to avoid accidental reuse of a previous state across experiments.【F:src/test/java/neqsim/pvtsimulation/simulation/DifferentialLiberationTest.java†L41-L48】
+1. Create `SystemInterface` with EOS and add components/TBP fractions
+2. Enable database use and select a mixing rule
+3. Initialize the system (state 0 and 1) before constructing `ConstantVolumeDepletion`
+4. Call `setTemperature(...)`, `setPressures(...)`, and `runCalc()`
+5. Optionally load experimental data for regression with `setExperimentalData(...)`
+6. Retrieve results: `getRelativeVolume()`, `getLiquidVolume()`, `getZgas()`
+
+---
+
+## Differential Liberation (DL)
+
+DL simulation removes liberated gas at each pressure step, measuring oil shrinkage and gas evolution - essential for black oil PVT tables.
+
+### Basic DL Setup
+
+```java
+import neqsim.pvtsimulation.simulation.DifferentialLiberation;
+import neqsim.thermo.system.SystemSrkEos;
+
+// Create rich oil system with TBP characterization
+SystemSrkEos fluid = new SystemSrkEos(97.5 + 273.15, 250.0);
+fluid.addComponent("nitrogen", 0.5);
+fluid.addComponent("CO2", 2.1);
+fluid.addComponent("methane", 45.0);
+fluid.addComponent("ethane", 7.5);
+fluid.addComponent("propane", 5.2);
+fluid.addComponent("i-butane", 1.1);
+fluid.addComponent("n-butane", 2.8);
+fluid.addComponent("i-pentane", 1.4);
+fluid.addComponent("n-pentane", 1.9);
+fluid.addTBPfraction("C6", 2.5, 86.0 / 1000, 0.685);
+fluid.addTBPfraction("C7", 4.2, 96.0 / 1000, 0.755);
+fluid.addTBPfraction("C8", 3.8, 107.0 / 1000, 0.775);
+fluid.addTBPfraction("C9", 3.2, 121.0 / 1000, 0.790);
+fluid.addTBPfraction("C10+", 18.8, 350.0 / 1000, 0.880);
+
+fluid.setMixingRule("classic");
+fluid.useVolumeCorrection(true);
+fluid.init(0);
+fluid.init(1);
+
+// Configure DL simulation
+DifferentialLiberation dl = new DifferentialLiberation(fluid);
+dl.setTemperature(97.5, "C");
+dl.setPressures(new double[] {250, 225, 200, 175, 150, 125, 100, 75, 50, 25, 1});
+
+// Run simulation
+dl.runCalc();
+
+// Get results
+double[] Bo = dl.getBo();           // Oil formation volume factor
+double[] Rs = dl.getRs();           // Solution gas-oil ratio (Sm3/Sm3)
+double[] Bg = dl.getBg();           // Gas formation volume factor
+double[] oilDensity = dl.getOilDensity();
+```
+
+### Interpreting DL Outputs
+
+| Property | Description | Expected Trend |
+|----------|-------------|----------------|
+| **Bo** | Oil formation volume factor (Vres/Vstock) | Decreases from ~1.7 to ~1.05 as pressure drops |
+| **Rs** | Solution gas-oil ratio | Decreases to zero at final stage |
+| **Bg** | Gas formation volume factor | Increases as gas expands at lower pressure |
+| **Oil Density** | Density of remaining oil | Increases as light components liberate |
+
+---
+
+## Constant Composition Expansion (CCE)
+
+CCE measures PV behavior without removing any material - used to determine bubble/dew point pressure.
+
+```java
+import neqsim.pvtsimulation.simulation.ConstantMassExpansion;
+
+// After creating and initializing fluid...
+ConstantMassExpansion cce = new ConstantMassExpansion(fluid);
+cce.setTemperature(100.0, "C");
+
+// Run to find saturation pressure
+cce.runCalc();
+
+double saturationPressure = cce.getSaturationPressure();
+double[] relativeVolume = cce.getRelativeVolume();
+double[] Ytfactor = cce.getYfactor();
+```
+
+---
+
+## Saturation Pressure Calculation
+
+Quick calculation of bubble or dew point pressure:
+
+```java
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+
+// For bubble point (oil system)
+ops.calcBubblePoint();
+double bubbleP = fluid.getPressure("bara");
+
+// For dew point (gas condensate)
+ops.calcDewPoint();
+double dewP = fluid.getPressure("bara");
+```
+
+---
+
+## Slim Tube Simulation
+
+Minimum miscibility pressure (MMP) determination:
+
+```java
+import neqsim.pvtsimulation.simulation.SlimTubeSim;
+
+// Create injection gas
+SystemSrkEos injectionGas = new SystemSrkEos(373.15, 200.0);
+injectionGas.addComponent("CO2", 1.0);
+injectionGas.setMixingRule("classic");
+
+// Configure slim tube
+SlimTubeSim slimTube = new SlimTubeSim(reservoirFluid, injectionGas);
+slimTube.setTemperature(100.0, "C");
+slimTube.setPressures(new double[] {150, 200, 250, 300, 350, 400});
+slimTube.runCalc();
+
+double[] recovery = slimTube.getOilRecovery();
+```
+
+---
+
+## Best Practices
+
+1. **Always initialize** - Set mixing rule and call `init(0)` and `init(1)` before creating PVT simulations
+2. **Set temperature explicitly** - Use `setTemperature()` on each simulation to avoid state carryover
+3. **Use volume correction** - Enable `useVolumeCorrection(true)` for better liquid density predictions
+4. **Validate against lab data** - Use `setExperimentalData()` methods for regression
+5. **Check convergence** - Verify flash calculations converge at each pressure step
+
+---
+
+## Related Documentation
+
+- [PVT Module Overview](../pvtsimulation/README.md)
+- [Fluid Characterization](fluid_characterization.md)
+- [Black Oil Flash Playbook](black_oil_flash_playbook.md)
+- [Thermodynamics Guide](thermodynamics_guide.md)

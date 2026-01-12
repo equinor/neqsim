@@ -21,6 +21,11 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass {
 
   private double alkalinity = 0.0;
 
+  private transient StreamInterface lastMeasuredStream;
+  private double lastMeasuredAlkalinity = Double.NaN;
+  private double lastMeasuredPH = Double.NaN;
+  private boolean hasCachedPH = false;
+
   /**
    * <p>
    * Constructor for pHProbe.
@@ -50,6 +55,7 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass {
    * </p>
    */
   public void run() {
+    hasCachedPH = false;
     if (stream != null && stream.getFluid().hasPhaseType("aqueous")) {
       reactiveThermoSystem = stream.getFluid().clone();
       // reactiveThermoSystem = stream.getFluid().phaseToSystem("aqueous");
@@ -66,6 +72,11 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass {
       }
       thermoOps = new ThermodynamicOperations(reactiveThermoSystem);
       thermoOps.TPflash();
+
+      lastMeasuredPH = reactiveThermoSystem.getPhase("aqueous").getpH();
+      lastMeasuredStream = stream;
+      lastMeasuredAlkalinity = alkalinity;
+      hasCachedPH = true;
     }
   }
 
@@ -78,22 +89,13 @@ public class pHProbe extends StreamMeasurementDeviceBaseClass {
     }
     if (stream != null) {
       if (stream.getFluid().hasPhaseType("aqueous")) {
-        reactiveThermoSystem = stream.getFluid().clone();
-        // reactiveThermoSystem = stream.getFluid().phaseToSystem("aqueous");
-        reactiveThermoSystem = reactiveThermoSystem.setModel("Electrolyte-CPA-EOS-statoil");
-        if (getAlkalinity() > 1e-10) {
-          double waterkg = reactiveThermoSystem.getComponent("water").getTotalFlowRate("kg/sec");
-          reactiveThermoSystem.addComponent("Na+", waterkg * getAlkalinity() / 1e3);
-          reactiveThermoSystem.addComponent("OH-", waterkg * getAlkalinity() / 1e3);
+        if (hasCachedPH && stream == lastMeasuredStream
+            && Double.compare(lastMeasuredAlkalinity, alkalinity) == 0) {
+          return lastMeasuredPH;
         }
-        if (!reactiveThermoSystem.isChemicalSystem()) {
-          reactiveThermoSystem.chemicalReactionInit();
-          reactiveThermoSystem.setMixingRule(10);
-          reactiveThermoSystem.setMultiPhaseCheck(false);
-        }
-        thermoOps = new ThermodynamicOperations(reactiveThermoSystem);
-        thermoOps.TPflash();
-        return reactiveThermoSystem.getPhase("aqueous").getpH();
+
+        run();
+        return hasCachedPH ? lastMeasuredPH : Double.NaN;
       } else {
         System.out.println("no aqueous phase for pH analyser");
         return 7.0;

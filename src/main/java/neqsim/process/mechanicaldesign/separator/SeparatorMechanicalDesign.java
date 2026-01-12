@@ -400,5 +400,63 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     }
 
     return totalPressureDrop;
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns a separator-specific response with additional fields for vessel sizing, internals, and
+   * process design data.
+   * </p>
+   */
+  @Override
+  public SeparatorMechanicalDesignResponse getResponse() {
+    return new SeparatorMechanicalDesignResponse(this);
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns JSON with separator-specific fields.
+   * </p>
+   */
+  @Override
+  public String toJson() {
+    return getResponse().toJson();
+  }
+
+  /**
+   * Get gas load factor (K-factor).
+   *
+   * @return gas load factor
+   */
+  public double getGasLoadFactor() {
+    return gasLoadFactor;
+  }
+
+  /**
+   * Get volume safety factor.
+   *
+   * @return volume safety factor
+   */
+  public double getVolumeSafetyFactor() {
+    return volumeSafetyFactor;
+  }
+
+  /**
+   * Get liquid level fraction (Fg).
+   *
+   * @return liquid level fraction
+   */
+  public double getFg() {
+    return Fg;
+  }
+
+  /**
+   * Get retention time in seconds.
+   *
+   * @return retention time
+   */
+  public double getRetentionTime() {
+    return retentionTime;
   }
 }

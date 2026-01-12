@@ -98,6 +98,30 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CompressorChart.class);
 
+  /** Reference gas density in kg/m3 for power calculations. */
+  private double referenceDensity = Double.NaN;
+
+  /** Inlet pressure in bara for pressure ratio calculations. */
+  private double inletPressure = Double.NaN;
+
+  /** Polytropic exponent for pressure ratio calculations. */
+  private double polytropicExponent = Double.NaN;
+
+  /** Inlet temperature in Kelvin for discharge temperature calculations. */
+  private double inletTemperature = Double.NaN;
+
+  /** Heat capacity ratio (gamma = Cp/Cv) for temperature calculations. */
+  private double gamma = Double.NaN;
+
+  /** Calculated power curves [speed][points] in kW. */
+  private double[][] powerCurves = null;
+
+  /** Calculated pressure ratio curves [speed][points]. */
+  private double[][] pressureRatioCurves = null;
+
+  /** Calculated discharge temperature curves [speed][points] in Kelvin. */
+  private double[][] dischargeTemperatureCurves = null;
+
   ArrayList<CompressorCurve> chartValues = new ArrayList<CompressorCurve>();
   ArrayList<Double> chartSpeeds = new ArrayList<Double>();
   SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve();
@@ -294,26 +318,143 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   /** {@inheritDoc} */
   @Override
   public int getSpeed(double flow, double head) {
-    int iter = 1;
-    double error = 1.0;
-    double derrordspeed = 1.0;
-    double newspeed = referenceSpeed;
-    double newhead = 0.0;
-    double oldspeed = newspeed + 1.0;
+    return (int) Math.round(getSpeedValue(flow, head));
+  }
+
+  /**
+   * Calculate the speed required to achieve a given head at a given flow rate.
+   *
+   * <p>
+   * This method uses fan law relationships: Head ∝ Speed². The algorithm uses a robust
+   * Newton-Raphson method with:
+   * <ul>
+   * <li>Fan-law based initial guess for fast convergence</li>
+   * <li>Bounds protection to prevent divergence</li>
+   * <li>Damped updates for stability</li>
+   * <li>Bisection fallback if Newton-Raphson fails</li>
+   * </ul>
+   *
+   * <p>
+   * The method works both within and outside the defined speed curve range by using the underlying
+   * fan law extrapolation of the compressor map.
+   * </p>
+   *
+   * @param flow the volumetric flow rate in m³/hr
+   * @param head the required polytropic head in the chart's head unit (kJ/kg or meter)
+   * @return the calculated speed in RPM (as double for precision)
+   */
+  public double getSpeedValue(double flow, double head) {
+    // Fan law: H = f(Q/N) * N², so N = sqrt(H / f(Q/N))
+    // For initial guess, use reference speed scaled by sqrt of head ratio
+    double refHead = getPolytropicHead(flow, referenceSpeed);
+    double initialGuess;
+    if (refHead > 0 && head > 0) {
+      // Fan law scaling: N2/N1 = sqrt(H2/H1) at constant Q/N
+      initialGuess = referenceSpeed * Math.sqrt(head / refHead);
+    } else {
+      initialGuess = referenceSpeed;
+    }
+
+    // Bounds for speed search (allow 50% extrapolation beyond curve range)
+    double speedLowerBound = minSpeedCurve * 0.5;
+    double speedUpperBound = maxSpeedCurve * 1.5;
+    if (speedLowerBound <= 0) {
+      speedLowerBound = 100; // Minimum reasonable speed
+    }
+
+    // Clamp initial guess to reasonable bounds
+    double newspeed = Math.max(speedLowerBound, Math.min(speedUpperBound, initialGuess));
+
+    // Newton-Raphson with damping and bounds protection
+    int maxIter = 50;
+    double tolerance = 1e-6;
+    double dampingFactor = 0.7; // Damping to improve stability
+
+    double oldspeed = newspeed * 1.01; // Slightly different for gradient calculation
     double oldhead = getPolytropicHead(flow, oldspeed);
     double olderror = oldhead - head;
-    do {
-      iter++;
-      newhead = getPolytropicHead(flow, newspeed);
-      error = newhead - head;
-      derrordspeed = (error - olderror) / (newspeed - oldspeed);
-      newspeed -= error / derrordspeed;
-      // System.out.println("speed " + newspeed);
-    } while (Math.abs(error) > 1e-6 && iter < 100);
 
-    // change speed to minimize
-    // Math.abs(head - reducedHeadFitterFunc.value(flow / speed) * speed * speed);
-    return (int) Math.round(newspeed);
+    for (int iter = 0; iter < maxIter; iter++) {
+      double newhead = getPolytropicHead(flow, newspeed);
+      double error = newhead - head;
+
+      // Check convergence
+      if (Math.abs(error) < tolerance) {
+        return newspeed;
+      }
+
+      // Calculate gradient (dError/dSpeed)
+      double derrordspeed = (error - olderror) / (newspeed - oldspeed);
+
+      // Protect against zero or very small gradient
+      if (Math.abs(derrordspeed) < 1e-10) {
+        // Use fan law derivative: dH/dN = 2*H/N
+        derrordspeed = 2.0 * newhead / newspeed;
+        if (Math.abs(derrordspeed) < 1e-10) {
+          break; // Cannot compute gradient, exit to fallback
+        }
+      }
+
+      // Calculate Newton-Raphson update with damping
+      double speedUpdate = dampingFactor * error / derrordspeed;
+
+      // Limit step size to prevent large jumps
+      double maxStep = 0.3 * newspeed; // Max 30% change per iteration
+      speedUpdate = Math.max(-maxStep, Math.min(maxStep, speedUpdate));
+
+      // Store old values for next gradient calculation
+      oldspeed = newspeed;
+      olderror = error;
+
+      // Update speed with bounds protection
+      newspeed = newspeed - speedUpdate;
+      newspeed = Math.max(speedLowerBound, Math.min(speedUpperBound, newspeed));
+
+      // Check for stagnation
+      if (Math.abs(newspeed - oldspeed) < 1e-10) {
+        break;
+      }
+    }
+
+    // Fallback: bisection method if Newton-Raphson didn't converge well
+    double headAtLower = getPolytropicHead(flow, speedLowerBound);
+    double headAtUpper = getPolytropicHead(flow, speedUpperBound);
+
+    // Extend bounds if target head is outside current range
+    if (head < headAtLower && head < headAtUpper) {
+      // Need lower speed - extend lower bound
+      speedLowerBound = speedLowerBound * 0.5;
+      speedUpperBound = (headAtLower < headAtUpper) ? speedLowerBound * 2 : speedUpperBound;
+    } else if (head > headAtLower && head > headAtUpper) {
+      // Need higher speed - extend upper bound
+      speedUpperBound = speedUpperBound * 2.0;
+    }
+
+    // Bisection search
+    for (int iter = 0; iter < 50; iter++) {
+      double midspeed = (speedLowerBound + speedUpperBound) / 2.0;
+      double midhead = getPolytropicHead(flow, midspeed);
+
+      if (Math.abs(midhead - head) < tolerance) {
+        return midspeed;
+      }
+
+      // Determine which half contains the solution
+      // Head increases with speed (fan law), so:
+      if (midhead < head) {
+        speedLowerBound = midspeed; // Need higher speed
+      } else {
+        speedUpperBound = midspeed; // Need lower speed
+      }
+
+      // Check convergence
+      if (speedUpperBound - speedLowerBound < 1.0) {
+        return midspeed;
+      }
+    }
+
+    // Return best estimate
+    return (speedLowerBound + speedUpperBound) / 2.0;
   }
 
   /** {@inheritDoc} */
@@ -321,7 +462,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   public double getFlow(double head, double speed, double guessFlow) {
     int iter = 1;
     double error = 1.0;
-    double derrordspeed = 1.0;
+    double derrordflow = 1.0;
     double newflow = guessFlow;
     double newhead = 0.0;
     double oldflow = newflow * 1.1;
@@ -332,14 +473,20 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
       newhead =
           getPolytropicHead(newflow, speed) / (getPolytropicEfficiency(newflow, speed) / 100.0);
       error = newhead - head;
-      derrordspeed = (error - olderror) / (newflow - oldflow);
-      newflow -= error / derrordspeed;
-      // System.out.println("newflow " + newflow);
+      derrordflow = (error - olderror) / (newflow - oldflow);
+      if (Math.abs(derrordflow) < 1e-10) {
+        break; // Avoid division by zero
+      }
+      oldflow = newflow;
+      olderror = error;
+      newflow -= error / derrordflow;
+      // Prevent negative flow during iteration
+      if (newflow < 0.0) {
+        newflow = guessFlow * 0.1;
+      }
     } while (Math.abs(error) > 1e-6 && iter < 100);
 
-    // change speed to minimize
-    // Math.abs(head - reducedHeadFitterFunc.value(flow / speed) * speed * speed);
-    return newflow;
+    return Math.max(0.0, newflow);
   }
 
   /**
@@ -774,5 +921,301 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
       }
     }
     return closestCurve.head[maxFlowIdx];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[] getSpeeds() {
+    return speed;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[][] getFlows() {
+    return flow;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[][] getHeads() {
+    return head;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[][] getPolytropicEfficiencies() {
+    return polytropicEfficiency;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[] getChartConditions() {
+    return chartConditions;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setReferenceDensity(double density) {
+    this.referenceDensity = density;
+    // Recalculate power curves if data is available
+    if (flow != null && head != null && polytropicEfficiency != null) {
+      calculatePowerCurves();
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getReferenceDensity() {
+    return referenceDensity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setInletPressure(double pressure) {
+    this.inletPressure = pressure;
+    // Recalculate pressure ratio curves if data is available
+    if (flow != null && head != null && !Double.isNaN(polytropicExponent)) {
+      calculatePressureRatioCurves();
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getInletPressure() {
+    return inletPressure;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setPolytropicExponent(double exponent) {
+    this.polytropicExponent = exponent;
+    // Recalculate pressure ratio curves if data is available
+    if (flow != null && head != null && !Double.isNaN(inletPressure)) {
+      calculatePressureRatioCurves();
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getPolytropicExponent() {
+    return polytropicExponent;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[][] getPowers() {
+    if (powerCurves == null && flow != null) {
+      calculatePowerCurves();
+    }
+    return powerCurves;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[][] getPressureRatios() {
+    if (pressureRatioCurves == null && flow != null) {
+      calculatePressureRatioCurves();
+    }
+    return pressureRatioCurves;
+  }
+
+  /**
+   * Calculate power curves from flow, head, and efficiency.
+   *
+   * <p>
+   * Power is calculated as: P = (density * volumeFlow * head) / efficiency where volumeFlow is in
+   * m3/hr, head is in kJ/kg (or converted from meters), and efficiency is in fraction (0-1).
+   * </p>
+   */
+  private void calculatePowerCurves() {
+    if (flow == null || head == null || polytropicEfficiency == null) {
+      return;
+    }
+
+    // Use reference density if set, otherwise use a default or estimate
+    double density = Double.isNaN(referenceDensity) ? 50.0 : referenceDensity; // Default ~50 kg/m3
+                                                                               // for natural gas
+
+    powerCurves = new double[flow.length][];
+
+    for (int i = 0; i < flow.length; i++) {
+      powerCurves[i] = new double[flow[i].length];
+      for (int j = 0; j < flow[i].length; j++) {
+        double volumeFlow = flow[i][j]; // m3/hr
+        double headValue = head[i][j]; // kJ/kg or meter
+
+        // Convert head from meters to kJ/kg if needed
+        double headKJperKg = headValue;
+        if ("meter".equalsIgnoreCase(headUnit) || "m".equalsIgnoreCase(headUnit)) {
+          headKJperKg = headValue * 9.81 / 1000.0; // m * g / 1000 = kJ/kg
+        }
+
+        // Efficiency as fraction (input is in %)
+        double effFraction = polytropicEfficiency[i][j] / 100.0;
+        if (effFraction <= 0) {
+          effFraction = 0.75; // Default if invalid
+        }
+
+        // Power = density * volumeFlow * head / efficiency
+        // Units: kg/m3 * m3/hr * kJ/kg / 1 = kJ/hr
+        // Convert to kW: kJ/hr / 3600 = kW
+        double massFlow = density * volumeFlow / 3600.0; // kg/s
+        powerCurves[i][j] = massFlow * headKJperKg / effFraction; // kW
+      }
+    }
+  }
+
+  /**
+   * Calculate pressure ratio curves from head and gas properties.
+   *
+   * <p>
+   * Pressure ratio is calculated from polytropic head using: PR = [1 + (n-1)/n * H /
+   * (Z*R*T/MW)]^(n/(n-1)) Simplified: PR = exp(n/(n-1) * ln(1 + (n-1)/n * H * MW / (Z*R*T)))
+   * </p>
+   */
+  private void calculatePressureRatioCurves() {
+    if (flow == null || head == null) {
+      return;
+    }
+
+    // Use reference values if available
+    double n = Double.isNaN(polytropicExponent) ? 1.3 : polytropicExponent;
+    double zRT_MW = 8314.0 * (refTemperature > 0 ? refTemperature : 300.0)
+        / (refMW > 0 ? refMW : 20.0) * (refZ > 0 ? refZ : 0.9); // J/kg = m2/s2
+
+    pressureRatioCurves = new double[flow.length][];
+
+    for (int i = 0; i < flow.length; i++) {
+      pressureRatioCurves[i] = new double[flow[i].length];
+      for (int j = 0; j < flow[i].length; j++) {
+        double headValue = head[i][j]; // kJ/kg or meter
+
+        // Convert head to J/kg
+        double headJperKg;
+        if ("meter".equalsIgnoreCase(headUnit) || "m".equalsIgnoreCase(headUnit)) {
+          headJperKg = headValue * 9.81; // m * g = J/kg
+        } else {
+          headJperKg = headValue * 1000.0; // kJ/kg * 1000 = J/kg
+        }
+
+        // Polytropic head relation: H = n/(n-1) * Z*R*T/MW * [(P2/P1)^((n-1)/n) - 1]
+        // Solving for pressure ratio: PR = [1 + (n-1)/n * H / (Z*R*T/MW)]^(n/(n-1))
+        double exponentRatio = (n - 1.0) / n;
+        double term = 1.0 + exponentRatio * headJperKg / zRT_MW;
+
+        if (term > 0) {
+          pressureRatioCurves[i][j] = Math.pow(term, 1.0 / exponentRatio);
+        } else {
+          pressureRatioCurves[i][j] = 1.0; // Invalid, return unity
+        }
+      }
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setInletTemperature(double temperature) {
+    this.inletTemperature = temperature;
+    // Recalculate discharge temperature curves if data is available
+    if (flow != null && pressureRatioCurves != null) {
+      calculateDischargeTemperatureCurves();
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getInletTemperature() {
+    return inletTemperature;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setGamma(double gamma) {
+    this.gamma = gamma;
+    // Recalculate discharge temperature curves if data is available
+    if (flow != null && pressureRatioCurves != null) {
+      calculateDischargeTemperatureCurves();
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getGamma() {
+    return gamma;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[][] getDischargeTemperatures() {
+    if (dischargeTemperatureCurves == null && flow != null) {
+      // Ensure pressure ratio curves are calculated first
+      if (pressureRatioCurves == null) {
+        calculatePressureRatioCurves();
+      }
+      calculateDischargeTemperatureCurves();
+    }
+    return dischargeTemperatureCurves;
+  }
+
+  /**
+   * Calculate discharge temperature curves from pressure ratio and gas properties.
+   *
+   * <p>
+   * Discharge temperature is calculated using the polytropic process relation: T2 = T1 *
+   * PR^((n-1)/n) where PR is pressure ratio and n is polytropic exponent related to efficiency:
+   * (n-1)/n = (gamma-1)/gamma / eta_polytropic
+   * </p>
+   *
+   * <p>
+   * This is critical for:
+   * </p>
+   * <ul>
+   * <li>Downstream equipment design</li>
+   * <li>Material temperature limits</li>
+   * <li>Intercooler requirements</li>
+   * </ul>
+   */
+  private void calculateDischargeTemperatureCurves() {
+    if (flow == null || pressureRatioCurves == null) {
+      return;
+    }
+
+    // Use inlet temperature if set, otherwise use reference or default
+    double t1 = Double.isNaN(inletTemperature) ? (refTemperature > 0 ? refTemperature : 300.0)
+        : inletTemperature;
+
+    // Use gamma if set, otherwise estimate from polytropic exponent or default
+    double k = Double.isNaN(gamma) ? 1.3 : gamma;
+
+    dischargeTemperatureCurves = new double[flow.length][];
+
+    for (int i = 0; i < flow.length; i++) {
+      dischargeTemperatureCurves[i] = new double[flow[i].length];
+      for (int j = 0; j < flow[i].length; j++) {
+        double pr = pressureRatioCurves[i][j];
+
+        // Get efficiency at this point
+        double effFraction = 0.75; // Default
+        if (polytropicEfficiency != null && polytropicEfficiency[i] != null
+            && j < polytropicEfficiency[i].length) {
+          effFraction = polytropicEfficiency[i][j] / 100.0;
+          if (effFraction <= 0 || effFraction > 1.0) {
+            effFraction = 0.75;
+          }
+        }
+
+        // Calculate polytropic exponent from efficiency and gamma
+        // (n-1)/n = (k-1)/k / eta_p
+        double isentropicExponent = (k - 1.0) / k;
+        double polytropicExp = isentropicExponent / effFraction;
+
+        // T2 = T1 * PR^((n-1)/n)
+        if (pr > 0) {
+          dischargeTemperatureCurves[i][j] = t1 * Math.pow(pr, polytropicExp);
+        } else {
+          dischargeTemperatureCurves[i][j] = t1; // No compression
+        }
+      }
+    }
   }
 }

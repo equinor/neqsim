@@ -3,6 +3,8 @@ package neqsim.thermo.phase;
 import org.netlib.util.doubleW;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentGERG2008Eos;
+import neqsim.thermo.util.gerg.GERG2008Type;
+import neqsim.thermo.util.gerg.NeqSimGERG2008;
 
 /**
  * <p>
@@ -36,6 +38,9 @@ public class PhaseGERG2008Eos extends PhaseEos {
   double kappa = 0.0;
   double W = 0.0;
 
+  /** The GERG-2008 model variant to use. Default is STANDARD. */
+  private GERG2008Type gergModelType = GERG2008Type.STANDARD;
+
   /**
    * <p>
    * Constructor for PhaseGERG2008Eos.
@@ -56,6 +61,29 @@ public class PhaseGERG2008Eos extends PhaseEos {
     }
 
     return clonedPhase;
+  }
+
+  /**
+   * Get the GERG-2008 model type used by this phase.
+   *
+   * @return the GERG model type
+   */
+  public GERG2008Type getGergModelType() {
+    return gergModelType;
+  }
+
+  /**
+   * Set the GERG-2008 model type for this phase.
+   *
+   * @param modelType the GERG model type to use
+   */
+  public void setGergModelType(GERG2008Type modelType) {
+    this.gergModelType = modelType;
+    if (modelType == GERG2008Type.HYDROGEN_ENHANCED) {
+      thermoPropertyModelName = "GERG2008-H2 Eos";
+    } else {
+      thermoPropertyModelName = "GERG2008 Eos";
+    }
   }
 
   /** {@inheritDoc} */
@@ -219,7 +247,7 @@ public class PhaseGERG2008Eos extends PhaseEos {
   @Override
   public double dFdVdV() {
     // During early initialisation the Helmholtz derivative array may not yet be
-    // populated.  In that case fall back to the default implementation.
+    // populated. In that case fall back to the default implementation.
     if (ar == null) {
       return super.dFdVdV();
     }
@@ -285,5 +313,33 @@ public class PhaseGERG2008Eos extends PhaseEos {
    */
   public doubleW[][] getAlphaRes() {
     return ar;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getDensity_GERG2008() {
+    NeqSimGERG2008 gerg = new NeqSimGERG2008(this, gergModelType);
+    return gerg.getDensity();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[] getProperties_GERG2008() {
+    NeqSimGERG2008 gerg = new NeqSimGERG2008(this, gergModelType);
+    return gerg.propertiesGERG();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public doubleW[] getAlpha0_GERG2008() {
+    NeqSimGERG2008 gerg = new NeqSimGERG2008(this, gergModelType);
+    return gerg.getAlpha0_GERG2008();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public doubleW[][] getAlphares_GERG2008() {
+    NeqSimGERG2008 gerg = new NeqSimGERG2008(this, gergModelType);
+    return gerg.getAlphares_GERG2008();
   }
 }

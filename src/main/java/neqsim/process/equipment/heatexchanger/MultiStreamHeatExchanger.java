@@ -381,7 +381,8 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new MultiStreamHeatExchangerResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new MultiStreamHeatExchangerResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -392,7 +393,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     }
     MultiStreamHeatExchangerResponse res = new MultiStreamHeatExchangerResponse(this);
     res.applyConfig(cfg);
-    return new GsonBuilder().create().toJson(res);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 
   /** {@inheritDoc} */

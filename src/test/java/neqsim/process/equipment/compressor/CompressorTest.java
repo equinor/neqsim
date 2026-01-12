@@ -474,4 +474,74 @@ class CompressorTest extends neqsim.NeqSimTest {
     compressor1.run();
     assertEquals(compressor1.getPolytropicHead("kJ/kg"), 467.9507559516084, 0.01);
   }
+
+  /**
+   * Test the Builder pattern for creating compressors.
+   */
+  @Test
+  public void testBuilderPattern() {
+    testSystem = new SystemSrkEos(298.0, 10.0);
+    testSystem.addComponent("methane", 100.0);
+    Stream inletStream = new Stream("inletStream", testSystem);
+    inletStream.setPressure(85.0, "bara");
+    inletStream.setTemperature(35.0, "C");
+    inletStream.setFlowRate(5.0, "MSm3/day");
+    inletStream.run();
+
+    Compressor comp =
+        Compressor.builder("K-100").inletStream(inletStream).outletPressure(150.0, "bara")
+            .polytropicEfficiency(0.77).speed(8000).polytropicMethod("schultz").build();
+
+    comp.run();
+
+    assertEquals("K-100", comp.getName());
+    assertEquals(150.0, comp.getOutletPressure(), 0.001);
+    assertEquals(0.77, comp.getPolytropicEfficiency(), 0.001);
+    assertEquals(8000, comp.getSpeed(), 0.001);
+    Assertions.assertTrue(comp.getOutletStream().getTemperature("C") > 35.0);
+  }
+
+  /**
+   * Test the Builder pattern with isentropic efficiency.
+   */
+  @Test
+  public void testBuilderWithIsentropicEfficiency() {
+    testSystem = new SystemSrkEos(298.0, 10.0);
+    testSystem.addComponent("methane", 100.0);
+    Stream inletStream = new Stream("inletStream", testSystem);
+    inletStream.setPressure(50.0, "bara");
+    inletStream.setTemperature(25.0, "C");
+    inletStream.setFlowRate(1.0, "MSm3/day");
+    inletStream.run();
+
+    Compressor comp = Compressor.builder("K-101").inletStream(inletStream).outletPressure(100.0)
+        .isentropicEfficiency(0.80).build();
+
+    comp.run();
+
+    assertEquals(0.80, comp.getIsentropicEfficiency(), 0.001);
+    Assertions.assertTrue(comp.getOutletStream().getPressure("bara") > 99.0);
+  }
+
+  /**
+   * Test the Builder pattern with compression ratio.
+   */
+  @Test
+  public void testBuilderWithCompressionRatio() {
+    testSystem = new SystemSrkEos(298.0, 10.0);
+    testSystem.addComponent("methane", 100.0);
+    Stream inletStream = new Stream("inletStream", testSystem);
+    inletStream.setPressure(20.0, "bara");
+    inletStream.setTemperature(30.0, "C");
+    inletStream.setFlowRate(2.0, "MSm3/day");
+    inletStream.run();
+
+    Compressor comp = Compressor.builder("K-102").inletStream(inletStream).compressionRatio(3.0)
+        .polytropicEfficiency(0.75).maxSpeed(15000).minSpeed(3000).build();
+
+    comp.run();
+
+    // Compression ratio 3.0: 20 * 3 = 60 bara
+    assertEquals(60.0, comp.getOutletStream().getPressure("bara"), 1.0);
+  }
 }

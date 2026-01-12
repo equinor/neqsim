@@ -93,8 +93,6 @@ public class ComponentModifiedFurstElectrolyteEosMod2004 extends ComponentSrk {
     lennardJonesMolecularDiameter =
         ionicCharge != 0 ? Math.pow((6.0 * b / 1.0e5) / (pi * avagadroNumber), 1.0 / 3.0) * 1e10
             : lennardJonesMolecularDiameter;
-
-    // if(ionicCharge>0) stokesCationicDiameter = stokesCationicDiameter/3.0;
   }
 
   /**

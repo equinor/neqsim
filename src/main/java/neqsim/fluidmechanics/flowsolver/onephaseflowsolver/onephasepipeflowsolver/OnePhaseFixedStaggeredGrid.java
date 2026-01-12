@@ -615,6 +615,33 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
    * @param componentNumber a int
    */
   public void setComponentConservationMatrix(int componentNumber) {
+    neqsim.fluidmechanics.flowsolver.AdvectionScheme scheme = pipe.getAdvectionScheme();
+
+    if (scheme == neqsim.fluidmechanics.flowsolver.AdvectionScheme.FIRST_ORDER_UPWIND) {
+      setComponentConservationMatrixFirstOrderUpwind(componentNumber);
+    } else if (scheme.usesTVD()) {
+      setComponentConservationMatrixTVD(componentNumber, scheme);
+    } else if (scheme == neqsim.fluidmechanics.flowsolver.AdvectionScheme.SECOND_ORDER_UPWIND) {
+      setComponentConservationMatrixSecondOrderUpwind(componentNumber);
+    } else if (scheme == neqsim.fluidmechanics.flowsolver.AdvectionScheme.QUICK) {
+      setComponentConservationMatrixQUICK(componentNumber);
+    } else {
+      // Default to first-order upwind
+      setComponentConservationMatrixFirstOrderUpwind(componentNumber);
+    }
+  }
+
+  /**
+   * First-order upwind scheme for component conservation (original implementation).
+   * 
+   * <p>
+   * This scheme is unconditionally stable but has high numerical dispersion: D_num = (v × Δx / 2) ×
+   * (1 - CFL)
+   * </p>
+   *
+   * @param componentNumber the component index
+   */
+  private void setComponentConservationMatrixFirstOrderUpwind(int componentNumber) {
     double SU = 0;
     a[0] = 0;
     b[0] = 1.0;
@@ -633,8 +660,6 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
           * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * Ae;
       double Fw = pipe.getNode(i).getVelocityIn().doubleValue()
           * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity() * Aw;
-      // System.out.println("vel: " +
-      // pipe.getNode(i).getVelocityOut(phase).doubleValue() + " fe " + Fe);
       if (dynamic) {
         oldComp[i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea()
             * pipe.getNode(i).getGeometry().getNodeLength()
@@ -647,15 +672,11 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
       b[i] = a[i] + c[i] + (Fe - Fw) + oldComp[i];
       r[i] = oldComp[i] * oldComposition[componentNumber][i];
 
-      // setter ligningen paa rett form
       a[i] = -a[i];
       c[i] = -c[i];
     }
 
     int i = numberOfNodes - 1;
-    // double fw =
-    // pipe.getNode(i-1).getGeometry().getNodeLength() /
-    // (pipe.getNode(i).getGeometry().getNodeLength()+pipe.getNode(i-1).getGeometry().getNodeLength());
     double Ae = pipe.getNode(i).getGeometry().getArea();
     double Aw = pipe.getNode(i - 1).getGeometry().getArea();
 
@@ -675,7 +696,319 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
     c[i] = Math.max(-Fe, 0);
     b[i] = a[i] + c[i] + (Fe - Fw) + oldComp[i];
     r[i] = oldComp[i] * oldComposition[componentNumber][i];
-    // setter ligningen paa rett form
+    a[i] = -a[i];
+    c[i] = -c[i];
+  }
+
+  /**
+   * TVD (Total Variation Diminishing) scheme with flux limiters.
+   * 
+   * <p>
+   * Achieves second-order accuracy in smooth regions while preventing oscillations near
+   * discontinuities. The flux limiter blends between first-order upwind and a higher-order scheme
+   * based on the local solution gradient.
+   * </p>
+   *
+   * @param componentNumber the component index
+   * @param scheme the TVD scheme variant (determines limiter function)
+   */
+  private void setComponentConservationMatrixTVD(int componentNumber,
+      neqsim.fluidmechanics.flowsolver.AdvectionScheme scheme) {
+
+    // Get composition values for gradient calculation
+    double[] phi = new double[numberOfNodes];
+    for (int i = 0; i < numberOfNodes; i++) {
+      phi[i] =
+          pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[componentNumber].getx()
+              * pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[componentNumber]
+                  .getMolarMass()
+              / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
+    }
+
+    // Inlet boundary condition
+    double SU = phi[0];
+    a[0] = 0;
+    b[0] = 1.0;
+    c[0] = 0;
+    r[0] = SU;
+
+    for (int i = 1; i < numberOfNodes - 1; i++) {
+      double Ae = pipe.getNode(i).getGeometry().getArea();
+      double Aw = pipe.getNode(i - 1).getGeometry().getArea();
+
+      double Fe = pipe.getNode(i).getVelocityOut().doubleValue()
+          * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * Ae;
+      double Fw = pipe.getNode(i).getVelocityIn().doubleValue()
+          * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity() * Aw;
+
+      if (dynamic) {
+        oldComp[i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea()
+            * pipe.getNode(i).getGeometry().getNodeLength()
+            * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity();
+      } else {
+        oldComp[i] = 0.0;
+      }
+
+      // Calculate gradient ratios for flux limiting
+      double rW = 1.0; // Default for boundaries
+      double rE = 1.0;
+
+      if (i > 1 && Fw > 0) {
+        // West face, positive flow (from upstream)
+        rW = neqsim.fluidmechanics.flowsolver.FluxLimiter.gradientRatio(phi[i - 2], phi[i - 1],
+            phi[i]);
+      }
+      if (i < numberOfNodes - 2 && Fe > 0) {
+        // East face, positive flow
+        rE = neqsim.fluidmechanics.flowsolver.FluxLimiter.gradientRatio(phi[i - 1], phi[i],
+            phi[i + 1]);
+      }
+
+      // Get limiter values
+      double psiW = neqsim.fluidmechanics.flowsolver.FluxLimiter.getLimiterValue(scheme, rW);
+      double psiE = neqsim.fluidmechanics.flowsolver.FluxLimiter.getLimiterValue(scheme, rE);
+
+      // Higher-order flux correction (anti-diffusion)
+      // The TVD correction reduces numerical diffusion by adding anti-diffusive flux
+      // modulated by the limiter function
+      double higherOrderCorrectionW =
+          0.5 * psiW * Math.abs(Fw) * (1.0 - Math.abs(Fw) / (Math.abs(Fw) + 1e-10));
+      double higherOrderCorrectionE =
+          0.5 * psiE * Math.abs(Fe) * (1.0 - Math.abs(Fe) / (Math.abs(Fe) + 1e-10));
+
+      // Modified coefficients with TVD correction
+      double aBase = Math.max(Fw, 0);
+      double cBase = Math.max(-Fe, 0);
+
+      // Add higher-order correction to RHS (deferred correction approach)
+      double fluxCorrection = 0.0;
+      if (i > 1 && Fw > 0) {
+        fluxCorrection += higherOrderCorrectionW * (phi[i - 1] - phi[i - 2]);
+      }
+      if (i < numberOfNodes - 2 && Fe > 0) {
+        fluxCorrection -= higherOrderCorrectionE * (phi[i + 1] - phi[i]);
+      }
+
+      a[i] = aBase;
+      c[i] = cBase;
+      b[i] = a[i] + c[i] + (Fe - Fw) + oldComp[i];
+      r[i] = oldComp[i] * oldComposition[componentNumber][i] + fluxCorrection;
+
+      a[i] = -a[i];
+      c[i] = -c[i];
+    }
+
+    // Outlet boundary
+    int i = numberOfNodes - 1;
+    double Ae = pipe.getNode(i).getGeometry().getArea();
+    double Aw = pipe.getNode(i - 1).getGeometry().getArea();
+
+    double Fe = pipe.getNode(i).getVelocity()
+        * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * Ae;
+    double Fw = pipe.getNode(i).getVelocityIn().doubleValue()
+        * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity() * Aw;
+
+    if (dynamic) {
+      oldComp[i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea()
+          * pipe.getNode(i).getGeometry().getNodeLength()
+          * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity();
+    } else {
+      oldComp[i] = 0.0;
+    }
+    a[i] = Math.max(Fw, 0);
+    c[i] = Math.max(-Fe, 0);
+    b[i] = a[i] + c[i] + (Fe - Fw) + oldComp[i];
+    r[i] = oldComp[i] * oldComposition[componentNumber][i];
+    a[i] = -a[i];
+    c[i] = -c[i];
+  }
+
+  /**
+   * Second-order upwind (Linear Upwind Differencing) scheme.
+   * 
+   * <p>
+   * Uses two upstream points for higher accuracy. Much less dispersive than first-order upwind but
+   * may oscillate near discontinuities.
+   * </p>
+   *
+   * @param componentNumber the component index
+   */
+  private void setComponentConservationMatrixSecondOrderUpwind(int componentNumber) {
+    // Get composition values for gradient calculation
+    double[] phi = new double[numberOfNodes];
+    for (int i = 0; i < numberOfNodes; i++) {
+      phi[i] =
+          pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[componentNumber].getx()
+              * pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[componentNumber]
+                  .getMolarMass()
+              / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
+    }
+
+    // Inlet boundary condition
+    a[0] = 0;
+    b[0] = 1.0;
+    c[0] = 0;
+    r[0] = phi[0];
+
+    for (int i = 1; i < numberOfNodes - 1; i++) {
+      double Ae = pipe.getNode(i).getGeometry().getArea();
+      double Aw = pipe.getNode(i - 1).getGeometry().getArea();
+
+      double Fe = pipe.getNode(i).getVelocityOut().doubleValue()
+          * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * Ae;
+      double Fw = pipe.getNode(i).getVelocityIn().doubleValue()
+          * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity() * Aw;
+
+      if (dynamic) {
+        oldComp[i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea()
+            * pipe.getNode(i).getGeometry().getNodeLength()
+            * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity();
+      } else {
+        oldComp[i] = 0.0;
+      }
+
+      // Second-order upwind: use two upstream points
+      // For positive flow at west face: phi_w = 1.5*phi_{i-1} - 0.5*phi_{i-2}
+      double extrapolationW = 0.0;
+      double extrapolationE = 0.0;
+
+      if (i > 1 && Fw > 0) {
+        // Second-order extrapolation from upstream
+        extrapolationW = 0.5 * Fw * (phi[i - 1] - phi[i - 2]);
+      }
+      if (i < numberOfNodes - 2 && Fe > 0) {
+        extrapolationE = 0.5 * Fe * (phi[i] - phi[i - 1]);
+      }
+
+      a[i] = Math.max(Fw, 0);
+      c[i] = Math.max(-Fe, 0);
+      b[i] = a[i] + c[i] + (Fe - Fw) + oldComp[i];
+
+      // Add second-order correction to RHS
+      r[i] = oldComp[i] * oldComposition[componentNumber][i] + extrapolationW - extrapolationE;
+
+      a[i] = -a[i];
+      c[i] = -c[i];
+    }
+
+    // Outlet boundary (first-order)
+    int i = numberOfNodes - 1;
+    double Ae = pipe.getNode(i).getGeometry().getArea();
+    double Aw = pipe.getNode(i - 1).getGeometry().getArea();
+
+    double Fe = pipe.getNode(i).getVelocity()
+        * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * Ae;
+    double Fw = pipe.getNode(i).getVelocityIn().doubleValue()
+        * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity() * Aw;
+
+    if (dynamic) {
+      oldComp[i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea()
+          * pipe.getNode(i).getGeometry().getNodeLength()
+          * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity();
+    } else {
+      oldComp[i] = 0.0;
+    }
+    a[i] = Math.max(Fw, 0);
+    c[i] = Math.max(-Fe, 0);
+    b[i] = a[i] + c[i] + (Fe - Fw) + oldComp[i];
+    r[i] = oldComp[i] * oldComposition[componentNumber][i];
+    a[i] = -a[i];
+    c[i] = -c[i];
+  }
+
+  /**
+   * QUICK scheme (Quadratic Upstream Interpolation for Convective Kinematics).
+   * 
+   * <p>
+   * Third-order accurate on uniform grids. Uses quadratic interpolation with upstream bias. Very
+   * low numerical dispersion but may produce oscillations.
+   * </p>
+   *
+   * @param componentNumber the component index
+   */
+  private void setComponentConservationMatrixQUICK(int componentNumber) {
+    // Get composition values
+    double[] phi = new double[numberOfNodes];
+    for (int i = 0; i < numberOfNodes; i++) {
+      phi[i] =
+          pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[componentNumber].getx()
+              * pipe.getNode(i).getBulkSystem().getPhases()[0].getComponents()[componentNumber]
+                  .getMolarMass()
+              / pipe.getNode(i).getBulkSystem().getPhases()[0].getMolarMass();
+    }
+
+    // Inlet boundary condition
+    a[0] = 0;
+    b[0] = 1.0;
+    c[0] = 0;
+    r[0] = phi[0];
+
+    for (int i = 1; i < numberOfNodes - 1; i++) {
+      double Ae = pipe.getNode(i).getGeometry().getArea();
+      double Aw = pipe.getNode(i - 1).getGeometry().getArea();
+
+      double Fe = pipe.getNode(i).getVelocityOut().doubleValue()
+          * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * Ae;
+      double Fw = pipe.getNode(i).getVelocityIn().doubleValue()
+          * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity() * Aw;
+
+      if (dynamic) {
+        oldComp[i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea()
+            * pipe.getNode(i).getGeometry().getNodeLength()
+            * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity();
+      } else {
+        oldComp[i] = 0.0;
+      }
+
+      // QUICK: phi_face = phi_U + (3*phi_D + 6*phi_C - phi_UU)/8
+      // For positive flow at west face: U=i-2, C=i-1, D=i
+      double quickCorrectionW = 0.0;
+      double quickCorrectionE = 0.0;
+
+      if (i > 1 && Fw > 0) {
+        // QUICK interpolation at west face
+        double phiQuickW =
+            phi[i - 1] + (3.0 * phi[i] + 6.0 * phi[i - 1] - phi[i - 2]) / 8.0 - phi[i - 1];
+        quickCorrectionW = Fw * phiQuickW;
+      }
+      if (i < numberOfNodes - 2 && Fe > 0) {
+        // QUICK interpolation at east face
+        double phiQuickE = phi[i] + (3.0 * phi[i + 1] + 6.0 * phi[i] - phi[i - 1]) / 8.0 - phi[i];
+        quickCorrectionE = Fe * phiQuickE;
+      }
+
+      a[i] = Math.max(Fw, 0);
+      c[i] = Math.max(-Fe, 0);
+      b[i] = a[i] + c[i] + (Fe - Fw) + oldComp[i];
+
+      // Add QUICK correction to RHS (deferred correction)
+      r[i] = oldComp[i] * oldComposition[componentNumber][i] + quickCorrectionW - quickCorrectionE;
+
+      a[i] = -a[i];
+      c[i] = -c[i];
+    }
+
+    // Outlet boundary (first-order)
+    int i = numberOfNodes - 1;
+    double Ae = pipe.getNode(i).getGeometry().getArea();
+    double Aw = pipe.getNode(i - 1).getGeometry().getArea();
+
+    double Fe = pipe.getNode(i).getVelocity()
+        * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity() * Ae;
+    double Fw = pipe.getNode(i).getVelocityIn().doubleValue()
+        * pipe.getNode(i - 1).getBulkSystem().getPhases()[0].getDensity() * Aw;
+
+    if (dynamic) {
+      oldComp[i] = 1.0 / timeStep * pipe.getNode(i).getGeometry().getArea()
+          * pipe.getNode(i).getGeometry().getNodeLength()
+          * pipe.getNode(i).getBulkSystem().getPhases()[0].getDensity();
+    } else {
+      oldComp[i] = 0.0;
+    }
+    a[i] = Math.max(Fw, 0);
+    c[i] = Math.max(-Fe, 0);
+    b[i] = a[i] + c[i] + (Fe - Fw) + oldComp[i];
+    r[i] = oldComp[i] * oldComposition[componentNumber][i];
     a[i] = -a[i];
     c[i] = -c[i];
   }

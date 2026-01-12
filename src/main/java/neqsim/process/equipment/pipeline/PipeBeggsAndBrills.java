@@ -22,36 +22,339 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * flow in horizontal, inclined, and vertical pipes.
  * </p>
  *
- * <h2>Energy Equation</h2>
+ * <h2>Reference</h2>
  * <p>
- * The energy balance includes three optional components:
+ * Beggs, H.D. and Brill, J.P., "A Study of Two-Phase Flow in Inclined Pipes", Journal of Petroleum
+ * Technology, May 1973, pp. 607-617. SPE-4007-PA.
+ * </p>
+ *
+ * <h2>Calculation Modes</h2>
+ * <p>
+ * The pipeline supports two primary calculation modes via {@link CalculationMode}:
+ * </p>
  * <ul>
- * <li><b>Wall heat transfer</b> - Heat exchange with surroundings using LMTD method</li>
- * <li><b>Joule-Thomson effect</b> - Temperature change due to gas expansion (cooling)</li>
- * <li><b>Friction heating</b> - Viscous dissipation adding energy to the fluid</li>
+ * <li><b>CALCULATE_OUTLET_PRESSURE</b> (default) - Given inlet conditions and flow rate, calculate
+ * the outlet pressure</li>
+ * <li><b>CALCULATE_FLOW_RATE</b> - Given inlet and outlet pressures, calculate the flow rate using
+ * iterative methods</li>
  * </ul>
  *
- * <h3>Usage Example</h3>
+ * <h2>Flow Regime Determination</h2>
+ * <p>
+ * The Beggs and Brill correlation classifies flow into four regimes based on the Froude number (Fr)
+ * and input liquid volume fraction (λL):
+ * </p>
+ * <ul>
+ * <li><b>SEGREGATED</b> - Stratified, wavy, or annular flow where phases are separated</li>
+ * <li><b>INTERMITTENT</b> - Plug or slug flow with alternating liquid slugs and gas pockets</li>
+ * <li><b>DISTRIBUTED</b> - Bubble or mist flow where one phase is dispersed in the other</li>
+ * <li><b>TRANSITION</b> - Flow in transition zone between segregated and intermittent</li>
+ * <li><b>SINGLE_PHASE</b> - Only gas or only liquid present</li>
+ * </ul>
+ * <p>
+ * Flow regime boundaries are defined by correlations L1-L4:
+ * </p>
+ * 
+ * <pre>
+ * L1 = 316 × λL^0.302
+ * L2 = 0.0009252 × λL^(-2.4684)
+ * L3 = 0.1 × λL^(-1.4516)
+ * L4 = 0.5 × λL^(-6.738)
+ * </pre>
+ *
+ * <h2>Pressure Drop Calculation</h2>
+ * <p>
+ * Total pressure drop consists of three components:
+ * </p>
+ * 
+ * <pre>
+ * ΔP_total = ΔP_friction + ΔP_hydrostatic + ΔP_acceleration
+ * </pre>
+ * <p>
+ * where:
+ * </p>
+ * <ul>
+ * <li><b>Friction pressure drop</b> - Uses two-phase friction factor with slip correction</li>
+ * <li><b>Hydrostatic pressure drop</b> - Based on mixture density and elevation change</li>
+ * <li><b>Acceleration pressure drop</b> - Usually negligible, included in friction term</li>
+ * </ul>
+ *
+ * <h3>Liquid Holdup Calculation</h3>
+ * <p>
+ * Liquid holdup (EL) is calculated based on flow regime:
+ * </p>
+ * <ul>
+ * <li><b>Segregated:</b> EL = 0.98 × λL^0.4846 / Fr^0.0868</li>
+ * <li><b>Intermittent:</b> EL = 0.845 × λL^0.5351 / Fr^0.0173</li>
+ * <li><b>Distributed:</b> EL = 1.065 × λL^0.5824 / Fr^0.0609</li>
+ * </ul>
+ * <p>
+ * Inclination correction factor (Bθ) is applied for non-horizontal pipes.
+ * </p>
+ *
+ * <h3>Friction Factor Calculation</h3>
+ * <p>
+ * The friction factor is calculated using:
+ * </p>
+ * <ul>
+ * <li><b>Laminar (Re &lt; 2300):</b> f = 64/Re</li>
+ * <li><b>Transition (2300-4000):</b> Linear interpolation</li>
+ * <li><b>Turbulent (Re &gt; 4000):</b> Haaland equation</li>
+ * </ul>
+ * <p>
+ * Two-phase friction factor: f_tp = f × exp(S), where S is a slip correction factor.
+ * </p>
+ *
+ * <h2>Heat Transfer Modes</h2>
+ * <p>
+ * The pipeline supports five heat transfer calculation modes via {@link HeatTransferMode}:
+ * </p>
+ * <ul>
+ * <li><b>ADIABATIC</b> - No heat transfer (Q=0). Temperature changes only from Joule-Thomson
+ * effect.</li>
+ * <li><b>ISOTHERMAL</b> - Constant temperature along the pipe (outlet T = inlet T).</li>
+ * <li><b>SPECIFIED_U</b> - Use a user-specified overall heat transfer coefficient (U-value).</li>
+ * <li><b>ESTIMATED_INNER_H</b> - Calculate inner h from flow conditions using Gnielinski
+ * correlation for turbulent flow, use as U.</li>
+ * <li><b>DETAILED_U</b> - Calculate inner h from flow, then compute overall U including pipe wall
+ * conduction, insulation (if present), and outer convection resistances.</li>
+ * </ul>
+ *
+ * <h3>NTU-Effectiveness Method</h3>
+ * <p>
+ * Heat transfer is calculated using the analytical NTU (Number of Transfer Units) method:
+ * </p>
+ * 
+ * <pre>
+ * NTU = U × A / (ṁ × Cp)
+ * T_out = T_wall + (T_in - T_wall) × exp(-NTU)
+ * </pre>
+ * <p>
+ * This provides an exact analytical solution for constant wall temperature boundary conditions.
+ * </p>
+ *
+ * <h3>Inner Heat Transfer Coefficient</h3>
+ * <p>
+ * For ESTIMATED_INNER_H and DETAILED_U modes, the inner convective heat transfer coefficient is
+ * calculated using:
+ * </p>
+ * <ul>
+ * <li><b>Laminar flow (Re &lt; 2300)</b>: Nu = 3.66 (fully developed pipe flow)</li>
+ * <li><b>Transition (2300 &lt; Re &lt; 3000)</b>: Linear interpolation</li>
+ * <li><b>Turbulent flow (Re &gt; 3000)</b>: Gnielinski correlation: Nu = (f/8)(Re-1000)Pr / [1 +
+ * 12.7(f/8)^0.5(Pr^(2/3)-1)]</li>
+ * <li><b>Two-phase flow</b>: Shah/Martinelli enhancement factor applied</li>
+ * </ul>
+ *
+ * <h3>Overall U-Value (DETAILED_U mode)</h3>
+ * <p>
+ * The overall heat transfer coefficient includes thermal resistances in series:
+ * </p>
+ * 
+ * <pre>
+ * 1/U = 1/h_inner + R_wall + R_insulation + 1/h_outer
+ * 
+ * R_wall = r_i × ln(r_o/r_i) / k_wall
+ * R_insulation = r_i × ln(r_ins/r_o) / k_ins
+ * </pre>
+ * <p>
+ * where:
+ * </p>
+ * <ul>
+ * <li>h_inner = inner convective coefficient from flow calculation</li>
+ * <li>R_wall = pipe wall conductive resistance (cylindrical geometry)</li>
+ * <li>R_insulation = insulation layer resistance (if thickness &gt; 0)</li>
+ * <li>h_outer = outer convective coefficient (e.g., seawater ~500 W/(m²·K))</li>
+ * </ul>
+ *
+ * <h2>Energy Equation Components</h2>
+ * <p>
+ * The energy balance can include three optional components:
+ * </p>
+ * <ul>
+ * <li><b>Wall heat transfer</b> - Heat exchange with surroundings using NTU-effectiveness
+ * method</li>
+ * <li><b>Joule-Thomson effect</b> - Temperature change due to gas expansion (cooling): ΔT_JT =
+ * -μ_JT × ΔP</li>
+ * <li><b>Friction heating</b> - Viscous dissipation adding energy to the fluid: Q_friction =
+ * ΔP_friction × V̇</li>
+ * </ul>
+ *
+ * <h3>Joule-Thomson Coefficient</h3>
+ * <p>
+ * The JT coefficient is calculated from rigorous thermodynamics (mass-weighted average across
+ * phases). Typical values:
+ * </p>
+ * <ul>
+ * <li>Methane: ~4×10⁻⁶ K/Pa (0.4 K/bar)</li>
+ * <li>Natural gas: 3-5×10⁻⁶ K/Pa</li>
+ * <li>CO₂: ~10⁻⁵ K/Pa (1 K/bar)</li>
+ * </ul>
+ *
+ * <h2>Usage Examples</h2>
+ *
+ * <h3>Example 1: Basic Horizontal Pipeline</h3>
  * 
  * <pre>{@code
- * PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipeline", feedStream);
+ * // Create fluid system
+ * SystemInterface fluid = new SystemSrkEos(303.15, 50.0);
+ * fluid.addComponent("methane", 0.9);
+ * fluid.addComponent("ethane", 0.1);
+ * fluid.setMixingRule("classic");
+ * 
+ * // Create inlet stream
+ * Stream inlet = new Stream("inlet", fluid);
+ * inlet.setFlowRate(50000, "kg/hr");
+ * inlet.run();
+ * 
+ * // Create pipeline
+ * PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipeline", inlet);
+ * pipe.setDiameter(0.2032); // 8 inch
+ * pipe.setLength(10000.0); // 10 km
+ * pipe.setElevation(0.0); // horizontal
+ * pipe.setNumberOfIncrements(20);
+ * pipe.run();
+ * 
+ * System.out.println("Pressure drop: " + pipe.getPressureDrop() + " bar");
+ * System.out.println("Flow regime: " + pipe.getFlowRegime());
+ * }</pre>
+ *
+ * <h3>Example 2: Pipeline with Heat Transfer</h3>
+ * 
+ * <pre>{@code
+ * // Hot fluid in cold environment
+ * PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("subsea_pipe", hotStream);
  * pipe.setDiameter(0.1524); // 6 inch
  * pipe.setLength(5000.0); // 5 km
  * pipe.setElevation(0.0); // horizontal
+ * pipe.setConstantSurfaceTemperature(5.0, "C"); // Sea temperature
+ * pipe.setHeatTransferCoefficient(25.0); // W/(m²·K) - SPECIFIED_U mode
+ * pipe.run();
+ * 
+ * System.out.println("Inlet T: " + pipe.getInletStream().getTemperature("C") + " °C");
+ * System.out.println("Outlet T: " + pipe.getOutletStream().getTemperature("C") + " °C");
+ * }</pre>
  *
- * // Enable enhanced energy equation
- * pipe.setConstantSurfaceTemperature(288.15, "K");
- * pipe.setHeatTransferCoefficient(25.0); // W/(m²·K)
- * pipe.setIncludeJouleThomsonEffect(true);
- * pipe.setJouleThomsonCoefficient(3.5e-6); // K/Pa
- * pipe.setIncludeFrictionHeating(true);
- *
+ * <h3>Example 3: Detailed U-Value with Insulation</h3>
+ * 
+ * <pre>{@code
+ * pipe.setConstantSurfaceTemperature(5.0, "C"); // Seawater
+ * pipe.setOuterHeatTransferCoefficient(500.0); // Seawater forced convection
+ * pipe.setPipeWallThermalConductivity(45.0); // Carbon steel
+ * pipe.setInsulation(0.05, 0.04); // 50mm foam, k=0.04 W/(m·K)
+ * pipe.setHeatTransferMode(HeatTransferMode.DETAILED_U);
  * pipe.run();
  * }</pre>
+ *
+ * <h3>Example 4: Inclined Pipeline (Riser)</h3>
+ * 
+ * <pre>{@code
+ * // Vertical riser
+ * PipeBeggsAndBrills riser = new PipeBeggsAndBrills("riser", feedStream);
+ * riser.setDiameter(0.1524); // 6 inch
+ * riser.setLength(500.0); // 500 m length
+ * riser.setElevation(500.0); // 500 m vertical rise
+ * riser.setAngle(90.0); // Vertical
+ * riser.run();
+ * 
+ * System.out.println("Hydrostatic head: " + riser.getSegmentPressure(0)
+ *     - riser.getSegmentPressure(riser.getNumberOfIncrements()) + " bar");
+ * }</pre>
+ *
+ * <h3>Example 5: Adiabatic with Joule-Thomson Effect</h3>
+ * 
+ * <pre>{@code
+ * // High-pressure gas expansion
+ * pipe.setHeatTransferMode(HeatTransferMode.ADIABATIC);
+ * pipe.setIncludeJouleThomsonEffect(true);
+ * pipe.run();
+ * 
+ * // For natural gas with ~20 bar pressure drop:
+ * // Expected JT cooling: ~8-10 K
+ * }</pre>
+ *
+ * <h3>Example 6: Calculate Flow Rate from Pressures</h3>
+ * 
+ * <pre>{@code
+ * pipe.setCalculationMode(CalculationMode.CALCULATE_FLOW_RATE);
+ * pipe.setSpecifiedOutletPressure(40.0, "bara"); // Target outlet pressure
+ * pipe.setMaxFlowIterations(50);
+ * pipe.setFlowConvergenceTolerance(1e-4);
+ * pipe.run();
+ * 
+ * System.out.println("Calculated flow: " + pipe.getOutletStream().getFlowRate("kg/hr") + " kg/hr");
+ * }</pre>
+ *
+ * <h2>Transient Simulation</h2>
+ * <p>
+ * The class supports transient (time-dependent) simulation using the {@code runTransient()} method.
+ * This solves the time-dependent mass, momentum, and energy conservation equations using an
+ * explicit finite difference scheme.
+ * </p>
+ *
+ * <h2>Typical Parameter Values</h2>
+ * <table border="1">
+ * <caption>Typical Heat Transfer Coefficients</caption>
+ * <tr>
+ * <th>Environment</th>
+ * <th>h [W/(m²·K)]</th>
+ * </tr>
+ * <tr>
+ * <td>Still air (natural convection)</td>
+ * <td>5-25</td>
+ * </tr>
+ * <tr>
+ * <td>Forced air</td>
+ * <td>25-250</td>
+ * </tr>
+ * <tr>
+ * <td>Still water</td>
+ * <td>100-500</td>
+ * </tr>
+ * <tr>
+ * <td>Seawater (flowing)</td>
+ * <td>500-1000</td>
+ * </tr>
+ * <tr>
+ * <td>Buried in soil</td>
+ * <td>1-5</td>
+ * </tr>
+ * </table>
+ *
+ * <table border="1">
+ * <caption>Typical Thermal Conductivities</caption>
+ * <tr>
+ * <th>Material</th>
+ * <th>k [W/(m·K)]</th>
+ * </tr>
+ * <tr>
+ * <td>Carbon steel</td>
+ * <td>45-50</td>
+ * </tr>
+ * <tr>
+ * <td>Stainless steel</td>
+ * <td>15-20</td>
+ * </tr>
+ * <tr>
+ * <td>Mineral wool insulation</td>
+ * <td>0.03-0.05</td>
+ * </tr>
+ * <tr>
+ * <td>Polyurethane foam</td>
+ * <td>0.02-0.03</td>
+ * </tr>
+ * <tr>
+ * <td>Concrete coating</td>
+ * <td>1.0-1.5</td>
+ * </tr>
+ * </table>
  *
  * @author Even Solbraa, Sviatoslav Eroshkin
  * @version $Id: $Id
  * @see Pipeline
+ * @see HeatTransferMode
+ * @see CalculationMode
+ * @see FlowRegime
  */
 public class PipeBeggsAndBrills extends Pipeline {
   private static final long serialVersionUID = 1001;
@@ -67,6 +370,37 @@ public class PipeBeggsAndBrills extends Pipeline {
     CALCULATE_OUTLET_PRESSURE,
     /** Calculate flow rate from inlet and specified outlet pressure. */
     CALCULATE_FLOW_RATE
+  }
+
+  /**
+   * Heat transfer calculation modes for pipeline thermal modeling.
+   *
+   * <p>
+   * Controls how temperature changes along the pipeline are calculated:
+   * <ul>
+   * <li>ADIABATIC: No heat transfer (Q=0), temperature changes only due to Joule-Thomson
+   * effect</li>
+   * <li>ISOTHERMAL: Constant temperature along the pipe (outlet T = inlet T)</li>
+   * <li>SPECIFIED_U: Use a user-specified overall heat transfer coefficient (U-value)</li>
+   * <li>ESTIMATED_INNER_H: Calculate inner h from flow (Gnielinski correlation), use as U</li>
+   * <li>DETAILED_U: Calculate inner h from flow, then compute overall U including pipe wall,
+   * insulation, and outer convection resistances</li>
+   * </ul>
+   */
+  public enum HeatTransferMode {
+    /** No heat transfer - adiabatic pipe. Temperature changes only from Joule-Thomson effect. */
+    ADIABATIC,
+    /** Constant temperature along the pipe - isothermal operation. */
+    ISOTHERMAL,
+    /** Use a user-specified overall heat transfer coefficient. */
+    SPECIFIED_U,
+    /** Calculate inner h from flow conditions (Gnielinski correlation), use as U. */
+    ESTIMATED_INNER_H,
+    /**
+     * Calculate detailed overall U-value including inner convection, pipe wall conduction,
+     * insulation (if present), and outer convection.
+     */
+    DETAILED_U
   }
 
   int iteration;
@@ -222,7 +556,7 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   private double heatTransferCoefficient;
 
-  private String heatTransferCoefficientMethod = "Estimated";
+  private HeatTransferMode heatTransferMode = HeatTransferMode.ESTIMATED_INNER_H;
 
   // Joule-Thomson effect: temperature change during gas expansion
   // When enabled, JT coefficient is calculated from gas phase thermodynamics
@@ -254,6 +588,12 @@ public class PipeBeggsAndBrills extends Pipeline {
   double criticalPressure;
   double hmax;
   double X;
+
+  // Overall heat transfer coefficient parameters
+  private double outerHeatTransferCoefficient = Double.NaN; // W/(m²·K) - external convection
+  private double pipeWallThermalConductivity = 45.0; // W/(m·K) - default carbon steel
+  private double insulationThickness = 0.0; // m - insulation thickness
+  private double insulationThermalConductivity = 0.04; // W/(m·K) - default mineral wool
 
   /**
    * Constructor for PipeBeggsAndBrills.
@@ -312,35 +652,20 @@ public class PipeBeggsAndBrills extends Pipeline {
     return outStream.getThermoSystem();
   }
 
-  /**
-   * <p>
-   * Setter for the field <code>elevation</code>.
-   * </p>
-   *
-   * @param elevation a double
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setElevation(double elevation) {
     this.totalElevation = elevation;
   }
 
-  /**
-   * <p>
-   * Setter for the field <code>length</code>.
-   * </p>
-   *
-   * @param length the length to set
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setLength(double length) {
     this.totalLength = length;
   }
 
-  /**
-   * <p>
-   * setDiameter.
-   * </p>
-   *
-   * @param diameter the diameter to set
-   */
+  /** {@inheritDoc} */
+  @Override
   public void setDiameter(double diameter) {
     insideDiameter = diameter;
   }
@@ -401,14 +726,18 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
-   * <p>
-   * Setter for the field <code>runIsothermal</code>.
-   * </p>
+   * Sets whether to run isothermal calculations.
    *
    * @param runIsothermal a boolean
+   * @deprecated Use {@link #setHeatTransferMode(HeatTransferMode)} with
+   *             {@link HeatTransferMode#ISOTHERMAL} instead
    */
+  @Deprecated
   public void setRunIsothermal(boolean runIsothermal) {
     this.runIsothermal = runIsothermal;
+    if (runIsothermal) {
+      this.heatTransferMode = HeatTransferMode.ISOTHERMAL;
+    }
   }
 
   /**
@@ -433,15 +762,72 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
+   * Sets the heat transfer calculation mode.
+   *
    * <p>
-   * Setter for the field <code>heatTransferCoefficient</code>.
+   * Available modes:
+   * <ul>
+   * <li>ADIABATIC: No heat transfer (Q=0)</li>
+   * <li>ISOTHERMAL: Constant temperature along the pipe</li>
+   * <li>SPECIFIED_U: Use a user-specified overall U-value</li>
+   * <li>ESTIMATED_INNER_H: Calculate h from flow (Gnielinski), use as U</li>
+   * <li>DETAILED_U: Calculate full U including wall, insulation, outer convection</li>
+   * </ul>
+   *
+   * @param mode the heat transfer calculation mode
+   */
+  public void setHeatTransferMode(HeatTransferMode mode) {
+    this.heatTransferMode = mode;
+    // Update legacy flags for backward compatibility
+    switch (mode) {
+      case ADIABATIC:
+        this.runAdiabatic = true;
+        this.runIsothermal = false;
+        this.runConstantSurfaceTemperature = false;
+        break;
+      case ISOTHERMAL:
+        this.runIsothermal = true;
+        this.runAdiabatic = false;
+        this.runConstantSurfaceTemperature = false;
+        break;
+      case SPECIFIED_U:
+      case ESTIMATED_INNER_H:
+      case DETAILED_U:
+        this.runIsothermal = false;
+        this.runAdiabatic = false;
+        this.runConstantSurfaceTemperature = true;
+        break;
+    }
+  }
+
+  /**
+   * Gets the current heat transfer calculation mode.
+   *
+   * @return the heat transfer mode
+   */
+  public HeatTransferMode getHeatTransferMode() {
+    return heatTransferMode;
+  }
+
+  /**
+   * Sets the overall heat transfer coefficient (U-value) and switches to SPECIFIED_U mode.
+   *
+   * <p>
+   * This is the effective U-value used in the heat transfer equation Q = U * A * LMTD. When set,
+   * the mode automatically changes to SPECIFIED_U, meaning this value is used directly without
+   * flow-based calculation.
    * </p>
    *
-   * @param heatTransferCoefficient a double
+   * @param heatTransferCoefficient the overall heat transfer coefficient in W/(m²·K)
+   * @throws IllegalArgumentException if heatTransferCoefficient is negative
    */
   public void setHeatTransferCoefficient(double heatTransferCoefficient) {
+    if (heatTransferCoefficient < 0) {
+      throw new IllegalArgumentException(
+          "Heat transfer coefficient must be non-negative, got: " + heatTransferCoefficient);
+    }
     this.heatTransferCoefficient = heatTransferCoefficient;
-    this.heatTransferCoefficientMethod = "Defined";
+    this.heatTransferMode = HeatTransferMode.SPECIFIED_U;
   }
 
   /**
@@ -571,6 +957,9 @@ public class PipeBeggsAndBrills extends Pipeline {
     length = length / 3.2808399;
     pipeWallRoughness = pipeWallRoughness / 3.2808399;
     pressureDrop = pressureDrop * 1.48727E-05;
+    // Also convert friction and hydrostatic components (same conversion as pressureDrop)
+    frictionPressureLoss = frictionPressureLoss * 1.48727E-05;
+    hydrostaticPressureDrop = hydrostaticPressureDrop * 1.48727E-05;
   }
 
   /**
@@ -669,6 +1058,10 @@ public class PipeBeggsAndBrills extends Pipeline {
     gasSuperficialVelocityProfile.add(supGasVel / 3.2808399);
     mixtureSuperficialVelocityProfile.add(supMixVel / 3.2808399);
 
+    // Beggs and Brill (1973) flow regime boundary correlations
+    // Reference: Beggs, H.D. and Brill, J.P., "A Study of Two-Phase Flow in Inclined Pipes",
+    // Journal of Petroleum Technology, May 1973, pp. 607-617
+    // L1, L2, L3, L4 define boundaries between Segregated, Intermittent, Distributed regimes
     double L1 = 316 * Math.pow(inputVolumeFractionLiquid, 0.302);
     double L2 = 0.0009252 * Math.pow(inputVolumeFractionLiquid, -2.4684);
     double L3 = 0.1 * Math.pow(inputVolumeFractionLiquid, -1.4516);
@@ -875,7 +1268,13 @@ public class PipeBeggsAndBrills extends Pipeline {
     mixtureViscosityProfile.add(muNoSlip);
     mixtureDensityProfile.add(rhoNoSlip * 16.01846);
 
-    ReNoSlip = rhoNoSlip * supMixVel * insideDiameter * (16 / (3.28 * 3.28)) / (0.001 * muNoSlip);
+    // Reynolds number calculation with unit conversions:
+    // - rhoNoSlip is in lb/ft³, supMixVel in ft/s, insideDiameter in ft
+    // - muNoSlip is in cP (centipoise) = 0.001 Pa·s = 0.001 kg/(m·s)
+    // - Factor 16/(3.28²) ≈ 1.486 converts (lb/ft³)*(ft/s)*(ft) to kg/(m·s) to match viscosity
+    // Derivation: 1 lb = 0.4536 kg, 1 ft = 0.3048 m
+    // (lb/ft³)*(ft/s)*(ft) = lb/(ft·s) = 0.4536/0.3048 kg/(m·s) ≈ 1.488 kg/(m·s)
+    ReNoSlip = rhoNoSlip * supMixVel * insideDiameter * (16.0 / (3.28 * 3.28)) / (0.001 * muNoSlip);
 
     mixtureReynoldsNumber.add(ReNoSlip);
 
@@ -1193,11 +1592,22 @@ public class PipeBeggsAndBrills extends Pipeline {
   }
 
   /**
-   * Estimates the heat transfer coefficient for the given system.
+   * Estimates the inner heat transfer coefficient for the given system.
+   *
+   * <p>
+   * For single-phase flow, uses standard correlations:
+   * <ul>
+   * <li>Laminar (Re &lt; 2300): Nu = 3.66 (fully developed)</li>
+   * <li>Transition (2300-3000): Linear interpolation</li>
+   * <li>Turbulent (Re &gt; 3000): Gnielinski correlation</li>
+   * </ul>
+   *
+   * <p>
+   * For two-phase flow, uses Shah correlation enhancement factor.
    *
    * @param system the thermodynamic system for which the heat transfer coefficient is to be
    *        estimated
-   * @return the estimated heat transfer coefficient
+   * @return the estimated inner heat transfer coefficient [W/(m²·K)]
    */
   public double estimateHeatTransferCoefficent(SystemInterface system) {
     cp = system.getCp("J/kgK");
@@ -1218,46 +1628,285 @@ public class PipeBeggsAndBrills extends Pipeline {
       // Turbulent flow - Gnielinski correlation (valid for 0.5 < Pr < 2000, 3000 < Re < 5E6)
       Nu = calcGnielinskiNu(ReNoSlip, Pr);
     }
-    heatTransferCoefficient = Nu * thermalConductivity / insideDiameter;
+    double innerHTC = Nu * thermalConductivity / insideDiameter;
 
+    // Two-phase flow enhancement using Shah correlation approach
     if (system.getNumberOfPhases() > 1) {
-      X = system.getPhase(0).getFlowRate("kg/sec") / system.getFlowRate("kg/sec");
-      heatTransferCoefficient =
-          (-31.469 * Math.pow(X, 2) + 31.469 * X + 0.007) * heatTransferCoefficient;
-      // double Xtt =
-      // (Math.pow(((1-X)/X),0.9)*Math.pow((system.getPhase(0).getDensity()/mixtureLiquidDensity),
-      // 0.5)*
-      // Math.pow(mixtureLiquidViscosity/(0.001*system.getPhase(0).getViscosity()), 0.1));
-      // double E = 0.8897*(1/Xtt) + 1.0392;
-      // double Retp = ReNoSlip*Math.pow(E, 1.25);
-      // double S;
-      // if (Retp < 1E5){
-      // S = 0.9;
-      // }
-      // else if(Retp <= 1E6){
-      // S = -5.6*1E-7*Retp + 0.9405;
-      // }
-      // else if(Retp < 1E7)
-      // S = 1368.9*Math.pow(Retp, -0.601);
-      // else{
-      // S = 0.1;
-      // }
+      innerHTC = calcTwoPhaseHeatTransferCoefficient(system, innerHTC);
+    }
 
-      // double reducedPressure = system.getPressure()*100/criticalPressure;
-      // double Fp = 1.8*Math.pow(reducedPressure, 0.17) + 4*Math.pow(reducedPressure, 1.2) +
-      // 10*Math.pow(reducedPressure, 10);
-      // double hb = 0.00417*Math.pow(criticalPressure, 0.69)*Math.pow(heatFlux/100, 0.7)*Fp;
-      // heatTransferCoefficient = E*heatTransferCoefficient + S*hb;
+    heatTransferCoefficient = innerHTC;
+
+    // Calculate overall heat transfer coefficient if DETAILED_U mode
+    if (heatTransferMode == HeatTransferMode.DETAILED_U) {
+      heatTransferCoefficient = calcOverallHeatTransferCoefficient(innerHTC);
     }
 
     return heatTransferCoefficient;
   }
 
   /**
+   * Calculates the two-phase heat transfer coefficient using Shah correlation.
+   *
+   * <p>
+   * The Shah correlation provides enhancement factors for convective heat transfer in two-phase
+   * flow. It accounts for the increased turbulence and interfacial effects in gas-liquid flow.
+   *
+   * @param system the thermodynamic system
+   * @param singlePhaseHTC the single-phase heat transfer coefficient [W/(m²·K)]
+   * @return the two-phase heat transfer coefficient [W/(m²·K)]
+   */
+  private double calcTwoPhaseHeatTransferCoefficient(SystemInterface system,
+      double singlePhaseHTC) {
+    // Get vapor quality (mass fraction of gas)
+    X = system.getPhase(0).getFlowRate("kg/sec") / system.getFlowRate("kg/sec");
+
+    // Protect against edge cases
+    if (X <= 0.001 || X >= 0.999) {
+      return singlePhaseHTC;
+    }
+
+    // Lockhart-Martinelli parameter for turbulent-turbulent flow
+    double rhoGas = system.getPhase(0).getDensity("kg/m3");
+    double rhoLiq = mixtureLiquidDensity > 0 ? mixtureLiquidDensity : system.getDensity("kg/m3");
+    double muGas = 0.001 * system.getPhase(0).getViscosity("cP");
+    double muLiq = 0.001 * mixtureLiquidViscosity;
+
+    if (muLiq <= 0 || rhoLiq <= 0) {
+      // Fallback to simple empirical correlation if properties unavailable
+      double enhancement = 1.0 + 2.0 * X * (1.0 - X);
+      return singlePhaseHTC * enhancement;
+    }
+
+    // Martinelli parameter Xtt
+    double Xtt = Math.pow((1.0 - X) / X, 0.9) * Math.pow(rhoGas / rhoLiq, 0.5)
+        * Math.pow(muLiq / muGas, 0.1);
+
+    // Shah correlation enhancement factor E
+    double E;
+    if (Xtt > 0.1) {
+      E = 1.0 + 3.8 / Math.pow(Xtt, 0.45);
+    } else {
+      // High quality region - use modified correlation
+      E = 2.0 + 3.0 / Math.pow(Xtt, 0.5);
+    }
+
+    // Limit enhancement factor to reasonable range
+    E = Math.min(E, 10.0);
+
+    return singlePhaseHTC * E;
+  }
+
+  /**
+   * Calculates the overall heat transfer coefficient including inner convection, pipe wall
+   * conduction, insulation (if present), and outer convection.
+   *
+   * <p>
+   * The overall U-value is based on the inner surface area and accounts for:
+   * <ul>
+   * <li>Inner convective resistance: 1/h_i</li>
+   * <li>Pipe wall conductive resistance: (r_o/r_i) × ln(r_o/r_i) / k_wall</li>
+   * <li>Insulation resistance (if present): (r_ins/r_i) × ln(r_ins/r_o) / k_ins</li>
+   * <li>Outer convective resistance: (r_o/r_i) / h_o or (r_ins/r_i) / h_o</li>
+   * </ul>
+   *
+   * @param innerHTC the inner heat transfer coefficient [W/(m²·K)]
+   * @return the overall heat transfer coefficient based on inner area [W/(m²·K)]
+   */
+  private double calcOverallHeatTransferCoefficient(double innerHTC) {
+    double ri = insideDiameter / 2.0; // inner radius
+
+    // Handle missing pipe thickness - use 1% of diameter as default
+    double wallThickness = pipeThickness;
+    if (Double.isNaN(wallThickness) || wallThickness <= 0) {
+      wallThickness = 0.01 * insideDiameter; // Default: 1% of diameter
+    }
+    double ro = ri + wallThickness; // outer radius of pipe wall
+    double rins = ro + insulationThickness; // outer radius including insulation
+
+    // Inner convective resistance
+    double Ri = 1.0 / innerHTC;
+
+    // Pipe wall conductive resistance (cylindrical)
+    double Rwall = 0.0;
+    if (pipeThickness > 0 && pipeWallThermalConductivity > 0) {
+      Rwall = (ri / pipeWallThermalConductivity) * Math.log(ro / ri);
+    }
+
+    // Insulation resistance
+    double Rins = 0.0;
+    if (insulationThickness > 0 && insulationThermalConductivity > 0) {
+      Rins = (ri / insulationThermalConductivity) * Math.log(rins / ro);
+    }
+
+    // Outer convective resistance
+    double Ro = 0.0;
+    if (!Double.isNaN(outerHeatTransferCoefficient) && outerHeatTransferCoefficient > 0) {
+      double routermost = insulationThickness > 0 ? rins : ro;
+      Ro = ri / (outerHeatTransferCoefficient * routermost);
+    }
+
+    // Total resistance and overall U-value
+    double Rtotal = Ri + Rwall + Rins + Ro;
+    return 1.0 / Rtotal;
+  }
+
+  /**
+   * Sets the outer (external) heat transfer coefficient for calculating overall U-value.
+   *
+   * <p>
+   * This is the convective heat transfer coefficient on the outside of the pipe (or insulation).
+   * Typical values:
+   * <ul>
+   * <li>Still air: 5-10 W/(m²·K)</li>
+   * <li>Moving air (wind): 10-50 W/(m²·K)</li>
+   * <li>Still water: 100-500 W/(m²·K)</li>
+   * <li>Flowing water (subsea): 200-1000 W/(m²·K)</li>
+   * </ul>
+   *
+   * @param coefficient the outer heat transfer coefficient [W/(m²·K)]
+   * @throws IllegalArgumentException if coefficient is negative
+   */
+  public void setOuterHeatTransferCoefficient(double coefficient) {
+    if (coefficient < 0) {
+      throw new IllegalArgumentException(
+          "Outer heat transfer coefficient must be non-negative, got: " + coefficient);
+    }
+    this.outerHeatTransferCoefficient = coefficient;
+  }
+
+  /**
+   * Gets the outer (external) heat transfer coefficient.
+   *
+   * @return the outer heat transfer coefficient [W/(m²·K)]
+   */
+  public double getOuterHeatTransferCoefficient() {
+    return outerHeatTransferCoefficient;
+  }
+
+  /**
+   * Sets the pipe wall thermal conductivity.
+   *
+   * <p>
+   * Typical values:
+   * <ul>
+   * <li>Carbon steel: 45-50 W/(m·K)</li>
+   * <li>Stainless steel: 15-20 W/(m·K)</li>
+   * <li>Duplex steel: 15-17 W/(m·K)</li>
+   * </ul>
+   *
+   * @param conductivity the thermal conductivity [W/(m·K)]
+   */
+  public void setPipeWallThermalConductivity(double conductivity) {
+    this.pipeWallThermalConductivity = conductivity;
+  }
+
+  /**
+   * Gets the pipe wall thermal conductivity.
+   *
+   * @return the thermal conductivity [W/(m·K)]
+   */
+  public double getPipeWallThermalConductivity() {
+    return pipeWallThermalConductivity;
+  }
+
+  /**
+   * Sets the insulation layer properties.
+   *
+   * <p>
+   * Typical thermal conductivity values:
+   * <ul>
+   * <li>Mineral wool: 0.03-0.05 W/(m·K)</li>
+   * <li>Polyurethane foam: 0.02-0.03 W/(m·K)</li>
+   * <li>Polypropylene (wet insulation): 0.22-0.25 W/(m·K)</li>
+   * <li>Syntactic foam (subsea): 0.10-0.15 W/(m·K)</li>
+   * </ul>
+   *
+   * @param thickness the insulation thickness [m]
+   * @param conductivity the thermal conductivity [W/(m·K)]
+   * @throws IllegalArgumentException if thickness or conductivity is negative
+   */
+  public void setInsulation(double thickness, double conductivity) {
+    if (thickness < 0) {
+      throw new IllegalArgumentException(
+          "Insulation thickness must be non-negative, got: " + thickness);
+    }
+    if (conductivity < 0) {
+      throw new IllegalArgumentException(
+          "Insulation thermal conductivity must be non-negative, got: " + conductivity);
+    }
+    this.insulationThickness = thickness;
+    this.insulationThermalConductivity = conductivity;
+  }
+
+  /**
+   * Gets the insulation thickness.
+   *
+   * @return the insulation thickness [m]
+   */
+  public double getInsulationThickness() {
+    return insulationThickness;
+  }
+
+  /**
+   * Gets the insulation thermal conductivity.
+   *
+   * @return the thermal conductivity [W/(m·K)]
+   */
+  public double getInsulationThermalConductivity() {
+    return insulationThermalConductivity;
+  }
+
+  /**
+   * Enables or disables use of detailed overall heat transfer coefficient calculation.
+   *
+   * <p>
+   * When enabled (true), switches to DETAILED_U mode which includes pipe wall resistance,
+   * insulation resistance (if set), and outer convection resistance (if set). When disabled
+   * (false), switches to ESTIMATED_INNER_H mode which uses only the inner convective heat transfer
+   * coefficient.
+   *
+   * @param use true to use DETAILED_U mode, false to use ESTIMATED_INNER_H mode
+   * @deprecated Use {@link #setHeatTransferMode(HeatTransferMode)} instead
+   */
+  @Deprecated
+  public void setUseOverallHeatTransferCoefficient(boolean use) {
+    if (use) {
+      this.heatTransferMode = HeatTransferMode.DETAILED_U;
+    } else {
+      this.heatTransferMode = HeatTransferMode.ESTIMATED_INNER_H;
+    }
+  }
+
+  /**
+   * Gets whether detailed overall heat transfer coefficient is being used.
+   *
+   * @return true if using DETAILED_U mode
+   * @deprecated Use {@link #getHeatTransferMode()} instead
+   */
+  @Deprecated
+  public boolean isUseOverallHeatTransferCoefficient() {
+    return heatTransferMode == HeatTransferMode.DETAILED_U;
+  }
+
+  /**
    * Calculates the temperature difference between the outlet and inlet of the system.
    *
+   * <p>
+   * Uses the analytical solution for a pipe with constant wall temperature (like a heat exchanger):
+   * </p>
+   *
+   * <pre>
+   * T_out = T_wall + (T_in - T_wall) * exp(-U * A / (m_dot * Cp))
+   * </pre>
+   *
+   * <p>
+   * This is derived from the energy balance dQ = U*(T-Ts)*dA = -m_dot*Cp*dT integrated along the
+   * pipe length.
+   * </p>
+   *
    * @param system the thermodynamic system for which the temperature difference is to be calculated
-   * @return the temperature difference between the outlet and inlet
+   * @return the temperature difference between the outlet and inlet (negative for cooling)
    */
   public double calcTemperatureDifference(SystemInterface system) {
     double cpLocal = system.getCp("J/kgK");
@@ -1269,25 +1918,22 @@ public class PipeBeggsAndBrills extends Pipeline {
       return 0.0;
     }
 
-    // Set bounds correctly for both heating and cooling cases
-    double TmoLower, TmoUpper;
-    if (Ts > Tmi) {
-      // Heating case: outlet temperature between inlet and surface
-      TmoLower = Tmi;
-      TmoUpper = Ts;
-    } else {
-      // Cooling case: outlet temperature between surface and inlet
-      TmoLower = Ts;
-      TmoUpper = Tmi;
-    }
-
-    double Tmo = (TmoLower + TmoUpper) / 2; // Initial guess
-    double error = 999;
-    double tolerance = 0.01; // Tolerance for convergence
-    int maxIterations = 100; // Maximum number of iterations
-
-    if (heatTransferCoefficientMethod.equals("Estimated")) {
-      heatTransferCoefficient = estimateHeatTransferCoefficent(system);
+    // Calculate heat transfer coefficient based on mode
+    switch (heatTransferMode) {
+      case ADIABATIC:
+        // No heat transfer - return 0 temperature difference
+        return 0.0;
+      case ISOTHERMAL:
+        // Constant temperature - return 0 temperature difference
+        return 0.0;
+      case ESTIMATED_INNER_H:
+      case DETAILED_U:
+        // Calculate h from flow conditions
+        heatTransferCoefficient = estimateHeatTransferCoefficent(system);
+        break;
+      case SPECIFIED_U:
+        // Use the user-specified value (already set)
+        break;
     }
 
     // Protect against zero or negative heat transfer coefficient
@@ -1295,52 +1941,23 @@ public class PipeBeggsAndBrills extends Pipeline {
       return 0.0;
     }
 
-    for (int i = 0; i < maxIterations; i++) {
-      // Log mean temperature difference (LMTD)
-      // dTlm = ((Ts-Tmo) - (Ts-Tmi)) / ln((Ts-Tmo)/(Ts-Tmi))
-      // Protect against log of negative or zero
-      double dT1 = Ts - Tmi;
-      double dT2 = Ts - Tmo;
-
-      // Check for singularity conditions
-      if (Math.abs(dT2) < 0.001) {
-        // Tmo very close to Ts - reached maximum heat transfer
-        break;
-      }
-      if (dT1 * dT2 <= 0) {
-        // Signs differ - Tmo has crossed Ts, which shouldn't happen
-        break;
-      }
-
-      double dTlm;
-      if (Math.abs(dT1 - dT2) < 0.001) {
-        // When dT1 ≈ dT2, use arithmetic mean to avoid 0/0
-        dTlm = (dT1 + dT2) / 2.0;
-      } else {
-        dTlm = (dT1 - dT2) / Math.log(dT1 / dT2);
-      }
-
-      // Original formulation: find Tmo where h_given = h_calculated
-      // h_calculated = m_dot * Cp * (Tmo - Tmi) / (A * dTlm)
-      double heatTransferArea = Math.PI * insideDiameter * length * dTlm;
-      error = heatTransferCoefficient
-          - system.getFlowRate("kg/sec") * cpLocal * (Tmo - Tmi) / heatTransferArea;
-
-      if (Math.abs(error) < tolerance) {
-        break; // Converged
-      }
-
-      // Bisection update
-      // error > 0 means h_given > h_calc, need more heat transfer (Tmo closer to Ts)
-      // error < 0 means h_given < h_calc, need less heat transfer (Tmo closer to Tmi)
-      if (error > 0) {
-        TmoLower = Tmo; // Need higher Tmo (for heating case)
-      } else {
-        TmoUpper = Tmo; // Need lower Tmo (for heating case)
-      }
-
-      Tmo = (TmoLower + TmoUpper) / 2; // New guess
+    double massFlowRate = system.getFlowRate("kg/sec");
+    if (massFlowRate <= 0) {
+      return 0.0;
     }
+
+    // Heat transfer area (inner surface)
+    double heatTransferArea = Math.PI * insideDiameter * length;
+
+    // Number of Transfer Units (NTU)
+    // NTU = U*A / (m_dot * Cp)
+    double NTU = heatTransferCoefficient * heatTransferArea / (massFlowRate * cpLocal);
+
+    // Analytical solution for constant wall temperature:
+    // T_out = T_wall + (T_in - T_wall) * exp(-NTU)
+    // Therefore: T_out - T_in = (T_wall - T_in) * (1 - exp(-NTU))
+    double Tmo = Ts + (Tmi - Ts) * Math.exp(-NTU);
+
     return Tmo - Tmi;
   }
 
@@ -1379,13 +1996,24 @@ public class PipeBeggsAndBrills extends Pipeline {
     }
 
     // 2. Joule-Thomson effect: temperature change due to pressure drop
-    // JT coefficient is calculated from gas phase thermodynamics
+    // JT coefficient calculated from mixture thermodynamics (mass-weighted average)
     // dH_JT = m_dot * Cp * μ_JT * dP (where dP is pressure drop, positive value)
-    if (includeJouleThomsonEffect && system.hasPhaseType("gas")) {
+    if (includeJouleThomsonEffect) {
       try {
-        double jouleThomsonCoeff = system.getPhase("gas").getJouleThomsonCoefficient("K/Pa");
-        if (!Double.isNaN(jouleThomsonCoeff) && !Double.isInfinite(jouleThomsonCoeff)
-            && jouleThomsonCoeff > 0) {
+        double jouleThomsonCoeff = 0.0;
+        double totalMassFlow = system.getFlowRate("kg/sec");
+
+        // Calculate mass-weighted average JT coefficient across all phases
+        for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
+          double phaseMassFlow = system.getPhase(phaseNum).getFlowRate("kg/sec");
+          double phaseFraction = phaseMassFlow / totalMassFlow;
+          double phaseJT = system.getPhase(phaseNum).getJouleThomsonCoefficient("K/Pa");
+          if (!Double.isNaN(phaseJT) && !Double.isInfinite(phaseJT)) {
+            jouleThomsonCoeff += phaseFraction * phaseJT;
+          }
+        }
+
+        if (jouleThomsonCoeff > 0) {
           double pressureDropPa = pressureDrop * 1e5; // bar to Pa
           double dT_JT = -jouleThomsonCoeff * pressureDropPa; // Cooling for expansion
           enthalpy = enthalpy + massFlowRate * Cp * dT_JT;
@@ -1397,8 +2025,11 @@ public class PipeBeggsAndBrills extends Pipeline {
 
     // 3. Friction heating: viscous dissipation adds energy to the fluid
     // Q_friction = dP_friction * volumetric_flow_rate
+    // Note: Use only friction pressure drop, not total (which includes hydrostatic)
+    // Hydrostatic pressure change is reversible work, not dissipation
     if (includeFrictionHeating) {
-      double frictionPressureDropPa = Math.abs(pressureDrop) * 1e5; // bar to Pa
+      // frictionPressureLoss is already in bar (after convertSystemUnitToMetric)
+      double frictionPressureDropPa = Math.abs(frictionPressureLoss) * 1e5; // bar to Pa
       double volumetricFlowRate = massFlowRate / system.getDensity("kg/m3");
       double frictionHeat = frictionPressureDropPa * volumetricFlowRate;
       enthalpy = enthalpy + frictionHeat;
@@ -1662,12 +2293,15 @@ public class PipeBeggsAndBrills extends Pipeline {
     List<Double> updatedVelocity = new ArrayList<>(transientVelocityProfile);
     List<Double> updatedDensity = new ArrayList<>(transientDensityProfile);
 
-    // Store viscosity for friction calculations (estimate from density ratio)
+    // Store viscosity for friction calculations
+    // Use inlet viscosity for all segments - viscosity changes relatively slowly
+    // compared to density and pressure in typical pipeline conditions.
+    // A more rigorous approach would require full thermodynamic flash at each segment.
     List<Double> segmentViscosities = new ArrayList<>();
     for (int i = 0; i < numberOfIncrements; i++) {
-      // Simple viscosity estimate - scale with density ratio from inlet
-      double densityRatio = transientDensityProfile.get(i) / inletDensityBoundary;
-      segmentViscosities.add(inletViscosityBoundary * Math.pow(densityRatio, 0.5));
+      // Use inlet viscosity as best estimate - avoids incorrect density-ratio scaling
+      // which would give wrong trends (gas viscosity increases with T, opposite of density)
+      segmentViscosities.add(inletViscosityBoundary);
     }
 
     updatedPressure.set(0, inletPressureBoundary);
@@ -1713,15 +2347,46 @@ public class PipeBeggsAndBrills extends Pipeline {
       newDownstreamPressure = Math.max(0.1, newDownstreamPressure);
       updatedPressure.set(segment + 1, newDownstreamPressure);
 
-      // Temperature propagation (advective transport, no heat losses in simplified model)
-      updatedTemperature.set(segment + 1,
-          downstreamTemperature + relaxation * (upstreamTemperature - downstreamTemperature));
-
       // Mass flow propagation - with mass conservation enforcement
       // For incompressible/weakly compressible flow, mass flow should be continuous
       double newMassFlow =
           downstreamMassFlow + relaxation * (upstreamMassFlow - downstreamMassFlow);
       updatedMassFlow.set(segment + 1, newMassFlow);
+
+      // Temperature propagation with advective transport and heat transfer
+      double advectedTemperature = upstreamTemperature;
+
+      // Apply heat transfer if not adiabatic and surface temperature is set
+      if (heatTransferMode != HeatTransferMode.ADIABATIC
+          && heatTransferMode != HeatTransferMode.ISOTHERMAL
+          && !Double.isNaN(constantSurfaceTemperature) && constantSurfaceTemperature > 0) {
+        // Calculate heat transfer using NTU-effectiveness method
+        double Twall = constantSurfaceTemperature; // in Kelvin
+        double Tin = advectedTemperature; // in Kelvin
+
+        // Get heat transfer coefficient (use specified or estimate)
+        double U = heatTransferCoefficient;
+        if (U <= 0 || Double.isNaN(U)) {
+          U = 25.0; // Default reasonable value W/(m²·K) for subsea pipe
+        }
+
+        // Heat transfer area for this segment
+        double A = Math.PI * insideDiameter * segmentLengthMeters;
+
+        // Estimate Cp from inlet (simplified - full approach would need flash)
+        double segmentCp = inletSystem.getCp("J/kgK");
+        double segmentMassFlow = Math.max(1e-6, newMassFlow);
+
+        // NTU = U*A / (m_dot * Cp)
+        double NTU = U * A / (segmentMassFlow * segmentCp);
+
+        // Analytical solution: T_out = T_wall + (T_in - T_wall) * exp(-NTU)
+        advectedTemperature = Twall + (Tin - Twall) * Math.exp(-NTU);
+      }
+
+      // Apply relaxation for wave propagation
+      updatedTemperature.set(segment + 1,
+          downstreamTemperature + relaxation * (advectedTemperature - downstreamTemperature));
 
       // Update velocity based on updated mass flow and density
       double targetVelocity =
@@ -1855,48 +2520,37 @@ public class PipeBeggsAndBrills extends Pipeline {
     return angle;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>length</code>.
-   * </p>
-   *
-   * @return total length of the pipe in m
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getLength() {
     return cumulativeLength;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>elevation</code>.
-   * </p>
-   *
-   * @return total elevation of the pipe in m
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getElevation() {
     return cumulativeElevation;
   }
 
-  /**
-   * <p>
-   * getDiameter.
-   * </p>
-   *
-   * @return the diameter
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getDiameter() {
     return insideDiameter;
   }
 
   /**
-   * <p>
-   * getFlowRegime.
-   * </p>
+   * Get the flow regime as an enum.
    *
-   * @return flow regime
+   * @return flow regime enum value
    */
-  public FlowRegime getFlowRegime() {
+  public FlowRegime getFlowRegimeEnum() {
     return regime;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getFlowRegime() {
+    return regime != null ? regime.toString() : "UNKNOWN";
   }
 
   /**
@@ -1910,25 +2564,31 @@ public class PipeBeggsAndBrills extends Pipeline {
     return pressureDrop;
   }
 
-  /**
-   * <p>
-   * Getter for the field <code>totalPressureDrop</code>.
-   * </p>
-   *
-   * @return total pressure drop
-   */
+  /** {@inheritDoc} */
+  @Override
   public double getPressureDrop() {
     return totalPressureDrop;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double[] getPressureProfile() {
+    if (pressureProfile == null) {
+      return new double[0];
+    }
+    double[] result = new double[pressureProfile.size()];
+    for (int i = 0; i < pressureProfile.size(); i++) {
+      result[i] = pressureProfile.get(i);
+    }
+    return result;
+  }
+
   /**
-   * <p>
-   * Getter for the field <code>PressureProfile</code>.
-   * </p>
+   * Get the pressure profile as a list.
    *
-   * @return a list double
+   * @return list of pressure values
    */
-  public List<Double> getPressureProfile() {
+  public List<Double> getPressureProfileList() {
     return new ArrayList<>(pressureProfile);
   }
 
@@ -1973,14 +2633,25 @@ public class PipeBeggsAndBrills extends Pipeline {
     }
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double[] getTemperatureProfile() {
+    if (temperatureProfile == null) {
+      return new double[0];
+    }
+    double[] result = new double[temperatureProfile.size()];
+    for (int i = 0; i < temperatureProfile.size(); i++) {
+      result[i] = temperatureProfile.get(i);
+    }
+    return result;
+  }
+
   /**
-   * <p>
-   * Getter for the field <code>temperatureProfile</code>.
-   * </p>
+   * Get the temperature profile as a list.
    *
    * @return list of temperatures
    */
-  public List<Double> getTemperatureProfile() {
+  public List<Double> getTemperatureProfileList() {
     return new ArrayList<>(temperatureProfile);
   }
 
@@ -2007,7 +2678,7 @@ public class PipeBeggsAndBrills extends Pipeline {
    *
    * @return list of flow regime names
    */
-  public List<FlowRegime> getFlowRegimeProfile() {
+  public List<FlowRegime> getFlowRegimeProfileList() {
     return new ArrayList<>(flowRegimeProfile);
   }
 
@@ -2093,14 +2764,25 @@ public class PipeBeggsAndBrills extends Pipeline {
     return new ArrayList<>(liquidDensityProfile);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double[] getLiquidHoldupProfile() {
+    if (liquidHoldupProfile == null) {
+      return new double[0];
+    }
+    double[] result = new double[liquidHoldupProfile.size()];
+    for (int i = 0; i < liquidHoldupProfile.size(); i++) {
+      result[i] = liquidHoldupProfile.get(i);
+    }
+    return result;
+  }
+
   /**
-   * <p>
-   * Getter for the field <code>liquidHoldupProfile</code>.
-   * </p>
+   * Get the liquid holdup profile as a list.
    *
-   * @return list of hold-up
+   * @return list of hold-up values
    */
-  public List<Double> getLiquidHoldupProfile() {
+  public List<Double> getLiquidHoldupProfileList() {
     return new ArrayList<>(liquidHoldupProfile);
   }
 

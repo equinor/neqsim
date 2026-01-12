@@ -20,6 +20,20 @@ Directory: `src/test/java/neqsim/process`
 
 Tests of the dynamic process models and process equipment. Examples include separator, compressor and process controller behaviour.
 
+### Compressor Test Files
+
+| Test File | Description |
+|-----------|-------------|
+| `CompressorTest.java` | Core compressor calculations, polytropic method, efficiency |
+| `CompressorChartTest.java` | Performance curve interpolation, surge/stone wall |
+| `CompressorChartGeneratorTest.java` | Automatic curve generation from templates |
+| `CompressorChartMWInterpolationTest.java` | Multi-map MW interpolation |
+| `CompressorChartKhader2015Test.java` | Khader 2015 method with fan law scaling |
+| `CompressorMechanicalLossesTest.java` | Seal gas consumption (API 692) and bearing losses (API 617) |
+| `ASMEPTC10ValidationTest.java` | Validation against ASME PTC 10 standard |
+| `CompressorDynamicSimulationTest.java` | Dynamic simulation, startup/shutdown profiles |
+| `SafeSplineSurgeCurveTest.java` | Spline-based surge curve with safe extrapolation |
+
 ## Physical properties and fluid mechanics
 
 Directories:
@@ -27,6 +41,17 @@ Directories:
 - `src/test/java/neqsim/fluidmechanics`
 
 Focus on methods for viscosity, density and other property models together with flow system calculations.
+
+### Fluid Mechanics Test Files
+
+| Test File | Description |
+|-----------|-------------|
+| `TwoPhasePipeFlowSystemTest.java` | System setup, steady-state solving, mass/heat transfer, model comparisons |
+| `NonEquilibriumPipeFlowTest.java` | Non-equilibrium mass transfer, evaporation, dissolution, bidirectional transfer |
+| `FlowPatternDetectorTest.java` | Flow pattern detection (Taitel-Dukler, Baker, Barnea, Beggs-Brill) |
+| `InterfacialAreaCalculatorTest.java` | Interfacial area calculations for all flow patterns |
+| `MassTransferCoefficientCalculatorTest.java` | Mass transfer coefficient correlations |
+| `TwoPhasePipeFlowSystemBuilderTest.java` | Builder API tests |
 
 ## Chemical reactions and thermo
 

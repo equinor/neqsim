@@ -19,11 +19,10 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
   @Test
   public void testTPflashNaCl() {
     SystemInterface system = new SystemPitzer(298.15, 10.0);
-    system.addComponent("methane", 5.0, 0);
-    system.addComponent("water", 55.5, 1);
-    system.addComponent("Na+", 1.0, 1);
-    system.addComponent("Cl-", 1.0, 1);
-    system.setMultiPhaseCheck(true);
+    system.addComponent("methane", 5.0);
+    system.addComponent("water", 55.5);
+    system.addComponent("Na+", 1.0);
+    system.addComponent("Cl-", 1.0);
     system.setMixingRule("classic");
     PhasePitzer liq = (PhasePitzer) system.getPhase(1);
     int na = liq.getComponent("Na+").getComponentNumber();
@@ -39,12 +38,11 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
   @Test
   public void testTPflashWithMEG() {
     SystemInterface system = new SystemPitzer(298.15, 10.0);
-    system.addComponent("methane", 5.0, 0);
-    system.addComponent("water", 55.5, 1);
-    system.addComponent("MEG", 1.0, 1);
-    system.addComponent("Na+", 1.0, 1);
-    system.addComponent("Cl-", 1.0, 1);
-    system.setMultiPhaseCheck(true);
+    system.addComponent("methane", 5.0);
+    system.addComponent("water", 55.5);
+    system.addComponent("MEG", 1.0);
+    system.addComponent("Na+", 1.0);
+    system.addComponent("Cl-", 1.0);
     system.setMixingRule("classic");
     PhasePitzer liq = (PhasePitzer) system.getPhase(1);
     int na = liq.getComponent("Na+").getComponentNumber();
@@ -64,11 +62,10 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
   @Test
   public void testPrettyPrintTwoPhase() {
     SystemInterface system = new SystemPitzer(298.15, 10.0);
-    system.addComponent("methane", 5.0, 0);
-    system.addComponent("water", 55.5, 1);
-    system.addComponent("Na+", 1.0, 1);
-    system.addComponent("Cl-", 1.0, 1);
-    system.setMultiPhaseCheck(true);
+    system.addComponent("methane", 5.0);
+    system.addComponent("water", 55.5);
+    system.addComponent("Na+", 1.0);
+    system.addComponent("Cl-", 1.0);
     system.setMixingRule("classic");
     PhasePitzer liq = (PhasePitzer) system.getPhase(1);
     int na = liq.getComponent("Na+").getComponentNumber();

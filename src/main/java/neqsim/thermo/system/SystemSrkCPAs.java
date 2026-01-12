@@ -2,7 +2,7 @@ package neqsim.thermo.system;
 
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhasePureComponentSolid;
-import neqsim.thermo.phase.PhaseSrkCPAsOld;
+import neqsim.thermo.phase.PhaseSrkCPAs;
 
 /**
  * This class defines a thermodynamic system using the sCPA-EOS equation of state.
@@ -50,7 +50,7 @@ public class SystemSrkCPAs extends SystemSrkCPA {
 
     // Recreates phases created in super constructor SystemSrkCPA
     for (int i = 0; i < numberOfPhases; i++) {
-      phaseArray[i] = new PhaseSrkCPAsOld();
+      phaseArray[i] = new PhaseSrkCPAs();
       phaseArray[i].setTemperature(T);
       phaseArray[i].setPressure(P);
     }

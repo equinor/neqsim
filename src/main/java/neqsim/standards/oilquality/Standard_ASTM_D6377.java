@@ -108,7 +108,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
       // at 100°F (37.8°C) at which 80% of the stream by volume is vapor at 100°F. In
       this.thermoOps.TVfractionFlash(0.8);
     } catch (Exception ex) {
-      logger.error("not able to find RVP...", ex);
+      logger.debug("not able to find RVP: {}", ex.getMessage());
     }
 
     VPCR4 = this.thermoSystem.getPressure();
@@ -127,7 +127,7 @@ public class Standard_ASTM_D6377 extends neqsim.standards.Standard {
       // at 100°F (37.8°C) at which 80% of the stream by volume is vapor at 100°F. In
       this.thermoOps.TVfractionFlash(0.8);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      logger.debug("RVP calculation without water failed: {}", ex.getMessage());
     }
     VPCR4_no_water = this.thermoSystem.getPressure();
     RVP_ASTM_D323_73_79 = VPCR4_no_water;

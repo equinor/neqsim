@@ -80,6 +80,7 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
     neqsim.util.database.NeqSimProcessDesignDataBase.dataBaseType = "H2";
 
     try {
+      // Core design data tables
       updateTable("TORG");
       updateTable("TechnicalRequirements_Process");
       updateTable("TechnicalRequirements_Piping");
@@ -89,6 +90,14 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
       updateTable("MaterialPipeProperties");
       updateTable("MaterialPlateProperties");
       updateTable("Fittings");
+
+      // Design standards tables - loaded from standards subdirectory
+      updateTable("standards_index", "designdata/standards/standards_index.csv");
+      updateTable("api_standards", "designdata/standards/api_standards.csv");
+      updateTable("asme_standards", "designdata/standards/asme_standards.csv");
+      updateTable("dnv_iso_en_standards", "designdata/standards/dnv_iso_en_standards.csv");
+      updateTable("norsok_standards", "designdata/standards/norsok_standards.csv");
+      updateTable("astm_standards", "designdata/standards/astm_standards.csv");
 
       h2IsInitialized = true;
     } catch (Exception ex) {

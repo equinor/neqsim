@@ -585,7 +585,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new MixerResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new MixerResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -596,10 +597,63 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     }
     MixerResponse res = new MixerResponse(this);
     res.applyConfig(cfg);
-    return new GsonBuilder().create().toJson(res);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 
-  public StreamInterface getMixedStream() {
-    return mixedStream;
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Validates the mixer setup before execution. Checks that:
+   * <ul>
+   * <li>Equipment has a valid name</li>
+   * <li>At least one input stream is connected</li>
+   * <li>Mixed stream is initialized</li>
+   * </ul>
+   *
+   * @return validation result with errors and warnings
+   */
+  @Override
+  public neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getName());
+
+    // Check: Equipment has a valid name
+    if (getName() == null || getName().trim().isEmpty()) {
+      result.addError("equipment", "Mixer has no name",
+          "Set mixer name in constructor: new Mixer(\"MyMixer\")");
+    }
+
+    // Check: At least one input stream is connected
+    if (numberOfInputStreams == 0 || streams.isEmpty()) {
+      result.addError("stream", "No input streams connected",
+          "Add input streams: mixer.addStream(stream1); mixer.addStream(stream2)");
+    }
+
+    // Check: Mixed stream is initialized
+    if (mixedStream == null) {
+      result.addError("stream", "Mixed output stream not initialized",
+          "Ensure at least one stream is added before running");
+    }
+
+    // Check: All input streams have valid fluid systems
+    for (int i = 0; i < streams.size(); i++) {
+      StreamInterface stream = streams.get(i);
+      if (stream == null) {
+        result.addError("stream", "Input stream at index " + i + " is null",
+            "Ensure all added streams are valid");
+      } else if (stream.getThermoSystem() == null) {
+        result.addWarning("stream", "Input stream '" + stream.getName() + "' has no fluid system",
+            "Ensure stream has valid thermodynamic system before mixing");
+      }
+    }
+
+    // Warning: Single stream mixer (not typical usage)
+    if (numberOfInputStreams == 1) {
+      result.addWarning("usage", "Mixer has only one input stream",
+          "Mixers typically combine multiple streams; consider using Stream directly");
+    }
+
+    return result;
   }
 }

@@ -153,10 +153,40 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
       init();
       setfvec();
       setJac();
+
+      // Check condition number and add regularization if needed
+      double jacTrace = 0.0;
+      for (int i = 0; i < neq; i++) {
+        jacTrace += Math.abs(Jac.get(i, i));
+      }
+      double diagAvg = jacTrace / neq;
+      // Add Levenberg-Marquardt regularization for stability
+      double lambda = 1e-8 * diagAvg;
+      for (int i = 0; i < neq; i++) {
+        Jac.set(i, i, Jac.get(i, i) + lambda);
+      }
+
       dx = Jac.solve(fvec);
-      // dx.print(10,10);
-      u.minusEquals(dx);
-      return (dx.norm2() / u.norm2());
+
+      // Trust region: limit maximum step size
+      double maxDeltaLnK = 2.0; // Maximum ~7x change in K per iteration
+      for (int i = 0; i < neq; i++) {
+        double delta = dx.get(i, 0);
+        if (Math.abs(delta) > maxDeltaLnK) {
+          dx.set(i, 0, Math.signum(delta) * maxDeltaLnK);
+        }
+      }
+
+      // Damped Newton: reduce step size for large updates
+      double stepNorm = dx.norm2();
+      double dampingFactor = 1.0;
+      if (stepNorm > 1.0) {
+        dampingFactor = 1.0 / stepNorm;
+        dampingFactor = Math.max(dampingFactor, 0.1); // Minimum 10% step
+      }
+
+      u.minusEquals(dx.times(dampingFactor));
+      return (dx.norm2() * dampingFactor / Math.max(u.norm2(), 1e-10));
     } catch (Exception ex) {
       throw ex;
     }

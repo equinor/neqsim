@@ -125,6 +125,20 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  public void testOptimizedExecutionSetting() {
+    // Default should be true for best performance
+    Assertions.assertTrue(p.isUseOptimizedExecution());
+
+    // Disable optimized execution
+    p.setUseOptimizedExecution(false);
+    Assertions.assertFalse(p.isUseOptimizedExecution());
+
+    // Enable again
+    p.setUseOptimizedExecution(true);
+    Assertions.assertTrue(p.isUseOptimizedExecution());
+  }
+
+  @Test
   public void testAddUnitsWithDuplicateName() {
     String name = "TestSeparator";
     Separator sep = new Separator(name);
@@ -929,13 +943,15 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
     operations.run();
     operations.run();
     operations.run();
-    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(), 1e-6);
+    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
+        1e-6);
 
     operations.run();
     operations.run();
     operations.run();
     operations.run();
-    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(), 1e-6);
+    assertEquals(1.5322819175995646E-5, dehydratedGas.getFluid().getComponent("water").getx(),
+        1e-6);
 
     // run as time step as thread
     Thread thread = operations.runAsThread();

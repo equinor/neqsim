@@ -137,7 +137,7 @@ public class BeggsAndBrillsPipeTest {
     double temperatureOut = pipe.getOutletTemperature() - 273.15;
     Assertions.assertEquals(pressureOut, 13.366143179275166, 1);
     Assertions.assertEquals(temperatureOut, 38.8, 0.1);
-    Assertions.assertEquals(pipe.getFlowRegime(), PipeBeggsAndBrills.FlowRegime.INTERMITTENT);
+    Assertions.assertEquals(pipe.getFlowRegimeEnum(), PipeBeggsAndBrills.FlowRegime.INTERMITTENT);
     Assertions.assertEquals(pipe.getOutletSuperficialVelocity(),
         pipe.getSegmentMixtureSuperficialVelocity(pipe.getNumberOfIncrements()), 0.1);
   }

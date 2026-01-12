@@ -120,6 +120,7 @@ public abstract class SystemThermo implements SystemInterface {
   protected String modelName = "Default";
 
   protected boolean multiPhaseCheck = false;
+  protected boolean enhancedMultiPhaseCheck = false;
   private boolean multiphaseWaxCheck = false;
 
   // todo: replace numberOfComponents with length of componentNames.
@@ -364,6 +365,10 @@ public abstract class SystemThermo implements SystemInterface {
       getPhase(i).getComponent(componentName).setTC(TC);
       getPhase(i).getComponent(componentName).setPC(PC);
       getPhase(i).getComponent(componentName).setAcentricFactor(acs);
+      // Set isPlusFraction for components with "_PC" suffix (plus fraction components)
+      if (componentName.endsWith("_PC")) {
+        getPhase(i).getComponent(componentName).setIsPlusFraction(true);
+      }
     }
     if (comNam.equals("default")) {
       componentNames.remove("default");
@@ -1393,7 +1398,7 @@ public abstract class SystemThermo implements SystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public SystemThermo clone() {
+  public synchronized SystemThermo clone() {
     SystemThermo clonedSystem = null;
     try {
       clonedSystem = (SystemThermo) super.clone();
@@ -1414,6 +1419,7 @@ public abstract class SystemThermo implements SystemInterface {
       // interfaceProp.clone();
     }
     clonedSystem.characterization = characterization.clone();
+    clonedSystem.characterization.setThermoSystem(clonedSystem);
     if (waxCharacterisation != null) {
       clonedSystem.waxCharacterisation = waxCharacterisation.clone();
     }
@@ -1505,7 +1511,7 @@ public abstract class SystemThermo implements SystemInterface {
     }
     table[0][1] = "total";
     for (int i = 0; i < numberOfPhases; i++) {
-      table[0][i + 2] = getPhase(i).getType().toString();
+      table[0][i + 2] = getPhase(i).getType().getDesc().toUpperCase();
     }
 
     StringBuffer buf = new StringBuffer();
@@ -2853,9 +2859,8 @@ public abstract class SystemThermo implements SystemInterface {
     }
 
     for (int compNumb = 0; compNumb < numberOfComponents; compNumb++) {
-      comp[compNumb] =
-          phase.getComponent(compNumb).getz() * phase.getComponent(compNumb).getMolarMass()
-              / totalMass;
+      comp[compNumb] = phase.getComponent(compNumb).getz()
+          * phase.getComponent(compNumb).getMolarMass() / totalMass;
     }
     return comp;
   }
@@ -3144,6 +3149,18 @@ public abstract class SystemThermo implements SystemInterface {
     // TODO: returning first if not found, not same as the others.
     for (int i = 0; i < numberOfPhases; i++) {
       if (getPhase(i).getType() == pt) {
+        return i;
+      }
+      // ASPHALTENE and LIQUID_ASPHALTENE are asphaltene-related phases, match when looking for
+      // either
+      if (pt == PhaseType.ASPHALTENE && getPhase(i).getType() == PhaseType.LIQUID_ASPHALTENE) {
+        return i;
+      }
+      if (pt == PhaseType.LIQUID_ASPHALTENE && getPhase(i).getType() == PhaseType.ASPHALTENE) {
+        return i;
+      }
+      // ASPHALTENE is a solid-like phase, so also match when looking for SOLID
+      if (pt == PhaseType.SOLID && getPhase(i).getType() == PhaseType.ASPHALTENE) {
         return i;
       }
     }
@@ -3518,6 +3535,17 @@ public abstract class SystemThermo implements SystemInterface {
         continue;
       }
       if (getPhase(i).getType() == pt) {
+        return true;
+      }
+      // ASPHALTENE and LIQUID_ASPHALTENE are asphaltene-related phases
+      if (pt == PhaseType.ASPHALTENE && getPhase(i).getType() == PhaseType.LIQUID_ASPHALTENE) {
+        return true;
+      }
+      if (pt == PhaseType.LIQUID_ASPHALTENE && getPhase(i).getType() == PhaseType.ASPHALTENE) {
+        return true;
+      }
+      // ASPHALTENE is a solid-like phase, so also match when looking for SOLID
+      if (pt == PhaseType.SOLID && getPhase(i).getType() == PhaseType.ASPHALTENE) {
         return true;
       }
       if (getPhase(i).getPhaseTypeName().equals(pt.getDesc())) {
@@ -4120,8 +4148,13 @@ public abstract class SystemThermo implements SystemInterface {
         } catch (Exception ex) {
           logger.error(ex.getMessage());
         }
-        if (getPhase(i).getPhysicalProperties().calcDensity() < getPhase(i - 1)
-            .getPhysicalProperties().calcDensity()) {
+
+        // Get effective density for comparison
+        // Solid phases (SOLID, ASPHALTENE, WAX, HYDRATE) should always be last (densest)
+        double density1 = getEffectiveDensityForOrdering(i - 1);
+        double density2 = getEffectiveDensityForOrdering(i);
+
+        if (density2 < density1) {
           int tempIndex1 = getPhaseIndex(i - 1);
           int tempIndex2 = getPhaseIndex(i);
           setPhaseIndex(i, tempIndex1);
@@ -4130,6 +4163,26 @@ public abstract class SystemThermo implements SystemInterface {
         }
       }
     } while (change);
+  }
+
+  /**
+   * Get effective density for phase ordering. Solid-like phases (SOLID, ASPHALTENE, WAX, HYDRATE)
+   * return a very high density to ensure they sort to the end.
+   *
+   * @param phaseNum phase number
+   * @return effective density for ordering purposes
+   */
+  private double getEffectiveDensityForOrdering(int phaseNum) {
+    PhaseType pt = getPhase(phaseNum).getType();
+    // Solid-like phases should always be ordered last (highest density)
+    if (pt == PhaseType.SOLID || pt == PhaseType.ASPHALTENE || pt == PhaseType.WAX
+        || pt == PhaseType.HYDRATE || pt == PhaseType.SOLIDCOMPLEX) {
+      // Return very high density to ensure solid phases sort to end
+      // Use actual density if positive, otherwise use 2000 kg/m3 as fallback
+      double actualDensity = getPhase(phaseNum).getPhysicalProperties().calcDensity();
+      return actualDensity > 0 ? actualDensity : 2000.0;
+    }
+    return getPhase(phaseNum).getPhysicalProperties().calcDensity();
   }
 
   /** {@inheritDoc} */
@@ -5092,8 +5145,8 @@ public abstract class SystemThermo implements SystemInterface {
 
     double totalFlow = getTotalNumberOfMoles();
     if (totalFlow < 1e-100) {
-      throw new RuntimeException(new InvalidInputException(this, "setMolarComposition",
-          "totalFlow", "must be larger than 0 (1e-100) when setting molar composition"));
+      throw new RuntimeException(new InvalidInputException(this, "setMolarComposition", "totalFlow",
+          "must be larger than 0 (1e-100) when setting molar composition"));
     }
     setEmptyFluid();
 
@@ -5157,6 +5210,21 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
     this.multiPhaseCheck = multiPhaseCheck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean doEnhancedMultiPhaseCheck() {
+    return enhancedMultiPhaseCheck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setEnhancedMultiPhaseCheck(boolean enhancedMultiPhaseCheck) {
+    this.enhancedMultiPhaseCheck = enhancedMultiPhaseCheck;
+    if (enhancedMultiPhaseCheck) {
+      setMultiPhaseCheck(true);
+    }
   }
 
   /** {@inheritDoc} */
@@ -5355,10 +5423,11 @@ public abstract class SystemThermo implements SystemInterface {
     this.solidPhaseCheck = true;
     init(0);
 
-    for (int phaseNum = 0; phaseNum < getMaxNumberOfPhases(); phaseNum++) {
+    for (int phaseNum = 0; phaseNum < numberOfPhases; phaseNum++) {
       try {
-        getPhase(phaseNum).getComponent(solidComponent).setSolidCheck(true);
-        getPhase(3).getComponent(solidComponent).setSolidCheck(true);
+        if (getPhase(phaseNum) != null && getPhase(phaseNum).hasComponent(solidComponent)) {
+          getPhase(phaseNum).getComponent(solidComponent).setSolidCheck(true);
+        }
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }

@@ -889,24 +889,33 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   }
 
   // ================================================================
-  // ---- MANDATORY UNUSED ----
+  // ---- STREAM ACCESS METHODS ----
   // ================================================================
   /** {@inheritDoc} */
   @Override
   public StreamInterface getInStream(int i) {
-    return null;
+    if (i < 0 || i >= inStreams.size()) {
+      throw new IndexOutOfBoundsException("Invalid inStream index: " + i);
+    }
+    return inStreams.get(i);
   }
 
   /** {@inheritDoc} */
   @Override
   public double getInTemperature(int i) {
-    return 0.0;
+    if (i < 0 || i >= inletTemps.size()) {
+      return 0.0;
+    }
+    return inletTemps.get(i);
   }
 
   /** {@inheritDoc} */
   @Override
   public double getOutTemperature(int i) {
-    return 0.0;
+    if (i < 0 || i >= outletTemps.size() || outletTemps.get(i) == null) {
+      return 0.0;
+    }
+    return outletTemps.get(i);
   }
 
   /** {@inheritDoc} */

@@ -75,8 +75,11 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
     double sumHydrocarbons = 0.0;
     double sumAqueous = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      if (getComponent(i).isHydrocarbon() || getComponent(i).isInert()
-          || getComponent(i).isIsTBPfraction()) {
+      if ((getComponent(i).isHydrocarbon() || getComponent(i).isInert()
+          || getComponent(i).isIsTBPfraction()) && !getComponent(i).getName().equals("water")
+          && !getComponent(i).getName().equals("water_PC")
+          && !getComponent(i).getComponentType().equals("alcohol")
+          && !getComponent(i).getComponentType().equals("glycol") && !getComponent(i).isIsIon()) {
         sumHydrocarbons += getComponent(i).getx();
       } else {
         sumAqueous += getComponent(i).getx();
@@ -102,8 +105,10 @@ public abstract class PhaseGE extends Phase implements PhaseGEInterface {
     double sumHydrocarbons = 0.0;
     double sumAqueous = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      if (getComponent(i).isHydrocarbon() || getComponent(i).isInert()
-          || getComponent(i).isIsTBPfraction()) {
+      if ((getComponent(i).isHydrocarbon() || getComponent(i).isInert()
+          || getComponent(i).isIsTBPfraction()) && !getComponent(i).getName().equals("water")
+          && !getComponent(i).getName().equals("water_PC")
+          && !getComponent(i).getComponentType().equals("aqueous") && !getComponent(i).isIsIon()) {
         sumHydrocarbons += getComponent(i).getx();
       } else {
         sumAqueous += getComponent(i).getx();

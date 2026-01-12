@@ -24,6 +24,11 @@
 NeqSim is the main part of the [NeqSim project](https://equinor.github.io/neqsimhome/). NeqSim (Non-Equilibrium Simulator) is a Java library for estimating fluid properties and process design.
 The basis for NeqSim is a library of fundamental mathematical models related to phase behavior and physical properties of fluids.  NeqSim is easily extended with new models. NeqSim development was initiated at the [Norwegian University of Science and Technology (NTNU)](https://www.ntnu.edu/employees/even.solbraa).
 
+## Documentation
+[NeqSim User Documentation](https://equinor.github.io/neqsim/)
+
+[Index of reference manual](https://github.com/equinor/neqsim/blob/master/docs/REFERENCE_MANUAL_INDEX.md)
+
 ## Releases
 
 [NeqSim releases](https://github.com/equinor/neqsim/releases) are available as a packaged jar file and as source code. NeqSim can be used in a third party application by adding NeqSim jar to the classpath.
@@ -145,6 +150,8 @@ The NeqSim source code is compiled and distributed as a Java library. [NeqSim re
 See the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests. An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).
 See [docs/DEVELOPER_SETUP.md](docs/DEVELOPER_SETUP.md) for a summary of how to clone the project, build it and run the tests. For more details see the [getting started as a NeqSim developer](https://github.com/equinor/neqsim/wiki/Getting-started-as-a-NeqSim-developer) documentation. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests. An interactive demonstration of how to get started as a NeqSim developer is presented in this [NeqSim Colab demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7).
 Pull requests will only be accepted if all tests and `./mvnw checkstyle:check` pass.
+
+For guidance on where to place production code, tests, and resources, see [docs/contributing-structure.md](docs/contributing-structure.md).
 
 ## Discussion forum
 

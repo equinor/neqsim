@@ -1,37 +1,142 @@
 # NeqSim Wiki
 
-Welcome to the NeqSim documentation. This wiki collects tips and guides for using the library and contributing to development.
+Welcome to the NeqSim documentation. This comprehensive wiki provides guides, tutorials, and reference materials for using the library and contributing to development.
 
-- [Getting started](getting_started.md)
-- [Thermodynamics Guide](thermodynamics_guide.md)
-- [Fluid Characterization](fluid_characterization.md)
-- [Process Simulation Guide](process_simulation.md)
-- [Advanced Process Simulation](advanced_process_simulation.md)
-- [Logical Unit Operations](logical_unit_operations.md)
-- [Usage examples](usage_examples.md)
-- [Frequently asked questions](faq.md)
+---
 
-NeqSim (Non-Equilibrium Simulator) is a Java library for estimating fluid properties and process design. The library contains models for phase behavior and physical properties of fluids and can easily be extended with new models. Development was initiated at the [Norwegian University of Science and Technology (NTNU)](https://www.ntnu.edu/employees/even.solbraa).
+## About NeqSim
 
-NeqSim is part of the [NeqSim project](https://equinor.github.io/neqsimhome/). Releases are provided as jar files from GitHub and can be added as a dependency in your own Java projects.
-This folder holds additional documentation for the NeqSim project. Below are useful pages:
+**NeqSim (Non-Equilibrium Simulator)** is a Java library for estimating fluid properties and process design. The library contains models for:
 
-- [JUnit test overview](test-overview.md)
-- [Flash calculations validated by tests](flash_equations_and_tests.md)
-- [PVT simulation workflows](pvt_simulation_workflows.md)
-- [Transient process simulation patterns](process_transient_simulation_guide.md)
-- [Black-oil flash playbook](black_oil_flash_playbook.md)
-- [Property flash workflows](property_flash_workflows.md)
-- [Gas quality standards from tests](gas_quality_standards_from_tests.md)
-- [Java simulations from Colab notebooks](java_simulation_from_colab_notebooks.md)
-- [Distillation column algorithm](distillation_column.md)
-- [Gibbs reactor](gibbs_reactor.md)
-- [Humid air mathematics](humid_air_math.md)
-- [Flow meter models](flow_meter_models.md)
-- [Air cooler unit operation](air_cooler.md)
-- [Heat exchanger mechanical design](heat_exchanger_mechanical_design.md)
-- [Water cooler](water_cooler.md)
-- [Steam heater](steam_heater.md)
-- [Battery storage unit](battery_storage.md)
-- [Solar panel unit operation](solar_panel.md)
-- [Process control framework](process_control.md)
+- **Phase behavior** using rigorous equations of state (SRK, PR, CPA, GERG-2008)
+- **Physical properties** (viscosity, density, thermal conductivity, interfacial tension)
+- **Process equipment** (50+ unit operations including separators, compressors, heat exchangers)
+- **Pipeline flow** (two-phase, multiphase, transient simulation)
+- **Flow assurance** (hydrates, wax, asphaltene, scaling)
+
+Development was initiated at the [Norwegian University of Science and Technology (NTNU)](https://www.ntnu.edu/employees/even.solbraa). NeqSim is part of the [NeqSim project](https://equinor.github.io/neqsimhome/).
+
+---
+
+## Quick Start
+
+```java
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+// Create a fluid
+SystemSrkEos fluid = new SystemSrkEos(298.15, 10.0);  // T(K), P(bara)
+fluid.addComponent("methane", 0.9);
+fluid.addComponent("ethane", 0.07);
+fluid.addComponent("propane", 0.03);
+fluid.setMixingRule("classic");
+
+// Run flash calculation
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPflash();
+
+// Get results
+System.out.println("Z-factor: " + fluid.getZ());
+System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m3");
+```
+
+---
+
+## 🚀 Getting Started
+
+| Guide | Description |
+|-------|-------------|
+| [Getting Started](getting_started.md) | Installation, first calculations, and basic concepts |
+| [Usage Examples](usage_examples.md) | Comprehensive code examples |
+| [FAQ](faq.md) | Frequently asked questions |
+| [GitHub Guide](Getting-started-with-NeqSim-and-Github.md) | Complete documentation index |
+
+---
+
+## 🧪 Thermodynamics & Phase Behavior
+
+| Guide | Description |
+|-------|-------------|
+| [Thermodynamics Guide](thermodynamics_guide.md) | Equations of state, flash calculations, mixing rules |
+| [Fluid Characterization](fluid_characterization.md) | Plus fractions, pseudo-components, TBP modeling |
+| [Flash Equations & Tests](flash_equations_and_tests.md) | Flash calculations validated by tests |
+| [Property Flash Workflows](property_flash_workflows.md) | PH, PS, UV flash calculations |
+
+---
+
+## ⚙️ Process Simulation
+
+| Guide | Description |
+|-------|-------------|
+| [Process Simulation Guide](process_simulation.md) | Building flowsheets, running simulations |
+| [Advanced Process Simulation](advanced_process_simulation.md) | Recycles, adjusters, complex systems |
+| [Logical Unit Operations](logical_unit_operations.md) | Controllers, splitters, recycles |
+| [Transient Simulation Guide](process_transient_simulation_guide.md) | Dynamic process modeling |
+| [Process Control Framework](process_control.md) | PID controllers, automation |
+
+---
+
+## 🔧 Equipment Models
+
+| Equipment | Documentation |
+|-----------|---------------|
+| [Distillation Column](distillation_column.md) | Sequential, damped, inside-out solvers |
+| [Gibbs Reactor](gibbs_reactor.md) | Chemical equilibrium reactor |
+| [Flow Meter Models](flow_meter_models.md) | Orifice, venturi, ultrasonic meters |
+| [Air Cooler](air_cooler.md) | Air-cooled heat exchanger |
+| [Heat Exchanger Design](heat_exchanger_mechanical_design.md) | Mechanical design methods |
+| [Water Cooler](water_cooler.md) | Water-cooled systems |
+| [Steam Heater](steam_heater.md) | Steam heating systems |
+| [Battery Storage](battery_storage.md) | Energy storage unit |
+| [Solar Panel](solar_panel.md) | Solar power generation |
+
+---
+
+## 📊 PVT & Reservoir
+
+| Guide | Description |
+|-------|-------------|
+| [PVT Simulation Workflows](pvt_simulation_workflows.md) | CVD, CCE, DL simulations |
+| [Black-Oil Flash Playbook](black_oil_flash_playbook.md) | Black-oil modeling techniques |
+| [Humid Air Mathematics](humid_air_math.md) | Psychrometric calculations |
+
+---
+
+## 📏 Standards & Quality
+
+| Guide | Description |
+|-------|-------------|
+| [Gas Quality Standards](gas_quality_standards_from_tests.md) | ISO 6976, GPA standards |
+
+---
+
+## 🔌 Integration & Tools
+
+| Guide | Description |
+|-------|-------------|
+| [Java from Colab](java_simulation_from_colab_notebooks.md) | Running NeqSim in Google Colab |
+| [JUnit Test Overview](test-overview.md) | Test suite structure |
+
+---
+
+## Installation
+
+**Maven:**
+```xml
+<dependency>
+    <groupId>com.equinor.neqsim</groupId>
+    <artifactId>neqsim</artifactId>
+    <version>3.0.0</version>
+</dependency>
+```
+
+**Download:** [GitHub Releases](https://github.com/equinor/neqsimsource/releases)
+
+---
+
+## Resources
+
+- **JavaDoc**: [API Documentation](https://htmlpreview.github.io/?https://github.com/equinor/neqsimhome/blob/master/javadoc/site/apidocs/index.html)
+- **Source Code**: [github.com/equinor/neqsim](https://github.com/equinor/neqsim)
+- **Issues**: [Report bugs or request features](https://github.com/equinor/neqsim/issues)
+- **Discussions**: [Ask questions](https://github.com/equinor/neqsim/discussions)

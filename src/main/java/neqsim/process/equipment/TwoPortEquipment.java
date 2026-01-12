@@ -131,4 +131,45 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
     }
     return toJson();
   }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Validates the two-port equipment setup before execution. Checks that:
+   * <ul>
+   * <li>Equipment has a valid name</li>
+   * <li>Inlet stream is connected</li>
+   * <li>Outlet stream is initialized</li>
+   * </ul>
+   *
+   * @return validation result with errors and warnings
+   */
+  @Override
+  public neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getName());
+
+    // Check: Equipment has a valid name
+    if (getName() == null || getName().trim().isEmpty()) {
+      result.addError("equipment", "Equipment has no name", "Set equipment name in constructor");
+    }
+
+    // Check: Inlet stream is connected
+    if (inStream == null) {
+      result.addError("stream", "No inlet stream connected",
+          "Set inlet stream: equipment.setInletStream(stream)");
+    } else if (inStream.getThermoSystem() == null) {
+      result.addError("stream", "Inlet stream has no fluid system",
+          "Ensure inlet stream has a valid thermodynamic system");
+    }
+
+    // Check: Outlet stream is initialized
+    if (outStream == null) {
+      result.addWarning("stream", "Outlet stream not initialized",
+          "Outlet stream is typically created when inlet stream is set");
+    }
+
+    return result;
+  }
 }

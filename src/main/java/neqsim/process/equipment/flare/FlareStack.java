@@ -122,6 +122,17 @@ public class FlareStack extends ProcessEquipmentBaseClass {
 
   /**
    * <p>
+   * Getter for the field <code>reliefInlet</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
+  public StreamInterface getReliefInlet() {
+    return reliefInlet;
+  }
+
+  /**
+   * <p>
    * Setter for the field <code>airAssist</code>.
    * </p>
    *
@@ -133,6 +144,17 @@ public class FlareStack extends ProcessEquipmentBaseClass {
 
   /**
    * <p>
+   * Getter for the field <code>airAssist</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
+  public StreamInterface getAirAssist() {
+    return airAssist;
+  }
+
+  /**
+   * <p>
    * Setter for the field <code>steamAssist</code>.
    * </p>
    *
@@ -140,6 +162,17 @@ public class FlareStack extends ProcessEquipmentBaseClass {
    */
   public void setSteamAssist(StreamInterface s) {
     this.steamAssist = s;
+  }
+
+  /**
+   * <p>
+   * Getter for the field <code>steamAssist</code>.
+   * </p>
+   *
+   * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
+   */
+  public StreamInterface getSteamAssist() {
+    return steamAssist;
   }
 
   // --- Config setters ---

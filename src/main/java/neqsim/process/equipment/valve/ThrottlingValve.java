@@ -439,6 +439,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
 
     try {
+      // Preserve inlet composition by keeping component mole fractions
+      // before setting total moles to zero
       thermoSystem.setTotalNumberOfMoles(0.0);
       thermoSystem.init(0);
     } catch (Exception ex) {
@@ -793,7 +795,8 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new ValveResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new ValveResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -804,7 +807,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
     }
     ValveResponse res = new ValveResponse(this);
     res.applyConfig(cfg);
-    return new GsonBuilder().create().toJson(res);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 
   /**

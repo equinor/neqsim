@@ -242,6 +242,11 @@ public class TPflash extends Flash {
       } else {
         system.setPhaseIndex(0, 1);
       }
+      // Solve chemical equilibrium for single-phase chemical systems
+      if (system.isChemicalSystem()) {
+        system.getChemicalReactionOperations().solveChemEq(0, 0);
+        system.getChemicalReactionOperations().solveChemEq(0, 1);
+      }
       if (solidCheck) {
         ThermodynamicOperations operation = new ThermodynamicOperations(system);
         operation.TPSolidflash();
@@ -323,6 +328,10 @@ public class TPflash extends Flash {
       dgonRT = -1.0;
     } else {
       for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+        // Skip ions in TPD calculation - they don't participate in VLE
+        if (system.getPhase(0).getComponent(i).getK() < 1e-30) {
+          continue;
+        }
         if (system.getComponent(i).getz() > 1e-50) {
           tpdy += system.getPhase(0).getComponent(i).getx()
               * (Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient())
@@ -339,6 +348,10 @@ public class TPflash extends Flash {
       if (dgonRT > 0) {
         if (tpdx < 0) {
           for (i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
+            // Preserve ion K-values - they don't participate in VLE
+            if (system.getPhase(0).getComponent(i).getK() < 1e-30) {
+              continue;
+            }
             system.getPhase(0).getComponent(i)
                 .setK(Math.exp(Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient())
                     - minGibsLogFugCoef[i]) * presdiff);
@@ -346,6 +359,10 @@ public class TPflash extends Flash {
           }
         } else if (tpdy < 0) {
           for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+            // Preserve ion K-values - they don't participate in VLE
+            if (system.getPhase(0).getComponent(i).getK() < 1e-30) {
+              continue;
+            }
             system.getPhase(0).getComponent(i)
                 .setK(Math
                     .exp(minGibsLogFugCoef[i]
@@ -376,6 +393,18 @@ public class TPflash extends Flash {
 
         system.orderByDensity();
         system.init(1);
+
+        // Chemical equilibrium for stable single-phase case
+        if (system.isChemicalSystem()) {
+          for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
+            String phaseType = system.getPhase(phaseNum).getPhaseTypeName();
+            if ("aqueous".equalsIgnoreCase(phaseType) || "liquid".equalsIgnoreCase(phaseType)) {
+              system.getChemicalReactionOperations().solveChemEq(phaseNum, 0);
+              system.getChemicalReactionOperations().solveChemEq(phaseNum, 1);
+            }
+          }
+          system.init(1);
+        }
         return;
       }
     }
@@ -403,8 +432,10 @@ public class TPflash extends Flash {
     }
     system.init(1);
 
-    int accelerateInterval = 7;
-    int newtonLimit = 20;
+    // Reduced acceleration interval for faster convergence
+    int accelerateInterval = 5;
+    // Adaptive Newton limit: switch earlier when close to convergence
+    int newtonLimit = 15;
     int timeFromLastGibbsFail = 0;
 
     double chemdev = 0;
@@ -530,6 +561,19 @@ public class TPflash extends Flash {
     // system.initPhysicalProperties("density");
     system.orderByDensity();
     system.init(1);
+
+    // Final chemical equilibrium call after all phase reordering
+    // This ensures chemical equilibrium is solved on the final phase configuration
+    if (system.isChemicalSystem()) {
+      for (int phaseNum = 0; phaseNum < system.getNumberOfPhases(); phaseNum++) {
+        String phaseType = system.getPhase(phaseNum).getPhaseTypeName();
+        if ("aqueous".equalsIgnoreCase(phaseType) || "liquid".equalsIgnoreCase(phaseType)) {
+          system.getChemicalReactionOperations().solveChemEq(phaseNum, 0);
+          system.getChemicalReactionOperations().solveChemEq(phaseNum, 1);
+        }
+      }
+      system.init(1);
+    }
   }
 
   /** {@inheritDoc} */

@@ -69,8 +69,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
   @Test
   public void testDensity() {
     assertEquals(6.594232943612613, thermoSystem.getPhase(PhaseType.GAS).getDensity("kg/m3"), 0.01);
-    assertEquals(996.5046667778549, thermoSystem.getPhase(PhaseType.AQUEOUS).getDensity("kg/m3"),
-        0.01);
+    assertEquals(995.69, thermoSystem.getPhase(PhaseType.AQUEOUS).getDensity("kg/m3"), 0.01);
   }
 
   /**
@@ -126,5 +125,28 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
   @DisplayName("test derivative of fugacity coefficients with respect to composition (2nd method)")
   public void checkFugacityCoefficientsDn2() {
     assertTrue(testModel.checkFugacityCoefficientsDn2());
+  }
+
+  /**
+   * Test hasIons method returns true for electrolyte systems.
+   */
+  @Test
+  @DisplayName("test hasIons returns true for system with ionic components")
+  public void testHasIonsWithElectrolytes() {
+    assertTrue(thermoSystem.hasIons(), "System with Na+ and Cl- should return hasIons() = true");
+  }
+
+  /**
+   * Test hasIons method returns false for systems without ions.
+   */
+  @Test
+  @DisplayName("test hasIons returns false for system without ionic components")
+  public void testHasIonsWithoutElectrolytes() {
+    SystemInterface nonIonicSystem = new SystemSrkEos(298.15, 10.0);
+    nonIonicSystem.addComponent("methane", 0.5);
+    nonIonicSystem.addComponent("water", 0.5);
+    nonIonicSystem.setMixingRule("classic");
+    assertEquals(false, nonIonicSystem.hasIons(),
+        "System without ions should return hasIons() = false");
   }
 }

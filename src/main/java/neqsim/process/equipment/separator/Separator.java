@@ -490,7 +490,24 @@ public class Separator extends ProcessEquipmentBaseClass
         initializeTransientCalculation();
       }
       inletStreamMixer.run(id);
-      thermoSystem.init(2);
+
+      // Check if separator has enough moles for calculation
+      if (thermoSystem.getTotalNumberOfMoles() < 1e-10) {
+        // Separator is essentially empty - just update time and return
+        increaseTime(dt);
+        setCalculationIdentifier(id);
+        return;
+      }
+
+      try {
+        thermoSystem.init(2);
+      } catch (Exception e) {
+        // If init fails due to low moles, skip this step
+        logger.debug("Separator init(2) failed, likely due to low moles: " + e.getMessage());
+        increaseTime(dt);
+        setCalculationIdentifier(id);
+        return;
+      }
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       try {
         gasOutStream.getThermoSystem().init(2);
@@ -525,8 +542,21 @@ public class Separator extends ProcessEquipmentBaseClass
         }
         dncomp += -gasOutStream.getThermoSystem().getComponent(i).getNumberOfmoles() + dniliq;
 
-        thermoSystem.addComponent(i, dncomp * dt);
+        double molesChange = dncomp * dt;
+        double currentMoles = thermoSystem.getComponent(i).getNumberOfmoles();
+        // Prevent negative moles - limit removal to what's available
+        if (currentMoles + molesChange < 1e-20) {
+          molesChange = -currentMoles + 1e-20;
+        }
+        thermoSystem.addComponent(i, molesChange);
       }
+
+      // Skip VU flash if system has too few moles (essentially empty separator)
+      if (thermoSystem.getTotalNumberOfMoles() < 1e-10) {
+        setCalculationIdentifier(id);
+        return;
+      }
+
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
       thermoOps.VUflash(gasVolume + liquidVolume, newEnergy, "m3", "J");
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
@@ -1640,7 +1670,8 @@ public class Separator extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new SeparatorResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new SeparatorResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -1651,7 +1682,7 @@ public class Separator extends ProcessEquipmentBaseClass
     }
     SeparatorResponse res = new SeparatorResponse(this);
     res.applyConfig(cfg);
-    return new GsonBuilder().create().toJson(res);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 
   /**
@@ -1995,5 +2026,394 @@ public class Separator extends ProcessEquipmentBaseClass
       }
     }
     System.out.println("========================================");
+   * {@inheritDoc}
+   *
+   * <p>
+   * Validates the separator setup before execution. Checks that:
+   * <ul>
+   * <li>Equipment has a valid name</li>
+   * <li>At least one inlet stream is connected</li>
+   * <li>Separator dimensions are positive</li>
+   * <li>Liquid level is within valid range</li>
+   * </ul>
+   *
+   * @return validation result with errors and warnings
+   */
+  @Override
+  public neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getName());
+
+    // Check: Equipment has a valid name (from interface default)
+    if (getName() == null || getName().trim().isEmpty()) {
+      result.addError("equipment", "Separator has no name",
+          "Set separator name in constructor: new Separator(\"MySeparator\")");
+    }
+
+    // Check: At least one inlet stream is connected
+    if (numberOfInputStreams == 0) {
+      result.addError("stream", "No inlet stream connected",
+          "Connect inlet stream: separator.setInletStream(stream) or separator.addStream(stream)");
+    }
+
+    // Check: Inlet stream has valid fluid
+    if (numberOfInputStreams > 0 && thermoSystem == null) {
+      result.addError("stream", "Inlet stream has no fluid system",
+          "Ensure inlet stream has a valid thermodynamic system");
+    }
+
+    // Check: Separator dimensions are positive
+    if (separatorLength <= 0) {
+      result.addError("dimensions", "Separator length must be positive: " + separatorLength + " m",
+          "Set positive length: separator.setSeparatorLength(5.0)");
+    }
+
+    if (internalDiameter <= 0) {
+      result.addError("dimensions",
+          "Separator diameter must be positive: " + internalDiameter + " m",
+          "Set positive diameter: separator.setInternalDiameter(1.0)");
+    }
+
+    // Check: Liquid level is within valid range (0-1)
+    if (liquidLevel < 0 || liquidLevel > internalDiameter) {
+      result.addWarning("level", "Liquid level may be outside valid range: " + liquidLevel
+          + " m (diameter: " + internalDiameter + " m)",
+          "Set liquid level between 0 and separator diameter");
+    }
+
+    // Check: Pressure drop is non-negative
+    if (pressureDrop < 0) {
+      result.addWarning("pressure", "Negative pressure drop: " + pressureDrop + " bar",
+          "Pressure drop should typically be >= 0");
+    }
+
+    // Check: Efficiency is in valid range
+    if (efficiency < 0 || efficiency > 1) {
+      result.addError("efficiency", "Efficiency must be between 0 and 1: " + efficiency,
+          "Set valid efficiency: separator.setEfficiency(0.95)");
+    }
+
+    return result;
+  }
+
+  /**
+   * Creates a new Builder for constructing a Separator with a fluent API.
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * Separator sep = Separator.builder("V-100").inletStream(feed).orientation("horizontal")
+   *     .length(5.0).diameter(2.0).liquidLevel(0.5).build();
+   * </pre>
+   *
+   * @param name the name of the separator
+   * @return a new Builder instance
+   */
+  public static Builder builder(String name) {
+    return new Builder(name);
+  }
+
+  /**
+   * Builder class for constructing Separator instances with a fluent API.
+   *
+   * <p>
+   * Provides a readable and maintainable way to construct separators with geometry, orientation,
+   * efficiency, and entrainment specifications.
+   * </p>
+   *
+   * @author NeqSim
+   * @version 1.0
+   */
+  public static class Builder {
+    private final String name;
+    private StreamInterface inletStream = null;
+    private String orientation = "horizontal";
+    private double separatorLength = 5.0;
+    private double internalDiameter = 1.0;
+    private double liquidLevel = -1.0;
+    private double designLiquidLevelFraction = 0.8;
+    private double pressureDrop = 0.0;
+    private double efficiency = 1.0;
+    private double liquidCarryoverFraction = 0.0;
+    private double gasCarryunderFraction = 0.0;
+    private double oilInGas = 0.0;
+    private String oilInGasSpec = "mole";
+    private double waterInGas = 0.0;
+    private String waterInGasSpec = "mole";
+    private double gasInLiquid = 0.0;
+    private String gasInLiquidSpec = "mole";
+    private String specifiedStream = "feed";
+    private double heatInput = 0.0;
+    private boolean calculateSteadyState = true;
+
+    /**
+     * Creates a new Builder with the specified separator name.
+     *
+     * @param name the name of the separator
+     */
+    public Builder(String name) {
+      this.name = name;
+    }
+
+    /**
+     * Sets the inlet stream for the separator.
+     *
+     * @param stream the inlet stream
+     * @return this builder for chaining
+     */
+    public Builder inletStream(StreamInterface stream) {
+      this.inletStream = stream;
+      return this;
+    }
+
+    /**
+     * Sets the separator orientation.
+     *
+     * @param orientation "horizontal" or "vertical"
+     * @return this builder for chaining
+     */
+    public Builder orientation(String orientation) {
+      this.orientation = orientation;
+      return this;
+    }
+
+    /**
+     * Sets the separator as horizontal orientation.
+     *
+     * @return this builder for chaining
+     */
+    public Builder horizontal() {
+      this.orientation = "horizontal";
+      return this;
+    }
+
+    /**
+     * Sets the separator as vertical orientation.
+     *
+     * @return this builder for chaining
+     */
+    public Builder vertical() {
+      this.orientation = "vertical";
+      return this;
+    }
+
+    /**
+     * Sets the separator length in meters.
+     *
+     * @param length separator length in meters
+     * @return this builder for chaining
+     */
+    public Builder length(double length) {
+      this.separatorLength = length;
+      return this;
+    }
+
+    /**
+     * Sets the internal diameter in meters.
+     *
+     * @param diameter internal diameter in meters
+     * @return this builder for chaining
+     */
+    public Builder diameter(double diameter) {
+      this.internalDiameter = diameter;
+      return this;
+    }
+
+    /**
+     * Sets the liquid level in meters.
+     *
+     * @param level liquid level height in meters
+     * @return this builder for chaining
+     */
+    public Builder liquidLevel(double level) {
+      this.liquidLevel = level;
+      return this;
+    }
+
+    /**
+     * Sets the design liquid level as a fraction of diameter (0.0-1.0).
+     *
+     * @param fraction liquid level fraction
+     * @return this builder for chaining
+     */
+    public Builder designLiquidLevelFraction(double fraction) {
+      this.designLiquidLevelFraction = fraction;
+      return this;
+    }
+
+    /**
+     * Sets the pressure drop across the separator in bar.
+     *
+     * @param dp pressure drop in bar
+     * @return this builder for chaining
+     */
+    public Builder pressureDrop(double dp) {
+      this.pressureDrop = dp;
+      return this;
+    }
+
+    /**
+     * Sets the separation efficiency (0.0-1.0).
+     *
+     * @param eff efficiency value
+     * @return this builder for chaining
+     */
+    public Builder efficiency(double eff) {
+      this.efficiency = eff;
+      return this;
+    }
+
+    /**
+     * Sets the liquid carryover fraction to gas outlet (0.0-1.0).
+     *
+     * @param fraction liquid carryover fraction
+     * @return this builder for chaining
+     */
+    public Builder liquidCarryover(double fraction) {
+      this.liquidCarryoverFraction = fraction;
+      return this;
+    }
+
+    /**
+     * Sets the gas carryunder fraction to liquid outlet (0.0-1.0).
+     *
+     * @param fraction gas carryunder fraction
+     * @return this builder for chaining
+     */
+    public Builder gasCarryunder(double fraction) {
+      this.gasCarryunderFraction = fraction;
+      return this;
+    }
+
+    /**
+     * Sets oil entrainment in gas phase.
+     *
+     * @param value entrainment value
+     * @param spec specification type ("mole", "mass", "volume")
+     * @return this builder for chaining
+     */
+    public Builder oilInGas(double value, String spec) {
+      this.oilInGas = value;
+      this.oilInGasSpec = spec;
+      return this;
+    }
+
+    /**
+     * Sets water entrainment in gas phase.
+     *
+     * @param value entrainment value
+     * @param spec specification type ("mole", "mass", "volume")
+     * @return this builder for chaining
+     */
+    public Builder waterInGas(double value, String spec) {
+      this.waterInGas = value;
+      this.waterInGasSpec = spec;
+      return this;
+    }
+
+    /**
+     * Sets gas entrainment in liquid phase.
+     *
+     * @param value entrainment value
+     * @param spec specification type ("mole", "mass", "volume")
+     * @return this builder for chaining
+     */
+    public Builder gasInLiquid(double value, String spec) {
+      this.gasInLiquid = value;
+      this.gasInLiquidSpec = spec;
+      return this;
+    }
+
+    /**
+     * Sets the reference stream for entrainment specifications.
+     *
+     * @param streamType "feed", "gas", or "liquid"
+     * @return this builder for chaining
+     */
+    public Builder specifiedStream(String streamType) {
+      this.specifiedStream = streamType;
+      return this;
+    }
+
+    /**
+     * Sets heat input to the separator in Watts.
+     *
+     * @param heat heat input in W
+     * @return this builder for chaining
+     */
+    public Builder heatInput(double heat) {
+      this.heatInput = heat;
+      return this;
+    }
+
+    /**
+     * Enables transient (dynamic) calculation mode.
+     *
+     * @return this builder for chaining
+     */
+    public Builder transientMode() {
+      this.calculateSteadyState = false;
+      return this;
+    }
+
+    /**
+     * Enables steady-state calculation mode (default).
+     *
+     * @return this builder for chaining
+     */
+    public Builder steadyStateMode() {
+      this.calculateSteadyState = true;
+      return this;
+    }
+
+    /**
+     * Builds and returns the configured Separator instance.
+     *
+     * @return a new Separator instance with the specified configuration
+     */
+    public Separator build() {
+      Separator sep;
+      if (inletStream != null) {
+        sep = new Separator(name, inletStream);
+      } else {
+        sep = new Separator(name);
+      }
+
+      sep.setOrientation(orientation);
+      sep.setSeparatorLength(separatorLength);
+      sep.setInternalDiameter(internalDiameter);
+
+      if (liquidLevel >= 0) {
+        sep.setLiquidLevel(liquidLevel);
+      } else {
+        sep.setLiquidLevel(internalDiameter * designLiquidLevelFraction);
+      }
+
+      sep.setDesignLiquidLevelFraction(designLiquidLevelFraction);
+      sep.setPressureDrop(pressureDrop);
+      sep.setEfficiency(efficiency);
+      sep.setLiquidCarryoverFraction(liquidCarryoverFraction);
+      sep.setGasCarryunderFraction(gasCarryunderFraction);
+
+      if (oilInGas > 0) {
+        sep.setEntrainment(oilInGas, oilInGasSpec, specifiedStream, "oil", "gas");
+      }
+      if (waterInGas > 0) {
+        sep.setEntrainment(waterInGas, waterInGasSpec, specifiedStream, "aqueous", "gas");
+      }
+      if (gasInLiquid > 0) {
+        sep.setEntrainment(gasInLiquid, gasInLiquidSpec, specifiedStream, "gas", "liquid");
+      }
+
+      if (heatInput != 0.0) {
+        sep.setHeatInput(heatInput, "W");
+      }
+
+      sep.setCalculateSteadyState(calculateSteadyState);
+
+      return sep;
+    }
   }
 }

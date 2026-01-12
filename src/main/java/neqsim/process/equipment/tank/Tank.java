@@ -8,6 +8,7 @@ import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.tank.TankMechanicalDesign;
 import neqsim.process.util.monitor.TankResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -28,6 +29,9 @@ public class Tank extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Tank.class);
+
+  /** Mechanical design for the tank. */
+  private TankMechanicalDesign mechanicalDesign;
 
   SystemInterface thermoSystem;
   SystemInterface gasSystem;
@@ -63,6 +67,7 @@ public class Tank extends ProcessEquipmentBaseClass {
   public Tank(String name) {
     super(name);
     setCalculateSteadyState(true);
+    initMechanicalDesign();
   }
 
   /**
@@ -76,6 +81,18 @@ public class Tank extends ProcessEquipmentBaseClass {
   public Tank(String name, StreamInterface inletStream) {
     this(name);
     setInletStream(inletStream);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public TankMechanicalDesign getMechanicalDesign() {
+    return mechanicalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initMechanicalDesign() {
+    mechanicalDesign = new TankMechanicalDesign(this);
   }
 
   /**
@@ -474,7 +491,8 @@ public class Tank extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().create().toJson(new TankResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(new TankResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -485,6 +503,59 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
     TankResponse res = new TankResponse(this);
     res.applyConfig(cfg);
-    return new GsonBuilder().create().toJson(res);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Validates the tank setup before execution. Checks that:
+   * <ul>
+   * <li>Equipment has a valid name</li>
+   * <li>At least one inlet stream is connected</li>
+   * <li>Tank volume is positive</li>
+   * <li>Liquid level is within valid range</li>
+   * </ul>
+   *
+   * @return validation result with errors and warnings
+   */
+  @Override
+  public neqsim.util.validation.ValidationResult validateSetup() {
+    neqsim.util.validation.ValidationResult result =
+        new neqsim.util.validation.ValidationResult(getName());
+
+    // Check: Equipment has a valid name
+    if (getName() == null || getName().trim().isEmpty()) {
+      result.addError("equipment", "Tank has no name",
+          "Set tank name in constructor: new Tank(\"MyTank\")");
+    }
+
+    // Check: At least one inlet stream is connected (via addStream or setInletStream)
+    // thermoSystem is set when setInletStream() is called
+    if (thermoSystem == null && numberOfInputStreams == 0) {
+      result.addError("stream", "No inlet stream connected",
+          "Connect inlet stream: tank.setInletStream(stream) or tank.addStream(stream)");
+    }
+
+    // Check: Tank volume is positive
+    if (volume <= 0) {
+      result.addError("dimensions", "Tank volume must be positive: " + volume + " m3",
+          "Set positive volume: tank.setVolume(100.0)");
+    }
+
+    // Check: Liquid level is in valid range (0-1)
+    if (liquidLevel < 0 || liquidLevel > 1) {
+      result.addWarning("level", "Liquid level outside 0-1 range: " + liquidLevel,
+          "Liquid level should be between 0 and 1 (fraction)");
+    }
+
+    // Check: Efficiency is in valid range
+    if (efficiency < 0 || efficiency > 1) {
+      result.addError("efficiency", "Efficiency must be between 0 and 1: " + efficiency,
+          "Set valid efficiency value");
+    }
+
+    return result;
   }
 }

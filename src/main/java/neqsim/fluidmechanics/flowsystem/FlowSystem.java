@@ -3,6 +3,7 @@ package neqsim.fluidmechanics.flowsystem;
 import java.util.UUID;
 import neqsim.fluidmechanics.flowleg.FlowLegInterface;
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
+import neqsim.fluidmechanics.flowsolver.AdvectionScheme;
 import neqsim.fluidmechanics.flowsolver.FlowSolverInterface;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface;
 import neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.FlowSystemVisualizationInterface;
@@ -30,7 +31,8 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   protected FlowNodeInterface[] flowNode;
   protected FlowLegInterface[] flowLeg;
   protected String initFlowPattern = "annular";
-  protected FlowSystemVisualizationInterface display;
+  /** Display interface for visualization. Marked transient for serialization. */
+  protected transient FlowSystemVisualizationInterface display;
   protected TimeSeries timeSeries = new TimeSeries();
   protected GeometryDefinitionInterface[] equipmentGeometry;
   protected SystemInterface thermoSystem;
@@ -66,6 +68,9 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   boolean equilibriumHeatTransfer = true;
 
   boolean equilibriumMassTransfer = false;
+
+  /** Advection scheme for compositional tracking. */
+  protected AdvectionScheme advectionScheme = AdvectionScheme.FIRST_ORDER_UPWIND;
 
   /**
    * <p>
@@ -457,5 +462,17 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
     } else {
       setNonEquilibriumHeatTransferModel(0, getTotalNumberOfNodes());
     }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setAdvectionScheme(AdvectionScheme scheme) {
+    this.advectionScheme = scheme;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public AdvectionScheme getAdvectionScheme() {
+    return advectionScheme;
   }
 }

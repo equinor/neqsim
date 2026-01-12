@@ -448,13 +448,40 @@ public class DifferentiableFlash implements Serializable {
         return system.getEntropy("J/molK");
       case "cp":
         return system.getCp("J/molK");
+      case "cv":
+        return system.getCv("J/molK");
       case "compressibility":
       case "z":
         return system.getZ();
       case "molarvolume":
         return system.getMolarVolume();
+      case "molarmass":
+        return system.getMolarMass("kg/mol");
+      case "viscosity":
+        return system.getViscosity("kg/msec");
+      case "thermalconductivity":
+        return system.getThermalConductivity("W/mK");
+      case "soundspeed":
+        return system.getSoundSpeed("m/s");
+      case "joulethomson":
+        return system.getJouleThomsonCoefficient("K/bar");
+      case "kappa":
+      case "cpcvratio":
+        return system.getKappa();
+      case "gamma":
+        return system.getGamma();
+      case "gibbsenergy":
+        return system.getGibbsEnergy();
+      case "internalenergy":
+        return system.getInternalEnergy("J/mol");
+      case "beta":
+      case "vaporfraction":
+        return system.getBeta();
       default:
-        throw new IllegalArgumentException("Unknown property: " + propertyName);
+        throw new IllegalArgumentException("Unknown property: " + propertyName
+            + ". Supported: density, enthalpy, entropy, cp, cv, compressibility, molarvolume, "
+            + "molarmass, viscosity, thermalconductivity, soundspeed, joulethomson, kappa, "
+            + "gamma, gibbsenergy, internalenergy, beta");
     }
   }
 
@@ -466,12 +493,31 @@ public class DifferentiableFlash implements Serializable {
         return "J/mol";
       case "entropy":
       case "cp":
+      case "cv":
         return "J/mol/K";
       case "compressibility":
       case "z":
+      case "kappa":
+      case "cpcvratio":
+      case "gamma":
+      case "beta":
+      case "vaporfraction":
         return "-";
       case "molarvolume":
         return "m3/mol";
+      case "molarmass":
+        return "kg/mol";
+      case "viscosity":
+        return "kg/m/s";
+      case "thermalconductivity":
+        return "W/m/K";
+      case "soundspeed":
+        return "m/s";
+      case "joulethomson":
+        return "K/bar";
+      case "gibbsenergy":
+      case "internalenergy":
+        return "J/mol";
       default:
         return "";
     }

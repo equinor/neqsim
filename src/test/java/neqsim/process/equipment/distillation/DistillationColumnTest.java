@@ -3,6 +3,7 @@ package neqsim.process.equipment.distillation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -11,6 +12,7 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
+@Tag("slow")
 public class DistillationColumnTest {
   /**
    * @throws java.lang.Exception
@@ -500,5 +502,60 @@ public class DistillationColumnTest {
     column.run();
 
     assertEquals(true, column.solved());
+  }
+
+  /**
+   * Test Builder pattern creates equivalent column to constructor approach.
+   */
+  @Test
+  public void testBuilderPattern() {
+    SystemInterface simpleSystem = new SystemSrkEos(298.15, 5.0);
+    simpleSystem.addComponent("methane", 1.0);
+    simpleSystem.addComponent("ethane", 1.0);
+    simpleSystem.createDatabase(true);
+    simpleSystem.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", simpleSystem);
+    feed.run();
+
+    // Build column using builder pattern
+    DistillationColumn column =
+        DistillationColumn.builder("TestColumn").numberOfTrays(5).withCondenserAndReboiler()
+            .topPressure(5.0, "bara").bottomPressure(5.5, "bara").temperatureTolerance(0.01)
+            .massBalanceTolerance(0.05).maxIterations(100).dampedSubstitution()
+            .relaxationFactor(0.5).internalDiameter(1.5).addFeedStream(feed, 3).build();
+
+    // Verify configuration was applied
+    assertEquals("TestColumn", column.getName());
+    assertEquals(7, column.getTrays().size()); // 5 simple + 1 reboiler + 1 condenser
+    assertTrue(column.getReboiler() != null);
+    assertTrue(column.getCondenser() != null);
+
+    // Run and verify it works
+    column.run();
+    assertTrue(column.solved());
+  }
+
+  /**
+   * Test Builder with inside-out solver.
+   */
+  @Test
+  public void testBuilderWithInsideOutSolver() {
+    SystemInterface simpleSystem = new SystemSrkEos(298.15, 5.0);
+    simpleSystem.addComponent("methane", 1.0);
+    simpleSystem.addComponent("ethane", 1.0);
+    simpleSystem.createDatabase(true);
+    simpleSystem.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", simpleSystem);
+    feed.run();
+
+    DistillationColumn column =
+        DistillationColumn.builder("InsideOutColumn").numberOfTrays(3).withCondenserAndReboiler()
+            .pressure(5.0, "bara").insideOut().tolerance(0.01).addFeedStream(feed, 2).build();
+
+    // Verify inside-out solver is configured (column uses INSIDE_OUT internally)
+    column.run();
+    assertTrue(column.solved());
   }
 }

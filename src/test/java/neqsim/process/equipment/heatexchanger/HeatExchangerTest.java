@@ -113,4 +113,67 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
 
     assertEquals(15780.77130, heatExchanger1.getUAvalue(), 1e-3);
   }
+
+  /**
+   * Test the Builder pattern for creating heat exchangers.
+   */
+  @Test
+  void testBuilderPattern() {
+    Stream hotStream = new Stream("HotStream", testSystem);
+    hotStream.setTemperature(100.0, "C");
+    hotStream.setFlowRate(1000.0, "kg/hr");
+    hotStream.run();
+
+    neqsim.thermo.system.SystemInterface coldSystem =
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 20.00);
+    coldSystem.addComponent("methane", 100.0);
+    coldSystem.addComponent("ethane", 50.0);
+    coldSystem.setMixingRule(2);
+
+    Stream coldStream = new Stream("ColdStream", coldSystem);
+    coldStream.setTemperature(20.0, "C");
+    coldStream.setFlowRate(500.0, "kg/hr");
+    coldStream.run();
+
+    HeatExchanger hx = HeatExchanger.builder("E-100").hotStream(hotStream).coldStream(coldStream)
+        .UAvalue(2000.0).flowArrangement("counterflow").guessOutTemperature(60.0, "C").build();
+
+    hx.run();
+
+    assertEquals("E-100", hx.getName());
+    assertEquals(2000.0, hx.getUAvalue(), 0.001);
+    // Verify heat exchange occurred
+    assertEquals(hotStream.getTemperature("C") > hx.getOutStream(0).getTemperature("C"), true);
+    assertEquals(coldStream.getTemperature("C") < hx.getOutStream(1).getTemperature("C"), true);
+  }
+
+  /**
+   * Test the Builder pattern with deltaT specification.
+   */
+  @Test
+  void testBuilderWithDeltaT() {
+    Stream hotStream = new Stream("HotStream", testSystem);
+    hotStream.setTemperature(80.0, "C");
+    hotStream.setFlowRate(800.0, "kg/hr");
+    hotStream.run();
+
+    neqsim.thermo.system.SystemInterface coldSystem =
+        new neqsim.thermo.system.SystemSrkEos((273.15 + 15.0), 20.00);
+    coldSystem.addComponent("methane", 80.0);
+    coldSystem.setMixingRule(2);
+
+    Stream coldStream = new Stream("ColdStream", coldSystem);
+    coldStream.setTemperature(15.0, "C");
+    coldStream.setFlowRate(600.0, "kg/hr");
+    coldStream.run();
+
+    HeatExchanger hx = HeatExchanger.builder("E-101").hotStream(hotStream).coldStream(coldStream)
+        .deltaT(5.0).build();
+
+    hx.run();
+
+    assertEquals("E-101", hx.getName());
+    // DeltaT mode sets minimum approach temperature
+  }
 }
+

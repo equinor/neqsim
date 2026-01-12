@@ -80,9 +80,11 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
         }
       }
     }
+    int solveXAttempts = 0;
     do {
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
-    } while (!solveX());
+      solveXAttempts++;
+    } while (!solveX() && solveXAttempts < 50);
 
     // System.out.println("test1 " + dFCPAdT());
     if (initType > 1) {

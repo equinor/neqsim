@@ -380,4 +380,33 @@ public interface FlowSystemInterface {
    * @param test a boolean
    */
   public void setEquilibriumHeatTransfer(boolean test);
+
+  /**
+   * <p>
+   * Set the advection scheme for compositional tracking.
+   * </p>
+   *
+   * <p>
+   * Different schemes offer trade-offs between accuracy and stability. Higher-order schemes reduce
+   * numerical dispersion but may require smaller time steps. TVD schemes provide a good balance by
+   * using flux limiters to prevent oscillations.
+   * </p>
+   *
+   * @param scheme the advection scheme to use
+   * @see neqsim.fluidmechanics.flowsolver.AdvectionScheme
+   */
+  public default void setAdvectionScheme(neqsim.fluidmechanics.flowsolver.AdvectionScheme scheme) {
+    // Default implementation - subclasses should override
+  }
+
+  /**
+   * <p>
+   * Get the current advection scheme for compositional tracking.
+   * </p>
+   *
+   * @return the current advection scheme
+   */
+  public default neqsim.fluidmechanics.flowsolver.AdvectionScheme getAdvectionScheme() {
+    return neqsim.fluidmechanics.flowsolver.AdvectionScheme.FIRST_ORDER_UPWIND;
+  }
 }

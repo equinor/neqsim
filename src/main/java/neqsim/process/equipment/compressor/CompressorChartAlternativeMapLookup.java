@@ -201,6 +201,14 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
       double[][] flowPolyEff, double[][] polyEff) {
+    this.chartConditions = chartConditions;
+    // Store arrays for base class methods (power, pressure ratio calculations)
+    this.speed = speed;
+    this.flow = flow;
+    this.head = head;
+    this.polytropicEfficiency = polyEff;
+    this.flowPolytropicEfficiency = flowPolyEff;
+
     for (int i = 0; i < speed.length; i++) {
       CompressorCurve curve =
           new CompressorCurve(speed[i], flow[i], head[i], flowPolyEff[i], polyEff[i]);
@@ -383,26 +391,126 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart
   /** {@inheritDoc} */
   @Override
   public int getSpeed(double flow, double head) {
-    int iter = 1;
-    double error = 1.0;
-    double derrordspeed = 1.0;
-    double newspeed = referenceSpeed;
-    double newhead = 0.0;
-    double oldspeed = newspeed + 1.0;
+    return (int) Math.round(getSpeedValue(flow, head));
+  }
+
+  /**
+   * Calculate the speed required to achieve a given head at a given flow rate.
+   *
+   * <p>
+   * This method uses a robust Newton-Raphson algorithm with fan-law based initial guess, bounds
+   * protection, damped updates, and bisection fallback for reliable convergence both within and
+   * outside the defined speed curve range.
+   * </p>
+   *
+   * @param flow the volumetric flow rate in m³/hr
+   * @param head the required polytropic head in the chart's head unit (kJ/kg or meter)
+   * @return the calculated speed in RPM (as double for precision)
+   */
+  public double getSpeedValue(double flow, double head) {
+    // Get speed bounds from chart
+    double minSpeed = getMinSpeedCurve();
+    double maxSpeed = getMaxSpeedCurve();
+
+    // Fallback bounds if not properly set
+    if (minSpeed <= 0) {
+      minSpeed = referenceSpeed * 0.5;
+    }
+    if (maxSpeed <= 0 || maxSpeed <= minSpeed) {
+      maxSpeed = referenceSpeed * 1.5;
+    }
+
+    // Calculate initial guess using fan law: H ∝ N²
+    double refHead = getPolytropicHead(flow, referenceSpeed);
+    double initialGuess;
+    if (refHead > 0 && head > 0) {
+      initialGuess = referenceSpeed * Math.sqrt(head / refHead);
+    } else {
+      initialGuess = referenceSpeed;
+    }
+
+    // Allow extrapolation beyond curve range (50% beyond)
+    double speedLowerBound = minSpeed * 0.5;
+    double speedUpperBound = maxSpeed * 1.5;
+    if (speedLowerBound <= 0) {
+      speedLowerBound = 100;
+    }
+
+    // Clamp initial guess
+    double newspeed = Math.max(speedLowerBound, Math.min(speedUpperBound, initialGuess));
+
+    // Newton-Raphson with damping
+    int maxIter = 50;
+    double tolerance = 1e-6;
+    double dampingFactor = 0.7;
+
+    double oldspeed = newspeed * 1.01;
     double oldhead = getPolytropicHead(flow, oldspeed);
     double olderror = oldhead - head;
-    do {
-      iter++;
-      newhead = getPolytropicHead(flow, newspeed);
-      error = newhead - head;
-      derrordspeed = (error - olderror) / (newspeed - oldspeed);
-      newspeed -= error / derrordspeed;
-      // System.out.println("speed " + newspeed);
-    } while (Math.abs(error) > 1e-6 && iter < 100);
 
-    // change speed to minimize
-    // Math.abs(head - reducedHeadFitterFunc.value(flow / speed) * speed * speed);
-    return (int) Math.round(newspeed);
+    for (int iter = 0; iter < maxIter; iter++) {
+      double newhead = getPolytropicHead(flow, newspeed);
+      double error = newhead - head;
+
+      if (Math.abs(error) < tolerance) {
+        return newspeed;
+      }
+
+      double derrordspeed = (error - olderror) / (newspeed - oldspeed);
+
+      // Protect against zero gradient
+      if (Math.abs(derrordspeed) < 1e-10) {
+        derrordspeed = 2.0 * newhead / newspeed; // Fan law derivative
+        if (Math.abs(derrordspeed) < 1e-10) {
+          break;
+        }
+      }
+
+      // Damped Newton update with step limiting
+      double speedUpdate = dampingFactor * error / derrordspeed;
+      double maxStep = 0.3 * newspeed;
+      speedUpdate = Math.max(-maxStep, Math.min(maxStep, speedUpdate));
+
+      oldspeed = newspeed;
+      olderror = error;
+
+      newspeed = Math.max(speedLowerBound, Math.min(speedUpperBound, newspeed - speedUpdate));
+
+      if (Math.abs(newspeed - oldspeed) < 1e-10) {
+        break;
+      }
+    }
+
+    // Bisection fallback
+    double headAtLower = getPolytropicHead(flow, speedLowerBound);
+    double headAtUpper = getPolytropicHead(flow, speedUpperBound);
+
+    if (head < headAtLower && head < headAtUpper) {
+      speedLowerBound = speedLowerBound * 0.5;
+    } else if (head > headAtLower && head > headAtUpper) {
+      speedUpperBound = speedUpperBound * 2.0;
+    }
+
+    for (int iter = 0; iter < 50; iter++) {
+      double midspeed = (speedLowerBound + speedUpperBound) / 2.0;
+      double midhead = getPolytropicHead(flow, midspeed);
+
+      if (Math.abs(midhead - head) < tolerance) {
+        return midspeed;
+      }
+
+      if (midhead < head) {
+        speedLowerBound = midspeed;
+      } else {
+        speedUpperBound = midspeed;
+      }
+
+      if (speedUpperBound - speedLowerBound < 1.0) {
+        return midspeed;
+      }
+    }
+
+    return (speedLowerBound + speedUpperBound) / 2.0;
   }
 
   /**
@@ -615,6 +723,8 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart
   public void setHeadUnit(String headUnit) {
     if (headUnit.equals("meter") || headUnit.equals("kJ/kg")) {
       this.headUnit = headUnit;
+      // Also update base class headUnit for power/pressure ratio calculations
+      super.setHeadUnit(headUnit);
     } else {
       throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
           "setHeadUnit", "headUnit", "does not support value " + headUnit));
@@ -688,13 +798,77 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart
   /** {@inheritDoc} */
   @Override
   public double getFlow(double head, double speed, double guessFlow) {
-    return 0.0;
+    // Use Newton-Raphson iteration to find flow that gives the specified head at the given speed
+    if (head <= 0.0 || speed <= 0.0) {
+      return guessFlow > 0.0 ? guessFlow : 1.0;
+    }
+
+    int maxIter = 100;
+    double tolerance = 1e-6;
+    double newflow = guessFlow > 0.0 ? guessFlow : 1000.0; // Start with guess or default
+    double oldflow = newflow * 1.1;
+    double oldhead = getPolytropicHead(oldflow, speed);
+    double olderror = oldhead - head;
+
+    for (int iter = 0; iter < maxIter; iter++) {
+      double newhead = getPolytropicHead(newflow, speed);
+      double efficiency = getPolytropicEfficiency(newflow, speed);
+      if (efficiency > 0.0) {
+        newhead = newhead / (efficiency / 100.0);
+      }
+      double error = newhead - head;
+
+      if (Math.abs(error) < tolerance) {
+        return Math.max(0.0, newflow);
+      }
+
+      double derrordflow = (error - olderror) / (newflow - oldflow);
+      if (Math.abs(derrordflow) < 1e-10) {
+        break; // Avoid division by zero
+      }
+
+      oldflow = newflow;
+      olderror = error;
+      newflow -= error / derrordflow;
+
+      // Prevent negative flow during iteration
+      if (newflow < 0.0) {
+        newflow = guessFlow * 0.1;
+      }
+    }
+
+    // Return best estimate, ensuring non-negative
+    return newflow > 0.0 ? newflow : (guessFlow > 0.0 ? guessFlow : 1.0);
   }
 
   /** {@inheritDoc} */
   @Override
   public double getMinSpeedCurve() {
-    return 0;
+    if (chartSpeeds == null || chartSpeeds.isEmpty()) {
+      return referenceSpeed * 0.7; // Default fallback
+    }
+    double minSpeed = Double.MAX_VALUE;
+    for (Double s : chartSpeeds) {
+      if (s < minSpeed) {
+        minSpeed = s;
+      }
+    }
+    return minSpeed;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxSpeedCurve() {
+    if (chartSpeeds == null || chartSpeeds.isEmpty()) {
+      return referenceSpeed * 1.05; // Default fallback
+    }
+    double maxSpeed = Double.MIN_VALUE;
+    for (Double s : chartSpeeds) {
+      if (s > maxSpeed) {
+        maxSpeed = s;
+      }
+    }
+    return maxSpeed;
   }
 
   /**
@@ -724,4 +898,93 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart
   public ArrayList<CompressorCurve> getChartValues() {
     return chartValues;
   }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns the speed values from the chartValues curves.
+   * </p>
+   */
+  @Override
+  public double[] getSpeeds() {
+    if (chartValues == null || chartValues.isEmpty()) {
+      return null;
+    }
+    double[] speeds = new double[chartValues.size()];
+    for (int i = 0; i < chartValues.size(); i++) {
+      speeds[i] = chartValues.get(i).speed;
+    }
+    return speeds;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns the flow values from the chartValues curves.
+   * </p>
+   */
+  @Override
+  public double[][] getFlows() {
+    if (chartValues == null || chartValues.isEmpty()) {
+      return null;
+    }
+    double[][] flows = new double[chartValues.size()][];
+    for (int i = 0; i < chartValues.size(); i++) {
+      flows[i] = chartValues.get(i).flow.clone();
+    }
+    return flows;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns the head values from the chartValues curves.
+   * </p>
+   */
+  @Override
+  public double[][] getHeads() {
+    if (chartValues == null || chartValues.isEmpty()) {
+      return null;
+    }
+    double[][] heads = new double[chartValues.size()][];
+    for (int i = 0; i < chartValues.size(); i++) {
+      heads[i] = chartValues.get(i).head.clone();
+    }
+    return heads;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns the polytropic efficiency values from the chartValues curves.
+   * </p>
+   */
+  @Override
+  public double[][] getPolytropicEfficiencies() {
+    if (chartValues == null || chartValues.isEmpty()) {
+      return null;
+    }
+    double[][] effs = new double[chartValues.size()][];
+    for (int i = 0; i < chartValues.size(); i++) {
+      effs[i] = chartValues.get(i).polytropicEfficiency.clone();
+    }
+    return effs;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns the chart conditions.
+   * </p>
+   */
+  @Override
+  public double[] getChartConditions() {
+    return chartConditions;
+  }
 }
+

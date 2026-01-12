@@ -1,0 +1,117 @@
+# NeqSim Documentation - GitHub Pages Configuration
+# See: https://docs.github.com/en/pages/setting-up-a-github-pages-site-with-jekyll
+
+# Site settings
+title: NeqSim Documentation
+description: >-
+  Comprehensive Java library for thermodynamic, physical property, and process simulation.
+  NeqSim provides tools for PVT analysis, phase equilibria, transport properties, and
+  full process simulation.
+baseurl: "/neqsim" # the subpath of your site, e.g. /neqsim for https://equinor.github.io/neqsim
+url: "https://equinor.github.io" # the base hostname & protocol for your site
+
+# Repository information
+repository: equinor/neqsim
+
+# Build settings
+theme: jekyll-theme-cayman
+markdown: kramdown
+highlighter: rouge
+
+# Kramdown settings for better code highlighting and math support
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: 'highlight'
+  auto_ids: true
+  hard_wrap: false
+  math_engine: null  # Disable kramdown's math engine, use KaTeX via JavaScript instead
+
+# Include these file extensions
+include:
+  - _pages
+  - _layouts
+  - _includes
+  - "*.md"
+  - "*.html"
+  - "*.json"
+  - search-index.json
+
+# Exclude from processing
+exclude:
+  - generate_manual.py
+  - convert_notebooks.py
+  - "*.py"
+  - __pycache__
+  - "*.pyc"
+  - Gemfile
+  - Gemfile.lock
+  - "*.ipynb"  # Jupyter notebooks - use converted .md versions instead
+
+# Navigation structure (for themes that support it)
+nav:
+  - title: Home
+    url: /
+  - title: Getting Started
+    url: /wiki/getting_started
+  - title: Thermodynamics
+    url: /thermo/
+  - title: Process Simulation
+    url: /process/
+  - title: Examples
+    url: /examples/
+  - title: Reference Manual
+    url: /manual/neqsim_reference_manual.html
+  - title: API Reference
+    url: /REFERENCE_MANUAL_INDEX
+
+# Collections for organizing documentation
+collections:
+  wiki:
+    output: true
+    permalink: /wiki/:name
+
+# Defaults - Apply default front matter to all markdown files
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: "**/*.md"
+    values:
+      layout: "default"
+  - scope:
+      path: "wiki"
+    values:
+      layout: "default"
+  - scope:
+      path: "thermo"
+    values:
+      layout: "default"
+  - scope:
+      path: "process"
+    values:
+      layout: "default"
+  - scope:
+      path: "safety"
+    values:
+      layout: "default"
+  - scope:
+      path: "examples"
+    values:
+      layout: "default"
+
+# Enable GitHub metadata
+plugins:
+  - jekyll-github-metadata
+  - jekyll-relative-links
+  - jekyll-seo-tag
+  - jekyll-optional-front-matter
+
+# Relative links plugin settings
+relative_links:
+  enabled: true
+  collections: true

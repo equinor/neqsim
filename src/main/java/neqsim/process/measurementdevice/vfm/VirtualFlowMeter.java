@@ -240,6 +240,11 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
 
   /**
    * Calculates uncertainty using simplified error propagation.
+   *
+   * @param rate phase flow rate in Sm3/d
+   * @param pressureUncert relative pressure uncertainty (fraction)
+   * @param tempUncert absolute temperature uncertainty (K)
+   * @return one standard deviation of the flow-rate estimate
    */
   private double calculateUncertainty(double rate, double pressureUncert, double tempUncert) {
     // Simplified uncertainty model: combine relative uncertainties
@@ -250,6 +255,10 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
 
   /**
    * Determines result quality based on operating conditions and calibration.
+   *
+   * @param pressure current operating pressure in bara
+   * @param temperature current operating temperature in Kelvin
+   * @return quality indicator based on calibration range and age
    */
   private VFMResult.Quality determineQuality(double pressure, double temperature) {
     if (calibrationHistory.isEmpty()) {

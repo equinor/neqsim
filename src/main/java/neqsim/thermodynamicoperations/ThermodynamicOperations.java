@@ -26,16 +26,21 @@ import neqsim.thermodynamicoperations.flashops.PSFlashGERG2008;
 import neqsim.thermodynamicoperations.flashops.PSFlashLeachman;
 import neqsim.thermodynamicoperations.flashops.PSFlashVega;
 import neqsim.thermodynamicoperations.flashops.PSflashSingleComp;
+import neqsim.thermodynamicoperations.flashops.PVflash;
 import neqsim.thermodynamicoperations.flashops.PVrefluxflash;
 import neqsim.thermodynamicoperations.flashops.SaturateWithWater;
 import neqsim.thermodynamicoperations.flashops.SolidFlash1;
+import neqsim.thermodynamicoperations.flashops.THflash;
 import neqsim.thermodynamicoperations.flashops.TPgradientFlash;
 import neqsim.thermodynamicoperations.flashops.TSFlash;
+import neqsim.thermodynamicoperations.flashops.TUflash;
 import neqsim.thermodynamicoperations.flashops.TVflash;
 import neqsim.thermodynamicoperations.flashops.VHflashQfunc;
 import neqsim.thermodynamicoperations.flashops.VUflashSingleComp;
 import neqsim.thermodynamicoperations.flashops.dTPflash;
 import neqsim.thermodynamicoperations.flashops.saturationops.AddIonToScaleSaturation;
+import neqsim.thermodynamicoperations.flashops.saturationops.AsphalteneOnsetPressureFlash;
+import neqsim.thermodynamicoperations.flashops.saturationops.AsphalteneOnsetTemperatureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlash;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointPressureFlashDer;
 import neqsim.thermodynamicoperations.flashops.saturationops.BubblePointTemperatureNoDer;
@@ -250,6 +255,96 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void TPflash(boolean checkForSolids) {
     operation = new neqsim.thermodynamicoperations.flashops.TPflash(system, checkForSolids);
+    getOperation().run();
+  }
+
+  /**
+   * Perform a TP flash with hydrate phase equilibrium calculation.
+   *
+   * <p>
+   * This method calculates the equilibrium phases at given temperature and pressure, including the
+   * hydrate phase if conditions favor hydrate formation. The hydrate fraction and composition are
+   * calculated using the CPA EOS approach (Statoil/Equinor model).
+   * </p>
+   *
+   * <p>
+   * After calling this method, the system will contain the hydrate phase (if formed) with correct
+   * composition based on cavity occupancy calculations. The hydrate phase will appear in
+   * prettyPrint() output with the header "HYDRATE".
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   *
+   * <pre>
+   * SystemInterface fluid = new SystemSrkCPAstatoil(273.15, 50.0);
+   * fluid.addComponent("methane", 0.9);
+   * fluid.addComponent("water", 0.1);
+   * fluid.setMixingRule(10); // CPA mixing rule
+   *
+   * ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+   * ops.hydrateTPflash();
+   *
+   * fluid.prettyPrint(); // Shows GAS, AQUEOUS, HYDRATE columns
+   * double hydrateFraction = fluid.getHydrateFraction();
+   * </pre>
+   *
+   * @see neqsim.thermodynamicoperations.flashops.TPHydrateFlash
+   */
+  public void hydrateTPflash() {
+    operation = new neqsim.thermodynamicoperations.flashops.TPHydrateFlash(system);
+    getOperation().run();
+  }
+
+  /**
+   * Perform a TP flash with hydrate phase equilibrium calculation.
+   *
+   * <p>
+   * This method calculates the equilibrium phases at given temperature and pressure, including the
+   * hydrate phase if conditions favor hydrate formation.
+   * </p>
+   *
+   * @param checkForSolids Set true to also check for solid phases (ice, wax, etc.)
+   * @see #hydrateTPflash()
+   */
+  public void hydrateTPflash(boolean checkForSolids) {
+    operation = new neqsim.thermodynamicoperations.flashops.TPHydrateFlash(system, checkForSolids);
+    getOperation().run();
+  }
+
+  /**
+   * Perform a TP flash targeting gas-hydrate equilibrium without aqueous phase.
+   *
+   * <p>
+   * This method calculates equilibrium between gas and hydrate phases, attempting to eliminate the
+   * aqueous phase when water content is low enough. This is useful for modeling scenarios where
+   * trace water in gas is entirely consumed by hydrate formation.
+   * </p>
+   *
+   * <p>
+   * Example usage for gas-hydrate equilibrium:
+   * </p>
+   *
+   * <pre>
+   * SystemInterface fluid = new SystemSrkCPAstatoil(273.15 - 10.0, 200.0);
+   * fluid.addComponent("methane", 0.9999);
+   * fluid.addComponent("water", 0.0001); // 100 ppm water
+   * fluid.setMixingRule(10);
+   *
+   * ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+   * ops.gasHydrateTPflash(); // Targets gas-hydrate equilibrium
+   *
+   * fluid.prettyPrint(); // May show only GAS and HYDRATE phases
+   * </pre>
+   *
+   * @see #hydrateTPflash()
+   */
+  public void gasHydrateTPflash() {
+    neqsim.thermodynamicoperations.flashops.TPHydrateFlash hydrateFlash =
+        new neqsim.thermodynamicoperations.flashops.TPHydrateFlash(system);
+    hydrateFlash.setGasHydrateOnlyMode(true);
+    operation = hydrateFlash;
     getOperation().run();
   }
 
@@ -728,6 +823,123 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   public void TVflash(double Vspec) {
     operation = new TVflash(system, Vspec);
     getOperation().run();
+  }
+
+  /**
+   * Performs a Temperature-Enthalpy (TH) flash calculation.
+   *
+   * <p>
+   * Given temperature T and enthalpy H, solves for pressure P. Uses Newton iteration with the
+   * thermodynamic derivative (∂H/∂P)_T.
+   * </p>
+   *
+   * @param Hspec specified enthalpy in J
+   */
+  public void THflash(double Hspec) {
+    operation = new THflash(system, Hspec);
+    getOperation().run();
+  }
+
+  /**
+   * Performs a Temperature-Enthalpy (TH) flash calculation with unit specification.
+   *
+   * @param Hspec specified enthalpy
+   * @param unit Supported units are J, J/mol, J/kg, kJ/kg
+   */
+  public void THflash(double Hspec, String unit) {
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "J":
+        conversionFactor = 1.0;
+        break;
+      case "J/mol":
+        conversionFactor = 1.0 / system.getTotalNumberOfMoles();
+        break;
+      case "J/kg":
+        conversionFactor = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
+        break;
+      case "kJ/kg":
+        conversionFactor = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+        break;
+      default:
+        break;
+    }
+    THflash(Hspec / conversionFactor);
+  }
+
+  /**
+   * Performs a Temperature-Internal Energy (TU) flash calculation.
+   *
+   * <p>
+   * Given temperature T and internal energy U, solves for pressure P. Uses Newton iteration with
+   * the thermodynamic derivative (∂U/∂P)_T.
+   * </p>
+   *
+   * @param Uspec specified internal energy in J
+   */
+  public void TUflash(double Uspec) {
+    operation = new TUflash(system, Uspec);
+    getOperation().run();
+  }
+
+  /**
+   * Performs a Temperature-Internal Energy (TU) flash calculation with unit specification.
+   *
+   * @param Uspec specified internal energy
+   * @param unit Supported units are J, J/mol, J/kg, kJ/kg
+   */
+  public void TUflash(double Uspec, String unit) {
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "J":
+        conversionFactor = 1.0;
+        break;
+      case "J/mol":
+        conversionFactor = 1.0 / system.getTotalNumberOfMoles();
+        break;
+      case "J/kg":
+        conversionFactor = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
+        break;
+      case "kJ/kg":
+        conversionFactor = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+        break;
+      default:
+        break;
+    }
+    TUflash(Uspec / conversionFactor);
+  }
+
+  /**
+   * Performs a Pressure-Volume (PV) flash calculation.
+   *
+   * <p>
+   * Given pressure P and volume V, solves for temperature T. Uses Newton iteration with the
+   * thermodynamic derivative (∂V/∂T)_P.
+   * </p>
+   *
+   * @param Vspec specified volume in m³
+   */
+  public void PVflash(double Vspec) {
+    operation = new PVflash(system, Vspec);
+    getOperation().run();
+  }
+
+  /**
+   * Performs a Pressure-Volume (PV) flash calculation with unit specification.
+   *
+   * @param Vspec specified volume
+   * @param unit Supported units are m3
+   */
+  public void PVflash(double Vspec, String unit) {
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "m3":
+        conversionFactor = 1.0e5;
+        break;
+      default:
+        break;
+    }
+    PVflash(Vspec * conversionFactor);
   }
 
   /**
@@ -2349,6 +2561,75 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     }
 
     return new CalculationResult(fluidProperties, calculationError);
+  }
+
+  // ==================== ASPHALTENE STABILITY METHODS ====================
+
+  /**
+   * Calculates the asphaltene onset pressure at the current system temperature.
+   *
+   * <p>
+   * The onset pressure is where asphaltenes begin to precipitate from the oil phase. This typically
+   * occurs during pressure depletion near the bubble point.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+   * double onsetP = ops.asphalteneOnsetPressure();
+   * </pre>
+   *
+   * @return onset pressure in bara, or NaN if no onset found
+   */
+  public double asphalteneOnsetPressure() {
+    AsphalteneOnsetPressureFlash flash =
+        new AsphalteneOnsetPressureFlash(system, system.getPressure(), 1.0);
+    flash.run();
+    return flash.getOnsetPressure();
+  }
+
+  /**
+   * Calculates the asphaltene onset pressure with specified pressure range.
+   *
+   * @param startPressure starting pressure for search (bara)
+   * @param minPressure minimum pressure to search to (bara)
+   * @return onset pressure in bara, or NaN if no onset found
+   */
+  public double asphalteneOnsetPressure(double startPressure, double minPressure) {
+    AsphalteneOnsetPressureFlash flash =
+        new AsphalteneOnsetPressureFlash(system, startPressure, minPressure);
+    flash.run();
+    return flash.getOnsetPressure();
+  }
+
+  /**
+   * Calculates the asphaltene onset temperature at the current system pressure.
+   *
+   * @return onset temperature in Kelvin, or NaN if no onset found
+   */
+  public double asphalteneOnsetTemperature() {
+    AsphalteneOnsetTemperatureFlash flash = new AsphalteneOnsetTemperatureFlash(system);
+    flash.run();
+    return flash.getOnsetTemperature();
+  }
+
+  /**
+   * Calculates the asphaltene onset temperature with specified temperature range.
+   *
+   * @param startTemperature starting temperature for search (K)
+   * @param minTemperature minimum temperature to search to (K)
+   * @param maxTemperature maximum temperature to search to (K)
+   * @return onset temperature in Kelvin, or NaN if no onset found
+   */
+  public double asphalteneOnsetTemperature(double startTemperature, double minTemperature,
+      double maxTemperature) {
+    AsphalteneOnsetTemperatureFlash flash = new AsphalteneOnsetTemperatureFlash(system,
+        startTemperature, minTemperature, maxTemperature);
+    flash.run();
+    return flash.getOnsetTemperature();
   }
 
   /**

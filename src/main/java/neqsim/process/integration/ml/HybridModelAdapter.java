@@ -108,7 +108,10 @@ public class HybridModelAdapter implements MLCorrectionInterface, Serializable {
   }
 
   /**
-   * Calculates ML model output (simple linear model for demonstration).
+   * Calculates the ML model output using the configured linear surrogate.
+   *
+   * @param features feature vector provided by the process context
+   * @return ML prediction corresponding to the supplied features
    */
   private double calculateMLOutput(double[] features) {
     double output = bias;

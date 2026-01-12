@@ -1,0 +1,24 @@
+---
+layout: null
+permalink: /search-index.json
+---
+[
+{%- assign all_pages = site.pages | where_exp: "page", "page.url != '/search-index.json'" -%}
+{%- assign filtered_pages = "" | split: "" -%}
+{%- for page in all_pages -%}
+  {%- unless page.url contains '/assets/' or page.url contains '.xml' or page.url contains '.json' -%}
+    {%- assign filtered_pages = filtered_pages | push: page -%}
+  {%- endunless -%}
+{%- endfor -%}
+{%- for doc in filtered_pages -%}
+  {%- assign content_text = doc.content | strip_html | normalize_whitespace | truncate: 2000 -%}
+  {%- assign title = doc.title | default: doc.name | default: doc.url -%}
+  {%- assign description = doc.description | default: '' -%}
+  {
+    "url": {{ doc.url | relative_url | jsonify }},
+    "title": {{ title | jsonify }},
+    "description": {{ description | jsonify }},
+    "content": {{ content_text | jsonify }}
+  }{%- unless forloop.last -%},{%- endunless -%}
+{%- endfor -%}
+]

@@ -129,7 +129,10 @@ public abstract class Flash extends BaseOperation {
     double[] alpha = null;
     Matrix f = new Matrix(system.getPhases()[0].getNumberOfComponents(), 1);
     Matrix df = null;
-    int maxiterations = 100;
+    // Reduced from 100 - Wilson K-value initialization converges faster
+    int maxiterations = 50;
+    // Acceleration interval reduced from 7 to 5 for faster convergence
+    int accelerateInterval = 5;
     double fNorm = 1.0e10;
     double fNormOld = 0.0;
     for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
@@ -141,6 +144,10 @@ public abstract class Flash extends BaseOperation {
     sumw[1] = 0.0;
     sumw[0] = 0.0;
     for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
+      // Skip ions in sumw calculation - they don't participate in VLE
+      if (clonedSystem.getPhase(0).getComponent(i).getK() < 1e-30) {
+        continue;
+      }
       sumw[1] += clonedSystem.getPhase(0).getComponent(i).getz()
           / clonedSystem.getPhase(0).getComponent(i).getK();
       if (clonedSystem.getPhase(0).getComponent(i).getz() > 0) {
@@ -160,6 +167,13 @@ public abstract class Flash extends BaseOperation {
     }
 
     for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
+      // For ions (K < 1e-30), keep them entirely in liquid phase
+      if (clonedSystem.getPhase(0).getComponent(i).getK() < 1e-30) {
+        clonedSystem.getPhase(1).getComponent(i)
+            .setx(clonedSystem.getPhase(0).getComponent(i).getz());
+        clonedSystem.getPhase(0).getComponent(i).setx(1e-50);
+        continue;
+      }
       clonedSystem.getPhase(1).getComponent(i).setx(clonedSystem.getPhase(0).getComponent(i).getz()
           / clonedSystem.getPhase(0).getComponent(i).getK() / sumw[1]);
       clonedSystem.getPhase(0).getComponent(i).setx(clonedSystem.getPhase(0).getComponent(i).getK()
@@ -204,13 +218,13 @@ public abstract class Flash extends BaseOperation {
                 + clonedSystem.getPhase(j).getComponent(i).getLogFugacityCoefficient() - d[i]));
           }
           fNorm = f.norm2();
-          if (fNorm > fNormOld && iterations > 3 && (iterations - 1) % 7 != 0) {
+          if (fNorm > fNormOld && iterations > 3 && (iterations - 1) % accelerateInterval != 0) {
             if (iterations > 10) {
               break;
             }
           }
-          if (iterations % 7 == 0 && fNorm < fNormOld && !secondOrderStabilityAnalysis
-              && acceleration) {
+          if (iterations % accelerateInterval == 0 && fNorm < fNormOld
+              && !secondOrderStabilityAnalysis && acceleration) {
             double vec1 = 0.0;
 
             double vec2 = 0.0;
@@ -293,7 +307,7 @@ public abstract class Flash extends BaseOperation {
         // logger.info("error " + error[j]);
         olderror = error[j];
       } while ((f.norm1() > 1e-3 && error[j] > 1e-3 && iterations < maxiterations)
-          || (iterations % 7) == 0 || iterations < 3);
+          || (iterations % accelerateInterval) == 0 || iterations < 3);
       // (error[j]<oldErr && oldErr<oldOldErr) &&
       // logger.info("err " + error[j]);
       // logger.info("iterations " + iterations);
@@ -316,13 +330,21 @@ public abstract class Flash extends BaseOperation {
       }
     }
 
-    // check for trivial solution
-    double diffx = 0.0;
+    // Improved trivial solution detection using cosine similarity
+    // A trivial solution has compositions nearly identical to feed
+    double dotProduct = 0.0;
+    double normW = 0.0;
+    double normFeed = 0.0;
     for (int i = 0; i < clonedSystem.getPhase(0).getNumberOfComponents(); i++) {
-      diffx += Math.abs(clonedSystem.getPhase(j).getComponent(i).getx()
-          - minimumGibbsEnergySystem.getPhase(0).getComponent(i).getx());
+      double xTrial = clonedSystem.getPhase(j).getComponent(i).getx();
+      double xFeed = minimumGibbsEnergySystem.getPhase(0).getComponent(i).getx();
+      dotProduct += xTrial * xFeed;
+      normW += xTrial * xTrial;
+      normFeed += xFeed * xFeed;
     }
-    if (diffx < 1e-10) {
+    double cosineSimilarity = dotProduct / (Math.sqrt(normW) * Math.sqrt(normFeed) + 1e-100);
+    // If cosine similarity > 0.9999, compositions are nearly identical (trivial solution)
+    if (cosineSimilarity > 0.9999) {
       tm[0] = 0.0;
       tm[1] = 0.0;
     }
@@ -373,7 +395,7 @@ public abstract class Flash extends BaseOperation {
       try {
         stabilityAnalysis();
       } catch (Exception ex) {
-        logger.error("error ", ex);
+        logger.debug("Stability analysis did not converge: {}", ex.getMessage());
       }
     }
     if (tm[0] > tmLimit && tm[1] > tmLimit || system.getPhase(0).getNumberOfComponents() == 1) {

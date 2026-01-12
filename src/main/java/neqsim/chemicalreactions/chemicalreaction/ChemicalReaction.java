@@ -316,25 +316,16 @@ public class ChemicalReaction extends NamedBaseClass
     double temperature = phase.getTemperature();
     lnK = K[0] + K[1] / (temperature) + K[2] * Math.log(temperature) + K[3] * temperature;
     // System.out.println("K: " + Math.exp(lnK));
+
+    for (int i = 0; i < names.length; i++) {
+      moles[i] = 0.0;
+    }
     for (int i = 0; i < names.length; i++) {
       for (int j = 0; j < phase.getNumberOfComponents(); j++) {
         if (this.names[i].equals(phase.getComponent(j).getName())) {
           moles[i] = phase.getComponent(j).getNumberOfMolesInPhase();
         }
       }
-    }
-
-    double cK = lnK;
-    for (int i = 0; i < names.length; i++) {
-      cK -= Math.log(moles[i] / phase.getNumberOfMolesInPhase()) * stocCoefs[i];
-    }
-
-    if (Math.exp(cK) > 1) {
-      for (int i = 0; i < stocCoefs.length; i++) {
-        stocCoefs[i] = -stocCoefs[i];
-      }
-      lnK = -lnK;
-      shiftSignK = !shiftSignK;
     }
   }
 
@@ -437,7 +428,7 @@ public class ChemicalReaction extends NamedBaseClass
   public double getReactionHeat(PhaseInterface phase) {
     double diffKt =
         -K[1] / Math.pow(phase.getTemperature(), 2.0) + K[2] / phase.getTemperature() + K[3];
-    double sign = (shiftSignK = true) ? -1.0 : 1.0;
+    double sign = shiftSignK ? -1.0 : 1.0;
     return sign * diffKt * Math.pow(phase.getTemperature(), 2.0) * R;
   }
 

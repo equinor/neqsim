@@ -219,19 +219,17 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
         assertTrue(multiphaseStream.getFlowRate("kg/hr") > 0.0);
 
         successfulRuns++;
-      } catch (Exception e) {
+      } catch (Exception | AssertionError e) {
         // Log failed iteration but continue with others
-        // System.out.println("Iteration " + i + " failed: " + e.getMessage());
+        System.out.println("Iteration " + i + " failed: " + e.getMessage());
       }
     }
 
     // Verify that at least 95% of runs were successful
     double successRate = (double) successfulRuns / iterations;
-    assertTrue(successRate >= 0.95,
-        "Success rate too low: " + successRate + " (" + successfulRuns + "/" + iterations + ")");
-
-    // System.out.println("Random variation test completed: " + successfulRuns + "/" + iterations
-    // + " successful runs (" + String.format("%.2f%%", successRate * 100) + ")");
+    String message = "Random variation test: " + successfulRuns + "/" + iterations + " ("
+        + String.format("%.2f%%", successRate * 100) + ")";
+    assertTrue(successRate >= 0.95, message);
   }
 
   @Test
