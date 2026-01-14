@@ -30,6 +30,12 @@ public class PhaseLeachmanEos extends PhaseEos {
   double kappa = 0.0;
   double W = 0.0;
 
+  // State caching for performance optimization
+  private transient double cachedTemperature = Double.NaN;
+  private transient double cachedPressure = Double.NaN;
+  private transient double[] cachedMoleFractions = null;
+  private transient boolean propertiesCalculated = false;
+
   /**
    * <p>
    * Constructor for PhaseLeachmanEos.
@@ -37,6 +43,65 @@ public class PhaseLeachmanEos extends PhaseEos {
    */
   public PhaseLeachmanEos() {
     thermoPropertyModelName = "Leachman Eos";
+  }
+
+  /**
+   * Checks if the thermodynamic state has changed since the last calculation.
+   *
+   * @return true if state has changed
+   */
+  private boolean hasStateChanged() {
+    if (Double.isNaN(cachedTemperature) || Double.isNaN(cachedPressure)) {
+      return true;
+    }
+
+    if (Math.abs(cachedTemperature - temperature) > 1e-10) {
+      return true;
+    }
+
+    if (Math.abs(cachedPressure - pressure) > 1e-10) {
+      return true;
+    }
+
+    if (cachedMoleFractions == null || cachedMoleFractions.length != numberOfComponents) {
+      return true;
+    }
+
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (Math.abs(cachedMoleFractions[i] - getComponent(i).getx()) > 1e-10) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Caches the current thermodynamic state.
+   */
+  private void cacheCurrentState() {
+    cachedTemperature = temperature;
+    cachedPressure = pressure;
+
+    if (cachedMoleFractions == null || cachedMoleFractions.length != numberOfComponents) {
+      cachedMoleFractions = new double[numberOfComponents];
+    }
+
+    for (int i = 0; i < numberOfComponents; i++) {
+      cachedMoleFractions[i] = getComponent(i).getx();
+    }
+
+    propertiesCalculated = true;
+  }
+
+  /**
+   * Invalidates the cached state, forcing recalculation on next init.
+   */
+  public void invalidateCache() {
+    cachedTemperature = Double.NaN;
+    cachedPressure = Double.NaN;
+    cachedMoleFractions = null;
+    propertiesCalculated = false;
   }
 
   /** {@inheritDoc} */
@@ -47,6 +112,10 @@ public class PhaseLeachmanEos extends PhaseEos {
       clonedPhase = (PhaseLeachmanEos) super.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
+    }
+    // Invalidate cached state in clone to force fresh calculations
+    if (clonedPhase != null) {
+      clonedPhase.invalidateCache();
     }
 
     return clonedPhase;
@@ -71,31 +140,32 @@ public class PhaseLeachmanEos extends PhaseEos {
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     }
     if (initType >= 1) {
+      // Check if we can skip Leachman calculations (state unchanged)
+      if (propertiesCalculated && !hasStateChanged()) {
+        // State unchanged - skip expensive Leachman calculations
+        return;
+      }
+
       double[] temp = new double[18];
       temp = getProperties_Leachman();
       a0 = getAlpha0_Leachman();
       ar = getAlphares_Leachman();
 
       pressure = temp[0] / 100;
-
       Z = temp[1];
-
       W = temp[11];
-
       JTcoef = temp[13];
-
       kappa = temp[14];
       gibbsEnergy = temp[12];
-      internalEnery = temp[6]; // .UOTPX(temperature,pressure/10.0,
-                               // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-      enthalpy = temp[7]; // gergEOS.HOTPX(temperature,pressure/10.0,
-                          // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-      entropy = temp[8]; // gergEOS.SOTPX(temperature,pressure/10.0,
-                         // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-      CpLeachman = temp[10]; // gergEOS.CPOTPX(temperature,pressure/10.0,
-      // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-      CvLeachman = temp[9]; // gergEOS.CPOTPX(temperature,pressure/10.0,
-      // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
+      internalEnery = temp[6];
+      enthalpy = temp[7];
+      entropy = temp[8];
+      CpLeachman = temp[10];
+      CvLeachman = temp[9];
+
+      // Cache the current state after calculations
+      cacheCurrentState();
+
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     }
   }

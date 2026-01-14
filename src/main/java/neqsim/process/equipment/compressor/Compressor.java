@@ -99,7 +99,7 @@ public class Compressor extends TwoPortEquipment
   private double operatingHours = 0.0; // Total operating hours
 
   // Efficiency solving tolerance (Kelvin)
-  private double efficiencySolveTolerance = 0.01;
+  private double efficiencySolveTolerance = 1e-5;
 
   // Surge margin thresholds for warnings/alarms
   private double surgeWarningThreshold = 0.15; // 15% margin triggers warning

@@ -1,6 +1,7 @@
 package neqsim.thermo.phase;
 
 import org.netlib.util.doubleW;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentGERG2008Eos;
 import neqsim.thermo.util.gerg.GERG2008Type;
@@ -40,6 +41,12 @@ public class PhaseGERG2008Eos extends PhaseEos {
 
   /** The GERG-2008 model variant to use. Default is STANDARD. */
   private GERG2008Type gergModelType = GERG2008Type.STANDARD;
+
+  // Caching state for performance optimization
+  private transient double cachedTemperature = Double.NaN;
+  private transient double cachedPressure = Double.NaN;
+  private transient double[] cachedMoleFractions = null;
+  private transient boolean propertiesCalculated = false;
 
   /**
    * <p>
@@ -93,6 +100,48 @@ public class PhaseGERG2008Eos extends PhaseEos {
     componentArray[compNumber] = new ComponentGERG2008Eos(name, moles, molesInPhase, compNumber);
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Physical property initialization is handled specially for GERG-2008 phases. GERG-2008
+   * calculates thermodynamic properties directly (density, Cp, Cv, enthalpy, entropy, etc.) and
+   * transport properties are not available through the standard correlations due to component
+   * compatibility issues.
+   * </p>
+   */
+  @Override
+  public void initPhysicalProperties() {
+    // Skip physical property initialization - GERG-2008 handles thermodynamic properties directly
+    // Transport properties (viscosity, thermal conductivity) are not available for GERG-2008
+    // phases due to component model compatibility issues
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Physical property initialization is handled specially for GERG-2008 phases.
+   * </p>
+   */
+  @Override
+  public void initPhysicalProperties(PhysicalPropertyType ppt) {
+    // Skip - GERG-2008 handles thermodynamic properties directly
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns null for GERG-2008 phases as physical properties are calculated directly. Use
+   * {@link #getDensity()}, {@link #getEnthalpy()}, {@link #getEntropy()}, etc. for property access.
+   * </p>
+   */
+  @Override
+  public neqsim.physicalproperties.system.PhysicalProperties getPhysicalProperties() {
+    return null;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
@@ -104,7 +153,16 @@ public class PhaseGERG2008Eos extends PhaseEos {
       IPHASE = pt == PhaseType.LIQUID ? -2 : -1;
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     }
+
+    // For initType >= 1, check if state has changed since last calculation
+    // The temperature and pressure are now updated by super.init()
     if (initType >= 1) {
+      // Check if we can skip GERG calculations (state unchanged)
+      if (propertiesCalculated && !hasStateChanged()) {
+        // State unchanged - skip expensive GERG-2008 calculations
+        return;
+      }
+
       double[] temp = new double[18];
       temp = getProperties_GERG2008();
       a0 = getAlpha0_GERG2008();
@@ -120,18 +178,67 @@ public class PhaseGERG2008Eos extends PhaseEos {
 
       kappa = temp[14];
       gibbsEnergy = temp[12];
-      internalEnery = temp[6]; // .UOTPX(temperature,pressure/10.0,
-                               // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-      enthalpy = temp[7]; // gergEOS.HOTPX(temperature,pressure/10.0,
-                          // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-      entropy = temp[8]; // gergEOS.SOTPX(temperature,pressure/10.0,
-                         // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-      CpGERG2008 = temp[10]; // gergEOS.CPOTPX(temperature,pressure/10.0,
-      // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
-      CvGERG2008 = temp[9]; // gergEOS.CPOTPX(temperature,pressure/10.0,
-      // xFracGERG[0],xFracGERG[1],xFracGERG[2],xFracGERG[3],xFracGERG[4],xFracGERG[5],xFracGERG[6],xFracGERG[7],xFracGERG[8],xFracGERG[9],xFracGERG[10],xFracGERG[11],xFracGERG[12],xFracGERG[13],xFracGERG[14],xFracGERG[15],xFracGERG[16],xFracGERG[17],IPHASE);
+      internalEnery = temp[6];
+      enthalpy = temp[7];
+      entropy = temp[8];
+      CpGERG2008 = temp[10];
+      CvGERG2008 = temp[9];
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
+
+      // Cache current state after successful calculation
+      cacheCurrentState();
     }
+  }
+
+  /**
+   * Check if the thermodynamic state (T, P, composition) has changed since last calculation.
+   *
+   * @return true if state has changed, false if unchanged
+   */
+  private boolean hasStateChanged() {
+    // Check temperature
+    if (Math.abs(temperature - cachedTemperature) > 1e-10) {
+      return true;
+    }
+    // Check pressure
+    if (Math.abs(pressure - cachedPressure) > 1e-10) {
+      return true;
+    }
+    // Check composition
+    if (cachedMoleFractions == null || cachedMoleFractions.length != numberOfComponents) {
+      return true;
+    }
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (Math.abs(getComponent(i).getx() - cachedMoleFractions[i]) > 1e-10) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Cache the current thermodynamic state for change detection.
+   */
+  private void cacheCurrentState() {
+    cachedTemperature = temperature;
+    cachedPressure = pressure;
+    if (cachedMoleFractions == null || cachedMoleFractions.length != numberOfComponents) {
+      cachedMoleFractions = new double[numberOfComponents];
+    }
+    for (int i = 0; i < numberOfComponents; i++) {
+      cachedMoleFractions[i] = getComponent(i).getx();
+    }
+    propertiesCalculated = true;
+  }
+
+  /**
+   * Invalidate the cached state, forcing recalculation on next init.
+   */
+  public void invalidateCache() {
+    propertiesCalculated = false;
+    cachedTemperature = Double.NaN;
+    cachedPressure = Double.NaN;
+    cachedMoleFractions = null;
   }
 
   /** {@inheritDoc} */
@@ -260,6 +367,34 @@ public class PhaseGERG2008Eos extends PhaseEos {
   @Override
   public double getDensity() {
     return getDensity_GERG2008();
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns the density calculated directly from GERG-2008 equation of state without requiring
+   * physical property initialization.
+   * </p>
+   */
+  @Override
+  public double getDensity(String unit) {
+    double refDensity = getDensity_GERG2008(); // density in kg/m3
+    double conversionFactor = 1.0;
+    switch (unit) {
+      case "kg/m3":
+        conversionFactor = 1.0;
+        break;
+      case "mol/m3":
+        conversionFactor = 1.0 / getMolarMass();
+        break;
+      case "lb/ft3":
+        conversionFactor = 0.0624279606;
+        break;
+      default:
+        throw new RuntimeException("unit not supported " + unit);
+    }
+    return refDensity * conversionFactor;
   }
 
   /** {@inheritDoc} */

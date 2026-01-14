@@ -4127,10 +4127,14 @@ public abstract class SystemThermo implements SystemInterface {
     boolean change = false;
 
     for (int i = 0; i < getNumberOfPhases(); i++) {
+      // Only initialize physical properties if they are supported (null check after init)
       if (getPhase(i).getPhysicalProperties() == null) {
         getPhase(i).initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       }
-      getPhase(i).getPhysicalProperties().setPhase(getPhase(i));
+      // Set phase only if physical properties are available
+      if (getPhase(i).getPhysicalProperties() != null) {
+        getPhase(i).getPhysicalProperties().setPhase(getPhase(i));
+      }
     }
 
     do {
@@ -4179,10 +4183,12 @@ public abstract class SystemThermo implements SystemInterface {
         || pt == PhaseType.HYDRATE || pt == PhaseType.SOLIDCOMPLEX) {
       // Return very high density to ensure solid phases sort to end
       // Use actual density if positive, otherwise use 2000 kg/m3 as fallback
-      double actualDensity = getPhase(phaseNum).getPhysicalProperties().calcDensity();
+      double actualDensity = getPhase(phaseNum).getDensity();
       return actualDensity > 0 ? actualDensity : 2000.0;
     }
-    return getPhase(phaseNum).getPhysicalProperties().calcDensity();
+    // Use getDensity() directly as it works for all phase types including GERG-2008
+    // (GERG-2008 phases override getDensity() to use GERG calculations directly)
+    return getPhase(phaseNum).getDensity();
   }
 
   /** {@inheritDoc} */
