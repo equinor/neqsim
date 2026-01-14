@@ -98,6 +98,9 @@ public class Compressor extends TwoPortEquipment
   private double foulingFactor = 0.0; // Head reduction due to fouling (0-1)
   private double operatingHours = 0.0; // Total operating hours
 
+  // Efficiency solving tolerance (Kelvin)
+  private double efficiencySolveTolerance = 1e-5;
+
   // Surge margin thresholds for warnings/alarms
   private double surgeWarningThreshold = 0.15; // 15% margin triggers warning
   private double surgeCriticalThreshold = 0.05; // 5% margin triggers critical
@@ -378,10 +381,14 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * Calculates polytropic or isentropic efficiency.
+   * Calculates polytropic or isentropic efficiency by iteratively matching the specified outlet
+   * temperature. The iteration continues until the temperature difference is within the tolerance
+   * set by {@link #setEfficiencySolveTolerance(double)} (default 1e-5 K) or the maximum iteration
+   * count is reached.
    *
-   * @param outTemperature a double
-   * @return a double
+   * @param outTemperature the target outlet temperature in Kelvin
+   * @return the calculated efficiency (polytropic or isentropic depending on configuration)
+   * @see #setEfficiencySolveTolerance(double)
    */
   public double solveEfficiency(double outTemperature) {
     double funk = 0.0;
@@ -416,8 +423,9 @@ public class Compressor extends TwoPortEquipment
       // System.out.println("temperature compressor " +
       // getThermoSystem().getTemperature() + " funk " + funk + " polytropic " +
       // polytropicEfficiency);
-    } while ((Math.abs((getThermoSystem().getTemperature() - outTemperature)) > 1e-5 || iter < 3)
-        && (iter < 50));
+    } while ((Math
+        .abs((getThermoSystem().getTemperature() - outTemperature)) > efficiencySolveTolerance
+        || iter < 3) && (iter < 50));
     usePolytropicCalc = useOld;
     return newPoly;
   }
@@ -1521,6 +1529,26 @@ public class Compressor extends TwoPortEquipment
   @Override
   public void setPolytropicEfficiency(double polytropicEfficiency) {
     this.polytropicEfficiency = polytropicEfficiency;
+  }
+
+  /**
+   * Get the temperature tolerance used for efficiency solving iterations.
+   *
+   * @return the efficiency solve tolerance in Kelvin
+   */
+  public double getEfficiencySolveTolerance() {
+    return efficiencySolveTolerance;
+  }
+
+  /**
+   * Set the temperature tolerance used for efficiency solving iterations. A larger tolerance (e.g.,
+   * 1e-3 K) can reduce iteration count when using computationally expensive equations of state like
+   * GERG-2008, while still providing good engineering accuracy.
+   *
+   * @param tolerance the temperature tolerance in Kelvin (default is 1e-5 K)
+   */
+  public void setEfficiencySolveTolerance(double tolerance) {
+    this.efficiencySolveTolerance = tolerance;
   }
 
   /** {@inheritDoc} */
