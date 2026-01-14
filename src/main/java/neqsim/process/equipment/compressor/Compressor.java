@@ -99,7 +99,7 @@ public class Compressor extends TwoPortEquipment
   private double operatingHours = 0.0; // Total operating hours
 
   // Efficiency solving tolerance (Kelvin)
-  private double efficiencySolveTolerance = 1e-5;
+  private double efficiencySolveTolerance = 0.01;
 
   // Surge margin thresholds for warnings/alarms
   private double surgeWarningThreshold = 0.15; // 15% margin triggers warning
@@ -383,7 +383,7 @@ public class Compressor extends TwoPortEquipment
   /**
    * Calculates polytropic or isentropic efficiency by iteratively matching the specified outlet
    * temperature. The iteration continues until the temperature difference is within the tolerance
-   * set by {@link #setEfficiencySolveTolerance(double)} (default 1e-5 K) or the maximum iteration
+   * set by {@link #setEfficiencySolveTolerance(double)} (default 0.01 K) or the maximum iteration
    * count is reached.
    *
    * @param outTemperature the target outlet temperature in Kelvin
@@ -1541,11 +1541,11 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
-   * Set the temperature tolerance used for efficiency solving iterations. A larger tolerance (e.g.,
-   * 1e-3 K) can reduce iteration count when using computationally expensive equations of state like
+   * Set the temperature tolerance used for efficiency solving iterations. A larger tolerance
+   * provides faster convergence when using computationally expensive equations of state like
    * GERG-2008, while still providing good engineering accuracy.
    *
-   * @param tolerance the temperature tolerance in Kelvin (default is 1e-5 K)
+   * @param tolerance the temperature tolerance in Kelvin (default is 0.01 K)
    */
   public void setEfficiencySolveTolerance(double tolerance) {
     this.efficiencySolveTolerance = tolerance;

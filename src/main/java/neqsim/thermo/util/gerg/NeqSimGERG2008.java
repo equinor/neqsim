@@ -1,5 +1,6 @@
 package neqsim.thermo.util.gerg;
 
+import java.util.concurrent.ConcurrentHashMap;
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
@@ -15,14 +16,30 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * NeqSimGERG2008 class.
  * </p>
  *
+ * <p>
+ * This class provides a wrapper around the GERG-2008 equation of state for calculating
+ * thermodynamic properties of natural gas mixtures. The GERG-2008 parameters are cached statically
+ * to avoid expensive re-initialization on every call, which significantly improves performance for
+ * applications that make repeated property calculations (such as compressor performance
+ * estimation).
+ * </p>
+ *
  * @author esol
  * @version $Id: $Id
  */
 public class NeqSimGERG2008 {
+  /**
+   * Cache of initialized GERG-2008 model instances by type. The SetupGERG() method initializes
+   * ~3000 lines of constant parameters, so caching provides significant performance improvement for
+   * repeated calculations.
+   */
+  private static final ConcurrentHashMap<GERG2008Type, GERG2008> MODEL_CACHE =
+      new ConcurrentHashMap<>();
+
   double[] normalizedGERGComposition = new double[21 + 1];
   double[] notNormalizedGERGComposition = new double[21 + 1];
   PhaseInterface phase = null;
-  GERG2008 GERG2008 = new GERG2008();
+  GERG2008 GERG2008;
   private GERG2008Type modelType = GERG2008Type.STANDARD;
 
   /**
@@ -30,7 +47,9 @@ public class NeqSimGERG2008 {
    * Constructor for NeqSimGERG2008.
    * </p>
    */
-  public NeqSimGERG2008() {}
+  public NeqSimGERG2008() {
+    this.GERG2008 = getCachedModel(GERG2008Type.STANDARD);
+  }
 
   /**
    * <p>
@@ -53,20 +72,39 @@ public class NeqSimGERG2008 {
    */
   public NeqSimGERG2008(PhaseInterface phase, GERG2008Type modelType) {
     this.modelType = modelType;
-    this.GERG2008 = createGERGModel(modelType);
+    this.GERG2008 = getCachedModel(modelType);
     this.setPhase(phase);
-    if (Double.isNaN(GERG2008.RGERG) || GERG2008.RGERG == 0) {
-      GERG2008.SetupGERG();
-    }
   }
 
   /**
-   * Creates the appropriate GERG model instance based on the specified type.
+   * Gets a cached and initialized GERG-2008 model instance for the specified type. If no cached
+   * instance exists, creates one and initializes it with SetupGERG(). This method is thread-safe.
+   *
+   * <p>
+   * Performance note: The SetupGERG() method initializes approximately 3000 lines of constant
+   * parameters for the GERG-2008 equation of state. Caching these initialized models provides
+   * significant performance improvement for applications that make repeated property calculations,
+   * such as compressor performance estimation where hundreds of flash calculations may be required.
+   * </p>
+   *
+   * @param type the GERG-2008 model variant (STANDARD or HYDROGEN_ENHANCED)
+   * @return a cached, initialized GERG2008 instance
+   */
+  private static GERG2008 getCachedModel(GERG2008Type type) {
+    return MODEL_CACHE.computeIfAbsent(type, t -> {
+      GERG2008 model = createNewModel(t);
+      model.SetupGERG();
+      return model;
+    });
+  }
+
+  /**
+   * Creates a new GERG model instance based on the specified type.
    *
    * @param type the GERG-2008 model variant
-   * @return a GERG2008 instance (standard or H2-enhanced)
+   * @return a new GERG2008 instance (not yet initialized)
    */
-  private static GERG2008 createGERGModel(GERG2008Type type) {
+  private static GERG2008 createNewModel(GERG2008Type type) {
     switch (type) {
       case HYDROGEN_ENHANCED:
         return new GERG2008H2();
@@ -74,6 +112,14 @@ public class NeqSimGERG2008 {
       default:
         return new GERG2008();
     }
+  }
+
+  /**
+   * Clears the cached GERG-2008 model instances. This is primarily useful for testing or when
+   * parameters need to be reloaded.
+   */
+  public static void clearCache() {
+    MODEL_CACHE.clear();
   }
 
   /**
@@ -86,15 +132,14 @@ public class NeqSimGERG2008 {
   }
 
   /**
-   * Set the GERG-2008 model type. This will recreate the internal GERG model.
+   * Set the GERG-2008 model type. Uses cached model instance for the new type.
    *
    * @param modelType the GERG-2008 model variant to use
    */
   public void setModelType(GERG2008Type modelType) {
     if (this.modelType != modelType) {
       this.modelType = modelType;
-      this.GERG2008 = createGERGModel(modelType);
-      this.GERG2008.SetupGERG();
+      this.GERG2008 = getCachedModel(modelType);
     }
   }
 
