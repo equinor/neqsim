@@ -192,5 +192,44 @@ public final class NeqSimSpanWagner {
 
     return new double[] {rho, Z, h, s, cp, cv, u, g, w, phi, muJT};
   }
+
+  /**
+   * Calculate the saturation pressure for CO2 at a given temperature using the Span-Wagner
+   * ancillary equation. Valid for temperatures from triple point (216.592 K) to critical point
+   * (304.1282 K).
+   *
+   * @param temperature Temperature in Kelvin
+   * @return Saturation pressure in Pascal
+   */
+  public static double getSaturationPressure(double temperature) {
+    // CO2 triple point: 216.592 K, 0.51795 MPa
+    // CO2 critical point: 304.1282 K, 7.3773 MPa
+    if (temperature < 216.592) {
+      // Below triple point - solid region, return triple point pressure
+      return 0.51795e6;
+    }
+    if (temperature >= TC) {
+      // At or above critical point
+      return 7.3773e6;
+    }
+
+    // Span-Wagner saturation pressure correlation (Eq. 3.14 in the paper)
+    // ln(P/Pc) = Tc/T * sum(a_i * theta^t_i)
+    // where theta = 1 - T/Tc
+    double theta = 1.0 - temperature / TC;
+    double pc = 7.3773e6; // Pa
+
+    // Coefficients from Span-Wagner paper Table 34
+    double[] a = {-7.0602087, 1.9391218, -1.6463597, -3.2995634};
+    double[] t = {1.0, 1.5, 2.0, 4.0};
+
+    double sum = 0.0;
+    for (int i = 0; i < a.length; i++) {
+      sum += a[i] * Math.pow(theta, t[i]);
+    }
+
+    double lnPratio = (TC / temperature) * sum;
+    return pc * Math.exp(lnPratio);
+  }
 }
 

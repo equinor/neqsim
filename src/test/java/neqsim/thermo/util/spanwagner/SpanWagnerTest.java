@@ -26,7 +26,7 @@ public class SpanWagnerTest {
     PhaseInterface phase = sys.getPhase(0);
     double moles = phase.getNumberOfMolesInPhase();
     assertEquals(422.164519, phase.getDensity() / phase.getMolarMass(), 1e-3);
-    assertEquals(0.94964297, phase.getZ(), 1e-4);
+    assertEquals(0.9496482691809078, phase.getZ(), 1e-6);
     assertEquals(21953.7555, phase.getEnthalpy() / moles, 1e-2);
     assertEquals(100.754536, phase.getEntropy() / moles, 1e-3);
     assertEquals(40.528088, phase.getCp() / moles, 1e-3);

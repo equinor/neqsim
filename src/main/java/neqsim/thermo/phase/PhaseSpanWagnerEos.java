@@ -60,7 +60,27 @@ public class PhaseSpanWagnerEos extends PhaseEos {
         return;
       }
 
-      double[] props = NeqSimSpanWagner.getProperties(temperature, pressure * 1e5, getType());
+      // Determine correct phase type before calling Span-Wagner
+      // CO2 critical point: Tc = 304.1282 K, Pc = 7.3773 MPa = 73.773 bar
+      PhaseType effectiveType = pt;
+      if (temperature < 304.1282) {
+        // Below critical temperature: determine phase from saturation pressure
+        double pSat = NeqSimSpanWagner.getSaturationPressure(temperature);
+        if (pressure * 1e5 > pSat) {
+          // Above saturation pressure = liquid
+          effectiveType = PhaseType.LIQUID;
+        } else {
+          // Below saturation pressure = gas
+          effectiveType = PhaseType.GAS;
+        }
+      } else {
+        // Supercritical: use density-based criterion
+        // At critical point, rhoc = 467.6 kg/m3 = 10624.9 mol/m3
+        // Use gas-like initial guess and let algorithm find the solution
+        effectiveType = pt;
+      }
+
+      double[] props = NeqSimSpanWagner.getProperties(temperature, pressure * 1e5, effectiveType);
       molarDensity = props[0];
       Z = props[1];
       enthalpy = props[2];
@@ -72,7 +92,9 @@ public class PhaseSpanWagnerEos extends PhaseEos {
       soundSpeed = props[8];
       getComponent(0).setFugacityCoefficient(props[9]);
       jouleThomson = props[10];
-      if (molarDensity > 1500.0) {
+      // Set phase type based on calculated density
+      // CO2 critical density: 10624.9 mol/m3
+      if (molarDensity > 10624.9 * 0.5) {
         setType(PhaseType.LIQUID);
       } else {
         setType(PhaseType.GAS);
