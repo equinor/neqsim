@@ -418,9 +418,10 @@ public abstract class PhysicalProperties implements Cloneable, ThermodynamicCons
       // diffusivityCalc.calcEffectiveDiffusionCoefficients();
       conductivity = conductivityCalc.calcConductivity();
     } catch (Exception ex) {
-      // might be a chance that entering here ends in an infinite loop...
-      phase.resetPhysicalProperties();
-      phase.initPhysicalProperties();
+      // Log the error but do not retry to avoid infinite recursion.
+      // Previous code called phase.resetPhysicalProperties() and phase.initPhysicalProperties()
+      // which caused stack overflow when the exception kept occurring.
+      logger.debug("Physical property calculation failed: " + ex.getMessage());
     }
   }
 
