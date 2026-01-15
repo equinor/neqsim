@@ -40,46 +40,6 @@ public class PhaseAmmoniaEos extends PhaseEos {
     thermoPropertyModelName = "Ammonia Reference Eos";
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Physical property initialization is handled specially for Ammonia phases. The Ammonia2023
-   * utility class provides transport properties (viscosity, thermal conductivity) directly.
-   * </p>
-   */
-  @Override
-  public void initPhysicalProperties() {
-    // Skip standard physical property initialization - Ammonia2023 handles transport properties
-    // via getViscosity() and getThermalConductivity() methods
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Physical property initialization is handled specially for Ammonia phases.
-   * </p>
-   */
-  @Override
-  public void initPhysicalProperties(PhysicalPropertyType ppt) {
-    // Skip - Ammonia2023 handles properties directly
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Returns null for Ammonia phases as physical properties are calculated directly through the
-   * Ammonia2023 utility class. Use {@link #getViscosity()} and {@link #getThermalConductivity()}
-   * for transport properties.
-   * </p>
-   */
-  @Override
-  public neqsim.physicalproperties.system.PhysicalProperties getPhysicalProperties() {
-    return null;
-  }
-
   /** {@inheritDoc} */
   @Override
   public PhaseAmmoniaEos clone() {
