@@ -51,8 +51,10 @@ public class SystemAmmoniaEos extends SystemEos {
     }
     this.useVolumeCorrection(false);
     addComponent("ammonia", 1.0);
-    // Note: PhaseAmmoniaEos provides its own getViscosity() and getThermalConductivity()
-    // methods via the Ammonia2023 utility class, so no physical property model setup is needed
+    for (int i = 0; i < numberOfPhases; i++) {
+      phaseArray[i].getPhysicalProperties().setViscosityModel("PFCT");
+      phaseArray[i].getPhysicalProperties().setConductivityModel("PFCT");
+    }
   }
 
   /** {@inheritDoc} */

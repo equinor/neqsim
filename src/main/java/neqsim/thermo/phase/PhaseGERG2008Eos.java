@@ -100,47 +100,6 @@ public class PhaseGERG2008Eos extends PhaseEos {
     componentArray[compNumber] = new ComponentGERG2008Eos(name, moles, molesInPhase, compNumber);
   }
 
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Physical property initialization is handled specially for GERG-2008 phases. GERG-2008
-   * calculates thermodynamic properties directly (density, Cp, Cv, enthalpy, entropy, etc.) and
-   * transport properties are not available through the standard correlations due to component
-   * compatibility issues.
-   * </p>
-   */
-  @Override
-  public void initPhysicalProperties() {
-    // Skip physical property initialization - GERG-2008 handles thermodynamic properties directly
-    // Transport properties (viscosity, thermal conductivity) are not available for GERG-2008
-    // phases due to component model compatibility issues
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Physical property initialization is handled specially for GERG-2008 phases.
-   * </p>
-   */
-  @Override
-  public void initPhysicalProperties(PhysicalPropertyType ppt) {
-    // Skip - GERG-2008 handles thermodynamic properties directly
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * <p>
-   * Returns null for GERG-2008 phases as physical properties are calculated directly. Use
-   * {@link #getDensity()}, {@link #getEnthalpy()}, {@link #getEntropy()}, etc. for property access.
-   * </p>
-   */
-  @Override
-  public neqsim.physicalproperties.system.PhysicalProperties getPhysicalProperties() {
-    return null;
-  }
 
   /** {@inheritDoc} */
   @Override
