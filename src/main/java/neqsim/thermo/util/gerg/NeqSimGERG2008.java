@@ -431,6 +431,14 @@ public class NeqSimGERG2008 {
     for (double value : notNormalizedGERGComposition) {
       result += value;
     }
+    // Handle case where sum is zero or near-zero to avoid NaN
+    if (result < 1e-30) {
+      // Set all normalized fractions to zero to avoid NaN
+      for (int k = 0; k < normalizedGERGComposition.length; k++) {
+        normalizedGERGComposition[k] = 0.0;
+      }
+      return;
+    }
     for (int k = 0; k < normalizedGERGComposition.length; k++) {
       normalizedGERGComposition[k] = notNormalizedGERGComposition[k] / result;
     }
