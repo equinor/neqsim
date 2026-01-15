@@ -4182,9 +4182,7 @@ public abstract class SystemThermo implements SystemInterface {
       double actualDensity = getPhase(phaseNum).getPhysicalProperties().calcDensity();
       return actualDensity > 0 ? actualDensity : 2000.0;
     }
-    // Use getDensity() directly as it works for all phase types including GERG-2008
-    // (GERG-2008 phases override getDensity() to use GERG calculations directly)
-    return getPhase(phaseNum).getDensity();
+    return getPhase(phaseNum).getPhysicalProperties().calcDensity();
   }
 
   /** {@inheritDoc} */
