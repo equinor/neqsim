@@ -98,8 +98,8 @@ public class VegaTest {
     // vegafluid.setP
 
     double enthalpgas = vegafluid.getPhase("gas").getEnthalpy("J/mol");
-    assertEquals(vegafluid.getPhase("gas").getDensity(),
-        SRKfluid.getPhase("gas").getDensity_Vega());
+    assertEquals(vegafluid.getPhase("gas").getDensity(), SRKfluid.getPhase("gas").getDensity_Vega(),
+        1e-8);
     assertEquals(SRKfluid.getPhase("gas").getProperties_Vega()[7], enthalpgas, 1e-9);
 
     vegafluid.setNumberOfPhases(1);

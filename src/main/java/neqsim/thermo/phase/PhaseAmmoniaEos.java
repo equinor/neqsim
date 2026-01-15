@@ -1,6 +1,7 @@
 package neqsim.thermo.phase;
 
 import org.netlib.util.doubleW;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.thermo.component.ComponentAmmoniaEos;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.util.referenceequations.Ammonia2023;

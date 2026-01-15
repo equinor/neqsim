@@ -1,24 +1,79 @@
 package neqsim.thermo.util.gerg;
 
+import java.util.Arrays;
 import org.netlib.util.StringW;
 import org.netlib.util.doubleW;
 import org.netlib.util.intW;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
-import java.util.Arrays;
 
-/** Wrapper for calling the EOS-CG multi-fluid model using the GERG-2008 API. */
+/**
+ * Wrapper for calling the EOS-CG multi-fluid model using the GERG-2008 API.
+ *
+ * <p>
+ * This class provides a wrapper around the EOS-CG (Equation of State for Combustion Gases)
+ * multi-fluid model. The EOS-CG parameters are cached statically to avoid expensive
+ * re-initialization on every call, which significantly improves performance for applications that
+ * make repeated property calculations.
+ * </p>
+ */
 public class NeqSimEOSCG {
+  /**
+   * Cached EOS-CG model instance. The setup() method initializes constant parameters, so caching
+   * provides significant performance improvement for repeated calculations.
+   */
+  private static volatile EOSCG cachedModel = null;
+  private static final Object CACHE_LOCK = new Object();
+
   double[] normalizedComposition = new double[27 + 1];
   double[] notNormalizedComposition = new double[27 + 1];
   PhaseInterface phase = null;
-  EOSCG eosCG = new EOSCG();
+  EOSCG eosCG;
 
-  public NeqSimEOSCG() {}
+  /**
+   * Default constructor.
+   */
+  public NeqSimEOSCG() {
+    this.eosCG = getCachedModel();
+  }
 
+  /**
+   * Constructor with phase.
+   *
+   * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
+   */
   public NeqSimEOSCG(PhaseInterface phase) {
+    this.eosCG = getCachedModel();
     this.setPhase(phase);
-    eosCG.setup();
+  }
+
+  /**
+   * Gets a cached and initialized EOS-CG model instance. If no cached instance exists, creates one
+   * and initializes it with setup(). This method is thread-safe.
+   *
+   * @return a cached, initialized EOSCG instance
+   */
+  private static EOSCG getCachedModel() {
+    if (cachedModel == null) {
+      synchronized (CACHE_LOCK) {
+        if (cachedModel == null) {
+          EOSCG model = new EOSCG();
+          model.setup();
+          cachedModel = model;
+        }
+      }
+    }
+    return cachedModel;
+  }
+
+  /**
+   * Clears the cached EOS-CG model instance. This is primarily useful for testing or when
+   * parameters need to be reloaded.
+   */
+  public static void clearCache() {
+    synchronized (CACHE_LOCK) {
+      cachedModel = null;
+    }
   }
 
   public double getMolarDensity(PhaseInterface phase) {
