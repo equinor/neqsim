@@ -18,7 +18,7 @@ import java.util.function.DoubleSupplier;
  * <pre>
  * CapacityConstraint speedConstraint = new CapacityConstraint("speed", "RPM", ConstraintType.HARD)
  *     .setDesignValue(10000.0).setMaxValue(11000.0).setWarningThreshold(0.9)
- *     .setValueSupplier(() -> compressor.getSpeed());
+ *     .setValueSupplier(() -&gt; compressor.getSpeed());
  * </pre>
  *
  * @author NeqSim Development Team

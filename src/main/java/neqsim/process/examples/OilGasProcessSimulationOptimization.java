@@ -30,7 +30,6 @@ import neqsim.thermo.system.SystemPrEos;
  * <li>Andreasen, A. Applied Process Simulation-Driven Oil and Gas Separation Plant Optimization
  * Using Surrogate Modeling and Evolutionary Algorithms. ChemEngineering 2020, 4, 11.</li>
  * </ul>
- * </p>
  * 
  * <p>
  * The process consists of:
@@ -40,7 +39,6 @@ import neqsim.thermo.system.SystemPrEos;
  * <li>Export gas compression with dew point control</li>
  * <li>Export oil pumping</li>
  * </ul>
- * </p>
  * 
  * @author NeqSim Development Team
  * @version 1.0
@@ -643,7 +641,6 @@ public class OilGasProcessSimulationOptimization {
    * <li>Export gas compression with dew point control</li>
    * <li>Export oil pumping</li>
    * </ul>
-   * </p>
    * 
    * @return the configured ProcessSystem
    */

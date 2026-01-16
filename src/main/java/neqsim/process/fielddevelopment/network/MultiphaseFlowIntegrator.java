@@ -100,47 +100,83 @@ public class MultiphaseFlowIntegrator implements Serializable {
     private boolean feasible;
     private String infeasibilityReason;
 
-    /** Get inlet pressure. */
+    /**
+     * Get inlet pressure.
+     *
+     * @return the inlet pressure in bar
+     */
     public double getInletPressureBar() {
       return inletPressureBar;
     }
 
-    /** Set inlet pressure. */
+    /**
+     * Set inlet pressure.
+     *
+     * @param p the inlet pressure in bar
+     */
     public void setInletPressureBar(double p) {
       this.inletPressureBar = p;
     }
 
-    /** Get arrival pressure. */
+    /**
+     * Get arrival pressure.
+     *
+     * @return the arrival pressure in bar
+     */
     public double getArrivalPressureBar() {
       return arrivalPressureBar;
     }
 
-    /** Set arrival pressure. */
+    /**
+     * Set arrival pressure.
+     *
+     * @param p the arrival pressure in bar
+     */
     public void setArrivalPressureBar(double p) {
       this.arrivalPressureBar = p;
     }
 
-    /** Get pressure drop. */
+    /**
+     * Get pressure drop.
+     *
+     * @return the pressure drop in bar
+     */
     public double getPressureDropBar() {
       return pressureDropBar;
     }
 
-    /** Set pressure drop. */
+    /**
+     * Set pressure drop.
+     *
+     * @param dp the pressure drop in bar
+     */
     public void setPressureDropBar(double dp) {
       this.pressureDropBar = dp;
     }
 
-    /** Get inlet temperature. */
+    /**
+     * Get inlet temperature.
+     *
+     * @return the inlet temperature in Celsius
+     */
     public double getInletTemperatureC() {
       return inletTemperatureC;
     }
 
-    /** Set inlet temperature. */
+    /**
+     * Set inlet temperature.
+     *
+     * @param t the inlet temperature in Celsius
+     */
     public void setInletTemperatureC(double t) {
       this.inletTemperatureC = t;
     }
 
-    /** Get arrival temperature. */
+    /**
+     * Get arrival temperature.
+     *
+     * @return the arrival temperature in Celsius
+     */
     public double getArrivalTemperatureC() {
       return arrivalTemperatureC;
     }

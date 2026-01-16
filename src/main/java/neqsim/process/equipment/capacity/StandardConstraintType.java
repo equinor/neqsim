@@ -15,7 +15,7 @@ package neqsim.process.equipment.capacity;
  * 
  * <pre>
  * CapacityConstraint speedConstraint = StandardConstraintType.COMPRESSOR_SPEED.createConstraint()
- *     .setDesignValue(10000.0).setMaxValue(11000.0).setValueSupplier(() -> compressor.getSpeed());
+ *     .setDesignValue(10000.0).setMaxValue(11000.0).setValueSupplier(() -&gt; compressor.getSpeed());
  * </pre>
  *
  * @author NeqSim Development Team

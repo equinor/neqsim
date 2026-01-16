@@ -59,6 +59,7 @@
  *
  * <h2>Supported Equipment Types</h2>
  * <table border="1">
+ * <caption>Equipment types and their typical capacity constraints</caption>
  * <tr>
  * <th>Equipment</th>
  * <th>Typical Constraints</th>
