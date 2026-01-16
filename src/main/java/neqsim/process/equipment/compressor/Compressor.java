@@ -134,8 +134,12 @@ public class Compressor extends TwoPortEquipment
   private String pressureUnit = "bara";
   private String polytropicMethod = "schultz";
 
-  /** Capacity constraints map for this compressor. */
-  private Map<String, CapacityConstraint> capacityConstraints =
+  /**
+   * Capacity constraints map for this compressor. Marked transient because constraints contain
+   * lambdas/method references that are not serializable. Constraints are re-initialized after
+   * deserialization when needed.
+   */
+  private transient Map<String, CapacityConstraint> capacityConstraints =
       new LinkedHashMap<String, CapacityConstraint>();
 
   /**
@@ -3664,19 +3668,33 @@ public class Compressor extends TwoPortEquipment
    * </p>
    */
   public void reinitializeCapacityConstraints() {
+    ensureCapacityConstraintsInitialized();
     capacityConstraints.clear();
     initializeCapacityConstraints();
+  }
+
+  /**
+   * Ensures the capacity constraints map is initialized. Called after deserialization since the map
+   * is transient.
+   */
+  private void ensureCapacityConstraintsInitialized() {
+    if (capacityConstraints == null) {
+      capacityConstraints = new LinkedHashMap<String, CapacityConstraint>();
+      initializeCapacityConstraints();
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public Map<String, CapacityConstraint> getCapacityConstraints() {
+    ensureCapacityConstraintsInitialized();
     return Collections.unmodifiableMap(capacityConstraints);
   }
 
   /** {@inheritDoc} */
   @Override
   public CapacityConstraint getBottleneckConstraint() {
+    ensureCapacityConstraintsInitialized();
     CapacityConstraint bottleneck = null;
     double maxUtil = 0.0;
     for (CapacityConstraint constraint : capacityConstraints.values()) {
@@ -3692,6 +3710,7 @@ public class Compressor extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public boolean isCapacityExceeded() {
+    ensureCapacityConstraintsInitialized();
     for (CapacityConstraint constraint : capacityConstraints.values()) {
       if (constraint.isViolated()) {
         return true;
@@ -3703,6 +3722,7 @@ public class Compressor extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public boolean isHardLimitExceeded() {
+    ensureCapacityConstraintsInitialized();
     for (CapacityConstraint constraint : capacityConstraints.values()) {
       if (constraint.isHardLimitExceeded()) {
         return true;
@@ -3714,6 +3734,7 @@ public class Compressor extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public double getMaxUtilization() {
+    ensureCapacityConstraintsInitialized();
     double maxUtil = 0.0;
     for (CapacityConstraint constraint : capacityConstraints.values()) {
       double util = constraint.getUtilization();
@@ -3727,6 +3748,7 @@ public class Compressor extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public void addCapacityConstraint(CapacityConstraint constraint) {
+    ensureCapacityConstraintsInitialized();
     if (constraint != null) {
       capacityConstraints.put(constraint.getName(), constraint);
     }
@@ -3735,12 +3757,14 @@ public class Compressor extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public boolean removeCapacityConstraint(String constraintName) {
+    ensureCapacityConstraintsInitialized();
     return capacityConstraints.remove(constraintName) != null;
   }
 
   /** {@inheritDoc} */
   @Override
   public void clearCapacityConstraints() {
+    ensureCapacityConstraintsInitialized();
     capacityConstraints.clear();
   }
 

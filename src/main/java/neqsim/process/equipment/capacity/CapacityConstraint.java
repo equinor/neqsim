@@ -1,5 +1,6 @@
 package neqsim.process.equipment.capacity;
 
+import java.io.Serializable;
 import java.util.function.DoubleSupplier;
 
 /**
@@ -24,7 +25,9 @@ import java.util.function.DoubleSupplier;
  * @author NeqSim Development Team
  * @version 1.0
  */
-public class CapacityConstraint {
+public class CapacityConstraint implements Serializable {
+  /** Serialization version. */
+  private static final long serialVersionUID = 1000L;
 
   /**
    * Enum defining the type of capacity constraint.
@@ -69,8 +72,12 @@ public class CapacityConstraint {
   /** Fraction of design value that triggers a warning (e.g., 0.9 = 90%). */
   private double warningThreshold = 0.9;
 
-  /** Supplier function to get current value from equipment. */
-  private DoubleSupplier valueSupplier;
+  /**
+   * Supplier function to get current value from equipment. Marked transient because lambdas/method
+   * references are not serializable. After deserialization, this will be null and the cached
+   * currentValue will be used instead.
+   */
+  private transient DoubleSupplier valueSupplier;
 
   /** Cached current value (updated when getCurrentValue() is called). */
   private double currentValue = 0.0;
