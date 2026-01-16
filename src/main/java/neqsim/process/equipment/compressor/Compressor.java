@@ -26,6 +26,12 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
+import neqsim.process.equipment.capacity.StandardConstraintType;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * <p>
@@ -36,7 +42,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class Compressor extends TwoPortEquipment
-    implements CompressorInterface, StateVectorProvider {
+    implements CompressorInterface, StateVectorProvider, CapacityConstrainedEquipment {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -128,6 +134,10 @@ public class Compressor extends TwoPortEquipment
   private String pressureUnit = "bara";
   private String polytropicMethod = "schultz";
 
+  /** Capacity constraints map for this compressor. */
+  private Map<String, CapacityConstraint> capacityConstraints =
+      new LinkedHashMap<String, CapacityConstraint>();
+
   /**
    * Constructor for Compressor.
    *
@@ -136,6 +146,7 @@ public class Compressor extends TwoPortEquipment
   public Compressor(String name) {
     super(name);
     initMechanicalDesign();
+    initializeCapacityConstraints();
   }
 
   /**
@@ -3509,6 +3520,160 @@ public class Compressor extends TwoPortEquipment
     speedLimitWarningActive = false;
     if (driver != null) {
       driver.resetOverloadTimer();
+    }
+  }
+
+  // ==================== CapacityConstrainedEquipment Interface Implementation ====================
+
+  /**
+   * Initializes default capacity constraints for this compressor.
+   *
+   * <p>
+   * Creates constraints for speed, power, and surge margin based on the compressor's design
+   * parameters. Additional constraints can be added after construction.
+   * </p>
+   */
+  protected void initializeCapacityConstraints() {
+    // Speed constraint
+    addCapacityConstraint(
+        StandardConstraintType.COMPRESSOR_SPEED.createConstraint().setDesignValue(speed)
+            .setMaxValue(maxspeed).setWarningThreshold(0.9).setValueSupplier(() -> this.speed));
+
+    // Power constraint (if driver power is set)
+    addCapacityConstraint(
+        StandardConstraintType.COMPRESSOR_POWER.createConstraint().setDesignValue(Double.MAX_VALUE) // Will
+                                                                                                    // be
+                                                                                                    // updated
+                                                                                                    // when
+                                                                                                    // driver
+                                                                                                    // is
+                                                                                                    // configured
+            .setWarningThreshold(0.9).setValueSupplier(() -> this.getPower()));
+
+    // Surge margin constraint
+    addCapacityConstraint(
+        StandardConstraintType.COMPRESSOR_SURGE_MARGIN.createConstraint().setDesignValue(100.0) // 100%
+                                                                                                // margin
+                                                                                                // at
+                                                                                                // design
+                                                                                                // (will
+                                                                                                // decrease
+                                                                                                // as
+                                                                                                // approaching
+                                                                                                // surge)
+            .setMinValue(10.0) // Minimum 10% surge margin required
+            .setWarningThreshold(0.15) // Warning at 15% margin
+            .setValueSupplier(() -> {
+              double margin = this.getDistanceToSurge();
+              // Return inverted value: low margin = high utilization
+              return margin > 0 ? 100.0 - margin : 100.0;
+            }));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, CapacityConstraint> getCapacityConstraints() {
+    return Collections.unmodifiableMap(capacityConstraints);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public CapacityConstraint getBottleneckConstraint() {
+    CapacityConstraint bottleneck = null;
+    double maxUtil = 0.0;
+    for (CapacityConstraint constraint : capacityConstraints.values()) {
+      double util = constraint.getUtilization();
+      if (!Double.isNaN(util) && util > maxUtil) {
+        maxUtil = util;
+        bottleneck = constraint;
+      }
+    }
+    return bottleneck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityExceeded() {
+    for (CapacityConstraint constraint : capacityConstraints.values()) {
+      if (constraint.isViolated()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHardLimitExceeded() {
+    for (CapacityConstraint constraint : capacityConstraints.values()) {
+      if (constraint.isHardLimitExceeded()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilization() {
+    double maxUtil = 0.0;
+    for (CapacityConstraint constraint : capacityConstraints.values()) {
+      double util = constraint.getUtilization();
+      if (!Double.isNaN(util) && util > maxUtil) {
+        maxUtil = util;
+      }
+    }
+    return maxUtil;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCapacityConstraint(CapacityConstraint constraint) {
+    if (constraint != null) {
+      capacityConstraints.put(constraint.getName(), constraint);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean removeCapacityConstraint(String constraintName) {
+    return capacityConstraints.remove(constraintName) != null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void clearCapacityConstraints() {
+    capacityConstraints.clear();
+  }
+
+  /**
+   * Updates the speed constraint design values.
+   *
+   * <p>
+   * Call this method after setting design speed and maximum speed to update the constraint.
+   * </p>
+   *
+   * @param designSpeed the design speed in RPM
+   * @param maximumSpeed the maximum allowable speed in RPM
+   */
+  public void updateSpeedConstraint(double designSpeed, double maximumSpeed) {
+    CapacityConstraint speedConstraint = capacityConstraints.get("speed");
+    if (speedConstraint != null) {
+      speedConstraint.setDesignValue(designSpeed);
+      speedConstraint.setMaxValue(maximumSpeed);
+    }
+  }
+
+  /**
+   * Updates the power constraint design value based on driver rating.
+   *
+   * @param driverPowerRating the driver power rating in kW
+   */
+  public void updatePowerConstraint(double driverPowerRating) {
+    CapacityConstraint powerConstraint = capacityConstraints.get("power");
+    if (powerConstraint != null) {
+      powerConstraint.setDesignValue(driverPowerRating);
+      powerConstraint.setMaxValue(driverPowerRating * 1.1); // 10% overload margin
     }
   }
 

@@ -274,7 +274,12 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Dynamic Simulation Guide | [docs/simulation/dynamic_simulation_guide.md](simulation/dynamic_simulation_guide.md) | Comprehensive dynamic/transient simulation guide |
 | Transient Simulation | [docs/wiki/process_transient_simulation_guide.md](wiki/process_transient_simulation_guide.md) | Transient simulation patterns |
 
-### Chapter 22: Mechanical Design
+### Chapter 22: Capacity Constraints & Equipment Limits
+| Document | Path | Description |
+|----------|------|-------------|
+| **Capacity Constraint Framework** | [docs/process/CAPACITY_CONSTRAINT_FRAMEWORK.md](process/CAPACITY_CONSTRAINT_FRAMEWORK.md) | **Framework for equipment capacity limits, bottleneck detection, and utilization tracking** |
+
+### Chapter 23: Mechanical Design
 | Document | Path | Description |
 |----------|------|-------------|
 | Mechanical Design | [docs/process/mechanical_design.md](process/mechanical_design.md) | Mechanical design overview and JSON export |

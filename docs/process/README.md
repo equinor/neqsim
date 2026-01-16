@@ -44,6 +44,12 @@ This documentation is organized into the following sections:
 |----------|-------------|
 | [process_design_guide.md](process_design_guide.md) | **Complete guide to process design workflow using NeqSim** |
 
+### Capacity Constraint Framework
+
+| Document | Description |
+|----------|-------------|
+| [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK.md) | **Framework for equipment capacity limits, bottleneck detection, and utilization tracking** |
+
 ### Mechanical Design Documentation
 
 | Document | Description |

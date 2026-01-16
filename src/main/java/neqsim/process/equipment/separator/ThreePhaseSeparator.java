@@ -366,7 +366,6 @@ public class ThreePhaseSeparator extends Separator {
     // //gasOutStream.setThermoSystem(gasSystem);
     if (thermoSystem2.hasPhaseType("gas")) {
       gasOutStream.setThermoSystemFromPhase(thermoSystem2, "gas");
-      gasOutStream.getFluid().init(2);
     } else {
       // No gas phase - set empty system with very low flow
       SystemInterface emptyGasSystem = thermoSystem2.getEmptySystemClone();
@@ -380,7 +379,6 @@ public class ThreePhaseSeparator extends Separator {
     if (thermoSystem2.hasPhaseType("oil")) {
       // thermoSystem.display();
       liquidOutStream.setThermoSystemFromPhase(thermoSystem2, "oil");
-      liquidOutStream.getFluid().init(2);
       // thermoSystem.display();
     } else {
       // No oil phase - set empty system with very low flow
@@ -394,7 +392,6 @@ public class ThreePhaseSeparator extends Separator {
     // waterOutStream.setThermoSystem(waterSystem);
     if (thermoSystem2.hasPhaseType("aqueous")) {
       waterOutStream.setThermoSystemFromPhase(thermoSystem2, "aqueous");
-      waterOutStream.getFluid().init(2);
     } else {
       // No aqueous phase - set empty system with very low flow
       SystemInterface emptyAqueousSystem = thermoSystem2.getEmptySystemClone();

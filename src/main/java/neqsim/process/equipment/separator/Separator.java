@@ -33,6 +33,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSoreideWhitson;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
+import neqsim.process.equipment.capacity.StandardConstraintType;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * <p>
@@ -43,7 +49,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class Separator extends ProcessEquipmentBaseClass
-    implements SeparatorInterface, StateVectorProvider {
+    implements SeparatorInterface, StateVectorProvider, CapacityConstrainedEquipment {
   /**
    * Initializes separator for transient calculations.
    */
@@ -148,7 +154,6 @@ public class Separator extends ProcessEquipmentBaseClass
   double liquidVolume;
   double gasVolume;
 
-  private double designLiquidLevelFraction = 0.8;
   ArrayList<SeparatorSection> separatorSection = new ArrayList<SeparatorSection>();
 
   SeparatorMechanicalDesign separatorMechanicalDesign;
@@ -161,6 +166,20 @@ public class Separator extends ProcessEquipmentBaseClass
   private double heatInput = 0.0; // W (watts)
   private String heatInputUnit = "W";
 
+  // Design capacity parameters
+  /** Design gas load factor (K-factor) from mechanical design [m/s]. */
+  private double designGasLoadFactor = 0.11;
+  /** Liquid level fraction (Fg) from mechanical design. */
+  private double designLiquidLevelFraction = 0.8;
+  /** Maximum gas volumetric flow rate from design [m3/s]. */
+  private double maxDesignGasFlowRate = Double.MAX_VALUE;
+  /** Whether to enforce capacity limits during simulation. */
+  private boolean enforceCapacityLimits = false;
+
+  /** Capacity constraints map for this separator. */
+  private Map<String, CapacityConstraint> capacityConstraints =
+      new LinkedHashMap<String, CapacityConstraint>();
+
   /**
    * Constructor for Separator.
    *
@@ -172,6 +191,7 @@ public class Separator extends ProcessEquipmentBaseClass
     enforceHeadspace();
     setCalculateSteadyState(true);
     initMechanicalDesign();
+    initializeCapacityConstraints();
   }
 
   /**
@@ -828,6 +848,159 @@ public class Separator extends ProcessEquipmentBaseClass
         - thermoSystem.getPhase(0).getPhysicalProperties().getDensity())
         / thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
     return derating * getGasSuperficialVelocity() * Math.sqrt(1.0 / term1);
+  }
+
+  // ============================================================================
+  // Design Capacity Methods
+  // ============================================================================
+
+  /**
+   * Gets the design gas load factor (K-factor) that the separator is designed for.
+   *
+   * @return design gas load factor [m/s]
+   */
+  public double getDesignGasLoadFactor() {
+    return designGasLoadFactor;
+  }
+
+  /**
+   * Sets the design gas load factor (K-factor) for the separator.
+   *
+   * @param kFactor design gas load factor [m/s], typically 0.07-0.15 for horizontal separators
+   */
+  public void setDesignGasLoadFactor(double kFactor) {
+    this.designGasLoadFactor = kFactor;
+  }
+
+  /**
+   * Calculates the maximum allowable gas velocity based on the design K-factor. Uses the
+   * Souders-Brown equation: V_max = K * sqrt((rho_liq - rho_gas) / rho_gas)
+   *
+   * @return maximum allowable gas velocity [m/s]
+   */
+  public double getMaxAllowableGasVelocity() {
+    if (thermoSystem == null || thermoSystem.getNumberOfPhases() < 2) {
+      return Double.MAX_VALUE;
+    }
+    thermoSystem.initPhysicalProperties();
+    double gasDensity = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
+    double liqDensity = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
+    return designGasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
+  }
+
+  /**
+   * Calculates the maximum allowable gas volumetric flow rate based on separator design.
+   *
+   * @return maximum allowable gas flow rate [m3/s]
+   */
+  public double getMaxAllowableGasFlowRate() {
+    double maxVelocity = getMaxAllowableGasVelocity();
+    double gasArea;
+    if (orientation.equals("horizontal")) {
+      // For horizontal, gas flows through upper section (above liquid level)
+      gasArea = sepCrossArea - liquidArea(liquidLevel);
+    } else {
+      // For vertical separator
+      gasArea = sepCrossArea * (1.0 - designLiquidLevelFraction);
+    }
+    return maxVelocity * gasArea;
+  }
+
+  /**
+   * Gets the capacity utilization as a fraction (current flow / max design flow). A value greater
+   * than 1.0 indicates the separator is overloaded.
+   *
+   * @return capacity utilization fraction (0.0 to 1.0+ if overloaded), or Double.NaN if not
+   *         applicable (no gas phase or insufficient phases for calculation)
+   */
+  public double getCapacityUtilization() {
+    if (thermoSystem == null || !thermoSystem.hasPhaseType("gas")) {
+      return Double.NaN; // No gas phase - utilization not applicable
+    }
+    if (thermoSystem.getNumberOfPhases() < 2) {
+      return Double.NaN; // Need at least 2 phases for Souders-Brown calculation
+    }
+    double currentGasFlow = thermoSystem.getPhase(0).getFlowRate("m3/sec");
+    double maxFlow = getMaxAllowableGasFlowRate();
+    if (maxFlow <= 0 || Double.isInfinite(maxFlow) || maxFlow == Double.MAX_VALUE) {
+      return Double.NaN; // Cannot calculate utilization
+    }
+    return currentGasFlow / maxFlow;
+  }
+
+  /**
+   * Checks if the separator is overloaded (operating above design capacity).
+   *
+   * @return true if capacity utilization is greater than 1.0
+   */
+  public boolean isOverloaded() {
+    return getCapacityUtilization() > 1.0;
+  }
+
+  /**
+   * Gets whether capacity limits are enforced during simulation.
+   *
+   * @return true if capacity limits are enforced
+   */
+  public boolean isEnforceCapacityLimits() {
+    return enforceCapacityLimits;
+  }
+
+  /**
+   * Sets whether to enforce capacity limits during simulation. When enabled, the simulation will
+   * check if flow exceeds separator design capacity.
+   *
+   * @param enforce true to enforce capacity limits
+   */
+  public void setEnforceCapacityLimits(boolean enforce) {
+    this.enforceCapacityLimits = enforce;
+  }
+
+  /**
+   * Sizes the separator diameter based on the current flow conditions and design K-factor. Uses the
+   * Souders-Brown equation to calculate the required diameter.
+   *
+   * @param safetyFactor design safety factor (typically 1.1-1.5)
+   */
+  public void sizeFromFlow(double safetyFactor) {
+    if (thermoSystem == null || thermoSystem.getNumberOfPhases() < 2) {
+      return;
+    }
+    thermoSystem.initPhysicalProperties();
+    double gasDensity = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
+    double liqDensity = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
+    double gasVolumeFlow = thermoSystem.getPhase(0).getFlowRate("m3/sec") * safetyFactor;
+
+    // Max gas velocity from Souders-Brown
+    double maxVelocity = designGasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
+
+    // Required gas area
+    double requiredGasArea = gasVolumeFlow / maxVelocity;
+
+    // Calculate diameter (assuming gas area fraction based on orientation)
+    double gasAreaFraction = orientation.equals("horizontal") ? (1.0 - designLiquidLevelFraction)
+        : (1.0 - designLiquidLevelFraction);
+    double requiredTotalArea = requiredGasArea / gasAreaFraction;
+    double requiredDiameter = Math.sqrt(4.0 * requiredTotalArea / Math.PI);
+
+    setInternalDiameter(requiredDiameter);
+    logger.info("Separator " + getName() + " sized to diameter: "
+        + String.format("%.3f", requiredDiameter) + " m");
+  }
+
+  /**
+   * Initializes separator dimensions from mechanical design calculations. This uses the mechanical
+   * design module to size the separator based on flow.
+   */
+  public void initDesignFromFlow() {
+    if (separatorMechanicalDesign == null) {
+      initMechanicalDesign();
+    }
+    separatorMechanicalDesign.calcDesign();
+    separatorMechanicalDesign.setDesign();
+
+    // Copy design parameters back to separator
+    this.designGasLoadFactor = separatorMechanicalDesign.getGasLoadFactor();
   }
 
   /**
@@ -1758,6 +1931,104 @@ public class Separator extends ProcessEquipmentBaseClass
     }
 
     return result;
+  }
+
+  // ==================== CapacityConstrainedEquipment Interface Implementation ====================
+
+  /**
+   * Initializes default capacity constraints for this separator.
+   *
+   * <p>
+   * Creates constraints for gas load factor based on the separator's design parameters. Additional
+   * constraints like liquid residence time can be added after construction.
+   * </p>
+   */
+  protected void initializeCapacityConstraints() {
+    // Gas load factor constraint
+    addCapacityConstraint(StandardConstraintType.SEPARATOR_GAS_LOAD_FACTOR.createConstraint()
+        .setDesignValue(designGasLoadFactor).setWarningThreshold(0.9).setValueSupplier(() -> {
+          try {
+            return getGasLoadFactor();
+          } catch (Exception e) {
+            return 0.0;
+          }
+        }));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, CapacityConstraint> getCapacityConstraints() {
+    return Collections.unmodifiableMap(capacityConstraints);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public CapacityConstraint getBottleneckConstraint() {
+    CapacityConstraint bottleneck = null;
+    double maxUtil = 0.0;
+    for (CapacityConstraint constraint : capacityConstraints.values()) {
+      double util = constraint.getUtilization();
+      if (!Double.isNaN(util) && util > maxUtil) {
+        maxUtil = util;
+        bottleneck = constraint;
+      }
+    }
+    return bottleneck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityExceeded() {
+    for (CapacityConstraint constraint : capacityConstraints.values()) {
+      if (constraint.isViolated()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHardLimitExceeded() {
+    for (CapacityConstraint constraint : capacityConstraints.values()) {
+      if (constraint.isHardLimitExceeded()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilization() {
+    double maxUtil = 0.0;
+    for (CapacityConstraint constraint : capacityConstraints.values()) {
+      double util = constraint.getUtilization();
+      if (!Double.isNaN(util) && util > maxUtil) {
+        maxUtil = util;
+      }
+    }
+    return maxUtil;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCapacityConstraint(CapacityConstraint constraint) {
+    if (constraint != null) {
+      capacityConstraints.put(constraint.getName(), constraint);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean removeCapacityConstraint(String constraintName) {
+    return capacityConstraints.remove(constraintName) != null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void clearCapacityConstraints() {
+    capacityConstraints.clear();
   }
 
   /**
