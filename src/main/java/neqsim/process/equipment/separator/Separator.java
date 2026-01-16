@@ -7,6 +7,7 @@
 package neqsim.process.equipment.separator;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
@@ -910,22 +911,46 @@ public class Separator extends ProcessEquipmentBaseClass
    * Gets the capacity utilization as a fraction (current flow / max design flow). A value greater
    * than 1.0 indicates the separator is overloaded.
    *
-   * @return capacity utilization fraction (0.0 to 1.0+ if overloaded), or Double.NaN if not
-   *         applicable (no gas phase or insufficient phases for calculation)
+   * @return capacity utilization fraction (0.0 to 1.0+ if overloaded), or 0.0 if single phase (no
+   *         separation needed), or Double.NaN if calculation error
    */
   public double getCapacityUtilization() {
-    if (thermoSystem == null || !thermoSystem.hasPhaseType("gas")) {
-      return Double.NaN; // No gas phase - utilization not applicable
+    if (thermoSystem == null) {
+      return Double.NaN; // No thermo system
     }
+
+    // Single phase - no separation needed, return 0% utilization
     if (thermoSystem.getNumberOfPhases() < 2) {
-      return Double.NaN; // Need at least 2 phases for Souders-Brown calculation
+      return 0.0;
     }
+
+    // No gas phase - liquid-only, no gas separation needed
+    if (!thermoSystem.hasPhaseType("gas")) {
+      return 0.0;
+    }
+
     double currentGasFlow = thermoSystem.getPhase(0).getFlowRate("m3/sec");
     double maxFlow = getMaxAllowableGasFlowRate();
-    if (maxFlow <= 0 || Double.isInfinite(maxFlow) || maxFlow == Double.MAX_VALUE) {
+
+    // Check for invalid max flow calculations
+    if (maxFlow <= 0 || Double.isInfinite(maxFlow) || maxFlow == Double.MAX_VALUE
+        || Double.isNaN(maxFlow)) {
       return Double.NaN; // Cannot calculate utilization
     }
+
     return currentGasFlow / maxFlow;
+  }
+
+  /**
+   * Checks if the separator feed is single-phase (no separation required).
+   *
+   * @return true if the thermodynamic system has only one phase
+   */
+  public boolean isSinglePhase() {
+    if (thermoSystem == null) {
+      return true; // No system - treat as single phase
+    }
+    return thermoSystem.getNumberOfPhases() < 2;
   }
 
   /**
@@ -934,7 +959,133 @@ public class Separator extends ProcessEquipmentBaseClass
    * @return true if capacity utilization is greater than 1.0
    */
   public boolean isOverloaded() {
-    return getCapacityUtilization() > 1.0;
+    double util = getCapacityUtilization();
+    if (Double.isNaN(util)) {
+      return false; // Cannot determine
+    }
+    return util > 1.0;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Validates that the separator simulation produced physically reasonable results.
+   * </p>
+   */
+  @Override
+  public boolean isSimulationValid() {
+    if (thermoSystem == null) {
+      return false;
+    }
+
+    // Check for NaN in basic properties
+    if (Double.isNaN(thermoSystem.getTemperature()) || Double.isNaN(thermoSystem.getPressure())) {
+      return false;
+    }
+
+    // Check phase fractions sum to approximately 1.0
+    double totalFraction = 0.0;
+    for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
+      double phaseFraction = thermoSystem.getPhase(i).getBeta();
+      if (Double.isNaN(phaseFraction) || phaseFraction < 0) {
+        return false;
+      }
+      totalFraction += phaseFraction;
+    }
+    if (Math.abs(totalFraction - 1.0) > 0.01) {
+      return false; // Phase fractions don't sum to 1
+    }
+
+    return true;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public List<String> getSimulationValidationErrors() {
+    List<String> errors = new ArrayList<String>();
+
+    if (thermoSystem == null) {
+      errors.add(getName() + ": No thermodynamic system - simulation not run");
+      return errors;
+    }
+
+    if (Double.isNaN(thermoSystem.getTemperature())) {
+      errors.add(getName() + ": Temperature is NaN");
+    }
+    if (Double.isNaN(thermoSystem.getPressure())) {
+      errors.add(getName() + ": Pressure is NaN");
+    }
+
+    // Check phase fractions
+    double totalFraction = 0.0;
+    for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
+      double phaseFraction = thermoSystem.getPhase(i).getBeta();
+      if (Double.isNaN(phaseFraction)) {
+        errors.add(getName() + ": Phase " + i + " fraction is NaN");
+      } else if (phaseFraction < 0) {
+        errors.add(getName() + ": Phase " + i + " has negative fraction: " + phaseFraction);
+      }
+      totalFraction += phaseFraction;
+    }
+    if (Math.abs(totalFraction - 1.0) > 0.01) {
+      errors.add(
+          String.format("%s: Phase fractions sum to %.3f, expected 1.0", getName(), totalFraction));
+    }
+
+    return errors;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Checks if the separator is operating within its valid envelope. For separators, this means not
+   * overloaded (gas velocity within design limits).
+   * </p>
+   */
+  @Override
+  public boolean isWithinOperatingEnvelope() {
+    if (!isSimulationValid()) {
+      return false;
+    }
+
+    // Single phase is valid (no separation needed)
+    if (isSinglePhase()) {
+      return true;
+    }
+
+    // Check if severely overloaded (e.g., > 200% utilization is likely invalid)
+    double util = getCapacityUtilization();
+    if (!Double.isNaN(util) && util > 2.0) {
+      return false; // Severely overloaded - likely simulation issue
+    }
+
+    return true;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String getOperatingEnvelopeViolation() {
+    if (!isSimulationValid()) {
+      List<String> errors = getSimulationValidationErrors();
+      if (!errors.isEmpty()) {
+        return errors.get(0);
+      }
+      return "Invalid simulation result";
+    }
+
+    double util = getCapacityUtilization();
+    if (!Double.isNaN(util) && util > 2.0) {
+      return String.format("Severely overloaded: %.0f%% utilization (max design velocity exceeded)",
+          util * 100);
+    }
+
+    return null;
   }
 
   /**

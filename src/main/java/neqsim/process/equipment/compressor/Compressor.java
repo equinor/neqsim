@@ -29,8 +29,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.capacity.StandardConstraintType;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -3744,6 +3746,196 @@ public class Compressor extends TwoPortEquipment
       }
     }
     return maxUtil;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Validates that the compressor simulation produced physically reasonable results. Checks for:
+   * <ul>
+   * <li>Positive power consumption (compressors consume energy)</li>
+   * <li>Positive polytropic head (work done on gas)</li>
+   * <li>Outlet temperature greater than inlet (compression heats gas)</li>
+   * <li>Pressure ratio greater than 1.0</li>
+   * <li>Non-NaN values for key properties</li>
+   * </ul>
+   * </p>
+   */
+  @Override
+  public boolean isSimulationValid() {
+    // Check basic thermodynamic system
+    if (thermoSystem == null) {
+      return false;
+    }
+
+    // Check for NaN values
+    double power = getPower();
+    double head = getPolytropicFluidHead();
+    double inletTemp = getInletTemperature();
+    double outletTemp = getOutletTemperature();
+    double pressureRatio = getActualCompressionRatio();
+
+    if (Double.isNaN(power) || Double.isNaN(head) || Double.isNaN(inletTemp)
+        || Double.isNaN(outletTemp) || Double.isNaN(pressureRatio)) {
+      return false;
+    }
+
+    // Power must be positive (compressor consumes energy)
+    if (power < 0) {
+      return false;
+    }
+
+    // Polytropic head must be positive (work done on gas)
+    if (head < 0) {
+      return false;
+    }
+
+    // Outlet temperature must be greater than or equal to inlet for compression
+    // (Allow small tolerance for numerical precision)
+    if (outletTemp < inletTemp - 1.0) {
+      return false;
+    }
+
+    // Pressure ratio must be >= 1.0 for compression
+    if (pressureRatio < 0.99) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns detailed validation errors for the compressor simulation.
+   * </p>
+   */
+  @Override
+  public List<String> getSimulationValidationErrors() {
+    List<String> errors = new ArrayList<String>();
+
+    if (thermoSystem == null) {
+      errors.add(getName() + ": No thermodynamic system - simulation not run");
+      return errors;
+    }
+
+    double power = getPower();
+    double head = getPolytropicFluidHead();
+    double inletTemp = getInletTemperature();
+    double outletTemp = getOutletTemperature();
+    double pressureRatio = getActualCompressionRatio();
+
+    if (Double.isNaN(power)) {
+      errors.add(getName() + ": Power calculation returned NaN");
+    } else if (power < 0) {
+      errors
+          .add(String.format("%s: Negative power (%.1f kW) - compressor beyond operating envelope",
+              getName(), power / 1000.0));
+    }
+
+    if (Double.isNaN(head)) {
+      errors.add(getName() + ": Polytropic head calculation returned NaN");
+    } else if (head < 0) {
+      errors.add(String.format(
+          "%s: Negative polytropic head (%.2f kJ/kg) - indicates expansion, not compression",
+          getName(), head));
+    }
+
+    if (Double.isNaN(pressureRatio)) {
+      errors.add(getName() + ": Pressure ratio calculation returned NaN");
+    } else if (pressureRatio < 0.99) {
+      errors.add(String.format("%s: Pressure ratio (%.2f) less than 1.0 - indicates pressure drop",
+          getName(), pressureRatio));
+    }
+
+    if (Double.isNaN(outletTemp) || Double.isNaN(inletTemp)) {
+      errors.add(getName() + ": Temperature calculation returned NaN");
+    } else if (outletTemp < inletTemp - 1.0) {
+      errors.add(String.format("%s: Outlet temperature (%.1f K) less than inlet (%.1f K)",
+          getName(), outletTemp, inletTemp));
+    }
+
+    return errors;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Checks if the compressor is operating within its valid envelope (between surge and stonewall).
+   * </p>
+   */
+  @Override
+  public boolean isWithinOperatingEnvelope() {
+    if (!isSimulationValid()) {
+      return false;
+    }
+
+    // Check surge condition
+    if (isSurge()) {
+      return false;
+    }
+
+    // Check stonewall condition
+    if (isStoneWall()) {
+      return false;
+    }
+
+    // Check if compressor chart is being used and we're within bounds
+    if (getCompressorChart() != null && getCompressorChart().isUseCompressorChart()) {
+      double surgeMargin = getDistanceToSurge();
+      double stonewallMargin = getDistanceToStoneWall();
+
+      // Negative margin means beyond the limit
+      if (!Double.isNaN(surgeMargin) && !Double.isInfinite(surgeMargin) && surgeMargin < 0) {
+        return false;
+      }
+      if (!Double.isNaN(stonewallMargin) && !Double.isInfinite(stonewallMargin)
+          && stonewallMargin < 0) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String getOperatingEnvelopeViolation() {
+    if (!isSimulationValid()) {
+      List<String> errors = getSimulationValidationErrors();
+      if (!errors.isEmpty()) {
+        return errors.get(0);
+      }
+      return "Invalid simulation result";
+    }
+
+    if (isSurge()) {
+      return "Operating below surge limit - flow too low for current head";
+    }
+
+    if (isStoneWall()) {
+      return "Operating above stonewall (choke) limit - flow too high";
+    }
+
+    if (getCompressorChart() != null && getCompressorChart().isUseCompressorChart()) {
+      double surgeMargin = getDistanceToSurge();
+      double stonewallMargin = getDistanceToStoneWall();
+
+      if (!Double.isNaN(surgeMargin) && !Double.isInfinite(surgeMargin) && surgeMargin < 0) {
+        return String.format("Below surge: margin = %.1f%%", surgeMargin);
+      }
+      if (!Double.isNaN(stonewallMargin) && !Double.isInfinite(stonewallMargin)
+          && stonewallMargin < 0) {
+        return String.format("Above stonewall: margin = %.1f%%", stonewallMargin);
+      }
+    }
+
+    return null;
   }
 
   /** {@inheritDoc} */

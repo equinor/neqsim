@@ -51,6 +51,45 @@ public class CapacityConstraint implements Serializable {
     DESIGN
   }
 
+  /**
+   * Enum defining the severity level of constraint violations.
+   * 
+   * <p>
+   * Used by the optimizer to determine how to handle constraint violations:
+   * <ul>
+   * <li>CRITICAL: Equipment damage or safety hazard - optimization must stop</li>
+   * <li>HARD: Exceeds design limits - marks solution as infeasible</li>
+   * <li>SOFT: Exceeds recommended limits - applies penalty to objective</li>
+   * <li>ADVISORY: Information only - no impact on optimization</li>
+   * </ul>
+   * </p>
+   */
+  public enum ConstraintSeverity {
+    /**
+     * Critical violation - exceeding causes equipment damage or safety hazard. Examples: surge,
+     * overspeed, over-temperature. Optimizer must stop immediately when this is violated.
+     */
+    CRITICAL,
+
+    /**
+     * Hard violation - exceeding means solution is infeasible. Examples: design capacity, maximum
+     * power. Optimizer marks solution as infeasible.
+     */
+    HARD,
+
+    /**
+     * Soft violation - exceeding is undesirable but acceptable. Examples: efficiency targets,
+     * recommended operating range. Optimizer applies penalty to objective function.
+     */
+    SOFT,
+
+    /**
+     * Advisory only - information for reporting. Examples: turndown ratio, design point deviation.
+     * No impact on optimization.
+     */
+    ADVISORY
+  }
+
   /** Name of the constraint (e.g., "speed", "gasLoadFactor"). */
   private final String name;
 
@@ -59,6 +98,9 @@ public class CapacityConstraint implements Serializable {
 
   /** Type of constraint (HARD, SOFT, or DESIGN). */
   private final ConstraintType type;
+
+  /** Severity level for optimization (CRITICAL, HARD, SOFT, ADVISORY). */
+  private ConstraintSeverity severity = ConstraintSeverity.HARD;
 
   /** Design/rated value for this constraint. */
   private double designValue = Double.MAX_VALUE;
@@ -140,6 +182,50 @@ public class CapacityConstraint implements Serializable {
   public CapacityConstraint setWarningThreshold(double warningThreshold) {
     this.warningThreshold = warningThreshold;
     return this;
+  }
+
+  /**
+   * Sets the severity level for this constraint.
+   *
+   * <p>
+   * Severity affects how the optimizer handles violations:
+   * <ul>
+   * <li>CRITICAL: Optimizer must stop immediately</li>
+   * <li>HARD: Solution marked as infeasible</li>
+   * <li>SOFT: Penalty applied to objective</li>
+   * <li>ADVISORY: Information only</li>
+   * </ul>
+   * </p>
+   *
+   * @param severity the severity level
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint setSeverity(ConstraintSeverity severity) {
+    this.severity = severity;
+    return this;
+  }
+
+  /**
+   * Gets the severity level for this constraint.
+   *
+   * @return the severity level
+   */
+  public ConstraintSeverity getSeverity() {
+    return severity;
+  }
+
+  /**
+   * Checks if this is a critical violation that requires immediate action.
+   *
+   * <p>
+   * Critical violations indicate equipment damage or safety hazard. The optimizer should stop
+   * immediately when this returns true.
+   * </p>
+   *
+   * @return true if constraint is CRITICAL severity and violated
+   */
+  public boolean isCriticalViolation() {
+    return severity == ConstraintSeverity.CRITICAL && isViolated();
   }
 
   /**
