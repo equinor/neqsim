@@ -2805,7 +2805,8 @@ public class ProcessSystem extends SimulationBaseClass {
         }
       }
 
-      if (!Double.isNaN(utilization) && utilization > maxUtilization) {
+      if (!Double.isNaN(utilization) && !Double.isInfinite(utilization)
+          && utilization > maxUtilization) {
         maxUtilization = utilization;
         bottleneck = unit;
       }

@@ -3597,36 +3597,31 @@ public class Compressor extends TwoPortEquipment
           }));
     }
 
-    // Power constraint - use mechanical design if set, then driver rating, then estimate
-    double designPower = Double.MAX_VALUE;
-    double maxPower = Double.MAX_VALUE;
-    if (getMechanicalDesign().maxDesignPower > 0) {
-      // Use mechanical design value (highest priority for bottleneck analysis)
-      maxPower = getMechanicalDesign().maxDesignPower;
-      designPower = maxPower * 0.9; // Design is 90% of max
-    } else if (driver != null && driver.getRatedPower() > 0) {
-      // Use driver rating
-      designPower = driver.getRatedPower();
-      maxPower = designPower * 1.1; // 10% overload margin
-    } else if (getThermoSystem() != null) {
-      // Estimate design power as 120% of current power (allows some margin)
-      double currentPower = getPower();
-      if (currentPower > 0 && !Double.isNaN(currentPower)) {
-        designPower = currentPower * 1.2;
-        maxPower = currentPower * 1.5; // Max 150% of current power
-      }
-    }
-    // If still MAX_VALUE, power constraint won't be meaningful until
-    // reinitializeCapacityConstraints is called
-    final double finalDesignPower = designPower;
-    final double finalMaxPower = maxPower;
+    // Power constraint - dynamically evaluates against mechanical design or driver
+    // Don't set fixed design values - use value supplier that returns utilization directly
     addCapacityConstraint(
-        StandardConstraintType.COMPRESSOR_POWER.createConstraint().setDesignValue(finalDesignPower)
-            .setMaxValue(finalMaxPower).setWarningThreshold(0.9).setValueSupplier(() -> {
+        StandardConstraintType.COMPRESSOR_POWER.createConstraint().setDesignValue(100.0) // 100%
+            .setMaxValue(110.0) // 110% overload
+            .setWarningThreshold(0.9).setValueSupplier(() -> {
               if (getThermoSystem() == null) {
                 return 0.0;
               }
-              return this.getPower();
+              double currentPower = this.getPower();
+              if (currentPower <= 0 || Double.isNaN(currentPower)) {
+                return 0.0;
+              }
+              // Determine max power: mechanical design > driver > estimate
+              double maxPowerLimit = 0.0;
+              if (getMechanicalDesign().maxDesignPower > 0) {
+                maxPowerLimit = getMechanicalDesign().maxDesignPower;
+              } else if (driver != null && driver.getRatedPower() > 0) {
+                maxPowerLimit = driver.getRatedPower() * 1.1; // 10% overload margin
+              }
+              if (maxPowerLimit <= 0) {
+                return 0.0; // No limit defined
+              }
+              // Return utilization percentage (0-100+)
+              return (currentPower / maxPowerLimit) * 100.0;
             }));
 
     // Surge margin constraint
