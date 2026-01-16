@@ -1787,16 +1787,46 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For separators, capacity duty is defined as the gas outlet volumetric flow rate in m³/hr. This
+   * is used in conjunction with {@link #getCapacityMax()} for bottleneck analysis via
+   * {@link neqsim.process.processmodel.ProcessSystem#getBottleneck()}.
+   * </p>
+   *
+   * @return gas outlet flow rate in m³/hr
+   */
   @Override
   public double getCapacityDuty() {
     return getGasOutStream().getFlowRate("m3/hr");
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For separators, maximum capacity is defined by the mechanical design's maximum gas volume flow
+   * in m³/hr. If not set, the value is derived from the gas load factor design:
+   * {@code designGasLoadFactor * crossSectionalArea * 3600}.
+   * </p>
+   *
+   * @return maximum design gas volume flow in m³/hr
+   * @see neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign#getMaxDesignGassVolumeFlow()
+   */
   @Override
   public double getCapacityMax() {
-    return getMechanicalDesign().getMaxDesignGassVolumeFlow();
+    double mechMax = getMechanicalDesign().getMaxDesignGassVolumeFlow();
+    if (mechMax > 1e-12) {
+      return mechMax;
+    }
+    // Fall back to gas load factor based capacity if mechanical design not set
+    if (designGasLoadFactor > 0 && internalDiameter > 0) {
+      double area = Math.PI * Math.pow(internalDiameter / 2.0, 2);
+      return designGasLoadFactor * area * 3600.0; // Convert m/s * m² to m³/hr
+    }
+    return 0.0;
   }
 
   /**

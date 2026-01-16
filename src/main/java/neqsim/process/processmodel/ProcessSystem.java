@@ -2772,23 +2772,68 @@ public class ProcessSystem extends SimulationBaseClass {
    * getBottleneck.
    * </p>
    *
-   * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * <p>
+   * Identifies the equipment with the highest capacity utilization. This method checks both:
+   * </p>
+   * <ul>
+   * <li>Traditional capacity: {@code getCapacityDuty() / getCapacityMax()}</li>
+   * <li>Multi-constraint capacity: Equipment implementing
+   * {@link neqsim.process.equipment.capacity.CapacityConstrainedEquipment}</li>
+   * </ul>
+   *
+   * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object representing the
+   *         bottleneck, or null if no equipment has capacity defined
    */
   public ProcessEquipmentInterface getBottleneck() {
     ProcessEquipmentInterface bottleneck = null;
     double maxUtilization = 0.0;
+
     for (ProcessEquipmentInterface unit : unitOperations) {
-      double capacity = unit.getCapacityMax();
-      double duty = unit.getCapacityDuty();
-      if (capacity > 1e-12) {
-        double utilization = duty / capacity;
-        if (utilization > maxUtilization) {
-          maxUtilization = utilization;
-          bottleneck = unit;
+      double utilization = 0.0;
+
+      // Check if equipment implements CapacityConstrainedEquipment (multi-constraint)
+      if (unit instanceof neqsim.process.equipment.capacity.CapacityConstrainedEquipment) {
+        neqsim.process.equipment.capacity.CapacityConstrainedEquipment constrained =
+            (neqsim.process.equipment.capacity.CapacityConstrainedEquipment) unit;
+        utilization = constrained.getMaxUtilization();
+      } else {
+        // Fall back to traditional single capacity metric
+        double capacity = unit.getCapacityMax();
+        double duty = unit.getCapacityDuty();
+        if (capacity > 1e-12) {
+          utilization = duty / capacity;
         }
+      }
+
+      if (!Double.isNaN(utilization) && utilization > maxUtilization) {
+        maxUtilization = utilization;
+        bottleneck = unit;
       }
     }
     return bottleneck;
+  }
+
+  /**
+   * Gets the utilization ratio of the bottleneck equipment.
+   *
+   * @return utilization as fraction (1.0 = 100%), or 0.0 if no bottleneck found
+   */
+  public double getBottleneckUtilization() {
+    ProcessEquipmentInterface bottleneck = getBottleneck();
+    if (bottleneck == null) {
+      return 0.0;
+    }
+
+    if (bottleneck instanceof neqsim.process.equipment.capacity.CapacityConstrainedEquipment) {
+      return ((neqsim.process.equipment.capacity.CapacityConstrainedEquipment) bottleneck)
+          .getMaxUtilization();
+    }
+
+    double capacity = bottleneck.getCapacityMax();
+    if (capacity > 1e-12) {
+      return bottleneck.getCapacityDuty() / capacity;
+    }
+    return 0.0;
   }
 
   // ============ GRAPH-BASED PROCESS REPRESENTATION ============
@@ -3510,14 +3555,21 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
-   * Finds the process bottleneck (equipment with highest capacity utilization).
+   * Finds the process bottleneck with detailed constraint information.
    *
    * <p>
-   * Iterates through all capacity-constrained equipment and finds the one with the highest
-   * utilization on any constraint. This identifies what is limiting process throughput.
+   * This method extends {@link #getBottleneck()} by returning detailed information about which
+   * specific constraint is limiting the bottleneck equipment. Only works for equipment that
+   * implements {@link neqsim.process.equipment.capacity.CapacityConstrainedEquipment}.
    * </p>
    *
-   * @return BottleneckResult containing the bottleneck equipment and constraint
+   * <p>
+   * For simple bottleneck detection without constraint details, use {@link #getBottleneck()}.
+   * </p>
+   *
+   * @return BottleneckResult containing the bottleneck equipment, limiting constraint, and
+   *         utilization; returns empty result if no constrained equipment found
+   * @see #getBottleneck()
    */
   public neqsim.process.equipment.capacity.BottleneckResult findBottleneck() {
     neqsim.process.equipment.capacity.CapacityConstrainedEquipment bottleneckEquipment = null;

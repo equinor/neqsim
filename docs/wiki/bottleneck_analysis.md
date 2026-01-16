@@ -132,6 +132,73 @@ public class BottleneckExample {
 
 To support capacity analysis for other equipment types (e.g., Pumps, Heat Exchangers), implement the `getCapacityDuty()` and `getCapacityMax()` methods in the respective classes. Ensure that the units for duty and capacity are consistent (e.g., both in Watts or both in kg/hr).
 
+## Multi-Constraint Capacity Analysis
+
+For equipment with multiple capacity constraints (e.g., compressors limited by speed, power, and surge margin), NeqSim provides the `CapacityConstrainedEquipment` interface in `neqsim.process.equipment.capacity`.
+
+### Key Features
+
+- **Multiple constraints per equipment**: Track speed, power, surge margin, discharge temperature, etc.
+- **Constraint types**: HARD (trip/damage), SOFT (efficiency loss), DESIGN (normal envelope)
+- **Automatic integration**: `ProcessSystem.getBottleneck()` automatically uses multi-constraint data when available
+- **Detailed analysis**: `ProcessSystem.findBottleneck()` returns specific constraint information
+
+### Constraint Types
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `HARD` | Absolute limit - trip or damage if exceeded | Max compressor speed, surge limit |
+| `SOFT` | Operational limit - reduced efficiency | High discharge temperature |
+| `DESIGN` | Normal operating envelope | Separator gas load factor |
+
+### Example: Multi-Constraint Analysis
+
+```java
+import neqsim.process.equipment.capacity.BottleneckResult;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+
+// Run simulation
+process.run();
+
+// Simple bottleneck detection (works with both single and multi-constraint)
+ProcessEquipmentInterface bottleneck = process.getBottleneck();
+double utilization = process.getBottleneckUtilization();
+System.out.println("Bottleneck: " + bottleneck.getName() + " at " + (utilization * 100) + "%");
+
+// Detailed constraint information (multi-constraint equipment only)
+BottleneckResult result = process.findBottleneck();
+if (!result.isEmpty()) {
+    System.out.println("Equipment: " + result.getEquipmentName());
+    System.out.println("Limiting constraint: " + result.getConstraint().getName());
+    System.out.println("Utilization: " + result.getUtilizationPercent() + "%");
+}
+
+// Check specific equipment constraints
+Compressor comp = (Compressor) process.getUnit("compressor");
+for (CapacityConstraint c : comp.getCapacityConstraints().values()) {
+    System.out.printf("  %s: %.1f / %.1f %s (%.1f%%)%n",
+        c.getName(), c.getCurrentValue(), c.getDesignValue(), 
+        c.getUnit(), c.getUtilizationPercent());
+}
+
+// Check for critical conditions
+if (process.isAnyHardLimitExceeded()) {
+    System.out.println("CRITICAL: Equipment hard limits exceeded!");
+}
+if (process.isAnyEquipmentOverloaded()) {
+    System.out.println("WARNING: Equipment operating above design capacity");
+}
+```
+
+### Supported Multi-Constraint Equipment
+
+| Equipment | Constraints |
+|-----------|-------------|
+| **Separator** | Gas load factor (vs design K-factor) |
+| **Compressor** | Speed, Power, Surge margin |
+
+For detailed documentation on extending to other equipment, see [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md).
+
 ## Production Optimization
 
 The bottleneck analysis feature is a powerful tool for optimizing production. By identifying the limiting constraint in a process, you can maximize throughput or identify the most effective upgrades (debottlenecking).

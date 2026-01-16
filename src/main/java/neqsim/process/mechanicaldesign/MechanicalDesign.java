@@ -102,6 +102,12 @@ public class MechanicalDesign implements java.io.Serializable {
   public double minDesignPower = 0.0;
   public double maxDesignDuty = 0.0;
   public double minDesignDuty = 0.0;
+  /** Maximum design Cv for valves. */
+  public double maxDesignCv = 0.0;
+  /** Maximum design velocity in m/s for pipes. */
+  public double maxDesignVelocity = 0.0;
+  /** Maximum design pressure drop in bara. */
+  public double maxDesignPressureDrop = 0.0;
 
   public void setMaxDesignPower(double maxDesignPower) {
     this.maxDesignPower = maxDesignPower;
@@ -117,6 +123,60 @@ public class MechanicalDesign implements java.io.Serializable {
 
   public void setMinDesignDuty(double minDesignDuty) {
     this.minDesignDuty = minDesignDuty;
+  }
+
+  /**
+   * Sets the maximum design Cv for valves.
+   *
+   * @param maxDesignCv maximum Cv value
+   */
+  public void setMaxDesignCv(double maxDesignCv) {
+    this.maxDesignCv = maxDesignCv;
+  }
+
+  /**
+   * Gets the maximum design Cv for valves.
+   *
+   * @return maximum Cv value
+   */
+  public double getMaxDesignCv() {
+    return maxDesignCv;
+  }
+
+  /**
+   * Sets the maximum design velocity in m/s.
+   *
+   * @param maxDesignVelocity maximum velocity in m/s
+   */
+  public void setMaxDesignVelocity(double maxDesignVelocity) {
+    this.maxDesignVelocity = maxDesignVelocity;
+  }
+
+  /**
+   * Gets the maximum design velocity in m/s.
+   *
+   * @return maximum velocity in m/s
+   */
+  public double getMaxDesignVelocity() {
+    return maxDesignVelocity;
+  }
+
+  /**
+   * Sets the maximum design pressure drop in bara.
+   *
+   * @param maxDesignPressureDrop maximum pressure drop in bara
+   */
+  public void setMaxDesignPressureDrop(double maxDesignPressureDrop) {
+    this.maxDesignPressureDrop = maxDesignPressureDrop;
+  }
+
+  /**
+   * Gets the maximum design pressure drop in bara.
+   *
+   * @return maximum pressure drop in bara
+   */
+  public double getMaxDesignPressureDrop() {
+    return maxDesignPressureDrop;
   }
 
   private String companySpecificDesignStandards = "Statoil";

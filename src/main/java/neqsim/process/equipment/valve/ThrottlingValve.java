@@ -25,7 +25,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author esol
  * @version $Id: $Id
  */
-public class ThrottlingValve extends TwoPortEquipment implements ValveInterface {
+public class ThrottlingValve extends TwoPortEquipment
+    implements ValveInterface, neqsim.process.equipment.capacity.CapacityConstrainedEquipment {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -920,5 +921,121 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface 
    */
   public void setAllowLaminar(boolean allowLaminar) {
     this.allowLaminar = allowLaminar;
+  }
+
+  // ============================================================================
+  // CapacityConstrainedEquipment Implementation
+  // ============================================================================
+
+  /** Storage for capacity constraints. */
+  private final java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> capacityConstraints =
+      new java.util.LinkedHashMap<>();
+
+  /**
+   * Initializes default capacity constraints for the valve.
+   */
+  protected void initializeCapacityConstraints() {
+    // Cv utilization constraint (HARD limit)
+    addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("cvUtilization",
+        "", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
+            .setDesignValue(getMechanicalDesign().maxDesignCv).setWarningThreshold(0.9)
+            .setValueSupplier(() -> getCv()));
+
+    // Volume flow constraint (DESIGN limit)
+    addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("volumeFlow",
+        "m3/hr", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
+            .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
+            .setValueSupplier(
+                () -> getOutStream() != null ? getOutStream().getFlowRate("m3/hr") : 0.0));
+
+    // Valve opening constraint (SOFT limit)
+    addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("valveOpening",
+        "%", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
+            .setDesignValue(maxValveOpening).setWarningThreshold(0.9)
+            .setValueSupplier(() -> percentValveOpening));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> getCapacityConstraints() {
+    if (capacityConstraints.isEmpty()) {
+      initializeCapacityConstraints();
+    }
+    return java.util.Collections.unmodifiableMap(capacityConstraints);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public neqsim.process.equipment.capacity.CapacityConstraint getBottleneckConstraint() {
+    neqsim.process.equipment.capacity.CapacityConstraint bottleneck = null;
+    double maxUtil = 0.0;
+    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints()
+        .values()) {
+      double util = c.getUtilization();
+      if (!Double.isNaN(util) && util > maxUtil) {
+        maxUtil = util;
+        bottleneck = c;
+      }
+    }
+    return bottleneck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityExceeded() {
+    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints()
+        .values()) {
+      if (c.isViolated()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHardLimitExceeded() {
+    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints()
+        .values()) {
+      if (c.isHardLimitExceeded()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilization() {
+    double maxUtil = 0.0;
+    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints()
+        .values()) {
+      double util = c.getUtilization();
+      if (!Double.isNaN(util)) {
+        maxUtil = Math.max(maxUtil, util);
+      }
+    }
+    return maxUtil;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCapacityConstraint(
+      neqsim.process.equipment.capacity.CapacityConstraint constraint) {
+    if (constraint != null) {
+      capacityConstraints.put(constraint.getName(), constraint);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean removeCapacityConstraint(String constraintName) {
+    return capacityConstraints.remove(constraintName) != null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void clearCapacityConstraints() {
+    capacityConstraints.clear();
   }
 }

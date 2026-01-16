@@ -2646,13 +2646,37 @@ public class Compressor extends TwoPortEquipment
   }
 
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For compressors, capacity duty is defined as the total shaft work (power consumption) in Watts.
+   * This is used in conjunction with {@link #getCapacityMax()} for bottleneck analysis via
+   * {@link neqsim.process.processmodel.ProcessSystem#getBottleneck()}.
+   * </p>
+   *
+   * <p>
+   * For more detailed constraint analysis including speed and surge limits, use the
+   * {@link neqsim.process.equipment.capacity.CapacityConstrainedEquipment} interface methods.
+   * </p>
+   *
+   * @return shaft power in Watts
+   */
   @Override
   public double getCapacityDuty() {
     return getTotalWork();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For compressors, maximum capacity is defined by the mechanical design's maximum power in Watts.
+   * This should be set via {@code getMechanicalDesign().maxDesignPower = value}.
+   * </p>
+   *
+   * @return maximum design power in Watts
+   */
   @Override
   public double getCapacityMax() {
     return getMechanicalDesign().maxDesignPower;

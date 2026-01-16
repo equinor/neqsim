@@ -2,33 +2,55 @@
 
 ## Overview
 
-The Capacity Constraint Framework provides a standardized way to define, track, and analyze equipment capacity limits across all NeqSim process equipment. It enables:
+The Capacity Constraint Framework extends NeqSim's existing bottleneck analysis capability with multi-constraint support. It provides:
 
-- **Bottleneck Detection**: Automatically identify which equipment is limiting process throughput
-- **Capacity Monitoring**: Track utilization of equipment relative to design limits
-- **Optimization Support**: Provide constraint information for process optimization algorithms
-- **Operational Warnings**: Alert when equipment approaches or exceeds design limits
+- **Multiple constraints per equipment**: Track speed, power, surge margin, temperature, etc. simultaneously
+- **Constraint types**: HARD (trip/damage), SOFT (efficiency loss), DESIGN (normal envelope)
+- **Warning thresholds**: Early warning when approaching limits
+- **Integration with ProductionOptimizer**: Works seamlessly with existing optimization tools
+
+## Relationship to Existing Bottleneck Analysis
+
+NeqSim already provides bottleneck analysis via `ProcessEquipmentInterface`:
+
+| Existing Method | Description |
+|-----------------|-------------|
+| `getCapacityDuty()` | Current operating load (power, flow, etc.) |
+| `getCapacityMax()` | Maximum design capacity |
+| `getRestCapacity()` | Available headroom |
+| `ProcessSystem.getBottleneck()` | Equipment with highest utilization |
+
+The new `CapacityConstrainedEquipment` interface **extends** this by allowing:
+- Multiple named constraints per equipment
+- Constraint severity levels (HARD/SOFT/DESIGN)
+- Live value suppliers for dynamic updates
+- Detailed bottleneck information via `findBottleneck()`
+
+**The systems are integrated**: `ProcessSystem.getBottleneck()` automatically uses multi-constraint data when available, falling back to single-capacity metrics for equipment that doesn't implement the new interface.
 
 ## Architecture
 
-The framework consists of four core components in `neqsim.process.equipment.capacity`:
+The framework integrates with existing bottleneck analysis in `neqsim.process.equipment.capacity`:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         ProcessSystem                                │
 │  ┌───────────────────────────────────────────────────────────────┐  │
-│  │  findBottleneck()  │  getConstrainedEquipment()  │  ...       │  │
+│  │  getBottleneck()  │  findBottleneck()  │  getRestCapacity()   │  │
+│  │  (unified: checks both single and multi-constraint equipment) │  │
 │  └───────────────────────────────────────────────────────────────┘  │
 │                              │                                       │
-│                              ▼                                       │
-│  ┌─────────────────────────────────────────────────────────────────┐│
-│  │              CapacityConstrainedEquipment (Interface)           ││
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐              ││
-│  │  │  Separator  │  │ Compressor  │  │    Pump     │  ...         ││
-│  │  └─────────────┘  └─────────────┘  └─────────────┘              ││
-│  └─────────────────────────────────────────────────────────────────┘│
-│                              │                                       │
-│                              ▼                                       │
+│         ┌────────────────────┴────────────────────┐                  │
+│         ▼                                         ▼                  │
+│  ┌──────────────────────┐             ┌─────────────────────────────┐│
+│  │  Traditional API     │             │  Multi-Constraint API       ││
+│  │  getCapacityDuty()   │             │  CapacityConstrainedEquipment│
+│  │  getCapacityMax()    │             │  ├─ getCapacityConstraints()││
+│  │  getRestCapacity()   │             │  ├─ getBottleneckConstraint()│
+│  └──────────────────────┘             │  └─ getMaxUtilization()     ││
+│                                       └─────────────────────────────┘│
+│                                                   │                  │
+│                                                   ▼                  │
 │  ┌─────────────────────────────────────────────────────────────────┐│
 │  │                    CapacityConstraint                            ││
 │  │  ┌──────────────────────────────────────────────────────────┐   ││
