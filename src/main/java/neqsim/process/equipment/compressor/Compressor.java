@@ -3577,9 +3577,11 @@ public class Compressor extends TwoPortEquipment
     }
 
     // Max speed constraint (from curve or mechanical limit)
+    // Design value = max speed, so utilization = currentSpeed / maxSpeed
+    // This gives proper utilization: 87% speed = 87% utilization
     final double maxSpeedLimit = effectiveMaxSpeed;
     addCapacityConstraint(StandardConstraintType.COMPRESSOR_SPEED.createConstraint()
-        .setDesignValue(speed).setMaxValue(maxSpeedLimit).setWarningThreshold(0.9)
+        .setDesignValue(maxSpeedLimit).setMaxValue(maxSpeedLimit).setWarningThreshold(0.9)
         .setValueSupplier(() -> this.speed));
 
     // Min speed constraint (from curve minimum)
