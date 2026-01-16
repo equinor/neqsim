@@ -3558,40 +3558,114 @@ public class Compressor extends TwoPortEquipment
    * </p>
    */
   protected void initializeCapacityConstraints() {
-    // Speed constraint
-    addCapacityConstraint(
-        StandardConstraintType.COMPRESSOR_SPEED.createConstraint().setDesignValue(speed)
-            .setMaxValue(maxspeed).setWarningThreshold(0.9).setValueSupplier(() -> this.speed));
+    // Determine max speed from curve or mechanical limit
+    double effectiveMaxSpeed = maxspeed;
+    double effectiveMinSpeed = 0.0;
+    if (getCompressorChart() != null && getCompressorChart().isUseCompressorChart()) {
+      double curveMaxSpeed = getCompressorChart().getMaxSpeedCurve();
+      double curveMinSpeed = getCompressorChart().getMinSpeedCurve();
+      if (!Double.isNaN(curveMaxSpeed) && curveMaxSpeed > 0) {
+        effectiveMaxSpeed = Math.min(maxspeed, curveMaxSpeed);
+      }
+      if (!Double.isNaN(curveMinSpeed) && curveMinSpeed > 0) {
+        effectiveMinSpeed = curveMinSpeed;
+      }
+    }
 
-    // Power constraint (if driver power is set)
+    // Max speed constraint (from curve or mechanical limit)
+    final double maxSpeedLimit = effectiveMaxSpeed;
+    addCapacityConstraint(StandardConstraintType.COMPRESSOR_SPEED.createConstraint()
+        .setDesignValue(speed).setMaxValue(maxSpeedLimit).setWarningThreshold(0.9)
+        .setValueSupplier(() -> this.speed));
+
+    // Min speed constraint (from curve minimum)
+    if (effectiveMinSpeed > 0) {
+      final double minSpeedLimit = effectiveMinSpeed;
+      addCapacityConstraint(StandardConstraintType.COMPRESSOR_MIN_SPEED.createConstraint()
+          .setDesignValue(minSpeedLimit).setMinValue(minSpeedLimit).setWarningThreshold(1.05) // Warning
+                                                                                              // when
+                                                                                              // close
+                                                                                              // to
+                                                                                              // minimum
+          .setValueSupplier(() -> {
+            // Return ratio: speed/minSpeed. Values < 1 indicate violation
+            return this.speed / minSpeedLimit;
+          }));
+    }
+
+    // Power constraint - use driver rating if available, otherwise estimate from current power
+    double designPower = Double.MAX_VALUE;
+    double maxPower = Double.MAX_VALUE;
+    if (driver != null && driver.getRatedPower() > 0) {
+      // Use driver rating
+      designPower = driver.getRatedPower();
+      maxPower = designPower * 1.1; // 10% overload margin
+    } else if (getThermoSystem() != null) {
+      // Estimate design power as 120% of current power (allows some margin)
+      double currentPower = getPower();
+      if (currentPower > 0 && !Double.isNaN(currentPower)) {
+        designPower = currentPower * 1.2;
+        maxPower = currentPower * 1.5; // Max 150% of current power
+      }
+    }
+    // If still MAX_VALUE, power constraint won't be meaningful until
+    // reinitializeCapacityConstraints is called
+    final double finalDesignPower = designPower;
+    final double finalMaxPower = maxPower;
     addCapacityConstraint(
-        StandardConstraintType.COMPRESSOR_POWER.createConstraint().setDesignValue(Double.MAX_VALUE) // Will
-                                                                                                    // be
-                                                                                                    // updated
-                                                                                                    // when
-                                                                                                    // driver
-                                                                                                    // is
-                                                                                                    // configured
-            .setWarningThreshold(0.9).setValueSupplier(() -> this.getPower()));
+        StandardConstraintType.COMPRESSOR_POWER.createConstraint().setDesignValue(finalDesignPower)
+            .setMaxValue(finalMaxPower).setWarningThreshold(0.9).setValueSupplier(() -> {
+              if (getThermoSystem() == null) {
+                return 0.0;
+              }
+              return this.getPower();
+            }));
 
     // Surge margin constraint
-    addCapacityConstraint(
-        StandardConstraintType.COMPRESSOR_SURGE_MARGIN.createConstraint().setDesignValue(100.0) // 100%
-                                                                                                // margin
-                                                                                                // at
-                                                                                                // design
-                                                                                                // (will
-                                                                                                // decrease
-                                                                                                // as
-                                                                                                // approaching
-                                                                                                // surge)
-            .setMinValue(10.0) // Minimum 10% surge margin required
-            .setWarningThreshold(0.15) // Warning at 15% margin
-            .setValueSupplier(() -> {
-              double margin = this.getDistanceToSurge();
-              // Return inverted value: low margin = high utilization
-              return margin > 0 ? 100.0 - margin : 100.0;
-            }));
+    // getDistanceToSurge() returns a ratio: (currentFlow / surgeFlow) - 1
+    // e.g., 0.5 means current flow is 50% above surge flow
+    // For utilization: 0 margin = 100% utilized (at surge), large margin = low utilization
+    addCapacityConstraint(StandardConstraintType.COMPRESSOR_SURGE_MARGIN.createConstraint()
+        .setDesignValue(100.0).setMinValue(10.0) // Minimum 10% surge margin required
+        .setWarningThreshold(0.85) // Warning at 85% utilization (15% margin)
+        .setValueSupplier(() -> {
+          double marginRatio = this.getDistanceToSurge();
+          if (marginRatio <= 0 || Double.isNaN(marginRatio) || Double.isInfinite(marginRatio)) {
+            return 100.0; // At or below surge = 100% utilized
+          }
+          // Convert ratio to utilization: utilization = 1 / (1 + marginRatio)
+          // e.g., margin=0.5 -> utilization = 1/1.5 = 66.7%
+          return 100.0 / (1.0 + marginRatio);
+        }));
+
+    // Stonewall margin constraint
+    // getDistanceToStoneWall() returns a ratio: (stoneWallFlow / currentFlow) - 1
+    // e.g., 0.5 means stonewall is 50% above current flow
+    addCapacityConstraint(StandardConstraintType.COMPRESSOR_STONEWALL_MARGIN.createConstraint()
+        .setDesignValue(100.0).setMinValue(5.0) // Minimum 5% stonewall margin
+        .setWarningThreshold(0.90) // Warning at 90% utilization (10% margin)
+        .setValueSupplier(() -> {
+          double marginRatio = this.getDistanceToStoneWall();
+          if (marginRatio <= 0 || Double.isNaN(marginRatio) || Double.isInfinite(marginRatio)) {
+            return 100.0; // At or above stonewall = 100% utilized
+          }
+          // Convert ratio to utilization: utilization = 1 / (1 + marginRatio)
+          return 100.0 / (1.0 + marginRatio);
+        }));
+  }
+
+  /**
+   * Reinitializes capacity constraints with current configuration.
+   *
+   * <p>
+   * Call this method after setting compressor charts or changing speed limits to update the
+   * constraints with the new values. This clears existing constraints and recreates them based on
+   * current settings.
+   * </p>
+   */
+  public void reinitializeCapacityConstraints() {
+    capacityConstraints.clear();
+    initializeCapacityConstraints();
   }
 
   /** {@inheritDoc} */

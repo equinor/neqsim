@@ -48,10 +48,16 @@ public enum StandardConstraintType {
   // ==================== Compressor Constraints ====================
 
   /**
-   * Compressor rotational speed.
+   * Compressor rotational speed (max). Limited by mechanical design or curve maximum.
    */
   COMPRESSOR_SPEED("speed", "RPM", CapacityConstraint.ConstraintType.HARD,
-      "Compressor rotational speed - limited by mechanical design"),
+      "Compressor rotational speed - limited by mechanical design or curve maximum"),
+
+  /**
+   * Compressor minimum speed. Limited by curve minimum or stability requirements.
+   */
+  COMPRESSOR_MIN_SPEED("minSpeed", "RPM", CapacityConstraint.ConstraintType.HARD,
+      "Compressor minimum speed - limited by curve minimum or stability"),
 
   /**
    * Compressor shaft power.
