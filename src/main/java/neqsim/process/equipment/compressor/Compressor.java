@@ -3597,10 +3597,14 @@ public class Compressor extends TwoPortEquipment
           }));
     }
 
-    // Power constraint - use driver rating if available, otherwise estimate from current power
+    // Power constraint - use mechanical design if set, then driver rating, then estimate
     double designPower = Double.MAX_VALUE;
     double maxPower = Double.MAX_VALUE;
-    if (driver != null && driver.getRatedPower() > 0) {
+    if (getMechanicalDesign().maxDesignPower > 0) {
+      // Use mechanical design value (highest priority for bottleneck analysis)
+      maxPower = getMechanicalDesign().maxDesignPower;
+      designPower = maxPower * 0.9; // Design is 90% of max
+    } else if (driver != null && driver.getRatedPower() > 0) {
       // Use driver rating
       designPower = driver.getRatedPower();
       maxPower = designPower * 1.1; // 10% overload margin
