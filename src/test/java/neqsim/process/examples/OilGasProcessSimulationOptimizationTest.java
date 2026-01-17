@@ -480,6 +480,37 @@ public class OilGasProcessSimulationOptimizationTest {
     dewPointScrubber3.setInternalDiameter(2.0);
     dewPointScrubber3.setSeparatorLength(6.0);
 
+    // Configure heaters and coolers with max design duty
+    // Inlet heater (20-HA-01) - well stream heater before HP separator
+    neqsim.process.equipment.heatexchanger.Heater inletHeater =
+        (neqsim.process.equipment.heatexchanger.Heater) process.getUnit("20-HA-01");
+    inletHeater.setMaxDesignDuty(6000.0, "kW"); // 6 MW max heating duty
+
+    // First stage cooler (23-HA-03) - gas cooler from 3rd stage separator
+    neqsim.process.equipment.heatexchanger.Cooler firstStageCooler =
+        (neqsim.process.equipment.heatexchanger.Cooler) process.getUnit("23-HA-03");
+    firstStageCooler.setMaxDesignDuty(500.0, "kW"); // 500 kW max cooling duty (small duty)
+
+    // Second stage cooler (23-HA-02)
+    neqsim.process.equipment.heatexchanger.Cooler secondStageCooler =
+        (neqsim.process.equipment.heatexchanger.Cooler) process.getUnit("23-HA-02");
+    secondStageCooler.setMaxDesignDuty(1000.0, "kW"); // 1 MW max cooling duty
+
+    // Dew point cooler (23-HA-01) - handles mixed gas, higher duty needed
+    neqsim.process.equipment.heatexchanger.Cooler dewPointCooler1 =
+        (neqsim.process.equipment.heatexchanger.Cooler) process.getUnit("23-HA-01");
+    dewPointCooler1.setMaxDesignDuty(5000.0, "kW"); // 5 MW max cooling duty
+
+    // Compressor aftercooler (24-HA-01) - after 1st stage export compressor
+    neqsim.process.equipment.heatexchanger.Cooler compressorAfterCooler1 =
+        (neqsim.process.equipment.heatexchanger.Cooler) process.getUnit("24-HA-01");
+    compressorAfterCooler1.setMaxDesignDuty(12000.0, "kW"); // 12 MW - handles compression heat
+
+    // Export gas cooler (27-HA-01) after final compression
+    neqsim.process.equipment.heatexchanger.Cooler exportGasCooler =
+        (neqsim.process.equipment.heatexchanger.Cooler) process.getUnit("27-HA-01");
+    exportGasCooler.setMaxDesignDuty(6000.0, "kW"); // 6 MW max cooling duty
+
     // Run simulation with configured equipment to establish baseline
     ProcessOutputResults baselineResults = simulation.runSimulation();
     assumeTrue(baselineResults != null, "Skipping test: baseline simulation did not converge");
@@ -493,7 +524,8 @@ public class OilGasProcessSimulationOptimizationTest {
     // Print baseline operating point
     double baselineFeedRateMoleSec = wellStream.getFlowRate("mole/sec");
     double baselineFeedRateKgmoleHr = baselineFeedRateMoleSec * 3600 / 1000;
-    System.out.println("\n=== Production Optimization with Separator + Compressor Constraints ===");
+    System.out.println(
+        "\n=== Production Optimization with Separator + Compressor + Heater/Cooler Constraints ===");
     System.out.println(
         "Baseline feed rate: " + String.format("%.0f", baselineFeedRateKgmoleHr) + " kgmole/hr");
 
@@ -502,6 +534,15 @@ public class OilGasProcessSimulationOptimizationTest {
     printSeparatorStatus("20-VA-01 (Inlet)", inletSeparator);
     printSeparatorStatus("20-VA-02 (2nd Stage)", secondStageSep);
     printSeparatorStatus("20-VA-03 (3rd Stage)", thirdStageSep);
+
+    // Print baseline heater/cooler duties
+    System.out.println("\n--- Baseline Heater/Cooler Status ---");
+    printHeaterCoolerStatus("20-HA-01 (Inlet Heater)", inletHeater);
+    printHeaterCoolerStatus("23-HA-03 (1st Stage Cooler)", firstStageCooler);
+    printHeaterCoolerStatus("23-HA-02 (2nd Stage Cooler)", secondStageCooler);
+    printHeaterCoolerStatus("23-HA-01 (Dew Point Cooler)", dewPointCooler1);
+    printHeaterCoolerStatus("24-HA-01 (Compressor Aftercooler)", compressorAfterCooler1);
+    printHeaterCoolerStatus("27-HA-01 (Export Gas Cooler)", exportGasCooler);
 
     // Create optimizer
     neqsim.process.util.optimization.ProductionOptimizer optimizer =
@@ -512,7 +553,7 @@ public class OilGasProcessSimulationOptimizationTest {
     double lowerBound = currentFeedMoleSec * 0.5;
     double upperBound = currentFeedMoleSec * 1.5;
 
-    // Configure optimization with both separator and compressor limits
+    // Configure optimization with separator, compressor, and heater/cooler limits
     neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig config =
         new neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig(lowerBound,
             upperBound).rateUnit("mole/sec").tolerance(currentFeedMoleSec * 0.01).maxIterations(30)
@@ -521,13 +562,16 @@ public class OilGasProcessSimulationOptimizationTest {
                 .utilizationLimitForType(neqsim.process.equipment.compressor.Compressor.class, 0.95)
                 .utilizationLimitForType(neqsim.process.equipment.separator.Separator.class, 0.90)
                 .utilizationLimitForType(
-                    neqsim.process.equipment.separator.ThreePhaseSeparator.class, 0.90);
+                    neqsim.process.equipment.separator.ThreePhaseSeparator.class, 0.90)
+                // Heaters and coolers can operate at 95% of max design duty
+                .utilizationLimitForType(neqsim.process.equipment.heatexchanger.Heater.class, 0.95);
 
     System.out.println("\nOptimization configuration:");
     System.out.println("  Search range: " + String.format("%.2f", lowerBound) + " - "
         + String.format("%.2f", upperBound) + " mole/sec");
     System.out.println("  Separator utilization limit: 90%");
     System.out.println("  Compressor utilization limit: 95%");
+    System.out.println("  Heater/Cooler utilization limit: 95%");
 
     // Run optimization
     neqsim.process.util.optimization.ProductionOptimizer.OptimizationResult result =
@@ -607,6 +651,24 @@ public class OilGasProcessSimulationOptimizationTest {
               c.getUtilization() * 100);
         }
       }
+    } catch (Exception e) {
+      System.out.printf("  %s: Unable to calculate status (%s)%n", label, e.getMessage());
+    }
+  }
+
+  /**
+   * Helper method to print heater/cooler status.
+   */
+  private void printHeaterCoolerStatus(String label,
+      neqsim.process.equipment.heatexchanger.Heater heaterCooler) {
+    try {
+      double duty = heaterCooler.getDuty("kW");
+      double maxDuty = heaterCooler.getMaxDesignDuty("kW");
+      double utilization = maxDuty > 0 ? Math.abs(duty) / maxDuty : 0;
+
+      System.out.printf("  %s:%n", label);
+      System.out.printf("    Duty: %.1f kW (max design: %.1f kW)%n", duty, maxDuty);
+      System.out.printf("    Utilization: %.1f%%%n", utilization * 100);
     } catch (Exception e) {
       System.out.printf("  %s: Unable to calculate status (%s)%n", label, e.getMessage());
     }

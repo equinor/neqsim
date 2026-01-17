@@ -2072,6 +2072,16 @@ public class ProductionOptimizer {
       return new CapacityRule(equipment -> Math.abs(exchanger.energyDiff()),
           equipment -> Math.max(1.0, exchanger.getCapacityMax()));
     }
+    if (unit instanceof neqsim.process.equipment.heatexchanger.Heater) {
+      neqsim.process.equipment.heatexchanger.Heater heater =
+          (neqsim.process.equipment.heatexchanger.Heater) unit;
+      // Use absolute duty for heaters/coolers (both heating and cooling)
+      return new CapacityRule(equipment -> Math.abs(heater.getDuty()), equipment -> {
+        double maxDuty = heater.getMaxDesignDuty();
+        // If max design duty is not set, return a large value (no constraint)
+        return maxDuty > 0 ? maxDuty : Double.MAX_VALUE;
+      });
+    }
     return new CapacityRule(ProcessEquipmentInterface::getCapacityDuty,
         ProcessEquipmentInterface::getCapacityMax);
   }

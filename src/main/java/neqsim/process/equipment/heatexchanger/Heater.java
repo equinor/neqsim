@@ -413,6 +413,54 @@ public class Heater extends TwoPortEquipment
   }
 
   /**
+   * Sets the maximum design duty (heating or cooling capacity) for capacity constraint checking.
+   * 
+   * <p>
+   * The duty is specified in Watts (W). Positive values indicate heating capacity, negative values
+   * indicate cooling capacity. For constraint checking, the absolute value is used.
+   * </p>
+   *
+   * @param maxDuty maximum design duty in Watts [W]
+   */
+  public void setMaxDesignDuty(double maxDuty) {
+    getMechanicalDesign().setMaxDesignDuty(maxDuty);
+    // Reinitialize capacity constraints with the new design value
+    capacityConstraints.clear();
+  }
+
+  /**
+   * Sets the maximum design duty with unit specification.
+   *
+   * @param maxDuty maximum design duty value
+   * @param unit unit of the duty value (e.g., "W", "kW", "MW")
+   */
+  public void setMaxDesignDuty(double maxDuty, String unit) {
+    neqsim.util.unit.PowerUnit powerUnit = new neqsim.util.unit.PowerUnit(maxDuty, unit);
+    setMaxDesignDuty(powerUnit.getValue("W"));
+  }
+
+  /**
+   * Gets the maximum design duty for this heater/cooler.
+   *
+   * @return maximum design duty in Watts [W]
+   */
+  public double getMaxDesignDuty() {
+    return getMechanicalDesign().maxDesignDuty;
+  }
+
+  /**
+   * Gets the maximum design duty in the specified unit.
+   *
+   * @param unit unit for the returned value (e.g., "W", "kW", "MW")
+   * @return maximum design duty in the specified unit
+   */
+  public double getMaxDesignDuty(String unit) {
+    neqsim.util.unit.PowerUnit powerUnit =
+        new neqsim.util.unit.PowerUnit(getMechanicalDesign().maxDesignDuty, "W");
+    return powerUnit.getValue(unit);
+  }
+
+  /**
    * <p>
    * isSetEnergyInput.
    * </p>
