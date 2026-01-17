@@ -557,9 +557,11 @@ public class Pipe extends ProcessEquipmentBaseClass
 | **Separator** | `SEPARATOR_GAS_LOAD_FACTOR` | gasLoadFactor | m/s | Souders-Brown K-factor |
 | | `SEPARATOR_LIQUID_RESIDENCE_TIME` | liquidResidenceTime | s | Liquid hold-up time |
 | | `SEPARATOR_LIQUID_LEVEL` | liquidLevel | % | Level as % of capacity |
-| **Compressor** | `COMPRESSOR_SPEED` | speed | RPM | Rotational speed |
+| **Compressor** | `COMPRESSOR_SPEED` | speed | RPM | Maximum rotational speed |
+| | `COMPRESSOR_MIN_SPEED` | minSpeed | RPM | Minimum stable speed (from curve) |
 | | `COMPRESSOR_POWER` | power | kW | Shaft power |
 | | `COMPRESSOR_SURGE_MARGIN` | surgeMargin | % | Distance to surge |
+| | `COMPRESSOR_STONEWALL_MARGIN` | stonewallMargin | % | Distance to stonewall |
 | | `COMPRESSOR_DISCHARGE_TEMP` | dischargeTemperature | °C | Discharge temperature |
 | | `COMPRESSOR_PRESSURE_RATIO` | pressureRatio | - | Compression ratio |
 | **Pump** | `PUMP_FLOW_RATE` | flowRate | m³/hr | Volumetric flow |
@@ -574,6 +576,10 @@ public class Pipe extends ProcessEquipmentBaseClass
 | **Pipe** | `PIPE_VELOCITY` | velocity | m/s | Fluid velocity |
 | | `PIPE_EROSIONAL_VELOCITY` | erosionalVelocityRatio | - | v/v_erosional ratio |
 | | `PIPE_PRESSURE_DROP` | pressureDrop | bar/km | Pressure gradient |
+
+**Notes:**
+- **COMPRESSOR_MIN_SPEED**: This is a "minimum constraint" - utilization is calculated as `minSpeed / currentSpeed`. Values < 1.0 mean operating safely above minimum; values > 1.0 mean operating below minimum (violation).
+- **COMPRESSOR_SURGE_MARGIN** and **COMPRESSOR_STONEWALL_MARGIN**: Utilization is calculated as `1 / (1 + marginRatio)` where margin = 0 gives 100% utilization.
 
 ## Best Practices
 

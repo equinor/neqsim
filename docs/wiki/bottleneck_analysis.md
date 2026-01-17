@@ -59,14 +59,20 @@ Currently, the following equipment types support capacity analysis:
 | Equipment | Duty Metric | Capacity Parameter |
 |-----------|-------------|--------------------|
 | **Compressor** | Power (W) | `MechanicalDesign.maxDesignPower` with optional P10/P50/P90 overrides |
-| **Separator** | Gas Flow ($m^3/hr$) | `MechanicalDesign.maxDesignGassVolumeFlow` |
+| **Separator** | Liquid Level Fraction | 1.0 (100% fill) |
 | **Pump** | Power (W) | `MechanicalDesign.maxDesignPower` |
 | **Heater** | Duty (W) | `MechanicalDesign.maxDesignDuty` |
 | **Cooler** | Duty (W) | `MechanicalDesign.maxDesignDuty` |
-| **ThrottlingValve** | Volume Flow ($m^3/hr$) | `MechanicalDesign.maxDesignVolumeFlow` |
-| **Pipeline** | Volume Flow ($m^3/hr$) | `MechanicalDesign.maxDesignVolumeFlow` |
+| **ThrottlingValve** | Valve Opening (%) | Max Opening (only if < 100% set) |
+| **Pipeline** | Superficial Velocity (m/s) | `MechanicalDesign.maxDesignVelocity` (default 20 m/s) |
 | **DistillationColumn** | Fs hydraulic factor | `OptimizationConfig.columnFsFactorLimit` (default 2.5) |
 | **Custom types** | User-supplied duty/limit lambdas | Configure via `capacityRuleForType` |
+
+**Notes:**
+- **Separator**: The `ProductionOptimizer` uses liquid level fraction for capacity tracking. A liquid level of 0.7 means 70% utilization. Gas load factor (K-factor) is used for sizing via `getGasLoadFactor()`.
+- **ThrottlingValve**: Valve utilization is only tracked if a max opening < 100% is explicitly set. A fully open valve (100%) is normal operation, not overutilization.
+- **Pipeline**: Default erosional velocity limit of 20 m/s is applied if no design velocity is set.
+- **Dry Gas**: For separators/scrubbers with single-phase (dry gas), K-factor calculations use a default liquid density of 1000 kg/m³.
 
 ## Example Usage
 

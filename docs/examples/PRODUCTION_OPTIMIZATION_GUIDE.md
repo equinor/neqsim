@@ -542,13 +542,20 @@ while True:
 
 | Equipment | getCapacityDuty() | getCapacityMax() | CapacityConstrainedEquipment |
 |-----------|-------------------|------------------|------------------------------|
-| Separator | ✅ Gas load factor | ✅ Design gas load | ✅ Gas load factor constraint |
-| Compressor | ✅ Power (kW) | ✅ Max power | ✅ Speed, power, surge margin |
-| Pump | ✅ Power (kW) | ✅ Max power | ❌ (planned) |
-| HeatExchanger | ✅ Duty (kW) | ✅ Max duty | ❌ (planned) |
-| Valve | ✅ Cv | ✅ Max Cv | ❌ (planned) |
-| Pipe | ✅ Pressure drop | ✅ Max ΔP | ❌ (planned) |
+| Separator | ✅ Liquid level fraction | ✅ 1.0 (100% fill) | ✅ Gas load factor constraint |
+| Compressor | ✅ Power (kW) | ✅ Max power | ✅ Speed, power, surge, stonewall margin |
+| Pump | ✅ Power (kW) | ✅ Max power | ✅ Capacity constraints |
+| Heater/Cooler | ✅ Duty (kW) | ✅ Max duty | ✅ Duty constraint |
+| HeatExchanger | ✅ Duty (kW) | ✅ Max duty | ✅ Duty constraint |
+| Valve | ✅ Opening (%) | ✅ Max opening | ✅ (only if max < 100% set) |
+| Pipe | ✅ Superficial velocity | ✅ Max velocity | ✅ Velocity constraint |
 | DistillationColumn | ✅ Fs factor | ✅ Max Fs factor | ❌ (planned) |
+| Manifold | ✅ Velocity | ✅ Erosional velocity | ✅ FIV analysis |
+
+**Notes:**
+- **Separator**: Uses liquid level fraction for optimization (0.7 = 70% filled). Gas load factor (K-factor) available via `getGasLoadFactor()` for sizing.
+- **Valve**: Only tracked if max opening < 100% is explicitly set. A fully open valve is normal, not overutilized.
+- **Compressor**: Min speed constraint correctly handles utilization (below minimum speed = violation).
 
 ---
 
@@ -591,6 +598,56 @@ config.utilizationLimitForName("Critical Compressor", 0.85)
 ```
 
 ### 4. Use Hard Constraints for Safety
+
+### 5. Compressor Curves with Optimization
+
+When using compressor performance curves with the optimizer, follow this setup sequence:
+
+```java
+// 1. Create and run compressor to establish design point
+Compressor compressor = new Compressor("Export Compressor", gasScrubber.getGasOutStream());
+compressor.setOutletPressure(80.0, "bara");
+compressor.setPolytropicEfficiency(0.78);
+compressor.setUsePolytropicCalc(true);
+process.add(compressor);
+process.run();
+
+// 2. Generate compressor chart at design point
+CompressorChartGenerator chartGen = new CompressorChartGenerator(compressor);
+chartGen.setChartType("interpolate and extrapolate");
+CompressorChartInterface chart = chartGen.generateCompressorChart("normal curves", 5);
+compressor.setCompressorChart(chart);
+compressor.getCompressorChart().setUseCompressorChart(true);
+
+// 3. IMPORTANT: Set max speed higher than operating speed
+// This defines the available headroom for optimization
+double designSpeed = compressor.getSpeed();
+compressor.setMaximumSpeed(designSpeed * 1.15);  // 15% speed margin
+
+// 4. Re-run process and reinitialize constraints
+process.run();
+compressor.reinitializeCapacityConstraints();  // Updates constraints with curve limits
+
+// 5. Now optimize - bounds must respect surge/stonewall
+double lowerBound = currentRate * 0.96;  // Stay above surge
+double upperBound = currentRate * 1.10;  // Stay below stonewall
+
+OptimizationConfig config = new OptimizationConfig(lowerBound, upperBound)
+    .rateUnit("kg/hr")
+    .capacityRuleForType(Compressor.class, new CapacityRule(
+        unit -> ((CapacityConstrainedEquipment) unit).getMaxUtilization(),
+        unit -> 1.0))
+    .utilizationLimitForType(Compressor.class, 1.0);  // 100% since getMaxUtilization is a ratio
+
+OptimizationResult result = optimizer.optimize(process, feedStream, config,
+    Collections.emptyList(), Collections.emptyList());
+```
+
+**Key Points:**
+- Call `reinitializeCapacityConstraints()` after setting compressor charts to update speed/surge constraints
+- Set `setMaximumSpeed()` to define available headroom (typically 10-15% above design)
+- Use realistic search bounds that respect compressor surge/stonewall limits
+- Compressor constraints include: speed, min speed, power, surge margin, stonewall margin
 
 ```java
 // HARD constraints cannot be violated
