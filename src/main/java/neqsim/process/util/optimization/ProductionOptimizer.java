@@ -2082,18 +2082,10 @@ public class ProductionOptimizer {
     if (unit instanceof neqsim.process.equipment.separator.Separator) {
       neqsim.process.equipment.separator.Separator sep =
           (neqsim.process.equipment.separator.Separator) unit;
-      // Use gas load factor (K-factor) for separator capacity constraint
-      // This is more meaningful than liquid level for gas handling capacity
-      return new CapacityRule(equipment -> {
-        try {
-          return sep.getGasLoadFactor();
-        } catch (Exception e) {
-          return 0.0;
-        }
-      }, equipment -> {
-        double designK = sep.getDesignGasLoadFactor();
-        return designK > 0 ? designK : 0.1; // Default K-factor if not set
-      });
+      // Use liquid level fraction as separator capacity metric
+      // This represents the operational filling of the separator vessel
+      // Values > 1.0 indicate liquid carryover risk
+      return new CapacityRule(equipment -> sep.getLiquidLevel(), equipment -> 1.0);
     }
     if (unit instanceof neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2) {
       neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2 exchanger =
@@ -2116,12 +2108,13 @@ public class ProductionOptimizer {
       // Use valve opening percentage as capacity measure (0-100%)
       // A valve operating at high opening (>80%) has poor control authority
       // and may indicate it is undersized for the current flow/Cv
-      // Only track if Cv/Kv has been explicitly set (valve is sized)
-      if (valve.isValveKvSet()) {
+      // Only track if Cv/Kv has been explicitly set AND max opening is constrained
+      double maxOpening = valve.getMaximumValveOpening();
+      if (valve.isValveKvSet() && maxOpening < 100.0) {
         return new CapacityRule(equipment -> valve.getPercentValveOpening(), // Current opening %
-            equipment -> valve.getMaximumValveOpening()); // Max allowed opening (default 100%)
+            equipment -> maxOpening); // Max allowed opening
       }
-      // For valves without explicit Cv set, return no-constraint rule
+      // For valves without explicit Cv or unconstrained opening, don't track utilization
       return new CapacityRule(equipment -> 0.0, equipment -> Double.MAX_VALUE);
     }
     if (unit instanceof PipeBeggsAndBrills) {

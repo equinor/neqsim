@@ -781,9 +781,16 @@ public class Separator extends ProcessEquipmentBaseClass
    */
   public double getGasLoadFactor() {
     thermoSystem.initPhysicalProperties();
-    double term1 = (thermoSystem.getPhase(1).getPhysicalProperties().getDensity()
-        - thermoSystem.getPhase(0).getPhysicalProperties().getDensity())
-        / thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
+    double gasDensity = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
+    double liquidDensity;
+    // For dry gas (single phase), use default liquid density of 1000 kg/m3
+    if (thermoSystem.getNumberOfPhases() < 2
+        || !thermoSystem.hasPhaseType("oil") && !thermoSystem.hasPhaseType("aqueous")) {
+      liquidDensity = 1000.0; // Default liquid density for dry separators/scrubbers
+    } else {
+      liquidDensity = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
+    }
+    double term1 = (liquidDensity - gasDensity) / gasDensity;
     return getGasSuperficialVelocity() * Math.sqrt(1.0 / term1);
   }
 
@@ -801,10 +808,15 @@ public class Separator extends ProcessEquipmentBaseClass
       gasAreaFraction = 1.0 - (liquidVolume / separatorVolume);
     }
     thermoSystem.initPhysicalProperties();
-    double term1 = 1.0 / gasAreaFraction
-        * (thermoSystem.getPhase(2).getPhysicalProperties().getDensity()
-            - thermoSystem.getPhase(0).getPhysicalProperties().getDensity())
-        / thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
+    double gasDensity = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
+    double liquidDensity;
+    // For dry gas (single phase), use default liquid density of 1000 kg/m3
+    if (thermoSystem.getNumberOfPhases() < 2 || phaseNumber >= thermoSystem.getNumberOfPhases()) {
+      liquidDensity = 1000.0; // Default liquid density for dry separators/scrubbers
+    } else {
+      liquidDensity = thermoSystem.getPhase(phaseNumber).getPhysicalProperties().getDensity();
+    }
+    double term1 = 1.0 / gasAreaFraction * (liquidDensity - gasDensity) / gasDensity;
     return getGasSuperficialVelocity() * Math.sqrt(1.0 / term1);
   }
 
