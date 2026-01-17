@@ -290,10 +290,10 @@ public class ProcessOptimizationExampleTest {
 
     // Configure optimization
     // The compressor charts were generated at 50,000 kg/hr design point
-    // Compressors typically have ~30-40% turndown before surge/stonewall
-    // Use a realistic search range around the design point
-    double lowerBound = 45000.0; // 90% of design (above surge)
-    double upperBound = 60000.0; // 120% of design (below stonewall)
+    // Compressors typically have ~15-20% turndown before surge and some stonewall margin
+    // Use a realistic search range around the design point that avoids surge
+    double lowerBound = 48000.0; // 96% of design (safely above surge)
+    double upperBound = 55000.0; // 110% of design (below stonewall)
 
     // Configure optimization with custom capacity rules for compressors
     // Use CapacityConstrainedEquipment interface for compressor utilization
