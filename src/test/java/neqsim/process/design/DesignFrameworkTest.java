@@ -2,6 +2,8 @@ package neqsim.process.design;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -123,17 +125,20 @@ class DesignFrameworkTest {
     EquipmentConstraintRegistry registry = EquipmentConstraintRegistry.getInstance();
 
     // Check separator constraints
-    var sepConstraints = registry.getConstraintTemplates("Separator");
+    List<EquipmentConstraintRegistry.ConstraintTemplate> sepConstraints =
+        registry.getConstraintTemplates("Separator");
     assertFalse(sepConstraints.isEmpty());
     assertTrue(sepConstraints.stream().anyMatch(c -> c.getType().equals("gasLoadFactor")));
 
     // Check compressor constraints
-    var compConstraints = registry.getConstraintTemplates("Compressor");
+    List<EquipmentConstraintRegistry.ConstraintTemplate> compConstraints =
+        registry.getConstraintTemplates("Compressor");
     assertFalse(compConstraints.isEmpty());
     assertTrue(compConstraints.stream().anyMatch(c -> c.getType().equals("surgeLine")));
 
     // Check pipeline constraints
-    var pipeConstraints = registry.getConstraintTemplates("Pipeline");
+    List<EquipmentConstraintRegistry.ConstraintTemplate> pipeConstraints =
+        registry.getConstraintTemplates("Pipeline");
     assertFalse(pipeConstraints.isEmpty());
     assertTrue(pipeConstraints.stream().anyMatch(c -> c.getType().equals("maxVelocity")));
   }
@@ -173,7 +178,7 @@ class DesignFrameworkTest {
     assertEquals(12500.0, result.getObjectiveValue(), 0.1);
     assertEquals(10000.0, result.getOptimizedFlowRate("Export Gas"), 0.1);
 
-    var sizes = result.getEquipmentSizes("HP-Separator");
+    Map<String, Double> sizes = result.getEquipmentSizes("HP-Separator");
     assertEquals(2.5, sizes.get("diameter"), 0.001);
     assertEquals(7.5, sizes.get("length"), 0.001);
 
@@ -367,13 +372,13 @@ class DesignFrameworkTest {
     assertTrue(template.isApplicable(oilGasFluid));
 
     // Check required equipment types
-    var requiredEquipment = template.getRequiredEquipmentTypes();
+    String[] requiredEquipment = template.getRequiredEquipmentTypes();
     assertEquals(2, requiredEquipment.length);
     assertEquals("Separator", requiredEquipment[0]);
     assertEquals("ThrottlingValve", requiredEquipment[1]);
 
     // Check expected outputs
-    var outputs = template.getExpectedOutputs();
+    String[] outputs = template.getExpectedOutputs();
     assertTrue(outputs.length > 0);
 
     // Create process from template
