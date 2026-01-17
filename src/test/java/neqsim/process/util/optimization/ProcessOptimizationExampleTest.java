@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.capacity.BottleneckResult;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;

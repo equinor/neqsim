@@ -274,4 +274,124 @@ public class OilGasProcessSimulationOptimizationTest {
     boolean hardLimitExceeded = comp27KA01.isHardLimitExceeded();
     System.out.println("Hard limit exceeded: " + hardLimitExceeded);
   }
+
+  /**
+   * Tests production optimization to maximize throughput while respecting compressor surge,
+   * stonewall, and speed constraints.
+   * 
+   * <p>
+   * This test demonstrates the integration between:
+   * <ul>
+   * <li>Compressor charts with surge and stonewall curves</li>
+   * <li>Capacity constraints (speed, power, surge margin, stonewall margin)</li>
+   * <li>ProductionOptimizer for finding maximum feasible throughput</li>
+   * </ul>
+   */
+  @Test
+  public void testProductionOptimizationWithCompressorConstraints() {
+    // Create process and run initial calculation
+    simulation.createProcess();
+    ProcessOutputResults initialResults = simulation.runSimulation();
+    assumeTrue(initialResults != null, "Skipping test: initial simulation did not converge");
+
+    // Configure compressor charts with design and max speeds
+    simulation.configureCompressorCharts(8000.0, 9000.0);
+
+    // Run simulation with compressor charts to establish baseline
+    ProcessOutputResults baselineResults = simulation.runSimulation();
+    assumeTrue(baselineResults != null, "Skipping test: baseline simulation did not converge");
+
+    // Get the process and feed stream
+    neqsim.process.processmodel.ProcessSystem process = simulation.getOilProcess();
+    neqsim.process.equipment.stream.Stream wellStream =
+        (neqsim.process.equipment.stream.Stream) process.getUnit("well stream");
+
+    // Get the export compressor for monitoring
+    neqsim.process.equipment.compressor.Compressor comp27KA01 =
+        (neqsim.process.equipment.compressor.Compressor) process.getUnit("27-KA-01");
+
+    // Print baseline operating point
+    double baselineFeedRateMoleSec = wellStream.getFlowRate("mole/sec");
+    double baselineFeedRateKgmoleHr = baselineFeedRateMoleSec * 3600 / 1000;
+    System.out.println("\n=== Production Optimization Test ===");
+    System.out.println(
+        "Baseline feed rate: " + String.format("%.0f", baselineFeedRateKgmoleHr) + " kgmole/hr");
+    System.out.println("Baseline gas export: "
+        + String.format("%.2f", baselineResults.getGasExportRate()) + " MSm3/day");
+    System.out.println("Baseline oil export: "
+        + String.format("%.2f", baselineResults.getOilExportRate()) + " m3/day");
+
+    // Create optimizer
+    neqsim.process.util.optimization.ProductionOptimizer optimizer =
+        new neqsim.process.util.optimization.ProductionOptimizer();
+
+    // Set optimization bounds (feed rate in mole/sec as used by the stream)
+    double currentFeedMoleSec = wellStream.getFlowRate("mole/sec");
+    double lowerBound = currentFeedMoleSec * 0.5; // 50% of current
+    double upperBound = currentFeedMoleSec * 1.5; // 150% of current
+
+    // Configure optimization
+    // The optimizer uses getCapacityDuty() and getCapacityMax() from equipment
+    // For compressors with charts, these methods consider surge/stonewall limits
+    neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig config =
+        new neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig(lowerBound,
+            upperBound).rateUnit("mole/sec").tolerance(currentFeedMoleSec * 0.01) // 1% tolerance
+                .maxIterations(30)
+                // Set default utilization limit for all equipment
+                .defaultUtilizationLimit(0.95)
+                // Allow compressors to operate at up to 95% of their capacity
+                .utilizationLimitForType(neqsim.process.equipment.compressor.Compressor.class,
+                    0.95);
+
+    System.out.println("\nOptimization configuration:");
+    System.out.println("  Search range: " + String.format("%.2f", lowerBound) + " - "
+        + String.format("%.2f", upperBound) + " mol/sec");
+    System.out.println("  Compressor utilization limit: 95%");
+
+    // Run optimization
+    neqsim.process.util.optimization.ProductionOptimizer.OptimizationResult result =
+        optimizer.optimize(process, wellStream, config, java.util.Collections.emptyList(),
+            java.util.Collections.emptyList());
+
+    // Print optimization results
+    System.out.println("\n--- Optimization Results ---");
+    System.out.println(
+        "Optimal feed rate: " + String.format("%.2f", result.getOptimalRate()) + " mol/sec");
+    System.out.println("Optimal feed rate: "
+        + String.format("%.0f", result.getOptimalRate() * 3600 / 1000) + " kgmole/hr");
+    System.out.println("Feasible: " + result.isFeasible());
+    System.out.println("Iterations: " + result.getIterations());
+
+    if (result.getBottleneck() != null) {
+      System.out.println("Limiting equipment: " + result.getBottleneck().getName());
+      System.out.println("Bottleneck utilization: "
+          + String.format("%.1f", result.getBottleneckUtilization() * 100) + "%");
+    }
+
+    // Print utilization records
+    System.out.println("\n--- Equipment Utilization at Optimum ---");
+    for (neqsim.process.util.optimization.ProductionOptimizer.UtilizationRecord record : result
+        .getUtilizationRecords()) {
+      boolean isBottleneck = result.getBottleneck() != null
+          && record.getEquipmentName().equals(result.getBottleneck().getName());
+      System.out.printf("  %-25s: %6.1f%% (limit: %.0f%%) %s%n", record.getEquipmentName(),
+          record.getUtilization() * 100, record.getUtilizationLimit() * 100,
+          isBottleneck ? " <-- BOTTLENECK" : "");
+    }
+
+    // Print compressor status at optimum
+    System.out.println("\n--- Compressor 27-KA-01 Status at Optimum ---");
+    System.out.println("  Speed: " + String.format("%.1f", comp27KA01.getSpeed()) + " RPM");
+    System.out.println("  Power: " + String.format("%.1f", comp27KA01.getPower("kW")) + " kW");
+    System.out.println("  Distance to surge: "
+        + String.format("%.1f", comp27KA01.getDistanceToSurge() * 100) + "%");
+    System.out.println("  Distance to stonewall: "
+        + String.format("%.1f", comp27KA01.getDistanceToStoneWall() * 100) + "%");
+    System.out.println(
+        "  Max utilization: " + String.format("%.1f", comp27KA01.getMaxUtilization() * 100) + "%");
+
+    // Verify optimization found a feasible solution
+    assertTrue(result.isFeasible(), "Optimization should find a feasible solution");
+    assertTrue(result.getOptimalRate() > 0, "Optimal rate should be positive");
+  }
 }
