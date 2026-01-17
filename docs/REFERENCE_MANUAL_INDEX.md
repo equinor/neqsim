@@ -169,6 +169,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Advanced Process | [docs/wiki/advanced_process_simulation.md](wiki/advanced_process_simulation.md) | Advanced techniques |
 | Logical Operations | [docs/wiki/logical_unit_operations.md](wiki/logical_unit_operations.md) | Logical unit operations |
 | Process Design | [docs/process/process_design_guide.md](process/process_design_guide.md) | Process design guide |
+| Design Framework | [docs/process/DESIGN_FRAMEWORK.md](process/DESIGN_FRAMEWORK.md) | Automated design & optimization framework |
+| Optimization Roadmap | [docs/process/OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](process/OPTIMIZATION_IMPROVEMENT_PROPOSAL.md) | Optimization implementation status |
 
 ### Chapter 12: Process Systems & Models
 | Document | Path | Description |
@@ -484,6 +486,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Document | Path | Description |
 |----------|------|-------------|
 | Optimization Overview | [docs/process/optimization/README.md](process/optimization/README.md) | Optimization module |
+| **Multi-Objective Optimization** | [docs/process/optimization/multi-objective-optimization.md](process/optimization/multi-objective-optimization.md) | **Pareto front generation for competing objectives (throughput vs energy)** |
 | Batch Studies | [docs/process/optimization/batch-studies.md](process/optimization/batch-studies.md) | Batch studies |
 | Bottleneck Analysis | [docs/wiki/bottleneck_analysis.md](wiki/bottleneck_analysis.md) | Bottleneck analysis |
 | Calibration | [docs/process/calibration/README.md](process/calibration/README.md) | Model calibration |

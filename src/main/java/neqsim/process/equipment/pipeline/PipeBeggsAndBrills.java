@@ -356,7 +356,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @see CalculationMode
  * @see FlowRegime
  */
-public class PipeBeggsAndBrills extends Pipeline {
+public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.design.AutoSizeable {
   private static final long serialVersionUID = 1001;
 
   /** Flow regimes available in Beggs and Brill correlations. */
@@ -547,6 +547,9 @@ public class PipeBeggsAndBrills extends Pipeline {
 
   private static final double MIN_TRANSIT_VELOCITY = 1.0e-3;
   private static final double MIN_DENSITY = 1.0e-6;
+
+  /** Flag indicating if pipeline has been auto-sized. */
+  private boolean autoSized = false;
 
   // Flag to run isothermal calculations
   private boolean runAdiabatic = true;
@@ -3006,5 +3009,207 @@ public class PipeBeggsAndBrills extends Pipeline {
     PipeBeggsBrillsResponse res = new PipeBeggsBrillsResponse(this);
     res.applyConfig(cfg);
     return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
+  }
+
+  // ============================================================================
+  // AutoSizeable Implementation
+  // ============================================================================
+
+  /**
+   * Auto-sizes the pipeline based on current flow conditions.
+   *
+   * <p>
+   * This method calculates the required pipe diameter to achieve target velocity criteria. The
+   * sizing is based on erosion velocity limits and pressure drop constraints.
+   * </p>
+   *
+   * @param safetyFactor safety factor to apply (e.g., 1.2 for 20% margin)
+   */
+  @Override
+  public void autoSize(double safetyFactor) {
+    if (getInletStream() == null) {
+      throw new IllegalStateException("Cannot auto-size pipeline without inlet stream");
+    }
+
+    // Run the pipeline first to establish operating conditions
+    run();
+
+    // Calculate optimal diameter based on velocity criteria
+    double volumetricFlowRate = getInletStream().getFluid().getFlowRate("m3/sec");
+
+    // Target velocity depends on fluid type (gas vs liquid)
+    double targetVelocity;
+    if (getInletStream().getFluid().hasPhaseType("gas")
+        && !getInletStream().getFluid().hasPhaseType("oil")
+        && !getInletStream().getFluid().hasPhaseType("aqueous")) {
+      // Gas pipeline - typical 15-20 m/s
+      targetVelocity = 15.0 / safetyFactor;
+    } else if (!getInletStream().getFluid().hasPhaseType("gas")) {
+      // Liquid pipeline - typical 2-3 m/s
+      targetVelocity = 2.5 / safetyFactor;
+    } else {
+      // Multiphase - use mixture velocity approach
+      targetVelocity = 8.0 / safetyFactor;
+    }
+
+    // Calculate required diameter: D = sqrt(4 * Q / (pi * v))
+    double requiredDiameter = Math.sqrt(4.0 * volumetricFlowRate / (Math.PI * targetVelocity));
+
+    // Apply safety factor to diameter
+    double designDiameter = requiredDiameter * Math.sqrt(safetyFactor);
+
+    // Round up to nearest standard pipe size (in inches)
+    double diameterInches = designDiameter / 0.0254;
+    double standardDiameter = selectStandardPipeSize(diameterInches);
+
+    // Set the diameter
+    setDiameter(standardDiameter * 0.0254); // Convert back to meters
+
+    // Re-run to update calculations with new diameter
+    run();
+
+    autoSized = true;
+  }
+
+  /**
+   * Selects standard pipe nominal diameter based on calculated diameter.
+   *
+   * @param calculatedDiameterInches calculated inside diameter in inches
+   * @return nearest standard pipe nominal diameter in inches
+   */
+  private double selectStandardPipeSize(double calculatedDiameterInches) {
+    // Standard NPS sizes (nominal pipe size in inches) - using inside diameter approximations
+    double[] standardSizes = {0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0,
+        14.0, 16.0, 18.0, 20.0, 24.0, 30.0, 36.0, 42.0, 48.0};
+
+    // Find the next size up that meets the requirement
+    for (double size : standardSizes) {
+      if (size >= calculatedDiameterInches) {
+        return size;
+      }
+    }
+
+    // If larger than all standard sizes, round to nearest 6 inches
+    return Math.ceil(calculatedDiameterInches / 6.0) * 6.0;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize() {
+    autoSize(1.2); // Default 20% safety factor
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(String company, String trDocument) {
+    // Company-specific sizing criteria
+    double safetyFactor = 1.2;
+
+    // Company-specific safety factors could be loaded from database
+    if ("Equinor".equalsIgnoreCase(company)) {
+      safetyFactor = 1.25; // Example: Equinor requires 25% margin
+    }
+
+    autoSize(safetyFactor);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isAutoSized() {
+    return autoSized;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReport() {
+    StringBuilder report = new StringBuilder();
+    report.append("Pipeline Sizing Report for: ").append(getName()).append("\n");
+    report.append("=========================================\n");
+
+    if (!autoSized) {
+      report.append("Pipeline has not been auto-sized.\n");
+      return report.toString();
+    }
+
+    report.append("Auto-sized: Yes\n");
+
+    // Operating conditions
+    if (getInletStream() != null) {
+      report.append("\nOperating Conditions:\n");
+      report.append(String.format("  Inlet Pressure: %.2f bara\n", inletPressure));
+      report.append(String.format("  Outlet Pressure: %.2f bara\n", pressureOut));
+      report.append(String.format("  Pressure Drop: %.2f bar (%.1f%%)\n", totalPressureDrop,
+          (totalPressureDrop / inletPressure) * 100));
+      report.append(
+          String.format("  Flow Rate: %.2f kg/hr\n", getInletStream().getFlowRate("kg/hr")));
+    }
+
+    // Geometry
+    report.append("\nGeometry:\n");
+    report.append(String.format("  Inside Diameter: %.1f mm (%.2f inch)\n", insideDiameter * 1000,
+        insideDiameter / 0.0254));
+    report.append(String.format("  Length: %.1f m\n", totalLength));
+    report.append(String.format("  Elevation: %.1f m\n", totalElevation));
+
+    // Velocities
+    report.append("\nFlow Velocities:\n");
+    report.append(String.format("  Superficial Gas Velocity: %.2f m/s\n", supGasVel));
+    report.append(String.format("  Superficial Liquid Velocity: %.2f m/s\n", supLiquidVel));
+    report.append(String.format("  Mixture Velocity: %.2f m/s\n", supMixVel));
+
+    // Flow regime
+    report.append("\nFlow Characteristics:\n");
+    report.append(String.format("  Flow Regime: %s\n", regime));
+    report.append(String.format("  Liquid Holdup: %.3f\n", El));
+    report.append(String.format("  Mixture Froude Number: %.3f\n", mixtureFroudeNumber));
+
+    return report.toString();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReportJson() {
+    java.util.Map<String, Object> reportData = new java.util.LinkedHashMap<String, Object>();
+
+    reportData.put("equipmentName", getName());
+    reportData.put("equipmentType", "PipeBeggsAndBrills");
+    reportData.put("autoSized", autoSized);
+
+    if (autoSized && getInletStream() != null) {
+      // Operating conditions
+      java.util.Map<String, Object> operating = new java.util.LinkedHashMap<String, Object>();
+      operating.put("inletPressure_bara", inletPressure);
+      operating.put("outletPressure_bara", pressureOut);
+      operating.put("pressureDrop_bar", totalPressureDrop);
+      operating.put("pressureDropPercent", (totalPressureDrop / inletPressure) * 100);
+      operating.put("flowRate_kghr", getInletStream().getFlowRate("kg/hr"));
+      reportData.put("operatingConditions", operating);
+
+      // Geometry
+      java.util.Map<String, Object> geometry = new java.util.LinkedHashMap<String, Object>();
+      geometry.put("insideDiameter_mm", insideDiameter * 1000);
+      geometry.put("insideDiameter_inch", insideDiameter / 0.0254);
+      geometry.put("length_m", totalLength);
+      geometry.put("elevation_m", totalElevation);
+      geometry.put("angle_degrees", angle);
+      reportData.put("geometry", geometry);
+
+      // Velocities
+      java.util.Map<String, Object> velocities = new java.util.LinkedHashMap<String, Object>();
+      velocities.put("superficialGasVelocity_ms", supGasVel);
+      velocities.put("superficialLiquidVelocity_ms", supLiquidVel);
+      velocities.put("mixtureVelocity_ms", supMixVel);
+      reportData.put("velocities", velocities);
+
+      // Flow characteristics
+      java.util.Map<String, Object> flowChars = new java.util.LinkedHashMap<String, Object>();
+      flowChars.put("flowRegime", regime != null ? regime.toString() : "UNKNOWN");
+      flowChars.put("liquidHoldup", El);
+      flowChars.put("mixtureFroudeNumber", mixtureFroudeNumber);
+      reportData.put("flowCharacteristics", flowChars);
+    }
+
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+        .toJson(reportData);
   }
 }

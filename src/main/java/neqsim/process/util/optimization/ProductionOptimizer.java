@@ -13,7 +13,9 @@ import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -672,6 +674,33 @@ public class ProductionOptimizer {
 
     public double getColumnFsFactorLimit() {
       return columnFsFactorLimit;
+    }
+
+    /**
+     * Gets the rate unit for the optimization.
+     *
+     * @return the rate unit string
+     */
+    public String getRateUnit() {
+      return rateUnit;
+    }
+
+    /**
+     * Gets the lower bound for the search range.
+     *
+     * @return the lower bound
+     */
+    public double getLowerBound() {
+      return lowerBound;
+    }
+
+    /**
+     * Gets the upper bound for the search range.
+     *
+     * @return the upper bound
+     */
+    public double getUpperBound() {
+      return upperBound;
     }
   }
 
@@ -2080,6 +2109,31 @@ public class ProductionOptimizer {
         double maxDuty = heater.getMaxDesignDuty();
         // If max design duty is not set, return a large value (no constraint)
         return maxDuty > 0 ? maxDuty : Double.MAX_VALUE;
+      });
+    }
+    if (unit instanceof ThrottlingValve) {
+      ThrottlingValve valve = (ThrottlingValve) unit;
+      // Use valve opening percentage as capacity measure (0-100%)
+      // A valve operating at high opening (>80%) has poor control authority
+      // and may indicate it is undersized for the current flow/Cv
+      // Only track if Cv/Kv has been explicitly set (valve is sized)
+      if (valve.isValveKvSet()) {
+        return new CapacityRule(equipment -> valve.getPercentValveOpening(), // Current opening %
+            equipment -> valve.getMaximumValveOpening()); // Max allowed opening (default 100%)
+      }
+      // For valves without explicit Cv set, return no-constraint rule
+      return new CapacityRule(equipment -> 0.0, equipment -> Double.MAX_VALUE);
+    }
+    if (unit instanceof PipeBeggsAndBrills) {
+      PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) unit;
+      // Use superficial velocity as capacity measure for pipelines
+      // Typical limits: gas ~20-25 m/s (erosion), liquid ~3-5 m/s
+      // Multiphase: often limited to 15-20 m/s to avoid erosion/corrosion
+      return new CapacityRule(equipment -> pipe.getOutletSuperficialVelocity(), equipment -> {
+        // Get max design velocity from mechanical design if set
+        double maxVel = pipe.getMechanicalDesign().getMaxDesignVelocity();
+        // Default to 20 m/s if not set (typical erosional velocity limit)
+        return maxVel > 0 ? maxVel : 20.0;
       });
     }
     return new CapacityRule(ProcessEquipmentInterface::getCapacityDuty,

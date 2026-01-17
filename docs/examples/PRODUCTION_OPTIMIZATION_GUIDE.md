@@ -4,6 +4,16 @@ This guide provides comprehensive examples for setting up and running production
 
 ---
 
+## Related Documentation
+
+| Document | Description |
+|----------|-------------|
+| [DESIGN_FRAMEWORK.md](../process/DESIGN_FRAMEWORK.md) | **AutoSizeable interface, ProcessTemplates, and DesignOptimizer** |
+| [OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](../process/OPTIMIZATION_IMPROVEMENT_PROPOSAL.md) | Optimization framework roadmap and implementation status |
+| [CAPACITY_CONSTRAINT_FRAMEWORK.md](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md) | Multi-constraint equipment and bottleneck detection |
+
+---
+
 ## Overview
 
 NeqSim provides a powerful production optimization framework that combines:

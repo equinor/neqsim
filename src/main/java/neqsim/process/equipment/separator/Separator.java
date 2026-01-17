@@ -40,6 +40,7 @@ import neqsim.process.equipment.capacity.StandardConstraintType;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import neqsim.process.design.AutoSizeable;
 
 /**
  * <p>
@@ -50,7 +51,7 @@ import java.util.Map;
  * @version $Id: $Id
  */
 public class Separator extends ProcessEquipmentBaseClass
-    implements SeparatorInterface, StateVectorProvider, CapacityConstrainedEquipment {
+    implements SeparatorInterface, StateVectorProvider, CapacityConstrainedEquipment, AutoSizeable {
   /**
    * Initializes separator for transient calculations.
    */
@@ -1137,6 +1138,130 @@ public class Separator extends ProcessEquipmentBaseClass
     setInternalDiameter(requiredDiameter);
     logger.info("Separator " + getName() + " sized to diameter: "
         + String.format("%.3f", requiredDiameter) + " m");
+  }
+
+  // ==================== AutoSizeable Implementation ====================
+
+  /** Flag indicating if separator has been auto-sized. */
+  private boolean autoSized = false;
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(double safetyFactor) {
+    sizeFromFlow(safetyFactor);
+    autoSized = true;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize() {
+    autoSize(1.2);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(String company, String trDocument) {
+    // Set company standard on mechanical design to load correct design parameters
+    if (separatorMechanicalDesign == null) {
+      initMechanicalDesign();
+    }
+
+    // Set company-specific design standards which triggers database lookup
+    separatorMechanicalDesign.setCompanySpecificDesignStandards(company);
+
+    // Read design specifications from database (loads GasLoadFactor, Fg, etc.)
+    separatorMechanicalDesign.readDesignSpecifications();
+
+    // Get company-specific K-factor from design standards if available
+    if (separatorMechanicalDesign.getDesignStandard().containsKey("separator process design")) {
+      double companyKFactor =
+          ((neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard) separatorMechanicalDesign
+              .getDesignStandard().get("separator process design")).getGasLoadFactor();
+      if (companyKFactor > 0) {
+        setDesignGasLoadFactor(companyKFactor);
+      }
+    }
+
+    // Use default safety factor (could also be loaded from TR document)
+    double safetyFactor = 1.2;
+
+    // Size using company parameters
+    sizeFromFlow(safetyFactor);
+    autoSized = true;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isAutoSized() {
+    return autoSized;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReport() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Separator Auto-Sizing Report ===\n");
+    sb.append("Equipment: ").append(getName()).append("\n");
+    sb.append("Auto-sized: ").append(autoSized).append("\n");
+    sb.append("Internal Diameter: ").append(String.format("%.3f m", internalDiameter)).append("\n");
+    sb.append("Length: ").append(String.format("%.3f m", separatorLength)).append("\n");
+    sb.append("Design K-factor: ").append(String.format("%.4f m/s", designGasLoadFactor))
+        .append("\n");
+    sb.append("Orientation: ").append(orientation).append("\n");
+
+    if (thermoSystem != null && thermoSystem.getNumberOfPhases() >= 2) {
+      thermoSystem.initPhysicalProperties();
+      double gasDensity = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
+      double liqDensity = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
+      double gasVolumeFlow = thermoSystem.getPhase(0).getFlowRate("m3/hr");
+      double maxVelocity = designGasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
+      double actualVelocity = gasVolumeFlow / 3600.0
+          / (Math.PI * Math.pow(internalDiameter / 2, 2) * (1.0 - designLiquidLevelFraction));
+
+      sb.append("\n--- Operating Conditions ---\n");
+      sb.append("Gas Volume Flow: ").append(String.format("%.1f m3/hr", gasVolumeFlow))
+          .append("\n");
+      sb.append("Gas Density: ").append(String.format("%.2f kg/m3", gasDensity)).append("\n");
+      sb.append("Liquid Density: ").append(String.format("%.2f kg/m3", liqDensity)).append("\n");
+      sb.append("Max Gas Velocity: ").append(String.format("%.3f m/s", maxVelocity)).append("\n");
+      sb.append("Actual Gas Velocity: ").append(String.format("%.3f m/s", actualVelocity))
+          .append("\n");
+      sb.append("K-factor Utilization: ")
+          .append(String.format("%.1f%%", actualVelocity / maxVelocity * 100)).append("\n");
+    }
+
+    return sb.toString();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReportJson() {
+    Map<String, Object> report = new LinkedHashMap<>();
+    report.put("equipmentName", getName());
+    report.put("autoSized", autoSized);
+    report.put("internalDiameter_m", internalDiameter);
+    report.put("length_m", separatorLength);
+    report.put("designKFactor_mps", designGasLoadFactor);
+    report.put("orientation", orientation);
+
+    if (thermoSystem != null && thermoSystem.getNumberOfPhases() >= 2) {
+      thermoSystem.initPhysicalProperties();
+      double gasDensity = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
+      double liqDensity = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
+      double gasVolumeFlow = thermoSystem.getPhase(0).getFlowRate("m3/hr");
+      double maxVelocity = designGasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
+      double actualVelocity = gasVolumeFlow / 3600.0
+          / (Math.PI * Math.pow(internalDiameter / 2, 2) * (1.0 - designLiquidLevelFraction));
+
+      report.put("gasVolumeFlow_m3hr", gasVolumeFlow);
+      report.put("gasDensity_kgm3", gasDensity);
+      report.put("liquidDensity_kgm3", liqDensity);
+      report.put("maxGasVelocity_mps", maxVelocity);
+      report.put("actualGasVelocity_mps", actualVelocity);
+      report.put("kFactorUtilization", actualVelocity / maxVelocity);
+    }
+
+    return new GsonBuilder().setPrettyPrinting().create().toJson(report);
   }
 
   /**

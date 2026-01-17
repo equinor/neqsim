@@ -26,7 +26,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class ThrottlingValve extends TwoPortEquipment
-    implements ValveInterface, neqsim.process.equipment.capacity.CapacityConstrainedEquipment {
+    implements ValveInterface, neqsim.process.equipment.capacity.CapacityConstrainedEquipment,
+    neqsim.process.design.AutoSizeable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -61,6 +62,9 @@ public class ThrottlingValve extends TwoPortEquipment
   private boolean allowChoked = false;
   private boolean allowLaminar = true;
   private double xt = 0.6; // critical pressure drop ratio for choked flow
+
+  /** Flag indicating if valve has been auto-sized. */
+  private boolean autoSized = false;
 
   /**
    * * Constructor for ThrottlingValve.
@@ -551,6 +555,24 @@ public class ThrottlingValve extends TwoPortEquipment
     requestedValveOpening = clampValveOpening(requestedValveOpening);
   }
 
+  /**
+   * Gets the maximum valve opening in percent.
+   *
+   * @return maximum valve opening percentage (0 to 100)
+   */
+  public double getMaximumValveOpening() {
+    return maxValveOpening;
+  }
+
+  /**
+   * Gets the minimum valve opening in percent.
+   *
+   * @return minimum valve opening percentage (0 to 100)
+   */
+  public double getMinimumValveOpening() {
+    return minValveOpening;
+  }
+
   /** {@inheritDoc} */
   @Override
   public double getKv() {
@@ -1037,5 +1059,149 @@ public class ThrottlingValve extends TwoPortEquipment
   @Override
   public void clearCapacityConstraints() {
     capacityConstraints.clear();
+  }
+
+  // ============================================================================
+  // AutoSizeable Implementation
+  // ============================================================================
+
+  /**
+   * Auto-sizes the valve based on current flow conditions.
+   *
+   * <p>
+   * This method calculates the required Cv value and selects an appropriate valve size based on the
+   * current inlet stream conditions and pressure drop.
+   * </p>
+   *
+   * @param safetyFactor safety factor to apply (e.g., 1.2 for 20% margin)
+   */
+  @Override
+  public void autoSize(double safetyFactor) {
+    if (getInletStream() == null) {
+      throw new IllegalStateException("Cannot auto-size valve without inlet stream");
+    }
+
+    // Run the valve first to establish operating conditions
+    run();
+
+    // Calculate valve size using mechanical design
+    getMechanicalDesign().calcDesign();
+    double calculatedCv = getMechanicalDesign().getValveCvMax();
+
+    // Apply safety factor to Cv and set on the valve itself
+    double designCv = calculatedCv * safetyFactor;
+
+    // Set the Cv on the valve (this is what controls valve sizing)
+    setCv(designCv);
+
+    autoSized = true;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize() {
+    autoSize(1.2); // Default 20% safety factor
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(String company, String trDocument) {
+    // For now, use default safety factor
+    // In the future, look up company-specific sizing requirements
+    double safetyFactor = 1.2;
+
+    // Company-specific safety factors could be loaded from database
+    if ("Equinor".equalsIgnoreCase(company)) {
+      safetyFactor = 1.25; // Example: Equinor requires 25% margin
+    }
+
+    autoSize(safetyFactor);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isAutoSized() {
+    return autoSized;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReport() {
+    StringBuilder report = new StringBuilder();
+    report.append("Valve Sizing Report for: ").append(getName()).append("\n");
+    report.append("=========================================\n");
+
+    if (!autoSized) {
+      report.append("Valve has not been auto-sized.\n");
+      return report.toString();
+    }
+
+    report.append("Auto-sized: Yes\n");
+
+    // Operating conditions
+    if (getInletStream() != null) {
+      report.append("\nOperating Conditions:\n");
+      report.append(String.format("  Inlet Pressure: %.2f bara\n", getInletPressure()));
+      report.append(String.format("  Outlet Pressure: %.2f bara\n", getOutletPressure()));
+      report.append(String.format("  Pressure Drop: %.2f bar\n", getInletPressure() - pressure));
+      report.append(
+          String.format("  Flow Rate: %.2f kg/hr\n", getInletStream().getFlowRate("kg/hr")));
+      report.append(String.format("  Valve Opening: %.1f%%\n", percentValveOpening));
+    }
+
+    // Valve sizing results
+    report.append("\nSizing Results:\n");
+    report.append(String.format("  Cv (max): %.2f\n", getMechanicalDesign().getValveCvMax()));
+    report.append(
+        String.format("  Nominal Size: %.0f inch\n", getMechanicalDesign().getNominalSizeInches()));
+    report
+        .append(String.format("  ANSI Class: %d\n", getMechanicalDesign().getAnsiPressureClass()));
+    report
+        .append(String.format("  Face-to-Face: %.1f mm\n", getMechanicalDesign().getFaceToFace()));
+
+    // Weight
+    report.append("\nWeight Estimate:\n");
+    report.append(String.format("  Body Weight: %.1f kg\n", getMechanicalDesign().getBodyWeight()));
+    report.append(
+        String.format("  Actuator Weight: %.1f kg\n", getMechanicalDesign().getActuatorWeight()));
+
+    return report.toString();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReportJson() {
+    java.util.Map<String, Object> reportData = new java.util.LinkedHashMap<String, Object>();
+
+    reportData.put("equipmentName", getName());
+    reportData.put("equipmentType", "ThrottlingValve");
+    reportData.put("autoSized", autoSized);
+
+    if (autoSized && getInletStream() != null) {
+      // Operating conditions
+      java.util.Map<String, Object> operating = new java.util.LinkedHashMap<String, Object>();
+      operating.put("inletPressure_bara", getInletPressure());
+      operating.put("outletPressure_bara", getOutletPressure());
+      operating.put("pressureDrop_bar", getInletPressure() - pressure);
+      operating.put("flowRate_kghr", getInletStream().getFlowRate("kg/hr"));
+      operating.put("valveOpening_percent", percentValveOpening);
+      reportData.put("operatingConditions", operating);
+
+      // Sizing results
+      java.util.Map<String, Object> sizing = new java.util.LinkedHashMap<String, Object>();
+      sizing.put("cvMax", getMechanicalDesign().getValveCvMax());
+      sizing.put("nominalSize_inch", getMechanicalDesign().getNominalSizeInches());
+      sizing.put("ansiClass", getMechanicalDesign().getAnsiPressureClass());
+      sizing.put("faceToFace_mm", getMechanicalDesign().getFaceToFace());
+      reportData.put("sizingResults", sizing);
+
+      // Weight
+      java.util.Map<String, Object> weight = new java.util.LinkedHashMap<String, Object>();
+      weight.put("bodyWeight_kg", getMechanicalDesign().getBodyWeight());
+      weight.put("actuatorWeight_kg", getMechanicalDesign().getActuatorWeight());
+      reportData.put("weightEstimate", weight);
+    }
+
+    return new GsonBuilder().setPrettyPrinting().create().toJson(reportData);
   }
 }

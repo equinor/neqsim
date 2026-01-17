@@ -8,6 +8,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.examples.OilGasProcessSimulationOptimization.ProcessInputParameters;
 import neqsim.process.examples.OilGasProcessSimulationOptimization.ProcessOutputResults;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.measurementdevice.FlowInducedVibrationAnalyser;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -511,13 +513,67 @@ public class OilGasProcessSimulationOptimizationTest {
         (neqsim.process.equipment.heatexchanger.Cooler) process.getUnit("27-HA-01");
     exportGasCooler.setMaxDesignDuty(6000.0, "kW"); // 6 MW max cooling duty
 
+    // Configure throttling valves with Cv (valve flow coefficient)
+    // VLV-100 is the oil outlet valve from HP separator (20-VA-01) to MP separator
+    // Cv is sized so valve operates around 50-70% open at baseline conditions
+    neqsim.process.equipment.valve.ThrottlingValve oilValve1 =
+        (neqsim.process.equipment.valve.ThrottlingValve) process.getUnit("VLV-100");
+    oilValve1.setCv(500.0); // Cv = 500 US gpm/sqrt(psi)
+    oilValve1.setPercentValveOpening(70.0); // Start at 70% open
+
+    // VLV-102 is the oil outlet valve from MP separator (20-VA-02) to LP separator
+    neqsim.process.equipment.valve.ThrottlingValve oilValve2 =
+        (neqsim.process.equipment.valve.ThrottlingValve) process.getUnit("VLV-102");
+    oilValve2.setCv(600.0); // Cv = 600 US gpm/sqrt(psi)
+    oilValve2.setPercentValveOpening(65.0); // Start at 65% open
+
+    // Configure inlet pipeline with Beggs and Brill multiphase flow correlation
+    // This pipeline represents the flowline from wellhead to the HP separator
+    neqsim.process.equipment.stream.Stream wellStream =
+        (neqsim.process.equipment.stream.Stream) process.getUnit("well stream");
+
+    // Create inlet pipeline using Beggs and Brill correlation for multiphase flow
+    // Note: Pipeline is tracked separately for velocity monitoring without adding to main process
+    PipeBeggsAndBrills inletPipeline = new PipeBeggsAndBrills("Inlet Pipeline", wellStream);
+    inletPipeline.setLength(500.0); // 500 m pipeline length
+    inletPipeline.setDiameter(0.5); // 20 inch (0.5 m) internal diameter - sized for high flow
+    inletPipeline.setElevation(0.0); // Horizontal pipeline (0 m elevation change)
+    inletPipeline.setAngle(0.0); // Horizontal angle
+    inletPipeline.setNumberOfIncrements(10);
+    inletPipeline.setRunIsothermal(true); // Assume isothermal for simplicity
+
+    // Initialize mechanical design before setting velocity limit
+    inletPipeline.initMechanicalDesign();
+
+    // Configure mechanical design with velocity limit
+    // Typical erosional velocity limit for multiphase flow: 10-25 m/s depending on conditions
+    // Per API RP 14E: V_erosional = C / sqrt(rho_mixture) where C is typically 100-150
+    inletPipeline.getMechanicalDesign().setMaxDesignVelocity(15.0); // 15 m/s max velocity
+
+    // Set wall thickness for FIV calculations (needed for LOF method)
+    inletPipeline.setThickness(0.0127); // 12.7 mm (0.5 inch) wall thickness
+
+    // Create Flow-Induced Vibration (FIV) analyzers for the pipeline
+    // LOF (Likelihood of Failure) method based on Energy Institute guidelines
+    FlowInducedVibrationAnalyser fivAnalyzerLOF =
+        new FlowInducedVibrationAnalyser("Inlet Pipeline FIV-LOF", inletPipeline);
+    fivAnalyzerLOF.setMethod("LOF");
+    fivAnalyzerLOF.setSupportArrangement("Stiff"); // Stiff, Medium stiff, Medium, or other
+
+    // FRMS method - alternative vibration assessment
+    FlowInducedVibrationAnalyser fivAnalyzerFRMS =
+        new FlowInducedVibrationAnalyser("Inlet Pipeline FIV-FRMS", inletPipeline);
+    fivAnalyzerFRMS.setMethod("FRMS");
+    fivAnalyzerFRMS.setFRMSConstant(6.7); // Default FRMS constant
+
     // Run simulation with configured equipment to establish baseline
     ProcessOutputResults baselineResults = simulation.runSimulation();
     assumeTrue(baselineResults != null, "Skipping test: baseline simulation did not converge");
 
-    // Get the feed stream and compressor for monitoring
-    neqsim.process.equipment.stream.Stream wellStream =
-        (neqsim.process.equipment.stream.Stream) process.getUnit("well stream");
+    // Run pipeline separately after main simulation to get velocity values
+    inletPipeline.run();
+
+    // Get the compressor for monitoring
     neqsim.process.equipment.compressor.Compressor comp27KA01 =
         (neqsim.process.equipment.compressor.Compressor) process.getUnit("27-KA-01");
 
@@ -544,6 +600,19 @@ public class OilGasProcessSimulationOptimizationTest {
     printHeaterCoolerStatus("24-HA-01 (Compressor Aftercooler)", compressorAfterCooler1);
     printHeaterCoolerStatus("27-HA-01 (Export Gas Cooler)", exportGasCooler);
 
+    // Print baseline valve status
+    System.out.println("\n--- Baseline Valve Status ---");
+    printValveStatus("VLV-100 (HP to MP Oil)", oilValve1);
+    printValveStatus("VLV-102 (MP to LP Oil)", oilValve2);
+
+    // Print baseline inlet pipeline status
+    System.out.println("\n--- Baseline Inlet Pipeline Status ---");
+    printPipelineStatus("Inlet Pipeline", inletPipeline);
+
+    // Print baseline Flow-Induced Vibration (FIV) analysis
+    System.out.println("\n--- Baseline FIV Analysis ---");
+    printFIVStatus(fivAnalyzerLOF, fivAnalyzerFRMS);
+
     // Create optimizer
     neqsim.process.util.optimization.ProductionOptimizer optimizer =
         new neqsim.process.util.optimization.ProductionOptimizer();
@@ -564,7 +633,11 @@ public class OilGasProcessSimulationOptimizationTest {
                 .utilizationLimitForType(
                     neqsim.process.equipment.separator.ThreePhaseSeparator.class, 0.90)
                 // Heaters and coolers can operate at 95% of max design duty
-                .utilizationLimitForType(neqsim.process.equipment.heatexchanger.Heater.class, 0.95);
+                .utilizationLimitForType(neqsim.process.equipment.heatexchanger.Heater.class, 0.95)
+                // Valves can operate at 90% of max design volume flow
+                .utilizationLimitForType(neqsim.process.equipment.valve.ThrottlingValve.class, 0.90)
+                // Pipelines limited to 85% of erosional velocity
+                .utilizationLimitForType(PipeBeggsAndBrills.class, 0.85);
 
     System.out.println("\nOptimization configuration:");
     System.out.println("  Search range: " + String.format("%.2f", lowerBound) + " - "
@@ -572,11 +645,28 @@ public class OilGasProcessSimulationOptimizationTest {
     System.out.println("  Separator utilization limit: 90%");
     System.out.println("  Compressor utilization limit: 95%");
     System.out.println("  Heater/Cooler utilization limit: 95%");
+    System.out.println("  Valve utilization limit: 90%");
+    System.out.println("  Pipeline utilization limit: 85% (velocity-based)");
+
+    // Create pipeline velocity constraint
+    // The metric function runs the pipeline and returns velocity utilization
+    final double maxVelocity = inletPipeline.getMechanicalDesign().getMaxDesignVelocity();
+    final double pipelineUtilizationLimit = 0.85;
+    java.util.List<neqsim.process.util.optimization.ProductionOptimizer.OptimizationConstraint> constraints =
+        new java.util.ArrayList<>();
+    constraints.add(neqsim.process.util.optimization.ProductionOptimizer.OptimizationConstraint
+        .lessThan("Inlet Pipeline Velocity", processSystem -> {
+          // Run the pipeline with updated well stream conditions
+          inletPipeline.run();
+          // Return velocity utilization as fraction
+          return inletPipeline.getOutletSuperficialVelocity() / maxVelocity;
+        }, pipelineUtilizationLimit, // Limit is 85% utilization
+            neqsim.process.util.optimization.ProductionOptimizer.ConstraintSeverity.HARD, 1.0,
+            "Inlet pipeline velocity must stay below erosional limit"));
 
     // Run optimization
-    neqsim.process.util.optimization.ProductionOptimizer.OptimizationResult result =
-        optimizer.optimize(process, wellStream, config, java.util.Collections.emptyList(),
-            java.util.Collections.emptyList());
+    neqsim.process.util.optimization.ProductionOptimizer.OptimizationResult result = optimizer
+        .optimize(process, wellStream, config, java.util.Collections.emptyList(), constraints);
 
     // Print optimization results
     System.out.println("\n--- Optimization Results ---");
@@ -618,6 +708,15 @@ public class OilGasProcessSimulationOptimizationTest {
         + String.format("%.1f", comp27KA01.getDistanceToSurge() * 100) + "%");
     System.out.println(
         "  Max utilization: " + String.format("%.1f", comp27KA01.getMaxUtilization() * 100) + "%");
+
+    // Print inlet pipeline status at optimum
+    System.out.println("\n--- Inlet Pipeline Status at Optimum ---");
+    inletPipeline.run(); // Re-run with optimized feed rate
+    printPipelineStatus("Inlet Pipeline", inletPipeline);
+
+    // Print FIV status at optimum
+    System.out.println("\n--- FIV Analysis at Optimum ---");
+    printFIVStatus(fivAnalyzerLOF, fivAnalyzerFRMS);
 
     // Verify optimization found a feasible solution
     assertTrue(result.isFeasible(), "Optimization should find a feasible solution");
@@ -671,6 +770,117 @@ public class OilGasProcessSimulationOptimizationTest {
       System.out.printf("    Utilization: %.1f%%%n", utilization * 100);
     } catch (Exception e) {
       System.out.printf("  %s: Unable to calculate status (%s)%n", label, e.getMessage());
+    }
+  }
+
+  /**
+   * Helper method to print valve status.
+   */
+  private void printValveStatus(String label,
+      neqsim.process.equipment.valve.ThrottlingValve valve) {
+    try {
+      double cv = valve.getCv();
+      double kv = valve.getKv();
+      double valveOpening = valve.getPercentValveOpening();
+      double maxOpening = valve.getMaximumValveOpening();
+      double utilization = maxOpening > 0 ? valveOpening / maxOpening : 0;
+      double volumeFlow = valve.getOutletStream().getFlowRate("m3/hr");
+
+      System.out.printf("  %s:%n", label);
+      System.out.printf("    Cv: %.1f (Kv: %.1f)%n", cv, kv);
+      System.out.printf("    Valve opening: %.1f%% (max: %.1f%%)%n", valveOpening, maxOpening);
+      System.out.printf("    Volume flow: %.1f m3/hr%n", volumeFlow);
+      System.out.printf("    Capacity utilization: %.1f%%%n", utilization * 100);
+    } catch (Exception e) {
+      System.out.printf("  %s: Unable to calculate status (%s)%n", label, e.getMessage());
+    }
+  }
+
+  /**
+   * Helper method to print pipeline status using Beggs and Brill multiphase correlation.
+   *
+   * <p>
+   * Displays superficial mixture velocity and compares against the mechanical design erosional
+   * velocity limit per API RP 14E.
+   * </p>
+   *
+   * @param label the display label for the pipeline
+   * @param pipeline the PipeBeggsAndBrills pipeline to report on
+   */
+  private void printPipelineStatus(String label, PipeBeggsAndBrills pipeline) {
+    try {
+      // Get velocities from the Beggs and Brill calculation
+      double inletVelocity = pipeline.getInletSuperficialVelocity();
+      double outletVelocity = pipeline.getOutletSuperficialVelocity();
+      double maxVelocity = pipeline.getMechanicalDesign().getMaxDesignVelocity();
+
+      // Get pressure drop
+      double inletPressure = pipeline.getInletStream().getPressure("bara");
+      double outletPressure = pipeline.getOutletStream().getPressure("bara");
+      double pressureDrop = inletPressure - outletPressure;
+
+      // Get flow regime information
+      String flowRegime = pipeline.getFlowRegime();
+
+      // Calculate utilization based on outlet velocity (highest velocity in pipe due to expansion)
+      double utilization = maxVelocity > 0 ? outletVelocity / maxVelocity : 0;
+
+      System.out.printf("  %s:%n", label);
+      System.out.printf("    Length: %.0f m, Diameter: %.3f m (%.1f inch)%n", pipeline.getLength(),
+          pipeline.getDiameter(), pipeline.getDiameter() / 0.0254);
+      System.out.printf("    Inlet velocity: %.2f m/s%n", inletVelocity);
+      System.out.printf("    Outlet velocity: %.2f m/s (max: %.1f m/s)%n", outletVelocity,
+          maxVelocity);
+      System.out.printf("    Pressure drop: %.2f bar (%.1f -> %.1f bara)%n", pressureDrop,
+          inletPressure, outletPressure);
+      System.out.printf("    Flow regime: %s%n", flowRegime);
+      System.out.printf("    Velocity utilization: %.1f%%%n", utilization * 100);
+    } catch (Exception e) {
+      System.out.printf("  %s: Unable to calculate status (%s)%n", label, e.getMessage());
+    }
+  }
+
+  /**
+   * Helper method to print Flow-Induced Vibration (FIV) analysis status.
+   *
+   * <p>
+   * Displays both LOF (Likelihood of Failure) and FRMS assessment methods. LOF values less than 1.0
+   * indicate acceptable vibration risk. The LOF method is based on Energy Institute guidelines
+   * using rho*V^2 with support arrangement factors.
+   * </p>
+   *
+   * @param lofAnalyzer the LOF method analyzer
+   * @param frmsAnalyzer the FRMS method analyzer
+   */
+  private void printFIVStatus(FlowInducedVibrationAnalyser lofAnalyzer,
+      FlowInducedVibrationAnalyser frmsAnalyzer) {
+    try {
+      // Get LOF (Likelihood of Failure) value
+      double lofValue = lofAnalyzer.getMeasuredValue();
+
+      // Get FRMS value
+      double frmsValue = frmsAnalyzer.getMeasuredValue();
+
+      // Determine risk level based on LOF value
+      String riskLevel;
+      if (lofValue < 0.3) {
+        riskLevel = "LOW (acceptable)";
+      } else if (lofValue < 0.7) {
+        riskLevel = "MEDIUM (monitor)";
+      } else if (lofValue < 1.0) {
+        riskLevel = "HIGH (action recommended)";
+      } else {
+        riskLevel = "CRITICAL (immediate action required)";
+      }
+
+      System.out.println("  LOF (Likelihood of Failure) Method:");
+      System.out.printf("    LOF value: %.4f%n", lofValue);
+      System.out.printf("    Risk assessment: %s%n", riskLevel);
+      System.out.println("    (LOF < 1.0 is generally acceptable per Energy Institute guidelines)");
+      System.out.println("  FRMS Method:");
+      System.out.printf("    FRMS value: %.4f%n", frmsValue);
+    } catch (Exception e) {
+      System.out.printf("  FIV Analysis: Unable to calculate (%s)%n", e.getMessage());
     }
   }
 }
