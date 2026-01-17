@@ -735,6 +735,115 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 
+  // ============================================================================
+  // AutoSizeable Implementation (overrides Heater methods for two-stream HX)
+  // ============================================================================
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(double safetyFactor) {
+    if (inStream[0] == null || inStream[1] == null) {
+      throw new IllegalStateException(
+          "Both inlet streams must be connected before auto-sizing heat exchanger");
+    }
+
+    // Calculate duty from heat transfer
+    double calculatedDuty = Math.abs(this.duty);
+    if (calculatedDuty <= 0) {
+      calculatedDuty = 1000000.0; // Default 1 MW if duty not calculable
+    }
+
+    // Apply safety factor to duty
+    double designDuty = calculatedDuty * safetyFactor;
+
+    // Initialize and calculate mechanical design
+    HeatExchangerMechanicalDesign mechDesign = getMechanicalDesign();
+    if (mechDesign != null) {
+      mechDesign.maxDesignDuty = designDuty;
+      mechDesign.calcDesign();
+    }
+
+    // Mark as auto-sized (don't call super.autoSize as it will fail on inStream check)
+    setAutoSized(true);
+  }
+
+  /**
+   * Sets the autoSized flag. Protected to allow subclass access.
+   *
+   * @param autoSized true if equipment has been auto-sized
+   */
+  protected void setAutoSized(boolean autoSized) {
+    // Access parent's autoSized field via reflection or use a setter
+    // For now, we track our own state since HeatExchanger has different streams
+    this.hxAutoSized = autoSized;
+  }
+
+  /** Internal auto-sized flag for heat exchanger. */
+  private boolean hxAutoSized = false;
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isAutoSized() {
+    return hxAutoSized;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReport() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Heat Exchanger Auto-Sizing Report ===\n");
+    sb.append("Equipment: ").append(getName()).append("\n");
+    sb.append("Auto-sized: ").append(isAutoSized()).append("\n");
+    sb.append("Flow Arrangement: ").append(flowArrangement).append("\n");
+
+    if (inStream[0] != null && inStream[1] != null) {
+      sb.append("\n--- Hot Side (Stream 0) ---\n");
+      sb.append("Inlet Temperature: ")
+          .append(String.format("%.2f C", inStream[0].getTemperature("C"))).append("\n");
+      sb.append("Outlet Temperature: ")
+          .append(String.format("%.2f C", outStream[0].getTemperature("C"))).append("\n");
+      sb.append("Flow Rate: ").append(String.format("%.3f kg/s", inStream[0].getFlowRate("kg/sec")))
+          .append("\n");
+
+      sb.append("\n--- Cold Side (Stream 1) ---\n");
+      sb.append("Inlet Temperature: ")
+          .append(String.format("%.2f C", inStream[1].getTemperature("C"))).append("\n");
+      sb.append("Outlet Temperature: ")
+          .append(String.format("%.2f C", outStream[1].getTemperature("C"))).append("\n");
+      sb.append("Flow Rate: ").append(String.format("%.3f kg/s", inStream[1].getFlowRate("kg/sec")))
+          .append("\n");
+
+      sb.append("\n--- Heat Transfer ---\n");
+      sb.append("Duty: ").append(String.format("%.2f kW", duty / 1000.0)).append("\n");
+      sb.append("UA Value: ").append(String.format("%.2f W/K", UAvalue)).append("\n");
+      sb.append("Thermal Effectiveness: ").append(String.format("%.3f", thermalEffectiveness))
+          .append("\n");
+
+      // Calculate LMTD
+      double hotIn = inStream[0].getTemperature("K");
+      double hotOut = outStream[0].getTemperature("K");
+      double coldIn = inStream[1].getTemperature("K");
+      double coldOut = outStream[1].getTemperature("K");
+      double deltaT1 = hotIn - coldOut;
+      double deltaT2 = hotOut - coldIn;
+      double lmtd = (Math.abs(deltaT1 - deltaT2) < 1e-6) ? (deltaT1 + deltaT2) / 2.0
+          : (deltaT1 - deltaT2) / Math.log(deltaT1 / deltaT2);
+      sb.append("LMTD: ").append(String.format("%.2f K", lmtd)).append("\n");
+
+      HeatExchangerMechanicalDesign mechDesign = getMechanicalDesign();
+      if (mechDesign != null) {
+        sb.append("\n--- Mechanical Design ---\n");
+        sb.append("Max Design Duty: ")
+            .append(String.format("%.2f kW", mechDesign.maxDesignDuty / 1000.0)).append("\n");
+        sb.append("Duty Utilization: ")
+            .append(String.format("%.1f%%", Math.abs(duty) / mechDesign.maxDesignDuty * 100))
+            .append("\n");
+      }
+    }
+
+    return sb.toString();
+  }
+
   /**
    * <p>
    * Setter for the field <code>useDeltaT</code>.

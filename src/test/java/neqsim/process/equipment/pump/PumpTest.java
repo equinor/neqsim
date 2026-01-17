@@ -136,4 +136,73 @@ public class PumpTest extends neqsim.NeqSimTest {
 
     Assertions.assertEquals(0.0, pump1.getOutletStream().getFlowRate("kg/sec"), 1e-20);
   }
+
+  @Test
+  void testPumpAutoSizing() {
+    // Create liquid feed stream
+    neqsim.thermo.system.SystemInterface feedLiquid =
+        new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 5.0);
+    feedLiquid.addComponent("water", 1.0);
+
+    Stream feedStream = new Stream("feed", feedLiquid);
+    feedStream.setFlowRate(100000.0, "kg/hr"); // Use mass flow rate
+    feedStream.setTemperature(25.0, "C");
+    feedStream.setPressure(2.0, "bara");
+    feedStream.run();
+
+    // Create pump and run
+    Pump pump = new Pump("TestPump", feedStream);
+    pump.setOutletPressure(10.0, "bara");
+    pump.setIsentropicEfficiency(0.75);
+    pump.run();
+
+    // Auto-size with 20% safety factor
+    Assertions.assertFalse(pump.isAutoSized());
+    pump.autoSize(1.2);
+    Assertions.assertTrue(pump.isAutoSized());
+
+    // Check sizing report
+    String report = pump.getSizingReport();
+    Assertions.assertTrue(report.contains("Pump Auto-Sizing Report"));
+    Assertions.assertTrue(report.contains("Auto-sized: true"));
+
+    // Check JSON report
+    String jsonReport = pump.getSizingReportJson();
+    Assertions.assertTrue(jsonReport.contains("\"autoSized\": true"));
+    Assertions.assertTrue(jsonReport.contains("\"equipmentType\": \"Pump\""));
+
+    // Check power is calculated
+    Assertions.assertTrue(pump.getPower("kW") > 0);
+  }
+
+  @Test
+  void testPumpCapacityConstraints() {
+    // Create liquid feed stream
+    neqsim.thermo.system.SystemInterface feedLiquid =
+        new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 5.0);
+    feedLiquid.addComponent("water", 1.0);
+
+    Stream feedStream = new Stream("feed", feedLiquid);
+    feedStream.setFlowRate(100000.0, "kg/hr"); // Use mass flow rate
+    feedStream.setTemperature(25.0, "C");
+    feedStream.setPressure(2.0, "bara");
+    feedStream.run();
+
+    // Create pump
+    Pump pump = new Pump("TestPump", feedStream);
+    pump.setOutletPressure(10.0, "bara");
+    pump.setIsentropicEfficiency(0.75);
+    pump.getMechanicalDesign().setMaxDesignPower(50000.0); // 50 kW limit
+    pump.run();
+
+    // Check capacity constraints
+    java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> constraints =
+        pump.getCapacityConstraints();
+    Assertions.assertFalse(constraints.isEmpty());
+    Assertions.assertTrue(constraints.containsKey("power"));
+
+    // Get utilization
+    double utilization = pump.getMaxUtilization();
+    Assertions.assertTrue(utilization >= 0);
+  }
 }

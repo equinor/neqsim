@@ -8,6 +8,15 @@ This guide describes the complete process design workflow using NeqSim, from ini
 - **Mechanical Design** - Equipment sizing based on international standards
 - **TORG Integration** - Project-specific technical requirements
 - **Design Orchestration** - Coordinated workflows for field development
+- **Automated Design** - Auto-sizing and optimization via [Design Framework](DESIGN_FRAMEWORK.md)
+
+## Related Documentation
+
+| Document | Description |
+|----------|-------------|
+| [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK.md) | **AutoSizeable interface, ProcessTemplates, DesignOptimizer** |
+| [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | Production optimization examples |
+| [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK.md) | Equipment capacity constraints |
 
 ## Process Design Workflow Overview
 

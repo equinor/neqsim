@@ -249,42 +249,74 @@ public class PortfolioOptimizer implements Serializable {
       this.annualBudgetRemaining = new HashMap<Integer, Double>();
     }
 
-    /** Get selected projects. */
+    /**
+     * Get selected projects.
+     *
+     * @return list of selected projects
+     */
     public List<Project> getSelectedProjects() {
       return selectedProjects;
     }
 
-    /** Get deferred projects. */
+    /**
+     * Get deferred projects.
+     *
+     * @return list of deferred projects
+     */
     public List<Project> getDeferredProjects() {
       return deferredProjects;
     }
 
-    /** Get total NPV. */
+    /**
+     * Get total NPV.
+     *
+     * @return total NPV value
+     */
     public double getTotalNpv() {
       return totalNpv;
     }
 
-    /** Set total NPV. */
+    /**
+     * Set total NPV.
+     *
+     * @param npv the total NPV value to set
+     */
     public void setTotalNpv(double npv) {
       this.totalNpv = npv;
     }
 
-    /** Get total CAPEX. */
+    /**
+     * Get total CAPEX.
+     *
+     * @return total CAPEX value
+     */
     public double getTotalCapex() {
       return totalCapex;
     }
 
-    /** Set total CAPEX. */
+    /**
+     * Set total CAPEX.
+     *
+     * @param capex the total CAPEX value to set
+     */
     public void setTotalCapex(double capex) {
       this.totalCapex = capex;
     }
 
-    /** Get total EMV. */
+    /**
+     * Get total EMV.
+     *
+     * @return total EMV value
+     */
     public double getTotalEmv() {
       return totalEmv;
     }
 
-    /** Set total EMV. */
+    /**
+     * Set total EMV.
+     *
+     * @param emv the total EMV value to set
+     */
     public void setTotalEmv(double emv) {
       this.totalEmv = emv;
     }
@@ -733,6 +765,11 @@ public class PortfolioOptimizer implements Serializable {
 
   /**
    * Check if a project can be afforded within budget constraints.
+   *
+   * @param p the project to check
+   * @param remainingBudget map of year to remaining budget for that year
+   * @param remainingTotal the total remaining budget across all years
+   * @return true if the project can be afforded, false otherwise
    */
   private boolean canAfford(Project p, Map<Integer, Double> remainingBudget,
       double remainingTotal) {
@@ -755,6 +792,9 @@ public class PortfolioOptimizer implements Serializable {
 
   /**
    * Deduct project CAPEX from remaining budgets.
+   *
+   * @param p the project whose CAPEX should be deducted
+   * @param remainingBudget map of year to remaining budget to update
    */
   private void deductCapex(Project p, Map<Integer, Double> remainingBudget) {
     for (Map.Entry<Integer, Double> entry : annualBudgets.entrySet()) {
@@ -772,6 +812,10 @@ public class PortfolioOptimizer implements Serializable {
 
   /**
    * Check if all dependencies are satisfied.
+   *
+   * @param p the project to check dependencies for
+   * @param selected the list of already selected projects
+   * @return true if all dependencies are satisfied, false otherwise
    */
   private boolean dependenciesSatisfied(Project p, List<Project> selected) {
     for (String dep : p.getDependencies()) {

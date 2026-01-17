@@ -2772,23 +2772,69 @@ public class ProcessSystem extends SimulationBaseClass {
    * getBottleneck.
    * </p>
    *
-   * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
+   * <p>
+   * Identifies the equipment with the highest capacity utilization. This method checks both:
+   * </p>
+   * <ul>
+   * <li>Traditional capacity: {@code getCapacityDuty() / getCapacityMax()}</li>
+   * <li>Multi-constraint capacity: Equipment implementing
+   * {@link neqsim.process.equipment.capacity.CapacityConstrainedEquipment}</li>
+   * </ul>
+   *
+   * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object representing the
+   *         bottleneck, or null if no equipment has capacity defined
    */
   public ProcessEquipmentInterface getBottleneck() {
     ProcessEquipmentInterface bottleneck = null;
     double maxUtilization = 0.0;
+
     for (ProcessEquipmentInterface unit : unitOperations) {
-      double capacity = unit.getCapacityMax();
-      double duty = unit.getCapacityDuty();
-      if (capacity > 1e-12) {
-        double utilization = duty / capacity;
-        if (utilization > maxUtilization) {
-          maxUtilization = utilization;
-          bottleneck = unit;
+      double utilization = 0.0;
+
+      // Check if equipment implements CapacityConstrainedEquipment (multi-constraint)
+      if (unit instanceof neqsim.process.equipment.capacity.CapacityConstrainedEquipment) {
+        neqsim.process.equipment.capacity.CapacityConstrainedEquipment constrained =
+            (neqsim.process.equipment.capacity.CapacityConstrainedEquipment) unit;
+        utilization = constrained.getMaxUtilization();
+      } else {
+        // Fall back to traditional single capacity metric
+        double capacity = unit.getCapacityMax();
+        double duty = unit.getCapacityDuty();
+        if (capacity > 1e-12) {
+          utilization = duty / capacity;
         }
+      }
+
+      if (!Double.isNaN(utilization) && !Double.isInfinite(utilization)
+          && utilization > maxUtilization) {
+        maxUtilization = utilization;
+        bottleneck = unit;
       }
     }
     return bottleneck;
+  }
+
+  /**
+   * Gets the utilization ratio of the bottleneck equipment.
+   *
+   * @return utilization as fraction (1.0 = 100%), or 0.0 if no bottleneck found
+   */
+  public double getBottleneckUtilization() {
+    ProcessEquipmentInterface bottleneck = getBottleneck();
+    if (bottleneck == null) {
+      return 0.0;
+    }
+
+    if (bottleneck instanceof neqsim.process.equipment.capacity.CapacityConstrainedEquipment) {
+      return ((neqsim.process.equipment.capacity.CapacityConstrainedEquipment) bottleneck)
+          .getMaxUtilization();
+    }
+
+    double capacity = bottleneck.getCapacityMax();
+    if (capacity > 1e-12) {
+      return bottleneck.getCapacityDuty() / capacity;
+    }
+    return 0.0;
   }
 
   // ============ GRAPH-BASED PROCESS REPRESENTATION ============
@@ -3484,6 +3530,146 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public void exportDiagramPNG(java.nio.file.Path path) throws java.io.IOException {
     new neqsim.process.processmodel.diagram.ProcessDiagramExporter(this).exportPNG(path);
+  }
+
+  // ==================== Capacity Constraint Methods ====================
+
+  /**
+   * Gets all capacity-constrained equipment in the process.
+   *
+   * <p>
+   * Returns equipment that implements the CapacityConstrainedEquipment interface, such as
+   * separators, compressors, pumps, etc.
+   * </p>
+   *
+   * @return list of capacity-constrained equipment
+   */
+  public java.util.List<neqsim.process.equipment.capacity.CapacityConstrainedEquipment> getConstrainedEquipment() {
+    java.util.List<neqsim.process.equipment.capacity.CapacityConstrainedEquipment> result =
+        new java.util.ArrayList<>();
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof neqsim.process.equipment.capacity.CapacityConstrainedEquipment) {
+        result.add((neqsim.process.equipment.capacity.CapacityConstrainedEquipment) unit);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Finds the process bottleneck with detailed constraint information.
+   *
+   * <p>
+   * This method extends {@link #getBottleneck()} by returning detailed information about which
+   * specific constraint is limiting the bottleneck equipment. Only works for equipment that
+   * implements {@link neqsim.process.equipment.capacity.CapacityConstrainedEquipment}.
+   * </p>
+   *
+   * <p>
+   * For simple bottleneck detection without constraint details, use {@link #getBottleneck()}.
+   * </p>
+   *
+   * @return BottleneckResult containing the bottleneck equipment, limiting constraint, and
+   *         utilization; returns empty result if no constrained equipment found
+   * @see #getBottleneck()
+   */
+  public neqsim.process.equipment.capacity.BottleneckResult findBottleneck() {
+    neqsim.process.equipment.capacity.CapacityConstrainedEquipment bottleneckEquipment = null;
+    neqsim.process.equipment.capacity.CapacityConstraint limitingConstraint = null;
+    double maxUtil = 0.0;
+
+    for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
+      neqsim.process.equipment.capacity.CapacityConstraint constraint =
+          equip.getBottleneckConstraint();
+      if (constraint != null) {
+        double util = constraint.getUtilization();
+        if (!Double.isNaN(util) && util > maxUtil) {
+          maxUtil = util;
+          bottleneckEquipment = equip;
+          limitingConstraint = constraint;
+        }
+      }
+    }
+
+    if (bottleneckEquipment == null) {
+      return neqsim.process.equipment.capacity.BottleneckResult.empty();
+    }
+    return new neqsim.process.equipment.capacity.BottleneckResult(
+        (ProcessEquipmentInterface) bottleneckEquipment, limitingConstraint, maxUtil);
+  }
+
+  /**
+   * Checks if any equipment in the process is overloaded (exceeds design capacity).
+   *
+   * @return true if any equipment has capacity utilization above 100%
+   */
+  public boolean isAnyEquipmentOverloaded() {
+    for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
+      if (equip.isCapacityExceeded()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Checks if any equipment exceeds a HARD capacity limit.
+   *
+   * <p>
+   * HARD limits represent absolute equipment limits that cannot be exceeded without trip or damage,
+   * such as maximum compressor speed or surge limits.
+   * </p>
+   *
+   * @return true if any HARD constraint is exceeded
+   */
+  public boolean isAnyHardLimitExceeded() {
+    for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
+      if (equip.isHardLimitExceeded()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Gets a summary of capacity utilization for all constrained equipment.
+   *
+   * <p>
+   * Returns a map of equipment names to their maximum constraint utilization. Useful for displaying
+   * overall process capacity status.
+   * </p>
+   *
+   * @return map of equipment name to utilization percentage
+   */
+  public java.util.Map<String, Double> getCapacityUtilizationSummary() {
+    java.util.Map<String, Double> summary = new java.util.LinkedHashMap<>();
+    for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
+      ProcessEquipmentInterface unit = (ProcessEquipmentInterface) equip;
+      double util = equip.getMaxUtilization();
+      if (!Double.isNaN(util)) {
+        summary.put(unit.getName(), util * 100.0);
+      }
+    }
+    return summary;
+  }
+
+  /**
+   * Gets equipment that is near its capacity limit (above warning threshold).
+   *
+   * <p>
+   * Returns equipment where at least one constraint is above its warning threshold (typically 90%
+   * of design). Useful for identifying potential future bottlenecks.
+   * </p>
+   *
+   * @return list of equipment names that are near capacity limits
+   */
+  public java.util.List<String> getEquipmentNearCapacityLimit() {
+    java.util.List<String> nearLimit = new java.util.ArrayList<>();
+    for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
+      if (equip.isNearCapacityLimit()) {
+        nearLimit.add(((ProcessEquipmentInterface) equip).getName());
+      }
+    }
+    return nearLimit;
   }
 
   /*

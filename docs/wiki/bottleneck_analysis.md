@@ -59,14 +59,20 @@ Currently, the following equipment types support capacity analysis:
 | Equipment | Duty Metric | Capacity Parameter |
 |-----------|-------------|--------------------|
 | **Compressor** | Power (W) | `MechanicalDesign.maxDesignPower` with optional P10/P50/P90 overrides |
-| **Separator** | Gas Flow ($m^3/hr$) | `MechanicalDesign.maxDesignGassVolumeFlow` |
+| **Separator** | Liquid Level Fraction | 1.0 (100% fill) |
 | **Pump** | Power (W) | `MechanicalDesign.maxDesignPower` |
 | **Heater** | Duty (W) | `MechanicalDesign.maxDesignDuty` |
 | **Cooler** | Duty (W) | `MechanicalDesign.maxDesignDuty` |
-| **ThrottlingValve** | Volume Flow ($m^3/hr$) | `MechanicalDesign.maxDesignVolumeFlow` |
-| **Pipeline** | Volume Flow ($m^3/hr$) | `MechanicalDesign.maxDesignVolumeFlow` |
+| **ThrottlingValve** | Valve Opening (%) | Max Opening (only if < 100% set) |
+| **Pipeline** | Superficial Velocity (m/s) | `MechanicalDesign.maxDesignVelocity` (default 20 m/s) |
 | **DistillationColumn** | Fs hydraulic factor | `OptimizationConfig.columnFsFactorLimit` (default 2.5) |
 | **Custom types** | User-supplied duty/limit lambdas | Configure via `capacityRuleForType` |
+
+**Notes:**
+- **Separator**: The `ProductionOptimizer` uses liquid level fraction for capacity tracking. A liquid level of 0.7 means 70% utilization. Gas load factor (K-factor) is used for sizing via `getGasLoadFactor()`.
+- **ThrottlingValve**: Valve utilization is only tracked if a max opening < 100% is explicitly set. A fully open valve (100%) is normal operation, not overutilization.
+- **Pipeline**: Default erosional velocity limit of 20 m/s is applied if no design velocity is set.
+- **Dry Gas**: For separators/scrubbers with single-phase (dry gas), K-factor calculations use a default liquid density of 1000 kg/m³.
 
 ## Example Usage
 
@@ -131,6 +137,73 @@ public class BottleneckExample {
 ## Extending to Other Equipment
 
 To support capacity analysis for other equipment types (e.g., Pumps, Heat Exchangers), implement the `getCapacityDuty()` and `getCapacityMax()` methods in the respective classes. Ensure that the units for duty and capacity are consistent (e.g., both in Watts or both in kg/hr).
+
+## Multi-Constraint Capacity Analysis
+
+For equipment with multiple capacity constraints (e.g., compressors limited by speed, power, and surge margin), NeqSim provides the `CapacityConstrainedEquipment` interface in `neqsim.process.equipment.capacity`.
+
+### Key Features
+
+- **Multiple constraints per equipment**: Track speed, power, surge margin, discharge temperature, etc.
+- **Constraint types**: HARD (trip/damage), SOFT (efficiency loss), DESIGN (normal envelope)
+- **Automatic integration**: `ProcessSystem.getBottleneck()` automatically uses multi-constraint data when available
+- **Detailed analysis**: `ProcessSystem.findBottleneck()` returns specific constraint information
+
+### Constraint Types
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `HARD` | Absolute limit - trip or damage if exceeded | Max compressor speed, surge limit |
+| `SOFT` | Operational limit - reduced efficiency | High discharge temperature |
+| `DESIGN` | Normal operating envelope | Separator gas load factor |
+
+### Example: Multi-Constraint Analysis
+
+```java
+import neqsim.process.equipment.capacity.BottleneckResult;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+
+// Run simulation
+process.run();
+
+// Simple bottleneck detection (works with both single and multi-constraint)
+ProcessEquipmentInterface bottleneck = process.getBottleneck();
+double utilization = process.getBottleneckUtilization();
+System.out.println("Bottleneck: " + bottleneck.getName() + " at " + (utilization * 100) + "%");
+
+// Detailed constraint information (multi-constraint equipment only)
+BottleneckResult result = process.findBottleneck();
+if (!result.isEmpty()) {
+    System.out.println("Equipment: " + result.getEquipmentName());
+    System.out.println("Limiting constraint: " + result.getConstraint().getName());
+    System.out.println("Utilization: " + result.getUtilizationPercent() + "%");
+}
+
+// Check specific equipment constraints
+Compressor comp = (Compressor) process.getUnit("compressor");
+for (CapacityConstraint c : comp.getCapacityConstraints().values()) {
+    System.out.printf("  %s: %.1f / %.1f %s (%.1f%%)%n",
+        c.getName(), c.getCurrentValue(), c.getDesignValue(), 
+        c.getUnit(), c.getUtilizationPercent());
+}
+
+// Check for critical conditions
+if (process.isAnyHardLimitExceeded()) {
+    System.out.println("CRITICAL: Equipment hard limits exceeded!");
+}
+if (process.isAnyEquipmentOverloaded()) {
+    System.out.println("WARNING: Equipment operating above design capacity");
+}
+```
+
+### Supported Multi-Constraint Equipment
+
+| Equipment | Constraints |
+|-----------|-------------|
+| **Separator** | Gas load factor (vs design K-factor) |
+| **Compressor** | Speed, Power, Surge margin |
+
+For detailed documentation on extending to other equipment, see [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md).
 
 ## Production Optimization
 

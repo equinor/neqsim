@@ -44,6 +44,26 @@ This documentation is organized into the following sections:
 |----------|-------------|
 | [process_design_guide.md](process_design_guide.md) | **Complete guide to process design workflow using NeqSim** |
 
+### Design Framework (NEW) ✨
+
+| Document | Description |
+|----------|-------------|
+| [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK.md) | **Automated equipment sizing and optimization framework** |
+| [OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](OPTIMIZATION_IMPROVEMENT_PROPOSAL.md) | Implementation status and roadmap |
+
+**Key Features:**
+- `AutoSizeable` interface - Equipment auto-sizing from flow requirements
+- `DesignSpecification` - Builder pattern for equipment configuration
+- `ProcessTemplate` - Reusable process configurations
+- `DesignOptimizer` - Design-to-optimization workflow
+- Integration with MechanicalDesign and company TR documents
+
+### Capacity Constraint Framework
+
+| Document | Description |
+|----------|-------------|
+| [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK.md) | **Framework for equipment capacity limits, bottleneck detection, and utilization tracking** |
+
 ### Mechanical Design Documentation
 
 | Document | Description |

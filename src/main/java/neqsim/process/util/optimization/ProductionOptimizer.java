@@ -13,7 +13,9 @@ import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -40,20 +42,17 @@ public class ProductionOptimizer {
 
   /** Objective optimization direction. */
   public enum ObjectiveType {
-    MAXIMIZE,
-    MINIMIZE
+    MAXIMIZE, MINIMIZE
   }
 
   /** Direction of a constraint comparison. */
   public enum ConstraintDirection {
-    LESS_THAN,
-    GREATER_THAN
+    LESS_THAN, GREATER_THAN
   }
 
   /** Severity classification for constraints. */
   public enum ConstraintSeverity {
-    HARD,
-    SOFT
+    HARD, SOFT
   }
 
   /** Simple container for objective configuration. */
@@ -103,9 +102,9 @@ public class ProductionOptimizer {
     private final double penaltyWeight;
     private final String description;
 
-    public OptimizationConstraint(String name, ToDoubleFunction<ProcessSystem> metric,
-        double limit, ConstraintDirection direction, ConstraintSeverity severity,
-        double penaltyWeight, String description) {
+    public OptimizationConstraint(String name, ToDoubleFunction<ProcessSystem> metric, double limit,
+        ConstraintDirection direction, ConstraintSeverity severity, double penaltyWeight,
+        String description) {
       this.name = Objects.requireNonNull(name, "Constraint name is required");
       this.metric = Objects.requireNonNull(metric, "Constraint metric is required");
       this.limit = limit;
@@ -482,6 +481,7 @@ public class ProductionOptimizer {
     private double capacityRangeSpreadFraction = 0.0;
     private SearchMode searchMode = SearchMode.BINARY_FEASIBILITY;
     private boolean enableCaching = true;
+    private boolean rejectInvalidSimulations = true;
     private int swarmSize = 8;
     private double inertiaWeight = 0.6;
     private double cognitiveWeight = 1.2;
@@ -508,6 +508,32 @@ public class ProductionOptimizer {
     public OptimizationConfig maxIterations(int maxIterations) {
       this.maxIterations = maxIterations;
       return this;
+    }
+
+    /**
+     * Sets whether to reject simulation results that are physically invalid.
+     * 
+     * <p>
+     * When enabled (default), the optimizer will mark operating points as infeasible if any
+     * equipment reports invalid simulation results (e.g., negative power in compressors, NaN
+     * values, etc.).
+     * </p>
+     * 
+     * @param reject true to reject invalid simulations
+     * @return this config for method chaining
+     */
+    public OptimizationConfig rejectInvalidSimulations(boolean reject) {
+      this.rejectInvalidSimulations = reject;
+      return this;
+    }
+
+    /**
+     * Gets whether invalid simulations are rejected.
+     * 
+     * @return true if invalid simulations are rejected
+     */
+    public boolean isRejectInvalidSimulations() {
+      return rejectInvalidSimulations;
     }
 
     public int getMaxIterations() {
@@ -648,6 +674,33 @@ public class ProductionOptimizer {
 
     public double getColumnFsFactorLimit() {
       return columnFsFactorLimit;
+    }
+
+    /**
+     * Gets the rate unit for the optimization.
+     *
+     * @return the rate unit string
+     */
+    public String getRateUnit() {
+      return rateUnit;
+    }
+
+    /**
+     * Gets the lower bound for the search range.
+     *
+     * @return the lower bound
+     */
+    public double getLowerBound() {
+      return lowerBound;
+    }
+
+    /**
+     * Gets the upper bound for the search range.
+     *
+     * @return the upper bound
+     */
+    public double getUpperBound() {
+      return upperBound;
     }
   }
 
@@ -928,10 +981,10 @@ public class ProductionOptimizer {
     Objects.requireNonNull(process, "ProcessSystem is required");
     Objects.requireNonNull(feedStream, "Feed stream is required");
     Objects.requireNonNull(config, "OptimizationConfig is required");
-    List<OptimizationObjective> safeObjectives = objectives == null ? Collections.emptyList()
-        : new ArrayList<>(objectives);
-    List<OptimizationConstraint> safeConstraints = constraints == null ? Collections.emptyList()
-        : new ArrayList<>(constraints);
+    List<OptimizationObjective> safeObjectives =
+        objectives == null ? Collections.emptyList() : new ArrayList<>(objectives);
+    List<OptimizationConstraint> safeConstraints =
+        constraints == null ? Collections.emptyList() : new ArrayList<>(constraints);
 
     List<IterationRecord> iterationHistory = new ArrayList<>();
 
@@ -952,8 +1005,8 @@ public class ProductionOptimizer {
   }
 
   /**
-   * Optimize multiple manipulated variables (feeds, pressures, temperatures) using multi-dimensional
-   * search strategies.
+   * Optimize multiple manipulated variables (feeds, pressures, temperatures) using
+   * multi-dimensional search strategies.
    */
   public OptimizationResult optimize(ProcessSystem process, List<ManipulatedVariable> variables,
       OptimizationConfig config, List<OptimizationObjective> objectives,
@@ -964,10 +1017,10 @@ public class ProductionOptimizer {
     if (variables.isEmpty()) {
       throw new IllegalArgumentException("At least one variable is required");
     }
-    List<OptimizationObjective> safeObjectives = objectives == null ? Collections.emptyList()
-        : new ArrayList<>(objectives);
-    List<OptimizationConstraint> safeConstraints = constraints == null ? Collections.emptyList()
-        : new ArrayList<>(constraints);
+    List<OptimizationObjective> safeObjectives =
+        objectives == null ? Collections.emptyList() : new ArrayList<>(objectives);
+    List<OptimizationConstraint> safeConstraints =
+        constraints == null ? Collections.emptyList() : new ArrayList<>(constraints);
     List<IterationRecord> iterationHistory = new ArrayList<>();
 
     if (variables.size() > 1 && (config.searchMode == SearchMode.BINARY_FEASIBILITY
@@ -1028,8 +1081,7 @@ public class ProductionOptimizer {
     if (scenarios.isEmpty()) {
       throw new IllegalArgumentException("At least one scenario is required");
     }
-      List<ScenarioKpi> safeKpis =
-          kpis == null ? Collections.emptyList() : new ArrayList<>(kpis);
+    List<ScenarioKpi> safeKpis = kpis == null ? Collections.emptyList() : new ArrayList<>(kpis);
     List<ScenarioResult> results = optimizeScenarios(scenarios);
     Map<String, Map<String, Double>> kpiValues = new LinkedHashMap<>();
     Map<String, Map<String, Double>> kpiDeltas = new LinkedHashMap<>();
@@ -1073,8 +1125,8 @@ public class ProductionOptimizer {
     OptimizationConfig config = new OptimizationConfig(lowerBound, upperBound).rateUnit(rateUnit);
     OptimizationObjective throughput = new OptimizationObjective("throughput",
         proc -> feedStream.getFlowRate(rateUnit), 1.0, ObjectiveType.MAXIMIZE);
-      return optimize(process, feedStream, config, Collections.singletonList(throughput),
-          additionalConstraints);
+    return optimize(process, feedStream, config, Collections.singletonList(throughput),
+        additionalConstraints);
   }
 
   /** Render a compact Markdown table describing utilization per unit. */
@@ -1096,13 +1148,12 @@ public class ProductionOptimizer {
   public static String formatScenarioComparisonTable(ScenarioComparisonResult comparison,
       List<ScenarioKpi> kpis) {
     Objects.requireNonNull(comparison, "comparison");
-      List<ScenarioKpi> safeKpis =
-          kpis == null ? Collections.emptyList() : new ArrayList<>(kpis);
+    List<ScenarioKpi> safeKpis = kpis == null ? Collections.emptyList() : new ArrayList<>(kpis);
     StringBuilder sb = new StringBuilder();
     sb.append("| Scenario | Feasible | Optimal Rate | Bottleneck | Score |");
     for (ScenarioKpi kpi : safeKpis) {
-      String label = kpi.getUnit() == null ? kpi.getName()
-          : kpi.getName() + " (" + kpi.getUnit() + ")";
+      String label =
+          kpi.getUnit() == null ? kpi.getName() : kpi.getName() + " (" + kpi.getUnit() + ")";
       sb.append(label).append(" |");
     }
     sb.append("\n|---|---|---|---|---|");
@@ -1118,15 +1169,14 @@ public class ProductionOptimizer {
           .append(String.format("%.3f %s", result.getOptimalRate(), result.getRateUnit()))
           .append("|")
           .append(result.getBottleneck() != null ? result.getBottleneck().getName() : "")
-          .append("|")
-          .append(String.format("%.3f", result.getScore())).append("|");
+          .append("|").append(String.format("%.3f", result.getScore())).append("|");
       for (ScenarioKpi kpi : safeKpis) {
-          double value = comparison.getKpiValues()
-              .getOrDefault(scenarioResult.getName(), Collections.emptyMap())
-              .getOrDefault(kpi.getName(), Double.NaN);
-          double delta = comparison.getKpiDeltas()
-              .getOrDefault(scenarioResult.getName(), Collections.emptyMap())
-              .getOrDefault(kpi.getName(), 0.0);
+        double value =
+            comparison.getKpiValues().getOrDefault(scenarioResult.getName(), Collections.emptyMap())
+                .getOrDefault(kpi.getName(), Double.NaN);
+        double delta =
+            comparison.getKpiDeltas().getOrDefault(scenarioResult.getName(), Collections.emptyMap())
+                .getOrDefault(kpi.getName(), 0.0);
         sb.append(String.format("%.3f (%.3f)", value, delta)).append("|");
       }
       sb.append("\n");
@@ -1180,7 +1230,8 @@ public class ProductionOptimizer {
     int iterationIndex = 0;
     for (IterationRecord record : iterationHistory) {
       for (UtilizationRecord utilization : record.getUtilizations()) {
-        utilizationByEquipment.computeIfAbsent(utilization.getEquipmentName(), k -> new ArrayList<>())
+        utilizationByEquipment
+            .computeIfAbsent(utilization.getEquipmentName(), k -> new ArrayList<>())
             .add(utilization.getUtilization());
         bottleneckFlags.computeIfAbsent(utilization.getEquipmentName(), k -> new ArrayList<>());
         limits.putIfAbsent(utilization.getEquipmentName(), utilization.getUtilizationLimit());
@@ -1191,18 +1242,18 @@ public class ProductionOptimizer {
         }
       }
       for (Map.Entry<String, List<Boolean>> entry : bottleneckFlags.entrySet()) {
-        boolean isBottleneck = record.getBottleneckName() != null
-            && record.getBottleneckName().equals(entry.getKey());
+        boolean isBottleneck =
+            record.getBottleneckName() != null && record.getBottleneckName().equals(entry.getKey());
         entry.getValue().add(isBottleneck);
       }
       iterationIndex++;
     }
 
     return utilizationByEquipment.entrySet().stream()
-          .map(entry -> new UtilizationSeries(entry.getKey(), entry.getValue(),
-              bottleneckFlags.getOrDefault(entry.getKey(), Collections.emptyList()),
-              limits.getOrDefault(entry.getKey(), DEFAULT_UTILIZATION_LIMIT)))
-          .collect(Collectors.toList());
+        .map(entry -> new UtilizationSeries(entry.getKey(), entry.getValue(),
+            bottleneckFlags.getOrDefault(entry.getKey(), Collections.emptyList()),
+            limits.getOrDefault(entry.getKey(), DEFAULT_UTILIZATION_LIMIT)))
+        .collect(Collectors.toList());
   }
 
   /**
@@ -1231,8 +1282,9 @@ public class ProductionOptimizer {
   private OptimizationResult toResult(double rate, String unit, int iteration,
       Evaluation evaluation, List<IterationRecord> iterationHistory) {
     return new OptimizationResult(rate, unit, evaluation.decisionVariables(),
-        evaluation.bottleneck(), evaluation.bottleneckUtilization(), evaluation.utilizationRecords(),
-        evaluation.objectiveValues(), evaluation.constraintStatuses(),
+        evaluation.bottleneck(), evaluation.bottleneckUtilization(),
+        evaluation.utilizationRecords(), evaluation.objectiveValues(),
+        evaluation.constraintStatuses(),
         evaluation.utilizationWithinLimits() && evaluation.hardOk(), evaluation.score(), iteration,
         new ArrayList<>(iterationHistory));
   }
@@ -1258,13 +1310,12 @@ public class ProductionOptimizer {
     double upper = baseRate * 2.0;
     OptimizationConfig config = new OptimizationConfig(lower, upper).rateUnit(rateUnit)
         .tolerance(baseRate * 0.005).maxIterations(40);
-      OptimizationResult result =
-          optimize(process, feedStream, config, Collections.emptyList(), constraints);
+    OptimizationResult result =
+        optimize(process, feedStream, config, Collections.emptyList(), constraints);
     UtilizationRecord bottleneck = result.getUtilizationRecords().stream()
         .filter(record -> result.getBottleneck() != null
             && record.getEquipmentName().equals(result.getBottleneck().getName()))
-        .findFirst()
-        .orElse(result.getUtilizationRecords().isEmpty() ? null
+        .findFirst().orElse(result.getUtilizationRecords().isEmpty() ? null
             : result.getUtilizationRecords().get(0));
     double utilization = bottleneck == null ? 0.0 : bottleneck.getUtilization();
     double utilizationLimit = bottleneck == null ? 0.0 : bottleneck.getUtilizationLimit();
@@ -1283,6 +1334,26 @@ public class ProductionOptimizer {
     ProcessEquipmentInterface bottleneck = null;
     List<OptimizationConstraint> equipmentConstraints = new ArrayList<>(constraints);
 
+    // Check simulation validity for all equipment
+    // Note: We only check basic simulation validity (NaN, negative values)
+    // Operating envelope violations (surge, stonewall) are handled as constraints
+    // during optimization, not as simulation failures
+    boolean simulationValid = true;
+    List<String> validationErrors = new ArrayList<>();
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+      if (!unit.isSimulationValid()) {
+        simulationValid = false;
+        validationErrors.addAll(unit.getSimulationValidationErrors());
+      }
+    }
+
+    // If simulation is fundamentally invalid, return infeasible evaluation immediately
+    if (!simulationValid && config.isRejectInvalidSimulations()) {
+      // Create a dummy evaluation with max utilization to signal infeasibility
+      return new Evaluation(Double.MAX_VALUE, null, utilizations, new ArrayList<ConstraintStatus>(),
+          new HashMap<String, Double>(), decisionVariables, false, false, Double.NEGATIVE_INFINITY);
+    }
+
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       for (EquipmentConstraintRule rule : config.equipmentConstraintRules) {
         if (rule.matches(unit)) {
@@ -1297,8 +1368,7 @@ public class ProductionOptimizer {
       CapacityRange range = determineCapacityRange(unit, config);
       if (range == null && config.capacityRangeSpreadFraction > 0.0) {
         double spread = config.capacityRangeSpreadFraction;
-        range = new CapacityRange(capacity * (1.0 - spread), capacity,
-            capacity * (1.0 + spread));
+        range = new CapacityRange(capacity * (1.0 - spread), capacity, capacity * (1.0 + spread));
       }
       if (range != null) {
         capacity = range.atPercentile(config.getCapacityPercentile());
@@ -1309,10 +1379,9 @@ public class ProductionOptimizer {
       double duty = capacityRule.duty(unit);
       if (capacity > 1e-12) {
         double utilization = duty / capacity;
-        double limit = determineUtilizationLimit(unit, config)
-            * (1.0 - config.utilizationMarginFraction);
-        utilizations
-            .add(new UtilizationRecord(unit.getName(), duty, capacity, utilization, limit));
+        double limit =
+            determineUtilizationLimit(unit, config) * (1.0 - config.utilizationMarginFraction);
+        utilizations.add(new UtilizationRecord(unit.getName(), duty, capacity, utilization, limit));
         if (utilization > maxUtilization) {
           maxUtilization = utilization;
           bottleneck = unit;
@@ -1328,9 +1397,8 @@ public class ProductionOptimizer {
     double penalty = 0.0;
     for (OptimizationConstraint constraint : equipmentConstraints) {
       double margin = constraint.margin(process);
-      ConstraintStatus status = new ConstraintStatus(constraint.getName(),
-          constraint.getSeverity(), margin, constraint.getPenaltyWeight(),
-          constraint.getDescription());
+      ConstraintStatus status = new ConstraintStatus(constraint.getName(), constraint.getSeverity(),
+          margin, constraint.getPenaltyWeight(), constraint.getDescription());
       constraintStatuses.add(status);
       if (status.violated()) {
         if (status.getSeverity() == ConstraintSeverity.HARD) {
@@ -1366,8 +1434,8 @@ public class ProductionOptimizer {
 
     while (iteration < config.maxIterations && Math.abs(high - low) > config.tolerance) {
       double candidate = 0.5 * (low + high);
-      Evaluation evaluation = evaluateCandidate(process, feedStream, config, objectives,
-          constraints, candidate, cache);
+      Evaluation evaluation =
+          evaluateCandidate(process, feedStream, config, objectives, constraints, candidate, cache);
       boolean feasible = evaluation.utilizationWithinLimits() && evaluation.hardOk();
       recordIteration(iterationHistory, candidate, config.rateUnit, evaluation, feasible);
       if (feasible) {
@@ -1380,8 +1448,8 @@ public class ProductionOptimizer {
     }
 
     if (bestResult == null) {
-      Evaluation evaluation = evaluateCandidate(process, feedStream, config, objectives,
-          constraints, low, cache);
+      Evaluation evaluation =
+          evaluateCandidate(process, feedStream, config, objectives, constraints, low, cache);
       recordIteration(iterationHistory, low, config.rateUnit, evaluation,
           evaluation.utilizationWithinLimits() && evaluation.hardOk());
       bestResult = toResult(low, config.rateUnit, iteration, evaluation, iterationHistory);
@@ -1426,8 +1494,8 @@ public class ProductionOptimizer {
     return bestResult;
   }
 
-  private OptimizationResult goldenSectionSearch(ProcessSystem process,
-      StreamInterface feedStream, OptimizationConfig config, List<OptimizationObjective> objectives,
+  private OptimizationResult goldenSectionSearch(ProcessSystem process, StreamInterface feedStream,
+      OptimizationConfig config, List<OptimizationObjective> objectives,
       List<OptimizationConstraint> constraints, List<IterationRecord> iterationHistory) {
     Map<Long, Evaluation> cache = new HashMap<>();
     double a = config.lowerBound;
@@ -1437,12 +1505,12 @@ public class ProductionOptimizer {
     double c = b - phi * (b - a);
     double d = a + phi * (b - a);
 
-    Evaluation evalC = evaluateCandidate(process, feedStream, config, objectives, constraints, c,
-        cache);
+    Evaluation evalC =
+        evaluateCandidate(process, feedStream, config, objectives, constraints, c, cache);
     recordIteration(iterationHistory, c, config.rateUnit, evalC,
         evalC.utilizationWithinLimits() && evalC.hardOk());
-    Evaluation evalD = evaluateCandidate(process, feedStream, config, objectives, constraints, d,
-        cache);
+    Evaluation evalD =
+        evaluateCandidate(process, feedStream, config, objectives, constraints, d, cache);
     recordIteration(iterationHistory, d, config.rateUnit, evalD,
         evalD.utilizationWithinLimits() && evalD.hardOk());
 
@@ -1511,10 +1579,10 @@ public class ProductionOptimizer {
         new double[] {c}, cache);
     Evaluation evalD = evaluateCandidate(process, variables, config, objectives, constraints,
         new double[] {d}, cache);
-    recordIteration(iterationHistory, c, unit, evalC, evalC.utilizationWithinLimits()
-        && evalC.hardOk());
-    recordIteration(iterationHistory, d, unit, evalD, evalD.utilizationWithinLimits()
-        && evalD.hardOk());
+    recordIteration(iterationHistory, c, unit, evalC,
+        evalC.utilizationWithinLimits() && evalC.hardOk());
+    recordIteration(iterationHistory, d, unit, evalD,
+        evalD.utilizationWithinLimits() && evalD.hardOk());
 
     int iteration = 0;
     while (iteration < config.maxIterations && Math.abs(high - low) > config.tolerance) {
@@ -1550,10 +1618,10 @@ public class ProductionOptimizer {
       List<OptimizationConstraint> constraints, List<IterationRecord> iterationHistory) {
     Map<Long, Evaluation> cache = new HashMap<>();
     double[] simplex = new double[] {config.lowerBound, config.upperBound};
-    Evaluation eval0 = evaluateCandidate(process, feedStream, config, objectives, constraints,
-        simplex[0], cache);
-    Evaluation eval1 = evaluateCandidate(process, feedStream, config, objectives, constraints,
-        simplex[1], cache);
+    Evaluation eval0 =
+        evaluateCandidate(process, feedStream, config, objectives, constraints, simplex[0], cache);
+    Evaluation eval1 =
+        evaluateCandidate(process, feedStream, config, objectives, constraints, simplex[1], cache);
     recordIteration(iterationHistory, simplex[0], config.rateUnit, eval0,
         eval0.utilizationWithinLimits() && eval0.hardOk());
     recordIteration(iterationHistory, simplex[1], config.rateUnit, eval1,
@@ -1567,8 +1635,8 @@ public class ProductionOptimizer {
       double centroid = simplex[bestIndex];
       double reflected = centroid + (centroid - simplex[worstIndex]);
       double clamped = Math.max(config.lowerBound, Math.min(config.upperBound, reflected));
-      Evaluation reflectedEval = evaluateCandidate(process, feedStream, config, objectives,
-          constraints, clamped, cache);
+      Evaluation reflectedEval =
+          evaluateCandidate(process, feedStream, config, objectives, constraints, clamped, cache);
       recordIteration(iterationHistory, clamped, config.rateUnit, reflectedEval,
           reflectedEval.utilizationWithinLimits() && reflectedEval.hardOk());
 
@@ -1620,8 +1688,8 @@ public class ProductionOptimizer {
         simplex[i][j] = Math.max(var.getLowerBound(),
             Math.min(var.getUpperBound(), center + (i == j + 1 ? span : 0.0)));
       }
-      evaluations[i] = evaluateCandidate(process, variables, config, objectives, constraints,
-          simplex[i], cache);
+      evaluations[i] =
+          evaluateCandidate(process, variables, config, objectives, constraints, simplex[i], cache);
       recordIteration(iterationHistory, simplex[i][0], unit, evaluations[i],
           evaluations[i].utilizationWithinLimits() && evaluations[i].hardOk());
     }
@@ -1633,13 +1701,13 @@ public class ProductionOptimizer {
       double[] worst = simplex[simplexSize - 1];
 
       double[] reflected = reflect(centroid, worst, 1.0);
-      Evaluation reflectedEval = evaluateCandidate(process, variables, config, objectives,
-          constraints, reflected, cache);
+      Evaluation reflectedEval =
+          evaluateCandidate(process, variables, config, objectives, constraints, reflected, cache);
 
       if (feasibilityScore(reflectedEval) > feasibilityScore(evaluations[0])) {
         double[] expanded = reflect(centroid, worst, 2.0);
-        Evaluation expandedEval = evaluateCandidate(process, variables, config, objectives,
-            constraints, expanded, cache);
+        Evaluation expandedEval =
+            evaluateCandidate(process, variables, config, objectives, constraints, expanded, cache);
         if (feasibilityScore(expandedEval) > feasibilityScore(reflectedEval)) {
           simplex[simplexSize - 1] = expanded;
           evaluations[simplexSize - 1] = expandedEval;
@@ -1696,8 +1764,8 @@ public class ProductionOptimizer {
           + (config.upperBound - config.lowerBound) * ((double) i / (double) swarmSize);
       positions[i] = initPos;
       velocities[i] = 0.0;
-      evaluations[i] = evaluateCandidate(process, feedStream, config, objectives, constraints,
-          initPos, cache);
+      evaluations[i] =
+          evaluateCandidate(process, feedStream, config, objectives, constraints, initPos, cache);
       recordIteration(iterationHistory, initPos, config.rateUnit, evaluations[i],
           evaluations[i].utilizationWithinLimits() && evaluations[i].hardOk());
       bestPersonalScores[i] = feasibilityScore(evaluations[i]);
@@ -1718,8 +1786,8 @@ public class ProductionOptimizer {
             + config.getCognitiveWeight() * r1 * (bestPersonalPositions[i] - positions[i])
             + config.getSocialWeight() * r2 * (globalBestPosition - positions[i]);
 
-        positions[i] = Math.max(config.lowerBound,
-            Math.min(config.upperBound, positions[i] + velocities[i]));
+        positions[i] =
+            Math.max(config.lowerBound, Math.min(config.upperBound, positions[i] + velocities[i]));
         evaluations[i] = evaluateCandidate(process, feedStream, config, objectives, constraints,
             positions[i], cache);
         recordIteration(iterationHistory, positions[i], config.rateUnit, evaluations[i],
@@ -1775,8 +1843,8 @@ public class ProductionOptimizer {
     for (int i = 0; i < swarmSize; i++) {
       for (int j = 0; j < dim; j++) {
         ManipulatedVariable var = variables.get(j);
-        double init = var.getLowerBound()
-            + (var.getUpperBound() - var.getLowerBound()) * random.nextDouble();
+        double init =
+            var.getLowerBound() + (var.getUpperBound() - var.getLowerBound()) * random.nextDouble();
         positions[i][j] = init;
         velocities[i][j] = 0.0;
       }
@@ -1891,8 +1959,7 @@ public class ProductionOptimizer {
 
   private Evaluation evaluateCandidate(ProcessSystem process, StreamInterface feedStream,
       OptimizationConfig config, List<OptimizationObjective> objectives,
-      List<OptimizationConstraint> constraints, double candidateRate,
-      Map<Long, Evaluation> cache) {
+      List<OptimizationConstraint> constraints, double candidateRate, Map<Long, Evaluation> cache) {
     if (config.enableCaching) {
       long cacheKey = Math.round(candidateRate / Math.max(config.tolerance, 1e-9));
       Evaluation cached = cache.get(cacheKey);
@@ -1910,20 +1977,20 @@ public class ProductionOptimizer {
 
   private Evaluation evaluateCandidate(ProcessSystem process, List<ManipulatedVariable> variables,
       OptimizationConfig config, List<OptimizationObjective> objectives,
-      List<OptimizationConstraint> constraints, double[] candidate,
-      Map<String, Evaluation> cache) {
+      List<OptimizationConstraint> constraints, double[] candidate, Map<String, Evaluation> cache) {
     if (config.enableCaching) {
       String cacheKey = buildVectorCacheKey(candidate, config);
       Evaluation cached = cache.get(cacheKey);
       if (cached != null) {
         return cached;
       }
-      Evaluation evaluation = evaluateCandidateInternal(process, variables, config, objectives,
-          constraints, candidate);
+      Evaluation evaluation =
+          evaluateCandidateInternal(process, variables, config, objectives, constraints, candidate);
       cache.put(cacheKey, evaluation);
       return evaluation;
     }
-    return evaluateCandidateInternal(process, variables, config, objectives, constraints, candidate);
+    return evaluateCandidateInternal(process, variables, config, objectives, constraints,
+        candidate);
   }
 
   private Evaluation evaluateCandidateInternal(ProcessSystem process, StreamInterface feedStream,
@@ -1943,8 +2010,8 @@ public class ProductionOptimizer {
     Map<String, Double> decisions = new HashMap<>();
     for (int i = 0; i < variables.size(); i++) {
       ManipulatedVariable variable = variables.get(i);
-      double bounded = Math.max(variable.getLowerBound(),
-          Math.min(variable.getUpperBound(), candidate[i]));
+      double bounded =
+          Math.max(variable.getLowerBound(), Math.min(variable.getUpperBound(), candidate[i]));
       variable.apply(process, bounded);
       decisions.put(variable.getName(), bounded);
     }
@@ -1964,8 +2031,8 @@ public class ProductionOptimizer {
 
   private void recordIteration(List<IterationRecord> iterationHistory, double candidate,
       String rateUnit, Evaluation evaluation, boolean feasible) {
-    String bottleneckName = evaluation.bottleneck() != null ? evaluation.bottleneck().getName()
-        : "unknown";
+    String bottleneckName =
+        evaluation.bottleneck() != null ? evaluation.bottleneck().getName() : "unknown";
     iterationHistory.add(new IterationRecord(candidate, rateUnit, evaluation.decisionVariables(),
         bottleneckName, evaluation.bottleneckUtilization(), evaluation.utilizationWithinLimits(),
         evaluation.hardOk(), feasible, evaluation.score(), evaluation.utilizationRecords()));
@@ -2013,15 +2080,54 @@ public class ProductionOptimizer {
           equipment -> config.getColumnFsFactorLimit());
     }
     if (unit instanceof neqsim.process.equipment.separator.Separator) {
-      return new CapacityRule(
-          equipment -> ((neqsim.process.equipment.separator.Separator) unit).getLiquidLevel(),
-          equipment -> 1.0);
+      neqsim.process.equipment.separator.Separator sep =
+          (neqsim.process.equipment.separator.Separator) unit;
+      // Use liquid level fraction as separator capacity metric
+      // This represents the operational filling of the separator vessel
+      // Values > 1.0 indicate liquid carryover risk
+      return new CapacityRule(equipment -> sep.getLiquidLevel(), equipment -> 1.0);
     }
     if (unit instanceof neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2) {
       neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2 exchanger =
           (neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2) unit;
       return new CapacityRule(equipment -> Math.abs(exchanger.energyDiff()),
           equipment -> Math.max(1.0, exchanger.getCapacityMax()));
+    }
+    if (unit instanceof neqsim.process.equipment.heatexchanger.Heater) {
+      neqsim.process.equipment.heatexchanger.Heater heater =
+          (neqsim.process.equipment.heatexchanger.Heater) unit;
+      // Use absolute duty for heaters/coolers (both heating and cooling)
+      return new CapacityRule(equipment -> Math.abs(heater.getDuty()), equipment -> {
+        double maxDuty = heater.getMaxDesignDuty();
+        // If max design duty is not set, return a large value (no constraint)
+        return maxDuty > 0 ? maxDuty : Double.MAX_VALUE;
+      });
+    }
+    if (unit instanceof ThrottlingValve) {
+      ThrottlingValve valve = (ThrottlingValve) unit;
+      // Use valve opening percentage as capacity measure (0-100%)
+      // A valve operating at high opening (>80%) has poor control authority
+      // and may indicate it is undersized for the current flow/Cv
+      // Only track if Cv/Kv has been explicitly set AND max opening is constrained
+      double maxOpening = valve.getMaximumValveOpening();
+      if (valve.isValveKvSet() && maxOpening < 100.0) {
+        return new CapacityRule(equipment -> valve.getPercentValveOpening(), // Current opening %
+            equipment -> maxOpening); // Max allowed opening
+      }
+      // For valves without explicit Cv or unconstrained opening, don't track utilization
+      return new CapacityRule(equipment -> 0.0, equipment -> Double.MAX_VALUE);
+    }
+    if (unit instanceof PipeBeggsAndBrills) {
+      PipeBeggsAndBrills pipe = (PipeBeggsAndBrills) unit;
+      // Use superficial velocity as capacity measure for pipelines
+      // Typical limits: gas ~20-25 m/s (erosion), liquid ~3-5 m/s
+      // Multiphase: often limited to 15-20 m/s to avoid erosion/corrosion
+      return new CapacityRule(equipment -> pipe.getOutletSuperficialVelocity(), equipment -> {
+        // Get max design velocity from mechanical design if set
+        double maxVel = pipe.getMechanicalDesign().getMaxDesignVelocity();
+        // Default to 20 m/s if not set (typical erosional velocity limit)
+        return maxVel > 0 ? maxVel : 20.0;
+      });
     }
     return new CapacityRule(ProcessEquipmentInterface::getCapacityDuty,
         ProcessEquipmentInterface::getCapacityMax);
@@ -2064,7 +2170,8 @@ public class ProductionOptimizer {
 
   /** Function to compute capacity duty/limit for a specific equipment. */
   @FunctionalInterface
-  interface CapacityMetric extends ToDoubleFunction<ProcessEquipmentInterface> {}
+  interface CapacityMetric extends ToDoubleFunction<ProcessEquipmentInterface> {
+  }
 
   /** Pair of capacity duty/max providers. */
   static final class CapacityRule {
@@ -2087,7 +2194,8 @@ public class ProductionOptimizer {
 
   /** Metric to evaluate per-equipment constraints. */
   @FunctionalInterface
-  interface EquipmentMetric extends ToDoubleFunction<ProcessEquipmentInterface> {}
+  interface EquipmentMetric extends ToDoubleFunction<ProcessEquipmentInterface> {
+  }
 
   /** Constraint template applied to each matching equipment. */
   static final class EquipmentConstraintRule {
@@ -2117,7 +2225,7 @@ public class ProductionOptimizer {
       return equipmentType.isAssignableFrom(unit.getClass());
     }
 
-  public OptimizationConstraint toConstraint(ProcessEquipmentInterface unit) {
+    public OptimizationConstraint toConstraint(ProcessEquipmentInterface unit) {
       return new OptimizationConstraint(name + " - " + unit.getName(),
           proc -> metric.applyAsDouble(unit), limit, direction, severity, penaltyWeight,
           description);

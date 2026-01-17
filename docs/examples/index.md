@@ -86,6 +86,7 @@ Example Java code demonstrating NeqSim APIs:
 
 Additional documentation and guides:
 
+- [Production Optimization Guide](PRODUCTION_OPTIMIZATION_GUIDE.md) - Complete guide to production optimization with Java and Python examples
 - [Comparesimulations Quickstart](comparesimulations_quickstart.md)
 - [Selective Logic Execution](selective-logic-execution.md)
 - [Transient Slug Separator Control Example](transient_slug_separator_control_example.md)

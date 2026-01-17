@@ -100,47 +100,83 @@ public class MultiphaseFlowIntegrator implements Serializable {
     private boolean feasible;
     private String infeasibilityReason;
 
-    /** Get inlet pressure. */
+    /**
+     * Get inlet pressure.
+     *
+     * @return the inlet pressure in bar
+     */
     public double getInletPressureBar() {
       return inletPressureBar;
     }
 
-    /** Set inlet pressure. */
+    /**
+     * Set inlet pressure.
+     *
+     * @param p the inlet pressure in bar
+     */
     public void setInletPressureBar(double p) {
       this.inletPressureBar = p;
     }
 
-    /** Get arrival pressure. */
+    /**
+     * Get arrival pressure.
+     *
+     * @return the arrival pressure in bar
+     */
     public double getArrivalPressureBar() {
       return arrivalPressureBar;
     }
 
-    /** Set arrival pressure. */
+    /**
+     * Set arrival pressure.
+     *
+     * @param p the arrival pressure in bar
+     */
     public void setArrivalPressureBar(double p) {
       this.arrivalPressureBar = p;
     }
 
-    /** Get pressure drop. */
+    /**
+     * Get pressure drop.
+     *
+     * @return the pressure drop in bar
+     */
     public double getPressureDropBar() {
       return pressureDropBar;
     }
 
-    /** Set pressure drop. */
+    /**
+     * Set pressure drop.
+     *
+     * @param dp the pressure drop in bar
+     */
     public void setPressureDropBar(double dp) {
       this.pressureDropBar = dp;
     }
 
-    /** Get inlet temperature. */
+    /**
+     * Get inlet temperature.
+     *
+     * @return the inlet temperature in Celsius
+     */
     public double getInletTemperatureC() {
       return inletTemperatureC;
     }
 
-    /** Set inlet temperature. */
+    /**
+     * Set inlet temperature.
+     *
+     * @param t the inlet temperature in Celsius
+     */
     public void setInletTemperatureC(double t) {
       this.inletTemperatureC = t;
     }
 
-    /** Get arrival temperature. */
+    /**
+     * Get arrival temperature.
+     *
+     * @return the arrival temperature in Celsius
+     */
     public double getArrivalTemperatureC() {
       return arrivalTemperatureC;
     }
@@ -190,47 +226,83 @@ public class MultiphaseFlowIntegrator implements Serializable {
       this.gasVelocityMs = v;
     }
 
-    /** Get mixture velocity. */
+    /**
+     * Get mixture velocity.
+     *
+     * @return mixture velocity in m/s
+     */
     public double getMixtureVelocityMs() {
       return mixtureVelocityMs;
     }
 
-    /** Set mixture velocity. */
+    /**
+     * Set mixture velocity.
+     *
+     * @param v mixture velocity in m/s
+     */
     public void setMixtureVelocityMs(double v) {
       this.mixtureVelocityMs = v;
     }
 
-    /** Get slug frequency. */
+    /**
+     * Get slug frequency.
+     *
+     * @return slug frequency per minute
+     */
     public double getSlugFrequencyPerMin() {
       return slugFrequencyPerMin;
     }
 
-    /** Set slug frequency. */
+    /**
+     * Set slug frequency.
+     *
+     * @param f slug frequency per minute
+     */
     public void setSlugFrequencyPerMin(double f) {
       this.slugFrequencyPerMin = f;
     }
 
-    /** Get erosional velocity. */
+    /**
+     * Get erosional velocity.
+     *
+     * @return erosional velocity in m/s
+     */
     public double getErosionalVelocityMs() {
       return erosionalVelocityMs;
     }
 
-    /** Set erosional velocity. */
+    /**
+     * Set erosional velocity.
+     *
+     * @param v erosional velocity in m/s
+     */
     public void setErosionalVelocityMs(double v) {
       this.erosionalVelocityMs = v;
     }
 
-    /** Get erosional velocity ratio. */
+    /**
+     * Get erosional velocity ratio.
+     *
+     * @return erosional velocity ratio (dimensionless)
+     */
     public double getErosionalVelocityRatio() {
       return erosionalVelocityRatio;
     }
 
-    /** Set erosional velocity ratio. */
+    /**
+     * Set erosional velocity ratio.
+     *
+     * @param r erosional velocity ratio (dimensionless)
+     */
     public void setErosionalVelocityRatio(double r) {
       this.erosionalVelocityRatio = r;
     }
 
-    /** Check if feasible. */
+    /**
+     * Check if feasible.
+     *
+     * @return true if feasible, false otherwise
+     */
     public boolean isFeasible() {
       return feasible;
     }

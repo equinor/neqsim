@@ -73,6 +73,7 @@ System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m3");
 | [Logical Unit Operations](logical_unit_operations.md) | Controllers, splitters, recycles |
 | [Transient Simulation Guide](process_transient_simulation_guide.md) | Dynamic process modeling |
 | [Process Control Framework](process_control.md) | PID controllers, automation |
+| [Bottleneck Analysis](bottleneck_analysis.md) | Capacity constraints, production optimization |
 
 ---
 

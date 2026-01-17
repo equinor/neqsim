@@ -234,7 +234,89 @@ double effectiveness = hx.getEffectiveness();
 
 ---
 
+## Auto-Sizing
+
+Heat exchanger equipment implements the `AutoSizeable` interface for automatic sizing based on duty requirements.
+
+### Heater/Cooler Auto-Sizing
+
+```java
+import neqsim.process.equipment.heatexchanger.Heater;
+
+Heater heater = new Heater("E-100", inletStream);
+heater.setOutTemperature(80.0, "C");
+heater.run();
+
+// Auto-size with 20% safety factor
+heater.autoSize(1.2);
+
+// Get sizing report
+System.out.println(heater.getSizingReport());
+// Output includes:
+// - Inlet/Outlet temperatures
+// - Duty
+// - Max design duty
+// - Duty utilization %
+
+// Get JSON report for programmatic access
+String jsonReport = heater.getSizingReportJson();
+```
+
+### Heat Exchanger Auto-Sizing
+
+Two-stream heat exchangers provide enhanced sizing reports:
+
+```java
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
+
+HeatExchanger hx = new HeatExchanger("E-300", hotStream, coldStream);
+hx.setUAvalue(10000.0);
+hx.run();
+
+// Auto-size with 25% safety factor
+hx.autoSize(1.25);
+
+// Get detailed sizing report
+System.out.println(hx.getSizingReport());
+// Output includes:
+// - Hot side: inlet/outlet temperatures, flow rate
+// - Cold side: inlet/outlet temperatures, flow rate
+// - Duty, UA value, thermal effectiveness
+// - LMTD (Log Mean Temperature Difference)
+// - Mechanical design parameters
+```
+
+### Using Company Standards
+
+```java
+// Auto-size using company-specific standards
+heater.autoSize("Equinor", "TR3100");
+
+// Standards are loaded from TechnicalRequirements_Process.csv
+// and design standards tables (api_standards.csv, etc.)
+```
+
+---
+
+## Mechanical Design
+
+Access mechanical design calculations:
+
+```java
+HeatExchangerMechanicalDesign mechDesign = hx.getMechanicalDesign();
+mechDesign.calcDesign();
+
+// Get exchanger type recommendations
+List<HeatExchangerSizingResult> results = mechDesign.getSizingResults();
+for (HeatExchangerSizingResult result : results) {
+    System.out.println(result.getType() + ": " + result.getArea() + " m²");
+}
+```
+
+---
+
 ## Related Documentation
 
 - [Process Package](../README.md) - Package overview
 - [Compressors](compressors.md) - Compression equipment
+- [Design Framework](../DESIGN_FRAMEWORK.md) - AutoSizeable interface

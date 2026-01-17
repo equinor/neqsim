@@ -26,6 +26,14 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
+import neqsim.process.equipment.capacity.StandardConstraintType;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -36,7 +44,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class Compressor extends TwoPortEquipment
-    implements CompressorInterface, StateVectorProvider {
+    implements CompressorInterface, StateVectorProvider, CapacityConstrainedEquipment {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -129,6 +137,14 @@ public class Compressor extends TwoPortEquipment
   private String polytropicMethod = "schultz";
 
   /**
+   * Capacity constraints map for this compressor. Marked transient because constraints contain
+   * lambdas/method references that are not serializable. Constraints are re-initialized after
+   * deserialization when needed.
+   */
+  private transient Map<String, CapacityConstraint> capacityConstraints =
+      new LinkedHashMap<String, CapacityConstraint>();
+
+  /**
    * Constructor for Compressor.
    *
    * @param name Name of compressor
@@ -136,6 +152,7 @@ public class Compressor extends TwoPortEquipment
   public Compressor(String name) {
     super(name);
     initMechanicalDesign();
+    initializeCapacityConstraints();
   }
 
   /**
@@ -2635,13 +2652,37 @@ public class Compressor extends TwoPortEquipment
   }
 
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For compressors, capacity duty is defined as the total shaft work (power consumption) in Watts.
+   * This is used in conjunction with {@link #getCapacityMax()} for bottleneck analysis via
+   * {@link neqsim.process.processmodel.ProcessSystem#getBottleneck()}.
+   * </p>
+   *
+   * <p>
+   * For more detailed constraint analysis including speed and surge limits, use the
+   * {@link neqsim.process.equipment.capacity.CapacityConstrainedEquipment} interface methods.
+   * </p>
+   *
+   * @return shaft power in Watts
+   */
   @Override
   public double getCapacityDuty() {
     return getTotalWork();
   }
 
-  /** {@inheritDoc} */
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For compressors, maximum capacity is defined by the mechanical design's maximum power in Watts.
+   * This should be set via {@code getMechanicalDesign().maxDesignPower = value}.
+   * </p>
+   *
+   * @return maximum design power in Watts
+   */
   @Override
   public double getCapacityMax() {
     return getMechanicalDesign().maxDesignPower;
@@ -3509,6 +3550,441 @@ public class Compressor extends TwoPortEquipment
     speedLimitWarningActive = false;
     if (driver != null) {
       driver.resetOverloadTimer();
+    }
+  }
+
+  // ==================== CapacityConstrainedEquipment Interface Implementation ====================
+
+  /**
+   * Initializes default capacity constraints for this compressor.
+   *
+   * <p>
+   * Creates constraints for speed, power, and surge margin based on the compressor's design
+   * parameters. Additional constraints can be added after construction.
+   * </p>
+   */
+  protected void initializeCapacityConstraints() {
+    // Determine max speed from curve or mechanical limit
+    double effectiveMaxSpeed = maxspeed;
+    double effectiveMinSpeed = 0.0;
+    if (getCompressorChart() != null && getCompressorChart().isUseCompressorChart()) {
+      double curveMaxSpeed = getCompressorChart().getMaxSpeedCurve();
+      double curveMinSpeed = getCompressorChart().getMinSpeedCurve();
+      if (!Double.isNaN(curveMaxSpeed) && curveMaxSpeed > 0) {
+        effectiveMaxSpeed = Math.min(maxspeed, curveMaxSpeed);
+      }
+      if (!Double.isNaN(curveMinSpeed) && curveMinSpeed > 0) {
+        effectiveMinSpeed = curveMinSpeed;
+      }
+    }
+
+    // Max speed constraint (from curve or mechanical limit)
+    // Design value = max speed, so utilization = currentSpeed / maxSpeed
+    // This gives proper utilization: 87% speed = 87% utilization
+    final double maxSpeedLimit = effectiveMaxSpeed;
+    addCapacityConstraint(StandardConstraintType.COMPRESSOR_SPEED.createConstraint()
+        .setDesignValue(maxSpeedLimit).setMaxValue(maxSpeedLimit).setWarningThreshold(0.9)
+        .setValueSupplier(() -> this.speed));
+
+    // Min speed constraint (from curve minimum)
+    // This constraint tracks if the compressor speed is above the minimum allowable speed
+    // Design value = MAX_VALUE (no upper limit), min value = minimum allowable speed
+    // Utilization = minSpeed/currentSpeed: <1 means above min (good), >1 means below min (bad)
+    if (effectiveMinSpeed > 0) {
+      final double minSpeedLimit = effectiveMinSpeed;
+      addCapacityConstraint(StandardConstraintType.COMPRESSOR_MIN_SPEED.createConstraint()
+          .setDesignValue(Double.MAX_VALUE) // No upper limit on speed for this constraint
+          .setMinValue(minSpeedLimit).setWarningThreshold(0.95) // Warning when within 5% of minimum
+          .setValueSupplier(() -> this.speed));
+    }
+
+    // Power constraint - dynamically evaluates against mechanical design or driver
+    // Don't set fixed design values - use value supplier that returns utilization directly
+    addCapacityConstraint(
+        StandardConstraintType.COMPRESSOR_POWER.createConstraint().setDesignValue(100.0) // 100%
+            .setMaxValue(110.0) // 110% overload
+            .setWarningThreshold(0.9).setValueSupplier(() -> {
+              if (getThermoSystem() == null) {
+                return 0.0;
+              }
+              double currentPower = this.getPower();
+              if (currentPower <= 0 || Double.isNaN(currentPower)) {
+                return 0.0;
+              }
+              // Determine max power: mechanical design > driver > estimate
+              double maxPowerLimit = 0.0;
+              if (getMechanicalDesign().maxDesignPower > 0) {
+                maxPowerLimit = getMechanicalDesign().maxDesignPower;
+              } else if (driver != null && driver.getRatedPower() > 0) {
+                maxPowerLimit = driver.getRatedPower() * 1.1; // 10% overload margin
+              }
+              if (maxPowerLimit <= 0) {
+                return 0.0; // No limit defined
+              }
+              // Return utilization percentage (0-100+)
+              return (currentPower / maxPowerLimit) * 100.0;
+            }));
+
+    // Surge margin constraint
+    // getDistanceToSurge() returns a ratio: (currentFlow / surgeFlow) - 1
+    // e.g., 0.5 means current flow is 50% above surge flow
+    // For utilization: 0 margin = 100% utilized (at surge), large margin = low utilization
+    addCapacityConstraint(StandardConstraintType.COMPRESSOR_SURGE_MARGIN.createConstraint()
+        .setDesignValue(100.0).setMinValue(10.0) // Minimum 10% surge margin required
+        .setWarningThreshold(0.85) // Warning at 85% utilization (15% margin)
+        .setValueSupplier(() -> {
+          double marginRatio = this.getDistanceToSurge();
+          if (marginRatio <= 0 || Double.isNaN(marginRatio) || Double.isInfinite(marginRatio)) {
+            return 100.0; // At or below surge = 100% utilized
+          }
+          // Convert ratio to utilization: utilization = 1 / (1 + marginRatio)
+          // e.g., margin=0.5 -> utilization = 1/1.5 = 66.7%
+          return 100.0 / (1.0 + marginRatio);
+        }));
+
+    // Stonewall margin constraint
+    // getDistanceToStoneWall() returns a ratio: (stoneWallFlow / currentFlow) - 1
+    // e.g., 0.5 means stonewall is 50% above current flow
+    addCapacityConstraint(StandardConstraintType.COMPRESSOR_STONEWALL_MARGIN.createConstraint()
+        .setDesignValue(100.0).setMinValue(5.0) // Minimum 5% stonewall margin
+        .setWarningThreshold(0.90) // Warning at 90% utilization (10% margin)
+        .setValueSupplier(() -> {
+          double marginRatio = this.getDistanceToStoneWall();
+          if (marginRatio <= 0 || Double.isNaN(marginRatio) || Double.isInfinite(marginRatio)) {
+            return 100.0; // At or above stonewall = 100% utilized
+          }
+          // Convert ratio to utilization: utilization = 1 / (1 + marginRatio)
+          return 100.0 / (1.0 + marginRatio);
+        }));
+  }
+
+  /**
+   * Reinitializes capacity constraints with current configuration.
+   *
+   * <p>
+   * Call this method after setting compressor charts or changing speed limits to update the
+   * constraints with the new values. This clears existing constraints and recreates them based on
+   * current settings.
+   * </p>
+   */
+  public void reinitializeCapacityConstraints() {
+    ensureCapacityConstraintsInitialized();
+    capacityConstraints.clear();
+    initializeCapacityConstraints();
+  }
+
+  /**
+   * Ensures the capacity constraints map is initialized. Called after deserialization since the map
+   * is transient.
+   */
+  private void ensureCapacityConstraintsInitialized() {
+    if (capacityConstraints == null) {
+      capacityConstraints = new LinkedHashMap<String, CapacityConstraint>();
+      initializeCapacityConstraints();
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, CapacityConstraint> getCapacityConstraints() {
+    ensureCapacityConstraintsInitialized();
+    return Collections.unmodifiableMap(capacityConstraints);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public CapacityConstraint getBottleneckConstraint() {
+    ensureCapacityConstraintsInitialized();
+    CapacityConstraint bottleneck = null;
+    double maxUtil = 0.0;
+    for (CapacityConstraint constraint : capacityConstraints.values()) {
+      double util = constraint.getUtilization();
+      if (!Double.isNaN(util) && util > maxUtil) {
+        maxUtil = util;
+        bottleneck = constraint;
+      }
+    }
+    return bottleneck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityExceeded() {
+    ensureCapacityConstraintsInitialized();
+    for (CapacityConstraint constraint : capacityConstraints.values()) {
+      if (constraint.isViolated()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHardLimitExceeded() {
+    ensureCapacityConstraintsInitialized();
+    for (CapacityConstraint constraint : capacityConstraints.values()) {
+      if (constraint.isHardLimitExceeded()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilization() {
+    ensureCapacityConstraintsInitialized();
+    double maxUtil = 0.0;
+    for (CapacityConstraint constraint : capacityConstraints.values()) {
+      double util = constraint.getUtilization();
+      if (!Double.isNaN(util) && util > maxUtil) {
+        maxUtil = util;
+      }
+    }
+    return maxUtil;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Validates that the compressor simulation produced physically reasonable results. Checks for:
+   * <ul>
+   * <li>Positive power consumption (compressors consume energy)</li>
+   * <li>Positive polytropic head (work done on gas)</li>
+   * <li>Outlet temperature greater than inlet (compression heats gas)</li>
+   * <li>Pressure ratio greater than 1.0</li>
+   * <li>Non-NaN values for key properties</li>
+   * </ul>
+   */
+  @Override
+  public boolean isSimulationValid() {
+    // Check basic thermodynamic system
+    if (thermoSystem == null) {
+      return false;
+    }
+
+    // Check for NaN values
+    double power = getPower();
+    double head = getPolytropicFluidHead();
+    double inletTemp = getInletTemperature();
+    double outletTemp = getOutletTemperature();
+    double pressureRatio = getActualCompressionRatio();
+
+    if (Double.isNaN(power) || Double.isNaN(head) || Double.isNaN(inletTemp)
+        || Double.isNaN(outletTemp) || Double.isNaN(pressureRatio)) {
+      return false;
+    }
+
+    // Power must be positive (compressor consumes energy)
+    if (power < 0) {
+      return false;
+    }
+
+    // Polytropic head must be positive (work done on gas)
+    if (head < 0) {
+      return false;
+    }
+
+    // Outlet temperature must be greater than or equal to inlet for compression
+    // (Allow small tolerance for numerical precision)
+    if (outletTemp < inletTemp - 1.0) {
+      return false;
+    }
+
+    // Pressure ratio must be >= 1.0 for compression
+    if (pressureRatio < 0.99) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Returns detailed validation errors for the compressor simulation.
+   * </p>
+   */
+  @Override
+  public List<String> getSimulationValidationErrors() {
+    List<String> errors = new ArrayList<String>();
+
+    if (thermoSystem == null) {
+      errors.add(getName() + ": No thermodynamic system - simulation not run");
+      return errors;
+    }
+
+    double power = getPower();
+    double head = getPolytropicFluidHead();
+    double inletTemp = getInletTemperature();
+    double outletTemp = getOutletTemperature();
+    double pressureRatio = getActualCompressionRatio();
+
+    if (Double.isNaN(power)) {
+      errors.add(getName() + ": Power calculation returned NaN");
+    } else if (power < 0) {
+      errors
+          .add(String.format("%s: Negative power (%.1f kW) - compressor beyond operating envelope",
+              getName(), power / 1000.0));
+    }
+
+    if (Double.isNaN(head)) {
+      errors.add(getName() + ": Polytropic head calculation returned NaN");
+    } else if (head < 0) {
+      errors.add(String.format(
+          "%s: Negative polytropic head (%.2f kJ/kg) - indicates expansion, not compression",
+          getName(), head));
+    }
+
+    if (Double.isNaN(pressureRatio)) {
+      errors.add(getName() + ": Pressure ratio calculation returned NaN");
+    } else if (pressureRatio < 0.99) {
+      errors.add(String.format("%s: Pressure ratio (%.2f) less than 1.0 - indicates pressure drop",
+          getName(), pressureRatio));
+    }
+
+    if (Double.isNaN(outletTemp) || Double.isNaN(inletTemp)) {
+      errors.add(getName() + ": Temperature calculation returned NaN");
+    } else if (outletTemp < inletTemp - 1.0) {
+      errors.add(String.format("%s: Outlet temperature (%.1f K) less than inlet (%.1f K)",
+          getName(), outletTemp, inletTemp));
+    }
+
+    return errors;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Checks if the compressor is operating within its valid envelope (between surge and stonewall).
+   * </p>
+   */
+  @Override
+  public boolean isWithinOperatingEnvelope() {
+    if (!isSimulationValid()) {
+      return false;
+    }
+
+    // Check surge condition
+    if (isSurge()) {
+      return false;
+    }
+
+    // Check stonewall condition
+    if (isStoneWall()) {
+      return false;
+    }
+
+    // Check if compressor chart is being used and we're within bounds
+    if (getCompressorChart() != null && getCompressorChart().isUseCompressorChart()) {
+      double surgeMargin = getDistanceToSurge();
+      double stonewallMargin = getDistanceToStoneWall();
+
+      // Negative margin means beyond the limit
+      if (!Double.isNaN(surgeMargin) && !Double.isInfinite(surgeMargin) && surgeMargin < 0) {
+        return false;
+      }
+      if (!Double.isNaN(stonewallMargin) && !Double.isInfinite(stonewallMargin)
+          && stonewallMargin < 0) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public String getOperatingEnvelopeViolation() {
+    if (!isSimulationValid()) {
+      List<String> errors = getSimulationValidationErrors();
+      if (!errors.isEmpty()) {
+        return errors.get(0);
+      }
+      return "Invalid simulation result";
+    }
+
+    if (isSurge()) {
+      return "Operating below surge limit - flow too low for current head";
+    }
+
+    if (isStoneWall()) {
+      return "Operating above stonewall (choke) limit - flow too high";
+    }
+
+    if (getCompressorChart() != null && getCompressorChart().isUseCompressorChart()) {
+      double surgeMargin = getDistanceToSurge();
+      double stonewallMargin = getDistanceToStoneWall();
+
+      if (!Double.isNaN(surgeMargin) && !Double.isInfinite(surgeMargin) && surgeMargin < 0) {
+        return String.format("Below surge: margin = %.1f%%", surgeMargin);
+      }
+      if (!Double.isNaN(stonewallMargin) && !Double.isInfinite(stonewallMargin)
+          && stonewallMargin < 0) {
+        return String.format("Above stonewall: margin = %.1f%%", stonewallMargin);
+      }
+    }
+
+    return null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCapacityConstraint(CapacityConstraint constraint) {
+    ensureCapacityConstraintsInitialized();
+    if (constraint != null) {
+      capacityConstraints.put(constraint.getName(), constraint);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean removeCapacityConstraint(String constraintName) {
+    ensureCapacityConstraintsInitialized();
+    return capacityConstraints.remove(constraintName) != null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void clearCapacityConstraints() {
+    ensureCapacityConstraintsInitialized();
+    capacityConstraints.clear();
+  }
+
+  /**
+   * Updates the speed constraint design values.
+   *
+   * <p>
+   * Call this method after setting design speed and maximum speed to update the constraint.
+   * </p>
+   *
+   * @param designSpeed the design speed in RPM
+   * @param maximumSpeed the maximum allowable speed in RPM
+   */
+  public void updateSpeedConstraint(double designSpeed, double maximumSpeed) {
+    CapacityConstraint speedConstraint = capacityConstraints.get("speed");
+    if (speedConstraint != null) {
+      speedConstraint.setDesignValue(designSpeed);
+      speedConstraint.setMaxValue(maximumSpeed);
+    }
+  }
+
+  /**
+   * Updates the power constraint design value based on driver rating.
+   *
+   * @param driverPowerRating the driver power rating in kW
+   */
+  public void updatePowerConstraint(double driverPowerRating) {
+    CapacityConstraint powerConstraint = capacityConstraints.get("power");
+    if (powerConstraint != null) {
+      powerConstraint.setDesignValue(driverPowerRating);
+      powerConstraint.setMaxValue(driverPowerRating * 1.1); // 10% overload margin
     }
   }
 

@@ -1,5 +1,7 @@
 package neqsim.process.equipment;
 
+import java.util.ArrayList;
+import java.util.List;
 import neqsim.process.SimulationInterface;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
@@ -351,5 +353,101 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
     }
 
     return result;
+  }
+
+  /**
+   * Checks if the current simulation result is physically valid.
+   *
+   * <p>
+   * Returns false if calculated values are outside physically possible ranges. This method should
+   * be overridden by specific equipment types to perform equipment-specific validation. For
+   * example:
+   * <ul>
+   * <li>Compressor: power must be positive, head must be positive</li>
+   * <li>Heat exchanger: duty direction must match temperature change</li>
+   * <li>Separator: phase fractions must sum to 1.0</li>
+   * </ul>
+   *
+   * @return true if simulation results are physically valid, false otherwise
+   */
+  public default boolean isSimulationValid() {
+    // Default implementation - check if equipment has valid thermodynamic system
+    // Equipment with no thermodynamic system (e.g., some utilities) are considered valid
+    // Subclasses should override for equipment-specific validation
+    SystemInterface thermo = getThermoSystem();
+    if (thermo == null) {
+      // No local thermo - assume equipment is valid unless it overrides this method
+      // This handles heat exchangers, valves, etc. that may not store thermo locally
+      return true;
+    }
+    // Check for NaN in basic properties
+    if (Double.isNaN(thermo.getTemperature()) || Double.isNaN(thermo.getPressure())) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Gets validation errors for the current simulation state.
+   *
+   * <p>
+   * Returns a list of human-readable error messages describing why the simulation result is
+   * invalid. Returns an empty list if the simulation is valid.
+   * </p>
+   *
+   * @return list of validation error messages, empty if valid
+   */
+  public default List<String> getSimulationValidationErrors() {
+    List<String> errors = new ArrayList<String>();
+    SystemInterface thermo = getThermoSystem();
+
+    if (thermo == null) {
+      // No local thermo - not an error for default case
+      // Equipment should override if it requires thermo validation
+      return errors;
+    }
+
+    if (Double.isNaN(thermo.getTemperature())) {
+      errors.add(getName() + ": Temperature is NaN");
+    }
+    if (Double.isNaN(thermo.getPressure())) {
+      errors.add(getName() + ": Pressure is NaN");
+    }
+
+    return errors;
+  }
+
+  /**
+   * Checks if the equipment is operating within its valid operating envelope.
+   *
+   * <p>
+   * This is different from capacity utilization - it checks whether the equipment can physically
+   * operate at the current conditions, not whether it's operating efficiently. For example:
+   * <ul>
+   * <li>Compressor: checks if between surge and stonewall</li>
+   * <li>Pump: checks if above minimum flow (no cavitation)</li>
+   * <li>Heat exchanger: checks if approach temperature is positive</li>
+   * </ul>
+   *
+   * @return true if operating within valid envelope
+   */
+  public default boolean isWithinOperatingEnvelope() {
+    return isSimulationValid();
+  }
+
+  /**
+   * Gets the reason why equipment is outside its operating envelope.
+   *
+   * @return description of envelope violation, or null if within envelope
+   */
+  public default String getOperatingEnvelopeViolation() {
+    if (isWithinOperatingEnvelope()) {
+      return null;
+    }
+    List<String> errors = getSimulationValidationErrors();
+    if (!errors.isEmpty()) {
+      return errors.get(0);
+    }
+    return "Unknown operating envelope violation";
   }
 }
