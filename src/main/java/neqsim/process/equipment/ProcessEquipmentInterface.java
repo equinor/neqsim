@@ -367,7 +367,6 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    * <li>Heat exchanger: duty direction must match temperature change</li>
    * <li>Separator: phase fractions must sum to 1.0</li>
    * </ul>
-   * </p>
    *
    * @return true if simulation results are physically valid, false otherwise
    */
@@ -429,7 +428,6 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    * <li>Pump: checks if above minimum flow (no cavitation)</li>
    * <li>Heat exchanger: checks if approach temperature is positive</li>
    * </ul>
-   * </p>
    *
    * @return true if operating within valid envelope
    */

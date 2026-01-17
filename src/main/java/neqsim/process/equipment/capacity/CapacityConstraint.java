@@ -62,7 +62,6 @@ public class CapacityConstraint implements Serializable {
    * <li>SOFT: Exceeds recommended limits - applies penalty to objective</li>
    * <li>ADVISORY: Information only - no impact on optimization</li>
    * </ul>
-   * </p>
    */
   public enum ConstraintSeverity {
     /**
@@ -195,7 +194,6 @@ public class CapacityConstraint implements Serializable {
    * <li>SOFT: Penalty applied to objective</li>
    * <li>ADVISORY: Information only</li>
    * </ul>
-   * </p>
    *
    * @param severity the severity level
    * @return this constraint for method chaining

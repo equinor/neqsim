@@ -226,47 +226,83 @@ public class MultiphaseFlowIntegrator implements Serializable {
       this.gasVelocityMs = v;
     }
 
-    /** Get mixture velocity. */
+    /**
+     * Get mixture velocity.
+     *
+     * @return mixture velocity in m/s
+     */
     public double getMixtureVelocityMs() {
       return mixtureVelocityMs;
     }
 
-    /** Set mixture velocity. */
+    /**
+     * Set mixture velocity.
+     *
+     * @param v mixture velocity in m/s
+     */
     public void setMixtureVelocityMs(double v) {
       this.mixtureVelocityMs = v;
     }
 
-    /** Get slug frequency. */
+    /**
+     * Get slug frequency.
+     *
+     * @return slug frequency per minute
+     */
     public double getSlugFrequencyPerMin() {
       return slugFrequencyPerMin;
     }
 
-    /** Set slug frequency. */
+    /**
+     * Set slug frequency.
+     *
+     * @param f slug frequency per minute
+     */
     public void setSlugFrequencyPerMin(double f) {
       this.slugFrequencyPerMin = f;
     }
 
-    /** Get erosional velocity. */
+    /**
+     * Get erosional velocity.
+     *
+     * @return erosional velocity in m/s
+     */
     public double getErosionalVelocityMs() {
       return erosionalVelocityMs;
     }
 
-    /** Set erosional velocity. */
+    /**
+     * Set erosional velocity.
+     *
+     * @param v erosional velocity in m/s
+     */
     public void setErosionalVelocityMs(double v) {
       this.erosionalVelocityMs = v;
     }
 
-    /** Get erosional velocity ratio. */
+    /**
+     * Get erosional velocity ratio.
+     *
+     * @return erosional velocity ratio (dimensionless)
+     */
     public double getErosionalVelocityRatio() {
       return erosionalVelocityRatio;
     }
 
-    /** Set erosional velocity ratio. */
+    /**
+     * Set erosional velocity ratio.
+     *
+     * @param r erosional velocity ratio (dimensionless)
+     */
     public void setErosionalVelocityRatio(double r) {
       this.erosionalVelocityRatio = r;
     }
 
-    /** Check if feasible. */
+    /**
+     * Check if feasible.
+     *
+     * @return true if feasible, false otherwise
+     */
     public boolean isFeasible() {
       return feasible;
     }

@@ -3760,7 +3760,6 @@ public class Compressor extends TwoPortEquipment
    * <li>Pressure ratio greater than 1.0</li>
    * <li>Non-NaN values for key properties</li>
    * </ul>
-   * </p>
    */
   @Override
   public boolean isSimulationValid() {

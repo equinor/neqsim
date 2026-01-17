@@ -249,42 +249,74 @@ public class PortfolioOptimizer implements Serializable {
       this.annualBudgetRemaining = new HashMap<Integer, Double>();
     }
 
-    /** Get selected projects. */
+    /**
+     * Get selected projects.
+     *
+     * @return list of selected projects
+     */
     public List<Project> getSelectedProjects() {
       return selectedProjects;
     }
 
-    /** Get deferred projects. */
+    /**
+     * Get deferred projects.
+     *
+     * @return list of deferred projects
+     */
     public List<Project> getDeferredProjects() {
       return deferredProjects;
     }
 
-    /** Get total NPV. */
+    /**
+     * Get total NPV.
+     *
+     * @return total NPV value
+     */
     public double getTotalNpv() {
       return totalNpv;
     }
 
-    /** Set total NPV. */
+    /**
+     * Set total NPV.
+     *
+     * @param npv the total NPV value to set
+     */
     public void setTotalNpv(double npv) {
       this.totalNpv = npv;
     }
 
-    /** Get total CAPEX. */
+    /**
+     * Get total CAPEX.
+     *
+     * @return total CAPEX value
+     */
     public double getTotalCapex() {
       return totalCapex;
     }
 
-    /** Set total CAPEX. */
+    /**
+     * Set total CAPEX.
+     *
+     * @param capex the total CAPEX value to set
+     */
     public void setTotalCapex(double capex) {
       this.totalCapex = capex;
     }
 
-    /** Get total EMV. */
+    /**
+     * Get total EMV.
+     *
+     * @return total EMV value
+     */
     public double getTotalEmv() {
       return totalEmv;
     }
 
-    /** Set total EMV. */
+    /**
+     * Set total EMV.
+     *
+     * @param emv the total EMV value to set
+     */
     public void setTotalEmv(double emv) {
       this.totalEmv = emv;
     }
