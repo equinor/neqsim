@@ -394,4 +394,221 @@ public class OilGasProcessSimulationOptimizationTest {
     assertTrue(result.isFeasible(), "Optimization should find a feasible solution");
     assertTrue(result.getOptimalRate() > 0, "Optimal rate should be positive");
   }
+
+  /**
+   * Tests production optimization with both separator and compressor capacity constraints.
+   * 
+   * <p>
+   * This test demonstrates comprehensive capacity management including:
+   * <ul>
+   * <li>Inlet separator (20-VA-01) gas load factor (K-factor) constraint</li>
+   * <li>Second stage separator (20-VA-02) gas load factor constraint</li>
+   * <li>Compressor charts with surge and stonewall curves</li>
+   * <li>ProductionOptimizer finding maximum throughput within all equipment limits</li>
+   * </ul>
+   * 
+   * <p>
+   * The separator K-factor (Souders-Brown coefficient) determines maximum gas velocity: V_max = K *
+   * sqrt((rho_liquid - rho_gas) / rho_gas) Typical values: 0.07-0.15 m/s for horizontal separators
+   */
+  @Test
+  public void testProductionOptimizationWithSeparatorAndCompressorConstraints() {
+    // Create process and run initial calculation
+    simulation.createProcess();
+    ProcessOutputResults initialResults = simulation.runSimulation();
+    assumeTrue(initialResults != null, "Skipping test: initial simulation did not converge");
+
+    // Configure compressor charts with design and max speeds
+    simulation.configureCompressorCharts(8000.0, 9000.0);
+
+    // Get the process system
+    neqsim.process.processmodel.ProcessSystem process = simulation.getOilProcess();
+
+    // Configure inlet separator (20-VA-01) with design capacity
+    // This is a horizontal three-phase separator handling the full well stream
+    neqsim.process.equipment.separator.ThreePhaseSeparator inletSeparator =
+        (neqsim.process.equipment.separator.ThreePhaseSeparator) process.getUnit("20-VA-01");
+    // Set conservative K-factor for HP separator (high pressure, higher density gas)
+    inletSeparator.setDesignGasLoadFactor(0.08); // Lower K for high pressure
+    inletSeparator.setInternalDiameter(3.0); // meters (increased 20% from 2.5m)
+    inletSeparator.setSeparatorLength(8.0); // meters
+
+    // Configure second stage separator (20-VA-02)
+    neqsim.process.equipment.separator.ThreePhaseSeparator secondStageSep =
+        (neqsim.process.equipment.separator.ThreePhaseSeparator) process.getUnit("20-VA-02");
+    secondStageSep.setDesignGasLoadFactor(0.10); // Slightly higher K for MP separator
+    secondStageSep.setInternalDiameter(2.0);
+    secondStageSep.setSeparatorLength(6.0);
+
+    // Configure third stage separator (20-VA-03) - atmospheric
+    neqsim.process.equipment.separator.ThreePhaseSeparator thirdStageSep =
+        (neqsim.process.equipment.separator.ThreePhaseSeparator) process.getUnit("20-VA-03");
+    thirdStageSep.setDesignGasLoadFactor(0.12); // Higher K for LP separator
+    thirdStageSep.setInternalDiameter(2.5);
+    thirdStageSep.setSeparatorLength(7.0);
+
+    // Configure gas scrubbers (two-phase separators) with appropriate K-factors
+    // These handle the flash gas from separation stages
+    // Scrubbers sized to handle up to 150% of baseline flow rate
+    neqsim.process.equipment.separator.Separator scrubber1 =
+        (neqsim.process.equipment.separator.Separator) process.getUnit("23-VG-03");
+    scrubber1.setDesignGasLoadFactor(0.15); // Higher K for scrubbers (lower liquid load)
+    scrubber1.setInternalDiameter(1.8);
+    scrubber1.setSeparatorLength(5.0);
+
+    neqsim.process.equipment.separator.Separator scrubber2 =
+        (neqsim.process.equipment.separator.Separator) process.getUnit("23-VG-02");
+    scrubber2.setDesignGasLoadFactor(0.15);
+    scrubber2.setInternalDiameter(1.8);
+    scrubber2.setSeparatorLength(5.0);
+
+    neqsim.process.equipment.separator.Separator dewPointScrubber1 =
+        (neqsim.process.equipment.separator.Separator) process.getUnit("23-VG-01");
+    dewPointScrubber1.setDesignGasLoadFactor(0.15); // Dew point scrubber
+    dewPointScrubber1.setInternalDiameter(2.0);
+    dewPointScrubber1.setSeparatorLength(6.0);
+
+    neqsim.process.equipment.separator.Separator dewPointScrubber2 =
+        (neqsim.process.equipment.separator.Separator) process.getUnit("24-VG-01");
+    dewPointScrubber2.setDesignGasLoadFactor(0.15);
+    dewPointScrubber2.setInternalDiameter(2.0);
+    dewPointScrubber2.setSeparatorLength(6.0);
+
+    neqsim.process.equipment.separator.Separator dewPointScrubber3 =
+        (neqsim.process.equipment.separator.Separator) process.getUnit("25-VG-01");
+    dewPointScrubber3.setDesignGasLoadFactor(0.15);
+    dewPointScrubber3.setInternalDiameter(2.0);
+    dewPointScrubber3.setSeparatorLength(6.0);
+
+    // Run simulation with configured equipment to establish baseline
+    ProcessOutputResults baselineResults = simulation.runSimulation();
+    assumeTrue(baselineResults != null, "Skipping test: baseline simulation did not converge");
+
+    // Get the feed stream and compressor for monitoring
+    neqsim.process.equipment.stream.Stream wellStream =
+        (neqsim.process.equipment.stream.Stream) process.getUnit("well stream");
+    neqsim.process.equipment.compressor.Compressor comp27KA01 =
+        (neqsim.process.equipment.compressor.Compressor) process.getUnit("27-KA-01");
+
+    // Print baseline operating point
+    double baselineFeedRateMoleSec = wellStream.getFlowRate("mole/sec");
+    double baselineFeedRateKgmoleHr = baselineFeedRateMoleSec * 3600 / 1000;
+    System.out.println("\n=== Production Optimization with Separator + Compressor Constraints ===");
+    System.out.println(
+        "Baseline feed rate: " + String.format("%.0f", baselineFeedRateKgmoleHr) + " kgmole/hr");
+
+    // Print baseline separator utilizations
+    System.out.println("\n--- Baseline Separator Status ---");
+    printSeparatorStatus("20-VA-01 (Inlet)", inletSeparator);
+    printSeparatorStatus("20-VA-02 (2nd Stage)", secondStageSep);
+    printSeparatorStatus("20-VA-03 (3rd Stage)", thirdStageSep);
+
+    // Create optimizer
+    neqsim.process.util.optimization.ProductionOptimizer optimizer =
+        new neqsim.process.util.optimization.ProductionOptimizer();
+
+    // Set optimization bounds
+    double currentFeedMoleSec = wellStream.getFlowRate("mole/sec");
+    double lowerBound = currentFeedMoleSec * 0.5;
+    double upperBound = currentFeedMoleSec * 1.5;
+
+    // Configure optimization with both separator and compressor limits
+    neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig config =
+        new neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig(lowerBound,
+            upperBound).rateUnit("mole/sec").tolerance(currentFeedMoleSec * 0.01).maxIterations(30)
+                .defaultUtilizationLimit(0.95)
+                // Set specific limits for different equipment types
+                .utilizationLimitForType(neqsim.process.equipment.compressor.Compressor.class, 0.95)
+                .utilizationLimitForType(neqsim.process.equipment.separator.Separator.class, 0.90)
+                .utilizationLimitForType(
+                    neqsim.process.equipment.separator.ThreePhaseSeparator.class, 0.90);
+
+    System.out.println("\nOptimization configuration:");
+    System.out.println("  Search range: " + String.format("%.2f", lowerBound) + " - "
+        + String.format("%.2f", upperBound) + " mole/sec");
+    System.out.println("  Separator utilization limit: 90%");
+    System.out.println("  Compressor utilization limit: 95%");
+
+    // Run optimization
+    neqsim.process.util.optimization.ProductionOptimizer.OptimizationResult result =
+        optimizer.optimize(process, wellStream, config, java.util.Collections.emptyList(),
+            java.util.Collections.emptyList());
+
+    // Print optimization results
+    System.out.println("\n--- Optimization Results ---");
+    System.out.println(
+        "Optimal feed rate: " + String.format("%.2f", result.getOptimalRate()) + " mole/sec");
+    System.out.println("Optimal feed rate: "
+        + String.format("%.0f", result.getOptimalRate() * 3600 / 1000) + " kgmole/hr");
+    System.out.println("Feasible: " + result.isFeasible());
+    System.out.println("Iterations: " + result.getIterations());
+
+    if (result.getBottleneck() != null) {
+      System.out.println("Limiting equipment: " + result.getBottleneck().getName());
+      System.out.println("Bottleneck utilization: "
+          + String.format("%.1f", result.getBottleneckUtilization() * 100) + "%");
+    }
+
+    // Print all equipment utilizations at optimum
+    System.out.println("\n--- Equipment Utilization at Optimum ---");
+    for (neqsim.process.util.optimization.ProductionOptimizer.UtilizationRecord record : result
+        .getUtilizationRecords()) {
+      boolean isBottleneck = result.getBottleneck() != null
+          && record.getEquipmentName().equals(result.getBottleneck().getName());
+      System.out.printf("  %-25s: %6.1f%% (limit: %.0f%%) %s%n", record.getEquipmentName(),
+          record.getUtilization() * 100, record.getUtilizationLimit() * 100,
+          isBottleneck ? " <-- BOTTLENECK" : "");
+    }
+
+    // Print final separator status
+    System.out.println("\n--- Separator Status at Optimum ---");
+    printSeparatorStatus("20-VA-01 (Inlet)", inletSeparator);
+    printSeparatorStatus("20-VA-02 (2nd Stage)", secondStageSep);
+    printSeparatorStatus("20-VA-03 (3rd Stage)", thirdStageSep);
+
+    // Print compressor status at optimum
+    System.out.println("\n--- Compressor 27-KA-01 Status at Optimum ---");
+    System.out.println("  Speed: " + String.format("%.1f", comp27KA01.getSpeed()) + " RPM");
+    System.out.println("  Power: " + String.format("%.1f", comp27KA01.getPower("kW")) + " kW");
+    System.out.println("  Distance to surge: "
+        + String.format("%.1f", comp27KA01.getDistanceToSurge() * 100) + "%");
+    System.out.println(
+        "  Max utilization: " + String.format("%.1f", comp27KA01.getMaxUtilization() * 100) + "%");
+
+    // Verify optimization found a feasible solution
+    assertTrue(result.isFeasible(), "Optimization should find a feasible solution");
+    assertTrue(result.getOptimalRate() > 0, "Optimal rate should be positive");
+
+    // Verify bottleneck is identified (should be either a separator or compressor)
+    assertNotNull(result.getBottleneck(), "Optimization should identify a bottleneck");
+  }
+
+  /**
+   * Helper method to print separator status.
+   */
+  private void printSeparatorStatus(String label,
+      neqsim.process.equipment.separator.Separator separator) {
+    try {
+      double gasLoadFactor = separator.getGasLoadFactor();
+      double designK = separator.getDesignGasLoadFactor();
+      double utilization = separator.getCapacityUtilization();
+
+      System.out.printf("  %s:%n", label);
+      System.out.printf("    Gas load factor (K): %.4f m/s (design: %.4f m/s)%n", gasLoadFactor,
+          designK);
+      System.out.printf("    Capacity utilization: %.1f%%%n", utilization * 100);
+
+      // Print capacity constraints if available
+      java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> constraints =
+          separator.getCapacityConstraints();
+      if (!constraints.isEmpty()) {
+        for (neqsim.process.equipment.capacity.CapacityConstraint c : constraints.values()) {
+          System.out.printf("    Constraint '%s': %.1f%% utilized%n", c.getName(),
+              c.getUtilization() * 100);
+        }
+      }
+    } catch (Exception e) {
+      System.out.printf("  %s: Unable to calculate status (%s)%n", label, e.getMessage());
+    }
+  }
 }

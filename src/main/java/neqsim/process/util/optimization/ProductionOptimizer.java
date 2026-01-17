@@ -2051,9 +2051,20 @@ public class ProductionOptimizer {
           equipment -> config.getColumnFsFactorLimit());
     }
     if (unit instanceof neqsim.process.equipment.separator.Separator) {
-      return new CapacityRule(
-          equipment -> ((neqsim.process.equipment.separator.Separator) unit).getLiquidLevel(),
-          equipment -> 1.0);
+      neqsim.process.equipment.separator.Separator sep =
+          (neqsim.process.equipment.separator.Separator) unit;
+      // Use gas load factor (K-factor) for separator capacity constraint
+      // This is more meaningful than liquid level for gas handling capacity
+      return new CapacityRule(equipment -> {
+        try {
+          return sep.getGasLoadFactor();
+        } catch (Exception e) {
+          return 0.0;
+        }
+      }, equipment -> {
+        double designK = sep.getDesignGasLoadFactor();
+        return designK > 0 ? designK : 0.1; // Default K-factor if not set
+      });
     }
     if (unit instanceof neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2) {
       neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2 exchanger =
