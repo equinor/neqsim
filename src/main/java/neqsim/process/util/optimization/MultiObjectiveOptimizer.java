@@ -50,11 +50,21 @@ public class MultiObjectiveOptimizer implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
+  /** Logger for this class. */
+  private static final org.apache.logging.log4j.Logger logger =
+      org.apache.logging.log4j.LogManager.getLogger(MultiObjectiveOptimizer.class);
+
   /** Default number of weight combinations to explore. */
   public static final int DEFAULT_WEIGHT_COMBINATIONS = 20;
 
   /** Default number of grid points for epsilon-constraint method. */
   public static final int DEFAULT_GRID_POINTS = 15;
+
+  /** Minimum number of objectives required. */
+  private static final int MIN_OBJECTIVES = 1;
+
+  /** Maximum number of objectives supported efficiently. */
+  private static final int MAX_OBJECTIVES_EFFICIENT = 5;
 
   /** Inner single-objective optimizer. */
   private final ProductionOptimizer singleObjectiveOptimizer;
@@ -144,16 +154,31 @@ public class MultiObjectiveOptimizer implements Serializable {
   public ParetoFront optimizeWeightedSum(ProcessSystem process, StreamInterface feedStream,
       List<ObjectiveFunction> objectives, OptimizationConfig baseConfig, int numWeightCombinations,
       List<OptimizationConstraint> constraints) {
-    Objects.requireNonNull(process, "Process is required");
-    Objects.requireNonNull(feedStream, "Feed stream is required");
-    Objects.requireNonNull(objectives, "Objectives are required");
-    Objects.requireNonNull(baseConfig, "Base config is required");
+    Objects.requireNonNull(process, "Process cannot be null");
+    Objects.requireNonNull(feedStream, "Feed stream cannot be null");
+    Objects.requireNonNull(objectives, "Objectives list cannot be null");
+    Objects.requireNonNull(baseConfig, "Optimization config cannot be null");
 
     if (objectives.isEmpty()) {
       throw new IllegalArgumentException("At least one objective is required");
     }
+    if (objectives.size() > MAX_OBJECTIVES_EFFICIENT) {
+      logger.warn(
+          "Using {} objectives may result in slow computation. "
+              + "Consider reducing to {} or fewer for efficient optimization.",
+          objectives.size(), MAX_OBJECTIVES_EFFICIENT);
+    }
+    if (numWeightCombinations < 2) {
+      throw new IllegalArgumentException(
+          "Number of weight combinations must be at least 2, got: " + numWeightCombinations);
+    }
+
+    logger.info("Starting weighted-sum optimization with {} objectives, {} weight combinations",
+        objectives.size(), numWeightCombinations);
+
     if (objectives.size() == 1) {
       // Single objective - just run normal optimization
+      logger.debug("Single objective detected, delegating to single-objective optimizer");
       return optimizeSingleObjective(process, feedStream, objectives.get(0), baseConfig,
           constraints);
     }
@@ -265,11 +290,29 @@ public class MultiObjectiveOptimizer implements Serializable {
       ObjectiveFunction primaryObjective, List<ObjectiveFunction> constrainedObjectives,
       OptimizationConfig baseConfig, int gridPoints,
       List<OptimizationConstraint> additionalConstraints) {
-    Objects.requireNonNull(process, "Process is required");
-    Objects.requireNonNull(feedStream, "Feed stream is required");
-    Objects.requireNonNull(primaryObjective, "Primary objective is required");
-    Objects.requireNonNull(constrainedObjectives, "Constrained objectives are required");
-    Objects.requireNonNull(baseConfig, "Base config is required");
+    Objects.requireNonNull(process, "Process cannot be null");
+    Objects.requireNonNull(feedStream, "Feed stream cannot be null");
+    Objects.requireNonNull(primaryObjective, "Primary objective cannot be null");
+    Objects.requireNonNull(constrainedObjectives, "Constrained objectives list cannot be null");
+    Objects.requireNonNull(baseConfig, "Optimization config cannot be null");
+
+    if (constrainedObjectives.isEmpty()) {
+      throw new IllegalArgumentException(
+          "At least one constrained objective is required for epsilon-constraint method");
+    }
+    if (gridPoints < 2) {
+      throw new IllegalArgumentException(
+          "Number of grid points must be at least 2, got: " + gridPoints);
+    }
+
+    int totalObjectives = 1 + constrainedObjectives.size();
+    if (totalObjectives > MAX_OBJECTIVES_EFFICIENT) {
+      logger.warn("Using {} objectives may result in slow computation. "
+          + "Grid size grows exponentially with constrained objectives.", totalObjectives);
+    }
+
+    logger.info("Starting epsilon-constraint optimization: primary={}, constrained={}, grid={}",
+        primaryObjective.getName(), constrainedObjectives.size(), gridPoints);
 
     ParetoFront front = new ParetoFront(!includeInfeasible);
 

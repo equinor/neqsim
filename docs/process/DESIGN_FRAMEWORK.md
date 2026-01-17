@@ -113,8 +113,14 @@ Equipment that implements `AutoSizeable` can automatically calculate their dimen
 
 **Implemented by:**
 - `Separator` - Sizes based on gas load factor (K-factor) and liquid residence time
+- `ThreePhaseSeparator` - Inherits from Separator with three-phase handling
+- `GasScrubber` - Inherits from Separator, defaults to vertical orientation
 - `ThrottlingValve` - Sizes based on Cv calculation using IEC 60534
 - `PipeBeggsAndBrills` - Sizes based on target velocity criteria
+- `Heater` - Sizes based on duty requirements with mechanical design
+- `Cooler` - Inherits from Heater
+- `HeatExchanger` - Sizes based on duty, UA value, and LMTD with two-stream support
+- `Manifold` - Sizes based on velocity limits, FIV analysis, and erosional velocity
 
 **Methods:**
 ```java
@@ -417,6 +423,19 @@ sep.autoSize("Equinor", "NORSOK-P-001");
 | Pipeline | designFactor | 0.72 | Equinor | NORSOK-L-001 |
 | Gas scrubber | GasLoadFactor | 0.11 | StatoilTR | TR1414 |
 | Compressor | SurgeMargin | 10% | Equinor | NORSOK-P-002 |
+| Pump | DriverPowerMargin | 1.15 | Equinor | API-610 |
+| Pump | NPSHMargin | 0.6 | Equinor | API-610 |
+| Manifold | HeaderVelocityLimit | 15.0 | Equinor | API-RP-14E |
+| Manifold | LOFThreshold | 0.5 | Equinor | EI-GL-017 |
+
+**Standards Tables** (in `designdata/standards/` subdirectory):
+
+| File | Standards Covered |
+|------|-------------------|
+| `api_standards.csv` | API-610 (pumps), API-674/675 (reciprocating/metering), API-682 (seals), API-RP-17A (subsea), API-RP-14E (erosional velocity) |
+| `asme_standards.csv` | ASME B73 (pumps), ASME B31.3 (piping/manifolds), ASME B16.5 (flanges), ASME-PTC-8.2 (pump tests) |
+| `dnv_iso_en_standards.csv` | ISO-13709 (pumps), ISO-21049 (seals), ISO-13628 (subsea manifolds), DNV-RP-A203 (subsea pumps) |
+| `norsok_standards.csv` | NORSOK-L-002 (piping), NORSOK-P-001/P-002 (process/pumps), NORSOK-U-001 (subsea) |
 
 **Example query flow:**
 ```java

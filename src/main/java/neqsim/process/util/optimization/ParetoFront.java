@@ -25,6 +25,10 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
 
   private static final long serialVersionUID = 1L;
 
+  /** Logger for this class. */
+  private static final org.apache.logging.log4j.Logger logger =
+      org.apache.logging.log4j.LogManager.getLogger(ParetoFront.class);
+
   /** The non-dominated solutions. */
   private final List<ParetoSolution> solutions;
 
@@ -53,43 +57,57 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
    *
    * <p>
    * If the candidate dominates any existing solutions, those are removed. If the candidate is
-   * dominated by any existing solution, it is not added.
+   * dominated by any existing solution, it is not added. This method is thread-safe.
    * </p>
    *
    * @param candidate the solution to add
    * @return true if the candidate was added to the front
    */
-  public boolean add(ParetoSolution candidate) {
+  public synchronized boolean add(ParetoSolution candidate) {
     if (candidate == null) {
+      logger.debug("Attempted to add null candidate to Pareto front");
       return false;
     }
 
     if (feasibleOnly && !candidate.isFeasible()) {
+      logger.debug("Rejected infeasible candidate: {}", candidate);
       return false;
     }
 
     // Check if candidate is dominated by any existing solution
     for (ParetoSolution existing : solutions) {
       if (existing.dominates(candidate)) {
+        logger.debug("Candidate dominated by existing solution");
         return false; // Candidate is dominated, don't add
       }
     }
 
     // Remove solutions dominated by candidate
-    solutions.removeIf(candidate::dominates);
+    int removedCount = 0;
+    java.util.Iterator<ParetoSolution> it = solutions.iterator();
+    while (it.hasNext()) {
+      if (candidate.dominates(it.next())) {
+        it.remove();
+        removedCount++;
+      }
+    }
+    if (removedCount > 0) {
+      logger.debug("New candidate dominated {} existing solutions", removedCount);
+    }
 
     // Add the candidate
     solutions.add(candidate);
+    logger.debug("Added solution to Pareto front, new size: {}", solutions.size());
     return true;
   }
 
   /**
    * Get all solutions on the front.
    *
-   * @return unmodifiable list of solutions
+   * @return unmodifiable list of solutions (snapshot at time of call)
    */
-  public List<ParetoSolution> getSolutions() {
-    return Collections.unmodifiableList(solutions);
+  public synchronized List<ParetoSolution> getSolutions() {
+    return Collections.unmodifiableList(new ArrayList<>(solutions));
   }
 
   /**

@@ -6,8 +6,11 @@
 
 package neqsim.process.equipment.heatexchanger;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 import com.google.gson.GsonBuilder;
+import neqsim.process.design.AutoSizeable;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -27,8 +30,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Heater extends TwoPortEquipment
-    implements HeaterInterface, neqsim.process.equipment.capacity.CapacityConstrainedEquipment {
+public class Heater extends TwoPortEquipment implements HeaterInterface,
+    neqsim.process.equipment.capacity.CapacityConstrainedEquipment, AutoSizeable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -560,6 +563,130 @@ public class Heater extends TwoPortEquipment
     HeaterResponse res = new HeaterResponse(this);
     res.applyConfig(cfg);
     return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
+  }
+
+  // ============================================================================
+  // AutoSizeable Implementation
+  // ============================================================================
+
+  /** Flag indicating if heater has been auto-sized. */
+  private boolean autoSized = false;
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(double safetyFactor) {
+    if (inStream == null || inStream.getThermoSystem() == null) {
+      throw new IllegalStateException("Inlet stream must be connected before auto-sizing");
+    }
+
+    // Calculate duty required to achieve the specified temperature change
+    double calculatedDuty = Math.abs(getDuty());
+    if (calculatedDuty <= 0) {
+      calculatedDuty = 1000.0; // Default 1 MW if duty not calculable
+    }
+
+    // Apply safety factor to duty
+    double designDuty = calculatedDuty * safetyFactor;
+
+    // Initialize and calculate mechanical design
+    if (mechanicalDesign == null) {
+      initMechanicalDesign();
+    }
+
+    // Set design parameters
+    mechanicalDesign.maxDesignDuty = designDuty;
+    mechanicalDesign.calcDesign();
+
+    autoSized = true;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize() {
+    autoSize(1.2);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(String company, String trDocument) {
+    // Set company standard on mechanical design to load correct design parameters
+    if (mechanicalDesign == null) {
+      initMechanicalDesign();
+    }
+
+    // Set company-specific design standards which triggers database lookup
+    mechanicalDesign.setCompanySpecificDesignStandards(company);
+
+    // Read design specifications from database
+    mechanicalDesign.readDesignSpecifications();
+
+    // Use default safety factor
+    autoSize(1.2);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isAutoSized() {
+    return autoSized;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReport() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Heater/Cooler Auto-Sizing Report ===\n");
+    sb.append("Equipment: ").append(getName()).append("\n");
+    sb.append("Auto-sized: ").append(autoSized).append("\n");
+
+    if (inStream != null && outStream != null) {
+      double inletTemp = inStream.getTemperature("C");
+      double outletTemp = outStream.getTemperature("C");
+      double duty = getDuty();
+
+      sb.append("\n--- Operating Conditions ---\n");
+      sb.append("Inlet Temperature: ").append(String.format("%.2f C", inletTemp)).append("\n");
+      sb.append("Outlet Temperature: ").append(String.format("%.2f C", outletTemp)).append("\n");
+      sb.append("Temperature Change: ").append(String.format("%.2f C", outletTemp - inletTemp))
+          .append("\n");
+      sb.append("Duty: ").append(String.format("%.2f kW", duty / 1000.0)).append("\n");
+
+      if (mechanicalDesign != null) {
+        sb.append("\n--- Design Parameters ---\n");
+        sb.append("Max Design Duty: ")
+            .append(String.format("%.2f kW", mechanicalDesign.maxDesignDuty / 1000.0)).append("\n");
+        sb.append("Duty Utilization: ")
+            .append(String.format("%.1f%%", Math.abs(duty) / mechanicalDesign.maxDesignDuty * 100))
+            .append("\n");
+      }
+    }
+
+    return sb.toString();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReportJson() {
+    Map<String, Object> report = new LinkedHashMap<>();
+    report.put("equipmentName", getName());
+    report.put("autoSized", autoSized);
+
+    if (inStream != null && outStream != null) {
+      double inletTemp = inStream.getTemperature("C");
+      double outletTemp = outStream.getTemperature("C");
+      double duty = getDuty();
+
+      report.put("inletTemperature_C", inletTemp);
+      report.put("outletTemperature_C", outletTemp);
+      report.put("temperatureChange_C", outletTemp - inletTemp);
+      report.put("duty_kW", duty / 1000.0);
+
+      if (mechanicalDesign != null) {
+        report.put("maxDesignDuty_kW", mechanicalDesign.maxDesignDuty / 1000.0);
+        report.put("dutyUtilization", Math.abs(duty) / mechanicalDesign.maxDesignDuty);
+      }
+    }
+
+    return new GsonBuilder().setPrettyPrinting().create().toJson(report);
   }
 
   // ============================================================================

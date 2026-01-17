@@ -71,7 +71,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @see PumpChartInterface
  */
 public class Pump extends TwoPortEquipment
-    implements PumpInterface, neqsim.process.equipment.capacity.CapacityConstrainedEquipment {
+    implements PumpInterface, neqsim.process.equipment.capacity.CapacityConstrainedEquipment,
+    neqsim.process.design.AutoSizeable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -796,6 +797,164 @@ public class Pump extends TwoPortEquipment
    */
   public double getNPSHMargin() {
     return npshMargin;
+  }
+
+  // ============================================================================
+  // AutoSizeable Implementation
+  // ============================================================================
+
+  /** Flag indicating if pump has been auto-sized. */
+  private boolean autoSized = false;
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(double safetyFactor) {
+    if (inStream == null) {
+      throw new IllegalStateException("Inlet stream must be connected before auto-sizing pump");
+    }
+
+    // Run the inlet stream to get current conditions
+    inStream.run();
+    inStream.getThermoSystem().initPhysicalProperties();
+
+    // Get flow rate and conditions
+    double volumeFlow = inStream.getFlowRate("m3/hr");
+    double massFlow = inStream.getFlowRate("kg/hr");
+
+    // Calculate design flow with safety factor
+    double designVolumeFlow = volumeFlow * safetyFactor;
+    double designMassFlow = massFlow * safetyFactor;
+
+    // Set mechanical design parameters
+    if (mechanicalDesign != null) {
+      mechanicalDesign.setMaxDesignVolumeFlow(designVolumeFlow);
+
+      // Calculate design power based on current operating point with safety
+      if (dH > 0) {
+        double designPower = dH * safetyFactor * safetyFactor; // Power scales with flow squared
+        mechanicalDesign.setMaxDesignPower(designPower);
+      }
+    }
+
+    // Update capacity constraints with new design values
+    initializeCapacityConstraints();
+
+    autoSized = true;
+    logger.info("Pump '{}' auto-sized: Design flow = {:.1f} m3/hr, Safety factor = {}", getName(),
+        designVolumeFlow, safetyFactor);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize() {
+    autoSize(1.2); // Default 20% margin
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(String companyStandard, String trDocument) {
+    // Set company standard on mechanical design
+    if (mechanicalDesign != null) {
+      mechanicalDesign.setCompanySpecificDesignStandards(companyStandard);
+      mechanicalDesign.readDesignSpecifications();
+    }
+
+    // Use company-specific safety factor if available, otherwise default
+    double safetyFactor = 1.2;
+    autoSize(safetyFactor);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isAutoSized() {
+    return autoSized;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReport() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Pump Auto-Sizing Report ===\n");
+    sb.append("Equipment: ").append(getName()).append("\n");
+    sb.append("Auto-sized: ").append(autoSized).append("\n");
+
+    if (inStream != null) {
+      sb.append("\n--- Design Basis ---\n");
+      sb.append("Flow Rate: ").append(String.format("%.2f m3/hr", inStream.getFlowRate("m3/hr")))
+          .append("\n");
+      sb.append("Mass Flow: ").append(String.format("%.2f kg/hr", inStream.getFlowRate("kg/hr")))
+          .append("\n");
+      sb.append("Inlet Pressure: ").append(String.format("%.2f bara", inStream.getPressure("bara")))
+          .append("\n");
+      sb.append("Outlet Pressure: ").append(String.format("%.2f bara", pressure)).append("\n");
+    }
+
+    sb.append("\n--- Operating Parameters ---\n");
+    sb.append("Power: ").append(String.format("%.2f kW", getPower("kW"))).append("\n");
+    sb.append("Isentropic Efficiency: ").append(String.format("%.1f%%", isentropicEfficiency * 100))
+        .append("\n");
+    sb.append("Speed: ").append(String.format("%.0f RPM", speed)).append("\n");
+
+    if (mechanicalDesign != null) {
+      sb.append("\n--- Design Limits ---\n");
+      sb.append("Max Design Power: ")
+          .append(String.format("%.2f kW", mechanicalDesign.maxDesignPower / 1000.0)).append("\n");
+      sb.append("Max Design Flow: ")
+          .append(String.format("%.2f m3/hr", mechanicalDesign.getMaxDesignVolumeFlow()))
+          .append("\n");
+    }
+
+    if (checkNPSH) {
+      sb.append("\n--- NPSH Analysis ---\n");
+      sb.append("NPSHa: ").append(String.format("%.2f m", getNPSHAvailable())).append("\n");
+      sb.append("NPSHr: ").append(String.format("%.2f m", getNPSHRequired())).append("\n");
+      sb.append("NPSH Margin: ").append(String.format("%.2f", npshMargin)).append("\n");
+      sb.append("Cavitation Risk: ").append(isCavitating() ? "YES" : "No").append("\n");
+    }
+
+    return sb.toString();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReportJson() {
+    java.util.Map<String, Object> report = new java.util.LinkedHashMap<>();
+    report.put("equipmentName", getName());
+    report.put("equipmentType", "Pump");
+    report.put("autoSized", autoSized);
+
+    if (inStream != null) {
+      java.util.Map<String, Object> designBasis = new java.util.LinkedHashMap<>();
+      designBasis.put("volumeFlow_m3hr", inStream.getFlowRate("m3/hr"));
+      designBasis.put("massFlow_kghr", inStream.getFlowRate("kg/hr"));
+      designBasis.put("inletPressure_bara", inStream.getPressure("bara"));
+      designBasis.put("outletPressure_bara", pressure);
+      report.put("designBasis", designBasis);
+    }
+
+    java.util.Map<String, Object> operating = new java.util.LinkedHashMap<>();
+    operating.put("power_kW", getPower("kW"));
+    operating.put("isentropicEfficiency", isentropicEfficiency);
+    operating.put("speed_rpm", speed);
+    report.put("operatingParameters", operating);
+
+    if (mechanicalDesign != null) {
+      java.util.Map<String, Object> limits = new java.util.LinkedHashMap<>();
+      limits.put("maxDesignPower_kW", mechanicalDesign.maxDesignPower / 1000.0);
+      limits.put("maxDesignFlow_m3hr", mechanicalDesign.getMaxDesignVolumeFlow());
+      report.put("designLimits", limits);
+    }
+
+    if (checkNPSH) {
+      java.util.Map<String, Object> npsh = new java.util.LinkedHashMap<>();
+      npsh.put("npshaAvailable_m", getNPSHAvailable());
+      npsh.put("npshrRequired_m", getNPSHRequired());
+      npsh.put("npshMargin", npshMargin);
+      npsh.put("cavitationRisk", isCavitating());
+      report.put("npshAnalysis", npsh);
+    }
+
+    return new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(report);
   }
 
   // ============================================================================

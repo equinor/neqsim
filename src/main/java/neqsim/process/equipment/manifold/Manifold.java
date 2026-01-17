@@ -20,10 +20,21 @@ import neqsim.process.util.report.ReportConfig.DetailLevel;
  * A manifold is a process unit that can take in any number of streams and distribute them into a
  * number of output streams. In NeqSim it is created as a combination of a mixer and a splitter.
  *
+ * <p>
+ * The manifold supports mechanical design calculations including:
+ * </p>
+ * <ul>
+ * <li>Header and branch inner/outer diameters</li>
+ * <li>Wall thickness calculations per ASME B31.3 or DNV-ST-F101</li>
+ * <li>Velocity calculations (header, branch, erosional)</li>
+ * <li>Flow-induced vibration analysis (LOF and FRMS methods)</li>
+ * </ul>
+ *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Manifold extends ProcessEquipmentBaseClass {
+public class Manifold extends ProcessEquipmentBaseClass
+    implements neqsim.process.design.AutoSizeable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -36,6 +47,21 @@ public class Manifold extends ProcessEquipmentBaseClass {
   protected Splitter localsplitter = new Splitter("tmpName");
 
   double[] splitFactors = new double[1];
+
+  /** Header inner diameter in meters. */
+  private double headerInnerDiameter = 0.2794; // Default 12" ID
+
+  /** Header wall thickness in meters. */
+  private double headerWallThickness = 0.0127; // Default 12.7mm
+
+  /** Branch inner diameter in meters. */
+  private double branchInnerDiameter = 0.1397; // Default 6" ID
+
+  /** Branch wall thickness in meters. */
+  private double branchWallThickness = 0.00711; // Default 7.11mm
+
+  /** Support arrangement for FIV calculation. */
+  private String supportArrangement = "Stiff";
 
   /**
    * <p>
@@ -121,6 +147,501 @@ public class Manifold extends ProcessEquipmentBaseClass {
     return localsplitter.getSplitFactors().length;
   }
 
+  // ============================================================================
+  // DIAMETER AND GEOMETRY METHODS
+  // ============================================================================
+
+  /**
+   * Get header inner diameter.
+   *
+   * @return inner diameter in meters
+   */
+  public double getHeaderInnerDiameter() {
+    return headerInnerDiameter;
+  }
+
+  /**
+   * Set header inner diameter.
+   *
+   * @param diameter inner diameter in meters
+   */
+  public void setHeaderInnerDiameter(double diameter) {
+    this.headerInnerDiameter = diameter;
+  }
+
+  /**
+   * Set header inner diameter with unit.
+   *
+   * @param diameter inner diameter value
+   * @param unit unit (m, mm, inch)
+   */
+  public void setHeaderInnerDiameter(double diameter, String unit) {
+    if (unit.equalsIgnoreCase("mm")) {
+      this.headerInnerDiameter = diameter / 1000.0;
+    } else if (unit.equalsIgnoreCase("inch") || unit.equalsIgnoreCase("in")) {
+      this.headerInnerDiameter = diameter * 0.0254;
+    } else {
+      this.headerInnerDiameter = diameter;
+    }
+  }
+
+  /**
+   * Get header outer diameter (ID + 2 * wall thickness).
+   *
+   * @return outer diameter in meters
+   */
+  public double getHeaderOuterDiameter() {
+    return headerInnerDiameter + 2 * headerWallThickness;
+  }
+
+  /**
+   * Get header wall thickness.
+   *
+   * @return wall thickness in meters
+   */
+  public double getHeaderWallThickness() {
+    return headerWallThickness;
+  }
+
+  /**
+   * Set header wall thickness.
+   *
+   * @param thickness wall thickness in meters
+   */
+  public void setHeaderWallThickness(double thickness) {
+    this.headerWallThickness = thickness;
+  }
+
+  /**
+   * Set header wall thickness with unit.
+   *
+   * @param thickness wall thickness value
+   * @param unit unit (m, mm, inch)
+   */
+  public void setHeaderWallThickness(double thickness, String unit) {
+    if (unit.equalsIgnoreCase("mm")) {
+      this.headerWallThickness = thickness / 1000.0;
+    } else if (unit.equalsIgnoreCase("inch") || unit.equalsIgnoreCase("in")) {
+      this.headerWallThickness = thickness * 0.0254;
+    } else {
+      this.headerWallThickness = thickness;
+    }
+  }
+
+  /**
+   * Get branch inner diameter.
+   *
+   * @return inner diameter in meters
+   */
+  public double getBranchInnerDiameter() {
+    return branchInnerDiameter;
+  }
+
+  /**
+   * Set branch inner diameter.
+   *
+   * @param diameter inner diameter in meters
+   */
+  public void setBranchInnerDiameter(double diameter) {
+    this.branchInnerDiameter = diameter;
+  }
+
+  /**
+   * Set branch inner diameter with unit.
+   *
+   * @param diameter inner diameter value
+   * @param unit unit (m, mm, inch)
+   */
+  public void setBranchInnerDiameter(double diameter, String unit) {
+    if (unit.equalsIgnoreCase("mm")) {
+      this.branchInnerDiameter = diameter / 1000.0;
+    } else if (unit.equalsIgnoreCase("inch") || unit.equalsIgnoreCase("in")) {
+      this.branchInnerDiameter = diameter * 0.0254;
+    } else {
+      this.branchInnerDiameter = diameter;
+    }
+  }
+
+  /**
+   * Get branch outer diameter (ID + 2 * wall thickness).
+   *
+   * @return outer diameter in meters
+   */
+  public double getBranchOuterDiameter() {
+    return branchInnerDiameter + 2 * branchWallThickness;
+  }
+
+  /**
+   * Get branch wall thickness.
+   *
+   * @return wall thickness in meters
+   */
+  public double getBranchWallThickness() {
+    return branchWallThickness;
+  }
+
+  /**
+   * Set branch wall thickness.
+   *
+   * @param thickness wall thickness in meters
+   */
+  public void setBranchWallThickness(double thickness) {
+    this.branchWallThickness = thickness;
+  }
+
+  /**
+   * Set branch wall thickness with unit.
+   *
+   * @param thickness wall thickness value
+   * @param unit unit (m, mm, inch)
+   */
+  public void setBranchWallThickness(double thickness, String unit) {
+    if (unit.equalsIgnoreCase("mm")) {
+      this.branchWallThickness = thickness / 1000.0;
+    } else if (unit.equalsIgnoreCase("inch") || unit.equalsIgnoreCase("in")) {
+      this.branchWallThickness = thickness * 0.0254;
+    } else {
+      this.branchWallThickness = thickness;
+    }
+  }
+
+  // ============================================================================
+  // VELOCITY CALCULATIONS
+  // ============================================================================
+
+  /**
+   * Calculate header velocity based on current flow and geometry.
+   *
+   * @return header velocity in m/s
+   */
+  public double getHeaderVelocity() {
+    StreamInterface mixedStream = getMixedStream();
+    if (mixedStream == null || mixedStream.getThermoSystem() == null) {
+      return 0.0;
+    }
+
+    double volumeFlow = mixedStream.getFlowRate("m3/sec");
+    double area = Math.PI * headerInnerDiameter * headerInnerDiameter / 4.0;
+    return area > 0 ? volumeFlow / area : 0.0;
+  }
+
+  /**
+   * Calculate branch velocity based on current flow and geometry.
+   *
+   * @return average branch velocity in m/s
+   */
+  public double getBranchVelocity() {
+    StreamInterface mixedStream = getMixedStream();
+    if (mixedStream == null || mixedStream.getThermoSystem() == null) {
+      return 0.0;
+    }
+
+    double volumeFlow = mixedStream.getFlowRate("m3/sec");
+    double flowPerBranch = volumeFlow / Math.max(1, getNumberOfOutputStreams());
+    double area = Math.PI * branchInnerDiameter * branchInnerDiameter / 4.0;
+    return area > 0 ? flowPerBranch / area : 0.0;
+  }
+
+  /**
+   * Calculate erosional velocity per API RP 14E.
+   *
+   * @param cFactor erosional C-factor (typically 100-150)
+   * @return erosional velocity in m/s
+   */
+  public double getErosionalVelocity(double cFactor) {
+    StreamInterface mixedStream = getMixedStream();
+    if (mixedStream == null || mixedStream.getThermoSystem() == null) {
+      return 0.0;
+    }
+
+    double density = mixedStream.getThermoSystem().getDensity("kg/m3");
+    return density > 0 ? cFactor / Math.sqrt(density) : 0.0;
+  }
+
+  /**
+   * Calculate erosional velocity with default C-factor of 100.
+   *
+   * @return erosional velocity in m/s
+   */
+  public double getErosionalVelocity() {
+    return getErosionalVelocity(100.0);
+  }
+
+  // ============================================================================
+  // FLOW-INDUCED VIBRATION (FIV) CALCULATIONS
+  // ============================================================================
+
+  /**
+   * Get support arrangement for FIV calculations.
+   *
+   * @return support arrangement (Stiff, Medium stiff, Medium, Flexible)
+   */
+  public String getSupportArrangement() {
+    return supportArrangement;
+  }
+
+  /**
+   * Set support arrangement for FIV calculations.
+   *
+   * @param arrangement support arrangement (Stiff, Medium stiff, Medium, Flexible)
+   */
+  public void setSupportArrangement(String arrangement) {
+    this.supportArrangement = arrangement;
+  }
+
+  /**
+   * Calculate Likelihood of Failure (LOF) for header pipe based on flow-induced vibration.
+   * <p>
+   * LOF interpretation:
+   * </p>
+   * <ul>
+   * <li>&lt; 0.5: Low risk - acceptable</li>
+   * <li>0.5 - 1.0: Medium risk - monitoring recommended</li>
+   * <li>&gt; 1.0: High risk - design review required</li>
+   * </ul>
+   *
+   * @return LOF value (dimensionless)
+   */
+  public double calculateHeaderLOF() {
+    StreamInterface mixedStream = getMixedStream();
+    if (mixedStream == null || mixedStream.getThermoSystem() == null) {
+      return Double.NaN;
+    }
+
+    double mixDensity = mixedStream.getThermoSystem().getDensity("kg/m3");
+    double mixVelocity = getHeaderVelocity();
+
+    // Calculate gas volume fraction
+    double gasVelocity = 0.0;
+    if (mixedStream.getThermoSystem().hasPhaseType("gas")) {
+      double gasFrac = mixedStream.getThermoSystem().getPhase("gas").getVolume("m3")
+          / mixedStream.getThermoSystem().getVolume("m3");
+      gasVelocity = mixVelocity * gasFrac;
+    }
+    double GVF = mixVelocity > 0 ? gasVelocity / mixVelocity : 0.0;
+
+    // Calculate flow velocity factor (FVF)
+    double FVF = 1.0;
+    if (GVF > 0.88) {
+      if (GVF > 0.99) {
+        double viscosity = mixedStream.getThermoSystem().getViscosity("kg/msec");
+        FVF = Math.sqrt(viscosity / Math.sqrt(0.001));
+      } else {
+        FVF = -27.882 * GVF * GVF + 45.545 * GVF - 17.495;
+      }
+    } else if (GVF < 0.2) {
+      FVF = 0.2 + 4 * GVF;
+    }
+
+    // External diameter in mm
+    double externalDiameter = getHeaderOuterDiameter() * 1000.0;
+
+    // Support arrangement coefficients
+    double alpha;
+    double beta;
+    if (supportArrangement.equals("Stiff")) {
+      alpha = 446187 + 646 * externalDiameter
+          + 9.17E-4 * externalDiameter * externalDiameter * externalDiameter;
+      beta = 0.1 * Math.log(externalDiameter) - 1.3739;
+    } else if (supportArrangement.equals("Medium stiff")) {
+      alpha = 283921 + 370 * externalDiameter;
+      beta = 0.1106 * Math.log(externalDiameter) - 1.501;
+    } else if (supportArrangement.equals("Medium")) {
+      alpha = 150412 + 209 * externalDiameter;
+      beta = 0.0815 * Math.log(externalDiameter) - 1.3269;
+    } else {
+      // Flexible
+      alpha = 41.21 * Math.log(externalDiameter) + 49397;
+      beta = 0.0815 * Math.log(externalDiameter) - 1.3842;
+    }
+
+    double diameterOverThickness = externalDiameter / (headerWallThickness * 1000.0);
+    double Fv = alpha * Math.pow(diameterOverThickness, beta);
+
+    return mixDensity * mixVelocity * mixVelocity * FVF / Fv;
+  }
+
+  /**
+   * Calculate Flow-induced vibration RMS (FRMS) for header pipe.
+   * <p>
+   * FRMS provides an alternative measure of vibration intensity based on mixture properties.
+   * </p>
+   *
+   * @return FRMS value
+   */
+  public double calculateHeaderFRMS() {
+    return calculateHeaderFRMS(6.7);
+  }
+
+  /**
+   * Calculate Flow-induced vibration RMS (FRMS) for header pipe with specified constant.
+   *
+   * @param frmsConstant FRMS constant (typically 6.7)
+   * @return FRMS value
+   */
+  public double calculateHeaderFRMS(double frmsConstant) {
+    StreamInterface mixedStream = getMixedStream();
+    if (mixedStream == null || mixedStream.getThermoSystem() == null) {
+      return Double.NaN;
+    }
+
+    double mixVelocity = getHeaderVelocity();
+
+    // Calculate gas volume fraction
+    double GVF = 0.0;
+    if (mixedStream.getThermoSystem().hasPhaseType("gas")) {
+      GVF = mixedStream.getThermoSystem().getPhase("gas").getVolume("m3")
+          / mixedStream.getThermoSystem().getVolume("m3");
+    }
+
+    // Get liquid density (use mixture if no liquid)
+    double liquidDensity = mixedStream.getThermoSystem().getDensity("kg/m3");
+    if (mixedStream.getThermoSystem().hasPhaseType("oil")) {
+      liquidDensity = mixedStream.getThermoSystem().getPhase("oil").getDensity("kg/m3");
+    } else if (mixedStream.getThermoSystem().hasPhaseType("aqueous")) {
+      liquidDensity = mixedStream.getThermoSystem().getPhase("aqueous").getDensity("kg/m3");
+    }
+
+    double C = Math.min(Math.min(1, 5 * (1 - GVF)), 5 * GVF) * frmsConstant;
+    return C * Math.pow(headerInnerDiameter, 1.6) * Math.pow(liquidDensity, 0.6)
+        * Math.pow(mixVelocity, 1.2);
+  }
+
+  /**
+   * Calculate LOF for branch pipes.
+   *
+   * @return branch LOF value
+   */
+  public double calculateBranchLOF() {
+    StreamInterface mixedStream = getMixedStream();
+    if (mixedStream == null || mixedStream.getThermoSystem() == null) {
+      return Double.NaN;
+    }
+
+    double mixDensity = mixedStream.getThermoSystem().getDensity("kg/m3");
+    double mixVelocity = getBranchVelocity();
+
+    // Calculate gas volume fraction
+    double gasVelocity = 0.0;
+    if (mixedStream.getThermoSystem().hasPhaseType("gas")) {
+      double gasFrac = mixedStream.getThermoSystem().getPhase("gas").getVolume("m3")
+          / mixedStream.getThermoSystem().getVolume("m3");
+      gasVelocity = mixVelocity * gasFrac;
+    }
+    double GVF = mixVelocity > 0 ? gasVelocity / mixVelocity : 0.0;
+
+    // Calculate flow velocity factor (FVF)
+    double FVF = 1.0;
+    if (GVF > 0.88) {
+      if (GVF > 0.99) {
+        double viscosity = mixedStream.getThermoSystem().getViscosity("kg/msec");
+        FVF = Math.sqrt(viscosity / Math.sqrt(0.001));
+      } else {
+        FVF = -27.882 * GVF * GVF + 45.545 * GVF - 17.495;
+      }
+    } else if (GVF < 0.2) {
+      FVF = 0.2 + 4 * GVF;
+    }
+
+    // External diameter in mm
+    double externalDiameter = getBranchOuterDiameter() * 1000.0;
+
+    // Support arrangement coefficients
+    double alpha;
+    double beta;
+    if (supportArrangement.equals("Stiff")) {
+      alpha = 446187 + 646 * externalDiameter
+          + 9.17E-4 * externalDiameter * externalDiameter * externalDiameter;
+      beta = 0.1 * Math.log(externalDiameter) - 1.3739;
+    } else if (supportArrangement.equals("Medium stiff")) {
+      alpha = 283921 + 370 * externalDiameter;
+      beta = 0.1106 * Math.log(externalDiameter) - 1.501;
+    } else if (supportArrangement.equals("Medium")) {
+      alpha = 150412 + 209 * externalDiameter;
+      beta = 0.0815 * Math.log(externalDiameter) - 1.3269;
+    } else {
+      // Flexible
+      alpha = 41.21 * Math.log(externalDiameter) + 49397;
+      beta = 0.0815 * Math.log(externalDiameter) - 1.3842;
+    }
+
+    double diameterOverThickness = externalDiameter / (branchWallThickness * 1000.0);
+    double Fv = alpha * Math.pow(diameterOverThickness, beta);
+
+    return mixDensity * mixVelocity * mixVelocity * FVF / Fv;
+  }
+
+  /**
+   * Get comprehensive FIV analysis results as a map.
+   *
+   * @return map containing all FIV analysis results
+   */
+  public java.util.Map<String, Object> getFIVAnalysis() {
+    java.util.Map<String, Object> result = new java.util.LinkedHashMap<String, Object>();
+
+    result.put("supportArrangement", supportArrangement);
+
+    // Header analysis
+    java.util.Map<String, Object> header = new java.util.LinkedHashMap<String, Object>();
+    header.put("innerDiameter_m", headerInnerDiameter);
+    header.put("outerDiameter_m", getHeaderOuterDiameter());
+    header.put("wallThickness_m", headerWallThickness);
+    header.put("velocity_m_s", getHeaderVelocity());
+    header.put("LOF", calculateHeaderLOF());
+    header.put("FRMS", calculateHeaderFRMS());
+
+    double headerLOF = calculateHeaderLOF();
+    if (headerLOF < 0.5) {
+      header.put("LOF_risk", "LOW");
+    } else if (headerLOF < 1.0) {
+      header.put("LOF_risk", "MEDIUM");
+    } else {
+      header.put("LOF_risk", "HIGH");
+    }
+    result.put("header", header);
+
+    // Branch analysis
+    java.util.Map<String, Object> branch = new java.util.LinkedHashMap<String, Object>();
+    branch.put("innerDiameter_m", branchInnerDiameter);
+    branch.put("outerDiameter_m", getBranchOuterDiameter());
+    branch.put("wallThickness_m", branchWallThickness);
+    branch.put("velocity_m_s", getBranchVelocity());
+    branch.put("LOF", calculateBranchLOF());
+
+    double branchLOF = calculateBranchLOF();
+    if (branchLOF < 0.5) {
+      branch.put("LOF_risk", "LOW");
+    } else if (branchLOF < 1.0) {
+      branch.put("LOF_risk", "MEDIUM");
+    } else {
+      branch.put("LOF_risk", "HIGH");
+    }
+    result.put("branch", branch);
+
+    // Erosional velocity
+    result.put("erosionalVelocity_m_s", getErosionalVelocity());
+    result.put("velocityMargin_header",
+        getErosionalVelocity() > 0 ? getHeaderVelocity() / getErosionalVelocity() : 0.0);
+    result.put("velocityMargin_branch",
+        getErosionalVelocity() > 0 ? getBranchVelocity() / getErosionalVelocity() : 0.0);
+
+    return result;
+  }
+
+  /**
+   * Get FIV analysis as JSON string.
+   *
+   * @return JSON string with FIV analysis
+   */
+  public String getFIVAnalysisJson() {
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+        .toJson(getFIVAnalysis());
+  }
+
+  // ============================================================================
+  // MASS BALANCE AND JSON
+  // ============================================================================
+
   /** {@inheritDoc} */
   @Override
   public double getMassBalance(String unit) {
@@ -161,5 +682,179 @@ public class Manifold extends ProcessEquipmentBaseClass {
   @Override
   public ManifoldMechanicalDesign getMechanicalDesign() {
     return mechanicalDesign;
+  }
+
+  // ============================================================================
+  // AutoSizeable Implementation
+  // ============================================================================
+
+  /** Flag indicating if manifold has been auto-sized. */
+  private boolean autoSized = false;
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(double safetyFactor) {
+    // Run to get current conditions
+    run();
+
+    // Get total inlet flow
+    StreamInterface mixedStream = getMixedStream();
+    if (mixedStream == null || mixedStream.getThermoSystem() == null) {
+      throw new IllegalStateException("Manifold must have inlet streams before auto-sizing");
+    }
+
+    double totalVolumeFlow = mixedStream.getFlowRate("m3/hr");
+    double totalMassFlow = mixedStream.getFlowRate("kg/hr");
+
+    // Apply safety factor to design capacity
+    double designVolumeFlow = totalVolumeFlow * safetyFactor;
+    double designMassFlow = totalMassFlow * safetyFactor;
+
+    // Set mechanical design parameters
+    if (mechanicalDesign != null) {
+      mechanicalDesign.setMaxDesignVolumeFlow(designVolumeFlow);
+      // Sync diameters with mechanical design
+      mechanicalDesign.setHeaderDiameter(getHeaderOuterDiameter());
+      mechanicalDesign.setBranchDiameter(getBranchOuterDiameter());
+      mechanicalDesign.setNumberOfInlets(localmixer.getNumberOfInputStreams());
+      mechanicalDesign.setNumberOfOutlets(getNumberOfOutputStreams());
+    }
+
+    autoSized = true;
+    logger.info("Manifold '{}' auto-sized: Design flow = {} m3/hr, Safety factor = {}", getName(),
+        String.format("%.1f", designVolumeFlow), safetyFactor);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize() {
+    autoSize(1.2); // Default 20% margin
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(String companyStandard, String trDocument) {
+    if (mechanicalDesign != null) {
+      mechanicalDesign.setCompanySpecificDesignStandards(companyStandard);
+    }
+    autoSize(1.2);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isAutoSized() {
+    return autoSized;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReport() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Manifold Auto-Sizing Report ===\n");
+    sb.append("Equipment: ").append(getName()).append("\n");
+    sb.append("Auto-sized: ").append(autoSized).append("\n");
+
+    StreamInterface mixedStream = getMixedStream();
+    if (mixedStream != null && mixedStream.getThermoSystem() != null) {
+      sb.append("\n--- Operating Conditions ---\n");
+      sb.append("Total Flow Rate: ")
+          .append(String.format("%.2f m3/hr", mixedStream.getFlowRate("m3/hr"))).append("\n");
+      sb.append("Mass Flow Rate: ")
+          .append(String.format("%.2f kg/hr", mixedStream.getFlowRate("kg/hr"))).append("\n");
+      sb.append("Pressure: ").append(String.format("%.2f bara", mixedStream.getPressure("bara")))
+          .append("\n");
+      sb.append("Temperature: ").append(String.format("%.2f C", mixedStream.getTemperature("C")))
+          .append("\n");
+
+      sb.append("\n--- Geometry ---\n");
+      sb.append("Header ID: ").append(String.format("%.1f mm", headerInnerDiameter * 1000))
+          .append("\n");
+      sb.append("Header OD: ").append(String.format("%.1f mm", getHeaderOuterDiameter() * 1000))
+          .append("\n");
+      sb.append("Header Wall: ").append(String.format("%.2f mm", headerWallThickness * 1000))
+          .append("\n");
+      sb.append("Branch ID: ").append(String.format("%.1f mm", branchInnerDiameter * 1000))
+          .append("\n");
+      sb.append("Branch OD: ").append(String.format("%.1f mm", getBranchOuterDiameter() * 1000))
+          .append("\n");
+
+      sb.append("\n--- Velocities ---\n");
+      sb.append("Header Velocity: ").append(String.format("%.2f m/s", getHeaderVelocity()))
+          .append("\n");
+      sb.append("Branch Velocity: ").append(String.format("%.2f m/s", getBranchVelocity()))
+          .append("\n");
+      sb.append("Erosional Velocity: ").append(String.format("%.2f m/s", getErosionalVelocity()))
+          .append("\n");
+
+      sb.append("\n--- FIV Analysis ---\n");
+      sb.append("Support Arrangement: ").append(supportArrangement).append("\n");
+      double headerLOF = calculateHeaderLOF();
+      sb.append("Header LOF: ").append(String.format("%.4f", headerLOF));
+      if (headerLOF < 0.5) {
+        sb.append(" (LOW RISK)\n");
+      } else if (headerLOF < 1.0) {
+        sb.append(" (MEDIUM RISK)\n");
+      } else {
+        sb.append(" (HIGH RISK)\n");
+      }
+      sb.append("Header FRMS: ").append(String.format("%.2f", calculateHeaderFRMS())).append("\n");
+      double branchLOF = calculateBranchLOF();
+      sb.append("Branch LOF: ").append(String.format("%.4f", branchLOF));
+      if (branchLOF < 0.5) {
+        sb.append(" (LOW RISK)\n");
+      } else if (branchLOF < 1.0) {
+        sb.append(" (MEDIUM RISK)\n");
+      } else {
+        sb.append(" (HIGH RISK)\n");
+      }
+    }
+
+    sb.append("\n--- Configuration ---\n");
+    sb.append("Number of Inputs: ").append(localmixer.getNumberOfInputStreams()).append("\n");
+    sb.append("Number of Outputs: ").append(getNumberOfOutputStreams()).append("\n");
+
+    return sb.toString();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReportJson() {
+    java.util.Map<String, Object> report = new java.util.LinkedHashMap<String, Object>();
+    report.put("equipmentName", getName());
+    report.put("equipmentType", "Manifold");
+    report.put("autoSized", autoSized);
+
+    StreamInterface mixedStream = getMixedStream();
+    if (mixedStream != null && mixedStream.getThermoSystem() != null) {
+      java.util.Map<String, Object> operating = new java.util.LinkedHashMap<String, Object>();
+      operating.put("volumeFlow_m3hr", mixedStream.getFlowRate("m3/hr"));
+      operating.put("massFlow_kghr", mixedStream.getFlowRate("kg/hr"));
+      operating.put("pressure_bara", mixedStream.getPressure("bara"));
+      operating.put("temperature_C", mixedStream.getTemperature("C"));
+      report.put("operatingConditions", operating);
+
+      java.util.Map<String, Object> geometry = new java.util.LinkedHashMap<String, Object>();
+      geometry.put("headerInnerDiameter_mm", headerInnerDiameter * 1000);
+      geometry.put("headerOuterDiameter_mm", getHeaderOuterDiameter() * 1000);
+      geometry.put("headerWallThickness_mm", headerWallThickness * 1000);
+      geometry.put("branchInnerDiameter_mm", branchInnerDiameter * 1000);
+      geometry.put("branchOuterDiameter_mm", getBranchOuterDiameter() * 1000);
+      geometry.put("branchWallThickness_mm", branchWallThickness * 1000);
+      report.put("geometry", geometry);
+
+      java.util.Map<String, Object> velocities = new java.util.LinkedHashMap<String, Object>();
+      velocities.put("headerVelocity_m_s", getHeaderVelocity());
+      velocities.put("branchVelocity_m_s", getBranchVelocity());
+      velocities.put("erosionalVelocity_m_s", getErosionalVelocity());
+      report.put("velocities", velocities);
+
+      // Add FIV analysis
+      report.put("fivAnalysis", getFIVAnalysis());
+    }
+
+    report.put("numberOfInputs", localmixer.getNumberOfInputStreams());
+    report.put("numberOfOutputs", getNumberOfOutputStreams());
+
+    return new GsonBuilder().setPrettyPrinting().create().toJson(report);
   }
 }

@@ -26,8 +26,14 @@ This document outlines improvements to NeqSim's production optimization framewor
 | `DesignResult` container | `neqsim.process.design` | ✅ Complete |
 | `ThreeStageSeparationTemplate` | `neqsim.process.design.template` | ✅ Complete |
 | Separator AutoSizeable | `neqsim.process.equipment.separator` | ✅ Complete |
+| ThreePhaseSeparator AutoSizeable | `neqsim.process.equipment.separator` | ✅ Complete |
+| GasScrubber AutoSizeable | `neqsim.process.equipment.separator` | ✅ Complete |
 | ThrottlingValve AutoSizeable | `neqsim.process.equipment.valve` | ✅ Complete |
 | PipeBeggsAndBrills AutoSizeable | `neqsim.process.equipment.pipeline` | ✅ Complete |
+| Heater AutoSizeable | `neqsim.process.equipment.heatexchanger` | ✅ Complete |
+| Cooler AutoSizeable | `neqsim.process.equipment.heatexchanger` | ✅ Complete |
+| HeatExchanger AutoSizeable | `neqsim.process.equipment.heatexchanger` | ✅ Complete |
+| Manifold AutoSizeable | `neqsim.process.equipment.manifold` | ✅ Complete |
 
 ### Documentation
 
@@ -65,7 +71,7 @@ This document outlines improvements to NeqSim's production optimization framewor
 | ~~Manual equipment configuration~~ | ~~Medium~~ | ~~Medium~~ | ✅ Solved |
 | ~~No process templates~~ | ~~High~~ | ~~High~~ | ✅ Solved |
 | ~~No multi-objective optimization~~ | ~~Medium~~ | ~~Low~~ | ✅ Solved |
-| Limited pump support | Low | Medium | Pending |
+| ~~Limited pump support~~ | ~~Low~~ | ~~Medium~~ | ✅ Solved |
 | More process templates needed | Medium | Medium | Pending |
 
 ---
@@ -366,10 +372,11 @@ public class EquipmentConstraintRegistry {
 **Location**: `neqsim.process.design` package  
 **Documentation**: [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK.md)
 
-### Phase 2: Extended Equipment Support 🔧 Pending
-1. Add `CapacityConstrainedEquipment` to Heater/Cooler
-2. Add `AutoSizeable` to Pump, HeatExchanger
-3. Implement more process templates (gas compression, dehydration)
+### Phase 2: Extended Equipment Support ✅ COMPLETE
+1. ✅ Add `CapacityConstrainedEquipment` to Heater/Cooler
+2. ✅ Add `AutoSizeable` to Heater, Cooler, HeatExchanger, Manifold
+3. ✅ Extended design standards database with pump and manifold standards
+4. 🔧 Implement more process templates (gas compression, dehydration) - pending
 
 ### Phase 3: Multi-Objective Optimization ✅ Completed
 Implementation provides Pareto optimization for competing objectives like throughput vs energy consumption.

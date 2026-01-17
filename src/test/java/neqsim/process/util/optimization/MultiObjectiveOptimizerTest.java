@@ -470,4 +470,253 @@ public class MultiObjectiveOptimizerTest {
 
     System.out.println("\nJSON Export:\n" + json);
   }
+
+  @Test
+  public void testFIVObjectives() {
+    // Create realistic gas/oil fluid similar to existing FIV test
+    double pressure = 58.3 + 1.01325; // bara
+    double temperature = 90.0; // C
+    double gasFlowRate = 54559.25; // Sm3/hr
+    double oilFlowRate = 50.66; // Sm3/hr
+    double waterFlowRate = 22.0; // Sm3/hr
+
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(
+        (273.15 + 45), neqsim.thermo.ThermodynamicConstantsInterface.referencePressure);
+    fluid.addComponent("nitrogen", 0.01);
+    fluid.addComponent("methane", 0.75);
+    fluid.addComponent("ethane", 0.10);
+    fluid.addComponent("propane", 0.05);
+    fluid.addComponent("n-butane", 0.02);
+    fluid.addComponent("n-pentane", 0.01);
+    fluid.addComponent("water", 0.06);
+    fluid.setMixingRule(2);
+    fluid.init(0);
+    fluid.useVolumeCorrection(true);
+    fluid.setPressure(pressure, "bara");
+    fluid.setTemperature(temperature, "C");
+    fluid.setTotalFlowRate(100.0, "kg/hr");
+    fluid.setMultiPhaseCheck(true);
+
+    neqsim.thermodynamicoperations.ThermodynamicOperations ops =
+        new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid);
+    ops.TPflash();
+    fluid.initPhysicalProperties();
+
+    ProcessSystem process = new ProcessSystem();
+
+    Stream feed = new Stream("Feed", fluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    process.add(feed);
+
+    // Use FlowRateAdjuster like in the existing FIV test
+    neqsim.process.equipment.util.FlowRateAdjuster flowRateAdj =
+        new neqsim.process.equipment.util.FlowRateAdjuster("Flow Adjuster", feed);
+    flowRateAdj.setAdjustedFlowRates(gasFlowRate, oilFlowRate, waterFlowRate, "Sm3/hr");
+    process.add(flowRateAdj);
+
+    // Pipeline
+    neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipe =
+        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("Gas Pipeline",
+            flowRateAdj.getOutletStream());
+    pipe.setPipeWallRoughness(1e-6);
+    pipe.setLength(25.0);
+    pipe.setElevation(0.0);
+    pipe.setPipeSpecification(8.0, "LD201");
+    pipe.setNumberOfIncrements(10);
+    process.add(pipe);
+
+    // Add FIV analyzers
+    neqsim.process.measurementdevice.FlowInducedVibrationAnalyser fivLOF =
+        new neqsim.process.measurementdevice.FlowInducedVibrationAnalyser("FIV-LOF", pipe);
+    fivLOF.setMethod("LOF");
+    fivLOF.setSupportArrangement("Stiff");
+    process.add(fivLOF);
+
+    neqsim.process.measurementdevice.FlowInducedVibrationAnalyser fivFRMS =
+        new neqsim.process.measurementdevice.FlowInducedVibrationAnalyser("FIV-FRMS", pipe);
+    fivFRMS.setMethod("FRMS");
+    process.add(fivFRMS);
+
+    // Run process
+    process.run();
+
+    // Test FIV objective creation
+    ObjectiveFunction lofObjective = StandardObjective.minimizeFIV_LOF("FIV-LOF");
+    ObjectiveFunction frmsObjective = StandardObjective.minimizeFIV_FRMS("FIV-FRMS");
+
+    Assertions.assertNotNull(lofObjective);
+    Assertions.assertNotNull(frmsObjective);
+    Assertions.assertEquals("Minimize FIV-LOF LOF", lofObjective.getName());
+    Assertions.assertEquals("Minimize FIV-FRMS FRMS", frmsObjective.getName());
+
+    // Evaluate objectives
+    double lofValue = lofObjective.evaluate(process);
+    double frmsValue = frmsObjective.evaluate(process);
+
+    System.out.println("LOF value: " + lofValue);
+    System.out.println("FRMS value: " + frmsValue);
+
+    // Values should be finite
+    Assertions.assertTrue(Double.isFinite(lofValue), "LOF should be a finite value");
+    Assertions.assertTrue(Double.isFinite(frmsValue), "FRMS should be a finite value");
+
+    // Test pipeline vibration objective (creates temp analyzer)
+    ObjectiveFunction pipeVib =
+        StandardObjective.minimizePipelineVibration("Gas Pipeline", "LOF", "Stiff");
+    double pipeVibValue = pipeVib.evaluate(process);
+    System.out.println("Pipeline vibration (LOF): " + pipeVibValue);
+    Assertions.assertTrue(Double.isFinite(pipeVibValue));
+  }
+
+  @Test
+  public void testManifoldObjectives() {
+    // Create fluid
+    neqsim.thermo.system.SystemSrkEos fluid = new neqsim.thermo.system.SystemSrkEos(298.15, 30.0);
+    fluid.addComponent("methane", 0.7);
+    fluid.addComponent("ethane", 0.2);
+    fluid.addComponent("propane", 0.1);
+    fluid.setMixingRule("classic");
+
+    ProcessSystem process = new ProcessSystem();
+
+    // Two inlet streams
+    Stream inlet1 = new Stream("Inlet 1", fluid.clone());
+    inlet1.setFlowRate(5000.0, "kg/hr");
+    inlet1.setTemperature(25.0, "C");
+    inlet1.setPressure(30.0, "bara");
+    process.add(inlet1);
+
+    Stream inlet2 = new Stream("Inlet 2", fluid.clone());
+    inlet2.setFlowRate(3000.0, "kg/hr");
+    inlet2.setTemperature(30.0, "C");
+    inlet2.setPressure(30.0, "bara");
+    process.add(inlet2);
+
+    // Manifold
+    neqsim.process.equipment.manifold.Manifold manifold =
+        new neqsim.process.equipment.manifold.Manifold("Production Manifold");
+    manifold.addStream(inlet1);
+    manifold.addStream(inlet2);
+    manifold.setSplitFactors(new double[] {0.5, 0.5}); // Split to 2 outlets
+    process.add(manifold);
+
+    process.run();
+
+    // Test manifold objectives
+    ObjectiveFunction throughputObj =
+        StandardObjective.maximizeManifoldThroughput("Production Manifold");
+    ObjectiveFunction pressureObj =
+        StandardObjective.minimizeManifoldPressureDrop("Production Manifold");
+    ObjectiveFunction balanceObj =
+        StandardObjective.minimizeManifoldImbalance("Production Manifold");
+
+    Assertions.assertNotNull(throughputObj);
+    Assertions.assertNotNull(pressureObj);
+    Assertions.assertNotNull(balanceObj);
+
+    double throughput = throughputObj.evaluate(process);
+    double pressure = pressureObj.evaluate(process);
+    double imbalance = balanceObj.evaluate(process);
+
+    System.out.println("Manifold throughput: " + throughput + " kg/hr");
+    System.out.println("Manifold outlet pressure: " + pressure + " bara");
+    System.out.println("Manifold imbalance: " + imbalance);
+
+    // Combined flow should be ~8000 kg/hr
+    Assertions.assertEquals(8000.0, throughput, 100.0);
+
+    // With 50/50 split, imbalance should be near zero
+    Assertions.assertEquals(0.0, imbalance, 0.01);
+
+    // Test geometry settings
+    manifold.setHeaderInnerDiameter(12.0, "inch");
+    manifold.setHeaderWallThickness(12.7, "mm");
+    manifold.setBranchInnerDiameter(6.0, "inch");
+    manifold.setBranchWallThickness(7.11, "mm");
+    manifold.setSupportArrangement("Stiff");
+
+    // Test velocity calculations
+    double headerVelocity = manifold.getHeaderVelocity();
+    double branchVelocity = manifold.getBranchVelocity();
+    double erosionalVelocity = manifold.getErosionalVelocity();
+
+    System.out.println("\nManifold Velocities:");
+    System.out.println("  Header velocity: " + String.format("%.3f", headerVelocity) + " m/s");
+    System.out.println("  Branch velocity: " + String.format("%.3f", branchVelocity) + " m/s");
+    System.out
+        .println("  Erosional velocity: " + String.format("%.2f", erosionalVelocity) + " m/s");
+
+    Assertions.assertTrue(headerVelocity > 0, "Header velocity should be positive");
+    Assertions.assertTrue(branchVelocity > 0, "Branch velocity should be positive");
+    Assertions.assertTrue(erosionalVelocity > 0, "Erosional velocity should be positive");
+
+    // Test FIV calculations
+    double headerLOF = manifold.calculateHeaderLOF();
+    double headerFRMS = manifold.calculateHeaderFRMS();
+    double branchLOF = manifold.calculateBranchLOF();
+
+    System.out.println("\nManifold FIV Analysis:");
+    System.out.println("  Header LOF: " + String.format("%.4f", headerLOF));
+    System.out.println("  Header FRMS: " + String.format("%.2f", headerFRMS));
+    System.out.println("  Branch LOF: " + String.format("%.4f", branchLOF));
+
+    Assertions.assertTrue(Double.isFinite(headerLOF), "Header LOF should be finite");
+    Assertions.assertTrue(Double.isFinite(headerFRMS), "Header FRMS should be finite");
+    Assertions.assertTrue(Double.isFinite(branchLOF), "Branch LOF should be finite");
+
+    // Test FIV analysis JSON
+    String fivJson = manifold.getFIVAnalysisJson();
+    Assertions.assertTrue(fivJson.contains("LOF"));
+    Assertions.assertTrue(fivJson.contains("FRMS"));
+    Assertions.assertTrue(fivJson.contains("supportArrangement"));
+
+    // Test auto-sizing with FIV
+    Assertions.assertFalse(manifold.isAutoSized());
+    manifold.autoSize(1.2);
+    Assertions.assertTrue(manifold.isAutoSized());
+
+    String report = manifold.getSizingReport();
+    Assertions.assertTrue(report.contains("Manifold Auto-Sizing Report"));
+    Assertions.assertTrue(report.contains("FIV Analysis"));
+    Assertions.assertTrue(report.contains("Header LOF"));
+    System.out.println("\n" + report);
+
+    // Test JSON sizing report
+    String jsonReport = manifold.getSizingReportJson();
+    Assertions.assertTrue(jsonReport.contains("fivAnalysis"));
+    Assertions.assertTrue(jsonReport.contains("geometry"));
+    Assertions.assertTrue(jsonReport.contains("velocities"));
+
+    // Test FIV optimization objectives
+    ObjectiveFunction headerLOFObj =
+        StandardObjective.minimizeManifoldHeaderLOF("Production Manifold");
+    ObjectiveFunction branchLOFObj =
+        StandardObjective.minimizeManifoldBranchLOF("Production Manifold");
+    ObjectiveFunction headerFRMSObj =
+        StandardObjective.minimizeManifoldHeaderFRMS("Production Manifold");
+    ObjectiveFunction velocityRatioObj =
+        StandardObjective.minimizeManifoldVelocityRatio("Production Manifold");
+
+    Assertions.assertNotNull(headerLOFObj);
+    Assertions.assertNotNull(branchLOFObj);
+    Assertions.assertNotNull(headerFRMSObj);
+    Assertions.assertNotNull(velocityRatioObj);
+
+    double headerLOFValue = headerLOFObj.evaluate(process);
+    double branchLOFValue = branchLOFObj.evaluate(process);
+    double headerFRMSValue = headerFRMSObj.evaluate(process);
+    double velocityRatioValue = velocityRatioObj.evaluate(process);
+
+    System.out.println("\nManifold FIV Objectives:");
+    System.out.println("  Header LOF objective: " + String.format("%.4f", headerLOFValue));
+    System.out.println("  Branch LOF objective: " + String.format("%.4f", branchLOFValue));
+    System.out.println("  Header FRMS objective: " + String.format("%.4f", headerFRMSValue));
+    System.out.println("  Velocity ratio objective: " + String.format("%.4f", velocityRatioValue));
+
+    Assertions.assertTrue(Double.isFinite(headerLOFValue), "Header LOF should be finite");
+    Assertions.assertTrue(Double.isFinite(branchLOFValue), "Branch LOF should be finite");
+    Assertions.assertTrue(Double.isFinite(headerFRMSValue), "Header FRMS should be finite");
+    Assertions.assertTrue(Double.isFinite(velocityRatioValue), "Velocity ratio should be finite");
+    Assertions.assertTrue(velocityRatioValue < 1.0, "Velocity should be below erosional");
+  }
 }
