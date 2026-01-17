@@ -5,6 +5,8 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.compressor.CompressorChartGenerator;
+import neqsim.process.equipment.compressor.CompressorChartInterface;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -919,9 +921,50 @@ public class OilGasProcessSimulationOptimization {
       comp27KA01.setUsePolytropicCalc(true);
       comp27KA01.setPolytropicEfficiency(0.75);
 
+      // Generate compressor chart with surge and stonewall curves
+      // Use "interpolate and extrapolate" chart type for best optimization behavior
+      CompressorChartGenerator generator = new CompressorChartGenerator(comp27KA01);
+      generator.setChartType("interpolate and extrapolate");
+
+      // Generate chart with 5 speed curves (from 80% to 120% of design speed)
+      // This creates curves with surge and stonewall limits automatically
+      CompressorChartInterface chart = generator.generateCompressorChart("normal curves", 5);
+
+      // Set the chart on the compressor and enable it
+      comp27KA01.setCompressorChart(chart);
+      comp27KA01.getCompressorChart().setUseCompressorChart(true);
+
+      // Set minimum speed from the chart's minimum speed curve
+      double chartMinSpeed = chart.getMinSpeedCurve();
+      if (!Double.isNaN(chartMinSpeed) && chartMinSpeed > 0) {
+        comp27KA01.setMinimumSpeed(chartMinSpeed);
+      }
+
+      // Enable speed calculation from compressor chart during simulation
+      // This allows the compressor to determine required speed based on operating conditions
+      comp27KA01.setSolveSpeed(true);
+
+      // Run the process once to calculate actual power for setting design power
+      oilProcess.run();
+
+      // Set design power based on calculated power with margin for optimization headroom
+      // Note: maxDesignPower should be in Watts (same units as getPower())
+      double currentPowerWatts = comp27KA01.getPower(); // Returns Watts
+      if (currentPowerWatts > 0 && !Double.isNaN(currentPowerWatts)) {
+        // Set design power to 120% of current power to allow for flow variations
+        comp27KA01.getMechanicalDesign().maxDesignPower = currentPowerWatts * 1.2;
+      }
+
+      // Reinitialize capacity constraints now that chart is configured
+      // This enables surge margin and stonewall margin constraints during optimization
+      comp27KA01.reinitializeCapacityConstraints();
+
       logger.info(
           String.format("Configured compressor 27-KA-01: design speed=%.0f RPM, max speed=%.0f RPM",
               designSpeed, maxSpeed));
+      logger.info(String.format(
+          "Compressor chart generated with %d speed curves, surge and stonewall curves enabled",
+          chart.getSpeeds().length));
     } catch (Exception e) {
       logger.warn("Failed to configure compressor 27-KA-01: " + e.getMessage());
     }

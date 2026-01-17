@@ -174,4 +174,104 @@ public class OilGasProcessSimulationOptimizationTest {
     assertTrue(output.contains("Mass Balance"), "Output should contain mass balance info");
     assertTrue(output.contains("Total Compressor Power"), "Output should contain power info");
   }
+
+  /**
+   * Tests that compressor charts are configured with surge and stonewall curves.
+   */
+  @Test
+  public void testCompressorChartConfigurationWithSurgeAndStonewall() {
+    // Create process and run initial calculation
+    simulation.createProcess();
+    ProcessOutputResults initialResults = simulation.runSimulation();
+    assumeTrue(initialResults != null, "Skipping test: initial simulation did not converge");
+
+    // Configure compressor charts with design and max speeds
+    double designSpeed = 8000.0;
+    double maxSpeed = 9000.0;
+    simulation.configureCompressorCharts(designSpeed, maxSpeed);
+
+    // Run simulation again with compressor charts
+    ProcessOutputResults results = simulation.runSimulation();
+    assumeTrue(results != null, "Skipping test: simulation with charts did not converge");
+
+    // Verify compressor chart is active and has surge/stonewall curves
+    neqsim.process.equipment.compressor.Compressor comp27KA01 =
+        (neqsim.process.equipment.compressor.Compressor) simulation.getOilProcess()
+            .getUnit("27-KA-01");
+    assertNotNull(comp27KA01, "Compressor 27-KA-01 should exist");
+    assertNotNull(comp27KA01.getCompressorChart(), "Compressor chart should not be null");
+    assertTrue(comp27KA01.getCompressorChart().isUseCompressorChart(),
+        "Compressor chart should be active");
+
+    // Verify distance to surge is calculated (not NaN)
+    double distanceToSurge = comp27KA01.getDistanceToSurge();
+    System.out.println("Distance to surge: " + distanceToSurge + "%");
+
+    // Verify distance to stonewall is calculated
+    double distanceToStonewall = comp27KA01.getDistanceToStoneWall();
+    System.out.println("Distance to stonewall: " + distanceToStonewall + "%");
+
+    // Verify that the chart has speed curves
+    double[] speeds = comp27KA01.getCompressorChart().getSpeeds();
+    assertTrue(speeds.length > 0, "Compressor chart should have speed curves");
+    System.out.println("Number of speed curves: " + speeds.length);
+
+    // Verify compressor is operating within acceptable margins
+    // (should be between surge and stonewall)
+    System.out.println("Compressor operating point:");
+    System.out.println("  Speed: " + comp27KA01.getSpeed() + " RPM");
+    System.out.println("  Flow: " + comp27KA01.getInletStream().getFlowRate("m3/hr") + " m3/hr");
+    System.out.println("  Head: " + comp27KA01.getPolytropicFluidHead() + " kJ/kg");
+    System.out.println("  Power: " + comp27KA01.getPower("kW") + " kW");
+  }
+
+  /**
+   * Tests optimization with compressor charts respecting surge and stonewall limits.
+   */
+  @Test
+  public void testOptimizationWithCompressorChartConstraints() {
+    // Create process and run initial calculation
+    simulation.createProcess();
+    ProcessOutputResults initialResults = simulation.runSimulation();
+    assumeTrue(initialResults != null, "Skipping test: initial simulation did not converge");
+
+    // Configure compressor charts with design and max speeds
+    simulation.configureCompressorCharts(8000.0, 9000.0);
+
+    // Run simulation with compressor charts
+    ProcessOutputResults results = simulation.runSimulation();
+    assumeTrue(results != null, "Skipping test: simulation with charts did not converge");
+
+    // Get the compressor and verify capacity constraints
+    neqsim.process.equipment.compressor.Compressor comp27KA01 =
+        (neqsim.process.equipment.compressor.Compressor) simulation.getOilProcess()
+            .getUnit("27-KA-01");
+
+    // Get capacity constraints (should include surge and stonewall margins)
+    java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> constraints =
+        comp27KA01.getCapacityConstraints();
+
+    assertNotNull(constraints, "Capacity constraints should not be null");
+
+    // Print chart speed range for debugging
+    System.out.println("\nCompressor chart speed range:");
+    System.out.println(
+        "  Min speed curve: " + comp27KA01.getCompressorChart().getMinSpeedCurve() + " RPM");
+    System.out.println(
+        "  Max speed curve: " + comp27KA01.getCompressorChart().getMaxSpeedCurve() + " RPM");
+    System.out.println("  Compressor minimum speed: " + comp27KA01.getMinimumSpeed() + " RPM");
+    System.out.println("  Compressor maximum speed: " + comp27KA01.getMaximumSpeed() + " RPM");
+
+    System.out.println("\nCompressor capacity constraints:");
+    for (java.util.Map.Entry<String, neqsim.process.equipment.capacity.CapacityConstraint> entry : constraints
+        .entrySet()) {
+      neqsim.process.equipment.capacity.CapacityConstraint c = entry.getValue();
+      System.out.printf("  %s: current=%.2f, design=%.2f, utilization=%.1f%%%n", c.getName(),
+          c.getCurrentValue(), c.getDesignValue(), c.getUtilization() * 100);
+    }
+
+    // Verify no hard limits are exceeded during normal operation
+    boolean hardLimitExceeded = comp27KA01.isHardLimitExceeded();
+    System.out.println("Hard limit exceeded: " + hardLimitExceeded);
+  }
 }

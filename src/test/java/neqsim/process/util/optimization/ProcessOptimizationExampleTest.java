@@ -155,7 +155,7 @@ public class ProcessOptimizationExampleTest {
     System.out.println("Feed rate: " + feedStream.getFlowRate("kg/hr") + " kg/hr");
 
     // Find the bottleneck equipment
-    var bottleneck = process.getBottleneck();
+    ProcessEquipmentInterface bottleneck = process.getBottleneck();
 
     if (bottleneck != null) {
       System.out.println("\nBottleneck equipment: " + bottleneck.getName());
@@ -437,7 +437,7 @@ public class ProcessOptimizationExampleTest {
 
     // Print all near-bottleneck equipment
     System.out.println("\n--- Equipment Status (> 50% utilization) ---");
-    for (var unit : process.getUnitOperations()) {
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (unit.getCapacityMax() > 0 && unit.getCapacityDuty() > 0) {
         double util = unit.getCapacityDuty() / unit.getCapacityMax();
         if (util > 0.5 && !Double.isInfinite(util) && !Double.isNaN(util)) {
@@ -469,7 +469,7 @@ public class ProcessOptimizationExampleTest {
     System.out.println("\n--- Effect of Inlet Pressure ---");
     System.out.printf("%-15s %-15s %-20s %-15s%n", "Inlet P (bara)", "Max Rate (kg/hr)",
         "Bottleneck", "Utilization");
-    System.out.println("-".repeat(70));
+    System.out.println("----------------------------------------------------------------------");
 
     for (double pressure : inletPressures) {
       // Update inlet pressure
@@ -666,7 +666,7 @@ public class ProcessOptimizationExampleTest {
   private double getMaxSystemUtilization() {
     double maxUtil = 0.0;
 
-    for (var unit : process.getUnitOperations()) {
+    for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       double capacity = unit.getCapacityMax();
       double duty = unit.getCapacityDuty();
 

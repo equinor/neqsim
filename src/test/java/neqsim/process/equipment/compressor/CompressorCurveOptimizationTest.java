@@ -183,11 +183,11 @@ public class CompressorCurveOptimizationTest {
     compressor.reinitializeCapacityConstraints();
 
     // Get constraints
-    var constraints = compressor.getCapacityConstraints();
+    java.util.Map<String, CapacityConstraint> constraints = compressor.getCapacityConstraints();
     assertFalse(constraints.isEmpty(), "Compressor should have capacity constraints");
 
     System.out.println("\n=== Compressor Capacity Constraints ===");
-    for (var entry : constraints.entrySet()) {
+    for (java.util.Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
       CapacityConstraint c = entry.getValue();
       System.out.printf("%s: current=%.2f, design=%.2f, max=%.2f, utilization=%.1f%%%n",
           c.getName(), c.getCurrentValue(), c.getDesignValue(), c.getMaxValue(),

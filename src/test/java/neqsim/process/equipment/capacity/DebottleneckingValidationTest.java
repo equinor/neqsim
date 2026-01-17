@@ -214,7 +214,7 @@ public class DebottleneckingValidationTest {
     compressor.reinitializeCapacityConstraints();
 
     // Check that constraints exist and have appropriate severities
-    var constraints = compressor.getCapacityConstraints();
+    java.util.Map<String, CapacityConstraint> constraints = compressor.getCapacityConstraints();
     assertFalse(constraints.isEmpty(), "Compressor should have constraints");
 
     // Surge margin should exist

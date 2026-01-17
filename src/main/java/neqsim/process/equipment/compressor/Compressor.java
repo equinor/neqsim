@@ -3587,6 +3587,9 @@ public class Compressor extends TwoPortEquipment
         .setValueSupplier(() -> this.speed));
 
     // Min speed constraint (from curve minimum)
+    // This constraint tracks if the compressor speed is above the minimum allowable speed
+    // Design value = min speed, current value = actual speed
+    // Utilization interpretation: speed > minSpeed is good, speed < minSpeed is violation
     if (effectiveMinSpeed > 0) {
       final double minSpeedLimit = effectiveMinSpeed;
       addCapacityConstraint(StandardConstraintType.COMPRESSOR_MIN_SPEED.createConstraint()
@@ -3595,10 +3598,7 @@ public class Compressor extends TwoPortEquipment
                                                                                               // close
                                                                                               // to
                                                                                               // minimum
-          .setValueSupplier(() -> {
-            // Return ratio: speed/minSpeed. Values < 1 indicate violation
-            return this.speed / minSpeedLimit;
-          }));
+          .setValueSupplier(() -> this.speed));
     }
 
     // Power constraint - dynamically evaluates against mechanical design or driver
