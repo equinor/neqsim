@@ -593,6 +593,8 @@ public class FieldDevelopmentWorkflow implements Serializable {
 
   /**
    * Runs screening-level analysis (±50% accuracy).
+   *
+   * @return workflow result containing screening analysis outputs
    */
   private WorkflowResult runScreening() {
     WorkflowResult result = new WorkflowResult(projectName, fidelityLevel);
@@ -641,6 +643,8 @@ public class FieldDevelopmentWorkflow implements Serializable {
 
   /**
    * Runs conceptual-level analysis (±30% accuracy).
+   *
+   * @return workflow result containing conceptual analysis outputs
    */
   private WorkflowResult runConceptual() {
     // Start with screening

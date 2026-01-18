@@ -170,6 +170,9 @@ public class ConceptToProcessLinker implements Serializable {
 
   /**
    * Determine process template from concept.
+   *
+   * @param concept the field concept to analyze
+   * @return the appropriate process template
    */
   private ProcessTemplate determineTemplate(FieldConcept concept) {
     if (concept.getReservoir() != null) {

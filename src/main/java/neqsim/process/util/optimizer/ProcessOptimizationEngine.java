@@ -707,12 +707,14 @@ public class ProcessOptimizationEngine implements Serializable {
    *
    * <p>
    * The Armijo-Wolfe conditions ensure:
+   * </p>
    * <ul>
    * <li><strong>Sufficient decrease (Armijo):</strong> f(x + alpha*d) &lt;= f(x) + c1*alpha*grad'*d
    * </li>
    * <li><strong>Curvature condition (Wolfe):</strong> |grad(x + alpha*d)'*d| &lt;=
    * c2*|grad'*d|</li>
    * </ul>
+   * <p>
    * These conditions guarantee convergence and avoid too-small or too-large steps.
    * </p>
    *

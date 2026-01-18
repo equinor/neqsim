@@ -470,6 +470,9 @@ public class ProductionAllocator implements Serializable {
 
   /**
    * Gets oil flow rate from a stream.
+   *
+   * @param stream the stream to get oil flow rate from
+   * @return oil flow rate in m3/hr, or 0.0 if no oil phase
    */
   private double getOilFlowRate(StreamInterface stream) {
     if (stream.getFluid().hasPhaseType(PhaseType.OIL)) {
@@ -480,6 +483,9 @@ public class ProductionAllocator implements Serializable {
 
   /**
    * Gets gas flow rate from a stream.
+   *
+   * @param stream the stream to get gas flow rate from
+   * @return gas flow rate in m3/hr, or 0.0 if no gas phase
    */
   private double getGasFlowRate(StreamInterface stream) {
     if (stream.getFluid().hasPhaseType(PhaseType.GAS)) {
@@ -490,6 +496,9 @@ public class ProductionAllocator implements Serializable {
 
   /**
    * Gets energy rate (heating value * flow).
+   *
+   * @param stream the stream to calculate energy rate from
+   * @return energy rate in MJ/hr
    */
   private double getEnergyRate(StreamInterface stream) {
     // Simplified: use mass flow * typical energy content
