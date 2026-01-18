@@ -295,7 +295,6 @@ public class FlowRateOptimizer implements Serializable {
    * <li>Process system/model is ready for simulation</li>
    * <li>Compressors have charts configured (if auto-configure is disabled)</li>
    * </ul>
-   * </p>
    *
    * @return list of validation issues (empty if valid)
    */
@@ -729,7 +728,6 @@ public class FlowRateOptimizer implements Serializable {
    * <li>Sets maximum speed with appropriate margin above design speed</li>
    * <li>Reinitializes capacity constraints after chart setup</li>
    * </ul>
-   * </p>
    *
    * <h3>Example Usage</h3>
    * 
@@ -928,7 +926,6 @@ public class FlowRateOptimizer implements Serializable {
    * <li>Equipment utilization data</li>
    * <li>Constraint status</li>
    * </ul>
-   * </p>
    *
    * @param flowRate the flow rate
    * @param flowRateUnit the flow rate unit
@@ -1072,7 +1069,6 @@ public class FlowRateOptimizer implements Serializable {
    * <li>Maximum equipment utilization</li>
    * <li>Feasibility status</li>
    * </ul>
-   * </p>
    *
    * <h3>Example Usage</h3>
    * 
@@ -1374,7 +1370,6 @@ public class FlowRateOptimizer implements Serializable {
    * <li>If outlet pressure is below target or utilization exceeds limit, decrease flow</li>
    * <li>Converge to the maximum flow that achieves target outlet pressure within constraints</li>
    * </ol>
-   * </p>
    *
    * <h3>Example Usage</h3>
    * 

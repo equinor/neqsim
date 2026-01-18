@@ -19,7 +19,6 @@ import java.util.Map;
  * <li>Sensitivity information</li>
  * <li>Performance metrics (timing, evaluations)</li>
  * </ul>
- * </p>
  *
  * <p>
  * Specialized result classes should extend this base to add domain-specific fields.
