@@ -29,14 +29,18 @@ import neqsim.process.util.optimization.FlowRateOptimizer;
  * <li>Sensitivity analysis for constraint insights</li>
  * </ul>
  *
- * <h3>Optimization Levels</h3>
+ * <p>
+ * <strong>Optimization Levels:</strong>
+ * </p>
  * <ul>
  * <li><strong>Low-level:</strong> Single equipment constraint evaluation</li>
  * <li><strong>Mid-level:</strong> Process segment optimization (inlet to outlet)</li>
  * <li><strong>High-level:</strong> Full process system optimization with recycles</li>
  * </ul>
  *
- * <h3>Example Usage</h3>
+ * <p>
+ * <strong>Example Usage:</strong>
+ * </p>
  * 
  * <pre>
  * ProcessOptimizationEngine engine = new ProcessOptimizationEngine(processSystem);
