@@ -95,6 +95,9 @@ public class CapacityConstraint implements Serializable {
   /** Unit of measurement (e.g., "RPM", "m/s", "kW"). */
   private final String unit;
 
+  /** Override unit for mutable unit changes. */
+  private String unitOverride = null;
+
   /** Type of constraint (HARD, SOFT, or DESIGN). */
   private final ConstraintType type;
 
@@ -137,6 +140,22 @@ public class CapacityConstraint implements Serializable {
     this.name = name;
     this.unit = unit;
     this.type = type;
+  }
+
+  /**
+   * Creates a new capacity constraint with default type SOFT and empty unit.
+   *
+   * <p>
+   * This constructor is a convenience for building constraints where the unit and type can be set
+   * later using the fluent API.
+   * </p>
+   *
+   * @param name the name of the constraint
+   */
+  public CapacityConstraint(String name) {
+    this.name = name;
+    this.unit = "";
+    this.type = ConstraintType.SOFT;
   }
 
   /**
@@ -249,6 +268,39 @@ public class CapacityConstraint implements Serializable {
   }
 
   /**
+   * Sets the current value directly. Use this when you want to set the value manually rather than
+   * using a supplier function.
+   *
+   * <p>
+   * Note: If a value supplier is set, it will override this value when getCurrentValue() is called.
+   * </p>
+   *
+   * @param value the current value to set
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint setCurrentValue(double value) {
+    this.currentValue = value;
+    return this;
+  }
+
+  /**
+   * Sets the unit of measurement for this constraint.
+   *
+   * <p>
+   * This is a convenience method for cases where the unit needs to be changed after construction.
+   * </p>
+   *
+   * @param unit the unit of measurement
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint setUnit(String unit) {
+    // Since unit is final, we need to use reflection or create a new instance
+    // For now, we'll just store it in a separate mutable field
+    this.unitOverride = unit;
+    return this;
+  }
+
+  /**
    * Gets the current value from the equipment.
    *
    * @return the current value, or 0.0 if no supplier is set
@@ -356,10 +408,10 @@ public class CapacityConstraint implements Serializable {
   /**
    * Gets the unit of measurement.
    *
-   * @return the unit
+   * @return the unit (or unitOverride if set)
    */
   public String getUnit() {
-    return unit;
+    return unitOverride != null ? unitOverride : unit;
   }
 
   /**

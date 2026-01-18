@@ -280,7 +280,10 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Document | Path | Description |
 |----------|------|-------------|
 | **Capacity Constraint Framework** | [docs/process/CAPACITY_CONSTRAINT_FRAMEWORK.md](process/CAPACITY_CONSTRAINT_FRAMEWORK.md) | **Framework for equipment capacity limits, bottleneck detection, and utilization tracking** |
+| **Optimizer Plugin Architecture** | [docs/process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md](process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md) | **Equipment capacity strategies, throughput optimization, and Eclipse VFP export** |
 | **Production Optimization Guide** | [docs/examples/PRODUCTION_OPTIMIZATION_GUIDE.md](examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | **Complete guide to production optimization with Java and Python examples** |
+| **Pressure Boundary Optimization** | [docs/process/pressure_boundary_optimization.md](process/pressure_boundary_optimization.md) | **Calculate flow rates for pressure boundaries, generate Eclipse VFP lift curves, optimize compressor power** |
+| **Flow Rate Optimization** | [docs/process/optimization/flow-rate-optimization.md](process/optimization/flow-rate-optimization.md) | **Comprehensive flow rate optimizer with lift curve generation for Eclipse reservoir simulation** |
 
 ### Chapter 23: Mechanical Design
 | Document | Path | Description |
@@ -486,6 +489,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Document | Path | Description |
 |----------|------|-------------|
 | Optimization Overview | [docs/process/optimization/README.md](process/optimization/README.md) | Optimization module |
+| **Flow Rate Optimization** | [docs/process/optimization/flow-rate-optimization.md](process/optimization/flow-rate-optimization.md) | **Comprehensive flow rate optimizer with lift curve generation for Eclipse reservoir simulation** |
 | **Multi-Objective Optimization** | [docs/process/optimization/multi-objective-optimization.md](process/optimization/multi-objective-optimization.md) | **Pareto front generation for competing objectives (throughput vs energy)** |
 | Batch Studies | [docs/process/optimization/batch-studies.md](process/optimization/batch-studies.md) | Batch studies |
 | Bottleneck Analysis | [docs/wiki/bottleneck_analysis.md](wiki/bottleneck_analysis.md) | Bottleneck analysis |
