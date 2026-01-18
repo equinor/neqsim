@@ -72,6 +72,13 @@ Manifold manifold = new Manifold("PM-101");
 | `setSplitFactors(double[])` | Set split ratios for outputs |
 | `getMixer()` | Access the internal mixer |
 | `getSplitter()` | Access the internal splitter |
+| `setInnerHeaderDiameter(double)` | Set header pipe diameter (m) |
+| `setInnerBranchDiameter(double)` | Set branch pipe diameter (m) |
+| `calculateHeaderLOF()` | Calculate header Likelihood of Failure |
+| `calculateBranchLOF()` | Calculate branch Likelihood of Failure |
+| `calculateHeaderFRMS()` | Calculate header RMS force (N/m) |
+| `getCapacityConstraints()` | Get all capacity constraints |
+| `autoSize(double)` | Auto-size header and branch diameters |
 | `run()` | Execute mixing then splitting |
 
 ---
@@ -220,6 +227,67 @@ manifold.run();
 
 ---
 
+## Flow-Induced Vibration (FIV) Analysis
+
+The `Manifold` class provides FIV analysis for both header and branch piping, implementing `CapacityConstrainedEquipment`.
+
+### FIV Methods
+
+```java
+Manifold manifold = new Manifold("Production Manifold", inlet1, inlet2);
+manifold.setInnerHeaderDiameter(0.3);  // 12 inch header
+manifold.setInnerBranchDiameter(0.15); // 6 inch branches
+manifold.setMaxDesignVelocity(15.0);   // m/s
+manifold.run();
+
+// Header FIV analysis
+double headerLOF = manifold.calculateHeaderLOF();
+double headerFRMS = manifold.calculateHeaderFRMS();
+
+// Branch FIV analysis
+double branchLOF = manifold.calculateBranchLOF();
+
+// Velocities
+double headerVelocity = manifold.getHeaderVelocity();
+double branchVelocity = manifold.getAverageBranchVelocity();
+```
+
+### Capacity Constraints
+
+The manifold provides these constraints:
+
+| Constraint | Type | Description |
+|------------|------|-------------|
+| `headerVelocity` | DESIGN | Header velocity vs erosional limit |
+| `branchVelocity` | DESIGN | Branch velocity vs erosional limit |
+| `headerLOF` | SOFT | Header Likelihood of Failure |
+| `headerFRMS` | SOFT | Header RMS force per meter |
+| `branchLOF` | SOFT | Branch Likelihood of Failure |
+
+```java
+// Get all constraints
+Map<String, CapacityConstraint> constraints = manifold.getCapacityConstraints();
+
+// Check bottleneck
+CapacityConstraint bottleneck = manifold.getBottleneckConstraint();
+System.out.println("Bottleneck: " + bottleneck.getName() + 
+                   " at " + bottleneck.getUtilizationPercent() + "%");
+```
+
+### AutoSizing
+
+```java
+// Auto-size header and branch diameters
+manifold.autoSize(1.2);  // 20% safety factor
+
+// Check sizing report
+System.out.println(manifold.getSizingReport());
+```
+
+For detailed FIV documentation, see [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md#flow-induced-vibration-fiv-analysis).
+
+---
+
 ## Design Considerations
 
 ### Pressure Matching
@@ -250,3 +318,6 @@ The mixed composition is the flow-weighted average of all inlet compositions.
 - [Splitters](splitters.md) - Stream splitting
 - [Streams](streams.md) - Process streams
 - [Subsea Systems](subsea_systems.md) - Subsea manifold applications
+- [Manifold Mechanical Design](manifold_design.md) - Detailed manifold mechanical design
+- [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) - Capacity limits and FIV analysis
+- [Pipelines](pipelines.md) - Pipeline equipment with FIV support
