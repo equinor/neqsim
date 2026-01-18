@@ -166,6 +166,9 @@ public class BottleneckAnalyzer implements Serializable {
 
   /**
    * Analyzes separator constraints.
+   *
+   * @param sep the separator to analyze
+   * @return the bottleneck analysis result for the separator
    */
   private BottleneckResult analyzeSeparator(SeparatorInterface sep) {
     BottleneckResult result = new BottleneckResult();
@@ -197,6 +200,9 @@ public class BottleneckAnalyzer implements Serializable {
 
   /**
    * Analyzes compressor constraints.
+   *
+   * @param comp the compressor to analyze
+   * @return the bottleneck analysis result for the compressor
    */
   private BottleneckResult analyzeCompressor(Compressor comp) {
     BottleneckResult result = new BottleneckResult();
@@ -226,6 +232,9 @@ public class BottleneckAnalyzer implements Serializable {
 
   /**
    * Analyzes pump constraints.
+   *
+   * @param pump the pump to analyze
+   * @return the bottleneck analysis result for the pump
    */
   private BottleneckResult analyzePump(Pump pump) {
     BottleneckResult result = new BottleneckResult();
@@ -246,6 +255,9 @@ public class BottleneckAnalyzer implements Serializable {
 
   /**
    * Analyzes heater/cooler constraints.
+   *
+   * @param heater the heater to analyze
+   * @return the bottleneck analysis result for the heater
    */
   private BottleneckResult analyzeHeater(Heater heater) {
     BottleneckResult result = new BottleneckResult();

@@ -522,6 +522,7 @@ jpype.shutdownJVM()
 
 ## See Also
 
-- [OPTIMIZER_PLUGIN_ARCHITECTURE.md](../process/OPTIMIZER_PLUGIN_ARCHITECTURE.md) - Plugin architecture for equipment-specific optimization
-- [ProcessOptimizationEngine](../process/optimization-engine.md) - Built-in optimization algorithms
-- [FlowRateOptimizer](../process/flow-rate-optimizer.md) - Specialized pipeline optimizer
+- [OPTIMIZER_PLUGIN_ARCHITECTURE.md](../process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md) - Plugin architecture for equipment-specific optimization
+- [flow-rate-optimization.md](../process/optimization/flow-rate-optimization.md) - FlowRateOptimizer for lift curve generation
+- [pressure_boundary_optimization.md](../process/pressure_boundary_optimization.md) - Simplified pressure boundary optimizer
+- [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) - Complete production optimization examples

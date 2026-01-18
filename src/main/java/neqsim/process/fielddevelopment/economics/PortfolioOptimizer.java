@@ -193,17 +193,30 @@ public class PortfolioOptimizer implements Serializable {
       this.startYear = year;
     }
 
-    /** Set CAPEX profile by year. */
+    /**
+     * Set CAPEX profile by year.
+     *
+     * @param profile the CAPEX profile map with year as key and CAPEX value as value
+     */
     public void setCapexProfile(Map<Integer, Double> profile) {
       this.capexProfile = profile;
     }
 
-    /** Get CAPEX profile. */
+    /**
+     * Get CAPEX profile.
+     *
+     * @return the CAPEX profile map with year as key and CAPEX value as value
+     */
     public Map<Integer, Double> getCapexProfile() {
       return capexProfile;
     }
 
-    /** Get CAPEX for specific year. */
+    /**
+     * Get CAPEX for specific year.
+     *
+     * @param year the year to get CAPEX for
+     * @return the CAPEX value for the specified year, or 0.0 if not defined
+     */
     public double getCapexForYear(int year) {
       if (capexProfile.isEmpty()) {
         // Default: spread evenly over 2 years starting from startYear
@@ -216,37 +229,65 @@ public class PortfolioOptimizer implements Serializable {
       return value != null ? value.doubleValue() : 0.0;
     }
 
-    /** Check if mandatory. */
+    /**
+     * Check if mandatory.
+     *
+     * @return true if this project is mandatory, false otherwise
+     */
     public boolean isMandatory() {
       return mandatory;
     }
 
-    /** Set mandatory flag. */
+    /**
+     * Set mandatory flag.
+     *
+     * @param mandatory true if this project is mandatory
+     */
     public void setMandatory(boolean mandatory) {
       this.mandatory = mandatory;
     }
 
-    /** Get dependencies. */
+    /**
+     * Get dependencies.
+     *
+     * @return the list of project names this project depends on
+     */
     public List<String> getDependencies() {
       return dependencies;
     }
 
-    /** Add dependency. */
+    /**
+     * Add dependency.
+     *
+     * @param projectName the name of the project this project depends on
+     */
     public void addDependency(String projectName) {
       dependencies.add(projectName);
     }
 
-    /** Calculate NPV/CAPEX ratio. */
+    /**
+     * Calculate NPV/CAPEX ratio.
+     *
+     * @return the NPV divided by CAPEX, or 0.0 if CAPEX is zero
+     */
     public double getNpvCapexRatio() {
       return capexMusd > 0 ? npvMusd / capexMusd : 0.0;
     }
 
-    /** Calculate expected monetary value. */
+    /**
+     * Calculate expected monetary value.
+     *
+     * @return the expected monetary value (NPV times probability of success)
+     */
     public double getEmv() {
       return npvMusd * probabilityOfSuccess;
     }
 
-    /** Calculate risk-weighted NPV ratio. */
+    /**
+     * Calculate risk-weighted NPV ratio.
+     *
+     * @return the NPV/CAPEX ratio multiplied by probability of success
+     */
     public double getRiskWeightedRatio() {
       return getNpvCapexRatio() * probabilityOfSuccess;
     }

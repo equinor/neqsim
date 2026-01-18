@@ -409,6 +409,8 @@ public class SensitivityAnalyzer implements Serializable {
 
   /**
    * Creates a clone of the base case engine.
+   *
+   * @return a new CashFlowEngine instance with copied settings
    */
   private CashFlowEngine cloneEngine() {
     // Note: This is a simplified clone - production profiles are not copied

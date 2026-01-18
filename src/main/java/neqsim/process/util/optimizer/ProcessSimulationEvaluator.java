@@ -929,7 +929,7 @@ public class ProcessSimulationEvaluator implements Serializable {
   }
 
   /**
-   * Adds a range constraint: lowerBound <= g(x) <= upperBound.
+   * Adds a range constraint: lowerBound &lt;= g(x) &lt;= upperBound.
    *
    * @param name constraint name
    * @param evaluator function that evaluates g(x)
