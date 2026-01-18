@@ -19,7 +19,6 @@ import neqsim.process.equipment.valve.ValveInterface;
  * <li>Choked flow conditions</li>
  * <li>Control authority</li>
  * </ul>
- * </p>
  *
  * @author NeqSim Development Team
  * @version 1.0

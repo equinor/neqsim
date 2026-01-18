@@ -575,6 +575,14 @@ Creates optimization engine for the given process system.
 | `findRequiredInletPressure(outletP, flowRate)` | `OptimizationResult` | Find inlet pressure for target flow |
 | `findBottleneckEquipment()` | `String` | Get name of bottleneck equipment |
 | `generateLiftCurve(pins, pouts, temps, wcuts, gors)` | `LiftCurveData` | Generate multi-dimensional lift curve |
+| `analyzeSensitivity(flow, inletP, outletP)` | `SensitivityResult` | Analyze flow sensitivity and margins |
+| `calculateShadowPrices(flow, inletP, outletP)` | `Map<String, Double>` | Calculate constraint shadow prices |
+| `createFlowRateOptimizer()` | `FlowRateOptimizer` | Create integrated FlowRateOptimizer |
+| `generateComprehensiveLiftCurve(stream, pressures, outletP)` | `FlowRateOptimizer` | Generate lift curves via FlowRateOptimizer |
+| `evaluateConstraintsWithCache()` | `ConstraintEvaluationResult` | Evaluate with caching enabled |
+| `calculateFlowSensitivities(flow, unit)` | `Map<String, Double>` | Calculate flow sensitivities by equipment |
+| `estimateMaximumFlow(currentFlow, unit)` | `double` | Estimate max feasible flow |
+| `getConstraintEvaluator()` | `ProcessConstraintEvaluator` | Get underlying constraint evaluator |
 
 ### OptimizationResult Class
 
@@ -801,6 +809,303 @@ public class StrategyUsageExample {
 
 ---
 
+## Unified Result Classes
+
+### OptimizationResultBase
+
+The `OptimizationResultBase` class provides a unified structure for all optimization results:
+
+```java
+import neqsim.process.util.optimizer.OptimizationResultBase;
+
+// Create result and track optimization
+OptimizationResultBase result = new OptimizationResultBase();
+result.markStart();  // Start timing
+result.setObjective("MaxThroughput");
+
+// During optimization
+for (int i = 0; i < maxIterations; i++) {
+    result.incrementIterations();
+    result.incrementFunctionEvaluations();
+    // ... optimization logic ...
+}
+
+// Record results
+result.setOptimalValue(5500.0);
+result.addOptimalValue("FlowRate", 5500.0);
+result.setObjectiveValue(5500.0);
+result.setBottleneckEquipment("Compressor1");
+result.setBottleneckConstraint("MaxPower");
+result.setConverged(true);
+result.markEnd();  // End timing
+
+// Get summary
+System.out.println(result.getSummary());
+System.out.println("Elapsed time: " + result.getElapsedTimeSeconds() + " s");
+```
+
+### Status Enum
+
+The `Status` enum tracks optimization state:
+
+| Status | Description |
+|--------|-------------|
+| `NOT_STARTED` | Optimization not yet begun |
+| `IN_PROGRESS` | Currently running |
+| `CONVERGED` | Successfully converged |
+| `MAX_ITERATIONS_REACHED` | Hit iteration limit |
+| `INFEASIBLE` | No feasible solution found |
+| `FAILED` | Error during optimization |
+| `CANCELLED` | User cancelled |
+
+### ConstraintViolation Class
+
+Track constraint violations with detailed information:
+
+```java
+OptimizationResultBase.ConstraintViolation violation = 
+    new OptimizationResultBase.ConstraintViolation(
+        "Compressor1",     // equipment name
+        "MaxPower",        // constraint name
+        15.0,              // current value
+        12.0,              // limit value
+        "MW",              // unit
+        true               // is hard constraint
+    );
+
+System.out.println("Violation: " + violation.getViolationAmount());  // 3.0 MW over
+System.out.println("Percent over: " + violation.getViolationPercent() + "%");  // 25%
+```
+
+---
+
+## ProcessConstraintEvaluator
+
+The `ProcessConstraintEvaluator` provides composite constraint evaluation with caching and sensitivity analysis.
+
+### Basic Usage
+
+```java
+import neqsim.process.util.optimizer.ProcessConstraintEvaluator;
+
+// Create evaluator
+ProcessConstraintEvaluator evaluator = new ProcessConstraintEvaluator(processSystem);
+
+// Evaluate all constraints
+ProcessConstraintEvaluator.ConstraintEvaluationResult result = evaluator.evaluate();
+
+System.out.println("Overall utilization: " + result.getOverallUtilization() * 100 + "%");
+System.out.println("Bottleneck: " + result.getBottleneckEquipment());
+System.out.println("Feasible: " + result.isFeasible());
+System.out.println("Violations: " + result.getTotalViolationCount());
+
+// Get per-equipment summaries
+for (Map.Entry<String, ProcessConstraintEvaluator.EquipmentConstraintSummary> entry : 
+        result.getEquipmentSummaries().entrySet()) {
+    ProcessConstraintEvaluator.EquipmentConstraintSummary summary = entry.getValue();
+    System.out.printf("%s: %.1f%% utilization, margin to limit: %.1f%%%n",
+        summary.getEquipmentName(),
+        summary.getUtilization() * 100,
+        summary.getMarginToLimit() * 100);
+}
+```
+
+### Constraint Caching
+
+Enable caching for repeated evaluations:
+
+```java
+// Configure cache TTL (default 10 seconds)
+evaluator.setCacheTTLMillis(30000);  // 30 seconds
+
+// Evaluate with caching
+ProcessConstraintEvaluator.ConstraintEvaluationResult result1 = evaluator.evaluate();
+// ... process runs again ...
+ProcessConstraintEvaluator.ConstraintEvaluationResult result2 = evaluator.evaluate();  // Uses cache if valid
+
+// Clear cache when needed
+evaluator.clearCache();
+```
+
+### CachedConstraints Class
+
+Manual cache management:
+
+```java
+ProcessConstraintEvaluator.CachedConstraints cache = 
+    new ProcessConstraintEvaluator.CachedConstraints();
+
+cache.setFlowRate(5000.0);
+cache.setTimestamp(System.currentTimeMillis());
+cache.setTtlMillis(10000);  // 10 second TTL
+cache.setValid(true);
+
+// Check cache status
+if (!cache.isExpired() && cache.isValid()) {
+    // Use cached results
+    double cachedFlow = cache.getFlowRate();
+}
+
+// Invalidate when process changes
+cache.invalidate();
+```
+
+### Flow Sensitivity Analysis
+
+Calculate how constraint utilization changes with flow:
+
+```java
+// Calculate sensitivities at current operating point
+Map<String, Double> sensitivities = evaluator.calculateFlowSensitivities(8000.0, "kg/hr");
+
+for (Map.Entry<String, Double> entry : sensitivities.entrySet()) {
+    System.out.printf("%s: sensitivity = %.3f (utilization change per kg/hr)%n",
+        entry.getKey(), entry.getValue());
+}
+
+// Estimate maximum feasible flow
+double maxFlow = evaluator.estimateMaxFlow(8000.0, "kg/hr");
+System.out.println("Estimated max flow: " + maxFlow + " kg/hr");
+```
+
+---
+
+## Gradient-Based Optimization
+
+The `ProcessOptimizationEngine` supports gradient descent optimization for smooth objective functions.
+
+### Search Algorithms
+
+| Algorithm | Description | Best For |
+|-----------|-------------|----------|
+| `BINARY_SEARCH` | Binary search for feasibility boundary | Simple monotonic problems |
+| `GOLDEN_SECTION` | Golden section search | Unimodal objectives |
+| `GRADIENT_DESCENT` | Gradient descent with finite differences | Smooth multi-variable problems |
+
+### Using Gradient Descent
+
+```java
+ProcessOptimizationEngine engine = new ProcessOptimizationEngine(processSystem);
+
+// Select gradient descent algorithm
+engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.GRADIENT_DESCENT);
+engine.setTolerance(1e-4);
+engine.setMaxIterations(100);
+engine.setEnforceConstraints(true);
+
+// Find maximum throughput
+ProcessOptimizationEngine.OptimizationResult result = 
+    engine.findMaximumThroughput(50.0, 10.0, 1000.0, 100000.0);
+
+System.out.println("Optimal flow: " + result.getOptimalValue() + " kg/hr");
+System.out.println("Converged: " + result.isConverged());
+System.out.println("Iterations: " + result.getIterations());
+```
+
+### Gradient Descent Features
+
+- **Finite-difference gradient estimation** with configurable step size
+- **Adaptive step size** with line search backtracking
+- **Constraint penalties** for infeasible solutions
+- **Bounds enforcement** to stay within search range
+
+---
+
+## Sensitivity Analysis
+
+Analyze how the optimal solution responds to parameter changes.
+
+### SensitivityResult Class
+
+```java
+ProcessOptimizationEngine engine = new ProcessOptimizationEngine(processSystem);
+
+// Analyze sensitivity at current operating point
+ProcessOptimizationEngine.SensitivityResult sensitivity = 
+    engine.analyzeSensitivity(5000.0, 50.0, 10.0);
+
+System.out.println("Base flow: " + sensitivity.getBaseFlow() + " kg/hr");
+System.out.println("Flow gradient: " + sensitivity.getFlowGradient());
+System.out.println("Tightest constraint: " + sensitivity.getTightestConstraint());
+System.out.println("Margin to limit: " + sensitivity.getTightestMargin() * 100 + "%");
+System.out.println("Flow buffer: " + sensitivity.getFlowBuffer() + " kg/hr");
+
+// Check if near capacity
+if (sensitivity.isAtCapacity()) {
+    System.out.println("WARNING: Operating near capacity!");
+    System.out.println("Bottleneck: " + sensitivity.getBottleneckEquipment());
+}
+
+// Access constraint margins
+Map<String, Double> margins = sensitivity.getConstraintMargins();
+for (Map.Entry<String, Double> entry : margins.entrySet()) {
+    System.out.printf("  %s: %.1f%% margin%n", entry.getKey(), entry.getValue() * 100);
+}
+```
+
+### Shadow Prices
+
+Calculate the economic value of relaxing constraints:
+
+```java
+// Calculate shadow prices (value of constraint relaxation)
+Map<String, Double> shadowPrices = engine.calculateShadowPrices(5000.0, 50.0, 10.0);
+
+System.out.println("Shadow Prices (flow increase per unit constraint relaxation):");
+for (Map.Entry<String, Double> entry : shadowPrices.entrySet()) {
+    if (entry.getValue() > 0) {
+        System.out.printf("  %s: %.2f kg/hr per unit%n", 
+            entry.getKey(), entry.getValue());
+    }
+}
+
+// Identify most valuable constraint to relax
+String mostValuable = shadowPrices.entrySet().stream()
+    .max(Map.Entry.comparingByValue())
+    .map(Map.Entry::getKey)
+    .orElse("none");
+System.out.println("Most valuable to relax: " + mostValuable);
+```
+
+---
+
+## FlowRateOptimizer Integration
+
+The `ProcessOptimizationEngine` integrates with `FlowRateOptimizer` for advanced lift curve generation.
+
+### Creating FlowRateOptimizer
+
+```java
+ProcessOptimizationEngine engine = new ProcessOptimizationEngine(processSystem);
+
+// Create FlowRateOptimizer with auto-detected streams
+FlowRateOptimizer optimizer = engine.createFlowRateOptimizer();
+
+// Use optimizer for detailed flow rate calculations
+double maxFlow = optimizer.findFlowRate(50.0, 10.0, "bara");
+System.out.println("Max flow at P_in=50, P_out=10: " + maxFlow + " kg/hr");
+```
+
+### Comprehensive Lift Curve Generation
+
+```java
+// Define inlet pressure range
+double[] inletPressures = {30.0, 40.0, 50.0, 60.0, 70.0, 80.0};
+double outletPressure = 10.0;
+
+// Generate comprehensive lift curves
+FlowRateOptimizer liftOptimizer = 
+    engine.generateComprehensiveLiftCurve("feed", inletPressures, outletPressure);
+
+// Use the optimizer for additional calculations
+for (double pin : inletPressures) {
+    double flow = liftOptimizer.findFlowRate(pin, outletPressure, "bara");
+    System.out.printf("P_in=%.0f bara -> Max flow = %.0f kg/hr%n", pin, flow);
+}
+```
+
+---
+
 ## Configuration and Tuning
 
 ### Optimization Tolerances
@@ -889,3 +1194,7 @@ import org.apache.logging.log4j.Logger;
 | 1.0 | 2026-01 | Initial release with plugin architecture |
 | 1.1 | 2026-01 | Added driver package and operating envelope |
 | 1.2 | 2026-01 | Added Eclipse VFP export support |
+| 1.3 | 2026-01 | Added OptimizationResultBase unified result class |
+| 1.4 | 2026-01 | Added ProcessConstraintEvaluator with caching and sensitivity |
+| 1.5 | 2026-01 | Added gradient descent optimization |
+| 1.6 | 2026-01 | Added FlowRateOptimizer integration and shadow prices |

@@ -20,7 +20,6 @@ import neqsim.process.equipment.pump.PumpInterface;
  * <li>Flow rate limits</li>
  * <li>Head limits</li>
  * </ul>
- * </p>
  *
  * @author NeqSim Development Team
  * @version 1.0

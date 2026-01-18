@@ -20,7 +20,6 @@ import neqsim.process.equipment.compressor.Compressor;
  * <li>Discharge temperature limits</li>
  * <li>Polytropic head limits</li>
  * </ul>
- * </p>
  *
  * @author NeqSim Development Team
  * @version 1.0

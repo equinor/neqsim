@@ -59,7 +59,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  * If hard constraints are violated at all feasible flow rates, the result is marked as
  * INFEASIBLE_CONSTRAINT.
- * </p>
  *
  * <h2>Example Usage - ProcessSystem with Compressors</h2>
  * 
@@ -1387,7 +1386,7 @@ public class FlowRateOptimizer implements Serializable {
    * ProcessOperatingPoint result =
    *     optimizer.findMaxFlowRateAtPressureBoundaries(80.0, 150.0, "bara", 0.95);
    * 
-   * if (result != null && result.isFeasible()) {
+   * if (result != null &amp;&amp; result.isFeasible()) {
    *   System.out.println("Max flow: " + result.getFlowRate() + " kg/hr");
    *   System.out.println("Total power: " + result.getTotalPower() + " kW");
    * }
@@ -2692,7 +2691,6 @@ public class FlowRateOptimizer implements Serializable {
    * <li>Reports progress during generation</li>
    * <li>Captures warnings and statistics</li>
    * </ul>
-   * </p>
    *
    * @param config the lift curve configuration
    * @return the lift curve result containing all generated tables
@@ -3158,7 +3156,6 @@ public class FlowRateOptimizer implements Serializable {
    * <li>Equipment utilization data</li>
    * <li>Constraint status</li>
    * </ul>
-   * </p>
    *
    * @author ESOL
    * @version 1.0
@@ -4256,7 +4253,6 @@ public class FlowRateOptimizer implements Serializable {
      * <li>THP = tubing head pressure (inlet pressure / wellhead pressure)</li>
      * <li>BHP = bottom hole pressure (outlet pressure in this context)</li>
      * </ul>
-     * </p>
      *
      * @return Eclipse VFP format string ready for inclusion in Eclipse DATA file
      */

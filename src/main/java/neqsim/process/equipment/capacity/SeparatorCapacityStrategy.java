@@ -18,7 +18,6 @@ import neqsim.process.equipment.separator.Separator;
  * <li>Liquid carryover risk</li>
  * <li>Foam handling capacity</li>
  * </ul>
- * </p>
  *
  * @author NeqSim Development Team
  * @version 1.0

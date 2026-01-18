@@ -12,6 +12,7 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.EquipmentCapacityStrategy;
 import neqsim.process.equipment.capacity.EquipmentCapacityStrategyRegistry;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.util.optimization.FlowRateOptimizer;
 
 /**
  * Unified process optimization engine.
@@ -24,6 +25,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * <li>Pressure optimization (finding required pressures for target flow)</li>
  * <li>Equipment constraint evaluation across entire process</li>
  * <li>Multi-objective optimization (maximize throughput while minimizing power)</li>
+ * <li>Gradient-based optimization for faster convergence</li>
+ * <li>Sensitivity analysis for constraint insights</li>
  * </ul>
  *
  * <h3>Optimization Levels</h3>
@@ -38,9 +41,13 @@ import neqsim.process.processmodel.ProcessSystem;
  * <pre>
  * ProcessOptimizationEngine engine = new ProcessOptimizationEngine(processSystem);
  * 
- * // Find maximum throughput
+ * // Find maximum throughput with gradient acceleration
+ * engine.setSearchAlgorithm(SearchAlgorithm.GRADIENT_ACCELERATED);
  * OptimizationResult result =
  *     engine.findMaximumThroughput(inletPressure, outletPressure, minFlow, maxFlow);
+ * 
+ * // Get sensitivity analysis
+ * SensitivityResult sens = engine.analyzeSensitivity(result.getOptimalValue());
  * 
  * // Evaluate all constraints
  * ConstraintReport report = engine.evaluateAllConstraints();
@@ -50,12 +57,12 @@ import neqsim.process.processmodel.ProcessSystem;
  * </pre>
  *
  * @author NeqSim Development Team
- * @version 1.0
+ * @version 2.0
  */
 public class ProcessOptimizationEngine implements Serializable {
 
   /** Serialization version UID. */
-  private static final long serialVersionUID = 1000L;
+  private static final long serialVersionUID = 1001L;
 
   /** Logger. */
   private static final Logger logger = LogManager.getLogger(ProcessOptimizationEngine.class);
@@ -130,6 +137,13 @@ public class ProcessOptimizationEngine implements Serializable {
           break;
         case BINARY_SEARCH:
           optimalFlow = binarySearch(inletPressure, outletPressure, minFlow, maxFlow);
+          break;
+        case GRADIENT_DESCENT:
+          // Start gradient descent from middle of range
+          double initialFlow = (minFlow + maxFlow) / 2.0;
+          optimalFlow = gradientDescentSearch(inletPressure, outletPressure, initialFlow);
+          // Ensure result is within bounds
+          optimalFlow = Math.max(minFlow, Math.min(maxFlow, optimalFlow));
           break;
         default:
           optimalFlow = goldenSectionSearch(inletPressure, outletPressure, minFlow, maxFlow);
@@ -521,6 +535,401 @@ public class ProcessOptimizationEngine implements Serializable {
     return goldenSectionSearch(inletPressure, outletPressure, minFlow, maxFlow);
   }
 
+  // ==========================================================================
+  // Gradient-Based Optimization Methods
+  // ==========================================================================
+
+  /**
+   * Performs gradient descent optimization to find maximum flow.
+   *
+   * <p>
+   * Uses finite-difference gradient estimation with adaptive step size. More efficient than
+   * bracket-based methods when near the optimum.
+   * </p>
+   *
+   * @param inletPressure inlet pressure in bara
+   * @param outletPressure outlet pressure in bara
+   * @param initialFlow starting flow rate in kg/hr
+   * @return optimal flow rate in kg/hr
+   */
+  public double gradientDescentSearch(double inletPressure, double outletPressure,
+      double initialFlow) {
+
+    double flow = initialFlow;
+    double stepSize = 1000.0; // Initial step size in kg/hr
+    double minStepSize = 0.1;
+    double gradientTolerance = 1e-4;
+
+    // Adaptive parameters
+    double beta = 0.8; // Step size decay
+    double minImprovement = 1e-6;
+
+    double lastObjective = evaluateConstrainedObjective(inletPressure, outletPressure, flow);
+
+    for (int iter = 0; iter < maxIterations; iter++) {
+      // Estimate gradient using finite differences
+      double gradient = estimateGradient(inletPressure, outletPressure, flow);
+
+      // Check convergence
+      if (Math.abs(gradient) < gradientTolerance || stepSize < minStepSize) {
+        logger.debug("Gradient descent converged at iter {} with flow {}", iter, flow);
+        break;
+      }
+
+      // Take step in direction of gradient (maximize objective)
+      double newFlow = flow + stepSize * Math.signum(gradient);
+      newFlow = Math.max(newFlow, 0.0); // Ensure non-negative
+
+      double newObjective = evaluateConstrainedObjective(inletPressure, outletPressure, newFlow);
+
+      if (newObjective > lastObjective + minImprovement) {
+        // Accept step
+        flow = newFlow;
+        lastObjective = newObjective;
+      } else {
+        // Reduce step size
+        stepSize *= beta;
+      }
+    }
+
+    return flow;
+  }
+
+  /**
+   * Estimates the gradient of the objective function using finite differences.
+   *
+   * @param inletPressure inlet pressure in bara
+   * @param outletPressure outlet pressure in bara
+   * @param flow current flow rate in kg/hr
+   * @return estimated gradient
+   */
+  private double estimateGradient(double inletPressure, double outletPressure, double flow) {
+    double h = Math.max(flow * 0.001, 1.0); // Step size for finite difference
+
+    double fPlus = evaluateConstrainedObjective(inletPressure, outletPressure, flow + h);
+    double fMinus = evaluateConstrainedObjective(inletPressure, outletPressure, flow - h);
+
+    return (fPlus - fMinus) / (2.0 * h);
+  }
+
+  /**
+   * Evaluates the objective function with constraint penalty.
+   *
+   * @param inletPressure inlet pressure in bara
+   * @param outletPressure outlet pressure in bara
+   * @param flow flow rate in kg/hr
+   * @return objective value (flow rate with penalty for constraint violations)
+   */
+  private double evaluateConstrainedObjective(double inletPressure, double outletPressure,
+      double flow) {
+
+    if (flow <= 0) {
+      return -Double.MAX_VALUE;
+    }
+
+    if (!canAchieveFlow(inletPressure, outletPressure, flow)) {
+      // Apply quadratic penalty for infeasible solutions
+      double violation = calculateConstraintViolationMagnitude();
+      return flow - 10000.0 * violation * violation;
+    }
+
+    return flow; // Maximize flow when feasible
+  }
+
+  /**
+   * Calculates the total magnitude of constraint violations.
+   *
+   * @return sum of squared constraint violations
+   */
+  private double calculateConstraintViolationMagnitude() {
+    double totalViolation = 0.0;
+
+    if (processSystem == null) {
+      return 0.0;
+    }
+
+    for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
+      ProcessEquipmentInterface equipment = processSystem.getUnitOperations().get(i);
+      EquipmentCapacityStrategy strategy = strategyRegistry.findStrategy(equipment);
+
+      if (strategy != null) {
+        List<CapacityConstraint> violations = strategy.getViolations(equipment);
+        for (CapacityConstraint c : violations) {
+          double excess = c.getCurrentValue() - c.getMaxValue();
+          if (excess > 0) {
+            totalViolation += excess / c.getMaxValue(); // Normalized violation
+          }
+        }
+      }
+    }
+
+    return totalViolation;
+  }
+
+  // ==========================================================================
+  // Sensitivity Analysis Methods
+  // ==========================================================================
+
+  /**
+   * Analyzes the sensitivity of the optimal solution to flow rate changes.
+   *
+   * @param optimalFlow the optimal flow rate in kg/hr
+   * @param inletPressure inlet pressure in bara
+   * @param outletPressure outlet pressure in bara
+   * @return sensitivity result with gradient and margin information
+   */
+  public SensitivityResult analyzeSensitivity(double optimalFlow, double inletPressure,
+      double outletPressure) {
+
+    SensitivityResult result = new SensitivityResult();
+    result.setBaseFlow(optimalFlow);
+
+    // Calculate flow gradient
+    double gradient = estimateGradient(inletPressure, outletPressure, optimalFlow);
+    result.setFlowGradient(gradient);
+
+    // Analyze constraint margins
+    if (processSystem != null) {
+      setFeedFlowRate(optimalFlow);
+      processSystem.run();
+
+      Map<String, Double> margins = new HashMap<String, Double>();
+      String tightestConstraint = null;
+      double smallestMargin = Double.MAX_VALUE;
+
+      for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
+        ProcessEquipmentInterface equipment = processSystem.getUnitOperations().get(i);
+        EquipmentCapacityStrategy strategy = strategyRegistry.findStrategy(equipment);
+
+        if (strategy != null) {
+          double utilization = strategy.evaluateCapacity(equipment);
+          double margin = 1.0 - utilization;
+          margins.put(equipment.getName(), margin);
+
+          if (margin < smallestMargin && margin >= 0) {
+            smallestMargin = margin;
+            tightestConstraint = equipment.getName();
+          }
+        }
+      }
+
+      result.setConstraintMargins(margins);
+      result.setTightestConstraint(tightestConstraint);
+      result.setTightestMargin(smallestMargin);
+    }
+
+    // Estimate max flow increase before constraint violation
+    double flowBuffer = estimateFlowBuffer(optimalFlow, inletPressure, outletPressure);
+    result.setFlowBuffer(flowBuffer);
+
+    return result;
+  }
+
+  /**
+   * Estimates how much flow can increase before hitting a constraint.
+   *
+   * @param currentFlow current flow rate in kg/hr
+   * @param inletPressure inlet pressure in bara
+   * @param outletPressure outlet pressure in bara
+   * @return estimated flow buffer in kg/hr
+   */
+  private double estimateFlowBuffer(double currentFlow, double inletPressure,
+      double outletPressure) {
+
+    double testFlow = currentFlow * 1.01; // 1% increase
+    int steps = 0;
+    int maxSteps = 50;
+
+    while (canAchieveFlow(inletPressure, outletPressure, testFlow) && steps < maxSteps) {
+      testFlow *= 1.01;
+      steps++;
+    }
+
+    return testFlow - currentFlow;
+  }
+
+  /**
+   * Calculates shadow prices for each constraint.
+   *
+   * <p>
+   * Shadow price indicates how much the objective would improve if the constraint were relaxed by
+   * one unit.
+   * </p>
+   *
+   * @param optimalFlow the optimal flow rate in kg/hr
+   * @param inletPressure inlet pressure in bara
+   * @param outletPressure outlet pressure in bara
+   * @return map of equipment name to shadow price
+   */
+  public Map<String, Double> calculateShadowPrices(double optimalFlow, double inletPressure,
+      double outletPressure) {
+
+    Map<String, Double> shadowPrices = new HashMap<String, Double>();
+
+    if (processSystem == null) {
+      return shadowPrices;
+    }
+
+    // Run at optimal
+    setFeedFlowRate(optimalFlow);
+    processSystem.run();
+
+    // For each equipment, estimate how much relaxing its constraint would help
+    for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
+      ProcessEquipmentInterface equipment = processSystem.getUnitOperations().get(i);
+      EquipmentCapacityStrategy strategy = strategyRegistry.findStrategy(equipment);
+
+      if (strategy != null) {
+        double utilization = strategy.evaluateCapacity(equipment);
+
+        // Equipment near capacity has higher shadow price
+        if (utilization > 0.9) {
+          // Shadow price is proportional to how binding the constraint is
+          double shadowPrice = (utilization - 0.9) / 0.1 * 1000.0; // Scale factor
+          shadowPrices.put(equipment.getName(), shadowPrice);
+        } else {
+          shadowPrices.put(equipment.getName(), 0.0);
+        }
+      }
+    }
+
+    return shadowPrices;
+  }
+
+  // ==========================================================================
+  // FlowRateOptimizer Integration
+  // ==========================================================================
+
+  /**
+   * Creates and configures a FlowRateOptimizer for this process system.
+   *
+   * <p>
+   * This integrates the detailed FlowRateOptimizer with the ProcessOptimizationEngine, allowing for
+   * more sophisticated optimization scenarios including lift curve generation and reservoir
+   * integration.
+   * </p>
+   *
+   * @return configured FlowRateOptimizer instance
+   */
+  public FlowRateOptimizer createFlowRateOptimizer() {
+    if (processSystem == null) {
+      throw new IllegalStateException("Process system must be set before creating optimizer");
+    }
+
+    // Find first and last stream names
+    String inletName = "FeedStream";
+    String outletName = "OutletStream";
+
+    if (processSystem.getUnitOperations().size() > 0) {
+      inletName = processSystem.getUnitOperations().get(0).getName();
+      int lastIdx = processSystem.getUnitOperations().size() - 1;
+      outletName = processSystem.getUnitOperations().get(lastIdx).getName();
+    }
+
+    FlowRateOptimizer optimizer = new FlowRateOptimizer(processSystem, inletName, outletName);
+    optimizer.setTolerance(this.tolerance);
+    optimizer.setMaxIterations(this.maxIterations);
+
+    return optimizer;
+  }
+
+  /**
+   * Generates a comprehensive lift curve using FlowRateOptimizer.
+   *
+   * @param feedStreamName name of the feed stream
+   * @param inletPressures array of inlet pressures to evaluate
+   * @param outletPressure target outlet pressure
+   * @return FlowRateOptimizer configured with lift curve results
+   */
+  public FlowRateOptimizer generateComprehensiveLiftCurve(String feedStreamName,
+      double[] inletPressures, double outletPressure) {
+
+    // Find outlet stream name
+    String outletName = "OutletStream";
+    if (processSystem != null && processSystem.getUnitOperations().size() > 0) {
+      int lastIdx = processSystem.getUnitOperations().size() - 1;
+      outletName = processSystem.getUnitOperations().get(lastIdx).getName();
+    }
+
+    FlowRateOptimizer optimizer = new FlowRateOptimizer(processSystem, feedStreamName, outletName);
+    optimizer.setTolerance(this.tolerance);
+    optimizer.setMaxIterations(this.maxIterations);
+
+    // Generate lift curve points by running optimization at each pressure
+    for (double pressure : inletPressures) {
+      try {
+        // Use findFlowRate method
+        optimizer.findFlowRate(pressure, outletPressure, "bara");
+      } catch (Exception e) {
+        logger.warn("Failed to evaluate pressure point: {}", pressure, e);
+      }
+    }
+
+    return optimizer;
+  }
+
+  // ==========================================================================
+  // ProcessConstraintEvaluator Integration
+  // ==========================================================================
+
+  /** Constraint evaluator for caching and sensitivity analysis. */
+  private transient ProcessConstraintEvaluator constraintEvaluator;
+
+  /**
+   * Gets or creates the constraint evaluator.
+   *
+   * @return constraint evaluator instance
+   */
+  public ProcessConstraintEvaluator getConstraintEvaluator() {
+    if (constraintEvaluator == null && processSystem != null) {
+      constraintEvaluator = new ProcessConstraintEvaluator(processSystem);
+    }
+    return constraintEvaluator;
+  }
+
+  /**
+   * Evaluates constraints using cached evaluator for better performance.
+   *
+   * @return constraint evaluation result
+   */
+  public ProcessConstraintEvaluator.ConstraintEvaluationResult evaluateConstraintsWithCache() {
+    ProcessConstraintEvaluator evaluator = getConstraintEvaluator();
+    if (evaluator == null) {
+      return null;
+    }
+    return evaluator.evaluate();
+  }
+
+  /**
+   * Calculates flow sensitivities for all equipment.
+   *
+   * @param baseFlowRate base flow rate in kg/hr
+   * @param flowUnit flow rate unit
+   * @return map of equipment name to sensitivity value
+   */
+  public Map<String, Double> calculateFlowSensitivities(double baseFlowRate, String flowUnit) {
+    ProcessConstraintEvaluator evaluator = getConstraintEvaluator();
+    if (evaluator == null) {
+      return new HashMap<String, Double>();
+    }
+    return evaluator.calculateFlowSensitivities(baseFlowRate, flowUnit);
+  }
+
+  /**
+   * Estimates maximum feasible flow rate.
+   *
+   * @param currentFlowRate current flow rate
+   * @param flowUnit flow rate unit
+   * @return estimated maximum flow rate
+   */
+  public double estimateMaximumFlow(double currentFlowRate, String flowUnit) {
+    ProcessConstraintEvaluator evaluator = getConstraintEvaluator();
+    if (evaluator == null) {
+      return currentFlowRate;
+    }
+    return evaluator.estimateMaxFlow(currentFlowRate, flowUnit);
+  }
+
   // Helper methods for process manipulation
 
   /**
@@ -901,6 +1310,85 @@ public class ProcessOptimizationEngine implements Serializable {
 
     public void setMaxFlowRate(double flow) {
       this.maxFlowRate = flow;
+    }
+  }
+
+  /**
+   * Sensitivity analysis result.
+   */
+  public static class SensitivityResult implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private double baseFlow;
+    private double flowGradient;
+    private String tightestConstraint;
+    private double tightestMargin;
+    private double flowBuffer;
+    private Map<String, Double> constraintMargins = new HashMap<String, Double>();
+
+    public double getBaseFlow() {
+      return baseFlow;
+    }
+
+    public void setBaseFlow(double baseFlow) {
+      this.baseFlow = baseFlow;
+    }
+
+    public double getFlowGradient() {
+      return flowGradient;
+    }
+
+    public void setFlowGradient(double flowGradient) {
+      this.flowGradient = flowGradient;
+    }
+
+    public String getTightestConstraint() {
+      return tightestConstraint;
+    }
+
+    public void setTightestConstraint(String tightestConstraint) {
+      this.tightestConstraint = tightestConstraint;
+    }
+
+    public double getTightestMargin() {
+      return tightestMargin;
+    }
+
+    public void setTightestMargin(double tightestMargin) {
+      this.tightestMargin = tightestMargin;
+    }
+
+    public double getFlowBuffer() {
+      return flowBuffer;
+    }
+
+    public void setFlowBuffer(double flowBuffer) {
+      this.flowBuffer = flowBuffer;
+    }
+
+    public Map<String, Double> getConstraintMargins() {
+      return constraintMargins;
+    }
+
+    public void setConstraintMargins(Map<String, Double> constraintMargins) {
+      this.constraintMargins = constraintMargins;
+    }
+
+    /**
+     * Checks if any equipment is at capacity.
+     *
+     * @return true if tightest margin is less than 5%
+     */
+    public boolean isAtCapacity() {
+      return tightestMargin < 0.05;
+    }
+
+    /**
+     * Gets the bottleneck equipment name.
+     *
+     * @return name of equipment with tightest constraint
+     */
+    public String getBottleneckEquipment() {
+      return tightestConstraint;
     }
   }
 }

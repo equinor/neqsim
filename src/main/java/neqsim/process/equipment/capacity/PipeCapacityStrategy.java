@@ -20,7 +20,6 @@ import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
  * <li>Liquid holdup (for multiphase)</li>
  * <li>Flow regime stability</li>
  * </ul>
- * </p>
  *
  * @author NeqSim Development Team
  * @version 1.0

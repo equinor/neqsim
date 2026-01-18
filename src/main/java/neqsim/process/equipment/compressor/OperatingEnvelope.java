@@ -365,6 +365,9 @@ public class OperatingEnvelope implements Serializable {
 
   /**
    * Interpolates surge flow from the surge curve.
+   *
+   * @param head the polytropic head value
+   * @return the interpolated surge flow rate
    */
   private double interpolateSurgeFlow(double head) {
     if (surgeHeads == null || surgeHeads.length == 0) {
@@ -389,6 +392,9 @@ public class OperatingEnvelope implements Serializable {
 
   /**
    * Interpolates stonewall flow from the stonewall curve.
+   *
+   * @param head the polytropic head value
+   * @return the interpolated stonewall flow rate
    */
   private double interpolateStonewallFlow(double head) {
     if (stonewallHeads == null || stonewallHeads.length == 0) {
@@ -412,6 +418,9 @@ public class OperatingEnvelope implements Serializable {
 
   /**
    * Gets surge flow from polynomial fit.
+   *
+   * @param head the polytropic head value
+   * @return the calculated surge flow from polynomial coefficients
    */
   private double getSurgeFlowFromPolynomial(double head) {
     if (surgePolynomialCoeffs == null) {

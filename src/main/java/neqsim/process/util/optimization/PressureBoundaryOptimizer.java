@@ -477,7 +477,6 @@ public class PressureBoundaryOptimizer implements Serializable {
    * <li>All equipment utilization is within limits</li>
    * <li>All compressors are within operating envelope (surge, stonewall)</li>
    * </ul>
-   * </p>
    *
    * @param inletPressure the inlet pressure boundary condition
    * @param targetOutletPressure the target outlet pressure boundary condition

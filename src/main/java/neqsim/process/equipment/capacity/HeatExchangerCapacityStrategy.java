@@ -19,7 +19,6 @@ import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2;
  * <li>Pressure drop (allowable DP per side)</li>
  * <li>Fouling factor impact</li>
  * </ul>
- * </p>
  *
  * @author NeqSim Development Team
  * @version 1.0

@@ -74,7 +74,6 @@ public interface EquipmentCapacityStrategy {
    * <li>1.0 = at design capacity</li>
    * <li>&gt;1.0 = over capacity</li>
    * </ul>
-   * </p>
    *
    * @param equipment the equipment to evaluate
    * @return capacity utilization as a fraction
