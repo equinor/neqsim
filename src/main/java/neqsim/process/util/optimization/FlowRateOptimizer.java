@@ -5,6 +5,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -170,6 +177,10 @@ public class FlowRateOptimizer implements Serializable {
   private boolean autoConfigureProcessCompressors = true; // Auto-setup compressor charts
   private double maxTotalPowerLimit = Double.MAX_VALUE; // Maximum total power for all compressors
   private double maxEquipmentUtilization = 1.0; // Maximum utilization for any equipment (1.0=100%)
+
+  // Parallel execution parameters
+  private boolean enableParallelEvaluation = false; // Enable parallel lift curve generation
+  private int parallelThreads = Runtime.getRuntime().availableProcessors(); // Number of threads
 
   // Progress monitoring
   private transient ProgressCallback progressCallback;
@@ -1575,9 +1586,34 @@ public class FlowRateOptimizer implements Serializable {
 
     // Calculate total number of evaluations for progress reporting
     int totalEvals = inletPressures.length * outletPressures.length;
-    int evalCount = 0;
 
-    // Find max flow for each inlet/outlet pressure combination
+    if (enableParallelEvaluation) {
+      // Parallel evaluation using thread pool
+      generateCapacityTableParallel(table, inletPressures, outletPressures, pressureUnit,
+          maxUtilization, totalEvals);
+    } else {
+      // Sequential evaluation (original implementation)
+      generateCapacityTableSequential(table, inletPressures, outletPressures, pressureUnit,
+          maxUtilization, totalEvals);
+    }
+
+    reportProgress(totalEvals, totalEvals, "Capacity table generation complete");
+    return table;
+  }
+
+  /**
+   * Generates capacity table using sequential evaluation.
+   *
+   * @param table the table to populate
+   * @param inletPressures array of inlet pressures
+   * @param outletPressures array of outlet pressures
+   * @param pressureUnit the pressure unit
+   * @param maxUtilization maximum allowed equipment utilization
+   * @param totalEvals total number of evaluations for progress
+   */
+  private void generateCapacityTableSequential(ProcessCapacityTable table, double[] inletPressures,
+      double[] outletPressures, String pressureUnit, double maxUtilization, int totalEvals) {
+    int evalCount = 0;
     for (int i = 0; i < inletPressures.length; i++) {
       for (int j = 0; j < outletPressures.length; j++) {
         evalCount++;
@@ -1594,9 +1630,152 @@ public class FlowRateOptimizer implements Serializable {
         }
       }
     }
+  }
 
-    reportProgress(totalEvals, totalEvals, "Capacity table generation complete");
-    return table;
+  /**
+   * Generates capacity table using parallel evaluation with thread pool.
+   *
+   * <p>
+   * This method creates a cloned FlowRateOptimizer for each thread to ensure thread safety. Each
+   * evaluation is submitted to a thread pool, and results are collected into the table.
+   * </p>
+   *
+   * @param table the table to populate
+   * @param inletPressures array of inlet pressures
+   * @param outletPressures array of outlet pressures
+   * @param pressureUnit the pressure unit
+   * @param maxUtilization maximum allowed equipment utilization
+   * @param totalEvals total number of evaluations for progress
+   */
+  private void generateCapacityTableParallel(ProcessCapacityTable table, double[] inletPressures,
+      double[] outletPressures, String pressureUnit, double maxUtilization, int totalEvals) {
+
+    // Thread-safe progress counter
+    AtomicInteger evalCount = new AtomicInteger(0);
+
+    // Store results in thread-safe map (key: "i,j" -> value: ProcessOperatingPoint)
+    ConcurrentHashMap<String, ProcessOperatingPoint> results =
+        new ConcurrentHashMap<String, ProcessOperatingPoint>();
+
+    // Create thread pool
+    ExecutorService executor = Executors.newFixedThreadPool(parallelThreads);
+    List<Future<?>> futures = new ArrayList<Future<?>>();
+
+    try {
+      // Submit evaluation tasks
+      for (int i = 0; i < inletPressures.length; i++) {
+        for (int j = 0; j < outletPressures.length; j++) {
+          final int rowIdx = i;
+          final int colIdx = j;
+          final double inletP = inletPressures[i];
+          final double outletP = outletPressures[j];
+
+          Callable<Void> task = new Callable<Void>() {
+            @Override
+            public Void call() {
+              try {
+                // Create a cloned optimizer for thread safety
+                FlowRateOptimizer threadOptimizer = createThreadSafeClone();
+
+                ProcessOperatingPoint point = threadOptimizer.findMaxFlowRateAtPressureBoundaries(
+                    inletP, outletP, pressureUnit, maxUtilization);
+
+                if (point != null) {
+                  results.put(rowIdx + "," + colIdx, point);
+                }
+
+                int currentCount = evalCount.incrementAndGet();
+                reportProgress(currentCount, totalEvals, String
+                    .format("Parallel: Pin=%.1f, Pout=%.1f %s", inletP, outletP, pressureUnit));
+              } catch (Exception e) {
+                logger.debug("Parallel error at Pin={}, Pout={}: {}", inletP, outletP,
+                    e.getMessage());
+                evalCount.incrementAndGet();
+              }
+              return null;
+            }
+          };
+
+          futures.add(executor.submit(task));
+        }
+      }
+
+      // Wait for all tasks to complete
+      for (Future<?> future : futures) {
+        try {
+          future.get();
+        } catch (Exception e) {
+          logger.debug("Error waiting for parallel task: {}", e.getMessage());
+        }
+      }
+    } finally {
+      // Shutdown executor
+      executor.shutdown();
+      try {
+        if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+          executor.shutdownNow();
+        }
+      } catch (InterruptedException e) {
+        executor.shutdownNow();
+        Thread.currentThread().interrupt();
+      }
+    }
+
+    // Populate table from results
+    for (int i = 0; i < inletPressures.length; i++) {
+      for (int j = 0; j < outletPressures.length; j++) {
+        ProcessOperatingPoint point = results.get(i + "," + j);
+        table.setOperatingPoint(i, j, point);
+      }
+    }
+  }
+
+  /**
+   * Creates a thread-safe clone of this optimizer for parallel evaluation.
+   *
+   * <p>
+   * This method clones the underlying ProcessSystem to ensure each thread has its own independent
+   * copy. The clone maintains all configuration settings but operates on a separate process
+   * instance.
+   * </p>
+   *
+   * @return a cloned FlowRateOptimizer for thread-safe use
+   */
+  private FlowRateOptimizer createThreadSafeClone() {
+    // Clone the process system for thread safety
+    ProcessSystem clonedProcess = processSystem.copy();
+
+    // Create new optimizer with cloned process
+    FlowRateOptimizer clone =
+        new FlowRateOptimizer(clonedProcess, inletStreamName, outletStreamName);
+
+    // Copy configuration settings
+    clone.maxIterations = this.maxIterations;
+    clone.tolerance = this.tolerance;
+    clone.minFlowRate = this.minFlowRate;
+    clone.maxFlowRate = this.maxFlowRate;
+    clone.initialFlowGuess = this.initialFlowGuess;
+    clone.maxVelocity = this.maxVelocity;
+    clone.checkCapacityConstraints = this.checkCapacityConstraints;
+    clone.minSurgeMargin = this.minSurgeMargin;
+    clone.solveSpeed = this.solveSpeed;
+    clone.maxPowerLimit = this.maxPowerLimit;
+    clone.maxSpeedLimit = this.maxSpeedLimit;
+    clone.minSpeedLimit = this.minSpeedLimit;
+    clone.autoGenerateCompressorChart = this.autoGenerateCompressorChart;
+    clone.numberOfChartSpeeds = this.numberOfChartSpeeds;
+    clone.speedMarginAboveDesign = this.speedMarginAboveDesign;
+    clone.autoConfigureProcessCompressors = this.autoConfigureProcessCompressors;
+    clone.maxTotalPowerLimit = this.maxTotalPowerLimit;
+    clone.maxEquipmentUtilization = this.maxEquipmentUtilization;
+
+    // Disable parallel in clone to avoid nested parallelism
+    clone.enableParallelEvaluation = false;
+
+    // Don't copy progress callback - each thread reports independently
+    clone.enableProgressLogging = false;
+
+    return clone;
   }
 
   /**
@@ -2163,6 +2342,61 @@ public class FlowRateOptimizer implements Serializable {
    */
   public void setEnableProgressLogging(boolean enabled) {
     this.enableProgressLogging = enabled;
+  }
+
+  /**
+   * Enables or disables parallel evaluation for lift curve generation.
+   *
+   * <p>
+   * When enabled, multiple pressure combinations are evaluated in parallel using a thread pool.
+   * This can significantly speed up lift curve generation for large tables. Note that parallel
+   * evaluation requires the process system to be thread-safe or uses process cloning.
+   * </p>
+   *
+   * <p>
+   * <strong>Important:</strong> Parallel evaluation creates cloned copies of the process system for
+   * each thread, which increases memory usage but ensures thread safety.
+   * </p>
+   *
+   * @param enabled true to enable parallel evaluation, false for sequential (default)
+   */
+  public void setEnableParallelEvaluation(boolean enabled) {
+    this.enableParallelEvaluation = enabled;
+  }
+
+  /**
+   * Checks if parallel evaluation is enabled.
+   *
+   * @return true if parallel evaluation is enabled
+   */
+  public boolean isParallelEvaluationEnabled() {
+    return enableParallelEvaluation;
+  }
+
+  /**
+   * Sets the number of threads to use for parallel lift curve generation.
+   *
+   * <p>
+   * Default is the number of available processors. Setting this too high may cause memory issues as
+   * each thread maintains a cloned copy of the process system.
+   * </p>
+   *
+   * @param threads number of threads (must be at least 1)
+   */
+  public void setParallelThreads(int threads) {
+    if (threads < 1) {
+      throw new IllegalArgumentException("Thread count must be at least 1");
+    }
+    this.parallelThreads = threads;
+  }
+
+  /**
+   * Gets the number of threads configured for parallel evaluation.
+   *
+   * @return the number of threads
+   */
+  public int getParallelThreads() {
+    return parallelThreads;
   }
 
   /**

@@ -85,7 +85,7 @@ Generate a 2D table of operating points for multiple inlet/outlet pressure combi
 double[] inletPressures = {40.0, 50.0, 60.0, 70.0, 80.0};      // bara
 double[] outletPressures = {90.0, 100.0, 110.0, 120.0, 130.0}; // bara
 
-// Generate table
+// Generate table (sequential by default)
 FlowRateOptimizer.ProcessCapacityTable table = 
     optimizer.generateProcessCapacityTable(
         inletPressures, 
@@ -97,7 +97,36 @@ FlowRateOptimizer.ProcessCapacityTable table =
 // Export to Eclipse format
 String eclipseVFP = table.toEclipseFormat();
 System.out.println(eclipseVFP);
+```
 
+### Parallel Lift Curve Generation
+
+For large pressure grids, enable parallel evaluation to speed up generation:
+
+```java
+// Enable parallel evaluation for faster lift curve generation
+optimizer.setEnableParallelEvaluation(true);
+optimizer.setParallelThreads(4);  // Use 4 threads (default: CPU count)
+
+// Generate table in parallel - each pressure combination evaluated concurrently
+FlowRateOptimizer.ProcessCapacityTable table = 
+    optimizer.generateProcessCapacityTable(
+        inletPressures,   // e.g., 10 inlet pressures
+        outletPressures,  // e.g., 10 outlet pressures = 100 evaluations
+        "bara", 
+        0.95
+    );
+```
+
+**Notes on parallel evaluation:**
+- Each thread uses a cloned copy of the process system for thread safety
+- Memory usage increases with thread count
+- Best for large tables (50+ pressure combinations)
+- Progress callbacks still work but may report out-of-order
+
+### Export and Access Results
+
+```java
 // Export to JSON
 String json = table.toJson();
 

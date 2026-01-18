@@ -682,6 +682,65 @@ public class FlowRateOptimizerTest {
   }
 
   @Test
+  public void testGenerateProcessCapacityTableParallel() {
+    // Create two-stage compression process
+    ProcessSystem process = createTwoStageCompressionProcess();
+
+    // Create optimizer with parallel evaluation enabled
+    FlowRateOptimizer optimizer =
+        new FlowRateOptimizer(process, "Feed Stream", "2nd Stage Compressor");
+    optimizer.setAutoConfigureProcessCompressors(true);
+    optimizer.setMinSurgeMargin(-1.0); // Relax surge margin for testing
+    optimizer.setMinFlowRate(30000.0);
+    optimizer.setMaxFlowRate(80000.0);
+
+    // Enable parallel evaluation
+    optimizer.setEnableParallelEvaluation(true);
+    optimizer.setParallelThreads(2); // Use 2 threads for test
+
+    assertTrue(optimizer.isParallelEvaluationEnabled(), "Parallel should be enabled");
+    assertEquals(2, optimizer.getParallelThreads(), "Should have 2 threads");
+
+    // Define pressure grids
+    double[] inletPressures = {70, 80, 90}; // bara
+    double[] outletPressures = {140, 160, 175}; // bara
+
+    // Generate capacity table in parallel
+    long startTime = System.currentTimeMillis();
+    FlowRateOptimizer.ProcessCapacityTable parallelTable =
+        optimizer.generateProcessCapacityTable(inletPressures, outletPressures, "bara", 1.0);
+    long parallelTime = System.currentTimeMillis() - startTime;
+
+    assertNotNull(parallelTable, "Should generate capacity table in parallel");
+
+    // Disable parallel and generate sequential for comparison
+    optimizer.setEnableParallelEvaluation(false);
+    startTime = System.currentTimeMillis();
+    FlowRateOptimizer.ProcessCapacityTable sequentialTable =
+        optimizer.generateProcessCapacityTable(inletPressures, outletPressures, "bara", 1.0);
+    long sequentialTime = System.currentTimeMillis() - startTime;
+
+    assertNotNull(sequentialTable, "Should generate capacity table sequentially");
+
+    // Compare results - should be similar (not exact due to floating point)
+    int parallelFeasible = parallelTable.countFeasiblePoints();
+    int sequentialFeasible = sequentialTable.countFeasiblePoints();
+
+    System.out.println("Parallel feasible points: " + parallelFeasible);
+    System.out.println("Sequential feasible points: " + sequentialFeasible);
+    System.out.println("Parallel time: " + parallelTime + " ms");
+    System.out.println("Sequential time: " + sequentialTime + " ms");
+
+    // Both should have same number of feasible points
+    assertEquals(sequentialFeasible, parallelFeasible,
+        "Parallel and sequential should have same feasible count");
+
+    // Print formatted output
+    System.out.println("\nParallel capacity table:");
+    System.out.println(parallelTable.toFormattedString());
+  }
+
+  @Test
   public void testProcessCapacityTableEclipseFormat() {
     // Create two-stage compression process
     ProcessSystem process = createTwoStageCompressionProcess();
