@@ -241,7 +241,7 @@ The framework integrates with NeqSim's existing ML capabilities:
 | RLEnvironment | `neqsim.process.ml` | Create from AIIntegrationHelper |
 | GymEnvironment | `neqsim.process.ml` | Compatible state/action vectors |
 | ProcessLinkedMPC | `neqsim.process.mpc` | Validate MPC process systems |
-| ProductionOptimizer | `neqsim.process.util.optimization` | Validate optimizer inputs |
+| ProductionOptimizer | `neqsim.process.util.optimizer` | Validate optimizer inputs |
 | SurrogateModelRegistry | `neqsim.process.ml.surrogate` | Physics constraint checking |
 
 ## Exception Remediation
@@ -355,3 +355,4 @@ Run tests:
 4. **Surrogate model validation** integration with SurrogateModelRegistry
 5. **Real-time validation** during simulation stepping
 6. **Custom validation rules** via pluggable validators
+

@@ -515,3 +515,4 @@ class ProcessSimulationEvaluatorTest {
     assertTrue(result.getObjectivesRaw()[0] > 0); // Raw value is positive
   }
 }
+

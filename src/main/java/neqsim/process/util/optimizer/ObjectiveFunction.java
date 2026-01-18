@@ -1,4 +1,4 @@
-package neqsim.process.util.optimization;
+package neqsim.process.util.optimizer;
 
 import java.util.function.ToDoubleFunction;
 import neqsim.process.processmodel.ProcessSystem;

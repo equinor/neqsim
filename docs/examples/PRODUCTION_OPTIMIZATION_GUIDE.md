@@ -44,8 +44,8 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.ProductionOptimizer;
-import neqsim.process.util.optimization.ProductionOptimizer.*;
+import neqsim.process.util.optimizer.ProductionOptimizer;
+import neqsim.process.util.optimizer.ProductionOptimizer.*;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -337,7 +337,7 @@ from neqsim.process.equipment.stream import Stream
 from neqsim.process.equipment.separator import Separator  
 from neqsim.process.equipment.compressor import Compressor
 from neqsim.process.processmodel import ProcessSystem
-from neqsim.process.util.optimization import ProductionOptimizer
+from neqsim.process.util.optimizer import ProductionOptimizer
 
 # Create fluid
 fluid = SystemSrkEos(298.15, 50.0)
@@ -766,3 +766,4 @@ config.tolerance(50.0)  // Coarser tolerance
 | `getMaxUtilization()` | Get maximum utilization across constraints |
 | `isOverloaded()` | Any constraint > 100% |
 | `isHardLimitExceeded()` | Any HARD constraint violated |
+

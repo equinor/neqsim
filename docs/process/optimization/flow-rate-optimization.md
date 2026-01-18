@@ -34,7 +34,7 @@ This is essential for:
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.FlowRateOptimizer;
+import neqsim.process.util.optimizer.FlowRateOptimizer;
 import neqsim.thermo.system.SystemSrkEos;
 
 // Create process
@@ -488,3 +488,4 @@ if (point == null || !point.isFeasible()) {
 | `isFeasible()` | Feasibility status |
 | `getCompressorOperatingPoint()` | Detailed compressor data |
 | `toJson()` | Export to JSON |
+

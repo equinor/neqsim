@@ -19,7 +19,7 @@ The `PressureBoundaryOptimizer` is a simplified wrapper around NeqSim's `Product
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.PressureBoundaryOptimizer;
+import neqsim.process.util.optimizer.PressureBoundaryOptimizer;
 import neqsim.thermo.system.SystemSrkEos;
 
 // Create a simple process
@@ -395,3 +395,4 @@ Files.writeString(Path.of("lift_curve.json"), table.toJson());
 | Very slow generation | Grid too fine | Use coarser grid or parallel execution |
 | NaN flow rates | Process doesn't converge | Check fluid composition and EOS |
 | Power values missing | No compressors in process | Expected for simple valve systems |
+

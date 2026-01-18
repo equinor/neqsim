@@ -1,4 +1,4 @@
-package neqsim.process.util.optimization;
+package neqsim.process.util.optimizer;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -17,26 +17,26 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.ProductionOptimizer.ConstraintSeverity;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationConstraint;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationObjective;
-import neqsim.process.util.optimization.ProductionOptimizer.ObjectiveType;
-import neqsim.process.util.optimization.ProductionOptimizer.IterationRecord;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationResult;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationSummary;
-import neqsim.process.util.optimization.ProductionOptimizer.ScenarioRequest;
-import neqsim.process.util.optimization.ProductionOptimizer.ScenarioResult;
-import neqsim.process.util.optimization.ProductionOptimizer.ScenarioComparisonResult;
-import neqsim.process.util.optimization.ProductionOptimizer.ScenarioKpi;
-import neqsim.process.util.optimization.ProductionOptimizer.EquipmentConstraintRule;
-import neqsim.process.util.optimization.ProductionOptimizer.CapacityRule;
-import neqsim.process.util.optimization.ProductionOptimizer.CapacityRange;
-import neqsim.process.util.optimization.ProductionOptimizer.ConstraintDirection;
-import neqsim.process.util.optimization.ProductionOptimizer.SearchMode;
-import neqsim.process.util.optimization.ProductionOptimizer.ManipulatedVariable;
-import neqsim.process.util.optimization.ProductionOptimizer.UtilizationSeries;
-import neqsim.process.util.optimization.ProductionOptimizationSpecLoader;
+import neqsim.process.util.optimizer.ProductionOptimizer.ConstraintSeverity;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConstraint;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationObjective;
+import neqsim.process.util.optimizer.ProductionOptimizer.ObjectiveType;
+import neqsim.process.util.optimizer.ProductionOptimizer.IterationRecord;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationSummary;
+import neqsim.process.util.optimizer.ProductionOptimizer.ScenarioRequest;
+import neqsim.process.util.optimizer.ProductionOptimizer.ScenarioResult;
+import neqsim.process.util.optimizer.ProductionOptimizer.ScenarioComparisonResult;
+import neqsim.process.util.optimizer.ProductionOptimizer.ScenarioKpi;
+import neqsim.process.util.optimizer.ProductionOptimizer.EquipmentConstraintRule;
+import neqsim.process.util.optimizer.ProductionOptimizer.CapacityRule;
+import neqsim.process.util.optimizer.ProductionOptimizer.CapacityRange;
+import neqsim.process.util.optimizer.ProductionOptimizer.ConstraintDirection;
+import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
+import neqsim.process.util.optimizer.ProductionOptimizer.ManipulatedVariable;
+import neqsim.process.util.optimizer.ProductionOptimizer.UtilizationSeries;
+import neqsim.process.util.optimizer.ProductionOptimizationSpecLoader;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class ProductionOptimizerTest {
@@ -696,3 +696,4 @@ public class ProductionOptimizerTest {
     Assertions.assertTrue(timeline.contains("Iteration"));
   }
 }
+

@@ -1,4 +1,4 @@
-package neqsim.process.util.optimization;
+package neqsim.process.util.optimizer;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -11,10 +11,10 @@ import java.util.Objects;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.ProductionOptimizer.ConstraintSeverity;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationConstraint;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationResult;
+import neqsim.process.util.optimizer.ProductionOptimizer.ConstraintSeverity;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConstraint;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
 
 /**
  * Multi-objective optimizer for process systems.

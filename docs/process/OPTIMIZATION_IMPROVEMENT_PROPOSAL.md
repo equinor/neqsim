@@ -391,7 +391,7 @@ Implementation provides Pareto optimization for competing objectives like throug
   - Epsilon-constraint method
   - Sampling-based Pareto generation
 
-**Package:** `neqsim.process.util.optimization`
+**Package:** `neqsim.process.util.optimizer`
 
 **Documentation:** See [Multi-Objective Optimization Guide](optimization/multi-objective-optimization.md)
 
@@ -475,3 +475,4 @@ NeqSim now has a comprehensive design-to-optimization framework with the Phase 1
 3. **Multi-Objective**: Pareto optimization support
 
 See [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK.md) for complete API documentation and usage examples.
+

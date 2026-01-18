@@ -18,7 +18,7 @@
  * <p>
  * These classes integrate with the existing NeqSim process simulation framework:
  * <ul>
- * <li>{@link neqsim.process.util.optimization.ProductionOptimizer} provides the underlying
+ * <li>{@link neqsim.process.util.optimizer.ProductionOptimizer} provides the underlying
  * bottleneck analysis and optimization algorithms</li>
  * <li>{@link neqsim.process.equipment.reservoir.SimpleReservoir} and
  * {@link neqsim.process.equipment.reservoir.Well} provide reservoir and well models</li>
@@ -50,3 +50,4 @@
  * @since 3.0
  */
 package neqsim.process.util.fielddevelopment;
+

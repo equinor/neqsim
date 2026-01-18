@@ -1,4 +1,4 @@
-package neqsim.process.util.optimization;
+package neqsim.process.util.optimizer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -10,7 +10,7 @@ import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationResult;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -356,3 +356,4 @@ public class PressureBoundaryOptimizerTest {
     assertNotNull(result, "Should return a result");
   }
 }
+

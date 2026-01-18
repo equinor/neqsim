@@ -1,4 +1,4 @@
-package neqsim.process.util.optimization;
+package neqsim.process.util.optimizer;
 
 import java.io.Serializable;
 import org.apache.logging.log4j.LogManager;

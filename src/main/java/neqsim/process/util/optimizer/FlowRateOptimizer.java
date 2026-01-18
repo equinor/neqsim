@@ -1,4 +1,4 @@
-package neqsim.process.util.optimization;
+package neqsim.process.util.optimizer;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -25,8 +25,8 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.FlowRateOptimizationResult.ConstraintViolation;
-import neqsim.process.util.optimization.FlowRateOptimizationResult.Status;
+import neqsim.process.util.optimizer.FlowRateOptimizationResult.ConstraintViolation;
+import neqsim.process.util.optimizer.FlowRateOptimizationResult.Status;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 

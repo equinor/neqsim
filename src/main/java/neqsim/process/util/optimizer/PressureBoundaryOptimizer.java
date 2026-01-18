@@ -1,4 +1,4 @@
-package neqsim.process.util.optimization;
+package neqsim.process.util.optimizer;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -15,14 +15,14 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorChartGenerator;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.ProductionOptimizer.ConstraintDirection;
-import neqsim.process.util.optimization.ProductionOptimizer.ConstraintSeverity;
-import neqsim.process.util.optimization.ProductionOptimizer.ObjectiveType;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationConstraint;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationObjective;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationResult;
-import neqsim.process.util.optimization.ProductionOptimizer.SearchMode;
+import neqsim.process.util.optimizer.ProductionOptimizer.ConstraintDirection;
+import neqsim.process.util.optimizer.ProductionOptimizer.ConstraintSeverity;
+import neqsim.process.util.optimizer.ProductionOptimizer.ObjectiveType;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConstraint;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationObjective;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
+import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
 
 /**
  * Optimizer for finding maximum flow rate given inlet and outlet pressure boundary conditions.

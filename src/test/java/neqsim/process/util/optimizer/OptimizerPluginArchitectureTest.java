@@ -374,3 +374,4 @@ public class OptimizerPluginArchitectureTest {
     assertNotNull(bottleneck, "Should identify a bottleneck");
   }
 }
+

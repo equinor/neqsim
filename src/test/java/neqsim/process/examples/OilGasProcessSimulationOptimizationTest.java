@@ -324,8 +324,8 @@ public class OilGasProcessSimulationOptimizationTest {
         + String.format("%.2f", baselineResults.getOilExportRate()) + " m3/day");
 
     // Create optimizer
-    neqsim.process.util.optimization.ProductionOptimizer optimizer =
-        new neqsim.process.util.optimization.ProductionOptimizer();
+    neqsim.process.util.optimizer.ProductionOptimizer optimizer =
+        new neqsim.process.util.optimizer.ProductionOptimizer();
 
     // Set optimization bounds (feed rate in mole/sec as used by the stream)
     double currentFeedMoleSec = wellStream.getFlowRate("mole/sec");
@@ -335,8 +335,8 @@ public class OilGasProcessSimulationOptimizationTest {
     // Configure optimization
     // The optimizer uses getCapacityDuty() and getCapacityMax() from equipment
     // For compressors with charts, these methods consider surge/stonewall limits
-    neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig config =
-        new neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig(lowerBound,
+    neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig config =
+        new neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig(lowerBound,
             upperBound).rateUnit("mole/sec").tolerance(currentFeedMoleSec * 0.01) // 1% tolerance
                 .maxIterations(30)
                 // Set default utilization limit for all equipment
@@ -351,7 +351,7 @@ public class OilGasProcessSimulationOptimizationTest {
     System.out.println("  Compressor utilization limit: 95%");
 
     // Run optimization
-    neqsim.process.util.optimization.ProductionOptimizer.OptimizationResult result =
+    neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult result =
         optimizer.optimize(process, wellStream, config, java.util.Collections.emptyList(),
             java.util.Collections.emptyList());
 
@@ -372,7 +372,7 @@ public class OilGasProcessSimulationOptimizationTest {
 
     // Print utilization records
     System.out.println("\n--- Equipment Utilization at Optimum ---");
-    for (neqsim.process.util.optimization.ProductionOptimizer.UtilizationRecord record : result
+    for (neqsim.process.util.optimizer.ProductionOptimizer.UtilizationRecord record : result
         .getUtilizationRecords()) {
       boolean isBottleneck = result.getBottleneck() != null
           && record.getEquipmentName().equals(result.getBottleneck().getName());
@@ -614,8 +614,8 @@ public class OilGasProcessSimulationOptimizationTest {
     printFIVStatus(fivAnalyzerLOF, fivAnalyzerFRMS);
 
     // Create optimizer
-    neqsim.process.util.optimization.ProductionOptimizer optimizer =
-        new neqsim.process.util.optimization.ProductionOptimizer();
+    neqsim.process.util.optimizer.ProductionOptimizer optimizer =
+        new neqsim.process.util.optimizer.ProductionOptimizer();
 
     // Set optimization bounds
     double currentFeedMoleSec = wellStream.getFlowRate("mole/sec");
@@ -623,8 +623,8 @@ public class OilGasProcessSimulationOptimizationTest {
     double upperBound = currentFeedMoleSec * 1.5;
 
     // Configure optimization with separator, compressor, and heater/cooler limits
-    neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig config =
-        new neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig(lowerBound,
+    neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig config =
+        new neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig(lowerBound,
             upperBound).rateUnit("mole/sec").tolerance(currentFeedMoleSec * 0.01).maxIterations(30)
                 .defaultUtilizationLimit(0.95)
                 // Set specific limits for different equipment types
@@ -652,20 +652,20 @@ public class OilGasProcessSimulationOptimizationTest {
     // The metric function runs the pipeline and returns velocity utilization
     final double maxVelocity = inletPipeline.getMechanicalDesign().getMaxDesignVelocity();
     final double pipelineUtilizationLimit = 0.85;
-    java.util.List<neqsim.process.util.optimization.ProductionOptimizer.OptimizationConstraint> constraints =
+    java.util.List<neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConstraint> constraints =
         new java.util.ArrayList<>();
-    constraints.add(neqsim.process.util.optimization.ProductionOptimizer.OptimizationConstraint
+    constraints.add(neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConstraint
         .lessThan("Inlet Pipeline Velocity", processSystem -> {
           // Run the pipeline with updated well stream conditions
           inletPipeline.run();
           // Return velocity utilization as fraction
           return inletPipeline.getOutletSuperficialVelocity() / maxVelocity;
         }, pipelineUtilizationLimit, // Limit is 85% utilization
-            neqsim.process.util.optimization.ProductionOptimizer.ConstraintSeverity.HARD, 1.0,
+            neqsim.process.util.optimizer.ProductionOptimizer.ConstraintSeverity.HARD, 1.0,
             "Inlet pipeline velocity must stay below erosional limit"));
 
     // Run optimization
-    neqsim.process.util.optimization.ProductionOptimizer.OptimizationResult result = optimizer
+    neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult result = optimizer
         .optimize(process, wellStream, config, java.util.Collections.emptyList(), constraints);
 
     // Print optimization results
@@ -685,7 +685,7 @@ public class OilGasProcessSimulationOptimizationTest {
 
     // Print all equipment utilizations at optimum
     System.out.println("\n--- Equipment Utilization at Optimum ---");
-    for (neqsim.process.util.optimization.ProductionOptimizer.UtilizationRecord record : result
+    for (neqsim.process.util.optimizer.ProductionOptimizer.UtilizationRecord record : result
         .getUtilizationRecords()) {
       boolean isBottleneck = result.getBottleneck() != null
           && record.getEquipmentName().equals(result.getBottleneck().getName());
@@ -884,3 +884,4 @@ public class OilGasProcessSimulationOptimizationTest {
     }
   }
 }
+

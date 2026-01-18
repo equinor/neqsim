@@ -338,3 +338,4 @@ class OptimizationResultBaseTest {
     assertFalse(result.hasViolations());
   }
 }
+

@@ -1,4 +1,4 @@
-package neqsim.process.util.optimization;
+package neqsim.process.util.optimizer;
 
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.Collections;
@@ -17,10 +17,10 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.ProductionOptimizer.CapacityRule;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationResult;
-import neqsim.process.util.optimization.ProductionOptimizer.UtilizationRecord;
+import neqsim.process.util.optimizer.ProductionOptimizer.CapacityRule;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
+import neqsim.process.util.optimizer.ProductionOptimizer.UtilizationRecord;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -682,3 +682,4 @@ public class ProcessOptimizationExampleTest {
     return maxUtil;
   }
 }
+

@@ -8,9 +8,9 @@ import java.util.Objects;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.ProductionOptimizer;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationResult;
+import neqsim.process.util.optimizer.ProductionOptimizer;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
 
 /**
  * Models production decline curves and plateau rates for field development planning.
@@ -1077,3 +1077,4 @@ public class ProductionProfile implements Serializable {
     return facility;
   }
 }
+

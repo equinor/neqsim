@@ -450,7 +450,7 @@ class ProcessOptimizationEngineTest {
 
   @Test
   void testCreateFlowRateOptimizer() {
-    neqsim.process.util.optimization.FlowRateOptimizer flowOptimizer =
+    neqsim.process.util.optimizer.FlowRateOptimizer flowOptimizer =
         engine.createFlowRateOptimizer();
 
     assertNotNull(flowOptimizer);
@@ -469,7 +469,7 @@ class ProcessOptimizationEngineTest {
   void testGenerateComprehensiveLiftCurve() {
     double[] inletPressures = {40.0, 50.0, 60.0};
 
-    neqsim.process.util.optimization.FlowRateOptimizer optimizer =
+    neqsim.process.util.optimizer.FlowRateOptimizer optimizer =
         engine.generateComprehensiveLiftCurve("feed", inletPressures, 10.0);
 
     assertNotNull(optimizer);
@@ -488,3 +488,5 @@ class ProcessOptimizationEngineTest {
     assertTrue(report.getEquipmentStatuses().isEmpty());
   }
 }
+
+

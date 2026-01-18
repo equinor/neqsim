@@ -12,7 +12,7 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.EquipmentCapacityStrategy;
 import neqsim.process.equipment.capacity.EquipmentCapacityStrategyRegistry;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.FlowRateOptimizer;
+import neqsim.process.util.optimizer.FlowRateOptimizer;
 
 /**
  * Unified process optimization engine.
@@ -187,6 +187,8 @@ public class ProcessOptimizationEngine implements Serializable {
 
       result.setOptimalValue(optimalFlow);
       result.setConverged(true);
+      result.setInletPressure(inletPressure);
+      result.setOutletPressure(outletPressure);
 
       // Run at optimal and collect metrics
       if (processSystem != null) {
@@ -194,6 +196,16 @@ public class ProcessOptimizationEngine implements Serializable {
         processSystem.run();
         result.setConstraintViolations(evaluateAllConstraintViolations());
         result.setBottleneck(findBottleneckEquipment());
+
+        // Auto-generate sensitivity analysis
+        try {
+          SensitivityResult sensitivity =
+              analyzeSensitivity(optimalFlow, inletPressure, outletPressure);
+          result.setSensitivity(sensitivity);
+        } catch (Exception sensEx) {
+          logger.debug("Sensitivity analysis failed: {}", sensEx.getMessage());
+          // Non-fatal - optimization result is still valid
+        }
       }
 
     } catch (Exception e) {
@@ -1477,13 +1489,16 @@ public class ProcessOptimizationEngine implements Serializable {
    * Result of an optimization run.
    */
   public static class OptimizationResult implements Serializable {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
     private String objective;
     private double optimalValue;
     private boolean converged;
     private String errorMessage;
     private String bottleneck;
     private List<String> constraintViolations = new ArrayList<String>();
+    private SensitivityResult sensitivity;
+    private double inletPressure;
+    private double outletPressure;
 
     public String getObjective() {
       return objective;
@@ -1531,6 +1546,91 @@ public class ProcessOptimizationEngine implements Serializable {
 
     public void setConstraintViolations(List<String> violations) {
       this.constraintViolations = violations;
+    }
+
+    /**
+     * Gets the sensitivity analysis result.
+     *
+     * <p>
+     * The sensitivity result is automatically generated when optimization completes, providing
+     * information about constraint margins, flow gradients, and bottleneck equipment.
+     * </p>
+     *
+     * @return the sensitivity result, or null if not available
+     */
+    public SensitivityResult getSensitivity() {
+      return sensitivity;
+    }
+
+    /**
+     * Sets the sensitivity analysis result.
+     *
+     * @param sensitivity the sensitivity result
+     */
+    public void setSensitivity(SensitivityResult sensitivity) {
+      this.sensitivity = sensitivity;
+    }
+
+    /**
+     * Gets the inlet pressure used in optimization.
+     *
+     * @return inlet pressure in bara
+     */
+    public double getInletPressure() {
+      return inletPressure;
+    }
+
+    /**
+     * Sets the inlet pressure.
+     *
+     * @param inletPressure inlet pressure in bara
+     */
+    public void setInletPressure(double inletPressure) {
+      this.inletPressure = inletPressure;
+    }
+
+    /**
+     * Gets the outlet pressure used in optimization.
+     *
+     * @return outlet pressure in bara
+     */
+    public double getOutletPressure() {
+      return outletPressure;
+    }
+
+    /**
+     * Sets the outlet pressure.
+     *
+     * @param outletPressure outlet pressure in bara
+     */
+    public void setOutletPressure(double outletPressure) {
+      this.outletPressure = outletPressure;
+    }
+
+    /**
+     * Checks if the system is near capacity at the optimal flow rate.
+     *
+     * <p>
+     * Convenience method that delegates to the sensitivity result.
+     * </p>
+     *
+     * @return true if utilization exceeds 95%
+     */
+    public boolean isNearCapacity() {
+      return sensitivity != null && sensitivity.isAtCapacity();
+    }
+
+    /**
+     * Gets the available margin before hitting capacity.
+     *
+     * <p>
+     * Convenience method that delegates to the sensitivity result.
+     * </p>
+     *
+     * @return margin as a fraction (0.05 = 5% headroom), or 1.0 if sensitivity not available
+     */
+    public double getAvailableMargin() {
+      return sensitivity != null ? sensitivity.getTightestMargin() : 1.0;
     }
   }
 

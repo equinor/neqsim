@@ -119,9 +119,9 @@
  * @see neqsim.process.util.optimizer.ProcessConstraintEvaluator
  * @see neqsim.process.util.optimizer.OptimizationResultBase
  * @see neqsim.process.util.optimizer.EclipseVFPExporter
- * @see neqsim.process.util.optimization.FlowRateOptimizer
- * @see neqsim.process.util.optimization.ProductionOptimizer
+ * @see neqsim.process.util.optimizer.FlowRateOptimizer
+ * @see neqsim.process.util.optimizer.ProductionOptimizer
  * @author NeqSim Development Team
- * @version 1.6
+ * @version 1.7
  */
 package neqsim.process.util.optimizer;

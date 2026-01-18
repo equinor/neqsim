@@ -262,7 +262,7 @@ double growthRate = capacity.calculateCapacityGrowthRate();
 The `FacilityCapacity` class leverages the existing `ProductionOptimizer` infrastructure for bottleneck analysis:
 
 ```java
-import neqsim.process.util.optimization.ProductionOptimizer;
+import neqsim.process.util.optimizer.ProductionOptimizer;
 
 // FacilityCapacity wraps ProductionOptimizer
 FacilityCapacity capacity = new FacilityCapacity("Platform", process);
@@ -543,3 +543,4 @@ See the Javadoc documentation for complete API details:
 - [`WellScheduler`](../javadoc/neqsim/process/util/fielddevelopment/WellScheduler.html)
 - [`FacilityCapacity`](../javadoc/neqsim/process/util/fielddevelopment/FacilityCapacity.html)
 - [`SensitivityAnalysis`](../javadoc/neqsim/process/util/fielddevelopment/SensitivityAnalysis.html)
+

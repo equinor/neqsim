@@ -231,12 +231,12 @@ The `ProductionOptimizer` utility adds structured reporting and constraint handl
 
 ```java
 import java.util.List;
-import neqsim.process.util.optimization.ProductionOptimizer;
-import neqsim.process.util.optimization.ProductionOptimizer.ConstraintSeverity;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationConstraint;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationObjective;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationResult;
+import neqsim.process.util.optimizer.ProductionOptimizer;
+import neqsim.process.util.optimizer.ProductionOptimizer.ConstraintSeverity;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConstraint;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationObjective;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
 
 ProductionOptimizer optimizer = new ProductionOptimizer();
 
@@ -544,4 +544,5 @@ Once the bottleneck is identified (e.g., a compressor), you can simulate a "debo
 2.  Re-run the optimization loop.
 3.  Identify the *new* bottleneck and the new maximum production rate.
 4.  Calculate the ROI of the upgrade based on the increased production.
+
 

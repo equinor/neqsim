@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.ProductionOptimizer;
+import neqsim.process.util.optimizer.ProductionOptimizer;
 
 /**
  * Schedules well interventions, workovers, and tracks well availability.
@@ -1254,3 +1254,4 @@ public class WellScheduler implements Serializable {
     this.defaultRateUnit = Objects.requireNonNull(rateUnit);
   }
 }
+

@@ -1,6 +1,6 @@
 # Multi-Objective Optimization for Process Systems
 
-The `neqsim.process.util.optimization` package provides a comprehensive **multi-objective optimization** framework for finding Pareto-optimal solutions when optimizing competing objectives in process simulations.
+The `neqsim.process.util.optimizer` package provides a comprehensive **multi-objective optimization** framework for finding Pareto-optimal solutions when optimizing competing objectives in process simulations.
 
 ## Table of Contents
 
@@ -305,7 +305,7 @@ import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.*;
+import neqsim.process.util.optimizer.*;
 import neqsim.thermo.system.SystemSrkEos;
 import java.util.Arrays;
 import java.util.List;
@@ -429,7 +429,7 @@ Knee Point (Best Trade-off):
 Add explicit constraints (beyond equipment capacity limits):
 
 ```java
-import neqsim.process.util.optimization.ProductionOptimizer.*;
+import neqsim.process.util.optimizer.ProductionOptimizer.*;
 
 // Define a power constraint
 OptimizationConstraint powerConstraint = OptimizationConstraint.lessThan(
@@ -663,3 +663,4 @@ System.out.println("  Best trade-off: " + knee.getRawValue(0) + " kg/hr at "
 ---
 
 *Last updated: January 2026*
+

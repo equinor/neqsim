@@ -1,4 +1,4 @@
-package neqsim.process.util.optimization;
+package neqsim.process.util.optimizer;
 
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;

@@ -20,9 +20,9 @@ import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.ProductionOptimizer;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationResult;
+import neqsim.process.util.optimizer.ProductionOptimizer;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
 
 /**
  * Monte Carlo sensitivity analysis for field development uncertainty quantification.
@@ -1410,3 +1410,4 @@ public class SensitivityAnalysis implements Serializable {
     return baseProcess;
   }
 }
+

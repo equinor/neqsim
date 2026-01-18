@@ -50,7 +50,7 @@ import neqsim.process.processmodel.graph.ProcessGraph;
 import neqsim.process.processmodel.graph.ProcessGraphBuilder;
 import neqsim.process.processmodel.graph.ProcessNode;
 import neqsim.process.util.report.Report;
-import neqsim.process.util.optimization.FlowRateOptimizer;
+import neqsim.process.util.optimizer.FlowRateOptimizer;
 import neqsim.process.util.optimizer.ProcessOptimizationEngine;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -3381,10 +3381,10 @@ public class ProcessSystem extends SimulationBaseClass {
    * </pre>
    *
    * @return a new batch study builder configured for this process
-   * @see neqsim.process.util.optimization.BatchStudy
+   * @see neqsim.process.util.optimizer.BatchStudy
    */
-  public neqsim.process.util.optimization.BatchStudy.Builder createBatchStudy() {
-    return neqsim.process.util.optimization.BatchStudy.builder(this);
+  public neqsim.process.util.optimizer.BatchStudy.Builder createBatchStudy() {
+    return neqsim.process.util.optimizer.BatchStudy.builder(this);
   }
 
   // ============ SAFETY SCENARIO GENERATION ============
@@ -4002,3 +4002,4 @@ public class ProcessSystem extends SimulationBaseClass {
    * public Report getReport(){ return this.new Report(); }
    */
 }
+

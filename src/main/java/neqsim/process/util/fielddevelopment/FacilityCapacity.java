@@ -13,17 +13,17 @@ import java.util.stream.Collectors;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.ProductionOptimizer;
-import neqsim.process.util.optimization.ProductionOptimizer.ConstraintSeverity;
-import neqsim.process.util.optimization.ProductionOptimizer.ObjectiveType;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationConfig;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationConstraint;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationObjective;
-import neqsim.process.util.optimization.ProductionOptimizer.OptimizationResult;
-import neqsim.process.util.optimization.ProductionOptimizer.ScenarioComparisonResult;
-import neqsim.process.util.optimization.ProductionOptimizer.ScenarioKpi;
-import neqsim.process.util.optimization.ProductionOptimizer.ScenarioRequest;
-import neqsim.process.util.optimization.ProductionOptimizer.UtilizationRecord;
+import neqsim.process.util.optimizer.ProductionOptimizer;
+import neqsim.process.util.optimizer.ProductionOptimizer.ConstraintSeverity;
+import neqsim.process.util.optimizer.ProductionOptimizer.ObjectiveType;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConstraint;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationObjective;
+import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
+import neqsim.process.util.optimizer.ProductionOptimizer.ScenarioComparisonResult;
+import neqsim.process.util.optimizer.ProductionOptimizer.ScenarioKpi;
+import neqsim.process.util.optimizer.ProductionOptimizer.ScenarioRequest;
+import neqsim.process.util.optimizer.ProductionOptimizer.UtilizationRecord;
 
 /**
  * Extended facility capacity analysis for field development planning.
@@ -1087,3 +1087,4 @@ public class FacilityCapacity implements Serializable {
     costFactorsByName.put(equipmentName, costPerUnit);
   }
 }
+
