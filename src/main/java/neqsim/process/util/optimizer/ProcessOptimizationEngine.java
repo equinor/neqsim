@@ -88,11 +88,32 @@ public class ProcessOptimizationEngine implements Serializable {
   /** Constraint evaluation cache. */
   private transient Map<String, List<CapacityConstraint>> constraintCache;
 
+  // Armijo-Wolfe line search parameters
+  private double armijoC1 = 1e-4; // Sufficient decrease parameter
+  private double wolfeC2 = 0.9; // Curvature condition parameter
+  private int maxLineSearchIterations = 20;
+
+  // BFGS parameters
+  private double bfgsGradientTolerance = 1e-6;
+
   /**
    * Search algorithm options.
    */
   public enum SearchAlgorithm {
-    BINARY_SEARCH, GOLDEN_SECTION, NELDER_MEAD, PARTICLE_SWARM, GRADIENT_DESCENT
+    /** Simple binary search for monotonic objectives. */
+    BINARY_SEARCH,
+    /** Golden section search for unimodal objectives. */
+    GOLDEN_SECTION,
+    /** Nelder-Mead simplex method for multi-dimensional. */
+    NELDER_MEAD,
+    /** Particle swarm optimization for global search. */
+    PARTICLE_SWARM,
+    /** Gradient descent with adaptive step size. */
+    GRADIENT_DESCENT,
+    /** Gradient descent with Armijo-Wolfe line search for guaranteed convergence. */
+    GRADIENT_DESCENT_ARMIJO_WOLFE,
+    /** BFGS quasi-Newton method for fast convergence. */
+    BFGS
   }
 
   /**
@@ -144,6 +165,17 @@ public class ProcessOptimizationEngine implements Serializable {
           optimalFlow = gradientDescentSearch(inletPressure, outletPressure, initialFlow);
           // Ensure result is within bounds
           optimalFlow = Math.max(minFlow, Math.min(maxFlow, optimalFlow));
+          break;
+        case GRADIENT_DESCENT_ARMIJO_WOLFE:
+          // Gradient descent with Armijo-Wolfe line search
+          double initFlowAW = (minFlow + maxFlow) / 2.0;
+          optimalFlow = gradientDescentArmijoWolfeSearch(inletPressure, outletPressure, initFlowAW);
+          optimalFlow = Math.max(minFlow, Math.min(maxFlow, optimalFlow));
+          break;
+        case BFGS:
+          // BFGS quasi-Newton method
+          double initFlowBFGS = (minFlow + maxFlow) / 2.0;
+          optimalFlow = bfgsSearch(inletPressure, outletPressure, initFlowBFGS, minFlow, maxFlow);
           break;
         default:
           optimalFlow = goldenSectionSearch(inletPressure, outletPressure, minFlow, maxFlow);
@@ -664,6 +696,351 @@ public class ProcessOptimizationEngine implements Serializable {
     }
 
     return totalViolation;
+  }
+
+  // ==========================================================================
+  // Advanced Optimization Methods: Armijo-Wolfe Line Search and BFGS
+  // ==========================================================================
+
+  /**
+   * Performs gradient descent with Armijo-Wolfe line search conditions.
+   *
+   * <p>
+   * The Armijo-Wolfe conditions ensure:
+   * <ul>
+   * <li><strong>Sufficient decrease (Armijo):</strong> f(x + alpha*d) &lt;= f(x) + c1*alpha*grad'*d
+   * </li>
+   * <li><strong>Curvature condition (Wolfe):</strong> |grad(x + alpha*d)'*d| &lt;=
+   * c2*|grad'*d|</li>
+   * </ul>
+   * These conditions guarantee convergence and avoid too-small or too-large steps.
+   * </p>
+   *
+   * @param inletPressure inlet pressure in bara
+   * @param outletPressure outlet pressure in bara
+   * @param initialFlow starting flow rate in kg/hr
+   * @return optimal flow rate in kg/hr
+   */
+  public double gradientDescentArmijoWolfeSearch(double inletPressure, double outletPressure,
+      double initialFlow) {
+
+    double flow = initialFlow;
+    double alpha = Math.max(initialFlow * 0.1, 100.0); // Initial step size based on flow scale
+
+    for (int iter = 0; iter < maxIterations; iter++) {
+      double f0 = evaluateConstrainedObjective(inletPressure, outletPressure, flow);
+
+      // Handle invalid objective values
+      if (Double.isNaN(f0) || Double.isInfinite(f0)) {
+        logger.debug("Invalid objective at flow {}", flow);
+        return flow;
+      }
+
+      double grad = estimateGradient(inletPressure, outletPressure, flow);
+
+      // Handle invalid gradient
+      if (Double.isNaN(grad) || Double.isInfinite(grad)) {
+        logger.debug("Invalid gradient at flow {}", flow);
+        return flow;
+      }
+
+      // Check convergence
+      if (Math.abs(grad) < bfgsGradientTolerance) {
+        logger.debug("Armijo-Wolfe converged at iter {} with flow {}", iter, flow);
+        break;
+      }
+
+      // Search direction (maximize, so use positive gradient)
+      double direction = Math.signum(grad);
+      double directionalDerivative = Math.abs(grad); // Always positive for line search
+
+      // Armijo-Wolfe line search
+      alpha = armijoWolfeLineSearch(inletPressure, outletPressure, flow, direction, f0,
+          directionalDerivative, alpha);
+
+      if (alpha <= 0 || Double.isNaN(alpha)) {
+        logger.debug("Line search failed at iter {}", iter);
+        // Fall back to simple step
+        alpha = Math.max(flow * 0.01, 10.0);
+      }
+
+      // Update flow
+      double newFlow = flow + alpha * direction;
+      newFlow = Math.max(newFlow, 1.0); // Ensure positive
+
+      // Check if we made progress
+      if (Math.abs(newFlow - flow) < 1.0) {
+        logger.debug("Armijo-Wolfe: step too small at iter {}", iter);
+        break;
+      }
+
+      flow = newFlow;
+    }
+
+    return flow;
+  }
+
+  /**
+   * Performs Armijo-Wolfe line search to find step size satisfying both conditions.
+   *
+   * @param inletPressure inlet pressure in bara
+   * @param outletPressure outlet pressure in bara
+   * @param flow current flow rate
+   * @param direction search direction
+   * @param f0 objective at current point
+   * @param directionalDerivative gradient dot direction
+   * @param initialAlpha initial step size guess
+   * @return step size satisfying Armijo-Wolfe conditions, or initial alpha if failed
+   */
+  private double armijoWolfeLineSearch(double inletPressure, double outletPressure, double flow,
+      double direction, double f0, double directionalDerivative, double initialAlpha) {
+
+    double alphaLo = 0.0;
+    double alphaHi = initialAlpha * 10.0; // Bounded upper limit instead of MAX_VALUE
+    double alpha = initialAlpha;
+    double bestAlpha = initialAlpha;
+    double bestObjective = f0;
+
+    for (int i = 0; i < maxLineSearchIterations; i++) {
+      double newFlow = flow + alpha * direction;
+
+      // Ensure positive flow
+      if (newFlow <= 0) {
+        alphaHi = alpha;
+        alpha = (alphaLo + alphaHi) / 2.0;
+        if (alpha < 1e-10) {
+          break;
+        }
+        continue;
+      }
+
+      double fNew = evaluateConstrainedObjective(inletPressure, outletPressure, newFlow);
+
+      // Handle invalid values
+      if (Double.isNaN(fNew) || Double.isInfinite(fNew)) {
+        alphaHi = alpha;
+        alpha = (alphaLo + alphaHi) / 2.0;
+        continue;
+      }
+
+      // Track best found
+      if (fNew > bestObjective) {
+        bestAlpha = alpha;
+        bestObjective = fNew;
+      }
+
+      // Check Armijo condition (sufficient decrease)
+      // For maximization: f(new) >= f0 + c1*alpha*grad
+      boolean armijoSatisfied = fNew >= f0 + armijoC1 * alpha * directionalDerivative;
+
+      if (!armijoSatisfied) {
+        // Step too large, reduce
+        alphaHi = alpha;
+        alpha = (alphaLo + alphaHi) / 2.0;
+        continue;
+      }
+
+      // Check Wolfe curvature condition
+      double gradNew = estimateGradient(inletPressure, outletPressure, newFlow);
+
+      // Handle invalid gradient
+      if (Double.isNaN(gradNew) || Double.isInfinite(gradNew)) {
+        return bestAlpha; // Return best found so far
+      }
+
+      double newDirectionalDerivative = gradNew * direction;
+
+      // For maximization: |grad_new| <= c2 * |grad_old|
+      boolean wolfeSatisfied =
+          Math.abs(newDirectionalDerivative) <= wolfeC2 * Math.abs(directionalDerivative);
+
+      if (wolfeSatisfied) {
+        return alpha; // Found acceptable step
+      }
+
+      // Curvature not satisfied
+      if (newDirectionalDerivative * direction > 0) {
+        // Gradient still positive (for maximization), try larger step
+        alphaLo = alpha;
+        alpha = Math.min(2.0 * alpha, alphaHi);
+      } else {
+        // Overshot, reduce step
+        alphaHi = alpha;
+        alpha = (alphaLo + alphaHi) / 2.0;
+      }
+
+      // Check for convergence
+      if (alphaHi - alphaLo < 1e-10) {
+        break;
+      }
+    }
+
+    // Return best alpha found
+    return bestAlpha > 0 ? bestAlpha : initialAlpha * 0.1;
+  }
+
+  /**
+   * Performs BFGS (Broyden-Fletcher-Goldfarb-Shanno) quasi-Newton optimization.
+   *
+   * <p>
+   * BFGS is a quasi-Newton method that approximates the inverse Hessian matrix using gradient
+   * information. This provides superlinear convergence near the optimum, typically much faster than
+   * steepest descent.
+   * </p>
+   *
+   * <p>
+   * For the 1D flow optimization problem, this simplifies to a scalar version that maintains an
+   * approximation of the inverse second derivative.
+   * </p>
+   *
+   * @param inletPressure inlet pressure in bara
+   * @param outletPressure outlet pressure in bara
+   * @param initialFlow starting flow rate in kg/hr
+   * @param minFlow minimum allowed flow in kg/hr
+   * @param maxFlow maximum allowed flow in kg/hr
+   * @return optimal flow rate in kg/hr
+   */
+  public double bfgsSearch(double inletPressure, double outletPressure, double initialFlow,
+      double minFlow, double maxFlow) {
+
+    double flow = initialFlow;
+    double H = 1000.0; // Initial inverse Hessian approximation (larger for faster initial steps)
+    double bestFlow = flow;
+    double bestObjective = evaluateConstrainedObjective(inletPressure, outletPressure, flow);
+
+    double grad = estimateGradient(inletPressure, outletPressure, flow);
+
+    for (int iter = 0; iter < maxIterations; iter++) {
+      // Handle invalid gradient
+      if (Double.isNaN(grad) || Double.isInfinite(grad)) {
+        logger.debug("BFGS: invalid gradient at iter {}", iter);
+        return bestFlow;
+      }
+
+      // Check convergence
+      if (Math.abs(grad) < bfgsGradientTolerance) {
+        logger.debug("BFGS converged at iter {} with flow {}", iter, flow);
+        break;
+      }
+
+      // Compute search direction: d = H * grad (for maximization)
+      // Use gradient direction directly scaled by H
+      double stepSize = H * Math.abs(grad);
+      stepSize = Math.min(stepSize, (maxFlow - minFlow) * 0.5); // Limit step size
+      stepSize = Math.max(stepSize, 1.0); // Minimum step
+
+      double direction = Math.signum(grad);
+      double newFlow = flow + stepSize * direction;
+
+      // Enforce bounds
+      newFlow = Math.max(minFlow, Math.min(maxFlow, newFlow));
+
+      // Evaluate new point
+      double newObjective = evaluateConstrainedObjective(inletPressure, outletPressure, newFlow);
+
+      // Track best solution
+      if (newObjective > bestObjective) {
+        bestFlow = newFlow;
+        bestObjective = newObjective;
+      }
+
+      // Compute actual step taken
+      double s = newFlow - flow;
+
+      if (Math.abs(s) < 1e-6) {
+        logger.debug("BFGS: step too small at iter {}", iter);
+        break;
+      }
+
+      // Compute new gradient
+      double newGrad = estimateGradient(inletPressure, outletPressure, newFlow);
+
+      // Handle invalid new gradient
+      if (Double.isNaN(newGrad) || Double.isInfinite(newGrad)) {
+        logger.debug("BFGS: invalid new gradient at iter {}", iter);
+        return bestFlow;
+      }
+
+      // Gradient difference
+      double y = newGrad - grad;
+
+      // BFGS update for inverse Hessian (1D scalar version)
+      // Standard BFGS: H_new = s / y for 1D
+      double sy = s * y;
+
+      if (Math.abs(sy) > 1e-10) {
+        // Secant update
+        double newH = Math.abs(s / y);
+        // Blend with previous to avoid oscillation
+        H = 0.8 * newH + 0.2 * H;
+      }
+
+      // Safeguard: bound H to prevent numerical issues
+      H = Math.max(1.0, Math.min(H, 1e5));
+
+      // Backtracking if no improvement
+      if (newObjective < bestObjective - 1e-6) {
+        // Not improving, reduce H
+        H *= 0.5;
+      }
+
+      // Update state
+      flow = newFlow;
+      grad = newGrad;
+    }
+
+    return bestFlow;
+  }
+
+  /**
+   * Sets the Armijo sufficient decrease parameter (c1).
+   *
+   * <p>
+   * Typical values: 1e-4 (default). Must satisfy 0 &lt; c1 &lt; c2 &lt; 1.
+   * </p>
+   *
+   * @param c1 the Armijo parameter (default 1e-4)
+   */
+  public void setArmijoC1(double c1) {
+    if (c1 <= 0 || c1 >= 1) {
+      throw new IllegalArgumentException("Armijo c1 must be in (0, 1)");
+    }
+    this.armijoC1 = c1;
+  }
+
+  /**
+   * Sets the Wolfe curvature condition parameter (c2).
+   *
+   * <p>
+   * Typical values: 0.9 for quasi-Newton methods (default), 0.1 for conjugate gradient. Must
+   * satisfy 0 &lt; c1 &lt; c2 &lt; 1.
+   * </p>
+   *
+   * @param c2 the Wolfe curvature parameter (default 0.9)
+   */
+  public void setWolfeC2(double c2) {
+    if (c2 <= 0 || c2 >= 1) {
+      throw new IllegalArgumentException("Wolfe c2 must be in (0, 1)");
+    }
+    this.wolfeC2 = c2;
+  }
+
+  /**
+   * Sets the BFGS gradient tolerance for convergence.
+   *
+   * @param tolerance gradient tolerance (default 1e-6)
+   */
+  public void setBfgsGradientTolerance(double tolerance) {
+    this.bfgsGradientTolerance = tolerance;
+  }
+
+  /**
+   * Sets the maximum number of line search iterations.
+   *
+   * @param iterations maximum iterations (default 20)
+   */
+  public void setMaxLineSearchIterations(int iterations) {
+    this.maxLineSearchIterations = iterations;
   }
 
   // ==========================================================================

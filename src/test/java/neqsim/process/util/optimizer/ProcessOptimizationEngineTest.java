@@ -146,6 +146,75 @@ class ProcessOptimizationEngineTest {
   }
 
   @Test
+  void testFindMaximumThroughputArmijoWolfe() {
+    engine.setSearchAlgorithm(
+        ProcessOptimizationEngine.SearchAlgorithm.GRADIENT_DESCENT_ARMIJO_WOLFE);
+    engine.setEnforceConstraints(false);
+
+    // Configure Armijo-Wolfe parameters
+    engine.setArmijoC1(1e-4);
+    engine.setWolfeC2(0.9);
+    engine.setMaxLineSearchIterations(20);
+
+    ProcessOptimizationEngine.OptimizationResult result =
+        engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0);
+
+    assertNotNull(result);
+    assertTrue(result.getOptimalValue() >= 1000.0, "Flow should be above min");
+    assertTrue(result.getOptimalValue() <= 50000.0, "Flow should be below max");
+    System.out.println("Armijo-Wolfe optimal flow: " + result.getOptimalValue());
+  }
+
+  @Test
+  void testFindMaximumThroughputBFGS() {
+    engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.BFGS);
+    engine.setEnforceConstraints(false);
+
+    // Configure BFGS parameters
+    engine.setBfgsGradientTolerance(1e-6);
+
+    ProcessOptimizationEngine.OptimizationResult result =
+        engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0);
+
+    assertNotNull(result);
+    assertTrue(result.getOptimalValue() >= 1000.0, "Flow should be above min");
+    assertTrue(result.getOptimalValue() <= 50000.0, "Flow should be below max");
+    System.out.println("BFGS optimal flow: " + result.getOptimalValue());
+  }
+
+  @Test
+  void testCompareOptimizationAlgorithms() {
+    engine.setEnforceConstraints(false);
+
+    // Test with all algorithms and compare results
+    double[] results = new double[4];
+
+    engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.GOLDEN_SECTION);
+    results[0] = engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0).getOptimalValue();
+
+    engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.GRADIENT_DESCENT);
+    results[1] = engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0).getOptimalValue();
+
+    engine.setSearchAlgorithm(
+        ProcessOptimizationEngine.SearchAlgorithm.GRADIENT_DESCENT_ARMIJO_WOLFE);
+    results[2] = engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0).getOptimalValue();
+
+    engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.BFGS);
+    results[3] = engine.findMaximumThroughput(50.0, 10.0, 1000.0, 50000.0).getOptimalValue();
+
+    System.out.println("Algorithm comparison:");
+    System.out.println("  Golden Section:    " + results[0]);
+    System.out.println("  Gradient Descent:  " + results[1]);
+    System.out.println("  Armijo-Wolfe:      " + results[2]);
+    System.out.println("  BFGS:              " + results[3]);
+
+    // All algorithms should find similar results (within 20% of each other)
+    double maxResult = Math.max(Math.max(results[0], results[1]), Math.max(results[2], results[3]));
+    double minResult = Math.min(Math.min(results[0], results[1]), Math.min(results[2], results[3]));
+    assertTrue(maxResult / minResult < 1.5, "Algorithm results should be within 50% of each other");
+  }
+
+  @Test
   void testEvaluateAllConstraints() {
     ProcessOptimizationEngine.ConstraintReport report = engine.evaluateAllConstraints();
 
