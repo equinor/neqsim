@@ -623,6 +623,17 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 |----------|------|-------------|
 | Utilities | [docs/util/README.md](util/README.md) | Utility functions |
 | Unit Conversion | [docs/util/unit_conversion.md](util/unit_conversion.md) | Unit conversion guide |
+| **Optimizer Guide** | [docs/util/optimizer_guide.md](util/optimizer_guide.md) | **NEW** Comprehensive optimization framework with BFGS, Pareto, sensitivity analysis |
+
+### Appendix F: Process Design Templates
+| Document | Path | Description |
+|----------|------|-------------|
+| **Templates Guide** | [docs/process/design/templates_guide.md](process/design/templates_guide.md) | **NEW** Pre-built process templates (compression, dehydration, CO2 capture) |
+
+### Appendix G: Mechanical Design Standards
+| Document | Path | Description |
+|----------|------|-------------|
+| **TEMA Standard Guide** | [docs/process/mechanical_design/tema_standard_guide.md](process/mechanical_design/tema_standard_guide.md) | **NEW** TEMA shell and tube heat exchanger design standards |
 
 ### Appendix E: Wiki Reference
 | Document | Path | Description |
@@ -647,8 +658,10 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Development | 8 |
 | Statistics | 4 |
 | Examples | 3 |
+| **Optimization** | **3** |
+| **Templates & Design** | **2** |
 | Other | 24 |
-| **Total** | **245** |
+| **Total** | **250** |
 
 ---
 
