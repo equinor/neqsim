@@ -138,12 +138,20 @@ public class ReservoirCouplingExporter implements Serializable {
       return wctValues;
     }
 
-    /** Get GOR values. */
+    /**
+     * Get GOR values.
+     *
+     * @return the array of gas-oil ratio values
+     */
     public double[] getGorValues() {
       return gorValues;
     }
 
-    /** Get BHP values array. */
+    /**
+     * Get BHP values array.
+     *
+     * @return the 5-dimensional array of bottom-hole pressure values
+     */
     public double[][][][][] getBhpValues() {
       return bhpValues;
     }

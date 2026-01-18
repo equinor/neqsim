@@ -16,7 +16,7 @@ import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.reservoir.Well;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimization.ProductionOptimizer;
+import neqsim.process.util.optimizer.ProductionOptimizer;
 
 /**
  * Orchestrates field-level production scheduling and forecasting.
@@ -922,3 +922,4 @@ public class FieldProductionScheduler implements Serializable {
     return wellScheduler;
   }
 }
+

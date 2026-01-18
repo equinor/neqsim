@@ -674,6 +674,10 @@ public class TiebackAnalyzer implements Serializable {
 
   /**
    * Quick CAPEX estimate for screening.
+   *
+   * @param distanceKm the tieback distance in kilometers
+   * @param waterDepthM the water depth in meters
+   * @return the estimated CAPEX in million USD
    */
   private double estimateQuickCapex(double distanceKm, double waterDepthM) {
     double pipeline = distanceKm * pipelineCostPerKmMusd;
@@ -719,57 +723,101 @@ public class TiebackAnalyzer implements Serializable {
       return hostName;
     }
 
-    /** Set host name. */
+    /**
+     * Set host name.
+     *
+     * @param name the host facility name
+     */
     public void setHostName(String name) {
       this.hostName = name;
     }
 
-    /** Check if passed. */
+    /**
+     * Check if passed.
+     *
+     * @return true if feasibility check passed
+     */
     public boolean isPassed() {
       return passed;
     }
 
-    /** Set passed status. */
+    /**
+     * Set passed status.
+     *
+     * @param passed true if feasibility check passed
+     */
     public void setPassed(boolean passed) {
       this.passed = passed;
     }
 
-    /** Get failure reason. */
+    /**
+     * Get failure reason.
+     *
+     * @return the reason for failure, or null if passed
+     */
     public String getFailureReason() {
       return failureReason;
     }
 
-    /** Set failure reason. */
+    /**
+     * Set failure reason.
+     *
+     * @param reason the reason for failure
+     */
     public void setFailureReason(String reason) {
       this.failureReason = reason;
     }
 
-    /** Get distance. */
+    /**
+     * Get distance.
+     *
+     * @return the tieback distance in kilometers
+     */
     public double getDistanceKm() {
       return distanceKm;
     }
 
-    /** Set distance. */
+    /**
+     * Set distance.
+     *
+     * @param km the tieback distance in kilometers
+     */
     public void setDistanceKm(double km) {
       this.distanceKm = km;
     }
 
-    /** Get estimated CAPEX. */
+    /**
+     * Get estimated CAPEX.
+     *
+     * @return the estimated capital expenditure in million USD
+     */
     public double getEstimatedCapexMusd() {
       return estimatedCapexMusd;
     }
 
-    /** Set estimated CAPEX. */
+    /**
+     * Set estimated CAPEX.
+     *
+     * @param capex the estimated capital expenditure in million USD
+     */
     public void setEstimatedCapexMusd(double capex) {
       this.estimatedCapexMusd = capex;
     }
 
-    /** Get estimated NPV. */
+    /**
+     * Get estimated NPV.
+     *
+     * @return the estimated net present value in million USD
+     */
     public double getEstimatedNpvMusd() {
       return estimatedNpvMusd;
     }
 
-    /** Set estimated NPV. */
+    /**
+     * Set estimated NPV.
+     *
+     * @param npv the estimated net present value in million USD
+     */
     public void setEstimatedNpvMusd(double npv) {
       this.estimatedNpvMusd = npv;
     }

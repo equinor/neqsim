@@ -2,6 +2,16 @@
 
 The `neqsim.process.calibration` package provides a comprehensive optimization framework for parameter estimation in process simulations. This document details the **Levenberg-Marquardt batch optimization** capabilities for fitting process model parameters to historical or batch data.
 
+## Related Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md) | Equipment capacity strategies, constraint evaluation, throughput optimization, sensitivity analysis, and FlowRateOptimizer integration |
+| [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) | Core constraint definition and bottleneck detection |
+| [Batch Studies](batch-studies.md) | Sensitivity analysis with parameter sweeps |
+| [Multi-Objective Optimization](multi-objective-optimization.md) | Pareto optimization for conflicting objectives |
+| [Pressure Boundary Optimization](../pressure_boundary_optimization.md) | Flow rate calculations for given pressure boundaries and Eclipse lift curves |
+
 ## Table of Contents
 
 - [Overview](#overview)

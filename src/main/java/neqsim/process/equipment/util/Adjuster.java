@@ -49,6 +49,7 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   private double oldError = 1.0e6;
   int iterations = 0;
   private boolean activateWhenLess = false;
+  private boolean active = true;
   private Function<ProcessEquipmentInterface, Double> targetValueCalculator;
   private Function<ProcessEquipmentInterface, Double> adjustedValueGetter;
   private BiConsumer<ProcessEquipmentInterface, Double> adjustedValueSetter;
@@ -231,6 +232,12 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    // Skip adjustment if not active
+    if (!active) {
+      setCalculationIdentifier(id);
+      return;
+    }
+
     oldError = error;
 
     // Get streams from equipment (handles both Stream and other equipment types)
@@ -375,6 +382,33 @@ public class Adjuster extends ProcessEquipmentBaseClass {
     } else {
       return false;
     }
+  }
+
+  /**
+   * Checks if this Adjuster is active.
+   *
+   * <p>
+   * When inactive, the Adjuster will not perform any adjustments during process runs.
+   * </p>
+   *
+   * @return true if the Adjuster is active, false otherwise
+   */
+  public boolean isActive() {
+    return active;
+  }
+
+  /**
+   * Sets the active state of this Adjuster.
+   *
+   * <p>
+   * This can be used to temporarily disable an Adjuster during optimization to prevent it from
+   * interfering with the optimization search.
+   * </p>
+   *
+   * @param active true to enable the Adjuster, false to disable
+   */
+  public void setActive(boolean active) {
+    this.active = active;
   }
 
   /** {@inheritDoc} */

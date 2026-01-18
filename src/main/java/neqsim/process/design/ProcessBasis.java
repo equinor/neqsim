@@ -57,11 +57,13 @@ public class ProcessBasis {
 
   private List<ProductSpecification> productSpecs = new ArrayList<>();
   private Map<String, Double> constraints = new HashMap<>();
+  private Map<String, Double> parameters = new HashMap<>();
+  private Map<String, String> stringParameters = new HashMap<>();
 
   /**
-   * Private constructor - use builder.
+   * Default constructor - for direct instantiation.
    */
-  private ProcessBasis() {}
+  public ProcessBasis() {}
 
   /**
    * Create a new builder for ProcessBasis.
@@ -212,6 +214,86 @@ public class ProcessBasis {
    */
   public Double getConstraint(String name) {
     return constraints.get(name);
+  }
+
+  /**
+   * Get a parameter value by name with default.
+   *
+   * @param name parameter name
+   * @param defaultValue default value if not set
+   * @return parameter value or default
+   */
+  public double getParameter(String name, double defaultValue) {
+    Double value = parameters.get(name);
+    return value != null ? value : defaultValue;
+  }
+
+  /**
+   * Set a parameter value.
+   *
+   * @param name parameter name
+   * @param value parameter value
+   */
+  public void setParameter(String name, double value) {
+    parameters.put(name, value);
+  }
+
+  /**
+   * Get a string parameter value by name with default.
+   *
+   * @param name parameter name
+   * @param defaultValue default value if not set
+   * @return parameter value or default
+   */
+  public String getParameterString(String name, String defaultValue) {
+    String value = stringParameters.get(name);
+    return value != null ? value : defaultValue;
+  }
+
+  /**
+   * Set a string parameter value.
+   *
+   * @param name parameter name
+   * @param value parameter value
+   */
+  public void setParameterString(String name, String value) {
+    stringParameters.put(name, value);
+  }
+
+  /**
+   * Set the feed fluid directly (convenience method).
+   *
+   * @param fluid the fluid
+   */
+  public void setFeedFluid(SystemInterface fluid) {
+    this.feedFluid = fluid;
+  }
+
+  /**
+   * Set the feed pressure directly (convenience method).
+   *
+   * @param pressure pressure in bara
+   */
+  public void setFeedPressure(double pressure) {
+    this.feedPressure = pressure;
+  }
+
+  /**
+   * Set the feed temperature directly (convenience method).
+   *
+   * @param temperature temperature in Kelvin
+   */
+  public void setFeedTemperature(double temperature) {
+    this.feedTemperature = temperature;
+  }
+
+  /**
+   * Set the feed flow rate directly (convenience method).
+   *
+   * @param flowRate flow rate in kg/hr
+   */
+  public void setFeedFlowRate(double flowRate) {
+    this.feedFlowRate = flowRate;
   }
 
   /**

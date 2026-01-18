@@ -130,52 +130,93 @@ public class PortfolioOptimizer implements Serializable {
       this.dependencies = new ArrayList<String>();
     }
 
-    /** Get project name. */
+    /**
+     * Get project name.
+     *
+     * @return project name
+     */
     public String getName() {
       return name;
     }
 
-    /** Get total CAPEX. */
+    /**
+     * Get total CAPEX.
+     *
+     * @return total CAPEX in MUSD
+     */
     public double getCapexMusd() {
       return capexMusd;
     }
 
-    /** Get NPV. */
+    /**
+     * Get NPV.
+     *
+     * @return NPV in MUSD
+     */
     public double getNpvMusd() {
       return npvMusd;
     }
 
-    /** Get project type. */
+    /**
+     * Get project type.
+     *
+     * @return project type
+     */
     public ProjectType getType() {
       return type;
     }
 
-    /** Get probability of success. */
+    /**
+     * Get probability of success.
+     *
+     * @return probability of success (0-1)
+     */
     public double getProbabilityOfSuccess() {
       return probabilityOfSuccess;
     }
 
-    /** Get start year. */
+    /**
+     * Get start year.
+     *
+     * @return start year
+     */
     public int getStartYear() {
       return startYear;
     }
 
-    /** Set start year. */
+    /**
+     * Set start year.
+     *
+     * @param year the start year to set
+     */
     public void setStartYear(int year) {
       this.startYear = year;
     }
 
-    /** Set CAPEX profile by year. */
+    /**
+     * Set CAPEX profile by year.
+     *
+     * @param profile the CAPEX profile map with year as key and CAPEX value as value
+     */
     public void setCapexProfile(Map<Integer, Double> profile) {
       this.capexProfile = profile;
     }
 
-    /** Get CAPEX profile. */
+    /**
+     * Get CAPEX profile.
+     *
+     * @return the CAPEX profile map with year as key and CAPEX value as value
+     */
     public Map<Integer, Double> getCapexProfile() {
       return capexProfile;
     }
 
-    /** Get CAPEX for specific year. */
+    /**
+     * Get CAPEX for specific year.
+     *
+     * @param year the year to get CAPEX for
+     * @return the CAPEX value for the specified year, or 0.0 if not defined
+     */
     public double getCapexForYear(int year) {
       if (capexProfile.isEmpty()) {
         // Default: spread evenly over 2 years starting from startYear
@@ -188,37 +229,65 @@ public class PortfolioOptimizer implements Serializable {
       return value != null ? value.doubleValue() : 0.0;
     }
 
-    /** Check if mandatory. */
+    /**
+     * Check if mandatory.
+     *
+     * @return true if this project is mandatory, false otherwise
+     */
     public boolean isMandatory() {
       return mandatory;
     }
 
-    /** Set mandatory flag. */
+    /**
+     * Set mandatory flag.
+     *
+     * @param mandatory true if this project is mandatory
+     */
     public void setMandatory(boolean mandatory) {
       this.mandatory = mandatory;
     }
 
-    /** Get dependencies. */
+    /**
+     * Get dependencies.
+     *
+     * @return the list of project names this project depends on
+     */
     public List<String> getDependencies() {
       return dependencies;
     }
 
-    /** Add dependency. */
+    /**
+     * Add dependency.
+     *
+     * @param projectName the name of the project this project depends on
+     */
     public void addDependency(String projectName) {
       dependencies.add(projectName);
     }
 
-    /** Calculate NPV/CAPEX ratio. */
+    /**
+     * Calculate NPV/CAPEX ratio.
+     *
+     * @return the NPV divided by CAPEX, or 0.0 if CAPEX is zero
+     */
     public double getNpvCapexRatio() {
       return capexMusd > 0 ? npvMusd / capexMusd : 0.0;
     }
 
-    /** Calculate expected monetary value. */
+    /**
+     * Calculate expected monetary value.
+     *
+     * @return the expected monetary value (NPV times probability of success)
+     */
     public double getEmv() {
       return npvMusd * probabilityOfSuccess;
     }
 
-    /** Calculate risk-weighted NPV ratio. */
+    /**
+     * Calculate risk-weighted NPV ratio.
+     *
+     * @return the NPV/CAPEX ratio multiplied by probability of success
+     */
     public double getRiskWeightedRatio() {
       return getNpvCapexRatio() * probabilityOfSuccess;
     }
@@ -321,32 +390,56 @@ public class PortfolioOptimizer implements Serializable {
       this.totalEmv = emv;
     }
 
-    /** Get capital efficiency (NPV/CAPEX). */
+    /**
+     * Get capital efficiency (NPV/CAPEX).
+     *
+     * @return capital efficiency ratio
+     */
     public double getCapitalEfficiency() {
       return totalCapex > 0 ? totalNpv / totalCapex : 0.0;
     }
 
-    /** Get annual CAPEX used. */
+    /**
+     * Get annual CAPEX used.
+     *
+     * @return map of year to CAPEX used
+     */
     public Map<Integer, Double> getAnnualCapexUsed() {
       return annualCapexUsed;
     }
 
-    /** Get annual budget remaining. */
+    /**
+     * Get annual budget remaining.
+     *
+     * @return map of year to budget remaining
+     */
     public Map<Integer, Double> getAnnualBudgetRemaining() {
       return annualBudgetRemaining;
     }
 
-    /** Get strategy used. */
+    /**
+     * Get strategy used.
+     *
+     * @return optimization strategy
+     */
     public OptimizationStrategy getStrategy() {
       return strategy;
     }
 
-    /** Set strategy. */
+    /**
+     * Set strategy.
+     *
+     * @param strategy the optimization strategy to set
+     */
     public void setStrategy(OptimizationStrategy strategy) {
       this.strategy = strategy;
     }
 
-    /** Get project count. */
+    /**
+     * Get project count.
+     *
+     * @return number of selected projects
+     */
     public int getProjectCount() {
       return selectedProjects.size();
     }

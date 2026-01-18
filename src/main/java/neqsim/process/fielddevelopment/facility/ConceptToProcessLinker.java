@@ -170,6 +170,9 @@ public class ConceptToProcessLinker implements Serializable {
 
   /**
    * Determine process template from concept.
+   *
+   * @param concept the field concept to analyze
+   * @return the appropriate process template
    */
   private ProcessTemplate determineTemplate(FieldConcept concept) {
     if (concept.getReservoir() != null) {
@@ -190,6 +193,9 @@ public class ConceptToProcessLinker implements Serializable {
 
   /**
    * Create inlet stream from concept parameters.
+   *
+   * @param concept the field concept containing reservoir and production data
+   * @return a configured Stream with representative fluid composition
    */
   private Stream createInletStream(FieldConcept concept) {
     // Create representative fluid

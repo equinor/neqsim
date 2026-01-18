@@ -631,6 +631,189 @@ public void setDesignSpeed(double speed) {
 }
 ```
 
+## Equipment Capacity Strategy Registry
+
+The Strategy Registry provides a plugin-based architecture for evaluating equipment capacity constraints without modifying equipment classes. This is useful when:
+
+- Working with equipment that doesn't implement `CapacityConstrainedEquipment`
+- Adding custom constraint evaluation logic
+- Performing system-wide optimization
+
+### Strategy Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                 EquipmentCapacityStrategyRegistry (Singleton)       │
+│  ┌─────────────────────────────────────────────────────────────────┐│
+│  │  findStrategy(equipment)  │  getAllStrategies()                 ││
+│  │  registerStrategy(...)    │  getConstraints(equipment)          ││
+│  └─────────────────────────────────────────────────────────────────┘│
+│                              │                                       │
+│         ┌────────────────────┴────────────────────┐                  │
+│         ▼                                         ▼                  │
+│  ┌──────────────────────┐             ┌─────────────────────────────┐│
+│  │  Built-in Strategies │             │  Custom Strategies          ││
+│  │  CompressorStrategy  │             │  MyEquipmentStrategy        ││
+│  │  SeparatorStrategy   │             │  VendorSpecificStrategy     ││
+│  │  PumpStrategy        │             │  ...                        ││
+│  │  ValveStrategy       │             │                             ││
+│  │  PipeStrategy        │             │                             ││
+│  │  HeatExchangerStrategy│            │                             ││
+│  └──────────────────────┘             └─────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Using the Strategy Registry
+
+```java
+import neqsim.process.equipment.capacity.EquipmentCapacityStrategyRegistry;
+import neqsim.process.equipment.capacity.EquipmentCapacityStrategy;
+
+// Get the singleton registry
+EquipmentCapacityStrategyRegistry registry = 
+    EquipmentCapacityStrategyRegistry.getInstance();
+
+// Find strategy for a specific equipment
+Compressor compressor = (Compressor) process.getUnit("ExportCompressor");
+EquipmentCapacityStrategy strategy = registry.findStrategy(compressor);
+
+if (strategy != null) {
+    // Evaluate capacity
+    double utilization = strategy.evaluateCapacity(compressor);
+    System.out.printf("Compressor utilization: %.1f%%\n", utilization * 100);
+    
+    // Get all constraints
+    Map<String, CapacityConstraint> constraints = strategy.getConstraints(compressor);
+    for (CapacityConstraint c : constraints.values()) {
+        System.out.printf("  %s: %.2f %s (%.1f%% of design)\n",
+            c.getName(), c.getCurrentValue(), c.getUnit(), 
+            c.getUtilizationPercent());
+    }
+    
+    // Check for violations
+    List<CapacityConstraint> violations = strategy.getViolations(compressor);
+    if (!violations.isEmpty()) {
+        System.out.println("Constraint violations:");
+        for (CapacityConstraint v : violations) {
+            System.out.printf("  - %s: %.2f exceeds %.2f\n",
+                v.getName(), v.getCurrentValue(), v.getDesignValue());
+        }
+    }
+    
+    // Get bottleneck constraint
+    CapacityConstraint bottleneck = strategy.getBottleneckConstraint(compressor);
+    System.out.println("Bottleneck: " + bottleneck.getName());
+}
+```
+
+### Creating Custom Strategies
+
+Implement `EquipmentCapacityStrategy` for equipment-specific logic:
+
+```java
+import neqsim.process.equipment.capacity.EquipmentCapacityStrategy;
+
+public class MyCustomStrategy implements EquipmentCapacityStrategy {
+    
+    @Override
+    public boolean supports(ProcessEquipmentInterface equipment) {
+        // Return true if this strategy handles this equipment type
+        return equipment instanceof MyCustomEquipment;
+    }
+    
+    @Override
+    public int getPriority() {
+        // Higher priority = more specific strategy
+        return 100;  // Built-in strategies use priority 10
+    }
+    
+    @Override
+    public double evaluateCapacity(ProcessEquipmentInterface equipment) {
+        MyCustomEquipment eq = (MyCustomEquipment) equipment;
+        // Return utilization as 0.0 to 1.0+
+        return eq.getCurrentLoad() / eq.getMaxLoad();
+    }
+    
+    @Override
+    public Map<String, CapacityConstraint> getConstraints(
+            ProcessEquipmentInterface equipment) {
+        Map<String, CapacityConstraint> constraints = new LinkedHashMap<>();
+        MyCustomEquipment eq = (MyCustomEquipment) equipment;
+        
+        constraints.put("customLoad", 
+            new CapacityConstraint("customLoad", ConstraintType.DESIGN)
+                .setDesignValue(eq.getDesignLoad())
+                .setMaxValue(eq.getMaxLoad())
+                .setUnit("kW")
+                .setValueSupplier(() -> eq.getCurrentLoad()));
+        
+        return constraints;
+    }
+    
+    @Override
+    public List<CapacityConstraint> getViolations(
+            ProcessEquipmentInterface equipment) {
+        List<CapacityConstraint> violations = new ArrayList<>();
+        for (CapacityConstraint c : getConstraints(equipment).values()) {
+            if (c.isViolated()) {
+                violations.add(c);
+            }
+        }
+        return violations;
+    }
+    
+    @Override
+    public CapacityConstraint getBottleneckConstraint(
+            ProcessEquipmentInterface equipment) {
+        CapacityConstraint bottleneck = null;
+        double maxUtilization = 0.0;
+        for (CapacityConstraint c : getConstraints(equipment).values()) {
+            if (c.getUtilization() > maxUtilization) {
+                maxUtilization = c.getUtilization();
+                bottleneck = c;
+            }
+        }
+        return bottleneck;
+    }
+    
+    @Override
+    public boolean isWithinHardLimits(ProcessEquipmentInterface equipment) {
+        for (CapacityConstraint c : getConstraints(equipment).values()) {
+            if (c.getType() == ConstraintType.HARD && c.isHardLimitExceeded()) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    @Override
+    public boolean isWithinSoftLimits(ProcessEquipmentInterface equipment) {
+        for (CapacityConstraint c : getConstraints(equipment).values()) {
+            if (c.getType() == ConstraintType.SOFT && c.isViolated()) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
+
+// Register the custom strategy
+registry.registerStrategy(new MyCustomStrategy());
+```
+
+### Built-in Strategies
+
+| Strategy | Equipment Type | Constraints Evaluated |
+|----------|---------------|----------------------|
+| `CompressorCapacityStrategy` | Compressor | speed, power, surgeMargin, stonewallMargin, dischargeTemperature |
+| `SeparatorCapacityStrategy` | Separator | liquidLevel, gasLoadFactor |
+| `PumpCapacityStrategy` | Pump | power, npshMargin, flowRate |
+| `ValveCapacityStrategy` | Valve | valveOpening, pressureDropRatio |
+| `PipeCapacityStrategy` | Pipeline | velocity, pressureDrop |
+| `HeatExchangerCapacityStrategy` | HeatExchanger | duty, outletTemperature |
+
+For detailed usage and integration with the ProcessOptimizationEngine, see [Optimizer Plugin Architecture](optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md).
+
 ## Integration with OilGasProcessSimulationOptimization
 
 The example simulation class demonstrates integration:
@@ -663,4 +846,6 @@ BottleneckResult bottleneck = process.findBottleneck();
 
 - [Process Equipment Documentation](../process/README.md)
 - [Mechanical Design Framework](../process/MECHANICAL_DESIGN_FRAMEWORK.md)
+- [Optimizer Plugin Architecture](optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md)
 - [Optimization Examples](../examples/index.md)
+

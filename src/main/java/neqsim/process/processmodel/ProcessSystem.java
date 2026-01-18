@@ -50,6 +50,8 @@ import neqsim.process.processmodel.graph.ProcessGraph;
 import neqsim.process.processmodel.graph.ProcessGraphBuilder;
 import neqsim.process.processmodel.graph.ProcessNode;
 import neqsim.process.util.report.Report;
+import neqsim.process.util.optimizer.FlowRateOptimizer;
+import neqsim.process.util.optimizer.ProcessOptimizationEngine;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -3379,10 +3381,10 @@ public class ProcessSystem extends SimulationBaseClass {
    * </pre>
    *
    * @return a new batch study builder configured for this process
-   * @see neqsim.process.util.optimization.BatchStudy
+   * @see neqsim.process.util.optimizer.BatchStudy
    */
-  public neqsim.process.util.optimization.BatchStudy.Builder createBatchStudy() {
-    return neqsim.process.util.optimization.BatchStudy.builder(this);
+  public neqsim.process.util.optimizer.BatchStudy.Builder createBatchStudy() {
+    return neqsim.process.util.optimizer.BatchStudy.builder(this);
   }
 
   // ============ SAFETY SCENARIO GENERATION ============
@@ -3672,6 +3674,322 @@ public class ProcessSystem extends SimulationBaseClass {
     return nearLimit;
   }
 
+  // ==========================================================================
+  // OPTIMIZATION METHODS
+  // ==========================================================================
+
+  /**
+   * Creates a ProcessOptimizationEngine for this process system.
+   *
+   * <p>
+   * The optimization engine provides advanced optimization capabilities including:
+   * </p>
+   * <ul>
+   * <li>Maximum throughput optimization</li>
+   * <li>Constraint evaluation and bottleneck detection</li>
+   * <li>Sensitivity analysis</li>
+   * <li>Lift curve generation</li>
+   * </ul>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * ProcessOptimizationEngine engine = process.createOptimizer();
+   * engine.setSearchAlgorithm(SearchAlgorithm.BFGS);
+   * OptimizationResult result = engine.findMaximumThroughput(50, 10, 1000, 100000);
+   * </pre>
+   *
+   * @return a new ProcessOptimizationEngine configured for this process
+   */
+  public ProcessOptimizationEngine createOptimizer() {
+    return new ProcessOptimizationEngine(this);
+  }
+
+  /**
+   * Creates a FlowRateOptimizer for this process system.
+   *
+   * <p>
+   * The FlowRateOptimizer provides detailed flow rate optimization capabilities including lift
+   * curve generation and Eclipse VFP export.
+   * </p>
+   *
+   * @param inletStreamName name of the inlet stream
+   * @param outletStreamName name of the outlet stream (or equipment)
+   * @return a new FlowRateOptimizer configured for this process
+   */
+  public FlowRateOptimizer createFlowRateOptimizer(String inletStreamName,
+      String outletStreamName) {
+    return new FlowRateOptimizer(this, inletStreamName, outletStreamName);
+  }
+
+  /**
+   * Finds the maximum throughput for given pressure boundaries.
+   *
+   * <p>
+   * This is a convenience method that creates an optimizer, runs the optimization, and returns the
+   * result. For more control over the optimization process, use {@link #createOptimizer()}.
+   * </p>
+   *
+   * @param inletPressure inlet pressure in bara
+   * @param outletPressure outlet pressure in bara
+   * @param minFlow minimum flow rate to consider in kg/hr
+   * @param maxFlow maximum flow rate to consider in kg/hr
+   * @return the maximum feasible flow rate in kg/hr, or NaN if optimization fails
+   */
+  public double findMaxThroughput(double inletPressure, double outletPressure, double minFlow,
+      double maxFlow) {
+    ProcessOptimizationEngine engine = createOptimizer();
+    ProcessOptimizationEngine.OptimizationResult result =
+        engine.findMaximumThroughput(inletPressure, outletPressure, minFlow, maxFlow);
+    return result.getOptimalValue();
+  }
+
+  /**
+   * Finds the maximum throughput using default flow bounds.
+   *
+   * <p>
+   * Uses default minimum flow of 100 kg/hr and maximum flow of 1,000,000 kg/hr.
+   * </p>
+   *
+   * @param inletPressure inlet pressure in bara
+   * @param outletPressure outlet pressure in bara
+   * @return the maximum feasible flow rate in kg/hr, or NaN if optimization fails
+   */
+  public double findMaxThroughput(double inletPressure, double outletPressure) {
+    return findMaxThroughput(inletPressure, outletPressure, 100.0, 1000000.0);
+  }
+
+  /**
+   * Optimizes the process throughput and returns detailed results.
+   *
+   * <p>
+   * This method provides a complete optimization result including the optimal flow rate, constraint
+   * status, and bottleneck information.
+   * </p>
+   *
+   * @param inletPressure inlet pressure in bara
+   * @param outletPressure outlet pressure in bara
+   * @param minFlow minimum flow rate to consider in kg/hr
+   * @param maxFlow maximum flow rate to consider in kg/hr
+   * @return optimization result with detailed information
+   */
+  public ProcessOptimizationEngine.OptimizationResult optimizeThroughput(double inletPressure,
+      double outletPressure, double minFlow, double maxFlow) {
+    ProcessOptimizationEngine engine = createOptimizer();
+    return engine.findMaximumThroughput(inletPressure, outletPressure, minFlow, maxFlow);
+  }
+
+  /**
+   * Evaluates all equipment constraints in the process.
+   *
+   * <p>
+   * Returns a detailed report of all capacity constraints across all equipment in the process.
+   * Useful for understanding the current operating status and identifying potential bottlenecks.
+   * </p>
+   *
+   * @return constraint report with utilization information for all equipment
+   */
+  public ProcessOptimizationEngine.ConstraintReport evaluateConstraints() {
+    ProcessOptimizationEngine engine = createOptimizer();
+    return engine.evaluateAllConstraints();
+  }
+
+  /**
+   * Generates a lift curve for this process.
+   *
+   * <p>
+   * Creates a table of maximum flow rates for different pressure and temperature conditions. The
+   * result can be exported to Eclipse VFP format for reservoir simulation.
+   * </p>
+   *
+   * @param pressures array of pressures to evaluate (bara)
+   * @param temperatures array of temperatures to evaluate (K)
+   * @param waterCuts array of water cuts as fraction
+   * @param GORs array of gas-oil ratios in Sm3/Sm3
+   * @return lift curve data
+   */
+  public ProcessOptimizationEngine.LiftCurveData generateLiftCurve(double[] pressures,
+      double[] temperatures, double[] waterCuts, double[] GORs) {
+    ProcessOptimizationEngine engine = createOptimizer();
+    return engine.generateLiftCurve(pressures, temperatures, waterCuts, GORs);
+  }
+
+  /**
+   * Performs sensitivity analysis at the given flow rate.
+   *
+   * <p>
+   * Calculates how sensitive the process is to changes in flow rate, identifying which constraints
+   * become binding and the rate of change of key variables.
+   * </p>
+   *
+   * @param optimalFlow optimal flow rate to analyze in kg/hr
+   * @param inletPressure inlet pressure in bara
+   * @param outletPressure outlet pressure in bara
+   * @return sensitivity analysis result
+   */
+  public ProcessOptimizationEngine.SensitivityResult analyzeSensitivity(double optimalFlow,
+      double inletPressure, double outletPressure) {
+    ProcessOptimizationEngine engine = createOptimizer();
+    return engine.analyzeSensitivity(optimalFlow, inletPressure, outletPressure);
+  }
+
+  /**
+   * Creates a fluent optimization builder for this process.
+   *
+   * <p>
+   * The builder provides a convenient way to configure and run optimizations with method chaining.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * double maxFlow = process.optimize().withPressures(50, 10).withFlowBounds(1000, 100000)
+   *     .usingAlgorithm(SearchAlgorithm.BFGS).findMaxThroughput();
+   * </pre>
+   *
+   * @return a new OptimizationBuilder for this process
+   */
+  public OptimizationBuilder optimize() {
+    return new OptimizationBuilder(this);
+  }
+
+  /**
+   * Fluent builder for process optimization.
+   *
+   * <p>
+   * Provides a convenient API for configuring and running process optimizations.
+   * </p>
+   */
+  public static class OptimizationBuilder {
+    private final ProcessSystem process;
+    private double inletPressure = 50.0;
+    private double outletPressure = 10.0;
+    private double minFlow = 100.0;
+    private double maxFlow = 1000000.0;
+    private ProcessOptimizationEngine.SearchAlgorithm algorithm =
+        ProcessOptimizationEngine.SearchAlgorithm.GOLDEN_SECTION;
+    private int maxIterations = 50;
+    private double tolerance = 1e-4;
+
+    /**
+     * Creates a new optimization builder for the given process.
+     *
+     * @param process the process to optimize
+     */
+    public OptimizationBuilder(ProcessSystem process) {
+      this.process = process;
+    }
+
+    /**
+     * Sets the inlet and outlet pressures.
+     *
+     * @param inlet inlet pressure in bara
+     * @param outlet outlet pressure in bara
+     * @return this builder for chaining
+     */
+    public OptimizationBuilder withPressures(double inlet, double outlet) {
+      this.inletPressure = inlet;
+      this.outletPressure = outlet;
+      return this;
+    }
+
+    /**
+     * Sets the flow rate bounds.
+     *
+     * @param min minimum flow rate in kg/hr
+     * @param max maximum flow rate in kg/hr
+     * @return this builder for chaining
+     */
+    public OptimizationBuilder withFlowBounds(double min, double max) {
+      this.minFlow = min;
+      this.maxFlow = max;
+      return this;
+    }
+
+    /**
+     * Sets the search algorithm.
+     *
+     * @param algorithm the optimization algorithm to use
+     * @return this builder for chaining
+     */
+    public OptimizationBuilder usingAlgorithm(ProcessOptimizationEngine.SearchAlgorithm algorithm) {
+      this.algorithm = algorithm;
+      return this;
+    }
+
+    /**
+     * Sets the maximum number of iterations.
+     *
+     * @param iterations maximum iterations
+     * @return this builder for chaining
+     */
+    public OptimizationBuilder withMaxIterations(int iterations) {
+      this.maxIterations = iterations;
+      return this;
+    }
+
+    /**
+     * Sets the convergence tolerance.
+     *
+     * @param tol convergence tolerance
+     * @return this builder for chaining
+     */
+    public OptimizationBuilder withTolerance(double tol) {
+      this.tolerance = tol;
+      return this;
+    }
+
+    /**
+     * Finds the maximum throughput with the configured settings.
+     *
+     * @return the maximum feasible flow rate in kg/hr
+     */
+    public double findMaxThroughput() {
+      ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
+      engine.setSearchAlgorithm(algorithm);
+      engine.setMaxIterations(maxIterations);
+      engine.setTolerance(tolerance);
+      ProcessOptimizationEngine.OptimizationResult result =
+          engine.findMaximumThroughput(inletPressure, outletPressure, minFlow, maxFlow);
+      return result.getOptimalValue();
+    }
+
+    /**
+     * Runs optimization and returns detailed results.
+     *
+     * @return optimization result with full details
+     */
+    public ProcessOptimizationEngine.OptimizationResult optimize() {
+      ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
+      engine.setSearchAlgorithm(algorithm);
+      engine.setMaxIterations(maxIterations);
+      engine.setTolerance(tolerance);
+      return engine.findMaximumThroughput(inletPressure, outletPressure, minFlow, maxFlow);
+    }
+
+    /**
+     * Generates a lift curve with the configured settings.
+     *
+     * @param pressures array of pressures to evaluate (bara)
+     * @param temperatures array of temperatures to evaluate (K)
+     * @param waterCuts array of water cuts as fraction
+     * @param GORs array of gas-oil ratios in Sm3/Sm3
+     * @return lift curve data
+     */
+    public ProcessOptimizationEngine.LiftCurveData generateLiftCurve(double[] pressures,
+        double[] temperatures, double[] waterCuts, double[] GORs) {
+      ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
+      engine.setSearchAlgorithm(algorithm);
+      engine.setMaxIterations(maxIterations);
+      engine.setTolerance(tolerance);
+      return engine.generateLiftCurve(pressures, temperatures, waterCuts, GORs);
+    }
+  }
+
   /*
    * @XmlRootElement private class Report extends Object{ public Double name; public
    * ArrayList<ReportInterface> unitOperationsReports = new ArrayList<ReportInterface>();
@@ -3684,3 +4002,4 @@ public class ProcessSystem extends SimulationBaseClass {
    * public Report getReport(){ return this.new Report(); }
    */
 }
+

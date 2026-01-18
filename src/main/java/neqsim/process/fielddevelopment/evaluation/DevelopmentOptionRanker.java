@@ -132,17 +132,29 @@ public class DevelopmentOptionRanker implements Serializable {
       this.higherIsBetter = higherIsBetter;
     }
 
-    /** Get display name. */
+    /**
+     * Get display name.
+     *
+     * @return the display name for this criterion
+     */
     public String getDisplayName() {
       return displayName;
     }
 
-    /** Get unit. */
+    /**
+     * Get unit.
+     *
+     * @return the unit of measurement for this criterion
+     */
     public String getUnit() {
       return unit;
     }
 
-    /** Check if higher values are better. */
+    /**
+     * Check if higher values are better.
+     *
+     * @return true if higher values are better for this criterion
+     */
     public boolean isHigherBetter() {
       return higherIsBetter;
     }
@@ -173,17 +185,29 @@ public class DevelopmentOptionRanker implements Serializable {
       this.normalizedScores = new HashMap<Criterion, Double>();
     }
 
-    /** Get option name. */
+    /**
+     * Get option name.
+     *
+     * @return the option name
+     */
     public String getName() {
       return name;
     }
 
-    /** Get description. */
+    /**
+     * Get description.
+     *
+     * @return the option description
+     */
     public String getDescription() {
       return description;
     }
 
-    /** Set description. */
+    /**
+     * Set description.
+     *
+     * @param description the option description
+     */
     public void setDescription(String description) {
       this.description = description;
     }
@@ -220,32 +244,57 @@ public class DevelopmentOptionRanker implements Serializable {
       return value != null ? value.doubleValue() : 0.0;
     }
 
-    /** Set normalized score. */
+    /**
+     * Set normalized score.
+     *
+     * @param criterion the criterion
+     * @param value the normalized score value (0-1)
+     */
     void setNormalizedScore(Criterion criterion, double value) {
       normalizedScores.put(criterion, Double.valueOf(value));
     }
 
-    /** Get weighted total score. */
+    /**
+     * Get weighted total score.
+     *
+     * @return the weighted total score
+     */
     public double getWeightedScore() {
       return weightedScore;
     }
 
-    /** Set weighted score. */
+    /**
+     * Set weighted score.
+     *
+     * @param score the weighted total score
+     */
     void setWeightedScore(double score) {
       this.weightedScore = score;
     }
 
-    /** Get rank. */
+    /**
+     * Get rank.
+     *
+     * @return the rank (1 = best)
+     */
     public int getRank() {
       return rank;
     }
 
-    /** Set rank. */
+    /**
+     * Set rank.
+     *
+     * @param rank the rank (1 = best)
+     */
     void setRank(int rank) {
       this.rank = rank;
     }
 
-    /** Get all raw scores. */
+    /**
+     * Get all raw scores.
+     *
+     * @return map of criterion to raw score
+     */
     public Map<Criterion, Double> getScores() {
       return scores;
     }
@@ -272,17 +321,29 @@ public class DevelopmentOptionRanker implements Serializable {
       this.maxValues = new HashMap<Criterion, Double>();
     }
 
-    /** Get ranked options (best first). */
+    /**
+     * Get ranked options (best first).
+     *
+     * @return list of development options sorted by rank
+     */
     public List<DevelopmentOption> getRankedOptions() {
       return rankedOptions;
     }
 
-    /** Get the best option. */
+    /**
+     * Get the best option.
+     *
+     * @return the highest ranked development option, or null if none
+     */
     public DevelopmentOption getBestOption() {
       return rankedOptions.isEmpty() ? null : rankedOptions.get(0);
     }
 
-    /** Get weights used. */
+    /**
+     * Get weights used.
+     *
+     * @return map of criterion to weight
+     */
     public Map<Criterion, Double> getWeights() {
       return weights;
     }
