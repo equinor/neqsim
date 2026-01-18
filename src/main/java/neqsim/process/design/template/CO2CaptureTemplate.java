@@ -4,17 +4,13 @@ import neqsim.process.design.ProcessBasis;
 import neqsim.process.design.ProcessTemplate;
 import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
 import neqsim.process.equipment.heatexchanger.Cooler;
-import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
-import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -248,25 +244,22 @@ public class CO2CaptureTemplate implements ProcessTemplate {
     Separator flashDrum = new Separator("Rich Amine Flash Drum", richAmineValve.getOutletStream());
     process.add(flashDrum);
 
-    // Lean-rich heat exchanger
-    HeatExchanger leanRichHX = new HeatExchanger("Lean-Rich HX");
-    leanRichHX.setFeedStream(0, flashDrum.getLiquidOutStream());
-    // Hot side connected later to regenerated amine
-    process.add(leanRichHX);
+    // Rich amine heater (simulates heat from lean-rich exchanger)
+    // Using separate Heater instead of HeatExchanger for template simplicity
+    Heater richAmineHeater = new Heater("Rich Amine Heater", flashDrum.getLiquidOutStream());
+    richAmineHeater.setOutTemperature(reboilerTemp - 15.0 + 273.15);
+    process.add(richAmineHeater);
 
     // Regenerator reboiler (simplified as heater + separator)
-    Heater reboiler = new Heater("Regenerator Reboiler", leanRichHX.getOutStream(0));
+    Heater reboiler = new Heater("Regenerator Reboiler", richAmineHeater.getOutletStream());
     reboiler.setOutTemperature(reboilerTemp + 273.15);
     process.add(reboiler);
 
     Separator regenerator = new Separator("Regenerator", reboiler.getOutletStream());
     process.add(regenerator);
 
-    // Connect hot side of lean-rich HX
-    leanRichHX.setFeedStream(1, regenerator.getLiquidOutStream());
-
     // Lean amine pump
-    Pump aminePump = new Pump("Lean Amine Pump", leanRichHX.getOutStream(1));
+    Pump aminePump = new Pump("Lean Amine Pump", regenerator.getLiquidOutStream());
     aminePump.setOutletPressure(feedPressure + 1.0);
     process.add(aminePump);
 
@@ -290,32 +283,43 @@ public class CO2CaptureTemplate implements ProcessTemplate {
    * @return amine fluid system
    */
   private SystemInterface createAmineFluid(AmineType type, double concentration, double pressure) {
-    SystemInterface amineFluid = new SystemSrkCPAstatoil(273.15 + 40.0, pressure);
+    // Use SRK for templates - CPA requires careful initialization and compatible fluids
+    // For production use with rigorous amine thermodynamics, use SystemSrkCPAstatoil
+    SystemInterface amineFluid = new neqsim.thermo.system.SystemSrkEos(273.15 + 40.0, pressure);
+    addAmineComponents(amineFluid, type, concentration);
+    amineFluid.setMixingRule("classic");
+    amineFluid.setMultiPhaseCheck(true);
+    return amineFluid;
+  }
 
+  /**
+   * Adds amine components to fluid.
+   *
+   * @param fluid fluid system
+   * @param type amine type
+   * @param concentration amine mass fraction
+   */
+  private void addAmineComponents(SystemInterface fluid, AmineType type, double concentration) {
     switch (type) {
       case MEA:
-        amineFluid.addComponent("MEA", concentration);
+        fluid.addComponent("MEA", concentration);
         break;
       case DEA:
-        amineFluid.addComponent("DEA", concentration);
+        fluid.addComponent("DEA", concentration);
         break;
       case MDEA:
       case MDEA_PZ:
-        amineFluid.addComponent("MDEA", concentration);
+        fluid.addComponent("MDEA", concentration);
         if (type == AmineType.MDEA_PZ) {
           // Add piperazine for activated MDEA
-          amineFluid.addComponent("piperazine", 0.05);
+          fluid.addComponent("piperazine", 0.05);
         }
         break;
       default:
-        amineFluid.addComponent("MDEA", concentration);
+        fluid.addComponent("MDEA", concentration);
     }
-
-    amineFluid.addComponent("water", 1.0 - concentration);
-    amineFluid.addComponent("CO2", 0.001); // Small amount to establish equilibrium
-    amineFluid.setMixingRule(10); // CPA mixing rule
-    amineFluid.setMultiPhaseCheck(true);
-    return amineFluid;
+    fluid.addComponent("water", 1.0 - concentration);
+    fluid.addComponent("CO2", 0.001); // Small amount to establish equilibrium
   }
 
   /**
@@ -410,8 +414,8 @@ public class CO2CaptureTemplate implements ProcessTemplate {
   /** {@inheritDoc} */
   @Override
   public String[] getRequiredEquipmentTypes() {
-    return new String[] {"SimpleTEGAbsorber", "Separator", "HeatExchanger", "Heater", "Pump",
-        "Cooler", "ThrottlingValve"};
+    return new String[] {"SimpleTEGAbsorber", "Separator", "Heater", "Pump", "Cooler",
+        "ThrottlingValve"};
   }
 
   /** {@inheritDoc} */

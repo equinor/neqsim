@@ -61,9 +61,9 @@ public class ProcessBasis {
   private Map<String, String> stringParameters = new HashMap<>();
 
   /**
-   * Private constructor - use builder.
+   * Default constructor - for direct instantiation.
    */
-  private ProcessBasis() {}
+  public ProcessBasis() {}
 
   /**
    * Create a new builder for ProcessBasis.

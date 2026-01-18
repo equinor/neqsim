@@ -3,17 +3,13 @@ package neqsim.process.design.template;
 import neqsim.process.design.ProcessBasis;
 import neqsim.process.design.ProcessTemplate;
 import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
-import neqsim.process.equipment.distillation.Reboiler;
-import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
-import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -152,25 +148,23 @@ public class DehydrationTemplate implements ProcessTemplate {
         new Separator("Rich Glycol Flash Drum", richGlycolValve.getOutletStream());
     process.add(flashDrum);
 
-    // Glycol-glycol heat exchanger (lean/rich exchanger)
-    HeatExchanger glycolHX = new HeatExchanger("Glycol-Glycol HX");
-    glycolHX.setFeedStream(0, flashDrum.getLiquidOutStream());
-    // Hot side will be connected to regenerated glycol
-    process.add(glycolHX);
+    // Rich glycol heater (simulates heat from lean/rich exchanger)
+    // Using separate Heater/Cooler instead of HeatExchanger for template simplicity
+    Heater richGlycolHeater = new Heater("Rich Glycol Heater", flashDrum.getLiquidOutStream());
+    richGlycolHeater.setOutTemperature(reboilerTemp - 20.0 + 273.15); // Preheat to near reboiler
+                                                                      // temp
+    process.add(richGlycolHeater);
 
     // Regeneration still (simplified as heater + separator)
-    Heater reboiler = new Heater("Regeneration Reboiler", glycolHX.getOutStream(0));
+    Heater reboiler = new Heater("Regeneration Reboiler", richGlycolHeater.getOutletStream());
     reboiler.setOutTemperature(reboilerTemp + 273.15);
     process.add(reboiler);
 
     Separator regenerator = new Separator("Regeneration Still", reboiler.getOutletStream());
     process.add(regenerator);
 
-    // Connect hot side of glycol-glycol HX
-    glycolHX.setFeedStream(1, regenerator.getLiquidOutStream());
-
     // Lean glycol pump
-    Pump glycolPump = new Pump("Lean Glycol Pump", glycolHX.getOutStream(1));
+    Pump glycolPump = new Pump("Lean Glycol Pump", regenerator.getLiquidOutStream());
     glycolPump.setOutletPressure(feedPressure + 2.0); // Slight overpressure
     process.add(glycolPump);
 
@@ -195,10 +189,12 @@ public class DehydrationTemplate implements ProcessTemplate {
    * @return TEG fluid system
    */
   private SystemInterface createTEGFluid(double purity, double pressure) {
-    SystemInterface tegFluid = new SystemSrkCPAstatoil(273.15 + 45.0, pressure);
+    // Use SRK for templates - CPA requires careful initialization and compatible fluids
+    // For production use with rigorous TEG thermodynamics, use SystemSrkCPAstatoil
+    SystemInterface tegFluid = new neqsim.thermo.system.SystemSrkEos(273.15 + 45.0, pressure);
     tegFluid.addComponent("TEG", purity);
     tegFluid.addComponent("water", 1.0 - purity);
-    tegFluid.setMixingRule(10); // CPA mixing rule
+    tegFluid.setMixingRule("classic");
     tegFluid.setMultiPhaseCheck(true);
     return tegFluid;
   }
@@ -241,8 +237,8 @@ public class DehydrationTemplate implements ProcessTemplate {
   /** {@inheritDoc} */
   @Override
   public String[] getRequiredEquipmentTypes() {
-    return new String[] {"SimpleTEGAbsorber", "Separator", "HeatExchanger", "Heater", "Pump",
-        "Cooler", "ThrottlingValve"};
+    return new String[] {"SimpleTEGAbsorber", "Separator", "Heater", "Pump", "Cooler",
+        "ThrottlingValve"};
   }
 
   /** {@inheritDoc} */
