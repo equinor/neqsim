@@ -492,7 +492,7 @@ if (stages <= 0) {
 
 ## See Also
 
-- [Process Design Guide](../process/process_design_guide.md)
-- [Design Framework](../process/DESIGN_FRAMEWORK.md)
-- [Optimizer Guide](../util/optimizer_guide.md)
-- [Equipment Documentation](../process/equipment/README.md)
+- [Process Design Guide](../process_design_guide.md)
+- [Design Framework](../DESIGN_FRAMEWORK.md)
+- [Optimizer Guide](../../util/optimizer_guide.md)
+- [Equipment Documentation](../equipment/README.md)

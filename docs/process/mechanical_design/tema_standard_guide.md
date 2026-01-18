@@ -443,7 +443,6 @@ System.out.println("Cost factor: " + tema.getCostFactor());
 
 ## See Also
 
-- [Heat Exchanger Equipment](../process/equipment/heat_exchangers.md)
-- [Mechanical Design Overview](../process/mechanical_design_overview.md)
-- [Process Design Guide](../process/process_design_guide.md)
-- [ASME Standards](../standards/asme_standards.md)
+- [Heat Exchanger Equipment](../equipment/heat_exchangers.md)
+- [Process Design Guide](../process_design_guide.md)
+- [Standards Overview](../../standards/README.md)

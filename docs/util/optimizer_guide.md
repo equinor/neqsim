@@ -1,6 +1,6 @@
 # Process Optimization Module
 
-The `neqsim.util.optimizer` package provides a comprehensive optimization framework for process simulation, including gradient-based optimizers, multi-objective optimization with Pareto front generation, and sensitivity analysis tools.
+The `neqsim.process.util.optimizer` package provides a comprehensive optimization framework for process simulation, including gradient-based optimizers, multi-objective optimization with Pareto front generation, and sensitivity analysis tools.
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@ The `neqsim.util.optimizer` package provides a comprehensive optimization framew
 
 ## Overview
 
-**Location:** `neqsim.util.optimizer`
+**Location:** `neqsim.process.util.optimizer`
 
 **Purpose:**
 
@@ -37,7 +37,8 @@ The `neqsim.util.optimizer` package provides a comprehensive optimization framew
 ### Basic Optimization
 
 ```java
-import neqsim.util.optimizer.*;
+import neqsim.process.util.optimizer.*;
+import neqsim.process.processmodel.ProcessSystem;
 
 // Create process system
 ProcessSystem process = new ProcessSystem();
@@ -46,26 +47,41 @@ ProcessSystem process = new ProcessSystem();
 // Create optimizer
 ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
 
-// Define objective: Maximize production
-engine.setObjectiveFunction(sys -> {
-    Stream product = (Stream) sys.getMeasurementDevice("ProductStream");
-    return -product.getFlowRate("kg/hr"); // Negative for maximization
-});
+// Find maximum throughput given inlet/outlet pressures
+ProcessOptimizationEngine.OptimizationResult result = 
+    engine.findMaximumThroughput(
+        150.0,    // Inlet pressure (bara)
+        30.0,     // Outlet pressure (bara)
+        100.0,    // Min flow rate
+        10000.0   // Max flow rate
+    );
 
-// Add variables
-engine.addVariable("FeedFlow", 1000.0, 5000.0, 2000.0);
-engine.addVariable("Pressure", 10.0, 80.0, 50.0);
+System.out.println("Optimal flow: " + result.getOptimalValue());
+System.out.println("Converged: " + result.isConverged());
+System.out.println("Bottleneck: " + result.getBottleneck());
+```
 
-// Add constraints
-engine.addConstraint("MaxTemp", sys -> {
-    Heater heater = (Heater) sys.getUnit("Heater1");
-    return heater.getOutletStream().getTemperature() - 473.15; // < 200°C
-});
+### Using FlowRateOptimizer
 
-// Run optimization
-OptimizationResult result = engine.optimize();
-System.out.println("Optimal production: " + (-result.getObjectiveValue()));
-System.out.println("Optimal variables: " + result.getOptimalVariables());
+```java
+import neqsim.process.util.optimizer.FlowRateOptimizer;
+
+// Create optimizer for a process system
+FlowRateOptimizer optimizer = new FlowRateOptimizer(process);
+
+// Set inlet/outlet conditions
+optimizer.setInletPressure(150.0);   // bara
+optimizer.setOutletPressure(30.0);    // bara
+
+// Find maximum flow rate
+double maxFlow = optimizer.findMaxFlowRate(100.0, 10000.0);
+System.out.println("Maximum flow rate: " + maxFlow + " kg/hr");
+
+// Generate performance table
+String[][] table = optimizer.generatePerformanceTable(
+    new double[]{100, 120, 140, 160},  // Inlet pressures
+    new double[]{20, 30, 40}            // Outlet pressures
+);
 ```
 
 ### Using OptimizationBuilder (Fluent API)
@@ -89,34 +105,25 @@ OptimizationResult result = OptimizationBuilder.forSystem(process)
 ### Class Hierarchy
 
 ```
-neqsim.util.optimizer/
+neqsim.process.util.optimizer/
 ├── ProcessOptimizationEngine     # Main unified optimizer
-├── OptimizationBuilder           # Fluent API builder
-├── OptimizationResult            # Result with sensitivity analysis
+├── FlowRateOptimizer             # Flow rate calculations
+├── ProductionOptimizer           # Production optimization
+├── ProcessSimulationEvaluator    # Process evaluation
+├── ProcessConstraintEvaluator    # Constraint evaluation
 │
-├── algorithms/                   # Optimization algorithms
-│   ├── BFGSOptimizer             # Quasi-Newton BFGS
-│   ├── ArmijoWolfeLineSearch     # Line search with Wolfe conditions
-│   ├── GradientDescentOptimizer  # Simple gradient descent
-│   └── MultiObjectiveOptimizer   # Pareto optimization
+├── OptimizationResultBase        # Base result class
+├── ParetoFront                   # Non-dominated solution set
+├── ParetoSolution                # Single Pareto point
 │
-├── pareto/                       # Multi-objective support
-│   ├── ParetoFront               # Non-dominated solution set
-│   ├── ParetoSolution            # Single Pareto point
-│   └── ObjectiveWeight           # Objective weighting
-│
-├── strategies/                   # Equipment strategies
-│   ├── EquipmentOptimizationStrategy
-│   ├── CompressorCapacityStrategy
-│   ├── SeparatorCapacityStrategy
-│   ├── PumpCapacityStrategy
-│   ├── ExpanderCapacityStrategy
-│   └── EjectorCapacityStrategy
-│
-└── production/                   # Production optimization
-    ├── FlowRateOptimizer         # Flow rate calculations
-    ├── ProductionOptimizer       # Production optimization
-    └── LiftCurveGenerator        # Well lift curves
+neqsim.process.equipment.capacity/
+├── EquipmentCapacityStrategy     # Strategy interface
+├── EquipmentCapacityStrategyRegistry  # Plugin registry
+├── CompressorCapacityStrategy    # Compressor constraints
+├── SeparatorCapacityStrategy     # Separator constraints
+├── PumpCapacityStrategy          # Pump constraints
+├── ExpanderCapacityStrategy      # Expander constraints
+└── EjectorCapacityStrategy       # Ejector constraints
 ```
 
 ### Plugin System
