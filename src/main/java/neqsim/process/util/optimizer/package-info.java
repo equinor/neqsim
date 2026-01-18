@@ -5,41 +5,69 @@
  * This package provides a comprehensive framework for process optimization including:
  * </p>
  *
- * <h2>Core Classes</h2>
+ * <p>
+ * <strong>Core Classes:</strong>
+ * </p>
  * <ul>
  * <li>{@link neqsim.process.util.optimizer.ProcessOptimizationEngine} - Unified API for process
- * optimization with multiple search algorithms (binary, golden section, gradient descent)</li>
+ * optimization with multiple search algorithms (binary, golden section, gradient descent,
+ * BFGS)</li>
  * <li>{@link neqsim.process.util.optimizer.ProcessConstraintEvaluator} - Composite constraint
  * evaluation with caching and sensitivity analysis</li>
+ * <li>{@link neqsim.process.util.optimizer.ProcessSimulationEvaluator} - Interface for external
+ * optimizers (Python/SciPy integration)</li>
  * <li>{@link neqsim.process.util.optimizer.OptimizationResultBase} - Unified result base class with
  * status tracking, timing, and constraint violation details</li>
  * <li>{@link neqsim.process.util.optimizer.EclipseVFPExporter} - Export VFP tables for Eclipse
  * reservoir simulation</li>
  * </ul>
  *
- * <h2>Key Features</h2>
+ * <p>
+ * <strong>Key Features:</strong>
+ * </p>
  * <ul>
- * <li><b>Multiple Search Algorithms:</b> Binary search, golden section, and gradient descent</li>
- * <li><b>Constraint Caching:</b> TTL-based caching for repeated constraint evaluations</li>
- * <li><b>Sensitivity Analysis:</b> Calculate flow sensitivities and shadow prices</li>
- * <li><b>Bottleneck Detection:</b> Identify limiting equipment and constraints</li>
- * <li><b>FlowRateOptimizer Integration:</b> Seamless integration with production optimizer</li>
- * <li><b>Eclipse Export:</b> Generate VFPPROD, VFPINJ, and VFPEXP tables</li>
+ * <li><strong>Multiple Search Algorithms:</strong> Binary search, golden section, gradient descent,
+ * Armijo-Wolfe line search, and BFGS quasi-Newton method</li>
+ * <li><strong>Constraint Caching:</strong> TTL-based caching for repeated constraint
+ * evaluations</li>
+ * <li><strong>Sensitivity Analysis:</strong> Calculate flow sensitivities and shadow prices</li>
+ * <li><strong>Bottleneck Detection:</strong> Identify limiting equipment and constraints</li>
+ * <li><strong>FlowRateOptimizer Integration:</strong> Seamless integration with production
+ * optimizer</li>
+ * <li><strong>Adjuster Integration:</strong> Coordinate optimization with existing Adjuster
+ * units</li>
+ * <li><strong>Eclipse Export:</strong> Generate VFPPROD, VFPINJ, and VFPEXP tables</li>
+ * <li><strong>Fluent API:</strong> Builder pattern for convenient configuration</li>
  * </ul>
  *
- * <h2>Usage Example</h2>
+ * <p>
+ * <strong>Quick Start - Using ProcessSystem Methods:</strong>
+ * </p>
  * 
  * <pre>
- * // Create process system
+ * // Simplest usage - direct methods on ProcessSystem
  * ProcessSystem process = new ProcessSystem();
  * // ... add equipment ...
  * process.run();
  *
- * // Create optimization engine
- * ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
- * engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.GRADIENT_DESCENT);
+ * // Find maximum throughput (simple)
+ * double maxFlow = process.findMaxThroughput(50.0, 10.0);
  *
- * // Find maximum throughput
+ * // Or use fluent API for more control
+ * double optimizedFlow = process.optimize().withPressures(50.0, 10.0)
+ *     .withFlowBounds(1000.0, 100000.0).usingAlgorithm(SearchAlgorithm.BFGS).findMaxThroughput();
+ * </pre>
+ *
+ * <p>
+ * <strong>Advanced Usage - Direct ProcessOptimizationEngine:</strong>
+ * </p>
+ * 
+ * <pre>
+ * // Create optimization engine directly
+ * ProcessOptimizationEngine engine = process.createOptimizer();
+ * engine.setSearchAlgorithm(ProcessOptimizationEngine.SearchAlgorithm.BFGS);
+ *
+ * // Find maximum throughput with detailed results
  * ProcessOptimizationEngine.OptimizationResult result =
  *     engine.findMaximumThroughput(50.0, 10.0, 1000.0, 100000.0);
  *
@@ -47,18 +75,28 @@
  * System.out.println("Bottleneck: " + result.getBottleneck());
  *
  * // Analyze sensitivity
- * ProcessOptimizationEngine.SensitivityResult sensitivity =
- *     engine.analyzeSensitivity(5000.0, 50.0, 10.0);
+ * ProcessOptimizationEngine.SensitivityResult sensitivity = engine.analyzeSensitivity(5000.0);
  *
  * if (sensitivity.isAtCapacity()) {
  *   System.out.println("Near capacity - bottleneck: " + sensitivity.getBottleneckEquipment());
  * }
- *
- * // Calculate shadow prices
- * Map&lt;String, Double&gt; shadowPrices = engine.calculateShadowPrices(5000.0, 50.0, 10.0);
  * </pre>
  *
- * <h2>Constraint Evaluation with Caching</h2>
+ * <p>
+ * <strong>Adjuster Integration:</strong>
+ * </p>
+ * 
+ * <pre>
+ * // Optimize with Adjusters temporarily disabled
+ * OptimizationResult result = engine.optimizeWithAdjustersDisabled(50.0, 10.0, 1000.0, 100000.0);
+ *
+ * // Or optimize while respecting Adjuster targets
+ * OptimizationResult result = engine.optimizeWithAdjusterTargets(50.0, 10.0, 1000.0, 100000.0);
+ * </pre>
+ *
+ * <p>
+ * <strong>Constraint Evaluation with Caching:</strong>
+ * </p>
  * 
  * <pre>
  * ProcessConstraintEvaluator evaluator = new ProcessConstraintEvaluator(process);

@@ -83,6 +83,8 @@ public class EquipmentCapacityStrategyRegistry {
     register(new ValveCapacityStrategy());
     register(new HeatExchangerCapacityStrategy());
     register(new PumpCapacityStrategy());
+    register(new ExpanderCapacityStrategy());
+    register(new EjectorCapacityStrategy());
   }
 
   /**

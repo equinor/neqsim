@@ -1774,4 +1774,210 @@ public class ProcessOptimizationEngine implements Serializable {
       return tightestConstraint;
     }
   }
+
+  // ==========================================================================
+  // ADJUSTER INTEGRATION
+  // ==========================================================================
+
+  /**
+   * Gets all Adjuster units in the process system.
+   *
+   * @return list of Adjuster units
+   */
+  public List<neqsim.process.equipment.util.Adjuster> getAdjusters() {
+    List<neqsim.process.equipment.util.Adjuster> adjusters =
+        new ArrayList<neqsim.process.equipment.util.Adjuster>();
+    if (processSystem == null) {
+      return adjusters;
+    }
+    for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
+      if (unit instanceof neqsim.process.equipment.util.Adjuster) {
+        adjusters.add((neqsim.process.equipment.util.Adjuster) unit);
+      }
+    }
+    return adjusters;
+  }
+
+  /**
+   * Temporarily disables all Adjusters during optimization.
+   *
+   * <p>
+   * Adjusters can interfere with optimization by trying to converge to their own targets. This
+   * method disables them and returns a list of the disabled adjusters for later re-enabling.
+   * </p>
+   *
+   * @return list of adjusters that were disabled
+   */
+  public List<neqsim.process.equipment.util.Adjuster> disableAdjusters() {
+    List<neqsim.process.equipment.util.Adjuster> disabled =
+        new ArrayList<neqsim.process.equipment.util.Adjuster>();
+    for (neqsim.process.equipment.util.Adjuster adj : getAdjusters()) {
+      if (adj.isActive()) {
+        adj.setActive(false);
+        disabled.add(adj);
+      }
+    }
+    return disabled;
+  }
+
+  /**
+   * Re-enables previously disabled Adjusters.
+   *
+   * @param adjusters list of adjusters to re-enable
+   */
+  public void enableAdjusters(List<neqsim.process.equipment.util.Adjuster> adjusters) {
+    for (neqsim.process.equipment.util.Adjuster adj : adjusters) {
+      adj.setActive(true);
+    }
+  }
+
+  /**
+   * Optimizes with Adjusters temporarily disabled.
+   *
+   * <p>
+   * This method disables all Adjusters during optimization, runs the optimization, and then
+   * re-enables them. This prevents the Adjusters from interfering with the optimization search.
+   * </p>
+   *
+   * @param inletPressure inlet pressure in bara
+   * @param outletPressure outlet pressure in bara
+   * @param minFlow minimum flow rate in kg/hr
+   * @param maxFlow maximum flow rate in kg/hr
+   * @return optimization result
+   */
+  public OptimizationResult optimizeWithAdjustersDisabled(double inletPressure,
+      double outletPressure, double minFlow, double maxFlow) {
+    List<neqsim.process.equipment.util.Adjuster> disabled = disableAdjusters();
+    try {
+      return findMaximumThroughput(inletPressure, outletPressure, minFlow, maxFlow);
+    } finally {
+      enableAdjusters(disabled);
+    }
+  }
+
+  /**
+   * Creates an Adjuster to optimize flow rate for a target variable.
+   *
+   * <p>
+   * This method creates a new Adjuster that adjusts the feed stream flow rate to achieve a target
+   * value for a specified variable (e.g., outlet pressure, temperature).
+   * </p>
+   *
+   * @param name name for the new Adjuster
+   * @param feedStreamName name of the feed stream to adjust
+   * @param targetEquipmentName name of the equipment with the target variable
+   * @param targetVariable name of the target variable (e.g., "pressure", "temperature")
+   * @param targetValue target value for the variable
+   * @param targetUnit unit for the target value
+   * @return the created Adjuster, or null if creation fails
+   */
+  public neqsim.process.equipment.util.Adjuster createFlowAdjuster(String name,
+      String feedStreamName, String targetEquipmentName, String targetVariable, double targetValue,
+      String targetUnit) {
+    if (processSystem == null) {
+      return null;
+    }
+
+    ProcessEquipmentInterface feedStream = processSystem.getUnit(feedStreamName);
+    ProcessEquipmentInterface targetEquipment = processSystem.getUnit(targetEquipmentName);
+
+    if (feedStream == null || targetEquipment == null) {
+      logger.warn("Could not find feed stream '{}' or target equipment '{}'", feedStreamName,
+          targetEquipmentName);
+      return null;
+    }
+
+    neqsim.process.equipment.util.Adjuster adjuster =
+        new neqsim.process.equipment.util.Adjuster(name);
+    adjuster.setAdjustedVariable(feedStream, "flow rate", "kg/hr");
+    adjuster.setTargetVariable(targetEquipment, targetVariable, targetValue, targetUnit);
+
+    return adjuster;
+  }
+
+  /**
+   * Coordinates optimization with existing Adjusters.
+   *
+   * <p>
+   * This method performs optimization while respecting the targets set by existing Adjusters. It
+   * finds the maximum flow rate that still allows all Adjusters to converge to their targets.
+   * </p>
+   *
+   * @param inletPressure inlet pressure in bara
+   * @param outletPressure outlet pressure in bara
+   * @param minFlow minimum flow rate in kg/hr
+   * @param maxFlow maximum flow rate in kg/hr
+   * @return optimization result with Adjuster-compatible flow rate
+   */
+  public OptimizationResult optimizeWithAdjusterTargets(double inletPressure, double outletPressure,
+      double minFlow, double maxFlow) {
+    OptimizationResult result = new OptimizationResult();
+    result.setObjective("Maximum Throughput with Adjuster Targets");
+
+    // First, find the unconstrained maximum
+    OptimizationResult unconstrained =
+        findMaximumThroughput(inletPressure, outletPressure, minFlow, maxFlow);
+
+    // Now check if Adjusters can converge at this flow rate
+    double testFlow = unconstrained.getOptimalValue();
+    boolean allAdjustersConverge = checkAdjusterConvergence(testFlow);
+
+    if (allAdjustersConverge) {
+      // Good, Adjusters can handle this flow rate
+      result.setOptimalValue(testFlow);
+      result.setConverged(true);
+    } else {
+      // Need to reduce flow until Adjusters can converge
+      double lowFlow = minFlow;
+      double highFlow = testFlow;
+
+      for (int i = 0; i < maxIterations; i++) {
+        double midFlow = (lowFlow + highFlow) / 2.0;
+        if (checkAdjusterConvergence(midFlow)) {
+          lowFlow = midFlow;
+        } else {
+          highFlow = midFlow;
+        }
+        if ((highFlow - lowFlow) < tolerance) {
+          break;
+        }
+      }
+      result.setOptimalValue(lowFlow);
+      result.setConverged(true);
+    }
+
+    return result;
+  }
+
+  /**
+   * Checks if all Adjusters can converge at the given flow rate.
+   *
+   * @param flowRate flow rate to test in kg/hr
+   * @return true if all Adjusters converge
+   */
+  private boolean checkAdjusterConvergence(double flowRate) {
+    if (processSystem == null) {
+      return true;
+    }
+
+    // Set the flow rate
+    setFeedFlowRate(flowRate);
+
+    // Run the process with Adjusters active
+    try {
+      processSystem.run();
+    } catch (Exception e) {
+      logger.debug("Process failed at flow rate {}: {}", flowRate, e.getMessage());
+      return false;
+    }
+
+    // Check if all Adjusters converged
+    for (neqsim.process.equipment.util.Adjuster adj : getAdjusters()) {
+      if (adj.isActive() && !adj.solved()) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 }
