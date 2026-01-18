@@ -405,6 +405,76 @@ For detailed constraint management, see [Capacity Constraint Framework](../CAPAC
 
 ---
 
+## Optimization with ProcessModule
+
+Both `ProcessOptimizationEngine` and `DesignOptimizer` fully support `ProcessModule`:
+
+### ProcessOptimizationEngine
+
+```java
+import neqsim.process.util.optimizer.ProcessOptimizationEngine;
+
+// Create engine with ProcessModule
+ProcessOptimizationEngine engine = new ProcessOptimizationEngine(facilityModule);
+
+// Set feed stream (searches across ALL systems in module)
+engine.setFeedStreamName("Well Feed");
+
+// Set outlet stream to monitor (searches across ALL systems in module)
+engine.setOutletStreamName("Export Gas");
+
+// Find maximum throughput
+OptimizationResult result = engine.findMaximumThroughput(
+    85.0,      // inlet pressure (bara)
+    40.0,      // outlet pressure (bara)
+    5000.0,    // min flow (kg/hr)
+    200000.0   // max flow (kg/hr)
+);
+
+// Get outlet conditions from the configured outlet stream
+double outletTemp = engine.getOutletTemperature("C");
+double outletFlow = engine.getOutletFlowRate("MSm3/day");
+System.out.println("Export temperature: " + outletTemp + " °C");
+System.out.println("Export flow: " + outletFlow + " MSm3/day");
+```
+
+### Stream Configuration Methods
+
+| Method | Description |
+|--------|-------------|
+| `setFeedStreamName(String)` | Set which stream to vary during optimization |
+| `getFeedStreamName()` | Get the feed stream name |
+| `setOutletStreamName(String)` | Set which stream to monitor for outlet conditions |
+| `getOutletStreamName()` | Get the outlet stream name |
+| `getOutletTemperature(String)` | Get outlet temperature in specified unit |
+| `getOutletFlowRate(String)` | Get outlet flow rate in specified unit |
+
+### DesignOptimizer
+
+```java
+import neqsim.process.design.DesignOptimizer;
+
+// Create optimizer from ProcessModule
+DesignOptimizer optimizer = DesignOptimizer.forProcess(facilityModule);
+
+// Check mode
+if (optimizer.isModuleMode()) {
+    System.out.println("Optimizing module: " + optimizer.getModule().getName());
+}
+
+// Configure and run
+optimizer
+    .autoSizeEquipment(1.2)
+    .applyDefaultConstraints()
+    .setObjective(ObjectiveType.MAXIMIZE_PRODUCTION);
+
+DesignResult result = optimizer.optimize();
+```
+
+Constraints are evaluated across **all nested ProcessSystems** in the module hierarchy.
+
+---
+
 ## Best Practices
 
 1. **Self-Contained**: Modules should be self-contained with clear interfaces

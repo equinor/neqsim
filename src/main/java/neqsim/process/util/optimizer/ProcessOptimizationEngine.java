@@ -107,6 +107,9 @@ public class ProcessOptimizationEngine implements Serializable {
   /** Name of the feed stream to vary during optimization. */
   private String feedStreamName = null;
 
+  /** Name of the outlet stream to monitor during optimization. */
+  private String outletStreamName = null;
+
   /**
    * Search algorithm options.
    */
@@ -1512,17 +1515,116 @@ public class ProcessOptimizationEngine implements Serializable {
   }
 
   /**
-   * Gets the outlet pressure.
+   * Gets the outlet stream used for optimization.
+   *
+   * <p>
+   * If {@link #setOutletStreamName(String)} was called, returns that stream. Otherwise returns the
+   * last unit operation in the process.
+   * </p>
+   *
+   * @return the outlet stream, or null if not found
    */
-  private double getOutletPressure() {
+  private ProcessEquipmentInterface getOutletStream() {
     List<ProcessEquipmentInterface> units = getAllUnitOperations();
     if (units.isEmpty()) {
-      return 0.0;
+      return null;
     }
-    int lastIndex = units.size() - 1;
-    ProcessEquipmentInterface lastUnit = units.get(lastIndex);
-    if (lastUnit != null && lastUnit.getFluid() != null) {
-      return lastUnit.getFluid().getPressure("bara");
+
+    // If outlet stream name is specified, find it
+    if (outletStreamName != null && !outletStreamName.isEmpty()) {
+      for (ProcessEquipmentInterface unit : units) {
+        if (outletStreamName.equals(unit.getName())) {
+          return unit;
+        }
+      }
+      logger.warn("Outlet stream '{}' not found, using last unit operation", outletStreamName);
+    }
+
+    // Default to last unit operation
+    return units.get(units.size() - 1);
+  }
+
+  /**
+   * Sets the name of the outlet stream to monitor during optimization.
+   *
+   * <p>
+   * Use this method to explicitly specify which stream should be monitored for outlet conditions
+   * (pressure, temperature, flow rate). If not set, the last unit operation in the process is used
+   * by default.
+   * </p>
+   *
+   * @param name the name of the outlet stream
+   * @return this engine for method chaining
+   */
+  public ProcessOptimizationEngine setOutletStreamName(String name) {
+    this.outletStreamName = name;
+    return this;
+  }
+
+  /**
+   * Gets the name of the outlet stream being monitored.
+   *
+   * @return the outlet stream name, or null if using default (last unit)
+   */
+  public String getOutletStreamName() {
+    if (outletStreamName != null) {
+      return outletStreamName;
+    }
+    // Return name of default outlet stream
+    ProcessEquipmentInterface outletUnit = getOutletStream();
+    return outletUnit != null ? outletUnit.getName() : null;
+  }
+
+  /**
+   * Gets the outlet pressure from the configured outlet stream.
+   *
+   * @return outlet pressure in bara, or 0.0 if no outlet stream found
+   */
+  private double getOutletPressure() {
+    ProcessEquipmentInterface outletUnit = getOutletStream();
+    if (outletUnit != null && outletUnit.getFluid() != null) {
+      return outletUnit.getFluid().getPressure("bara");
+    }
+    return 0.0;
+  }
+
+  /**
+   * Gets the outlet temperature from the configured outlet stream.
+   *
+   * @return outlet temperature in Kelvin, or 0.0 if no outlet stream found
+   */
+  public double getOutletTemperature() {
+    ProcessEquipmentInterface outletUnit = getOutletStream();
+    if (outletUnit != null && outletUnit.getFluid() != null) {
+      return outletUnit.getFluid().getTemperature();
+    }
+    return 0.0;
+  }
+
+  /**
+   * Gets the outlet temperature from the configured outlet stream in specified unit.
+   *
+   * @param unit temperature unit ("K", "C", "R", "F")
+   * @return outlet temperature in specified unit, or 0.0 if no outlet stream found
+   */
+  public double getOutletTemperature(String unit) {
+    ProcessEquipmentInterface outletUnit = getOutletStream();
+    if (outletUnit != null && outletUnit.getFluid() != null) {
+      return outletUnit.getFluid().getTemperature(unit);
+    }
+    return 0.0;
+  }
+
+  /**
+   * Gets the outlet flow rate from the configured outlet stream.
+   *
+   * @param flowUnit flow rate unit (e.g., "kg/hr", "MSm3/day")
+   * @return outlet flow rate in specified unit, or 0.0 if no outlet stream found
+   */
+  public double getOutletFlowRate(String flowUnit) {
+    ProcessEquipmentInterface outletUnit = getOutletStream();
+    if (outletUnit != null && outletUnit.getFluid() != null) {
+      return outletUnit.getFluid().getFlowRate(flowUnit);
     }
     return 0.0;
   }

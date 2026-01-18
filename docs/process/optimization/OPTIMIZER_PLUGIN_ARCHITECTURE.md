@@ -720,6 +720,64 @@ OptimizationResult result = engine
 System.out.println("Optimizing flow rate of: " + engine.getFeedStreamName());
 ```
 
+### Outlet Stream Configuration
+
+By default, the optimization engine monitors the **last unit operation** for outlet conditions. For complex processes or modules, you can explicitly specify the outlet stream:
+
+| Method | Description |
+|--------|-------------|
+| `setOutletStreamName(String name)` | Set the name of the outlet stream to monitor |
+| `getOutletStreamName()` | Get the name of the outlet stream being monitored |
+| `getOutletTemperature()` | Get outlet temperature in Kelvin |
+| `getOutletTemperature(String unit)` | Get outlet temperature in specified unit ("C", "K", "F", "R") |
+| `getOutletFlowRate(String flowUnit)` | Get outlet flow rate in specified unit ("kg/hr", "MSm3/day") |
+
+```java
+// Configure both feed and outlet streams
+ProcessOptimizationEngine engine = new ProcessOptimizationEngine(fieldModule);
+engine.setFeedStreamName("Well Feed");        // Input stream to vary
+engine.setOutletStreamName("Export Gas");     // Output stream to monitor
+
+// Run optimization
+OptimizationResult result = engine.findMaximumThroughput(50.0, 40.0, 1000.0, 100000.0);
+
+// Get outlet conditions from the specified stream
+double outletTemp = engine.getOutletTemperature("C");
+double outletFlow = engine.getOutletFlowRate("MSm3/day");
+System.out.println("Export temperature: " + outletTemp + " °C");
+System.out.println("Export flow rate: " + outletFlow + " MSm3/day");
+```
+
+#### ProcessModule Example with Feed and Outlet Streams
+
+```java
+// Module with multiple process systems
+ProcessModule facilityModule = new ProcessModule("Offshore Facility");
+
+// Subsea system
+ProcessSystem subseaSystem = new ProcessSystem("Subsea");
+subseaSystem.add(new Stream("Wellhead Feed", wellFluid));
+subseaSystem.add(new AdiabaticPipe("Flowline", subseaSystem.getUnit("Wellhead Feed")));
+facilityModule.add(subseaSystem);
+
+// Topside system
+ProcessSystem topsideSystem = new ProcessSystem("Topside");
+topsideSystem.add(new Separator("HP Separator", subseaSystem.getUnit("Flowline")));
+topsideSystem.add(new Compressor("Export Compressor", topsideSystem.getUnit("HP Separator")));
+topsideSystem.add(new Stream("Export Gas", topsideSystem.getUnit("Export Compressor")));
+facilityModule.add(topsideSystem);
+
+facilityModule.run();
+
+// Optimize with explicit feed/outlet
+ProcessOptimizationEngine engine = new ProcessOptimizationEngine(facilityModule);
+engine.setFeedStreamName("Wellhead Feed");  // From subseaSystem
+engine.setOutletStreamName("Export Gas");   // From topsideSystem
+
+// Optimization searches across ALL systems in the module
+OptimizationResult result = engine.findMaximumThroughput(85.0, 40.0, 5000.0, 200000.0);
+```
+
 ### Core Methods
 
 | Method | Returns | Description |
