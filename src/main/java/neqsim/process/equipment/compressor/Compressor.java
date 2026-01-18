@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import neqsim.process.design.AutoSizeable;
 
 /**
  * <p>
@@ -43,8 +44,8 @@ import java.util.Map;
  * @author esol
  * @version $Id: $Id
  */
-public class Compressor extends TwoPortEquipment
-    implements CompressorInterface, StateVectorProvider, CapacityConstrainedEquipment {
+public class Compressor extends TwoPortEquipment implements CompressorInterface,
+    StateVectorProvider, CapacityConstrainedEquipment, AutoSizeable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -108,6 +109,14 @@ public class Compressor extends TwoPortEquipment
 
   // Efficiency solving tolerance (Kelvin)
   private double efficiencySolveTolerance = 0.01;
+
+  // AutoSizeable fields
+  /** Flag indicating if compressor has been auto-sized. */
+  private boolean autoSized = false;
+  /** Template used for curve generation. */
+  private String curveTemplate = "CENTRIFUGAL_STANDARD";
+  /** Number of speed curves to generate. */
+  private int numberOfSpeedCurves = 5;
 
   // Surge margin thresholds for warnings/alarms
   private double surgeWarningThreshold = 0.15; // 15% margin triggers warning
@@ -3985,6 +3994,248 @@ public class Compressor extends TwoPortEquipment
     if (powerConstraint != null) {
       powerConstraint.setDesignValue(driverPowerRating);
       powerConstraint.setMaxValue(driverPowerRating * 1.1); // 10% overload margin
+    }
+  }
+
+  // ============================================================================
+  // AutoSizeable Implementation
+  // ============================================================================
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(double safetyFactor) {
+    if (inStream == null) {
+      throw new IllegalStateException("Inlet stream must be set before auto-sizing");
+    }
+
+    // First run to get operating point if not already run
+    if (thermoSystem == null) {
+      run();
+    }
+
+    // Initialize mechanical design if not already done
+    initMechanicalDesign();
+    getMechanicalDesign().calcDesign();
+
+    // Generate compressor curves from template scaled to current operating point
+    CompressorChartGenerator chartGenerator = new CompressorChartGenerator(this);
+    chartGenerator.setChartType("interpolate and extrapolate");
+
+    // Select template based on application (can be overridden via setCurveTemplate)
+    CompressorChartInterface generatedChart =
+        chartGenerator.generateFromTemplate(curveTemplate, numberOfSpeedCurves);
+
+    // Set the chart on the compressor
+    setCompressorChart(generatedChart);
+    getCompressorChart().setUseCompressorChart(true);
+
+    // Enable speed solving - compressor will calculate speed from pressure ratio
+    setSolveSpeed(true);
+
+    // Apply safety factor to design head if needed
+    if (safetyFactor > 1.0) {
+      // Safety factor can be used to select a larger compressor frame
+      // For now, we note it in the sizing but curve scaling already accounts for margin
+      logger.info("Auto-sizing compressor {} with safety factor {}", getName(), safetyFactor);
+    }
+
+    autoSized = true;
+    logger.info("Compressor {} auto-sized with {} template, {} speed curves, solveSpeed=true",
+        getName(), curveTemplate, numberOfSpeedCurves);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize() {
+    autoSize(1.2);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(String company, String trDocument) {
+    // Initialize mechanical design with company standards
+    initMechanicalDesign();
+    getMechanicalDesign().setCompanySpecificDesignStandards(company);
+    getMechanicalDesign().readDesignSpecifications();
+
+    // Run design calculations
+    getMechanicalDesign().calcDesign();
+
+    // Select template based on typical application
+    // Could be enhanced to read from TR document
+    selectTemplateForApplication();
+
+    // Generate and apply curves
+    autoSize(1.2);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isAutoSized() {
+    return autoSized;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReport() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Compressor Auto-Sizing Report ===\n");
+    sb.append("Equipment: ").append(getName()).append("\n");
+    sb.append("Auto-sized: ").append(autoSized).append("\n");
+    sb.append("Curve Template: ").append(curveTemplate).append("\n");
+    sb.append("Number of Speed Curves: ").append(numberOfSpeedCurves).append("\n");
+    sb.append("Solve Speed Mode: ").append(isSolveSpeed()).append("\n");
+    sb.append("\n--- Operating Point ---\n");
+    sb.append("Speed: ").append(String.format("%.0f RPM", getSpeed())).append("\n");
+    sb.append("Polytropic Efficiency: ")
+        .append(String.format("%.1f%%", getPolytropicEfficiency() * 100)).append("\n");
+    sb.append("Polytropic Head: ").append(String.format("%.2f kJ/kg", getPolytropicFluidHead()))
+        .append("\n");
+    sb.append("Power: ").append(String.format("%.2f kW", getPower("kW"))).append("\n");
+
+    if (inStream != null) {
+      sb.append("\n--- Design Basis ---\n");
+      sb.append("Inlet Flow: ").append(String.format("%.1f m3/hr", inStream.getFlowRate("m3/hr")))
+          .append("\n");
+      sb.append("Inlet Pressure: ").append(String.format("%.2f bara", inStream.getPressure("bara")))
+          .append("\n");
+      sb.append("Outlet Pressure: ").append(String.format("%.2f bara", getOutletPressure()))
+          .append("\n");
+      sb.append("Compression Ratio: ").append(String.format("%.2f", getActualCompressionRatio()))
+          .append("\n");
+    }
+
+    if (getCompressorChart() != null && getCompressorChart().isUseCompressorChart()) {
+      sb.append("\n--- Compressor Map ---\n");
+      sb.append("Using Compressor Chart: Yes\n");
+      double[] speeds = getCompressorChart().getSpeeds();
+      if (speeds != null && speeds.length > 0) {
+        sb.append("Speed Range: ")
+            .append(String.format("%.0f - %.0f RPM", speeds[0], speeds[speeds.length - 1]))
+            .append("\n");
+      }
+    }
+
+    if (getMechanicalDesign() != null) {
+      sb.append("\n--- Mechanical Design ---\n");
+      CompressorMechanicalDesign mechDesign = (CompressorMechanicalDesign) getMechanicalDesign();
+      sb.append("Number of Stages: ").append(mechDesign.getNumberOfStages()).append("\n");
+      sb.append("Impeller Diameter: ")
+          .append(String.format("%.0f mm", mechDesign.getImpellerDiameter())).append("\n");
+      sb.append("Driver Power: ").append(String.format("%.0f kW", mechDesign.getDriverPower()))
+          .append("\n");
+    }
+
+    return sb.toString();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReportJson() {
+    Map<String, Object> report = new LinkedHashMap<String, Object>();
+    report.put("equipmentName", getName());
+    report.put("autoSized", autoSized);
+    report.put("curveTemplate", curveTemplate);
+    report.put("numberOfSpeedCurves", numberOfSpeedCurves);
+    report.put("solveSpeed", isSolveSpeed());
+    report.put("speed_rpm", getSpeed());
+    report.put("polytropicEfficiency", getPolytropicEfficiency());
+    report.put("polytropicHead_kJkg", getPolytropicFluidHead());
+    report.put("power_kW", getPower("kW"));
+
+    if (inStream != null) {
+      report.put("inletFlow_m3hr", inStream.getFlowRate("m3/hr"));
+      report.put("inletPressure_bara", inStream.getPressure("bara"));
+      report.put("outletPressure_bara", getOutletPressure());
+      report.put("compressionRatio", getActualCompressionRatio());
+    }
+
+    if (getMechanicalDesign() != null) {
+      CompressorMechanicalDesign mechDesign = (CompressorMechanicalDesign) getMechanicalDesign();
+      Map<String, Object> mechReport = new LinkedHashMap<String, Object>();
+      mechReport.put("numberOfStages", mechDesign.getNumberOfStages());
+      mechReport.put("impellerDiameter_mm", mechDesign.getImpellerDiameter());
+      mechReport.put("driverPower_kW", mechDesign.getDriverPower());
+      report.put("mechanicalDesign", mechReport);
+    }
+
+    return new GsonBuilder().setPrettyPrinting().create().toJson(report);
+  }
+
+  /**
+   * Set the curve template to use for auto-sizing.
+   *
+   * <p>
+   * Available templates:
+   * </p>
+   * <ul>
+   * <li>"CENTRIFUGAL_STANDARD" - Standard centrifugal compressor (default)</li>
+   * <li>"CENTRIFUGAL_HIGH_FLOW" - High flow, lower head compressor</li>
+   * <li>"CENTRIFUGAL_HIGH_HEAD" - High head, narrower operating range</li>
+   * <li>"PIPELINE" - Pipeline/export compressor</li>
+   * <li>"EXPORT" - Offshore export compressor</li>
+   * <li>"INJECTION" - Gas injection compressor</li>
+   * <li>"GAS_LIFT" - Gas lift compressor</li>
+   * <li>"REFRIGERATION" - Refrigeration compressor</li>
+   * <li>"BOOSTER" - Booster compressor</li>
+   * </ul>
+   *
+   * @param template the template name
+   */
+  public void setCurveTemplate(String template) {
+    this.curveTemplate = template;
+  }
+
+  /**
+   * Get the curve template used for auto-sizing.
+   *
+   * @return the template name
+   */
+  public String getCurveTemplate() {
+    return curveTemplate;
+  }
+
+  /**
+   * Set the number of speed curves to generate during auto-sizing.
+   *
+   * @param numberOfCurves number of curves (typically 3-9)
+   */
+  public void setNumberOfSpeedCurves(int numberOfCurves) {
+    this.numberOfSpeedCurves = numberOfCurves;
+  }
+
+  /**
+   * Get the number of speed curves generated during auto-sizing.
+   *
+   * @return number of speed curves
+   */
+  public int getNumberOfSpeedCurves() {
+    return numberOfSpeedCurves;
+  }
+
+  /**
+   * Select an appropriate curve template based on operating conditions. Called during
+   * autoSize(company, trDocument) to pick a suitable template.
+   */
+  private void selectTemplateForApplication() {
+    if (inStream == null) {
+      return;
+    }
+
+    double compressionRatioVal = getActualCompressionRatio();
+    double flowRate = inStream.getFlowRate("m3/hr");
+
+    // Select template based on compression ratio and flow
+    if (compressionRatioVal > 5.0) {
+      curveTemplate = "INJECTION"; // High compression ratio
+    } else if (compressionRatioVal > 3.0) {
+      curveTemplate = "EXPORT"; // Medium-high compression
+    } else if (flowRate > 50000) {
+      curveTemplate = "PIPELINE"; // High flow
+    } else if (compressionRatioVal < 2.0) {
+      curveTemplate = "BOOSTER"; // Low compression
+    } else {
+      curveTemplate = "CENTRIFUGAL_STANDARD"; // Default
     }
   }
 

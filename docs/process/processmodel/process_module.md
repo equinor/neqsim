@@ -324,6 +324,87 @@ fpso.run();
 
 ---
 
+## Capacity Constraints in ProcessModule
+
+ProcessModule supports the same capacity constraint methods as ProcessSystem, enabling bottleneck detection and capacity monitoring across all nested systems and modules.
+
+### Available Methods
+
+| Method | Description |
+|--------|-------------|
+| `getConstrainedEquipment()` | Get all capacity-constrained equipment from all systems |
+| `findBottleneck()` | Find equipment with highest utilization |
+| `isAnyEquipmentOverloaded()` | Check if any equipment exceeds design capacity |
+| `isAnyHardLimitExceeded()` | Check if any HARD limits are exceeded |
+| `getCapacityUtilizationSummary()` | Get utilization map for all equipment |
+| `getEquipmentNearCapacityLimit()` | Get equipment near warning threshold |
+
+### Usage Example
+
+```java
+import neqsim.process.processmodel.ProcessModule;
+import neqsim.process.equipment.capacity.BottleneckResult;
+
+// Create module with multiple systems
+ProcessModule module = new ProcessModule("Production Module");
+module.add(inletSystem);
+module.add(compressionSystem);
+module.add(exportSystem);
+module.run();
+
+// Get all constrained equipment across all systems
+List<CapacityConstrainedEquipment> constrained = module.getConstrainedEquipment();
+System.out.println("Found " + constrained.size() + " constrained equipment");
+
+// Find bottleneck across entire module
+BottleneckResult bottleneck = module.findBottleneck();
+if (bottleneck.hasBottleneck()) {
+    System.out.println("Bottleneck: " + bottleneck.getEquipmentName());
+    System.out.println("Constraint: " + bottleneck.getConstraintName());
+    System.out.println("Utilization: " + bottleneck.getUtilizationPercent() + "%");
+}
+
+// Check for overloaded equipment
+if (module.isAnyEquipmentOverloaded()) {
+    System.out.println("Warning: Equipment exceeds design capacity!");
+}
+
+// Get utilization summary
+Map<String, Double> utilization = module.getCapacityUtilizationSummary();
+for (Map.Entry<String, Double> entry : utilization.entrySet()) {
+    System.out.printf("%s: %.1f%%%n", entry.getKey(), entry.getValue());
+}
+```
+
+### Nested Module Support
+
+Capacity constraint methods work recursively across nested modules:
+
+```java
+// Inner modules
+ProcessModule gatheringModule = new ProcessModule("Gathering");
+gatheringModule.add(manifoldSystem);
+
+ProcessModule compressionModule = new ProcessModule("Compression");
+compressionModule.add(compressorSystem);
+
+// Outer module containing both
+ProcessModule facilityModule = new ProcessModule("Facility");
+facilityModule.add(gatheringModule);
+facilityModule.add(compressionModule);
+facilityModule.run();
+
+// This will find constrained equipment from BOTH inner modules
+List<CapacityConstrainedEquipment> allConstrained = facilityModule.getConstrainedEquipment();
+
+// Bottleneck detection spans all nested modules
+BottleneckResult bottleneck = facilityModule.findBottleneck();
+```
+
+For detailed constraint management, see [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md).
+
+---
+
 ## Best Practices
 
 1. **Self-Contained**: Modules should be self-contained with clear interfaces

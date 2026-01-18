@@ -100,6 +100,231 @@ System.out.println("Feasible: " + result.isFeasible());
 
 ---
 
+## Equipment Constraints and Active Bottlenecks
+
+### Which Equipment Can Restrict Production?
+
+**Any equipment implementing `CapacityConstrainedEquipment` can become the bottleneck**, not just compressors. The optimizer checks ALL equipment constraints and reports the one limiting production.
+
+| Equipment | Implemented Constraints | Typical Bottleneck Scenarios |
+|-----------|------------------------|------------------------------|
+| **Separator** | `gasLoadFactor`, `liquidResidenceTime` | High gas rates, high liquid rates |
+| **Compressor** | `speed`, `power`, `surgeMargin`, `stonewallMargin` | High compression duty, variable conditions |
+| **Pump** | `npshMargin`, `power`, `flowRate` | High liquid rates, cavitation risk |
+| **ThrottlingValve** | `valveOpening`, `cvUtilization` | Large pressure drops, high flows |
+| **Pipeline** | `velocity`, `pressureDrop`, `FIV_LOF`, `FIV_FRMS` | Long pipelines, high velocities |
+| **Heater/Cooler** | `duty`, `outletTemperature` | High thermal loads |
+
+### What is an "Active Constraint"?
+
+An **active constraint** is the specific equipment limit that prevents increasing production further. It's the "binding" constraint at the current operating point.
+
+```java
+// After optimization, identify the active constraint
+ProcessEquipmentInterface bottleneck = result.getBottleneck();
+
+if (bottleneck instanceof CapacityConstrainedEquipment) {
+    CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) bottleneck;
+    CapacityConstraint active = constrained.getBottleneckConstraint();
+    
+    System.out.println("=== ACTIVE CONSTRAINT ===");
+    System.out.println("Equipment: " + bottleneck.getName());
+    System.out.println("Constraint: " + active.getName());
+    System.out.println("Current value: " + active.getCurrentValue() + " " + active.getUnit());
+    System.out.println("Design limit: " + active.getDesignValue() + " " + active.getUnit());
+    System.out.println("Utilization: " + active.getUtilizationPercent() + "%");
+    System.out.println("Type: " + active.getConstraintType());  // HARD, SOFT, or DESIGN
+}
+```
+
+**Example scenarios where different equipment is the bottleneck:**
+
+| Scenario | Bottleneck | Active Constraint | Reason |
+|----------|------------|-------------------|--------|
+| High GOR well | Separator | gasLoadFactor | K-factor limit exceeded |
+| Low reservoir pressure | Compressor | power | Compressor at max driver power |
+| Long export line | Pipeline | velocity | Erosional velocity limit |
+| High water cut | Pump | npshMargin | Insufficient NPSH available |
+| Restricted outlet | Valve | valveOpening | Valve fully open (90%) |
+| Cold ambient | Heater | duty | Maximum heating capacity |
+
+### How Constraints Are Established
+
+Constraints come from three sources:
+
+#### 1. Auto-Sizing (Recommended)
+
+When you call `autoSize()`, constraints are automatically created based on design calculations:
+
+```java
+// Separator - sets gasLoadFactor constraint from K-factor sizing
+Separator sep = new Separator("HP-Sep", feed);
+sep.autoSize(1.2);  // Creates constraint: gasLoadFactor = design K-factor
+
+// Compressor - sets speed, power, surge constraints + generates curves
+Compressor comp = new Compressor("Export", gasStream);
+comp.setOutletPressure(100.0);
+comp.autoSize(1.2);  // Creates constraints: speed, power, surgeMargin
+                     // Also generates compressor curves and sets solveSpeed=true
+
+// Valve - sets valveOpening and Cv constraints
+ThrottlingValve valve = new ThrottlingValve("HP-Valve", stream);
+valve.setOutletPressure(30.0);
+valve.autoSize(1.2);  // Creates constraints: valveOpening, cvUtilization
+```
+
+#### 2. Manual Configuration
+
+Set limits directly on equipment:
+
+```java
+// Compressor limits
+Compressor comp = new Compressor("K-100", stream);
+comp.setMaximumSpeed(11000.0);    // Creates HARD speed constraint
+comp.setMaximumPower(2000.0);     // Creates HARD power constraint
+comp.setSurgeMargin(10.0);        // Creates SOFT surge margin constraint
+
+// Separator limits
+Separator sep = new Separator("V-100", feed);
+sep.setDesignGasLoadFactor(0.08);  // Creates DESIGN gasLoadFactor constraint
+
+// Pipeline limits
+Pipeline pipe = new PipeBeggsAndBrills("L-100", stream);
+pipe.setMaxLOF(1.0);               // Creates SOFT FIV_LOF constraint
+pipe.setMaxFRMS(100000.0);         // Creates SOFT FIV_FRMS constraint
+```
+
+#### 3. Mechanical Design Integration
+
+When `initMechanicalDesign()` is called, constraints use design values:
+
+```java
+Separator sep = new Separator("HP-Sep", feed);
+sep.initMechanicalDesign();
+sep.getMechanicalDesign().setMaxDesignGassVolFlow(5000.0);  // m³/hr
+sep.getMechanicalDesign().setMaxDesignPressure(100.0);      // bara
+// These values feed into constraint limits
+```
+
+### Constraint Types and Their Behavior
+
+| Type | Meaning | Optimization Behavior | Example |
+|------|---------|----------------------|---------|
+| **HARD** | Physical or safety limit - cannot exceed | Optimization stops before exceeding | Compressor trip speed, vessel MAWP |
+| **SOFT** | Operational limit - penalty for exceeding | Can exceed with warning/penalty | Efficiency degradation zone |
+| **DESIGN** | Normal operating envelope | Target for optimal operation | Design K-factor, rated capacity |
+
+### Full Process Example: Finding Active Constraint
+
+```java
+// Build a realistic process
+ProcessSystem process = new ProcessSystem();
+
+// Feed from reservoir
+Stream wellFeed = new Stream("Well Feed", reservoirFluid);
+wellFeed.setFlowRate(20000.0, "kg/hr");
+
+// Three-phase separation
+ThreePhaseSeparator hpSep = new ThreePhaseSeparator("HP Separator", wellFeed);
+hpSep.autoSize(1.2);  // Constraints: gasLoadFactor, liquidResidenceTime
+
+// Gas compression
+Compressor gasComp = new Compressor("Gas Compressor", hpSep.getGasOutStream());
+gasComp.setOutletPressure(100.0);
+gasComp.autoSize(1.2);  // Constraints: speed, power, surgeMargin + curves
+
+// Export pipeline
+PipeBeggsAndBrills exportPipe = new PipeBeggsAndBrills("Export Pipeline", gasComp.getOutletStream());
+exportPipe.setLength(50000.0);  // 50 km
+exportPipe.setDiameter(0.4);    // 16 inch
+exportPipe.autoSize(1.2);       // Constraints: velocity, pressureDrop, FIV_LOF, FIV_FRMS
+
+// Liquid pump
+Pump oilPump = new Pump("Oil Pump", hpSep.getOilOutStream());
+oilPump.setOutletPressure(15.0);
+// Pump has: npshMargin, power, flowRate constraints
+
+process.add(wellFeed);
+process.add(hpSep);
+process.add(gasComp);
+process.add(exportPipe);
+process.add(oilPump);
+process.run();
+
+// Run optimization
+OptimizationConfig config = new OptimizationConfig(5000.0, 50000.0)
+    .rateUnit("kg/hr")
+    .defaultUtilizationLimit(0.95);
+
+OptimizationResult result = ProductionOptimizer.optimize(process, wellFeed, config);
+
+// Report ALL equipment constraints and identify the active one
+System.out.println("=== CONSTRAINT STATUS FOR ALL EQUIPMENT ===\n");
+
+for (CapacityConstrainedEquipment equip : process.getConstrainedEquipment()) {
+    ProcessEquipmentInterface unit = (ProcessEquipmentInterface) equip;
+    boolean isBottleneck = unit.equals(result.getBottleneck());
+    
+    System.out.println(unit.getName() + (isBottleneck ? " ⭐ BOTTLENECK" : "") + ":");
+    
+    CapacityConstraint limitingConstraint = equip.getBottleneckConstraint();
+    
+    for (CapacityConstraint c : equip.getCapacityConstraints().values()) {
+        boolean isActive = c.equals(limitingConstraint) && isBottleneck;
+        String marker = isActive ? " ◀ ACTIVE" : "";
+        String status = c.isViolated() ? "⚠️" : c.isNearLimit() ? "⚡" : "✓";
+        
+        System.out.printf("  %s %-18s: %7.2f / %7.2f %-6s (%5.1f%%)%s%n",
+            status,
+            c.getName(),
+            c.getCurrentValue(),
+            c.getDesignValue(),
+            c.getUnit(),
+            c.getUtilizationPercent(),
+            marker);
+    }
+    System.out.println();
+}
+
+System.out.println("=== OPTIMIZATION RESULT ===");
+System.out.println("Optimal production rate: " + result.getOptimalRate() + " kg/hr");
+System.out.println("Bottleneck equipment: " + result.getBottleneck().getName());
+System.out.println("Feasible: " + result.isFeasible());
+```
+
+**Example output:**
+
+```
+=== CONSTRAINT STATUS FOR ALL EQUIPMENT ===
+
+HP Separator:
+  ✓ gasLoadFactor     :    0.07 /    0.08 m/s    (87.5%)
+  ✓ liquidResidence   :    2.80 /    3.00 min    (93.3%)
+
+Gas Compressor ⭐ BOTTLENECK:
+  ⚡ speed             : 9800.00 / 10000.00 RPM    (98.0%) ◀ ACTIVE
+  ✓ power             : 1650.00 /  2000.00 kW     (82.5%)
+  ✓ surgeMargin       :   12.00 /   10.00 %      (83.3%)
+
+Export Pipeline:
+  ✓ velocity          :   12.50 /   15.00 m/s    (83.3%)
+  ✓ pressureDrop      :    3.80 /    5.00 bara   (76.0%)
+  ✓ FIV_LOF           :    0.28 /    1.00 -      (28.0%)
+
+Oil Pump:
+  ✓ npshMargin        :    2.50 /    0.60 m      (24.0%)
+  ✓ power             :   85.00 /  150.00 kW     (56.7%)
+
+=== OPTIMIZATION RESULT ===
+Optimal production rate: 28500 kg/hr
+Bottleneck equipment: Gas Compressor
+Feasible: true
+```
+
+In this example, the **Gas Compressor** is the bottleneck with **speed** as the active constraint at 98% utilization.
+
+---
+
 ## Capacity Constraint Framework
 
 ### Setting Up Multi-Constraint Equipment

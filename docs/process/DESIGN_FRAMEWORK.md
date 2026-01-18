@@ -548,3 +548,255 @@ Planned improvements include:
 - Export to design tools (PFD generation, data sheets)
 - Machine learning-based sizing recommendations
 
+---
+
+## AutoSizing, Mechanical Design, and Optimization Integration
+
+This section explains how AutoSizing, Mechanical Design, and Production Optimization work together to create a complete equipment sizing and process optimization workflow.
+
+### The Complete Workflow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           1. EQUIPMENT CREATION                              │
+│  Equipment is created with basic process specifications                      │
+│  (flow rate, inlet/outlet conditions)                                       │
+└────────────────────────────────────┬────────────────────────────────────────┘
+                                     │
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           2. AUTO-SIZING (autoSize)                          │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │ • Calculates physical dimensions (diameter, length, impeller size)    │   │
+│  │ • Generates compressor curves (for Compressor)                        │   │
+│  │ • Sets operational modes (solveSpeed=true for compressors)            │   │
+│  │ • Uses company standards from database (TR documents)                 │   │
+│  └──────────────────────────────────────────────────────────────────────┘   │
+│                                     │                                        │
+│                                     ▼                                        │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │             MECHANICAL DESIGN (calcDesign)                            │   │
+│  │ • Wall thickness, material selection, weight estimation               │   │
+│  │ • Driver power sizing, stage calculations                             │   │
+│  │ • Cost estimation, bill of materials                                  │   │
+│  └──────────────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────────┬────────────────────────────────────────┘
+                                     │
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    3. CAPACITY CONSTRAINTS ARE SET                           │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │ Each equipment has constraints based on mechanical design:            │   │
+│  │                                                                       │   │
+│  │ Separator:    gasLoadFactor, liquidResidenceTime                     │   │
+│  │ Compressor:   speed, power, surgeMargin, stonewallMargin             │   │
+│  │ Pump:         npshMargin, power, flowRate                            │   │
+│  │ Valve:        valveOpening, cvUtilization                            │   │
+│  │ Pipeline:     velocity, pressureDrop, FIV_LOF, FIV_FRMS              │   │
+│  │ Heater:       duty, outletTemperature                                │   │
+│  └──────────────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────────┬────────────────────────────────────────┘
+                                     │
+                                     ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    4. PRODUCTION OPTIMIZATION                                │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │ Optimizer increases feed rate until an ACTIVE CONSTRAINT is hit       │   │
+│  │                                                                       │   │
+│  │ • Checks ALL CapacityConstrainedEquipment in the process             │   │
+│  │ • The equipment with highest utilization is the BOTTLENECK           │   │
+│  │ • The specific constraint limiting that equipment is ACTIVE          │   │
+│  │ • Reports optimal flow and which constraint limits production         │   │
+│  └──────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Equipment That Can Be Bottlenecks
+
+**ANY equipment implementing `CapacityConstrainedEquipment` can be a bottleneck**, not just compressors:
+
+| Equipment Class | Constraints | When It Limits |
+|----------------|-------------|----------------|
+| **Separator** | `gasLoadFactor`, `liquidResidenceTime` | High gas/liquid rates |
+| **Compressor** | `speed`, `power`, `surgeMargin`, `stonewallMargin` | High gas rates, high compression ratios |
+| **Pump** | `npshMargin`, `power`, `flowRate` | High liquid rates, low suction pressure |
+| **ThrottlingValve** | `valveOpening`, `cvUtilization` | High flow through restriction |
+| **Pipeline** | `velocity`, `pressureDrop`, `FIV_LOF`, `FIV_FRMS` | High velocities, long pipelines |
+| **Heater** | `duty`, `outletTemperature` | High heating demand |
+
+### What is an "Active Constraint"?
+
+An **active constraint** is the specific limit on a piece of equipment that currently restricts the process from operating at a higher rate.
+
+```java
+// Example: Finding the active constraint
+ProcessSystem process = new ProcessSystem();
+// ... add equipment ...
+process.run();
+
+// Find the bottleneck equipment
+ProcessEquipmentInterface bottleneck = process.getBottleneck();
+System.out.println("Bottleneck equipment: " + bottleneck.getName());
+
+// Find the specific active constraint on that equipment
+if (bottleneck instanceof CapacityConstrainedEquipment) {
+    CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) bottleneck;
+    CapacityConstraint activeConstraint = constrained.getBottleneckConstraint();
+    
+    System.out.println("Active constraint: " + activeConstraint.getName());
+    System.out.println("Current value: " + activeConstraint.getCurrentValue());
+    System.out.println("Design limit: " + activeConstraint.getDesignValue());
+    System.out.println("Utilization: " + activeConstraint.getUtilizationPercent() + "%");
+}
+```
+
+**Example outputs:**
+- "Bottleneck: HP Separator, Active constraint: gasLoadFactor at 95%"
+- "Bottleneck: Export Compressor, Active constraint: power at 92%"
+- "Bottleneck: Feed Valve, Active constraint: valveOpening at 88%"
+- "Bottleneck: Export Pipeline, Active constraint: velocity at 97%"
+
+### How Constraints Are Set
+
+Constraints are initialized automatically when equipment is auto-sized or when `initMechanicalDesign()` is called:
+
+```java
+// Method 1: Auto-sizing sets constraints automatically
+Separator sep = new Separator("HP-Sep", feed);
+sep.autoSize(1.2);  // Sets gasLoadFactor constraint based on design K-factor
+
+// Method 2: Manual constraint setup
+Compressor comp = new Compressor("Export Comp", gasStream);
+comp.setMaximumSpeed(11000.0);   // Sets HARD speed constraint
+comp.setMaximumPower(2000.0);    // Sets HARD power constraint
+comp.setSurgeMargin(10.0);       // Sets SOFT surge margin constraint
+
+// Method 3: Programmatic constraint addition
+Pipeline pipe = new Pipeline("Export Line", compOutput);
+pipe.addCapacityConstraint(new CapacityConstraint("velocity", "m/s", ConstraintType.DESIGN)
+    .setDesignValue(15.0)
+    .setMaxValue(20.0)
+    .setWarningThreshold(0.8)
+    .setValueSupplier(() -> pipe.getVelocity()));
+```
+
+### Constraint Types and Optimization Behavior
+
+| Constraint Type | During Optimization | Example |
+|-----------------|---------------------|---------|
+| **HARD** | Cannot be exceeded - optimization stops | Compressor trip speed, vessel MAWP |
+| **SOFT** | Can be exceeded with penalty/warning | Efficiency degradation zone |
+| **DESIGN** | Target limit for normal operation | Design K-factor, rated flow |
+
+```java
+// Setting constraint types
+CapacityConstraint speedLimit = new CapacityConstraint("speed", ConstraintType.HARD)
+    .setDesignValue(10000.0)   // Normal operating speed
+    .setMaxValue(11000.0);      // Trip point - HARD limit
+
+CapacityConstraint surgeMargin = new CapacityConstraint("surgeMargin", ConstraintType.SOFT)
+    .setDesignValue(10.0)      // 10% margin from surge
+    .setMinValue(5.0);         // Absolute minimum - warning
+
+CapacityConstraint kFactor = new CapacityConstraint("gasLoadFactor", ConstraintType.DESIGN)
+    .setDesignValue(0.08)      // Design basis
+    .setWarningThreshold(0.9); // Warn at 90% utilization
+```
+
+### Optimization with Multiple Equipment Types
+
+The optimizer checks **all** constrained equipment, not just compressors:
+
+```java
+// Create process with multiple equipment types
+ProcessSystem process = new ProcessSystem();
+
+Stream feed = new Stream("Feed", fluid);
+feed.setFlowRate(10000.0, "kg/hr");
+
+Separator sep = new Separator("Inlet Sep", feed);
+sep.autoSize(1.2);  // Sets gasLoadFactor constraint
+
+ThrottlingValve valve = new ThrottlingValve("HP Valve", sep.getGasOutStream());
+valve.setOutletPressure(30.0, "bara");
+valve.autoSize(1.2);  // Sets valveOpening constraint
+
+Compressor comp = new Compressor("Export Comp", valve.getOutletStream());
+comp.setOutletPressure(100.0);
+comp.autoSize(1.2);  // Sets speed, power, surge constraints
+
+Pipeline pipe = new PipeBeggsAndBrills("Export Pipeline", comp.getOutletStream());
+pipe.setLength(50000.0);
+pipe.setDiameter(0.4);
+// Pipeline has velocity, pressureDrop, FIV constraints
+
+process.add(feed);
+process.add(sep);
+process.add(valve);
+process.add(comp);
+process.add(pipe);
+
+// Run optimization - checks ALL equipment constraints
+OptimizationConfig config = new OptimizationConfig(1000.0, 50000.0)
+    .defaultUtilizationLimit(0.95);
+
+OptimizationResult result = ProductionOptimizer.optimize(process, feed, config);
+
+// The bottleneck could be ANY of: separator, valve, compressor, or pipeline
+System.out.println("Bottleneck: " + result.getBottleneck().getName());
+System.out.println("Active constraint: " + result.getActiveConstraintName());
+System.out.println("Optimal rate: " + result.getOptimalRate() + " kg/hr");
+```
+
+### Viewing All Constraints in a Process
+
+```java
+// Get all constrained equipment
+for (CapacityConstrainedEquipment equip : process.getConstrainedEquipment()) {
+    System.out.println("\n" + equip.getName() + ":");
+    
+    for (CapacityConstraint c : equip.getCapacityConstraints().values()) {
+        String status = c.isViolated() ? "⚠️ EXCEEDED" : 
+                       c.isNearLimit() ? "⚡ NEAR LIMIT" : "✓ OK";
+        System.out.printf("  %-20s: %6.1f / %6.1f %s (%5.1f%%) %s%n",
+            c.getName(),
+            c.getCurrentValue(),
+            c.getDesignValue(),
+            c.getUnit(),
+            c.getUtilizationPercent(),
+            status);
+    }
+}
+```
+
+Example output:
+```
+Inlet Sep:
+  gasLoadFactor       :   0.07 /   0.08 m/s  (87.5%) ✓ OK
+  liquidResidenceTime :   3.20 /   3.00 min  (106.7%) ⚠️ EXCEEDED
+
+HP Valve:
+  valveOpening        :  72.00 /  90.00 %    (80.0%) ✓ OK
+  cvUtilization       :  45.00 /  50.00 -    (90.0%) ⚡ NEAR LIMIT
+
+Export Comp:
+  speed               : 9500.0 /10000.0 RPM  (95.0%) ⚡ NEAR LIMIT
+  power               : 1650.0 / 2000.0 kW   (82.5%) ✓ OK
+  surgeMargin         :  12.00 /  10.00 %    (83.3%) ✓ OK
+
+Export Pipeline:
+  velocity            :  14.50 /  15.00 m/s  (96.7%) ⚡ NEAR LIMIT
+  pressureDrop        :   4.20 /   5.00 bara (84.0%) ✓ OK
+  FIV_LOF             :   0.35 /   1.00 -    (35.0%) ✓ OK
+```
+
+### Summary: AutoSizing → Mechanical Design → Constraints → Optimization
+
+1. **AutoSizing** (`autoSize()`) calculates equipment dimensions from process conditions
+2. **Mechanical Design** (`calcDesign()`) determines detailed specifications (materials, wall thickness, etc.)
+3. **Constraints** are set based on the design limits (K-factor, max speed, rated power, etc.)
+4. **Optimization** finds the maximum flow rate that respects ALL constraints across ALL equipment
+5. The **Active Constraint** is the specific limit currently preventing higher production
+6. The **Bottleneck** is the equipment where that active constraint exists
+
+

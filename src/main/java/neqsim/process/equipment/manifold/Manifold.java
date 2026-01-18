@@ -1,10 +1,15 @@
 package neqsim.process.equipment.manifold;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -30,11 +35,21 @@ import neqsim.process.util.report.ReportConfig.DetailLevel;
  * <li>Flow-induced vibration analysis (LOF and FRMS methods)</li>
  * </ul>
  *
+ * <p>
+ * The manifold implements CapacityConstrainedEquipment with constraints for:
+ * </p>
+ * <ul>
+ * <li>Header velocity - SOFT limit based on erosional velocity</li>
+ * <li>Branch velocity - SOFT limit based on erosional velocity</li>
+ * <li>Header LOF (Likelihood of Failure) - SOFT limit for FIV</li>
+ * <li>Header FRMS - SOFT limit for flow-induced vibration</li>
+ * </ul>
+ *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public class Manifold extends ProcessEquipmentBaseClass
-    implements neqsim.process.design.AutoSizeable {
+    implements neqsim.process.design.AutoSizeable, CapacityConstrainedEquipment {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -856,5 +871,183 @@ public class Manifold extends ProcessEquipmentBaseClass
     report.put("numberOfOutputs", getNumberOfOutputStreams());
 
     return new GsonBuilder().setPrettyPrinting().create().toJson(report);
+  }
+
+  // ============================================================================
+  // CapacityConstrainedEquipment Implementation
+  // ============================================================================
+
+  /** Storage for capacity constraints. */
+  private final Map<String, CapacityConstraint> capacityConstraints = new LinkedHashMap<>();
+
+  /** Maximum header velocity design limit in m/s. */
+  private double maxHeaderVelocityDesign = 20.0;
+
+  /** Maximum branch velocity design limit in m/s. */
+  private double maxBranchVelocityDesign = 25.0;
+
+  /** Maximum LOF design limit (1.0 = high risk threshold). */
+  private double maxLOFDesign = 1.0;
+
+  /** Maximum FRMS design limit. */
+  private double maxFRMSDesign = 500.0;
+
+  /**
+   * Initialize capacity constraints based on design limits and FIV analysis.
+   */
+  protected void initializeCapacityConstraints() {
+    // Header velocity constraint
+    addCapacityConstraint(
+        new CapacityConstraint("headerVelocity", "m/s", CapacityConstraint.ConstraintType.SOFT)
+            .setDesignValue(maxHeaderVelocityDesign).setMaxValue(getErosionalVelocity())
+            .setWarningThreshold(0.9).setDescription("Header pipe velocity vs erosional limit")
+            .setValueSupplier(() -> getHeaderVelocity()));
+
+    // Branch velocity constraint
+    addCapacityConstraint(
+        new CapacityConstraint("branchVelocity", "m/s", CapacityConstraint.ConstraintType.SOFT)
+            .setDesignValue(maxBranchVelocityDesign).setMaxValue(getErosionalVelocity())
+            .setWarningThreshold(0.9).setDescription("Branch pipe velocity vs erosional limit")
+            .setValueSupplier(() -> getBranchVelocity()));
+
+    // Header LOF (Likelihood of Failure) - FIV constraint
+    addCapacityConstraint(
+        new CapacityConstraint("headerLOF", "-", CapacityConstraint.ConstraintType.SOFT)
+            .setDesignValue(maxLOFDesign).setMaxValue(1.5).setWarningThreshold(0.5)
+            .setDescription("Header LOF for flow-induced vibration (>1.0 = high risk)")
+            .setValueSupplier(() -> calculateHeaderLOF()));
+
+    // Header FRMS (Flow-induced vibration RMS)
+    addCapacityConstraint(
+        new CapacityConstraint("headerFRMS", "-", CapacityConstraint.ConstraintType.SOFT)
+            .setDesignValue(maxFRMSDesign).setMaxValue(750.0).setWarningThreshold(0.8)
+            .setDescription("Header FRMS vibration intensity")
+            .setValueSupplier(() -> calculateHeaderFRMS()));
+
+    // Branch LOF - FIV constraint
+    addCapacityConstraint(
+        new CapacityConstraint("branchLOF", "-", CapacityConstraint.ConstraintType.SOFT)
+            .setDesignValue(maxLOFDesign).setMaxValue(1.5).setWarningThreshold(0.5)
+            .setDescription("Branch LOF for flow-induced vibration (>1.0 = high risk)")
+            .setValueSupplier(() -> calculateBranchLOF()));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, CapacityConstraint> getCapacityConstraints() {
+    if (capacityConstraints.isEmpty()) {
+      initializeCapacityConstraints();
+    }
+    return Collections.unmodifiableMap(capacityConstraints);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public CapacityConstraint getBottleneckConstraint() {
+    CapacityConstraint bottleneck = null;
+    double maxUtil = 0.0;
+    for (CapacityConstraint c : getCapacityConstraints().values()) {
+      double util = c.getUtilization();
+      if (!Double.isNaN(util) && util > maxUtil) {
+        maxUtil = util;
+        bottleneck = c;
+      }
+    }
+    return bottleneck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityExceeded() {
+    for (CapacityConstraint c : getCapacityConstraints().values()) {
+      if (c.isViolated()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHardLimitExceeded() {
+    for (CapacityConstraint c : getCapacityConstraints().values()) {
+      if (c.isHardLimitExceeded()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilization() {
+    double maxUtil = 0.0;
+    for (CapacityConstraint c : getCapacityConstraints().values()) {
+      double util = c.getUtilization();
+      if (!Double.isNaN(util)) {
+        maxUtil = Math.max(maxUtil, util);
+      }
+    }
+    return maxUtil;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCapacityConstraint(CapacityConstraint constraint) {
+    if (constraint != null) {
+      capacityConstraints.put(constraint.getName(), constraint);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean removeCapacityConstraint(String constraintName) {
+    return capacityConstraints.remove(constraintName) != null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void clearCapacityConstraints() {
+    capacityConstraints.clear();
+  }
+
+  /**
+   * Set maximum header velocity design limit.
+   *
+   * @param velocity maximum velocity in m/s
+   */
+  public void setMaxHeaderVelocityDesign(double velocity) {
+    this.maxHeaderVelocityDesign = velocity;
+    capacityConstraints.clear(); // Force re-initialization
+  }
+
+  /**
+   * Set maximum branch velocity design limit.
+   *
+   * @param velocity maximum velocity in m/s
+   */
+  public void setMaxBranchVelocityDesign(double velocity) {
+    this.maxBranchVelocityDesign = velocity;
+    capacityConstraints.clear(); // Force re-initialization
+  }
+
+  /**
+   * Set maximum LOF design limit.
+   *
+   * @param lof maximum LOF value
+   */
+  public void setMaxLOFDesign(double lof) {
+    this.maxLOFDesign = lof;
+    capacityConstraints.clear(); // Force re-initialization
+  }
+
+  /**
+   * Set maximum FRMS design limit.
+   *
+   * @param frms maximum FRMS value
+   */
+  public void setMaxFRMSDesign(double frms) {
+    this.maxFRMSDesign = frms;
+    capacityConstraints.clear(); // Force re-initialization
   }
 }

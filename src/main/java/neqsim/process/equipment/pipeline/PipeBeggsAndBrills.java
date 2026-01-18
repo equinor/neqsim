@@ -349,6 +349,17 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * </tr>
  * </table>
  *
+ * <p>
+ * The pipeline implements CapacityConstrainedEquipment (inherited from Pipeline) with constraints:
+ * </p>
+ * <ul>
+ * <li>Velocity - SOFT limit based on erosional velocity</li>
+ * <li>LOF (Likelihood of Failure) - SOFT limit for flow-induced vibration</li>
+ * <li>FRMS - SOFT limit for flow-induced vibration intensity</li>
+ * <li>Volume flow - DESIGN limit from mechanical design</li>
+ * <li>Pressure drop - DESIGN limit</li>
+ * </ul>
+ *
  * @author Even Solbraa, Sviatoslav Eroshkin
  * @version $Id: $Id
  * @see Pipeline
@@ -2990,6 +3001,360 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       return elevationProfile.get(index);
     } else {
       throw new IndexOutOfBoundsException("Index is out of bounds.");
+    }
+  }
+
+  // ============================================================================
+  // Flow-Induced Vibration (FIV) Calculations
+  // ============================================================================
+
+  /** Support arrangement for FIV calculations. */
+  private String supportArrangement = "Medium stiff";
+
+  /** Maximum design velocity in m/s. */
+  private double maxDesignVelocity = 20.0;
+
+  /** Maximum design LOF value. */
+  private double maxDesignLOF = 1.0;
+
+  /** Maximum design FRMS value. */
+  private double maxDesignFRMS = 500.0;
+
+  /**
+   * Get support arrangement for FIV calculations.
+   *
+   * @return support arrangement (Stiff, Medium stiff, Medium, Flexible)
+   */
+  public String getSupportArrangement() {
+    return supportArrangement;
+  }
+
+  /**
+   * Set support arrangement for FIV calculations.
+   *
+   * @param arrangement support arrangement (Stiff, Medium stiff, Medium, Flexible)
+   */
+  public void setSupportArrangement(String arrangement) {
+    this.supportArrangement = arrangement;
+  }
+
+  /**
+   * Calculate erosional velocity per API RP 14E.
+   *
+   * <p>
+   * The erosional velocity is calculated using the formula:
+   * </p>
+   * 
+   * <pre>
+   * V_e = C / sqrt(rho_mix)
+   * </pre>
+   * 
+   * where C is typically 100-150 for continuous service.
+   *
+   * @param cFactor erosional C-factor (typically 100-150)
+   * @return erosional velocity in m/s
+   */
+  public double getErosionalVelocity(double cFactor) {
+    if (mixtureDensity <= 0 || Double.isNaN(mixtureDensity)) {
+      // Use inlet stream density if mixture density not yet calculated
+      if (getInletStream() != null && getInletStream().getFluid() != null) {
+        double density = getInletStream().getFluid().getDensity("kg/m3");
+        return density > 0 ? cFactor / Math.sqrt(density) : 0.0;
+      }
+      return 0.0;
+    }
+    // mixtureDensity is stored in lb/ft³ internally, convert to kg/m³
+    double densityKgM3 = mixtureDensity * 16.0185; // lb/ft³ to kg/m³
+    return densityKgM3 > 0 ? cFactor / Math.sqrt(densityKgM3) : 0.0;
+  }
+
+  /**
+   * Calculate erosional velocity with default C-factor of 100.
+   *
+   * @return erosional velocity in m/s
+   */
+  public double getErosionalVelocity() {
+    return getErosionalVelocity(100.0);
+  }
+
+  /**
+   * Get the mixture velocity in m/s.
+   *
+   * @return mixture superficial velocity in m/s
+   */
+  public double getMixtureVelocity() {
+    // supMixVel is stored in ft/s internally, convert to m/s
+    return supMixVel / 3.2808399;
+  }
+
+  /**
+   * Calculate Likelihood of Failure (LOF) for flow-induced vibration.
+   *
+   * <p>
+   * LOF interpretation:
+   * </p>
+   * <ul>
+   * <li>&lt; 0.5: Low risk - acceptable</li>
+   * <li>0.5 - 1.0: Medium risk - monitoring recommended</li>
+   * <li>&gt; 1.0: High risk - design review required</li>
+   * </ul>
+   *
+   * @return LOF value (dimensionless)
+   */
+  public double calculateLOF() {
+    double mixVelocity = getMixtureVelocity();
+    if (mixVelocity <= 0 || Double.isNaN(mixVelocity)) {
+      return Double.NaN;
+    }
+
+    // Get mixture density in kg/m³
+    double densityKgM3;
+    if (mixtureDensity > 0) {
+      densityKgM3 = mixtureDensity * 16.0185; // lb/ft³ to kg/m³
+    } else if (getInletStream() != null && getInletStream().getFluid() != null) {
+      densityKgM3 = getInletStream().getFluid().getDensity("kg/m3");
+    } else {
+      return Double.NaN;
+    }
+
+    // Calculate gas volume fraction (GVF)
+    double GVF = 1.0 - inputVolumeFractionLiquid;
+    if (Double.isNaN(GVF)) {
+      GVF = 0.9; // Assume mostly gas
+    }
+
+    // Calculate flow velocity factor (FVF)
+    double FVF = 1.0;
+    if (GVF > 0.88) {
+      if (GVF > 0.99) {
+        // Gas-only: use viscosity-based correction
+        double viscosity = 0.001; // Default gas viscosity
+        if (getInletStream() != null && getInletStream().getFluid() != null) {
+          try {
+            viscosity = getInletStream().getFluid().getViscosity("kg/msec");
+          } catch (Exception e) {
+            // Use default
+          }
+        }
+        FVF = Math.sqrt(viscosity / Math.sqrt(0.001));
+      } else {
+        FVF = -27.882 * GVF * GVF + 45.545 * GVF - 17.495;
+      }
+    } else if (GVF < 0.2) {
+      FVF = 0.2 + 4 * GVF;
+    }
+
+    // External diameter in mm
+    double outerDiameter;
+    if (insideDiameter > 0 && pipeThickness > 0) {
+      outerDiameter = (insideDiameter + 2 * pipeThickness) * 1000.0; // m to mm
+    } else {
+      // Estimate OD from ID with typical 5% wall thickness
+      outerDiameter = insideDiameter * 1.1 * 1000.0; // m to mm
+    }
+    // Convert from internal ft units if needed
+    if (outerDiameter > 100) {
+      // Already in mm
+    } else {
+      outerDiameter = outerDiameter / 3.2808399 * 1000.0; // ft to mm
+    }
+
+    // Wall thickness in mm
+    double wallThicknessMM;
+    if (pipeThickness > 0) {
+      wallThicknessMM = pipeThickness * 1000.0;
+    } else {
+      wallThicknessMM = outerDiameter * 0.05; // Assume 5% D/t ratio
+    }
+    if (wallThicknessMM < 1.0) {
+      wallThicknessMM = outerDiameter * 0.05;
+    }
+
+    // Support arrangement coefficients
+    double alpha;
+    double beta;
+    if ("Stiff".equals(supportArrangement)) {
+      alpha =
+          446187 + 646 * outerDiameter + 9.17E-4 * outerDiameter * outerDiameter * outerDiameter;
+      beta = 0.1 * Math.log(outerDiameter) - 1.3739;
+    } else if ("Medium stiff".equals(supportArrangement)) {
+      alpha = 283921 + 370 * outerDiameter;
+      beta = 0.1106 * Math.log(outerDiameter) - 1.501;
+    } else if ("Medium".equals(supportArrangement)) {
+      alpha = 150412 + 209 * outerDiameter;
+      beta = 0.0815 * Math.log(outerDiameter) - 1.3269;
+    } else {
+      // Flexible
+      alpha = 41.21 * Math.log(outerDiameter) + 49397;
+      beta = 0.0815 * Math.log(outerDiameter) - 1.3842;
+    }
+
+    double diameterOverThickness = outerDiameter / wallThicknessMM;
+    double Fv = alpha * Math.pow(diameterOverThickness, beta);
+
+    return densityKgM3 * mixVelocity * mixVelocity * FVF / Fv;
+  }
+
+  /**
+   * Calculate Flow-induced vibration RMS (FRMS).
+   *
+   * <p>
+   * FRMS provides an alternative measure of vibration intensity based on mixture properties. Higher
+   * values indicate greater vibration risk.
+   * </p>
+   *
+   * @return FRMS value
+   */
+  public double calculateFRMS() {
+    return calculateFRMS(6.7);
+  }
+
+  /**
+   * Calculate Flow-induced vibration RMS (FRMS) with specified constant.
+   *
+   * @param frmsConstant FRMS constant (typically 6.7)
+   * @return FRMS value
+   */
+  public double calculateFRMS(double frmsConstant) {
+    double mixVelocity = getMixtureVelocity();
+    if (mixVelocity <= 0 || Double.isNaN(mixVelocity)) {
+      return Double.NaN;
+    }
+
+    // Calculate gas volume fraction (GVF)
+    double GVF = 1.0 - inputVolumeFractionLiquid;
+    if (Double.isNaN(GVF)) {
+      GVF = 0.9; // Assume mostly gas
+    }
+
+    // Get liquid density (use mixture if no liquid)
+    double liquidDensity;
+    if (mixtureLiquidDensity > 0) {
+      liquidDensity = mixtureLiquidDensity * 16.0185; // lb/ft³ to kg/m³
+    } else if (mixtureDensity > 0) {
+      liquidDensity = mixtureDensity * 16.0185;
+    } else if (getInletStream() != null && getInletStream().getFluid() != null) {
+      liquidDensity = getInletStream().getFluid().getDensity("kg/m3");
+    } else {
+      return Double.NaN;
+    }
+
+    // Get inside diameter in meters
+    double diameterM = insideDiameter / 3.2808399; // ft to m
+
+    double C = Math.min(Math.min(1, 5 * (1 - GVF)), 5 * GVF) * frmsConstant;
+    return C * Math.pow(diameterM, 1.6) * Math.pow(liquidDensity, 0.6) * Math.pow(mixVelocity, 1.2);
+  }
+
+  /**
+   * Get comprehensive FIV analysis results as a map.
+   *
+   * @return map containing all FIV analysis results
+   */
+  public java.util.Map<String, Object> getFIVAnalysis() {
+    java.util.Map<String, Object> result = new java.util.LinkedHashMap<String, Object>();
+
+    result.put("supportArrangement", supportArrangement);
+    result.put("mixtureVelocity_m_s", getMixtureVelocity());
+    result.put("erosionalVelocity_m_s", getErosionalVelocity());
+    result.put("velocityRatio",
+        getErosionalVelocity() > 0 ? getMixtureVelocity() / getErosionalVelocity() : Double.NaN);
+
+    double lof = calculateLOF();
+    result.put("LOF", lof);
+    if (Double.isNaN(lof)) {
+      result.put("LOF_risk", "UNKNOWN");
+    } else if (lof < 0.5) {
+      result.put("LOF_risk", "LOW");
+    } else if (lof < 1.0) {
+      result.put("LOF_risk", "MEDIUM");
+    } else {
+      result.put("LOF_risk", "HIGH");
+    }
+
+    result.put("FRMS", calculateFRMS());
+
+    return result;
+  }
+
+  /**
+   * Get FIV analysis as JSON string.
+   *
+   * @return JSON string with FIV analysis
+   */
+  public String getFIVAnalysisJson() {
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+        .toJson(getFIVAnalysis());
+  }
+
+  /**
+   * Set maximum design velocity for capacity constraints.
+   *
+   * @param velocity maximum velocity in m/s
+   */
+  public void setMaxDesignVelocity(double velocity) {
+    this.maxDesignVelocity = velocity;
+  }
+
+  /**
+   * Set maximum design LOF for capacity constraints.
+   *
+   * @param lof maximum LOF value
+   */
+  public void setMaxDesignLOF(double lof) {
+    this.maxDesignLOF = lof;
+  }
+
+  /**
+   * Set maximum design FRMS for capacity constraints.
+   *
+   * @param frms maximum FRMS value
+   */
+  public void setMaxDesignFRMS(double frms) {
+    this.maxDesignFRMS = frms;
+  }
+
+  /**
+   * Override parent's capacity constraint initialization to add FIV/FRMS constraints.
+   */
+  @Override
+  protected void initializeCapacityConstraints() {
+    // Velocity constraint (SOFT limit - erosional is a guideline)
+    addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("velocity",
+        "m/s", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
+            .setDesignValue(maxDesignVelocity).setMaxValue(getErosionalVelocity())
+            .setWarningThreshold(0.9).setDescription("Mixture velocity vs erosional limit")
+            .setValueSupplier(() -> getMixtureVelocity()));
+
+    // LOF (Likelihood of Failure) - FIV constraint
+    addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("LOF", "-",
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
+            .setDesignValue(maxDesignLOF).setMaxValue(1.5).setWarningThreshold(0.5)
+            .setDescription("LOF for flow-induced vibration (>1.0 = high risk)")
+            .setValueSupplier(() -> calculateLOF()));
+
+    // FRMS (Flow-induced vibration RMS)
+    addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("FRMS", "-",
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
+            .setDesignValue(maxDesignFRMS).setMaxValue(750.0).setWarningThreshold(0.8)
+            .setDescription("FRMS vibration intensity").setValueSupplier(() -> calculateFRMS()));
+
+    // Volume flow constraint from mechanical design
+    if (getMechanicalDesign() != null && getMechanicalDesign().maxDesignVolumeFlow > 0) {
+      addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("volumeFlow",
+          "m3/hr", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
+              .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
+              .setDescription("Volume flow vs mechanical design limit").setValueSupplier(
+                  () -> getOutletStream() != null ? getOutletStream().getFlowRate("m3/hr") : 0.0));
+    }
+
+    // Pressure drop constraint
+    if (getMechanicalDesign() != null && getMechanicalDesign().maxDesignPressureDrop > 0) {
+      addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("pressureDrop",
+          "bar", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
+              .setDesignValue(getMechanicalDesign().maxDesignPressureDrop).setWarningThreshold(0.9)
+              .setDescription("Pressure drop vs mechanical design limit")
+              .setValueSupplier(() -> getPressureDrop()));
     }
   }
 

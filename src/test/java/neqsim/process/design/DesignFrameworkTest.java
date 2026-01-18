@@ -429,4 +429,68 @@ class DesignFrameworkTest {
     assertNotNull(result);
     assertNotNull(result.getProcess());
   }
+
+  @Test
+  void testAutoSizeProcessSystemWithCompressor() {
+    // Create a gas fluid
+    SystemInterface gasFluid = new SystemSrkEos(298.15, 10.0);
+    gasFluid.addComponent("methane", 0.90);
+    gasFluid.addComponent("ethane", 0.05);
+    gasFluid.addComponent("propane", 0.03);
+    gasFluid.addComponent("CO2", 0.02);
+    gasFluid.setMixingRule("classic");
+
+    // Build a simple process with separator and compressor
+    ProcessSystem process = new ProcessSystem();
+
+    Stream feed = new Stream("Feed", gasFluid);
+    feed.setFlowRate(50000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(30.0, "bara");
+
+    Separator inletSep = new Separator("Inlet-Sep", feed);
+    inletSep.setInternalDiameter(1.5);
+    inletSep.setSeparatorLength(4.0);
+
+    neqsim.process.equipment.compressor.Compressor compressor =
+        new neqsim.process.equipment.compressor.Compressor("Export-Comp",
+            inletSep.getGasOutStream());
+    compressor.setOutletPressure(80.0);
+    compressor.setPolytropicEfficiency(0.77);
+    compressor.setSpeed(8500);
+
+    process.add(feed);
+    process.add(inletSep);
+    process.add(compressor);
+
+    // Run baseline
+    process.run();
+
+    // Verify compressor is not auto-sized initially
+    assertFalse(compressor.isAutoSized());
+    assertFalse(compressor.isSolveSpeed());
+
+    // Use DesignOptimizer to auto-size all equipment
+    DesignOptimizer optimizer = DesignOptimizer.forProcess(process).autoSizeEquipment(1.2)
+        .applyDefaultConstraints().setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION);
+
+    DesignResult result = optimizer.optimize();
+
+    // Verify auto-sizing was performed
+    assertTrue(inletSep.isAutoSized(), "Separator should be auto-sized");
+    assertTrue(compressor.isAutoSized(), "Compressor should be auto-sized");
+    assertTrue(compressor.isSolveSpeed(),
+        "Compressor should have solveSpeed=true after auto-sizing");
+    assertTrue(compressor.getCompressorChart().isUseCompressorChart(),
+        "Compressor should have curves enabled after auto-sizing");
+
+    // Verify result
+    assertNotNull(result);
+    assertTrue(result.isConverged());
+
+    // Print sizing reports
+    System.out.println("\n=== Process System Auto-Sizing Results ===\n");
+    System.out.println(inletSep.getSizingReport());
+    System.out.println(compressor.getSizingReport());
+  }
 }

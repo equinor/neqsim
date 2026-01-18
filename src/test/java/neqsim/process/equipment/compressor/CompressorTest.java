@@ -544,4 +544,92 @@ class CompressorTest extends neqsim.NeqSimTest {
     // Compression ratio 3.0: 20 * 3 = 60 bara
     assertEquals(60.0, comp.getOutletStream().getPressure("bara"), 1.0);
   }
+
+  /**
+   * Test AutoSizeable implementation - auto-sizing generates curves and enables solveSpeed.
+   */
+  @Test
+  public void testAutoSizeable() {
+    testSystem = new SystemSrkEos(298.0, 10.0);
+    testSystem.addComponent("methane", 100.0);
+    Stream inletStream = new Stream("inletStream", testSystem);
+    inletStream.setPressure(50.0, "bara");
+    inletStream.setTemperature(25.0, "C");
+    inletStream.setFlowRate(1.0, "MSm3/day");
+    inletStream.run();
+
+    Compressor comp = new Compressor("AutoSizeComp", inletStream);
+    comp.setOutletPressure(100.0);
+    comp.setPolytropicEfficiency(0.77);
+    comp.setSpeed(8000);
+
+    // Run once to establish operating point
+    comp.run();
+
+    // Verify not auto-sized initially
+    Assertions.assertFalse(comp.isAutoSized());
+    Assertions.assertFalse(comp.isSolveSpeed());
+
+    // Auto-size the compressor
+    comp.autoSize(1.2);
+
+    // Verify auto-sizing was successful
+    Assertions.assertTrue(comp.isAutoSized());
+    Assertions.assertTrue(comp.isSolveSpeed()); // solveSpeed should be true after autoSize
+    Assertions.assertTrue(comp.getCompressorChart().isUseCompressorChart());
+
+    // Verify sizing report is available
+    String report = comp.getSizingReport();
+    Assertions.assertTrue(report.contains("Auto-sized: true"));
+    Assertions.assertTrue(report.contains("Solve Speed Mode: true"));
+
+    // Verify JSON report is valid
+    String jsonReport = comp.getSizingReportJson();
+    Assertions.assertTrue(jsonReport.contains("\"autoSized\": true"));
+    Assertions.assertTrue(jsonReport.contains("\"solveSpeed\": true"));
+
+    System.out.println("Auto-sizing report:\n" + report);
+  }
+
+  /**
+   * Test auto-sizing with different curve templates.
+   */
+  @Test
+  public void testAutoSizeWithTemplate() {
+    testSystem = new SystemSrkEos(298.0, 10.0);
+    testSystem.addComponent("methane", 100.0);
+    Stream inletStream = new Stream("inletStream", testSystem);
+    inletStream.setPressure(30.0, "bara");
+    inletStream.setTemperature(30.0, "C");
+    inletStream.setFlowRate(2.0, "MSm3/day");
+    inletStream.run();
+
+    Compressor comp = new Compressor("PipelineComp", inletStream);
+    comp.setOutletPressure(80.0);
+    comp.setPolytropicEfficiency(0.80);
+    comp.setSpeed(9000);
+    comp.run();
+
+    // Set template before auto-sizing
+    comp.setCurveTemplate("PIPELINE");
+    comp.setNumberOfSpeedCurves(7);
+
+    // Auto-size
+    comp.autoSize();
+
+    // Verify template was used
+    assertEquals("PIPELINE", comp.getCurveTemplate());
+    assertEquals(7, comp.getNumberOfSpeedCurves());
+    Assertions.assertTrue(comp.isAutoSized());
+    Assertions.assertTrue(comp.isSolveSpeed());
+
+    // Run again with curves - should calculate speed from pressure
+    double originalSpeed = comp.getSpeed();
+    comp.run();
+
+    System.out.println("Pipeline compressor auto-sized:");
+    System.out.println("  Template: " + comp.getCurveTemplate());
+    System.out.println("  Original speed: " + originalSpeed + " RPM");
+    System.out.println("  Calculated speed: " + comp.getSpeed() + " RPM");
+  }
 }

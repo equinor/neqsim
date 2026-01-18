@@ -28,14 +28,14 @@ Documentation for pipeline equipment in NeqSim.
 **Location:** `neqsim.process.equipment.pipeline`
 
 **Classes:**
-| Class | Description |
-|-------|-------------|
-| `PipeBeggsAndBrills` | Beggs-Brill correlation |
-| `AdiabaticPipe` | Adiabatic pipe segment |
-| `OnePhasePipe` | Single-phase pipe |
-| `TwoPhasePipeLine` | Two-phase pipeline |
-| `TopsidePiping` | Topside/platform piping with service types and mechanical design |
-| `Riser` | Subsea risers (SCR, TTR, Flexible, Lazy-Wave) |
+| Class | Description | FIV | AutoSize |
+|-------|-------------|-----|----------|
+| `PipeBeggsAndBrills` | Beggs-Brill correlation | ✅ | ✅ |
+| `AdiabaticPipe` | Adiabatic pipe segment | ✅ | ✅ |
+| `OnePhasePipe` | Single-phase pipe | - | - |
+| `TwoPhasePipeLine` | Two-phase pipeline | - | - |
+| `TopsidePiping` | Topside/platform piping with service types and mechanical design | ✅ | ✅ |
+| `Riser` | Subsea risers (SCR, TTR, Flexible, Lazy-Wave) | - | - |
 
 For detailed pipe flow modeling, see also [Fluid Mechanics](../../fluidmechanics/README.md).
 
@@ -553,6 +553,84 @@ ttrDesign.calcDesign();
 System.out.println("TTR tension: " + ttrDesign.getRiserCalculator().getTopTension() + " kN");
 System.out.println("Stroke requirement: " + ttrDesign.getRiserCalculator().getStrokeRequirement() + " m");
 ```
+
+---
+
+## Flow-Induced Vibration (FIV) Analysis
+
+Pipeline equipment (`PipeBeggsAndBrills`, `AdiabaticPipe`, `Pipeline`) includes built-in FIV analysis with capacity constraints.
+
+### FIV Methods
+
+All pipeline types provide these FIV methods:
+
+```java
+// LOF - Likelihood of Failure (dimensionless)
+double lof = pipe.calculateLOF();
+
+// FRMS - RMS force per meter (N/m)  
+double frms = pipe.calculateFRMS();
+
+// Erosional velocity per API RP 14E
+double erosionalVel = pipe.getErosionalVelocity();
+
+// Actual mixture velocity
+double velocity = pipe.getMixtureVelocity();
+
+// Full FIV analysis
+Map<String, Object> fivAnalysis = pipe.getFIVAnalysis();
+String fivJson = pipe.getFIVAnalysisJson();
+```
+
+### Support Arrangement
+
+Configure pipe support stiffness:
+
+```java
+pipe.setSupportArrangement("Stiff");        // Coefficient 1.0
+pipe.setSupportArrangement("Medium stiff"); // Coefficient 1.5
+pipe.setSupportArrangement("Medium");       // Coefficient 2.0
+pipe.setSupportArrangement("Flexible");     // Coefficient 3.0
+```
+
+### Capacity Constraints
+
+Pipeline types implement `CapacityConstrainedEquipment`:
+
+```java
+// Get all constraints
+Map<String, CapacityConstraint> constraints = pipe.getCapacityConstraints();
+
+// Available constraints:
+// - velocity: actual vs erosional velocity
+// - LOF: Likelihood of Failure
+// - FRMS: RMS force per meter  
+// - pressureDrop: (AdiabaticPipe only)
+
+// Check if any limit exceeded
+if (pipe.isCapacityExceeded()) {
+    CapacityConstraint bottleneck = pipe.getBottleneckConstraint();
+    System.out.println("Limit exceeded: " + bottleneck.getName());
+}
+```
+
+### AutoSizing
+
+`PipeBeggsAndBrills` and `AdiabaticPipe` support auto-sizing:
+
+```java
+// Auto-size with 20% safety factor
+pipe.autoSize(1.2);
+
+// Auto-size per company standard
+pipe.autoSize("Equinor", "TR1414");
+
+// Check sizing report
+System.out.println(pipe.getSizingReport());
+System.out.println(pipe.getSizingReportJson());
+```
+
+For detailed FIV documentation, see [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md#flow-induced-vibration-fiv-analysis).
 
 ---
 
