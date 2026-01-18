@@ -558,13 +558,79 @@ String vfpExp = exporter.generateVFPEXP(
 
 ## ProcessOptimizationEngine API Reference
 
-### Constructor
+### Constructors
 
 ```java
+// For ProcessSystem
 public ProcessOptimizationEngine(ProcessSystem processSystem)
+
+// For ProcessModule (supports nested modules)
+public ProcessOptimizationEngine(ProcessModule processModule)
 ```
 
-Creates optimization engine for the given process system.
+Creates optimization engine for the given process system or module.
+
+### ProcessModule Support
+
+The `ProcessOptimizationEngine` fully supports `ProcessModule`, which can contain multiple `ProcessSystem` instances and nested modules. All optimization methods work recursively across the entire module hierarchy.
+
+```java
+import neqsim.process.util.optimizer.ProcessOptimizationEngine;
+import neqsim.process.processmodel.ProcessModule;
+import neqsim.process.processmodel.ProcessSystem;
+
+// Create a module with multiple systems
+ProcessModule fieldModule = new ProcessModule("Field Development");
+
+ProcessSystem subseaSystem = new ProcessSystem();
+// ... add subsea equipment ...
+fieldModule.add(subseaSystem);
+
+ProcessSystem topsideSystem = new ProcessSystem();
+// ... add topside equipment ...
+fieldModule.add(topsideSystem);
+
+fieldModule.run();
+
+// Create engine with ProcessModule
+ProcessOptimizationEngine engine = new ProcessOptimizationEngine(fieldModule);
+
+// Specify which feed stream to vary (searches across ALL systems in module)
+engine.setFeedStreamName("WellheadFeed");
+
+// Find maximum throughput - evaluates constraints across entire module
+OptimizationResult result = engine.findMaximumThroughput(
+    50.0,      // inlet pressure (bara)
+    40.0,      // outlet pressure (bara)
+    10000.0,   // min flow (kg/hr)
+    500000.0   // max flow (kg/hr)
+);
+
+// Check which stream is being varied
+System.out.println("Feed stream: " + engine.getFeedStreamName());
+```
+
+### Feed Stream Configuration
+
+By default, the optimization engine varies the **first unit operation** in the process. For complex processes or modules, you should explicitly specify the feed stream:
+
+| Method | Description |
+|--------|-------------|
+| `setFeedStreamName(String name)` | Set the name of the stream to vary during optimization |
+| `getFeedStreamName()` | Get the name of the stream being varied |
+
+```java
+// Explicitly set which stream to vary
+engine.setFeedStreamName("InletManifold");
+
+// Method chaining is supported
+OptimizationResult result = engine
+    .setFeedStreamName("WellStream")
+    .findMaximumThroughput(50.0, 40.0, 1000.0, 100000.0);
+
+// Verify which stream is being used
+System.out.println("Optimizing flow rate of: " + engine.getFeedStreamName());
+```
 
 ### Core Methods
 

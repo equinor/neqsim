@@ -11,6 +11,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.EquipmentCapacityStrategy;
 import neqsim.process.equipment.capacity.EquipmentCapacityStrategyRegistry;
+import neqsim.process.processmodel.ProcessModule;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.FlowRateOptimizer;
 
@@ -74,6 +75,9 @@ public class ProcessOptimizationEngine implements Serializable {
   /** The process system to optimize. */
   private ProcessSystem processSystem;
 
+  /** The process module to optimize (alternative to processSystem). */
+  private ProcessModule processModule;
+
   /** Strategy registry for equipment constraint evaluation. */
   private transient EquipmentCapacityStrategyRegistry strategyRegistry;
 
@@ -99,6 +103,9 @@ public class ProcessOptimizationEngine implements Serializable {
 
   // BFGS parameters
   private double bfgsGradientTolerance = 1e-6;
+
+  /** Name of the feed stream to vary during optimization. */
+  private String feedStreamName = null;
 
   /**
    * Search algorithm options.
@@ -136,6 +143,75 @@ public class ProcessOptimizationEngine implements Serializable {
   public ProcessOptimizationEngine(ProcessSystem processSystem) {
     this();
     this.processSystem = processSystem;
+  }
+
+  /**
+   * Constructor with process module.
+   *
+   * @param processModule the process module to optimize
+   */
+  public ProcessOptimizationEngine(ProcessModule processModule) {
+    this();
+    this.processModule = processModule;
+  }
+
+  // ==================== Helper Methods for ProcessSystem/ProcessModule ====================
+
+  /**
+   * Run the simulation (either ProcessSystem or ProcessModule).
+   */
+  private void runSimulation() {
+    if (processSystem != null) {
+      processSystem.run();
+    } else if (processModule != null) {
+      processModule.run();
+    }
+  }
+
+  /**
+   * Get all unit operations from either ProcessSystem or ProcessModule.
+   *
+   * @return list of all unit operations
+   */
+  private List<ProcessEquipmentInterface> getAllUnitOperations() {
+    List<ProcessEquipmentInterface> allUnits = new ArrayList<>();
+
+    if (processSystem != null) {
+      allUnits.addAll(processSystem.getUnitOperations());
+    } else if (processModule != null) {
+      for (ProcessSystem sys : processModule.getAllProcessSystems()) {
+        allUnits.addAll(sys.getUnitOperations());
+      }
+    }
+
+    return allUnits;
+  }
+
+  /**
+   * Check if a process (system or module) is configured.
+   *
+   * @return true if either processSystem or processModule is set
+   */
+  private boolean hasProcess() {
+    return processSystem != null || processModule != null;
+  }
+
+  /**
+   * Get the primary ProcessSystem (first one if using module).
+   *
+   * @return the ProcessSystem or null
+   */
+  private ProcessSystem getPrimaryProcessSystem() {
+    if (processSystem != null) {
+      return processSystem;
+    }
+    if (processModule != null) {
+      List<ProcessSystem> systems = processModule.getAllProcessSystems();
+      if (!systems.isEmpty()) {
+        return systems.get(0);
+      }
+    }
+    return null;
   }
 
   /**
@@ -191,9 +267,9 @@ public class ProcessOptimizationEngine implements Serializable {
       result.setOutletPressure(outletPressure);
 
       // Run at optimal and collect metrics
-      if (processSystem != null) {
+      if (hasProcess()) {
         setFeedFlowRate(optimalFlow);
-        processSystem.run();
+        runSimulation();
         result.setConstraintViolations(evaluateAllConstraintViolations());
         result.setBottleneck(findBottleneckEquipment());
 
@@ -477,14 +553,14 @@ public class ProcessOptimizationEngine implements Serializable {
    * Checks if a flow rate can be achieved.
    */
   private boolean canAchieveFlow(double inletPressure, double outletPressure, double flow) {
-    if (processSystem == null) {
+    if (!hasProcess()) {
       return true;
     }
 
     try {
       setFeedFlowRate(flow);
       setInletPressure(inletPressure);
-      processSystem.run();
+      runSimulation();
 
       // Check outlet pressure
       double actualOutletPressure = getOutletPressure();
@@ -509,14 +585,14 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   private boolean canAchieveFlowWithPressure(double flow, double inletPressure,
       double outletPressure) {
-    if (processSystem == null) {
+    if (!hasProcess()) {
       return true;
     }
 
     try {
       setFeedFlowRate(flow);
       setInletPressure(inletPressure);
-      processSystem.run();
+      runSimulation();
 
       double actualOutletPressure = getOutletPressure();
       return actualOutletPressure >= outletPressure * 0.99;
@@ -530,12 +606,13 @@ public class ProcessOptimizationEngine implements Serializable {
    * Checks if all constraints are satisfied.
    */
   private boolean areAllConstraintsSatisfied() {
-    if (processSystem == null) {
+    if (!hasProcess()) {
       return true;
     }
 
-    for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
-      ProcessEquipmentInterface equipment = processSystem.getUnitOperations().get(i);
+    List<ProcessEquipmentInterface> units = getAllUnitOperations();
+    for (int i = 0; i < units.size(); i++) {
+      ProcessEquipmentInterface equipment = units.get(i);
       EquipmentCapacityStrategy strategy = strategyRegistry.findStrategy(equipment);
 
       if (strategy != null && !strategy.isWithinHardLimits(equipment)) {
@@ -552,12 +629,13 @@ public class ProcessOptimizationEngine implements Serializable {
   private List<String> evaluateAllConstraintViolations() {
     List<String> violations = new ArrayList<String>();
 
-    if (processSystem == null) {
+    if (!hasProcess()) {
       return violations;
     }
 
-    for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
-      ProcessEquipmentInterface equipment = processSystem.getUnitOperations().get(i);
+    List<ProcessEquipmentInterface> units = getAllUnitOperations();
+    for (int i = 0; i < units.size(); i++) {
+      ProcessEquipmentInterface equipment = units.get(i);
       EquipmentCapacityStrategy strategy = strategyRegistry.findStrategy(equipment);
 
       if (strategy != null) {
@@ -692,12 +770,13 @@ public class ProcessOptimizationEngine implements Serializable {
   private double calculateConstraintViolationMagnitude() {
     double totalViolation = 0.0;
 
-    if (processSystem == null) {
+    if (!hasProcess()) {
       return 0.0;
     }
 
-    for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
-      ProcessEquipmentInterface equipment = processSystem.getUnitOperations().get(i);
+    List<ProcessEquipmentInterface> units = getAllUnitOperations();
+    for (int i = 0; i < units.size(); i++) {
+      ProcessEquipmentInterface equipment = units.get(i);
       EquipmentCapacityStrategy strategy = strategyRegistry.findStrategy(equipment);
 
       if (strategy != null) {
@@ -1084,16 +1163,17 @@ public class ProcessOptimizationEngine implements Serializable {
     result.setFlowGradient(gradient);
 
     // Analyze constraint margins
-    if (processSystem != null) {
+    if (hasProcess()) {
       setFeedFlowRate(optimalFlow);
-      processSystem.run();
+      runSimulation();
 
       Map<String, Double> margins = new HashMap<String, Double>();
       String tightestConstraint = null;
       double smallestMargin = Double.MAX_VALUE;
 
-      for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
-        ProcessEquipmentInterface equipment = processSystem.getUnitOperations().get(i);
+      List<ProcessEquipmentInterface> units = getAllUnitOperations();
+      for (int i = 0; i < units.size(); i++) {
+        ProcessEquipmentInterface equipment = units.get(i);
         EquipmentCapacityStrategy strategy = strategyRegistry.findStrategy(equipment);
 
         if (strategy != null) {
@@ -1161,17 +1241,18 @@ public class ProcessOptimizationEngine implements Serializable {
 
     Map<String, Double> shadowPrices = new HashMap<String, Double>();
 
-    if (processSystem == null) {
+    if (!hasProcess()) {
       return shadowPrices;
     }
 
     // Run at optimal
     setFeedFlowRate(optimalFlow);
-    processSystem.run();
+    runSimulation();
 
     // For each equipment, estimate how much relaxing its constraint would help
-    for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
-      ProcessEquipmentInterface equipment = processSystem.getUnitOperations().get(i);
+    List<ProcessEquipmentInterface> units = getAllUnitOperations();
+    for (int i = 0; i < units.size(); i++) {
+      ProcessEquipmentInterface equipment = units.get(i);
       EquipmentCapacityStrategy strategy = strategyRegistry.findStrategy(equipment);
 
       if (strategy != null) {
@@ -1207,7 +1288,8 @@ public class ProcessOptimizationEngine implements Serializable {
    * @return configured FlowRateOptimizer instance
    */
   public FlowRateOptimizer createFlowRateOptimizer() {
-    if (processSystem == null) {
+    ProcessSystem primarySystem = getPrimaryProcessSystem();
+    if (primarySystem == null) {
       throw new IllegalStateException("Process system must be set before creating optimizer");
     }
 
@@ -1215,13 +1297,14 @@ public class ProcessOptimizationEngine implements Serializable {
     String inletName = "FeedStream";
     String outletName = "OutletStream";
 
-    if (processSystem.getUnitOperations().size() > 0) {
-      inletName = processSystem.getUnitOperations().get(0).getName();
-      int lastIdx = processSystem.getUnitOperations().size() - 1;
-      outletName = processSystem.getUnitOperations().get(lastIdx).getName();
+    List<ProcessEquipmentInterface> units = getAllUnitOperations();
+    if (units.size() > 0) {
+      inletName = units.get(0).getName();
+      int lastIdx = units.size() - 1;
+      outletName = units.get(lastIdx).getName();
     }
 
-    FlowRateOptimizer optimizer = new FlowRateOptimizer(processSystem, inletName, outletName);
+    FlowRateOptimizer optimizer = new FlowRateOptimizer(primarySystem, inletName, outletName);
     optimizer.setTolerance(this.tolerance);
     optimizer.setMaxIterations(this.maxIterations);
 
@@ -1241,12 +1324,14 @@ public class ProcessOptimizationEngine implements Serializable {
 
     // Find outlet stream name
     String outletName = "OutletStream";
-    if (processSystem != null && processSystem.getUnitOperations().size() > 0) {
-      int lastIdx = processSystem.getUnitOperations().size() - 1;
-      outletName = processSystem.getUnitOperations().get(lastIdx).getName();
+    List<ProcessEquipmentInterface> units = getAllUnitOperations();
+    if (units.size() > 0) {
+      int lastIdx = units.size() - 1;
+      outletName = units.get(lastIdx).getName();
     }
 
-    FlowRateOptimizer optimizer = new FlowRateOptimizer(processSystem, feedStreamName, outletName);
+    ProcessSystem primarySystem = getPrimaryProcessSystem();
+    FlowRateOptimizer optimizer = new FlowRateOptimizer(primarySystem, feedStreamName, outletName);
     optimizer.setTolerance(this.tolerance);
     optimizer.setMaxIterations(this.maxIterations);
 
@@ -1329,29 +1414,91 @@ public class ProcessOptimizationEngine implements Serializable {
 
   /**
    * Sets the feed flow rate.
+   *
+   * <p>
+   * If a feed stream name is specified via {@link #setFeedStreamName(String)}, that stream will be
+   * used. Otherwise, the first unit operation is assumed to be the feed stream.
+   * </p>
+   *
+   * @param flowKgPerHr flow rate in kg/hr
    */
   private void setFeedFlowRate(double flowKgPerHr) {
-    if (processSystem == null || processSystem.getUnitOperations().isEmpty()) {
-      return;
-    }
-    // Assume first unit is the feed stream
-    ProcessEquipmentInterface feedUnit = processSystem.getUnitOperations().get(0);
-    if (feedUnit != null) {
+    ProcessEquipmentInterface feedUnit = getFeedStream();
+    if (feedUnit != null && feedUnit.getFluid() != null) {
       feedUnit.getFluid().setTotalFlowRate(flowKgPerHr, "kg/hr");
     }
   }
 
   /**
    * Sets the inlet pressure.
+   *
+   * @param pressureBara pressure in bara
    */
   private void setInletPressure(double pressureBara) {
-    if (processSystem == null || processSystem.getUnitOperations().isEmpty()) {
-      return;
-    }
-    ProcessEquipmentInterface feedUnit = processSystem.getUnitOperations().get(0);
-    if (feedUnit != null) {
+    ProcessEquipmentInterface feedUnit = getFeedStream();
+    if (feedUnit != null && feedUnit.getFluid() != null) {
       feedUnit.getFluid().setPressure(pressureBara, "bara");
     }
+  }
+
+  /**
+   * Gets the feed stream being used for optimization.
+   *
+   * <p>
+   * If a feed stream name is specified, finds that stream by name. Otherwise, returns the first
+   * unit operation.
+   * </p>
+   *
+   * @return the feed stream, or null if not found
+   */
+  private ProcessEquipmentInterface getFeedStream() {
+    List<ProcessEquipmentInterface> units = getAllUnitOperations();
+    if (units.isEmpty()) {
+      return null;
+    }
+
+    // If feed stream name is specified, find it
+    if (feedStreamName != null && !feedStreamName.isEmpty()) {
+      for (ProcessEquipmentInterface unit : units) {
+        if (feedStreamName.equals(unit.getName())) {
+          return unit;
+        }
+      }
+      logger.warn("Feed stream '{}' not found, using first unit operation", feedStreamName);
+    }
+
+    // Default to first unit operation
+    return units.get(0);
+  }
+
+  /**
+   * Sets the name of the feed stream to vary during optimization.
+   *
+   * <p>
+   * Use this method to explicitly specify which stream should have its flow rate varied. If not
+   * set, the first unit operation in the process is used by default.
+   * </p>
+   *
+   * @param name the name of the feed stream
+   * @return this engine for method chaining
+   */
+  public ProcessOptimizationEngine setFeedStreamName(String name) {
+    this.feedStreamName = name;
+    return this;
+  }
+
+  /**
+   * Gets the name of the feed stream being varied.
+   *
+   * @return the feed stream name, or null if using default (first unit)
+   */
+  public String getFeedStreamName() {
+    if (feedStreamName != null) {
+      return feedStreamName;
+    }
+    // Return name of default feed stream
+    ProcessEquipmentInterface feedUnit = getFeedStream();
+    return feedUnit != null ? feedUnit.getName() : null;
   }
 
   /**
@@ -1359,9 +1506,6 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   private void setInletConditions(double pressure, double temperature, double waterCut,
       double gor) {
-    if (processSystem == null || processSystem.getUnitOperations().isEmpty()) {
-      return;
-    }
     // Simplified - actual implementation would modify fluid composition
     setInletPressure(pressure);
     // Additional composition changes based on waterCut and GOR would go here
@@ -1371,11 +1515,12 @@ public class ProcessOptimizationEngine implements Serializable {
    * Gets the outlet pressure.
    */
   private double getOutletPressure() {
-    if (processSystem == null || processSystem.getUnitOperations().isEmpty()) {
+    List<ProcessEquipmentInterface> units = getAllUnitOperations();
+    if (units.isEmpty()) {
       return 0.0;
     }
-    int lastIndex = processSystem.getUnitOperations().size() - 1;
-    ProcessEquipmentInterface lastUnit = processSystem.getUnitOperations().get(lastIndex);
+    int lastIndex = units.size() - 1;
+    ProcessEquipmentInterface lastUnit = units.get(lastIndex);
     if (lastUnit != null && lastUnit.getFluid() != null) {
       return lastUnit.getFluid().getPressure("bara");
     }
@@ -2056,7 +2201,7 @@ public class ProcessOptimizationEngine implements Serializable {
    * @return true if all Adjusters converge
    */
   private boolean checkAdjusterConvergence(double flowRate) {
-    if (processSystem == null) {
+    if (!hasProcess()) {
       return true;
     }
 
@@ -2065,7 +2210,7 @@ public class ProcessOptimizationEngine implements Serializable {
 
     // Run the process with Adjusters active
     try {
-      processSystem.run();
+      runSimulation();
     } catch (Exception e) {
       logger.debug("Process failed at flow rate {}: {}", flowRate, e.getMessage());
       return false;

@@ -99,6 +99,25 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
+   * Get all ProcessSystem instances from this module and all nested modules recursively.
+   *
+   * @return list of all ProcessSystem instances in the module hierarchy
+   */
+  public List<ProcessSystem> getAllProcessSystems() {
+    List<ProcessSystem> allSystems = new ArrayList<>();
+
+    // Add directly added process systems
+    allSystems.addAll(addedUnitOperations);
+
+    // Recursively add from nested modules
+    for (ProcessModule nestedModule : addedModules) {
+      allSystems.addAll(nestedModule.getAllProcessSystems());
+    }
+
+    return allSystems;
+  }
+
+  /**
    * Get the list of module index. The module index is used to follow the correct order of
    * calculations.
    *

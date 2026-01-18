@@ -243,8 +243,11 @@ String getDescription();  // Template description
 Integrated workflow manager for design and optimization.
 
 ```java
-// Create from existing process
+// Create from existing ProcessSystem
 DesignOptimizer optimizer = DesignOptimizer.forProcess(myProcess);
+
+// Create from ProcessModule (multi-system modular processes)
+DesignOptimizer optimizer = DesignOptimizer.forProcess(myModule);
 
 // Or create from template
 DesignOptimizer optimizer = DesignOptimizer.fromTemplate(template, basis);
@@ -259,6 +262,12 @@ optimizer
 DesignResult result = optimizer.validate();  // Just validate
 DesignResult result = optimizer.optimize();  // Full optimization
 ```
+
+**ProcessModule Support:**
+- Use `forProcess(ProcessModule)` for modular process structures
+- Check mode with `optimizer.isModuleMode()` 
+- Access the module with `optimizer.getModule()`
+- All child ProcessSystems are automatically evaluated for constraints
 
 **Objective Types:**
 - `MAXIMIZE_PRODUCTION` - Maximize total hydrocarbon production

@@ -8,6 +8,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.processmodel.ProcessModule;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -41,6 +42,7 @@ public class DesignOptimizer {
   private static final Logger logger = LogManager.getLogger(DesignOptimizer.class);
 
   private ProcessSystem process;
+  private ProcessModule module;
   private ProcessBasis basis;
   private double safetyFactor = 1.2;
   private boolean autoSizeEnabled = false;
@@ -70,6 +72,17 @@ public class DesignOptimizer {
    */
   private DesignOptimizer(ProcessSystem process) {
     this.process = process;
+    this.module = null;
+  }
+
+  /**
+   * Private constructor for ProcessModule - use factory methods.
+   *
+   * @param module the process module to optimize
+   */
+  private DesignOptimizer(ProcessModule module) {
+    this.module = module;
+    this.process = null;
   }
 
   // ==================== Factory Methods ====================
@@ -82,6 +95,16 @@ public class DesignOptimizer {
    */
   public static DesignOptimizer forProcess(ProcessSystem process) {
     return new DesignOptimizer(process);
+  }
+
+  /**
+   * Create a DesignOptimizer for an existing process module.
+   *
+   * @param module the process module
+   * @return new DesignOptimizer
+   */
+  public static DesignOptimizer forProcess(ProcessModule module) {
+    return new DesignOptimizer(module);
   }
 
   /**
@@ -163,18 +186,18 @@ public class DesignOptimizer {
    * @return the design result
    */
   public DesignResult optimize() {
-    DesignResult result = new DesignResult(process);
+    DesignResult result = new DesignResult(process != null ? process : getFirstProcessSystem());
 
     try {
       // Step 1: Run baseline
       logger.info("Running baseline simulation...");
-      process.run();
+      runSimulation();
 
       // Step 2: Auto-size equipment if enabled
       if (autoSizeEnabled) {
         logger.info("Auto-sizing equipment with safety factor: " + safetyFactor);
         autoSizeAllEquipment();
-        process.run(); // Re-run after sizing
+        runSimulation(); // Re-run after sizing
       }
 
       // Step 3: Record results (simplified - full optimization will be added later)
@@ -214,7 +237,7 @@ public class DesignOptimizer {
    * @return this optimizer for further operations
    */
   public DesignOptimizer runAutoSizing() {
-    process.run();
+    runSimulation();
     autoSizeAllEquipment();
     return this;
   }
@@ -225,16 +248,65 @@ public class DesignOptimizer {
    * @return design result with validation status
    */
   public DesignResult validate() {
-    DesignResult result = new DesignResult(process);
-    process.run();
+    DesignResult result = new DesignResult(process != null ? process : getFirstProcessSystem());
+    runSimulation();
     checkViolations(result);
     return result;
   }
 
   // ==================== Helper Methods ====================
 
+  /**
+   * Run the simulation (either ProcessSystem or ProcessModule).
+   */
+  private void runSimulation() {
+    if (process != null) {
+      process.run();
+    } else if (module != null) {
+      module.run();
+    }
+  }
+
+  /**
+   * Get all unit operations from either ProcessSystem or ProcessModule.
+   *
+   * @return list of all unit operations
+   */
+  private List<ProcessEquipmentInterface> getAllUnitOperations() {
+    List<ProcessEquipmentInterface> allUnits = new ArrayList<>();
+
+    if (process != null) {
+      allUnits.addAll(process.getUnitOperations());
+    } else if (module != null) {
+      // Collect from all process systems in the module
+      for (ProcessSystem sys : module.getAllProcessSystems()) {
+        allUnits.addAll(sys.getUnitOperations());
+      }
+    }
+
+    return allUnits;
+  }
+
+  /**
+   * Get the first ProcessSystem (for result creation when using module).
+   *
+   * @return the first ProcessSystem or null
+   */
+  private ProcessSystem getFirstProcessSystem() {
+    if (process != null) {
+      return process;
+    }
+    if (module != null) {
+      List<ProcessSystem> systems = module.getAllProcessSystems();
+      if (!systems.isEmpty()) {
+        return systems.get(0);
+      }
+    }
+    return null;
+  }
+
   private void autoSizeAllEquipment() {
-    for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
+    for (ProcessEquipmentInterface equipment : getAllUnitOperations()) {
       if (equipment instanceof AutoSizeable && !excludedEquipment.contains(equipment.getName())) {
         AutoSizeable sizeable = (AutoSizeable) equipment;
         sizeable.autoSize(safetyFactor);
@@ -245,7 +317,7 @@ public class DesignOptimizer {
 
   private StreamInterface findProductStream() {
     // Find the last stream in the process as the product
-    List<ProcessEquipmentInterface> units = process.getUnitOperations();
+    List<ProcessEquipmentInterface> units = getAllUnitOperations();
     for (int i = units.size() - 1; i >= 0; i--) {
       ProcessEquipmentInterface equipment = units.get(i);
       if (equipment instanceof StreamInterface) {
@@ -256,7 +328,7 @@ public class DesignOptimizer {
   }
 
   private void recordEquipmentSizes(DesignResult result) {
-    for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
+    for (ProcessEquipmentInterface equipment : getAllUnitOperations()) {
 
       if (equipment instanceof Separator) {
         Separator sep = (Separator) equipment;
@@ -269,7 +341,7 @@ public class DesignOptimizer {
 
   private void recordConstraintStatus(DesignResult result) {
     // Record constraint utilizations from optimization result
-    for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
+    for (ProcessEquipmentInterface equipment : getAllUnitOperations()) {
       if (equipment instanceof CapacityConstrainedEquipment) {
         CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) equipment;
         for (neqsim.process.equipment.capacity.CapacityConstraint constraint : constrained
@@ -283,7 +355,7 @@ public class DesignOptimizer {
   }
 
   private void checkViolations(DesignResult result) {
-    for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
+    for (ProcessEquipmentInterface equipment : getAllUnitOperations()) {
       if (equipment instanceof CapacityConstrainedEquipment) {
         CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) equipment;
         for (neqsim.process.equipment.capacity.CapacityConstraint constraint : constrained
@@ -304,10 +376,31 @@ public class DesignOptimizer {
   /**
    * Get the process system.
    *
-   * @return the process
+   * @return the process, or the first process system from the module if using a module
    */
   public ProcessSystem getProcess() {
-    return process;
+    if (process != null) {
+      return process;
+    }
+    return getFirstProcessSystem();
+  }
+
+  /**
+   * Get the process module.
+   *
+   * @return the module or null if not using a module
+   */
+  public ProcessModule getModule() {
+    return module;
+  }
+
+  /**
+   * Check if this optimizer is working with a ProcessModule.
+   *
+   * @return true if using a ProcessModule, false if using a ProcessSystem
+   */
+  public boolean isModuleMode() {
+    return module != null;
   }
 
   /**
