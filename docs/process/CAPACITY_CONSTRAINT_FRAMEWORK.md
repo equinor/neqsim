@@ -34,6 +34,21 @@ The framework integrates with existing bottleneck analysis in `neqsim.process.eq
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
+│                         ProcessModule                                │
+│  ┌────────────────────────────────────────────────────────────────┐ │
+│  │  getConstrainedEquipment() │ findBottleneck() │ ...            │ │
+│  │  (recursively searches all nested modules and systems)         │ │
+│  └────────────────────────────────────────────────────────────────┘ │
+│                              │                                       │
+│         ┌────────────────────┴────────────────────┐                  │
+│         ▼                                         ▼                  │
+│  ┌──────────────────────┐             ┌──────────────────────┐       │
+│  │    ProcessModule     │             │    ProcessSystem     │       │
+│  │    (nested)          │             │                      │       │
+│  └──────────────────────┘             └──────────────────────┘       │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
 │                         ProcessSystem                                │
 │  ┌───────────────────────────────────────────────────────────────┐  │
 │  │  getBottleneck()  │  findBottleneck()  │  getRestCapacity()   │  │
@@ -159,6 +174,122 @@ if (!result.isEmpty()) {
 }
 ```
 
+## Integration with AutoSizing and Mechanical Design
+
+### How AutoSizing Creates Constraints
+
+When equipment is auto-sized using the `AutoSizeable` interface, constraints are automatically created based on the calculated design values:
+
+```java
+// Auto-sizing creates constraints automatically
+Separator sep = new Separator("HP-Sep", feedStream);
+sep.autoSize(1.2);  // 20% safety factor
+
+// This creates the following constraints:
+// - gasLoadFactor: based on K-factor sizing calculation
+// - liquidResidenceTime: based on L/D ratio and liquid level
+
+// For compressors, autoSize does even more:
+Compressor comp = new Compressor("Export", gasStream);
+comp.setOutletPressure(100.0);
+comp.autoSize(1.2);
+
+// This creates:
+// - speed constraint (from mechanical design)
+// - power constraint (from driver sizing)
+// - surgeMargin constraint (soft limit)
+// AND generates compressor curves, sets solveSpeed=true
+```
+
+### Mechanical Design as Source of Constraint Values
+
+The `MechanicalDesign` class provides design values that become constraint limits:
+
+```java
+// Mechanical design values feed constraints
+Separator sep = new Separator("V-100", feed);
+sep.initMechanicalDesign();
+SeparatorMechanicalDesign mechDesign = (SeparatorMechanicalDesign) sep.getMechanicalDesign();
+
+// Set design limits that will become constraints
+mechDesign.setMaxDesignGassVolFlow(5000.0);    // m³/hr → volumeFlow constraint
+mechDesign.setMaxDesignPressureDrop(2.0);      // bara → pressureDrop constraint
+
+// For pipelines
+Pipeline pipe = new PipeBeggsAndBrills("L-100", gasStream);
+pipe.initMechanicalDesign();
+PipelineMechanicalDesign pipeDesign = (PipelineMechanicalDesign) pipe.getMechanicalDesign();
+
+// Design values → constraints
+pipeDesign.maxDesignVelocity = 15.0;           // → velocity constraint
+pipeDesign.maxDesignPressureDrop = 5.0;        // → pressureDrop constraint
+pipeDesign.maxDesignVolumeFlow = 10000.0;      // → volumeFlow constraint
+```
+
+### Complete Workflow: Design → Constraints → Optimization
+
+```java
+// 1. Create process with auto-sizing
+ProcessSystem process = new ProcessSystem();
+
+Stream feed = new Stream("Feed", fluid);
+feed.setFlowRate(10000.0, "kg/hr");
+process.add(feed);
+
+Separator sep = new Separator("HP-Sep", feed);
+sep.autoSize(1.2);  // Creates gasLoadFactor constraint
+process.add(sep);
+
+Compressor comp = new Compressor("K-100", sep.getGasOutStream());
+comp.setOutletPressure(100.0);
+comp.autoSize(1.2);  // Creates speed, power, surge constraints + curves
+process.add(comp);
+
+Pipeline pipe = new PipeBeggsAndBrills("Export", comp.getOutletStream());
+pipe.setLength(30000.0);
+pipe.setDiameter(0.3);
+pipe.autoSize(1.2);  // Creates velocity, pressureDrop, FIV constraints
+process.add(pipe);
+
+// 2. Run process
+process.run();
+
+// 3. Constraints are now active and can be queried
+System.out.println("Equipment constraints after auto-sizing:");
+for (CapacityConstrainedEquipment equip : process.getConstrainedEquipment()) {
+    System.out.println(((ProcessEquipmentInterface) equip).getName() + ":");
+    for (CapacityConstraint c : equip.getCapacityConstraints().values()) {
+        System.out.printf("  %s: %.2f / %.2f %s%n",
+            c.getName(), c.getCurrentValue(), c.getDesignValue(), c.getUnit());
+    }
+}
+
+// 4. Use in optimization - optimizer checks ALL constraints
+ProductionOptimizer.OptimizationConfig config = 
+    new ProductionOptimizer.OptimizationConfig(1000.0, 50000.0);
+ProductionOptimizer.OptimizationResult result = 
+    ProductionOptimizer.optimize(process, feed, config);
+
+// 5. The bottleneck could be separator, compressor, or pipeline
+System.out.println("Bottleneck: " + result.getBottleneck().getName());
+```
+
+### Equipment Currently Supporting CapacityConstrainedEquipment
+
+| Equipment | Constraints | Set By |
+|-----------|-------------|--------|
+| **Separator** | gasLoadFactor, liquidResidenceTime | autoSize(), setDesignGasLoadFactor() |
+| **Compressor** | speed, power, surgeMargin, stonewallMargin | autoSize(), setMaximumSpeed(), setMaximumPower() |
+| **Pump** | npshMargin, power, flowRate | setMaximumPower(), mechanical design |
+| **ThrottlingValve** | valveOpening, cvUtilization | autoSize(), setCv() |
+| **Pipeline** | velocity, pressureDrop, volumeFlow, FIV_LOF, FIV_FRMS | autoSize(), setMaxLOF(), setMaxFRMS() |
+| **PipeBeggsAndBrills** | velocity, LOF, FRMS | autoSize(), setMaxDesignVelocity(), setMaxDesignLOF() |
+| **AdiabaticPipe** | velocity, LOF, FRMS, pressureDrop | autoSize(), setMaxDesignVelocity(), setMaxDesignLOF() |
+| **Manifold** | headerVelocity, branchVelocity, headerLOF, headerFRMS, branchLOF | autoSize(), setMaxDesignVelocity() |
+| **Heater/Cooler** | duty, outletTemperature | autoSize(), setMaxDesignDuty() |
+
+---
+
 ## Usage Examples
 
 ### Basic Usage: Process-Wide Bottleneck Detection
@@ -197,6 +328,99 @@ if (!nearLimit.isEmpty()) {
     System.out.println("Equipment near capacity: " + nearLimit);
 }
 ```
+
+### ProcessModule Support
+
+The capacity constraint framework also works with `ProcessModule`, which can contain multiple `ProcessSystem` instances and nested modules. All constraint methods work recursively across the entire module hierarchy.
+
+```java
+import neqsim.process.processmodel.ProcessModule;
+
+// Create a complex module with multiple systems
+ProcessModule productionModule = new ProcessModule("Production Platform");
+
+// Add process systems
+ProcessSystem separationSystem = new ProcessSystem();
+separationSystem.add(inletManifold);
+separationSystem.add(hpSeparator);
+separationSystem.add(lpSeparator);
+
+ProcessSystem compressionSystem = new ProcessSystem();
+compressionSystem.add(lpCompressor);
+compressionSystem.add(hpCompressor);
+compressionSystem.add(exportPipeline);
+
+productionModule.add(separationSystem);
+productionModule.add(compressionSystem);
+productionModule.run();
+
+// Find bottleneck across ALL systems in the module
+BottleneckResult bottleneck = productionModule.findBottleneck();
+if (bottleneck.hasBottleneck()) {
+    System.out.println("Module bottleneck: " + bottleneck.getEquipmentName());
+    System.out.println("Constraint: " + bottleneck.getConstraint().getName());
+    System.out.println("Utilization: " + bottleneck.getUtilizationPercent() + "%");
+}
+
+// Check for overloaded equipment across all systems
+if (productionModule.isAnyEquipmentOverloaded()) {
+    System.out.println("WARNING: Equipment overloaded in module!");
+}
+
+// Get all constrained equipment from the module
+List<CapacityConstrainedEquipment> allConstrained = 
+    productionModule.getConstrainedEquipment();
+System.out.println("Found " + allConstrained.size() + " constrained equipment items");
+
+// Get utilization summary across entire module
+Map<String, Double> utilization = productionModule.getCapacityUtilizationSummary();
+for (Map.Entry<String, Double> entry : utilization.entrySet()) {
+    System.out.printf("%s: %.1f%%\n", entry.getKey(), entry.getValue());
+}
+```
+
+#### Nested Module Support
+
+ProcessModule supports nesting, and constraint methods work recursively:
+
+```java
+// Create nested modules
+ProcessModule topside = new ProcessModule("Topside");
+ProcessModule subsea = new ProcessModule("Subsea");
+
+subsea.add(subseaManifold);
+subsea.add(flowlines);
+subsea.add(risers);
+
+topside.add(separationSystem);
+topside.add(compressionSystem);
+
+// Create master module containing both
+ProcessModule field = new ProcessModule("Field Development");
+field.add(subsea);
+field.add(topside);
+field.run();
+
+// findBottleneck() searches recursively through ALL nested modules
+BottleneckResult fieldBottleneck = field.findBottleneck();
+
+// All constraint methods work recursively
+List<CapacityConstrainedEquipment> allEquipment = field.getConstrainedEquipment();
+Map<String, Double> fieldUtilization = field.getCapacityUtilizationSummary();
+boolean anyOverloaded = field.isAnyEquipmentOverloaded();
+boolean hardLimitExceeded = field.isAnyHardLimitExceeded();
+```
+
+#### ProcessModule Constraint Methods
+
+| Method | Description |
+|--------|-------------|
+| `getConstrainedEquipment()` | Returns all equipment implementing CapacityConstrainedEquipment from all systems and nested modules |
+| `findBottleneck()` | Finds the equipment with highest utilization across entire module hierarchy |
+| `isAnyEquipmentOverloaded()` | Checks if any equipment exceeds design capacity (utilization > 100%) |
+| `isAnyHardLimitExceeded()` | Checks if any HARD constraint limits are exceeded |
+| `getCapacityUtilizationSummary()` | Returns Map<String, Double> of equipment name to utilization percentage |
+| `getEquipmentNearCapacityLimit()` | Returns list of equipment names near warning threshold |
 
 ### Individual Equipment Inspection
 
@@ -243,6 +467,297 @@ separator.removeCapacityConstraint("gasLoadFactor");
 // Clear all constraints
 separator.clearCapacityConstraints();
 ```
+
+---
+
+## Activating and Deactivating Constraints
+
+### Adding Constraints to Equipment WITH Existing Constraints
+
+Equipment that already implements `CapacityConstrainedEquipment` (Separator, Compressor, Pipeline, Manifold, etc.) can have additional constraints added:
+
+```java
+// Equipment already has default constraints from autoSize() or initialization
+Compressor compressor = new Compressor("Export Compressor", feed);
+compressor.setOutletPressure(150.0);
+compressor.autoSize(1.2);  // Creates speed, power, surgeMargin constraints
+compressor.run();
+
+// View existing constraints
+System.out.println("Current constraints:");
+for (CapacityConstraint c : compressor.getCapacityConstraints().values()) {
+    System.out.println("  " + c.getName() + ": " + c.getDesignValue() + " " + c.getUnit());
+}
+
+// ADD a new custom constraint (discharge temperature)
+CapacityConstraint tempLimit = new CapacityConstraint("dischargeTemp", ConstraintType.SOFT)
+    .setDesignValue(150.0)  // °C design limit
+    .setMaxValue(180.0)     // °C absolute max
+    .setUnit("°C")
+    .setWarningThreshold(0.9)
+    .setValueSupplier(() -> compressor.getOutletStream().getTemperature("C"));
+
+compressor.addCapacityConstraint(tempLimit);
+
+// MODIFY an existing constraint's design value
+CapacityConstraint speedConstraint = compressor.getCapacityConstraints().get("speed");
+if (speedConstraint != null) {
+    speedConstraint.setDesignValue(9500.0);  // Lower speed limit
+    speedConstraint.setMaxValue(10000.0);
+}
+```
+
+### Adding Constraints to Equipment WITHOUT Existing Constraints
+
+For equipment that does not implement `CapacityConstrainedEquipment`, you need to either:
+
+1. **Use the Strategy Registry** (recommended for temporary/external constraints):
+
+```java
+// Equipment without built-in constraints
+Heater heater = new Heater("Process Heater", feed);
+heater.setOutTemperature(350.0);
+
+// Use strategy registry to add constraint evaluation
+EquipmentCapacityStrategyRegistry registry = EquipmentCapacityStrategyRegistry.getInstance();
+
+// Create custom strategy for heater
+EquipmentCapacityStrategy heaterStrategy = new EquipmentCapacityStrategy() {
+    @Override
+    public boolean supports(ProcessEquipmentInterface equipment) {
+        return equipment instanceof Heater && equipment.getName().equals("Process Heater");
+    }
+    
+    @Override
+    public Map<String, CapacityConstraint> getConstraints(ProcessEquipmentInterface equipment) {
+        Heater h = (Heater) equipment;
+        Map<String, CapacityConstraint> constraints = new LinkedHashMap<>();
+        
+        constraints.put("duty", new CapacityConstraint("duty", ConstraintType.DESIGN)
+            .setDesignValue(5000.0)  // kW
+            .setMaxValue(6000.0)
+            .setUnit("kW")
+            .setValueSupplier(() -> Math.abs(h.getDuty()) / 1000.0));
+        
+        return constraints;
+    }
+    // ... implement other interface methods
+};
+
+registry.registerStrategy(heaterStrategy);
+```
+
+2. **Extend the equipment class** (for permanent constraints):
+
+```java
+// Create subclass with constraint support
+public class ConstrainedHeater extends Heater implements CapacityConstrainedEquipment {
+    private Map<String, CapacityConstraint> capacityConstraints = new LinkedHashMap<>();
+    
+    public ConstrainedHeater(String name, StreamInterface inletStream) {
+        super(name, inletStream);
+        initializeCapacityConstraints();
+    }
+    
+    protected void initializeCapacityConstraints() {
+        addCapacityConstraint(new CapacityConstraint("duty", ConstraintType.DESIGN)
+            .setDesignValue(5000.0)
+            .setUnit("kW")
+            .setValueSupplier(() -> Math.abs(getDuty()) / 1000.0));
+    }
+    
+    // Implement CapacityConstrainedEquipment interface methods...
+}
+```
+
+### Deactivating (Removing) Constraints
+
+```java
+// Remove a specific constraint by name
+compressor.removeCapacityConstraint("surgeMargin");
+
+// Remove multiple constraints
+compressor.removeCapacityConstraint("stonewallMargin");
+compressor.removeCapacityConstraint("dischargeTemp");
+
+// Remove ALL constraints (equipment will no longer be capacity-limited)
+compressor.clearCapacityConstraints();
+
+// Re-initialize default constraints after clearing
+compressor.initializeCapacityConstraints();  // If method is public/protected
+```
+
+### Temporarily Disabling Constraints
+
+For scenarios where you want to keep constraints defined but temporarily ignore them:
+
+```java
+// Option 1: Set design value to very high (effectively disabling)
+CapacityConstraint speedConstraint = compressor.getCapacityConstraints().get("speed");
+double originalDesign = speedConstraint.getDesignValue();
+speedConstraint.setDesignValue(Double.MAX_VALUE);  // Disable
+
+// ... run optimization without speed constraint ...
+
+speedConstraint.setDesignValue(originalDesign);  // Re-enable
+
+// Option 2: Store and remove, then re-add
+CapacityConstraint removedConstraint = compressor.getCapacityConstraints().get("power");
+compressor.removeCapacityConstraint("power");
+
+// ... run optimization without power constraint ...
+
+compressor.addCapacityConstraint(removedConstraint);  // Re-add
+```
+
+---
+
+## Constraints in Eclipse VFP Table Generation
+
+When generating VFP (Vertical Flow Performance) tables for Eclipse reservoir simulation, capacity constraints determine the **maximum feasible flow rates** at each operating point.
+
+### How Constraints Affect VFP Tables
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                       VFP Table Generation Process                       │
+├─────────────────────────────────────────────────────────────────────────┤
+│  For each (inlet_pressure, outlet_pressure, temperature, WC, GOR):      │
+│                                                                          │
+│  1. Set process boundary conditions                                      │
+│  2. Binary search for maximum flow rate where:                           │
+│     - Process converges (thermodynamically feasible)                     │
+│     - ALL capacity constraints satisfied (utilization ≤ 1.0)             │
+│     - No HARD limit exceeded                                             │
+│                                                                          │
+│  3. Record: flow_rate, BHP (or THP), bottleneck_equipment                │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### VFP Generation with Constraint Checking
+
+```java
+import neqsim.process.util.optimizer.EclipseVFPExporter;
+import neqsim.process.util.optimizer.ProcessOptimizationEngine;
+
+// Create process and optimization engine
+ProcessSystem process = createProductionProcess();
+ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
+
+// Define VFP table parameters
+double[] inletPressures = {60.0, 70.0, 80.0, 90.0, 100.0};  // Wellhead (bara)
+double[] outletPressures = {40.0, 50.0, 60.0};              // Separator (bara)
+double[] waterCuts = {0.0, 0.2, 0.4, 0.6};
+double[] gors = {100.0, 300.0, 500.0};
+
+// Generate VFP with constraint-limited flow rates
+EclipseVFPExporter exporter = new EclipseVFPExporter(process);
+exporter.setTableNumber(1);
+exporter.setConstraintEnforcement(true);  // Enable constraint checking
+
+// Each cell in the VFP table will contain the MAXIMUM flow rate
+// that satisfies ALL equipment constraints
+String vfpTable = exporter.generateVFPPROD(
+    inletPressures,
+    waterCuts,
+    gors,
+    new double[]{0.0},  // No artificial lift
+    new double[]{5000, 10000, 20000, 50000, 100000, 150000},  // Test flow rates
+    "bara",
+    "kg/hr"
+);
+
+// The VFP table will show:
+// - Flow rate = 0 if no feasible operation at that point
+// - Flow rate = max achievable if constrained by equipment
+// - Flow rate = tested max if all constraints satisfied
+```
+
+### Understanding Constraint Impact on VFP
+
+```java
+// Example: Analyze how each constraint affects maximum flow at one operating point
+double inletP = 80.0;   // bara
+double outletP = 50.0;  // bara
+
+// Find maximum flow WITH all constraints
+OptimizationResult withConstraints = engine.findMaximumThroughput(
+    inletP, outletP, 1000.0, 200000.0);
+System.out.println("Max flow (all constraints): " + withConstraints.getOptimalFlowRate());
+System.out.println("Bottleneck: " + withConstraints.getBottleneckEquipment());
+
+// Temporarily remove compressor speed constraint
+Compressor comp = (Compressor) process.getUnit("Export Compressor");
+CapacityConstraint speedLimit = comp.getCapacityConstraints().get("speed");
+comp.removeCapacityConstraint("speed");
+
+OptimizationResult noSpeedLimit = engine.findMaximumThroughput(
+    inletP, outletP, 1000.0, 200000.0);
+System.out.println("Max flow (no speed limit): " + noSpeedLimit.getOptimalFlowRate());
+
+// Restore constraint
+comp.addCapacityConstraint(speedLimit);
+
+// Calculate flow increase if speed limit removed
+double flowIncrease = noSpeedLimit.getOptimalFlowRate() - withConstraints.getOptimalFlowRate();
+System.out.println("Flow increase if speed debottlenecked: " + flowIncrease + " kg/hr");
+```
+
+### Modifying Constraints for What-If VFP Studies
+
+```java
+// Study: How does upgrading separator affect production capacity?
+
+// Baseline VFP
+String baselineVFP = exporter.generateVFPPROD(...);
+Files.writeString(Path.of("VFP_BASELINE.INC"), baselineVFP);
+
+// Upgraded separator (higher gas load factor)
+Separator sep = (Separator) process.getUnit("HP Separator");
+CapacityConstraint gasLoad = sep.getCapacityConstraints().get("gasLoadFactor");
+double originalDesign = gasLoad.getDesignValue();
+gasLoad.setDesignValue(originalDesign * 1.5);  // 50% larger separator
+
+String upgradedVFP = exporter.generateVFPPROD(...);
+Files.writeString(Path.of("VFP_UPGRADED_SEPARATOR.INC"), upgradedVFP);
+
+// Restore original
+gasLoad.setDesignValue(originalDesign);
+```
+
+### Constraint-Aware Lift Curve Generation
+
+```java
+// Generate lift curves showing which constraint limits each point
+ProcessOptimizationEngine.LiftCurveData liftCurve = engine.generateLiftCurve(
+    inletPressures, outletPressures, temperatures, waterCuts, gors);
+
+// Access detailed results
+for (LiftCurvePoint point : liftCurve.getPoints()) {
+    System.out.printf("Pin=%.0f, Pout=%.0f, WC=%.1f, GOR=%.0f: " +
+                      "MaxFlow=%.0f kg/hr, Limited by: %s%n",
+        point.getInletPressure(),
+        point.getOutletPressure(),
+        point.getWaterCut(),
+        point.getGOR(),
+        point.getMaxFlowRate(),
+        point.getBottleneckConstraint()  // e.g., "Compressor:speed"
+    );
+}
+```
+
+### Summary: Constraint Management for VFP Tables
+
+| Action | Method | Effect on VFP |
+|--------|--------|---------------|
+| **Add constraint** | `equipment.addCapacityConstraint(c)` | Lower max flow rates |
+| **Remove constraint** | `equipment.removeCapacityConstraint(name)` | Higher max flow rates |
+| **Tighten constraint** | `constraint.setDesignValue(lower)` | Lower max flow rates |
+| **Relax constraint** | `constraint.setDesignValue(higher)` | Higher max flow rates |
+| **Disable all** | `equipment.clearCapacityConstraints()` | Unconstrained (thermodynamic only) |
+| **What-if study** | Modify → generate VFP → restore | Compare scenarios |
+
+---
 
 ### Integration with Optimization
 
@@ -580,6 +1095,118 @@ public class Pipe extends ProcessEquipmentBaseClass
 **Notes:**
 - **COMPRESSOR_MIN_SPEED**: This is a "minimum constraint" - utilization is calculated as `minSpeed / currentSpeed`. Values < 1.0 mean operating safely above minimum; values > 1.0 mean operating below minimum (violation).
 - **COMPRESSOR_SURGE_MARGIN** and **COMPRESSOR_STONEWALL_MARGIN**: Utilization is calculated as `1 / (1 + marginRatio)` where margin = 0 gives 100% utilization.
+
+## Flow-Induced Vibration (FIV) Analysis
+
+Pipeline equipment (`Pipeline`, `PipeBeggsAndBrills`, `AdiabaticPipe`, `Manifold`) includes built-in FIV analysis capabilities with constraints based on industry standards.
+
+### FIV Metrics
+
+| Metric | Description | Risk Threshold |
+|--------|-------------|----------------|
+| **LOF** (Likelihood of Failure) | Dimensionless indicator based on density, velocity, GVF, and support stiffness | > 0.6 = High risk |
+| **FRMS** | RMS force per meter (N/m) - dynamic loading indicator | > 500 N/m = High risk |
+| **Erosional Velocity** | Maximum velocity per API RP 14E: Ve = C/√ρ | > 100% = Erosion risk |
+
+### Support Arrangement Coefficients
+
+The LOF calculation uses support arrangement coefficients per industry practice:
+
+| Support Type | Coefficient | Description |
+|--------------|-------------|-------------|
+| Stiff | 1.0 | Rigid supports, short spans |
+| Medium stiff | 1.5 | Standard pipe racks |
+| Medium | 2.0 | Longer spans, typical offshore |
+| Flexible | 3.0 | Flexible supports, risers |
+
+### Using FIV Analysis
+
+```java
+// Pipeline with FIV constraints
+PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("Export Line", feed);
+pipe.setLength(5000.0);
+pipe.setDiameter(0.2032);  // 8 inch
+pipe.setThickness(0.008);   // 8mm wall
+pipe.setSupportArrangement("Medium stiff");
+pipe.run();
+
+// Get FIV metrics
+double lof = pipe.calculateLOF();
+double frms = pipe.calculateFRMS();
+double erosionalVel = pipe.getErosionalVelocity();
+double actualVel = pipe.getMixtureVelocity();
+
+System.out.printf("LOF: %.3f (Risk: %s)%n", lof, lof > 0.6 ? "HIGH" : "Low");
+System.out.printf("FRMS: %.1f N/m%n", frms);
+System.out.printf("Velocity: %.2f / %.2f m/s (%.1f%% of erosional)%n",
+    actualVel, erosionalVel, 100 * actualVel / erosionalVel);
+
+// Get full FIV analysis as Map
+Map<String, Object> fivAnalysis = pipe.getFIVAnalysis();
+
+// Get FIV analysis as JSON
+String fivJson = pipe.getFIVAnalysisJson();
+```
+
+### FIV Analysis Output (JSON)
+
+```json
+{
+  "LOF": 0.234,
+  "LOF_risk": "Low",
+  "FRMS_N_per_m": 125.6,
+  "FRMS_risk": "Low",
+  "mixtureDensity_kg_m3": 85.2,
+  "mixtureVelocity_m_s": 12.4,
+  "erosionalVelocity_m_s": 18.5,
+  "velocityRatio": 0.67,
+  "gasVolumeFraction": 0.92,
+  "supportArrangement": "Medium stiff",
+  "supportCoefficient": 1.5,
+  "innerDiameter_m": 0.1872
+}
+```
+
+### Manifold FIV Analysis
+
+Manifolds provide separate FIV analysis for header and branch lines:
+
+```java
+Manifold manifold = new Manifold("Production Manifold", inlet1, inlet2);
+manifold.setSplitNumber(3);
+manifold.setMaxDesignVelocity(15.0);
+manifold.setInnerHeaderDiameter(0.3);
+manifold.setInnerBranchDiameter(0.15);
+manifold.run();
+
+// Header FIV
+double headerLOF = manifold.calculateHeaderLOF();
+double headerFRMS = manifold.calculateHeaderFRMS();
+
+// Branch FIV (uses average branch flow)
+double branchLOF = manifold.calculateBranchLOF();
+
+// All constraints
+Map<String, CapacityConstraint> constraints = manifold.getCapacityConstraints();
+// Contains: headerVelocity, branchVelocity, headerLOF, headerFRMS, branchLOF
+```
+
+### FIV Design Limits
+
+Set design limits for FIV constraints:
+
+```java
+// Set maximum allowable values
+pipe.setMaxDesignVelocity(15.0);  // m/s
+pipe.setMaxDesignLOF(0.5);        // dimensionless
+pipe.setMaxDesignFRMS(400.0);     // N/m
+
+// These become constraint design values
+CapacityConstraint lofConstraint = pipe.getCapacityConstraints().get("LOF");
+// lofConstraint.getDesignValue() returns 0.5
+```
+
+---
 
 ## Best Practices
 

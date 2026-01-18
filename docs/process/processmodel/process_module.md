@@ -324,8 +324,6 @@ fpso.run();
 
 ---
 
-<<<<<<< Updated upstream
-=======
 ## Capacity Constraints in ProcessModule
 
 ProcessModule supports the same capacity constraint methods as ProcessSystem, enabling bottleneck detection and capacity monitoring across all nested systems and modules.
@@ -407,75 +405,6 @@ For detailed constraint management, see [Capacity Constraint Framework](../CAPAC
 
 ---
 
-## Optimization with ProcessModule
-
-Both `ProcessOptimizationEngine` and `DesignOptimizer` fully support `ProcessModule`:
-
-### ProcessOptimizationEngine
-
-```java
-import neqsim.process.util.optimizer.ProcessOptimizationEngine;
-
-// Create engine with ProcessModule
-ProcessOptimizationEngine engine = new ProcessOptimizationEngine(facilityModule);
-
-// Specify which feed stream to optimize (searches across ALL systems in module)
-engine.setFeedStreamName("WellheadFeed");
-
-// Check which stream will be varied
-System.out.println("Optimizing: " + engine.getFeedStreamName());
-
-// Find maximum throughput across entire module
-OptimizationResult result = engine.findMaximumThroughput(
-    50.0,      // inlet pressure (bara)
-    40.0,      // outlet pressure (bara)
-    10000.0,   // min flow (kg/hr)
-    500000.0   // max flow (kg/hr)
-);
-
-System.out.println("Optimal flow: " + result.getOptimalValue() + " kg/hr");
-System.out.println("Bottleneck: " + result.getBottleneck());
-```
-
-### DesignOptimizer
-
-```java
-import neqsim.process.design.DesignOptimizer;
-
-// Create optimizer with ProcessModule
-DesignOptimizer optimizer = DesignOptimizer.forProcess(facilityModule);
-
-// Configure and run
-DesignResult result = optimizer
-    .autoSizeEquipment(1.2)           // 20% safety factor
-    .applyDefaultConstraints()
-    .setObjective(ObjectiveType.MAXIMIZE_PRODUCTION)
-    .optimize();
-
-System.out.println("Converged: " + result.isConverged());
-System.out.println("Violations: " + result.hasViolations());
-```
-
-### Feed Stream Selection
-
-When using a ProcessModule, you should explicitly specify which stream to vary:
-
-```java
-// Default: uses first unit operation (may not be what you want)
-engine.getFeedStreamName();  // Returns name of first unit
-
-// Better: explicitly specify the feed stream
-engine.setFeedStreamName("InletManifold");
-
-// The engine searches across ALL ProcessSystems in the module
-// to find the stream with the specified name
-```
-
-For detailed optimization documentation, see [Optimizer Plugin Architecture](../optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md).
-
----
-
->>>>>>> Stashed changes
 ## Best Practices
 
 1. **Self-Contained**: Modules should be self-contained with clear interfaces

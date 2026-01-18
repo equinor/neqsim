@@ -499,17 +499,53 @@ CompressorConstraintConfig api617 = CompressorConstraintConfig.createAPI617Confi
 
 ## Eclipse VFP Export
 
-Generate VFP tables for reservoir simulation:
+Generate VFP tables for reservoir simulation. **Capacity constraints directly affect the maximum flow rates in VFP tables**.
 
-### VFPPROD Tables (Production Wells)
+> **📘 See Also:** [Capacity Constraint Framework - VFP Section](../CAPACITY_CONSTRAINT_FRAMEWORK.md#constraints-in-eclipse-vfp-table-generation) for detailed documentation on constraint management for VFP studies.
+
+### How Constraints Affect VFP Tables
+
+When generating VFP tables, the optimizer finds the **maximum flow rate** at each operating point where:
+1. Process converges thermodynamically
+2. **All capacity constraints are satisfied** (utilization ≤ 100%)
+3. No HARD limits are exceeded
+
+```
+Operating Point (Pin, Pout, WC, GOR) → Binary Search → Max Flow Rate
+                                            ↓
+                               Check ALL equipment constraints
+                                            ↓
+                               Bottleneck determines limit
+```
+
+### Constraint Configuration for VFP
 
 ```java
 import neqsim.process.util.optimizer.EclipseVFPExporter;
 
-// Create exporter
-EclipseVFPExporter exporter = new EclipseVFPExporter(processSystem);
-exporter.setTableNumber(1);
+// Create process with constrained equipment
+ProcessSystem process = createProcess();
 
+// Configure constraints BEFORE generating VFP
+Compressor comp = (Compressor) process.getUnit("Export Compressor");
+comp.autoSize(1.2);  // Sets speed, power, surge constraints
+
+Separator sep = (Separator) process.getUnit("HP Separator");
+sep.autoSize(1.2);   // Sets gasLoadFactor constraint
+
+// Optionally modify constraints for study
+CapacityConstraint speedLimit = comp.getCapacityConstraints().get("speed");
+speedLimit.setDesignValue(9000.0);  // More conservative speed limit
+
+// Create exporter - will respect all active constraints
+EclipseVFPExporter exporter = new EclipseVFPExporter(process);
+exporter.setTableNumber(1);
+exporter.setConstraintEnforcement(true);  // Enable constraint checking (default: true)
+```
+
+### VFPPROD Tables (Production Wells)
+
+```java
 // Define parameter ranges
 double[] thp = {20.0, 30.0, 40.0, 50.0};           // Tubing head pressures (bara)
 double[] wfr = {0.0, 0.1, 0.3, 0.5};                // Water fractions
@@ -517,7 +553,7 @@ double[] gfr = {100.0, 200.0, 500.0, 1000.0};       // GOR (Sm3/Sm3)
 double[] alq = {0.0};                               // Artificial lift (none)
 double[] flowRates = {1000.0, 5000.0, 10000.0, 20000.0, 50000.0};  // kg/hr
 
-// Generate VFPPROD table
+// Generate VFPPROD table - max flow at each point limited by constraints
 String vfpTable = exporter.generateVFPPROD(
     thp, wfr, gfr, alq, flowRates,
     "bara", "kg/hr"
@@ -552,6 +588,58 @@ String vfpExp = exporter.generateVFPEXP(
     inletPressures, outletPressures, temperatures, flowRates,
     "bara", "C", "kg/hr"
 );
+```
+
+### What-If Studies: Modifying Constraints for VFP Scenarios
+
+```java
+// Scenario 1: Baseline VFP with current constraints
+String baselineVFP = exporter.generateVFPPROD(thp, wfr, gfr, alq, flowRates, "bara", "kg/hr");
+Files.writeString(Path.of("VFP_BASELINE.INC"), baselineVFP);
+
+// Scenario 2: Debottleneck compressor (increase speed limit)
+CapacityConstraint speedConstraint = comp.getCapacityConstraints().get("speed");
+double originalSpeed = speedConstraint.getDesignValue();
+speedConstraint.setDesignValue(originalSpeed * 1.1);  // 10% higher
+
+String debottleneckedVFP = exporter.generateVFPPROD(thp, wfr, gfr, alq, flowRates, "bara", "kg/hr");
+Files.writeString(Path.of("VFP_DEBOTTLENECKED.INC"), debottleneckedVFP);
+
+speedConstraint.setDesignValue(originalSpeed);  // Restore
+
+// Scenario 3: No equipment constraints (thermodynamic limits only)
+comp.clearCapacityConstraints();
+sep.clearCapacityConstraints();
+
+String unconstrainedVFP = exporter.generateVFPPROD(thp, wfr, gfr, alq, flowRates, "bara", "kg/hr");
+Files.writeString(Path.of("VFP_UNCONSTRAINED.INC"), unconstrainedVFP);
+
+// Restore constraints
+comp.initializeCapacityConstraints();
+sep.initializeCapacityConstraints();
+```
+
+### VFP Generation with Bottleneck Reporting
+
+```java
+// Generate VFP with detailed bottleneck information
+VFPGenerationResult result = exporter.generateVFPPRODWithDetails(
+    thp, wfr, gfr, alq, flowRates, "bara", "kg/hr");
+
+// Access VFP table
+String vfpTable = result.getVFPTable();
+
+// Access bottleneck analysis
+for (VFPPoint point : result.getPoints()) {
+    if (point.isConstrained()) {
+        System.out.printf("At THP=%.0f, WC=%.1f, GOR=%.0f: " +
+                          "Max=%.0f kg/hr, Limited by %s (%s)%n",
+            point.getTHP(), point.getWaterCut(), point.getGOR(),
+            point.getMaxFlowRate(),
+            point.getBottleneckEquipment(),
+            point.getBottleneckConstraint());
+    }
+}
 ```
 
 ---
