@@ -28,7 +28,6 @@ import neqsim.process.mechanicaldesign.heatexchanger.TEMAStandard.TubePitchPatte
  * <li>Thermal-hydraulic performance estimates</li>
  * <li>Weight and cost estimates</li>
  * </ul>
- * </p>
  *
  * <h2>TEMA Classes</h2>
  * <ul>

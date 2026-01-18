@@ -193,6 +193,9 @@ public class ConceptToProcessLinker implements Serializable {
 
   /**
    * Create inlet stream from concept parameters.
+   *
+   * @param concept the field concept containing reservoir and production data
+   * @return a configured Stream with representative fluid composition
    */
   private Stream createInletStream(FieldConcept concept) {
     // Create representative fluid

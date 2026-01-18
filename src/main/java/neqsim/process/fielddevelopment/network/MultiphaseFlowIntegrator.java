@@ -580,6 +580,11 @@ public class MultiphaseFlowIntegrator implements Serializable {
 
   /**
    * Identify flow regime.
+   *
+   * @param fluid the fluid system interface
+   * @param mixVel mixture velocity in m/s
+   * @param liquidHoldup liquid holdup fraction (0-1)
+   * @return the identified flow regime
    */
   private FlowRegime identifyFlowRegime(SystemInterface fluid, double mixVel, double liquidHoldup) {
     if (liquidHoldup < 0.01) {
@@ -605,6 +610,9 @@ public class MultiphaseFlowIntegrator implements Serializable {
 
   /**
    * Calculate erosional velocity (API RP 14E).
+   *
+   * @param mixtureDensity mixture density in kg/m3
+   * @return erosional velocity limit in m/s
    */
   private double calculateErosionalVelocity(double mixtureDensity) {
     return erosionalConstant / Math.sqrt(mixtureDensity);

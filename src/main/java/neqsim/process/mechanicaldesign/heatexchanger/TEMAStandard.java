@@ -17,7 +17,6 @@ import java.util.Set;
  * <li>Second letter: Shell type</li>
  * <li>Third letter: Rear head type</li>
  * </ul>
- * </p>
  *
  * <p>
  * Example: "AES" means A-type front head, E-type shell, S-type rear head.
@@ -25,6 +24,7 @@ import java.util.Set;
  *
  * <h2>Common TEMA Designations</h2>
  * <table>
+ * <caption>Common TEMA heat exchanger designations and applications</caption>
  * <tr>
  * <th>Type</th>
  * <th>Application</th>
