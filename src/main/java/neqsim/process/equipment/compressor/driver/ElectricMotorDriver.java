@@ -221,6 +221,13 @@ public class ElectricMotorDriver extends DriverCurveBase {
 
   /**
    * Linear interpolation helper.
+   *
+   * @param x the value to interpolate at
+   * @param x1 first x coordinate
+   * @param x2 second x coordinate
+   * @param y1 first y coordinate
+   * @param y2 second y coordinate
+   * @return the interpolated y value at x
    */
   private double interpolate(double x, double x1, double x2, double y1, double y2) {
     return y1 + (y2 - y1) * (x - x1) / (x2 - x1);

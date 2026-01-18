@@ -437,6 +437,9 @@ public class OperatingEnvelope implements Serializable {
 
   /**
    * Gets stonewall flow from polynomial fit.
+   *
+   * @param head the polytropic head value
+   * @return the calculated stonewall flow from polynomial coefficients
    */
   private double getStonewallFlowFromPolynomial(double head) {
     if (stonewallPolynomialCoeffs == null) {

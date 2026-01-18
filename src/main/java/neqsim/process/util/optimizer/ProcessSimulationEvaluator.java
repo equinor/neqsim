@@ -337,11 +337,11 @@ public class ProcessSimulationEvaluator implements Serializable {
 
     /** Constraint type. */
     public enum Type {
-      /** g(x) >= lowerBound. */
+      /** g(x) &gt;= lowerBound. */
       LOWER_BOUND,
-      /** g(x) <= upperBound. */
+      /** g(x) &lt;= upperBound. */
       UPPER_BOUND,
-      /** lowerBound <= g(x) <= upperBound. */
+      /** lowerBound &lt;= g(x) &lt;= upperBound. */
       RANGE,
       /** g(x) == target (with tolerance). */
       EQUALITY
@@ -363,7 +363,7 @@ public class ProcessSimulationEvaluator implements Serializable {
     public ConstraintDefinition() {}
 
     /**
-     * Constructor for lower bound constraint (g(x) >= bound).
+     * Constructor for lower bound constraint (g(x) &gt;= bound).
      *
      * @param name constraint name
      * @param evaluator evaluation function

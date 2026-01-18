@@ -130,37 +130,65 @@ public class PortfolioOptimizer implements Serializable {
       this.dependencies = new ArrayList<String>();
     }
 
-    /** Get project name. */
+    /**
+     * Get project name.
+     *
+     * @return project name
+     */
     public String getName() {
       return name;
     }
 
-    /** Get total CAPEX. */
+    /**
+     * Get total CAPEX.
+     *
+     * @return total CAPEX in MUSD
+     */
     public double getCapexMusd() {
       return capexMusd;
     }
 
-    /** Get NPV. */
+    /**
+     * Get NPV.
+     *
+     * @return NPV in MUSD
+     */
     public double getNpvMusd() {
       return npvMusd;
     }
 
-    /** Get project type. */
+    /**
+     * Get project type.
+     *
+     * @return project type
+     */
     public ProjectType getType() {
       return type;
     }
 
-    /** Get probability of success. */
+    /**
+     * Get probability of success.
+     *
+     * @return probability of success (0-1)
+     */
     public double getProbabilityOfSuccess() {
       return probabilityOfSuccess;
     }
 
-    /** Get start year. */
+    /**
+     * Get start year.
+     *
+     * @return start year
+     */
     public int getStartYear() {
       return startYear;
     }
 
-    /** Set start year. */
+    /**
+     * Set start year.
+     *
+     * @param year the start year to set
+     */
     public void setStartYear(int year) {
       this.startYear = year;
     }
@@ -321,32 +349,56 @@ public class PortfolioOptimizer implements Serializable {
       this.totalEmv = emv;
     }
 
-    /** Get capital efficiency (NPV/CAPEX). */
+    /**
+     * Get capital efficiency (NPV/CAPEX).
+     *
+     * @return capital efficiency ratio
+     */
     public double getCapitalEfficiency() {
       return totalCapex > 0 ? totalNpv / totalCapex : 0.0;
     }
 
-    /** Get annual CAPEX used. */
+    /**
+     * Get annual CAPEX used.
+     *
+     * @return map of year to CAPEX used
+     */
     public Map<Integer, Double> getAnnualCapexUsed() {
       return annualCapexUsed;
     }
 
-    /** Get annual budget remaining. */
+    /**
+     * Get annual budget remaining.
+     *
+     * @return map of year to budget remaining
+     */
     public Map<Integer, Double> getAnnualBudgetRemaining() {
       return annualBudgetRemaining;
     }
 
-    /** Get strategy used. */
+    /**
+     * Get strategy used.
+     *
+     * @return optimization strategy
+     */
     public OptimizationStrategy getStrategy() {
       return strategy;
     }
 
-    /** Set strategy. */
+    /**
+     * Set strategy.
+     *
+     * @param strategy the optimization strategy to set
+     */
     public void setStrategy(OptimizationStrategy strategy) {
       this.strategy = strategy;
     }
 
-    /** Get project count. */
+    /**
+     * Get project count.
+     *
+     * @return number of selected projects
+     */
     public int getProjectCount() {
       return selectedProjects.size();
     }
