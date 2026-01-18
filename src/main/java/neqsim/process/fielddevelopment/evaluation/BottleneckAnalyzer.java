@@ -277,6 +277,9 @@ public class BottleneckAnalyzer implements Serializable {
 
   /**
    * Analyzes valve constraints.
+   *
+   * @param valve the throttling valve to analyze
+   * @return the bottleneck analysis result for the valve
    */
   private BottleneckResult analyzeValve(ThrottlingValve valve) {
     BottleneckResult result = new BottleneckResult();

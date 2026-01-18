@@ -674,6 +674,10 @@ public class TiebackAnalyzer implements Serializable {
 
   /**
    * Quick CAPEX estimate for screening.
+   *
+   * @param distanceKm the tieback distance in kilometers
+   * @param waterDepthM the water depth in meters
+   * @return the estimated CAPEX in million USD
    */
   private double estimateQuickCapex(double distanceKm, double waterDepthM) {
     double pipeline = distanceKm * pipelineCostPerKmMusd;

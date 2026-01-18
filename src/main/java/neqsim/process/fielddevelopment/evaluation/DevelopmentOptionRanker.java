@@ -132,12 +132,20 @@ public class DevelopmentOptionRanker implements Serializable {
       this.higherIsBetter = higherIsBetter;
     }
 
-    /** Get display name. */
+    /**
+     * Get display name.
+     *
+     * @return the display name for this criterion
+     */
     public String getDisplayName() {
       return displayName;
     }
 
-    /** Get unit. */
+    /**
+     * Get unit.
+     *
+     * @return the unit of measurement for this criterion
+     */
     public String getUnit() {
       return unit;
     }

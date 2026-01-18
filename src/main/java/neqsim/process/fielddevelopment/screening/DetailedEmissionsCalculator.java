@@ -222,6 +222,8 @@ public class DetailedEmissionsCalculator implements Serializable {
 
   /**
    * Calculates combustion emissions from all sources.
+   *
+   * @param report the emissions report to populate with combustion emissions
    */
   private void calculateCombustionEmissions(DetailedEmissionsReport report) {
     double totalCombustionCO2e = 0.0;
@@ -251,6 +253,8 @@ public class DetailedEmissionsCalculator implements Serializable {
 
   /**
    * Calculates flaring emissions.
+   *
+   * @param report the emissions report to populate with flaring emissions
    */
   private void calculateFlaringEmissions(DetailedEmissionsReport report) {
     if (flaringRateMSm3PerDay <= 0) {
@@ -280,6 +284,8 @@ public class DetailedEmissionsCalculator implements Serializable {
 
   /**
    * Calculates venting emissions.
+   *
+   * @param report the emissions report to populate with venting emissions
    */
   private void calculateVentingEmissions(DetailedEmissionsReport report) {
     double totalVenting = 0.0;
@@ -326,6 +332,8 @@ public class DetailedEmissionsCalculator implements Serializable {
 
   /**
    * Calculates fugitive emissions using EPA method.
+   *
+   * @param report the emissions report to populate with fugitive emissions
    */
   private void calculateFugitiveEmissions(DetailedEmissionsReport report) {
     double totalFugitive = 0.0;
@@ -357,6 +365,8 @@ public class DetailedEmissionsCalculator implements Serializable {
 
   /**
    * Calculates Scope 2 emissions from purchased electricity.
+   *
+   * @param report the emissions report to populate with Scope 2 emissions
    */
   private void calculateScope2Emissions(DetailedEmissionsReport report) {
     if (purchasedElectricityMWh <= 0) {
@@ -372,6 +382,8 @@ public class DetailedEmissionsCalculator implements Serializable {
 
   /**
    * Calculates annual production in boe.
+   *
+   * @return the annual production in barrels of oil equivalent
    */
   private double calculateAnnualProductionBoe() {
     // Oil: 1 bbl = 1 boe
@@ -388,6 +400,9 @@ public class DetailedEmissionsCalculator implements Serializable {
 
   /**
    * Calculates emissions rating based on intensity.
+   *
+   * @param intensity the emissions intensity in kg CO2 per boe
+   * @return the letter rating from A (very low) to F (extremely high)
    */
   private String calculateEmissionsRating(double intensity) {
     if (intensity < 5) {
