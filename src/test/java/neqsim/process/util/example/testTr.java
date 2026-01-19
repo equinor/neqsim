@@ -268,8 +268,10 @@ public class testTr {
       System.out.println("Speed: " + String.format("%.0f RPM", comp.getSpeed()));
       System.out.println("Max Speed: " + String.format("%.0f RPM", comp.getMaximumSpeed()));
       System.out.println("Min Speed: " + String.format("%.0f RPM", comp.getMinimumSpeed()));
-      System.out.println("Chart Max Speed: " + String.format("%.0f RPM", comp.getCompressorChart().getMaxSpeedCurve()));
-      System.out.println("Chart Min Speed: " + String.format("%.0f RPM", comp.getCompressorChart().getMinSpeedCurve()));
+      System.out.println("Chart Max Speed: "
+          + String.format("%.0f RPM", comp.getCompressorChart().getMaxSpeedCurve()));
+      System.out.println("Chart Min Speed: "
+          + String.format("%.0f RPM", comp.getCompressorChart().getMinSpeedCurve()));
       System.out
           .println("Polytropic Head: " + String.format("%.0f J/kg", comp.getPolytropicFluidHead()));
       System.out.println("Polytropic Efficiency: "
@@ -294,8 +296,8 @@ public class testTr {
         neqsim.process.equipment.capacity.CapacityConstraint constraint = entry.getValue();
         String labelType = constraint.isMinimumConstraint() ? "min" : "design";
         System.out.println(String.format("%-20s: %6.2f%% (value=%.2f, %s=%.2f)", entry.getKey(),
-            constraint.getUtilizationPercent(), constraint.getCurrentValue(),
-            labelType, constraint.getDisplayDesignValue()));
+            constraint.getUtilizationPercent(), constraint.getCurrentValue(), labelType,
+            constraint.getDisplayDesignValue()));
       }
     }
 

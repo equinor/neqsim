@@ -3865,7 +3865,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
 
     // Min speed constraint (from curve minimum)
     // This constraint tracks if the compressor speed is above the minimum allowable speed
-    // Utilization = minSpeed/currentSpeed: <100% means above min (good), >100% means below min (bad)
+    // Utilization = minSpeed/currentSpeed: <100% means above min (good), >100% means below min
+    // (bad)
     if (effectiveMinSpeed > 0) {
       final double minSpeedLimit = effectiveMinSpeed;
       addCapacityConstraint(StandardConstraintType.COMPRESSOR_MIN_SPEED.createConstraint()
