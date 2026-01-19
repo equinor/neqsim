@@ -441,6 +441,142 @@ results.exportToCsv("batch_results.csv");
 
 ## 4. Reservoir Integration
 
+### EclipseLiftCurveGenerator - VFP Tables from Beggs & Brill Pipelines
+
+Generate Eclipse VFPPROD tables using rigorous Beggs and Brill pipeline calculations:
+
+```java
+import neqsim.process.fielddevelopment.reservoir.*;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemSrkEos;
+
+// Create reservoir fluid
+SystemInterface fluid = new SystemSrkEos(353.15, 150.0);
+fluid.addComponent("methane", 0.70);
+fluid.addComponent("ethane", 0.10);
+fluid.addComponent("propane", 0.05);
+fluid.addComponent("n-heptane", 0.10);
+fluid.addComponent("water", 0.05);
+fluid.setMixingRule("classic");
+
+// Create inlet stream
+Stream inlet = new Stream("wellstream", fluid);
+inlet.setFlowRate(50000, "kg/hr");
+inlet.run();
+
+// Create pipeline (e.g., vertical riser)
+PipeBeggsAndBrills riser = new PipeBeggsAndBrills("riser", inlet);
+riser.setDiameter(0.1524);      // 6 inch
+riser.setLength(1500.0);        // 1500 m
+riser.setElevation(1500.0);     // Vertical
+riser.setNumberOfIncrements(30);
+
+// Create lift curve generator
+EclipseLiftCurveGenerator generator = new EclipseLiftCurveGenerator(riser, fluid);
+generator.setPipelineParameters(0.1524, 1500.0, 1500.0);
+generator.setInletTemperature(80.0, "C");
+
+// Configure VFP table dimensions
+generator.setFlowRateRange(500, 8000, 8);       // Sm3/day
+generator.setThpRange(20, 80, 7);               // bara
+generator.setWaterCutRange(0.0, 0.8, 5);        // fraction
+generator.setGorRange(100, 500, 5);             // Sm3/Sm3
+
+// Generate VFP table
+VfpTableData vfp = generator.generateVfpTable(1, "PROD-A1");
+
+// Export to Eclipse INCLUDE file
+generator.exportToFile("include/vfp_riser.inc");
+
+// Also available as CSV or JSON
+String csv = generator.exportToCsv();
+String json = generator.toJson();
+```
+
+### ProcessSystemLiftCurveGenerator - VFP Tables for Full Process Plants
+
+Generate Eclipse VFPPROD tables for complete oil and gas separation facilities using full process simulation:
+
+```java
+import neqsim.process.fielddevelopment.reservoir.*;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemSrkEos;
+
+// Create base fluid with typical oil/gas composition
+SystemInterface fluid = new SystemSrkEos(330.0, 35.0);
+fluid.addComponent("methane", 62.0);
+fluid.addComponent("ethane", 9.0);
+fluid.addComponent("propane", 6.0);
+fluid.addComponent("n-butane", 3.0);
+fluid.addComponent("n-heptane", 6.0);
+fluid.addComponent("n-octane", 4.0);
+fluid.addComponent("nC10", 5.0);
+fluid.setMixingRule("classic");
+
+// Build separation process
+ProcessSystem process = new ProcessSystem("Offshore Platform");
+
+Stream wellStream = new Stream("well stream", fluid);
+wellStream.setFlowRate(100000, "kg/hr");
+wellStream.setPressure(35.0, "bara");
+process.add(wellStream);
+
+ThreePhaseSeparator hpSep = new ThreePhaseSeparator("HP Separator", wellStream);
+process.add(hpSep);
+
+// ... add MP separator, LP separator, compressors, coolers, etc.
+
+Stream exportGas = new Stream("export gas", ...);
+Stream stableOil = new Stream("stable oil", ...);
+process.add(exportGas);
+process.add(stableOil);
+
+// Create lift curve generator
+ProcessSystemLiftCurveGenerator generator = 
+    new ProcessSystemLiftCurveGenerator(process, fluid);
+
+// Configure stream names
+generator.setInletStreamName("well stream");
+generator.setExportGasStreamName("export gas");
+generator.setExportOilStreamName("stable oil");
+
+// Set process description for documentation
+generator.setProcessDescription("Three-Stage Offshore Separation - North Sea");
+
+// Configure VFP table dimensions
+generator.setFlowRateRange(500, 8000, 8);        // Sm3/day
+generator.setThpRange(20, 60, 5);                // bara
+generator.setWaterCutRange(0.0, 0.6, 4);         // fraction
+generator.setGorRange(100, 400, 4);              // Sm3/Sm3
+
+// Optional: Set well/datum depth for hydrostatic calculation
+generator.setDatumDepth(2500.0);                 // meters
+generator.setInletTemperature(57.0, "C");
+
+// Generate VFP table (runs process simulation for each combination)
+VfpTableData vfp = generator.generateVfpTable(1, "PLATFORM-A");
+
+// Export to Eclipse INCLUDE file
+generator.exportToFile("include/vfp_platform.inc");
+
+// Also available as CSV with extended process data
+// (includes export gas/oil rates, compression power per point)
+String csv = generator.exportToCsv();
+String json = generator.toJson();
+```
+
+#### Key Features:
+
+- **Full Process Simulation**: Runs actual NeqSim process simulation for each VFP point
+- **Multi-Stage Separation**: Captures behavior of HP/MP/LP separator trains
+- **Process Outputs**: Tracks export gas/oil rates and compression power
+- **Standard Eclipse Format**: VFPPROD tables compatible with Eclipse 100 and E300
+- **Extended Reporting**: CSV export includes process-level data for analysis
+
 ### ReservoirCouplingExporter - VFP Table Generation
 
 ```java

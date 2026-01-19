@@ -78,7 +78,32 @@ public class ReservoirCouplingExporter implements Serializable {
   }
 
   /**
-   * VFP table data structure.
+   * Flow rate type for VFP table.
+   */
+  public enum FlowRateType {
+    /** Liquid rate (oil + water) in Sm3/day. */
+    LIQUID,
+    /** Oil rate in Sm3/day. */
+    OIL,
+    /** Gas rate in Sm3/day. */
+    GAS
+  }
+
+  /**
+   * VFP table data structure containing all lift curve data.
+   *
+   * <p>
+   * This class represents a complete VFP (Vertical Flow Performance) table that relates wellhead
+   * conditions to bottomhole pressure. It supports:
+   * </p>
+   * <ul>
+   * <li>Standard Eclipse VFPPROD dimensions (flow, THP, WCT, GOR, ALQ)</li>
+   * <li>Equipment capacity tracking (utilization, feasibility, bottleneck identification)</li>
+   * <li>Additional process outputs (gas/oil/water export rates, compression power)</li>
+   * </ul>
+   *
+   * @author ESOL
+   * @version 1.1
    */
   public static class VfpTable implements Serializable {
     private static final long serialVersionUID = 1001L;
@@ -92,6 +117,18 @@ public class ReservoirCouplingExporter implements Serializable {
     private double[] gorValues;
     private double[] almValues; // artificial lift
     private double[][][][][] bhpValues; // 5D array: flow, thp, wct, gor, alm
+    private FlowRateType flowRateType = FlowRateType.LIQUID;
+
+    // Additional process outputs
+    private double[][][][][] exportGasRates; // [flow][thp][wct][gor][alm]
+    private double[][][][][] exportOilRates;
+    private double[][][][][] exportWaterRates;
+    private double[][][][][] compressionPower;
+
+    // Equipment capacity tracking
+    private double[][][][][] maxUtilization; // Maximum equipment utilization (0-1)
+    private boolean[][][][][] feasible; // Whether point is within all equipment capacities
+    private String[][][][][] bottleneckEquipment; // Name of limiting equipment
 
     /** Get table number. */
     public int getTableNumber() {
@@ -128,14 +165,29 @@ public class ReservoirCouplingExporter implements Serializable {
       return flowRates;
     }
 
+    /** Set flow rates. */
+    public void setFlowRates(double[] rates) {
+      this.flowRates = rates;
+    }
+
     /** Get THP values. */
     public double[] getThpValues() {
       return thpValues;
     }
 
+    /** Set THP values. */
+    public void setThpValues(double[] values) {
+      this.thpValues = values;
+    }
+
     /** Get water cut values. */
     public double[] getWctValues() {
       return wctValues;
+    }
+
+    /** Set water cut values. */
+    public void setWctValues(double[] values) {
+      this.wctValues = values;
     }
 
     /**
@@ -147,6 +199,21 @@ public class ReservoirCouplingExporter implements Serializable {
       return gorValues;
     }
 
+    /** Set GOR values. */
+    public void setGorValues(double[] values) {
+      this.gorValues = values;
+    }
+
+    /** Get ALM values. */
+    public double[] getAlmValues() {
+      return almValues;
+    }
+
+    /** Set ALM values. */
+    public void setAlmValues(double[] values) {
+      this.almValues = values;
+    }
+
     /**
      * Get BHP values array.
      *
@@ -154,6 +221,161 @@ public class ReservoirCouplingExporter implements Serializable {
      */
     public double[][][][][] getBhpValues() {
       return bhpValues;
+    }
+
+    /** Set BHP values. */
+    public void setBhpValues(double[][][][][] values) {
+      this.bhpValues = values;
+    }
+
+    /** Get flow rate type. */
+    public FlowRateType getFlowRateType() {
+      return flowRateType;
+    }
+
+    /** Set flow rate type. */
+    public void setFlowRateType(FlowRateType type) {
+      this.flowRateType = type;
+    }
+
+    /** Get export gas rates. */
+    public double[][][][][] getExportGasRates() {
+      return exportGasRates;
+    }
+
+    /** Set export gas rates. */
+    public void setExportGasRates(double[][][][][] rates) {
+      this.exportGasRates = rates;
+    }
+
+    /** Get export oil rates. */
+    public double[][][][][] getExportOilRates() {
+      return exportOilRates;
+    }
+
+    /** Set export oil rates. */
+    public void setExportOilRates(double[][][][][] rates) {
+      this.exportOilRates = rates;
+    }
+
+    /** Get export water rates. */
+    public double[][][][][] getExportWaterRates() {
+      return exportWaterRates;
+    }
+
+    /** Set export water rates. */
+    public void setExportWaterRates(double[][][][][] rates) {
+      this.exportWaterRates = rates;
+    }
+
+    /** Get compression power. */
+    public double[][][][][] getCompressionPower() {
+      return compressionPower;
+    }
+
+    /** Set compression power. */
+    public void setCompressionPower(double[][][][][] power) {
+      this.compressionPower = power;
+    }
+
+    /** Get max utilization array. */
+    public double[][][][][] getMaxUtilization() {
+      return maxUtilization;
+    }
+
+    /** Set max utilization array. */
+    public void setMaxUtilization(double[][][][][] util) {
+      this.maxUtilization = util;
+    }
+
+    /** Get feasible array. */
+    public boolean[][][][][] getFeasible() {
+      return feasible;
+    }
+
+    /** Set feasible array. */
+    public void setFeasible(boolean[][][][][] feas) {
+      this.feasible = feas;
+    }
+
+    /** Get bottleneck equipment array. */
+    public String[][][][][] getBottleneckEquipment() {
+      return bottleneckEquipment;
+    }
+
+    /** Set bottleneck equipment array. */
+    public void setBottleneckEquipment(String[][][][][] equipment) {
+      this.bottleneckEquipment = equipment;
+    }
+
+    /**
+     * Initialize all arrays for given dimensions.
+     *
+     * @param nFlow number of flow rate points
+     * @param nThp number of THP points
+     * @param nWct number of WCT points
+     * @param nGor number of GOR points
+     * @param nAlm number of ALQ points
+     */
+    public void initializeArrays(int nFlow, int nThp, int nWct, int nGor, int nAlm) {
+      bhpValues = new double[nFlow][nThp][nWct][nGor][nAlm];
+      exportGasRates = new double[nFlow][nThp][nWct][nGor][nAlm];
+      exportOilRates = new double[nFlow][nThp][nWct][nGor][nAlm];
+      exportWaterRates = new double[nFlow][nThp][nWct][nGor][nAlm];
+      compressionPower = new double[nFlow][nThp][nWct][nGor][nAlm];
+      maxUtilization = new double[nFlow][nThp][nWct][nGor][nAlm];
+      feasible = new boolean[nFlow][nThp][nWct][nGor][nAlm];
+      bottleneckEquipment = new String[nFlow][nThp][nWct][nGor][nAlm];
+
+      // Initialize feasible to true by default
+      for (int i = 0; i < nFlow; i++) {
+        for (int j = 0; j < nThp; j++) {
+          for (int k = 0; k < nWct; k++) {
+            for (int l = 0; l < nGor; l++) {
+              for (int m = 0; m < nAlm; m++) {
+                feasible[i][j][k][l][m] = true;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    /**
+     * Get number of feasible points in the table.
+     *
+     * @return count of feasible points
+     */
+    public int countFeasiblePoints() {
+      if (feasible == null) {
+        return flowRates.length * thpValues.length * wctValues.length * gorValues.length
+            * almValues.length;
+      }
+      int count = 0;
+      for (int i = 0; i < flowRates.length; i++) {
+        for (int j = 0; j < thpValues.length; j++) {
+          for (int k = 0; k < wctValues.length; k++) {
+            for (int l = 0; l < gorValues.length; l++) {
+              for (int m = 0; m < almValues.length; m++) {
+                if (feasible[i][j][k][l][m]) {
+                  count++;
+                }
+              }
+            }
+          }
+        }
+      }
+      return count;
+    }
+
+    /**
+     * Get total number of points in the table.
+     *
+     * @return total point count
+     */
+    public int getTotalPoints() {
+      return flowRates.length * thpValues.length * wctValues.length * gorValues.length
+          * almValues.length;
     }
   }
 
