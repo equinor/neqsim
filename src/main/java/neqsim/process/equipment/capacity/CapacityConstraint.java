@@ -433,6 +433,28 @@ public class CapacityConstraint implements Serializable {
   }
 
   /**
+   * Gets the display design value for reporting purposes. For minimum constraints (where
+   * designValue is MAX_VALUE), this returns the minValue instead.
+   *
+   * @return the design value for display purposes
+   */
+  public double getDisplayDesignValue() {
+    if (minValue > 0 && designValue == Double.MAX_VALUE) {
+      return minValue;
+    }
+    return designValue;
+  }
+
+  /**
+   * Checks if this is a minimum constraint (where being above the minimum is good).
+   *
+   * @return true if this is a minimum constraint
+   */
+  public boolean isMinimumConstraint() {
+    return minValue > 0 && designValue == Double.MAX_VALUE;
+  }
+
+  /**
    * Gets the maximum allowable value.
    *
    * @return the max value
@@ -473,7 +495,12 @@ public class CapacityConstraint implements Serializable {
     StringBuilder sb = new StringBuilder();
     sb.append(name).append(": ");
     sb.append(String.format("%.2f", getCurrentValue())).append(" ").append(unit);
-    sb.append(String.format(" (%.1f%% of design %.2f)", getUtilizationPercent(), designValue));
+    // For min constraints (designValue=MAX_VALUE), show minValue as the constraint value
+    if (minValue > 0 && designValue == Double.MAX_VALUE) {
+      sb.append(String.format(" (%.1f%% of min %.2f)", getUtilizationPercent(), minValue));
+    } else {
+      sb.append(String.format(" (%.1f%% of design %.2f)", getUtilizationPercent(), designValue));
+    }
     if (isViolated()) {
       sb.append(" [EXCEEDED]");
     } else if (isNearLimit()) {

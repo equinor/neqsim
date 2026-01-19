@@ -68,6 +68,7 @@ This documentation is organized into the following sections:
 
 | Document | Description |
 |----------|-------------|
+| [EQUIPMENT_DESIGN_PARAMETERS.md](EQUIPMENT_DESIGN_PARAMETERS.md) | **Equipment design parameters, autoSize vs MechanicalDesign guide** |
 | [mechanical_design_standards.md](mechanical_design_standards.md) | Design standards (NORSOK, ASME, API, DNV, etc.) |
 | [mechanical_design_database.md](mechanical_design_database.md) | Data sources, database schemas, and CSV configuration |
 | [pipeline_mechanical_design.md](pipeline_mechanical_design.md) | Pipeline mechanical design (wall thickness, stress, buckling) |

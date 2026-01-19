@@ -209,6 +209,10 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart
     this.polytropicEfficiency = polyEff;
     this.flowPolytropicEfficiency = flowPolyEff;
 
+    // Clear existing curves before adding new ones
+    chartValues.clear();
+    chartSpeeds.clear();
+
     for (int i = 0; i < speed.length; i++) {
       CompressorCurve curve =
           new CompressorCurve(speed[i], flow[i], head[i], flowPolyEff[i], polyEff[i]);

@@ -1138,4 +1138,79 @@ public class ProcessModel implements Runnable, Serializable {
   public neqsim.process.processmodel.lifecycle.ProcessModelState exportState() {
     return neqsim.process.processmodel.lifecycle.ProcessModelState.fromProcessModel(this);
   }
+
+  // ============ AUTO-SIZING METHODS ============
+
+  /**
+   * Auto-sizes all equipment in this model that implements
+   * {@link neqsim.process.design.AutoSizeable}.
+   *
+   * <p>
+   * This method iterates through all process systems in the model and calls autoSize() on each
+   * equipment that implements the AutoSizeable interface. The equipment is sized using the default
+   * safety factor (1.2 = 20% margin).
+   * </p>
+   *
+   * <p>
+   * <strong>Important:</strong> This method should be called AFTER running the process model so
+   * that flow rates and conditions are known for sizing calculations.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * ProcessModel model = new ProcessModel();
+   * model.add("upstream", upstreamProcess);
+   * model.add("downstream", downstreamProcess);
+   * model.run();
+   * model.autoSizeEquipment(); // Size all equipment based on actual flow rates
+   * model.run(); // Re-run with sized equipment
+   * </pre>
+   *
+   * @return the number of equipment items that were auto-sized
+   */
+  public int autoSizeEquipment() {
+    return autoSizeEquipment(1.2);
+  }
+
+  /**
+   * Auto-sizes all equipment in this model with the specified safety factor.
+   *
+   * <p>
+   * This method iterates through all process systems in the model and calls autoSize() on each
+   * equipment that implements the AutoSizeable interface.
+   * </p>
+   *
+   * @param safetyFactor multiplier for design capacity, typically 1.1-1.3 (10-30% over design)
+   * @return the number of equipment items that were auto-sized
+   */
+  public int autoSizeEquipment(double safetyFactor) {
+    int count = 0;
+    for (ProcessSystem processSystem : processes.values()) {
+      count += processSystem.autoSizeEquipment(safetyFactor);
+    }
+    return count;
+  }
+
+  /**
+   * Auto-sizes all equipment in this model using company-specific design standards.
+   *
+   * <p>
+   * This method applies design rules from the specified company's technical requirements (TR)
+   * documents. The standards are loaded from the NeqSim design database.
+   * </p>
+   *
+   * @param companyStandard company name (e.g., "Equinor", "Shell", "TotalEnergies")
+   * @param trDocument TR document reference (e.g., "TR2000", "DEP-31.38.01.11")
+   * @return the number of equipment items that were auto-sized
+   */
+  public int autoSizeEquipment(String companyStandard, String trDocument) {
+    int count = 0;
+    for (ProcessSystem processSystem : processes.values()) {
+      count += processSystem.autoSizeEquipment(companyStandard, trDocument);
+    }
+    return count;
+  }
 }

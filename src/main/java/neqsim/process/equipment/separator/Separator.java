@@ -147,6 +147,12 @@ public class Separator extends ProcessEquipmentBaseClass
   private static final double MIN_HEADSPACE_FRACTION = 0.05;
   private static final double MIN_HEADSPACE_VOLUME = 1.0e-6;
 
+  /**
+   * Default liquid density for sizing calculations when no liquid phase is present [kg/m³]. Assumes
+   * water density for conservative sizing.
+   */
+  public static final double DEFAULT_LIQUID_DENSITY_FOR_SIZING = 1000.0;
+
   /** Separator cross sectional area. */
   private double sepCrossArea = Math.PI * internalDiameter * internalDiameter / 4.0;
 
@@ -169,8 +175,10 @@ public class Separator extends ProcessEquipmentBaseClass
   private String heatInputUnit = "W";
 
   // Design capacity parameters
+  /** Default design gas load factor (K-factor) [m/s]. Used to detect user overrides. */
+  private static final double DEFAULT_DESIGN_GAS_LOAD_FACTOR = 0.11;
   /** Design gas load factor (K-factor) from mechanical design [m/s]. */
-  private double designGasLoadFactor = 0.11;
+  private double designGasLoadFactor = DEFAULT_DESIGN_GAS_LOAD_FACTOR;
   /** Liquid level fraction (Fg) from mechanical design. */
   private double designLiquidLevelFraction = 0.8;
   /** Maximum gas volumetric flow rate from design [m3/s]. */
@@ -890,15 +898,30 @@ public class Separator extends ProcessEquipmentBaseClass
    * Calculates the maximum allowable gas velocity based on the design K-factor. Uses the
    * Souders-Brown equation: V_max = K * sqrt((rho_liq - rho_gas) / rho_gas)
    *
+   * <p>
+   * If no liquid phase is present, a default liquid density of 1000 kg/m³ is assumed for sizing
+   * purposes.
+   * </p>
+   *
    * @return maximum allowable gas velocity [m/s]
    */
   public double getMaxAllowableGasVelocity() {
-    if (thermoSystem == null || thermoSystem.getNumberOfPhases() < 2) {
+    if (thermoSystem == null) {
       return Double.MAX_VALUE;
     }
     thermoSystem.initPhysicalProperties();
-    double gasDensity = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
-    double liqDensity = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
+    double gasDensity = thermoSystem.hasPhaseType("gas")
+        ? thermoSystem.getPhase("gas").getPhysicalProperties().getDensity()
+        : 50.0; // Default gas density if no gas phase
+
+    // Use actual liquid density if available, otherwise default to 1000 kg/m³
+    double liqDensity = DEFAULT_LIQUID_DENSITY_FOR_SIZING;
+    if (thermoSystem.hasPhaseType("oil")) {
+      liqDensity = thermoSystem.getPhase("oil").getPhysicalProperties().getDensity();
+    } else if (thermoSystem.hasPhaseType("aqueous")) {
+      liqDensity = thermoSystem.getPhase("aqueous").getPhysicalProperties().getDensity();
+    }
+
     return designGasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
   }
 
@@ -1124,16 +1147,37 @@ public class Separator extends ProcessEquipmentBaseClass
    * Sizes the separator diameter based on the current flow conditions and design K-factor. Uses the
    * Souders-Brown equation to calculate the required diameter.
    *
+   * <p>
+   * If no liquid phase is present, a default liquid density of 1000 kg/m³ is assumed for sizing
+   * purposes.
+   * </p>
+   *
    * @param safetyFactor design safety factor (typically 1.1-1.5)
    */
   public void sizeFromFlow(double safetyFactor) {
-    if (thermoSystem == null || thermoSystem.getNumberOfPhases() < 2) {
+    if (thermoSystem == null) {
       return;
     }
     thermoSystem.initPhysicalProperties();
-    double gasDensity = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
-    double liqDensity = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
-    double gasVolumeFlow = thermoSystem.getPhase(0).getFlowRate("m3/sec") * safetyFactor;
+
+    // Get gas density and flow
+    double gasDensity;
+    double gasVolumeFlow;
+    if (thermoSystem.hasPhaseType("gas")) {
+      gasDensity = thermoSystem.getPhase("gas").getPhysicalProperties().getDensity();
+      gasVolumeFlow = thermoSystem.getPhase("gas").getFlowRate("m3/sec") * safetyFactor;
+    } else {
+      // No gas phase - cannot size based on gas flow
+      return;
+    }
+
+    // Use actual liquid density if available, otherwise default to 1000 kg/m³
+    double liqDensity = DEFAULT_LIQUID_DENSITY_FOR_SIZING;
+    if (thermoSystem.hasPhaseType("oil")) {
+      liqDensity = thermoSystem.getPhase("oil").getPhysicalProperties().getDensity();
+    } else if (thermoSystem.hasPhaseType("aqueous")) {
+      liqDensity = thermoSystem.getPhase("aqueous").getPhysicalProperties().getDensity();
+    }
 
     // Max gas velocity from Souders-Brown
     double maxVelocity = designGasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
@@ -1160,8 +1204,37 @@ public class Separator extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public void autoSize(double safetyFactor) {
-    sizeFromFlow(safetyFactor);
+    // Initialize mechanical design if not already done
+    if (separatorMechanicalDesign == null) {
+      initMechanicalDesign();
+    }
+
+    // First read design specifications to get standard K-factors, Fg, etc.
+    separatorMechanicalDesign.readDesignSpecifications();
+
+    // Then override with safety factor
+    separatorMechanicalDesign.setVolumeSafetyFactor(safetyFactor);
+
+    // If user has set a specific K-factor on separator, use it
+    // Otherwise use the value from design standards
+    if (designGasLoadFactor != DEFAULT_DESIGN_GAS_LOAD_FACTOR) {
+      separatorMechanicalDesign.setGasLoadFactor(designGasLoadFactor);
+    } else {
+      // Use K-factor from design standards, apply to separator for consistency
+      designGasLoadFactor = separatorMechanicalDesign.getGasLoadFactor();
+    }
+
+    // Use mechanical design for complete sizing (diameter, length, wall thickness, etc.)
+    // Note: we skip super.calcDesign() to avoid re-reading design specs
+    separatorMechanicalDesign.performSizingCalculations();
+
+    // Apply calculated dimensions back to separator
+    separatorMechanicalDesign.setDesign();
+
     autoSized = true;
+    logger.info("Separator " + getName() + " auto-sized: diameter="
+        + String.format("%.3f", internalDiameter) + " m, length="
+        + String.format("%.3f", separatorLength) + " m");
   }
 
   /** {@inheritDoc} */
@@ -1221,11 +1294,19 @@ public class Separator extends ProcessEquipmentBaseClass
         .append("\n");
     sb.append("Orientation: ").append(orientation).append("\n");
 
-    if (thermoSystem != null && thermoSystem.getNumberOfPhases() >= 2) {
+    if (thermoSystem != null && thermoSystem.hasPhaseType("gas")) {
       thermoSystem.initPhysicalProperties();
-      double gasDensity = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
-      double liqDensity = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
-      double gasVolumeFlow = thermoSystem.getPhase(0).getFlowRate("m3/hr");
+      double gasDensity = thermoSystem.getPhase("gas").getPhysicalProperties().getDensity();
+
+      // Use actual liquid density if available, otherwise default to 1000 kg/m³
+      double liqDensity = DEFAULT_LIQUID_DENSITY_FOR_SIZING;
+      if (thermoSystem.hasPhaseType("oil")) {
+        liqDensity = thermoSystem.getPhase("oil").getPhysicalProperties().getDensity();
+      } else if (thermoSystem.hasPhaseType("aqueous")) {
+        liqDensity = thermoSystem.getPhase("aqueous").getPhysicalProperties().getDensity();
+      }
+
+      double gasVolumeFlow = thermoSystem.getPhase("gas").getFlowRate("m3/hr");
       double maxVelocity = designGasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
       double actualVelocity = gasVolumeFlow / 3600.0
           / (Math.PI * Math.pow(internalDiameter / 2, 2) * (1.0 - designLiquidLevelFraction));
@@ -1234,7 +1315,11 @@ public class Separator extends ProcessEquipmentBaseClass
       sb.append("Gas Volume Flow: ").append(String.format("%.1f m3/hr", gasVolumeFlow))
           .append("\n");
       sb.append("Gas Density: ").append(String.format("%.2f kg/m3", gasDensity)).append("\n");
-      sb.append("Liquid Density: ").append(String.format("%.2f kg/m3", liqDensity)).append("\n");
+      sb.append("Liquid Density: ").append(String.format("%.2f kg/m3", liqDensity));
+      if (!thermoSystem.hasPhaseType("oil") && !thermoSystem.hasPhaseType("aqueous")) {
+        sb.append(" (assumed - no liquid phase)");
+      }
+      sb.append("\n");
       sb.append("Max Gas Velocity: ").append(String.format("%.3f m/s", maxVelocity)).append("\n");
       sb.append("Actual Gas Velocity: ").append(String.format("%.3f m/s", actualVelocity))
           .append("\n");
@@ -1256,11 +1341,22 @@ public class Separator extends ProcessEquipmentBaseClass
     report.put("designKFactor_mps", designGasLoadFactor);
     report.put("orientation", orientation);
 
-    if (thermoSystem != null && thermoSystem.getNumberOfPhases() >= 2) {
+    if (thermoSystem != null && thermoSystem.hasPhaseType("gas")) {
       thermoSystem.initPhysicalProperties();
-      double gasDensity = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
-      double liqDensity = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
-      double gasVolumeFlow = thermoSystem.getPhase(0).getFlowRate("m3/hr");
+      double gasDensity = thermoSystem.getPhase("gas").getPhysicalProperties().getDensity();
+
+      // Use actual liquid density if available, otherwise default to 1000 kg/m³
+      double liqDensity = DEFAULT_LIQUID_DENSITY_FOR_SIZING;
+      boolean liquidDensityAssumed = true;
+      if (thermoSystem.hasPhaseType("oil")) {
+        liqDensity = thermoSystem.getPhase("oil").getPhysicalProperties().getDensity();
+        liquidDensityAssumed = false;
+      } else if (thermoSystem.hasPhaseType("aqueous")) {
+        liqDensity = thermoSystem.getPhase("aqueous").getPhysicalProperties().getDensity();
+        liquidDensityAssumed = false;
+      }
+
+      double gasVolumeFlow = thermoSystem.getPhase("gas").getFlowRate("m3/hr");
       double maxVelocity = designGasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
       double actualVelocity = gasVolumeFlow / 3600.0
           / (Math.PI * Math.pow(internalDiameter / 2, 2) * (1.0 - designLiquidLevelFraction));
@@ -1268,6 +1364,7 @@ public class Separator extends ProcessEquipmentBaseClass
       report.put("gasVolumeFlow_m3hr", gasVolumeFlow);
       report.put("gasDensity_kgm3", gasDensity);
       report.put("liquidDensity_kgm3", liqDensity);
+      report.put("liquidDensityAssumed", liquidDensityAssumed);
       report.put("maxGasVelocity_mps", maxVelocity);
       report.put("actualGasVelocity_mps", actualVelocity);
       report.put("kFactorUtilization", actualVelocity / maxVelocity);
