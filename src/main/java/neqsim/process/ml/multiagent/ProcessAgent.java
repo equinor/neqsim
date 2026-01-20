@@ -1,10 +1,9 @@
 package neqsim.process.ml.multiagent;
 
-import java.io.Serializable;
 import java.util.Map;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.ml.ConstraintManager;
 import neqsim.process.ml.StateVector;
-import neqsim.process.equipment.ProcessEquipmentInterface;
 
 /**
  * Base class for process equipment control agents.
@@ -21,7 +20,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * @author ESOL
  * @version 1.0
  */
-public abstract class ProcessAgent implements Agent, Serializable {
+public abstract class ProcessAgent implements Agent {
   private static final long serialVersionUID = 1000L;
 
   protected final String agentId;

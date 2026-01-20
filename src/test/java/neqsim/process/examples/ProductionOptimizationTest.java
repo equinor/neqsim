@@ -1,12 +1,11 @@
 package neqsim.process.examples;
 
-import static org.junit.jupiter.api.Assertions.*;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.examples.OilGasProcessSimulationOptimization.MaxProductionResult;
 import neqsim.process.examples.OilGasProcessSimulationOptimization.ProcessOutputResults;
-import neqsim.process.equipment.separator.ThreePhaseSeparator;
-import neqsim.process.equipment.separator.Separator;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**

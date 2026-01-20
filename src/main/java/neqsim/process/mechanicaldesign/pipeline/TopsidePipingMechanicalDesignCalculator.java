@@ -1,6 +1,5 @@
 package neqsim.process.mechanicaldesign.pipeline;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,8 +24,7 @@ import com.google.gson.GsonBuilder;
  * @author ASMF
  * @version 1.0
  */
-public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesignCalculator
-    implements Serializable {
+public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesignCalculator {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
 

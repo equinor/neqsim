@@ -7,11 +7,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.function.DoubleSupplier;
-import neqsim.process.fielddevelopment.economics.CashFlowEngine;
-import neqsim.process.fielddevelopment.economics.CashFlowEngine.CashFlowResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.fielddevelopment.economics.CashFlowEngine;
+import neqsim.process.fielddevelopment.economics.CashFlowEngine.CashFlowResult;
 
 /**
  * Monte Carlo simulation runner for uncertainty quantification in field development.

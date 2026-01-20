@@ -4,10 +4,9 @@ import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
-import neqsim.util.database.NeqSimProcessDesignDataBase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.util.database.NeqSimProcessDesignDataBase;
 
 /**
  * Data source for loading riser mechanical design parameters from the NeqSim database.

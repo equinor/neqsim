@@ -1,13 +1,12 @@
 package neqsim.process.ml.examples;
 
-import neqsim.process.ml.ActionVector;
-import neqsim.process.ml.Constraint;
-import neqsim.process.ml.ConstraintManager;
-import neqsim.process.ml.RLEnvironment;
-import neqsim.process.ml.StateVector;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.ml.ActionVector;
+import neqsim.process.ml.Constraint;
+import neqsim.process.ml.RLEnvironment;
+import neqsim.process.ml.StateVector;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;

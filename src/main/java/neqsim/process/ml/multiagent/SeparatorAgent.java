@@ -1,9 +1,8 @@
 package neqsim.process.ml.multiagent;
 
-import neqsim.process.ml.Constraint;
-import neqsim.process.ml.StateVector;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.ml.StateVector;
 
 /**
  * RL agent for separator level and pressure control.

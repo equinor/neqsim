@@ -1,7 +1,5 @@
 package neqsim.process.mechanicaldesign.valve;
 
-import java.util.HashMap;
-import java.util.Map;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.thermo.system.SystemInterface;

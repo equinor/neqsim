@@ -1,6 +1,5 @@
 package neqsim.process.equipment.distillation;
 
-import java.util.ArrayList;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,8 +26,20 @@ public class DistillationColumnMatrixSolver {
   private double dampingFactor = 0.1;
   private double prevError = 1e10;
 
-  // Cache arrays to reduce allocation
-  private double[] A, B, C, D, c_prime, d_prime, x_tdma;
+  private double[] A;
+
+  private double[] B;
+
+  private double[] C;
+
+  private double[] D;
+
+  private double[] c_prime;
+
+  private double[] d_prime;
+
+  private double[] x_tdma;
+
   private double[][] feedFlows;
   private double[] feedVapor;
   private double[] feedLiquid;
@@ -39,8 +50,9 @@ public class DistillationColumnMatrixSolver {
 
   public void solve(UUID id) {
     this.nTrays = column.trays.size();
-    if (nTrays == 0)
+    if (nTrays == 0) {
       return;
+    }
 
     SystemInterface fluid = column.trays.get(0).getThermoSystem();
     this.nComps = fluid.getNumberOfComponents();
@@ -158,8 +170,9 @@ public class DistillationColumnMatrixSolver {
 
       V_trays[j] = (gasIdx != -1) ? system.getPhase(gasIdx).getNumberOfMolesInPhase() : 0.0;
       L_trays[j] = (liqIdx != -1) ? system.getPhase(liqIdx).getNumberOfMolesInPhase() : 0.0;
-      if (L_trays[j] < 1e-12)
+      if (L_trays[j] < 1e-12) {
         L_trays[j] = 1e-12; // Avoid division by zero
+      }
     }
 
     // For each component, build and solve the tridiagonal system
@@ -259,8 +272,9 @@ public class DistillationColumnMatrixSolver {
 
       double V_tray = (gasIdx != -1) ? system.getPhase(gasIdx).getNumberOfMolesInPhase() : 0.0;
       double L_tray = (liqIdx != -1) ? system.getPhase(liqIdx).getNumberOfMolesInPhase() : 0.0;
-      if (L_tray < 1e-12)
+      if (L_tray < 1e-12) {
         L_tray = 1e-12;
+      }
 
       for (int c = 0; c < nComps; c++) {
         L_SR[j] += l_flows[j][c];
@@ -337,8 +351,9 @@ public class DistillationColumnMatrixSolver {
                 .setNumberOfMolesInPhase(l_flows[j][c]);
           }
         } else {
-          for (int c = 0; c < nComps; c++)
+          for (int c = 0; c < nComps; c++) {
             system.getPhase(liquidPhaseIndex).getComponent(c).setNumberOfMolesInPhase(0.0);
+          }
         }
       }
 
@@ -353,8 +368,9 @@ public class DistillationColumnMatrixSolver {
             system.getPhase(gasPhaseIndex).getComponent(c).setNumberOfMolesInPhase(v_flows[j][c]);
           }
         } else {
-          for (int c = 0; c < nComps; c++)
+          for (int c = 0; c < nComps; c++) {
             system.getPhase(gasPhaseIndex).getComponent(c).setNumberOfMolesInPhase(0.0);
+          }
         }
       }
 
@@ -428,8 +444,9 @@ public class DistillationColumnMatrixSolver {
       int liquidPhaseIndex = liquidPhaseIndices[j];
       double oldT = system.getTemperature();
 
-      if (tray.isSetOutTemperature())
+      if (tray.isSetOutTemperature()) {
         continue;
+      }
 
       if (liquidPhaseIndex != -1) {
         double sumYi = 0.0;
@@ -464,26 +481,31 @@ public class DistillationColumnMatrixSolver {
           double h_gas = system.getPhase(gasPhaseIndex).getEnthalpy("J/mol");
           double h_liq = system.getPhase(liquidPhaseIndex).getEnthalpy("J/mol");
           dH = h_gas - h_liq;
-          if (dH < 1000.0)
+          if (dH < 1000.0) {
             dH = 30000.0;
+          }
         }
 
         // Log-Newton Update: dT = - ln(sumYi) * R * T^2 / dH
         double dT = -Math.log(sumYi) * R * oldT * oldT / dH;
 
         // Limit step
-        if (dT > 5.0)
+        if (dT > 5.0) {
           dT = 5.0;
-        if (dT < -5.0)
+        }
+        if (dT < -5.0) {
           dT = -5.0;
+        }
 
         double newT = oldT + dT;
 
         // Bounds
-        if (newT < 50.0)
+        if (newT < 50.0) {
           newT = 50.0;
-        if (newT > 1000.0)
+        }
+        if (newT > 1000.0) {
           newT = 1000.0;
+        }
 
         maxError = Math.max(maxError, Math.abs(newT - oldT));
 

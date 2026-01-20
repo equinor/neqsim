@@ -1,6 +1,5 @@
 package neqsim.process.mpc;
 
-import java.io.Serializable;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 
 /**
@@ -36,7 +35,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * @version 1.0
  * @since 3.0
  */
-public class StateVariable extends MPCVariable implements Serializable {
+public class StateVariable extends MPCVariable {
   private static final long serialVersionUID = 1000L;
 
   /** Model-predicted value. */

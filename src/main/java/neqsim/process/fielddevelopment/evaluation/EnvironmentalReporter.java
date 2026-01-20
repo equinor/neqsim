@@ -1,8 +1,6 @@
 package neqsim.process.fielddevelopment.evaluation;
 
 import java.io.Serializable;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.flare.Flare;

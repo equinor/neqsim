@@ -1,16 +1,15 @@
 package neqsim.process.ml.examples;
 
-import java.util.HashMap;
 import java.util.Map;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.ml.ConstraintManager;
 import neqsim.process.ml.StateVector;
 import neqsim.process.ml.multiagent.CompressorAgent;
 import neqsim.process.ml.multiagent.MultiAgentEnvironment;
 import neqsim.process.ml.multiagent.SeparatorAgent;
-import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;

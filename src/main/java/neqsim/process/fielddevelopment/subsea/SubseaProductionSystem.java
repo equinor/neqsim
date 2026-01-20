@@ -2,14 +2,10 @@ package neqsim.process.fielddevelopment.subsea;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import neqsim.process.equipment.network.WellFlowlineNetwork;
 import neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe;
-import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
-import neqsim.process.equipment.reservoir.WellFlow;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.subsea.SimpleFlowLine;

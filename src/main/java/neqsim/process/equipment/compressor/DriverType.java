@@ -1,7 +1,5 @@
 package neqsim.process.equipment.compressor;
 
-import java.io.Serializable;
-
 /**
  * Enum representing different types of compressor drivers.
  *
@@ -12,7 +10,7 @@ import java.io.Serializable;
  * @author esol
  * @version 1.0
  */
-public enum DriverType implements Serializable {
+public enum DriverType {
   /**
    * Electric motor driver. Fast response, constant torque, high efficiency at rated speed.
    */

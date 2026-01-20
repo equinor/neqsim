@@ -11,9 +11,7 @@ import neqsim.fluidmechanics.flowsolver.AdvectionScheme;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pipeline.OnePhasePipeLine;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
 
 /**
  * Network of pipelines connected through manifolds using compositional PipeFlowSystem.

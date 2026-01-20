@@ -9,7 +9,6 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.TwoPortEquipment;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -647,10 +646,12 @@ public class TubingPerformance extends TwoPortEquipment {
       double b = 0.4846;
       double c = 0.0868;
       HL = a * Math.pow(lambdaL, b) / Math.pow(NFr, c);
-      if (HL > 1.0)
+      if (HL > 1.0) {
         HL = 1.0;
-      if (HL < lambdaL)
+      }
+      if (HL < lambdaL) {
         HL = lambdaL;
+      }
     }
 
     // Mixture density
@@ -696,8 +697,9 @@ public class TubingPerformance extends TwoPortEquipment {
     double vSL = qL / area;
     double vSG = qG / area;
     double vM = vSL + vSG;
-    if (vM < 0.01)
+    if (vM < 0.01) {
       vM = 0.01;
+    }
 
     // Hagedorn-Brown holdup correlation (simplified)
     // Uses liquid velocity number and dimensionless groups
@@ -706,8 +708,9 @@ public class TubingPerformance extends TwoPortEquipment {
 
     // Empirical holdup (simplified)
     double HL = 0.1 + 0.6 * Math.exp(-0.5 * vSG / (vSL + 0.01));
-    if (HL > 1.0)
+    if (HL > 1.0) {
       HL = 1.0;
+    }
 
     double rhoM = rhoL * HL + rhoG * (1.0 - HL);
 
@@ -744,15 +747,17 @@ public class TubingPerformance extends TwoPortEquipment {
     double vSG = qG / area;
     double vSL = qL / area;
     double vM = vSG + vSL;
-    if (vM < 0.01)
+    if (vM < 0.01) {
       vM = vSG > 0 ? vSG : 0.01;
+    }
 
     // Gray's correlation for gas wells (simplified)
     // Low liquid loading assumed
     double lambdaL = vSL / vM;
     double HL = 1.5 * lambdaL; // Gray's simplified holdup for gas wells
-    if (HL > 0.5)
+    if (HL > 0.5) {
       HL = 0.5;
+    }
 
     double rhoM = rhoL * HL + rhoG * (1.0 - HL);
 
@@ -789,8 +794,9 @@ public class TubingPerformance extends TwoPortEquipment {
     double vSL = qL / area;
     double vSG = qG / area;
     double vM = vSL + vSG;
-    if (vM < 0.01)
+    if (vM < 0.01) {
       vM = 0.01;
+    }
 
     // Drift-flux model parameters (Hasan-Kabir)
     double C0 = 1.2; // Distribution coefficient for bubbly/slug
@@ -798,10 +804,12 @@ public class TubingPerformance extends TwoPortEquipment {
 
     // Void fraction from drift-flux
     double alpha = vSG / (C0 * vM + vD);
-    if (alpha > 0.95)
+    if (alpha > 0.95) {
       alpha = 0.95;
-    if (alpha < 0.0)
+    }
+    if (alpha < 0.0) {
       alpha = 0.0;
+    }
 
     double HL = 1.0 - alpha;
     double rhoM = rhoL * HL + rhoG * alpha;
@@ -920,8 +928,9 @@ public class TubingPerformance extends TwoPortEquipment {
 
           double dP = calculateSegmentPressureDrop(testFluid, segmentLength);
           currentP -= dP;
-          if (currentP < 1.0)
+          if (currentP < 1.0) {
             currentP = 1.0;
+          }
         }
 
         double calculatedWHP = currentP;
@@ -932,10 +941,12 @@ public class TubingPerformance extends TwoPortEquipment {
 
         // Adjust BHP guess
         bhpGuess += (targetWHP - calculatedWHP);
-        if (bhpGuess < targetWHP)
+        if (bhpGuess < targetWHP) {
           bhpGuess = targetWHP + 10.0;
-        if (bhpGuess > 1000.0)
+        }
+        if (bhpGuess > 1000.0) {
           bhpGuess = 1000.0;
+        }
       }
 
       vlpFlowRates[i] = flowRates[i];
@@ -1065,6 +1076,8 @@ public class TubingPerformance extends TwoPortEquipment {
       case "msm3/day":
         sm3day = value * 1.0e6;
         break;
+      default:
+        break;
     }
 
     // Convert to target unit
@@ -1097,6 +1110,8 @@ public class TubingPerformance extends TwoPortEquipment {
         break;
       case "mpa":
         bara = value * 10.0;
+        break;
+      default:
         break;
     }
 

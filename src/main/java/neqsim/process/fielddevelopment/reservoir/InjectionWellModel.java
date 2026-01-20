@@ -1,8 +1,6 @@
 package neqsim.process.fielddevelopment.reservoir;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Injection well performance model for water and gas injection.

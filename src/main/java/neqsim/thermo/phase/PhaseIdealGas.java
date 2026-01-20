@@ -1,6 +1,5 @@
 package neqsim.thermo.phase;
 
-import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentIdealGas;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
@@ -11,7 +10,7 @@ import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
  *
  * @author esol
  */
-public class PhaseIdealGas extends Phase implements ThermodynamicConstantsInterface {
+public class PhaseIdealGas extends Phase {
 
   private static final long serialVersionUID = 1000L;
 

@@ -1,7 +1,6 @@
 package neqsim.process.equipment.util;
 
-import static org.junit.jupiter.api.Assertions.*;
-import java.util.List;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

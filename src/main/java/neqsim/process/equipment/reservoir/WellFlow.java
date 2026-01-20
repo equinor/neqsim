@@ -1,7 +1,6 @@
 package neqsim.process.equipment.reservoir;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,30 +16,23 @@ import neqsim.thermo.system.SystemInterface;
 
 /**
  * <p>
- * WellFlow class - Inflow Performance Relationship (IPR) model for
- * reservoir-to-wellbore flow.
+ * WellFlow class - Inflow Performance Relationship (IPR) model for reservoir-to-wellbore flow.
  * </p>
  *
  * <p>
- * This class models the reservoir inflow into the wellbore using various IPR
- * correlations. It
- * calculates either the bottom-hole flowing pressure (Pwf) from a specified
- * flow rate, or the flow
+ * This class models the reservoir inflow into the wellbore using various IPR correlations. It
+ * calculates either the bottom-hole flowing pressure (Pwf) from a specified flow rate, or the flow
  * rate from a specified Pwf, depending on the operating mode.
  * </p>
  *
  * <h2>Supported IPR Models</h2>
  * <ul>
- * <li><b>PRODUCTION_INDEX</b> - Constant PI using squared-pressure drawdown: q
- * = PI × (Pr² -
+ * <li><b>PRODUCTION_INDEX</b> - Constant PI using squared-pressure drawdown: q = PI × (Pr² -
  * Pwf²)</li>
- * <li><b>VOGEL</b> - Solution gas drive oil wells (1968): q/qmax = 1 -
- * 0.2(Pwf/Pr) -
+ * <li><b>VOGEL</b> - Solution gas drive oil wells (1968): q/qmax = 1 - 0.2(Pwf/Pr) -
  * 0.8(Pwf/Pr)²</li>
- * <li><b>FETKOVICH</b> - Gas well deliverability (1973): q = C × (Pr² -
- * Pwf²)ⁿ</li>
- * <li><b>BACKPRESSURE</b> - Non-Darcy/turbulence effects: Pr² - Pwf² = a×q +
- * b×q²</li>
+ * <li><b>FETKOVICH</b> - Gas well deliverability (1973): q = C × (Pr² - Pwf²)ⁿ</li>
+ * <li><b>BACKPRESSURE</b> - Non-Darcy/turbulence effects: Pr² - Pwf² = a×q + b×q²</li>
  * <li><b>TABLE</b> - Tabulated IPR from well tests</li>
  * </ul>
  *
@@ -189,10 +181,10 @@ public class WellFlow extends TwoPortEquipment {
     /**
      * Create a reservoir layer.
      *
-     * @param name              layer identifier
-     * @param stream            fluid stream from layer
+     * @param name layer identifier
+     * @param stream fluid stream from layer
      * @param reservoirPressure layer reservoir pressure (bara)
-     * @param pi                layer productivity index
+     * @param pi layer productivity index
      */
     public ReservoirLayer(String name, StreamInterface stream, double reservoirPressure,
         double pi) {
@@ -218,17 +210,15 @@ public class WellFlow extends TwoPortEquipment {
    * Add a reservoir layer for commingled production.
    * 
    * <p>
-   * Multiple layers can contribute to the total well flow. Each layer has its own
-   * reservoir
-   * pressure and productivity index. The flow from each layer is calculated based
-   * on the common
+   * Multiple layers can contribute to the total well flow. Each layer has its own reservoir
+   * pressure and productivity index. The flow from each layer is calculated based on the common
    * bottom-hole pressure.
    * </p>
    *
-   * @param name              layer identifier
-   * @param stream            stream representing the layer fluid
+   * @param name layer identifier
+   * @param stream stream representing the layer fluid
    * @param reservoirPressure layer reservoir pressure (bara)
-   * @param pi                layer productivity index (Sm3/day/bar² for gas)
+   * @param pi layer productivity index (Sm3/day/bar² for gas)
    */
   public void addLayer(String name, StreamInterface stream, double reservoirPressure, double pi) {
     layers.add(new ReservoirLayer(name, stream, reservoirPressure, pi));
@@ -323,7 +313,8 @@ public class WellFlow extends TwoPortEquipment {
           outStream.setPressure(Math.sqrt(Math.pow(presRes, 2.0) - delta), "bara");
         } else {
           double pwf = thermoSystem.getPressure("bara");
-          double flow = fetkovichC * Math.pow(Math.pow(presRes, 2.0) - Math.pow(pwf, 2.0), fetkovichN);
+          double flow =
+              fetkovichC * Math.pow(Math.pow(presRes, 2.0) - Math.pow(pwf, 2.0), fetkovichN);
           outStream.setFlowRate(flow, "MSm3/day");
         }
         break;
@@ -392,8 +383,7 @@ public class WellFlow extends TwoPortEquipment {
    * Run multi-layer commingled production calculation.
    * 
    * <p>
-   * For commingled wells, the flow from each layer is calculated based on the
-   * common bottom-hole
+   * For commingled wells, the flow from each layer is calculated based on the common bottom-hole
    * pressure. The total flow is the sum of individual layer contributions.
    * </p>
    *
@@ -468,12 +458,11 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
-   * Specify the well outlet pressure to be used when solving for flow from
-   * backpressure (i.e.
+   * Specify the well outlet pressure to be used when solving for flow from backpressure (i.e.
    * {@link #solveFlowFromOutletPressure(boolean)} set to true).
    *
    * @param pressure outlet pressure
-   * @param unit     pressure unit
+   * @param unit pressure unit
    */
   public void setOutletPressure(double pressure, String unit) {
     this.pressureOut = pressure;
@@ -481,8 +470,7 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
-   * Enable solving for flow rate from a specified outlet pressure instead of
-   * solving for outlet
+   * Enable solving for flow rate from a specified outlet pressure instead of solving for outlet
    * pressure from a specified flow rate.
    *
    * @param solve true to compute flow from the set outlet pressure
@@ -492,8 +480,7 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
-   * @return true if the well is set to compute outlet pressure from the inlet
-   *         stream flowrate.
+   * @return true if the well is set to compute outlet pressure from the inlet stream flowrate.
    */
   public boolean isCalculatingOutletPressure() {
     return calcpressure;
@@ -502,8 +489,8 @@ public class WellFlow extends TwoPortEquipment {
   /**
    * Use Vogel inflow performance relationship.
    *
-   * @param qTest             flow rate at test conditions (same unit as stream)
-   * @param pwfTest           bottom-hole pressure at test conditions in bara
+   * @param qTest flow rate at test conditions (same unit as stream)
+   * @param pwfTest bottom-hole pressure at test conditions in bara
    * @param reservoirPressure reservoir pressure in bara
    */
   public void setVogelParameters(double qTest, double pwfTest, double reservoirPressure) {
@@ -517,8 +504,8 @@ public class WellFlow extends TwoPortEquipment {
   /**
    * Use Fetkovich inflow performance relationship.
    *
-   * @param c                 Fetkovich constant C
-   * @param n                 Fetkovich exponent n
+   * @param c Fetkovich constant C
+   * @param n Fetkovich exponent n
    * @param reservoirPressure reservoir pressure in bara
    */
   public void setFetkovichParameters(double c, double n, double reservoirPressure) {
@@ -531,12 +518,11 @@ public class WellFlow extends TwoPortEquipment {
 
   /**
    * Use backpressure equation for gas wells: p<sub>res</sub><sup>2</sup> -
-   * p<sub>wf</sub><sup>2</sup> = a·q + b·q². Parameter {@code b} captures
-   * non-Darcy (turbulence)
+   * p<sub>wf</sub><sup>2</sup> = a·q + b·q². Parameter {@code b} captures non-Darcy (turbulence)
    * effects.
    *
-   * @param a                 deliverability coefficient a
-   * @param b                 deliverability coefficient b (non-Darcy component)
+   * @param a deliverability coefficient a
+   * @param b deliverability coefficient b (non-Darcy component)
    * @param reservoirPressure reservoir pressure in bara (stored for reference)
    */
   public void setBackpressureParameters(double a, double b, double reservoirPressure) {
@@ -548,13 +534,11 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
-   * Provide tabulated inflow data (flow rate vs. bottom-hole pressure). Arrays
-   * are sorted by
+   * Provide tabulated inflow data (flow rate vs. bottom-hole pressure). Arrays are sorted by
    * pressure internally to allow monotonic interpolation.
    *
    * @param bottomHolePressures bottom-hole flowing pressures in bara
-   * @param flowRates           flow rates corresponding to each pressure point
-   *                            (same unit as stream)
+   * @param flowRates flow rates corresponding to each pressure point (same unit as stream)
    */
   public void setTableInflow(double[] bottomHolePressures, double[] flowRates) {
     if (bottomHolePressures == null || flowRates == null
@@ -574,16 +558,15 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
-   * Estimate well production index from Darcy law parameters. Units: permeability
-   * in mD, viscosity
+   * Estimate well production index from Darcy law parameters. Units: permeability in mD, viscosity
    * in cP and lengths in meter.
    *
-   * @param permeability    reservoir permeability
-   * @param thickness       reservoir thickness
-   * @param viscosity       fluid viscosity
+   * @param permeability reservoir permeability
+   * @param thickness reservoir thickness
+   * @param viscosity fluid viscosity
    * @param reservoirRadius drainage radius
-   * @param wellRadius      wellbore radius
-   * @param skinFactor      skin factor
+   * @param wellRadius wellbore radius
+   * @param skinFactor skin factor
    */
   public void setDarcyLawParameters(double permeability, double thickness, double viscosity,
       double reservoirRadius, double wellRadius, double skinFactor) {
@@ -667,10 +650,8 @@ public class WellFlow extends TwoPortEquipment {
    * Load IPR curve from a CSV file.
    *
    * <p>
-   * The CSV file should have two columns: bottom-hole pressure (bara) and flow
-   * rate. The first row
-   * can be a header (will be skipped if non-numeric). Columns can be separated by
-   * comma, semicolon,
+   * The CSV file should have two columns: bottom-hole pressure (bara) and flow rate. The first row
+   * can be a header (will be skipped if non-numeric). Columns can be separated by comma, semicolon,
    * or tab.
    * </p>
    *
@@ -754,8 +735,7 @@ public class WellFlow extends TwoPortEquipment {
   /**
    * Get the current IPR table pressures.
    *
-   * @return array of bottom-hole pressures (bara), or empty array if not using
-   *         table IPR
+   * @return array of bottom-hole pressures (bara), or empty array if not using table IPR
    */
   public double[] getIPRTablePressures() {
     return java.util.Arrays.copyOf(inflowTablePwf, inflowTablePwf.length);
