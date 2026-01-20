@@ -489,6 +489,7 @@ public class ProcessSystem extends SimulationBaseClass {
     for (int i = 0; i < unitOperations.size(); i++) {
       if (unitOperations.get(i).getName().equals(name)) {
         unitOperations.remove(i);
+        graphDirty = true; // Invalidate graph when structure changes
       }
     }
   }
@@ -500,6 +501,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public void clearAll() {
     unitOperations.clear();
+    graphDirty = true; // Invalidate graph when structure changes
   }
 
   /**
@@ -509,6 +511,7 @@ public class ProcessSystem extends SimulationBaseClass {
    */
   public void clear() {
     unitOperations = new ArrayList<ProcessEquipmentInterface>(0);
+    graphDirty = true; // Invalidate graph when structure changes
   }
 
   /**
