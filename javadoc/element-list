@@ -120,12 +120,16 @@ neqsim.process.costestimation
 neqsim.process.costestimation.compressor
 neqsim.process.costestimation.separator
 neqsim.process.costestimation.valve
+neqsim.process.design
+neqsim.process.design.template
 neqsim.process.equipment
 neqsim.process.equipment.absorber
 neqsim.process.equipment.adsorber
 neqsim.process.equipment.battery
 neqsim.process.equipment.blackoil
+neqsim.process.equipment.capacity
 neqsim.process.equipment.compressor
+neqsim.process.equipment.compressor.driver
 neqsim.process.equipment.diffpressure
 neqsim.process.equipment.distillation
 neqsim.process.equipment.ejector
@@ -157,6 +161,7 @@ neqsim.process.equipment.util
 neqsim.process.equipment.valve
 neqsim.process.equipment.watertreatment
 neqsim.process.equipment.well.allocation
+neqsim.process.examples
 neqsim.process.fielddevelopment
 neqsim.process.fielddevelopment.concept
 neqsim.process.fielddevelopment.economics
@@ -226,7 +231,7 @@ neqsim.process.util.export
 neqsim.process.util.fielddevelopment
 neqsim.process.util.fire
 neqsim.process.util.monitor
-neqsim.process.util.optimization
+neqsim.process.util.optimizer
 neqsim.process.util.report
 neqsim.process.util.report.safety
 neqsim.process.util.scenario
