@@ -57,9 +57,9 @@ public final class EclipseEOSExporter {
    * Unit system for Eclipse export.
    */
   public enum Units {
-    /** Metric units: bar, kg/m³, Sm³/Sm³, mPa·s */
+    /** Metric units: bar, kg/m³, Sm³/Sm³, mPa·s. */
     METRIC,
-    /** Field units: psia, lb/ft³, scf/stb, cp */
+    /** Field units: psia, lb/ft³, scf/stb, cp. */
     FIELD
   }
 

@@ -1,7 +1,9 @@
 package neqsim.integration;
 
+import neqsim.integration.ValidationFramework.CommonErrors;
+import neqsim.integration.ValidationFramework.ValidationBuilder;
+import neqsim.integration.ValidationFramework.ValidationResult;
 import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.integration.ValidationFramework.*;
 
 /**
  * Validators for process streams (StreamInterface).
@@ -20,7 +22,7 @@ public class StreamValidator {
 
   /**
    * Validate a process stream before use in equipment.
-   * 
+   *
    * @param stream The stream to validate
    * @return ValidationResult with errors and warnings
    */
@@ -111,7 +113,7 @@ public class StreamValidator {
 
   /**
    * Validate that a stream has been executed (properties calculated).
-   * 
+   *
    * @param stream The stream to check
    * @return ValidationResult indicating if stream has been run
    */

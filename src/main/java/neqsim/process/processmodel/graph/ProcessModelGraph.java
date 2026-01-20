@@ -67,6 +67,8 @@ public class ProcessModelGraph implements Serializable {
     }
 
     /**
+     * Get the name of this sub-system.
+     *
      * @return the name of this sub-system
      */
     public String getSystemName() {
@@ -74,6 +76,8 @@ public class ProcessModelGraph implements Serializable {
     }
 
     /**
+     * Get Graph for this sub-system.
+     *
      * @return the graph for this sub-system
      */
     public ProcessGraph getGraph() {
@@ -81,6 +85,8 @@ public class ProcessModelGraph implements Serializable {
     }
 
     /**
+     * Get execution index of this sub-system in the module.
+     *
      * @return the execution index in the module (order of execution)
      */
     public int getExecutionIndex() {
@@ -88,6 +94,8 @@ public class ProcessModelGraph implements Serializable {
     }
 
     /**
+     * Get whether this sub-system is itself a ProcessModule.
+     *
      * @return true if this sub-system is itself a ProcessModule
      */
     public boolean isModule() {
@@ -95,6 +103,8 @@ public class ProcessModelGraph implements Serializable {
     }
 
     /**
+     * Get number of nodes in this sub-system.
+     *
      * @return number of nodes in this sub-system
      */
     public int getNodeCount() {
@@ -102,6 +112,8 @@ public class ProcessModelGraph implements Serializable {
     }
 
     /**
+     * Get number of edges in this sub-system.
+     *
      * @return number of edges in this sub-system
      */
     public int getEdgeCount() {
@@ -131,6 +143,8 @@ public class ProcessModelGraph implements Serializable {
     }
 
     /**
+     * Get the name of the source sub-system.
+     *
      * @return the name of the source sub-system
      */
     public String getSourceSystemName() {
@@ -138,6 +152,8 @@ public class ProcessModelGraph implements Serializable {
     }
 
     /**
+     * Get the name of the target sub-system.
+     *
      * @return the name of the target sub-system
      */
     public String getTargetSystemName() {
@@ -145,6 +161,8 @@ public class ProcessModelGraph implements Serializable {
     }
 
     /**
+     * Get the source node in the source sub-system.
+     *
      * @return the source node in the source sub-system
      */
     public ProcessNode getSourceNode() {
@@ -152,6 +170,8 @@ public class ProcessModelGraph implements Serializable {
     }
 
     /**
+     * Get the target node in the target sub-system.
+     *
      * @return the target node in the target sub-system
      */
     public ProcessNode getTargetNode() {
@@ -159,6 +179,8 @@ public class ProcessModelGraph implements Serializable {
     }
 
     /**
+     * Get the edge connecting the two nodes.
+     *
      * @return the edge connecting the two nodes
      */
     public ProcessEdge getEdge() {
@@ -185,6 +207,8 @@ public class ProcessModelGraph implements Serializable {
   }
 
   /**
+   * Get the name of this process model.
+   *
    * @return the name of this process model
    */
   public String getModelName() {
@@ -192,6 +216,8 @@ public class ProcessModelGraph implements Serializable {
   }
 
   /**
+   * Get list of sub-system graphs.
+   *
    * @return list of sub-system graphs
    */
   public List<SubSystemGraph> getSubSystemGraphs() {
@@ -199,6 +225,8 @@ public class ProcessModelGraph implements Serializable {
   }
 
   /**
+   * Get the flattened graph containing all equipment from all sub-systems.
+   *
    * @return the flattened graph containing all equipment from all sub-systems
    */
   public ProcessGraph getFlattenedGraph() {
@@ -206,6 +234,8 @@ public class ProcessModelGraph implements Serializable {
   }
 
   /**
+   * Get list of connections between sub-systems.
+   *
    * @return list of connections between sub-systems
    */
   public List<InterSystemConnection> getInterSystemConnections() {
@@ -213,6 +243,8 @@ public class ProcessModelGraph implements Serializable {
   }
 
   /**
+   * Get total number of sub-systems.
+   *
    * @return total number of sub-systems
    */
   public int getSubSystemCount() {
@@ -220,6 +252,8 @@ public class ProcessModelGraph implements Serializable {
   }
 
   /**
+   * Get total number of nodes across all sub-systems.
+   *
    * @return total number of nodes across all sub-systems
    */
   public int getTotalNodeCount() {
@@ -227,6 +261,8 @@ public class ProcessModelGraph implements Serializable {
   }
 
   /**
+   * Get total number of edges across all sub-systems.
+   *
    * @return total number of edges across all sub-systems
    */
   public int getTotalEdgeCount() {
@@ -234,6 +270,8 @@ public class ProcessModelGraph implements Serializable {
   }
 
   /**
+   * Get number of cross-system connections.
+   *
    * @return number of cross-system connections
    */
   public int getInterSystemConnectionCount() {
@@ -481,6 +519,8 @@ public class ProcessModelGraph implements Serializable {
     }
 
     /**
+     * Get the levels of the partition.
+     *
      * @return list of execution levels, each containing sub-systems that can run in parallel
      */
     public List<List<SubSystemGraph>> getLevels() {
@@ -488,6 +528,8 @@ public class ProcessModelGraph implements Serializable {
     }
 
     /**
+     * Get number of execution levels.
+     *
      * @return number of execution levels
      */
     public int getLevelCount() {
@@ -495,6 +537,8 @@ public class ProcessModelGraph implements Serializable {
     }
 
     /**
+     * Get maximum parallelism across all levels.
+     *
      * @return maximum number of sub-systems that can run in parallel at any level
      */
     public int getMaxParallelism() {
@@ -502,6 +546,8 @@ public class ProcessModelGraph implements Serializable {
     }
 
     /**
+     * Get names of sub-systems at each level.
+     *
      * @return list of sub-system names at each level
      */
     public List<List<String>> getLevelNames() {

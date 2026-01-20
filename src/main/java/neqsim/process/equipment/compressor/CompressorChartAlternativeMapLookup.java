@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * 
  * CompressorChartAlternativeMapLookup class. This class is an implementation of the compressor
  * chart class that uses Fan laws and "double" interpolation to navigate the compressor map (as
  * opposed to the standard class using reduced variables according to Fan laws).

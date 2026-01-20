@@ -48,6 +48,13 @@ public class DistillationColumnMatrixSolver {
     this.column = column;
   }
 
+  /**
+   * Solves the distillation column. This method iteratively calculates component material balances,
+   * updates compositions and flow rates, and adjusts temperatures until convergence or maximum
+   * iterations are reached.
+   *
+   * @param id the UUID for tracking the calculation identifier through product streams
+   */
   public void solve(UUID id) {
     this.nTrays = column.trays.size();
     if (nTrays == 0) {

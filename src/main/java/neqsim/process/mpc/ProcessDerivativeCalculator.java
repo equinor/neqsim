@@ -94,13 +94,13 @@ public class ProcessDerivativeCalculator {
    * Derivative calculation methods.
    */
   public enum DerivativeMethod {
-    /** Forward difference: f'(x) ≈ (f(x+h) - f(x)) / h */
+    /** Forward difference: f'(x) ≈ (f(x+h) - f(x)) / h. */
     FORWARD_DIFFERENCE,
 
-    /** Central difference: f'(x) ≈ (f(x+h) - f(x-h)) / (2h) - more accurate */
+    /** Central difference: f'(x) ≈ (f(x+h) - f(x-h)) / (2h) - more accurate. */
     CENTRAL_DIFFERENCE,
 
-    /** Second-order central: includes error estimation */
+    /** Second-order central: includes error estimation. */
     CENTRAL_DIFFERENCE_SECOND_ORDER
   }
 

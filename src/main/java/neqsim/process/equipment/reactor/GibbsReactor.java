@@ -417,7 +417,7 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /**
    * Mark a component as inert by name.
-   * 
+   *
    * @param componentName component name as in the thermo system
    */
   public void setComponentAsInert(String componentName) {
@@ -428,7 +428,7 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /**
    * Mark a component as inert by index in inlet system.
-   * 
+   *
    * @param index component index in inlet system
    */
   public void setComponentAsInert(int index) {
@@ -655,7 +655,7 @@ public class GibbsReactor extends TwoPortEquipment {
     /**
      * Calculate corrected heat capacity coefficients dA, dB, dC, dD by subtracting elemental
      * contributions. dA = A - nO*AO - nN*AN - nC*AC - nH*AH - nS*AS
-     * 
+     *
      * @param compNumber component index
      * @return array of corrected coefficients [dA, dB, dC, dD]
      */
@@ -694,7 +694,7 @@ public class GibbsReactor extends TwoPortEquipment {
      * Calculate the corrected formation enthalpy term J. J = ΔH°f - ΔA*TR - ΔB/2*TR² - ΔC/3*TR³ -
      * ΔD/4*TR⁴ where TR is the reference temperature and ΔA, ΔB, ΔC, ΔD are corrected heat capacity
      * coefficients.
-     * 
+     *
      * @param compNumber component index
      * @return corrected formation enthalpy term J
      */
@@ -719,7 +719,7 @@ public class GibbsReactor extends TwoPortEquipment {
      * Calculate the I term for thermodynamic calculations. I = (1/R) × [J/TR + ΔA×ln(TR) + ΔB/2×TR
      * + ΔC/6×TR² + ΔD/12×TR³] where R is the gas constant, TR is the reference temperature, and J
      * is the corrected formation enthalpy term.
-     * 
+     *
      * @param compNumber component index
      * @return the I term
      */

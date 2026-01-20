@@ -480,6 +480,8 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
+   * Check if the well is set to compute outlet pressure from inlet flowrate.
+   *
    * @return true if the well is set to compute outlet pressure from the inlet stream flowrate.
    */
   public boolean isCalculatingOutletPressure() {
