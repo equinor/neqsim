@@ -308,6 +308,170 @@ OptimizationResult multiVar = optimizer.optimize(process, List.of(feedNorth, fee
     List.of(keepPowerLow));
 ```
 
+### Multi-Variable Optimization with `ManipulatedVariable`
+
+The `ManipulatedVariable` class enables optimization over arbitrary process parameters beyond
+inlet flow rates. This is essential for complex systems where multiple degrees of freedom
+affect the bottleneck—such as flow distribution between parallel trains, intermediate
+pressures, or heat integration setpoints.
+
+#### ManipulatedVariable API
+
+```java
+public class ManipulatedVariable {
+    /**
+     * Create a decision variable for optimization.
+     *
+     * @param name        Human-readable variable name (appears in logs/reports)
+     * @param lowerBound  Minimum allowed value
+     * @param upperBound  Maximum allowed value
+     * @param unit        Engineering unit string (informational)
+     * @param setter      BiConsumer that applies the value to the ProcessSystem
+     */
+    public ManipulatedVariable(String name, double lowerBound, double upperBound,
+            String unit, BiConsumer<ProcessSystem, Double> setter);
+    
+    public String getName();
+    public double getLowerBound();
+    public double getUpperBound();
+    public String getUnit();
+    public void apply(ProcessSystem process, double value);
+}
+```
+
+The `setter` parameter is a `BiConsumer<ProcessSystem, Double>` lambda that receives the
+process and a candidate value from the optimizer. This allows you to manipulate any equipment
+parameter—not just stream flow rates.
+
+#### Common Use Cases
+
+| Scenario | Variables | Setter Example |
+|----------|-----------|----------------|
+| **Parallel train balancing** | Split factors | `splitter.setSplitFactors(new double[]{val, 0.33, 0.33-val})` |
+| **Dual-feed systems** | Two inlet flows | `feedA.setFlowRate(val, "kg/hr")` |
+| **Pressure optimization** | Compressor setpoints | `comp.setOutletPressure(val)` |
+| **Temperature control** | Heater/cooler setpoints | `heater.setOutletTemperature(val)` |
+| **Recycle ratio** | Recycle stream split | `recycler.setFlowRate(val, "kg/hr")` |
+
+#### Example: Split Factor Optimization
+
+When a process has parallel compression trains served by a common inlet, the optimal split
+depends on each train's capacity curve and driver limits. The optimizer can find the best
+distribution:
+
+```java
+// Define system with splitter and three parallel trains
+Splitter splitter = new Splitter("inlet_splitter", inletStream, 3);
+// ... compressors ups1, ups2, ups3 downstream of splitter
+
+// Create manipulated variables
+ManipulatedVariable inletFlow = new ManipulatedVariable(
+    "TotalInletFlow", 1_800_000.0, 2_200_000.0, "kg/hr",
+    (proc, val) -> inletStream.setFlowRate(val, "kg/hr"));
+
+// Balance factor: shifts flow from train 1 to train 3
+// At bal=0: equal split (33.3% / 33.3% / 33.3%)
+// At bal=+0.05: train 3 gets more (28.3% / 33.3% / 38.3%)
+ManipulatedVariable balanceFactor = new ManipulatedVariable(
+    "BalanceFactor", -0.10, 0.10, "factor",
+    (proc, val) -> {
+        double base = 1.0 / 3.0;
+        splitter.setSplitFactors(new double[]{base - val, base, base + val});
+    });
+
+List<ManipulatedVariable> variables = Arrays.asList(inletFlow, balanceFactor);
+
+OptimizationConfig config = new OptimizationConfig(1_800_000.0, 2_200_000.0)
+    .rateUnit("kg/hr")
+    .tolerance(1000.0)
+    .defaultUtilizationLimit(0.99)
+    .searchMode(SearchMode.GOLDEN_SECTION_SCORE);
+
+OptimizationResult result = optimizer.optimize(process, variables, config,
+    Collections.singletonList(new OptimizationObjective("throughput",
+        proc -> inletStream.getFlowRate("kg/hr"), 1.0)),
+    Collections.emptyList());
+
+System.out.println("Optimal flow: " + result.getOptimalRate() + " kg/hr");
+System.out.println("Optimal split: " + Arrays.toString(splitter.getSplitFactors()));
+```
+
+#### Choosing a Search Mode for Multi-Variable Problems
+
+| Search Mode | Best For | Characteristics |
+|-------------|----------|-----------------|
+| `GOLDEN_SECTION_SCORE` | 1-2 variables, smooth response | Fast convergence on unimodal landscapes |
+| `NELDER_MEAD_SCORE` | 2-4 variables, noisy responses | Robust simplex method, handles local noise |
+| `PARTICLE_SWARM_SCORE` | 3+ variables, multimodal | Global search, configurable swarm size |
+
+**Caution**: Gradient-free optimizers (Nelder-Mead, PSO) may explore infeasible regions where
+equipment solvers (e.g., compressor chart interpolation) fail or return unrealistic values.
+Strategies to handle this:
+
+1. **Tighten bounds** to stay within solver-reliable operating ranges
+2. **Add soft constraints** with high penalty weights in infeasible regions
+3. **Use grid search** as a fallback for critical decisions:
+
+```java
+// Grid search for robustness when chart solvers are sensitive
+double bestFlow = 0, bestBalance = 0, maxFeasibleFlow = 0;
+for (double flow = 1_900_000; flow <= 2_150_000; flow += 10_000) {
+    for (double bal = -0.10; bal <= 0.10; bal += 0.02) {
+        inletStream.setFlowRate(flow, "kg/hr");
+        splitter.setSplitFactors(new double[]{0.333 - bal, 0.333, 0.333 + bal});
+        process.run();
+        double util = process.getBottleneckUtilization();
+        if (util < 1.0 && flow > maxFeasibleFlow) {
+            maxFeasibleFlow = flow;
+            bestFlow = flow;
+            bestBalance = bal;
+        }
+    }
+}
+```
+
+#### Example: Dual-Feed Optimization
+
+For systems with multiple inlet streams feeding a common process:
+
+```java
+ManipulatedVariable feedNorth = new ManipulatedVariable(
+    "NorthFeed", 100.0, 800.0, "kg/hr",
+    (proc, val) -> northInlet.setFlowRate(val, "kg/hr"));
+
+ManipulatedVariable feedSouth = new ManipulatedVariable(
+    "SouthFeed", 100.0, 800.0, "kg/hr",
+    (proc, val) -> southInlet.setFlowRate(val, "kg/hr"));
+
+// Total throughput objective
+OptimizationObjective totalThroughput = new OptimizationObjective(
+    "totalThroughput",
+    proc -> northInlet.getFlowRate("kg/hr") + southInlet.getFlowRate("kg/hr"),
+    1.0);
+
+OptimizationResult result = optimizer.optimize(process,
+    Arrays.asList(feedNorth, feedSouth),
+    config.searchMode(SearchMode.PARTICLE_SWARM_SCORE),
+    Collections.singletonList(totalThroughput),
+    Collections.emptyList());
+```
+
+#### Practical Considerations
+
+1. **Equal-capacity trains**: For parallel trains with similar equipment specs, equal split is
+   often near-optimal. Split optimization provides more value when trains have asymmetric
+   capacities (e.g., different compressor sizes or driver ratings).
+
+2. **Solver stability**: Compressor chart solvers may produce erroneous results (e.g., 99,000%
+   utilization) when flows fall outside the interpolation envelope. Always validate results
+   against physical bounds.
+
+3. **Variable coupling**: Some variables are tightly coupled (e.g., split factors must sum to
+   1.0). Encode these constraints in the setter lambda rather than relying on the optimizer.
+
+4. **Iteration budget**: Multi-variable optimization requires more evaluations. Set appropriate
+   `maxIterations` in the config (default is often too low for PSO with 3+ variables).
+
 ### Comparing debottlenecking scenarios
 
 Use `compareScenarios` to run a baseline plus multiple upgrades and compute KPI deltas in one

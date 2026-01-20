@@ -34,7 +34,7 @@ public class BlackOilConverter {
    *
    * @param eosFluid a {@link neqsim.thermo.system.SystemInterface} object
    * @param Tref a double
-   * @param pGrid an array of {@link double} objects
+   * @param pGrid an array of double objects
    * @param Pstd a double
    * @param Tstd a double
    * @return a {@link neqsim.blackoil.BlackOilConverter.Result} object

@@ -740,7 +740,7 @@ public class FlowRateOptimizer implements Serializable {
    * <li>Reinitializes capacity constraints after chart setup</li>
    * </ul>
    *
-   * <h3>Example Usage</h3>
+   * <p><strong>Example Usage</strong></p>
    * 
    * <pre>
    * FlowRateOptimizer optimizer = new FlowRateOptimizer(process, "Feed", "Export");
@@ -1081,7 +1081,7 @@ public class FlowRateOptimizer implements Serializable {
    * <li>Feasibility status</li>
    * </ul>
    *
-   * <h3>Example Usage</h3>
+   * <p><strong>Example Usage</strong></p>
    * 
    * <pre>
    * FlowRateOptimizer optimizer = new FlowRateOptimizer(process, "Feed", "Export");
@@ -1148,7 +1148,7 @@ public class FlowRateOptimizer implements Serializable {
    * Performance) tables used by reservoir simulators like Eclipse.
    * </p>
    *
-   * <h3>Example Usage</h3>
+   * <p><strong>Example Usage</strong></p>
    * 
    * <pre>
    * double[] flowRates = {20000, 40000, 60000, 80000, 100000};
@@ -1217,7 +1217,7 @@ public class FlowRateOptimizer implements Serializable {
    * constraints.
    * </p>
    *
-   * <h3>Example Usage</h3>
+   * <p><strong>Example Usage</strong></p>
    * 
    * <pre>
    * ProcessOperatingPoint minPowerPoint =
@@ -1382,7 +1382,7 @@ public class FlowRateOptimizer implements Serializable {
    * <li>Converge to the maximum flow that achieves target outlet pressure within constraints</li>
    * </ol>
    *
-   * <h3>Example Usage</h3>
+   * <p><strong>Example Usage</strong></p>
    * 
    * <pre>
    * FlowRateOptimizer optimizer = new FlowRateOptimizer(process, "Feed", "Export");
@@ -1541,7 +1541,7 @@ public class FlowRateOptimizer implements Serializable {
    * boundary conditions.
    * </p>
    *
-   * <h3>Example Usage</h3>
+   * <p><strong>Example Usage</strong></p>
    * 
    * <pre>
    * double[] inletPressures = {60, 70, 80, 90}; // bara
@@ -2426,7 +2426,7 @@ public class FlowRateOptimizer implements Serializable {
    * allowing customization of all parameters.
    * </p>
    *
-   * <h3>Example Usage</h3>
+   * <p><strong>Example Usage</strong></p>
    * 
    * <pre>
    * LiftCurveConfiguration config =
@@ -4241,7 +4241,7 @@ public class FlowRateOptimizer implements Serializable {
    * deliverability curves and the question is "what flow rate can the production system handle?"
    * </p>
    *
-   * <h3>Table Structure</h3>
+   * <p><strong>Table Structure</strong></p>
    * 
    * <pre>
    *               Pout=130   Pout=140   Pout=150   Pout=160

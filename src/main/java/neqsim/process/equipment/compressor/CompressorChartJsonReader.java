@@ -200,6 +200,16 @@ public class CompressorChartJsonReader {
     compressor.getCompressorChart().setSurgeCurve(new SafeSplineSurgeCurve(surgeFlow, surgeHead));
     compressor.getCompressorChart().setHeadUnit(headUnit);
 
+    // Set max and min speed from chart curves
+    double chartMaxSpeed = compressor.getCompressorChart().getMaxSpeedCurve();
+    double chartMinSpeed = compressor.getCompressorChart().getMinSpeedCurve();
+    if (chartMaxSpeed > 0) {
+      compressor.setMaximumSpeed(chartMaxSpeed);
+    }
+    if (chartMinSpeed > 0) {
+      compressor.setMinimumSpeed(chartMinSpeed);
+    }
+
     // Optionally set max design power if available
     if (maxDesignPower > 0) {
       compressor.getMechanicalDesign().setMaxDesignPower(maxDesignPower);

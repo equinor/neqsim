@@ -59,6 +59,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   private boolean useCompressionRatio = false;
   private double maxOutletPressure = 10000.0;
   private boolean isSetMaxOutletPressure = false;
+  /** Maximum discharge temperature in Kelvin for capacity constraint. */
+  private double maxDischargeTemperature = 473.15; // 200°C default
+  private boolean isSetMaxDischargeTemperature = false;
   private CompressorPropertyProfile propertyProfile = new CompressorPropertyProfile();
   public double dH = 0.0;
   public double inletEnthalpy = 0;
@@ -2680,6 +2683,72 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   }
 
   /**
+   * Gets the maximum discharge temperature.
+   *
+   * @return maximum discharge temperature in Kelvin
+   */
+  public double getMaxDischargeTemperature() {
+    return maxDischargeTemperature;
+  }
+
+  /**
+   * Gets the maximum discharge temperature in specified unit.
+   *
+   * @param unit temperature unit ("K", "C", or "F")
+   * @return maximum discharge temperature in specified unit
+   */
+  public double getMaxDischargeTemperature(String unit) {
+    if (unit.equalsIgnoreCase("C")) {
+      return maxDischargeTemperature - 273.15;
+    } else if (unit.equalsIgnoreCase("F")) {
+      return (maxDischargeTemperature - 273.15) * 9.0 / 5.0 + 32.0;
+    }
+    return maxDischargeTemperature; // Kelvin
+  }
+
+  /**
+   * Sets the maximum discharge temperature constraint.
+   *
+   * <p>
+   * This value is used by the capacity constraint framework to track discharge temperature
+   * utilization. When the actual discharge temperature exceeds this limit, the compressor will be
+   * flagged as over-utilized.
+   * </p>
+   *
+   * @param temp maximum discharge temperature
+   * @param unit temperature unit ("K", "C", or "F")
+   */
+  public void setMaxDischargeTemperature(double temp, String unit) {
+    if (unit.equalsIgnoreCase("C")) {
+      this.maxDischargeTemperature = temp + 273.15;
+    } else if (unit.equalsIgnoreCase("F")) {
+      this.maxDischargeTemperature = (temp - 32.0) * 5.0 / 9.0 + 273.15;
+    } else {
+      this.maxDischargeTemperature = temp; // Kelvin
+    }
+    this.isSetMaxDischargeTemperature = true;
+  }
+
+  /**
+   * Sets the maximum discharge temperature in Kelvin.
+   *
+   * @param tempKelvin maximum discharge temperature in Kelvin
+   */
+  public void setMaxDischargeTemperature(double tempKelvin) {
+    this.maxDischargeTemperature = tempKelvin;
+    this.isSetMaxDischargeTemperature = true;
+  }
+
+  /**
+   * Checks if maximum discharge temperature has been explicitly set.
+   *
+   * @return true if max discharge temperature is set
+   */
+  public boolean isSetMaxDischargeTemperature() {
+    return isSetMaxDischargeTemperature;
+  }
+
+  /**
    * <p>
    * Getter for the field <code>actualCompressionRatio</code>.
    * </p>
@@ -3889,9 +3958,12 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
               if (currentPowerKW <= 0 || Double.isNaN(currentPowerKW)) {
                 return 0.0;
               }
-              // Determine max power: mechanical design > driver > estimate
+              // Determine max power: driver speed-dependent > mechanical design > driver rated
               double maxPowerLimitKW = 0.0;
-              if (getMechanicalDesign().maxDesignPower > 0) {
+              if (driver != null && driver.getRatedSpeed() > 0 && this.speed > 0) {
+                // Use speed-dependent max power from driver curve
+                maxPowerLimitKW = driver.getMaxAvailablePowerAtSpeed(this.speed);
+              } else if (getMechanicalDesign().maxDesignPower > 0) {
                 maxPowerLimitKW = getMechanicalDesign().maxDesignPower;
               } else if (driver != null && driver.getRatedPower() > 0) {
                 maxPowerLimitKW = driver.getRatedPower() * 1.1; // 10% overload margin
@@ -3934,6 +4006,21 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
           // Convert ratio to utilization: utilization = 1 / (1 + marginRatio)
           return 100.0 / (1.0 + marginRatio);
         }));
+
+    // Discharge temperature constraint
+    // Track actual discharge temperature vs maximum allowable
+    if (isSetMaxDischargeTemperature) {
+      final double maxTempC = maxDischargeTemperature - 273.15;
+      addCapacityConstraint(new CapacityConstraint("dischargeTemperature").setDesignValue(maxTempC)
+          .setMaxValue(maxTempC * 1.1).setUnit("C")
+          .setSeverity(CapacityConstraint.ConstraintSeverity.HARD).setWarningThreshold(0.9)
+          .setValueSupplier(() -> {
+            if (getOutletStream() == null || getOutletStream().getThermoSystem() == null) {
+              return 0.0;
+            }
+            return getOutletStream().getTemperature("C");
+          }));
+    }
   }
 
   /**

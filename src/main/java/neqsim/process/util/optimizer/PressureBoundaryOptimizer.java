@@ -347,7 +347,7 @@ public class PressureBoundaryOptimizer implements Serializable {
    * constraints, and equipment utilization limits already defined.
    * </p>
    *
-   * <h3>Example</h3>
+   * <p><strong>Example</strong></p>
    * 
    * <pre>
    * // Configure production optimizer with custom settings
@@ -892,7 +892,7 @@ public class PressureBoundaryOptimizer implements Serializable {
    * network models.
    * </p>
    *
-   * <h3>Table Structure</h3>
+   * <p><strong>Table Structure</strong></p>
    * <p>
    * The table is organized as a 2D matrix where:
    * </p>
@@ -910,13 +910,13 @@ public class PressureBoundaryOptimizer implements Serializable {
    * <li><b>Bottleneck matrix</b> - Name of limiting equipment at each point</li>
    * </ul>
    *
-   * <h3>Eclipse VFP Format</h3>
+   * <p><strong>Eclipse VFP Format</strong></p>
    * <p>
    * The {@link #toEclipseFormat()} method generates output compatible with Eclipse VFPPROD keyword.
    * Infeasible points are marked with "1*" (Eclipse default value marker).
    * </p>
    *
-   * <h3>Example Usage</h3>
+   * <p><strong>Example Usage</strong></p>
    * 
    * <pre>
    * // Generate table

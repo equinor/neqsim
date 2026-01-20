@@ -80,7 +80,7 @@ public class Setter extends ProcessEquipmentBaseClass {
    *
    * @param type a {@link java.lang.String} object representing the type
    * @param unit a {@link java.lang.String} object representing the unit
-   * @param value a {@link double} representing the value
+   * @param value a double representing the value
    */
   public void addParameter(String type, String unit, double value) {
     Map<String, Object> parameter = new HashMap<>();

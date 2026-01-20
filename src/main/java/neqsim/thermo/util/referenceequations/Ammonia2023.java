@@ -352,7 +352,7 @@ public class Ammonia2023 {
    * Evaluate thermodynamic properties and return an array following the same layout as the GERG2008
    * utility class.
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[] properties() {
     double T = phase.getTemperature();

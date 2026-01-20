@@ -27,7 +27,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <li>Bottleneck identification across all equipment</li>
  * </ul>
  *
- * <h3>Example Usage</h3>
+ * <p><strong>Example Usage</strong></p>
  * 
  * <pre>
  * ProcessConstraintEvaluator evaluator = new ProcessConstraintEvaluator(processSystem);

@@ -19,7 +19,7 @@ import neqsim.process.equipment.compressor.driver.DriverCurve;
  * <li>Driver constraints</li>
  * </ul>
  *
- * <h3>Example Usage</h3>
+ * <p><strong>Example Usage</strong></p>
  * 
  * <pre>
  * CompressorConstraintConfig config = new CompressorConstraintConfig();

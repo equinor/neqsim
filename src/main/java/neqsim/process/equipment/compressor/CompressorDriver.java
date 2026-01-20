@@ -658,17 +658,16 @@ public class CompressorDriver implements Serializable {
    * <p>
    * The max power at a given speed is calculated as: P_max(N) = maxPower * (a + b*(N/N_rated) +
    * c*(N/N_rated)²)
-   * </p>
    *
    * <p>
    * Example coefficients:
+   * </p>
    * <ul>
    * <li>Constant power: a=1.0, b=0.0, c=0.0 (default)</li>
    * <li>Linear increase: a=0.5, b=0.5, c=0.0 (50% at 0 speed, 100% at rated)</li>
    * <li>Typical VFD motor: a=0.0, b=1.0, c=0.0 (power proportional to speed)</li>
    * <li>With torque limit: a=0.0, b=0.8, c=0.2 (slight curve)</li>
    * </ul>
-   * </p>
    *
    * @param a constant term (dimensionless)
    * @param b linear term coefficient (dimensionless)

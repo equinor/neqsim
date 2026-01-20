@@ -23,13 +23,13 @@ import org.apache.logging.log4j.Logger;
  * <li>VFPEXP - Export pipeline/processing facility tables</li>
  * </ul>
  *
- * <h3>VFP Table Format</h3>
+ * <p><strong>VFP Table Format</strong></p>
  * <p>
  * VFP tables define the relationship between flowing bottom-hole pressure and production rate as a
  * function of various parameters (GOR, water cut, artificial lift, etc.).
  * </p>
  *
- * <h3>Example Usage</h3>
+ * <p><strong>Example Usage</strong></p>
  * 
  * <pre>
  * EclipseVFPExporter exporter = new EclipseVFPExporter();

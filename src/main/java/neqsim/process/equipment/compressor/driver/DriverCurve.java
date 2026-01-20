@@ -10,14 +10,14 @@ package neqsim.process.equipment.compressor.driver;
  * constraints of its driver.
  * </p>
  *
- * <h3>Supported Driver Types</h3>
+ * <p><strong>Supported Driver Types</strong></p>
  * <ul>
  * <li>Gas Turbines - Power varies with ambient temperature, altitude, and speed</li>
  * <li>Electric Motors - Constant torque (VFD) or fixed speed characteristics</li>
  * <li>Steam Turbines - Power varies with steam conditions and extraction</li>
  * </ul>
  *
- * <h3>Example Usage</h3>
+ * <p><strong>Example Usage</strong></p>
  * 
  * <pre>
  * DriverCurve driver = new GasTurbineDriver(10000, 0.35); // 10 MW, 35% efficiency

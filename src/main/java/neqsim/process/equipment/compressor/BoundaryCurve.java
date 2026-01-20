@@ -34,8 +34,8 @@ public abstract class BoundaryCurve implements BoundaryCurveInterface {
    * Constructor for BoundaryCurve.
    * </p>
    *
-   * @param flow an array of {@link double} objects
-   * @param head an array of {@link double} objects
+   * @param flow an array of double objects
+   * @param head an array of double objects
    */
   protected BoundaryCurve(double[] flow, double[] head) {
     setCurve(null, flow, head);
@@ -59,7 +59,7 @@ public abstract class BoundaryCurve implements BoundaryCurveInterface {
   /**
    * Get flow values defining the curve.
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[] getFlow() {
     return flow;
@@ -88,7 +88,7 @@ public abstract class BoundaryCurve implements BoundaryCurveInterface {
   /**
    * Get head values defining the curve.
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[] getHead() {
     return head;

@@ -56,7 +56,7 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
    * Getter for the field <code>sortedHead</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[] getSortedHead() {
     return sortedHead;
@@ -67,7 +67,7 @@ public class SafeSplineStoneWallCurve extends StoneWallCurve {
    * Getter for the field <code>sortedFlow</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[] getSortedFlow() {
     return sortedFlow;

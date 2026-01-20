@@ -393,7 +393,7 @@ public class PipeDesign {
    * @param Di a {@link java.lang.Double} object
    * @param NPS a {@link java.lang.Double} object
    * @param schedule a {@link java.lang.String} object
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public static double[] nearestPipe(Double Do, Double Di, Double NPS, String schedule) {
     if (!scheduleLookup.containsKey(schedule)) {

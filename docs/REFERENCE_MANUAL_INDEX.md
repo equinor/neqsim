@@ -494,7 +494,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Flow Rate Optimization** | [docs/process/optimization/flow-rate-optimization.md](process/optimization/flow-rate-optimization.md) | **Comprehensive flow rate optimizer with lift curve generation for Eclipse reservoir simulation** |
 | **Multi-Objective Optimization** | [docs/process/optimization/multi-objective-optimization.md](process/optimization/multi-objective-optimization.md) | **Pareto front generation for competing objectives (throughput vs energy)** |
 | Batch Studies | [docs/process/optimization/batch-studies.md](process/optimization/batch-studies.md) | Batch studies |
-| Bottleneck Analysis | [docs/wiki/bottleneck_analysis.md](wiki/bottleneck_analysis.md) | Bottleneck analysis |
+| Bottleneck Analysis | [docs/wiki/bottleneck_analysis.md](wiki/bottleneck_analysis.md) | Bottleneck analysis and ProductionOptimizer |
+| **Multi-Variable Optimization** | [docs/wiki/bottleneck_analysis.md#multi-variable-optimization-with-manipulatedvariable](wiki/bottleneck_analysis.md#multi-variable-optimization-with-manipulatedvariable) | **ManipulatedVariable for split factors, dual feeds, pressure setpoints** |
 | Calibration | [docs/process/calibration/README.md](process/calibration/README.md) | Model calibration |
 | Advisory | [docs/process/advisory/README.md](process/advisory/README.md) | Advisory systems |
 

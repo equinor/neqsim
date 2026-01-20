@@ -18,7 +18,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * automatic discovery during optimization.
  * </p>
  *
- * <h3>Example Implementation</h3>
+ * <p><strong>Example Implementation</strong></p>
  * 
  * <pre>
  * public class CompressorCapacityStrategy implements EquipmentCapacityStrategy {

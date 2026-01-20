@@ -13,14 +13,14 @@ package neqsim.process.equipment.compressor.driver;
  * <li>Willans line efficiency characteristics</li>
  * </ul>
  *
- * <h3>Steam Turbine Types</h3>
+ * <p><strong>Steam Turbine Types</strong></p>
  * <ul>
  * <li><strong>Back-pressure:</strong> Exhaust at process steam pressure</li>
  * <li><strong>Condensing:</strong> Exhaust to condenser at vacuum</li>
  * <li><strong>Extraction:</strong> Steam taken from intermediate stage</li>
  * </ul>
  *
- * <h3>Example Usage</h3>
+ * <p><strong>Example Usage</strong></p>
  * 
  * <pre>
  * SteamTurbineDriver turbine = new SteamTurbineDriver(5000, 6000, 0.75);
