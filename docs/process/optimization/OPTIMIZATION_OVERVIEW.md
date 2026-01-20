@@ -38,6 +38,8 @@ This document provides a high-level introduction to the process optimization cap
 | Document | Purpose |
 |----------|---------|
 | **This Document** | High-level overview and when to use which optimizer |
+| **[ProductionOptimizer Tutorial (Jupyter)](../../examples/ProductionOptimizer_Tutorial.ipynb)** | **Interactive notebook: algorithms, single/multi-variable, Pareto, constraints** |
+| **[Python Optimization Tutorial (Jupyter)](../../examples/NeqSim_Python_Optimization.ipynb)** | **Using SciPy/Python optimizers with NeqSim: constraints, Pareto, global opt** |
 | [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md) | Equipment capacity strategies, ProcessOptimizationEngine API, VFP export |
 | [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | Complete examples for ProductionOptimizer with Java/Python |
 | [Practical Examples](PRACTICAL_EXAMPLES.md) | Code samples for common optimization tasks |
