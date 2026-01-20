@@ -13,20 +13,20 @@ package neqsim.process.equipment.compressor.driver;
  * <li>Motor temperature limits</li>
  * </ul>
  *
- * <h3>VFD Operation Modes</h3>
+ * <p><strong>VFD Operation Modes</strong></p>
  * <ul>
  * <li><strong>Constant Torque:</strong> Torque is constant up to base speed, power proportional to
  * speed</li>
  * <li><strong>Constant Power:</strong> Above base speed, power is constant, torque decreases</li>
  * </ul>
  *
- * <h3>Efficiency Characteristics</h3>
+ * <p><strong>Efficiency Characteristics</strong></p>
  * <p>
  * Electric motors have high efficiency at rated load (typically 90-97% for large motors) with
  * efficiency dropping at part load due to fixed losses (core losses, friction).
  * </p>
  *
- * <h3>Example Usage</h3>
+ * <p><strong>Example Usage</strong></p>
  * 
  * <pre>
  * ElectricMotorDriver motor = new ElectricMotorDriver(5000, 3600, 0.95);

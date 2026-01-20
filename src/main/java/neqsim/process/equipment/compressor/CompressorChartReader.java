@@ -163,7 +163,7 @@ public class CompressorChartReader {
    * Getter for the field <code>surgeFlow</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[] getSurgeFlow() {
     return surgeFlow;
@@ -174,7 +174,7 @@ public class CompressorChartReader {
    * Getter for the field <code>surgeHead</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[] getSurgeHead() {
     return surgeHead;
@@ -185,7 +185,7 @@ public class CompressorChartReader {
    * Getter for the field <code>chokeFlow</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[] getChokeFlow() {
     return chokeFlow;
@@ -196,7 +196,7 @@ public class CompressorChartReader {
    * Getter for the field <code>chokeHead</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[] getChokeHead() {
     return chokeHead;
@@ -207,7 +207,7 @@ public class CompressorChartReader {
    * Getter for the field <code>speeds</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[] getSpeeds() {
     return speeds;
@@ -218,7 +218,7 @@ public class CompressorChartReader {
    * Getter for the field <code>flowLines</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[][] getFlowLines() {
     return flowLines;
@@ -229,7 +229,7 @@ public class CompressorChartReader {
    * Getter for the field <code>headLines</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[][] getHeadLines() {
     return headLines;
@@ -240,7 +240,7 @@ public class CompressorChartReader {
    * Getter for the field <code>polyEffLines</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[][] getPolyEffLines() {
     return polyEffLines;
@@ -251,7 +251,7 @@ public class CompressorChartReader {
    * Getter for the field <code>stonewallCurve</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[] getStonewallCurve() {
     return stonewallCurve;
@@ -262,7 +262,7 @@ public class CompressorChartReader {
    * Getter for the field <code>surgeCurve</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[] getSurgeCurve() {
     return surgeCurve;

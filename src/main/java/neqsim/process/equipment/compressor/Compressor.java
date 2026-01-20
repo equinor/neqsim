@@ -59,6 +59,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   private boolean useCompressionRatio = false;
   private double maxOutletPressure = 10000.0;
   private boolean isSetMaxOutletPressure = false;
+  /** Maximum discharge temperature in Kelvin for capacity constraint. */
+  private double maxDischargeTemperature = 473.15; // 200°C default
+  private boolean isSetMaxDischargeTemperature = false;
   private CompressorPropertyProfile propertyProfile = new CompressorPropertyProfile();
   public double dH = 0.0;
   public double inletEnthalpy = 0;
@@ -1606,6 +1609,274 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     this.compressorChart = compressorChart;
   }
 
+  /**
+   * Save compressor chart to a CSV file.
+   *
+   * <p>
+   * The CSV format is compatible with {@link CompressorChartReader} for loading:
+   * </p>
+   * 
+   * <pre>
+   * speed;flow;head;polyEff
+   * 2000.00;9598.75;33.36;78.30
+   * ...
+   * </pre>
+   *
+   * @param filePath the path to save the CSV file
+   * @throws java.io.IOException if file cannot be written
+   */
+  public void saveCompressorChartToCsv(String filePath) throws java.io.IOException {
+    if (compressorChart == null || !compressorChart.isUseCompressorChart()) {
+      throw new IllegalStateException("No compressor chart available to save");
+    }
+
+    double[] speeds = compressorChart.getSpeeds();
+    double[][] flows = compressorChart.getFlows();
+    double[][] heads = compressorChart.getHeads();
+    double[][] efficiencies = compressorChart.getPolytropicEfficiencies();
+
+    try (java.io.PrintWriter writer = new java.io.PrintWriter(filePath)) {
+      // Write header
+      writer.println("speed;flow;head;polyEff");
+
+      // Write data points for each speed curve
+      for (int i = 0; i < speeds.length; i++) {
+        if (flows != null && flows[i] != null) {
+          for (int j = 0; j < flows[i].length; j++) {
+            writer.println(String.format(java.util.Locale.US, "%.2f;%.2f;%.2f;%.2f", speeds[i],
+                flows[i][j], heads[i][j], efficiencies[i][j]));
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Save compressor chart to a JSON file.
+   *
+   * <p>
+   * The JSON format includes metadata (name, head unit, max design power) and is compatible with
+   * {@link CompressorChartJsonReader} for loading:
+   * </p>
+   * 
+   * <pre>
+   * {
+   *   "compressorName": "Compressor Name",
+   *   "headUnit": "kJ/kg",
+   *   "maxDesignPower_kW": 16619.42,
+   *   "speedCurves": [...]
+   * }
+   * </pre>
+   *
+   * @param filePath the path to save the JSON file
+   * @throws java.io.IOException if file cannot be written
+   */
+  public void saveCompressorChartToJson(String filePath) throws java.io.IOException {
+    if (compressorChart == null || !compressorChart.isUseCompressorChart()) {
+      throw new IllegalStateException("No compressor chart available to save");
+    }
+
+    double[] speeds = compressorChart.getSpeeds();
+    double[][] flows = compressorChart.getFlows();
+    double[][] heads = compressorChart.getHeads();
+    double[][] efficiencies = compressorChart.getPolytropicEfficiencies();
+
+    try (java.io.PrintWriter writer = new java.io.PrintWriter(filePath)) {
+      StringBuilder json = new StringBuilder();
+      json.append("{\n");
+      json.append("  \"compressorName\": \"").append(getName()).append("\",\n");
+      json.append("  \"headUnit\": \"").append(compressorChart.getHeadUnit()).append("\",\n");
+      json.append("  \"maxDesignPower_kW\": ").append(getMechanicalDesign().maxDesignPower)
+          .append(",\n");
+      json.append("  \"speedCurves\": [\n");
+
+      for (int i = 0; i < speeds.length; i++) {
+        json.append("    {\n");
+        json.append("      \"speed_rpm\": ").append(speeds[i]).append(",\n");
+        json.append("      \"flow_m3h\": [");
+        for (int j = 0; j < flows[i].length; j++) {
+          json.append(String.format(java.util.Locale.US, "%.2f", flows[i][j]));
+          if (j < flows[i].length - 1) {
+            json.append(", ");
+          }
+        }
+        json.append("],\n");
+        json.append("      \"head_kJkg\": [");
+        for (int j = 0; j < heads[i].length; j++) {
+          json.append(String.format(java.util.Locale.US, "%.2f", heads[i][j]));
+          if (j < heads[i].length - 1) {
+            json.append(", ");
+          }
+        }
+        json.append("],\n");
+        json.append("      \"polytropicEfficiency_pct\": [");
+        for (int j = 0; j < efficiencies[i].length; j++) {
+          json.append(String.format(java.util.Locale.US, "%.2f", efficiencies[i][j]));
+          if (j < efficiencies[i].length - 1) {
+            json.append(", ");
+          }
+        }
+        json.append("]\n");
+        json.append("    }");
+        if (i < speeds.length - 1) {
+          json.append(",");
+        }
+        json.append("\n");
+      }
+      json.append("  ]\n");
+      json.append("}");
+      writer.print(json.toString());
+    }
+  }
+
+  /**
+   * Load compressor chart from a CSV file.
+   *
+   * <p>
+   * The CSV format should match the output of {@link #saveCompressorChartToCsv(String)}:
+   * </p>
+   * 
+   * <pre>
+   * speed;flow;head;polyEff
+   * 2000.00;9598.75;33.36;78.30
+   * ...
+   * </pre>
+   *
+   * @param filePath the path to the CSV file
+   * @throws Exception if file cannot be read or parsed
+   */
+  public void loadCompressorChartFromCsv(String filePath) throws Exception {
+    CompressorChartReader reader = new CompressorChartReader(filePath);
+    reader.setCurvesToCompressor(this);
+    compressorChart.setUseCompressorChart(true);
+  }
+
+  /**
+   * Load compressor chart from a JSON file.
+   *
+   * <p>
+   * The JSON format should match the output of {@link #saveCompressorChartToJson(String)}. This
+   * method also restores the maxDesignPower if present in the JSON file.
+   * </p>
+   *
+   * @param filePath the path to the JSON file
+   * @throws Exception if file cannot be read or parsed
+   */
+  public void loadCompressorChartFromJson(String filePath) throws Exception {
+    CompressorChartJsonReader reader = new CompressorChartJsonReader(filePath);
+    reader.setCurvesToCompressor(this);
+    compressorChart.setUseCompressorChart(true);
+  }
+
+  /**
+   * Load compressor chart from a JSON string.
+   *
+   * @param jsonString the JSON string containing chart data
+   * @throws Exception if JSON cannot be parsed
+   */
+  public void loadCompressorChartFromJsonString(String jsonString) throws Exception {
+    CompressorChartJsonReader reader = new CompressorChartJsonReader(jsonString, true);
+    reader.setCurvesToCompressor(this);
+    compressorChart.setUseCompressorChart(true);
+  }
+
+  /**
+   * Get the compressor chart as a JSON string.
+   *
+   * @return JSON string representation of the compressor chart
+   */
+  public String getCompressorChartAsJson() {
+    if (compressorChart == null || !compressorChart.isUseCompressorChart()) {
+      return "{}";
+    }
+
+    double[] speeds = compressorChart.getSpeeds();
+    double[][] flows = compressorChart.getFlows();
+    double[][] heads = compressorChart.getHeads();
+    double[][] efficiencies = compressorChart.getPolytropicEfficiencies();
+
+    StringBuilder json = new StringBuilder();
+    json.append("{\n");
+    json.append("  \"compressorName\": \"").append(getName()).append("\",\n");
+    json.append("  \"chartType\": \"").append(compressorChart.getClass().getSimpleName())
+        .append("\",\n");
+    json.append("  \"headUnit\": \"").append(compressorChart.getHeadUnit()).append("\",\n");
+    json.append("  \"maxDesignPower_kW\": ").append(getMechanicalDesign().maxDesignPower)
+        .append(",\n");
+
+    // Reference conditions
+    json.append("  \"referenceConditions\": {\n");
+    double[] conditions = compressorChart.getChartConditions();
+    if (conditions != null && conditions.length >= 4) {
+      json.append("    \"molecularWeight\": ").append(conditions[0]).append(",\n");
+      json.append("    \"temperature_K\": ").append(conditions[1]).append(",\n");
+      json.append("    \"pressure_bara\": ").append(conditions[2]).append(",\n");
+      json.append("    \"compressibilityZ\": ").append(conditions[3]).append("\n");
+    }
+    json.append("  },\n");
+
+    // Speed curves
+    json.append("  \"speedCurves\": [\n");
+    if (speeds != null) {
+      for (int i = 0; i < speeds.length; i++) {
+        json.append("    {\n");
+        json.append("      \"speed_rpm\": ").append(speeds[i]).append(",\n");
+
+        json.append("      \"flow_m3h\": [");
+        if (flows != null && flows[i] != null) {
+          for (int j = 0; j < flows[i].length; j++) {
+            json.append(String.format(java.util.Locale.US, "%.2f", flows[i][j]));
+            if (j < flows[i].length - 1) {
+              json.append(", ");
+            }
+          }
+        }
+        json.append("],\n");
+
+        json.append("      \"head_kJkg\": [");
+        if (heads != null && heads[i] != null) {
+          for (int j = 0; j < heads[i].length; j++) {
+            json.append(String.format(java.util.Locale.US, "%.2f", heads[i][j]));
+            if (j < heads[i].length - 1) {
+              json.append(", ");
+            }
+          }
+        }
+        json.append("],\n");
+
+        json.append("      \"polytropicEfficiency_pct\": [");
+        if (efficiencies != null && efficiencies[i] != null) {
+          for (int j = 0; j < efficiencies[i].length; j++) {
+            json.append(String.format(java.util.Locale.US, "%.2f", efficiencies[i][j]));
+            if (j < efficiencies[i].length - 1) {
+              json.append(", ");
+            }
+          }
+        }
+        json.append("]\n");
+
+        json.append("    }");
+        if (i < speeds.length - 1) {
+          json.append(",");
+        }
+        json.append("\n");
+      }
+    }
+    json.append("  ],\n");
+
+    // Surge and stonewall info
+    json.append("  \"surgeCurve\": { \"active\": ").append(compressorChart.getSurgeCurve() != null)
+        .append(" },\n");
+    json.append("  \"stonewallCurve\": { \"active\": ")
+        .append(compressorChart.getStoneWallCurve() != null
+            && compressorChart.getStoneWallCurve().isActive())
+        .append(" }\n");
+
+    json.append("}");
+
+    return json.toString();
+  }
+
   /** {@inheritDoc} */
   @Override
   public AntiSurge getAntiSurge() {
@@ -2409,6 +2680,72 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    */
   public void setIsSetMaxOutletPressure(boolean isSetMaxOutletPressure) {
     this.isSetMaxOutletPressure = isSetMaxOutletPressure;
+  }
+
+  /**
+   * Gets the maximum discharge temperature.
+   *
+   * @return maximum discharge temperature in Kelvin
+   */
+  public double getMaxDischargeTemperature() {
+    return maxDischargeTemperature;
+  }
+
+  /**
+   * Gets the maximum discharge temperature in specified unit.
+   *
+   * @param unit temperature unit ("K", "C", or "F")
+   * @return maximum discharge temperature in specified unit
+   */
+  public double getMaxDischargeTemperature(String unit) {
+    if (unit.equalsIgnoreCase("C")) {
+      return maxDischargeTemperature - 273.15;
+    } else if (unit.equalsIgnoreCase("F")) {
+      return (maxDischargeTemperature - 273.15) * 9.0 / 5.0 + 32.0;
+    }
+    return maxDischargeTemperature; // Kelvin
+  }
+
+  /**
+   * Sets the maximum discharge temperature constraint.
+   *
+   * <p>
+   * This value is used by the capacity constraint framework to track discharge temperature
+   * utilization. When the actual discharge temperature exceeds this limit, the compressor will be
+   * flagged as over-utilized.
+   * </p>
+   *
+   * @param temp maximum discharge temperature
+   * @param unit temperature unit ("K", "C", or "F")
+   */
+  public void setMaxDischargeTemperature(double temp, String unit) {
+    if (unit.equalsIgnoreCase("C")) {
+      this.maxDischargeTemperature = temp + 273.15;
+    } else if (unit.equalsIgnoreCase("F")) {
+      this.maxDischargeTemperature = (temp - 32.0) * 5.0 / 9.0 + 273.15;
+    } else {
+      this.maxDischargeTemperature = temp; // Kelvin
+    }
+    this.isSetMaxDischargeTemperature = true;
+  }
+
+  /**
+   * Sets the maximum discharge temperature in Kelvin.
+   *
+   * @param tempKelvin maximum discharge temperature in Kelvin
+   */
+  public void setMaxDischargeTemperature(double tempKelvin) {
+    this.maxDischargeTemperature = tempKelvin;
+    this.isSetMaxDischargeTemperature = true;
+  }
+
+  /**
+   * Checks if maximum discharge temperature has been explicitly set.
+   *
+   * @return true if max discharge temperature is set
+   */
+  public boolean isSetMaxDischargeTemperature() {
+    return isSetMaxDischargeTemperature;
   }
 
   /**
@@ -3575,15 +3912,15 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   protected void initializeCapacityConstraints() {
     // Determine max speed from curve or mechanical limit
     double effectiveMaxSpeed = maxspeed;
-    double effectiveMinSpeed = 0.0;
+    double effectiveMinSpeed = minspeed;
     if (getCompressorChart() != null && getCompressorChart().isUseCompressorChart()) {
       double curveMaxSpeed = getCompressorChart().getMaxSpeedCurve();
       double curveMinSpeed = getCompressorChart().getMinSpeedCurve();
       if (!Double.isNaN(curveMaxSpeed) && curveMaxSpeed > 0) {
         effectiveMaxSpeed = Math.min(maxspeed, curveMaxSpeed);
       }
-      if (!Double.isNaN(curveMinSpeed) && curveMinSpeed > 0) {
-        effectiveMinSpeed = curveMinSpeed;
+      if (!Double.isNaN(curveMinSpeed) && curveMinSpeed > 0 && curveMinSpeed < Double.MAX_VALUE) {
+        effectiveMinSpeed = Math.max(minspeed, curveMinSpeed);
       }
     }
 
@@ -3597,12 +3934,12 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
 
     // Min speed constraint (from curve minimum)
     // This constraint tracks if the compressor speed is above the minimum allowable speed
-    // Design value = MAX_VALUE (no upper limit), min value = minimum allowable speed
-    // Utilization = minSpeed/currentSpeed: <1 means above min (good), >1 means below min (bad)
+    // Utilization = minSpeed/currentSpeed: <100% means above min (good), >100% means below min
+    // (bad)
     if (effectiveMinSpeed > 0) {
       final double minSpeedLimit = effectiveMinSpeed;
       addCapacityConstraint(StandardConstraintType.COMPRESSOR_MIN_SPEED.createConstraint()
-          .setDesignValue(Double.MAX_VALUE) // No upper limit on speed for this constraint
+          .setDesignValue(Double.MAX_VALUE) // MAX_VALUE signals this is a min constraint
           .setMinValue(minSpeedLimit).setWarningThreshold(0.95) // Warning when within 5% of minimum
           .setValueSupplier(() -> this.speed));
     }
@@ -3616,22 +3953,26 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
               if (getThermoSystem() == null) {
                 return 0.0;
               }
-              double currentPower = this.getPower();
-              if (currentPower <= 0 || Double.isNaN(currentPower)) {
+              // Use kW to match maxDesignPower units
+              double currentPowerKW = this.getPower("kW");
+              if (currentPowerKW <= 0 || Double.isNaN(currentPowerKW)) {
                 return 0.0;
               }
-              // Determine max power: mechanical design > driver > estimate
-              double maxPowerLimit = 0.0;
-              if (getMechanicalDesign().maxDesignPower > 0) {
-                maxPowerLimit = getMechanicalDesign().maxDesignPower;
+              // Determine max power: driver speed-dependent > mechanical design > driver rated
+              double maxPowerLimitKW = 0.0;
+              if (driver != null && driver.getRatedSpeed() > 0 && this.speed > 0) {
+                // Use speed-dependent max power from driver curve
+                maxPowerLimitKW = driver.getMaxAvailablePowerAtSpeed(this.speed);
+              } else if (getMechanicalDesign().maxDesignPower > 0) {
+                maxPowerLimitKW = getMechanicalDesign().maxDesignPower;
               } else if (driver != null && driver.getRatedPower() > 0) {
-                maxPowerLimit = driver.getRatedPower() * 1.1; // 10% overload margin
+                maxPowerLimitKW = driver.getRatedPower() * 1.1; // 10% overload margin
               }
-              if (maxPowerLimit <= 0) {
+              if (maxPowerLimitKW <= 0) {
                 return 0.0; // No limit defined
               }
               // Return utilization percentage (0-100+)
-              return (currentPower / maxPowerLimit) * 100.0;
+              return (currentPowerKW / maxPowerLimitKW) * 100.0;
             }));
 
     // Surge margin constraint
@@ -3665,6 +4006,21 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
           // Convert ratio to utilization: utilization = 1 / (1 + marginRatio)
           return 100.0 / (1.0 + marginRatio);
         }));
+
+    // Discharge temperature constraint
+    // Track actual discharge temperature vs maximum allowable
+    if (isSetMaxDischargeTemperature) {
+      final double maxTempC = maxDischargeTemperature - 273.15;
+      addCapacityConstraint(new CapacityConstraint("dischargeTemperature").setDesignValue(maxTempC)
+          .setMaxValue(maxTempC * 1.1).setUnit("C")
+          .setSeverity(CapacityConstraint.ConstraintSeverity.HARD).setWarningThreshold(0.9)
+          .setValueSupplier(() -> {
+            if (getOutletStream() == null || getOutletStream().getThermoSystem() == null) {
+              return 0.0;
+            }
+            return getOutletStream().getTemperature("C");
+          }));
+    }
   }
 
   /**
@@ -4029,8 +4385,23 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     setCompressorChart(generatedChart);
     getCompressorChart().setUseCompressorChart(true);
 
+    // Update max speed to match the chart's max speed curve
+    double chartMaxSpeed = getCompressorChart().getMaxSpeedCurve();
+    if (!Double.isNaN(chartMaxSpeed) && chartMaxSpeed > 0) {
+      setMaximumSpeed(chartMaxSpeed);
+    }
+
+    // Update min speed to match the chart's min speed curve
+    double chartMinSpeed = getCompressorChart().getMinSpeedCurve();
+    if (!Double.isNaN(chartMinSpeed) && chartMinSpeed > 0 && chartMinSpeed < Double.MAX_VALUE) {
+      setMinimumSpeed(chartMinSpeed);
+    }
+
     // Enable speed solving - compressor will calculate speed from pressure ratio
     setSolveSpeed(true);
+
+    // Reinitialize capacity constraints with new speed limits from chart
+    reinitializeCapacityConstraints();
 
     // Apply safety factor to design head if needed
     if (safetyFactor > 1.0) {

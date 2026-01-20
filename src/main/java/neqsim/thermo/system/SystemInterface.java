@@ -1281,7 +1281,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * getOilFractionIDs.
    * </p>
    *
-   * @return an array of {@link int} objects
+   * @return an array of int objects
    */
   public int[] getOilFractionIDs();
 

@@ -720,6 +720,28 @@ public class ProcessSystem extends SimulationBaseClass {
           || unit instanceof FurnaceBurner || unit instanceof FlareStack) {
         return true;
       }
+      // Check if Separator has multiple input streams (uses internal mixer)
+      if (unit instanceof neqsim.process.equipment.separator.Separator) {
+        neqsim.process.equipment.separator.Separator sep =
+            (neqsim.process.equipment.separator.Separator) unit;
+        if (sep.numberOfInputStreams > 1) {
+          return true;
+        }
+      }
+      // Check if Tank has multiple input streams (uses internal mixer like Separator)
+      if (unit instanceof neqsim.process.equipment.tank.Tank) {
+        try {
+          java.lang.reflect.Field field =
+              neqsim.process.equipment.tank.Tank.class.getDeclaredField("numberOfInputStreams");
+          field.setAccessible(true);
+          int numInputs = field.getInt(unit);
+          if (numInputs > 1) {
+            return true;
+          }
+        } catch (Exception e) {
+          // Ignore reflection errors
+        }
+      }
     }
     return false;
   }
@@ -3672,6 +3694,83 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
     return nearLimit;
+  }
+
+  // ==========================================================================
+  // AUTO-SIZING METHODS
+  // ==========================================================================
+
+  /**
+   * Automatically sizes all equipment in the process system that implements AutoSizeable.
+   *
+   * <p>
+   * This method iterates through all unit operations and calls autoSize() on each one that
+   * implements the {@link neqsim.process.design.AutoSizeable} interface. Equipment dimensions are
+   * calculated based on current flow conditions, so the process should be run before calling this
+   * method.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * processSystem.run(); // Run first to establish flow conditions
+   * int sized = processSystem.autoSizeEquipment(); // Size all equipment
+   * processSystem.run(); // Run again to update calculations with new dimensions
+   * </pre>
+   *
+   * @return the number of equipment items that were auto-sized
+   */
+  public int autoSizeEquipment() {
+    return autoSizeEquipment(1.2);
+  }
+
+  /**
+   * Automatically sizes all equipment in the process system with specified safety factor.
+   *
+   * <p>
+   * This method iterates through all unit operations and calls autoSize() on each one that
+   * implements the {@link neqsim.process.design.AutoSizeable} interface. Equipment dimensions are
+   * calculated based on current flow conditions, so the process should be run before calling this
+   * method.
+   * </p>
+   *
+   * @param safetyFactor multiplier for design capacity, typically 1.1-1.3 (10-30% over design)
+   * @return the number of equipment items that were auto-sized
+   */
+  public int autoSizeEquipment(double safetyFactor) {
+    int count = 0;
+    for (ProcessEquipmentInterface equipment : unitOperations) {
+      if (equipment instanceof neqsim.process.design.AutoSizeable) {
+        ((neqsim.process.design.AutoSizeable) equipment).autoSize(safetyFactor);
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Automatically sizes all equipment using company-specific design standards.
+   *
+   * <p>
+   * This method applies design rules from the specified company's technical requirements (TR)
+   * documents. The standards are loaded from the NeqSim design database.
+   * </p>
+   *
+   * @param companyStandard company name (e.g., "Equinor", "Shell", "TotalEnergies")
+   * @param trDocument TR document reference (e.g., "TR2000", "DEP-31.38.01.11")
+   * @return the number of equipment items that were auto-sized
+   */
+  public int autoSizeEquipment(String companyStandard, String trDocument) {
+    int count = 0;
+    for (ProcessEquipmentInterface equipment : unitOperations) {
+      if (equipment instanceof neqsim.process.design.AutoSizeable) {
+        ((neqsim.process.design.AutoSizeable) equipment).autoSize(companyStandard, trDocument);
+        count++;
+      }
+    }
+    return count;
   }
 
   // ==========================================================================

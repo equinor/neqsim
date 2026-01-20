@@ -1,6 +1,17 @@
 # Process Optimization Practical Examples
 
+> **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
+
 This document provides practical examples for using the optimizer plugin architecture with process simulations, including both Java and Python code samples.
+
+## Related Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Optimization Overview](OPTIMIZATION_OVERVIEW.md) | When to use which optimizer |
+| [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md) | ProcessOptimizationEngine API |
+| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | ProductionOptimizer examples |
+| [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) | Python/SciPy integration |
 
 ## Table of Contents
 

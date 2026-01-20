@@ -18,7 +18,7 @@ import java.util.List;
  * <li>Head limits - maximum and minimum head at each speed</li>
  * </ul>
  *
- * <h3>Envelope Definition</h3>
+ * <p><strong>Envelope Definition</strong></p>
  * <p>
  * The operating envelope is typically defined by arrays of flow and head values at different
  * speeds. The surge line represents the minimum flow below which the compressor becomes unstable.
@@ -26,7 +26,7 @@ import java.util.List;
  * increase flow regardless of head.
  * </p>
  *
- * <h3>Example Usage</h3>
+ * <p><strong>Example Usage</strong></p>
  * 
  * <pre>
  * OperatingEnvelope envelope = new OperatingEnvelope();

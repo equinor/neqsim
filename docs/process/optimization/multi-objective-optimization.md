@@ -1,6 +1,16 @@
 # Multi-Objective Optimization for Process Systems
 
+> **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
+
 The `neqsim.process.util.optimizer` package provides a comprehensive **multi-objective optimization** framework for finding Pareto-optimal solutions when optimizing competing objectives in process simulations.
+
+## Related Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Optimization Overview](OPTIMIZATION_OVERVIEW.md) | When to use which optimizer |
+| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | ProductionOptimizer examples |
+| [Batch Studies](batch-studies.md) | Parallel parameter sweeps |
 
 ## Table of Contents
 

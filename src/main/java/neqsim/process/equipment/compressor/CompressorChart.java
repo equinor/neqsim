@@ -223,6 +223,14 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     this.flow = flow;
     this.flowPolytropicEfficiency = flowPolyEff;
 
+    // Clear existing curves and fitters before adding new ones
+    chartValues.clear();
+    reducedHeadFitter.clear();
+    reducedPolytropicEfficiencyFitter.clear();
+    fanLawCorrectionFitter.clear();
+    maxSpeedCurve = 0;
+    minSpeedCurve = Double.MAX_VALUE;
+
     // Dynamically initialize arrays based on the maximum length of flow, head, and polyEff
     int maxLength = 0;
     for (double[] f : flow) {

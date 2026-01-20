@@ -322,6 +322,10 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   @Override
   public boolean needRecalculation() {
     if (stream != null) {
+      // If wrapping another stream, check if upstream needs recalculation first
+      if (stream.needRecalculation()) {
+        return true;
+      }
       thermoSystem = stream.getFluid();
     }
     if (getFluid().getTemperature() == lastTemperature && getFluid().getPressure() == lastPressure

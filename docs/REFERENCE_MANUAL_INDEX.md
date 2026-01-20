@@ -204,7 +204,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 ### Chapter 15: Rotating Equipment
 | Document | Path | Description |
 |----------|------|-------------|
-| Compressors | [docs/process/equipment/compressors.md](process/equipment/compressors.md) | Compressor models |
+| Compressors | [docs/process/equipment/compressors.md](process/equipment/compressors.md) | Compressor models, drivers, speed-dependent power |
 | Compressor Curves | [docs/process/equipment/compressor_curves.md](process/equipment/compressor_curves.md) | Compressor performance curves |
 | Compressor Design | [docs/process/CompressorMechanicalDesign.md](process/CompressorMechanicalDesign.md) | Compressor mechanical design |
 | Pumps | [docs/process/equipment/pumps.md](process/equipment/pumps.md) | Pump models |
@@ -279,6 +279,9 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 ### Chapter 22: Capacity Constraints & Equipment Limits
 | Document | Path | Description |
 |----------|------|-------------|
+| **Optimization Overview** | [docs/process/optimization/OPTIMIZATION_OVERVIEW.md](process/optimization/OPTIMIZATION_OVERVIEW.md) | **START HERE: Introduction to process optimization, when to use ProcessOptimizationEngine vs ProductionOptimizer** |
+| **ProductionOptimizer Tutorial** | [docs/examples/ProductionOptimizer_Tutorial.ipynb](examples/ProductionOptimizer_Tutorial.ipynb) | **Interactive Jupyter notebook with complete ProductionOptimizer guide: algorithms, single/multi-variable, Pareto, constraints** |
+| **Python Optimization Tutorial** | [docs/examples/NeqSim_Python_Optimization.ipynb](examples/NeqSim_Python_Optimization.ipynb) | **Using SciPy/Python optimizers with NeqSim process simulations: constraints, Pareto, global optimization** |
 | **Capacity Constraint Framework** | [docs/process/CAPACITY_CONSTRAINT_FRAMEWORK.md](process/CAPACITY_CONSTRAINT_FRAMEWORK.md) | **Framework for equipment capacity limits, bottleneck detection, and utilization tracking** |
 | **Optimizer Plugin Architecture** | [docs/process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md](process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md) | **Equipment capacity strategies, throughput optimization, gradient descent, sensitivity analysis, shadow prices, and Eclipse VFP export** |
 | **External Optimizer Integration** | [docs/integration/EXTERNAL_OPTIMIZER_INTEGRATION.md](integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) | **ProcessSimulationEvaluator for Python/SciPy/NLopt/Pyomo integration with gradient estimation** |
@@ -290,6 +293,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Document | Path | Description |
 |----------|------|-------------|
 | Mechanical Design | [docs/process/mechanical_design.md](process/mechanical_design.md) | Mechanical design overview and JSON export |
+| **Equipment Design Parameters** | [docs/process/EQUIPMENT_DESIGN_PARAMETERS.md](process/EQUIPMENT_DESIGN_PARAMETERS.md) | **Comprehensive guide to autoSize vs MechanicalDesign, manual sizing, and capacity constraints** |
 | **Mechanical Design Report** | [docs/process/mechanical_design.md#comprehensive-mechanical-design-report-json](process/mechanical_design.md#comprehensive-mechanical-design-report-json) | **Combined JSON output for all mechanical design data (equipment + piping)** |
 | Design Standards | [docs/process/mechanical_design_standards.md](process/mechanical_design_standards.md) | Design standards |
 | Design Database | [docs/process/mechanical_design_database.md](process/mechanical_design_database.md) | Design database |
@@ -493,7 +497,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Flow Rate Optimization** | [docs/process/optimization/flow-rate-optimization.md](process/optimization/flow-rate-optimization.md) | **Comprehensive flow rate optimizer with lift curve generation for Eclipse reservoir simulation** |
 | **Multi-Objective Optimization** | [docs/process/optimization/multi-objective-optimization.md](process/optimization/multi-objective-optimization.md) | **Pareto front generation for competing objectives (throughput vs energy)** |
 | Batch Studies | [docs/process/optimization/batch-studies.md](process/optimization/batch-studies.md) | Batch studies |
-| Bottleneck Analysis | [docs/wiki/bottleneck_analysis.md](wiki/bottleneck_analysis.md) | Bottleneck analysis |
+| Bottleneck Analysis | [docs/wiki/bottleneck_analysis.md](wiki/bottleneck_analysis.md) | Bottleneck analysis and ProductionOptimizer |
+| **Multi-Variable Optimization** | [docs/wiki/bottleneck_analysis.md#multi-variable-optimization-with-manipulatedvariable](wiki/bottleneck_analysis.md#multi-variable-optimization-with-manipulatedvariable) | **ManipulatedVariable for split factors, dual feeds, pressure setpoints** |
 | Calibration | [docs/process/calibration/README.md](process/calibration/README.md) | Model calibration |
 | Advisory | [docs/process/advisory/README.md](process/advisory/README.md) | Advisory systems |
 

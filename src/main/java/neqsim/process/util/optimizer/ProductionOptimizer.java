@@ -9,6 +9,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -19,10 +24,109 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
- * Utility class for production optimization based on capacity utilization and configurable
- * constraints. The optimizer currently targets a single decision variable (feed flow) but keeps a
- * structured record of objectives, constraint margins, and utilization limits so that more advanced
- * workflows (multi-objective scoring, probabilistic margins, reporting) can be built on top.
+ * Production optimization utility for process simulation models.
+ *
+ * <p>
+ * This class provides comprehensive optimization capabilities for NeqSim process models, supporting
+ * single-variable and multi-variable optimization with multiple search algorithms. It can maximize
+ * throughput subject to equipment capacity constraints, or optimize arbitrary objective functions
+ * with configurable constraints.
+ * </p>
+ *
+ * <p>
+ * <strong>Supported Search Algorithms</strong>
+ * </p>
+ * <ul>
+ * <li><b>BINARY_FEASIBILITY</b> - Traditional monotonic binary search on feasibility. Fast for
+ * single-variable problems where feasibility is monotonic with respect to the decision
+ * variable.</li>
+ * <li><b>GOLDEN_SECTION_SCORE</b> - Golden-section search on a composite score. Suitable for
+ * single-variable non-monotonic responses.</li>
+ * <li><b>NELDER_MEAD_SCORE</b> - Nelder-Mead simplex algorithm for multi-dimensional optimization.
+ * Does not require gradients; works well for 2-10 decision variables.</li>
+ * <li><b>PARTICLE_SWARM_SCORE</b> - Particle swarm optimization for global search. Good for
+ * non-convex problems with multiple local optima.</li>
+ * </ul>
+ *
+ * <p>
+ * <strong>Multi-Objective Optimization</strong>
+ * </p>
+ * <p>
+ * The optimizer supports Pareto multi-objective optimization via weighted-sum scalarization. This
+ * generates a Pareto front by solving multiple single-objective problems with different weight
+ * combinations. Use {@link #optimizePareto} for multi-objective problems.
+ * </p>
+ *
+ * <p>
+ * <strong>Usage Example (Java)</strong>
+ * </p>
+ * 
+ * <pre>{@code
+ * // Create process model
+ * ProcessSystem process = new ProcessSystem();
+ * Stream feed = new Stream("feed", fluid);
+ * feed.setFlowRate(100000.0, "kg/hr");
+ * Compressor compressor = new Compressor("compressor", feed);
+ * process.add(feed);
+ * process.add(compressor);
+ * process.run();
+ *
+ * // Configure and run optimization
+ * ProductionOptimizer optimizer = new ProductionOptimizer();
+ * OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0).tolerance(100.0)
+ *     .searchMode(SearchMode.GOLDEN_SECTION_SCORE).maxIterations(30);
+ *
+ * OptimizationResult result = optimizer.optimize(process, feed, config, null, null);
+ * System.out.println("Optimal rate: " + result.getOptimalRate() + " kg/hr");
+ * }</pre>
+ *
+ * <p>
+ * <strong>Usage Example (Python via neqsim-python/JPype)</strong>
+ * </p>
+ * 
+ * <pre>{@code
+ * from neqsim.neqsimpython import jneqsim
+ *
+ * # Import classes
+ * ProductionOptimizer = jneqsim.process.util.optimizer.ProductionOptimizer
+ * OptimizationConfig = ProductionOptimizer.OptimizationConfig
+ * SearchMode = ProductionOptimizer.SearchMode
+ *
+ * # Create optimizer and config
+ * optimizer = ProductionOptimizer()
+ * config = OptimizationConfig(50000.0, 200000.0) \
+ *     .tolerance(100.0) \
+ *     .searchMode(SearchMode.GOLDEN_SECTION_SCORE)
+ *
+ * # Run optimization
+ * result = optimizer.optimize(process, feed, config, None, None)
+ * print(f"Optimal rate: {result.getOptimalRate():.0f} kg/hr")
+ * }</pre>
+ *
+ * <p>
+ * <strong>Multi-Variable Optimization Example</strong>
+ * </p>
+ * 
+ * <pre>{@code
+ * // Define manipulated variables
+ * List<ManipulatedVariable> variables = Arrays.asList(
+ *     new ManipulatedVariable("flowRate", 50000, 200000, "kg/hr",
+ *         (proc, val) -> proc.getUnit("feed").setFlowRate(val, "kg/hr")),
+ *     new ManipulatedVariable("pressure", 100, 200, "bara",
+ *         (proc, val) -> ((Compressor) proc.getUnit("comp")).setOutletPressure(val, "bara")));
+ *
+ * OptimizationConfig config = new OptimizationConfig(0, 1) // bounds ignored for multi-var
+ *     .searchMode(SearchMode.NELDER_MEAD_SCORE);
+ *
+ * OptimizationResult result = optimizer.optimize(process, variables, config, objectives, null);
+ * }</pre>
+ *
+ * @author NeqSim Development Team
+ * @version 1.0
+ * @see OptimizationConfig
+ * @see OptimizationResult
+ * @see ManipulatedVariable
+ * @see ParetoResult
  */
 public class ProductionOptimizer {
   /** Default maximum utilization used when no specific equipment rule is provided. */
@@ -55,18 +159,65 @@ public class ProductionOptimizer {
     HARD, SOFT
   }
 
-  /** Simple container for objective configuration. */
+  /**
+   * Container for optimization objective configuration.
+   *
+   * <p>
+   * An objective defines a quantity to optimize (maximize or minimize) during the optimization
+   * process. Multiple objectives can be combined with weights to form a composite score.
+   * </p>
+   *
+   * <p>
+   * <strong>Java Example</strong>
+   * </p>
+   * 
+   * <pre>{@code
+   * OptimizationObjective throughput = new OptimizationObjective("throughput",
+   *     proc -> proc.getUnit("outlet").getFlowRate("kg/hr"), 1.0, ObjectiveType.MAXIMIZE);
+   * }</pre>
+   *
+   * <p>
+   * <strong>Python Example (via JPype)</strong>
+   * </p>
+   * 
+   * <pre>
+   * from jpype import JImplements, JOverride
+   *
+   * &#64;JImplements("java.util.function.ToDoubleFunction")
+   * class ThroughputEvaluator:
+   *     &#64;JOverride
+   *     def applyAsDouble(self, proc):
+   *         return proc.getUnit("outlet").getFlowRate("kg/hr")
+   *
+   * throughput = OptimizationObjective("throughput", ThroughputEvaluator(), 1.0)
+   * </pre>
+   */
   public static final class OptimizationObjective {
     private final String name;
     private final ToDoubleFunction<ProcessSystem> evaluator;
     private final double weight;
     private final ObjectiveType type;
 
+    /**
+     * Constructs an objective with MAXIMIZE direction.
+     *
+     * @param name unique name for the objective
+     * @param evaluator function to compute objective value from process state
+     * @param weight relative weight for composite scoring (typically 0.0-1.0)
+     */
     public OptimizationObjective(String name, ToDoubleFunction<ProcessSystem> evaluator,
         double weight) {
       this(name, evaluator, weight, ObjectiveType.MAXIMIZE);
     }
 
+    /**
+     * Constructs an objective with explicit direction.
+     *
+     * @param name unique name for the objective
+     * @param evaluator function to compute objective value from process state
+     * @param weight relative weight for composite scoring (typically 0.0-1.0)
+     * @param type MAXIMIZE or MINIMIZE direction
+     */
     public OptimizationObjective(String name, ToDoubleFunction<ProcessSystem> evaluator,
         double weight, ObjectiveType type) {
       this.name = Objects.requireNonNull(name, "Objective name is required");
@@ -75,18 +226,39 @@ public class ProductionOptimizer {
       this.type = Objects.requireNonNull(type, "Objective type is required");
     }
 
+    /**
+     * Returns the objective name.
+     *
+     * @return objective name
+     */
     public String getName() {
       return name;
     }
 
+    /**
+     * Returns the objective weight.
+     *
+     * @return weight value
+     */
     public double getWeight() {
       return weight;
     }
 
+    /**
+     * Returns the objective type (MAXIMIZE or MINIMIZE).
+     *
+     * @return objective type
+     */
     public ObjectiveType getType() {
       return type;
     }
 
+    /**
+     * Evaluates the objective for the given process state.
+     *
+     * @param process the process system to evaluate
+     * @return computed objective value
+     */
     public double evaluate(ProcessSystem process) {
       return evaluator.applyAsDouble(process);
     }
@@ -467,7 +639,49 @@ public class ProductionOptimizer {
     }
   }
 
-  /** Builder-style configuration for the optimizer. */
+  /**
+   * Builder-style configuration for the production optimizer.
+   *
+   * <p>
+   * This class uses a fluent API pattern for configuring optimization parameters. All setter
+   * methods return {@code this} to enable method chaining.
+   * </p>
+   *
+   * <p>
+   * <strong>Configuration Categories</strong>
+   * </p>
+   * <ul>
+   * <li><b>Search bounds</b> - {@link #lowerBound}, {@link #upperBound} define the search
+   * range</li>
+   * <li><b>Convergence</b> - {@link #tolerance}, {@link #maxIterations} control termination</li>
+   * <li><b>Algorithm</b> - {@link #searchMode} selects the optimization algorithm</li>
+   * <li><b>Utilization</b> - equipment capacity limits and margins</li>
+   * <li><b>Parallelization</b> - {@link #parallelEvaluations}, {@link #parallelThreads}</li>
+   * <li><b>Pareto</b> - {@link #paretoGridSize} for multi-objective optimization</li>
+   * <li><b>PSO parameters</b> - swarm size, inertia, cognitive/social weights</li>
+   * </ul>
+   *
+   * <p>
+   * <strong>Java Example</strong>
+   * </p>
+   * 
+   * <pre>{@code
+   * OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0).tolerance(100.0)
+   *     .maxIterations(50).searchMode(SearchMode.GOLDEN_SECTION_SCORE).rateUnit("kg/hr")
+   *     .utilizationLimitForName("compressor1", 0.90).parallelEvaluations(true).parallelThreads(4);
+   * }</pre>
+   *
+   * <p>
+   * <strong>Python Example (via JPype)</strong>
+   * </p>
+   * 
+   * <pre>{@code
+   * config = OptimizationConfig(50000.0, 200000.0) \
+   *     .tolerance(100.0) \
+   *     .maxIterations(50) \
+   *     .searchMode(SearchMode.GOLDEN_SECTION_SCORE)
+   * }</pre>
+   */
   public static final class OptimizationConfig {
     private double lowerBound;
     private double upperBound;
@@ -482,6 +696,9 @@ public class ProductionOptimizer {
     private SearchMode searchMode = SearchMode.BINARY_FEASIBILITY;
     private boolean enableCaching = true;
     private boolean rejectInvalidSimulations = true;
+    private boolean parallelEvaluations = false;
+    private int parallelThreads = Runtime.getRuntime().availableProcessors();
+    private int paretoGridSize = 11;
     private int swarmSize = 8;
     private double inertiaWeight = 0.6;
     private double cognitiveWeight = 1.2;
@@ -495,16 +712,39 @@ public class ProductionOptimizer {
     private final Map<Class<?>, CapacityRange> capacityRangesByType = new HashMap<>();
     private final List<EquipmentConstraintRule> equipmentConstraintRules = new ArrayList<>();
 
+    /**
+     * Constructs a configuration with specified search bounds.
+     *
+     * @param lowerBound minimum value for the decision variable (e.g., min flow rate)
+     * @param upperBound maximum value for the decision variable (e.g., max flow rate)
+     */
     public OptimizationConfig(double lowerBound, double upperBound) {
       this.lowerBound = lowerBound;
       this.upperBound = upperBound;
     }
 
+    /**
+     * Sets the convergence tolerance.
+     *
+     * <p>
+     * The optimizer terminates when the change in the decision variable between iterations is less
+     * than this tolerance.
+     * </p>
+     *
+     * @param tolerance convergence tolerance in the same units as the decision variable
+     * @return this config for method chaining
+     */
     public OptimizationConfig tolerance(double tolerance) {
       this.tolerance = tolerance;
       return this;
     }
 
+    /**
+     * Sets the maximum number of iterations.
+     *
+     * @param maxIterations maximum iterations before termination (default: 30)
+     * @return this config for method chaining
+     */
     public OptimizationConfig maxIterations(int maxIterations) {
       this.maxIterations = maxIterations;
       return this;
@@ -656,6 +896,76 @@ public class ProductionOptimizer {
       return this;
     }
 
+    /**
+     * Enables parallel evaluation of candidates in PSO and scenario optimization.
+     * 
+     * <p>
+     * When enabled, particle swarm optimization evaluates particles in parallel using a thread
+     * pool, and scenario optimization runs scenarios concurrently.
+     * </p>
+     * 
+     * @param parallel true to enable parallel evaluations
+     * @return this config for method chaining
+     */
+    public OptimizationConfig parallelEvaluations(boolean parallel) {
+      this.parallelEvaluations = parallel;
+      return this;
+    }
+
+    /**
+     * Sets the number of threads for parallel evaluations.
+     * 
+     * @param threads number of threads (default: available processors)
+     * @return this config for method chaining
+     */
+    public OptimizationConfig parallelThreads(int threads) {
+      this.parallelThreads = Math.max(1, threads);
+      return this;
+    }
+
+    /**
+     * Sets the grid size for Pareto front generation.
+     * 
+     * <p>
+     * For weighted-sum Pareto optimization, this determines how many weight combinations are
+     * evaluated. A grid size of 11 generates weights: 0.0, 0.1, 0.2, ..., 1.0.
+     * </p>
+     * 
+     * @param gridSize number of weight points per objective (default: 11)
+     * @return this config for method chaining
+     */
+    public OptimizationConfig paretoGridSize(int gridSize) {
+      this.paretoGridSize = Math.max(2, gridSize);
+      return this;
+    }
+
+    /**
+     * Returns whether parallel evaluations are enabled.
+     * 
+     * @return true if parallel evaluations are enabled
+     */
+    public boolean isParallelEvaluations() {
+      return parallelEvaluations;
+    }
+
+    /**
+     * Returns the number of threads for parallel evaluations.
+     * 
+     * @return number of threads
+     */
+    public int getParallelThreads() {
+      return parallelThreads;
+    }
+
+    /**
+     * Returns the grid size for Pareto front generation.
+     * 
+     * @return Pareto grid size
+     */
+    public int getParetoGridSize() {
+      return paretoGridSize;
+    }
+
     public int getSwarmSize() {
       return swarmSize;
     }
@@ -769,7 +1079,41 @@ public class ProductionOptimizer {
     }
   }
 
-  /** Definition of a manipulated decision variable. */
+  /**
+   * Definition of a manipulated decision variable for multi-variable optimization.
+   *
+   * <p>
+   * A manipulated variable represents a process parameter that can be adjusted during optimization.
+   * Each variable has bounds, a unit, and a setter function that applies the value to the process
+   * model.
+   * </p>
+   *
+   * <p>
+   * <strong>Java Example</strong>
+   * </p>
+   * 
+   * <pre>{@code
+   * ManipulatedVariable flowVar = new ManipulatedVariable("feedFlow", 50000.0, 200000.0, // lower/upper
+   *                                                                                      // bounds
+   *     "kg/hr", (proc, val) -> ((Stream) proc.getUnit("feed")).setFlowRate(val, "kg/hr"));
+   * }</pre>
+   *
+   * <p>
+   * <strong>Python Example (via JPype)</strong>
+   * </p>
+   * 
+   * <pre>
+   * from jpype import JImplements, JOverride
+   *
+   * &#64;JImplements("java.util.function.BiConsumer")
+   * class FlowSetter:
+   *     &#64;JOverride
+   *     def accept(self, proc, val):
+   *         proc.getUnit("feed").setFlowRate(float(val), "kg/hr")
+   *
+   * flow_var = ManipulatedVariable("feedFlow", 50000.0, 200000.0, "kg/hr", FlowSetter())
+   * </pre>
+   */
   public static final class ManipulatedVariable {
     private final String name;
     private final double lowerBound;
@@ -777,6 +1121,16 @@ public class ProductionOptimizer {
     private final String unit;
     private final java.util.function.BiConsumer<ProcessSystem, Double> setter;
 
+    /**
+     * Constructs a manipulated variable.
+     *
+     * @param name unique name identifying this variable
+     * @param lowerBound minimum allowed value for the variable
+     * @param upperBound maximum allowed value for the variable
+     * @param unit engineering unit string (e.g., "kg/hr", "bara", "C")
+     * @param setter BiConsumer that applies the variable value to the process model
+     * @throws NullPointerException if name or setter is null
+     */
     public ManipulatedVariable(String name, double lowerBound, double upperBound, String unit,
         java.util.function.BiConsumer<ProcessSystem, Double> setter) {
       this.name = Objects.requireNonNull(name, "Variable name is required");
@@ -786,22 +1140,48 @@ public class ProductionOptimizer {
       this.setter = Objects.requireNonNull(setter, "Variable setter is required");
     }
 
+    /**
+     * Returns the variable name.
+     *
+     * @return variable name
+     */
     public String getName() {
       return name;
     }
 
+    /**
+     * Returns the lower bound.
+     *
+     * @return minimum allowed value
+     */
     public double getLowerBound() {
       return lowerBound;
     }
 
+    /**
+     * Returns the upper bound.
+     *
+     * @return maximum allowed value
+     */
     public double getUpperBound() {
       return upperBound;
     }
 
+    /**
+     * Returns the engineering unit.
+     *
+     * @return unit string
+     */
     public String getUnit() {
       return unit;
     }
 
+    /**
+     * Applies the variable value to the process model.
+     *
+     * @param process the process system to modify
+     * @param value the value to set
+     */
     public void apply(ProcessSystem process, double value) {
       setter.accept(process, value);
     }
@@ -900,6 +1280,252 @@ public class ProductionOptimizer {
     }
   }
 
+  /**
+   * A single point on the Pareto front representing a non-dominated solution.
+   */
+  public static final class ParetoPoint {
+    private final Map<String, Double> decisionVariables;
+    private final Map<String, Double> objectiveValues;
+    private final double[] weights;
+    private final boolean feasible;
+    private final OptimizationResult fullResult;
+
+    /**
+     * Constructs a Pareto point.
+     *
+     * @param decisionVariables the decision variable values at this point
+     * @param objectiveValues the objective function values at this point
+     * @param weights the weight combination used to find this point
+     * @param feasible whether this point satisfies all constraints
+     * @param fullResult the full optimization result for this point
+     */
+    public ParetoPoint(Map<String, Double> decisionVariables, Map<String, Double> objectiveValues,
+        double[] weights, boolean feasible, OptimizationResult fullResult) {
+      this.decisionVariables = new LinkedHashMap<>(decisionVariables);
+      this.objectiveValues = new LinkedHashMap<>(objectiveValues);
+      this.weights = weights.clone();
+      this.feasible = feasible;
+      this.fullResult = fullResult;
+    }
+
+    public Map<String, Double> getDecisionVariables() {
+      return new LinkedHashMap<>(decisionVariables);
+    }
+
+    public Map<String, Double> getObjectiveValues() {
+      return new LinkedHashMap<>(objectiveValues);
+    }
+
+    public double[] getWeights() {
+      return weights.clone();
+    }
+
+    public boolean isFeasible() {
+      return feasible;
+    }
+
+    public OptimizationResult getFullResult() {
+      return fullResult;
+    }
+
+    /**
+     * Checks if this point dominates another point (all objectives at least as good, one strictly
+     * better).
+     *
+     * @param other the other point to compare
+     * @param objectiveTypes map of objective names to their types (MAXIMIZE/MINIMIZE)
+     * @return true if this point dominates the other
+     */
+    public boolean dominates(ParetoPoint other, Map<String, ObjectiveType> objectiveTypes) {
+      boolean atLeastOneBetter = false;
+      for (String objName : objectiveValues.keySet()) {
+        double thisVal = objectiveValues.getOrDefault(objName, 0.0);
+        double otherVal = other.objectiveValues.getOrDefault(objName, 0.0);
+        ObjectiveType type = objectiveTypes.getOrDefault(objName, ObjectiveType.MAXIMIZE);
+        int comparison = type == ObjectiveType.MAXIMIZE ? Double.compare(thisVal, otherVal)
+            : Double.compare(otherVal, thisVal);
+        if (comparison < 0) {
+          return false; // This point is worse in at least one objective
+        }
+        if (comparison > 0) {
+          atLeastOneBetter = true;
+        }
+      }
+      return atLeastOneBetter;
+    }
+  }
+
+  /**
+   * Result of a multi-objective Pareto optimization containing the Pareto front.
+   */
+  public static final class ParetoResult {
+    private final List<ParetoPoint> paretoFront;
+    private final List<ParetoPoint> allPoints;
+    private final List<String> objectiveNames;
+    private final Map<String, ObjectiveType> objectiveTypes;
+    private final int totalIterations;
+
+    /**
+     * Constructs a Pareto result.
+     *
+     * @param paretoFront the non-dominated solutions forming the Pareto front
+     * @param allPoints all evaluated points (including dominated ones)
+     * @param objectiveNames names of the objectives in order
+     * @param objectiveTypes types (MAXIMIZE/MINIMIZE) for each objective
+     * @param totalIterations total number of optimization iterations across all weights
+     */
+    public ParetoResult(List<ParetoPoint> paretoFront, List<ParetoPoint> allPoints,
+        List<String> objectiveNames, Map<String, ObjectiveType> objectiveTypes,
+        int totalIterations) {
+      this.paretoFront = new ArrayList<>(paretoFront);
+      this.allPoints = new ArrayList<>(allPoints);
+      this.objectiveNames = new ArrayList<>(objectiveNames);
+      this.objectiveTypes = new LinkedHashMap<>(objectiveTypes);
+      this.totalIterations = totalIterations;
+    }
+
+    /**
+     * Returns the Pareto front (non-dominated solutions only).
+     *
+     * @return list of Pareto-optimal points
+     */
+    public List<ParetoPoint> getParetoFront() {
+      return new ArrayList<>(paretoFront);
+    }
+
+    /**
+     * Returns all evaluated points including dominated ones.
+     *
+     * @return list of all points
+     */
+    public List<ParetoPoint> getAllPoints() {
+      return new ArrayList<>(allPoints);
+    }
+
+    /**
+     * Returns the objective names in order.
+     *
+     * @return list of objective names
+     */
+    public List<String> getObjectiveNames() {
+      return new ArrayList<>(objectiveNames);
+    }
+
+    /**
+     * Returns the objective types.
+     *
+     * @return map of objective name to type
+     */
+    public Map<String, ObjectiveType> getObjectiveTypes() {
+      return new LinkedHashMap<>(objectiveTypes);
+    }
+
+    /**
+     * Returns the total number of iterations across all weight combinations.
+     *
+     * @return total iterations
+     */
+    public int getTotalIterations() {
+      return totalIterations;
+    }
+
+    /**
+     * Returns the number of points on the Pareto front.
+     *
+     * @return Pareto front size
+     */
+    public int getParetoFrontSize() {
+      return paretoFront.size();
+    }
+
+    /**
+     * Returns the utopia point (best value for each objective independently).
+     *
+     * @return map of objective name to utopia value
+     */
+    public Map<String, Double> getUtopiaPoint() {
+      Map<String, Double> utopia = new LinkedHashMap<>();
+      for (String objName : objectiveNames) {
+        ObjectiveType type = objectiveTypes.getOrDefault(objName, ObjectiveType.MAXIMIZE);
+        double best =
+            type == ObjectiveType.MAXIMIZE ? Double.NEGATIVE_INFINITY : Double.POSITIVE_INFINITY;
+        for (ParetoPoint point : paretoFront) {
+          double val = point.getObjectiveValues().getOrDefault(objName, 0.0);
+          if (type == ObjectiveType.MAXIMIZE) {
+            best = Math.max(best, val);
+          } else {
+            best = Math.min(best, val);
+          }
+        }
+        utopia.put(objName, best);
+      }
+      return utopia;
+    }
+
+    /**
+     * Returns the nadir point (worst value for each objective on the Pareto front).
+     *
+     * @return map of objective name to nadir value
+     */
+    public Map<String, Double> getNadirPoint() {
+      Map<String, Double> nadir = new LinkedHashMap<>();
+      for (String objName : objectiveNames) {
+        ObjectiveType type = objectiveTypes.getOrDefault(objName, ObjectiveType.MAXIMIZE);
+        double worst =
+            type == ObjectiveType.MAXIMIZE ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
+        for (ParetoPoint point : paretoFront) {
+          double val = point.getObjectiveValues().getOrDefault(objName, 0.0);
+          if (type == ObjectiveType.MAXIMIZE) {
+            worst = Math.min(worst, val);
+          } else {
+            worst = Math.max(worst, val);
+          }
+        }
+        nadir.put(objName, worst);
+      }
+      return nadir;
+    }
+
+    /**
+     * Formats the Pareto front as a Markdown table.
+     *
+     * @return Markdown table string
+     */
+    public String toMarkdownTable() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("| # | Feasible |");
+      for (String objName : objectiveNames) {
+        sb.append(" ").append(objName).append(" |");
+      }
+      sb.append(" Weights |\n");
+      sb.append("|---|---|");
+      for (int i = 0; i < objectiveNames.size(); i++) {
+        sb.append("---|");
+      }
+      sb.append("---|\n");
+
+      int idx = 1;
+      for (ParetoPoint point : paretoFront) {
+        sb.append("| ").append(idx++).append(" | ").append(point.isFeasible() ? "yes" : "no")
+            .append(" |");
+        for (String objName : objectiveNames) {
+          double val = point.getObjectiveValues().getOrDefault(objName, Double.NaN);
+          sb.append(String.format(" %.4f |", val));
+        }
+        sb.append(" [");
+        double[] w = point.getWeights();
+        for (int i = 0; i < w.length; i++) {
+          if (i > 0) {
+            sb.append(", ");
+          }
+          sb.append(String.format("%.2f", w[i]));
+        }
+        sb.append("] |\n");
+      }
+      return sb.toString();
+    }
+  }
+
   /** Result of a single iteration. */
   private static final class Evaluation {
     private final double bottleneckUtilization;
@@ -968,12 +1594,59 @@ public class ProductionOptimizer {
   /**
    * Optimize the feed stream rate of a process to respect utilization limits and constraints.
    *
-   * @param process the process model to evaluate
-   * @param feedStream the feed stream whose flow rate will be adjusted
-   * @param config optimizer configuration
-   * @param objectives list of objectives (optional) to compute a weighted score for reporting
-   * @param constraints list of constraints with optional penalties
-   * @return optimization result
+   * <p>
+   * This is the primary optimization method for single-variable (flow rate) optimization. It
+   * adjusts the flow rate of the specified feed stream to maximize throughput while respecting
+   * equipment utilization limits and any specified constraints.
+   * </p>
+   *
+   * <p>
+   * <strong>Algorithm Selection</strong>
+   * </p>
+   * <p>
+   * The search algorithm is determined by {@link OptimizationConfig#searchMode}:
+   * </p>
+   * <ul>
+   * <li><b>BINARY_FEASIBILITY</b> - Fast binary search assuming monotonic feasibility</li>
+   * <li><b>GOLDEN_SECTION_SCORE</b> - Golden-section search for non-monotonic responses</li>
+   * <li><b>NELDER_MEAD_SCORE</b> - Simplex method (overkill for 1D, but supported)</li>
+   * <li><b>PARTICLE_SWARM_SCORE</b> - Global search for multi-modal problems</li>
+   * </ul>
+   *
+   * <p>
+   * <strong>Java Example</strong>
+   * </p>
+   * 
+   * <pre>{@code
+   * ProductionOptimizer optimizer = new ProductionOptimizer();
+   * OptimizationConfig config = new OptimizationConfig(50000.0, 200000.0)
+   *     .searchMode(SearchMode.GOLDEN_SECTION_SCORE).tolerance(100.0);
+   *
+   * OptimizationResult result = optimizer.optimize(process, feedStream, config, null, null);
+   * System.out.println("Optimal: " + result.getOptimalRate() + " " + result.getRateUnit());
+   * }</pre>
+   *
+   * <p>
+   * <strong>Python Example (via JPype)</strong>
+   * </p>
+   * 
+   * <pre>{@code
+   * optimizer = ProductionOptimizer()
+   * config = OptimizationConfig(50000.0, 200000.0) \
+   *     .searchMode(SearchMode.GOLDEN_SECTION_SCORE) \
+   *     .tolerance(100.0)
+   *
+   * result = optimizer.optimize(process, feed_stream, config, None, None)
+   * print(f"Optimal: {result.getOptimalRate():.0f} {result.getRateUnit()}")
+   * }</pre>
+   *
+   * @param process the process model to evaluate (must not be null)
+   * @param feedStream the feed stream whose flow rate will be adjusted (must not be null)
+   * @param config optimizer configuration including bounds and algorithm (must not be null)
+   * @param objectives list of objectives to compute weighted scores (may be null or empty)
+   * @param constraints list of constraints with optional penalties (may be null or empty)
+   * @return optimization result containing optimal rate, bottleneck, and diagnostics
+   * @throws NullPointerException if process, feedStream, or config is null
    */
   public OptimizationResult optimize(ProcessSystem process, StreamInterface feedStream,
       OptimizationConfig config, List<OptimizationObjective> objectives,
@@ -1005,8 +1678,69 @@ public class ProductionOptimizer {
   }
 
   /**
-   * Optimize multiple manipulated variables (feeds, pressures, temperatures) using
-   * multi-dimensional search strategies.
+   * Optimize multiple manipulated variables using multi-dimensional search strategies.
+   *
+   * <p>
+   * This method extends single-variable optimization to multiple decision variables such as flow
+   * rates, pressures, temperatures, or split ratios. It uses Nelder-Mead or Particle Swarm
+   * algorithms for multi-dimensional search.
+   * </p>
+   *
+   * <p>
+   * <strong>Algorithm Selection for Multi-Variable</strong>
+   * </p>
+   * <ul>
+   * <li><b>NELDER_MEAD_SCORE</b> - Recommended for 2-10 variables, derivative-free</li>
+   * <li><b>PARTICLE_SWARM_SCORE</b> - Better for non-convex problems with local optima</li>
+   * </ul>
+   *
+   * <p>
+   * <strong>Java Example</strong>
+   * </p>
+   * 
+   * <pre>{@code
+   * List<ManipulatedVariable> variables = Arrays.asList(
+   *     new ManipulatedVariable("flow", 50000, 200000, "kg/hr",
+   *         (p, v) -> ((Stream) p.getUnit("feed")).setFlowRate(v, "kg/hr")),
+   *     new ManipulatedVariable("pressure", 100, 200, "bara",
+   *         (p, v) -> ((Compressor) p.getUnit("comp")).setOutletPressure(v, "bara")));
+   *
+   * OptimizationConfig config = new OptimizationConfig(0, 1) // bounds from variables
+   *     .searchMode(SearchMode.NELDER_MEAD_SCORE);
+   *
+   * OptimizationResult result = optimizer.optimize(process, variables, config, objectives, null);
+   * Map<String, Double> optimalValues = result.getDecisionVariables();
+   * }</pre>
+   *
+   * <p>
+   * <strong>Python Example (via JPype)</strong>
+   * </p>
+   * 
+   * <pre>
+   * from jpype import JImplements, JOverride
+   * Arrays = jneqsim.java.util.Arrays
+   *
+   * &#64;JImplements("java.util.function.BiConsumer")
+   * class FlowSetter:
+   *     &#64;JOverride
+   *     def accept(self, proc, val):
+   *         proc.getUnit("feed").setFlowRate(float(val), "kg/hr")
+   *
+   * variables = Arrays.asList([
+   *     ManipulatedVariable("flow", 50000, 200000, "kg/hr", FlowSetter())
+   * ])
+   * result = optimizer.optimize(process, variables, config, None, None)
+   * </pre>
+   *
+   * @param process the process model to evaluate (must not be null)
+   * @param variables list of manipulated variables with bounds and setters (must not be empty)
+   * @param config optimizer configuration (must not be null)
+   * @param objectives list of objectives (may be null or empty)
+   * @param constraints list of constraints (may be null or empty)
+   * @return optimization result with optimal variable values in {@code getDecisionVariables()}
+   * @throws NullPointerException if process, variables, or config is null
+   * @throws IllegalArgumentException if variables is empty or algorithm doesn't support
+   *         multi-variable
    */
   public OptimizationResult optimize(ProcessSystem process, List<ManipulatedVariable> variables,
       OptimizationConfig config, List<OptimizationObjective> objectives,
@@ -1048,11 +1782,26 @@ public class ProductionOptimizer {
   /**
    * Optimize a collection of named scenarios and return results for side-by-side comparison.
    *
+   * <p>
+   * If parallel evaluations are enabled in any scenario's config, scenarios will be optimized
+   * concurrently using a thread pool.
+   * </p>
+   *
    * @param scenarios scenarios containing process, feed, config, objectives, and constraints
    * @return list of scenario results in the same order as provided
    */
   public List<ScenarioResult> optimizeScenarios(List<ScenarioRequest> scenarios) {
     Objects.requireNonNull(scenarios, "scenarios are required");
+
+    // Check if any scenario has parallel enabled
+    boolean anyParallel = scenarios.stream()
+        .anyMatch(s -> s.getConfig() != null && s.getConfig().isParallelEvaluations());
+
+    if (anyParallel && scenarios.size() > 1) {
+      return optimizeScenariosParallel(scenarios);
+    }
+
+    // Sequential execution
     List<ScenarioResult> results = new ArrayList<>();
     for (ScenarioRequest scenario : scenarios) {
       OptimizationResult result;
@@ -1066,6 +1815,359 @@ public class ProductionOptimizer {
       results.add(new ScenarioResult(scenario.getName(), result));
     }
     return results;
+  }
+
+  /**
+   * Optimize scenarios in parallel using a thread pool.
+   *
+   * @param scenarios list of scenario requests to optimize
+   * @return list of scenario results in the same order as input
+   */
+  private List<ScenarioResult> optimizeScenariosParallel(List<ScenarioRequest> scenarios) {
+    int threads = scenarios.stream().filter(s -> s.getConfig() != null)
+        .mapToInt(s -> s.getConfig().getParallelThreads()).max()
+        .orElse(Runtime.getRuntime().availableProcessors());
+
+    ExecutorService executor = Executors.newFixedThreadPool(Math.min(threads, scenarios.size()));
+    List<Future<ScenarioResult>> futures = new ArrayList<>();
+
+    for (ScenarioRequest scenario : scenarios) {
+      futures.add(executor.submit(() -> {
+        OptimizationResult result;
+        if (scenario.getVariables() != null && !scenario.getVariables().isEmpty()) {
+          result = optimize(scenario.getProcess(), scenario.getVariables(), scenario.getConfig(),
+              scenario.getObjectives(), scenario.getConstraints());
+        } else {
+          result = optimize(scenario.getProcess(), scenario.getFeedStream(), scenario.getConfig(),
+              scenario.getObjectives(), scenario.getConstraints());
+        }
+        return new ScenarioResult(scenario.getName(), result);
+      }));
+    }
+
+    List<ScenarioResult> results = new ArrayList<>();
+    for (Future<ScenarioResult> future : futures) {
+      try {
+        results.add(future.get());
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException("Scenario optimization interrupted", e);
+      } catch (ExecutionException e) {
+        throw new RuntimeException("Scenario optimization failed", e.getCause());
+      }
+    }
+
+    executor.shutdown();
+    return results;
+  }
+
+  /**
+   * Perform multi-objective Pareto optimization using weighted-sum scalarization.
+   *
+   * <p>
+   * This method generates a Pareto front by solving a series of single-objective problems with
+   * different weight combinations. The weighted-sum approach converts the multi-objective problem
+   * into a sequence of single-objective problems by combining objectives with weights.
+   * </p>
+   *
+   * <p>
+   * <strong>How It Works</strong>
+   * </p>
+   * <ol>
+   * <li>Generate weight combinations based on {@code paretoGridSize} (e.g., for 2 objectives with
+   * gridSize=11: [1.0,0.0], [0.9,0.1], ..., [0.0,1.0])</li>
+   * <li>For each weight combination, solve the weighted single-objective problem</li>
+   * <li>Filter dominated solutions to obtain the Pareto front</li>
+   * </ol>
+   *
+   * <p>
+   * <strong>Java Example</strong>
+   * </p>
+   * 
+   * <pre>{@code
+   * List<OptimizationObjective> objectives = Arrays.asList(
+   *     new OptimizationObjective("throughput", p -> p.getUnit("outlet").getFlowRate("kg/hr"), 1.0,
+   *         ObjectiveType.MAXIMIZE),
+   *     new OptimizationObjective("power", p -> ((Compressor) p.getUnit("comp")).getPower("kW"), 1.0,
+   *         ObjectiveType.MINIMIZE));
+   *
+   * OptimizationConfig config = new OptimizationConfig(50000, 200000).paretoGridSize(11) // generates
+   *                                                                                      // 11 weight
+   *                                                                                      // combinations
+   *     .searchMode(SearchMode.GOLDEN_SECTION_SCORE);
+   *
+   * ParetoResult pareto = optimizer.optimizePareto(process, feed, config, objectives, null);
+   *
+   * System.out.println("Pareto front size: " + pareto.getParetoFrontSize());
+   * System.out.println(pareto.toMarkdownTable());
+   * }</pre>
+   *
+   * <p>
+   * <strong>Python Example (via JPype)</strong>
+   * </p>
+   * 
+   * <pre>{@code
+   * objectives = Arrays.asList([throughput_obj, power_obj])
+   * config = OptimizationConfig(50000, 200000).paretoGridSize(11)
+   *
+   * pareto = optimizer.optimizePareto(process, feed, config, objectives, None)
+   * print(f"Pareto front: {pareto.getParetoFrontSize()} points")
+   * print(pareto.toMarkdownTable())
+   * }</pre>
+   *
+   * @param process the process model to evaluate (must not be null)
+   * @param feedStream the feed stream whose flow rate will be adjusted (must not be null)
+   * @param config optimizer configuration; {@code paretoGridSize} controls weight granularity
+   * @param objectives list of objectives (must have at least 2 for Pareto optimization)
+   * @param constraints list of constraints (may be null or empty)
+   * @return Pareto result containing the Pareto front, utopia/nadir points, and all evaluated
+   *         points
+   * @throws NullPointerException if process, feedStream, config, or objectives is null
+   * @throws IllegalArgumentException if fewer than 2 objectives are provided
+   */
+  public ParetoResult optimizePareto(ProcessSystem process, StreamInterface feedStream,
+      OptimizationConfig config, List<OptimizationObjective> objectives,
+      List<OptimizationConstraint> constraints) {
+    Objects.requireNonNull(process, "ProcessSystem is required");
+    Objects.requireNonNull(feedStream, "Feed stream is required");
+    Objects.requireNonNull(config, "OptimizationConfig is required");
+    Objects.requireNonNull(objectives, "Objectives are required for Pareto optimization");
+    if (objectives.size() < 2) {
+      throw new IllegalArgumentException("Pareto optimization requires at least 2 objectives");
+    }
+
+    List<String> objectiveNames = new ArrayList<>();
+    Map<String, ObjectiveType> objectiveTypes = new LinkedHashMap<>();
+    for (OptimizationObjective obj : objectives) {
+      objectiveNames.add(obj.getName());
+      objectiveTypes.put(obj.getName(), obj.getType());
+    }
+
+    List<double[]> weightCombinations =
+        generateWeightCombinations(objectives.size(), config.getParetoGridSize());
+
+    List<ParetoPoint> allPoints = new ArrayList<>();
+    int totalIterations = 0;
+
+    // Determine if we should run in parallel
+    if (config.isParallelEvaluations() && weightCombinations.size() > 1) {
+      allPoints = optimizeParetoParallel(process, feedStream, config, objectives, constraints,
+          weightCombinations, objectiveNames);
+      totalIterations = allPoints.size() * config.getMaxIterations();
+    } else {
+      // Sequential execution
+      for (double[] weights : weightCombinations) {
+        List<OptimizationObjective> weightedObjectives =
+            createWeightedObjectives(objectives, weights);
+        OptimizationResult result =
+            optimize(process, feedStream, config, weightedObjectives, constraints);
+        totalIterations += result.getIterations();
+
+        ParetoPoint point = new ParetoPoint(result.getDecisionVariables(),
+            result.getObjectiveValues(), weights, result.isFeasible(), result);
+        allPoints.add(point);
+      }
+    }
+
+    // Filter to Pareto front (non-dominated solutions)
+    List<ParetoPoint> paretoFront = filterToPareto(allPoints, objectiveTypes);
+
+    return new ParetoResult(paretoFront, allPoints, objectiveNames, objectiveTypes,
+        totalIterations);
+  }
+
+  /**
+   * Perform multi-objective Pareto optimization with multiple manipulated variables.
+   *
+   * <p>
+   * This extends Pareto optimization to support multiple decision variables (e.g., flow rate and
+   * pressure simultaneously). Uses Nelder-Mead or PSO for multi-dimensional search at each weight
+   * combination.
+   * </p>
+   *
+   * <p>
+   * <strong>Java Example</strong>
+   * </p>
+   * 
+   * <pre>{@code
+   * List<ManipulatedVariable> variables =
+   *     Arrays.asList(new ManipulatedVariable("flow", 50000, 200000, "kg/hr", flowSetter),
+   *         new ManipulatedVariable("pressure", 100, 200, "bara", pressureSetter));
+   *
+   * List<OptimizationObjective> objectives = Arrays.asList(throughputObj, powerObj);
+   *
+   * OptimizationConfig config =
+   *     new OptimizationConfig(0, 1).paretoGridSize(11).searchMode(SearchMode.NELDER_MEAD_SCORE);
+   *
+   * ParetoResult pareto = optimizer.optimizePareto(process, variables, config, objectives, null);
+   * }</pre>
+   *
+   * @param process the process model to evaluate (must not be null)
+   * @param variables list of manipulated decision variables (must not be empty)
+   * @param config optimizer configuration (must not be null)
+   * @param objectives list of objectives (must have at least 2)
+   * @param constraints list of constraints (may be null or empty)
+   * @return Pareto result containing the Pareto front and all evaluated points
+   * @throws NullPointerException if process, variables, config, or objectives is null
+   * @throws IllegalArgumentException if fewer than 2 objectives or no variables provided
+   */
+  public ParetoResult optimizePareto(ProcessSystem process, List<ManipulatedVariable> variables,
+      OptimizationConfig config, List<OptimizationObjective> objectives,
+      List<OptimizationConstraint> constraints) {
+    Objects.requireNonNull(process, "ProcessSystem is required");
+    Objects.requireNonNull(variables, "Variables are required");
+    Objects.requireNonNull(config, "OptimizationConfig is required");
+    Objects.requireNonNull(objectives, "Objectives are required for Pareto optimization");
+    if (objectives.size() < 2) {
+      throw new IllegalArgumentException("Pareto optimization requires at least 2 objectives");
+    }
+    if (variables.isEmpty()) {
+      throw new IllegalArgumentException("At least one variable is required");
+    }
+
+    List<String> objectiveNames = new ArrayList<>();
+    Map<String, ObjectiveType> objectiveTypes = new LinkedHashMap<>();
+    for (OptimizationObjective obj : objectives) {
+      objectiveNames.add(obj.getName());
+      objectiveTypes.put(obj.getName(), obj.getType());
+    }
+
+    List<double[]> weightCombinations =
+        generateWeightCombinations(objectives.size(), config.getParetoGridSize());
+
+    List<ParetoPoint> allPoints = new ArrayList<>();
+    int totalIterations = 0;
+
+    for (double[] weights : weightCombinations) {
+      List<OptimizationObjective> weightedObjectives =
+          createWeightedObjectives(objectives, weights);
+      OptimizationResult result =
+          optimize(process, variables, config, weightedObjectives, constraints);
+      totalIterations += result.getIterations();
+
+      ParetoPoint point = new ParetoPoint(result.getDecisionVariables(),
+          result.getObjectiveValues(), weights, result.isFeasible(), result);
+      allPoints.add(point);
+    }
+
+    List<ParetoPoint> paretoFront = filterToPareto(allPoints, objectiveTypes);
+
+    return new ParetoResult(paretoFront, allPoints, objectiveNames, objectiveTypes,
+        totalIterations);
+  }
+
+  /**
+   * Parallel execution of Pareto weight combinations.
+   */
+  private List<ParetoPoint> optimizeParetoParallel(ProcessSystem process,
+      StreamInterface feedStream, OptimizationConfig config, List<OptimizationObjective> objectives,
+      List<OptimizationConstraint> constraints, List<double[]> weightCombinations,
+      List<String> objectiveNames) {
+
+    ExecutorService executor = Executors
+        .newFixedThreadPool(Math.min(config.getParallelThreads(), weightCombinations.size()));
+    List<Future<ParetoPoint>> futures = new ArrayList<>();
+
+    for (double[] weights : weightCombinations) {
+      final double[] w = weights.clone();
+      futures.add(executor.submit(() -> {
+        List<OptimizationObjective> weightedObjectives = createWeightedObjectives(objectives, w);
+        OptimizationResult result =
+            optimize(process, feedStream, config, weightedObjectives, constraints);
+        return new ParetoPoint(result.getDecisionVariables(), result.getObjectiveValues(), w,
+            result.isFeasible(), result);
+      }));
+    }
+
+    List<ParetoPoint> points = new ArrayList<>();
+    for (Future<ParetoPoint> future : futures) {
+      try {
+        points.add(future.get());
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException("Pareto optimization interrupted", e);
+      } catch (ExecutionException e) {
+        throw new RuntimeException("Pareto optimization failed", e.getCause());
+      }
+    }
+
+    executor.shutdown();
+    return points;
+  }
+
+  /**
+   * Generate all weight combinations for a given number of objectives and grid size.
+   */
+  private List<double[]> generateWeightCombinations(int numObjectives, int gridSize) {
+    List<double[]> combinations = new ArrayList<>();
+    if (numObjectives == 2) {
+      // Simple case: linear combination
+      for (int i = 0; i < gridSize; i++) {
+        double w1 = (double) i / (gridSize - 1);
+        combinations.add(new double[] {1.0 - w1, w1});
+      }
+    } else {
+      // General case: recursive simplex grid
+      generateWeightCombinationsRecursive(numObjectives, gridSize - 1, new double[numObjectives], 0,
+          1.0, combinations);
+    }
+    return combinations;
+  }
+
+  /**
+   * Recursively generate weight combinations that sum to 1.
+   */
+  private void generateWeightCombinationsRecursive(int numObjectives, int divisions,
+      double[] current, int index, double remaining, List<double[]> combinations) {
+    if (index == numObjectives - 1) {
+      current[index] = remaining;
+      combinations.add(current.clone());
+      return;
+    }
+    for (int i = 0; i <= divisions; i++) {
+      double weight = (double) i / divisions * remaining;
+      if (weight <= remaining + 1e-10) {
+        current[index] = weight;
+        generateWeightCombinationsRecursive(numObjectives, divisions, current, index + 1,
+            remaining - weight, combinations);
+      }
+    }
+  }
+
+  /**
+   * Create weighted objectives from original objectives and weights.
+   */
+  private List<OptimizationObjective> createWeightedObjectives(
+      List<OptimizationObjective> originals, double[] weights) {
+    List<OptimizationObjective> weighted = new ArrayList<>();
+    for (int i = 0; i < originals.size(); i++) {
+      OptimizationObjective orig = originals.get(i);
+      double newWeight = orig.getWeight() * weights[i];
+      weighted.add(new OptimizationObjective(orig.getName(), proc -> orig.evaluate(proc), newWeight,
+          orig.getType()));
+    }
+    return weighted;
+  }
+
+  /**
+   * Filter points to keep only Pareto-optimal (non-dominated) solutions.
+   */
+  private List<ParetoPoint> filterToPareto(List<ParetoPoint> allPoints,
+      Map<String, ObjectiveType> objectiveTypes) {
+    List<ParetoPoint> paretoFront = new ArrayList<>();
+    for (ParetoPoint candidate : allPoints) {
+      boolean dominated = false;
+      for (ParetoPoint other : allPoints) {
+        if (other != candidate && other.dominates(candidate, objectiveTypes)) {
+          dominated = true;
+          break;
+        }
+      }
+      if (!dominated) {
+        paretoFront.add(candidate);
+      }
+    }
+    return paretoFront;
   }
 
   /**

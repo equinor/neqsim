@@ -17,7 +17,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * registry uses a priority-based selection when multiple strategies support the same equipment.
  * </p>
  *
- * <h3>Usage</h3>
+ * <p><strong>Usage</strong></p>
  * 
  * <pre>
  * // Get the singleton instance

@@ -58,6 +58,10 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
+    // First check if inlet stream needs recalculation
+    if (inStream != null && inStream.needRecalculation()) {
+      return true;
+    }
     if (outStream == null || inStream == null) {
       return true;
     }

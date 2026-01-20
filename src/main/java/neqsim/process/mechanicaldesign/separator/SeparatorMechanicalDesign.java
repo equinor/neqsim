@@ -26,10 +26,16 @@ import neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard;
 public class SeparatorMechanicalDesign extends MechanicalDesign {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
-  double gasLoadFactor = 1.0;
+  /**
+   * Gas load factor (K-factor) for Souders-Brown equation [m/s]. Default 0.107 for mesh demister.
+   */
+  double gasLoadFactor = 0.107;
+  /** Volume safety factor for design flow calculations. Default 1.0 (no margin). */
   double volumeSafetyFactor = 1.0;
-  double Fg = 1.0;
-  double retentionTime = 60.0;
+  /** Gas area fraction (1 - liquid level fraction). Default 0.5 for 50% liquid level. */
+  double Fg = 0.5;
+  /** Liquid retention time in seconds. Default 120s (2 minutes). */
+  double retentionTime = 120.0;
 
   /**
    * <p>
@@ -269,12 +275,106 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     setModuleLength(moduleLength);
   }
 
+  /**
+   * Performs the sizing calculations without reading design specifications. This method is called
+   * by autoSize() after design specs have been read and any user overrides have been applied.
+   */
+  public void performSizingCalculations() {
+    Separator separator = (Separator) getProcessEquipment();
+    separator.getThermoSystem().initPhysicalProperties();
+
+    double emptyVesselWeight = 0.0;
+    double internalsWeight = 0.0;
+    double externalNozzelsWeight = 0.0;
+    double pipingWeight = 0.0;
+    double structualWeight = 0.0;
+    double electricalWeight = 0.0;
+    double totalSkidWeight = 0.0;
+    double materialsCost = 0.0;
+
+    double gasDensity =
+        separator.getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+
+    double liqDensity = getDefaultLiquidDensity();
+    double liqViscosity = getDefaultLiquidViscosity();
+    if (separator.getThermoSystem().getNumberOfPhases() > 1) {
+      liqDensity = separator.getThermoSystem().getPhase(1).getPhysicalProperties().getDensity();
+      liqViscosity = separator.getThermoSystem().getPhase(1).getPhysicalProperties().getViscosity();
+    }
+
+    // Apply safety factor to flow
+    maxDesignVolumeFlow =
+        volumeSafetyFactor * separator.getThermoSystem().getPhase(0).getVolume() / 1e5;
+
+    // Souders-Brown equation for max gas velocity
+    double maxGasVelocity = gasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
+
+    // Calculate diameter based on gas area (Fg is gas fraction = 1 - liquid level)
+    innerDiameter = Math.sqrt(4.0 * maxDesignVolumeFlow
+        / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
+    outerDiameter = innerDiameter + 2.0 * wallThickness;
+
+    // Calculate length based on liquid retention time
+    double liquidVolume = separator.getThermoSystem().getLiquidVolume() / 1e5;
+    if (liquidVolume > 1e-10) {
+      tantanLength = Math.sqrt(4.0 * retentionTime * liquidVolume * volumeSafetyFactor
+          / (Math.PI * innerDiameter * innerDiameter * (1 - Fg)));
+    } else {
+      // No liquid - use L/D ratio of 4
+      tantanLength = innerDiameter * 4.0;
+    }
+
+    double separatorTotalLength = tantanLength + innerDiameter;
+
+    // Check L/D ratio and adjust if needed
+    if (separatorTotalLength / innerDiameter > 6 || separatorTotalLength / innerDiameter < 3) {
+      tantanLength = innerDiameter * 4.0; // Default to L/D = 5
+    }
+
+    // Weight calculations
+    emptyVesselWeight = 0.032 * getWallThickness() * 1e3 * innerDiameter * 1e3 * tantanLength;
+    setOuterDiameter(innerDiameter + 2.0 * getWallThickness());
+
+    // Calculate internals weight
+    for (SeparatorSection sep : separator.getSeparatorSections()) {
+      sep.setOuterDiameter(getOuterDiameter());
+      sep.getMechanicalDesign().calcDesign();
+      internalsWeight += sep.getMechanicalDesign().getTotalWeight();
+    }
+
+    externalNozzelsWeight = 0.0;
+    double Wv = emptyVesselWeight + internalsWeight + externalNozzelsWeight;
+    pipingWeight = Wv * 0.4;
+    structualWeight = Wv * 0.1;
+    electricalWeight = Wv * 0.08;
+    totalSkidWeight = Wv + pipingWeight + structualWeight + electricalWeight;
+    materialsCost = totalSkidWeight / 1000.0 * (1000 * 6.0) / 1000.0;
+    moduleWidth = innerDiameter * 2;
+    moduleLength = tantanLength * 1.5;
+    moduleHeight = innerDiameter * 2 + 1.0;
+
+    setWeigthVesselShell(emptyVesselWeight);
+    setInnerDiameter(innerDiameter);
+    setOuterDiameter(outerDiameter);
+    setWeightElectroInstrument(electricalWeight);
+    setWeightNozzle(externalNozzelsWeight);
+    setWeightPiping(pipingWeight);
+    setWeightStructualSteel(structualWeight);
+    setWeightTotal(totalSkidWeight);
+    setModuleHeight(moduleHeight);
+    setModuleWidth(moduleWidth);
+    setModuleLength(moduleLength);
+  }
+
   /** {@inheritDoc} */
   @Override
   public void setDesign() {
-    ((SeparatorInterface) getProcessEquipment()).setInternalDiameter(innerDiameter);
-    ((Separator) getProcessEquipment()).setSeparatorLength(tantanLength);
-    // this method will be implemented to set calculated design...
+    Separator separator = (Separator) getProcessEquipment();
+    separator.setInternalDiameter(innerDiameter);
+    separator.setSeparatorLength(tantanLength);
+    // Synchronize design parameters back to separator
+    separator.setDesignGasLoadFactor(gasLoadFactor);
+    separator.setDesignLiquidLevelFraction(1.0 - Fg);
   }
 
   /**
@@ -312,6 +412,15 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
+   * Set gas load factor (K-factor).
+   *
+   * @param gasLoadFactor gas load factor [m/s], typically 0.07-0.15 for horizontal separators
+   */
+  public void setGasLoadFactor(double gasLoadFactor) {
+    this.gasLoadFactor = gasLoadFactor;
+  }
+
+  /**
    * Get volume safety factor.
    *
    * @return volume safety factor
@@ -321,12 +430,30 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
+   * Set volume safety factor for design flow calculations.
+   *
+   * @param volumeSafetyFactor safety factor (typically 1.1-1.3)
+   */
+  public void setVolumeSafetyFactor(double volumeSafetyFactor) {
+    this.volumeSafetyFactor = volumeSafetyFactor;
+  }
+
+  /**
    * Get liquid level fraction (Fg).
    *
    * @return liquid level fraction
    */
   public double getFg() {
     return Fg;
+  }
+
+  /**
+   * Set liquid level fraction (Fg = 1 - liquid level).
+   *
+   * @param fg gas area fraction
+   */
+  public void setFg(double fg) {
+    this.Fg = fg;
   }
 
   /**

@@ -79,8 +79,8 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
    * calcXi.
    * </p>
    *
-   * @param assosScheme an array of {@link int} objects
-   * @param assosScheme2 an array of {@link int} objects
+   * @param assosScheme an array of int objects
+   * @param assosScheme2 an array of int objects
    * @param siteNumber a int
    * @param compnumb a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object

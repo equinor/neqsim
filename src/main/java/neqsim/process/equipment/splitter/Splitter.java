@@ -204,6 +204,10 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
+    // Check if inlet stream needs recalculation first
+    if (inletStream.needRecalculation()) {
+      return true;
+    }
     if (inletStream.getFluid().getTemperature() == lastTemperature
         && inletStream.getFluid().getPressure() == lastPressure
         && Math.abs(inletStream.getFluid().getFlowRate("kg/hr") - lastFlowRate)
@@ -252,10 +256,11 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       thermoOps.TPflash();
     }
 
-    lastFlowRate = thermoSystem.getFlowRate("kg/hr");
-    lastTemperature = thermoSystem.getTemperature();
-    lastPressure = thermoSystem.getPressure();
-    lastComposition = thermoSystem.getMolarComposition();
+    // Store inlet stream values for needRecalculation check (not split stream values)
+    lastFlowRate = inletStream.getFluid().getFlowRate("kg/hr");
+    lastTemperature = inletStream.getFluid().getTemperature();
+    lastPressure = inletStream.getFluid().getPressure();
+    lastComposition = inletStream.getFluid().getMolarComposition();
     oldSplitFactor = Arrays.copyOf(splitFactor, splitFactor.length);
 
     setCalculationIdentifier(id);

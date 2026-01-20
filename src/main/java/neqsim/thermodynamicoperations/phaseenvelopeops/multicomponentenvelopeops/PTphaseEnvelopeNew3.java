@@ -227,7 +227,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
    * Getter for the field <code>pressures</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[] getPressures() {
     return pressures;
@@ -238,7 +238,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
    * Getter for the field <code>temperatures</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[] getTemperatures() {
     return temperatures;
@@ -304,7 +304,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
    * getPhaseMatrix.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[][] getPhaseMatrix() {
     return betta;
@@ -316,7 +316,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
    * Getter for the field <code>bettaTransitionRegion</code>.
    * </p>
    *
-   * @return an array of {@link boolean} objects
+   * @return an array of boolean objects
    */
   public boolean[][] getBettaTransitionRegion() {
     return bettaTransitionRegion;
@@ -328,7 +328,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
    * getBettaMatrix.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[][] getBettaMatrix() {
     return betta;
@@ -339,7 +339,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
    * Getter for the field <code>dewPointTemperatures</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[] getDewPointTemperatures() {
     return dewPointTemperatures;
@@ -350,7 +350,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
    * Getter for the field <code>dewPointPressures</code>.
    * </p>
    *
-   * @return an array of {@link double} objects
+   * @return an array of double objects
    */
   public double[] getDewPointPressures() {
     return dewPointPressures;

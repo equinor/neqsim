@@ -44,6 +44,11 @@ public class CompressorDriver implements Serializable {
   private double isoTemperature = 288.15; // K (ISO conditions)
   private double temperatureDerateFactor = 0.005; // power reduction per K above ISO
 
+  // Speed-dependent max power curve coefficients
+  // P_max(N) = maxPower * (a + b*(N/N_rated) + c*(N/N_rated)²)
+  private double[] maxPowerCurveCoeffs = null; // null means constant max power
+  private boolean useMaxPowerCurve = false;
+
   /**
    * Default constructor.
    */
@@ -94,6 +99,11 @@ public class CompressorDriver implements Serializable {
   /**
    * Get the maximum available power at current conditions.
    *
+   * <p>
+   * This method returns a constant max power. Use {@link #getMaxAvailablePowerAtSpeed(double)} if a
+   * speed-dependent max power curve has been configured.
+   * </p>
+   *
    * @return maximum power in kW
    */
   public double getMaxAvailablePower() {
@@ -103,6 +113,67 @@ public class CompressorDriver implements Serializable {
       return maxPower * derateFactor;
     }
     return maxPower;
+  }
+
+  /**
+   * Get the maximum available power at a specific speed.
+   *
+   * <p>
+   * If a max power curve has been configured using
+   * {@link #setMaxPowerCurveCoefficients(double, double, double)}, the max power will vary with
+   * speed according to: P_max(N) = maxPower * (a + b*(N/N_rated) + c*(N/N_rated)²)
+   * </p>
+   *
+   * <p>
+   * For gas turbines, ambient temperature derating is also applied.
+   * </p>
+   *
+   * @param speed current speed in RPM
+   * @return maximum power in kW at the given speed
+   */
+  public double getMaxAvailablePowerAtSpeed(double speed) {
+    double basePower = maxPower;
+
+    // Apply speed-dependent curve if configured
+    if (useMaxPowerCurve && maxPowerCurveCoeffs != null && ratedSpeed > 0) {
+      double speedRatio = speed / ratedSpeed;
+      double curveFactor = maxPowerCurveCoeffs[0] + maxPowerCurveCoeffs[1] * speedRatio
+          + maxPowerCurveCoeffs[2] * speedRatio * speedRatio;
+      // Ensure factor stays positive and reasonable (0.1 to 1.5)
+      curveFactor = Math.max(0.1, Math.min(1.5, curveFactor));
+      basePower = maxPower * curveFactor;
+    }
+
+    // Apply gas turbine temperature derating if applicable
+    if (driverType == DriverType.GAS_TURBINE) {
+      double tempDelta = ambientTemperature - isoTemperature;
+      double derateFactor = 1.0 - Math.max(0, tempDelta * temperatureDerateFactor);
+      basePower = basePower * derateFactor;
+    }
+
+    return basePower;
+  }
+
+  /**
+   * Check if the driver can deliver the required power at a specific speed.
+   *
+   * @param requiredPower required power in kW
+   * @param speed current speed in RPM
+   * @return true if power can be delivered at this speed
+   */
+  public boolean canDeliverPowerAtSpeed(double requiredPower, double speed) {
+    return requiredPower <= getMaxAvailablePowerAtSpeed(speed);
+  }
+
+  /**
+   * Get the power margin (remaining power capacity) at a specific speed.
+   *
+   * @param currentPower current power demand in kW
+   * @param speed current speed in RPM
+   * @return power margin in kW
+   */
+  public double getPowerMarginAtSpeed(double currentPower, double speed) {
+    return getMaxAvailablePowerAtSpeed(speed) - currentPower;
   }
 
   /**
@@ -579,6 +650,79 @@ public class CompressorDriver implements Serializable {
    */
   public void setTemperatureDerateFactor(double factor) {
     this.temperatureDerateFactor = factor;
+  }
+
+  /**
+   * Set max power curve coefficients for speed-dependent max power.
+   *
+   * <p>
+   * The max power at a given speed is calculated as: P_max(N) = maxPower * (a + b*(N/N_rated) +
+   * c*(N/N_rated)²)
+   *
+   * <p>
+   * Example coefficients:
+   * </p>
+   * <ul>
+   * <li>Constant power: a=1.0, b=0.0, c=0.0 (default)</li>
+   * <li>Linear increase: a=0.5, b=0.5, c=0.0 (50% at 0 speed, 100% at rated)</li>
+   * <li>Typical VFD motor: a=0.0, b=1.0, c=0.0 (power proportional to speed)</li>
+   * <li>With torque limit: a=0.0, b=0.8, c=0.2 (slight curve)</li>
+   * </ul>
+   *
+   * @param a constant term (dimensionless)
+   * @param b linear term coefficient (dimensionless)
+   * @param c quadratic term coefficient (dimensionless)
+   */
+  public void setMaxPowerCurveCoefficients(double a, double b, double c) {
+    this.maxPowerCurveCoeffs = new double[] {a, b, c};
+    this.useMaxPowerCurve = true;
+  }
+
+  /**
+   * Get the max power curve coefficients.
+   *
+   * @return array of coefficients [a, b, c] or null if not set
+   */
+  public double[] getMaxPowerCurveCoefficients() {
+    if (maxPowerCurveCoeffs != null) {
+      return new double[] {maxPowerCurveCoeffs[0], maxPowerCurveCoeffs[1], maxPowerCurveCoeffs[2]};
+    }
+    return null;
+  }
+
+  /**
+   * Check if speed-dependent max power curve is enabled.
+   *
+   * @return true if max power varies with speed
+   */
+  public boolean isMaxPowerCurveEnabled() {
+    return useMaxPowerCurve;
+  }
+
+  /**
+   * Disable the speed-dependent max power curve.
+   *
+   * <p>
+   * After calling this method, {@link #getMaxAvailablePowerAtSpeed(double)} will return constant
+   * max power regardless of speed.
+   * </p>
+   */
+  public void disableMaxPowerCurve() {
+    this.useMaxPowerCurve = false;
+  }
+
+  /**
+   * Enable the speed-dependent max power curve.
+   *
+   * <p>
+   * This method enables the curve if coefficients have been set. Use
+   * {@link #setMaxPowerCurveCoefficients(double, double, double)} first.
+   * </p>
+   */
+  public void enableMaxPowerCurve() {
+    if (maxPowerCurveCoeffs != null) {
+      this.useMaxPowerCurve = true;
+    }
   }
 
   @Override

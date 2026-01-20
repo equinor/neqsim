@@ -8,7 +8,8 @@ Documentation for compression equipment in NeqSim process simulation.
 - [Calculation Methods](#calculation-methods)
 - [Performance Curves](#performance-curves)
 - [Surge and Stone Wall](#surge-and-stone-wall)
-- [Mechanical Losses and Seal Gas](#mechanical-losses-and-seal-gas) ⭐ NEW
+- [Compressor Driver](#compressor-driver) ⭐ NEW
+- [Mechanical Losses and Seal Gas](#mechanical-losses-and-seal-gas)
 - [Usage Examples](#usage-examples)
 
 > **📖 Detailed Curve Documentation:** For comprehensive information on compressor curves, 
@@ -368,6 +369,238 @@ comp.run();
 
 > **📖 Detailed Documentation:** See [Compressor Curves - Automatic Generation](compressor_curves.md#automatic-curve-generation) 
 > for complete API reference, advanced corrections, and examples.
+
+---
+
+## Compressor Driver
+
+NeqSim supports detailed modeling of compressor drivers including electric motors, gas turbines, and variable frequency drives (VFDs). The driver model includes power limits, efficiency curves, and **speed-dependent maximum power**.
+
+### Overview
+
+**Location:** `neqsim.process.equipment.compressor.CompressorDriver`
+
+**Driver Types:**
+- `ELECTRIC_MOTOR` - Fixed speed electric motor
+- `VFD_MOTOR` - Variable frequency drive motor
+- `GAS_TURBINE` - Gas turbine (with temperature derating)
+- `STEAM_TURBINE` - Steam turbine driver
+- `RECIPROCATING_ENGINE` - Reciprocating gas/diesel engine
+
+### Basic Usage
+
+```java
+import neqsim.process.equipment.compressor.CompressorDriver;
+import neqsim.process.equipment.compressor.DriverType;
+
+// Create driver with type and rated power
+CompressorDriver driver = new CompressorDriver(DriverType.VFD_MOTOR, 5000.0);
+driver.setRatedSpeed(5000.0);  // RPM
+driver.setMaxSpeed(6000.0);    // RPM
+driver.setMinSpeed(1000.0);    // RPM
+
+// Attach to compressor
+compressor.setDriver(driver);
+```
+
+### Speed-Dependent Maximum Power
+
+A key feature is the ability to specify max power as a function of compressor speed. This is essential for accurate modeling of:
+
+- **VFD motors** where torque is constant and power varies linearly with speed
+- **Gas turbines** where power output depends on shaft speed
+- **Reciprocating engines** with speed-dependent power limits
+
+#### Power Curve Formula
+
+The max power at a given speed is calculated as:
+
+$$P_{max}(N) = P_{max,rated} \times \left( a + b \cdot \frac{N}{N_{rated}} + c \cdot \left(\frac{N}{N_{rated}}\right)^2 \right)$$
+
+Where:
+- $P_{max,rated}$ = Maximum power at rated conditions (kW)
+- $N$ = Current speed (RPM)
+- $N_{rated}$ = Rated speed (RPM)
+- $a, b, c$ = Polynomial coefficients
+
+#### Setting the Power Curve
+
+```java
+// Set max power curve coefficients: a, b, c
+driver.setMaxPowerCurveCoefficients(a, b, c);
+
+// Get max power at a specific speed
+double maxPowerAtSpeed = driver.getMaxAvailablePowerAtSpeed(3000.0);
+
+// Check if power can be delivered at speed
+boolean canDeliver = driver.canDeliverPowerAtSpeed(4000.0, 3500.0);
+
+// Get power margin at speed
+double margin = driver.getPowerMarginAtSpeed(currentPower, speed);
+```
+
+#### Common Curve Coefficients
+
+| Curve Type | a | b | c | Description |
+|------------|---|---|---|-------------|
+| Constant | 1.0 | 0.0 | 0.0 | Max power same at all speeds (default) |
+| Linear (VFD motor) | 0.0 | 1.0 | 0.0 | Power proportional to speed |
+| With base offset | 0.5 | 0.5 | 0.0 | 50% at zero speed, 100% at rated |
+| Torque limited | 0.2 | 0.6 | 0.2 | Typical motor torque curve |
+
+#### Example: VFD Motor with Linear Power Curve
+
+```java
+// VFD motor: constant torque, so power is proportional to speed
+CompressorDriver vfdDriver = new CompressorDriver(DriverType.VFD_MOTOR, 5000.0);
+vfdDriver.setRatedSpeed(5000.0);
+vfdDriver.setMaxPower(5500.0);  // 110% overload capacity
+
+// Linear power curve: P_max = maxPower × (N / N_rated)
+vfdDriver.setMaxPowerCurveCoefficients(0.0, 1.0, 0.0);
+
+// At rated speed (5000 RPM): max power = 5500 kW
+double maxAtRated = vfdDriver.getMaxAvailablePowerAtSpeed(5000.0);  // 5500 kW
+
+// At half speed (2500 RPM): max power = 2750 kW
+double maxAtHalf = vfdDriver.getMaxAvailablePowerAtSpeed(2500.0);   // 2750 kW
+
+// At 120% speed (6000 RPM): max power = 6600 kW
+double maxAt120Pct = vfdDriver.getMaxAvailablePowerAtSpeed(6000.0); // 6600 kW
+```
+
+#### Example: Gas Turbine with Temperature Derating
+
+```java
+// Gas turbine with power curve AND temperature derating
+CompressorDriver gtDriver = new CompressorDriver(DriverType.GAS_TURBINE, 10000.0);
+gtDriver.setRatedSpeed(10000.0);
+gtDriver.setMaxPower(11000.0);
+
+// Set power curve (slight speed dependency)
+gtDriver.setMaxPowerCurveCoefficients(0.1, 0.9, 0.0);
+
+// Temperature derating: 0.5% power loss per K above ISO (15°C)
+gtDriver.setTemperatureDerateFactor(0.005);
+
+// Hot day at 30°C
+gtDriver.setAmbientTemperature(303.15);  // K
+
+// Combined effect: power curve × temperature derating
+double maxPower = gtDriver.getMaxAvailablePowerAtSpeed(10000.0);
+// = 11000 × 1.0 × (1 - 15×0.005) = 11000 × 0.925 = 10175 kW
+```
+
+#### Managing the Power Curve
+
+```java
+// Check if curve is enabled
+boolean enabled = driver.isMaxPowerCurveEnabled();
+
+// Temporarily disable curve (use constant max power)
+driver.disableMaxPowerCurve();
+double constantMax = driver.getMaxAvailablePowerAtSpeed(3000.0);  // Same as rated
+
+// Re-enable curve
+driver.enableMaxPowerCurve();
+
+// Get current coefficients
+double[] coeffs = driver.getMaxPowerCurveCoefficients();  // [a, b, c]
+```
+
+### Driver Power Checks During Operation
+
+```java
+// Check power limits during compressor operation
+compressor.setDriver(driver);
+compressor.run();
+
+double requiredPower = compressor.getPower("kW");
+double currentSpeed = compressor.getSpeed();
+
+// Check if driver can deliver required power at current speed
+if (driver.canDeliverPowerAtSpeed(requiredPower, currentSpeed)) {
+    System.out.println("Operating within driver limits");
+} else {
+    double margin = driver.getPowerMarginAtSpeed(requiredPower, currentSpeed);
+    System.out.println("Driver overloaded by " + (-margin) + " kW");
+}
+```
+
+### VFD Efficiency Curve
+
+For VFD motors, efficiency also varies with speed:
+
+```java
+// Set VFD efficiency curve: η = a + b×(N/N_rated) + c×(N/N_rated)²
+driver.setVfdEfficiencyCoefficients(0.90, 0.05, -0.02);
+
+// Get efficiency at current speed
+double efficiency = driver.getEfficiencyAtSpeed(4000.0);
+```
+
+### Complete Example: Power-Limited Compressor
+
+```java
+// Create gas and inlet stream
+SystemInterface gas = new SystemSrkEos(288.0, 30.0);
+gas.addComponent("methane", 0.95);
+gas.addComponent("ethane", 0.05);
+gas.setMixingRule("classic");
+
+Stream inlet = new Stream("inlet", gas);
+inlet.setFlowRate(50000.0, "kg/hr");
+inlet.run();
+
+// Create compressor
+Compressor comp = new Compressor("Export Compressor", inlet);
+comp.setOutletPressure(100.0, "bara");
+comp.setPolytropicEfficiency(0.78);
+comp.setSpeed(8000);
+
+// Create VFD driver with speed-dependent power limit
+CompressorDriver driver = new CompressorDriver(DriverType.VFD_MOTOR, 8000.0);
+driver.setRatedSpeed(10000.0);
+driver.setMaxPower(8800.0);  // 110% overload
+driver.setMinSpeed(3000.0);
+driver.setMaxSpeed(11000.0);
+
+// Linear power curve (constant torque)
+driver.setMaxPowerCurveCoefficients(0.0, 1.0, 0.0);
+
+comp.setDriver(driver);
+comp.run();
+
+// Report
+System.out.println("=== Compressor Operation ===");
+System.out.println("Speed: " + comp.getSpeed() + " RPM");
+System.out.println("Power required: " + comp.getPower("kW") + " kW");
+System.out.println();
+System.out.println("=== Driver Limits ===");
+double maxPowerAtSpeed = driver.getMaxAvailablePowerAtSpeed(comp.getSpeed());
+System.out.println("Max power at speed: " + maxPowerAtSpeed + " kW");
+System.out.println("Power margin: " + driver.getPowerMarginAtSpeed(comp.getPower("kW"), comp.getSpeed()) + " kW");
+System.out.println("Can deliver: " + driver.canDeliverPowerAtSpeed(comp.getPower("kW"), comp.getSpeed()));
+```
+
+### Python Example
+
+```python
+from neqsim.process.equipment.compressor import CompressorDriver, DriverType
+
+# Create VFD driver
+driver = CompressorDriver(DriverType.VFD_MOTOR, 5000.0)  # 5000 kW rated
+driver.setRatedSpeed(5000.0)
+driver.setMaxPower(5500.0)
+
+# Set linear power curve
+driver.setMaxPowerCurveCoefficients(0.0, 1.0, 0.0)
+
+# Check power at different speeds
+for speed in [2500, 3750, 5000, 6000]:
+    max_power = driver.getMaxAvailablePowerAtSpeed(speed)
+    print(f"Speed {speed} RPM: Max power = {max_power:.0f} kW")
+```
 
 ---
 

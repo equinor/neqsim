@@ -1,6 +1,16 @@
 # Batch Studies
 
+> **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
+
 This document describes the batch study infrastructure for parallel parameter studies and concept screening.
+
+## Related Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Optimization Overview](OPTIMIZATION_OVERVIEW.md) | When to use which optimizer |
+| [Multi-Objective Optimization](multi-objective-optimization.md) | Pareto fronts and trade-offs |
+| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | ProductionOptimizer examples |
 
 ## Overview
 

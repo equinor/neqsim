@@ -1,5 +1,7 @@
 # Production Optimization Guide
 
+> **New to process optimization?** Start with the [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
+
 This guide provides comprehensive examples for setting up and running production optimization simulations in NeqSim, covering both Java and Python implementations.
 
 ---
@@ -8,8 +10,12 @@ This guide provides comprehensive examples for setting up and running production
 
 | Document | Description |
 |----------|-------------|
-| [DESIGN_FRAMEWORK.md](../process/DESIGN_FRAMEWORK.md) | **AutoSizeable interface, ProcessTemplates, and DesignOptimizer** |
-| [OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](../process/OPTIMIZATION_IMPROVEMENT_PROPOSAL.md) | Optimization framework roadmap and implementation status |
+| [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) | **START HERE**: When to use which optimizer |
+| [Optimizer Plugin Architecture](../process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md) | ProcessOptimizationEngine and equipment strategies |
+| [Multi-Objective Optimization](../process/optimization/multi-objective-optimization.md) | Pareto fronts and trade-offs |
+| [Flow Rate Optimization](../process/optimization/flow-rate-optimization.md) | FlowRateOptimizer and lift curves |
+| [Batch Studies](../process/optimization/batch-studies.md) | Parallel parameter sweeps |
+| [External Optimizer Integration](../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) | Python/SciPy integration |
 | [CAPACITY_CONSTRAINT_FRAMEWORK.md](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md) | Multi-constraint equipment and bottleneck detection |
 
 ---

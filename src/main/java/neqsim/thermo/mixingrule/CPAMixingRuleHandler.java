@@ -727,7 +727,7 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
    *
    * @param compnumb a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return an array of {@link int} objects
+   * @return an array of int objects
    */
   public int[][] setAssociationScheme(int compnumb, PhaseInterface phase) {
     if (phase.getComponent(compnumb).getAssociationScheme().equals("4C")) {
@@ -751,7 +751,7 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
    * @param compnumb a int
    * @param compnumb2 a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @return an array of {@link int} objects
+   * @return an array of int objects
    */
   public int[][] setCrossAssociationScheme(int compnumb, int compnumb2, PhaseInterface phase) {
     int[] comp1Scheme = new int[0];
@@ -794,9 +794,9 @@ public class CPAMixingRuleHandler extends MixingRuleHandler {
    * getInteractionMatrix.
    * </p>
    *
-   * @param comp1Scheme an array of {@link int} objects
-   * @param comp2Scheme an array of {@link int} objects
-   * @return an array of {@link int} objects
+   * @param comp1Scheme an array of int objects
+   * @param comp2Scheme an array of int objects
+   * @return an array of int objects
    */
   public int[][] getInteractionMatrix(int[] comp1Scheme, int[] comp2Scheme) {
     int[][] intMatrix = new int[comp1Scheme.length][comp2Scheme.length];
