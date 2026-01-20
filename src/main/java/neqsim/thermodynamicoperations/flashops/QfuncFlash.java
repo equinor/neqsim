@@ -2,7 +2,6 @@ package neqsim.thermodynamicoperations.flashops;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -78,8 +77,9 @@ public class QfuncFlash extends Flash {
    * @return a double
    */
   public double solveQ() {
-    double oldTemp = 1.0 / system.getTemperature(), nyTemp = 1.0 / system.getTemperature();
-    double iterations = 1;
+    double oldTemp = 1.0 / system.getTemperature();
+    double nyTemp = 1.0 / system.getTemperature();
+    int iterations = 1;
     do {
       iterations++;
       oldTemp = nyTemp;

@@ -142,8 +142,9 @@ public class GibbsReactor extends TwoPortEquipment {
    * @return Power in the specified unit
    */
   public double getPower(String unit) {
-    if (unit == null)
+    if (unit == null) {
       return getPower();
+    }
     switch (unit.trim().toLowerCase()) {
       case "kw":
         return -enthalpyOfReactions;
@@ -335,8 +336,9 @@ public class GibbsReactor extends TwoPortEquipment {
    * @throws java.lang.IllegalArgumentException if the mode is not recognized
    */
   public void setEnergyMode(String mode) {
-    if (mode == null)
+    if (mode == null) {
       throw new IllegalArgumentException("Energy mode string cannot be null");
+    }
     switch (mode.trim().toLowerCase()) {
       case "adiabatic":
         setEnergyMode(EnergyMode.ADIABATIC);
@@ -845,12 +847,14 @@ public class GibbsReactor extends TwoPortEquipment {
             .getResourceAsStream("/data/GibbsReactDatabase/DatabaseGibbsFreeEnergyCoeff.csv");
         if (coeffStream != null) {
           Scanner coeffScanner = new Scanner(coeffStream);
-          if (coeffScanner.hasNextLine())
+          if (coeffScanner.hasNextLine()) {
             coeffScanner.nextLine(); // skip header
+          }
           while (coeffScanner.hasNextLine()) {
             String line = coeffScanner.nextLine().trim();
-            if (line.isEmpty() || line.startsWith("#"))
+            if (line.isEmpty() || line.startsWith("#")) {
               continue;
+            }
             String[] parts = line.split(";");
             if (parts.length == 13) {
               String compName = parts[0].trim().toLowerCase();
@@ -872,12 +876,14 @@ public class GibbsReactor extends TwoPortEquipment {
       }
 
       Scanner scanner = new Scanner(inputStream);
-      if (scanner.hasNextLine())
+      if (scanner.hasNextLine()) {
         scanner.nextLine(); // skip header
+      }
       while (scanner.hasNextLine()) {
         String line = scanner.nextLine().trim();
-        if (line.isEmpty() || line.startsWith("#"))
+        if (line.isEmpty() || line.startsWith("#")) {
           continue;
+        }
         String[] parts = line.split(";");
         // Handle actual format: molecule + 8 elements + 4 Cp + 3 thermo = 16 columns
         if (parts.length >= 16) {
