@@ -1,8 +1,20 @@
 # Optimizer Plugin Architecture
 
+> **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
+
 ## Overview
 
 The Optimizer Plugin Architecture provides a flexible, extensible framework for evaluating equipment capacity constraints and optimizing process throughput. It enables automated bottleneck detection, lift curve generation, and integration with reservoir simulators like Eclipse.
+
+### Related Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Optimization Overview](OPTIMIZATION_OVERVIEW.md) | When to use which optimizer |
+| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | ProductionOptimizer examples |
+| [Multi-Objective Optimization](multi-objective-optimization.md) | Pareto fronts and trade-offs |
+| [Flow Rate Optimization](flow-rate-optimization.md) | FlowRateOptimizer and lift curves |
+| [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) | Equipment constraints |
 
 ### Key Components
 

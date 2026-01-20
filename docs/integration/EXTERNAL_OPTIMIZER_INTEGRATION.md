@@ -1,6 +1,16 @@
 # External Optimizer Integration Guide
 
+> **New to process optimization?** Start with the [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
+
 This guide explains how to use NeqSim's `ProcessSimulationEvaluator` to integrate process simulation with external optimization frameworks like Python's SciPy, NLopt, or other optimization libraries.
+
+## Related Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) | When to use which optimizer |
+| [Production Optimization Guide](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | ProductionOptimizer examples |
+| [Practical Examples](../process/optimization/PRACTICAL_EXAMPLES.md) | Code samples |
 
 ## Overview
 

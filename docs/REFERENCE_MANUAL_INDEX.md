@@ -279,6 +279,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 ### Chapter 22: Capacity Constraints & Equipment Limits
 | Document | Path | Description |
 |----------|------|-------------|
+| **Optimization Overview** | [docs/process/optimization/OPTIMIZATION_OVERVIEW.md](process/optimization/OPTIMIZATION_OVERVIEW.md) | **START HERE: Introduction to process optimization, when to use ProcessOptimizationEngine vs ProductionOptimizer** |
 | **Capacity Constraint Framework** | [docs/process/CAPACITY_CONSTRAINT_FRAMEWORK.md](process/CAPACITY_CONSTRAINT_FRAMEWORK.md) | **Framework for equipment capacity limits, bottleneck detection, and utilization tracking** |
 | **Optimizer Plugin Architecture** | [docs/process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md](process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md) | **Equipment capacity strategies, throughput optimization, gradient descent, sensitivity analysis, shadow prices, and Eclipse VFP export** |
 | **External Optimizer Integration** | [docs/integration/EXTERNAL_OPTIMIZER_INTEGRATION.md](integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) | **ProcessSimulationEvaluator for Python/SciPy/NLopt/Pyomo integration with gradient estimation** |
