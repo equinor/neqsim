@@ -204,7 +204,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 ### Chapter 15: Rotating Equipment
 | Document | Path | Description |
 |----------|------|-------------|
-| Compressors | [docs/process/equipment/compressors.md](process/equipment/compressors.md) | Compressor models |
+| Compressors | [docs/process/equipment/compressors.md](process/equipment/compressors.md) | Compressor models, drivers, speed-dependent power |
 | Compressor Curves | [docs/process/equipment/compressor_curves.md](process/equipment/compressor_curves.md) | Compressor performance curves |
 | Compressor Design | [docs/process/CompressorMechanicalDesign.md](process/CompressorMechanicalDesign.md) | Compressor mechanical design |
 | Pumps | [docs/process/equipment/pumps.md](process/equipment/pumps.md) | Pump models |
