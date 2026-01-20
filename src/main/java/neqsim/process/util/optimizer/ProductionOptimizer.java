@@ -181,17 +181,15 @@ public class ProductionOptimizer {
    * </p>
    * 
    * <pre>
-   * {@code
    * from jpype import JImplements, JOverride
    *
    * &#64;JImplements("java.util.function.ToDoubleFunction")
    * class ThroughputEvaluator:
-   *     @JOverride
+   *     &#64;JOverride
    *     def applyAsDouble(self, proc):
    *         return proc.getUnit("outlet").getFlowRate("kg/hr")
    *
    * throughput = OptimizationObjective("throughput", ThroughputEvaluator(), 1.0)
-   * }
    * </pre>
    */
   public static final class OptimizationObjective {
@@ -1105,17 +1103,15 @@ public class ProductionOptimizer {
    * </p>
    * 
    * <pre>
-   * {@code
    * from jpype import JImplements, JOverride
    *
    * &#64;JImplements("java.util.function.BiConsumer")
    * class FlowSetter:
-   *     @JOverride
+   *     &#64;JOverride
    *     def accept(self, proc, val):
    *         proc.getUnit("feed").setFlowRate(float(val), "kg/hr")
    *
    * flow_var = ManipulatedVariable("feedFlow", 50000.0, 200000.0, "kg/hr", FlowSetter())
-   * }
    * </pre>
    */
   public static final class ManipulatedVariable {
@@ -1721,13 +1717,12 @@ public class ProductionOptimizer {
    * </p>
    * 
    * <pre>
-   * {@code
    * from jpype import JImplements, JOverride
    * Arrays = jneqsim.java.util.Arrays
    *
    * &#64;JImplements("java.util.function.BiConsumer")
    * class FlowSetter:
-   *     @JOverride
+   *     &#64;JOverride
    *     def accept(self, proc, val):
    *         proc.getUnit("feed").setFlowRate(float(val), "kg/hr")
    *
@@ -1735,7 +1730,6 @@ public class ProductionOptimizer {
    *     ManipulatedVariable("flow", 50000, 200000, "kg/hr", FlowSetter())
    * ])
    * result = optimizer.optimize(process, variables, config, None, None)
-   * }
    * </pre>
    *
    * @param process the process model to evaluate (must not be null)
