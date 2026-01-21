@@ -18,7 +18,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * These tests validate multi-unit flowsheets spanning thermo, PVT, and process modules.
  */
 public class EndToEndSimulationTests {
-
   /**
    * Test: Complete well-to-separator train.
    */

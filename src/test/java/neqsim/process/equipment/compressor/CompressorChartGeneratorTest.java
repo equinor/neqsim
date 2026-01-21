@@ -1,6 +1,9 @@
 package neqsim.process.equipment.compressor;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -15,7 +18,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class CompressorChartGeneratorTest {
-
   private Compressor compressor;
   private Stream inletStream;
 

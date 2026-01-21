@@ -83,8 +83,6 @@ public abstract class BoundaryCurve implements BoundaryCurveInterface {
     this.isActive = isActive;
   }
 
-
-
   /**
    * Get head values defining the curve.
    *

@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 
-
 /**
  * 
  * Tests for {@link DexpiXmlReader}.

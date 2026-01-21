@@ -7,7 +7,6 @@ import neqsim.thermo.Fluid;
 import neqsim.thermo.system.SystemInterface;
 
 class ElectrolyzerTest extends neqsim.NeqSimTest {
-
   @Test
   void testElectrolyzer() {
     SystemInterface water = new Fluid().create("water");

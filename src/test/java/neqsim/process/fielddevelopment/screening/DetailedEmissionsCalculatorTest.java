@@ -15,8 +15,6 @@ import neqsim.process.fielddevelopment.screening.DetailedEmissionsCalculator.Det
  */
 class DetailedEmissionsCalculatorTest {
 
-  private DetailedEmissionsCalculator calculator;
-
   @BeforeEach
   void setUp() {
     calculator = new DetailedEmissionsCalculator();

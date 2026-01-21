@@ -54,7 +54,6 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     setSurgeCurve(new SafeSplineSurgeCurve(surgeFlow, surgeHead));
   }
 
-
   /**
    * {@inheritDoc}
    *

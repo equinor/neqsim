@@ -18,7 +18,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author Even Solbraa
  */
 public class DiffusivityModelsTest {
-
   private SystemInterface hydrocarbonSystem;
   private SystemInterface aqueousSystem;
   private SystemInterface highPressureSystem;

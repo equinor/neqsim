@@ -1,6 +1,8 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -10,7 +12,6 @@ import org.junit.jupiter.api.Test;
  * Tests two-fluid specific state variables and geometry calculations.
  */
 public class TwoFluidSectionTest {
-
   private static final double TOLERANCE = 1e-10;
   private TwoFluidSection section;
 

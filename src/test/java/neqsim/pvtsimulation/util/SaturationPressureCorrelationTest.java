@@ -1,6 +1,9 @@
 package neqsim.pvtsimulation.util;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -9,7 +12,6 @@ import org.junit.jupiter.api.Test;
  * @author ESOL
  */
 public class SaturationPressureCorrelationTest {
-
   // Typical medium oil input values
   private static final double RS = 500.0; // scf/STB
   private static final double GAMMA_G = 0.75;

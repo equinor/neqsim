@@ -754,7 +754,6 @@ public class TPmultiflash extends TPflash {
       // but LLE is driven by activity coefficient differences (polarity, H-bonding),
       // so we use a different initialization strategy for LLE detection.
       for (int trialType = 1; trialType >= -1; trialType--) {
-
         // Initialize logWi based on trial type
         for (int j = 0; j < numComponents; j++) {
           if (!validComponent[j]) {
@@ -1805,7 +1804,6 @@ public class TPmultiflash extends TPflash {
     system.init(1);
   }
 
-
   private boolean seedHydrocarbonLiquidFromFeed() {
     if (!system.doMultiPhaseCheck()) {
       return false;
@@ -1880,7 +1878,6 @@ public class TPmultiflash extends TPflash {
     system.init(1);
     return true;
   }
-
 
   /** {@inheritDoc} */
   @Override
@@ -2161,7 +2158,6 @@ public class TPmultiflash extends TPflash {
         stabilityAnalysis3();
         run();
       }
-
 
       /*
        * if (!secondTime) { secondTime = true; doStabilityAnalysis = false; run(); }

@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 @Tag("slow")
 public class GibbsReactorCO2ScenariosTest {
-
   /**
    * Run reactor and return the outlet thermo system.
    */
@@ -202,7 +201,6 @@ public class GibbsReactorCO2ScenariosTest {
     runAndPrintWithAssertions(sys, "8", expectedNames, expectedPpm);
   }
 
-
   // Scenario 9
   @Test
   public void scenario9() {
@@ -286,5 +284,4 @@ public class GibbsReactorCO2ScenariosTest {
     assertSelectedPpm(outSys, names, expectedPpm, 0.1,
         "Gas Phase Reactions Stopped - compositions should be unchanged");
   }
-
 }

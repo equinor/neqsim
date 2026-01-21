@@ -106,7 +106,6 @@ public class MUSCLReconstructor implements Serializable {
    */
   public ReconstructedPair reconstruct(double uLeft, double uCenter, double uRight,
       double uFarRight) {
-
     ReconstructedPair result = new ReconstructedPair();
 
     // Calculate slopes

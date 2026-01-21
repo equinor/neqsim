@@ -10,7 +10,6 @@ import neqsim.thermo.system.SystemInterface;
  * equation.
  */
 class PhaseAmmoniaExperimentalComparisonTest {
-
   private static class DataPoint {
     final double temperature;
     final double pressure;

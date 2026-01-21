@@ -151,7 +151,6 @@ public class DriftFluxModel implements Serializable {
    */
   private void calculateBubbleFlowParameters(DriftFluxParameters params, double U_M, double D,
       double theta, double rho_L, double rho_G, double sigma) {
-
     // Zuber-Findlay (1965) for bubble flow
     // C0 depends on void fraction and velocity profile
     // C0 = 1.2 for turbulent pipe flow, 1.0-1.1 for low void fraction
@@ -195,7 +194,6 @@ public class DriftFluxModel implements Serializable {
    */
   private void calculateSlugFlowParameters(DriftFluxParameters params, double U_M, double D,
       double theta, double rho_L, double rho_G, double sigma, double mu_L) {
-
     // Bendiksen (1984) distribution coefficient
     double Fr_M = U_M / Math.sqrt(GRAVITY * D);
 
@@ -242,7 +240,6 @@ public class DriftFluxModel implements Serializable {
    */
   private void calculateAnnularFlowParameters(DriftFluxParameters params, double U_M, double D,
       double theta, double rho_L, double rho_G, double sigma) {
-
     // Annular flow: thin liquid film, gas core
     // Less slip, more homogeneous
     params.C0 = 1.0;
@@ -271,7 +268,6 @@ public class DriftFluxModel implements Serializable {
    */
   private void calculateStratifiedFlowParameters(DriftFluxParameters params, double U_SL,
       double U_SG, double D, double theta, double rho_L, double rho_G, double mu_L) {
-
     // For stratified flow, C0 and drift velocity concept doesn't apply directly
     // Instead, calculate holdup from momentum balance
 
@@ -310,7 +306,6 @@ public class DriftFluxModel implements Serializable {
    */
   private double estimateStratifiedLevel(double U_SL, double U_SG, double D, double theta,
       double rho_L, double rho_G, double mu_L) {
-
     // Iterative solution of momentum balance
     double h = 0.5 * D;
 
@@ -408,7 +403,6 @@ public class DriftFluxModel implements Serializable {
    */
   private double calculateFrictionGradient(PipeSection section, DriftFluxParameters params,
       double roughness) {
-
     double D = section.getDiameter();
     double rho_L = section.getLiquidDensity();
     double rho_G = section.getGasDensity();
@@ -509,7 +503,6 @@ public class DriftFluxModel implements Serializable {
    */
   private double calculateHomogeneousFriction(PipeSection section, DriftFluxParameters params,
       double roughness) {
-
     double D = section.getDiameter();
     double U_M = section.getSuperficialGasVelocity() + section.getSuperficialLiquidVelocity();
 
@@ -540,7 +533,6 @@ public class DriftFluxModel implements Serializable {
    */
   private double calculateStratifiedFriction(PipeSection section, DriftFluxParameters params,
       double roughness) {
-
     double D = section.getDiameter();
     double h_L = params.liquidHoldup * D; // Approximate
 
@@ -592,7 +584,6 @@ public class DriftFluxModel implements Serializable {
    */
   private double calculateAnnularFriction(PipeSection section, DriftFluxParameters params,
       double roughness) {
-
     double D = section.getDiameter();
     double alpha_L = params.liquidHoldup;
 
@@ -705,7 +696,6 @@ public class DriftFluxModel implements Serializable {
   public EnergyEquationResult calculateEnergyEquation(PipeSection section,
       DriftFluxParameters params, double dt, double dx, double ambientTemperature,
       double overallHeatTransferCoeff, double jouleThomsonCoeff) {
-
     EnergyEquationResult result = new EnergyEquationResult();
 
     double T = section.getTemperature();
@@ -820,7 +810,6 @@ public class DriftFluxModel implements Serializable {
   public double calculateSteadyStateTemperature(PipeSection section, double upstreamTemperature,
       double dx, double ambientTemperature, double overallHeatTransferCoeff, double massFlowRate,
       double jouleThomsonCoeff) {
-
     if (massFlowRate < 1e-10) {
       return upstreamTemperature;
     }
@@ -910,7 +899,6 @@ public class DriftFluxModel implements Serializable {
    */
   public double calculateMixtureHeatCapacity(PipeSection section, DriftFluxParameters params,
       double Cp_gas, double Cp_liquid) {
-
     double rho_G = section.getGasDensity();
     double rho_L = section.getLiquidDensity();
     double alpha_G = params.voidFraction;

@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
  * @author ESOL
  */
 public class ReliefValveSizingTest {
-
   @Test
   void testBasicPSVSizing() {
     // Size a PSV for methane gas at typical conditions

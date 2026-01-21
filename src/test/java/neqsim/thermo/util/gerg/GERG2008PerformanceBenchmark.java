@@ -19,7 +19,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author esol
  */
 public class GERG2008PerformanceBenchmark {
-
   /**
    * Benchmark to measure the speedup from GERG-2008 caching.
    * 

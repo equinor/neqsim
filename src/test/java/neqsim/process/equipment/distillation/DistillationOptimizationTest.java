@@ -7,7 +7,6 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 
 public class DistillationOptimizationTest {
-
   @Test
   public void testAutoFeedOnly() {
     // Use a simple Propane/n-Butane system

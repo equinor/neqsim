@@ -18,7 +18,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 class TwoPhasePipeFlowSystemSimplifiedAPITest {
-
   /**
    * Creates a test fluid with proper two-phase conditions.
    */

@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.EquipmentFactory;
 
 public class WindTurbineTest extends neqsim.NeqSimTest {
-
   @Test
   public void testPowerCalculation() {
     WindTurbine turbine = new WindTurbine("turbine");
@@ -21,8 +20,7 @@ public class WindTurbineTest extends neqsim.NeqSimTest {
 
   @Test
   public void testEquipmentFactory() {
-    WindTurbine turbine =
-        (WindTurbine) EquipmentFactory.createEquipment("turb", "windturbine");
+    WindTurbine turbine = (WindTurbine) EquipmentFactory.createEquipment("turb", "windturbine");
     assertTrue(turbine instanceof WindTurbine);
   }
 }

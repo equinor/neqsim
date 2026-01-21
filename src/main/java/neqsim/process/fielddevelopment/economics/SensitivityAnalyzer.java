@@ -224,7 +224,6 @@ public class SensitivityAnalyzer implements Serializable {
    */
   public ScenarioResult scenarioAnalysis(double lowOilPrice, double highOilPrice,
       double lowGasPrice, double highGasPrice, double capexContingency) {
-
     // Low case: low prices, high CAPEX
     CashFlowEngine lowCase = cloneEngine();
     lowCase.setOilPrice(lowOilPrice);

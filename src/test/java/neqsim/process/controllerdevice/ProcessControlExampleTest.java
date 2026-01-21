@@ -17,11 +17,10 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * Example integration test showing the process control framework on a rigorous
- * NeqSim process model.
+ * Example integration test showing the process control framework on a rigorous NeqSim process
+ * model.
  */
 public class ProcessControlExampleTest extends neqsim.NeqSimTest {
-
   /** Transmitter returning the current valve opening. */
   static class ValvePositionTransmitter extends MeasurementDeviceBaseClass {
     private static final long serialVersionUID = 1L;
@@ -101,8 +100,8 @@ public class ProcessControlExampleTest extends neqsim.NeqSimTest {
       flowController.runTransient(flowController.getResponse(), 1.0, UUID.randomUUID());
     }
 
-    Assertions.assertTrue(flowController.getResponse() <= 100.0
-        && flowController.getResponse() >= 0.0);
+    Assertions
+        .assertTrue(flowController.getResponse() <= 100.0 && flowController.getResponse() >= 0.0);
     Assertions.assertFalse(flowController.getEventLog().isEmpty());
     Assertions.assertTrue(flowController.getIntegralAbsoluteError() > 0.0);
     Assertions.assertTrue(flowController.getSettlingTime() > 0.0);
@@ -123,7 +122,8 @@ public class ProcessControlExampleTest extends neqsim.NeqSimTest {
     ratio.runTransient(1.0);
     double ratioOut = ratio.getOutput();
 
-    FeedForwardControllerStructure ff = new FeedForwardControllerStructure(flowController, feedMeas);
+    FeedForwardControllerStructure ff =
+        new FeedForwardControllerStructure(flowController, feedMeas);
     ff.setFeedForwardGain(0.1);
     ff.runTransient(1.0);
     double ffOut = ff.getOutput();

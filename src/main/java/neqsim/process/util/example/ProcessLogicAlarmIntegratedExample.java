@@ -6,37 +6,37 @@ import neqsim.process.alarm.AlarmConfig;
 import neqsim.process.alarm.AlarmEvaluator;
 import neqsim.process.alarm.AlarmReporter;
 import neqsim.process.alarm.ProcessAlarmManager;
+import neqsim.process.equipment.flare.Flare;
+import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ControlValve;
 import neqsim.process.equipment.valve.ESDValve;
 import neqsim.process.equipment.valve.HIPPSValve;
 import neqsim.process.equipment.valve.SafetyValve;
-import neqsim.process.equipment.mixer.Mixer;
-import neqsim.process.equipment.flare.Flare;
-import neqsim.process.measurementdevice.PushButton;
-import neqsim.process.measurementdevice.PressureTransmitter;
-import neqsim.process.measurementdevice.TemperatureTransmitter;
-import neqsim.process.measurementdevice.VolumeFlowTransmitter;
-import neqsim.process.measurementdevice.LevelTransmitter;
-import neqsim.process.logic.esd.ESDLogic;
-import neqsim.process.logic.startup.StartupLogic;
-import neqsim.process.logic.control.PressureControlLogic;
-import neqsim.process.logic.action.SetSplitterAction;
 import neqsim.process.logic.action.CloseValveAction;
-import neqsim.process.logic.action.OpenValveAction;
-import neqsim.process.logic.action.SetValveOpeningAction;
-import neqsim.process.logic.action.SetSeparatorModeAction;
 import neqsim.process.logic.action.EnergizeESDValveAction;
+import neqsim.process.logic.action.OpenValveAction;
+import neqsim.process.logic.action.SetSeparatorModeAction;
+import neqsim.process.logic.action.SetSplitterAction;
+import neqsim.process.logic.action.SetValveOpeningAction;
 import neqsim.process.logic.condition.PressureCondition;
 import neqsim.process.logic.condition.TemperatureCondition;
 import neqsim.process.logic.condition.TimerCondition;
 import neqsim.process.logic.condition.ValvePositionCondition;
+import neqsim.process.logic.control.PressureControlLogic;
+import neqsim.process.logic.esd.ESDLogic;
+import neqsim.process.logic.startup.StartupLogic;
+import neqsim.process.measurementdevice.LevelTransmitter;
+import neqsim.process.measurementdevice.PressureTransmitter;
+import neqsim.process.measurementdevice.PushButton;
+import neqsim.process.measurementdevice.TemperatureTransmitter;
+import neqsim.process.measurementdevice.VolumeFlowTransmitter;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.ProcessSafetyScenario;
 import neqsim.process.util.scenario.ProcessScenarioRunner;
 import neqsim.process.util.scenario.ScenarioTestRunner;
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -343,7 +343,6 @@ public class ProcessLogicAlarmIntegratedExample {
    */
   private static void registerAlarmActions(ProcessAlarmManager alarmManager, ProcessSystem system,
       ProcessLogicSetup logicSetup) {
-
     ControlValve inletValve = (ControlValve) system.getUnit("Inlet Control Valve");
 
     // Create pressure control logic for automatic valve throttling
@@ -440,7 +439,6 @@ public class ProcessLogicAlarmIntegratedExample {
   private static void runAlarmTriggeredScenarios(ProcessScenarioRunner runner,
       ProcessAlarmManager alarmManager, InstrumentationSetup instruments,
       ProcessLogicSetup logicSetup, ProcessSystem system) {
-
     ScenarioTestRunner testRunner = new ScenarioTestRunner(runner);
     testRunner.printHeader();
 
@@ -550,7 +548,6 @@ public class ProcessLogicAlarmIntegratedExample {
    * @param alarmManager the alarm manager for acknowledgement
    */
   private static void simulateLowLevelAlarm(ESDLogic esdLogic, ProcessAlarmManager alarmManager) {
-
     System.out.println("\n  ╔═══════════════════════════════════════════════════════╗");
     System.out.println("  ║  ⚠️  LOLO LEVEL ALARM - EMERGENCY SHUTDOWN           ║");
     System.out.println("  ╠═══════════════════════════════════════════════════════╣");
@@ -575,7 +572,6 @@ public class ProcessLogicAlarmIntegratedExample {
    */
   private static void runBlowdownSimulation(ProcessSystem system, InstrumentationSetup instruments,
       ProcessAlarmManager alarmManager, double startTime) {
-
     System.out.println("\n╔═══════════════════════════════════════════════════════════════╗");
     System.out.println("║           TRANSIENT BLOWDOWN SIMULATION                       ║");
     System.out.println("╚═══════════════════════════════════════════════════════════════╝");

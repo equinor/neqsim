@@ -1,16 +1,16 @@
 package neqsim.physicalproperties.methods.gasphysicalproperties.viscosity;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.LeeViscosityMethod;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.LeeViscosityMethod;
 
 /**
  * Test class for LeeViscosityMethod - Lee-Gonzalez-Eakin gas viscosity correlation.
  */
 class LeeViscosityMethodTest {
-
   @Test
   void testMethaneViscosity() {
     // Methane at standard conditions

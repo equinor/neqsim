@@ -19,7 +19,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author Even Solbraa
  */
 class SafetyValveDynamicSizingTest extends neqsim.NeqSimTest {
-
   /**
    * Dynamic test for PSV sizing with blocked outlet scenario.
    * 

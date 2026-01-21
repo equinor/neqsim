@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
  * Unit tests for HeatTransferCoefficientCalculator.
  */
 class HeatTransferCoefficientCalculatorTest {
-
   // Typical fluid properties for testing
   private static final double DIAMETER = 0.1; // m
   private static final double RHO_L = 800.0; // kg/m³

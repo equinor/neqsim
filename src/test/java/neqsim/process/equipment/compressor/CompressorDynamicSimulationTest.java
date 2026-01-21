@@ -16,7 +16,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class CompressorDynamicSimulationTest {
-
   private SystemInterface gasFluid;
   private Stream inletStream;
   private Compressor compressor;

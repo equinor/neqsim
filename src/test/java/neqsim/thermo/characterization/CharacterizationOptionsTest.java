@@ -17,7 +17,6 @@ import neqsim.thermo.system.SystemPrEos;
  * Tests for CharacterizationOptions, BIP transfer, and fluent API functionality.
  */
 class CharacterizationOptionsTest {
-
   private static final double TOLERANCE = 1e-8;
 
   @Test

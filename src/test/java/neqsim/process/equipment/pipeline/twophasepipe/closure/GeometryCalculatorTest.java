@@ -1,9 +1,9 @@
 package neqsim.process.equipment.pipeline.twophasepipe.closure;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator.StratifiedGeometry;
 
 /**
@@ -12,7 +12,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator
  * Tests stratified flow geometry calculations for circular pipes.
  */
 public class GeometryCalculatorTest {
-
   private static final double TOLERANCE = 1e-6;
   private GeometryCalculator calculator;
 

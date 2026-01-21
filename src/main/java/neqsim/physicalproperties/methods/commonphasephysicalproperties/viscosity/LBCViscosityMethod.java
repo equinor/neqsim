@@ -107,7 +107,6 @@ public class LBCViscosityMethod extends Viscosity {
     }
   }
 
-
   /**
    * The Lee-Gonzalez-Eakin dilute-gas correlation returns viscosity in micropoise when critical
    * pressure is supplied in bar. This weighted mixture estimate stays in micropoise to match the

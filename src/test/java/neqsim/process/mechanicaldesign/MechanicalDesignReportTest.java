@@ -23,8 +23,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim Development Team
  */
 public class MechanicalDesignReportTest {
-
-  private ProcessSystem process;
   private MechanicalDesignReport report;
 
   @BeforeEach

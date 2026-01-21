@@ -6,10 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Integration tests validating thermo module integration with process equipment.
@@ -18,7 +16,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * These tests demonstrate how thermodynamic systems couple with process unit operations.
  */
 public class ThermoToProcessTests {
-
   /**
    * Test: Natural gas through a separator - validates thermo-process coupling.
    */

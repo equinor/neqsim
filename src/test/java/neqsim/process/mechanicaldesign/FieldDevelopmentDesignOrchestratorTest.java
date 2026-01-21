@@ -23,7 +23,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 class FieldDevelopmentDesignOrchestratorTest {
-
   private ProcessSystem processSystem;
   private FieldDevelopmentDesignOrchestrator orchestrator;
 
@@ -51,7 +50,6 @@ class FieldDevelopmentDesignOrchestratorTest {
   @Nested
   @DisplayName("Constructor Tests")
   class ConstructorTests {
-
     @Test
     @DisplayName("Should create orchestrator with valid process system")
     void shouldCreateWithValidProcessSystem() {
@@ -95,7 +93,6 @@ class FieldDevelopmentDesignOrchestratorTest {
   @Nested
   @DisplayName("Design Phase Tests")
   class DesignPhaseTests {
-
     @Test
     @DisplayName("Should set design phase")
     void shouldSetDesignPhase() {
@@ -115,7 +112,6 @@ class FieldDevelopmentDesignOrchestratorTest {
   @Nested
   @DisplayName("Design Case Tests")
   class DesignCaseTests {
-
     @Test
     @DisplayName("Should add design case")
     void shouldAddDesignCase() {
@@ -152,7 +148,6 @@ class FieldDevelopmentDesignOrchestratorTest {
   @Nested
   @DisplayName("TORG Tests")
   class TorgTests {
-
     @Test
     @DisplayName("Should have TORG manager")
     void shouldHaveTorgManager() {
@@ -176,7 +171,6 @@ class FieldDevelopmentDesignOrchestratorTest {
   @Nested
   @DisplayName("Workflow Tests")
   class WorkflowTests {
-
     @Test
     @DisplayName("Should run complete design workflow")
     void shouldRunCompleteWorkflow() {
@@ -246,7 +240,6 @@ class FieldDevelopmentDesignOrchestratorTest {
   @Nested
   @DisplayName("Validation Tests")
   class ValidationTests {
-
     @Test
     @DisplayName("Should have validation result after workflow")
     void shouldHaveValidationResult() {
@@ -271,7 +264,6 @@ class FieldDevelopmentDesignOrchestratorTest {
   @Nested
   @DisplayName("Report Generation Tests")
   class ReportTests {
-
     @Test
     @DisplayName("Should generate design report")
     void shouldGenerateReport() {

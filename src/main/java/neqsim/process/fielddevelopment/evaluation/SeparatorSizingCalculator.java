@@ -311,7 +311,6 @@ public class SeparatorSizingCalculator implements Serializable {
    */
   public SeparatorSizingResult sizeSeparator(StreamInterface feed, SeparatorType type,
       DesignStandard standard) {
-
     // Run the feed to get properties
     if (feed.getFluid() == null) {
       throw new IllegalArgumentException("Feed stream must have a fluid");

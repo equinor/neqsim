@@ -1,8 +1,6 @@
 package neqsim.fluidmechanics.flownode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 
@@ -10,7 +8,6 @@ import org.junit.jupiter.api.Test;
  * Unit tests for FlowPattern enum.
  */
 class FlowPatternTest {
-
   @Test
   void testFlowPatternNames() {
     assertEquals("stratified", FlowPattern.STRATIFIED.getName());

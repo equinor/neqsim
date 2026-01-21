@@ -2,9 +2,8 @@ package neqsim.process.equipment.pipeline.twophasepipe;
 
 import java.io.Serializable;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator;
-import neqsim.process.equipment.pipeline.twophasepipe.closure.WallFriction;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.InterfacialFriction;
-import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
+import neqsim.process.equipment.pipeline.twophasepipe.closure.WallFriction;
 
 /**
  * Conservation equations for three-fluid (gas-oil-water) pipe flow model.
@@ -121,7 +120,6 @@ public class ThreeFluidConservationEquations implements Serializable {
    */
   public ThreeFluidRHS calcRHS(ThreeFluidSection section, double dPdx,
       ThreeFluidSection upstreamSection, ThreeFluidSection downstreamSection) {
-
     ThreeFluidRHS rhs = new ThreeFluidRHS();
 
     double diameter = section.getDiameter();
@@ -272,7 +270,6 @@ public class ThreeFluidConservationEquations implements Serializable {
    */
   private double calculateInterfacialFrictionFactor(double alpha1, double alpha2, double rho1,
       double rho2, double relVel, double diameter, double surfaceTension) {
-
     if (alpha1 < 1e-6 || alpha2 < 1e-6) {
       return 0.0;
     }

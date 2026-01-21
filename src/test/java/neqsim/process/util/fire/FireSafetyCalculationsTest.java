@@ -3,7 +3,6 @@ package neqsim.process.util.fire;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 import neqsim.process.util.fire.FireHeatTransferCalculator.SurfaceTemperatureResult;
 
@@ -11,7 +10,6 @@ import neqsim.process.util.fire.FireHeatTransferCalculator.SurfaceTemperatureRes
  * Unit tests for fire heat load, wall temperature, and rupture calculations.
  */
 public class FireSafetyCalculationsTest {
-
   @Test
   public void testApi521HeatLoad() {
     double wettedArea = 50.0; // m2
@@ -21,8 +19,8 @@ public class FireSafetyCalculationsTest {
 
   @Test
   public void testStefanBoltzmannHeatFlux() {
-    double heatFlux = FireHeatLoadCalculator.generalizedStefanBoltzmannHeatFlux(0.35, 0.8, 1200.0,
-        350.0);
+    double heatFlux =
+        FireHeatLoadCalculator.generalizedStefanBoltzmannHeatFlux(0.35, 0.8, 1200.0, 350.0);
     assertEquals(3.268e4, heatFlux, 50.0);
   }
 

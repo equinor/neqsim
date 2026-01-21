@@ -31,7 +31,6 @@ import neqsim.thermo.system.SystemPrEos;
  * product qualities (Wobbe Index for gas and RVP for oil) within specification.
  */
 public class OffshoreProcessMpcIntegrationTest extends neqsim.NeqSimTest {
-
   private static final double GAS_REFERENCE_T = 15.0; // degC
   private static final double GAS_REFERENCE_COMBUSTION_T = 15.0; // degC
   private static final double OIL_RVP_TEMPERATURE = 37.8; // degC

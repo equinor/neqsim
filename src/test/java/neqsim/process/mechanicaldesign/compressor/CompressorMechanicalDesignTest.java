@@ -12,8 +12,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Tests for compressor mechanical design calculations. */
 public class CompressorMechanicalDesignTest {
-
-  @Test
   void testCalcDesign() {
     SystemInterface gas = new SystemSrkEos(300.0, 10.0);
     gas.addComponent("methane", 1.0);

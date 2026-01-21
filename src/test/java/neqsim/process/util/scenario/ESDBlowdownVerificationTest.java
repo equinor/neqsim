@@ -1,21 +1,21 @@
 package neqsim.process.util.scenario;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.splitter.Splitter;
-import neqsim.process.equipment.valve.ControlValve;
-import neqsim.process.equipment.valve.ESDValve;
 import neqsim.process.equipment.flare.Flare;
 import neqsim.process.equipment.mixer.Mixer;
-import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.logic.esd.ESDLogic;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.valve.ControlValve;
+import neqsim.process.equipment.valve.ESDValve;
 import neqsim.process.logic.action.CloseValveAction;
 import neqsim.process.logic.action.EnergizeESDValveAction;
-import neqsim.process.logic.action.SetSplitterAction;
 import neqsim.process.logic.action.SetSeparatorModeAction;
+import neqsim.process.logic.action.SetSplitterAction;
+import neqsim.process.logic.esd.ESDLogic;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.ProcessSafetyScenario;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -24,7 +24,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Test to verify that ESD scenario actually reduces separator pressure and routes gas to flare.
  */
 class ESDBlowdownVerificationTest {
-
   private ProcessSystem system;
   private ProcessScenarioRunner runner;
   private Separator separator;

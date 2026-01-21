@@ -295,7 +295,6 @@ public class GeometryCalculator implements Serializable {
    */
   public boolean isStratifiedStable(double gasVelocity, double liquidLevel, double diameter,
       double gasDensity, double liquidDensity, double inclination) {
-
     StratifiedGeometry geom = calculateFromLiquidLevel(liquidLevel, diameter);
 
     if (geom.gasArea < 1e-10 || geom.liquidArea < 1e-10) {

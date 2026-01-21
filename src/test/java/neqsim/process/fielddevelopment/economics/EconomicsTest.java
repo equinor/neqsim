@@ -11,7 +11,6 @@ import neqsim.process.fielddevelopment.economics.TaxModel.TaxResult;
  * Unit tests for Norwegian petroleum tax model and cash flow engine.
  */
 class EconomicsTest {
-
   private NorwegianTaxModel taxModel;
   private CashFlowEngine engine;
 

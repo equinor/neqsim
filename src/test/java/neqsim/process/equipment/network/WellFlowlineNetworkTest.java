@@ -14,7 +14,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 
 class WellFlowlineNetworkTest {
-
   private SystemInterface buildGasReservoirFluid() {
     SystemInterface fluid = new SystemPrEos(303.15, 120.0);
     fluid.addComponent("water", 2.0);
@@ -306,9 +305,8 @@ class WellFlowlineNetworkTest {
         double oilRate =
             network.getArrivalStream().getFluid().getComponent("nC12").getFlowRate("kg/hr");
 
-        if (oilRate > bestOilRate
-            || (Math.abs(oilRate - bestOilRate) < 1e-6 && (opening1 > bestChoke1
-                || (opening1 == bestChoke1 && opening2 > bestChoke2)))) {
+        if (oilRate > bestOilRate || (Math.abs(oilRate - bestOilRate) < 1e-6
+            && (opening1 > bestChoke1 || (opening1 == bestChoke1 && opening2 > bestChoke2)))) {
           bestOilRate = oilRate;
           bestChoke1 = opening1;
           bestChoke2 = opening2;

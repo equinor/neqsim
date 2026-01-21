@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
  * @version 1.0
  */
 public class CompressorDriverTest {
-
   private CompressorDriver driver;
 
   @BeforeEach

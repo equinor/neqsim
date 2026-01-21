@@ -2062,7 +2062,6 @@ public class ProductionOptimizer {
       StreamInterface feedStream, OptimizationConfig config, List<OptimizationObjective> objectives,
       List<OptimizationConstraint> constraints, List<double[]> weightCombinations,
       List<String> objectiveNames) {
-
     ExecutorService executor = Executors
         .newFixedThreadPool(Math.min(config.getParallelThreads(), weightCombinations.size()));
     List<Future<ParetoPoint>> futures = new ArrayList<>();
@@ -3332,5 +3331,4 @@ public class ProductionOptimizer {
           description);
     }
   }
-
 }

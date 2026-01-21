@@ -1,7 +1,8 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,7 +20,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 class TwoFluidPipeIntegrationTest {
-
   private static final int NUM_SECTIONS = 5; // Reduced for faster tests
   private TwoFluidPipe pipe;
   private static Stream sharedInletStream;

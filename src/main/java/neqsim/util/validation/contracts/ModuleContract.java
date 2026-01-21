@@ -36,7 +36,6 @@ import neqsim.util.validation.ValidationResult;
  * @version 1.0
  */
 public interface ModuleContract<T> {
-
   /**
    * Get the name of this contract.
    * 

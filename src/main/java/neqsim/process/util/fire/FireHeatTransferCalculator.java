@@ -3,7 +3,8 @@ package neqsim.process.util.fire;
 /**
  * Calculates metal wall temperatures for wetted and unwetted zones during fire exposure.
  *
- * <p>The model treats the vessel wall as a one-dimensional thermal resistance network and solves for
+ * <p>
+ * The model treats the vessel wall as a one-dimensional thermal resistance network and solves for
  * wall temperatures using the imposed fire temperature and process fluid temperature. It can be
  * combined with {@link FireHeatLoadCalculator} to evaluate transient blowdown cases where external
  * heat input varies over time.
@@ -27,8 +28,8 @@ public final class FireHeatTransferCalculator {
      * @param innerWallTemperatureK Inner wall temperature [K]
      * @param outerWallTemperatureK Outer wall temperature [K]
      */
-    public SurfaceTemperatureResult(
-        double heatFlux, double innerWallTemperatureK, double outerWallTemperatureK) {
+    public SurfaceTemperatureResult(double heatFlux, double innerWallTemperatureK,
+        double outerWallTemperatureK) {
       this.heatFlux = heatFlux;
       this.innerWallTemperatureK = innerWallTemperatureK;
       this.outerWallTemperatureK = outerWallTemperatureK;
@@ -50,7 +51,8 @@ public final class FireHeatTransferCalculator {
   /**
    * Calculates the heat flux and wall temperatures for a single wall section.
    *
-   * <p>The solution assumes a series of resistances: external convection/radiation, wall conduction,
+   * <p>
+   * The solution assumes a series of resistances: external convection/radiation, wall conduction,
    * and internal convection/boiling. It is valid for both wetted and unwetted regions as long as
    * appropriate film coefficients are supplied.
    *
@@ -59,19 +61,14 @@ public final class FireHeatTransferCalculator {
    * @param wallThicknessM Wall thickness [m]
    * @param thermalConductivityWPerMPerK Metal thermal conductivity [W/(m*K)]
    * @param internalFilmCoefficientWPerM2K Internal film coefficient (boiling/condensation vs. gas)
-   *     [W/(m2*K)]
+   *        [W/(m2*K)]
    * @param externalFilmCoefficientWPerM2K External film coefficient (radiation/impingement) [W/(m2*
-   *     K)]
+   *        K)]
    * @return Heat flux and wall temperatures for the section
    */
-  public static SurfaceTemperatureResult calculateWallTemperatures(
-      double processFluidTemperatureK,
-      double fireTemperatureK,
-      double wallThicknessM,
-      double thermalConductivityWPerMPerK,
-      double internalFilmCoefficientWPerM2K,
-      double externalFilmCoefficientWPerM2K) {
-
+  public static SurfaceTemperatureResult calculateWallTemperatures(double processFluidTemperatureK,
+      double fireTemperatureK, double wallThicknessM, double thermalConductivityWPerMPerK,
+      double internalFilmCoefficientWPerM2K, double externalFilmCoefficientWPerM2K) {
     if (processFluidTemperatureK <= 0.0 || fireTemperatureK <= 0.0) {
       throw new IllegalArgumentException("Temperatures must be positive Kelvin values");
     }
@@ -82,13 +79,12 @@ public final class FireHeatTransferCalculator {
       throw new IllegalArgumentException("Film coefficients must be positive");
     }
 
-    double totalResistance =
-        1.0 / externalFilmCoefficientWPerM2K
-            + wallThicknessM / thermalConductivityWPerMPerK
-            + 1.0 / internalFilmCoefficientWPerM2K;
+    double totalResistance = 1.0 / externalFilmCoefficientWPerM2K
+        + wallThicknessM / thermalConductivityWPerMPerK + 1.0 / internalFilmCoefficientWPerM2K;
 
     double heatFlux = (fireTemperatureK - processFluidTemperatureK) / totalResistance;
-    double innerWallTemperatureK = processFluidTemperatureK + heatFlux / internalFilmCoefficientWPerM2K;
+    double innerWallTemperatureK =
+        processFluidTemperatureK + heatFlux / internalFilmCoefficientWPerM2K;
     double outerWallTemperatureK = fireTemperatureK - heatFlux / externalFilmCoefficientWPerM2K;
 
     return new SurfaceTemperatureResult(heatFlux, innerWallTemperatureK, outerWallTemperatureK);

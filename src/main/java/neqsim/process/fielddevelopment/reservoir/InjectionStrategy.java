@@ -142,7 +142,6 @@ public class InjectionStrategy implements Serializable {
    */
   public InjectionResult calculateInjection(SimpleReservoir reservoir, double oilProductionRate,
       double gasProductionRate, double waterProductionRate) {
-
     InjectionResult result = new InjectionResult();
     result.strategyType = this.strategyType;
 
@@ -215,7 +214,6 @@ public class InjectionStrategy implements Serializable {
    */
   private double calculateProductionVoidage(SimpleReservoir reservoir, double oilRate,
       double gasRate, double waterRate) {
-
     SystemInterface reservoirFluid = reservoir.getReservoirFluid();
     double reservoirPressure = reservoirFluid.getPressure();
     double reservoirTemperature = reservoirFluid.getTemperature();

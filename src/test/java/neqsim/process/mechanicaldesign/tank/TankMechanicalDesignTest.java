@@ -19,7 +19,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim Development Team
  */
 public class TankMechanicalDesignTest {
-
   private Tank tank;
   private TankMechanicalDesign mechDesign;
 

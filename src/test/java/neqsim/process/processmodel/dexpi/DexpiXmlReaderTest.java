@@ -13,7 +13,6 @@ import neqsim.NeqSimTest;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.processmodel.ProcessSystem;
 
-
 /**
  * Tests for {@link DexpiXmlReader}.
  *
@@ -21,7 +20,6 @@ import neqsim.process.processmodel.ProcessSystem;
  * @version 1.0
  */
 public class DexpiXmlReaderTest extends NeqSimTest {
-
   @Test
   public void testRead() throws IOException, DexpiXmlReaderException {
     // Create a simple DEXPI XML file for testing

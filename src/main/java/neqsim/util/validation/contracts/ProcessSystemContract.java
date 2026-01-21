@@ -1,7 +1,7 @@
 package neqsim.util.validation.contracts;
 
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.util.validation.ValidationResult;
 
 /**
@@ -31,7 +31,6 @@ import neqsim.util.validation.ValidationResult;
  * @version 1.0
  */
 public class ProcessSystemContract implements ModuleContract<ProcessSystem> {
-
   /** Singleton instance. */
   private static final ProcessSystemContract INSTANCE = new ProcessSystemContract();
 

@@ -163,7 +163,6 @@ public final class ReliefValveSizing {
       double overpressureFraction, double backPressure, double temperature, double molecularWeight,
       double compressibility, double specificHeatRatio, boolean isBalancedBellows,
       boolean hasRuptureDisk) {
-
     if (massFlowRate <= 0.0) {
       throw new IllegalArgumentException("Mass flow rate must be positive");
     }
@@ -262,7 +261,6 @@ public final class ReliefValveSizing {
   public static double calculateMassFlowCapacity(double orificeArea, double setPressure,
       double overpressureFraction, double backPressure, double temperature, double molecularWeight,
       double compressibility, double specificHeatRatio, double dischargeCoefficient) {
-
     double P1 = setPressure * (1.0 + overpressureFraction);
     double k = specificHeatRatio;
 
@@ -326,7 +324,6 @@ public final class ReliefValveSizing {
       double setPressure, double initialTemperature, double fireHeatInput, double vesselVolume,
       double molecularWeight, double specificHeatRatio, double compressibility, double heatCapacity,
       double blowdownTime) {
-
     // API 521 fire case: 21% overpressure for first PSV, 16% for additional
     double overpressureFraction = 0.21;
     double relievingPressure = setPressure * (1.0 + overpressureFraction);

@@ -17,7 +17,6 @@ import neqsim.process.mechanicaldesign.designstandards.StandardType;
  * Tests for CsvTorgDataSource class.
  */
 class CsvTorgDataSourceTest {
-
   @TempDir
   Path tempDir;
 

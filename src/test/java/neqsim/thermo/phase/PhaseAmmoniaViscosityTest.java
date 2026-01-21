@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 
 /** Tests the ammonia viscosity correlation. */
 public class PhaseAmmoniaViscosityTest {
-
   @Test
   public void testGasViscosityAt5bar20C() {
     PhaseAmmoniaEos phase = new PhaseAmmoniaEos();

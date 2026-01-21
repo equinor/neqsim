@@ -1,6 +1,5 @@
 package neqsim.chemicalreactions;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
@@ -22,7 +21,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  */
 public class CO2WaterEquilibriumTest {
-
   /**
    * Test basic CO2-water equilibrium at ambient conditions.
    * 

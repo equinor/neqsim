@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 
 class PseudoComponentCombinerTest {
-
   private static final double TOLERANCE = 1e-8;
 
   private static SystemInterface createFluid1() {
@@ -75,13 +74,13 @@ class PseudoComponentCombinerTest {
     assertEquals(0.1, combined.getComponent("ethane").getNumberOfmoles(), TOLERANCE);
     assertEquals(0.05, combined.getComponent("n-butane").getNumberOfmoles(), TOLERANCE);
 
-    List<ComponentInterface> pseudoComponents = Arrays.stream(combined.getComponentNames())
-        .map(combined::getComponent)
-        .filter(component -> component.isIsTBPfraction() || component.isIsPlusFraction())
-        .sorted((c1, c2) -> Double.compare(
-            c1.getNormalBoilingPoint() > 0.0 ? c1.getNormalBoilingPoint() : c1.getMolarMass(),
-            c2.getNormalBoilingPoint() > 0.0 ? c2.getNormalBoilingPoint() : c2.getMolarMass()))
-        .collect(Collectors.toList());
+    List<ComponentInterface> pseudoComponents =
+        Arrays.stream(combined.getComponentNames()).map(combined::getComponent)
+            .filter(component -> component.isIsTBPfraction() || component.isIsPlusFraction())
+            .sorted((c1, c2) -> Double.compare(
+                c1.getNormalBoilingPoint() > 0.0 ? c1.getNormalBoilingPoint() : c1.getMolarMass(),
+                c2.getNormalBoilingPoint() > 0.0 ? c2.getNormalBoilingPoint() : c2.getMolarMass()))
+            .collect(Collectors.toList());
 
     assertEquals(2, pseudoComponents.size());
 
@@ -103,9 +102,8 @@ class PseudoComponentCombinerTest {
     assertEquals(21.29554656, high.getPC(), 1e-6);
     assertEquals(0.367044534, high.getAcentricFactor(), 5e-4);
 
-    double expectedMass = mass(fluid1.getComponent("C7_PC"))
-        + mass(fluid1.getComponent("C10_PC")) + mass(fluid2.getComponent("C8_PC"))
-        + mass(fluid2.getComponent("C11_PC"));
+    double expectedMass = mass(fluid1.getComponent("C7_PC")) + mass(fluid1.getComponent("C10_PC"))
+        + mass(fluid2.getComponent("C8_PC")) + mass(fluid2.getComponent("C11_PC"));
     double combinedMass = mass(low) + mass(high);
     assertEquals(expectedMass, combinedMass, 1e-12);
   }
@@ -180,13 +178,13 @@ class PseudoComponentCombinerTest {
 
     assertEquals(0.7, characterized.getComponent("methane").getNumberOfmoles(), TOLERANCE);
 
-    List<ComponentInterface> pseudoComponents = Arrays.stream(characterized.getComponentNames())
-        .map(characterized::getComponent)
-        .filter(component -> component.isIsTBPfraction() || component.isIsPlusFraction())
-        .sorted((c1, c2) -> Double.compare(
-            c1.getNormalBoilingPoint() > 0.0 ? c1.getNormalBoilingPoint() : c1.getMolarMass(),
-            c2.getNormalBoilingPoint() > 0.0 ? c2.getNormalBoilingPoint() : c2.getMolarMass()))
-        .collect(Collectors.toList());
+    List<ComponentInterface> pseudoComponents =
+        Arrays.stream(characterized.getComponentNames()).map(characterized::getComponent)
+            .filter(component -> component.isIsTBPfraction() || component.isIsPlusFraction())
+            .sorted((c1, c2) -> Double.compare(
+                c1.getNormalBoilingPoint() > 0.0 ? c1.getNormalBoilingPoint() : c1.getMolarMass(),
+                c2.getNormalBoilingPoint() > 0.0 ? c2.getNormalBoilingPoint() : c2.getMolarMass()))
+            .collect(Collectors.toList());
 
     assertEquals(3, pseudoComponents.size());
 

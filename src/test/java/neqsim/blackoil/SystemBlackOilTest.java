@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.blackoil.io.EclipseBlackOilImporter;
 
 class SystemBlackOilTest {
-
   private static String sampleDeck() {
     return String.join("\n",
         Arrays.asList("UNITS  METRIC", "", "DENSITY", "  800.0   1000.0   1.2  /", "", "PVTO",
@@ -26,7 +25,6 @@ class SystemBlackOilTest {
             "-- P      Bw      mu_w", "  50      1.02    0.5", "  150     1.01    0.6",
             "  250     1.00    0.7 /", "/"));
   }
-
 
   @Test
   void testBasicFlash() throws java.io.IOException {

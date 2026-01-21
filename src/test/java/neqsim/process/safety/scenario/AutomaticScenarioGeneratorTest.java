@@ -20,7 +20,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for AutomaticScenarioGenerator safety scenario generation.
  */
 public class AutomaticScenarioGeneratorTest {
-
   private ProcessSystem process;
   private AutomaticScenarioGenerator generator;
 

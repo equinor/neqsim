@@ -27,7 +27,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim Development Team
  */
 public class OptimizerPluginArchitectureTest {
-
   private SystemInterface testFluid;
   private Stream feed;
   private ProcessSystem process;

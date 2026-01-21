@@ -768,7 +768,6 @@ public class FacilityCapacity implements Serializable {
   private DebottleneckOption createDebottleneckOption(ProcessEquipmentInterface equipment,
       OptimizationResult baseResult, StreamInterface feedStream, double lowerBound,
       double upperBound, String rateUnit) {
-
     double currentCapacity = equipment.getCapacityMax();
     double currentDuty = equipment.getCapacityDuty();
     double currentUtilization = currentCapacity > 0 ? currentDuty / currentCapacity : 0;

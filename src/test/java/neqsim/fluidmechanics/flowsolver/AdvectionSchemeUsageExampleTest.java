@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem.PipeFlowSystem;
-import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -18,7 +17,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  */
 public class AdvectionSchemeUsageExampleTest {
-
   private SystemInterface naturalGas;
   private SystemInterface nitrogen;
 

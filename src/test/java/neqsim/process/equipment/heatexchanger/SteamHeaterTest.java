@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.util.steam.Iapws_if97;
 
-
 public class SteamHeaterTest {
   @Test
   void testSteamHeater() {

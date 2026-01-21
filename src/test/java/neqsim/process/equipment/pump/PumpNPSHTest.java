@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim
  */
 public class PumpNPSHTest extends neqsim.NeqSimTest {
-
   private SystemInterface testFluid;
   private Stream feedStream;
   private Pump pump;

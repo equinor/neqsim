@@ -506,7 +506,6 @@ public class EclipseVFPExporter implements Serializable {
    */
   public void exportMultipleScenarios(List<VFPScenario> scenarios, String baseFilename)
       throws IOException {
-
     for (int i = 0; i < scenarios.size(); i++) {
       VFPScenario scenario = scenarios.get(i);
       setTableNumber(scenario.getTableNumber());

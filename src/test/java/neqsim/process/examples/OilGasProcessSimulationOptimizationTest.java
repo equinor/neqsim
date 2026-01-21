@@ -28,8 +28,6 @@ import neqsim.process.processmodel.ProcessSystem;
  * @version 1.0
  */
 public class OilGasProcessSimulationOptimizationTest {
-
-  private OilGasProcessSimulationOptimization simulation;
   private ProcessOutputResults cachedResults;
   private boolean simulationConverged = false;
 

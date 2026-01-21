@@ -16,7 +16,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class SplitterResponseTest {
-
   private Splitter splitter;
   private Stream inletStream;
 

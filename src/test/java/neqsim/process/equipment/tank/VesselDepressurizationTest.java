@@ -22,7 +22,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @see <a href="https://doi.org/10.21105/joss.03695">Andreasen (2021) - HydDown JOSS Paper</a>
  */
 public class VesselDepressurizationTest {
-
   private Stream createTestStream(double tempK, double pressBar) {
     SystemInterface gas = new SystemSrkEos(tempK, pressBar);
     gas.addComponent("methane", 0.9);

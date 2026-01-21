@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
  * Tests for StandardType enum.
  */
 class StandardTypeTest {
-
   @Test
   void testGetCode() {
     assertEquals("NORSOK-L-001", StandardType.NORSOK_L_001.getCode());

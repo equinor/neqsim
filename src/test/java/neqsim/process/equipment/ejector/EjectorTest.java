@@ -10,7 +10,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 class EjectorTest {
-
   @Test
   void boostLowPressureGas() {
     SystemInterface motiveFluid = new SystemSrkEos(273.15 + 20.0, 10.0);
@@ -107,8 +106,8 @@ class EjectorTest {
     assertEquals(1.0, design.getSuctionConnectionLength(), 1.0e-9);
     assertEquals(2.0, design.getDischargeConnectionLength(), 1.0e-9);
 
-    double expectedConnectedVolume = design.getSuctionInletArea() * 1.0
-        + design.getDiffuserOutletArea() * 2.0;
+    double expectedConnectedVolume =
+        design.getSuctionInletArea() * 1.0 + design.getDiffuserOutletArea() * 2.0;
     assertEquals(expectedConnectedVolume, design.getConnectedPipingVolume(), 1.0e-9);
   }
 

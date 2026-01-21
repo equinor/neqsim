@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
  * @author ESOL
  */
 public class VesselHeatTransferCalculatorTest {
-
   @Test
   void testGrashofNumber() {
     // Test Grashof number calculation for vertical vessel wall

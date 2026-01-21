@@ -20,7 +20,6 @@ class EOSCGDensityComparisonTest {
     ClapeyronReference ref = new ClapeyronReference(0.6420, 35.7, 27.385, 0.0, 1.0);
     Properties props = propertiesEOSCG(temperature, pressure, "methane");
 
-
     assertPropertyMatch("methane density", props.density, ref.density);
     assertPropertyMatch("methane Cp", props.cp, ref.cp);
     assertPropertyMatch("methane Cv", props.cv, ref.cv);
@@ -35,7 +34,6 @@ class EOSCGDensityComparisonTest {
     ClapeyronReference ref = new ClapeyronReference(3.3079, 37.2, 28.886, 0.0, 1.0);
     Properties props = propertiesEOSCG(temperature, pressure, "CO2");
 
-
     assertPropertyMatch("CO2 density", props.density, ref.density);
     assertPropertyMatch("CO2 Cp", props.cp, ref.cp);
     assertPropertyMatch("CO2 Cv", props.cv, ref.cv);
@@ -49,7 +47,6 @@ class EOSCGDensityComparisonTest {
     system.setPressure(pressure);
     system.getPhase(0).setPressure(pressure);
     system.init(3);
-
 
     double density = system.getPhase(0).getDensity();
     double cp = system.getPhase(0).getCp() / system.getPhase(0).getNumberOfMolesInPhase();

@@ -103,7 +103,6 @@ public class CompressorChartKhader2015Test {
     StoneWallCurve sw = compChart.getStoneWallCurve();
     SurgeCurve sc = compChart.getSurgeCurve();
 
-
     testFluid = new SystemSrkEos(298.15, 50.0);
 
     testFluid.addComponent("methane", 8.35736E-1);
@@ -150,7 +149,6 @@ public class CompressorChartKhader2015Test {
 
   @Test
   void testGetNewCurves() {
-
     // compressor chart conditions: temperature [C], pressure [bara], density
     // [kg/m3], molecular
     // weight [g/mol]
@@ -196,7 +194,6 @@ public class CompressorChartKhader2015Test {
         {78.0924334304045, 80.9353551568667, 80.7904437766234, 78.8639325223295, 75.2170936751143,
             70.3105081673411, 65.5507568533569, 61.0391468300337}};
 
-
     SystemInterface actualFluid = new SystemSrkEos(298.15, 50.0);
     actualFluid.addComponent("nitrogen", 1.205);
     actualFluid.addComponent("CO2", 1.340);
@@ -223,7 +220,6 @@ public class CompressorChartKhader2015Test {
     referenceFluid.addComponent("i-pentane", 0.056);
     referenceFluid.addComponent("n-pentane", 0.053);
     referenceFluid.setMixingRule("classic");
-
 
     CompressorChartKhader2015 compChart =
         new CompressorChartKhader2015(actualFluid, referenceFluid, 0.9);

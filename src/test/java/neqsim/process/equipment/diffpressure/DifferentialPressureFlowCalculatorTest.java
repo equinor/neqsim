@@ -21,7 +21,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for {@link DifferentialPressureFlowCalculator}.
  */
 class DifferentialPressureFlowCalculatorTest {
-
   private static SystemInterface createNitrogenSystem() {
     SystemInterface system = new SystemSrkEos(273.15 + 15.0, 1.0125);
     system.addComponent("nitrogen", 1.0);
@@ -32,7 +31,6 @@ class DifferentialPressureFlowCalculatorTest {
     system.initPhysicalProperties();
     return system;
   }
-
 
   @Test
   void testSimplifiedFlowUsesCv() {

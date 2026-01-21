@@ -1,6 +1,8 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,7 +14,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.SlugTracker.SlugUnit;
  * Tests for SlugTracker.
  */
 class SlugTrackerTest {
-
   private SlugTracker tracker;
   private PipeSection[] sections;
 

@@ -17,7 +17,6 @@ package neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsyst
 // TODO: Re-enable tests once TwoPhasePipeFlowSystem builder is fully implemented
 // @Disabled("Slow integration tests - temporarily disabled")
 public class TwoPhasePipeFlowSystemHeatTransferIntegrationTest {
-
   // private TwoPhasePipeFlowSystem pipe;
   // private SystemInterface gasLiquidSystem;
 

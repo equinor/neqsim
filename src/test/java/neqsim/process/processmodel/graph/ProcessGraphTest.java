@@ -40,7 +40,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for the graph-based process representation.
  */
 public class ProcessGraphTest {
-
   private SystemInterface testFluid;
 
   @BeforeEach

@@ -49,7 +49,6 @@ public class FlowPatternDetector {
   public static FlowPattern detectFlowPattern(FlowPatternModel model, double usg, double usl,
       double rhoG, double rhoL, double muG, double muL, double sigma, double diameter,
       double inclination) {
-
     switch (model) {
       case TAITEL_DUKLER:
         return detectTaitelDukler(usg, usl, rhoG, rhoL, muG, muL, sigma, diameter, inclination);
@@ -92,7 +91,6 @@ public class FlowPatternDetector {
    */
   private static FlowPattern detectTaitelDukler(double usg, double usl, double rhoG, double rhoL,
       double muG, double muL, double sigma, double diameter, double inclination) {
-
     // Calculate mixture velocity and input liquid fraction
     double um = usg + usl;
     double lambdaL = usl / um;
@@ -172,7 +170,6 @@ public class FlowPatternDetector {
    */
   private static FlowPattern detectBakerChart(double usg, double usl, double rhoG, double rhoL,
       double muL, double sigma) {
-
     // Reference properties (air-water at atmospheric conditions)
     double rhoG_ref = 1.23; // kg/m³
     double rhoL_ref = 1000.0; // kg/m³
@@ -232,7 +229,6 @@ public class FlowPatternDetector {
    */
   private static FlowPattern detectBarnea(double usg, double usl, double rhoG, double rhoL,
       double muG, double muL, double sigma, double diameter, double inclination) {
-
     // For near-horizontal pipes, use Taitel-Dukler
     if (Math.abs(inclination) < Math.PI / 18) { // Less than 10 degrees
       return detectTaitelDukler(usg, usl, rhoG, rhoL, muG, muL, sigma, diameter, inclination);
@@ -293,7 +289,6 @@ public class FlowPatternDetector {
    */
   private static FlowPattern detectBeggsBrill(double usg, double usl, double rhoG, double rhoL,
       double diameter, double inclination) {
-
     double um = usg + usl;
     double lambdaL = usl / um;
     double nFr = um * um / (G * diameter);

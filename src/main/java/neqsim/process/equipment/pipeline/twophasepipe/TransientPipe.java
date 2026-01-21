@@ -1042,7 +1042,6 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     // For CONSTANT_FLOW inlet + CONSTANT_PRESSURE outlet: march from outlet to inlet
     if (inletBCType == BoundaryCondition.CONSTANT_FLOW
         && outletBCType == BoundaryCondition.CONSTANT_PRESSURE) {
-
       double P = outletPressureValue;
       sections[numberOfSections - 1].setPressure(P);
 
@@ -1086,7 +1085,6 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
         P -= dP;
         sections[i].setPressure(P);
       }
-
     } else if (inletBCType == BoundaryCondition.CONSTANT_PRESSURE
         && outletBCType == BoundaryCondition.CONSTANT_FLOW) {
       // CONSTANT_PRESSURE inlet + CONSTANT_FLOW outlet: march from inlet to outlet
@@ -1126,7 +1124,6 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
         P = Math.max(P, 1e5);
         sections[i].setPressure(P);
       }
-
     } else if (inletBCType == BoundaryCondition.CONSTANT_PRESSURE) {
       // March from inlet to outlet (default for CONSTANT_PRESSURE inlet)
       double P = inletPressureValue;
@@ -1916,7 +1913,6 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
         } else {
           section.setMixtureHeatCapacity(1000.0); // Default fallback
         }
-
       } catch (Exception e) {
         // Keep previous properties if flash fails
       }

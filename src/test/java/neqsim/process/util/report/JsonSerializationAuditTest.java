@@ -30,7 +30,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class JsonSerializationAuditTest {
-
   /**
    * Audit which equipment types return null from toJson().
    */

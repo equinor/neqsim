@@ -1,18 +1,16 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling.ThermoProperties;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling.ThermoProperties;
 
 /**
  * Unit tests for ThermodynamicCoupling class.
  */
 class ThermodynamicCouplingTest {
-
   private ThermodynamicCoupling coupling;
   private SystemInterface testFluid;
 

@@ -14,16 +14,8 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Regression tests for heater/cooler mechanical design sizing using utility specifications. */
 public class HeaterCoolerMechanicalDesignTest {
-
-  private SystemInterface createBaseSystem(double temperatureC) {
-    SystemInterface system = new SystemSrkEos(273.15 + temperatureC, 50.0);
-    system.addComponent("methane", 120.0);
-    system.addComponent("ethane", 20.0);
-    system.addComponent("n-heptane", 2.0);
-    system.createDatabase(true);
-    system.setMixingRule(2);
-    new ThermodynamicOperations(system).TPflash();
-    return system;
+  SystemInterface system = new SystemSrkEos(273.15 + temperatureC,
+      50.0);system.addComponent("methane",120.0);system.addComponent("ethane",20.0);system.addComponent("n-heptane",2.0);system.createDatabase(true);system.setMixingRule(2);new ThermodynamicOperations(system).TPflash();return system;
   }
 
   @Test
@@ -97,8 +89,8 @@ public class HeaterCoolerMechanicalDesignTest {
 
     double duty = Math.abs(cooler.getDuty());
     double utilitySupply = cooler.getUtilitySpecification().getSupplyTemperature();
-    double utilityReturn = utilitySupply
-        + duty / cooler.getUtilitySpecification().getHeatCapacityRate();
+    double utilityReturn =
+        utilitySupply + duty / cooler.getUtilitySpecification().getHeatCapacityRate();
     double deltaT1 = Math.abs(cooler.getInletStream().getTemperature() - utilityReturn);
     double deltaT2 = Math.abs(cooler.getOutletStream().getTemperature() - utilitySupply);
     double expectedApproach = Math.min(deltaT1, deltaT2);

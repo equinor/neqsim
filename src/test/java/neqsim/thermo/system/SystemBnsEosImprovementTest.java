@@ -9,7 +9,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Additional tests for SystemBnsEos to validate improvements.
  */
 public class SystemBnsEosImprovementTest {
-
   @Test
   public void testInputValidationNegativeComposition() {
     SystemBnsEos sys = new SystemBnsEos();

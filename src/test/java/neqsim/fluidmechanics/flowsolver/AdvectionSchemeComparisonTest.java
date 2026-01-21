@@ -20,7 +20,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  */
 public class AdvectionSchemeComparisonTest {
-
   private SystemInterface testFluidMethane;
   private SystemInterface testFluidNitrogen;
   private double pipeLength = 100.0; // meters

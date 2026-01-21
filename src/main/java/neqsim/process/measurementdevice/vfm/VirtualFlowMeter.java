@@ -179,7 +179,6 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
    */
   public VFMResult calculateFlowRates(double pressure, double differentialPressure,
       double temperature) {
-
     StreamInterface str = getStream();
     if (str == null || str.getFluid() == null) {
       return VFMResult.builder().quality(VFMResult.Quality.INVALID).build();

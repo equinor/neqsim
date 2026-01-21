@@ -263,7 +263,6 @@ public class TimeIntegrator implements Serializable {
    */
   public double calcTwoFluidTimeStep(double[] gasVelocities, double[] liquidVelocities,
       double[] gasSoundSpeeds, double[] liquidSoundSpeeds, double dx) {
-
     double maxSpeed = 1.0; // Minimum to avoid division by zero
 
     for (int i = 0; i < gasVelocities.length; i++) {

@@ -209,7 +209,6 @@ public class SensitivityResult {
         }
         writer.println();
       }
-
     } catch (IOException e) {
       throw new RuntimeException("Failed to export sensitivity results: " + e.getMessage(), e);
     }

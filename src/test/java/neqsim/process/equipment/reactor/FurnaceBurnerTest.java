@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class FurnaceBurnerTest {
-
   @Test
   public void testNaturalGasCombustion() {
     SystemInterface fuel = new SystemSrkEos(298.15, 20.0);

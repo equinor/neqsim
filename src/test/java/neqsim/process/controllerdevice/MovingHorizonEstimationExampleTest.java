@@ -11,7 +11,6 @@ import neqsim.process.measurementdevice.MeasurementDeviceBaseClass;
  * the process gain, time constant and bias online to maintain accurate tracking.
  */
 public class MovingHorizonEstimationExampleTest extends neqsim.NeqSimTest {
-
   /**
    * Simple first-order process model acting as the transmitter for the MPC. The model permits
    * adjustments to the underlying gain, time constant and ambient bias to emulate plant drift.
@@ -59,7 +58,8 @@ public class MovingHorizonEstimationExampleTest extends neqsim.NeqSimTest {
       if (unit == null || unit.isEmpty() || unit.equals(getUnit())) {
         return temperature;
       }
-      throw new IllegalArgumentException("Unsupported unit for adaptive heater measurement: " + unit);
+      throw new IllegalArgumentException(
+          "Unsupported unit for adaptive heater measurement: " + unit);
     }
   }
 
@@ -140,8 +140,8 @@ public class MovingHorizonEstimationExampleTest extends neqsim.NeqSimTest {
         "Estimated bias should shift with the new ambient condition");
     Assertions.assertTrue(adaptedEstimate.getMeanSquaredError() < 8.0,
         "Prediction error should remain bounded after the disturbance");
-    Assertions.assertNotEquals(initialEstimate.getProcessGain(), adaptedEstimate.getProcessGain(), 1.0e-3,
-        "Moving horizon estimation should adjust the process gain when conditions change");
+    Assertions.assertNotEquals(initialEstimate.getProcessGain(), adaptedEstimate.getProcessGain(),
+        1.0e-3, "Moving horizon estimation should adjust the process gain when conditions change");
     Assertions.assertEquals(controller.getControllerSetPoint(), measurement.getMeasuredValue(), 3.0,
         "Controller should re-steady close to the new temperature target");
   }

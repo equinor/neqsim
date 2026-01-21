@@ -19,7 +19,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim Development Team
  */
 public class ExpanderMechanicalDesignTest {
-
   private Expander expander;
   private ExpanderMechanicalDesign mechDesign;
 

@@ -1,7 +1,8 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidConservationEquations.ThreeFluidRHS;
@@ -10,7 +11,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.ThreeFluidConservationEqua
  * Unit tests for ThreeFluidConservationEquations class.
  */
 class ThreeFluidConservationEquationsTest {
-
   private ThreeFluidConservationEquations equations;
   private ThreeFluidSection section;
 

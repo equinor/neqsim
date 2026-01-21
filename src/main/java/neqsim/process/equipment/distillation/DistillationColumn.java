@@ -1263,7 +1263,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     solveSequential(id, relaxationFactor);
   }
 
-
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport

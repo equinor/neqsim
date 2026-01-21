@@ -16,7 +16,6 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
 
   ValveMechanicalDesign valveMechanicalDesign = null;
 
-
   /**
    * <p>
    * Getter for the field <code>valveMechanicalDesign</code>.
@@ -129,7 +128,6 @@ public class ControlValveSizing implements ControlValveSizingInterface, Serializ
    * @return the calculated Kv value
    */
   public double calcKv(double percentOpening) {
-
     ThrottlingValve valve = (ThrottlingValve) valveMechanicalDesign.getProcessEquipment();
     SystemInterface fluid = valve.getInletStream().getFluid();
 

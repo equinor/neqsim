@@ -49,7 +49,6 @@ public class PhaseIdealGas extends Phase {
     componentArray[compNumber] = new ComponentIdealGas(name, moles, molesInPhase, compNumber);
   }
 
-
   /**
    * <p>
    * getMixingRule.
@@ -61,7 +60,6 @@ public class PhaseIdealGas extends Phase {
     return null;
   }
 
-
   /** {@inheritDoc} */
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
@@ -70,10 +68,8 @@ public class PhaseIdealGas extends Phase {
     updateMolarVolume();
   }
 
-
   /** {@inheritDoc} */
   public void setMixingRuleGEModel(String name) {}
-
 
   /**
    * <p>
@@ -84,10 +80,8 @@ public class PhaseIdealGas extends Phase {
    */
   public void setMixingRule(MixingRuleTypeInterface mr) {}
 
-
   /** {@inheritDoc} */
   public void resetMixingRule(MixingRuleTypeInterface mr) {}
-
 
   /** {@inheritDoc} */
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)

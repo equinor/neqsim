@@ -19,7 +19,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for ProcessSystemState lifecycle management.
  */
 public class ProcessSystemStateTest {
-
   private ProcessSystem process;
 
   @BeforeEach

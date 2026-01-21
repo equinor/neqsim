@@ -82,7 +82,6 @@ public class InterfacialFriction implements Serializable {
   public InterfacialFrictionResult calculate(FlowRegime flowRegime, double gasVelocity,
       double liquidVelocity, double gasDensity, double liquidDensity, double gasViscosity,
       double liquidViscosity, double liquidHoldup, double diameter, double surfaceTension) {
-
     switch (flowRegime) {
       case STRATIFIED_SMOOTH:
         return calcStratifiedSmooth(gasVelocity, liquidVelocity, gasDensity, liquidDensity,
@@ -140,7 +139,6 @@ public class InterfacialFriction implements Serializable {
    */
   private InterfacialFrictionResult calcStratifiedSmooth(double vG, double vL, double rhoG,
       double rhoL, double muG, double muL, double alphaL, double D) {
-
     InterfacialFrictionResult result = new InterfacialFrictionResult();
 
     // Get geometry
@@ -201,7 +199,6 @@ public class InterfacialFriction implements Serializable {
    */
   private InterfacialFrictionResult calcStratifiedWavy(double vG, double vL, double rhoG,
       double rhoL, double muG, double muL, double alphaL, double D, double sigma) {
-
     InterfacialFrictionResult result = new InterfacialFrictionResult();
 
     // Get geometry
@@ -271,7 +268,6 @@ public class InterfacialFriction implements Serializable {
    */
   private InterfacialFrictionResult calcAnnular(double vG, double vL, double rhoG, double rhoL,
       double muG, double muL, double alphaL, double D, double sigma) {
-
     InterfacialFrictionResult result = new InterfacialFrictionResult();
 
     // Film thickness
@@ -334,7 +330,6 @@ public class InterfacialFriction implements Serializable {
    */
   private InterfacialFrictionResult calcSlug(double vG, double vL, double rhoG, double rhoL,
       double muG, double muL, double alphaL, double D) {
-
     InterfacialFrictionResult result = new InterfacialFrictionResult();
 
     result.slipVelocity = vG - vL;
@@ -392,7 +387,6 @@ public class InterfacialFriction implements Serializable {
    */
   private InterfacialFrictionResult calcChurn(double vG, double vL, double rhoG, double rhoL,
       double muG, double muL, double alphaL, double D, double sigma) {
-
     // Use annular correlation with higher enhancement
     InterfacialFrictionResult result = calcAnnular(vG, vL, rhoG, rhoL, muG, muL, alphaL, D, sigma);
 
@@ -422,7 +416,6 @@ public class InterfacialFriction implements Serializable {
    */
   private InterfacialFrictionResult calcBubble(double vG, double vL, double rhoG, double rhoL,
       double muG, double muL, double alphaL, double D) {
-
     InterfacialFrictionResult result = new InterfacialFrictionResult();
 
     result.slipVelocity = vG - vL;
@@ -491,7 +484,6 @@ public class InterfacialFriction implements Serializable {
   public double calcInterfacialForce(FlowRegime flowRegime, double gasVelocity,
       double liquidVelocity, double gasDensity, double liquidDensity, double gasViscosity,
       double liquidViscosity, double liquidHoldup, double diameter, double surfaceTension) {
-
     InterfacialFrictionResult result =
         calculate(flowRegime, gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
             liquidViscosity, liquidHoldup, diameter, surfaceTension);

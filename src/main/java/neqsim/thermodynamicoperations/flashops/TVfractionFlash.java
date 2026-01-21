@@ -34,7 +34,6 @@ public class TVfractionFlash extends Flash {
   /** Flag indicating if the flash calculation converged successfully. */
   private boolean converged = false;
 
-
   /**
    * <p>
    * Constructor for TVflash.
@@ -202,7 +201,6 @@ public class TVfractionFlash extends Flash {
         converged = true;
         break;
       }
-
     } while ((error > 1e-6 && Math.abs(pressureStep) > 1e-6 && iterations < 200) || iterations < 6);
 
     converged = (error <= 1e-4);

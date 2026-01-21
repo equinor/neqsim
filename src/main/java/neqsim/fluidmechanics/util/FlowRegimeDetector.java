@@ -84,7 +84,6 @@ public class FlowRegimeDetector {
    */
   public static FlowRegime detectFlowRegime(SystemInterface system, double gasVelocity,
       double liquidVelocity, double pipeDiameter, double inclination) {
-
     // Get fluid properties
     double rhoG = system.getPhase(0).getDensity("kg/m3");
     double rhoL = system.getPhase(1).getDensity("kg/m3");
@@ -120,7 +119,6 @@ public class FlowRegimeDetector {
   public static FlowRegime detectFlowRegime(double gasVelocity, double liquidVelocity,
       double pipeDiameter, double inclination, double rhoG, double rhoL, double muG, double muL,
       double surfaceTension) {
-
     // Calculate dimensionless parameters
 
     // Mixture velocity

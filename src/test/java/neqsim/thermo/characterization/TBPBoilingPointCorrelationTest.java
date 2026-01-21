@@ -11,7 +11,6 @@ import neqsim.thermo.system.SystemInterface;
  * Test class for the TBP boiling point correlation implementation in TBP fraction handling.
  */
 public class TBPBoilingPointCorrelationTest {
-
   private SystemInterface testSystem;
 
   @BeforeEach
@@ -27,7 +26,6 @@ public class TBPBoilingPointCorrelationTest {
     double boilingPoint = 80 + 273.15; // K
     double molarMass = 0.078; // kg/mol
 
-
     // Calculate density using TBP boiling point correlation
     double calculatedDensity = testSystem.calculateDensityFromBoilingPoint(molarMass, boilingPoint);
 
@@ -36,13 +34,11 @@ public class TBPBoilingPointCorrelationTest {
     assertTrue(calculatedDensity < 0.9, "Density should be less than 0.9");
   }
 
-
   @Test
   void testTBPBoilingPointCorrelationDensityCalculation2() {
     // Test data from literature - typical petroleum fraction nC10 CORRECT ANSWER 0.73
     double boilingPoint = 174 + 273.15; // K
     double molarMass = 0.14229; // kg/mol
-
 
     // Calculate density using TBP boiling point correlation
     double calculatedDensity = testSystem.calculateDensityFromBoilingPoint(molarMass, boilingPoint);
@@ -65,7 +61,6 @@ public class TBPBoilingPointCorrelationTest {
     testSystem.getCharacterization().setTBPModel("PedersenPR2"); // to ensure to call Soreide
     testSystem.addTBPfraction2("TestFraction", moles, molarMass, boilingPoint);
 
-
     // Verify component was added
     assertEquals(initialComponentCount + 1, testSystem.getNumberOfComponents(),
         "Component should have been added to system");
@@ -84,7 +79,6 @@ public class TBPBoilingPointCorrelationTest {
     double boilingPoint = 80 + 273.15; // K
     double density = 0.83; // kg/mol
 
-
     // Calculate density using TBP boiling point correlation
     double calculatedMolarmass =
         testSystem.calculateMolarMassFromDensityAndBoilingPoint(density, boilingPoint);
@@ -93,7 +87,6 @@ public class TBPBoilingPointCorrelationTest {
     assertTrue(calculatedMolarmass > 0.07, "");
     assertTrue(calculatedMolarmass < 0.08, "");
   }
-
 
   @Test
   void testaddTBPfraction3UsesStandardMethod() {
@@ -127,11 +120,11 @@ public class TBPBoilingPointCorrelationTest {
     double boilingPoint = 174 + 273.15; // K
     double density = 0.73; // g/cm3 (correct for nC10)
 
-    //Calculate molar mass using TBP correlation
+    // Calculate molar mass using TBP correlation
     double calculatedMolarMass = ((neqsim.thermo.system.SystemThermo) testSystem)
-    .calculateMolarMassFromDensityAndBoilingPoint(density, boilingPoint);
+        .calculateMolarMassFromDensityAndBoilingPoint(density, boilingPoint);
 
-    //Verify molar mass is in reasonable range for nC10 (should be close to 0.142 kg/mol)
+    // Verify molar mass is in reasonable range for nC10 (should be close to 0.142 kg/mol)
     assertTrue(calculatedMolarMass > 0.13, "Molar mass should be greater than 0.13");
     assertTrue(calculatedMolarMass < 0.15, "Molar mass should be less than 0.15");
   }
@@ -162,5 +155,4 @@ public class TBPBoilingPointCorrelationTest {
   }
 
 
-  
 }

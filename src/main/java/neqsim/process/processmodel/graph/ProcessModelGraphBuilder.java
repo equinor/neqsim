@@ -200,7 +200,6 @@ public final class ProcessModelGraphBuilder {
   private static void detectInterSystemConnections(
       List<ProcessModelGraph.SubSystemGraph> subSystemGraphs, Map<ProcessNode, String> nodeToSystem,
       List<ProcessModelGraph.InterSystemConnection> connections, ProcessGraph flattenedGraph) {
-
     // Build a map of stream objects to their producing equipment AND their sub-system
     Map<Object, ProcessEquipmentInterface> streamProducers = new IdentityHashMap<>();
     Map<Object, String> streamToSystem = new IdentityHashMap<>();
@@ -509,7 +508,6 @@ public final class ProcessModelGraphBuilder {
   private static void checkMixerInputs(ProcessEquipmentInterface mixer, String targetSystemName,
       Map<Object, ProcessEquipmentInterface> streamProducers, Map<Object, String> streamToSystem,
       ProcessGraph flattenedGraph, List<ProcessModelGraph.InterSystemConnection> connections) {
-
     // Try to access mixer streams via reflection
     try {
       java.lang.reflect.Field streamsField = findField(mixer.getClass(), "streams");

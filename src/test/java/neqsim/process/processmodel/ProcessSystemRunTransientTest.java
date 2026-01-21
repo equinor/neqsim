@@ -925,7 +925,6 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     assertEquals(1.77761052380, compPower1 - compPower2, 0.0001);
   }
 
-
   @Test
   public void testDynamicCalculation1() {
     neqsim.thermo.system.SystemSrkEos fluid1 =
@@ -956,10 +955,7 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     separator1.setLiquidLevel(0.5);
     separator1.setCalculateSteadyState(false);
 
-
-    neqsim.process.equipment.valve.ThrottlingValve valve2 =
-        new neqsim.process.equipment.valve.ThrottlingValve("valve_2",
-            separator1.getLiquidOutStream());
+    new neqsim.process.equipment.valve.ThrottlingValve("valve_2", separator1.getLiquidOutStream());
     valve2.setOutletPressure(1.0);
     valve2.setPercentValveOpening(30.0);
     valve2.setCalculateSteadyState(false);
@@ -976,10 +972,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     flowTransmitter.setMaximumValue(100.0);
     flowTransmitter.setMinimumValue(1.0);
 
+    neqsim.process.processmodel.ProcessSy
 
-    neqsim.process.processmodel.ProcessSystem p = new neqsim.process.processmodel.ProcessSystem();
-    p.add(stream1);
-    p.add(valve1);
     p.add(separator1);
     p.add(valve2);
     p.add(valve3);

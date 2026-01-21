@@ -2,9 +2,7 @@ package neqsim.process.equipment.valve;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
-
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -15,7 +13,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Tests for {@link SafetyReliefValve} transient opening and reseating behaviour.
  */
 public class SafetyReliefValveTest {
-
   @Test
   void testTransientOpeningAndClosing() {
     // upstream gas node

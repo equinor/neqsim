@@ -15,7 +15,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for BatchStudy parallel parameter study class.
  */
 public class BatchStudyTest {
-
   private ProcessSystem baseProcess;
 
   @BeforeEach

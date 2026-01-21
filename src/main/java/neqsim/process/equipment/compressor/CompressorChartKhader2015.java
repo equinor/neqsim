@@ -353,7 +353,6 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     return super.getPolytropicEfficiency(machNumberCorrectedFlowFactor, machineMachNumber);
   }
 
-
   /**
    * Returns the outer diameter of the impeller.
    *
@@ -395,7 +394,6 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   // ...existing code...
-
 
   /**
    * Simple POJO to hold corrected (dimensionless) compressor curve data for a given speed.

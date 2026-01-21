@@ -265,7 +265,6 @@ public class ValveMechanicalDesign extends MechanicalDesign {
    *         false, the map will be null.
    */
   public Map<String, Object> calcValveSize() {
-
     Map<String, Object> result = fullOutput ? new HashMap<>() : null;
 
     result = valveSizingMethod

@@ -1,14 +1,15 @@
 package neqsim.process.design;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
@@ -19,7 +20,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for the design framework including DesignSpecification, AutoSizeable, and DesignOptimizer.
  */
 class DesignFrameworkTest {
-
   private static SystemInterface testFluid;
   private static ProcessSystem testProcess;
   private static Separator separator;

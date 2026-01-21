@@ -219,7 +219,6 @@ public class FlowRegimeDetector implements Serializable {
    */
   private FlowRegime detectHorizontalFlowRegime(double U_SL, double U_SG, double D, double theta,
       double rho_L, double rho_G, double mu_L, double sigma) {
-
     double U_M = U_SL + U_SG;
 
     // Dimensionless parameters
@@ -279,7 +278,6 @@ public class FlowRegimeDetector implements Serializable {
    */
   private FlowRegime detectInclinedFlowRegime(double U_SL, double U_SG, double D, double theta,
       double rho_L, double rho_G, double mu_L, double sigma) {
-
     boolean isUpward = theta > 0;
 
     // Check for dispersed bubble
@@ -339,7 +337,6 @@ public class FlowRegimeDetector implements Serializable {
    */
   private double calcMartinelliParameter(double U_SL, double U_SG, double D, double rho_L,
       double rho_G, double mu_L, double sigma) {
-
     if (U_SG < 1e-6) {
       return 1e6;
     }
@@ -389,7 +386,6 @@ public class FlowRegimeDetector implements Serializable {
    */
   private double calcKelvinHelmholtzParameter(double U_SG, double D, double rho_L, double rho_G,
       double sigma) {
-
     double deltaRho = rho_L - rho_G;
     if (deltaRho < 1e-6) {
       return 0;
@@ -409,7 +405,6 @@ public class FlowRegimeDetector implements Serializable {
    */
   private double calcTurbulenceParameter(double U_SL, double D, double rho_L, double rho_G,
       double mu_L) {
-
     double deltaRho = rho_L - rho_G;
     if (deltaRho < 1e-6) {
       return 0;
@@ -450,7 +445,6 @@ public class FlowRegimeDetector implements Serializable {
    */
   private boolean isDispersedBubble(double U_SL, double U_SG, double D, double rho_L, double rho_G,
       double sigma) {
-
     double U_M = U_SL + U_SG;
 
     // Use default surface tension if not available (assume gas-oil for typical multiphase)
@@ -484,7 +478,6 @@ public class FlowRegimeDetector implements Serializable {
    */
   private boolean isAnnularFlow(double U_SL, double U_SG, double D, double rho_L, double rho_G,
       double sigma) {
-
     // Minimum gas velocity for annular flow (Taitel-Dukler)
     double deltaRho = rho_L - rho_G;
     if (deltaRho < 1e-6) {
@@ -518,7 +511,6 @@ public class FlowRegimeDetector implements Serializable {
    */
   private double estimateStratifiedLiquidLevel(double U_SL, double U_SG, double D, double rho_L,
       double rho_G, double mu_L, double theta) {
-
     // Simplified momentum balance for stratified flow
     // Iterative solution for liquid level h_L
 
@@ -590,7 +582,6 @@ public class FlowRegimeDetector implements Serializable {
    */
   private boolean isKelvinHelmholtzUnstable(double U_SG, double h_L, double D, double rho_L,
       double rho_G) {
-
     if (h_L < 0.01 * D || h_L > 0.99 * D) {
       return false;
     }
@@ -626,7 +617,6 @@ public class FlowRegimeDetector implements Serializable {
    */
   private boolean isWavyTransition(double U_SG, double h_L, double D, double rho_L, double rho_G,
       double mu_L) {
-
     if (h_L < 0.01 * D || h_L > 0.99 * D) {
       return false;
     }
@@ -675,7 +665,6 @@ public class FlowRegimeDetector implements Serializable {
    */
   public FlowRegime[][] getFlowRegimeMap(PipeSection section, double U_SL_max, double U_SG_max,
       int resolution) {
-
     FlowRegime[][] map = new FlowRegime[resolution][resolution];
     PipeSection testSection = section.clone();
 

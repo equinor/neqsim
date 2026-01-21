@@ -25,7 +25,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  */
 public class PressureBoundaryOptimizerTest {
-
   private SystemInterface testFluid;
   private Stream feedStream;
   private ProcessSystem simpleProcess;

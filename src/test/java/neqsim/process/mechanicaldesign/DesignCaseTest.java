@@ -14,11 +14,9 @@ import org.junit.jupiter.api.Test;
  * @author esol
  */
 class DesignCaseTest {
-
   @Nested
   @DisplayName("Basic Properties Tests")
   class BasicPropertiesTests {
-
     @Test
     @DisplayName("Should have correct display names")
     void shouldHaveCorrectDisplayNames() {
@@ -50,7 +48,6 @@ class DesignCaseTest {
   @Nested
   @DisplayName("Sizing Tests")
   class SizingTests {
-
     @Test
     @DisplayName("Maximum case should be sizing critical")
     void maximumShouldBeSizingCritical() {
@@ -79,7 +76,6 @@ class DesignCaseTest {
   @Nested
   @DisplayName("Turndown Tests")
   class TurndownTests {
-
     @Test
     @DisplayName("Minimum case should be turndown")
     void minimumShouldBeTurndown() {
@@ -108,7 +104,6 @@ class DesignCaseTest {
   @Nested
   @DisplayName("Relief Tests")
   class ReliefTests {
-
     @Test
     @DisplayName("Upset case should require relief sizing")
     void upsetShouldRequireRelief() {
@@ -137,7 +132,6 @@ class DesignCaseTest {
   @Nested
   @DisplayName("Load Factor Tests")
   class LoadFactorTests {
-
     @Test
     @DisplayName("Upset should have higher load than normal")
     void upsetShouldHaveHigherLoad() {
@@ -163,7 +157,6 @@ class DesignCaseTest {
   @Nested
   @DisplayName("ToString Tests")
   class ToStringTests {
-
     @Test
     @DisplayName("ToString should include name and load percentage")
     void toStringShouldIncludeNameAndLoad() {

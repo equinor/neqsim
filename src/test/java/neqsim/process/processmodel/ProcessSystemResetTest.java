@@ -2,12 +2,10 @@ package neqsim.process.processmodel;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import org.junit.jupiter.api.Test;
 
 /** Tests for the ProcessSystem history buffer and reset behaviour. */
 public class ProcessSystemResetTest extends neqsim.NeqSimTest {
-
   @Test
   public void historyGrowsBeyondOriginalCapacity() {
     ProcessSystem process = new ProcessSystem();

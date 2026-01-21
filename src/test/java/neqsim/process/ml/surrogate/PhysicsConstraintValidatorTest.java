@@ -19,7 +19,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for PhysicsConstraintValidator AI action validation.
  */
 public class PhysicsConstraintValidatorTest {
-
   private ProcessSystem process;
   private PhysicsConstraintValidator validator;
 

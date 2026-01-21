@@ -1,6 +1,7 @@
 package neqsim.thermo.mixingrule;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -9,7 +10,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Test class for BIPEstimator - Chueh-Prausnitz and Katz-Firoozabadi correlations.
  */
 class BIPEstimatorTest {
-
   @Test
   void testChuehPrausnitzBasicCalculation() {
     // Create a simple fluid with methane and n-heptane

@@ -133,7 +133,6 @@ public class HeatExchangerCapacityStrategy implements EquipmentCapacityStrategy 
             .setValueSupplier(() -> heater.getOutletStream().getTemperature("C"));
         constraints.put("outletTemperature", tempConstraint);
       }
-
     } else if (equipment instanceof MultiStreamHeatExchanger2) {
       MultiStreamHeatExchanger2 hx = (MultiStreamHeatExchanger2) equipment;
 

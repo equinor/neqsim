@@ -1,6 +1,9 @@
 package neqsim.util.validation.contracts;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -13,11 +16,9 @@ import neqsim.util.validation.ValidationResult;
  * Tests for module contracts.
  */
 class ModuleContractTest {
-
   @Nested
   @DisplayName("ThermodynamicSystemContract Tests")
   class ThermodynamicSystemContractTests {
-
     @Test
     @DisplayName("Valid system passes preconditions")
     void testValidSystemPreconditions() {
@@ -104,7 +105,6 @@ class ModuleContractTest {
   @Nested
   @DisplayName("StreamContract Tests")
   class StreamContractTests {
-
     @Test
     @DisplayName("Valid stream passes preconditions")
     void testValidStreamPreconditions() {
@@ -144,7 +144,6 @@ class ModuleContractTest {
   @Nested
   @DisplayName("SeparatorContract Tests")
   class SeparatorContractTests {
-
     @Test
     @DisplayName("Valid separator passes preconditions")
     void testValidSeparatorPreconditions() {
@@ -190,7 +189,6 @@ class ModuleContractTest {
   @Nested
   @DisplayName("Integration Tests")
   class IntegrationTests {
-
     @Test
     @DisplayName("Full workflow with contract validation")
     void testFullWorkflowWithContracts() {

@@ -45,7 +45,6 @@ public class MassTransferCoefficientCalculator {
   public static double calculateLiquidMassTransferCoefficient(FlowPattern flowPattern,
       double diameter, double liquidHoldup, double usg, double usl, double rhoL, double muL,
       double diffL) {
-
     // Validate inputs - return 0 for invalid values
     if (diameter <= 0 || diffL <= 0 || rhoL <= 0 || muL <= 0) {
       return 0.0;
@@ -100,7 +99,6 @@ public class MassTransferCoefficientCalculator {
    */
   public static double calculateGasMassTransferCoefficient(FlowPattern flowPattern, double diameter,
       double liquidHoldup, double usg, double rhoG, double muG, double diffG) {
-
     // Validate inputs - return 0 for invalid values
     if (diameter <= 0 || diffG <= 0 || rhoG <= 0 || muG <= 0) {
       return 0.0;
@@ -197,7 +195,6 @@ public class MassTransferCoefficientCalculator {
    */
   private static double calculateStratifiedKL(double diameter, double liquidHoldup, double usl,
       double rhoL, double muL, double diffL, double scL) {
-
     // Hydraulic diameter for liquid phase
     double dh = calculateLiquidHydraulicDiameter(diameter, liquidHoldup);
 
@@ -232,7 +229,6 @@ public class MassTransferCoefficientCalculator {
    */
   private static double calculateAnnularKL(double diameter, double liquidHoldup, double usl,
       double rhoL, double muL, double diffL, double scL) {
-
     // Film thickness
     double delta = diameter / 2.0 * (1.0 - Math.sqrt(1.0 - liquidHoldup));
 
@@ -268,7 +264,6 @@ public class MassTransferCoefficientCalculator {
    */
   private static double calculateSlugKL(double diameter, double liquidHoldup, double usg,
       double usl, double rhoL, double muL, double diffL, double scL) {
-
     // Slug flow is combination of film (in Taylor bubble region) and mixed (in slug)
     double voidFraction = 1.0 - liquidHoldup;
     double bubbleFraction = Math.min(0.8, voidFraction / 0.7);
@@ -301,7 +296,6 @@ public class MassTransferCoefficientCalculator {
    */
   private static double calculateBubbleKL(double diameter, double liquidHoldup, double usg,
       double usl, double rhoL, double muL, double diffL, double scL) {
-
     // For bubble flow, use Ranz-Marshall with bubble slip velocity
     double voidFraction = 1.0 - liquidHoldup;
 
@@ -334,7 +328,6 @@ public class MassTransferCoefficientCalculator {
    */
   private static double calculateDropletKL(double diameter, double usg, double rhoL, double muL,
       double diffL, double scL) {
-
     // Internal circulation in droplets enhances mass transfer
     // Use Kronig-Brink for circulating drops: Sh ≈ 17.9
 
@@ -366,7 +359,6 @@ public class MassTransferCoefficientCalculator {
    */
   private static double calculateChurnKL(double diameter, double liquidHoldup, double usg,
       double usl, double rhoL, double muL, double diffL, double scL) {
-
     // Churn flow has high turbulence - use enhanced turbulent correlation
     double uMix = usg + usl;
     double reMix = rhoL * uMix * diameter / muL;
@@ -393,7 +385,6 @@ public class MassTransferCoefficientCalculator {
    */
   private static double calculateStratifiedKG(double diameter, double voidFraction, double uG,
       double rhoG, double muG, double diffG, double scG) {
-
     // Hydraulic diameter for gas phase
     double dh = calculateGasHydraulicDiameter(diameter, voidFraction);
 
@@ -420,7 +411,6 @@ public class MassTransferCoefficientCalculator {
    */
   private static double calculateAnnularKG(double diameter, double voidFraction, double uG,
       double rhoG, double muG, double diffG, double scG) {
-
     // Core diameter
     double dCore = diameter * Math.sqrt(voidFraction);
 
@@ -446,7 +436,6 @@ public class MassTransferCoefficientCalculator {
    */
   private static double calculateBubbleKG(double diameter, double uG, double rhoG, double muG,
       double diffG, double scG) {
-
     // For gas side in bubbles, diffusion in stagnant bubble interior
     double dBubble = 0.01 * diameter;
 
@@ -470,7 +459,6 @@ public class MassTransferCoefficientCalculator {
    */
   private static double calculateDropletKG(double diameter, double uG, double rhoG, double muG,
       double diffG, double scG) {
-
     // Droplets in gas stream - use Ranz-Marshall
     double dDrop = 0.001;
     double uRel = uG * 0.1;
@@ -494,7 +482,6 @@ public class MassTransferCoefficientCalculator {
    */
   private static double calculateChurnKG(double diameter, double uG, double rhoG, double muG,
       double diffG, double scG) {
-
     double reG = rhoG * uG * diameter / muG;
     double sh = 0.04 * Math.pow(reG, 0.8) * Math.pow(scG, 0.33);
 

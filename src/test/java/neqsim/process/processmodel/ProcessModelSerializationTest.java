@@ -23,7 +23,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  */
 public class ProcessModelSerializationTest {
-
   private Path tempDir;
   private ProcessModel testModel;
 

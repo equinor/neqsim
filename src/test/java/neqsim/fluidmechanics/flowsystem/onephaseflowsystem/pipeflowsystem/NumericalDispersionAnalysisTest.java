@@ -1,6 +1,7 @@
 package neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 
@@ -48,7 +49,6 @@ import org.junit.jupiter.api.Test;
  * @author ESOL
  */
 public class NumericalDispersionAnalysisTest {
-
   /**
    * Compares analytical vs numerical front spreading predictions.
    * 

@@ -8,7 +8,6 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 
 @Tag("slow")
 public class DistillationSpeedTest {
-
   @Test
   public void compareSolvers() {
     int warmupRuns = 2;

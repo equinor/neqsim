@@ -14,7 +14,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * 1.3293403882
  */
 public class GammaFunctionVerificationTest {
-
   private static final double SQRT_PI = Math.sqrt(Math.PI);
   private static final double TOLERANCE = 0.01; // 1% tolerance
 

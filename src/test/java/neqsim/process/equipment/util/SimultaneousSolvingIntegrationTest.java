@@ -23,7 +23,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * using large, realistic process simulations.
  */
 class SimultaneousSolvingIntegrationTest {
-
   private SystemInterface richGasFluid;
   private SystemInterface leanGasFluid;
 

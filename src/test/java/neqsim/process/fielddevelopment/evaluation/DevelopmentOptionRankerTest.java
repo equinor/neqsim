@@ -1,6 +1,8 @@
 package neqsim.process.fielddevelopment.evaluation;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +18,6 @@ import neqsim.process.fielddevelopment.evaluation.DevelopmentOptionRanker.Rankin
  * @version 1.0
  */
 class DevelopmentOptionRankerTest {
-
   private DevelopmentOptionRanker ranker;
 
   @BeforeEach

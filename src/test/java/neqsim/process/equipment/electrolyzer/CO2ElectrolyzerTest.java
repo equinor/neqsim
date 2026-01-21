@@ -8,11 +8,10 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 class CO2ElectrolyzerTest extends neqsim.NeqSimTest {
-
   @Test
   void testSelectivityBasedConversionAndEnergyDemand() {
-    SystemInterface feedFluid = new Fluid().create2(new String[] {"CO2", "water"},
-        new double[] {0.95, 0.05}, "mole/sec");
+    SystemInterface feedFluid =
+        new Fluid().create2(new String[] {"CO2", "water"}, new double[] {0.95, 0.05}, "mole/sec");
     feedFluid.setTemperature(298.15);
     feedFluid.setPressure(20.0);
 
@@ -45,11 +44,10 @@ class CO2ElectrolyzerTest extends neqsim.NeqSimTest {
     String coName = ComponentInterface.getComponentNameFromAlias("CO");
     String hydrogenName = ComponentInterface.getComponentNameFromAlias("H2");
 
-    assertEquals(expectedCo2,
-        gasProduct.getComponent(co2Name).getFlowRate("mole/sec"), 1e-6);
+    assertEquals(expectedCo2, gasProduct.getComponent(co2Name).getFlowRate("mole/sec"), 1e-6);
     assertEquals(expectedCo, gasProduct.getComponent(coName).getFlowRate("mole/sec"), 1e-6);
-    assertEquals(expectedHydrogen,
-        gasProduct.getComponent(hydrogenName).getFlowRate("mole/sec"), 1e-6);
+    assertEquals(expectedHydrogen, gasProduct.getComponent(hydrogenName).getFlowRate("mole/sec"),
+        1e-6);
     double electronMoles = expectedCo * 2.0 / 0.9 + expectedHydrogen * 2.0;
     double expectedPower = electronMoles / 0.95 * 96485.3329 * 2.7;
     assertEquals(expectedPower, electrolyzer.getEnergyStream().getDuty(), 1e-3);

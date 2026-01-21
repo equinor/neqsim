@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
  * Tests for valve characteristic implementations.
  */
 public class ValveCharacteristicTest {
-
   // ========== Linear Characteristic Tests ==========
 
   @Test

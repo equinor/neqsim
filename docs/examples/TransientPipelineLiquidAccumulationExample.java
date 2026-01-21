@@ -238,7 +238,6 @@ public class TransientPipelineLiquidAccumulationExample {
   private static void runDetailedTransientSimulation(double pipeLength, double pipeDiameter,
       int numberOfSections, double[] elevationProfile, double inletTemperature,
       double inletPressure, double outletPressure) {
-
     System.out.println("=============================================================");
     System.out.println("  TRANSIENT SIMULATION: FLOW RATE RAMP-UP");
     System.out.println("  Starting from 50 kg/s, ramping to 150 kg/s over 2 hours");

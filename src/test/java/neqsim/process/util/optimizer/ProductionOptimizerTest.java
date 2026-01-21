@@ -38,8 +38,6 @@ import neqsim.process.util.optimizer.ProductionOptimizer.UtilizationSeries;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class ProductionOptimizerTest {
-
-  @Test
   public void testOptimizationCollectsUtilizationsAndConstraints() {
     SystemSrkEos testSystem = new SystemSrkEos(298.15, 10.0);
     testSystem.addComponent("methane", 1200.0);

@@ -2278,7 +2278,6 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
-
     if (getCalculateSteadyState()) {
       run(id);
       increaseTime(dt);

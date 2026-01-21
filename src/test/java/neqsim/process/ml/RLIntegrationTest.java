@@ -9,6 +9,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.ml.controllers.BangBangController;
 import neqsim.process.ml.controllers.Controller;
 import neqsim.process.ml.controllers.PIDController;
@@ -18,10 +21,6 @@ import neqsim.process.ml.examples.SeparatorCompressorMultiAgentEnv;
 import neqsim.process.ml.examples.SeparatorGymEnv;
 import neqsim.process.ml.examples.SeparatorLevelControlEnv;
 import neqsim.process.ml.multiagent.MultiAgentEnvironment;
-import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.equipment.heatexchanger.HeatExchanger;
-import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -29,7 +28,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Unit tests for RL integration classes.
  */
 class RLIntegrationTest {
-
   @Test
   void testStateVectorNormalization() {
     StateVector state = new StateVector();

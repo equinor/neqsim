@@ -32,7 +32,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  */
 class HIPPSValveTest {
-
   private SystemInterface testSystem;
   private Stream feedStream;
   private Separator separator;

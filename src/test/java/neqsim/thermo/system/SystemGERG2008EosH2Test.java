@@ -12,7 +12,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Tests for SystemGERG2008Eos with GERG-2008-H2 model selection.
  */
 class SystemGERG2008EosH2Test {
-
   /**
    * Test that the default model type is STANDARD.
    */

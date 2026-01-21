@@ -137,7 +137,6 @@ public class AsphalteneStabilityAnalyzer {
    */
   public AsphalteneRisk deBoerScreening(double reservoirPressure, double saturationPressure,
       double oilDensity) {
-
     double undersaturation = reservoirPressure - saturationPressure;
 
     // De Boer correlation boundaries (approximate)
@@ -355,7 +354,6 @@ public class AsphalteneStabilityAnalyzer {
    */
   public String comprehensiveAssessment(double reservoirPressure, double reservoirTemperature,
       double wellheadPressure, double wellheadTemperature) {
-
     StringBuilder report = new StringBuilder();
     report.append("=== ASPHALTENE STABILITY ASSESSMENT ===\n\n");
 

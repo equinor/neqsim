@@ -12,7 +12,6 @@ import neqsim.process.processmodel.ProcessSystem;
  * Test to run production optimization with separator and scrubber design checks
  */
 public class ProductionOptimizationTest {
-
   @Test
   void testMaximizeProduction() {
     System.out.println("===== Production Optimization Test (Max 15000 kmol/hr) =====\n");

@@ -16,7 +16,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for {@link PipeFlowNetwork} - pipeline networks with compositional PipeFlowSystem.
  */
 class PipeFlowNetworkTest {
-
   /**
    * Create a natural gas test fluid.
    */

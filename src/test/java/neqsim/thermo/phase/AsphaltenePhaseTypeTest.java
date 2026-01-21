@@ -14,7 +14,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Tests demonstrating asphaltene phase type in multi-phase flash calculations.
  */
 public class AsphaltenePhaseTypeTest {
-
   /**
    * Test that PhaseType.ASPHALTENE exists and has correct properties.
    */

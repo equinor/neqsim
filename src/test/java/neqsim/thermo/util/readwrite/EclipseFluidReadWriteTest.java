@@ -289,7 +289,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     Assertions.assertEquals(3, testSystem.getNumberOfPhases());
   }
 
-
   @Test
   void testFluidWater_os_sep_test() throws IOException {
     testSystem = EclipseFluidReadWrite.read(fluid_water);
@@ -398,7 +397,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
         throttlingValve.getOutletStream().getFluid().getTemperature("C"), 1e-3);
   }
 
-
   @Test
   void testSetAllocationComposition2() throws IOException {
     String[] fluids = new String[] {"A", "B"};
@@ -444,17 +442,14 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     stream1.getFluid().prettyPrint();
   }
 
-
   @Test
   void testGOW34() throws IOException {
     testSystem = EclipseFluidReadWrite.read(gow);
     testSystem.setMultiPhaseCheck(true);
 
-
     double[] moleFractions = {0.00540071, 0.0127938, 0.724541, 0.0972789, 0.0746364, 0.0124884,
         0.0296084, 0.00701328, 0.00872348, 0.00703798, 0.00641995, 0.00266744, 0.00123526,
         0.00015286, 4.30823E-08, 7.49295E-16, 0.0100024};
-
 
     testSystem.setMolarComposition(moleFractions);
 
@@ -465,7 +460,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
 
     Assertions.assertEquals(3, testSystem.getNumberOfPhases());
   }
-
 
   @Test
   void testGOW() throws IOException {
@@ -712,7 +706,6 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
         0.05893425834431258, 0.07525119431180687, 0.07925100506320992, 0.0814576540555948,
         0.04665775189490658, 0.01708982141273816, 0.004685723238493833, 5.666335741724731e-06,
         2.608641697723448e-12, 0.0};
-
 
     testSystem.setMolarComposition(moleFractions);
 

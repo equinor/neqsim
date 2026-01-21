@@ -11,15 +11,14 @@ import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerMechanicalDesign.SelectionCriterion;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Tests for HeatExchanger mechanical design calculations.
  */
 public class HeatExchangerMechanicalDesignTest {
-
   @Test
   void testCalcDesign() {
     HeatExchanger hx = createHeatExchanger(1000.0);
@@ -66,8 +65,9 @@ public class HeatExchangerMechanicalDesignTest {
 
     HeatExchangerSizingResult selected = design.getSelectedSizingResult();
     assertNotNull(selected);
-    double minArea = design.getSizingResults().stream().mapToDouble(HeatExchangerSizingResult::getRequiredArea)
-        .min().orElseThrow(() -> new IllegalStateException("No sizing results available"));
+    double minArea =
+        design.getSizingResults().stream().mapToDouble(HeatExchangerSizingResult::getRequiredArea)
+            .min().orElseThrow(() -> new IllegalStateException("No sizing results available"));
     assertEquals(minArea, selected.getRequiredArea(), 1e-6);
 
     // Switch criterion to evaluate another automatic decision

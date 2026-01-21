@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class PureComponentSaturationPointTest {
-
   static Stream<String> components() {
     return Stream.of("CO2", "methane", "ethane", "nitrogen", "propane");
   }

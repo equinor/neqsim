@@ -14,8 +14,6 @@ import org.junit.jupiter.api.Test;
  */
 public class PredictionResultTest {
 
-  private PredictionResult prediction;
-
   @BeforeEach
   void setUp() {
     prediction = new PredictionResult(Duration.ofHours(2), "Test Scenario");

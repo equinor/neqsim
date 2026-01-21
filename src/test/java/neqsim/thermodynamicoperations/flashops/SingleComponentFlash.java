@@ -14,8 +14,6 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SingleComponentFlash {
-
-
   @Test
   void testConstantPhaseFractionPressureFlash() {
     neqsim.thermo.system.SystemInterface testSystem =
@@ -115,7 +113,6 @@ public class SingleComponentFlash {
     // testSystem.prettyPrint();
   }
 
-
   @Test
   void testConstantPhaseFractionPressureFlash3() {
     neqsim.thermo.system.SystemInterface testSystem =
@@ -133,7 +130,6 @@ public class SingleComponentFlash {
 
   @Test
   void testProcess1() {
-
     SystemInterface fluid1 = new SystemPrEos(278.15, 10.0);
     fluid1.addComponent("propane", 1.0);
 

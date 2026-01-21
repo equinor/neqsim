@@ -1,6 +1,7 @@
 package neqsim.process.equipment.compressor;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.Test;
  * @version 1.0
  */
 class CompressorCurveCorrectionsTest {
-
   private static final double TOLERANCE = 1e-6;
 
   // ==================== Reynolds Number Tests ====================

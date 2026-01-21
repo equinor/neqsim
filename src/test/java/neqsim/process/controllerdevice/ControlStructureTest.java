@@ -7,13 +7,11 @@ import neqsim.process.controllerdevice.structure.CascadeControllerStructure;
 import neqsim.process.controllerdevice.structure.ControlStructureInterface;
 import neqsim.process.controllerdevice.structure.FeedForwardControllerStructure;
 import neqsim.process.controllerdevice.structure.RatioControllerStructure;
-import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.measurementdevice.MeasurementDeviceBaseClass;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 
 /** Tests for advanced control structures coordinating multiple controllers. */
 public class ControlStructureTest {
-
   /** Dummy controller returning set-point as response without dynamics. */
   static class DummyController implements ControllerDeviceInterface {
     double setPoint;
@@ -108,8 +106,7 @@ public class ControlStructureTest {
   public void testCascadeStructurePassesSetPoint() {
     DummyController primary = new DummyController();
     DummyController secondary = new DummyController();
-    ControlStructureInterface cascade =
-        new CascadeControllerStructure(primary, secondary);
+    ControlStructureInterface cascade = new CascadeControllerStructure(primary, secondary);
     primary.setControllerSetPoint(5.0);
     cascade.runTransient(1.0);
     Assertions.assertEquals(5.0, cascade.getOutput(), 1e-8);

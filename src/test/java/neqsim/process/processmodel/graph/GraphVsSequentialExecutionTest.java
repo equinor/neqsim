@@ -27,7 +27,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 public class GraphVsSequentialExecutionTest {
-
   private SystemInterface testFluid;
 
   @BeforeEach

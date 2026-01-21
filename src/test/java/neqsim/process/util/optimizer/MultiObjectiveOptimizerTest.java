@@ -9,7 +9,6 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProductionOptimizer.ConstraintSeverity;
 import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationConfig;
@@ -26,7 +25,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 public class MultiObjectiveOptimizerTest {
-
   /**
    * Create a test process with compressor and cooler for multi-objective testing.
    *

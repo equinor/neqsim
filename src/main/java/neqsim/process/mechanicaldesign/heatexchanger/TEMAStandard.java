@@ -685,7 +685,6 @@ public class TEMAStandard {
    */
   public static String recommendConfiguration(boolean needsCleanable,
       boolean hasLargeTemperatureDifference, boolean isHighPressure, boolean isHazardous) {
-
     if (isHazardous) {
       if (hasLargeTemperatureDifference) {
         return "AEW"; // Sealed floating head
@@ -737,7 +736,6 @@ public class TEMAStandard {
    */
   public static int estimateTubeCount(double shellID, double tubeOD, double tubePitch,
       TubePitchPattern pattern, int tubePasses) {
-
     // Effective shell area (accounting for pass lanes and bundle clearance)
     double effectiveDiameter = shellID - 2.0 * tubeOD; // Bundle clearance
     double passLaneFactor = 1.0 - 0.05 * (tubePasses - 1); // Pass lane reduction

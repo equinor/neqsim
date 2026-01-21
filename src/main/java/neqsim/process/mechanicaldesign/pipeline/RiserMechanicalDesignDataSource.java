@@ -121,7 +121,6 @@ public class RiserMechanicalDesignDataSource {
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
         ResultSet dataSet = database.getResultSet(query)) {
-
       while (dataSet.next()) {
         String spec = dataSet.getString("SPECIFICATION");
         double minValue = dataSet.getDouble("MINVALUE");
@@ -131,7 +130,6 @@ public class RiserMechanicalDesignDataSource {
         // Use max value for safety factors
         applyParameter(params, spec, minValue, maxValue, documentId);
       }
-
     } catch (Exception e) {
       logger.warn("Failed to load riser design parameters for company '{}', using defaults: {}",
           company, e.getMessage());
@@ -153,13 +151,11 @@ public class RiserMechanicalDesignDataSource {
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
         ResultSet dataSet = database.getResultSet(query)) {
-
       while (dataSet.next()) {
         String spec = dataSet.getString("SPECIFICATION");
         double maxValue = dataSet.getDouble("MAXVALUE");
         params.put(spec, maxValue);
       }
-
     } catch (Exception e) {
       logger.warn("Failed to load standard '{}' parameters: {}", standardCode, e.getMessage());
     }

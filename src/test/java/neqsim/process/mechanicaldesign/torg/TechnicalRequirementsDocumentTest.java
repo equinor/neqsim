@@ -13,7 +13,6 @@ import neqsim.process.mechanicaldesign.designstandards.StandardType;
  * Tests for TechnicalRequirementsDocument class.
  */
 class TechnicalRequirementsDocumentTest {
-
   @Test
   void testBuilderCreatesDocument() {
     TechnicalRequirementsDocument torg =

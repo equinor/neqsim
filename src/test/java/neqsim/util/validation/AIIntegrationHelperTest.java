@@ -1,6 +1,12 @@
 package neqsim.util.validation;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,7 +20,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for AIIntegrationHelper.
  */
 class AIIntegrationHelperTest {
-
   private ProcessSystem process;
   private SystemInterface fluid;
 
@@ -35,7 +40,6 @@ class AIIntegrationHelperTest {
   @Nested
   @DisplayName("Factory Method Tests")
   class FactoryMethodTests {
-
     @Test
     @DisplayName("Should create helper for process")
     void testForProcess() {
@@ -48,7 +52,6 @@ class AIIntegrationHelperTest {
   @Nested
   @DisplayName("Validation Tests")
   class ValidationTests {
-
     @Test
     @DisplayName("Should validate process")
     void testValidate() {
@@ -92,7 +95,6 @@ class AIIntegrationHelperTest {
   @Nested
   @DisplayName("Execution Tests")
   class ExecutionTests {
-
     @Test
     @DisplayName("Should run process safely")
     void testSafeRun() {
@@ -131,7 +133,6 @@ class AIIntegrationHelperTest {
   @Nested
   @DisplayName("Documentation Tests")
   class DocumentationTests {
-
     @Test
     @DisplayName("Should get API documentation")
     void testGetAPIDocumentation() {
@@ -148,7 +149,6 @@ class AIIntegrationHelperTest {
   @Nested
   @DisplayName("Component Validation Tests")
   class ComponentValidationTests {
-
     @Test
     @DisplayName("Should validate individual fluid")
     void testValidateFluid() {
@@ -175,7 +175,6 @@ class AIIntegrationHelperTest {
   @Nested
   @DisplayName("RL Environment Tests")
   class RLEnvironmentTests {
-
     @Test
     @DisplayName("Should create RL environment")
     void testCreateRLEnvironment() {
@@ -191,7 +190,6 @@ class AIIntegrationHelperTest {
   @Nested
   @DisplayName("ExecutionResult Status Tests")
   class ExecutionResultStatusTests {
-
     @Test
     @DisplayName("Success result should be success")
     void testSuccessResult() {

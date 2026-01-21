@@ -31,7 +31,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  */
 public class AsphalteneValidationTest {
-
   /**
    * Literature data from De Boer et al. (1995) SPE-24987-PA Table 1. Field cases with known
    * asphaltene problem status.
@@ -662,7 +661,6 @@ public class AsphalteneValidationTest {
         if (liquidDensity > 0) {
           previousDensity = liquidDensity;
         }
-
       } catch (Exception e) {
         System.out.printf("%12.0f | Error: %s%n", pressure, e.getMessage());
       }

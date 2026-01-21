@@ -62,7 +62,6 @@ public final class BlackOilTableValidator {
    */
   public static ValidationResult validate(double[] pressures, double[] Bo, double[] Rs, double[] Bg,
       double[] oilViscosity, double[] gasViscosity) {
-
     ValidationResult result = new ValidationResult();
 
     if (pressures == null || pressures.length == 0) {
@@ -245,7 +244,6 @@ public final class BlackOilTableValidator {
    */
   private static void validateBoRsConsistency(double[] pressures, double[] Bo, double[] Rs,
       ValidationResult result) {
-
     // Calculate dBo/dRs (should be positive - more gas means higher Bo)
     for (int i = 1; i < Bo.length; i++) {
       double dBo = Bo[i] - Bo[i - 1];

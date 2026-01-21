@@ -240,7 +240,6 @@ public class ConceptToProcessLinker implements Serializable {
    */
   private void generateOilProcessing(ProcessSystem process, Stream inlet, FieldConcept concept,
       FidelityLevel fidelity) {
-
     // HP Separator
     ThreePhaseSeparator hpSep = new ThreePhaseSeparator("HP-Separator", inlet);
     process.add(hpSep);
@@ -302,7 +301,6 @@ public class ConceptToProcessLinker implements Serializable {
    */
   private void generateGasProcessing(ProcessSystem process, StreamInterface inlet,
       FieldConcept concept, FidelityLevel fidelity) {
-
     // Inlet separator (slug catcher)
     ThreePhaseSeparator slugCatcher = new ThreePhaseSeparator("Slug-Catcher", inlet);
     process.add(slugCatcher);
@@ -340,7 +338,6 @@ public class ConceptToProcessLinker implements Serializable {
    */
   private void generateGasCondensateProcessing(ProcessSystem process, Stream inlet,
       FieldConcept concept, FidelityLevel fidelity) {
-
     // HP Separator
     ThreePhaseSeparator hpSep = new ThreePhaseSeparator("HP-Separator", inlet);
     process.add(hpSep);

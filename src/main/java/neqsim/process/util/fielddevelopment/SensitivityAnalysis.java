@@ -1127,7 +1127,6 @@ public class SensitivityAnalysis implements Serializable {
   private List<TrialResult> runSequentialTrials(StreamInterface feedStream, double lowerBound,
       double upperBound, String rateUnit, ToDoubleFunction<OptimizationResult> outputMetric,
       SensitivityConfig config, Random localRng) {
-
     List<TrialResult> results = new ArrayList<>();
     ProductionOptimizer optimizer = new ProductionOptimizer();
     OptimizationConfig optConfig =
@@ -1170,7 +1169,6 @@ public class SensitivityAnalysis implements Serializable {
   private List<TrialResult> runParallelTrials(StreamInterface feedStream, double lowerBound,
       double upperBound, String rateUnit, ToDoubleFunction<OptimizationResult> outputMetric,
       SensitivityConfig config, Random localRng) {
-
     // Pre-generate all random samples (thread-safe)
     List<Map<String, Double>> allSamples = new ArrayList<>();
     for (int trial = 0; trial < config.getNumberOfTrials(); trial++) {
@@ -1266,7 +1264,6 @@ public class SensitivityAnalysis implements Serializable {
   private Map<String, Double> runTornadoAnalysisInternal(StreamInterface feedStream,
       double lowerBound, double upperBound, String rateUnit,
       ToDoubleFunction<OptimizationResult> outputMetric) {
-
     Map<String, Double> sensitivities = new LinkedHashMap<>();
     ProductionOptimizer optimizer = new ProductionOptimizer();
     OptimizationConfig optConfig =
@@ -1335,7 +1332,6 @@ public class SensitivityAnalysis implements Serializable {
   public Map<String, List<SpiderPoint>> runSpiderAnalysis(StreamInterface feedStream,
       double lowerBound, double upperBound, String rateUnit, int stepsPerParameter,
       ToDoubleFunction<OptimizationResult> outputMetric) {
-
     Map<String, List<SpiderPoint>> spiderData = new LinkedHashMap<>();
     ProductionOptimizer optimizer = new ProductionOptimizer();
     OptimizationConfig optConfig =

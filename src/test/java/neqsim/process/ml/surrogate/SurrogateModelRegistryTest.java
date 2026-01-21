@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
  * Tests for SurrogateModelRegistry ML model management.
  */
 public class SurrogateModelRegistryTest {
-
   private SurrogateModelRegistry registry;
 
   @BeforeEach

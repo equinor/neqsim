@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
  * @author Even Solbraa
  */
 public class AsphalteneCharacterizationTest {
-
   @Test
   void testDefaultConstructor() {
     AsphalteneCharacterization characterization = new AsphalteneCharacterization();

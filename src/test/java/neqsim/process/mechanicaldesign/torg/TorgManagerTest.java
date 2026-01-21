@@ -21,7 +21,6 @@ import neqsim.process.processmodel.ProcessSystem;
  * Tests for TorgManager class.
  */
 class TorgManagerTest {
-
   @TempDir
   Path tempDir;
 

@@ -250,7 +250,6 @@ public class RiskResult {
         writer.printf("%s,%.6e,%.6f,%.6e,%s%n", er.eventName, er.frequency, er.probability,
             er.riskContribution, er.category.name());
       }
-
     } catch (IOException e) {
       throw new RuntimeException("Failed to export risk results: " + e.getMessage(), e);
     }

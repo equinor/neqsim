@@ -17,7 +17,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  */
 public class ThreePhaseWaterPHTest {
-
   /**
    * Test pure water pH calculation with single phase.
    * 

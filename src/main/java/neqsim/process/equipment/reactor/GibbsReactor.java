@@ -134,7 +134,6 @@ public class GibbsReactor extends TwoPortEquipment {
     return -enthalpyOfReactions * 1000.0;
   }
 
-
   /**
    * Get the reactor power in the specified unit ("W", "kW", or "MW").
    *
@@ -478,7 +477,6 @@ public class GibbsReactor extends TwoPortEquipment {
     return ION_NAME_PATTERN.matcher(moleculeName).matches();
   }
 
-
   /**
    * Constructor for GibbsReactor.
    *
@@ -818,8 +816,6 @@ public class GibbsReactor extends TwoPortEquipment {
     }
   }
 
-
-
   /**
    * Load the Gibbs reaction database from resources.
    */
@@ -1033,7 +1029,6 @@ public class GibbsReactor extends TwoPortEquipment {
       }
     }
 
-
     // Minimize Gibbs energy
     performGibbsMinimization(system);
 
@@ -1095,8 +1090,6 @@ public class GibbsReactor extends TwoPortEquipment {
     }
   }
 
-
-
   /**
    * Perform Gibbs free energy minimization.
    *
@@ -1124,7 +1117,6 @@ public class GibbsReactor extends TwoPortEquipment {
         }
       }
     }
-
 
     logger.info("Gibbs minimization completed for iteration " + iteration);
   }
@@ -1491,7 +1483,6 @@ public class GibbsReactor extends TwoPortEquipment {
     SystemInterface system = getOutletStream().getThermoSystem();
     double T = system.getTemperature();
     double RT = R_KJ * T;
-
 
     // Calculate total moles for mole fraction derivatives using outlet_mole
     double totalMoles = 0.0;
@@ -1992,7 +1983,6 @@ public class GibbsReactor extends TwoPortEquipment {
     // Show total norm of delta vector
     // System.out.printf("\n=== Total Norm of Δ (composition): %12.6e ===\n", deltaNorm);
 
-
     // System.out.printf("\n=== Current Temperature: %.4f K ===\n", system.getTemperature());
 
     // Print enthalpy of reaction after temperature
@@ -2045,7 +2035,6 @@ public class GibbsReactor extends TwoPortEquipment {
         getOutletStream().setThermoSystem(system);
       }
 
-
       // Recalculate objective function values with new compositions and Lagrange multipliers
       calculateObjectiveFunctionValues(system);
 
@@ -2081,7 +2070,6 @@ public class GibbsReactor extends TwoPortEquipment {
    *         Double.NaN if not found
    */
   public double[] getFugacityCoefficient(Object phaseNameOrIndex) {
-
     int phaseIndex = 0;
     if (phaseNameOrIndex instanceof Integer) {
       phaseIndex = (Integer) phaseNameOrIndex;
@@ -2104,7 +2092,6 @@ public class GibbsReactor extends TwoPortEquipment {
     }
     return phiArray;
   }
-
 
   /**
    * Set maximum number of Newton-Raphson iterations.
@@ -2268,8 +2255,6 @@ public class GibbsReactor extends TwoPortEquipment {
         logger.debug("Gibbs energy change dG = " + dG);
       }
 
-
-
       if (energyMode == EnergyMode.ADIABATIC) {
         if (iteration == 1) {
           inletEnthalpy = calculateMixtureEnthalpy(processedComponents, outlet_mole, componentMap,
@@ -2294,8 +2279,6 @@ public class GibbsReactor extends TwoPortEquipment {
           this.getOutletStream().getThermoSystem().setTemperature(system.getTemperature());
         }
       }
-
-
 
       // Check convergence (require minimum 100 iterations)
       if ((deltaXNorm < convergenceTolerance && iteration >= 100) || iteration == maxIterations) {// ||
@@ -2363,7 +2346,6 @@ public class GibbsReactor extends TwoPortEquipment {
     // Add more mappings as needed
   }
 
-
   /**
    * Solve Gibbs equilibrium using Newton-Raphson iterations with default damping factor.
    *
@@ -2372,5 +2354,4 @@ public class GibbsReactor extends TwoPortEquipment {
   public boolean solveGibbsEquilibrium() {
     return solveGibbsEquilibrium(dampingComposition); // Use configured damping factor
   }
-
 }

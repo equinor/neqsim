@@ -16,8 +16,6 @@ import neqsim.process.fielddevelopment.reservoir.InjectionWellModel.InjectionWel
  */
 class InjectionWellModelTest {
 
-  private InjectionWellModel model;
-
   @BeforeEach
   void setUp() {
     model = new InjectionWellModel();

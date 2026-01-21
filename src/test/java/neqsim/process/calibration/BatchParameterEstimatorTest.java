@@ -25,7 +25,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class BatchParameterEstimatorTest extends neqsim.NeqSimTest {
-
   private ProcessSystem process;
   private Heater heater1;
   private Heater heater2;

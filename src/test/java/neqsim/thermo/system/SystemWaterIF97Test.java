@@ -1,17 +1,15 @@
 package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import neqsim.thermo.util.steam.Iapws_if97;
-import neqsim.thermo.phase.PhaseType;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.util.steam.Iapws_if97;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Basic regression test for the water IAPWS-IF97 system implementation.
  */
 public class SystemWaterIF97Test {
-
   @Test
   public void testPureWaterProperties() {
     SystemInterface sys = new SystemWaterIF97(373.15, 1.0);

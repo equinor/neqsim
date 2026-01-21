@@ -237,7 +237,6 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   public double molarVolume2(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-
     double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
         : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
     BonV = Math.max(1.0e-4, Math.min(1.0 - 1.0e-4, BonV));
@@ -325,7 +324,6 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
    */
   private double molarVolumeAnalytical(double pressure, double temperature, PhaseType pt)
       throws neqsim.util.exception.IsNaNException {
-
     double a = geta();
     double b = getb();
     double A = a * pressure / (R * R * temperature * temperature);
@@ -406,7 +404,6 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-
     double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
         : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
     BonV = Math.max(1.0e-4, Math.min(1.0 - 1.0e-4, BonV));

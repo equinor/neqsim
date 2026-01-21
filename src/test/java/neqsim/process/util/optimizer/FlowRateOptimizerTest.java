@@ -24,7 +24,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  */
 public class FlowRateOptimizerTest {
-
   private SystemInterface testFluid;
   private Stream inletStream;
   private AdiabaticPipe pipeline;

@@ -15,11 +15,20 @@ import neqsim.thermo.system.SystemSrkEos;
  * This ensures proper sizing for both gas and liquid valves in typical process configurations.
  */
 public class ValveSizingWithSeparatorTest {
+  *
+  Test that
+  gas and
+  liquid valves
+  connected to
+  separator outlets
+  get correctly
+  calculated Cv/Kv*
+  values based
+  on their
+  respective flow
+  rates and
+  pressure drops.*/
 
-  /**
-   * Test that gas and liquid valves connected to separator outlets get correctly calculated Cv/Kv
-   * values based on their respective flow rates and pressure drops.
-   */
   @Test
   void testGasAndLiquidValveCvCalculation() {
     // Create a two-phase feed (gas + liquid)

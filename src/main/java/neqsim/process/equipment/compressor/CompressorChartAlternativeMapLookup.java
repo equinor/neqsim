@@ -126,7 +126,6 @@ public class CompressorChartAlternativeMapLookup extends CompressorChart {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CompressorChart.class);
 
-
   boolean isSurge = false;
   boolean isStoneWall = false;
   double refMW;

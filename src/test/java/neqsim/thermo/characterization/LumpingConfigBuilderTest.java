@@ -15,7 +15,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  */
 public class LumpingConfigBuilderTest {
-
   private SystemInterface fluid;
 
   @BeforeEach

@@ -10,7 +10,6 @@ package neqsim.thermo.util.steam;
  * @author esol
  */
 public final class Iapws_if97 {
-
   /** Specific gas constant for water [kJ/(kg*K)]. */
   private static final double R = 0.461526;
 

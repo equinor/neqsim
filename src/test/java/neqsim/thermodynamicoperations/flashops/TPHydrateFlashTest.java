@@ -19,7 +19,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  */
 public class TPHydrateFlashTest {
-
   /**
    * Test basic hydrate TPflash with methane and water using CPA EOS.
    */

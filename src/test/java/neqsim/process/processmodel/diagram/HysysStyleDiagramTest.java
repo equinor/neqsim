@@ -36,7 +36,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class HysysStyleDiagramTest {
-
   private ProcessSystem processSystem;
 
   /**

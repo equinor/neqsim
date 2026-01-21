@@ -22,7 +22,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class CompressorMechanicalLossesTest {
-
   private CompressorMechanicalLosses losses;
 
   @BeforeEach
@@ -38,7 +37,6 @@ public class CompressorMechanicalLossesTest {
   @Nested
   @DisplayName("Construction Tests")
   class ConstructionTests {
-
     @Test
     @DisplayName("Default constructor sets reasonable defaults")
     void testDefaultConstructor() {
@@ -64,7 +62,6 @@ public class CompressorMechanicalLossesTest {
   @Nested
   @DisplayName("Dry Gas Seal Tests (API 692)")
   class DryGasSealTests {
-
     @Test
     @DisplayName("Primary seal leakage is within typical range")
     void testPrimarySealLeakageRange() {
@@ -153,7 +150,6 @@ public class CompressorMechanicalLossesTest {
   @Nested
   @DisplayName("Bearing Loss Tests (API 617)")
   class BearingLossTests {
-
     @Test
     @DisplayName("Radial bearing loss is within typical range")
     void testRadialBearingLossRange() {
@@ -222,7 +218,6 @@ public class CompressorMechanicalLossesTest {
   @Nested
   @DisplayName("Lube Oil System Tests")
   class LubeOilSystemTests {
-
     @Test
     @DisplayName("Lube oil flow rate is within typical range")
     void testLubeOilFlowRateRange() {
@@ -260,7 +255,6 @@ public class CompressorMechanicalLossesTest {
   @Nested
   @DisplayName("Mechanical Efficiency Tests")
   class MechanicalEfficiencyTests {
-
     @Test
     @DisplayName("Mechanical efficiency is in realistic range")
     void testMechanicalEfficiencyRange() {
@@ -294,7 +288,6 @@ public class CompressorMechanicalLossesTest {
   @Nested
   @DisplayName("Integration with Compressor")
   class CompressorIntegrationTests {
-
     @Test
     @DisplayName("Compressor can initialize mechanical losses")
     void testCompressorInitMechanicalLosses() {
@@ -376,7 +369,6 @@ public class CompressorMechanicalLossesTest {
   @Nested
   @DisplayName("Seal Type Specific Tests")
   class SealTypeTests {
-
     @Test
     @DisplayName("Oil seal has zero gas leakage")
     void testOilSealNoGasLeakage() {
@@ -407,7 +399,6 @@ public class CompressorMechanicalLossesTest {
   @Nested
   @DisplayName("Edge Cases and Boundary Tests")
   class EdgeCaseTests {
-
     @Test
     @DisplayName("Very small shaft diameter gives reasonable results")
     void testSmallShaftDiameter() {

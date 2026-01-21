@@ -79,7 +79,6 @@ class StreamTest extends neqsim.NeqSimTest {
     assertFalse(((Stream) processOps.getUnit("inlet stream")).needRecalculation());
   }
 
-
   @Test
   public void testSingleCComponent() {
     // Create fluid using SRK EOS

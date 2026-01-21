@@ -177,7 +177,6 @@ public class TransientWallHeatTransfer {
   public void advanceTimeStep(double dt, double innerFluidTemperatureK,
       double innerFilmCoefficientWPerM2K, double outerAmbientTemperatureK,
       double outerFilmCoefficientWPerM2K) {
-
     if (dt <= 0.0) {
       throw new IllegalArgumentException("Time step must be positive");
     }
@@ -205,7 +204,6 @@ public class TransientWallHeatTransfer {
   private void advanceTimeStepInternal(double dt, double innerFluidTemperatureK,
       double innerFilmCoefficientWPerM2K, double outerAmbientTemperatureK,
       double outerFilmCoefficientWPerM2K) {
-
     double[] newTemp = new double[numNodes];
 
     // Interior nodes - explicit finite difference

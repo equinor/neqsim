@@ -1,17 +1,17 @@
 package neqsim.process.util.example;
 
-import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.splitter.Splitter;
-import neqsim.process.equipment.valve.BlowdownValve;
-import neqsim.process.equipment.valve.ThrottlingValve;
-import neqsim.process.equipment.valve.SafetyValve;
-import neqsim.process.equipment.mixer.Mixer;
-import neqsim.process.equipment.flare.Flare;
-import neqsim.process.measurementdevice.PushButton;
-import neqsim.process.measurementdevice.PressureTransmitter;
-import neqsim.process.measurementdevice.TemperatureTransmitter;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
+import neqsim.process.equipment.flare.Flare;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.valve.BlowdownValve;
+import neqsim.process.equipment.valve.SafetyValve;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.measurementdevice.PressureTransmitter;
+import neqsim.process.measurementdevice.PushButton;
+import neqsim.process.measurementdevice.TemperatureTransmitter;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
@@ -399,7 +399,6 @@ public class IntegratedSafetySystemExample {
       PressureTransmitter hippsPT2, PressureTransmitter separatorPT,
       TemperatureTransmitter separatorTT, HIPPSController hippsController,
       ESDController esdController, FireDetectionSystem fireSystem) {
-
     System.out.println("╔════════════════════════════════════════════════════════════════╗");
     System.out.println("║     SCENARIO 1: NORMAL OPERATION                               ║");
     System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
@@ -467,7 +466,6 @@ public class IntegratedSafetySystemExample {
       PressureTransmitter hippsPT2, PressureTransmitter separatorPT,
       TemperatureTransmitter separatorTT, HIPPSController hippsController,
       ESDController esdController, FireDetectionSystem fireSystem) {
-
     System.out.println("╔════════════════════════════════════════════════════════════════╗");
     System.out.println("║     SCENARIO 2: HIPPS ACTIVATION (SIL-3)                       ║");
     System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
@@ -538,7 +536,6 @@ public class IntegratedSafetySystemExample {
       PressureTransmitter hippsPT2, PressureTransmitter separatorPT,
       TemperatureTransmitter separatorTT, HIPPSController hippsController,
       ESDController esdController, FireDetectionSystem fireSystem, PushButton esdButton) {
-
     System.out.println("╔════════════════════════════════════════════════════════════════╗");
     System.out.println("║     SCENARIO 3: ESD ACTIVATION & BLOWDOWN (SIL-2)              ║");
     System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
@@ -624,7 +621,6 @@ public class IntegratedSafetySystemExample {
       PressureTransmitter hippsPT2, PressureTransmitter separatorPT,
       TemperatureTransmitter separatorTT, HIPPSController hippsController,
       ESDController esdController, FireDetectionSystem fireSystem) {
-
     System.out.println("╔════════════════════════════════════════════════════════════════╗");
     System.out.println("║     SCENARIO 4: PSV RELIEF (FINAL PROTECTION)                  ║");
     System.out.println("╚════════════════════════════════════════════════════════════════╝\n");
@@ -674,7 +670,6 @@ public class IntegratedSafetySystemExample {
       Stream separatorGasOut, Splitter gasSplitter, Stream processStream, Stream blowdownStream,
       BlowdownValve bdValve, SafetyValve psv, Stream psvOutlet, Mixer flareHeader,
       Stream flareHeaderOutlet, Flare flare) {
-
     highPressureFeed.run();
     hippsValve.run();
     esdInletValve.run();
@@ -698,7 +693,6 @@ public class IntegratedSafetySystemExample {
   private static void resetSystem(ThrottlingValve hippsValve, ThrottlingValve esdInletValve,
       Splitter gasSplitter, BlowdownValve bdValve, Separator separator,
       HIPPSController hippsController, ESDController esdController, PushButton esdButton) {
-
     System.out.println(">>> RESETTING SYSTEM FOR NEXT SCENARIO <<<\n");
     hippsValve.setPercentValveOpening(100.0);
     esdInletValve.setPercentValveOpening(100.0);

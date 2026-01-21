@@ -15,7 +15,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Consolidated regression tests for the Pitzer activity model in thermodynamic systems.
  */
 public class SystemPitzerTest extends neqsim.NeqSimTest {
-
   @Test
   public void testTPflashNaCl() {
     SystemInterface system = new SystemPitzer(298.15, 10.0);

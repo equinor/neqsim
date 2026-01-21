@@ -1,6 +1,9 @@
 package neqsim.util.validation;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -29,7 +32,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class EquipmentValidationTest {
-
   private SystemInterface validFluid;
   private Stream validStream;
 
@@ -52,7 +54,6 @@ class EquipmentValidationTest {
   @Nested
   @DisplayName("Stream validateSetup() Tests")
   class StreamValidationTests {
-
     @Test
     @DisplayName("Valid stream passes validation")
     void testValidStreamPasses() {
@@ -100,7 +101,6 @@ class EquipmentValidationTest {
   @Nested
   @DisplayName("Separator validateSetup() Tests")
   class SeparatorValidationTests {
-
     @Test
     @DisplayName("Valid separator passes validation")
     void testValidSeparatorPasses() {
@@ -135,7 +135,6 @@ class EquipmentValidationTest {
   @Nested
   @DisplayName("Mixer validateSetup() Tests")
   class MixerValidationTests {
-
     @Test
     @DisplayName("Valid mixer with multiple streams passes validation")
     void testValidMixerPasses() {
@@ -174,7 +173,6 @@ class EquipmentValidationTest {
   @Nested
   @DisplayName("Splitter validateSetup() Tests")
   class SplitterValidationTests {
-
     @Test
     @DisplayName("Valid splitter passes validation")
     void testValidSplitterPasses() {
@@ -209,7 +207,6 @@ class EquipmentValidationTest {
   @Nested
   @DisplayName("Tank validateSetup() Tests")
   class TankValidationTests {
-
     @Test
     @DisplayName("Valid tank passes validation")
     void testValidTankPasses() {
@@ -235,7 +232,6 @@ class EquipmentValidationTest {
   @Nested
   @DisplayName("TwoPortEquipment validateSetup() Tests")
   class TwoPortValidationTests {
-
     @Test
     @DisplayName("Valid valve passes validation")
     void testValidValvePasses() {
@@ -262,7 +258,6 @@ class EquipmentValidationTest {
   @Nested
   @DisplayName("DistillationColumn validateSetup() Tests")
   class DistillationColumnValidationTests {
-
     @Test
     @DisplayName("Valid column passes validation")
     void testValidColumnPasses() {
@@ -298,7 +293,6 @@ class EquipmentValidationTest {
   @Nested
   @DisplayName("Recycle validateSetup() Tests")
   class RecycleValidationTests {
-
     @Test
     @DisplayName("Valid recycle passes validation")
     void testValidRecyclePasses() {
@@ -325,7 +319,6 @@ class EquipmentValidationTest {
   @Nested
   @DisplayName("Adjuster validateSetup() Tests")
   class AdjusterValidationTests {
-
     @Test
     @DisplayName("Adjuster without adjusted equipment fails validation")
     void testAdjusterWithoutAdjustedFails() {
@@ -354,7 +347,6 @@ class EquipmentValidationTest {
   @Nested
   @DisplayName("ProcessSystem validateSetup() Tests")
   class ProcessSystemValidationTests {
-
     @Test
     @DisplayName("Valid process system passes validation")
     void testValidProcessSystemPasses() {
@@ -448,7 +440,6 @@ class EquipmentValidationTest {
   @Nested
   @DisplayName("SimulationValidator Integration Tests")
   class SimulationValidatorTests {
-
     @Test
     @DisplayName("SimulationValidator.validate() works with Separator")
     void testSimulationValidatorSeparator() {
@@ -490,7 +481,6 @@ class EquipmentValidationTest {
   @Nested
   @DisplayName("ProcessModel validateSetup() Tests")
   class ProcessModelValidationTests {
-
     @Test
     @DisplayName("Empty ProcessModel fails validation")
     void testEmptyProcessModelFails() {

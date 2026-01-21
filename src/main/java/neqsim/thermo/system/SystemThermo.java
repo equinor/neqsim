@@ -24,7 +24,6 @@ import neqsim.thermo.characterization.WaxModelInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
-import neqsim.thermo.mixingrule.MixingRulesInterface;
 import neqsim.thermo.phase.PhaseEosInterface;
 import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhaseInterface;
@@ -1733,7 +1732,6 @@ public abstract class SystemThermo implements SystemInterface {
     double upperOLD = 1.5;
 
     for (int i = 0; i < maxIterations; i++) {
-
       density = 0.5 * (lower + upper);
       calculated_TB = characterization.getTBPModel().calcTB(molarMass * 1000, density);
       f_mid = calculated_TB - TB;
@@ -1763,7 +1761,6 @@ public abstract class SystemThermo implements SystemInterface {
     // Return the midpoint as density
   }
 
-
   /**
    * {@inheritDoc}
    *
@@ -1790,9 +1787,7 @@ public abstract class SystemThermo implements SystemInterface {
    * Calculates molar mass from density and boiling point
    */
   public double calculateMolarMassFromDensityAndBoilingPoint(double density, double boilingPoint) {
-
     double TB = boilingPoint;
-
 
     double lower = 0.01;
     double upper = 0.5;
@@ -1804,9 +1799,7 @@ public abstract class SystemThermo implements SystemInterface {
     double f_mid;
     double calculated_TB;
 
-
     for (int i = 0; i < maxIterations; i++) {
-
       molarMass = 0.5 * (lower + upper);
       calculated_TB = characterization.getTBPModel().calcTB(molarMass * 1000, density);
       f_mid = calculated_TB - TB;

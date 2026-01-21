@@ -1,6 +1,8 @@
 package neqsim.process.equipment.pipeline;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +16,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Test class for WaterHammerPipe.
  */
 public class WaterHammerPipeTest {
-
   private SystemInterface water;
   private Stream feed;
   private WaterHammerPipe pipe;

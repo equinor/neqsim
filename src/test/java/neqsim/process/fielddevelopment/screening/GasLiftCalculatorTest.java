@@ -15,7 +15,6 @@ import neqsim.process.fielddevelopment.screening.GasLiftCalculator.ValvePosition
  * @author ESOL
  */
 class GasLiftCalculatorTest {
-
   private GasLiftCalculator calculator;
 
   @BeforeEach

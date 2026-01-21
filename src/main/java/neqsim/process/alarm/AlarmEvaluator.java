@@ -40,7 +40,6 @@ public final class AlarmEvaluator {
    */
   public static List<AlarmEvent> evaluateAll(ProcessAlarmManager alarmManager, ProcessSystem system,
       double dt, double time) {
-
     List<AlarmEvent> allEvents = new ArrayList<>();
 
     // Run the process to get current values
@@ -64,7 +63,6 @@ public final class AlarmEvaluator {
    */
   public static List<AlarmEvent> evaluateDevices(ProcessAlarmManager alarmManager,
       List<MeasurementDeviceInterface> devices, double dt, double time) {
-
     List<AlarmEvent> allEvents = new ArrayList<>();
 
     for (MeasurementDeviceInterface device : devices) {
@@ -87,7 +85,6 @@ public final class AlarmEvaluator {
    */
   public static List<AlarmEvent> evaluateAndDisplay(ProcessAlarmManager alarmManager,
       List<MeasurementDeviceInterface> devices, double dt, double time) {
-
     List<AlarmEvent> events = evaluateDevices(alarmManager, devices, dt, time);
 
     if (!events.isEmpty()) {

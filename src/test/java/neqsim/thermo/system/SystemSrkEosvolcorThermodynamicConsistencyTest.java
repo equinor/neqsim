@@ -10,7 +10,6 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SystemSrkEosvolcorThermodynamicConsistencyTest extends neqsim.NeqSimTest {
-
   private static ThermodynamicModelTest prepareSystem(SystemInterface system, double[] cTValues) {
     applyVolumeTranslation(system, cTValues);
     system.init(3);

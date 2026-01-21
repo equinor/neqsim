@@ -21,7 +21,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim
  */
 public class PumpDensityCorrectionTest extends neqsim.NeqSimTest {
-
   private PumpChart pumpChart;
 
   @BeforeEach

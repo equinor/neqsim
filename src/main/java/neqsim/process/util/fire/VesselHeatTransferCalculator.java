@@ -195,7 +195,6 @@ public final class VesselHeatTransferCalculator {
   public static double calculateInternalFilmCoefficient(double characteristicLength,
       double wallTemperatureK, double fluidTemperatureK, double thermalConductivity,
       double heatCapacity, double dynamicViscosity, double density, boolean isVertical) {
-
     // Use film temperature for property evaluation
     double filmTemperatureK = (wallTemperatureK + fluidTemperatureK) / 2.0;
 
@@ -311,7 +310,6 @@ public final class VesselHeatTransferCalculator {
       double wallTemperatureK, double fluidTemperatureK, double massFlowRate, double inletDiameter,
       double thermalConductivity, double heatCapacity, double dynamicViscosity, double density,
       boolean isVertical) {
-
     // Natural convection component
     double hNatural =
         calculateInternalFilmCoefficient(characteristicLength, wallTemperatureK, fluidTemperatureK,
@@ -357,7 +355,6 @@ public final class VesselHeatTransferCalculator {
   public static double calculateNucleateBoilingHeatFlux(double wallTemperatureK,
       double saturationTemperatureK, double latentHeat, double liquidDensity, double vaporDensity,
       double liquidViscosity, double liquidCp, double surfaceTension, double liquidPrandtl) {
-
     double deltaT = wallTemperatureK - saturationTemperatureK;
     if (deltaT <= 0) {
       return 0.0; // No boiling if wall is at or below saturation
@@ -402,7 +399,6 @@ public final class VesselHeatTransferCalculator {
       double fluidTemperatureK, double saturationTemperatureK, double characteristicLength,
       double thermalConductivity, double heatCapacity, double dynamicViscosity, double density,
       boolean isVertical) {
-
     // Natural convection in liquid
     double hConv =
         calculateInternalFilmCoefficient(characteristicLength, wallTemperatureK, fluidTemperatureK,
@@ -494,7 +490,6 @@ public final class VesselHeatTransferCalculator {
   public static HeatTransferResult calculateCompleteHeatTransfer(double characteristicLength,
       double wallTemperatureK, double fluidTemperatureK, double thermalConductivity,
       double heatCapacity, double dynamicViscosity, double density, boolean isVertical) {
-
     double filmTemperatureK = (wallTemperatureK + fluidTemperatureK) / 2.0;
     double beta = 1.0 / filmTemperatureK;
     double nu = dynamicViscosity / density;

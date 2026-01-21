@@ -16,7 +16,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class NeqSimXtreamTest {
-
   private ProcessSystem testProcess;
   private String testFileName;
 

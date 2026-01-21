@@ -19,7 +19,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for EmissionsTracker sustainability module.
  */
 public class EmissionsTrackerTest {
-
   private ProcessSystem process;
   private EmissionsTracker tracker;
 

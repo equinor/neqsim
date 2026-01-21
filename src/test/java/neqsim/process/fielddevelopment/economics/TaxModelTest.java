@@ -22,8 +22,6 @@ import org.junit.jupiter.api.Test;
  */
 public class TaxModelTest {
 
-  private static final double TOLERANCE = 0.0001;
-
   @BeforeEach
   void setUp() {
     // Reset any state if needed

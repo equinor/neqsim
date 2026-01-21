@@ -375,7 +375,6 @@ public class InjectionWellModel implements Serializable {
    */
   public InjectionWellResult calculateWithInterference(double targetRate,
       double[] producerDistances, double[] producerRates) {
-
     // Calculate base injection
     InjectionWellResult result = calculate(targetRate);
 

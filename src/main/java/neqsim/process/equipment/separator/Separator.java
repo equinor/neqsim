@@ -7,16 +7,21 @@
 package neqsim.process.equipment.separator;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
-import neqsim.process.ml.StateVector;
-import neqsim.process.ml.StateVectorProvider;
 import neqsim.physicalproperties.PhysicalPropertyType;
+import neqsim.process.design.AutoSizeable;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
+import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.capacity.StandardConstraintType;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.sectiontype.ManwaySection;
 import neqsim.process.equipment.separator.sectiontype.MeshSection;
@@ -26,6 +31,8 @@ import neqsim.process.equipment.separator.sectiontype.ValveSection;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
+import neqsim.process.ml.StateVector;
+import neqsim.process.ml.StateVectorProvider;
 import neqsim.process.util.fire.SeparatorFireExposure;
 import neqsim.process.util.monitor.SeparatorResponse;
 import neqsim.process.util.report.ReportConfig;
@@ -34,13 +41,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSoreideWhitson;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import neqsim.process.equipment.capacity.CapacityConstraint;
-import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
-import neqsim.process.equipment.capacity.StandardConstraintType;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import neqsim.process.design.AutoSizeable;
 
 /**
  * <p>
@@ -769,7 +769,6 @@ public class Separator extends ProcessEquipmentBaseClass
    * @return a double
    */
   public double getGasSuperficialVelocity() {
-
     if (orientation.equals("horizontal")) {
       return thermoSystem.getPhase(0).getFlowRate("m3/sec")
           / (sepCrossArea - liquidArea(liquidLevel));
@@ -1425,7 +1424,6 @@ public class Separator extends ProcessEquipmentBaseClass
    * @return separator liquid area.
    */
   public double liquidArea(double level) {
-
     double lArea = 0;
 
     if (level <= 0) {
@@ -1435,9 +1433,7 @@ public class Separator extends ProcessEquipmentBaseClass
     }
 
     if (orientation.equals("horizontal")) {
-
       if (level < internalRadius) {
-
         double d = internalRadius - level;
         double theta = Math.acos(d / internalRadius);
         double a = internalRadius * Math.sin(theta);
@@ -1475,7 +1471,6 @@ public class Separator extends ProcessEquipmentBaseClass
    * @return liquid level in the separator
    */
   public double calcLiquidVolume() {
-
     double lVolume = 0.0;
 
     if (orientation.equals("horizontal")) {
@@ -1663,8 +1658,6 @@ public class Separator extends ProcessEquipmentBaseClass
    * @return liquid level in the separator
    */
   public double levelFromVolume(double volumeTarget) {
-
-
     double tol = 1e-4;
     int maxIter = 100;
 
@@ -1677,7 +1670,6 @@ public class Separator extends ProcessEquipmentBaseClass
     double b = internalDiameter;
 
     if (orientation.equalsIgnoreCase("horizontal")) {
-
       if (internalDiameter <= 0.0) {
         return 0.0;
       }
@@ -1724,7 +1716,6 @@ public class Separator extends ProcessEquipmentBaseClass
 
       return 0.5 * (a + b);
     } else if (orientation.equalsIgnoreCase("vertical")) {
-
       if (sepCrossArea <= 0.0) {
         return 0.0;
       }
@@ -2170,7 +2161,6 @@ public class Separator extends ProcessEquipmentBaseClass
   public double getExergyChange(String unit) {
     return getExergyChange(unit, 288.15);
   }
-
 
   /**
    * {@inheritDoc}
