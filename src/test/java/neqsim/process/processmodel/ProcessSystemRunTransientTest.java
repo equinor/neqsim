@@ -976,6 +976,8 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
 
     neqsim.process.processmodel.ProcessSystem p = new neqsim.process.processmodel.ProcessSystem();
 
+    p.add(stream1);
+    p.add(valve1);
     p.add(separator1);
     p.add(valve2);
     p.add(valve3);
