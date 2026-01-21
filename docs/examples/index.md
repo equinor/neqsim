@@ -10,47 +10,9 @@ has_children: true
 
 This section contains tutorials, code examples, and Jupyter notebooks demonstrating NeqSim capabilities.
 
----
-
-## 🚀 Quick Start with Google Colab
-
-The easiest way to try NeqSim is through Google Colab - **no installation required!**
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/examples_of_NeqSim_in_Colab.ipynb)
-
-👆 Click the badge above to open a comprehensive introduction to NeqSim in Colab.
-
----
-
-## 📚 NeqSim-Colab Notebook Collection
-
-The [NeqSim-Colab repository](https://github.com/EvenSol/NeqSim-Colab) contains 100+ notebooks organized by topic:
-
-| Category | Description | Open in Colab |
-|----------|-------------|---------------|
-| **🎓 Getting Started** | Introduction and basic examples | [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/examples_of_NeqSim_in_Colab.ipynb) |
-| **🔬 Thermodynamics** | EOS, phase equilibria, flash calculations | [Browse](https://github.com/EvenSol/NeqSim-Colab/tree/master/notebooks/thermodynamics) |
-| **📊 PVT Analysis** | PVT simulations and fluid characterization | [Browse](https://github.com/EvenSol/NeqSim-Colab/tree/master/notebooks/PVT) |
-| **⚙️ Process Simulation** | Equipment, separators, compressors | [Browse](https://github.com/EvenSol/NeqSim-Colab/tree/master/notebooks/process) |
-| **🌊 Fluid Flow** | Pipelines, multiphase flow | [Browse](https://github.com/EvenSol/NeqSim-Colab/tree/master/notebooks/fluidflow) |
-| **🛢️ LNG** | LNG processing and calculations | [Browse](https://github.com/EvenSol/NeqSim-Colab/tree/master/notebooks/LNG) |
-| **💨 Gas Quality** | Gas specifications and calculations | [Browse](https://github.com/EvenSol/NeqSim-Colab/tree/master/notebooks/gasquality) |
-| **🔋 Hydrogen** | Hydrogen systems and storage | [Browse](https://github.com/EvenSol/NeqSim-Colab/tree/master/notebooks/hydrogen) |
-| **⚡ Power** | Power generation, turbines | [Browse](https://github.com/EvenSol/NeqSim-Colab/tree/master/notebooks/power) |
-| **🌿 Emissions** | CO2 capture and emissions | [Browse](https://github.com/EvenSol/NeqSim-Colab/tree/master/notebooks/emissions) |
-| **🧪 Reactions** | Chemical reactions, ammonia | [Browse](https://github.com/EvenSol/NeqSim-Colab/tree/master/notebooks/reactions) |
-| **🛠️ Well Operations** | Well modeling and operations | [Browse](https://github.com/EvenSol/NeqSim-Colab/tree/master/notebooks/well) |
-| **🏭 Field Development** | Full field simulations | [Browse](https://github.com/EvenSol/NeqSim-Colab/tree/master/notebooks/fielddevelopment) |
-| **🤖 AI/ML Integration** | Machine learning with NeqSim | [Browse](https://github.com/EvenSol/NeqSim-Colab/tree/master/notebooks/AI) |
-| **📏 Standards** | Industry standards (ISO, etc.) | [Browse](https://github.com/EvenSol/NeqSim-Colab/tree/master/notebooks/standards) |
-
-> 💡 **Tip:** To open any notebook in Colab, replace `github.com` with `colab.research.google.com/github` in the URL.
-
----
-
 ## Jupyter Notebook Tutorials
 
-Interactive Python notebooks from this repository:
+Interactive Python notebooks using NeqSim through [neqsim-python](https://github.com/equinor/neqsim-python):
 
 | Notebook | Description | View Options |
 |----------|-------------|--------------|
@@ -59,7 +21,9 @@ Interactive Python notebooks from this repository:
 | **FieldDevelopmentWorkflow** | See notebook for details | [Markdown](FieldDevelopmentWorkflow.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb) |
 | **GraphBasedProcessSimulation** | See notebook for details | [Markdown](GraphBasedProcessSimulation.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/GraphBasedProcessSimulation.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/GraphBasedProcessSimulation.ipynb) |
 | **MPC Integration Tutorial** | See notebook for details | [Markdown](MPC_Integration_Tutorial.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/MPC_Integration_Tutorial.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/MPC_Integration_Tutorial.ipynb) |
+| **NeqSim Python Optimization** | See notebook for details | [Markdown](NeqSim_Python_Optimization.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/NeqSim_Python_Optimization.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/NeqSim_Python_Optimization.ipynb) |
 | **NetworkSolverTutorial** | See notebook for details | [Markdown](NetworkSolverTutorial.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/NetworkSolverTutorial.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/NetworkSolverTutorial.ipynb) |
+| **ProductionOptimizer Tutorial** | See notebook for details | [Markdown](ProductionOptimizer_Tutorial.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/ProductionOptimizer_Tutorial.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/ProductionOptimizer_Tutorial.ipynb) |
 | **PVT Simulation and Tuning** | See notebook for details | [Markdown](PVT_Simulation_and_Tuning.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/PVT_Simulation_and_Tuning.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/PVT_Simulation_and_Tuning.ipynb) |
 | **TVP RVP Study** | See notebook for details | [Markdown](TVP_RVP_Study.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/TVP_RVP_Study.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/TVP_RVP_Study.ipynb) |
 
@@ -86,8 +50,8 @@ Example Java code demonstrating NeqSim APIs:
 
 Additional documentation and guides:
 
-- [Production Optimization Guide](PRODUCTION_OPTIMIZATION_GUIDE.md) - Complete guide to production optimization with Java and Python examples
 - [Comparesimulations Quickstart](comparesimulations_quickstart.md)
+- [Production Optimization Guide](PRODUCTION_OPTIMIZATION_GUIDE.md)
 - [Selective Logic Execution](selective-logic-execution.md)
 - [Transient Slug Separator Control Example](transient_slug_separator_control_example.md)
 
