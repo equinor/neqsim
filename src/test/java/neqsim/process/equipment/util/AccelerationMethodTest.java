@@ -185,8 +185,6 @@ class AccelerationMethodTest {
   @Nested
   @DisplayName("Recycle Acceleration Integration")
   class RecycleIntegrationTests {
-{
-
     @DisplayName("Default acceleration method is direct substitution")
     void testDefaultMethod() {
       Recycle recycle = new Recycle("test-recycle");
@@ -262,8 +260,6 @@ class AccelerationMethodTest {
   @Nested
   @DisplayName("RecycleController Acceleration Integration")
   class RecycleControllerTests {
-{
-
     @DisplayName("RecycleController can set acceleration method for all recycles")
     void testSetAccelerationMethodForAll() {
       RecycleController controller = new RecycleController();
@@ -405,7 +401,7 @@ class AccelerationMethodTest {
   @Nested
   @DisplayName("Acceleration Performance Benchmark")
   class PerformanceBenchmarkTests {
-{
+    /*
      * Demonstrate Wegstein formula and q-factor calculation.
      */
 
@@ -513,7 +509,11 @@ class AccelerationMethodTest {
   @Nested
   @DisplayName("Real Process Benchmark")
   class RealProcessBenchmarkTests {
-    {{{{{
+    private neqsim.thermo.system.SystemInterface createOilGasFluid() {
+      neqsim.thermo.system.SystemInterface fluid =
+          new neqsim.thermo.system.SystemSrkEos(273.15 + 50.0, 62.0);
+      fluid.addComponent("nitrogen", 0.5);
+      fluid.addComponent("CO2", 2.0);
       fluid.addComponent("methane", 70.0);
       fluid.addComponent("ethane", 8.0);
       fluid.addComponent("propane", 5.0);

@@ -8,14 +8,21 @@ import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.heatexchanger.UtilityStreamSpecification;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Regression tests for heater/cooler mechanical design sizing using utility specifications. */
 public class HeaterCoolerMechanicalDesignTest {
-  SystemInterface system = new SystemSrkEos(273.15 + temperatureC,
-      50.0);system.addComponent("methane",120.0);system.addComponent("ethane",20.0);system.addComponent("n-heptane",2.0);system.createDatabase(true);system.setMixingRule(2);new ThermodynamicOperations(system).TPflash();return system;
+  private SystemInterface createBaseSystem(double temperatureC) {
+    SystemInterface system = new SystemSrkEos(273.15 + temperatureC, 50.0);
+    system.addComponent("methane", 120.0);
+    system.addComponent("ethane", 20.0);
+    system.addComponent("n-heptane", 2.0);
+    system.createDatabase(true);
+    system.setMixingRule(2);
+    new ThermodynamicOperations(system).TPflash();
+    return system;
   }
 
   @Test

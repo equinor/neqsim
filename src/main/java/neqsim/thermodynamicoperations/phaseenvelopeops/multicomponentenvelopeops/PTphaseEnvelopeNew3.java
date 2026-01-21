@@ -213,10 +213,6 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
   public java.util.List<double[]> getRefinedTransitionPoints() {
     return refinedTransitionPoints;
   }
-  // removed extra closing brace
-
-
-  // ...existing code...
 
   /**
    * <p>

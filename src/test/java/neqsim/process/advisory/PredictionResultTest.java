@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
  * Tests for PredictionResult advisory system output.
  */
 public class PredictionResultTest {
+  private PredictionResult prediction;
 
   @BeforeEach
   void setUp() {

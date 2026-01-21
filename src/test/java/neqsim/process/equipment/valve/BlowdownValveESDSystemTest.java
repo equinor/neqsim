@@ -42,6 +42,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class BlowdownValveESDSystemTest {
+  SystemInterface separatorGas;
   Stream feedStream;
   Separator separator;
   Stream separatorGasOut;

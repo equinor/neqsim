@@ -30,6 +30,7 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 class ProcessDiagramExporterTest {
   private SystemInterface fluid;
+  private ProcessSystem process;
 
   @TempDir
   Path tempDir;

@@ -543,7 +543,6 @@ public class TBPfractionModel implements java.io.Serializable {
     }
   }
 
-
   public class PedersenTBPModelPRHeavyOil extends PedersenTBPModelPR {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;

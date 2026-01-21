@@ -14,6 +14,7 @@ import neqsim.process.fielddevelopment.screening.DetailedEmissionsCalculator.Det
  * @author ESOL
  */
 class DetailedEmissionsCalculatorTest {
+  private DetailedEmissionsCalculator calculator;
 
   @BeforeEach
   void setUp() {

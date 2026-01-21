@@ -13,6 +13,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * consistent results.
  */
 public class ValveSizingMethodComparisonTest {
+  /*
    * Compare all sizing methods for a gas valve.
    */
   @Test

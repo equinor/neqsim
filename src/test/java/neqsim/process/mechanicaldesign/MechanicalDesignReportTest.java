@@ -24,6 +24,7 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 public class MechanicalDesignReportTest {
   private MechanicalDesignReport report;
+  private ProcessSystem process;
 
   @BeforeEach
   public void setUp() {

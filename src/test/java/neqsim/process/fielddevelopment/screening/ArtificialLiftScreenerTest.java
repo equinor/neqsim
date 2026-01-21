@@ -18,6 +18,7 @@ import neqsim.process.fielddevelopment.screening.ArtificialLiftScreener.Screenin
  * @author ESOL
  */
 class ArtificialLiftScreenerTest {
+  private ArtificialLiftScreener screener;
 
   @BeforeEach
   void setUp() {

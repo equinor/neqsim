@@ -6,9 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.examples.OilGasProcessSimulationOptimization.ProcessInputParameters;
 import neqsim.process.examples.OilGasProcessSimulationOptimization.ProcessOutputResults;
-import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.measurementdevice.FlowInducedVibrationAnalyser;
 import neqsim.process.processmodel.ProcessSystem;
 
@@ -30,6 +30,7 @@ import neqsim.process.processmodel.ProcessSystem;
 public class OilGasProcessSimulationOptimizationTest {
   private ProcessOutputResults cachedResults;
   private boolean simulationConverged = false;
+  private OilGasProcessSimulationOptimization simulation;
 
   /**
    * Sets up the test environment before each test.

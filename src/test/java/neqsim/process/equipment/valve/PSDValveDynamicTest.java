@@ -22,6 +22,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 public class PSDValveDynamicTest extends neqsim.NeqSimTest {
+  private SystemInterface testFluid;
   private Stream feedStream;
   private PSDValve psdValve;
   private PressureTransmitter pressureTransmitter;

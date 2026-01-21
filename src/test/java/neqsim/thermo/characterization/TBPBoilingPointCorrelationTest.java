@@ -153,6 +153,4 @@ public class TBPBoilingPointCorrelationTest {
     assertEquals(moles, addedComponent.getNumberOfmoles(), 1e-10, "Moles should match");
     assertEquals(molarMass, addedComponent.getMolarMass(), 1e-10, "Molar mass should match");
   }
-
-
 }

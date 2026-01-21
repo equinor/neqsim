@@ -159,8 +159,6 @@ public class GibbsReactorTest {
     reactor.run();
 
     SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
-
-
     double h2 = outletSystem.getComponent("hydrogen").getz();
     double n2 = outletSystem.getComponent("nitrogen").getz();
     double nh3 = outletSystem.getComponent("ammonia").getz();
@@ -183,8 +181,8 @@ public class GibbsReactorTest {
     system.addComponent("argon", 0.05); // Add argon to test Ar element
     system.setMixingRule(2);
 
-
-
+    // Create inlet stream
+    Stream inletStream = new Stream("Inlet Stream", system);
     inletStream.run();
 
     // Create GibbsReactor in adiabatic mode
@@ -228,8 +226,9 @@ public class GibbsReactorTest {
 
     system.setMixingRule(2);
 
-
     // Create inlet stream
+    Stream inletStream = new Stream("Inlet Stream", system);
+    inletStream.run();
 
     // Create GibbsReactor in adiabatic mode
     GibbsReactor reactor = new GibbsReactor("Gibbs Reactor", inletStream);
@@ -271,11 +270,9 @@ public class GibbsReactorTest {
     Assertions.assertEquals(2.19702E-1, water, 0.01);
   }
 
-
   /**
    * Test N2O4 ⇌ 2NO2 equilibrium reaction at 298 K and 1 bara using SRK EOS. N2O4 (dinitrogen
-   
-
+   */
   public void testN2O4_NO2_Equilibrium() {
     // Create system at 298 K (25°C) and 1 bara
     SystemInterface system = new SystemSrkEos(298.15, 1.0);

@@ -29,16 +29,10 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class GasOilWaterProcessSvgExportTest extends neqsim.NeqSimTest {
-  *
-  Creates a
-  well fluid
-  with typical
-  oil and
-  gas components
-  plus water.**@return
-  a configured
-  SystemInterface with gas,oil,
-  and water components*/
+  /*
+   * Creates a well fluid with typical oil and gas components plus water.**@return a configured
+   * SystemInterface with gas,oil, and water components
+   */
 
   private SystemInterface createWellFluid() {
     SystemInterface fluid = new SystemSrkEos(338.15, 50.0);
