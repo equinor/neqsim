@@ -3605,9 +3605,13 @@ public class ProcessSystem extends SimulationBaseClass {
     double maxUtil = 0.0;
 
     for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
+      // Skip equipment with capacity analysis disabled
+      if (!equip.isCapacityAnalysisEnabled()) {
+        continue;
+      }
       neqsim.process.equipment.capacity.CapacityConstraint constraint =
           equip.getBottleneckConstraint();
-      if (constraint != null) {
+      if (constraint != null && constraint.isEnabled()) {
         double util = constraint.getUtilization();
         if (!Double.isNaN(util) && util > maxUtil) {
           maxUtil = util;
@@ -3627,11 +3631,15 @@ public class ProcessSystem extends SimulationBaseClass {
   /**
    * Checks if any equipment in the process is overloaded (exceeds design capacity).
    *
+   * <p>
+   * Only equipment with capacity analysis enabled is checked.
+   * </p>
+   *
    * @return true if any equipment has capacity utilization above 100%
    */
   public boolean isAnyEquipmentOverloaded() {
     for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
-      if (equip.isCapacityExceeded()) {
+      if (equip.isCapacityAnalysisEnabled() && equip.isCapacityExceeded()) {
         return true;
       }
     }
@@ -3643,14 +3651,15 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * <p>
    * HARD limits represent absolute equipment limits that cannot be exceeded without trip or damage,
-   * such as maximum compressor speed or surge limits.
+   * such as maximum compressor speed or surge limits. Only equipment with capacity analysis enabled
+   * is checked.
    * </p>
    *
    * @return true if any HARD constraint is exceeded
    */
   public boolean isAnyHardLimitExceeded() {
     for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
-      if (equip.isHardLimitExceeded()) {
+      if (equip.isCapacityAnalysisEnabled() && equip.isHardLimitExceeded()) {
         return true;
       }
     }
@@ -3661,8 +3670,8 @@ public class ProcessSystem extends SimulationBaseClass {
    * Gets a summary of capacity utilization for all constrained equipment.
    *
    * <p>
-   * Returns a map of equipment names to their maximum constraint utilization. Useful for displaying
-   * overall process capacity status.
+   * Returns a map of equipment names to their maximum constraint utilization. Only equipment with
+   * capacity analysis enabled is included. Useful for displaying overall process capacity status.
    * </p>
    *
    * @return map of equipment name to utilization percentage
@@ -3670,6 +3679,10 @@ public class ProcessSystem extends SimulationBaseClass {
   public java.util.Map<String, Double> getCapacityUtilizationSummary() {
     java.util.Map<String, Double> summary = new java.util.LinkedHashMap<>();
     for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
+      // Skip equipment with capacity analysis disabled
+      if (!equip.isCapacityAnalysisEnabled()) {
+        continue;
+      }
       ProcessEquipmentInterface unit = (ProcessEquipmentInterface) equip;
       double util = equip.getMaxUtilization();
       if (!Double.isNaN(util)) {
@@ -3684,7 +3697,8 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * <p>
    * Returns equipment where at least one constraint is above its warning threshold (typically 90%
-   * of design). Useful for identifying potential future bottlenecks.
+   * of design). Only equipment with capacity analysis enabled is included. Useful for identifying
+   * potential future bottlenecks.
    * </p>
    *
    * @return list of equipment names that are near capacity limits
@@ -3692,7 +3706,7 @@ public class ProcessSystem extends SimulationBaseClass {
   public java.util.List<String> getEquipmentNearCapacityLimit() {
     java.util.List<String> nearLimit = new java.util.ArrayList<>();
     for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
-      if (equip.isNearCapacityLimit()) {
+      if (equip.isCapacityAnalysisEnabled() && equip.isNearCapacityLimit()) {
         nearLimit.add(((ProcessEquipmentInterface) equip).getName());
       }
     }

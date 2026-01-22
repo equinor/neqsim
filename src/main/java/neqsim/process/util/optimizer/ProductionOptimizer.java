@@ -3144,17 +3144,25 @@ public class ProductionOptimizer {
     if (evaluation.utilizationWithinLimits() && evaluation.hardOk()) {
       return evaluation.score();
     }
-    // Penalize infeasible points to still allow non-monotonic searches to converge.
+    // Penalize infeasible points heavily to ensure optimizer prefers feasible solutions.
+    // Use a large negative penalty proportional to how far we exceed limits.
     double penalty = 0.0;
     for (ConstraintStatus status : evaluation.constraintStatuses()) {
       if (status.getSeverity() == ConstraintSeverity.HARD && status.violated()) {
-        penalty -= Math.abs(status.getMargin());
+        // Strong penalty for constraint violations
+        penalty -= 1000.0 * (1.0 + Math.abs(status.getMargin()));
       }
     }
     if (!evaluation.utilizationWithinLimits()) {
-      penalty -= Math.abs(1.0 + evaluation.bottleneckUtilization());
+      // Strong penalty for exceeding utilization limits
+      // Penalty increases quadratically with how much we exceed 100%
+      double overUtil = evaluation.bottleneckUtilization() - 1.0;
+      if (overUtil > 0) {
+        penalty -= 1000.0 * (1.0 + overUtil * overUtil);
+      }
     }
-    return evaluation.score() + penalty;
+    // Return a score that is always much worse than any feasible solution
+    return Math.min(-1000.0, evaluation.score() + penalty);
   }
 
   private double determineUtilizationLimit(ProcessEquipmentInterface unit,

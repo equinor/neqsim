@@ -198,8 +198,8 @@ public class testTr {
     manifold.addStream(upstreamCompressorTrain2);
     manifold.addStream(upstreamCompressorTrain3);
     manifold.setSplitFactors(new double[] {1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0});
-    manifold.setHeaderInnerDiameter(1.5);
-    manifold.setBranchInnerDiameter(0.6);
+    // manifold.setHeaderInnerDiameter(1.5);
+    // manifold.setBranchInnerDiameter(0.6);
     manifold.run();
     processSystem.add(manifold);
 
@@ -264,8 +264,9 @@ public class testTr {
 
     // Change flow rate and run once - tests that flow propagates correctly
     // with hasMultiInputEquipment() detecting multi-input Separator
-    // inletStream.setFlowRate(2157870.58288790, "kg/hr");
-    // processSystem.run();
+
+    inletStream.setFlowRate(2157870.58288790, "kg/hr");
+    processSystem.run();
 
     // Verify flow propagated to compressor
     double newFlow = ((Compressor) processSystem.getUnit("ups1 Compressor")).getInletStream()

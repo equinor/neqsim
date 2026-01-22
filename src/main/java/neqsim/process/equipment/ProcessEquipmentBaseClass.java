@@ -50,6 +50,12 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   private double minimumFlow = 1e-20;
 
   /**
+   * Flag to enable/disable capacity analysis for this equipment. When disabled, this equipment is
+   * excluded from bottleneck detection, capacity utilization summaries, and optimization routines.
+   */
+  private boolean capacityAnalysisEnabled = true;
+
+  /**
    * <p>
    * Constructor for ProcessEquipmentBaseClass.
    * </p>
@@ -391,5 +397,40 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    */
   public void isActive(boolean isActive) {
     this.isActive = isActive;
+  }
+
+  /**
+   * Checks if capacity analysis is enabled for this equipment.
+   *
+   * <p>
+   * When disabled, this equipment is excluded from bottleneck detection, capacity utilization
+   * summaries, and optimization routines. The equipment still tracks its constraints but doesn't
+   * contribute to system-level analysis.
+   * </p>
+   *
+   * @return true if capacity analysis is enabled (default is true)
+   */
+  public boolean isCapacityAnalysisEnabled() {
+    return capacityAnalysisEnabled;
+  }
+
+  /**
+   * Enables or disables capacity analysis for this equipment.
+   *
+   * <p>
+   * When disabled, this equipment is excluded from:
+   * <ul>
+   * <li>System bottleneck detection ({@code ProcessSystem.findBottleneck()})</li>
+   * <li>Capacity utilization summaries ({@code ProcessSystem.getCapacityUtilizationSummary()})</li>
+   * <li>Equipment near capacity lists ({@code ProcessSystem.getEquipmentNearCapacityLimit()})</li>
+   * <li>Optimization constraint checking</li>
+   * </ul>
+   * The equipment still calculates and tracks its constraints internally.
+   * </p>
+   *
+   * @param enabled true to include in capacity analysis, false to exclude
+   */
+  public void setCapacityAnalysisEnabled(boolean enabled) {
+    this.capacityAnalysisEnabled = enabled;
   }
 }

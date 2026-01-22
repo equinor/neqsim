@@ -129,6 +129,9 @@ public class CapacityConstraint implements Serializable {
   /** Description of the constraint for documentation. */
   private String description = "";
 
+  /** Whether this constraint is enabled for capacity analysis. */
+  private boolean enabled = true;
+
   /**
    * Creates a new capacity constraint.
    *
@@ -488,6 +491,42 @@ public class CapacityConstraint implements Serializable {
    */
   public String getDescription() {
     return description;
+  }
+
+  /**
+   * Checks if this constraint is enabled for capacity analysis.
+   *
+   * <p>
+   * Disabled constraints are excluded from bottleneck detection and optimization. They still track
+   * values but don't contribute to utilization summaries.
+   * </p>
+   *
+   * @return true if the constraint is enabled
+   */
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  /**
+   * Enables or disables this constraint for capacity analysis.
+   *
+   * <p>
+   * When disabled, this constraint is excluded from:
+   * <ul>
+   * <li>Bottleneck detection</li>
+   * <li>Capacity utilization summaries</li>
+   * <li>Optimization constraints</li>
+   * <li>Near-limit warnings</li>
+   * </ul>
+   * The constraint still tracks its current value and can be queried directly.
+   * </p>
+   *
+   * @param enabled true to enable, false to disable
+   * @return this constraint for method chaining
+   */
+  public CapacityConstraint setEnabled(boolean enabled) {
+    this.enabled = enabled;
+    return this;
   }
 
   @Override
