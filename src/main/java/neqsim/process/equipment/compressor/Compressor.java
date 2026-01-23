@@ -1095,6 +1095,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
           double nV = (1.0 + schultzX)
               / (1.0 / isenthalpicvolumeexponent * (1.0 / polytropicEfficiency + schultzX)
                   - schultzY * (1.0 / polytropicEfficiency - 1.0));
+          polytropicExponent = nV;
           double term = nV / (nV - 1.0);
           double term2 = 1e5 * (getOutletPressure() / densOutIsentropic - presinn / densInn);
           double term3 = isenthalpicvolumeexponent / (isenthalpicvolumeexponent - 1.0);
@@ -1145,6 +1146,12 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
           }
           double isenthalpicvolumeexponent =
               Math.log(getOutletPressure() / presinn) / Math.log(densOutIsentropic / densInn);
+          // Calculate polytropic exponent from isentropic exponent and efficiency
+          // n_poly = k_s / (1 - (k_s - 1) / k_s * (1 - eta_poly))
+          // Simplified: use isenthalpicvolumeexponent as base
+          polytropicExponent = isenthalpicvolumeexponent
+              / (1.0 - (isenthalpicvolumeexponent - 1.0) / isenthalpicvolumeexponent
+                  * (1.0 - polytropicEfficiency));
           double term = isenthalpicvolumeexponent / (isenthalpicvolumeexponent - 1.0)
               * (polytropicEfficiency);
           double term2 = 1e5 * (getOutletPressure() / densOutIsentropic - presinn / densInn);
@@ -1235,6 +1242,25 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
         getPower() / getThermoSystem().getFlowRate("kg/sec") / 1000.0 * getPolytropicEfficiency();
     polytropicHeadMeter = polytropicFluidHead * 1000.0 / 9.81;
     actualCompressionRatio = getOutletPressure() / presinn;
+
+    // Calculate polytropic exponent from actual compression process if not already set
+    // n = ln(P2/P1) / ln(rho2/rho1) - polytropic volume exponent
+    if (polytropicExponent == 0 || !getCompressorChart().isUseCompressorChart()) {
+      double densOut = getThermoSystem().getDensity("kg/m3");
+      if (useGERG2008 && getThermoSystem().getNumberOfPhases() == 1) {
+        densOut = getThermoSystem().getPhase(0).getDensity_GERG2008();
+      } else if (useLeachman && getThermoSystem().getNumberOfPhases() == 1) {
+        densOut = getThermoSystem().getPhase(0).getDensity_Leachman();
+      } else if (useVega && getThermoSystem().getNumberOfPhases() == 1) {
+        densOut = getThermoSystem().getPhase(0).getDensity_Vega();
+      }
+      double pressureRatioCalc = getOutletPressure() / presinn;
+      double densityRatio = densOut / densInn;
+      if (pressureRatioCalc > 1.0 && densityRatio > 1.0) {
+        polytropicExponent = Math.log(pressureRatioCalc) / Math.log(densityRatio);
+      }
+    }
+
     setCalculationIdentifier(id);
   }
 
