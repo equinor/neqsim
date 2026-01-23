@@ -113,7 +113,6 @@ public final class DifferentialPressureFlowCalculator {
   public static FlowCalculationResult calculate(double[] pressureBarg, double[] temperatureC,
       double[] differentialPressureMbar, String flowType, double[] flowData,
       List<String> components, double[] fractions, boolean normalizeFractions) {
-
     Objects.requireNonNull(pressureBarg, "pressureBarg");
     Objects.requireNonNull(temperatureC, "temperatureC");
     Objects.requireNonNull(differentialPressureMbar, "differentialPressureMbar");
@@ -607,7 +606,6 @@ public final class DifferentialPressureFlowCalculator {
   public static double calculateDpFromFlowVenturi(double massFlowKgPerHour, double pressureBara,
       double density, double kappa, double pipeDiameterMm, double throatDiameterMm,
       double dischargeCoefficient) {
-
     double D = pipeDiameterMm / 1000.0;
     double d = throatDiameterMm / 1000.0;
     double C = dischargeCoefficient;
@@ -682,7 +680,6 @@ public final class DifferentialPressureFlowCalculator {
   public static double calculateDpFromFlow(double massFlowKgPerHour, double pressureBarg,
       double temperatureC, String flowType, double[] flowData, List<String> components,
       double[] fractions, boolean normalizeFractions) {
-
     Objects.requireNonNull(flowData, "flowData");
 
     double[] validatedFlowData = Arrays.copyOf(flowData, flowData.length);

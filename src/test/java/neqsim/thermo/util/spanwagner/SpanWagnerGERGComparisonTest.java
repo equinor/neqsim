@@ -1,7 +1,6 @@
 package neqsim.thermo.util.spanwagner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemGERG2008Eos;
@@ -13,7 +12,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Regression tests comparing Span–Wagner and GERG‑2008 properties for CO₂.
  */
 public class SpanWagnerGERGComparisonTest {
-
   private double[] getSpanWagnerProps(double temperature, double pressure) {
     SystemInterface sys = new SystemSpanWagnerEos(temperature, pressure);
     sys.init(0);

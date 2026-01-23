@@ -4,7 +4,6 @@ import neqsim.process.fielddevelopment.concept.FieldConcept;
 import neqsim.process.fielddevelopment.concept.InfrastructureInput;
 import neqsim.process.fielddevelopment.concept.ReservoirInput;
 import neqsim.process.fielddevelopment.concept.WellsInput;
-import neqsim.process.fielddevelopment.facility.BlockType;
 import neqsim.process.fielddevelopment.facility.FacilityConfig;
 
 /**
@@ -29,7 +28,6 @@ import neqsim.process.fielddevelopment.facility.FacilityConfig;
  * @version 1.0
  */
 public class SafetyScreener {
-
   // Blowdown constants
   private static final double BLOWDOWN_TARGET_MINUTES = 15.0;
   private static final double TYPICAL_ORIFICE_FACTOR = 0.005; // Fraction of volume per minute
@@ -188,7 +186,6 @@ public class SafetyScreener {
   private SafetyReport.SafetyLevel determineSafetyLevel(SafetyReport.Builder builder,
       double blowdownMinutes, double minMetalTemp, double h2sPpm, double maxPressure,
       boolean manned) {
-
     boolean hasIssues = false;
     boolean hasMajorIssues = false;
 
@@ -234,7 +231,6 @@ public class SafetyScreener {
 
   private void addRequirements(SafetyReport.Builder builder, SafetyReport.SafetyLevel level,
       double h2sPpm, double maxPressure, double minMetalTemp, double blowdownMinutes) {
-
     if (h2sPpm > H2S_TOXIC_THRESHOLD_PPM) {
       builder.addRequirement("h2s_detection", "H2S detection and alarm system required");
       builder.addRequirement("h2s_ppe", "H2S personal protective equipment");

@@ -10,7 +10,6 @@ import neqsim.thermo.system.SystemInterface;
  * Tests integration of the ideal-gas model with the Gibbs reactor.
  */
 public class GibbsReactorIdealGasTest {
-
   /**
    * Ensures Gibbs reactor can reach equilibrium for a simple ideal-gas mixture.
    */

@@ -1,7 +1,6 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.stream.Stream;
@@ -13,7 +12,6 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  * TransientPipelineLiquidAccumulationExample.
  */
 class TransientThreePhaseFlowTest {
-
   @Test
   void testThreePhaseTransientStability() {
     // Create a rich gas condensate fluid with water (CPA for accurate water modeling)

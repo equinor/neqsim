@@ -40,23 +40,14 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class OilStabilizationDiagramTest {
-
-  /**
-   * Test generating a full oil stabilization process diagram with HYSYS style.
-   * 
-   * <p>
-   * Creates a comprehensive process including:
-   * </p>
-   * <ul>
-   * <li>HP well stream at 62 bara</li>
-   * <li>LP well stream at 20 bara</li>
-   * <li>4-stage separation train</li>
-   * <li>3-stage gas compression</li>
-   * <li>Dew point control unit</li>
-   * <li>Turbo-expander</li>
-   * <li>3 recycle loops for condensate recovery</li>
-   * </ul>
+  /*
+   * Test generating a full oil stabilization process diagram with HYSYS style.**<p>* Creates a
+   * comprehensive process including:*</p>*<ul>*<li>HP well stream at 62 bara</li>*<li>LP well
+   * stream at 20 bara</li>*<li>4- stage separation train</li>*<li>3- stage gas
+   * compression</li>*<li> Dew point control unit</li>*<li>Turbo-expander</li>*<li>3 recycle loops
+   * for condensate recovery</li>*</ul>
    */
+
   @Test
   void testOilStabilizationWithRecycles() {
     // =========================================================================

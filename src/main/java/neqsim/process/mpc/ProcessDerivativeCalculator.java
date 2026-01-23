@@ -1,10 +1,7 @@
 package neqsim.process.mpc;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -97,13 +94,13 @@ public class ProcessDerivativeCalculator {
    * Derivative calculation methods.
    */
   public enum DerivativeMethod {
-    /** Forward difference: f'(x) ≈ (f(x+h) - f(x)) / h */
+    /** Forward difference: f'(x) ≈ (f(x+h) - f(x)) / h. */
     FORWARD_DIFFERENCE,
 
-    /** Central difference: f'(x) ≈ (f(x+h) - f(x-h)) / (2h) - more accurate */
+    /** Central difference: f'(x) ≈ (f(x+h) - f(x-h)) / (2h) - more accurate. */
     CENTRAL_DIFFERENCE,
 
-    /** Second-order central: includes error estimation */
+    /** Second-order central: includes error estimation. */
     CENTRAL_DIFFERENCE_SECOND_ORDER
   }
 

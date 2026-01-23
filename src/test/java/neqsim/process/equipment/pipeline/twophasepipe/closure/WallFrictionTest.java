@@ -1,9 +1,9 @@
 package neqsim.process.equipment.pipeline.twophasepipe.closure;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.closure.WallFriction.WallFrictionResult;
 
@@ -13,7 +13,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.WallFriction.WallF
  * Tests wall shear stress calculations for various flow regimes.
  */
 public class WallFrictionTest {
-
   private WallFriction wallFriction;
 
   @BeforeEach

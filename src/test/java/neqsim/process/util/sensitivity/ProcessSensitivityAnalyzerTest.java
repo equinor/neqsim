@@ -1,6 +1,11 @@
 package neqsim.process.util.sensitivity;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,7 +22,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for ProcessSensitivityAnalyzer.
  */
 class ProcessSensitivityAnalyzerTest {
-
   private SystemInterface testFluid;
 
   @BeforeEach
@@ -32,8 +36,6 @@ class ProcessSensitivityAnalyzerTest {
   @Nested
   @DisplayName("Fluent API Tests")
   class FluentApiTests {
-
-    @Test
     @DisplayName("Can add inputs and outputs")
     void testAddInputsOutputs() {
       ProcessSystem process = new ProcessSystem();
@@ -86,7 +88,6 @@ class ProcessSensitivityAnalyzerTest {
   @Nested
   @DisplayName("VariableSpec Tests")
   class VariableSpecTests {
-
     @Test
     @DisplayName("VariableSpec stores equipment and property names")
     void testVariableSpecBasic() {
@@ -120,7 +121,6 @@ class ProcessSensitivityAnalyzerTest {
   @Nested
   @DisplayName("Validation Tests")
   class ValidationTests {
-
     @Test
     @DisplayName("Throws exception if no inputs specified")
     void testNoInputsThrowsException() {
@@ -147,7 +147,6 @@ class ProcessSensitivityAnalyzerTest {
   @Nested
   @DisplayName("Simple Process Sensitivity Tests")
   class SimpleProcessTests {
-
     @Test
     @DisplayName("Computes sensitivity for stream")
     void testStreamSensitivity() {
@@ -256,7 +255,6 @@ class ProcessSensitivityAnalyzerTest {
   @Nested
   @DisplayName("Report Generation Tests")
   class ReportTests {
-
     @Test
     @DisplayName("Generates readable report")
     void testReportGeneration() {

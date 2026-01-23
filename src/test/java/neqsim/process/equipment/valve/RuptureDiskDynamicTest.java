@@ -18,7 +18,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author Even Solbraa
  */
 class RuptureDiskDynamicTest extends neqsim.NeqSimTest {
-
   /**
    * Dynamic test for rupture disk with blocked outlet scenario.
    * 

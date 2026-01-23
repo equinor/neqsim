@@ -1,15 +1,15 @@
 package neqsim.process.equipment.valve;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.splitter.Splitter;
-import neqsim.process.equipment.mixer.Mixer;
-import neqsim.process.equipment.flare.Flare;
 import neqsim.process.equipment.diffpressure.Orifice;
+import neqsim.process.equipment.flare.Flare;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.measurementdevice.PushButton;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -42,7 +42,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class BlowdownValveESDSystemTest {
-
   SystemInterface separatorGas;
   Stream feedStream;
   Separator separator;

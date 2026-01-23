@@ -1,8 +1,6 @@
 package neqsim.process.fielddevelopment.reservoir;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Injection well performance model for water and gas injection.
@@ -377,7 +375,6 @@ public class InjectionWellModel implements Serializable {
    */
   public InjectionWellResult calculateWithInterference(double targetRate,
       double[] producerDistances, double[] producerRates) {
-
     // Calculate base injection
     InjectionWellResult result = calculate(targetRate);
 

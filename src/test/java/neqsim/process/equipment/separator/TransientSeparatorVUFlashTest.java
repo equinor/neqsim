@@ -22,7 +22,6 @@ import neqsim.thermo.system.SystemPrEos;
  * replicates a complex oil processing scenario with control systems.
  */
 public class TransientSeparatorVUFlashTest {
-
   // Process parameters
   private static final double TIME_STEP = 10.0; // seconds
   private static final double TOTAL_TIME = 300.0; // seconds (reduced for testing)

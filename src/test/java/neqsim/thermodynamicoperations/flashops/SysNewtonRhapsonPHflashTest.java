@@ -3,15 +3,14 @@ package neqsim.thermodynamicoperations.flashops;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Test class for SysNewtonRhapsonPHflash.
  */
 public class SysNewtonRhapsonPHflashTest {
-
   @Test
   void testDirectPHFlash() {
     // Use a system that is definitely 2-phase

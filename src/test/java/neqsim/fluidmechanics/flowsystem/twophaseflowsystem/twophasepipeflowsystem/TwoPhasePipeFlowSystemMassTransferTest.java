@@ -22,7 +22,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 public class TwoPhasePipeFlowSystemMassTransferTest {
-
   private TwoPhasePipeFlowSystem pipe;
   private SystemInterface testFluid;
 

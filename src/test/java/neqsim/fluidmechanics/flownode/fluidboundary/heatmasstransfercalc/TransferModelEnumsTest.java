@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
  * Unit tests for MassTransferModel, InterfacialAreaModel, and WallHeatTransferModel enums.
  */
 public class TransferModelEnumsTest {
-
   @Test
   void testMassTransferModelEnumValues() {
     // Verify all enum values exist

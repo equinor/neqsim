@@ -442,7 +442,6 @@ public class LiquidAccumulationTracker implements Serializable {
    */
   public double calculateDrainageRate(AccumulationZone zone, PipeSection[] sections,
       double pressureDrop) {
-
     if (zone.liquidVolume <= 0 || zone.sectionIndices.isEmpty()) {
       return 0;
     }

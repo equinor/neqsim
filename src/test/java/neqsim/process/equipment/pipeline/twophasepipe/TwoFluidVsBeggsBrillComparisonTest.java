@@ -1,7 +1,6 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +28,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim Team
  */
 class TwoFluidVsBeggsBrillComparisonTest {
-
   /**
    * Helper to calculate percent difference between two values.
    */

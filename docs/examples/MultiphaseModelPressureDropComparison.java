@@ -358,7 +358,6 @@ public class MultiphaseModelPressureDropComparison {
       pipe.setNumberOfSections(25);
       pipe.run();
 
-
       double[] P = pipe.getPressureProfile();
       if (P != null && P.length > 1) {
         return (P[0] - P[P.length - 1]) / 1e5; // Pa to bar

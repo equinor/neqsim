@@ -1,11 +1,12 @@
 package neqsim.integration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import neqsim.integration.ValidationFramework.*;
+import neqsim.integration.ValidationFramework.CommonErrors;
+import neqsim.integration.ValidationFramework.ValidationError;
+import neqsim.integration.ValidationFramework.ValidationResult;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -13,7 +14,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for the ValidationFramework and validators.
  */
 public class ValidationFrameworkTests {
-
   /**
    * Test: ValidationBuilder creates valid result for good system.
    */

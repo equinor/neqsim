@@ -183,7 +183,6 @@ public class SystemSoreideWhitson extends SystemPrEos1978 {
                 Math.abs(((PhaseSoreideWhitson) aqueousPhase).getSalinityConcentration()
                     - salinityConcentration);
             if (errorSalinityConcentration > 1e-6) {
-
               ((PhaseSoreideWhitson) aqueousPhase).setSalinityConcentration(salinityConcentration);
               // Set salinityConcentration for each component's attractive term if SoreideWhitso
 

@@ -221,7 +221,6 @@ public class WellProductionAllocator implements Serializable {
    */
   public AllocationResult allocate(double totalOilRate, double totalGasRate,
       double totalWaterRate) {
-
     Map<String, Double> oilRates = new HashMap<>();
     Map<String, Double> gasRates = new HashMap<>();
     Map<String, Double> waterRates = new HashMap<>();
@@ -265,7 +264,6 @@ public class WellProductionAllocator implements Serializable {
    */
   private void allocateByWellTest(Map<String, Double> oilRates, Map<String, Double> gasRates,
       Map<String, Double> waterRates, Map<String, Double> uncertainties) {
-
     double totalTestOil = 0;
     double totalTestGas = 0;
     double totalTestWater = 0;
@@ -295,7 +293,6 @@ public class WellProductionAllocator implements Serializable {
    */
   private void allocateByVFM(Map<String, Double> oilRates, Map<String, Double> gasRates,
       Map<String, Double> waterRates, Map<String, Double> uncertainties) {
-
     for (WellData well : wells) {
       String name = well.getWellName();
       oilRates.put(name, well.getVfmOilRate());
@@ -315,7 +312,6 @@ public class WellProductionAllocator implements Serializable {
    */
   private void allocateByChokeModel(Map<String, Double> oilRates, Map<String, Double> gasRates,
       Map<String, Double> waterRates, Map<String, Double> uncertainties) {
-
     // Simple choke-based allocation using position and PI
     double totalCapacity = 0;
     for (WellData well : wells) {
@@ -348,7 +344,6 @@ public class WellProductionAllocator implements Serializable {
    */
   private void allocateCombined(Map<String, Double> oilRates, Map<String, Double> gasRates,
       Map<String, Double> waterRates, Map<String, Double> uncertainties) {
-
     // Weight: VFM 50%, Well test 30%, Choke 20%
     double wVFM = 0.5;
     double wTest = 0.3;

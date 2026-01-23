@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
  * Tests for convergence acceleration methods (Wegstein, Broyden).
  */
 class AccelerationMethodTest {
-
   @Nested
   @DisplayName("AccelerationMethod Enum")
   class EnumTests {
@@ -186,8 +185,6 @@ class AccelerationMethodTest {
   @Nested
   @DisplayName("Recycle Acceleration Integration")
   class RecycleIntegrationTests {
-
-    @Test
     @DisplayName("Default acceleration method is direct substitution")
     void testDefaultMethod() {
       Recycle recycle = new Recycle("test-recycle");
@@ -263,8 +260,6 @@ class AccelerationMethodTest {
   @Nested
   @DisplayName("RecycleController Acceleration Integration")
   class RecycleControllerTests {
-
-    @Test
     @DisplayName("RecycleController can set acceleration method for all recycles")
     void testSetAccelerationMethodForAll() {
       RecycleController controller = new RecycleController();
@@ -406,10 +401,10 @@ class AccelerationMethodTest {
   @Nested
   @DisplayName("Acceleration Performance Benchmark")
   class PerformanceBenchmarkTests {
-
-    /**
+    /*
      * Demonstrate Wegstein formula and q-factor calculation.
      */
+
     @Test
     @DisplayName("Benchmark: Wegstein formula demonstration")
     void demonstrateWegsteinFormula() {
@@ -514,7 +509,6 @@ class AccelerationMethodTest {
   @Nested
   @DisplayName("Real Process Benchmark")
   class RealProcessBenchmarkTests {
-
     private neqsim.thermo.system.SystemInterface createOilGasFluid() {
       neqsim.thermo.system.SystemInterface fluid =
           new neqsim.thermo.system.SystemSrkEos(273.15 + 50.0, 62.0);

@@ -8,7 +8,6 @@ import neqsim.thermo.phase.PhaseSrkEos;
 
 /** Tests for calc_lngij implementations. */
 public class CalcLngijTest {
-
   private PhaseSrkEos createPhase(double V, double B, ComponentEos comp0, ComponentEos comp1)
       throws Exception {
     PhaseSrkEos phase = new PhaseSrkEos();

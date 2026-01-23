@@ -1,19 +1,19 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
-import neqsim.process.equipment.pipeline.twophasepipe.EntrainmentDeposition.EntrainmentResult;
-import neqsim.process.equipment.pipeline.twophasepipe.EntrainmentDeposition.EntrainmentModel;
 import neqsim.process.equipment.pipeline.twophasepipe.EntrainmentDeposition.DepositionModel;
+import neqsim.process.equipment.pipeline.twophasepipe.EntrainmentDeposition.EntrainmentModel;
+import neqsim.process.equipment.pipeline.twophasepipe.EntrainmentDeposition.EntrainmentResult;
+import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 
 /**
  * Unit tests for EntrainmentDeposition class.
  */
 class EntrainmentDepositionTest {
-
   private EntrainmentDeposition entrainment;
 
   // Typical properties for gas-liquid flow

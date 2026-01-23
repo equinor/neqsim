@@ -1,7 +1,7 @@
 package neqsim.thermodynamicoperations.flashops.saturationops;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class PureComponentSaturationPressureTest {
-
   static Stream<String> components() {
     return Stream.of("CO2", "methane", "ethane", "nitrogen", "propane");
   }

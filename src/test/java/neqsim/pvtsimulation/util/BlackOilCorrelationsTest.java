@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
  * Unit tests for BlackOilCorrelations.
  */
 class BlackOilCorrelationsTest {
-
   @Test
   void testSpecificGravityToAPI() {
     // Water (SG = 1.0) should give API = 10

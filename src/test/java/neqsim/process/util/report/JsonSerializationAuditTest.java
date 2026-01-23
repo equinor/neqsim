@@ -4,13 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.ProcessEquipmentInterface;
-import neqsim.process.equipment.absorber.SimpleAbsorber;
-import neqsim.process.equipment.adsorber.SimpleAdsorber;
 import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.equipment.ejector.Ejector;
-import neqsim.process.equipment.filter.Filter;
 import neqsim.process.equipment.heatexchanger.Heater;
-import neqsim.process.equipment.membrane.MembraneSeparator;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.GasScrubber;
@@ -35,7 +30,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class JsonSerializationAuditTest {
-
   /**
    * Audit which equipment types return null from toJson().
    */

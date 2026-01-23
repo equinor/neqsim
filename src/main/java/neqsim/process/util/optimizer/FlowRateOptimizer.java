@@ -579,7 +579,6 @@ public class FlowRateOptimizer implements Serializable {
         result.setInletPressure(inletPressure);
         result.setOutletPressure(pOutMid);
       }
-
     } catch (Exception e) {
       logger.error("Error during flow rate optimization", e);
       result.setStatus(Status.ERROR);
@@ -679,7 +678,6 @@ public class FlowRateOptimizer implements Serializable {
         result.setInletPressure(pInMid);
         result.setOutletPressure(pOutMid);
       }
-
     } catch (Exception e) {
       logger.error("Error during inlet pressure calculation", e);
       result.setStatus(Status.ERROR);
@@ -740,7 +738,9 @@ public class FlowRateOptimizer implements Serializable {
    * <li>Reinitializes capacity constraints after chart setup</li>
    * </ul>
    *
-   * <p><strong>Example Usage</strong></p>
+   * <p>
+   * <strong>Example Usage</strong>
+   * </p>
    * 
    * <pre>
    * FlowRateOptimizer optimizer = new FlowRateOptimizer(process, "Feed", "Export");
@@ -1081,7 +1081,9 @@ public class FlowRateOptimizer implements Serializable {
    * <li>Feasibility status</li>
    * </ul>
    *
-   * <p><strong>Example Usage</strong></p>
+   * <p>
+   * <strong>Example Usage</strong>
+   * </p>
    * 
    * <pre>
    * FlowRateOptimizer optimizer = new FlowRateOptimizer(process, "Feed", "Export");
@@ -1148,7 +1150,9 @@ public class FlowRateOptimizer implements Serializable {
    * Performance) tables used by reservoir simulators like Eclipse.
    * </p>
    *
-   * <p><strong>Example Usage</strong></p>
+   * <p>
+   * <strong>Example Usage</strong>
+   * </p>
    * 
    * <pre>
    * double[] flowRates = {20000, 40000, 60000, 80000, 100000};
@@ -1217,7 +1221,9 @@ public class FlowRateOptimizer implements Serializable {
    * constraints.
    * </p>
    *
-   * <p><strong>Example Usage</strong></p>
+   * <p>
+   * <strong>Example Usage</strong>
+   * </p>
    * 
    * <pre>
    * ProcessOperatingPoint minPowerPoint =
@@ -1382,7 +1388,9 @@ public class FlowRateOptimizer implements Serializable {
    * <li>Converge to the maximum flow that achieves target outlet pressure within constraints</li>
    * </ol>
    *
-   * <p><strong>Example Usage</strong></p>
+   * <p>
+   * <strong>Example Usage</strong>
+   * </p>
    * 
    * <pre>
    * FlowRateOptimizer optimizer = new FlowRateOptimizer(process, "Feed", "Export");
@@ -1541,7 +1549,9 @@ public class FlowRateOptimizer implements Serializable {
    * boundary conditions.
    * </p>
    *
-   * <p><strong>Example Usage</strong></p>
+   * <p>
+   * <strong>Example Usage</strong>
+   * </p>
    * 
    * <pre>
    * double[] inletPressures = {60, 70, 80, 90}; // bara
@@ -1649,7 +1659,6 @@ public class FlowRateOptimizer implements Serializable {
    */
   private void generateCapacityTableParallel(ProcessCapacityTable table, double[] inletPressures,
       double[] outletPressures, String pressureUnit, double maxUtilization, int totalEvals) {
-
     // Thread-safe progress counter
     AtomicInteger evalCount = new AtomicInteger(0);
 
@@ -2426,7 +2435,9 @@ public class FlowRateOptimizer implements Serializable {
    * allowing customization of all parameters.
    * </p>
    *
-   * <p><strong>Example Usage</strong></p>
+   * <p>
+   * <strong>Example Usage</strong>
+   * </p>
    * 
    * <pre>
    * LiftCurveConfiguration config =
@@ -4241,7 +4252,9 @@ public class FlowRateOptimizer implements Serializable {
    * deliverability curves and the question is "what flow rate can the production system handle?"
    * </p>
    *
-   * <p><strong>Table Structure</strong></p>
+   * <p>
+   * <strong>Table Structure</strong>
+   * </p>
    * 
    * <pre>
    *               Pout=130   Pout=140   Pout=150   Pout=160

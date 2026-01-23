@@ -212,7 +212,6 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
   @Override
   public Map<String, Object> sizeControlValveGas(double T, double MW, double gamma, double Z,
       double P1, double P2, double Q, double percentOpening) {
-
     Map<String, Object> ans = new HashMap<>();
 
     // Unit conversions
@@ -476,7 +475,6 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
     return Math.max(0.0, Math.min(100.0, valveOpening)); // Clamp between 0 and 100
   }
 
-
   // === PRIVATE HELPERS FOR CONSISTENT CALCULATIONS ===
 
   /**
@@ -489,7 +487,6 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
    */
   private double calculateFlowRateFromValveOpeningLiquid_full(double adjustedKv,
       StreamInterface inletStream, StreamInterface outletStream) {
-
     double effectiveKv = adjustedKv;
 
     double rho = inletStream.getThermoSystem().getDensity("kg/m3");
@@ -542,7 +539,6 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
    */
   private double calculateFlowRateFromValveOpeningGas_full(double adjustedKv,
       StreamInterface inletStream, StreamInterface outletStream) {
-
     double effectiveKv = adjustedKv;
 
     double T = inletStream.getThermoSystem().getTemperature("K");

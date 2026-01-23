@@ -37,7 +37,6 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 @DisplayName("ASME PTC 10 Validation Tests")
 public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
-
   /**
    * Test Case 1: Natural Gas Compression - Single Stage.
    *

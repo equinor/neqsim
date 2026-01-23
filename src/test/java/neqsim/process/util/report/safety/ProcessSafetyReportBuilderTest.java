@@ -17,7 +17,6 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Integration tests for {@link ProcessSafetyReportBuilder}. */
 public class ProcessSafetyReportBuilderTest {
-
   @Test
   public void testCriticalFindingsAreHighlighted() {
     ScenarioFixtures upset = createScenario("upset", 75.0, 90.0);
@@ -25,12 +24,12 @@ public class ProcessSafetyReportBuilderTest {
     ProcessSafetyThresholds thresholds = new ProcessSafetyThresholds()
         .setMinSafetyMarginWarning(0.20).setMinSafetyMarginCritical(0.05)
         .setReliefUtilisationWarning(0.4).setReliefUtilisationCritical(0.7)
-        .setEntropyChangeWarning(0.1).setEntropyChangeCritical(1.0)
-        .setExergyChangeWarning(100.0).setExergyChangeCritical(500.0);
+        .setEntropyChangeWarning(0.1).setEntropyChangeCritical(1.0).setExergyChangeWarning(100.0)
+        .setExergyChangeCritical(500.0);
 
-    ProcessSafetyReport report = new ProcessSafetyReportBuilder(upset.process)
-        .withScenarioLabel("compressor-upset").withConditionMonitor(upset.monitor)
-        .withThresholds(thresholds).build();
+    ProcessSafetyReport report =
+        new ProcessSafetyReportBuilder(upset.process).withScenarioLabel("compressor-upset")
+            .withConditionMonitor(upset.monitor).withThresholds(thresholds).build();
 
     assertFalse(report.getConditionFindings().isEmpty(), "Condition findings should be present");
     assertEquals(SeverityLevel.CRITICAL, report.getConditionFindings().get(0).getSeverity());
@@ -41,10 +40,11 @@ public class ProcessSafetyReportBuilderTest {
             "Expected safety margin assessment for " + upset.compressor.getName()));
     assertEquals(SeverityLevel.CRITICAL, margin.getSeverity());
 
-    ProcessSafetyReport.ReliefDeviceAssessment reliefAssessment = report.getReliefDeviceAssessments()
-        .stream().filter(r -> upset.reliefValve.getName().equals(r.getUnitName())).findFirst()
-        .orElseThrow(() -> new IllegalStateException(
-            "Expected relief device assessment for " + upset.reliefValve.getName()));
+    ProcessSafetyReport.ReliefDeviceAssessment reliefAssessment =
+        report.getReliefDeviceAssessments().stream()
+            .filter(r -> upset.reliefValve.getName().equals(r.getUnitName())).findFirst()
+            .orElseThrow(() -> new IllegalStateException(
+                "Expected relief device assessment for " + upset.reliefValve.getName()));
     assertEquals(SeverityLevel.CRITICAL, reliefAssessment.getSeverity());
 
     assertNotNull(report.getSystemKpis());
@@ -62,31 +62,32 @@ public class ProcessSafetyReportBuilderTest {
         .setMinSafetyMarginWarning(0.20).setMinSafetyMarginCritical(0.05)
         .setReliefUtilisationWarning(0.4).setReliefUtilisationCritical(0.7);
 
-    ProcessSafetyReport baselineReport = new ProcessSafetyReportBuilder(baseline.process)
-        .withScenarioLabel("baseline").withConditionMonitor(baseline.monitor)
-        .withThresholds(thresholds).build();
+    ProcessSafetyReport baselineReport =
+        new ProcessSafetyReportBuilder(baseline.process).withScenarioLabel("baseline")
+            .withConditionMonitor(baseline.monitor).withThresholds(thresholds).build();
 
-    ProcessSafetyReport upsetReport = new ProcessSafetyReportBuilder(upset.process)
-        .withScenarioLabel("upset").withConditionMonitor(upset.monitor).withThresholds(thresholds)
-        .build();
+    ProcessSafetyReport upsetReport =
+        new ProcessSafetyReportBuilder(upset.process).withScenarioLabel("upset")
+            .withConditionMonitor(upset.monitor).withThresholds(thresholds).build();
 
-    Optional<ProcessSafetyReport.SafetyMarginAssessment> baselineMargin = baselineReport
-        .getSafetyMargins().stream()
-        .filter(m -> baseline.compressor.getName().equals(m.getUnitName())).findFirst();
-    Optional<ProcessSafetyReport.SafetyMarginAssessment> upsetMargin = upsetReport.getSafetyMargins()
-        .stream().filter(m -> upset.compressor.getName().equals(m.getUnitName())).findFirst();
+    Optional<ProcessSafetyReport.SafetyMarginAssessment> baselineMargin =
+        baselineReport.getSafetyMargins().stream()
+            .filter(m -> baseline.compressor.getName().equals(m.getUnitName())).findFirst();
+    Optional<ProcessSafetyReport.SafetyMarginAssessment> upsetMargin =
+        upsetReport.getSafetyMargins().stream()
+            .filter(m -> upset.compressor.getName().equals(m.getUnitName())).findFirst();
 
     assertTrue(baselineMargin.isPresent());
     assertTrue(upsetMargin.isPresent());
     assertTrue(baselineMargin.get().getSeverity().ordinal() <= SeverityLevel.WARNING.ordinal());
     assertEquals(SeverityLevel.CRITICAL, upsetMargin.get().getSeverity());
 
-    Optional<ProcessSafetyReport.ReliefDeviceAssessment> baselineRelief = baselineReport
-        .getReliefDeviceAssessments().stream()
-        .filter(r -> baseline.reliefValve.getName().equals(r.getUnitName())).findFirst();
-    Optional<ProcessSafetyReport.ReliefDeviceAssessment> upsetRelief = upsetReport
-        .getReliefDeviceAssessments().stream()
-        .filter(r -> upset.reliefValve.getName().equals(r.getUnitName())).findFirst();
+    Optional<ProcessSafetyReport.ReliefDeviceAssessment> baselineRelief =
+        baselineReport.getReliefDeviceAssessments().stream()
+            .filter(r -> baseline.reliefValve.getName().equals(r.getUnitName())).findFirst();
+    Optional<ProcessSafetyReport.ReliefDeviceAssessment> upsetRelief =
+        upsetReport.getReliefDeviceAssessments().stream()
+            .filter(r -> upset.reliefValve.getName().equals(r.getUnitName())).findFirst();
 
     assertTrue(baselineRelief.isPresent());
     assertTrue(upsetRelief.isPresent());
@@ -126,8 +127,8 @@ public class ProcessSafetyReportBuilderTest {
 
     ConditionMonitor monitor = new ConditionMonitor(process);
     ProcessSystem monitorProcess = monitor.getProcess();
-    ProcessEquipmentBaseClass monitorCompressor = (ProcessEquipmentBaseClass) monitorProcess
-        .getUnit(compressor.getName());
+    ProcessEquipmentBaseClass monitorCompressor =
+        (ProcessEquipmentBaseClass) monitorProcess.getUnit(compressor.getName());
     monitorCompressor.conditionAnalysisMessage =
         scenarioName.equals("upset") ? "CRITICAL: High vibration detected" : "Monitoring";
 

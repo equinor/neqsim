@@ -10,7 +10,6 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SystemPrEosvolcorThermodynamicConsistencyTest extends neqsim.NeqSimTest {
-
   private static ThermodynamicModelTest prepareSystem(SystemInterface system, double[] cTValues) {
     applyVolumeTranslation(system, cTValues);
     system.init(3);
@@ -46,9 +45,8 @@ public class SystemPrEosvolcorThermodynamicConsistencyTest extends neqsim.NeqSim
       return;
     }
 
-    for (int compIndex = 0;
-        compIndex < Math.min(system.getPhase(0).getNumberOfComponents(), cTValues.length);
-        compIndex++) {
+    for (int compIndex = 0; compIndex < Math.min(system.getPhase(0).getNumberOfComponents(),
+        cTValues.length); compIndex++) {
       double expectedDerivative = cTValues[compIndex];
       assertEquals(expectedDerivative, system.getComponent(compIndex).getVolumeCorrectionT(), 1e-12,
           "Volume-translation temperature derivative should match the configured value");
@@ -92,8 +90,7 @@ public class SystemPrEosvolcorThermodynamicConsistencyTest extends neqsim.NeqSim
     system.addComponent("n-butane", 0.1);
     system.setMixingRule("classic");
 
-    ThermodynamicModelTest modelTest =
-        prepareSystem(system, new double[] {4.0e-5, 3.5e-5, 2.5e-5});
+    ThermodynamicModelTest modelTest = prepareSystem(system, new double[] {4.0e-5, 3.5e-5, 2.5e-5});
     assertThermodynamicConsistency(modelTest);
   }
 
@@ -106,8 +103,7 @@ public class SystemPrEosvolcorThermodynamicConsistencyTest extends neqsim.NeqSim
     system.addComponent("propane", 0.15);
     system.setMixingRule("classic");
 
-    ThermodynamicModelTest modelTest =
-        prepareSystem(system, new double[] {3.0e-5, 2.5e-5, 2.0e-5});
+    ThermodynamicModelTest modelTest = prepareSystem(system, new double[] {3.0e-5, 2.5e-5, 2.0e-5});
     assertThermodynamicConsistency(modelTest);
 
     system.init(3);

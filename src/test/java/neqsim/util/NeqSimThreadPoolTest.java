@@ -24,7 +24,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for the NeqSimThreadPool utility class.
  */
 class NeqSimThreadPoolTest {
-
   @AfterEach
   void tearDown() {
     // Reset pool to default state after each test

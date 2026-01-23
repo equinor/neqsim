@@ -9,7 +9,6 @@ import neqsim.thermo.system.SystemPrEos;
 
 /** Tests for explicit component volume correction handling. */
 public class ComponentVolumeCorrectionTest extends neqsim.NeqSimTest {
-
   private static final double TEMPERATURE = 273.15; // K
   private static final double PRESSURE = 50.0; // bara
 

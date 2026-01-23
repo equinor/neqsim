@@ -1,12 +1,11 @@
 package neqsim.process.equipment.reactor;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 public class FurnaceBurnerTBPTest {
-
   @Test
   public void testFurnaceBurnerWithTBPFraction() {
     SystemSrkEos fluid = new SystemSrkEos(298.15, 1.0);

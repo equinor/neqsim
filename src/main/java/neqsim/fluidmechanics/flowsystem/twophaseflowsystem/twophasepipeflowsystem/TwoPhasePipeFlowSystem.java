@@ -3000,7 +3000,6 @@ public class TwoPhasePipeFlowSystem
   public void exportToCSV(String filePath, String delimiter) throws java.io.IOException {
     try (java.io.PrintWriter writer =
         new java.io.PrintWriter(new java.io.BufferedWriter(new java.io.FileWriter(filePath)))) {
-
       // Write header
       String[] headers = {"Position [m]", "Elevation [m]", "Temperature [K]", "Pressure [Pa]",
           "Gas Velocity [m/s]", "Liquid Velocity [m/s]", "Superficial Gas Velocity [m/s]",
@@ -3071,7 +3070,6 @@ public class TwoPhasePipeFlowSystem
       throws java.io.IOException {
     try (java.io.PrintWriter writer =
         new java.io.PrintWriter(new java.io.BufferedWriter(new java.io.FileWriter(filePath)))) {
-
       // Build header and collect data
       java.util.List<String> headers = new java.util.ArrayList<>();
       java.util.List<double[]> data = new java.util.ArrayList<>();

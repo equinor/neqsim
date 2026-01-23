@@ -1,6 +1,10 @@
 package neqsim.process.equipment.util;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +22,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for RecycleController with simultaneous modular solving.
  */
 class RecycleControllerTest {
-
   private SystemInterface testFluid;
 
   @BeforeEach
@@ -101,7 +104,6 @@ class RecycleControllerTest {
   @Nested
   @DisplayName("Priority Level Tests")
   class PriorityTests {
-
     @Test
     @DisplayName("Priority levels are initialized correctly")
     void testPriorityLevels() {
@@ -150,7 +152,6 @@ class RecycleControllerTest {
   @Nested
   @DisplayName("Simultaneous Modular Solving Tests")
   class SimultaneousSolvingTests {
-
     @Test
     @DisplayName("Convergence diagnostics provides useful information")
     void testConvergenceDiagnostics() {
@@ -215,7 +216,6 @@ class RecycleControllerTest {
   @Nested
   @DisplayName("Integration Tests with Process System")
   class IntegrationTests {
-
     @Test
     @DisplayName("RecycleController works with process system")
     void testWithProcessSystem() {
@@ -290,7 +290,6 @@ class RecycleControllerTest {
   @Nested
   @DisplayName("Sensitivity Matrix Tests")
   class SensitivityMatrixTests {
-
     @Test
     @DisplayName("No sensitivity data before convergence")
     void testNoSensitivityBeforeConvergence() {

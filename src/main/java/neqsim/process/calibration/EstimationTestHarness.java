@@ -417,7 +417,6 @@ public class EstimationTestHarness implements Serializable {
    */
   public TestReport runConvergenceTest(EnKFParameterEstimator estimator, int numSteps,
       double noiseMultiplier, Consumer<Integer> progressCallback) {
-
     List<double[]> estimateHistory = new ArrayList<>();
     List<double[]> rmseHistory = new ArrayList<>();
 
@@ -454,7 +453,6 @@ public class EstimationTestHarness implements Serializable {
    */
   public Map<Double, TestReport> runNoiseRobustnessTest(EnKFParameterEstimator estimator,
       int stepsPerLevel, double[] noiseLevels) {
-
     Map<Double, TestReport> reports = new HashMap<>();
 
     for (double noiseLevel : noiseLevels) {
@@ -478,7 +476,6 @@ public class EstimationTestHarness implements Serializable {
    */
   public TestReport runDriftTrackingTest(EnKFParameterEstimator estimator, int numSteps,
       int driftingParamIndex, double driftRate) {
-
     List<double[]> estimateHistory = new ArrayList<>();
     List<double[]> rmseHistory = new ArrayList<>();
 
@@ -525,7 +522,6 @@ public class EstimationTestHarness implements Serializable {
   public MonteCarloReport runMonteCarloValidation(
       java.util.function.Supplier<EnKFParameterEstimator> estimatorFactory, int numTrials,
       int stepsPerTrial) {
-
     List<Double> rmseValues = new ArrayList<>();
     List<Double> coverageValues = new ArrayList<>();
     int successCount = 0;

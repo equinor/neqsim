@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -2063,7 +2062,6 @@ public class ProductionOptimizer {
       StreamInterface feedStream, OptimizationConfig config, List<OptimizationObjective> objectives,
       List<OptimizationConstraint> constraints, List<double[]> weightCombinations,
       List<String> objectiveNames) {
-
     ExecutorService executor = Executors
         .newFixedThreadPool(Math.min(config.getParallelThreads(), weightCombinations.size()));
     List<Future<ParetoPoint>> futures = new ArrayList<>();
@@ -3333,5 +3331,4 @@ public class ProductionOptimizer {
           description);
     }
   }
-
 }

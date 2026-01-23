@@ -17,7 +17,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Test for the complete production system from reservoir to oil stabilization.
  */
 public class WellToOilStabilizationExampleTest {
-
   /** Helper method for Java 8 compatibility (String.repeat was added in Java 11). */
   private static String repeat(String str, int count) {
     StringBuilder sb = new StringBuilder();

@@ -14,11 +14,9 @@ import org.junit.jupiter.api.Test;
  * @author esol
  */
 class DesignPhaseTest {
-
   @Nested
   @DisplayName("Basic Properties Tests")
   class BasicPropertiesTests {
-
     @Test
     @DisplayName("Should have correct display names")
     void shouldHaveCorrectDisplayNames() {
@@ -58,7 +56,6 @@ class DesignPhaseTest {
   @Nested
   @DisplayName("Requirements Tests")
   class RequirementsTests {
-
     @Test
     @DisplayName("FEED and Detail Design require full mechanical design")
     void feedAndDetailRequireFullDesign() {
@@ -93,7 +90,6 @@ class DesignPhaseTest {
   @Nested
   @DisplayName("Accuracy Tests")
   class AccuracyTests {
-
     @Test
     @DisplayName("Later phases should have tighter accuracy")
     void laterPhasesShouldHaveTighterAccuracy() {
@@ -113,7 +109,6 @@ class DesignPhaseTest {
   @Nested
   @DisplayName("ToString Tests")
   class ToStringTests {
-
     @Test
     @DisplayName("ToString should include name and accuracy")
     void toStringShouldIncludeNameAndAccuracy() {

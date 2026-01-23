@@ -1,7 +1,6 @@
 package neqsim.pvtsimulation.util.parameterfitting;
 
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**

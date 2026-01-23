@@ -58,12 +58,10 @@ public class TopsidePipingMechanicalDesignDataSource {
   public void loadDesignParameters(TopsidePipingMechanicalDesignCalculator calc, String company,
       String serviceType) {
     String sql = "SELECT ParameterName, MinValue, MaxValue, Unit, Standard "
-        + "FROM TechnicalRequirements_Process "
-        + "WHERE EquipmentType = 'TopsidePiping'";
+        + "FROM TechnicalRequirements_Process " + "WHERE EquipmentType = 'TopsidePiping'";
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
         ResultSet rs = database.getResultSet(sql)) {
-
       while (rs.next()) {
         String param = rs.getString("ParameterName");
         double minVal = rs.getDouble("MinValue");
@@ -87,12 +85,11 @@ public class TopsidePipingMechanicalDesignDataSource {
   public void loadFromStandard(TopsidePipingMechanicalDesignCalculator calc, String standardCode,
       String equipmentType) {
     String sql = "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT, DESCRIPTION "
-        + "FROM asme_standards WHERE STANDARD_CODE = '" + standardCode
-        + "' AND EQUIPMENTTYPE = '" + equipmentType + "'";
+        + "FROM asme_standards WHERE STANDARD_CODE = '" + standardCode + "' AND EQUIPMENTTYPE = '"
+        + equipmentType + "'";
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
         ResultSet rs = database.getResultSet(sql)) {
-
       while (rs.next()) {
         String param = rs.getString("SPECIFICATION");
         double minVal = rs.getDouble("MINVALUE");
@@ -120,7 +117,6 @@ public class TopsidePipingMechanicalDesignDataSource {
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
         ResultSet rs = database.getResultSet(sql)) {
-
       while (rs.next()) {
         String param = rs.getString("ParameterName");
         double maxVal = rs.getDouble("MaxValue");
@@ -152,7 +148,6 @@ public class TopsidePipingMechanicalDesignDataSource {
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
         ResultSet rs = database.getResultSet(sql)) {
-
       while (rs.next()) {
         // Apply vibration-specific parameters if found
         // These would be added to the calculator
@@ -219,12 +214,11 @@ public class TopsidePipingMechanicalDesignDataSource {
    * @return wall thickness in meters
    */
   public double loadPipeScheduleThickness(String nominalSize, String schedule) {
-    String sql = "SELECT WallThickness FROM PipeScheduleData WHERE NominalSize = '"
-        + nominalSize + "' AND Schedule = '" + schedule + "'";
+    String sql = "SELECT WallThickness FROM PipeScheduleData WHERE NominalSize = '" + nominalSize
+        + "' AND Schedule = '" + schedule + "'";
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
         ResultSet rs = database.getResultSet(sql)) {
-
       if (rs.next()) {
         return rs.getDouble("WallThickness") / 1000.0; // mm to m
       }
@@ -249,7 +243,6 @@ public class TopsidePipingMechanicalDesignDataSource {
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
         ResultSet rs = database.getResultSet(sql)) {
-
       if (rs.next()) {
         return rs.getDouble("AllowableStress");
       }
@@ -273,7 +266,6 @@ public class TopsidePipingMechanicalDesignDataSource {
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
         ResultSet rs = database.getResultSet(sql)) {
-
       if (rs.next()) {
         return rs.getDouble("PressureRating");
       }

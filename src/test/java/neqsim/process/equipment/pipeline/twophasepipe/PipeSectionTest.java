@@ -1,6 +1,10 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
@@ -9,7 +13,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * Tests for PipeSection and FlowRegimeDetector.
  */
 class PipeSectionTest {
-
   private PipeSection section;
   private FlowRegimeDetector detector;
 

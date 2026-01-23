@@ -30,7 +30,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Integration style regression test for the Graphviz export of a complex process model.
  */
 public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
-
   @Test
   public void exportGraphvizForComplexOilProcess(@TempDir Path tempDir) throws IOException {
     ProcessSystem process = createExampleProcess();

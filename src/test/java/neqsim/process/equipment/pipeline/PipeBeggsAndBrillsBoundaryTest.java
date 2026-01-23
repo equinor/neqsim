@@ -8,7 +8,6 @@ import neqsim.process.equipment.stream.Stream;
  * Tests boundary checks for PipeBeggsAndBrills profile accessors.
  */
 public class PipeBeggsAndBrillsBoundaryTest {
-
   @Test
   public void testOutOfBoundsProfileIndex() {
     neqsim.thermo.system.SystemInterface system =
@@ -26,7 +25,8 @@ public class PipeBeggsAndBrillsBoundaryTest {
     pipe.setDiameter(0.1);
     pipe.setNumberOfIncrements(1);
 
-    neqsim.process.processmodel.ProcessSystem proc = new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem proc =
+        new neqsim.process.processmodel.ProcessSystem();
     proc.add(stream);
     proc.add(pipe);
     proc.run();

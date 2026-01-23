@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.component.ComponentSrkCPA;
 
 public class PhaseSrkCPAArrayScalingTest {
-
   private static class DummyPhaseSrkCPA extends PhaseSrkCPA {
     private static final long serialVersionUID = 1L;
 

@@ -6,7 +6,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Heater;
-import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
@@ -24,9 +23,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim Development Team
  */
 public class MechanicalDesignReportTest {
-
-  private ProcessSystem process;
   private MechanicalDesignReport report;
+  private ProcessSystem process;
 
   @BeforeEach
   public void setUp() {

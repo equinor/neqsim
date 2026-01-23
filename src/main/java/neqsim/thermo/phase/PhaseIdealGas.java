@@ -1,6 +1,5 @@
 package neqsim.thermo.phase;
 
-import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentIdealGas;
 import neqsim.thermo.mixingrule.EosMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
@@ -11,7 +10,7 @@ import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
  *
  * @author esol
  */
-public class PhaseIdealGas extends Phase implements ThermodynamicConstantsInterface {
+public class PhaseIdealGas extends Phase {
 
   private static final long serialVersionUID = 1000L;
 
@@ -50,7 +49,6 @@ public class PhaseIdealGas extends Phase implements ThermodynamicConstantsInterf
     componentArray[compNumber] = new ComponentIdealGas(name, moles, molesInPhase, compNumber);
   }
 
-
   /**
    * <p>
    * getMixingRule.
@@ -62,7 +60,6 @@ public class PhaseIdealGas extends Phase implements ThermodynamicConstantsInterf
     return null;
   }
 
-
   /** {@inheritDoc} */
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
@@ -71,10 +68,8 @@ public class PhaseIdealGas extends Phase implements ThermodynamicConstantsInterf
     updateMolarVolume();
   }
 
-
   /** {@inheritDoc} */
   public void setMixingRuleGEModel(String name) {}
-
 
   /**
    * <p>
@@ -85,10 +80,8 @@ public class PhaseIdealGas extends Phase implements ThermodynamicConstantsInterf
    */
   public void setMixingRule(MixingRuleTypeInterface mr) {}
 
-
   /** {@inheritDoc} */
   public void resetMixingRule(MixingRuleTypeInterface mr) {}
-
 
   /** {@inheritDoc} */
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)

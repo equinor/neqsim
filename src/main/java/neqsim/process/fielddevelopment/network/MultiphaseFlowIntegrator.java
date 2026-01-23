@@ -5,9 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.fluidmechanics.flownode.FlowNodeInterface;
-import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
-import neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -501,7 +498,6 @@ public class MultiphaseFlowIntegrator implements Serializable {
    */
   public List<PipelineResult> calculateHydraulicsCurve(SystemInterface baseFluid,
       double inletPressureBar, double[] flowRatesKgHr) {
-
     List<PipelineResult> results = new ArrayList<PipelineResult>();
 
     for (double flowRate : flowRatesKgHr) {

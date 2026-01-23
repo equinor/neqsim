@@ -2,13 +2,11 @@ package neqsim.process.equipment.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemSrkEos;
 
 class CalculatorLibraryTest {
-
   @Test
   void energyBalanceMatchesInputEnthalpy() {
     SystemSrkEos fluid = new SystemSrkEos(280.0, 50.0);
@@ -64,8 +62,8 @@ class CalculatorLibraryTest {
 
     calculator.run();
 
-    double dewPoint = source.getHydrocarbonDewPoint("K",
-        target.getThermoSystem().getPressure("bara"), "bara");
+    double dewPoint =
+        source.getHydrocarbonDewPoint("K", target.getThermoSystem().getPressure("bara"), "bara");
     assertEquals(dewPoint, target.getTemperature("K"), 1e-6);
     assertTrue(target.getThermoSystem().getPressure() > 0.0);
   }

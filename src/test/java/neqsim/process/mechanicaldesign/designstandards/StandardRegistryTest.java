@@ -16,7 +16,6 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * Tests for StandardRegistry class.
  */
 class StandardRegistryTest {
-
   private MechanicalDesign mechanicalDesign;
 
   @BeforeEach

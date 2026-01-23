@@ -3,7 +3,6 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosit
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.system.PhysicalProperties;
-import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.FrictionTheoryViscosityMethod;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
@@ -22,8 +21,8 @@ public class LBCViscosityMethod extends Viscosity {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(LBCViscosityMethod.class);
   private static final double FT3_PER_LBMOL_TO_CM3_PER_MOL = 62.42796;
-  private static final double[] DEFAULT_DENSE_CONTRIBUTION_PARAMETERS = {0.10230, 0.023364,
-      0.058533, -0.040758, 0.0093324};
+  private static final double[] DEFAULT_DENSE_CONTRIBUTION_PARAMETERS =
+      {0.10230, 0.023364, 0.058533, -0.040758, 0.0093324};
 
   double[] denseContributionParameters = DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.clone();
 
@@ -103,10 +102,10 @@ public class LBCViscosityMethod extends Viscosity {
     PhaseType phaseType = phase.getPhase().getType();
     if (phaseType == PhaseType.AQUEOUS) {
       return waterViscosityMicropoise();
-    } else
+    } else {
       return leeGonzalezEakinGasViscosityMicropoise(weightedGasViscosity, mixtureMolarMassSqrt);
+    }
   }
-
 
   /**
    * The Lee-Gonzalez-Eakin dilute-gas correlation returns viscosity in micropoise when critical
@@ -147,9 +146,8 @@ public class LBCViscosityMethod extends Viscosity {
    */
   public void setDenseContributionParameters(double[] parameters) {
     if (parameters == null || parameters.length != DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.length) {
-      throw new IllegalArgumentException(
-          "LBC dense contribution requires exactly "
-              + DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.length + " parameters");
+      throw new IllegalArgumentException("LBC dense contribution requires exactly "
+          + DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.length + " parameters");
     }
     denseContributionParameters = parameters.clone();
   }

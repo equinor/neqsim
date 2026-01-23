@@ -57,7 +57,6 @@ class PhaseAmmoniaEosTest {
     assertEquals(1.03e-5, gas.getViscosity(), 5.0e-7);
   }
 
-
   @Test
   void testLiquidPropertiesAt10bar20C() {
     SystemInterface system = new SystemAmmoniaEos(293.15, 10.0);

@@ -19,7 +19,6 @@ import neqsim.process.mechanicaldesign.DesignValidationResult.ValidationMessage;
  * @author esol
  */
 class DesignValidationResultTest {
-
   private DesignValidationResult result;
 
   @BeforeEach
@@ -30,7 +29,6 @@ class DesignValidationResultTest {
   @Nested
   @DisplayName("Initial State Tests")
   class InitialStateTests {
-
     @Test
     @DisplayName("Should start with empty messages")
     void shouldStartWithEmptyMessages() {
@@ -65,7 +63,6 @@ class DesignValidationResultTest {
   @Nested
   @DisplayName("Add Message Tests")
   class AddMessageTests {
-
     @Test
     @DisplayName("Should add info message")
     void shouldAddInfoMessage() {
@@ -126,7 +123,6 @@ class DesignValidationResultTest {
   @Nested
   @DisplayName("Validity Tests")
   class ValidityTests {
-
     @Test
     @DisplayName("Should be valid with only info")
     void shouldBeValidWithOnlyInfo() {
@@ -159,7 +155,6 @@ class DesignValidationResultTest {
   @Nested
   @DisplayName("Filter Tests")
   class FilterTests {
-
     @Test
     @DisplayName("Should filter by severity")
     void shouldFilterBySeverity() {
@@ -184,7 +179,6 @@ class DesignValidationResultTest {
   @Nested
   @DisplayName("Count Tests")
   class CountTests {
-
     @Test
     @DisplayName("Should count messages by severity")
     void shouldCountBySeverity() {
@@ -211,7 +205,6 @@ class DesignValidationResultTest {
   @Nested
   @DisplayName("Metrics Tests")
   class MetricsTests {
-
     @Test
     @DisplayName("Should add metrics")
     void shouldAddMetrics() {
@@ -238,7 +231,6 @@ class DesignValidationResultTest {
   @Nested
   @DisplayName("Merge Tests")
   class MergeTests {
-
     @Test
     @DisplayName("Should merge results")
     void shouldMergeResults() {
@@ -285,7 +277,6 @@ class DesignValidationResultTest {
   @Nested
   @DisplayName("Summary Tests")
   class SummaryTests {
-
     @Test
     @DisplayName("Should generate summary")
     void shouldGenerateSummary() {
@@ -309,7 +300,6 @@ class DesignValidationResultTest {
   @Nested
   @DisplayName("ValidationMessage Tests")
   class ValidationMessageTests {
-
     @Test
     @DisplayName("Should store all properties")
     void shouldStoreAllProperties() {

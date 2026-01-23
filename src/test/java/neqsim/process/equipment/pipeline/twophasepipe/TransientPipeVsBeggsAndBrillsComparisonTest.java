@@ -1,7 +1,5 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Disabled;
@@ -90,7 +88,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @see PipeBeggsAndBrills
  */
 public class TransientPipeVsBeggsAndBrillsComparisonTest {
-
   private SystemInterface createGasSystem(double temperature, double pressure) {
     SystemInterface system = new SystemSrkEos(temperature, pressure);
     system.addComponent("methane", 0.85);

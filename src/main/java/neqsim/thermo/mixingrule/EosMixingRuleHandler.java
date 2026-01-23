@@ -247,7 +247,6 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                   intparam[k][l] = Double.parseDouble(dataSet.getString("cpakij_SRK"));
                   intparamT[k][l] = Double.parseDouble(dataSet.getString("cpakijT_SRK"));
                 } else if (phase instanceof PhaseSoreideWhitson) {
-
                   intparam[k][l] = Double.parseDouble(dataSet.getString("KIJWhitsonSoriede"));
                   intparam[l][k] = intparam[k][l];
 
@@ -1452,7 +1451,6 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       return 2.0 * sum;
     }
 
-
     @Override
     public double calcATT(PhaseInterface phase, double temperature, double pressure, int numbcomp) {
       final ComponentEosInterface[] c = (ComponentEosInterface[]) phase.getcomponentArray();
@@ -1496,7 +1494,6 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       }
       return Atot;
     }
-
 
     /** {@inheritDoc} */
     @Override
@@ -1833,7 +1830,6 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
     public double getkijWhitsonSoreideAqueous(ComponentEosInterface[] compArray,
         double salinityConcentration, double temperature, int i, int j) {
-
       String componenti = (compArray[i]).getComponentName();
       String componentj = compArray[j].getComponentName();
       double acentricFactori = compArray[i].getAcentricFactor();

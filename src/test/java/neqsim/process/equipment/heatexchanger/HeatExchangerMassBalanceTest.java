@@ -8,7 +8,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 class HeatExchangerMassBalanceTest {
-
   @Test
   void maintainsMassBalanceDuringRun() {
     Stream hot = createStream("hot", 1200.0, 90.0);

@@ -4,8 +4,6 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.equipment.ProcessEquipmentInterface;
-import neqsim.process.equipment.stream.StreamInterface;
 
 /**
  * Accessor for reading and writing process variables by path.
@@ -280,7 +278,6 @@ public class ProcessVariableAccessor {
         // Fall back to setter without unit
         setValue(path, value);
       }
-
     } catch (Exception e) {
       throw new RuntimeException("Failed to set value for path: " + path + " with unit: " + unit,
           e);

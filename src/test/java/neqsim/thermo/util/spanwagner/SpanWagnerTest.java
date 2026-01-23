@@ -1,7 +1,6 @@
 package neqsim.thermo.util.spanwagner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
@@ -11,7 +10,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Tests for Span-Wagner CO2 model. */
 public class SpanWagnerTest {
-
   private void init(SystemInterface sys) {
     sys.init(0);
     sys.init(1);

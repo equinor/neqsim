@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
  * Unit tests for {@link FrictionFactorCalculator}.
  */
 public class FrictionFactorCalculatorTest {
-
   private static final double TOLERANCE = 1e-6;
 
   @Test

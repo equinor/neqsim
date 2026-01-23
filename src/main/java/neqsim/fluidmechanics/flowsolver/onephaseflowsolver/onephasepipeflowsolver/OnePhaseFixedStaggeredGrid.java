@@ -714,7 +714,6 @@ public class OnePhaseFixedStaggeredGrid extends OnePhasePipeFlowSolver
    */
   private void setComponentConservationMatrixTVD(int componentNumber,
       neqsim.fluidmechanics.flowsolver.AdvectionScheme scheme) {
-
     // Get composition values for gradient calculation
     double[] phi = new double[numberOfNodes];
     for (int i = 0; i < numberOfNodes; i++) {

@@ -281,7 +281,6 @@ public class ConceptEvaluator {
 
   private void calculateScores(ConceptKPIs.Builder builder, FlowAssuranceReport faReport,
       SafetyReport safetyReport, EmissionsReport emissionsReport, EconomicsReport economicsReport) {
-
     // Technical score (0-1) based on flow assurance and safety
     double technicalScore = 1.0;
     switch (faReport.getOverallResult()) {
@@ -334,7 +333,6 @@ public class ConceptEvaluator {
 
   private void addWarnings(ConceptKPIs.Builder builder, FlowAssuranceReport faReport,
       SafetyReport safetyReport, EmissionsReport emissionsReport) {
-
     if (faReport.getOverallResult() == FlowAssuranceResult.FAIL) {
       builder.addWarning("flow_assurance", "Flow assurance FAIL - mitigation measures mandatory");
     } else if (faReport.getOverallResult() == FlowAssuranceResult.MARGINAL) {

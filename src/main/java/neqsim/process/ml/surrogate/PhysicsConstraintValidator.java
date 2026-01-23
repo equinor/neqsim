@@ -2,7 +2,6 @@ package neqsim.process.ml.surrogate;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -361,6 +360,14 @@ public class PhysicsConstraintValidator implements Serializable {
     private final double value;
     private final String message;
 
+    /**
+     * Constructor for a constraint violation.
+     *
+     * @param constraintName name of the violated constraint
+     * @param variable the variable that violated the constraint
+     * @param value the value of the variable
+     * @param message explanation of the violation
+     */
     public ConstraintViolation(String constraintName, String variable, double value,
         String message) {
       this.constraintName = constraintName;

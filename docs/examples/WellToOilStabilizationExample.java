@@ -170,7 +170,6 @@ public class WellToOilStabilizationExample {
     // =========================================================================
     System.out.println("\n6. Creating oil stabilization train...");
 
-
     // --- First Stage: HP Separator ---
     Heater preHeater1 = new Heater("Pre-Heater HP", inletChoke.getOutletStream());
     preHeater1.setOutTemperature(70.0, "C");

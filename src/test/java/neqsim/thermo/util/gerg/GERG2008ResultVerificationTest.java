@@ -21,7 +21,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author esol
  */
 public class GERG2008ResultVerificationTest {
-
   private static final double TOLERANCE = 1e-8;
   private static final double TOLERANCE_PERCENT = 0.0001; // 0.0001% for relative comparisons
 

@@ -1,13 +1,13 @@
 package neqsim.process.equipment.reactor;
 
-import neqsim.process.equipment.stream.Stream;
-import neqsim.thermo.system.SystemSrkEos;
-import neqsim.thermo.system.SystemInterface;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
 public class FurnaceBurnerJsonTest {
-
   @Test
   public void testToJson() {
     SystemInterface gas = new SystemSrkEos(298.15, 1.0);

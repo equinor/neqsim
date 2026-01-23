@@ -40,7 +40,6 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   boolean allowLaminar = true;
   boolean fullOutput = true;
 
-
   /**
    * <p>
    * isAllowChoked.
@@ -303,7 +302,6 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     }
   }
 
-
   /**
    * Sizes a control valve for a liquid based on the provided parameters. Aligned with IEC 60534 and
    * 'fluids' library.
@@ -437,7 +435,6 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    */
   public double calculateFlowRateFromValveOpeningLiquid(double adjustedKv,
       StreamInterface inletStream, StreamInterface outletStream) {
-
     return calculateFlowRateFromValveOpeningLiquid(adjustedKv,
         inletStream.getThermoSystem().getDensity("kg/m3"),
         inletStream.getThermoSystem().getPhase(0).getPressure("Pa"),
@@ -482,8 +479,6 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     return Math.max(0.0, Math.min(100.0, valveOpening)); // Clamp between 0 and 100
   }
 
-
-
   /**
    * <p>
    * calculateValveOpeningFromFlowRateLiquid.
@@ -524,7 +519,6 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   public double findOutletPressureForFixedKvLiquid(double rho, double Psat, double Pc, double mu,
       double P1, double Q, double actualKv, double FL, double Fd, boolean allowChoked,
       boolean allowLaminar) {
-
     // --- CORRECTED: The entire bisection search is performed in kilopascals (kPa) ---
 
     // Set bisection bounds for P2 in kPa.
@@ -568,7 +562,6 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   // add a general method to find outlet pressure for fixed Kv that work for both gas and liquid
-
 
   /**
    * <p>
@@ -640,8 +633,6 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     return ans;
   }
 
-
-
   /**
    * Calculates the flow rate for gas based on Kv and valve opening percentage.
    *
@@ -661,7 +652,6 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   public double calculateFlowRateFromKvAndValveOpeningGas(double adjustedKv, double T, double MW,
       double mu, double gamma, double Z, double P1, double P2, double FL, double xT,
       boolean allowChoked) {
-
     // Convert pressures to bar
     double locP1 = P1 / 1000.0;
     double locP2 = P2 / 1000.0;
@@ -806,7 +796,6 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    */
   public double findOutletPressureForFixedKvGas(double T, double MW, double gamma, double Z,
       double P1, double Q, double actualKv) {
-
     // --- CORRECTED: The entire bisection search is performed in Pascals (Pa) ---
 
     // Set bisection bounds for P2 in Pascals.
@@ -862,7 +851,6 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * @return a double
    */
   public double findOutletPressureForFixedKvGas(double actualKv, StreamInterface inletStream) {
-
     return findOutletPressureForFixedKvGas(inletStream.getThermoSystem().getTemperature("K"),
         inletStream.getThermoSystem().getMolarMass("gr/mol"),
         inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(),

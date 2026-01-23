@@ -1,14 +1,12 @@
 package neqsim.process.equipment.separator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.junit.jupiter.api.Test;
 
 /**
  * Geometry tests for separator wetted/unwetted surface area helpers.
  */
 public class SeparatorSurfaceAreaTest {
-
   @Test
   public void testHorizontalWettedAreaAtHalfLevel() {
     Separator separator = new Separator("AreaTest");

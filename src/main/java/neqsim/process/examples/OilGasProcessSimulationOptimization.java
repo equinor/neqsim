@@ -1512,7 +1512,6 @@ public class OilGasProcessSimulationOptimization {
           result.setLimitingUtilization(maxUtil);
           break;
         }
-
       } catch (Exception e) {
         consecutiveFailures++;
         totalFailures++;

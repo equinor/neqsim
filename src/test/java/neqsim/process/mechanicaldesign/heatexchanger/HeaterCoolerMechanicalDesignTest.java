@@ -8,13 +8,12 @@ import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.heatexchanger.UtilityStreamSpecification;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Regression tests for heater/cooler mechanical design sizing using utility specifications. */
 public class HeaterCoolerMechanicalDesignTest {
-
   private SystemInterface createBaseSystem(double temperatureC) {
     SystemInterface system = new SystemSrkEos(273.15 + temperatureC, 50.0);
     system.addComponent("methane", 120.0);
@@ -97,8 +96,8 @@ public class HeaterCoolerMechanicalDesignTest {
 
     double duty = Math.abs(cooler.getDuty());
     double utilitySupply = cooler.getUtilitySpecification().getSupplyTemperature();
-    double utilityReturn = utilitySupply
-        + duty / cooler.getUtilitySpecification().getHeatCapacityRate();
+    double utilityReturn =
+        utilitySupply + duty / cooler.getUtilitySpecification().getHeatCapacityRate();
     double deltaT1 = Math.abs(cooler.getInletStream().getTemperature() - utilityReturn);
     double deltaT2 = Math.abs(cooler.getOutletStream().getTemperature() - utilitySupply);
     double expectedApproach = Math.min(deltaT1, deltaT2);

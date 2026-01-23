@@ -16,7 +16,6 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  * @author ASMF
  */
 public class AsphalteneOnsetFittingTest extends neqsim.NeqSimTest {
-
   private SystemInterface baseSystem;
 
   @BeforeEach

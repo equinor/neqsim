@@ -220,7 +220,6 @@ public class AUSMPlusFluxCalculator implements Serializable {
    */
   public TwoFluidFlux calcTwoFluidFlux(PhaseState gasLeft, PhaseState gasRight,
       PhaseState liquidLeft, PhaseState liquidRight, double area) {
-
     TwoFluidFlux result = new TwoFluidFlux();
 
     // Calculate flux for each phase independently

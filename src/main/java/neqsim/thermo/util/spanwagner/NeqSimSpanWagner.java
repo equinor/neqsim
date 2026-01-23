@@ -9,7 +9,6 @@ import neqsim.thermo.phase.PhaseType;
  * @author esol
  */
 public final class NeqSimSpanWagner {
-
   private NeqSimSpanWagner() {}
 
   // Gas constant and critical parameters for CO2

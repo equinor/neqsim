@@ -13,7 +13,6 @@ import neqsim.blackoil.SystemBlackOil;
 
 /** JUnit test + runnable demo for EclipseBlackOilImporter using a typical METRIC deck. */
 public class EclipseBlackOilImporterTest {
-
   private static String sampleDeck() {
     return String.join("\n",
         Arrays.asList("UNITS  METRIC", "", "DENSITY", "  800.0   1000.0   1.2  /", "", "PVTO",

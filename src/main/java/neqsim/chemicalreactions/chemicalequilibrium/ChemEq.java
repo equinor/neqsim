@@ -469,9 +469,7 @@ public class ChemEq implements java.io.Serializable {
         }
         logger.debug("Iteration " + iteration + ", Gibbs: " + Gibbs + ", error: " + error);
       }
-
     } while (error > overallTolerance && iteration < maxIterations);
-
     if (iteration >= maxIterations) {
       logger
           .debug("ChemEq.solve(): max iterations (" + maxIterations + ") reached, error: " + error);

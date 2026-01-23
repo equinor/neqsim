@@ -162,7 +162,6 @@ public class ProductionProfileGenerator implements Serializable {
    */
   public Map<Integer, Double> generateExponentialDecline(double initialRatePerDay,
       double annualDeclineRate, int startYear, int maxYears, double economicLimit) {
-
     Map<Integer, Double> profile = new LinkedHashMap<Integer, Double>();
 
     for (int i = 0; i < maxYears; i++) {
@@ -223,7 +222,6 @@ public class ProductionProfileGenerator implements Serializable {
   public Map<Integer, Double> generateHyperbolicDecline(double initialRatePerDay,
       double initialDeclineRate, double bFactor, int startYear, int maxYears,
       double economicLimit) {
-
     // Validate b-factor
     if (bFactor <= 0 || bFactor >= 1) {
       throw new IllegalArgumentException("b-factor must be between 0 and 1 (exclusive)");
@@ -290,7 +288,6 @@ public class ProductionProfileGenerator implements Serializable {
    */
   public Map<Integer, Double> generateHarmonicDecline(double initialRatePerDay,
       double initialDeclineRate, int startYear, int maxYears, double economicLimit) {
-
     Map<Integer, Double> profile = new LinkedHashMap<Integer, Double>();
 
     for (int i = 0; i < maxYears; i++) {
@@ -362,7 +359,6 @@ public class ProductionProfileGenerator implements Serializable {
   public Map<Integer, Double> generateWithPlateau(double plateauRatePerDay, int plateauYears,
       double declineRate, double bFactor, DeclineType declineType, int startYear, int totalYears,
       double economicLimit) {
-
     Map<Integer, Double> profile = new LinkedHashMap<Integer, Double>();
 
     // Plateau period
@@ -449,7 +445,6 @@ public class ProductionProfileGenerator implements Serializable {
   public Map<Integer, Double> generateFullProfile(double peakRatePerDay, int rampUpYears,
       int plateauYears, double declineRate, double bFactor, DeclineType declineType, int startYear,
       int totalYears, double economicLimit) {
-
     Map<Integer, Double> profile = new LinkedHashMap<Integer, Double>();
     int yearIndex = 0;
 

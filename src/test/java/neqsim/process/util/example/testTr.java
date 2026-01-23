@@ -9,7 +9,6 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorDriver;
 import neqsim.process.equipment.compressor.DriverType;
 import neqsim.process.equipment.manifold.Manifold;
-import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
@@ -27,7 +26,6 @@ import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
 import neqsim.process.util.optimizer.ProductionOptimizer.ParetoResult;
 import neqsim.process.util.optimizer.ProductionOptimizer.SearchMode;
 import neqsim.thermo.system.SystemPrEos;
-
 
 public class testTr {
 
@@ -170,7 +168,6 @@ public class testTr {
     PipeBeggsAndBrills train4Outlet =
         createProcessingTrain("Train4", splitter.getSplitStream(3), processSystem);
 
-
     ThreePhaseSeparator finalSeparator = new ThreePhaseSeparator("Final Separator");
     finalSeparator.addStream(train1Outlet.getOutletStream());
     finalSeparator.addStream(train2Outlet.getOutletStream());
@@ -191,7 +188,6 @@ public class testTr {
         createUpstreamCompressors("ups2", splitter2.getSplitStream(1), processSystem);
     StreamInterface upstreamCompressorTrain3 =
         createUpstreamCompressors("ups3", splitter2.getSplitStream(2), processSystem);
-
 
     Manifold manifold = new Manifold("Compressor Outlet Manifold");
     manifold.addStream(upstreamCompressorTrain1);
@@ -254,7 +250,6 @@ public class testTr {
     driver3.setRatedSpeed(6726.3); // Different rated speed for ups3
     driver3.setMaxPowerCurveCoefficients(0.3, 0.5, 0.2);
     ups3Comp.setDriver(driver3);
-
 
     processSystem.run();
 
@@ -709,7 +704,6 @@ public class testTr {
     StreamInterface upstreamCompressorTrain3 =
         createUpstreamCompressors("ups3", splitter2.getSplitStream(2), processSystem);
 
-
     Manifold manifold = new Manifold("Compressor Outlet Manifold");
     manifold.addStream(upstreamCompressorTrain1);
     manifold.addStream(upstreamCompressorTrain2);
@@ -753,8 +747,6 @@ public class testTr {
     Assertions.assertTrue(vfpTable.contains("BHP values"));
   }
 
-
-
   @Test
   public void testBottleneck3() throws Exception {
     SystemPrEos testSystem = createTestFluid();
@@ -796,7 +788,6 @@ public class testTr {
     PipeBeggsAndBrills train4Outlet =
         createProcessingTrain("Train4", splitter.getSplitStream(3), processSystem);
 
-
     ThreePhaseSeparator finalSeparator = new ThreePhaseSeparator("Final Separator");
     finalSeparator.addStream(train1Outlet.getOutletStream());
     finalSeparator.addStream(train2Outlet.getOutletStream());
@@ -817,7 +808,6 @@ public class testTr {
         createUpstreamCompressors("ups2", splitter2.getSplitStream(1), processSystem);
     StreamInterface upstreamCompressorTrain3 =
         createUpstreamCompressors("ups3", splitter2.getSplitStream(2), processSystem);
-
 
     Manifold manifold = new Manifold("Compressor Outlet Manifold");
     manifold.addStream(upstreamCompressorTrain1);
@@ -1315,7 +1305,4 @@ public class testTr {
       }
     }
   }
-
-
-
 }

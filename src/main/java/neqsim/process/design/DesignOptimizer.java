@@ -329,7 +329,6 @@ public class DesignOptimizer {
 
   private void recordEquipmentSizes(DesignResult result) {
     for (ProcessEquipmentInterface equipment : getAllUnitOperations()) {
-
       if (equipment instanceof Separator) {
         Separator sep = (Separator) equipment;
         result.addEquipmentSize(sep.getName(), "diameter", sep.getInternalDiameter());

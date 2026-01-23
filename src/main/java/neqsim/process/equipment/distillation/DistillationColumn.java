@@ -483,15 +483,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     if (hasReboiler && getReboiler() != null) {
       reboilerReflux = getReboiler().getRefluxRatio();
       reboilerHasSetTemp = getReboiler().isSetOutTemperature();
-      if (reboilerHasSetTemp)
+      if (reboilerHasSetTemp) {
         reboilerTemp = getReboiler().getOutTemperature();
+      }
     }
 
     if (hasCondenser && getCondenser() != null) {
       condenserReflux = getCondenser().getRefluxRatio();
       condenserHasSetTemp = getCondenser().isSetOutTemperature();
-      if (condenserHasSetTemp)
+      if (condenserHasSetTemp) {
         condenserTemp = getCondenser().getOutTemperature();
+      }
     }
 
     // Collect all feeds (assigned and unassigned)
@@ -502,14 +504,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     // Start searching from a low number of trays to find the minimum (optimal)
     int startN = 2;
-    if (hasReboiler)
+    if (hasReboiler) {
       startN++;
-    if (hasCondenser)
+    }
+    if (hasCondenser) {
       startN++;
+    }
 
     // Ensure we don't exceed maxTrays immediately
-    if (startN > maxTrays)
+    if (startN > maxTrays) {
       startN = maxTrays;
+    }
 
     for (int n = startN; n <= maxTrays; n++) {
       // Re-initialize column with n trays
@@ -532,8 +537,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         Reboiler reb = new Reboiler("Reboiler");
         reb.setMultiPhaseCheck(doMultiPhaseCheck);
         reb.setRefluxRatio(reboilerReflux);
-        if (reboilerHasSetTemp)
+        if (reboilerHasSetTemp) {
           reb.setOutTemperature(reboilerTemp);
+        }
         trays.add(reb);
         trayCount++;
       }
@@ -551,8 +557,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         Condenser cond = new Condenser("Condenser");
         cond.setMultiPhaseCheck(doMultiPhaseCheck);
         cond.setRefluxRatio(condenserReflux);
-        if (condenserHasSetTemp)
+        if (condenserHasSetTemp) {
           cond.setOutTemperature(condenserTemp);
+        }
         trays.add(cond);
         trayCount++;
       }
@@ -1255,7 +1262,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private void runDamped(UUID id) {
     solveSequential(id, relaxationFactor);
   }
-
 
   /** {@inheritDoc} */
   @Override

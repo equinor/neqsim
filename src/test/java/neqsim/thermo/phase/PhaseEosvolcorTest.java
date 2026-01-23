@@ -246,7 +246,6 @@ public class PhaseEosvolcorTest {
     Assertions.assertEquals(density1, density2, 1e-10);
   }
 
-
   @Test
   void testFlashSrk() {
     SystemInterface system = new SystemSrkEos(308.15, 1.0);
@@ -271,7 +270,6 @@ public class PhaseEosvolcorTest {
     double density2 = system2.getPhase(0).getPhysicalProperties().getDensity();
 
     Assertions.assertEquals(density1, density2, 1e-10);
-
 
     double volcor = system2.getPhase(0).getComponent(0).getVolumeCorrection();
 

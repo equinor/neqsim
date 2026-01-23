@@ -448,7 +448,6 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       pipe.getNode(i + 1).getBulkSystem().getPhase(0).setTemperature(newGasTemp);
       pipe.getNode(i + 1).getBulkSystem().getPhase(1).setTemperature(newLiquidTemp);
 
-
       // Calculate and apply mass transfer from this node
       for (int componentNumber = 0; componentNumber < numComponents; componentNumber++) {
         double transferToLiquid =

@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -58,9 +57,9 @@ public final class EclipseEOSExporter {
    * Unit system for Eclipse export.
    */
   public enum Units {
-    /** Metric units: bar, kg/m³, Sm³/Sm³, mPa·s */
+    /** Metric units: bar, kg/m³, Sm³/Sm³, mPa·s. */
     METRIC,
-    /** Field units: psia, lb/ft³, scf/stb, cp */
+    /** Field units: psia, lb/ft³, scf/stb, cp. */
     FIELD
   }
 

@@ -21,7 +21,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ASMF
  */
 public class TwoPhaseFlowNodeTest {
-
   @Test
   void testStratifiedFlowNodeType() {
     SystemInterface testSystem = new SystemSrkEos(295.3, 5.0);

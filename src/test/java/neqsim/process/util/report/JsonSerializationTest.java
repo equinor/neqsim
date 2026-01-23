@@ -43,7 +43,6 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 @Disabled
 public class JsonSerializationTest {
-
   private static SystemSrkEos testFluid;
   private static Stream feedStream;
 

@@ -22,7 +22,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim
  */
 public class PumpAffinityLawTest extends neqsim.NeqSimTest {
-
   private SystemInterface testFluid;
   private Stream feedStream;
   private Pump pump;

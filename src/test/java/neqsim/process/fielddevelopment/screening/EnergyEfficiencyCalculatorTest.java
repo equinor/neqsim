@@ -15,7 +15,6 @@ import neqsim.process.fielddevelopment.screening.EnergyEfficiencyCalculator.Faci
  * @author ESOL
  */
 class EnergyEfficiencyCalculatorTest {
-
   private EnergyEfficiencyCalculator calculator;
 
   @BeforeEach

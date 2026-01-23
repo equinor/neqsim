@@ -49,7 +49,6 @@ public class HeatTransferCoefficientCalculator {
   public static double calculateLiquidHeatTransferCoefficient(FlowPattern flowPattern,
       double diameter, double liquidHoldup, double usg, double usl, double rhoL, double muL,
       double cpL, double kL) {
-
     // Validate inputs - return 0 for invalid values
     if (diameter <= 0 || kL <= 0 || rhoL <= 0 || muL <= 0 || cpL <= 0) {
       return 0.0;
@@ -105,7 +104,6 @@ public class HeatTransferCoefficientCalculator {
    */
   public static double calculateGasHeatTransferCoefficient(FlowPattern flowPattern, double diameter,
       double liquidHoldup, double usg, double rhoG, double muG, double cpG, double kG) {
-
     // Validate inputs - return 0 for invalid values
     if (diameter <= 0 || kG <= 0 || rhoG <= 0 || muG <= 0 || cpG <= 0) {
       return 0.0;
@@ -245,7 +243,6 @@ public class HeatTransferCoefficientCalculator {
    */
   public static double calculateCondensationNusselt(double rhoL, double rhoG, double hfg,
       double length, double muL, double kL, double deltaT) {
-
     if (deltaT <= 0 || length <= 0 || muL <= 0 || kL <= 0) {
       return 0.0;
     }
@@ -260,7 +257,6 @@ public class HeatTransferCoefficientCalculator {
 
   private static double calculateStratifiedHL(double diameter, double liquidHoldup, double usl,
       double rhoL, double muL, double cpL, double kL, double prL) {
-
     // Calculate liquid hydraulic diameter
     double dHL = 4.0 * liquidHoldup * Math.PI * diameter * diameter / 4.0
         / (Math.PI * diameter * liquidHoldup + diameter);
@@ -292,7 +288,6 @@ public class HeatTransferCoefficientCalculator {
 
   private static double calculateStratifiedHG(double diameter, double voidFraction, double uG,
       double rhoG, double muG, double cpG, double kG, double prG) {
-
     // Calculate gas hydraulic diameter
     double dHG = 4.0 * voidFraction * Math.PI * diameter * diameter / 4.0
         / (Math.PI * diameter * voidFraction + diameter);
@@ -320,7 +315,6 @@ public class HeatTransferCoefficientCalculator {
 
   private static double calculateAnnularHL(double diameter, double liquidHoldup, double usl,
       double rhoL, double muL, double cpL, double kL, double prL) {
-
     // Film thickness
     double delta = diameter / 2.0 * (1.0 - Math.sqrt(1.0 - liquidHoldup));
 
@@ -346,7 +340,6 @@ public class HeatTransferCoefficientCalculator {
 
   private static double calculateAnnularHG(double diameter, double voidFraction, double uG,
       double rhoG, double muG, double cpG, double kG, double prG) {
-
     // Core diameter
     double dCore = diameter * Math.sqrt(voidFraction);
 
@@ -363,7 +356,6 @@ public class HeatTransferCoefficientCalculator {
 
   private static double calculateSlugHL(double diameter, double liquidHoldup, double usg,
       double usl, double rhoL, double muL, double cpL, double kL, double prL) {
-
     // Mixture velocity
     double uM = usg + usl;
 
@@ -387,7 +379,6 @@ public class HeatTransferCoefficientCalculator {
 
   private static double calculateBubbleHL(double diameter, double liquidHoldup, double usg,
       double usl, double rhoL, double muL, double cpL, double kL, double prL) {
-
     // Liquid velocity
     double uL = usl / Math.max(liquidHoldup, 0.01);
 
@@ -406,7 +397,6 @@ public class HeatTransferCoefficientCalculator {
 
   private static double calculateBubbleHG(double diameter, double uG, double rhoG, double muG,
       double cpG, double kG, double prG) {
-
     // Ranz-Marshall for bubbles
     // Nu = 2 + 0.6·Re^0.5·Pr^0.33
     double reBubble = rhoG * Math.abs(uG) * diameter / muG;
@@ -419,7 +409,6 @@ public class HeatTransferCoefficientCalculator {
 
   private static double calculateDropletHL(double diameter, double usg, double rhoL, double muL,
       double cpL, double kL, double prL) {
-
     // Droplet Reynolds number
     double reDroplet = rhoL * Math.abs(usg) * diameter * 0.01 / muL;
 
@@ -432,7 +421,6 @@ public class HeatTransferCoefficientCalculator {
 
   private static double calculateDropletHG(double diameter, double uG, double rhoG, double muG,
       double cpG, double kG, double prG) {
-
     // Gas continuous phase
     double reG = rhoG * Math.abs(uG) * diameter / muG;
     double nu = calculateDittusBoelterNusselt(reG, prG, true);
@@ -444,7 +432,6 @@ public class HeatTransferCoefficientCalculator {
 
   private static double calculateChurnHL(double diameter, double liquidHoldup, double usg,
       double usl, double rhoL, double muL, double cpL, double kL, double prL) {
-
     // Highly turbulent - use enhanced correlation
     double uM = usg + usl;
     double reM = rhoL * Math.abs(uM) * diameter / muL;
@@ -455,7 +442,6 @@ public class HeatTransferCoefficientCalculator {
 
   private static double calculateChurnHG(double diameter, double uG, double rhoG, double muG,
       double cpG, double kG, double prG) {
-
     double reG = rhoG * Math.abs(uG) * diameter / muG;
     double nu = calculateDittusBoelterNusselt(reG, prG, true);
 
@@ -504,7 +490,6 @@ public class HeatTransferCoefficientCalculator {
    */
   public static double calculateCondensationHTC(double rhoL, double rhoG, double kL, double hfg,
       double cpL, double muL, double diameter, double deltaT) {
-
     if (deltaT <= 0 || diameter <= 0 || muL <= 0) {
       return 0.0;
     }
@@ -534,7 +519,6 @@ public class HeatTransferCoefficientCalculator {
    */
   public static double calculateEvaporationHTC(double rhoL, double rhoG, double cpL, double hfg,
       double sigma, double muL, double prL, double qFlux) {
-
     if (qFlux <= 0 || sigma <= 0 || hfg <= 0) {
       return 0.0;
     }

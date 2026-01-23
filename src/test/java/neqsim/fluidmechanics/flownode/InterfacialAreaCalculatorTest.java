@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
  * Unit tests for InterfacialAreaCalculator.
  */
 class InterfacialAreaCalculatorTest {
-
   // Reference properties for air-water at atmospheric conditions
   private static final double RHO_G = 1.2; // kg/m³
   private static final double RHO_L = 1000.0; // kg/m³

@@ -13,7 +13,6 @@ import neqsim.process.equipment.capacity.EquipmentCapacityStrategy;
 import neqsim.process.equipment.capacity.EquipmentCapacityStrategyRegistry;
 import neqsim.process.processmodel.ProcessModule;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.util.optimizer.FlowRateOptimizer;
 
 /**
  * Unified process optimization engine.
@@ -228,7 +227,6 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   public OptimizationResult findMaximumThroughput(double inletPressure, double outletPressure,
       double minFlow, double maxFlow) {
-
     OptimizationResult result = new OptimizationResult();
     result.setObjective("Maximum Throughput");
 
@@ -286,7 +284,6 @@ public class ProcessOptimizationEngine implements Serializable {
           // Non-fatal - optimization result is still valid
         }
       }
-
     } catch (Exception e) {
       logger.error("Optimization failed", e);
       result.setConverged(false);
@@ -307,7 +304,6 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   public OptimizationResult findRequiredInletPressure(double targetFlow, double outletPressure,
       double minPressure, double maxPressure) {
-
     OptimizationResult result = new OptimizationResult();
     result.setObjective("Required Inlet Pressure");
 
@@ -322,7 +318,6 @@ public class ProcessOptimizationEngine implements Serializable {
       if (processSystem != null) {
         result.setConstraintViolations(evaluateAllConstraintViolations());
       }
-
     } catch (Exception e) {
       logger.error("Pressure optimization failed", e);
       result.setConverged(false);
@@ -414,7 +409,6 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   public LiftCurveData generateLiftCurve(double[] pressures, double[] temperatures,
       double[] waterCuts, double[] GORs) {
-
     LiftCurveData liftCurve = new LiftCurveData();
 
     if (processSystem == null || pressures == null || pressures.length == 0) {
@@ -442,7 +436,6 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   private LiftCurvePoint evaluateLiftCurvePoint(double pressure, double temperature,
       double waterCut, double gor) {
-
     try {
       // Set conditions and find max flow
       setInletConditions(pressure, temperature, waterCut, gor);
@@ -470,7 +463,6 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   private double goldenSectionSearch(double inletPressure, double outletPressure, double minFlow,
       double maxFlow) {
-
     double phi = (1.0 + Math.sqrt(5.0)) / 2.0;
     double a = minFlow;
     double b = maxFlow;
@@ -503,7 +495,6 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   private double binarySearch(double inletPressure, double outletPressure, double minFlow,
       double maxFlow) {
-
     double low = minFlow;
     double high = maxFlow;
 
@@ -525,7 +516,6 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   private double pressureBinarySearch(double targetFlow, double outletPressure, double minPressure,
       double maxPressure) {
-
     double low = minPressure;
     double high = maxPressure;
 
@@ -683,7 +673,6 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   public double gradientDescentSearch(double inletPressure, double outletPressure,
       double initialFlow) {
-
     double flow = initialFlow;
     double stepSize = 1000.0; // Initial step size in kg/hr
     double minStepSize = 0.1;
@@ -751,7 +740,6 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   private double evaluateConstrainedObjective(double inletPressure, double outletPressure,
       double flow) {
-
     if (flow <= 0) {
       return -Double.MAX_VALUE;
     }
@@ -823,7 +811,6 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   public double gradientDescentArmijoWolfeSearch(double inletPressure, double outletPressure,
       double initialFlow) {
-
     double flow = initialFlow;
     double alpha = Math.max(initialFlow * 0.1, 100.0); // Initial step size based on flow scale
 
@@ -894,7 +881,6 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   private double armijoWolfeLineSearch(double inletPressure, double outletPressure, double flow,
       double direction, double f0, double directionalDerivative, double initialAlpha) {
-
     double alphaLo = 0.0;
     double alphaHi = initialAlpha * 10.0; // Bounded upper limit instead of MAX_VALUE
     double alpha = initialAlpha;
@@ -1002,7 +988,6 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   public double bfgsSearch(double inletPressure, double outletPressure, double initialFlow,
       double minFlow, double maxFlow) {
-
     double flow = initialFlow;
     double H = 1000.0; // Initial inverse Hessian approximation (larger for faster initial steps)
     double bestFlow = flow;
@@ -1157,7 +1142,6 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   public SensitivityResult analyzeSensitivity(double optimalFlow, double inletPressure,
       double outletPressure) {
-
     SensitivityResult result = new SensitivityResult();
     result.setBaseFlow(optimalFlow);
 
@@ -1213,7 +1197,6 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   private double estimateFlowBuffer(double currentFlow, double inletPressure,
       double outletPressure) {
-
     double testFlow = currentFlow * 1.01; // 1% increase
     int steps = 0;
     int maxSteps = 50;
@@ -1241,7 +1224,6 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   public Map<String, Double> calculateShadowPrices(double optimalFlow, double inletPressure,
       double outletPressure) {
-
     Map<String, Double> shadowPrices = new HashMap<String, Double>();
 
     if (!hasProcess()) {
@@ -1324,7 +1306,6 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   public FlowRateOptimizer generateComprehensiveLiftCurve(String feedStreamName,
       double[] inletPressures, double outletPressure) {
-
     // Find outlet stream name
     String outletName = "OutletStream";
     List<ProcessEquipmentInterface> units = getAllUnitOperations();

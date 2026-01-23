@@ -269,7 +269,6 @@ public class SafetyEnvelope {
         writer.printf("%.4f,%.4f,%.4f,%.4f%n", pressure[i], temperature[i], temperature[i] - 273.15,
             margin[i]);
       }
-
     } catch (IOException e) {
       throw new RuntimeException("Failed to export safety envelope: " + e.getMessage(), e);
     }
@@ -320,7 +319,6 @@ public class SafetyEnvelope {
         String tag = String.format("%s_P%.0f_LIMIT", tagPrefix, pressure[i]);
         writer.printf("%s,%.4f%n", tag, temperature[i] - 273.15); // Export in Celsius
       }
-
     } catch (IOException e) {
       throw new RuntimeException("Failed to export to PI format: " + e.getMessage(), e);
     }
@@ -341,7 +339,6 @@ public class SafetyEnvelope {
       for (int i = 0; i < pressure.length; i++) {
         writer.printf("%.4f,%.4f,%.4f%n", pressure[i], temperature[i] - 273.15, margin[i]);
       }
-
     } catch (IOException e) {
       throw new RuntimeException("Failed to export to Seeq format: " + e.getMessage(), e);
     }

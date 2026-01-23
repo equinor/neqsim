@@ -24,7 +24,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author ESOL
  */
 public class OnePhasePipeLineCompositionalTest {
-
   private SystemInterface naturalGas;
   private SystemInterface nitrogen;
 

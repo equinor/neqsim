@@ -8,7 +8,6 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class AdjusterRunStepTest {
-
   @Test
   void testRunStep() {
     // Create a simple system

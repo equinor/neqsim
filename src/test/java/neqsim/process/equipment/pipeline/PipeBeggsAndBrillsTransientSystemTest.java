@@ -24,7 +24,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * introduced by the transient pipeline model.
  */
 public class PipeBeggsAndBrillsTransientSystemTest {
-
   private static final double PIPELINE_LENGTH_METERS = 100.0;
   private static final double PIPELINE_DIAMETER_METERS = 0.3;
   private static final double PIPELINE_ROUGHNESS_METERS = 5e-6;

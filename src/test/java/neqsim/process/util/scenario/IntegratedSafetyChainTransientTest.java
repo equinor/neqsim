@@ -1,7 +1,7 @@
 package neqsim.process.util.scenario;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +38,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * a transient overpressure upset.
  */
 class IntegratedSafetyChainTransientTest {
-
   private ProcessSystem system;
   private ProcessScenarioRunner runner;
   private Separator separator;
@@ -110,12 +109,12 @@ class IntegratedSafetyChainTransientTest {
     hippsLogic.setIsolationValve(hippsValve);
     hippsLogic.setValveClosureTime(1.5);
 
-    Detector hippsPT1 = new Detector("PT-HIPPS-1", DetectorType.PRESSURE, AlarmLevel.HIGH_HIGH,
-        60.0, "bara");
-    Detector hippsPT2 = new Detector("PT-HIPPS-2", DetectorType.PRESSURE, AlarmLevel.HIGH_HIGH,
-        60.0, "bara");
-    Detector hippsPT3 = new Detector("PT-HIPPS-3", DetectorType.PRESSURE, AlarmLevel.HIGH_HIGH,
-        60.0, "bara");
+    Detector hippsPT1 =
+        new Detector("PT-HIPPS-1", DetectorType.PRESSURE, AlarmLevel.HIGH_HIGH, 60.0, "bara");
+    Detector hippsPT2 =
+        new Detector("PT-HIPPS-2", DetectorType.PRESSURE, AlarmLevel.HIGH_HIGH, 60.0, "bara");
+    Detector hippsPT3 =
+        new Detector("PT-HIPPS-3", DetectorType.PRESSURE, AlarmLevel.HIGH_HIGH, 60.0, "bara");
 
     hippsLogic.addPressureSensor(hippsPT1);
     hippsLogic.addPressureSensor(hippsPT2);
@@ -133,8 +132,7 @@ class IntegratedSafetyChainTransientTest {
     runner = new ProcessScenarioRunner(system);
     runner.addLogic(hippsLogic);
     runner.addLogic(esdLogic);
-    runner.addLogic(
-        new SafetyInstrumentationCoordinator(feed, separator, hippsLogic, separatorPT));
+    runner.addLogic(new SafetyInstrumentationCoordinator(feed, separator, hippsLogic, separatorPT));
   }
 
   @Test
@@ -144,8 +142,8 @@ class IntegratedSafetyChainTransientTest {
     double initialPressure = separator.getGasOutStream().getPressure("bara");
     double initialFlareFlow = flare.getInletStream().getFlowRate("kg/hr");
 
-    ProcessSafetyScenario upsetScenario = ProcessSafetyScenario.builder("Feed Surge")
-        .customManipulator("HP Feed", equipment -> {
+    ProcessSafetyScenario upsetScenario =
+        ProcessSafetyScenario.builder("Feed Surge").customManipulator("HP Feed", equipment -> {
           if (equipment instanceof Stream) {
             Stream feed = (Stream) equipment;
             feed.setPressure(70.0, "bara");
@@ -160,9 +158,9 @@ class IntegratedSafetyChainTransientTest {
     double finalFlareFlow = flare.getInletStream().getFlowRate("kg/hr");
 
     assertTrue(separatorPT.getAlarmState().isActive(), "High pressure alarm should be active");
-    assertTrue(separatorPT.getAlarmState().getActiveLevel() != null
-        && separatorPT.getAlarmState().getActiveLevel().getDirection()
-            == neqsim.process.alarm.AlarmLevel.Direction.HIGH,
+    assertTrue(
+        separatorPT.getAlarmState().getActiveLevel() != null && separatorPT.getAlarmState()
+            .getActiveLevel().getDirection() == neqsim.process.alarm.AlarmLevel.Direction.HIGH,
         "Alarm should indicate high or high-high state");
     assertTrue(hippsLogic.isTripped(), "HIPPS must trip when high-high pressure is detected");
     assertEquals(0.0, hippsValve.getPercentValveOpening(), 1e-6,

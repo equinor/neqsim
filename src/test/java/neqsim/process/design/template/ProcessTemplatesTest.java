@@ -16,7 +16,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim Development Team
  */
 class ProcessTemplatesTest {
-
   @Test
   void testGasCompressionTemplateCreation() {
     // Create feed gas

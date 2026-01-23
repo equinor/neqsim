@@ -35,7 +35,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class ManifoldMechanicalDesignTest {
-
   private ManifoldMechanicalDesignCalculator calculator;
 
   @BeforeEach
@@ -46,7 +45,6 @@ public class ManifoldMechanicalDesignTest {
   @Nested
   @DisplayName("Calculator Initialization Tests")
   class CalculatorInitializationTests {
-
     @Test
     @DisplayName("Default calculator has correct initial values")
     void testDefaultInitialization() {
@@ -82,7 +80,6 @@ public class ManifoldMechanicalDesignTest {
   @Nested
   @DisplayName("Wall Thickness Calculation Tests")
   class WallThicknessTests {
-
     @Test
     @DisplayName("ASME B31.3 wall thickness calculation")
     void testASMEWallThickness() {
@@ -134,7 +131,6 @@ public class ManifoldMechanicalDesignTest {
   @Nested
   @DisplayName("Velocity Calculation Tests")
   class VelocityTests {
-
     @Test
     @DisplayName("Erosional velocity calculation per API RP 14E")
     void testErosionalVelocity() {
@@ -218,7 +214,6 @@ public class ManifoldMechanicalDesignTest {
   @Nested
   @DisplayName("Branch Reinforcement Tests")
   class ReinforcementTests {
-
     @Test
     @DisplayName("Calculate branch reinforcement requirement")
     void testBranchReinforcement() {
@@ -246,7 +241,6 @@ public class ManifoldMechanicalDesignTest {
   @Nested
   @DisplayName("Support Spacing Tests")
   class SupportSpacingTests {
-
     @Test
     @DisplayName("Support spacing for topside manifold per NORSOK L-002")
     void testTopsideSupportSpacing() {
@@ -278,7 +272,6 @@ public class ManifoldMechanicalDesignTest {
   @Nested
   @DisplayName("Weight Calculation Tests")
   class WeightTests {
-
     @Test
     @DisplayName("Calculate dry weight")
     void testDryWeight() {
@@ -331,7 +324,6 @@ public class ManifoldMechanicalDesignTest {
   @Nested
   @DisplayName("Design Verification Tests")
   class DesignVerificationTests {
-
     @Test
     @DisplayName("Complete design verification passes")
     void testDesignVerificationPasses() {
@@ -375,7 +367,6 @@ public class ManifoldMechanicalDesignTest {
   @Nested
   @DisplayName("JSON Output Tests")
   class JsonOutputTests {
-
     @Test
     @DisplayName("Calculator produces valid JSON")
     void testCalculatorToJson() {
@@ -408,7 +399,6 @@ public class ManifoldMechanicalDesignTest {
   @Nested
   @DisplayName("Integration Tests with Manifold Equipment")
   class IntegrationTests {
-
     @Test
     @DisplayName("Manifold equipment with mechanical design")
     void testManifoldWithMechanicalDesign() {
@@ -540,7 +530,6 @@ public class ManifoldMechanicalDesignTest {
   @Nested
   @DisplayName("Material Grade Tests")
   class MaterialGradeTests {
-
     @Test
     @DisplayName("Subsea material grade sets SMYS correctly")
     void testSubseaMaterialGrade() {
@@ -572,7 +561,6 @@ public class ManifoldMechanicalDesignTest {
   @Nested
   @DisplayName("Stress Calculation Tests")
   class StressTests {
-
     @Test
     @DisplayName("Allowable stress for topside carbon steel")
     void testAllowableStressTopside() {

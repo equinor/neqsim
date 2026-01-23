@@ -22,7 +22,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class MechanicalDesignJsonExportTest {
-
   private ProcessSystem process;
   private Separator separator;
   private Compressor compressor;

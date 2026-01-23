@@ -7,9 +7,8 @@
 package neqsim.thermo.system;
 
 import neqsim.thermo.mixingrule.HVMixingRulesInterface;
-import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.phase.PhaseElectrolyteCPAMM;
-import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.phase.PhaseEos;
 import neqsim.thermo.util.constants.IonParametersMM;
 
 /**

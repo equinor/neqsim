@@ -1,12 +1,13 @@
 package neqsim.process.util.optimizer;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
@@ -25,7 +26,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class ProcessConstraintEvaluatorTest {
-
   private ProcessSystem processSystem;
   private ProcessConstraintEvaluator evaluator;
 

@@ -1,11 +1,9 @@
 package neqsim.process.alarm;
 
-import java.io.Serializable;
-
 /**
  * Enumerates the discrete alarm levels used when evaluating measurement values.
  */
-public enum AlarmLevel implements Serializable {
+public enum AlarmLevel {
   /** Low-low alarm limit exceeded. */
   LOLO(-2, Direction.LOW),
   /** Low alarm limit exceeded. */

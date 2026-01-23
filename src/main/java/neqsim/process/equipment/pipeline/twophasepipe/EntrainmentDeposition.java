@@ -129,7 +129,6 @@ public class EntrainmentDeposition implements Serializable {
   public EntrainmentResult calculate(FlowRegime flowRegime, double gasVelocity,
       double liquidVelocity, double gasDensity, double liquidDensity, double gasViscosity,
       double liquidViscosity, double surfaceTension, double diameter, double liquidHoldup) {
-
     EntrainmentResult result = new EntrainmentResult();
 
     // Only calculate for annular/mist regimes
@@ -197,7 +196,6 @@ public class EntrainmentDeposition implements Serializable {
    */
   private boolean isEntrainmentActive(double gasVelocity, double gasDensity, double liquidDensity,
       double surfaceTension, double diameter, double reFilm) {
-
     // Weber number criterion
     double we = gasDensity * gasVelocity * gasVelocity * diameter / surfaceTension;
 
@@ -222,7 +220,6 @@ public class EntrainmentDeposition implements Serializable {
   private double calculateEntrainmentRate(double gasVelocity, double liquidVelocity,
       double gasDensity, double liquidDensity, double gasViscosity, double liquidViscosity,
       double surfaceTension, double diameter, double filmThickness) {
-
     switch (entrainmentModel) {
       case ISHII_MISHIMA:
         return entrainmentIshiiMishima(gasVelocity, gasDensity, liquidDensity, liquidViscosity,
@@ -255,7 +252,6 @@ public class EntrainmentDeposition implements Serializable {
    */
   private double entrainmentIshiiMishima(double gasVelocity, double gasDensity,
       double liquidDensity, double liquidViscosity, double surfaceTension, double diameter) {
-
     // Dimensionless groups
     double densityRatio = gasDensity / liquidDensity;
     double re = gasDensity * gasVelocity * diameter / (liquidViscosity * Math.sqrt(densityRatio));
@@ -287,7 +283,6 @@ public class EntrainmentDeposition implements Serializable {
   private double entrainmentPanHanratty(double gasVelocity, double liquidVelocity,
       double gasDensity, double liquidDensity, double gasViscosity, double liquidViscosity,
       double surfaceTension, double diameter) {
-
     double reG = gasDensity * gasVelocity * diameter / gasViscosity;
     double weG = gasDensity * gasVelocity * gasVelocity * diameter / surfaceTension;
 
@@ -315,7 +310,6 @@ public class EntrainmentDeposition implements Serializable {
    */
   private double entrainmentOliemans(double gasVelocity, double gasDensity, double liquidDensity,
       double liquidViscosity, double surfaceTension, double diameter) {
-
     // Similar structure to Ishii-Mishima with different coefficients
     double we = gasDensity * gasVelocity * gasVelocity * diameter / surfaceTension;
 
@@ -343,7 +337,6 @@ public class EntrainmentDeposition implements Serializable {
   private double calculateEntrainmentFraction(double gasVelocity, double gasDensity,
       double liquidDensity, double liquidViscosity, double surfaceTension, double diameter,
       double reFilm) {
-
     // Ishii-Mishima equilibrium entrainment fraction
     double viscosityNumber = liquidViscosity / Math.sqrt(liquidDensity * surfaceTension * diameter);
 
@@ -376,7 +369,6 @@ public class EntrainmentDeposition implements Serializable {
   private double calculateDepositionRate(double dropletConcentration, double dropletDiameter,
       double gasDensity, double gasViscosity, double liquidDensity, double gasVelocity,
       double diameter) {
-
     switch (depositionModel) {
       case MCCOY_HANRATTY:
         return depositionMcCoyHanratty(dropletConcentration, dropletDiameter, gasDensity,
@@ -409,7 +401,6 @@ public class EntrainmentDeposition implements Serializable {
    */
   private double depositionMcCoyHanratty(double dropletConcentration, double dropletDiameter,
       double gasDensity, double gasViscosity, double gasVelocity, double diameter) {
-
     // Friction velocity
     double reG = gasDensity * gasVelocity * diameter / gasViscosity;
     double fG = 0.046 * Math.pow(reG, -0.2); // Blasius friction factor
@@ -451,7 +442,6 @@ public class EntrainmentDeposition implements Serializable {
   private double depositionRelaxation(double dropletConcentration, double dropletDiameter,
       double gasDensity, double gasViscosity, double liquidDensity, double gasVelocity,
       double diameter) {
-
     // Particle relaxation time
     double tauP = liquidDensity * dropletDiameter * dropletDiameter / (18.0 * gasViscosity);
 
@@ -488,7 +478,6 @@ public class EntrainmentDeposition implements Serializable {
    */
   private double depositionCousins(double dropletConcentration, double dropletDiameter,
       double gasVelocity, double gasDensity, double gasViscosity, double diameter) {
-
     // Simple diffusion-based model
     double reG = gasDensity * gasVelocity * diameter / gasViscosity;
     double sc = gasViscosity / (gasDensity * 1e-5); // Schmidt number, assume diffusivity ~1e-5
@@ -510,7 +499,6 @@ public class EntrainmentDeposition implements Serializable {
    */
   private double calculateDropletDiameter(double gasVelocity, double gasDensity,
       double surfaceTension) {
-
     // Weber number based correlation (Tatterson)
     double weCrit = 13.0;
 
@@ -558,7 +546,6 @@ public class EntrainmentDeposition implements Serializable {
    */
   private double estimateDropletConcentration(double liquidVelocity, double liquidDensity,
       double liquidHoldup, double entrainmentFraction, double gasVelocity, double diameter) {
-
     // Mass flow rate of entrained liquid
     double liquidMassFlux = liquidDensity * liquidVelocity;
     double entrainedMassFlux = liquidMassFlux * entrainmentFraction;

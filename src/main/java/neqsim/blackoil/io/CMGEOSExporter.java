@@ -421,7 +421,6 @@ public final class CMGEOSExporter {
       double rhoGasSc, double rhoWaterSc, List<Double> pressurePoints, double bubblePoint,
       double pFactor, double rhoFactor, double rsFactor, double viscFactor, String pUnit,
       String rhoUnit, String rsUnit, String viscUnit) throws IOException {
-
     // Model type
     bw.write("*MODEL *BLACKOIL\n\n");
 
@@ -487,7 +486,6 @@ public final class CMGEOSExporter {
       double rhoGasSc, double rhoWaterSc, List<Double> pressurePoints, double bubblePoint,
       double pFactor, double rhoFactor, double rsFactor, double viscFactor, String pUnit,
       String rhoUnit, String rsUnit, String viscUnit) throws IOException {
-
     // GEM is compositional but can use PVT tables for comparison
     bw.write("** GEM Black-Oil Table (for comparison/validation)\n\n");
 
@@ -532,7 +530,6 @@ public final class CMGEOSExporter {
       double rhoGasSc, double rhoWaterSc, List<Double> pressurePoints, double bubblePoint,
       double pFactor, double rhoFactor, double rsFactor, double viscFactor, String pUnit,
       String rhoUnit, String rsUnit, String viscUnit) throws IOException {
-
     // STARS format for thermal simulation
     bw.write("** STARS Component Properties (from Black-Oil model)\n\n");
 

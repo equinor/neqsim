@@ -14,7 +14,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author Even Solbraa
  */
 public class DeBoerAsphalteneScreeningTest {
-
   private DeBoerAsphalteneScreening screening;
 
   @BeforeEach

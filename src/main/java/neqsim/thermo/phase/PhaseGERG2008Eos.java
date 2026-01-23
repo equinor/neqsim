@@ -1,7 +1,6 @@
 package neqsim.thermo.phase;
 
 import org.netlib.util.doubleW;
-import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentGERG2008Eos;
 import neqsim.thermo.util.gerg.GERG2008Type;
@@ -99,7 +98,6 @@ public class PhaseGERG2008Eos extends PhaseEos {
     super.addComponent(name, molesInPhase, compNumber);
     componentArray[compNumber] = new ComponentGERG2008Eos(name, moles, molesInPhase, compNumber);
   }
-
 
   /** {@inheritDoc} */
   @Override

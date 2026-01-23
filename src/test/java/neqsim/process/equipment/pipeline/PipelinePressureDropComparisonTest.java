@@ -37,7 +37,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 public class PipelinePressureDropComparisonTest {
-
   private static final double PIPE_LENGTH = 10000.0; // 10 km
   private static final double PIPE_DIAMETER = 0.3; // 0.3 m (12 inch)
   private static final double PIPE_ROUGHNESS = 5e-5; // 0.05 mm

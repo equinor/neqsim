@@ -457,7 +457,6 @@ public class MultiObjectiveOptimizer implements Serializable {
   public ParetoFront sampleParetoFront(ProcessSystem process, StreamInterface feedStream,
       List<ObjectiveFunction> objectives, OptimizationConfig baseConfig, int numSamples,
       List<OptimizationConstraint> constraints) {
-
     ParetoFront front = new ParetoFront(!includeInfeasible);
 
     double lowerBound = baseConfig.getLowerBound();
@@ -512,7 +511,6 @@ public class MultiObjectiveOptimizer implements Serializable {
         if (progressCallback != null) {
           progressCallback.onProgress(i + 1, numSamples, solution);
         }
-
       } catch (Exception e) {
         // Skip failed samples
         if (progressCallback != null) {

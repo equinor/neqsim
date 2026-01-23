@@ -1,6 +1,8 @@
 package neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.fluidmechanics.geometrydefinitions.surrounding.PipeSurroundingEnvironment;
@@ -11,7 +13,6 @@ import neqsim.fluidmechanics.geometrydefinitions.surrounding.PipeSurroundingEnvi
  * PipeSurroundingEnvironment with buried/subsea models - PipeWallBuilder convenience patterns
  */
 public class PipeWallHeatTransferTest {
-
   // ===== PipeMaterial Tests =====
 
   @Test

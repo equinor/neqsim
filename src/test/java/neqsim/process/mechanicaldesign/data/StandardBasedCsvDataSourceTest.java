@@ -16,7 +16,6 @@ import neqsim.process.mechanicaldesign.DesignLimitData;
  * Tests for StandardBasedCsvDataSource class.
  */
 class StandardBasedCsvDataSourceTest {
-
   @TempDir
   Path tempDir;
 

@@ -1,6 +1,9 @@
 package neqsim.thermo.util.derivatives;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -13,7 +16,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Unit tests for DifferentiableFlash and gradient computation.
  */
 class DifferentiableFlashTest {
-
   /** Relative tolerance for gradient comparison. */
   private static final double RELATIVE_TOLERANCE = 0.25; // 25% tolerance for analytical vs
                                                          // numerical
@@ -407,7 +409,6 @@ class DifferentiableFlashTest {
   @Nested
   @DisplayName("Gradient Validation Tests - Analytical vs Numerical")
   class GradientValidationTests {
-
     /**
      * Note: These tests compare analytical gradients from DifferentiableFlash with numerical finite
      * differences. Failing tests indicate the analytical implementation needs improvement. Tests

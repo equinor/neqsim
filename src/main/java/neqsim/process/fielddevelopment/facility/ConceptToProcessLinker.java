@@ -1,21 +1,16 @@
 package neqsim.process.fielddevelopment.facility;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.fielddevelopment.concept.FieldConcept;
-import neqsim.process.fielddevelopment.concept.InfrastructureInput;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -245,7 +240,6 @@ public class ConceptToProcessLinker implements Serializable {
    */
   private void generateOilProcessing(ProcessSystem process, Stream inlet, FieldConcept concept,
       FidelityLevel fidelity) {
-
     // HP Separator
     ThreePhaseSeparator hpSep = new ThreePhaseSeparator("HP-Separator", inlet);
     process.add(hpSep);
@@ -307,7 +301,6 @@ public class ConceptToProcessLinker implements Serializable {
    */
   private void generateGasProcessing(ProcessSystem process, StreamInterface inlet,
       FieldConcept concept, FidelityLevel fidelity) {
-
     // Inlet separator (slug catcher)
     ThreePhaseSeparator slugCatcher = new ThreePhaseSeparator("Slug-Catcher", inlet);
     process.add(slugCatcher);
@@ -345,7 +338,6 @@ public class ConceptToProcessLinker implements Serializable {
    */
   private void generateGasCondensateProcessing(ProcessSystem process, Stream inlet,
       FieldConcept concept, FidelityLevel fidelity) {
-
     // HP Separator
     ThreePhaseSeparator hpSep = new ThreePhaseSeparator("HP-Separator", inlet);
     process.add(hpSep);

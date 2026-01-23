@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
 public class BatteryStorageTest extends neqsim.NeqSimTest {
-
   @Test
   void testChargeDischargeCycle() {
     BatteryStorage battery = new BatteryStorage("battery", 1000.0);

@@ -1,7 +1,5 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
-import java.io.Serializable;
-
 /**
  * Extended section state for three-phase (gas-oil-water) pipe flow.
  *
@@ -34,7 +32,7 @@ import java.io.Serializable;
  * @author Even Solbraa
  * @version 1.0
  */
-public class ThreeFluidSection extends TwoFluidSection implements Cloneable, Serializable {
+public class ThreeFluidSection extends TwoFluidSection {
 
   private static final long serialVersionUID = 1L;
 

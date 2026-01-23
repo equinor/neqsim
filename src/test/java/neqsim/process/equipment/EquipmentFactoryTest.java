@@ -19,7 +19,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for {@link EquipmentFactory}.
  */
 public class EquipmentFactoryTest extends neqsim.NeqSimTest {
-
   @Test
   public void createEquipmentFromEnum() {
     ProcessEquipmentInterface equipment =

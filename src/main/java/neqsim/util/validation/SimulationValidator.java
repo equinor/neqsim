@@ -39,7 +39,6 @@ import neqsim.util.validation.contracts.ThermodynamicSystemContract;
  * @version 1.0
  */
 public final class SimulationValidator {
-
   private SimulationValidator() {
     // Utility class
   }

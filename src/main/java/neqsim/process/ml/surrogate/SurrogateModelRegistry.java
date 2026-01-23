@@ -148,7 +148,6 @@ public class SurrogateModelRegistry implements Serializable {
    */
   public double[] predictWithFallback(String modelId, double[] input,
       Function<double[], double[]> physicsFallback) {
-
     SurrogateModelEntry entry = models.get(modelId);
 
     if (entry == null) {

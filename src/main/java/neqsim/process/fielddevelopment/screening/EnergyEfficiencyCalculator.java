@@ -1,7 +1,6 @@
 package neqsim.process.fielddevelopment.screening;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import neqsim.process.fielddevelopment.concept.FieldConcept;

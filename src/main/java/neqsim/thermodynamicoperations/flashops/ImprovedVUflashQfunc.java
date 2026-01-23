@@ -142,7 +142,7 @@ public class ImprovedVUflashQfunc extends Flash {
     double initialPres = oldPres;
     double initialTemp = oldTemp;
 
-    double iterations = 0;
+    int iterations = 0;
     double maxIterations = 100; // Reduced for stability
     double tolerance = 1e-8; // Relaxed tolerance
 

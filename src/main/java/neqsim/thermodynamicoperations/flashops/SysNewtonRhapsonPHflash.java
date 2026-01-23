@@ -321,7 +321,6 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
           system.setTemperature(oldTemp);
           break; // Failed, go to 2-phase
         }
-
       } while (iterSingle < 100);
 
       // If converged

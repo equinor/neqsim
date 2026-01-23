@@ -23,7 +23,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author esol
  */
 public class SlugFlowNodeTest {
-
   private SystemInterface testSystem;
   private PipeData pipe;
 

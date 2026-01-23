@@ -243,7 +243,6 @@ public class TwoFluidVsDriftFluxComparisonExample {
       int numberOfSections, double[] elevationProfile, double inletTemperature,
       double inletPressure, double flowRate, double roughness, double heatTransferCoeff,
       double ambientTemp) {
-
     // Create fluid
     SystemInterface fluid = createGasCondensateWithWater(inletTemperature, inletPressure);
 
@@ -306,7 +305,6 @@ public class TwoFluidVsDriftFluxComparisonExample {
       int numberOfSections, double[] elevationProfile, double inletTemperature,
       double inletPressure, double flowRate, double roughness, double heatTransferCoeff,
       double ambientTemp) {
-
     // Create fluid
     SystemInterface fluid = createGasCondensateWithWater(inletTemperature, inletPressure);
 
@@ -429,7 +427,6 @@ public class TwoFluidVsDriftFluxComparisonExample {
    */
   private static void printProfileComparison(TwoFluidResults tf, DriftFluxResults df,
       double[] elevationProfile, double pipeLength) {
-
     int n = tf.pressureProfile.length;
     double dx = pipeLength / n;
 

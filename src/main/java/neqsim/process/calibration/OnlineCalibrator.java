@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -146,7 +145,6 @@ public class OnlineCalibrator implements Serializable {
    */
   public boolean recordDataPoint(Map<String, Double> measurements, Map<String, Double> predictions,
       Map<String, Double> conditions) {
-
     DataPoint point = new DataPoint(measurements, predictions, conditions);
     calibrationHistory.add(point);
 
@@ -184,7 +182,6 @@ public class OnlineCalibrator implements Serializable {
    */
   public CalibrationResult incrementalUpdate(Map<String, Double> measurements,
       Map<String, Double> predictions) {
-
     if (tunableParameters.isEmpty()) {
       return CalibrationResult.failure("No tunable parameters configured");
     }

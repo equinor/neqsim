@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author Even Solbraa
  */
 public class AsphalteneMethodComparisonTest {
-
   private SystemInterface testFluid;
 
   @BeforeEach

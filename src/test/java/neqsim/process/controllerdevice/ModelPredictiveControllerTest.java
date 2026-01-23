@@ -16,7 +16,6 @@ import neqsim.process.measurementdevice.MeasurementDeviceBaseClass;
  * heater duty (energy usage) while targeting a desired outlet temperature.
  */
 public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
-
   /**
    * Simple first-order heater model used as transmitter for the controller.
    */
@@ -55,8 +54,8 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Simplified process representation coupling two manipulated variables and feed quality to generic
-   * product quality indicators. The model is linear to keep the MPC validation generic.
+   * Simplified process representation coupling two manipulated variables and feed quality to
+   * generic product quality indicators. The model is linear to keep the MPC validation generic.
    */
   static class SyntheticQualityProcess {
     private static final double BASE_QUALITY_A = -9.5;
@@ -128,13 +127,13 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
 
       qualityA = BASE_QUALITY_A + QUALITY_A_CONTROL1_COEFF * (control1 - baseControl1)
           + QUALITY_A_CONTROL2_COEFF * (control2 - baseControl2)
-          + QUALITY_A_MID_COMPONENT_COEFF * midDelta
-          + QUALITY_A_HEAVY_COMPONENT_COEFF * heavyDelta + QUALITY_A_RATE_COEFF * rateDelta;
+          + QUALITY_A_MID_COMPONENT_COEFF * midDelta + QUALITY_A_HEAVY_COMPONENT_COEFF * heavyDelta
+          + QUALITY_A_RATE_COEFF * rateDelta;
 
       qualityB = BASE_QUALITY_B + QUALITY_B_CONTROL1_COEFF * (control1 - baseControl1)
           + QUALITY_B_CONTROL2_COEFF * (control2 - baseControl2)
-          + QUALITY_B_MID_COMPONENT_COEFF * midDelta
-          + QUALITY_B_HEAVY_COMPONENT_COEFF * heavyDelta + QUALITY_B_RATE_COEFF * rateDelta;
+          + QUALITY_B_MID_COMPONENT_COEFF * midDelta + QUALITY_B_HEAVY_COMPONENT_COEFF * heavyDelta
+          + QUALITY_B_RATE_COEFF * rateDelta;
     }
   }
 
@@ -297,8 +296,8 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
     ModelPredictiveController.AutoTuneConfiguration configuration =
         ModelPredictiveController.AutoTuneConfiguration.builder().applyImmediately(false).build();
 
-    ModelPredictiveController.AutoTuneResult result = controller.autoTune(measurements, controls,
-        sampleTimes, configuration);
+    ModelPredictiveController.AutoTuneResult result =
+        controller.autoTune(measurements, controls, sampleTimes, configuration);
 
     Assertions.assertFalse(result.isApplied(), "Auto-tune should not update controller state");
     Assertions.assertEquals(0.1, controller.getProcessGain(), 1.0e-12);
@@ -338,25 +337,13 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
     controller.setControlMoveLimits("mv1", -4.0, 5.0);
     controller.setControlMoveLimits("mv2", -3.0, 4.5);
     controller.addQualityConstraint(ModelPredictiveController.QualityConstraint.builder("qualityA")
-        .measurement(qualityAMeasurement)
-        .unit("qa")
-        .limit(-6.0)
-        .margin(0.2)
-        .controlSensitivity(0.12, -0.45)
-        .compositionSensitivity("mid", 4.0)
-        .compositionSensitivity("heavy", 12.0)
-        .rateSensitivity(1.2)
-        .build());
+        .measurement(qualityAMeasurement).unit("qa").limit(-6.0).margin(0.2)
+        .controlSensitivity(0.12, -0.45).compositionSensitivity("mid", 4.0)
+        .compositionSensitivity("heavy", 12.0).rateSensitivity(1.2).build());
     controller.addQualityConstraint(ModelPredictiveController.QualityConstraint.builder("qualityB")
-        .measurement(qualityBMeasurement)
-        .unit("qb")
-        .limit(6.8)
-        .margin(0.2)
-        .controlSensitivity(-0.06, 0.15)
-        .compositionSensitivity("mid", 8.0)
-        .compositionSensitivity("heavy", 15.0)
-        .rateSensitivity(0.9)
-        .build());
+        .measurement(qualityBMeasurement).unit("qb").limit(6.8).margin(0.2)
+        .controlSensitivity(-0.06, 0.15).compositionSensitivity("mid", 8.0)
+        .compositionSensitivity("heavy", 15.0).rateSensitivity(0.9).build());
 
     controller.updateFeedConditions(baseComposition, baseRate);
     process.updateFeed(baseComposition, baseRate);
@@ -368,10 +355,10 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
       controller.runTransient(Double.NaN, dt);
       double mv1 = controller.getControlValue("mv1");
       double mv2 = controller.getControlValue("mv2");
-      Assertions.assertTrue(mv1 - previousMv1 >= -4.0 - 1.0e-9
-          && mv1 - previousMv1 <= 5.0 + 1.0e-9);
-      Assertions.assertTrue(mv2 - previousMv2 >= -3.0 - 1.0e-9
-          && mv2 - previousMv2 <= 4.5 + 1.0e-9);
+      Assertions
+          .assertTrue(mv1 - previousMv1 >= -4.0 - 1.0e-9 && mv1 - previousMv1 <= 5.0 + 1.0e-9);
+      Assertions
+          .assertTrue(mv2 - previousMv2 >= -3.0 - 1.0e-9 && mv2 - previousMv2 <= 4.5 + 1.0e-9);
       previousMv1 = mv1;
       previousMv2 = mv2;
       process.applyControl(mv1, mv2);
@@ -420,10 +407,10 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
       controller.runTransient(Double.NaN, dt);
       double mv1 = controller.getControlValue("mv1");
       double mv2 = controller.getControlValue("mv2");
-      Assertions.assertTrue(mv1 - previousMv1 >= -4.0 - 1.0e-9
-          && mv1 - previousMv1 <= 5.0 + 1.0e-9);
-      Assertions.assertTrue(mv2 - previousMv2 >= -3.0 - 1.0e-9
-          && mv2 - previousMv2 <= 4.5 + 1.0e-9);
+      Assertions
+          .assertTrue(mv1 - previousMv1 >= -4.0 - 1.0e-9 && mv1 - previousMv1 <= 5.0 + 1.0e-9);
+      Assertions
+          .assertTrue(mv2 - previousMv2 >= -3.0 - 1.0e-9 && mv2 - previousMv2 <= 4.5 + 1.0e-9);
       previousMv1 = mv1;
       previousMv2 = mv2;
       process.applyControl(mv1, mv2);
@@ -555,11 +542,8 @@ public class ModelPredictiveControllerTest extends neqsim.NeqSimTest {
     controller.setPreferredControlVector(0.0);
 
     ModelPredictiveController.QualityConstraint constraint =
-        ModelPredictiveController.QualityConstraint.builder("spec")
-            .limit(9.5)
-            .margin(0.0)
-            .controlSensitivity(0.4)
-            .build();
+        ModelPredictiveController.QualityConstraint.builder("spec").limit(9.5).margin(0.0)
+            .controlSensitivity(0.4).build();
     controller.addQualityConstraint(constraint);
 
     controller.runTransient(Double.NaN, 1.0, UUID.randomUUID());

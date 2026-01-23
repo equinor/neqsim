@@ -13,9 +13,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * This class is an implementation of the compressor chart class that uses Fan laws and "double"
- * interpolation to navigate the compressor map (as opposed to the standard class using reduced
- * variables according to Fan laws).
+ * CompressorChartAlternativeMapLookup class. This class is an implementation of the compressor
+ * chart class that uses Fan laws and "double" interpolation to navigate the compressor map (as
+ * opposed to the standard class using reduced variables according to Fan laws).
  *
  * <p>
  * The class provides methods to add compressor curves, set reference conditions, and calculate
@@ -120,22 +120,11 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @see neqsim.thermo.system.SystemInterface
  * @see neqsim.thermo.system.SystemSrkEos
  */
-
-/**
- * <p>
- * CompressorChartAlternativeMapLookup class.
- * </p>
- *
- * @author asmund
- * @version $Id: $Id
- */
-public class CompressorChartAlternativeMapLookup extends CompressorChart
-    implements CompressorChartInterface, java.io.Serializable {
+public class CompressorChartAlternativeMapLookup extends CompressorChart {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CompressorChart.class);
-
 
   boolean isSurge = false;
   boolean isStoneWall = false;

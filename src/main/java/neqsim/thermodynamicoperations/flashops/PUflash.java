@@ -72,7 +72,7 @@ public class PUflash extends Flash {
   public double solveQ() {
     double oldTemp = 1.0 / system.getTemperature();
     double nyTemp = 1.0 / system.getTemperature();
-    double iterations = 1;
+    int iterations = 1;
     double error = 1.0;
     double errorOld = 10.0e10;
     double factor = 0.8;

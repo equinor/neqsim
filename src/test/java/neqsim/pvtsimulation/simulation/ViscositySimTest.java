@@ -30,7 +30,6 @@ public class ViscositySimTest {
     assertEquals(4.443002015621749E-4, sepSim.getOilViscosity()[0], 0.000001);
   }
 
-
   /**
    * ~Seawater: 35 g NaCl per 1 kg water (≈3.5 wt%) at 25 °C, 1 bar. Expected ≈ 0.94 mPa·s → 9.4e-4
    * Pa·s (tolerance ±1.5e-4).

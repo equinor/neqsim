@@ -1,7 +1,7 @@
 package neqsim.process.equipment.pipeline;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,7 +39,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class TwoPhasePressureDropValidationTest {
-
   // Tolerance for validation (Beggs & Brill claim ±10% for most cases)
   private static final double BEGGS_BRILL_TOLERANCE = 0.30; // 30% tolerance for empirical
                                                             // correlation
@@ -247,7 +246,6 @@ class TwoPhasePressureDropValidationTest {
           assertTrue(calculatedDp > -0.1,
               "Pressure drop should be positive or near-zero for non-downhill flow");
         }
-
       } catch (Exception e) {
         System.out.println("  ERROR: " + e.getMessage());
         System.out.println();
@@ -639,7 +637,6 @@ class TwoPhasePressureDropValidationTest {
         } else {
           passed++; // Allow some flexibility in comparison
         }
-
       } catch (Exception e) {
         System.out
             .println(String.format("%-30s | ERROR: %s", testCase.description, e.getMessage()));

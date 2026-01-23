@@ -1,6 +1,10 @@
 package neqsim.fluidmechanics.flowsystem.onephaseflowsystem.pipeflowsystem;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,7 +44,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim Development Team
  */
 public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
-
   private static final double TOLERANCE_PRESSURE = 0.1; // bar
   private static final double TOLERANCE_TEMPERATURE = 0.5; // K
   private static final double TOLERANCE_COMPOSITION = 0.01; // mole fraction (1% allowed drift)
@@ -49,7 +52,6 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
   @Nested
   @DisplayName("Steady State Solver Tests")
   class SteadyStateSolverTests {
-
     private FlowSystemInterface pipe;
     private SystemInterface inletGas;
 
@@ -250,7 +252,6 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
   @Nested
   @DisplayName("Compositional Tracking Tests")
   class CompositionalTrackingTests {
-
     @Test
     @DisplayName("Steady state preserves inlet composition")
     void testSteadyStateCompositionPreservation() {
@@ -360,7 +361,6 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
   @Nested
   @DisplayName("Numerical Stability Tests")
   class NumericalStabilityTests {
-
     @Test
     @DisplayName("Solver handles high flow rates without divergence")
     void testHighFlowRateStability() {
@@ -496,7 +496,6 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
   @Nested
   @DisplayName("Physical Validation Tests")
   class PhysicalValidationTests {
-
     @Test
     @DisplayName("Pressure drop follows Darcy-Weisbach equation qualitatively")
     void testDarcyWeisbachScaling() {
@@ -634,7 +633,6 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
   @Nested
   @DisplayName("Transient Flow Tests")
   class TransientFlowTests {
-
     @Test
     @DisplayName("Transient solver runs without errors")
     void testTransientSolverRuns() {
@@ -996,7 +994,6 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
   @Nested
   @DisplayName("Outlet Boundary Condition Tests")
   class OutletBoundaryConditionTests {
-
     @Test
     @DisplayName("Closed outlet boundary type is correctly set")
     void testClosedOutletBoundaryType() {
@@ -1227,7 +1224,6 @@ public class SinglePhaseGasPipeFlowTest extends neqsim.NeqSimTest {
   @Nested
   @DisplayName("Simplified API Tests")
   class SimplifiedAPITests {
-
     @Test
     @DisplayName("runTransient with time and step works")
     void testRunTransientSimple() {

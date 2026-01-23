@@ -47,7 +47,6 @@ public class InterfacialAreaCalculator {
    */
   public static double calculateInterfacialArea(FlowPattern flowPattern, double diameter,
       double liquidHoldup, double rhoG, double rhoL, double usg, double usl, double sigma) {
-
     switch (flowPattern) {
       case STRATIFIED:
       case STRATIFIED_WAVY:

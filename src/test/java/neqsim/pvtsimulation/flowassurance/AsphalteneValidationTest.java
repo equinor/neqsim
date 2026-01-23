@@ -1,12 +1,13 @@
 package neqsim.pvtsimulation.flowassurance;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.pvtsimulation.flowassurance.DeBoerAsphalteneScreening.DeBoerRisk;
 import neqsim.thermo.phase.PhaseType;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -30,7 +31,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  */
 public class AsphalteneValidationTest {
-
   /**
    * Literature data from De Boer et al. (1995) SPE-24987-PA Table 1. Field cases with known
    * asphaltene problem status.
@@ -661,7 +661,6 @@ public class AsphalteneValidationTest {
         if (liquidDensity > 0) {
           previousDensity = liquidDensity;
         }
-
       } catch (Exception e) {
         System.out.printf("%12.0f | Error: %s%n", pressure, e.getMessage());
       }

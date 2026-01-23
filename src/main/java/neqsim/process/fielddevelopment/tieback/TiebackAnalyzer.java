@@ -598,7 +598,6 @@ public class TiebackAnalyzer implements Serializable {
    */
   public TiebackScreeningResult quickScreen(double discoveryLat, double discoveryLon,
       double reservesMMboe, double waterDepthM, HostFacility host) {
-
     TiebackScreeningResult result = new TiebackScreeningResult();
     result.setHostName(host.getName());
 
@@ -648,7 +647,6 @@ public class TiebackAnalyzer implements Serializable {
    */
   public List<TiebackScreeningResult> screenAllHosts(double discoveryLat, double discoveryLon,
       double reservesMMboe, double waterDepthM, List<HostFacility> hosts) {
-
     List<TiebackScreeningResult> results = new ArrayList<TiebackScreeningResult>();
 
     for (HostFacility host : hosts) {

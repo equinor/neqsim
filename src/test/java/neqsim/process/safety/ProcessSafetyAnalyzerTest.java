@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -20,7 +19,6 @@ import neqsim.thermo.system.SystemInterface;
 
 /** Tests for {@link ProcessSafetyAnalyzer}. */
 public class ProcessSafetyAnalyzerTest extends NeqSimTest {
-
   @Test
   public void analyzeScenarioPersistsSummaryAndCapturesKpis() {
     ProcessSystem base = new ProcessSystem("base");
@@ -35,9 +33,7 @@ public class ProcessSafetyAnalyzerTest extends NeqSimTest {
     ProcessSafetyAnalyzer analyzer = new ProcessSafetyAnalyzer(base, repository);
 
     ProcessSafetyScenario scenario = ProcessSafetyScenario.builder("Blocked pump")
-        .blockOutlet("pump1")
-        .controllerSetPoint("pump1", 5.0)
-        .build();
+        .blockOutlet("pump1").controllerSetPoint("pump1", 5.0).build();
 
     ProcessSafetyAnalysisSummary summary = analyzer.analyze(scenario);
 
@@ -70,8 +66,7 @@ public class ProcessSafetyAnalyzerTest extends NeqSimTest {
     List<ProcessSafetyScenario> scenarios = new ArrayList<>();
     scenarios.add(ProcessSafetyScenario.builder("Utility loss").utilityLoss("cooler1").build());
     scenarios.add(ProcessSafetyScenario.builder("Controller change")
-        .controllerSetPoint("cooler1", 15.0)
-        .build());
+        .controllerSetPoint("cooler1", 15.0).build());
 
     List<ProcessSafetyAnalysisSummary> summaries = analyzer.analyze(scenarios);
 

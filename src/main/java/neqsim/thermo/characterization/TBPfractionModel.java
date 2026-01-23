@@ -511,7 +511,6 @@ public class TBPfractionModel implements java.io.Serializable {
     }
   }
 
-
   public class PedersenTBPModelPR2 extends PedersenTBPModelSRK {
     /** Serialization version UID. */
 
@@ -543,8 +542,6 @@ public class TBPfractionModel implements java.io.Serializable {
       return calculated_TB / 1.8;
     }
   }
-
-
 
   public class PedersenTBPModelPRHeavyOil extends PedersenTBPModelPR {
     /** Serialization version UID. */

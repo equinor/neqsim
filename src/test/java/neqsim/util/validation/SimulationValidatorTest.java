@@ -1,10 +1,11 @@
 package neqsim.util.validation;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
@@ -14,11 +15,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for SimulationValidator - the AI-friendly validation facade.
  */
 class SimulationValidatorTest {
-
   @Nested
   @DisplayName("Type Detection Tests")
   class TypeDetectionTests {
-
     @Test
     @DisplayName("Validates SystemInterface correctly")
     void testValidateSystemInterface() {
@@ -97,7 +96,6 @@ class SimulationValidatorTest {
   @Nested
   @DisplayName("Validation and Run Tests")
   class ValidationAndRunTests {
-
     @Test
     @DisplayName("validateAndRun succeeds for valid equipment")
     void testValidateAndRunValid() {
@@ -147,7 +145,6 @@ class SimulationValidatorTest {
   @Nested
   @DisplayName("Helper Method Tests")
   class HelperMethodTests {
-
     @Test
     @DisplayName("isReady returns true for valid system")
     void testIsReadyValid() {
@@ -186,7 +183,6 @@ class SimulationValidatorTest {
   @Nested
   @DisplayName("Output Validation Tests")
   class OutputValidationTests {
-
     @Test
     @DisplayName("validateOutput checks post-run state")
     void testValidateOutput() {
@@ -215,7 +211,6 @@ class SimulationValidatorTest {
   @Nested
   @DisplayName("AI Workflow Simulation")
   class AIWorkflowTests {
-
     @Test
     @DisplayName("AI can use validation to self-correct")
     void testAISelfCorrectWorkflow() {

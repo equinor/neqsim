@@ -3,18 +3,16 @@ package neqsim.process.util.fire;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.flare.Flare;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.util.fire.SeparatorFireExposure.FireExposureResult;
 import neqsim.process.util.fire.SeparatorFireExposure.FireScenarioConfig;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class SeparatorFireExposureTest {
-
   @Test
   public void evaluateFireExposureReturnsGeometryDrivenAreas() {
     SystemInterface system = new SystemSrkEos(300.0, 20.0);
@@ -33,10 +31,8 @@ public class SeparatorFireExposureTest {
     separator.setLiquidLevel(0.5); // 50% liquid height
     separator.run();
 
-    FireScenarioConfig config = new FireScenarioConfig()
-        .setEnvironmentalFactor(0.82)
-        .setWallThicknessM(0.018)
-        .setAllowableTensileStrengthPa(2.1e8);
+    FireScenarioConfig config = new FireScenarioConfig().setEnvironmentalFactor(0.82)
+        .setWallThicknessM(0.018).setAllowableTensileStrengthPa(2.1e8);
 
     FireExposureResult result = separator.evaluateFireExposure(config);
 
@@ -111,8 +107,7 @@ public class SeparatorFireExposureTest {
 
     FireScenarioConfig config = new FireScenarioConfig();
     FireExposureResult base = separator.evaluateFireExposure(config);
-    FireExposureResult withFlare =
-        separator.evaluateFireExposure(config, flare, distanceM);
+    FireExposureResult withFlare = separator.evaluateFireExposure(config, flare, distanceM);
 
     assertTrue(withFlare.totalFireHeat() > base.totalFireHeat());
     assertEquals(expectedFlux, withFlare.flareRadiativeFlux(), 1.0e-6);

@@ -15,7 +15,6 @@ import neqsim.chemicalreactions.chemicalequilibrium.ChemicalEquilibrium;
 import neqsim.chemicalreactions.chemicalequilibrium.LinearProgrammingChemicalEquilibrium;
 import neqsim.chemicalreactions.chemicalreaction.ChemicalReactionList;
 import neqsim.chemicalreactions.kinetics.Kinetics;
-import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;

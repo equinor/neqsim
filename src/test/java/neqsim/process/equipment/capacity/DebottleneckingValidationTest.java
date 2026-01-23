@@ -1,6 +1,10 @@
 package neqsim.process.equipment.capacity;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +35,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class DebottleneckingValidationTest {
-
   private ProcessSystem process;
   private Stream feedStream;
   private Separator separator;

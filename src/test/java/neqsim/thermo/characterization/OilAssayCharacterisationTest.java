@@ -12,7 +12,6 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class OilAssayCharacterisationTest {
-
   @Test
   public void testAssayApplicationAddsPseudoComponents() {
     SystemInterface system = new SystemSrkEos(298.15, 10.0);

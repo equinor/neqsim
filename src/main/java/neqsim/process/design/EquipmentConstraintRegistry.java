@@ -166,7 +166,6 @@ public class EquipmentConstraintRegistry {
    */
   public CapacityConstraint createConstraint(ProcessEquipmentInterface equipment,
       String constraintType, double maxValue) {
-
     // Find the template
     String equipmentType = getEquipmentType(equipment);
     ConstraintTemplate template = findTemplate(equipmentType, constraintType);

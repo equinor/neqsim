@@ -67,7 +67,7 @@ public class PHflashLeachman extends Flash {
   public double solveQ() {
     double oldTemp = 1.0 / system.getTemperature();
     double nyTemp = 1.0 / system.getTemperature();
-    double iterations = 1;
+    int iterations = 1;
     double error = 1.0;
     double errorOld = 1.0e10;
     double factor = 0.8;
@@ -121,8 +121,8 @@ public class PHflashLeachman extends Flash {
 
       /*
        * if (false && error * errorOld < 0) { system.setTemperature( (Math.abs(errorOld) * 1.0 /
-       * oldTemp + Math.abs(error) * 1.0 / nyTemp) / (Math.abs(errorOld) + Math.abs(error))); errorOld
-       * = error; error = calcdQdT(); System.out.println("reset temperature -- new temp " +
+       * oldTemp + Math.abs(error) * 1.0 / nyTemp) / (Math.abs(errorOld) + Math.abs(error)));
+       * errorOld = error; error = calcdQdT(); System.out.println("reset temperature -- new temp " +
        * system.getTemperature() + " error " + error + " iter " + iterations); } // error =
        * Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp)); // System.out.println("temp " +
        * system.getTemperature() + " iter "+ iterations + // " error "+ error + " correction " +

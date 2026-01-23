@@ -13,8 +13,6 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.component.ComponentSrkCPAMM;
-import neqsim.thermo.phase.PhaseType;
-import neqsim.thermo.util.constants.IonParametersMM;
 
 /**
  * Electrolyte CPA (e-CPA) phase class implementing the Maribo-Mogensen model.

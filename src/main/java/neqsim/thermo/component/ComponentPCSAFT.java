@@ -267,7 +267,6 @@ public class ComponentPCSAFT extends ComponentSrk {
     return (dFplus - dFminus) / (2.0 * h);
   }
 
-
   /**
    * <p>
    * calcF1dispSumTermdn.

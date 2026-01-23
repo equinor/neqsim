@@ -15,7 +15,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Unit tests for TwoPhasePipeFlowSystemBuilder.
  */
 class TwoPhasePipeFlowSystemBuilderTest {
-
   /**
    * Creates a test fluid with proper two-phase conditions. Uses methane as gas phase (phase 0) and
    * water as liquid phase (phase 1), similar to existing TwoPhasePipeFlowSystemTest.

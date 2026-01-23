@@ -22,7 +22,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * optimizer.
  * </p>
  *
- * <p><strong>Key Features</strong></p>
+ * <p>
+ * <strong>Key Features</strong>
+ * </p>
  * <ul>
  * <li>Single-point evaluation: {@code evaluate(double[] x)} runs simulation and returns all
  * outputs</li>
@@ -33,7 +35,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * <li>Thread-safe evaluation with process cloning option</li>
  * </ul>
  *
- * <p><strong>Python Integration Example</strong></p>
+ * <p>
+ * <strong>Python Integration Example</strong>
+ * </p>
  * 
  * <pre>
  * # Using with SciPy
@@ -63,7 +67,6 @@ import neqsim.process.processmodel.ProcessSystem;
  * @version 1.0
  */
 public class ProcessSimulationEvaluator implements Serializable {
-
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000L;
 

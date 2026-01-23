@@ -627,7 +627,6 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
    */
   public OptimizationResult optimizeFirstStageSeparator(double minPressure, double maxPressure,
       int pressureSteps, double minTemperature, double maxTemperature, int temperatureSteps) {
-
     if (stages.isEmpty()) {
       throw new IllegalStateException("No separator stages defined. Add at least one stage first.");
     }

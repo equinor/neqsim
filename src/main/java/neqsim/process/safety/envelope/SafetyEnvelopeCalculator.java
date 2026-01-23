@@ -240,7 +240,6 @@ public class SafetyEnvelopeCalculator {
           envelope.setDataPoint(i, pres, temp, 0.0);
         }
       }
-
     } catch (Exception e) {
       // Phase envelope calculation failed
       // Return envelope with placeholder data

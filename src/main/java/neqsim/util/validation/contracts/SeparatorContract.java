@@ -30,7 +30,6 @@ import neqsim.util.validation.ValidationResult;
  * @version 1.0
  */
 public class SeparatorContract implements ModuleContract<Separator> {
-
   /** Singleton instance. */
   private static final SeparatorContract INSTANCE = new SeparatorContract();
 

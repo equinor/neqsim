@@ -13,7 +13,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version $Id: $Id
  */
 public class GibbsReactorTest {
-
   /**
    * Test that a component not found in the Gibbs database (e.g., TBPfraction) does not change
    * moles.
@@ -130,7 +129,6 @@ public class GibbsReactorTest {
     Assertions.assertEquals(0.5000004000363735, ppm_s, 1e-9, "ppm_s");
   }
 
-
   /**
    * Test adiabatic mode in GibbsReactor (PH flash at inlet enthalpy).
    */
@@ -142,7 +140,6 @@ public class GibbsReactorTest {
     system.addComponent("nitrogen", 0.5);
     system.addComponent("ammonia", 0);
     system.setMixingRule(2);
-
 
     // Create inlet stream
     Stream inletStream = new Stream("Inlet Stream", system);
@@ -162,9 +159,6 @@ public class GibbsReactorTest {
     reactor.run();
 
     SystemInterface outletSystem = reactor.getOutletStream().getThermoSystem();
-
-
-    // Assert outlet mole fractions (rounded to 5 significant digits)
     double h2 = outletSystem.getComponent("hydrogen").getz();
     double n2 = outletSystem.getComponent("nitrogen").getz();
     double nh3 = outletSystem.getComponent("ammonia").getz();
@@ -186,7 +180,6 @@ public class GibbsReactorTest {
     system.addComponent("water", 0);
     system.addComponent("argon", 0.05); // Add argon to test Ar element
     system.setMixingRule(2);
-
 
     // Create inlet stream
     Stream inletStream = new Stream("Inlet Stream", system);
@@ -233,7 +226,6 @@ public class GibbsReactorTest {
 
     system.setMixingRule(2);
 
-
     // Create inlet stream
     Stream inletStream = new Stream("Inlet Stream", system);
     inletStream.run();
@@ -278,12 +270,9 @@ public class GibbsReactorTest {
     Assertions.assertEquals(2.19702E-1, water, 0.01);
   }
 
-
   /**
    * Test N2O4 ⇌ 2NO2 equilibrium reaction at 298 K and 1 bara using SRK EOS. N2O4 (dinitrogen
-   * tetroxide) dissociates to NO2 (nitrogen dioxide).
    */
-  @Test
   public void testN2O4_NO2_Equilibrium() {
     // Create system at 298 K (25°C) and 1 bara
     SystemInterface system = new SystemSrkEos(298.15, 1.0);
@@ -329,5 +318,4 @@ public class GibbsReactorTest {
     Assertions.assertEquals(0.9886, fugCoefN2O4, 0.001, "N2O4 fugacity coefficient");
 
   }
-
 }

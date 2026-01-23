@@ -134,7 +134,6 @@ public class GibbsReactor extends TwoPortEquipment {
     return -enthalpyOfReactions * 1000.0;
   }
 
-
   /**
    * Get the reactor power in the specified unit ("W", "kW", or "MW").
    *
@@ -142,8 +141,9 @@ public class GibbsReactor extends TwoPortEquipment {
    * @return Power in the specified unit
    */
   public double getPower(String unit) {
-    if (unit == null)
+    if (unit == null) {
       return getPower();
+    }
     switch (unit.trim().toLowerCase()) {
       case "kw":
         return -enthalpyOfReactions;
@@ -335,8 +335,9 @@ public class GibbsReactor extends TwoPortEquipment {
    * @throws java.lang.IllegalArgumentException if the mode is not recognized
    */
   public void setEnergyMode(String mode) {
-    if (mode == null)
+    if (mode == null) {
       throw new IllegalArgumentException("Energy mode string cannot be null");
+    }
     switch (mode.trim().toLowerCase()) {
       case "adiabatic":
         setEnergyMode(EnergyMode.ADIABATIC);
@@ -417,7 +418,7 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /**
    * Mark a component as inert by name.
-   * 
+   *
    * @param componentName component name as in the thermo system
    */
   public void setComponentAsInert(String componentName) {
@@ -428,7 +429,7 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /**
    * Mark a component as inert by index in inlet system.
-   * 
+   *
    * @param index component index in inlet system
    */
   public void setComponentAsInert(int index) {
@@ -475,7 +476,6 @@ public class GibbsReactor extends TwoPortEquipment {
   private boolean isIonicComponent(String moleculeName) {
     return ION_NAME_PATTERN.matcher(moleculeName).matches();
   }
-
 
   /**
    * Constructor for GibbsReactor.
@@ -655,7 +655,7 @@ public class GibbsReactor extends TwoPortEquipment {
     /**
      * Calculate corrected heat capacity coefficients dA, dB, dC, dD by subtracting elemental
      * contributions. dA = A - nO*AO - nN*AN - nC*AC - nH*AH - nS*AS
-     * 
+     *
      * @param compNumber component index
      * @return array of corrected coefficients [dA, dB, dC, dD]
      */
@@ -694,7 +694,7 @@ public class GibbsReactor extends TwoPortEquipment {
      * Calculate the corrected formation enthalpy term J. J = ΔH°f - ΔA*TR - ΔB/2*TR² - ΔC/3*TR³ -
      * ΔD/4*TR⁴ where TR is the reference temperature and ΔA, ΔB, ΔC, ΔD are corrected heat capacity
      * coefficients.
-     * 
+     *
      * @param compNumber component index
      * @return corrected formation enthalpy term J
      */
@@ -719,7 +719,7 @@ public class GibbsReactor extends TwoPortEquipment {
      * Calculate the I term for thermodynamic calculations. I = (1/R) × [J/TR + ΔA×ln(TR) + ΔB/2×TR
      * + ΔC/6×TR² + ΔD/12×TR³] where R is the gas constant, TR is the reference temperature, and J
      * is the corrected formation enthalpy term.
-     * 
+     *
      * @param compNumber component index
      * @return the I term
      */
@@ -816,8 +816,6 @@ public class GibbsReactor extends TwoPortEquipment {
     }
   }
 
-
-
   /**
    * Load the Gibbs reaction database from resources.
    */
@@ -845,12 +843,14 @@ public class GibbsReactor extends TwoPortEquipment {
             .getResourceAsStream("/data/GibbsReactDatabase/DatabaseGibbsFreeEnergyCoeff.csv");
         if (coeffStream != null) {
           Scanner coeffScanner = new Scanner(coeffStream);
-          if (coeffScanner.hasNextLine())
+          if (coeffScanner.hasNextLine()) {
             coeffScanner.nextLine(); // skip header
+          }
           while (coeffScanner.hasNextLine()) {
             String line = coeffScanner.nextLine().trim();
-            if (line.isEmpty() || line.startsWith("#"))
+            if (line.isEmpty() || line.startsWith("#")) {
               continue;
+            }
             String[] parts = line.split(";");
             if (parts.length == 13) {
               String compName = parts[0].trim().toLowerCase();
@@ -872,12 +872,14 @@ public class GibbsReactor extends TwoPortEquipment {
       }
 
       Scanner scanner = new Scanner(inputStream);
-      if (scanner.hasNextLine())
+      if (scanner.hasNextLine()) {
         scanner.nextLine(); // skip header
+      }
       while (scanner.hasNextLine()) {
         String line = scanner.nextLine().trim();
-        if (line.isEmpty() || line.startsWith("#"))
+        if (line.isEmpty() || line.startsWith("#")) {
           continue;
+        }
         String[] parts = line.split(";");
         // Handle actual format: molecule + 8 elements + 4 Cp + 3 thermo = 16 columns
         if (parts.length >= 16) {
@@ -1027,7 +1029,6 @@ public class GibbsReactor extends TwoPortEquipment {
       }
     }
 
-
     // Minimize Gibbs energy
     performGibbsMinimization(system);
 
@@ -1089,8 +1090,6 @@ public class GibbsReactor extends TwoPortEquipment {
     }
   }
 
-
-
   /**
    * Perform Gibbs free energy minimization.
    *
@@ -1118,7 +1117,6 @@ public class GibbsReactor extends TwoPortEquipment {
         }
       }
     }
-
 
     logger.info("Gibbs minimization completed for iteration " + iteration);
   }
@@ -1485,7 +1483,6 @@ public class GibbsReactor extends TwoPortEquipment {
     SystemInterface system = getOutletStream().getThermoSystem();
     double T = system.getTemperature();
     double RT = R_KJ * T;
-
 
     // Calculate total moles for mole fraction derivatives using outlet_mole
     double totalMoles = 0.0;
@@ -1986,7 +1983,6 @@ public class GibbsReactor extends TwoPortEquipment {
     // Show total norm of delta vector
     // System.out.printf("\n=== Total Norm of Δ (composition): %12.6e ===\n", deltaNorm);
 
-
     // System.out.printf("\n=== Current Temperature: %.4f K ===\n", system.getTemperature());
 
     // Print enthalpy of reaction after temperature
@@ -2039,7 +2035,6 @@ public class GibbsReactor extends TwoPortEquipment {
         getOutletStream().setThermoSystem(system);
       }
 
-
       // Recalculate objective function values with new compositions and Lagrange multipliers
       calculateObjectiveFunctionValues(system);
 
@@ -2075,7 +2070,6 @@ public class GibbsReactor extends TwoPortEquipment {
    *         Double.NaN if not found
    */
   public double[] getFugacityCoefficient(Object phaseNameOrIndex) {
-
     int phaseIndex = 0;
     if (phaseNameOrIndex instanceof Integer) {
       phaseIndex = (Integer) phaseNameOrIndex;
@@ -2098,7 +2092,6 @@ public class GibbsReactor extends TwoPortEquipment {
     }
     return phiArray;
   }
-
 
   /**
    * Set maximum number of Newton-Raphson iterations.
@@ -2262,8 +2255,6 @@ public class GibbsReactor extends TwoPortEquipment {
         logger.debug("Gibbs energy change dG = " + dG);
       }
 
-
-
       if (energyMode == EnergyMode.ADIABATIC) {
         if (iteration == 1) {
           inletEnthalpy = calculateMixtureEnthalpy(processedComponents, outlet_mole, componentMap,
@@ -2288,8 +2279,6 @@ public class GibbsReactor extends TwoPortEquipment {
           this.getOutletStream().getThermoSystem().setTemperature(system.getTemperature());
         }
       }
-
-
 
       // Check convergence (require minimum 100 iterations)
       if ((deltaXNorm < convergenceTolerance && iteration >= 100) || iteration == maxIterations) {// ||
@@ -2357,7 +2346,6 @@ public class GibbsReactor extends TwoPortEquipment {
     // Add more mappings as needed
   }
 
-
   /**
    * Solve Gibbs equilibrium using Newton-Raphson iterations with default damping factor.
    *
@@ -2366,5 +2354,4 @@ public class GibbsReactor extends TwoPortEquipment {
   public boolean solveGibbsEquilibrium() {
     return solveGibbsEquilibrium(dampingComposition); // Use configured damping factor
   }
-
 }

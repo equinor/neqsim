@@ -1,19 +1,17 @@
 package neqsim.process.examples;
 
-import static org.junit.jupiter.api.Assertions.*;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.examples.OilGasProcessSimulationOptimization.MaxProductionResult;
 import neqsim.process.examples.OilGasProcessSimulationOptimization.ProcessOutputResults;
-import neqsim.process.equipment.separator.ThreePhaseSeparator;
-import neqsim.process.equipment.separator.Separator;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
  * Test to run production optimization with separator and scrubber design checks
  */
 public class ProductionOptimizationTest {
-
   @Test
   void testMaximizeProduction() {
     System.out.println("===== Production Optimization Test (Max 15000 kmol/hr) =====\n");

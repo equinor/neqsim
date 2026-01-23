@@ -27,7 +27,6 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 @Tag("slow")
 class EnKFParameterEstimatorTest {
-
   private static final int NUM_WELLS = 4;
   private static final double SEA_TEMPERATURE = 4.0;
   private static final double WELL_TEMPERATURE = 70.0;

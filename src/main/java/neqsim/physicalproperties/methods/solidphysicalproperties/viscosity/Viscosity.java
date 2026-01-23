@@ -1,6 +1,5 @@
 package neqsim.physicalproperties.methods.solidphysicalproperties.viscosity;
 
-import static java.lang.Double.NaN;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.methods.methodinterface.ViscosityInterface;

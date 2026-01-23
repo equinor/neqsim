@@ -1,5 +1,7 @@
 package examples;
 
+import java.util.HashMap;
+import java.util.Map;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.pipeline.TwoFluidPipe;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection;
@@ -7,8 +9,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.TransientPipe;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Example showing flow regime detection for various multiphase models.
@@ -60,7 +60,6 @@ public class FlowRegimeDetectionExample {
 
   private static void testFlowRegimes(SystemInterface fluid, double flowRate, double length,
       double diameter, double roughness, double tempC, double pressure) {
-
     // Beggs & Brill
     try {
       Stream inlet = new Stream("BB_inlet", fluid.clone());

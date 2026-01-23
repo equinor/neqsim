@@ -2,7 +2,6 @@ package neqsim.fluidmechanics.flownode.twophasenode;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.BubbleFlowNode;
@@ -27,7 +26,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  */
 public class PhaseTransitionInitiationTest {
-
   @Test
   void testMinimumPhaseFractionConstants() {
     // Verify constants are defined with reasonable values

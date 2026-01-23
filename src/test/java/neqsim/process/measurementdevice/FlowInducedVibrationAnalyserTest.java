@@ -15,8 +15,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 public class FlowInducedVibrationAnalyserTest {
 
-  private static final double DELTA = 1e-2;
-
   @Test
   @DisplayName("Test LOF calculation method with Stiff support arrangement")
   public void testLOFCalculationWithStiffSupport() {

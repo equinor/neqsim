@@ -27,7 +27,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * <li>Bottleneck identification across all equipment</li>
  * </ul>
  *
- * <p><strong>Example Usage</strong></p>
+ * <p>
+ * <strong>Example Usage</strong>
+ * </p>
  * 
  * <pre>
  * ProcessConstraintEvaluator evaluator = new ProcessConstraintEvaluator(processSystem);
@@ -772,7 +774,6 @@ public class ProcessConstraintEvaluator implements Serializable {
    */
   public Map<String, Double> calculateFlowSensitivities(ProcessSystem processSystem,
       double flowRateKgPerHr) {
-
     Map<String, Double> sensitivities = new HashMap<String, Double>();
 
     if (processSystem == null || processSystem.getUnitOperations().isEmpty()) {
@@ -814,7 +815,6 @@ public class ProcessConstraintEvaluator implements Serializable {
           sensitivities.put(key, sensitivity);
         }
       }
-
     } finally {
       // Restore original flow rate
       setFeedFlowRate(processSystem, originalFlow);
@@ -868,7 +868,6 @@ public class ProcessConstraintEvaluator implements Serializable {
   private Map<String, CapacityConstraint> getConstraintsWithCaching(
       ProcessEquipmentInterface equipment, EquipmentCapacityStrategy strategy,
       int processRunCount) {
-
     if (!cachingEnabled) {
       return strategy.getConstraints(equipment);
     }

@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
  * @version 1.0
  */
 public class TaxModelTest {
-
   private static final double TOLERANCE = 0.0001;
 
   @BeforeEach

@@ -1,6 +1,5 @@
 package neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +26,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  */
 public class MassTransferMeOHTest {
-
   private SystemInterface fluid;
   private PipeData pipe;
 

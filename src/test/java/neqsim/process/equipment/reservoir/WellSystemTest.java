@@ -1,6 +1,8 @@
 package neqsim.process.equipment.reservoir;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -13,7 +15,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim development team
  */
 class WellSystemTest {
-
   private SystemInterface gasFluid;
   private Stream reservoirStream;
 

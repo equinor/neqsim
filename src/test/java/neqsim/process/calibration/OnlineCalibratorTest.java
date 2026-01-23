@@ -16,7 +16,6 @@ import neqsim.process.processmodel.ProcessSystem;
  * Tests for OnlineCalibrator class.
  */
 class OnlineCalibratorTest {
-
   private ProcessSystem processSystem;
   private OnlineCalibrator calibrator;
 

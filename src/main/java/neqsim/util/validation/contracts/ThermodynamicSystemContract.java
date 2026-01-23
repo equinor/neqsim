@@ -31,7 +31,6 @@ import neqsim.util.validation.ValidationResult;
  * @version 1.0
  */
 public class ThermodynamicSystemContract implements ModuleContract<SystemInterface> {
-
   /** Singleton instance. */
   private static final ThermodynamicSystemContract INSTANCE = new ThermodynamicSystemContract();
 

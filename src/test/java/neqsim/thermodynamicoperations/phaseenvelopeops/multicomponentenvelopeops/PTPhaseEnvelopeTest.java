@@ -192,7 +192,6 @@ public class PTPhaseEnvelopeTest {
     fluid0_HC.addComponent("n-octane", 0.01);
     // fluid0_HC.addComponent("2.2-DM-C7", 0.01);
 
-
     fluid0_HC.setMixingRule("HV", "UNIFAC_UMRPRU");
     testOps = new ThermodynamicOperations(fluid0_HC);
     testOps.TPflash();

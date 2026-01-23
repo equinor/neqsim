@@ -84,7 +84,6 @@ public class WallFriction implements Serializable {
   public WallFrictionResult calculate(FlowRegime flowRegime, double gasVelocity,
       double liquidVelocity, double gasDensity, double liquidDensity, double gasViscosity,
       double liquidViscosity, double liquidHoldup, double diameter, double roughness) {
-
     switch (flowRegime) {
       case STRATIFIED_SMOOTH:
       case STRATIFIED_WAVY:
@@ -144,7 +143,6 @@ public class WallFriction implements Serializable {
    */
   private WallFrictionResult calcStratifiedFriction(double vG, double vL, double rhoG, double rhoL,
       double muG, double muL, double alphaL, double D, double eps) {
-
     WallFrictionResult result = new WallFrictionResult();
 
     // Get geometry
@@ -189,7 +187,6 @@ public class WallFriction implements Serializable {
    */
   private WallFrictionResult calcSlugFriction(double vG, double vL, double rhoG, double rhoL,
       double muG, double muL, double alphaL, double D, double eps) {
-
     WallFrictionResult result = new WallFrictionResult();
 
     // Slug body: treat as homogeneous mixture
@@ -236,7 +233,6 @@ public class WallFriction implements Serializable {
    */
   private WallFrictionResult calcAnnularFriction(double vG, double vL, double rhoG, double rhoL,
       double muG, double muL, double alphaL, double D, double eps) {
-
     WallFrictionResult result = new WallFrictionResult();
 
     // Film thickness
@@ -289,7 +285,6 @@ public class WallFriction implements Serializable {
    */
   private WallFrictionResult calcBubbleFriction(double vG, double vL, double rhoG, double rhoL,
       double muG, double muL, double alphaL, double D, double eps) {
-
     WallFrictionResult result = new WallFrictionResult();
 
     // Mixture velocity and density (liquid-continuous)
@@ -348,7 +343,6 @@ public class WallFriction implements Serializable {
    */
   private WallFrictionResult calcSinglePhaseGasFriction(double vG, double rhoG, double muG,
       double D, double eps) {
-
     WallFrictionResult result = new WallFrictionResult();
 
     if (Math.abs(vG) > 1e-10) {
@@ -372,7 +366,6 @@ public class WallFriction implements Serializable {
    */
   private WallFrictionResult calcSinglePhaseLiquidFriction(double vL, double rhoL, double muL,
       double D, double eps) {
-
     WallFrictionResult result = new WallFrictionResult();
 
     if (Math.abs(vL) > 1e-10) {

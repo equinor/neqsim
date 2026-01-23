@@ -975,7 +975,6 @@ public class TwoFluidPipe extends Pipeline {
    */
   private double[] calculateLocalHoldup(TwoFluidSection sec, TwoFluidSection prev, double mDotGas,
       double mDotLiq, double area) {
-
     double rhoG = sec.getGasDensity();
     double rhoL = sec.getLiquidDensity();
     double sigma = sec.getSurfaceTension();

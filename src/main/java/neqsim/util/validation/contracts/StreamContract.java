@@ -30,7 +30,6 @@ import neqsim.util.validation.ValidationResult;
  * @version 1.0
  */
 public class StreamContract implements ModuleContract<StreamInterface> {
-
   /** Singleton instance. */
   private static final StreamContract INSTANCE = new StreamContract();
 

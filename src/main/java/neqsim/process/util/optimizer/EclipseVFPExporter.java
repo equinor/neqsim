@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,13 +22,17 @@ import org.apache.logging.log4j.Logger;
  * <li>VFPEXP - Export pipeline/processing facility tables</li>
  * </ul>
  *
- * <p><strong>VFP Table Format</strong></p>
+ * <p>
+ * <strong>VFP Table Format</strong>
+ * </p>
  * <p>
  * VFP tables define the relationship between flowing bottom-hole pressure and production rate as a
  * function of various parameters (GOR, water cut, artificial lift, etc.).
  * </p>
  *
- * <p><strong>Example Usage</strong></p>
+ * <p>
+ * <strong>Example Usage</strong>
+ * </p>
  * 
  * <pre>
  * EclipseVFPExporter exporter = new EclipseVFPExporter();
@@ -503,7 +506,6 @@ public class EclipseVFPExporter implements Serializable {
    */
   public void exportMultipleScenarios(List<VFPScenario> scenarios, String baseFilename)
       throws IOException {
-
     for (int i = 0; i < scenarios.size(); i++) {
       VFPScenario scenario = scenarios.get(i);
       setTableNumber(scenario.getTableNumber());

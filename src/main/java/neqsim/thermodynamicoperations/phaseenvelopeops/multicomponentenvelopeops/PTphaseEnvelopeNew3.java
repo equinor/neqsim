@@ -60,8 +60,6 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
     this.tempStep = tempStep;
   }
 
-
-
   // Main calculation method
   /**
    * <p>
@@ -72,7 +70,6 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
     coarse();
     findBettaTransitionsAndRefine();
   }
-
 
   // Coarse grid calculation
   /**
@@ -216,11 +213,6 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
   public java.util.List<double[]> getRefinedTransitionPoints() {
     return refinedTransitionPoints;
   }
-  // removed extra closing brace
-
-
-
-  // ...existing code...
 
   /**
    * <p>

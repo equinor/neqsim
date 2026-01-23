@@ -9,7 +9,7 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 
 /**
  * Example demonstrating slug tracking capabilities in the TwoFluidPipe model.
- * 
+ *
  * <p>
  * This example shows how the Two-Fluid model tracks:
  * <ul>
@@ -18,10 +18,12 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  * <li>Slug propagation through the pipeline (Lagrangian tracking)</li>
  * <li>Slug statistics at the outlet</li>
  * </ul>
+ * </p>
  * 
  * <p>
  * The pipeline has significant terrain variations designed to induce terrain-induced slugging
  * behavior.
+ * </p>
  */
 public class TwoFluidPipeSlugTrackingExample {
 

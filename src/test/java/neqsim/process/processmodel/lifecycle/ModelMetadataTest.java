@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
  * Tests for ModelMetadata lifecycle tracking.
  */
 public class ModelMetadataTest {
-
   private ModelMetadata metadata;
 
   @BeforeEach

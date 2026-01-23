@@ -12,7 +12,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Unit tests for MultiStageSeparatorTest.
  */
 class MultiStageSeparatorTestTest {
-
   private SystemInterface reservoirFluid;
 
   @BeforeEach

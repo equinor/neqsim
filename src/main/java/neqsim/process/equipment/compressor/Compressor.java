@@ -4,6 +4,11 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import javax.swing.JDialog;
@@ -13,12 +18,16 @@ import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
-import neqsim.process.ml.StateVector;
-import neqsim.process.ml.StateVectorProvider;
 import neqsim.physicalproperties.PhysicalPropertyType;
+import neqsim.process.design.AutoSizeable;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.capacity.StandardConstraintType;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign;
+import neqsim.process.ml.StateVector;
+import neqsim.process.ml.StateVectorProvider;
 import neqsim.process.util.monitor.CompressorResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -26,15 +35,6 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
-import neqsim.process.equipment.capacity.CapacityConstraint;
-import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
-import neqsim.process.equipment.capacity.StandardConstraintType;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import neqsim.process.design.AutoSizeable;
 
 /**
  * <p>
@@ -516,8 +516,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     if (isSetEnergyStream()) {
       setPower(energyStream.getDuty());
     }
-
-
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(getThermoSystem());
     thermoOps = new ThermodynamicOperations(getThermoSystem());
@@ -2996,7 +2994,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   public double getExergyChange(String unit) {
     return getExergyChange(unit, 288.15);
   }
-
 
   /**
    * {@inheritDoc}

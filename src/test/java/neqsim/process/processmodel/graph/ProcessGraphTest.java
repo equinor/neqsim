@@ -1,14 +1,17 @@
 package neqsim.process.processmodel.graph;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
-import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.equipment.distillation.DistillationColumn;
-import neqsim.process.equipment.ejector.Ejector;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.filter.Filter;
 import neqsim.process.equipment.heatexchanger.Cooler;
@@ -23,10 +26,7 @@ import neqsim.process.equipment.splitter.ComponentSplitter;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.process.equipment.util.Adjuster;
-import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
-import neqsim.process.equipment.util.SetPoint;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.LevelTransmitter;
 import neqsim.process.measurementdevice.PressureTransmitter;
@@ -40,7 +40,6 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for the graph-based process representation.
  */
 public class ProcessGraphTest {
-
   private SystemInterface testFluid;
 
   @BeforeEach

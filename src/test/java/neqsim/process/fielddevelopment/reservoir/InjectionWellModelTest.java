@@ -15,7 +15,6 @@ import neqsim.process.fielddevelopment.reservoir.InjectionWellModel.InjectionWel
  * @author ESOL
  */
 class InjectionWellModelTest {
-
   private InjectionWellModel model;
 
   @BeforeEach

@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
  * @author ESOL
  */
 public class TransientWallHeatTransferTest {
-
   private TransientWallHeatTransfer wallModel;
 
   @BeforeEach

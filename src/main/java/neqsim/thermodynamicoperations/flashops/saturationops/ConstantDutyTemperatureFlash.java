@@ -210,7 +210,6 @@ public class ConstantDutyTemperatureFlash extends ConstantDutyFlash {
         && iterations < maxIter) || iterations < 3);
   }
 
-
   /** {@inheritDoc} */
   @Override
   public void printToFile(String name) {}

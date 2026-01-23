@@ -18,7 +18,6 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
  * </ul>
  */
 public class SolutionGasWaterRatioVerificationTest {
-
   // Java 8 compatible separator strings (instead of String.repeat())
   private static final String SEPARATOR_EQUALS =
       "================================================================================";

@@ -1,8 +1,8 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
 import java.io.Serializable;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling.ThermoProperties;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  * Pre-computed flash property table for fast interpolation.
@@ -31,7 +31,6 @@ import neqsim.process.equipment.pipeline.twophasepipe.ThermodynamicCoupling.Ther
  * @version 1.0
  */
 public class FlashTable implements Serializable {
-
   private static final long serialVersionUID = 1L;
 
   /** Pressure grid points (Pa). */
@@ -102,7 +101,6 @@ public class FlashTable implements Serializable {
   public void build(SystemInterface referenceFluid, double pressureMin, double pressureMax,
       int numPressurePoints, double temperatureMin, double temperatureMax,
       int numTemperaturePoints) {
-
     this.pMin = pressureMin;
     this.pMax = pressureMax;
     this.tMin = temperatureMin;

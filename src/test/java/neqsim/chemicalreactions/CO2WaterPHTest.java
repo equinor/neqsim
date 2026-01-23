@@ -15,7 +15,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  */
 public class CO2WaterPHTest {
-
   /**
    * Test that CO2-water system produces acidic pH.
    * 

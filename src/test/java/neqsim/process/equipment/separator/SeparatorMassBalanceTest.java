@@ -1,5 +1,8 @@
 package neqsim.process.equipment.separator;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -7,14 +10,11 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 /**
  * Comprehensive test suite for Separator mass balance and thermodynamic property calculations.
  * Tests edge cases including missing phases, zero flows, and negligible inlet flows.
  */
 public class SeparatorMassBalanceTest {
-
   private SystemInterface thermoSystem;
 
   @BeforeEach

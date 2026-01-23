@@ -3,15 +3,14 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosit
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.thermo.system.SystemSpanWagnerEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Tests for the CO2 viscosity model coupled with the Span–Wagner EOS over a wide range of
  * conditions.
  */
 public class CO2ViscosityMethodTest {
-
   @Test
   void testViscosityAcrossConditions() {
     // Expected values validated against NIST WebBook reference data

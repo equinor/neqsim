@@ -25,7 +25,6 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  */
 public class StirredCellMassTransferTest {
-
   /**
    * Test basic stirred cell mass transfer calculation.
    * 

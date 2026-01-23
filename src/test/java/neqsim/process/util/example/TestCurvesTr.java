@@ -3,7 +3,6 @@ package neqsim.process.util.example;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
@@ -14,9 +13,7 @@ import neqsim.process.equipment.util.StreamSaturatorUtil;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemPrEos;
 
-
 public class TestCurvesTr {
-
   /**
    * Creates and configures a test fluid system with natural gas composition.
    *
@@ -44,7 +41,6 @@ public class TestCurvesTr {
    */
   private PipeBeggsAndBrills createProcessingTrain(String trainName,
       neqsim.process.equipment.stream.StreamInterface inletStream, ProcessSystem processSystem) {
-
     PipeBeggsAndBrills inletPipe = new PipeBeggsAndBrills(trainName + " Inlet Pipe", inletStream);
     inletPipe.setLength(100.0); // meters
     inletPipe.setDiameter(0.7); // meters
@@ -73,7 +69,6 @@ public class TestCurvesTr {
 
   private StreamInterface createUpstreamCompressors(String trainName,
       neqsim.process.equipment.stream.StreamInterface inletStream, ProcessSystem processSystem) {
-
     // Print inlet conditions to diagnose pressure drop issues
     System.out.println("\n=== " + trainName + " INLET CONDITIONS ===");
     System.out
@@ -156,7 +151,6 @@ public class TestCurvesTr {
     PipeBeggsAndBrills train4Outlet =
         createProcessingTrain("Train4", splitter.getSplitStream(3), processSystem);
 
-
     ThreePhaseSeparator finalSeparator = new ThreePhaseSeparator("Final Separator");
     finalSeparator.addStream(train1Outlet.getOutletStream());
     finalSeparator.addStream(train2Outlet.getOutletStream());
@@ -173,7 +167,6 @@ public class TestCurvesTr {
 
     StreamInterface upstreamCompressorTrain1 =
         createUpstreamCompressors("ups1", splitter2.getSplitStream(0), processSystem);
-
 
     // Run the process system
     processSystem.run();
@@ -341,7 +334,6 @@ public class TestCurvesTr {
    */
   private String generateEclipseLiftCurve(ProcessSystem processSystem, String inletStreamName,
       double[] outletPressures, double[] flowRates) {
-
     StringBuilder vfp = new StringBuilder();
 
     // Get the inlet stream to modify flow rates
@@ -734,7 +726,4 @@ public class TestCurvesTr {
     Assertions.assertEquals(4921.7, compressor.getMinimumSpeed(), 0.01,
         "Min speed should be set from chart");
   }
-
-
-
 }
