@@ -126,8 +126,8 @@ public class CompressorDriver implements Serializable {
    *
    * <p>
    * If a tabular max power curve has been set using
-   * {@link #setMaxPowerSpeedCurve(double[], double[])}, the power will be linearly interpolated
-   * from the curve data.
+   * {@link #setMaxPowerSpeedCurve(double[], double[], String)}, the power will be linearly
+   * interpolated from the curve data.
    * </p>
    *
    * <p>

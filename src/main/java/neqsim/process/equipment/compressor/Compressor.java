@@ -1149,9 +1149,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
           // Calculate polytropic exponent from isentropic exponent and efficiency
           // n_poly = k_s / (1 - (k_s - 1) / k_s * (1 - eta_poly))
           // Simplified: use isenthalpicvolumeexponent as base
-          polytropicExponent = isenthalpicvolumeexponent
-              / (1.0 - (isenthalpicvolumeexponent - 1.0) / isenthalpicvolumeexponent
-                  * (1.0 - polytropicEfficiency));
+          polytropicExponent = isenthalpicvolumeexponent / (1.0 - (isenthalpicvolumeexponent - 1.0)
+              / isenthalpicvolumeexponent * (1.0 - polytropicEfficiency));
           double term = isenthalpicvolumeexponent / (isenthalpicvolumeexponent - 1.0)
               * (polytropicEfficiency);
           double term2 = 1e5 * (getOutletPressure() / densOutIsentropic - presinn / densInn);
@@ -3049,13 +3048,14 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    * {@inheritDoc}
    *
    * <p>
+   * <p>
    * For compressors, maximum capacity is determined in priority order:
+   * </p>
    * <ol>
    * <li>Driver speed-dependent max power curve (if driver and speed are set)</li>
    * <li>Mechanical design maximum power</li>
    * <li>Driver rated power with 10% overload margin</li>
    * </ol>
-   * </p>
    *
    * @return maximum design power in Watts (converted from kW if from driver)
    */

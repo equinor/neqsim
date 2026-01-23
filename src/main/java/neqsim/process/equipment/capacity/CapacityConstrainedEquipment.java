@@ -58,6 +58,7 @@ public interface CapacityConstrainedEquipment {
    * <li>Equipment near capacity lists ({@code ProcessSystem.getEquipmentNearCapacityLimit()})</li>
    * <li>Optimization constraint checking</li>
    * </ul>
+   * <p>
    * The equipment still calculates and tracks its constraints internally.
    * </p>
    *

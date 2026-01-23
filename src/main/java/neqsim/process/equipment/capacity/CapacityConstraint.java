@@ -518,6 +518,7 @@ public class CapacityConstraint implements Serializable {
    * <li>Optimization constraints</li>
    * <li>Near-limit warnings</li>
    * </ul>
+   * <p>
    * The constraint still tracks its current value and can be queried directly.
    * </p>
    *

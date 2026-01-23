@@ -270,9 +270,11 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
 
     double polytropicExponent = compressor.getPolytropicExponent();
 
-    // For natural gas with Schultz method, polytropic exponent is calculated
-    // Note: polytropicExponent may be 0 if not explicitly calculated in the Schultz path
-    // The Schultz method calculates nV internally but may not expose it via getPolytropicExponent
+    // Polytropic exponent should be calculated and be reasonable (typically 1.1 to 1.6 for gases)
+    assertTrue(polytropicExponent > 1.0 && polytropicExponent < 2.0,
+        "Polytropic exponent should be in reasonable range for gas compression: "
+            + polytropicExponent);
+
     // Validate that the calculation completed successfully by checking other outputs
     double polytropicHead = compressor.getPolytropicHead("kJ/kg");
     assertTrue(polytropicHead > 30.0 && polytropicHead < 150.0,
@@ -633,5 +635,74 @@ public class ASMEPTC10ValidationTest extends neqsim.NeqSimTest {
     double effDiff = Math.abs(calculatedEff - knownPolytropicEff) / knownPolytropicEff * 100.0;
     assertTrue(effDiff < 5.0, "Back-calculated efficiency (" + calculatedEff
         + ") should be within 5% of known (" + knownPolytropicEff + "): diff = " + effDiff + "%");
+  }
+
+  /**
+   * Test that polytropic exponent is always calculated regardless of calculation method.
+   *
+   * <p>
+   * The polytropic exponent should be returned (not 0) for all calculation methods: isentropic,
+   * polytropic with Schultz method, polytropic with default method.
+   * </p>
+   */
+  @Test
+  @DisplayName("Polytropic exponent should always be calculated")
+  public void testPolytropicExponentAlwaysCalculated() {
+    double inletPressure = 30.0; // bara
+    double inletTemperature = 25.0; // °C
+    double outletPressure = 60.0; // bara
+
+    // Test 1: Isentropic calculation
+    SystemInterface gasSystem1 = new SystemSrkEos(273.15 + inletTemperature, inletPressure);
+    gasSystem1.addComponent("methane", 0.90);
+    gasSystem1.addComponent("ethane", 0.05);
+    gasSystem1.addComponent("propane", 0.05);
+    gasSystem1.setMixingRule("classic");
+    gasSystem1.setTotalFlowRate(20000.0, "kg/hr");
+
+    Stream inletStream1 = new Stream("Inlet1", gasSystem1);
+    inletStream1.run();
+
+    Compressor compressor1 = new Compressor("Isentropic Comp", inletStream1);
+    compressor1.setOutletPressure(outletPressure);
+    compressor1.setIsentropicEfficiency(0.75);
+    compressor1.setUsePolytropicCalc(false); // Isentropic calculation
+    compressor1.run();
+
+    double n1 = compressor1.getPolytropicExponent();
+    assertTrue(n1 > 1.0, "Polytropic exponent should be > 1.0 for isentropic calc: " + n1);
+    assertTrue(n1 < 2.0, "Polytropic exponent should be < 2.0 for isentropic calc: " + n1);
+
+    // Test 2: Polytropic with Schultz method
+    SystemInterface gasSystem2 = gasSystem1.clone();
+    Stream inletStream2 = new Stream("Inlet2", gasSystem2);
+    inletStream2.run();
+
+    Compressor compressor2 = new Compressor("Polytropic Schultz", inletStream2);
+    compressor2.setOutletPressure(outletPressure);
+    compressor2.setPolytropicEfficiency(0.77);
+    compressor2.setUsePolytropicCalc(true);
+    compressor2.setPolytropicMethod("schultz");
+    compressor2.run();
+
+    double n2 = compressor2.getPolytropicExponent();
+    assertTrue(n2 > 1.0, "Polytropic exponent should be > 1.0 for Schultz method: " + n2);
+    assertTrue(n2 < 2.0, "Polytropic exponent should be < 2.0 for Schultz method: " + n2);
+
+    // Test 3: Polytropic with default method
+    SystemInterface gasSystem3 = gasSystem1.clone();
+    Stream inletStream3 = new Stream("Inlet3", gasSystem3);
+    inletStream3.run();
+
+    Compressor compressor3 = new Compressor("Polytropic Default", inletStream3);
+    compressor3.setOutletPressure(outletPressure);
+    compressor3.setPolytropicEfficiency(0.77);
+    compressor3.setUsePolytropicCalc(true);
+    compressor3.setPolytropicMethod("default");
+    compressor3.run();
+
+    double n3 = compressor3.getPolytropicExponent();
+    assertTrue(n3 > 1.0, "Polytropic exponent should be > 1.0 for default method: " + n3);
+    assertTrue(n3 < 2.0, "Polytropic exponent should be < 2.0 for default method: " + n3);
   }
 }
