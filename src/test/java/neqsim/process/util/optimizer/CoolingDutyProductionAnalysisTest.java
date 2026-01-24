@@ -1,9 +1,10 @@
-package neqsim.process.util.optimizer;
+﻿package neqsim.process.util.optimizer;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorDriver;
@@ -30,7 +31,7 @@ import neqsim.thermo.system.SystemPrEos;
  * Evaluates production increase per degree of cooling and required cooling duty.
  * 
  * <p>
- * This test sweeps through different cooling temperatures (0°C to 15°C cooling) and for each:
+ * This test sweeps through different cooling temperatures (0Â°C to 15Â°C cooling) and for each:
  * <ul>
  * <li>Builds the process with the specified cooling</li>
  * <li>Runs optimization to find maximum feasible production</li>
@@ -61,9 +62,9 @@ public class CoolingDutyProductionAnalysisTest {
    */
   @Test
   public void testProductionVsCoolingDuty() {
-    System.out.println("\n" + "=".repeat(80));
+    System.out.println("\n" + StringUtils.repeat("=", 80));
     System.out.println("COOLING DUTY vs PRODUCTION ANALYSIS");
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
 
     // Store results
     List<Double> coolingDeltaTs = new ArrayList<>();
@@ -76,28 +77,28 @@ public class CoolingDutyProductionAnalysisTest {
     double baselineFlow = runOptimizationWithCooling(0.0, coolingDeltaTs, coolingDuties,
         optimalFlows, productionIncreases, bottlenecks);
 
-    // Sweep cooling from 1°C to 15°C in 1°C increments
+    // Sweep cooling from 1Â°C to 15Â°C in 1Â°C increments
     for (double deltaT = 1.0; deltaT <= 15.0; deltaT += 1.0) {
       runOptimizationWithCooling(deltaT, coolingDeltaTs, coolingDuties, optimalFlows,
           productionIncreases, bottlenecks);
     }
 
-    // Cooling water parameters: inlet 10°C, outlet 20°C, ΔT = 10°C
-    double cpWater = 4.18; // kJ/(kg·K)
-    double waterDeltaT = 10.0; // °C (20°C out - 10°C in)
+    // Cooling water parameters: inlet 10Â°C, outlet 20Â°C, Î”T = 10Â°C
+    double cpWater = 4.18; // kJ/(kgÂ·K)
+    double waterDeltaT = 10.0; // Â°C (20Â°C out - 10Â°C in)
 
     // Gas standard density for conversion to MSm3/day
-    // Natural gas (mainly methane) at standard conditions (15°C, 1 atm): ~0.73 kg/Sm³
-    double gasStdDensity = 0.73; // kg/Sm³
+    // Natural gas (mainly methane) at standard conditions (15Â°C, 1 atm): ~0.73 kg/SmÂ³
+    double gasStdDensity = 0.73; // kg/SmÂ³
 
     // Print results as table
-    System.out.println("\n" + "=".repeat(140));
+    System.out.println("\n" + StringUtils.repeat("=", 140));
     System.out.println("RESULTS SUMMARY");
-    System.out.println("=".repeat(140));
+    System.out.println(StringUtils.repeat("=", 140));
     System.out.println(String.format("%-10s %-12s %-12s %-14s %-16s %-14s %-10s %s", "Cooling(C)",
         "Duty(MW)", "CW(m3/hr)", "Flow(MSm3/d)", "Flow(kg/hr)", "Increase(kg/hr)", "Incr(%)",
         "Bottleneck"));
-    System.out.println("-".repeat(140));
+    System.out.println(StringUtils.repeat("-", 140));
 
     for (int i = 0; i < coolingDeltaTs.size(); i++) {
       double increase = optimalFlows.get(i) - baselineFlow;
@@ -112,9 +113,9 @@ public class CoolingDutyProductionAnalysisTest {
     }
 
     // Print CSV format for plotting
-    System.out.println("\n" + "=".repeat(80));
+    System.out.println("\n" + StringUtils.repeat("=", 80));
     System.out.println("CSV DATA (copy for plotting)");
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
     System.out.println(
         "Cooling_DeltaT_C,Cooling_Duty_MW,Optimal_Flow_kg_hr,Production_Increase_kg_hr,Production_Increase_Percent,Bottleneck");
     for (int i = 0; i < coolingDeltaTs.size(); i++) {
@@ -126,12 +127,12 @@ public class CoolingDutyProductionAnalysisTest {
     }
 
     // Print efficiency metrics
-    System.out.println("\n" + "=".repeat(80));
+    System.out.println("\n" + StringUtils.repeat("=", 80));
     System.out.println("EFFICIENCY METRICS");
-    System.out.println("=".repeat(80));
-    System.out.println(String.format("%-12s %-20s %-25s", "Cooling(°C)", "kg/hr per MW cooling",
-        "kg/hr per °C cooling"));
-    System.out.println("-".repeat(60));
+    System.out.println(StringUtils.repeat("=", 80));
+    System.out.println(String.format("%-12s %-20s %-25s", "Cooling(Â°C)", "kg/hr per MW cooling",
+        "kg/hr per Â°C cooling"));
+    System.out.println(StringUtils.repeat("-", 60));
 
     for (int i = 1; i < coolingDeltaTs.size(); i++) {
       double increase = optimalFlows.get(i) - baselineFlow;
@@ -143,24 +144,24 @@ public class CoolingDutyProductionAnalysisTest {
     }
 
     // Print cooling water requirements
-    // Cooling water: inlet 10°C, outlet 20°C, ΔT = 10°C
-    // Q = m_water × Cp × ΔT => m_water = Q / (Cp × ΔT)
-    // Cp of water ≈ 4.18 kJ/(kg·K)
-    // m_water (kg/s) = Q (kW) / (4.18 × 10) = Q (MW) × 1000 / 41.8
+    // Cooling water: inlet 10Â°C, outlet 20Â°C, Î”T = 10Â°C
+    // Q = m_water Ã— Cp Ã— Î”T => m_water = Q / (Cp Ã— Î”T)
+    // Cp of water â‰ˆ 4.18 kJ/(kgÂ·K)
+    // m_water (kg/s) = Q (kW) / (4.18 Ã— 10) = Q (MW) Ã— 1000 / 41.8
 
-    System.out.println("\n" + "=".repeat(80));
-    System.out.println("COOLING WATER REQUIREMENTS (Inlet: 10°C, Outlet: 20°C)");
-    System.out.println("=".repeat(80));
-    System.out.println(String.format("%-12s %-15s %-18s %-18s %-15s", "Cooling(°C)", "Duty(MW)",
-        "CW Flow(kg/s)", "CW Flow(m³/hr)", "CW Flow(kg/hr)"));
-    System.out.println("-".repeat(80));
+    System.out.println("\n" + StringUtils.repeat("=", 80));
+    System.out.println("COOLING WATER REQUIREMENTS (Inlet: 10Â°C, Outlet: 20Â°C)");
+    System.out.println(StringUtils.repeat("=", 80));
+    System.out.println(String.format("%-12s %-15s %-18s %-18s %-15s", "Cooling(Â°C)", "Duty(MW)",
+        "CW Flow(kg/s)", "CW Flow(mÂ³/hr)", "CW Flow(kg/hr)"));
+    System.out.println(StringUtils.repeat("-", 80));
 
     for (int i = 0; i < coolingDeltaTs.size(); i++) {
       double duty = coolingDuties.get(i);
-      // m_water (kg/s) = Q (MW) × 1000 / (Cp × ΔT)
+      // m_water (kg/s) = Q (MW) Ã— 1000 / (Cp Ã— Î”T)
       double cwFlowKgS = duty * 1000.0 / (cpWater * waterDeltaT);
-      double cwFlowM3Hr = cwFlowKgS * 3600.0 / 1000.0; // Convert kg/s to m³/hr (assuming ~1000
-                                                       // kg/m³)
+      double cwFlowM3Hr = cwFlowKgS * 3600.0 / 1000.0; // Convert kg/s to mÂ³/hr (assuming ~1000
+                                                       // kg/mÂ³)
       double cwFlowKgHr = cwFlowKgS * 3600.0;
       System.out.println(String.format("%-12.1f %-15.2f %-18.1f %-18.1f %-15.0f",
           coolingDeltaTs.get(i), duty, cwFlowKgS, cwFlowM3Hr, cwFlowKgHr));
@@ -174,14 +175,14 @@ public class CoolingDutyProductionAnalysisTest {
       double maxIncrease = optimalFlows.get(optimalFlows.size() - 1) - baselineFlow;
       double maxIncreasePercent = (maxIncrease / baselineFlow) * 100;
 
-      System.out.println("\n" + "-".repeat(80));
-      System.out.println("SUMMARY AT MAXIMUM COOLING (15°C):");
+      System.out.println("\n" + StringUtils.repeat("-", 80));
+      System.out.println("SUMMARY AT MAXIMUM COOLING (15Â°C):");
       System.out.println(String.format("  Cooling duty required: %.2f MW", maxDuty));
-      System.out.println(String.format("  Cooling water flow:    %.0f kg/s = %.0f m³/hr",
+      System.out.println(String.format("  Cooling water flow:    %.0f kg/s = %.0f mÂ³/hr",
           maxCwFlowKgS, maxCwFlowM3Hr));
       System.out.println(String.format("  Production increase:   %.0f kg/hr (+%.2f%%)", maxIncrease,
           maxIncreasePercent));
-      System.out.println(String.format("  Production gain per m³/hr cooling water: %.1f kg/hr",
+      System.out.println(String.format("  Production gain per mÂ³/hr cooling water: %.1f kg/hr",
           maxIncrease / maxCwFlowM3Hr));
     }
 
@@ -192,7 +193,7 @@ public class CoolingDutyProductionAnalysisTest {
   /**
    * Runs optimization for a given cooling delta T and records results.
    *
-   * @param coolingDeltaT temperature drop in the cooler (°C)
+   * @param coolingDeltaT temperature drop in the cooler (Â°C)
    * @param coolingDeltaTs list to store delta T values
    * @param coolingDuties list to store cooling duties
    * @param optimalFlows list to store optimal flow rates
@@ -239,8 +240,8 @@ public class CoolingDutyProductionAnalysisTest {
     productionIncreases.add(result.getOptimalRate() - originalFlow);
     bottlenecks.add(result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A");
 
-    System.out
-        .println(String.format("Cooling ΔT=%.1f°C: Duty=%.2f MW, Optimal=%.0f kg/hr, Bottleneck=%s",
+    System.out.println(
+        String.format("Cooling Î”T=%.1fÂ°C: Duty=%.2f MW, Optimal=%.0f kg/hr, Bottleneck=%s",
             coolingDeltaT, coolingDuty, result.getOptimalRate(),
             result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A"));
 
@@ -250,7 +251,7 @@ public class CoolingDutyProductionAnalysisTest {
   /**
    * Builds the process system with specified cooling.
    *
-   * @param coolingDeltaT temperature drop in cooler (°C), 0 means no cooling
+   * @param coolingDeltaT temperature drop in cooler (Â°C), 0 means no cooling
    * @return configured ProcessSystem
    */
   private ProcessSystem buildProcess(double coolingDeltaT) {
@@ -533,9 +534,9 @@ public class CoolingDutyProductionAnalysisTest {
    */
   private void printAsciiPlot(List<Double> coolingDeltaTs, List<Double> optimalFlows,
       double baselineFlow) {
-    System.out.println("\n" + "=".repeat(80));
+    System.out.println("\n" + StringUtils.repeat("=", 80));
     System.out.println("PRODUCTION vs COOLING (ASCII Plot)");
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
 
     double minFlow = baselineFlow * 0.995;
     double maxFlow = optimalFlows.stream().mapToDouble(d -> d).max().orElse(baselineFlow) * 1.005;
@@ -548,29 +549,29 @@ public class CoolingDutyProductionAnalysisTest {
       int barLen = (int) ((flow - minFlow) / range * barWidth);
       barLen = Math.max(0, Math.min(barWidth, barLen));
 
-      String bar = "█".repeat(barLen);
+      String bar = StringUtils.repeat("#", barLen);
       double increasePercent = ((flow - baselineFlow) / baselineFlow) * 100;
-      System.out.println(String.format("%5.1f°C |%-50s| %.0f kg/hr (+%.2f%%)", deltaT, bar, flow,
+      System.out.println(String.format("%5.1fÂ°C |%-50s| %.0f kg/hr (+%.2f%%)", deltaT, bar, flow,
           increasePercent));
     }
 
-    System.out.println("\n        " + "-".repeat(50));
+    System.out.println("\n        " + StringUtils.repeat("-", 50));
     System.out.println(String.format("        %-25s %25s", String.format("%.0f", minFlow),
         String.format("%.0f kg/hr", maxFlow)));
   }
 
   /**
-   * Evaluates production loss due to pressure drop in cooler with NO cooling (0°C temperature
+   * Evaluates production loss due to pressure drop in cooler with NO cooling (0Â°C temperature
    * change). Sweeps pressure drop from 0 to 1 bar in 0.1 bar increments.
    */
   @Test
   public void testPressureDropEffectNoCooling() {
-    System.out.println("\n" + "=".repeat(100));
-    System.out.println("PRESSURE DROP EFFECT ON PRODUCTION (NO COOLING - 0°C temperature change)");
-    System.out.println("=".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("=", 100));
+    System.out.println("PRESSURE DROP EFFECT ON PRODUCTION (NO COOLING - 0Â°C temperature change)");
+    System.out.println(StringUtils.repeat("=", 100));
 
     // Gas standard density for conversion to MSm3/day
-    double gasStdDensity = 0.73; // kg/Sm³
+    double gasStdDensity = 0.73; // kg/SmÂ³
 
     // Store results
     List<Double> pressureDrops = new ArrayList<>();
@@ -579,7 +580,7 @@ public class CoolingDutyProductionAnalysisTest {
 
     // Sweep pressure drop from 0 to 1 bar in 0.1 bar increments
     for (double dP = 0.0; dP <= 1.05; dP += 0.1) {
-      ProcessSystem process = buildProcessWithPressureDrop(0.0, dP); // 0°C cooling, variable dP
+      ProcessSystem process = buildProcessWithPressureDrop(0.0, dP); // 0Â°C cooling, variable dP
       Stream inletStream = (Stream) process.getUnit("Inlet Stream");
       double originalFlow = inletStream.getFlowRate("kg/hr");
 
@@ -613,12 +614,12 @@ public class CoolingDutyProductionAnalysisTest {
     double baselineMSm3Day = baselineFlow / gasStdDensity * 24.0 / 1e6;
 
     // Print results table
-    System.out.println("\n" + "=".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("=", 100));
     System.out.println("RESULTS SUMMARY - PRESSURE DROP EFFECT (NO COOLING)");
-    System.out.println("=".repeat(100));
+    System.out.println(StringUtils.repeat("=", 100));
     System.out.println(String.format("%-10s %-14s %-16s %-16s %-12s %s", "dP(bar)", "Flow(MSm3/d)",
         "Flow(kg/hr)", "Loss(kg/hr)", "Loss(%)", "Bottleneck"));
-    System.out.println("-".repeat(100));
+    System.out.println(StringUtils.repeat("-", 100));
 
     for (int i = 0; i < pressureDrops.size(); i++) {
       double dP = pressureDrops.get(i);
@@ -637,7 +638,7 @@ public class CoolingDutyProductionAnalysisTest {
     double totalLossPercent = (totalLoss / baselineFlow) * 100;
     double lossPerBar = totalLoss / 1.0; // per bar
 
-    System.out.println("\n" + "-".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("-", 100));
     System.out.println("SUMMARY:");
     System.out.println(String.format("  Baseline (0 bar dP):    %.0f kg/hr = %.2f MSm3/day",
         baselineFlow, baselineMSm3Day));
@@ -650,9 +651,9 @@ public class CoolingDutyProductionAnalysisTest {
         lossPerBar, lossPerBar / gasStdDensity * 24.0 / 1e6));
 
     // Print ASCII plot
-    System.out.println("\n" + "=".repeat(80));
+    System.out.println("\n" + StringUtils.repeat("=", 80));
     System.out.println("PRODUCTION vs PRESSURE DROP (ASCII Plot)");
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
 
     double minFlow = optimalFlows.stream().mapToDouble(d -> d).min().orElse(baselineFlow) * 0.995;
     double maxFlow = baselineFlow * 1.005;
@@ -665,13 +666,13 @@ public class CoolingDutyProductionAnalysisTest {
       int barLen = (int) ((flow - minFlow) / range * barWidth);
       barLen = Math.max(0, Math.min(barWidth, barLen));
 
-      String bar = "█".repeat(barLen);
+      String bar = StringUtils.repeat("#", barLen);
       double lossPercent = ((baselineFlow - flow) / baselineFlow) * 100;
       System.out.println(
           String.format("%4.1f bar |%-50s| %.0f kg/hr (-%.2f%%)", dP, bar, flow, lossPercent));
     }
 
-    System.out.println("\n         " + "-".repeat(50));
+    System.out.println("\n         " + StringUtils.repeat("-", 50));
     System.out.println(String.format("         %-25s %25s", String.format("%.0f", minFlow),
         String.format("%.0f kg/hr", maxFlow)));
   }
@@ -679,7 +680,7 @@ public class CoolingDutyProductionAnalysisTest {
   /**
    * Builds the process system with specified cooling and pressure drop.
    *
-   * @param coolingDeltaT temperature drop in cooler (°C)
+   * @param coolingDeltaT temperature drop in cooler (Â°C)
    * @param pressureDrop pressure drop in cooler (bar)
    * @return configured ProcessSystem
    */
@@ -834,19 +835,19 @@ public class CoolingDutyProductionAnalysisTest {
    */
   @Test
   public void testProductionWithIdenticalCompressor1And2Curves() {
-    System.out.println("\n" + "=".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("=", 100));
     System.out.println("ANALYSIS WITH COMPRESSOR 2 USING SAME CURVE AS COMPRESSOR 1");
-    System.out.println("=".repeat(100));
+    System.out.println(StringUtils.repeat("=", 100));
     System.out
         .println("Scenario: ups2 Compressor now uses example_compressor_curve.json (same as ups1)");
     System.out.println();
 
     // Gas standard density for conversion to MSm3/day
-    double gasStdDensity = 0.73; // kg/Sm³
+    double gasStdDensity = 0.73; // kg/SmÂ³
 
     // Cooling water parameters
-    double cpWater = 4.18; // kJ/(kg·K)
-    double waterDeltaT = 10.0; // °C
+    double cpWater = 4.18; // kJ/(kgÂ·K)
+    double waterDeltaT = 10.0; // Â°C
 
     // Store results
     List<Double> coolingDeltaTs = new ArrayList<>();
@@ -859,20 +860,20 @@ public class CoolingDutyProductionAnalysisTest {
     double baselineFlow = runOptimizationWithIdenticalCompressors(0.0, coolingDeltaTs,
         coolingDuties, optimalFlows, productionIncreases, bottlenecks);
 
-    // Sweep cooling from 0.5°C to 15°C in 0.5°C increments for smoother curves
+    // Sweep cooling from 0.5Â°C to 15Â°C in 0.5Â°C increments for smoother curves
     for (double deltaT = 0.5; deltaT <= 15.0; deltaT += 0.5) {
       runOptimizationWithIdenticalCompressors(deltaT, coolingDeltaTs, coolingDuties, optimalFlows,
           productionIncreases, bottlenecks);
     }
 
     // Print results table
-    System.out.println("\n" + "=".repeat(140));
+    System.out.println("\n" + StringUtils.repeat("=", 140));
     System.out.println("RESULTS SUMMARY - COMPRESSOR 2 SAME AS COMPRESSOR 1");
-    System.out.println("=".repeat(140));
+    System.out.println(StringUtils.repeat("=", 140));
     System.out.println(String.format("%-10s %-12s %-12s %-14s %-16s %-14s %-10s %s", "Cooling(C)",
         "Duty(MW)", "CW(m3/hr)", "Flow(MSm3/d)", "Flow(kg/hr)", "Increase(kg/hr)", "Incr(%)",
         "Bottleneck"));
-    System.out.println("-".repeat(140));
+    System.out.println(StringUtils.repeat("-", 140));
 
     for (int i = 0; i < coolingDeltaTs.size(); i++) {
       double increase = optimalFlows.get(i) - baselineFlow;
@@ -886,9 +887,9 @@ public class CoolingDutyProductionAnalysisTest {
     }
 
     // Print comparison with original configuration
-    System.out.println("\n" + "=".repeat(80));
+    System.out.println("\n" + StringUtils.repeat("=", 80));
     System.out.println("COMPARISON: Original vs Identical Compressor Curves");
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
     System.out.println("\nOriginal configuration:");
     System.out.println("  - ups1: example_compressor_curve.json, VFD 44.4 MW, 7383 RPM");
     System.out.println("  - ups2: compressor_curve_ups2.json, VFD 44.4 MW, 7383 RPM");
@@ -909,17 +910,17 @@ public class CoolingDutyProductionAnalysisTest {
     double totalIncrease = maxCoolingFlow - baselineFlow;
     double totalIncreasePercent = (totalIncrease / baselineFlow) * 100;
 
-    System.out.println("\n" + "-".repeat(80));
+    System.out.println("\n" + StringUtils.repeat("-", 80));
     System.out.println("SUMMARY (Identical Compressor 1 & 2 Curves):");
-    System.out.println(String.format("  Baseline (0°C cooling): %.0f kg/hr = %.2f MSm3/day",
+    System.out.println(String.format("  Baseline (0Â°C cooling): %.0f kg/hr = %.2f MSm3/day",
         baselineFlow, baselineMSm3Day));
-    System.out.println(String.format("  At 15°C cooling:        %.0f kg/hr = %.2f MSm3/day",
+    System.out.println(String.format("  At 15Â°C cooling:        %.0f kg/hr = %.2f MSm3/day",
         maxCoolingFlow, maxCoolingMSm3Day));
     System.out.println(String.format("  Production increase:    %.0f kg/hr (+%.2f%%)",
         totalIncrease, totalIncreasePercent));
     System.out.println(String.format("  Bottleneck at baseline: %s", bottlenecks.get(0)));
     System.out.println(
-        String.format("  Bottleneck at 15°C:     %s", bottlenecks.get(bottlenecks.size() - 1)));
+        String.format("  Bottleneck at 15Â°C:     %s", bottlenecks.get(bottlenecks.size() - 1)));
   }
 
   /**
@@ -968,8 +969,8 @@ public class CoolingDutyProductionAnalysisTest {
         "  Speeds: ups1=%.0f, ups2=%.0f, ups3=%.0f RPM | Max util: %.1f%%", ups1.getSpeed(),
         ups2.getSpeed(), ups3.getSpeed(), result.getBottleneckUtilization() * 100));
 
-    System.out
-        .println(String.format("Cooling ΔT=%.1f°C: Duty=%.2f MW, Optimal=%.0f kg/hr, Bottleneck=%s",
+    System.out.println(
+        String.format("Cooling Î”T=%.1fÂ°C: Duty=%.2f MW, Optimal=%.0f kg/hr, Bottleneck=%s",
             coolingDeltaT, coolingDuty, result.getOptimalRate(),
             result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A"));
 
@@ -1112,9 +1113,9 @@ public class CoolingDutyProductionAnalysisTest {
    */
   @Test
   public void testPressureDropWithIdenticalCompressors() {
-    System.out.println("\n" + "=".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("=", 100));
     System.out.println("PRESSURE DROP EFFECT - COMPRESSOR 2 SAME AS COMPRESSOR 1 (NO COOLING)");
-    System.out.println("=".repeat(100));
+    System.out.println(StringUtils.repeat("=", 100));
 
     double gasStdDensity = 0.73;
 
@@ -1154,12 +1155,12 @@ public class CoolingDutyProductionAnalysisTest {
     double baselineFlow = optimalFlows.get(0);
     double baselineMSm3Day = baselineFlow / gasStdDensity * 24.0 / 1e6;
 
-    System.out.println("\n" + "=".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("=", 100));
     System.out.println("RESULTS SUMMARY - PRESSURE DROP (Identical Compressor Curves)");
-    System.out.println("=".repeat(100));
+    System.out.println(StringUtils.repeat("=", 100));
     System.out.println(String.format("%-10s %-14s %-16s %-16s %-12s %s", "dP(bar)", "Flow(MSm3/d)",
         "Flow(kg/hr)", "Loss(kg/hr)", "Loss(%)", "Bottleneck"));
-    System.out.println("-".repeat(100));
+    System.out.println(StringUtils.repeat("-", 100));
 
     for (int i = 0; i < pressureDrops.size(); i++) {
       double dP = pressureDrops.get(i);
@@ -1177,7 +1178,7 @@ public class CoolingDutyProductionAnalysisTest {
     double totalLoss = baselineFlow - maxDpFlow;
     double totalLossPercent = (totalLoss / baselineFlow) * 100;
 
-    System.out.println("\n" + "-".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("-", 100));
     System.out.println("SUMMARY (Identical Compressor Curves):");
     System.out.println(String.format("  Baseline (0 bar dP):    %.0f kg/hr = %.2f MSm3/day",
         baselineFlow, baselineMSm3Day));
@@ -1321,33 +1322,33 @@ public class CoolingDutyProductionAnalysisTest {
 
   /**
    * 2027 SCENARIO: Troll A with only 2 compressor trains (A & B Series). Compressor 3 stopped. Flow
-   * approximately 40 MSm³/day from Troll East. Both compressors A and B use identical curves.
+   * approximately 40 MSmÂ³/day from Troll East. Both compressors A and B use identical curves.
    * 
    * <p>
-   * Based on Troll A production forecast: - Total gas rate declining from ~60 MSm³/day in 2027 -
-   * Troll East (TE) contributing ~40 MSm³/day - 2-stage compression with A&B series only
+   * Based on Troll A production forecast: - Total gas rate declining from ~60 MSmÂ³/day in 2027 -
+   * Troll East (TE) contributing ~40 MSmÂ³/day - 2-stage compression with A&B series only
    * </p>
    */
   @Test
   public void test2027ScenarioTwoCompressorTrains() {
-    System.out.println("\n" + "=".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("=", 100));
     System.out
         .println("2027 SCENARIO: TROLL A WITH 2 COMPRESSOR TRAINS (A & B) - COMPRESSOR 3 STOPPED");
-    System.out.println("=".repeat(100));
+    System.out.println(StringUtils.repeat("=", 100));
     System.out.println("Configuration:");
     System.out.println("  - Compressor A: example_compressor_curve.json, VFD 44.4 MW, 7383 RPM");
     System.out.println(
         "  - Compressor B: example_compressor_curve.json, VFD 44.4 MW, 7383 RPM (identical)");
     System.out.println("  - Compressor 3: STOPPED (not in service)");
-    System.out.println("  - Design flow: ~40 MSm³/day (Troll East)");
+    System.out.println("  - Design flow: ~40 MSmÂ³/day (Troll East)");
     System.out.println();
 
     // Gas standard density for conversion to MSm3/day
-    double gasStdDensity = 0.73; // kg/Sm³
+    double gasStdDensity = 0.73; // kg/SmÂ³
 
     // Cooling water parameters
-    double cpWater = 4.18; // kJ/(kg·K)
-    double waterDeltaT = 10.0; // °C
+    double cpWater = 4.18; // kJ/(kgÂ·K)
+    double waterDeltaT = 10.0; // Â°C
 
     // Store results
     List<Double> coolingDeltaTs = new ArrayList<>();
@@ -1360,20 +1361,20 @@ public class CoolingDutyProductionAnalysisTest {
     double baselineFlow = runOptimization2027Scenario(0.0, coolingDeltaTs, coolingDuties,
         optimalFlows, productionIncreases, bottlenecks);
 
-    // Sweep cooling from 0.5°C to 15°C in 0.5°C increments
+    // Sweep cooling from 0.5Â°C to 15Â°C in 0.5Â°C increments
     for (double deltaT = 0.5; deltaT <= 15.0; deltaT += 0.5) {
       runOptimization2027Scenario(deltaT, coolingDeltaTs, coolingDuties, optimalFlows,
           productionIncreases, bottlenecks);
     }
 
     // Print results table
-    System.out.println("\n" + "=".repeat(140));
-    System.out.println("RESULTS SUMMARY - 2027 SCENARIO (2 COMPRESSOR TRAINS, 40 MSm³/day)");
-    System.out.println("=".repeat(140));
+    System.out.println("\n" + StringUtils.repeat("=", 140));
+    System.out.println("RESULTS SUMMARY - 2027 SCENARIO (2 COMPRESSOR TRAINS, 40 MSmÂ³/day)");
+    System.out.println(StringUtils.repeat("=", 140));
     System.out.println(String.format("%-10s %-12s %-12s %-14s %-16s %-14s %-10s %s", "Cooling(C)",
         "Duty(MW)", "CW(m3/hr)", "Flow(MSm3/d)", "Flow(kg/hr)", "Increase(kg/hr)", "Incr(%)",
         "Bottleneck"));
-    System.out.println("-".repeat(140));
+    System.out.println(StringUtils.repeat("-", 140));
 
     for (int i = 0; i < coolingDeltaTs.size(); i++) {
       double increase = optimalFlows.get(i) - baselineFlow;
@@ -1396,22 +1397,22 @@ public class CoolingDutyProductionAnalysisTest {
     double totalIncrease = maxCoolingFlow - baselineFlow;
     double totalIncreasePercent = (totalIncrease / baselineFlow) * 100;
 
-    System.out.println("\n" + "-".repeat(80));
+    System.out.println("\n" + StringUtils.repeat("-", 80));
     System.out.println("SUMMARY - 2027 SCENARIO (2 Compressor Trains A & B):");
-    System.out.println(String.format("  Baseline (0°C cooling): %.0f kg/hr = %.2f MSm3/day",
+    System.out.println(String.format("  Baseline (0Â°C cooling): %.0f kg/hr = %.2f MSm3/day",
         baselineFlow, baselineMSm3Day));
-    System.out.println(String.format("  At 15°C cooling:        %.0f kg/hr = %.2f MSm3/day",
+    System.out.println(String.format("  At 15Â°C cooling:        %.0f kg/hr = %.2f MSm3/day",
         maxCoolingFlow, maxCoolingMSm3Day));
     System.out.println(String.format("  Production increase:    %.0f kg/hr (+%.2f%%)",
         totalIncrease, totalIncreasePercent));
     System.out.println(String.format("  Bottleneck at baseline: %s", bottlenecks.get(0)));
     System.out.println(
-        String.format("  Bottleneck at 15°C:     %s", bottlenecks.get(bottlenecks.size() - 1)));
+        String.format("  Bottleneck at 15Â°C:     %s", bottlenecks.get(bottlenecks.size() - 1)));
 
-    // Calculate compressor utilization at 40 MSm³/day target
-    System.out.println("\n" + "=".repeat(80));
-    System.out.println("COMPRESSOR UTILIZATION AT DESIGN POINT (~40 MSm³/day)");
-    System.out.println("=".repeat(80));
+    // Calculate compressor utilization at 40 MSmÂ³/day target
+    System.out.println("\n" + StringUtils.repeat("=", 80));
+    System.out.println("COMPRESSOR UTILIZATION AT DESIGN POINT (~40 MSmÂ³/day)");
+    System.out.println(StringUtils.repeat("=", 80));
     double targetFlow = 40.0 * 1e6 * gasStdDensity / 24.0; // kg/hr
     System.out.println(String.format("  Target flow: %.0f kg/hr = 40.0 MSm3/day", targetFlow));
     System.out.println(String.format("  Baseline capacity: %.2f MSm3/day", baselineMSm3Day));
@@ -1429,10 +1430,10 @@ public class CoolingDutyProductionAnalysisTest {
    */
   @Test
   public void test2027ScenarioMaxCapacityWithCooling() {
-    System.out.println("\n" + "=".repeat(120));
+    System.out.println("\n" + StringUtils.repeat("=", 120));
     System.out.println(
         "2027 SCENARIO - MAX CAPACITY ANALYSIS WITH 2 COMPRESSOR TRAINS (A & B) - COOLING EFFECT");
-    System.out.println("=".repeat(120));
+    System.out.println(StringUtils.repeat("=", 120));
     System.out.println("Configuration:");
     System.out.println("  - Compressor A: example_compressor_curve.json, VFD 44.4 MW, 7383 RPM");
     System.out.println(
@@ -1443,12 +1444,12 @@ public class CoolingDutyProductionAnalysisTest {
     System.out.println();
 
     // Gas standard density for conversion to MSm3/day
-    double gasStdDensity = 0.73; // kg/Sm³
+    double gasStdDensity = 0.73; // kg/SmÂ³
 
     // Cooling water parameters
-    double cpWater = 4.18; // kJ/(kg·K) - specific heat of water
-    double waterDeltaT = 10.0; // °C (inlet 10°C, outlet 20°C)
-    double waterDensity = 1000.0; // kg/m³
+    double cpWater = 4.18; // kJ/(kgÂ·K) - specific heat of water
+    double waterDeltaT = 10.0; // Â°C (inlet 10Â°C, outlet 20Â°C)
+    double waterDensity = 1000.0; // kg/mÂ³
 
     // Store results
     List<Double> coolingDeltaTs = new ArrayList<>();
@@ -1462,26 +1463,26 @@ public class CoolingDutyProductionAnalysisTest {
     double baselineFlow = runOptimization2027MaxCapacity(0.0, coolingDeltaTs, coolingDuties,
         optimalFlows, productionIncreases, bottlenecks, coolingWaterFlows);
 
-    // Sweep cooling from 1°C to 15°C in 1°C increments
+    // Sweep cooling from 1Â°C to 15Â°C in 1Â°C increments
     for (double deltaT = 1.0; deltaT <= 15.0; deltaT += 1.0) {
       runOptimization2027MaxCapacity(deltaT, coolingDeltaTs, coolingDuties, optimalFlows,
           productionIncreases, bottlenecks, coolingWaterFlows);
     }
 
     // Print results table
-    System.out.println("\n" + "=".repeat(160));
+    System.out.println("\n" + StringUtils.repeat("=", 160));
     System.out.println("RESULTS SUMMARY - 2027 MAX CAPACITY (2 COMPRESSOR TRAINS A & B)");
-    System.out.println("=".repeat(160));
+    System.out.println(StringUtils.repeat("=", 160));
     System.out.println(String.format("%-10s %-12s %-14s %-14s %-16s %-16s %-10s %-10s %s",
         "Cooling(C)", "Duty(MW)", "CW(m3/hr)", "CW(kg/s)", "Flow(MSm3/d)", "Flow(kg/hr)",
         "Incr(kg/hr)", "Incr(%)", "Bottleneck"));
-    System.out.println("-".repeat(160));
+    System.out.println(StringUtils.repeat("-", 160));
 
     for (int i = 0; i < coolingDeltaTs.size(); i++) {
       double increase = optimalFlows.get(i) - baselineFlow;
       double increasePercent = (increase / baselineFlow) * 100;
       double duty = coolingDuties.get(i);
-      // Cooling water: Q = m_dot * Cp * ΔT => m_dot = Q / (Cp * ΔT)
+      // Cooling water: Q = m_dot * Cp * Î”T => m_dot = Q / (Cp * Î”T)
       double cwMassFlowKgS = (duty * 1e6) / (cpWater * 1000 * waterDeltaT); // kW / (J/kg-K * K)
       double cwVolFlowM3Hr = cwMassFlowKgS * 3600 / waterDensity;
       double flowMSm3Day = optimalFlows.get(i) / gasStdDensity * 24.0 / 1e6;
@@ -1501,54 +1502,54 @@ public class CoolingDutyProductionAnalysisTest {
     double maxCwFlowKgS = (maxDuty * 1e6) / (cpWater * 1000 * waterDeltaT);
     double maxCwFlowM3Hr = maxCwFlowKgS * 3600 / waterDensity;
 
-    System.out.println("\n" + "=".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("=", 100));
     System.out.println("SUMMARY - 2027 MAX CAPACITY (2 Compressor Trains A & B)");
-    System.out.println("=".repeat(100));
-    System.out.println(String.format("  Baseline (0°C cooling): %.0f kg/hr = %.2f MSm3/day",
+    System.out.println(StringUtils.repeat("=", 100));
+    System.out.println(String.format("  Baseline (0Â°C cooling): %.0f kg/hr = %.2f MSm3/day",
         baselineFlow, baselineMSm3Day));
-    System.out.println(String.format("  At 15°C cooling:        %.0f kg/hr = %.2f MSm3/day",
+    System.out.println(String.format("  At 15Â°C cooling:        %.0f kg/hr = %.2f MSm3/day",
         maxCoolingFlow, maxCoolingMSm3Day));
     System.out.println(String.format("  Production increase:    %.0f kg/hr (+%.2f%%)",
         totalIncrease, totalIncreasePercent));
     System.out.println(String.format("  Bottleneck at baseline: %s", bottlenecks.get(0)));
     System.out.println(
-        String.format("  Bottleneck at 15°C:     %s", bottlenecks.get(bottlenecks.size() - 1)));
+        String.format("  Bottleneck at 15Â°C:     %s", bottlenecks.get(bottlenecks.size() - 1)));
 
-    System.out.println("\n" + "-".repeat(80));
-    System.out.println("COOLING DUTY & WATER REQUIREMENTS AT 15°C COOLING:");
+    System.out.println("\n" + StringUtils.repeat("-", 80));
+    System.out.println("COOLING DUTY & WATER REQUIREMENTS AT 15Â°C COOLING:");
     System.out.println(String.format("  Cooling duty:           %.2f MW", maxDuty));
-    System.out.println(String.format("  Cooling water flow:     %.1f m³/hr", maxCwFlowM3Hr));
+    System.out.println(String.format("  Cooling water flow:     %.1f mÂ³/hr", maxCwFlowM3Hr));
     System.out.println(String.format("  Cooling water flow:     %.1f kg/s", maxCwFlowKgS));
-    System.out.println(String.format("  Water inlet temp:       10°C"));
-    System.out.println(String.format("  Water outlet temp:      20°C"));
-    System.out.println(String.format("  Water ΔT:               %.1f°C", waterDeltaT));
+    System.out.println(String.format("  Water inlet temp:       10Â°C"));
+    System.out.println(String.format("  Water outlet temp:      20Â°C"));
+    System.out.println(String.format("  Water Î”T:               %.1fÂ°C", waterDeltaT));
 
     // Calculate efficiency
     double productionPerMW = totalIncrease / maxDuty; // kg/hr per MW
-    double productionPerMWMSm3 = (totalIncrease / gasStdDensity * 24.0 / 1e6) / maxDuty; // MSm³/d
+    double productionPerMWMSm3 = (totalIncrease / gasStdDensity * 24.0 / 1e6) / maxDuty; // MSmÂ³/d
                                                                                          // per MW
-    System.out.println("\n" + "-".repeat(80));
+    System.out.println("\n" + StringUtils.repeat("-", 80));
     System.out.println("COOLING EFFICIENCY:");
     System.out.println(
         String.format("  Production gain per MW: %.0f kg/hr per MW of cooling", productionPerMW));
-    System.out.println(String.format("  Production gain per MW: %.3f MSm³/day per MW of cooling",
+    System.out.println(String.format("  Production gain per MW: %.3f MSmÂ³/day per MW of cooling",
         productionPerMWMSm3));
 
-    // Comparison with 40 MSm³/day target
+    // Comparison with 40 MSmÂ³/day target
     double targetFlow = 40.0 * 1e6 * gasStdDensity / 24.0;
     double headroom = (baselineFlow - targetFlow) / targetFlow * 100;
     double headroomWithCooling = (maxCoolingFlow - targetFlow) / targetFlow * 100;
-    System.out.println("\n" + "-".repeat(80));
-    System.out.println("COMPARISON WITH 40 MSm³/day TARGET (Troll East 2027):");
+    System.out.println("\n" + StringUtils.repeat("-", 80));
+    System.out.println("COMPARISON WITH 40 MSmÂ³/day TARGET (Troll East 2027):");
     System.out
         .println(String.format("  Target flow:            %.0f kg/hr = 40.0 MSm3/day", targetFlow));
     System.out.println(String.format("  Headroom (no cooling):  +%.1f%%", headroom));
-    System.out.println(String.format("  Headroom (15°C cool):   +%.1f%%", headroomWithCooling));
+    System.out.println(String.format("  Headroom (15Â°C cool):   +%.1f%%", headroomWithCooling));
 
     // Print ASCII plot
-    System.out.println("\n" + "=".repeat(80));
+    System.out.println("\n" + StringUtils.repeat("=", 80));
     System.out.println("PRODUCTION vs COOLING (ASCII Plot)");
-    System.out.println("=".repeat(80));
+    System.out.println(StringUtils.repeat("=", 80));
     printAsciiPlot(coolingDeltaTs, optimalFlows, baselineFlow);
   }
 
@@ -1598,7 +1599,7 @@ public class CoolingDutyProductionAnalysisTest {
     Compressor compA = (Compressor) process.getUnit("CompA Compressor");
     Compressor compB = (Compressor) process.getUnit("CompB Compressor");
     System.out.println(String.format(
-        "  ΔT=%.0f°C: Duty=%.2f MW, Speed A=%.0f B=%.0f RPM, Util=%.1f%%, Flow=%.2f MSm3/d",
+        "  Î”T=%.0fÂ°C: Duty=%.2f MW, Speed A=%.0f B=%.0f RPM, Util=%.1f%%, Flow=%.2f MSm3/d",
         coolingDeltaT, coolingDuty, compA.getSpeed(), compB.getSpeed(),
         result.getBottleneckUtilization() * 100, result.getOptimalRate() / 0.73 * 24 / 1e6));
 
@@ -1613,7 +1614,7 @@ public class CoolingDutyProductionAnalysisTest {
     ProcessSystem processSystem = new ProcessSystem();
 
     // Start at higher flow to allow optimization to find true maximum
-    // 2 compressors can handle ~46 MSm³/day based on previous run
+    // 2 compressors can handle ~46 MSmÂ³/day based on previous run
     double startFlowKgHr = 46.0 * 1e6 * 0.73 / 24.0; // ~1,398,333 kg/hr
 
     Stream inletStream = new Stream("Inlet Stream", testSystem);
@@ -1739,7 +1740,7 @@ public class CoolingDutyProductionAnalysisTest {
   /**
    * Builds process for 2027 max capacity with configurable cooling AND pressure drop.
    * 
-   * @param coolingDeltaT temperature drop in cooler (°C), 0 = no cooling
+   * @param coolingDeltaT temperature drop in cooler (Â°C), 0 = no cooling
    * @param pressureDrop pressure drop in cooler (bar)
    * @return configured ProcessSystem
    */
@@ -1868,7 +1869,7 @@ public class CoolingDutyProductionAnalysisTest {
    * 
    * <p>
    * This test isolates the effect of pressure drop on production capacity when there is no
-   * temperature change (0°C cooling). Useful for evaluating:
+   * temperature change (0Â°C cooling). Useful for evaluating:
    * <ul>
    * <li>Impact of cooler/heat exchanger pressure drop</li>
    * <li>Effect of adding equipment (filters, separators) in the gas path</li>
@@ -1878,13 +1879,13 @@ public class CoolingDutyProductionAnalysisTest {
    */
   @Test
   public void test2027PressureDropEffectNoCooling() {
-    System.out.println("\n" + "=".repeat(130));
+    System.out.println("\n" + StringUtils.repeat("=", 130));
     System.out.println("2027 SCENARIO - PRESSURE DROP EFFECT ON PRODUCTION (NO COOLING)");
-    System.out.println("=".repeat(130));
+    System.out.println(StringUtils.repeat("=", 130));
     System.out.println("Configuration:");
     System.out.println("  - 2 Compressor trains (A & B) with identical curves");
     System.out.println("  - Smooth VFD motor power curve (no discrete steps)");
-    System.out.println("  - Temperature change: 0°C (no cooling)");
+    System.out.println("  - Temperature change: 0Â°C (no cooling)");
     System.out.println("  - Pressure drop sweep: 0.0 to 1.0 bar in 0.1 bar increments");
     System.out.println();
 
@@ -1943,13 +1944,13 @@ public class CoolingDutyProductionAnalysisTest {
     double baselinePressure = compressorInletPressures.get(0);
 
     // Print detailed results table
-    System.out.println("\n" + "=".repeat(150));
+    System.out.println("\n" + StringUtils.repeat("=", 150));
     System.out.println("DETAILED RESULTS - PRESSURE DROP EFFECT (NO COOLING)");
-    System.out.println("=".repeat(150));
+    System.out.println(StringUtils.repeat("=", 150));
     System.out.println(String.format("%-8s %-12s %-12s %-12s %-12s %-14s %-14s %-12s %s", "dP(bar)",
         "P_in(bar)", "Speed(RPM)", "Power(MW)", "Flow(MSm3/d)", "Loss(MSm3/d)", "Loss(%)",
         "Loss/0.1bar", "Bottleneck"));
-    System.out.println("-".repeat(150));
+    System.out.println(StringUtils.repeat("-", 150));
 
     double prevFlow = baselineFlow;
     for (int i = 0; i < pressureDrops.size(); i++) {
@@ -1981,23 +1982,23 @@ public class CoolingDutyProductionAnalysisTest {
     double lossPerBar = totalLossMSm3 / 1.0;
     double finalPressure = compressorInletPressures.get(compressorInletPressures.size() - 1);
 
-    System.out.println("\n" + "=".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("=", 100));
     System.out.println("SUMMARY");
-    System.out.println("=".repeat(100));
-    System.out.println(String.format("  Baseline (0 bar dP):      %.2f MSm³/day at %.2f bar inlet",
+    System.out.println(StringUtils.repeat("=", 100));
+    System.out.println(String.format("  Baseline (0 bar dP):      %.2f MSmÂ³/day at %.2f bar inlet",
         baselineMSm3Day, baselinePressure));
-    System.out.println(String.format("  At 1.0 bar dP:            %.2f MSm³/day at %.2f bar inlet",
+    System.out.println(String.format("  At 1.0 bar dP:            %.2f MSmÂ³/day at %.2f bar inlet",
         maxDpMSm3Day, finalPressure));
-    System.out.println(String.format("  Total production loss:    %.2f MSm³/day (%.2f%%)",
+    System.out.println(String.format("  Total production loss:    %.2f MSmÂ³/day (%.2f%%)",
         totalLossMSm3, totalLossPercent));
     System.out
-        .println(String.format("  Loss per 0.1 bar dP:      ~%.3f MSm³/day", lossPerBar / 10));
-    System.out.println(String.format("  Loss per 1.0 bar dP:      ~%.2f MSm³/day", lossPerBar));
+        .println(String.format("  Loss per 0.1 bar dP:      ~%.3f MSmÂ³/day", lossPerBar / 10));
+    System.out.println(String.format("  Loss per 1.0 bar dP:      ~%.2f MSmÂ³/day", lossPerBar));
 
     // ASCII plot
-    System.out.println("\n" + "=".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("=", 100));
     System.out.println("PRODUCTION vs PRESSURE DROP (ASCII Plot)");
-    System.out.println("=".repeat(100));
+    System.out.println(StringUtils.repeat("=", 100));
 
     double minFlowPlot =
         optimalFlows.stream().mapToDouble(d -> d).min().orElse(baselineFlow) * 0.995;
@@ -2015,33 +2016,33 @@ public class CoolingDutyProductionAnalysisTest {
       StringBuilder bar = new StringBuilder();
       for (int j = 0; j < barWidth; j++) {
         if (j < barLen) {
-          bar.append("█");
+          bar.append("â–ˆ");
         } else {
           bar.append(" ");
         }
       }
 
       double lossPercent = ((baselineFlow - flow) / baselineFlow) * 100;
-      System.out.println(String.format("%4.1f bar |%s| %.2f MSm³/d (-%.2f%%)", dP, bar.toString(),
+      System.out.println(String.format("%4.1f bar |%s| %.2f MSmÂ³/d (-%.2f%%)", dP, bar.toString(),
           flowMSm3, lossPercent));
     }
 
-    System.out.println("        |" + " ".repeat(barWidth) + "|");
+    System.out.println("        |" + StringUtils.repeat(" ", barWidth) + "|");
     System.out.println(
-        String.format("         %.2f%s%.2f MSm³/d", minFlowPlot / gasStdDensity * 24.0 / 1e6,
-            " ".repeat(barWidth - 12), maxFlowPlot / gasStdDensity * 24.0 / 1e6));
+        String.format("         %.2f%s%.2f MSmÂ³/d", minFlowPlot / gasStdDensity * 24.0 / 1e6,
+            StringUtils.repeat(" ", barWidth - 12), maxFlowPlot / gasStdDensity * 24.0 / 1e6));
 
     // Key insight
-    System.out.println("\n" + "=".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("=", 100));
     System.out.println("KEY INSIGHTS");
-    System.out.println("=".repeat(100));
+    System.out.println(StringUtils.repeat("=", 100));
     System.out.println("  - Pressure drop directly reduces compressor inlet pressure");
     System.out.println("  - Lower inlet pressure = higher compression ratio needed");
     System.out.println("  - Higher compression ratio = more power required per unit flow");
     System.out.println("  - With fixed power limit, throughput decreases");
     System.out.println();
-    System.out.println(
-        String.format("  RULE OF THUMB: ~%.2f MSm³/day lost per bar of pressure drop", lossPerBar));
+    System.out.println(String
+        .format("  RULE OF THUMB: ~%.2f MSmÂ³/day lost per bar of pressure drop", lossPerBar));
   }
 
   /**
@@ -2087,8 +2088,8 @@ public class CoolingDutyProductionAnalysisTest {
     System.out.println(String.format("  Speeds: CompA=%.0f, CompB=%.0f RPM | Max util: %.1f%%",
         compA.getSpeed(), compB.getSpeed(), result.getBottleneckUtilization() * 100));
 
-    System.out
-        .println(String.format("Cooling ΔT=%.1f°C: Duty=%.2f MW, Optimal=%.0f kg/hr, Bottleneck=%s",
+    System.out.println(
+        String.format("Cooling Î”T=%.1fÂ°C: Duty=%.2f MW, Optimal=%.0f kg/hr, Bottleneck=%s",
             coolingDeltaT, coolingDuty, result.getOptimalRate(),
             result.getBottleneck() != null ? result.getBottleneck().getName() : "N/A"));
 
@@ -2097,13 +2098,13 @@ public class CoolingDutyProductionAnalysisTest {
 
   /**
    * Builds process for 2027 scenario with only 2 compressor trains (A & B). Flow rate set to
-   * approximately 40 MSm³/day (Troll East).
+   * approximately 40 MSmÂ³/day (Troll East).
    */
   private ProcessSystem buildProcess2027Scenario(double coolingDeltaT) {
     SystemInterface testSystem = createTestFluid();
     ProcessSystem processSystem = new ProcessSystem();
 
-    // 40 MSm³/day = 40e6 Sm³/day × 0.73 kg/Sm³ / 24 hr = 1,216,667 kg/hr
+    // 40 MSmÂ³/day = 40e6 SmÂ³/day Ã— 0.73 kg/SmÂ³ / 24 hr = 1,216,667 kg/hr
     double flowRate2027 = 40.0 * 1e6 * 0.73 / 24.0; // ~1,216,667 kg/hr
 
     Stream inletStream = new Stream("Inlet Stream", testSystem);
@@ -2279,10 +2280,10 @@ public class CoolingDutyProductionAnalysisTest {
    */
   @Test
   public void test2027DiagnosticCompressorBehavior() {
-    System.out.println("\n" + "=".repeat(150));
+    System.out.println("\n" + StringUtils.repeat("=", 150));
     System.out.println("DIAGNOSTIC: COMPRESSOR OPERATING POINT ANALYSIS - WHY OSCILLATION?");
-    System.out.println("=".repeat(150));
-    System.out.println("Investigating why production dips at 4-5°C and 7°C cooling");
+    System.out.println(StringUtils.repeat("=", 150));
+    System.out.println("Investigating why production dips at 4-5Â°C and 7Â°C cooling");
     System.out.println();
 
     double gasStdDensity = 0.73;
@@ -2292,31 +2293,31 @@ public class CoolingDutyProductionAnalysisTest {
         "%-6s %-10s %-10s %-10s %-10s %-10s %-12s %-10s %-10s %-12s %-10s %-10s %-10s", "Cool",
         "P_in(bar)", "P_out(bar)", "T_in(C)", "T_out(C)", "Density", "Act.Vol(m3/h)", "Speed",
         "Util(%)", "Flow(MSm3)", "Head(kJ)", "Power(MW)", "MaxPwr(MW)"));
-    System.out.println("-".repeat(150));
+    System.out.println(StringUtils.repeat("-", 150));
 
-    // Sweep cooling from 0°C to 15°C
+    // Sweep cooling from 0Â°C to 15Â°C
     for (double deltaT = 0.0; deltaT <= 15.0; deltaT += 1.0) {
       analyzeCompressorOperatingPoint(deltaT, gasStdDensity);
     }
 
     // Now show more detail for the problematic range
-    System.out.println("\n" + "=".repeat(150));
-    System.out.println("DETAILED ANALYSIS: 3-8°C COOLING (PROBLEMATIC ZONE)");
-    System.out.println("=".repeat(150));
+    System.out.println("\n" + StringUtils.repeat("=", 150));
+    System.out.println("DETAILED ANALYSIS: 3-8Â°C COOLING (PROBLEMATIC ZONE)");
+    System.out.println(StringUtils.repeat("=", 150));
     System.out.println(String.format(
         "%-6s %-10s %-10s %-10s %-10s %-10s %-12s %-10s %-10s %-12s %-10s %-10s %-10s", "Cool",
         "P_in(bar)", "P_out(bar)", "T_in(C)", "T_out(C)", "Density", "Act.Vol(m3/h)", "Speed",
         "Util(%)", "Flow(MSm3)", "Head(kJ)", "Power(MW)", "MaxPwr(MW)"));
-    System.out.println("-".repeat(150));
+    System.out.println(StringUtils.repeat("-", 150));
 
     for (double deltaT = 3.0; deltaT <= 8.0; deltaT += 0.5) {
       analyzeCompressorOperatingPoint(deltaT, gasStdDensity);
     }
 
     // ASCII pressure plot
-    System.out.println("\n" + "=".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("=", 100));
     System.out.println("COMPRESSOR INLET PRESSURE vs COOLING (shows effect of cooler dP)");
-    System.out.println("=".repeat(100));
+    System.out.println(StringUtils.repeat("=", 100));
     printPressureAnalysis();
   }
 
@@ -2381,7 +2382,7 @@ public class CoolingDutyProductionAnalysisTest {
     System.out.println("  Compressor inlet:       ~34.2-34.4 bara");
     System.out.println();
     System.out.println("ROOT CAUSE IDENTIFIED: VFD Motor Power-Speed Curve!");
-    System.out.println("=".repeat(60));
+    System.out.println(StringUtils.repeat("=", 60));
     System.out.println("The driver max power varies with speed:");
     System.out.println("  At 7050-7070 RPM: MaxPwr = 44.40 MW (full power)");
     System.out.println("  At 6950-6965 RPM: MaxPwr = 43.75-43.82 MW (reduced)");
@@ -2412,17 +2413,17 @@ public class CoolingDutyProductionAnalysisTest {
    */
   @Test
   public void testCompressorMapOperatingPoints() {
-    System.out.println("\n" + "=".repeat(150));
+    System.out.println("\n" + StringUtils.repeat("=", 150));
     System.out
         .println("COMPRESSOR MAP VISUALIZATION - OPERATING POINTS AT DIFFERENT COOLING LEVELS");
-    System.out.println("=".repeat(150));
+    System.out.println(StringUtils.repeat("=", 150));
     System.out.println();
 
     double gasStdDensity = 0.73;
 
     // First, print the compressor chart data (speed curves)
     System.out.println("COMPRESSOR MAP (from example_compressor_curve.json)");
-    System.out.println("=".repeat(100));
+    System.out.println(StringUtils.repeat("=", 100));
     System.out.println("Speed curves define: Flow (m3/hr) vs Polytropic Head (kJ/kg)");
     System.out.println();
 
@@ -2459,7 +2460,7 @@ public class CoolingDutyProductionAnalysisTest {
     System.out.println("SPEED CURVE SUMMARY:");
     System.out.println(String.format("%-12s %-18s %-18s %-18s %-18s", "Speed(RPM)",
         "Min Flow(m3/h)", "Max Flow(m3/h)", "Max Head(kJ/kg)", "Min Head(kJ/kg)"));
-    System.out.println("-".repeat(85));
+    System.out.println(StringUtils.repeat("-", 85));
     for (int i = 0; i < speeds.length; i++) {
       double minFlow = flows[i][0];
       double maxFlow = flows[i][flows[i].length - 1];
@@ -2470,13 +2471,13 @@ public class CoolingDutyProductionAnalysisTest {
     }
 
     // Now collect operating points at different cooling levels
-    System.out.println("\n" + "=".repeat(150));
+    System.out.println("\n" + StringUtils.repeat("=", 150));
     System.out.println("OPERATING POINTS AT DIFFERENT COOLING LEVELS");
-    System.out.println("=".repeat(150));
+    System.out.println(StringUtils.repeat("=", 150));
     System.out.println(String.format("%-8s %-12s %-12s %-12s %-14s %-10s %-12s %-10s %-10s",
         "Cool(C)", "Speed(RPM)", "Flow(m3/h)", "Head(kJ/kg)", "Flow(MSm3/d)", "Power(MW)",
         "MaxPwr(MW)", "Util(%)", "Status"));
-    System.out.println("-".repeat(150));
+    System.out.println(StringUtils.repeat("-", 150));
 
     // Store operating points for visualization
     List<double[]> operatingPoints = new ArrayList<>(); // [cooling, speed, flow, head]
@@ -2503,27 +2504,27 @@ public class CoolingDutyProductionAnalysisTest {
     }
 
     // ASCII visualization of compressor map with operating points
-    System.out.println("\n" + "=".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("=", 100));
     System.out.println("ASCII COMPRESSOR MAP (Flow vs Head)");
-    System.out.println("=".repeat(100));
+    System.out.println(StringUtils.repeat("=", 100));
     printCompressorMapASCII(speeds, flows, heads, operatingPoints);
 
     // ASCII visualization showing operating points relative to speed curves
-    System.out.println("\n" + "=".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("=", 100));
     System.out.println("OPERATING POINT TRAJECTORY (Speed vs Flow)");
-    System.out.println("=".repeat(100));
+    System.out.println(StringUtils.repeat("=", 100));
     printSpeedFlowASCII(speeds, flows, operatingPoints);
 
     // Show the oscillation pattern visually
-    System.out.println("\n" + "=".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("=", 100));
     System.out.println("FLOW vs COOLING (shows oscillation pattern)");
-    System.out.println("=".repeat(100));
+    System.out.println(StringUtils.repeat("=", 100));
     printFlowOscillationASCII(operatingPoints);
 
     // Key observations
-    System.out.println("\n" + "=".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("=", 100));
     System.out.println("KEY OBSERVATIONS:");
-    System.out.println("=".repeat(100));
+    System.out.println(StringUtils.repeat("=", 100));
     System.out.println();
     System.out.println("1. Operating points move along the compressor map as cooling changes");
     System.out
@@ -2534,11 +2535,11 @@ public class CoolingDutyProductionAnalysisTest {
     System.out.println("   - At ~6679-6900 RPM: Only ~42.6-43.0 MW available");
     System.out.println();
     System.out.println("4. This causes the oscillation:");
-    System.out.println("   - 0°C cooling: Speed ~6965 RPM -> power limited -> lower flow");
-    System.out.println("   - 3°C cooling: Speed ~7066 RPM -> full power -> higher flow");
-    System.out.println("   - 4°C cooling: Speed ~6963 RPM -> power limited -> lower flow");
-    System.out.println("   - 6°C cooling: Speed ~7048 RPM -> full power -> higher flow");
-    System.out.println("   - 7°C cooling: Speed ~6937 RPM -> power limited -> lower flow");
+    System.out.println("   - 0Â°C cooling: Speed ~6965 RPM -> power limited -> lower flow");
+    System.out.println("   - 3Â°C cooling: Speed ~7066 RPM -> full power -> higher flow");
+    System.out.println("   - 4Â°C cooling: Speed ~6963 RPM -> power limited -> lower flow");
+    System.out.println("   - 6Â°C cooling: Speed ~7048 RPM -> full power -> higher flow");
+    System.out.println("   - 7Â°C cooling: Speed ~6937 RPM -> power limited -> lower flow");
     System.out.println();
     System.out.println("5. The compressor map interpolation is working correctly!");
     System.out.println("   The oscillation is a REAL physical effect from the motor driver.");
@@ -2652,9 +2653,9 @@ public class CoolingDutyProductionAnalysisTest {
       }
       System.out.println(new String(grid[i]));
     }
-    System.out.println("       +" + "-".repeat(width));
-    System.out
-        .println(String.format("       %6.0f%s%6.0f", minFlow, " ".repeat(width - 12), maxFlow));
+    System.out.println("       +" + StringUtils.repeat("-", width));
+    System.out.println(String.format("       %6.0f%s%6.0f", minFlow,
+        StringUtils.repeat(" ", width - 12), maxFlow));
     System.out.println("                           Flow (m3/hr)");
 
     // Legend
@@ -2682,7 +2683,7 @@ public class CoolingDutyProductionAnalysisTest {
     // Draw speed bands with power limits
     System.out.println("Speed bands and VFD motor power limits:");
     System.out.println("  7383 |--------------------| Full Power Zone (44.4 MW)");
-    System.out.println("  7031 |--------------------| ← Transition zone");
+    System.out.println("  7031 |--------------------| â† Transition zone");
     System.out.println("  6679 |--------------------| Reduced Power Zone (~42.6 MW)");
     System.out.println("  6328 |--------------------| Lower Power Zone");
     System.out.println();
@@ -2711,13 +2712,13 @@ public class CoolingDutyProductionAnalysisTest {
       }
 
       String powerStatus = maxPwr >= 44.3 ? "FULL" : "LIMITED";
-      System.out.println(String.format("%4.0f°C |%s| %.0f RPM, %.2f MSm3/d, %.1f MW max [%s]",
+      System.out.println(String.format("%4.0fÂ°C |%s| %.0f RPM, %.2f MSm3/d, %.1f MW max [%s]",
           cooling, line.toString(), speed, flowMSm3, maxPwr, powerStatus));
     }
 
-    System.out.println("       |" + " ".repeat(width) + "|");
-    System.out.println(
-        String.format("     %5.0f%s%5.0f RPM", minSpeed, " ".repeat(width - 10), maxSpeed));
+    System.out.println("       |" + StringUtils.repeat(" ", width) + "|");
+    System.out.println(String.format("     %5.0f%s%5.0f RPM", minSpeed,
+        StringUtils.repeat(" ", width - 10), maxSpeed));
   }
 
   /**
@@ -2741,7 +2742,7 @@ public class CoolingDutyProductionAnalysisTest {
 
     System.out.println("\nProduction (MSm3/day) vs Cooling Temperature");
     System.out.println();
-    System.out.println(String.format("Flow (MSm3/d) | Cooling(°C)"));
+    System.out.println(String.format("Flow (MSm3/d) | Cooling(Â°C)"));
     System.out.println(String.format("%.2f          |", maxFlow));
 
     for (int i = 0; i < operatingPoints.size(); i++) {
@@ -2756,24 +2757,24 @@ public class CoolingDutyProductionAnalysisTest {
       StringBuilder bar = new StringBuilder();
       for (int j = 0; j < width; j++) {
         if (j == pos) {
-          bar.append("█");
+          bar.append("â–ˆ");
         } else if (j < pos) {
-          bar.append("░");
+          bar.append("â–‘");
         } else {
           bar.append(" ");
         }
       }
 
-      String marker = maxPwr >= 44.3 ? " ← full power" : " ← LIMITED";
+      String marker = maxPwr >= 44.3 ? " â† full power" : " â† LIMITED";
       if (i == 0 || (i > 0 && flow < operatingPoints.get(i - 1)[4])) {
-        marker = " ← DIP (power limited)";
+        marker = " â† DIP (power limited)";
       }
-      System.out.println(String.format("              |%s %4.0f°C (%.2f)%s", bar.toString(),
+      System.out.println(String.format("              |%s %4.0fÂ°C (%.2f)%s", bar.toString(),
           cooling, flow, marker));
     }
 
     System.out.println(String.format("%.2f          |", minFlow));
-    System.out.println("              +" + "-".repeat(width));
+    System.out.println("              +" + StringUtils.repeat("-", width));
   }
 
   /**
@@ -2786,10 +2787,10 @@ public class CoolingDutyProductionAnalysisTest {
    */
   @Test
   public void test2026ScenarioCoolingAnalysisThreeCompressors() {
-    System.out.println("\n" + "=".repeat(110));
+    System.out.println("\n" + StringUtils.repeat("=", 110));
     System.out.println(
         "2026 SCENARIO: COOLING EFFECT ANALYSIS - 3 COMPRESSORS (UPS1=UPS2 BUNDLE, UPS3 IN OPERATION)");
-    System.out.println("=".repeat(110));
+    System.out.println(StringUtils.repeat("=", 110));
     System.out.println("Configuration:");
     System.out
         .println("  - Compressor 1 (ups1): example_compressor_curve.json, 44.4 MW max @ 7383 RPM");
@@ -2797,17 +2798,17 @@ public class CoolingDutyProductionAnalysisTest {
     System.out.println("  - Compressor 3 (ups3): compressor_curve_ups3.json, 50 MW max @ 6726 RPM");
     System.out.println("  - All compressors use SMOOTH VFD motor power curves");
     System.out.println("  - Cooler pressure drop: 0.5 bar");
-    System.out.println("  - Cooling water: 10°C inlet, 20°C outlet (ΔT = 10°C)");
-    System.out.println("=".repeat(110));
+    System.out.println("  - Cooling water: 10Â°C inlet, 20Â°C outlet (Î”T = 10Â°C)");
+    System.out.println(StringUtils.repeat("=", 110));
 
     // Gas standard density for conversion to MSm3/day
-    double gasStdDensity = 0.73; // kg/Sm³
+    double gasStdDensity = 0.73; // kg/SmÂ³
 
     // Cooling water properties
-    double coolingWaterInletTemp = 10.0; // °C
-    double coolingWaterOutletTemp = 20.0; // °C
-    double coolingWaterDeltaT = coolingWaterOutletTemp - coolingWaterInletTemp; // 10°C
-    double coolingWaterCp = 4.18; // kJ/(kg·K)
+    double coolingWaterInletTemp = 10.0; // Â°C
+    double coolingWaterOutletTemp = 20.0; // Â°C
+    double coolingWaterDeltaT = coolingWaterOutletTemp - coolingWaterInletTemp; // 10Â°C
+    double coolingWaterCp = 4.18; // kJ/(kgÂ·K)
 
     // Store results for table output
     List<double[]> results = new ArrayList<>();
@@ -2836,11 +2837,11 @@ public class CoolingDutyProductionAnalysisTest {
     String baselineBottleneck =
         baselineResult.getBottleneck() != null ? baselineResult.getBottleneck().getName() : "N/A";
 
-    System.out.println(String.format("\nBaseline (no cooling): %.2f MSm³/day (%.0f kg/hr)",
+    System.out.println(String.format("\nBaseline (no cooling): %.2f MSmÂ³/day (%.0f kg/hr)",
         baselineMSm3Day, baselineFlow));
     System.out.println(String.format("Baseline bottleneck: %s", baselineBottleneck));
 
-    // Sweep cooling from 0 to 15°C
+    // Sweep cooling from 0 to 15Â°C
     for (double coolingDeltaT = 0.0; coolingDeltaT <= 15.5; coolingDeltaT += 1.0) {
       ProcessSystem process = buildProcessWithIdenticalCompressors(coolingDeltaT);
       Stream inletStream = (Stream) process.getUnit("Inlet Stream");
@@ -2864,11 +2865,11 @@ public class CoolingDutyProductionAnalysisTest {
       double coolingDutyMW = coolingDutyKW / 1000.0;
 
       // Calculate cooling water requirement
-      // Q = m * Cp * ΔT => m = Q / (Cp * ΔT)
+      // Q = m * Cp * Î”T => m = Q / (Cp * Î”T)
       double coolingWaterMassFlowKgS =
           (coolingDutyKW > 0) ? coolingDutyKW / (coolingWaterCp * coolingWaterDeltaT) : 0.0;
       double coolingWaterMassFlowKgHr = coolingWaterMassFlowKgS * 3600.0;
-      double coolingWaterVolFlowM3Hr = coolingWaterMassFlowKgHr / 1000.0; // density ~ 1000 kg/m³
+      double coolingWaterVolFlowM3Hr = coolingWaterMassFlowKgHr / 1000.0; // density ~ 1000 kg/mÂ³
 
       double optimalFlow = result.getOptimalRate();
       double flowMSm3Day = optimalFlow / gasStdDensity * 24.0 / 1e6;
@@ -2884,20 +2885,20 @@ public class CoolingDutyProductionAnalysisTest {
           increasePercent, increaseMSm3Day, optimalFlow});
 
       System.out.println(String.format(
-          "Cooling ΔT=%4.0f°C: Flow=%.2f MSm³/d (+%.2f%%), Duty=%.2f MW, CW=%.0f m³/hr, Bottleneck=%s",
+          "Cooling Î”T=%4.0fÂ°C: Flow=%.2f MSmÂ³/d (+%.2f%%), Duty=%.2f MW, CW=%.0f mÂ³/hr, Bottleneck=%s",
           coolingDeltaT, flowMSm3Day, increasePercent, coolingDutyMW, coolingWaterVolFlowM3Hr,
           bottleneck));
     }
 
     // Print detailed results table
-    System.out.println("\n" + "=".repeat(140));
+    System.out.println("\n" + StringUtils.repeat("=", 140));
     System.out.println(
         "2026 SCENARIO DETAILED RESULTS TABLE - 3 COMPRESSORS (UPS1=UPS2, UPS3 OPERATING)");
-    System.out.println("=".repeat(140));
-    System.out.println(String.format("%-12s %-18s %-18s %-16s %-18s %-14s %-18s", "Cooling(°C)",
-        "Production(MSm³/d)", "Production(kg/hr)", "Duty(MW)", "CoolingWater(m³/hr)", "Increase(%)",
-        "Increase(MSm³/d)"));
-    System.out.println("-".repeat(140));
+    System.out.println(StringUtils.repeat("=", 140));
+    System.out.println(String.format("%-12s %-18s %-18s %-16s %-18s %-14s %-18s", "Cooling(Â°C)",
+        "Production(MSmÂ³/d)", "Production(kg/hr)", "Duty(MW)", "CoolingWater(mÂ³/hr)",
+        "Increase(%)", "Increase(MSmÂ³/d)"));
+    System.out.println(StringUtils.repeat("-", 140));
 
     for (double[] row : results) {
       System.out.println(String.format("%-12.0f %-18.2f %-18.0f %-16.2f %-18.0f %-14.2f %-18.3f",
@@ -2912,28 +2913,28 @@ public class CoolingDutyProductionAnalysisTest {
     double maxIncrease = results.get(results.size() - 1)[4];
     double maxIncreaseMSm3 = results.get(results.size() - 1)[5];
 
-    System.out.println("-".repeat(140));
+    System.out.println(StringUtils.repeat("-", 140));
     System.out
         .println("\n2026 SCENARIO SUMMARY (3 Compressors - ups1=ups2 bundle, ups3 operating):");
     System.out.println(
-        String.format("  Baseline production (no cooling): %.2f MSm³/day", baselineMSm3Day));
-    System.out.println(
-        String.format("  Maximum production (%.0f°C cooling): %.2f MSm³/day", maxCooling, maxFlow));
-    System.out.println(String.format("  Total production increase: %.3f MSm³/day (+%.2f%%)",
+        String.format("  Baseline production (no cooling): %.2f MSmÂ³/day", baselineMSm3Day));
+    System.out.println(String.format("  Maximum production (%.0fÂ°C cooling): %.2f MSmÂ³/day",
+        maxCooling, maxFlow));
+    System.out.println(String.format("  Total production increase: %.3f MSmÂ³/day (+%.2f%%)",
         maxIncreaseMSm3, maxIncrease));
     System.out.println(String.format("  Maximum cooling duty: %.2f MW", maxDuty));
-    System.out.println(String.format("  Maximum cooling water requirement: %.0f m³/hr", maxCW));
-    System.out.println(String.format("  Production gain per °C cooling: ~%.3f MSm³/day",
+    System.out.println(String.format("  Maximum cooling water requirement: %.0f mÂ³/hr", maxCW));
+    System.out.println(String.format("  Production gain per Â°C cooling: ~%.3f MSmÂ³/day",
         maxIncreaseMSm3 / maxCooling));
     System.out.println(
-        String.format("  Cooling water per MSm³/day gain: ~%.0f m³/hr", maxCW / maxIncreaseMSm3));
+        String.format("  Cooling water per MSmÂ³/day gain: ~%.0f mÂ³/hr", maxCW / maxIncreaseMSm3));
 
     // Efficiency metrics table
-    System.out.println("\n" + "-".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("-", 100));
     System.out.println("EFFICIENCY METRICS (per unit cooling):");
-    System.out.println(String.format("%-12s %-20s %-25s %-20s", "Cooling(°C)", "MSm³/d per °C",
-        "CW(m³/hr) per MSm³/d gain", "MW per MSm³/d gain"));
-    System.out.println("-".repeat(100));
+    System.out.println(String.format("%-12s %-20s %-25s %-20s", "Cooling(Â°C)", "MSmÂ³/d per Â°C",
+        "CW(mÂ³/hr) per MSmÂ³/d gain", "MW per MSmÂ³/d gain"));
+    System.out.println(StringUtils.repeat("-", 100));
 
     for (int i = 1; i < results.size(); i++) {
       double[] curr = results.get(i);
@@ -2961,9 +2962,9 @@ public class CoolingDutyProductionAnalysisTest {
    * Prints ASCII visualization for 2026 scenario results.
    */
   private void print2026ScenarioASCIIPlot(List<double[]> results, double baselineMSm3Day) {
-    System.out.println("\n" + "=".repeat(90));
+    System.out.println("\n" + StringUtils.repeat("=", 90));
     System.out.println("2026 SCENARIO: PRODUCTION vs COOLING (ASCII Plot)");
-    System.out.println("=".repeat(90));
+    System.out.println(StringUtils.repeat("=", 90));
 
     double minFlow = baselineMSm3Day * 0.995;
     double maxFlow = results.stream().mapToDouble(r -> r[1]).max().orElse(baselineMSm3Day) * 1.005;
@@ -2977,15 +2978,15 @@ public class CoolingDutyProductionAnalysisTest {
       int barLen = (int) ((flow - minFlow) / range * barWidth);
       barLen = Math.max(0, Math.min(barWidth, barLen));
 
-      String bar = "█".repeat(barLen);
+      String bar = StringUtils.repeat("#", barLen);
       double increasePercent = row[4];
-      System.out.println(String.format("%5.0f°C |%-55s| %.2f MSm³/d (+%.2f%%) CW:%.0fm³/hr",
+      System.out.println(String.format("%5.0fÂ°C |%-55s| %.2f MSmÂ³/d (+%.2f%%) CW:%.0fmÂ³/hr",
           cooling, bar, flow, increasePercent, cw));
     }
 
-    System.out.println("\n        " + "-".repeat(55));
+    System.out.println("\n        " + StringUtils.repeat("-", 55));
     System.out.println(String.format("        %-27s %27s", String.format("%.2f", minFlow),
-        String.format("%.2f MSm³/day", maxFlow)));
+        String.format("%.2f MSmÂ³/day", maxFlow)));
   }
 
   /**
@@ -2994,27 +2995,27 @@ public class CoolingDutyProductionAnalysisTest {
    * curve. All compressors use smooth VFD motor power curves.
    * 
    * Configuration: - ups1 and ups2: example_compressor_curve.json, 44.4 MW max at 7383 RPM - ups3:
-   * compressor_curve_ups3.json, 50 MW max at 6726 RPM - NO cooling (0°C temperature change) -
+   * compressor_curve_ups3.json, 50 MW max at 6726 RPM - NO cooling (0Â°C temperature change) -
    * Pressure drop sweep: 0 to 1 bar in 0.1 bar increments
    */
   @Test
   public void test2026ScenarioPressureDropEffectNoCooling() {
-    System.out.println("\n" + "=".repeat(110));
+    System.out.println("\n" + StringUtils.repeat("=", 110));
     System.out.println(
         "2026 SCENARIO: PRESSURE DROP EFFECT (NO COOLING) - 3 COMPRESSORS (UPS1=UPS2 BUNDLE, UPS3 IN OPERATION)");
-    System.out.println("=".repeat(110));
+    System.out.println(StringUtils.repeat("=", 110));
     System.out.println("Configuration:");
     System.out
         .println("  - Compressor 1 (ups1): example_compressor_curve.json, 44.4 MW max @ 7383 RPM");
     System.out.println("  - Compressor 2 (ups2): SAME curve as ups1 (identical bundle)");
     System.out.println("  - Compressor 3 (ups3): compressor_curve_ups3.json, 50 MW max @ 6726 RPM");
     System.out.println("  - All compressors use SMOOTH VFD motor power curves");
-    System.out.println("  - NO cooling (0°C temperature change)");
+    System.out.println("  - NO cooling (0Â°C temperature change)");
     System.out.println("  - Pressure drop sweep: 0 to 1 bar");
-    System.out.println("=".repeat(110));
+    System.out.println(StringUtils.repeat("=", 110));
 
     // Gas standard density for conversion to MSm3/day
-    double gasStdDensity = 0.73; // kg/Sm³
+    double gasStdDensity = 0.73; // kg/SmÂ³
 
     // Store results for table output
     List<double[]> results = new ArrayList<>();
@@ -3047,7 +3048,7 @@ public class CoolingDutyProductionAnalysisTest {
     String baselineBottleneck =
         baselineResult.getBottleneck() != null ? baselineResult.getBottleneck().getName() : "N/A";
 
-    System.out.println(String.format("\nBaseline (no pressure drop): %.2f MSm³/day (%.0f kg/hr)",
+    System.out.println(String.format("\nBaseline (no pressure drop): %.2f MSmÂ³/day (%.0f kg/hr)",
         baselineMSm3Day, baselineFlow));
     System.out.println(String.format("Baseline bottleneck: %s", baselineBottleneck));
 
@@ -3084,19 +3085,19 @@ public class CoolingDutyProductionAnalysisTest {
           compressorInletPressure});
 
       System.out.println(String.format(
-          "dP=%4.1f bar: Flow=%.2f MSm³/d (%.2f%%), Inlet P=%.2f bara, Loss=%.3f MSm³/d, Bottleneck=%s",
+          "dP=%4.1f bar: Flow=%.2f MSmÂ³/d (%.2f%%), Inlet P=%.2f bara, Loss=%.3f MSmÂ³/d, Bottleneck=%s",
           dP, flowMSm3Day, -lossPercent, compressorInletPressure, lossMSm3Day, bottleneck));
     }
 
     // Print detailed results table
-    System.out.println("\n" + "=".repeat(130));
+    System.out.println("\n" + StringUtils.repeat("=", 130));
     System.out.println(
         "2026 SCENARIO DETAILED RESULTS TABLE - PRESSURE DROP EFFECT (NO COOLING) - 3 COMPRESSORS");
-    System.out.println("=".repeat(130));
+    System.out.println(StringUtils.repeat("=", 130));
     System.out.println(
         String.format("%-10s %-14s %-18s %-18s %-14s %-14s %-18s", "dP(bar)", "Inlet P(bara)",
-            "Production(MSm³/d)", "Production(kg/hr)", "Loss(MSm³/d)", "Loss(%)", "Loss(kg/hr)"));
-    System.out.println("-".repeat(130));
+            "Production(MSmÂ³/d)", "Production(kg/hr)", "Loss(MSmÂ³/d)", "Loss(%)", "Loss(kg/hr)"));
+    System.out.println(StringUtils.repeat("-", 130));
 
     for (double[] row : results) {
       double lossKgHr = baselineFlow - row[4];
@@ -3114,28 +3115,28 @@ public class CoolingDutyProductionAnalysisTest {
     // Calculate average loss per bar
     double avgLossPerBar = totalLossMSm3 / maxDp;
 
-    System.out.println("-".repeat(130));
+    System.out.println(StringUtils.repeat("-", 130));
     System.out.println(
         "\n2026 SCENARIO SUMMARY (3 Compressors - ups1=ups2 bundle, ups3 operating) - PRESSURE DROP:");
-    System.out
-        .println(String.format("  Baseline production (0 bar dP): %.2f MSm³/day at %.2f bara inlet",
+    System.out.println(
+        String.format("  Baseline production (0 bar dP): %.2f MSmÂ³/day at %.2f bara inlet",
             baselineMSm3Day, baselineInletPressure));
     System.out.println(
-        String.format("  Minimum production (%.1f bar dP): %.2f MSm³/day at %.2f bara inlet", maxDp,
-            minFlow, minInletPressure));
-    System.out.println(String.format("  Total production loss: %.3f MSm³/day (%.2f%%)",
+        String.format("  Minimum production (%.1f bar dP): %.2f MSmÂ³/day at %.2f bara inlet",
+            maxDp, minFlow, minInletPressure));
+    System.out.println(String.format("  Total production loss: %.3f MSmÂ³/day (%.2f%%)",
         totalLossMSm3, totalLossPercent));
     System.out.println(
-        String.format("  Average loss per bar of pressure drop: ~%.2f MSm³/day", avgLossPerBar));
+        String.format("  Average loss per bar of pressure drop: ~%.2f MSmÂ³/day", avgLossPerBar));
     System.out.println(
-        String.format("  Rule of thumb: ~%.1f MSm³/day lost per bar of dP", avgLossPerBar));
+        String.format("  Rule of thumb: ~%.1f MSmÂ³/day lost per bar of dP", avgLossPerBar));
 
     // Incremental loss table
-    System.out.println("\n" + "-".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("-", 100));
     System.out.println("INCREMENTAL LOSS ANALYSIS (per 0.1 bar pressure drop):");
-    System.out.println(String.format("%-10s %-18s %-22s %-25s", "dP(bar)", "Flow(MSm³/d)",
-        "Incremental Loss(MSm³/d)", "Cumulative Loss(MSm³/d)"));
-    System.out.println("-".repeat(100));
+    System.out.println(String.format("%-10s %-18s %-22s %-25s", "dP(bar)", "Flow(MSmÂ³/d)",
+        "Incremental Loss(MSmÂ³/d)", "Cumulative Loss(MSmÂ³/d)"));
+    System.out.println(StringUtils.repeat("-", 100));
 
     for (int i = 0; i < results.size(); i++) {
       double[] curr = results.get(i);
@@ -3161,9 +3162,9 @@ public class CoolingDutyProductionAnalysisTest {
    * Prints ASCII visualization for 2026 pressure drop scenario results.
    */
   private void print2026PressureDropASCIIPlot(List<double[]> results, double baselineMSm3Day) {
-    System.out.println("\n" + "=".repeat(90));
+    System.out.println("\n" + StringUtils.repeat("=", 90));
     System.out.println("2026 SCENARIO: PRODUCTION vs PRESSURE DROP (ASCII Plot)");
-    System.out.println("=".repeat(90));
+    System.out.println(StringUtils.repeat("=", 90));
 
     double maxFlow = baselineMSm3Day * 1.005;
     double minFlow = results.stream().mapToDouble(r -> r[1]).min().orElse(baselineMSm3Day) * 0.995;
@@ -3177,14 +3178,14 @@ public class CoolingDutyProductionAnalysisTest {
       int barLen = (int) ((flow - minFlow) / range * barWidth);
       barLen = Math.max(0, Math.min(barWidth, barLen));
 
-      String bar = "█".repeat(barLen);
+      String bar = StringUtils.repeat("#", barLen);
       System.out.println(
-          String.format("%5.1f bar |%-55s| %.2f MSm³/d (%.2f%%)", dP, bar, flow, -lossPercent));
+          String.format("%5.1f bar |%-55s| %.2f MSmÂ³/d (%.2f%%)", dP, bar, flow, -lossPercent));
     }
 
-    System.out.println("\n          " + "-".repeat(55));
+    System.out.println("\n          " + StringUtils.repeat("-", 55));
     System.out.println(String.format("          %-27s %27s", String.format("%.2f", minFlow),
-        String.format("%.2f MSm³/day", maxFlow)));
+        String.format("%.2f MSmÂ³/day", maxFlow)));
   }
 
   // ==================================================================================
@@ -3232,9 +3233,9 @@ public class CoolingDutyProductionAnalysisTest {
    */
   @Test
   public void testTrollEastDetailedReferenceCaseNoCooler() {
-    System.out.println("\n" + "=".repeat(150));
+    System.out.println("\n" + StringUtils.repeat("=", 150));
     System.out.println("TROLL EAST DETAILED REFERENCE CASE - NO COOLER SCENARIO");
-    System.out.println("=".repeat(150));
+    System.out.println(StringUtils.repeat("=", 150));
     System.out.println("Configuration: 2 compressors (A & B) with IDENTICAL RB71-6 bundles");
     System.out.println("Data source: Mage reference case - daily values\n");
 
@@ -3531,10 +3532,10 @@ public class CoolingDutyProductionAnalysisTest {
 
     // Print reference data summary
     System.out.println("\nReference Data Summary (sampled):");
-    System.out.println("-".repeat(100));
+    System.out.println(StringUtils.repeat("-", 100));
     System.out.println(String.format("%-12s %-15s %-15s %-15s %-12s", "Date", "Flow(MSm3/d)",
         "P_inlet(bara)", "P_outlet(bara)", "PR"));
-    System.out.println("-".repeat(100));
+    System.out.println(StringUtils.repeat("-", 100));
     for (TrollEastDetailedRefPoint ref : sampledData) {
       double pr = ref.outletPressure / ref.inletPressure;
       System.out.println(String.format("%-12s %-15.2f %-15.2f %-15.2f %-12.2f", ref.getDateString(),
@@ -3542,15 +3543,15 @@ public class CoolingDutyProductionAnalysisTest {
     }
 
     // Run model comparison
-    System.out.println("\n" + "=".repeat(180));
+    System.out.println("\n" + StringUtils.repeat("=", 180));
     System.out.println("MODEL vs REFERENCE COMPARISON (No Cooler)");
-    System.out.println("=".repeat(180));
+    System.out.println(StringUtils.repeat("=", 180));
     System.out.println(String.format("%-12s %-12s %-12s %-12s %-12s %-10s %-10s %-12s %-12s %-15s",
         "Date", "Ref_Flow", "Model_Flow", "Deviation%", "P_inlet", "P_outlet", "PR_ref", "PR_model",
         "Power(MW)", "Bottleneck"));
-    System.out.println("-".repeat(180));
+    System.out.println(StringUtils.repeat("-", 180));
 
-    double gasStdDensity = 0.73; // kg/Sm³
+    double gasStdDensity = 0.73; // kg/SmÂ³
     List<double[]> results = new ArrayList<>();
     List<String> bottleneckList = new ArrayList<>();
 
@@ -3604,9 +3605,9 @@ public class CoolingDutyProductionAnalysisTest {
     }
 
     // Print statistics
-    System.out.println("\n" + "=".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("=", 100));
     System.out.println("DEVIATION STATISTICS");
-    System.out.println("=".repeat(100));
+    System.out.println(StringUtils.repeat("=", 100));
 
     double sumDev = 0, sumAbsDev = 0, maxDev = Double.MIN_VALUE, minDev = Double.MAX_VALUE;
     for (double[] row : results) {
@@ -3626,9 +3627,9 @@ public class CoolingDutyProductionAnalysisTest {
     System.out.println(String.format("Min deviation: %.2f%%", minDev));
 
     // Print CSV for plotting
-    System.out.println("\n" + "=".repeat(100));
+    System.out.println("\n" + StringUtils.repeat("=", 100));
     System.out.println("CSV DATA FOR PLOTTING");
-    System.out.println("=".repeat(100));
+    System.out.println(StringUtils.repeat("=", 100));
     System.out.println(
         "ExcelDate,Ref_Flow_MSm3d,Model_Flow_MSm3d,Deviation_pct,P_inlet,P_outlet,PR_ref,PR_model,Power_MW,Bottleneck");
     for (int i = 0; i < results.size(); i++) {
@@ -3638,10 +3639,10 @@ public class CoolingDutyProductionAnalysisTest {
     }
 
     // Analyze results by pressure ratio range - exclude invalid solutions (power <= 0)
-    System.out.println("\n" + "=".repeat(120));
+    System.out.println("\n" + StringUtils.repeat("=", 120));
     System.out
         .println("ANALYSIS BY PRESSURE RATIO RANGE (excluding invalid solutions with Power <= 0)");
-    System.out.println("=".repeat(120));
+    System.out.println(StringUtils.repeat("=", 120));
     System.out
         .println("Note: Single-stage centrifugal compressors typically limited to PR < 3.5-4.0");
     System.out.println("      Higher PR requires series configuration or multi-stage design\n");
@@ -3685,9 +3686,9 @@ public class CoolingDutyProductionAnalysisTest {
     printPRGroupStats("High PR (>=5.0)", highPR);
 
     // Print recommendations
-    System.out.println("\n" + "=".repeat(120));
+    System.out.println("\n" + StringUtils.repeat("=", 120));
     System.out.println("MODEL VALIDITY AND RECOMMENDATIONS");
-    System.out.println("=".repeat(120));
+    System.out.println(StringUtils.repeat("=", 120));
     System.out.println("\nModel Validity by Period:");
     System.out
         .println("  2027-2032 (PR 3.1-3.4): Model valid - single-stage compressor applicable");
@@ -3720,7 +3721,7 @@ public class CoolingDutyProductionAnalysisTest {
   }
 
   /**
-   * Evaluates Troll East model WITH COOLER (10°C cooling, 0.5 bar dP) against detailed reference
+   * Evaluates Troll East model WITH COOLER (10Â°C cooling, 0.5 bar dP) against detailed reference
    * case data. Compares cooler vs no-cooler scenarios to quantify production benefit.
    * 
    * <p>
@@ -3729,11 +3730,11 @@ public class CoolingDutyProductionAnalysisTest {
    */
   @Test
   public void testTrollEastDetailedReferenceCaseWithCooler() {
-    System.out.println("\n" + "=".repeat(150));
-    System.out.println("TROLL EAST DETAILED REFERENCE CASE - WITH COOLER (10°C, 0.5 bar dP)");
-    System.out.println("=".repeat(150));
+    System.out.println("\n" + StringUtils.repeat("=", 150));
+    System.out.println("TROLL EAST DETAILED REFERENCE CASE - WITH COOLER (10Â°C, 0.5 bar dP)");
+    System.out.println(StringUtils.repeat("=", 150));
     System.out.println("Configuration: 2 compressors (A & B) with IDENTICAL RB71-6 bundles");
-    System.out.println("Cooler: 10°C temperature reduction, 0.5 bar pressure drop");
+    System.out.println("Cooler: 10Â°C temperature reduction, 0.5 bar pressure drop");
     System.out.println("Data source: Mage reference case - daily values\n");
 
     // Use same reference data as no-cooler test
@@ -3750,16 +3751,16 @@ public class CoolingDutyProductionAnalysisTest {
     System.out.println("Sampled points (every " + sampleInterval + "): " + sampledData.size());
 
     // Run both WITH and WITHOUT cooler for comparison
-    System.out.println("\n" + "=".repeat(200));
-    System.out.println("MODEL COMPARISON: NO COOLER vs WITH COOLER (10°C, 0.5 bar dP)");
-    System.out.println("=".repeat(200));
+    System.out.println("\n" + StringUtils.repeat("=", 200));
+    System.out.println("MODEL COMPARISON: NO COOLER vs WITH COOLER (10Â°C, 0.5 bar dP)");
+    System.out.println(StringUtils.repeat("=", 200));
     System.out
         .println(String.format("%-12s %-12s %-14s %-14s %-10s %-12s %-12s %-12s %-12s %-12s %-15s",
             "Date", "Ref_Flow", "NoCooler", "WithCooler", "Benefit%", "P_inlet", "P_outlet",
             "PR_ref", "Power_NC", "Power_WC", "Bottleneck_WC"));
-    System.out.println("-".repeat(200));
+    System.out.println(StringUtils.repeat("-", 200));
 
-    double gasStdDensity = 0.73; // kg/Sm³
+    double gasStdDensity = 0.73; // kg/SmÂ³
     List<double[]> results = new ArrayList<>();
     List<String> bottleneckListNoCooler = new ArrayList<>();
     List<String> bottleneckListWithCooler = new ArrayList<>();
@@ -3797,7 +3798,7 @@ public class CoolingDutyProductionAnalysisTest {
           resultNC.getBottleneck() != null ? resultNC.getBottleneck().getName() : "N/A";
       bottleneckListNoCooler.add(bottleneckNC);
 
-      // Build process WITH cooler (10°C, 0.5 bar dP)
+      // Build process WITH cooler (10Â°C, 0.5 bar dP)
       ProcessSystem processWithCooler =
           buildTrollEastProcessWithCooler(ref.inletPressure, ref.outletPressure, 2, 10.0, 0.5);
 
@@ -3850,9 +3851,9 @@ public class CoolingDutyProductionAnalysisTest {
     }
 
     // Print summary statistics
-    System.out.println("\n" + "=".repeat(150));
+    System.out.println("\n" + StringUtils.repeat("=", 150));
     System.out.println("COOLER BENEFIT ANALYSIS SUMMARY");
-    System.out.println("=".repeat(150));
+    System.out.println(StringUtils.repeat("=", 150));
 
     // Calculate statistics for valid results only (positive power)
     List<double[]> validResults = new ArrayList<>();
@@ -3885,7 +3886,7 @@ public class CoolingDutyProductionAnalysisTest {
       System.out.println(String.format("Valid comparison points: %d (of %d total)",
           validResults.size(), results.size()));
       System.out.println();
-      System.out.println("COOLER BENEFIT (10°C cooling, 0.5 bar dP):");
+      System.out.println("COOLER BENEFIT (10Â°C cooling, 0.5 bar dP):");
       System.out.println(String.format("  Average production benefit: %.2f%%", avgBenefit));
       System.out.println(String.format("  Maximum benefit: %.2f%%", maxBenefit));
       System.out.println(String.format("  Minimum benefit: %.2f%%", minBenefit));
@@ -3900,9 +3901,9 @@ public class CoolingDutyProductionAnalysisTest {
     }
 
     // Analyze by PR range
-    System.out.println("\n" + "=".repeat(150));
+    System.out.println("\n" + StringUtils.repeat("=", 150));
     System.out.println("COOLER BENEFIT BY PRESSURE RATIO RANGE");
-    System.out.println("=".repeat(150));
+    System.out.println(StringUtils.repeat("=", 150));
 
     List<double[]> lowPR = new ArrayList<>(); // PR < 3.5
     List<double[]> midPR = new ArrayList<>(); // 3.5 <= PR < 5.0
@@ -3924,9 +3925,9 @@ public class CoolingDutyProductionAnalysisTest {
     printCoolerBenefitByPRRange("High PR (>=5.0)", highPR);
 
     // Print CSV for plotting
-    System.out.println("\n" + "=".repeat(150));
+    System.out.println("\n" + StringUtils.repeat("=", 150));
     System.out.println("CSV DATA FOR PLOTTING");
-    System.out.println("=".repeat(150));
+    System.out.println(StringUtils.repeat("=", 150));
     System.out.println(
         "ExcelDate,Ref_Flow,NoCooler_Flow,WithCooler_Flow,Benefit_pct,P_inlet,P_outlet,PR,Power_NC,Power_WC,Dev_NC,Dev_WC");
     for (double[] row : results) {
@@ -3936,16 +3937,17 @@ public class CoolingDutyProductionAnalysisTest {
     }
 
     // Conclusions
-    System.out.println("\n" + "=".repeat(150));
+    System.out.println("\n" + StringUtils.repeat("=", 150));
     System.out.println("CONCLUSIONS - COOLER INSTALLATION ANALYSIS");
-    System.out.println("=".repeat(150));
+    System.out.println(StringUtils.repeat("=", 150));
     System.out.println("\nCooler Specification:");
-    System.out.println("  Temperature reduction: 10°C");
+    System.out.println("  Temperature reduction: 10Â°C");
     System.out.println("  Pressure drop: 0.5 bar");
     System.out.println("\nExpected Effects:");
-    System.out.println("  + Lower gas temperature → higher gas density → lower actual volume flow");
+    System.out
+        .println("  + Lower gas temperature â†’ higher gas density â†’ lower actual volume flow");
     System.out.println("  + Compressor can handle more mass flow at same volumetric capacity");
-    System.out.println("  - 0.5 bar pressure drop → slightly lower compressor inlet pressure");
+    System.out.println("  - 0.5 bar pressure drop â†’ slightly lower compressor inlet pressure");
     System.out.println("  - Additional equipment and operating cost");
     System.out.println("\nRecommendation:");
     if (!validResults.isEmpty()) {
@@ -3954,13 +3956,13 @@ public class CoolingDutyProductionAnalysisTest {
         avgBenefit += row[4];
       avgBenefit /= validResults.size();
       if (avgBenefit > 2.0) {
-        System.out.println("  ✓ RECOMMENDED - Average production benefit of "
+        System.out.println("  âœ“ RECOMMENDED - Average production benefit of "
             + String.format("%.1f%%", avgBenefit) + " justifies cooler installation");
       } else if (avgBenefit > 0) {
-        System.out.println("  ⚠ MARGINAL - Small positive benefit of "
+        System.out.println("  âš  MARGINAL - Small positive benefit of "
             + String.format("%.1f%%", avgBenefit) + " - requires detailed economic analysis");
       } else {
-        System.out.println("  ✗ NOT RECOMMENDED - No production benefit from cooler");
+        System.out.println("  âœ— NOT RECOMMENDED - No production benefit from cooler");
       }
     }
 
@@ -4287,7 +4289,7 @@ public class CoolingDutyProductionAnalysisTest {
    * @param inletPressure compressor inlet pressure (bara)
    * @param outletPressure compressor outlet pressure (bara)
    * @param numCompressors number of compressors (2 or 3)
-   * @param coolingDeltaT temperature drop in cooler (°C)
+   * @param coolingDeltaT temperature drop in cooler (Â°C)
    * @param pressureDrop pressure drop across cooler (bar)
    * @return configured ProcessSystem
    */
@@ -4429,8 +4431,8 @@ public class CoolingDutyProductionAnalysisTest {
     int year;
     double teInletPressure; // bara - Troll East inlet pressure
     double kollsnesPressure; // bara - Kollsnes arrival/export pressure
-    double teRate; // MSm³/day - Troll East production rate
-    double totalRate; // MSm³/day - Total gas rate
+    double teRate; // MSmÂ³/day - Troll East production rate
+    double totalRate; // MSmÂ³/day - Total gas rate
     String compressorConfig; // Configuration description
     int numCompressors; // Number of compressors in operation
 
@@ -4452,18 +4454,18 @@ public class CoolingDutyProductionAnalysisTest {
    */
   @Test
   public void testTrollEastReferenceCaseEvaluation() {
-    System.out.println("\n" + "=".repeat(130));
+    System.out.println("\n" + StringUtils.repeat("=", 130));
     System.out.println("TROLL EAST REFERENCE CASE EVALUATION - MODEL vs REFERENCE (2027-2045)");
-    System.out.println("=".repeat(130));
+    System.out.println(StringUtils.repeat("=", 130));
     System.out.println("Configuration: 2 compressors (A & B) with IDENTICAL RB71-6 bundles");
 
     // Reference case data extracted from Figure 3-1
     // TE_Inlet (stippled blue curve): 35-40 bara range initially, declining over time
-    // TE_Rate (solid light blue curve): drops to ~40 MSm³/day in 2027, declining further
+    // TE_Rate (solid light blue curve): drops to ~40 MSmÂ³/day in 2027, declining further
     // From 2027: Only 2 compressors (A & B) with same curves on Troll East
     List<TrollEastReferenceCase> referenceData = new ArrayList<>();
-    // Year, TE_Inlet(bara), Kollsnes(bara), TE_Rate(MSm³/d), Total(MSm³/d), Config, NumComp
-    // TE_Rate read from solid light blue curve (drops to ~40 MSm³/day in 2027)
+    // Year, TE_Inlet(bara), Kollsnes(bara), TE_Rate(MSmÂ³/d), Total(MSmÂ³/d), Config, NumComp
+    // TE_Rate read from solid light blue curve (drops to ~40 MSmÂ³/day in 2027)
     referenceData.add(new TrollEastReferenceCase(2027, 40, 90, 40, 120, "2 parallel (A+B)", 2));
     referenceData.add(new TrollEastReferenceCase(2028, 39, 88, 38, 115, "2 parallel (A+B)", 2));
     referenceData.add(new TrollEastReferenceCase(2030, 37, 75, 32, 100, "2 parallel (A+B)", 2));
@@ -4476,10 +4478,10 @@ public class CoolingDutyProductionAnalysisTest {
     referenceData.add(new TrollEastReferenceCase(2045, 20, 70, 6, 18, "2 series (A+B)", 2));
 
     System.out.println("\nReference Case Data (from Figure 3-1):");
-    System.out.println("-".repeat(100));
+    System.out.println(StringUtils.repeat("-", 100));
     System.out.println(String.format("%-6s %-12s %-14s %-12s %-12s %-25s", "Year", "TE_Inlet(bara)",
         "Kollsnes(bara)", "TE_Rate", "Total_Rate", "Configuration"));
-    System.out.println("-".repeat(100));
+    System.out.println(StringUtils.repeat("-", 100));
     for (TrollEastReferenceCase ref : referenceData) {
       System.out.println(
           String.format("%-6d %-12.0f %-14.0f %-12.0f %-12.0f %-25s", ref.year, ref.teInletPressure,
@@ -4493,12 +4495,12 @@ public class CoolingDutyProductionAnalysisTest {
     // [year, refRate, modelRate, deviation%, pressureRatio, compPower, compSpeed, compEfficiency,
     // teInletPressure, kollsnesPressure, polytropicHead, actualInletFlow]
 
-    System.out.println("\n" + "=".repeat(130));
+    System.out.println("\n" + StringUtils.repeat("=", 130));
     System.out.println("MODEL EVALUATION - Running optimizer for each reference case year");
     System.out.println("  Compressor config: 2 x RB71-6 (identical bundles, 44.4 MW max each)");
-    System.out.println("=".repeat(130));
+    System.out.println(StringUtils.repeat("=", 130));
 
-    double gasStdDensity = 0.73; // kg/Sm³
+    double gasStdDensity = 0.73; // kg/SmÂ³
 
     for (TrollEastReferenceCase ref : referenceData) {
       // Build process with reference case conditions - always 2 compressors with same curves
@@ -4593,21 +4595,21 @@ public class CoolingDutyProductionAnalysisTest {
       bottleneckList.add(bottleneck);
 
       System.out.println(String.format(
-          "Year %d: Model=%.1f MSm³/d, Ref=%.0f MSm³/d, Dev=%+.1f%%, PR=%.2f, Power=%.1f MW, "
-              + "Speed=%.0f RPM, η=%.1f%%, Head=%.0f kJ/kg, Flow=%.0f m³/hr, ChartStatus=%s, Bottleneck=%s",
+          "Year %d: Model=%.1f MSmÂ³/d, Ref=%.0f MSmÂ³/d, Dev=%+.1f%%, PR=%.2f, Power=%.1f MW, "
+              + "Speed=%.0f RPM, Î·=%.1f%%, Head=%.0f kJ/kg, Flow=%.0f mÂ³/hr, ChartStatus=%s, Bottleneck=%s",
           ref.year, modelFlowMSm3Day, ref.teRate, deviation, pressureRatio, compPower, compSpeed,
           polyEff, polytropicHead, actualInletFlow, chartStatus, bottleneck));
     }
 
     // Print detailed comparison table with bottleneck
-    System.out.println("\n" + "=".repeat(220));
+    System.out.println("\n" + StringUtils.repeat("=", 220));
     System.out.println("DETAILED MODEL vs REFERENCE COMPARISON");
-    System.out.println("=".repeat(220));
+    System.out.println(StringUtils.repeat("=", 220));
     System.out.println(String.format(
         "%-6s %-8s %-8s %-10s %-10s %-8s %-6s %-10s %-8s %-8s %-10s %-12s %-15s %-20s", "Year",
-        "P_in", "P_out", "Ref", "Model", "Dev%", "PR", "Power(MW)", "Speed", "η(%)", "Head(kJ/kg)",
-        "Flow(m³/hr)", "ChartStatus", "Bottleneck"));
-    System.out.println("-".repeat(220));
+        "P_in", "P_out", "Ref", "Model", "Dev%", "PR", "Power(MW)", "Speed", "Î·(%)", "Head(kJ/kg)",
+        "Flow(mÂ³/hr)", "ChartStatus", "Bottleneck"));
+    System.out.println(StringUtils.repeat("-", 220));
 
     for (int i = 0; i < modelResults.size(); i++) {
       double[] row = modelResults.get(i);
@@ -4622,9 +4624,9 @@ public class CoolingDutyProductionAnalysisTest {
     }
 
     // Print compressor chart analysis
-    System.out.println("\n" + "=".repeat(150));
+    System.out.println("\n" + StringUtils.repeat("=", 150));
     System.out.println("COMPRESSOR CHART STATUS ANALYSIS");
-    System.out.println("=".repeat(150));
+    System.out.println(StringUtils.repeat("=", 150));
     System.out.println("ChartStatus meanings:");
     System.out.println("  OK           - Operating point within compressor chart envelope");
     System.out.println("  SURGE        - Operating point below minimum flow (surge line)");
@@ -4659,9 +4661,9 @@ public class CoolingDutyProductionAnalysisTest {
     System.out.println(String.format("  INVALID_POWER: %d years (numerical issues)", invalidCount));
 
     // Rebundling analysis
-    System.out.println("\n" + "=".repeat(130));
+    System.out.println("\n" + StringUtils.repeat("=", 130));
     System.out.println("COMPRESSOR REBUNDLING ANALYSIS (Post-2032)");
-    System.out.println("=".repeat(130));
+    System.out.println(StringUtils.repeat("=", 130));
 
     System.out.println("\nCurrent RB71-6 Bundle Design Point:");
     System.out.println("  - Design inlet pressure: ~55-65 bara");
@@ -4670,10 +4672,10 @@ public class CoolingDutyProductionAnalysisTest {
     System.out.println("  - Max power: 44.4 MW");
 
     System.out.println("\nOperating Condition Analysis:");
-    System.out.println("-".repeat(120));
+    System.out.println(StringUtils.repeat("-", 120));
     System.out.println(String.format("%-6s %-12s %-12s %-12s %-15s %-35s", "Year", "P_in(bara)",
         "P_ratio", "Speed(RPM)", "Status", "Rebundling Recommendation"));
-    System.out.println("-".repeat(120));
+    System.out.println(StringUtils.repeat("-", 120));
 
     for (double[] row : modelResults) {
       int year = (int) row[0];
@@ -4718,9 +4720,9 @@ public class CoolingDutyProductionAnalysisTest {
     }
 
     // Rebundling benefit analysis
-    System.out.println("\n" + "=".repeat(130));
+    System.out.println("\n" + StringUtils.repeat("=", 130));
     System.out.println("REBUNDLING BENEFIT ANALYSIS - POTENTIAL PRODUCTION GAINS");
-    System.out.println("=".repeat(130));
+    System.out.println(StringUtils.repeat("=", 130));
 
     System.out.println("\nScenario: LP Rebundle (D18R5S-LP or similar) optimized for:");
     System.out.println("  - Design inlet pressure: 35-50 bara (vs current 55-65 bara)");
@@ -4728,10 +4730,10 @@ public class CoolingDutyProductionAnalysisTest {
     System.out.println("  - Higher volumetric flow capacity at low pressure");
 
     System.out.println("\nEstimated Production Benefits (with LP rebundle after 2034):");
-    System.out.println("-".repeat(100));
-    System.out.println(String.format("%-6s %-15s %-15s %-15s %-20s", "Year", "Current(MSm³/d)",
-        "With LP Bundle", "Gain(MSm³/d)", "Gain(%)"));
-    System.out.println("-".repeat(100));
+    System.out.println(StringUtils.repeat("-", 100));
+    System.out.println(String.format("%-6s %-15s %-15s %-15s %-20s", "Year", "Current(MSmÂ³/d)",
+        "With LP Bundle", "Gain(MSmÂ³/d)", "Gain(%)"));
+    System.out.println(StringUtils.repeat("-", 100));
 
     // Estimate benefits from rebundling
     for (double[] row : modelResults) {
@@ -4763,9 +4765,9 @@ public class CoolingDutyProductionAnalysisTest {
     }
 
     // Economic summary
-    System.out.println("\n" + "=".repeat(130));
+    System.out.println("\n" + StringUtils.repeat("=", 130));
     System.out.println("REBUNDLING ECONOMIC SUMMARY");
-    System.out.println("=".repeat(130));
+    System.out.println(StringUtils.repeat("=", 130));
 
     System.out.println("\nKey Decision Points:");
     System.out.println("  2032-2034: Evaluate rebundling - inlet pressure drops below 50 bara");
@@ -4777,19 +4779,20 @@ public class CoolingDutyProductionAnalysisTest {
 
     System.out.println("\nRebundling Cost-Benefit Factors:");
     System.out.println("  Typical rebundling cost: ~$5-10M per compressor");
-    System.out.println("  Production gain at 2034: ~3-4 MSm³/d additional capacity");
+    System.out.println("  Production gain at 2034: ~3-4 MSmÂ³/d additional capacity");
     System.out
         .println("  At $8/MMBtu gas price: ~$25-35M/year additional revenue (if constrained)");
     System.out.println("  Payback period: 3-6 months if production-constrained");
 
-    System.out.println("\n" + "=".repeat(130));
+    System.out.println("\n" + StringUtils.repeat("=", 130));
     System.out.println("RECOMMENDATION SUMMARY");
-    System.out.println("=".repeat(130));
+    System.out.println(StringUtils.repeat("=", 130));
+    System.out.println(
+        "\nâœ“ 2034: Begin LP rebundle planning for compressors A & B (RB71-6 â†’ RB71-6-LP)");
+    System.out.println("âœ“ 2035: Execute rebundle during P10 closure (maintenance window)");
     System.out
-        .println("\n✓ 2034: Begin LP rebundle planning for compressors A & B (RB71-6 → RB71-6-LP)");
-    System.out.println("✓ 2035: Execute rebundle during P10 closure (maintenance window)");
-    System.out.println("✓ 2036: LP bundles operational before Kollsnes pressure drops to 60 bara");
-    System.out.println("✓ 2038: Transition to series configuration with LP first stage");
+        .println("âœ“ 2036: LP bundles operational before Kollsnes pressure drops to 60 bara");
+    System.out.println("âœ“ 2038: Transition to series configuration with LP first stage");
 
     // Verify model runs
     assertTrue(modelResults.size() > 0, "Should have model results");
@@ -4804,7 +4807,7 @@ public class CoolingDutyProductionAnalysisTest {
     ProcessSystem processSystem = new ProcessSystem();
 
     // Scale flow based on typical conditions
-    double baseFlow = 2097870.58288790; // kg/hr at ~70 MSm³/d
+    double baseFlow = 2097870.58288790; // kg/hr at ~70 MSmÂ³/d
 
     Stream inletStream = new Stream("Inlet Stream", testSystem);
     inletStream.setFlowRate(baseFlow, "kg/hr");
