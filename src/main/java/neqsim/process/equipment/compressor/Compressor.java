@@ -4168,6 +4168,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    * <li>Outlet temperature greater than inlet (compression heats gas)</li>
    * <li>Pressure ratio greater than 1.0</li>
    * <li>Non-NaN values for key properties</li>
+   * <li>Speed within compressor chart limits (if chart is active)</li>
+   * <li>Operating point not in surge region (if surge curve is defined)</li>
+   * <li>Operating point not beyond stonewall/choke (if stonewall curve is defined)</li>
    * </ul>
    */
   @Override
@@ -4215,13 +4218,45 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     if (getCompressorChart() != null && getCompressorChart().isUseCompressorChart()) {
       double chartMinSpeed = getCompressorChart().getMinSpeedCurve();
       double chartMaxSpeed = getCompressorChart().getMaxSpeedCurve();
-      // If speed is significantly outside chart range, simulation is invalid
-      // Allow 5% tolerance for edge cases
-      if (chartMinSpeed > 0 && speed < chartMinSpeed * 0.95) {
+      // Strict enforcement - speed must be within chart boundaries
+      if (chartMinSpeed > 0 && speed < chartMinSpeed) {
         return false;
       }
-      if (chartMaxSpeed > 0 && speed > chartMaxSpeed * 1.05) {
+      if (chartMaxSpeed > 0 && speed > chartMaxSpeed) {
         return false;
+      }
+
+      // Check if operating in surge region (if surge curve is defined)
+      // Skip surge check if AntiSurge is active - the controller handles surge protection
+      if (getCompressorChart().getSurgeCurve() != null
+          && getCompressorChart().getSurgeCurve().isActive()
+          && !(getAntiSurge() != null && getAntiSurge().isActive())) {
+        try {
+          double actualFlow = getInletStream().getFlowRate("m3/hr");
+          double polytropicHeadValue = getPolytropicFluidHead();
+          if (getCompressorChart().getSurgeCurve().isSurge(polytropicHeadValue, actualFlow)) {
+            return false;
+          }
+        } catch (Exception e) {
+          // If we can't check surge, don't fail validation
+          logger.debug("Could not check surge condition: " + e.getMessage());
+        }
+      }
+
+      // Check if operating beyond stonewall (choke) region (if stonewall curve is defined)
+      if (getCompressorChart().getStoneWallCurve() != null
+          && getCompressorChart().getStoneWallCurve().isActive()) {
+        try {
+          double actualFlow = getInletStream().getFlowRate("m3/hr");
+          double polytropicHeadValue = getPolytropicFluidHead();
+          if (getCompressorChart().getStoneWallCurve().isStoneWall(polytropicHeadValue,
+              actualFlow)) {
+            return false;
+          }
+        } catch (Exception e) {
+          // If we can't check stonewall, don't fail validation
+          logger.debug("Could not check stonewall condition: " + e.getMessage());
+        }
       }
     }
 
@@ -4293,6 +4328,44 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
         errors.add(String.format(
             "%s: Speed (%.0f RPM) above chart maximum (%.0f RPM) - outside valid operating range",
             getName(), speed, chartMaxSpeed));
+      }
+
+      // Check surge condition (skip if AntiSurge is active - controller handles it)
+      if (getCompressorChart().getSurgeCurve() != null
+          && getCompressorChart().getSurgeCurve().isActive()
+          && !(getAntiSurge() != null && getAntiSurge().isActive())) {
+        try {
+          double actualFlow = getInletStream().getFlowRate("m3/hr");
+          double polytropicHeadValue = getPolytropicFluidHead();
+          double surgeFlow = getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHeadValue);
+          if (getCompressorChart().getSurgeCurve().isSurge(polytropicHeadValue, actualFlow)) {
+            double surgeMargin = (actualFlow - surgeFlow) / surgeFlow * 100.0;
+            errors.add(String.format(
+                "%s: Operating in SURGE region - actual flow %.0f m3/hr < surge flow %.0f m3/hr (margin: %.1f%%)",
+                getName(), actualFlow, surgeFlow, surgeMargin));
+          }
+        } catch (Exception e) {
+          // Ignore if we can't check
+        }
+      }
+
+      // Check stonewall condition
+      if (getCompressorChart().getStoneWallCurve() != null
+          && getCompressorChart().getStoneWallCurve().isActive()) {
+        try {
+          double actualFlow = getInletStream().getFlowRate("m3/hr");
+          double polytropicHeadValue = getPolytropicFluidHead();
+          if (getCompressorChart().getStoneWallCurve().isStoneWall(polytropicHeadValue,
+              actualFlow)) {
+            double stonewallFlow =
+                getCompressorChart().getStoneWallCurve().getStoneWallFlow(polytropicHeadValue);
+            errors.add(String.format(
+                "%s: Operating beyond STONEWALL (choke) - actual flow %.0f m3/hr > stonewall flow %.0f m3/hr",
+                getName(), actualFlow, stonewallFlow));
+          }
+        } catch (Exception e) {
+          // Ignore if we can't check
+        }
       }
     }
 

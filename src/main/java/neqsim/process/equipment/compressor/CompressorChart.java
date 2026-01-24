@@ -362,9 +362,10 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
       initialGuess = referenceSpeed;
     }
 
-    // Bounds for speed search (allow 50% extrapolation beyond curve range)
-    double speedLowerBound = minSpeedCurve * 0.5;
-    double speedUpperBound = maxSpeedCurve * 1.5;
+    // Bounds for speed search - strict enforcement at chart boundaries
+    // No extrapolation beyond chart range - if required speed is outside, it's invalid
+    double speedLowerBound = minSpeedCurve;
+    double speedUpperBound = maxSpeedCurve;
     if (speedLowerBound <= 0) {
       speedLowerBound = 100; // Minimum reasonable speed
     }

@@ -587,6 +587,52 @@ public class Manifold extends ProcessEquipmentBaseClass
   }
 
   /**
+   * Calculate Flow-induced vibration RMS (FRMS) for branch pipes.
+   * <p>
+   * FRMS provides an alternative measure of vibration intensity based on mixture properties.
+   * </p>
+   *
+   * @return FRMS value
+   */
+  public double calculateBranchFRMS() {
+    return calculateBranchFRMS(6.7);
+  }
+
+  /**
+   * Calculate Flow-induced vibration RMS (FRMS) for branch pipes with specified constant.
+   *
+   * @param frmsConstant FRMS constant (typically 6.7)
+   * @return FRMS value
+   */
+  public double calculateBranchFRMS(double frmsConstant) {
+    StreamInterface mixedStream = getMixedStream();
+    if (mixedStream == null || mixedStream.getThermoSystem() == null) {
+      return Double.NaN;
+    }
+
+    double mixVelocity = getBranchVelocity();
+
+    // Calculate gas volume fraction
+    double GVF = 0.0;
+    if (mixedStream.getThermoSystem().hasPhaseType("gas")) {
+      GVF = mixedStream.getThermoSystem().getPhase("gas").getVolume("m3")
+          / mixedStream.getThermoSystem().getVolume("m3");
+    }
+
+    // Get liquid density (use mixture if no liquid)
+    double liquidDensity = mixedStream.getThermoSystem().getDensity("kg/m3");
+    if (mixedStream.getThermoSystem().hasPhaseType("oil")) {
+      liquidDensity = mixedStream.getThermoSystem().getPhase("oil").getDensity("kg/m3");
+    } else if (mixedStream.getThermoSystem().hasPhaseType("aqueous")) {
+      liquidDensity = mixedStream.getThermoSystem().getPhase("aqueous").getDensity("kg/m3");
+    }
+
+    double C = Math.min(Math.min(1, 5 * (1 - GVF)), 5 * GVF) * frmsConstant;
+    return C * Math.pow(branchInnerDiameter, 1.6) * Math.pow(liquidDensity, 0.6)
+        * Math.pow(mixVelocity, 1.2);
+  }
+
+  /**
    * Get comprehensive FIV analysis results as a map.
    *
    * @return map containing all FIV analysis results
@@ -622,6 +668,7 @@ public class Manifold extends ProcessEquipmentBaseClass
     branch.put("wallThickness_m", branchWallThickness);
     branch.put("velocity_m_s", getBranchVelocity());
     branch.put("LOF", calculateBranchLOF());
+    branch.put("FRMS", calculateBranchFRMS());
 
     double branchLOF = calculateBranchLOF();
     if (branchLOF < 0.5) {
@@ -930,6 +977,13 @@ public class Manifold extends ProcessEquipmentBaseClass
             .setDesignValue(maxLOFDesign).setMaxValue(1.5).setWarningThreshold(0.5)
             .setDescription("Branch LOF for flow-induced vibration (>1.0 = high risk)")
             .setValueSupplier(() -> calculateBranchLOF()));
+
+    // Branch FRMS (Flow-induced vibration RMS)
+    addCapacityConstraint(
+        new CapacityConstraint("branchFRMS", "-", CapacityConstraint.ConstraintType.SOFT)
+            .setDesignValue(maxFRMSDesign).setMaxValue(750.0).setWarningThreshold(0.8)
+            .setDescription("Branch FRMS vibration intensity")
+            .setValueSupplier(() -> calculateBranchFRMS()));
   }
 
   /** {@inheritDoc} */

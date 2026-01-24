@@ -253,3 +253,68 @@ $$x_{effective} = F_\gamma \cdot x_T$$
 - [Compressor Mechanical Design](CompressorMechanicalDesign.md) - Compressor mechanical design
 - [Process Package](README.md) - Package overview
 - [Safety Systems](safety/) - Safety valve sizing
+
+---
+
+## Acoustic-Induced Vibration (AIV) Analysis
+
+Throttling valves are primary sources of Acoustic-Induced Vibration (AIV) due to the turbulent flow and acoustic energy generated during pressure reduction. AIV can cause fatigue failures in downstream piping.
+
+### AIV Calculation
+
+The `ThrottlingValve` class includes AIV analysis per Energy Institute Guidelines:
+
+$$W_{acoustic} = 3.2 \times 10^{-9} \cdot \dot{m} \cdot P_1 \cdot \left(\frac{\Delta P}{P_1}\right)^{3.6} \cdot \left(\frac{T}{273.15}\right)^{0.8}$$
+
+Where:
+- $W_{acoustic}$ = Acoustic power (kW)
+- $\dot{m}$ = Mass flow rate (kg/s)
+- $P_1$ = Upstream pressure (Pa)
+- $\Delta P$ = Pressure drop across valve (Pa)
+- $T$ = Temperature (K)
+
+### AIV Risk Levels
+
+| Acoustic Power (kW) | Risk Level | Action Required |
+|---------------------|------------|-----------------|
+| < 1 | LOW | No action required |
+| 1 - 10 | MEDIUM | Review piping layout |
+| 10 - 25 | HIGH | Detailed analysis required |
+| > 25 | VERY HIGH | Mitigation required |
+
+### Using AIV Analysis
+
+```java
+// Create valve with significant pressure drop
+ThrottlingValve valve = new ThrottlingValve("PCV-100", feed);
+valve.setOutletPressure(30.0, "bara");  // Large ΔP from ~80 bara inlet
+valve.run();
+
+// Calculate AIV power
+double aivPower = valve.calculateAIV();  // Returns kW
+System.out.printf("AIV Power: %.2f kW%n", aivPower);
+
+// Calculate AIV likelihood of failure (requires downstream pipe geometry)
+double downstreamDiameter = 0.2032;  // 8 inch
+double downstreamThickness = 0.008;  // 8mm wall
+double aivLOF = valve.calculateAIVLikelihoodOfFailure(
+    downstreamDiameter, downstreamThickness);
+System.out.printf("AIV LOF: %.3f%n", aivLOF);
+
+// Set AIV design limit as capacity constraint
+valve.setMaxDesignAIV(10.0);  // kW (default is 10 kW for valves)
+
+// Access AIV constraint
+CapacityConstraint aivConstraint = valve.getCapacityConstraints().get("AIV");
+double utilization = aivConstraint.getUtilization();  // Current/Design ratio
+```
+
+### AIV Mitigation Strategies
+
+When AIV is identified as a concern:
+
+1. **Increase downstream pipe wall thickness** - Reduces LOF
+2. **Use acoustic/vibration analysis software** - Detailed assessment
+3. **Install acoustic dampeners** - Reduces transmitted energy
+4. **Multi-stage pressure reduction** - Reduces ΔP per stage
+5. **Increase pipe diameter** - Reduces velocity and acoustic intensity
