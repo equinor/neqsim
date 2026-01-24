@@ -29,6 +29,49 @@ import java.util.Map;
 public interface CapacityConstrainedEquipment {
 
   /**
+   * Checks if capacity analysis is enabled for this equipment.
+   *
+   * <p>
+   * When disabled, this equipment is excluded from bottleneck detection, capacity utilization
+   * summaries, and optimization routines. The equipment still tracks its constraints but doesn't
+   * contribute to system-level analysis.
+   * </p>
+   *
+   * <p>
+   * Note: The actual field is stored in {@code ProcessEquipmentBaseClass} and is enabled by default
+   * for all equipment. Equipment classes should not override this method as it delegates to the
+   * base class implementation.
+   * </p>
+   *
+   * @return true if capacity analysis is enabled (default is true)
+   */
+  boolean isCapacityAnalysisEnabled();
+
+  /**
+   * Enables or disables capacity analysis for this equipment.
+   *
+   * <p>
+   * When disabled, this equipment is excluded from:
+   * <ul>
+   * <li>System bottleneck detection ({@code ProcessSystem.findBottleneck()})</li>
+   * <li>Capacity utilization summaries ({@code ProcessSystem.getCapacityUtilizationSummary()})</li>
+   * <li>Equipment near capacity lists ({@code ProcessSystem.getEquipmentNearCapacityLimit()})</li>
+   * <li>Optimization constraint checking</li>
+   * </ul>
+   * <p>
+   * The equipment still calculates and tracks its constraints internally.
+   * </p>
+   *
+   * <p>
+   * Note: The actual field is stored in {@code ProcessEquipmentBaseClass} and is enabled by default
+   * for all equipment.
+   * </p>
+   *
+   * @param enabled true to include in capacity analysis, false to exclude
+   */
+  void setCapacityAnalysisEnabled(boolean enabled);
+
+  /**
    * Gets all capacity constraints defined for this equipment.
    *
    * <p>
@@ -127,10 +170,10 @@ public interface CapacityConstrainedEquipment {
    *
    * <p>
    * The warning threshold is typically set at 90% of design capacity to provide early warning
-   * before constraints are violated.
+   * before constraints are violated. Only enabled constraints are checked.
    * </p>
    *
-   * @return true if any constraint is above its warning threshold
+   * @return true if any enabled constraint is above its warning threshold
    */
   default boolean isNearCapacityLimit() {
     Map<String, CapacityConstraint> constraints = getCapacityConstraints();
@@ -138,7 +181,7 @@ public interface CapacityConstrainedEquipment {
       return false;
     }
     for (CapacityConstraint constraint : constraints.values()) {
-      if (constraint.isNearLimit()) {
+      if (constraint.isEnabled() && constraint.isNearLimit()) {
         return true;
       }
     }
@@ -149,8 +192,8 @@ public interface CapacityConstrainedEquipment {
    * Gets a summary of all constraint utilizations.
    *
    * <p>
-   * Returns a map of constraint names to their current utilization percentages. Useful for
-   * reporting and visualization.
+   * Returns a map of constraint names to their current utilization percentages. Only enabled
+   * constraints are included. Useful for reporting and visualization.
    * </p>
    *
    * @return map of constraint name to utilization percentage
@@ -160,7 +203,9 @@ public interface CapacityConstrainedEquipment {
     java.util.Map<String, Double> summary = new java.util.LinkedHashMap<String, Double>();
     if (constraints != null) {
       for (Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
-        summary.put(entry.getKey(), entry.getValue().getUtilizationPercent());
+        if (entry.getValue().isEnabled()) {
+          summary.put(entry.getKey(), entry.getValue().getUtilizationPercent());
+        }
       }
     }
     return summary;

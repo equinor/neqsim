@@ -1,6 +1,7 @@
 package neqsim.process.equipment.compressor;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 /**
  * Models the driver (motor, turbine, engine) for a compressor.
@@ -48,6 +49,11 @@ public class CompressorDriver implements Serializable {
   // P_max(N) = maxPower * (a + b*(N/N_rated) + c*(N/N_rated)²)
   private double[] maxPowerCurveCoeffs = null; // null means constant max power
   private boolean useMaxPowerCurve = false;
+
+  // Tabular max power curve (discrete data points)
+  private double[] maxPowerCurveSpeeds = null; // RPM values
+  private double[] maxPowerCurvePowers = null; // kW values (or MW if specified)
+  private boolean useMaxPowerCurveTable = false;
 
   /**
    * Default constructor.
@@ -119,7 +125,13 @@ public class CompressorDriver implements Serializable {
    * Get the maximum available power at a specific speed.
    *
    * <p>
-   * If a max power curve has been configured using
+   * If a tabular max power curve has been set using
+   * {@link #setMaxPowerSpeedCurve(double[], double[], String)}, the power will be linearly
+   * interpolated from the curve data.
+   * </p>
+   *
+   * <p>
+   * Alternatively, if polynomial coefficients have been configured using
    * {@link #setMaxPowerCurveCoefficients(double, double, double)}, the max power will vary with
    * speed according to: P_max(N) = maxPower * (a + b*(N/N_rated) + c*(N/N_rated)²)
    * </p>
@@ -134,8 +146,12 @@ public class CompressorDriver implements Serializable {
   public double getMaxAvailablePowerAtSpeed(double speed) {
     double basePower = maxPower;
 
-    // Apply speed-dependent curve if configured
-    if (useMaxPowerCurve && maxPowerCurveCoeffs != null && ratedSpeed > 0) {
+    // First priority: use tabular data if available
+    if (useMaxPowerCurveTable && maxPowerCurveSpeeds != null && maxPowerCurvePowers != null
+        && maxPowerCurveSpeeds.length > 0) {
+      basePower = interpolateMaxPower(speed);
+    } else if (useMaxPowerCurve && maxPowerCurveCoeffs != null && ratedSpeed > 0) {
+      // Second priority: polynomial curve
       double speedRatio = speed / ratedSpeed;
       double curveFactor = maxPowerCurveCoeffs[0] + maxPowerCurveCoeffs[1] * speedRatio
           + maxPowerCurveCoeffs[2] * speedRatio * speedRatio;
@@ -152,6 +168,37 @@ public class CompressorDriver implements Serializable {
     }
 
     return basePower;
+  }
+
+  /**
+   * Interpolates max power from the tabular curve data.
+   *
+   * @param speed current speed in RPM
+   * @return interpolated max power in kW
+   */
+  private double interpolateMaxPower(double speed) {
+    int n = maxPowerCurveSpeeds.length;
+
+    // Handle edge cases
+    if (speed <= maxPowerCurveSpeeds[0]) {
+      return maxPowerCurvePowers[0];
+    }
+    if (speed >= maxPowerCurveSpeeds[n - 1]) {
+      return maxPowerCurvePowers[n - 1];
+    }
+
+    // Find the interval containing speed and interpolate
+    for (int i = 0; i < n - 1; i++) {
+      if (speed >= maxPowerCurveSpeeds[i] && speed <= maxPowerCurveSpeeds[i + 1]) {
+        double fraction = (speed - maxPowerCurveSpeeds[i])
+            / (maxPowerCurveSpeeds[i + 1] - maxPowerCurveSpeeds[i]);
+        return maxPowerCurvePowers[i]
+            + fraction * (maxPowerCurvePowers[i + 1] - maxPowerCurvePowers[i]);
+      }
+    }
+
+    // Fallback (should not reach here)
+    return maxPower;
   }
 
   /**
@@ -723,6 +770,89 @@ public class CompressorDriver implements Serializable {
     if (maxPowerCurveCoeffs != null) {
       this.useMaxPowerCurve = true;
     }
+  }
+
+  /**
+   * Set the max power vs speed curve using tabular data with linear interpolation.
+   *
+   * <p>
+   * This method allows specifying discrete data points for the max power curve. The power at any
+   * speed is determined by linear interpolation between the provided points. For speeds outside the
+   * data range, the boundary values are used.
+   * </p>
+   *
+   * <p>
+   * Example usage for a typical VFD electric motor:
+   * </p>
+   * 
+   * <pre>
+   * double[] speeds = {4922, 5500, 6000, 6500, 7000, 7383}; // RPM
+   * double[] powers = {21.8, 27.5, 32.0, 37.0, 42.0, 44.4}; // MW
+   * driver.setMaxPowerSpeedCurve(speeds, powers, "MW");
+   * </pre>
+   *
+   * @param speeds array of speed values in RPM (must be in ascending order)
+   * @param powers array of max power values (same length as speeds)
+   * @param powerUnit unit of power values: "kW", "MW", or "W"
+   * @throws IllegalArgumentException if arrays have different lengths or speeds not in order
+   */
+  public void setMaxPowerSpeedCurve(double[] speeds, double[] powers, String powerUnit) {
+    if (speeds == null || powers == null) {
+      throw new IllegalArgumentException("Speed and power arrays cannot be null");
+    }
+    if (speeds.length != powers.length) {
+      throw new IllegalArgumentException("Speed and power arrays must have the same length");
+    }
+    if (speeds.length < 2) {
+      throw new IllegalArgumentException("At least 2 data points are required");
+    }
+
+    // Verify speeds are in ascending order
+    for (int i = 1; i < speeds.length; i++) {
+      if (speeds[i] <= speeds[i - 1]) {
+        throw new IllegalArgumentException("Speed values must be in strictly ascending order");
+      }
+    }
+
+    // Convert power to kW based on unit
+    double conversionFactor = 1.0;
+    if ("MW".equalsIgnoreCase(powerUnit)) {
+      conversionFactor = 1000.0; // MW to kW
+    } else if ("W".equalsIgnoreCase(powerUnit)) {
+      conversionFactor = 0.001; // W to kW
+    }
+
+    this.maxPowerCurveSpeeds = Arrays.copyOf(speeds, speeds.length);
+    this.maxPowerCurvePowers = new double[powers.length];
+    for (int i = 0; i < powers.length; i++) {
+      this.maxPowerCurvePowers[i] = powers[i] * conversionFactor;
+    }
+
+    this.useMaxPowerCurveTable = true;
+    this.useMaxPowerCurve = false; // Disable polynomial curve when using tabular
+
+    // Update maxPower to the maximum value in the curve
+    double maxVal = 0;
+    for (double p : this.maxPowerCurvePowers) {
+      maxVal = Math.max(maxVal, p);
+    }
+    this.maxPower = maxVal;
+  }
+
+  /**
+   * Check if tabular max power curve is enabled.
+   *
+   * @return true if using tabular interpolation for max power
+   */
+  public boolean isMaxPowerCurveTableEnabled() {
+    return useMaxPowerCurveTable;
+  }
+
+  /**
+   * Disable the tabular max power curve.
+   */
+  public void disableMaxPowerCurveTable() {
+    this.useMaxPowerCurveTable = false;
   }
 
   @Override

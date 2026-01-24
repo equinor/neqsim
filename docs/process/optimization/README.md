@@ -9,6 +9,7 @@ The `neqsim.process.calibration` package provides a comprehensive optimization f
 | Document | Description |
 |----------|-------------|
 | [Optimization Overview](OPTIMIZATION_OVERVIEW.md) | **START HERE**: When to use which optimizer |
+| [Compressor Optimization Guide](COMPRESSOR_OPTIMIZATION_GUIDE.md) | **NEW**: Multi-train compressor optimization with VFD, driver curves, and two-stage approach |
 | [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md) | Equipment capacity strategies, constraint evaluation, throughput optimization, sensitivity analysis, and FlowRateOptimizer integration |
 | [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | Complete examples for ProductionOptimizer |
 | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) | Core constraint definition and bottleneck detection |

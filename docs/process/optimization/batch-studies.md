@@ -21,6 +21,23 @@ Early-phase engineering requires rapid evaluation of many alternatives. The `Bat
 - **Multi-Objective Ranking**: Compare by cost, emissions, efficiency
 - **Result Aggregation**: Collect and analyze efficiently
 
+## Table of Contents
+
+- [Usage](#usage)
+- [Parameter Variation Methods](#parameter-variation-methods)
+- [Supported Parameter Paths](#supported-parameter-paths)
+- [Result Analysis](#result-analysis)
+- [Multi-Objective Analysis](#multi-objective-analysis)
+- [Concept Screening Example](#concept-screening-example)
+- [Performance Considerations](#performance-considerations)
+- [Best Practices](#best-practices)
+- [Python Usage (via JPype)](#python-usage-via-jpype)
+  - [Basic Setup](#basic-setup)
+  - [Building and Running Batch Study](#building-and-running-batch-study)
+  - [Converting to Pandas DataFrame](#converting-to-pandas-dataframe)
+  - [Visualizing Results](#visualizing-results)
+  - [Concept Screening Example (Python)](#concept-screening-example)
+
 ## Usage
 
 ### Basic Usage
@@ -250,8 +267,318 @@ for (var entry : conceptResults.entrySet()) {
 4. **Export Results**: Always save before analysis
 5. **Version Control**: Track study configurations
 
+---
+
+## Python Usage (via JPype)
+
+BatchStudy is fully accessible from Python using neqsim-python.
+
+### Basic Setup
+
+```python
+from neqsim.neqsimpython import jneqsim
+import jpype
+from jpype import JImplements, JOverride
+import pandas as pd
+import json
+
+# Import classes
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+Stream = jneqsim.process.equipment.stream.Stream
+Compressor = jneqsim.process.equipment.compressor.Compressor
+Heater = jneqsim.process.equipment.heatexchanger.Heater
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+
+BatchStudy = jneqsim.process.util.optimizer.BatchStudy
+Objective = BatchStudy.Objective
+```
+
+### Creating a Base Process
+
+```python
+# Create fluid
+fluid = SystemSrkEos(298.15, 50.0)
+fluid.addComponent("methane", 0.85)
+fluid.addComponent("ethane", 0.10)
+fluid.addComponent("propane", 0.05)
+fluid.setMixingRule("classic")
+
+# Build base process
+base_process = ProcessSystem()
+
+feed = Stream("feed", fluid)
+feed.setFlowRate(10000.0, "kg/hr")
+feed.setPressure(50.0, "bara")
+base_process.add(feed)
+
+heater = Heater("heater", feed)
+heater.setOutTemperature(350.0, "K")
+base_process.add(heater)
+
+compressor = Compressor("compressor", heater.getOutletStream())
+compressor.setOutletPressure(100.0, "bara")
+base_process.add(compressor)
+
+base_process.run()
+```
+
+### Defining Objective Functions in Python
+
+```python
+# Define objective functions using Java interface
+@JImplements("java.util.function.ToDoubleFunction")
+class PowerObjective:
+    @JOverride
+    def applyAsDouble(self, proc):
+        comp = proc.getUnit("compressor")
+        return comp.getPower("kW") if comp else 0.0
+
+@JImplements("java.util.function.ToDoubleFunction")
+class ThroughputObjective:
+    @JOverride
+    def applyAsDouble(self, proc):
+        return proc.getUnit("feed").getFlowRate("kg/hr")
+
+@JImplements("java.util.function.ToDoubleFunction")
+class EfficiencyObjective:
+    @JOverride
+    def applyAsDouble(self, proc):
+        comp = proc.getUnit("compressor")
+        return comp.getPolytropicEfficiency() * 100 if comp else 0.0
+```
+
+### Building and Running Batch Study
+
+```python
+# Build batch study using builder pattern
+study = BatchStudy.builder(base_process) \
+    .name("HeaterCompressorStudy") \
+    .vary("heater.outletTemperature", 300.0, 400.0, 5) \
+    .vary("compressor.outletPressure", 80.0, 120.0, 5) \
+    .addObjective("power", Objective.MINIMIZE, PowerObjective()) \
+    .addObjective("throughput", Objective.MAXIMIZE, ThroughputObjective()) \
+    .parallelism(4) \
+    .stopOnFailure(False) \
+    .build()
+
+# Run the study
+result = study.run()
+
+# Print summary
+print(f"Total cases: {result.getTotalCases()}")
+print(f"Completed: {result.getCompletedCases()}")
+print(f"Failed: {result.getFailedCases()}")
+print(f"Runtime: {result.getTotalRuntime()}")
+```
+
+### Analyzing Results
+
+```python
+# Get best cases
+best_power = result.getBestCase("power")
+best_throughput = result.getBestCase("throughput")
+
+print(f"\nBest by power: {best_power.objectiveValues.get('power'):.1f} kW")
+print(f"Best by throughput: {best_throughput.objectiveValues.get('throughput'):.0f} kg/hr")
+
+# Get all successful results
+successful = result.getSuccessfulCases()
+print(f"\nSuccessful cases: {len(list(successful))}")
+
+# Get Pareto front for two objectives
+pareto_front = result.getParetoFront("power", "throughput")
+print(f"Pareto front size: {len(list(pareto_front))}")
+```
+
+### Exporting Results
+
+```python
+# Export to CSV
+result.exportToCSV("batch_results.csv")
+
+# Export to JSON
+result.exportToJSON("batch_results.json")
+
+# Get JSON string directly
+json_str = result.toJson()
+data = json.loads(json_str)
+```
+
+### Converting to Pandas DataFrame
+
+```python
+import pandas as pd
+
+# Build DataFrame from results
+rows = []
+for case_result in result.getAllResults():
+    row = {
+        'failed': case_result.failed,
+        'error': case_result.errorMessage if case_result.failed else None
+    }
+    
+    # Add parameters
+    for name, value in case_result.parameters.values.items():
+        row[f'param_{name}'] = value
+    
+    # Add objectives (if successful)
+    if not case_result.failed:
+        for name, value in case_result.objectiveValues.items():
+            row[f'obj_{name}'] = value
+    
+    rows.append(row)
+
+df = pd.DataFrame(rows)
+print(df.head())
+
+# Filter successful cases
+df_success = df[~df['failed']]
+print(f"\nSuccessful cases: {len(df_success)}")
+
+# Find optimal
+idx_min_power = df_success['obj_power'].idxmin()
+print(f"\nMinimum power case:")
+print(df_success.loc[idx_min_power])
+```
+
+### Visualizing Results
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Create scatter plot of parameter study
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# Plot 1: Power vs parameters
+ax1 = axes[0]
+if 'param_heater.outletTemperature' in df_success.columns:
+    scatter = ax1.scatter(
+        df_success['param_heater.outletTemperature'],
+        df_success['param_compressor.outletPressure'],
+        c=df_success['obj_power'],
+        cmap='viridis',
+        s=100
+    )
+    plt.colorbar(scatter, ax=ax1, label='Power (kW)')
+    ax1.set_xlabel('Heater Outlet Temperature (K)')
+    ax1.set_ylabel('Compressor Outlet Pressure (bara)')
+    ax1.set_title('Power Consumption Heat Map')
+
+# Plot 2: Pareto front
+ax2 = axes[1]
+ax2.scatter(df_success['obj_power'], df_success['obj_throughput'], 
+            s=100, alpha=0.6, label='All cases')
+
+# Highlight Pareto front
+pareto_rows = []
+for case in result.getParetoFront("power", "throughput"):
+    pareto_rows.append({
+        'power': case.objectiveValues.get('power'),
+        'throughput': case.objectiveValues.get('throughput')
+    })
+df_pareto = pd.DataFrame(pareto_rows)
+if not df_pareto.empty:
+    ax2.scatter(df_pareto['power'], df_pareto['throughput'],
+                s=150, c='red', marker='*', label='Pareto front')
+
+ax2.set_xlabel('Power (kW)')
+ax2.set_ylabel('Throughput (kg/hr)')
+ax2.set_title('Pareto Front: Power vs Throughput')
+ax2.legend()
+ax2.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig('batch_study_results.png', dpi=150)
+plt.show()
+```
+
+### Using Explicit Parameter Values
+
+```python
+# Vary with explicit values instead of range
+study = BatchStudy.builder(base_process) \
+    .name("ExplicitValuesStudy") \
+    .vary("compressor.outletPressure", 80.0, 100.0, 120.0) \
+    .vary("heater.outletTemperature", 320.0, 350.0, 380.0) \
+    .addObjective("power", Objective.MINIMIZE, PowerObjective()) \
+    .parallelism(2) \
+    .build()
+
+result = study.run()
+print(f"Evaluated {result.getTotalCases()} combinations")
+```
+
+### Concept Screening Example
+
+```python
+def create_staged_compressor(num_stages, fluid):
+    """Create a compressor train with specified stages"""
+    process = ProcessSystem()
+    
+    feed = Stream("feed", fluid)
+    feed.setFlowRate(10000.0, "kg/hr")
+    feed.setPressure(30.0, "bara")
+    process.add(feed)
+    
+    inlet_stream = feed
+    total_ratio = 5.0  # Total pressure ratio
+    stage_ratio = total_ratio ** (1.0 / num_stages)
+    
+    for i in range(num_stages):
+        comp = Compressor(f"stage{i+1}", inlet_stream)
+        outlet_p = 30.0 * (stage_ratio ** (i + 1))
+        comp.setOutletPressure(outlet_p, "bara")
+        comp.setPolytropicEfficiency(0.78)
+        process.add(comp)
+        
+        if i < num_stages - 1:  # Add intercooler
+            cooler = jneqsim.process.equipment.heatexchanger.Cooler(
+                f"cooler{i+1}", comp.getOutletStream())
+            cooler.setOutTemperature(308.15)  # 35°C
+            process.add(cooler)
+            inlet_stream = cooler.getOutletStream()
+        else:
+            inlet_stream = comp.getOutletStream()
+    
+    process.run()
+    return process
+
+# Screen 1, 2, 3, 4 stage options
+concept_results = {}
+for stages in range(1, 5):
+    concept = create_staged_compressor(stages, fluid.clone())
+    
+    @JImplements("java.util.function.ToDoubleFunction")
+    class TotalPowerObj:
+        @JOverride
+        def applyAsDouble(self, proc):
+            total = 0.0
+            for unit in proc.getUnitOperations():
+                if unit.getClass().getSimpleName() == "Compressor":
+                    total += unit.getPower("kW")
+            return total
+    
+    study = BatchStudy.builder(concept) \
+        .name(f"Concept-{stages}-stages") \
+        .vary("stage1.outletPressure", 40.0, 60.0, 3) \
+        .addObjective("totalPower", Objective.MINIMIZE, TotalPowerObj()) \
+        .parallelism(2) \
+        .build()
+    
+    result = study.run()
+    concept_results[stages] = result
+    
+    best = result.getBestCase("totalPower")
+    print(f"{stages} stages: Best power = {best.objectiveValues.get('totalPower'):.1f} kW")
+```
+
+---
+
 ## Related Documentation
 
 - [Optimization Package](README.md) - General optimization capabilities
+- [Multi-Objective Optimization](multi-objective-optimization.md) - Pareto fronts
+- [Python Optimization Tutorial](../../examples/NeqSim_Python_Optimization.md) - SciPy integration
 - [Safety Scenario Generation](../safety/scenario-generation.md) - Generate scenarios for batch studies
 - [Future Infrastructure Overview](../future-infrastructure.md) - Full infrastructure overview

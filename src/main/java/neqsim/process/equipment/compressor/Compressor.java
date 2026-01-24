@@ -1093,6 +1093,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
           double nV = (1.0 + schultzX)
               / (1.0 / isenthalpicvolumeexponent * (1.0 / polytropicEfficiency + schultzX)
                   - schultzY * (1.0 / polytropicEfficiency - 1.0));
+          polytropicExponent = nV;
           double term = nV / (nV - 1.0);
           double term2 = 1e5 * (getOutletPressure() / densOutIsentropic - presinn / densInn);
           double term3 = isenthalpicvolumeexponent / (isenthalpicvolumeexponent - 1.0);
@@ -1143,6 +1144,11 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
           }
           double isenthalpicvolumeexponent =
               Math.log(getOutletPressure() / presinn) / Math.log(densOutIsentropic / densInn);
+          // Calculate polytropic exponent from isentropic exponent and efficiency
+          // n_poly = k_s / (1 - (k_s - 1) / k_s * (1 - eta_poly))
+          // Simplified: use isenthalpicvolumeexponent as base
+          polytropicExponent = isenthalpicvolumeexponent / (1.0 - (isenthalpicvolumeexponent - 1.0)
+              / isenthalpicvolumeexponent * (1.0 - polytropicEfficiency));
           double term = isenthalpicvolumeexponent / (isenthalpicvolumeexponent - 1.0)
               * (polytropicEfficiency);
           double term2 = 1e5 * (getOutletPressure() / densOutIsentropic - presinn / densInn);
@@ -1233,6 +1239,25 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
         getPower() / getThermoSystem().getFlowRate("kg/sec") / 1000.0 * getPolytropicEfficiency();
     polytropicHeadMeter = polytropicFluidHead * 1000.0 / 9.81;
     actualCompressionRatio = getOutletPressure() / presinn;
+
+    // Calculate polytropic exponent from actual compression process if not already set
+    // n = ln(P2/P1) / ln(rho2/rho1) - polytropic volume exponent
+    if (polytropicExponent == 0 || !getCompressorChart().isUseCompressorChart()) {
+      double densOut = getThermoSystem().getDensity("kg/m3");
+      if (useGERG2008 && getThermoSystem().getNumberOfPhases() == 1) {
+        densOut = getThermoSystem().getPhase(0).getDensity_GERG2008();
+      } else if (useLeachman && getThermoSystem().getNumberOfPhases() == 1) {
+        densOut = getThermoSystem().getPhase(0).getDensity_Leachman();
+      } else if (useVega && getThermoSystem().getNumberOfPhases() == 1) {
+        densOut = getThermoSystem().getPhase(0).getDensity_Vega();
+      }
+      double pressureRatioCalc = getOutletPressure() / presinn;
+      double densityRatio = densOut / densInn;
+      if (pressureRatioCalc > 1.0 && densityRatio > 1.0) {
+        polytropicExponent = Math.log(pressureRatioCalc) / Math.log(densityRatio);
+      }
+    }
+
     setCalculationIdentifier(id);
   }
 
@@ -3020,15 +3045,34 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    * {@inheritDoc}
    *
    * <p>
-   * For compressors, maximum capacity is defined by the mechanical design's maximum power in Watts.
-   * This should be set via {@code getMechanicalDesign().maxDesignPower = value}.
+   * <p>
+   * For compressors, maximum capacity is determined in priority order:
    * </p>
+   * <ol>
+   * <li>Driver speed-dependent max power curve (if driver and speed are set)</li>
+   * <li>Mechanical design maximum power</li>
+   * <li>Driver rated power with 10% overload margin</li>
+   * </ol>
    *
-   * @return maximum design power in Watts
+   * @return maximum design power in Watts (converted from kW if from driver)
    */
   @Override
   public double getCapacityMax() {
-    return getMechanicalDesign().maxDesignPower;
+    // Priority 1: Driver with speed-dependent power curve
+    if (driver != null && driver.getRatedSpeed() > 0 && speed > 0) {
+      // Driver returns kW, convert to Watts for consistency with getTotalWork()
+      return driver.getMaxAvailablePowerAtSpeed(speed) * 1000.0;
+    }
+    // Priority 2: Mechanical design max power
+    if (getMechanicalDesign().maxDesignPower > 0) {
+      return getMechanicalDesign().maxDesignPower;
+    }
+    // Priority 3: Driver rated power with 10% overload margin
+    if (driver != null && driver.getRatedPower() > 0) {
+      return driver.getRatedPower() * 1.1 * 1000.0; // kW to W
+    }
+    // Fallback: no limit defined
+    return Double.MAX_VALUE;
   }
 
   /**
@@ -4096,6 +4140,12 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   /** {@inheritDoc} */
   @Override
   public double getMaxUtilization() {
+    // If simulation is invalid (e.g., compressor outside chart envelope),
+    // return NaN to indicate utilization cannot be meaningfully computed
+    if (!isSimulationValid()) {
+      return Double.NaN;
+    }
+
     ensureCapacityConstraintsInitialized();
     double maxUtil = 0.0;
     for (CapacityConstraint constraint : capacityConstraints.values()) {
@@ -4144,8 +4194,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       return false;
     }
 
-    // Polytropic head must be positive (work done on gas)
-    if (head < 0) {
+    // Polytropic head must be strictly positive (work done on gas)
+    // Zero head indicates invalid operating point (e.g., speed outside chart range)
+    if (head <= 0) {
       return false;
     }
 
@@ -4158,6 +4209,20 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     // Pressure ratio must be >= 1.0 for compression
     if (pressureRatio < 0.99) {
       return false;
+    }
+
+    // Check if operating within compressor chart speed limits (if chart is active)
+    if (getCompressorChart() != null && getCompressorChart().isUseCompressorChart()) {
+      double chartMinSpeed = getCompressorChart().getMinSpeedCurve();
+      double chartMaxSpeed = getCompressorChart().getMaxSpeedCurve();
+      // If speed is significantly outside chart range, simulation is invalid
+      // Allow 5% tolerance for edge cases
+      if (chartMinSpeed > 0 && speed < chartMinSpeed * 0.95) {
+        return false;
+      }
+      if (chartMaxSpeed > 0 && speed > chartMaxSpeed * 1.05) {
+        return false;
+      }
     }
 
     return true;
@@ -4195,9 +4260,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
 
     if (Double.isNaN(head)) {
       errors.add(getName() + ": Polytropic head calculation returned NaN");
-    } else if (head < 0) {
+    } else if (head <= 0) {
       errors.add(String.format(
-          "%s: Negative polytropic head (%.2f kJ/kg) - indicates expansion, not compression",
+          "%s: Zero or negative polytropic head (%.2f J/kg) - compressor outside valid operating range",
           getName(), head));
     }
 
@@ -4213,6 +4278,22 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     } else if (outletTemp < inletTemp - 1.0) {
       errors.add(String.format("%s: Outlet temperature (%.1f K) less than inlet (%.1f K)",
           getName(), outletTemp, inletTemp));
+    }
+
+    // Check if operating within compressor chart speed limits
+    if (getCompressorChart() != null && getCompressorChart().isUseCompressorChart()) {
+      double chartMinSpeed = getCompressorChart().getMinSpeedCurve();
+      double chartMaxSpeed = getCompressorChart().getMaxSpeedCurve();
+      if (chartMinSpeed > 0 && speed < chartMinSpeed * 0.95) {
+        errors.add(String.format(
+            "%s: Speed (%.0f RPM) below chart minimum (%.0f RPM) - outside valid operating range",
+            getName(), speed, chartMinSpeed));
+      }
+      if (chartMaxSpeed > 0 && speed > chartMaxSpeed * 1.05) {
+        errors.add(String.format(
+            "%s: Speed (%.0f RPM) above chart maximum (%.0f RPM) - outside valid operating range",
+            getName(), speed, chartMaxSpeed));
+      }
     }
 
     return errors;
