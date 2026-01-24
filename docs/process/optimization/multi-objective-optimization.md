@@ -29,6 +29,14 @@ The `neqsim.process.util.optimizer` package provides a comprehensive **multi-obj
 - [Usage Examples](#usage-examples)
 - [API Reference](#api-reference)
 - [Best Practices](#best-practices)
+- [Python Usage (via JPype)](#python-usage-via-jpype)
+  - [Basic Setup](#basic-setup)
+  - [Using Standard Objectives](#using-standard-objectives)
+  - [Custom Objectives in Python](#custom-objectives-in-python)
+  - [Progress Monitoring](#progress-monitoring)
+  - [Extracting Results for Pandas/NumPy](#extracting-results-for-pandasnumpy)
+  - [Plotting Pareto Front (matplotlib)](#plotting-pareto-front-matplotlib)
+  - [Integration with SciPy](#integration-with-scipy-for-custom-algorithms)
 
 ---
 
@@ -664,11 +672,344 @@ System.out.println("  Best trade-off: " + knee.getRawValue(0) + " kg/hr at "
 
 ---
 
+## Python Usage (via JPype)
+
+All multi-objective optimization features are accessible from Python using neqsim-python.
+
+### Basic Setup
+
+```python
+from neqsim.neqsimpython import jneqsim
+import jpype
+from jpype import JImplements, JOverride
+import numpy as np
+
+# Import optimizer classes
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+Stream = jneqsim.process.equipment.stream.Stream
+Compressor = jneqsim.process.equipment.compressor.Compressor
+Separator = jneqsim.process.equipment.separator.Separator
+Cooler = jneqsim.process.equipment.heatexchanger.Cooler
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+
+MultiObjectiveOptimizer = jneqsim.process.util.optimizer.MultiObjectiveOptimizer
+ProductionOptimizer = jneqsim.process.util.optimizer.ProductionOptimizer
+OptimizationConfig = ProductionOptimizer.OptimizationConfig
+StandardObjective = jneqsim.process.util.optimizer.StandardObjective
+ObjectiveFunction = jneqsim.process.util.optimizer.ObjectiveFunction
+
+# Java collections
+Arrays = jpype.JClass("java.util.Arrays")
+```
+
+### Creating Process Model
+
+```python
+# Create fluid
+fluid = SystemSrkEos(298.15, 30.0)
+fluid.addComponent("methane", 0.85)
+fluid.addComponent("ethane", 0.08)
+fluid.addComponent("propane", 0.05)
+fluid.addComponent("n-butane", 0.02)
+fluid.setMixingRule("classic")
+
+# Build process
+process = ProcessSystem()
+
+feed = Stream("Feed", fluid)
+feed.setFlowRate(5000.0, "kg/hr")
+feed.setTemperature(25.0, "C")
+feed.setPressure(30.0, "bara")
+process.add(feed)
+
+separator = Separator("HP Separator", feed)
+process.add(separator)
+
+compressor = Compressor("Gas Compressor", separator.getGasOutStream())
+compressor.setOutletPressure(50.0, "bara")
+compressor.setIsentropicEfficiency(0.75)
+process.add(compressor)
+
+cooler = Cooler("After Cooler", compressor.getOutletStream())
+cooler.setOutTemperature(40.0, "C")
+process.add(cooler)
+
+process.run()
+```
+
+### Using Standard Objectives
+
+```python
+# Use pre-defined standard objectives
+objectives = Arrays.asList(
+    StandardObjective.MAXIMIZE_THROUGHPUT,
+    StandardObjective.MINIMIZE_POWER
+)
+
+# Configure optimization bounds
+config = OptimizationConfig(1000.0, 20000.0) \
+    .rateUnit("kg/hr") \
+    .tolerance(50.0) \
+    .defaultUtilizationLimit(0.95) \
+    .maxIterations(20)
+```
+
+### Sampling-Based Pareto Front
+
+```python
+# Create optimizer
+moo = MultiObjectiveOptimizer()
+
+# Generate Pareto front by sampling
+front = moo.sampleParetoFront(process, feed, objectives, config, 10)
+
+# Analyze results
+print(f"\n=== Pareto Front Results ===")
+print(f"Number of solutions: {front.size()}")
+
+# Iterate through solutions (sorted by throughput, descending)
+for sol in front.getSolutionsSortedBy(0, True):  # index=0 is throughput
+    throughput = sol.getRawValue(0)
+    power = sol.getRawValue(1)
+    print(f"  Throughput: {throughput:.0f} kg/hr, Power: {power:.1f} kW")
+
+# Find knee point (best trade-off)
+knee = front.findKneePoint()
+print(f"\nKnee Point (Best Trade-off):")
+print(f"  Throughput: {knee.getRawValue(0):.0f} kg/hr")
+print(f"  Power: {knee.getRawValue(1):.1f} kW")
+```
+
+### Weighted-Sum Method
+
+```python
+# Weighted-sum optimization (good for convex Pareto fronts)
+front = moo.optimizeWeightedSum(
+    process,     # ProcessSystem
+    feed,        # Stream to vary
+    objectives,  # List of ObjectiveFunction
+    config,      # OptimizationConfig
+    10           # Number of weight combinations
+)
+
+print(f"Found {front.size()} Pareto-optimal solutions")
+```
+
+### Custom Objectives in Python
+
+```python
+# Define custom objective using Java interface implementation
+@JImplements("java.util.function.ToDoubleFunction")
+class SpecificProductionObjective:
+    """Throughput per unit power (kg/kWh)"""
+    @JOverride
+    def applyAsDouble(self, proc):
+        # Get throughput (first feed stream)
+        throughput = 0.0
+        for unit in proc.getUnitOperations():
+            if hasattr(unit, 'getFlowRate'):
+                throughput = unit.getFlowRate("kg/hr")
+                break
+        
+        # Get total power
+        power = 0.0
+        for unit in proc.getUnitOperations():
+            class_name = unit.getClass().getSimpleName()
+            if class_name == "Compressor" or class_name == "Pump":
+                power += unit.getPower("kW")
+        
+        return throughput / power if power > 1.0 else throughput
+
+# Create ObjectiveFunction from Python callable
+Direction = ObjectiveFunction.Direction
+
+specific_obj = ObjectiveFunction.create(
+    "Specific Production",
+    SpecificProductionObjective(),
+    Direction.MAXIMIZE,
+    "kg/kWh"
+)
+
+# Use in optimization
+objectives_3 = Arrays.asList(
+    StandardObjective.MAXIMIZE_THROUGHPUT,
+    StandardObjective.MINIMIZE_POWER,
+    specific_obj
+)
+
+front = moo.sampleParetoFront(process, feed, objectives_3, config, 15)
+```
+
+### Progress Monitoring
+
+```python
+# Define progress callback
+@JImplements("neqsim.process.util.optimizer.MultiObjectiveOptimizer$ProgressCallback")
+class ProgressMonitor:
+    def __init__(self):
+        self.feasible = 0
+        self.infeasible = 0
+    
+    @JOverride
+    def onProgress(self, iteration, total, solution):
+        if solution is not None:
+            if solution.isFeasible():
+                self.feasible += 1
+            else:
+                self.infeasible += 1
+            print(f"  [{iteration}/{total}] Flow={solution.getRawValue(0):.0f} kg/hr, "
+                  f"Power={solution.getRawValue(1):.1f} kW, Feasible={solution.isFeasible()}")
+        else:
+            print(f"  [{iteration}/{total}] FAILED")
+
+# Use progress monitor
+monitor = ProgressMonitor()
+moo = MultiObjectiveOptimizer() \
+    .includeInfeasible(True) \
+    .onProgress(monitor)
+
+front = moo.sampleParetoFront(process, feed, objectives, config, 20)
+print(f"\nSummary: {monitor.feasible} feasible, {monitor.infeasible} infeasible")
+```
+
+### Extracting Results for Pandas/NumPy
+
+```python
+import pandas as pd
+import json
+
+# Export to JSON and parse
+json_str = front.toJson()
+data = json.loads(json_str)
+
+# Build DataFrame from Pareto solutions
+results = []
+for sol in front.getSolutions():
+    row = {
+        'throughput_kg_hr': sol.getRawValue(0),
+        'power_kW': sol.getRawValue(1),
+        'feasible': sol.isFeasible()
+    }
+    # Add decision variables if available
+    dvars = sol.getDecisionVariables()
+    if dvars:
+        for name, val in dvars.items():
+            row[f'var_{name}'] = val
+    results.append(row)
+
+df = pd.DataFrame(results)
+print(df)
+
+# Save to CSV
+df.to_csv('pareto_front.csv', index=False)
+```
+
+### Plotting Pareto Front (matplotlib)
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Extract data for plotting
+throughputs = [sol.getRawValue(0) for sol in front.getSolutions()]
+powers = [sol.getRawValue(1) for sol in front.getSolutions()]
+
+# Get knee point
+knee = front.findKneePoint()
+knee_throughput = knee.getRawValue(0)
+knee_power = knee.getRawValue(1)
+
+# Plot
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# Pareto front
+ax.scatter(throughputs, powers, s=100, c='blue', label='Pareto Solutions', zorder=2)
+
+# Connect points to show front
+sorted_idx = np.argsort(throughputs)
+ax.plot(np.array(throughputs)[sorted_idx], np.array(powers)[sorted_idx], 
+        'b--', alpha=0.5, zorder=1)
+
+# Highlight knee point
+ax.scatter([knee_throughput], [knee_power], s=200, c='red', marker='*',
+           label=f'Knee Point ({knee_throughput:.0f} kg/hr, {knee_power:.1f} kW)', zorder=3)
+
+ax.set_xlabel('Throughput (kg/hr)', fontsize=12)
+ax.set_ylabel('Power (kW)', fontsize=12)
+ax.set_title('Pareto Front: Throughput vs Power Trade-off', fontsize=14)
+ax.legend(loc='upper left')
+ax.grid(True, alpha=0.3)
+
+# Add annotations
+ax.annotate('High throughput,\nhigh power', 
+            xy=(max(throughputs), max(powers)),
+            xytext=(max(throughputs)*0.9, max(powers)*1.1),
+            fontsize=9, alpha=0.7)
+ax.annotate('Low throughput,\nlow power', 
+            xy=(min(throughputs), min(powers)),
+            xytext=(min(throughputs)*0.8, min(powers)*0.7),
+            fontsize=9, alpha=0.7)
+
+plt.tight_layout()
+plt.savefig('pareto_front.png', dpi=150)
+plt.show()
+```
+
+### Integration with SciPy for Custom Algorithms
+
+For advanced multi-objective optimization, combine NeqSim with Python's optimization libraries:
+
+```python
+from scipy.optimize import differential_evolution
+import numpy as np
+
+def evaluate_both_objectives(x):
+    """Evaluate both objectives at flow rate x[0]"""
+    flow_rate = x[0]
+    
+    # Clone process and set flow
+    proc_copy = process.copy()
+    feed_copy = proc_copy.getUnit("Feed")
+    feed_copy.setFlowRate(flow_rate, "kg/hr")
+    proc_copy.run()
+    
+    # Get objectives
+    throughput = flow_rate
+    power = proc_copy.getUnit("Gas Compressor").getPower("kW")
+    
+    return throughput, power
+
+# Generate Pareto front using SciPy differential evolution
+# with weighted sum scalarization
+def weighted_objective(x, w1, w2):
+    throughput, power = evaluate_both_objectives(x)
+    # Minimize: -w1*throughput + w2*power (negate throughput to maximize)
+    return -w1 * throughput + w2 * power
+
+pareto_scipy = []
+for w in np.linspace(0.1, 0.9, 9):
+    result = differential_evolution(
+        weighted_objective, 
+        bounds=[(1000, 20000)],
+        args=(w, 1-w),
+        seed=42
+    )
+    throughput, power = evaluate_both_objectives(result.x)
+    pareto_scipy.append({'throughput': throughput, 'power': power, 'weight': w})
+
+print("SciPy Pareto front:")
+for p in pareto_scipy:
+    print(f"  w={p['weight']:.1f}: {p['throughput']:.0f} kg/hr, {p['power']:.1f} kW")
+```
+
+---
+
 ## Related Documentation
 
 - [Production Optimization Framework](README.md) - Single-objective optimization
 - [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) - Equipment constraints
 - [Batch Parameter Estimation](batch-studies.md) - Parameter fitting
+- [Python Optimization Tutorial](../../examples/NeqSim_Python_Optimization.md) - SciPy integration
 
 ---
 

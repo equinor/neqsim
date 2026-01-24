@@ -34,6 +34,21 @@ This is essential for:
 | **Eclipse export** | Direct VFPPROD/VFPINJ format output |
 | **JSON export** | Machine-readable results for external tools |
 
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Lift Curve Generation](#lift-curve-generation)
+- [Professional Lift Curve Generation](#professional-lift-curve-generation)
+- [Best Practices](#best-practices)
+- [Troubleshooting](#troubleshooting)
+- [Python Usage (via JPype)](#python-usage-via-jpype)
+  - [Basic Setup](#basic-setup)
+  - [Finding Maximum Flow Rate](#finding-maximum-flow-rate)
+  - [Generating Lift Curve Tables](#generating-lift-curve-tables)
+  - [Parallel Lift Curve Generation](#parallel-lift-curve-generation)
+  - [Plotting Lift Curves (matplotlib)](#plotting-lift-curves-matplotlib)
+- [API Reference](#api-reference)
+
 ---
 
 ## Quick Start
@@ -454,6 +469,218 @@ if (point == null || !point.isFeasible()) {
 1. Verify flow rates are in expected units
 2. Check pressure monotonicity
 3. Ensure at least 2 feasible points per curve
+
+---
+
+## Python Usage (via JPype)
+
+All FlowRateOptimizer functionality is accessible from Python using neqsim-python and JPype.
+
+### Basic Setup
+
+```python
+from neqsim.neqsimpython import jneqsim
+import numpy as np
+
+# Import classes
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+Stream = jneqsim.process.equipment.stream.Stream
+Compressor = jneqsim.process.equipment.compressor.Compressor
+Cooler = jneqsim.process.equipment.heatexchanger.Cooler
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+
+FlowRateOptimizer = jneqsim.process.util.optimizer.FlowRateOptimizer
+```
+
+### Creating a Process and Optimizer
+
+```python
+# Create gas composition
+gas = SystemSrkEos(288.15, 50.0)
+gas.addComponent("methane", 0.85)
+gas.addComponent("ethane", 0.10)
+gas.addComponent("propane", 0.05)
+gas.setMixingRule("classic")
+
+# Build process
+feed = Stream("Feed", gas)
+feed.setFlowRate(50000, "kg/hr")
+feed.setPressure(50.0, "bara")
+
+compressor = Compressor("Export Compressor", feed)
+compressor.setOutletPressure(100.0)
+
+afterCooler = Cooler("Aftercooler", compressor.getOutletStream())
+afterCooler.setOutTemperature(313.15)  # 40°C
+
+process = ProcessSystem()
+process.add(feed)
+process.add(compressor)
+process.add(afterCooler)
+process.run()
+
+# Create optimizer
+optimizer = FlowRateOptimizer(process, "Feed", "Export Compressor")
+optimizer.setMinSurgeMargin(0.15)  # 15% surge margin
+optimizer.setMaxPowerLimit(5000.0)  # 5 MW max
+optimizer.configureProcessCompressorCharts()
+```
+
+### Finding Maximum Flow Rate
+
+```python
+# Find max flow at pressure boundaries
+result = optimizer.findMaxFlowRateAtPressureBoundaries(
+    50.0,    # inlet pressure (bara)
+    100.0,   # outlet pressure (bara)
+    "bara",  # pressure unit
+    0.95     # max utilization
+)
+
+if result is not None and result.isFeasible():
+    print(f"Max flow rate: {result.getFlowRate():.0f} kg/hr")
+    print(f"Total power: {result.getTotalPower():.1f} kW")
+    print(f"Feasible: {result.isFeasible()}")
+else:
+    print("No feasible operating point found")
+```
+
+### Generating Lift Curve Tables
+
+```python
+import numpy as np
+
+# Define pressure grids
+inlet_pressures = [40.0, 50.0, 60.0, 70.0, 80.0]     # bara
+outlet_pressures = [90.0, 100.0, 110.0, 120.0, 130.0]  # bara
+
+# Convert to Java arrays (required for JPype)
+from jpype import JArray, JDouble
+java_inlet = JArray(JDouble)(inlet_pressures)
+java_outlet = JArray(JDouble)(outlet_pressures)
+
+# Generate lift curve table
+table = optimizer.generateProcessCapacityTable(
+    java_inlet,
+    java_outlet,
+    "bara",
+    0.95  # max utilization
+)
+
+# Export to Eclipse format
+eclipse_vfp = table.toEclipseFormat()
+print(eclipse_vfp)
+
+# Export to JSON
+json_output = table.toJson()
+
+# Access individual operating points
+point = table.getOperatingPoint(1, 2)  # Pin=50, Pout=110
+print(f"Flow at Pin=50, Pout=110: {point.getFlowRate():.0f} kg/hr")
+```
+
+### Parallel Lift Curve Generation
+
+```python
+# Enable parallel evaluation for large tables
+optimizer.setEnableParallelEvaluation(True)
+optimizer.setParallelThreads(4)  # Use 4 threads
+
+# Generate table in parallel
+table = optimizer.generateProcessCapacityTable(
+    java_inlet,
+    java_outlet,
+    "bara",
+    0.95
+)
+
+print(f"Feasible points: {table.getFeasibleCount()}")
+```
+
+### Professional Lift Curves with Configuration
+
+```python
+# Create configuration object
+LiftCurveConfiguration = FlowRateOptimizer.LiftCurveConfiguration
+
+config = LiftCurveConfiguration() \
+    .setTableName("Export_System_VFP") \
+    .setTableNumber(1) \
+    .setInletPressures(java_inlet) \
+    .setOutletPressures(java_outlet) \
+    .setPressureUnit("bara") \
+    .setFlowUnit("kg/hr") \
+    .setMaxUtilization(0.95) \
+    .setSurgeMargin(0.15) \
+    .setMaxPowerLimit(5000.0) \
+    .setIncludePowerData(True) \
+    .setIncludeCompressorDetails(True)
+
+# Generate professional lift curves
+result = optimizer.generateProfessionalLiftCurves(config)
+
+# Get Eclipse format
+print(result.getCapacityTable().toEclipseFormat())
+
+# Check warnings
+for warning in result.getWarnings():
+    print(f"Warning: {warning}")
+```
+
+### Processing Results in Python
+
+```python
+import json
+
+# Parse JSON results for pandas/numpy analysis
+json_str = table.toJson()
+data = json.loads(json_str)
+
+# Extract flow rates into numpy array
+import numpy as np
+flow_matrix = np.zeros((len(inlet_pressures), len(outlet_pressures)))
+
+for i, pin in enumerate(inlet_pressures):
+    for j, pout in enumerate(outlet_pressures):
+        point = table.getOperatingPoint(i, j)
+        if point is not None and point.isFeasible():
+            flow_matrix[i, j] = point.getFlowRate()
+        else:
+            flow_matrix[i, j] = np.nan
+
+print("Flow rate matrix (kg/hr):")
+print(flow_matrix)
+```
+
+### Plotting Lift Curves (matplotlib)
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Collect data for plotting
+fig, ax = plt.subplots(figsize=(10, 6))
+
+for i, pin in enumerate(inlet_pressures):
+    flows = []
+    pressures = []
+    for j, pout in enumerate(outlet_pressures):
+        point = table.getOperatingPoint(i, j)
+        if point is not None and point.isFeasible():
+            flows.append(point.getFlowRate())
+            pressures.append(pout)
+    
+    if flows:
+        ax.plot(flows, pressures, 'o-', label=f'Pin={pin} bara')
+
+ax.set_xlabel('Flow Rate (kg/hr)')
+ax.set_ylabel('Outlet Pressure (bara)')
+ax.set_title('Lift Curves - Export Compression System')
+ax.legend()
+ax.grid(True)
+plt.savefig('lift_curves.png', dpi=150)
+plt.show()
+```
 
 ---
 
