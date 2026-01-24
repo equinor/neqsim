@@ -1,4 +1,4 @@
-﻿package neqsim.process.util.optimizer;
+package neqsim.process.util.optimizer;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
