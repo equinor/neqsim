@@ -619,6 +619,138 @@ print(f"Utilization: {result.getBottleneckUtilization() * 100:.1f}%")
 print(f"Feasible: {result.isFeasible()}")
 ```
 
+### Configuring Restrictions and Constraints in Python
+
+Python provides full access to all restriction configuration options through the `OptimizationConfig` builder pattern.
+
+#### Controlling Simulation Validity
+
+```python
+# Strict mode (recommended for production)
+config = OptConfig(1000.0, 20000.0) \
+    .rejectInvalidSimulations(True) \
+    .defaultUtilizationLimit(0.95)
+
+# Exploration mode (for debugging/investigation)
+config = OptConfig(1000.0, 50000.0) \
+    .rejectInvalidSimulations(False) \
+    .defaultUtilizationLimit(2.0)  # Allow simulated overload
+```
+
+#### Per-Equipment Utilization Limits
+
+```python
+# Import equipment classes for type-based limits
+Compressor = jneqsim.process.equipment.compressor.Compressor
+Separator = jneqsim.process.equipment.separator.Separator
+Pump = jneqsim.process.equipment.pump.Pump
+
+# Configure per-equipment limits
+config = OptConfig(1000.0, 20000.0) \
+    .rateUnit("kg/hr") \
+    .defaultUtilizationLimit(1.0) \
+    .utilizationLimitForName("Export Compressor", 0.90) \
+    .utilizationLimitForName("HP Separator", 1.05) \
+    .utilizationLimitForType(Compressor, 0.95) \
+    .utilizationLimitForType(Pump, 0.90)
+```
+
+#### Disabling Capacity Analysis on Equipment
+
+```python
+# Exclude specific equipment from bottleneck detection
+heater = process.getUnit("Gas Heater")
+heater.setCapacityAnalysisEnabled(False)
+
+manifold = process.getUnit("Production Manifold")
+manifold.setCapacityAnalysisEnabled(False)
+
+# Now these won't be considered as bottlenecks
+result = ProductionOptimizer.optimize(process, feed, config)
+```
+
+#### Adding Custom Constraints
+
+```python
+from jpype import JImplements, JOverride
+
+# Import constraint classes
+OptimizationConstraint = ProductionOptimizer.OptimizationConstraint
+ConstraintSeverity = ProductionOptimizer.ConstraintSeverity
+
+# Define a constraint evaluator
+@JImplements("java.util.function.ToDoubleFunction")
+class PowerEvaluator:
+    @JOverride
+    def applyAsDouble(self, proc):
+        comp = proc.getUnit("Gas Compressor")
+        return comp.getPower("kW") if comp else 0.0
+
+# Create HARD constraint (must be satisfied)
+power_constraint = OptimizationConstraint.lessThan(
+    "Max Power",                    # Name
+    PowerEvaluator(),               # Evaluator function
+    450.0,                          # Limit (kW)
+    ConstraintSeverity.HARD,        # Cannot be violated
+    0.0,                            # Penalty weight (unused for HARD)
+    "Compressor driver power limit" # Description
+)
+
+# Create SOFT constraint (penalty for violation)
+@JImplements("java.util.function.ToDoubleFunction")
+class SurgeMarginEvaluator:
+    @JOverride
+    def applyAsDouble(self, proc):
+        comp = proc.getUnit("Gas Compressor")
+        return comp.getSurgeMargin() if hasattr(comp, 'getSurgeMargin') else 0.2
+
+margin_constraint = OptimizationConstraint.greaterThan(
+    "Surge Margin",
+    SurgeMarginEvaluator(),
+    0.10,                           # Minimum 10% surge margin
+    ConstraintSeverity.SOFT,        # Can be violated with penalty
+    100.0,                          # Penalty weight
+    "Maintain adequate surge margin"
+)
+
+# Create constraint list
+from java.util import Arrays
+constraints = Arrays.asList(power_constraint, margin_constraint)
+
+# Run optimization with constraints
+result = ProductionOptimizer.optimize(process, feed, config, None, constraints)
+```
+
+#### Common Restriction Configuration Patterns
+
+```python
+# Pattern 1: Safe Production Operation
+config_safe = OptConfig(1000.0, 20000.0) \
+    .rejectInvalidSimulations(True) \
+    .defaultUtilizationLimit(0.90) \
+    .searchMode(SearchMode.BINARY_FEASIBILITY)
+
+# Pattern 2: Maximum Capacity Search
+config_max = OptConfig(1000.0, 50000.0) \
+    .rejectInvalidSimulations(True) \
+    .defaultUtilizationLimit(1.0) \
+    .searchMode(SearchMode.GOLDEN_SECTION_SCORE)
+
+# Pattern 3: Equipment Sizing Study
+config_sizing = OptConfig(1000.0, 100000.0) \
+    .rejectInvalidSimulations(False) \
+    .defaultUtilizationLimit(999.0) \
+    .searchMode(SearchMode.PARTICLE_SWARM_SCORE)
+
+# Pattern 4: Critical Equipment Protection
+config_critical = OptConfig(1000.0, 20000.0) \
+    .rejectInvalidSimulations(True) \
+    .defaultUtilizationLimit(1.0) \
+    .utilizationLimitForName("Critical Compressor", 0.85) \
+    .utilizationLimitForName("Aging Pump", 0.80) \
+    .searchMode(SearchMode.BINARY_FEASIBILITY)
+```
+
 ### Multi-Constraint Analysis in Python
 
 ```python

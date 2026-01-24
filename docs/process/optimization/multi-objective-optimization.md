@@ -32,6 +32,8 @@ The `neqsim.process.util.optimizer` package provides a comprehensive **multi-obj
 - [Python Usage (via JPype)](#python-usage-via-jpype)
   - [Basic Setup](#basic-setup)
   - [Using Standard Objectives](#using-standard-objectives)
+  - [Configuring Restrictions in Python](#configuring-restrictions-in-python)
+  - [Including Infeasible Solutions for Analysis](#including-infeasible-solutions-for-analysis)
   - [Custom Objectives in Python](#custom-objectives-in-python)
   - [Progress Monitoring](#progress-monitoring)
   - [Extracting Results for Pandas/NumPy](#extracting-results-for-pandasnumpy)
@@ -752,6 +754,93 @@ config = OptimizationConfig(1000.0, 20000.0) \
     .tolerance(50.0) \
     .defaultUtilizationLimit(0.95) \
     .maxIterations(20)
+```
+
+### Configuring Restrictions in Python
+
+Control how constraints and restrictions affect Pareto front generation:
+
+```python
+# Import constraint classes
+OptimizationConstraint = ProductionOptimizer.OptimizationConstraint
+ConstraintSeverity = ProductionOptimizer.ConstraintSeverity
+Compressor = jneqsim.process.equipment.compressor.Compressor
+
+# Relaxed config for exploring full trade-off space
+config_explore = OptimizationConfig(1000.0, 30000.0) \
+    .rateUnit("kg/hr") \
+    .rejectInvalidSimulations(False) \
+    .defaultUtilizationLimit(1.5)  # Allow temporary overload
+
+# Strict config for feasible Pareto points only
+config_strict = OptimizationConfig(1000.0, 20000.0) \
+    .rateUnit("kg/hr") \
+    .rejectInvalidSimulations(True) \
+    .defaultUtilizationLimit(0.95) \
+    .utilizationLimitForType(Compressor, 0.90)
+
+# With explicit constraints
+@JImplements("java.util.function.ToDoubleFunction")
+class PowerEvaluator:
+    @JOverride
+    def applyAsDouble(self, proc):
+        comp = proc.getUnit("Gas Compressor")
+        return comp.getPower("kW") if comp else 0.0
+
+power_constraint = OptimizationConstraint.lessThan(
+    "Max Power",
+    PowerEvaluator(),
+    300.0,                          # 300 kW limit
+    ConstraintSeverity.HARD,
+    0.0,
+    "Driver power limit"
+)
+
+# Pass constraints to optimization
+from java.util import Collections
+front = moo.optimizeWeightedSum(
+    process, feed, objectives, config_strict, 10,
+    Collections.singletonList(power_constraint)
+)
+
+# Check which solutions are feasible
+for sol in front.getSolutions():
+    status = "✓ Feasible" if sol.isFeasible() else "⚠️ Infeasible"
+    print(f"  {sol.getRawValue(0):.0f} kg/hr, {sol.getRawValue(1):.1f} kW - {status}")
+```
+
+### Including Infeasible Solutions for Analysis
+
+```python
+# Include infeasible points to understand constraint boundaries
+moo = MultiObjectiveOptimizer() \
+    .includeInfeasible(True)
+
+front = moo.sampleParetoFront(process, feed, objectives, config_strict, 20)
+
+# Separate feasible and infeasible solutions
+feasible = [s for s in front.getSolutions() if s.isFeasible()]
+infeasible = [s for s in front.getSolutions() if not s.isFeasible()]
+
+print(f"Feasible solutions: {len(feasible)}")
+print(f"Infeasible solutions: {len(infeasible)}")
+
+# Plot both for visualization
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots()
+if feasible:
+    ax.scatter([s.getRawValue(0) for s in feasible],
+               [s.getRawValue(1) for s in feasible],
+               c='green', label='Feasible', s=100)
+if infeasible:
+    ax.scatter([s.getRawValue(0) for s in infeasible],
+               [s.getRawValue(1) for s in infeasible],
+               c='red', marker='x', label='Infeasible', s=80)
+ax.legend()
+ax.set_xlabel('Throughput (kg/hr)')
+ax.set_ylabel('Power (kW)')
+plt.show()
 ```
 
 ### Sampling-Based Pareto Front
