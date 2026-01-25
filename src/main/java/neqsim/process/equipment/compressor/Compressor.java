@@ -3985,8 +3985,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
           .setValueSupplier(() -> this.speed));
     }
 
-    // Power constraint - dynamically evaluates against mechanical design or driver
-    // Don't set fixed design values - use value supplier that returns utilization directly
+    // Power constraint - dynamically evaluates against speed-dependent max power from driver curve
+    // This shows the actual operating margin at current speed
     addCapacityConstraint(
         StandardConstraintType.COMPRESSOR_POWER.createConstraint().setDesignValue(100.0) // 100%
             .setMaxValue(110.0) // 110% overload
@@ -4015,6 +4015,32 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
               // Return utilization percentage (0-100+)
               return (currentPowerKW / maxPowerLimitKW) * 100.0;
             }));
+
+    // Rated power constraint - compares against driver's rated power (for capacity planning)
+    // This shows utilization vs the full motor rating, regardless of current speed
+    addCapacityConstraint(new CapacityConstraint("ratedPower", "%", ConstraintType.DESIGN)
+        .setDesignValue(100.0).setMaxValue(110.0).setWarningThreshold(0.9)
+        .setDescription("Power utilization vs driver rated power (capacity planning)")
+        .setValueSupplier(() -> {
+          if (getThermoSystem() == null) {
+            return 0.0;
+          }
+          double currentPowerKW = this.getPower("kW");
+          if (currentPowerKW <= 0 || Double.isNaN(currentPowerKW)) {
+            return 0.0;
+          }
+          // Use driver rated power or mechanical design power
+          double ratedPowerKW = 0.0;
+          if (driver != null && driver.getRatedPower() > 0) {
+            ratedPowerKW = driver.getRatedPower();
+          } else if (getMechanicalDesign().maxDesignPower > 0) {
+            ratedPowerKW = getMechanicalDesign().maxDesignPower;
+          }
+          if (ratedPowerKW <= 0) {
+            return 0.0;
+          }
+          return (currentPowerKW / ratedPowerKW) * 100.0;
+        }));
 
     // Surge margin constraint
     // getDistanceToSurge() returns a ratio: (currentFlow / surgeFlow) - 1

@@ -377,13 +377,21 @@ public class TwoFluidPipe extends Pipeline {
     double inletWaterCut = 0.0;
     double inletOilFraction = 1.0;
     boolean isThreePhase = false;
+    boolean hasOil = false;
+    boolean hasWater = false;
 
     // Determine phase fractions based on number of phases
     int numPhases = inletFluid.getNumberOfPhases();
 
+    // Determine which phases are present (check for all cases)
+    boolean hasGas = inletFluid.hasPhaseType("gas");
+    hasOil = inletFluid.hasPhaseType("oil");
+    hasWater = inletFluid.hasPhaseType("aqueous");
+
     if (numPhases == 1) {
-      // Single-phase flow - determine if gas or liquid
-      if (inletFluid.hasPhaseType("gas")) {
+      // Single-phase flow
+      if (hasGas) {
+        // Pure gas
         alphaG = 1.0;
         alphaL = 0.0;
         rhoG = inletFluid.getPhase("gas").getDensity("kg/m3");
@@ -393,30 +401,46 @@ public class TwoFluidPipe extends Pipeline {
         // Set liquid properties to dummy values (won't be used)
         rhoL = rhoG;
         muL = muG;
-      } else if (inletFluid.hasPhaseType("oil") || inletFluid.hasPhaseType("aqueous")) {
+        logger.info("Single-phase gas flow");
+      } else if (hasOil) {
+        // Pure oil
         alphaG = 0.0;
         alphaL = 1.0;
-        String liqPhase = inletFluid.hasPhaseType("oil") ? "oil" : "aqueous";
-        rhoL = inletFluid.getPhase(liqPhase).getDensity("kg/m3");
-        muL = inletFluid.getPhase(liqPhase).getViscosity("kg/msec");
-        cL = inletFluid.getPhase(liqPhase).getSoundSpeed();
-        hL = inletFluid.getPhase(liqPhase).getEnthalpy("J/kg");
-        // Set gas properties to dummy values (won't be used)
+        rhoL = inletFluid.getPhase("oil").getDensity("kg/m3");
+        muL = inletFluid.getPhase("oil").getViscosity("kg/msec");
+        cL = inletFluid.getPhase("oil").getSoundSpeed();
+        hL = inletFluid.getPhase("oil").getEnthalpy("J/kg");
+        rhoOil = rhoL;
+        muOil = muL;
+        // Set gas properties to dummy values
         rhoG = rhoL;
         muG = muL;
+        logger.info("Single-phase oil flow");
+      } else if (hasWater) {
+        // Pure water
+        alphaG = 0.0;
+        alphaL = 1.0;
+        rhoL = inletFluid.getPhase("aqueous").getDensity("kg/m3");
+        muL = inletFluid.getPhase("aqueous").getViscosity("kg/msec");
+        cL = inletFluid.getPhase("aqueous").getSoundSpeed();
+        hL = inletFluid.getPhase("aqueous").getEnthalpy("J/kg");
+        rhoWater = rhoL;
+        muWater = muL;
+        // Set gas properties to dummy values
+        rhoG = rhoL;
+        muG = muL;
+        logger.info("Single-phase water flow");
       }
     } else {
       // Two-phase or multi-phase flow
-      if (inletFluid.hasPhaseType("gas")) {
+      if (hasGas) {
         rhoG = inletFluid.getPhase("gas").getDensity("kg/m3");
         muG = inletFluid.getPhase("gas").getViscosity("kg/msec");
         cG = inletFluid.getPhase("gas").getSoundSpeed();
         hG = inletFluid.getPhase("gas").getEnthalpy("J/kg");
       }
 
-      // Handle three-phase (gas + oil + water) or two-phase with liquid
-      boolean hasOil = inletFluid.hasPhaseType("oil");
-      boolean hasWater = inletFluid.hasPhaseType("aqueous");
+      // Handle all liquid-containing phase combinations
 
       if (hasOil && hasWater) {
         // Three-phase flow: combine oil and water as effective liquid
@@ -513,11 +537,25 @@ public class TwoFluidPipe extends Pipeline {
       }
 
       // Calculate holdup from volumetric phase fractions
-      if (inletFluid.hasPhaseType("gas")) {
+      if (hasGas) {
         double volGas = inletFluid.getPhase("gas").getVolume("m3");
         double volTotal = inletFluid.getVolume("m3");
         alphaG = volGas / volTotal;
         alphaL = 1.0 - alphaG;
+      } else if (hasOil && hasWater) {
+        // Oil-water flow (no gas) - treat as two-phase liquid-liquid flow
+        // alphaG represents oil (lighter liquid), alphaL represents water (heavier)
+        double volOil = inletFluid.getPhase("oil").getVolume("m3");
+        double volWater = inletFluid.getPhase("aqueous").getVolume("m3");
+        double volTotal = volOil + volWater;
+        // Use gas holdup as oil fraction, liquid holdup as water fraction for oil-water
+        alphaG = 0.0; // No gas
+        alphaL = 1.0; // All liquid
+        // Track oil-water split internally
+        inletWaterCut = volWater / volTotal;
+        inletOilFraction = 1.0 - inletWaterCut;
+        isThreePhase = true; // Use three-fluid tracking even without gas
+        logger.info("Oil-water flow (no gas): water cut = {:.1f}%", inletWaterCut * 100);
       }
     }
 
@@ -584,6 +622,39 @@ public class TwoFluidPipe extends Pipeline {
 
         // Update water/oil conservative variables
         sec.updateWaterOilConservativeVariables();
+      } else if (hasWater && !hasOil) {
+        // Two-phase gas + aqueous (no oil) - all liquid is water
+        sec.setWaterDensity(rhoL);
+        sec.setWaterViscosity(muL);
+        sec.setOilDensity(rhoL); // Dummy value, no oil present
+        sec.setOilViscosity(muL);
+        sec.setWaterCut(1.0);
+        sec.setOilFractionInLiquid(0.0);
+
+        // All liquid holdup is water
+        sec.setWaterHoldup(alphaL);
+        sec.setOilHoldup(0.0);
+        sec.setWaterVelocity(sec.getLiquidVelocity());
+        sec.setOilVelocity(0.0);
+        sec.updateWaterOilConservativeVariables();
+      } else if (hasOil && !hasWater) {
+        // Two-phase gas + oil (no water) OR single-phase oil - all liquid is oil
+        sec.setOilDensity(rhoL);
+        sec.setOilViscosity(muL);
+        sec.setWaterDensity(1000.0); // Dummy value, no water present
+        sec.setWaterViscosity(1e-3);
+        sec.setWaterCut(0.0);
+        sec.setOilFractionInLiquid(1.0);
+
+        // All liquid holdup is oil
+        sec.setOilHoldup(alphaL);
+        sec.setWaterHoldup(0.0);
+        sec.setOilVelocity(sec.getLiquidVelocity());
+        sec.setWaterVelocity(0.0);
+        sec.updateWaterOilConservativeVariables();
+      } else if (!hasOil && !hasWater && !hasGas) {
+        // No phases detected - this shouldn't happen, log warning
+        logger.warn("No phases detected in inlet fluid - using default properties");
       }
 
       // Initialize derived quantities

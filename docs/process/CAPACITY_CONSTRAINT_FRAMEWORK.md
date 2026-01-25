@@ -279,7 +279,7 @@ System.out.println("Bottleneck: " + result.getBottleneck().getName());
 | Equipment | Constraints | Set By |
 |-----------|-------------|--------|
 | **Separator** | gasLoadFactor, liquidResidenceTime | autoSize(), setDesignGasLoadFactor() |
-| **Compressor** | speed, power, surgeMargin, stonewallMargin | autoSize(), setMaximumSpeed(), setMaximumPower() |
+| **Compressor** | speed, power, ratedPower, surgeMargin, stonewallMargin | autoSize(), setMaximumSpeed(), setMaximumPower() |
 | **Pump** | npshMargin, power, flowRate | setMaximumPower(), mechanical design |
 | **ThrottlingValve** | valveOpening, cvUtilization, AIV | autoSize(), setCv(), setMaxDesignAIV() |
 | **Pipeline** | velocity, pressureDrop, volumeFlow, FIV_LOF, FIV_FRMS | autoSize(), setMaxLOF(), setMaxFRMS() |
@@ -1074,7 +1074,8 @@ public class Pipe extends ProcessEquipmentBaseClass
 | | `SEPARATOR_LIQUID_LEVEL` | liquidLevel | % | Level as % of capacity |
 | **Compressor** | `COMPRESSOR_SPEED` | speed | RPM | Maximum rotational speed |
 | | `COMPRESSOR_MIN_SPEED` | minSpeed | RPM | Minimum stable speed (from curve) |
-| | `COMPRESSOR_POWER` | power | kW | Shaft power |
+| | `COMPRESSOR_POWER` | power | % | Power utilization vs speed-dependent driver limit |
+| | (custom) | ratedPower | % | Power utilization vs driver rated power |
 | | `COMPRESSOR_SURGE_MARGIN` | surgeMargin | % | Distance to surge |
 | | `COMPRESSOR_STONEWALL_MARGIN` | stonewallMargin | % | Distance to stonewall |
 | | `COMPRESSOR_DISCHARGE_TEMP` | dischargeTemperature | °C | Discharge temperature |
@@ -1096,6 +1097,8 @@ public class Pipe extends ProcessEquipmentBaseClass
 
 **Notes:**
 - **COMPRESSOR_MIN_SPEED**: This is a "minimum constraint" - utilization is calculated as `minSpeed / currentSpeed`. Values < 1.0 mean operating safely above minimum; values > 1.0 mean operating below minimum (violation).
+- **COMPRESSOR_POWER**: Utilization vs speed-dependent max power from driver curve. Shows actual operating margin at current speed. 100% means the driver is at its maximum power output at the current speed.
+- **ratedPower**: Utilization vs driver's rated power (for capacity planning). Shows what fraction of the motor's full rating is being used, regardless of current speed.
 - **COMPRESSOR_SURGE_MARGIN** and **COMPRESSOR_STONEWALL_MARGIN**: Utilization is calculated as `1 / (1 + marginRatio)` where margin = 0 gives 100% utilization.
 
 ## Flow-Induced Vibration (FIV) Analysis
@@ -1207,6 +1210,8 @@ pipe.setMaxDesignFRMS(400.0);     // N/m
 CapacityConstraint lofConstraint = pipe.getCapacityConstraints().get("LOF");
 // lofConstraint.getDesignValue() returns 0.5
 ```
+
+**Note:** The setter methods (`setMaxDesignVelocity`, `setMaxDesignLOF`, `setMaxDesignFRMS`, `setMaxDesignAIV`) automatically invalidate cached constraints, so the new values take effect immediately when `getCapacityConstraints()` is called. If you need to explicitly reinitialize constraints after other changes, call `pipe.reinitializeCapacityConstraints()`.
 
 ## Acoustic-Induced Vibration (AIV) Analysis
 

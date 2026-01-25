@@ -3341,12 +3341,15 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Set maximum design AIV power level for capacity constraints.
+   * Set maximum design AIV power level for capacity constraints. Clears cached constraints so they
+   * will be recreated with the new value on next access.
    *
    * @param aivKW maximum AIV power level in kW
    */
   public void setMaxDesignAIV(double aivKW) {
     this.maxDesignAIV = aivKW;
+    // Invalidate cached constraints so they get recreated with the new design value
+    capacityConstraints.clear();
   }
 
   /**
@@ -3415,30 +3418,39 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Set maximum design velocity for capacity constraints.
+   * Set maximum design velocity for capacity constraints. Clears cached constraints so they will be
+   * recreated with the new value on next access.
    *
    * @param velocity maximum velocity in m/s
    */
   public void setMaxDesignVelocity(double velocity) {
     this.maxDesignVelocity = velocity;
+    // Invalidate cached constraints so they get recreated with the new design value
+    capacityConstraints.clear();
   }
 
   /**
-   * Set maximum design LOF for capacity constraints.
+   * Set maximum design LOF for capacity constraints. Clears cached constraints so they will be
+   * recreated with the new value on next access.
    *
    * @param lof maximum LOF value
    */
   public void setMaxDesignLOF(double lof) {
     this.maxDesignLOF = lof;
+    // Invalidate cached constraints so they get recreated with the new design value
+    capacityConstraints.clear();
   }
 
   /**
-   * Set maximum design FRMS for capacity constraints.
+   * Set maximum design FRMS for capacity constraints. Clears cached constraints so they will be
+   * recreated with the new value on next access.
    *
    * @param frms maximum FRMS value
    */
   public void setMaxDesignFRMS(double frms) {
     this.maxDesignFRMS = frms;
+    // Invalidate cached constraints so they get recreated with the new design value
+    capacityConstraints.clear();
   }
 
   /**
@@ -3491,6 +3503,25 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
               .setDescription("Pressure drop vs mechanical design limit")
               .setValueSupplier(() -> getPressureDrop()));
     }
+  }
+
+  /**
+   * Reinitialize capacity constraints with current design values.
+   *
+   * <p>
+   * Call this method after changing design limits (velocity, LOF, FRMS, AIV) if constraints have
+   * already been accessed. This clears existing constraints and recreates them based on current
+   * settings.
+   * </p>
+   *
+   * <p>
+   * Note: The setter methods (setMaxDesignVelocity, setMaxDesignLOF, etc.) automatically clear the
+   * constraints, so this method is only needed if you want to explicitly reinitialize.
+   * </p>
+   */
+  public void reinitializeCapacityConstraints() {
+    capacityConstraints.clear();
+    initializeCapacityConstraints();
   }
 
   /** {@inheritDoc} */
