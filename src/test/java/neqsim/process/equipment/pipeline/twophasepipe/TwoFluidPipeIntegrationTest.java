@@ -162,7 +162,9 @@ class TwoFluidPipeIntegrationTest {
 
     double[] positions = pipe.getPositionProfile();
     assertNotNull(positions, "Position profile should not be null");
-    assertEquals(NUM_SECTIONS, positions.length, "Should have positions for all sections");
+    // Position profile includes inlet (x=0) plus all section midpoints = NUM_SECTIONS + 1
+    assertEquals(NUM_SECTIONS + 1, positions.length,
+        "Should have positions for inlet + all sections");
 
     // Positions should be increasing
     for (int i = 1; i < positions.length; i++) {

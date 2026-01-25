@@ -4,6 +4,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.pipeline.twophasepipe.FlowRegimeDetector;
+import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.SlugTracker;
@@ -148,8 +149,26 @@ public class TwoFluidPipe extends Pipeline {
   /** Liquid accumulation tracker. */
   private LiquidAccumulationTracker accumulationTracker;
 
-  /** Slug tracker. */
+  /** Slug tracker (simplified model). */
   private SlugTracker slugTracker;
+
+  /** Lagrangian slug tracker (OLGA-style full tracking). */
+  private LagrangianSlugTracker lagrangianSlugTracker;
+
+  /**
+   * Slug tracking mode.
+   */
+  public enum SlugTrackingMode {
+    /** Simplified slug unit model. */
+    SIMPLIFIED,
+    /** Full Lagrangian tracking (OLGA-style). */
+    LAGRANGIAN,
+    /** No slug tracking. */
+    DISABLED
+  }
+
+  /** Current slug tracking mode. */
+  private SlugTrackingMode slugTrackingMode = SlugTrackingMode.LAGRANGIAN;
 
   // ============ Boundary conditions ============
 
@@ -524,6 +543,7 @@ public class TwoFluidPipe extends Pipeline {
     flowRegimeDetector = new FlowRegimeDetector();
     accumulationTracker = new LiquidAccumulationTracker();
     slugTracker = new SlugTracker();
+    lagrangianSlugTracker = new LagrangianSlugTracker();
 
     timeIntegrator.setCflNumber(cflNumber);
 
@@ -2842,28 +2862,52 @@ public class TwoFluidPipe extends Pipeline {
       validateSectionStates();
 
       // 8. Update accumulation tracking and slug tracking
-      if (enableSlugTracking) {
+      if (enableSlugTracking && slugTrackingMode != SlugTrackingMode.DISABLED) {
         accumulationTracker.updateAccumulation(sections, dtActual);
-
-        // Check for terrain-induced slug initiation from accumulation zones
-        for (LiquidAccumulationTracker.AccumulationZone zone : accumulationTracker
-            .getAccumulationZones()) {
-          LiquidAccumulationTracker.SlugCharacteristics slugChar =
-              accumulationTracker.checkForSlugRelease(zone, sections);
-          if (slugChar != null) {
-            slugTracker.initializeTerrainSlug(slugChar, sections);
-          }
-        }
 
         // Set reference velocity for slug propagation (from inlet)
         double inletMixtureVelocity = sections[0].getMixtureVelocity();
-        slugTracker.setReferenceVelocity(inletMixtureVelocity);
 
-        // Advance existing slugs through the pipeline
-        slugTracker.advanceSlugs(sections, dtActual);
+        if (slugTrackingMode == SlugTrackingMode.LAGRANGIAN) {
+          // OLGA-style full Lagrangian tracking
+          lagrangianSlugTracker.setReferenceVelocity(inletMixtureVelocity);
 
-        // Track slugs arriving at outlet
-        trackOutletSlugs();
+          // Check for terrain-induced slug initiation from accumulation zones
+          for (LiquidAccumulationTracker.AccumulationZone zone : accumulationTracker
+              .getAccumulationZones()) {
+            LiquidAccumulationTracker.SlugCharacteristics slugChar =
+                accumulationTracker.checkForSlugRelease(zone, sections);
+            if (slugChar != null) {
+              lagrangianSlugTracker.initializeTerrainSlug(slugChar, sections);
+            }
+          }
+
+          // Advance slugs with full Lagrangian tracking
+          lagrangianSlugTracker.advanceTimeStep(sections, dtActual);
+
+          // Track slugs arriving at outlet
+          trackOutletSlugsLagrangian();
+
+        } else {
+          // Simplified slug unit model
+          slugTracker.setReferenceVelocity(inletMixtureVelocity);
+
+          // Check for terrain-induced slug initiation from accumulation zones
+          for (LiquidAccumulationTracker.AccumulationZone zone : accumulationTracker
+              .getAccumulationZones()) {
+            LiquidAccumulationTracker.SlugCharacteristics slugChar =
+                accumulationTracker.checkForSlugRelease(zone, sections);
+            if (slugChar != null) {
+              slugTracker.initializeTerrainSlug(slugChar, sections);
+            }
+          }
+
+          // Advance existing slugs through the pipeline
+          slugTracker.advanceSlugs(sections, dtActual);
+
+          // Track slugs arriving at outlet
+          trackOutletSlugs();
+        }
       }
 
       // 9. Update temperature profile if heat transfer is enabled
@@ -3694,12 +3738,85 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Get slug tracker for slug statistics.
+   * Get slug tracker for slug statistics (simplified model).
    *
    * @return Slug tracker
    */
   public SlugTracker getSlugTracker() {
     return slugTracker;
+  }
+
+  /**
+   * Get Lagrangian slug tracker for OLGA-style slug tracking.
+   *
+   * @return Lagrangian slug tracker
+   */
+  public LagrangianSlugTracker getLagrangianSlugTracker() {
+    return lagrangianSlugTracker;
+  }
+
+  /**
+   * Get current slug tracking mode.
+   *
+   * @return slug tracking mode
+   */
+  public SlugTrackingMode getSlugTrackingMode() {
+    return slugTrackingMode;
+  }
+
+  /**
+   * Set slug tracking mode.
+   *
+   * <p>
+   * Available modes:
+   * </p>
+   * <ul>
+   * <li><b>SIMPLIFIED:</b> Simple slug unit model with basic tracking</li>
+   * <li><b>LAGRANGIAN:</b> Full OLGA-style Lagrangian tracking with wake effects, frequency-based
+   * initiation, and detailed statistics</li>
+   * <li><b>DISABLED:</b> No slug tracking</li>
+   * </ul>
+   *
+   * @param mode slug tracking mode
+   */
+  public void setSlugTrackingMode(SlugTrackingMode mode) {
+    this.slugTrackingMode = mode;
+    this.enableSlugTracking = (mode != SlugTrackingMode.DISABLED);
+  }
+
+  /**
+   * Configure Lagrangian slug tracker parameters.
+   *
+   * <p>
+   * This method provides access to advanced slug tracking configuration for the OLGA-style
+   * Lagrangian model.
+   * </p>
+   *
+   * @param enableInletGeneration enable hydrodynamic slug generation at inlet
+   * @param enableTerrainGeneration enable terrain-induced slug generation
+   * @param enableWakeEffects enable wake interaction between slugs
+   */
+  public void configureLagrangianSlugTracking(boolean enableInletGeneration,
+      boolean enableTerrainGeneration, boolean enableWakeEffects) {
+    if (lagrangianSlugTracker != null) {
+      lagrangianSlugTracker.setEnableInletSlugGeneration(enableInletGeneration);
+      lagrangianSlugTracker.setEnableTerrainSlugGeneration(enableTerrainGeneration);
+      lagrangianSlugTracker.setEnableWakeEffects(enableWakeEffects);
+    }
+  }
+
+  /**
+   * Get slug tracking statistics as JSON string.
+   *
+   * @return JSON string with slug statistics
+   */
+  public String getSlugTrackingStatisticsJson() {
+    if (slugTrackingMode == SlugTrackingMode.LAGRANGIAN && lagrangianSlugTracker != null) {
+      return lagrangianSlugTracker.toJson();
+    } else if (slugTracker != null) {
+      return slugTracker.getStatisticsString();
+    }
+    return "{}";
   }
 
   /**
@@ -3735,6 +3852,28 @@ public class TwoFluidPipe extends Pipeline {
         }
       }
     }
+  }
+
+  /**
+   * Track slugs arriving at outlet using Lagrangian tracker.
+   */
+  private void trackOutletSlugsLagrangian() {
+    if (lagrangianSlugTracker == null || sections == null || sections.length == 0) {
+      return;
+    }
+
+    // Statistics are tracked internally by LagrangianSlugTracker
+    // Update local statistics from the tracker
+    outletSlugCount = lagrangianSlugTracker.getTotalSlugsExited();
+    maxSlugVolumeAtOutlet = lagrangianSlugTracker.getMaxSlugVolumeAtOutlet();
+    maxSlugLengthAtOutlet = lagrangianSlugTracker.getMaxSlugLength();
+
+    // Get total volume from outlet slug volumes
+    double totalVol = 0;
+    for (Double vol : lagrangianSlugTracker.getOutletSlugVolumes()) {
+      totalVol += vol;
+    }
+    totalSlugVolumeAtOutlet = totalVol;
   }
 
   /**
@@ -3790,18 +3929,46 @@ public class TwoFluidPipe extends Pipeline {
   public String getSlugStatisticsSummary() {
     StringBuilder sb = new StringBuilder();
     sb.append("=== Slug Statistics ===\n");
-    sb.append(String.format("Active slugs in pipe: %d\n", slugTracker.getSlugCount()));
-    sb.append(String.format("Slugs generated: %d\n", slugTracker.getTotalSlugsGenerated()));
-    sb.append(String.format("Slugs merged: %d\n", slugTracker.getTotalSlugsMerged()));
-    sb.append(String.format("Slugs at outlet: %d\n", outletSlugCount));
-    sb.append(String.format("Total slug volume at outlet: %.2f m³\n", totalSlugVolumeAtOutlet));
-    sb.append(String.format("Max slug length at outlet: %.1f m\n", maxSlugLengthAtOutlet));
-    sb.append(String.format("Max slug volume at outlet: %.3f m³\n", maxSlugVolumeAtOutlet));
-    if (outletSlugCount > 0 && simulationTime > 0) {
-      double avgFrequency = outletSlugCount / simulationTime;
-      sb.append(String.format("Average slug frequency: %.4f Hz (%.1f min between slugs)\n",
-          avgFrequency, avgFrequency > 0 ? 1.0 / (avgFrequency * 60) : 0));
+    sb.append(String.format("Tracking mode: %s\n", slugTrackingMode));
+
+    if (slugTrackingMode == SlugTrackingMode.LAGRANGIAN && lagrangianSlugTracker != null) {
+      // Use Lagrangian tracker statistics
+      sb.append(String.format("Active slugs in pipe: %d\n", lagrangianSlugTracker.getSlugCount()));
+      sb.append(
+          String.format("Slugs generated: %d\n", lagrangianSlugTracker.getTotalSlugsGenerated()));
+      sb.append(String.format("Slugs merged: %d\n", lagrangianSlugTracker.getTotalSlugsMerged()));
+      sb.append(
+          String.format("Slugs dissipated: %d\n", lagrangianSlugTracker.getTotalSlugsDissipated()));
+      sb.append(
+          String.format("Slugs at outlet: %d\n", lagrangianSlugTracker.getTotalSlugsExited()));
+      sb.append(String.format("Inlet slug frequency: %.4f Hz\n",
+          lagrangianSlugTracker.getInletSlugFrequency()));
+      sb.append(String.format("Outlet slug frequency: %.4f Hz\n",
+          lagrangianSlugTracker.getOutletSlugFrequency()));
+      sb.append(String.format("Average slug length: %.2f m\n",
+          lagrangianSlugTracker.getAverageSlugLength()));
+      sb.append(
+          String.format("Max slug length: %.2f m\n", lagrangianSlugTracker.getMaxSlugLength()));
+      sb.append(String.format("Max slug volume at outlet: %.4f m³\n",
+          lagrangianSlugTracker.getMaxSlugVolumeAtOutlet()));
+      sb.append(String.format("Mass conservation error: %.6f kg\n",
+          lagrangianSlugTracker.getMassConservationError()));
+    } else if (slugTracker != null) {
+      // Use simplified tracker statistics
+      sb.append(String.format("Active slugs in pipe: %d\n", slugTracker.getSlugCount()));
+      sb.append(String.format("Slugs generated: %d\n", slugTracker.getTotalSlugsGenerated()));
+      sb.append(String.format("Slugs merged: %d\n", slugTracker.getTotalSlugsMerged()));
+      sb.append(String.format("Slugs at outlet: %d\n", outletSlugCount));
+      sb.append(String.format("Total slug volume at outlet: %.2f m³\n", totalSlugVolumeAtOutlet));
+      sb.append(String.format("Max slug length at outlet: %.1f m\n", maxSlugLengthAtOutlet));
+      sb.append(String.format("Max slug volume at outlet: %.3f m³\n", maxSlugVolumeAtOutlet));
+      if (outletSlugCount > 0 && simulationTime > 0) {
+        double avgFrequency = outletSlugCount / simulationTime;
+        sb.append(String.format("Average slug frequency: %.4f Hz (%.1f min between slugs)\n",
+            avgFrequency, avgFrequency > 0 ? 1.0 / (avgFrequency * 60) : 0));
+      }
     }
+
     return sb.toString();
   }
 
