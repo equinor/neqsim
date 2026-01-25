@@ -1068,6 +1068,59 @@ public class TwoFluidPipe extends Pipeline {
     // No-slip holdup (input liquid fraction)
     double lambdaL = vsL / vMix;
 
+    // Determine flow regime to select appropriate correlation
+    FlowRegime regime = sec.getFlowRegime();
+
+    // For gas-dominant systems (lambdaL < 0.05), use Beggs-Brill type correlation
+    // which is more appropriate for stratified/annular flow
+    boolean isStratified =
+        (regime == FlowRegime.STRATIFIED_SMOOTH || regime == FlowRegime.STRATIFIED_WAVY);
+    if (lambdaL < 0.05 || isStratified || regime == FlowRegime.ANNULAR) {
+      // Beggs-Brill type correlation for gas-dominant horizontal flow
+      // Liquid holdup is a fraction of no-slip holdup based on flow pattern
+      double Fr = vMix * vMix / (g * diameter); // Froude number
+      double NLv = vsL * Math.pow(rhoL / (g * sigma), 0.25); // Liquid velocity number
+
+      // Horizontal flow holdup correction factor
+      // At LOW velocities (low Fr), liquid accumulates in stratified flow
+      // At HIGH velocities (high Fr), gas sweeps liquid, holdup approaches no-slip
+      double holdupFactor;
+      if (Fr > 10.0) {
+        // Very high Froude number - minimal slip, holdup close to no-slip
+        holdupFactor = 1.0 + 0.05 / Fr;
+      } else if (Fr > 1.0) {
+        // High Froude number - reduced slip
+        holdupFactor = 1.0 + 0.5 / Fr;
+      } else {
+        // Low Froude number - significant liquid accumulation
+        // At very low velocities, liquid accumulates in pipe bottom
+        // Holdup can be 5-20x higher than no-slip value
+        holdupFactor = 1.0 + 2.0 * Math.pow(1.0 / Math.max(0.01, Fr), 0.4);
+      }
+
+      // Apply correction for gas-dominant systems
+      double alphaL = lambdaL * holdupFactor;
+
+      // Upper limit depends on velocity: at low Fr, allow higher holdup (accumulation)
+      // At high Fr, limit to prevent unrealistic values
+      double maxHoldup;
+      if (Fr < 0.5) {
+        // Low velocity: liquid can accumulate significantly (up to 30%)
+        maxHoldup = Math.max(lambdaL * 15.0, 0.30);
+      } else if (Fr < 2.0) {
+        // Medium velocity: moderate accumulation
+        maxHoldup = Math.max(lambdaL * 8.0, 0.20);
+      } else {
+        // High velocity: limited slip
+        maxHoldup = Math.max(lambdaL * 4.0, 0.10);
+      }
+      alphaL = Math.min(alphaL, maxHoldup);
+      alphaL = Math.max(0.001, Math.min(0.999, alphaL));
+
+      return new double[] {alphaL, 1.0 - alphaL};
+    }
+
+    // For higher liquid loading, use drift-flux model
     // Drift-flux parameters
     // Distribution coefficient C0 depends on flow regime
     double C0 = 1.2; // Typical for stratified/slug flow in pipes
@@ -1102,12 +1155,14 @@ public class TwoFluidPipe extends Pipeline {
     double Eo = g * dRho * diameter * diameter / sigma; // Eötvös number
     if (Eo > 40) {
       // Large pipe correction (slug flow in large pipes)
-      vGj = 0.35 * Math.sqrt(g * diameter * dRho / rhoL) * fTheta;
+      // Reduce magnitude for horizontal/near-horizontal flow
+      double inclinationFactor = Math.max(0.2, Math.abs(sinTheta) + 0.2);
+      vGj = 0.35 * Math.sqrt(g * diameter * dRho / rhoL) * fTheta * inclinationFactor;
     }
 
-    // Froude number effect - at high velocities, slip decreases
+    // Froude number effect - at high velocities, slip decreases significantly
     double Fr = vMix / Math.sqrt(g * diameter);
-    double slipReduction = 1.0 / (1.0 + 0.1 * Fr);
+    double slipReduction = 1.0 / (1.0 + 0.2 * Fr); // Increased effect at high Fr
     vGj *= slipReduction;
 
     // Calculate gas holdup from drift-flux relation
