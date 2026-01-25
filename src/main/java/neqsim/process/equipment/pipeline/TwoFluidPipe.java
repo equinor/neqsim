@@ -563,6 +563,15 @@ public class TwoFluidPipe extends Pipeline {
     dx = length / numberOfSections;
     sections = new TwoFluidSection[numberOfSections];
 
+    // Reset slug tracking state on re-initialization
+    outletSlugCount = 0;
+    totalSlugVolumeAtOutlet = 0;
+    lastSlugArrivalTime = 0;
+    maxSlugLengthAtOutlet = 0;
+    maxSlugVolumeAtOutlet = 0;
+    countedOutletSlugs.clear();
+    simulationTime = 0;
+
     // Get inlet properties
     SystemInterface inletFluid = getInletStream().getFluid();
     double P_in = inletFluid.getPressure("Pa");
@@ -1985,16 +1994,21 @@ public class TwoFluidPipe extends Pipeline {
       // f'(β) = 1 - cos(β)
 
       double beta = 2.0 * Math.PI * alphaL; // Initial guess
-      for (int betaIter = 0; betaIter < 10; betaIter++) {
+      // Ensure initial guess is in valid range
+      beta = Math.max(0.1, Math.min(2.0 * Math.PI - 0.1, beta));
+      for (int betaIter = 0; betaIter < 15; betaIter++) {
         double f = beta - Math.sin(beta) - 2.0 * Math.PI * alphaL;
         double df = 1.0 - Math.cos(beta);
-        if (Math.abs(df) < 1e-10) {
-          break;
+        // Avoid division by very small numbers near beta = 0 or 2*pi
+        if (Math.abs(df) < 1e-6) {
+          df = (df >= 0) ? 1e-6 : -1e-6;
         }
         double deltaBeta = -f / df;
+        // Limit step size for stability
+        deltaBeta = Math.max(-0.5, Math.min(0.5, deltaBeta));
         beta += deltaBeta;
-        beta = Math.max(0.01, Math.min(2.0 * Math.PI - 0.01, beta));
-        if (Math.abs(deltaBeta) < 1e-8) {
+        beta = Math.max(0.05, Math.min(2.0 * Math.PI - 0.05, beta));
+        if (Math.abs(deltaBeta) < 1e-8 || Math.abs(f) < 1e-10) {
           break;
         }
       }
@@ -2061,16 +2075,21 @@ public class TwoFluidPipe extends Pipeline {
 
       // Recalculate geometry for perturbed holdup
       double beta2 = 2.0 * Math.PI * alphaL2;
-      for (int betaIter = 0; betaIter < 10; betaIter++) {
+      // Ensure initial guess is in valid range
+      beta2 = Math.max(0.1, Math.min(2.0 * Math.PI - 0.1, beta2));
+      for (int betaIter = 0; betaIter < 15; betaIter++) {
         double f = beta2 - Math.sin(beta2) - 2.0 * Math.PI * alphaL2;
         double df = 1.0 - Math.cos(beta2);
-        if (Math.abs(df) < 1e-10) {
-          break;
+        // Avoid division by very small numbers near beta = 0 or 2*pi
+        if (Math.abs(df) < 1e-6) {
+          df = (df >= 0) ? 1e-6 : -1e-6;
         }
         double deltaBeta = -f / df;
+        // Limit step size for stability
+        deltaBeta = Math.max(-0.5, Math.min(0.5, deltaBeta));
         beta2 += deltaBeta;
-        beta2 = Math.max(0.01, Math.min(2.0 * Math.PI - 0.01, beta2));
-        if (Math.abs(deltaBeta) < 1e-8) {
+        beta2 = Math.max(0.05, Math.min(2.0 * Math.PI - 0.05, beta2));
+        if (Math.abs(deltaBeta) < 1e-8 || Math.abs(f) < 1e-10) {
           break;
         }
       }
@@ -2550,12 +2569,16 @@ public class TwoFluidPipe extends Pipeline {
    * @param dt Time step (s)
    */
   private void checkTerrainSlugEvents(double dt) {
-    if (!enableTerrainTracking || !enableSevereSlugModel || sections == null) {
+    if (!enableTerrainTracking || !enableSevereSlugModel || sections == null
+        || sections.length == 0) {
       return;
     }
 
     for (int i = 0; i < sections.length; i++) {
       TwoFluidSection sec = sections[i];
+      if (sec == null) {
+        continue;
+      }
       if (sec.isTerrainSlugPending() && sec.getLiquidHoldup() > terrainSlugCriticalHoldup) {
         // Initiate terrain-induced slug
         if (slugTracker != null) {
@@ -2957,9 +2980,14 @@ public class TwoFluidPipe extends Pipeline {
       // Apply to all mass variables: gas (0), oil (1), water (2)
       int numMassVars = Math.min(3, U_new[i].length);
       for (int j = 0; j < numMassVars; j++) {
-        if (U_prev[i][j] > 1e-10) {
+        // Check for valid non-zero previous value before computing ratio
+        if (U_prev[i][j] > 1e-10 && !Double.isNaN(U_prev[i][j])
+            && !Double.isInfinite(U_prev[i][j])) {
           double ratio = U_new[i][j] / U_prev[i][j];
-          if (ratio > 1 + maxChangeRatio) {
+          if (Double.isNaN(ratio) || Double.isInfinite(ratio)) {
+            // Invalid ratio - revert to previous value
+            U_new[i][j] = U_prev[i][j];
+          } else if (ratio > 1 + maxChangeRatio) {
             U_new[i][j] = U_prev[i][j] * (1 + maxChangeRatio);
           } else if (ratio < 1 - maxChangeRatio && ratio > 0) {
             U_new[i][j] = U_prev[i][j] * (1 - maxChangeRatio);
@@ -3338,8 +3366,8 @@ public class TwoFluidPipe extends Pipeline {
    * Update result arrays from section states.
    *
    * <p>
-   * Includes true inlet conditions (x=0) as first point for smooth profiles. Total array length is
-   * numberOfSections + 1.
+   * Array length equals numberOfSections, with each element representing the section midpoint
+   * values.
    * </p>
    */
   private void updateResultArrays() {
@@ -3347,51 +3375,20 @@ public class TwoFluidPipe extends Pipeline {
       return;
     }
 
-    // Include inlet point (x=0) + all section midpoints
-    int profileLength = numberOfSections + 1;
-    pressureProfile = new double[profileLength];
-    temperatureProfile = new double[profileLength];
-    liquidHoldupProfile = new double[profileLength];
-    gasVelocityProfile = new double[profileLength];
-    liquidVelocityProfile = new double[profileLength];
+    // Array length equals number of sections
+    pressureProfile = new double[numberOfSections];
+    temperatureProfile = new double[numberOfSections];
+    liquidHoldupProfile = new double[numberOfSections];
+    gasVelocityProfile = new double[numberOfSections];
+    liquidVelocityProfile = new double[numberOfSections];
 
-    // First point: true inlet conditions from inlet stream
-    SystemInterface inletFluid = getInletStream().getFluid();
-    pressureProfile[0] = inletFluid.getPressure("Pa");
-    temperatureProfile[0] = inletFluid.getTemperature("K");
-
-    // Calculate inlet holdup from inlet fluid phase fractions
-    double inletAlphaL = 0.0;
-    double inletVG = 0.0;
-    double inletVL = 0.0;
-
-    if (inletFluid.getNumberOfPhases() > 1) {
-      double volTotal = inletFluid.getVolume("m3");
-      double volGas =
-          inletFluid.hasPhaseType("gas") ? inletFluid.getPhase("gas").getVolume("m3") : 0.0;
-      inletAlphaL = (volTotal - volGas) / volTotal;
-    } else if (!inletFluid.hasPhaseType("gas")) {
-      inletAlphaL = 1.0; // Single-phase liquid
-    }
-
-    // Use first section velocities as inlet velocities (best estimate)
-    if (sections[0] != null) {
-      inletVG = sections[0].getGasVelocity();
-      inletVL = sections[0].getLiquidVelocity();
-    }
-
-    liquidHoldupProfile[0] = inletAlphaL;
-    gasVelocityProfile[0] = inletVG;
-    liquidVelocityProfile[0] = inletVL;
-
-    // Remaining points: section midpoint values
     for (int i = 0; i < numberOfSections; i++) {
       TwoFluidSection sec = sections[i];
-      pressureProfile[i + 1] = sec.getPressure();
-      temperatureProfile[i + 1] = sec.getTemperature();
-      liquidHoldupProfile[i + 1] = sec.getLiquidHoldup();
-      gasVelocityProfile[i + 1] = sec.getGasVelocity();
-      liquidVelocityProfile[i + 1] = sec.getLiquidVelocity();
+      pressureProfile[i] = sec.getPressure();
+      temperatureProfile[i] = sec.getTemperature();
+      liquidHoldupProfile[i] = sec.getLiquidHoldup();
+      gasVelocityProfile[i] = sec.getGasVelocity();
+      liquidVelocityProfile[i] = sec.getLiquidVelocity();
     }
   }
 
@@ -3476,7 +3473,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * For consistency with oil and water holdups, the liquid holdup is calculated as the sum of oil
-   * and water holdups. Includes inlet conditions (x=0) as first point.
+   * and water holdups.
    * </p>
    *
    * @return Holdup at each section (0-1)
@@ -3486,19 +3483,7 @@ public class TwoFluidPipe extends Pipeline {
       return liquidHoldupProfile != null ? liquidHoldupProfile.clone() : new double[0];
     }
     // Return consistent values: liquidHoldup = oilHoldup + waterHoldup
-    // Include inlet point for consistency
-    int profileLength = numberOfSections + 1;
-    double[] profile = new double[profileLength];
-
-    // First point: inlet liquid holdup
-    double inletOilHL = sections[0].getOilHoldup();
-    double inletWaterHL = sections[0].getWaterHoldup();
-    double inletSumOilWater = inletOilHL + inletWaterHL;
-    if (inletSumOilWater > 0.001) {
-      profile[0] = inletSumOilWater;
-    } else {
-      profile[0] = sections[0].getLiquidHoldup();
-    }
+    double[] profile = new double[numberOfSections];
 
     for (int i = 0; i < numberOfSections; i++) {
       double oilHL = sections[i].getOilHoldup();
@@ -3506,9 +3491,9 @@ public class TwoFluidPipe extends Pipeline {
       double sumOilWater = oilHL + waterHL;
       // Use sum if it's reasonable, otherwise use stored liquid holdup
       if (sumOilWater > 0.001) {
-        profile[i + 1] = sumOilWater;
+        profile[i] = sumOilWater;
       } else {
-        profile[i + 1] = sections[i].getLiquidHoldup();
+        profile[i] = sections[i].getLiquidHoldup();
       }
     }
     return profile;
@@ -3519,8 +3504,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * For three-phase flow, water cut can vary along the pipeline as water accumulates in low spots
-   * (valleys) due to its higher density compared to oil. Includes inlet conditions (x=0) as first
-   * point.
+   * (valleys) due to its higher density compared to oil.
    * </p>
    *
    * @return Water cut at each section (0-1, fraction of liquid that is water)
@@ -3529,14 +3513,10 @@ public class TwoFluidPipe extends Pipeline {
     if (sections == null) {
       return new double[0];
     }
-    int profileLength = numberOfSections + 1;
-    double[] waterCuts = new double[profileLength];
-
-    // First point: inlet water cut
-    waterCuts[0] = sections[0].getWaterCut();
+    double[] waterCuts = new double[numberOfSections];
 
     for (int i = 0; i < numberOfSections; i++) {
-      waterCuts[i + 1] = sections[i].getWaterCut();
+      waterCuts[i] = sections[i].getWaterCut();
     }
     return waterCuts;
   }
@@ -3544,24 +3524,16 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Get water holdup profile along the pipeline.
    *
-   * <p>
-   * Includes inlet conditions (x=0) as first point for consistency with other profiles.
-   * </p>
-   *
    * @return Water holdup at each section (0-1, fraction of pipe area occupied by water)
    */
   public double[] getWaterHoldupProfile() {
     if (sections == null) {
       return new double[0];
     }
-    int profileLength = numberOfSections + 1;
-    double[] waterHoldups = new double[profileLength];
-
-    // First point: inlet water holdup from first section (best estimate)
-    waterHoldups[0] = sections[0].getWaterHoldup();
+    double[] waterHoldups = new double[numberOfSections];
 
     for (int i = 0; i < numberOfSections; i++) {
-      waterHoldups[i + 1] = sections[i].getWaterHoldup();
+      waterHoldups[i] = sections[i].getWaterHoldup();
     }
     return waterHoldups;
   }
@@ -3569,24 +3541,16 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Get oil holdup profile along the pipeline.
    *
-   * <p>
-   * Includes inlet conditions (x=0) as first point for consistency with other profiles.
-   * </p>
-   *
    * @return Oil holdup at each section (0-1, fraction of pipe area occupied by oil)
    */
   public double[] getOilHoldupProfile() {
     if (sections == null) {
       return new double[0];
     }
-    int profileLength = numberOfSections + 1;
-    double[] oilHoldups = new double[profileLength];
-
-    // First point: inlet oil holdup from first section (best estimate)
-    oilHoldups[0] = sections[0].getOilHoldup();
+    double[] oilHoldups = new double[numberOfSections];
 
     for (int i = 0; i < numberOfSections; i++) {
-      oilHoldups[i + 1] = sections[i].getOilHoldup();
+      oilHoldups[i] = sections[i].getOilHoldup();
     }
     return oilHoldups;
   }
@@ -3614,7 +3578,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * When water-oil slip is enabled, this returns the independent oil velocity. Otherwise, it
-   * returns the combined liquid velocity. Includes inlet conditions (x=0) as first point.
+   * returns the combined liquid velocity.
    * </p>
    *
    * @return Oil velocity at each section (m/s)
@@ -3623,11 +3587,9 @@ public class TwoFluidPipe extends Pipeline {
     if (sections == null) {
       return new double[0];
     }
-    int profileLength = numberOfSections + 1;
-    double[] velocities = new double[profileLength];
-    velocities[0] = sections[0].getOilVelocity();
+    double[] velocities = new double[numberOfSections];
     for (int i = 0; i < numberOfSections; i++) {
-      velocities[i + 1] = sections[i].getOilVelocity();
+      velocities[i] = sections[i].getOilVelocity();
     }
     return velocities;
   }
@@ -3637,7 +3599,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * When water-oil slip is enabled, this returns the independent water velocity. Otherwise, it
-   * returns the combined liquid velocity. Includes inlet conditions (x=0) as first point.
+   * returns the combined liquid velocity.
    * </p>
    *
    * @return Water velocity at each section (m/s)
@@ -3646,11 +3608,9 @@ public class TwoFluidPipe extends Pipeline {
     if (sections == null) {
       return new double[0];
     }
-    int profileLength = numberOfSections + 1;
-    double[] velocities = new double[profileLength];
-    velocities[0] = sections[0].getWaterVelocity();
+    double[] velocities = new double[numberOfSections];
     for (int i = 0; i < numberOfSections; i++) {
-      velocities[i + 1] = sections[i].getWaterVelocity();
+      velocities[i] = sections[i].getWaterVelocity();
     }
     return velocities;
   }
@@ -3660,7 +3620,7 @@ public class TwoFluidPipe extends Pipeline {
    *
    * <p>
    * Returns the difference between oil and water velocities (vOil - vWater). Positive values
-   * indicate oil is flowing faster than water. Includes inlet conditions (x=0) as first point.
+   * indicate oil is flowing faster than water.
    * </p>
    *
    * @return Oil-water slip velocity at each section (m/s)
@@ -3669,11 +3629,9 @@ public class TwoFluidPipe extends Pipeline {
     if (sections == null) {
       return new double[0];
     }
-    int profileLength = numberOfSections + 1;
-    double[] slip = new double[profileLength];
-    slip[0] = sections[0].getOilVelocity() - sections[0].getWaterVelocity();
+    double[] slip = new double[numberOfSections];
     for (int i = 0; i < numberOfSections; i++) {
-      slip[i + 1] = sections[i].getOilVelocity() - sections[i].getWaterVelocity();
+      slip[i] = sections[i].getOilVelocity() - sections[i].getWaterVelocity();
     }
     return slip;
   }
@@ -3681,21 +3639,15 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Get flow regime at each section.
    *
-   * <p>
-   * Includes inlet conditions (x=0) as first point.
-   * </p>
-   *
    * @return Array of flow regimes
    */
   public FlowRegime[] getFlowRegimeProfile() {
     if (sections == null) {
       return new FlowRegime[0];
     }
-    int profileLength = numberOfSections + 1;
-    FlowRegime[] regimes = new FlowRegime[profileLength];
-    regimes[0] = sections[0].getFlowRegime();
+    FlowRegime[] regimes = new FlowRegime[numberOfSections];
     for (int i = 0; i < numberOfSections; i++) {
-      regimes[i + 1] = sections[i].getFlowRegime();
+      regimes[i] = sections[i].getFlowRegime();
     }
     return regimes;
   }
@@ -3703,18 +3655,12 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Get position array for plotting.
    *
-   * <p>
-   * Includes x=0 (inlet) as first point, then section midpoints.
-   * </p>
-   *
-   * @return Position along pipe (m)
+   * @return Position along pipe (m), one value per section at section midpoint
    */
   public double[] getPositionProfile() {
-    int profileLength = numberOfSections + 1;
-    double[] positions = new double[profileLength];
-    positions[0] = 0.0; // Inlet at x=0
+    double[] positions = new double[numberOfSections];
     for (int i = 0; i < numberOfSections; i++) {
-      positions[i + 1] = (i + 0.5) * dx;
+      positions[i] = (i + 0.5) * dx;
     }
     return positions;
   }
