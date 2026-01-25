@@ -3045,7 +3045,6 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    * {@inheritDoc}
    *
    * <p>
-   * <p>
    * For compressors, maximum capacity is determined in priority order:
    * </p>
    * <ol>

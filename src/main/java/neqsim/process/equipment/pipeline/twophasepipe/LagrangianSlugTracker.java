@@ -145,7 +145,7 @@ public class LagrangianSlugTracker implements Serializable {
     public double distanceToPrecedingSlug;
     /** Is this slug in wake of preceding slug. */
     public boolean inWakeRegion;
-    /** Wake coefficient (1.0 = no wake, >1.0 = accelerated). */
+    /** Wake coefficient (1.0 = no wake, &gt;1.0 = accelerated). */
     public double wakeCoefficient;
 
     /**

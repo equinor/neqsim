@@ -178,47 +178,83 @@ public class MultiphaseFlowIntegrator implements Serializable {
       return arrivalTemperatureC;
     }
 
-    /** Set arrival temperature. */
+    /**
+     * Set arrival temperature.
+     *
+     * @param t the arrival temperature in Celsius
+     */
     public void setArrivalTemperatureC(double t) {
       this.arrivalTemperatureC = t;
     }
 
-    /** Get flow regime. */
+    /**
+     * Get flow regime.
+     *
+     * @return the flow regime
+     */
     public FlowRegime getFlowRegime() {
       return flowRegime;
     }
 
-    /** Set flow regime. */
+    /**
+     * Set flow regime.
+     *
+     * @param regime the flow regime to set
+     */
     public void setFlowRegime(FlowRegime regime) {
       this.flowRegime = regime;
     }
 
-    /** Get liquid holdup. */
+    /**
+     * Get liquid holdup.
+     *
+     * @return the liquid holdup (0-1)
+     */
     public double getLiquidHoldup() {
       return liquidHoldup;
     }
 
-    /** Set liquid holdup. */
+    /**
+     * Set liquid holdup.
+     *
+     * @param hl the liquid holdup (0-1)
+     */
     public void setLiquidHoldup(double hl) {
       this.liquidHoldup = hl;
     }
 
-    /** Get liquid velocity. */
+    /**
+     * Get liquid velocity.
+     *
+     * @return the liquid velocity in m/s
+     */
     public double getLiquidVelocityMs() {
       return liquidVelocityMs;
     }
 
-    /** Set liquid velocity. */
+    /**
+     * Set liquid velocity.
+     *
+     * @param v the liquid velocity in m/s
+     */
     public void setLiquidVelocityMs(double v) {
       this.liquidVelocityMs = v;
     }
 
-    /** Get gas velocity. */
+    /**
+     * Get gas velocity.
+     *
+     * @return the gas velocity in m/s
+     */
     public double getGasVelocityMs() {
       return gasVelocityMs;
     }
 
-    /** Set gas velocity. */
+    /**
+     * Set gas velocity.
+     *
+     * @param v the gas velocity in m/s
+     */
     public void setGasVelocityMs(double v) {
       this.gasVelocityMs = v;
     }
@@ -615,7 +651,11 @@ public class MultiphaseFlowIntegrator implements Serializable {
   }
 
   /**
-   * Estimate slug frequency (Gregory correlation).
+   * Estimate slug frequency using Gregory correlation.
+   *
+   * @param mixVel mixture velocity in m/s
+   * @param diameter pipe inner diameter in m
+   * @return estimated slug frequency in slugs per minute
    */
   private double estimateSlugFrequency(double mixVel, double diameter) {
     // Gregory et al. correlation
@@ -626,6 +666,9 @@ public class MultiphaseFlowIntegrator implements Serializable {
 
   /**
    * Check feasibility against constraints.
+   *
+   * @param result the pipeline result to check and update
+   * @param minArrivalP minimum required arrival pressure in bar
    */
   private void checkFeasibility(PipelineResult result, double minArrivalP) {
     result.setFeasible(true);
@@ -745,12 +788,20 @@ public class MultiphaseFlowIntegrator implements Serializable {
   // GETTERS
   // ============================================================================
 
-  /** Get pipeline length. */
+  /**
+   * Get pipeline length.
+   *
+   * @return the pipeline length in kilometers
+   */
   public double getPipelineLengthKm() {
     return pipelineLengthKm;
   }
 
-  /** Get pipeline diameter. */
+  /**
+   * Get pipeline diameter.
+   *
+   * @return the pipeline inner diameter in meters
+   */
   public double getPipelineDiameterM() {
     return pipelineDiameterM;
   }
