@@ -4018,29 +4018,30 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
 
     // Rated power constraint - compares against driver's rated power (for capacity planning)
     // This shows utilization vs the full motor rating, regardless of current speed
-    addCapacityConstraint(new CapacityConstraint("ratedPower", "%", ConstraintType.DESIGN)
-        .setDesignValue(100.0).setMaxValue(110.0).setWarningThreshold(0.9)
-        .setDescription("Power utilization vs driver rated power (capacity planning)")
-        .setValueSupplier(() -> {
-          if (getThermoSystem() == null) {
-            return 0.0;
-          }
-          double currentPowerKW = this.getPower("kW");
-          if (currentPowerKW <= 0 || Double.isNaN(currentPowerKW)) {
-            return 0.0;
-          }
-          // Use driver rated power or mechanical design power
-          double ratedPowerKW = 0.0;
-          if (driver != null && driver.getRatedPower() > 0) {
-            ratedPowerKW = driver.getRatedPower();
-          } else if (getMechanicalDesign().maxDesignPower > 0) {
-            ratedPowerKW = getMechanicalDesign().maxDesignPower;
-          }
-          if (ratedPowerKW <= 0) {
-            return 0.0;
-          }
-          return (currentPowerKW / ratedPowerKW) * 100.0;
-        }));
+    addCapacityConstraint(
+        new CapacityConstraint("ratedPower", "%", CapacityConstraint.ConstraintType.DESIGN)
+            .setDesignValue(100.0).setMaxValue(110.0).setWarningThreshold(0.9)
+            .setDescription("Power utilization vs driver rated power (capacity planning)")
+            .setValueSupplier(() -> {
+              if (getThermoSystem() == null) {
+                return 0.0;
+              }
+              double currentPowerKW = this.getPower("kW");
+              if (currentPowerKW <= 0 || Double.isNaN(currentPowerKW)) {
+                return 0.0;
+              }
+              // Use driver rated power or mechanical design power
+              double ratedPowerKW = 0.0;
+              if (driver != null && driver.getRatedPower() > 0) {
+                ratedPowerKW = driver.getRatedPower();
+              } else if (getMechanicalDesign().maxDesignPower > 0) {
+                ratedPowerKW = getMechanicalDesign().maxDesignPower;
+              }
+              if (ratedPowerKW <= 0) {
+                return 0.0;
+              }
+              return (currentPowerKW / ratedPowerKW) * 100.0;
+            }));
 
     // Surge margin constraint
     // getDistanceToSurge() returns a ratio: (currentFlow / surgeFlow) - 1

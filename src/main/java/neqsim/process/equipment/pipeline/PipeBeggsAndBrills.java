@@ -3349,7 +3349,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   public void setMaxDesignAIV(double aivKW) {
     this.maxDesignAIV = aivKW;
     // Invalidate cached constraints so they get recreated with the new design value
-    capacityConstraints.clear();
+    clearCapacityConstraints();
   }
 
   /**
@@ -3426,7 +3426,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   public void setMaxDesignVelocity(double velocity) {
     this.maxDesignVelocity = velocity;
     // Invalidate cached constraints so they get recreated with the new design value
-    capacityConstraints.clear();
+    clearCapacityConstraints();
   }
 
   /**
@@ -3438,7 +3438,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   public void setMaxDesignLOF(double lof) {
     this.maxDesignLOF = lof;
     // Invalidate cached constraints so they get recreated with the new design value
-    capacityConstraints.clear();
+    clearCapacityConstraints();
   }
 
   /**
@@ -3450,7 +3450,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   public void setMaxDesignFRMS(double frms) {
     this.maxDesignFRMS = frms;
     // Invalidate cached constraints so they get recreated with the new design value
-    capacityConstraints.clear();
+    clearCapacityConstraints();
   }
 
   /**
@@ -3520,7 +3520,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * </p>
    */
   public void reinitializeCapacityConstraints() {
-    capacityConstraints.clear();
+    clearCapacityConstraints();
     initializeCapacityConstraints();
   }
 
