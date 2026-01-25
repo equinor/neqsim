@@ -61,6 +61,54 @@ The flow regime detector uses Taitel-Dukler transitions:
 
 ## Holdup Correlations
 
+### Minimum Holdup Configuration
+
+The model enforces a minimum liquid holdup to prevent unrealistically low values in gas-dominant systems. By default, an **adaptive minimum** is used that scales with the no-slip holdup, making it suitable for both lean gas and rich condensate systems.
+
+#### Configuration Methods
+
+| Method | Default | Description |
+|--------|---------|-------------|
+| `setUseAdaptiveMinimumOnly(boolean)` | `true` | Use correlation-based minimum only |
+| `setMinimumLiquidHoldup(double)` | 0.001 | Absolute floor (when adaptive-only = false) |
+| `setMinimumSlipFactor(double)` | 2.0 | Multiplier for no-slip holdup |
+| `setEnforceMinimumSlip(boolean)` | `true` | Enable/disable minimum constraint |
+
+#### Lean Gas Systems
+
+For lean wet gas (< 1% liquid loading), use adaptive-only mode:
+
+```java
+pipe.setUseAdaptiveMinimumOnly(true);  // Default
+pipe.setMinimumSlipFactor(2.0);
+// Minimum holdup = lambdaL × 2.0 = 0.6% for 0.3% liquid loading
+```
+
+#### Rich Condensate Systems
+
+For rich gas condensate (> 5% liquid loading), either mode works:
+
+```java
+// Option 1: Adaptive (recommended)
+pipe.setUseAdaptiveMinimumOnly(true);
+
+// Option 2: Fixed floor (OLGA-style)
+pipe.setUseAdaptiveMinimumOnly(false);
+pipe.setMinimumLiquidHoldup(0.01);  // 1% floor
+```
+
+#### Minimum Holdup Correlations
+
+The adaptive minimum uses Beggs-Brill type correlations:
+
+| Flow Regime | Correlation | Exponents |
+|-------------|-------------|-----------|
+| Stratified | αL = 0.98 × λL^0.4846 / Fr^0.0868 | Segregated flow |
+| Slug/Churn | αL = 0.845 × λL^0.5351 / Fr^0.0173 | Intermittent flow |
+| Annular | Film model + 1.065 × λL^0.5824 / Fr^0.0609 | Distributed flow |
+
+Where λL = no-slip liquid holdup, Fr = Froude number = v²/(g×D)
+
 ### Stratified Flow Holdup
 The `calculateStratifiedHoldupMomentumBalance()` method calculates liquid holdup from momentum balance:
 
