@@ -362,7 +362,7 @@ public class TwoFluidPipe extends Pipeline {
    * Engineering
    * </p>
    */
-  private double minimumLiquidHoldup = 0.01;
+  private double minimumLiquidHoldup = 0.001;
 
   /**
    * Slip factor applied to no-slip holdup to calculate adaptive minimum.
@@ -375,6 +375,20 @@ public class TwoFluidPipe extends Pipeline {
    * </p>
    */
   private double minimumSlipFactor = 2.0;
+
+  /**
+   * Use only adaptive (correlation-based) minimum, without absolute floor.
+   *
+   * <p>
+   * When true, the minimum holdup is calculated purely from flow correlations (Beggs-Brill type)
+   * without enforcing the absolute minimumLiquidHoldup floor. This allows the model to predict very
+   * low holdups for lean gas systems where the physical holdup may be below 1%.
+   * </p>
+   * <p>
+   * Default is true for better handling of lean gas systems.
+   * </p>
+   */
+  private boolean useAdaptiveMinimumOnly = true;
 
   /**
    * Enable OLGA-style minimum slip constraint.
@@ -1764,10 +1778,22 @@ public class TwoFluidPipe extends Pipeline {
         }
 
         // Clamp to physical bounds
-        adaptiveMin = Math.max(minimumLiquidHoldup, Math.min(0.9, adaptiveMin));
+        // For lean gas systems (low lambdaL), use adaptive minimum based on no-slip holdup
+        // to avoid artificially high holdup floors
+        double effectiveMin;
+        if (useAdaptiveMinimumOnly) {
+          // No absolute floor - use only correlation-based minimum
+          // Scale with lambdaL to handle very lean systems
+          double lambdaBasedMin = lambdaL * minimumSlipFactor;
+          effectiveMin = Math.max(lambdaBasedMin, adaptiveMin);
+        } else {
+          // Apply absolute floor (original behavior)
+          effectiveMin = Math.max(minimumLiquidHoldup, adaptiveMin);
+        }
+        effectiveMin = Math.min(0.9, effectiveMin);
 
-        if (alphaL < adaptiveMin) {
-          alphaL = adaptiveMin;
+        if (alphaL < effectiveMin) {
+          alphaL = effectiveMin;
         }
       }
 
@@ -1812,10 +1838,18 @@ public class TwoFluidPipe extends Pipeline {
               0.845 * Math.pow(Math.max(lambdaL, 1e-6), 0.5351) / Math.pow(froudeNumber, 0.0173);
         }
 
-        adaptiveMin = Math.max(minimumLiquidHoldup, Math.min(0.9, adaptiveMin));
+        // Clamp to physical bounds - adaptive for lean gas systems
+        double effectiveMin;
+        if (useAdaptiveMinimumOnly) {
+          double lambdaBasedMin = lambdaL * minimumSlipFactor;
+          effectiveMin = Math.max(lambdaBasedMin, adaptiveMin);
+        } else {
+          effectiveMin = Math.max(minimumLiquidHoldup, adaptiveMin);
+        }
+        effectiveMin = Math.min(0.9, effectiveMin);
 
-        if (alphaL < adaptiveMin) {
-          alphaL = adaptiveMin;
+        if (alphaL < effectiveMin) {
+          alphaL = effectiveMin;
         }
       }
 
@@ -4327,6 +4361,38 @@ public class TwoFluidPipe extends Pipeline {
    */
   public boolean isEnforceMinimumSlip() {
     return enforceMinimumSlip;
+  }
+
+  /**
+   * Set whether to use adaptive-only minimum holdup (no absolute floor).
+   *
+   * <p>
+   * When true (default), the minimum holdup is calculated purely from flow correlations
+   * (Beggs-Brill type) scaled by the no-slip holdup, without enforcing an absolute floor. This
+   * allows the model to predict very low holdups for lean gas systems where the physical holdup may
+   * be well below 1%.
+   * </p>
+   *
+   * <p>
+   * When false, an absolute minimum (minimumLiquidHoldup, default 0.1%) is enforced in addition to
+   * the correlation-based minimum. This is more conservative but may overpredict holdup for very
+   * lean gas systems.
+   * </p>
+   *
+   * @param useAdaptive true to use correlation-only minimum (recommended for lean gas), false to
+   *        also enforce absolute floor
+   */
+  public void setUseAdaptiveMinimumOnly(boolean useAdaptive) {
+    this.useAdaptiveMinimumOnly = useAdaptive;
+  }
+
+  /**
+   * Check if adaptive-only minimum holdup mode is enabled.
+   *
+   * @return true if using correlation-based minimum only (no absolute floor)
+   */
+  public boolean isUseAdaptiveMinimumOnly() {
+    return useAdaptiveMinimumOnly;
   }
 
   // ============ OLGA Model Configuration Methods ============
