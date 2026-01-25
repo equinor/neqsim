@@ -1064,8 +1064,11 @@ class TwoFluidVsBeggsBrillComparisonTest {
     assertTrue(tfOutletPressure < tfInletPressure, "Outlet should be less than inlet");
 
     // The model should complete without errors
-    assertTrue(pressureProfile.length == nSections, "Pressure profile should match sections");
-    assertTrue(holdupProfile.length == nSections, "Holdup profile should match sections");
+    // Profile length is nSections + 1 (inlet point + section midpoints)
+    assertTrue(pressureProfile.length == nSections + 1,
+        "Pressure profile should match sections + inlet");
+    assertTrue(holdupProfile.length == nSections + 1,
+        "Holdup profile should match sections + inlet");
   }
 
   @Test
@@ -1170,7 +1173,9 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     // Assertions
     assertTrue(tfPressureDrop > 0, "Pressure drop should be positive");
-    assertTrue(pressureProfile.length == nSections, "Pressure profile should match sections");
+    // Profile length is nSections + 1 (inlet point + section midpoints)
+    assertTrue(pressureProfile.length == nSections + 1,
+        "Pressure profile should match sections + inlet");
 
     // Deep valley should show pressure recovery after valley due to hydrostatic head
     // Check that pressure increases after valley bottom (ascending section)
@@ -1363,7 +1368,9 @@ class TwoFluidVsBeggsBrillComparisonTest {
         "Outlet pressure should be less than inlet (overall pressure drop)");
     assertTrue(pressureProfile[sagIdx] > pressureProfile[0],
         "Pressure at sag bend should be higher than inlet due to depth");
-    assertTrue(holdupProfile.length == nSections, "Holdup profile should match sections");
+    // Profile length is nSections + 1 (inlet point + section midpoints)
+    assertTrue(holdupProfile.length == nSections + 1,
+        "Holdup profile should match sections + inlet");
 
     // Verify liquid tends to accumulate in sag bend region
     double avgSagHoldup = sagCount > 0 ? sagInventory / sagCount : 0;
@@ -1502,7 +1509,9 @@ class TwoFluidVsBeggsBrillComparisonTest {
 
     // Assertions
     assertTrue(outletPressure > 0, "Outlet pressure should be positive");
-    assertTrue(holdupProfile.length == nSections, "Holdup profile should match sections");
+    // Profile length is nSections + 1 (inlet point + section midpoints)
+    assertTrue(holdupProfile.length == nSections + 1,
+        "Holdup profile should match sections + inlet");
   }
 
   @Test
@@ -1664,7 +1673,9 @@ class TwoFluidVsBeggsBrillComparisonTest {
     }
 
     assertTrue(P_sep > 0, "Outlet pressure should be positive");
-    assertTrue(holdupProfile.length == nSections, "Holdup profile should match sections");
+    // Profile length is nSections + 1 (inlet point + section midpoints)
+    assertTrue(holdupProfile.length == nSections + 1,
+        "Holdup profile should match sections + inlet");
   }
 
   @Test
