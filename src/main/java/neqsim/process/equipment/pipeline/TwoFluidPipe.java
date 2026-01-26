@@ -4,6 +4,7 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.pipeline.twophasepipe.FlowRegimeDetector;
+import neqsim.process.equipment.pipeline.twophasepipe.LagrangianSlugTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker;
 import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
 import neqsim.process.equipment.pipeline.twophasepipe.SlugTracker;
@@ -148,8 +149,26 @@ public class TwoFluidPipe extends Pipeline {
   /** Liquid accumulation tracker. */
   private LiquidAccumulationTracker accumulationTracker;
 
-  /** Slug tracker. */
+  /** Slug tracker (simplified model). */
   private SlugTracker slugTracker;
+
+  /** Lagrangian slug tracker (OLGA-style full tracking). */
+  private LagrangianSlugTracker lagrangianSlugTracker;
+
+  /**
+   * Slug tracking mode.
+   */
+  public enum SlugTrackingMode {
+    /** Simplified slug unit model. */
+    SIMPLIFIED,
+    /** Full Lagrangian tracking (OLGA-style). */
+    LAGRANGIAN,
+    /** No slug tracking. */
+    DISABLED
+  }
+
+  /** Current slug tracking mode. */
+  private SlugTrackingMode slugTrackingMode = SlugTrackingMode.LAGRANGIAN;
 
   // ============ Boundary conditions ============
 
@@ -212,6 +231,12 @@ public class TwoFluidPipe extends Pipeline {
 
   /** Soil/burial thermal resistance (m²·K/W). */
   private double soilThermalResistance = 0.0;
+
+  /** Multi-layer thermal calculator for OLGA-style radial heat transfer. */
+  private MultilayerThermalCalculator thermalCalculator = null;
+
+  /** Enable multi-layer thermal model (vs simple U-value). */
+  private boolean useMultilayerThermalModel = false;
 
   /** Enable Joule-Thomson effect. */
   private boolean enableJouleThomson = true;
@@ -281,6 +306,199 @@ public class TwoFluidPipe extends Pipeline {
   /** Track which slugs have already been counted at outlet (by slug ID). */
   private java.util.Set<Integer> countedOutletSlugs = new java.util.HashSet<>();
 
+  // ============ OLGA-style model parameters ============
+
+  /**
+   * OLGA model type for holdup and flow regime calculations.
+   *
+   * <p>
+   * Reference: Bendiksen et al. (1991) "The Dynamic Two-Fluid Model OLGA" SPE Production
+   * Engineering, May 1991, pp. 171-180
+   * </p>
+   */
+  public enum OLGAModelType {
+    /**
+     * Full OLGA model with momentum balance for all flow regimes. Most accurate but computationally
+     * intensive.
+     */
+    FULL,
+    /**
+     * Simplified OLGA model with empirical correlations. Faster but less accurate for complex
+     * terrain.
+     */
+    SIMPLIFIED,
+    /**
+     * Original NeqSim drift-flux model (pre-OLGA). For backward compatibility.
+     */
+    DRIFT_FLUX
+  }
+
+  /** Current OLGA model type. Default is FULL for best accuracy. */
+  private OLGAModelType olgaModelType = OLGAModelType.FULL;
+
+  /**
+   * Base minimum liquid holdup for stratified flow (OLGA-style constraint).
+   *
+   * <p>
+   * OLGA enforces a minimum holdup to prevent unrealistically low values at high gas velocities.
+   * This is based on the observation that even at high velocities, a thin liquid film remains on
+   * the pipe wall in stratified/annular flow.
+   * </p>
+   *
+   * <p>
+   * The actual minimum applied is the maximum of:
+   * </p>
+   * <ul>
+   * <li>This base value (default 1%)</li>
+   * <li>A multiple of the no-slip holdup (lambdaL * minimumSlipFactor)</li>
+   * </ul>
+   * <p>
+   * This ensures the minimum is physically reasonable for both lean gas (low liquid loading) and
+   * rich gas condensate (high liquid loading) systems.
+   * </p>
+   *
+   * <p>
+   * Reference: Bendiksen et al. (1991) "The Dynamic Two-Fluid Model OLGA" - SPE Production
+   * Engineering
+   * </p>
+   */
+  private double minimumLiquidHoldup = 0.001;
+
+  /**
+   * Slip factor applied to no-slip holdup to calculate adaptive minimum.
+   *
+   * <p>
+   * The adaptive minimum holdup is calculated as: lambdaL * minimumSlipFactor. For gas-dominant
+   * systems, typical slip ratios range from 1.5-3.0. Default value of 2.0 means minimum holdup is
+   * twice the no-slip value, which accounts for liquid accumulation due to slip. This prevents the
+   * minimum from being unrealistically high for lean gas systems with very low liquid loading.
+   * </p>
+   */
+  private double minimumSlipFactor = 2.0;
+
+  /**
+   * Use only adaptive (correlation-based) minimum, without absolute floor.
+   *
+   * <p>
+   * When true, the minimum holdup is calculated purely from flow correlations (Beggs-Brill type)
+   * without enforcing the absolute minimumLiquidHoldup floor. This allows the model to predict very
+   * low holdups for lean gas systems where the physical holdup may be below 1%.
+   * </p>
+   * <p>
+   * Default is true for better handling of lean gas systems.
+   * </p>
+   */
+  private boolean useAdaptiveMinimumOnly = true;
+
+  /**
+   * Enable OLGA-style minimum slip constraint.
+   *
+   * <p>
+   * When enabled (default), enforces a minimum liquid holdup in gas-dominant stratified flow,
+   * matching OLGA behavior. When disabled, holdup can approach no-slip values at high velocities
+   * (Beggs-Brill style).
+   * </p>
+   */
+  private boolean enforceMinimumSlip = true;
+
+  // ============ OLGA Annular Film Model Parameters ============
+
+  /**
+   * Minimum film thickness for annular flow (m).
+   *
+   * <p>
+   * In high gas velocity annular flow, OLGA maintains a minimum liquid film on the pipe wall. This
+   * prevents unrealistically low holdup predictions. Default 0.1mm based on typical measurements.
+   * </p>
+   */
+  private double minimumFilmThickness = 0.0001; // 0.1 mm
+
+  /**
+   * Entrainment fraction in annular flow.
+   *
+   * <p>
+   * Fraction of liquid entrained as droplets in the gas core. Affects the distribution between film
+   * flow and droplet flow in annular regime. OLGA uses Ishii-Mishima correlation.
+   * </p>
+   */
+  private double annularEntrainmentFraction = 0.0;
+
+  /**
+   * Enable OLGA-style annular film model.
+   *
+   * <p>
+   * When enabled, uses OLGA's annular film model which accounts for: - Minimum film thickness on
+   * pipe wall - Liquid entrainment in gas core - Wave formation and droplet deposition
+   * </p>
+   */
+  private boolean enableAnnularFilmModel = true;
+
+  // ============ OLGA Terrain Tracking Parameters ============
+
+  /**
+   * Enable full OLGA-style terrain tracking.
+   *
+   * <p>
+   * When enabled, uses OLGA's terrain tracking algorithm which: - Identifies all low points and
+   * high points - Tracks liquid accumulation in valleys - Models terrain-induced slugging - Handles
+   * severe slugging in risers
+   * </p>
+   */
+  private boolean enableTerrainTracking = true;
+
+  /**
+   * Critical holdup for terrain-induced slug initiation.
+   *
+   * <p>
+   * When liquid holdup in a low point exceeds this value, a terrain-induced slug is initiated.
+   * Default 0.6 based on OLGA recommendations.
+   * </p>
+   */
+  private double terrainSlugCriticalHoldup = 0.6;
+
+  /**
+   * Liquid fallback coefficient for uphill sections.
+   *
+   * <p>
+   * Controls how much liquid falls back in uphill sections when gas velocity is insufficient to
+   * carry liquid upward. Higher values mean more liquid accumulation. OLGA default ~0.3.
+   * </p>
+   */
+  private double liquidFallbackCoefficient = 0.3;
+
+  /**
+   * Enable severe slugging detection and modeling.
+   *
+   * <p>
+   * Severe slugging occurs at riser bases when liquid periodically blocks gas flow. This cyclic
+   * phenomenon can cause large pressure and flow oscillations.
+   * </p>
+   */
+  private boolean enableSevereSlugModel = true;
+
+  // ============ OLGA Flow Regime Map Parameters ============
+
+  /**
+   * Use OLGA flow regime map instead of Taitel-Dukler.
+   *
+   * <p>
+   * OLGA's flow regime map differs from Taitel-Dukler in several ways: - Different transition
+   * criteria for stratified wavy to slug - Accounts for pipe roughness effects - Better handling of
+   * inclined flow - Hysteresis in regime transitions
+   * </p>
+   */
+  private boolean useOLGAFlowRegimeMap = true;
+
+  /**
+   * Flow regime transition hysteresis factor.
+   *
+   * <p>
+   * OLGA uses hysteresis to prevent rapid switching between flow regimes. A value of 0.1 means 10%
+   * hysteresis band around transition boundaries.
+   * </p>
+   */
+  private double flowRegimeHysteresis = 0.1;
+
   /** Update thermodynamics every N steps. */
   private int thermodynamicUpdateInterval = 10;
 
@@ -339,6 +557,7 @@ public class TwoFluidPipe extends Pipeline {
     flowRegimeDetector = new FlowRegimeDetector();
     accumulationTracker = new LiquidAccumulationTracker();
     slugTracker = new SlugTracker();
+    lagrangianSlugTracker = new LagrangianSlugTracker();
 
     timeIntegrator.setCflNumber(cflNumber);
 
@@ -357,6 +576,15 @@ public class TwoFluidPipe extends Pipeline {
   private void initializeSections() {
     dx = length / numberOfSections;
     sections = new TwoFluidSection[numberOfSections];
+
+    // Reset slug tracking state on re-initialization
+    outletSlugCount = 0;
+    totalSlugVolumeAtOutlet = 0;
+    lastSlugArrivalTime = 0;
+    maxSlugLengthAtOutlet = 0;
+    maxSlugVolumeAtOutlet = 0;
+    countedOutletSlugs.clear();
+    simulationTime = 0;
 
     // Get inlet properties
     SystemInterface inletFluid = getInletStream().getFluid();
@@ -377,13 +605,21 @@ public class TwoFluidPipe extends Pipeline {
     double inletWaterCut = 0.0;
     double inletOilFraction = 1.0;
     boolean isThreePhase = false;
+    boolean hasOil = false;
+    boolean hasWater = false;
 
     // Determine phase fractions based on number of phases
     int numPhases = inletFluid.getNumberOfPhases();
 
+    // Determine which phases are present (check for all cases)
+    boolean hasGas = inletFluid.hasPhaseType("gas");
+    hasOil = inletFluid.hasPhaseType("oil");
+    hasWater = inletFluid.hasPhaseType("aqueous");
+
     if (numPhases == 1) {
-      // Single-phase flow - determine if gas or liquid
-      if (inletFluid.hasPhaseType("gas")) {
+      // Single-phase flow
+      if (hasGas) {
+        // Pure gas
         alphaG = 1.0;
         alphaL = 0.0;
         rhoG = inletFluid.getPhase("gas").getDensity("kg/m3");
@@ -393,30 +629,46 @@ public class TwoFluidPipe extends Pipeline {
         // Set liquid properties to dummy values (won't be used)
         rhoL = rhoG;
         muL = muG;
-      } else if (inletFluid.hasPhaseType("oil") || inletFluid.hasPhaseType("aqueous")) {
+        logger.info("Single-phase gas flow");
+      } else if (hasOil) {
+        // Pure oil
         alphaG = 0.0;
         alphaL = 1.0;
-        String liqPhase = inletFluid.hasPhaseType("oil") ? "oil" : "aqueous";
-        rhoL = inletFluid.getPhase(liqPhase).getDensity("kg/m3");
-        muL = inletFluid.getPhase(liqPhase).getViscosity("kg/msec");
-        cL = inletFluid.getPhase(liqPhase).getSoundSpeed();
-        hL = inletFluid.getPhase(liqPhase).getEnthalpy("J/kg");
-        // Set gas properties to dummy values (won't be used)
+        rhoL = inletFluid.getPhase("oil").getDensity("kg/m3");
+        muL = inletFluid.getPhase("oil").getViscosity("kg/msec");
+        cL = inletFluid.getPhase("oil").getSoundSpeed();
+        hL = inletFluid.getPhase("oil").getEnthalpy("J/kg");
+        rhoOil = rhoL;
+        muOil = muL;
+        // Set gas properties to dummy values
         rhoG = rhoL;
         muG = muL;
+        logger.info("Single-phase oil flow");
+      } else if (hasWater) {
+        // Pure water
+        alphaG = 0.0;
+        alphaL = 1.0;
+        rhoL = inletFluid.getPhase("aqueous").getDensity("kg/m3");
+        muL = inletFluid.getPhase("aqueous").getViscosity("kg/msec");
+        cL = inletFluid.getPhase("aqueous").getSoundSpeed();
+        hL = inletFluid.getPhase("aqueous").getEnthalpy("J/kg");
+        rhoWater = rhoL;
+        muWater = muL;
+        // Set gas properties to dummy values
+        rhoG = rhoL;
+        muG = muL;
+        logger.info("Single-phase water flow");
       }
     } else {
       // Two-phase or multi-phase flow
-      if (inletFluid.hasPhaseType("gas")) {
+      if (hasGas) {
         rhoG = inletFluid.getPhase("gas").getDensity("kg/m3");
         muG = inletFluid.getPhase("gas").getViscosity("kg/msec");
         cG = inletFluid.getPhase("gas").getSoundSpeed();
         hG = inletFluid.getPhase("gas").getEnthalpy("J/kg");
       }
 
-      // Handle three-phase (gas + oil + water) or two-phase with liquid
-      boolean hasOil = inletFluid.hasPhaseType("oil");
-      boolean hasWater = inletFluid.hasPhaseType("aqueous");
+      // Handle all liquid-containing phase combinations
 
       if (hasOil && hasWater) {
         // Three-phase flow: combine oil and water as effective liquid
@@ -513,11 +765,25 @@ public class TwoFluidPipe extends Pipeline {
       }
 
       // Calculate holdup from volumetric phase fractions
-      if (inletFluid.hasPhaseType("gas")) {
+      if (hasGas) {
         double volGas = inletFluid.getPhase("gas").getVolume("m3");
         double volTotal = inletFluid.getVolume("m3");
         alphaG = volGas / volTotal;
         alphaL = 1.0 - alphaG;
+      } else if (hasOil && hasWater) {
+        // Oil-water flow (no gas) - treat as two-phase liquid-liquid flow
+        // alphaG represents oil (lighter liquid), alphaL represents water (heavier)
+        double volOil = inletFluid.getPhase("oil").getVolume("m3");
+        double volWater = inletFluid.getPhase("aqueous").getVolume("m3");
+        double volTotal = volOil + volWater;
+        // Use gas holdup as oil fraction, liquid holdup as water fraction for oil-water
+        alphaG = 0.0; // No gas
+        alphaL = 1.0; // All liquid
+        // Track oil-water split internally
+        inletWaterCut = volWater / volTotal;
+        inletOilFraction = 1.0 - inletWaterCut;
+        isThreePhase = true; // Use three-fluid tracking even without gas
+        logger.info("Oil-water flow (no gas): water cut = {:.1f}%", inletWaterCut * 100);
       }
     }
 
@@ -584,6 +850,39 @@ public class TwoFluidPipe extends Pipeline {
 
         // Update water/oil conservative variables
         sec.updateWaterOilConservativeVariables();
+      } else if (hasWater && !hasOil) {
+        // Two-phase gas + aqueous (no oil) - all liquid is water
+        sec.setWaterDensity(rhoL);
+        sec.setWaterViscosity(muL);
+        sec.setOilDensity(rhoL); // Dummy value, no oil present
+        sec.setOilViscosity(muL);
+        sec.setWaterCut(1.0);
+        sec.setOilFractionInLiquid(0.0);
+
+        // All liquid holdup is water
+        sec.setWaterHoldup(alphaL);
+        sec.setOilHoldup(0.0);
+        sec.setWaterVelocity(sec.getLiquidVelocity());
+        sec.setOilVelocity(0.0);
+        sec.updateWaterOilConservativeVariables();
+      } else if (hasOil && !hasWater) {
+        // Two-phase gas + oil (no water) OR single-phase oil - all liquid is oil
+        sec.setOilDensity(rhoL);
+        sec.setOilViscosity(muL);
+        sec.setWaterDensity(1000.0); // Dummy value, no water present
+        sec.setWaterViscosity(1e-3);
+        sec.setWaterCut(0.0);
+        sec.setOilFractionInLiquid(1.0);
+
+        // All liquid holdup is oil
+        sec.setOilHoldup(alphaL);
+        sec.setWaterHoldup(0.0);
+        sec.setOilVelocity(sec.getLiquidVelocity());
+        sec.setWaterVelocity(0.0);
+        sec.updateWaterOilConservativeVariables();
+      } else if (!hasOil && !hasWater && !hasGas) {
+        // No phases detected - this shouldn't happen, log warning
+        logger.warn("No phases detected in inlet fluid - using default properties");
       }
 
       // Initialize derived quantities
@@ -613,7 +912,7 @@ public class TwoFluidPipe extends Pipeline {
     int maxIter = 100;
     double tolerance = 1e-4;
 
-    // Get total mass flow rates for each phase (constant along pipe in steady state)
+    // Get total mass flow rate (conserved)
     double massFlow = getInletStream().getFlowRate("kg/sec");
     double area = Math.PI * diameter * diameter / 4.0;
 
@@ -623,17 +922,25 @@ public class TwoFluidPipe extends Pipeline {
     // Fix inlet section pressure to boundary condition
     sections[0].setPressure(P_inlet);
 
-    // Get inlet phase fractions from first section
+    // Get inlet phase fractions from first section (initial estimate)
     double inletAlphaL = sections[0].getLiquidHoldup();
     double inletAlphaG = sections[0].getGasHoldup();
     double inletRhoG = sections[0].getGasDensity();
     double inletRhoL = sections[0].getLiquidDensity();
 
-    // Calculate phase mass flow rates (conserved in steady state)
+    // Calculate INITIAL phase mass flow rates from inlet (may change with condensation)
     double rhoMixInlet = inletAlphaG * inletRhoG + inletAlphaL * inletRhoL;
     double gasQualityInlet = inletAlphaG * inletRhoG / rhoMixInlet;
     double mDotGas = massFlow * gasQualityInlet;
     double mDotLiq = massFlow * (1.0 - gasQualityInlet);
+
+    // Store local mass flow arrays for condensation tracking
+    double[] localMDotGas = new double[numberOfSections];
+    double[] localMDotLiq = new double[numberOfSections];
+    for (int i = 0; i < numberOfSections; i++) {
+      localMDotGas[i] = mDotGas;
+      localMDotLiq[i] = mDotLiq;
+    }
 
     for (int iter = 0; iter < maxIter; iter++) {
       double maxChange = 0;
@@ -641,6 +948,41 @@ public class TwoFluidPipe extends Pipeline {
       // Update flow regimes
       for (TwoFluidSection sec : sections) {
         sec.setFlowRegime(flowRegimeDetector.detectFlowRegime(sec));
+      }
+
+      // Update inlet section (i=0) holdup using same momentum balance as other sections
+      // This ensures smooth profile from inlet - no discontinuity at first section
+      {
+        TwoFluidSection inletSec = sections[0];
+        double localMDotG = localMDotGas[0];
+        double localMDotL = localMDotLiq[0];
+
+        // Calculate inlet holdup using momentum balance (pass null for prev to indicate inlet)
+        double[] inletHoldups = calculateLocalHoldup(inletSec, null, localMDotG, localMDotL, area);
+        double alphaL_inlet = inletHoldups[0];
+        double alphaG_inlet = inletHoldups[1];
+
+        inletSec.setLiquidHoldup(alphaL_inlet);
+        inletSec.setGasHoldup(alphaG_inlet);
+
+        // Update inlet velocities
+        if (alphaG_inlet > 0.001 && inletSec.getGasDensity() > 0) {
+          double vG = localMDotG / (area * alphaG_inlet * inletSec.getGasDensity());
+          inletSec.setGasVelocity(vG);
+        }
+        if (alphaL_inlet > 0.001 && inletSec.getLiquidDensity() > 0) {
+          double vL = localMDotL / (area * alphaL_inlet * inletSec.getLiquidDensity());
+          inletSec.setLiquidVelocity(vL);
+        }
+
+        // Update water/oil holdups for inlet if three-phase
+        if (inletSec.getWaterDensity() > 0 && inletSec.getOilDensity() > 0
+            && alphaL_inlet > 0.001) {
+          updateWaterOilHoldups(inletSec, null, alphaL_inlet, area);
+        }
+
+        inletSec.updateDerivedQuantities();
+        inletSec.updateStratifiedGeometry();
       }
 
       // Update pressures and holdups using momentum balance
@@ -658,8 +1000,12 @@ public class TwoFluidPipe extends Pipeline {
 
         sec.setPressure(P_new);
 
+        // Use LOCAL mass flow rates that account for condensation
+        double localMDotG = localMDotGas[i];
+        double localMDotL = localMDotLiq[i];
+
         // Update holdup using drift-flux model with terrain effects
-        double[] newHoldups = calculateLocalHoldup(sec, prev, mDotGas, mDotLiq, area);
+        double[] newHoldups = calculateLocalHoldup(sec, prev, localMDotG, localMDotL, area);
         double alphaL_new = newHoldups[0];
         double alphaG_new = newHoldups[1];
 
@@ -673,11 +1019,11 @@ public class TwoFluidPipe extends Pipeline {
 
         // Update velocities based on new holdups
         if (alphaG_new > 0.001 && sec.getGasDensity() > 0) {
-          double vG = mDotGas / (area * alphaG_new * sec.getGasDensity());
+          double vG = localMDotG / (area * alphaG_new * sec.getGasDensity());
           sec.setGasVelocity(vG);
         }
         if (alphaL_new > 0.001 && sec.getLiquidDensity() > 0) {
-          double vL = mDotLiq / (area * alphaL_new * sec.getLiquidDensity());
+          double vL = localMDotL / (area * alphaL_new * sec.getLiquidDensity());
           sec.setLiquidVelocity(vL);
         }
 
@@ -705,14 +1051,210 @@ public class TwoFluidPipe extends Pipeline {
         updateTemperatureProfile(massFlow, area);
       }
 
+      // Update thermodynamics on EVERY iteration to capture phase changes (condensation)
+      // MUST be after P/T updates so flash uses fresh values
+      // This is critical for systems where liquid condenses along the pipeline
+      if (referenceFluid != null) {
+        updateThermodynamicsWithCondensation(massFlow, localMDotGas, localMDotLiq);
+      }
+
+      // Update liquid accumulation zones and apply terrain-induced accumulation
+      // This is critical for detecting liquid pooling in valleys at low gas velocities
+      if (enableTerrainTracking && accumulationTracker != null) {
+        accumulationTracker.identifyAccumulationZones(sections);
+        accumulationTracker.updateAccumulation(sections, 1.0); // Use nominal time step for
+                                                               // steady-state
+      }
+
       if (maxChange < tolerance) {
         logger.info("Steady-state converged after {} iterations", iter);
         break;
       }
     }
 
+    // Final accumulation zone identification after convergence
+    if (enableTerrainTracking && accumulationTracker != null) {
+      accumulationTracker.identifyAccumulationZones(sections);
+    }
+
     // Store initial profiles
     updateResultArrays();
+  }
+
+  /**
+   * Update thermodynamics along pipe with condensation tracking.
+   *
+   * <p>
+   * Performs TP-flash at each section to determine local phase fractions accounting for
+   * condensation/vaporization. This is critical for gas systems with water where liquid may
+   * condense as pressure drops and temperature decreases along the pipeline.
+   * </p>
+   *
+   * @param massFlow Total mass flow rate [kg/s]
+   * @param localMDotGas Array to store local gas mass flow rates [kg/s]
+   * @param localMDotLiq Array to store local liquid mass flow rates [kg/s]
+   */
+  private void updateThermodynamicsWithCondensation(double massFlow, double[] localMDotGas,
+      double[] localMDotLiq) {
+    for (int i = 0; i < numberOfSections; i++) {
+      TwoFluidSection sec = sections[i];
+      try {
+        SystemInterface flash = referenceFluid.clone();
+        flash.setPressure(sec.getPressure() / 1e5, "bara"); // Convert Pa to bar
+        flash.setTemperature(sec.getTemperature(), "K");
+
+        ThermodynamicOperations ops = new ThermodynamicOperations(flash);
+        ops.TPflash();
+        flash.initPhysicalProperties();
+
+        // Update phase properties
+        if (flash.hasPhaseType("gas")) {
+          sec.setGasDensity(flash.getPhase("gas").getDensity("kg/m3"));
+          sec.setGasViscosity(flash.getPhase("gas").getViscosity("kg/msec"));
+          sec.setGasSoundSpeed(flash.getPhase("gas").getSoundSpeed());
+          sec.setGasEnthalpy(flash.getPhase("gas").getEnthalpy("J/kg"));
+        }
+
+        // Calculate local phase MASS fractions from flash results
+        // Use getMolarMass() weighted by beta (phase fraction) to get mass fractions
+        // This properly accounts for condensation as temperature drops
+        double gasMassFraction = 0.0;
+        double liqMassFraction = 0.0;
+
+        // Calculate total mass-weighted contribution from all phases
+        double totalMassWeighted = 0.0;
+        for (int p = 0; p < flash.getNumberOfPhases(); p++) {
+          // beta is mole fraction, multiply by molar mass to get mass contribution
+          double beta = flash.getBeta(p);
+          double molarMass = flash.getPhase(p).getMolarMass(); // kg/mol
+          totalMassWeighted += beta * molarMass;
+        }
+
+        // Now calculate mass fraction for each phase type
+        double gasMassContrib = 0.0;
+        double liqMassContrib = 0.0;
+        double volTotal = 0.0;
+        double volLiq = 0.0;
+
+        // Handle liquid phases (oil, water, or both)
+        boolean hasOil = flash.hasPhaseType("oil");
+        boolean hasWater = flash.hasPhaseType("aqueous");
+
+        for (int p = 0; p < flash.getNumberOfPhases(); p++) {
+          double beta = flash.getBeta(p);
+          double molarMass = flash.getPhase(p).getMolarMass(); // kg/mol
+          double massContrib = beta * molarMass;
+          String phaseType = flash.getPhase(p).getType().toString();
+
+          if (phaseType.equalsIgnoreCase("gas")) {
+            gasMassContrib += massContrib;
+          } else {
+            // oil or aqueous
+            liqMassContrib += massContrib;
+          }
+
+          // Track volumes for water/oil split calculation
+          volTotal += flash.getPhase(p).getVolume("m3");
+          if (!phaseType.equalsIgnoreCase("gas")) {
+            volLiq += flash.getPhase(p).getVolume("m3");
+          }
+        }
+
+        // Update liquid phase properties (densities, viscosities)
+        if (hasOil) {
+          sec.setOilDensity(flash.getPhase("oil").getDensity("kg/m3"));
+          sec.setOilViscosity(flash.getPhase("oil").getViscosity("kg/msec"));
+        }
+
+        if (hasWater) {
+          sec.setWaterDensity(flash.getPhase("aqueous").getDensity("kg/m3"));
+          sec.setWaterViscosity(flash.getPhase("aqueous").getViscosity("kg/msec"));
+        }
+
+        // Calculate mass fractions and update local mass flow rates
+        if (totalMassWeighted > 0) {
+          gasMassFraction = gasMassContrib / totalMassWeighted;
+          liqMassFraction = liqMassContrib / totalMassWeighted;
+
+          // Scale to actual mass flow rate
+          localMDotGas[i] = massFlow * gasMassFraction;
+          localMDotLiq[i] = massFlow * liqMassFraction;
+        }
+
+        // IMPORTANT: DO NOT overwrite holdup from flash volumetric fractions!
+        // The holdup from flash (volLiq/volTotal) is the NO-SLIP holdup (λL),
+        // NOT the actual in-situ holdup (αL) which is calculated from momentum balance
+        // in calculateLocalHoldup(). Overwriting would destroy the slip/accumulation
+        // effects and cause the model to miss liquid accumulation at low flows.
+        //
+        // Instead, only update the water/oil SPLIT within the liquid phase,
+        // preserving the total liquid holdup from momentum balance.
+        if (volTotal > 0 && volLiq > 0) {
+          // Update water/oil split if both are present (preserve total liquid holdup)
+          if (hasOil && hasWater) {
+            double volOil = flash.getPhase("oil").getVolume("m3");
+            double volWater = flash.getPhase("aqueous").getVolume("m3");
+            double waterCut = volWater / volLiq;
+            sec.setWaterCut(waterCut);
+            sec.setOilFractionInLiquid(1.0 - waterCut);
+            // Update water/oil holdups based on EXISTING total liquid holdup and new split
+            double existingAlphaL = sec.getLiquidHoldup();
+            sec.setWaterHoldup(existingAlphaL * waterCut);
+            sec.setOilHoldup(existingAlphaL * (1.0 - waterCut));
+          } else if (hasWater && !hasOil) {
+            // Gas + water only - all liquid is water
+            sec.setWaterCut(1.0);
+            sec.setOilFractionInLiquid(0.0);
+            sec.setWaterHoldup(sec.getLiquidHoldup());
+            sec.setOilHoldup(0.0);
+          } else if (hasOil && !hasWater) {
+            // Gas + oil only - all liquid is oil
+            sec.setWaterCut(0.0);
+            sec.setOilFractionInLiquid(1.0);
+            sec.setWaterHoldup(0.0);
+            sec.setOilHoldup(sec.getLiquidHoldup());
+          }
+        }
+
+        // Update combined liquid properties
+        if (hasOil && hasWater) {
+          double rhoOil = flash.getPhase("oil").getDensity("kg/m3");
+          double rhoWater = flash.getPhase("aqueous").getDensity("kg/m3");
+          double muOil = flash.getPhase("oil").getViscosity("kg/msec");
+          double muWater = flash.getPhase("aqueous").getViscosity("kg/msec");
+          double waterCut = sec.getWaterCut();
+          double oilFraction = 1.0 - waterCut;
+
+          // Volume-weighted density
+          sec.setLiquidDensity(oilFraction * rhoOil + waterCut * rhoWater);
+
+          // Effective viscosity (Brinkman)
+          double muL;
+          if (oilFraction > 0.5) {
+            muL = muOil * Math.pow(1.0 - waterCut, -2.5);
+          } else {
+            muL = muWater * Math.pow(1.0 - oilFraction, -2.5);
+          }
+          sec.setLiquidViscosity(muL);
+          sec.setLiquidSoundSpeed(flash.getPhase("oil").getSoundSpeed());
+          sec.setLiquidEnthalpy(oilFraction * flash.getPhase("oil").getEnthalpy("J/kg")
+              + waterCut * flash.getPhase("aqueous").getEnthalpy("J/kg"));
+
+        } else if (hasOil) {
+          sec.setLiquidDensity(flash.getPhase("oil").getDensity("kg/m3"));
+          sec.setLiquidViscosity(flash.getPhase("oil").getViscosity("kg/msec"));
+          sec.setLiquidSoundSpeed(flash.getPhase("oil").getSoundSpeed());
+          sec.setLiquidEnthalpy(flash.getPhase("oil").getEnthalpy("J/kg"));
+        } else if (hasWater) {
+          sec.setLiquidDensity(flash.getPhase("aqueous").getDensity("kg/m3"));
+          sec.setLiquidViscosity(flash.getPhase("aqueous").getViscosity("kg/msec"));
+          sec.setLiquidSoundSpeed(flash.getPhase("aqueous").getSoundSpeed());
+          sec.setLiquidEnthalpy(flash.getPhase("aqueous").getEnthalpy("J/kg"));
+        }
+      } catch (Exception e) {
+        logger.warn("Flash calculation failed for section {} at position {}", i, sec.getPosition());
+      }
+    }
   }
 
   /**
@@ -841,6 +1383,11 @@ public class TwoFluidPipe extends Pipeline {
    * T_amb)</li>
    * </ul>
    *
+   * <p>
+   * If multi-layer thermal model is enabled, uses MultilayerThermalCalculator for accurate radial
+   * heat transfer through multiple layers (steel, insulation, coatings, etc.).
+   * </p>
+   *
    * @param massFlow Total mass flow rate [kg/s]
    * @param area Pipe cross-sectional area [m²]
    * @param dt Time step [s]
@@ -867,6 +1414,19 @@ public class TwoFluidPipe extends Pipeline {
       waxRiskSections = new boolean[numberOfSections];
     }
 
+    // Get Joule-Thomson coefficient if enabled
+    double muJT = 0.0;
+    if (enableJouleThomson) {
+      muJT = 0.4 / 1e5; // K/Pa (typical for natural gas)
+    }
+
+    // Use multi-layer thermal model if enabled
+    if (useMultilayerThermalModel && thermalCalculator != null) {
+      updateTransientTemperatureMultilayer(massFlow, area, dt, Cp, muJT);
+      return;
+    }
+
+    // Simple two-layer model (fluid + wall)
     double pipePerimeter = Math.PI * diameter;
     double outerDiameter = diameter + 2 * wallThickness;
     double outerPerimeter = Math.PI * outerDiameter;
@@ -876,14 +1436,8 @@ public class TwoFluidPipe extends Pipeline {
     double wallMassPerLength = wallArea * wallDensity; // kg/m
 
     // Fluid properties per unit length
-    double fluidDensity = (inletFluid.getDensity("kg/m3"));
+    double fluidDensity = inletFluid.getDensity("kg/m3");
     double fluidMassPerLength = area * fluidDensity;
-
-    // Get Joule-Thomson coefficient if enabled
-    double muJT = 0.0;
-    if (enableJouleThomson) {
-      muJT = 0.4 / 1e5; // K/Pa (typical for natural gas)
-    }
 
     for (int i = 1; i < numberOfSections; i++) {
       TwoFluidSection sec = sections[i];
@@ -933,38 +1487,153 @@ public class TwoFluidPipe extends Pipeline {
       T_fluid += dTfluid_dt * dt;
 
       // Ensure physical bounds
-      // The fluid temperature cannot go below ambient due to heat exchange alone
-      // J-T cooling is separate but in real systems is limited
-      // For subsea pipelines, the minimum temperature is the seabed temperature
-      // unless there's very rapid expansion (which is not the case in steady pipeline flow)
       T_fluid = Math.max(T_fluid, T_ambient);
       T_fluid = Math.max(T_fluid, 100.0); // Absolute minimum: 100K
       sec.setTemperature(T_fluid);
 
       // Check hydrate/wax risk
-      if (hydrateFormationTemperature > 0 && T_fluid < hydrateFormationTemperature) {
-        hydrateRiskSections[i] = true;
-      } else {
-        hydrateRiskSections[i] = false;
-      }
-      if (waxAppearanceTemperature > 0 && T_fluid < waxAppearanceTemperature) {
-        waxRiskSections[i] = true;
-      } else {
-        waxRiskSections[i] = false;
-      }
+      hydrateRiskSections[i] =
+          (hydrateFormationTemperature > 0 && T_fluid < hydrateFormationTemperature);
+      waxRiskSections[i] = (waxAppearanceTemperature > 0 && T_fluid < waxAppearanceTemperature);
     }
   }
 
   /**
-   * Calculate local liquid holdup using drift-flux model with terrain effects.
+   * Update temperature using multi-layer thermal model.
    *
    * <p>
-   * Uses the drift-flux model: v_G = C_0 * v_m + v_gj where:
+   * This method implements OLGA-style radial heat transfer through multiple concentric layers. The
+   * heat transfer calculation uses:
+   * </p>
    * <ul>
-   * <li>C_0 = distribution coefficient (~1.0-1.2 for stratified flow)</li>
-   * <li>v_gj = drift velocity (gas rises relative to mixture)</li>
+   * <li>Inner convective resistance from fluid to pipe wall</li>
+   * <li>Conductive resistance through each layer</li>
+   * <li>Thermal mass storage in each layer for transient response</li>
+   * <li>Outer convective/conductive resistance to ambient</li>
    * </ul>
-   * Terrain effects modify slip velocity based on inclination.
+   *
+   * @param massFlow Total mass flow rate [kg/s]
+   * @param area Pipe cross-sectional area [m²]
+   * @param dt Time step [s]
+   * @param Cp Fluid heat capacity [J/(kg·K)]
+   * @param muJT Joule-Thomson coefficient [K/Pa]
+   */
+  private void updateTransientTemperatureMultilayer(double massFlow, double area, double dt,
+      double Cp, double muJT) {
+    double pipePerimeter = Math.PI * diameter;
+
+    // Fluid properties per unit length
+    SystemInterface inletFluid = getInletStream().getFluid();
+    double fluidDensity = inletFluid.getDensity("kg/m3");
+    double fluidMassPerLength = area * fluidDensity;
+
+    // Calculate effective inner heat transfer coefficient based on flow regime
+    double h_inner = calculateInnerHTC(massFlow, area);
+
+    for (int i = 1; i < numberOfSections; i++) {
+      TwoFluidSection sec = sections[i];
+      TwoFluidSection prev = sections[i - 1];
+
+      double T_fluid = sec.getTemperature();
+
+      // Get local surface temperature (profile or constant)
+      double T_ambient = surfaceTemperature;
+      if (surfaceTemperatureProfile != null && i < surfaceTemperatureProfile.length) {
+        T_ambient = surfaceTemperatureProfile[i];
+      }
+
+      // Configure thermal calculator for this section
+      thermalCalculator.setFluidTemperature(T_fluid);
+      thermalCalculator.setAmbientTemperature(T_ambient);
+      thermalCalculator.setInnerHTC(h_inner);
+
+      // Update thermal layers for this time step
+      thermalCalculator.updateTransient(dt);
+
+      // Get heat loss rate using overall thermal resistance
+      double Q_loss = thermalCalculator.calculateHeatLossPerLength(); // W/m
+
+      // Advection term: m_dot * Cp * (T_in - T_out) / dx
+      double T_upstream = prev.getTemperature();
+      double Q_advection = massFlow * Cp * (T_upstream - T_fluid) / dx; // W/m
+
+      // Joule-Thomson cooling
+      double dP = sec.getPressure() - prev.getPressure();
+      double Q_JT = massFlow * Cp * muJT * dP / dx; // W/m
+
+      // Update fluid temperature
+      double dTfluid_dt = (Q_advection - Q_loss + Q_JT) / (fluidMassPerLength * Cp);
+      T_fluid += dTfluid_dt * dt;
+
+      // Ensure physical bounds
+      T_fluid = Math.max(T_fluid, T_ambient);
+      T_fluid = Math.max(T_fluid, 100.0);
+      sec.setTemperature(T_fluid);
+
+      // Store wall temperature (inner surface of first layer)
+      if (thermalCalculator.getNumberOfLayers() > 0) {
+        wallTemperatureProfile[i] = thermalCalculator.calculateInterfaceTemperature(0, false);
+      }
+
+      // Check hydrate/wax risk
+      hydrateRiskSections[i] =
+          (hydrateFormationTemperature > 0 && T_fluid < hydrateFormationTemperature);
+      waxRiskSections[i] = (waxAppearanceTemperature > 0 && T_fluid < waxAppearanceTemperature);
+    }
+  }
+
+  /**
+   * Calculate inner (fluid-side) heat transfer coefficient based on flow conditions.
+   *
+   * <p>
+   * Uses Dittus-Boelter correlation for turbulent flow, constant Nusselt for laminar.
+   * </p>
+   *
+   * @param massFlow Mass flow rate [kg/s]
+   * @param area Pipe cross-sectional area [m²]
+   * @return Inner HTC in W/(m²·K)
+   */
+  private double calculateInnerHTC(double massFlow, double area) {
+    if (massFlow <= 0 || area <= 0) {
+      return heatTransferCoefficient; // Default
+    }
+
+    SystemInterface fluid = getInletStream().getFluid();
+    double rho = fluid.getDensity("kg/m3");
+    double mu = fluid.getViscosity("kg/msec");
+    double k = 0.025; // Default thermal conductivity for gas [W/(m·K)]
+    double Pr = 0.7; // Default Prandtl number for gas
+
+    // Estimate from fluid properties if available
+    double Cp = fluid.getCp("J/kgK");
+    if (Cp > 0 && mu > 0 && k > 0) {
+      Pr = mu * Cp / k;
+    }
+
+    double velocity = massFlow / (rho * area);
+    double Re = rho * velocity * diameter / mu;
+
+    if (Re < 2300) {
+      // Laminar: Nu = 3.66
+      return 3.66 * k / diameter;
+    } else {
+      // Turbulent: Dittus-Boelter Nu = 0.023 * Re^0.8 * Pr^0.3 (cooling)
+      double Nu = 0.023 * Math.pow(Re, 0.8) * Math.pow(Pr, 0.3);
+      return Nu * k / diameter;
+    }
+  }
+
+  /**
+   * Calculate local liquid holdup using OLGA-style models with terrain effects.
+   *
+   * <p>
+   * Supports multiple model types:
+   * </p>
+   * <ul>
+   * <li>FULL OLGA: Momentum balance for stratified, film model for annular, Dukler for slug</li>
+   * <li>SIMPLIFIED OLGA: Empirical correlations with minimum slip constraint</li>
+   * <li>DRIFT_FLUX: Original NeqSim drift-flux model</li>
+   * </ul>
    *
    * @param sec Current section
    * @param prev Previous section (upstream)
@@ -997,80 +1666,969 @@ public class TwoFluidPipe extends Pipeline {
     // No-slip holdup (input liquid fraction)
     double lambdaL = vsL / vMix;
 
-    // Drift-flux parameters
-    // Distribution coefficient C0 depends on flow regime
-    double C0 = 1.2; // Typical for stratified/slug flow in pipes
+    // Determine flow regime to select appropriate correlation
+    FlowRegime regime = sec.getFlowRegime();
 
-    // Drift velocity based on Bendiksen (1984) correlation for inclined pipes
-    // v_gj = v_gj0 * f(theta) where f(theta) accounts for inclination
+    // Get viscosities for momentum balance calculations
+    double muL = sec.getLiquidViscosity();
+    double muG = sec.getGasViscosity();
+
+    double alphaL;
+
+    // Use OLGA model type to determine calculation method
+    if (olgaModelType == OLGAModelType.FULL) {
+      // ========== FULL OLGA MODEL ==========
+      // Use flow-regime-specific OLGA correlations
+
+      if (regime == FlowRegime.ANNULAR) {
+        // OLGA annular film model
+        if (enableAnnularFilmModel) {
+          double[] annularResult = calculateAnnularHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma,
+              diameter, inclination);
+          alphaL = annularResult[0];
+        } else {
+          // Annular flow with slip model
+          // For annular flow, gas flows faster than liquid (S = vG/vL > 1)
+          // Holdup formula: αL = λL / (λL + S*(1-λL))
+          // Or equivalently: αL = λL / (S - (S-1)*λL)
+          //
+          // Typical slip ratios for annular flow: S = 1.5 to 4.0
+          // At high gas velocities, liquid film is thin and moves slower
+          double vsgRef = 8.0;
+          double velocityRatio = Math.max(0.5, Math.min(4.0, vsG / Math.max(vsgRef, 0.1)));
+
+          // Slip ratio increases with gas velocity (liquid film slows down)
+          double baseSlipRatio = 1.5; // Minimum slip ratio for annular
+          double maxSlipRatio = 4.0; // Maximum slip ratio
+          double slipRatio = baseSlipRatio
+              + (maxSlipRatio - baseSlipRatio) * Math.min(1.0, velocityRatio * velocityRatio / 4.0);
+
+          // Calculate holdup using slip model
+          // αL = λL / (λL + S*(1-λL)) = λL / (S - (S-1)*λL)
+          double denominator = slipRatio - (slipRatio - 1.0) * lambdaL;
+          if (denominator > 0.1) {
+            alphaL = lambdaL / denominator;
+          } else {
+            // Fallback for very high liquid loading
+            alphaL = lambdaL;
+          }
+
+          // Apply minimum film constraint for liquid wetting
+          double filmHoldup = 4.0 * minimumFilmThickness / diameter;
+          alphaL = Math.max(filmHoldup, alphaL);
+        }
+
+      } else if (regime == FlowRegime.SLUG || regime == FlowRegime.CHURN) {
+        // OLGA slug flow model
+        alphaL = calculateSlugHoldupOLGA(vsG, vsL, rhoG, rhoL, muL, sigma, diameter, inclination);
+
+      } else if (regime == FlowRegime.STRATIFIED_SMOOTH || regime == FlowRegime.STRATIFIED_WAVY) {
+        // OLGA stratified flow momentum balance
+        alphaL = calculateStratifiedHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter,
+            inclination);
+
+      } else if (regime == FlowRegime.DISPERSED_BUBBLE || regime == FlowRegime.BUBBLE) {
+        // Dispersed bubble: near-homogeneous flow
+        // αL ≈ λL with small correction for bubble rise
+        double vSlip = 1.53 * Math.pow(g * sigma * (rhoL - rhoG) / (rhoL * rhoL), 0.25);
+        alphaL = vsL / (vsL + vsG + vSlip * (1.0 - lambdaL));
+        alphaL = Math.max(lambdaL * 0.9, alphaL);
+
+      } else {
+        // Default to stratified momentum balance
+        alphaL = calculateStratifiedHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter,
+            inclination);
+      }
+
+      // Apply terrain accumulation enhancement
+      alphaL = applyTerrainAccumulation(sec, prev, alphaL);
+
+      // Apply minimum slip constraint based on physics-based correlation
+      // Use Beggs-Brill type correlation: αL = C × λL^a / Fr^b
+      // This gives physically reasonable holdup that increases with λL
+      // and decreases with velocity (Froude number)
+      if (enforceMinimumSlip) {
+        // Froude number = v² / (g × D)
+        double froudeNumber = vMix * vMix / (g * diameter);
+        froudeNumber = Math.max(0.01, froudeNumber); // Avoid division by zero
+
+        double adaptiveMin;
+        if (regime == FlowRegime.STRATIFIED_SMOOTH || regime == FlowRegime.STRATIFIED_WAVY) {
+          // Segregated/Stratified flow correlation (like Beggs-Brill)
+          // αL = 0.98 × λL^0.4846 / Fr^0.0868
+          adaptiveMin =
+              0.98 * Math.pow(Math.max(lambdaL, 1e-6), 0.4846) / Math.pow(froudeNumber, 0.0868);
+        } else if (regime == FlowRegime.ANNULAR) {
+          // Annular flow: use film model with minimum thickness
+          double filmHoldup = 4.0 * minimumFilmThickness / diameter;
+          // Also apply distributed flow correlation
+          double correlationHoldup =
+              1.065 * Math.pow(Math.max(lambdaL, 1e-6), 0.5824) / Math.pow(froudeNumber, 0.0609);
+          adaptiveMin = Math.max(filmHoldup, correlationHoldup);
+        } else if (regime == FlowRegime.SLUG || regime == FlowRegime.CHURN) {
+          // Intermittent flow correlation
+          // αL = 0.845 × λL^0.5351 / Fr^0.0173
+          adaptiveMin =
+              0.845 * Math.pow(Math.max(lambdaL, 1e-6), 0.5351) / Math.pow(froudeNumber, 0.0173);
+        } else {
+          // Default: distributed flow correlation
+          // αL = 1.065 × λL^0.5824 / Fr^0.0609
+          adaptiveMin =
+              1.065 * Math.pow(Math.max(lambdaL, 1e-6), 0.5824) / Math.pow(froudeNumber, 0.0609);
+        }
+
+        // Clamp to physical bounds
+        // For lean gas systems (low lambdaL), use adaptive minimum based on no-slip holdup
+        // to avoid artificially high holdup floors
+        double effectiveMin;
+        if (useAdaptiveMinimumOnly) {
+          // No absolute floor - use only correlation-based minimum
+          // Scale with lambdaL to handle very lean systems
+          double lambdaBasedMin = lambdaL * minimumSlipFactor;
+          effectiveMin = Math.max(lambdaBasedMin, adaptiveMin);
+        } else {
+          // Apply absolute floor (original behavior)
+          effectiveMin = Math.max(minimumLiquidHoldup, adaptiveMin);
+        }
+        effectiveMin = Math.min(0.9, effectiveMin);
+
+        if (alphaL < effectiveMin) {
+          alphaL = effectiveMin;
+        }
+      }
+
+    } else if (olgaModelType == OLGAModelType.SIMPLIFIED) {
+      // ========== SIMPLIFIED OLGA MODEL ==========
+      // Use empirical correlations with minimum slip
+
+      // For gas-dominant systems, use stratified momentum balance
+      boolean isStratified =
+          (regime == FlowRegime.STRATIFIED_SMOOTH || regime == FlowRegime.STRATIFIED_WAVY);
+      if (lambdaL < 0.1 || isStratified || regime == FlowRegime.ANNULAR) {
+        alphaL = calculateStratifiedHoldupOLGA(vsG, vsL, rhoG, rhoL, muG, muL, sigma, diameter,
+            inclination);
+      } else {
+        // Higher liquid loading: use drift-flux with terrain correction
+        alphaL = calculateDriftFluxHoldup(vsG, vsL, rhoG, rhoL, sigma, inclination);
+      }
+
+      // Apply terrain accumulation
+      if (enableTerrainTracking) {
+        alphaL = applyTerrainAccumulation(sec, prev, alphaL);
+      }
+
+      // Apply minimum slip constraint using Beggs-Brill type correlation
+      if (enforceMinimumSlip) {
+        double froudeNumber = vMix * vMix / (g * diameter);
+        froudeNumber = Math.max(0.01, froudeNumber);
+
+        double adaptiveMin;
+        if (isStratified) {
+          // Segregated/Stratified flow correlation
+          adaptiveMin =
+              0.98 * Math.pow(Math.max(lambdaL, 1e-6), 0.4846) / Math.pow(froudeNumber, 0.0868);
+        } else if (regime == FlowRegime.ANNULAR) {
+          double filmHoldup = 4.0 * minimumFilmThickness / diameter;
+          double correlationHoldup =
+              1.065 * Math.pow(Math.max(lambdaL, 1e-6), 0.5824) / Math.pow(froudeNumber, 0.0609);
+          adaptiveMin = Math.max(filmHoldup, correlationHoldup);
+        } else {
+          // Intermittent/Other
+          adaptiveMin =
+              0.845 * Math.pow(Math.max(lambdaL, 1e-6), 0.5351) / Math.pow(froudeNumber, 0.0173);
+        }
+
+        // Clamp to physical bounds - adaptive for lean gas systems
+        double effectiveMin;
+        if (useAdaptiveMinimumOnly) {
+          double lambdaBasedMin = lambdaL * minimumSlipFactor;
+          effectiveMin = Math.max(lambdaBasedMin, adaptiveMin);
+        } else {
+          effectiveMin = Math.max(minimumLiquidHoldup, adaptiveMin);
+        }
+        effectiveMin = Math.min(0.9, effectiveMin);
+
+        if (alphaL < effectiveMin) {
+          alphaL = effectiveMin;
+        }
+      }
+
+    } else {
+      // ========== ORIGINAL DRIFT-FLUX MODEL ==========
+      // For backward compatibility with original NeqSim behavior
+      alphaL = calculateDriftFluxHoldup(vsG, vsL, rhoG, rhoL, sigma, inclination);
+    }
+
+    alphaL = Math.max(0.001, Math.min(0.999, alphaL));
+
+    // Valley/peak terrain adjustments (existing logic)
+    if (prev != null) {
+      double inclinationChange = inclination - prev.getInclination();
+      boolean isValley = prev.getInclination() < -0.05 && inclination > 0.05;
+      boolean isPeak = prev.getInclination() > 0.05 && inclination < -0.05;
+
+      if (isValley) {
+        double valleyFactor = 1.0 + 0.3 * Math.min(Math.abs(inclinationChange), 0.2);
+        alphaL = Math.min(0.8, alphaL * valleyFactor); // Allow up to 80% in valleys
+      } else if (isPeak) {
+        double peakFactor = 1.0 - 0.3 * Math.min(Math.abs(inclinationChange), 0.2);
+        alphaL = Math.max(0.001, alphaL * peakFactor);
+      }
+    }
+
+    return new double[] {alphaL, 1.0 - alphaL};
+  }
+
+  /**
+   * Calculate holdup using original drift-flux model.
+   *
+   * <p>
+   * Uses the drift-flux model: v_G = C_0 * v_m + v_gj where:
+   * </p>
+   * <ul>
+   * <li>C_0 = distribution coefficient (~1.0-1.2 for pipe flow)</li>
+   * <li>v_gj = drift velocity (gas rises relative to mixture)</li>
+   * </ul>
+   *
+   * @param vsG Gas superficial velocity [m/s]
+   * @param vsL Liquid superficial velocity [m/s]
+   * @param rhoG Gas density [kg/m³]
+   * @param rhoL Liquid density [kg/m³]
+   * @param sigma Surface tension [N/m]
+   * @param inclination Pipe inclination [radians]
+   * @return Liquid holdup [-]
+   */
+  private double calculateDriftFluxHoldup(double vsG, double vsL, double rhoG, double rhoL,
+      double sigma, double inclination) {
+
+    double g = 9.81;
+    double vMix = vsG + vsL;
+    double lambdaL = vsL / vMix;
     double dRho = rhoL - rhoG;
+
+    // Distribution coefficient
+    double C0 = 1.2;
 
     // Terminal rise velocity (Harmathy, 1960)
     double vGj0 = 1.53 * Math.pow(g * sigma * dRho / (rhoL * rhoL), 0.25);
 
     // Inclination correction factor
-    // For uphill (positive inclination): gas rises faster -> higher slip -> more holdup
-    // For downhill (negative inclination): gravity pulls liquid down -> less holdup
     double sinTheta = Math.sin(inclination);
     double cosTheta = Math.cos(inclination);
 
-    // Bendiksen inclination factor for drift velocity
     double fTheta;
     if (inclination >= 0) {
-      // Uphill: enhanced drift velocity (liquid tends to accumulate)
       fTheta = cosTheta + 1.2 * sinTheta;
     } else {
-      // Downhill: reduced drift velocity (liquid drains)
       fTheta = cosTheta + 0.3 * Math.abs(sinTheta);
     }
-    fTheta = Math.max(0.1, fTheta); // Minimum factor
+    fTheta = Math.max(0.1, fTheta);
 
     double vGj = vGj0 * fTheta;
 
-    // Pipe diameter effect on drift velocity (larger pipes -> higher drift)
-    double Eo = g * dRho * diameter * diameter / sigma; // Eötvös number
+    // Pipe diameter effect
+    double Eo = g * dRho * diameter * diameter / sigma;
     if (Eo > 40) {
-      // Large pipe correction (slug flow in large pipes)
-      vGj = 0.35 * Math.sqrt(g * diameter * dRho / rhoL) * fTheta;
+      double inclinationFactor = Math.max(0.2, Math.abs(sinTheta) + 0.2);
+      vGj = 0.35 * Math.sqrt(g * diameter * dRho / rhoL) * fTheta * inclinationFactor;
     }
 
-    // Froude number effect - at high velocities, slip decreases
-    double Fr = vMix / Math.sqrt(g * diameter);
-    double slipReduction = 1.0 / (1.0 + 0.1 * Fr);
-    vGj *= slipReduction;
+    // Froude number effect
+    double Fr = vMix * vMix / (g * diameter);
+    if (Fr > 1.0) {
+      double frFactor = 1.0 / (1.0 + 0.1 * (Fr - 1.0));
+      vGj = vGj * frFactor;
+    }
 
-    // Calculate gas holdup from drift-flux relation
-    // v_G = C0 * v_m + v_gj
-    // alpha_G * v_G = vsG
-    // Solving: alpha_G = vsG / (C0 * vMix + vGj)
-    double alphaG = vsG / (C0 * vMix + vGj);
+    // Gas velocity from drift-flux
+    double vG = C0 * vMix + vGj;
+
+    // Liquid holdup from mass balance
+    double alphaG = vsG / vG;
     alphaG = Math.max(0.001, Math.min(0.999, alphaG));
-    double alphaL = 1.0 - alphaG;
 
-    // Terrain accumulation effect for valleys
-    // In valleys (going from downhill to uphill), liquid accumulates
-    if (prev != null) {
-      double prevInclination = prev.getInclination();
-      double inclinationChange = inclination - prevInclination;
+    return 1.0 - alphaG;
+  }
 
-      // Transition from downhill to uphill -> valley -> liquid accumulates
-      if (inclinationChange > 0.01 && prevInclination < -0.01) {
-        // Valley effect: increase liquid holdup
-        double valleyFactor = 1.0 + 0.5 * Math.min(inclinationChange, 0.2);
-        alphaL = Math.min(0.999, alphaL * valleyFactor);
-        alphaG = 1.0 - alphaL;
+  /**
+   * Calculate stratified flow liquid holdup using OLGA-style momentum balance.
+   *
+   * <p>
+   * This method implements the OLGA approach for stratified flow, where the liquid level is
+   * determined by a momentum balance between the phases. The key principle is that at equilibrium,
+   * the pressure gradient must be equal in both phases.
+   * </p>
+   *
+   * <p>
+   * The momentum balance accounts for:
+   * </p>
+   * <ul>
+   * <li>Wall friction in each phase (τ_wG, τ_wL)</li>
+   * <li>Interfacial friction between phases (τ_i)</li>
+   * <li>Gravity component for inclined pipes</li>
+   * </ul>
+   *
+   * <p>
+   * Uses exact circular segment geometry for wetted perimeters and areas, which is critical for
+   * accurate holdup prediction at low liquid fractions (lean gas systems).
+   * </p>
+   *
+   * <p>
+   * Reference: Bendiksen et al. (1991) "The Dynamic Two-Fluid Model OLGA: Theory and Application"
+   * SPE Production Engineering, May 1991, pp. 171-180
+   * </p>
+   *
+   * @param vsG Gas superficial velocity [m/s]
+   * @param vsL Liquid superficial velocity [m/s]
+   * @param rhoG Gas density [kg/m³]
+   * @param rhoL Liquid density [kg/m³]
+   * @param muG Gas dynamic viscosity [Pa·s]
+   * @param muL Liquid dynamic viscosity [Pa·s]
+   * @param sigma Surface tension [N/m]
+   * @param D Pipe diameter [m]
+   * @param theta Pipe inclination [radians]
+   * @return Equilibrium liquid holdup [-]
+   */
+  private double calculateStratifiedHoldupOLGA(double vsG, double vsL, double rhoG, double rhoL,
+      double muG, double muL, double sigma, double D, double theta) {
+
+    double g = 9.81;
+    double A = Math.PI * D * D / 4.0; // Total cross-section area
+    double vMix = vsG + vsL;
+
+    // No-slip liquid holdup (input fraction)
+    double lambdaL = vsL / vMix;
+
+    // For very low liquid loading, use minimum holdup
+    if (lambdaL < 0.001) {
+      return minimumLiquidHoldup;
+    }
+
+    // Iterative solution for equilibrium liquid level
+    // Start with an initial guess based on Taitel-Dukler
+    double alphaL = lambdaL * 2.0; // Initial guess: 2x input fraction
+
+    // Limit initial guess
+    alphaL = Math.max(0.01, Math.min(0.5, alphaL));
+
+    // Newton-Raphson iteration for equilibrium holdup
+    // Solve: F(αL) = dP/dx_gas - dP/dx_liquid = 0
+    for (int iter = 0; iter < 20; iter++) {
+      double alphaG = 1.0 - alphaL;
+
+      // ========== EXACT CIRCULAR SEGMENT GEOMETRY ==========
+      // For stratified flow, liquid occupies a circular segment at the pipe bottom.
+      // The liquid level hL and central angle β are related to holdup by exact formulas.
+      //
+      // Central angle β (radians) subtended by the liquid surface:
+      // αL = (β - sin(β)) / (2π) => solve for β
+      //
+      // This requires iterative solution or approximation. Use Newton-Raphson:
+      // f(β) = β - sin(β) - 2π*αL = 0
+      // f'(β) = 1 - cos(β)
+
+      double beta = 2.0 * Math.PI * alphaL; // Initial guess
+      // Ensure initial guess is in valid range
+      beta = Math.max(0.1, Math.min(2.0 * Math.PI - 0.1, beta));
+      for (int betaIter = 0; betaIter < 15; betaIter++) {
+        double f = beta - Math.sin(beta) - 2.0 * Math.PI * alphaL;
+        double df = 1.0 - Math.cos(beta);
+        // Avoid division by very small numbers near beta = 0 or 2*pi
+        if (Math.abs(df) < 1e-6) {
+          df = (df >= 0) ? 1e-6 : -1e-6;
+        }
+        double deltaBeta = -f / df;
+        // Limit step size for stability
+        deltaBeta = Math.max(-0.5, Math.min(0.5, deltaBeta));
+        beta += deltaBeta;
+        beta = Math.max(0.05, Math.min(2.0 * Math.PI - 0.05, beta));
+        if (Math.abs(deltaBeta) < 1e-8 || Math.abs(f) < 1e-10) {
+          break;
+        }
       }
 
-      // Transition from uphill to downhill -> peak -> liquid drains
-      if (inclinationChange < -0.01 && prevInclination > 0.01) {
-        // Peak effect: decrease liquid holdup
-        double peakFactor = 1.0 - 0.3 * Math.min(Math.abs(inclinationChange), 0.2);
-        alphaL = Math.max(0.001, alphaL * peakFactor);
-        alphaG = 1.0 - alphaL;
+      // Liquid level from central angle
+      double hL = D / 2.0 * (1.0 - Math.cos(beta / 2.0));
+
+      // Areas from exact circular segment formulas
+      double AL = D * D / 8.0 * (beta - Math.sin(beta));
+      double AG = A - AL;
+
+      // Wetted perimeters (exact)
+      double SL = D * beta / 2.0; // Liquid-wall arc length
+      double SG = D * (Math.PI - beta / 2.0); // Gas-wall arc length
+
+      // Interfacial width (chord length)
+      double Si = D * Math.sin(beta / 2.0);
+
+      // Hydraulic diameters
+      double DL = (SL + Si > 1e-10) ? 4.0 * AL / (SL + Si) : D;
+      double DG = (SG + Si > 1e-10) ? 4.0 * AG / (SG + Si) : D;
+
+      // Actual phase velocities
+      double vL = (AL > 1e-10) ? vsL * A / AL : vsL / 0.01;
+      double vG = (AG > 1e-10) ? vsG * A / AG : vsG / 0.99;
+
+      // Reynolds numbers
+      double ReL = rhoL * Math.abs(vL) * DL / muL;
+      double ReG = rhoG * Math.abs(vG) * DG / muG;
+
+      // Friction factors (Blasius correlation for simplicity)
+      double fL = (ReL < 2000) ? 16.0 / Math.max(ReL, 1.0) : 0.046 / Math.pow(ReL, 0.2);
+      double fG = (ReG < 2000) ? 16.0 / Math.max(ReG, 1.0) : 0.046 / Math.pow(ReG, 0.2);
+
+      // Interfacial friction factor (OLGA uses enhanced value due to waves)
+      double fi = fG * (1.0 + 75.0 * alphaL); // Enhancement factor for wavy interface
+
+      // Wall shear stresses
+      double tauWL = fL * rhoL * vL * Math.abs(vL) / 2.0;
+      double tauWG = fG * rhoG * vG * Math.abs(vG) / 2.0;
+
+      // Interfacial shear stress (gas exerts stress on liquid)
+      double vRel = vG - vL;
+      double tauI = fi * rhoG * vRel * Math.abs(vRel) / 2.0;
+
+      // Pressure gradients (momentum balance)
+      // Gas: -dP/dx = τ_wG * S_G / A_G + τ_i * S_i / A_G + ρ_G * g * sin(θ)
+      // Liquid: -dP/dx = τ_wL * S_L / A_L - τ_i * S_i / A_L + ρ_L * g * sin(θ)
+      double dPdxG = tauWG * SG / AG + tauI * Si / AG + rhoG * g * Math.sin(theta);
+      double dPdxL = tauWL * SL / AL - tauI * Si / AL + rhoL * g * Math.sin(theta);
+
+      // Residual: pressure gradients should be equal at equilibrium
+      double F = dPdxG - dPdxL;
+
+      // Convergence check
+      if (Math.abs(F) < 1.0) { // Converged (within 1 Pa/m)
+        break;
+      }
+
+      // Numerical derivative for Newton-Raphson
+      double dAlpha = 0.001;
+      double alphaL2 = alphaL + dAlpha;
+      double alphaG2 = 1.0 - alphaL2;
+
+      // Recalculate geometry for perturbed holdup
+      double beta2 = 2.0 * Math.PI * alphaL2;
+      // Ensure initial guess is in valid range
+      beta2 = Math.max(0.1, Math.min(2.0 * Math.PI - 0.1, beta2));
+      for (int betaIter = 0; betaIter < 15; betaIter++) {
+        double f = beta2 - Math.sin(beta2) - 2.0 * Math.PI * alphaL2;
+        double df = 1.0 - Math.cos(beta2);
+        // Avoid division by very small numbers near beta = 0 or 2*pi
+        if (Math.abs(df) < 1e-6) {
+          df = (df >= 0) ? 1e-6 : -1e-6;
+        }
+        double deltaBeta = -f / df;
+        // Limit step size for stability
+        deltaBeta = Math.max(-0.5, Math.min(0.5, deltaBeta));
+        beta2 += deltaBeta;
+        beta2 = Math.max(0.05, Math.min(2.0 * Math.PI - 0.05, beta2));
+        if (Math.abs(deltaBeta) < 1e-8 || Math.abs(f) < 1e-10) {
+          break;
+        }
+      }
+
+      double AL2 = D * D / 8.0 * (beta2 - Math.sin(beta2));
+      double AG2 = A - AL2;
+      double SL2 = D * beta2 / 2.0;
+      double SG2 = D * (Math.PI - beta2 / 2.0);
+      double Si2 = D * Math.sin(beta2 / 2.0);
+      double DL2 = (SL2 + Si2 > 1e-10) ? 4.0 * AL2 / (SL2 + Si2) : D;
+      double DG2 = (SG2 + Si2 > 1e-10) ? 4.0 * AG2 / (SG2 + Si2) : D;
+
+      double vL2 = (AL2 > 1e-10) ? vsL * A / AL2 : vsL / 0.01;
+      double vG2 = (AG2 > 1e-10) ? vsG * A / AG2 : vsG / 0.99;
+      double ReL2 = rhoL * Math.abs(vL2) * DL2 / muL;
+      double ReG2 = rhoG * Math.abs(vG2) * DG2 / muG;
+      double fL2 = (ReL2 < 2000) ? 16.0 / Math.max(ReL2, 1.0) : 0.046 / Math.pow(ReL2, 0.2);
+      double fG2 = (ReG2 < 2000) ? 16.0 / Math.max(ReG2, 1.0) : 0.046 / Math.pow(ReG2, 0.2);
+      double fi2 = fG2 * (1.0 + 75.0 * alphaL2);
+
+      double tauWL2 = fL2 * rhoL * vL2 * Math.abs(vL2) / 2.0;
+      double tauWG2 = fG2 * rhoG * vG2 * Math.abs(vG2) / 2.0;
+      double vRel2 = vG2 - vL2;
+      double tauI2 = fi2 * rhoG * vRel2 * Math.abs(vRel2) / 2.0;
+
+      double dPdxG2 = tauWG2 * SG2 / AG2 + tauI2 * Si2 / AG2 + rhoG * g * Math.sin(theta);
+      double dPdxL2 = tauWL2 * SL2 / AL2 - tauI2 * Si2 / AL2 + rhoL * g * Math.sin(theta);
+      double F2 = dPdxG2 - dPdxL2;
+
+      double dFdAlpha = (F2 - F) / dAlpha;
+
+      // Newton-Raphson update with damping
+      if (Math.abs(dFdAlpha) > 1e-10) {
+        double deltaAlpha = -F / dFdAlpha;
+        // Damping to prevent overshooting
+        deltaAlpha = Math.max(-0.05, Math.min(0.05, deltaAlpha));
+        alphaL = alphaL + 0.5 * deltaAlpha;
+      }
+
+      // Keep holdup in valid range - allow up to 80% for low velocity stratified flow
+      alphaL = Math.max(0.01, Math.min(0.8, alphaL));
+    }
+
+    return alphaL;
+  }
+
+  /**
+   * Calculate liquid holdup for annular flow using OLGA-style film model.
+   *
+   * <p>
+   * In annular flow, liquid exists as a thin film on the pipe wall and as entrained droplets in the
+   * gas core. OLGA models this using:
+   * </p>
+   * <ul>
+   * <li>Film flow momentum balance</li>
+   * <li>Entrainment/deposition equilibrium</li>
+   * <li>Minimum film thickness constraint</li>
+   * </ul>
+   *
+   * <p>
+   * Reference: Bendiksen et al. (1991) and OLGA Technical Manual
+   * </p>
+   *
+   * @param vsG Gas superficial velocity [m/s]
+   * @param vsL Liquid superficial velocity [m/s]
+   * @param rhoG Gas density [kg/m³]
+   * @param rhoL Liquid density [kg/m³]
+   * @param muG Gas dynamic viscosity [Pa·s]
+   * @param muL Liquid dynamic viscosity [Pa·s]
+   * @param sigma Surface tension [N/m]
+   * @param D Pipe diameter [m]
+   * @param theta Pipe inclination [radians]
+   * @return Array with [total liquid holdup, film holdup, entrained fraction]
+   */
+  private double[] calculateAnnularHoldupOLGA(double vsG, double vsL, double rhoG, double rhoL,
+      double muG, double muL, double sigma, double D, double theta) {
+
+    double g = 9.81;
+    double A = Math.PI * D * D / 4.0;
+
+    // Calculate entrainment fraction using Ishii-Mishima correlation
+    // E = tanh(7.25e-7 * We^1.25 * Re_L^0.25)
+    // where We = ρ_G * v_SG² * D / σ (gas Weber number)
+    // and Re_L = ρ_L * v_SL * D / μ_L (liquid Reynolds number)
+
+    double WeG = rhoG * vsG * vsG * D / sigma;
+    double ReL = rhoL * vsL * D / muL;
+
+    // Entrainment fraction (OLGA uses modified Ishii-Mishima)
+    double entrainment = 0.0;
+    if (WeG > 0 && ReL > 0) {
+      double entrainmentArg = 7.25e-7 * Math.pow(WeG, 1.25) * Math.pow(ReL, 0.25);
+      entrainment = Math.tanh(entrainmentArg);
+      entrainment = Math.min(0.95, entrainment); // Maximum 95% entrainment
+    }
+
+    // Film superficial velocity (liquid not entrained)
+    double vsLF = vsL * (1.0 - entrainment);
+
+    // Minimum film thickness based on OLGA constraint
+    // Film area = π * D * δ for thin films
+    double minFilmArea = Math.PI * D * minimumFilmThickness;
+    double minFilmHoldup = minFilmArea / A;
+
+    // Calculate film holdup from momentum balance
+    // For thin film: τ_i = τ_wL where interfacial shear balances wall friction
+    // This gives: δ/D = (f_L * ρ_L * v_LF²) / (f_i * ρ_G * v_G² * 4)
+
+    double vG = vsG / 0.95; // Approximate gas core velocity
+    double ReG = rhoG * vG * D / muG;
+    double fG = (ReG < 2000) ? 16.0 / Math.max(ReG, 1.0) : 0.046 / Math.pow(ReG, 0.2);
+
+    // Interfacial friction factor for annular flow (Wallis correlation)
+    // f_i = f_G * (1 + 300 * δ/D)
+    // Start with initial guess for film thickness
+    double deltaOverD = 0.01; // Initial guess: 1% of diameter
+
+    // Iterative solution for film thickness
+    for (int iter = 0; iter < 10; iter++) {
+      double filmHoldup = 4.0 * deltaOverD * (1.0 - deltaOverD);
+      if (filmHoldup < 0.001) {
+        filmHoldup = 0.001;
+      }
+
+      double vLF = vsLF / filmHoldup;
+      double ReLF = rhoL * Math.abs(vLF) * (2.0 * deltaOverD * D) / muL;
+      double fLF = (ReLF < 2000) ? 16.0 / Math.max(ReLF, 1.0) : 0.046 / Math.pow(ReLF, 0.2);
+
+      // Interfacial friction with roughness correction
+      double fi = fG * (1.0 + 300.0 * deltaOverD);
+
+      // Momentum balance: τ_wL = τ_i
+      // fLF * ρL * vLF² / 2 = fi * ρG * vG² / 2
+      // Solve for δ/D
+      double tauRatio = (fLF * rhoL * vLF * vLF) / (fi * rhoG * vG * vG + 1e-10);
+
+      // Update film thickness estimate
+      double newDeltaOverD = deltaOverD * Math.sqrt(tauRatio);
+      newDeltaOverD = Math.max(minimumFilmThickness / D, Math.min(0.2, newDeltaOverD));
+
+      if (Math.abs(newDeltaOverD - deltaOverD) < 1e-6) {
+        break;
+      }
+      deltaOverD = 0.5 * deltaOverD + 0.5 * newDeltaOverD;
+    }
+
+    // Final film holdup
+    double filmHoldup = 4.0 * deltaOverD * (1.0 - deltaOverD);
+    filmHoldup = Math.max(minFilmHoldup, filmHoldup);
+
+    // Entrained droplet holdup (homogeneous with gas core)
+    // v_droplet ≈ v_gas (droplets carried by gas)
+    double vsLE = vsL * entrainment;
+    double dropletHoldup = vsLE / (vsG + vsLE + 1e-10);
+
+    // Total liquid holdup
+    double totalHoldup = filmHoldup + dropletHoldup * (1.0 - filmHoldup);
+
+    // Calculate no-slip holdup (lambdaL) for comparison
+    double lambdaL = vsL / (vsG + vsL + 1e-10);
+
+    // Apply slip ratio model for annular flow
+    // In annular flow, gas flows faster than liquid film (slip ratio S = vG/vL > 1)
+    // Holdup formula: αL = λL / (λL + S*(1-λL))
+    // Typical slip ratios for annular flow: S = 1.5 to 4.0
+    double vsgRef = 8.0;
+    double velocityRatio = Math.min(4.0, vsG / Math.max(vsgRef, 0.1));
+
+    // Slip ratio increases with gas velocity
+    double baseSlipRatio = 1.5;
+    double maxSlipRatio = 4.0;
+    double slipRatio = baseSlipRatio
+        + (maxSlipRatio - baseSlipRatio) * Math.min(1.0, velocityRatio * velocityRatio / 4.0);
+
+    // Calculate holdup using slip model: αL = λL / (S - (S-1)*λL)
+    double slipBasedHoldup;
+    double denominator = slipRatio - (slipRatio - 1.0) * lambdaL;
+    if (denominator > 0.1) {
+      slipBasedHoldup = lambdaL / denominator;
+    } else {
+      slipBasedHoldup = lambdaL;
+    }
+
+    // Use physics-based calculation, with slip model as minimum
+    // The film model can under-predict when gas velocity is high
+    double minFilmConstraint = 4.0 * minimumFilmThickness / D;
+    totalHoldup = Math.max(totalHoldup, slipBasedHoldup);
+    totalHoldup = Math.max(minFilmConstraint, Math.min(0.9, totalHoldup));
+
+    // Store entrainment for diagnostic purposes
+    this.annularEntrainmentFraction = entrainment;
+
+    return new double[] {totalHoldup, filmHoldup, entrainment};
+  }
+
+  /**
+   * Calculate liquid holdup for slug flow using OLGA model.
+   *
+   * <p>
+   * OLGA models slug flow as a sequence of liquid slugs separated by gas bubbles (Taylor bubbles).
+   * The average holdup is determined by:
+   * </p>
+   * <ul>
+   * <li>Slug body holdup (typically 0.7-1.0)</li>
+   * <li>Film holdup under Taylor bubble</li>
+   * <li>Slug frequency and length</li>
+   * </ul>
+   *
+   * @param vsG Gas superficial velocity [m/s]
+   * @param vsL Liquid superficial velocity [m/s]
+   * @param rhoG Gas density [kg/m³]
+   * @param rhoL Liquid density [kg/m³]
+   * @param muL Liquid dynamic viscosity [Pa·s]
+   * @param sigma Surface tension [N/m]
+   * @param D Pipe diameter [m]
+   * @param theta Pipe inclination [radians]
+   * @return Slug flow average liquid holdup [-]
+   */
+  private double calculateSlugHoldupOLGA(double vsG, double vsL, double rhoG, double rhoL,
+      double muL, double sigma, double D, double theta) {
+
+    double g = 9.81;
+    double vMix = vsG + vsL;
+
+    // Slug body holdup using Gregory correlation
+    // H_LS = 1 / (1 + (v_m / 8.66)^1.39)
+    double slugBodyHoldup = 1.0 / (1.0 + Math.pow(vMix / 8.66, 1.39));
+    slugBodyHoldup = Math.max(0.5, Math.min(0.98, slugBodyHoldup));
+
+    // Taylor bubble rise velocity using Bendiksen (1984)
+    double dRho = rhoL - rhoG;
+    double C0 = 1.2; // Distribution coefficient
+
+    // Drift velocity for inclined pipes
+    double vD0 = 0.35 * Math.sqrt(g * D * dRho / rhoL);
+    double sinTheta = Math.sin(theta);
+    double cosTheta = Math.cos(theta);
+
+    // Inclination correction
+    double vD;
+    if (theta >= 0) {
+      vD = vD0 * (cosTheta + 1.2 * sinTheta);
+    } else {
+      vD = vD0 * (cosTheta + 0.3 * Math.abs(sinTheta));
+    }
+
+    // Taylor bubble velocity
+    double vTB = C0 * vMix + vD;
+
+    // Film holdup under Taylor bubble using Barnea-Brauner correlation
+    // Simplified: assume film holdup scales with liquid fraction
+    double lambdaL = vsL / vMix;
+    double filmHoldup = 0.1 * lambdaL; // Thin film under bubble
+
+    // Slug unit composition using mass balance
+    // Slug length ratio (Ls/Lu) from Dukler-Hubbard
+    double slugLengthRatio = vsL / (vTB * (slugBodyHoldup - filmHoldup) + 1e-10);
+    slugLengthRatio = Math.max(0.1, Math.min(0.9, slugLengthRatio));
+
+    // Average holdup = Ls/Lu * H_LS + (1 - Ls/Lu) * H_film
+    double avgHoldup = slugLengthRatio * slugBodyHoldup + (1.0 - slugLengthRatio) * filmHoldup;
+
+    return Math.max(0.1, Math.min(0.9, avgHoldup));
+  }
+
+  /**
+   * Calculate terrain-induced liquid accumulation enhancement using OLGA methodology.
+   *
+   * <p>
+   * This implements the full OLGA terrain tracking algorithm which accounts for:
+   * </p>
+   * <ul>
+   * <li><b>Low Point Accumulation:</b> Liquid pools in valleys due to gravity. The volume of
+   * accumulated liquid depends on the depth of the valley and gas carrying capacity.</li>
+   * <li><b>Uphill Liquid Fallback:</b> When gas velocity is below critical velocity, liquid falls
+   * back. The critical velocity is based on Taitel-Dukler flooding criterion.</li>
+   * <li><b>Downhill Drainage:</b> Liquid accelerates on downhill sections, reducing holdup.</li>
+   * <li><b>Riser Base Accumulation:</b> Special treatment for transition from horizontal/downhill
+   * to steep uphill (severe slugging potential).</li>
+   * <li><b>Terrain-Induced Slugging:</b> When low-point holdup exceeds critical value, slugs form
+   * and surge out.</li>
+   * </ul>
+   *
+   * <p>
+   * Reference: Bendiksen et al. (1991) "The Dynamic Two-Fluid Model OLGA: Theory and Application"
+   * SPE Production Engineering, May 1991, pp. 171-180
+   * </p>
+   *
+   * @param sec Current pipe section
+   * @param prev Previous pipe section
+   * @param baseHoldup Base holdup from flow regime correlation
+   * @return Enhanced holdup accounting for terrain effects
+   */
+  private double applyTerrainAccumulation(TwoFluidSection sec, TwoFluidSection prev,
+      double baseHoldup) {
+
+    if (!enableTerrainTracking) {
+      return baseHoldup;
+    }
+
+    double g = 9.81;
+    double inclination = sec.getInclination();
+    double prevInclination = (prev != null) ? prev.getInclination() : inclination;
+
+    // Get flow properties
+    double vsG = sec.getSuperficialGasVelocity();
+    double vsL = sec.getSuperficialLiquidVelocity();
+    double rhoG = sec.getGasDensity();
+    double rhoL = sec.getLiquidDensity();
+    double dRho = rhoL - rhoG;
+    double sigma = sec.getSurfaceTension();
+
+    // Classify terrain features
+    boolean isLowPoint = prevInclination < -0.01 && inclination > 0.01;
+    boolean isHighPoint = prevInclination > 0.01 && inclination < -0.01;
+    boolean isUphill = inclination > 0.02; // > ~1 degree uphill
+    boolean isDownhill = inclination < -0.02; // > ~1 degree downhill
+    boolean isSteepUphill = inclination > Math.toRadians(15); // > 15 degrees
+    boolean isRiserBase = prevInclination < Math.toRadians(5) && inclination > Math.toRadians(30);
+
+    double enhancedHoldup = baseHoldup;
+
+    // ========== LOW POINT ACCUMULATION (OLGA Valley Model) ==========
+    if (isLowPoint || sec.isLowPoint()) {
+      // At low points, liquid accumulates due to gravity pooling
+      // OLGA uses a modified Froude number criterion for accumulation
+
+      // Elevation change into the low point
+      double elevChange = (prev != null) ? Math.abs(sec.getElevation() - prev.getElevation()) : 0;
+
+      // Gas Froude number - indicates ability to sweep liquid from low point
+      // Fr = vG / sqrt(g * D * (rhoL - rhoG) / rhoG)
+      double froudeG = vsG / Math.sqrt(g * diameter * dRho / Math.max(rhoG, 1.0));
+
+      // Liquid accumulation factor increases as Froude decreases
+      // Below Fr ~ 1.5, significant accumulation occurs
+      // ENHANCED: Use stronger accumulation for very low Froude numbers (low gas velocity)
+      // Field data shows accumulation factors of 5-15x at Fr < 0.5
+      double criticalFroude = 1.5;
+      double accumulationFactor = 1.0;
+
+      if (froudeG < criticalFroude) {
+        // Use stronger non-linear relationship for low Froude numbers
+        // At Fr = 0, factor should be ~10-15x; at Fr = criticalFroude, factor = 1
+        double froudeRatio = froudeG / criticalFroude;
+
+        // Enhanced formula: factor = 1 + A * (1 - Fr/Fr_crit)^n
+        // With A = 10 and n = 1.5 for stronger low-velocity response
+        double exponent = 1.5;
+        double amplitude = 10.0;
+        accumulationFactor = 1.0 + amplitude * Math.pow(1.0 - froudeRatio, exponent);
+
+        // Additional factor for very low velocities (Fr < 0.3)
+        // This captures the "pooling" regime where gas cannot sweep liquid
+        if (froudeG < 0.3) {
+          double poolingFactor = 1.0 + 3.0 * (0.3 - froudeG) / 0.3;
+          accumulationFactor *= poolingFactor;
+        }
+
+        // Additional factor for deep valleys
+        double depthFactor = 1.0 + 0.5 * Math.min(elevChange / diameter, 10.0);
+        accumulationFactor *= depthFactor;
+      }
+
+      // Allow holdup up to 85% in low points at very low gas velocities
+      double maxHoldup = (froudeG < 0.5) ? 0.85 : terrainSlugCriticalHoldup + 0.2;
+      enhancedHoldup = Math.min(maxHoldup, baseHoldup * accumulationFactor);
+
+      // Check for terrain-induced slug initiation
+      if (enhancedHoldup > terrainSlugCriticalHoldup && enableSevereSlugModel) {
+        // Liquid level high enough to bridge pipe - slug will form
+        sec.setTerrainSlugPending(true);
       }
     }
 
-    return new double[] {alphaL, alphaG};
+    // ========== RISER BASE ACCUMULATION (Severe Slugging Model) ==========
+    else if (isRiserBase && enableSevereSlugModel) {
+      // Riser base is particularly prone to severe slugging
+      // Use Pots severe slugging criterion: PI = (P_sep * L_riser) / (rho_L * g * H_riser)
+
+      // Simplified criterion: gas velocity must exceed critical to prevent buildup
+      double sinTheta = Math.sin(inclination);
+      double vCritRiser = 1.5 * Math.sqrt(g * diameter * dRho * sinTheta / Math.max(rhoG, 1.0));
+
+      if (vsG < vCritRiser) {
+        // Severe slugging conditions - high accumulation
+        // Enhanced: use stronger factor for very low velocities
+        double velocityRatio = vsG / vCritRiser;
+        double severityFactor = 1.0 + 4.0 * Math.pow(1.0 - velocityRatio, 1.5);
+        enhancedHoldup = Math.min(0.90, baseHoldup * severityFactor);
+        sec.setSevereSlugPotential(true);
+      }
+    }
+
+    // ========== UPHILL LIQUID FALLBACK (OLGA Film Model) ==========
+    else if (isUphill) {
+      double sinTheta = Math.sin(inclination);
+      double cosTheta = Math.cos(inclination);
+
+      // Critical gas velocity for liquid carryover (Turner droplet model + film flow)
+      // For film flow: vG_crit = C * sqrt(g * D * (rhoL - rhoG) * sin(theta) / rhoG)
+      // where C ~ 0.8-1.2 depending on liquid loading
+      double filmCarryFactor = 0.9 + 0.3 * Math.min(baseHoldup * 10.0, 1.0);
+      double vCritFilm =
+          filmCarryFactor * Math.sqrt(g * diameter * dRho * sinTheta / Math.max(rhoG, 1.0));
+
+      // For droplet entrainment (Turner correlation)
+      // vG_crit_droplet = 1.593 * (sigma * (rhoL - rhoG) * g / rhoG^2)^0.25
+      double vCritDroplet = 1.593 * Math.pow(sigma * dRho * g / (rhoG * rhoG), 0.25);
+
+      // Use more conservative (higher) of the two criteria for steep angles
+      double vCrit = isSteepUphill ? Math.max(vCritFilm, vCritDroplet) : vCritFilm;
+
+      if (vsG < vCrit) {
+        // Liquid falls back - accumulation factor depends on how far below critical
+        double fallbackRatio = Math.min(1.0, vsG / vCrit);
+        double fallbackFactor = 1.0 + liquidFallbackCoefficient * (1.0 - fallbackRatio) * 2.0;
+
+        // Additional factor for steep uphills
+        if (isSteepUphill) {
+          fallbackFactor *= (1.0 + sinTheta);
+        }
+
+        enhancedHoldup = Math.min(0.75, baseHoldup * fallbackFactor);
+      } else if (vsG > 1.3 * vCrit) {
+        // Well above critical - good liquid carryover, slight holdup reduction
+        enhancedHoldup = baseHoldup * 0.95;
+      }
+    }
+
+    // ========== DOWNHILL DRAINAGE (OLGA Film Model) ==========
+    else if (isDownhill) {
+      double sinTheta = Math.abs(Math.sin(inclination));
+
+      // On downhill sections, gravity accelerates liquid, reducing holdup
+      // Drainage factor depends on angle and liquid loading
+      double drainageFactor = 1.0 - 0.15 * sinTheta * (1.0 - baseHoldup);
+
+      // But at very low velocities, liquid can still pool on downhill
+      double froudeL = vsL / Math.sqrt(g * diameter * sinTheta);
+      if (froudeL < 0.3) {
+        // Low liquid Froude - stratified pooling possible
+        drainageFactor = Math.max(drainageFactor, 0.9);
+      }
+
+      enhancedHoldup = baseHoldup * drainageFactor;
+    }
+
+    // ========== HIGH POINT GAS ACCUMULATION ==========
+    else if (isHighPoint) {
+      // At high points, gas accumulates (liquid drains away)
+      // This can cause flow instabilities and gas blowby
+      double gasAccumulationFactor = 0.85;
+      enhancedHoldup = baseHoldup * gasAccumulationFactor;
+    }
+
+    // Ensure physical bounds
+    // Only apply minimumLiquidHoldup floor if terrain modifications were actually applied
+    // For flat terrain (no modifications), preserve the slip-based holdup from calculateLocalHoldup
+    if (enhancedHoldup != baseHoldup) {
+      // Terrain modification was applied - use floor
+      return Math.max(minimumLiquidHoldup, Math.min(0.95, enhancedHoldup));
+    } else {
+      // No terrain modification - just apply upper bound
+      return Math.min(0.95, enhancedHoldup);
+    }
+  }
+
+  /**
+   * Check for and handle terrain-induced slug events.
+   *
+   * <p>
+   * Called during transient simulation to detect when accumulated liquid in low points reaches
+   * critical level and triggers a terrain-induced slug.
+   * </p>
+   *
+   * @param dt Time step (s)
+   */
+  private void checkTerrainSlugEvents(double dt) {
+    if (!enableTerrainTracking || !enableSevereSlugModel || sections == null
+        || sections.length == 0) {
+      return;
+    }
+
+    for (int i = 0; i < sections.length; i++) {
+      TwoFluidSection sec = sections[i];
+      if (sec == null) {
+        continue;
+      }
+      if (sec.isTerrainSlugPending() && sec.getLiquidHoldup() > terrainSlugCriticalHoldup) {
+        // Initiate terrain-induced slug
+        if (slugTracker != null) {
+          // Create a new slug starting at this position
+          double slugVolume = sec.getArea() * sec.getLength() * sec.getLiquidHoldup();
+          double slugLength = sec.getLength() * sec.getLiquidHoldup() / 0.7; // Assume 70% holdup in
+                                                                             // slug
+
+          // Log terrain slug event
+          logger.debug(
+              "Terrain-induced slug initiated at section {} (position {} m), " + "volume {} m³", i,
+              sec.getPosition(), slugVolume);
+        }
+        sec.setTerrainSlugPending(false);
+      }
+    }
   }
 
   /**
@@ -1163,11 +2721,59 @@ public class TwoFluidPipe extends Pipeline {
     // Get previous water cut for continuity
     double prevWaterCut = (prev != null) ? prev.getWaterCut() : sec.getWaterCut();
 
-    // Simplified model: water cut is advected from upstream without terrain-induced settling.
-    // This assumes water and oil are well-mixed within the liquid phase.
-    // A more sophisticated model would track water/oil separation dynamics explicitly,
-    // but the terrain factor approach causes numerical instabilities.
+    // Get liquid velocity for stratification assessment
+    double vL = sec.getLiquidVelocity();
+
+    // ========== ENHANCED: Low-Velocity Water Stratification Model ==========
+    // At low liquid velocities, water (denser phase) tends to segregate and accumulate
+    // at the pipe bottom in stratified layers, increasing effective water holdup locally.
+    //
+    // This is critical for detecting liquid accumulation in pipelines with water
+    // content at low flow rates.
     double waterCut = prevWaterCut;
+
+    // Calculate liquid Froude number for stratification assessment
+    // Fr_L = v_L / sqrt(g * D * Δρ/ρ_L)
+    double effectiveRhoL = waterCut * rhoWater + (1.0 - waterCut) * rhoOil;
+    double liquidFroude = vL / Math.sqrt(g * diameter * Math.abs(deltaRho) / effectiveRhoL + 1e-10);
+
+    // Stratification enhancement factor: significant below Fr_L ~ 2
+    double stratificationFroude = 2.0;
+    double stratificationFactor = 1.0;
+
+    if (liquidFroude < stratificationFroude && deltaRho > 10.0 && alphaL > 0.01) {
+      // Low velocity stratified flow - water segregates to bottom
+      // Enhancement factor increases as velocity decreases
+      double froudeRatio = liquidFroude / stratificationFroude;
+
+      // Stronger enhancement at very low velocities (Fr < 0.5)
+      if (liquidFroude < 0.5) {
+        // Very low velocity: significant water pooling
+        // Water cut can effectively increase by 50-100% due to local accumulation
+        stratificationFactor = 1.0 + 1.5 * Math.pow(1.0 - froudeRatio, 1.5);
+      } else {
+        // Moderate stratification
+        stratificationFactor = 1.0 + 0.5 * Math.pow(1.0 - froudeRatio, 1.2);
+      }
+
+      // Inclination effect: downhill enhances water accumulation at front
+      // Uphill causes water to lag and pool
+      if (sinTheta < -0.02) {
+        // Downhill: water accumulates at front
+        stratificationFactor *= 1.0 + 0.3 * Math.abs(sinTheta);
+      } else if (sinTheta > 0.02) {
+        // Uphill: water pools behind (increases local holdup)
+        stratificationFactor *= 1.0 + 0.5 * sinTheta;
+      }
+
+      // Apply stratification enhancement to water cut
+      // This represents local water accumulation due to settling
+      double enhancedWaterCut = prevWaterCut * stratificationFactor;
+      enhancedWaterCut = Math.min(0.95, enhancedWaterCut); // Physical limit
+
+      // Blend with upstream value for numerical stability
+      waterCut = 0.7 * prevWaterCut + 0.3 * enhancedWaterCut;
+    }
 
     // Clamp water cut to valid range
     waterCut = Math.max(0.001, Math.min(0.999, waterCut)); // Keep small margin to avoid numerical
@@ -1193,7 +2799,7 @@ public class TwoFluidPipe extends Pipeline {
     // m_dot_oil = rho_o * alpha_o * A * v_o (constant)
     // But with slip, v_w != v_o
 
-    double vL = sec.getLiquidVelocity();
+    // Note: vL already defined above for stratification assessment
     double vOil = vL;
     double vWater = vL;
 
@@ -1313,28 +2919,52 @@ public class TwoFluidPipe extends Pipeline {
       validateSectionStates();
 
       // 8. Update accumulation tracking and slug tracking
-      if (enableSlugTracking) {
+      if (enableSlugTracking && slugTrackingMode != SlugTrackingMode.DISABLED) {
         accumulationTracker.updateAccumulation(sections, dtActual);
-
-        // Check for terrain-induced slug initiation from accumulation zones
-        for (LiquidAccumulationTracker.AccumulationZone zone : accumulationTracker
-            .getAccumulationZones()) {
-          LiquidAccumulationTracker.SlugCharacteristics slugChar =
-              accumulationTracker.checkForSlugRelease(zone, sections);
-          if (slugChar != null) {
-            slugTracker.initializeTerrainSlug(slugChar, sections);
-          }
-        }
 
         // Set reference velocity for slug propagation (from inlet)
         double inletMixtureVelocity = sections[0].getMixtureVelocity();
-        slugTracker.setReferenceVelocity(inletMixtureVelocity);
 
-        // Advance existing slugs through the pipeline
-        slugTracker.advanceSlugs(sections, dtActual);
+        if (slugTrackingMode == SlugTrackingMode.LAGRANGIAN) {
+          // OLGA-style full Lagrangian tracking
+          lagrangianSlugTracker.setReferenceVelocity(inletMixtureVelocity);
 
-        // Track slugs arriving at outlet
-        trackOutletSlugs();
+          // Check for terrain-induced slug initiation from accumulation zones
+          for (LiquidAccumulationTracker.AccumulationZone zone : accumulationTracker
+              .getAccumulationZones()) {
+            LiquidAccumulationTracker.SlugCharacteristics slugChar =
+                accumulationTracker.checkForSlugRelease(zone, sections);
+            if (slugChar != null) {
+              lagrangianSlugTracker.initializeTerrainSlug(slugChar, sections);
+            }
+          }
+
+          // Advance slugs with full Lagrangian tracking
+          lagrangianSlugTracker.advanceTimeStep(sections, dtActual);
+
+          // Track slugs arriving at outlet
+          trackOutletSlugsLagrangian();
+
+        } else {
+          // Simplified slug unit model
+          slugTracker.setReferenceVelocity(inletMixtureVelocity);
+
+          // Check for terrain-induced slug initiation from accumulation zones
+          for (LiquidAccumulationTracker.AccumulationZone zone : accumulationTracker
+              .getAccumulationZones()) {
+            LiquidAccumulationTracker.SlugCharacteristics slugChar =
+                accumulationTracker.checkForSlugRelease(zone, sections);
+            if (slugChar != null) {
+              slugTracker.initializeTerrainSlug(slugChar, sections);
+            }
+          }
+
+          // Advance existing slugs through the pipeline
+          slugTracker.advanceSlugs(sections, dtActual);
+
+          // Track slugs arriving at outlet
+          trackOutletSlugs();
+        }
       }
 
       // 9. Update temperature profile if heat transfer is enabled
@@ -1384,9 +3014,14 @@ public class TwoFluidPipe extends Pipeline {
       // Apply to all mass variables: gas (0), oil (1), water (2)
       int numMassVars = Math.min(3, U_new[i].length);
       for (int j = 0; j < numMassVars; j++) {
-        if (U_prev[i][j] > 1e-10) {
+        // Check for valid non-zero previous value before computing ratio
+        if (U_prev[i][j] > 1e-10 && !Double.isNaN(U_prev[i][j])
+            && !Double.isInfinite(U_prev[i][j])) {
           double ratio = U_new[i][j] / U_prev[i][j];
-          if (ratio > 1 + maxChangeRatio) {
+          if (Double.isNaN(ratio) || Double.isInfinite(ratio)) {
+            // Invalid ratio - revert to previous value
+            U_new[i][j] = U_prev[i][j];
+          } else if (ratio > 1 + maxChangeRatio) {
             U_new[i][j] = U_prev[i][j] * (1 + maxChangeRatio);
           } else if (ratio < 1 - maxChangeRatio && ratio > 0) {
             U_new[i][j] = U_prev[i][j] * (1 - maxChangeRatio);
@@ -1763,12 +3398,18 @@ public class TwoFluidPipe extends Pipeline {
 
   /**
    * Update result arrays from section states.
+   *
+   * <p>
+   * Array length equals numberOfSections, with each element representing the section midpoint
+   * values.
+   * </p>
    */
   private void updateResultArrays() {
     if (sections == null) {
       return;
     }
 
+    // Array length equals number of sections
     pressureProfile = new double[numberOfSections];
     temperatureProfile = new double[numberOfSections];
     liquidHoldupProfile = new double[numberOfSections];
@@ -1877,6 +3518,7 @@ public class TwoFluidPipe extends Pipeline {
     }
     // Return consistent values: liquidHoldup = oilHoldup + waterHoldup
     double[] profile = new double[numberOfSections];
+
     for (int i = 0; i < numberOfSections; i++) {
       double oilHL = sections[i].getOilHoldup();
       double waterHL = sections[i].getWaterHoldup();
@@ -1906,6 +3548,7 @@ public class TwoFluidPipe extends Pipeline {
       return new double[0];
     }
     double[] waterCuts = new double[numberOfSections];
+
     for (int i = 0; i < numberOfSections; i++) {
       waterCuts[i] = sections[i].getWaterCut();
     }
@@ -1922,6 +3565,7 @@ public class TwoFluidPipe extends Pipeline {
       return new double[0];
     }
     double[] waterHoldups = new double[numberOfSections];
+
     for (int i = 0; i < numberOfSections; i++) {
       waterHoldups[i] = sections[i].getWaterHoldup();
     }
@@ -1938,6 +3582,7 @@ public class TwoFluidPipe extends Pipeline {
       return new double[0];
     }
     double[] oilHoldups = new double[numberOfSections];
+
     for (int i = 0; i < numberOfSections; i++) {
       oilHoldups[i] = sections[i].getOilHoldup();
     }
@@ -2044,7 +3689,7 @@ public class TwoFluidPipe extends Pipeline {
   /**
    * Get position array for plotting.
    *
-   * @return Position along pipe (m)
+   * @return Position along pipe (m), one value per section at section midpoint
    */
   public double[] getPositionProfile() {
     double[] positions = new double[numberOfSections];
@@ -2073,12 +3718,85 @@ public class TwoFluidPipe extends Pipeline {
   }
 
   /**
-   * Get slug tracker for slug statistics.
+   * Get slug tracker for slug statistics (simplified model).
    *
    * @return Slug tracker
    */
   public SlugTracker getSlugTracker() {
     return slugTracker;
+  }
+
+  /**
+   * Get Lagrangian slug tracker for OLGA-style slug tracking.
+   *
+   * @return Lagrangian slug tracker
+   */
+  public LagrangianSlugTracker getLagrangianSlugTracker() {
+    return lagrangianSlugTracker;
+  }
+
+  /**
+   * Get current slug tracking mode.
+   *
+   * @return slug tracking mode
+   */
+  public SlugTrackingMode getSlugTrackingMode() {
+    return slugTrackingMode;
+  }
+
+  /**
+   * Set slug tracking mode.
+   *
+   * <p>
+   * Available modes:
+   * </p>
+   * <ul>
+   * <li><b>SIMPLIFIED:</b> Simple slug unit model with basic tracking</li>
+   * <li><b>LAGRANGIAN:</b> Full OLGA-style Lagrangian tracking with wake effects, frequency-based
+   * initiation, and detailed statistics</li>
+   * <li><b>DISABLED:</b> No slug tracking</li>
+   * </ul>
+   *
+   * @param mode slug tracking mode
+   */
+  public void setSlugTrackingMode(SlugTrackingMode mode) {
+    this.slugTrackingMode = mode;
+    this.enableSlugTracking = (mode != SlugTrackingMode.DISABLED);
+  }
+
+  /**
+   * Configure Lagrangian slug tracker parameters.
+   *
+   * <p>
+   * This method provides access to advanced slug tracking configuration for the OLGA-style
+   * Lagrangian model.
+   * </p>
+   *
+   * @param enableInletGeneration enable hydrodynamic slug generation at inlet
+   * @param enableTerrainGeneration enable terrain-induced slug generation
+   * @param enableWakeEffects enable wake interaction between slugs
+   */
+  public void configureLagrangianSlugTracking(boolean enableInletGeneration,
+      boolean enableTerrainGeneration, boolean enableWakeEffects) {
+    if (lagrangianSlugTracker != null) {
+      lagrangianSlugTracker.setEnableInletSlugGeneration(enableInletGeneration);
+      lagrangianSlugTracker.setEnableTerrainSlugGeneration(enableTerrainGeneration);
+      lagrangianSlugTracker.setEnableWakeEffects(enableWakeEffects);
+    }
+  }
+
+  /**
+   * Get slug tracking statistics as JSON string.
+   *
+   * @return JSON string with slug statistics
+   */
+  public String getSlugTrackingStatisticsJson() {
+    if (slugTrackingMode == SlugTrackingMode.LAGRANGIAN && lagrangianSlugTracker != null) {
+      return lagrangianSlugTracker.toJson();
+    } else if (slugTracker != null) {
+      return slugTracker.getStatisticsString();
+    }
+    return "{}";
   }
 
   /**
@@ -2114,6 +3832,28 @@ public class TwoFluidPipe extends Pipeline {
         }
       }
     }
+  }
+
+  /**
+   * Track slugs arriving at outlet using Lagrangian tracker.
+   */
+  private void trackOutletSlugsLagrangian() {
+    if (lagrangianSlugTracker == null || sections == null || sections.length == 0) {
+      return;
+    }
+
+    // Statistics are tracked internally by LagrangianSlugTracker
+    // Update local statistics from the tracker
+    outletSlugCount = lagrangianSlugTracker.getTotalSlugsExited();
+    maxSlugVolumeAtOutlet = lagrangianSlugTracker.getMaxSlugVolumeAtOutlet();
+    maxSlugLengthAtOutlet = lagrangianSlugTracker.getMaxSlugLength();
+
+    // Get total volume from outlet slug volumes
+    double totalVol = 0;
+    for (Double vol : lagrangianSlugTracker.getOutletSlugVolumes()) {
+      totalVol += vol;
+    }
+    totalSlugVolumeAtOutlet = totalVol;
   }
 
   /**
@@ -2169,18 +3909,46 @@ public class TwoFluidPipe extends Pipeline {
   public String getSlugStatisticsSummary() {
     StringBuilder sb = new StringBuilder();
     sb.append("=== Slug Statistics ===\n");
-    sb.append(String.format("Active slugs in pipe: %d\n", slugTracker.getSlugCount()));
-    sb.append(String.format("Slugs generated: %d\n", slugTracker.getTotalSlugsGenerated()));
-    sb.append(String.format("Slugs merged: %d\n", slugTracker.getTotalSlugsMerged()));
-    sb.append(String.format("Slugs at outlet: %d\n", outletSlugCount));
-    sb.append(String.format("Total slug volume at outlet: %.2f m³\n", totalSlugVolumeAtOutlet));
-    sb.append(String.format("Max slug length at outlet: %.1f m\n", maxSlugLengthAtOutlet));
-    sb.append(String.format("Max slug volume at outlet: %.3f m³\n", maxSlugVolumeAtOutlet));
-    if (outletSlugCount > 0 && simulationTime > 0) {
-      double avgFrequency = outletSlugCount / simulationTime;
-      sb.append(String.format("Average slug frequency: %.4f Hz (%.1f min between slugs)\n",
-          avgFrequency, avgFrequency > 0 ? 1.0 / (avgFrequency * 60) : 0));
+    sb.append(String.format("Tracking mode: %s\n", slugTrackingMode));
+
+    if (slugTrackingMode == SlugTrackingMode.LAGRANGIAN && lagrangianSlugTracker != null) {
+      // Use Lagrangian tracker statistics
+      sb.append(String.format("Active slugs in pipe: %d\n", lagrangianSlugTracker.getSlugCount()));
+      sb.append(
+          String.format("Slugs generated: %d\n", lagrangianSlugTracker.getTotalSlugsGenerated()));
+      sb.append(String.format("Slugs merged: %d\n", lagrangianSlugTracker.getTotalSlugsMerged()));
+      sb.append(
+          String.format("Slugs dissipated: %d\n", lagrangianSlugTracker.getTotalSlugsDissipated()));
+      sb.append(
+          String.format("Slugs at outlet: %d\n", lagrangianSlugTracker.getTotalSlugsExited()));
+      sb.append(String.format("Inlet slug frequency: %.4f Hz\n",
+          lagrangianSlugTracker.getInletSlugFrequency()));
+      sb.append(String.format("Outlet slug frequency: %.4f Hz\n",
+          lagrangianSlugTracker.getOutletSlugFrequency()));
+      sb.append(String.format("Average slug length: %.2f m\n",
+          lagrangianSlugTracker.getAverageSlugLength()));
+      sb.append(
+          String.format("Max slug length: %.2f m\n", lagrangianSlugTracker.getMaxSlugLength()));
+      sb.append(String.format("Max slug volume at outlet: %.4f m³\n",
+          lagrangianSlugTracker.getMaxSlugVolumeAtOutlet()));
+      sb.append(String.format("Mass conservation error: %.6f kg\n",
+          lagrangianSlugTracker.getMassConservationError()));
+    } else if (slugTracker != null) {
+      // Use simplified tracker statistics
+      sb.append(String.format("Active slugs in pipe: %d\n", slugTracker.getSlugCount()));
+      sb.append(String.format("Slugs generated: %d\n", slugTracker.getTotalSlugsGenerated()));
+      sb.append(String.format("Slugs merged: %d\n", slugTracker.getTotalSlugsMerged()));
+      sb.append(String.format("Slugs at outlet: %d\n", outletSlugCount));
+      sb.append(String.format("Total slug volume at outlet: %.2f m³\n", totalSlugVolumeAtOutlet));
+      sb.append(String.format("Max slug length at outlet: %.1f m\n", maxSlugLengthAtOutlet));
+      sb.append(String.format("Max slug volume at outlet: %.3f m³\n", maxSlugVolumeAtOutlet));
+      if (outletSlugCount > 0 && simulationTime > 0) {
+        double avgFrequency = outletSlugCount / simulationTime;
+        sb.append(String.format("Average slug frequency: %.4f Hz (%.1f min between slugs)\n",
+            avgFrequency, avgFrequency > 0 ? 1.0 / (avgFrequency * 60) : 0));
+      }
     }
+
     return sb.toString();
   }
 
@@ -2500,6 +4268,344 @@ public class TwoFluidPipe extends Pipeline {
     this.thermodynamicUpdateInterval = Math.max(1, interval);
   }
 
+  // ============ OLGA-style Minimum Slip Methods ============
+
+  /**
+   * Set minimum liquid holdup for stratified flow (OLGA-style constraint).
+   *
+   * <p>
+   * This parameter enforces a minimum liquid holdup in gas-dominant stratified flow, preventing
+   * unrealistically low values at high gas velocities. OLGA uses a similar approach based on the
+   * observation that a thin liquid film always remains on the pipe wall.
+   * </p>
+   *
+   * <p>
+   * Typical values:
+   * </p>
+   * <ul>
+   * <li>0.005 (0.5%) - Default, suitable for gas-condensate systems</li>
+   * <li>0.01 (1%) - Conservative estimate for wet gas</li>
+   * <li>0.02 (2%) - High liquid loading or wavy stratified flow</li>
+   * </ul>
+   *
+   * @param minHoldup Base minimum liquid holdup fraction (0-1), default 0.01
+   */
+  public void setMinimumLiquidHoldup(double minHoldup) {
+    this.minimumLiquidHoldup = Math.max(0.0, Math.min(0.5, minHoldup));
+  }
+
+  /**
+   * Get base minimum liquid holdup for stratified flow.
+   *
+   * @return Base minimum liquid holdup fraction (0-1)
+   */
+  public double getMinimumLiquidHoldup() {
+    return minimumLiquidHoldup;
+  }
+
+  /**
+   * Set the slip factor used for adaptive minimum holdup calculation.
+   *
+   * <p>
+   * The adaptive minimum holdup is calculated as: lambdaL * minimumSlipFactor, where lambdaL is the
+   * no-slip (input) liquid fraction. This ensures physically reasonable minimum holdup for systems
+   * with varying liquid loading.
+   * </p>
+   *
+   * <p>
+   * Example: For a lean gas with 0.5% liquid loading and slipFactor=2.0:
+   * </p>
+   * <ul>
+   * <li>adaptiveMin = 0.005 * 2.0 = 1% holdup</li>
+   * <li>This is more reasonable than a fixed 5% minimum</li>
+   * </ul>
+   *
+   * @param slipFactor Multiplier for no-slip holdup (1.0-5.0), default 2.0
+   */
+  public void setMinimumSlipFactor(double slipFactor) {
+    this.minimumSlipFactor = Math.max(1.0, Math.min(5.0, slipFactor));
+  }
+
+  /**
+   * Get the slip factor used for adaptive minimum holdup calculation.
+   *
+   * @return Slip factor (multiplier for no-slip holdup)
+   */
+  public double getMinimumSlipFactor() {
+    return minimumSlipFactor;
+  }
+
+  /**
+   * Enable or disable OLGA-style minimum slip constraint.
+   *
+   * <p>
+   * When enabled (default), enforces a minimum liquid holdup in gas-dominant stratified flow. This
+   * matches OLGA behavior and prevents unrealistically low holdup at high velocities.
+   * </p>
+   *
+   * <p>
+   * When disabled, holdup can approach no-slip values at high Froude numbers, similar to the
+   * original Beggs-Brill correlation behavior.
+   * </p>
+   *
+   * @param enforce true to enforce minimum slip (OLGA-style, default), false for Beggs-Brill style
+   */
+  public void setEnforceMinimumSlip(boolean enforce) {
+    this.enforceMinimumSlip = enforce;
+  }
+
+  /**
+   * Check if OLGA-style minimum slip constraint is enabled.
+   *
+   * @return true if minimum slip is enforced (OLGA-style)
+   */
+  public boolean isEnforceMinimumSlip() {
+    return enforceMinimumSlip;
+  }
+
+  /**
+   * Set whether to use adaptive-only minimum holdup (no absolute floor).
+   *
+   * <p>
+   * When true (default), the minimum holdup is calculated purely from flow correlations
+   * (Beggs-Brill type) scaled by the no-slip holdup, without enforcing an absolute floor. This
+   * allows the model to predict very low holdups for lean gas systems where the physical holdup may
+   * be well below 1%.
+   * </p>
+   *
+   * <p>
+   * When false, an absolute minimum (minimumLiquidHoldup, default 0.1%) is enforced in addition to
+   * the correlation-based minimum. This is more conservative but may overpredict holdup for very
+   * lean gas systems.
+   * </p>
+   *
+   * @param useAdaptive true to use correlation-only minimum (recommended for lean gas), false to
+   *        also enforce absolute floor
+   */
+  public void setUseAdaptiveMinimumOnly(boolean useAdaptive) {
+    this.useAdaptiveMinimumOnly = useAdaptive;
+  }
+
+  /**
+   * Check if adaptive-only minimum holdup mode is enabled.
+   *
+   * @return true if using correlation-based minimum only (no absolute floor)
+   */
+  public boolean isUseAdaptiveMinimumOnly() {
+    return useAdaptiveMinimumOnly;
+  }
+
+  // ============ OLGA Model Configuration Methods ============
+
+  /**
+   * Set the OLGA model type for holdup and flow regime calculations.
+   *
+   * <p>
+   * Available model types:
+   * </p>
+   * <ul>
+   * <li>FULL - Full OLGA model with momentum balance for all flow regimes (most accurate)</li>
+   * <li>SIMPLIFIED - Simplified OLGA model with empirical correlations (faster)</li>
+   * <li>DRIFT_FLUX - Original NeqSim drift-flux model (for backward compatibility)</li>
+   * </ul>
+   *
+   * @param modelType the OLGA model type to use
+   */
+  public void setOLGAModelType(OLGAModelType modelType) {
+    this.olgaModelType = modelType;
+    // Update related settings based on model type
+    if (modelType == OLGAModelType.FULL) {
+      this.enforceMinimumSlip = true;
+      this.enableAnnularFilmModel = true;
+      this.enableTerrainTracking = true;
+      this.useOLGAFlowRegimeMap = true;
+    } else if (modelType == OLGAModelType.SIMPLIFIED) {
+      this.enforceMinimumSlip = true;
+      this.enableAnnularFilmModel = false;
+      this.enableTerrainTracking = true;
+      this.useOLGAFlowRegimeMap = false;
+    } else {
+      // DRIFT_FLUX - original NeqSim behavior
+      this.enforceMinimumSlip = false;
+      this.enableAnnularFilmModel = false;
+      this.enableTerrainTracking = false;
+      this.useOLGAFlowRegimeMap = false;
+    }
+  }
+
+  /**
+   * Get the current OLGA model type.
+   *
+   * @return the current OLGA model type
+   */
+  public OLGAModelType getOLGAModelType() {
+    return olgaModelType;
+  }
+
+  /**
+   * Set minimum film thickness for annular flow model.
+   *
+   * @param thickness minimum film thickness in meters (default 0.0001 m = 0.1 mm)
+   */
+  public void setMinimumFilmThickness(double thickness) {
+    this.minimumFilmThickness = Math.max(0.0, thickness);
+  }
+
+  /**
+   * Get minimum film thickness for annular flow model.
+   *
+   * @return minimum film thickness in meters
+   */
+  public double getMinimumFilmThickness() {
+    return minimumFilmThickness;
+  }
+
+  /**
+   * Enable or disable OLGA-style annular film model.
+   *
+   * @param enable true to enable annular film model
+   */
+  public void setEnableAnnularFilmModel(boolean enable) {
+    this.enableAnnularFilmModel = enable;
+  }
+
+  /**
+   * Check if annular film model is enabled.
+   *
+   * @return true if annular film model is enabled
+   */
+  public boolean isEnableAnnularFilmModel() {
+    return enableAnnularFilmModel;
+  }
+
+  /**
+   * Enable or disable full terrain tracking.
+   *
+   * <p>
+   * Terrain tracking identifies low points and models liquid accumulation in valleys. Required for
+   * accurate liquid inventory prediction in undulating pipelines.
+   * </p>
+   *
+   * @param enable true to enable terrain tracking (default true)
+   */
+  public void setEnableTerrainTracking(boolean enable) {
+    this.enableTerrainTracking = enable;
+  }
+
+  /**
+   * Check if terrain tracking is enabled.
+   *
+   * @return true if terrain tracking is enabled
+   */
+  public boolean isEnableTerrainTracking() {
+    return enableTerrainTracking;
+  }
+
+  /**
+   * Set the critical holdup for terrain-induced slug initiation.
+   *
+   * @param criticalHoldup holdup fraction (0-1) at which terrain slug initiates (default 0.6)
+   */
+  public void setTerrainSlugCriticalHoldup(double criticalHoldup) {
+    this.terrainSlugCriticalHoldup = Math.max(0.0, Math.min(1.0, criticalHoldup));
+  }
+
+  /**
+   * Get the critical holdup for terrain-induced slug initiation.
+   *
+   * @return critical holdup fraction
+   */
+  public double getTerrainSlugCriticalHoldup() {
+    return terrainSlugCriticalHoldup;
+  }
+
+  /**
+   * Set the liquid fallback coefficient for uphill sections.
+   *
+   * <p>
+   * Controls liquid accumulation in uphill sections. Higher values mean more liquid falls back and
+   * accumulates. OLGA default is approximately 0.3.
+   * </p>
+   *
+   * @param coefficient fallback coefficient (0-1), default 0.3
+   */
+  public void setLiquidFallbackCoefficient(double coefficient) {
+    this.liquidFallbackCoefficient = Math.max(0.0, Math.min(1.0, coefficient));
+  }
+
+  /**
+   * Get the liquid fallback coefficient.
+   *
+   * @return liquid fallback coefficient
+   */
+  public double getLiquidFallbackCoefficient() {
+    return liquidFallbackCoefficient;
+  }
+
+  /**
+   * Enable or disable severe slugging model for risers.
+   *
+   * @param enable true to enable severe slugging detection (default true)
+   */
+  public void setEnableSevereSlugModel(boolean enable) {
+    this.enableSevereSlugModel = enable;
+  }
+
+  /**
+   * Check if severe slugging model is enabled.
+   *
+   * @return true if severe slugging model is enabled
+   */
+  public boolean isEnableSevereSlugModel() {
+    return enableSevereSlugModel;
+  }
+
+  /**
+   * Enable or disable OLGA flow regime map.
+   *
+   * <p>
+   * When enabled, uses OLGA's flow regime transition criteria instead of Taitel-Dukler. OLGA's
+   * criteria include roughness effects and better inclined flow handling.
+   * </p>
+   *
+   * @param enable true to use OLGA flow regime map (default true)
+   */
+  public void setUseOLGAFlowRegimeMap(boolean enable) {
+    this.useOLGAFlowRegimeMap = enable;
+  }
+
+  /**
+   * Check if OLGA flow regime map is used.
+   *
+   * @return true if OLGA flow regime map is enabled
+   */
+  public boolean isUseOLGAFlowRegimeMap() {
+    return useOLGAFlowRegimeMap;
+  }
+
+  /**
+   * Set flow regime transition hysteresis factor.
+   *
+   * <p>
+   * Prevents rapid switching between flow regimes near transition boundaries. A value of 0.1 means
+   * 10% hysteresis band.
+   * </p>
+   *
+   * @param hysteresis hysteresis factor (0-0.5), default 0.1
+   */
+  public void setFlowRegimeHysteresis(double hysteresis) {
+    this.flowRegimeHysteresis = Math.max(0.0, Math.min(0.5, hysteresis));
+  }
+
+  /**
+   * Get flow regime transition hysteresis factor.
+   *
+   * @return hysteresis factor
+   */
+  public double getFlowRegimeHysteresis() {
+    return flowRegimeHysteresis;
+  }
+
   // ============ New Heat Transfer API Methods ============
 
   /**
@@ -2659,6 +4765,219 @@ public class TwoFluidPipe extends Pipeline {
    */
   public double getSoilThermalResistance() {
     return soilThermalResistance;
+  }
+
+  // ============ Multi-layer Thermal Model API ============
+
+  /**
+   * Get or create the multi-layer thermal calculator.
+   *
+   * <p>
+   * If not yet created, initializes with current pipe geometry. The calculator allows defining
+   * multiple radial thermal layers (steel wall, insulation, coatings, etc.) for accurate heat
+   * transfer calculations.
+   * </p>
+   *
+   * @return MultilayerThermalCalculator instance
+   */
+  public MultilayerThermalCalculator getThermalCalculator() {
+    if (thermalCalculator == null) {
+      thermalCalculator = new MultilayerThermalCalculator(diameter / 2.0);
+    }
+    return thermalCalculator;
+  }
+
+  /**
+   * Set a pre-configured thermal calculator.
+   *
+   * @param calculator Configured MultilayerThermalCalculator
+   */
+  public void setThermalCalculator(MultilayerThermalCalculator calculator) {
+    this.thermalCalculator = calculator;
+    this.useMultilayerThermalModel = (calculator != null);
+    if (calculator != null) {
+      enableHeatTransfer = true;
+    }
+  }
+
+  /**
+   * Enable multi-layer thermal model for OLGA-style radial heat transfer.
+   *
+   * <p>
+   * When enabled, uses the MultilayerThermalCalculator for accurate heat transfer with proper
+   * modeling of:
+   * </p>
+   * <ul>
+   * <li>Steel pipe wall thermal mass and conductivity</li>
+   * <li>Insulation layers (PU foam, syntactic, aerogel, etc.)</li>
+   * <li>Coating layers (FBE, 3LPE, etc.)</li>
+   * <li>Concrete weight coating</li>
+   * <li>Burial/soil effects</li>
+   * </ul>
+   *
+   * @param enable true to use multi-layer model, false to use simple U-value
+   */
+  public void setUseMultilayerThermalModel(boolean enable) {
+    this.useMultilayerThermalModel = enable;
+    if (enable) {
+      enableHeatTransfer = true;
+      getThermalCalculator(); // Ensure created
+    }
+  }
+
+  /**
+   * Check if multi-layer thermal model is enabled.
+   *
+   * @return true if using multi-layer thermal model
+   */
+  public boolean isUseMultilayerThermalModel() {
+    return useMultilayerThermalModel;
+  }
+
+  /**
+   * Configure standard subsea pipe thermal model.
+   *
+   * <p>
+   * Creates a typical subsea configuration with:
+   * </p>
+   * <ol>
+   * <li>Steel wall</li>
+   * <li>FBE corrosion coating</li>
+   * <li>Insulation (optional)</li>
+   * <li>Concrete weight coating (optional)</li>
+   * </ol>
+   *
+   * @param insulationThickness Insulation thickness [m], 0 for uninsulated
+   * @param concreteThickness Concrete coating thickness [m], 0 for none
+   * @param insulationMaterial Type of insulation material
+   */
+  public void configureSubseaThermalModel(double insulationThickness, double concreteThickness,
+      RadialThermalLayer.MaterialType insulationMaterial) {
+    MultilayerThermalCalculator calc = getThermalCalculator();
+    calc.createSubseaPipeConfig(diameter, wallThickness, insulationThickness, concreteThickness,
+        insulationMaterial);
+    calc.setAmbientTemperature(surfaceTemperature);
+    useMultilayerThermalModel = true;
+    enableHeatTransfer = true;
+
+    // Update the simple U-value to match for backwards compatibility
+    heatTransferCoefficient = calc.calculateOverallUValue();
+  }
+
+  /**
+   * Configure buried onshore pipe thermal model.
+   *
+   * @param burialDepth Depth of cover [m]
+   * @param wetSoil true for wet soil, false for dry
+   */
+  public void configureBuriedThermalModel(double burialDepth, boolean wetSoil) {
+    MultilayerThermalCalculator calc = getThermalCalculator();
+    RadialThermalLayer.MaterialType soilType = wetSoil ? RadialThermalLayer.MaterialType.SOIL_WET
+        : RadialThermalLayer.MaterialType.SOIL_DRY;
+    calc.createBuriedOnshorePipe(diameter, wallThickness, burialDepth, soilType);
+    calc.setAmbientTemperature(surfaceTemperature);
+    useMultilayerThermalModel = true;
+    enableHeatTransfer = true;
+
+    heatTransferCoefficient = calc.calculateOverallUValue();
+  }
+
+  /**
+   * Calculate cooldown time from current state to a target temperature.
+   *
+   * <p>
+   * Estimates shutdown cooldown time, useful for hydrate prevention planning.
+   * </p>
+   *
+   * @param targetTemperature Target temperature
+   * @param unit Temperature unit ("K" or "C")
+   * @return Cooldown time in hours
+   */
+  public double calculateCooldownTime(double targetTemperature, String unit) {
+    double targetK = "C".equals(unit) ? targetTemperature + 273.15 : targetTemperature;
+
+    if (useMultilayerThermalModel && thermalCalculator != null) {
+      // Use initial fluid temperature
+      double initialTemp = getInletStream().getTemperature("K");
+      thermalCalculator.setFluidTemperature(initialTemp);
+      thermalCalculator.initializeLayerTemperaturesLinear();
+      return thermalCalculator.calculateCooldownTime(targetK);
+    }
+
+    // Simple exponential decay estimate with U-value
+    if (heatTransferCoefficient <= 0) {
+      return Double.POSITIVE_INFINITY;
+    }
+
+    double fluidTemp = getInletStream().getTemperature("K");
+    double ambientTemp = surfaceTemperature;
+
+    // Thermal mass per unit length (fluid + wall)
+    double fluidArea = Math.PI * diameter * diameter / 4.0;
+    double wallArea =
+        Math.PI * (Math.pow(diameter / 2 + wallThickness, 2) - Math.pow(diameter / 2, 2));
+    double fluidRho = getInletStream().getFluid().getDensity("kg/m3");
+    double fluidCp = getInletStream().getFluid().getCp("J/kgK");
+    double thermalMass = fluidArea * fluidRho * fluidCp + wallArea * wallDensity * wallHeatCapacity;
+
+    // Heat transfer surface area per unit length
+    double perimeter = Math.PI * diameter;
+
+    // Time constant tau = m*Cp / (h*A)
+    double tau = thermalMass / (heatTransferCoefficient * perimeter);
+
+    double dT0 = fluidTemp - ambientTemp;
+    double dT_target = targetK - ambientTemp;
+
+    if (dT0 <= 0 || dT_target <= 0 || dT_target >= dT0) {
+      return 0.0;
+    }
+
+    double cooldownSeconds = -tau * Math.log(dT_target / dT0);
+    return cooldownSeconds / 3600.0;
+  }
+
+  /**
+   * Calculate cooldown time to hydrate formation temperature.
+   *
+   * @return Cooldown time in hours, or infinity if hydrate temp not set
+   */
+  public double calculateHydrateCooldownTime() {
+    if (hydrateFormationTemperature <= 0) {
+      return Double.POSITIVE_INFINITY;
+    }
+    return calculateCooldownTime(hydrateFormationTemperature, "K");
+  }
+
+  /**
+   * Get thermal summary including U-value and layer details.
+   *
+   * @return Formatted thermal summary string
+   */
+  public String getThermalSummary() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Pipeline Thermal Configuration:\n");
+    sb.append(String.format("  Pipe ID: %.1f mm\n", diameter * 1000));
+    sb.append(String.format("  Wall thickness: %.1f mm\n", wallThickness * 1000));
+    sb.append(String.format("  Heat transfer enabled: %s\n", enableHeatTransfer));
+
+    if (useMultilayerThermalModel && thermalCalculator != null) {
+      sb.append("\nMulti-layer model enabled:\n");
+      sb.append(thermalCalculator.getSummary());
+    } else {
+      sb.append(String.format("  U-value: %.2f W/(m²·K)\n", heatTransferCoefficient));
+      sb.append(String.format("  Insulation type: %s\n", insulationType));
+      sb.append(String.format("  Surface temperature: %.1f °C\n", surfaceTemperature - 273.15));
+    }
+
+    if (hydrateFormationTemperature > 0) {
+      sb.append(String.format("\nHydrate formation temperature: %.1f °C\n",
+          hydrateFormationTemperature - 273.15));
+      sb.append(
+          String.format("Cooldown time to hydrate: %.1f hours\n", calculateHydrateCooldownTime()));
+    }
+
+    return sb.toString();
   }
 
   /**

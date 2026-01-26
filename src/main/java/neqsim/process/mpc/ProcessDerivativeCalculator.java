@@ -495,7 +495,12 @@ public class ProcessDerivativeCalculator {
   }
 
   /**
-   * Second-order central difference with error estimation.
+   * Second-order central difference with error estimation using five-point stencil.
+   *
+   * @param inputSpec the input variable specification
+   * @param baseValue the base value of the input variable
+   * @param step the perturbation step size
+   * @return gradient array with derivatives for each output variable
    */
   private double[] calculateCentralDifferenceSecondOrder(VariableSpec inputSpec, double baseValue,
       double step) {

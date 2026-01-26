@@ -66,6 +66,9 @@ public class ThrottlingValve extends TwoPortEquipment
   /** Flag indicating if valve has been auto-sized. */
   private boolean autoSized = false;
 
+  /** Maximum design AIV (Acoustic-Induced Vibration) power level in kW. */
+  private double maxDesignAIV = 10.0;
+
   /**
    * * Constructor for ThrottlingValve.
    *
@@ -946,6 +949,117 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   // ============================================================================
+  // Acoustic-Induced Vibration (AIV) Calculations
+  // ============================================================================
+
+  /**
+   * Calculate Acoustic-Induced Vibration (AIV) power level.
+   *
+   * <p>
+   * AIV is most significant at control valves where high pressure drops occur. The acoustic power
+   * generated is a function of mass flow rate, pressure drop, and temperature. This method
+   * implements the Energy Institute Guidelines formula for AIV screening.
+   * </p>
+   *
+   * <p>
+   * AIV Power Level interpretation (per Energy Institute Guidelines):
+   * </p>
+   * <ul>
+   * <li>&lt; 1 kW: Low risk - no special measures required</li>
+   * <li>1 - 10 kW: Medium risk - screening required</li>
+   * <li>10 - 25 kW: High risk - detailed assessment required</li>
+   * <li>&gt; 25 kW: Very high risk - design modifications needed</li>
+   * </ul>
+   *
+   * @return AIV acoustic power level in kW
+   */
+  public double calculateAIV() {
+    if (inStream == null || outStream == null) {
+      return 0.0;
+    }
+
+    double p1 = inStream.getPressure("Pa"); // Upstream pressure in Pa
+    double p2 = outStream.getPressure("Pa"); // Downstream pressure in Pa
+
+    if (p1 <= 0 || p2 <= 0 || p1 <= p2) {
+      return 0.0; // No pressure drop or invalid pressures
+    }
+
+    double tempK = inStream.getTemperature("K");
+    double mdot = inStream.getFlowRate("kg/sec"); // Mass flow rate in kg/s
+
+    // Pressure ratio for acoustic power calculation
+    double pressureRatio = (p1 - p2) / p1;
+    if (pressureRatio > 1.0) {
+      pressureRatio = 1.0;
+    }
+
+    // Energy Institute formula for acoustic power level
+    // W_acoustic = 3.2e-9 * mdot * P1 * (dP/P1)^3.6 * (T/273.15)^0.8
+    double acousticPowerWatts =
+        3.2e-9 * mdot * p1 * Math.pow(pressureRatio, 3.6) * Math.pow(tempK / 273.15, 0.8);
+
+    return acousticPowerWatts / 1000.0; // Return in kW
+  }
+
+  /**
+   * Calculate AIV Likelihood of Failure based on acoustic power and downstream pipe geometry.
+   *
+   * <p>
+   * AIV LOF interpretation:
+   * </p>
+   * <ul>
+   * <li>&lt; 0.3: Low risk</li>
+   * <li>0.3 - 0.5: Medium risk - monitoring recommended</li>
+   * <li>0.5 - 0.7: High risk - detailed assessment required</li>
+   * <li>&gt; 0.7: Very high risk - design changes needed</li>
+   * </ul>
+   *
+   * @param downstreamDiameter downstream pipe diameter in meters
+   * @param downstreamThickness downstream pipe wall thickness in meters
+   * @return AIV likelihood of failure (0.0-1.0)
+   */
+  public double calculateAIVLikelihoodOfFailure(double downstreamDiameter,
+      double downstreamThickness) {
+    double acousticPowerKW = calculateAIV();
+
+    double externalDiameter = downstreamDiameter + 2 * downstreamThickness;
+    double dtRatio = externalDiameter / downstreamThickness;
+
+    // Screening parameter: acoustic power * (D/t)^2
+    double screeningParam = acousticPowerKW * 1000 * Math.pow(dtRatio, 2); // Convert to W
+
+    // LOF based on screening parameter thresholds
+    if (screeningParam < 1e4) {
+      return 0.1;
+    } else if (screeningParam < 1e5) {
+      return 0.3;
+    } else if (screeningParam < 1e6) {
+      return 0.6;
+    } else {
+      return 0.9;
+    }
+  }
+
+  /**
+   * Set maximum design AIV power level for capacity constraints.
+   *
+   * @param aivKW maximum AIV power level in kW
+   */
+  public void setMaxDesignAIV(double aivKW) {
+    this.maxDesignAIV = aivKW;
+  }
+
+  /**
+   * Get maximum design AIV power level.
+   *
+   * @return maximum AIV power level in kW
+   */
+  public double getMaxDesignAIV() {
+    return maxDesignAIV;
+  }
+
+  // ============================================================================
   // CapacityConstrainedEquipment Implementation
   // ============================================================================
 
@@ -961,20 +1075,28 @@ public class ThrottlingValve extends TwoPortEquipment
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("cvUtilization",
         "", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
             .setDesignValue(getMechanicalDesign().maxDesignCv).setWarningThreshold(0.9)
-            .setValueSupplier(() -> getCv()));
+            .setDescription("Cv utilization vs design maximum").setValueSupplier(() -> getCv()));
 
     // Volume flow constraint (DESIGN limit)
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("volumeFlow",
         "m3/hr", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
             .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
-            .setValueSupplier(
+            .setDescription("Volume flow vs design maximum").setValueSupplier(
                 () -> getOutStream() != null ? getOutStream().getFlowRate("m3/hr") : 0.0));
 
     // Valve opening constraint (SOFT limit)
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("valveOpening",
         "%", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
             .setDesignValue(maxValveOpening).setWarningThreshold(0.9)
+            .setDescription("Valve opening percentage")
             .setValueSupplier(() -> percentValveOpening));
+
+    // AIV (Acoustic-Induced Vibration) constraint - critical for control valves
+    addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("AIV", "kW",
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
+            .setDesignValue(maxDesignAIV).setMaxValue(50.0).setWarningThreshold(0.4)
+            .setDescription("AIV acoustic power (<1kW=low, 1-10kW=medium, >25kW=very high risk)")
+            .setValueSupplier(() -> calculateAIV()));
   }
 
   /** {@inheritDoc} */

@@ -198,6 +198,69 @@ double[] tempC = pipe.getTemperatureProfile("C");   // Celsius
 double[] tempF = pipe.getTemperatureProfile("F");   // Fahrenheit
 ```
 
+## Holdup Model Configuration
+
+### Minimum Holdup Constraints
+
+The model applies a minimum liquid holdup constraint to prevent unrealistically low values in gas-dominant systems. This is based on OLGA's observation that even at high velocities, a thin liquid film remains on the pipe wall.
+
+**Default behavior (adaptive minimum):**
+
+By default, `useAdaptiveMinimumOnly = true`, which calculates the minimum holdup from flow correlations (Beggs-Brill type) scaled by the no-slip holdup. This allows very low holdups for lean gas systems:
+
+```java
+// Adaptive minimum (default) - good for lean gas
+// Minimum holdup = max(lambdaL × slipFactor, correlation-based)
+pipe.setUseAdaptiveMinimumOnly(true);   // Default
+pipe.setMinimumSlipFactor(2.0);         // Default multiplier
+```
+
+**For more conservative OLGA-style behavior:**
+
+```java
+// Apply absolute floor in addition to correlation
+pipe.setUseAdaptiveMinimumOnly(false);
+pipe.setMinimumLiquidHoldup(0.01);  // 1% absolute minimum
+```
+
+### Configuration Options
+
+| Method | Default | Description |
+|--------|---------|-------------|
+| `setUseAdaptiveMinimumOnly(boolean)` | `true` | Use correlation-only minimum (no absolute floor) |
+| `setMinimumLiquidHoldup(double)` | 0.001 | Absolute minimum holdup floor (when adaptive-only is false) |
+| `setMinimumSlipFactor(double)` | 2.0 | Multiplier for no-slip holdup in adaptive mode |
+| `setEnforceMinimumSlip(boolean)` | `true` | Enable/disable minimum slip constraint entirely |
+
+### Example: Lean Gas vs Rich Condensate
+
+```java
+// Lean wet gas (0.3% liquid loading) - use adaptive minimum
+TwoFluidPipe leanGasPipe = new TwoFluidPipe("LeanGas", inlet);
+leanGasPipe.setUseAdaptiveMinimumOnly(true);  // Allows holdup < 1%
+// Expected holdup ~ 0.6% (2× no-slip)
+
+// Rich gas condensate (5% liquid loading) - can use either mode
+TwoFluidPipe richPipe = new TwoFluidPipe("RichGas", inlet);
+richPipe.setUseAdaptiveMinimumOnly(false);
+richPipe.setMinimumLiquidHoldup(0.01);  // 1% floor is reasonable
+// Expected holdup ~ 8-15% depending on velocity
+```
+
+### Physics Background
+
+The adaptive minimum uses Beggs-Brill type correlations:
+
+- **Stratified flow:** `αL = 0.98 × λL^0.4846 / Fr^0.0868`
+- **Slug/Churn flow:** `αL = 0.845 × λL^0.5351 / Fr^0.0173`
+- **Annular flow:** Film model with minimum thickness + correlation
+
+Where:
+- `λL` = No-slip liquid holdup (input liquid volume fraction)
+- `Fr` = Froude number = v²/(g×D)
+
+For lean gas systems with λL = 0.003, the stratified correlation gives αL ≈ 0.007 (0.7%), which is more realistic than a fixed 1% floor.
+
 ## Closure Relations
 
 ### Flow Regime Detection

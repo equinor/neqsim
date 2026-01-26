@@ -278,6 +278,17 @@ Where:
 - $\Delta P$ = Pressure drop (Pa)
 - $T$ = Temperature (K)
 
+> **Note:** AIV is also available as a capacity constraint on `PipeBeggsAndBrills` and `ThrottlingValve` classes via `calculateAIV()` and `setMaxDesignAIV()` methods. See [Capacity Constraint Framework](CAPACITY_CONSTRAINT_FRAMEWORK.md#acoustic-induced-vibration-aiv-analysis) for details.
+
+### AIV Risk Levels (Acoustic Power Based)
+
+| Acoustic Power (kW) | Risk Level | Action Required |
+|---------------------|------------|-----------------|
+| < 1 | LOW | No action required |
+| 1 - 10 | MEDIUM | Review piping layout |
+| 10 - 25 | HIGH | Detailed analysis required |
+| > 25 | VERY HIGH | Mitigation required |
+
 ### Likelihood of Failure Assessment
 
 | Screening Parameter | LOF Category | Action Required |

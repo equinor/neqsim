@@ -254,6 +254,9 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Well Simulation | [docs/simulation/well_simulation_guide.md](simulation/well_simulation_guide.md) | Well simulation guide |
 | Well & Choke | [docs/simulation/well_and_choke_simulation.md](simulation/well_and_choke_simulation.md) | Choke valve simulation |
 | Pipelines | [docs/process/equipment/pipelines.md](process/equipment/pipelines.md) | Pipeline and riser models |
+| **TwoFluidPipe Model** | [docs/process/TWOFLUIDPIPE_MODEL.md](process/TWOFLUIDPIPE_MODEL.md) | **Two-fluid multiphase flow model** |
+| **TwoFluidPipe OLGA Comparison** | [docs/wiki/two_fluid_model_olga_comparison.md](wiki/two_fluid_model_olga_comparison.md) | **Mathematical equations, slug flow physics, Lagrangian tracking** |
+| **TwoFluidPipe Tutorial (Jupyter)** | [docs/examples/TwoFluidPipe_Tutorial.ipynb](examples/TwoFluidPipe_Tutorial.ipynb) | **Interactive notebook: multiphase flow, slug tracking, terrain effects, heat transfer** |
 | **Risers** | [docs/process/equipment/pipelines.md#risers](process/equipment/pipelines.md#risers) | **SCR, TTR, Flexible, Lazy-Wave risers** |
 | Beggs & Brill | [docs/process/PipeBeggsAndBrills.md](process/PipeBeggsAndBrills.md) | Beggs & Brill correlation |
 | Networks | [docs/process/equipment/networks.md](process/equipment/networks.md) | Pipeline network modeling |
@@ -282,7 +285,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Optimization Overview** | [docs/process/optimization/OPTIMIZATION_OVERVIEW.md](process/optimization/OPTIMIZATION_OVERVIEW.md) | **START HERE: Introduction to process optimization, when to use ProcessOptimizationEngine vs ProductionOptimizer** |
 | **ProductionOptimizer Tutorial** | [docs/examples/ProductionOptimizer_Tutorial.md](examples/ProductionOptimizer_Tutorial.md) | **Interactive Jupyter notebook with complete ProductionOptimizer guide: algorithms, single/multi-variable, Pareto, constraints** |
 | **Python Optimization Tutorial** | [docs/examples/NeqSim_Python_Optimization.md](examples/NeqSim_Python_Optimization.md) | **Using SciPy/Python optimizers with NeqSim process simulations: constraints, Pareto, global optimization** |
-| **Capacity Constraint Framework** | [docs/process/CAPACITY_CONSTRAINT_FRAMEWORK.md](process/CAPACITY_CONSTRAINT_FRAMEWORK.md) | **Framework for equipment capacity limits, bottleneck detection, and utilization tracking** |
+| **Capacity Constraint Framework** | [docs/process/CAPACITY_CONSTRAINT_FRAMEWORK.md](process/CAPACITY_CONSTRAINT_FRAMEWORK.md) | **Framework for equipment capacity limits, bottleneck detection, utilization tracking, and AIV/FIV vibration analysis** |
 | **Optimizer Plugin Architecture** | [docs/process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md](process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md) | **Equipment capacity strategies, throughput optimization, gradient descent, sensitivity analysis, shadow prices, and Eclipse VFP export** |
 | **External Optimizer Integration** | [docs/integration/EXTERNAL_OPTIMIZER_INTEGRATION.md](integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) | **ProcessSimulationEvaluator for Python/SciPy/NLopt/Pyomo integration with gradient estimation** |
 | **Production Optimization Guide** | [docs/examples/PRODUCTION_OPTIMIZATION_GUIDE.md](examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | **Complete guide to production optimization with Java and Python examples** |

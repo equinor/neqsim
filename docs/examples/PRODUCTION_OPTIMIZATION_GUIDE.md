@@ -1010,7 +1010,8 @@ OptimizationResult result = optimizer.optimize(process, feedStream, config,
 - Call `reinitializeCapacityConstraints()` after setting compressor charts to update speed/surge constraints
 - Set `setMaximumSpeed()` to define available headroom (typically 10-15% above design)
 - Use realistic search bounds that respect compressor surge/stonewall limits
-- Compressor constraints include: speed, min speed, power, surge margin, stonewall margin
+- Compressor constraints include: speed, min speed, power (speed-dependent), ratedPower (vs motor rating), surge margin, stonewall margin
+- For pipes, `setMaxDesignVelocity()` auto-invalidates cached constraints; use `reinitializeCapacityConstraints()` if needed after other changes
 
 ```java
 // HARD constraints cannot be violated

@@ -144,6 +144,20 @@ public class TwoFluidSection extends PipeSection {
   /** Water viscosity (Pa·s). */
   private double waterViscosity;
 
+  // ============ Terrain tracking fields ============
+
+  /** Flag indicating terrain-induced slug is pending at this section. */
+  private boolean terrainSlugPending = false;
+
+  /** Flag indicating severe slugging potential at this section (riser base). */
+  private boolean severeSlugPotential = false;
+
+  /** Accumulated liquid volume in low point (m³). */
+  private double accumulatedLiquidVolume = 0.0;
+
+  /** Time since last terrain slug event (s). */
+  private double timeSinceTerrainSlug = 0.0;
+
   // ============ Geometry calculator ============
   private transient GeometryCalculator geometryCalc;
 
@@ -923,6 +937,80 @@ public class TwoFluidSection extends PipeSection {
 
   public void setOilVelocity(double oilVelocity) {
     this.oilVelocity = oilVelocity;
+  }
+
+  // ============ Terrain tracking getters/setters ============
+
+  /**
+   * Check if a terrain-induced slug is pending at this section.
+   *
+   * @return true if terrain slug is pending
+   */
+  public boolean isTerrainSlugPending() {
+    return terrainSlugPending;
+  }
+
+  /**
+   * Set terrain-induced slug pending flag.
+   *
+   * @param pending true if terrain slug is pending
+   */
+  public void setTerrainSlugPending(boolean pending) {
+    this.terrainSlugPending = pending;
+  }
+
+  /**
+   * Check if this section has severe slugging potential (typically riser base).
+   *
+   * @return true if severe slugging potential exists
+   */
+  public boolean isSevereSlugPotential() {
+    return severeSlugPotential;
+  }
+
+  /**
+   * Set severe slugging potential flag.
+   *
+   * @param potential true if severe slugging potential exists
+   */
+  public void setSevereSlugPotential(boolean potential) {
+    this.severeSlugPotential = potential;
+  }
+
+  /**
+   * Get accumulated liquid volume at this section (for low points).
+   *
+   * @return Accumulated liquid volume (m³)
+   */
+  public double getAccumulatedLiquidVolume() {
+    return accumulatedLiquidVolume;
+  }
+
+  /**
+   * Set accumulated liquid volume.
+   *
+   * @param volume Accumulated liquid volume (m³)
+   */
+  public void setAccumulatedLiquidVolume(double volume) {
+    this.accumulatedLiquidVolume = Math.max(0, volume);
+  }
+
+  /**
+   * Get time since last terrain slug event at this section.
+   *
+   * @return Time since last terrain slug (s)
+   */
+  public double getTimeSinceTerrainSlug() {
+    return timeSinceTerrainSlug;
+  }
+
+  /**
+   * Set time since last terrain slug event.
+   *
+   * @param time Time since last terrain slug (s)
+   */
+  public void setTimeSinceTerrainSlug(double time) {
+    this.timeSinceTerrainSlug = Math.max(0, time);
   }
 
   @Override

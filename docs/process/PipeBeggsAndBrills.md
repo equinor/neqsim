@@ -590,6 +590,69 @@ System.out.println("Average liquid holdup: " + pipe.getLiquidHoldup());
 | `getTemperatureProfile()` | List of temperatures along pipe |
 | `getLiquidHoldupProfile()` | List of holdups along pipe |
 
+### Vibration Analysis Methods
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `calculateLOF()` | Likelihood of Failure [-] | FIV risk indicator for two-phase flow |
+| `calculateFRMS()` | RMS force [N/m] | Dynamic loading indicator |
+| `calculateAIV()` | Acoustic power [kW] | AIV per Energy Institute Guidelines |
+| `calculateAIVLikelihoodOfFailure()` | LOF [-] | AIV-based failure likelihood |
+| `getFIVAnalysis()` | Map<String, Object> | Complete vibration analysis |
+| `getFIVAnalysisJson()` | String (JSON) | Vibration analysis as JSON |
+
+### Vibration Design Limits
+
+| Method | Default | Description |
+|--------|---------|-------------|
+| `setMaxDesignVelocity(double)` | 15 m/s | Maximum erosional velocity |
+| `setMaxDesignLOF(double)` | 0.6 | Maximum LOF for two-phase |
+| `setMaxDesignFRMS(double)` | 500 N/m | Maximum RMS force |
+| `setMaxDesignAIV(double)` | 25 kW | Maximum acoustic power |
+
+---
+
+## Vibration Analysis
+
+### Flow-Induced Vibration (FIV)
+
+FIV analysis is relevant for two-phase (gas-liquid) flow where liquid slugging can cause pipe vibration:
+
+```java
+pipe.setSupportArrangement("Medium stiff");  // Affects LOF calculation
+double lof = pipe.calculateLOF();
+double frms = pipe.calculateFRMS();
+```
+
+### Acoustic-Induced Vibration (AIV)
+
+AIV is relevant for high-pressure gas systems with significant pressure drops. The calculation uses the Energy Institute Guidelines formula:
+
+$$W_{acoustic} = 3.2 \times 10^{-9} \cdot \dot{m} \cdot P_1 \cdot \left(\frac{\Delta P}{P_1}\right)^{3.6} \cdot \left(\frac{T}{273.15}\right)^{0.8}$$
+
+```java
+// AIV analysis for gas pipes
+double aivPower = pipe.calculateAIV();  // kW
+double aivLOF = pipe.calculateAIVLikelihoodOfFailure();
+
+// Set AIV limit (default 25 kW)
+pipe.setMaxDesignAIV(10.0);  // kW
+
+// Get complete analysis
+Map<String, Object> analysis = pipe.getFIVAnalysis();
+// Includes: AIV_power_kW, AIV_risk, AIV_LOF
+```
+
+**AIV Risk Levels:**
+| Acoustic Power | Risk Level |
+|----------------|------------|
+| < 1 kW | LOW |
+| 1-10 kW | MEDIUM |
+| 10-25 kW | HIGH |
+| > 25 kW | VERY HIGH |
+
+**Note:** For dry gas systems, AIV is typically more relevant than FIV (LOF/FRMS will be near zero).
+
 ---
 
 ## Validation
