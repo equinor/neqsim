@@ -423,6 +423,13 @@ public class ReservoirCouplingExporter implements Serializable {
 
   /**
    * Calculate BHP from THP using process model.
+   *
+   * @param fluid the fluid system
+   * @param rate production rate in Sm3/day
+   * @param thp tubing head pressure in bara
+   * @param wct water cut fraction (0-1)
+   * @param gor gas-oil ratio Sm3/Sm3
+   * @return calculated bottom hole pressure in bara
    */
   private double calculateBhp(SystemInterface fluid, double rate, double thp, double wct,
       double gor) {
@@ -441,6 +448,11 @@ public class ReservoirCouplingExporter implements Serializable {
 
   /**
    * Calculate injection BHP.
+   *
+   * @param fluid the fluid system
+   * @param rate injection rate in Sm3/day
+   * @param thp tubing head pressure in bara
+   * @return calculated bottom hole pressure in bara
    */
   private double calculateInjectionBhp(SystemInterface fluid, double rate, double thp) {
     double tvd = datumDepth;

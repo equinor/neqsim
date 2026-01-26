@@ -449,6 +449,9 @@ public class NetworkSolver implements Serializable {
 
   /**
    * Estimates flowline pressure drop using simplified Beggs-Brill.
+   *
+   * @param node the well node to calculate pressure drop for
+   * @return estimated pressure drop in bar
    */
   private double estimateFlowlinePressureDrop(WellNode node) {
     if (node.allocatedRate <= 0) {
@@ -474,6 +477,10 @@ public class NetworkSolver implements Serializable {
 
   /**
    * Finds wellhead pressure required to achieve target rate.
+   *
+   * @param node the well node
+   * @param targetRate target production rate in Sm3/day
+   * @return wellhead pressure in bara required to achieve target rate
    */
   private double findWHPForRate(WellNode node, double targetRate) {
     double whpLow = manifoldPressure + 5;
@@ -502,6 +509,8 @@ public class NetworkSolver implements Serializable {
 
   /**
    * Builds the result object.
+   *
+   * @return the network solution result
    */
   private NetworkResult buildResult() {
     NetworkResult result = new NetworkResult(name);

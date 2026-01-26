@@ -2741,7 +2741,6 @@ public class Separator extends ProcessEquipmentBaseClass
    * <li>"oilRetentionTime" - Oil retention time per API 12J</li>
    * <li>"waterRetentionTime" - Water retention time per API 12J</li>
    * </ul>
-   * </p>
    *
    * @param constraintNames names of constraints to enable (all others will be
    *                        disabled)

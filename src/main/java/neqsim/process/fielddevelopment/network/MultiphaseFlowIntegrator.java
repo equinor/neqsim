@@ -340,17 +340,29 @@ public class MultiphaseFlowIntegrator implements Serializable {
       return feasible;
     }
 
-    /** Set feasibility. */
+    /**
+     * Set feasibility.
+     *
+     * @param f true if feasible
+     */
     public void setFeasible(boolean f) {
       this.feasible = f;
     }
 
-    /** Get infeasibility reason. */
+    /**
+     * Get infeasibility reason.
+     *
+     * @return the infeasibility reason or null if feasible
+     */
     public String getInfeasibilityReason() {
       return infeasibilityReason;
     }
 
-    /** Set infeasibility reason. */
+    /**
+     * Set infeasibility reason.
+     *
+     * @param r the infeasibility reason
+     */
     public void setInfeasibilityReason(String r) {
       this.infeasibilityReason = r;
     }
