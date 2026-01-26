@@ -14,6 +14,11 @@ Detailed documentation for compressor performance curves in NeqSim, including mu
 - [Distance to Operating Limits](#distance-to-operating-limits)
 - [**Speed Calculation from Operating Point**](#speed-calculation-from-operating-point) ⭐ NEW
 - [Anti-Surge Control](#anti-surge-control)
+- [**Loading Compressor Curves from Files**](#loading-compressor-curves-from-files) ⭐ NEW
+  - [Loading from JSON Files](#loading-from-json-files)
+  - [Loading from CSV Files](#loading-from-csv-files)
+  - [CompressorChartJsonReader Class](#compressorchartjsonreader-class)
+  - [Best Practices for File-Based Curves](#best-practices-for-file-based-curves)
 - [API Reference](#api-reference)
 - [Python Examples](#python-examples)
 - [**Automatic Curve Generation**](#automatic-curve-generation) ⭐ NEW
@@ -1205,6 +1210,343 @@ antiSurge.setSurgeControlFactor(1.10);  // 10% margin above surge
 boolean isSurging = antiSurge.isSurge();
 double controlFactor = antiSurge.getSurgeControlFactor();
 ```
+
+---
+
+## Loading Compressor Curves from Files
+
+NeqSim supports loading compressor performance curves from external JSON and CSV files. This is useful when:
+- Working with vendor-provided compressor data
+- Sharing compressor curves between simulations
+- Storing compressor curves in version control
+- Integrating with external data management systems
+
+### Loading from JSON Files
+
+JSON is the recommended format for compressor curves due to its readability and support for metadata.
+
+#### JSON File Format
+
+```json
+{
+  "compressorName": "Example Compressor",
+  "headUnit": "kJ/kg",
+  "maxDesignPower_kW": 16619.42,
+  "speedCurves": [
+    {
+      "speed_rpm": 7382.55,
+      "flow_m3h": [19852.05, 21679.87, 23507.69, 25335.50, 27163.32],
+      "head_kJkg": [256.69, 253.67, 249.29, 243.58, 236.91],
+      "polytropicEfficiency_pct": [81.74, 82.99, 83.95, 84.64, 85.12]
+    },
+    {
+      "speed_rpm": 7031.0,
+      "flow_m3h": [17735.92, 19543.79, 21351.65, 23159.52, 24967.38],
+      "head_kJkg": [233.14, 230.33, 226.34, 220.79, 214.38],
+      "polytropicEfficiency_pct": [81.26, 82.67, 83.79, 84.53, 85.05]
+    },
+    {
+      "speed_rpm": 6327.9,
+      "flow_m3h": [15510.56, 17055.53, 18600.50, 20145.47, 21690.43],
+      "head_kJkg": [187.13, 184.12, 180.13, 175.31, 169.41],
+      "polytropicEfficiency_pct": [81.66, 82.93, 83.87, 84.54, 84.80]
+    }
+  ]
+}
+```
+
+#### JSON Field Reference
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `compressorName` | string | No | Name/identifier for the compressor |
+| `headUnit` | string | No | Unit for head values (default: "kJ/kg") |
+| `maxDesignPower_kW` | number | No | Maximum design power in kW |
+| `speedCurves` | array | **Yes** | Array of speed curve objects |
+
+**Speed Curve Object:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `speed_rpm` | number | **Yes** | Rotational speed in RPM |
+| `flow_m3h` | array | **Yes** | Flow values in m³/h (actual conditions) |
+| `head_kJkg` or `head` | array | **Yes** | Polytropic head in kJ/kg |
+| `polytropicEfficiency_pct` | array | **Yes** | Polytropic efficiency in % (0-100) |
+
+**Important Notes:**
+- All arrays in a speed curve must have the same length
+- Flow, head, and efficiency values must be ordered consistently (typically from surge to stonewall)
+- The surge point is automatically detected as the minimum flow point
+- The stonewall/choke point is automatically detected as the maximum flow point
+- Multiple speed curves should be provided for variable-speed compressors
+
+#### Java Usage
+
+```java
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.processSimulation.processEquipment.stream.Stream;
+import neqsim.thermo.system.SystemSrkEos;
+
+// Create a simple gas stream
+SystemSrkEos fluid = new SystemSrkEos(298.15, 50.0);
+fluid.addComponent("methane", 0.85);
+fluid.addComponent("ethane", 0.10);
+fluid.addComponent("propane", 0.05);
+fluid.setMixingRule("classic");
+
+Stream inlet = new Stream("inlet", fluid);
+inlet.setFlowRate(20000.0, "m3/hr");
+inlet.setTemperature(35.0, "C");
+inlet.setPressure(37.0, "bara");
+inlet.run();
+
+// Create compressor and load curves from JSON file
+Compressor compressor = new Compressor("K-100", inlet);
+compressor.setOutletPressure(110.0, "bara");
+compressor.setUsePolytropicCalc(true);
+
+// Load compressor curves from JSON file
+compressor.loadCompressorChartFromJson("path/to/compressor_curve.json");
+
+// Set speed and run
+compressor.setSpeed(6327.9);  // RPM matching one of the curves
+compressor.run();
+
+// Results now use the loaded performance curves
+System.out.println("Power: " + compressor.getPower("kW") + " kW");
+System.out.println("Polytropic Efficiency: " + (compressor.getPolytropicEfficiency() * 100) + "%");
+System.out.println("Polytropic Head: " + compressor.getPolytropicHead("kJ/kg") + " kJ/kg");
+```
+
+#### Loading from JSON String
+
+You can also load curves directly from a JSON string:
+
+```java
+String jsonString = """
+{
+  "compressorName": "Test Compressor",
+  "headUnit": "kJ/kg",
+  "speedCurves": [
+    {
+      "speed_rpm": 10000,
+      "flow_m3h": [3000, 4000, 5000, 6000],
+      "head_kJkg": [120, 110, 95, 75],
+      "polytropicEfficiency_pct": [75, 80, 82, 78]
+    }
+  ]
+}
+""";
+
+compressor.loadCompressorChartFromJsonString(jsonString);
+```
+
+#### Python Usage (neqsim-python)
+
+```python
+from neqsim.thermo import fluid
+from neqsim.process import stream, compressor
+
+# Create inlet stream
+gas = fluid('srk')
+gas.addComponent("methane", 0.85)
+gas.addComponent("ethane", 0.10)
+gas.addComponent("propane", 0.05)
+gas.setMixingRule("classic")
+
+inlet = stream(gas)
+inlet.setFlowRate(20000.0, "m3/hr")
+inlet.setTemperature(35.0, "C")
+inlet.setPressure(37.0, "bara")
+inlet.run()
+
+# Create compressor
+comp = compressor(inlet)
+comp.setOutletPressure(110.0, "bara")
+comp.setUsePolytropicCalc(True)
+
+# Load curves from JSON file
+comp.loadCompressorChartFromJson("compressor_curves/example_compressor_curve.json")
+
+# Set speed and run
+comp.setSpeed(6327.9)
+comp.run()
+
+print(f"Power: {comp.getPower('kW'):.2f} kW")
+print(f"Efficiency: {comp.getPolytropicEfficiency()*100:.2f}%")
+```
+
+#### Saving Curves to JSON
+
+You can export a compressor's current curves to JSON:
+
+```java
+// Save current compressor chart to JSON file
+compressor.saveCompressorChartToJson("output/my_compressor_curve.json");
+
+// Or get as JSON string
+String jsonOutput = compressor.getCompressorChartAsJson();
+System.out.println(jsonOutput);
+```
+
+---
+
+### Loading from CSV Files
+
+CSV format is useful for spreadsheet-based workflows or when importing data from other simulation tools.
+
+#### CSV File Format
+
+The CSV file must use **semicolon (`;`)** as the delimiter and include a header row.
+
+**Required columns:**
+- `speed` - Rotational speed in RPM
+- `flow` - Volumetric flow in m³/h (actual conditions)
+- `head` - Polytropic head in kJ/kg
+- `polyEff` - Polytropic efficiency in % (0-100)
+
+**Example CSV file (`compressor_curve.csv`):**
+
+```csv
+speed;flow;head;polyEff
+7382.55;19852.05;256.69;81.74
+7382.55;21679.87;253.67;82.99
+7382.55;23507.69;249.29;83.95
+7382.55;25335.50;243.58;84.64
+7382.55;27163.32;236.91;85.12
+7031.00;17735.92;233.14;81.26
+7031.00;19543.79;230.33;82.67
+7031.00;21351.65;226.34;83.79
+7031.00;23159.52;220.79;84.53
+7031.00;24967.38;214.38;85.05
+6327.90;15510.56;187.13;81.66
+6327.90;17055.53;184.12;82.93
+6327.90;18600.50;180.13;83.87
+6327.90;20145.47;175.31;84.54
+6327.90;21690.43;169.41;84.80
+```
+
+**Key Points:**
+- Each row represents one operating point
+- Multiple rows with the same speed define a single speed curve
+- Rows are automatically grouped by speed value
+- Order of columns does not matter (column names are used)
+- Surge and stonewall points are automatically detected from min/max flow per speed
+
+#### Java Usage
+
+```java
+// Load compressor curves from CSV file
+compressor.loadCompressorChartFromCsv("path/to/compressor_curve.csv");
+
+// The chart is automatically activated
+System.out.println("Chart active: " + compressor.getCompressorChart().isUseCompressorChart());
+```
+
+#### Creating CSV from Spreadsheet
+
+If you have compressor data in Excel or another spreadsheet:
+
+1. Organize data with columns: `speed`, `flow`, `head`, `polyEff`
+2. Ensure each speed curve has multiple flow/head/efficiency points
+3. Save as CSV with semicolon delimiter (`;`)
+4. Verify the header row matches exactly: `speed;flow;head;polyEff`
+
+**Excel Formula Example (to create CSV):**
+
+| A (speed) | B (flow) | C (head) | D (polyEff) |
+|-----------|----------|----------|-------------|
+| 10000 | 3000 | 120 | 75 |
+| 10000 | 3500 | 115 | 78 |
+| 10000 | 4000 | 108 | 80 |
+| 11000 | 3300 | 138 | 76 |
+| 11000 | 3800 | 132 | 79 |
+
+---
+
+### CompressorChartJsonReader Class
+
+For advanced use cases, you can use the reader class directly:
+
+```java
+import neqsim.process.equipment.compressor.CompressorChartJsonReader;
+
+// Create reader from file
+CompressorChartJsonReader reader = new CompressorChartJsonReader("compressor_curve.json");
+
+// Get metadata
+String name = reader.getCompressorName();
+String headUnit = reader.getHeadUnit();
+double maxPower = reader.getMaxDesignPower();
+
+// Get curve data
+double[] speeds = reader.getSpeeds();
+double[][] flows = reader.getFlowLines();
+double[][] heads = reader.getHeadLines();
+double[][] efficiencies = reader.getPolyEffLines();
+
+// Get automatically detected surge/choke points
+double[] surgeFlows = reader.getSurgeFlow();
+double[] surgeHeads = reader.getSurgeHead();
+double[] chokeFlows = reader.getChokeFlow();
+double[] chokeHeads = reader.getChokeHead();
+
+// Apply to compressor
+reader.setCurvesToCompressor(compressor);
+```
+
+### CompressorChartReader Class (CSV)
+
+```java
+import neqsim.process.equipment.compressor.CompressorChartReader;
+
+// Create reader from CSV file
+CompressorChartReader reader = new CompressorChartReader("compressor_curve.csv");
+
+// Get curve data
+double[] speeds = reader.getSpeeds();
+double[][] flows = reader.getFlowLines();
+double[][] heads = reader.getHeadLines();
+double[][] efficiencies = reader.getPolyEffLines();
+
+// Apply to compressor
+reader.setCurvesToCompressor(compressor);
+```
+
+---
+
+### Best Practices for File-Based Curves
+
+1. **Consistent Units**: Always use the same units throughout:
+   - Flow: m³/h at actual (inlet) conditions
+   - Head: kJ/kg (polytropic)
+   - Efficiency: % (0-100 scale, polytropic)
+   - Speed: RPM
+
+2. **Data Quality**:
+   - Include at least 5-10 points per speed curve for accurate interpolation
+   - Cover the full operating range from surge to stonewall
+   - Ensure efficiency values are physically reasonable (typically 70-90%)
+
+3. **Multiple Speeds**:
+   - Include at least 3 speed curves for variable-speed compressors
+   - Speed curves should cover the expected operating range
+
+4. **Version Control**:
+   - Store JSON/CSV files in version control
+   - Include metadata (compressor name, date, source) in JSON files
+   - Document the reference conditions (temperature, pressure) used
+
+5. **Validation**:
+   - After loading, verify the curves are active:
+     ```java
+     assert compressor.getCompressorChart().isUseCompressorChart();
+     ```
+   - Check that min/max speed bounds are set correctly:
+     ```java
+     System.out.println("Min speed: " + compressor.getMinimumSpeed());
+     System.out.println("Max speed: " + compressor.getMaximumSpeed());
+     ```
 
 ---
 
