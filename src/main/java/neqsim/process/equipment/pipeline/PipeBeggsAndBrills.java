@@ -3599,6 +3599,33 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     // Re-run to update calculations with new diameter
     run();
 
+    // Set design values for capacity constraints
+    try {
+      double currentVelocity = getMixtureVelocity();
+      double currentVolumeFlow = outStream != null ? outStream.getFlowRate("m3/hr") : 0.0;
+      double currentPressureDrop = getPressureDrop();
+
+      // Set default values if current values are invalid
+      if (Double.isNaN(currentVelocity) || currentVelocity <= 0) {
+        currentVelocity = targetVelocity;
+      }
+      if (Double.isNaN(currentVolumeFlow) || currentVolumeFlow <= 0) {
+        currentVolumeFlow = volumetricFlowRate * 3600.0; // m3/sec to m3/hr
+      }
+
+      getMechanicalDesign().maxDesignVelocity = currentVelocity * safetyFactor;
+      getMechanicalDesign().maxDesignVolumeFlow = currentVolumeFlow * safetyFactor;
+      if (!Double.isNaN(currentPressureDrop) && currentPressureDrop > 0) {
+        getMechanicalDesign().maxDesignPressureDrop = currentPressureDrop * safetyFactor;
+      }
+
+      // Clear and reinitialize capacity constraints with new design values
+      clearCapacityConstraints();
+      initializeCapacityConstraints();
+    } catch (Exception e) {
+      // Continue without constraint design values
+    }
+
     autoSized = true;
   }
 

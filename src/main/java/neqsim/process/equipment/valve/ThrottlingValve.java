@@ -1187,18 +1187,46 @@ public class ThrottlingValve extends TwoPortEquipment
   // AutoSizeable Implementation
   // ============================================================================
 
+  /** Default design opening percentage for valve sizing (50% for good control range). */
+  private static final double DESIGN_OPENING_PERCENT = 50.0;
+
+  /** Minimum design Cv when flow is zero or very low. */
+  private static final double MIN_DEFAULT_CV = 1.0;
+
   /**
    * Auto-sizes the valve based on current flow conditions.
    *
    * <p>
-   * This method calculates the required Cv value and selects an appropriate valve size based on the
-   * current inlet stream conditions and pressure drop.
+   * This method calculates the required Cv value so that the valve operates at approximately 50%
+   * opening at the current flow rate. This provides good control range - the valve can open further
+   * for higher flows or close for lower flows.
    * </p>
+   *
+   * <p>
+   * Design philosophy:
+   * </p>
+   * <ul>
+   * <li>At normal flow, valve should be at ~50% opening (design point)</li>
+   * <li>Maximum Cv (100% opening) = Cv needed at 50% opening * 2 (approximately)</li>
+   * <li>This gives control range from ~25% to 100% opening for typical flow variations</li>
+   * <li>For zero flow valves (bypass, emergency), uses minimum default Cv or estimates from
+   * connected equipment</li>
+   * </ul>
    *
    * @param safetyFactor safety factor to apply (e.g., 1.2 for 20% margin)
    */
   @Override
   public void autoSize(double safetyFactor) {
+    autoSize(safetyFactor, DESIGN_OPENING_PERCENT);
+  }
+
+  /**
+   * Auto-sizes the valve based on current flow conditions with specified design opening.
+   *
+   * @param safetyFactor safety factor to apply (e.g., 1.2 for 20% margin)
+   * @param designOpeningPercent the target valve opening percentage at design flow (typically 50%)
+   */
+  public void autoSize(double safetyFactor, double designOpeningPercent) {
     if (getInletStream() == null) {
       throw new IllegalStateException("Cannot auto-size valve without inlet stream");
     }
@@ -1206,17 +1234,147 @@ public class ThrottlingValve extends TwoPortEquipment
     // Run the valve first to establish operating conditions
     run();
 
-    // Calculate valve size using mechanical design
-    getMechanicalDesign().calcDesign();
-    double calculatedCv = getMechanicalDesign().getValveCvMax();
+    // Check if we have meaningful flow
+    double flowRate = getInletStream().getFlowRate("kg/hr");
+    boolean hasFlow = flowRate > 1e-6; // More than 1 mg/hr
 
-    // Apply safety factor to Cv and set on the valve itself
-    double designCv = calculatedCv * safetyFactor;
+    double designCv;
+
+    if (hasFlow) {
+      // Calculate Cv at 100% opening for current flow
+      getMechanicalDesign().calcDesign();
+      double calculatedCv = getMechanicalDesign().getValveCvMax();
+
+      if (calculatedCv <= 0 || Double.isNaN(calculatedCv)) {
+        // Fallback if calculation fails
+        calculatedCv = estimateCvFromFlow(flowRate);
+      }
+
+      // The calculated Cv is for 100% opening
+      // To have the valve at designOpeningPercent at current flow,
+      // we need to size the valve Cv larger
+      // For equal-percentage characteristic: Cv_actual = Cv_100 * R^((opening-1))
+      // Simplified: Cv needed at 100% ≈ Cv at design opening / opening factor
+      double openingFactor =
+          getMechanicalDesign().getValveCharacterizationMethod().getOpeningFactor(designOpeningPercent);
+
+      // designCv is the Cv at 100% opening such that at current flow,
+      // the valve operates at designOpeningPercent
+      designCv = calculatedCv / openingFactor;
+
+      // Apply safety factor
+      designCv = designCv * safetyFactor;
+
+      logger.info(
+          "Valve {} auto-sized: flow={} kg/hr, Cv@100%={}, designOpening={}%, designCv={}",
+          getName(), flowRate, calculatedCv, designOpeningPercent, designCv);
+    } else {
+      // Zero flow valve - estimate based on connected equipment or use default
+      designCv = estimateCvForZeroFlowValve(safetyFactor);
+      logger.info("Valve {} auto-sized for zero flow: using default/estimated Cv={}", getName(),
+          designCv);
+    }
+
+    // Ensure minimum Cv
+    designCv = Math.max(designCv, MIN_DEFAULT_CV);
 
     // Set the Cv on the valve (this is what controls valve sizing)
     setCv(designCv);
 
+    // Also set maxDesignCv for capacity constraint tracking
+    getMechanicalDesign().setMaxDesignCv(designCv);
+
+    // Set the valve opening to the design point for meaningful utilization
+    if (hasFlow) {
+      setPercentValveOpening(designOpeningPercent);
+    }
+
+    // Set volume flow design value
+    if (getOutStream() != null) {
+      double volumeFlow = getOutStream().getFlowRate("m3/hr");
+      if (volumeFlow > 0) {
+        getMechanicalDesign().maxDesignVolumeFlow = volumeFlow * safetyFactor;
+      }
+    }
+
+    // Clear and reinitialize capacity constraints with new design values
+    capacityConstraints.clear();
+    initializeCapacityConstraints();
+
     autoSized = true;
+  }
+
+  /**
+   * Estimates Cv from flow rate using simplified correlation.
+   *
+   * <p>
+   * This is a rough estimate when the standard calculation fails. Uses typical valve sizing rules
+   * of thumb.
+   * </p>
+   *
+   * @param flowRateKghr mass flow rate in kg/hr
+   * @return estimated Cv value
+   */
+  private double estimateCvFromFlow(double flowRateKghr) {
+    // Rule of thumb: For liquids, Cv ≈ Q (gpm) for water at 1 psi drop
+    // For gases, Cv ≈ Q (scfh) / 1360 at critical flow
+    // Use a conservative estimate based on mass flow
+    if (isGasValve()) {
+      // Gas: assume typical conditions, rough estimate
+      // Cv ≈ mass flow (kg/hr) / 50 (very rough rule of thumb)
+      return Math.max(flowRateKghr / 50.0, MIN_DEFAULT_CV);
+    } else {
+      // Liquid: assume water-like, rough estimate
+      // Cv ≈ volume flow (m3/hr) * 0.865 for water at 1 bar drop
+      double volumeFlow = flowRateKghr / 1000.0; // Approximate for water-like
+      return Math.max(volumeFlow * 0.865, MIN_DEFAULT_CV);
+    }
+  }
+
+  /**
+   * Estimates Cv for a valve with zero or negligible flow.
+   *
+   * <p>
+   * For valves like bypass valves, emergency relief valves, or startup valves that normally have no
+   * flow, this method estimates an appropriate Cv based on:
+   * </p>
+   * <ul>
+   * <li>Connected stream design conditions (if available)</li>
+   * <li>Pressure drop across the valve</li>
+   * <li>Default minimum values based on valve type</li>
+   * </ul>
+   *
+   * @param safetyFactor safety factor to apply
+   * @return estimated design Cv
+   */
+  private double estimateCvForZeroFlowValve(double safetyFactor) {
+    double estimatedCv = MIN_DEFAULT_CV;
+
+    // Try to estimate from pressure conditions
+    if (getInletStream() != null && getOutStream() != null) {
+      double p1 = getInletStream().getPressure("bara");
+      double p2 = getOutStream().getPressure("bara");
+      double dp = Math.abs(p1 - p2);
+
+      if (dp > 0.1) {
+        // There's a pressure drop defined - estimate Cv for potential flow
+        // Use a conservative estimate based on typical design flow for the pipe size
+        // Assume the valve might need to pass up to 10% of typical process flow
+        // For now, use pressure-based scaling
+        if (isGasValve()) {
+          // For gas, Cv roughly scales with sqrt(P1^2 - P2^2) / P1
+          // Use conservative estimate: Cv = 10 * sqrt(dp) for small valves
+          estimatedCv = 10.0 * Math.sqrt(dp);
+        } else {
+          // For liquid, Cv roughly scales with sqrt(dp)
+          estimatedCv = 5.0 * Math.sqrt(dp);
+        }
+      }
+    }
+
+    // Apply safety factor and ensure minimum
+    estimatedCv = estimatedCv * safetyFactor;
+    return Math.max(estimatedCv, MIN_DEFAULT_CV * safetyFactor);
   }
 
   /** {@inheritDoc} */

@@ -1230,6 +1230,10 @@ public class Separator extends ProcessEquipmentBaseClass
     // Apply calculated dimensions back to separator
     separatorMechanicalDesign.setDesign();
 
+    // Clear capacity constraints to force re-initialization with new design values
+    capacityConstraints.clear();
+    initializeCapacityConstraints();
+
     autoSized = true;
     logger.info("Separator " + getName() + " auto-sized: diameter="
         + String.format("%.3f", internalDiameter) + " m, length="

@@ -774,6 +774,34 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
     // Re-run to update calculations with new diameter
     run();
 
+    // Set design values for capacity constraints (with guards for NaN/invalid values)
+    try {
+      double currentVelocity = getVelocity();
+      double currentVolumeFlow = outStream != null ? outStream.getFlowRate("m3/hr") : 0.0;
+      double currentPressureDrop = getPressureDrop();
+
+      // Set default values if current values are invalid
+      if (Double.isNaN(currentVelocity) || currentVelocity <= 0) {
+        currentVelocity = 10.0; // Default 10 m/s
+      }
+      if (Double.isNaN(currentVolumeFlow) || currentVolumeFlow <= 0) {
+        currentVolumeFlow = 100.0; // Default 100 m3/hr
+      }
+
+      getMechanicalDesign().maxDesignVelocity = currentVelocity * safetyFactor;
+      getMechanicalDesign().maxDesignVolumeFlow = currentVolumeFlow * safetyFactor;
+      if (!Double.isNaN(currentPressureDrop) && currentPressureDrop > 0) {
+        getMechanicalDesign().maxDesignPressureDrop = currentPressureDrop * safetyFactor;
+      }
+
+      // Clear and reinitialize capacity constraints with new design values
+      clearCapacityConstraints();
+      initializeCapacityConstraints();
+    } catch (Exception e) {
+      // Silently continue if we can't calculate design values
+      // The pipeline was still sized, just without constraint design values
+    }
+
     autoSized = true;
   }
 

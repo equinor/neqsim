@@ -4562,9 +4562,10 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     setCompressorChart(generatedChart);
     getCompressorChart().setUseCompressorChart(true);
 
-    // Update max speed to match the chart's max speed curve
+    // Update max speed to match the chart's max speed curve with safety margin
     double chartMaxSpeed = getCompressorChart().getMaxSpeedCurve();
     if (!Double.isNaN(chartMaxSpeed) && chartMaxSpeed > 0) {
+      // Set max speed to chart max - this represents the design limit
       setMaximumSpeed(chartMaxSpeed);
     }
 
@@ -4574,22 +4575,36 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       setMinimumSpeed(chartMinSpeed);
     }
 
+    // Apply safety factor to power design value
+    // This ensures the compressor is sized with margin above current operating power
+    double currentPowerKW = getPower("kW");
+    if (!Double.isNaN(currentPowerKW) && currentPowerKW > 0) {
+      double designPowerKW = currentPowerKW * safetyFactor;
+      getMechanicalDesign().setMaxDesignPower(designPowerKW);
+      logger.debug("Set maxDesignPower to {} kW (current {} kW * safety factor {})", designPowerKW,
+          currentPowerKW, safetyFactor);
+    }
+
+    // Set design volume flow with safety factor for capacity tracking
+    double currentFlowM3h = inStream.getFlowRate("m3/hr");
+    if (!Double.isNaN(currentFlowM3h) && currentFlowM3h > 0) {
+      double designFlowM3h = currentFlowM3h * safetyFactor;
+      getMechanicalDesign().setMaxDesignVolumeFlow(designFlowM3h);
+      getMechanicalDesign().setMaxDesignGassVolumeFlow(designFlowM3h);
+      logger.debug("Set maxDesignVolumeFlow to {} m3/hr (current {} m3/hr * safety factor {})",
+          designFlowM3h, currentFlowM3h, safetyFactor);
+    }
+
     // Enable speed solving - compressor will calculate speed from pressure ratio
     setSolveSpeed(true);
 
-    // Reinitialize capacity constraints with new speed limits from chart
+    // Reinitialize capacity constraints with updated design values
     reinitializeCapacityConstraints();
 
-    // Apply safety factor to design head if needed
-    if (safetyFactor > 1.0) {
-      // Safety factor can be used to select a larger compressor frame
-      // For now, we note it in the sizing but curve scaling already accounts for margin
-      logger.info("Auto-sizing compressor {} with safety factor {}", getName(), safetyFactor);
-    }
-
     autoSized = true;
-    logger.info("Compressor {} auto-sized with {} template, {} speed curves, solveSpeed=true",
-        getName(), curveTemplate, numberOfSpeedCurves);
+    logger.info(
+        "Compressor {} auto-sized with {} template, {} speed curves, solveSpeed=true, safety factor {}",
+        getName(), curveTemplate, numberOfSpeedCurves, safetyFactor);
   }
 
   /** {@inheritDoc} */
