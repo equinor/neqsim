@@ -1287,9 +1287,25 @@ public class Separator extends ProcessEquipmentBaseClass
     // Apply calculated dimensions back to separator
     separatorMechanicalDesign.setDesign();
 
+    // Preserve which constraints were enabled before re-initialization
+    java.util.Set<String> enabledConstraints = new java.util.HashSet<String>();
+    for (Map.Entry<String, CapacityConstraint> entry : capacityConstraints.entrySet()) {
+      if (entry.getValue().isEnabled()) {
+        enabledConstraints.add(entry.getKey());
+      }
+    }
+
     // Clear capacity constraints to force re-initialization with new design values
     capacityConstraints.clear();
     initializeCapacityConstraints();
+
+    // Restore previously enabled constraints
+    for (String constraintName : enabledConstraints) {
+      CapacityConstraint constraint = capacityConstraints.get(constraintName);
+      if (constraint != null) {
+        constraint.setEnabled(true);
+      }
+    }
 
     // Enable the gasLoadFactor constraint since autoSize uses K-factor sizing
     CapacityConstraint gasLoadConstraint = capacityConstraints.get("gasLoadFactor");
@@ -2504,11 +2520,11 @@ public class Separator extends ProcessEquipmentBaseClass
 
     // Oil retention time constraint per API 12J (minimum 3 minutes)
     // Note: For retention time, we want ABOVE the minimum, so utilization is
-    // inverted
+    // inverted: utilization = minValue / currentValue
     // Disabled by default - enable via useEquinorConstraints() or
     // useAllConstraints()
     addCapacityConstraint(StandardConstraintType.SEPARATOR_OIL_RETENTION_TIME.createConstraint()
-        .setDesignValue(DEFAULT_MIN_OIL_RETENTION_TIME).setMinValue(DEFAULT_MIN_OIL_RETENTION_TIME)
+        .setMinValue(DEFAULT_MIN_OIL_RETENTION_TIME) // Only set minValue for minimum constraints
         .setWarningThreshold(1.2).setEnabled(false) // Warn if close to minimum
         .setValueSupplier(() -> {
           try {
@@ -2523,8 +2539,8 @@ public class Separator extends ProcessEquipmentBaseClass
     // Disabled by default - enable via useEquinorConstraints() or
     // useAllConstraints()
     addCapacityConstraint(StandardConstraintType.SEPARATOR_WATER_RETENTION_TIME.createConstraint()
-        .setDesignValue(DEFAULT_MIN_WATER_RETENTION_TIME)
-        .setMinValue(DEFAULT_MIN_WATER_RETENTION_TIME).setWarningThreshold(1.2).setEnabled(false)
+        .setMinValue(DEFAULT_MIN_WATER_RETENTION_TIME) // Only set minValue for minimum constraints
+        .setWarningThreshold(1.2).setEnabled(false)
         .setValueSupplier(() -> {
           try {
             double retention = calcWaterRetentionTime();

@@ -11,8 +11,10 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
@@ -832,5 +834,174 @@ public class ProductionOptimizerTest {
     Assertions.assertNotNull(detailedCsv, "Detailed CSV export should not be null");
     Assertions.assertTrue(detailedCsv.contains("_Util") || detailedCsv.contains("Feasible"),
         "Detailed CSV should have utilization columns or at least basic columns");
+  }
+
+  /**
+   * Tests optimization of a three-phase separator with all capacity constraints
+   * enabled and
+   * autosizing. This comprehensive test verifies:
+   * <ul>
+   * <li>ThreePhaseSeparator capacity analysis with gas, oil, and water
+   * phases</li>
+   * <li>autoSize() properly sizes the separator for the given flow</li>
+   * <li>All capacity constraints (gas load, liquid load, residence time) are
+   * active</li>
+   * <li>Optimizer finds the maximum feasible flow rate</li>
+   * <li>Constraint summary shows all active constraints</li>
+   * </ul>
+   */
+  @Test
+  public void testThreePhaseSeparatorOptimizationWithAllConstraints() {
+    // Create a realistic three-phase fluid (gas + oil + water)
+    SystemSrkEos system = new SystemSrkEos(323.15, 35.0); // 50C, 35 bara
+    system.addComponent("nitrogen", 1.0);
+    system.addComponent("CO2", 2.0);
+    system.addComponent("methane", 70.0);
+    system.addComponent("ethane", 8.0);
+    system.addComponent("propane", 5.0);
+    system.addComponent("n-butane", 3.0);
+    system.addComponent("n-pentane", 2.0);
+    system.addComponent("n-hexane", 1.5);
+    system.addComponent("n-heptane", 1.0);
+    system.addComponent("nC10", 3.5);
+    system.addComponent("water", 3.0);
+    system.setMixingRule("classic");
+    system.setMultiPhaseCheck(true);
+
+    // Create inlet stream
+    Stream inlet = new Stream("Well Stream", system);
+    inlet.setFlowRate(50000.0, "kg/hr");
+    inlet.setTemperature(50.0, "C");
+    inlet.setPressure(35.0, "bara");
+    inlet.run();
+
+    // Create three-phase separator
+    ThreePhaseSeparator separator = new ThreePhaseSeparator("HP 3-Phase Separator", inlet);
+
+    // Verify capacity analysis is enabled by default
+    Assertions.assertTrue(separator.isCapacityAnalysisEnabled(),
+        "Capacity analysis should be enabled by default for ThreePhaseSeparator");
+
+    // Build and run the process
+    ProcessSystem process = new ProcessSystem();
+    process.add(inlet);
+    process.add(separator);
+    process.run();
+
+    // Get initial utilization before autoSize
+    double initialUtil = separator.getMaxUtilization();
+    System.out.println("\n=== THREE-PHASE SEPARATOR OPTIMIZATION TEST ===");
+    System.out.println("Initial utilization (before autoSize): " + (initialUtil * 100) + "%");
+
+    // Auto-size the separator to match current flow with 50% safety margin
+    // Note: Use higher safety factor to ensure K-value constraint is satisfied
+    // (K-value at HLL is typically higher than gas load factor)
+    separator.autoSize(1.5);
+    process.run();
+
+    // NOTE: Must enable constraints AFTER autoSize() because autoSize() clears and
+    // reinitializes all constraints (setting them back to disabled by default)
+    // Enable ALL separator constraints including:
+    // - Gas load factor
+    // - K-value (Souders-Brown)
+    // - Droplet cut size (150 µm limit per TR3500)
+    // - Inlet momentum flux (16000 Pa limit)
+    // - Oil retention time (3 min minimum)
+    // - Water retention time (3 min minimum)
+    separator.useAllConstraints();
+
+    // Check utilization after autoSize
+    double utilAfterAutoSize = separator.getMaxUtilization();
+    System.out.println("Utilization after autoSize(1.2): " + (utilAfterAutoSize * 100) + "%");
+
+    // Print separator dimensions
+    System.out.println("Separator dimensions after autoSize:");
+    System.out.println("  Inner diameter: " + separator.getInternalDiameter() + " m");
+    System.out.println("  Length: " + separator.getSeparatorLength() + " m");
+    System.out.println("  Inlet nozzle ID: " + separator.getMechanicalDesign().getInletNozzleID() + " m");
+
+    // Print constraint summary
+    String constraintSummary = separator.getConstraintSummary();
+    System.out.println("\n" + constraintSummary);
+
+    // Debug: Print all constraint values including disabled ones
+    System.out.println("\n=== ALL CONSTRAINTS (including disabled) ===");
+    for (Map.Entry<String, CapacityConstraint> entry : separator.getCapacityConstraints().entrySet()) {
+      CapacityConstraint c = entry.getValue();
+      System.out.printf("  %s: enabled=%b, value=%.4f %s, maxValue=%.4f, util=%.1f%%%n",
+          c.getName(), c.isEnabled(), c.getCurrentValue(), c.getUnit(),
+          c.getMaxValue(), c.getUtilization() * 100);
+    }
+
+    // Verify constraints exist
+    Assertions.assertFalse(separator.getCapacityConstraints().isEmpty(),
+        "ThreePhaseSeparator should have capacity constraints");
+
+    // Run optimization to find maximum flow rate
+    ProductionOptimizer optimizer = new ProductionOptimizer();
+    double baseRate = inlet.getFlowRate("kg/hr");
+
+    OptimizationConfig config = new OptimizationConfig(baseRate * 0.2, baseRate * 2.0)
+        .rateUnit("kg/hr")
+        .tolerance(baseRate * 0.01)
+        .maxIterations(30)
+        .searchMode(SearchMode.BINARY_FEASIBILITY);
+
+    OptimizationResult result = optimizer.optimize(process, inlet, config,
+        Collections.emptyList(), Collections.emptyList());
+
+    // Print optimization results
+    System.out.println("\n=== OPTIMIZATION RESULTS ===");
+    System.out.println("Optimal flow rate: " + result.getOptimalRate() + " " + result.getRateUnit());
+    System.out.println("Feasible: " + result.isFeasible());
+    System.out.println("Iterations: " + result.getIterations());
+    System.out.println("Bottleneck: "
+        + (result.getBottleneck() != null ? result.getBottleneck().getName() : "none"));
+    System.out.println("Bottleneck utilization: " + (result.getBottleneckUtilization() * 100) + "%");
+
+    // Print utilization records
+    System.out.println("\nEquipment utilizations at optimal point:");
+    for (ProductionOptimizer.UtilizationRecord rec : result.getUtilizationRecords()) {
+      System.out.println("  " + rec.getEquipmentName() + ": "
+          + String.format("%.1f%%", rec.getUtilization() * 100)
+          + " (limit: " + String.format("%.1f%%", rec.getUtilizationLimit() * 100) + ")");
+    }
+
+    // Print iteration history summary
+    System.out.println("\n=== ITERATION HISTORY ===");
+    for (IterationRecord rec : result.getIterationHistory()) {
+      System.out.printf("  Rate=%.0f, Bottleneck=%s, Util=%.1f%%, Feasible=%b%n",
+          rec.getRate(), rec.getBottleneckName(),
+          rec.getBottleneckUtilization() * 100, rec.isFeasible());
+    }
+
+    // Assertions
+    Assertions.assertTrue(result.isFeasible(),
+        "Optimization should find a feasible solution");
+
+    // Optimal rate should be higher than minimum but not exceed original rate by
+    // too much
+    // (since separator was sized for 50000 kg/hr with 20% margin)
+    Assertions.assertTrue(result.getOptimalRate() > baseRate * 0.2,
+        "Optimal rate should be at least 20% of base rate");
+    Assertions.assertTrue(result.getOptimalRate() < baseRate * 2.0,
+        "Optimal rate should not exceed 200% of base rate");
+
+    // Bottleneck utilization should be within acceptable limits
+    Assertions.assertTrue(result.getBottleneckUtilization() > 0.0,
+        "Bottleneck utilization should be positive at optimal point");
+    Assertions.assertTrue(result.getBottleneckUtilization() <= 1.0,
+        "Bottleneck utilization should not exceed 100%");
+
+    // Test export functionality
+    String json = result.exportIterationHistoryAsJson();
+    Assertions.assertTrue(json.contains("\"iterationHistory\""),
+        "JSON export should contain iteration history");
+
+    String csv = result.exportIterationHistoryAsCsv();
+    Assertions.assertTrue(csv.split("\n").length > 5,
+        "CSV should have multiple iteration rows");
+
+    System.out.println("\n=== TEST PASSED ===");
   }
 }

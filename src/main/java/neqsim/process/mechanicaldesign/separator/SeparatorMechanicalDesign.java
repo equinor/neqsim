@@ -751,19 +751,54 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    */
   public double calcInletNozzleID() {
     Separator separator = (Separator) getProcessEquipment();
-    double gasFlowRate = separator.getThermoSystem().getPhase(0).getVolume() / 1e5; // m³/hr
-    double gasDensity = separator.getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    neqsim.thermo.system.SystemInterface thermoSystem = separator.getThermoSystem();
+
+    if (thermoSystem == null) {
+      inletNozzleID = 0.10; // Default 4" if no thermo system
+      return inletNozzleID;
+    }
+
+    // Calculate total volumetric flow from all phases
+    double totalVolumetricFlow = 0.0; // m³/hr
+    double mixDensity = 0.0;
+    double totalMassFlow = 0.0;
+
+    for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
+      double phaseFlowM3hr = thermoSystem.getPhase(i).getFlowRate("m3/hr");
+      double phaseDensity = thermoSystem.getPhase(i).getDensity("kg/m3");
+      double phaseMassFlow = phaseFlowM3hr * phaseDensity;
+
+      totalVolumetricFlow += phaseFlowM3hr;
+      totalMassFlow += phaseMassFlow;
+    }
+
+    if (totalVolumetricFlow > 0 && totalMassFlow > 0) {
+      mixDensity = totalMassFlow / totalVolumetricFlow;
+    } else {
+      // Fallback to gas-only calculation
+      if (thermoSystem.hasPhaseType("gas")) {
+        int gasIdx = thermoSystem.getPhaseNumberOfPhase("gas");
+        totalVolumetricFlow = thermoSystem.getPhase(gasIdx).getFlowRate("m3/hr");
+        mixDensity = thermoSystem.getPhase(gasIdx).getDensity("kg/m3");
+      }
+    }
+
+    if (totalVolumetricFlow <= 0 || mixDensity <= 0) {
+      inletNozzleID = 0.10; // Default 4" if no flow
+      return inletNozzleID;
+    }
 
     // API 12J recommends ρv² < 8000 Pa for inlet devices
-    double maxMomentum = 8000.0; // Pa
-    double maxVelocity = Math.sqrt(maxMomentum / gasDensity);
+    // For revamp situations, use 16000 Pa
+    double maxMomentum = 8000.0; // Pa (conservative)
+    double maxVelocity = Math.sqrt(maxMomentum / mixDensity);
 
     // Calculate minimum nozzle area
-    double minArea = (gasFlowRate / 3600.0) / maxVelocity;
+    double minArea = (totalVolumetricFlow / 3600.0) / maxVelocity;
     inletNozzleID = Math.sqrt(4.0 * minArea / Math.PI);
 
     // Round up to nearest standard size (50mm increments)
-    inletNozzleID = Math.ceil(inletNozzleID / 0.05) * 0.05;
+    inletNozzleID = Math.max(0.05, Math.ceil(inletNozzleID / 0.05) * 0.05);
 
     return inletNozzleID;
   }
