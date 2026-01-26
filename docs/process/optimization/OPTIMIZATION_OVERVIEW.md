@@ -255,6 +255,16 @@ Equipment constraints define operating limits. Each equipment type has a strateg
 | Pipe | Erosional velocity, pressure drop |
 | Valve | Cv capacity, choke conditions |
 
+> **⚠️ Important**: Most equipment constraints are **disabled by default** for backward compatibility. The optimizer automatically falls back to traditional capacity methods (`getCapacityMax()`/`getCapacityDuty()`) when no enabled constraints exist. To use multi-constraint capacity analysis, you must explicitly enable constraints:
+> 
+> ```java
+> separator.useEquinorConstraints();  // Enable Equinor TR3500 constraints
+> // OR
+> separator.enableConstraints();       // Enable all constraints
+> ```
+> 
+> See [Capacity Constraint Framework - Constraints Disabled by Default](../CAPACITY_CONSTRAINT_FRAMEWORK.md#important-constraints-disabled-by-default) for details.
+
 ### Utilization Ratio
 
 The **utilization ratio** is the key metric:

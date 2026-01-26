@@ -262,7 +262,9 @@ scrubber.useGasScrubberConstraints();  // Only K-value
 
 NeqSim separators include a constraint system for performance monitoring and capacity analysis. Constraints are based on industry standards including **Equinor TR3500** and **API 12J**.
 
-> **Note:** All separator constraints are **disabled by default** for backwards compatibility with the optimizer. Use the constraint selection methods (`useEquinorConstraints()`, `useAPIConstraints()`, `useAllConstraints()`, etc.) to enable constraints for capacity analysis.
+> **⚠️ Important:** All separator constraints are **disabled by default** for backward compatibility with the optimizer. Use the constraint selection methods (`useEquinorConstraints()`, `useAPIConstraints()`, `useAllConstraints()`, or `enableConstraints()`) to enable constraints for capacity analysis. The optimizer automatically falls back to traditional capacity methods when no enabled constraints exist.
+>
+> For detailed information on how the optimizer handles constraints, see [Capacity Constraint Framework - Constraints Disabled by Default](../CAPACITY_CONSTRAINT_FRAMEWORK.md#important-constraints-disabled-by-default).
 
 ### Available Constraints
 

@@ -9,6 +9,72 @@ The Capacity Constraint Framework extends NeqSim's existing bottleneck analysis 
 - **Warning thresholds**: Early warning when approaching limits
 - **Integration with ProductionOptimizer**: Works seamlessly with existing optimization tools
 
+## Important: Constraints Disabled by Default
+
+> **⚠️ Key Behavior**: All separator, valve, pipeline, pump, and manifold constraints are **disabled by default** for backward compatibility. The optimizer checks whether any constraints are enabled before using the `CapacityConstrainedEquipment` interface.
+
+### Why Constraints Are Disabled by Default
+
+To maintain backward compatibility with existing simulations, constraints are created but **not enabled** when equipment is initialized. This ensures that:
+
+1. **Existing code works unchanged** - Simulations that don't use capacity analysis continue to work
+2. **Explicit opt-in for capacity analysis** - You must explicitly enable constraints to use them
+3. **No unexpected optimization failures** - Optimizer falls back to traditional methods if no constraints are enabled
+
+### How to Enable Constraints
+
+```java
+// Method 1: Use pre-configured constraint sets (Separator example)
+Separator separator = new Separator("HP Separator", feed);
+separator.useEquinorConstraints();  // Enables K-value, droplet, momentum, retention times
+// OR
+separator.useAPIConstraints();      // Enables K-value and retention times per API 12J
+// OR
+separator.useAllConstraints();      // Enables all 5 constraint types
+
+// Method 2: Enable individual constraints
+separator.getConstraints().get(StandardConstraintType.SEPARATOR_K_VALUE).setEnabled(true);
+
+// Method 3: Enable all constraints at once
+separator.enableConstraints();      // Enables all constraints on this equipment
+
+// Method 4: Disable constraints (return to default)
+separator.disableConstraints();     // Disables all constraints
+```
+
+### How the Optimizer Uses Constraints
+
+The `ProductionOptimizer` uses a smart fallback mechanism:
+
+```java
+// In determineCapacityRule(), the optimizer checks:
+boolean hasEnabledConstraints = constrained.getCapacityConstraints().values().stream()
+    .anyMatch(CapacityConstraint::isEnabled);
+
+if (constrained.isCapacityAnalysisEnabled() && hasEnabledConstraints) {
+    // Use multi-constraint capacity analysis
+    return new ConstrainedCapacityRule(equipment);
+} else {
+    // Fall back to traditional getCapacityMax()/getCapacityDuty()
+    return new TraditionalCapacityRule(equipment);
+}
+```
+
+### Summary: Constraint Enablement by Equipment Type
+
+| Equipment Type | Default State | How to Enable |
+|---------------|---------------|---------------|
+| **Separator** | All disabled | `useEquinorConstraints()`, `useAPIConstraints()`, `enableConstraints()` |
+| **ThreePhaseSeparator** | All disabled | Same as Separator |
+| **GasScrubber** | K-value only enabled | `useGasScrubberConstraints()` (automatic in constructor) |
+| **Compressor** | All enabled | (constraints created by `autoSize()` are enabled by default) |
+| **ThrottlingValve** | All disabled | `enableConstraints()` |
+| **Pipeline** | All disabled | `enableConstraints()` |
+| **Pump** | All disabled | `enableConstraints()` |
+| **Manifold** | All disabled | `enableConstraints()` |
+
+---
+
 ## Relationship to Existing Bottleneck Analysis
 
 NeqSim already provides bottleneck analysis via `ProcessEquipmentInterface`:

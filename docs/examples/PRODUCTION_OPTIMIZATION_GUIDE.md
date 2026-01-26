@@ -8,6 +8,9 @@ This guide provides comprehensive examples for setting up and running production
 
 ## What's New (January 2026)
 
+### Behavior Changes
+- **Constraints Disabled by Default**: Separator, valve, pipeline, pump, and manifold constraints are now disabled by default for backward compatibility. Use `enableConstraints()`, `useEquinorConstraints()`, or `useAPIConstraints()` to enable constraint-based capacity analysis. The optimizer automatically falls back to traditional capacity methods when no constraints are enabled.
+
 ### Bug Fixes
 - **Golden Section Ratio**: Fixed inconsistent phi formula and comparison logic
 - **Nelder-Mead Bounds**: Added clamping for reflected/contracted simplex points
@@ -232,6 +235,40 @@ sep.getMechanicalDesign().setMaxDesignGassVolFlow(5000.0);  // m³/hr
 sep.getMechanicalDesign().setMaxDesignPressure(100.0);      // bara
 // These values feed into constraint limits
 ```
+
+### Important: Constraints Are Disabled by Default
+
+> **⚠️ Backward Compatibility**: Most equipment types have constraints **disabled by default** to maintain backward compatibility. The optimizer will automatically fall back to traditional capacity methods when no enabled constraints exist.
+
+**Equipment with Disabled Constraints by Default:**
+- Separator, ThreePhaseSeparator (except GasScrubber which enables K-value)
+- ThrottlingValve
+- Pipeline, PipeBeggsAndBrills, AdiabaticPipe
+- Pump
+- Manifold
+
+**Equipment with Enabled Constraints by Default:**
+- Compressor (when using `autoSize()` or setting max speed/power)
+
+**To enable constraints for capacity analysis:**
+
+```java
+// Separators - use pre-configured sets
+separator.useEquinorConstraints();  // Equinor TR3500 standards
+separator.useAPIConstraints();      // API 12J standards
+separator.useAllConstraints();      // All constraint types
+
+// Or enable all constraints on any equipment
+separator.enableConstraints();
+valve.enableConstraints();
+pipeline.enableConstraints();
+
+// Check if constraints are enabled
+boolean hasEnabled = equipment.getCapacityConstraints().values().stream()
+    .anyMatch(CapacityConstraint::isEnabled);
+```
+
+For detailed information, see [Capacity Constraint Framework - Constraints Disabled by Default](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md#important-constraints-disabled-by-default).
 
 ### Constraint Types and Their Behavior
 

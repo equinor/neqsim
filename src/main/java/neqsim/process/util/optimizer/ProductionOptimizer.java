@@ -545,6 +545,168 @@ public class ProductionOptimizer {
 
       return sb.toString();
     }
+
+    /**
+     * Exports the iteration history as a JSON string for analysis and debugging.
+     *
+     * <p>
+     * The JSON format includes an array of iteration records with all relevant
+     * optimization metrics including rate, utilization, feasibility, and equipment
+     * utilizations.
+     * </p>
+     *
+     * @return JSON string containing the full iteration history
+     */
+    public String exportIterationHistoryAsJson() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("{\n");
+      sb.append("  \"optimizationResult\": {\n");
+      sb.append("    \"optimalRate\": ").append(optimalRate).append(",\n");
+      sb.append("    \"rateUnit\": \"").append(rateUnit != null ? rateUnit : "").append("\",\n");
+      sb.append("    \"feasible\": ").append(feasible).append(",\n");
+      sb.append("    \"score\": ").append(score).append(",\n");
+      sb.append("    \"iterations\": ").append(iterations).append(",\n");
+      sb.append("    \"bottleneckUtilization\": ").append(bottleneckUtilization).append("\n");
+      sb.append("  },\n");
+      sb.append("  \"iterationHistory\": [\n");
+
+      for (int i = 0; i < iterationHistory.size(); i++) {
+        IterationRecord record = iterationHistory.get(i);
+        sb.append("    {\n");
+        sb.append("      \"iteration\": ").append(i + 1).append(",\n");
+        sb.append("      \"rate\": ").append(record.getRate()).append(",\n");
+        sb.append("      \"rateUnit\": \"").append(record.getRateUnit() != null ? record.getRateUnit() : "")
+            .append("\",\n");
+        sb.append("      \"bottleneckName\": \"")
+            .append(record.getBottleneckName() != null ? record.getBottleneckName() : "").append("\",\n");
+        sb.append("      \"bottleneckUtilization\": ").append(record.getBottleneckUtilization()).append(",\n");
+        sb.append("      \"utilizationWithinLimits\": ").append(record.isUtilizationWithinLimits()).append(",\n");
+        sb.append("      \"hardConstraintsOk\": ").append(record.isHardConstraintsOk()).append(",\n");
+        sb.append("      \"feasible\": ").append(record.isFeasible()).append(",\n");
+        sb.append("      \"score\": ").append(record.getScore()).append(",\n");
+
+        // Add equipment utilizations
+        sb.append("      \"utilizations\": [");
+        List<UtilizationRecord> utils = record.getUtilizations();
+        for (int j = 0; j < utils.size(); j++) {
+          UtilizationRecord util = utils.get(j);
+          sb.append("{\"equipment\": \"").append(util.getEquipmentName());
+          sb.append("\", \"utilization\": ").append(util.getUtilization());
+          sb.append(", \"limit\": ").append(util.getUtilizationLimit()).append("}");
+          if (j < utils.size() - 1) {
+            sb.append(", ");
+          }
+        }
+        sb.append("]\n");
+
+        sb.append("    }");
+        if (i < iterationHistory.size() - 1) {
+          sb.append(",");
+        }
+        sb.append("\n");
+      }
+
+      sb.append("  ]\n");
+      sb.append("}");
+      return sb.toString();
+    }
+
+    /**
+     * Exports the iteration history as a CSV string for spreadsheet analysis.
+     *
+     * <p>
+     * The CSV includes columns for iteration number, rate, unit, bottleneck name,
+     * bottleneck utilization, feasibility flags, and score. This format is suitable
+     * for import into Excel, Python pandas, or other analysis tools.
+     * </p>
+     *
+     * @return CSV string with header row and one data row per iteration
+     */
+    public String exportIterationHistoryAsCsv() {
+      StringBuilder sb = new StringBuilder();
+      // Header row
+      sb.append("Iteration,Rate,RateUnit,BottleneckName,BottleneckUtilization,");
+      sb.append("UtilizationWithinLimits,HardConstraintsOk,Feasible,Score\n");
+
+      for (int i = 0; i < iterationHistory.size(); i++) {
+        IterationRecord record = iterationHistory.get(i);
+        sb.append(i + 1).append(",");
+        sb.append(record.getRate()).append(",");
+        sb.append(record.getRateUnit() != null ? record.getRateUnit() : "").append(",");
+        sb.append(record.getBottleneckName() != null ? record.getBottleneckName() : "").append(",");
+        sb.append(record.getBottleneckUtilization()).append(",");
+        sb.append(record.isUtilizationWithinLimits()).append(",");
+        sb.append(record.isHardConstraintsOk()).append(",");
+        sb.append(record.isFeasible()).append(",");
+        sb.append(record.getScore()).append("\n");
+      }
+
+      return sb.toString();
+    }
+
+    /**
+     * Exports a detailed CSV including per-equipment utilization at each iteration.
+     *
+     * <p>
+     * This expanded format includes one column per equipment item, allowing
+     * visualization of how individual equipment utilizations change throughout
+     * the optimization search.
+     * </p>
+     *
+     * @return CSV string with equipment utilization columns
+     */
+    public String exportDetailedIterationHistoryAsCsv() {
+      if (iterationHistory.isEmpty()) {
+        return "No iteration history available";
+      }
+
+      // Collect all unique equipment names
+      List<String> equipmentNames = new ArrayList<>();
+      for (IterationRecord record : iterationHistory) {
+        for (UtilizationRecord util : record.getUtilizations()) {
+          if (!equipmentNames.contains(util.getEquipmentName())) {
+            equipmentNames.add(util.getEquipmentName());
+          }
+        }
+      }
+      Collections.sort(equipmentNames);
+
+      StringBuilder sb = new StringBuilder();
+      // Header row
+      sb.append("Iteration,Rate,RateUnit,Feasible,Score");
+      for (String name : equipmentNames) {
+        sb.append(",").append(name.replace(",", "_")).append("_Util");
+      }
+      sb.append("\n");
+
+      // Data rows
+      for (int i = 0; i < iterationHistory.size(); i++) {
+        IterationRecord record = iterationHistory.get(i);
+        sb.append(i + 1).append(",");
+        sb.append(record.getRate()).append(",");
+        sb.append(record.getRateUnit() != null ? record.getRateUnit() : "").append(",");
+        sb.append(record.isFeasible()).append(",");
+        sb.append(record.getScore());
+
+        // Build utilization lookup for this iteration
+        Map<String, Double> utilMap = new HashMap<>();
+        for (UtilizationRecord util : record.getUtilizations()) {
+          utilMap.put(util.getEquipmentName(), util.getUtilization());
+        }
+
+        // Add utilization for each equipment
+        for (String name : equipmentNames) {
+          sb.append(",");
+          Double util = utilMap.get(name);
+          if (util != null) {
+            sb.append(util);
+          }
+        }
+        sb.append("\n");
+      }
+
+      return sb.toString();
+    }
   }
 
   /**
@@ -3203,9 +3365,9 @@ public class ProductionOptimizer {
     }
 
     int iteration = 0;
-    while (iteration < config.maxIterations) {
-      double previousBestScore = globalBestScore;
+    double previousBestScore = globalBestScore; // Initialize before loop for stagnation detection
 
+    while (iteration < config.maxIterations) {
       for (int i = 0; i < swarmSize; i++) {
         double r1 = random.nextDouble();
         double r2 = random.nextDouble();
@@ -3242,6 +3404,7 @@ public class ProductionOptimizer {
       } else {
         stagnationCount = 0;
       }
+      previousBestScore = globalBestScore; // Update for next iteration's comparison
 
       if (Math.abs(globalBestScore) < 1e-12) {
         break;
@@ -3736,11 +3899,16 @@ public class ProductionOptimizer {
   }
 
   private String buildVectorCacheKey(double[] candidate, OptimizationConfig config) {
-    double tol = Math.max(config.tolerance, 1e-9);
+    // Use a minimum bucket size to avoid excessive cache entries while
+    // maintaining enough precision to distinguish meaningfully different
+    // candidates.
+    // When tolerance is very small, use the value itself with limited precision.
+    double bucketSize = Math.max(config.tolerance, 0.1);
     StringBuilder key = new StringBuilder();
     for (double value : candidate) {
-      long rounded = Math.round(value / tol);
-      key.append(rounded).append("|");
+      // Use bucket-based rounding for cache keys
+      long bucket = Math.round(value / bucketSize);
+      key.append(bucket).append("|");
     }
     return key.toString();
   }

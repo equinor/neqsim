@@ -779,4 +779,58 @@ public class ProductionOptimizerTest {
     Assertions.assertTrue(result.isFeasible(),
         "Optimization starting near feasible point should find feasible solution");
   }
+
+  /**
+   * Tests the iteration history export functionality for JSON and CSV formats.
+   */
+  @Test
+  public void testIterationHistoryExport() {
+    // Simple optimization to get iteration history
+    SystemSrkEos system = new SystemSrkEos(300.0, 50.0);
+    system.addComponent("methane", 90.0);
+    system.addComponent("propane", 10.0);
+    system.setMixingRule("classic");
+
+    Stream inlet = new Stream("inlet", system);
+    inlet.setFlowRate(5000.0, "kg/hr");
+    inlet.setTemperature(25.0, "C");
+    inlet.setPressure(50.0, "bara");
+    inlet.run();
+
+    Separator separator = new Separator("separator", inlet);
+    separator.autoSize(1.0);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(inlet);
+    process.add(separator);
+    process.run();
+
+    ProductionOptimizer optimizer = new ProductionOptimizer();
+    OptimizationConfig config = new OptimizationConfig(1000.0, 10000.0)
+        .rateUnit("kg/hr")
+        .maxIterations(10);
+
+    OptimizationResult result = optimizer.optimize(process, inlet, config,
+        Collections.emptyList(), Collections.emptyList());
+
+    // Test JSON export
+    String json = result.exportIterationHistoryAsJson();
+    Assertions.assertNotNull(json, "JSON export should not be null");
+    Assertions.assertTrue(json.contains("\"iterationHistory\""), "JSON should contain iterationHistory");
+    Assertions.assertTrue(json.contains("\"rate\""), "JSON should contain rate field");
+    Assertions.assertTrue(json.contains("\"feasible\""), "JSON should contain feasible field");
+    Assertions.assertTrue(json.contains("\"optimalRate\""), "JSON should contain optimalRate");
+
+    // Test CSV export
+    String csv = result.exportIterationHistoryAsCsv();
+    Assertions.assertNotNull(csv, "CSV export should not be null");
+    Assertions.assertTrue(csv.contains("Iteration,Rate,RateUnit"), "CSV should have header row");
+    Assertions.assertTrue(csv.split("\n").length > 1, "CSV should have data rows");
+
+    // Test detailed CSV export
+    String detailedCsv = result.exportDetailedIterationHistoryAsCsv();
+    Assertions.assertNotNull(detailedCsv, "Detailed CSV export should not be null");
+    Assertions.assertTrue(detailedCsv.contains("_Util") || detailedCsv.contains("Feasible"),
+        "Detailed CSV should have utilization columns or at least basic columns");
+  }
 }
