@@ -3807,13 +3807,17 @@ public class ProductionOptimizer {
     }
 
     // PRIORITY: If equipment implements CapacityConstrainedEquipment and has
-    // capacity analysis
-    // enabled, use its getMaxUtilization() method instead of hardcoded rules.
+    // capacity analysis enabled AND at least one constraint is enabled,
+    // use its getMaxUtilization() method instead of hardcoded rules.
     // This ensures the optimizer uses the same capacity calculations as the
-    // equipment itself.
+    // equipment itself, while falling back to type-specific rules when
+    // constraints are disabled.
     if (unit instanceof neqsim.process.equipment.capacity.CapacityConstrainedEquipment) {
       neqsim.process.equipment.capacity.CapacityConstrainedEquipment constrained = (neqsim.process.equipment.capacity.CapacityConstrainedEquipment) unit;
-      if (constrained.isCapacityAnalysisEnabled()) {
+      // Check if any constraint is enabled
+      boolean hasEnabledConstraints = constrained.getCapacityConstraints().values().stream()
+          .anyMatch(neqsim.process.equipment.capacity.CapacityConstraint::isEnabled);
+      if (constrained.isCapacityAnalysisEnabled() && hasEnabledConstraints) {
         // Use getMaxUtilization() which returns the actual capacity utilization (0-1
         // scale)
         // from the equipment's capacity constraint framework

@@ -4236,19 +4236,21 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   /** {@inheritDoc} */
   @Override
   public double getMaxUtilization() {
-    // If simulation is invalid (e.g., compressor outside chart envelope),
-    // return NaN to indicate utilization cannot be meaningfully computed
-    if (!isSimulationValid()) {
-      return Double.NaN;
-    }
-
     ensureCapacityConstraintsInitialized();
     double maxUtil = 0.0;
     for (CapacityConstraint constraint : capacityConstraints.values()) {
+      if (!constraint.isEnabled()) {
+        continue;
+      }
       double util = constraint.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
         maxUtil = util;
       }
+    }
+    // If no enabled constraints or all returned NaN, fall back to simulation validity
+    // A compressor in surge or operating outside its envelope should show high utilization
+    if (maxUtil == 0.0 && !isSimulationValid()) {
+      return 1.5; // 150% utilization indicates operating beyond capacity
     }
     return maxUtil;
   }

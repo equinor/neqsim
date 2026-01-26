@@ -903,6 +903,9 @@ public class Separator extends ProcessEquipmentBaseClass
   public void setDesignGasLoadFactor(double kFactor) {
     this.designGasLoadFactor = kFactor;
     // Update the capacity constraint if it exists
+    // Note: This does NOT enable the constraint - users must explicitly call
+    // enableConstraint("gasLoadFactor") or useXxxConstraints() to enable capacity
+    // tracking
     CapacityConstraint constraint = capacityConstraints.get("gasLoadFactor");
     if (constraint != null) {
       constraint.setDesignValue(kFactor);
@@ -1287,6 +1290,12 @@ public class Separator extends ProcessEquipmentBaseClass
     // Clear capacity constraints to force re-initialization with new design values
     capacityConstraints.clear();
     initializeCapacityConstraints();
+
+    // Enable the gasLoadFactor constraint since autoSize uses K-factor sizing
+    CapacityConstraint gasLoadConstraint = capacityConstraints.get("gasLoadFactor");
+    if (gasLoadConstraint != null) {
+      gasLoadConstraint.setEnabled(true);
+    }
 
     autoSized = true;
     logger.info("Separator " + getName() + " auto-sized: diameter="
@@ -2738,6 +2747,10 @@ public class Separator extends ProcessEquipmentBaseClass
    * @param constraintNames names of constraints to enable
    */
   public void enableConstraints(String... constraintNames) {
+    // Ensure constraints are initialized
+    if (capacityConstraints.isEmpty()) {
+      initializeCapacityConstraints();
+    }
     for (String name : constraintNames) {
       CapacityConstraint constraint = capacityConstraints.get(name);
       if (constraint != null) {
@@ -2752,6 +2765,10 @@ public class Separator extends ProcessEquipmentBaseClass
    * @param constraintNames names of constraints to disable
    */
   public void disableConstraints(String... constraintNames) {
+    // Ensure constraints are initialized
+    if (capacityConstraints.isEmpty()) {
+      initializeCapacityConstraints();
+    }
     for (String name : constraintNames) {
       CapacityConstraint constraint = capacityConstraints.get(name);
       if (constraint != null) {
