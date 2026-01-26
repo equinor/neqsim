@@ -2488,6 +2488,13 @@ public class Separator extends ProcessEquipmentBaseClass
       if (!Double.isNaN(util) && util > maxUtil) {
         maxUtil = util;
       }
+      // Log constraint details if utilization is unusually high
+      if (util > 5.0) {
+        logger.warn("Separator {} constraint {} has high utilization: {}%, "
+            + "currentValue={}, designValue={}",
+            getName(), constraint.getName(), util * 100,
+            constraint.getCurrentValue(), constraint.getDesignValue());
+      }
     }
     return maxUtil;
   }

@@ -4333,7 +4333,12 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
         try {
           double actualFlow = getInletStream().getFlowRate("m3/hr");
           double polytropicHeadValue = getPolytropicFluidHead();
-          if (getCompressorChart().getSurgeCurve().isSurge(polytropicHeadValue, actualFlow)) {
+          double surgeFlow = getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHeadValue);
+          // Only flag as surge if actual flow is significantly below surge flow
+          // Allow small tolerance (0.5%) to handle floating-point precision and
+          // compressors operating exactly on the surge line with anti-surge control
+          double surgeTolerance = 0.005; // 0.5% tolerance
+          if (actualFlow < surgeFlow * (1.0 - surgeTolerance)) {
             return false;
           }
         } catch (Exception e) {
@@ -4438,7 +4443,11 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
           double actualFlow = getInletStream().getFlowRate("m3/hr");
           double polytropicHeadValue = getPolytropicFluidHead();
           double surgeFlow = getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHeadValue);
-          if (getCompressorChart().getSurgeCurve().isSurge(polytropicHeadValue, actualFlow)) {
+          // Only flag as surge if actual flow is significantly below surge flow
+          // Allow small tolerance (0.5%) to handle floating-point precision and
+          // compressors operating exactly on the surge line with anti-surge control
+          double surgeTolerance = 0.005; // 0.5% tolerance
+          if (actualFlow < surgeFlow * (1.0 - surgeTolerance)) {
             double surgeMargin = (actualFlow - surgeFlow) / surgeFlow * 100.0;
             errors.add(String.format(
                 "%s: Operating in SURGE region - actual flow %.0f m3/hr < surge flow %.0f m3/hr (margin: %.1f%%)",

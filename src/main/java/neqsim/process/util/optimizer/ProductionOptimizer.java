@@ -15,6 +15,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
@@ -138,6 +140,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * @see ParetoResult
  */
 public class ProductionOptimizer {
+  /** Logger for this class. */
+  private static final Logger logger = LogManager.getLogger(ProductionOptimizer.class);
+
   /**
    * Default maximum utilization used when no specific equipment rule is provided.
    */
@@ -2547,6 +2552,13 @@ public class ProductionOptimizer {
     // If simulation is fundamentally invalid, return infeasible evaluation
     // immediately
     if (!simulationValid && config.isRejectInvalidSimulations()) {
+      // Log validation errors for debugging
+      if (!validationErrors.isEmpty()) {
+        logger.warn("Simulation validation failed with {} errors:", validationErrors.size());
+        for (String error : validationErrors) {
+          logger.warn("  - {}", error);
+        }
+      }
       // Create a dummy evaluation with high but finite utilization to signal
       // infeasibility
       // Using a value > 1.0 but not infinity to avoid confusion in reporting
@@ -2775,15 +2787,18 @@ public class ProductionOptimizer {
       List<ManipulatedVariable> variables, OptimizationConfig config,
       List<OptimizationObjective> objectives, List<OptimizationConstraint> constraints,
       List<IterationRecord> iterationHistory) {
-    double phi = (1 + Math.sqrt(5)) / 2;
+    // Use consistent golden ratio: phi = (sqrt(5) - 1) / 2 ≈ 0.618
+    // This is the conjugate golden ratio, which gives the correct interval reduction
+    double phi = 0.5 * (Math.sqrt(5) - 1);
     Map<String, Evaluation> cache = new HashMap<>();
     ManipulatedVariable variable = variables.get(0);
     double low = variable.getLowerBound();
     double high = variable.getUpperBound();
     String unit = variable.getUnit() != null ? variable.getUnit() : config.rateUnit;
 
-    double c = high - (high - low) / phi;
-    double d = low + (high - low) / phi;
+    // Golden section points: c is closer to low, d is closer to high
+    double c = high - phi * (high - low);
+    double d = low + phi * (high - low);
 
     Evaluation evalC = evaluateCandidate(process, variables, config, objectives, constraints,
         new double[] { c }, cache);
@@ -2796,30 +2811,47 @@ public class ProductionOptimizer {
 
     int iteration = 0;
     while (iteration < config.maxIterations && Math.abs(high - low) > config.tolerance) {
-      if (feasibilityScore(evalC) > feasibilityScore(evalD)) {
-        high = d;
-        d = c;
-        evalD = evalC;
-        c = high - (high - low) / phi;
-        evalC = evaluateCandidate(process, variables, config, objectives, constraints,
-            new double[] { c }, cache);
-        recordIteration(iterationHistory, c, unit, evalC,
-            evalC.utilizationWithinLimits() && evalC.hardOk());
-      } else {
+      // Higher score is better, so if scoreC < scoreD, narrow from low side
+      if (feasibilityScore(evalC) < feasibilityScore(evalD)) {
         low = c;
         c = d;
         evalC = evalD;
-        d = low + (high - low) / phi;
+        d = low + phi * (high - low);
         evalD = evaluateCandidate(process, variables, config, objectives, constraints,
             new double[] { d }, cache);
         recordIteration(iterationHistory, d, unit, evalD,
             evalD.utilizationWithinLimits() && evalD.hardOk());
+      } else {
+        high = d;
+        d = c;
+        evalD = evalC;
+        c = high - phi * (high - low);
+        evalC = evaluateCandidate(process, variables, config, objectives, constraints,
+            new double[] { c }, cache);
+        recordIteration(iterationHistory, c, unit, evalC,
+            evalC.utilizationWithinLimits() && evalC.hardOk());
       }
       iteration++;
     }
 
-    Evaluation bestEval = feasibilityScore(evalC) > feasibilityScore(evalD) ? evalC : evalD;
-    double bestRate = feasibilityScore(evalC) > feasibilityScore(evalD) ? c : d;
+    // Track best feasible solution throughout the search
+    Evaluation bestEval = null;
+    double bestRate = low;
+    if (evalC.utilizationWithinLimits() && evalC.hardOk()
+        && (bestEval == null || evalC.score() > bestEval.score())) {
+      bestEval = evalC;
+      bestRate = c;
+    }
+    if (evalD.utilizationWithinLimits() && evalD.hardOk()
+        && (bestEval == null || evalD.score() > bestEval.score())) {
+      bestEval = evalD;
+      bestRate = d;
+    }
+    if (bestEval == null) {
+      // No feasible solution found, return best score
+      bestEval = feasibilityScore(evalC) > feasibilityScore(evalD) ? evalC : evalD;
+      bestRate = feasibilityScore(evalC) > feasibilityScore(evalD) ? c : d;
+    }
     return toResult(bestRate, unit, iteration, bestEval, iterationHistory);
   }
 
@@ -2907,12 +2939,12 @@ public class ProductionOptimizer {
       double[] centroid = computeCentroid(simplex, simplexSize - 1);
       double[] worst = simplex[simplexSize - 1];
 
-      double[] reflected = reflect(centroid, worst, 1.0);
+      double[] reflected = clampToBounds(reflect(centroid, worst, 1.0), variables);
       Evaluation reflectedEval = evaluateCandidate(process, variables, config, objectives, constraints, reflected,
           cache);
 
       if (feasibilityScore(reflectedEval) > feasibilityScore(evaluations[0])) {
-        double[] expanded = reflect(centroid, worst, 2.0);
+        double[] expanded = clampToBounds(reflect(centroid, worst, 2.0), variables);
         Evaluation expandedEval = evaluateCandidate(process, variables, config, objectives, constraints, expanded,
             cache);
         if (feasibilityScore(expandedEval) > feasibilityScore(reflectedEval)) {
@@ -2926,7 +2958,7 @@ public class ProductionOptimizer {
         simplex[simplexSize - 1] = reflected;
         evaluations[simplexSize - 1] = reflectedEval;
       } else {
-        double[] contracted = contract(centroid, worst, 0.5);
+        double[] contracted = clampToBounds(contract(centroid, worst, 0.5), variables);
         Evaluation contractedEval = evaluateCandidate(process, variables, config, objectives,
             constraints, contracted, cache);
         if (feasibilityScore(contractedEval) > feasibilityScore(evaluations[simplexSize - 1])) {
@@ -3325,6 +3357,22 @@ public class ProductionOptimizer {
     return result;
   }
 
+  /**
+   * Clamp all values in the candidate array to the bounds defined by the manipulated variables.
+   *
+   * @param candidate the array of candidate values to clamp
+   * @param variables the list of manipulated variables defining the bounds
+   * @return the clamped array
+   */
+  private double[] clampToBounds(double[] candidate, List<ManipulatedVariable> variables) {
+    double[] clamped = new double[candidate.length];
+    for (int i = 0; i < candidate.length; i++) {
+      ManipulatedVariable var = variables.get(i);
+      clamped[i] = Math.max(var.getLowerBound(), Math.min(var.getUpperBound(), candidate[i]));
+    }
+    return clamped;
+  }
+
   private void shrink(double[][] simplex, List<ManipulatedVariable> variables) {
     for (int i = 1; i < simplex.length; i++) {
       for (int j = 0; j < simplex[i].length; j++) {
@@ -3373,6 +3421,15 @@ public class ProductionOptimizer {
   private Evaluation evaluateCandidateInternal(ProcessSystem process, StreamInterface feedStream,
       OptimizationConfig config, List<OptimizationObjective> objectives,
       List<OptimizationConstraint> constraints, double candidateRate) {
+    // Validate candidate rate to avoid zero/negative flow issues
+    if (candidateRate <= 0 || Double.isNaN(candidateRate) || Double.isInfinite(candidateRate)) {
+      logger.debug("Invalid candidate rate: {}, returning infeasible evaluation", candidateRate);
+      Map<String, Double> decisions = new HashMap<>();
+      decisions.put(feedStream.getName(), candidateRate);
+      return new Evaluation(10.0, null, new ArrayList<UtilizationRecord>(),
+          new ArrayList<ConstraintStatus>(), new HashMap<String, Double>(), decisions, false, false,
+          Double.NEGATIVE_INFINITY);
+    }
     feedStream.setFlowRate(candidateRate, config.rateUnit);
     process.run();
     Map<String, Double> decisions = new HashMap<>();
@@ -3429,10 +3486,17 @@ public class ProductionOptimizer {
     }
     if (!evaluation.utilizationWithinLimits()) {
       // Strong penalty for exceeding utilization limits
-      // Penalty increases quadratically with how much we exceed 100%
-      double overUtil = evaluation.bottleneckUtilization() - 1.0;
-      if (overUtil > 0) {
-        penalty -= 1000.0 * (1.0 + overUtil * overUtil);
+      // Find the maximum over-utilization from utilization records
+      double maxOverUtil = 0.0;
+      for (UtilizationRecord record : evaluation.utilizationRecords()) {
+        double overUtil = record.getUtilization() - record.getUtilizationLimit();
+        if (overUtil > maxOverUtil) {
+          maxOverUtil = overUtil;
+        }
+      }
+      // Penalty increases quadratically with how much we exceed the limit
+      if (maxOverUtil > 0) {
+        penalty -= 1000.0 * (1.0 + maxOverUtil * maxOverUtil);
       }
     }
     // Return a score that is always much worse than any feasible solution
@@ -3471,8 +3535,16 @@ public class ProductionOptimizer {
         // scale)
         // from the equipment's capacity constraint framework
         return new CapacityRule(
-            equipment -> ((neqsim.process.equipment.capacity.CapacityConstrainedEquipment) equipment)
-                .getMaxUtilization(),
+            equipment -> {
+              double util = ((neqsim.process.equipment.capacity.CapacityConstrainedEquipment) equipment)
+                  .getMaxUtilization();
+              // Log unusually high utilization values for debugging
+              if (util > 5.0) {
+                logger.warn("Equipment {} reports very high utilization: {}%",
+                    equipment.getName(), util * 100);
+              }
+              return util;
+            },
             equipment -> 1.0); // Limit is 1.0 (100% utilization)
       }
     }

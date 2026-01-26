@@ -694,4 +694,89 @@ public class ProductionOptimizerTest {
     Assertions.assertTrue(timeline.contains("compressor"));
     Assertions.assertTrue(timeline.contains("Iteration"));
   }
+
+  /**
+   * Test that optimizer correctly uses capacity constraints from auto-sized
+   * separator.
+   * This verifies that after autoSize(), the separator's capacity constraints are
+   * properly
+   * used by the optimizer (via getMaxUtilization() from
+   * CapacityConstrainedEquipment).
+   */
+  @Test
+  public void testSeparatorCapacityConstraintAfterAutoSize() {
+    // Create a realistic multi-phase fluid
+    SystemSrkEos system = new SystemSrkEos(300.0, 50.0);
+    system.addComponent("methane", 80.0);
+    system.addComponent("propane", 15.0);
+    system.addComponent("nC10", 5.0);
+    system.setMixingRule("classic");
+    system.setMultiPhaseCheck(true);
+
+    Stream inlet = new Stream("inlet", system);
+    inlet.setFlowRate(10000.0, "kg/hr");
+    inlet.setTemperature(25.0, "C");
+    inlet.setPressure(50.0, "bara");
+    inlet.run();
+
+    Separator separator = new Separator("separator", inlet);
+    // Capacity analysis should be enabled by default
+    Assertions.assertTrue(separator.isCapacityAnalysisEnabled(),
+        "Capacity analysis should be enabled by default");
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(inlet);
+    process.add(separator);
+    process.run();
+
+    // Get initial utilization before autoSize (should be low since separator is
+    // oversized)
+    double initialUtil = separator.getMaxUtilization();
+    System.out.println("Initial utilization (before autoSize): " + (initialUtil * 100) + "%");
+
+    // Auto-size the separator to match current flow
+    separator.autoSize(1.0); // No safety factor for this test
+    process.run();
+
+    // After autoSize with safety factor 1.0, utilization should be close to 100%
+    double utilAfterAutoSize = separator.getMaxUtilization();
+    System.out.println("Utilization after autoSize(1.0): " + (utilAfterAutoSize * 100) + "%");
+    Assertions.assertTrue(utilAfterAutoSize > 0.5 && utilAfterAutoSize < 1.5,
+        "Utilization should be reasonable (50-150%) after autoSize(1.0), got: " + (utilAfterAutoSize * 100) + "%");
+
+    // Now test the optimizer
+    ProductionOptimizer optimizer = new ProductionOptimizer();
+    double baseRate = inlet.getFlowRate("kg/hr");
+    OptimizationConfig config = new OptimizationConfig(baseRate * 0.5, baseRate * 1.5)
+        .rateUnit("kg/hr")
+        .tolerance(baseRate * 0.01)
+        .maxIterations(20);
+
+    OptimizationResult result = optimizer.optimize(process, inlet, config, Collections.emptyList(),
+        Collections.emptyList());
+
+    // Print iteration history for debugging
+    System.out.println("=== ITERATION HISTORY ===");
+    for (IterationRecord rec : result.getIterationHistory()) {
+      System.out.printf("  Rate=%.1f, Util=%.1f%%, Feasible=%b%n",
+          rec.getRate(), rec.getBottleneckUtilization() * 100, rec.isFeasible());
+    }
+
+    // The optimal rate should be close to the original rate (since separator was
+    // sized for it)
+    double optimalRate = result.getOptimalRate();
+    System.out.println("Optimal rate: " + optimalRate + " kg/hr");
+    System.out.println("Feasible: " + result.isFeasible());
+
+    // Verify no crazy utilization values (like 53597%)
+    for (IterationRecord rec : result.getIterationHistory()) {
+      Assertions.assertTrue(rec.getBottleneckUtilization() < 10.0,
+          "Utilization should be reasonable (<1000%), got: " + (rec.getBottleneckUtilization() * 100) + "% at rate "
+              + rec.getRate());
+    }
+
+    // Result should be feasible if we started at a feasible point
+    Assertions.assertTrue(result.isFeasible(),
+        "Optimization starting near feasible point should find feasible solution");
+  }
 }
