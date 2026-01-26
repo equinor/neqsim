@@ -2523,8 +2523,9 @@ public class Separator extends ProcessEquipmentBaseClass
    * </p>
    *
    * @param in the ObjectInputStream to read from
-   * @throws java.io.IOException if an I/O error occurs
-   * @throws ClassNotFoundException if the class of a serialized object cannot be found
+   * @throws java.io.IOException    if an I/O error occurs
+   * @throws ClassNotFoundException if the class of a serialized object cannot be
+   *                                found
    */
   private void readObject(java.io.ObjectInputStream in)
       throws java.io.IOException, ClassNotFoundException {
