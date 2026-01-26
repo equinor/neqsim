@@ -2613,7 +2613,7 @@ public class Separator extends ProcessEquipmentBaseClass
       }
       double util = constraint.getUtilization();
       String status = constraint.isViolated() ? "VIOLATED"
-          : (constraint.isInWarningZone() ? "WARNING" : "OK");
+          : (constraint.isNearLimit() ? "WARNING" : "OK");
       sb.append(String.format("%s: %.2f %s (%.1f%% utilization) - %s%n", constraint.getName(),
           constraint.getCurrentValue(), constraint.getUnit(), util * 100, status));
     }
