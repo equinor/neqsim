@@ -171,7 +171,7 @@ public class MultiObjectiveOptimizerTest {
 
     OptimizationConfig config =
         new OptimizationConfig(1000.0, 15000.0).rateUnit("kg/hr").tolerance(50.0).maxIterations(20)
-            .defaultUtilizationLimit(0.95).searchMode(SearchMode.BINARY_FEASIBILITY);
+            .defaultUtilizationLimit(1.0).searchMode(SearchMode.BINARY_FEASIBILITY);
 
     // Run epsilon-constraint optimization
     MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer();
@@ -315,7 +315,7 @@ public class MultiObjectiveOptimizerTest {
         StandardObjective.MINIMIZE_POWER, specificProduction);
 
     OptimizationConfig config = new OptimizationConfig(2000.0, 12000.0).rateUnit("kg/hr")
-        .tolerance(100.0).maxIterations(15).defaultUtilizationLimit(0.95);
+        .tolerance(100.0).maxIterations(15).defaultUtilizationLimit(1.0);
 
     MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer();
     ParetoFront front = moo.optimizeWeightedSum(process, feed, objectives, config, 8);
@@ -454,7 +454,7 @@ public class MultiObjectiveOptimizerTest {
         Arrays.asList(StandardObjective.MAXIMIZE_THROUGHPUT, StandardObjective.MINIMIZE_POWER);
 
     OptimizationConfig config = new OptimizationConfig(2000.0, 10000.0).rateUnit("kg/hr")
-        .tolerance(100.0).maxIterations(10);
+        .tolerance(100.0).maxIterations(10).defaultUtilizationLimit(1.0);
 
     MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer();
     ParetoFront front = moo.optimizeWeightedSum(process, feed, objectives, config, 5);
