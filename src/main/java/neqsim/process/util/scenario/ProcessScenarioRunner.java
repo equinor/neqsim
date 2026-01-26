@@ -58,8 +58,10 @@ public class ProcessScenarioRunner {
   }
 
   /**
-   * Ensures the process system has a valid steady-state solution before running scenarios. This
-   * method should be called before running any scenarios to establish baseline conditions.
+   * Ensures the process system has a valid steady-state solution before running
+   * scenarios. This
+   * method should be called before running any scenarios to establish baseline
+   * conditions.
    * 
    * @throws RuntimeException if steady-state calculation fails
    */
@@ -84,14 +86,12 @@ public class ProcessScenarioRunner {
           .forEach(unit -> {
             try {
               if (unit instanceof neqsim.process.equipment.separator.Separator) {
-                neqsim.process.equipment.separator.Separator sep =
-                    (neqsim.process.equipment.separator.Separator) unit;
+                neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
                 System.out.printf("  %s: P=%.1f bara, T=%.1f °C%n", unit.getName(),
                     sep.getGasOutStream().getPressure("bara"),
                     sep.getGasOutStream().getTemperature("C"));
               } else if (unit instanceof neqsim.process.equipment.stream.Stream) {
-                neqsim.process.equipment.stream.Stream stream =
-                    (neqsim.process.equipment.stream.Stream) unit;
+                neqsim.process.equipment.stream.Stream stream = (neqsim.process.equipment.stream.Stream) unit;
                 System.out.printf("  %s: P=%.1f bara, T=%.1f °C, Flow=%.1f kg/hr%n", unit.getName(),
                     stream.getPressure("bara"), stream.getTemperature("C"),
                     stream.getFlowRate("kg/hr"));
@@ -109,14 +109,14 @@ public class ProcessScenarioRunner {
   }
 
   /**
-   * Validates that process conditions are within reasonable ranges to prevent simulation errors.
+   * Validates that process conditions are within reasonable ranges to prevent
+   * simulation errors.
    */
   private void validateProcessConditions() {
     for (Object unit : system.getUnitOperations()) {
       try {
         if (unit instanceof neqsim.process.equipment.stream.Stream) {
-          neqsim.process.equipment.stream.Stream stream =
-              (neqsim.process.equipment.stream.Stream) unit;
+          neqsim.process.equipment.stream.Stream stream = (neqsim.process.equipment.stream.Stream) unit;
           double pressure = stream.getPressure("bara");
           double temperature = stream.getTemperature("C");
 
@@ -191,9 +191,9 @@ public class ProcessScenarioRunner {
    * Runs a scenario with the given parameters.
    *
    * @param scenarioName descriptive name for logging
-   * @param scenario scenario perturbations to apply (can be null)
-   * @param duration simulation duration in seconds
-   * @param timeStep time step in seconds
+   * @param scenario     scenario perturbations to apply (can be null)
+   * @param duration     simulation duration in seconds
+   * @param timeStep     time step in seconds
    * @return scenario execution summary
    */
   public ScenarioExecutionSummary runScenario(String scenarioName, ProcessSafetyScenario scenario,
@@ -205,8 +205,10 @@ public class ProcessScenarioRunner {
    * Runs a scenario with only specific logic sequences enabled.
    * 
    * <p>
-   * This allows you to run a scenario with a subset of registered logic sequences. Only the logic
-   * sequences with names matching the provided list will be executed during this scenario.
+   * This allows you to run a scenario with a subset of registered logic
+   * sequences. Only the logic
+   * sequences with names matching the provided list will be executed during this
+   * scenario.
    * 
    * <p>
    * Example:
@@ -216,15 +218,17 @@ public class ProcessScenarioRunner {
    * runner.addLogic(esdLogic);
    * runner.addLogic(startupLogic);
    * 
-   * // Run scenario with only ESD logic active (HIPPS and startup will be ignored)
-   * runner.runScenarioWithLogic("ESD Test", scenario, 30.0, 1.0, List.of("ESD Level 1"));
+   * // Run scenario with only ESD logic active (HIPPS and startup will be
+   * // ignored)
+   * runner.runScenarioWithLogic("ESD Test", scenario, 30.0, 1.0, Arrays.asList("ESD Level 1"));
    * </pre>
    * 
-   * @param scenarioName descriptive name for logging
-   * @param scenario scenario perturbations to apply (can be null)
-   * @param duration simulation duration in seconds
-   * @param timeStep time step in seconds
-   * @param enabledLogicNames names of logic sequences to enable (null = all logic enabled)
+   * @param scenarioName      descriptive name for logging
+   * @param scenario          scenario perturbations to apply (can be null)
+   * @param duration          simulation duration in seconds
+   * @param timeStep          time step in seconds
+   * @param enabledLogicNames names of logic sequences to enable (null = all logic
+   *                          enabled)
    * @return scenario execution summary
    */
   public ScenarioExecutionSummary runScenarioWithLogic(String scenarioName,
@@ -310,8 +314,7 @@ public class ProcessScenarioRunner {
         errorCount++;
         consecutiveErrors++;
 
-        String errorMsg =
-            "Simulation error at t=" + String.format("%.1f", time) + "s: " + e.getMessage();
+        String errorMsg = "Simulation error at t=" + String.format("%.1f", time) + "s: " + e.getMessage();
         System.out.println(errorMsg);
         summary.addError(errorMsg);
 
@@ -387,7 +390,7 @@ public class ProcessScenarioRunner {
   /**
    * Prints current status of scenario execution.
    *
-   * @param time current simulation time
+   * @param time      current simulation time
    * @param logicList list of logic sequences to monitor
    */
   private void printStatus(double time, List<ProcessLogic> logicList) {
@@ -424,8 +427,7 @@ public class ProcessScenarioRunner {
       // Find separator or key process unit for monitoring
       for (Object unit : system.getUnitOperations()) {
         if (unit instanceof neqsim.process.equipment.separator.Separator) {
-          neqsim.process.equipment.separator.Separator sep =
-              (neqsim.process.equipment.separator.Separator) unit;
+          neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
           double pressure = sep.getGasOutStream().getPressure("bara");
           double temperature = sep.getGasOutStream().getTemperature("C");
           return String.format("P=%.1f bara, T=%.1f°C", pressure, temperature);
@@ -435,8 +437,7 @@ public class ProcessScenarioRunner {
       // Fallback to first stream
       for (Object unit : system.getUnitOperations()) {
         if (unit instanceof neqsim.process.equipment.stream.Stream) {
-          neqsim.process.equipment.stream.Stream stream =
-              (neqsim.process.equipment.stream.Stream) unit;
+          neqsim.process.equipment.stream.Stream stream = (neqsim.process.equipment.stream.Stream) unit;
           double pressure = stream.getPressure("bara");
           double flow = stream.getFlowRate("kg/hr");
           return String.format("P=%.1f bara, F=%.0f kg/hr", pressure, flow);
@@ -477,7 +478,7 @@ public class ProcessScenarioRunner {
   /**
    * Prints final summary of scenario execution.
    *
-   * @param summary execution summary
+   * @param summary   execution summary
    * @param logicList list of logic sequences that were active in this scenario
    */
   private void printFinalSummary(ScenarioExecutionSummary summary, List<ProcessLogic> logicList) {
@@ -521,7 +522,8 @@ public class ProcessScenarioRunner {
    * Resets the system for the next scenario.
    * 
    * <p>
-   * This method resets logic states and re-establishes steady-state conditions to ensure clean
+   * This method resets logic states and re-establishes steady-state conditions to
+   * ensure clean
    * starting conditions for each scenario.
    */
   public void reset() {

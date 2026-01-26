@@ -44,7 +44,7 @@ import neqsim.thermo.system.SystemSrkEos;
  *   Map<String, double[]> actions = new HashMap<>();
  *   actions.put("separator", sepPolicy.predict(obs.get("separator")));
  *   actions.put("compressor", compPolicy.predict(obs.get("compressor")));
- *   var result = env.step(actions);
+ *   StepResult result = env.step(actions);
  *   obs = result.observations;
  * }
  * }
