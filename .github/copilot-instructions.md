@@ -1,4 +1,16 @@
 # NeqSim AI Guidance for Coding Agents
+
+## Quick Commands
+
+- **Package and Update Python**: When the user says "package and update python" or similar, run these commands:
+  ```powershell
+  .\mvnw.cmd package -DskipTests
+  Copy-Item -Path "C:\Users\ESOL\Documents\GitHub\neqsim2\target\neqsim-3.3.0.jar" -Destination "C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\java11\" -Force
+  ```
+  This builds the NeqSim JAR and copies it to the Python neqsim package for immediate use.
+
+---
+
 - **Mission Focus**: NeqSim is a Java toolkit for thermodynamics and process simulation; changes usually affect physical property models (`src/main/java/neqsim/thermo`) or process equipment (`src/main/java/neqsim/process`).
 - **Architecture Overview**: Packages map to the seven base modules in docs/modules.md; keep new code within the existing package boundaries so thermodynamic, property, and process layers stay decoupled.
 - **Thermo Systems**: Fluids are represented by `SystemInterface` implementations such as `SystemSrkEos` or `SystemSrkCPAstatoil`; always set a mixing rule (`setMixingRule("classic")` or numeric CPA rule) and call `createDatabase(true)` when introducing new components.
@@ -444,3 +456,4 @@ String jsonReport = design.toJson();
 ```
 
 ---
+

@@ -2547,8 +2547,10 @@ public class ProductionOptimizer {
     // If simulation is fundamentally invalid, return infeasible evaluation
     // immediately
     if (!simulationValid && config.isRejectInvalidSimulations()) {
-      // Create a dummy evaluation with max utilization to signal infeasibility
-      return new Evaluation(Double.MAX_VALUE, null, utilizations, new ArrayList<ConstraintStatus>(),
+      // Create a dummy evaluation with high but finite utilization to signal
+      // infeasibility
+      // Using a value > 1.0 but not infinity to avoid confusion in reporting
+      return new Evaluation(10.0, null, utilizations, new ArrayList<ConstraintStatus>(),
           new HashMap<String, Double>(), decisionVariables, false, false, Double.NEGATIVE_INFINITY);
     }
 
@@ -2575,14 +2577,29 @@ public class ProductionOptimizer {
         capacity = capacity * (1.0 - config.capacityUncertaintyFraction);
       }
       double duty = capacityRule.duty(unit);
-      if (capacity > 1e-12) {
-        double utilization = duty / capacity;
-        double limit = determineUtilizationLimit(unit, config) * (1.0 - config.utilizationMarginFraction);
-        utilizations.add(new UtilizationRecord(unit.getName(), duty, capacity, utilization, limit));
-        if (utilization > maxUtilization) {
-          maxUtilization = utilization;
-          bottleneck = unit;
-        }
+
+      // Validate duty and capacity values to prevent NaN/Infinity utilization
+      if (Double.isNaN(duty) || Double.isInfinite(duty)) {
+        // Invalid duty - skip this equipment or treat as infeasible
+        continue;
+      }
+      if (Double.isNaN(capacity) || Double.isInfinite(capacity) || capacity <= 1e-12) {
+        // Invalid or zero capacity - skip this equipment
+        continue;
+      }
+
+      double utilization = duty / capacity;
+
+      // Final validation of utilization value
+      if (Double.isNaN(utilization) || Double.isInfinite(utilization)) {
+        continue;
+      }
+
+      double limit = determineUtilizationLimit(unit, config) * (1.0 - config.utilizationMarginFraction);
+      utilizations.add(new UtilizationRecord(unit.getName(), duty, capacity, utilization, limit));
+      if (utilization > maxUtilization) {
+        maxUtilization = utilization;
+        bottleneck = unit;
       }
     }
 
@@ -3441,6 +3458,25 @@ public class ProductionOptimizer {
         return entry.getValue();
       }
     }
+
+    // PRIORITY: If equipment implements CapacityConstrainedEquipment and has
+    // capacity analysis
+    // enabled, use its getMaxUtilization() method instead of hardcoded rules.
+    // This ensures the optimizer uses the same capacity calculations as the
+    // equipment itself.
+    if (unit instanceof neqsim.process.equipment.capacity.CapacityConstrainedEquipment) {
+      neqsim.process.equipment.capacity.CapacityConstrainedEquipment constrained = (neqsim.process.equipment.capacity.CapacityConstrainedEquipment) unit;
+      if (constrained.isCapacityAnalysisEnabled()) {
+        // Use getMaxUtilization() which returns the actual capacity utilization (0-1
+        // scale)
+        // from the equipment's capacity constraint framework
+        return new CapacityRule(
+            equipment -> ((neqsim.process.equipment.capacity.CapacityConstrainedEquipment) equipment)
+                .getMaxUtilization(),
+            equipment -> 1.0); // Limit is 1.0 (100% utilization)
+      }
+    }
+
     if (unit instanceof DistillationColumn) {
       DistillationColumn column = (DistillationColumn) unit;
       return new CapacityRule(equipment -> column.getFsFactor(),

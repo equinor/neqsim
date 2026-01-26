@@ -148,7 +148,8 @@ public class Separator extends ProcessEquipmentBaseClass
   private static final double MIN_HEADSPACE_VOLUME = 1.0e-6;
 
   /**
-   * Default liquid density for sizing calculations when no liquid phase is present [kg/m³]. Assumes
+   * Default liquid density for sizing calculations when no liquid phase is
+   * present [kg/m³]. Assumes
    * water density for conservative sizing.
    */
   public static final double DEFAULT_LIQUID_DENSITY_FOR_SIZING = 1000.0;
@@ -175,7 +176,10 @@ public class Separator extends ProcessEquipmentBaseClass
   private String heatInputUnit = "W";
 
   // Design capacity parameters
-  /** Default design gas load factor (K-factor) [m/s]. Used to detect user overrides. */
+  /**
+   * Default design gas load factor (K-factor) [m/s]. Used to detect user
+   * overrides.
+   */
   private static final double DEFAULT_DESIGN_GAS_LOAD_FACTOR = 0.11;
   /** Design gas load factor (K-factor) from mechanical design [m/s]. */
   private double designGasLoadFactor = DEFAULT_DESIGN_GAS_LOAD_FACTOR;
@@ -187,8 +191,7 @@ public class Separator extends ProcessEquipmentBaseClass
   private boolean enforceCapacityLimits = false;
 
   /** Capacity constraints map for this separator. */
-  private Map<String, CapacityConstraint> capacityConstraints =
-      new LinkedHashMap<String, CapacityConstraint>();
+  private Map<String, CapacityConstraint> capacityConstraints = new LinkedHashMap<String, CapacityConstraint>();
 
   /**
    * Constructor for Separator.
@@ -207,8 +210,9 @@ public class Separator extends ProcessEquipmentBaseClass
   /**
    * Constructor for Separator.
    *
-   * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param name        a {@link java.lang.String} object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
+   *                    object
    */
   public Separator(String name, StreamInterface inletStream) {
     this(name);
@@ -233,7 +237,8 @@ public class Separator extends ProcessEquipmentBaseClass
    * setInletStream.
    * </p>
    *
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
+   *                    object
    */
   public void setInletStream(StreamInterface inletStream) {
     inletStreamMixer.addStream(inletStream);
@@ -251,7 +256,8 @@ public class Separator extends ProcessEquipmentBaseClass
    * addStream.
    * </p>
    *
-   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface}
+   *                  object
    */
   public void addStream(StreamInterface newStream) {
     if (numberOfInputStreams == 0) {
@@ -329,11 +335,15 @@ public class Separator extends ProcessEquipmentBaseClass
    * setEntrainment.
    * </p>
    *
-   * @param val a double specifying the entrainment amount
-   * @param specType a {@link java.lang.String} object describing the specification unit
-   * @param specifiedStream a {@link java.lang.String} object describing the reference stream
-   * @param phaseFrom a {@link java.lang.String} object describing the phase entrained from
-   * @param phaseTo a {@link java.lang.String} object describing the phase entrained to
+   * @param val             a double specifying the entrainment amount
+   * @param specType        a {@link java.lang.String} object describing the
+   *                        specification unit
+   * @param specifiedStream a {@link java.lang.String} object describing the
+   *                        reference stream
+   * @param phaseFrom       a {@link java.lang.String} object describing the phase
+   *                        entrained from
+   * @param phaseTo         a {@link java.lang.String} object describing the phase
+   *                        entrained to
    */
   public void setEntrainment(double val, String specType, String specifiedStream, String phaseFrom,
       String phaseTo) {
@@ -526,8 +536,7 @@ public class Separator extends ProcessEquipmentBaseClass
       thermoSystem.init(0);
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
         double dncomp = 0.0;
-        dncomp +=
-            inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
+        dncomp += inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
         double dniliq = 0.0;
         if (hasliq) {
           dniliq = -liquidOutStream.getThermoSystem().getComponent(i).getNumberOfmoles();
@@ -859,8 +868,7 @@ public class Separator extends ProcessEquipmentBaseClass
   public double getDeRatedGasLoadFactor(int phaseNum) {
     thermoSystem.initPhysicalProperties();
     double derating = 1.0;
-    double surfaceTension =
-        thermoSystem.getInterphaseProperties().getSurfaceTension(phaseNum - 1, phaseNum);
+    double surfaceTension = thermoSystem.getInterphaseProperties().getSurfaceTension(phaseNum - 1, phaseNum);
     if (surfaceTension < 10.0e-3) {
       derating = 1.0 - 0.5 * (10.0e-3 - surfaceTension) / 10.0e-3;
     }
@@ -876,7 +884,8 @@ public class Separator extends ProcessEquipmentBaseClass
   // ============================================================================
 
   /**
-   * Gets the design gas load factor (K-factor) that the separator is designed for.
+   * Gets the design gas load factor (K-factor) that the separator is designed
+   * for.
    *
    * @return design gas load factor [m/s]
    */
@@ -887,18 +896,21 @@ public class Separator extends ProcessEquipmentBaseClass
   /**
    * Sets the design gas load factor (K-factor) for the separator.
    *
-   * @param kFactor design gas load factor [m/s], typically 0.07-0.15 for horizontal separators
+   * @param kFactor design gas load factor [m/s], typically 0.07-0.15 for
+   *                horizontal separators
    */
   public void setDesignGasLoadFactor(double kFactor) {
     this.designGasLoadFactor = kFactor;
   }
 
   /**
-   * Calculates the maximum allowable gas velocity based on the design K-factor. Uses the
+   * Calculates the maximum allowable gas velocity based on the design K-factor.
+   * Uses the
    * Souders-Brown equation: V_max = K * sqrt((rho_liq - rho_gas) / rho_gas)
    *
    * <p>
-   * If no liquid phase is present, a default liquid density of 1000 kg/m³ is assumed for sizing
+   * If no liquid phase is present, a default liquid density of 1000 kg/m³ is
+   * assumed for sizing
    * purposes.
    * </p>
    *
@@ -925,7 +937,8 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Calculates the maximum allowable gas volumetric flow rate based on separator design.
+   * Calculates the maximum allowable gas volumetric flow rate based on separator
+   * design.
    *
    * @return maximum allowable gas flow rate [m3/s]
    */
@@ -943,10 +956,12 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Gets the capacity utilization as a fraction (current flow / max design flow). A value greater
+   * Gets the capacity utilization as a fraction (current flow / max design flow).
+   * A value greater
    * than 1.0 indicates the separator is overloaded.
    *
-   * @return capacity utilization fraction (0.0 to 1.0+ if overloaded), or 0.0 if single phase (no
+   * @return capacity utilization fraction (0.0 to 1.0+ if overloaded), or 0.0 if
+   *         single phase (no
    *         separation needed), or Double.NaN if calculation error
    */
   public double getCapacityUtilization() {
@@ -1005,7 +1020,8 @@ public class Separator extends ProcessEquipmentBaseClass
    * {@inheritDoc}
    *
    * <p>
-   * Validates that the separator simulation produced physically reasonable results.
+   * Validates that the separator simulation produced physically reasonable
+   * results.
    * </p>
    */
   @Override
@@ -1077,7 +1093,8 @@ public class Separator extends ProcessEquipmentBaseClass
    * {@inheritDoc}
    *
    * <p>
-   * Checks if the separator is operating within its valid envelope. For separators, this means not
+   * Checks if the separator is operating within its valid envelope. For
+   * separators, this means not
    * overloaded (gas velocity within design limits).
    * </p>
    */
@@ -1133,7 +1150,8 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Sets whether to enforce capacity limits during simulation. When enabled, the simulation will
+   * Sets whether to enforce capacity limits during simulation. When enabled, the
+   * simulation will
    * check if flow exceeds separator design capacity.
    *
    * @param enforce true to enforce capacity limits
@@ -1143,11 +1161,13 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Sizes the separator diameter based on the current flow conditions and design K-factor. Uses the
+   * Sizes the separator diameter based on the current flow conditions and design
+   * K-factor. Uses the
    * Souders-Brown equation to calculate the required diameter.
    *
    * <p>
-   * If no liquid phase is present, a default liquid density of 1000 kg/m³ is assumed for sizing
+   * If no liquid phase is present, a default liquid density of 1000 kg/m³ is
+   * assumed for sizing
    * purposes.
    * </p>
    *
@@ -1200,6 +1220,9 @@ public class Separator extends ProcessEquipmentBaseClass
   /** Flag indicating if separator has been auto-sized. */
   private boolean autoSized = false;
 
+  /** Minimum default design volume flow in m3/hr for zero flow cases. */
+  private static final double MIN_DEFAULT_VOLUME_FLOW = 100.0; // 100 m3/hr
+
   /** {@inheritDoc} */
   @Override
   public void autoSize(double safetyFactor) {
@@ -1223,7 +1246,32 @@ public class Separator extends ProcessEquipmentBaseClass
       designGasLoadFactor = separatorMechanicalDesign.getGasLoadFactor();
     }
 
-    // Use mechanical design for complete sizing (diameter, length, wall thickness, etc.)
+    // Check for zero/very low flow and set minimum design values
+    double gasFlow = 0.0;
+    double liquidFlow = 0.0;
+    if (thermoSystem != null) {
+      if (thermoSystem.hasPhaseType("gas")) {
+        gasFlow = thermoSystem.getPhase("gas").getFlowRate("m3/hr");
+      }
+      if (thermoSystem.hasPhaseType("oil")) {
+        liquidFlow += thermoSystem.getPhase("oil").getFlowRate("m3/hr");
+      }
+      if (thermoSystem.hasPhaseType("aqueous")) {
+        liquidFlow += thermoSystem.getPhase("aqueous").getFlowRate("m3/hr");
+      }
+    }
+
+    // If both flows are zero or very small, set minimum design values
+    boolean hasFlow = gasFlow > 1e-6 || liquidFlow > 1e-6;
+    if (!hasFlow) {
+      // Set minimum design values for zero-flow separator
+      separatorMechanicalDesign.setMaxDesignGassVolumeFlow(MIN_DEFAULT_VOLUME_FLOW);
+      separatorMechanicalDesign.setMaxDesignVolumeFlow(MIN_DEFAULT_VOLUME_FLOW);
+      logger.info("Separator '{}' has zero flow, using minimum design values", getName());
+    }
+
+    // Use mechanical design for complete sizing (diameter, length, wall thickness,
+    // etc.)
     // Note: we skip super.calcDesign() to avoid re-reading design specs
     separatorMechanicalDesign.performSizingCalculations();
 
@@ -1262,9 +1310,8 @@ public class Separator extends ProcessEquipmentBaseClass
 
     // Get company-specific K-factor from design standards if available
     if (separatorMechanicalDesign.getDesignStandard().containsKey("separator process design")) {
-      double companyKFactor =
-          ((neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard) separatorMechanicalDesign
-              .getDesignStandard().get("separator process design")).getGasLoadFactor();
+      double companyKFactor = ((neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard) separatorMechanicalDesign
+          .getDesignStandard().get("separator process design")).getGasLoadFactor();
       if (companyKFactor > 0) {
         setDesignGasLoadFactor(companyKFactor);
       }
@@ -1377,7 +1424,8 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Initializes separator dimensions from mechanical design calculations. This uses the mechanical
+   * Initializes separator dimensions from mechanical design calculations. This
+   * uses the mechanical
    * design module to size the separator based on flow.
    */
   public void initDesignFromFlow() {
@@ -1420,7 +1468,8 @@ public class Separator extends ProcessEquipmentBaseClass
 
   /**
    * <p>
-   * Calculates both gas and liquid fluid section areas for horizontal separators. Results can be
+   * Calculates both gas and liquid fluid section areas for horizontal separators.
+   * Results can be
    * used for volume calculation, gas superficial velocity, and settling time.
    * </p>
    *
@@ -1444,7 +1493,8 @@ public class Separator extends ProcessEquipmentBaseClass
         double triArea = a * d;
         double circArea = theta * Math.pow(internalRadius, 2);
         lArea = circArea - triArea;
-        // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n", internalRadius, d,
+        // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n",
+        // internalRadius, d,
         // theta, a, lArea);
       } else if (level > internalRadius) {
         double d = level - internalRadius;
@@ -1453,7 +1503,8 @@ public class Separator extends ProcessEquipmentBaseClass
         double triArea = a * d;
         double circArea = (Math.PI - theta) * Math.pow(internalRadius, 2);
         lArea = circArea + triArea;
-        // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n", internalRadius, d,
+        // System.out.printf("Area func: radius %f d %f theta %f a %f area %f\n",
+        // internalRadius, d,
         // theta, a, lArea);
       } else {
         lArea = 0.5 * Math.PI * Math.pow(internalRadius, 2);
@@ -1491,7 +1542,8 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Keeps cached gas/liquid holdup volumes aligned with current geometry and level.
+   * Keeps cached gas/liquid holdup volumes aligned with current geometry and
+   * level.
    */
   private void updateHoldupVolumes() {
     liquidVolume = calcLiquidVolume();
@@ -1552,7 +1604,8 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Calculates the total inner surface area of the separator, including shell and heads.
+   * Calculates the total inner surface area of the separator, including shell and
+   * heads.
    *
    * @return inner surface area in square meters
    */
@@ -1566,11 +1619,14 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Estimates the wetted inner surface area based on current liquid level and orientation.
+   * Estimates the wetted inner surface area based on current liquid level and
+   * orientation.
    *
    * <p>
-   * For horizontal separators, the wetted area uses the circular segment defined by the liquid
-   * level to apportion the cylindrical shell and head areas. For vertical separators, the wetted
+   * For horizontal separators, the wetted area uses the circular segment defined
+   * by the liquid
+   * level to apportion the cylindrical shell and head areas. For vertical
+   * separators, the wetted
    * area is the side area up to the current level plus the bottom head.
    *
    * @return wetted area in square meters
@@ -1613,7 +1669,8 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Estimates the unwetted (dry) area as the remaining inner area not in contact with liquid.
+   * Estimates the unwetted (dry) area as the remaining inner area not in contact
+   * with liquid.
    *
    * @return unwetted area in square meters
    */
@@ -1638,12 +1695,15 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Evaluates fire exposure using separator geometry and process conditions while accounting for
+   * Evaluates fire exposure using separator geometry and process conditions while
+   * accounting for
    * flare radiation based on the real flaring heat duty.
    *
-   * @param config fire scenario configuration
-   * @param flare flare supplying heat duty and radiation parameters
-   * @param flareGroundDistanceM horizontal distance from flare base to separator [m]
+   * @param config               fire scenario configuration
+   * @param flare                flare supplying heat duty and radiation
+   *                             parameters
+   * @param flareGroundDistanceM horizontal distance from flare base to separator
+   *                             [m]
    * @return aggregated fire exposure result
    */
   public SeparatorFireExposure.FireExposureResult evaluateFireExposure(
@@ -1654,7 +1714,8 @@ public class Separator extends ProcessEquipmentBaseClass
 
   /**
    * <p>
-   * Estimates liquid level based on volume for horizontal separators using bisection method.
+   * Estimates liquid level based on volume for horizontal separators using
+   * bisection method.
    * Vertical separators too. tol and maxIter are bisection loop parameters.
    * </p>
    *
@@ -1666,8 +1727,7 @@ public class Separator extends ProcessEquipmentBaseClass
     int maxIter = 100;
 
     double headspace = getMinGasVolume();
-    double maxLiquidVolume =
-        separatorVolume > 0.0 ? Math.max(separatorVolume - headspace, 0.0) : 0.0;
+    double maxLiquidVolume = separatorVolume > 0.0 ? Math.max(separatorVolume - headspace, 0.0) : 0.0;
     double limitedVolume = Math.max(0.0, Math.min(volumeTarget, maxLiquidVolume));
 
     double a = 0.0;
@@ -1763,7 +1823,9 @@ public class Separator extends ProcessEquipmentBaseClass
    * </p>
    *
    * @param i a int
-   * @return a {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection} object
+   * @return a
+   *         {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection}
+   *         object
    */
   public SeparatorSection getSeparatorSection(int i) {
     return separatorSection.get(i);
@@ -1775,7 +1837,9 @@ public class Separator extends ProcessEquipmentBaseClass
    * </p>
    *
    * @param name a {@link java.lang.String} object
-   * @return a {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection} object
+   * @return a
+   *         {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection}
+   *         object
    */
   public SeparatorSection getSeparatorSection(String name) {
     for (SeparatorSection sec : separatorSection) {
@@ -2031,7 +2095,8 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Set heat input to the separator (e.g., from flare radiation, external heating).
+   * Set heat input to the separator (e.g., from flare radiation, external
+   * heating).
    *
    * @param heatInput heat duty in watts
    */
@@ -2045,7 +2110,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * Set heat input to the separator with specified unit.
    *
    * @param heatInput heat duty value
-   * @param unit heat duty unit (W, kW, MW, J/s, etc.)
+   * @param unit      heat duty unit (W, kW, MW, J/s, etc.)
    */
   public void setHeatInput(double heatInput, String unit) {
     this.heatInputUnit = unit;
@@ -2079,14 +2144,15 @@ public class Separator extends ProcessEquipmentBaseClass
    * Set heat duty with unit (alias for setHeatInput).
    *
    * @param heatDuty heat duty value
-   * @param unit heat duty unit
+   * @param unit     heat duty unit
    */
   public void setHeatDuty(double heatDuty, String unit) {
     setHeatInput(heatDuty, unit);
   }
 
   /**
-   * Set heat duty (alias preserved for compatibility with energy-stream style naming).
+   * Set heat duty (alias preserved for compatibility with energy-stream style
+   * naming).
    *
    * @param heatDuty heat duty in watts
    */
@@ -2095,10 +2161,11 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Set heat duty with unit (alias preserved for compatibility with energy-stream style naming).
+   * Set heat duty with unit (alias preserved for compatibility with energy-stream
+   * style naming).
    *
    * @param heatDuty heat duty value
-   * @param unit heat duty unit
+   * @param unit     heat duty unit
    */
   public void setDuty(double heatDuty, String unit) {
     setHeatInput(heatDuty, unit);
@@ -2170,8 +2237,10 @@ public class Separator extends ProcessEquipmentBaseClass
    * {@inheritDoc}
    *
    * <p>
-   * For separators, capacity duty is defined as the gas outlet volumetric flow rate in m³/hr. This
-   * is used in conjunction with {@link #getCapacityMax()} for bottleneck analysis via
+   * For separators, capacity duty is defined as the gas outlet volumetric flow
+   * rate in m³/hr. This
+   * is used in conjunction with {@link #getCapacityMax()} for bottleneck analysis
+   * via
    * {@link neqsim.process.processmodel.ProcessSystem#getBottleneck()}.
    * </p>
    *
@@ -2186,7 +2255,8 @@ public class Separator extends ProcessEquipmentBaseClass
    * {@inheritDoc}
    *
    * <p>
-   * For separators, maximum capacity is defined by the mechanical design's maximum gas volume flow
+   * For separators, maximum capacity is defined by the mechanical design's
+   * maximum gas volume flow
    * in m³/hr. If not set, the value is derived from the gas load factor design:
    * {@code designGasLoadFactor * crossSectionalArea * 3600}.
    * </p>
@@ -2265,7 +2335,8 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /*
-   * private class SeparatorReport extends Object{ public Double gasLoadFactor; SeparatorReport(){
+   * private class SeparatorReport extends Object{ public Double gasLoadFactor;
+   * SeparatorReport(){
    * gasLoadFactor = getGasLoadFactor(); } }
    *
    * public SeparatorReport getReport(){ return this.new SeparatorReport(); }
@@ -2287,8 +2358,7 @@ public class Separator extends ProcessEquipmentBaseClass
    */
   @Override
   public neqsim.util.validation.ValidationResult validateSetup() {
-    neqsim.util.validation.ValidationResult result =
-        new neqsim.util.validation.ValidationResult(getName());
+    neqsim.util.validation.ValidationResult result = new neqsim.util.validation.ValidationResult(getName());
 
     // Check: Equipment has a valid name (from interface default)
     if (getName() == null || getName().trim().isEmpty()) {
@@ -2342,13 +2412,15 @@ public class Separator extends ProcessEquipmentBaseClass
     return result;
   }
 
-  // ==================== CapacityConstrainedEquipment Interface Implementation ====================
+  // ==================== CapacityConstrainedEquipment Interface Implementation
+  // ====================
 
   /**
    * Initializes default capacity constraints for this separator.
    *
    * <p>
-   * Creates constraints for gas load factor based on the separator's design parameters. Additional
+   * Creates constraints for gas load factor based on the separator's design
+   * parameters. Additional
    * constraints like liquid residence time can be added after construction.
    * </p>
    */
@@ -2441,6 +2513,33 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
+   * Custom deserialization to reinitialize transient fields.
+   *
+   * <p>
+   * After deserialization, the capacity constraints need to be reinitialized
+   * because the valueSupplier lambdas are transient and cannot be serialized.
+   * This method clears any deserialized constraints and creates fresh ones
+   * with proper value suppliers bound to this separator instance.
+   * </p>
+   *
+   * @param in the ObjectInputStream to read from
+   * @throws java.io.IOException if an I/O error occurs
+   * @throws ClassNotFoundException if the class of a serialized object cannot be found
+   */
+  private void readObject(java.io.ObjectInputStream in)
+      throws java.io.IOException, ClassNotFoundException {
+    in.defaultReadObject();
+    // Reinitialize capacity constraints with fresh value suppliers
+    // The map was deserialized but lambdas (transient) are null
+    if (capacityConstraints == null) {
+      capacityConstraints = new LinkedHashMap<String, CapacityConstraint>();
+    } else {
+      capacityConstraints.clear();
+    }
+    initializeCapacityConstraints();
+  }
+
+  /**
    * Creates a new Builder for constructing a Separator with a fluent API.
    *
    * <p>
@@ -2463,7 +2562,8 @@ public class Separator extends ProcessEquipmentBaseClass
    * Builder class for constructing Separator instances with a fluent API.
    *
    * <p>
-   * Provides a readable and maintainable way to construct separators with geometry, orientation,
+   * Provides a readable and maintainable way to construct separators with
+   * geometry, orientation,
    * efficiency, and entrainment specifications.
    * </p>
    *
@@ -2635,7 +2735,7 @@ public class Separator extends ProcessEquipmentBaseClass
      * Sets oil entrainment in gas phase.
      *
      * @param value entrainment value
-     * @param spec specification type ("mole", "mass", "volume")
+     * @param spec  specification type ("mole", "mass", "volume")
      * @return this builder for chaining
      */
     public Builder oilInGas(double value, String spec) {
@@ -2648,7 +2748,7 @@ public class Separator extends ProcessEquipmentBaseClass
      * Sets water entrainment in gas phase.
      *
      * @param value entrainment value
-     * @param spec specification type ("mole", "mass", "volume")
+     * @param spec  specification type ("mole", "mass", "volume")
      * @return this builder for chaining
      */
     public Builder waterInGas(double value, String spec) {
@@ -2661,7 +2761,7 @@ public class Separator extends ProcessEquipmentBaseClass
      * Sets gas entrainment in liquid phase.
      *
      * @param value entrainment value
-     * @param spec specification type ("mole", "mass", "volume")
+     * @param spec  specification type ("mole", "mass", "volume")
      * @return this builder for chaining
      */
     public Builder gasInLiquid(double value, String spec) {
