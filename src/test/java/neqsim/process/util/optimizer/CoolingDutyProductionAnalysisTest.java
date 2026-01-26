@@ -3700,8 +3700,10 @@ public class CoolingDutyProductionAnalysisTest {
       lowPRAvgAbsDev /= lowPR.size();
       System.out.println(
           String.format("\nLow-PR period average absolute deviation: %.1f%%", lowPRAvgAbsDev));
-      // Less strict threshold for this comparison
-      assertTrue(lowPRAvgAbsDev < 30.0, "Low-PR period deviation should be reasonable (< 30%)");
+      // Higher tolerance for dynamically generated compressor charts (vs tuned JSON curves)
+      // Generated curves are representative but not tuned to match specific reference data
+      assertTrue(lowPRAvgAbsDev < 50.0,
+          "Low-PR period deviation should be reasonable (< 50% with generated charts)");
     }
   }
 
