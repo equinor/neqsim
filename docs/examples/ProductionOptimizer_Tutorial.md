@@ -604,8 +604,15 @@ config_options = {
         "cognitiveWeight(double)": "Cognitive (personal best) weight (default: 1.2)",
         "socialWeight(double)": "Social (global best) weight (default: 1.2)",
     },
-    "Caching": {
+    "Caching & Performance": {
         "enableCaching(boolean)": "Cache constraint evaluations (default: true)",
+        "maxCacheSize(int)": "Maximum LRU cache entries (default: 1000)",
+    },
+    "Early Termination": {
+        "stagnationIterations(int)": "Stop after N iterations with no improvement (default: 5)",
+    },
+    "Warm Start": {
+        "initialGuess(double[])": "Starting point for optimization (near known good solution)",
     },
     "Special Equipment": {
         "columnFsFactorLimit(double)": "Fs factor limit for distillation columns",
@@ -635,12 +642,104 @@ comprehensive_config = OptimizationConfig(10000.0, 200000.0) \
     .capacityUncertaintyFraction(0.10) \
     .capacityPercentile(0.5) \
     .enableCaching(True) \
+    .maxCacheSize(500) \
+    .stagnationIterations(10) \
     .paretoGridSize(20)
 
 print("Comprehensive configuration created")
 print(f"  Bounds: [{comprehensive_config.getLowerBound()}, {comprehensive_config.getUpperBound()}]")
 print(f"  Search mode: {comprehensive_config.getSearchMode()}")
 print(f"  Max iterations: {comprehensive_config.getMaxIterations()}")
+```
+
+### 8.1 Configuration Validation (New)
+
+The optimizer now validates configuration before running:
+
+```python
+# Configuration validation
+config = OptimizationConfig(100.0, 50.0)  # Invalid: lower > upper
+
+try:
+    config.validate()  # Throws IllegalArgumentException
+except Exception as e:
+    print(f"Configuration error: {e}")
+
+# Valid configuration
+valid_config = OptimizationConfig(100.0, 10000.0) \
+    .tolerance(10.0) \
+    .maxIterations(50)
+valid_config.validate()  # No exception
+print("Configuration is valid")
+```
+
+### 8.2 Warm Start for Faster Convergence (New)
+
+When you have a good initial guess, use warm start to speed up convergence:
+
+```python
+# Warm start example - useful when re-optimizing after small changes
+from jpype import JArray, JDouble
+
+# Previous optimal solution
+previous_optimal = JArray(JDouble)([7500.0])  # Single variable
+
+config_warmstart = OptimizationConfig(1000.0, 20000.0) \
+    .searchMode(SearchMode.PARTICLE_SWARM_SCORE) \
+    .initialGuess(previous_optimal) \
+    .maxIterations(20)
+
+# First particle starts near previous solution, converges faster
+result = optimizer.optimize(process, feed, config_warmstart, None, None)
+print(f"Warm start result: {result.getOptimalRate():.0f} kg/hr")
+```
+
+### 8.3 Stagnation Detection (New)
+
+Automatically terminate when optimization stops improving:
+
+```python
+# Stagnation detection - saves computation time
+config_stagnation = OptimizationConfig(1000.0, 20000.0) \
+    .searchMode(SearchMode.PARTICLE_SWARM_SCORE) \
+    .maxIterations(100) \
+    .stagnationIterations(5)  # Stop after 5 iterations with no improvement
+
+# May terminate early if converged
+result = optimizer.optimize(process, feed, config_stagnation, None, None)
+print(f"Stopped at iteration: {result.getIterations()}")
+```
+
+### 8.4 LRU Cache Size Control (New)
+
+Control memory usage with bounded cache:
+
+```python
+# Cache size control for large-scale optimization
+config_cache = OptimizationConfig(1000.0, 20000.0) \
+    .enableCaching(True) \
+    .maxCacheSize(500)  # Limit to 500 entries (default: 1000)
+
+# Useful when memory is constrained or running many optimizations
+result = optimizer.optimize(process, feed, config_cache, None, None)
+```
+
+### 8.5 Infeasibility Diagnostics (New)
+
+Get detailed diagnosis when optimization fails:
+
+```python
+# Infeasibility diagnostics
+result = optimizer.optimize(process, feed, config, None, None)
+
+if not result.isFeasible():
+    diagnosis = result.getInfeasibilityDiagnosis()
+    print("Infeasibility diagnosis:")
+    print(diagnosis)
+    # Example output:
+    # Infeasibility diagnosis for rate 15000.0 kg/hr:
+    #   - Compressor 'K-100': 115.2% utilization (limit: 95.0%), exceeded by 20.2%
+    #   - Separator 'V-100': 102.3% utilization (limit: 100.0%), exceeded by 2.3%
 ```
 
 ## 9. Advanced Usage
@@ -741,6 +840,7 @@ print(json.dumps(result_dict, indent=2))
 | 1 | Non-monotonic | `GOLDEN_SECTION_SCORE` |
 | 2-10 | Smooth landscape | `NELDER_MEAD_SCORE` |
 | Any | Many local optima | `PARTICLE_SWARM_SCORE` |
+| 5-20+ | Smooth multi-variable | `GRADIENT_DESCENT_SCORE` |
 
 ### Configuration Tips
 
@@ -748,6 +848,9 @@ print(json.dumps(result_dict, indent=2))
 2. **Use `defaultUtilizationLimit(0.95)`** to leave 5% safety margin
 3. **Enable caching** for repeated evaluations
 4. **For Pareto**, use `paretoGridSize(15-25)` for good resolution
+5. **Use `stagnationIterations(5-10)`** for early termination in PSO/Gradient Descent
+6. **Use `initialGuess()`** when re-optimizing after small process changes
+7. **Set `maxCacheSize()`** appropriately when memory is constrained
 
 ### Constraint Design
 
@@ -760,7 +863,8 @@ print(json.dumps(result_dict, indent=2))
 1. Check `result.isFeasible()` first
 2. Examine `result.getConstraintViolations()` for failures
 3. Use `result.getIterations()` to check convergence
-4. Enable verbose logging in Java if needed
+4. **Use `result.getInfeasibilityDiagnosis()`** for detailed violation reports
+5. Enable verbose logging in Java if needed
 
 ```python
 # Summary: Complete optimization workflow
@@ -814,7 +918,7 @@ final_result = run_production_optimization(final_process, final_feed)
 
 The `ProductionOptimizer` provides:
 
-✅ **Four search algorithms** for different problem types  
+✅ **Five search algorithms** for different problem types (Binary, Golden-Section, Nelder-Mead, PSO, Gradient Descent)  
 ✅ **Single and multi-variable** optimization  
 ✅ **Custom objectives** (maximize/minimize anything)  
 ✅ **Hard and soft constraints** with penalties  
@@ -822,6 +926,11 @@ The `ProductionOptimizer` provides:
 ✅ **Parallel scenario** evaluation  
 ✅ **Equipment utilization** tracking  
 ✅ **JSON export** for analysis  
+✅ **Configuration validation** for early error detection  
+✅ **Warm start** for faster convergence  
+✅ **Stagnation detection** for early termination  
+✅ **Bounded LRU cache** for memory control  
+✅ **Infeasibility diagnostics** for debugging  
 
 For more details, see:
 - [OPTIMIZATION_OVERVIEW.md](../process/optimization/OPTIMIZATION_OVERVIEW.md)

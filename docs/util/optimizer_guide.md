@@ -368,6 +368,62 @@ OperatingPoint op = flowOptimizer.findOperatingPoint(ipr, vlp);
 
 ## Production Optimization
 
+### Using ProductionOptimizer
+
+For detailed production optimization with constraints, use `ProductionOptimizer`:
+
+```java
+import neqsim.process.util.optimizer.ProductionOptimizer;
+import neqsim.process.util.optimizer.ProductionOptimizer.*;
+
+ProductionOptimizer optimizer = new ProductionOptimizer();
+
+// Configure optimization
+OptimizationConfig config = new OptimizationConfig(1000.0, 20000.0)
+    .rateUnit("kg/hr")
+    .tolerance(10.0)
+    .maxIterations(30)
+    .defaultUtilizationLimit(0.95)
+    .searchMode(SearchMode.GOLDEN_SECTION_SCORE);
+
+// Run optimization
+OptimizationResult result = optimizer.optimize(process, feedStream, config);
+System.out.println("Optimal rate: " + result.getOptimalRate());
+System.out.println("Bottleneck: " + result.getBottleneck().getName());
+```
+
+### New Configuration Options (January 2026)
+
+```java
+// Validate configuration before running
+config.validate();  // Throws if invalid
+
+// Stagnation detection - stop early when no improvement
+config.stagnationIterations(10);  // Stop after 10 iterations with no improvement
+
+// Warm start - start near known good solution
+double[] previousOptimal = new double[]{7500.0};
+config.initialGuess(previousOptimal);
+
+// Bounded LRU cache - control memory usage
+config.maxCacheSize(500);  // Limit to 500 cached evaluations
+```
+
+### Infeasibility Diagnostics (January 2026)
+
+```java
+OptimizationResult result = optimizer.optimize(process, feed, config);
+
+if (!result.isFeasible()) {
+    // Get detailed violation report
+    String diagnosis = result.getInfeasibilityDiagnosis();
+    System.out.println(diagnosis);
+    // Example output:
+    // Infeasibility diagnosis for rate 15000.0 kg/hr:
+    //   - Compressor 'K-100': 115.2% utilization (limit: 95.0%), exceeded by 20.2%
+}
+```
+
 ### Real-Time Optimization
 
 ```java
@@ -551,6 +607,35 @@ engine.setRespectAdjusters(true);
 
 ---
 
+## Algorithm Selection Guide
+
+| Variables | Problem Type | Recommended Algorithm |
+|-----------|--------------|----------------------|
+| 1 | Monotonic feasibility | `BINARY_FEASIBILITY` |
+| 1 | Non-monotonic | `GOLDEN_SECTION_SCORE` |
+| 2-10 | Smooth landscape | `NELDER_MEAD_SCORE` |
+| Any | Many local optima | `PARTICLE_SWARM_SCORE` |
+| 5-20+ | Smooth multi-variable | `GRADIENT_DESCENT_SCORE` |
+
+---
+
+## What's New (January 2026)
+
+### Bug Fixes
+- **Golden Section Ratio**: Fixed inconsistent phi formula and comparison logic
+- **Nelder-Mead Bounds**: Added clamping for reflected/contracted simplex points  
+- **Zero Flow Validation**: Added check for zero/invalid flow rates
+- **Feasibility Scoring**: Fixed penalty calculation to use actual utilization limits
+
+### New Features
+- **Configuration Validation**: `config.validate()` checks bounds, tolerance, and iterations
+- **Stagnation Detection**: `stagnationIterations(int)` for early termination (default: 5)
+- **Warm Start**: `initialGuess(double[])` to start near known good solutions
+- **LRU Cache Control**: `maxCacheSize(int)` to limit memory usage (default: 1000)
+- **Infeasibility Diagnostics**: `result.getInfeasibilityDiagnosis()` for detailed violation reports
+
+---
+
 ## API Reference
 
 ### ProcessOptimizationEngine
@@ -572,21 +657,13 @@ engine.setRespectAdjusters(true);
 | `isConverged()` | Whether optimization converged |
 | `getIterationCount()` | Number of iterations |
 | `getSensitivityAnalysis()` | Auto-generated sensitivity |
+| `getInfeasibilityDiagnosis()` | Detailed constraint violation report (New) |
 
-### MultiObjectiveOptimizer
+### OptimizationConfig (ProductionOptimizer)
 
 | Method | Description |
 |--------|-------------|
-| `addObjective(name, Function, weight)` | Add objective |
-| `optimizeWeightedSum(n)` | Generate Pareto with n points |
-| `optimizeEpsilonConstraint(...)` | Epsilon-constraint method |
-| `getParetoFront()` | Get resulting Pareto front |
-
----
-
-## See Also
-
-- [Process Design Framework](../process/DESIGN_FRAMEWORK.md)
-- [Optimization Improvement Proposal](../process/OPTIMIZATION_IMPROVEMENT_PROPOSAL.md)
-- [Production Optimization Guide](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md)
-- [Field Development](../fielddevelopment/API_GUIDE.md)
+| `validate()` | Validates configuration, throws if invalid (New) |
+| `stagnationIterations(int)` | Stop after N iterations with no improvement (New) |
+| `maxCacheSize(int)` | Maximum LRU cache entries (New) |
+| `initialGuess(double[])` | Starting point for warm start (New) |

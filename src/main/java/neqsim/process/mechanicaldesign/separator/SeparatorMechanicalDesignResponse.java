@@ -6,7 +6,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
  * Response class for separator mechanical design JSON export.
  *
  * <p>
- * Extends {@link MechanicalDesignResponse} with separator-specific parameters including vessel
+ * Extends {@link MechanicalDesignResponse} with separator-specific parameters
+ * including vessel
  * sizing, internals, and process design data per API 12J and ASME VIII.
  * </p>
  *
@@ -121,6 +122,64 @@ public class SeparatorMechanicalDesignResponse extends MechanicalDesignResponse 
   private double gasDensity;
 
   // ============================================================================
+  // Liquid Level Design Parameters (added January 2026)
+  // ============================================================================
+
+  /** Effective length for liquid separation [m]. */
+  private double effectiveLengthLiquid;
+
+  /** Effective length for gas separation [m]. */
+  private double effectiveLengthGas;
+
+  /** High-High Liquid Level fraction of ID. */
+  private double hhllFraction;
+
+  /** High Liquid Level fraction of ID. */
+  private double hllFraction;
+
+  /** Normal Liquid Level fraction of ID. */
+  private double nllFraction;
+
+  /** Low Liquid Level fraction of ID. */
+  private double lllFraction;
+
+  /** Weir height fraction of ID. */
+  private double weirFraction;
+
+  /** High Interface Level fraction of ID. */
+  private double hilFraction;
+
+  /** Normal Interface Level fraction of ID. */
+  private double nilFraction;
+
+  /** Low Interface Level fraction of ID. */
+  private double lilFraction;
+
+  /** High-High Liquid Level [m]. */
+  private double hhll;
+
+  /** High Liquid Level [m] - duplicate for explicit naming. */
+  private double hll;
+
+  /** Normal Liquid Level [m] - duplicate for explicit naming. */
+  private double nll;
+
+  /** Low Liquid Level [m] - duplicate for explicit naming. */
+  private double lll;
+
+  /** Weir height [m]. */
+  private double weirHeight;
+
+  /** High Interface Level [m]. */
+  private double hil;
+
+  /** Normal Interface Level [m]. */
+  private double nil;
+
+  /** Low Interface Level [m]. */
+  private double lil;
+
+  // ============================================================================
   // Constructors
   // ============================================================================
 
@@ -159,6 +218,41 @@ public class SeparatorMechanicalDesignResponse extends MechanicalDesignResponse 
     this.volumeSafetyFactor = mecDesign.getVolumeSafetyFactor();
     this.liquidLevelFraction = mecDesign.getFg();
     this.retentionTime = mecDesign.getRetentionTime();
+
+    // Populate nozzle sizes (convert m to mm)
+    this.inletNozzleDiameter = mecDesign.getInletNozzleID() * 1000.0;
+    this.gasOutletNozzleDiameter = mecDesign.getGasOutletNozzleID() * 1000.0;
+    this.liquidOutletNozzleDiameter = mecDesign.getOilOutletNozzleID() * 1000.0;
+    this.waterOutletNozzleDiameter = mecDesign.getWaterOutletNozzleID() * 1000.0;
+
+    // Populate liquid levels
+    this.normalLiquidLevel = mecDesign.getNLL();
+    this.highLiquidLevel = mecDesign.getHLL();
+    this.lowLiquidLevel = mecDesign.getLLL();
+
+    // Populate effective lengths
+    this.effectiveLengthLiquid = mecDesign.getEffectiveLengthLiquid();
+    this.effectiveLengthGas = mecDesign.getEffectiveLengthGas();
+
+    // Populate level fractions
+    this.hhllFraction = mecDesign.getHHLLFraction();
+    this.hllFraction = mecDesign.getHLLFraction();
+    this.nllFraction = mecDesign.getNLLFraction();
+    this.lllFraction = mecDesign.getLLLFraction();
+    this.weirFraction = mecDesign.getWeirFraction();
+    this.hilFraction = mecDesign.getHILFraction();
+    this.nilFraction = mecDesign.getNILFraction();
+    this.lilFraction = mecDesign.getLILFraction();
+
+    // Populate absolute level heights
+    this.hhll = mecDesign.getHHLL();
+    this.hll = mecDesign.getHLL();
+    this.nll = mecDesign.getNLL();
+    this.lll = mecDesign.getLLL();
+    this.weirHeight = mecDesign.getWeirHeight();
+    this.hil = mecDesign.getHIL();
+    this.nil = mecDesign.getNIL();
+    this.lil = mecDesign.getLIL();
   }
 
   // ============================================================================

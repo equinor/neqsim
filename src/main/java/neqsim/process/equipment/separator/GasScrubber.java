@@ -14,6 +14,13 @@ import neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign;
  * GasScrubber class.
  * </p>
  *
+ * <p>
+ * A gas scrubber is a vertical separator designed primarily for removing liquid
+ * droplets from gas streams. Unlike standard separators, the key performance
+ * metric is the K-value (Souders-Brown factor) rather than liquid retention
+ * time.
+ * </p>
+ *
  * @author Even Solbraa
  * @version $Id: $Id
  */
@@ -29,6 +36,8 @@ public class GasScrubber extends Separator {
   public GasScrubber(String name) {
     super(name);
     this.setOrientation("vertical");
+    // Use only K-value constraint for gas scrubbers
+    useGasScrubberConstraints();
   }
 
   /**
@@ -36,12 +45,14 @@ public class GasScrubber extends Separator {
    * Constructor for GasScrubber.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name        a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.Stream} object
    */
   public GasScrubber(String name, StreamInterface inletStream) {
     super(name, inletStream);
     this.setOrientation("vertical");
+    // Use only K-value constraint for gas scrubbers
+    useGasScrubberConstraints();
   }
 
   /** {@inheritDoc} */

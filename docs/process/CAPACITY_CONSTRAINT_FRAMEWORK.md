@@ -288,6 +288,40 @@ System.out.println("Bottleneck: " + result.getBottleneck().getName());
 | **Manifold** | headerVelocity, branchVelocity, headerLOF, headerFRMS, branchLOF, branchFRMS | autoSize(), setMaxDesignVelocity() |
 | **Heater/Cooler** | duty, outletTemperature | autoSize(), setMaxDesignDuty() |
 
+### How to Override autoSize Constraints
+
+After `autoSize()` creates constraints, you can override them:
+
+```java
+// 1. Override BEFORE autoSize (parameter will be used in sizing)
+separator.setDesignGasLoadFactor(0.15);  // Your K-factor
+separator.autoSize(1.2);                  // Uses your K-factor
+
+// 2. Override AFTER autoSize (keeps sizing, changes constraint limit)
+compressor.autoSize(1.2);
+compressor.setMaximumPower(6000.0);       // Override constraint limit (kW)
+compressor.setMaximumSpeed(12000.0);      // Override speed limit (RPM)
+
+// 3. Manually set constraint on existing equipment
+CapacityConstraint customPower = new CapacityConstraint("powerLimit", ConstraintType.HARD)
+    .setDesignValue(5000.0)
+    .setUnit("kW")
+    .setValueSupplier(() -> compressor.getPower("kW"));
+compressor.addCapacityConstraint(customPower);
+
+// 4. Remove auto-generated constraint and add custom one
+compressor.removeCapacityConstraint("power");  // Remove default
+compressor.addCapacityConstraint(customPower); // Add custom
+```
+
+### Constraint Priority After Override
+
+When you override a constraint parameter, the priority is:
+1. **User-specified value** (highest) - via setter methods
+2. **autoSize calculated value** - based on flow conditions
+3. **Mechanical design default** - from design standards
+4. **Hard-coded default** (lowest) - in equipment class
+
 ---
 
 ## Usage Examples

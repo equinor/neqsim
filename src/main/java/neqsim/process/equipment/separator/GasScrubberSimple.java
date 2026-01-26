@@ -18,6 +18,16 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * GasScrubberSimple class.
  * </p>
  *
+ * <p>
+ * A simplified gas scrubber model that is a vertical separator designed
+ * primarily
+ * for removing liquid droplets from gas streams. Unlike standard separators,
+ * the
+ * key performance metric is the K-value (Souders-Brown factor) rather than
+ * liquid
+ * retention time.
+ * </p>
+ *
  * @author Even Solbraa
  * @version $Id: $Id
  */
@@ -42,6 +52,8 @@ public class GasScrubberSimple extends Separator {
   public GasScrubberSimple(String name) {
     super(name);
     this.setOrientation("vertical");
+    // Use only K-value constraint for gas scrubbers
+    useGasScrubberConstraints();
   }
 
   /**
@@ -49,12 +61,14 @@ public class GasScrubberSimple extends Separator {
    * Constructor for GasScrubberSimple.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
+   * @param name        a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.Stream} object
    */
   public GasScrubberSimple(String name, StreamInterface inletStream) {
     super(name, inletStream);
     this.setOrientation("vertical");
+    // Use only K-value constraint for gas scrubbers
+    useGasScrubberConstraints();
   }
 
   /** {@inheritDoc} */
@@ -148,8 +162,7 @@ public class GasScrubberSimple extends Separator {
     }
     System.out.println("Ktot " + (1.0 - ktotal));
     double area = getInternalDiameter() * getInternalDiameter() / 4.0 * 3.14;
-    double gasVel =
-        thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarVolume() / 1e5 / area;
+    double gasVel = thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarVolume() / 1e5 / area;
     setLiquidCarryoverFraction(ktotal);
     return gasVel;
   }

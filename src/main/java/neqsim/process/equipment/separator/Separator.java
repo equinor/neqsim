@@ -895,12 +895,18 @@ public class Separator extends ProcessEquipmentBaseClass
 
   /**
    * Sets the design gas load factor (K-factor) for the separator.
+   * Also updates the associated capacity constraint if one exists.
    *
    * @param kFactor design gas load factor [m/s], typically 0.07-0.15 for
    *                horizontal separators
    */
   public void setDesignGasLoadFactor(double kFactor) {
     this.designGasLoadFactor = kFactor;
+    // Update the capacity constraint if it exists
+    CapacityConstraint constraint = capacityConstraints.get("gasLoadFactor");
+    if (constraint != null) {
+      constraint.setDesignValue(kFactor);
+    }
   }
 
   /**
@@ -2423,17 +2429,186 @@ public class Separator extends ProcessEquipmentBaseClass
    * parameters. Additional
    * constraints like liquid residence time can be added after construction.
    * </p>
+   * 
+   * <p>
+   * Note: All separator constraints (gas load factor, K-value, droplet cut size,
+   * inlet momentum, retention times) are disabled by default for backwards
+   * compatibility with the optimizer. Use {@link #useEquinorConstraints()},
+   * {@link #useAPIConstraints()}, or {@link #useAllConstraints()} to enable them
+   * explicitly for capacity analysis.
+   * </p>
    */
   protected void initializeCapacityConstraints() {
-    // Gas load factor constraint
+    // Gas load factor constraint (legacy) - disabled by default for backwards
+    // compatibility with optimizer which uses getLiquidLevel() for separators.
+    // Enable via useGasCapacityConstraints(), useEquinorConstraints(), or
+    // useAllConstraints().
     addCapacityConstraint(StandardConstraintType.SEPARATOR_GAS_LOAD_FACTOR.createConstraint()
-        .setDesignValue(designGasLoadFactor).setWarningThreshold(0.9).setValueSupplier(() -> {
+        .setDesignValue(designGasLoadFactor).setWarningThreshold(0.9).setEnabled(false)
+        .setValueSupplier(() -> {
           try {
             return getGasLoadFactor();
           } catch (Exception e) {
             return 0.0;
           }
         }));
+
+    // K-value constraint per TR3500 (limit 0.15 m/s)
+    // Disabled by default - enable via useEquinorConstraints() or
+    // useAllConstraints()
+    addCapacityConstraint(StandardConstraintType.SEPARATOR_K_VALUE.createConstraint()
+        .setDesignValue(DEFAULT_K_VALUE_LIMIT).setMaxValue(DEFAULT_K_VALUE_LIMIT)
+        .setWarningThreshold(0.9).setEnabled(false).setValueSupplier(() -> {
+          try {
+            return calcKValueAtHLL();
+          } catch (Exception e) {
+            return 0.0;
+          }
+        }));
+
+    // Droplet cut size constraint per TR3500 (limit 150 µm)
+    // Disabled by default - enable via useEquinorConstraints() or
+    // useAllConstraints()
+    addCapacityConstraint(StandardConstraintType.SEPARATOR_DROPLET_CUTSIZE.createConstraint()
+        .setDesignValue(DEFAULT_DROPLET_CUTSIZE_LIMIT * 1e6)
+        .setMaxValue(DEFAULT_DROPLET_CUTSIZE_LIMIT * 1e6).setWarningThreshold(0.9)
+        .setEnabled(false).setValueSupplier(() -> {
+          try {
+            return calcDropletCutSizeAtHLL() * 1e6; // Convert to µm
+          } catch (Exception e) {
+            return 0.0;
+          }
+        }));
+
+    // Inlet momentum constraint (limit 16000 Pa)
+    // Disabled by default - enable via useEquinorConstraints() or
+    // useAllConstraints()
+    addCapacityConstraint(StandardConstraintType.SEPARATOR_INLET_MOMENTUM.createConstraint()
+        .setDesignValue(DEFAULT_INLET_MOMENTUM_LIMIT).setMaxValue(DEFAULT_INLET_MOMENTUM_LIMIT)
+        .setWarningThreshold(0.9).setEnabled(false).setValueSupplier(() -> {
+          try {
+            return calcInletMomentumFlux();
+          } catch (Exception e) {
+            return 0.0;
+          }
+        }));
+
+    // Oil retention time constraint per API 12J (minimum 3 minutes)
+    // Note: For retention time, we want ABOVE the minimum, so utilization is
+    // inverted
+    // Disabled by default - enable via useEquinorConstraints() or
+    // useAllConstraints()
+    addCapacityConstraint(StandardConstraintType.SEPARATOR_OIL_RETENTION_TIME.createConstraint()
+        .setDesignValue(DEFAULT_MIN_OIL_RETENTION_TIME).setMinValue(DEFAULT_MIN_OIL_RETENTION_TIME)
+        .setWarningThreshold(1.2).setEnabled(false) // Warn if close to minimum
+        .setValueSupplier(() -> {
+          try {
+            double retention = calcOilRetentionTime();
+            return Double.isInfinite(retention) ? 999.0 : retention;
+          } catch (Exception e) {
+            return 999.0; // Return high value if no oil
+          }
+        }));
+
+    // Water retention time constraint per API 12J (minimum 3 minutes)
+    // Disabled by default - enable via useEquinorConstraints() or
+    // useAllConstraints()
+    addCapacityConstraint(StandardConstraintType.SEPARATOR_WATER_RETENTION_TIME.createConstraint()
+        .setDesignValue(DEFAULT_MIN_WATER_RETENTION_TIME)
+        .setMinValue(DEFAULT_MIN_WATER_RETENTION_TIME).setWarningThreshold(1.2).setEnabled(false)
+        .setValueSupplier(() -> {
+          try {
+            double retention = calcWaterRetentionTime();
+            return Double.isInfinite(retention) ? 999.0 : retention;
+          } catch (Exception e) {
+            return 999.0; // Return high value if no water
+          }
+        }));
+  }
+
+  /**
+   * Set custom K-value limit for the separator constraint.
+   *
+   * @param limit K-value limit in m/s (default 0.15 per TR3500)
+   */
+  public void setKValueLimit(double limit) {
+    CapacityConstraint constraint = capacityConstraints.get("kValue");
+    if (constraint != null) {
+      constraint.setDesignValue(limit).setMaxValue(limit);
+    }
+  }
+
+  /**
+   * Set custom droplet cut size limit for the separator constraint.
+   *
+   * @param limitMicrons droplet cut size limit in micrometers (default 150 µm per
+   *                     TR3500)
+   */
+  public void setDropletCutSizeLimit(double limitMicrons) {
+    CapacityConstraint constraint = capacityConstraints.get("dropletCutSize");
+    if (constraint != null) {
+      constraint.setDesignValue(limitMicrons).setMaxValue(limitMicrons);
+    }
+  }
+
+  /**
+   * Set custom inlet momentum limit for the separator constraint.
+   *
+   * @param limitPa momentum flux limit in Pa (default 16000 Pa per Equinor
+   *                Revamp)
+   */
+  public void setInletMomentumLimit(double limitPa) {
+    CapacityConstraint constraint = capacityConstraints.get("inletMomentum");
+    if (constraint != null) {
+      constraint.setDesignValue(limitPa).setMaxValue(limitPa);
+    }
+  }
+
+  /**
+   * Set custom minimum oil retention time for the separator constraint.
+   *
+   * @param minMinutes minimum oil retention time in minutes (default 3 min per
+   *                   API 12J)
+   */
+  public void setMinOilRetentionTime(double minMinutes) {
+    CapacityConstraint constraint = capacityConstraints.get("oilRetentionTime");
+    if (constraint != null) {
+      constraint.setDesignValue(minMinutes).setMinValue(minMinutes);
+    }
+  }
+
+  /**
+   * Set custom minimum water retention time for the separator constraint.
+   *
+   * @param minMinutes minimum water retention time in minutes (default 3 min per
+   *                   API 12J)
+   */
+  public void setMinWaterRetentionTime(double minMinutes) {
+    CapacityConstraint constraint = capacityConstraints.get("waterRetentionTime");
+    if (constraint != null) {
+      constraint.setDesignValue(minMinutes).setMinValue(minMinutes);
+    }
+  }
+
+  /**
+   * Get a summary of all constraint utilizations.
+   *
+   * @return constraint summary as formatted string
+   */
+  public String getConstraintSummary() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Separator Constraint Summary: ").append(getName()).append(" ===\n");
+    for (CapacityConstraint constraint : capacityConstraints.values()) {
+      if (!constraint.isEnabled()) {
+        continue;
+      }
+      double util = constraint.getUtilization();
+      String status = constraint.isViolated() ? "VIOLATED"
+          : (constraint.isInWarningZone() ? "WARNING" : "OK");
+      sb.append(String.format("%s: %.2f %s (%.1f%% utilization) - %s%n", constraint.getName(),
+          constraint.getCurrentValue(), constraint.getUnit(), util * 100, status));
+    }
+    return sb.toString();
   }
 
   /** {@inheritDoc} */
@@ -2448,6 +2623,9 @@ public class Separator extends ProcessEquipmentBaseClass
     CapacityConstraint bottleneck = null;
     double maxUtil = 0.0;
     for (CapacityConstraint constraint : capacityConstraints.values()) {
+      if (!constraint.isEnabled()) {
+        continue;
+      }
       double util = constraint.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
         maxUtil = util;
@@ -2461,7 +2639,7 @@ public class Separator extends ProcessEquipmentBaseClass
   @Override
   public boolean isCapacityExceeded() {
     for (CapacityConstraint constraint : capacityConstraints.values()) {
-      if (constraint.isViolated()) {
+      if (constraint.isEnabled() && constraint.isViolated()) {
         return true;
       }
     }
@@ -2472,7 +2650,7 @@ public class Separator extends ProcessEquipmentBaseClass
   @Override
   public boolean isHardLimitExceeded() {
     for (CapacityConstraint constraint : capacityConstraints.values()) {
-      if (constraint.isHardLimitExceeded()) {
+      if (constraint.isEnabled() && constraint.isHardLimitExceeded()) {
         return true;
       }
     }
@@ -2484,12 +2662,15 @@ public class Separator extends ProcessEquipmentBaseClass
   public double getMaxUtilization() {
     double maxUtil = 0.0;
     for (CapacityConstraint constraint : capacityConstraints.values()) {
+      if (!constraint.isEnabled()) {
+        continue;
+      }
       double util = constraint.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
         maxUtil = util;
       }
       // Log constraint details if utilization is unusually high
-      if (util > 5.0) {
+      if (constraint.isEnabled() && util > 5.0) {
         logger.warn("Separator {} constraint {} has high utilization: {}%, "
             + "currentValue={}, designValue={}",
             getName(), constraint.getName(), util * 100,
@@ -2517,6 +2698,663 @@ public class Separator extends ProcessEquipmentBaseClass
   @Override
   public void clearCapacityConstraints() {
     capacityConstraints.clear();
+  }
+
+  // ==================== Constraint Selection Methods ====================
+
+  /**
+   * Enable only the specified constraints by name. All other constraints are
+   * removed.
+   * 
+   * <p>
+   * Available constraint names:
+   * <ul>
+   * <li>"gasLoadFactor" - Gas load factor (K-factor)</li>
+   * <li>"kValue" - K-value (Souders-Brown) at HLL per TR3500</li>
+   * <li>"dropletCutSize" - Droplet cut size per TR3500</li>
+   * <li>"inletMomentum" - Inlet nozzle momentum flux</li>
+   * <li>"oilRetentionTime" - Oil retention time per API 12J</li>
+   * <li>"waterRetentionTime" - Water retention time per API 12J</li>
+   * </ul>
+   * </p>
+   *
+   * @param constraintNames names of constraints to enable (all others will be
+   *                        disabled)
+   */
+  public void useConstraints(String... constraintNames) {
+    // Convert to set for efficient lookup
+    java.util.Set<String> enabled = new java.util.HashSet<String>(
+        java.util.Arrays.asList(constraintNames));
+    // Enable only the requested constraints, disable others
+    for (Map.Entry<String, CapacityConstraint> entry : capacityConstraints.entrySet()) {
+      entry.getValue().setEnabled(enabled.contains(entry.getKey()));
+    }
+  }
+
+  /**
+   * Enable specific constraints by name (additive - doesn't disable others).
+   * Use this to add constraints to the existing set without clearing others.
+   *
+   * @param constraintNames names of constraints to enable
+   */
+  public void enableConstraints(String... constraintNames) {
+    for (String name : constraintNames) {
+      CapacityConstraint constraint = capacityConstraints.get(name);
+      if (constraint != null) {
+        constraint.setEnabled(true);
+      }
+    }
+  }
+
+  /**
+   * Disable specific constraints by name.
+   *
+   * @param constraintNames names of constraints to disable
+   */
+  public void disableConstraints(String... constraintNames) {
+    for (String name : constraintNames) {
+      CapacityConstraint constraint = capacityConstraints.get(name);
+      if (constraint != null) {
+        constraint.setEnabled(false);
+      }
+    }
+  }
+
+  /**
+   * Use Equinor TR3500 constraints (K-value, droplet cut size, inlet momentum,
+   * retention times).
+   * Enables these constraints in addition to the default gas load factor.
+   */
+  public void useEquinorConstraints() {
+    enableConstraints("gasLoadFactor", "kValue", "dropletCutSize", "inletMomentum",
+        "oilRetentionTime", "waterRetentionTime");
+  }
+
+  /**
+   * Use API 12J constraints (K-value, retention times).
+   * Enables these constraints in addition to the default gas load factor.
+   */
+  public void useAPIConstraints() {
+    enableConstraints("gasLoadFactor", "kValue", "oilRetentionTime", "waterRetentionTime");
+  }
+
+  /**
+   * Use gas scrubber constraints only (gas load factor, K-value).
+   * For gas scrubbers, K-value is the primary performance metric as liquid
+   * retention is not relevant - the focus is on removing liquid droplets from
+   * gas.
+   * This enables K-value in addition to the default gas load factor.
+   */
+  public void useGasScrubberConstraints() {
+    enableConstraints("gasLoadFactor", "kValue");
+  }
+
+  /**
+   * Use gas capacity constraints (gas load factor, K-value, droplet cut size,
+   * inlet momentum).
+   */
+  public void useGasCapacityConstraints() {
+    enableConstraints("gasLoadFactor", "kValue", "dropletCutSize", "inletMomentum");
+  }
+
+  /**
+   * Use liquid capacity constraints (retention times).
+   */
+  public void useLiquidCapacityConstraints() {
+    enableConstraints("oilRetentionTime", "waterRetentionTime");
+  }
+
+  /**
+   * Use all available constraints.
+   * Enables all constraints including the new TR3500/API 12J constraints.
+   */
+  public void useAllConstraints() {
+    for (CapacityConstraint constraint : capacityConstraints.values()) {
+      constraint.setEnabled(true);
+    }
+  }
+
+  /**
+   * Disable a specific constraint by name.
+   *
+   * @param constraintName name of constraint to disable
+   * @return true if constraint was found and disabled
+   */
+  public boolean disableConstraint(String constraintName) {
+    CapacityConstraint constraint = capacityConstraints.get(constraintName);
+    if (constraint != null) {
+      constraint.setEnabled(false);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Check if a specific constraint is enabled.
+   *
+   * @param constraintName name of constraint to check
+   * @return true if constraint exists and is enabled
+   */
+  public boolean isConstraintEnabled(String constraintName) {
+    CapacityConstraint constraint = capacityConstraints.get(constraintName);
+    return constraint != null && constraint.isEnabled();
+  }
+
+  /**
+   * Get list of all enabled constraint names.
+   *
+   * @return list of constraint names that are enabled
+   */
+  public java.util.List<String> getEnabledConstraintNames() {
+    java.util.List<String> enabled = new java.util.ArrayList<String>();
+    for (Map.Entry<String, CapacityConstraint> entry : capacityConstraints.entrySet()) {
+      if (entry.getValue().isEnabled()) {
+        enabled.add(entry.getKey());
+      }
+    }
+    return enabled;
+  }
+
+  // ==================== Separator Performance Calculations ====================
+  // These methods calculate operating performance parameters as used in
+  // separator rating studies per Equinor TR3500 and API 12J standards.
+
+  /**
+   * Default K-value limit per Equinor TR3500 SR-50535 [m/s].
+   * K-value must be less than this limit related to HLL.
+   */
+  public static final double DEFAULT_K_VALUE_LIMIT = 0.15;
+
+  /**
+   * Default droplet cut size limit per Equinor TR3500 SR-50535 [m].
+   * Droplet cut size must be less than 150 µm (150e-6 m).
+   */
+  public static final double DEFAULT_DROPLET_CUTSIZE_LIMIT = 150e-6;
+
+  /**
+   * Default inlet momentum flux limit per Equinor Revamp Limit [Pa].
+   */
+  public static final double DEFAULT_INLET_MOMENTUM_LIMIT = 16000.0;
+
+  /**
+   * Default minimum oil retention time per API 12J [minutes].
+   * Typically 3-5 minutes for oil gravities above 35° API.
+   */
+  public static final double DEFAULT_MIN_OIL_RETENTION_TIME = 3.0;
+
+  /**
+   * Default minimum water retention time per API 12J [minutes].
+   */
+  public static final double DEFAULT_MIN_WATER_RETENTION_TIME = 3.0;
+
+  /**
+   * Calculate the gas area above the specified liquid level for horizontal
+   * separator.
+   *
+   * @param liquidLevelHeight liquid level height in meters
+   * @return gas area in m²
+   */
+  public double calcGasAreaAboveLevel(double liquidLevelHeight) {
+    if (!orientation.equalsIgnoreCase("horizontal")) {
+      // For vertical separator, gas area is above the liquid
+      return sepCrossArea;
+    }
+    double r = internalDiameter / 2.0;
+    double h = Math.min(liquidLevelHeight, internalDiameter);
+    if (h <= 0) {
+      return sepCrossArea; // Full cross-section is gas
+    }
+    if (h >= internalDiameter) {
+      return 0.0; // No gas area
+    }
+    // Gas area = total area - liquid area
+    return sepCrossArea - liquidArea(h);
+  }
+
+  /**
+   * Calculate gas velocity above the specified liquid level.
+   *
+   * @param liquidLevelHeight liquid level height in meters (e.g., HLL)
+   * @return gas velocity in m/s
+   */
+  public double calcGasVelocityAboveLevel(double liquidLevelHeight) {
+    if (thermoSystem == null || !thermoSystem.hasPhaseType("gas")) {
+      return 0.0;
+    }
+    double gasArea = calcGasAreaAboveLevel(liquidLevelHeight);
+    if (gasArea <= 0) {
+      return Double.POSITIVE_INFINITY;
+    }
+    double gasVolumeFlow = thermoSystem.getPhase(0).getFlowRate("m3/sec");
+    return gasVolumeFlow / gasArea;
+  }
+
+  /**
+   * Calculate the K-value (Souders-Brown factor) above the specified liquid
+   * level.
+   * K = v_gas * sqrt(ρ_gas / (ρ_liquid - ρ_gas))
+   *
+   * <p>
+   * Per Equinor TR3500 SR-50535: K-value must be less than 0.15 m/s related to
+   * HLL.
+   * </p>
+   *
+   * @param liquidLevelHeight liquid level height in meters (typically HLL)
+   * @return K-value in m/s
+   */
+  public double calcKValue(double liquidLevelHeight) {
+    if (thermoSystem == null || thermoSystem.getNumberOfPhases() < 2) {
+      return 0.0;
+    }
+    if (!thermoSystem.hasPhaseType("gas")) {
+      return 0.0;
+    }
+
+    double gasDensity = thermoSystem.getPhase(0).getDensity("kg/m3");
+    double liquidDensity = thermoSystem.getPhase(1).getDensity("kg/m3");
+
+    if (liquidDensity <= gasDensity) {
+      return Double.POSITIVE_INFINITY;
+    }
+
+    double gasVelocity = calcGasVelocityAboveLevel(liquidLevelHeight);
+    return gasVelocity * Math.sqrt(gasDensity / (liquidDensity - gasDensity));
+  }
+
+  /**
+   * Calculate the K-value at the design HLL from mechanical design.
+   * Uses HLL fraction from SeparatorMechanicalDesign if available.
+   *
+   * @return K-value in m/s at HLL
+   */
+  public double calcKValueAtHLL() {
+    double hll = getMechanicalDesign().getHLL();
+    if (hll <= 0) {
+      // Default to 70% of internal diameter if not set
+      hll = internalDiameter * 0.70;
+    }
+    return calcKValue(hll);
+  }
+
+  /**
+   * Check if K-value is within the specified limit.
+   *
+   * @param limit K-value limit in m/s (default 0.15 per TR3500)
+   * @return true if K-value is below the limit
+   */
+  public boolean isKValueWithinLimit(double limit) {
+    return calcKValueAtHLL() <= limit;
+  }
+
+  /**
+   * Check if K-value is within the default limit (0.15 m/s per TR3500).
+   *
+   * @return true if K-value is below the default limit
+   */
+  public boolean isKValueWithinLimit() {
+    return isKValueWithinLimit(DEFAULT_K_VALUE_LIMIT);
+  }
+
+  /**
+   * Calculate the oil droplet cut size in the gas section above liquid level.
+   * Based on Stokes law for terminal settling velocity.
+   *
+   * <p>
+   * Per Equinor TR3500 SR-50535: Droplet cut size must be less than 150 µm.
+   * </p>
+   *
+   * @param effectiveGasLength    effective gas separation length in meters
+   * @param freeHeightAboveLiquid free height above liquid level in meters
+   * @return droplet cut size in meters (multiply by 1e6 for µm)
+   */
+  public double calcDropletCutSize(double effectiveGasLength, double freeHeightAboveLiquid) {
+    if (thermoSystem == null || thermoSystem.getNumberOfPhases() < 2) {
+      return 0.0;
+    }
+    if (!thermoSystem.hasPhaseType("gas")) {
+      return 0.0;
+    }
+
+    double gasDensity = thermoSystem.getPhase(0).getDensity("kg/m3");
+    double oilDensity = thermoSystem.getPhase(1).getDensity("kg/m3");
+    double temperature = thermoSystem.getTemperature() - 273.15; // Celsius
+
+    // Gas velocity above liquid
+    double gasVelocity = calcGasVelocityAboveLevel(internalDiameter - freeHeightAboveLiquid);
+    if (gasVelocity <= 0 || effectiveGasLength <= 0) {
+      return 0.0;
+    }
+
+    // Terminal velocity required for droplet to settle in available time
+    double residenceTime = effectiveGasLength / gasVelocity;
+    double terminalVelocity = freeHeightAboveLiquid / residenceTime;
+
+    // Gas viscosity using Sutherland equation for methane (conservative)
+    double gasViscosity = 11e-6 * (293.0 + 169.0) / (273.0 + temperature + 169.0)
+        * Math.pow((273.0 + temperature) / 293.0, 1.5);
+
+    // Stokes law: D = 2 * sqrt(9/2 * v_terminal * µ / ((ρ_oil - ρ_gas) * g))
+    double dropletDiameter = 2.0 * Math.sqrt(
+        4.5 * terminalVelocity * gasViscosity / ((oilDensity - gasDensity) * 9.81));
+
+    return dropletDiameter;
+  }
+
+  /**
+   * Calculate the oil droplet cut size at HLL using mechanical design parameters.
+   *
+   * @return droplet cut size in meters
+   */
+  public double calcDropletCutSizeAtHLL() {
+    double hll = getMechanicalDesign().getHLL();
+    if (hll <= 0) {
+      hll = internalDiameter * 0.70;
+    }
+    double freeHeight = internalDiameter - hll;
+    double effGasLength = getMechanicalDesign().getEffectiveLengthGas();
+    if (effGasLength <= 0) {
+      effGasLength = separatorLength * 0.64; // Default 64% of length
+    }
+    return calcDropletCutSize(effGasLength, freeHeight);
+  }
+
+  /**
+   * Check if droplet cut size is within the specified limit.
+   *
+   * @param limitMicrons droplet cut size limit in micrometers (default 150 µm per
+   *                     TR3500)
+   * @return true if droplet cut size is below the limit
+   */
+  public boolean isDropletCutSizeWithinLimit(double limitMicrons) {
+    return calcDropletCutSizeAtHLL() <= limitMicrons * 1e-6;
+  }
+
+  /**
+   * Check if droplet cut size is within the default limit (150 µm per TR3500).
+   *
+   * @return true if droplet cut size is below the default limit
+   */
+  public boolean isDropletCutSizeWithinLimit() {
+    return isDropletCutSizeWithinLimit(150.0);
+  }
+
+  /**
+   * Calculate the inlet nozzle momentum flux.
+   * M = ρ_mix * v_mix²
+   *
+   * <p>
+   * Per Equinor Revamp Limit: Momentum flux should be less than 16000 Pa.
+   * </p>
+   *
+   * @param nozzleDiameter inlet nozzle internal diameter in meters
+   * @return momentum flux in Pa
+   */
+  public double calcInletMomentumFlux(double nozzleDiameter) {
+    if (thermoSystem == null || nozzleDiameter <= 0) {
+      return 0.0;
+    }
+
+    double nozzleArea = Math.PI * Math.pow(nozzleDiameter / 2.0, 2);
+
+    // Get actual volumetric flows
+    double gasFlow = 0.0;
+    double oilFlow = 0.0;
+    double waterFlow = 0.0;
+    double gasDensity = 1.0;
+    double oilDensity = 800.0;
+    double waterDensity = 1000.0;
+
+    if (thermoSystem.hasPhaseType("gas")) {
+      int gasIndex = thermoSystem.getPhaseNumberOfPhase("gas");
+      gasFlow = thermoSystem.getPhase(gasIndex).getFlowRate("m3/hr");
+      gasDensity = thermoSystem.getPhase(gasIndex).getDensity("kg/m3");
+    }
+    if (thermoSystem.hasPhaseType("oil")) {
+      int oilIndex = thermoSystem.getPhaseNumberOfPhase("oil");
+      oilFlow = thermoSystem.getPhase(oilIndex).getFlowRate("m3/hr");
+      oilDensity = thermoSystem.getPhase(oilIndex).getDensity("kg/m3");
+    }
+    if (thermoSystem.hasPhaseType("aqueous")) {
+      int waterIndex = thermoSystem.getPhaseNumberOfPhase("aqueous");
+      waterFlow = thermoSystem.getPhase(waterIndex).getFlowRate("m3/hr");
+      waterDensity = thermoSystem.getPhase(waterIndex).getDensity("kg/m3");
+    }
+
+    double totalVolumeFlow = gasFlow + oilFlow + waterFlow; // m³/hr
+    if (totalVolumeFlow <= 0) {
+      return 0.0;
+    }
+
+    double mixVelocity = (totalVolumeFlow / 3600.0) / nozzleArea; // m/s
+    double mixDensity = (gasDensity * gasFlow + oilDensity * oilFlow + waterDensity * waterFlow)
+        / totalVolumeFlow;
+
+    return mixDensity * mixVelocity * mixVelocity;
+  }
+
+  /**
+   * Calculate the inlet momentum flux using mechanical design nozzle size.
+   *
+   * @return momentum flux in Pa
+   */
+  public double calcInletMomentumFlux() {
+    double nozzleID = getMechanicalDesign().getInletNozzleID();
+    if (nozzleID <= 0) {
+      // Estimate nozzle size if not set
+      nozzleID = internalDiameter * 0.15; // Rough estimate: 15% of vessel ID
+    }
+    return calcInletMomentumFlux(nozzleID);
+  }
+
+  /**
+   * Check if inlet momentum flux is within the specified limit.
+   *
+   * @param limitPa momentum flux limit in Pa (default 16000 Pa for revamp)
+   * @return true if momentum flux is below the limit
+   */
+  public boolean isInletMomentumWithinLimit(double limitPa) {
+    return calcInletMomentumFlux() <= limitPa;
+  }
+
+  /**
+   * Check if inlet momentum flux is within the default limit (16000 Pa).
+   *
+   * @return true if momentum flux is below the default limit
+   */
+  public boolean isInletMomentumWithinLimit() {
+    return isInletMomentumWithinLimit(DEFAULT_INLET_MOMENTUM_LIMIT);
+  }
+
+  /**
+   * Calculate the liquid area (circular segment) at a given level height.
+   *
+   * @param diameter    vessel internal diameter in meters
+   * @param levelHeight liquid level height in meters
+   * @return segment area in m²
+   */
+  public static double calcSegmentArea(double diameter, double levelHeight) {
+    double r = diameter / 2.0;
+    double h = Math.min(levelHeight, diameter);
+    if (h <= 0) {
+      return 0.0;
+    }
+    if (h <= r) {
+      // Lower segment
+      double theta = Math.acos((r - h) / r);
+      return r * r * theta - (r - h) * Math.sqrt(2 * r * h - h * h);
+    } else {
+      // Upper segment - calculate complement
+      double h2 = diameter - h;
+      double theta2 = Math.acos((r - h2) / r);
+      double lowerArea = r * r * theta2 - (r - h2) * Math.sqrt(2 * r * h2 - h2 * h2);
+      return Math.PI * r * r - lowerArea;
+    }
+  }
+
+  /**
+   * Calculate oil retention time between NIL and NLL.
+   * Per API 12J and TR3500 SR-83381: Should be 3-5 minutes for light oils.
+   *
+   * @return oil retention time in minutes
+   */
+  public double calcOilRetentionTime() {
+    if (thermoSystem == null || !thermoSystem.hasPhaseType("oil")) {
+      return Double.POSITIVE_INFINITY; // No oil - infinite retention
+    }
+
+    double nll = getMechanicalDesign().getNLL();
+    double nil = getMechanicalDesign().getNIL();
+    double effLiquidLength = getMechanicalDesign().getEffectiveLengthLiquid();
+
+    if (nll <= 0) {
+      nll = internalDiameter * 0.50;
+    }
+    if (nil <= 0) {
+      nil = internalDiameter * 0.20;
+    }
+    if (effLiquidLength <= 0) {
+      effLiquidLength = separatorLength * 0.82;
+    }
+
+    // Oil volume between NIL and NLL
+    double oilArea = calcSegmentArea(internalDiameter, nll) - calcSegmentArea(internalDiameter, nil);
+    double oilVolume = oilArea * effLiquidLength; // m³
+
+    // Oil flow rate
+    int oilIndex = thermoSystem.getPhaseNumberOfPhase("oil");
+    double oilFlowRate = thermoSystem.getPhase(oilIndex).getFlowRate("m3/hr") / 60.0; // m³/min
+
+    if (oilFlowRate <= 0) {
+      return Double.POSITIVE_INFINITY;
+    }
+
+    return oilVolume / oilFlowRate; // minutes
+  }
+
+  /**
+   * Calculate water retention time below NIL.
+   * Per API 12J and TR3500 SR-83381: Should be 3-5 minutes for light oils.
+   *
+   * @return water retention time in minutes
+   */
+  public double calcWaterRetentionTime() {
+    if (thermoSystem == null || !thermoSystem.hasPhaseType("aqueous")) {
+      return Double.POSITIVE_INFINITY; // No water - infinite retention
+    }
+
+    double nil = getMechanicalDesign().getNIL();
+    double effLiquidLength = getMechanicalDesign().getEffectiveLengthLiquid();
+
+    if (nil <= 0) {
+      nil = internalDiameter * 0.20;
+    }
+    if (effLiquidLength <= 0) {
+      effLiquidLength = separatorLength * 0.82;
+    }
+
+    // Water volume below NIL
+    double waterArea = calcSegmentArea(internalDiameter, nil);
+    double waterVolume = waterArea * effLiquidLength; // m³
+
+    // Water flow rate
+    int waterIndex = thermoSystem.getPhaseNumberOfPhase("aqueous");
+    double waterFlowRate = thermoSystem.getPhase(waterIndex).getFlowRate("m3/hr") / 60.0; // m³/min
+
+    if (waterFlowRate <= 0) {
+      return Double.POSITIVE_INFINITY;
+    }
+
+    return waterVolume / waterFlowRate; // minutes
+  }
+
+  /**
+   * Check if oil retention time meets the minimum requirement.
+   *
+   * @param minMinutes minimum retention time in minutes (default 3 minutes per
+   *                   API 12J)
+   * @return true if retention time is above the minimum
+   */
+  public boolean isOilRetentionTimeAboveMinimum(double minMinutes) {
+    return calcOilRetentionTime() >= minMinutes;
+  }
+
+  /**
+   * Check if oil retention time meets the default minimum (3 minutes).
+   *
+   * @return true if retention time is above the default minimum
+   */
+  public boolean isOilRetentionTimeAboveMinimum() {
+    return isOilRetentionTimeAboveMinimum(DEFAULT_MIN_OIL_RETENTION_TIME);
+  }
+
+  /**
+   * Check if water retention time meets the minimum requirement.
+   *
+   * @param minMinutes minimum retention time in minutes (default 3 minutes per
+   *                   API 12J)
+   * @return true if retention time is above the minimum
+   */
+  public boolean isWaterRetentionTimeAboveMinimum(double minMinutes) {
+    return calcWaterRetentionTime() >= minMinutes;
+  }
+
+  /**
+   * Check if water retention time meets the default minimum (3 minutes).
+   *
+   * @return true if retention time is above the default minimum
+   */
+  public boolean isWaterRetentionTimeAboveMinimum() {
+    return isWaterRetentionTimeAboveMinimum(DEFAULT_MIN_WATER_RETENTION_TIME);
+  }
+
+  /**
+   * Check if all separator performance parameters are within limits.
+   * Uses default limits from Equinor TR3500 and API 12J.
+   *
+   * @return true if all parameters are within limits
+   */
+  public boolean isWithinAllLimits() {
+    return isKValueWithinLimit() && isDropletCutSizeWithinLimit()
+        && isInletMomentumWithinLimit() && isOilRetentionTimeAboveMinimum()
+        && isWaterRetentionTimeAboveMinimum();
+  }
+
+  /**
+   * Get a summary of all performance parameters with limit checks.
+   *
+   * @return performance summary as formatted string
+   */
+  public String getPerformanceSummary() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Separator Performance Summary: ").append(getName()).append(" ===\n");
+
+    double kValue = calcKValueAtHLL();
+    sb.append(String.format("K-value at HLL: %.4f m/s (limit: %.2f m/s) - %s%n",
+        kValue, DEFAULT_K_VALUE_LIMIT, isKValueWithinLimit() ? "OK" : "EXCEEDED"));
+
+    double cutSize = calcDropletCutSizeAtHLL() * 1e6;
+    sb.append(String.format("Droplet cut size: %.1f µm (limit: %.0f µm) - %s%n",
+        cutSize, DEFAULT_DROPLET_CUTSIZE_LIMIT * 1e6,
+        isDropletCutSizeWithinLimit() ? "OK" : "EXCEEDED"));
+
+    double momentum = calcInletMomentumFlux();
+    sb.append(String.format("Inlet momentum: %.0f Pa (limit: %.0f Pa) - %s%n",
+        momentum, DEFAULT_INLET_MOMENTUM_LIMIT,
+        isInletMomentumWithinLimit() ? "OK" : "EXCEEDED"));
+
+    double oilRetention = calcOilRetentionTime();
+    sb.append(String.format("Oil retention time: %.1f min (min: %.1f min) - %s%n",
+        oilRetention, DEFAULT_MIN_OIL_RETENTION_TIME,
+        isOilRetentionTimeAboveMinimum() ? "OK" : "BELOW MINIMUM"));
+
+    double waterRetention = calcWaterRetentionTime();
+    sb.append(String.format("Water retention time: %.1f min (min: %.1f min) - %s%n",
+        waterRetention, DEFAULT_MIN_WATER_RETENTION_TIME,
+        isWaterRetentionTimeAboveMinimum() ? "OK" : "BELOW MINIMUM"));
+
+    sb.append(String.format("%nOverall: %s%n", isWithinAllLimits() ? "ALL WITHIN LIMITS" : "LIMITS EXCEEDED"));
+
+    return sb.toString();
   }
 
   /**

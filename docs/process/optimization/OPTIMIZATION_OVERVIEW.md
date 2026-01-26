@@ -286,6 +286,7 @@ Both optimizers support multiple search algorithms:
 | **Golden Section** | Single variable, non-monotonic | Moderate | Robust, doesn't require derivatives |
 | **Nelder-Mead** | Multi-variable (2-10 vars) | Moderate | No gradients needed |
 | **PSO (Particle Swarm)** | Global search, many local optima | Slow | Good for non-convex problems |
+| **Gradient Descent** | Smooth multi-variable (5-20+) | Fast | **New (Jan 2026)** - Finite-difference gradients |
 | **BFGS** | Smooth functions | Fast | Requires gradient approximation |
 
 ### ProcessOptimizationEngine Algorithms
@@ -303,7 +304,10 @@ config.searchMode(SearchMode.BINARY_FEASIBILITY);
 config.searchMode(SearchMode.GOLDEN_SECTION_SCORE);
 config.searchMode(SearchMode.NELDER_MEAD_SCORE);
 config.searchMode(SearchMode.PARTICLE_SWARM_SCORE);
+config.searchMode(SearchMode.GRADIENT_DESCENT_SCORE);  // New (Jan 2026)
 ```
+
+> **January 2026 Update:** ProductionOptimizer now includes `GRADIENT_DESCENT_SCORE` algorithm, configuration validation, stagnation detection, warm start, bounded LRU cache, and infeasibility diagnostics. See [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) for details.
 
 ---
 

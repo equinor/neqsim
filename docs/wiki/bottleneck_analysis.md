@@ -56,21 +56,52 @@ This method iterates through all unit operations in the system and returns the o
 
 Currently, the following equipment types support capacity analysis:
 
-| Equipment | Duty Metric | Capacity Parameter |
-|-----------|-------------|--------------------|
-| **Compressor** | Power (W) | `MechanicalDesign.maxDesignPower` with optional P10/P50/P90 overrides |
-| **Separator** | Liquid Level Fraction | 1.0 (100% fill) |
-| **Pump** | Power (W) | `MechanicalDesign.maxDesignPower` |
-| **Heater** | Duty (W) | `MechanicalDesign.maxDesignDuty` |
-| **Cooler** | Duty (W) | `MechanicalDesign.maxDesignDuty` |
-| **ThrottlingValve** | Valve Opening (%) | Max Opening (only if < 100% set) |
-| **Pipeline** | Superficial Velocity (m/s) | `MechanicalDesign.maxDesignVelocity` (default 20 m/s) |
-| **DistillationColumn** | Fs hydraulic factor | `OptimizationConfig.columnFsFactorLimit` (default 2.5) |
-| **Custom types** | User-supplied duty/limit lambdas | Configure via `capacityRuleForType` |
+| Equipment | Duty Metric | Capacity Metric | How to Set Capacity | Override After autoSize |
+|-----------|-------------|-----------------|---------------------|------------------------|
+| **Separator** | Gas flow (m³/s) | Max allowable gas flow | `setDesignGasLoadFactor()`, `setInternalDiameter()` | `separator.setDesignGasLoadFactor(0.15)` |
+| **Compressor** | Power (W) | Max design power | `setMaximumPower()`, `setMaximumSpeed()` | `compressor.setMaximumPower(5000.0)` |
+| **Pump** | Power (W) | Max design power | `getMechanicalDesign().setMaxDesignPower()` | `pump.getMechanicalDesign().setMaxDesignPower(100000)` |
+| **Heater/Cooler** | Duty (W) | Max design duty | `getMechanicalDesign().setMaxDesignDuty()` | `heater.getMechanicalDesign().setMaxDesignDuty(1e6)` |
+| **ThrottlingValve** | Volume flow (m³/hr) | Max volume flow | `setDesignCv()`, `setDesignVolumeFlow()` | `valve.setDesignCv(200.0)` |
+| **Pipeline/Pipe** | Volume flow (m³/hr) | Max design flow | `setMaxDesignVelocity()`, `setDiameter()` | `pipe.setMaxDesignVelocity(25.0)` |
+| **DistillationColumn** | Fs hydraulic factor | Fs limit | `OptimizationConfig.columnFsFactorLimit()` | Configure in optimizer |
+| **Custom types** | User-defined | User-defined | `capacityRuleForType` lambda | N/A |
+
+### Capacity Calculation Details
+
+**Separator:** Uses Souders-Brown equation with K-factor:
+```
+MaxGasFlow = K × A × √((ρ_liq - ρ_gas) / ρ_gas)
+Utilization = ActualGasFlow / MaxGasFlow
+```
+Override K-factor with `setDesignGasLoadFactor()` to change capacity.
+
+**Compressor:** Uses power-based utilization:
+```
+Utilization = ShaftPower / MaxDesignPower
+```
+MaxDesignPower comes from: (1) driver speed-power curve, (2) `setMaximumPower()`, or (3) mechanical design.
+
+**Pump:** Uses power-based utilization:
+```
+Utilization = ShaftPower / MaxDesignPower
+```
+
+**Valve:** Uses flow-based utilization:
+```
+Utilization = ActualVolumeFlow / MaxVolumeFlow
+```
+MaxVolumeFlow derived from Cv at operating conditions.
+
+**Pipe:** Uses velocity or flow-based utilization:
+```
+Utilization = ActualVolumeFlow / MaxVolumeFlow
+MaxVolumeFlow = Area × MaxDesignVelocity
+```
 
 **Notes:**
-- **Separator**: The `ProductionOptimizer` uses liquid level fraction for capacity tracking. A liquid level of 0.7 means 70% utilization. Gas load factor (K-factor) is used for sizing via `getGasLoadFactor()`.
-- **ThrottlingValve**: Valve utilization is only tracked if a max opening < 100% is explicitly set. A fully open valve (100%) is normal operation, not overutilization.
+- **Separator**: The `ProductionOptimizer` uses gas volumetric flow for capacity tracking. Gas load factor (K-factor) determines max allowable gas velocity.
+- **ThrottlingValve**: Valve utilization is tracked based on volume flow vs design flow capacity.
 - **Pipeline**: Default erosional velocity limit of 20 m/s is applied if no design velocity is set.
 - **Dry Gas**: For separators/scrubbers with single-phase (dry gas), K-factor calculations use a default liquid density of 1000 kg/m³.
 
@@ -218,6 +249,7 @@ The bottleneck analysis feature is a powerful tool for optimizing production. By
     *   `GOLDEN_SECTION_SCORE` samples non-monotonic responses using weighted objectives and constraint penalties to guide the search.
     *   `NELDER_MEAD_SCORE` applies a simplex-based heuristic to handle noisy or coupled objectives without assuming monotonicity.
     *   `PARTICLE_SWARM_SCORE` explores the design space with a configurable swarm size/inertia/weights, useful when the objective landscape has multiple peaks.
+    *   `GRADIENT_DESCENT_SCORE` **(New Jan 2026)** uses finite-difference gradients with Armijo line search for smooth multi-variable problems (5-20+ variables).
 4.  **Diagnostics & reporting**:
     *   Each run keeps an `iterationHistory` with per-iteration utilization snapshots so you can plot trajectories of bottleneck movement and score versus candidate rate to understand convergence.
     *   Use `ProductionOptimizer.buildUtilizationSeries(result.getIterationHistory())` to feed plotting libraries or CSV exports and `formatUtilizationTimeline(...)` to highlight bottlenecks per iteration in Markdown.
