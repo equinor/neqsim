@@ -4247,8 +4247,10 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
         maxUtil = util;
       }
     }
-    // If no enabled constraints or all returned NaN, fall back to simulation validity
-    // A compressor in surge or operating outside its envelope should show high utilization
+    // If no enabled constraints or all returned NaN, fall back to simulation
+    // validity
+    // A compressor in surge or operating outside its envelope should show high
+    // utilization
     if (maxUtil == 0.0 && !isSimulationValid()) {
       return 1.5; // 150% utilization indicates operating beyond capacity
     }
