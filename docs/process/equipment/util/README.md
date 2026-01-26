@@ -10,15 +10,7 @@ This folder contains documentation for utility and control equipment in NeqSim.
 |-----------|------|-------------|
 | Adjusters | [adjusters.md](adjusters.md) | Parameter adjustment to meet specifications |
 | Recycles | [recycles.md](recycles.md) | Recycle stream handling |
-| Setters | [setters.md](setters.md) | Variable setters |
 | Calculators | [calculators.md](calculators.md) | Custom calculations |
-
-### Flow Control
-
-| Equipment | File | Description |
-|-----------|------|-------------|
-| Set Points | [setpoints.md](setpoints.md) | Process set points |
-| Flow Rate Adjusters | [flow_adjusters.md](flow_adjusters.md) | Flow rate control |
 
 ---
 

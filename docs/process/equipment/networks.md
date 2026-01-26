@@ -318,5 +318,5 @@ pipeline.setOverallHeatTransferCoefficient(5.0);  // W/m²/K
 
 - [Pipelines](pipelines.md) - Single pipeline modeling
 - [Manifolds](manifolds.md) - Manifold equipment
-- [Mixers](mixers.md) - Stream mixing
+- [Mixers and Splitters](mixers_splitters.md) - Stream mixing and splitting
 - [Subsea Systems](subsea_systems.md) - Subsea production

@@ -474,6 +474,6 @@ EclipseEOSExporter.toFile(tunedFluid, Path.of("TUNED_PVT.INC"));
 
 ## See Also
 
-- [PVT Experiments](thermo/pvt_experiments.md) - CCE, CVD, DLE simulations
-- [C7+ Characterization](thermo/c7plus_characterization.md) - Plus-fraction modeling
-- [Thermodynamic Models](modules.md) - EOS and mixing rules
+- [PVT Workflow](pvt_workflow.md) - CCE, CVD, DLE simulations
+- [Fluid Characterization](fluid_characterization_mathematics.md) - Plus-fraction modeling
+- [Thermodynamic Models](../modules.md) - EOS and mixing rules

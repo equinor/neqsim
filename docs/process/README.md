@@ -508,7 +508,7 @@ process.add(psv);
 
 ### Blowdown Systems
 
-See [Safety Simulation Roadmap](../SAFETY_SIMULATION_ROADMAP.md) for detailed safety system documentation.
+See [Safety Simulation Roadmap](../safety/SAFETY_SIMULATION_ROADMAP.md) for detailed safety system documentation.
 
 ---
 
@@ -578,7 +578,7 @@ See [Future Infrastructure Overview](future-infrastructure.md) for complete docu
 ## Related Documentation
 
 - [Equipment Documentation](equipment/) - Detailed equipment guides
-- [Process Logic Framework](../process_logic_framework.md) - Logic controllers
-- [Safety Systems](../SAFETY_SIMULATION_ROADMAP.md) - Safety simulation
-- [Alarm System](../alarm_system_guide.md) - Process alarms
+- [Process Logic Framework](../simulation/process_logic_framework.md) - Logic controllers
+- [Safety Systems](../safety/SAFETY_SIMULATION_ROADMAP.md) - Safety simulation
+- [Alarm System](../safety/alarm_system_guide.md) - Process alarms
 - [Future Infrastructure](future-infrastructure.md) - Digital twin, AI integration, sustainability

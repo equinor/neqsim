@@ -581,6 +581,6 @@ System.out.println("TransientPipe: " + dpTransient + " bar");
 
 ## See Also
 
-- [Pipe Flow Models](pipe_flow_models.md)
-- [Thermodynamic Operations](../thermo/thermodynamic_operations.md)
+- [Pipeline Flow Equations](pipeline_flow_equations.md)
+- [Pipeline Model Recommendations](pipeline_model_recommendations.md)
 - [Process Simulation](advanced_process_simulation.md)

@@ -490,7 +490,7 @@ compressionGraph.execute();
 - [ProcessSystem](process_system.md) - Process system management
 - [ProcessModel](process_model.md) - Multi-process model management
 - [ProcessModule](process_module.md) - Modular process units
-- [Parallel Simulation](../../parallel_process_simulation.md) - Parallel execution guide
+- [Parallel Simulation](../../simulation/parallel_process_simulation.md) - Parallel execution guide
 
 ---
 

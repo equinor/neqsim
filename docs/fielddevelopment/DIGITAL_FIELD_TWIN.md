@@ -708,8 +708,7 @@ FieldConcept concept = FieldConcept.builder("My Field")
 
 ## See Also
 
-- [Field Development Workflows](FIELD_DEVELOPMENT_WORKFLOWS.md)
-- [Economics Module](ECONOMICS_MODULE.md)
-- [TPG4230 Course Integration](TPG4230_COURSE_INTEGRATION.md)
+- [Field Development Strategy](FIELD_DEVELOPMENT_STRATEGY.md)
+- [Integrated Field Development Framework](INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md)
 - [Process Simulation Guide](../process/README.md)
 - [PVT Simulation Guide](../pvtsimulation/README.md)

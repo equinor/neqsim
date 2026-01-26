@@ -385,6 +385,5 @@ System.out.println("\nOptimal abandonment year: " + optimalYear);
 
 ## See Also
 
-- [TPG4230_SUPPORT_GUIDE.md](TPG4230_SUPPORT_GUIDE.md) - Overall TPG4230 support
-- [TPG4230_EXAMPLES.md](TPG4230_EXAMPLES.md) - Code examples
 - [INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md) - Full API reference
+- [NeqSim Examples](../examples/index.md) - Code examples

@@ -594,7 +594,7 @@ The EnKF naturally accumulates information across these configurations.
 
 ### Complete Example Code
 
-See [DynamicRoutingEstimationExample.java](DynamicRoutingEstimationExample.md) for the full implementation.
+See the full implementation below:
 
 ```java
 package neqsim.process.calibration;
@@ -977,7 +977,4 @@ When `result.isAnomalyDetected()` returns `true`:
 
 ## See Also
 
-- [OnlineCalibrator](../OnlineCalibrator.md) - Basic online calibration
-- [ProcessVariableAccessor](../mpc/ProcessVariableAccessor.md) - Variable access patterns
-- [ProcessDerivativeCalculator](../mpc/ProcessDerivativeCalculator.md) - Sensitivity computation
-- [Adjuster](../equipment/Adjuster.md) - Single-variable adjustment
+- [Adjusters](../equipment/util/adjusters.md) - Variable adjustment patterns

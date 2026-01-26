@@ -433,5 +433,5 @@ eq.setName("E-101");
 
 ## Related Documentation
 
-- [Developer Setup](../DEVELOPER_SETUP.md) - Environment configuration
+- [Developer Setup](../development/DEVELOPER_SETUP.md) - Environment configuration
 - [Component Database Guide](../thermo/component_database_guide.md) - Database tables

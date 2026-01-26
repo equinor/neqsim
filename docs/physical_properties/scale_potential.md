@@ -493,6 +493,5 @@ Several salt correlations were corrected:
 
 ## See Also
 
-- [Electrolyte Thermodynamics](../thermo/electrolyte_models.md)
+- [Electrolyte CPA Model](../thermo/ElectrolyteCPAModel.md)
 - [Chemical Equilibrium](../chemicalreactions/README.md)
-- [Water Chemistry](../physical_properties/water_properties.md)

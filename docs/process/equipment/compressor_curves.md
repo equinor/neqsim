@@ -2719,5 +2719,4 @@ print(str(comp.getOperatingHistory().generateSummary()))
 ## Related Documentation
 
 - [Compressor Equipment](compressors.md) - Basic compressor usage
-- [Anti-Surge Control](../control/antisurge.md) - Anti-surge system details
 - [Process Simulation](../../simulation/README.md) - Process simulation overview

@@ -671,6 +671,6 @@ The Beggs and Brill correlation has been validated against:
 
 ## See Also
 
-- [Pipeline](Pipeline.md) - Base pipeline class
-- [TransientPipe](../twophasepipe/TransientPipe.md) - Mechanistic drift-flux model
-- [PipeFlowSystem](../../fluidmechanics/PipeFlowSystem.md) - Detailed two-phase flow modeling
+- [Pipeline Mechanical Design](pipeline_mechanical_design.md) - Pipeline design
+- [Single Phase Pipe Flow](../fluidmechanics/single_phase_pipe_flow.md) - Single phase flow modeling
+- [Two Phase Pipe Flow Development](../fluidmechanics/TwoPhasePipeFlowSystem_Development_Plan.md) - Two-phase flow development
