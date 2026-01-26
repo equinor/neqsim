@@ -2788,7 +2788,8 @@ public class ProductionOptimizer {
       List<OptimizationObjective> objectives, List<OptimizationConstraint> constraints,
       List<IterationRecord> iterationHistory) {
     // Use consistent golden ratio: phi = (sqrt(5) - 1) / 2 ≈ 0.618
-    // This is the conjugate golden ratio, which gives the correct interval reduction
+    // This is the conjugate golden ratio, which gives the correct interval
+    // reduction
     double phi = 0.5 * (Math.sqrt(5) - 1);
     Map<String, Evaluation> cache = new HashMap<>();
     ManipulatedVariable variable = variables.get(0);
@@ -3358,7 +3359,8 @@ public class ProductionOptimizer {
   }
 
   /**
-   * Clamp all values in the candidate array to the bounds defined by the manipulated variables.
+   * Clamp all values in the candidate array to the bounds defined by the
+   * manipulated variables.
    *
    * @param candidate the array of candidate values to clamp
    * @param variables the list of manipulated variables defining the bounds
