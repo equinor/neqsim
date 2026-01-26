@@ -3115,8 +3115,9 @@ public class ProductionOptimizer {
     }
 
     if (bestEval == null) {
-      bestEval = evalC;
-      bestRate = c;
+      // No feasible solution found, return best score between final candidates
+      bestEval = feasibilityScore(evalC) > feasibilityScore(evalD) ? evalC : evalD;
+      bestRate = feasibilityScore(evalC) > feasibilityScore(evalD) ? c : d;
     }
 
     return toResult(bestRate, config.rateUnit, iteration, bestEval, iterationHistory);
@@ -3149,6 +3150,21 @@ public class ProductionOptimizer {
     recordIteration(iterationHistory, d, unit, evalD,
         evalD.utilizationWithinLimits() && evalD.hardOk());
 
+    // Track best feasible solution throughout the search
+    Evaluation bestEval = null;
+    double bestRate = low;
+
+    // Check initial candidates
+    if (evalC.utilizationWithinLimits() && evalC.hardOk()) {
+      bestEval = evalC;
+      bestRate = c;
+    }
+    if (evalD.utilizationWithinLimits() && evalD.hardOk()
+        && (bestEval == null || evalD.score() > bestEval.score())) {
+      bestEval = evalD;
+      bestRate = d;
+    }
+
     int iteration = 0;
     while (iteration < config.maxIterations && Math.abs(high - low) > config.tolerance) {
       // Higher score is better, so if scoreC < scoreD, narrow from low side
@@ -3161,6 +3177,13 @@ public class ProductionOptimizer {
             new double[] { d }, cache);
         recordIteration(iterationHistory, d, unit, evalD,
             evalD.utilizationWithinLimits() && evalD.hardOk());
+
+        // Track best feasible solution
+        if (evalD.utilizationWithinLimits() && evalD.hardOk()
+            && (bestEval == null || evalD.score() > bestEval.score())) {
+          bestEval = evalD;
+          bestRate = d;
+        }
       } else {
         high = d;
         d = c;
@@ -3170,25 +3193,19 @@ public class ProductionOptimizer {
             new double[] { c }, cache);
         recordIteration(iterationHistory, c, unit, evalC,
             evalC.utilizationWithinLimits() && evalC.hardOk());
+
+        // Track best feasible solution
+        if (evalC.utilizationWithinLimits() && evalC.hardOk()
+            && (bestEval == null || evalC.score() > bestEval.score())) {
+          bestEval = evalC;
+          bestRate = c;
+        }
       }
       iteration++;
     }
 
-    // Track best feasible solution throughout the search
-    Evaluation bestEval = null;
-    double bestRate = low;
-    if (evalC.utilizationWithinLimits() && evalC.hardOk()
-        && (bestEval == null || evalC.score() > bestEval.score())) {
-      bestEval = evalC;
-      bestRate = c;
-    }
-    if (evalD.utilizationWithinLimits() && evalD.hardOk()
-        && (bestEval == null || evalD.score() > bestEval.score())) {
-      bestEval = evalD;
-      bestRate = d;
-    }
+    // If no feasible solution was found during the search, return best score
     if (bestEval == null) {
-      // No feasible solution found, return best score
       bestEval = feasibilityScore(evalC) > feasibilityScore(evalD) ? evalC : evalD;
       bestRate = feasibilityScore(evalC) > feasibilityScore(evalD) ? c : d;
     }
