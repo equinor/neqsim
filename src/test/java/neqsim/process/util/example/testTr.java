@@ -6,6 +6,8 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.compressor.CompressorChartGenerator;
+import neqsim.process.equipment.compressor.CompressorChartInterface;
 import neqsim.process.equipment.compressor.CompressorDriver;
 import neqsim.process.equipment.compressor.DriverType;
 import neqsim.process.equipment.manifold.Manifold;
@@ -217,8 +219,12 @@ public class testTr {
     // Configure ups1 compressor with driver curve (speed-dependent max power)
     Compressor ups1Comp = (Compressor) processSystem.getUnit("ups1 Compressor");
     ups1Comp.getMechanicalDesign().setMaxDesignPower(50000.0);
-    String jsonFilePath = "src/test/resources/compressor_curves/example_compressor_curve.json";
-    ups1Comp.loadCompressorChartFromJson(jsonFilePath);
+    // Generate compressor chart programmatically instead of loading from JSON
+    CompressorChartGenerator generator1 = new CompressorChartGenerator(ups1Comp);
+    generator1.setChartType("interpolate and extrapolate");
+    CompressorChartInterface chart1 = generator1.generateCompressorChart("normal curves", 8);
+    ups1Comp.setCompressorChart(chart1);
+    ups1Comp.getCompressorChart().setUseCompressorChart(true);
     ups1Comp.setSolveSpeed(true);
     // Set up driver with speed-dependent max power curve
     // P_max(N) = maxPower * (a + b*(N/N_rated) + c*(N/N_rated)^2)
@@ -232,8 +238,12 @@ public class testTr {
     // Configure ups2 compressor with driver curve
     Compressor ups2Comp = (Compressor) processSystem.getUnit("ups2 Compressor");
     ups2Comp.getMechanicalDesign().setMaxDesignPower(50000.0);
-    String jsonFilePathUps2 = "src/test/resources/compressor_curves/compressor_curve_ups2.json";
-    ups2Comp.loadCompressorChartFromJson(jsonFilePathUps2);
+    // Generate compressor chart programmatically instead of loading from JSON
+    CompressorChartGenerator generator2 = new CompressorChartGenerator(ups2Comp);
+    generator2.setChartType("interpolate and extrapolate");
+    CompressorChartInterface chart2 = generator2.generateCompressorChart("normal curves", 8);
+    ups2Comp.setCompressorChart(chart2);
+    ups2Comp.getCompressorChart().setUseCompressorChart(true);
     ups2Comp.setSolveSpeed(true);
     CompressorDriver driver2 = new CompressorDriver(DriverType.GAS_TURBINE, 40500.0);
     driver2.setRatedSpeed(7383.0);
@@ -243,8 +253,12 @@ public class testTr {
     // Configure ups3 compressor with driver curve
     Compressor ups3Comp = (Compressor) processSystem.getUnit("ups3 Compressor");
     ups3Comp.getMechanicalDesign().setMaxDesignPower(50000.0);
-    String jsonFilePathUps3 = "src/test/resources/compressor_curves/compressor_curve_ups3.json";
-    ups3Comp.loadCompressorChartFromJson(jsonFilePathUps3);
+    // Generate compressor chart programmatically instead of loading from JSON
+    CompressorChartGenerator generator3 = new CompressorChartGenerator(ups3Comp);
+    generator3.setChartType("interpolate and extrapolate");
+    CompressorChartInterface chart3 = generator3.generateCompressorChart("normal curves", 8);
+    ups3Comp.setCompressorChart(chart3);
+    ups3Comp.getCompressorChart().setUseCompressorChart(true);
     ups3Comp.setSolveSpeed(true);
     CompressorDriver driver3 = new CompressorDriver(DriverType.GAS_TURBINE, 45000.0);
     driver3.setRatedSpeed(6726.3); // Different rated speed for ups3
@@ -838,8 +852,12 @@ public class testTr {
     // Configure ups1 compressor with driver curve (speed-dependent max power)
     Compressor ups1Comp = (Compressor) processSystem.getUnit("ups1 Compressor");
     ups1Comp.getMechanicalDesign().setMaxDesignPower(50000.0);
-    String jsonFilePath = "src/test/resources/compressor_curves/example_compressor_curve.json";
-    ups1Comp.loadCompressorChartFromJson(jsonFilePath);
+    // Generate compressor chart programmatically instead of loading from JSON
+    CompressorChartGenerator generator1 = new CompressorChartGenerator(ups1Comp);
+    generator1.setChartType("interpolate and extrapolate");
+    CompressorChartInterface chart1 = generator1.generateCompressorChart("normal curves", 8);
+    ups1Comp.setCompressorChart(chart1);
+    ups1Comp.getCompressorChart().setUseCompressorChart(true);
     ups1Comp.setSolveSpeed(true);
     // Set up driver with speed-dependent max power curve
     // P_max(N) = maxPower * (a + b*(N/N_rated) + c*(N/N_rated)^2)
@@ -853,8 +871,12 @@ public class testTr {
     // Configure ups2 compressor with driver curve
     Compressor ups2Comp = (Compressor) processSystem.getUnit("ups2 Compressor");
     ups2Comp.getMechanicalDesign().setMaxDesignPower(50000.0);
-    String jsonFilePathUps2 = "src/test/resources/compressor_curves/compressor_curve_ups2.json";
-    ups2Comp.loadCompressorChartFromJson(jsonFilePathUps2);
+    // Generate compressor chart programmatically instead of loading from JSON
+    CompressorChartGenerator generator2 = new CompressorChartGenerator(ups2Comp);
+    generator2.setChartType("interpolate and extrapolate");
+    CompressorChartInterface chart2 = generator2.generateCompressorChart("normal curves", 8);
+    ups2Comp.setCompressorChart(chart2);
+    ups2Comp.getCompressorChart().setUseCompressorChart(true);
     ups2Comp.setSolveSpeed(true);
     CompressorDriver driver2 = new CompressorDriver(DriverType.GAS_TURBINE, 40500.0);
     driver2.setRatedSpeed(7383.0);
@@ -864,8 +886,12 @@ public class testTr {
     // Configure ups3 compressor with driver curve
     Compressor ups3Comp = (Compressor) processSystem.getUnit("ups3 Compressor");
     ups3Comp.getMechanicalDesign().setMaxDesignPower(50000.0);
-    String jsonFilePathUps3 = "src/test/resources/compressor_curves/compressor_curve_ups3.json";
-    ups3Comp.loadCompressorChartFromJson(jsonFilePathUps3);
+    // Generate compressor chart programmatically instead of loading from JSON
+    CompressorChartGenerator generator3 = new CompressorChartGenerator(ups3Comp);
+    generator3.setChartType("interpolate and extrapolate");
+    CompressorChartInterface chart3 = generator3.generateCompressorChart("normal curves", 8);
+    ups3Comp.setCompressorChart(chart3);
+    ups3Comp.getCompressorChart().setUseCompressorChart(true);
     ups3Comp.setSolveSpeed(true);
     CompressorDriver driver3 = new CompressorDriver(DriverType.GAS_TURBINE, 45000.0);
     driver3.setRatedSpeed(6726.3); // Different rated speed for ups3

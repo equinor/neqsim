@@ -7,6 +7,8 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.compressor.CompressorChartGenerator;
+import neqsim.process.equipment.compressor.CompressorChartInterface;
 import neqsim.process.equipment.compressor.CompressorDriver;
 import neqsim.process.equipment.compressor.DriverType;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -373,12 +375,9 @@ public class CoolingDutyProductionAnalysisTest {
     Compressor ups2Comp = (Compressor) processSystem.getUnit("ups2 Compressor");
     Compressor ups3Comp = (Compressor) processSystem.getUnit("ups3 Compressor");
 
-    configureCompressor1And2WithElectricDriver(ups1Comp,
-        "src/test/resources/compressor_curves/example_compressor_curve.json", 7383.0);
-    configureCompressor1And2WithElectricDriver(ups2Comp,
-        "src/test/resources/compressor_curves/compressor_curve_ups2.json", 7383.0);
-    configureCompressor3WithElectricDriver(ups3Comp,
-        "src/test/resources/compressor_curves/compressor_curve_ups3.json", 6726.0);
+    configureCompressor1And2WithElectricDriver(ups1Comp, 7383.0);
+    configureCompressor1And2WithElectricDriver(ups2Comp, 7383.0);
+    configureCompressor3WithElectricDriver(ups3Comp, 6726.0);
 
     // Initialize pipe mechanical designs
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem
@@ -477,15 +476,16 @@ public class CoolingDutyProductionAnalysisTest {
     return outletPipe2.getOutletStream();
   }
 
-  private void configureCompressor1And2WithElectricDriver(Compressor compressor, String chartPath,
+  private void configureCompressor1And2WithElectricDriver(Compressor compressor,
       double ratedSpeed) {
     // Set chart type to use interpolation and extrapolation for smooth curves
     compressor.setCompressorChartType("interpolate and extrapolate");
-    try {
-      compressor.loadCompressorChartFromJson(chartPath);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to load compressor chart: " + chartPath, e);
-    }
+    // Generate compressor chart programmatically instead of loading from JSON
+    CompressorChartGenerator generator = new CompressorChartGenerator(compressor);
+    generator.setChartType("interpolate and extrapolate");
+    CompressorChartInterface chart = generator.generateCompressorChart("normal curves", 8);
+    compressor.setCompressorChart(chart);
+    compressor.getCompressorChart().setUseCompressorChart(true);
     compressor.setSolveSpeed(true);
 
     CompressorDriver driver = new CompressorDriver(DriverType.VFD_MOTOR, 44400.0);
@@ -503,15 +503,15 @@ public class CoolingDutyProductionAnalysisTest {
     compressor.setDriver(driver);
   }
 
-  private void configureCompressor3WithElectricDriver(Compressor compressor, String chartPath,
-      double ratedSpeed) {
+  private void configureCompressor3WithElectricDriver(Compressor compressor, double ratedSpeed) {
     // Set chart type to use interpolation and extrapolation for smooth curves
     compressor.setCompressorChartType("interpolate and extrapolate");
-    try {
-      compressor.loadCompressorChartFromJson(chartPath);
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to load compressor chart: " + chartPath, e);
-    }
+    // Generate compressor chart programmatically instead of loading from JSON
+    CompressorChartGenerator generator = new CompressorChartGenerator(compressor);
+    generator.setChartType("interpolate and extrapolate");
+    CompressorChartInterface chart = generator.generateCompressorChart("normal curves", 8);
+    compressor.setCompressorChart(chart);
+    compressor.getCompressorChart().setUseCompressorChart(true);
     compressor.setSolveSpeed(true);
 
     // Compressor 3 has 50 MW max power at rated speed 6726 RPM
@@ -803,12 +803,9 @@ public class CoolingDutyProductionAnalysisTest {
     Compressor ups2Comp = (Compressor) processSystem.getUnit("ups2 Compressor");
     Compressor ups3Comp = (Compressor) processSystem.getUnit("ups3 Compressor");
 
-    configureCompressor1And2WithElectricDriver(ups1Comp,
-        "src/test/resources/compressor_curves/example_compressor_curve.json", 7383.0);
-    configureCompressor1And2WithElectricDriver(ups2Comp,
-        "src/test/resources/compressor_curves/compressor_curve_ups2.json", 7383.0);
-    configureCompressor3WithElectricDriver(ups3Comp,
-        "src/test/resources/compressor_curves/compressor_curve_ups3.json", 6726.0);
+    configureCompressor1And2WithElectricDriver(ups1Comp, 7383.0);
+    configureCompressor1And2WithElectricDriver(ups2Comp, 7383.0);
+    configureCompressor3WithElectricDriver(ups3Comp, 6726.0);
 
     // Initialize pipe mechanical designs
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem
@@ -1087,13 +1084,10 @@ public class CoolingDutyProductionAnalysisTest {
     Compressor ups3Comp = (Compressor) processSystem.getUnit("ups3 Compressor");
 
     // Both ups1 and ups2 use the SAME compressor curve (example_compressor_curve.json)
-    configureCompressor1And2WithElectricDriver(ups1Comp,
-        "src/test/resources/compressor_curves/example_compressor_curve.json", 7383.0);
-    configureCompressor1And2WithElectricDriver(ups2Comp,
-        "src/test/resources/compressor_curves/example_compressor_curve.json", 7383.0); // SAME as
-                                                                                       // ups1!
-    configureCompressor3WithElectricDriver(ups3Comp,
-        "src/test/resources/compressor_curves/compressor_curve_ups3.json", 6726.0);
+    configureCompressor1And2WithElectricDriver(ups1Comp, 7383.0);
+    configureCompressor1And2WithElectricDriver(ups2Comp, 7383.0); // SAME as
+                                                                  // ups1!
+    configureCompressor3WithElectricDriver(ups3Comp, 6726.0);
 
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem
         .getUnitOperations()) {
@@ -1299,13 +1293,10 @@ public class CoolingDutyProductionAnalysisTest {
     Compressor ups2Comp = (Compressor) processSystem.getUnit("ups2 Compressor");
     Compressor ups3Comp = (Compressor) processSystem.getUnit("ups3 Compressor");
 
-    configureCompressor1And2WithElectricDriver(ups1Comp,
-        "src/test/resources/compressor_curves/example_compressor_curve.json", 7383.0);
-    configureCompressor1And2WithElectricDriver(ups2Comp,
-        "src/test/resources/compressor_curves/example_compressor_curve.json", 7383.0); // SAME as
-                                                                                       // ups1!
-    configureCompressor3WithElectricDriver(ups3Comp,
-        "src/test/resources/compressor_curves/compressor_curve_ups3.json", 6726.0);
+    configureCompressor1And2WithElectricDriver(ups1Comp, 7383.0);
+    configureCompressor1And2WithElectricDriver(ups2Comp, 7383.0); // SAME as
+                                                                  // ups1!
+    configureCompressor3WithElectricDriver(ups3Comp, 6726.0);
 
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem
         .getUnitOperations()) {
@@ -1719,10 +1710,8 @@ public class CoolingDutyProductionAnalysisTest {
     Compressor compA = (Compressor) processSystem.getUnit("CompA Compressor");
     Compressor compB = (Compressor) processSystem.getUnit("CompB Compressor");
 
-    configureCompressor1And2WithElectricDriver(compA,
-        "src/test/resources/compressor_curves/example_compressor_curve.json", 7383.0);
-    configureCompressor1And2WithElectricDriver(compB,
-        "src/test/resources/compressor_curves/example_compressor_curve.json", 7383.0);
+    configureCompressor1And2WithElectricDriver(compA, 7383.0);
+    configureCompressor1And2WithElectricDriver(compB, 7383.0);
 
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem
         .getUnitOperations()) {
@@ -1845,10 +1834,8 @@ public class CoolingDutyProductionAnalysisTest {
     Compressor compA = (Compressor) processSystem.getUnit("CompA Compressor");
     Compressor compB = (Compressor) processSystem.getUnit("CompB Compressor");
 
-    configureCompressor1And2WithElectricDriver(compA,
-        "src/test/resources/compressor_curves/example_compressor_curve.json", 7383.0);
-    configureCompressor1And2WithElectricDriver(compB,
-        "src/test/resources/compressor_curves/example_compressor_curve.json", 7383.0);
+    configureCompressor1And2WithElectricDriver(compA, 7383.0);
+    configureCompressor1And2WithElectricDriver(compB, 7383.0);
 
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem
         .getUnitOperations()) {
@@ -2209,10 +2196,8 @@ public class CoolingDutyProductionAnalysisTest {
     Compressor compA = (Compressor) processSystem.getUnit("CompA Compressor");
     Compressor compB = (Compressor) processSystem.getUnit("CompB Compressor");
 
-    configureCompressor1And2WithElectricDriver(compA,
-        "src/test/resources/compressor_curves/example_compressor_curve.json", 7383.0);
-    configureCompressor1And2WithElectricDriver(compB,
-        "src/test/resources/compressor_curves/example_compressor_curve.json", 7383.0);
+    configureCompressor1And2WithElectricDriver(compA, 7383.0);
+    configureCompressor1And2WithElectricDriver(compB, 7383.0);
 
     for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem
         .getUnitOperations()) {
@@ -4387,15 +4372,12 @@ public class CoolingDutyProductionAnalysisTest {
     Compressor ups1Comp = (Compressor) processSystem.getUnit("ups1 Compressor");
     Compressor ups2Comp = (Compressor) processSystem.getUnit("ups2 Compressor");
 
-    configureCompressor1And2WithElectricDriver(ups1Comp,
-        "src/test/resources/compressor_curves/example_compressor_curve.json", 7383.0);
-    configureCompressor1And2WithElectricDriver(ups2Comp,
-        "src/test/resources/compressor_curves/example_compressor_curve.json", 7383.0);
+    configureCompressor1And2WithElectricDriver(ups1Comp, 7383.0);
+    configureCompressor1And2WithElectricDriver(ups2Comp, 7383.0);
 
     if (numCompressors == 3) {
       Compressor ups3Comp = (Compressor) processSystem.getUnit("ups3 Compressor");
-      configureCompressor3WithElectricDriver(ups3Comp,
-          "src/test/resources/compressor_curves/compressor_curve_ups3.json", 6726.0);
+      configureCompressor3WithElectricDriver(ups3Comp, 6726.0);
     }
 
     processSystem.run();
@@ -4875,15 +4857,12 @@ public class CoolingDutyProductionAnalysisTest {
     Compressor ups1Comp = (Compressor) processSystem.getUnit("ups1 Compressor");
     Compressor ups2Comp = (Compressor) processSystem.getUnit("ups2 Compressor");
 
-    configureCompressor1And2WithElectricDriver(ups1Comp,
-        "src/test/resources/compressor_curves/example_compressor_curve.json", 7383.0);
-    configureCompressor1And2WithElectricDriver(ups2Comp,
-        "src/test/resources/compressor_curves/example_compressor_curve.json", 7383.0);
+    configureCompressor1And2WithElectricDriver(ups1Comp, 7383.0);
+    configureCompressor1And2WithElectricDriver(ups2Comp, 7383.0);
 
     if (numCompressors == 3) {
       Compressor ups3Comp = (Compressor) processSystem.getUnit("ups3 Compressor");
-      configureCompressor3WithElectricDriver(ups3Comp,
-          "src/test/resources/compressor_curves/compressor_curve_ups3.json", 6726.0);
+      configureCompressor3WithElectricDriver(ups3Comp, 6726.0);
     }
 
     processSystem.run();
