@@ -1255,8 +1255,8 @@ public class ThrottlingValve extends TwoPortEquipment
       // we need to size the valve Cv larger
       // For equal-percentage characteristic: Cv_actual = Cv_100 * R^((opening-1))
       // Simplified: Cv needed at 100% ≈ Cv at design opening / opening factor
-      double openingFactor =
-          getMechanicalDesign().getValveCharacterizationMethod().getOpeningFactor(designOpeningPercent);
+      double openingFactor = getMechanicalDesign().getValveCharacterizationMethod()
+          .getOpeningFactor(designOpeningPercent);
 
       // designCv is the Cv at 100% opening such that at current flow,
       // the valve operates at designOpeningPercent
@@ -1265,8 +1265,7 @@ public class ThrottlingValve extends TwoPortEquipment
       // Apply safety factor
       designCv = designCv * safetyFactor;
 
-      logger.info(
-          "Valve {} auto-sized: flow={} kg/hr, Cv@100%={}, designOpening={}%, designCv={}",
+      logger.info("Valve {} auto-sized: flow={} kg/hr, Cv@100%={}, designOpening={}%, designCv={}",
           getName(), flowRate, calculatedCv, designOpeningPercent, designCv);
     } else {
       // Zero flow valve - estimate based on connected equipment or use default

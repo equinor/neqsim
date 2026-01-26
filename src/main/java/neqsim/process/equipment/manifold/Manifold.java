@@ -760,8 +760,7 @@ public class Manifold extends ProcessEquipmentBaseClass
   private static final double TARGET_BRANCH_VELOCITY = 18.0;
 
   /** Standard pipe inner diameters in meters (Schedule 40 approximate). */
-  private static final double[] STANDARD_PIPE_IDS = {
-      0.0269, // 1"
+  private static final double[] STANDARD_PIPE_IDS = {0.0269, // 1"
       0.0409, // 1.5"
       0.0525, // 2"
       0.0779, // 3"
@@ -776,12 +775,11 @@ public class Manifold extends ProcessEquipmentBaseClass
       0.5080, // 20"
       0.6096, // 24"
       0.7620, // 30"
-      0.9144  // 36"
+      0.9144 // 36"
   };
 
   /** Standard pipe wall thicknesses in meters (Schedule 40 approximate). */
-  private static final double[] STANDARD_PIPE_WALLS = {
-      0.00338, // 1"
+  private static final double[] STANDARD_PIPE_WALLS = {0.00338, // 1"
       0.00368, // 1.5"
       0.00391, // 2"
       0.00549, // 3"
@@ -796,7 +794,7 @@ public class Manifold extends ProcessEquipmentBaseClass
       0.01575, // 20"
       0.01778, // 24"
       0.01905, // 30"
-      0.02223  // 36"
+      0.02223 // 36"
   };
 
   /** {@inheritDoc} */
@@ -846,11 +844,9 @@ public class Manifold extends ProcessEquipmentBaseClass
       setBranchInnerDiameter(selectedBranchID);
       setBranchWallThickness(selectedBranchWall);
 
-      logger.info(
-          "Manifold '{}' sized: Header ID={} mm, Branch ID={} mm for flow={} m3/hr",
+      logger.info("Manifold '{}' sized: Header ID={} mm, Branch ID={} mm for flow={} m3/hr",
           getName(), String.format("%.1f", selectedHeaderID * 1000),
-          String.format("%.1f", selectedBranchID * 1000),
-          String.format("%.1f", totalVolumeFlow));
+          String.format("%.1f", selectedBranchID * 1000), String.format("%.1f", totalVolumeFlow));
     }
 
     // Apply safety factor to design capacity
