@@ -314,8 +314,7 @@ The mixed composition is the flow-weighted average of all inlet compositions.
 
 ## Related Documentation
 
-- [Mixers](mixers.md) - Stream mixing
-- [Splitters](splitters.md) - Stream splitting
+- [Mixers and Splitters](mixers_splitters.md) - Stream mixing and splitting
 - [Streams](streams.md) - Process streams
 - [Subsea Systems](subsea_systems.md) - Subsea manifold applications
 - [Manifold Mechanical Design](manifold_design.md) - Detailed manifold mechanical design

@@ -55,7 +55,9 @@ public class ThreePhaseSeparator extends Separator {
   private double lastFlowRate;
   private double lastPressure;
 
-  /** Water level height in meters (bottom of separator to water-oil interface). */
+  /**
+   * Water level height in meters (bottom of separator to water-oil interface).
+   */
   private double waterLevel = 0.0;
   /** Oil level height in meters (bottom of separator to top of oil phase). */
   private double oilLevel = 0.0;
@@ -81,8 +83,9 @@ public class ThreePhaseSeparator extends Separator {
    * Constructor for ThreePhaseSeparator.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param name        a {@link java.lang.String} object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
+   *                    object
    */
   public ThreePhaseSeparator(String name, StreamInterface inletStream) {
     super(name, inletStream);
@@ -93,11 +96,11 @@ public class ThreePhaseSeparator extends Separator {
    * setEntrainment.
    * </p>
    *
-   * @param val a double
-   * @param specType a {@link java.lang.String} object
+   * @param val             a double
+   * @param specType        a {@link java.lang.String} object
    * @param specifiedStream a {@link java.lang.String} object
-   * @param phaseFrom a {@link java.lang.String} object
-   * @param phaseTo a {@link java.lang.String} object
+   * @param phaseFrom       a {@link java.lang.String} object
+   * @param phaseTo         a {@link java.lang.String} object
    */
   public void setEntrainment(double val, String specType, String specifiedStream, String phaseFrom,
       String phaseTo) {
@@ -542,8 +545,7 @@ public class ThreePhaseSeparator extends Separator {
 
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
         double dncomp = 0.0;
-        dncomp +=
-            inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
+        dncomp += inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
         double dniOil = 0.0;
         double dniAqueous = 0.0;
         if (hasOil) {
@@ -789,5 +791,175 @@ public class ThreePhaseSeparator extends Separator {
     SeparatorResponse res = new SeparatorResponse(this);
     res.applyConfig(cfg);
     return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
+  }
+
+  // ==================== Three-Phase Separator Performance Overrides
+  // ====================
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For three-phase separator, oil retention time is calculated for the oil layer
+   * between the water-oil interface (NIL) and the oil surface (NLL).
+   * </p>
+   */
+  @Override
+  public double calcOilRetentionTime() {
+    if (thermoSystem == null || !thermoSystem.hasPhaseType("oil")) {
+      return Double.POSITIVE_INFINITY; // No oil - infinite retention
+    }
+
+    double nll = getMechanicalDesign().getNLL();
+    double nil = getMechanicalDesign().getNIL();
+    double effLiquidLength = getMechanicalDesign().getEffectiveLengthLiquid();
+    double id = getInternalDiameter();
+
+    if (nll <= 0) {
+      nll = id * 0.50; // Default 50% of ID
+    }
+    if (nil <= 0) {
+      nil = id * 0.20; // Default 20% of ID (water-oil interface)
+    }
+    if (effLiquidLength <= 0) {
+      effLiquidLength = getSeparatorLength() * 0.82;
+    }
+
+    // Oil volume between NIL (water-oil interface) and NLL (oil surface)
+    double oilArea = calcSegmentArea(id, nll) - calcSegmentArea(id, nil);
+    double oilVolume = oilArea * effLiquidLength; // m³
+
+    // Oil flow rate
+    int oilIndex = thermoSystem.getPhaseNumberOfPhase("oil");
+    double oilFlowRate = thermoSystem.getPhase(oilIndex).getFlowRate("m3/hr") / 60.0; // m³/min
+
+    if (oilFlowRate <= 0) {
+      return Double.POSITIVE_INFINITY;
+    }
+
+    return oilVolume / oilFlowRate; // minutes
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For three-phase separator, water retention time is calculated for the water
+   * layer
+   * below the water-oil interface (NIL).
+   * </p>
+   */
+  @Override
+  public double calcWaterRetentionTime() {
+    if (thermoSystem == null || !thermoSystem.hasPhaseType("aqueous")) {
+      return Double.POSITIVE_INFINITY; // No water - infinite retention
+    }
+
+    double nil = getMechanicalDesign().getNIL();
+    double effLiquidLength = getMechanicalDesign().getEffectiveLengthLiquid();
+    double id = getInternalDiameter();
+
+    if (nil <= 0) {
+      nil = id * 0.20; // Default 20% of ID (water-oil interface)
+    }
+    if (effLiquidLength <= 0) {
+      effLiquidLength = getSeparatorLength() * 0.82;
+    }
+
+    // Water volume below NIL (water-oil interface)
+    double waterArea = calcSegmentArea(id, nil);
+    double waterVolume = waterArea * effLiquidLength; // m³
+
+    // Water flow rate
+    int waterIndex = thermoSystem.getPhaseNumberOfPhase("aqueous");
+    double waterFlowRate = thermoSystem.getPhase(waterIndex).getFlowRate("m3/hr") / 60.0; // m³/min
+
+    if (waterFlowRate <= 0) {
+      return Double.POSITIVE_INFINITY;
+    }
+
+    return waterVolume / waterFlowRate; // minutes
+  }
+
+  /**
+   * Calculate the oil-water interface settling time.
+   * This is the time for oil droplets to rise through the water layer
+   * and water droplets to settle through the oil layer.
+   *
+   * @return interface settling time in minutes
+   */
+  public double calcInterfaceSettlingTime() {
+    if (thermoSystem == null || thermoSystem.getNumberOfPhases() < 3) {
+      return 0.0;
+    }
+
+    double nil = getMechanicalDesign().getNIL();
+    double nll = getMechanicalDesign().getNLL();
+    double effLiquidLength = getMechanicalDesign().getEffectiveLengthLiquid();
+    double id = getInternalDiameter();
+
+    if (nil <= 0) {
+      nil = id * 0.20;
+    }
+    if (nll <= 0) {
+      nll = id * 0.50;
+    }
+    if (effLiquidLength <= 0) {
+      effLiquidLength = getSeparatorLength() * 0.82;
+    }
+
+    // Oil layer thickness
+    double oilLayerThickness = nll - nil;
+    // Water layer thickness
+    double waterLayerThickness = nil;
+
+    // Get densities and viscosity
+    double oilDensity = thermoSystem.getPhase("oil").getDensity("kg/m3");
+    double waterDensity = thermoSystem.getPhase("aqueous").getDensity("kg/m3");
+    double oilViscosity = thermoSystem.getPhase("oil").getPhysicalProperties().getViscosity();
+
+    // Stokes settling velocity for 150 µm water droplet in oil
+    double dropletDiameter = 150e-6; // 150 µm
+    double settlingVelocity = 9.81 * Math.pow(dropletDiameter, 2) * (waterDensity - oilDensity)
+        / (18.0 * oilViscosity);
+
+    if (settlingVelocity <= 0) {
+      return Double.POSITIVE_INFINITY;
+    }
+
+    // Time for water droplet to settle through oil layer
+    double settlingTime = oilLayerThickness / Math.abs(settlingVelocity) / 60.0; // minutes
+
+    return settlingTime;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For three-phase separator, also checks interface settling time.
+   * </p>
+   */
+  @Override
+  public boolean isWithinAllLimits() {
+    return super.isWithinAllLimits() && calcInterfaceSettlingTime() >= 1.0; // Min 1 minute settling
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * For three-phase separator, includes interface settling information.
+   * </p>
+   */
+  @Override
+  public String getPerformanceSummary() {
+    StringBuilder sb = new StringBuilder(super.getPerformanceSummary());
+
+    double settlingTime = calcInterfaceSettlingTime();
+    sb.append(String.format("Interface settling time: %.1f min (min: 1.0 min) - %s%n",
+        settlingTime, settlingTime >= 1.0 ? "OK" : "BELOW MINIMUM"));
+
+    return sb.toString();
   }
 }

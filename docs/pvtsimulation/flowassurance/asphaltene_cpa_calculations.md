@@ -513,4 +513,4 @@ System.out.println(analyzer.comprehensiveAssessment());
 - [Asphaltene Modeling Overview](asphaltene_modeling.md)
 - [De Boer Screening](asphaltene_deboer_screening.md)
 - [Method Comparison](asphaltene_method_comparison.md)
-- [CPA Equation of State](../../thermo/cpa_eos.md)
+- [Electrolyte CPA Model](../../thermo/ElectrolyteCPAModel.md)

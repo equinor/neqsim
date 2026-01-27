@@ -19,6 +19,10 @@ This guide covers production optimization for facilities with compressors, inclu
 
 ---
 
+> **January 2026 Update:** ProductionOptimizer now includes `GRADIENT_DESCENT_SCORE` algorithm for smooth multi-variable problems, configuration validation with `config.validate()`, stagnation detection, warm start support, bounded LRU cache, and infeasibility diagnostics. See [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) for details.
+
+---
+
 ## Overview
 
 Production optimization for compression facilities requires careful handling of:
@@ -121,7 +125,7 @@ compressor.setDriver(driver);
 | Flow + 2-3 split factors | `NELDER_MEAD_SCORE` | Multi-dimensional simplex |
 | Many variables (4-10) | `PARTICLE_SWARM_SCORE` | Global search |
 | Many smooth variables (5-20+) | `GRADIENT_DESCENT_SCORE` | **New** - Fast convergence |
-| Two-stage approach | `NELDER_MEAD` then `BINARY_FEASIBILITY` | **Recommended** |
+| Two-stage approach | `NELDER_MEAD_SCORE` then `BINARY_FEASIBILITY` | **Recommended** |
 
 ### Algorithm Configuration
 

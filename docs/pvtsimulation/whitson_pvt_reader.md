@@ -417,7 +417,6 @@ For gas condensates, an oil (condensate) phase forms below the dew point pressur
 
 ## See Also
 
-- [EclipseFluidReadWrite](../src/main/java/neqsim/thermo/util/readwrite/EclipseFluidReadWrite.java) - Reader for Eclipse E300 PVT files
 - [Fluid Characterization](fluid_characterization_mathematics.md) - Mathematical background for C7+ characterization
-- [BIP Estimation](../src/main/java/neqsim/thermo/characterization/BIPEstimator.java) - Binary interaction parameter correlations
-- [Viscosity Models](wiki/viscosity_models.md) - LBC and other viscosity model documentation
+- [PVT Workflow](pvt_workflow.md) - End-to-end PVT workflow
+- [Viscosity Models](../physical_properties/viscosity_models.md) - LBC and other viscosity model documentation

@@ -9,6 +9,72 @@ The Capacity Constraint Framework extends NeqSim's existing bottleneck analysis 
 - **Warning thresholds**: Early warning when approaching limits
 - **Integration with ProductionOptimizer**: Works seamlessly with existing optimization tools
 
+## Important: Constraints Disabled by Default
+
+> **⚠️ Key Behavior**: All separator, valve, pipeline, pump, and manifold constraints are **disabled by default** for backward compatibility. The optimizer checks whether any constraints are enabled before using the `CapacityConstrainedEquipment` interface.
+
+### Why Constraints Are Disabled by Default
+
+To maintain backward compatibility with existing simulations, constraints are created but **not enabled** when equipment is initialized. This ensures that:
+
+1. **Existing code works unchanged** - Simulations that don't use capacity analysis continue to work
+2. **Explicit opt-in for capacity analysis** - You must explicitly enable constraints to use them
+3. **No unexpected optimization failures** - Optimizer falls back to traditional methods if no constraints are enabled
+
+### How to Enable Constraints
+
+```java
+// Method 1: Use pre-configured constraint sets (Separator example)
+Separator separator = new Separator("HP Separator", feed);
+separator.useEquinorConstraints();  // Enables K-value, droplet, momentum, retention times
+// OR
+separator.useAPIConstraints();      // Enables K-value and retention times per API 12J
+// OR
+separator.useAllConstraints();      // Enables all 5 constraint types
+
+// Method 2: Enable individual constraints
+separator.getConstraints().get(StandardConstraintType.SEPARATOR_K_VALUE).setEnabled(true);
+
+// Method 3: Enable all constraints at once
+separator.enableConstraints();      // Enables all constraints on this equipment
+
+// Method 4: Disable constraints (return to default)
+separator.disableConstraints();     // Disables all constraints
+```
+
+### How the Optimizer Uses Constraints
+
+The `ProductionOptimizer` uses a smart fallback mechanism:
+
+```java
+// In determineCapacityRule(), the optimizer checks:
+boolean hasEnabledConstraints = constrained.getCapacityConstraints().values().stream()
+    .anyMatch(CapacityConstraint::isEnabled);
+
+if (constrained.isCapacityAnalysisEnabled() && hasEnabledConstraints) {
+    // Use multi-constraint capacity analysis
+    return new ConstrainedCapacityRule(equipment);
+} else {
+    // Fall back to traditional getCapacityMax()/getCapacityDuty()
+    return new TraditionalCapacityRule(equipment);
+}
+```
+
+### Summary: Constraint Enablement by Equipment Type
+
+| Equipment Type | Default State | How to Enable |
+|---------------|---------------|---------------|
+| **Separator** | All disabled | `useEquinorConstraints()`, `useAPIConstraints()`, `enableConstraints()` |
+| **ThreePhaseSeparator** | All disabled | Same as Separator |
+| **GasScrubber** | K-value only enabled | `useGasScrubberConstraints()` (automatic in constructor) |
+| **Compressor** | All enabled | (constraints created by `autoSize()` are enabled by default) |
+| **ThrottlingValve** | All disabled | `enableConstraints()` |
+| **Pipeline** | All disabled | `enableConstraints()` |
+| **Pump** | All disabled | `enableConstraints()` |
+| **Manifold** | All disabled | `enableConstraints()` |
+
+---
+
 ## Relationship to Existing Bottleneck Analysis
 
 NeqSim already provides bottleneck analysis via `ProcessEquipmentInterface`:
@@ -287,6 +353,40 @@ System.out.println("Bottleneck: " + result.getBottleneck().getName());
 | **AdiabaticPipe** | velocity, LOF, FRMS, AIV, pressureDrop | autoSize(), setMaxDesignVelocity(), setMaxDesignLOF(), setMaxDesignAIV() |
 | **Manifold** | headerVelocity, branchVelocity, headerLOF, headerFRMS, branchLOF, branchFRMS | autoSize(), setMaxDesignVelocity() |
 | **Heater/Cooler** | duty, outletTemperature | autoSize(), setMaxDesignDuty() |
+
+### How to Override autoSize Constraints
+
+After `autoSize()` creates constraints, you can override them:
+
+```java
+// 1. Override BEFORE autoSize (parameter will be used in sizing)
+separator.setDesignGasLoadFactor(0.15);  // Your K-factor
+separator.autoSize(1.2);                  // Uses your K-factor
+
+// 2. Override AFTER autoSize (keeps sizing, changes constraint limit)
+compressor.autoSize(1.2);
+compressor.setMaximumPower(6000.0);       // Override constraint limit (kW)
+compressor.setMaximumSpeed(12000.0);      // Override speed limit (RPM)
+
+// 3. Manually set constraint on existing equipment
+CapacityConstraint customPower = new CapacityConstraint("powerLimit", ConstraintType.HARD)
+    .setDesignValue(5000.0)
+    .setUnit("kW")
+    .setValueSupplier(() -> compressor.getPower("kW"));
+compressor.addCapacityConstraint(customPower);
+
+// 4. Remove auto-generated constraint and add custom one
+compressor.removeCapacityConstraint("power");  // Remove default
+compressor.addCapacityConstraint(customPower); // Add custom
+```
+
+### Constraint Priority After Override
+
+When you override a constraint parameter, the priority is:
+1. **User-specified value** (highest) - via setter methods
+2. **autoSize calculated value** - based on flow conditions
+3. **Mechanical design default** - from design standards
+4. **Hard-coded default** (lowest) - in equipment class
 
 ---
 
@@ -1592,8 +1692,8 @@ BottleneckResult bottleneck = process.findBottleneck();
 
 ## See Also
 
-- [Process Equipment Documentation](../process/README.md)
-- [Mechanical Design Framework](../process/MECHANICAL_DESIGN_FRAMEWORK.md)
+- [Process Equipment Documentation](README.md)
+- [Mechanical Design](mechanical_design.md)
 - [Optimizer Plugin Architecture](optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md)
 - [Optimization Examples](../examples/index.md)
 

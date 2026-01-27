@@ -351,9 +351,9 @@ The `PressureBoundaryOptimizer` is **NOT** thread-safe. The underlying `ProcessS
 
 ## Related Classes
 
-- [ProductionOptimizer](ProductionOptimizer.md) - Base optimization framework
-- [ProcessSystem](ProcessSystem.md) - Process flowsheet container
-- [Compressor](Compressor.md) - Centrifugal compressor with surge/stonewall limits
+- [Compressors](equipment/compressors.md) - Centrifugal compressor documentation
+- [Pipelines](equipment/pipelines.md) - Pipeline documentation
+- [Process Equipment](README.md) - Process equipment overview
 
 ## Example: Complete Workflow
 

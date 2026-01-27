@@ -21,6 +21,8 @@ import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * <p>
@@ -34,6 +36,9 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
     neqsim.process.equipment.capacity.CapacityConstrainedEquipment, AutoSizeable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+
+  /** Logger object for class. */
+  static Logger logger = LogManager.getLogger(Heater.class);
 
   boolean setTemperature = false;
 
@@ -52,6 +57,16 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
   private String temperatureUnit = "K";
   private String pressureUnit = "bara";
   double coolingMediumTemperature = 278.15;
+
+  // Design temperature limits for capacity constraint checking
+  /**
+   * Maximum outlet temperature limit in Kelvin. Double.MAX_VALUE means no limit.
+   */
+  private double maxOutletTemperatureLimit = Double.MAX_VALUE;
+  /** Minimum outlet temperature limit in Kelvin. 0.0 means no limit. */
+  private double minOutletTemperatureLimit = 0.0;
+  /** Unit for temperature limits (for display/reporting purposes). */
+  private String temperatureLimitUnit = "K";
 
   // Results from previous calculation
   protected double lastTemperature = 0.0;
@@ -79,8 +94,9 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
    * Constructor for Heater.
    * </p>
    *
-   * @param name a {@link java.lang.String} object
-   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param name     a {@link java.lang.String} object
+   * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface}
+   *                 object
    */
   public Heater(String name, StreamInterface inStream) {
     super(name);
@@ -117,7 +133,8 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
   }
 
   /**
-   * Returns the utility-side specification used by the mechanical design calculation.
+   * Returns the utility-side specification used by the mechanical design
+   * calculation.
    *
    * @return the utility specification instance for this heater/cooler
    */
@@ -131,15 +148,14 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
    * @param specification new utility specification instance
    */
   public void setUtilitySpecification(UtilityStreamSpecification specification) {
-    this.utilitySpecification =
-        specification != null ? specification : new UtilityStreamSpecification();
+    this.utilitySpecification = specification != null ? specification : new UtilityStreamSpecification();
   }
 
   /**
    * Convenience method to set the utility supply temperature.
    *
    * @param temperature utility temperature value
-   * @param unit unit of the provided value (e.g. "K" or "C")
+   * @param unit        unit of the provided value (e.g. "K" or "C")
    */
   public void setUtilitySupplyTemperature(double temperature, String unit) {
     utilitySpecification.setSupplyTemperature(temperature, unit);
@@ -149,17 +165,18 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
    * Convenience method to set the utility return temperature.
    *
    * @param temperature utility temperature value
-   * @param unit unit of the provided value (e.g. "K" or "C")
+   * @param unit        unit of the provided value (e.g. "K" or "C")
    */
   public void setUtilityReturnTemperature(double temperature, String unit) {
     utilitySpecification.setReturnTemperature(temperature, unit);
   }
 
   /**
-   * Convenience method to set the minimum approach temperature between process and utility.
+   * Convenience method to set the minimum approach temperature between process
+   * and utility.
    *
    * @param approach minimum temperature difference
-   * @param unit unit of the provided value (e.g. "K" or "C")
+   * @param unit     unit of the provided value (e.g. "K" or "C")
    */
   public void setUtilityApproachTemperature(double approach, String unit) {
     utilitySpecification.setApproachTemperature(approach, unit);
@@ -175,7 +192,8 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
   }
 
   /**
-   * Convenience method to set the assumed overall heat-transfer coefficient for sizing.
+   * Convenience method to set the assumed overall heat-transfer coefficient for
+   * sizing.
    *
    * @param u overall heat-transfer coefficient in W/(m^2*K)
    */
@@ -416,11 +434,14 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
   }
 
   /**
-   * Sets the maximum design duty (heating or cooling capacity) for capacity constraint checking.
+   * Sets the maximum design duty (heating or cooling capacity) for capacity
+   * constraint checking.
    * 
    * <p>
-   * The duty is specified in Watts (W). Positive values indicate heating capacity, negative values
-   * indicate cooling capacity. For constraint checking, the absolute value is used.
+   * The duty is specified in Watts (W). Positive values indicate heating
+   * capacity, negative values
+   * indicate cooling capacity. For constraint checking, the absolute value is
+   * used.
    * </p>
    *
    * @param maxDuty maximum design duty in Watts [W]
@@ -435,7 +456,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
    * Sets the maximum design duty with unit specification.
    *
    * @param maxDuty maximum design duty value
-   * @param unit unit of the duty value (e.g., "W", "kW", "MW")
+   * @param unit    unit of the duty value (e.g., "W", "kW", "MW")
    */
   public void setMaxDesignDuty(double maxDuty, String unit) {
     neqsim.util.unit.PowerUnit powerUnit = new neqsim.util.unit.PowerUnit(maxDuty, unit);
@@ -458,9 +479,140 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
    * @return maximum design duty in the specified unit
    */
   public double getMaxDesignDuty(String unit) {
-    neqsim.util.unit.PowerUnit powerUnit =
-        new neqsim.util.unit.PowerUnit(getMechanicalDesign().maxDesignDuty, "W");
+    neqsim.util.unit.PowerUnit powerUnit = new neqsim.util.unit.PowerUnit(getMechanicalDesign().maxDesignDuty, "W");
     return powerUnit.getValue(unit);
+  }
+
+  // ============================================================================
+  // Temperature Limit Methods
+  // ============================================================================
+
+  /**
+   * Sets the maximum outlet temperature limit in Kelvin.
+   *
+   * <p>
+   * When set, this creates a capacity constraint that tracks whether the outlet
+   * temperature exceeds
+   * this limit. Useful for coolers where a maximum cooling temperature is
+   * desired.
+   * </p>
+   *
+   * @param maxTemp maximum outlet temperature in Kelvin [K]
+   */
+  public void setMaxOutletTemperature(double maxTemp) {
+    this.maxOutletTemperatureLimit = maxTemp;
+    this.temperatureLimitUnit = "K";
+    // Clear constraints to force re-initialization with new limits
+    capacityConstraints.clear();
+  }
+
+  /**
+   * Sets the maximum outlet temperature limit with unit specification.
+   *
+   * @param maxTemp maximum outlet temperature value
+   * @param unit    unit of the temperature value (e.g., "K", "C")
+   */
+  public void setMaxOutletTemperature(double maxTemp, String unit) {
+    neqsim.util.unit.TemperatureUnit tempUnit = new neqsim.util.unit.TemperatureUnit(maxTemp, unit);
+    this.maxOutletTemperatureLimit = tempUnit.getValue("K");
+    this.temperatureLimitUnit = unit;
+    capacityConstraints.clear();
+  }
+
+  /**
+   * Gets the maximum outlet temperature limit.
+   *
+   * @return maximum outlet temperature in Kelvin [K], or Double.MAX_VALUE if not
+   *         set
+   */
+  public double getMaxOutletTemperature() {
+    return maxOutletTemperatureLimit;
+  }
+
+  /**
+   * Gets the maximum outlet temperature limit in the specified unit.
+   *
+   * @param unit unit for the returned value (e.g., "K", "C")
+   * @return maximum outlet temperature in the specified unit
+   */
+  public double getMaxOutletTemperature(String unit) {
+    if (maxOutletTemperatureLimit == Double.MAX_VALUE) {
+      return Double.MAX_VALUE;
+    }
+    neqsim.util.unit.TemperatureUnit tempUnit = new neqsim.util.unit.TemperatureUnit(maxOutletTemperatureLimit, "K");
+    return tempUnit.getValue(unit);
+  }
+
+  /**
+   * Sets the minimum outlet temperature limit in Kelvin.
+   *
+   * <p>
+   * When set, this creates a capacity constraint that tracks whether the outlet
+   * temperature falls
+   * below this limit. Useful for heaters where a minimum heating temperature is
+   * desired.
+   * </p>
+   *
+   * @param minTemp minimum outlet temperature in Kelvin [K]
+   */
+  public void setMinOutletTemperature(double minTemp) {
+    this.minOutletTemperatureLimit = minTemp;
+    this.temperatureLimitUnit = "K";
+    capacityConstraints.clear();
+  }
+
+  /**
+   * Sets the minimum outlet temperature limit with unit specification.
+   *
+   * @param minTemp minimum outlet temperature value
+   * @param unit    unit of the temperature value (e.g., "K", "C")
+   */
+  public void setMinOutletTemperature(double minTemp, String unit) {
+    neqsim.util.unit.TemperatureUnit tempUnit = new neqsim.util.unit.TemperatureUnit(minTemp, unit);
+    this.minOutletTemperatureLimit = tempUnit.getValue("K");
+    this.temperatureLimitUnit = unit;
+    capacityConstraints.clear();
+  }
+
+  /**
+   * Gets the minimum outlet temperature limit.
+   *
+   * @return minimum outlet temperature in Kelvin [K], or 0.0 if not set
+   */
+  public double getMinOutletTemperature() {
+    return minOutletTemperatureLimit;
+  }
+
+  /**
+   * Gets the minimum outlet temperature limit in the specified unit.
+   *
+   * @param unit unit for the returned value (e.g., "K", "C")
+   * @return minimum outlet temperature in the specified unit
+   */
+  public double getMinOutletTemperature(String unit) {
+    if (minOutletTemperatureLimit == 0.0) {
+      return 0.0;
+    }
+    neqsim.util.unit.TemperatureUnit tempUnit = new neqsim.util.unit.TemperatureUnit(minOutletTemperatureLimit, "K");
+    return tempUnit.getValue(unit);
+  }
+
+  /**
+   * Checks if a maximum outlet temperature limit has been set.
+   *
+   * @return true if a maximum outlet temperature limit is configured
+   */
+  public boolean hasMaxOutletTemperatureLimit() {
+    return maxOutletTemperatureLimit != Double.MAX_VALUE;
+  }
+
+  /**
+   * Checks if a minimum outlet temperature limit has been set.
+   *
+   * @return true if a minimum outlet temperature limit is configured
+   */
+  public boolean hasMinOutletTemperatureLimit() {
+    return minOutletTemperatureLimit > 0.0;
   }
 
   /**
@@ -528,8 +680,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
     outStream.run(id);
     outStream.getFluid().init(3);
 
-    double entrop =
-        outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
+    double entrop = outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
 
     return entrop;
   }
@@ -572,6 +723,9 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
   /** Flag indicating if heater has been auto-sized. */
   private boolean autoSized = false;
 
+  /** Minimum default design duty in Watts when current duty is zero. */
+  private static final double MIN_DEFAULT_DESIGN_DUTY = 100000.0; // 100 kW
+
   /** {@inheritDoc} */
   @Override
   public void autoSize(double safetyFactor) {
@@ -579,14 +733,49 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
       throw new IllegalStateException("Inlet stream must be connected before auto-sizing");
     }
 
+    // Run to establish operating conditions
+    run();
+
     // Calculate duty required to achieve the specified temperature change
     double calculatedDuty = Math.abs(getDuty());
-    if (calculatedDuty <= 0) {
-      calculatedDuty = 1000.0; // Default 1 MW if duty not calculable
-    }
 
-    // Apply safety factor to duty
-    double designDuty = calculatedDuty * safetyFactor;
+    // For zero or very low duty (e.g., bypass heater, startup heater),
+    // estimate a reasonable design duty based on the stream
+    double designDuty;
+    if (calculatedDuty <= 0 || Double.isNaN(calculatedDuty)) {
+      // Estimate design duty based on stream heat capacity
+      // Typical design: capacity to heat/cool stream by 50°C
+      double massFlow = inStream.getFlowRate("kg/hr");
+      double cp = 2000.0; // Approximate Cp in J/(kg·K) for hydrocarbons
+
+      if (inStream.getThermoSystem() != null) {
+        try {
+          // Try to get actual Cp
+          cp = inStream.getThermoSystem().getCp("J/kgK");
+          if (Double.isNaN(cp) || cp <= 0) {
+            cp = 2000.0;
+          }
+        } catch (Exception e) {
+          cp = 2000.0;
+        }
+      }
+
+      if (massFlow > 0) {
+        // Design duty for 50°C temperature change
+        double deltaT = 50.0;
+        designDuty = massFlow * cp * deltaT / 3600.0; // Convert to Watts
+        designDuty = Math.max(designDuty, MIN_DEFAULT_DESIGN_DUTY);
+      } else {
+        // No flow - use minimum default
+        designDuty = MIN_DEFAULT_DESIGN_DUTY;
+      }
+
+      logger.info("Heater '{}' has zero current duty, estimated design duty: {} kW", getName(),
+          designDuty / 1000.0);
+    } else {
+      // Normal case - use calculated duty with safety factor
+      designDuty = calculatedDuty * safetyFactor;
+    }
 
     // Initialize and calculate mechanical design
     if (mechanicalDesign == null) {
@@ -596,6 +785,10 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
     // Set design parameters
     mechanicalDesign.maxDesignDuty = designDuty;
     mechanicalDesign.calcDesign();
+
+    // Clear and reinitialize capacity constraints with new design values
+    capacityConstraints.clear();
+    initializeCapacityConstraints();
 
     autoSized = true;
   }
@@ -694,24 +887,51 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
   // ============================================================================
 
   /** Storage for capacity constraints. */
-  private final java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> capacityConstraints =
-      new java.util.LinkedHashMap<>();
+  private final java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> capacityConstraints = new java.util.LinkedHashMap<>();
 
   /**
    * Initializes default capacity constraints for the heater.
    */
   protected void initializeCapacityConstraints() {
-    // Duty constraint (HARD limit)
-    addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("duty", "kW",
-        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
-            .setDesignValue(getMechanicalDesign().maxDesignDuty).setWarningThreshold(0.9)
-            .setValueSupplier(() -> Math.abs(getDuty())));
+    // Duty constraint (HARD limit) - only add if maxDesignDuty is set
+    double maxDuty = getMechanicalDesign().maxDesignDuty;
+    if (maxDuty > 0.0) {
+      addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("duty", "W",
+          neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
+          .setDesignValue(maxDuty).setWarningThreshold(0.9)
+          .setValueSupplier(() -> Math.abs(getDuty())));
+    }
 
-    // Pressure drop constraint (DESIGN limit)
-    addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("pressureDrop",
-        "bara", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
-            .setDesignValue(getMechanicalDesign().maxDesignPressureDrop).setWarningThreshold(0.9)
-            .setValueSupplier(() -> pressureDrop));
+    // Pressure drop constraint (DESIGN limit) - only add if maxDesignPressureDrop
+    // is set
+    double maxPressureDrop = getMechanicalDesign().maxDesignPressureDrop;
+    if (maxPressureDrop > 0.0) {
+      addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("pressureDrop",
+          "bara", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
+          .setDesignValue(maxPressureDrop).setWarningThreshold(0.9)
+          .setValueSupplier(() -> pressureDrop));
+    }
+
+    // Maximum outlet temperature constraint (for coolers)
+    if (hasMaxOutletTemperatureLimit()) {
+      addCapacityConstraint(
+          new neqsim.process.equipment.capacity.CapacityConstraint("maxOutletTemperature", "K",
+              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
+              .setDesignValue(maxOutletTemperatureLimit).setWarningThreshold(0.9)
+              .setValueSupplier(
+                  () -> getOutletStream() != null ? getOutletStream().getTemperature() : 0.0));
+    }
+
+    // Minimum outlet temperature constraint (for heaters)
+    // Uses inverse logic: utilization = minLimit / currentValue
+    if (hasMinOutletTemperatureLimit()) {
+      addCapacityConstraint(
+          new neqsim.process.equipment.capacity.CapacityConstraint("minOutletTemperature", "K",
+              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
+              .setMinValue(minOutletTemperatureLimit).setWarningThreshold(0.9).setValueSupplier(
+                  () -> getOutletStream() != null ? getOutletStream().getTemperature()
+                      : Double.MAX_VALUE));
+    }
   }
 
   /** {@inheritDoc} */

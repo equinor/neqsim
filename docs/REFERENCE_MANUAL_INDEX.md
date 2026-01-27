@@ -193,7 +193,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 ### Chapter 14: Separation Equipment
 | Document | Path | Description |
 |----------|------|-------------|
-| Separators | [docs/process/equipment/separators.md](process/equipment/separators.md) | Separator models |
+| Separators | [docs/process/equipment/separators.md](process/equipment/separators.md) | Two/three-phase separators, scrubbers, design parameters, performance constraints (K-value, droplet cut size, retention time), Equinor TR3500 & API 12J compliance |
 | Distillation | [docs/process/equipment/distillation.md](process/equipment/distillation.md) | Distillation columns |
 | Distillation Wiki | [docs/wiki/distillation_column.md](wiki/distillation_column.md) | Distillation column details |
 | Absorbers | [docs/process/equipment/absorbers.md](process/equipment/absorbers.md) | Absorption equipment |
@@ -280,6 +280,9 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Transient Simulation | [docs/wiki/process_transient_simulation_guide.md](wiki/process_transient_simulation_guide.md) | Transient simulation patterns |
 
 ### Chapter 22: Capacity Constraints & Equipment Limits
+
+> **January 2026 Update:** ProductionOptimizer now includes configuration validation, stagnation detection, warm start, bounded LRU cache, and infeasibility diagnostics. See updated tutorials for details.
+
 | Document | Path | Description |
 |----------|------|-------------|
 | **Optimization Overview** | [docs/process/optimization/OPTIMIZATION_OVERVIEW.md](process/optimization/OPTIMIZATION_OVERVIEW.md) | **START HERE: Introduction to process optimization, when to use ProcessOptimizationEngine vs ProductionOptimizer** |

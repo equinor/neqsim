@@ -171,7 +171,6 @@ System.out.println("Total Power Required: " + powerMW + " MW");
 
 | Topic | Document |
 |-------|----------|
-| TPG4230 Course Support | [TPG4230_SUPPORT_GUIDE.md](TPG4230_SUPPORT_GUIDE.md) |
 | Late-Life Operations | [LATE_LIFE_OPERATIONS.md](LATE_LIFE_OPERATIONS.md) |
 | Field Development Strategy | [FIELD_DEVELOPMENT_STRATEGY.md](FIELD_DEVELOPMENT_STRATEGY.md) |
 | Integrated Framework | [INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md) |

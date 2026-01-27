@@ -23,8 +23,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Base class for pipeline simulation models.
  *
  * <p>
- * This class provides the foundation for all pipeline models in NeqSim. It implements the
- * {@link PipeLineInterface} with default implementations that can be overridden by specialized
+ * This class provides the foundation for all pipeline models in NeqSim. It
+ * implements the
+ * {@link PipeLineInterface} with default implementations that can be overridden
+ * by specialized
  * subclasses.
  * </p>
  *
@@ -33,7 +35,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>{@link AdiabaticPipe} - Single-phase adiabatic pipe</li>
  * <li>{@link AdiabaticTwoPhasePipe} - Two-phase adiabatic pipe</li>
  * <li>{@link PipeBeggsAndBrills} - Beggs and Brill multiphase correlation</li>
- * <li>{@link OnePhasePipeLine} - One-phase flow with compositional tracking</li>
+ * <li>{@link OnePhasePipeLine} - One-phase flow with compositional
+ * tracking</li>
  * <li>{@link TwoPhasePipeLine} - Two-phase flow model</li>
  * <li>{@link TwoFluidPipe} - Two-fluid transient model</li>
  * <li>{@link WaterHammerPipe} - Water hammer transient model</li>
@@ -162,13 +165,13 @@ public class Pipeline extends TwoPortEquipment
   boolean equilibriumMassTransfer = false;
   int numberOfLegs = 1;
   int numberOfNodesInLeg = 30;
-  double[] legHeights = {0, 0};
-  double[] legPositions = {0.0, 1.0};
-  double[] pipeDiameters = {0.1507588, 0.1507588};
-  double[] outerTemperature = {278.0, 278.0};
-  double[] pipeWallRoughness = {1e-5, 1e-5};
-  double[] outerHeatTransferCoeffs = {1e-5, 1e-5};
-  double[] wallHeatTransferCoeffs = {1e-5, 1e-5};
+  double[] legHeights = { 0, 0 };
+  double[] legPositions = { 0.0, 1.0 };
+  double[] pipeDiameters = { 0.1507588, 0.1507588 };
+  double[] outerTemperature = { 278.0, 278.0 };
+  double[] pipeWallRoughness = { 1e-5, 1e-5 };
+  double[] outerHeatTransferCoeffs = { 1e-5, 1e-5 };
+  double[] wallHeatTransferCoeffs = { 1e-5, 1e-5 };
 
   PipelineMechanicalDesign pipelineMechanicalDesign = null;
 
@@ -184,7 +187,7 @@ public class Pipeline extends TwoPortEquipment
   /**
    * Constructor for Pipeline with inlet stream.
    *
-   * @param name the equipment name
+   * @param name     the equipment name
    * @param inStream the inlet stream
    */
   public Pipeline(String name, StreamInterface inStream) {
@@ -439,13 +442,12 @@ public class Pipeline extends TwoPortEquipment
    * Get superficial velocity for a phase at a specific node.
    *
    * @param phaseNum phase index (0=gas, 1=liquid)
-   * @param node node index
+   * @param node     node index
    * @return superficial velocity in m/s
    */
   public double getSuperficialVelocity(int phaseNum, int node) {
     try {
-      double d =
-          (pipeDiameters != null && node < pipeDiameters.length) ? pipeDiameters[node] : diameter;
+      double d = (pipeDiameters != null && node < pipeDiameters.length) ? pipeDiameters[node] : diameter;
       return outStream.getThermoSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
           * outStream.getThermoSystem().getPhase(phaseNum).getMolarMass()
           / outStream.getThermoSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
@@ -754,8 +756,7 @@ public class Pipeline extends TwoPortEquipment
         : 0.0;
 
     // Outer convection resistance (based on outer diameter)
-    double R_outer =
-        (outerHeatTransferCoefficient > 0) ? ri / (rins * outerHeatTransferCoefficient) : 0.0;
+    double R_outer = (outerHeatTransferCoefficient > 0) ? ri / (rins * outerHeatTransferCoefficient) : 0.0;
 
     // If buried, add soil resistance
     double R_soil = 0.0;
@@ -1136,7 +1137,8 @@ public class Pipeline extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport
-  public void displayResult() {}
+  public void displayResult() {
+  }
 
   // ============================================================================
   // TIME SERIES (for transient simulations)
@@ -1154,8 +1156,8 @@ public class Pipeline extends TwoPortEquipment
   /**
    * Set time series for transient simulation.
    *
-   * @param times array of times
-   * @param systems array of thermodynamic systems at each time
+   * @param times              array of times
+   * @param systems            array of thermodynamic systems at each time
    * @param timestepininterval number of time steps in each interval
    */
   public void setTimeSeries(double[] times, SystemInterface[] systems, int timestepininterval) {
@@ -1194,8 +1196,7 @@ public class Pipeline extends TwoPortEquipment
         .getDetailLevel(getName()) == neqsim.process.util.report.ReportConfig.DetailLevel.HIDE) {
       return null;
     }
-    neqsim.process.util.monitor.PipelineResponse res =
-        new neqsim.process.util.monitor.PipelineResponse(this);
+    neqsim.process.util.monitor.PipelineResponse res = new neqsim.process.util.monitor.PipelineResponse(this);
     res.applyConfig(cfg);
     return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
         .toJson(res);
@@ -1206,32 +1207,41 @@ public class Pipeline extends TwoPortEquipment
   // ============================================================================
 
   /** Storage for capacity constraints. */
-  private final java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> capacityConstraints =
-      new java.util.LinkedHashMap<>();
+  private final java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> capacityConstraints = new java.util.LinkedHashMap<>();
 
   /**
    * Initializes default capacity constraints for the pipeline.
+   *
+   * <p>
+   * NOTE: All constraints are disabled by default for backwards compatibility.
+   * Enable specific
+   * constraints when pipeline capacity analysis is needed (e.g., after sizing).
+   * </p>
    */
   protected void initializeCapacityConstraints() {
-    // Velocity constraint (SOFT limit - erosional is a guideline)
+    // Velocity constraint (SOFT limit - erosional is a guideline) - disabled by
+    // default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("velocity",
         "m/s", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(getMechanicalDesign().maxDesignVelocity > 0
-                ? getMechanicalDesign().maxDesignVelocity
-                : 20.0)
-            .setWarningThreshold(0.9).setValueSupplier(() -> getVelocity()));
+        .setDesignValue(getMechanicalDesign().maxDesignVelocity > 0
+            ? getMechanicalDesign().maxDesignVelocity
+            : 20.0)
+        .setWarningThreshold(0.9).setValueSupplier(() -> getVelocity())
+        .setEnabled(false));
 
-    // Volume flow constraint (DESIGN limit)
+    // Volume flow constraint (DESIGN limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("volumeFlow",
         "m3/hr", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
-            .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
-            .setValueSupplier(() -> outStream != null ? outStream.getFlowRate("m3/hr") : 0.0));
+        .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
+        .setValueSupplier(() -> outStream != null ? outStream.getFlowRate("m3/hr") : 0.0)
+        .setEnabled(false));
 
-    // Pressure drop constraint (DESIGN limit)
+    // Pressure drop constraint (DESIGN limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("pressureDrop",
         "bara", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
-            .setDesignValue(getMechanicalDesign().maxDesignPressureDrop).setWarningThreshold(0.9)
-            .setValueSupplier(() -> getPressureDrop()));
+        .setDesignValue(getMechanicalDesign().maxDesignPressureDrop).setWarningThreshold(0.9)
+        .setValueSupplier(() -> getPressureDrop())
+        .setEnabled(false));
   }
 
   /** {@inheritDoc} */
@@ -1250,6 +1260,9 @@ public class Pipeline extends TwoPortEquipment
     double maxUtil = 0.0;
     for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints()
         .values()) {
+      if (!c.isEnabled()) {
+        continue;
+      }
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
         maxUtil = util;
@@ -1264,6 +1277,9 @@ public class Pipeline extends TwoPortEquipment
   public boolean isCapacityExceeded() {
     for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints()
         .values()) {
+      if (!c.isEnabled()) {
+        continue;
+      }
       if (c.isViolated()) {
         return true;
       }
@@ -1276,6 +1292,9 @@ public class Pipeline extends TwoPortEquipment
   public boolean isHardLimitExceeded() {
     for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints()
         .values()) {
+      if (!c.isEnabled()) {
+        continue;
+      }
       if (c.isHardLimitExceeded()) {
         return true;
       }
@@ -1289,6 +1308,9 @@ public class Pipeline extends TwoPortEquipment
     double maxUtil = 0.0;
     for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints()
         .values()) {
+      if (!c.isEnabled()) {
+        continue;
+      }
       double util = c.getUtilization();
       if (!Double.isNaN(util)) {
         maxUtil = Math.max(maxUtil, util);

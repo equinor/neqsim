@@ -13,7 +13,6 @@ Welcome to the NeqSim Wiki - your comprehensive guide to thermodynamic and proce
 - [Thermodynamics Guide](thermodynamics_guide.md) - Comprehensive thermodynamics overview
 - [Fluid Characterization](fluid_characterization.md) - Characterizing petroleum fluids
 - [TBP Fraction Models](tbp_fraction_models.md) - True boiling point fractions
-- [Phase Behavior](phase_behavior.md) - Phase equilibrium concepts
 - [Viscosity Models](viscosity_models.md) - Viscosity calculation methods
 - [Steam Tables (IF97)](steam_tables_if97.md) - Water/steam properties
 
@@ -116,7 +115,6 @@ For the complete structured documentation, see:
 | logical_unit_operations.md | Logical operations |
 | membrane_separation.md | Membrane separation |
 | multiphase_transient_model.md | Multiphase transient |
-| phase_behavior.md | Phase behavior |
 | pipe_wall_heat_transfer.md | Pipe heat transfer |
 | pipeline_design.md | Pipeline design |
 | pipeline_flow_equations.md | Flow equations |

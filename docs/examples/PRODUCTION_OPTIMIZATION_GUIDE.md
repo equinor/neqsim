@@ -6,6 +6,26 @@ This guide provides comprehensive examples for setting up and running production
 
 ---
 
+## What's New (January 2026)
+
+### Behavior Changes
+- **Constraints Disabled by Default**: Separator, valve, pipeline, pump, and manifold constraints are now disabled by default for backward compatibility. Use `enableConstraints()`, `useEquinorConstraints()`, or `useAPIConstraints()` to enable constraint-based capacity analysis. The optimizer automatically falls back to traditional capacity methods when no constraints are enabled.
+
+### Bug Fixes
+- **Golden Section Ratio**: Fixed inconsistent phi formula and comparison logic
+- **Nelder-Mead Bounds**: Added clamping for reflected/contracted simplex points
+- **Zero Flow Validation**: Added check for zero/invalid flow rates
+- **Feasibility Scoring**: Fixed penalty calculation to use actual utilization limits
+
+### New Features
+- **Configuration Validation**: `config.validate()` checks bounds, tolerance, and iterations
+- **Stagnation Detection**: `stagnationIterations(int)` for early termination (default: 5)
+- **Warm Start**: `initialGuess(double[])` to start near known good solutions
+- **LRU Cache Control**: `maxCacheSize(int)` to limit memory usage (default: 1000)
+- **Infeasibility Diagnostics**: `result.getInfeasibilityDiagnosis()` for detailed violation reports
+
+---
+
 ## Related Documentation
 
 | Document | Description |
@@ -33,11 +53,15 @@ NeqSim provides a powerful production optimization framework that combines:
 
 ### Key Features
 
-- **Multiple search algorithms**: Binary feasibility, Golden-section, Nelder-Mead, Particle-swarm
+- **Multiple search algorithms**: Binary feasibility, Golden-section, Nelder-Mead, Particle-swarm, Gradient descent
 - **Hard & soft constraints**: Enforce limits or penalize violations
 - **Equipment-specific utilization limits**: Configure per equipment or type
 - **Scenario comparison**: Run multiple what-if scenarios
 - **JSON reporting**: Machine-readable optimization results
+- **Early termination**: Stagnation detection for faster convergence
+- **Warm start**: Start optimization near known good solutions
+- **Bounded caching**: LRU cache with configurable size limit
+- **Infeasibility diagnostics**: Detailed reports when optimization fails
 
 ---
 
@@ -211,6 +235,40 @@ sep.getMechanicalDesign().setMaxDesignGassVolFlow(5000.0);  // m³/hr
 sep.getMechanicalDesign().setMaxDesignPressure(100.0);      // bara
 // These values feed into constraint limits
 ```
+
+### Important: Constraints Are Disabled by Default
+
+> **⚠️ Backward Compatibility**: Most equipment types have constraints **disabled by default** to maintain backward compatibility. The optimizer will automatically fall back to traditional capacity methods when no enabled constraints exist.
+
+**Equipment with Disabled Constraints by Default:**
+- Separator, ThreePhaseSeparator (except GasScrubber which enables K-value)
+- ThrottlingValve
+- Pipeline, PipeBeggsAndBrills, AdiabaticPipe
+- Pump
+- Manifold
+
+**Equipment with Enabled Constraints by Default:**
+- Compressor (when using `autoSize()` or setting max speed/power)
+
+**To enable constraints for capacity analysis:**
+
+```java
+// Separators - use pre-configured sets
+separator.useEquinorConstraints();  // Equinor TR3500 standards
+separator.useAPIConstraints();      // API 12J standards
+separator.useAllConstraints();      // All constraint types
+
+// Or enable all constraints on any equipment
+separator.enableConstraints();
+valve.enableConstraints();
+pipeline.enableConstraints();
+
+// Check if constraints are enabled
+boolean hasEnabled = equipment.getCapacityConstraints().values().stream()
+    .anyMatch(CapacityConstraint::isEnabled);
+```
+
+For detailed information, see [Capacity Constraint Framework - Constraints Disabled by Default](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md#important-constraints-disabled-by-default).
 
 ### Constraint Types and Their Behavior
 
@@ -1059,6 +1117,12 @@ for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
         System.out.println("Already exceeded at min rate: " + unit.getName());
     }
 }
+
+// Use infeasibility diagnostics (New)
+OptimizationResult result = optimizer.optimize(process, feed, config);
+if (!result.isFeasible()) {
+    System.out.println(result.getInfeasibilityDiagnosis());
+}
 ```
 
 ### Problem: Bottleneck changes unexpectedly
@@ -1077,13 +1141,32 @@ for (IterationRecord r : result.getIterationHistory()) {
 1. Reduce search range
 2. Increase tolerance
 3. Use binary search for monotonic problems
-4. Enable caching
+4. Enable caching with size limit
+5. **Use stagnation detection** (New)
+6. **Use warm start** when re-optimizing (New)
 
 ```java
 config.tolerance(50.0)  // Coarser tolerance
       .maxIterations(15)
       .enableCaching(true)
+      .maxCacheSize(500)               // Bounded cache (New)
+      .stagnationIterations(5)         // Early termination (New)
       .searchMode(SearchMode.BINARY_FEASIBILITY);
+
+// For re-optimization, use warm start (New)
+double[] previousOptimal = new double[]{lastResult.getOptimalRate()};
+config.initialGuess(previousOptimal);
+```
+
+### Problem: Invalid configuration causes runtime errors
+
+**Solution:** Validate configuration before optimization (New):
+```java
+try {
+    config.validate();  // Throws if invalid
+} catch (IllegalArgumentException e) {
+    System.out.println("Configuration error: " + e.getMessage());
+}
 ```
 
 ---
@@ -1107,6 +1190,21 @@ config.tolerance(50.0)  // Coarser tolerance
 | `optimize(ProcessSystem, StreamInterface, OptimizationConfig, List<Objective>, List<Constraint>)` | With objectives/constraints |
 | `optimizeSummary(...)` | Returns lightweight summary |
 | `compareScenarios(List<ScenarioRequest>, List<ScenarioKpi>)` | Compare multiple scenarios |
+
+### OptimizationConfig (New Methods)
+
+| Method | Description |
+|--------|-------------|
+| `validate()` | Validates configuration, throws if invalid |
+| `stagnationIterations(int)` | Stop after N iterations with no improvement (default: 5) |
+| `maxCacheSize(int)` | Maximum LRU cache entries (default: 1000) |
+| `initialGuess(double[])` | Starting point for warm start optimization |
+
+### OptimizationResult (New Methods)
+
+| Method | Description |
+|--------|-------------|
+| `getInfeasibilityDiagnosis()` | Detailed report of constraint violations |
 
 ### ProcessSystem
 

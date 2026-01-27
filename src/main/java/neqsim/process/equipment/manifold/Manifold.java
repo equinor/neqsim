@@ -22,8 +22,10 @@ import neqsim.process.util.report.ReportConfig.DetailLevel;
  * <p>
  * Manifold class.
  * </p>
- * A manifold is a process unit that can take in any number of streams and distribute them into a
- * number of output streams. In NeqSim it is created as a combination of a mixer and a splitter.
+ * A manifold is a process unit that can take in any number of streams and
+ * distribute them into a
+ * number of output streams. In NeqSim it is created as a combination of a mixer
+ * and a splitter.
  *
  * <p>
  * The manifold supports mechanical design calculations including:
@@ -95,7 +97,8 @@ public class Manifold extends ProcessEquipmentBaseClass
    * addStream.
    * </p>
    *
-   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
+   * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface}
+   *                  object
    */
   public void addStream(StreamInterface newStream) {
     localmixer.addStream(newStream);
@@ -188,7 +191,7 @@ public class Manifold extends ProcessEquipmentBaseClass
    * Set header inner diameter with unit.
    *
    * @param diameter inner diameter value
-   * @param unit unit (m, mm, inch)
+   * @param unit     unit (m, mm, inch)
    */
   public void setHeaderInnerDiameter(double diameter, String unit) {
     if (unit.equalsIgnoreCase("mm")) {
@@ -231,7 +234,7 @@ public class Manifold extends ProcessEquipmentBaseClass
    * Set header wall thickness with unit.
    *
    * @param thickness wall thickness value
-   * @param unit unit (m, mm, inch)
+   * @param unit      unit (m, mm, inch)
    */
   public void setHeaderWallThickness(double thickness, String unit) {
     if (unit.equalsIgnoreCase("mm")) {
@@ -265,7 +268,7 @@ public class Manifold extends ProcessEquipmentBaseClass
    * Set branch inner diameter with unit.
    *
    * @param diameter inner diameter value
-   * @param unit unit (m, mm, inch)
+   * @param unit     unit (m, mm, inch)
    */
   public void setBranchInnerDiameter(double diameter, String unit) {
     if (unit.equalsIgnoreCase("mm")) {
@@ -308,7 +311,7 @@ public class Manifold extends ProcessEquipmentBaseClass
    * Set branch wall thickness with unit.
    *
    * @param thickness wall thickness value
-   * @param unit unit (m, mm, inch)
+   * @param unit      unit (m, mm, inch)
    */
   public void setBranchWallThickness(double thickness, String unit) {
     if (unit.equalsIgnoreCase("mm")) {
@@ -398,14 +401,16 @@ public class Manifold extends ProcessEquipmentBaseClass
   /**
    * Set support arrangement for FIV calculations.
    *
-   * @param arrangement support arrangement (Stiff, Medium stiff, Medium, Flexible)
+   * @param arrangement support arrangement (Stiff, Medium stiff, Medium,
+   *                    Flexible)
    */
   public void setSupportArrangement(String arrangement) {
     this.supportArrangement = arrangement;
   }
 
   /**
-   * Calculate Likelihood of Failure (LOF) for header pipe based on flow-induced vibration.
+   * Calculate Likelihood of Failure (LOF) for header pipe based on flow-induced
+   * vibration.
    * <p>
    * LOF interpretation:
    * </p>
@@ -479,7 +484,8 @@ public class Manifold extends ProcessEquipmentBaseClass
   /**
    * Calculate Flow-induced vibration RMS (FRMS) for header pipe.
    * <p>
-   * FRMS provides an alternative measure of vibration intensity based on mixture properties.
+   * FRMS provides an alternative measure of vibration intensity based on mixture
+   * properties.
    * </p>
    *
    * @return FRMS value
@@ -489,7 +495,8 @@ public class Manifold extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Calculate Flow-induced vibration RMS (FRMS) for header pipe with specified constant.
+   * Calculate Flow-induced vibration RMS (FRMS) for header pipe with specified
+   * constant.
    *
    * @param frmsConstant FRMS constant (typically 6.7)
    * @return FRMS value
@@ -589,7 +596,8 @@ public class Manifold extends ProcessEquipmentBaseClass
   /**
    * Calculate Flow-induced vibration RMS (FRMS) for branch pipes.
    * <p>
-   * FRMS provides an alternative measure of vibration intensity based on mixture properties.
+   * FRMS provides an alternative measure of vibration intensity based on mixture
+   * properties.
    * </p>
    *
    * @return FRMS value
@@ -599,7 +607,8 @@ public class Manifold extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Calculate Flow-induced vibration RMS (FRMS) for branch pipes with specified constant.
+   * Calculate Flow-induced vibration RMS (FRMS) for branch pipes with specified
+   * constant.
    *
    * @param frmsConstant FRMS constant (typically 6.7)
    * @return FRMS value
@@ -753,6 +762,53 @@ public class Manifold extends ProcessEquipmentBaseClass
   /** Flag indicating if manifold has been auto-sized. */
   private boolean autoSized = false;
 
+  /**
+   * Target header velocity for sizing (m/s) - typical gas manifold design
+   * velocity.
+   */
+  private static final double TARGET_HEADER_VELOCITY = 15.0;
+
+  /** Target branch velocity for sizing (m/s) - slightly higher than header. */
+  private static final double TARGET_BRANCH_VELOCITY = 18.0;
+
+  /** Standard pipe inner diameters in meters (Schedule 40 approximate). */
+  private static final double[] STANDARD_PIPE_IDS = { 0.0269, // 1"
+      0.0409, // 1.5"
+      0.0525, // 2"
+      0.0779, // 3"
+      0.1023, // 4"
+      0.1541, // 6"
+      0.2027, // 8"
+      0.2540, // 10"
+      0.3048, // 12"
+      0.3556, // 14"
+      0.4064, // 16"
+      0.4572, // 18"
+      0.5080, // 20"
+      0.6096, // 24"
+      0.7620, // 30"
+      0.9144 // 36"
+  };
+
+  /** Standard pipe wall thicknesses in meters (Schedule 40 approximate). */
+  private static final double[] STANDARD_PIPE_WALLS = { 0.00338, // 1"
+      0.00368, // 1.5"
+      0.00391, // 2"
+      0.00549, // 3"
+      0.00602, // 4"
+      0.00711, // 6"
+      0.00823, // 8"
+      0.00927, // 10"
+      0.01067, // 12"
+      0.01118, // 14"
+      0.01270, // 16"
+      0.01422, // 18"
+      0.01575, // 20"
+      0.01778, // 24"
+      0.01905, // 30"
+      0.02223 // 36"
+  };
+
   /** {@inheritDoc} */
   @Override
   public void autoSize(double safetyFactor) {
@@ -767,10 +823,46 @@ public class Manifold extends ProcessEquipmentBaseClass
 
     double totalVolumeFlow = mixedStream.getFlowRate("m3/hr");
     double totalMassFlow = mixedStream.getFlowRate("kg/hr");
+    double volumeFlowM3sec = mixedStream.getFlowRate("m3/sec");
+
+    // Check for zero or negligible flow
+    boolean hasFlow = totalMassFlow > 1e-6;
+
+    if (hasFlow) {
+      // Calculate required header diameter for target velocity
+      // Area = Q / v, Diameter = sqrt(4 * Area / pi)
+      double requiredHeaderArea = volumeFlowM3sec / TARGET_HEADER_VELOCITY;
+      double requiredHeaderID = Math.sqrt(4.0 * requiredHeaderArea / Math.PI);
+
+      // Select next larger standard pipe size
+      double selectedHeaderID = selectStandardPipeID(requiredHeaderID);
+      double selectedHeaderWall = getWallThicknessForID(selectedHeaderID);
+
+      // Set header dimensions
+      setHeaderInnerDiameter(selectedHeaderID);
+      setHeaderWallThickness(selectedHeaderWall);
+
+      // Calculate required branch diameter
+      int numBranches = Math.max(1, getNumberOfOutputStreams());
+      double flowPerBranch = volumeFlowM3sec / numBranches;
+      double requiredBranchArea = flowPerBranch / TARGET_BRANCH_VELOCITY;
+      double requiredBranchID = Math.sqrt(4.0 * requiredBranchArea / Math.PI);
+
+      // Select next larger standard pipe size for branches
+      double selectedBranchID = selectStandardPipeID(requiredBranchID);
+      double selectedBranchWall = getWallThicknessForID(selectedBranchID);
+
+      // Set branch dimensions
+      setBranchInnerDiameter(selectedBranchID);
+      setBranchWallThickness(selectedBranchWall);
+
+      logger.info("Manifold '{}' sized: Header ID={} mm, Branch ID={} mm for flow={} m3/hr",
+          getName(), String.format("%.1f", selectedHeaderID * 1000),
+          String.format("%.1f", selectedBranchID * 1000), String.format("%.1f", totalVolumeFlow));
+    }
 
     // Apply safety factor to design capacity
-    double designVolumeFlow = totalVolumeFlow * safetyFactor;
-    double designMassFlow = totalMassFlow * safetyFactor;
+    double designVolumeFlow = hasFlow ? totalVolumeFlow * safetyFactor : 100.0;
 
     // Set mechanical design parameters
     if (mechanicalDesign != null) {
@@ -782,9 +874,78 @@ public class Manifold extends ProcessEquipmentBaseClass
       mechanicalDesign.setNumberOfOutlets(getNumberOfOutputStreams());
     }
 
+    // Update velocity design limits based on sized pipe velocities with safety
+    // factor
+    double currentHeaderVelocity = getHeaderVelocity();
+    double currentBranchVelocity = getBranchVelocity();
+    double erosionalVelocity = getErosionalVelocity();
+
+    // For header velocity design: use current velocity * safety factor, but cap at
+    // erosional limit
+    if (hasFlow && currentHeaderVelocity > 0 && !Double.isNaN(currentHeaderVelocity)) {
+      double proposedHeaderDesign = currentHeaderVelocity * safetyFactor;
+      if (erosionalVelocity > 0 && !Double.isNaN(erosionalVelocity)) {
+        maxHeaderVelocityDesign = Math.min(proposedHeaderDesign, erosionalVelocity * 0.9);
+      } else {
+        maxHeaderVelocityDesign = proposedHeaderDesign;
+      }
+      maxHeaderVelocityDesign = Math.max(maxHeaderVelocityDesign, 5.0);
+    }
+
+    // Same for branch velocity
+    if (hasFlow && currentBranchVelocity > 0 && !Double.isNaN(currentBranchVelocity)) {
+      double proposedBranchDesign = currentBranchVelocity * safetyFactor;
+      if (erosionalVelocity > 0 && !Double.isNaN(erosionalVelocity)) {
+        maxBranchVelocityDesign = Math.min(proposedBranchDesign, erosionalVelocity * 0.9);
+      } else {
+        maxBranchVelocityDesign = proposedBranchDesign;
+      }
+      maxBranchVelocityDesign = Math.max(maxBranchVelocityDesign, 5.0);
+    }
+
+    // Clear and reinitialize capacity constraints with new design values
+    capacityConstraints.clear();
+    initializeCapacityConstraints();
+
     autoSized = true;
-    logger.info("Manifold '{}' auto-sized: Design flow = {} m3/hr, Safety factor = {}", getName(),
-        String.format("%.1f", designVolumeFlow), safetyFactor);
+    logger.info(
+        "Manifold '{}' auto-sized: headerVel={} m/s (design={}), branchVel={} m/s (design={})",
+        getName(), String.format("%.1f", currentHeaderVelocity),
+        String.format("%.1f", maxHeaderVelocityDesign),
+        String.format("%.1f", currentBranchVelocity),
+        String.format("%.1f", maxBranchVelocityDesign));
+  }
+
+  /**
+   * Select the next larger standard pipe ID for the required diameter.
+   *
+   * @param requiredID required inner diameter in meters
+   * @return selected standard pipe ID in meters
+   */
+  private double selectStandardPipeID(double requiredID) {
+    for (double standardID : STANDARD_PIPE_IDS) {
+      if (standardID >= requiredID) {
+        return standardID;
+      }
+    }
+    // If larger than all standard sizes, return the largest
+    return STANDARD_PIPE_IDS[STANDARD_PIPE_IDS.length - 1];
+  }
+
+  /**
+   * Get standard wall thickness for a given pipe ID.
+   *
+   * @param pipeID pipe inner diameter in meters
+   * @return wall thickness in meters
+   */
+  private double getWallThicknessForID(double pipeID) {
+    for (int i = 0; i < STANDARD_PIPE_IDS.length; i++) {
+      if (Math.abs(STANDARD_PIPE_IDS[i] - pipeID) < 0.001) {
+        return STANDARD_PIPE_WALLS[i];
+      }
+    }
+    // Default wall thickness based on approximate scaling
+    return pipeID * 0.04; // ~4% of ID as rough estimate
   }
 
   /** {@inheritDoc} */
@@ -941,49 +1102,61 @@ public class Manifold extends ProcessEquipmentBaseClass
 
   /**
    * Initialize capacity constraints based on design limits and FIV analysis.
+   *
+   * <p>
+   * NOTE: All constraints are disabled by default for backwards compatibility.
+   * Enable specific
+   * constraints when manifold capacity analysis is needed (e.g., after sizing).
+   * </p>
    */
   protected void initializeCapacityConstraints() {
-    // Header velocity constraint
+    // Header velocity constraint - disabled by default
     addCapacityConstraint(
         new CapacityConstraint("headerVelocity", "m/s", CapacityConstraint.ConstraintType.SOFT)
             .setDesignValue(maxHeaderVelocityDesign).setMaxValue(getErosionalVelocity())
             .setWarningThreshold(0.9).setDescription("Header pipe velocity vs erosional limit")
-            .setValueSupplier(() -> getHeaderVelocity()));
+            .setValueSupplier(() -> getHeaderVelocity())
+            .setEnabled(false));
 
-    // Branch velocity constraint
+    // Branch velocity constraint - disabled by default
     addCapacityConstraint(
         new CapacityConstraint("branchVelocity", "m/s", CapacityConstraint.ConstraintType.SOFT)
             .setDesignValue(maxBranchVelocityDesign).setMaxValue(getErosionalVelocity())
             .setWarningThreshold(0.9).setDescription("Branch pipe velocity vs erosional limit")
-            .setValueSupplier(() -> getBranchVelocity()));
+            .setValueSupplier(() -> getBranchVelocity())
+            .setEnabled(false));
 
-    // Header LOF (Likelihood of Failure) - FIV constraint
+    // Header LOF (Likelihood of Failure) - FIV constraint - disabled by default
     addCapacityConstraint(
         new CapacityConstraint("headerLOF", "-", CapacityConstraint.ConstraintType.SOFT)
             .setDesignValue(maxLOFDesign).setMaxValue(1.5).setWarningThreshold(0.5)
             .setDescription("Header LOF for flow-induced vibration (>1.0 = high risk)")
-            .setValueSupplier(() -> calculateHeaderLOF()));
+            .setValueSupplier(() -> calculateHeaderLOF())
+            .setEnabled(false));
 
-    // Header FRMS (Flow-induced vibration RMS)
+    // Header FRMS (Flow-induced vibration RMS) - disabled by default
     addCapacityConstraint(
         new CapacityConstraint("headerFRMS", "-", CapacityConstraint.ConstraintType.SOFT)
             .setDesignValue(maxFRMSDesign).setMaxValue(750.0).setWarningThreshold(0.8)
             .setDescription("Header FRMS vibration intensity")
-            .setValueSupplier(() -> calculateHeaderFRMS()));
+            .setValueSupplier(() -> calculateHeaderFRMS())
+            .setEnabled(false));
 
-    // Branch LOF - FIV constraint
+    // Branch LOF - FIV constraint - disabled by default
     addCapacityConstraint(
         new CapacityConstraint("branchLOF", "-", CapacityConstraint.ConstraintType.SOFT)
             .setDesignValue(maxLOFDesign).setMaxValue(1.5).setWarningThreshold(0.5)
             .setDescription("Branch LOF for flow-induced vibration (>1.0 = high risk)")
-            .setValueSupplier(() -> calculateBranchLOF()));
+            .setValueSupplier(() -> calculateBranchLOF())
+            .setEnabled(false));
 
-    // Branch FRMS (Flow-induced vibration RMS)
+    // Branch FRMS (Flow-induced vibration RMS) - disabled by default
     addCapacityConstraint(
         new CapacityConstraint("branchFRMS", "-", CapacityConstraint.ConstraintType.SOFT)
             .setDesignValue(maxFRMSDesign).setMaxValue(750.0).setWarningThreshold(0.8)
             .setDescription("Branch FRMS vibration intensity")
-            .setValueSupplier(() -> calculateBranchFRMS()));
+            .setValueSupplier(() -> calculateBranchFRMS())
+            .setEnabled(false));
   }
 
   /** {@inheritDoc} */
@@ -1001,6 +1174,9 @@ public class Manifold extends ProcessEquipmentBaseClass
     CapacityConstraint bottleneck = null;
     double maxUtil = 0.0;
     for (CapacityConstraint c : getCapacityConstraints().values()) {
+      if (!c.isEnabled()) {
+        continue;
+      }
       double util = c.getUtilization();
       if (!Double.isNaN(util) && util > maxUtil) {
         maxUtil = util;
@@ -1014,6 +1190,9 @@ public class Manifold extends ProcessEquipmentBaseClass
   @Override
   public boolean isCapacityExceeded() {
     for (CapacityConstraint c : getCapacityConstraints().values()) {
+      if (!c.isEnabled()) {
+        continue;
+      }
       if (c.isViolated()) {
         return true;
       }
@@ -1025,6 +1204,9 @@ public class Manifold extends ProcessEquipmentBaseClass
   @Override
   public boolean isHardLimitExceeded() {
     for (CapacityConstraint c : getCapacityConstraints().values()) {
+      if (!c.isEnabled()) {
+        continue;
+      }
       if (c.isHardLimitExceeded()) {
         return true;
       }
@@ -1037,6 +1219,9 @@ public class Manifold extends ProcessEquipmentBaseClass
   public double getMaxUtilization() {
     double maxUtil = 0.0;
     for (CapacityConstraint c : getCapacityConstraints().values()) {
+      if (!c.isEnabled()) {
+        continue;
+      }
       double util = c.getUtilization();
       if (!Double.isNaN(util)) {
         maxUtil = Math.max(maxUtil, util);

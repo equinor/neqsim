@@ -277,8 +277,7 @@ ruptureDisk.setBurstPressure(65.0, "bara");
 ## References
 
 - [PSD Valve HIHI Trip Documentation](psd_valve_hihi_trip.md)
-- [Safety Valve (PSV) Documentation](safety_valve.md)
-- [Rupture Disk Documentation](rupture_disk.md)
+- [PSV Dynamic Sizing](psv_dynamic_sizing_example.md)
 - [Process Alarm System](process_control.md)
 
 ## Test Class

@@ -15,6 +15,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
@@ -138,6 +140,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * @see ParetoResult
  */
 public class ProductionOptimizer {
+  /** Logger for this class. */
+  private static final Logger logger = LogManager.getLogger(ProductionOptimizer.class);
+
   /**
    * Default maximum utilization used when no specific equipment rule is provided.
    */
@@ -469,6 +474,239 @@ public class ProductionOptimizer {
     public List<IterationRecord> getIterationHistory() {
       return iterationHistory;
     }
+
+    /**
+     * Returns a detailed diagnostic report explaining why the result is infeasible.
+     *
+     * <p>
+     * This method analyzes utilization records and constraint statuses to identify
+     * and describe all violations that prevent the solution from being feasible.
+     * </p>
+     *
+     * @return diagnostic report string, or "Feasible" if no violations
+     */
+    public String getInfeasibilityDiagnosis() {
+      if (feasible) {
+        return "Feasible";
+      }
+      StringBuilder sb = new StringBuilder();
+      sb.append("INFEASIBILITY DIAGNOSIS\n");
+      sb.append("=======================\n");
+
+      // Check utilization violations
+      List<UtilizationRecord> utilViolations = new ArrayList<>();
+      for (UtilizationRecord record : utilizationRecords) {
+        if (record.getUtilization() > record.getUtilizationLimit()) {
+          utilViolations.add(record);
+        }
+      }
+      if (!utilViolations.isEmpty()) {
+        sb.append("\nUtilization Violations:\n");
+        for (UtilizationRecord v : utilViolations) {
+          double overUtil = (v.getUtilization() - v.getUtilizationLimit()) * 100.0;
+          sb.append(String.format("  - %s: %.1f%% over limit (util=%.1f%%, limit=%.1f%%)\n",
+              v.getEquipmentName(), overUtil, v.getUtilization() * 100.0,
+              v.getUtilizationLimit() * 100.0));
+        }
+      }
+
+      // Check constraint violations
+      List<ConstraintStatus> hardViolations = new ArrayList<>();
+      List<ConstraintStatus> softViolations = new ArrayList<>();
+      for (ConstraintStatus status : constraintStatuses) {
+        if (status.violated()) {
+          if (status.getSeverity() == ConstraintSeverity.HARD) {
+            hardViolations.add(status);
+          } else {
+            softViolations.add(status);
+          }
+        }
+      }
+
+      if (!hardViolations.isEmpty()) {
+        sb.append("\nHard Constraint Violations:\n");
+        for (ConstraintStatus v : hardViolations) {
+          sb.append(String.format("  - %s: margin=%.4f (%s)\n", v.getName(), v.getMargin(),
+              v.getDescription() != null ? v.getDescription() : "no description"));
+        }
+      }
+
+      if (!softViolations.isEmpty()) {
+        sb.append("\nSoft Constraint Violations:\n");
+        for (ConstraintStatus v : softViolations) {
+          sb.append(String.format("  - %s: margin=%.4f, penalty=%.2f\n", v.getName(),
+              v.getMargin(), v.getPenaltyWeight()));
+        }
+      }
+
+      if (utilViolations.isEmpty() && hardViolations.isEmpty()) {
+        sb.append("\nNo specific violations identified. Check simulation validity.\n");
+      }
+
+      return sb.toString();
+    }
+
+    /**
+     * Exports the iteration history as a JSON string for analysis and debugging.
+     *
+     * <p>
+     * The JSON format includes an array of iteration records with all relevant
+     * optimization metrics including rate, utilization, feasibility, and equipment
+     * utilizations.
+     * </p>
+     *
+     * @return JSON string containing the full iteration history
+     */
+    public String exportIterationHistoryAsJson() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("{\n");
+      sb.append("  \"optimizationResult\": {\n");
+      sb.append("    \"optimalRate\": ").append(optimalRate).append(",\n");
+      sb.append("    \"rateUnit\": \"").append(rateUnit != null ? rateUnit : "").append("\",\n");
+      sb.append("    \"feasible\": ").append(feasible).append(",\n");
+      sb.append("    \"score\": ").append(score).append(",\n");
+      sb.append("    \"iterations\": ").append(iterations).append(",\n");
+      sb.append("    \"bottleneckUtilization\": ").append(bottleneckUtilization).append("\n");
+      sb.append("  },\n");
+      sb.append("  \"iterationHistory\": [\n");
+
+      for (int i = 0; i < iterationHistory.size(); i++) {
+        IterationRecord record = iterationHistory.get(i);
+        sb.append("    {\n");
+        sb.append("      \"iteration\": ").append(i + 1).append(",\n");
+        sb.append("      \"rate\": ").append(record.getRate()).append(",\n");
+        sb.append("      \"rateUnit\": \"").append(record.getRateUnit() != null ? record.getRateUnit() : "")
+            .append("\",\n");
+        sb.append("      \"bottleneckName\": \"")
+            .append(record.getBottleneckName() != null ? record.getBottleneckName() : "").append("\",\n");
+        sb.append("      \"bottleneckUtilization\": ").append(record.getBottleneckUtilization()).append(",\n");
+        sb.append("      \"utilizationWithinLimits\": ").append(record.isUtilizationWithinLimits()).append(",\n");
+        sb.append("      \"hardConstraintsOk\": ").append(record.isHardConstraintsOk()).append(",\n");
+        sb.append("      \"feasible\": ").append(record.isFeasible()).append(",\n");
+        sb.append("      \"score\": ").append(record.getScore()).append(",\n");
+
+        // Add equipment utilizations
+        sb.append("      \"utilizations\": [");
+        List<UtilizationRecord> utils = record.getUtilizations();
+        for (int j = 0; j < utils.size(); j++) {
+          UtilizationRecord util = utils.get(j);
+          sb.append("{\"equipment\": \"").append(util.getEquipmentName());
+          sb.append("\", \"utilization\": ").append(util.getUtilization());
+          sb.append(", \"limit\": ").append(util.getUtilizationLimit()).append("}");
+          if (j < utils.size() - 1) {
+            sb.append(", ");
+          }
+        }
+        sb.append("]\n");
+
+        sb.append("    }");
+        if (i < iterationHistory.size() - 1) {
+          sb.append(",");
+        }
+        sb.append("\n");
+      }
+
+      sb.append("  ]\n");
+      sb.append("}");
+      return sb.toString();
+    }
+
+    /**
+     * Exports the iteration history as a CSV string for spreadsheet analysis.
+     *
+     * <p>
+     * The CSV includes columns for iteration number, rate, unit, bottleneck name,
+     * bottleneck utilization, feasibility flags, and score. This format is suitable
+     * for import into Excel, Python pandas, or other analysis tools.
+     * </p>
+     *
+     * @return CSV string with header row and one data row per iteration
+     */
+    public String exportIterationHistoryAsCsv() {
+      StringBuilder sb = new StringBuilder();
+      // Header row
+      sb.append("Iteration,Rate,RateUnit,BottleneckName,BottleneckUtilization,");
+      sb.append("UtilizationWithinLimits,HardConstraintsOk,Feasible,Score\n");
+
+      for (int i = 0; i < iterationHistory.size(); i++) {
+        IterationRecord record = iterationHistory.get(i);
+        sb.append(i + 1).append(",");
+        sb.append(record.getRate()).append(",");
+        sb.append(record.getRateUnit() != null ? record.getRateUnit() : "").append(",");
+        sb.append(record.getBottleneckName() != null ? record.getBottleneckName() : "").append(",");
+        sb.append(record.getBottleneckUtilization()).append(",");
+        sb.append(record.isUtilizationWithinLimits()).append(",");
+        sb.append(record.isHardConstraintsOk()).append(",");
+        sb.append(record.isFeasible()).append(",");
+        sb.append(record.getScore()).append("\n");
+      }
+
+      return sb.toString();
+    }
+
+    /**
+     * Exports a detailed CSV including per-equipment utilization at each iteration.
+     *
+     * <p>
+     * This expanded format includes one column per equipment item, allowing
+     * visualization of how individual equipment utilizations change throughout
+     * the optimization search.
+     * </p>
+     *
+     * @return CSV string with equipment utilization columns
+     */
+    public String exportDetailedIterationHistoryAsCsv() {
+      if (iterationHistory.isEmpty()) {
+        return "No iteration history available";
+      }
+
+      // Collect all unique equipment names
+      List<String> equipmentNames = new ArrayList<>();
+      for (IterationRecord record : iterationHistory) {
+        for (UtilizationRecord util : record.getUtilizations()) {
+          if (!equipmentNames.contains(util.getEquipmentName())) {
+            equipmentNames.add(util.getEquipmentName());
+          }
+        }
+      }
+      Collections.sort(equipmentNames);
+
+      StringBuilder sb = new StringBuilder();
+      // Header row
+      sb.append("Iteration,Rate,RateUnit,Feasible,Score");
+      for (String name : equipmentNames) {
+        sb.append(",").append(name.replace(",", "_")).append("_Util");
+      }
+      sb.append("\n");
+
+      // Data rows
+      for (int i = 0; i < iterationHistory.size(); i++) {
+        IterationRecord record = iterationHistory.get(i);
+        sb.append(i + 1).append(",");
+        sb.append(record.getRate()).append(",");
+        sb.append(record.getRateUnit() != null ? record.getRateUnit() : "").append(",");
+        sb.append(record.isFeasible()).append(",");
+        sb.append(record.getScore());
+
+        // Build utilization lookup for this iteration
+        Map<String, Double> utilMap = new HashMap<>();
+        for (UtilizationRecord util : record.getUtilizations()) {
+          utilMap.put(util.getEquipmentName(), util.getUtilization());
+        }
+
+        // Add utilization for each equipment
+        for (String name : equipmentNames) {
+          sb.append(",");
+          Double util = utilMap.get(name);
+          if (util != null) {
+            sb.append(util);
+          }
+        }
+        sb.append("\n");
+      }
+
+      return sb.toString();
+    }
   }
 
   /**
@@ -728,6 +966,9 @@ public class ProductionOptimizer {
     private double cognitiveWeight = 1.2;
     private double socialWeight = 1.2;
     private double columnFsFactorLimit = 2.5;
+    private int stagnationIterations = 5;
+    private int maxCacheSize = 1000;
+    private double[] initialGuess = null;
     private final Map<String, Double> utilizationLimitsByName = new HashMap<>();
     private final Map<Class<?>, Double> utilizationLimitsByType = new HashMap<>();
     private final Map<String, CapacityRule> capacityRulesByName = new HashMap<>();
@@ -1061,6 +1302,106 @@ public class ProductionOptimizer {
      */
     public double getTolerance() {
       return tolerance;
+    }
+
+    /**
+     * Sets the number of iterations without improvement before early termination.
+     *
+     * <p>
+     * Stagnation detection prevents wasted iterations when the optimizer is stuck.
+     * If the best score doesn't improve for this many consecutive iterations, the
+     * search terminates early.
+     * </p>
+     *
+     * @param iterations number of stagnation iterations (default: 5, 0 to disable)
+     * @return this config for method chaining
+     */
+    public OptimizationConfig stagnationIterations(int iterations) {
+      this.stagnationIterations = Math.max(0, iterations);
+      return this;
+    }
+
+    /**
+     * Gets the stagnation iteration limit.
+     *
+     * @return number of iterations without improvement before termination
+     */
+    public int getStagnationIterations() {
+      return stagnationIterations;
+    }
+
+    /**
+     * Sets the maximum cache size for evaluation caching.
+     *
+     * <p>
+     * Limits memory usage by evicting oldest entries when cache exceeds this size.
+     * </p>
+     *
+     * @param size maximum number of cached evaluations (default: 1000)
+     * @return this config for method chaining
+     */
+    public OptimizationConfig maxCacheSize(int size) {
+      this.maxCacheSize = Math.max(10, size);
+      return this;
+    }
+
+    /**
+     * Gets the maximum cache size.
+     *
+     * @return maximum number of cached evaluations
+     */
+    public int getMaxCacheSize() {
+      return maxCacheSize;
+    }
+
+    /**
+     * Sets an initial guess for warm starting the optimization.
+     *
+     * <p>
+     * For single-variable optimization, provide a single-element array.
+     * For multi-variable optimization, provide values matching the variable order.
+     * </p>
+     *
+     * @param guess initial values for decision variables (null to disable)
+     * @return this config for method chaining
+     */
+    public OptimizationConfig initialGuess(double[] guess) {
+      this.initialGuess = guess != null ? guess.clone() : null;
+      return this;
+    }
+
+    /**
+     * Gets the initial guess for warm starting.
+     *
+     * @return initial guess array or null if not set
+     */
+    public double[] getInitialGuess() {
+      return initialGuess != null ? initialGuess.clone() : null;
+    }
+
+    /**
+     * Validates this configuration and throws if invalid.
+     *
+     * @throws IllegalArgumentException if configuration is invalid
+     */
+    public void validate() {
+      if (Double.isNaN(lowerBound) || Double.isInfinite(lowerBound)) {
+        throw new IllegalArgumentException("Lower bound must be finite");
+      }
+      if (Double.isNaN(upperBound) || Double.isInfinite(upperBound)) {
+        throw new IllegalArgumentException("Upper bound must be finite");
+      }
+      // Allow equal bounds for single-point evaluation
+      if (lowerBound > upperBound) {
+        throw new IllegalArgumentException(
+            "Lower bound (" + lowerBound + ") must not exceed upper bound (" + upperBound + ")");
+      }
+      if (tolerance <= 0) {
+        throw new IllegalArgumentException("Tolerance must be positive");
+      }
+      if (maxIterations < 1) {
+        throw new IllegalArgumentException("Max iterations must be at least 1");
+      }
     }
   }
 
@@ -1711,7 +2052,8 @@ public class ProductionOptimizer {
    *                    or empty)
    * @return optimization result containing optimal rate, bottleneck, and
    *         diagnostics
-   * @throws NullPointerException if process, feedStream, or config is null
+   * @throws NullPointerException     if process, feedStream, or config is null
+   * @throws IllegalArgumentException if config is invalid
    */
   public OptimizationResult optimize(ProcessSystem process, StreamInterface feedStream,
       OptimizationConfig config, List<OptimizationObjective> objectives,
@@ -1719,6 +2061,8 @@ public class ProductionOptimizer {
     Objects.requireNonNull(process, "ProcessSystem is required");
     Objects.requireNonNull(feedStream, "Feed stream is required");
     Objects.requireNonNull(config, "OptimizationConfig is required");
+    config.validate();
+
     List<OptimizationObjective> safeObjectives = objectives == null ? Collections.emptyList()
         : new ArrayList<>(objectives);
     List<OptimizationConstraint> safeConstraints = constraints == null ? Collections.emptyList()
@@ -2547,8 +2891,17 @@ public class ProductionOptimizer {
     // If simulation is fundamentally invalid, return infeasible evaluation
     // immediately
     if (!simulationValid && config.isRejectInvalidSimulations()) {
-      // Create a dummy evaluation with max utilization to signal infeasibility
-      return new Evaluation(Double.MAX_VALUE, null, utilizations, new ArrayList<ConstraintStatus>(),
+      // Log validation errors for debugging
+      if (!validationErrors.isEmpty()) {
+        logger.warn("Simulation validation failed with {} errors:", validationErrors.size());
+        for (String error : validationErrors) {
+          logger.warn("  - {}", error);
+        }
+      }
+      // Create a dummy evaluation with high but finite utilization to signal
+      // infeasibility
+      // Using a value > 1.0 but not infinity to avoid confusion in reporting
+      return new Evaluation(10.0, null, utilizations, new ArrayList<ConstraintStatus>(),
           new HashMap<String, Double>(), decisionVariables, false, false, Double.NEGATIVE_INFINITY);
     }
 
@@ -2575,14 +2928,29 @@ public class ProductionOptimizer {
         capacity = capacity * (1.0 - config.capacityUncertaintyFraction);
       }
       double duty = capacityRule.duty(unit);
-      if (capacity > 1e-12) {
-        double utilization = duty / capacity;
-        double limit = determineUtilizationLimit(unit, config) * (1.0 - config.utilizationMarginFraction);
-        utilizations.add(new UtilizationRecord(unit.getName(), duty, capacity, utilization, limit));
-        if (utilization > maxUtilization) {
-          maxUtilization = utilization;
-          bottleneck = unit;
-        }
+
+      // Validate duty and capacity values to prevent NaN/Infinity utilization
+      if (Double.isNaN(duty) || Double.isInfinite(duty)) {
+        // Invalid duty - skip this equipment or treat as infeasible
+        continue;
+      }
+      if (Double.isNaN(capacity) || Double.isInfinite(capacity) || capacity <= 1e-12) {
+        // Invalid or zero capacity - skip this equipment
+        continue;
+      }
+
+      double utilization = duty / capacity;
+
+      // Final validation of utilization value
+      if (Double.isNaN(utilization) || Double.isInfinite(utilization)) {
+        continue;
+      }
+
+      double limit = determineUtilizationLimit(unit, config) * (1.0 - config.utilizationMarginFraction);
+      utilizations.add(new UtilizationRecord(unit.getName(), duty, capacity, utilization, limit));
+      if (utilization > maxUtilization) {
+        maxUtilization = utilization;
+        bottleneck = unit;
       }
     }
 
@@ -2623,7 +2991,7 @@ public class ProductionOptimizer {
   private OptimizationResult binaryFeasibilitySearch(ProcessSystem process,
       StreamInterface feedStream, OptimizationConfig config, List<OptimizationObjective> objectives,
       List<OptimizationConstraint> constraints, List<IterationRecord> iterationHistory) {
-    Map<Long, Evaluation> cache = new HashMap<>();
+    Map<Long, Evaluation> cache = createLruCache(config.getMaxCacheSize());
     double low = config.lowerBound;
     double high = config.upperBound;
     OptimizationResult bestResult = null;
@@ -2656,7 +3024,7 @@ public class ProductionOptimizer {
       List<ManipulatedVariable> variables, OptimizationConfig config,
       List<OptimizationObjective> objectives, List<OptimizationConstraint> constraints,
       List<IterationRecord> iterationHistory) {
-    Map<String, Evaluation> cache = new HashMap<>();
+    Map<String, Evaluation> cache = createLruCacheString(config.getMaxCacheSize());
     ManipulatedVariable variable = variables.get(0);
     double low = variable.getLowerBound();
     double high = variable.getUpperBound();
@@ -2692,7 +3060,7 @@ public class ProductionOptimizer {
   private OptimizationResult goldenSectionSearch(ProcessSystem process, StreamInterface feedStream,
       OptimizationConfig config, List<OptimizationObjective> objectives,
       List<OptimizationConstraint> constraints, List<IterationRecord> iterationHistory) {
-    Map<Long, Evaluation> cache = new HashMap<>();
+    Map<Long, Evaluation> cache = createLruCache(config.getMaxCacheSize());
     double a = config.lowerBound;
     double b = config.upperBound;
     double phi = 0.5 * (Math.sqrt(5) - 1); // ~0.618
@@ -2747,8 +3115,9 @@ public class ProductionOptimizer {
     }
 
     if (bestEval == null) {
-      bestEval = evalC;
-      bestRate = c;
+      // No feasible solution found, return best score between final candidates
+      bestEval = feasibilityScore(evalC) > feasibilityScore(evalD) ? evalC : evalD;
+      bestRate = feasibilityScore(evalC) > feasibilityScore(evalD) ? c : d;
     }
 
     return toResult(bestRate, config.rateUnit, iteration, bestEval, iterationHistory);
@@ -2758,15 +3127,19 @@ public class ProductionOptimizer {
       List<ManipulatedVariable> variables, OptimizationConfig config,
       List<OptimizationObjective> objectives, List<OptimizationConstraint> constraints,
       List<IterationRecord> iterationHistory) {
-    double phi = (1 + Math.sqrt(5)) / 2;
-    Map<String, Evaluation> cache = new HashMap<>();
+    // Use consistent golden ratio: phi = (sqrt(5) - 1) / 2 ≈ 0.618
+    // This is the conjugate golden ratio, which gives the correct interval
+    // reduction
+    double phi = 0.5 * (Math.sqrt(5) - 1);
+    Map<String, Evaluation> cache = createLruCacheString(config.getMaxCacheSize());
     ManipulatedVariable variable = variables.get(0);
     double low = variable.getLowerBound();
     double high = variable.getUpperBound();
     String unit = variable.getUnit() != null ? variable.getUnit() : config.rateUnit;
 
-    double c = high - (high - low) / phi;
-    double d = low + (high - low) / phi;
+    // Golden section points: c is closer to low, d is closer to high
+    double c = high - phi * (high - low);
+    double d = low + phi * (high - low);
 
     Evaluation evalC = evaluateCandidate(process, variables, config, objectives, constraints,
         new double[] { c }, cache);
@@ -2777,39 +3150,72 @@ public class ProductionOptimizer {
     recordIteration(iterationHistory, d, unit, evalD,
         evalD.utilizationWithinLimits() && evalD.hardOk());
 
+    // Track best feasible solution throughout the search
+    Evaluation bestEval = null;
+    double bestRate = low;
+
+    // Check initial candidates
+    if (evalC.utilizationWithinLimits() && evalC.hardOk()) {
+      bestEval = evalC;
+      bestRate = c;
+    }
+    if (evalD.utilizationWithinLimits() && evalD.hardOk()
+        && (bestEval == null || evalD.score() > bestEval.score())) {
+      bestEval = evalD;
+      bestRate = d;
+    }
+
     int iteration = 0;
     while (iteration < config.maxIterations && Math.abs(high - low) > config.tolerance) {
-      if (feasibilityScore(evalC) > feasibilityScore(evalD)) {
-        high = d;
-        d = c;
-        evalD = evalC;
-        c = high - (high - low) / phi;
-        evalC = evaluateCandidate(process, variables, config, objectives, constraints,
-            new double[] { c }, cache);
-        recordIteration(iterationHistory, c, unit, evalC,
-            evalC.utilizationWithinLimits() && evalC.hardOk());
-      } else {
+      // Higher score is better, so if scoreC < scoreD, narrow from low side
+      if (feasibilityScore(evalC) < feasibilityScore(evalD)) {
         low = c;
         c = d;
         evalC = evalD;
-        d = low + (high - low) / phi;
+        d = low + phi * (high - low);
         evalD = evaluateCandidate(process, variables, config, objectives, constraints,
             new double[] { d }, cache);
         recordIteration(iterationHistory, d, unit, evalD,
             evalD.utilizationWithinLimits() && evalD.hardOk());
+
+        // Track best feasible solution
+        if (evalD.utilizationWithinLimits() && evalD.hardOk()
+            && (bestEval == null || evalD.score() > bestEval.score())) {
+          bestEval = evalD;
+          bestRate = d;
+        }
+      } else {
+        high = d;
+        d = c;
+        evalD = evalC;
+        c = high - phi * (high - low);
+        evalC = evaluateCandidate(process, variables, config, objectives, constraints,
+            new double[] { c }, cache);
+        recordIteration(iterationHistory, c, unit, evalC,
+            evalC.utilizationWithinLimits() && evalC.hardOk());
+
+        // Track best feasible solution
+        if (evalC.utilizationWithinLimits() && evalC.hardOk()
+            && (bestEval == null || evalC.score() > bestEval.score())) {
+          bestEval = evalC;
+          bestRate = c;
+        }
       }
       iteration++;
     }
 
-    Evaluation bestEval = feasibilityScore(evalC) > feasibilityScore(evalD) ? evalC : evalD;
-    double bestRate = feasibilityScore(evalC) > feasibilityScore(evalD) ? c : d;
+    // If no feasible solution was found during the search, return best score
+    if (bestEval == null) {
+      bestEval = feasibilityScore(evalC) > feasibilityScore(evalD) ? evalC : evalD;
+      bestRate = feasibilityScore(evalC) > feasibilityScore(evalD) ? c : d;
+    }
     return toResult(bestRate, unit, iteration, bestEval, iterationHistory);
   }
 
   private OptimizationResult nelderMeadSearch(ProcessSystem process, StreamInterface feedStream,
       OptimizationConfig config, List<OptimizationObjective> objectives,
       List<OptimizationConstraint> constraints, List<IterationRecord> iterationHistory) {
-    Map<Long, Evaluation> cache = new HashMap<>();
+    Map<Long, Evaluation> cache = createLruCache(config.getMaxCacheSize());
     double[] simplex = new double[] { config.lowerBound, config.upperBound };
     Evaluation eval0 = evaluateCandidate(process, feedStream, config, objectives, constraints, simplex[0], cache);
     Evaluation eval1 = evaluateCandidate(process, feedStream, config, objectives, constraints, simplex[1], cache);
@@ -2868,7 +3274,7 @@ public class ProductionOptimizer {
     int simplexSize = dim + 1;
     double[][] simplex = new double[simplexSize][dim];
     Evaluation[] evaluations = new Evaluation[simplexSize];
-    Map<String, Evaluation> cache = new HashMap<>();
+    Map<String, Evaluation> cache = createLruCacheString(config.getMaxCacheSize());
     String unit = variables.get(0).getUnit() != null ? variables.get(0).getUnit() : config.rateUnit;
 
     for (int i = 0; i < simplexSize; i++) {
@@ -2890,12 +3296,12 @@ public class ProductionOptimizer {
       double[] centroid = computeCentroid(simplex, simplexSize - 1);
       double[] worst = simplex[simplexSize - 1];
 
-      double[] reflected = reflect(centroid, worst, 1.0);
+      double[] reflected = clampToBounds(reflect(centroid, worst, 1.0), variables);
       Evaluation reflectedEval = evaluateCandidate(process, variables, config, objectives, constraints, reflected,
           cache);
 
       if (feasibilityScore(reflectedEval) > feasibilityScore(evaluations[0])) {
-        double[] expanded = reflect(centroid, worst, 2.0);
+        double[] expanded = clampToBounds(reflect(centroid, worst, 2.0), variables);
         Evaluation expandedEval = evaluateCandidate(process, variables, config, objectives, constraints, expanded,
             cache);
         if (feasibilityScore(expandedEval) > feasibilityScore(reflectedEval)) {
@@ -2909,7 +3315,7 @@ public class ProductionOptimizer {
         simplex[simplexSize - 1] = reflected;
         evaluations[simplexSize - 1] = reflectedEval;
       } else {
-        double[] contracted = contract(centroid, worst, 0.5);
+        double[] contracted = clampToBounds(contract(centroid, worst, 0.5), variables);
         Evaluation contractedEval = evaluateCandidate(process, variables, config, objectives,
             constraints, contracted, cache);
         if (feasibilityScore(contractedEval) > feasibilityScore(evaluations[simplexSize - 1])) {
@@ -2936,7 +3342,7 @@ public class ProductionOptimizer {
   private OptimizationResult particleSwarmSearch(ProcessSystem process, StreamInterface feedStream,
       OptimizationConfig config, List<OptimizationObjective> objectives,
       List<OptimizationConstraint> constraints, List<IterationRecord> iterationHistory) {
-    Map<Long, Evaluation> cache = new HashMap<>();
+    Map<Long, Evaluation> cache = createLruCache(config.getMaxCacheSize());
     Random random = new Random(0);
     int swarmSize = Math.max(2, config.getSwarmSize());
     double[] positions = new double[swarmSize];
@@ -2948,10 +3354,19 @@ public class ProductionOptimizer {
     double globalBestScore = Double.NEGATIVE_INFINITY;
     double globalBestPosition = config.lowerBound;
     Evaluation globalBestEvaluation = null;
+    int stagnationCount = 0;
 
+    // Use initial guess if provided
+    double[] initialGuess = config.getInitialGuess();
     for (int i = 0; i < swarmSize; i++) {
-      double initPos = config.lowerBound
-          + (config.upperBound - config.lowerBound) * ((double) i / (double) swarmSize);
+      double initPos;
+      if (initialGuess != null && initialGuess.length > 0 && i == 0) {
+        // First particle starts at the initial guess
+        initPos = Math.max(config.lowerBound, Math.min(config.upperBound, initialGuess[0]));
+      } else {
+        initPos = config.lowerBound
+            + (config.upperBound - config.lowerBound) * ((double) i / (double) swarmSize);
+      }
       positions[i] = initPos;
       velocities[i] = 0.0;
       evaluations[i] = evaluateCandidate(process, feedStream, config, objectives, constraints, initPos, cache);
@@ -2967,6 +3382,8 @@ public class ProductionOptimizer {
     }
 
     int iteration = 0;
+    double previousBestScore = globalBestScore; // Initialize before loop for stagnation detection
+
     while (iteration < config.maxIterations) {
       for (int i = 0; i < swarmSize; i++) {
         double r1 = random.nextDouble();
@@ -2992,6 +3409,20 @@ public class ProductionOptimizer {
           globalBestEvaluation = evaluations[i];
         }
       }
+
+      // Stagnation detection
+      if (Math.abs(globalBestScore - previousBestScore) < 1e-9) {
+        stagnationCount++;
+        if (config.getStagnationIterations() > 0
+            && stagnationCount >= config.getStagnationIterations()) {
+          logger.debug("PSO terminating due to stagnation after {} iterations", iteration);
+          break;
+        }
+      } else {
+        stagnationCount = 0;
+      }
+      previousBestScore = globalBestScore; // Update for next iteration's comparison
+
       if (Math.abs(globalBestScore) < 1e-12) {
         break;
       }
@@ -3012,7 +3443,8 @@ public class ProductionOptimizer {
       List<ManipulatedVariable> variables, OptimizationConfig config,
       List<OptimizationObjective> objectives, List<OptimizationConstraint> constraints,
       List<IterationRecord> iterationHistory) {
-    Map<String, Evaluation> cache = new HashMap<>();
+    final int maxCacheSize = config.getMaxCacheSize();
+    Map<String, Evaluation> cache = createLruCacheString(maxCacheSize);
     Random random = new Random(0);
     int swarmSize = Math.max(2, config.getSwarmSize());
     int dim = variables.size();
@@ -3028,10 +3460,19 @@ public class ProductionOptimizer {
     double[] globalBestPosition = new double[dim];
     Evaluation globalBestEvaluation = null;
 
+    // Warm start support: initialize first particle from initial guess if provided
+    double[] initialGuess = config.getInitialGuess();
+
     for (int i = 0; i < swarmSize; i++) {
       for (int j = 0; j < dim; j++) {
         ManipulatedVariable var = variables.get(j);
-        double init = var.getLowerBound() + (var.getUpperBound() - var.getLowerBound()) * random.nextDouble();
+        double init;
+        if (i == 0 && initialGuess != null && j < initialGuess.length) {
+          // Use warm start for first particle
+          init = Math.max(var.getLowerBound(), Math.min(var.getUpperBound(), initialGuess[j]));
+        } else {
+          init = var.getLowerBound() + (var.getUpperBound() - var.getLowerBound()) * random.nextDouble();
+        }
         positions[i][j] = init;
         velocities[i][j] = 0.0;
       }
@@ -3047,6 +3488,11 @@ public class ProductionOptimizer {
         globalBestEvaluation = evaluations[i];
       }
     }
+
+    // Stagnation detection
+    int stagnationCount = 0;
+    int stagnationLimit = config.getStagnationIterations();
+    double previousBestScore = globalBestScore;
 
     int iteration = 0;
     while (iteration < config.maxIterations) {
@@ -3077,6 +3523,17 @@ public class ProductionOptimizer {
         }
       }
       iteration++;
+
+      // Check for stagnation
+      if (globalBestScore > previousBestScore + config.getTolerance()) {
+        stagnationCount = 0;
+        previousBestScore = globalBestScore;
+      } else {
+        stagnationCount++;
+        if (stagnationCount >= stagnationLimit) {
+          break; // Early termination due to stagnation
+        }
+      }
     }
 
     if (globalBestEvaluation == null) {
@@ -3121,16 +3578,22 @@ public class ProductionOptimizer {
       List<ManipulatedVariable> variables, OptimizationConfig config,
       List<OptimizationObjective> objectives, List<OptimizationConstraint> constraints,
       List<IterationRecord> iterationHistory) {
-    Map<String, Evaluation> cache = new HashMap<>();
+    final int maxCacheSize = config.getMaxCacheSize();
+    Map<String, Evaluation> cache = createLruCacheString(maxCacheSize);
     int dim = variables.size();
     String unit = variables.get(0).getUnit() != null ? variables.get(0).getUnit() : config.rateUnit;
 
-    // Initialize at center of bounds
+    // Initialize at center of bounds (or from warm start if provided)
     double[] position = new double[dim];
     double[] scales = new double[dim]; // Scaling for each dimension
+    double[] initialGuess = config.getInitialGuess();
     for (int j = 0; j < dim; j++) {
       ManipulatedVariable var = variables.get(j);
-      position[j] = 0.5 * (var.getLowerBound() + var.getUpperBound());
+      if (initialGuess != null && j < initialGuess.length) {
+        position[j] = Math.max(var.getLowerBound(), Math.min(var.getUpperBound(), initialGuess[j]));
+      } else {
+        position[j] = 0.5 * (var.getLowerBound() + var.getUpperBound());
+      }
       scales[j] = var.getUpperBound() - var.getLowerBound();
     }
 
@@ -3148,6 +3611,11 @@ public class ProductionOptimizer {
     double initialStepSize = 0.1; // Initial step size (fraction of scale)
     double minStepSize = 1e-10; // Minimum step size before termination
     double gradientTolerance = 1e-10; // Minimum gradient norm to continue
+
+    // Stagnation detection
+    int stagnationCount = 0;
+    int stagnationLimit = config.getStagnationIterations();
+    double previousBestScore = bestScore;
 
     int iteration = 0;
     while (iteration < config.getMaxIterations()) {
@@ -3252,6 +3720,17 @@ public class ProductionOptimizer {
 
       iteration++;
 
+      // Check for stagnation
+      if (bestScore > previousBestScore + config.getTolerance()) {
+        stagnationCount = 0;
+        previousBestScore = bestScore;
+      } else {
+        stagnationCount++;
+        if (stagnationCount >= stagnationLimit) {
+          break; // Early termination due to stagnation
+        }
+      }
+
       // Check convergence
       if (maxChange < config.getTolerance() / scales[0]) {
         break;
@@ -3308,6 +3787,23 @@ public class ProductionOptimizer {
     return result;
   }
 
+  /**
+   * Clamp all values in the candidate array to the bounds defined by the
+   * manipulated variables.
+   *
+   * @param candidate the array of candidate values to clamp
+   * @param variables the list of manipulated variables defining the bounds
+   * @return the clamped array
+   */
+  private double[] clampToBounds(double[] candidate, List<ManipulatedVariable> variables) {
+    double[] clamped = new double[candidate.length];
+    for (int i = 0; i < candidate.length; i++) {
+      ManipulatedVariable var = variables.get(i);
+      clamped[i] = Math.max(var.getLowerBound(), Math.min(var.getUpperBound(), candidate[i]));
+    }
+    return clamped;
+  }
+
   private void shrink(double[][] simplex, List<ManipulatedVariable> variables) {
     for (int i = 1; i < simplex.length; i++) {
       for (int j = 0; j < simplex[i].length; j++) {
@@ -3316,6 +3812,38 @@ public class ProductionOptimizer {
             Math.min(var.getUpperBound(), 0.5 * (simplex[0][j] + simplex[i][j])));
       }
     }
+  }
+
+  /**
+   * Creates an LRU cache with the specified maximum size for Long keys.
+   *
+   * @param maxSize maximum number of entries before eviction
+   * @return a LinkedHashMap configured for LRU eviction
+   */
+  @SuppressWarnings("serial")
+  private Map<Long, Evaluation> createLruCache(final int maxSize) {
+    return new LinkedHashMap<Long, Evaluation>(maxSize + 1, 0.75f, true) {
+      @Override
+      protected boolean removeEldestEntry(Map.Entry<Long, Evaluation> eldest) {
+        return size() > maxSize;
+      }
+    };
+  }
+
+  /**
+   * Creates an LRU cache with the specified maximum size for String keys.
+   *
+   * @param maxSize maximum number of entries before eviction
+   * @return a LinkedHashMap configured for LRU eviction
+   */
+  @SuppressWarnings("serial")
+  private Map<String, Evaluation> createLruCacheString(final int maxSize) {
+    return new LinkedHashMap<String, Evaluation>(maxSize + 1, 0.75f, true) {
+      @Override
+      protected boolean removeEldestEntry(Map.Entry<String, Evaluation> eldest) {
+        return size() > maxSize;
+      }
+    };
   }
 
   private Evaluation evaluateCandidate(ProcessSystem process, StreamInterface feedStream,
@@ -3356,6 +3884,15 @@ public class ProductionOptimizer {
   private Evaluation evaluateCandidateInternal(ProcessSystem process, StreamInterface feedStream,
       OptimizationConfig config, List<OptimizationObjective> objectives,
       List<OptimizationConstraint> constraints, double candidateRate) {
+    // Validate candidate rate to avoid zero/negative flow issues
+    if (candidateRate <= 0 || Double.isNaN(candidateRate) || Double.isInfinite(candidateRate)) {
+      logger.debug("Invalid candidate rate: {}, returning infeasible evaluation", candidateRate);
+      Map<String, Double> decisions = new HashMap<>();
+      decisions.put(feedStream.getName(), candidateRate);
+      return new Evaluation(10.0, null, new ArrayList<UtilizationRecord>(),
+          new ArrayList<ConstraintStatus>(), new HashMap<String, Double>(), decisions, false, false,
+          Double.NEGATIVE_INFINITY);
+    }
     feedStream.setFlowRate(candidateRate, config.rateUnit);
     process.run();
     Map<String, Double> decisions = new HashMap<>();
@@ -3379,11 +3916,16 @@ public class ProductionOptimizer {
   }
 
   private String buildVectorCacheKey(double[] candidate, OptimizationConfig config) {
-    double tol = Math.max(config.tolerance, 1e-9);
+    // Use a minimum bucket size to avoid excessive cache entries while
+    // maintaining enough precision to distinguish meaningfully different
+    // candidates.
+    // When tolerance is very small, use the value itself with limited precision.
+    double bucketSize = Math.max(config.tolerance, 0.1);
     StringBuilder key = new StringBuilder();
     for (double value : candidate) {
-      long rounded = Math.round(value / tol);
-      key.append(rounded).append("|");
+      // Use bucket-based rounding for cache keys
+      long bucket = Math.round(value / bucketSize);
+      key.append(bucket).append("|");
     }
     return key.toString();
   }
@@ -3412,10 +3954,17 @@ public class ProductionOptimizer {
     }
     if (!evaluation.utilizationWithinLimits()) {
       // Strong penalty for exceeding utilization limits
-      // Penalty increases quadratically with how much we exceed 100%
-      double overUtil = evaluation.bottleneckUtilization() - 1.0;
-      if (overUtil > 0) {
-        penalty -= 1000.0 * (1.0 + overUtil * overUtil);
+      // Find the maximum over-utilization from utilization records
+      double maxOverUtil = 0.0;
+      for (UtilizationRecord record : evaluation.utilizationRecords()) {
+        double overUtil = record.getUtilization() - record.getUtilizationLimit();
+        if (overUtil > maxOverUtil) {
+          maxOverUtil = overUtil;
+        }
+      }
+      // Penalty increases quadratically with how much we exceed the limit
+      if (maxOverUtil > 0) {
+        penalty -= 1000.0 * (1.0 + maxOverUtil * maxOverUtil);
       }
     }
     // Return a score that is always much worse than any feasible solution
@@ -3441,6 +3990,37 @@ public class ProductionOptimizer {
         return entry.getValue();
       }
     }
+
+    // PRIORITY: If equipment implements CapacityConstrainedEquipment and has
+    // capacity analysis enabled AND at least one constraint is enabled,
+    // use its getMaxUtilization() method instead of hardcoded rules.
+    // This ensures the optimizer uses the same capacity calculations as the
+    // equipment itself, while falling back to type-specific rules when
+    // constraints are disabled.
+    if (unit instanceof neqsim.process.equipment.capacity.CapacityConstrainedEquipment) {
+      neqsim.process.equipment.capacity.CapacityConstrainedEquipment constrained = (neqsim.process.equipment.capacity.CapacityConstrainedEquipment) unit;
+      // Check if any constraint is enabled
+      boolean hasEnabledConstraints = constrained.getCapacityConstraints().values().stream()
+          .anyMatch(neqsim.process.equipment.capacity.CapacityConstraint::isEnabled);
+      if (constrained.isCapacityAnalysisEnabled() && hasEnabledConstraints) {
+        // Use getMaxUtilization() which returns the actual capacity utilization (0-1
+        // scale)
+        // from the equipment's capacity constraint framework
+        return new CapacityRule(
+            equipment -> {
+              double util = ((neqsim.process.equipment.capacity.CapacityConstrainedEquipment) equipment)
+                  .getMaxUtilization();
+              // Log unusually high utilization values for debugging
+              if (util > 5.0) {
+                logger.warn("Equipment {} reports very high utilization: {}%",
+                    equipment.getName(), util * 100);
+              }
+              return util;
+            },
+            equipment -> 1.0); // Limit is 1.0 (100% utilization)
+      }
+    }
+
     if (unit instanceof DistillationColumn) {
       DistillationColumn column = (DistillationColumn) unit;
       return new CapacityRule(equipment -> column.getFsFactor(),

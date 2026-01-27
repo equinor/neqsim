@@ -415,9 +415,7 @@ for (FieldConcept concept : concepts) {
 
 ## See Also
 
-- [Field Development Framework](../fielddevelopment/README.md)
-- [Concept Evaluation](../evaluation/README.md)
-- [Flow Assurance Screening](../screening/README.md)
+- [Field Development Framework](../../fielddevelopment/README.md)
 
 ## References
 

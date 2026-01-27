@@ -14,41 +14,53 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * Pipeline simulation using Beggs and Brill empirical correlations for multiphase flow.
+ * Pipeline simulation using Beggs and Brill empirical correlations for
+ * multiphase flow.
  *
  * <p>
- * This class implements the Beggs and Brill (1973) correlation for pressure drop and liquid holdup
- * prediction in multiphase pipeline flow. It supports both single-phase and multiphase (gas-liquid)
+ * This class implements the Beggs and Brill (1973) correlation for pressure
+ * drop and liquid holdup
+ * prediction in multiphase pipeline flow. It supports both single-phase and
+ * multiphase (gas-liquid)
  * flow in horizontal, inclined, and vertical pipes.
  * </p>
  *
  * <h2>Reference</h2>
  * <p>
- * Beggs, H.D. and Brill, J.P., "A Study of Two-Phase Flow in Inclined Pipes", Journal of Petroleum
+ * Beggs, H.D. and Brill, J.P., "A Study of Two-Phase Flow in Inclined Pipes",
+ * Journal of Petroleum
  * Technology, May 1973, pp. 607-617. SPE-4007-PA.
  * </p>
  *
  * <h2>Calculation Modes</h2>
  * <p>
- * The pipeline supports two primary calculation modes via {@link CalculationMode}:
+ * The pipeline supports two primary calculation modes via
+ * {@link CalculationMode}:
  * </p>
  * <ul>
- * <li><b>CALCULATE_OUTLET_PRESSURE</b> (default) - Given inlet conditions and flow rate, calculate
+ * <li><b>CALCULATE_OUTLET_PRESSURE</b> (default) - Given inlet conditions and
+ * flow rate, calculate
  * the outlet pressure</li>
- * <li><b>CALCULATE_FLOW_RATE</b> - Given inlet and outlet pressures, calculate the flow rate using
+ * <li><b>CALCULATE_FLOW_RATE</b> - Given inlet and outlet pressures, calculate
+ * the flow rate using
  * iterative methods</li>
  * </ul>
  *
  * <h2>Flow Regime Determination</h2>
  * <p>
- * The Beggs and Brill correlation classifies flow into four regimes based on the Froude number (Fr)
+ * The Beggs and Brill correlation classifies flow into four regimes based on
+ * the Froude number (Fr)
  * and input liquid volume fraction (λL):
  * </p>
  * <ul>
- * <li><b>SEGREGATED</b> - Stratified, wavy, or annular flow where phases are separated</li>
- * <li><b>INTERMITTENT</b> - Plug or slug flow with alternating liquid slugs and gas pockets</li>
- * <li><b>DISTRIBUTED</b> - Bubble or mist flow where one phase is dispersed in the other</li>
- * <li><b>TRANSITION</b> - Flow in transition zone between segregated and intermittent</li>
+ * <li><b>SEGREGATED</b> - Stratified, wavy, or annular flow where phases are
+ * separated</li>
+ * <li><b>INTERMITTENT</b> - Plug or slug flow with alternating liquid slugs and
+ * gas pockets</li>
+ * <li><b>DISTRIBUTED</b> - Bubble or mist flow where one phase is dispersed in
+ * the other</li>
+ * <li><b>TRANSITION</b> - Flow in transition zone between segregated and
+ * intermittent</li>
  * <li><b>SINGLE_PHASE</b> - Only gas or only liquid present</li>
  * </ul>
  * <p>
@@ -74,9 +86,12 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * where:
  * </p>
  * <ul>
- * <li><b>Friction pressure drop</b> - Uses two-phase friction factor with slip correction</li>
- * <li><b>Hydrostatic pressure drop</b> - Based on mixture density and elevation change</li>
- * <li><b>Acceleration pressure drop</b> - Usually negligible, included in friction term</li>
+ * <li><b>Friction pressure drop</b> - Uses two-phase friction factor with slip
+ * correction</li>
+ * <li><b>Hydrostatic pressure drop</b> - Based on mixture density and elevation
+ * change</li>
+ * <li><b>Acceleration pressure drop</b> - Usually negligible, included in
+ * friction term</li>
  * </ul>
  *
  * <h3>Liquid Holdup Calculation</h3>
@@ -102,27 +117,35 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li><b>Turbulent (Re &gt; 4000):</b> Haaland equation</li>
  * </ul>
  * <p>
- * Two-phase friction factor: f_tp = f × exp(S), where S is a slip correction factor.
+ * Two-phase friction factor: f_tp = f × exp(S), where S is a slip correction
+ * factor.
  * </p>
  *
  * <h2>Heat Transfer Modes</h2>
  * <p>
- * The pipeline supports five heat transfer calculation modes via {@link HeatTransferMode}:
+ * The pipeline supports five heat transfer calculation modes via
+ * {@link HeatTransferMode}:
  * </p>
  * <ul>
- * <li><b>ADIABATIC</b> - No heat transfer (Q=0). Temperature changes only from Joule-Thomson
+ * <li><b>ADIABATIC</b> - No heat transfer (Q=0). Temperature changes only from
+ * Joule-Thomson
  * effect.</li>
- * <li><b>ISOTHERMAL</b> - Constant temperature along the pipe (outlet T = inlet T).</li>
- * <li><b>SPECIFIED_U</b> - Use a user-specified overall heat transfer coefficient (U-value).</li>
- * <li><b>ESTIMATED_INNER_H</b> - Calculate inner h from flow conditions using Gnielinski
+ * <li><b>ISOTHERMAL</b> - Constant temperature along the pipe (outlet T = inlet
+ * T).</li>
+ * <li><b>SPECIFIED_U</b> - Use a user-specified overall heat transfer
+ * coefficient (U-value).</li>
+ * <li><b>ESTIMATED_INNER_H</b> - Calculate inner h from flow conditions using
+ * Gnielinski
  * correlation for turbulent flow, use as U.</li>
- * <li><b>DETAILED_U</b> - Calculate inner h from flow, then compute overall U including pipe wall
+ * <li><b>DETAILED_U</b> - Calculate inner h from flow, then compute overall U
+ * including pipe wall
  * conduction, insulation (if present), and outer convection resistances.</li>
  * </ul>
  *
  * <h3>NTU-Effectiveness Method</h3>
  * <p>
- * Heat transfer is calculated using the analytical NTU (Number of Transfer Units) method:
+ * Heat transfer is calculated using the analytical NTU (Number of Transfer
+ * Units) method:
  * </p>
  * 
  * <pre>
@@ -130,18 +153,22 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * T_out = T_wall + (T_in - T_wall) × exp(-NTU)
  * </pre>
  * <p>
- * This provides an exact analytical solution for constant wall temperature boundary conditions.
+ * This provides an exact analytical solution for constant wall temperature
+ * boundary conditions.
  * </p>
  *
  * <h3>Inner Heat Transfer Coefficient</h3>
  * <p>
- * For ESTIMATED_INNER_H and DETAILED_U modes, the inner convective heat transfer coefficient is
+ * For ESTIMATED_INNER_H and DETAILED_U modes, the inner convective heat
+ * transfer coefficient is
  * calculated using:
  * </p>
  * <ul>
- * <li><b>Laminar flow (Re &lt; 2300)</b>: Nu = 3.66 (fully developed pipe flow)</li>
+ * <li><b>Laminar flow (Re &lt; 2300)</b>: Nu = 3.66 (fully developed pipe
+ * flow)</li>
  * <li><b>Transition (2300 &lt; Re &lt; 3000)</b>: Linear interpolation</li>
- * <li><b>Turbulent flow (Re &gt; 3000)</b>: Gnielinski correlation: Nu = (f/8)(Re-1000)Pr / [1 +
+ * <li><b>Turbulent flow (Re &gt; 3000)</b>: Gnielinski correlation: Nu =
+ * (f/8)(Re-1000)Pr / [1 +
  * 12.7(f/8)^0.5(Pr^(2/3)-1)]</li>
  * <li><b>Two-phase flow</b>: Shah/Martinelli enhancement factor applied</li>
  * </ul>
@@ -164,7 +191,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>h_inner = inner convective coefficient from flow calculation</li>
  * <li>R_wall = pipe wall conductive resistance (cylindrical geometry)</li>
  * <li>R_insulation = insulation layer resistance (if thickness &gt; 0)</li>
- * <li>h_outer = outer convective coefficient (e.g., seawater ~500 W/(m²·K))</li>
+ * <li>h_outer = outer convective coefficient (e.g., seawater ~500
+ * W/(m²·K))</li>
  * </ul>
  *
  * <h2>Energy Equation Components</h2>
@@ -172,17 +200,21 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * The energy balance can include three optional components:
  * </p>
  * <ul>
- * <li><b>Wall heat transfer</b> - Heat exchange with surroundings using NTU-effectiveness
+ * <li><b>Wall heat transfer</b> - Heat exchange with surroundings using
+ * NTU-effectiveness
  * method</li>
- * <li><b>Joule-Thomson effect</b> - Temperature change due to gas expansion (cooling): ΔT_JT =
+ * <li><b>Joule-Thomson effect</b> - Temperature change due to gas expansion
+ * (cooling): ΔT_JT =
  * -μ_JT × ΔP</li>
- * <li><b>Friction heating</b> - Viscous dissipation adding energy to the fluid: Q_friction =
+ * <li><b>Friction heating</b> - Viscous dissipation adding energy to the fluid:
+ * Q_friction =
  * ΔP_friction × V̇</li>
  * </ul>
  *
  * <h3>Joule-Thomson Coefficient</h3>
  * <p>
- * The JT coefficient is calculated from rigorous thermodynamics (mass-weighted average across
+ * The JT coefficient is calculated from rigorous thermodynamics (mass-weighted
+ * average across
  * phases). Typical values:
  * </p>
  * <ul>
@@ -287,8 +319,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  *
  * <h2>Transient Simulation</h2>
  * <p>
- * The class supports transient (time-dependent) simulation using the {@code runTransient()} method.
- * This solves the time-dependent mass, momentum, and energy conservation equations using an
+ * The class supports transient (time-dependent) simulation using the
+ * {@code runTransient()} method.
+ * This solves the time-dependent mass, momentum, and energy conservation
+ * equations using an
  * explicit finite difference scheme.
  * </p>
  *
@@ -350,7 +384,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * </table>
  *
  * <p>
- * The pipeline implements CapacityConstrainedEquipment (inherited from Pipeline) with constraints:
+ * The pipeline implements CapacityConstrainedEquipment (inherited from
+ * Pipeline) with constraints:
  * </p>
  * <ul>
  * <li>Velocity - SOFT limit based on erosional velocity</li>
@@ -389,26 +424,36 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * <p>
    * Controls how temperature changes along the pipeline are calculated:
    * <ul>
-   * <li>ADIABATIC: No heat transfer (Q=0), temperature changes only due to Joule-Thomson
+   * <li>ADIABATIC: No heat transfer (Q=0), temperature changes only due to
+   * Joule-Thomson
    * effect</li>
    * <li>ISOTHERMAL: Constant temperature along the pipe (outlet T = inlet T)</li>
-   * <li>SPECIFIED_U: Use a user-specified overall heat transfer coefficient (U-value)</li>
-   * <li>ESTIMATED_INNER_H: Calculate inner h from flow (Gnielinski correlation), use as U</li>
-   * <li>DETAILED_U: Calculate inner h from flow, then compute overall U including pipe wall,
+   * <li>SPECIFIED_U: Use a user-specified overall heat transfer coefficient
+   * (U-value)</li>
+   * <li>ESTIMATED_INNER_H: Calculate inner h from flow (Gnielinski correlation),
+   * use as U</li>
+   * <li>DETAILED_U: Calculate inner h from flow, then compute overall U including
+   * pipe wall,
    * insulation, and outer convection resistances</li>
    * </ul>
    */
   public enum HeatTransferMode {
-    /** No heat transfer - adiabatic pipe. Temperature changes only from Joule-Thomson effect. */
+    /**
+     * No heat transfer - adiabatic pipe. Temperature changes only from
+     * Joule-Thomson effect.
+     */
     ADIABATIC,
     /** Constant temperature along the pipe - isothermal operation. */
     ISOTHERMAL,
     /** Use a user-specified overall heat transfer coefficient. */
     SPECIFIED_U,
-    /** Calculate inner h from flow conditions (Gnielinski correlation), use as U. */
+    /**
+     * Calculate inner h from flow conditions (Gnielinski correlation), use as U.
+     */
     ESTIMATED_INNER_H,
     /**
-     * Calculate detailed overall U-value including inner convection, pipe wall conduction,
+     * Calculate detailed overall U-value including inner convection, pipe wall
+     * conduction,
      * insulation (if present), and outer convection.
      */
     DETAILED_U
@@ -505,16 +550,20 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   // Angle of the pipe [degrees]
   private double angle = Double.NaN;
 
-  // Density of the liquid in the mixture in case of water and oil phases present together
+  // Density of the liquid in the mixture in case of water and oil phases present
+  // together
   private double mixtureLiquidDensity;
 
-  // Viscosity of the liquid in the mixture in case of water and oil phases present together
+  // Viscosity of the liquid in the mixture in case of water and oil phases
+  // present together
   private double mixtureLiquidViscosity;
 
-  // Mass fraction of oil in the mixture in case of water and oil phases present together
+  // Mass fraction of oil in the mixture in case of water and oil phases present
+  // together
   private double mixtureOilMassFraction;
 
-  // Volume fraction of oil in the mixture in case of water and oil phases present together
+  // Volume fraction of oil in the mixture in case of water and oil phases present
+  // together
   private double mixtureOilVolumeFraction;
 
   private double cumulativeLength;
@@ -577,7 +626,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   private boolean includeJouleThomsonEffect = false;
 
   // Friction heating parameters for viscous dissipation
-  // When enabled, friction pressure losses are converted to thermal energy in the fluid
+  // When enabled, friction pressure losses are converted to thermal energy in the
+  // fluid
   private boolean includeFrictionHeating = false;
 
   // Heat transfer parameters
@@ -621,7 +671,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   /**
    * Constructor for PipeBeggsAndBrills.
    *
-   * @param name name of pipe
+   * @param name     name of pipe
    * @param inStream input stream
    */
   public PipeBeggsAndBrills(String name, StreamInterface inStream) {
@@ -634,7 +684,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * </p>
    *
    * @param nominalDiameter a double in inch
-   * @param pipeSec a {@link java.lang.String} object
+   * @param pipeSec         a {@link java.lang.String} object
    */
   public void setPipeSpecification(double nominalDiameter, String pipeSec) {
     this.pipeSpecification = pipeSec;
@@ -642,13 +692,11 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     this.PipeSpecSet = true;
 
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
-      java.sql.ResultSet dataSet =
-          database.getResultSet("SELECT * FROM pipedata where Size='" + nominalDiameter + "'");
+      java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM pipedata where Size='" + nominalDiameter + "'");
       try {
         if (dataSet.next()) {
           this.pipeThickness = Double.parseDouble(dataSet.getString(pipeSpecification)) / 1000;
-          this.insideDiameter =
-              (Double.parseDouble(dataSet.getString("OD"))) / 1000 - 2 * this.pipeThickness;
+          this.insideDiameter = (Double.parseDouble(dataSet.getString("OD"))) / 1000 - 2 * this.pipeThickness;
         }
       } catch (NumberFormatException e) {
         logger.error(e.getMessage());
@@ -760,7 +808,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * </p>
    *
    * @param temperature a double
-   * @param unit a {@link java.lang.String} object
+   * @param unit        a {@link java.lang.String} object
    */
   public void setConstantSurfaceTemperature(double temperature, String unit) {
     if (unit.equals("K")) {
@@ -785,7 +833,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * <li>ISOTHERMAL: Constant temperature along the pipe</li>
    * <li>SPECIFIED_U: Use a user-specified overall U-value</li>
    * <li>ESTIMATED_INNER_H: Calculate h from flow (Gnielinski), use as U</li>
-   * <li>DETAILED_U: Calculate full U including wall, insulation, outer convection</li>
+   * <li>DETAILED_U: Calculate full U including wall, insulation, outer
+   * convection</li>
    * </ul>
    *
    * @param mode the heat transfer calculation mode
@@ -824,15 +873,19 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Sets the overall heat transfer coefficient (U-value) and switches to SPECIFIED_U mode.
+   * Sets the overall heat transfer coefficient (U-value) and switches to
+   * SPECIFIED_U mode.
    *
    * <p>
-   * This is the effective U-value used in the heat transfer equation Q = U * A * LMTD. When set,
-   * the mode automatically changes to SPECIFIED_U, meaning this value is used directly without
+   * This is the effective U-value used in the heat transfer equation Q = U * A *
+   * LMTD. When set,
+   * the mode automatically changes to SPECIFIED_U, meaning this value is used
+   * directly without
    * flow-based calculation.
    * </p>
    *
-   * @param heatTransferCoefficient the overall heat transfer coefficient in W/(m²·K)
+   * @param heatTransferCoefficient the overall heat transfer coefficient in
+   *                                W/(m²·K)
    * @throws IllegalArgumentException if heatTransferCoefficient is negative
    */
   public void setHeatTransferCoefficient(double heatTransferCoefficient) {
@@ -845,8 +898,10 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Sets the specified outlet pressure and switches to flow rate calculation mode. When outlet
-   * pressure is specified, the run() method will iterate to find the flow rate that achieves the
+   * Sets the specified outlet pressure and switches to flow rate calculation
+   * mode. When outlet
+   * pressure is specified, the run() method will iterate to find the flow rate
+   * that achieves the
    * specified outlet pressure.
    *
    * @param pressure the desired outlet pressure in bara
@@ -858,12 +913,14 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Sets the specified outlet pressure with unit and switches to flow rate calculation mode. When
-   * outlet pressure is specified, the run() method will iterate to find the flow rate that achieves
+   * Sets the specified outlet pressure with unit and switches to flow rate
+   * calculation mode. When
+   * outlet pressure is specified, the run() method will iterate to find the flow
+   * rate that achieves
    * the specified outlet pressure.
    *
    * @param pressure the desired outlet pressure
-   * @param unit the pressure unit (e.g., "bara", "barg", "Pa", "MPa")
+   * @param unit     the pressure unit (e.g., "bara", "barg", "Pa", "MPa")
    */
   public void setOutletPressure(double pressure, String unit) {
     this.specifiedOutletPressure = pressure;
@@ -874,7 +931,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   /**
    * Gets the specified outlet pressure.
    *
-   * @return the specified outlet pressure in the unit set, or NaN if not specified
+   * @return the specified outlet pressure in the unit set, or NaN if not
+   *         specified
    */
   public double getSpecifiedOutletPressure() {
     return specifiedOutletPressure;
@@ -892,7 +950,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   /**
    * Sets the calculation mode for the pipeline.
    *
-   * @param mode the calculation mode (CALCULATE_OUTLET_PRESSURE or CALCULATE_FLOW_RATE)
+   * @param mode the calculation mode (CALCULATE_OUTLET_PRESSURE or
+   *             CALCULATE_FLOW_RATE)
    */
   public void setCalculationMode(CalculationMode mode) {
     this.calculationMode = mode;
@@ -908,7 +967,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Sets the maximum number of iterations for flow rate calculation when outlet pressure is
+   * Sets the maximum number of iterations for flow rate calculation when outlet
+   * pressure is
    * specified.
    *
    * @param maxIterations the maximum number of iterations
@@ -918,7 +978,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Sets the convergence tolerance for flow rate calculation when outlet pressure is specified.
+   * Sets the convergence tolerance for flow rate calculation when outlet pressure
+   * is specified.
    *
    * @param tolerance the relative convergence tolerance (default 1e-4)
    */
@@ -927,7 +988,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Converts the input values from the system measurement units to imperial units. Needed because
+   * Converts the input values from the system measurement units to imperial
+   * units. Needed because
    * the main equations and coefficients are developed for imperial system
    * <p>
    * The conversions applied are:
@@ -949,10 +1011,12 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Converts the input values from imperial units to the system measurement units. Needed because
+   * Converts the input values from imperial units to the system measurement
+   * units. Needed because
    * the main equations and coefficients are developed for imperial system
    * <p>
-   * The conversions applied are the inverse of those in the {@link #convertSystemUnitToImperial()}
+   * The conversions applied are the inverse of those in the
+   * {@link #convertSystemUnitToImperial()}
    * method:
    * </p>
    * <ul>
@@ -971,7 +1035,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     length = length / 3.2808399;
     pipeWallRoughness = pipeWallRoughness / 3.2808399;
     pressureDrop = pressureDrop * 1.48727E-05;
-    // Also convert friction and hydrostatic components (same conversion as pressureDrop)
+    // Also convert friction and hydrostatic components (same conversion as
+    // pressureDrop)
     frictionPressureLoss = frictionPressureLoss * 1.48727E-05;
     hydrostaticPressureDrop = hydrostaticPressureDrop * 1.48727E-05;
   }
@@ -1041,9 +1106,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     area = (Math.PI / 4.0) * Math.pow(insideDiameter, 2.0);
     if (system.getNumberOfPhases() != 1) {
       if (system.getNumberOfPhases() == 3) {
-        supLiquidVel =
-            (system.getPhase(1).getFlowRate("ft3/sec") + system.getPhase(2).getFlowRate("ft3/sec"))
-                / area;
+        supLiquidVel = (system.getPhase(1).getFlowRate("ft3/sec") + system.getPhase(2).getFlowRate("ft3/sec"))
+            / area;
       } else {
         supLiquidVel = system.getPhase(1).getFlowRate("ft3/sec") / area;
       }
@@ -1073,9 +1137,11 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     mixtureSuperficialVelocityProfile.add(supMixVel / 3.2808399);
 
     // Beggs and Brill (1973) flow regime boundary correlations
-    // Reference: Beggs, H.D. and Brill, J.P., "A Study of Two-Phase Flow in Inclined Pipes",
+    // Reference: Beggs, H.D. and Brill, J.P., "A Study of Two-Phase Flow in
+    // Inclined Pipes",
     // Journal of Petroleum Technology, May 1973, pp. 607-617
-    // L1, L2, L3, L4 define boundaries between Segregated, Intermittent, Distributed regimes
+    // L1, L2, L3, L4 define boundaries between Segregated, Intermittent,
+    // Distributed regimes
     double L1 = 316 * Math.pow(inputVolumeFractionLiquid, 0.302);
     double L2 = 0.0009252 * Math.pow(inputVolumeFractionLiquid, -2.4684);
     double L3 = 0.1 * Math.pow(inputVolumeFractionLiquid, -1.4516);
@@ -1210,8 +1276,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
       El = BThetta * El;
       if (system.getNumberOfPhases() == 3) {
-        mixtureDensity =
-            mixtureLiquidDensity * El + system.getPhase(0).getDensity("lb/ft3") * (1 - El);
+        mixtureDensity = mixtureLiquidDensity * El + system.getPhase(0).getDensity("lb/ft3") * (1 - El);
       } else {
         mixtureDensity = system.getPhase(1).getDensity("lb/ft3") * El
             + system.getPhase(0).getDensity("lb/ft3") * (1 - El);
@@ -1285,7 +1350,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     // Reynolds number calculation with unit conversions:
     // - rhoNoSlip is in lb/ft³, supMixVel in ft/s, insideDiameter in ft
     // - muNoSlip is in cP (centipoise) = 0.001 Pa·s = 0.001 kg/(m·s)
-    // - Factor 16/(3.28²) ≈ 1.486 converts (lb/ft³)*(ft/s)*(ft) to kg/(m·s) to match viscosity
+    // - Factor 16/(3.28²) ≈ 1.486 converts (lb/ft³)*(ft/s)*(ft) to kg/(m·s) to
+    // match viscosity
     // Derivation: 1 lb = 0.4536 kg, 1 ft = 0.3048 m
     // (lb/ft³)*(ft/s)*(ft) = lb/(ft·s) = 0.4536/0.3048 kg/(m·s) ≈ 1.488 kg/(m·s)
     ReNoSlip = rhoNoSlip * supMixVel * insideDiameter * (16.0 / (3.28 * 3.28)) / (0.001 * muNoSlip);
@@ -1303,19 +1369,16 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     } else if (Math.abs(ReNoSlip) < 4000) {
       // Transition zone - interpolate between laminar and turbulent
       double fLaminar = 64.0 / 2300.0;
-      double fTurbulent =
-          Math.pow(1 / (-1.8 * Math.log10(Math.pow(E / 3.7, 1.11) + (6.9 / 4000.0))), 2);
+      double fTurbulent = Math.pow(1 / (-1.8 * Math.log10(Math.pow(E / 3.7, 1.11) + (6.9 / 4000.0))), 2);
       frictionFactor = fLaminar + (fTurbulent - fLaminar) * (ReNoSlip - 2300.0) / 1700.0;
     } else {
       // Turbulent flow - Haaland equation
       // f = (1 / (-1.8 * log10((ε/D/3.7)^1.11 + 6.9/Re)))^2
-      frictionFactor =
-          Math.pow(1 / (-1.8 * Math.log10(Math.pow(E / 3.7, 1.11) + (6.9 / ReNoSlip))), 2);
+      frictionFactor = Math.pow(1 / (-1.8 * Math.log10(Math.pow(E / 3.7, 1.11) + (6.9 / ReNoSlip))), 2);
     }
     frictionTwoPhase = frictionFactor * Math.exp(S);
 
-    frictionPressureLoss =
-        frictionTwoPhase * Math.pow(supMixVel, 2) * rhoNoSlip * (length) / (2 * insideDiameter);
+    frictionPressureLoss = frictionTwoPhase * Math.pow(supMixVel, 2) * rhoNoSlip * (length) / (2 * insideDiameter);
     return frictionPressureLoss;
   }
 
@@ -1361,7 +1424,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Run pipeline calculation with specified flow rate (calculate outlet pressure). This is the
+   * Run pipeline calculation with specified flow rate (calculate outlet
+   * pressure). This is the
    * default calculation mode.
    *
    * @param id calculation identifier
@@ -1449,7 +1513,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Run pipeline calculation with specified outlet pressure (calculate flow rate). Uses bisection
+   * Run pipeline calculation with specified outlet pressure (calculate flow
+   * rate). Uses bisection
    * method to find the flow rate that achieves the target outlet pressure.
    *
    * @param id calculation identifier
@@ -1514,7 +1579,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       boundSearchIter++;
     }
 
-    // If we couldn't find a high bound with positive pressure that gives low enough outlet pressure
+    // If we couldn't find a high bound with positive pressure that gives low enough
+    // outlet pressure
     // it means we need very high flow (or it's infeasible)
     if (pressureAtHighFlow > targetPressure) {
       inStream.setFlowRate(originalFlowRate, flowUnit);
@@ -1564,13 +1630,15 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Helper method to calculate outlet pressure for a given flow rate, handling exceptions when
+   * Helper method to calculate outlet pressure for a given flow rate, handling
+   * exceptions when
    * pressure goes negative (indicating flow rate is too high).
    *
    * @param flowRate the flow rate to test
    * @param flowUnit the unit for flow rate
-   * @param id calculation identifier
-   * @return the outlet pressure, or a very low value if calculation fails (pressure went negative)
+   * @param id       calculation identifier
+   * @return the outlet pressure, or a very low value if calculation fails
+   *         (pressure went negative)
    */
   private double tryCalculatePressure(double flowRate, String flowUnit, UUID id) {
     inStream.setFlowRate(flowRate, flowUnit);
@@ -1586,7 +1654,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Calculates the Nusselt number using the Gnielinski correlation for turbulent pipe flow. Valid
+   * Calculates the Nusselt number using the Gnielinski correlation for turbulent
+   * pipe flow. Valid
    * for 0.5 &lt; Pr &lt; 2000 and 3000 &lt; Re &lt; 5E6.
    *
    * @param Re Reynolds number
@@ -1594,7 +1663,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * @return the Nusselt number
    */
   private double calcGnielinskiNu(double Re, double Pr) {
-    // Gnielinski correlation: Nu = (f/8)(Re-1000)Pr / (1 + 12.7*(f/8)^0.5*(Pr^(2/3)-1))
+    // Gnielinski correlation: Nu = (f/8)(Re-1000)Pr / (1 +
+    // 12.7*(f/8)^0.5*(Pr^(2/3)-1))
     // Uses the friction factor already calculated
     double f = frictionFactor;
     if (f <= 0) {
@@ -1619,8 +1689,9 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * <p>
    * For two-phase flow, uses Shah correlation enhancement factor.
    *
-   * @param system the thermodynamic system for which the heat transfer coefficient is to be
-   *        estimated
+   * @param system the thermodynamic system for which the heat transfer
+   *               coefficient is to be
+   *               estimated
    * @return the estimated inner heat transfer coefficient [W/(m²·K)]
    */
   public double estimateHeatTransferCoefficent(SystemInterface system) {
@@ -1639,7 +1710,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       double NuTurbulent = calcGnielinskiNu(3000, Pr);
       Nu = NuLaminar + (NuTurbulent - NuLaminar) * (ReNoSlip - 2300) / 700.0;
     } else {
-      // Turbulent flow - Gnielinski correlation (valid for 0.5 < Pr < 2000, 3000 < Re < 5E6)
+      // Turbulent flow - Gnielinski correlation (valid for 0.5 < Pr < 2000, 3000 < Re
+      // < 5E6)
       Nu = calcGnielinskiNu(ReNoSlip, Pr);
     }
     double innerHTC = Nu * thermalConductivity / insideDiameter;
@@ -1663,10 +1735,12 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * Calculates the two-phase heat transfer coefficient using Shah correlation.
    *
    * <p>
-   * The Shah correlation provides enhancement factors for convective heat transfer in two-phase
-   * flow. It accounts for the increased turbulence and interfacial effects in gas-liquid flow.
+   * The Shah correlation provides enhancement factors for convective heat
+   * transfer in two-phase
+   * flow. It accounts for the increased turbulence and interfacial effects in
+   * gas-liquid flow.
    *
-   * @param system the thermodynamic system
+   * @param system         the thermodynamic system
    * @param singlePhaseHTC the single-phase heat transfer coefficient [W/(m²·K)]
    * @return the two-phase heat transfer coefficient [W/(m²·K)]
    */
@@ -1712,7 +1786,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Calculates the overall heat transfer coefficient including inner convection, pipe wall
+   * Calculates the overall heat transfer coefficient including inner convection,
+   * pipe wall
    * conduction, insulation (if present), and outer convection.
    *
    * <p>
@@ -1720,7 +1795,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * <ul>
    * <li>Inner convective resistance: 1/h_i</li>
    * <li>Pipe wall conductive resistance: (r_o/r_i) × ln(r_o/r_i) / k_wall</li>
-   * <li>Insulation resistance (if present): (r_ins/r_i) × ln(r_ins/r_o) / k_ins</li>
+   * <li>Insulation resistance (if present): (r_ins/r_i) × ln(r_ins/r_o) /
+   * k_ins</li>
    * <li>Outer convective resistance: (r_o/r_i) / h_o or (r_ins/r_i) / h_o</li>
    * </ul>
    *
@@ -1766,10 +1842,12 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Sets the outer (external) heat transfer coefficient for calculating overall U-value.
+   * Sets the outer (external) heat transfer coefficient for calculating overall
+   * U-value.
    *
    * <p>
-   * This is the convective heat transfer coefficient on the outside of the pipe (or insulation).
+   * This is the convective heat transfer coefficient on the outside of the pipe
+   * (or insulation).
    * Typical values:
    * <ul>
    * <li>Still air: 5-10 W/(m²·K)</li>
@@ -1836,7 +1914,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * <li>Syntactic foam (subsea): 0.10-0.15 W/(m·K)</li>
    * </ul>
    *
-   * @param thickness the insulation thickness [m]
+   * @param thickness    the insulation thickness [m]
    * @param conductivity the thermal conductivity [W/(m·K)]
    * @throws IllegalArgumentException if thickness or conductivity is negative
    */
@@ -1872,12 +1950,16 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Enables or disables use of detailed overall heat transfer coefficient calculation.
+   * Enables or disables use of detailed overall heat transfer coefficient
+   * calculation.
    *
    * <p>
-   * When enabled (true), switches to DETAILED_U mode which includes pipe wall resistance,
-   * insulation resistance (if set), and outer convection resistance (if set). When disabled
-   * (false), switches to ESTIMATED_INNER_H mode which uses only the inner convective heat transfer
+   * When enabled (true), switches to DETAILED_U mode which includes pipe wall
+   * resistance,
+   * insulation resistance (if set), and outer convection resistance (if set).
+   * When disabled
+   * (false), switches to ESTIMATED_INNER_H mode which uses only the inner
+   * convective heat transfer
    * coefficient.
    *
    * @param use true to use DETAILED_U mode, false to use ESTIMATED_INNER_H mode
@@ -1904,10 +1986,12 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Calculates the temperature difference between the outlet and inlet of the system.
+   * Calculates the temperature difference between the outlet and inlet of the
+   * system.
    *
    * <p>
-   * Uses the analytical solution for a pipe with constant wall temperature (like a heat exchanger):
+   * Uses the analytical solution for a pipe with constant wall temperature (like
+   * a heat exchanger):
    * </p>
    *
    * <pre>
@@ -1915,19 +1999,23 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * </pre>
    *
    * <p>
-   * This is derived from the energy balance dQ = U*(T-Ts)*dA = -m_dot*Cp*dT integrated along the
+   * This is derived from the energy balance dQ = U*(T-Ts)*dA = -m_dot*Cp*dT
+   * integrated along the
    * pipe length.
    * </p>
    *
-   * @param system the thermodynamic system for which the temperature difference is to be calculated
-   * @return the temperature difference between the outlet and inlet (negative for cooling)
+   * @param system the thermodynamic system for which the temperature difference
+   *               is to be calculated
+   * @return the temperature difference between the outlet and inlet (negative for
+   *         cooling)
    */
   public double calcTemperatureDifference(SystemInterface system) {
     double cpLocal = system.getCp("J/kgK");
     double Tmi = system.getTemperature("C");
     double Ts = constantSurfaceTemperature - 273.15;
 
-    // Handle case where surface temperature equals inlet temperature (no heat transfer)
+    // Handle case where surface temperature equals inlet temperature (no heat
+    // transfer)
     if (Math.abs(Ts - Tmi) < 0.01) {
       return 0.0;
     }
@@ -1982,21 +2070,26 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * This method calculates the enthalpy change due to:
    * <ul>
    * <li>Wall heat transfer (LMTD method) - when not adiabatic</li>
-   * <li>Joule-Thomson effect - cooling/heating due to pressure change (calculated from
+   * <li>Joule-Thomson effect - cooling/heating due to pressure change (calculated
+   * from
    * thermodynamics)</li>
    * <li>Friction heating - viscous dissipation</li>
    * </ul>
    *
    * <p>
-   * The final PHflash operation determines the equilibrium state at the new enthalpy and pressure,
-   * which inherently accounts for heat of vaporization/condensation in two-phase flow. Phase
-   * changes (liquid evaporation or vapor condensation) are properly handled through the enthalpy
+   * The final PHflash operation determines the equilibrium state at the new
+   * enthalpy and pressure,
+   * which inherently accounts for heat of vaporization/condensation in two-phase
+   * flow. Phase
+   * changes (liquid evaporation or vapor condensation) are properly handled
+   * through the enthalpy
    * balance.
    * </p>
    *
    * @param enthalpy the initial enthalpy of the system
-   * @param system the thermodynamic system for which the heat balance is to be calculated
-   * @param testOps the thermodynamic operations to be performed
+   * @param system   the thermodynamic system for which the heat balance is to be
+   *                 calculated
+   * @param testOps  the thermodynamic operations to be performed
    * @return the calculated enthalpy after performing the heat balance
    */
   public double calcHeatBalance(double enthalpy, SystemInterface system,
@@ -2059,9 +2152,12 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * Sets whether to include Joule-Thomson effect in energy calculations.
    *
    * <p>
-   * The Joule-Thomson effect accounts for temperature change during gas expansion. For natural gas,
-   * this typically results in cooling during pressure drop. The JT coefficient is automatically
-   * calculated from the gas phase thermodynamics using NeqSim's rigorous equation of state,
+   * The Joule-Thomson effect accounts for temperature change during gas
+   * expansion. For natural gas,
+   * this typically results in cooling during pressure drop. The JT coefficient is
+   * automatically
+   * calculated from the gas phase thermodynamics using NeqSim's rigorous equation
+   * of state,
    * providing accurate values for the actual fluid composition and conditions.
    * </p>
    *
@@ -2083,8 +2179,10 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * Gets whether Joule-Thomson effect is included in energy calculations.
    *
    * <p>
-   * When enabled, the energy equation accounts for temperature change due to gas expansion,
-   * typically resulting in cooling for natural gas flows. The JT coefficient is automatically
+   * When enabled, the energy equation accounts for temperature change due to gas
+   * expansion,
+   * typically resulting in cooling for natural gas flows. The JT coefficient is
+   * automatically
    * calculated from the gas phase thermodynamics.
    * </p>
    *
@@ -2099,14 +2197,18 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * Sets whether to include friction heating in energy calculations.
    *
    * <p>
-   * Friction heating accounts for viscous dissipation, where mechanical energy lost to friction is
-   * converted to thermal energy in the fluid. The heat added is calculated as: Q_friction =
+   * Friction heating accounts for viscous dissipation, where mechanical energy
+   * lost to friction is
+   * converted to thermal energy in the fluid. The heat added is calculated as:
+   * Q_friction =
    * ΔP_friction × Q_volumetric
    * </p>
    *
    * <p>
-   * For typical pipeline conditions, friction heating is a small effect (typically 0.01-0.1 K per
-   * bar of friction pressure drop) compared to wall heat transfer or Joule-Thomson cooling.
+   * For typical pipeline conditions, friction heating is a small effect
+   * (typically 0.01-0.1 K per
+   * bar of friction pressure drop) compared to wall heat transfer or
+   * Joule-Thomson cooling.
    * However, for high-velocity or long pipelines, it may become significant.
    * </p>
    *
@@ -2120,7 +2222,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * Gets whether friction heating is included in energy calculations.
    *
    * <p>
-   * When enabled, the energy equation accounts for viscous dissipation, where friction pressure
+   * When enabled, the energy equation accounts for viscous dissipation, where
+   * friction pressure
    * losses are converted to thermal energy in the fluid.
    * </p>
    *
@@ -2140,8 +2243,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     if (transientTemperatureProfile.size() < numberOfIncrements + 1) {
       double fallbackTemperature;
       if (!transientTemperatureProfile.isEmpty()) {
-        fallbackTemperature =
-            transientTemperatureProfile.get(transientTemperatureProfile.size() - 1);
+        fallbackTemperature = transientTemperatureProfile.get(transientTemperatureProfile.size() - 1);
       } else {
         fallbackTemperature = getInletStream().getThermoSystem().getTemperature();
       }
@@ -2216,12 +2318,13 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Calculates friction pressure drop for transient simulation. Uses simplified correlations that
+   * Calculates friction pressure drop for transient simulation. Uses simplified
+   * correlations that
    * don't depend on steady-state flow regime detection.
    *
-   * @param velocity mixture velocity in m/s
-   * @param density mixture density in kg/m3
-   * @param viscosity mixture viscosity in Pa.s (not cP)
+   * @param velocity      mixture velocity in m/s
+   * @param density       mixture density in kg/m3
+   * @param viscosity     mixture viscosity in Pa.s (not cP)
    * @param segmentLength length of segment in m
    * @return friction pressure drop in bar
    */
@@ -2246,8 +2349,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     } else if (Re < 4000) {
       // Transition zone
       double fLaminar = 64.0 / 2300.0;
-      double fTurbulent =
-          Math.pow(1 / (-1.8 * Math.log10(Math.pow(E / 3.7, 1.11) + (6.9 / 4000.0))), 2);
+      double fTurbulent = Math.pow(1 / (-1.8 * Math.log10(Math.pow(E / 3.7, 1.11) + (6.9 / 4000.0))), 2);
       f = fLaminar + (fTurbulent - fLaminar) * (Re - 2300.0) / 1700.0;
     } else {
       // Turbulent flow - Haaland equation
@@ -2256,15 +2358,14 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
     // Darcy-Weisbach: ΔP = f * (L/D) * (ρv²/2)
     // Result in Pa, convert to bar
-    double dpFrictionPa =
-        f * (segmentLength / insideDiameter) * (density * velocity * velocity / 2.0);
+    double dpFrictionPa = f * (segmentLength / insideDiameter) * (density * velocity * velocity / 2.0);
     return dpFrictionPa / 1e5; // Convert Pa to bar
   }
 
   /**
    * Calculates hydrostatic pressure drop for transient simulation.
    *
-   * @param density mixture density in kg/m3
+   * @param density         mixture density in kg/m3
    * @param elevationChange elevation change in m (positive = uphill)
    * @return hydrostatic pressure drop in bar
    */
@@ -2309,11 +2410,13 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     // Store viscosity for friction calculations
     // Use inlet viscosity for all segments - viscosity changes relatively slowly
     // compared to density and pressure in typical pipeline conditions.
-    // A more rigorous approach would require full thermodynamic flash at each segment.
+    // A more rigorous approach would require full thermodynamic flash at each
+    // segment.
     List<Double> segmentViscosities = new ArrayList<>();
     for (int i = 0; i < numberOfIncrements; i++) {
       // Use inlet viscosity as best estimate - avoids incorrect density-ratio scaling
-      // which would give wrong trends (gas viscosity increases with T, opposite of density)
+      // which would give wrong trends (gas viscosity increases with T, opposite of
+      // density)
       segmentViscosities.add(inletViscosityBoundary);
     }
 
@@ -2353,8 +2456,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
       double advectedPressure = upstreamPressure - totalSegmentDp;
 
       // Apply relaxation for wave propagation
-      double newDownstreamPressure =
-          downstreamPressure + relaxation * (advectedPressure - downstreamPressure);
+      double newDownstreamPressure = downstreamPressure + relaxation * (advectedPressure - downstreamPressure);
 
       // Ensure pressure doesn't go negative
       newDownstreamPressure = Math.max(0.1, newDownstreamPressure);
@@ -2362,8 +2464,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
       // Mass flow propagation - with mass conservation enforcement
       // For incompressible/weakly compressible flow, mass flow should be continuous
-      double newMassFlow =
-          downstreamMassFlow + relaxation * (upstreamMassFlow - downstreamMassFlow);
+      double newMassFlow = downstreamMassFlow + relaxation * (upstreamMassFlow - downstreamMassFlow);
       updatedMassFlow.set(segment + 1, newMassFlow);
 
       // Temperature propagation with advective transport and heat transfer
@@ -2402,8 +2503,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
           downstreamTemperature + relaxation * (advectedTemperature - downstreamTemperature));
 
       // Update velocity based on updated mass flow and density
-      double targetVelocity =
-          newMassFlow / (Math.max(MIN_DENSITY, segmentDensity) * crossSectionArea);
+      double targetVelocity = newMassFlow / (Math.max(MIN_DENSITY, segmentDensity) * crossSectionArea);
       double relaxedVelocity = segmentVelocity + relaxation * (targetVelocity - segmentVelocity);
       updatedVelocity.set(segment, Math.max(MIN_TRANSIT_VELOCITY, relaxedVelocity));
 
@@ -2444,8 +2544,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     mixtureDensityProfile = new ArrayList<>(transientDensityProfile);
 
     double outletPressure = transientPressureProfile.get(transientPressureProfile.size() - 1);
-    double outletTemperature =
-        transientTemperatureProfile.get(transientTemperatureProfile.size() - 1);
+    double outletTemperature = transientTemperatureProfile.get(transientTemperatureProfile.size() - 1);
     double outletMassFlow = transientMassFlowProfile.get(transientMassFlowProfile.size() - 1);
 
     SystemInterface outletSystem = system;
@@ -3034,7 +3133,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   /**
    * Set support arrangement for FIV calculations.
    *
-   * @param arrangement support arrangement (Stiff, Medium stiff, Medium, Flexible)
+   * @param arrangement support arrangement (Stiff, Medium stiff, Medium,
+   *                    Flexible)
    */
   public void setSupportArrangement(String arrangement) {
     this.supportArrangement = arrangement;
@@ -3176,8 +3276,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     double alpha;
     double beta;
     if ("Stiff".equals(supportArrangement)) {
-      alpha =
-          446187 + 646 * outerDiameter + 9.17E-4 * outerDiameter * outerDiameter * outerDiameter;
+      alpha = 446187 + 646 * outerDiameter + 9.17E-4 * outerDiameter * outerDiameter * outerDiameter;
       beta = 0.1 * Math.log(outerDiameter) - 1.3739;
     } else if ("Medium stiff".equals(supportArrangement)) {
       alpha = 283921 + 370 * outerDiameter;
@@ -3201,7 +3300,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * Calculate Flow-induced vibration RMS (FRMS).
    *
    * <p>
-   * FRMS provides an alternative measure of vibration intensity based on mixture properties. Higher
+   * FRMS provides an alternative measure of vibration intensity based on mixture
+   * properties. Higher
    * values indicate greater vibration risk.
    * </p>
    *
@@ -3252,7 +3352,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * Calculate Acoustic-Induced Vibration (AIV) power level.
    *
    * <p>
-   * AIV occurs at pressure-reducing elements (valves, orifices, restrictions) where high-velocity
+   * AIV occurs at pressure-reducing elements (valves, orifices, restrictions)
+   * where high-velocity
    * gas flow creates acoustic energy. This is most relevant for:
    * </p>
    * <ul>
@@ -3296,14 +3397,14 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
     // Energy Institute formula for acoustic power level
     // W_acoustic = 3.2e-9 * mdot * P1 * (dP/P1)^3.6 * (T/273.15)^0.8
-    double acousticPowerWatts =
-        3.2e-9 * mdot * p1 * Math.pow(pressureRatio, 3.6) * Math.pow(tempK / 273.15, 0.8);
+    double acousticPowerWatts = 3.2e-9 * mdot * p1 * Math.pow(pressureRatio, 3.6) * Math.pow(tempK / 273.15, 0.8);
 
     return acousticPowerWatts / 1000.0; // Return in kW
   }
 
   /**
-   * Calculate AIV Likelihood of Failure based on acoustic power and pipe geometry.
+   * Calculate AIV Likelihood of Failure based on acoustic power and pipe
+   * geometry.
    *
    * <p>
    * AIV LOF interpretation:
@@ -3341,7 +3442,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Set maximum design AIV power level for capacity constraints. Clears cached constraints so they
+   * Set maximum design AIV power level for capacity constraints. Clears cached
+   * constraints so they
    * will be recreated with the new value on next access.
    *
    * @param aivKW maximum AIV power level in kW
@@ -3418,7 +3520,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Set maximum design velocity for capacity constraints. Clears cached constraints so they will be
+   * Set maximum design velocity for capacity constraints. Clears cached
+   * constraints so they will be
    * recreated with the new value on next access.
    *
    * @param velocity maximum velocity in m/s
@@ -3430,7 +3533,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Set maximum design LOF for capacity constraints. Clears cached constraints so they will be
+   * Set maximum design LOF for capacity constraints. Clears cached constraints so
+   * they will be
    * recreated with the new value on next access.
    *
    * @param lof maximum LOF value
@@ -3442,7 +3546,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Set maximum design FRMS for capacity constraints. Clears cached constraints so they will be
+   * Set maximum design FRMS for capacity constraints. Clears cached constraints
+   * so they will be
    * recreated with the new value on next access.
    *
    * @param frms maximum FRMS value
@@ -3454,54 +3559,55 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   }
 
   /**
-   * Override parent's capacity constraint initialization to add FIV/FRMS/AIV constraints.
+   * Override parent's capacity constraint initialization to add FIV/FRMS/AIV
+   * constraints.
    */
   @Override
   protected void initializeCapacityConstraints() {
     // Velocity constraint (SOFT limit - erosional is a guideline)
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("velocity",
         "m/s", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(maxDesignVelocity).setMaxValue(getErosionalVelocity())
-            .setWarningThreshold(0.9).setDescription("Mixture velocity vs erosional limit")
-            .setValueSupplier(() -> getMixtureVelocity()));
+        .setDesignValue(maxDesignVelocity).setMaxValue(getErosionalVelocity())
+        .setWarningThreshold(0.9).setDescription("Mixture velocity vs erosional limit")
+        .setValueSupplier(() -> getMixtureVelocity()));
 
     // LOF (Likelihood of Failure) - FIV constraint for multiphase flow
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("LOF", "-",
         neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(maxDesignLOF).setMaxValue(1.5).setWarningThreshold(0.5)
-            .setDescription("FIV LOF - flow-induced vibration (>1.0 = high risk)")
-            .setValueSupplier(() -> calculateLOF()));
+        .setDesignValue(maxDesignLOF).setMaxValue(1.5).setWarningThreshold(0.5)
+        .setDescription("FIV LOF - flow-induced vibration (>1.0 = high risk)")
+        .setValueSupplier(() -> calculateLOF()));
 
     // FRMS (Flow-induced vibration RMS) - for multiphase flow
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("FRMS", "-",
         neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(maxDesignFRMS).setMaxValue(750.0).setWarningThreshold(0.8)
-            .setDescription("FIV FRMS - vibration intensity")
-            .setValueSupplier(() -> calculateFRMS()));
+        .setDesignValue(maxDesignFRMS).setMaxValue(750.0).setWarningThreshold(0.8)
+        .setDescription("FIV FRMS - vibration intensity")
+        .setValueSupplier(() -> calculateFRMS()));
 
     // AIV (Acoustic-Induced Vibration) - for gas/high pressure drop
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("AIV", "kW",
         neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(maxDesignAIV).setMaxValue(50.0).setWarningThreshold(0.4)
-            .setDescription("AIV acoustic power (<1kW=low, 1-10kW=medium, >25kW=very high risk)")
-            .setValueSupplier(() -> calculateAIV()));
+        .setDesignValue(maxDesignAIV).setMaxValue(50.0).setWarningThreshold(0.4)
+        .setDescription("AIV acoustic power (<1kW=low, 1-10kW=medium, >25kW=very high risk)")
+        .setValueSupplier(() -> calculateAIV()));
 
     // Volume flow constraint from mechanical design
     if (getMechanicalDesign() != null && getMechanicalDesign().maxDesignVolumeFlow > 0) {
       addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("volumeFlow",
           "m3/hr", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
-              .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
-              .setDescription("Volume flow vs mechanical design limit").setValueSupplier(
-                  () -> getOutletStream() != null ? getOutletStream().getFlowRate("m3/hr") : 0.0));
+          .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
+          .setDescription("Volume flow vs mechanical design limit").setValueSupplier(
+              () -> getOutletStream() != null ? getOutletStream().getFlowRate("m3/hr") : 0.0));
     }
 
     // Pressure drop constraint
     if (getMechanicalDesign() != null && getMechanicalDesign().maxDesignPressureDrop > 0) {
       addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("pressureDrop",
           "bar", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
-              .setDesignValue(getMechanicalDesign().maxDesignPressureDrop).setWarningThreshold(0.9)
-              .setDescription("Pressure drop vs mechanical design limit")
-              .setValueSupplier(() -> getPressureDrop()));
+          .setDesignValue(getMechanicalDesign().maxDesignPressureDrop).setWarningThreshold(0.9)
+          .setDescription("Pressure drop vs mechanical design limit")
+          .setValueSupplier(() -> getPressureDrop()));
     }
   }
 
@@ -3509,14 +3615,18 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * Reinitialize capacity constraints with current design values.
    *
    * <p>
-   * Call this method after changing design limits (velocity, LOF, FRMS, AIV) if constraints have
-   * already been accessed. This clears existing constraints and recreates them based on current
+   * Call this method after changing design limits (velocity, LOF, FRMS, AIV) if
+   * constraints have
+   * already been accessed. This clears existing constraints and recreates them
+   * based on current
    * settings.
    * </p>
    *
    * <p>
-   * Note: The setter methods (setMaxDesignVelocity, setMaxDesignLOF, etc.) automatically clear the
-   * constraints, so this method is only needed if you want to explicitly reinitialize.
+   * Note: The setter methods (setMaxDesignVelocity, setMaxDesignLOF, etc.)
+   * automatically clear the
+   * constraints, so this method is only needed if you want to explicitly
+   * reinitialize.
    * </p>
    */
   public void reinitializeCapacityConstraints() {
@@ -3550,7 +3660,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * Auto-sizes the pipeline based on current flow conditions.
    *
    * <p>
-   * This method calculates the required pipe diameter to achieve target velocity criteria. The
+   * This method calculates the required pipe diameter to achieve target velocity
+   * criteria. The
    * sizing is based on erosion velocity limits and pressure drop constraints.
    * </p>
    *
@@ -3567,6 +3678,25 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
 
     // Calculate optimal diameter based on velocity criteria
     double volumetricFlowRate = getInletStream().getFluid().getFlowRate("m3/sec");
+
+    // Handle zero flow case - use minimum default diameter
+    if (Double.isNaN(volumetricFlowRate) || volumetricFlowRate <= 0) {
+      // For zero-flow pipe, set reasonable minimum design values
+      double minDesignDiameter = 0.0254 * 2.0; // 2 inch minimum
+      setDiameter(minDesignDiameter);
+
+      // Set minimum design values for capacity tracking
+      getMechanicalDesign().maxDesignVelocity = 10.0 * safetyFactor; // 10 m/s default
+      getMechanicalDesign().maxDesignVolumeFlow = 100.0 * safetyFactor; // 100 m3/hr default
+      getMechanicalDesign().maxDesignPressureDrop = 1.0; // 1 bar default
+
+      // Clear and reinitialize capacity constraints with new design values
+      clearCapacityConstraints();
+      initializeCapacityConstraints();
+
+      autoSized = true;
+      return;
+    }
 
     // Target velocity depends on fluid type (gas vs liquid)
     double targetVelocity;
@@ -3599,6 +3729,33 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     // Re-run to update calculations with new diameter
     run();
 
+    // Set design values for capacity constraints
+    try {
+      double currentVelocity = getMixtureVelocity();
+      double currentVolumeFlow = outStream != null ? outStream.getFlowRate("m3/hr") : 0.0;
+      double currentPressureDrop = getPressureDrop();
+
+      // Set default values if current values are invalid
+      if (Double.isNaN(currentVelocity) || currentVelocity <= 0) {
+        currentVelocity = targetVelocity;
+      }
+      if (Double.isNaN(currentVolumeFlow) || currentVolumeFlow <= 0) {
+        currentVolumeFlow = volumetricFlowRate * 3600.0; // m3/sec to m3/hr
+      }
+
+      getMechanicalDesign().maxDesignVelocity = currentVelocity * safetyFactor;
+      getMechanicalDesign().maxDesignVolumeFlow = currentVolumeFlow * safetyFactor;
+      if (!Double.isNaN(currentPressureDrop) && currentPressureDrop > 0) {
+        getMechanicalDesign().maxDesignPressureDrop = currentPressureDrop * safetyFactor;
+      }
+
+      // Clear and reinitialize capacity constraints with new design values
+      clearCapacityConstraints();
+      initializeCapacityConstraints();
+    } catch (Exception e) {
+      // Continue without constraint design values
+    }
+
     autoSized = true;
   }
 
@@ -3609,9 +3766,10 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * @return nearest standard pipe nominal diameter in inches
    */
   private double selectStandardPipeSize(double calculatedDiameterInches) {
-    // Standard NPS sizes (nominal pipe size in inches) - using inside diameter approximations
-    double[] standardSizes = {0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0,
-        14.0, 16.0, 18.0, 20.0, 24.0, 30.0, 36.0, 42.0, 48.0};
+    // Standard NPS sizes (nominal pipe size in inches) - using inside diameter
+    // approximations
+    double[] standardSizes = { 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0,
+        14.0, 16.0, 18.0, 20.0, 24.0, 30.0, 36.0, 42.0, 48.0 };
 
     // Find the next size up that meets the requirement
     for (double size : standardSizes) {

@@ -5,12 +5,15 @@ This guide describes how to manually set design parameters for process equipment
 ## Table of Contents
 
 - [Overview](#overview)
+- [Capacity Utilization Quick Reference](#capacity-utilization-quick-reference)
 - [autoSize vs MechanicalDesign](#autosize-vs-mechanicaldesign)
+- [How to Override autoSize Results](#how-to-override-autosize-results)
 - [Separator Design Parameters](#separator-design-parameters)
 - [Pipe/Pipeline Design Parameters](#pipepipeline-design-parameters)
 - [Compressor Design Parameters](#compressor-design-parameters)
 - [Heat Exchanger Design Parameters](#heat-exchanger-design-parameters)
 - [Valve Design Parameters](#valve-design-parameters)
+- [Pump Design Parameters](#pump-design-parameters)
 - [Using autoSizeEquipment() vs Manual Sizing](#using-autosizeequipment-vs-manual-sizing)
 - [Capacity Constraints and Utilization](#capacity-constraints-and-utilization)
 
@@ -35,6 +38,116 @@ NeqSim equipment can be configured in two ways:
 - Greenfield design where equipment sizes are unknown
 - Quick feasibility studies
 - Capacity studies where equipment should match flow rates
+
+---
+
+## Capacity Utilization Quick Reference
+
+This table summarizes how capacity utilization is calculated for each equipment type:
+
+| Equipment | Utilization Formula | Duty Metric | Capacity Metric | Override Design Methods |
+|-----------|--------------------|--------------|-----------------|-----------------------|
+| **Separator** | `gasFlow / maxAllowableGasFlow` | Gas volumetric flow (m³/s) | K-factor × area × density function | `setDesignGasLoadFactor()`, `setInternalDiameter()` |
+| **Compressor** | `power / maxPower` | Shaft power (W) | Driver power or design power | `setMaximumPower()`, `setMaximumSpeed()` |
+| **Pump** | `power / maxPower` | Shaft power (W) | Design power | `getMechanicalDesign().setMaxDesignVolumeFlow()` |
+| **ThrottlingValve** | `volumeFlow / maxVolumeFlow` | Outlet flow (m³/hr) | Design Cv × conditions | `setDesignCv()`, `setDesignVolumeFlow()` |
+| **Heater/Cooler** | `duty / maxDuty` | Heat duty (W) | Max design duty | `getMechanicalDesign().setMaxDesignDuty()` |
+| **Pipe/Pipeline** | `volumeFlow / maxVolumeFlow` | Volume flow (m³/hr) | Area × design velocity | `setMaxDesignVelocity()`, `setMaxDesignVolumeFlow()` |
+| **Manifold** | `velocity / maxVelocity` | Header/branch velocity (m/s) | Design velocity limits | `setDesignHeaderVelocity()`, `setDesignBranchVelocity()` |
+
+### Utilization Interpretation
+
+| Value | Meaning |
+|-------|---------|
+| 0.0 - 0.8 | Normal operation with headroom |
+| 0.8 - 0.95 | Approaching design limits |
+| 0.95 - 1.0 | At design capacity |
+| > 1.0 | **Overloaded** - exceeds design |
+
+---
+
+## How to Override autoSize Results
+
+After calling `autoSize()`, you can override specific design parameters while keeping others:
+
+### Option 1: Override Before autoSize (Preferred)
+
+```java
+// Set your custom values first - they will be respected by autoSize
+separator.setDesignGasLoadFactor(0.15);  // Custom K-factor (won't be overwritten)
+separator.autoSize(1.2);                  // Sizes diameter/length using your K-factor
+```
+
+### Option 2: Override After autoSize
+
+```java
+// Auto-size first
+separator.autoSize(1.2);
+
+// Then override specific parameters
+separator.setInternalDiameter(3.0);  // Override calculated diameter
+// Note: This changes capacity but keeps other design parameters
+```
+
+### Option 3: Manual Sizing (Skip autoSize)
+
+```java
+// Set all parameters manually - don't call autoSize
+separator.setInternalDiameter(2.5);
+separator.setSeparatorLength(8.0);
+separator.setDesignGasLoadFactor(0.107);
+separator.setOrientation("horizontal");
+// Now capacity is fully user-controlled
+```
+
+### Option 4: Partial Override with Design Standards
+
+```java
+// Use company standards but override specific values
+separator.autoSize("Equinor", "TR2000");  // Load Equinor K-factors
+separator.setInternalDiameter(2.8);        // But use custom diameter
+```
+
+### Equipment-Specific Override Examples
+
+**Separator:**
+```java
+separator.autoSize(1.2);
+// Override the K-factor used for utilization calculations
+separator.setDesignGasLoadFactor(0.12);  // Changes max allowable gas flow
+// Or override dimensions directly
+separator.setInternalDiameter(2.5);
+separator.setSeparatorLength(7.0);
+```
+
+**Compressor:**
+```java
+compressor.autoSize(1.2);
+// Override power limits
+compressor.setMaximumPower(5000.0);  // kW - overrides driver power
+compressor.setMaximumSpeed(12000.0); // RPM - sets speed limit
+// Or disable auto-generated curves and use manual efficiency
+compressor.setUsePolytropicCalc(true);
+compressor.setPolytropicEfficiency(0.78);
+```
+
+**Valve:**
+```java
+valve.autoSize(1.2);
+// Override Cv for different valve selection
+valve.setCv(200.0);  // Set Cv directly
+// Or set design opening target
+valve.setDesignVolumeFlow(500.0);  // m³/hr at design conditions
+```
+
+**Pipe:**
+```java
+pipe.autoSize(1.2);
+// Override velocity limit for different service
+pipe.setMaxDesignVelocity(25.0);  // m/s for clean dry gas
+// Or set diameter directly
+pipe.setDiameter(0.4);  // 400mm ID
+```
 
 ---
 
@@ -411,6 +524,14 @@ Or for control valves:
 | Cv | `setCv(double)` | - | Valve flow coefficient |
 | Percent Opening | `setPercentValveOpening(double)` | % | 0-100% |
 
+### Design Parameters for Capacity Tracking
+
+| Parameter | Method | Description |
+|-----------|--------|-------------|
+| Design Cv | `setDesignCv(double)` | Design flow coefficient for utilization |
+| Design Volume Flow | `setDesignVolumeFlow(double)` | Max design volume flow (m³/hr) |
+| Design Opening | `setDesignOpening(double)` | Target opening at design flow (default 50%) |
+
 ### Example: Manual Valve Design
 
 ```java
@@ -429,7 +550,82 @@ valve.setIsCalcOutPressure(false);  // Use specified outlet pressure
 
 // Run
 valve.run();
+
+// Override after autoSize to set custom capacity limits
+valve.autoSize(1.2);
+valve.setDesignCv(200.0);  // Override with actual valve Cv
 ```
+
+### Capacity Utilization for Valves
+
+Valve utilization is calculated as:
+```
+Utilization = Actual Volume Flow / Max Design Volume Flow
+```
+
+Where max design flow is derived from Cv at current conditions. A valve at 50% opening with full Cv utilization is at 50% capacity (typical design point).
+
+---
+
+## Pump Design Parameters
+
+### Required Parameters
+
+| Parameter | Method | Unit | Description |
+|-----------|--------|------|-------------|
+| Outlet Pressure | `setOutletPressure(double, String)` | bara | Discharge pressure |
+
+### Optional Design Parameters
+
+| Parameter | Method | Unit | Description |
+|-----------|--------|------|-------------|
+| Efficiency | `setPumpEfficiency(double)` | fraction | 0.6-0.85 typical |
+| Speed | `setSpeed(double)` | RPM | Operating speed |
+
+### Design Parameters for Capacity Tracking
+
+| Parameter | Method | Unit | Description |
+|-----------|--------|------|-------------|
+| Design Volume Flow | `getMechanicalDesign().setMaxDesignVolumeFlow(double)` | m³/hr | Max design flow |
+| Design Power | `getMechanicalDesign().setMaxDesignPower(double)` | W | Max design power |
+
+### Example: Manual Pump Design
+
+```java
+// Create pump
+Pump pump = new Pump("Export Pump", liquidStream);
+
+// Set operating point
+pump.setOutletPressure(50.0, "bara");
+pump.setPumpEfficiency(0.75);
+
+// Run
+pump.run();
+
+// Check power
+double power = pump.getPower("kW");
+System.out.println("Pump power: " + power + " kW");
+
+// Set capacity limits for utilization tracking
+pump.autoSize(1.2);
+// Or manually override:
+pump.getMechanicalDesign().setMaxDesignPower(power * 1.3);  // 30% margin
+```
+
+### Capacity Utilization for Pumps
+
+Pump utilization is calculated as:
+```
+Utilization = Actual Shaft Power / Max Design Power
+```
+
+### Typical Pump Efficiencies
+
+| Pump Type | Efficiency Range |
+|-----------|-----------------|
+| Centrifugal (single stage) | 0.60-0.75 |
+| Centrifugal (multi-stage) | 0.65-0.80 |
+| Positive Displacement | 0.80-0.90 |
 
 ---
 

@@ -3790,6 +3790,121 @@ public class ProcessSystem extends SimulationBaseClass {
     return count;
   }
 
+  /**
+   * Gets the design report for all auto-sized equipment in JSON format.
+   *
+   * <p>
+   * Returns a JSON object containing design reports for all equipment that implements AutoSizeable.
+   * Each equipment's report includes design basis, calculated dimensions, and capacity constraints.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * processSystem.run();
+   * processSystem.autoSizeEquipment();
+   * String designReport = processSystem.getDesignReportJson();
+   * System.out.println(designReport);
+   * </pre>
+   *
+   * @return JSON string with design reports for all auto-sized equipment
+   */
+  public String getDesignReportJson() {
+    com.google.gson.JsonObject report = new com.google.gson.JsonObject();
+    report.addProperty("processName", getName());
+    report.addProperty("timestamp", java.time.Instant.now().toString());
+
+    com.google.gson.JsonArray equipmentArray = new com.google.gson.JsonArray();
+
+    for (ProcessEquipmentInterface equipment : unitOperations) {
+      if (equipment instanceof neqsim.process.design.AutoSizeable) {
+        neqsim.process.design.AutoSizeable sizeable =
+            (neqsim.process.design.AutoSizeable) equipment;
+
+        com.google.gson.JsonObject equipReport = new com.google.gson.JsonObject();
+        equipReport.addProperty("name", equipment.getName());
+        equipReport.addProperty("type", equipment.getClass().getSimpleName());
+        equipReport.addProperty("autoSized", sizeable.isAutoSized());
+
+        // Get JSON sizing report if available
+        String jsonReport = sizeable.getSizingReportJson();
+        if (jsonReport != null && !jsonReport.equals("{}")) {
+          try {
+            com.google.gson.JsonObject sizingData =
+                com.google.gson.JsonParser.parseString(jsonReport).getAsJsonObject();
+            equipReport.add("sizingData", sizingData);
+          } catch (Exception e) {
+            equipReport.addProperty("sizingData", jsonReport);
+          }
+        }
+
+        // Add capacity constraints if equipment is capacity-constrained
+        if (equipment instanceof neqsim.process.equipment.capacity.CapacityConstrainedEquipment) {
+          neqsim.process.equipment.capacity.CapacityConstrainedEquipment constrained =
+              (neqsim.process.equipment.capacity.CapacityConstrainedEquipment) equipment;
+
+          com.google.gson.JsonObject capacityData = new com.google.gson.JsonObject();
+          capacityData.addProperty("maxUtilization", constrained.getMaxUtilization() * 100.0);
+          capacityData.addProperty("capacityExceeded", constrained.isCapacityExceeded());
+
+          com.google.gson.JsonArray constraintsArray = new com.google.gson.JsonArray();
+          for (java.util.Map.Entry<String, neqsim.process.equipment.capacity.CapacityConstraint> entry : constrained
+              .getCapacityConstraints().entrySet()) {
+            neqsim.process.equipment.capacity.CapacityConstraint constraint = entry.getValue();
+            com.google.gson.JsonObject constraintObj = new com.google.gson.JsonObject();
+            constraintObj.addProperty("name", constraint.getName());
+            constraintObj.addProperty("currentValue", constraint.getCurrentValue());
+            constraintObj.addProperty("designValue", constraint.getDesignValue());
+            constraintObj.addProperty("unit", constraint.getUnit());
+            constraintObj.addProperty("utilization", constraint.getUtilization() * 100.0);
+            constraintObj.addProperty("violated", constraint.isViolated());
+            constraintsArray.add(constraintObj);
+          }
+          capacityData.add("constraints", constraintsArray);
+          equipReport.add("capacityConstraints", capacityData);
+        }
+
+        equipmentArray.add(equipReport);
+      }
+    }
+
+    report.add("equipment", equipmentArray);
+
+    return new com.google.gson.GsonBuilder().setPrettyPrinting()
+        .serializeSpecialFloatingPointValues().create().toJson(report);
+  }
+
+  /**
+   * Gets a summary design report for all auto-sized equipment.
+   *
+   * <p>
+   * Returns a human-readable text report summarizing the design of all equipment.
+   * </p>
+   *
+   * @return formatted text report
+   */
+  public String getDesignReport() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== PROCESS DESIGN REPORT ===\n");
+    sb.append("Process: ").append(getName()).append("\n");
+    sb.append("Generated: ").append(java.time.Instant.now()).append("\n\n");
+
+    for (ProcessEquipmentInterface equipment : unitOperations) {
+      if (equipment instanceof neqsim.process.design.AutoSizeable) {
+        neqsim.process.design.AutoSizeable sizeable =
+            (neqsim.process.design.AutoSizeable) equipment;
+        sb.append("--- ").append(equipment.getName()).append(" (")
+            .append(equipment.getClass().getSimpleName()).append(") ---\n");
+        sb.append("Auto-sized: ").append(sizeable.isAutoSized()).append("\n");
+        sb.append(sizeable.getSizingReport()).append("\n");
+      }
+    }
+
+    return sb.toString();
+  }
+
   // ==========================================================================
   // OPTIMIZATION METHODS
   // ==========================================================================

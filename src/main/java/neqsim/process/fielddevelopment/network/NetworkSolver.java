@@ -14,7 +14,8 @@ import neqsim.thermo.system.SystemInterface;
  * Production network solver for multi-well gathering systems.
  *
  * <p>
- * This class solves the pressure-flow equilibrium in a gathering network connecting multiple wells
+ * This class solves the pressure-flow equilibrium in a gathering network
+ * connecting multiple wells
  * to a common manifold or host facility. It supports:
  * </p>
  * <ul>
@@ -144,7 +145,7 @@ public class NetworkSolver implements Serializable {
   /**
    * Adds a well to the network.
    *
-   * @param well integrated well system
+   * @param well             integrated well system
    * @param flowlineLengthKm flowline length in km
    * @return this for chaining
    */
@@ -156,8 +157,8 @@ public class NetworkSolver implements Serializable {
   /**
    * Adds a well with flowline specifications.
    *
-   * @param well integrated well system
-   * @param flowlineLengthKm flowline length in km
+   * @param well              integrated well system
+   * @param flowlineLengthKm  flowline length in km
    * @param flowlineDiameterM flowline inner diameter in meters
    * @return this for chaining
    */
@@ -183,7 +184,7 @@ public class NetworkSolver implements Serializable {
    * Sets the manifold pressure constraint.
    *
    * @param pressure manifold pressure
-   * @param unit pressure unit
+   * @param unit     pressure unit
    * @return this for chaining
    */
   public NetworkSolver setManifoldPressure(double pressure, String unit) {
@@ -237,7 +238,7 @@ public class NetworkSolver implements Serializable {
    * Enables or disables a well.
    *
    * @param wellName well name
-   * @param enabled true to enable, false to shut in
+   * @param enabled  true to enable, false to shut in
    * @return this for chaining
    */
   public NetworkSolver setWellEnabled(String wellName, boolean enabled) {
@@ -254,7 +255,7 @@ public class NetworkSolver implements Serializable {
    * Sets the choke opening for a well.
    *
    * @param wellName well name
-   * @param opening choke opening (0-1)
+   * @param opening  choke opening (0-1)
    * @return this for chaining
    */
   public NetworkSolver setChokeOpening(String wellName, double opening) {
@@ -270,8 +271,8 @@ public class NetworkSolver implements Serializable {
   /**
    * Sets solver parameters.
    *
-   * @param tolerance convergence tolerance (fraction)
-   * @param maxIter maximum iterations
+   * @param tolerance  convergence tolerance (fraction)
+   * @param maxIter    maximum iterations
    * @param relaxation under-relaxation factor
    * @return this for chaining
    */
@@ -339,8 +340,7 @@ public class NetworkSolver implements Serializable {
         double change = Math.abs(newRate - node.allocatedRate) / Math.max(newRate, 1);
         maxChange = Math.max(maxChange, change);
 
-        node.allocatedRate =
-            node.allocatedRate * (1 - relaxationFactor) + newRate * relaxationFactor;
+        node.allocatedRate = node.allocatedRate * (1 - relaxationFactor) + newRate * relaxationFactor;
         node.wellheadPressure = whpRequired;
         node.flowlinePressureDrop = estimateFlowlinePressureDrop(node);
 
@@ -356,8 +356,7 @@ public class NetworkSolver implements Serializable {
     }
 
     // Apply facility capacity constraint
-    double totalRate =
-        wellNodes.stream().filter(n -> n.enabled).mapToDouble(n -> n.allocatedRate).sum();
+    double totalRate = wellNodes.stream().filter(n -> n.enabled).mapToDouble(n -> n.allocatedRate).sum();
 
     if (totalRate > maxTotalRate) {
       double scaleFactor = maxTotalRate / totalRate;
@@ -380,8 +379,7 @@ public class NetworkSolver implements Serializable {
 
       solveFixedManifoldPressure();
 
-      double totalRate =
-          wellNodes.stream().filter(n -> n.enabled).mapToDouble(n -> n.allocatedRate).sum();
+      double totalRate = wellNodes.stream().filter(n -> n.enabled).mapToDouble(n -> n.allocatedRate).sum();
 
       double error = (totalRate - targetTotalRate) / targetTotalRate;
       lastResidual = Math.abs(error);
@@ -449,6 +447,9 @@ public class NetworkSolver implements Serializable {
 
   /**
    * Estimates flowline pressure drop using simplified Beggs-Brill.
+   *
+   * @param node the well node to calculate pressure drop for
+   * @return estimated pressure drop in bar
    */
   private double estimateFlowlinePressureDrop(WellNode node) {
     if (node.allocatedRate <= 0) {
@@ -474,6 +475,10 @@ public class NetworkSolver implements Serializable {
 
   /**
    * Finds wellhead pressure required to achieve target rate.
+   *
+   * @param node       the well node
+   * @param targetRate target production rate in Sm3/day
+   * @return wellhead pressure in bara required to achieve target rate
    */
   private double findWHPForRate(WellNode node, double targetRate) {
     double whpLow = manifoldPressure + 5;
@@ -502,6 +507,8 @@ public class NetworkSolver implements Serializable {
 
   /**
    * Builds the result object.
+   *
+   * @return the network solution result
    */
   private NetworkResult buildResult() {
     NetworkResult result = new NetworkResult(name);
@@ -518,8 +525,7 @@ public class NetworkSolver implements Serializable {
       result.wellEnabled.put(node.name, node.enabled);
     }
 
-    result.totalRate =
-        wellNodes.stream().filter(n -> n.enabled).mapToDouble(n -> n.allocatedRate).sum();
+    result.totalRate = wellNodes.stream().filter(n -> n.enabled).mapToDouble(n -> n.allocatedRate).sum();
 
     return result;
   }
@@ -591,8 +597,7 @@ public class NetworkSolver implements Serializable {
       throw new IllegalStateException("Reference fluid must be set");
     }
 
-    double totalRate =
-        wellNodes.stream().filter(n -> n.enabled).mapToDouble(n -> n.allocatedRate).sum();
+    double totalRate = wellNodes.stream().filter(n -> n.enabled).mapToDouble(n -> n.allocatedRate).sum();
 
     SystemInterface combinedFluid = referenceFluid.clone();
     Stream combined = new Stream(name + " Combined", combinedFluid);

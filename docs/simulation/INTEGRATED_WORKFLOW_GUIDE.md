@@ -796,8 +796,8 @@ mdmt.exportToPIFormat("mdmt_limits.csv");
 
 ## References
 
-- [NeqSim QRA Integration Guide](QRA_INTEGRATION_GUIDE.md)
-- [Safety Simulation Roadmap](SAFETY_SIMULATION_ROADMAP.md)
+- [NeqSim QRA Integration Guide](../integration/QRA_INTEGRATION_GUIDE.md)
+- [Safety Simulation Roadmap](../safety/SAFETY_SIMULATION_ROADMAP.md)
 - [NeqSim Documentation](https://equinor.github.io/neqsim/)
 - [NeqSim GitHub Repository](https://github.com/equinor/neqsim)
 

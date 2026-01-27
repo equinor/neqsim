@@ -365,5 +365,5 @@ for (double t = 0; t < 3600; t += 1.0) {
 
 - [Process Package](README.md) - Package overview
 - [Equipment](equipment/README.md) - Process equipment
-- [Alarm System](../alarm_system_guide.md) - Alarms
-- [Process Logic Framework](../process_logic_framework.md) - Advanced logic
+- [Alarm System](../safety/alarm_system_guide.md) - Alarms
+- [Process Logic Framework](../simulation/process_logic_framework.md) - Advanced logic
