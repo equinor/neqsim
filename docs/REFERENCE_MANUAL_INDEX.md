@@ -299,8 +299,10 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 ### Chapter 23: Mechanical Design
 | Document | Path | Description |
 |----------|------|-------------|
-| Mechanical Design | [docs/process/mechanical_design.md](process/mechanical_design.md) | Mechanical design overview and JSON export |
-| **Equipment Design Parameters** | [docs/process/EQUIPMENT_DESIGN_PARAMETERS.md](process/EQUIPMENT_DESIGN_PARAMETERS.md) | **Comprehensive guide to autoSize vs MechanicalDesign, manual sizing, and capacity constraints** |
+| Mechanical Design | [docs/process/mechanical_design.md](process/mechanical_design.md) | Mechanical design overview, process design parameters, validation, and JSON export |
+| **Equipment Design Parameters** | [docs/process/EQUIPMENT_DESIGN_PARAMETERS.md](process/EQUIPMENT_DESIGN_PARAMETERS.md) | **Comprehensive guide to autoSize vs MechanicalDesign, manual sizing, validation methods, and capacity constraints** |
+| **Process Design Parameters** | [docs/process/mechanical_design.md#process-design-parameters](process/mechanical_design.md#process-design-parameters) | **Industry-standard process design parameters for separators, compressors, pumps, heat exchangers** |
+| **Design Validation** | [docs/process/mechanical_design.md#design-validation](process/mechanical_design.md#design-validation) | **Validation methods per API-610, API-617, TEMA, API-12J standards** |
 | **Mechanical Design Report** | [docs/process/mechanical_design.md#comprehensive-mechanical-design-report-json](process/mechanical_design.md#comprehensive-mechanical-design-report-json) | **Combined JSON output for all mechanical design data (equipment + piping)** |
 | Design Standards | [docs/process/mechanical_design_standards.md](process/mechanical_design_standards.md) | Design standards |
 | Design Database | [docs/process/mechanical_design_database.md](process/mechanical_design_database.md) | Design database |
