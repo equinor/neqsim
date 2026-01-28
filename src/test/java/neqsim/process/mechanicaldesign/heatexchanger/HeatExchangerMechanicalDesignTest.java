@@ -116,4 +116,145 @@ public class HeatExchangerMechanicalDesignTest {
 
     return hx;
   }
+
+  // ============================================================================
+  // Process Design Parameter Tests
+  // ============================================================================
+
+  @Test
+  void testFoulingResistances() {
+    HeatExchanger hx = createHeatExchanger(1000.0);
+    hx.initMechanicalDesign();
+    HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
+    design.calcDesign();
+
+    double shellFouling = design.getFoulingResistanceShellHC();
+    double tubeFouling = design.getFoulingResistanceTubeHC();
+
+    assertTrue(shellFouling > 0, "Shell fouling resistance should be positive");
+    assertTrue(tubeFouling > 0, "Tube fouling resistance should be positive");
+    System.out.println("Shell fouling resistance (HC): " + shellFouling + " m²K/W");
+    System.out.println("Tube fouling resistance (HC): " + tubeFouling + " m²K/W");
+  }
+
+  @Test
+  void testTemaClass() {
+    HeatExchanger hx = createHeatExchanger(1000.0);
+    hx.initMechanicalDesign();
+    HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
+    design.calcDesign();
+
+    String temaClass = design.getTemaClass();
+    assertNotNull(temaClass, "TEMA class should not be null");
+    assertTrue(temaClass.equals("R") || temaClass.equals("C") || temaClass.equals("B"),
+        "TEMA class should be R, C, or B");
+    System.out.println("TEMA class: " + temaClass);
+  }
+
+  @Test
+  void testVelocityLimits() {
+    HeatExchanger hx = createHeatExchanger(1000.0);
+    hx.initMechanicalDesign();
+    HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
+    design.calcDesign();
+
+    double maxTubeVel = design.getMaxTubeVelocity();
+    double maxShellVel = design.getMaxShellVelocity();
+
+    assertTrue(maxTubeVel > 0, "Max tube velocity should be positive");
+    assertTrue(maxShellVel > 0, "Max shell velocity should be positive");
+    System.out.println("Max tube velocity: " + maxTubeVel + " m/s");
+    System.out.println("Max shell velocity: " + maxShellVel + " m/s");
+  }
+
+  @Test
+  void testApproachTemperature() {
+    HeatExchanger hx = createHeatExchanger(1000.0);
+    hx.initMechanicalDesign();
+    HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
+    design.calcDesign();
+
+    double minApproach = design.getMinApproachTemperatureC();
+    assertTrue(minApproach > 0, "Min approach temperature should be positive");
+    assertTrue(minApproach <= 30, "Min approach temperature should be reasonable (<= 30 C)");
+    System.out.println("Min approach temperature: " + minApproach + " C");
+  }
+
+  // ============================================================================
+  // Validation Method Tests
+  // ============================================================================
+
+  @Test
+  void testValidateTubeVelocity() {
+    HeatExchanger hx = createHeatExchanger(1000.0);
+    hx.initMechanicalDesign();
+    HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
+    design.calcDesign();
+
+    double maxVel = design.getMaxTubeVelocity();
+
+    // Test within limit
+    assertTrue(design.validateTubeVelocity(maxVel * 0.8),
+        "Velocity 80% of max should pass");
+
+    // Test above limit
+    assertFalse(design.validateTubeVelocity(maxVel * 1.2),
+        "Velocity 120% of max should fail");
+  }
+
+  @Test
+  void testValidateShellVelocity() {
+    HeatExchanger hx = createHeatExchanger(1000.0);
+    hx.initMechanicalDesign();
+    HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
+    design.calcDesign();
+
+    double maxVel = design.getMaxShellVelocity();
+
+    // Test within limit
+    assertTrue(design.validateShellVelocity(maxVel * 0.5),
+        "Velocity 50% of max should pass");
+
+    // Test above limit
+    assertFalse(design.validateShellVelocity(maxVel * 1.5),
+        "Velocity 150% of max should fail");
+  }
+
+  @Test
+  void testValidateApproachTemperature() {
+    HeatExchanger hx = createHeatExchanger(1000.0);
+    hx.initMechanicalDesign();
+    HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
+    design.calcDesign();
+
+    double minApproach = design.getMinApproachTemperatureC();
+
+    // Test with adequate approach
+    assertTrue(design.validateApproachTemperature(minApproach * 2),
+        "Approach 2x minimum should pass");
+
+    // Test with inadequate approach
+    assertFalse(design.validateApproachTemperature(minApproach * 0.5),
+        "Approach 0.5x minimum should fail");
+  }
+
+  @Test
+  void testComprehensiveValidation() {
+    HeatExchanger hx = createHeatExchanger(1000.0);
+    hx.initMechanicalDesign();
+    HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
+    design.calcDesign();
+
+    HeatExchangerMechanicalDesign.HeatExchangerValidationResult result = design.validateDesign();
+
+    assertNotNull(result, "Validation result should not be null");
+    assertNotNull(result.getIssues(), "Issues list should not be null");
+
+    System.out.println("Heat exchanger validation valid: " + result.isValid());
+    if (!result.isValid()) {
+      for (String issue : result.getIssues()) {
+        System.out.println("  Issue: " + issue);
+      }
+    }
+  }
 }

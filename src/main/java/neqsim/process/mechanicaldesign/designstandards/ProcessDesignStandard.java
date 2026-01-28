@@ -118,10 +118,10 @@ public class ProcessDesignStandard extends DesignStandard {
     try {
       neqsim.util.database.NeqSimProcessDesignDataBase database =
           new neqsim.util.database.NeqSimProcessDesignDataBase();
-      java.sql.ResultSet dataSet = database.getResultSet(
-          "SELECT * FROM technicalrequirements_process WHERE " + "EQUIPMENTTYPE='" + equipmentType
-              + "' AND Company='" + getMechanicalDesign().getCompanySpecificDesignStandards()
-              + "'");
+      java.sql.ResultSet dataSet =
+          database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
+              + "EQUIPMENTTYPE='" + equipmentType + "' AND Company='"
+              + getMechanicalDesign().getCompanySpecificDesignStandards() + "'");
 
       while (dataSet.next()) {
         String spec = dataSet.getString("SPECIFICATION");

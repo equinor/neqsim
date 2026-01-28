@@ -1020,8 +1020,8 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
     try {
       neqsim.util.database.NeqSimProcessDesignDataBase database =
           new neqsim.util.database.NeqSimProcessDesignDataBase();
-      java.sql.ResultSet dataSet = database.getResultSet(
-          "SELECT * FROM technicalrequirements_process WHERE "
+      java.sql.ResultSet dataSet =
+          database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
               + "EQUIPMENTTYPE='HeatExchanger' AND Company='" + getCompanySpecificDesignStandards()
               + "'");
 
@@ -1076,6 +1076,133 @@ public class HeatExchangerMechanicalDesign extends MechanicalDesign {
       dataSet.close();
     } catch (Exception ex) {
       // Use default values if database lookup fails
+    }
+  }
+
+  // ============================================================================
+  // Validation Methods
+  // ============================================================================
+
+  /**
+   * Validates that tube side velocity is within acceptable limits.
+   *
+   * @param actualVelocity actual tube side velocity in m/s
+   * @return true if velocity is within acceptable range
+   */
+  public boolean validateTubeVelocity(double actualVelocity) {
+    return actualVelocity >= minTubeVelocity && actualVelocity <= maxTubeVelocity;
+  }
+
+  /**
+   * Validates that shell side velocity is within acceptable limits.
+   *
+   * @param actualVelocity actual shell side velocity in m/s
+   * @return true if velocity is acceptable
+   */
+  public boolean validateShellVelocity(double actualVelocity) {
+    return actualVelocity <= maxShellVelocity;
+  }
+
+  /**
+   * Validates that approach temperature meets minimum requirements.
+   *
+   * @param actualApproach actual approach temperature in Celsius
+   * @return true if approach temperature is acceptable
+   */
+  public boolean validateApproachTemperature(double actualApproach) {
+    return actualApproach >= minApproachTemperatureC;
+  }
+
+  /**
+   * Validates that tube length is within acceptable limits.
+   *
+   * @param actualLengthM actual tube length in meters
+   * @return true if tube length is acceptable
+   */
+  public boolean validateTubeLength(double actualLengthM) {
+    return actualLengthM <= maxTubeLengthM;
+  }
+
+  /**
+   * Calculates the clean overall heat transfer coefficient (without fouling).
+   *
+   * @param shellHTC shell side heat transfer coefficient in W/(m²K)
+   * @param tubeHTC tube side heat transfer coefficient in W/(m²K)
+   * @param wallThicknessMm tube wall thickness in mm
+   * @param wallConductivity tube wall thermal conductivity in W/(mK), typically 45 for CS
+   * @return clean U-value in W/(m²K)
+   */
+  public double calculateCleanU(double shellHTC, double tubeHTC, double wallThicknessMm,
+      double wallConductivity) {
+    double wallResistance = (wallThicknessMm / 1000.0) / wallConductivity;
+    return 1.0 / (1.0 / shellHTC + wallResistance + 1.0 / tubeHTC);
+  }
+
+  /**
+   * Calculates the fouled overall heat transfer coefficient.
+   *
+   * @param cleanU clean U-value in W/(m²K)
+   * @param shellServiceWater true if shell side is water service
+   * @param tubeServiceWater true if tube side is water service
+   * @return fouled U-value in W/(m²K)
+   */
+  public double calculateFouledU(double cleanU, boolean shellServiceWater,
+      boolean tubeServiceWater) {
+    double totalFouling = calculateTotalFoulingResistance(shellServiceWater, tubeServiceWater);
+    return 1.0 / (1.0 / cleanU + totalFouling);
+  }
+
+  /**
+   * Performs comprehensive validation of heat exchanger design.
+   *
+   * @return HeatExchangerValidationResult with status and any issues found
+   */
+  public HeatExchangerValidationResult validateDesign() {
+    HeatExchangerValidationResult result = new HeatExchangerValidationResult();
+
+    // Validate approach temperature
+    if (approachTemperature > 0 && !validateApproachTemperature(approachTemperature)) {
+      result.addIssue("Approach temperature " + String.format("%.1f", approachTemperature)
+          + " °C below minimum " + String.format("%.1f", minApproachTemperatureC) + " °C");
+    }
+
+    // Validate tube length if set
+    if (tantanLength > 0 && !validateTubeLength(tantanLength)) {
+      result.addIssue("Tube length " + String.format("%.1f", tantanLength) + " m exceeds maximum "
+          + String.format("%.1f", maxTubeLengthM) + " m");
+    }
+
+    // Validate design margins
+    if (designPressureMargin < 1.05) {
+      result.addIssue("Design pressure margin " + String.format("%.2f", designPressureMargin)
+          + " below recommended 1.05");
+    }
+
+    result.setValid(result.getIssues().isEmpty());
+    return result;
+  }
+
+  /**
+   * Inner class to hold validation results.
+   */
+  public static class HeatExchangerValidationResult {
+    private boolean valid = true;
+    private java.util.List<String> issues = new java.util.ArrayList<>();
+
+    public boolean isValid() {
+      return valid;
+    }
+
+    public void setValid(boolean valid) {
+      this.valid = valid;
+    }
+
+    public java.util.List<String> getIssues() {
+      return issues;
+    }
+
+    public void addIssue(String issue) {
+      issues.add(issue);
     }
   }
 }

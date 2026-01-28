@@ -1264,8 +1264,8 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
     try {
       neqsim.util.database.NeqSimProcessDesignDataBase database =
           new neqsim.util.database.NeqSimProcessDesignDataBase();
-      java.sql.ResultSet dataSet = database.getResultSet(
-          "SELECT * FROM technicalrequirements_process WHERE "
+      java.sql.ResultSet dataSet =
+          database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
               + "EQUIPMENTTYPE='Compressor' AND Company='" + getCompanySpecificDesignStandards()
               + "'");
 
@@ -1308,6 +1308,123 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
       dataSet.close();
     } catch (Exception ex) {
       // Use default values if database lookup fails
+    }
+  }
+
+  // ============================================================================
+  // Validation Methods
+  // ============================================================================
+
+  /**
+   * Validates that the actual polytropic efficiency meets minimum requirements.
+   *
+   * @param actualEfficiency actual polytropic efficiency (0-1)
+   * @return true if efficiency is acceptable
+   */
+  public boolean validateEfficiency(double actualEfficiency) {
+    return actualEfficiency >= minPolytropicEfficiency;
+  }
+
+  /**
+   * Validates that the discharge temperature is within acceptable limits.
+   *
+   * @param actualTemperatureC actual discharge temperature in Celsius
+   * @return true if temperature is acceptable
+   */
+  public boolean validateDischargeTemperature(double actualTemperatureC) {
+    return actualTemperatureC <= maxDischargeTemperatureC;
+  }
+
+  /**
+   * Validates that the pressure ratio per stage is within acceptable limits.
+   *
+   * @param actualPressureRatio actual pressure ratio per stage
+   * @return true if pressure ratio is acceptable
+   */
+  public boolean validatePressureRatioPerStage(double actualPressureRatio) {
+    return actualPressureRatio <= maxPressureRatioPerStage;
+  }
+
+  /**
+   * Validates that vibration levels are within acceptable limits.
+   *
+   * @param actualVibrationMmS actual vibration in mm/s RMS
+   * @return true if vibration is acceptable
+   */
+  public boolean validateVibration(double actualVibrationMmS) {
+    return actualVibrationMmS <= maxVibrationMmPerSec;
+  }
+
+  /**
+   * Performs comprehensive validation of compressor design.
+   *
+   * @return CompressorValidationResult with status and any issues found
+   */
+  public CompressorValidationResult validateDesign() {
+    CompressorValidationResult result = new CompressorValidationResult();
+
+    Compressor compressor = (Compressor) getProcessEquipment();
+    if (compressor == null || compressor.getThermoSystem() == null) {
+      result.addIssue("Compressor not properly initialized");
+      result.setValid(false);
+      return result;
+    }
+
+    // Validate discharge temperature
+    double dischargeTemp = compressor.getOutletStream().getTemperature("C");
+    if (!validateDischargeTemperature(dischargeTemp)) {
+      result.addIssue("Discharge temperature " + String.format("%.1f", dischargeTemp)
+          + " °C exceeds maximum " + String.format("%.1f", maxDischargeTemperatureC) + " °C");
+    }
+
+    // Validate polytropic efficiency
+    double actualEfficiency = compressor.getPolytropicEfficiency();
+    if (actualEfficiency > 0 && !validateEfficiency(actualEfficiency)) {
+      result.addIssue("Polytropic efficiency " + String.format("%.1f", actualEfficiency * 100)
+          + "% below minimum " + String.format("%.1f", minPolytropicEfficiency * 100) + "%");
+    }
+
+    // Validate pressure ratio per stage
+    double suctionPressure = compressor.getInletStream().getPressure("bara");
+    double dischargePressure = compressor.getOutletStream().getPressure("bara");
+    double totalPressureRatio = dischargePressure / suctionPressure;
+    double pressureRatioPerStage = Math.pow(totalPressureRatio, 1.0 / numberOfStages);
+    if (!validatePressureRatioPerStage(pressureRatioPerStage)) {
+      result.addIssue("Pressure ratio per stage " + String.format("%.2f", pressureRatioPerStage)
+          + " exceeds maximum " + String.format("%.2f", maxPressureRatioPerStage));
+    }
+
+    // Validate surge margin
+    if (surgeMarginPercent < 10.0) {
+      result.addIssue("Surge margin " + String.format("%.1f", surgeMarginPercent)
+          + "% below recommended minimum 10%");
+    }
+
+    result.setValid(result.getIssues().isEmpty());
+    return result;
+  }
+
+  /**
+   * Inner class to hold validation results.
+   */
+  public static class CompressorValidationResult {
+    private boolean valid = true;
+    private java.util.List<String> issues = new java.util.ArrayList<>();
+
+    public boolean isValid() {
+      return valid;
+    }
+
+    public void setValid(boolean valid) {
+      this.valid = valid;
+    }
+
+    public java.util.List<String> getIssues() {
+      return issues;
+    }
+
+    public void addIssue(String issue) {
+      issues.add(issue);
     }
   }
 }

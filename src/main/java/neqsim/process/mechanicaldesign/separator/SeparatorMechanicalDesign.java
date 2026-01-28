@@ -1819,8 +1819,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     try {
       neqsim.util.database.NeqSimProcessDesignDataBase database =
           new neqsim.util.database.NeqSimProcessDesignDataBase();
-      java.sql.ResultSet dataSet = database.getResultSet(
-          "SELECT * FROM technicalrequirements_process WHERE "
+      java.sql.ResultSet dataSet =
+          database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
               + "EQUIPMENTTYPE='Separator' AND Company='" + getCompanySpecificDesignStandards()
               + "'");
 
@@ -1878,6 +1878,119 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
       dataSet.close();
     } catch (Exception ex) {
       // Use default values if database lookup fails
+    }
+  }
+
+  // ============================================================================
+  // Validation Methods
+  // ============================================================================
+
+  /**
+   * Validates that the actual gas velocity is within acceptable limits.
+   *
+   * @param actualVelocity actual gas velocity in m/s
+   * @return true if velocity is acceptable, false if too high
+   */
+  public boolean validateGasVelocity(double actualVelocity) {
+    return actualVelocity <= maxGasVelocity;
+  }
+
+  /**
+   * Validates that the actual liquid outlet velocity is within acceptable limits.
+   *
+   * @param actualVelocity actual liquid velocity in m/s
+   * @return true if velocity is acceptable, false if too high
+   */
+  public boolean validateLiquidVelocity(double actualVelocity) {
+    return actualVelocity <= maxLiquidVelocity;
+  }
+
+  /**
+   * Validates that the actual retention time meets minimum requirements.
+   *
+   * @param actualRetentionMinutes actual retention time in minutes
+   * @param isOil true for oil retention, false for water retention
+   * @return true if retention time is sufficient
+   */
+  public boolean validateRetentionTime(double actualRetentionMinutes, boolean isOil) {
+    double minRequired = isOil ? minOilRetentionTime : minWaterRetentionTime;
+    return actualRetentionMinutes >= minRequired;
+  }
+
+  /**
+   * Validates that the droplet diameter is appropriate for separation.
+   *
+   * @param actualDropletDiameterUm actual droplet diameter in micrometers
+   * @param isGasLiquid true for gas-liquid separation, false for liquid-liquid
+   * @return true if droplet diameter is at or above design diameter
+   */
+  public boolean validateDropletDiameter(double actualDropletDiameterUm, boolean isGasLiquid) {
+    double designDiameter = isGasLiquid ? dropletDiameterGasLiquid : dropletDiameterLiquidLiquid;
+    return actualDropletDiameterUm >= designDiameter;
+  }
+
+  /**
+   * Performs comprehensive validation of separator design against process requirements.
+   *
+   * @return ValidationResult with status and any issues found
+   */
+  public SeparatorValidationResult validateDesignComprehensive() {
+    SeparatorValidationResult result = new SeparatorValidationResult();
+
+    // Calculate actual gas velocity from design
+    double crossSectionalArea = Math.PI * Math.pow(innerDiameter / 2.0, 2);
+    double gasArea = crossSectionalArea * Fg;
+    double actualGasVelocity = maxDesignVolumeFlow / gasArea;
+
+    if (!validateGasVelocity(actualGasVelocity)) {
+      result.addIssue("Gas velocity " + String.format("%.2f", actualGasVelocity)
+          + " m/s exceeds maximum " + String.format("%.2f", maxGasVelocity) + " m/s");
+    }
+
+    // Validate retention time
+    if (retentionTime < minOilRetentionTime * 60.0) {
+      result.addIssue("Oil retention time " + String.format("%.1f", retentionTime / 60.0)
+          + " min below minimum " + String.format("%.1f", minOilRetentionTime) + " min");
+    }
+
+    // Validate L/D ratio
+    double ldRatio = tantanLength / innerDiameter;
+    if (ldRatio < 2.0 || ldRatio > 6.0) {
+      result.addIssue(
+          "L/D ratio " + String.format("%.1f", ldRatio) + " outside recommended range 2.0-6.0");
+    }
+
+    // Validate design pressure margin
+    if (designPressureMargin < 1.05) {
+      result.addIssue("Design pressure margin " + String.format("%.2f", designPressureMargin)
+          + " below recommended 1.05");
+    }
+
+    result.setValid(result.getIssues().isEmpty());
+    return result;
+  }
+
+  /**
+   * Inner class to hold validation results.
+   */
+  public static class SeparatorValidationResult {
+    private boolean valid = true;
+    private java.util.List<String> issues = new java.util.ArrayList<>();
+
+    public boolean isValid() {
+      return valid;
+    }
+
+    public void setValid(boolean valid) {
+      this.valid = valid;
+    }
+
+    public java.util.List<String> getIssues() {
+      return issues;
+    }
+
+    public void addIssue(String issue) {
+      issues.add(issue);
     }
   }
 }
