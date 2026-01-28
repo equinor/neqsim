@@ -194,12 +194,10 @@ public class HeatExchangerMechanicalDesignTest {
     double maxVel = design.getMaxTubeVelocity();
 
     // Test within limit
-    assertTrue(design.validateTubeVelocity(maxVel * 0.8),
-        "Velocity 80% of max should pass");
+    assertTrue(design.validateTubeVelocity(maxVel * 0.8), "Velocity 80% of max should pass");
 
     // Test above limit
-    assertFalse(design.validateTubeVelocity(maxVel * 1.2),
-        "Velocity 120% of max should fail");
+    assertFalse(design.validateTubeVelocity(maxVel * 1.2), "Velocity 120% of max should fail");
   }
 
   @Test
@@ -212,12 +210,10 @@ public class HeatExchangerMechanicalDesignTest {
     double maxVel = design.getMaxShellVelocity();
 
     // Test within limit
-    assertTrue(design.validateShellVelocity(maxVel * 0.5),
-        "Velocity 50% of max should pass");
+    assertTrue(design.validateShellVelocity(maxVel * 0.5), "Velocity 50% of max should pass");
 
     // Test above limit
-    assertFalse(design.validateShellVelocity(maxVel * 1.5),
-        "Velocity 150% of max should fail");
+    assertFalse(design.validateShellVelocity(maxVel * 1.5), "Velocity 150% of max should fail");
   }
 
   @Test

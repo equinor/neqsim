@@ -66,8 +66,7 @@ public class SeparatorMechanicalDesignTest {
 
     assertTrue(gasLiquid > 0, "Gas-liquid droplet diameter should be positive");
     assertTrue(liquidLiquid > 0, "Liquid-liquid droplet diameter should be positive");
-    assertTrue(gasLiquid < liquidLiquid,
-        "Gas-liquid droplet diameter should typically be smaller");
+    assertTrue(gasLiquid < liquidLiquid, "Gas-liquid droplet diameter should typically be smaller");
 
     System.out.println("Gas-liquid droplet diameter: " + gasLiquid + " um");
     System.out.println("Liquid-liquid droplet diameter: " + liquidLiquid + " um");
@@ -134,12 +133,10 @@ public class SeparatorMechanicalDesignTest {
     double maxVel = mechDesign.getMaxGasVelocityLimit();
 
     // Test with velocity below limit
-    assertTrue(mechDesign.validateGasVelocity(maxVel * 0.8),
-        "Velocity 80% of max should pass");
+    assertTrue(mechDesign.validateGasVelocity(maxVel * 0.8), "Velocity 80% of max should pass");
 
     // Test with velocity above limit
-    assertFalse(mechDesign.validateGasVelocity(maxVel * 1.2),
-        "Velocity 120% of max should fail");
+    assertFalse(mechDesign.validateGasVelocity(maxVel * 1.2), "Velocity 120% of max should fail");
   }
 
   @Test
@@ -147,8 +144,7 @@ public class SeparatorMechanicalDesignTest {
     double maxVel = mechDesign.getMaxLiquidVelocity();
 
     // Test with velocity below limit
-    assertTrue(mechDesign.validateLiquidVelocity(maxVel * 0.5),
-        "Velocity 50% of max should pass");
+    assertTrue(mechDesign.validateLiquidVelocity(maxVel * 0.5), "Velocity 50% of max should pass");
 
     // Test with velocity above limit
     assertFalse(mechDesign.validateLiquidVelocity(maxVel * 1.5),
