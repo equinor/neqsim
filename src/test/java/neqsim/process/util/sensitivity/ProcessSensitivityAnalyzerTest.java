@@ -36,6 +36,7 @@ class ProcessSensitivityAnalyzerTest {
   @Nested
   @DisplayName("Fluent API Tests")
   class FluentApiTests {
+    @Test
     @DisplayName("Can add inputs and outputs")
     void testAddInputsOutputs() {
       ProcessSystem process = new ProcessSystem();

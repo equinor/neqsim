@@ -13,9 +13,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * consistent results.
  */
 public class ValveSizingMethodComparisonTest {
-  /*
-   * Compare all sizing methods for a gas valve.
-   */
+  /** Compare all sizing methods for a gas valve. */
   @Test
   void compareGasValveSizingMethods() {
     System.out.println("=== GAS VALVE SIZING METHOD COMPARISON ===\n");
