@@ -1211,4 +1211,29 @@ public class ProcessModel implements Runnable, Serializable {
     }
     return count;
   }
+
+  /**
+   * Enables or disables capacity analysis for all equipment in all process systems.
+   *
+   * <p>
+   * This is a convenience method that applies the setting to all equipment in all processes. When
+   * disabled, equipment is excluded from:
+   * <ul>
+   * <li>System bottleneck detection</li>
+   * <li>Capacity utilization summaries</li>
+   * <li>Equipment near capacity lists</li>
+   * <li>Optimization constraint checking</li>
+   * </ul>
+   * </p>
+   *
+   * @param enabled true to enable capacity analysis for all equipment, false to disable
+   * @return the number of equipment items that were updated
+   */
+  public int setCapacityAnalysisEnabled(boolean enabled) {
+    int count = 0;
+    for (ProcessSystem processSystem : processes.values()) {
+      count += processSystem.setCapacityAnalysisEnabled(enabled);
+    }
+    return count;
+  }
 }

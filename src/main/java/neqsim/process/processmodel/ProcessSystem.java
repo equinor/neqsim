@@ -3562,6 +3562,34 @@ public class ProcessSystem extends SimulationBaseClass {
   // ==================== Capacity Constraint Methods ====================
 
   /**
+   * Enables or disables capacity analysis for all equipment in this process system.
+   *
+   * <p>
+   * This is a convenience method that applies the setting to all equipment that extends
+   * {@link ProcessEquipmentBaseClass}. When disabled, equipment is excluded from:
+   * <ul>
+   * <li>System bottleneck detection ({@code findBottleneck()})</li>
+   * <li>Capacity utilization summaries ({@code getCapacityUtilizationSummary()})</li>
+   * <li>Equipment near capacity lists ({@code getEquipmentNearCapacityLimit()})</li>
+   * <li>Optimization constraint checking</li>
+   * </ul>
+   * </p>
+   *
+   * @param enabled true to enable capacity analysis for all equipment, false to disable
+   * @return the number of equipment items that were updated
+   */
+  public int setCapacityAnalysisEnabled(boolean enabled) {
+    int count = 0;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof ProcessEquipmentBaseClass) {
+        ((ProcessEquipmentBaseClass) unit).setCapacityAnalysisEnabled(enabled);
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /**
    * Gets all capacity-constrained equipment in the process.
    *
    * <p>
