@@ -168,6 +168,9 @@ public final class ProcessModelGraphBuilder {
 
   /**
    * Builds a flattened graph containing all nodes and edges from all sub-systems.
+   *
+   * @param subSystemGraphs list of sub-system graphs to flatten
+   * @return a new ProcessGraph containing all nodes and edges from all sub-systems
    */
   private static ProcessGraph buildFlattenedGraph(
       List<ProcessModelGraph.SubSystemGraph> subSystemGraphs) {
@@ -197,11 +200,14 @@ public final class ProcessModelGraphBuilder {
   }
 
   /**
-   * Detects connections between different sub-systems by analyzing stream
-   * references. This includes
-   * both explicit edges within sub-systems AND implicit dependencies where one
-   * system uses
+   * Detects connections between different sub-systems by analyzing stream references. This includes
+   * both explicit edges within sub-systems AND implicit dependencies where one system uses
    * stream/fluid objects from another system's equipment.
+   *
+   * @param subSystemGraphs list of sub-system graphs to analyze
+   * @param nodeToSystem mapping from nodes to their owning system names
+   * @param connections list to populate with detected inter-system connections
+   * @param flattenedGraph the flattened graph containing all nodes
    */
   private static void detectInterSystemConnections(
       List<ProcessModelGraph.SubSystemGraph> subSystemGraphs, Map<ProcessNode, String> nodeToSystem,
@@ -362,6 +368,11 @@ public final class ProcessModelGraphBuilder {
 
   /**
    * Collect output streams from specific equipment types.
+   *
+   * @param equipment the equipment to collect outputs from
+   * @param systemName the name of the system containing the equipment
+   * @param streamProducers map to populate with stream-to-producer mappings
+   * @param streamToSystem map to populate with stream-to-system mappings
    */
   private static void collectEquipmentOutputs(ProcessEquipmentInterface equipment,
       String systemName, Map<Object, ProcessEquipmentInterface> streamProducers,

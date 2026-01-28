@@ -1224,7 +1224,6 @@ public class ProcessModel implements Runnable, Serializable {
    * <li>Equipment near capacity lists</li>
    * <li>Optimization constraint checking</li>
    * </ul>
-   * </p>
    *
    * @param enabled true to enable capacity analysis for all equipment, false to disable
    * @return the number of equipment items that were updated

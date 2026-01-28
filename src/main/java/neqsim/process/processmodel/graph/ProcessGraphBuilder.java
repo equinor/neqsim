@@ -657,7 +657,11 @@ public final class ProcessGraphBuilder {
   }
 
   /**
-   * Safely invokes a method.
+   * Safely invokes a method on a process equipment unit.
+   *
+   * @param unit the process equipment instance to invoke the method on
+   * @param method the method to invoke
+   * @return the result of the method invocation, or null if an exception occurs
    */
   private static Object invokeMethod(ProcessEquipmentInterface unit, Method method) {
     try {
