@@ -231,6 +231,9 @@ public class DatabaseTorgDataSource implements TorgDataSource {
 
   /**
    * Load from the legacy TechnicalRequirements_Process table.
+   *
+   * @param companyIdentifier the company identifier to query
+   * @return Optional containing the TR document if found, empty otherwise
    */
   private Optional<TechnicalRequirementsDocument> loadFromLegacyTable(String companyIdentifier) {
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase()) {

@@ -386,6 +386,10 @@ public class ProcessVariableAccessor {
 
   /**
    * Check if method parameters match.
+   *
+   * @param method the method to check
+   * @param paramTypes the expected parameter types
+   * @return true if the method parameters match the expected types
    */
   private boolean matchesParams(Method method, Class<?>[] paramTypes) {
     Class<?>[] methodParams = method.getParameterTypes();
