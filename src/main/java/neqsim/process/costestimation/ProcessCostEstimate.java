@@ -169,62 +169,110 @@ public class ProcessCostEstimate implements java.io.Serializable {
       this.type = type;
     }
 
-    /** Get equipment name. @return name */
+    /**
+     * Get equipment name.
+     *
+     * @return name
+     */
     public String getName() {
       return name;
     }
 
-    /** Get equipment type. @return type */
+    /**
+     * Get equipment type.
+     *
+     * @return type
+     */
     public String getType() {
       return type;
     }
 
-    /** Get PEC. @return PEC in USD */
+    /**
+     * Get PEC.
+     *
+     * @return PEC in USD
+     */
     public double getPurchasedEquipmentCost() {
       return purchasedEquipmentCost;
     }
 
-    /** Set PEC. @param cost PEC in USD */
+    /**
+     * Set PEC.
+     *
+     * @param cost PEC in USD
+     */
     public void setPurchasedEquipmentCost(double cost) {
       this.purchasedEquipmentCost = cost;
     }
 
-    /** Get BMC. @return BMC in USD */
+    /**
+     * Get BMC.
+     *
+     * @return BMC in USD
+     */
     public double getBareModuleCost() {
       return bareModuleCost;
     }
 
-    /** Set BMC. @param cost BMC in USD */
+    /**
+     * Set BMC.
+     *
+     * @param cost BMC in USD
+     */
     public void setBareModuleCost(double cost) {
       this.bareModuleCost = cost;
     }
 
-    /** Get TMC. @return TMC in USD */
+    /**
+     * Get TMC.
+     *
+     * @return TMC in USD
+     */
     public double getTotalModuleCost() {
       return totalModuleCost;
     }
 
-    /** Set TMC. @param cost TMC in USD */
+    /**
+     * Set TMC.
+     *
+     * @param cost TMC in USD
+     */
     public void setTotalModuleCost(double cost) {
       this.totalModuleCost = cost;
     }
 
-    /** Get installation hours. @return man-hours */
+    /**
+     * Get installation hours.
+     *
+     * @return man-hours
+     */
     public double getInstallationManHours() {
       return installationManHours;
     }
 
-    /** Set installation hours. @param hours man-hours */
+    /**
+     * Set installation hours.
+     *
+     * @param hours man-hours
+     */
     public void setInstallationManHours(double hours) {
       this.installationManHours = hours;
     }
 
-    /** Get weight. @return weight in kg */
+    /**
+     * Get weight.
+     *
+     * @return weight in kg
+     */
     public double getWeight() {
       return weight;
     }
 
-    /** Set weight. @param weight weight in kg */
+    /**
+     * Set weight.
+     *
+     * @param weight weight in kg
+     */
     public void setWeight(double weight) {
       this.weight = weight;
     }
@@ -681,6 +729,10 @@ public class ProcessCostEstimate implements java.io.Serializable {
 
   /**
    * Truncate string to max length.
+   *
+   * @param str the string to truncate
+   * @param maxLen maximum length
+   * @return truncated string
    */
   private String truncate(String str, int maxLen) {
     if (str == null) {

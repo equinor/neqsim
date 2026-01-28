@@ -310,6 +310,9 @@ public class DynamicLogicExample {
 
   /**
    * Demonstrates modifying logic sequences at runtime.
+   *
+   * @param valve the throttling valve to control
+   * @param separator the separator to monitor
    */
   private static void demonstrateRuntimeModification(ThrottlingValve valve, Separator separator) {
     System.out.println("\n=== EXAMPLE 4: RUNTIME LOGIC MODIFICATION ===");
@@ -396,6 +399,8 @@ public class DynamicLogicExample {
 
   /**
    * Simulates determining what scenario to use at runtime.
+   *
+   * @return the determined runtime scenario name
    */
   private static String determineRuntimeScenario() {
     // In real implementation, this might check:
