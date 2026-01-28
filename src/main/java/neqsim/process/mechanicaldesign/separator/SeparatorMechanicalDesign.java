@@ -41,6 +41,63 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   /** Liquid retention time in seconds. Default 120s (2 minutes). */
   double retentionTime = 120.0;
 
+  // ============================================================================
+  // Process Design Parameters (loaded from TechnicalRequirements_Process)
+  // ============================================================================
+
+  /** Design pressure margin factor (e.g., 1.10 for 10% margin). */
+  private double designPressureMargin = 1.10;
+
+  /** Design temperature margin above max operating in Celsius. */
+  private double designTemperatureMarginC = 25.0;
+
+  /** Minimum design temperature in Celsius (material limit). */
+  private double minDesignTemperatureC = -46.0;
+
+  /** Foam allowance factor for liquid level (1.0 = no foam, 1.5 = 50% foam). */
+  private double foamAllowanceFactor = 1.0;
+
+  /** Design droplet diameter for gas-liquid separation in micrometers. */
+  private double dropletDiameterGasLiquid = 100.0;
+
+  /** Design droplet diameter for liquid-liquid separation in micrometers. */
+  private double dropletDiameterLiquidLiquid = 500.0;
+
+  /** Maximum gas velocity limit in m/s. */
+  private double maxGasVelocity = 3.0;
+
+  /** Maximum liquid outlet velocity in m/s. */
+  private double maxLiquidVelocity = 1.0;
+
+  /** Minimum oil retention time in minutes. */
+  private double minOilRetentionTime = 2.0;
+
+  /** Minimum water retention time in minutes. */
+  private double minWaterRetentionTime = 3.0;
+
+  // ============================================================================
+  // Demister/Mist Eliminator Parameters
+  // ============================================================================
+
+  /** Demister pad pressure drop in mbar. */
+  private double demisterPressureDrop = 1.5;
+
+  /** Wire mesh demister void fraction (typically 0.97-0.99). */
+  private double demisterVoidFraction = 0.98;
+
+  /** Demister pad thickness in mm. */
+  private double demisterThickness = 150.0;
+
+  /** Demister pad wire diameter in mm. */
+  private double demisterWireDiameter = 0.28;
+
+  /** Inlet device K-factor reduction (1.0 = no reduction). */
+  private double inletDeviceKFactor = 0.85;
+
+  /** Demister type: "wire_mesh", "vane_pack", "cyclone". */
+  private String demisterType = "wire_mesh";
+
+  // ============================================================================
   // Liquid level design parameters (as fraction of internal diameter for
   // horizontal separators)
   /** High-High Liquid Level (HHLL) as fraction of ID. Typically ~0.80-0.85. */
@@ -1385,5 +1442,442 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     sb.append(String.format("NIL: %.3f m (%.0f%% of ID)%n", getNIL(), nilFraction * 100));
     sb.append(String.format("LIL: %.3f m (%.0f%% of ID)%n", getLIL(), lilFraction * 100));
     return sb.toString();
+  }
+
+  // ============================================================================
+  // Process Design Parameter Getters/Setters
+  // ============================================================================
+
+  /**
+   * Gets the design pressure margin factor.
+   *
+   * @return design pressure margin (e.g., 1.10 for 10% margin)
+   */
+  public double getDesignPressureMargin() {
+    return designPressureMargin;
+  }
+
+  /**
+   * Sets the design pressure margin factor.
+   *
+   * @param margin margin factor (e.g., 1.10 for 10%)
+   */
+  public void setDesignPressureMargin(double margin) {
+    this.designPressureMargin = margin;
+  }
+
+  /**
+   * Gets the design temperature margin in Celsius.
+   *
+   * @return temperature margin in Celsius
+   */
+  public double getDesignTemperatureMarginC() {
+    return designTemperatureMarginC;
+  }
+
+  /**
+   * Sets the design temperature margin in Celsius.
+   *
+   * @param marginC temperature margin in Celsius
+   */
+  public void setDesignTemperatureMarginC(double marginC) {
+    this.designTemperatureMarginC = marginC;
+  }
+
+  /**
+   * Gets the minimum design temperature in Celsius.
+   *
+   * @return minimum design temperature in Celsius
+   */
+  public double getMinDesignTemperatureC() {
+    return minDesignTemperatureC;
+  }
+
+  /**
+   * Sets the minimum design temperature in Celsius.
+   *
+   * @param tempC minimum design temperature in Celsius
+   */
+  public void setMinDesignTemperatureC(double tempC) {
+    this.minDesignTemperatureC = tempC;
+  }
+
+  /**
+   * Gets the foam allowance factor.
+   *
+   * @return foam allowance factor (1.0 = no foam)
+   */
+  public double getFoamAllowanceFactor() {
+    return foamAllowanceFactor;
+  }
+
+  /**
+   * Sets the foam allowance factor.
+   *
+   * @param factor foam allowance factor (typically 1.0-1.5)
+   */
+  public void setFoamAllowanceFactor(double factor) {
+    this.foamAllowanceFactor = factor;
+  }
+
+  /**
+   * Gets the design droplet diameter for gas-liquid separation.
+   *
+   * @return droplet diameter in micrometers
+   */
+  public double getDropletDiameterGasLiquid() {
+    return dropletDiameterGasLiquid;
+  }
+
+  /**
+   * Sets the design droplet diameter for gas-liquid separation.
+   *
+   * @param diameterUm droplet diameter in micrometers
+   */
+  public void setDropletDiameterGasLiquid(double diameterUm) {
+    this.dropletDiameterGasLiquid = diameterUm;
+  }
+
+  /**
+   * Gets the design droplet diameter for liquid-liquid separation.
+   *
+   * @return droplet diameter in micrometers
+   */
+  public double getDropletDiameterLiquidLiquid() {
+    return dropletDiameterLiquidLiquid;
+  }
+
+  /**
+   * Sets the design droplet diameter for liquid-liquid separation.
+   *
+   * @param diameterUm droplet diameter in micrometers
+   */
+  public void setDropletDiameterLiquidLiquid(double diameterUm) {
+    this.dropletDiameterLiquidLiquid = diameterUm;
+  }
+
+  /**
+   * Gets the maximum gas velocity limit.
+   *
+   * @return maximum gas velocity in m/s
+   */
+  public double getMaxGasVelocityLimit() {
+    return maxGasVelocity;
+  }
+
+  /**
+   * Sets the maximum gas velocity limit.
+   *
+   * @param velocity maximum velocity in m/s
+   */
+  public void setMaxGasVelocityLimit(double velocity) {
+    this.maxGasVelocity = velocity;
+  }
+
+  /**
+   * Gets the maximum liquid outlet velocity.
+   *
+   * @return maximum liquid velocity in m/s
+   */
+  public double getMaxLiquidVelocity() {
+    return maxLiquidVelocity;
+  }
+
+  /**
+   * Sets the maximum liquid outlet velocity.
+   *
+   * @param velocity maximum velocity in m/s
+   */
+  public void setMaxLiquidVelocity(double velocity) {
+    this.maxLiquidVelocity = velocity;
+  }
+
+  /**
+   * Gets the minimum oil retention time.
+   *
+   * @return retention time in minutes
+   */
+  public double getMinOilRetentionTime() {
+    return minOilRetentionTime;
+  }
+
+  /**
+   * Sets the minimum oil retention time.
+   *
+   * @param minutes retention time in minutes
+   */
+  public void setMinOilRetentionTime(double minutes) {
+    this.minOilRetentionTime = minutes;
+  }
+
+  /**
+   * Gets the minimum water retention time.
+   *
+   * @return retention time in minutes
+   */
+  public double getMinWaterRetentionTime() {
+    return minWaterRetentionTime;
+  }
+
+  /**
+   * Sets the minimum water retention time.
+   *
+   * @param minutes retention time in minutes
+   */
+  public void setMinWaterRetentionTime(double minutes) {
+    this.minWaterRetentionTime = minutes;
+  }
+
+  // ============================================================================
+  // Demister/Mist Eliminator Getters/Setters
+  // ============================================================================
+
+  /**
+   * Gets the demister pressure drop.
+   *
+   * @return pressure drop in mbar
+   */
+  public double getDemisterPressureDrop() {
+    return demisterPressureDrop;
+  }
+
+  /**
+   * Sets the demister pressure drop.
+   *
+   * @param pressureDrop pressure drop in mbar
+   */
+  public void setDemisterPressureDrop(double pressureDrop) {
+    this.demisterPressureDrop = pressureDrop;
+  }
+
+  /**
+   * Gets the demister void fraction.
+   *
+   * @return void fraction (0.0-1.0)
+   */
+  public double getDemisterVoidFraction() {
+    return demisterVoidFraction;
+  }
+
+  /**
+   * Sets the demister void fraction.
+   *
+   * @param voidFraction void fraction (typically 0.97-0.99)
+   */
+  public void setDemisterVoidFraction(double voidFraction) {
+    this.demisterVoidFraction = voidFraction;
+  }
+
+  /**
+   * Gets the demister pad thickness.
+   *
+   * @return thickness in mm
+   */
+  public double getDemisterThickness() {
+    return demisterThickness;
+  }
+
+  /**
+   * Sets the demister pad thickness.
+   *
+   * @param thickness thickness in mm
+   */
+  public void setDemisterThickness(double thickness) {
+    this.demisterThickness = thickness;
+  }
+
+  /**
+   * Gets the demister wire diameter.
+   *
+   * @return wire diameter in mm
+   */
+  public double getDemisterWireDiameter() {
+    return demisterWireDiameter;
+  }
+
+  /**
+   * Sets the demister wire diameter.
+   *
+   * @param diameter wire diameter in mm
+   */
+  public void setDemisterWireDiameter(double diameter) {
+    this.demisterWireDiameter = diameter;
+  }
+
+  /**
+   * Gets the inlet device K-factor reduction.
+   *
+   * @return K-factor reduction (1.0 = no reduction)
+   */
+  public double getInletDeviceKFactor() {
+    return inletDeviceKFactor;
+  }
+
+  /**
+   * Sets the inlet device K-factor reduction.
+   *
+   * @param factor K-factor reduction (typically 0.8-1.0)
+   */
+  public void setInletDeviceKFactor(double factor) {
+    this.inletDeviceKFactor = factor;
+  }
+
+  /**
+   * Gets the demister type.
+   *
+   * @return demister type ("wire_mesh", "vane_pack", or "cyclone")
+   */
+  public String getDemisterType() {
+    return demisterType;
+  }
+
+  /**
+   * Sets the demister type.
+   *
+   * @param type demister type ("wire_mesh", "vane_pack", or "cyclone")
+   */
+  public void setDemisterType(String type) {
+    this.demisterType = type;
+  }
+
+  // ============================================================================
+  // Design Calculation Methods
+  // ============================================================================
+
+  /**
+   * Calculates the design pressure from maximum operating pressure.
+   *
+   * @return design pressure in barg
+   */
+  public double calculateDesignPressure() {
+    return getMaxOperationPressure() * designPressureMargin;
+  }
+
+  /**
+   * Calculates the design temperature from maximum operating temperature.
+   *
+   * @return design temperature in Celsius
+   */
+  public double calculateDesignTemperature() {
+    double maxOpTemp = getMaxOperationTemperature() - 273.15; // Convert K to C
+    return maxOpTemp + designTemperatureMarginC;
+  }
+
+  /**
+   * Calculates the minimum design temperature considering material limits.
+   *
+   * @return minimum design temperature in Celsius
+   */
+  public double calculateMinDesignTemperature() {
+    double minOpTemp = getMinOperationTemperature() - 273.15; // Convert K to C
+    return Math.max(minOpTemp - 10.0, minDesignTemperatureC);
+  }
+
+  /**
+   * Calculates the terminal settling velocity for a droplet using Stokes' law.
+   *
+   * @param dropletDiameterUm droplet diameter in micrometers
+   * @param continuousDensity density of continuous phase in kg/m³
+   * @param dispersedDensity density of dispersed phase in kg/m³
+   * @param continuousViscosity viscosity of continuous phase in Pa·s
+   * @return terminal velocity in m/s
+   */
+  public double calculateStokesVelocity(double dropletDiameterUm, double continuousDensity,
+      double dispersedDensity, double continuousViscosity) {
+    double diameterM = dropletDiameterUm * 1e-6;
+    double g = 9.81;
+    double deltaDensity = Math.abs(continuousDensity - dispersedDensity);
+    return (g * diameterM * diameterM * deltaDensity) / (18.0 * continuousViscosity);
+  }
+
+  /**
+   * Calculates the maximum allowable gas velocity using Souders-Brown equation.
+   *
+   * @param gasDensity gas density in kg/m³
+   * @param liquidDensity liquid density in kg/m³
+   * @return maximum gas velocity in m/s
+   */
+  public double calculateSoudersBrownVelocity(double gasDensity, double liquidDensity) {
+    double kEffective = gasLoadFactor * inletDeviceKFactor;
+    return kEffective * Math.sqrt((liquidDensity - gasDensity) / gasDensity);
+  }
+
+  /**
+   * Calculates the adjusted liquid volume accounting for foam.
+   *
+   * @param baseLiquidVolume base liquid volume in m³
+   * @return adjusted volume with foam allowance in m³
+   */
+  public double calculateFoamAdjustedVolume(double baseLiquidVolume) {
+    return baseLiquidVolume * foamAllowanceFactor;
+  }
+
+  /**
+   * Loads process design parameters from the TechnicalRequirements_Process database.
+   */
+  public void loadProcessDesignParameters() {
+    try {
+      neqsim.util.database.NeqSimProcessDesignDataBase database =
+          new neqsim.util.database.NeqSimProcessDesignDataBase();
+      java.sql.ResultSet dataSet = database.getResultSet(
+          "SELECT * FROM technicalrequirements_process WHERE "
+              + "EQUIPMENTTYPE='Separator' AND Company='" + getCompanySpecificDesignStandards()
+              + "'");
+
+      while (dataSet.next()) {
+        String spec = dataSet.getString("SPECIFICATION");
+        double minVal = dataSet.getDouble("MINVALUE");
+        double maxVal = dataSet.getDouble("MAXVALUE");
+        double value = (minVal + maxVal) / 2.0;
+
+        switch (spec) {
+          case "DesignPressureMargin":
+            this.designPressureMargin = value;
+            break;
+          case "DesignTemperatureMargin":
+            this.designTemperatureMarginC = value;
+            break;
+          case "MinDesignTemperature":
+            this.minDesignTemperatureC = value;
+            break;
+          case "FoamAllowanceFactor":
+            this.foamAllowanceFactor = value;
+            break;
+          case "DropletDiameterGas":
+            this.dropletDiameterGasLiquid = value;
+            break;
+          case "DropletDiameterLiquid":
+            this.dropletDiameterLiquidLiquid = value;
+            break;
+          case "MaxGasVelocity":
+            this.maxGasVelocity = value;
+            break;
+          case "MaxLiquidVelocity":
+            this.maxLiquidVelocity = value;
+            break;
+          case "MinLiquidRetentionOil":
+            this.minOilRetentionTime = value;
+            break;
+          case "MinLiquidRetentionWater":
+            this.minWaterRetentionTime = value;
+            break;
+          case "DemisterDeltaP":
+            this.demisterPressureDrop = value;
+            break;
+          case "DemisterVoidFraction":
+            this.demisterVoidFraction = value;
+            break;
+          case "InletDeviceKFactor":
+            this.inletDeviceKFactor = value;
+            break;
+          default:
+            // Ignore unknown parameters
+            break;
+        }
+      }
+      dataSet.close();
+    } catch (Exception ex) {
+      // Use default values if database lookup fails
+    }
   }
 }

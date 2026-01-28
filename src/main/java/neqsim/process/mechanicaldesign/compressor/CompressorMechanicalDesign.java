@@ -129,6 +129,94 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   /** Mechanical losses model reference. */
   private CompressorMechanicalLosses mechanicalLosses = null;
 
+  // ============================================================================
+  // Process Design Parameters (Industry Standards)
+  // ============================================================================
+
+  /** Surge margin minimum requirement [%]. */
+  private double surgeMarginPercent = 10.0;
+
+  /** Stonewall margin minimum requirement [%]. */
+  private double stonewallMarginPercent = 10.0;
+
+  /** Minimum turndown requirement [%]. */
+  private double minTurndownPercent = 70.0;
+
+  /** Target polytropic efficiency [%]. */
+  private double targetPolytropicEfficiency = 80.0;
+
+  /** Minimum polytropic efficiency [%]. */
+  private double minPolytropicEfficiency = 75.0;
+
+  /** Design flow margin factor. */
+  private double flowMarginFactor = 1.10;
+
+  /** Recycle valve capacity margin [%]. */
+  private double recycleValveMarginPercent = 20.0;
+
+  /** Design suction pressure margin [bara]. */
+  private double suctionPressureMargin = 0.0;
+
+  /** Maximum discharge temperature [C]. */
+  private double maxDischargeTemperatureC = 150.0;
+
+  /** Speed range requirement - minimum [% of rated]. */
+  private double minSpeedPercent = 70.0;
+
+  /** Speed range requirement - maximum [% of rated]. */
+  private double maxSpeedPercent = 105.0;
+
+  /** Separation margin from first critical speed [%]. */
+  private double criticalSpeedMarginPercent = 15.0;
+
+  /** Anti-surge control response time requirement [seconds]. */
+  private double antiSurgeResponseTimeSec = 2.0;
+
+  /** Maximum allowable suction strainer pressure drop [bar]. */
+  private double maxSuctionStrainerDPBar = 0.05;
+
+  /** Seal gas consumption allowance [% of design flow]. */
+  private double sealGasConsumptionPercent = 1.0;
+
+  /** Vibration limit at bearing [mm/s RMS]. */
+  private double maxBearingVibrationMmS = 2.5;
+
+  /** Calculated surge flow rate [m3/hr]. */
+  private double surgeFlowM3hr = 0.0;
+
+  /** Calculated stonewall flow rate [m3/hr]. */
+  private double stonewallFlowM3hr = 0.0;
+
+  /** Calculated turndown flow rate [m3/hr]. */
+  private double turndownFlowM3hr = 0.0;
+
+  /** Maximum pressure ratio per stage. */
+  private double maxPressureRatioPerStage = 3.0;
+
+  /** Design flow margin factor. */
+  private double designFlowMargin = 1.10;
+
+  /** Maximum allowable vibration [mm/s RMS]. */
+  private double maxVibrationMmPerSec = 5.0;
+
+  /** Minimum seal gas differential pressure [bar]. */
+  private double minSealGasDifferentialPressureBar = 2.0;
+
+  /** Maximum number of stages per casing. */
+  private int maxStagesPerCasing = 10;
+
+  /** Seal type. */
+  private String sealType = "dry_gas";
+
+  /** Bearing type. */
+  private String bearingType = "tilting_pad";
+
+  /** Material class. */
+  private String materialClass = "carbon_steel";
+
+  /** NACE MR0175 compliance required. */
+  private boolean naceCompliance = false;
+
   /**
    * Casing type enumeration per API 617.
    */
@@ -850,5 +938,376 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
   @Override
   public String toJson() {
     return getResponse().toJson();
+  }
+
+  // ============================================================================
+  // Process Design Parameter Getters/Setters
+  // ============================================================================
+
+  /**
+   * Gets the surge margin requirement.
+   *
+   * @return surge margin as percentage
+   */
+  public double getSurgeMarginPercent() {
+    return surgeMarginPercent;
+  }
+
+  /**
+   * Sets the surge margin requirement.
+   *
+   * @param margin surge margin as percentage (typically 10-25%)
+   */
+  public void setSurgeMarginPercent(double margin) {
+    this.surgeMarginPercent = margin;
+  }
+
+  /**
+   * Gets the stonewall margin requirement.
+   *
+   * @return stonewall margin as percentage
+   */
+  public double getStonewallMarginPercent() {
+    return stonewallMarginPercent;
+  }
+
+  /**
+   * Sets the stonewall margin requirement.
+   *
+   * @param margin stonewall margin as percentage
+   */
+  public void setStonewallMarginPercent(double margin) {
+    this.stonewallMarginPercent = margin;
+  }
+
+  /**
+   * Gets the turndown requirement.
+   *
+   * @return turndown as percentage of design flow
+   */
+  public double getTurndownPercent() {
+    return minTurndownPercent;
+  }
+
+  /**
+   * Sets the turndown requirement.
+   *
+   * @param turndown turndown as percentage of design flow (typically 70-100%)
+   */
+  public void setTurndownPercent(double turndown) {
+    this.minTurndownPercent = turndown;
+  }
+
+  /**
+   * Gets the target polytropic efficiency.
+   *
+   * @return polytropic efficiency as fraction (0-1)
+   */
+  public double getTargetPolytropicEfficiency() {
+    return targetPolytropicEfficiency;
+  }
+
+  /**
+   * Sets the target polytropic efficiency.
+   *
+   * @param efficiency polytropic efficiency as fraction (typically 0.75-0.85)
+   */
+  public void setTargetPolytropicEfficiency(double efficiency) {
+    this.targetPolytropicEfficiency = efficiency;
+  }
+
+  /**
+   * Gets the minimum polytropic efficiency.
+   *
+   * @return minimum polytropic efficiency as fraction
+   */
+  public double getMinPolytropicEfficiency() {
+    return minPolytropicEfficiency;
+  }
+
+  /**
+   * Sets the minimum polytropic efficiency.
+   *
+   * @param efficiency minimum polytropic efficiency as fraction
+   */
+  public void setMinPolytropicEfficiency(double efficiency) {
+    this.minPolytropicEfficiency = efficiency;
+  }
+
+  /**
+   * Gets the maximum pressure ratio per stage.
+   *
+   * @return max pressure ratio per stage
+   */
+  public double getMaxPressureRatioPerStage() {
+    return maxPressureRatioPerStage;
+  }
+
+  /**
+   * Sets the maximum pressure ratio per stage.
+   *
+   * @param ratio max pressure ratio per stage (typically 2.5-4.0)
+   */
+  public void setMaxPressureRatioPerStage(double ratio) {
+    this.maxPressureRatioPerStage = ratio;
+  }
+
+  /**
+   * Gets the design flow margin.
+   *
+   * @return design flow margin factor
+   */
+  public double getDesignFlowMargin() {
+    return designFlowMargin;
+  }
+
+  /**
+   * Sets the design flow margin.
+   *
+   * @param margin design flow margin factor (typically 1.05-1.15)
+   */
+  public void setDesignFlowMargin(double margin) {
+    this.designFlowMargin = margin;
+  }
+
+  /**
+   * Gets the maximum allowable vibration.
+   *
+   * @return max vibration in mm/s RMS
+   */
+  public double getMaxVibrationMmPerSec() {
+    return maxVibrationMmPerSec;
+  }
+
+  /**
+   * Sets the maximum allowable vibration.
+   *
+   * @param vibration max vibration in mm/s RMS
+   */
+  public void setMaxVibrationMmPerSec(double vibration) {
+    this.maxVibrationMmPerSec = vibration;
+  }
+
+  /**
+   * Gets the maximum discharge temperature.
+   *
+   * @return max discharge temperature in Celsius
+   */
+  public double getMaxDischargeTemperatureC() {
+    return maxDischargeTemperatureC;
+  }
+
+  /**
+   * Sets the maximum discharge temperature.
+   *
+   * @param tempC max discharge temperature in Celsius
+   */
+  public void setMaxDischargeTemperatureC(double tempC) {
+    this.maxDischargeTemperatureC = tempC;
+  }
+
+  /**
+   * Gets the minimum seal gas differential pressure.
+   *
+   * @return min seal gas differential in bar
+   */
+  public double getMinSealGasDifferentialPressureBar() {
+    return minSealGasDifferentialPressureBar;
+  }
+
+  /**
+   * Sets the minimum seal gas differential pressure.
+   *
+   * @param pressure min seal gas differential in bar
+   */
+  public void setMinSealGasDifferentialPressureBar(double pressure) {
+    this.minSealGasDifferentialPressureBar = pressure;
+  }
+
+  /**
+   * Gets the maximum stages per casing.
+   *
+   * @return max stages per casing
+   */
+  public int getMaxStagesPerCasing() {
+    return maxStagesPerCasing;
+  }
+
+  /**
+   * Sets the maximum stages per casing.
+   *
+   * @param stages max stages per casing
+   */
+  public void setMaxStagesPerCasing(int stages) {
+    this.maxStagesPerCasing = stages;
+  }
+
+  /**
+   * Gets the seal type.
+   *
+   * @return seal type description
+   */
+  public String getSealType() {
+    return sealType;
+  }
+
+  /**
+   * Sets the seal type.
+   *
+   * @param sealType seal type ("dry_gas", "labyrinth", "oil_film")
+   */
+  public void setSealType(String sealType) {
+    this.sealType = sealType;
+  }
+
+  /**
+   * Gets the bearing type.
+   *
+   * @return bearing type description
+   */
+  public String getBearingType() {
+    return bearingType;
+  }
+
+  /**
+   * Sets the bearing type.
+   *
+   * @param bearingType bearing type ("tilting_pad", "magnetic", "ball")
+   */
+  public void setBearingType(String bearingType) {
+    this.bearingType = bearingType;
+  }
+
+  /**
+   * Gets the material class.
+   *
+   * @return material class
+   */
+  public String getMaterialClass() {
+    return materialClass;
+  }
+
+  /**
+   * Sets the material class.
+   *
+   * @param materialClass material class for casing and internals
+   */
+  public void setMaterialClass(String materialClass) {
+    this.materialClass = materialClass;
+  }
+
+  /**
+   * Checks if NACE MR0175 compliance is required.
+   *
+   * @return true if NACE compliance required
+   */
+  public boolean isNaceCompliance() {
+    return naceCompliance;
+  }
+
+  /**
+   * Sets NACE MR0175 compliance requirement.
+   *
+   * @param naceCompliance true if NACE compliance required
+   */
+  public void setNaceCompliance(boolean naceCompliance) {
+    this.naceCompliance = naceCompliance;
+  }
+
+  /**
+   * Calculates the surge flow rate based on design flow and surge margin.
+   *
+   * @param designFlowM3hr design volumetric flow rate in m3/hr
+   * @return surge flow rate in m3/hr
+   */
+  public double calculateSurgeFlow(double designFlowM3hr) {
+    return designFlowM3hr * (1.0 - surgeMarginPercent / 100.0);
+  }
+
+  /**
+   * Calculates the stonewall flow rate based on design flow and stonewall margin.
+   *
+   * @param designFlowM3hr design volumetric flow rate in m3/hr
+   * @return stonewall flow rate in m3/hr
+   */
+  public double calculateStonewallFlow(double designFlowM3hr) {
+    return designFlowM3hr * (1.0 + stonewallMarginPercent / 100.0);
+  }
+
+  /**
+   * Calculates the minimum turndown flow rate.
+   *
+   * @param designFlowM3hr design volumetric flow rate in m3/hr
+   * @return minimum turndown flow rate in m3/hr
+   */
+  public double calculateTurndownFlow(double designFlowM3hr) {
+    return designFlowM3hr * minTurndownPercent / 100.0;
+  }
+
+  /**
+   * Validates that design operating point is within acceptable margins.
+   *
+   * @param actualFlowM3hr actual operating flow in m3/hr
+   * @param surgeFlowM3hr calculated surge flow in m3/hr
+   * @param stonewallFlowM3hr calculated stonewall flow in m3/hr
+   * @return true if operating point is acceptable
+   */
+  public boolean validateOperatingPoint(double actualFlowM3hr, double surgeFlowM3hr,
+      double stonewallFlowM3hr) {
+    return actualFlowM3hr > surgeFlowM3hr && actualFlowM3hr < stonewallFlowM3hr;
+  }
+
+  /**
+   * Loads compressor design parameters from the database based on company standards.
+   */
+  public void loadProcessDesignParameters() {
+    try {
+      neqsim.util.database.NeqSimProcessDesignDataBase database =
+          new neqsim.util.database.NeqSimProcessDesignDataBase();
+      java.sql.ResultSet dataSet = database.getResultSet(
+          "SELECT * FROM technicalrequirements_process WHERE "
+              + "EQUIPMENTTYPE='Compressor' AND Company='" + getCompanySpecificDesignStandards()
+              + "'");
+
+      while (dataSet.next()) {
+        String spec = dataSet.getString("SPECIFICATION");
+        double minVal = dataSet.getDouble("MINVALUE");
+        double maxVal = dataSet.getDouble("MAXVALUE");
+        double value = (minVal + maxVal) / 2.0;
+
+        switch (spec) {
+          case "SurgeMargin":
+            this.surgeMarginPercent = value;
+            break;
+          case "StonewallMargin":
+            this.stonewallMarginPercent = value;
+            break;
+          case "MinTurndown":
+            this.minTurndownPercent = value;
+            break;
+          case "PolytropicEfficiencyTarget":
+            this.targetPolytropicEfficiency = value / 100.0;
+            break;
+          case "PolytropicEfficiencyMin":
+            this.minPolytropicEfficiency = value / 100.0;
+            break;
+          case "MaxPressureRatioPerStage":
+            this.maxPressureRatioPerStage = value;
+            break;
+          case "MaxVibration":
+            this.maxVibrationMmPerSec = value;
+            break;
+          case "MaxDischargeTemperature":
+            this.maxDischargeTemperatureC = value;
+            break;
+          default:
+            // Ignore unknown parameters
+            break;
+        }
+      }
+      dataSet.close();
+    } catch (Exception ex) {
+      // Use default values if database lookup fails
+    }
   }
 }
