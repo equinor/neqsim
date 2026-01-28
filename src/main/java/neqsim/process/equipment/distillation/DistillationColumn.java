@@ -18,6 +18,8 @@ import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.distillation.DistillationColumnMechanicalDesign;
 import neqsim.process.util.monitor.DistillationColumnResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -106,6 +108,9 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   private boolean enforceEnergyBalanceTolerance = false;
   private boolean doMultiPhaseCheck = true;
 
+  /** Mechanical design for the distillation column. */
+  private DistillationColumnMechanicalDesign mechanicalDesign;
+
   Mixer feedmixer = new Mixer("temp mixer");
   double bottomTrayPressure = -1.0;
   int numberOfTrays = 1;
@@ -185,6 +190,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     this.hasCondenser = hasCondenser;
     distoperations = new neqsim.process.processmodel.ProcessSystem();
     this.numberOfTrays = numberOfTraysLocal;
+    initMechanicalDesign();
 
     // If user sets hasReboiler, put that in as the first tray in 'trays' list
     if (hasReboiler) {
@@ -1630,6 +1636,18 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public void setDoInitializion(boolean doInitializion) {
     this.doInitializion = doInitializion;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public MechanicalDesign getMechanicalDesign() {
+    return mechanicalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initMechanicalDesign() {
+    mechanicalDesign = new DistillationColumnMechanicalDesign(this);
   }
 
   /**

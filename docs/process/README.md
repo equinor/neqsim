@@ -58,11 +58,22 @@ This documentation is organized into the following sections:
 - `DesignOptimizer` - Design-to-optimization workflow
 - Integration with MechanicalDesign and company TR documents
 
-### Capacity Constraint Framework
+### Optimization and Constraints Framework (NEW) ✨
 
 | Document | Description |
 |----------|-------------|
-| [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK.md) | **Framework for equipment capacity limits, bottleneck detection, and utilization tracking** |
+| [optimization/OPTIMIZATION_AND_CONSTRAINTS.md](optimization/OPTIMIZATION_AND_CONSTRAINTS.md) | **COMPREHENSIVE: Complete guide to optimization algorithms, constraint types, bottleneck analysis** |
+| [optimization/OPTIMIZATION_OVERVIEW.md](optimization/OPTIMIZATION_OVERVIEW.md) | When to use which optimizer |
+| [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK.md) | Equipment capacity limits and utilization tracking |
+
+**Key Features:**
+- Five search algorithms: Binary, Golden-Section, Nelder-Mead, Particle Swarm, Gradient Descent
+- Multi-constraint support per equipment (speed, power, surge, K-factor, etc.)
+- Constraint types: HARD (trip/damage), SOFT (efficiency loss), DESIGN (normal envelope)
+- Constraint severity: CRITICAL, HARD, SOFT, ADVISORY
+- Automated bottleneck detection with `ProcessSystem.findBottleneck()`
+- Multi-objective Pareto optimization
+- External optimizer integration (Python/SciPy via `ProcessSimulationEvaluator`)
 
 ### Mechanical Design Documentation
 
@@ -76,6 +87,22 @@ This documentation is organized into the following sections:
 | [riser_mechanical_design.md](riser_mechanical_design.md) | Riser design (catenary, VIV, fatigue per DNV-OS-F201) |
 | [torg_integration.md](torg_integration.md) | Technical Requirements Documents (TORG) integration |
 | [field_development_orchestration.md](field_development_orchestration.md) | Complete design workflow orchestration |
+
+### Cost Estimation Framework (NEW) ✨
+
+| Document | Description |
+|----------|-------------|
+| [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK.md) | **Comprehensive capital and operating cost estimation** |
+| [COST_ESTIMATION_API_REFERENCE.md](COST_ESTIMATION_API_REFERENCE.md) | **Detailed API reference for cost estimation classes** |
+
+**Key Features:**
+- Equipment cost estimation using Turton et al. correlations
+- Support for 14+ equipment types (separators, compressors, heat exchangers, tanks, expanders, ejectors, absorbers, etc.)
+- Multi-currency support (USD, EUR, NOK, GBP, CNY, JPY)
+- Location factors for 11 global regions
+- Operating cost (OPEX) calculation with utility costs
+- Financial metrics (payback period, ROI, NPV)
+- Process-level cost aggregation with JSON export
 
 ### Equipment Categories
 

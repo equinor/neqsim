@@ -2,14 +2,16 @@
 
 NeqSim provides a comprehensive mechanical design framework for sizing and specifying process equipment according to industry standards. This document describes the architecture, usage patterns, and JSON export capabilities.
 
-> **📘 Equipment-Specific Documentation**
+> **📘 Related Documentation**
 >
-> | Equipment | Documentation |
-> |-----------|---------------|
+> | Topic | Documentation |
+> |-------|---------------|
 > | **Pipelines** | [Pipeline Mechanical Design](pipeline_mechanical_design.md) - Wall thickness, stress analysis, cost estimation |
 > | **Mathematical Methods** | [Pipeline Design Math](pipeline_mechanical_design_math.md) - Complete formula reference |
 > | **Design Standards** | [Mechanical Design Standards](mechanical_design_standards.md) - Industry standards reference |
 > | **Database** | [Mechanical Design Database](mechanical_design_database.md) - Material properties, design factors |
+> | **Cost Estimation** | [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK.md) - CAPEX, OPEX, currency, location factors |
+> | **Design Parameters** | [EQUIPMENT_DESIGN_PARAMETERS.md](EQUIPMENT_DESIGN_PARAMETERS.md) - autoSize vs manual sizing guide |
 
 ## Overview
 
@@ -552,13 +554,50 @@ The framework applies industry-standard margins:
 
 ## Integration with Cost Estimation
 
-Each mechanical design class has an associated cost estimation class:
+Each mechanical design class has an associated cost estimation class in `neqsim.process.costestimation`:
 
 ```java
-// Access cost estimate
+// Access cost estimate from mechanical design
 UnitCostEstimateBaseClass costEstimate = mecDesign.getCostEstimate();
 double equipmentCost = costEstimate.getEquipmentCost();    // USD
 double installedCost = costEstimate.getInstalledCost();    // USD
+```
+
+### Comprehensive Cost Estimation Framework
+
+For detailed cost estimation including OPEX, financial metrics, currency conversion, and location factors, see the dedicated cost estimation documentation:
+
+| Document | Description |
+|----------|-------------|
+| [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK.md) | **Comprehensive guide to capital and operating cost estimation** |
+| [COST_ESTIMATION_API_REFERENCE.md](COST_ESTIMATION_API_REFERENCE.md) | **Detailed API reference for all cost estimation classes** |
+
+**Key Features:**
+- Equipment costs using Turton et al., Peters & Timmerhaus, GPSA correlations
+- 14+ equipment types (separators, compressors, heat exchangers, tanks, expanders, ejectors, absorbers, etc.)
+- Multi-currency support (USD, EUR, NOK, GBP, CNY, JPY)
+- Location factors for 11 global regions
+- Operating cost (OPEX) calculation with utility costs
+- Financial metrics (payback period, ROI, NPV)
+- Process-level cost aggregation with `ProcessCostEstimate`
+
+```java
+// Example: Process-level cost estimation
+ProcessCostEstimate processCost = new ProcessCostEstimate(process);
+
+// Set location and currency
+processCost.setLocationByRegion("North Sea");
+processCost.setCurrency("NOK");
+
+// Calculate costs
+processCost.calculateCosts();
+
+// Get results in selected currency
+double totalCAPEX = processCost.getTotalCapitalCost();  // NOK
+double totalOPEX = processCost.calculateOperatingCost(8760);  // NOK/year
+
+// Export comprehensive JSON report
+String json = processCost.toJson();
 ```
 
 ## Best Practices

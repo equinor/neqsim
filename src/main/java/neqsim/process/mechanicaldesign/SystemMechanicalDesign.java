@@ -228,57 +228,101 @@ public class SystemMechanicalDesign implements java.io.Serializable {
       return power;
     }
 
-    /** Set power. @param power power in kW */
+    /**
+     * Set power.
+     *
+     * @param power power in kW
+     */
     public void setPower(double power) {
       this.power = power;
     }
 
-    /** Get duty in kW. @return duty */
+    /**
+     * Get duty in kW.
+     *
+     * @return duty in kW
+     */
     public double getDuty() {
       return duty;
     }
 
-    /** Set duty. @param duty duty in kW */
+    /**
+     * Set duty.
+     *
+     * @param duty duty in kW
+     */
     public void setDuty(double duty) {
       this.duty = duty;
     }
 
-    /** Get dimensions string. @return dimensions */
+    /**
+     * Get dimensions string.
+     *
+     * @return dimensions description
+     */
     public String getDimensions() {
       return dimensions;
     }
 
-    /** Set dimensions string. @param dimensions dimensions description */
+    /**
+     * Set dimensions string.
+     *
+     * @param dimensions dimensions description
+     */
     public void setDimensions(String dimensions) {
       this.dimensions = dimensions;
     }
 
-    /** Get length in meters. @return length */
+    /**
+     * Get length in meters.
+     *
+     * @return length in meters
+     */
     public double getLength() {
       return length;
     }
 
-    /** Set length. @param length length in meters */
+    /**
+     * Set length.
+     *
+     * @param length length in meters
+     */
     public void setLength(double length) {
       this.length = length;
     }
 
-    /** Get width in meters. @return width */
+    /**
+     * Get width in meters.
+     *
+     * @return width in meters
+     */
     public double getWidth() {
       return width;
     }
 
-    /** Set width. @param width width in meters */
+    /**
+     * Set width.
+     *
+     * @param width width in meters
+     */
     public void setWidth(double width) {
       this.width = width;
     }
 
-    /** Get height in meters. @return height */
+    /**
+     * Get height in meters.
+     *
+     * @return height in meters
+     */
     public double getHeight() {
       return height;
     }
 
-    /** Set height. @param height height in meters */
+    /**
+     * Set height.
+     *
+     * @param height height in meters
+     */
     public void setHeight(double height) {
       this.height = height;
     }
@@ -951,6 +995,93 @@ public class SystemMechanicalDesign implements java.io.Serializable {
       weight += processSystem.getUnitOperations().get(i).getMechanicalDesign().getWeightTotal();
     }
     return weight;
+  }
+
+  // ============================================================================
+  // Cost Estimation Integration
+  // ============================================================================
+
+  /**
+   * Get the process cost estimate for this system.
+   *
+   * <p>
+   * This method provides direct access to cost estimation from the mechanical design context. It
+   * creates a ProcessCostEstimate and calculates all costs based on the equipment in the process.
+   * </p>
+   *
+   * <p>
+   * Example:
+   * </p>
+   * 
+   * <pre>
+   * {@code
+   * SystemMechanicalDesign mecDesign = new SystemMechanicalDesign(process);
+   * mecDesign.runDesignCalculation();
+   * ProcessCostEstimate costEst = mecDesign.getCostEstimate();
+   * System.out.println("PEC: $" + costEst.getTotalPurchasedEquipmentCost());
+   * }
+   * </pre>
+   *
+   * @return the process cost estimate
+   */
+  public neqsim.process.costestimation.ProcessCostEstimate getCostEstimate() {
+    neqsim.process.costestimation.ProcessCostEstimate costEstimate =
+        new neqsim.process.costestimation.ProcessCostEstimate(processSystem, this);
+    costEstimate.calculateAllCosts();
+    return costEstimate;
+  }
+
+  /**
+   * Get combined mechanical design and cost estimation JSON.
+   *
+   * <p>
+   * This convenience method returns a comprehensive JSON report including both mechanical design
+   * data and cost estimates.
+   * </p>
+   *
+   * @return JSON string with combined data
+   */
+  public String toJsonWithCosts() {
+    neqsim.process.costestimation.ProcessCostEstimate costEst = getCostEstimate();
+
+    Map<String, Object> combined = new LinkedHashMap<String, Object>();
+    combined.put("processName", (processSystem != null) ? processSystem.getName() : "Unknown");
+    combined.put("reportType", "SystemMechanicalDesignWithCosts");
+    combined.put("generatedAt", java.time.Instant.now().toString());
+
+    // Mechanical design summary
+    Map<String, Object> mecSummary = new LinkedHashMap<String, Object>();
+    mecSummary.put("totalWeight_kg", totalWeight);
+    mecSummary.put("totalVolume_m3", totalVolume);
+    mecSummary.put("totalPlotSpace_m2", totalPlotSpace);
+    mecSummary.put("equipmentCount", equipmentList.size());
+    combined.put("mechanicalDesignSummary", mecSummary);
+
+    // Utility requirements
+    Map<String, Object> utilities = new LinkedHashMap<String, Object>();
+    utilities.put("totalPowerRequired_kW", totalPowerRequired);
+    utilities.put("totalPowerRecovered_kW", totalPowerRecovered);
+    utilities.put("netPowerRequired_kW", totalPowerRequired - totalPowerRecovered);
+    utilities.put("totalHeatingDuty_kW", totalHeatingDuty);
+    utilities.put("totalCoolingDuty_kW", totalCoolingDuty);
+    combined.put("utilityRequirements", utilities);
+
+    // Cost summary
+    Map<String, Object> costSummary = new LinkedHashMap<String, Object>();
+    costSummary.put("purchasedEquipmentCost_USD", costEst.getTotalPurchasedEquipmentCost());
+    costSummary.put("bareModuleCost_USD", costEst.getTotalBareModuleCost());
+    costSummary.put("totalModuleCost_USD", costEst.getTotalModuleCost());
+    costSummary.put("grassRootsCost_USD", costEst.getTotalGrassRootsCost());
+    costSummary.put("installationManHours", costEst.getTotalInstallationManHours());
+    combined.put("costSummary", costSummary);
+
+    // Breakdowns
+    combined.put("weightByEquipmentType_kg", weightByEquipmentType);
+    combined.put("weightByDiscipline_kg", weightByDiscipline);
+    combined.put("costByEquipmentType_USD", costEst.getCostByEquipmentType());
+
+    return new com.google.gson.GsonBuilder().setPrettyPrinting()
+        .serializeSpecialFloatingPointValues().create().toJson(combined);
   }
 
   /** {@inheritDoc} */

@@ -155,6 +155,10 @@ public class CsvTorgDataSource implements TorgDataSource {
 
   /**
    * Load standards-focused CSV format where each row is a standard assignment.
+   *
+   * @param reader the BufferedReader to read CSV data from
+   * @param headerIndex map of column names to their indices
+   * @throws IOException if an I/O error occurs while reading
    */
   private void loadStandardsFormat(BufferedReader reader, Map<String, Integer> headerIndex)
       throws IOException {
@@ -230,6 +234,10 @@ public class CsvTorgDataSource implements TorgDataSource {
 
   /**
    * Load master format where each row is a complete TORG (less common).
+   *
+   * @param reader the BufferedReader to read CSV data from
+   * @param headerIndex map of column names to their indices
+   * @throws IOException if an I/O error occurs while reading
    */
   private void loadMasterFormat(BufferedReader reader, Map<String, Integer> headerIndex)
       throws IOException {

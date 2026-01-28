@@ -2,6 +2,15 @@
 
 This guide describes how to manually set design parameters for process equipment in NeqSim when not using `autoSizeEquipment()`. Understanding these parameters is essential for accurate capacity utilization tracking and bottleneck analysis.
 
+> **📘 Related Documentation**
+>
+> | Topic | Documentation |
+> |-------|---------------|
+> | **Mechanical Design** | [mechanical_design.md](mechanical_design.md) - Equipment sizing, weights, JSON export |
+> | **Constraints & Optimization** | [optimization/OPTIMIZATION_AND_CONSTRAINTS.md](optimization/OPTIMIZATION_AND_CONSTRAINTS.md) - Complete optimization guide |
+> | **Capacity Constraints** | [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK.md) - Multi-constraint bottleneck detection |
+> | **Cost Estimation** | [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK.md) - CAPEX, OPEX, financial metrics |
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -756,4 +765,6 @@ List<String> nearLimit = process.getEquipmentNearCapacityLimit();
 
 - [AutoSizeable Interface](../src/main/java/neqsim/process/design/AutoSizeable.java)
 - [Capacity Constraint Framework](CAPACITY_CONSTRAINT_FRAMEWORK.md)
-- [Mechanical Design Framework](DESIGN_FRAMEWORK.md)
+- [Mechanical Design Framework](mechanical_design.md)
+- [Optimization & Constraints Guide](optimization/OPTIMIZATION_AND_CONSTRAINTS.md)
+- [Cost Estimation Framework](COST_ESTIMATION_FRAMEWORK.md)

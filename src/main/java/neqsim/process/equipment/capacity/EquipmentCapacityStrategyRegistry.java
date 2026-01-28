@@ -17,7 +17,9 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * registry uses a priority-based selection when multiple strategies support the same equipment.
  * </p>
  *
- * <p><strong>Usage</strong></p>
+ * <p>
+ * <strong>Usage</strong>
+ * </p>
  * 
  * <pre>
  * // Get the singleton instance
@@ -85,6 +87,10 @@ public class EquipmentCapacityStrategyRegistry {
     register(new PumpCapacityStrategy());
     register(new ExpanderCapacityStrategy());
     register(new EjectorCapacityStrategy());
+    register(new MixerCapacityStrategy());
+    register(new SplitterCapacityStrategy());
+    register(new TankCapacityStrategy());
+    register(new DistillationColumnCapacityStrategy());
   }
 
   /**

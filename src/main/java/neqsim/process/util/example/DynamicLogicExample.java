@@ -256,6 +256,9 @@ public class DynamicLogicExample {
 
   /**
    * Demonstrates building complex logic sequences completely at runtime.
+   *
+   * @param valve the throttling valve to control
+   * @param separator the separator to monitor
    */
   private static void demonstrateDynamicLogicSequences(ThrottlingValve valve, Separator separator) {
     System.out.println("\n=== EXAMPLE 3: DYNAMIC LOGIC SEQUENCES ===");

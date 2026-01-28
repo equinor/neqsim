@@ -30,7 +30,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class HeatExchanger extends Heater implements HeatExchangerInterface, StateVectorProvider {
+public class HeatExchanger extends Heater implements HeatExchangerInterface, StateVectorProvider,
+    neqsim.process.equipment.capacity.CapacityConstrainedEquipment {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -55,6 +56,23 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   private String flowArrangement = "concentric tube counterflow";
   private boolean useDeltaT = false;
   private double deltaT = 1.0;
+
+  // ============ Capacity Constraint Fields ============
+  /** Design duty in Watts for capacity constraint. */
+  private double designDuty = 0.0;
+  /** Design UA value in W/K for capacity constraint. */
+  private double designUAValue = 0.0;
+  /** Minimum approach temperature in K. */
+  private double minApproachTemperature = 5.0;
+  /** Maximum shell-side pressure drop in bar. */
+  private double maxShellPressureDrop = 0.5;
+  /** Maximum tube-side pressure drop in bar. */
+  private double maxTubePressureDrop = 0.5;
+  /** Capacity constraints map. */
+  private java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> hxCapacityConstraints =
+      new java.util.LinkedHashMap<String, neqsim.process.equipment.capacity.CapacityConstraint>();
+  /** Flag for HX-specific capacity analysis. */
+  private boolean hxCapacityAnalysisEnabled = true;
 
   /**
    * Constructor for HeatExchanger.
@@ -943,6 +961,250 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
    */
   public static Builder builder(String name) {
     return new Builder(name);
+  }
+
+  // ============================================================================
+  // CapacityConstrainedEquipment Implementation
+  // ============================================================================
+
+  /**
+   * Sets the design duty for capacity calculations.
+   *
+   * @param duty design duty in Watts
+   */
+  public void setDesignDuty(double duty) {
+    this.designDuty = duty;
+    initializeHxCapacityConstraints();
+  }
+
+  /**
+   * Gets the design duty.
+   *
+   * @return design duty in Watts
+   */
+  public double getDesignDuty() {
+    return designDuty;
+  }
+
+  /**
+   * Sets the design UA value for capacity calculations.
+   *
+   * @param uaValue design UA value in W/K
+   */
+  public void setDesignUAValue(double uaValue) {
+    this.designUAValue = uaValue;
+    initializeHxCapacityConstraints();
+  }
+
+  /**
+   * Gets the design UA value.
+   *
+   * @return design UA value in W/K
+   */
+  public double getDesignUAValue() {
+    return designUAValue;
+  }
+
+  /**
+   * Sets the minimum approach temperature.
+   *
+   * @param temperature minimum approach temperature in K
+   */
+  public void setMinApproachTemperature(double temperature) {
+    this.minApproachTemperature = temperature;
+    initializeHxCapacityConstraints();
+  }
+
+  /**
+   * Gets the minimum approach temperature.
+   *
+   * @return minimum approach temperature in K
+   */
+  public double getMinApproachTemperature() {
+    return minApproachTemperature;
+  }
+
+  /**
+   * Sets the maximum shell-side pressure drop.
+   *
+   * @param pressureDrop maximum pressure drop in bar
+   */
+  public void setMaxShellPressureDrop(double pressureDrop) {
+    this.maxShellPressureDrop = pressureDrop;
+    initializeHxCapacityConstraints();
+  }
+
+  /**
+   * Sets the maximum tube-side pressure drop.
+   *
+   * @param pressureDrop maximum pressure drop in bar
+   */
+  public void setMaxTubePressureDrop(double pressureDrop) {
+    this.maxTubePressureDrop = pressureDrop;
+    initializeHxCapacityConstraints();
+  }
+
+  /**
+   * Calculates the current approach temperature.
+   *
+   * @return current approach temperature in K
+   */
+  public double getApproachTemperature() {
+    if (inStream[0] == null || inStream[1] == null || outStream[0] == null
+        || outStream[1] == null) {
+      return Double.MAX_VALUE;
+    }
+    double hotOut = outStream[0].getTemperature("K");
+    double coldIn = inStream[1].getTemperature("K");
+    double hotIn = inStream[0].getTemperature("K");
+    double coldOut = outStream[1].getTemperature("K");
+
+    // For counterflow: min of (hot_out - cold_in) and (hot_in - cold_out)
+    // For parallel flow: (hot_out - cold_out)
+    if (flowArrangement.contains("counter")) {
+      return Math.min(hotOut - coldIn, hotIn - coldOut);
+    } else {
+      return hotOut - coldOut;
+    }
+  }
+
+  /**
+   * Initialize heat exchanger specific capacity constraints.
+   */
+  private void initializeHxCapacityConstraints() {
+    hxCapacityConstraints.clear();
+
+    // Duty utilization constraint
+    if (designDuty > 0) {
+      neqsim.process.equipment.capacity.CapacityConstraint dutyConstraint =
+          new neqsim.process.equipment.capacity.CapacityConstraint("dutyUtilization", "W",
+              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN);
+      dutyConstraint.setDesignValue(designDuty);
+      dutyConstraint.setDescription("Heat duty utilization");
+      dutyConstraint.setValueSupplier(() -> Math.abs(this.duty));
+      hxCapacityConstraints.put("dutyUtilization", dutyConstraint);
+    }
+
+    // UA utilization constraint
+    if (designUAValue > 0) {
+      neqsim.process.equipment.capacity.CapacityConstraint uaConstraint =
+          new neqsim.process.equipment.capacity.CapacityConstraint("uaUtilization", "W/K",
+              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+      uaConstraint.setDesignValue(designUAValue);
+      uaConstraint.setDescription("UA value utilization");
+      uaConstraint.setValueSupplier(() -> this.UAvalue);
+      hxCapacityConstraints.put("uaUtilization", uaConstraint);
+    }
+
+    // Approach temperature constraint (inverse - we want to be above minimum)
+    if (minApproachTemperature > 0) {
+      neqsim.process.equipment.capacity.CapacityConstraint approachConstraint =
+          new neqsim.process.equipment.capacity.CapacityConstraint("approachTemperature", "K",
+              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+      approachConstraint.setDesignValue(minApproachTemperature);
+      approachConstraint.setDescription("Minimum temperature approach");
+      // Utilization is inverted: approaches 100% as we get close to minimum
+      approachConstraint.setValueSupplier(() -> {
+        double approach = getApproachTemperature();
+        return approach > 0 ? minApproachTemperature / approach : 1.0;
+      });
+      hxCapacityConstraints.put("approachTemperature", approachConstraint);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityAnalysisEnabled() {
+    return hxCapacityAnalysisEnabled;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setCapacityAnalysisEnabled(boolean enabled) {
+    this.hxCapacityAnalysisEnabled = enabled;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> getCapacityConstraints() {
+    return java.util.Collections.unmodifiableMap(hxCapacityConstraints);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public neqsim.process.equipment.capacity.CapacityConstraint getBottleneckConstraint() {
+    neqsim.process.equipment.capacity.CapacityConstraint bottleneck = null;
+    double maxUtil = 0.0;
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : hxCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()) {
+        double util = constraint.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+          bottleneck = constraint;
+        }
+      }
+    }
+    return bottleneck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityExceeded() {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : hxCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled() && constraint.getUtilization() > 1.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHardLimitExceeded() {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : hxCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()
+          && constraint
+              .getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
+          && constraint.getUtilization() > 1.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilization() {
+    double maxUtil = 0.0;
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : hxCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()) {
+        maxUtil = Math.max(maxUtil, constraint.getUtilization());
+      }
+    }
+    return maxUtil;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCapacityConstraint(
+      neqsim.process.equipment.capacity.CapacityConstraint constraint) {
+    hxCapacityConstraints.put(constraint.getName(), constraint);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean removeCapacityConstraint(String constraintName) {
+    return hxCapacityConstraints.remove(constraintName) != null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void clearCapacityConstraints() {
+    hxCapacityConstraints.clear();
   }
 
   /**

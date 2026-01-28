@@ -14,8 +14,17 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * suction stream and calculates the resulting mixed stream using a quasi one-dimensional
  * formulation. The implementation combines energy and momentum balances commonly used in steam-jet
  * ejector design as summarised by Keenan et al. (1950) and ESDU 86030.
+ *
+ * <p>
+ * The ejector implements {@link neqsim.process.design.AutoSizeable} for automatic sizing based on
+ * flow conditions and {@link neqsim.process.equipment.capacity.CapacityConstrainedEquipment} for
+ * capacity analysis with constraints for entrainment ratio, compression ratio, and critical back
+ * pressure.
+ * </p>
  */
-public class Ejector extends ProcessEquipmentBaseClass {
+public class Ejector extends ProcessEquipmentBaseClass
+    implements neqsim.process.design.AutoSizeable,
+    neqsim.process.equipment.capacity.CapacityConstrainedEquipment {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -41,6 +50,23 @@ public class Ejector extends ProcessEquipmentBaseClass {
   private boolean dischargeConnectionLengthOverride = false;
 
   private transient EjectorMechanicalDesign mechanicalDesign;
+
+  // ============ AutoSizeable and CapacityConstrainedEquipment Fields ============
+  /** Flag indicating if ejector has been auto-sized. */
+  private boolean autoSized = false;
+  /** Design entrainment ratio (suction/motive mass ratio). */
+  private double designEntrainmentRatio = 0.0;
+  /** Design compression ratio (discharge/suction pressure). */
+  private double designCompressionRatio = 0.0;
+  /** Maximum critical back pressure in bara. */
+  private double maxCriticalBackPressure = 0.0;
+  /** Design motive flow rate in kg/s. */
+  private double designMotiveFlowRate = 0.0;
+  /** Capacity constraints map. */
+  private java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> ejectorCapacityConstraints =
+      new java.util.LinkedHashMap<String, neqsim.process.equipment.capacity.CapacityConstraint>();
+  /** Flag for capacity analysis. */
+  private boolean ejectorCapacityAnalysisEnabled = true;
 
   private static final double BAR_TO_PA = 1.0e5;
   private static final double DEFAULT_NOZZLE_LENGTH_FACTOR = 3.0; // ~3x throat diameter
@@ -513,5 +539,354 @@ public class Ejector extends ProcessEquipmentBaseClass {
     res.applyConfig(cfg);
     return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
         .toJson(res);
+  }
+
+  // ============================================================================
+  // AutoSizeable Implementation
+  // ============================================================================
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(double safetyFactor) {
+    if (motiveStream == null || suctionStream == null) {
+      throw new IllegalStateException(
+          "Both motive and suction streams must be connected before auto-sizing ejector");
+    }
+
+    // Calculate design values from current operating point
+    double currentEntrainmentRatio = getEntrainmentRatio();
+    double suctionPressure = suctionStream.getPressure("bara");
+    double currentCompressionRatio = dischargePressure / suctionPressure;
+    double motiveFlowRate = motiveStream.getFlowRate("kg/sec");
+
+    // Apply safety factor
+    this.designEntrainmentRatio = currentEntrainmentRatio * safetyFactor;
+    this.designCompressionRatio = currentCompressionRatio;
+    this.designMotiveFlowRate = motiveFlowRate * safetyFactor;
+    this.maxCriticalBackPressure = dischargePressure * 1.1; // 10% margin
+
+    // Initialize capacity constraints
+    initializeEjectorCapacityConstraints();
+
+    autoSized = true;
+    logger.info("Ejector '{}' auto-sized: design ER={:.2f}, CR={:.2f}", getName(),
+        designEntrainmentRatio, designCompressionRatio);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize() {
+    autoSize(1.2);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(String companyStandard, String trDocument) {
+    // Load company-specific parameters from database if available
+    if (mechanicalDesign != null) {
+      mechanicalDesign.setCompanySpecificDesignStandards(companyStandard);
+    }
+    autoSize(1.2);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isAutoSized() {
+    return autoSized;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReport() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Ejector Auto-Sizing Report ===\n");
+    sb.append("Equipment: ").append(getName()).append("\n");
+    sb.append("Auto-sized: ").append(isAutoSized()).append("\n");
+
+    if (motiveStream != null && suctionStream != null) {
+      sb.append("\n--- Operating Conditions ---\n");
+      sb.append("Motive Pressure: ")
+          .append(String.format("%.2f bara", motiveStream.getPressure("bara"))).append("\n");
+      sb.append("Suction Pressure: ")
+          .append(String.format("%.2f bara", suctionStream.getPressure("bara"))).append("\n");
+      sb.append("Discharge Pressure: ").append(String.format("%.2f bara", dischargePressure))
+          .append("\n");
+      sb.append("Motive Flow: ")
+          .append(String.format("%.3f kg/s", motiveStream.getFlowRate("kg/sec"))).append("\n");
+      sb.append("Suction Flow: ")
+          .append(String.format("%.3f kg/s", suctionStream.getFlowRate("kg/sec"))).append("\n");
+
+      sb.append("\n--- Performance ---\n");
+      sb.append("Entrainment Ratio: ").append(String.format("%.3f", getEntrainmentRatio()))
+          .append("\n");
+      sb.append("Compression Ratio: ")
+          .append(String.format("%.3f", dischargePressure / suctionStream.getPressure("bara")))
+          .append("\n");
+      sb.append("Nozzle Efficiency: ").append(String.format("%.1f%%", efficiencyIsentropic * 100))
+          .append("\n");
+      sb.append("Diffuser Efficiency: ").append(String.format("%.1f%%", diffuserEfficiency * 100))
+          .append("\n");
+
+      if (isAutoSized()) {
+        sb.append("\n--- Design Values ---\n");
+        sb.append("Design Entrainment Ratio: ")
+            .append(String.format("%.3f", designEntrainmentRatio)).append("\n");
+        sb.append("Design Compression Ratio: ")
+            .append(String.format("%.3f", designCompressionRatio)).append("\n");
+        sb.append("Design Motive Flow: ").append(String.format("%.3f kg/s", designMotiveFlowRate))
+            .append("\n");
+        sb.append("Max Critical Back Pressure: ")
+            .append(String.format("%.2f bara", maxCriticalBackPressure)).append("\n");
+      }
+    }
+
+    return sb.toString();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReportJson() {
+    java.util.Map<String, Object> report = new java.util.LinkedHashMap<String, Object>();
+    report.put("equipmentName", getName());
+    report.put("equipmentType", "Ejector");
+    report.put("autoSized", autoSized);
+
+    if (motiveStream != null && suctionStream != null) {
+      java.util.Map<String, Object> operating = new java.util.LinkedHashMap<String, Object>();
+      operating.put("motivePressure_bara", motiveStream.getPressure("bara"));
+      operating.put("suctionPressure_bara", suctionStream.getPressure("bara"));
+      operating.put("dischargePressure_bara", dischargePressure);
+      operating.put("motiveFlow_kg_s", motiveStream.getFlowRate("kg/sec"));
+      operating.put("suctionFlow_kg_s", suctionStream.getFlowRate("kg/sec"));
+      operating.put("entrainmentRatio", getEntrainmentRatio());
+      operating.put("compressionRatio", dischargePressure / suctionStream.getPressure("bara"));
+      report.put("operatingConditions", operating);
+
+      if (autoSized) {
+        java.util.Map<String, Object> design = new java.util.LinkedHashMap<String, Object>();
+        design.put("designEntrainmentRatio", designEntrainmentRatio);
+        design.put("designCompressionRatio", designCompressionRatio);
+        design.put("designMotiveFlow_kg_s", designMotiveFlowRate);
+        design.put("maxCriticalBackPressure_bara", maxCriticalBackPressure);
+        report.put("designValues", design);
+      }
+    }
+
+    return new com.google.gson.GsonBuilder().setPrettyPrinting()
+        .serializeSpecialFloatingPointValues().create().toJson(report);
+  }
+
+  // ============================================================================
+  // CapacityConstrainedEquipment Implementation
+  // ============================================================================
+
+  /**
+   * Initialize ejector capacity constraints.
+   */
+  private void initializeEjectorCapacityConstraints() {
+    ejectorCapacityConstraints.clear();
+
+    // Entrainment ratio constraint
+    if (designEntrainmentRatio > 0) {
+      neqsim.process.equipment.capacity.CapacityConstraint erConstraint =
+          new neqsim.process.equipment.capacity.CapacityConstraint("entrainmentRatio", "-",
+              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+      erConstraint.setDesignValue(designEntrainmentRatio);
+      erConstraint.setDescription("Entrainment ratio (suction/motive mass ratio)");
+      erConstraint.setValueSupplier(this::getEntrainmentRatio);
+      ejectorCapacityConstraints.put("entrainmentRatio", erConstraint);
+    }
+
+    // Compression ratio constraint
+    if (designCompressionRatio > 0) {
+      neqsim.process.equipment.capacity.CapacityConstraint crConstraint =
+          new neqsim.process.equipment.capacity.CapacityConstraint("compressionRatio", "-",
+              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+      crConstraint.setDesignValue(designCompressionRatio);
+      crConstraint.setDescription("Compression ratio (discharge/suction pressure)");
+      crConstraint.setValueSupplier(() -> {
+        if (suctionStream != null && suctionStream.getPressure("bara") > 0) {
+          return dischargePressure / suctionStream.getPressure("bara");
+        }
+        return 0.0;
+      });
+      ejectorCapacityConstraints.put("compressionRatio", crConstraint);
+    }
+
+    // Critical back pressure constraint (HARD limit)
+    if (maxCriticalBackPressure > 0) {
+      neqsim.process.equipment.capacity.CapacityConstraint bpConstraint =
+          new neqsim.process.equipment.capacity.CapacityConstraint("criticalBackPressure", "bara",
+              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD);
+      bpConstraint.setDesignValue(maxCriticalBackPressure);
+      bpConstraint.setMaxValue(maxCriticalBackPressure);
+      bpConstraint.setDescription("Maximum allowable back pressure");
+      bpConstraint.setValueSupplier(() -> dischargePressure);
+      ejectorCapacityConstraints.put("criticalBackPressure", bpConstraint);
+    }
+
+    // Motive flow rate constraint
+    if (designMotiveFlowRate > 0) {
+      neqsim.process.equipment.capacity.CapacityConstraint mfConstraint =
+          new neqsim.process.equipment.capacity.CapacityConstraint("motiveFlowRate", "kg/s",
+              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+      mfConstraint.setDesignValue(designMotiveFlowRate);
+      mfConstraint.setDescription("Motive stream flow rate");
+      mfConstraint
+          .setValueSupplier(() -> motiveStream != null ? motiveStream.getFlowRate("kg/sec") : 0.0);
+      ejectorCapacityConstraints.put("motiveFlowRate", mfConstraint);
+    }
+  }
+
+  /**
+   * Sets the design entrainment ratio.
+   *
+   * @param ratio design entrainment ratio (suction/motive mass ratio)
+   */
+  public void setDesignEntrainmentRatio(double ratio) {
+    this.designEntrainmentRatio = ratio;
+    initializeEjectorCapacityConstraints();
+  }
+
+  /**
+   * Gets the design entrainment ratio.
+   *
+   * @return design entrainment ratio
+   */
+  public double getDesignEntrainmentRatio() {
+    return designEntrainmentRatio;
+  }
+
+  /**
+   * Sets the design compression ratio.
+   *
+   * @param ratio design compression ratio (discharge/suction pressure)
+   */
+  public void setDesignCompressionRatio(double ratio) {
+    this.designCompressionRatio = ratio;
+    initializeEjectorCapacityConstraints();
+  }
+
+  /**
+   * Gets the design compression ratio.
+   *
+   * @return design compression ratio
+   */
+  public double getDesignCompressionRatio() {
+    return designCompressionRatio;
+  }
+
+  /**
+   * Sets the maximum critical back pressure.
+   *
+   * @param pressure maximum critical back pressure in bara
+   */
+  public void setMaxCriticalBackPressure(double pressure) {
+    this.maxCriticalBackPressure = pressure;
+    initializeEjectorCapacityConstraints();
+  }
+
+  /**
+   * Gets the maximum critical back pressure.
+   *
+   * @return maximum critical back pressure in bara
+   */
+  public double getMaxCriticalBackPressure() {
+    return maxCriticalBackPressure;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityAnalysisEnabled() {
+    return ejectorCapacityAnalysisEnabled;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setCapacityAnalysisEnabled(boolean enabled) {
+    this.ejectorCapacityAnalysisEnabled = enabled;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> getCapacityConstraints() {
+    return java.util.Collections.unmodifiableMap(ejectorCapacityConstraints);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public neqsim.process.equipment.capacity.CapacityConstraint getBottleneckConstraint() {
+    neqsim.process.equipment.capacity.CapacityConstraint bottleneck = null;
+    double maxUtil = 0.0;
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : ejectorCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()) {
+        double util = constraint.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+          bottleneck = constraint;
+        }
+      }
+    }
+    return bottleneck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityExceeded() {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : ejectorCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled() && constraint.getUtilization() > 1.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHardLimitExceeded() {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : ejectorCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()
+          && constraint
+              .getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
+          && constraint.getUtilization() > 1.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilization() {
+    double maxUtil = 0.0;
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : ejectorCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()) {
+        maxUtil = Math.max(maxUtil, constraint.getUtilization());
+      }
+    }
+    return maxUtil;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCapacityConstraint(
+      neqsim.process.equipment.capacity.CapacityConstraint constraint) {
+    ejectorCapacityConstraints.put(constraint.getName(), constraint);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean removeCapacityConstraint(String constraintName) {
+    return ejectorCapacityConstraints.remove(constraintName) != null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void clearCapacityConstraints() {
+    ejectorCapacityConstraints.clear();
   }
 }

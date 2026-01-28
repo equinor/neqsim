@@ -4,7 +4,9 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
+import neqsim.process.design.AutoSizeable;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
+import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -24,7 +26,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Tank extends ProcessEquipmentBaseClass {
+public class Tank extends ProcessEquipmentBaseClass
+    implements AutoSizeable, CapacityConstrainedEquipment {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -32,6 +35,34 @@ public class Tank extends ProcessEquipmentBaseClass {
 
   /** Mechanical design for the tank. */
   private TankMechanicalDesign mechanicalDesign;
+
+  /** Whether tank has been auto-sized. */
+  private boolean autoSized = false;
+
+  /** Design liquid level (fraction). */
+  private double designLiquidLevel = 0.5;
+
+  /** Design liquid residence time (seconds). */
+  private double designResidenceTime = 300.0;
+
+  /** Design volume (m3). */
+  private double designVolume = 0.0;
+
+  /** Minimum residence time allowed (seconds). */
+  private double minResidenceTime = 60.0;
+
+  /** Maximum liquid level allowed (fraction). */
+  private double maxLiquidLevel = 0.9;
+
+  /** Minimum liquid level allowed (fraction). */
+  private double minLiquidLevel = 0.1;
+
+  /** Tank capacity constraints map. */
+  private java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> tankCapacityConstraints =
+      new java.util.LinkedHashMap<String, neqsim.process.equipment.capacity.CapacityConstraint>();
+
+  /** Whether capacity analysis is enabled. */
+  private boolean tankCapacityAnalysisEnabled = false;
 
   SystemInterface thermoSystem;
   SystemInterface gasSystem;
@@ -557,5 +588,392 @@ public class Tank extends ProcessEquipmentBaseClass {
     }
 
     return result;
+  }
+
+  // ============================================================================
+  // AutoSizeable Implementation
+  // ============================================================================
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(double safetyFactor) {
+    if (thermoSystem == null) {
+      throw new IllegalStateException("Inlet stream must be connected before auto-sizing tank");
+    }
+
+    // Calculate required volume based on desired residence time
+    double liquidFlowRate = 0.0;
+    if (liquidSystem != null) {
+      // Volume flow of liquid phase in m3/s
+      liquidFlowRate = liquidSystem.getFlowRate("m3/hr") / 3600.0;
+    } else if (thermoSystem.hasPhaseType("aqueous") || thermoSystem.hasPhaseType("oil")) {
+      // Estimate from inlet stream
+      liquidFlowRate = thermoSystem.getFlowRate("m3/hr") / 3600.0 * 0.5; // rough estimate
+    }
+
+    if (liquidFlowRate > 0) {
+      // Required volume = flow rate * residence time * safety factor
+      double requiredLiquidVolume = liquidFlowRate * designResidenceTime * safetyFactor;
+      // Total volume considering design liquid level
+      this.designVolume = requiredLiquidVolume / designLiquidLevel;
+      this.volume = designVolume;
+      this.liquidVolume = requiredLiquidVolume;
+      this.gasVolume = volume - liquidVolume;
+    }
+
+    // Initialize capacity constraints
+    initializeTankCapacityConstraints();
+
+    autoSized = true;
+    logger.info("Tank '{}' auto-sized: volume={:.1f} m3, liquid volume={:.1f} m3", getName(),
+        volume, liquidVolume);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize() {
+    autoSize(1.2);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(String companyStandard, String trDocument) {
+    // Load company-specific parameters from database if available
+    if (mechanicalDesign != null) {
+      mechanicalDesign.setCompanySpecificDesignStandards(companyStandard);
+    }
+    autoSize(1.2);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isAutoSized() {
+    return autoSized;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReport() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Tank Auto-Sizing Report ===\n");
+    sb.append("Equipment: ").append(getName()).append("\n");
+    sb.append("Auto-sized: ").append(isAutoSized()).append("\n");
+
+    sb.append("\n--- Dimensions ---\n");
+    sb.append("Total Volume: ").append(String.format("%.1f m3", volume)).append("\n");
+    sb.append("Liquid Volume: ").append(String.format("%.1f m3", liquidVolume)).append("\n");
+    sb.append("Gas Volume: ").append(String.format("%.1f m3", gasVolume)).append("\n");
+    sb.append("Separator Length: ").append(String.format("%.2f m", separatorLength)).append("\n");
+    sb.append("Separator Diameter: ").append(String.format("%.2f m", separatorDiameter))
+        .append("\n");
+
+    sb.append("\n--- Operating Conditions ---\n");
+    sb.append("Liquid Level: ").append(String.format("%.1f%%", liquidLevel * 100)).append("\n");
+    sb.append("Efficiency: ").append(String.format("%.1f%%", efficiency * 100)).append("\n");
+
+    if (liquidSystem != null) {
+      double liquidFlowRate = liquidSystem.getFlowRate("m3/hr") / 3600.0;
+      double actualResidenceTime = liquidFlowRate > 0 ? liquidVolume / liquidFlowRate : 0;
+      sb.append("Actual Residence Time: ")
+          .append(String.format("%.0f s (%.1f min)", actualResidenceTime, actualResidenceTime / 60))
+          .append("\n");
+    }
+
+    if (isAutoSized()) {
+      sb.append("\n--- Design Values ---\n");
+      sb.append("Design Volume: ").append(String.format("%.1f m3", designVolume)).append("\n");
+      sb.append("Design Liquid Level: ").append(String.format("%.1f%%", designLiquidLevel * 100))
+          .append("\n");
+      sb.append("Design Residence Time: ")
+          .append(String.format("%.0f s (%.1f min)", designResidenceTime, designResidenceTime / 60))
+          .append("\n");
+    }
+
+    return sb.toString();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReportJson() {
+    java.util.Map<String, Object> report = new java.util.LinkedHashMap<String, Object>();
+    report.put("equipmentName", getName());
+    report.put("equipmentType", "Tank");
+    report.put("autoSized", autoSized);
+
+    java.util.Map<String, Object> dimensions = new java.util.LinkedHashMap<String, Object>();
+    dimensions.put("totalVolume_m3", volume);
+    dimensions.put("liquidVolume_m3", liquidVolume);
+    dimensions.put("gasVolume_m3", gasVolume);
+    dimensions.put("separatorLength_m", separatorLength);
+    dimensions.put("separatorDiameter_m", separatorDiameter);
+    report.put("dimensions", dimensions);
+
+    java.util.Map<String, Object> operating = new java.util.LinkedHashMap<String, Object>();
+    operating.put("liquidLevel_fraction", liquidLevel);
+    operating.put("efficiency", efficiency);
+    if (liquidSystem != null) {
+      double liquidFlowRate = liquidSystem.getFlowRate("m3/hr") / 3600.0;
+      operating.put("liquidFlowRate_m3_s", liquidFlowRate);
+      operating.put("actualResidenceTime_s",
+          liquidFlowRate > 0 ? liquidVolume / liquidFlowRate : 0);
+    }
+    report.put("operatingConditions", operating);
+
+    if (autoSized) {
+      java.util.Map<String, Object> design = new java.util.LinkedHashMap<String, Object>();
+      design.put("designVolume_m3", designVolume);
+      design.put("designLiquidLevel_fraction", designLiquidLevel);
+      design.put("designResidenceTime_s", designResidenceTime);
+      report.put("designValues", design);
+    }
+
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+        .toJson(report);
+  }
+
+  // ============================================================================
+  // CapacityConstrainedEquipment Implementation
+  // ============================================================================
+
+  /**
+   * Initialize tank capacity constraints.
+   */
+  private void initializeTankCapacityConstraints() {
+    tankCapacityConstraints.clear();
+
+    // Liquid level constraint
+    neqsim.process.equipment.capacity.CapacityConstraint levelConstraint =
+        new neqsim.process.equipment.capacity.CapacityConstraint("liquidLevel", "-",
+            neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD);
+    levelConstraint.setDesignValue(designLiquidLevel);
+    levelConstraint.setMinValue(minLiquidLevel);
+    levelConstraint.setMaxValue(maxLiquidLevel);
+    levelConstraint.setUnit("-");
+    levelConstraint.setDescription("Liquid level fraction (0-1)");
+    levelConstraint.setValueSupplier(this::getLiquidLevel);
+    tankCapacityConstraints.put("liquidLevel", levelConstraint);
+
+    // Residence time constraint
+    neqsim.process.equipment.capacity.CapacityConstraint residenceConstraint =
+        new neqsim.process.equipment.capacity.CapacityConstraint("residenceTime", "s",
+            neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+    residenceConstraint.setDesignValue(designResidenceTime);
+    residenceConstraint.setMinValue(minResidenceTime);
+    residenceConstraint.setUnit("s");
+    residenceConstraint.setDescription("Liquid residence time");
+    residenceConstraint.setValueSupplier(() -> {
+      if (liquidSystem != null) {
+        double liquidFlowRate = liquidSystem.getFlowRate("m3/hr") / 3600.0;
+        return liquidFlowRate > 0 ? liquidVolume / liquidFlowRate : Double.MAX_VALUE;
+      }
+      return Double.MAX_VALUE;
+    });
+    tankCapacityConstraints.put("residenceTime", residenceConstraint);
+
+    // Volume utilization constraint
+    if (designVolume > 0) {
+      neqsim.process.equipment.capacity.CapacityConstraint volumeConstraint =
+          new neqsim.process.equipment.capacity.CapacityConstraint("volumeUtilization", "m3",
+              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+      volumeConstraint.setDesignValue(designVolume);
+      volumeConstraint.setMaxValue(designVolume);
+      volumeConstraint.setUnit("m3");
+      volumeConstraint.setDescription("Volume utilization vs design");
+      volumeConstraint.setValueSupplier(() -> liquidVolume + gasVolume);
+      tankCapacityConstraints.put("volumeUtilization", volumeConstraint);
+    }
+  }
+
+  /**
+   * Sets the design liquid level.
+   *
+   * @param level design liquid level (0-1 fraction)
+   */
+  public void setDesignLiquidLevel(double level) {
+    this.designLiquidLevel = level;
+    initializeTankCapacityConstraints();
+  }
+
+  /**
+   * Gets the design liquid level.
+   *
+   * @return design liquid level (0-1 fraction)
+   */
+  public double getDesignLiquidLevel() {
+    return designLiquidLevel;
+  }
+
+  /**
+   * Sets the design residence time.
+   *
+   * @param time design residence time in seconds
+   */
+  public void setDesignResidenceTime(double time) {
+    this.designResidenceTime = time;
+    initializeTankCapacityConstraints();
+  }
+
+  /**
+   * Gets the design residence time.
+   *
+   * @return design residence time in seconds
+   */
+  public double getDesignResidenceTime() {
+    return designResidenceTime;
+  }
+
+  /**
+   * Sets the minimum residence time.
+   *
+   * @param time minimum residence time in seconds
+   */
+  public void setMinResidenceTime(double time) {
+    this.minResidenceTime = time;
+    initializeTankCapacityConstraints();
+  }
+
+  /**
+   * Gets the minimum residence time.
+   *
+   * @return minimum residence time in seconds
+   */
+  public double getMinResidenceTime() {
+    return minResidenceTime;
+  }
+
+  /**
+   * Sets the maximum liquid level.
+   *
+   * @param level maximum liquid level (0-1 fraction)
+   */
+  public void setMaxLiquidLevel(double level) {
+    this.maxLiquidLevel = level;
+    initializeTankCapacityConstraints();
+  }
+
+  /**
+   * Gets the maximum liquid level.
+   *
+   * @return maximum liquid level (0-1 fraction)
+   */
+  public double getMaxLiquidLevel() {
+    return maxLiquidLevel;
+  }
+
+  /**
+   * Sets the minimum liquid level.
+   *
+   * @param level minimum liquid level (0-1 fraction)
+   */
+  public void setMinLiquidLevel(double level) {
+    this.minLiquidLevel = level;
+    initializeTankCapacityConstraints();
+  }
+
+  /**
+   * Gets the minimum liquid level.
+   *
+   * @return minimum liquid level (0-1 fraction)
+   */
+  public double getMinLiquidLevel() {
+    return minLiquidLevel;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityAnalysisEnabled() {
+    return tankCapacityAnalysisEnabled;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setCapacityAnalysisEnabled(boolean enabled) {
+    this.tankCapacityAnalysisEnabled = enabled;
+    if (enabled && tankCapacityConstraints.isEmpty()) {
+      initializeTankCapacityConstraints();
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> getCapacityConstraints() {
+    return java.util.Collections.unmodifiableMap(tankCapacityConstraints);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public neqsim.process.equipment.capacity.CapacityConstraint getBottleneckConstraint() {
+    neqsim.process.equipment.capacity.CapacityConstraint bottleneck = null;
+    double maxUtil = 0.0;
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : tankCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()) {
+        double util = constraint.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+          bottleneck = constraint;
+        }
+      }
+    }
+    return bottleneck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityExceeded() {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : tankCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled() && constraint.getUtilization() > 1.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHardLimitExceeded() {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : tankCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()
+          && constraint
+              .getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
+          && constraint.getUtilization() > 1.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilization() {
+    double maxUtil = 0.0;
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : tankCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()) {
+        maxUtil = Math.max(maxUtil, constraint.getUtilization());
+      }
+    }
+    return maxUtil;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCapacityConstraint(
+      neqsim.process.equipment.capacity.CapacityConstraint constraint) {
+    tankCapacityConstraints.put(constraint.getName(), constraint);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean removeCapacityConstraint(String constraintName) {
+    return tankCapacityConstraints.remove(constraintName) != null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void clearCapacityConstraints() {
+    tankCapacityConstraints.clear();
   }
 }
