@@ -363,6 +363,8 @@ public class ProcessDerivativeCalculator {
 
   /**
    * Calculate Jacobian sequentially.
+   *
+   * @param jacobian the matrix to populate with Jacobian values
    */
   private void calculateJacobianSequential(double[][] jacobian) {
     int numInputs = inputVariables.size();
@@ -378,6 +380,8 @@ public class ProcessDerivativeCalculator {
 
   /**
    * Calculate Jacobian in parallel.
+   *
+   * @param jacobian the matrix to populate with Jacobian values
    */
   private void calculateJacobianParallel(double[][] jacobian) {
     int numInputs = inputVariables.size();
@@ -441,6 +445,11 @@ public class ProcessDerivativeCalculator {
 
   /**
    * Forward difference calculation.
+   *
+   * @param inputSpec the input variable specification
+   * @param baseValue the base value of the input variable
+   * @param step the perturbation step size
+   * @return gradient array with derivatives for each output variable
    */
   private double[] calculateForwardDifference(VariableSpec inputSpec, double baseValue,
       double step) {
@@ -466,6 +475,11 @@ public class ProcessDerivativeCalculator {
 
   /**
    * Central difference calculation (more accurate).
+   *
+   * @param inputSpec the input variable specification
+   * @param baseValue the base value of the input variable
+   * @param step the perturbation step size
+   * @return gradient array with derivatives for each output variable
    */
   private double[] calculateCentralDifference(VariableSpec inputSpec, double baseValue,
       double step) {
@@ -528,6 +542,10 @@ public class ProcessDerivativeCalculator {
 
   /**
    * Helper to perturb input and evaluate outputs.
+   *
+   * @param inputSpec the input variable specification
+   * @param value the value to set for the input variable
+   * @return array of output values after perturbation
    */
   private double[] perturbAndEvaluate(VariableSpec inputSpec, double value) {
     variableAccessor.setValue(inputSpec.path, value);

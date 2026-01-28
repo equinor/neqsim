@@ -2,14 +2,16 @@
 
 NeqSim provides a comprehensive mechanical design framework for sizing and specifying process equipment according to industry standards. This document describes the architecture, usage patterns, and JSON export capabilities.
 
-> **📘 Equipment-Specific Documentation**
+> **📘 Related Documentation**
 >
-> | Equipment | Documentation |
-> |-----------|---------------|
+> | Topic | Documentation |
+> |-------|---------------|
 > | **Pipelines** | [Pipeline Mechanical Design](pipeline_mechanical_design.md) - Wall thickness, stress analysis, cost estimation |
 > | **Mathematical Methods** | [Pipeline Design Math](pipeline_mechanical_design_math.md) - Complete formula reference |
 > | **Design Standards** | [Mechanical Design Standards](mechanical_design_standards.md) - Industry standards reference |
 > | **Database** | [Mechanical Design Database](mechanical_design_database.md) - Material properties, design factors |
+> | **Cost Estimation** | [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK.md) - CAPEX, OPEX, currency, location factors |
+> | **Design Parameters** | [EQUIPMENT_DESIGN_PARAMETERS.md](EQUIPMENT_DESIGN_PARAMETERS.md) - autoSize vs manual sizing guide |
 
 ## Overview
 
@@ -418,9 +420,206 @@ String combined = mecResponse.mergeWithEquipmentJson(processJson);
 // Result has both "processData" and "mechanicalDesign" sections
 ```
 
+## Process Design Parameters
+
+Process design parameters define the sizing basis and validation limits for equipment per industry standards. These parameters can be loaded from the database or set manually.
+
+### Loading from Database
+
+```java
+// Load company-specific process design standards
+separator.getMechanicalDesign().setCompanySpecificDesignStandards("MyCompany");
+separator.getMechanicalDesign().loadProcessDesignParameters();  // Loads from TechnicalRequirements_Process table
+```
+
+### Equipment Process Design Parameters
+
+#### Separator Process Design Parameters
+
+| Parameter | Method | Unit | Typical Range | Description |
+|-----------|--------|------|---------------|-------------|
+| Foam allowance factor | `getFoamAllowanceFactor()` | - | 1.0-1.5 | Liquid level increase due to foaming |
+| Gas-liquid droplet diameter | `getDropletDiameterGasLiquid()` | μm | 100-150 | Design droplet size for gas-liquid separation |
+| Liquid-liquid droplet diameter | `getDropletDiameterLiquidLiquid()` | μm | 300-500 | Design droplet size for liquid-liquid separation |
+| Maximum gas velocity | `getMaxGasVelocityLimit()` | m/s | 2.0-4.0 | Upper limit for gas velocity |
+| Maximum liquid velocity | `getMaxLiquidVelocity()` | m/s | 0.5-1.5 | Upper limit for liquid outlet velocity |
+| Minimum oil retention time | `getMinOilRetentionTime()` | min | 2.0-5.0 | Minimum oil residence time |
+| Minimum water retention time | `getMinWaterRetentionTime()` | min | 3.0-10.0 | Minimum water residence time |
+| Demister pressure drop | `getDemisterPressureDrop()` | mbar | 1.0-3.0 | Design pressure drop across mist eliminator |
+| Demister void fraction | `getDemisterVoidFraction()` | - | 0.97-0.99 | Wire mesh demister void fraction |
+| Design pressure margin | `getDesignPressureMargin()` | - | 1.05-1.15 | Factor above max operating pressure |
+
+#### Compressor Process Design Parameters
+
+| Parameter | Method | Unit | Typical Range | Description |
+|-----------|--------|------|---------------|-------------|
+| Surge margin | `getSurgeMarginPercent()` | % | 10-20 | Minimum margin from surge line |
+| Stonewall margin | `getStonewallMarginPercent()` | % | 10-15 | Minimum margin from stonewall |
+| Minimum turndown | `getTurndownPercent()` | % | 60-80 | Minimum operating flow as % of design |
+| Target polytropic efficiency | `getTargetPolytropicEfficiency()` | % | 75-85 | Design efficiency target |
+| Maximum discharge temperature | `getMaxDischargeTemperatureC()` | °C | 150-180 | Material/process limit |
+| Maximum pressure ratio per stage | `getMaxPressureRatioPerStage()` | - | 2.5-3.5 | Single stage limit |
+| Maximum vibration | `getMaxVibrationMmPerSec()` | mm/s | 2.0-4.0 | Unfiltered vibration limit |
+| Seal type | `getSealType()` | - | - | Dry gas, oil film, labyrinth |
+| Bearing type | `getBearingType()` | - | - | Tilting pad, plain, magnetic |
+
+#### Pump Process Design Parameters (API-610)
+
+| Parameter | Method | Unit | Typical Range | Description |
+|-----------|--------|------|---------------|-------------|
+| NPSH margin factor | `getNpshMarginFactor()` | - | 1.1-1.3 | NPSHa / NPSHr requirement |
+| Hydraulic power margin | `getHydraulicPowerMargin()` | - | 1.05-1.15 | Driver sizing margin |
+| POR low fraction | `getPorLowFraction()` | - | 0.70-0.80 | Preferred Operating Region low limit (of BEP) |
+| POR high fraction | `getPorHighFraction()` | - | 1.10-1.15 | Preferred Operating Region high limit (of BEP) |
+| AOR low fraction | `getAorLowFraction()` | - | 0.60-0.70 | Allowable Operating Region low limit |
+| AOR high fraction | `getAorHighFraction()` | - | 1.20-1.30 | Allowable Operating Region high limit |
+| Maximum suction specific speed | `getMaxSuctionSpecificSpeed()` | - | 8000-13000 | Nss limit for stable operation |
+| Head margin factor | `getHeadMarginFactor()` | - | 1.05-1.10 | Head design margin |
+
+#### Heat Exchanger Process Design Parameters (TEMA)
+
+| Parameter | Method | Unit | Typical Range | Description |
+|-----------|--------|------|---------------|-------------|
+| Shell fouling resistance (HC) | `getFoulingResistanceShellHC()` | m²K/W | 0.00018-0.00053 | Hydrocarbon service |
+| Tube fouling resistance (HC) | `getFoulingResistanceTubeHC()` | m²K/W | 0.00018-0.00053 | Hydrocarbon service |
+| Shell fouling resistance (water) | `getFoulingResistanceShellWater()` | m²K/W | 0.00009-0.00035 | Water service |
+| Tube fouling resistance (water) | `getFoulingResistanceTubeWater()` | m²K/W | 0.00009-0.00035 | Water service |
+| Maximum tube velocity | `getMaxTubeVelocity()` | m/s | 2.0-4.0 | Erosion limit |
+| Minimum tube velocity | `getMinTubeVelocity()` | m/s | 0.5-1.0 | Fouling prevention |
+| Maximum shell velocity | `getMaxShellVelocity()` | m/s | 1.5-3.0 | Vibration/erosion limit |
+| Minimum approach temperature | `getMinApproachTemperatureC()` | °C | 5-15 | Heat exchanger pinch |
+| Maximum tube length | `getMaxTubeLengthM()` | m | 3.0-9.0 | Physical/mechanical limit |
+| TEMA class | `getTemaClass()` | - | R, C, B | Equipment class designation |
+
+## Design Validation
+
+The mechanical design framework includes validation methods to verify designs against process requirements and industry standards. Each equipment class provides both individual parameter validation and comprehensive design validation.
+
+### Validation Result Classes
+
+Each equipment type has a validation result class that collects issues:
+
+```java
+// Separator validation
+SeparatorMechanicalDesign.SeparatorValidationResult result = sepDesign.validateDesignComprehensive();
+if (!result.isValid()) {
+    for (String issue : result.getIssues()) {
+        System.out.println("Issue: " + issue);
+    }
+}
+
+// Compressor validation
+CompressorMechanicalDesign.CompressorValidationResult result = compDesign.validateDesign();
+
+// Pump validation  
+PumpMechanicalDesign.PumpValidationResult result = pumpDesign.validateDesign();
+
+// Heat exchanger validation
+HeatExchangerMechanicalDesign.HeatExchangerValidationResult result = hxDesign.validateDesign();
+```
+
+### Individual Parameter Validation
+
+#### Separator Validation Methods
+
+```java
+SeparatorMechanicalDesign sepDesign = (SeparatorMechanicalDesign) separator.getMechanicalDesign();
+
+// Validate gas velocity
+boolean gasVelOk = sepDesign.validateGasVelocity(actualVelocity);  // m/s
+
+// Validate liquid velocity  
+boolean liqVelOk = sepDesign.validateLiquidVelocity(actualVelocity);  // m/s
+
+// Validate retention time (isOil = true for oil, false for water)
+boolean retTimeOk = sepDesign.validateRetentionTime(actualMinutes, isOil);
+
+// Validate droplet diameter (isGasLiquid = true for gas-liquid separation)
+boolean dropletOk = sepDesign.validateDropletDiameter(actualDiameterUm, isGasLiquid);
+```
+
+#### Compressor Validation Methods
+
+```java
+CompressorMechanicalDesign compDesign = compressor.getMechanicalDesign();
+
+// Validate polytropic efficiency (value as percentage, e.g., 78.0 for 78%)
+boolean effOk = compDesign.validateEfficiency(actualEfficiencyPercent);
+
+// Validate discharge temperature
+boolean tempOk = compDesign.validateDischargeTemperature(actualTempC);
+
+// Validate pressure ratio per stage
+boolean prOk = compDesign.validatePressureRatioPerStage(actualPressureRatio);
+
+// Validate vibration
+boolean vibOk = compDesign.validateVibration(actualVibrationMmPerSec);
+```
+
+#### Pump Validation Methods
+
+```java
+PumpMechanicalDesign pumpDesign = pump.getMechanicalDesign();
+
+// Validate NPSH margin
+boolean npshOk = pumpDesign.validateNpshMargin(npshAvailable, npshRequired);
+
+// Validate operating in Preferred Operating Region
+boolean porOk = pumpDesign.validateOperatingInPOR(operatingFlow, bepFlow);
+
+// Validate operating in Allowable Operating Region  
+boolean aorOk = pumpDesign.validateOperatingInAOR(operatingFlow, bepFlow);
+
+// Validate suction specific speed
+boolean nssOk = pumpDesign.validateSuctionSpecificSpeed(actualNss);
+```
+
+#### Heat Exchanger Validation Methods
+
+```java
+HeatExchangerMechanicalDesign hxDesign = heatExchanger.getMechanicalDesign();
+
+// Validate tube velocity (must be between min and max)
+boolean tubeVelOk = hxDesign.validateTubeVelocity(actualVelocity);
+
+// Validate shell velocity
+boolean shellVelOk = hxDesign.validateShellVelocity(actualVelocity);
+
+// Validate approach temperature
+boolean approachOk = hxDesign.validateApproachTemperature(actualApproachC);
+
+// Validate tube length
+boolean lengthOk = hxDesign.validateTubeLength(actualLengthM);
+```
+
+### Comprehensive Validation Example
+
+```java
+// Run equipment
+separator.run();
+separator.getMechanicalDesign().calcDesign();
+
+// Comprehensive validation
+SeparatorMechanicalDesign sepDesign = (SeparatorMechanicalDesign) separator.getMechanicalDesign();
+SeparatorMechanicalDesign.SeparatorValidationResult result = sepDesign.validateDesignComprehensive();
+
+System.out.println("Design valid: " + result.isValid());
+System.out.println("Issues found: " + result.getIssues().size());
+
+for (String issue : result.getIssues()) {
+    System.out.println("  - " + issue);
+}
+
+// Example output:
+// Design valid: false
+// Issues found: 2
+//   - Gas velocity 3.50 m/s exceeds maximum 3.00 m/s
+//   - L/D ratio 7.5 outside recommended range 2.0-6.0
+```
+
 ## Equipment-Specific Design Standards
 
-### Separators (API 12J / ASME VIII)
+### Separators (API 12J / ASME VIII / NORSOK P-001)
 
 ```java
 SeparatorMechanicalDesign sepDesign = 
@@ -430,14 +629,20 @@ SeparatorMechanicalDesign sepDesign =
 double gasLoadFactor = sepDesign.getGasLoadFactor();      // K-factor
 double retentionTime = sepDesign.getRetentionTime();      // seconds
 double liquidLevelFraction = sepDesign.getFg();           // Fg factor
+
+// Process design parameters
+double foamFactor = sepDesign.getFoamAllowanceFactor();
+double maxGasVel = sepDesign.getMaxGasVelocityLimit();
+double minOilRetention = sepDesign.getMinOilRetentionTime();  // minutes
 ```
 
 Design calculations include:
 - Gas capacity based on Souders-Brown equation
 - Liquid retention time requirements
 - Vessel L/D optimization
-- Demister sizing
+- Demister sizing with pressure drop calculation
 - Nozzle sizing per API RP 14E
+- Foam allowance for foaming services
 
 ### Compressors (API 617)
 
@@ -451,6 +656,15 @@ double headPerStage = compDesign.getHeadPerStage();       // kJ/kg
 double impellerDia = compDesign.getImpellerDiameter();    // mm
 double tipSpeed = compDesign.getTipSpeed();                // m/s
 double driverPower = compDesign.getDriverPower();          // kW
+
+// Process design parameters
+double surgeMargin = compDesign.getSurgeMarginPercent();
+double stonewallMargin = compDesign.getStonewallMarginPercent();
+double turndown = compDesign.getTurndownPercent();
+double targetEff = compDesign.getTargetPolytropicEfficiency();
+double maxDischargeTemp = compDesign.getMaxDischargeTemperatureC();
+String sealType = compDesign.getSealType();
+String bearingType = compDesign.getBearingType();
 ```
 
 Design calculations include:
@@ -459,6 +673,8 @@ Design calculations include:
 - Driver margin per API 617 (10-25% depending on power)
 - Casing type selection (barrel vs split)
 - Rotordynamic estimates (critical speeds)
+- Surge/stonewall margin verification
+- Discharge temperature limit checking
 
 ### Pumps (API 610)
 
@@ -471,14 +687,25 @@ double specificSpeed = pumpDesign.getSpecificSpeed();
 double npshRequired = pumpDesign.getNpshRequired();        // m
 double impellerDia = pumpDesign.getImpellerDiameter();     // mm
 double driverPower = pumpDesign.getDriverPower();          // kW
+
+// Process design parameters
+double npshMarginFactor = pumpDesign.getNpshMarginFactor();
+double porLow = pumpDesign.getPorLowFraction();   // Preferred Operating Region
+double porHigh = pumpDesign.getPorHighFraction();
+double aorLow = pumpDesign.getAorLowFraction();   // Allowable Operating Region
+double aorHigh = pumpDesign.getAorHighFraction();
+double maxNss = pumpDesign.getMaxSuctionSpecificSpeed();
+double headMargin = pumpDesign.getHeadMarginFactor();
 ```
 
 Design calculations include:
 - Pump type selection (OH, BB, VS) based on application
 - Impeller sizing from affinity laws
-- NPSH margin verification
+- NPSH margin verification against requirements
 - Driver margin per API 610 (10-25%)
 - Seal type selection
+- Operating region validation (POR/AOR vs BEP)
+- Suction specific speed verification
 
 ### Valves (IEC 60534)
 
@@ -502,12 +729,40 @@ Design calculations include:
 
 ### Heat Exchangers (TEMA)
 
+```java
+HeatExchangerMechanicalDesign hxDesign = 
+    (HeatExchangerMechanicalDesign) heatExchanger.getMechanicalDesign();
+
+// Key parameters
+double area = hxDesign.getHeatTransferArea();              // m²
+double uValue = hxDesign.getOverallHeatTransferCoefficient(); // W/m²K
+int tubeCount = hxDesign.getTubeCount();
+double shellDiameter = hxDesign.getShellDiameter();        // mm
+
+// Process design parameters  
+double shellFouling = hxDesign.getFoulingResistanceShellHC();  // m²K/W
+double tubeFouling = hxDesign.getFoulingResistanceTubeHC();    // m²K/W
+double maxTubeVel = hxDesign.getMaxTubeVelocity();             // m/s
+double minTubeVel = hxDesign.getMinTubeVelocity();             // m/s
+double maxShellVel = hxDesign.getMaxShellVelocity();           // m/s
+double minApproach = hxDesign.getMinApproachTemperatureC();    // °C
+double maxTubeLength = hxDesign.getMaxTubeLengthM();           // m
+String temaClass = hxDesign.getTemaClass();                    // "R", "C", or "B"
+
+// Calculate clean and fouled U-values
+double cleanU = hxDesign.calculateCleanU(shellHTC, tubeHTC, wallThickness, conductivity);
+double fouledU = hxDesign.calculateFouledU(cleanU, shellIsWater, tubeIsWater);
+```
+
 Design calculations include:
-- Heat transfer area calculation
-- Tube count and layout
+- Heat transfer area calculation with fouling allowance
+- Tube count and layout per TEMA standards
 - Shell diameter sizing
 - Baffle spacing optimization
 - Pressure drop verification
+- Velocity limits for erosion/fouling prevention
+- Approach temperature validation
+- TEMA class (R, C, B) specification
 
 ### Tanks (API 650/620)
 
@@ -552,13 +807,50 @@ The framework applies industry-standard margins:
 
 ## Integration with Cost Estimation
 
-Each mechanical design class has an associated cost estimation class:
+Each mechanical design class has an associated cost estimation class in `neqsim.process.costestimation`:
 
 ```java
-// Access cost estimate
+// Access cost estimate from mechanical design
 UnitCostEstimateBaseClass costEstimate = mecDesign.getCostEstimate();
 double equipmentCost = costEstimate.getEquipmentCost();    // USD
 double installedCost = costEstimate.getInstalledCost();    // USD
+```
+
+### Comprehensive Cost Estimation Framework
+
+For detailed cost estimation including OPEX, financial metrics, currency conversion, and location factors, see the dedicated cost estimation documentation:
+
+| Document | Description |
+|----------|-------------|
+| [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK.md) | **Comprehensive guide to capital and operating cost estimation** |
+| [COST_ESTIMATION_API_REFERENCE.md](COST_ESTIMATION_API_REFERENCE.md) | **Detailed API reference for all cost estimation classes** |
+
+**Key Features:**
+- Equipment costs using Turton et al., Peters & Timmerhaus, GPSA correlations
+- 14+ equipment types (separators, compressors, heat exchangers, tanks, expanders, ejectors, absorbers, etc.)
+- Multi-currency support (USD, EUR, NOK, GBP, CNY, JPY)
+- Location factors for 11 global regions
+- Operating cost (OPEX) calculation with utility costs
+- Financial metrics (payback period, ROI, NPV)
+- Process-level cost aggregation with `ProcessCostEstimate`
+
+```java
+// Example: Process-level cost estimation
+ProcessCostEstimate processCost = new ProcessCostEstimate(process);
+
+// Set location and currency
+processCost.setLocationByRegion("North Sea");
+processCost.setCurrency("NOK");
+
+// Calculate costs
+processCost.calculateCosts();
+
+// Get results in selected currency
+double totalCAPEX = processCost.getTotalCapitalCost();  // NOK
+double totalOPEX = processCost.calculateOperatingCost(8760);  // NOK/year
+
+// Export comprehensive JSON report
+String json = processCost.toJson();
 ```
 
 ## Best Practices

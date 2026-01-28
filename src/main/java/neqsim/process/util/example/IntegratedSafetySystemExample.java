@@ -612,6 +612,29 @@ public class IntegratedSafetySystemExample {
 
   /**
    * Scenario 4: PSV relief (final protection layer).
+   *
+   * @param highPressureFeed the high pressure feed stream
+   * @param hippsValve the HIPPS valve
+   * @param esdInletValve the ESD inlet valve
+   * @param separatorInlet the separator inlet stream
+   * @param separator the separator equipment
+   * @param separatorGasOut the separator gas outlet stream
+   * @param gasSplitter the gas splitter
+   * @param processStream the main process stream
+   * @param blowdownStream the blowdown stream
+   * @param bdValve the blowdown valve
+   * @param psv the pressure safety valve
+   * @param psvOutlet the PSV outlet stream
+   * @param flareHeader the flare header mixer
+   * @param flareHeaderOutlet the flare header outlet stream
+   * @param flare the flare equipment
+   * @param hippsPT1 the first HIPPS pressure transmitter
+   * @param hippsPT2 the second HIPPS pressure transmitter
+   * @param separatorPT the separator pressure transmitter
+   * @param separatorTT the separator temperature transmitter
+   * @param hippsController the HIPPS controller
+   * @param esdController the ESD controller
+   * @param fireSystem the fire detection system
    */
   private static void runScenario4_PSVRelief(Stream highPressureFeed, ThrottlingValve hippsValve,
       ThrottlingValve esdInletValve, Stream separatorInlet, Separator separator,

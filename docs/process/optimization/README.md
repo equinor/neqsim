@@ -2,14 +2,15 @@
 
 The `neqsim.process.calibration` package provides a comprehensive optimization framework for parameter estimation in process simulations. This document details the **Levenberg-Marquardt batch optimization** capabilities for fitting process model parameters to historical or batch data.
 
-> **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
+> **New to process optimization?** Start with the [Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS.md) for a comprehensive overview of all optimization and constraint capabilities.
 
 ## Related Documentation
 
 | Document | Description |
 |----------|-------------|
+| **[Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS.md)** | **COMPREHENSIVE: Complete guide to optimization algorithms, constraint types, bottleneck analysis** |
 | [Optimization Overview](OPTIMIZATION_OVERVIEW.md) | **START HERE**: When to use which optimizer |
-| [Compressor Optimization Guide](COMPRESSOR_OPTIMIZATION_GUIDE.md) | **NEW**: Multi-train compressor optimization with VFD, driver curves, and two-stage approach |
+| [Compressor Optimization Guide](COMPRESSOR_OPTIMIZATION_GUIDE.md) | Multi-train compressor optimization with VFD, driver curves, and two-stage approach |
 | [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md) | Equipment capacity strategies, constraint evaluation, throughput optimization, sensitivity analysis, and FlowRateOptimizer integration |
 | [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | Complete examples for ProductionOptimizer |
 | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) | Core constraint definition and bottleneck detection |

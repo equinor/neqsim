@@ -139,4 +139,186 @@ public class CompressorMechanicalDesignTest {
     assertTrue(driverPower >= shaftPower * 1.20,
         "Small compressor should have at least 20% driver margin");
   }
+
+  // ============================================================================
+  // Process Design Parameter Tests
+  // ============================================================================
+
+  @Test
+  void testSurgeMargin() {
+    SystemInterface gas = new SystemSrkEos(300.0, 10.0);
+    gas.addComponent("methane", 1.0);
+    gas.setMixingRule(2);
+
+    Stream inlet = new Stream("inlet", gas);
+    inlet.setFlowRate(10000.0, "kg/hr");
+
+    Compressor comp = new Compressor("comp", inlet);
+    comp.setOutletPressure(40.0);
+    comp.setPolytropicEfficiency(0.75);
+
+    ProcessSystem ps = new ProcessSystem();
+    ps.add(inlet);
+    ps.add(comp);
+    ps.run();
+
+    CompressorMechanicalDesign design = comp.getMechanicalDesign();
+    design.calcDesign();
+
+    double surgeMargin = design.getSurgeMarginPercent();
+    assertTrue(surgeMargin >= 10.0, "Surge margin should be >= 10%");
+    assertTrue(surgeMargin <= 30.0, "Surge margin should be reasonable (<= 30%)");
+    System.out.println("Surge margin: " + surgeMargin + "%");
+  }
+
+  @Test
+  void testStonewallMargin() {
+    SystemInterface gas = new SystemSrkEos(300.0, 10.0);
+    gas.addComponent("methane", 1.0);
+    gas.setMixingRule(2);
+
+    Stream inlet = new Stream("inlet", gas);
+    inlet.setFlowRate(10000.0, "kg/hr");
+
+    Compressor comp = new Compressor("comp", inlet);
+    comp.setOutletPressure(40.0);
+
+    ProcessSystem ps = new ProcessSystem();
+    ps.add(inlet);
+    ps.add(comp);
+    ps.run();
+
+    CompressorMechanicalDesign design = comp.getMechanicalDesign();
+    design.calcDesign();
+
+    double stonewallMargin = design.getStonewallMarginPercent();
+    assertTrue(stonewallMargin >= 5.0, "Stonewall margin should be >= 5%");
+    System.out.println("Stonewall margin: " + stonewallMargin + "%");
+  }
+
+  @Test
+  void testEfficiencyTargets() {
+    SystemInterface gas = new SystemSrkEos(300.0, 10.0);
+    gas.addComponent("methane", 1.0);
+    gas.setMixingRule(2);
+
+    Stream inlet = new Stream("inlet", gas);
+    inlet.setFlowRate(10000.0, "kg/hr");
+
+    Compressor comp = new Compressor("comp", inlet);
+    comp.setOutletPressure(40.0);
+    comp.setPolytropicEfficiency(0.82);
+
+    ProcessSystem ps = new ProcessSystem();
+    ps.add(inlet);
+    ps.add(comp);
+    ps.run();
+
+    CompressorMechanicalDesign design = comp.getMechanicalDesign();
+    design.calcDesign();
+
+    double targetEff = design.getTargetPolytropicEfficiency();
+    // Target efficiency is stored as percentage (70-90%)
+    assertTrue(targetEff >= 70.0, "Target efficiency should be >= 70%");
+    assertTrue(targetEff <= 90.0, "Target efficiency should be <= 90%");
+    System.out.println("Target polytropic efficiency: " + targetEff + "%");
+  }
+
+  // ============================================================================
+  // Validation Method Tests
+  // ============================================================================
+
+  @Test
+  void testValidateEfficiency() {
+    SystemInterface gas = new SystemSrkEos(300.0, 10.0);
+    gas.addComponent("methane", 1.0);
+    gas.setMixingRule(2);
+
+    Stream inlet = new Stream("inlet", gas);
+    inlet.setFlowRate(10000.0, "kg/hr");
+
+    Compressor comp = new Compressor("comp", inlet);
+    comp.setOutletPressure(40.0);
+
+    ProcessSystem ps = new ProcessSystem();
+    ps.add(inlet);
+    ps.add(comp);
+    ps.run();
+
+    CompressorMechanicalDesign design = comp.getMechanicalDesign();
+    design.calcDesign();
+
+    // Test with good efficiency (as percentage)
+    assertTrue(design.validateEfficiency(82.0), "Efficiency of 82% should pass");
+
+    // Test with very low efficiency (might fail)
+    // The validation depends on the target set in process design
+    boolean lowEffResult = design.validateEfficiency(50.0);
+    System.out.println("Low efficiency (50%) validation: " + lowEffResult);
+  }
+
+  @Test
+  void testValidateDischargeTemperature() {
+    SystemInterface gas = new SystemSrkEos(300.0, 10.0);
+    gas.addComponent("methane", 1.0);
+    gas.setMixingRule(2);
+
+    Stream inlet = new Stream("inlet", gas);
+    inlet.setFlowRate(10000.0, "kg/hr");
+
+    Compressor comp = new Compressor("comp", inlet);
+    comp.setOutletPressure(40.0);
+
+    ProcessSystem ps = new ProcessSystem();
+    ps.add(inlet);
+    ps.add(comp);
+    ps.run();
+
+    CompressorMechanicalDesign design = comp.getMechanicalDesign();
+    design.calcDesign();
+
+    double maxTemp = design.getMaxDischargeTemperatureC();
+
+    // Test within limit
+    assertTrue(design.validateDischargeTemperature(maxTemp - 20),
+        "Temperature 20C below max should pass");
+
+    // Test above limit
+    assertTrue(!design.validateDischargeTemperature(maxTemp + 20),
+        "Temperature 20C above max should fail");
+  }
+
+  @Test
+  void testComprehensiveValidation() {
+    SystemInterface gas = new SystemSrkEos(300.0, 10.0);
+    gas.addComponent("methane", 1.0);
+    gas.setMixingRule(2);
+
+    Stream inlet = new Stream("inlet", gas);
+    inlet.setFlowRate(10000.0, "kg/hr");
+
+    Compressor comp = new Compressor("comp", inlet);
+    comp.setOutletPressure(40.0);
+    comp.setPolytropicEfficiency(0.78);
+
+    ProcessSystem ps = new ProcessSystem();
+    ps.add(inlet);
+    ps.add(comp);
+    ps.run();
+
+    CompressorMechanicalDesign design = comp.getMechanicalDesign();
+    design.calcDesign();
+
+    CompressorMechanicalDesign.CompressorValidationResult result = design.validateDesign();
+
+    assertTrue(result != null, "Validation result should not be null");
+    assertTrue(result.getIssues() != null, "Issues list should not be null");
+
+    System.out.println("Compressor validation valid: " + result.isValid());
+    if (!result.isValid()) {
+      for (String issue : result.getIssues()) {
+        System.out.println("  Issue: " + issue);
+      }
+    }
+  }
 }

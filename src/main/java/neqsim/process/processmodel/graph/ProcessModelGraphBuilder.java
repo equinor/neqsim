@@ -12,14 +12,11 @@ import neqsim.process.processmodel.ProcessModule;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
- * Builder class for constructing a {@link ProcessModelGraph} from a
- * {@link ProcessModule}.
+ * Builder class for constructing a {@link ProcessModelGraph} from a {@link ProcessModule}.
  *
  * <p>
- * This builder handles the complexity of combining multiple
- * {@link ProcessSystem} objects into a
- * unified graph representation, while maintaining information about the
- * hierarchical structure and
+ * This builder handles the complexity of combining multiple {@link ProcessSystem} objects into a
+ * unified graph representation, while maintaining information about the hierarchical structure and
  * cross-system connections.
  * </p>
  *
@@ -56,8 +53,7 @@ public final class ProcessModelGraphBuilder {
   /**
    * Builds a ProcessModelGraph from a ProcessModule.
    *
-   * @param module the process module containing ProcessSystems and/or nested
-   *               modules
+   * @param module the process module containing ProcessSystems and/or nested modules
    * @return the constructed ProcessModelGraph
    */
   public static ProcessModelGraph buildModelGraph(ProcessModule module) {
@@ -103,7 +99,8 @@ public final class ProcessModelGraphBuilder {
       ProcessModelGraph nestedGraph = buildModelGraph(nestedModule);
 
       // Add the flattened graph as a subsystem
-      String moduleName = nestedModule.getName() != null ? nestedModule.getName() : "Module_" + execIndex;
+      String moduleName =
+          nestedModule.getName() != null ? nestedModule.getName() : "Module_" + execIndex;
 
       subSystemGraphs.add(new ProcessModelGraph.SubSystemGraph(moduleName,
           nestedGraph.getFlattenedGraph(), execIndex, true));
@@ -129,12 +126,11 @@ public final class ProcessModelGraphBuilder {
    * Builds a ProcessModelGraph from multiple ProcessSystems.
    *
    * <p>
-   * Convenience method for combining multiple systems without creating a
-   * ProcessModule.
+   * Convenience method for combining multiple systems without creating a ProcessModule.
    * </p>
    *
    * @param modelName name for the combined model
-   * @param systems   the process systems to combine
+   * @param systems the process systems to combine
    * @return the constructed ProcessModelGraph
    */
   public static ProcessModelGraph buildModelGraph(String modelName, ProcessSystem... systems) {
@@ -168,6 +164,9 @@ public final class ProcessModelGraphBuilder {
 
   /**
    * Builds a flattened graph containing all nodes and edges from all sub-systems.
+   *
+   * @param subSystemGraphs list of sub-system graphs to flatten
+   * @return a new ProcessGraph containing all nodes and edges from all sub-systems
    */
   private static ProcessGraph buildFlattenedGraph(
       List<ProcessModelGraph.SubSystemGraph> subSystemGraphs) {
@@ -197,11 +196,14 @@ public final class ProcessModelGraphBuilder {
   }
 
   /**
-   * Detects connections between different sub-systems by analyzing stream
-   * references. This includes
-   * both explicit edges within sub-systems AND implicit dependencies where one
-   * system uses
+   * Detects connections between different sub-systems by analyzing stream references. This includes
+   * both explicit edges within sub-systems AND implicit dependencies where one system uses
    * stream/fluid objects from another system's equipment.
+   *
+   * @param subSystemGraphs list of sub-system graphs to analyze
+   * @param nodeToSystem mapping from nodes to their owning system names
+   * @param connections list to populate with detected inter-system connections
+   * @param flattenedGraph the flattened graph containing all nodes
    */
   private static void detectInterSystemConnections(
       List<ProcessModelGraph.SubSystemGraph> subSystemGraphs, Map<ProcessNode, String> nodeToSystem,
@@ -362,13 +364,19 @@ public final class ProcessModelGraphBuilder {
 
   /**
    * Collect output streams from specific equipment types.
+   *
+   * @param equipment the equipment to collect outputs from
+   * @param systemName the name of the system containing the equipment
+   * @param streamProducers map to populate with stream-to-producer mappings
+   * @param streamToSystem map to populate with stream-to-system mappings
    */
   private static void collectEquipmentOutputs(ProcessEquipmentInterface equipment,
       String systemName, Map<Object, ProcessEquipmentInterface> streamProducers,
       Map<Object, String> streamToSystem) {
     // Separator outputs - use reflection since interface doesn't have all methods
     if (equipment instanceof neqsim.process.equipment.separator.Separator) {
-      neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) equipment;
+      neqsim.process.equipment.separator.Separator sep =
+          (neqsim.process.equipment.separator.Separator) equipment;
       try {
         StreamInterface gasOut = sep.getGasOutStream();
         if (gasOut != null) {
@@ -398,7 +406,8 @@ public final class ProcessModelGraphBuilder {
 
       // ThreePhaseSeparator has additional aqueous (water) outlet
       if (equipment instanceof neqsim.process.equipment.separator.ThreePhaseSeparator) {
-        neqsim.process.equipment.separator.ThreePhaseSeparator threePhaseSep = (neqsim.process.equipment.separator.ThreePhaseSeparator) equipment;
+        neqsim.process.equipment.separator.ThreePhaseSeparator threePhaseSep =
+            (neqsim.process.equipment.separator.ThreePhaseSeparator) equipment;
         try {
           StreamInterface waterOut = threePhaseSep.getWaterOutStream();
           if (waterOut != null) {
@@ -417,7 +426,8 @@ public final class ProcessModelGraphBuilder {
 
     // Splitter outputs
     if (equipment instanceof neqsim.process.equipment.splitter.SplitterInterface) {
-      neqsim.process.equipment.splitter.SplitterInterface splitter = (neqsim.process.equipment.splitter.SplitterInterface) equipment;
+      neqsim.process.equipment.splitter.SplitterInterface splitter =
+          (neqsim.process.equipment.splitter.SplitterInterface) equipment;
       for (int i = 0; i < 20; i++) {
         try {
           StreamInterface splitStream = splitter.getSplitStream(i);
@@ -437,7 +447,8 @@ public final class ProcessModelGraphBuilder {
 
     // TwoPort outlet
     if (equipment instanceof neqsim.process.equipment.TwoPortInterface) {
-      neqsim.process.equipment.TwoPortInterface twoPort = (neqsim.process.equipment.TwoPortInterface) equipment;
+      neqsim.process.equipment.TwoPortInterface twoPort =
+          (neqsim.process.equipment.TwoPortInterface) equipment;
       StreamInterface outStream = twoPort.getOutletStream();
       if (outStream != null) {
         streamProducers.put(outStream, equipment);
@@ -451,7 +462,8 @@ public final class ProcessModelGraphBuilder {
 
     // Mixer outlet
     if (equipment instanceof neqsim.process.equipment.mixer.MixerInterface) {
-      neqsim.process.equipment.mixer.MixerInterface mixer = (neqsim.process.equipment.mixer.MixerInterface) equipment;
+      neqsim.process.equipment.mixer.MixerInterface mixer =
+          (neqsim.process.equipment.mixer.MixerInterface) equipment;
       StreamInterface outStream = mixer.getOutletStream();
       if (outStream != null) {
         streamProducers.put(outStream, equipment);
@@ -508,13 +520,12 @@ public final class ProcessModelGraphBuilder {
   /**
    * Check Mixer inputs for cross-system connections.
    *
-   * @param mixer            the mixer equipment to check
+   * @param mixer the mixer equipment to check
    * @param targetSystemName the name of the target process system
-   * @param streamProducers  map from streams to their producing equipment
-   * @param streamToSystem   map from streams to their originating system name
-   * @param flattenedGraph   the flattened process graph
-   * @param connections      list to populate with discovered inter-system
-   *                         connections
+   * @param streamProducers map from streams to their producing equipment
+   * @param streamToSystem map from streams to their originating system name
+   * @param flattenedGraph the flattened process graph
+   * @param connections list to populate with discovered inter-system connections
    */
   private static void checkMixerInputs(ProcessEquipmentInterface mixer, String targetSystemName,
       Map<Object, ProcessEquipmentInterface> streamProducers, Map<Object, String> streamToSystem,

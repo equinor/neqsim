@@ -15,7 +15,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
+import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.mixer.MixerMechanicalDesign;
 import neqsim.process.util.monitor.MixerResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -32,12 +35,29 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
+public class Mixer extends ProcessEquipmentBaseClass
+    implements MixerInterface, CapacityConstrainedEquipment {
 
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Mixer.class);
+
+  /** Mechanical design for the mixer. */
+  private MixerMechanicalDesign mechanicalDesign;
+
+  /** Mixer capacity constraints map. */
+  private java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> mixerCapacityConstraints =
+      new java.util.LinkedHashMap<String, neqsim.process.equipment.capacity.CapacityConstraint>();
+
+  /** Whether capacity analysis is enabled. */
+  private boolean mixerCapacityAnalysisEnabled = false;
+
+  /** Design pressure drop [bar]. */
+  private double designPressureDrop = 0.1;
+
+  /** Maximum design velocity [m/s]. */
+  private double maxDesignVelocity = 30.0;
 
   protected ArrayList<StreamInterface> streams = new ArrayList<StreamInterface>(0);
   private int numberOfInputStreams = 0;
@@ -79,6 +99,19 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
    */
   public Mixer(String name) {
     super(name);
+    initMechanicalDesign();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public MechanicalDesign getMechanicalDesign() {
+    return mechanicalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initMechanicalDesign() {
+    mechanicalDesign = new MixerMechanicalDesign(this);
   }
 
   /** {@inheritDoc} */
@@ -655,5 +688,193 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface {
     }
 
     return result;
+  }
+
+  // ============================================================================
+  // CapacityConstrainedEquipment Implementation
+  // ============================================================================
+
+  /**
+   * Initialize mixer capacity constraints.
+   */
+  private void initializeMixerCapacityConstraints() {
+    mixerCapacityConstraints.clear();
+
+    // Pressure drop constraint
+    if (designPressureDrop > 0) {
+      neqsim.process.equipment.capacity.CapacityConstraint dpConstraint =
+          new neqsim.process.equipment.capacity.CapacityConstraint("pressureDrop", "bar",
+              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+      dpConstraint.setDesignValue(designPressureDrop);
+      dpConstraint.setDescription("Pressure drop across mixer");
+      dpConstraint.setValueSupplier(() -> {
+        // Calculate pressure drop as difference between lowest inlet and outlet
+        if (mixedStream != null && !streams.isEmpty()) {
+          double minInletP = Double.MAX_VALUE;
+          for (StreamInterface s : streams) {
+            if (s != null && s.getPressure("bara") < minInletP) {
+              minInletP = s.getPressure("bara");
+            }
+          }
+          return minInletP - mixedStream.getPressure("bara");
+        }
+        return 0.0;
+      });
+      mixerCapacityConstraints.put("pressureDrop", dpConstraint);
+    }
+
+    // Velocity constraint (if mechanical design available)
+    if (mechanicalDesign != null && maxDesignVelocity > 0) {
+      neqsim.process.equipment.capacity.CapacityConstraint velConstraint =
+          new neqsim.process.equipment.capacity.CapacityConstraint("velocity", "m/s",
+              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+      velConstraint.setDesignValue(maxDesignVelocity);
+      velConstraint.setDescription("Velocity in mixing header");
+      velConstraint.setValueSupplier(() -> {
+        if (mixedStream != null && mechanicalDesign.getHeaderDiameter() > 0) {
+          double volumeFlow = mixedStream.getFlowRate("m3/hr") / 3600.0;
+          double area = Math.PI * Math.pow(mechanicalDesign.getHeaderDiameter() / 2.0, 2);
+          return volumeFlow / area;
+        }
+        return 0.0;
+      });
+      mixerCapacityConstraints.put("velocity", velConstraint);
+    }
+  }
+
+  /**
+   * Sets the design pressure drop.
+   *
+   * @param pressureDrop design pressure drop in bar
+   */
+  public void setDesignPressureDrop(double pressureDrop) {
+    this.designPressureDrop = pressureDrop;
+    initializeMixerCapacityConstraints();
+  }
+
+  /**
+   * Gets the design pressure drop.
+   *
+   * @return design pressure drop in bar
+   */
+  public double getDesignPressureDrop() {
+    return designPressureDrop;
+  }
+
+  /**
+   * Sets the maximum design velocity.
+   *
+   * @param velocity max design velocity in m/s
+   */
+  public void setMaxDesignVelocity(double velocity) {
+    this.maxDesignVelocity = velocity;
+    initializeMixerCapacityConstraints();
+  }
+
+  /**
+   * Gets the maximum design velocity.
+   *
+   * @return max design velocity in m/s
+   */
+  public double getMaxDesignVelocity() {
+    return maxDesignVelocity;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityAnalysisEnabled() {
+    return mixerCapacityAnalysisEnabled;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setCapacityAnalysisEnabled(boolean enabled) {
+    this.mixerCapacityAnalysisEnabled = enabled;
+    if (enabled && mixerCapacityConstraints.isEmpty()) {
+      initializeMixerCapacityConstraints();
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> getCapacityConstraints() {
+    return java.util.Collections.unmodifiableMap(mixerCapacityConstraints);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public neqsim.process.equipment.capacity.CapacityConstraint getBottleneckConstraint() {
+    neqsim.process.equipment.capacity.CapacityConstraint bottleneck = null;
+    double maxUtil = 0.0;
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : mixerCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()) {
+        double util = constraint.getUtilization();
+        if (util > maxUtil) {
+          maxUtil = util;
+          bottleneck = constraint;
+        }
+      }
+    }
+    return bottleneck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityExceeded() {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : mixerCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled() && constraint.getUtilization() > 1.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHardLimitExceeded() {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : mixerCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()
+          && constraint
+              .getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
+          && constraint.getUtilization() > 1.0) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilization() {
+    double maxUtil = 0.0;
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : mixerCapacityConstraints
+        .values()) {
+      if (constraint.isEnabled()) {
+        maxUtil = Math.max(maxUtil, constraint.getUtilization());
+      }
+    }
+    return maxUtil;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCapacityConstraint(
+      neqsim.process.equipment.capacity.CapacityConstraint constraint) {
+    mixerCapacityConstraints.put(constraint.getName(), constraint);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean removeCapacityConstraint(String constraintName) {
+    return mixerCapacityConstraints.remove(constraintName) != null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void clearCapacityConstraints() {
+    mixerCapacityConstraints.clear();
   }
 }

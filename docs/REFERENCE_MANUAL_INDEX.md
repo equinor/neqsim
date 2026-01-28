@@ -279,12 +279,13 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Dynamic Simulation Guide | [docs/simulation/dynamic_simulation_guide.md](simulation/dynamic_simulation_guide.md) | Comprehensive dynamic/transient simulation guide |
 | Transient Simulation | [docs/wiki/process_transient_simulation_guide.md](wiki/process_transient_simulation_guide.md) | Transient simulation patterns |
 
-### Chapter 22: Capacity Constraints & Equipment Limits
+### Chapter 22: Optimization and Constraints
 
 > **January 2026 Update:** ProductionOptimizer now includes configuration validation, stagnation detection, warm start, bounded LRU cache, and infeasibility diagnostics. See updated tutorials for details.
 
 | Document | Path | Description |
 |----------|------|-------------|
+| **Optimization & Constraints Guide** | [docs/process/optimization/OPTIMIZATION_AND_CONSTRAINTS.md](process/optimization/OPTIMIZATION_AND_CONSTRAINTS.md) | **COMPREHENSIVE: Complete guide to optimization algorithms, constraint types, bottleneck analysis, and practical examples** |
 | **Optimization Overview** | [docs/process/optimization/OPTIMIZATION_OVERVIEW.md](process/optimization/OPTIMIZATION_OVERVIEW.md) | **START HERE: Introduction to process optimization, when to use ProcessOptimizationEngine vs ProductionOptimizer** |
 | **ProductionOptimizer Tutorial** | [docs/examples/ProductionOptimizer_Tutorial.md](examples/ProductionOptimizer_Tutorial.md) | **Interactive Jupyter notebook with complete ProductionOptimizer guide: algorithms, single/multi-variable, Pareto, constraints** |
 | **Python Optimization Tutorial** | [docs/examples/NeqSim_Python_Optimization.md](examples/NeqSim_Python_Optimization.md) | **Using SciPy/Python optimizers with NeqSim process simulations: constraints, Pareto, global optimization** |
@@ -298,8 +299,10 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 ### Chapter 23: Mechanical Design
 | Document | Path | Description |
 |----------|------|-------------|
-| Mechanical Design | [docs/process/mechanical_design.md](process/mechanical_design.md) | Mechanical design overview and JSON export |
-| **Equipment Design Parameters** | [docs/process/EQUIPMENT_DESIGN_PARAMETERS.md](process/EQUIPMENT_DESIGN_PARAMETERS.md) | **Comprehensive guide to autoSize vs MechanicalDesign, manual sizing, and capacity constraints** |
+| Mechanical Design | [docs/process/mechanical_design.md](process/mechanical_design.md) | Mechanical design overview, process design parameters, validation, and JSON export |
+| **Equipment Design Parameters** | [docs/process/EQUIPMENT_DESIGN_PARAMETERS.md](process/EQUIPMENT_DESIGN_PARAMETERS.md) | **Comprehensive guide to autoSize vs MechanicalDesign, manual sizing, validation methods, and capacity constraints** |
+| **Process Design Parameters** | [docs/process/mechanical_design.md#process-design-parameters](process/mechanical_design.md#process-design-parameters) | **Industry-standard process design parameters for separators, compressors, pumps, heat exchangers** |
+| **Design Validation** | [docs/process/mechanical_design.md#design-validation](process/mechanical_design.md#design-validation) | **Validation methods per API-610, API-617, TEMA, API-12J standards** |
 | **Mechanical Design Report** | [docs/process/mechanical_design.md#comprehensive-mechanical-design-report-json](process/mechanical_design.md#comprehensive-mechanical-design-report-json) | **Combined JSON output for all mechanical design data (equipment + piping)** |
 | Design Standards | [docs/process/mechanical_design_standards.md](process/mechanical_design_standards.md) | Design standards |
 | Design Database | [docs/process/mechanical_design_database.md](process/mechanical_design_database.md) | Design database |
@@ -311,7 +314,21 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | TORG Integration | [docs/process/torg_integration.md](process/torg_integration.md) | TORG integration |
 | Field Development | [docs/process/field_development_orchestration.md](process/field_development_orchestration.md) | Field development orchestration |
 
-### Chapter 23: Serialization & Persistence
+### Chapter 23b: Cost Estimation
+| Document | Path | Description |
+|----------|------|-------------|
+| **Cost Estimation Framework** | [docs/process/COST_ESTIMATION_FRAMEWORK.md](process/COST_ESTIMATION_FRAMEWORK.md) | **Comprehensive capital and operating cost estimation framework** |
+| **Cost Estimation API** | [docs/process/COST_ESTIMATION_API_REFERENCE.md](process/COST_ESTIMATION_API_REFERENCE.md) | **Detailed API reference for all cost estimation classes** |
+| Equipment Costs | [docs/process/COST_ESTIMATION_FRAMEWORK.md#equipment-cost-estimation](process/COST_ESTIMATION_FRAMEWORK.md#equipment-cost-estimation) | Equipment-specific cost correlations |
+| Tank Costs | [docs/process/COST_ESTIMATION_FRAMEWORK.md#tank-cost](process/COST_ESTIMATION_FRAMEWORK.md#tank-cost) | Storage tank cost estimation (API 650/620) |
+| Expander Costs | [docs/process/COST_ESTIMATION_FRAMEWORK.md#expander-cost](process/COST_ESTIMATION_FRAMEWORK.md#expander-cost) | Turboexpander cost estimation |
+| Ejector Costs | [docs/process/COST_ESTIMATION_FRAMEWORK.md#ejector-cost](process/COST_ESTIMATION_FRAMEWORK.md#ejector-cost) | Ejector and vacuum system costs |
+| Absorber Costs | [docs/process/COST_ESTIMATION_FRAMEWORK.md#absorber-cost](process/COST_ESTIMATION_FRAMEWORK.md#absorber-cost) | Absorption tower cost estimation |
+| Currency & Location | [docs/process/COST_ESTIMATION_FRAMEWORK.md#currency-and-location-support](process/COST_ESTIMATION_FRAMEWORK.md#currency-and-location-support) | Multi-currency and location factors |
+| OPEX Estimation | [docs/process/COST_ESTIMATION_FRAMEWORK.md#operating-cost-opex-estimation](process/COST_ESTIMATION_FRAMEWORK.md#operating-cost-opex-estimation) | Operating cost calculation |
+| Financial Metrics | [docs/process/COST_ESTIMATION_FRAMEWORK.md#financial-metrics](process/COST_ESTIMATION_FRAMEWORK.md#financial-metrics) | Payback, ROI, NPV calculations |
+
+### Chapter 24: Serialization & Persistence
 | Document | Path | Description |
 |----------|------|-------------|
 | Process Serialization | [docs/simulation/process_serialization.md](simulation/process_serialization.md) | Save/load process models |

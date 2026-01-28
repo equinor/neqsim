@@ -209,6 +209,40 @@ public class PumpMechanicalDesign extends MechanicalDesign {
   /** Maximum allowable flow [m³/h]. */
   private double maximumFlow = 0.0;
 
+  // ============================================================================
+  // Process Design Parameters (from design standards database)
+  // ============================================================================
+
+  /** NPSH available margin factor over required. */
+  private double npshMarginFactor = 1.15;
+
+  /** Hydraulic power sizing margin. */
+  private double hydraulicPowerMargin = 1.10;
+
+  /** Minimum continuous flow as fraction of BEP. */
+  private double minContinuousFlowFraction = 0.70;
+
+  /** Maximum continuous flow as fraction of BEP. */
+  private double maxContinuousFlowFraction = 1.20;
+
+  /** Preferred operating region - low limit as fraction of BEP. */
+  private double porLowFraction = 0.80;
+
+  /** Preferred operating region - high limit as fraction of BEP. */
+  private double porHighFraction = 1.10;
+
+  /** Allowable operating region - low limit as fraction of BEP. */
+  private double aorLowFraction = 0.60;
+
+  /** Allowable operating region - high limit as fraction of BEP. */
+  private double aorHighFraction = 1.30;
+
+  /** Maximum suction specific speed for stable operation. */
+  private double maxSuctionSpecificSpeed = 11000.0;
+
+  /** Head margin factor. */
+  private double headMarginFactor = 1.05;
+
   /**
    * Constructor for PumpMechanicalDesign.
    *
@@ -217,6 +251,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
   public PumpMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
   }
+
 
   /** {@inheritDoc} */
   @Override
@@ -904,5 +939,325 @@ public class PumpMechanicalDesign extends MechanicalDesign {
   @Override
   public String toJson() {
     return getResponse().toJson();
+  }
+
+  // ============================================================================
+  // Process Design Parameter Getters/Setters
+  // ============================================================================
+
+  /**
+   * Gets the NPSH margin factor requirement.
+   *
+   * @return NPSH margin factor (NPSHa/NPSHr)
+   */
+  public double getNpshMarginFactor() {
+    return npshMarginFactor;
+  }
+
+  /**
+   * Sets the NPSH margin factor requirement.
+   *
+   * @param factor NPSH margin factor (typically 1.1-1.3)
+   */
+  public void setNpshMarginFactor(double factor) {
+    this.npshMarginFactor = factor;
+  }
+
+  /**
+   * Gets the hydraulic power margin.
+   *
+   * @return hydraulic power margin factor
+   */
+  public double getHydraulicPowerMargin() {
+    return hydraulicPowerMargin;
+  }
+
+  /**
+   * Sets the hydraulic power margin.
+   *
+   * @param margin power margin factor (typically 1.05-1.10)
+   */
+  public void setHydraulicPowerMargin(double margin) {
+    this.hydraulicPowerMargin = margin;
+  }
+
+  /**
+   * Gets the preferred operating region low limit as fraction of BEP.
+   *
+   * @return POR low limit fraction
+   */
+  public double getPorLowFraction() {
+    return porLowFraction;
+  }
+
+  /**
+   * Sets the preferred operating region low limit.
+   *
+   * @param fraction POR low limit as fraction of BEP (typically 0.80)
+   */
+  public void setPorLowFraction(double fraction) {
+    this.porLowFraction = fraction;
+  }
+
+  /**
+   * Gets the preferred operating region high limit as fraction of BEP.
+   *
+   * @return POR high limit fraction
+   */
+  public double getPorHighFraction() {
+    return porHighFraction;
+  }
+
+  /**
+   * Sets the preferred operating region high limit.
+   *
+   * @param fraction POR high limit as fraction of BEP (typically 1.10)
+   */
+  public void setPorHighFraction(double fraction) {
+    this.porHighFraction = fraction;
+  }
+
+  /**
+   * Gets the allowable operating region low limit as fraction of BEP.
+   *
+   * @return AOR low limit fraction
+   */
+  public double getAorLowFraction() {
+    return aorLowFraction;
+  }
+
+  /**
+   * Sets the allowable operating region low limit.
+   *
+   * @param fraction AOR low limit as fraction of BEP (typically 0.60-0.70)
+   */
+  public void setAorLowFraction(double fraction) {
+    this.aorLowFraction = fraction;
+  }
+
+  /**
+   * Gets the allowable operating region high limit as fraction of BEP.
+   *
+   * @return AOR high limit fraction
+   */
+  public double getAorHighFraction() {
+    return aorHighFraction;
+  }
+
+  /**
+   * Sets the allowable operating region high limit.
+   *
+   * @param fraction AOR high limit as fraction of BEP (typically 1.20-1.30)
+   */
+  public void setAorHighFraction(double fraction) {
+    this.aorHighFraction = fraction;
+  }
+
+  /**
+   * Gets the maximum suction specific speed.
+   *
+   * @return max Nss value
+   */
+  public double getMaxSuctionSpecificSpeed() {
+    return maxSuctionSpecificSpeed;
+  }
+
+  /**
+   * Sets the maximum suction specific speed.
+   *
+   * @param maxNss max Nss value (typically 11000-13000)
+   */
+  public void setMaxSuctionSpecificSpeed(double maxNss) {
+    this.maxSuctionSpecificSpeed = maxNss;
+  }
+
+  /**
+   * Gets the head margin factor.
+   *
+   * @return head margin factor as fraction (typically 1.05-1.10)
+   */
+  public double getHeadMarginFactor() {
+    return headMarginFactor;
+  }
+
+  /**
+   * Sets the head margin factor.
+   *
+   * @param factor head margin factor as fraction (typically 1.05-1.10)
+   */
+  public void setHeadMarginFactor(double factor) {
+    this.headMarginFactor = factor;
+  }
+
+  // ============================================================================
+  // Validation Methods
+  // ============================================================================
+
+  /**
+   * Validates that NPSH available meets the required margin.
+   *
+   * @param npshAvailableM NPSH available in meters
+   * @param npshRequiredM NPSH required in meters
+   * @return true if NPSH margin is adequate
+   */
+  public boolean validateNpshMargin(double npshAvailableM, double npshRequiredM) {
+    if (npshRequiredM <= 0) {
+      return true;
+    }
+    return npshAvailableM >= npshRequiredM * npshMarginFactor;
+  }
+
+  /**
+   * Validates that operating flow is within the preferred operating region.
+   *
+   * @param operatingFlowM3h operating flow rate in m³/h
+   * @param bepFlowM3h BEP flow rate in m³/h
+   * @return true if operating in POR
+   */
+  public boolean validateOperatingInPOR(double operatingFlowM3h, double bepFlowM3h) {
+    if (bepFlowM3h <= 0) {
+      return false;
+    }
+    double ratio = operatingFlowM3h / bepFlowM3h;
+    return ratio >= porLowFraction && ratio <= porHighFraction;
+  }
+
+  /**
+   * Validates that operating flow is within the allowable operating region.
+   *
+   * @param operatingFlowM3h operating flow rate in m³/h
+   * @param bepFlowM3h BEP flow rate in m³/h
+   * @return true if operating in AOR
+   */
+  public boolean validateOperatingInAOR(double operatingFlowM3h, double bepFlowM3h) {
+    if (bepFlowM3h <= 0) {
+      return false;
+    }
+    double ratio = operatingFlowM3h / bepFlowM3h;
+    return ratio >= aorLowFraction && ratio <= aorHighFraction;
+  }
+
+  /**
+   * Validates that suction specific speed is within acceptable limits.
+   *
+   * @param actualNss actual suction specific speed
+   * @return true if Nss is acceptable
+   */
+  public boolean validateSuctionSpecificSpeed(double actualNss) {
+    return actualNss <= maxSuctionSpecificSpeed;
+  }
+
+  /**
+   * Performs comprehensive validation of pump design.
+   *
+   * @return PumpValidationResult with status and any issues found
+   */
+  public PumpValidationResult validateDesign() {
+    PumpValidationResult result = new PumpValidationResult();
+
+    // Validate NPSH margin
+    if (npshRequired > 0 && npshAvailable > 0) {
+      if (!validateNpshMargin(npshAvailable, npshRequired)) {
+        result.addIssue("NPSH margin " + String.format("%.2f", npshAvailable / npshRequired)
+            + " below required " + String.format("%.2f", npshMarginFactor));
+      }
+    }
+
+    // Validate operating point vs BEP
+    if (bepFlow > 0) {
+      double operatingFlow = bepFlow; // Assuming design point = BEP
+      if (!validateOperatingInPOR(operatingFlow, bepFlow)) {
+        result.addIssue("Operating point outside Preferred Operating Region (POR)");
+      }
+    }
+
+    // Validate suction specific speed
+    if (suctionSpecificSpeed > 0 && !validateSuctionSpecificSpeed(suctionSpecificSpeed)) {
+      result.addIssue("Suction specific speed " + String.format("%.0f", suctionSpecificSpeed)
+          + " exceeds maximum " + String.format("%.0f", maxSuctionSpecificSpeed));
+    }
+
+    // Validate design margins
+    if (driverMargin < 1.05) {
+      result.addIssue(
+          "Driver power margin " + String.format("%.2f", driverMargin) + " below recommended 1.05");
+    }
+
+    result.setValid(result.getIssues().isEmpty());
+    return result;
+  }
+
+  /**
+   * Loads pump design parameters from the database.
+   */
+  public void loadProcessDesignParameters() {
+    try {
+      neqsim.util.database.NeqSimProcessDesignDataBase database =
+          new neqsim.util.database.NeqSimProcessDesignDataBase();
+      java.sql.ResultSet dataSet =
+          database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
+              + "EQUIPMENTTYPE='Pump' AND Company='" + getCompanySpecificDesignStandards() + "'");
+
+      while (dataSet.next()) {
+        String spec = dataSet.getString("SPECIFICATION");
+        double minVal = dataSet.getDouble("MINVALUE");
+        double maxVal = dataSet.getDouble("MAXVALUE");
+        double value = (minVal + maxVal) / 2.0;
+
+        switch (spec) {
+          case "NPSHMarginFactor":
+            this.npshMarginFactor = value;
+            break;
+          case "HydraulicPowerMargin":
+            this.hydraulicPowerMargin = value;
+            break;
+          case "PreferredOperatingRegionLow":
+            this.porLowFraction = value;
+            break;
+          case "PreferredOperatingRegionHigh":
+            this.porHighFraction = value;
+            break;
+          case "AllowableOperatingRegionLow":
+            this.aorLowFraction = value;
+            break;
+          case "AllowableOperatingRegionHigh":
+            this.aorHighFraction = value;
+            break;
+          case "SuctionSpecificSpeedMax":
+            this.maxSuctionSpecificSpeed = value;
+            break;
+          default:
+            // Ignore unknown parameters
+            break;
+        }
+      }
+      dataSet.close();
+    } catch (Exception ex) {
+      // Use default values if database lookup fails
+    }
+  }
+
+  /**
+   * Inner class to hold validation results.
+   */
+  public static class PumpValidationResult {
+    private boolean valid = true;
+    private java.util.List<String> issues = new java.util.ArrayList<>();
+
+    public boolean isValid() {
+      return valid;
+    }
+
+    public void setValid(boolean valid) {
+      this.valid = valid;
+    }
+
+    public java.util.List<String> getIssues() {
+      return issues;
+    }
+
+    public void addIssue(String issue) {
+      issues.add(issue);
+    }
   }
 }

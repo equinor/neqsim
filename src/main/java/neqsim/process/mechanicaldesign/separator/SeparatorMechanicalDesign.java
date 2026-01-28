@@ -27,8 +27,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /**
-   * Gas load factor (K-factor) for Souders-Brown equation [m/s]. Default 0.107
-   * for mesh demister.
+   * Gas load factor (K-factor) for Souders-Brown equation [m/s]. Default 0.107 for mesh demister.
    */
   double gasLoadFactor = 0.107;
   /**
@@ -36,13 +35,69 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    */
   double volumeSafetyFactor = 1.0;
   /**
-   * Gas area fraction (1 - liquid level fraction). Default 0.5 for 50% liquid
-   * level.
+   * Gas area fraction (1 - liquid level fraction). Default 0.5 for 50% liquid level.
    */
   double Fg = 0.5;
   /** Liquid retention time in seconds. Default 120s (2 minutes). */
   double retentionTime = 120.0;
 
+  // ============================================================================
+  // Process Design Parameters (loaded from TechnicalRequirements_Process)
+  // ============================================================================
+
+  /** Design pressure margin factor (e.g., 1.10 for 10% margin). */
+  private double designPressureMargin = 1.10;
+
+  /** Design temperature margin above max operating in Celsius. */
+  private double designTemperatureMarginC = 25.0;
+
+  /** Minimum design temperature in Celsius (material limit). */
+  private double minDesignTemperatureC = -46.0;
+
+  /** Foam allowance factor for liquid level (1.0 = no foam, 1.5 = 50% foam). */
+  private double foamAllowanceFactor = 1.0;
+
+  /** Design droplet diameter for gas-liquid separation in micrometers. */
+  private double dropletDiameterGasLiquid = 100.0;
+
+  /** Design droplet diameter for liquid-liquid separation in micrometers. */
+  private double dropletDiameterLiquidLiquid = 500.0;
+
+  /** Maximum gas velocity limit in m/s. */
+  private double maxGasVelocity = 3.0;
+
+  /** Maximum liquid outlet velocity in m/s. */
+  private double maxLiquidVelocity = 1.0;
+
+  /** Minimum oil retention time in minutes. */
+  private double minOilRetentionTime = 2.0;
+
+  /** Minimum water retention time in minutes. */
+  private double minWaterRetentionTime = 3.0;
+
+  // ============================================================================
+  // Demister/Mist Eliminator Parameters
+  // ============================================================================
+
+  /** Demister pad pressure drop in mbar. */
+  private double demisterPressureDrop = 1.5;
+
+  /** Wire mesh demister void fraction (typically 0.97-0.99). */
+  private double demisterVoidFraction = 0.98;
+
+  /** Demister pad thickness in mm. */
+  private double demisterThickness = 150.0;
+
+  /** Demister pad wire diameter in mm. */
+  private double demisterWireDiameter = 0.28;
+
+  /** Inlet device K-factor reduction (1.0 = no reduction). */
+  private double inletDeviceKFactor = 0.85;
+
+  /** Demister type: "wire_mesh", "vane_pack", "cyclone". */
+  private String demisterType = "wire_mesh";
+
+  // ============================================================================
   // Liquid level design parameters (as fraction of internal diameter for
   // horizontal separators)
   /** High-High Liquid Level (HHLL) as fraction of ID. Typically ~0.80-0.85. */
@@ -93,8 +148,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * Constructor for SeparatorMechanicalDesign.
    * </p>
    *
-   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface}
-   *                  object
+   * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
   public SeparatorMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
@@ -114,8 +168,9 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     if (getDesignStandard().containsKey("pressure vessel design code")) {
       System.out.println("pressure vessel code standard: "
           + getDesignStandard().get("pressure vessel design code").getStandardName());
-      wallThickness = ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
-          .calcWallThickness();
+      wallThickness =
+          ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
+              .calcWallThickness();
     } else {
       System.out.println("no pressure vessel code standard specified......");
     }
@@ -123,11 +178,13 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     if (getDesignStandard().containsKey("separator process design")) {
       System.out.println("separator process design: "
           + getDesignStandard().get("separator process design").getStandardName());
-      gasLoadFactor = ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
-          .getGasLoadFactor();
+      gasLoadFactor =
+          ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
+              .getGasLoadFactor();
       Fg = ((SeparatorDesignStandard) getDesignStandard().get("separator process design")).getFg();
-      volumeSafetyFactor = ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
-          .getVolumetricDesignFactor();
+      volumeSafetyFactor =
+          ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
+              .getVolumetricDesignFactor();
       retentionTime = 120.0; // ((SeparatorDesignStandard)
                              // getDesignStandard().get("separator process
                              // design")).getLiquidRetentionTime("API12J", this);
@@ -143,7 +200,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = { "Name", "Value", "Unit" };
+    String[] names = {"Name", "Value", "Unit"};
     String[][] table = new String[16][3]; // createTable(getProcessEquipment().getName());
 
     table[1][0] = "Separator Inner Diameter";
@@ -258,7 +315,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
     // alternative design
     double bubbleDiameter = 250.0e-6;
-    double bubVelocity = 9.82 * Math.pow(bubbleDiameter, 2.0) * (liqDensity - gasDensity) / 18.0 / liqViscosity;
+    double bubVelocity =
+        9.82 * Math.pow(bubbleDiameter, 2.0) * (liqDensity - gasDensity) / 18.0 / liqViscosity;
     double Ar = ((SeparatorInterface) getProcessEquipment()).getThermoSystem().getLiquidVolume()
         / 1e5 / bubVelocity;
     double Daim = Math.sqrt(Ar / 4.0);
@@ -294,15 +352,11 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     // }
 
     /*
-     * System.out.println("wall thickness: " + separator.getName() + " " +
-     * getWallThickness() +
-     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight +
-     * " kg");
+     * System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() +
+     * " m"); System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
      * System.out.println("total skid weigth: " + totalSkidWeight + " kg");
-     * System.out.println("foot print: width:" + moduleWidth + " length " +
-     * moduleLength +
-     * " height " + moduleHeight + " meter.");
-     * System.out.println("mechanical price: " +
+     * System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength +
+     * " height " + moduleHeight + " meter."); System.out.println("mechanical price: " +
      * materialsCost + " kNOK");
      */
     setWeigthVesselShell(emptyVesselWeight);
@@ -334,10 +388,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Performs the sizing calculations without reading design specifications. This
-   * method is called
-   * by autoSize() after design specs have been read and any user overrides have
-   * been applied.
+   * Performs the sizing calculations without reading design specifications. This method is called
+   * by autoSize() after design specs have been read and any user overrides have been applied.
    */
   public void performSizingCalculations() {
     Separator separator = (Separator) getProcessEquipment();
@@ -352,7 +404,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     double totalSkidWeight = 0.0;
     double materialsCost = 0.0;
 
-    double gasDensity = separator.getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double gasDensity =
+        separator.getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
 
     double liqDensity = getDefaultLiquidDensity();
     double liqViscosity = getDefaultLiquidViscosity();
@@ -362,7 +415,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     }
 
     // Apply safety factor to flow
-    maxDesignVolumeFlow = volumeSafetyFactor * separator.getThermoSystem().getPhase(0).getVolume() / 1e5;
+    maxDesignVolumeFlow =
+        volumeSafetyFactor * separator.getThermoSystem().getPhase(0).getVolume() / 1e5;
 
     // Souders-Brown equation for max gas velocity
     double maxGasVelocity = gasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
@@ -457,8 +511,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * {@inheritDoc}
    *
    * <p>
-   * Returns a separator-specific response with additional fields for vessel
-   * sizing, internals, and
+   * Returns a separator-specific response with additional fields for vessel sizing, internals, and
    * process design data.
    * </p>
    */
@@ -491,8 +544,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   /**
    * Set gas load factor (K-factor).
    *
-   * @param gasLoadFactor gas load factor [m/s], typically 0.07-0.15 for
-   *                      horizontal separators
+   * @param gasLoadFactor gas load factor [m/s], typically 0.07-0.15 for horizontal separators
    */
   public void setGasLoadFactor(double gasLoadFactor) {
     this.gasLoadFactor = gasLoadFactor;
@@ -555,8 +607,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   // ==================== Liquid Level Calculations ====================
 
   /**
-   * Calculate the High-High Liquid Level (HHLL) in meters.
-   * HHLL is the maximum safe operating level before emergency shutdown.
+   * Calculate the High-High Liquid Level (HHLL) in meters. HHLL is the maximum safe operating level
+   * before emergency shutdown.
    *
    * @return HHLL height in meters
    */
@@ -565,8 +617,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate the High Liquid Level (HLL) in meters.
-   * HLL triggers high level alarm.
+   * Calculate the High Liquid Level (HLL) in meters. HLL triggers high level alarm.
    *
    * @return HLL height in meters
    */
@@ -575,8 +626,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate the Normal Liquid Level (NLL) in meters.
-   * NLL is the target operating level during normal operation.
+   * Calculate the Normal Liquid Level (NLL) in meters. NLL is the target operating level during
+   * normal operation.
    *
    * @return NLL height in meters
    */
@@ -585,8 +636,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate the Low Liquid Level (LLL) in meters.
-   * LLL triggers low level alarm.
+   * Calculate the Low Liquid Level (LLL) in meters. LLL triggers low level alarm.
    *
    * @return LLL height in meters
    */
@@ -595,8 +645,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate the Low-Low Liquid Level (LLLL) in meters.
-   * LLLL triggers emergency shutdown to prevent pump dry-running.
+   * Calculate the Low-Low Liquid Level (LLLL) in meters. LLLL triggers emergency shutdown to
+   * prevent pump dry-running.
    *
    * @return LLLL height in meters
    */
@@ -605,8 +655,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate the weir height in meters.
-   * The weir separates oil and water compartments in three-phase separators.
+   * Calculate the weir height in meters. The weir separates oil and water compartments in
+   * three-phase separators.
    *
    * @return weir height in meters
    */
@@ -615,8 +665,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate the High Interface Level (HIL) in meters.
-   * HIL is the high oil/water interface level alarm point.
+   * Calculate the High Interface Level (HIL) in meters. HIL is the high oil/water interface level
+   * alarm point.
    *
    * @return HIL height in meters
    */
@@ -625,8 +675,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate the Normal Interface Level (NIL) in meters.
-   * NIL is the target oil/water interface level.
+   * Calculate the Normal Interface Level (NIL) in meters. NIL is the target oil/water interface
+   * level.
    *
    * @return NIL height in meters
    */
@@ -635,8 +685,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate the Low Interface Level (LIL) in meters.
-   * LIL is the low oil/water interface level alarm point.
+   * Calculate the Low Interface Level (LIL) in meters. LIL is the low oil/water interface level
+   * alarm point.
    *
    * @return LIL height in meters
    */
@@ -647,8 +697,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   // ==================== Effective Length Calculations ====================
 
   /**
-   * Calculate effective length for liquid separation.
-   * This is typically: TanTan length - inlet device length - weir plate distance.
+   * Calculate effective length for liquid separation. This is typically: TanTan length - inlet
+   * device length - weir plate distance.
    *
    * @return effective liquid separation length in meters
    */
@@ -662,8 +712,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate effective length for gas separation.
-   * This is typically: TanTan length - inlet device length - demister position.
+   * Calculate effective length for gas separation. This is typically: TanTan length - inlet device
+   * length - demister position.
    *
    * @return effective gas separation length in meters
    */
@@ -696,8 +746,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate liquid volume at a given level height for horizontal cylindrical
-   * vessel.
+   * Calculate liquid volume at a given level height for horizontal cylindrical vessel.
    *
    * @param levelHeight liquid level height in meters
    * @return liquid volume in m³
@@ -715,8 +764,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate surge volume between NLL and HLL.
-   * This volume provides time buffer for control system response.
+   * Calculate surge volume between NLL and HLL. This volume provides time buffer for control system
+   * response.
    *
    * @return surge volume in m³
    */
@@ -744,8 +793,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   // ==================== Nozzle Size Calculations ====================
 
   /**
-   * Calculate inlet nozzle diameter based on inlet momentum.
-   * Uses API 12J recommendations for maximum momentum.
+   * Calculate inlet nozzle diameter based on inlet momentum. Uses API 12J recommendations for
+   * maximum momentum.
    *
    * @return inlet nozzle ID in meters
    */
@@ -804,8 +853,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate gas outlet nozzle diameter.
-   * Based on gas velocity limit (typically 15-20 m/s).
+   * Calculate gas outlet nozzle diameter. Based on gas velocity limit (typically 15-20 m/s).
    *
    * @return gas outlet nozzle ID in meters
    */
@@ -825,8 +873,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate oil outlet nozzle diameter.
-   * Based on liquid velocity limit (typically 1-2 m/s).
+   * Calculate oil outlet nozzle diameter. Based on liquid velocity limit (typically 1-2 m/s).
    *
    * @return oil outlet nozzle ID in meters
    */
@@ -990,79 +1037,131 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
   // ==================== Getters for Fractions ====================
 
-  /** @return HHLL fraction */
+  /**
+   * Get HHLL (High-High Liquid Level) fraction.
+   *
+   * @return HHLL fraction
+   */
   public double getHHLLFraction() {
     return hhllFraction;
   }
 
-  /** @return HLL fraction */
+  /**
+   * Get HLL (High Liquid Level) fraction.
+   *
+   * @return HLL fraction
+   */
   public double getHLLFraction() {
     return hllFraction;
   }
 
-  /** @return NLL fraction */
+  /**
+   * Get NLL (Normal Liquid Level) fraction.
+   *
+   * @return NLL fraction
+   */
   public double getNLLFraction() {
     return nllFraction;
   }
 
-  /** @return LLL fraction */
+  /**
+   * Get LLL (Low Liquid Level) fraction.
+   *
+   * @return LLL fraction
+   */
   public double getLLLFraction() {
     return lllFraction;
   }
 
-  /** @return LLLL fraction */
+  /**
+   * Get LLLL (Low-Low Liquid Level) fraction.
+   *
+   * @return LLLL fraction
+   */
   public double getLLLLFraction() {
     return llllFraction;
   }
 
-  /** @return weir fraction */
+  /**
+   * Get weir fraction.
+   *
+   * @return weir fraction
+   */
   public double getWeirFraction() {
     return weirFraction;
   }
 
-  /** @return HIL fraction */
+  /**
+   * Get HIL (High Interface Level) fraction.
+   *
+   * @return HIL fraction
+   */
   public double getHILFraction() {
     return hilFraction;
   }
 
-  /** @return NIL fraction */
+  /**
+   * Get NIL (Normal Interface Level) fraction.
+   *
+   * @return NIL fraction
+   */
   public double getNILFraction() {
     return nilFraction;
   }
 
-  /** @return LIL fraction */
+  /**
+   * Get LIL (Low Interface Level) fraction.
+   *
+   * @return LIL fraction
+   */
   public double getLILFraction() {
     return lilFraction;
   }
 
-  /** @return inlet nozzle ID in meters */
+  /**
+   * Get inlet nozzle internal diameter.
+   *
+   * @return inlet nozzle ID in meters
+   */
   public double getInletNozzleID() {
     return inletNozzleID;
   }
 
-  /** @return gas outlet nozzle ID in meters */
+  /**
+   * Get gas outlet nozzle internal diameter.
+   *
+   * @return gas outlet nozzle ID in meters
+   */
   public double getGasOutletNozzleID() {
     return gasOutletNozzleID;
   }
 
-  /** @return oil outlet nozzle ID in meters */
+  /**
+   * Get oil outlet nozzle internal diameter.
+   *
+   * @return oil outlet nozzle ID in meters
+   */
   public double getOilOutletNozzleID() {
     return oilOutletNozzleID;
   }
 
-  /** @return water outlet nozzle ID in meters */
+  /**
+   * Get water outlet nozzle internal diameter.
+   *
+   * @return water outlet nozzle ID in meters
+   */
   public double getWaterOutletNozzleID() {
     return waterOutletNozzleID;
   }
 
   /**
-   * Configure liquid levels based on provided values (heights in meters).
-   * Automatically calculates fractions based on internal diameter.
+   * Configure liquid levels based on provided values (heights in meters). Automatically calculates
+   * fractions based on internal diameter.
    *
    * @param hhll High-High Liquid Level in meters
-   * @param hll  High Liquid Level in meters
-   * @param nll  Normal Liquid Level in meters
-   * @param lll  Low Liquid Level in meters
+   * @param hll High Liquid Level in meters
+   * @param nll Normal Liquid Level in meters
+   * @param lll Low Liquid Level in meters
    */
   public void setLiquidLevelsFromHeights(double hhll, double hll, double nll, double lll) {
     if (innerDiameter > 0) {
@@ -1076,9 +1175,9 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   /**
    * Configure interface levels for three-phase separator based on heights.
    *
-   * @param hil  High Interface Level in meters
-   * @param nil  Normal Interface Level in meters
-   * @param lil  Low Interface Level in meters
+   * @param hil High Interface Level in meters
+   * @param nil Normal Interface Level in meters
+   * @param lil Low Interface Level in meters
    * @param weir Weir height in meters
    */
   public void setInterfaceLevelsFromHeights(double hil, double nil, double lil, double weir) {
@@ -1091,8 +1190,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate all level fractions based on the actual internal diameter.
-   * Uses typical design ratios from API 12J and NORSOK.
+   * Calculate all level fractions based on the actual internal diameter. Uses typical design ratios
+   * from API 12J and NORSOK.
    */
   public void calculateDefaultLevelFractions() {
     // Typical level fractions for horizontal separator
@@ -1114,13 +1213,12 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   // ====================
 
   /**
-   * Configure all separator dimensions from an existing pre-designed separator.
-   * This allows importing a complete design from external sources (e.g., vendor
-   * data).
+   * Configure all separator dimensions from an existing pre-designed separator. This allows
+   * importing a complete design from external sources (e.g., vendor data).
    *
-   * @param id           Inner diameter in meters
+   * @param id Inner diameter in meters
    * @param tanTanLength Tan-tan length in meters
-   * @param wallThick    Wall thickness in meters
+   * @param wallThick Wall thickness in meters
    */
   public void setFromExistingDesign(double id, double tanTanLength, double wallThick) {
     this.innerDiameter = id;
@@ -1130,23 +1228,22 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Configure all separator dimensions and levels from an existing design.
-   * This is the comprehensive method for importing a complete pre-designed
-   * separator.
+   * Configure all separator dimensions and levels from an existing design. This is the
+   * comprehensive method for importing a complete pre-designed separator.
    *
-   * @param id           Inner diameter in meters
+   * @param id Inner diameter in meters
    * @param tanTanLength Tan-tan length in meters
-   * @param wallThick    Wall thickness in meters
-   * @param lEffLiquid   Effective length for liquid separation in meters
-   * @param lEffGas      Effective length for gas separation in meters
-   * @param inletNozzle  Inlet nozzle ID in meters
-   * @param gasNozzle    Gas outlet nozzle ID in meters
-   * @param oilNozzle    Oil outlet nozzle ID in meters
-   * @param waterNozzle  Water outlet nozzle ID in meters (0 for two-phase)
+   * @param wallThick Wall thickness in meters
+   * @param lEffLiquid Effective length for liquid separation in meters
+   * @param lEffGas Effective length for gas separation in meters
+   * @param inletNozzle Inlet nozzle ID in meters
+   * @param gasNozzle Gas outlet nozzle ID in meters
+   * @param oilNozzle Oil outlet nozzle ID in meters
+   * @param waterNozzle Water outlet nozzle ID in meters (0 for two-phase)
    */
   public void setFromExistingDesign(double id, double tanTanLength, double wallThick,
-      double lEffLiquid, double lEffGas, double inletNozzle, double gasNozzle,
-      double oilNozzle, double waterNozzle) {
+      double lEffLiquid, double lEffGas, double inletNozzle, double gasNozzle, double oilNozzle,
+      double waterNozzle) {
     setFromExistingDesign(id, tanTanLength, wallThick);
     this.effectiveLengthLiquid = lEffLiquid;
     this.effectiveLengthGas = lEffGas;
@@ -1157,17 +1254,17 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Configure all liquid levels from heights in meters.
-   * Automatically calculates fractions based on internal diameter.
+   * Configure all liquid levels from heights in meters. Automatically calculates fractions based on
+   * internal diameter.
    *
    * @param hhll High-High Liquid Level in meters
-   * @param hll  High Liquid Level in meters
-   * @param nll  Normal Liquid Level in meters
-   * @param lll  Low Liquid Level in meters
+   * @param hll High Liquid Level in meters
+   * @param nll Normal Liquid Level in meters
+   * @param lll Low Liquid Level in meters
    * @param llll Low-Low Liquid Level in meters
    */
-  public void setAllLiquidLevelsFromHeights(double hhll, double hll, double nll,
-      double lll, double llll) {
+  public void setAllLiquidLevelsFromHeights(double hhll, double hll, double nll, double lll,
+      double llll) {
     if (innerDiameter > 0) {
       this.hhllFraction = hhll / innerDiameter;
       this.hllFraction = hll / innerDiameter;
@@ -1178,26 +1275,26 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Set all design parameters from a Python-style dictionary-like specification.
-   * This method mirrors the Python dict format: {'ID': 3.154, 'L': 13.1, ...}.
+   * Set all design parameters from a Python-style dictionary-like specification. This method
+   * mirrors the Python dict format: {'ID': 3.154, 'L': 13.1, ...}.
    *
-   * @param id            Inner diameter in meters
-   * @param length        Tan-tan length in meters
-   * @param lEffLiquid    Effective length for liquid separation in meters
-   * @param lEffGas       Effective length for gas separation in meters
+   * @param id Inner diameter in meters
+   * @param length Tan-tan length in meters
+   * @param lEffLiquid Effective length for liquid separation in meters
+   * @param lEffGas Effective length for gas separation in meters
    * @param inletNozzleId Inlet nozzle ID in meters
-   * @param hhll          HHLL height in meters
-   * @param hll           HLL height in meters
-   * @param nll           NLL height in meters
-   * @param lll           LLL height in meters
-   * @param weir          Weir height in meters
-   * @param hil           HIL height in meters
-   * @param nil           NIL height in meters
-   * @param lil           LIL height in meters
+   * @param hhll HHLL height in meters
+   * @param hll HLL height in meters
+   * @param nll NLL height in meters
+   * @param lll LLL height in meters
+   * @param weir Weir height in meters
+   * @param hil HIL height in meters
+   * @param nil NIL height in meters
+   * @param lil LIL height in meters
    */
   public void setFromDesignSpec(double id, double length, double lEffLiquid, double lEffGas,
-      double inletNozzleId, double hhll, double hll, double nll, double lll,
-      double weir, double hil, double nil, double lil) {
+      double inletNozzleId, double hhll, double hll, double nll, double lll, double weir,
+      double hil, double nil, double lil) {
     this.innerDiameter = id;
     this.tantanLength = length;
     this.effectiveLengthLiquid = lEffLiquid;
@@ -1272,9 +1369,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Calculate effective lengths from internal positions.
-   * Call this after setting inlet-to-perforated-plate and
-   * perforated-plate-to-weir distances.
+   * Calculate effective lengths from internal positions. Call this after setting
+   * inlet-to-perforated-plate and perforated-plate-to-weir distances.
    */
   public void calculateEffectiveLengthsFromInternals() {
     // L_eff_liquid = perforated plate to weir
@@ -1305,8 +1401,8 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     }
 
     // Check level sequence
-    if (hhllFraction <= hllFraction || hllFraction <= nllFraction
-        || nllFraction <= lllFraction || lllFraction <= llllFraction) {
+    if (hhllFraction <= hllFraction || hllFraction <= nllFraction || nllFraction <= lllFraction
+        || lllFraction <= llllFraction) {
       // Levels should be in descending order
     } else {
       System.out.println("Warning: Liquid levels not in correct order");
@@ -1346,5 +1442,555 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     sb.append(String.format("NIL: %.3f m (%.0f%% of ID)%n", getNIL(), nilFraction * 100));
     sb.append(String.format("LIL: %.3f m (%.0f%% of ID)%n", getLIL(), lilFraction * 100));
     return sb.toString();
+  }
+
+  // ============================================================================
+  // Process Design Parameter Getters/Setters
+  // ============================================================================
+
+  /**
+   * Gets the design pressure margin factor.
+   *
+   * @return design pressure margin (e.g., 1.10 for 10% margin)
+   */
+  public double getDesignPressureMargin() {
+    return designPressureMargin;
+  }
+
+  /**
+   * Sets the design pressure margin factor.
+   *
+   * @param margin margin factor (e.g., 1.10 for 10%)
+   */
+  public void setDesignPressureMargin(double margin) {
+    this.designPressureMargin = margin;
+  }
+
+  /**
+   * Gets the design temperature margin in Celsius.
+   *
+   * @return temperature margin in Celsius
+   */
+  public double getDesignTemperatureMarginC() {
+    return designTemperatureMarginC;
+  }
+
+  /**
+   * Sets the design temperature margin in Celsius.
+   *
+   * @param marginC temperature margin in Celsius
+   */
+  public void setDesignTemperatureMarginC(double marginC) {
+    this.designTemperatureMarginC = marginC;
+  }
+
+  /**
+   * Gets the minimum design temperature in Celsius.
+   *
+   * @return minimum design temperature in Celsius
+   */
+  public double getMinDesignTemperatureC() {
+    return minDesignTemperatureC;
+  }
+
+  /**
+   * Sets the minimum design temperature in Celsius.
+   *
+   * @param tempC minimum design temperature in Celsius
+   */
+  public void setMinDesignTemperatureC(double tempC) {
+    this.minDesignTemperatureC = tempC;
+  }
+
+  /**
+   * Gets the foam allowance factor.
+   *
+   * @return foam allowance factor (1.0 = no foam)
+   */
+  public double getFoamAllowanceFactor() {
+    return foamAllowanceFactor;
+  }
+
+  /**
+   * Sets the foam allowance factor.
+   *
+   * @param factor foam allowance factor (typically 1.0-1.5)
+   */
+  public void setFoamAllowanceFactor(double factor) {
+    this.foamAllowanceFactor = factor;
+  }
+
+  /**
+   * Gets the design droplet diameter for gas-liquid separation.
+   *
+   * @return droplet diameter in micrometers
+   */
+  public double getDropletDiameterGasLiquid() {
+    return dropletDiameterGasLiquid;
+  }
+
+  /**
+   * Sets the design droplet diameter for gas-liquid separation.
+   *
+   * @param diameterUm droplet diameter in micrometers
+   */
+  public void setDropletDiameterGasLiquid(double diameterUm) {
+    this.dropletDiameterGasLiquid = diameterUm;
+  }
+
+  /**
+   * Gets the design droplet diameter for liquid-liquid separation.
+   *
+   * @return droplet diameter in micrometers
+   */
+  public double getDropletDiameterLiquidLiquid() {
+    return dropletDiameterLiquidLiquid;
+  }
+
+  /**
+   * Sets the design droplet diameter for liquid-liquid separation.
+   *
+   * @param diameterUm droplet diameter in micrometers
+   */
+  public void setDropletDiameterLiquidLiquid(double diameterUm) {
+    this.dropletDiameterLiquidLiquid = diameterUm;
+  }
+
+  /**
+   * Gets the maximum gas velocity limit.
+   *
+   * @return maximum gas velocity in m/s
+   */
+  public double getMaxGasVelocityLimit() {
+    return maxGasVelocity;
+  }
+
+  /**
+   * Sets the maximum gas velocity limit.
+   *
+   * @param velocity maximum velocity in m/s
+   */
+  public void setMaxGasVelocityLimit(double velocity) {
+    this.maxGasVelocity = velocity;
+  }
+
+  /**
+   * Gets the maximum liquid outlet velocity.
+   *
+   * @return maximum liquid velocity in m/s
+   */
+  public double getMaxLiquidVelocity() {
+    return maxLiquidVelocity;
+  }
+
+  /**
+   * Sets the maximum liquid outlet velocity.
+   *
+   * @param velocity maximum velocity in m/s
+   */
+  public void setMaxLiquidVelocity(double velocity) {
+    this.maxLiquidVelocity = velocity;
+  }
+
+  /**
+   * Gets the minimum oil retention time.
+   *
+   * @return retention time in minutes
+   */
+  public double getMinOilRetentionTime() {
+    return minOilRetentionTime;
+  }
+
+  /**
+   * Sets the minimum oil retention time.
+   *
+   * @param minutes retention time in minutes
+   */
+  public void setMinOilRetentionTime(double minutes) {
+    this.minOilRetentionTime = minutes;
+  }
+
+  /**
+   * Gets the minimum water retention time.
+   *
+   * @return retention time in minutes
+   */
+  public double getMinWaterRetentionTime() {
+    return minWaterRetentionTime;
+  }
+
+  /**
+   * Sets the minimum water retention time.
+   *
+   * @param minutes retention time in minutes
+   */
+  public void setMinWaterRetentionTime(double minutes) {
+    this.minWaterRetentionTime = minutes;
+  }
+
+  // ============================================================================
+  // Demister/Mist Eliminator Getters/Setters
+  // ============================================================================
+
+  /**
+   * Gets the demister pressure drop.
+   *
+   * @return pressure drop in mbar
+   */
+  public double getDemisterPressureDrop() {
+    return demisterPressureDrop;
+  }
+
+  /**
+   * Sets the demister pressure drop.
+   *
+   * @param pressureDrop pressure drop in mbar
+   */
+  public void setDemisterPressureDrop(double pressureDrop) {
+    this.demisterPressureDrop = pressureDrop;
+  }
+
+  /**
+   * Gets the demister void fraction.
+   *
+   * @return void fraction (0.0-1.0)
+   */
+  public double getDemisterVoidFraction() {
+    return demisterVoidFraction;
+  }
+
+  /**
+   * Sets the demister void fraction.
+   *
+   * @param voidFraction void fraction (typically 0.97-0.99)
+   */
+  public void setDemisterVoidFraction(double voidFraction) {
+    this.demisterVoidFraction = voidFraction;
+  }
+
+  /**
+   * Gets the demister pad thickness.
+   *
+   * @return thickness in mm
+   */
+  public double getDemisterThickness() {
+    return demisterThickness;
+  }
+
+  /**
+   * Sets the demister pad thickness.
+   *
+   * @param thickness thickness in mm
+   */
+  public void setDemisterThickness(double thickness) {
+    this.demisterThickness = thickness;
+  }
+
+  /**
+   * Gets the demister wire diameter.
+   *
+   * @return wire diameter in mm
+   */
+  public double getDemisterWireDiameter() {
+    return demisterWireDiameter;
+  }
+
+  /**
+   * Sets the demister wire diameter.
+   *
+   * @param diameter wire diameter in mm
+   */
+  public void setDemisterWireDiameter(double diameter) {
+    this.demisterWireDiameter = diameter;
+  }
+
+  /**
+   * Gets the inlet device K-factor reduction.
+   *
+   * @return K-factor reduction (1.0 = no reduction)
+   */
+  public double getInletDeviceKFactor() {
+    return inletDeviceKFactor;
+  }
+
+  /**
+   * Sets the inlet device K-factor reduction.
+   *
+   * @param factor K-factor reduction (typically 0.8-1.0)
+   */
+  public void setInletDeviceKFactor(double factor) {
+    this.inletDeviceKFactor = factor;
+  }
+
+  /**
+   * Gets the demister type.
+   *
+   * @return demister type ("wire_mesh", "vane_pack", or "cyclone")
+   */
+  public String getDemisterType() {
+    return demisterType;
+  }
+
+  /**
+   * Sets the demister type.
+   *
+   * @param type demister type ("wire_mesh", "vane_pack", or "cyclone")
+   */
+  public void setDemisterType(String type) {
+    this.demisterType = type;
+  }
+
+  // ============================================================================
+  // Design Calculation Methods
+  // ============================================================================
+
+  /**
+   * Calculates the design pressure from maximum operating pressure.
+   *
+   * @return design pressure in barg
+   */
+  public double calculateDesignPressure() {
+    return getMaxOperationPressure() * designPressureMargin;
+  }
+
+  /**
+   * Calculates the design temperature from maximum operating temperature.
+   *
+   * @return design temperature in Celsius
+   */
+  public double calculateDesignTemperature() {
+    double maxOpTemp = getMaxOperationTemperature() - 273.15; // Convert K to C
+    return maxOpTemp + designTemperatureMarginC;
+  }
+
+  /**
+   * Calculates the minimum design temperature considering material limits.
+   *
+   * @return minimum design temperature in Celsius
+   */
+  public double calculateMinDesignTemperature() {
+    double minOpTemp = getMinOperationTemperature() - 273.15; // Convert K to C
+    return Math.max(minOpTemp - 10.0, minDesignTemperatureC);
+  }
+
+  /**
+   * Calculates the terminal settling velocity for a droplet using Stokes' law.
+   *
+   * @param dropletDiameterUm droplet diameter in micrometers
+   * @param continuousDensity density of continuous phase in kg/m³
+   * @param dispersedDensity density of dispersed phase in kg/m³
+   * @param continuousViscosity viscosity of continuous phase in Pa·s
+   * @return terminal velocity in m/s
+   */
+  public double calculateStokesVelocity(double dropletDiameterUm, double continuousDensity,
+      double dispersedDensity, double continuousViscosity) {
+    double diameterM = dropletDiameterUm * 1e-6;
+    double g = 9.81;
+    double deltaDensity = Math.abs(continuousDensity - dispersedDensity);
+    return (g * diameterM * diameterM * deltaDensity) / (18.0 * continuousViscosity);
+  }
+
+  /**
+   * Calculates the maximum allowable gas velocity using Souders-Brown equation.
+   *
+   * @param gasDensity gas density in kg/m³
+   * @param liquidDensity liquid density in kg/m³
+   * @return maximum gas velocity in m/s
+   */
+  public double calculateSoudersBrownVelocity(double gasDensity, double liquidDensity) {
+    double kEffective = gasLoadFactor * inletDeviceKFactor;
+    return kEffective * Math.sqrt((liquidDensity - gasDensity) / gasDensity);
+  }
+
+  /**
+   * Calculates the adjusted liquid volume accounting for foam.
+   *
+   * @param baseLiquidVolume base liquid volume in m³
+   * @return adjusted volume with foam allowance in m³
+   */
+  public double calculateFoamAdjustedVolume(double baseLiquidVolume) {
+    return baseLiquidVolume * foamAllowanceFactor;
+  }
+
+  /**
+   * Loads process design parameters from the TechnicalRequirements_Process database.
+   */
+  public void loadProcessDesignParameters() {
+    try {
+      neqsim.util.database.NeqSimProcessDesignDataBase database =
+          new neqsim.util.database.NeqSimProcessDesignDataBase();
+      java.sql.ResultSet dataSet =
+          database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
+              + "EQUIPMENTTYPE='Separator' AND Company='" + getCompanySpecificDesignStandards()
+              + "'");
+
+      while (dataSet.next()) {
+        String spec = dataSet.getString("SPECIFICATION");
+        double minVal = dataSet.getDouble("MINVALUE");
+        double maxVal = dataSet.getDouble("MAXVALUE");
+        double value = (minVal + maxVal) / 2.0;
+
+        switch (spec) {
+          case "DesignPressureMargin":
+            this.designPressureMargin = value;
+            break;
+          case "DesignTemperatureMargin":
+            this.designTemperatureMarginC = value;
+            break;
+          case "MinDesignTemperature":
+            this.minDesignTemperatureC = value;
+            break;
+          case "FoamAllowanceFactor":
+            this.foamAllowanceFactor = value;
+            break;
+          case "DropletDiameterGas":
+            this.dropletDiameterGasLiquid = value;
+            break;
+          case "DropletDiameterLiquid":
+            this.dropletDiameterLiquidLiquid = value;
+            break;
+          case "MaxGasVelocity":
+            this.maxGasVelocity = value;
+            break;
+          case "MaxLiquidVelocity":
+            this.maxLiquidVelocity = value;
+            break;
+          case "MinLiquidRetentionOil":
+            this.minOilRetentionTime = value;
+            break;
+          case "MinLiquidRetentionWater":
+            this.minWaterRetentionTime = value;
+            break;
+          case "DemisterDeltaP":
+            this.demisterPressureDrop = value;
+            break;
+          case "DemisterVoidFraction":
+            this.demisterVoidFraction = value;
+            break;
+          case "InletDeviceKFactor":
+            this.inletDeviceKFactor = value;
+            break;
+          default:
+            // Ignore unknown parameters
+            break;
+        }
+      }
+      dataSet.close();
+    } catch (Exception ex) {
+      // Use default values if database lookup fails
+    }
+  }
+
+  // ============================================================================
+  // Validation Methods
+  // ============================================================================
+
+  /**
+   * Validates that the actual gas velocity is within acceptable limits.
+   *
+   * @param actualVelocity actual gas velocity in m/s
+   * @return true if velocity is acceptable, false if too high
+   */
+  public boolean validateGasVelocity(double actualVelocity) {
+    return actualVelocity <= maxGasVelocity;
+  }
+
+  /**
+   * Validates that the actual liquid outlet velocity is within acceptable limits.
+   *
+   * @param actualVelocity actual liquid velocity in m/s
+   * @return true if velocity is acceptable, false if too high
+   */
+  public boolean validateLiquidVelocity(double actualVelocity) {
+    return actualVelocity <= maxLiquidVelocity;
+  }
+
+  /**
+   * Validates that the actual retention time meets minimum requirements.
+   *
+   * @param actualRetentionMinutes actual retention time in minutes
+   * @param isOil true for oil retention, false for water retention
+   * @return true if retention time is sufficient
+   */
+  public boolean validateRetentionTime(double actualRetentionMinutes, boolean isOil) {
+    double minRequired = isOil ? minOilRetentionTime : minWaterRetentionTime;
+    return actualRetentionMinutes >= minRequired;
+  }
+
+  /**
+   * Validates that the droplet diameter is appropriate for separation.
+   *
+   * @param actualDropletDiameterUm actual droplet diameter in micrometers
+   * @param isGasLiquid true for gas-liquid separation, false for liquid-liquid
+   * @return true if droplet diameter is at or above design diameter
+   */
+  public boolean validateDropletDiameter(double actualDropletDiameterUm, boolean isGasLiquid) {
+    double designDiameter = isGasLiquid ? dropletDiameterGasLiquid : dropletDiameterLiquidLiquid;
+    return actualDropletDiameterUm >= designDiameter;
+  }
+
+  /**
+   * Performs comprehensive validation of separator design against process requirements.
+   *
+   * @return ValidationResult with status and any issues found
+   */
+  public SeparatorValidationResult validateDesignComprehensive() {
+    SeparatorValidationResult result = new SeparatorValidationResult();
+
+    // Calculate actual gas velocity from design
+    double crossSectionalArea = Math.PI * Math.pow(innerDiameter / 2.0, 2);
+    double gasArea = crossSectionalArea * Fg;
+    double actualGasVelocity = maxDesignVolumeFlow / gasArea;
+
+    if (!validateGasVelocity(actualGasVelocity)) {
+      result.addIssue("Gas velocity " + String.format("%.2f", actualGasVelocity)
+          + " m/s exceeds maximum " + String.format("%.2f", maxGasVelocity) + " m/s");
+    }
+
+    // Validate retention time
+    if (retentionTime < minOilRetentionTime * 60.0) {
+      result.addIssue("Oil retention time " + String.format("%.1f", retentionTime / 60.0)
+          + " min below minimum " + String.format("%.1f", minOilRetentionTime) + " min");
+    }
+
+    // Validate L/D ratio
+    double ldRatio = tantanLength / innerDiameter;
+    if (ldRatio < 2.0 || ldRatio > 6.0) {
+      result.addIssue(
+          "L/D ratio " + String.format("%.1f", ldRatio) + " outside recommended range 2.0-6.0");
+    }
+
+    // Validate design pressure margin
+    if (designPressureMargin < 1.05) {
+      result.addIssue("Design pressure margin " + String.format("%.2f", designPressureMargin)
+          + " below recommended 1.05");
+    }
+
+    result.setValid(result.getIssues().isEmpty());
+    return result;
+  }
+
+  /**
+   * Inner class to hold validation results.
+   */
+  public static class SeparatorValidationResult {
+    private boolean valid = true;
+    private java.util.List<String> issues = new java.util.ArrayList<>();
+
+    public boolean isValid() {
+      return valid;
+    }
+
+    public void setValid(boolean valid) {
+      this.valid = valid;
+    }
+
+    public java.util.List<String> getIssues() {
+      return issues;
+    }
+
+    public void addIssue(String issue) {
+      issues.add(issue);
+    }
   }
 }

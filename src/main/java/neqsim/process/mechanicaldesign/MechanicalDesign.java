@@ -126,6 +126,34 @@ public class MechanicalDesign implements java.io.Serializable {
   }
 
   /**
+   * Gets the maximum design power in kW.
+   *
+   * @return maximum design power in kW
+   */
+  public double getPower() {
+    return maxDesignPower;
+  }
+
+  /**
+   * Gets the maximum design duty in kW.
+   *
+   * @return maximum design duty in kW
+   */
+  public double getDuty() {
+    return maxDesignDuty;
+  }
+
+  /**
+   * Gets the heat transfer area in m2.
+   *
+   * @return heat transfer area in m2
+   */
+  public double getHeatTransferArea() {
+    // Override in heat exchanger subclass
+    return 0.0;
+  }
+
+  /**
    * Sets the maximum design Cv for valves.
    *
    * @param maxDesignCv maximum Cv value
@@ -1588,6 +1616,168 @@ public class MechanicalDesign implements java.io.Serializable {
    */
   public MechanicalDesignResponse getResponse() {
     return new MechanicalDesignResponse(this);
+  }
+
+  // ============================================================================
+  // Cost Estimation Methods
+  // ============================================================================
+
+  /**
+   * Calculate cost estimates for this equipment.
+   *
+   * <p>
+   * This method calculates purchased equipment cost, bare module cost, total module cost, and grass
+   * roots cost based on the equipment weight and design parameters.
+   * </p>
+   *
+   * <p>
+   * Usage example:
+   * </p>
+   * 
+   * <pre>
+   * {@code
+   * MechanicalDesign mecDesign = separator.getMechanicalDesign();
+   * mecDesign.calcDesign();
+   * mecDesign.calculateCostEstimate();
+   * double totalCost = mecDesign.getTotalModuleCost();
+   * }
+   * </pre>
+   */
+  public void calculateCostEstimate() {
+    if (costEstimate != null) {
+      costEstimate.calculateCostEstimate();
+    }
+  }
+
+  /**
+   * Get the purchased equipment cost.
+   *
+   * @return purchased equipment cost in USD
+   */
+  public double getPurchasedEquipmentCost() {
+    if (costEstimate == null) {
+      return 0.0;
+    }
+    return costEstimate.getPurchasedEquipmentCost();
+  }
+
+  /**
+   * Get the bare module cost.
+   *
+   * <p>
+   * Bare module cost includes the purchased equipment cost plus installation, piping,
+   * instrumentation, and other direct costs.
+   * </p>
+   *
+   * @return bare module cost in USD
+   */
+  public double getBareModuleCost() {
+    if (costEstimate == null) {
+      return 0.0;
+    }
+    return costEstimate.getBareModuleCost();
+  }
+
+  /**
+   * Get the total module cost.
+   *
+   * <p>
+   * Total module cost includes bare module cost plus contingency and engineering fees.
+   * </p>
+   *
+   * @return total module cost in USD
+   */
+  public double getTotalModuleCost() {
+    if (costEstimate == null) {
+      return 0.0;
+    }
+    return costEstimate.getTotalModuleCost();
+  }
+
+  /**
+   * Get the grass roots cost.
+   *
+   * <p>
+   * Grass roots cost is the total cost for a new facility including site development, buildings,
+   * and offsites.
+   * </p>
+   *
+   * @return grass roots cost in USD
+   */
+  public double getGrassRootsCost() {
+    if (costEstimate == null) {
+      return 0.0;
+    }
+    return costEstimate.getGrassRootsCost();
+  }
+
+  /**
+   * Get the installation labor man-hours.
+   *
+   * @return installation man-hours
+   */
+  public double getInstallationManHours() {
+    if (costEstimate == null) {
+      return 0.0;
+    }
+    return costEstimate.getInstallationManHours();
+  }
+
+  /**
+   * Generate bill of materials for this equipment.
+   *
+   * @return list of BOM items as maps
+   */
+  public java.util.List<java.util.Map<String, Object>> generateBillOfMaterials() {
+    if (costEstimate == null) {
+      return new ArrayList<>();
+    }
+    return costEstimate.generateBillOfMaterials();
+  }
+
+  /**
+   * Set the material of construction for cost estimation.
+   *
+   * @param material material name (e.g., "Carbon Steel", "SS316", "Monel")
+   */
+  public void setCostEstimateMaterial(String material) {
+    if (costEstimate != null) {
+      costEstimate.setMaterialOfConstruction(material);
+    }
+  }
+
+  /**
+   * Set the location factor for cost estimation.
+   *
+   * @param factor location factor (1.0 = US Gulf Coast)
+   */
+  public void setCostEstimateLocationFactor(double factor) {
+    if (costEstimate != null) {
+      costEstimate.setLocationFactor(factor);
+    }
+  }
+
+  /**
+   * Set the current CEPCI for cost escalation.
+   *
+   * @param cepci Chemical Engineering Plant Cost Index
+   */
+  public void setCostEstimateCepci(double cepci) {
+    if (costEstimate != null) {
+      costEstimate.setCurrentCepci(cepci);
+    }
+  }
+
+  /**
+   * Export cost estimate to JSON format.
+   *
+   * @return JSON string of cost estimate
+   */
+  public String costEstimateToJson() {
+    if (costEstimate == null) {
+      return "{}";
+    }
+    return costEstimate.toJson();
   }
 
   /** {@inheritDoc} */

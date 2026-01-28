@@ -133,6 +133,40 @@ public class HeatExchangerMechanicalDesignResponse extends MechanicalDesignRespo
   private double channelWeight;
 
   // ============================================================================
+  // Process Design Parameters (added for TR3500 compliance)
+  // ============================================================================
+
+  /** Shell-side fouling resistance (design value) [m²K/W]. */
+  private double designShellFoulingResistance;
+
+  /** Tube-side fouling resistance (design value) [m²K/W]. */
+  private double designTubeFoulingResistance;
+
+  /** TEMA equipment class (R, C, or B). */
+  private String temaClass;
+
+  /** Maximum tube velocity [m/s]. */
+  private double maxTubeVelocity;
+
+  /** Maximum shell velocity [m/s]. */
+  private double maxShellVelocity;
+
+  /** Minimum approach temperature [°C]. */
+  private double minApproachTemperature;
+
+  /** Maximum tube length [m]. */
+  private double maxTubeLength;
+
+  /** Vibration analysis required flag. */
+  private boolean vibrationAnalysisRequired;
+
+  /** Clean overall heat transfer coefficient [W/m²K]. */
+  private double cleanOverallHeatTransferCoeff;
+
+  /** Fouled overall heat transfer coefficient [W/m²K]. */
+  private double fouledOverallHeatTransferCoeff;
+
+  // ============================================================================
   // Constructors
   // ============================================================================
 
@@ -167,9 +201,18 @@ public class HeatExchangerMechanicalDesignResponse extends MechanicalDesignRespo
       return;
     }
 
-    // The base HeatExchangerMechanicalDesign may have limited fields
-    // This will be populated based on what's available
-    // Subclasses can override to add more specific data
+    // Populate process design parameters
+    // Use shell-side HC fouling as default design value
+    this.designShellFoulingResistance = mecDesign.getFoulingResistanceShellHC();
+    // Use tube-side HC fouling as default design value
+    this.designTubeFoulingResistance = mecDesign.getFoulingResistanceTubeHC();
+    this.temaClass = mecDesign.getTemaClass();
+    this.maxTubeVelocity = mecDesign.getMaxTubeVelocity();
+    this.maxShellVelocity = mecDesign.getMaxShellVelocity();
+    this.minApproachTemperature = mecDesign.getMinApproachTemperatureC();
+    this.maxTubeLength = mecDesign.getMaxTubeLengthM();
+    // Default to false - can be determined based on design conditions
+    this.vibrationAnalysisRequired = false;
   }
 
   // ============================================================================
@@ -470,5 +513,89 @@ public class HeatExchangerMechanicalDesignResponse extends MechanicalDesignRespo
 
   public void setChannelWeight(double channelWeight) {
     this.channelWeight = channelWeight;
+  }
+
+  // ============================================================================
+  // Getters and Setters for Process Design Parameters
+  // ============================================================================
+
+  public double getDesignShellFoulingResistance() {
+    return designShellFoulingResistance;
+  }
+
+  public void setDesignShellFoulingResistance(double designShellFoulingResistance) {
+    this.designShellFoulingResistance = designShellFoulingResistance;
+  }
+
+  public double getDesignTubeFoulingResistance() {
+    return designTubeFoulingResistance;
+  }
+
+  public void setDesignTubeFoulingResistance(double designTubeFoulingResistance) {
+    this.designTubeFoulingResistance = designTubeFoulingResistance;
+  }
+
+  public String getTemaClass() {
+    return temaClass;
+  }
+
+  public void setTemaClass(String temaClass) {
+    this.temaClass = temaClass;
+  }
+
+  public double getMaxTubeVelocity() {
+    return maxTubeVelocity;
+  }
+
+  public void setMaxTubeVelocity(double maxTubeVelocity) {
+    this.maxTubeVelocity = maxTubeVelocity;
+  }
+
+  public double getMaxShellVelocity() {
+    return maxShellVelocity;
+  }
+
+  public void setMaxShellVelocity(double maxShellVelocity) {
+    this.maxShellVelocity = maxShellVelocity;
+  }
+
+  public double getMinApproachTemperature() {
+    return minApproachTemperature;
+  }
+
+  public void setMinApproachTemperature(double minApproachTemperature) {
+    this.minApproachTemperature = minApproachTemperature;
+  }
+
+  public double getMaxTubeLength() {
+    return maxTubeLength;
+  }
+
+  public void setMaxTubeLength(double maxTubeLength) {
+    this.maxTubeLength = maxTubeLength;
+  }
+
+  public boolean isVibrationAnalysisRequired() {
+    return vibrationAnalysisRequired;
+  }
+
+  public void setVibrationAnalysisRequired(boolean vibrationAnalysisRequired) {
+    this.vibrationAnalysisRequired = vibrationAnalysisRequired;
+  }
+
+  public double getCleanOverallHeatTransferCoeff() {
+    return cleanOverallHeatTransferCoeff;
+  }
+
+  public void setCleanOverallHeatTransferCoeff(double cleanOverallHeatTransferCoeff) {
+    this.cleanOverallHeatTransferCoeff = cleanOverallHeatTransferCoeff;
+  }
+
+  public double getFouledOverallHeatTransferCoeff() {
+    return fouledOverallHeatTransferCoeff;
+  }
+
+  public void setFouledOverallHeatTransferCoeff(double fouledOverallHeatTransferCoeff) {
+    this.fouledOverallHeatTransferCoeff = fouledOverallHeatTransferCoeff;
   }
 }

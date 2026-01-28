@@ -112,6 +112,34 @@ public class PumpMechanicalDesignResponse extends MechanicalDesignResponse {
   private double fluidViscosity;
 
   // ============================================================================
+  // Process Design Parameters (added for TR3500 compliance)
+  // ============================================================================
+
+  /** NPSH margin factor. */
+  private double npshMarginFactor;
+
+  /** Hydraulic power margin factor. */
+  private double hydraulicPowerMargin;
+
+  /** Preferred Operating Region low boundary fraction of BEP. */
+  private double porLowFraction;
+
+  /** Preferred Operating Region high boundary fraction of BEP. */
+  private double porHighFraction;
+
+  /** Allowable Operating Region low boundary fraction of BEP. */
+  private double aorLowFraction;
+
+  /** Allowable Operating Region high boundary fraction of BEP. */
+  private double aorHighFraction;
+
+  /** Maximum suction specific speed. */
+  private double maxSuctionSpecificSpeed;
+
+  /** Head margin factor. */
+  private double headMarginFactor;
+
+  // ============================================================================
   // Constructors
   // ============================================================================
 
@@ -165,6 +193,16 @@ public class PumpMechanicalDesignResponse extends MechanicalDesignResponse {
     if (mecDesign.getSealType() != null) {
       this.sealType = mecDesign.getSealType().name();
     }
+
+    // Populate process design parameters
+    this.npshMarginFactor = mecDesign.getNpshMarginFactor();
+    this.hydraulicPowerMargin = mecDesign.getHydraulicPowerMargin();
+    this.porLowFraction = mecDesign.getPorLowFraction();
+    this.porHighFraction = mecDesign.getPorHighFraction();
+    this.aorLowFraction = mecDesign.getAorLowFraction();
+    this.aorHighFraction = mecDesign.getAorHighFraction();
+    this.maxSuctionSpecificSpeed = mecDesign.getMaxSuctionSpecificSpeed();
+    this.headMarginFactor = mecDesign.getHeadMarginFactor();
   }
 
   // ============================================================================
@@ -409,5 +447,73 @@ public class PumpMechanicalDesignResponse extends MechanicalDesignResponse {
 
   public void setFluidViscosity(double fluidViscosity) {
     this.fluidViscosity = fluidViscosity;
+  }
+
+  // ============================================================================
+  // Getters and Setters for Process Design Parameters
+  // ============================================================================
+
+  public double getNpshMarginFactor() {
+    return npshMarginFactor;
+  }
+
+  public void setNpshMarginFactor(double npshMarginFactor) {
+    this.npshMarginFactor = npshMarginFactor;
+  }
+
+  public double getHydraulicPowerMargin() {
+    return hydraulicPowerMargin;
+  }
+
+  public void setHydraulicPowerMargin(double hydraulicPowerMargin) {
+    this.hydraulicPowerMargin = hydraulicPowerMargin;
+  }
+
+  public double getPorLowFraction() {
+    return porLowFraction;
+  }
+
+  public void setPorLowFraction(double porLowFraction) {
+    this.porLowFraction = porLowFraction;
+  }
+
+  public double getPorHighFraction() {
+    return porHighFraction;
+  }
+
+  public void setPorHighFraction(double porHighFraction) {
+    this.porHighFraction = porHighFraction;
+  }
+
+  public double getAorLowFraction() {
+    return aorLowFraction;
+  }
+
+  public void setAorLowFraction(double aorLowFraction) {
+    this.aorLowFraction = aorLowFraction;
+  }
+
+  public double getAorHighFraction() {
+    return aorHighFraction;
+  }
+
+  public void setAorHighFraction(double aorHighFraction) {
+    this.aorHighFraction = aorHighFraction;
+  }
+
+  public double getMaxSuctionSpecificSpeed() {
+    return maxSuctionSpecificSpeed;
+  }
+
+  public void setMaxSuctionSpecificSpeed(double maxSuctionSpecificSpeed) {
+    this.maxSuctionSpecificSpeed = maxSuctionSpecificSpeed;
+  }
+
+  public double getHeadMarginFactor() {
+    return headMarginFactor;
+  }
+
+  public void setHeadMarginFactor(double headMarginFactor) {
+    this.headMarginFactor = headMarginFactor;
   }
 }

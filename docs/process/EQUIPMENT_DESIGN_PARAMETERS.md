@@ -2,6 +2,15 @@
 
 This guide describes how to manually set design parameters for process equipment in NeqSim when not using `autoSizeEquipment()`. Understanding these parameters is essential for accurate capacity utilization tracking and bottleneck analysis.
 
+> **📘 Related Documentation**
+>
+> | Topic | Documentation |
+> |-------|---------------|
+> | **Mechanical Design** | [mechanical_design.md](mechanical_design.md) - Equipment sizing, weights, JSON export |
+> | **Constraints & Optimization** | [optimization/OPTIMIZATION_AND_CONSTRAINTS.md](optimization/OPTIMIZATION_AND_CONSTRAINTS.md) - Complete optimization guide |
+> | **Capacity Constraints** | [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK.md) - Multi-constraint bottleneck detection |
+> | **Cost Estimation** | [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK.md) - CAPEX, OPEX, financial metrics |
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -687,6 +696,144 @@ process.autoSizeEquipment("Shell", "DEP-31.38.01.11");
 
 ---
 
+## Design Validation Methods
+
+Each mechanical design class provides validation methods to verify that the design meets industry standards and process requirements. These methods return either boolean values for individual checks or comprehensive validation results with issue lists.
+
+### Separator Design Validation
+
+```java
+SeparatorMechanicalDesign sepDesign = (SeparatorMechanicalDesign) separator.getMechanicalDesign();
+
+// Individual parameter validation
+boolean gasOk = sepDesign.validateGasVelocity(actualVelocity);     // m/s
+boolean liqOk = sepDesign.validateLiquidVelocity(actualVelocity);  // m/s
+boolean retOk = sepDesign.validateRetentionTime(minutes, isOil);   // true=oil, false=water
+boolean dropOk = sepDesign.validateDropletDiameter(diameterUm, isGasLiq);
+
+// Comprehensive validation
+SeparatorMechanicalDesign.SeparatorValidationResult result = sepDesign.validateDesignComprehensive();
+System.out.println("Valid: " + result.isValid());
+for (String issue : result.getIssues()) {
+    System.out.println("  Issue: " + issue);
+}
+```
+
+**Separator Validation Checks:**
+- Gas velocity vs maximum allowed
+- L/D ratio within 2.0-6.0 range
+- Retention time vs minimum requirements
+- Design pressure margin adequacy
+
+### Compressor Design Validation
+
+```java
+CompressorMechanicalDesign compDesign = compressor.getMechanicalDesign();
+
+// Individual validation
+boolean effOk = compDesign.validateEfficiency(efficiencyPercent);  // e.g., 78.0 for 78%
+boolean tempOk = compDesign.validateDischargeTemperature(tempC);
+boolean prOk = compDesign.validatePressureRatioPerStage(ratio);
+boolean vibOk = compDesign.validateVibration(mmPerSec);
+
+// Comprehensive validation
+CompressorMechanicalDesign.CompressorValidationResult result = compDesign.validateDesign();
+```
+
+**Compressor Validation Checks:**
+- Discharge temperature vs material/process limits
+- Polytropic efficiency vs minimum target
+- Pressure ratio per stage vs maximum
+- Surge margin adequacy (minimum 10%)
+
+### Pump Design Validation (API-610)
+
+```java
+PumpMechanicalDesign pumpDesign = pump.getMechanicalDesign();
+
+// NPSH margin validation
+boolean npshOk = pumpDesign.validateNpshMargin(npshAvailable, npshRequired);
+
+// Operating region validation
+boolean porOk = pumpDesign.validateOperatingInPOR(operatingFlow, bepFlow);  // Preferred region
+boolean aorOk = pumpDesign.validateOperatingInAOR(operatingFlow, bepFlow);  // Allowable region
+
+// Suction specific speed validation
+boolean nssOk = pumpDesign.validateSuctionSpecificSpeed(actualNss);
+
+// Comprehensive validation
+PumpMechanicalDesign.PumpValidationResult result = pumpDesign.validateDesign();
+```
+
+**Pump Validation Checks:**
+- NPSH margin (NPSHa / NPSHr) vs minimum factor
+- Operating point within Preferred Operating Region (80-110% of BEP)
+- Operating point within Allowable Operating Region (60-130% of BEP)
+- Suction specific speed vs maximum (typically 11,000)
+- Driver power margin adequacy
+
+### Heat Exchanger Design Validation (TEMA)
+
+```java
+HeatExchangerMechanicalDesign hxDesign = heatExchanger.getMechanicalDesign();
+
+// Velocity validation
+boolean tubeOk = hxDesign.validateTubeVelocity(velocity);    // Must be between min and max
+boolean shellOk = hxDesign.validateShellVelocity(velocity);
+
+// Temperature validation
+boolean approachOk = hxDesign.validateApproachTemperature(approachC);
+
+// Geometry validation
+boolean lengthOk = hxDesign.validateTubeLength(lengthM);
+
+// Comprehensive validation
+HeatExchangerMechanicalDesign.HeatExchangerValidationResult result = hxDesign.validateDesign();
+```
+
+**Heat Exchanger Validation Checks:**
+- Tube velocity between minimum (fouling) and maximum (erosion)
+- Shell velocity vs erosion limit
+- Approach temperature vs minimum (pinch)
+- Tube length vs mechanical limits
+- Design pressure margin adequacy
+
+### Example: Complete Design Validation Workflow
+
+```java
+// Build and run process
+ProcessSystem process = new ProcessSystem();
+// ... add equipment ...
+process.run();
+
+// Validate all equipment
+boolean allValid = true;
+StringBuilder report = new StringBuilder();
+
+for (ProcessEquipmentInterface equip : process.getEquipmentList()) {
+    MechanicalDesign design = equip.getMechanicalDesign();
+    design.calcDesign();
+    
+    if (design instanceof SeparatorMechanicalDesign) {
+        SeparatorMechanicalDesign.SeparatorValidationResult result = 
+            ((SeparatorMechanicalDesign) design).validateDesignComprehensive();
+        if (!result.isValid()) {
+            allValid = false;
+            report.append(equip.getName() + " issues:\n");
+            result.getIssues().forEach(i -> report.append("  - " + i + "\n"));
+        }
+    }
+    // Similar for other equipment types...
+}
+
+System.out.println("All designs valid: " + allValid);
+if (!allValid) {
+    System.out.println(report.toString());
+}
+```
+
+---
+
 ## Capacity Constraints and Utilization
 
 ### Understanding Utilization
@@ -756,4 +903,6 @@ List<String> nearLimit = process.getEquipmentNearCapacityLimit();
 
 - [AutoSizeable Interface](../src/main/java/neqsim/process/design/AutoSizeable.java)
 - [Capacity Constraint Framework](CAPACITY_CONSTRAINT_FRAMEWORK.md)
-- [Mechanical Design Framework](DESIGN_FRAMEWORK.md)
+- [Mechanical Design Framework](mechanical_design.md)
+- [Optimization & Constraints Guide](optimization/OPTIMIZATION_AND_CONSTRAINTS.md)
+- [Cost Estimation Framework](COST_ESTIMATION_FRAMEWORK.md)

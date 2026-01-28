@@ -727,6 +727,13 @@ public class FacilityCapacity implements Serializable {
 
   /**
    * Generates debottleneck options for near-bottleneck equipment.
+   *
+   * @param baseResult the optimization result containing bottleneck and utilization data
+   * @param feedStream the feed stream used for capacity calculations
+   * @param lowerBound the lower bound of the rate range
+   * @param upperBound the upper bound of the rate range
+   * @param rateUnit the unit of measurement for the rate
+   * @return list of debottleneck options sorted by NPV (best first)
    */
   private List<DebottleneckOption> generateDebottleneckOptions(OptimizationResult baseResult,
       StreamInterface feedStream, double lowerBound, double upperBound, String rateUnit) {
