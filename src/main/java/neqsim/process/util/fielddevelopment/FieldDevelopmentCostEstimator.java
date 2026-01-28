@@ -31,6 +31,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <h2>Fidelity Levels</h2>
  * 
  * <table border="1">
+ * <caption>Cost Estimation Fidelity Levels</caption>
  * <tr>
  * <th>Level</th>
  * <th>Accuracy</th>
