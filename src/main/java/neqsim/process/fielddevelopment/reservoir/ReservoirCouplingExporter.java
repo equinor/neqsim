@@ -95,37 +95,65 @@ public class ReservoirCouplingExporter implements Serializable {
     private double[] almValues; // artificial lift
     private double[][][][][] bhpValues; // 5D array: flow, thp, wct, gor, alm
 
-    /** Get table number. */
+    /**
+     * Get table number.
+     *
+     * @return the VFP table number
+     */
     public int getTableNumber() {
       return tableNumber;
     }
 
-    /** Set table number. */
+    /**
+     * Set table number.
+     *
+     * @param num the VFP table number to set
+     */
     public void setTableNumber(int num) {
       this.tableNumber = num;
     }
 
-    /** Get well name. */
+    /**
+     * Get well name.
+     *
+     * @return the well name associated with this VFP table
+     */
     public String getWellName() {
       return wellName;
     }
 
-    /** Set well name. */
+    /**
+     * Set well name.
+     *
+     * @param name the well name to set
+     */
     public void setWellName(String name) {
       this.wellName = name;
     }
 
-    /** Get datum depth. */
+    /**
+     * Get datum depth.
+     *
+     * @return the datum depth in meters
+     */
     public double getDatumDepth() {
       return datumDepth;
     }
 
-    /** Set datum depth. */
+    /**
+     * Set datum depth.
+     *
+     * @param depth the datum depth to set in meters
+     */
     public void setDatumDepth(double depth) {
       this.datumDepth = depth;
     }
 
-    /** Get flow rates. */
+    /**
+     * Get flow rates.
+     *
+     * @return the array of flow rates in Sm3/d
+     */
     public double[] getFlowRates() {
       return flowRates;
     }
@@ -182,17 +210,29 @@ public class ReservoirCouplingExporter implements Serializable {
       this.content = content;
     }
 
-    /** Get date. */
+    /**
+     * Get date.
+     *
+     * @return the schedule date
+     */
     public Date getDate() {
       return date;
     }
 
-    /** Get keyword. */
+    /**
+     * Get keyword.
+     *
+     * @return the Eclipse keyword
+     */
     public String getKeyword() {
       return keyword;
     }
 
-    /** Get content. */
+    /**
+     * Get content.
+     *
+     * @return the keyword content
+     */
     public String getContent() {
       return content;
     }
@@ -529,6 +569,8 @@ public class ReservoirCouplingExporter implements Serializable {
 
   /**
    * Append VFPPROD keyword to buffer.
+   *
+   * @param vfp the VFP table containing production well data
    */
   private void appendVfpProdKeyword(VfpTable vfp) {
     keywordsBuffer.append("VFPPROD\n");
@@ -591,6 +633,8 @@ public class ReservoirCouplingExporter implements Serializable {
 
   /**
    * Append VFPINJ keyword to buffer.
+   *
+   * @param vfp the VFP table containing injection well data
    */
   private void appendVfpInjKeyword(VfpTable vfp) {
     keywordsBuffer.append("VFPINJ\n");
@@ -766,6 +810,11 @@ public class ReservoirCouplingExporter implements Serializable {
 
   /**
    * Generate linearly spaced array.
+   *
+   * @param start  the starting value of the sequence
+   * @param end    the ending value of the sequence
+   * @param points the number of points to generate
+   * @return an array of linearly spaced values from start to end
    */
   private double[] linspace(double start, double end, int points) {
     double[] result = new double[points];
