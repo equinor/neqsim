@@ -185,6 +185,7 @@ class AccelerationMethodTest {
   @Nested
   @DisplayName("Recycle Acceleration Integration")
   class RecycleIntegrationTests {
+    @Test
     @DisplayName("Default acceleration method is direct substitution")
     void testDefaultMethod() {
       Recycle recycle = new Recycle("test-recycle");
@@ -260,6 +261,7 @@ class AccelerationMethodTest {
   @Nested
   @DisplayName("RecycleController Acceleration Integration")
   class RecycleControllerTests {
+    @Test
     @DisplayName("RecycleController can set acceleration method for all recycles")
     void testSetAccelerationMethodForAll() {
       RecycleController controller = new RecycleController();
@@ -401,9 +403,7 @@ class AccelerationMethodTest {
   @Nested
   @DisplayName("Acceleration Performance Benchmark")
   class PerformanceBenchmarkTests {
-    /*
-     * Demonstrate Wegstein formula and q-factor calculation.
-     */
+    /** Demonstrate Wegstein formula and q-factor calculation. */
 
     @Test
     @DisplayName("Benchmark: Wegstein formula demonstration")
