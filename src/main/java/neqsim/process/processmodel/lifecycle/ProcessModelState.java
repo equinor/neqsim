@@ -681,7 +681,11 @@ public class ProcessModelState implements Serializable {
     private List<String> errors = new ArrayList<>();
     private List<String> warnings = new ArrayList<>();
 
-    /** Adds an error. */
+    /**
+     * Adds an error.
+     *
+     * @param error the error message to add
+     */
     public void addError(String error) {
       errors.add(error);
     }

@@ -165,37 +165,65 @@ public class SystemMechanicalDesign implements java.io.Serializable {
       return type;
     }
 
-    /** Get equipment weight in kg. @return weight */
+    /**
+     * Get equipment weight in kg.
+     *
+     * @return weight in kg
+     */
     public double getWeight() {
       return weight;
     }
 
-    /** Set equipment weight. @param weight weight in kg */
+    /**
+     * Set equipment weight.
+     *
+     * @param weight weight in kg
+     */
     public void setWeight(double weight) {
       this.weight = weight;
     }
 
-    /** Get design pressure in bara. @return design pressure */
+    /**
+     * Get design pressure in bara.
+     *
+     * @return design pressure in bara
+     */
     public double getDesignPressure() {
       return designPressure;
     }
 
-    /** Set design pressure. @param designPressure pressure in bara */
+    /**
+     * Set design pressure.
+     *
+     * @param designPressure pressure in bara
+     */
     public void setDesignPressure(double designPressure) {
       this.designPressure = designPressure;
     }
 
-    /** Get design temperature in °C. @return design temperature */
+    /**
+     * Get design temperature in °C.
+     *
+     * @return design temperature in °C
+     */
     public double getDesignTemperature() {
       return designTemperature;
     }
 
-    /** Set design temperature. @param designTemperature temperature in °C */
+    /**
+     * Set design temperature.
+     *
+     * @param designTemperature temperature in °C
+     */
     public void setDesignTemperature(double designTemperature) {
       this.designTemperature = designTemperature;
     }
 
-    /** Get power in kW. @return power */
+    /**
+     * Get power in kW.
+     *
+     * @return power in kW
+     */
     public double getPower() {
       return power;
     }

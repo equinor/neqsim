@@ -716,6 +716,8 @@ public class FieldDevelopmentWorkflow implements Serializable {
 
   /**
    * Runs detailed-level analysis (±20% accuracy).
+   *
+   * @return workflow result with detailed analysis data
    */
   private WorkflowResult runDetailed() {
     // Start with conceptual
@@ -918,6 +920,10 @@ public class FieldDevelopmentWorkflow implements Serializable {
 
   /**
    * Runs reservoir depletion with wells to generate production profile.
+   *
+   * @param res the reservoir to deplete
+   * @param wellList the list of wells producing from the reservoir
+   * @return map of year to annual production rate in Sm3/day
    */
   private Map<Integer, Double> runReservoirDepletion(SimpleReservoir res,
       List<WellSystem> wellList) {

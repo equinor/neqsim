@@ -692,6 +692,10 @@ public class TiebackAnalyzer implements Serializable {
 
   /**
    * Quick NPV estimate for screening.
+   *
+   * @param reservesMMboe recoverable reserves in million barrels of oil equivalent
+   * @param capexMusd capital expenditure in million USD
+   * @return estimated net present value in million USD
    */
   private double estimateQuickNpv(double reservesMMboe, double capexMusd) {
     // Simplified NPV: revenue - capex - opex
@@ -716,7 +720,11 @@ public class TiebackAnalyzer implements Serializable {
     private double estimatedCapexMusd;
     private double estimatedNpvMusd;
 
-    /** Get host name. */
+    /**
+     * Get host name.
+     *
+     * @return the host facility name
+     */
     public String getHostName() {
       return hostName;
     }

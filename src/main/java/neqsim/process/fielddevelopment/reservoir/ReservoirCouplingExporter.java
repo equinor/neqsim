@@ -158,12 +158,20 @@ public class ReservoirCouplingExporter implements Serializable {
       return flowRates;
     }
 
-    /** Get THP values. */
+    /**
+     * Get THP values.
+     *
+     * @return the array of tubing head pressure values in bara
+     */
     public double[] getThpValues() {
       return thpValues;
     }
 
-    /** Get water cut values. */
+    /**
+     * Get water cut values.
+     *
+     * @return the array of water cut values (fraction 0-1)
+     */
     public double[] getWctValues() {
       return wctValues;
     }
