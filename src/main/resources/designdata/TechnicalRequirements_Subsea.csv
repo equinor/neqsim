@@ -1,0 +1,59 @@
+Company,EquipmentType,ParameterName,Value,Unit,Standard,Description
+Equinor,PLET,DesignPressureFactor,1.10,,TR1414,Design pressure factor over MAOP
+Equinor,PLET,CorrosionAllowance,3.0,mm,TR1414,Internal corrosion allowance
+Equinor,PLET,FoundationSafetyFactor,2.0,,TR2300,Foundation bearing capacity safety factor
+Equinor,PLET,MinWallThickness,12.7,mm,TR1414,Minimum wall thickness
+Equinor,PLET,IsolationValveRequired,true,,TR1414,Isolation valve requirement
+Equinor,PLEM,DesignPressureFactor,1.10,,TR1414,Design pressure factor over MAOP
+Equinor,PLEM,CorrosionAllowance,3.0,mm,TR1414,Internal corrosion allowance
+Equinor,PLEM,MinHeaderWallThickness,19.05,mm,TR1414,Minimum header wall thickness
+Equinor,SubseaManifold,DesignPressureFactor,1.10,,TR2300,Design pressure factor
+Equinor,SubseaManifold,CorrosionAllowance,3.0,mm,TR2300,Internal corrosion allowance
+Equinor,SubseaManifold,FoundationSafetyFactor,2.0,,TR2300,Foundation bearing capacity factor
+Equinor,SubseaManifold,MinValveSkidCapacity,6,,TR2300,Minimum valve skid well slots
+Equinor,SubseaJumper,DesignFactor,0.72,,TR1414,DNV-ST-F101 design factor
+Equinor,SubseaJumper,CorrosionAllowance,3.0,mm,TR1414,Internal corrosion allowance
+Equinor,SubseaJumper,FabricationTolerance,12.5,%,TR1414,Wall thickness tolerance
+Equinor,SubseaJumper,MinBendRadiusFactor,3.0,,TR1414,Minimum bend radius as factor of OD
+Equinor,Umbilical,MinTubeWallThickness,1.5,mm,TR3100,Minimum hydraulic tube wall thickness
+Equinor,Umbilical,DesignFactor,0.60,,TR3100,Design factor for tubes
+Equinor,Umbilical,MinBendRadiusFactor,8.0,,TR3100,MBR factor for steel tube umbilical
+Equinor,Umbilical,ServiceLifeYears,25,years,TR3100,Design service life
+Equinor,SubseaTree,TestPressureFactor,1.50,,TR2300,FAT test pressure factor
+Equinor,SubseaTree,DesignFactor,0.67,,TR2300,Design factor per API 17D
+Equinor,SubseaTree,FailSafeClose,true,,TR2300,Fail safe close requirement
+Equinor,SubseaTree,MinBoreSize,4.0,inches,TR2300,Minimum bore size
+Equinor,FlexiblePipe,BurstDesignFactor,0.67,,TR3100,Burst pressure design factor
+Equinor,FlexiblePipe,CollapseDesignFactor,0.67,,TR3100,Collapse pressure design factor
+Equinor,FlexiblePipe,ServiceLifeYears,25,years,TR3100,Design service life
+Equinor,FlexiblePipe,MinInternalSheathThickness,6.0,mm,TR3100,Minimum internal sheath thickness
+Equinor,SubseaBooster,MotorPowerMargin,1.20,,TR3200,Motor power margin factor
+Equinor,SubseaBooster,MinMTBF,40000,hours,TR3200,Minimum mean time between failures
+Equinor,SubseaBooster,DesignLifeYears,25,years,TR3200,Design service life
+Equinor,SubseaBooster,RedundancyRequired,false,,TR3200,Motor redundancy requirement
+Shell,PLET,DesignPressureFactor,1.10,,DEP-31.38.01.11,Design pressure factor
+Shell,PLET,CorrosionAllowance,3.0,mm,DEP-31.38.01.11,Internal corrosion allowance
+Shell,SubseaManifold,DesignPressureFactor,1.10,,DEP-31.38.01.11,Design pressure factor
+Shell,SubseaManifold,FoundationSafetyFactor,2.5,,DEP-31.38.01.11,Foundation safety factor
+Shell,SubseaTree,TestPressureFactor,1.50,,DEP-31.38.01.11,Test pressure factor
+Shell,Umbilical,MinBendRadiusFactor,8.0,,DEP-31.38.01.11,MBR factor
+TotalEnergies,PLET,DesignPressureFactor,1.10,,GS-EP-PVV-611,Design pressure factor
+TotalEnergies,SubseaManifold,FoundationSafetyFactor,2.0,,GS-EP-PVV-611,Foundation safety factor
+BP,PLET,CorrosionAllowance,3.0,mm,GP-44-70,Internal corrosion allowance
+BP,SubseaTree,FailSafeClose,true,,GP-44-70,Fail safe close requirement
+DEFAULT,PLET,DesignPressureFactor,1.10,,Industry,Default design pressure factor
+DEFAULT,PLET,CorrosionAllowance,3.0,mm,Industry,Default corrosion allowance
+DEFAULT,PLET,FoundationSafetyFactor,2.0,,Industry,Default foundation safety factor
+DEFAULT,PLEM,DesignPressureFactor,1.10,,Industry,Default design pressure factor
+DEFAULT,SubseaManifold,DesignPressureFactor,1.10,,Industry,Default design pressure factor
+DEFAULT,SubseaManifold,FoundationSafetyFactor,2.0,,Industry,Default foundation safety factor
+DEFAULT,SubseaJumper,DesignFactor,0.72,,DNV-ST-F101,DNV design factor
+DEFAULT,SubseaJumper,MinBendRadiusFactor,3.0,,DNV-ST-F101,Minimum bend radius factor
+DEFAULT,Umbilical,DesignFactor,0.60,,API-RP-17E,Design factor for tubes
+DEFAULT,Umbilical,MinBendRadiusFactor,8.0,,API-RP-17E,MBR factor
+DEFAULT,SubseaTree,DesignFactor,0.67,,API-Spec-17D,Design factor
+DEFAULT,SubseaTree,TestPressureFactor,1.50,,API-Spec-17D,Test pressure factor
+DEFAULT,FlexiblePipe,BurstDesignFactor,0.67,,API-RP-17B,Burst design factor
+DEFAULT,FlexiblePipe,CollapseDesignFactor,0.67,,API-RP-17B,Collapse design factor
+DEFAULT,SubseaBooster,MotorPowerMargin,1.20,,API-RP-17V,Motor power margin
+DEFAULT,SubseaBooster,MinMTBF,40000,hours,API-RP-17V,Minimum MTBF

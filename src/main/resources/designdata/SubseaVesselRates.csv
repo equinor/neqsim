@@ -1,0 +1,13 @@
+VesselType,DayRateUSD,MobDemobUSD,FuelPerDayUSD,TransitSpeedKnots,Description
+ConstructionVessel_Large,350000,2000000,50000,12,Large construction vessel (>150m)
+ConstructionVessel_Medium,250000,1500000,40000,12,Medium construction vessel (100-150m)
+PipeLayVessel_S_Lay,400000,3000000,60000,10,S-lay pipelay vessel
+PipeLayVessel_J_Lay,500000,4000000,70000,8,J-lay vessel for deepwater
+PipeLayVessel_Reel,450000,3500000,55000,12,Reel-lay vessel
+DSV_SatDiving,300000,2000000,45000,12,Diving support vessel with sat system
+DSV_AirDiving,150000,1000000,30000,12,Air diving support vessel
+ROV_SupportVessel,120000,800000,25000,14,ROV support vessel
+CableLay,280000,2000000,40000,10,Cable/umbilical lay vessel
+HeavyLiftVessel,600000,5000000,80000,8,Heavy lift vessel
+AHTS,80000,500000,20000,14,Anchor handling tug supply
+PSV,45000,300000,15000,14,Platform supply vessel
