@@ -190,6 +190,8 @@ System.out.println("Total Weight: " + mechDesign.getWeightTotal() + " kg");
 
 NeqSim supports multiple valve sizing standards that can be selected via `setValveSizingStandard()`:
 
+### Single-Phase Standards (Control Valves)
+
 | Standard | Description | Best For |
 |----------|-------------|----------|
 | `default` | IEC 60534-based calculation | General control valves |
@@ -197,12 +199,41 @@ NeqSim supports multiple valve sizing standards that can be selected via `setVal
 | `IEC 60534 full` | Extended IEC 60534 with all factors | Detailed sizing studies |
 | `prod choke` | Production choke sizing with Cd | Wellhead chokes |
 
+### Multiphase Standards (Production Chokes)
+
+| Standard | Description | Best For |
+|----------|-------------|----------|
+| `Sachdeva` | Mechanistic two-phase model (SPE 15657) | When fluid composition is known |
+| `Gilbert` | Empirical correlation (1954) | Quick estimates, field matching |
+| `Baxendell` | Empirical correlation (1958) | Higher flow rates |
+| `Ros` | Empirical correlation (1960) | Low GLR systems |
+| `Achong` | Empirical correlation (1961) | High GLR systems |
+
 ### Example: Setting Sizing Standard
 
 ```java
 ValveMechanicalDesign mechDesign = (ValveMechanicalDesign) valve.getMechanicalDesign();
+
+// For control valves (single-phase)
 mechDesign.setValveSizingStandard("IEC 60534");
+
+// For production chokes (two-phase)
+mechDesign.setValveSizingStandard("Sachdeva");
+mechDesign.setChokeDiameter(0.5, "in");
+mechDesign.setChokeDischargeCoefficient(0.84);
 ```
+
+### Multiphase Choke Helper Methods
+
+For production choke sizing, additional methods are available:
+
+| Method | Description |
+|--------|-------------|
+| `setChokeDiameter(value, unit)` | Set choke diameter (units: "m", "mm", "in", "64ths") |
+| `getChokeDiameter()` | Get choke diameter in meters |
+| `setChokeDischargeCoefficient(Cd)` | Set discharge coefficient (0.75-0.90 typical) |
+
+See [Multiphase Choke Flow Models](./MultiphaseChokeFlow.md) for detailed two-phase choke documentation.
 
 ## Valve Characteristics
 

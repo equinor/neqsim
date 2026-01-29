@@ -232,6 +232,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 |----------|------|-------------|
 | Valves | [docs/process/equipment/valves.md](process/equipment/valves.md) | Valve models |
 | Valve Design | [docs/process/ValveMechanicalDesign.md](process/ValveMechanicalDesign.md) | Valve mechanical design |
+| **Multiphase Choke Flow** | [docs/process/MultiphaseChokeFlow.md](process/MultiphaseChokeFlow.md) | **Sachdeva, Gilbert two-phase choke models** |
 | Flow Meters | [docs/wiki/flow_meter_models.md](wiki/flow_meter_models.md) | Flow metering |
 | Venturi | [docs/wiki/venturi_calculation.md](wiki/venturi_calculation.md) | Venturi calculations |
 | Tanks | [docs/process/equipment/tanks.md](process/equipment/tanks.md) | Tank models |
