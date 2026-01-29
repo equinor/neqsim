@@ -335,7 +335,7 @@ public class SubseaManifoldMechanicalDesign extends MechanicalDesign {
 
     JsonObject config = new JsonObject();
     config.addProperty("manifoldType", manifold.getManifoldType().name());
-    config.addProperty("numberOfWellSlots", manifold.getNumberOfWellSlots());
+    config.addProperty("numberOfWellSlots", manifold.getNumberOfSlots());
     config.addProperty("productionHeaderSizeInches", manifold.getProductionHeaderSizeInches());
     jsonObj.add("configuration", config);
 

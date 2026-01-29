@@ -131,7 +131,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
    */
   private void calculateHubWallThickness() {
     double designPressure = plet.getDesignPressure();
-    double hubSize = plet.getHubSizeInches() * 25.4; // Convert to mm
+    double hubSize = plet.getNominalBoreInches() * 25.4; // Convert to mm
     double outerDiameter = hubSize * 1.5; // Approximate OD
 
     // SMYS for F22 is approximately 414 MPa
@@ -214,7 +214,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
     double dragCoeff = 1.2;
 
     // Projected area (approximate)
-    double projectedArea = plet.getFootprintArea() * 0.5; // m²
+    double projectedArea = plet.getStructureLength() * plet.getStructureWidth() * 0.5; // m²
 
     // Drag force
     double currentLoad = 0.5 * seawaterDensity * currentVelocity * currentVelocity * dragCoeff
@@ -282,7 +282,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
    * Calculate connector load capacity.
    */
   private void calculateConnectorCapacity() {
-    double hubSize = plet.getHubSizeInches();
+    double hubSize = plet.getNominalBoreInches();
 
     // Connector capacity depends on hub size and type
     // Values based on typical hub capacities
@@ -313,8 +313,8 @@ public class PLETMechanicalDesign extends MechanicalDesign {
     double structureWeight = 0.0;
 
     // Base structure weight
-    double footprint = plet.getFootprintArea();
-    double height = plet.getHeight();
+    double footprint = plet.getStructureLength() * plet.getStructureWidth();
+    double height = plet.getStructureHeight();
     double steelDensity = 7850.0; // kg/m³
 
     // Estimate steel volume (very approximate)
@@ -322,7 +322,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
     structureWeight += structureVolume * steelDensity / 1000; // tonnes
 
     // Add hub weight
-    double hubSize = plet.getHubSizeInches() * 25.4 / 1000; // meters
+    double hubSize = plet.getNominalBoreInches() * 25.4 / 1000; // meters
     double hubWeight = Math.PI * hubSize * hubSize * 0.3 * steelDensity / 1000; // tonnes
     structureWeight += hubWeight;
 
@@ -347,7 +347,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
   private void calculateCostEstimate() {
     costEstimator = new SubseaCostEstimator(SubseaCostEstimator.Region.NORWAY);
 
-    costEstimator.calculatePLETCost(plet.getDryWeight(), plet.getHubSizeInches(),
+    costEstimator.calculatePLETCost(plet.getDryWeight(), plet.getNominalBoreInches(),
         plet.getWaterDepth(), plet.hasIsolationValve(), plet.hasPiggingFacilities());
 
     totalCostUSD = costEstimator.getTotalCost();
@@ -442,7 +442,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
     JsonObject config = new JsonObject();
     config.addProperty("connectionType", plet.getConnectionType().name());
     config.addProperty("structureType", plet.getStructureType().name());
-    config.addProperty("hubSizeInches", plet.getHubSizeInches());
+    config.addProperty("hubSizeInches", plet.getNominalBoreInches());
     config.addProperty("hasIsolationValve", plet.hasIsolationValve());
     config.addProperty("hasPiggingFacilities", plet.hasPiggingFacilities());
     config.addProperty("hasFutureTieIn", plet.hasFutureTieIn());
@@ -474,8 +474,8 @@ public class PLETMechanicalDesign extends MechanicalDesign {
     JsonObject weight = new JsonObject();
     weight.addProperty("dryWeightTonnes", plet.getDryWeight());
     weight.addProperty("submergedWeightTonnes", plet.getSubmergedWeight());
-    weight.addProperty("heightM", plet.getHeight());
-    weight.addProperty("footprintAreaM2", plet.getFootprintArea());
+    weight.addProperty("heightM", plet.getStructureHeight());
+    weight.addProperty("footprintAreaM2", plet.getStructureLength() * plet.getStructureWidth());
     jsonObj.add("weight", weight);
 
     // Cost estimation
@@ -514,7 +514,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
     designParams.put("waterDepthM", plet.getWaterDepth());
     designParams.put("designPressureBar", plet.getDesignPressure());
     designParams.put("designTemperatureC", plet.getDesignTemperature());
-    designParams.put("hubSizeInches", plet.getHubSizeInches());
+    designParams.put("hubSizeInches", plet.getNominalBoreInches());
     result.put("designParameters", designParams);
 
     // Calculated results

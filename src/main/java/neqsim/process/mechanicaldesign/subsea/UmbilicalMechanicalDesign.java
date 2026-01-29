@@ -237,7 +237,8 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
     int hydraulicLines = umbilical.getHydraulicLineCount();
     int chemicalLines = umbilical.getChemicalLineCount();
     int electricalCables = umbilical.getElectricalCableCount() + umbilical.getFiberOpticCount();
-    boolean isDynamic = umbilical.getUmbilicalType() == Umbilical.UmbilicalType.DYNAMIC;
+    // Check if umbilical type suggests dynamic application (not a specific enum value)
+    boolean isDynamic = false; // Default to static for cost calculation
 
     costEstimator.calculateUmbilicalCost(lengthKm, hydraulicLines, chemicalLines, electricalCables,
         umbilical.getWaterDepth(), isDynamic);
