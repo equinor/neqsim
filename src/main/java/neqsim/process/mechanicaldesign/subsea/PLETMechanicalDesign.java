@@ -332,7 +332,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
     }
 
     // Add pigging facilities
-    if (plet.hasPiggingFacilities()) {
+    if (plet.hasPiggingFacility()) {
       structureWeight += 1.5; // Approximate
     }
 
@@ -344,11 +344,11 @@ public class PLETMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate cost estimate for PLET.
    */
-  private void calculateCostEstimate() {
+  public void calculateCostEstimate() {
     costEstimator = new SubseaCostEstimator(SubseaCostEstimator.Region.NORWAY);
 
     costEstimator.calculatePLETCost(plet.getDryWeight(), plet.getNominalBoreInches(),
-        plet.getWaterDepth(), plet.hasIsolationValve(), plet.hasPiggingFacilities());
+        plet.getWaterDepth(), plet.hasIsolationValve(), plet.hasPiggingFacility());
 
     totalCostUSD = costEstimator.getTotalCost();
     equipmentCostUSD = costEstimator.getEquipmentCost();
@@ -444,7 +444,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
     config.addProperty("structureType", plet.getStructureType().name());
     config.addProperty("hubSizeInches", plet.getNominalBoreInches());
     config.addProperty("hasIsolationValve", plet.hasIsolationValve());
-    config.addProperty("hasPiggingFacilities", plet.hasPiggingFacilities());
+    config.addProperty("hasPiggingFacilities", plet.hasPiggingFacility());
     config.addProperty("hasFutureTieIn", plet.hasFutureTieIn());
     jsonObj.add("configuration", config);
 

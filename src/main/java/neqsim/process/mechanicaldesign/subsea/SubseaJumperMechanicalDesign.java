@@ -275,14 +275,18 @@ public class SubseaJumperMechanicalDesign extends MechanicalDesign {
       costEstimator = new SubseaCostEstimator();
     }
 
-    Map<String, Object> costResult = costEstimator.calculateJumperCost(jumper.getWaterDepth(),
-        jumper.getLength(), jumper.getNominalBoreInches(), jumper.isRigid());
+    boolean isRigid = jumper.getJumperType() == SubseaJumper.JumperType.RIGID_M_SHAPE
+        || jumper.getJumperType() == SubseaJumper.JumperType.RIGID_Z_SHAPE
+        || jumper.getJumperType() == SubseaJumper.JumperType.RIGID_VERTICAL;
 
-    totalCostUSD = ((Number) costResult.get("totalCost")).doubleValue();
-    equipmentCostUSD = ((Number) costResult.get("equipmentCost")).doubleValue();
-    installationCostUSD = ((Number) costResult.get("installationCost")).doubleValue();
-    vesselDays = ((Number) costResult.get("vesselDays")).doubleValue();
-    totalManhours = ((Number) costResult.get("totalManhours")).doubleValue();
+    costEstimator.calculateJumperCost(jumper.getLength(), jumper.getNominalBoreInches(), isRigid,
+        jumper.getWaterDepth());
+
+    totalCostUSD = costEstimator.getTotalCost();
+    equipmentCostUSD = costEstimator.getEquipmentCost();
+    installationCostUSD = costEstimator.getInstallationCost();
+    vesselDays = costEstimator.getVesselDays();
+    totalManhours = costEstimator.getTotalManhours();
   }
 
   /**
@@ -294,8 +298,13 @@ public class SubseaJumperMechanicalDesign extends MechanicalDesign {
     if (costEstimator == null) {
       calculateCostEstimate();
     }
-    return costEstimator.calculateJumperCost(jumper.getWaterDepth(), jumper.getLength(),
-        jumper.getNominalBoreInches(), jumper.isRigid());
+    Map<String, Object> breakdown = new java.util.HashMap<>();
+    breakdown.put("totalCost", totalCostUSD);
+    breakdown.put("equipmentCost", equipmentCostUSD);
+    breakdown.put("installationCost", installationCostUSD);
+    breakdown.put("vesselDays", vesselDays);
+    breakdown.put("totalManhours", totalManhours);
+    return breakdown;
   }
 
   /**

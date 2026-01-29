@@ -158,7 +158,7 @@ public class SubseaManifoldMechanicalDesign extends MechanicalDesign {
     requiredMudmatArea = (requiredCapacity * safetyFactor) / maxBearingPressure;
 
     // Minimum based on well slots
-    double minArea = manifold.getNumberOfWellSlots() * 6.0; // 6 m² per slot
+    double minArea = manifold.getNumberOfSlots() * 6.0; // 6 m² per slot
     requiredMudmatArea = Math.max(requiredMudmatArea, minArea);
 
     // Environmental load
@@ -177,7 +177,7 @@ public class SubseaManifoldMechanicalDesign extends MechanicalDesign {
     double currentVelocity = 0.5;
     double seawaterDensity = 1025.0;
     double dragCoeff = 1.2;
-    double projectedArea = manifold.getFootprintArea() * 0.6;
+    double projectedArea = manifold.getStructureLength() * manifold.getStructureWidth() * 0.6;
 
     return 0.5 * seawaterDensity * currentVelocity * currentVelocity * dragCoeff * projectedArea
         / 1000;
@@ -190,13 +190,13 @@ public class SubseaManifoldMechanicalDesign extends MechanicalDesign {
     double steelDensity = 7850.0; // kg/m³
 
     // Structure weight
-    double footprint = manifold.getFootprintArea();
-    double height = manifold.getHeight();
+    double footprint = manifold.getStructureLength() * manifold.getStructureWidth();
+    double height = manifold.getStructureHeight();
     double structureVolume = footprint * height * 0.05;
     structureWeight = structureVolume * steelDensity / 1000;
 
     // Piping weight
-    int wellSlots = manifold.getNumberOfWellSlots();
+    int wellSlots = manifold.getNumberOfSlots();
     double prodHeaderLength = wellSlots * 2.0; // 2m per slot
     double prodHeaderSize = manifold.getProductionHeaderSizeInches() * 25.4 / 1000;
     double headerArea = Math.PI * prodHeaderSize * productionHeaderWallThickness / 1000;
@@ -230,15 +230,18 @@ public class SubseaManifoldMechanicalDesign extends MechanicalDesign {
       costEstimator = new SubseaCostEstimator();
     }
 
-    Map<String, Object> costResult =
-        costEstimator.calculateManifoldCost(manifold.getWaterDepth(), manifold.getDryWeight(),
-            manifold.getNumberOfWellSlots(), manifold.getManifoldType().name());
+    boolean hasTestHeader =
+        manifold.getManifoldType() == SubseaManifold.ManifoldType.PRODUCTION_TEST
+            || manifold.getManifoldType() == SubseaManifold.ManifoldType.FULL_SERVICE;
 
-    totalCostUSD = ((Number) costResult.get("totalCost")).doubleValue();
-    equipmentCostUSD = ((Number) costResult.get("equipmentCost")).doubleValue();
-    installationCostUSD = ((Number) costResult.get("installationCost")).doubleValue();
-    vesselDays = ((Number) costResult.get("vesselDays")).doubleValue();
-    totalManhours = ((Number) costResult.get("totalManhours")).doubleValue();
+    costEstimator.calculateManifoldCost(manifold.getNumberOfSlots(), manifold.getDryWeight(),
+        manifold.getWaterDepth(), hasTestHeader);
+
+    totalCostUSD = costEstimator.getTotalCost();
+    equipmentCostUSD = costEstimator.getEquipmentCost();
+    installationCostUSD = costEstimator.getInstallationCost();
+    vesselDays = costEstimator.getVesselDays();
+    totalManhours = costEstimator.getTotalManhours();
   }
 
   /**
@@ -250,8 +253,13 @@ public class SubseaManifoldMechanicalDesign extends MechanicalDesign {
     if (costEstimator == null) {
       calculateCostEstimate();
     }
-    return costEstimator.calculateManifoldCost(manifold.getWaterDepth(), manifold.getDryWeight(),
-        manifold.getNumberOfWellSlots(), manifold.getManifoldType().name());
+    Map<String, Object> breakdown = new java.util.HashMap<>();
+    breakdown.put("totalCost", totalCostUSD);
+    breakdown.put("equipmentCost", equipmentCostUSD);
+    breakdown.put("installationCost", installationCostUSD);
+    breakdown.put("vesselDays", vesselDays);
+    breakdown.put("totalManhours", totalManhours);
+    return breakdown;
   }
 
   /**

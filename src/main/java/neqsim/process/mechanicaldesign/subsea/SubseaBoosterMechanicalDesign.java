@@ -239,14 +239,17 @@ public class SubseaBoosterMechanicalDesign extends MechanicalDesign {
       costEstimator = new SubseaCostEstimator();
     }
 
-    Map<String, Object> costResult = costEstimator.calculateBoosterCost(booster.getWaterDepth(),
-        requiredMotorPower, booster.isCompressor(), booster.hasRedundantMotor());
+    boolean isCompressor = booster.getBoosterType() == SubseaBooster.BoosterType.WET_GAS_COMPRESSOR;
+    boolean hasRedundancy = booster.hasRedundantMotor();
 
-    totalCostUSD = ((Number) costResult.get("totalCost")).doubleValue();
-    equipmentCostUSD = ((Number) costResult.get("equipmentCost")).doubleValue();
-    installationCostUSD = ((Number) costResult.get("installationCost")).doubleValue();
-    vesselDays = ((Number) costResult.get("vesselDays")).doubleValue();
-    totalManhours = ((Number) costResult.get("totalManhours")).doubleValue();
+    costEstimator.calculateBoosterCost(requiredMotorPower / 1000.0, isCompressor,
+        booster.getWaterDepth(), hasRedundancy);
+
+    totalCostUSD = costEstimator.getTotalCost();
+    equipmentCostUSD = costEstimator.getEquipmentCost();
+    installationCostUSD = costEstimator.getInstallationCost();
+    vesselDays = costEstimator.getVesselDays();
+    totalManhours = costEstimator.getTotalManhours();
   }
 
   /**
@@ -258,8 +261,13 @@ public class SubseaBoosterMechanicalDesign extends MechanicalDesign {
     if (costEstimator == null) {
       calculateCostEstimate();
     }
-    return costEstimator.calculateBoosterCost(booster.getWaterDepth(), requiredMotorPower,
-        booster.isCompressor(), booster.hasRedundantMotor());
+    Map<String, Object> breakdown = new java.util.HashMap<>();
+    breakdown.put("totalCost", totalCostUSD);
+    breakdown.put("equipmentCost", equipmentCostUSD);
+    breakdown.put("installationCost", installationCostUSD);
+    breakdown.put("vesselDays", vesselDays);
+    breakdown.put("totalManhours", totalManhours);
+    return breakdown;
   }
 
   /**

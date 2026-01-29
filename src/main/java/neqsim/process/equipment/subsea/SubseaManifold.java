@@ -446,7 +446,7 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
     }
 
     // Run production header
-    if (productionMixer.getStreams().size() > 0) {
+    if (productionMixer.getNumberOfInputStreams() > 0) {
       productionMixer.run(id);
       productionStream = productionMixer.getOutletStream();
 
@@ -456,7 +456,7 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
     }
 
     // Run test header
-    if (hasTestHeader && testMixer.getStreams().size() > 0) {
+    if (hasTestHeader && testMixer.getNumberOfInputStreams() > 0) {
       testMixer.run(id);
       testStream = testMixer.getOutletStream();
 
