@@ -277,7 +277,8 @@ public class SubseaJumperMechanicalDesign extends MechanicalDesign {
 
     boolean isRigid = jumper.getJumperType() == SubseaJumper.JumperType.RIGID_M_SHAPE
         || jumper.getJumperType() == SubseaJumper.JumperType.RIGID_Z_SHAPE
-        || jumper.getJumperType() == SubseaJumper.JumperType.RIGID_VERTICAL;
+        || jumper.getJumperType() == SubseaJumper.JumperType.RIGID_INVERTED_U
+        || jumper.getJumperType() == SubseaJumper.JumperType.RIGID_STRAIGHT;
 
     costEstimator.calculateJumperCost(jumper.getLength(), jumper.getNominalBoreInches(), isRigid,
         jumper.getWaterDepth());
