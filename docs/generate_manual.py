@@ -568,6 +568,8 @@ FULL_MANUAL_STRUCTURE = {
         "Chapter 10: Hydrates & Flow Assurance": [
             ("Hydrate Models", "thermo/hydrate_models.md"),
             ("Hydrate Flash", "thermodynamicoperations/hydrate_flash_operations.md"),
+            ("Wax Characterization", "thermo/characterization/wax_characterization.md"),
+            ("Asphaltene Characterization", "thermo/characterization/asphaltene_characterization.md"),
         ],
     },
     "Part III: Process Simulation": {
@@ -600,6 +602,7 @@ FULL_MANUAL_STRUCTURE = {
             ("Membrane", "wiki/membrane_separation.md"),
             ("Membrane Equipment", "process/equipment/membranes.md"),
             ("Filters", "process/equipment/filters.md"),
+            ("Water Treatment", "process/equipment/water_treatment.md"),
         ],
         "Chapter 15: Rotating Equipment": [
             ("Compressors", "process/equipment/compressors.md"),
@@ -643,11 +646,13 @@ FULL_MANUAL_STRUCTURE = {
             ("Wells", "process/equipment/wells.md"),
             ("Well Simulation", "simulation/well_simulation_guide.md"),
             ("Well & Choke", "simulation/well_and_choke_simulation.md"),
+            ("Well Allocation", "process/equipment/well_allocation.md"),
             ("Pipelines", "process/equipment/pipelines.md"),
             ("Beggs & Brill", "process/PipeBeggsAndBrills.md"),
             ("Networks", "process/equipment/networks.md"),
             ("Reservoirs", "process/equipment/reservoirs.md"),
             ("Subsea Systems", "process/equipment/subsea_systems.md"),
+            ("Subsea Equipment", "process/equipment/subsea_equipment.md"),
         ],
         "Chapter 20: Utility Equipment": [
             ("Utility Overview", "process/equipment/util/README.md"),
@@ -670,6 +675,7 @@ FULL_MANUAL_STRUCTURE = {
         ],
         "Chapter 23: Serialization & Persistence": [
             ("Process Serialization", "simulation/process_serialization.md"),
+            ("Process Model Lifecycle", "process/lifecycle/process_model_lifecycle.md"),
         ],
     },
     "Part IV: Pipeline & Multiphase Flow": {

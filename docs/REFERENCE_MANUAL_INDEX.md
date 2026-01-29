@@ -156,6 +156,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 |----------|------|-------------|
 | Hydrate Models | [docs/thermo/hydrate_models.md](thermo/hydrate_models.md) | Hydrate equilibrium models |
 | Hydrate Flash | [docs/thermodynamicoperations/hydrate_flash_operations.md](thermodynamicoperations/hydrate_flash_operations.md) | Hydrate flash operations |
+| Wax Characterization | [docs/thermo/characterization/wax_characterization.md](thermo/characterization/wax_characterization.md) | Wax modeling, WAT calculation, flow assurance |
+| Asphaltene Characterization | [docs/thermo/characterization/asphaltene_characterization.md](thermo/characterization/asphaltene_characterization.md) | SARA analysis, CII, CPA parameters |
 
 ---
 
@@ -200,6 +202,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Membrane | [docs/wiki/membrane_separation.md](wiki/membrane_separation.md) | Membrane separation |
 | Membrane Equipment | [docs/process/equipment/membranes.md](process/equipment/membranes.md) | Membrane equipment |
 | Filters | [docs/process/equipment/filters.md](process/equipment/filters.md) | Filter equipment |
+| Water Treatment | [docs/process/equipment/water_treatment.md](process/equipment/water_treatment.md) | Hydrocyclones, produced water treatment trains, OIW limits |
 
 ### Chapter 15: Rotating Equipment
 | Document | Path | Description |
@@ -253,6 +256,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Wells | [docs/process/equipment/wells.md](process/equipment/wells.md) | Well equipment |
 | Well Simulation | [docs/simulation/well_simulation_guide.md](simulation/well_simulation_guide.md) | Well simulation guide |
 | Well & Choke | [docs/simulation/well_and_choke_simulation.md](simulation/well_and_choke_simulation.md) | Choke valve simulation |
+| Well Allocation | [docs/process/equipment/well_allocation.md](process/equipment/well_allocation.md) | Production allocation for commingled wells, VFM, well test methods |
 | Pipelines | [docs/process/equipment/pipelines.md](process/equipment/pipelines.md) | Pipeline and riser models |
 | **TwoFluidPipe Model** | [docs/process/TWOFLUIDPIPE_MODEL.md](process/TWOFLUIDPIPE_MODEL.md) | **Two-fluid multiphase flow model** |
 | **TwoFluidPipe OLGA Comparison** | [docs/wiki/two_fluid_model_olga_comparison.md](wiki/two_fluid_model_olga_comparison.md) | **Mathematical equations, slug flow physics, Lagrangian tracking** |
@@ -262,6 +266,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Networks | [docs/process/equipment/networks.md](process/equipment/networks.md) | Pipeline network modeling |
 | Reservoirs | [docs/process/equipment/reservoirs.md](process/equipment/reservoirs.md) | Reservoir modeling |
 | Subsea Systems | [docs/process/equipment/subsea_systems.md](process/equipment/subsea_systems.md) | Subsea wells and flowlines |
+| Subsea Equipment | [docs/process/equipment/subsea_equipment.md](process/equipment/subsea_equipment.md) | SubseaWell, SimpleFlowLine, flow assurance |
 
 ### Chapter 20: Utility Equipment
 | Document | Path | Description |
@@ -332,6 +337,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Document | Path | Description |
 |----------|------|-------------|
 | Process Serialization | [docs/simulation/process_serialization.md](simulation/process_serialization.md) | Save/load process models |
+| Process Model Lifecycle | [docs/process/lifecycle/process_model_lifecycle.md](process/lifecycle/process_model_lifecycle.md) | ProcessModelState, versioning, checkpointing, digital twin lifecycle |
 
 ---
 
