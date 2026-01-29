@@ -818,4 +818,49 @@ public class SubseaJumper extends TwoPortEquipment {
   public void setOutletHubSizeInches(double outletHubSizeInches) {
     this.outletHubSizeInches = outletHubSizeInches;
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toJson() {
+    com.google.gson.JsonObject jsonObj = new com.google.gson.JsonObject();
+    jsonObj.addProperty("name", getName());
+    jsonObj.addProperty("componentType", "SubseaJumper");
+    jsonObj.addProperty("jumperType", jumperType != null ? jumperType.toString() : null);
+
+    // Dimensions
+    com.google.gson.JsonObject dimensions = new com.google.gson.JsonObject();
+    dimensions.addProperty("length_m", length);
+    dimensions.addProperty("innerDiameter_m", innerDiameter);
+    dimensions.addProperty("outerDiameter_m", outerDiameter);
+    dimensions.addProperty("wallThickness_mm", wallThickness * 1000);
+    dimensions.addProperty("nominalBoreInches", nominalBoreInches);
+    jsonObj.add("dimensions", dimensions);
+
+    // Environment
+    com.google.gson.JsonObject environment = new com.google.gson.JsonObject();
+    environment.addProperty("waterDepth_m", waterDepth);
+    environment.addProperty("installationType",
+        installationType != null ? installationType.toString() : null);
+    jsonObj.add("environment", environment);
+
+    // Material
+    com.google.gson.JsonObject material = new com.google.gson.JsonObject();
+    material.addProperty("materialGrade", materialGrade);
+    material.addProperty("dryWeight_tonnes", dryWeight);
+    jsonObj.add("material", material);
+
+    // Process conditions
+    if (inStream != null && inStream.getThermoSystem() != null) {
+      com.google.gson.JsonObject process = new com.google.gson.JsonObject();
+      process.addProperty("inletPressure_bar", inStream.getPressure("bara"));
+      process.addProperty("inletTemperature_C", inStream.getTemperature("C"));
+      process.addProperty("outletPressure_bar",
+          outStream != null ? outStream.getPressure("bara") : null);
+      process.addProperty("pressureDrop_bar", pressureDrop);
+      jsonObj.add("processConditions", process);
+    }
+
+    return new com.google.gson.GsonBuilder().setPrettyPrinting()
+        .serializeSpecialFloatingPointValues().create().toJson(jsonObj);
+  }
 }
