@@ -165,12 +165,60 @@ double powerMW = linker.getTotalPowerMW(process);
 System.out.println("Total Power Required: " + powerMW + " MW");
 ```
 
+### Estimate SURF Costs
+```java
+import neqsim.process.mechanicaldesign.subsea.SubseaCostEstimator;
+
+// Create estimator with regional factors (Norway, UK, GOM, Brazil, West Africa)
+SubseaCostEstimator estimator = new SubseaCostEstimator(SubseaCostEstimator.Region.NORWAY);
+
+// Calculate SURF equipment costs
+estimator.calculateTreeCost(10000.0, 7.0, 380.0, true, false);
+System.out.println("Subsea Tree: $" + String.format("%,.0f", estimator.getTotalCost()));
+
+estimator.calculateManifoldCost(6, 80.0, 380.0, true);
+System.out.println("Manifold: $" + String.format("%,.0f", estimator.getTotalCost()));
+
+estimator.calculateUmbilicalCost(48.0, 4, 3, 2, 380.0, false);
+System.out.println("Umbilical: $" + String.format("%,.0f", estimator.getTotalCost()));
+
+estimator.calculateFlexiblePipeCost(1200.0, 8.0, 380.0, true, true);
+System.out.println("Dynamic Riser: $" + String.format("%,.0f", estimator.getTotalCost()));
+```
+
+---
+
+## SURF Equipment Classes
+
+NeqSim provides comprehensive SURF (Subsea, Umbilical, Riser, Flowline) modeling in `neqsim.process.equipment.subsea`:
+
+| Class | Description |
+|-------|-------------|
+| `SubseaTree` | Christmas tree for well control (horizontal/vertical) |
+| `SubseaManifold` | Production/test/injection routing with well slots |
+| `PLET` | Pipeline End Termination structures |
+| `PLEM` | Pipeline End Manifold with multiple connections |
+| `SubseaJumper` | Rigid or flexible inter-equipment connections |
+| `Umbilical` | Control, power, and chemical injection lines |
+| `FlexiblePipe` | Dynamic risers and static flowlines |
+| `SubseaBooster` | Multiphase pumps and wet gas compressors |
+
+Each equipment type has a dedicated mechanical design class with:
+- Wall thickness and structural calculations
+- Design standard compliance (DNV, API, NORSOK)
+- Regional cost estimation
+- Bill of materials generation
+- JSON export for reporting
+
+See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT.md) for detailed documentation.
+
 ---
 
 ## Related Documentation
 
 | Topic | Document |
 |-------|----------|
+| SURF Subsea Equipment | [SURF_SUBSEA_EQUIPMENT.md](../process/SURF_SUBSEA_EQUIPMENT.md) |
 | Late-Life Operations | [LATE_LIFE_OPERATIONS.md](LATE_LIFE_OPERATIONS.md) |
 | Field Development Strategy | [FIELD_DEVELOPMENT_STRATEGY.md](FIELD_DEVELOPMENT_STRATEGY.md) |
 | Integrated Framework | [INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md) |

@@ -317,15 +317,20 @@ public class FlexiblePipeMechanicalDesign extends MechanicalDesign {
       costEstimator = new SubseaCostEstimator();
     }
 
-    Map<String, Object> costResult = costEstimator.calculateFlexiblePipeCost(
-        flexPipe.getWaterDepth(), flexPipe.getLength(), flexPipe.getInnerDiameterInches(),
-        flexPipe.getApplication() == FlexiblePipe.Application.DYNAMIC_RISER);
+    boolean isDynamic = flexPipe.getApplication() == FlexiblePipe.Application.DYNAMIC_RISER;
+    // Buoyancy typically used for lazy wave and steep wave configurations
+    boolean hasBuoyancy =
+        flexPipe.getRiserConfiguration() == FlexiblePipe.RiserConfiguration.LAZY_WAVE
+            || flexPipe.getRiserConfiguration() == FlexiblePipe.RiserConfiguration.STEEP_WAVE;
 
-    totalCostUSD = ((Number) costResult.get("totalCost")).doubleValue();
-    equipmentCostUSD = ((Number) costResult.get("equipmentCost")).doubleValue();
-    installationCostUSD = ((Number) costResult.get("installationCost")).doubleValue();
-    vesselDays = ((Number) costResult.get("vesselDays")).doubleValue();
-    totalManhours = ((Number) costResult.get("totalManhours")).doubleValue();
+    costEstimator.calculateFlexiblePipeCost(flexPipe.getLength(), flexPipe.getInnerDiameterInches(),
+        flexPipe.getWaterDepth(), isDynamic, hasBuoyancy);
+
+    totalCostUSD = costEstimator.getTotalCost();
+    equipmentCostUSD = costEstimator.getEquipmentCost();
+    installationCostUSD = costEstimator.getInstallationCost();
+    vesselDays = costEstimator.getVesselDays();
+    totalManhours = costEstimator.getTotalManhours();
   }
 
   /**
@@ -337,9 +342,13 @@ public class FlexiblePipeMechanicalDesign extends MechanicalDesign {
     if (costEstimator == null) {
       calculateCostEstimate();
     }
-    return costEstimator.calculateFlexiblePipeCost(flexPipe.getWaterDepth(), flexPipe.getLength(),
-        flexPipe.getInnerDiameterInches(),
-        flexPipe.getApplication() == FlexiblePipe.Application.DYNAMIC_RISER);
+    Map<String, Object> breakdown = new java.util.HashMap<>();
+    breakdown.put("totalCost", totalCostUSD);
+    breakdown.put("equipmentCost", equipmentCostUSD);
+    breakdown.put("installationCost", installationCostUSD);
+    breakdown.put("vesselDays", vesselDays);
+    breakdown.put("totalManhours", totalManhours);
+    return breakdown;
   }
 
   /**

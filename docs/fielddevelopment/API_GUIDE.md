@@ -14,6 +14,7 @@ This guide provides detailed usage examples for all components added in the fiel
 6. [Network & Hydraulics](#6-network--hydraulics)
 7. [Tieback Analysis](#7-tieback-analysis)
 8. [Screening Tools](#8-screening-tools)
+9. [SURF Equipment and Cost Estimation](#9-surf-equipment-and-cost-estimation)
 
 ---
 
@@ -882,8 +883,348 @@ System.out.println("CO2 Intensity: " + report.getCo2Intensity() + " kg/boe");
 
 ---
 
+## 9. SURF Equipment and Cost Estimation
+
+### SURF Equipment Classes
+
+NeqSim provides comprehensive SURF (Subsea, Umbilical, Riser, Flowline) equipment in `neqsim.process.equipment.subsea`:
+
+```java
+import neqsim.process.equipment.subsea.*;
+import neqsim.process.mechanicaldesign.subsea.*;
+import neqsim.thermo.system.SystemSrkEos;
+
+// Create reservoir fluid
+SystemInterface fluid = new SystemSrkEos(373.15, 250.0);
+fluid.addComponent("methane", 0.80);
+fluid.addComponent("ethane", 0.10);
+fluid.addComponent("propane", 0.05);
+fluid.addComponent("n-butane", 0.03);
+fluid.addComponent("n-pentane", 0.02);
+fluid.setMixingRule("classic");
+
+// Create well stream
+Stream wellStream = new Stream("Well-1", fluid);
+wellStream.setFlowRate(100000.0, "kg/hr");
+wellStream.run();
+
+// === Subsea Tree ===
+SubseaTree tree = new SubseaTree("Well-1 Tree", wellStream);
+tree.setTreeType(SubseaTree.TreeType.HORIZONTAL);
+tree.setPressureRating(SubseaTree.PressureRating.PR10000);
+tree.setBoreSizeInches(7.0);
+tree.setWaterDepth(380.0);
+tree.run();
+
+// === Subsea Manifold ===
+SubseaManifold manifold = new SubseaManifold("Field Manifold");
+manifold.setManifoldType(SubseaManifold.ManifoldType.PRODUCTION_TEST);
+manifold.setNumberOfWellSlots(6);
+manifold.setProductionHeaderSizeInches(12.0);
+manifold.setTestHeaderSizeInches(6.0);
+manifold.setWaterDepth(380.0);
+manifold.addWellStream(tree.getOutletStream(), 1);
+manifold.routeWellToProduction(1);
+manifold.run();
+
+// === PLET (Pipeline End Termination) ===
+PLET exportPLET = new PLET("Export PLET", manifold.getProductionOutputStream());
+exportPLET.setConnectionType(PLET.ConnectionType.VERTICAL_HUB);
+exportPLET.setHubSizeInches(12.0);
+exportPLET.setStructureType(PLET.StructureType.GRAVITY_BASE);
+exportPLET.setWaterDepth(380.0);
+exportPLET.setMaterialGrade("X65");
+exportPLET.run();
+
+// === Rigid Jumper ===
+SubseaJumper jumper = new SubseaJumper("Tree-Manifold Jumper", tree.getOutletStream());
+jumper.setJumperType(SubseaJumper.JumperType.RIGID_M_SHAPE);
+jumper.setLength(50.0);
+jumper.setNominalBoreInches(6.0);
+jumper.setDesignPressure(200.0);
+jumper.setMaterialGrade("X65");
+jumper.run();
+
+// === Dynamic Riser (Flexible Pipe) ===
+FlexiblePipe riser = new FlexiblePipe("Production Riser", exportPLET.getOutletStream());
+riser.setPipeType(FlexiblePipe.PipeType.UNBONDED);
+riser.setApplication(FlexiblePipe.Application.DYNAMIC_RISER);
+riser.setRiserConfiguration(FlexiblePipe.RiserConfiguration.LAZY_WAVE);
+riser.setLength(1200.0);
+riser.setInnerDiameterInches(8.0);
+riser.setDesignPressure(200.0);
+riser.setWaterDepth(380.0);
+riser.run();
+
+// === Umbilical ===
+Umbilical umbilical = new Umbilical("Field Umbilical");
+umbilical.setUmbilicalType(Umbilical.UmbilicalType.STEEL_TUBE);
+umbilical.setLength(48000.0);
+umbilical.setWaterDepth(380.0);
+umbilical.addHydraulicLine(12.7, 517.0, "HP Supply");
+umbilical.addHydraulicLine(12.7, 517.0, "HP Return");
+umbilical.addChemicalLine(25.4, 207.0, "MEG Injection");
+umbilical.addElectricalCable(35.0, 6600.0, "Power");
+umbilical.addFiberOptic(12, "Communication");
+umbilical.run(null);
+
+// === Subsea Booster ===
+SubseaBooster mpPump = new SubseaBooster("MP Pump", manifold.getProductionOutputStream());
+mpPump.setBoosterType(SubseaBooster.BoosterType.MULTIPHASE_PUMP);
+mpPump.setPumpType(SubseaBooster.PumpType.HELICO_AXIAL);
+mpPump.setNumberOfStages(6);
+mpPump.setDifferentialPressure(50.0);
+mpPump.setWaterDepth(380.0);
+mpPump.run();
+```
+
+### SURF Mechanical Design
+
+```java
+import neqsim.process.mechanicaldesign.subsea.*;
+
+// Initialize mechanical designs
+tree.initMechanicalDesign();
+manifold.initMechanicalDesign();
+exportPLET.initMechanicalDesign();
+riser.initMechanicalDesign();
+umbilical.initMechanicalDesign();
+
+// === Subsea Tree Design ===
+SubseaTreeMechanicalDesign treeDesign = 
+    (SubseaTreeMechanicalDesign) tree.getMechanicalDesign();
+treeDesign.setMaxOperationPressure(690.0);
+treeDesign.setDesignStandardCode("API-17D");
+treeDesign.setRegion(SubseaCostEstimator.Region.NORWAY);
+treeDesign.calcDesign();
+
+System.out.println("=== Subsea Tree Design ===");
+System.out.println("Frame Weight: " + treeDesign.getFrameWeight() + " tonnes");
+System.out.println("Total Weight: " + treeDesign.getDryWeight() + " tonnes");
+
+// === PLET Design ===
+PLETMechanicalDesign pletDesign = 
+    (PLETMechanicalDesign) exportPLET.getMechanicalDesign();
+pletDesign.setMaxOperationPressure(200.0);
+pletDesign.setMaterialGrade("X65");
+pletDesign.setDesignStandardCode("DNV-ST-F101");
+pletDesign.calcDesign();
+
+System.out.println("=== PLET Design ===");
+System.out.println("Hub Wall Thickness: " + pletDesign.getHubWallThickness() + " mm");
+System.out.println("Mudmat Area: " + pletDesign.getRequiredMudmatArea() + " m²");
+
+// === Manifold Design ===
+SubseaManifoldMechanicalDesign manifoldDesign = 
+    (SubseaManifoldMechanicalDesign) manifold.getMechanicalDesign();
+manifoldDesign.setMaxOperationPressure(250.0);
+manifoldDesign.setDesignStandardCode("DNV-ST-F101");
+manifoldDesign.calcDesign();
+
+System.out.println("=== Manifold Design ===");
+System.out.println("Header Wall Thickness: " + manifoldDesign.getHeaderWallThickness() + " mm");
+
+// Export design as JSON
+String designJson = pletDesign.toJson();
+System.out.println(designJson);
+```
+
+### SubseaCostEstimator
+
+The `SubseaCostEstimator` provides comprehensive parametric cost estimation with regional factors:
+
+```java
+import neqsim.process.mechanicaldesign.subsea.SubseaCostEstimator;
+
+// Create estimator with regional factor
+SubseaCostEstimator estimator = new SubseaCostEstimator(SubseaCostEstimator.Region.NORWAY);
+
+// === Subsea Tree Cost ===
+estimator.calculateTreeCost(
+    10000.0,    // Pressure rating (psi)
+    7.0,        // Bore size (inches)
+    380.0,      // Water depth (m)
+    true,       // Has EDP (Emergency Disconnect Package)
+    false       // Is deepwater variant
+);
+double treeCost = estimator.getTotalCost();
+System.out.println("Subsea Tree: $" + String.format("%,.0f", treeCost));
+
+// === Manifold Cost ===
+estimator.calculateManifoldCost(
+    6,          // Number of well slots
+    80.0,       // Dry weight (tonnes)
+    380.0,      // Water depth (m)
+    true        // Has pigging loop
+);
+double manifoldCost = estimator.getTotalCost();
+System.out.println("Manifold: $" + String.format("%,.0f", manifoldCost));
+
+// === PLET Cost ===
+estimator.calculatePLETCost(
+    25.0,       // Structure weight (tonnes)
+    12.0,       // Hub size (inches)
+    380.0,      // Water depth (m)
+    true,       // Has isolation valve
+    true        // Has foundation (mudmat)
+);
+double pletCost = estimator.getTotalCost();
+System.out.println("PLET: $" + String.format("%,.0f", pletCost));
+
+// === Jumper Cost ===
+estimator.calculateJumperCost(
+    50.0,       // Length (m)
+    6.0,        // Diameter (inches)
+    true,       // Is rigid (vs flexible)
+    380.0       // Water depth (m)
+);
+double jumperCost = estimator.getTotalCost();
+System.out.println("Jumper: $" + String.format("%,.0f", jumperCost));
+
+// === Umbilical Cost ===
+estimator.calculateUmbilicalCost(
+    48.0,       // Length (km)
+    4,          // Number of hydraulic lines
+    3,          // Number of chemical lines
+    2,          // Number of electrical/fiber pairs
+    380.0,      // Water depth (m)
+    false       // Is dynamic section
+);
+double umbilicalCost = estimator.getTotalCost();
+System.out.println("Umbilical: $" + String.format("%,.0f", umbilicalCost));
+
+// === Flexible Pipe Cost ===
+estimator.calculateFlexiblePipeCost(
+    1200.0,     // Length (m)
+    8.0,        // Inner diameter (inches)
+    380.0,      // Water depth (m)
+    true,       // Is dynamic riser
+    true        // Has bend stiffener
+);
+double riserCost = estimator.getTotalCost();
+System.out.println("Flexible Riser: $" + String.format("%,.0f", riserCost));
+
+// === Subsea Booster Cost ===
+estimator.calculateBoosterCost(
+    SubseaCostEstimator.BoosterType.MULTIPHASE_PUMP,
+    2000.0,     // Power (kW)
+    380.0,      // Water depth (m)
+    true        // Is retrievable
+);
+double boosterCost = estimator.getTotalCost();
+System.out.println("Subsea Booster: $" + String.format("%,.0f", boosterCost));
+```
+
+### Regional Cost Comparison
+
+```java
+// Compare costs across regions
+System.out.println("\n=== Regional Cost Comparison (6-slot Manifold) ===");
+
+for (SubseaCostEstimator.Region region : SubseaCostEstimator.Region.values()) {
+    SubseaCostEstimator regional = new SubseaCostEstimator(region);
+    regional.calculateManifoldCost(6, 80.0, 380.0, true);
+    
+    System.out.printf("%s (%.2fx): $%,.0f%n", 
+        region.name(), 
+        region.getFactor(),
+        regional.getTotalCost());
+}
+```
+
+Output:
+```
+=== Regional Cost Comparison (6-slot Manifold) ===
+NORWAY (1.35x): $54,000,000
+UK (1.25x): $50,000,000
+GOM (1.00x): $40,000,000
+BRAZIL (0.85x): $34,000,000
+WEST_AFRICA (1.10x): $44,000,000
+```
+
+### Complete SURF System Costing
+
+```java
+// Calculate total SURF CAPEX
+double totalSurfCapex = 0.0;
+SubseaCostEstimator estimator = new SubseaCostEstimator(SubseaCostEstimator.Region.NORWAY);
+
+System.out.println("=== Complete SURF System Cost ===");
+
+// 6 Subsea Trees
+estimator.calculateTreeCost(10000.0, 7.0, 380.0, true, false);
+double treeCost = estimator.getTotalCost() * 6;
+totalSurfCapex += treeCost;
+System.out.printf("Subsea Trees (6x): $%,.0f%n", treeCost);
+
+// Production Manifold
+estimator.calculateManifoldCost(6, 80.0, 380.0, true);
+double manifoldCost = estimator.getTotalCost();
+totalSurfCapex += manifoldCost;
+System.out.printf("Production Manifold: $%,.0f%n", manifoldCost);
+
+// PLET
+estimator.calculatePLETCost(25.0, 12.0, 380.0, true, true);
+double pletCost = estimator.getTotalCost();
+totalSurfCapex += pletCost;
+System.out.printf("Export PLET: $%,.0f%n", pletCost);
+
+// Jumpers (6x50m)
+estimator.calculateJumperCost(50.0, 6.0, true, 380.0);
+double jumperCost = estimator.getTotalCost() * 6;
+totalSurfCapex += jumperCost;
+System.out.printf("Rigid Jumpers (6x): $%,.0f%n", jumperCost);
+
+// Umbilical (48 km)
+estimator.calculateUmbilicalCost(48.0, 4, 3, 2, 380.0, false);
+double umbilicalCost = estimator.getTotalCost();
+totalSurfCapex += umbilicalCost;
+System.out.printf("Control Umbilical: $%,.0f%n", umbilicalCost);
+
+// Dynamic Riser (1200m)
+estimator.calculateFlexiblePipeCost(1200.0, 8.0, 380.0, true, true);
+double riserCost = estimator.getTotalCost();
+totalSurfCapex += riserCost;
+System.out.printf("Dynamic Riser: $%,.0f%n", riserCost);
+
+System.out.println("──────────────────────────────────");
+System.out.printf("TOTAL SURF CAPEX: $%,.0f%n", totalSurfCapex);
+System.out.printf("TOTAL SURF CAPEX: %.1f MUSD%n", totalSurfCapex / 1e6);
+```
+
+### Bill of Materials Generation
+
+```java
+// Generate BOM for equipment
+PLETMechanicalDesign pletDesign = (PLETMechanicalDesign) exportPLET.getMechanicalDesign();
+pletDesign.calcDesign();
+
+List<Map<String, Object>> bom = pletDesign.generateBillOfMaterials();
+
+System.out.println("=== PLET Bill of Materials ===");
+System.out.println("Item | Quantity | Unit | Unit Cost | Total");
+System.out.println("-----|----------|------|-----------|------");
+
+double bomTotal = 0.0;
+for (Map<String, Object> item : bom) {
+    double totalCost = (Double) item.get("totalCost");
+    bomTotal += totalCost;
+    System.out.printf("%s | %.1f | %s | $%,.0f | $%,.0f%n",
+        item.get("item"),
+        item.get("quantity"),
+        item.get("unit"),
+        item.get("unitCost"),
+        totalCost);
+}
+System.out.println("-----|----------|------|-----------|------");
+System.out.printf("TOTAL | | | | $%,.0f%n", bomTotal);
+```
+
+---
+
 ## See Also
 
+- [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT.md)
 - [Digital Field Twin Architecture](DIGITAL_FIELD_TWIN.md)
 - [Mathematical Reference](MATHEMATICAL_REFERENCE.md)
 - [Late Life Operations](LATE_LIFE_OPERATIONS.md)

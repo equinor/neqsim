@@ -233,15 +233,20 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
       costEstimator = new SubseaCostEstimator();
     }
 
-    Map<String, Object> costResult =
-        costEstimator.calculateUmbilicalCost(umbilical.getWaterDepth(), umbilical.getLength(),
-            umbilical.getTotalElementCount(), umbilical.getUmbilicalType().name());
+    double lengthKm = umbilical.getLength() / 1000.0;
+    int hydraulicLines = umbilical.getHydraulicLineCount();
+    int chemicalLines = umbilical.getChemicalLineCount();
+    int electricalCables = umbilical.getElectricalCableCount() + umbilical.getFiberOpticCount();
+    boolean isDynamic = umbilical.getUmbilicalType() == Umbilical.UmbilicalType.DYNAMIC;
 
-    totalCostUSD = ((Number) costResult.get("totalCost")).doubleValue();
-    equipmentCostUSD = ((Number) costResult.get("equipmentCost")).doubleValue();
-    installationCostUSD = ((Number) costResult.get("installationCost")).doubleValue();
-    vesselDays = ((Number) costResult.get("vesselDays")).doubleValue();
-    totalManhours = ((Number) costResult.get("totalManhours")).doubleValue();
+    costEstimator.calculateUmbilicalCost(lengthKm, hydraulicLines, chemicalLines, electricalCables,
+        umbilical.getWaterDepth(), isDynamic);
+
+    totalCostUSD = costEstimator.getTotalCost();
+    equipmentCostUSD = costEstimator.getEquipmentCost();
+    installationCostUSD = costEstimator.getInstallationCost();
+    vesselDays = costEstimator.getVesselDays();
+    totalManhours = costEstimator.getTotalManhours();
   }
 
   /**
@@ -253,8 +258,13 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
     if (costEstimator == null) {
       calculateCostEstimate();
     }
-    return costEstimator.calculateUmbilicalCost(umbilical.getWaterDepth(), umbilical.getLength(),
-        umbilical.getTotalElementCount(), umbilical.getUmbilicalType().name());
+    Map<String, Object> breakdown = new java.util.HashMap<>();
+    breakdown.put("totalCost", totalCostUSD);
+    breakdown.put("equipmentCost", equipmentCostUSD);
+    breakdown.put("installationCost", installationCostUSD);
+    breakdown.put("vesselDays", vesselDays);
+    breakdown.put("totalManhours", totalManhours);
+    return breakdown;
   }
 
   /**

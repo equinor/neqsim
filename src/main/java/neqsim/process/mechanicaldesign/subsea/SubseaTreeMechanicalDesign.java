@@ -212,14 +212,18 @@ public class SubseaTreeMechanicalDesign extends MechanicalDesign {
       costEstimator = new SubseaCostEstimator();
     }
 
-    Map<String, Object> costResult = costEstimator.calculateTreeCost(tree.getWaterDepth(),
-        tree.getDryWeight(), tree.getBoreSizeInches(), tree.getPressureRating().name());
+    double pressureRatingPsi = tree.getPressureRating().getPsi();
+    boolean isHorizontal = tree.getTreeType() == SubseaTree.TreeType.HORIZONTAL;
+    boolean isDualBore = tree.getTreeType() == SubseaTree.TreeType.DUAL_BORE;
 
-    totalCostUSD = ((Number) costResult.get("totalCost")).doubleValue();
-    equipmentCostUSD = ((Number) costResult.get("equipmentCost")).doubleValue();
-    installationCostUSD = ((Number) costResult.get("installationCost")).doubleValue();
-    vesselDays = ((Number) costResult.get("vesselDays")).doubleValue();
-    totalManhours = ((Number) costResult.get("totalManhours")).doubleValue();
+    costEstimator.calculateTreeCost(pressureRatingPsi, tree.getBoreSizeInches(),
+        tree.getWaterDepth(), isHorizontal, isDualBore);
+
+    totalCostUSD = costEstimator.getTotalCost();
+    equipmentCostUSD = costEstimator.getEquipmentCost();
+    installationCostUSD = costEstimator.getInstallationCost();
+    vesselDays = costEstimator.getVesselDays();
+    totalManhours = costEstimator.getTotalManhours();
   }
 
   /**
@@ -231,8 +235,13 @@ public class SubseaTreeMechanicalDesign extends MechanicalDesign {
     if (costEstimator == null) {
       calculateCostEstimate();
     }
-    return costEstimator.calculateTreeCost(tree.getWaterDepth(), tree.getDryWeight(),
-        tree.getBoreSizeInches(), tree.getPressureRating().name());
+    Map<String, Object> breakdown = new java.util.HashMap<>();
+    breakdown.put("totalCost", totalCostUSD);
+    breakdown.put("equipmentCost", equipmentCostUSD);
+    breakdown.put("installationCost", installationCostUSD);
+    breakdown.put("vesselDays", vesselDays);
+    breakdown.put("totalManhours", totalManhours);
+    return breakdown;
   }
 
   /**

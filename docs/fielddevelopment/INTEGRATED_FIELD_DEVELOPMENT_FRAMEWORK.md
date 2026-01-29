@@ -719,6 +719,22 @@ integrating wells, flowlines, manifolds, and tieback analysis into the field dev
 | `DAISY_CHAIN` | Wells connected in series | Long, narrow reservoir |
 | `TEMPLATE` | Multiple wells from single structure | Compact field development |
 
+### SURF Equipment Classes
+
+NeqSim provides comprehensive SURF (Subsea, Umbilical, Riser, Flowline) equipment modeling
+in `neqsim.process.equipment.subsea`:
+
+| Equipment | Class | Description |
+|-----------|-------|-------------|
+| **PLET** | `PLET` | Pipeline End Termination - pipeline termination structures |
+| **PLEM** | `PLEM` | Pipeline End Manifold - multi-slot pipeline connections |
+| **Subsea Tree** | `SubseaTree` | Christmas tree for well control (vertical/horizontal) |
+| **Manifold** | `SubseaManifold` | Production/test/injection routing |
+| **Jumper** | `SubseaJumper` | Rigid or flexible connections between equipment |
+| **Umbilical** | `Umbilical` | Control and chemical injection lines |
+| **Flexible Pipe** | `FlexiblePipe` | Dynamic risers and flowlines |
+| **Subsea Booster** | `SubseaBooster` | Multiphase pumps and wet gas compressors |
+
 ### Subsea System Configuration
 
 ```java
@@ -755,6 +771,237 @@ System.out.println("  Manifold: " + result.getManifoldCostMusd() + " MUSD");
 System.out.println("  Pipeline: " + result.getPipelineCostMusd() + " MUSD");
 System.out.println("  Umbilical: " + result.getUmbilicalCostMusd() + " MUSD");
 ```
+
+### Detailed SURF Equipment Modeling
+
+For detailed engineering, use the dedicated SURF equipment classes:
+
+```java
+import neqsim.process.equipment.subsea.*;
+import neqsim.process.mechanicaldesign.subsea.*;
+
+// Create well stream
+Stream wellStream = new Stream("Well-1", reservoirFluid);
+wellStream.setFlowRate(100000.0, "kg/hr");
+wellStream.run();
+
+// Subsea Tree with full configuration
+SubseaTree tree = new SubseaTree("Well-1 Tree", wellStream);
+tree.setTreeType(SubseaTree.TreeType.HORIZONTAL);
+tree.setPressureRating(SubseaTree.PressureRating.PR10000);  // 10,000 psi
+tree.setBoreSizeInches(7.0);
+tree.setWaterDepth(380.0);
+tree.setDesignPressure(690.0);  // bar
+tree.setDesignTemperature(121.0);  // °C
+tree.run();
+
+// Production Manifold
+SubseaManifold manifold = new SubseaManifold("Field Manifold");
+manifold.setManifoldType(SubseaManifold.ManifoldType.PRODUCTION_TEST);
+manifold.setNumberOfWellSlots(6);
+manifold.setProductionHeaderSizeInches(12.0);
+manifold.setTestHeaderSizeInches(6.0);
+manifold.setWaterDepth(380.0);
+manifold.setDesignPressure(250.0);
+manifold.addWellStream(tree.getOutletStream(), 1);
+manifold.routeWellToProduction(1);
+manifold.run();
+
+// Rigid Jumper (Tree to Manifold)
+SubseaJumper jumper = new SubseaJumper("Tree-Manifold Jumper", tree.getOutletStream());
+jumper.setJumperType(SubseaJumper.JumperType.RIGID_M_SHAPE);
+jumper.setLength(50.0);
+jumper.setNominalBoreInches(6.0);
+jumper.setOuterDiameterInches(6.625);
+jumper.setWallThicknessMm(12.7);
+jumper.setDesignPressure(200.0);
+jumper.setMaterialGrade("X65");
+jumper.run();
+
+// Export PLET
+PLET exportPLET = new PLET("Export PLET", manifold.getProductionOutputStream());
+exportPLET.setConnectionType(PLET.ConnectionType.VERTICAL_HUB);
+exportPLET.setHubSizeInches(12.0);
+exportPLET.setStructureType(PLET.StructureType.GRAVITY_BASE);
+exportPLET.setWaterDepth(380.0);
+exportPLET.setDesignPressure(200.0);
+exportPLET.setMaterialGrade("X65");
+exportPLET.run();
+
+// Dynamic Riser with Lazy-Wave Configuration
+FlexiblePipe riser = new FlexiblePipe("Production Riser", exportPLET.getOutletStream());
+riser.setPipeType(FlexiblePipe.PipeType.UNBONDED);
+riser.setApplication(FlexiblePipe.Application.DYNAMIC_RISER);
+riser.setRiserConfiguration(FlexiblePipe.RiserConfiguration.LAZY_WAVE);
+riser.setServiceType(FlexiblePipe.ServiceType.OIL_SERVICE);
+riser.setLength(1200.0);
+riser.setInnerDiameterInches(8.0);
+riser.setDesignPressure(200.0);
+riser.setWaterDepth(380.0);
+riser.setHasBendStiffener(true);
+riser.setHasBuoyancyModules(true);
+riser.run();
+
+// Control Umbilical
+Umbilical umbilical = new Umbilical("Field Umbilical");
+umbilical.setUmbilicalType(Umbilical.UmbilicalType.STEEL_TUBE);
+umbilical.setLength(48000.0);  // 48 km
+umbilical.setWaterDepth(380.0);
+umbilical.setHasArmorWires(true);
+
+// Add hydraulic control lines
+umbilical.addHydraulicLine(12.7, 517.0, "HP Supply");    // 12.7mm ID, 517 bar
+umbilical.addHydraulicLine(12.7, 517.0, "HP Return");
+umbilical.addHydraulicLine(9.525, 345.0, "LP Supply");
+umbilical.addHydraulicLine(9.525, 345.0, "LP Return");
+
+// Add chemical injection lines
+umbilical.addChemicalLine(25.4, 207.0, "MEG Injection");
+umbilical.addChemicalLine(19.05, 207.0, "Scale Inhibitor");
+umbilical.addChemicalLine(12.7, 207.0, "Corrosion Inhibitor");
+
+// Add electrical and fiber
+umbilical.addElectricalCable(35.0, 6600.0, "Power");
+umbilical.addElectricalCable(4.0, 500.0, "Signal");
+umbilical.addFiberOptic(12, "Communication");
+
+umbilical.run(null);
+
+// Subsea Boosting (if required for pressure support)
+SubseaBooster mpPump = new SubseaBooster("MP Pump", manifold.getProductionOutputStream());
+mpPump.setBoosterType(SubseaBooster.BoosterType.MULTIPHASE_PUMP);
+mpPump.setPumpType(SubseaBooster.PumpType.HELICO_AXIAL);
+mpPump.setDriveType(SubseaBooster.DriveType.ELECTRIC);
+mpPump.setNumberOfStages(6);
+mpPump.setDesignInletPressure(80.0);
+mpPump.setDifferentialPressure(50.0);
+mpPump.setWaterDepth(380.0);
+mpPump.setDesignLifeYears(25);
+mpPump.setRetrievable(true);
+mpPump.run();
+```
+
+### SURF Mechanical Design and Cost Estimation
+
+Each SURF equipment type has a dedicated mechanical design class with integrated cost estimation:
+
+```java
+import neqsim.process.mechanicaldesign.subsea.*;
+
+// Initialize mechanical design for equipment
+tree.initMechanicalDesign();
+manifold.initMechanicalDesign();
+jumper.initMechanicalDesign();
+exportPLET.initMechanicalDesign();
+riser.initMechanicalDesign();
+umbilical.initMechanicalDesign();
+
+// Configure and run mechanical designs
+SubseaTreeMechanicalDesign treeDesign = 
+    (SubseaTreeMechanicalDesign) tree.getMechanicalDesign();
+treeDesign.setMaxOperationPressure(690.0);
+treeDesign.setDesignStandardCode("API-17D");
+treeDesign.setRegion(SubseaCostEstimator.Region.NORWAY);
+treeDesign.calcDesign();
+
+PLETMechanicalDesign pletDesign = 
+    (PLETMechanicalDesign) exportPLET.getMechanicalDesign();
+pletDesign.setMaxOperationPressure(200.0);
+pletDesign.setMaterialGrade("X65");
+pletDesign.setDesignStandardCode("DNV-ST-F101");
+pletDesign.setRegion(SubseaCostEstimator.Region.NORWAY);
+pletDesign.calcDesign();
+
+// Get detailed design results
+System.out.println("PLET Hub Wall Thickness: " + pletDesign.getHubWallThickness() + " mm");
+System.out.println("PLET Mudmat Area: " + pletDesign.getRequiredMudmatArea() + " m²");
+
+// Get cost breakdown
+Map<String, Object> treeCosts = treeDesign.getCostBreakdown();
+Map<String, Object> pletCosts = pletDesign.getCostBreakdown();
+
+System.out.println("Tree Total Cost: $" + String.format("%,.0f", treeCosts.get("totalCostUSD")));
+System.out.println("PLET Total Cost: $" + String.format("%,.0f", pletCosts.get("totalCostUSD")));
+
+// Generate Bill of Materials
+List<Map<String, Object>> pletBOM = pletDesign.generateBillOfMaterials();
+for (Map<String, Object> item : pletBOM) {
+    System.out.println("  " + item.get("item") + ": " + item.get("quantity") + " " + 
+        item.get("unit") + " @ $" + String.format("%,.0f", (Double)item.get("unitCost")));
+}
+
+// Export full design report as JSON
+String designJson = pletDesign.toJson();
+```
+
+### Subsea Cost Estimation with Regional Factors
+
+The `SubseaCostEstimator` class provides comprehensive cost estimation with regional adjustments:
+
+```java
+import neqsim.process.mechanicaldesign.subsea.SubseaCostEstimator;
+
+SubseaCostEstimator estimator = new SubseaCostEstimator(SubseaCostEstimator.Region.NORWAY);
+
+// Calculate costs for complete SURF system
+double totalSurfCapex = 0.0;
+
+// Trees (6 wells)
+estimator.calculateTreeCost(10000.0, 7.0, 380.0, true, false);
+double treeCost = estimator.getTotalCost();
+totalSurfCapex += treeCost * 6;
+System.out.println("Trees (6x): $" + String.format("%,.0f", treeCost * 6));
+
+// Manifold
+estimator.calculateManifoldCost(6, 80.0, 380.0, true);
+double manifoldCost = estimator.getTotalCost();
+totalSurfCapex += manifoldCost;
+System.out.println("Manifold: $" + String.format("%,.0f", manifoldCost));
+
+// Jumpers (6 x 50m rigid)
+estimator.calculateJumperCost(50.0, 6.0, true, 380.0);
+double jumperCost = estimator.getTotalCost();
+totalSurfCapex += jumperCost * 6;
+System.out.println("Jumpers (6x): $" + String.format("%,.0f", jumperCost * 6));
+
+// Export PLET
+estimator.calculatePLETCost(25.0, 12.0, 380.0, true, true);
+double pletCost = estimator.getTotalCost();
+totalSurfCapex += pletCost;
+System.out.println("PLET: $" + String.format("%,.0f", pletCost));
+
+// Umbilical (48 km)
+estimator.calculateUmbilicalCost(48.0, 4, 3, 2, 380.0, false);
+double umbilicalCost = estimator.getTotalCost();
+totalSurfCapex += umbilicalCost;
+System.out.println("Umbilical: $" + String.format("%,.0f", umbilicalCost));
+
+// Dynamic Riser (1200m)
+estimator.calculateFlexiblePipeCost(1200.0, 8.0, 380.0, true, true);
+double riserCost = estimator.getTotalCost();
+totalSurfCapex += riserCost;
+System.out.println("Riser: $" + String.format("%,.0f", riserCost));
+
+System.out.println("\n=== TOTAL SURF CAPEX: $" + String.format("%,.0f", totalSurfCapex) + " ===");
+
+// Compare by region
+System.out.println("\nRegional Cost Comparison:");
+for (SubseaCostEstimator.Region region : SubseaCostEstimator.Region.values()) {
+    SubseaCostEstimator regional = new SubseaCostEstimator(region);
+    regional.calculateManifoldCost(6, 80.0, 380.0, true);
+    System.out.println("  " + region.name() + ": $" + String.format("%,.0f", regional.getTotalCost()));
+}
+```
+
+**Regional Cost Factors:**
+
+| Region | Factor | Typical Projects |
+|--------|--------|------------------|
+| NORWAY | 1.35 | Norwegian Continental Shelf |
+| UK | 1.25 | UK North Sea |
+| GOM | 1.00 | Gulf of Mexico (baseline) |
+| BRAZIL | 0.85 | Pre-salt developments |
+| WEST_AFRICA | 1.10 | West African margin |
 
 ### Tieback Analysis to Multiple Hosts
 

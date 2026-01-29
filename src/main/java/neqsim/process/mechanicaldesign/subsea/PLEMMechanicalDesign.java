@@ -173,14 +173,15 @@ public class PLEMMechanicalDesign extends MechanicalDesign {
       costEstimator = new SubseaCostEstimator();
     }
 
-    Map<String, Object> costResult = costEstimator.calculatePLETCost(plem.getWaterDepth(),
-        plem.getDryWeight(), plem.getNumberOfSlots() > 2);
+    // Use PLET cost calculation with PLEM parameters
+    costEstimator.calculatePLETCost(plem.getDryWeight(), plem.getHeaderSizeInches(),
+        plem.getWaterDepth(), plem.hasBranchIsolationValves(), plem.getNumberOfSlots() > 2);
 
-    totalCostUSD = ((Number) costResult.get("totalCost")).doubleValue();
-    equipmentCostUSD = ((Number) costResult.get("equipmentCost")).doubleValue();
-    installationCostUSD = ((Number) costResult.get("installationCost")).doubleValue();
-    vesselDays = ((Number) costResult.get("vesselDays")).doubleValue();
-    totalManhours = ((Number) costResult.get("totalManhours")).doubleValue();
+    totalCostUSD = costEstimator.getTotalCost();
+    equipmentCostUSD = costEstimator.getEquipmentCost();
+    installationCostUSD = costEstimator.getInstallationCost();
+    vesselDays = costEstimator.getVesselDays();
+    totalManhours = costEstimator.getTotalManhours();
   }
 
   /**
@@ -192,8 +193,13 @@ public class PLEMMechanicalDesign extends MechanicalDesign {
     if (costEstimator == null) {
       calculateCostEstimate();
     }
-    return costEstimator.calculatePLETCost(plem.getWaterDepth(), plem.getDryWeight(),
-        plem.getNumberOfSlots() > 2);
+    Map<String, Object> breakdown = new java.util.HashMap<>();
+    breakdown.put("totalCost", totalCostUSD);
+    breakdown.put("equipmentCost", equipmentCostUSD);
+    breakdown.put("installationCost", installationCostUSD);
+    breakdown.put("vesselDays", vesselDays);
+    breakdown.put("totalManhours", totalManhours);
+    return breakdown;
   }
 
   /**
