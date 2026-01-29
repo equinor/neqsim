@@ -181,6 +181,20 @@ public class ValveMechanicalDesign extends MechanicalDesign {
    * Setter for the field <code>valveSizingStandard</code>.
    * </p>
    *
+   * <p>
+   * Available sizing standards:
+   * </p>
+   * <ul>
+   * <li><b>IEC 60534</b> - Standard control valve sizing (single-phase focus)</li>
+   * <li><b>IEC 60534 full</b> - Full IEC 60534 implementation with all corrections</li>
+   * <li><b>prod choke</b> - Simple production choke model</li>
+   * <li><b>Sachdeva</b> - Sachdeva et al. (1986) mechanistic two-phase choke model</li>
+   * <li><b>Gilbert</b> - Gilbert (1954) empirical correlation</li>
+   * <li><b>Baxendell</b> - Baxendell (1958) empirical correlation</li>
+   * <li><b>Ros</b> - Ros (1960) empirical correlation</li>
+   * <li><b>Achong</b> - Achong (1961) empirical correlation</li>
+   * </ul>
+   *
    * @param valveSizingStandard a {@link java.lang.String} object
    */
   public void setValveSizingStandard(String valveSizingStandard) {
@@ -192,6 +206,16 @@ public class ValveMechanicalDesign extends MechanicalDesign {
       valveSizingMethod = new ControlValveSizing_IEC_60534_full(this);
     } else if (valveSizingStandard.equals("prod choke")) {
       valveSizingMethod = new ControlValveSizing_simple(this);
+    } else if (valveSizingStandard.equalsIgnoreCase("Sachdeva")) {
+      valveSizingMethod = new ControlValveSizing_MultiphaseChoke(this, "Sachdeva");
+    } else if (valveSizingStandard.equalsIgnoreCase("Gilbert")) {
+      valveSizingMethod = new ControlValveSizing_MultiphaseChoke(this, "Gilbert");
+    } else if (valveSizingStandard.equalsIgnoreCase("Baxendell")) {
+      valveSizingMethod = new ControlValveSizing_MultiphaseChoke(this, "Baxendell");
+    } else if (valveSizingStandard.equalsIgnoreCase("Ros")) {
+      valveSizingMethod = new ControlValveSizing_MultiphaseChoke(this, "Ros");
+    } else if (valveSizingStandard.equalsIgnoreCase("Achong")) {
+      valveSizingMethod = new ControlValveSizing_MultiphaseChoke(this, "Achong");
     } else {
       valveSizingMethod = new ControlValveSizing(this);
     }
@@ -228,6 +252,50 @@ public class ValveMechanicalDesign extends MechanicalDesign {
       valveCharacterizationMethod = new ModifiedParabolicCharacteristic();
     } else {
       valveCharacterizationMethod = new LinearCharacteristic();
+    }
+  }
+
+  /**
+   * Sets the choke diameter for multiphase choke models.
+   *
+   * <p>
+   * This method is only applicable when using multiphase choke sizing methods (Sachdeva, Gilbert,
+   * Baxendell, Ros, or Achong). For other sizing methods, this has no effect.
+   * </p>
+   *
+   * @param diameter the choke diameter value
+   * @param unit the unit: "m", "mm", "in", or "64ths"
+   */
+  public void setChokeDiameter(double diameter, String unit) {
+    if (valveSizingMethod instanceof ControlValveSizing_MultiphaseChoke) {
+      ((ControlValveSizing_MultiphaseChoke) valveSizingMethod).setChokeDiameter(diameter, unit);
+    }
+  }
+
+  /**
+   * Gets the choke diameter in meters.
+   *
+   * <p>
+   * This method is only applicable when using multiphase choke sizing methods.
+   * </p>
+   *
+   * @return choke diameter in meters, or 0 if not using a choke model
+   */
+  public double getChokeDiameter() {
+    if (valveSizingMethod instanceof ControlValveSizing_MultiphaseChoke) {
+      return ((ControlValveSizing_MultiphaseChoke) valveSizingMethod).getChokeDiameter();
+    }
+    return 0.0;
+  }
+
+  /**
+   * Sets the discharge coefficient for multiphase choke models.
+   *
+   * @param cd discharge coefficient (typically 0.75-0.90)
+   */
+  public void setChokeDischargeCoefficient(double cd) {
+    if (valveSizingMethod instanceof ControlValveSizing_MultiphaseChoke) {
+      ((ControlValveSizing_MultiphaseChoke) valveSizingMethod).setDischargeCoefficient(cd);
     }
   }
 

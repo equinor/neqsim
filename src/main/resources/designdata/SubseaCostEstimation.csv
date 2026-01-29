@@ -1,0 +1,33 @@
+EquipmentType,SizeCategory,BaseCostUSD,MaterialCostPerTonneUSD,FabricationCostPerTonneUSD,InstallationCostUSD,EngineeringPct,ProjectMgmtPct,ContingencyPct,Standard,Description
+PLET,Small,500000,8000,15000,800000,0.10,0.05,0.15,Industry,PLET <10 inch hub
+PLET,Medium,800000,8000,15000,1200000,0.10,0.05,0.15,Industry,PLET 10-16 inch hub
+PLET,Large,1200000,8000,15000,1800000,0.10,0.05,0.15,Industry,PLET >16 inch hub
+PLEM,Small,800000,8000,15000,1000000,0.10,0.05,0.15,Industry,PLEM 2-slot
+PLEM,Medium,1500000,8000,15000,1800000,0.10,0.05,0.15,Industry,PLEM 4-slot
+PLEM,Large,2500000,8000,15000,2500000,0.10,0.05,0.15,Industry,PLEM 6+ slot
+SubseaManifold,Small,3000000,10000,20000,2000000,0.12,0.06,0.15,Industry,Manifold 4-slot
+SubseaManifold,Medium,5000000,10000,20000,3500000,0.12,0.06,0.15,Industry,Manifold 6-slot
+SubseaManifold,Large,8000000,10000,20000,5000000,0.12,0.06,0.15,Industry,Manifold 8+ slot
+SubseaJumper_Rigid,Small,200000,6000,12000,300000,0.08,0.04,0.12,Industry,Rigid jumper <30m
+SubseaJumper_Rigid,Medium,400000,6000,12000,500000,0.08,0.04,0.12,Industry,Rigid jumper 30-60m
+SubseaJumper_Rigid,Large,700000,6000,12000,800000,0.08,0.04,0.12,Industry,Rigid jumper >60m
+SubseaJumper_Flexible,Small,300000,0,0,250000,0.08,0.04,0.12,Industry,Flexible jumper <50m
+SubseaJumper_Flexible,Medium,500000,0,0,400000,0.08,0.04,0.12,Industry,Flexible jumper 50-100m
+SubseaJumper_Flexible,Large,800000,0,0,600000,0.08,0.04,0.12,Industry,Flexible jumper >100m
+Umbilical,PerKm,2000000,0,0,500000,0.10,0.05,0.15,Industry,Static umbilical per km
+Umbilical_Dynamic,PerKm,3500000,0,0,800000,0.10,0.05,0.15,Industry,Dynamic umbilical per km
+SubseaTree,PR5000,8000000,0,0,1500000,0.12,0.06,0.18,Industry,5000 psi tree
+SubseaTree,PR10000,15000000,0,0,2500000,0.12,0.06,0.18,Industry,10000 psi tree
+SubseaTree,PR15000,25000000,0,0,4000000,0.12,0.06,0.18,Industry,15000 psi tree
+SubseaTree,PR20000,40000000,0,0,6000000,0.12,0.06,0.18,Industry,20000 psi tree
+FlexiblePipe,PerMeter_6in,800,0,0,200,0.08,0.04,0.12,Industry,6 inch flexible per meter
+FlexiblePipe,PerMeter_8in,1200,0,0,300,0.08,0.04,0.12,Industry,8 inch flexible per meter
+FlexiblePipe,PerMeter_10in,1800,0,0,400,0.08,0.04,0.12,Industry,10 inch flexible per meter
+FlexiblePipe_Dynamic,PerMeter_6in,1200,0,0,400,0.08,0.04,0.12,Industry,6 inch dynamic riser per meter
+FlexiblePipe_Dynamic,PerMeter_8in,1800,0,0,600,0.08,0.04,0.12,Industry,8 inch dynamic riser per meter
+SubseaBooster_Pump,Small,30000000,0,0,8000000,0.15,0.08,0.20,Industry,MP pump <3 MW
+SubseaBooster_Pump,Medium,50000000,0,0,12000000,0.15,0.08,0.20,Industry,MP pump 3-6 MW
+SubseaBooster_Pump,Large,80000000,0,0,18000000,0.15,0.08,0.20,Industry,MP pump >6 MW
+SubseaBooster_Compressor,Small,60000000,0,0,15000000,0.15,0.08,0.20,Industry,WG compressor <5 MW
+SubseaBooster_Compressor,Medium,100000000,0,0,25000000,0.15,0.08,0.20,Industry,WG compressor 5-10 MW
+SubseaBooster_Compressor,Large,150000000,0,0,40000000,0.15,0.08,0.20,Industry,WG compressor >10 MW

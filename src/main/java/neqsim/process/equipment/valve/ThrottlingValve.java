@@ -85,9 +85,8 @@ public class ThrottlingValve extends TwoPortEquipment
    * Constructor for ThrottlingValve.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *                    object
+   * @param name a {@link java.lang.String} object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public ThrottlingValve(String name, StreamInterface inletStream) {
     this(name);
@@ -149,7 +148,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * </p>
    *
    * @param pressure a double
-   * @param unit     a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setPressure(double pressure, String unit) {
     setOutletPressure(pressure, unit);
@@ -168,7 +167,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * </p>
    *
    * @param pressure a double
-   * @param unit     a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setOutletPressure(double pressure, String unit) {
     pressureUnit = unit;
@@ -199,8 +198,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * Calculates molar flow for a gas based on IEC 60534 standards. This method
-   * accounts for choked
+   * Calculates molar flow for a gas based on IEC 60534 standards. This method accounts for choked
    * (critical) flow.
    *
    * @return Molar flow in mole/sec.
@@ -227,7 +225,7 @@ public class ThrottlingValve extends TwoPortEquipment
   /**
    * Adjusts the flow coefficient (Kv) based on the percentage valve opening.
    *
-   * @param Kv                  Flow coefficient SI (for 100% opening)
+   * @param Kv Flow coefficient SI (for 100% opening)
    * @param percentValveOpening Percentage valve opening (0 to 100).
    * @return Adjusted flow coefficient (Kv)
    */
@@ -478,7 +476,8 @@ public class ThrottlingValve extends TwoPortEquipment
     }
     controllerRequest = clampValveOpening(controllerRequest);
     setTargetPercentValveOpening(controllerRequest);
-    percentValveOpening = clampValveOpening(applyTravelDynamics(percentValveOpening, requestedValveOpening, dt));
+    percentValveOpening =
+        clampValveOpening(applyTravelDynamics(percentValveOpening, requestedValveOpening, dt));
     setCalculationIdentifier(id);
   }
 
@@ -498,7 +497,8 @@ public class ThrottlingValve extends TwoPortEquipment
         if (Math.abs(delta) < 1e-12 || effectiveDt <= 0.0) {
           return target;
         }
-        double travelTime = delta >= 0.0 ? getEffectiveOpeningTravelTime() : getEffectiveClosingTravelTime();
+        double travelTime =
+            delta >= 0.0 ? getEffectiveOpeningTravelTime() : getEffectiveClosingTravelTime();
         if (travelTime <= 0.0) {
           return target;
         }
@@ -897,7 +897,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * </p>
    *
    * @param deltaPressure a double
-   * @param unit          a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setDeltaPressure(double deltaPressure, String unit) {
     this.deltaPressure = deltaPressure;
@@ -956,10 +956,8 @@ public class ThrottlingValve extends TwoPortEquipment
    * Calculate Acoustic-Induced Vibration (AIV) power level.
    *
    * <p>
-   * AIV is most significant at control valves where high pressure drops occur.
-   * The acoustic power
-   * generated is a function of mass flow rate, pressure drop, and temperature.
-   * This method
+   * AIV is most significant at control valves where high pressure drops occur. The acoustic power
+   * generated is a function of mass flow rate, pressure drop, and temperature. This method
    * implements the Energy Institute Guidelines formula for AIV screening.
    * </p>
    *
@@ -998,14 +996,14 @@ public class ThrottlingValve extends TwoPortEquipment
 
     // Energy Institute formula for acoustic power level
     // W_acoustic = 3.2e-9 * mdot * P1 * (dP/P1)^3.6 * (T/273.15)^0.8
-    double acousticPowerWatts = 3.2e-9 * mdot * p1 * Math.pow(pressureRatio, 3.6) * Math.pow(tempK / 273.15, 0.8);
+    double acousticPowerWatts =
+        3.2e-9 * mdot * p1 * Math.pow(pressureRatio, 3.6) * Math.pow(tempK / 273.15, 0.8);
 
     return acousticPowerWatts / 1000.0; // Return in kW
   }
 
   /**
-   * Calculate AIV Likelihood of Failure based on acoustic power and downstream
-   * pipe geometry.
+   * Calculate AIV Likelihood of Failure based on acoustic power and downstream pipe geometry.
    *
    * <p>
    * AIV LOF interpretation:
@@ -1017,7 +1015,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * <li>&gt; 0.7: Very high risk - design changes needed</li>
    * </ul>
    *
-   * @param downstreamDiameter  downstream pipe diameter in meters
+   * @param downstreamDiameter downstream pipe diameter in meters
    * @param downstreamThickness downstream pipe wall thickness in meters
    * @return AIV likelihood of failure (0.0-1.0)
    */
@@ -1066,50 +1064,48 @@ public class ThrottlingValve extends TwoPortEquipment
   // ============================================================================
 
   /** Storage for capacity constraints. */
-  private final java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> capacityConstraints = new java.util.LinkedHashMap<>();
+  private final java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> capacityConstraints =
+      new java.util.LinkedHashMap<>();
 
   /**
    * Initializes default capacity constraints for the valve.
    *
    * <p>
-   * NOTE: All constraints are disabled by default for backwards compatibility.
-   * Enable specific
-   * constraints when valve capacity analysis is needed (e.g., when Cv has been
-   * sized).
+   * NOTE: All constraints are disabled by default for backwards compatibility. Enable specific
+   * constraints when valve capacity analysis is needed (e.g., when Cv has been sized).
    * </p>
    */
   protected void initializeCapacityConstraints() {
     // Cv utilization constraint (HARD limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("cvUtilization",
         "", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
-        .setDesignValue(getMechanicalDesign().maxDesignCv).setWarningThreshold(0.9)
-        .setDescription("Cv utilization vs design maximum").setValueSupplier(() -> getCv())
-        .setEnabled(false));
+            .setDesignValue(getMechanicalDesign().maxDesignCv).setWarningThreshold(0.9)
+            .setDescription("Cv utilization vs design maximum").setValueSupplier(() -> getCv())
+            .setEnabled(false));
 
     // Volume flow constraint (DESIGN limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("volumeFlow",
         "m3/hr", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
-        .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
-        .setDescription("Volume flow vs design maximum").setValueSupplier(
-            () -> getOutStream() != null ? getOutStream().getFlowRate("m3/hr") : 0.0)
-        .setEnabled(false));
+            .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
+            .setDescription("Volume flow vs design maximum")
+            .setValueSupplier(
+                () -> getOutStream() != null ? getOutStream().getFlowRate("m3/hr") : 0.0)
+            .setEnabled(false));
 
     // Valve opening constraint (SOFT limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("valveOpening",
         "%", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-        .setDesignValue(maxValveOpening).setWarningThreshold(0.9)
-        .setDescription("Valve opening percentage")
-        .setValueSupplier(() -> percentValveOpening)
-        .setEnabled(false));
+            .setDesignValue(maxValveOpening).setWarningThreshold(0.9)
+            .setDescription("Valve opening percentage").setValueSupplier(() -> percentValveOpening)
+            .setEnabled(false));
 
     // AIV (Acoustic-Induced Vibration) constraint - critical for control valves -
     // disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("AIV", "kW",
         neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-        .setDesignValue(maxDesignAIV).setMaxValue(50.0).setWarningThreshold(0.4)
-        .setDescription("AIV acoustic power (<1kW=low, 1-10kW=medium, >25kW=very high risk)")
-        .setValueSupplier(() -> calculateAIV())
-        .setEnabled(false));
+            .setDesignValue(maxDesignAIV).setMaxValue(50.0).setWarningThreshold(0.4)
+            .setDescription("AIV acoustic power (<1kW=low, 1-10kW=medium, >25kW=very high risk)")
+            .setValueSupplier(() -> calculateAIV()).setEnabled(false));
   }
 
   /** {@inheritDoc} */
@@ -1213,8 +1209,7 @@ public class ThrottlingValve extends TwoPortEquipment
   // ============================================================================
 
   /**
-   * Default design opening percentage for valve sizing (50% for good control
-   * range).
+   * Default design opening percentage for valve sizing (50% for good control range).
    */
   private static final double DESIGN_OPENING_PERCENT = 50.0;
 
@@ -1225,10 +1220,8 @@ public class ThrottlingValve extends TwoPortEquipment
    * Auto-sizes the valve based on current flow conditions.
    *
    * <p>
-   * This method calculates the required Cv value so that the valve operates at
-   * approximately 50%
-   * opening at the current flow rate. This provides good control range - the
-   * valve can open further
+   * This method calculates the required Cv value so that the valve operates at approximately 50%
+   * opening at the current flow rate. This provides good control range - the valve can open further
    * for higher flows or close for lower flows.
    * </p>
    *
@@ -1237,12 +1230,9 @@ public class ThrottlingValve extends TwoPortEquipment
    * </p>
    * <ul>
    * <li>At normal flow, valve should be at ~50% opening (design point)</li>
-   * <li>Maximum Cv (100% opening) = Cv needed at 50% opening * 2
-   * (approximately)</li>
-   * <li>This gives control range from ~25% to 100% opening for typical flow
-   * variations</li>
-   * <li>For zero flow valves (bypass, emergency), uses minimum default Cv or
-   * estimates from
+   * <li>Maximum Cv (100% opening) = Cv needed at 50% opening * 2 (approximately)</li>
+   * <li>This gives control range from ~25% to 100% opening for typical flow variations</li>
+   * <li>For zero flow valves (bypass, emergency), uses minimum default Cv or estimates from
    * connected equipment</li>
    * </ul>
    *
@@ -1254,12 +1244,10 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * Auto-sizes the valve based on current flow conditions with specified design
-   * opening.
+   * Auto-sizes the valve based on current flow conditions with specified design opening.
    *
-   * @param safetyFactor         safety factor to apply (e.g., 1.2 for 20% margin)
-   * @param designOpeningPercent the target valve opening percentage at design
-   *                             flow (typically 50%)
+   * @param safetyFactor safety factor to apply (e.g., 1.2 for 20% margin)
+   * @param designOpeningPercent the target valve opening percentage at design flow (typically 50%)
    */
   public void autoSize(double safetyFactor, double designOpeningPercent) {
     if (getInletStream() == null) {
@@ -1342,8 +1330,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * Estimates Cv from flow rate using simplified correlation.
    *
    * <p>
-   * This is a rough estimate when the standard calculation fails. Uses typical
-   * valve sizing rules
+   * This is a rough estimate when the standard calculation fails. Uses typical valve sizing rules
    * of thumb.
    * </p>
    *
@@ -1370,8 +1357,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * Estimates Cv for a valve with zero or negligible flow.
    *
    * <p>
-   * For valves like bypass valves, emergency relief valves, or startup valves
-   * that normally have no
+   * For valves like bypass valves, emergency relief valves, or startup valves that normally have no
    * flow, this method estimates an appropriate Cv based on:
    * </p>
    * <ul>

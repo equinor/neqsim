@@ -1,0 +1,62 @@
+Standard,Section,ParameterName,Value,Unit,EquipmentType,Description
+DNV-ST-F101,Sec5,DesignFactor,0.72,,Pipeline,Design factor for location class 1
+DNV-ST-F101,Sec5,DesignFactorClass2,0.67,,Pipeline,Design factor for location class 2
+DNV-ST-F101,Sec5,SafetyClassFactor_Low,1.04,,Pipeline,Safety class factor - low
+DNV-ST-F101,Sec5,SafetyClassFactor_Normal,1.14,,Pipeline,Safety class factor - normal
+DNV-ST-F101,Sec5,SafetyClassFactor_High,1.26,,Pipeline,Safety class factor - high
+DNV-ST-F101,Sec5,MaterialFactor,1.15,,Pipeline,Material resistance factor
+DNV-ST-F101,Sec5,ConditionLoadFactor,1.07,,Pipeline,Condition load factor
+DNV-ST-F101,Sec5,MinWallThickness,12.7,mm,Pipeline,Minimum wall thickness
+DNV-ST-F101,Sec5,CorrosionAllowance_Internal,3.0,mm,Pipeline,Internal corrosion allowance
+DNV-ST-F101,Sec5,FabricationTolerance,12.5,%,Pipeline,Negative fabrication tolerance
+DNV-ST-F101,Sec13,CollapseTestFactor,0.667,,Pipeline,Collapse test factor
+DNV-ST-F101,Sec13,PropagationBucklingFactor,0.75,,Pipeline,Propagation buckling factor
+DNV-ST-F201,Sec4,DynamicAmplificationFactor,1.5,,Riser,Dynamic amplification factor
+DNV-ST-F201,Sec4,FatigueDesignFactor_Normal,6.0,,Riser,Fatigue design factor - normal
+DNV-ST-F201,Sec4,FatigueDesignFactor_High,10.0,,Riser,Fatigue design factor - high safety
+DNV-RP-F109,Sec5,LateralStabilityFactor,1.1,,Pipeline,Lateral stability safety factor
+DNV-RP-F109,Sec5,VerticalStabilityFactor,1.1,,Pipeline,Vertical stability safety factor
+API-Spec-17D,Sec7,DesignFactor,0.67,,SubseaTree,Design stress factor
+API-Spec-17D,Sec8,TestPressureFactor,1.50,,SubseaTree,Factory acceptance test pressure
+API-Spec-17D,Sec8,SystemTestPressure,1.25,,SubseaTree,System integration test pressure
+API-Spec-17D,Sec7,MinBoreSizeRatio,0.80,,SubseaTree,Min bore to nominal ratio
+API-RP-17A,Sec6,DesignLifeYears,25,years,General,Typical design life
+API-RP-17A,Sec6,OperatingTemperatureMin,-18,degC,General,Minimum operating temperature
+API-RP-17A,Sec6,OperatingTemperatureMax,180,degC,General,Maximum operating temperature
+API-RP-17B,Sec5,BurstDesignFactor,0.67,,FlexiblePipe,Burst pressure design factor
+API-RP-17B,Sec5,CollapseDesignFactor,0.67,,FlexiblePipe,Collapse pressure design factor
+API-RP-17B,Sec5,TensileDesignFactor,0.67,,FlexiblePipe,Tensile load design factor
+API-RP-17B,Sec5,TorsionDesignFactor,0.80,,FlexiblePipe,Torsion load design factor
+API-RP-17B,Sec6,MinBendRadiusFactor_Unbonded,7.0,,FlexiblePipe,MBR factor for unbonded
+API-RP-17B,Sec6,MinBendRadiusFactor_Bonded,10.0,,FlexiblePipe,MBR factor for bonded
+API-RP-17B,Sec6,StorageMBRFactor,1.5,,FlexiblePipe,Storage MBR multiplier
+API-Spec-17J,Sec7,InternalSheathMin_Standard,6.0,mm,FlexiblePipe,Min sheath thickness standard
+API-Spec-17J,Sec7,InternalSheathMin_Sour,8.0,mm,FlexiblePipe,Min sheath thickness sour
+API-Spec-17J,Sec8,PressureArmorYield,700,MPa,FlexiblePipe,Pressure armor yield strength
+API-Spec-17J,Sec8,TensileArmorYield,1400,MPa,FlexiblePipe,Tensile armor yield strength
+API-RP-17E,Sec5,TubeDesignFactor,0.60,,Umbilical,Design factor for tubes
+API-RP-17E,Sec5,ArmorDesignFactor,0.67,,Umbilical,Design factor for armor
+API-RP-17E,Sec6,MinBendRadiusFactor_Steel,8.0,,Umbilical,MBR factor for steel tube
+API-RP-17E,Sec6,MinBendRadiusFactor_Thermo,6.0,,Umbilical,MBR factor for thermoplastic
+API-RP-17E,Sec7,TubeWallMin,1.5,mm,Umbilical,Minimum tube wall thickness
+API-RP-17E,Sec8,SuperDuplexSMYS,550,MPa,Umbilical,Super duplex yield strength
+API-RP-17G,Sec6,FoundationSafetyFactor,2.0,,Manifold,Foundation capacity factor
+API-RP-17G,Sec6,ValveActuationTime,30,seconds,Manifold,Maximum valve actuation time
+API-RP-17G,Sec7,HubConnectorCapacity,500,kN,Manifold,Minimum connector capacity
+API-RP-17Q,Sec5,QualificationTestDuration,2000,hours,General,Technology qualification test
+API-RP-17Q,Sec5,SystemIntegrationTest,500,hours,General,System integration test duration
+API-RP-17V,Sec5,MotorPowerMargin,1.20,,SubseaBooster,Motor power margin
+API-RP-17V,Sec5,MinMTBF,40000,hours,SubseaBooster,Minimum MTBF requirement
+API-RP-17V,Sec6,DesignLifeYears,25,years,SubseaBooster,Design service life
+API-RP-17V,Sec6,BearingLifeMin,40000,hours,SubseaBooster,Minimum bearing L10 life
+API-RP-17V,Sec7,CoolingMargin,1.20,,SubseaBooster,Cooling capacity margin
+ISO-13628-1,Sec7,DesignPressureFactor,1.10,,General,Design pressure factor
+ISO-13628-1,Sec7,DesignTemperatureMargin,15,degC,General,Temperature margin above max
+ISO-13628-4,Sec6,TreeDesignFactor,0.67,,SubseaTree,Tree design factor
+ISO-13628-4,Sec7,TreeTestPressure,1.50,,SubseaTree,Tree FAT pressure factor
+ISO-13628-5,Sec5,UmbilicalDesignFactor,0.60,,Umbilical,Umbilical tube design factor
+ISO-13628-5,Sec6,UmbilicalMBRFactor,8.0,,Umbilical,MBR factor for steel tube
+NORSOK-U-001,Sec5,DesignLifeYears,25,years,General,Design service life
+NORSOK-U-001,Sec5,CorrosionAllowance,3.0,mm,General,Standard corrosion allowance
+NORSOK-U-001,Sec6,FoundationSafetyFactor,2.0,,Foundation,Bearing capacity factor
+NORSOK-U-001,Sec7,SubseaTreeTestPressure,1.50,,SubseaTree,FAT pressure factor

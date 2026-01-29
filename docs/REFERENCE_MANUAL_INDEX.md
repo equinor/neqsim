@@ -232,6 +232,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 |----------|------|-------------|
 | Valves | [docs/process/equipment/valves.md](process/equipment/valves.md) | Valve models |
 | Valve Design | [docs/process/ValveMechanicalDesign.md](process/ValveMechanicalDesign.md) | Valve mechanical design |
+| **Multiphase Choke Flow** | [docs/process/MultiphaseChokeFlow.md](process/MultiphaseChokeFlow.md) | **Sachdeva, Gilbert two-phase choke models** |
 | Flow Meters | [docs/wiki/flow_meter_models.md](wiki/flow_meter_models.md) | Flow metering |
 | Venturi | [docs/wiki/venturi_calculation.md](wiki/venturi_calculation.md) | Venturi calculations |
 | Tanks | [docs/process/equipment/tanks.md](process/equipment/tanks.md) | Tank models |
@@ -270,6 +271,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Reservoirs | [docs/process/equipment/reservoirs.md](process/equipment/reservoirs.md) | Reservoir modeling |
 | Subsea Systems | [docs/process/equipment/subsea_systems.md](process/equipment/subsea_systems.md) | Subsea wells and flowlines |
 | Subsea Equipment | [docs/process/equipment/subsea_equipment.md](process/equipment/subsea_equipment.md) | SubseaWell, SimpleFlowLine, flow assurance |
+| **SURF Subsea Equipment** | [docs/process/SURF_SUBSEA_EQUIPMENT.md](process/SURF_SUBSEA_EQUIPMENT.md) | **Comprehensive SURF equipment: PLET, PLEM, manifolds, trees, jumpers, umbilicals, flexible pipes, boosters with mechanical design and cost estimation** |
 
 ### Chapter 20: Utility Equipment
 | Document | Path | Description |
@@ -320,6 +322,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Manifold Mechanical Design** | [docs/process/equipment/manifold_design.md](process/equipment/manifold_design.md) | **Manifold design for topside, onshore, and subsea with velocity limits, reinforcement, support per ASME B31.3 and DNV-ST-F101** |
 | **Riser Mechanical Design** | [docs/process/riser_mechanical_design.md](process/riser_mechanical_design.md) | **Riser design with catenary mechanics, VIV, fatigue per DNV-OS-F201** |
 | **Pipeline Design Math** | [docs/process/pipeline_mechanical_design_math.md](process/pipeline_mechanical_design_math.md) | **Mathematical methods and formulas for pipeline design** |
+| **Subsea SURF Mechanical Design** | [docs/process/SURF_SUBSEA_EQUIPMENT.md#mechanical-design](process/SURF_SUBSEA_EQUIPMENT.md#mechanical-design) | **Mechanical design for PLET, PLEM, trees, manifolds, jumpers, umbilicals, flexible pipes, boosters per DNV, API, ISO, NORSOK** |
 | TORG Integration | [docs/process/torg_integration.md](process/torg_integration.md) | TORG integration |
 | Field Development | [docs/process/field_development_orchestration.md](process/field_development_orchestration.md) | Field development orchestration |
 
@@ -328,6 +331,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 |----------|------|-------------|
 | **Cost Estimation Framework** | [docs/process/COST_ESTIMATION_FRAMEWORK.md](process/COST_ESTIMATION_FRAMEWORK.md) | **Comprehensive capital and operating cost estimation framework** |
 | **Cost Estimation API** | [docs/process/COST_ESTIMATION_API_REFERENCE.md](process/COST_ESTIMATION_API_REFERENCE.md) | **Detailed API reference for all cost estimation classes** |
+| **Subsea SURF Cost Estimation** | [docs/process/SURF_SUBSEA_EQUIPMENT.md#cost-estimation](process/SURF_SUBSEA_EQUIPMENT.md#cost-estimation) | **Cost estimation for all SURF equipment with regional factors, labor rates, vessel costs, BOM generation** |
 | Equipment Costs | [docs/process/COST_ESTIMATION_FRAMEWORK.md#equipment-cost-estimation](process/COST_ESTIMATION_FRAMEWORK.md#equipment-cost-estimation) | Equipment-specific cost correlations |
 | Tank Costs | [docs/process/COST_ESTIMATION_FRAMEWORK.md#tank-cost](process/COST_ESTIMATION_FRAMEWORK.md#tank-cost) | Storage tank cost estimation (API 650/620) |
 | Expander Costs | [docs/process/COST_ESTIMATION_FRAMEWORK.md#expander-cost](process/COST_ESTIMATION_FRAMEWORK.md#expander-cost) | Turboexpander cost estimation |

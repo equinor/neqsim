@@ -157,13 +157,44 @@ NeqSim supports multiple valve sizing standards for different applications.
 | IEC 60534 | `IEC 60534` | Full IEC 60534-2-1 implementation |
 | Extended | `IEC 60534 full` | IEC 60534 with all correction factors |
 | Prod Choke | `prod choke` | Production choke with discharge coefficient |
+| **Sachdeva** | `Sachdeva` | **Mechanistic two-phase choke model (SPE 15657)** |
+| **Gilbert** | `Gilbert` | **Empirical two-phase correlation (1954)** |
+| **Baxendell** | `Baxendell` | **Empirical two-phase correlation (1958)** |
+| **Ros** | `Ros` | **Empirical two-phase correlation (1960)** |
+| **Achong** | `Achong` | **Empirical two-phase correlation (1961)** |
 
 ### Setting Sizing Standard
 
 ```java
 ValveMechanicalDesign mechDesign = (ValveMechanicalDesign) valve.getMechanicalDesign();
 mechDesign.setValveSizingStandard("IEC 60534");
+
+// For multiphase production chokes:
+mechDesign.setValveSizingStandard("Sachdeva");
+mechDesign.setChokeDiameter(0.5, "in");
 ```
+
+### Multiphase Choke Sizing
+
+For production chokes handling two-phase (gas-liquid) flow, use the Sachdeva or Gilbert-type models:
+
+```java
+ThrottlingValve choke = new ThrottlingValve("Production Choke", wellStream);
+choke.setOutletPressure(30.0, "bara");
+
+ValveMechanicalDesign design = choke.getMechanicalDesign();
+design.setValveSizingStandard("Sachdeva");  // Mechanistic model
+design.setChokeDiameter(32, "64ths");        // 32/64" = 0.5"
+design.setChokeDischargeCoefficient(0.84);
+
+// Enable flow calculation in transient mode
+choke.setCalculateSteadyState(false);
+choke.runTransient(0.1);
+
+double calculatedFlow = choke.getOutletStream().getFlowRate("kg/hr");
+```
+
+**See:** [Multiphase Choke Flow Models](../MultiphaseChokeFlow.md) for detailed documentation.
 
 ### IEC 60534 Gas Sizing
 
