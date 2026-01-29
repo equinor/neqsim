@@ -524,6 +524,7 @@ FULL_MANUAL_STRUCTURE = {
         ],
         "Chapter 5: Fluid Creation & Components": [
             ("Fluid Creation Guide", "thermo/fluid_creation_guide.md"),
+            ("Fluid Classification", "thermo/fluid_classification.md"),
             ("Component Database", "thermo/component_database_guide.md"),
             ("Component Package", "thermo/component/README.md"),
             ("Mathematical Models", "thermo/mathematical_models.md"),
@@ -628,6 +629,8 @@ FULL_MANUAL_STRUCTURE = {
             ("Flow Meters", "wiki/flow_meter_models.md"),
             ("Venturi", "wiki/venturi_calculation.md"),
             ("Tanks", "process/equipment/tanks.md"),
+            ("Vessel Depressurization", "process/equipment/vessel_depressurization.md"),
+            ("Measurement Devices", "process/equipment/measurement_devices.md"),
         ],
         "Chapter 18: Special Equipment": [
             ("Reactors", "process/equipment/reactors.md"),
@@ -659,6 +662,7 @@ FULL_MANUAL_STRUCTURE = {
             ("Adjusters", "process/equipment/util/adjusters.md"),
             ("Recycles", "process/equipment/util/recycles.md"),
             ("Calculators", "process/equipment/util/calculators.md"),
+            ("Stream Fitters", "process/equipment/util/stream_fitters.md"),
         ],
         "Chapter 21: Process Control": [
             ("Controllers", "process/controllers.md"),
@@ -684,6 +688,7 @@ FULL_MANUAL_STRUCTURE = {
             ("Pipeline Index", "wiki/pipeline_index.md"),
             ("Flow Equations", "wiki/pipeline_flow_equations.md"),
             ("Single Phase Flow", "fluidmechanics/single_phase_pipe_flow.md"),
+            ("Flow Pattern Detection", "fluidmechanics/flow_pattern_detection.md"),
         ],
         "Chapter 25: Pressure Drop Calculations": [
             ("Pressure Drop", "wiki/pipeline_pressure_drop.md"),

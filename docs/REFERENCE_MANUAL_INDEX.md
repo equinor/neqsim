@@ -99,6 +99,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Document | Path | Description |
 |----------|------|-------------|
 | Fluid Creation Guide | [docs/thermo/fluid_creation_guide.md](thermo/fluid_creation_guide.md) | Creating thermodynamic systems |
+| **Fluid Classification** | [docs/thermo/fluid_classification.md](thermo/fluid_classification.md) | **Whitson methodology: FluidClassifier, ReservoirFluidType, GOR/C7+ classification** |
 | Component Database | [docs/thermo/component_database_guide.md](thermo/component_database_guide.md) | Component properties and database |
 | Component Package | [docs/thermo/component/README.md](thermo/component/README.md) | Component class documentation |
 | Mathematical Models | [docs/thermo/mathematical_models.md](thermo/mathematical_models.md) | Underlying mathematical models |
@@ -234,6 +235,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Flow Meters | [docs/wiki/flow_meter_models.md](wiki/flow_meter_models.md) | Flow metering |
 | Venturi | [docs/wiki/venturi_calculation.md](wiki/venturi_calculation.md) | Venturi calculations |
 | Tanks | [docs/process/equipment/tanks.md](process/equipment/tanks.md) | Tank models |
+| **Vessel Depressurization** | [docs/process/equipment/vessel_depressurization.md](process/equipment/vessel_depressurization.md) | **Blowdown simulation, fire scenarios, transient analysis** |
+| **Measurement Devices** | [docs/process/equipment/measurement_devices.md](process/equipment/measurement_devices.md) | **CO2 emissions, FIV analysis, NMVOC, dew points, safety detectors** |
 
 ### Chapter 18: Special Equipment
 | Document | Path | Description |
@@ -275,6 +278,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Adjusters | [docs/process/equipment/util/adjusters.md](process/equipment/util/adjusters.md) | Adjuster units |
 | Recycles | [docs/process/equipment/util/recycles.md](process/equipment/util/recycles.md) | Recycle units |
 | Calculators | [docs/process/equipment/util/calculators.md](process/equipment/util/calculators.md) | Calculator units |
+| **Stream Fitters** | [docs/process/equipment/util/stream_fitters.md](process/equipment/util/stream_fitters.md) | **GORfitter, MPFMfitter: GOR/GVF adjustment, MPFM reference fluids** |
 
 ### Chapter 21: Process Control
 | Document | Path | Description |
@@ -351,6 +355,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Pipeline Simulation** | [docs/process/equipment/pipeline_simulation.md](process/equipment/pipeline_simulation.md) | **Comprehensive pipeline simulation guide with PipeLineInterface, all pipe types, flow regimes, heat transfer** |
 | Flow Equations | [docs/wiki/pipeline_flow_equations.md](wiki/pipeline_flow_equations.md) | Pipeline flow equations |
 | Single Phase Flow | [docs/fluidmechanics/single_phase_pipe_flow.md](fluidmechanics/single_phase_pipe_flow.md) | Single phase pipe flow |
+| **Flow Pattern Detection** | [docs/fluidmechanics/flow_pattern_detection.md](fluidmechanics/flow_pattern_detection.md) | **Taitel-Dukler, Baker, Barnea models, FlowPatternDetector API** |
 
 ### Chapter 25: Pressure Drop Calculations
 | Document | Path | Description |
