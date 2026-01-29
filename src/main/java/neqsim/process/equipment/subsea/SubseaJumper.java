@@ -830,17 +830,15 @@ public class SubseaJumper extends TwoPortEquipment {
     // Dimensions
     com.google.gson.JsonObject dimensions = new com.google.gson.JsonObject();
     dimensions.addProperty("length_m", length);
-    dimensions.addProperty("innerDiameter_m", innerDiameter);
-    dimensions.addProperty("outerDiameter_m", outerDiameter);
-    dimensions.addProperty("wallThickness_mm", wallThickness * 1000);
+    dimensions.addProperty("outerDiameterInches", outerDiameterInches);
+    dimensions.addProperty("wallThickness_mm", wallThicknessMm);
     dimensions.addProperty("nominalBoreInches", nominalBoreInches);
     jsonObj.add("dimensions", dimensions);
 
     // Environment
     com.google.gson.JsonObject environment = new com.google.gson.JsonObject();
     environment.addProperty("waterDepth_m", waterDepth);
-    environment.addProperty("installationType",
-        installationType != null ? installationType.toString() : null);
+    environment.addProperty("installationMethod", installationMethod);
     jsonObj.add("environment", environment);
 
     // Material
@@ -854,9 +852,9 @@ public class SubseaJumper extends TwoPortEquipment {
       com.google.gson.JsonObject process = new com.google.gson.JsonObject();
       process.addProperty("inletPressure_bar", inStream.getPressure("bara"));
       process.addProperty("inletTemperature_C", inStream.getTemperature("C"));
-      process.addProperty("outletPressure_bar",
-          outStream != null ? outStream.getPressure("bara") : null);
-      process.addProperty("pressureDrop_bar", pressureDrop);
+      if (outStream != null) {
+        process.addProperty("outletPressure_bar", outStream.getPressure("bara"));
+      }
       jsonObj.add("processConditions", process);
     }
 
