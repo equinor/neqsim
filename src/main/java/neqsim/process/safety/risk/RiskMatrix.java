@@ -92,7 +92,7 @@ public class RiskMatrix implements Serializable {
    * Probability categories (1-5).
    */
   public enum ProbabilityCategory {
-    /** Very Low: < 0.1 failures/year. */
+    /** Very Low: less than 0.1 failures/year. */
     VERY_LOW(1, "Very Low", 0.0, 0.1),
     /** Low: 0.1 - 0.5 failures/year. */
     LOW(2, "Low", 0.1, 0.5),
@@ -100,7 +100,7 @@ public class RiskMatrix implements Serializable {
     MEDIUM(3, "Medium", 0.5, 1.0),
     /** High: 1.0 - 2.0 failures/year. */
     HIGH(4, "High", 1.0, 2.0),
-    /** Very High: > 2.0 failures/year. */
+    /** Very High: more than 2.0 failures/year. */
     VERY_HIGH(5, "Very High", 2.0, Double.MAX_VALUE);
 
     private final int level;
@@ -143,7 +143,7 @@ public class RiskMatrix implements Serializable {
    * Consequence categories (1-5).
    */
   public enum ConsequenceCategory {
-    /** Negligible: < 5% production loss. */
+    /** Negligible: less than 5% production loss. */
     NEGLIGIBLE(1, "Negligible", 0.0, 5.0),
     /** Minor: 5-20% production loss. */
     MINOR(2, "Minor", 5.0, 20.0),
@@ -151,7 +151,7 @@ public class RiskMatrix implements Serializable {
     MODERATE(3, "Moderate", 20.0, 50.0),
     /** Major: 50-80% production loss. */
     MAJOR(4, "Major", 50.0, 80.0),
-    /** Catastrophic: > 80% production loss (plant stop). */
+    /** Catastrophic: more than 80% production loss (plant stop). */
     CATASTROPHIC(5, "Catastrophic", 80.0, 100.1);
 
     private final int level;

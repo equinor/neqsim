@@ -61,7 +61,7 @@ public class DependencyAnalyzerTest {
     assertEquals("HP Separator", result.getFailedEquipment());
 
     // Downstream equipment should be directly affected
-    assertTrue(result.getDirectlyAffected().contains("Export Compressor") 
+    assertTrue(result.getDirectlyAffected().contains("Export Compressor")
         || result.getIndirectlyAffected().contains("Export Compressor")
         || result.getDirectlyAffected().isEmpty()); // May depend on stream tracking
   }
@@ -74,28 +74,23 @@ public class DependencyAnalyzerTest {
     // Should include downstream equipment
     boolean hasDownstream = false;
     for (String key : toMonitor.keySet()) {
-      if (toMonitor.get(key).contains("Direkte påvirket") 
-          || toMonitor.get(key).contains("HØY")) {
+      if (toMonitor.get(key).contains("Direkte påvirket") || toMonitor.get(key).contains("HØY")) {
         hasDownstream = true;
       }
     }
     // The exact result depends on topology detection
-    assertNotNull(toMonitor); 
+    assertNotNull(toMonitor);
   }
 
   @Test
   void testCrossInstallationDependency() {
-    analyzer.addCrossInstallationDependency(
-        "Export",
-        "Åsgard Inlet Separator",
-        "Åsgard A",
-        "gas_export"
-    );
+    analyzer.addCrossInstallationDependency("Export", "Åsgard Inlet Separator", "Åsgard A",
+        "gas_export");
 
     DependencyAnalyzer.DependencyResult result = analyzer.analyzeFailure("Export");
 
     // Should include cross-installation effect
-    List<DependencyAnalyzer.CrossInstallationDependency> crossEffects = 
+    List<DependencyAnalyzer.CrossInstallationDependency> crossEffects =
         result.getCrossInstallationEffects();
     assertEquals(1, crossEffects.size());
     assertEquals("Åsgard A", crossEffects.get(0).getTargetInstallation());
@@ -112,7 +107,7 @@ public class DependencyAnalyzerTest {
     // Query by STID tag
     DependencyAnalyzer.DependencyResult result = analyzer.analyzeFailure("1775-KA-23011A");
 
-    List<DependencyAnalyzer.CrossInstallationDependency> crossEffects = 
+    List<DependencyAnalyzer.CrossInstallationDependency> crossEffects =
         result.getCrossInstallationEffects();
     assertEquals(1, crossEffects.size());
     assertEquals("Åsgard A", crossEffects.get(0).getTargetInstallation());
@@ -130,12 +125,7 @@ public class DependencyAnalyzerTest {
 
   @Test
   void testResultToJson() {
-    analyzer.addCrossInstallationDependency(
-        "Export",
-        "Åsgard Inlet",
-        "Åsgard A",
-        "gas_export"
-    );
+    analyzer.addCrossInstallationDependency("Export", "Åsgard Inlet", "Åsgard A", "gas_export");
 
     DependencyAnalyzer.DependencyResult result = analyzer.analyzeFailure("Export");
     String json = result.toJson();
@@ -162,13 +152,8 @@ public class DependencyAnalyzerTest {
     assertNotNull(toMonitor);
     // Verify priority strings are present
     for (String value : toMonitor.values()) {
-      assertTrue(
-          value.contains("KRITISK") || 
-          value.contains("HØY") || 
-          value.contains("MEDIUM") ||
-          value.contains("EKSTERN"),
-          "Priority should be KRITISK, HØY, MEDIUM, or EKSTERN"
-      );
+      assertTrue(value.contains("KRITISK") || value.contains("HØY") || value.contains("MEDIUM")
+          || value.contains("EKSTERN"), "Priority should be KRITISK, HØY, MEDIUM, or EKSTERN");
     }
   }
 }
