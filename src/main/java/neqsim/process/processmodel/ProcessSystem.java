@@ -116,6 +116,65 @@ public class ProcessSystem extends SimulationBaseClass {
   private boolean useOptimizedExecution = true;
 
   /**
+   * Transient listener for simulation progress callbacks. Used for real-time visualization in
+   * Jupyter notebooks and digital twin dashboards. Marked transient to avoid serialization issues.
+   */
+  private transient SimulationProgressListener progressListener = null;
+
+  /**
+   * Interface for monitoring simulation progress during execution. Implementations receive
+   * callbacks after each unit operation completes, enabling real-time visualization, progress
+   * tracking, and early termination detection.
+   *
+   * <p>
+   * This interface is designed for integration with:
+   * <ul>
+   * <li>Jupyter notebooks for live plotting</li>
+   * <li>Digital twin dashboards for production monitoring</li>
+   * <li>Debugging tools for convergence analysis</li>
+   * <li>Training/educational applications</li>
+   * </ul>
+   *
+   * @author Even Solbraa
+   * @version 1.0
+   */
+  public interface SimulationProgressListener {
+    /**
+     * Called after each unit operation completes successfully.
+     *
+     * @param unit the completed unit operation
+     * @param unitIndex zero-based index of current unit in execution order
+     * @param totalUnits total number of unit operations in the system
+     * @param iterationNumber current iteration number (for recycle loops, starts at 1)
+     */
+    void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
+        int iterationNumber);
+
+    /**
+     * Called when an iteration of the process system completes. For systems with recycles, this is
+     * called after each complete pass through all units.
+     *
+     * @param iterationNumber the iteration that just completed (starts at 1)
+     * @param converged true if all recycles have converged
+     * @param recycleError maximum relative error across all recycle streams (0.0 if no recycles)
+     */
+    default void onIterationComplete(int iterationNumber, boolean converged, double recycleError) {
+      // Default implementation does nothing
+    }
+
+    /**
+     * Called if a unit operation encounters an error during execution.
+     *
+     * @param unit the unit operation that failed
+     * @param exception the exception that was thrown
+     * @return true to continue with next unit, false to abort simulation
+     */
+    default boolean onUnitError(ProcessEquipmentInterface unit, Exception exception) {
+      return false; // Default: abort on error
+    }
+  }
+
+  /**
    * <p>
    * Constructor for ProcessSystem.
    * </p>
@@ -1523,6 +1582,273 @@ public class ProcessSystem extends SimulationBaseClass {
       unitOperations.get(i).setCalculationIdentifier(id);
     }
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Set a listener to receive progress updates during simulation. Useful for real-time
+   * visualization in Jupyter notebooks and digital twin dashboards.
+   *
+   * <p>
+   * Example usage in Python/Jupyter:
+   * 
+   * <pre>
+   * class MyListener(ProcessSystem.SimulationProgressListener):
+   *     def onUnitComplete(self, unit, index, total, iteration):
+   *         print(f"Completed {unit.getName()} ({index+1}/{total})")
+   * 
+   * process.setProgressListener(MyListener())
+   * process.run()
+   * </pre>
+   *
+   * @param listener the progress listener, or null to disable callbacks
+   */
+  public void setProgressListener(SimulationProgressListener listener) {
+    this.progressListener = listener;
+  }
+
+  /**
+   * Get the current progress listener.
+   *
+   * @return the current listener, or null if none is set
+   */
+  public SimulationProgressListener getProgressListener() {
+    return this.progressListener;
+  }
+
+  /**
+   * Run simulation with a simple callback for each completed unit operation. This is a convenience
+   * method for Python/Jupyter integration where implementing the full SimulationProgressListener
+   * interface may be cumbersome.
+   *
+   * <p>
+   * Example usage in Python/Jupyter:
+   * 
+   * <pre>
+   * def on_complete(unit):
+   *     print(f"Completed: {unit.getName()}")
+   *     temp = unit.getOutletStream().getTemperature("C")
+   *     # Update live plot...
+   *
+   * process.runWithCallback(on_complete)
+   * </pre>
+   *
+   * @param callback Consumer function called with each completed unit operation. May be null for no
+   *        callbacks (equivalent to regular run()).
+   */
+  public void runWithCallback(java.util.function.Consumer<ProcessEquipmentInterface> callback) {
+    runWithCallback(callback, UUID.randomUUID());
+  }
+
+  /**
+   * Run simulation with a simple callback for each completed unit operation.
+   *
+   * @param callback Consumer function called with each completed unit operation
+   * @param id calculation identifier for tracking
+   */
+  public void runWithCallback(java.util.function.Consumer<ProcessEquipmentInterface> callback,
+      UUID id) {
+    // Wrap the simple callback in a full listener if provided
+    SimulationProgressListener originalListener = this.progressListener;
+    if (callback != null) {
+      this.progressListener = new SimulationProgressListener() {
+        @Override
+        public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
+            int iterationNumber) {
+          callback.accept(unit);
+        }
+      };
+    }
+
+    try {
+      runWithProgress(id);
+    } finally {
+      // Restore original listener
+      this.progressListener = originalListener;
+    }
+  }
+
+  /**
+   * Run simulation with full progress monitoring. This method executes the process system and
+   * invokes the registered SimulationProgressListener after each unit operation and iteration
+   * completes.
+   *
+   * <p>
+   * This is the primary method for digital twin applications requiring real-time feedback. It
+   * supports:
+   * <ul>
+   * <li>Progress callbacks after each unit operation</li>
+   * <li>Iteration callbacks for recycle convergence monitoring</li>
+   * <li>Error callbacks with optional continuation</li>
+   * <li>Thread interruption handling</li>
+   * </ul>
+   *
+   * @param id calculation identifier for tracking
+   */
+  public void runWithProgress(UUID id) {
+    // Determine execution order
+    List<ProcessEquipmentInterface> executionOrder;
+    if (useGraphBasedExecution) {
+      List<ProcessEquipmentInterface> topoOrder = getTopologicalOrder();
+      executionOrder = (topoOrder != null) ? topoOrder : unitOperations;
+    } else {
+      executionOrder = unitOperations;
+    }
+
+    int totalUnits = executionOrder.size();
+
+    // Run setters first
+    for (int i = 0; i < totalUnits; i++) {
+      ProcessEquipmentInterface unit = executionOrder.get(i);
+      if (unit instanceof Setter) {
+        unit.run(id);
+        notifyUnitComplete(unit, i, totalUnits, 0);
+      }
+    }
+
+    // Initialize recycle controller
+    boolean hasRecycle = false;
+    recycleController.clear();
+    for (int i = 0; i < totalUnits; i++) {
+      ProcessEquipmentInterface unit = executionOrder.get(i);
+      if (unit instanceof Recycle) {
+        hasRecycle = true;
+        recycleController.addRecycle((Recycle) unit);
+      }
+    }
+    recycleController.init();
+
+    // Main iteration loop
+    boolean isConverged = true;
+    int iter = 0;
+    do {
+      iter++;
+      isConverged = true;
+
+      for (int i = 0; i < totalUnits; i++) {
+        ProcessEquipmentInterface unit = executionOrder.get(i);
+
+        if (Thread.currentThread().isInterrupted()) {
+          logger.debug(
+              "Process simulation was interrupted, exiting runWithProgress()..." + getName());
+          break;
+        }
+
+        if (!(unit instanceof Recycle)) {
+          try {
+            if (iter == 1 || unit.needRecalculation()) {
+              unit.run(id);
+            }
+            notifyUnitComplete(unit, i, totalUnits, iter);
+          } catch (Exception ex) {
+            logger.error("Error running unit operation " + unit.getName() + " " + ex.getMessage(),
+                ex);
+            if (!notifyUnitError(unit, ex)) {
+              // Listener requested abort
+              return;
+            }
+          }
+        }
+
+        if (unit instanceof Recycle && recycleController.doSolveRecycle((Recycle) unit)) {
+          try {
+            unit.run(id);
+            notifyUnitComplete(unit, i, totalUnits, iter);
+          } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            if (!notifyUnitError(unit, ex)) {
+              return;
+            }
+          }
+        }
+      }
+
+      // Check convergence
+      if (!recycleController.solvedAll() || recycleController.hasHigherPriorityLevel()) {
+        isConverged = false;
+      }
+
+      if (recycleController.solvedCurrentPriorityLevel()) {
+        recycleController.nextPriorityLevel();
+      } else if (recycleController.hasLoverPriorityLevel() && !recycleController.solvedAll()) {
+        recycleController.resetPriorityLevel();
+      }
+
+      for (int i = 0; i < totalUnits; i++) {
+        ProcessEquipmentInterface unit = executionOrder.get(i);
+        if (unit instanceof Adjuster) {
+          if (!((Adjuster) unit).solved()) {
+            isConverged = false;
+            break;
+          }
+        }
+      }
+
+      // Notify iteration complete
+      double recycleError = recycleController.getMaxResidualError();
+      notifyIterationComplete(iter, isConverged, recycleError);
+
+    } while (((!isConverged || (iter < 2 && hasRecycle)) && iter < 100) && !runStep
+        && !Thread.currentThread().isInterrupted());
+
+    for (int i = 0; i < totalUnits; i++) {
+      executionOrder.get(i).setCalculationIdentifier(id);
+    }
+    setCalculationIdentifier(id);
+  }
+
+  /**
+   * Notify the progress listener that a unit operation has completed.
+   *
+   * @param unit the completed unit
+   * @param unitIndex index of the unit
+   * @param totalUnits total number of units
+   * @param iterationNumber current iteration
+   */
+  private void notifyUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
+      int iterationNumber) {
+    if (progressListener != null) {
+      try {
+        progressListener.onUnitComplete(unit, unitIndex, totalUnits, iterationNumber);
+      } catch (Exception ex) {
+        logger.warn("Progress listener threw exception in onUnitComplete: " + ex.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Notify the progress listener that an iteration has completed.
+   *
+   * @param iterationNumber the completed iteration
+   * @param converged whether the system has converged
+   * @param recycleError maximum recycle error
+   */
+  private void notifyIterationComplete(int iterationNumber, boolean converged,
+      double recycleError) {
+    if (progressListener != null) {
+      try {
+        progressListener.onIterationComplete(iterationNumber, converged, recycleError);
+      } catch (Exception ex) {
+        logger.warn("Progress listener threw exception in onIterationComplete: " + ex.getMessage());
+      }
+    }
+  }
+
+  /**
+   * Notify the progress listener that a unit operation encountered an error.
+   *
+   * @param unit the unit that failed
+   * @param exception the exception
+   * @return true to continue, false to abort
+   */
+  private boolean notifyUnitError(ProcessEquipmentInterface unit, Exception exception) {
+    if (progressListener != null) {
+      try {
+        return progressListener.onUnitError(unit, exception);
+      } catch (Exception ex) {
+        logger.warn("Progress listener threw exception in onUnitError: " + ex.getMessage());
+      }
+    }
+    return false; // Default: abort on error
   }
 
   /*

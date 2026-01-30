@@ -127,6 +127,69 @@ public class ProcessModule extends SimulationBaseClass {
     return modulesIndex;
   }
 
+  /**
+   * Transient listener for simulation progress callbacks. Propagated to all child ProcessSystems.
+   */
+  private transient ProcessSystem.SimulationProgressListener progressListener = null;
+
+  /**
+   * Set a listener to receive progress updates during simulation. The listener is propagated to all
+   * contained ProcessSystem instances.
+   *
+   * @param listener the progress listener, or null to disable callbacks
+   */
+  public void setProgressListener(ProcessSystem.SimulationProgressListener listener) {
+    this.progressListener = listener;
+    // Propagate to all child process systems
+    for (ProcessSystem ps : addedUnitOperations) {
+      ps.setProgressListener(listener);
+    }
+    // Propagate to nested modules
+    for (ProcessModule pm : addedModules) {
+      pm.setProgressListener(listener);
+    }
+  }
+
+  /**
+   * Get the current progress listener.
+   *
+   * @return the current listener, or null if none is set
+   */
+  public ProcessSystem.SimulationProgressListener getProgressListener() {
+    return this.progressListener;
+  }
+
+  /**
+   * Run module with a simple callback for each completed unit operation. This is a convenience
+   * method for Python/Jupyter integration.
+   *
+   * @param callback Consumer function called with each completed unit operation
+   */
+  public void runWithCallback(java.util.function.Consumer<ProcessEquipmentInterface> callback) {
+    // Create a listener wrapper for the callback
+    ProcessSystem.SimulationProgressListener listenerWrapper = null;
+    if (callback != null) {
+      listenerWrapper = new ProcessSystem.SimulationProgressListener() {
+        @Override
+        public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
+            int iterationNumber) {
+          callback.accept(unit);
+        }
+      };
+    }
+
+    // Set listener on all child process systems
+    for (ProcessSystem ps : addedUnitOperations) {
+      ps.setProgressListener(listenerWrapper);
+    }
+    // Propagate to nested modules
+    for (ProcessModule pm : addedModules) {
+      pm.setProgressListener(listenerWrapper);
+    }
+    // Run the module
+    run();
+  }
+
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
@@ -137,10 +200,15 @@ public class ProcessModule extends SimulationBaseClass {
       for (int i = 0; i < unitIndex; i++) {
         if (operationsIndex.contains(i)) {
           int index = operationsIndex.indexOf(i);
-          for (ProcessEquipmentInterface unitOperation : addedUnitOperations.get(index)
-              .getUnitOperations()) {
-            if (iteration == 0 || unitOperation.needRecalculation()) {
-              unitOperation.run(id);
+          ProcessSystem processSystem = addedUnitOperations.get(index);
+          // Use runWithProgress if a listener is set, otherwise run units directly
+          if (processSystem.getProgressListener() != null) {
+            processSystem.runWithProgress(id);
+          } else {
+            for (ProcessEquipmentInterface unitOperation : processSystem.getUnitOperations()) {
+              if (iteration == 0 || unitOperation.needRecalculation()) {
+                unitOperation.run(id);
+              }
             }
           }
         } else if (modulesIndex.contains(i)) {
