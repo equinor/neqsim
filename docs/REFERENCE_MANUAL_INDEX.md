@@ -444,6 +444,38 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Safety Chain Tests | [docs/safety/integration_safety_chain_tests.md](safety/integration_safety_chain_tests.md) | Safety chain tests |
 | Scenario Generation | [docs/process/safety/scenario-generation.md](process/safety/scenario-generation.md) | Automatic scenario generation |
 
+### Chapter 35: Risk Simulation Framework (**NEW**)
+
+Comprehensive operational risk simulation framework for equipment failure analysis, production impact assessment, and degraded operation optimization. Includes Monte Carlo simulation, 5×5 risk matrix, process topology analysis, STID tagging per ISO 14224/NORSOK, and dependency analysis with cross-installation support.
+
+| Document | Path | Description |
+|----------|------|-------------|
+| **Risk Framework Index** | [docs/risk/index.md](risk/index.md) | **START HERE**: Quick start guide, architecture overview, package structure |
+| **Framework Overview** | [docs/risk/overview.md](risk/overview.md) | Core concepts, capabilities, industry standards compliance (ISO 14224, OREDA, NORSOK) |
+| **Equipment Failure Modeling** | [docs/risk/equipment-failure.md](risk/equipment-failure.md) | FailureType enum, capacity factors, OREDA reliability data, λ/R(t)/MTTF formulas |
+| **Risk Matrix** | [docs/risk/risk-matrix.md](risk/risk-matrix.md) | 5×5 probability/consequence matrix, risk scoring, cost calculations |
+| **Monte Carlo Simulation** | [docs/risk/monte-carlo.md](risk/monte-carlo.md) | OperationalRiskSimulator, exponential sampling, P10/P50/P90 statistics, convergence |
+| **Production Impact Analysis** | [docs/risk/production-impact.md](risk/production-impact.md) | Loss calculations, criticality index, cascade analysis, economic impact |
+| **Degraded Operation** | [docs/risk/degraded-operation.md](risk/degraded-operation.md) | DegradedOperationOptimizer, recovery planning, operating modes |
+| **Process Topology** | [docs/risk/topology.md](risk/topology.md) | ProcessTopologyAnalyzer, graph extraction, topological ordering, DOT/JSON export |
+| **STID Tagging** | [docs/risk/stid-tagging.md](risk/stid-tagging.md) | FunctionalLocation class, PPPP-TT-NNNNN[S] format, installation/equipment codes |
+| **Dependency Analysis** | [docs/risk/dependency-analysis.md](risk/dependency-analysis.md) | DependencyAnalyzer, cascade failure trees, cross-installation effects |
+| **Mathematical Reference** | [docs/risk/mathematical-reference.md](risk/mathematical-reference.md) | Complete formulas: reliability, system availability, Monte Carlo, risk calculations |
+| **API Reference** | [docs/risk/api-reference.md](risk/api-reference.md) | Full API documentation for all risk simulation classes |
+
+#### Key Classes in Risk Framework
+| Class | Package | Purpose |
+|-------|---------|---------|
+| `EquipmentFailureMode` | `process.equipment.failure` | Failure mode definitions with OREDA data |
+| `ReliabilityDataSource` | `process.equipment.failure` | OREDA-based reliability data access |
+| `ProductionImpactAnalyzer` | `process.safety.risk` | Production loss analysis |
+| `DegradedOperationOptimizer` | `process.safety.risk` | Degraded mode optimization |
+| `OperationalRiskSimulator` | `process.safety.risk` | Monte Carlo simulation engine |
+| `RiskMatrix` | `process.safety.risk` | 5×5 risk assessment matrix |
+| `ProcessTopologyAnalyzer` | `process.util.topology` | Process graph extraction |
+| `FunctionalLocation` | `process.util.topology` | STID tag parsing (ISO 14224) |
+| `DependencyAnalyzer` | `process.util.topology` | Equipment dependency analysis |
+
 ---
 
 ## Part VI: PVT & Flow Assurance
@@ -693,6 +725,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Thermodynamics | 25 |
 | Process Simulation | 45 |
 | Safety Systems | 18 |
+| **Risk Simulation** | **12** |
 | Field Development | 10 |
 | Integration/AI | 12 |
 | Pipeline/Flow | 15 |
@@ -704,7 +737,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Optimization** | **3** |
 | **Templates & Design** | **2** |
 | Other | 24 |
-| **Total** | **250** |
+| **Total** | **262** |
 
 ---
 
