@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.UUID;
 import neqsim.process.SimulationBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
+import neqsim.process.equipment.failure.EquipmentFailureMode;
 import neqsim.process.equipment.stream.EnergyStream;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.util.report.Report;
@@ -54,6 +55,16 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    * excluded from bottleneck detection, capacity utilization summaries, and optimization routines.
    */
   private boolean capacityAnalysisEnabled = true;
+
+  /**
+   * Current failure mode of the equipment. Null means equipment is operating normally.
+   */
+  private EquipmentFailureMode failureMode = null;
+
+  /**
+   * Flag indicating if the equipment is in a failed state.
+   */
+  private boolean isFailed = false;
 
   /**
    * <p>
@@ -433,5 +444,90 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    */
   public void setCapacityAnalysisEnabled(boolean enabled) {
     this.capacityAnalysisEnabled = enabled;
+  }
+
+  /**
+   * Gets the current failure mode of the equipment.
+   *
+   * @return the failure mode, or null if equipment is operating normally
+   */
+  public EquipmentFailureMode getFailureMode() {
+    return failureMode;
+  }
+
+  /**
+   * Sets a failure mode on the equipment.
+   *
+   * <p>
+   * When a failure mode is set, the equipment is marked as failed and its behavior changes
+   * according to the failure mode characteristics (capacity factor, etc.). Setting null clears the
+   * failure.
+   * </p>
+   *
+   * @param failureMode the failure mode to apply, or null to clear failure
+   */
+  public void setFailureMode(EquipmentFailureMode failureMode) {
+    this.failureMode = failureMode;
+    this.isFailed = (failureMode != null);
+    if (isFailed && failureMode.isCompleteFailure()) {
+      this.isActive = false;
+      this.capacityAnalysisEnabled = false;
+    }
+  }
+
+  /**
+   * Checks if the equipment is in a failed state.
+   *
+   * @return true if the equipment has a failure mode set
+   */
+  public boolean isFailed() {
+    return isFailed;
+  }
+
+  /**
+   * Simulates a trip (complete failure) on the equipment.
+   *
+   * <p>
+   * Convenience method that applies a standard trip failure mode. The equipment becomes inactive
+   * and is excluded from capacity analysis.
+   * </p>
+   */
+  public void simulateTrip() {
+    setFailureMode(EquipmentFailureMode.trip(this.getClass().getSimpleName()));
+  }
+
+  /**
+   * Simulates degraded operation at a specified capacity.
+   *
+   * @param capacityPercent remaining capacity percentage (0-100)
+   */
+  public void simulateDegradedOperation(double capacityPercent) {
+    setFailureMode(EquipmentFailureMode.degraded(capacityPercent));
+  }
+
+  /**
+   * Restores the equipment from a failed state.
+   *
+   * <p>
+   * Clears any failure mode and restores the equipment to normal operation.
+   * </p>
+   */
+  public void restoreFromFailure() {
+    this.failureMode = null;
+    this.isFailed = false;
+    this.isActive = true;
+    this.capacityAnalysisEnabled = true;
+  }
+
+  /**
+   * Gets the effective capacity factor considering any failure mode.
+   *
+   * @return capacity factor (0.0 to 1.0), where 1.0 is full capacity
+   */
+  public double getEffectiveCapacityFactor() {
+    if (failureMode == null) {
+      return 1.0;
+    }
+    return failureMode.getCapacityFactor();
   }
 }

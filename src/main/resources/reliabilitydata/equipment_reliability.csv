@@ -1,0 +1,38 @@
+EquipmentType,SubType,MTBF_hours,MTTR_hours,Source,Notes
+Compressor,Centrifugal,25000,72,OREDA 2015,Offshore gas service
+Compressor,Reciprocating,8000,48,OREDA 2015,High-pressure gas
+Compressor,Screw,15000,36,OREDA 2015,Low-pressure gas
+Pump,Centrifugal,35000,24,OREDA 2015,Single stage
+Pump,Reciprocating,15000,36,OREDA 2015,Plunger type
+Pump,Progressive Cavity,12000,24,OREDA 2015,Viscous fluids
+Pump,Multistage,30000,48,OREDA 2015,High pressure
+HeatExchanger,Shell-and-Tube,200000,120,OREDA 2015,Standard service
+HeatExchanger,Plate,150000,48,OREDA 2015,Compact type
+HeatExchanger,Air Cooler,50000,24,OREDA 2015,Fin-fan type
+Separator,Two-Phase,300000,48,OREDA 2015,Gas-liquid
+Separator,Three-Phase,250000,72,OREDA 2015,Oil-gas-water
+Separator,Scrubber,350000,24,OREDA 2015,Gas cleaning
+Valve,Control,50000,8,OREDA 2015,Pneumatic actuated
+Valve,Safety PSV,100000,24,OREDA 2015,Spring loaded
+Valve,On-Off,150000,4,OREDA 2015,Ball type
+Valve,Check,200000,4,OREDA 2015,Swing type
+Motor,Electric,100000,48,OREDA 2015,Standard induction
+Motor,Variable Speed,75000,72,OREDA 2015,With VFD
+Turbine,Gas,15000,168,OREDA 2015,Industrial frame
+Turbine,Steam,20000,120,OREDA 2015,Condensing type
+Generator,Gas Turbine,12000,96,OREDA 2015,Package unit
+Generator,Diesel,8000,48,OREDA 2015,Standby service
+Vessel,Pressure,500000,168,OREDA 2015,ASME code
+Vessel,Atmospheric,600000,120,OREDA 2015,Storage tank
+Piping,Carbon Steel,1000000,24,OREDA 2015,General service
+Piping,Stainless Steel,1500000,48,OREDA 2015,Corrosive service
+Instrumentation,Transmitter,100000,4,OREDA 2015,Electronic type
+Instrumentation,Flow Meter,75000,8,OREDA 2015,Coriolis type
+Instrumentation,Level Gauge,150000,4,OREDA 2015,Displacer type
+Filter,Strainer,100000,8,OREDA 2015,Basket type
+Filter,Coalescer,75000,24,OREDA 2015,Gas dehydration
+Expander,Turbo,20000,96,OREDA 2015,Gas processing
+Absorber,Packed Column,400000,120,API 689,Glycol contactor
+Distillation,Tray Column,350000,168,API 689,Fractionation
+Heater,Fired,30000,48,OREDA 2015,Direct fired
+Heater,Electric,80000,24,OREDA 2015,Immersion type
