@@ -180,8 +180,8 @@ public class RiskFrameworkQuickStart {
 
     // LOPA Analysis - create model and add initiating event first
     SISIntegratedRiskModel model = new SISIntegratedRiskModel("HP Vessel Overpressure");
-    model.addInitiatingEvent("Overpressure", 0.1, RiskMatrix.ConsequenceCategory.MAJOR); // 0.1 per
-                                                                                         // year
+    model.addInitiatingEvent("Overpressure", 0.1,
+        neqsim.process.safety.risk.RiskEvent.ConsequenceCategory.MAJOR); // 0.1 per year
 
     // Add Independent Protection Layers
     SISIntegratedRiskModel.IndependentProtectionLayer bpcs =
@@ -265,43 +265,82 @@ public class RiskFrameworkQuickStart {
     System.out.println("--- Example: P4 - Bow-Tie Analysis ---");
 
     // Create bow-tie model for vessel rupture
-    BowTieModel bowtie = new BowTieModel("Pressure Vessel Rupture");
-    bowtie.setHazard("Loss of containment from HP separator");
+    BowTieModel bowtie = new BowTieModel("PVR-001", "Loss of containment from HP separator");
 
-    // Add threats (left side)
-    bowtie.addThreat("Overpressure", 0.01);
-    bowtie.addThreat("Corrosion", 0.005);
-    bowtie.addThreat("External Impact", 0.001);
+    // Add threats (left side) using Threat objects
+    BowTieModel.Threat overpressure = new BowTieModel.Threat("T-001", "Overpressure", 0.01);
+    BowTieModel.Threat corrosion = new BowTieModel.Threat("T-002", "Corrosion", 0.005);
+    BowTieModel.Threat externalImpact = new BowTieModel.Threat("T-003", "External Impact", 0.001);
+    bowtie.addThreat(overpressure);
+    bowtie.addThreat(corrosion);
+    bowtie.addThreat(externalImpact);
 
     // Add prevention barriers
-    bowtie.addPreventionBarrier("Overpressure", "Pressure Relief Valve", 0.99);
-    bowtie.addPreventionBarrier("Overpressure", "High Pressure Alarm", 0.9);
-    bowtie.addPreventionBarrier("Corrosion", "Inspection Program", 0.95);
-    bowtie.addPreventionBarrier("External Impact", "Physical Protection", 0.8);
+    BowTieModel.Barrier psv = new BowTieModel.Barrier("B-001", "Pressure Relief Valve", 0.01);
+    psv.setBarrierType(BowTieModel.BarrierType.PREVENTION);
+    BowTieModel.Barrier alarm = new BowTieModel.Barrier("B-002", "High Pressure Alarm", 0.1);
+    alarm.setBarrierType(BowTieModel.BarrierType.PREVENTION);
+    BowTieModel.Barrier inspection = new BowTieModel.Barrier("B-003", "Inspection Program", 0.05);
+    inspection.setBarrierType(BowTieModel.BarrierType.PREVENTION);
+    BowTieModel.Barrier physicalProtection =
+        new BowTieModel.Barrier("B-004", "Physical Protection", 0.2);
+    physicalProtection.setBarrierType(BowTieModel.BarrierType.PREVENTION);
+    bowtie.addBarrier(psv);
+    bowtie.addBarrier(alarm);
+    bowtie.addBarrier(inspection);
+    bowtie.addBarrier(physicalProtection);
+
+    // Link prevention barriers to threats
+    bowtie.linkBarrierToThreat("T-001", "B-001");
+    bowtie.linkBarrierToThreat("T-001", "B-002");
+    bowtie.linkBarrierToThreat("T-002", "B-003");
+    bowtie.linkBarrierToThreat("T-003", "B-004");
 
     // Add consequences (right side)
-    bowtie.addConsequence("Fire/Explosion", 1000000.0);
-    bowtie.addConsequence("Environmental Release", 500000.0);
-    bowtie.addConsequence("Personnel Injury", 2000000.0);
+    BowTieModel.Consequence fireExplosion =
+        new BowTieModel.Consequence("C-001", "Fire/Explosion", 5);
+    BowTieModel.Consequence envRelease =
+        new BowTieModel.Consequence("C-002", "Environmental Release", 4);
+    BowTieModel.Consequence injury = new BowTieModel.Consequence("C-003", "Personnel Injury", 5);
+    bowtie.addConsequence(fireExplosion);
+    bowtie.addConsequence(envRelease);
+    bowtie.addConsequence(injury);
 
     // Add mitigation barriers
-    bowtie.addMitigationBarrier("Fire/Explosion", "Fire Detection", 0.95);
-    bowtie.addMitigationBarrier("Fire/Explosion", "Deluge System", 0.9);
-    bowtie.addMitigationBarrier("Environmental Release", "Secondary Containment", 0.85);
-    bowtie.addMitigationBarrier("Personnel Injury", "Evacuation Procedures", 0.95);
+    BowTieModel.Barrier fireDetection = new BowTieModel.Barrier("B-005", "Fire Detection", 0.05);
+    fireDetection.setBarrierType(BowTieModel.BarrierType.MITIGATION);
+    BowTieModel.Barrier deluge = new BowTieModel.Barrier("B-006", "Deluge System", 0.1);
+    deluge.setBarrierType(BowTieModel.BarrierType.MITIGATION);
+    BowTieModel.Barrier containment =
+        new BowTieModel.Barrier("B-007", "Secondary Containment", 0.15);
+    containment.setBarrierType(BowTieModel.BarrierType.MITIGATION);
+    BowTieModel.Barrier evacuation =
+        new BowTieModel.Barrier("B-008", "Evacuation Procedures", 0.05);
+    evacuation.setBarrierType(BowTieModel.BarrierType.MITIGATION);
+    bowtie.addBarrier(fireDetection);
+    bowtie.addBarrier(deluge);
+    bowtie.addBarrier(containment);
+    bowtie.addBarrier(evacuation);
 
-    // Analyze
-    BowTieAnalyzer analyzer = new BowTieAnalyzer(bowtie);
-    analyzer.analyze();
+    // Link mitigation barriers to consequences
+    bowtie.linkBarrierToConsequence("C-001", "B-005");
+    bowtie.linkBarrierToConsequence("C-001", "B-006");
+    bowtie.linkBarrierToConsequence("C-002", "B-007");
+    bowtie.linkBarrierToConsequence("C-003", "B-008");
 
-    System.out.println("  Hazard: " + bowtie.getHazard());
-    System.out.println("  Unmitigated Frequency: "
-        + String.format("%.4f /yr", analyzer.getUnmitigatedFrequency()));
+    // Calculate risk (calls internal analyze method)
+    bowtie.calculate();
+
+    System.out.println("  Hazard: " + bowtie.getHazardDescription());
     System.out.println(
-        "  Mitigated Frequency: " + String.format("%.6f /yr", analyzer.getMitigatedFrequency()));
-    System.out.println("  Risk Reduction: " + String.format("%.0fx",
-        analyzer.getUnmitigatedFrequency() / analyzer.getMitigatedFrequency()));
-    System.out.println("  Most Critical Threat: " + analyzer.getMostCriticalThreat());
+        "  Unmitigated Frequency: " + String.format("%.4f /yr", bowtie.getUnmitigatedFrequency()));
+    System.out.println(
+        "  Mitigated Frequency: " + String.format("%.6f /yr", bowtie.getMitigatedFrequency()));
+    double riskReduction = bowtie.getUnmitigatedFrequency() > 0
+        ? bowtie.getUnmitigatedFrequency() / Math.max(bowtie.getMitigatedFrequency(), 1e-10)
+        : 1.0;
+    System.out.println("  Risk Reduction: " + String.format("%.0fx", riskReduction));
+    System.out.println("  Number of Threats: " + bowtie.getThreats().size());
     System.out.println();
   }
 
@@ -322,25 +361,34 @@ public class RiskFrameworkQuickStart {
     portfolio.addAsset("Platform Beta", 30000, 0.92, 80.0);
     portfolio.addAsset("FPSO Gamma", 75000, 0.90, 80.0);
 
-    // Add common cause scenarios
-    portfolio.addCommonCauseScenario(PortfolioRiskAnalyzer.CommonCauseScenario.SEVERE_WEATHER, 0.1, // 10%
-                                                                                                    // annual
-                                                                                                    // probability
-        0.3 // 30% production impact
-    );
-    portfolio.addCommonCauseScenario(PortfolioRiskAnalyzer.CommonCauseScenario.CYBER_ATTACK, 0.05,
-        0.5);
+    // Add common cause scenarios using proper CommonCauseScenario objects
+    PortfolioRiskAnalyzer.CommonCauseScenario weatherScenario =
+        new PortfolioRiskAnalyzer.CommonCauseScenario("WEATHER-NS", "Severe North Sea Weather",
+            PortfolioRiskAnalyzer.CommonCauseScenario.CommonCauseType.WEATHER, 0.1);
+    weatherScenario.addAffectedAsset("Platform Alpha", 0.3);
+    weatherScenario.addAffectedAsset("Platform Beta", 0.3);
+    weatherScenario.addAffectedAsset("FPSO Gamma", 0.2);
+    portfolio.addCommonCauseScenario(weatherScenario);
 
-    // Run analysis
-    PortfolioRiskResult result = portfolio.runAnalysis(10000, 365);
+    PortfolioRiskAnalyzer.CommonCauseScenario cyberScenario =
+        new PortfolioRiskAnalyzer.CommonCauseScenario("CYBER-001", "Cyber Attack on OT Systems",
+            PortfolioRiskAnalyzer.CommonCauseScenario.CommonCauseType.CYBER, 0.05);
+    cyberScenario.addAffectedAsset("Platform Alpha", 0.5);
+    cyberScenario.addAffectedAsset("Platform Beta", 0.5);
+    cyberScenario.addAffectedAsset("FPSO Gamma", 0.5);
+    portfolio.addCommonCauseScenario(cyberScenario);
+
+    // Run analysis (uses default iterations and period from the analyzer)
+    PortfolioRiskResult result = portfolio.run();
 
     System.out.println("  Total Expected Production: "
         + String.format("%.0f bbl", result.getTotalExpectedProduction()));
     System.out
-        .println("  Portfolio VaR (95%): $" + String.format("%.0f", result.getValueAtRisk95()));
+        .println("  Portfolio VaR (95%): $" + String.format("%.0f", result.getValueAtRisk(95)));
     System.out.println("  Diversification Benefit: "
         + String.format("%.1f%%", result.getDiversificationBenefit() * 100));
-    System.out.println("  Correlated Loss Events: " + result.getCorrelatedLossCount());
+    System.out.println("  Common Cause Fraction: "
+        + String.format("%.1f%%", result.getCommonCauseFraction() * 100));
     System.out.println();
   }
 
