@@ -1,0 +1,129 @@
+# OREDA Equipment Reliability Data
+# Source: Based on OREDA Handbook 6th Edition (2015)
+# Format: EquipmentType,EquipmentClass,FailureMode,FailureRate,MTBF_hours,MTTR_hours,DataSource,Confidence
+# FailureRate is per hour, MTBF and MTTR in hours
+#
+# Note: These are representative values for demonstration purposes.
+# For actual projects, use official OREDA data from www.oreda.com
+
+# Compressors
+Compressor,Centrifugal,All modes,1.14e-4,8772,72,OREDA-2015,High
+Compressor,Centrifugal,Critical,2.85e-5,35088,96,OREDA-2015,High
+Compressor,Centrifugal,Degraded,5.71e-5,17513,48,OREDA-2015,High
+Compressor,Reciprocating,All modes,2.28e-4,4386,96,OREDA-2015,High
+Compressor,Reciprocating,Critical,5.71e-5,17513,120,OREDA-2015,High
+Compressor,Screw,All modes,1.71e-4,5848,48,OREDA-2015,Medium
+
+# Pumps
+Pump,Centrifugal,All modes,1.83e-4,5464,24,OREDA-2015,High
+Pump,Centrifugal,Critical,4.57e-5,21882,48,OREDA-2015,High
+Pump,Centrifugal,Degraded,9.13e-5,10953,16,OREDA-2015,High
+Pump,Reciprocating,All modes,3.65e-4,2740,48,OREDA-2015,High
+Pump,Reciprocating,Critical,9.13e-5,10953,72,OREDA-2015,High
+Pump,Submersible (ESP),All modes,5.71e-4,1751,168,OREDA-2015,Medium
+Pump,Multiphase,All modes,2.74e-4,3650,72,OREDA-2015,Medium
+
+# Separators
+Separator,Two-phase,All modes,5.71e-5,17513,24,OREDA-2015,High
+Separator,Two-phase,Critical,1.14e-5,87720,48,OREDA-2015,High
+Separator,Three-phase,All modes,6.85e-5,14599,36,OREDA-2015,High
+Separator,Three-phase,Critical,1.37e-5,73050,48,OREDA-2015,High
+Separator,Gas scrubber,All modes,4.57e-5,21882,16,OREDA-2015,High
+Separator,Test separator,All modes,6.85e-5,14599,24,OREDA-2015,Medium
+
+# Heat Exchangers
+Heat Exchanger,Shell and tube,All modes,2.28e-5,43860,48,OREDA-2015,High
+Heat Exchanger,Shell and tube,Critical,5.71e-6,175130,72,OREDA-2015,High
+Heat Exchanger,Plate,All modes,3.43e-5,29155,24,OREDA-2015,Medium
+Heat Exchanger,Plate,Critical,8.57e-6,116753,36,OREDA-2015,Medium
+Heat Exchanger,Air cooler,All modes,4.57e-5,21882,36,OREDA-2015,High
+Heat Exchanger,Double pipe,All modes,1.83e-5,54675,24,OREDA-2015,Medium
+
+# Valves
+Valve,Ball,All modes,1.14e-5,87720,8,OREDA-2015,High
+Valve,Ball,Fail to close,2.85e-6,350880,4,OREDA-2015,High
+Valve,Gate,All modes,1.37e-5,73050,8,OREDA-2015,High
+Valve,Gate,Fail to close,3.43e-6,291600,4,OREDA-2015,High
+Valve,Control,All modes,4.57e-5,21882,12,OREDA-2015,High
+Valve,Control,Fail to respond,1.14e-5,87720,8,OREDA-2015,High
+Valve,Safety/Relief,All modes,2.28e-5,43860,4,OREDA-2015,High
+Valve,Safety/Relief,Fail to open,5.71e-6,175130,4,OREDA-2015,High
+Valve,Check,All modes,1.83e-5,54675,4,OREDA-2015,High
+Valve,Check,Fail to close,4.57e-6,218820,4,OREDA-2015,High
+Valve,ESD,All modes,1.14e-5,87720,8,OREDA-2015,High
+Valve,ESD,Fail to close,2.85e-6,350880,4,OREDA-2015,High
+Valve,Choke,All modes,6.85e-5,14599,12,OREDA-2015,High
+
+# Turbines and Drivers
+Gas Turbine,Industrial,All modes,1.37e-4,7299,120,OREDA-2015,High
+Gas Turbine,Industrial,Critical,3.43e-5,29155,168,OREDA-2015,High
+Gas Turbine,Aero-derivative,All modes,1.03e-4,9713,96,OREDA-2015,Medium
+Steam Turbine,General purpose,All modes,6.85e-5,14599,72,OREDA-2015,High
+Electric Motor,Large (>1MW),All modes,4.57e-5,21882,48,OREDA-2015,High
+Electric Motor,Large (>1MW),Critical,1.14e-5,87720,72,OREDA-2015,High
+Electric Motor,Medium (100kW-1MW),All modes,2.28e-5,43860,24,OREDA-2015,High
+Electric Motor,Small (<100kW),All modes,1.14e-5,87720,12,OREDA-2015,High
+
+# Pressure Vessels
+Pressure Vessel,Vertical,All modes,1.14e-5,87720,48,OREDA-2015,High
+Pressure Vessel,Vertical,Critical,2.85e-6,350880,72,OREDA-2015,High
+Pressure Vessel,Horizontal,All modes,1.14e-5,87720,48,OREDA-2015,High
+Pressure Vessel,Horizontal,Critical,2.85e-6,350880,72,OREDA-2015,High
+Pressure Vessel,Spherical,All modes,5.71e-6,175130,72,OREDA-2015,Medium
+
+# Piping
+Pipeline,Process piping,All modes,5.71e-7,1751300,24,OREDA-2015,High
+Pipeline,Process piping,Leak,2.85e-7,3502600,16,OREDA-2015,High
+Pipeline,Export pipeline,All modes,2.85e-7,3502600,168,OREDA-2015,High
+Pipeline,Flexible hose,All modes,2.28e-6,438600,8,OREDA-2015,Medium
+
+# Subsea Equipment
+Subsea Tree,Vertical,All modes,2.28e-5,43860,720,OREDA-2015,Medium
+Subsea Tree,Vertical,Critical,5.71e-6,175130,960,OREDA-2015,Medium
+Subsea Tree,Horizontal,All modes,2.28e-5,43860,720,OREDA-2015,Medium
+Subsea Manifold,Production,All modes,1.14e-5,87720,480,OREDA-2015,Medium
+Subsea Manifold,Injection,All modes,1.14e-5,87720,480,OREDA-2015,Medium
+Umbilical,Electro-hydraulic,All modes,1.83e-6,546750,720,OREDA-2015,Low
+Umbilical,Electric only,All modes,9.13e-7,1095000,480,OREDA-2015,Low
+Flexible Riser,Dynamic,All modes,5.71e-6,175130,480,OREDA-2015,Medium
+Flexible Riser,Static,All modes,2.85e-6,350880,240,OREDA-2015,Medium
+PLET,Standard,All modes,5.71e-6,175130,360,OREDA-2015,Low
+Jumper,Rigid,All modes,2.85e-6,350880,240,OREDA-2015,Low
+Jumper,Flexible,All modes,5.71e-6,175130,240,OREDA-2015,Low
+
+# Instrumentation
+Transmitter,Pressure,All modes,6.85e-6,146000,4,OREDA-2015,High
+Transmitter,Pressure,Critical,1.71e-6,584000,4,OREDA-2015,High
+Transmitter,Temperature,All modes,4.57e-6,219000,4,OREDA-2015,High
+Transmitter,Temperature,Critical,1.14e-6,876000,4,OREDA-2015,High
+Transmitter,Flow,All modes,9.13e-6,109500,8,OREDA-2015,High
+Transmitter,Flow,Critical,2.28e-6,438000,8,OREDA-2015,High
+Transmitter,Level,All modes,6.85e-6,146000,4,OREDA-2015,High
+Transmitter,Level,Critical,1.71e-6,584000,4,OREDA-2015,High
+Analyzer,Gas chromatograph,All modes,2.74e-5,36500,12,OREDA-2015,Medium
+Analyzer,H2S detector,All modes,1.83e-5,54675,8,OREDA-2015,High
+Analyzer,Fire/gas detector,All modes,1.14e-5,87720,4,OREDA-2015,High
+
+# Control Systems
+PLC,Safety PLC,All modes,1.14e-6,876000,8,OREDA-2015,High
+PLC,Safety PLC,Dangerous failure,2.85e-7,3504000,8,OREDA-2015,High
+PLC,Standard PLC,All modes,2.28e-6,438000,4,OREDA-2015,High
+DCS,Controller,All modes,4.57e-6,219000,4,OREDA-2015,High
+DCS,I/O module,All modes,2.28e-6,438000,2,OREDA-2015,High
+
+# Electrical Equipment
+Transformer,Power,All modes,1.14e-5,87720,72,OREDA-2015,High
+Switchgear,High voltage,All modes,2.28e-5,43860,24,OREDA-2015,High
+Switchgear,Low voltage,All modes,1.14e-5,87720,12,OREDA-2015,High
+UPS,Large,All modes,4.57e-5,21882,8,OREDA-2015,High
+Generator,Diesel,All modes,6.85e-5,14599,48,OREDA-2015,High
+Generator,Gas,All modes,9.13e-5,10953,72,OREDA-2015,High
+
+# Rotating Equipment
+Gearbox,High speed,All modes,5.71e-5,17513,72,OREDA-2015,High
+Gearbox,Low speed,All modes,2.85e-5,35088,48,OREDA-2015,High
+Coupling,Flexible,All modes,1.14e-5,87720,24,OREDA-2015,High
+Bearing,Journal,All modes,2.28e-5,43860,24,OREDA-2015,High
+Bearing,Thrust,All modes,2.28e-5,43860,24,OREDA-2015,High
+Seal,Mechanical,All modes,4.57e-5,21882,16,OREDA-2015,High
+Seal,Dry gas,All modes,2.28e-5,43860,24,OREDA-2015,High

@@ -249,38 +249,90 @@ public class AIIntegrationHelper implements Serializable {
       this.exception = exception;
     }
 
+    /**
+     * Creates a success result.
+     *
+     * @param validation the validation result
+     * @return an ExecutionResult with SUCCESS status
+     */
     public static ExecutionResult success(ValidationResult validation) {
       return new ExecutionResult(Status.SUCCESS, "Process ran successfully", validation, null);
     }
 
+    /**
+     * Creates a warning result.
+     *
+     * @param message the warning message
+     * @param validation the validation result
+     * @return an ExecutionResult with WARNING status
+     */
     public static ExecutionResult warning(String message, ValidationResult validation) {
       return new ExecutionResult(Status.WARNING, message, validation, null);
     }
 
+    /**
+     * Creates a failure result.
+     *
+     * @param message the failure message
+     * @param validation the validation result
+     * @return an ExecutionResult with FAILURE status
+     */
     public static ExecutionResult failure(String message, ValidationResult validation) {
       return new ExecutionResult(Status.FAILURE, message, validation, null);
     }
 
+    /**
+     * Creates an error result.
+     *
+     * @param message the error message
+     * @param e the exception that caused the error
+     * @return an ExecutionResult with ERROR status
+     */
     public static ExecutionResult error(String message, Exception e) {
       return new ExecutionResult(Status.ERROR, message, null, e);
     }
 
+    /**
+     * Gets the status.
+     *
+     * @return the execution status
+     */
     public Status getStatus() {
       return status;
     }
 
+    /**
+     * Gets the message.
+     *
+     * @return the execution message
+     */
     public String getMessage() {
       return message;
     }
 
+    /**
+     * Gets the validation result.
+     *
+     * @return the validation result, or null if not applicable
+     */
     public ValidationResult getValidation() {
       return validation;
     }
 
+    /**
+     * Gets the exception.
+     *
+     * @return the exception, or null if not applicable
+     */
     public Exception getException() {
       return exception;
     }
 
+    /**
+     * Checks if the execution was successful.
+     *
+     * @return true if status is SUCCESS
+     */
     public boolean isSuccess() {
       return status == Status.SUCCESS;
     }

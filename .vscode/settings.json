@@ -21,5 +21,6 @@
   },
   "github.copilot.chat.autoCommit.enabled": false,
   "github.copilot.chat.confirmEditGeneration": true,
-  "chat.agent.maxRequests": 2500
+  "chat.agent.maxRequests": 2500,
+  "java.debug.settings.onBuildFailureProceed": true
 }

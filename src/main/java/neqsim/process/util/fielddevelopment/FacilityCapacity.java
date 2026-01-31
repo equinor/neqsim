@@ -771,6 +771,14 @@ public class FacilityCapacity implements Serializable {
 
   /**
    * Creates a debottleneck option for a piece of equipment.
+   *
+   * @param equipment the equipment to evaluate for debottlenecking
+   * @param baseResult the baseline optimization result
+   * @param feedStream the feed stream to the facility
+   * @param lowerBound the lower bound of the rate range
+   * @param upperBound the upper bound of the rate range
+   * @param rateUnit the unit for production rates
+   * @return the debottleneck option, or null if not applicable
    */
   private DebottleneckOption createDebottleneckOption(ProcessEquipmentInterface equipment,
       OptimizationResult baseResult, StreamInterface feedStream, double lowerBound,
@@ -828,6 +836,11 @@ public class FacilityCapacity implements Serializable {
 
   /**
    * Estimates CAPEX for a capacity upgrade.
+   *
+   * @param equipment the equipment being upgraded
+   * @param currentCapacity the current capacity
+   * @param upgradedCapacity the target upgraded capacity
+   * @return the estimated capital expenditure in currency units
    */
   private double estimateCapex(ProcessEquipmentInterface equipment, double currentCapacity,
       double upgradedCapacity) {
@@ -847,6 +860,13 @@ public class FacilityCapacity implements Serializable {
 
   /**
    * Calculates simplified NPV for a debottleneck investment.
+   *
+   * @param dailyIncrementalProduction daily incremental production from the upgrade
+   * @param revenuePerUnit revenue per unit of production
+   * @param capex capital expenditure for the upgrade
+   * @param discountRate annual discount rate for NPV calculation
+   * @param years number of years for NPV calculation
+   * @return the net present value of the investment
    */
   private double calculateSimpleNPV(double dailyIncrementalProduction, double revenuePerUnit,
       double capex, double discountRate, int years) {

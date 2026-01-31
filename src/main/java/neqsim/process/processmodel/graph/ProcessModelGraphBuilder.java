@@ -478,6 +478,10 @@ public final class ProcessModelGraphBuilder {
 
   /**
    * Find an edge between two nodes.
+   *
+   * @param source the source node
+   * @param target the target node
+   * @return the edge between the nodes, or null if not found
    */
   private static ProcessEdge findEdge(ProcessNode source, ProcessNode target) {
     for (ProcessEdge edge : source.getOutgoingEdges()) {
@@ -490,6 +494,11 @@ public final class ProcessModelGraphBuilder {
 
   /**
    * Check if a connection already exists.
+   *
+   * @param connections the list of existing connections
+   * @param source the source node
+   * @param target the target node
+   * @return true if the connection exists, false otherwise
    */
   private static boolean connectionExists(List<ProcessModelGraph.InterSystemConnection> connections,
       ProcessNode source, ProcessNode target) {
@@ -504,6 +513,9 @@ public final class ProcessModelGraphBuilder {
 
   /**
    * Find the 'stream' field in a Stream class hierarchy.
+   *
+   * @param clazz the class to search for the stream field
+   * @return the stream field, or null if not found
    */
   private static java.lang.reflect.Field findStreamField(Class<?> clazz) {
     Class<?> current = clazz;
@@ -575,6 +587,10 @@ public final class ProcessModelGraphBuilder {
 
   /**
    * Find a field in class hierarchy.
+   *
+   * @param clazz the class to search
+   * @param fieldName the name of the field to find
+   * @return the field, or null if not found
    */
   private static java.lang.reflect.Field findField(Class<?> clazz, String fieldName) {
     Class<?> current = clazz;

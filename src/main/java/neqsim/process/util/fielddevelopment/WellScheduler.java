@@ -33,22 +33,19 @@ import neqsim.process.util.optimizer.ProductionOptimizer;
  *
  * <h2>Well Status Model</h2>
  * <p>
- * Each well can be in one of several states that affect its contribution to
- * total production:
+ * Each well can be in one of several states that affect its contribution to total production:
  * <ul>
  * <li>{@link WellStatus#PRODUCING} - Well is online and producing</li>
  * <li>{@link WellStatus#SHUT_IN} - Well is temporarily shut in</li>
  * <li>{@link WellStatus#WORKOVER} - Well is undergoing intervention</li>
- * <li>{@link WellStatus#WAITING_ON_WEATHER} - Operations delayed by
- * weather</li>
+ * <li>{@link WellStatus#WAITING_ON_WEATHER} - Operations delayed by weather</li>
  * <li>{@link WellStatus#DRILLING} - New well being drilled</li>
  * <li>{@link WellStatus#PLUGGED} - Well permanently abandoned</li>
  * </ul>
  *
  * <h2>Intervention Planning</h2>
  * <p>
- * Interventions are scheduled activities that temporarily take a well offline
- * but may improve its
+ * Interventions are scheduled activities that temporarily take a well offline but may improve its
  * performance afterward. The scheduler calculates:
  * <ul>
  * <li>Deferred production during intervention</li>
@@ -59,16 +56,12 @@ import neqsim.process.util.optimizer.ProductionOptimizer;
  *
  * <h2>Integration with Facility Model</h2>
  * <p>
- * When a {@link ProcessSystem} is provided, the scheduler accounts for facility
- * bottlenecks. This
+ * When a {@link ProcessSystem} is provided, the scheduler accounts for facility bottlenecks. This
  * ensures that:
  * <ul>
- * <li>Production is capped at facility capacity even when well potential
- * exceeds it</li>
- * <li>Interventions on non-bottleneck wells may not increase total
- * production</li>
- * <li>Optimal scheduling prioritizes interventions that relieve
- * constraints</li>
+ * <li>Production is capped at facility capacity even when well potential exceeds it</li>
+ * <li>Interventions on non-bottleneck wells may not increase total production</li>
+ * <li>Optimal scheduling prioritizes interventions that relieve constraints</li>
  * </ul>
  *
  * <h2>Example Usage</h2>
@@ -89,9 +82,10 @@ import neqsim.process.util.optimizer.ProductionOptimizer;
  *         .cost(500000, "USD").build());
  *
  * // Optimize the schedule
- * ScheduleResult result = scheduler.optimizeSchedule(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), 1); // max 1
- *                                                                                                              // concurrent
- *                                                                                                              // intervention
+ * ScheduleResult result =
+ *     scheduler.optimizeSchedule(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31), 1); // max 1
+ *                                                                                          // concurrent
+ *                                                                                          // intervention
  *
  * System.out.println("Total deferred: " + result.getTotalDeferredProduction());
  * System.out.println("Total gain: " + result.getTotalProductionGain());
@@ -126,8 +120,7 @@ public class WellScheduler implements Serializable {
    * Well operational status.
    *
    * <p>
-   * Defines the possible states a well can be in during field operations. The
-   * status affects both
+   * Defines the possible states a well can be in during field operations. The status affects both
    * production contribution and intervention scheduling.
    */
   public enum WellStatus {
@@ -192,20 +185,17 @@ public class WellScheduler implements Serializable {
    * Types of well interventions.
    *
    * <p>
-   * Each intervention type has typical duration ranges and cost factors that can
-   * be used for
+   * Each intervention type has typical duration ranges and cost factors that can be used for
    * planning purposes.
    */
   public enum InterventionType {
     /**
-     * Coiled tubing intervention for cleanout, stimulation, or logging. Typical
-     * duration: 2-7 days.
+     * Coiled tubing intervention for cleanout, stimulation, or logging. Typical duration: 2-7 days.
      */
     COILED_TUBING("Coiled Tubing", 2, 7),
 
     /**
-     * Wireline operations for logging, perforation, or plug setting. Typical
-     * duration: 1-3 days.
+     * Wireline operations for logging, perforation, or plug setting. Typical duration: 1-3 days.
      */
     WIRELINE("Wireline", 1, 3),
 
@@ -215,8 +205,7 @@ public class WellScheduler implements Serializable {
     HYDRAULIC_WORKOVER("HWO", 5, 15),
 
     /**
-     * Full rig workover for major repairs or recompletions. Typical duration: 15-45
-     * days.
+     * Full rig workover for major repairs or recompletions. Typical duration: 15-45 days.
      */
     RIG_WORKOVER("Rig Workover", 15, 45),
 
@@ -226,8 +215,7 @@ public class WellScheduler implements Serializable {
     STIMULATION("Stimulation", 3, 10),
 
     /**
-     * Artificial lift system installation (ESP, gas lift). Typical duration: 5-20
-     * days.
+     * Artificial lift system installation (ESP, gas lift). Typical duration: 5-20 days.
      */
     ARTIFICIAL_LIFT_INSTALL("AL Install", 5, 20),
 
@@ -288,8 +276,7 @@ public class WellScheduler implements Serializable {
    * Scheduled intervention record.
    *
    * <p>
-   * Represents a planned well intervention with timing, cost, and expected
-   * outcome information.
+   * Represents a planned well intervention with timing, cost, and expected outcome information.
    */
   public static final class Intervention implements Serializable, Comparable<Intervention> {
     private static final long serialVersionUID = 1000L;
@@ -420,7 +407,7 @@ public class WellScheduler implements Serializable {
      * Checks if the intervention overlaps with a date range.
      *
      * @param rangeStart start of date range
-     * @param rangeEnd   end of date range
+     * @param rangeEnd end of date range
      * @return true if any overlap exists
      */
     public boolean overlaps(LocalDate rangeStart, LocalDate rangeEnd) {
@@ -521,7 +508,7 @@ public class WellScheduler implements Serializable {
       /**
        * Sets the cost.
        *
-       * @param cost     intervention cost
+       * @param cost intervention cost
        * @param currency currency code
        * @return this builder
        */
@@ -568,8 +555,7 @@ public class WellScheduler implements Serializable {
    * Well record for availability and production tracking.
    *
    * <p>
-   * Maintains the complete history of a well's status and production, along with
-   * scheduled
+   * Maintains the complete history of a well's status and production, along with scheduled
    * interventions.
    */
   public static final class WellRecord implements Serializable {
@@ -587,9 +573,9 @@ public class WellScheduler implements Serializable {
     /**
      * Creates a new well record.
      *
-     * @param wellName         well identifier
+     * @param wellName well identifier
      * @param initialPotential initial production potential
-     * @param rateUnit         rate unit
+     * @param rateUnit rate unit
      */
     public WellRecord(String wellName, double initialPotential, String rateUnit) {
       this.wellName = wellName;
@@ -660,7 +646,7 @@ public class WellScheduler implements Serializable {
      * Sets the current well status and records it in history.
      *
      * @param status new status
-     * @param date   date of status change
+     * @param date date of status change
      */
     public void setStatus(WellStatus status, LocalDate date) {
       this.currentStatus = status;
@@ -725,7 +711,7 @@ public class WellScheduler implements Serializable {
      * Calculates availability over a period.
      *
      * @param startDate start of period
-     * @param endDate   end of period
+     * @param endDate end of period
      * @return availability fraction (0-1)
      */
     public double calculateAvailability(LocalDate startDate, LocalDate endDate) {
@@ -745,7 +731,7 @@ public class WellScheduler implements Serializable {
      * Gets interventions within a date range.
      *
      * @param startDate start of range
-     * @param endDate   end of range
+     * @param endDate end of range
      * @return list of interventions overlapping the range
      */
     public List<Intervention> getInterventionsInRange(LocalDate startDate, LocalDate endDate) {
@@ -758,8 +744,7 @@ public class WellScheduler implements Serializable {
    * Schedule optimization result.
    *
    * <p>
-   * Contains the complete optimized schedule and associated metrics including
-   * deferred production,
+   * Contains the complete optimized schedule and associated metrics including deferred production,
    * production gains, and facility utilization.
    */
   public static final class ScheduleResult implements Serializable {
@@ -777,14 +762,14 @@ public class WellScheduler implements Serializable {
     /**
      * Creates a schedule result.
      *
-     * @param optimizedSchedule       list of scheduled interventions
-     * @param wellUptime              map of well name to uptime fraction
+     * @param optimizedSchedule list of scheduled interventions
+     * @param wellUptime map of well name to uptime fraction
      * @param totalDeferredProduction production lost during interventions
-     * @param totalProductionGain     production gained from interventions
-     * @param dailyFacilityRate       daily total production rates
-     * @param dailyBottleneck         daily bottleneck equipment
-     * @param overallAvailability     overall system availability
-     * @param rateUnit                rate unit for production values
+     * @param totalProductionGain production gained from interventions
+     * @param dailyFacilityRate daily total production rates
+     * @param dailyBottleneck daily bottleneck equipment
+     * @param overallAvailability overall system availability
+     * @param rateUnit rate unit for production values
      */
     public ScheduleResult(List<Intervention> optimizedSchedule, Map<String, Double> wellUptime,
         double totalDeferredProduction, double totalProductionGain,
@@ -796,7 +781,8 @@ public class WellScheduler implements Serializable {
       this.totalProductionGain = totalProductionGain;
       this.dailyFacilityRate = dailyFacilityRate != null ? new LinkedHashMap<>(dailyFacilityRate)
           : new LinkedHashMap<>();
-      this.dailyBottleneck = dailyBottleneck != null ? new LinkedHashMap<>(dailyBottleneck) : new LinkedHashMap<>();
+      this.dailyBottleneck =
+          dailyBottleneck != null ? new LinkedHashMap<>(dailyBottleneck) : new LinkedHashMap<>();
       this.overallAvailability = overallAvailability;
       this.rateUnit = rateUnit;
     }
@@ -886,8 +872,8 @@ public class WellScheduler implements Serializable {
       sb.append("    dateFormat YYYY-MM-DD\n");
 
       // Group interventions by well
-      Map<String, List<Intervention>> byWell = optimizedSchedule.stream()
-          .collect(Collectors.groupingBy(Intervention::getWellName));
+      Map<String, List<Intervention>> byWell =
+          optimizedSchedule.stream().collect(Collectors.groupingBy(Intervention::getWellName));
 
       for (Map.Entry<String, List<Intervention>> entry : byWell.entrySet()) {
         sb.append("    section ").append(entry.getKey()).append("\n");
@@ -951,7 +937,7 @@ public class WellScheduler implements Serializable {
    * Creates a well scheduler with reservoir and facility models.
    *
    * @param reservoir reservoir model for production tracking
-   * @param facility  surface facility for bottleneck analysis
+   * @param facility surface facility for bottleneck analysis
    */
   public WellScheduler(SimpleReservoir reservoir, ProcessSystem facility) {
     this.reservoir = reservoir;
@@ -962,9 +948,9 @@ public class WellScheduler implements Serializable {
   /**
    * Adds a well with initial production potential.
    *
-   * @param name             well name (unique identifier)
+   * @param name well name (unique identifier)
    * @param initialPotential unconstrained production rate
-   * @param rateUnit         rate unit (e.g., "Sm3/day")
+   * @param rateUnit rate unit (e.g., "Sm3/day")
    * @return the created well record
    */
   public WellRecord addWell(String name, double initialPotential, String rateUnit) {
@@ -1037,10 +1023,9 @@ public class WellScheduler implements Serializable {
    * <li>Facility constraints (if facility is provided)</li>
    * </ul>
    *
-   * @param startDate                  start of scheduling period
-   * @param endDate                    end of scheduling period
-   * @param maxConcurrentInterventions maximum number of simultaneous
-   *                                   interventions
+   * @param startDate start of scheduling period
+   * @param endDate end of scheduling period
+   * @param maxConcurrentInterventions maximum number of simultaneous interventions
    * @return optimized schedule result
    */
   public ScheduleResult optimizeSchedule(LocalDate startDate, LocalDate endDate,
@@ -1084,12 +1069,13 @@ public class WellScheduler implements Serializable {
 
       if (!availableDate.isAfter(endDate.minusDays(intervention.getDurationDays() - 1))) {
         // Reschedule to available date
-        Intervention rescheduled = Intervention.builder(intervention.getWellName()).type(intervention.getType())
-            .startDate(availableDate).durationDays(intervention.getDurationDays())
-            .expectedGain(intervention.getExpectedProductionGain())
-            .cost(intervention.getCost(), intervention.getCurrency())
-            .description(intervention.getDescription()).priority(intervention.getPriority())
-            .build();
+        Intervention rescheduled =
+            Intervention.builder(intervention.getWellName()).type(intervention.getType())
+                .startDate(availableDate).durationDays(intervention.getDurationDays())
+                .expectedGain(intervention.getExpectedProductionGain())
+                .cost(intervention.getCost(), intervention.getCurrency())
+                .description(intervention.getDescription()).priority(intervention.getPriority())
+                .build();
         scheduledInterventions.add(rescheduled);
       }
     }
@@ -1175,7 +1161,8 @@ public class WellScheduler implements Serializable {
       }
     }
 
-    double overallAvailability = wellUptime.values().stream().mapToDouble(Double::doubleValue).average().orElse(1.0);
+    double overallAvailability =
+        wellUptime.values().stream().mapToDouble(Double::doubleValue).average().orElse(1.0);
 
     return new ScheduleResult(scheduledInterventions, wellUptime, totalDeferred, totalGain,
         dailyRate, dailyBottleneck, overallAvailability,
@@ -1185,6 +1172,10 @@ public class WellScheduler implements Serializable {
 
   /**
    * Counts concurrent interventions on a specific date.
+   *
+   * @param interventions list of interventions to check
+   * @param date the date to check for concurrency
+   * @return the count of concurrent interventions on the specified date
    */
   private long countConcurrentOnDate(List<Intervention> interventions, LocalDate date) {
     return interventions.stream().filter(i -> i.isActiveOn(date)).count();
@@ -1194,7 +1185,7 @@ public class WellScheduler implements Serializable {
    * Calculates system-wide availability over a period.
    *
    * @param startDate start of period
-   * @param endDate   end of period
+   * @param endDate end of period
    * @return weighted average availability across all wells
    */
   public double calculateSystemAvailability(LocalDate startDate, LocalDate endDate) {

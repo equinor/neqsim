@@ -444,7 +444,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Safety Chain Tests | [docs/safety/integration_safety_chain_tests.md](safety/integration_safety_chain_tests.md) | Safety chain tests |
 | Scenario Generation | [docs/process/safety/scenario-generation.md](process/safety/scenario-generation.md) | Automatic scenario generation |
 
-### Chapter 35: Risk Simulation Framework (**NEW**)
+### Chapter 35: Risk Simulation Framework
 
 Comprehensive operational risk simulation framework for equipment failure analysis, production impact assessment, and degraded operation optimization. Includes Monte Carlo simulation, 5×5 risk matrix, process topology analysis, STID tagging per ISO 14224/NORSOK, and dependency analysis with cross-installation support.
 
@@ -462,6 +462,33 @@ Comprehensive operational risk simulation framework for equipment failure analys
 | **Dependency Analysis** | [docs/risk/dependency-analysis.md](risk/dependency-analysis.md) | DependencyAnalyzer, cascade failure trees, cross-installation effects |
 | **Mathematical Reference** | [docs/risk/mathematical-reference.md](risk/mathematical-reference.md) | Complete formulas: reliability, system availability, Monte Carlo, risk calculations |
 | **API Reference** | [docs/risk/api-reference.md](risk/api-reference.md) | Full API documentation for all risk simulation classes |
+| **Improvement Recommendations** | [docs/risk/IMPROVEMENT_RECOMMENDATIONS.md](risk/IMPROVEMENT_RECOMMENDATIONS.md) | Future enhancements for O&G industry: dynamic simulation, SIS integration, digital twins |
+
+### Chapter 35a: Advanced Risk Framework (**NEW**)
+
+Extended risk analysis capabilities implementing P1-P7 priority improvements for oil & gas industry applications.
+
+| Document | Path | Description |
+|----------|------|-------------|
+| **Advanced Framework Overview** | [docs/risk/README.md](risk/README.md) | **START HERE**: Overview of all 7 priority packages |
+| **P1: Dynamic Simulation** | [docs/risk/dynamic-simulation.md](risk/dynamic-simulation.md) | Monte Carlo with transient effects, shutdown/startup modeling |
+| **P2: SIS/SIF Integration** | [docs/risk/sis-integration.md](risk/sis-integration.md) | IEC 61508/61511, LOPA analysis, SIL verification |
+| **P4: Bow-Tie Analysis** | [docs/risk/bowtie-analysis.md](risk/bowtie-analysis.md) | Barrier analysis, threat/consequence visualization |
+| **P6: Condition-Based Reliability** | [docs/risk/condition-based.md](risk/condition-based.md) | Health monitoring, RUL estimation, predictive maintenance |
+| **Tutorial Notebook** | [docs/examples/AdvancedRiskFramework_Tutorial.ipynb](examples/AdvancedRiskFramework_Tutorial.ipynb) | Comprehensive Jupyter tutorial |
+
+#### Advanced Risk Framework Packages
+
+| Package | Purpose | Key Classes |
+|---------|---------|-------------|
+| `process.safety.risk.dynamic` | P1: Transient simulation | `DynamicRiskSimulator`, `ProductionProfile`, `TransientLossStatistics` |
+| `process.safety.risk.sis` | P2: Safety systems | `SafetyInstrumentedFunction`, `SISIntegratedRiskModel`, `LOPAResult` |
+| `process.safety.risk.realtime` | P3: Digital twin | `RealTimeRiskMonitor`, `RealTimeRiskAssessment` |
+| `process.safety.risk.bowtie` | P4: Barrier analysis | `BowTieAnalyzer`, `BowTieModel` |
+| `process.safety.risk.portfolio` | P5: Portfolio risk | `PortfolioRiskAnalyzer`, `PortfolioRiskResult` |
+| `process.safety.risk.condition` | P6: CBR | `ConditionBasedReliability` |
+| `process.safety.risk.ml` | P7: ML integration | `RiskMLInterface`, `MLPrediction` |
+| `process.safety.risk.examples` | Quick-start examples | `RiskFrameworkQuickStart` |
 
 #### Key Classes in Risk Framework
 | Class | Package | Purpose |

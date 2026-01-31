@@ -204,6 +204,9 @@ public class ProcessLogicIntegratedExample {
 
   /**
    * Sets up instrumentation for the process.
+   *
+   * @param system the process system to set up instrumentation for
+   * @return the configured instrumentation setup
    */
   private static InstrumentationSetup setupInstrumentation(ProcessSystem system) {
     InstrumentationSetup setup = new InstrumentationSetup();
@@ -358,6 +361,9 @@ public class ProcessLogicIntegratedExample {
 
   /**
    * Creates independent HIPPS logic - fast-acting pressure protection.
+   *
+   * @param hippsValve the HIPPS valve to control
+   * @return configured ESD logic for HIPPS protection
    */
   private static ESDLogic createHIPPSLogic(HIPPSValve hippsValve) {
     // Use ESDLogic as base for HIPPS (similar fast-acting safety function)

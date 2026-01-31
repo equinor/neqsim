@@ -198,6 +198,10 @@ public class ProcessModelState implements Serializable {
 
   /**
    * Checks if a stream comes from a different process and adds an inter-process connection.
+   *
+   * @param stream the stream to check
+   * @param currentProcess the name of the current process
+   * @param streamToProcess map from stream names to their originating process
    */
   private void checkAndAddInterProcessConnection(
       neqsim.process.equipment.stream.StreamInterface stream, String currentProcess,
@@ -334,6 +338,8 @@ public class ProcessModelState implements Serializable {
 
   /**
    * Creates a Gson instance with custom type adapters.
+   *
+   * @return configured Gson instance
    */
   private static Gson createGson() {
     return new GsonBuilder().setPrettyPrinting().serializeNulls()
@@ -583,22 +589,38 @@ public class ProcessModelState implements Serializable {
       this.targetPort = targetPort;
     }
 
-    /** Gets source process name. */
+    /**
+     * Gets source process name.
+     *
+     * @return the source process name
+     */
     public String getSourceProcess() {
       return sourceProcess;
     }
 
-    /** Gets stream name. */
+    /**
+     * Gets stream name.
+     *
+     * @return the stream name
+     */
     public String getStreamName() {
       return streamName;
     }
 
-    /** Gets target process name. */
+    /**
+     * Gets target process name.
+     *
+     * @return the target process name
+     */
     public String getTargetProcess() {
       return targetProcess;
     }
 
-    /** Gets target port. */
+    /**
+     * Gets target port.
+     *
+     * @return the target port
+     */
     public String getTargetPort() {
       return targetPort;
     }
@@ -621,52 +643,92 @@ public class ProcessModelState implements Serializable {
     private double pressureTolerance = 1e-4;
     private boolean useOptimizedExecution = true;
 
-    /** Gets max iterations. */
+    /**
+     * Gets max iterations.
+     *
+     * @return maximum number of iterations
+     */
     public int getMaxIterations() {
       return maxIterations;
     }
 
-    /** Sets max iterations. */
+    /**
+     * Sets max iterations.
+     *
+     * @param maxIterations maximum number of iterations to set
+     */
     public void setMaxIterations(int maxIterations) {
       this.maxIterations = maxIterations;
     }
 
-    /** Gets flow tolerance. */
+    /**
+     * Gets flow tolerance.
+     *
+     * @return the flow tolerance
+     */
     public double getFlowTolerance() {
       return flowTolerance;
     }
 
-    /** Sets flow tolerance. */
+    /**
+     * Sets flow tolerance.
+     *
+     * @param flowTolerance the flow tolerance to set
+     */
     public void setFlowTolerance(double flowTolerance) {
       this.flowTolerance = flowTolerance;
     }
 
-    /** Gets temperature tolerance. */
+    /**
+     * Gets temperature tolerance.
+     *
+     * @return the temperature tolerance
+     */
     public double getTemperatureTolerance() {
       return temperatureTolerance;
     }
 
-    /** Sets temperature tolerance. */
+    /**
+     * Sets temperature tolerance.
+     *
+     * @param temperatureTolerance the temperature tolerance to set
+     */
     public void setTemperatureTolerance(double temperatureTolerance) {
       this.temperatureTolerance = temperatureTolerance;
     }
 
-    /** Gets pressure tolerance. */
+    /**
+     * Gets pressure tolerance.
+     *
+     * @return the pressure tolerance
+     */
     public double getPressureTolerance() {
       return pressureTolerance;
     }
 
-    /** Sets pressure tolerance. */
+    /**
+     * Sets pressure tolerance.
+     *
+     * @param pressureTolerance the pressure tolerance to set
+     */
     public void setPressureTolerance(double pressureTolerance) {
       this.pressureTolerance = pressureTolerance;
     }
 
-    /** Checks if optimized execution is enabled. */
+    /**
+     * Checks if optimized execution is enabled.
+     *
+     * @return true if optimized execution is enabled
+     */
     public boolean isUseOptimizedExecution() {
       return useOptimizedExecution;
     }
 
-    /** Sets optimized execution flag. */
+    /**
+     * Sets optimized execution flag.
+     *
+     * @param useOptimizedExecution true to enable optimized execution
+     */
     public void setUseOptimizedExecution(boolean useOptimizedExecution) {
       this.useOptimizedExecution = useOptimizedExecution;
     }
@@ -690,22 +752,38 @@ public class ProcessModelState implements Serializable {
       errors.add(error);
     }
 
-    /** Adds a warning. */
+    /**
+     * Adds a warning.
+     *
+     * @param warning the warning message to add
+     */
     public void addWarning(String warning) {
       warnings.add(warning);
     }
 
-    /** Checks if valid (no errors). */
+    /**
+     * Checks if valid (no errors).
+     *
+     * @return true if there are no errors
+     */
     public boolean isValid() {
       return errors.isEmpty();
     }
 
-    /** Gets errors. */
+    /**
+     * Gets errors.
+     *
+     * @return the list of error messages
+     */
     public List<String> getErrors() {
       return errors;
     }
 
-    /** Gets warnings. */
+    /**
+     * Gets warnings.
+     *
+     * @return the list of warning messages
+     */
     public List<String> getWarnings() {
       return warnings;
     }

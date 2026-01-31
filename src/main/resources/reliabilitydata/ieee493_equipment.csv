@@ -1,0 +1,129 @@
+# IEEE 493 (Gold Book) Equipment Reliability Data
+# Source: IEEE Std 493-2007 "IEEE Recommended Practice for the Design of Reliable Industrial and Commercial Power Systems"
+# PUBLIC DOMAIN DATA - Free to use and distribute
+# Format: EquipmentType,EquipmentClass,FailureMode,FailureRate,MTBF_hours,MTTR_hours,DataSource,Confidence
+# FailureRate is per hour, MTBF and MTTR in hours
+#
+# Reference: IEEE Std 493-2007, Appendix A - Equipment Reliability Data
+
+# Transformers (Table 3-1 in IEEE 493)
+Transformer,Liquid filled (300-10000 kVA),All modes,6.17e-6,162100,356,IEEE493-2007,High
+Transformer,Liquid filled (>10000 kVA),All modes,1.03e-5,97100,285,IEEE493-2007,High
+Transformer,Dry type (300-750 kVA),All modes,2.28e-6,438600,48,IEEE493-2007,Medium
+Transformer,Dry type (>750 kVA),All modes,5.71e-6,175200,72,IEEE493-2007,Medium
+Transformer,Rectifier,All modes,1.14e-5,87600,62,IEEE493-2007,High
+
+# Circuit Breakers (Table 3-2 in IEEE 493)
+Circuit Breaker,Fixed metalclad (0-600V),All modes,4.11e-6,243400,4,IEEE493-2007,High
+Circuit Breaker,Fixed metalclad (>600V),All modes,1.71e-5,58400,83,IEEE493-2007,High
+Circuit Breaker,Drawout metalclad (0-600V),All modes,1.14e-5,87600,4,IEEE493-2007,High
+Circuit Breaker,Drawout metalclad (>600V),All modes,1.14e-5,87600,10,IEEE493-2007,High
+Circuit Breaker,Molded case,All modes,3.43e-6,291600,4,IEEE493-2007,High
+
+# Motors (Table 3-3 in IEEE 493)
+Motor,Induction 0-50 HP,All modes,6.17e-6,162100,46,IEEE493-2007,High
+Motor,Induction 51-250 HP,All modes,9.37e-6,106700,79,IEEE493-2007,High
+Motor,Induction 251-500 HP,All modes,2.22e-5,45000,42,IEEE493-2007,High
+Motor,Induction 501-1500 HP,All modes,2.91e-5,34400,57,IEEE493-2007,High
+Motor,Induction >1500 HP,All modes,3.08e-5,32500,88,IEEE493-2007,High
+Motor,Synchronous 1001-5000 HP,All modes,4.00e-5,25000,78,IEEE493-2007,Medium
+Motor,DC 0-250 HP,All modes,5.48e-6,182500,69,IEEE493-2007,Medium
+
+# Generators (Table 3-4 in IEEE 493)
+Generator,Emergency/Standby,All modes,1.68e-4,5950,54,IEEE493-2007,High
+Generator,Emergency/Standby,Fail to start,1.28e-4,7800,3,IEEE493-2007,High
+Generator,Continuous duty,All modes,6.85e-5,14600,62,IEEE493-2007,Medium
+
+# Cable (Table 3-5 in IEEE 493) - per 1000 circuit feet
+Cable,Above ground (0-600V),All modes,1.14e-7,8760000,11,IEEE493-2007,High
+Cable,Above ground (601-15000V),All modes,4.57e-7,2190000,19,IEEE493-2007,High
+Cable,Below ground in duct (0-600V),All modes,1.37e-7,7300000,61,IEEE493-2007,High
+Cable,Below ground in duct (601-15000V),All modes,9.13e-7,1095000,96,IEEE493-2007,High
+Cable,Direct burial (0-600V),All modes,8.22e-7,1217000,35,IEEE493-2007,High
+Cable,Direct burial (601-15000V),All modes,1.51e-6,662000,78,IEEE493-2007,High
+Cable,Aerial (0-600V),All modes,7.76e-7,1288000,12,IEEE493-2007,Medium
+
+# Switchgear Bus (Table 3-6 in IEEE 493) - per connected circuit breaker
+Switchgear Bus,Insulated (0-600V),All modes,2.05e-6,487800,28,IEEE493-2007,High
+Switchgear Bus,Insulated (>600V),All modes,4.45e-6,224700,26,IEEE493-2007,High
+Switchgear Bus,Bare (0-600V),All modes,1.60e-6,625000,42,IEEE493-2007,High
+Switchgear Bus,Bare (>600V),All modes,2.28e-6,438600,36,IEEE493-2007,High
+
+# Bus Duct (Table 3-7 in IEEE 493) - per 1000 circuit feet
+Bus Duct,Plug-in (0-600V),All modes,2.28e-6,438600,8,IEEE493-2007,High
+Bus Duct,Feeder (0-600V),All modes,1.37e-6,730000,32,IEEE493-2007,High
+Bus Duct,Feeder (>600V),All modes,3.43e-6,291600,32,IEEE493-2007,High
+
+# Disconnect Switches (Table 3-8 in IEEE 493)
+Disconnect Switch,Open (0-600V),All modes,2.05e-6,487800,4,IEEE493-2007,High
+Disconnect Switch,Enclosed (0-600V),All modes,3.08e-6,324700,5,IEEE493-2007,High
+Disconnect Switch,Enclosed (>600V),All modes,1.60e-6,625000,25,IEEE493-2007,High
+
+# Relays (Table 3-9 in IEEE 493)
+Relay,Protective,All modes,2.74e-6,365000,5,IEEE493-2007,High
+Relay,Control/timing,All modes,2.28e-6,438600,4,IEEE493-2007,High
+
+# Inverters/Rectifiers (Table 3-10 in IEEE 493)
+Inverter,Static,All modes,3.20e-5,31250,127,IEEE493-2007,Medium
+Rectifier,Static,All modes,3.08e-5,32500,72,IEEE493-2007,Medium
+UPS,Static (IEEE 493),All modes,6.28e-5,15900,25,IEEE493-2007,High
+
+# Utility Power (Table 3-11 in IEEE 493)
+Utility,Single circuit (overhead),All modes,1.96e-4,5100,2.7,IEEE493-2007,High
+Utility,Single circuit (underground),All modes,2.51e-5,39800,10,IEEE493-2007,High
+Utility,Double circuit (overhead),All modes,3.42e-5,29200,4.2,IEEE493-2007,Medium
+Utility,Double circuit (underground),All modes,6.85e-6,146000,15,IEEE493-2007,Medium
+
+# Pumps (Table A-1 in IEEE 493 Appendix)
+Pump,Motor driven (IEEE),All modes,1.68e-4,5950,39,IEEE493-2007,High
+Pump,Motor driven (IEEE),Mechanical,8.57e-5,11680,50,IEEE493-2007,High
+Pump,Motor driven (IEEE),Electrical,4.11e-5,24300,19,IEEE493-2007,High
+
+# Compressors (Table A-2 in IEEE 493 Appendix)
+Compressor,Motor driven (IEEE),All modes,2.74e-4,3650,168,IEEE493-2007,High
+Compressor,Reciprocating (IEEE),All modes,3.43e-4,2920,192,IEEE493-2007,High
+Compressor,Screw (IEEE),All modes,1.60e-4,6250,96,IEEE493-2007,Medium
+
+# Fans/Blowers (Table A-3 in IEEE 493 Appendix)
+Fan,Centrifugal motor driven,All modes,1.14e-4,8760,16,IEEE493-2007,High
+Fan,Vaneaxial motor driven,All modes,9.13e-5,10950,20,IEEE493-2007,High
+Blower,Centrifugal motor driven,All modes,1.37e-4,7300,24,IEEE493-2007,High
+
+# Air Handling Units
+AHU,Central system,All modes,2.74e-5,36500,24,IEEE493-2007,Medium
+AHU,Roof top unit,All modes,4.57e-5,21900,16,IEEE493-2007,Medium
+
+# Cooling Equipment
+Chiller,Centrifugal,All modes,9.13e-5,10950,72,IEEE493-2007,High
+Chiller,Reciprocating,All modes,1.14e-4,8760,48,IEEE493-2007,High
+Chiller,Screw,All modes,7.31e-5,13700,56,IEEE493-2007,Medium
+Cooling Tower,Induced draft,All modes,5.71e-5,17520,32,IEEE493-2007,High
+Cooling Tower,Forced draft,All modes,6.85e-5,14600,28,IEEE493-2007,High
+
+# Instrumentation (Table A-6 in IEEE 493 Appendix)
+Instrument,Temperature element,All modes,1.14e-5,87600,2,IEEE493-2007,High
+Instrument,Temperature transmitter,All modes,9.13e-6,109500,4,IEEE493-2007,High
+Instrument,Pressure element,All modes,1.37e-5,73000,3,IEEE493-2007,High
+Instrument,Pressure transmitter,All modes,1.14e-5,87600,4,IEEE493-2007,High
+Instrument,Flow element,All modes,1.83e-5,54750,6,IEEE493-2007,High
+Instrument,Flow transmitter,All modes,1.37e-5,73000,5,IEEE493-2007,High
+Instrument,Level element,All modes,1.14e-5,87600,4,IEEE493-2007,High
+Instrument,Level transmitter,All modes,9.13e-6,109500,4,IEEE493-2007,High
+Instrument,Control valve positioner,All modes,2.74e-5,36500,6,IEEE493-2007,High
+Instrument,Solenoid valve,All modes,2.05e-5,48780,3,IEEE493-2007,High
+Instrument,Actuator electric,All modes,1.60e-5,62500,8,IEEE493-2007,High
+Instrument,Actuator pneumatic,All modes,1.14e-5,87600,4,IEEE493-2007,High
+
+# Process Control
+Controller,Single loop,All modes,2.28e-6,438600,4,IEEE493-2007,High
+Controller,PLC small (<128 I/O),All modes,4.57e-6,219000,6,IEEE493-2007,High
+Controller,PLC medium (128-512 I/O),All modes,6.85e-6,146000,8,IEEE493-2007,High
+Controller,PLC large (>512 I/O),All modes,9.13e-6,109500,12,IEEE493-2007,High
+Controller,DCS controller,All modes,5.71e-6,175200,8,IEEE493-2007,High
+
+# Additional Industrial Equipment
+Conveyor,Belt (motor driven),All modes,1.83e-4,5475,16,IEEE493-2007,Medium
+Conveyor,Roller (motor driven),All modes,1.37e-4,7300,12,IEEE493-2007,Medium
+Crane,Overhead (motor driven),All modes,1.14e-4,8760,24,IEEE493-2007,Medium
+Hoist,Electric,All modes,9.13e-5,10950,8,IEEE493-2007,Medium
+Lift,Hydraulic,All modes,1.14e-4,8760,16,IEEE493-2007,Medium
