@@ -1,0 +1,47 @@
+# SIS/SIF Performance Validation Dataset
+# Purpose: Validation of Safety Instrumented System calculations against field data
+# Format: SIF_ID,Description,TargetSIL,Architecture,TestInterval_months,ProofTestCoverage,SensorFailureRate,LogicFailureRate,FinalElementFailureRate,CalculatedPFD,AchievedSIL,SpuriousTripRate,FieldDemands,FieldSuccesses,Notes
+# Failure rates are per hour, PFD is average probability of failure on demand
+
+# High Integrity Pressure Protection Systems (HIPPS)
+HIPPS-001,HP Separator HIPPS,3,1oo2,12,0.95,1.5e-6,5.0e-8,3.0e-6,8.5e-5,3,0.015,5,5,Full demand history
+HIPPS-002,Export Pipeline HIPPS,3,2oo3,6,0.98,1.2e-6,5.0e-8,2.5e-6,3.2e-5,3,0.008,3,3,Subsea installation
+HIPPS-003,Wellhead HIPPS,2,1oo2,12,0.90,2.0e-6,1.0e-7,4.0e-6,2.1e-4,2,0.022,8,8,Multiple wells
+
+# Emergency Shutdown Systems
+ESD-001,Platform ESD,2,1oo2,12,0.95,1.0e-6,5.0e-8,5.0e-6,1.5e-4,2,0.018,12,12,Annual testing
+ESD-002,Process Area ESD,2,1oo1,6,0.98,1.5e-6,5.0e-8,4.0e-6,4.8e-4,2,0.025,6,6,Frequent testing
+ESD-003,Compressor ESD,2,1oo2,12,0.95,1.2e-6,5.0e-8,6.0e-6,1.8e-4,2,0.020,15,15,High demand rate
+ESD-004,Fire Area Isolation,1,1oo1,12,0.90,2.0e-6,1.0e-7,8.0e-6,9.5e-4,1,0.035,4,4,Fire/gas triggered
+
+# High Level Protection
+HLS-001,Separator High Level Shutdown,1,1oo1,12,0.95,1.5e-6,5.0e-8,5.0e-6,6.2e-4,1,0.028,20,20,Frequent demands
+HLS-002,Scrubber High Level,1,1oo1,6,0.98,1.2e-6,5.0e-8,4.0e-6,3.1e-4,1,0.022,10,10,Gas processing
+HLS-003,Flare KO Drum High Level,2,1oo2,12,0.95,1.0e-6,5.0e-8,3.0e-6,9.5e-5,2,0.012,3,3,Safety critical
+
+# Pressure Protection
+PSD-001,HP Flare PSV Block Valve,2,1oo2,12,0.95,1.0e-6,5.0e-8,4.0e-6,1.2e-4,2,0.015,2,2,Backup to PSV
+PSD-002,Compressor Suction PSH,2,1oo2,6,0.98,1.5e-6,5.0e-8,5.0e-6,7.8e-5,2,0.018,8,8,Compressor protection
+PSD-003,Vessel Overpressure,2,1oo1,12,0.95,1.2e-6,5.0e-8,6.0e-6,6.8e-4,2,0.030,5,5,With PSV backup
+
+# Temperature Protection
+TSD-001,Heater High Temperature,1,1oo1,12,0.95,0.8e-6,5.0e-8,4.0e-6,4.5e-4,1,0.020,6,6,Fuel gas heater
+TSD-002,Reactor High Temperature,2,1oo2,6,0.98,1.0e-6,5.0e-8,3.0e-6,4.2e-5,2,0.010,2,2,Chemical reactor
+
+# Combustion/Burner Safety
+BMS-001,Fired Heater BMS,2,1oo2,6,0.98,1.5e-6,5.0e-8,4.0e-6,5.5e-5,2,0.015,10,10,IEC 61511 compliant
+BMS-002,Flare Ignition System,1,1oo1,12,0.90,2.0e-6,1.0e-7,6.0e-6,8.2e-4,1,0.038,4,4,Pilot monitoring
+
+# Subsea SIF
+SSIF-001,Subsea SCSSV Control,2,1oo2,24,0.85,2.0e-6,1.0e-7,5.0e-6,3.5e-4,2,0.012,3,3,Extended test interval
+SSIF-002,Subsea Choke Override,1,1oo1,12,0.90,1.5e-6,1.0e-7,4.0e-6,7.5e-4,1,0.028,2,2,Remote operated
+
+# Fire and Gas
+FGS-001,Deluge Activation,1,2oo3,12,0.95,1.0e-6,5.0e-8,3.0e-6,2.8e-4,1,0.008,2,2,Voting logic
+FGS-002,HVAC Shutdown on Gas,1,1oo2,6,0.98,0.8e-6,5.0e-8,2.0e-6,1.5e-4,1,0.012,4,4,Gas detection
+FGS-003,Emergency Blowdown,2,1oo2,12,0.95,1.2e-6,5.0e-8,4.0e-6,1.3e-4,2,0.016,1,1,Fire protection
+
+# Machinery Protection
+MPS-001,Compressor Antisurge,1,1oo1,6,0.98,1.5e-6,5.0e-8,5.0e-6,3.8e-4,1,0.025,25,25,High demand
+MPS-002,Turbine Overspeed,2,2oo3,12,0.95,1.0e-6,5.0e-8,3.0e-6,3.5e-5,2,0.006,3,3,Triple redundant
+MPS-003,Pump Low Flow,1,1oo1,12,0.90,1.2e-6,1.0e-7,4.0e-6,6.5e-4,1,0.032,12,12,Minimum flow

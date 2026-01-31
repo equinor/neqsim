@@ -6,6 +6,7 @@ This documentation covers NeqSim's comprehensive **Operational Risk Simulation F
 
 ## 📚 Documentation Structure
 
+### Core Framework
 | Section | Description |
 |---------|-------------|
 | [Overview](overview.md) | Framework architecture and key concepts |
@@ -19,6 +20,15 @@ This documentation covers NeqSim's comprehensive **Operational Risk Simulation F
 | [Dependency Analysis](dependency-analysis.md) | Cascade failure and cross-installation effects |
 | [Mathematical Reference](mathematical-reference.md) | Formulas and statistical methods |
 | [API Reference](api-reference.md) | Complete Java API documentation |
+
+### Advanced Risk Framework (P1-P7)
+| Section | Description |
+|---------|-------------|
+| [**Advanced Framework Overview**](README.md) | Overview of all 7 priority packages |
+| [P1: Dynamic Simulation](dynamic-simulation.md) | Monte Carlo with transient modeling |
+| [P2: SIS/SIF Integration](sis-integration.md) | IEC 61508/61511, LOPA, SIL verification |
+| [P4: Bow-Tie Analysis](bowtie-analysis.md) | Barrier analysis, threat/consequence visualization |
+| [P6: Condition-Based Reliability](condition-based.md) | Health monitoring, RUL estimation |
 
 ---
 
@@ -50,6 +60,33 @@ System.out.println("Availability: " + result.getAvailability() + "%");
 ProcessTopologyAnalyzer topology = new ProcessTopologyAnalyzer(process);
 topology.buildTopology();
 topology.setFunctionalLocation("Compressor A", "1775-KA-23011A");
+```
+
+### Advanced Risk Framework (Python)
+
+```python
+# Dynamic simulation with transients
+from neqsim.process.safety.risk.dynamic import DynamicRiskSimulator
+
+sim = DynamicRiskSimulator("Platform Risk")
+sim.setBaseProductionRate(100.0)
+sim.addEquipment("Compressor", 8760, 72, 1.0)
+sim.setShutdownProfile(DynamicRiskSimulator.RampProfile.S_CURVE)
+result = sim.runSimulation()
+print(f"Transient losses: {result.getTransientLoss().getTotalTransientLoss()}")
+
+# SIS/LOPA Analysis
+from neqsim.process.safety.risk.sis import SISIntegratedRiskModel, SafetyInstrumentedFunction
+
+model = SISIntegratedRiskModel("Overpressure Protection")
+model.setInitiatingEventFrequency(0.1)
+model.addIPL("BPCS Alarm", 10)
+model.addIPL("Operator", 10)
+sif = SafetyInstrumentedFunction("SIF-001", "PAHH")
+sif.setSILTarget(2)
+model.addSIF(sif)
+lopa = model.performLOPA()
+print(f"LOPA: {'PASS' if lopa.isAcceptable() else 'FAIL'}")
 ```
 
 ### Python (neqsim-python)
