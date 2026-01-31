@@ -478,6 +478,9 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
 
   /**
    * Calculates degraded production rates for all equipment.
+   *
+   * @param equipmentNames iterable of equipment names to calculate degraded rates for
+   * @return map of equipment names to their degraded production rates
    */
   private Map<String, Double> calculateDegradedRates(Iterable<String> equipmentNames) {
     Map<String, Double> rates = new HashMap<>();
@@ -498,6 +501,9 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
 
   /**
    * Calculates degraded production with specific equipment failed.
+   *
+   * @param equipmentName name of the equipment to simulate as failed
+   * @return the production rate with the specified equipment failed
    */
   private double calculateDegradedProduction(String equipmentName) {
     ProductionImpactAnalyzer analyzer = new ProductionImpactAnalyzer(getProcessSystem(),
