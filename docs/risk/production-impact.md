@@ -1,3 +1,9 @@
+---
+layout: default
+title: Production Impact Analysis
+parent: Risk Framework
+---
+
 # Production Impact Analysis
 
 Production Impact Analysis quantifies how equipment failures affect plant output, enabling prioritization of maintenance and investment decisions.

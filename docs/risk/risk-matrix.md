@@ -1,3 +1,9 @@
+---
+layout: default
+title: Risk Matrix
+parent: Risk Framework
+---
+
 # Risk Matrix
 
 The Risk Matrix provides a visual representation of equipment risks by combining probability (failure frequency) with consequence (production impact). It follows ISO 31000 and NORSOK Z-013 guidelines.

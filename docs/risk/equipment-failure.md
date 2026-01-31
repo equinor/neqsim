@@ -1,3 +1,9 @@
+---
+layout: default
+title: Equipment Failure Modeling
+parent: Risk Framework
+---
+
 # Equipment Failure Modeling
 
 This document describes how to model equipment failures in NeqSim, including failure types, capacity factors, and reliability data.

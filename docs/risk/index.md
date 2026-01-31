@@ -1,3 +1,9 @@
+---
+layout: default
+title: Risk Simulation Framework
+nav_order: 7
+---
+
 # Risk Simulation Framework Documentation
 
 This documentation covers NeqSim's comprehensive **Operational Risk Simulation Framework** for equipment failure analysis, production impact assessment, and process topology analysis.

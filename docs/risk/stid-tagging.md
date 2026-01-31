@@ -1,3 +1,9 @@
+---
+layout: default
+title: STID Tagging
+parent: Risk Framework
+---
+
 # STID & Functional Location Tagging
 
 STID (Standard Tag Identification) provides a standardized way to identify equipment across offshore installations, following ISO 14224 conventions used on the Norwegian Continental Shelf.

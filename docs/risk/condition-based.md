@@ -1,3 +1,9 @@
+---
+layout: default
+title: Condition-Based Reliability
+parent: Risk Framework
+---
+
 # P6: Condition-Based Reliability
 
 ## Overview

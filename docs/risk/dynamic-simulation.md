@@ -1,3 +1,9 @@
+---
+layout: default
+title: Dynamic Simulation
+parent: Risk Framework
+---
+
 # P1: Dynamic Simulation Integration
 
 ## Overview
