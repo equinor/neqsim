@@ -102,11 +102,11 @@ public class RiskFrameworkQuickStart {
     OperationalRiskResult result = simulator.runSimulation(1000, 365);
 
     System.out.println("  Availability: " + String.format("%.2f%%", result.getAvailability()));
-    System.out.println(
-        "  Expected Production: " + String.format("%.0f Sm3", result.getExpectedProduction()));
-    System.out.println("  P10 Loss: " + String.format("%.0f Sm3", result.getProductionLossP10()));
-    System.out.println("  P50 Loss: " + String.format("%.0f Sm3", result.getProductionLossP50()));
-    System.out.println("  P90 Loss: " + String.format("%.0f Sm3", result.getProductionLossP90()));
+    System.out
+        .println("  Mean Production: " + String.format("%.0f Sm3", result.getMeanProduction()));
+    System.out.println("  P10 Production: " + String.format("%.0f Sm3", result.getP10Production()));
+    System.out.println("  P50 Production: " + String.format("%.0f Sm3", result.getP50Production()));
+    System.out.println("  P90 Production: " + String.format("%.0f Sm3", result.getP90Production()));
     System.out.println();
   }
 
@@ -121,32 +121,35 @@ public class RiskFrameworkQuickStart {
   public static void exampleDynamicSimulation() {
     System.out.println("--- Example: P1 - Dynamic Simulation with Transients ---");
 
-    DynamicRiskSimulator sim = new DynamicRiskSimulator("Offshore Platform");
-    sim.setBaseProductionRate(50000.0); // 50,000 bbl/d
+    // Create a simple process system for dynamic simulation
+    ProcessSystem process = createSimpleProcessSystem();
 
-    // Add equipment
-    sim.addEquipment("Gas Compressor", 8760, 72, 1.0);
-    sim.addEquipment("Oil Export Pump", 4380, 48, 0.8);
-    sim.addEquipment("Water Injection Pump", 6000, 36, 0.5);
+    DynamicRiskSimulator sim = new DynamicRiskSimulator(process);
+    sim.setFeedStreamName("Feed");
+    sim.setProductStreamName("Gas Out");
+
+    // Add equipment with reliability data (failure rate per year, MTTR hours)
+    sim.addEquipmentReliability("HP Compressor", 1.0, 72);
+    sim.addEquipmentReliability("HP Separator", 0.5, 24);
 
     // Configure transient profiles
     sim.setShutdownProfile(DynamicRiskSimulator.RampProfile.EXPONENTIAL);
-    sim.setStartupProfile(DynamicRiskSimulator.RampProfile.S_CURVE);
-    sim.setShutdownDuration(4.0); // 4 hours to shutdown
-    sim.setStartupDuration(8.0); // 8 hours to full rate
+    sim.setRampUpProfile(DynamicRiskSimulator.RampProfile.S_CURVE);
+    sim.setShutdownTimeHours(4.0); // 4 hours to shutdown
+    sim.setRampUpTimeHours(8.0); // 8 hours to full rate
 
-    // Run simulation
-    DynamicRiskResult result = sim.runSimulation(1000, 365);
+    // Run dynamic simulation
+    DynamicRiskResult result = sim.runDynamicSimulation(1000, 365);
 
+    System.out
+        .println("  Mean Production: " + String.format("%.0f kg", result.getMeanProduction()));
     System.out.println(
-        "  Expected Production: " + String.format("%.0f bbl", result.getExpectedProduction()));
+        "  Steady-State Losses: " + String.format("%.0f kg", result.getMeanSteadyStateLoss()));
+    System.out
+        .println("  Transient Losses: " + String.format("%.0f kg", result.getMeanTransientLoss()));
+    System.out.println("  Transient Events: " + result.getTotalTransientEvents());
     System.out.println(
-        "  Steady-State Losses: " + String.format("%.0f bbl", result.getSteadyStateLoss()));
-    System.out.println("  Transient Losses: "
-        + String.format("%.0f bbl", result.getTransientLoss().getTotalTransientLoss()));
-    System.out.println("  Shutdown Events: " + result.getTransientLoss().getShutdownCount());
-    System.out.println("  Transient % of Total: "
-        + String.format("%.1f%%", result.getTransientLoss().getTransientLossPercentage()));
+        "  Transient % of Total: " + String.format("%.1f%%", result.getTransientLossPercent()));
     System.out.println();
   }
 
@@ -161,34 +164,47 @@ public class RiskFrameworkQuickStart {
     System.out.println("--- Example: P2 - SIS/SIF Integration (IEC 61508/61511) ---");
 
     // Create a Safety Instrumented Function using builder
-    SafetyInstrumentedFunction sif = SafetyInstrumentedFunction.builder("ESD-001")
-        .description("High Pressure Emergency Shutdown").targetSIL(2).architecture("1oo2")
-        .sensorFailureRate(1e-6).logicSolverFailureRate(1e-7).finalElementFailureRate(5e-6)
-        .testInterval(8760) // Annual testing
+    SafetyInstrumentedFunction sif = SafetyInstrumentedFunction.builder().name("ESD-001")
+        .description("High Pressure Emergency Shutdown").sil(2).pfd(0.005) // PFD within SIL 2 range
+        .architecture("1oo2").testIntervalHours(8760) // Annual testing
         .build();
 
     System.out.println("  SIF: " + sif.getName());
-    System.out.println("  Target SIL: " + sif.getTargetSIL());
+    System.out.println("  SIL: " + sif.getSil());
     System.out.println("  Architecture: " + sif.getArchitecture());
     System.out.println("  Calculated PFDavg: " + String.format("%.2e", sif.getPfdAvg()));
-    System.out.println("  Achieved SIL: " + sif.getAchievedSIL());
     System.out
         .println("  Risk Reduction Factor: " + String.format("%.0f", sif.getRiskReductionFactor()));
     System.out
         .println("  Spurious Trip Rate: " + String.format("%.4f /yr", sif.getSpuriousTripRate()));
 
-    // LOPA Analysis
+    // LOPA Analysis - create model and add initiating event first
     SISIntegratedRiskModel model = new SISIntegratedRiskModel("HP Vessel Overpressure");
-    model.setInitiatingEventFrequency(0.1); // per year
-    model.addIndependentProtectionLayer("BPCS", 0.1);
-    model.addIndependentProtectionLayer("Relief Valve", 0.01);
-    model.addSIF(sif);
-    model.setTolerableRiskFrequency(1e-5);
+    model.addInitiatingEvent("Overpressure", 0.1, RiskMatrix.ConsequenceCategory.MAJOR); // 0.1 per
+                                                                                         // year
 
-    LOPAResult lopa = model.performLOPA();
+    // Add Independent Protection Layers
+    SISIntegratedRiskModel.IndependentProtectionLayer bpcs =
+        new SISIntegratedRiskModel.IndependentProtectionLayer("BPCS", 0.1,
+            SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.BPCS);
+    bpcs.addApplicableEvent("Overpressure");
+    model.addIPL(bpcs);
+
+    SISIntegratedRiskModel.IndependentProtectionLayer reliefValve =
+        new SISIntegratedRiskModel.IndependentProtectionLayer("Relief Valve", 0.01,
+            SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.MECHANICAL);
+    reliefValve.addApplicableEvent("Overpressure");
+    model.addIPL(reliefValve);
+
+    // Add the SIF with initiating event reference
+    sif = SafetyInstrumentedFunction.builder().name("ESD-001").sil(2).pfd(0.005)
+        .initiatingEvent("Overpressure").build();
+    model.addSIF(sif);
+
+    LOPAResult lopa = model.performLOPA("Overpressure");
     System.out.println(
         "  LOPA - Mitigated Frequency: " + String.format("%.2e /yr", lopa.getMitigatedFrequency()));
-    System.out.println("  LOPA - Meets Target: " + lopa.meetsTarget());
+    System.out.println("  LOPA - Meets Target: " + lopa.isTargetMet());
     System.out.println();
   }
 
@@ -338,21 +354,21 @@ public class RiskFrameworkQuickStart {
   public static void exampleConditionBasedReliability() {
     System.out.println("--- Example: P6 - Condition-Based Reliability ---");
 
-    ConditionBasedReliability cbr = new ConditionBasedReliability("Export Compressor");
-    cbr.setBaseFailureRate(0.0001); // per hour
+    ConditionBasedReliability cbr =
+        new ConditionBasedReliability("COMP-001", "Export Compressor", 0.0001);
     cbr.setDegradationModel(ConditionBasedReliability.DegradationModel.WEIBULL);
-    cbr.setWeibullShape(2.5);
 
-    // Add condition indicators
-    cbr.addIndicator(ConditionBasedReliability.IndicatorType.VIBRATION, 2.5, 1.0, 5.0, 10.0); // current,
-                                                                                              // min,
-                                                                                              // warning,
-                                                                                              // alarm
-    cbr.addIndicator(ConditionBasedReliability.IndicatorType.TEMPERATURE, 85.0, 20.0, 95.0, 110.0);
-    cbr.addIndicator(ConditionBasedReliability.IndicatorType.EFFICIENCY, 0.78, 0.70, 0.75, 0.72);
+    // Add condition indicators using convenience methods
+    ConditionBasedReliability.ConditionIndicator vibration =
+        cbr.addVibrationIndicator("VIB-001", "Bearing Vibration", 1.0, 5.0, 10.0);
+    vibration.updateValue(2.5); // Current value
 
-    // Calculate health
-    cbr.updateHealth();
+    ConditionBasedReliability.ConditionIndicator temp =
+        cbr.addTemperatureIndicator("TEMP-001", "Bearing Temperature", 60.0, 95.0, 110.0);
+    temp.updateValue(85.0); // Current value
+
+    // Recalculate health based on updated indicators
+    cbr.recalculateHealth();
 
     System.out.println("  Equipment: " + cbr.getEquipmentName());
     System.out.println("  Health Index: " + String.format("%.2f", cbr.getHealthIndex()));

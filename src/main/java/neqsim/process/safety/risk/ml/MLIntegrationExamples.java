@@ -543,18 +543,34 @@ public class MLIntegrationExamples {
     System.out.println("=== ML Integration Examples ===\n");
 
     // Create RiskMLInterface
-    RiskMLInterface mlInterface = new RiskMLInterface();
+    RiskMLInterface mlInterface = new RiskMLInterface("ML Integration Examples");
 
     // Register threshold-based models (for testing without actual ML)
     ThresholdModel failureModel = createTestFailurePredictor();
     RiskMLInterface.MLModel failureMlModel =
         mlInterface.createFailurePredictionModel("failure_predictor", "Failure Predictor");
-    failureMlModel.setPredictor(failureModel::predict);
+    failureMlModel.setPredictor(features -> {
+      double score = failureModel.predict(features);
+      RiskMLInterface.MLPrediction pred =
+          new RiskMLInterface.MLPrediction(failureMlModel.getModelId());
+      pred.setPrediction(score);
+      pred.setConfidence(0.85);
+      pred.setLabel(score > 0.5 ? "HIGH_RISK" : "LOW_RISK");
+      return pred;
+    });
 
     ThresholdModel anomalyModel = createTestAnomalyDetector();
     RiskMLInterface.MLModel anomalyMlModel =
         mlInterface.createAnomalyDetectionModel("anomaly_detector", "Anomaly Detector");
-    anomalyMlModel.setPredictor(anomalyModel::predict);
+    anomalyMlModel.setPredictor(features -> {
+      double score = anomalyModel.predict(features);
+      RiskMLInterface.MLPrediction pred =
+          new RiskMLInterface.MLPrediction(anomalyMlModel.getModelId());
+      pred.setPrediction(score);
+      pred.setConfidence(0.85);
+      pred.setLabel(score > 0.5 ? "ANOMALY" : "NORMAL");
+      return pred;
+    });
 
     // Create test features
     java.util.Map<String, Double> testFeatures = new java.util.HashMap<>();
