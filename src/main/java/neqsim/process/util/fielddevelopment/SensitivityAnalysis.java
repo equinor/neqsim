@@ -1165,6 +1165,15 @@ public class SensitivityAnalysis implements Serializable {
 
   /**
    * Runs trials in parallel.
+   *
+   * @param feedStream the feed stream for optimization
+   * @param lowerBound lower bound of the rate range
+   * @param upperBound upper bound of the rate range
+   * @param rateUnit unit for production rates
+   * @param outputMetric function to extract output metric from optimization result
+   * @param config sensitivity analysis configuration
+   * @param localRng random number generator for sampling
+   * @return list of trial results
    */
   private List<TrialResult> runParallelTrials(StreamInterface feedStream, double lowerBound,
       double upperBound, String rateUnit, ToDoubleFunction<OptimizationResult> outputMetric,
@@ -1206,6 +1215,15 @@ public class SensitivityAnalysis implements Serializable {
 
   /**
    * Runs a single trial (used for parallel execution).
+   *
+   * @param trialNum the trial number
+   * @param sampled map of sampled parameter values
+   * @param feedStream the feed stream for optimization
+   * @param lowerBound lower bound of the rate range
+   * @param upperBound upper bound of the rate range
+   * @param rateUnit unit for production rates
+   * @param outputMetric function to extract output metric from optimization result
+   * @return the trial result
    */
   private TrialResult runSingleTrial(int trialNum, Map<String, Double> sampled,
       StreamInterface feedStream, double lowerBound, double upperBound, String rateUnit,

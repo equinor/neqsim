@@ -108,6 +108,14 @@ When writing JavaDoc, ensure HTML5 compatibility for the Maven JavaDoc plugin:
 | "no @param for X" | Missing parameter documentation | Add `@param X description` |
 | "no @return" | Missing return documentation | Add `@return description` |
 | "semicolon missing" | Malformed HTML in JavaDoc | Check HTML tag closure |
+| "bad use of '>'" | Lambda arrow `->` or comparison `>` in JavaDoc | Use `&gt;` for `>` or rewrite lambdas as anonymous classes |
+
+### Lambda Expressions in JavaDoc Examples
+- **NEVER** use lambda arrow syntax (`->`) in JavaDoc code examples - it causes HTML parsing errors
+- Instead, use anonymous inner class syntax or escape the arrow
+- Wrong: `list.forEach(item -> System.out.println(item));`
+- Correct: `list.forEach(new Consumer() { public void accept(Object item) { ... } });`
+- For comparisons, use `&gt;` entity: `if (value &gt; threshold)`
 
 ### Verification
 Before committing, run `./mvnw javadoc:javadoc` to catch JavaDoc errors early.

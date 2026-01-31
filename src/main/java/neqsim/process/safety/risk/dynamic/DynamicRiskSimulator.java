@@ -517,6 +517,12 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
 
   /**
    * Calculates production loss during a transient period.
+   *
+   * @param fromRate the starting production rate
+   * @param toRate the ending production rate
+   * @param duration the duration of the transition in hours
+   * @param profile the ramp profile type
+   * @return the production loss during the transient period
    */
   private double calculateTransientLoss(double fromRate, double toRate, double duration,
       RampProfile profile) {
@@ -546,6 +552,11 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
 
   /**
    * Calculates transient factor at a point in the transition.
+   *
+   * @param timeRemaining time remaining in the transition in hours
+   * @param totalDuration total duration of the transition in hours
+   * @param profile the ramp profile type
+   * @return the transient factor (0-1) indicating progress through transition
    */
   private double calculateTransientFactor(double timeRemaining, double totalDuration,
       RampProfile profile) {
@@ -576,6 +587,10 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
 
   /**
    * Samples repair time from exponential distribution.
+   *
+   * @param random the random number generator
+   * @param mttr the mean time to repair in hours
+   * @return sampled repair time in hours
    */
   private double sampleRepairTime(Random random, double mttr) {
     return -mttr * Math.log(random.nextDouble());
@@ -583,6 +598,8 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
 
   /**
    * Gets baseline production rate.
+   *
+   * @return the baseline production rate in kg/hr
    */
   private double getBaselineProductionRate() {
     ProcessEquipmentInterface productStream = getProcessSystem().getUnit(getProductStreamName());
@@ -594,6 +611,8 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
 
   /**
    * Gets the random seed.
+   *
+   * @return the random seed value
    */
   private long getRandomSeed() {
     // Access parent class random seed through reflection or store locally
@@ -602,6 +621,8 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
 
   /**
    * Gets the process system.
+   *
+   * @return the process system being simulated
    */
   private ProcessSystem getProcessSystem() {
     try {
@@ -616,6 +637,8 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
 
   /**
    * Gets the feed stream name.
+   *
+   * @return the name of the feed stream
    */
   private String getFeedStreamName() {
     try {
@@ -630,6 +653,8 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
 
   /**
    * Gets the product stream name.
+   *
+   * @return the name of the product stream
    */
   private String getProductStreamName() {
     try {

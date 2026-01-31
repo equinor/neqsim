@@ -42,10 +42,12 @@
  * <h3>Alert Handling</h3>
  * 
  * <pre>
- * monitor.addAlertListener(alert -> {
- *   if (alert.getSeverity() == RiskAlert.AlertSeverity.CRITICAL) {
- *     sendSMSNotification(alert);
- *     logToHistorian(alert);
+ * monitor.addAlertListener(new AlertListener() {
+ *   public void onAlert(RiskAlert alert) {
+ *     if (alert.getSeverity() == RiskAlert.AlertSeverity.CRITICAL) {
+ *       sendSMSNotification(alert);
+ *       logToHistorian(alert);
+ *     }
  *   }
  * });
  * </pre>

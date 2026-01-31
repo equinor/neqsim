@@ -35,29 +35,33 @@
  * model.setAccuracy(0.92);
  *
  * // Set up predictor (e.g., calling external Python/TensorFlow service)
- * model.setPredictor(features -> {
- *   // Call ML service
- *   RiskMLInterface.MLPrediction pred = new RiskMLInterface.MLPrediction(model.getModelId());
- *   pred.setPrediction(callMLService(features)); // Your ML service
- *   pred.setConfidence(0.85);
- *   return pred;
+ * model.setPredictor(new MLPredictor() {
+ *   public MLPrediction predict(Map features) {
+ *     // Call ML service
+ *     RiskMLInterface.MLPrediction pred = new RiskMLInterface.MLPrediction(model.getModelId());
+ *     pred.setPrediction(callMLService(features)); // Your ML service
+ *     pred.setConfidence(0.85);
+ *     return pred;
+ *   }
  * });
  *
  * // Register feature extractor
- * mlInterface.registerFeatureExtractor("process", processData -> {
- *   Map&lt;String, Double&gt; features = new HashMap&lt;&gt;();
- *   features.put("pressure", (Double) processData.get("PT-001"));
- *   features.put("temperature", (Double) processData.get("TT-001"));
- *   features.put("vibration", (Double) processData.get("VT-001"));
- *   return features;
+ * mlInterface.registerFeatureExtractor("process", new FeatureExtractor() {
+ *   public Map extractFeatures(Map processData) {
+ *     Map features = new HashMap();
+ *     features.put("pressure", processData.get("PT-001"));
+ *     features.put("temperature", processData.get("TT-001"));
+ *     features.put("vibration", processData.get("VT-001"));
+ *     return features;
+ *   }
  * });
  *
  * // Make prediction
- * Map&lt;String, Object&gt; processData = getLatestProcessData();
+ * Map processData = getLatestProcessData();
  * RiskMLInterface.MLPrediction prediction =
  *     mlInterface.predictWithExtraction("pump-failure-v1", "process", processData);
  *
- * if (prediction.getPrediction() > 0.7) {
+ * if (prediction.getPrediction() &gt; 0.7) {
  *   // High failure probability - trigger alert
  *   generateMaintenanceWorkOrder();
  * }
