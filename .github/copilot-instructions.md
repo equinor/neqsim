@@ -48,6 +48,9 @@ When creating example files or documentation that references existing classes:
    - Assuming enum constants like `SEVERE_WEATHER` when actual is `CommonCauseType.WEATHER`
    - Assuming 1-arg constructors when 2+ args are required
    - Calling methods on wrong class (e.g., `analyzer.getFrequency()` vs `model.getFrequency()`)
+   - Assuming `calculate()` when actual method is `calculateRisk()` or `run()`
+   - Assuming convenience overloads like `addAsset(name, value1, value2, value3)` when API is `addAsset(id, name, value)`
+   - Using descriptive names as IDs when API distinguishes between `id` and `name` parameters
 
 ---
 
