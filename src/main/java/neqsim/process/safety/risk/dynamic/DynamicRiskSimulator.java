@@ -352,6 +352,13 @@ public class DynamicRiskSimulator extends OperationalRiskSimulator implements Se
 
   /**
    * Simulates dynamic iteration with transient tracking.
+   *
+   * @param random random number generator for Monte Carlo sampling
+   * @param timeHorizonHours total simulation time in hours
+   * @param baselineProduction baseline production rate
+   * @param degradedRates map of equipment names to degraded production rates
+   * @param reliability map of equipment names to reliability data
+   * @return dynamic iteration state with simulation results
    */
   private DynamicIterationState simulateDynamicIteration(Random random, double timeHorizonHours,
       double baselineProduction, Map<String, Double> degradedRates,
