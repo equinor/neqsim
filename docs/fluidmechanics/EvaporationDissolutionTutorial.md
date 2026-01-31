@@ -4,6 +4,11 @@
 
 This tutorial provides practical guidance for modeling **complete evaporation of liquids into gas** and **dissolution of gas into liquids** using NeqSim's non-equilibrium two-phase pipe flow model.
 
+**Related Documentation:**
+- [MassTransferAPI.md](MassTransferAPI.md) - Complete API reference with method signatures and parameters
+- [MASS_TRANSFER_MODEL_IMPROVEMENTS.md](MASS_TRANSFER_MODEL_IMPROVEMENTS.md) - Technical model review
+- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer.md) - Theory background
+
 **Common Industrial Applications:**
 - Gas lift wells where injected gas dissolves into oil
 - Wet gas pipelines where condensate evaporates
