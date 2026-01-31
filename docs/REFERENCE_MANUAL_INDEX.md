@@ -465,7 +465,7 @@ Comprehensive operational risk simulation framework for equipment failure analys
 | **Dependency Analysis** | [docs/risk/dependency-analysis.md](risk/dependency-analysis.md) | DependencyAnalyzer, cascade failure trees, cross-installation effects |
 | **Mathematical Reference** | [docs/risk/mathematical-reference.md](risk/mathematical-reference.md) | Complete formulas: reliability, system availability, Monte Carlo, risk calculations |
 | **API Reference** | [docs/risk/api-reference.md](risk/api-reference.md) | Full API documentation for all risk simulation classes |
-| **Improvement Recommendations** | [docs/risk/IMPROVEMENT_RECOMMENDATIONS.md](risk/IMPROVEMENT_RECOMMENDATIONS.md) | Future enhancements for O&G industry: dynamic simulation, SIS integration, digital twins |
+| **Reliability Data Guide** | [docs/risk/RELIABILITY_DATA_GUIDE.md](risk/RELIABILITY_DATA_GUIDE.md) | OREDA-based reliability data, failure rate sources, equipment categories |
 
 ### Chapter 35a: Advanced Risk Framework (**NEW**)
 
