@@ -102,7 +102,7 @@ public class SafetyInstrumentedFunction implements Serializable {
   /** Safe state description. */
   private String safeState;
 
-  /** SIF category (ESD, HIPPS, F&G, etc.). */
+  /** SIF category (ESD, HIPPS, Fire and Gas, etc.). */
   private SIFCategory category;
 
   /** Architecture (1oo1, 1oo2, 2oo3, etc.). */
