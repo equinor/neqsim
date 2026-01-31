@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import com.google.gson.GsonBuilder;
 
 /**
@@ -433,14 +434,14 @@ public class SILVerificationResult implements Serializable {
   public String toReport() {
     StringBuilder sb = new StringBuilder();
     sb.append("SIL Verification Report\n");
-    sb.append("═".repeat(60)).append("\n\n");
+    sb.append(StringUtils.repeat("═", 60)).append("\n\n");
 
     sb.append("SIF: ").append(sif.getName()).append("\n");
     sb.append("Category: ").append(sif.getCategory()).append("\n");
     sb.append("Architecture: ").append(sif.getArchitecture()).append("\n\n");
 
     sb.append("SIL Assessment:\n");
-    sb.append("─".repeat(40)).append("\n");
+    sb.append(StringUtils.repeat("─", 40)).append("\n");
     sb.append(String.format("  Claimed SIL:    %d%n", claimedSIL));
     sb.append(String.format("  Achieved SIL:   %d%n", achievedSIL));
     sb.append(String.format("  Target PFD:     %.2e%n",
@@ -450,7 +451,7 @@ public class SILVerificationResult implements Serializable {
     sb.append("\n");
 
     sb.append("Architecture Assessment:\n");
-    sb.append("─".repeat(40)).append("\n");
+    sb.append(StringUtils.repeat("─", 40)).append("\n");
     sb.append(String.format("  Hardware Fault Tolerance: %d%n", hardwareFaultTolerance));
     sb.append(String.format("  Systematic Capability:    SC %d%n", systematicCapability));
     sb.append(String.format("  Diagnostic Coverage:      %.0f%%%n", diagnosticCoverage * 100));
@@ -458,7 +459,7 @@ public class SILVerificationResult implements Serializable {
 
     if (!issues.isEmpty()) {
       sb.append("Issues Found:\n");
-      sb.append("─".repeat(40)).append("\n");
+      sb.append(StringUtils.repeat("─", 40)).append("\n");
       for (VerificationIssue issue : issues) {
         sb.append(String.format("  [%s] %s%n", issue.getSeverity(), issue.getDescription()));
         sb.append(String.format("    → %s%n", issue.getRecommendation()));

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import com.google.gson.GsonBuilder;
 
 /**
@@ -612,7 +613,7 @@ public class ConditionBasedReliability implements Serializable {
   public String toReport() {
     StringBuilder sb = new StringBuilder();
     sb.append("CONDITION-BASED RELIABILITY REPORT\n");
-    sb.append("═".repeat(60)).append("\n\n");
+    sb.append(StringUtils.repeat("═", 60)).append("\n\n");
 
     sb.append("Equipment: ").append(equipmentName).append(" (").append(equipmentId).append(")\n");
     sb.append("Last Updated: ").append(lastUpdated).append("\n\n");
@@ -625,7 +626,7 @@ public class ConditionBasedReliability implements Serializable {
 
     // Reliability
     sb.append("RELIABILITY METRICS\n");
-    sb.append("─".repeat(40)).append("\n");
+    sb.append(StringUtils.repeat("─", 40)).append("\n");
     sb.append(String.format("  Base Failure Rate:     %.2e /hour%n", baseFailureRate));
     sb.append(String.format("  Adjusted Failure Rate: %.2e /hour (%.1fx)%n", adjustedFailureRate,
         getFailureRateMultiplier()));
@@ -646,10 +647,10 @@ public class ConditionBasedReliability implements Serializable {
 
     // Indicators
     sb.append("CONDITION INDICATORS\n");
-    sb.append("─".repeat(60)).append("\n");
+    sb.append(StringUtils.repeat("─", 60)).append("\n");
     sb.append(String.format("%-20s %10s %10s %10s %8s%n", "Indicator", "Current", "Normal",
         "Critical", "Health"));
-    sb.append("─".repeat(60)).append("\n");
+    sb.append(StringUtils.repeat("─", 60)).append("\n");
 
     for (ConditionIndicator ind : indicators) {
       String flag = ind.isCritical() ? "✗" : ind.isAlarming() ? "!" : "✓";

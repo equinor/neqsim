@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.processmodel.ProcessSystem;
@@ -423,7 +424,7 @@ public class BowTieAnalyzer implements Serializable {
   public String generateReport() {
     StringBuilder sb = new StringBuilder();
     sb.append("BOW-TIE ANALYSIS REPORT\n");
-    sb.append("═".repeat(70)).append("\n");
+    sb.append(StringUtils.repeat("═", 70)).append("\n");
     sb.append("Analysis: ").append(name).append("\n");
     sb.append("Number of Bow-Ties: ").append(bowTieModels.size()).append("\n\n");
 
