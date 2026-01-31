@@ -204,6 +204,9 @@ public class ProcessLogicIntegratedExample {
 
   /**
    * Sets up instrumentation for the process.
+   *
+   * @param system the process system to set up instrumentation for
+   * @return the configured instrumentation setup
    */
   private static InstrumentationSetup setupInstrumentation(ProcessSystem system) {
     InstrumentationSetup setup = new InstrumentationSetup();

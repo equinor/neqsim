@@ -198,6 +198,10 @@ public class ProcessModelState implements Serializable {
 
   /**
    * Checks if a stream comes from a different process and adds an inter-process connection.
+   *
+   * @param stream the stream to check
+   * @param currentProcess the name of the current process
+   * @param streamToProcess map from stream names to their originating process
    */
   private void checkAndAddInterProcessConnection(
       neqsim.process.equipment.stream.StreamInterface stream, String currentProcess,
@@ -334,6 +338,8 @@ public class ProcessModelState implements Serializable {
 
   /**
    * Creates a Gson instance with custom type adapters.
+   *
+   * @return configured Gson instance
    */
   private static Gson createGson() {
     return new GsonBuilder().setPrettyPrinting().serializeNulls()
@@ -621,12 +627,20 @@ public class ProcessModelState implements Serializable {
     private double pressureTolerance = 1e-4;
     private boolean useOptimizedExecution = true;
 
-    /** Gets max iterations. */
+    /**
+     * Gets max iterations.
+     *
+     * @return maximum number of iterations
+     */
     public int getMaxIterations() {
       return maxIterations;
     }
 
-    /** Sets max iterations. */
+    /**
+     * Sets max iterations.
+     *
+     * @param maxIterations maximum number of iterations to set
+     */
     public void setMaxIterations(int maxIterations) {
       this.maxIterations = maxIterations;
     }

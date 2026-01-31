@@ -298,7 +298,6 @@ public class OREDADataImporter implements Serializable {
    */
   private void loadFromReader(BufferedReader reader) throws IOException {
     String line;
-    boolean isHeader = true;
     int lineNumber = 0;
 
     while ((line = reader.readLine()) != null) {
@@ -310,9 +309,8 @@ public class OREDADataImporter implements Serializable {
         continue;
       }
 
-      // Skip header
-      if (isHeader) {
-        isHeader = false;
+      // Skip header line (contains "EquipmentType" as first column)
+      if (line.toLowerCase().startsWith("equipmenttype")) {
         continue;
       }
 
@@ -480,6 +478,195 @@ public class OREDADataImporter implements Serializable {
   }
 
   /**
+   * Gets the failure rate for specified equipment.
+   *
+   * @param equipmentType equipment type (e.g., "Pump")
+   * @param equipmentClass equipment class (e.g., "Centrifugal")
+   * @param failureMode failure mode (e.g., "All modes")
+   * @return failure rate per hour, or -1 if not found
+   */
+  public double getFailureRate(String equipmentType, String equipmentClass, String failureMode) {
+    ReliabilityRecord record = getRecord(equipmentType, equipmentClass, failureMode);
+    return record != null ? record.getFailureRate() : -1.0;
+  }
+
+  /**
+   * Gets the MTBF for specified equipment.
+   *
+   * @param equipmentType equipment type
+   * @param equipmentClass equipment class
+   * @param failureMode failure mode
+   * @return MTBF in hours, or -1 if not found
+   */
+  public double getMTBF(String equipmentType, String equipmentClass, String failureMode) {
+    ReliabilityRecord record = getRecord(equipmentType, equipmentClass, failureMode);
+    return record != null ? record.getMtbfHours() : -1.0;
+  }
+
+  /**
+   * Gets the MTTR for specified equipment.
+   *
+   * @param equipmentType equipment type
+   * @param equipmentClass equipment class
+   * @param failureMode failure mode
+   * @return MTTR in hours, or -1 if not found
+   */
+  public double getMTTR(String equipmentType, String equipmentClass, String failureMode) {
+    ReliabilityRecord record = getRecord(equipmentType, equipmentClass, failureMode);
+    return record != null ? record.getMttrHours() : -1.0;
+  }
+
+  /**
+   * Gets the data source for specified equipment.
+   *
+   * @param equipmentType equipment type
+   * @param equipmentClass equipment class
+   * @param failureMode failure mode
+   * @return data source identifier, or null if not found
+   */
+  public String getDataSourceForRecord(String equipmentType, String equipmentClass,
+      String failureMode) {
+    ReliabilityRecord record = getRecord(equipmentType, equipmentClass, failureMode);
+    return record != null ? record.getDataSource() : null;
+  }
+
+  /**
+   * Gets all equipment classes for a given equipment type.
+   *
+   * @param equipmentType equipment type
+   * @return list of equipment classes
+   */
+  public List<String> getEquipmentClasses(String equipmentType) {
+    List<String> classes = new ArrayList<>();
+    List<ReliabilityRecord> typeRecords = byEquipmentType.get(equipmentType);
+    if (typeRecords != null) {
+      for (ReliabilityRecord record : typeRecords) {
+        if (!classes.contains(record.getEquipmentClass())) {
+          classes.add(record.getEquipmentClass());
+        }
+      }
+    }
+    return classes;
+  }
+
+  /**
+   * Gets all failure modes for a given equipment type and class.
+   *
+   * @param equipmentType equipment type
+   * @param equipmentClass equipment class
+   * @return list of failure modes
+   */
+  public List<String> getFailureModes(String equipmentType, String equipmentClass) {
+    List<String> modes = new ArrayList<>();
+    List<ReliabilityRecord> typeRecords = byEquipmentType.get(equipmentType);
+    if (typeRecords != null) {
+      for (ReliabilityRecord record : typeRecords) {
+        if (record.getEquipmentClass().equals(equipmentClass)
+            && !modes.contains(record.getFailureMode())) {
+          modes.add(record.getFailureMode());
+        }
+      }
+    }
+    return modes;
+  }
+
+  /**
+   * Loads all built-in public domain reliability data sources.
+   *
+   * <p>
+   * This method loads data from:
+   * </p>
+   * <ul>
+   * <li>Generic literature (Lees, CCPS, MIL-HDBK-217F)</li>
+   * <li>IEEE 493 (Gold Book) electrical equipment data</li>
+   * <li>IOGP/OGP oil and gas industry data</li>
+   * <li>Representative OREDA data</li>
+   * </ul>
+   *
+   * <p>
+   * Data is loaded in priority order with later sources overriding earlier ones for matching
+   * equipment.
+   * </p>
+   *
+   * @throws IOException if any data file cannot be read
+   */
+  public void loadAllPublicDataSources() throws IOException {
+    // Load in priority order (later overrides earlier)
+    loadFromResource("/reliabilitydata/generic_literature.csv");
+    loadFromResource("/reliabilitydata/ieee493_equipment.csv");
+    loadFromResource("/reliabilitydata/iogp_equipment.csv");
+    loadFromResource("/reliabilitydata/oreda_equipment.csv");
+    this.dataSource = "Combined Public Data Sources";
+    logger.info("Loaded all public data sources: {} total records", records.size());
+  }
+
+  /**
+   * Loads IEEE 493 (Gold Book) reliability data.
+   *
+   * <p>
+   * IEEE 493 provides reliability data primarily for electrical and power distribution equipment.
+   * </p>
+   *
+   * @throws IOException if data file cannot be read
+   */
+  public void loadIEEE493Data() throws IOException {
+    loadFromResource("/reliabilitydata/ieee493_equipment.csv");
+  }
+
+  /**
+   * Loads IOGP/OGP oil and gas industry reliability data.
+   *
+   * <p>
+   * IOGP data includes offshore equipment, safety systems, and hydrocarbon release frequencies.
+   * </p>
+   *
+   * @throws IOException if data file cannot be read
+   */
+  public void loadIOGPData() throws IOException {
+    loadFromResource("/reliabilitydata/iogp_equipment.csv");
+  }
+
+  /**
+   * Loads generic reliability data from published literature.
+   *
+   * <p>
+   * Sources include Lees' Loss Prevention, CCPS Guidelines, and MIL-HDBK-217F.
+   * </p>
+   *
+   * @throws IOException if data file cannot be read
+   */
+  public void loadGenericLiteratureData() throws IOException {
+    loadFromResource("/reliabilitydata/generic_literature.csv");
+  }
+
+  /**
+   * Loads reliability data from a CSV file path string.
+   *
+   * @param csvPath path to CSV file
+   * @throws IOException if file cannot be read
+   */
+  public void loadFromCSV(String csvPath) throws IOException {
+    if (csvPath.startsWith("/") || csvPath.startsWith("reliabilitydata/")) {
+      // Treat as resource path
+      String resourcePath = csvPath.startsWith("/") ? csvPath : "/" + csvPath;
+      loadFromResource(resourcePath);
+    } else {
+      // Treat as file path
+      loadFromFile(java.nio.file.Paths.get(csvPath));
+    }
+  }
+
+  /**
+   * Clears all loaded records.
+   */
+  public void clear() {
+    records.clear();
+    byEquipmentType.clear();
+    byKey.clear();
+    dataSource = null;
+  }
+
+  /**
    * Creates a default importer with built-in OREDA data.
    *
    * @return importer with default data
@@ -569,6 +756,70 @@ public class OREDADataImporter implements Serializable {
         4, "OREDA-2015", "High"));
 
     importer.dataSource = "OREDA-2015 (Built-in defaults)";
+    return importer;
+  }
+
+  /**
+   * Creates an importer with all public domain data sources loaded.
+   *
+   * <p>
+   * This factory method loads data from IEEE 493, IOGP, generic literature, and OREDA
+   * representative values. This provides the most comprehensive coverage for risk analysis.
+   * </p>
+   *
+   * @return importer with all public data sources loaded
+   */
+  public static OREDADataImporter createWithAllPublicData() {
+    OREDADataImporter importer = new OREDADataImporter();
+    try {
+      importer.loadAllPublicDataSources();
+    } catch (IOException e) {
+      logger.warn("Failed to load some public data sources, using built-in defaults: {}",
+          e.getMessage());
+      return createWithDefaults();
+    }
+    return importer;
+  }
+
+  /**
+   * Creates an importer optimized for electrical equipment analysis.
+   *
+   * <p>
+   * Loads IEEE 493 (Gold Book) data which is the primary reference for electrical equipment
+   * reliability in industrial and commercial power systems.
+   * </p>
+   *
+   * @return importer with IEEE 493 data
+   */
+  public static OREDADataImporter createForElectricalEquipment() {
+    OREDADataImporter importer = new OREDADataImporter();
+    try {
+      importer.loadIEEE493Data();
+    } catch (IOException e) {
+      logger.warn("Failed to load IEEE 493 data: {}", e.getMessage());
+    }
+    return importer;
+  }
+
+  /**
+   * Creates an importer optimized for oil and gas equipment analysis.
+   *
+   * <p>
+   * Loads IOGP/OGP and OREDA data which are the primary references for oil and gas industry
+   * equipment reliability.
+   * </p>
+   *
+   * @return importer with O&amp;G specific data
+   */
+  public static OREDADataImporter createForOilAndGas() {
+    OREDADataImporter importer = new OREDADataImporter();
+    try {
+      importer.loadIOGPData();
+      importer.loadFromResource("/reliabilitydata/oreda_equipment.csv");
+      importer.dataSource = "IOGP + OREDA Combined";
+    } catch (IOException e) {
+      logger.warn("Failed to load O&G data: {}", e.getMessage());
+    }
     return importer;
   }
 }

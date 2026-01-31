@@ -165,6 +165,10 @@ public class ControlValveSizing_MultiphaseChoke
 
   /**
    * Converts diameter to meters from various units.
+   *
+   * @param value the value to convert
+   * @param unit the unit of the input value (m, mm, in, inch, inches, 64ths, 64th)
+   * @return the value converted to meters
    */
   private double convertToMeters(double value, String unit) {
     switch (unit.toLowerCase()) {
