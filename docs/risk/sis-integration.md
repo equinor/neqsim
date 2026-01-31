@@ -1,3 +1,9 @@
+---
+layout: default
+title: SIS Integration
+parent: Risk Framework
+---
+
 # P2: Safety Instrumented System (SIS) Integration
 
 ## Overview

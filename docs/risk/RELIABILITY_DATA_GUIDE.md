@@ -1,3 +1,9 @@
+---
+layout: default
+title: Reliability Data Guide
+parent: Risk Framework
+---
+
 # Equipment Reliability Data Guide
 
 ## Overview

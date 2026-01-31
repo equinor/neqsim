@@ -1,3 +1,9 @@
+---
+layout: default
+title: Degraded Operation
+parent: Risk Framework
+---
+
 # Degraded Operation Optimization
 
 When equipment fails, plants often continue operating at reduced capacity. The `DegradedOperationOptimizer` finds the best operating strategy during equipment outages.

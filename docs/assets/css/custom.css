@@ -460,6 +460,51 @@
   color: #159957;
 }
 
+/* Markdown Table Styling - Default for all tables */
+.main-content table {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin: 1.5rem 0;
+  display: table;
+  overflow-x: auto;
+}
+
+.main-content table th,
+.main-content table td {
+  padding: 0.75rem 1rem;
+  border: 1px solid #e1e4e8;
+  text-align: left;
+}
+
+.main-content table th {
+  background: linear-gradient(135deg, #159957 0%, #127a45 100%);
+  color: white;
+  font-weight: 600;
+}
+
+.main-content table td {
+  background: #fff;
+}
+
+.main-content table tr:nth-child(even) td {
+  background: #f6f8fa;
+}
+
+.main-content table tr:hover td {
+  background: #e8f4f0;
+}
+
+.main-content table a {
+  color: #127a45;
+  font-weight: 500;
+}
+
+.main-content table a:hover {
+  color: #0d5c34;
+  text-decoration: underline;
+}
+
 /* Documentation Table Enhancement */
 .doc-table {
   width: 100%;

@@ -1,3 +1,9 @@
+---
+layout: default
+title: Dependency Analysis
+parent: Risk Framework
+---
+
 # Dependency Analysis
 
 Dependency analysis answers critical operational questions:

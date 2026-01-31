@@ -1,3 +1,9 @@
+---
+layout: default
+title: Process Topology
+parent: Risk Framework
+---
+
 # Process Topology Analysis
 
 Process topology analysis extracts the graph structure from a NeqSim ProcessSystem, enabling understanding of equipment relationships, dependencies, and parallel configurations.

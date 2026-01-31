@@ -1,3 +1,9 @@
+---
+layout: default
+title: Mathematical Reference
+parent: Risk Framework
+---
+
 # Mathematical Reference
 
 This document provides the mathematical foundations for the Risk Simulation Framework, including reliability theory, Monte Carlo methods, and risk calculations.

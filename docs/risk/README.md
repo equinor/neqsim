@@ -1,3 +1,9 @@
+---
+layout: default
+title: Advanced Risk Framework
+parent: Risk Framework
+---
+
 # NeqSim Advanced Risk Framework
 
 The NeqSim Risk Framework provides comprehensive operational risk analysis capabilities for oil and gas operations. This documentation covers the advanced features implemented across seven priority areas.

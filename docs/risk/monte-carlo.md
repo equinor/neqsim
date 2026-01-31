@@ -1,3 +1,9 @@
+---
+layout: default
+title: Monte Carlo Simulation
+parent: Risk Framework
+---
+
 # Monte Carlo Risk Simulation
 
 Monte Carlo simulation provides probabilistic production forecasts by randomly sampling equipment failure events over a time horizon.

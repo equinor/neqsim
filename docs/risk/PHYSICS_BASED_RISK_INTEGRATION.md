@@ -1,3 +1,9 @@
+---
+layout: default
+title: Physics-Based Risk Integration
+parent: Risk Framework
+---
+
 # Physics-Based Risk Integration in NeqSim
 
 This document describes how the risk framework integrates with NeqSim's physics-based process simulation capabilities.

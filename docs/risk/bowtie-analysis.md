@@ -1,3 +1,9 @@
+---
+layout: default
+title: Bow-Tie Analysis
+parent: Risk Framework
+---
+
 # P4: Bow-Tie Diagram Analysis
 
 ## Overview

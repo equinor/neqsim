@@ -1,3 +1,9 @@
+---
+layout: default
+title: API Reference
+parent: Risk Framework
+---
+
 # API Reference
 
 Complete Java API reference for the Risk Simulation Framework.
