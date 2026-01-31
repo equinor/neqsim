@@ -17,6 +17,19 @@ The `fluidmechanics` package provides models for pipeline flow, pressure drop ca
 - [Reactive Mass Transfer](#reactive-mass-transfer)
 - [Usage Examples](#usage-examples)
 
+## Related Documentation
+
+| Document | Description |
+|----------|-------------|
+| [MassTransferAPI.md](MassTransferAPI.md) | **Complete API documentation** for mass transfer with methods, parameters, and examples |
+| [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial.md) | **Practical tutorial** for liquid evaporation and gas dissolution with worked examples |
+| [MASS_TRANSFER_MODEL_IMPROVEMENTS.md](MASS_TRANSFER_MODEL_IMPROVEMENTS.md) | **Technical review** of mass transfer model with improvement recommendations |
+| [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer.md) | Complete theory for interphase mass and heat transfer |
+| [mass_transfer.md](mass_transfer.md) | Diffusivity models, correlations, and reactive mass transfer |
+| [heat_transfer.md](heat_transfer.md) | Heat transfer correlations and wall boundary conditions |
+| [TwoPhasePipeFlowModel.md](TwoPhasePipeFlowModel.md) | Two-phase flow governing equations and numerical methods |
+| [flow_pattern_detection.md](flow_pattern_detection.md) | Flow regime identification algorithms |
+
 ---
 
 ## Overview

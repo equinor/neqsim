@@ -23,10 +23,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Base class for pipeline simulation models.
  *
  * <p>
- * This class provides the foundation for all pipeline models in NeqSim. It
- * implements the
- * {@link PipeLineInterface} with default implementations that can be overridden
- * by specialized
+ * This class provides the foundation for all pipeline models in NeqSim. It implements the
+ * {@link PipeLineInterface} with default implementations that can be overridden by specialized
  * subclasses.
  * </p>
  *
@@ -35,8 +33,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>{@link AdiabaticPipe} - Single-phase adiabatic pipe</li>
  * <li>{@link AdiabaticTwoPhasePipe} - Two-phase adiabatic pipe</li>
  * <li>{@link PipeBeggsAndBrills} - Beggs and Brill multiphase correlation</li>
- * <li>{@link OnePhasePipeLine} - One-phase flow with compositional
- * tracking</li>
+ * <li>{@link OnePhasePipeLine} - One-phase flow with compositional tracking</li>
  * <li>{@link TwoPhasePipeLine} - Two-phase flow model</li>
  * <li>{@link TwoFluidPipe} - Two-fluid transient model</li>
  * <li>{@link WaterHammerPipe} - Water hammer transient model</li>
@@ -158,6 +155,29 @@ public class Pipeline extends TwoPortEquipment
   /** Number of computational increments. */
   protected int numberOfIncrements = 10;
 
+  // ============ Pipe Fittings (bends, valves, etc.) ============
+  /**
+   * Collection of pipe fittings for equivalent length calculations.
+   *
+   * <p>
+   * Fittings such as bends, valves, tees, and reducers contribute additional pressure drop beyond
+   * the straight pipe friction loss. This is accounted for using the equivalent length method,
+   * where each fitting is assigned an L/D ratio representing the length of straight pipe (in
+   * diameters) that would produce the same pressure drop.
+   * </p>
+   */
+  protected Fittings fittings = new Fittings();
+
+  /**
+   * Flag to enable/disable fittings in pressure drop calculations.
+   *
+   * <p>
+   * When true (default), the equivalent length from fittings is added to the physical pipe length
+   * in pressure drop calculations. Set to false to temporarily exclude fittings.
+   * </p>
+   */
+  protected boolean useFittings = true;
+
   // ============ Legacy segmented geometry ============
   String flowPattern = "stratified";
   double[] times;
@@ -165,13 +185,13 @@ public class Pipeline extends TwoPortEquipment
   boolean equilibriumMassTransfer = false;
   int numberOfLegs = 1;
   int numberOfNodesInLeg = 30;
-  double[] legHeights = { 0, 0 };
-  double[] legPositions = { 0.0, 1.0 };
-  double[] pipeDiameters = { 0.1507588, 0.1507588 };
-  double[] outerTemperature = { 278.0, 278.0 };
-  double[] pipeWallRoughness = { 1e-5, 1e-5 };
-  double[] outerHeatTransferCoeffs = { 1e-5, 1e-5 };
-  double[] wallHeatTransferCoeffs = { 1e-5, 1e-5 };
+  double[] legHeights = {0, 0};
+  double[] legPositions = {0.0, 1.0};
+  double[] pipeDiameters = {0.1507588, 0.1507588};
+  double[] outerTemperature = {278.0, 278.0};
+  double[] pipeWallRoughness = {1e-5, 1e-5};
+  double[] outerHeatTransferCoeffs = {1e-5, 1e-5};
+  double[] wallHeatTransferCoeffs = {1e-5, 1e-5};
 
   PipelineMechanicalDesign pipelineMechanicalDesign = null;
 
@@ -187,7 +207,7 @@ public class Pipeline extends TwoPortEquipment
   /**
    * Constructor for Pipeline with inlet stream.
    *
-   * @param name     the equipment name
+   * @param name the equipment name
    * @param inStream the inlet stream
    */
   public Pipeline(String name, StreamInterface inStream) {
@@ -442,12 +462,13 @@ public class Pipeline extends TwoPortEquipment
    * Get superficial velocity for a phase at a specific node.
    *
    * @param phaseNum phase index (0=gas, 1=liquid)
-   * @param node     node index
+   * @param node node index
    * @return superficial velocity in m/s
    */
   public double getSuperficialVelocity(int phaseNum, int node) {
     try {
-      double d = (pipeDiameters != null && node < pipeDiameters.length) ? pipeDiameters[node] : diameter;
+      double d =
+          (pipeDiameters != null && node < pipeDiameters.length) ? pipeDiameters[node] : diameter;
       return outStream.getThermoSystem().getPhase(phaseNum).getNumberOfMolesInPhase()
           * outStream.getThermoSystem().getPhase(phaseNum).getMolarMass()
           / outStream.getThermoSystem().getPhase(phaseNum).getPhysicalProperties().getDensity()
@@ -756,7 +777,8 @@ public class Pipeline extends TwoPortEquipment
         : 0.0;
 
     // Outer convection resistance (based on outer diameter)
-    double R_outer = (outerHeatTransferCoefficient > 0) ? ri / (rins * outerHeatTransferCoefficient) : 0.0;
+    double R_outer =
+        (outerHeatTransferCoefficient > 0) ? ri / (rins * outerHeatTransferCoefficient) : 0.0;
 
     // If buried, add soil resistance
     double R_soil = 0.0;
@@ -812,6 +834,259 @@ public class Pipeline extends TwoPortEquipment
   @Override
   public void setBuried(boolean buried) {
     this.buried = buried;
+  }
+
+  // ============================================================================
+  // PIPE FITTINGS - Equivalent Length Method
+  // ============================================================================
+  //
+  // The equivalent length method accounts for pressure losses through pipe fittings
+  // (bends, valves, tees, reducers, etc.) by converting each fitting's resistance
+  // into an equivalent length of straight pipe.
+  //
+  // MATHEMATICAL BASIS:
+  // -------------------
+  // For fully turbulent flow, the pressure drop through a fitting can be expressed as:
+  //
+  // ΔP_fitting = K × (ρV²/2)
+  //
+  // where K is the resistance coefficient (K-factor).
+  //
+  // The equivalent length method relates K to pipe friction factor f:
+  //
+  // K = f × (L/D)_eq
+  //
+  // where (L/D)_eq is the equivalent length ratio.
+  //
+  // The total pressure drop becomes:
+  //
+  // ΔP_total = f × (L_eff/D) × (ρV²/2)
+  //
+  // where:
+  // L_eff = L_physical + Σ(L/D)_i × D
+  //
+  // ADVANTAGES:
+  // - Simple to apply: just add equivalent lengths
+  // - Works for both single-phase and multiphase flow
+  // - Industry-standard values available (Crane TP-410)
+  // - Compatible with all friction factor correlations
+  //
+  // REFERENCE:
+  // Crane Technical Paper 410 - "Flow of Fluids Through Valves, Fittings, and Pipe"
+  //
+  // ============================================================================
+
+  /**
+   * Add a fitting with a specified L/D ratio.
+   *
+   * <p>
+   * The L/D ratio represents the equivalent length of the fitting in terms of pipe diameters. For
+   * example, a standard 90° elbow has L/D ≈ 30, meaning it causes the same pressure drop as 30
+   * diameters of straight pipe.
+   * </p>
+   *
+   * <p>
+   * Example usage:
+   * </p>
+   * 
+   * <pre>
+   * pipe.addFitting("90-degree elbow", 30.0);
+   * pipe.addFitting("gate valve", 8.0);
+   * </pre>
+   *
+   * @param name descriptive name for the fitting
+   * @param LdivD equivalent length ratio (L/D), dimensionless
+   */
+  public void addFitting(String name, double LdivD) {
+    fittings.add(name, LdivD);
+  }
+
+  /**
+   * Add a fitting by name, loading L/D from database.
+   *
+   * <p>
+   * The fitting name must exist in the 'fittings' database table. Standard fitting names include:
+   * </p>
+   * <ul>
+   * <li>"Standard elbow (R=1.5D), 90deg" - L/D = 16</li>
+   * <li>"Standard elbow (R=1D), 90deg" - L/D = 30</li>
+   * <li>"Gate valve, fully open" - L/D = 8</li>
+   * <li>"Globe valve, fully open" - L/D = 340</li>
+   * </ul>
+   *
+   * @param name fitting name as stored in database
+   */
+  public void addFittingFromDatabase(String name) {
+    fittings.add(name);
+  }
+
+  /**
+   * Add a standard fitting type with predefined L/D value.
+   *
+   * <p>
+   * Uses built-in L/D values from Crane TP-410. See {@link Fittings#addStandard(String)} for
+   * available types.
+   * </p>
+   *
+   * @param type standard fitting type
+   * @return true if fitting was added, false if type not recognized
+   */
+  public boolean addStandardFitting(String type) {
+    return fittings.addStandard(type);
+  }
+
+  /**
+   * Add multiple identical fittings with specified L/D ratio.
+   *
+   * <p>
+   * Convenience method for adding several fittings of the same type. For example, adding 6 elbows
+   * with L/D = 30:
+   * </p>
+   * 
+   * <pre>
+   * pipe.addFittings("90-degree elbow", 30.0, 6);
+   * </pre>
+   *
+   * @param name fitting name
+   * @param LdivD L/D ratio for each fitting
+   * @param count number of fittings to add
+   */
+  public void addFittings(String name, double LdivD, int count) {
+    fittings.addMultiple(name, LdivD, count);
+  }
+
+  /**
+   * Add multiple standard fittings of the same type.
+   *
+   * @param type standard fitting type (e.g., "elbow_90_standard", "valve_gate_open")
+   * @param count number of fittings to add
+   * @return true if fittings were added, false if type not recognized
+   */
+  public boolean addStandardFittings(String type, int count) {
+    return fittings.addStandardMultiple(type, count);
+  }
+
+  /**
+   * Get the fittings collection.
+   *
+   * @return Fittings object containing all added fittings
+   */
+  public Fittings getFittings() {
+    return fittings;
+  }
+
+  /**
+   * Clear all fittings from the pipe.
+   */
+  public void clearFittings() {
+    fittings.clear();
+  }
+
+  /**
+   * Get the total L/D ratio of all fittings.
+   *
+   * <p>
+   * This is the sum of all individual fitting L/D ratios.
+   * </p>
+   *
+   * @return total L/D ratio (dimensionless)
+   */
+  public double getTotalFittingsLdRatio() {
+    return fittings.getTotalLdRatio();
+  }
+
+  /**
+   * Calculate the total equivalent length from all fittings.
+   *
+   * <p>
+   * The equivalent length is calculated as:
+   * </p>
+   * 
+   * <pre>
+   * L_eq = Σ(L/D)_i × D
+   * </pre>
+   * <p>
+   * where D is the pipe internal diameter.
+   * </p>
+   *
+   * @return equivalent length from fittings in meters
+   */
+  public double getEquivalentLength() {
+    if (!useFittings || fittings.isEmpty()) {
+      return 0.0;
+    }
+    return fittings.getTotalEquivalentLength(diameter);
+  }
+
+  /**
+   * Get the effective pipe length for pressure drop calculations.
+   *
+   * <p>
+   * The effective length includes both the physical pipe length and the equivalent length from all
+   * fittings:
+   * </p>
+   * 
+   * <pre>
+   * L_eff = L_physical + L_equivalent
+   *       = L_physical + Σ(L/D)_i × D
+   * </pre>
+   *
+   * <p>
+   * This effective length should be used in the Darcy-Weisbach equation:
+   * </p>
+   * 
+   * <pre>
+   * ΔP = f × (L_eff / D) × (ρV² / 2)
+   * </pre>
+   *
+   * @return effective pipe length in meters
+   */
+  public double getEffectiveLength() {
+    return length + getEquivalentLength();
+  }
+
+  /**
+   * Enable or disable fittings in pressure drop calculations.
+   *
+   * <p>
+   * When disabled, the equivalent length from fittings is not added to the physical pipe length.
+   * This is useful for comparing pressure drop with and without fittings.
+   * </p>
+   *
+   * @param enable true to include fittings (default), false to exclude
+   */
+  public void setUseFittings(boolean enable) {
+    this.useFittings = enable;
+  }
+
+  /**
+   * Check if fittings are enabled in pressure drop calculations.
+   *
+   * @return true if fittings are included, false if excluded
+   */
+  public boolean isUseFittings() {
+    return useFittings;
+  }
+
+  /**
+   * Get the number of fittings added to this pipe.
+   *
+   * @return number of fittings
+   */
+  public int getNumberOfFittings() {
+    return fittings.size();
+  }
+
+  /**
+   * Print a summary of all fittings to the console.
+   */
+  public void printFittingsSummary() {
+    System.out.println(fittings.getSummary());
+    System.out.println(String.format("Pipe diameter: %.4f m", diameter));
+    System.out.println(String.format("Physical length: %.2f m", length));
+    System.out
+        .println(String.format("Equivalent length (fittings): %.2f m", getEquivalentLength()));
+    System.out.println(String.format("Effective length (total): %.2f m", getEffectiveLength()));
   }
 
   // ============================================================================
@@ -1137,8 +1412,7 @@ public class Pipeline extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport
-  public void displayResult() {
-  }
+  public void displayResult() {}
 
   // ============================================================================
   // TIME SERIES (for transient simulations)
@@ -1156,8 +1430,8 @@ public class Pipeline extends TwoPortEquipment
   /**
    * Set time series for transient simulation.
    *
-   * @param times              array of times
-   * @param systems            array of thermodynamic systems at each time
+   * @param times array of times
+   * @param systems array of thermodynamic systems at each time
    * @param timestepininterval number of time steps in each interval
    */
   public void setTimeSeries(double[] times, SystemInterface[] systems, int timestepininterval) {
@@ -1196,7 +1470,8 @@ public class Pipeline extends TwoPortEquipment
         .getDetailLevel(getName()) == neqsim.process.util.report.ReportConfig.DetailLevel.HIDE) {
       return null;
     }
-    neqsim.process.util.monitor.PipelineResponse res = new neqsim.process.util.monitor.PipelineResponse(this);
+    neqsim.process.util.monitor.PipelineResponse res =
+        new neqsim.process.util.monitor.PipelineResponse(this);
     res.applyConfig(cfg);
     return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
         .toJson(res);
@@ -1207,14 +1482,14 @@ public class Pipeline extends TwoPortEquipment
   // ============================================================================
 
   /** Storage for capacity constraints. */
-  private final java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> capacityConstraints = new java.util.LinkedHashMap<>();
+  private final java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> capacityConstraints =
+      new java.util.LinkedHashMap<>();
 
   /**
    * Initializes default capacity constraints for the pipeline.
    *
    * <p>
-   * NOTE: All constraints are disabled by default for backwards compatibility.
-   * Enable specific
+   * NOTE: All constraints are disabled by default for backwards compatibility. Enable specific
    * constraints when pipeline capacity analysis is needed (e.g., after sizing).
    * </p>
    */
@@ -1223,25 +1498,23 @@ public class Pipeline extends TwoPortEquipment
     // default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("velocity",
         "m/s", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-        .setDesignValue(getMechanicalDesign().maxDesignVelocity > 0
-            ? getMechanicalDesign().maxDesignVelocity
-            : 20.0)
-        .setWarningThreshold(0.9).setValueSupplier(() -> getVelocity())
-        .setEnabled(false));
+            .setDesignValue(getMechanicalDesign().maxDesignVelocity > 0
+                ? getMechanicalDesign().maxDesignVelocity
+                : 20.0)
+            .setWarningThreshold(0.9).setValueSupplier(() -> getVelocity()).setEnabled(false));
 
     // Volume flow constraint (DESIGN limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("volumeFlow",
         "m3/hr", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
-        .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
-        .setValueSupplier(() -> outStream != null ? outStream.getFlowRate("m3/hr") : 0.0)
-        .setEnabled(false));
+            .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
+            .setValueSupplier(() -> outStream != null ? outStream.getFlowRate("m3/hr") : 0.0)
+            .setEnabled(false));
 
     // Pressure drop constraint (DESIGN limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("pressureDrop",
         "bara", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
-        .setDesignValue(getMechanicalDesign().maxDesignPressureDrop).setWarningThreshold(0.9)
-        .setValueSupplier(() -> getPressureDrop())
-        .setEnabled(false));
+            .setDesignValue(getMechanicalDesign().maxDesignPressureDrop).setWarningThreshold(0.9)
+            .setValueSupplier(() -> getPressureDrop()).setEnabled(false));
   }
 
   /** {@inheritDoc} */

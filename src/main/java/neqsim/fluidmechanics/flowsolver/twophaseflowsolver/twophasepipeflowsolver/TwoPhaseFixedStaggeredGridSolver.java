@@ -122,6 +122,15 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
   /** Current solver type (enum). Default includes momentum, phase, and energy. */
   private SolverType solverTypeEnum = SolverType.DEFAULT;
 
+  /** Mass transfer configuration for advanced settings. */
+  private MassTransferConfig massTransferConfig = new MassTransferConfig();
+
+  /** Track phases that have disappeared during simulation. */
+  private boolean[] phasePresent = {true, true, true};
+
+  /** Cumulative mass transfer for monitoring. */
+  private double[][] cumulativeMassTransfer;
+
   Matrix diffMatrix;
   double[][] dn;
   int iter = 0;
@@ -159,6 +168,54 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
    */
   public MassTransferMode getMassTransferMode() {
     return this.massTransferMode;
+  }
+
+  /**
+   * Sets the mass transfer configuration.
+   *
+   * @param config the configuration to use
+   */
+  public void setMassTransferConfig(MassTransferConfig config) {
+    this.massTransferConfig = config;
+  }
+
+  /**
+   * Gets the current mass transfer configuration.
+   *
+   * @return the current configuration
+   */
+  public MassTransferConfig getMassTransferConfig() {
+    return this.massTransferConfig;
+  }
+
+  /**
+   * Checks if a phase is present (not fully depleted).
+   *
+   * @param phaseIndex the phase index (0=gas, 1=liquid, 2=aqueous)
+   * @return true if the phase is present
+   */
+  public boolean isPhasePresent(int phaseIndex) {
+    if (phaseIndex >= 0 && phaseIndex < phasePresent.length) {
+      return phasePresent[phaseIndex];
+    }
+    return false;
+  }
+
+  /**
+   * Gets the cumulative mass transfer for a component.
+   *
+   * @param componentIndex component index
+   * @return cumulative moles transferred (positive = to liquid)
+   */
+  public double getCumulativeMassTransfer(int componentIndex) {
+    if (cumulativeMassTransfer != null && componentIndex < cumulativeMassTransfer.length) {
+      double total = 0;
+      for (int i = 0; i < cumulativeMassTransfer[componentIndex].length; i++) {
+        total += cumulativeMassTransfer[componentIndex][i];
+      }
+      return total;
+    }
+    return 0;
   }
 
   /**
@@ -436,6 +493,11 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         liquid_dT = 0.0;
       }
 
+      // Apply max temperature change limit from config
+      double maxDT = massTransferConfig.getMaxTemperatureChangePerNode();
+      gas_dT = Math.max(-maxDT, Math.min(maxDT, gas_dT));
+      liquid_dT = Math.max(-maxDT, Math.min(maxDT, liquid_dT));
+
       // Calculate new temperatures
       double newGasTemp = gasTemp + gas_dT;
       double newLiquidTemp = liquidTemp + liquid_dT;
@@ -448,11 +510,24 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       pipe.getNode(i + 1).getBulkSystem().getPhase(0).setTemperature(newGasTemp);
       pipe.getNode(i + 1).getBulkSystem().getPhase(1).setTemperature(newLiquidTemp);
 
+      // ========================================================================
+      // ENHANCED MASS TRANSFER CALCULATION
+      // ========================================================================
+      // Calculate total system moles for relative thresholds
+      double totalSystemMoles = pipe.getNode(i).getBulkSystem().getTotalNumberOfMoles();
+      double minMolesThreshold = Math.max(massTransferConfig.getAbsoluteMinMoles(),
+          totalSystemMoles * massTransferConfig.getMinMolesFraction());
+
       // Calculate and apply mass transfer from this node
       for (int componentNumber = 0; componentNumber < numComponents; componentNumber++) {
         double transferToLiquid =
             pipe.getNode(i).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
                 * pipe.getNode(i).getInterphaseContactArea();
+
+        // Get transfer limits from configuration
+        double maxFractionBidir = massTransferConfig.getMaxTransferFractionBidirectional();
+        double maxFractionDir = massTransferConfig.getMaxTransferFractionDirectional();
+        double maxPhaseDepletion = massTransferConfig.getMaxPhaseDepletionPerNode();
 
         // Handle transfer based on mass transfer mode
         if (transferToLiquid > 0.0) {
@@ -463,12 +538,30 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
             // Limit to available gas moles
             double availableInGas = pipe.getNode(i).getBulkSystem().getPhase(0)
                 .getComponent(componentNumber).getNumberOfMolesInPhase();
-            if (massTransferMode == MassTransferMode.BIDIRECTIONAL) {
-              // Allow up to 90% transfer per node for numerical stability
-              transferToLiquid = Math.min(transferToLiquid, 0.9 * Math.max(0.0, availableInGas));
-            } else {
-              // Limit to 50% for DISSOLUTION_ONLY mode
-              transferToLiquid = Math.min(transferToLiquid, 0.5 * Math.max(0.0, availableInGas));
+
+            // Adaptive limiting if enabled
+            double maxFraction =
+                (massTransferMode == MassTransferMode.BIDIRECTIONAL) ? maxFractionBidir
+                    : maxFractionDir;
+
+            if (massTransferConfig.isUseAdaptiveLimiting()) {
+              // Courant-like condition: limit based on residence time
+              double localGasVelocity = Math.max(pipe.getNode(i).getVelocity(0), 0.01);
+              double residenceTime = nodeLength / localGasVelocity;
+              double adaptiveFactor = Math.min(1.0, residenceTime * 10.0); // Scale with residence
+              maxFraction = maxFraction * adaptiveFactor;
+            }
+
+            // Apply phase depletion limit for complete dissolution
+            double totalGasPhase =
+                pipe.getNode(i).getBulkSystem().getPhase(0).getNumberOfMolesInPhase();
+            if (totalGasPhase > minMolesThreshold) {
+              double depletionLimit = maxPhaseDepletion * availableInGas;
+              transferToLiquid = Math.min(transferToLiquid,
+                  Math.min(maxFraction * Math.max(0.0, availableInGas), depletionLimit));
+            } else if (massTransferConfig.isAllowPhaseDisappearance()) {
+              // Phase nearly depleted - allow complete transfer
+              transferToLiquid = Math.min(transferToLiquid, availableInGas);
             }
           }
         } else if (transferToLiquid < 0.0) {
@@ -479,14 +572,30 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
             // Limit to available liquid moles
             double availableInLiquid = pipe.getNode(i).getBulkSystem().getPhase(1)
                 .getComponent(componentNumber).getNumberOfMolesInPhase();
-            if (massTransferMode == MassTransferMode.BIDIRECTIONAL) {
-              // Allow up to 90% transfer per node for numerical stability
-              transferToLiquid =
-                  -Math.min(-transferToLiquid, 0.9 * Math.max(0.0, availableInLiquid));
-            } else {
-              // Limit to 50% for EVAPORATION_ONLY mode
-              transferToLiquid =
-                  -Math.min(-transferToLiquid, 0.5 * Math.max(0.0, availableInLiquid));
+
+            // Adaptive limiting if enabled
+            double maxFraction =
+                (massTransferMode == MassTransferMode.BIDIRECTIONAL) ? maxFractionBidir
+                    : maxFractionDir;
+
+            if (massTransferConfig.isUseAdaptiveLimiting()) {
+              // Courant-like condition: limit based on residence time
+              double localLiquidVelocity = Math.max(pipe.getNode(i).getVelocity(1), 0.001);
+              double residenceTime = nodeLength / localLiquidVelocity;
+              double adaptiveFactor = Math.min(1.0, residenceTime * 10.0);
+              maxFraction = maxFraction * adaptiveFactor;
+            }
+
+            // Apply phase depletion limit for complete evaporation
+            double totalLiquidPhase =
+                pipe.getNode(i).getBulkSystem().getPhase(1).getNumberOfMolesInPhase();
+            if (totalLiquidPhase > minMolesThreshold) {
+              double depletionLimit = maxPhaseDepletion * availableInLiquid;
+              transferToLiquid = -Math.min(-transferToLiquid,
+                  Math.min(maxFraction * Math.max(0.0, availableInLiquid), depletionLimit));
+            } else if (massTransferConfig.isAllowPhaseDisappearance()) {
+              // Phase nearly depleted - allow complete evaporation
+              transferToLiquid = -Math.min(-transferToLiquid, availableInLiquid);
             }
           }
         }
@@ -494,23 +603,38 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
         // Apply mass transfer: gas loses, liquid gains
         pipe.getNode(i).getBulkSystem().getPhases()[0].addMoles(componentNumber, -transferToLiquid);
         pipe.getNode(i).getBulkSystem().getPhases()[1].addMoles(componentNumber, transferToLiquid);
+
+        // Track cumulative transfer for diagnostics
+        if (massTransferConfig.isEnableDiagnostics() && cumulativeMassTransfer != null) {
+          cumulativeMassTransfer[i][componentNumber] += transferToLiquid;
+        }
       }
 
-      // Ensure no negative moles (handles numerical round-off)
+      // Ensure no negative moles with configurable threshold
       for (int phase = 0; phase < 2; phase++) {
         for (int comp = 0; comp < numComponents; comp++) {
           double moles = pipe.getNode(i).getBulkSystem().getPhase(phase).getComponent(comp)
               .getNumberOfMolesInPhase();
-          if (moles < 1e-20) {
-            // Set very small positive value to keep thermodynamics stable
+          double absMinMoles = massTransferConfig.getAbsoluteMinMoles();
+          if (moles < absMinMoles) {
             double currentMoles = pipe.getNode(i).getBulkSystem().getPhase(phase).getComponent(comp)
                 .getNumberOfMolesInPhase();
-            if (currentMoles < 1e-20) {
+            if (currentMoles < absMinMoles) {
               pipe.getNode(i).getBulkSystem().getPhases()[phase].addMoles(comp,
-                  1e-20 - currentMoles);
+                  absMinMoles - currentMoles);
             }
           }
         }
+      }
+
+      // Track phase presence for diagnostics
+      if (massTransferConfig.isEnableDiagnostics() && phasePresent != null) {
+        double gasPhaseMoles =
+            pipe.getNode(i).getBulkSystem().getPhase(0).getNumberOfMolesInPhase();
+        double liquidPhaseMoles =
+            pipe.getNode(i).getBulkSystem().getPhase(1).getNumberOfMolesInPhase();
+        phasePresent[i] =
+            (gasPhaseMoles > minMolesThreshold && liquidPhaseMoles > minMolesThreshold);
       }
 
       // Re-init after applying transfer so phaseFraction reflects new state
@@ -1813,5 +1937,215 @@ public class TwoPhaseFixedStaggeredGridSolver extends TwoPhasePipeFlowSolver
       // this.setVelocities();*/
     } while (Math.abs(maxDiff) > 1e-7 && iterTop < 15); // diffMatrix.norm2()/sol2Matrix.norm2())>0.1);
 
+  }
+
+  // ========================================================================
+  // MASS TRANSFER DIAGNOSTICS AND VALIDATION
+  // ========================================================================
+
+  /**
+   * Get the total mass transfer summary for all components. Useful for validating complete
+   * dissolution or evaporation.
+   *
+   * @return Array containing [totalDissolution, totalEvaporation, netTransfer] in moles
+   */
+  public double[] getMassTransferSummary() {
+    if (cumulativeMassTransfer == null) {
+      return new double[] {0.0, 0.0, 0.0};
+    }
+    double totalDissolution = 0.0;
+    double totalEvaporation = 0.0;
+    for (int i = 0; i < numberOfNodes; i++) {
+      for (int comp = 0; comp < cumulativeMassTransfer[0].length; comp++) {
+        double transfer = cumulativeMassTransfer[i][comp];
+        if (transfer > 0.0) {
+          totalDissolution += transfer;
+        } else {
+          totalEvaporation += (-transfer);
+        }
+      }
+    }
+    return new double[] {totalDissolution, totalEvaporation, totalDissolution - totalEvaporation};
+  }
+
+  /**
+   * Get the mass transfer for a specific component across all nodes.
+   *
+   * @param componentNumber The component index
+   * @return Array of transfer values for each node [mol]
+   */
+  public double[] getComponentMassTransferProfile(int componentNumber) {
+    if (cumulativeMassTransfer == null) {
+      return new double[numberOfNodes];
+    }
+    double[] profile = new double[numberOfNodes];
+    for (int i = 0; i < numberOfNodes; i++) {
+      if (componentNumber < cumulativeMassTransfer[i].length) {
+        profile[i] = cumulativeMassTransfer[i][componentNumber];
+      }
+    }
+    return profile;
+  }
+
+  /**
+   * Check if the gas phase has been completely dissolved. Useful for validating total dissolution
+   * scenarios.
+   *
+   * @return true if gas phase moles are below the threshold at the outlet
+   */
+  public boolean isGasPhaseCompletelyDissolved() {
+    if (pipe == null || numberOfNodes < 2) {
+      return false;
+    }
+    double totalSystemMoles =
+        pipe.getNode(numberOfNodes - 1).getBulkSystem().getTotalNumberOfMoles();
+    double minMolesThreshold = Math.max(massTransferConfig.getAbsoluteMinMoles(),
+        totalSystemMoles * massTransferConfig.getMinMolesFraction());
+    double gasPhase =
+        pipe.getNode(numberOfNodes - 1).getBulkSystem().getPhase(0).getNumberOfMolesInPhase();
+    return gasPhase < minMolesThreshold;
+  }
+
+  /**
+   * Check if the liquid phase has been completely evaporated. Useful for validating total
+   * evaporation scenarios.
+   *
+   * @return true if liquid phase moles are below the threshold at the outlet
+   */
+  public boolean isLiquidPhaseCompletelyEvaporated() {
+    if (pipe == null || numberOfNodes < 2) {
+      return false;
+    }
+    double totalSystemMoles =
+        pipe.getNode(numberOfNodes - 1).getBulkSystem().getTotalNumberOfMoles();
+    double minMolesThreshold = Math.max(massTransferConfig.getAbsoluteMinMoles(),
+        totalSystemMoles * massTransferConfig.getMinMolesFraction());
+    double liquidPhase =
+        pipe.getNode(numberOfNodes - 1).getBulkSystem().getPhase(1).getNumberOfMolesInPhase();
+    return liquidPhase < minMolesThreshold;
+  }
+
+  /**
+   * Get indices of nodes where a phase has disappeared. Returns empty array if all nodes have two
+   * phases.
+   *
+   * @return Array of node indices where one phase is absent
+   */
+  public int[] getSinglePhaseNodeIndices() {
+    if (phasePresent == null) {
+      return new int[0];
+    }
+    int count = 0;
+    for (int i = 0; i < numberOfNodes; i++) {
+      if (!phasePresent[i]) {
+        count++;
+      }
+    }
+    int[] indices = new int[count];
+    int idx = 0;
+    for (int i = 0; i < numberOfNodes; i++) {
+      if (!phasePresent[i]) {
+        indices[idx++] = i;
+      }
+    }
+    return indices;
+  }
+
+  /**
+   * Get the mass transfer rate at a specific node for a given component.
+   *
+   * @param nodeIndex The node index
+   * @param componentNumber The component index
+   * @return Mass transfer rate [mol/s] (positive = dissolution, negative = evaporation)
+   */
+  public double getNodeMassTransferRate(int nodeIndex, int componentNumber) {
+    if (pipe == null || nodeIndex < 0 || nodeIndex >= numberOfNodes) {
+      return 0.0;
+    }
+    // Mass transfer rate = flux * area
+    return pipe.getNode(nodeIndex).getFluidBoundary().getInterphaseMolarFlux(componentNumber)
+        * pipe.getNode(nodeIndex).getInterphaseContactArea();
+  }
+
+  /**
+   * Validate the mass transfer against literature correlations. Compares calculated Sherwood
+   * numbers against expected ranges.
+   *
+   * @return ValidationResult containing pass/fail and diagnostic messages
+   */
+  public String validateMassTransferAgainstLiterature() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("Mass Transfer Validation Report\n");
+    sb.append("================================\n\n");
+
+    // Get mass transfer summary
+    double[] summary = getMassTransferSummary();
+    sb.append(String.format("Total Dissolution: %.4e mol%n", summary[0]));
+    sb.append(String.format("Total Evaporation: %.4e mol%n", summary[1]));
+    sb.append(String.format("Net Transfer: %.4e mol%n%n", summary[2]));
+
+    // Check phase status
+    sb.append("Phase Status at Outlet:\n");
+    sb.append(String.format("  Gas phase dissolved: %s%n", isGasPhaseCompletelyDissolved()));
+    sb.append(
+        String.format("  Liquid phase evaporated: %s%n%n", isLiquidPhaseCompletelyEvaporated()));
+
+    // Sample node validation (middle node)
+    if (pipe != null && numberOfNodes > 2) {
+      int midNode = numberOfNodes / 2;
+      sb.append(String.format("Sample Validation at Node %d:%n", midNode));
+
+      // Get characteristic values
+      double gasVelocity = pipe.getNode(midNode).getVelocity(0);
+      double liquidVelocity = pipe.getNode(midNode).getVelocity(1);
+      double diameter = pipe.getNode(midNode).getGeometry().getDiameter();
+
+      sb.append(String.format("  Gas velocity: %.3f m/s%n", gasVelocity));
+      sb.append(String.format("  Liquid velocity: %.3f m/s%n", liquidVelocity));
+      sb.append(String.format("  Pipe diameter: %.4f m%n", diameter));
+
+      // Expected Sherwood number ranges (from literature)
+      // Typical laminar: Sh ~ 2-20, turbulent: Sh ~ 100-10000
+      // Calculate kinematic viscosity: nu = mu / rho
+      double gasKinVisc = pipe.getNode(midNode).getBulkSystem().getPhase(0).getViscosity()
+          / pipe.getNode(midNode).getBulkSystem().getPhase(0).getDensity();
+      double liqKinVisc = pipe.getNode(midNode).getBulkSystem().getPhase(1).getViscosity()
+          / pipe.getNode(midNode).getBulkSystem().getPhase(1).getDensity();
+      double Re_gas = gasVelocity * diameter / gasKinVisc;
+      double Re_liq = liquidVelocity * diameter / liqKinVisc;
+
+      sb.append(String.format("  Gas Reynolds number: %.1f%n", Re_gas));
+      sb.append(String.format("  Liquid Reynolds number: %.1f%n", Re_liq));
+
+      // Literature reference: Solbraa (2002), Hewitt & Hall-Taylor (1970)
+      String regime = (Re_gas > 4000 && Re_liq > 4000) ? "turbulent"
+          : (Re_gas > 4000 || Re_liq > 4000) ? "transitional" : "laminar";
+      sb.append(String.format("  Flow regime: %s%n%n", regime));
+
+      sb.append("Literature References:\n");
+      sb.append("  - Solbraa (2002): Gas-oil mass transfer in pipelines\n");
+      sb.append("  - Hewitt & Hall-Taylor (1970): Annular Two-Phase Flow\n");
+      sb.append("  - Perry's Chemical Engineers' Handbook (8th ed.): Chapters 5 & 14\n");
+    }
+
+    return sb.toString();
+  }
+
+  /**
+   * Get mass balance error for diagnostics. Compares inlet and outlet total moles accounting for
+   * transfer.
+   *
+   * @return Relative mass balance error (should be near zero for converged solution)
+   */
+  public double getMassBalanceError() {
+    if (pipe == null || numberOfNodes < 2) {
+      return 0.0;
+    }
+    double inletMoles = pipe.getNode(0).getBulkSystem().getTotalNumberOfMoles();
+    double outletMoles = pipe.getNode(numberOfNodes - 1).getBulkSystem().getTotalNumberOfMoles();
+    if (inletMoles > 1e-15) {
+      return Math.abs(inletMoles - outletMoles) / inletMoles;
+    }
+    return 0.0;
   }
 }

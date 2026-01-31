@@ -379,6 +379,9 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Pipe Wall | [docs/wiki/pipe_wall_heat_transfer.md](wiki/pipe_wall_heat_transfer.md) | Pipe wall heat transfer |
 | Interphase | [docs/fluidmechanics/InterphaseHeatMassTransfer.md](fluidmechanics/InterphaseHeatMassTransfer.md) | Interphase heat/mass transfer |
 | Mass Transfer | [docs/fluidmechanics/mass_transfer.md](fluidmechanics/mass_transfer.md) | Mass transfer models |
+| **Mass Transfer API** | [docs/fluidmechanics/MassTransferAPI.md](fluidmechanics/MassTransferAPI.md) | **Complete API documentation for mass transfer with methods, parameters, and examples** |
+| **Evaporation & Dissolution Tutorial** | [docs/fluidmechanics/EvaporationDissolutionTutorial.md](fluidmechanics/EvaporationDissolutionTutorial.md) | **Practical tutorial for liquid evaporation and gas dissolution with worked examples** |
+| **Model Improvements** | [docs/fluidmechanics/MASS_TRANSFER_MODEL_IMPROVEMENTS.md](fluidmechanics/MASS_TRANSFER_MODEL_IMPROVEMENTS.md) | **Technical review of mass transfer model with improvement recommendations** |
 
 ### Chapter 27: Two-Phase & Multiphase Flow
 | Document | Path | Description |

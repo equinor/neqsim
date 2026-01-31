@@ -2,6 +2,11 @@
 
 Automatic detection and classification of two-phase flow regimes in pipe flow using mechanistic models.
 
+**Related Documentation:**
+- [TwoPhasePipeFlowModel.md](TwoPhasePipeFlowModel.md) - Two-phase flow governing equations
+- [MassTransferAPI.md](MassTransferAPI.md) - Flow pattern-specific mass transfer correlations
+- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer.md) - Interfacial area by flow pattern
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -462,9 +467,9 @@ plt.savefig('flow_pattern_map.png', dpi=150)
 
 ## Related Documentation
 
-- [Pipeline Simulation](../equipment/pipeline_simulation.md) - Pipeline flow models
-- [Two-Phase Pipe Flow](../../fluidmechanics/TwoPhasePipeFlowSystem_Development_Plan.md) - Advanced two-phase modeling
-- [Heat Transfer](../../fluidmechanics/heat_transfer.md) - Flow pattern effects on heat transfer
+- [Pipeline Simulation](../process/equipment/pipeline_simulation.md) - Pipeline flow models
+- [Two-Phase Pipe Flow](TwoPhasePipeFlowSystem_Development_Plan.md) - Advanced two-phase modeling
+- [Heat Transfer](heat_transfer.md) - Flow pattern effects on heat transfer
 
 ---
 

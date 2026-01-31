@@ -4,6 +4,12 @@
 
 This document provides a detailed description of the theoretical models and numerical methods used in NeqSim for calculating **interphase mass and heat transfer** in two-phase gas-liquid pipe flow. The approach is based on **non-equilibrium thermodynamics** where the gas and liquid phases are not assumed to be in thermodynamic equilibrium at the interface.
 
+**Related Documentation:**
+- [MassTransferAPI.md](MassTransferAPI.md) - API reference for mass transfer methods
+- [mass_transfer.md](mass_transfer.md) - Diffusivity correlations
+- [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial.md) - Practical tutorial
+- [heat_transfer.md](heat_transfer.md) - Heat transfer correlations
+
 **Key Concepts:**
 - Phases exchange mass and heat across the interface
 - Interface is assumed to be at thermodynamic equilibrium
