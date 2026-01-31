@@ -684,7 +684,7 @@ List<String> getTearStreamVariableNames()
 ## See Also
 
 - [Graph-Based Process Simulation](graph_based_process_simulation.md) - Detailed guide on graph algorithms and sensitivity analysis
-- 📓 [GraphBasedProcessSimulation.ipynb](../notebooks/GraphBasedProcessSimulation.ipynb) - Interactive Jupyter notebook example
+- 📓 [GraphBasedProcessSimulation.ipynb](../examples/GraphBasedProcessSimulation.ipynb) - Interactive Jupyter notebook example
 
 ---
 

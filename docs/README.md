@@ -318,5 +318,5 @@ Specialized guides for advanced features and use cases:
 
 - [NeqSim GitHub Repository](https://github.com/equinor/neqsim)
 - [neqsim-python](https://github.com/equinor/neqsim-python)
-- [Example Notebooks](../notebooks/)
+- [Example Notebooks](examples/index.md)
 

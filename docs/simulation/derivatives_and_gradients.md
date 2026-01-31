@@ -554,4 +554,4 @@ See test classes for comprehensive validation:
 - [Differentiable Thermodynamics](differentiable_thermodynamics.md) — detailed thermodynamic derivatives
 - [MPC Integration Guide](../integration/mpc_integration.md) — using derivatives for control
 - [AI Platform Integration](../integration/ai_platform_integration.md) — ML framework integration
-- [DifferentiableThermodynamics.ipynb](../../notebooks/DifferentiableThermodynamics.ipynb) — interactive examples
+- [MPC Integration Tutorial](../examples/MPC_Integration_Tutorial.ipynb) — interactive examples

@@ -554,4 +554,5 @@ DegradedOperationResult optResult = opt.optimizeWithEquipmentDown(failure);
 
 - [Overview](overview.md)
 - [Mathematical Reference](mathematical-reference.md)
-- [Jupyter Notebook Examples](../../examples/notebooks/)
+- [Advanced Risk Framework Tutorial](../examples/AdvancedRiskFramework_Tutorial.ipynb)
+- [Examples Index](../examples/index.md)

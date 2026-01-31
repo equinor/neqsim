@@ -659,7 +659,7 @@ These Colab notebooks provide hands-on dynamic simulation examples:
 
 ### Local Examples
 - [Transient Slug Separator Control](../examples/transient_slug_separator_control_example.md)
-- [VesselDepressurizationTutorial.ipynb](../../examples/notebooks/VesselDepressurizationTutorial.ipynb)
+- [ESP Pump Tutorial](../examples/ESP_Pump_Tutorial.ipynb)
 
 ### Process Logic
 - [Process Logic Framework](process_logic_framework.md) - runTransient integration

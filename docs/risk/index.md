@@ -195,7 +195,8 @@ neqsim.process
 
 - [NeqSim Main Documentation](../index.md)
 - [Process Simulation Guide](../process/README.md)
-- [Jupyter Notebook Examples](../../examples/notebooks/)
+- [Advanced Risk Framework Tutorial (Jupyter)](../examples/AdvancedRiskFramework_Tutorial.ipynb)
+- [Examples Index](../examples/index.md)
 - [OREDA Handbook](https://www.oreda.com/)
 - [ISO 14224 - Petroleum and natural gas industries](https://www.iso.org/standard/64076.html)
 - [NORSOK Z-013 - Risk and emergency preparedness assessment](https://www.standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/z-regularity--emergency/z-0132/)

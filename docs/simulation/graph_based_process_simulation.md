@@ -971,9 +971,9 @@ For most users, simply using `process.runOptimal()` provides the best of both wo
 
 ## Jupyter Notebook Example
 
-A complete interactive example is available in the notebooks directory:
+A complete interactive example is available in the examples directory:
 
-📓 **[GraphBasedProcessSimulation.ipynb](../notebooks/GraphBasedProcessSimulation.ipynb)**
+📓 **[GraphBasedProcessSimulation.ipynb](../examples/GraphBasedProcessSimulation.ipynb)**
 
 The notebook demonstrates:
 - Graph construction and analysis
