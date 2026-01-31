@@ -33,6 +33,22 @@ When creating example files or documentation that references existing classes:
    - Method names like `addEquipment` vs `addEquipmentReliability` vs `addEquipmentMtbf`
    - Parameter counts vary (e.g., 3 params vs 4 params)
 
+4. **Inner classes and enums** - verify the exact location:
+   - Enums may be in different classes: `RiskEvent.ConsequenceCategory` vs `RiskMatrix.ConsequenceCategory`
+   - Inner classes require full path: `BowTieModel.Threat`, `PortfolioRiskAnalyzer.CommonCauseScenario`
+   - Check imports in the actual class to see which enum/type it uses
+
+5. **Object-based vs convenience APIs** - do NOT assume convenience methods exist:
+   - Wrong: `model.addThreat("name", 0.1)` (assuming convenience overload)
+   - Right: First check if method takes objects: `model.addThreat(new Threat(...))`
+   - Many APIs use builder patterns or require creating objects explicitly
+
+6. **Common API mistakes to avoid**:
+   - Assuming `getXxx95()` exists when actual method is `getXxx(int percentile)`
+   - Assuming enum constants like `SEVERE_WEATHER` when actual is `CommonCauseType.WEATHER`
+   - Assuming 1-arg constructors when 2+ args are required
+   - Calling methods on wrong class (e.g., `analyzer.getFrequency()` vs `model.getFrequency()`)
+
 ---
 
 - **Mission Focus**: NeqSim is a Java toolkit for thermodynamics and process simulation; changes usually affect physical property models (`src/main/java/neqsim/thermo`) or process equipment (`src/main/java/neqsim/process`).

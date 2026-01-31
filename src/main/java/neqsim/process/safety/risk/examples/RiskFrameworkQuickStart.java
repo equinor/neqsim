@@ -328,8 +328,8 @@ public class RiskFrameworkQuickStart {
     bowtie.linkBarrierToConsequence("C-002", "B-007");
     bowtie.linkBarrierToConsequence("C-003", "B-008");
 
-    // Calculate risk (calls internal analyze method)
-    bowtie.calculate();
+    // Calculate risk
+    bowtie.calculateRisk();
 
     System.out.println("  Hazard: " + bowtie.getHazardDescription());
     System.out.println(
@@ -356,26 +356,26 @@ public class RiskFrameworkQuickStart {
 
     PortfolioRiskAnalyzer portfolio = new PortfolioRiskAnalyzer("North Sea Portfolio");
 
-    // Add assets
-    portfolio.addAsset("Platform Alpha", 50000, 0.95, 80.0);
-    portfolio.addAsset("Platform Beta", 30000, 0.92, 80.0);
-    portfolio.addAsset("FPSO Gamma", 75000, 0.90, 80.0);
+    // Add assets using correct API: addAsset(id, name, maxProduction)
+    portfolio.addAsset("ALPHA-001", "Platform Alpha", 50000.0);
+    portfolio.addAsset("BETA-001", "Platform Beta", 30000.0);
+    portfolio.addAsset("GAMMA-001", "FPSO Gamma", 75000.0);
 
     // Add common cause scenarios using proper CommonCauseScenario objects
     PortfolioRiskAnalyzer.CommonCauseScenario weatherScenario =
         new PortfolioRiskAnalyzer.CommonCauseScenario("WEATHER-NS", "Severe North Sea Weather",
             PortfolioRiskAnalyzer.CommonCauseScenario.CommonCauseType.WEATHER, 0.1);
-    weatherScenario.addAffectedAsset("Platform Alpha", 0.3);
-    weatherScenario.addAffectedAsset("Platform Beta", 0.3);
-    weatherScenario.addAffectedAsset("FPSO Gamma", 0.2);
+    weatherScenario.addAffectedAsset("ALPHA-001", 0.3);
+    weatherScenario.addAffectedAsset("BETA-001", 0.3);
+    weatherScenario.addAffectedAsset("GAMMA-001", 0.2);
     portfolio.addCommonCauseScenario(weatherScenario);
 
     PortfolioRiskAnalyzer.CommonCauseScenario cyberScenario =
         new PortfolioRiskAnalyzer.CommonCauseScenario("CYBER-001", "Cyber Attack on OT Systems",
             PortfolioRiskAnalyzer.CommonCauseScenario.CommonCauseType.CYBER, 0.05);
-    cyberScenario.addAffectedAsset("Platform Alpha", 0.5);
-    cyberScenario.addAffectedAsset("Platform Beta", 0.5);
-    cyberScenario.addAffectedAsset("FPSO Gamma", 0.5);
+    cyberScenario.addAffectedAsset("ALPHA-001", 0.5);
+    cyberScenario.addAffectedAsset("BETA-001", 0.5);
+    cyberScenario.addAffectedAsset("GAMMA-001", 0.5);
     portfolio.addCommonCauseScenario(cyberScenario);
 
     // Run analysis (uses default iterations and period from the analyzer)
