@@ -21,7 +21,8 @@ import com.google.gson.GsonBuilder;
  * </ul>
  *
  * <h2>SIL Levels and PFD Ranges</h2>
- * <table>
+ * <table summary="SIL levels with corresponding PFD and RRF ranges">
+ * <caption>Safety Integrity Level Requirements</caption>
  * <tr>
  * <th>SIL</th>
  * <th>PFD Range</th>
@@ -66,7 +67,6 @@ import com.google.gson.GsonBuilder;
  *
  * @author NeqSim Development Team
  * @version 1.0
- * @see IEC 61508, IEC 61511
  */
 public class SafetyInstrumentedFunction implements Serializable {
 
