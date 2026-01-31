@@ -59,6 +59,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 |----------|------|-------------|
 | Overview | [docs/README.md](README.md) | Package overview and quick start |
 | Modules | [docs/modules.md](modules.md) | Architecture and module structure |
+| **O&G Design Review** | [docs/NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW.md](NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW.md) | **Comprehensive capability review for oil & gas design and operations** |
 
 ### Chapter 2: Installation & Setup
 | Document | Path | Description |
@@ -268,6 +269,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Risers** | [docs/process/equipment/pipelines.md#risers](process/equipment/pipelines.md#risers) | **SCR, TTR, Flexible, Lazy-Wave risers** |
 | Beggs & Brill | [docs/process/PipeBeggsAndBrills.md](process/PipeBeggsAndBrills.md) | Beggs & Brill correlation |
 | Networks | [docs/process/equipment/networks.md](process/equipment/networks.md) | Pipeline network modeling |
+| **Looped Network Solver** | [docs/process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT.md](process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT.md) | **Hardy Cross looped network solver for ring mains and parallel pipelines** |
+| **Looped Network Tutorial** | [docs/examples/LoopedPipelineNetworkExample.ipynb](examples/LoopedPipelineNetworkExample.ipynb) | **Interactive notebook: ring mains, offshore rings, loop detection, Hardy Cross** |
 | Reservoirs | [docs/process/equipment/reservoirs.md](process/equipment/reservoirs.md) | Reservoir modeling |
 | Subsea Systems | [docs/process/equipment/subsea_systems.md](process/equipment/subsea_systems.md) | Subsea wells and flowlines |
 | Subsea Equipment | [docs/process/equipment/subsea_equipment.md](process/equipment/subsea_equipment.md) | SubseaWell, SimpleFlowLine, flow assurance |
@@ -462,7 +465,7 @@ Comprehensive operational risk simulation framework for equipment failure analys
 | **Dependency Analysis** | [docs/risk/dependency-analysis.md](risk/dependency-analysis.md) | DependencyAnalyzer, cascade failure trees, cross-installation effects |
 | **Mathematical Reference** | [docs/risk/mathematical-reference.md](risk/mathematical-reference.md) | Complete formulas: reliability, system availability, Monte Carlo, risk calculations |
 | **API Reference** | [docs/risk/api-reference.md](risk/api-reference.md) | Full API documentation for all risk simulation classes |
-| **Improvement Recommendations** | [docs/risk/IMPROVEMENT_RECOMMENDATIONS.md](risk/IMPROVEMENT_RECOMMENDATIONS.md) | Future enhancements for O&G industry: dynamic simulation, SIS integration, digital twins |
+| **Reliability Data Guide** | [docs/risk/RELIABILITY_DATA_GUIDE.md](risk/RELIABILITY_DATA_GUIDE.md) | OREDA-based reliability data, failure rate sources, equipment categories |
 
 ### Chapter 35a: Advanced Risk Framework (**NEW**)
 

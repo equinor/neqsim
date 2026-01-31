@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import com.google.gson.GsonBuilder;
 
 /**
@@ -399,7 +400,7 @@ public class PortfolioRiskResult implements Serializable {
   public String toReport() {
     StringBuilder sb = new StringBuilder();
     sb.append("PORTFOLIO RISK ANALYSIS REPORT\n");
-    sb.append("═".repeat(70)).append("\n\n");
+    sb.append(StringUtils.repeat("═", 70)).append("\n\n");
 
     sb.append("Analysis: ").append(analysisName).append("\n");
     sb.append(String.format("Simulations: %,d over %.1f years%n", numberOfSimulations,
@@ -407,14 +408,14 @@ public class PortfolioRiskResult implements Serializable {
     sb.append("\n");
 
     sb.append("PORTFOLIO PRODUCTION\n");
-    sb.append("─".repeat(40)).append("\n");
+    sb.append(StringUtils.repeat("─", 40)).append("\n");
     sb.append(String.format("  Total Capacity:    %,.0f boe/day%n", totalMaxProduction));
     sb.append(String.format("  Expected Output:   %,.0f boe/day%n", totalExpectedProduction));
     sb.append(String.format("  Availability:      %.1f%%%n", portfolioAvailability * 100));
     sb.append("\n");
 
     sb.append("PRODUCTION LOSS (boe/period)\n");
-    sb.append("─".repeat(40)).append("\n");
+    sb.append(StringUtils.repeat("─", 40)).append("\n");
     sb.append(String.format("  Expected:          %,.0f%n", expectedPortfolioLoss));
     sb.append(String.format("  Std Dev:           %,.0f%n", portfolioLossStdDev));
     sb.append(String.format("  P10 (optimistic):  %,.0f%n", p10PortfolioLoss));
@@ -424,16 +425,16 @@ public class PortfolioRiskResult implements Serializable {
     sb.append("\n");
 
     sb.append("COMMON CAUSE ANALYSIS\n");
-    sb.append("─".repeat(40)).append("\n");
+    sb.append(StringUtils.repeat("─", 40)).append("\n");
     sb.append(String.format("  Common Cause Loss: %,.0f boe (%.1f%% of total)%n",
         expectedCommonCauseLoss, commonCauseFraction * 100));
     sb.append(String.format("  Diversification:   %.1f%% benefit%n", diversificationBenefit * 100));
     sb.append("\n");
 
     sb.append("ASSET CONTRIBUTIONS\n");
-    sb.append("─".repeat(60)).append("\n");
+    sb.append(StringUtils.repeat("─", 60)).append("\n");
     sb.append(String.format("%-20s %12s %12s %12s%n", "Asset", "Production", "Loss", "% Risk"));
-    sb.append("─".repeat(60)).append("\n");
+    sb.append(StringUtils.repeat("─", 60)).append("\n");
     for (AssetResult ar : assetResults) {
       sb.append(String.format("%-20s %,12.0f %,12.0f %11.1f%%%n", ar.getAssetName(),
           ar.getExpectedProduction(), ar.getExpectedLoss(),

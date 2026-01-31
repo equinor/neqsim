@@ -1,5 +1,33 @@
 # NeqSim AI Guidance for Coding Agents
 
+## ⚠️ CRITICAL: Java 8 Compatibility (READ FIRST)
+
+**All code MUST compile with Java 8.** The CI build will FAIL if you use Java 9+ features.
+
+### FORBIDDEN Java 9+ Features (NEVER USE):
+| Forbidden | Java 8 Alternative |
+|-----------|-------------------|
+| `"str".repeat(n)` | `StringUtils.repeat("str", n)` (Apache Commons) |
+| `var x = ...` | Explicit type declaration: `String x = ...` |
+| `List.of(a, b)` | `Arrays.asList(a, b)` or `Collections.singletonList(a)` |
+| `Set.of(a, b)` | `new HashSet<>(Arrays.asList(a, b))` |
+| `Map.of(k, v)` | `Collections.singletonMap(k, v)` or HashMap |
+| `str.isBlank()` | `str.trim().isEmpty()` |
+| `str.strip()` | `str.trim()` |
+| `str.lines()` | `str.split("\\R")` or BufferedReader |
+| `Optional.isEmpty()` | `!optional.isPresent()` |
+| Text blocks `"""..."""` | Regular strings with `\n` |
+| Records | Regular class with fields |
+| Pattern matching `instanceof` | Traditional instanceof + cast |
+
+### Required Import for String Repeat:
+```java
+import org.apache.commons.lang3.StringUtils;
+// Usage: StringUtils.repeat("=", 70)
+```
+
+---
+
 ## Quick Commands
 
 - **Package and Update Python**: When the user says "package and update python" or similar, run these commands:
@@ -68,7 +96,7 @@ When creating example files or documentation that references existing classes:
 - **Style & Formatting**: Java code follows Google style with project overrides from `checkstyle_neqsim.xml` and formatter profiles (`neqsim_formatter.xml`); keep indentation at two spaces and respect existing comment minimalism.
 - **Serialization & Copying**: Many equipment classes rely on Java serialization (`ProcessEquipmentBaseClass.copy()`); avoid introducing non-serializable fields or mark them `transient` to preserve cloning.
 - **External Dependencies**: Core math depends on EJML, Commons Math, JAMA, and MTJ; check numerical stability when swapping linear algebra routines, and keep JSON/YAML handling aligned with gson/jackson versions pinned in pom.xml.
-- **Java 8 Compatibility (MANDATORY)**: All code MUST be Java 8 compatible. NEVER use these Java 9+ features: `var` keyword, `String.repeat()`, `String.isBlank()`, `String.strip()`, `String.lines()`, `List.of()`, `Set.of()`, `Map.of()`, `Optional.isEmpty()`, `InputStream.transferTo()`, `Stream.takeWhile()`, `Stream.dropWhile()`, text blocks ("""), records, sealed classes, pattern matching. Use `StringUtils.repeat()` from Apache Commons instead of `String.repeat()`. Use `str.trim().isEmpty()` instead of `str.isBlank()`. Use `Arrays.asList()` or `Collections.singletonList()` instead of `List.of()`.
+- **Java 8 Compatibility (MANDATORY)**: See the critical section at the top of this document. All code MUST compile with Java 8. The CI build will FAIL if you use Java 9+ features like `String.repeat()`, `var`, `List.of()`, etc.
 - **Sample Flow**:
 
 ```java
@@ -139,7 +167,7 @@ When writing JavaDoc, ensure HTML5 compatibility for the Maven JavaDoc plugin:
 ### Verification
 Before committing, run `./mvnw javadoc:javadoc` to catch JavaDoc errors early.
 
-- **Java 8 Features**: All new code must be Java 8 compatible; use streams, lambdas, and `Optional` where they enhance readability. NEVER use `String.repeat()` - use `StringUtils.repeat()` from Apache Commons. NEVER use `var`, `List.of()`, `Map.of()`, text blocks, or any Java 9+ syntax.
+- **Java 8 Features**: All new code must be Java 8 compatible; use streams, lambdas, and `Optional` where they enhance readability. NEVER use `String.repeat()` - use `StringUtils.repeat()` from Apache Commons. NEVER use `var`, `List.of()`, `Map.of()`, text blocks, or any Java 9+ syntax. See the critical Java 8 Compatibility section at the top of this document for complete list.
 - **Validation Framework**: Use `SimulationValidator.validate(object)` before running simulations to catch configuration errors early. When extending equipment, override `validateSetup()` to add custom validation. See `neqsim.util.validation` package and docs/integration/ai_validation_framework.md.
 - **AI-Friendly Error Handling**: Exceptions in `neqsim.util.exception` provide `getRemediation()` hints. When adding new errors, include actionable fix suggestions that AI agents can parse.
 - **Auto-Validation for New Equipment**: When creating a new class that extends `ProcessEquipmentBaseClass`, ALWAYS generate a `validateSetup()` method that checks: (1) required input streams are connected, (2) required parameters are set and within valid ranges, (3) return `ValidationResult` with remediation hints for each issue.

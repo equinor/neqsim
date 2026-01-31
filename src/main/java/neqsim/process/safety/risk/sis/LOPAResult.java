@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import com.google.gson.GsonBuilder;
 
 /**
@@ -265,22 +266,22 @@ public class LOPAResult implements Serializable {
   public String toVisualization() {
     StringBuilder sb = new StringBuilder();
     sb.append("LOPA: ").append(scenarioName).append("\n");
-    sb.append("═".repeat(60)).append("\n\n");
+    sb.append(StringUtils.repeat("═", 60)).append("\n\n");
 
     sb.append(String.format("Initiating Event Frequency: %.2e /year%n", initiatingEventFrequency));
     sb.append("\n");
 
     sb.append("Protection Layers:\n");
-    sb.append("─".repeat(60)).append("\n");
+    sb.append(StringUtils.repeat("─", 60)).append("\n");
     sb.append(String.format("%-25s %10s %15s %15s%n", "Layer", "PFD", "Before", "After"));
-    sb.append("─".repeat(60)).append("\n");
+    sb.append(StringUtils.repeat("─", 60)).append("\n");
 
     for (ProtectionLayer layer : layers) {
       sb.append(String.format("%-25s %10.2e %15.2e %15.2e%n", layer.getName(), layer.getPfd(),
           layer.getFrequencyBefore(), layer.getFrequencyAfter()));
     }
 
-    sb.append("─".repeat(60)).append("\n");
+    sb.append(StringUtils.repeat("─", 60)).append("\n");
     sb.append(String.format("%-25s %10s %15s %15.2e%n", "TOTAL",
         String.format("%.0fx", getTotalRRF()), "", mitigatedFrequency));
     sb.append("\n");

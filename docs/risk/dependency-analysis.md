@@ -255,7 +255,8 @@ System.out.println("Cascade Tree for HP Separator failure:");
 printTree(cascadeTree, "HP Separator", 0);
 
 void printTree(Map<String, List<String>> tree, String node, int depth) {
-    System.out.println("  ".repeat(depth) + "└─ " + node);
+    String indent = StringUtils.repeat("  ", depth);
+    System.out.println(indent + "└─ " + node);
     for (String child : tree.getOrDefault(node, Collections.emptyList())) {
         printTree(tree, child, depth + 1);
     }
@@ -326,9 +327,9 @@ deps.addCrossInstallationDependency(
 );
 
 // Analyze Compressor A failure
-System.out.println("═".repeat(70));
+System.out.println(StringUtils.repeat("═", 70));
 System.out.println("DEPENDENCY ANALYSIS: Compressor A Failure");
-System.out.println("═".repeat(70));
+System.out.println(StringUtils.repeat("═", 70));
 
 DependencyResult result = deps.analyzeFailure("Compressor A");
 
