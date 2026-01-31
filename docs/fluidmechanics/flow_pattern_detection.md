@@ -2,6 +2,11 @@
 
 Automatic detection and classification of two-phase flow regimes in pipe flow using mechanistic models.
 
+**Related Documentation:**
+- [TwoPhasePipeFlowModel.md](TwoPhasePipeFlowModel.md) - Two-phase flow governing equations
+- [MassTransferAPI.md](MassTransferAPI.md) - Flow pattern-specific mass transfer correlations
+- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer.md) - Interfacial area by flow pattern
+
 ## Table of Contents
 
 - [Overview](#overview)

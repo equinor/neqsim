@@ -431,11 +431,3 @@ String report = solver.validateMassTransferAgainstLiterature();
 
 7. Springer, T.G., & Pigford, R.L. (1970). Influence of surface turbulence and surfactants on gas transport through liquid interfaces. *Industrial & Engineering Chemistry Fundamentals*, 9(3), 458-465.
 
----
-
-## Next Steps
-
-1. Create GitHub issues for each improvement area
-2. Start with high-priority items (transfer limiting, phase depletion)
-3. Add unit tests for each improvement
-4. Update documentation with model limitations and validity ranges

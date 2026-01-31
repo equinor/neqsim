@@ -1,6 +1,11 @@
 # Mass Transfer Modeling in NeqSim
 
-This document provides detailed documentation of the mass transfer models implemented in the NeqSim fluid mechanics package.
+This document provides detailed documentation of the mass transfer models implemented in the NeqSim fluid mechanics package, focusing on diffusivity correlations and reactive mass transfer.
+
+**Related Documentation:**
+- [MassTransferAPI.md](MassTransferAPI.md) - API reference for interfacial area and kL/kG methods
+- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer.md) - Theory for interphase transfer
+- [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial.md) - Practical tutorial
 
 ## Table of Contents
 - [Overview](#overview)

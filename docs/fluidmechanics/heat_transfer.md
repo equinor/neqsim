@@ -2,6 +2,11 @@
 
 This document provides detailed documentation of the heat transfer models implemented in the NeqSim fluid mechanics package.
 
+**Related Documentation:**
+- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer.md) - Coupled heat-mass transfer theory
+- [mass_transfer.md](mass_transfer.md) - Mass transfer correlations
+- [TwoPhasePipeFlowModel.md](TwoPhasePipeFlowModel.md) - Two-phase flow governing equations
+
 ## Table of Contents
 - [Overview](#overview)
 - [Theoretical Background](#theoretical-background)
