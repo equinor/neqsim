@@ -547,30 +547,36 @@ public class MLIntegrationExamples {
 
     // Register threshold-based models (for testing without actual ML)
     ThresholdModel failureModel = createTestFailurePredictor();
-    mlInterface.registerModel("failure_predictor", RiskMLInterface.ModelType.FAILURE_PREDICTION,
-        failureModel::predict);
+    RiskMLInterface.MLModel failureMlModel =
+        mlInterface.createFailurePredictionModel("failure_predictor", "Failure Predictor");
+    failureMlModel.setPredictor(failureModel::predict);
 
     ThresholdModel anomalyModel = createTestAnomalyDetector();
-    mlInterface.registerModel("anomaly_detector", RiskMLInterface.ModelType.ANOMALY_DETECTION,
-        anomalyModel::predict);
+    RiskMLInterface.MLModel anomalyMlModel =
+        mlInterface.createAnomalyDetectionModel("anomaly_detector", "Anomaly Detector");
+    anomalyMlModel.setPredictor(anomalyModel::predict);
 
-    // Add feature extractors
-    mlInterface.addFeatureExtractor("temperature", eq -> 95.0);
-    mlInterface.addFeatureExtractor("vibration", eq -> 4.5);
-    mlInterface.addFeatureExtractor("pressure", eq -> 120.0);
-    mlInterface.addFeatureExtractor("operating_hours", eq -> 45000.0);
-    mlInterface.addFeatureExtractor("temperature_deviation", eq -> 8.0);
-    mlInterface.addFeatureExtractor("pressure_deviation", eq -> 3.0);
-    mlInterface.addFeatureExtractor("vibration_deviation", eq -> 1.5);
-    mlInterface.addFeatureExtractor("flow_deviation", eq -> 10.0);
+    // Create test features
+    java.util.Map<String, Double> testFeatures = new java.util.HashMap<>();
+    testFeatures.put("temperature", 95.0);
+    testFeatures.put("vibration", 4.5);
+    testFeatures.put("pressure", 120.0);
+    testFeatures.put("operating_hours", 45000.0);
+    testFeatures.put("temperature_deviation", 8.0);
+    testFeatures.put("pressure_deviation", 3.0);
+    testFeatures.put("vibration_deviation", 1.5);
+    testFeatures.put("flow_deviation", 10.0);
 
     // Run predictions
-    double failureProb = mlInterface.predict("failure_predictor", "Compressor-1");
-    double anomalyScore = mlInterface.predict("anomaly_detector", "Compressor-1");
+    RiskMLInterface.MLPrediction failurePred =
+        mlInterface.predict("failure_predictor", testFeatures);
+    RiskMLInterface.MLPrediction anomalyPred =
+        mlInterface.predict("anomaly_detector", testFeatures);
 
     System.out.println("Equipment: Compressor-1");
-    System.out.println("Failure Probability: " + String.format("%.2f", failureProb));
-    System.out.println("Anomaly Score: " + String.format("%.2f", anomalyScore));
+    System.out
+        .println("Failure Probability: " + String.format("%.2f", failurePred.getPrediction()));
+    System.out.println("Anomaly Score: " + String.format("%.2f", anomalyPred.getPrediction()));
 
     System.out.println("\n=== Production Integration ===");
     System.out.println("For production use, replace threshold models with:");

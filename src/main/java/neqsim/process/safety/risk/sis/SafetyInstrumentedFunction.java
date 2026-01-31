@@ -21,7 +21,7 @@ import com.google.gson.GsonBuilder;
  * </ul>
  *
  * <h2>SIL Levels and PFD Ranges</h2>
- * <table summary="SIL levels with corresponding PFD and RRF ranges">
+ * <table>
  * <caption>Safety Integrity Level Requirements</caption>
  * <tr>
  * <th>SIL</th>

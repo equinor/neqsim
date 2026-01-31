@@ -85,14 +85,18 @@ public class RiskFrameworkQuickStart {
   public static void exampleOperationalRiskSimulation() {
     System.out.println("--- Example: Operational Risk Simulation ---");
 
-    // Create simulator
-    OperationalRiskSimulator simulator = new OperationalRiskSimulator("Platform Risk");
-    simulator.setBaseProductionRate(100000.0); // 100,000 Sm3/d
+    // Create a simple process system for demonstration
+    ProcessSystem process = createSimpleProcessSystem();
 
-    // Add equipment with reliability data (MTBF hours, MTTR hours, criticality)
-    simulator.addEquipmentReliability("HP Compressor", 8760, 72, 1.0);
-    simulator.addEquipmentReliability("HP Separator", 17520, 24, 0.8);
-    simulator.addEquipmentReliability("Export Pump", 4380, 48, 0.6);
+    // Create simulator with process system
+    OperationalRiskSimulator simulator = new OperationalRiskSimulator(process);
+    simulator.setFeedStreamName("Feed");
+    simulator.setProductStreamName("Gas Out");
+
+    // Add equipment with reliability data (failure rate per year, MTTR hours)
+    simulator.addEquipmentReliability("HP Compressor", 1.0, 72);
+    simulator.addEquipmentReliability("HP Separator", 0.5, 24);
+    simulator.addEquipmentReliability("Export Pump", 2.0, 48);
 
     // Run Monte Carlo simulation
     OperationalRiskResult result = simulator.runSimulation(1000, 365);
@@ -453,5 +457,37 @@ public class RiskFrameworkQuickStart {
     System.out.println("  Note: Replace placeholder models with trained TensorFlow/PyTorch");
     System.out.println("        models for production use via registerModel().");
     System.out.println();
+  }
+
+  /**
+   * Creates a simple process system for demonstration.
+   *
+   * @return a ProcessSystem with basic equipment
+   */
+  private static ProcessSystem createSimpleProcessSystem() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.9);
+    fluid.addComponent("ethane", 0.07);
+    fluid.addComponent("propane", 0.03);
+    fluid.setMixingRule("classic");
+
+    ProcessSystem process = new ProcessSystem();
+
+    Stream feed = new Stream("Feed", fluid);
+    feed.setFlowRate(10000, "kg/hr");
+    process.add(feed);
+
+    Separator separator = new Separator("HP Separator", feed);
+    process.add(separator);
+
+    Compressor compressor = new Compressor("HP Compressor", separator.getGasOutStream());
+    compressor.setOutletPressure(100.0);
+    process.add(compressor);
+
+    Stream gasOut = new Stream("Gas Out", compressor.getOutletStream());
+    process.add(gasOut);
+
+    process.run();
+    return process;
   }
 }

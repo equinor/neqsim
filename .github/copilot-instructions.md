@@ -11,6 +11,30 @@
 
 ---
 
+## API Consistency (MANDATORY)
+
+When creating example files or documentation that references existing classes:
+
+1. **ALWAYS verify method signatures** before using them - read the actual class to confirm:
+   - Constructor parameters (type and order)
+   - Method names exist and have correct parameter types
+   - Return types match expected usage
+
+2. **Common API verification pattern**:
+   ```
+   # Before writing example code that uses SomeClass:
+   1. Search for the class: file_search("**/SomeClass.java")
+   2. Read constructor and method signatures
+   3. Use only methods that actually exist with correct parameter types
+   ```
+
+3. **Do NOT assume API patterns** - different classes may have different conventions:
+   - Some constructors take `String name`, others take `ProcessSystem`
+   - Method names like `addEquipment` vs `addEquipmentReliability` vs `addEquipmentMtbf`
+   - Parameter counts vary (e.g., 3 params vs 4 params)
+
+---
+
 - **Mission Focus**: NeqSim is a Java toolkit for thermodynamics and process simulation; changes usually affect physical property models (`src/main/java/neqsim/thermo`) or process equipment (`src/main/java/neqsim/process`).
 - **Architecture Overview**: Packages map to the seven base modules in docs/modules.md; keep new code within the existing package boundaries so thermodynamic, property, and process layers stay decoupled.
 - **Thermo Systems**: Fluids are represented by `SystemInterface` implementations such as `SystemSrkEos` or `SystemSrkCPAstatoil`; always set a mixing rule (`setMixingRule("classic")` or numeric CPA rule) and call `createDatabase(true)` when introducing new components.
@@ -46,6 +70,48 @@ column.run();
 - **Community Norms**: Engage on GitHub issues or discussions for design questions; NeqSim has an active user base familiar with thermodynamics and process simulation who can provide valuable insights.
 - **Performance Considerations**: Profile long-running simulations with Java Flight Recorder or VisualVM; optimize critical loops in thermodynamic calculations but prioritize clarity and maintainability in the codebase.
 - **JavaDoc Standards (MANDATORY)**: ALWAYS document all public classes and methods with complete JavaDoc. Required elements: (1) class-level description with `@author` and `@version`, (2) method description, (3) `@param` for every parameter with type and valid range, (4) `@return` describing what is returned, (5) `@throws` for each exception. Before completing any code change, verify JavaDoc is complete and accurate. Update JavaDoc when modifying method signatures.
+
+## JavaDoc HTML5 Compatibility (MANDATORY)
+
+When writing JavaDoc, ensure HTML5 compatibility for the Maven JavaDoc plugin:
+
+### Tables
+- **ALWAYS** include `<caption>` element after `<table>` tag
+- **NEVER** use the `summary` attribute (deprecated in HTML5)
+- Correct format:
+```java
+/**
+ * <table>
+ * <caption>Description of table contents</caption>
+ * <tr><th>Header</th></tr>
+ * <tr><td>Data</td></tr>
+ * </table>
+ */
+```
+
+### @see Tags
+- **NEVER** use `@see` with plain text like `@see IEC 61508` - this causes "reference not found" errors
+- Only use `@see` with valid Java references: `@see ClassName`, `@see #methodName`, `@see package.ClassName#method`
+- For standards references, put them in the description text instead:
+```java
+/**
+ * Implements safety functions per IEC 61508 and IEC 61511 standards.
+ */
+```
+
+### Common JavaDoc Errors to Avoid
+| Error | Cause | Fix |
+|-------|-------|-----|
+| "no summary or caption for table" | Missing `<caption>` | Add `<caption>` after `<table>` |
+| "attribute not supported in HTML5: summary" | Using `summary=""` on table | Remove `summary` attribute |
+| "reference not found" | Invalid `@see` reference | Use valid class/method reference or move to description |
+| "no @param for X" | Missing parameter documentation | Add `@param X description` |
+| "no @return" | Missing return documentation | Add `@return description` |
+| "semicolon missing" | Malformed HTML in JavaDoc | Check HTML tag closure |
+
+### Verification
+Before committing, run `./mvnw javadoc:javadoc` to catch JavaDoc errors early.
+
 - **Java 8 Features**: All new code must be Java 8 compatible; use streams, lambdas, and `Optional` where they enhance readability. NEVER use `String.repeat()` - use `StringUtils.repeat()` from Apache Commons. NEVER use `var`, `List.of()`, `Map.of()`, text blocks, or any Java 9+ syntax.
 - **Validation Framework**: Use `SimulationValidator.validate(object)` before running simulations to catch configuration errors early. When extending equipment, override `validateSetup()` to add custom validation. See `neqsim.util.validation` package and docs/integration/ai_validation_framework.md.
 - **AI-Friendly Error Handling**: Exceptions in `neqsim.util.exception` provide `getRemediation()` hints. When adding new errors, include actionable fix suggestions that AI agents can parse.
