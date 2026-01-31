@@ -651,11 +651,18 @@ FULL_MANUAL_STRUCTURE = {
             ("Well & Choke", "simulation/well_and_choke_simulation.md"),
             ("Well Allocation", "process/equipment/well_allocation.md"),
             ("Pipelines", "process/equipment/pipelines.md"),
+            ("Pipeline Simulation", "process/equipment/pipeline_simulation.md"),
+            ("TwoFluidPipe Model", "process/TWOFLUIDPIPE_MODEL.md"),
+            ("TwoFluidPipe OLGA Comparison", "wiki/two_fluid_model_olga_comparison.md"),
             ("Beggs & Brill", "process/PipeBeggsAndBrills.md"),
+            ("Multiphase Choke Flow", "process/MultiphaseChokeFlow.md"),
             ("Networks", "process/equipment/networks.md"),
+            ("Looped Network Solver", "process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT.md"),
+            ("Pipe Fittings Equivalent Length", "process/PIPE_FITTINGS_EQUIVALENT_LENGTH.md"),
             ("Reservoirs", "process/equipment/reservoirs.md"),
             ("Subsea Systems", "process/equipment/subsea_systems.md"),
             ("Subsea Equipment", "process/equipment/subsea_equipment.md"),
+            ("SURF Subsea Equipment", "process/SURF_SUBSEA_EQUIPMENT.md"),
         ],
         "Chapter 20: Utility Equipment": [
             ("Utility Overview", "process/equipment/util/README.md"),
@@ -672,10 +679,21 @@ FULL_MANUAL_STRUCTURE = {
         ],
         "Chapter 22: Mechanical Design": [
             ("Mechanical Design", "process/mechanical_design.md"),
+            ("Equipment Design Parameters", "process/EQUIPMENT_DESIGN_PARAMETERS.md"),
             ("Design Standards", "process/mechanical_design_standards.md"),
             ("Design Database", "process/mechanical_design_database.md"),
+            ("Pipeline Mechanical Design", "process/pipeline_mechanical_design.md"),
+            ("Topside Piping Design", "process/topside_piping_design.md"),
+            ("Manifold Design", "process/equipment/manifold_design.md"),
+            ("Riser Mechanical Design", "process/riser_mechanical_design.md"),
+            ("Pipeline Design Math", "process/pipeline_mechanical_design_math.md"),
+            ("TEMA Standard Guide", "process/mechanical_design/tema_standard_guide.md"),
+            ("Cost Estimation Framework", "process/COST_ESTIMATION_FRAMEWORK.md"),
+            ("Cost Estimation API", "process/COST_ESTIMATION_API_REFERENCE.md"),
             ("TORG Integration", "process/torg_integration.md"),
-            ("Field Development", "process/field_development_orchestration.md"),
+            ("Field Development Orchestration", "process/field_development_orchestration.md"),
+            ("Design Framework", "process/DESIGN_FRAMEWORK.md"),
+            ("Templates Guide", "process/design/templates_guide.md"),
         ],
         "Chapter 23: Serialization & Persistence": [
             ("Process Serialization", "simulation/process_serialization.md"),
@@ -701,6 +719,9 @@ FULL_MANUAL_STRUCTURE = {
             ("Pipe Wall", "wiki/pipe_wall_heat_transfer.md"),
             ("Interphase", "fluidmechanics/InterphaseHeatMassTransfer.md"),
             ("Mass Transfer", "fluidmechanics/mass_transfer.md"),
+            ("Mass Transfer API", "fluidmechanics/MassTransferAPI.md"),
+            ("Evaporation & Dissolution Tutorial", "fluidmechanics/EvaporationDissolutionTutorial.md"),
+            ("Model Improvements", "fluidmechanics/MASS_TRANSFER_MODEL_IMPROVEMENTS.md"),
         ],
         "Chapter 27: Two-Phase & Multiphase Flow": [
             ("Two-Phase Model", "fluidmechanics/TwoPhasePipeFlowModel.md"),
@@ -751,9 +772,32 @@ FULL_MANUAL_STRUCTURE = {
             ("Safety Chain Tests", "safety/integration_safety_chain_tests.md"),
             ("Scenario Generation", "process/safety/scenario-generation.md"),
         ],
+        "Chapter 35: Risk Simulation Framework": [
+            ("Risk Framework Index", "risk/index.md"),
+            ("Framework Overview", "risk/overview.md"),
+            ("Equipment Failure Modeling", "risk/equipment-failure.md"),
+            ("Risk Matrix", "risk/risk-matrix.md"),
+            ("Monte Carlo Simulation", "risk/monte-carlo.md"),
+            ("Production Impact Analysis", "risk/production-impact.md"),
+            ("Degraded Operation", "risk/degraded-operation.md"),
+            ("Process Topology", "risk/topology.md"),
+            ("STID Tagging", "risk/stid-tagging.md"),
+            ("Dependency Analysis", "risk/dependency-analysis.md"),
+            ("Mathematical Reference", "risk/mathematical-reference.md"),
+            ("API Reference", "risk/api-reference.md"),
+            ("Reliability Data Guide", "risk/RELIABILITY_DATA_GUIDE.md"),
+            ("Physics-Based Integration", "risk/PHYSICS_BASED_RISK_INTEGRATION.md"),
+        ],
+        "Chapter 36: Advanced Risk Framework": [
+            ("Advanced Framework Overview", "risk/README.md"),
+            ("Dynamic Simulation", "risk/dynamic-simulation.md"),
+            ("SIS/SIF Integration", "risk/sis-integration.md"),
+            ("Bow-Tie Analysis", "risk/bowtie-analysis.md"),
+            ("Condition-Based Reliability", "risk/condition-based.md"),
+        ],
     },
     "Part VI: PVT & Flow Assurance": {
-        "Chapter 35: PVT Simulation": [
+        "Chapter 37: PVT Simulation": [
             ("PVT Overview", "pvtsimulation/README.md"),
             ("PVT Workflows", "wiki/pvt_simulation_workflows.md"),
             ("PVT Workflow Module", "pvtsimulation/pvt_workflow.md"),
@@ -761,12 +805,12 @@ FULL_MANUAL_STRUCTURE = {
             ("Whitson Reader", "pvtsimulation/whitson_pvt_reader.md"),
             ("Solution Gas-Water Ratio", "pvtsimulation/SolutionGasWaterRatio.md"),
         ],
-        "Chapter 36: Black Oil Models": [
+        "Chapter 38: Black Oil Models": [
             ("Black Oil Overview", "blackoil/README.md"),
             ("Flash Playbook", "wiki/black_oil_flash_playbook.md"),
             ("Black Oil Export", "pvtsimulation/blackoil_pvt_export.md"),
         ],
-        "Chapter 37: Flow Assurance": [
+        "Chapter 39: Flow Assurance": [
             ("Flow Assurance", "pvtsimulation/flowassurance/README.md"),
             ("Asphaltene Modeling", "pvtsimulation/flowassurance/asphaltene_modeling.md"),
             ("Asphaltene CPA", "pvtsimulation/flowassurance/asphaltene_cpa_calculations.md"),
@@ -775,13 +819,13 @@ FULL_MANUAL_STRUCTURE = {
             ("Parameter Fitting", "pvtsimulation/flowassurance/asphaltene_parameter_fitting.md"),
             ("Validation", "pvtsimulation/flowassurance/asphaltene_validation.md"),
         ],
-        "Chapter 38: Gas Quality": [
+        "Chapter 40: Gas Quality": [
             ("Gas Quality Standards", "wiki/gas_quality_standards_from_tests.md"),
             ("Humid Air", "wiki/humid_air_math.md"),
         ],
     },
     "Part VII: Standards & Quality": {
-        "Chapter 39: ISO Standards": [
+        "Chapter 41: ISO Standards": [
             ("Standards Overview", "standards/README.md"),
             ("ISO 6976", "standards/iso6976_calorific_values.md"),
             ("ISO 6578", "standards/iso6578_lng_density.md"),
@@ -792,26 +836,92 @@ FULL_MANUAL_STRUCTURE = {
         ],
     },
     "Part VIII: Advanced Topics": {
-        "Chapter 40: Future Infrastructure": [
+        "Chapter 42: Process Optimization": [
+            ("Optimization Overview", "process/optimization/README.md"),
+            ("Optimization & Constraints Guide", "process/optimization/OPTIMIZATION_AND_CONSTRAINTS.md"),
+            ("Optimization Start Guide", "process/optimization/OPTIMIZATION_OVERVIEW.md"),
+            ("Capacity Constraint Framework", "process/CAPACITY_CONSTRAINT_FRAMEWORK.md"),
+            ("Optimizer Plugin Architecture", "process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md"),
+            ("Flow Rate Optimization", "process/optimization/flow-rate-optimization.md"),
+            ("Multi-Objective Optimization", "process/optimization/multi-objective-optimization.md"),
+            ("Compressor Optimization Guide", "process/optimization/COMPRESSOR_OPTIMIZATION_GUIDE.md"),
+            ("Practical Examples", "process/optimization/PRACTICAL_EXAMPLES.md"),
+            ("Batch Studies", "process/optimization/batch-studies.md"),
+            ("Bottleneck Analysis", "wiki/bottleneck_analysis.md"),
+        ],
+        "Chapter 43: Field Development": [
+            ("Field Development Overview", "fielddevelopment/README.md"),
+            ("Digital Field Twin", "fielddevelopment/DIGITAL_FIELD_TWIN.md"),
+            ("Mathematical Reference", "fielddevelopment/MATHEMATICAL_REFERENCE.md"),
+            ("API Guide", "fielddevelopment/API_GUIDE.md"),
+            ("Integrated Framework", "fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md"),
+            ("Strategy", "fielddevelopment/FIELD_DEVELOPMENT_STRATEGY.md"),
+            ("Late-Life Operations", "fielddevelopment/LATE_LIFE_OPERATIONS.md"),
+            ("Field Planning", "wiki/field_development_planning.md"),
+            ("Field Engine", "simulation/field_development_engine.md"),
+            ("Economics", "process/economics/README.md"),
+        ],
+        "Chapter 44: Future Infrastructure": [
             ("Future Infrastructure", "process/future-infrastructure.md"),
             ("API Reference", "process/future-api-reference.md"),
         ],
-        "Chapter 41: Integration & APIs": [
-            ("Digital Twins", "integration/README.md"),
+        "Chapter 45: Integration & APIs": [
+            ("Integration Overview", "integration/README.md"),
+            ("Digital Twins", "process/digital-twin-integration.md"),
             ("AI Platform Integration", "integration/ai_platform_integration.md"),
             ("AI Validation Framework", "integration/ai_validation_framework.md"),
+            ("Real-Time Integration", "integration/REAL_TIME_INTEGRATION_GUIDE.md"),
+            ("MPC Integration", "integration/mpc_integration.md"),
+            ("Industrial MPC", "integration/neqsim_industrial_mpc_integration.md"),
+            ("External Optimizer Integration", "integration/EXTERNAL_OPTIMIZER_INTEGRATION.md"),
+            ("DEXPI Reader", "integration/dexpi-reader.md"),
+            ("QRA Integration", "integration/QRA_INTEGRATION_GUIDE.md"),
         ],
-        "Chapter 42: Chemical Reactions": [
+        "Chapter 46: Chemical Reactions": [
             ("Chemical Reactions", "chemicalreactions/README.md"),
+            ("Deep Review", "chemicalreactions/CHEMICAL_REACTION_DEEP_REVIEW.md"),
         ],
-        "Chapter 43: Statistics & Fitting": [
+        "Chapter 47: Statistics & Fitting": [
             ("Statistics Overview", "statistics/README.md"),
+            ("Parameter Fitting", "statistics/parameter_fitting.md"),
+            ("Monte Carlo", "statistics/monte_carlo_simulation.md"),
+            ("Data Analysis", "statistics/data_analysis.md"),
         ],
-        "Chapter 44: Utilities": [
+        "Chapter 48: Utilities": [
             ("Utilities Overview", "util/README.md"),
+            ("Unit Conversion", "util/unit_conversion.md"),
+            ("Optimizer Guide", "util/optimizer_guide.md"),
         ],
-        "Chapter 45: Math Library": [
+        "Chapter 49: Math Library": [
             ("Math Library", "mathlib/README.md"),
+        ],
+    },
+    "Part IX: Developer Guide": {
+        "Chapter 50: Contributing": [
+            ("Development Overview", "development/README.md"),
+            ("Contributing Structure", "development/contributing-structure.md"),
+            ("Developer Setup", "development/DEVELOPER_SETUP.md"),
+        ],
+        "Chapter 51: Testing": [
+            ("Test Overview", "wiki/test-overview.md"),
+            ("Flash Tests", "wiki/flash_equations_and_tests.md"),
+            ("Safety Tests", "safety/integration_safety_chain_tests.md"),
+        ],
+        "Chapter 52: Process Logic Framework": [
+            ("Simulation Overview", "simulation/README.md"),
+            ("Process Logic", "simulation/process_logic_framework.md"),
+            ("Advanced Logic", "simulation/advanced_process_logic.md"),
+            ("Implementation", "simulation/process_logic_implementation_summary.md"),
+            ("Enhancements", "simulation/ProcessLogicEnhancements.md"),
+            ("Runtime Flexibility", "simulation/RuntimeLogicFlexibility.md"),
+            ("Graph-Based", "simulation/graph_based_process_simulation.md"),
+            ("Parallel Simulation", "simulation/parallel_process_simulation.md"),
+            ("Recycle Acceleration", "simulation/recycle_acceleration_guide.md"),
+            ("Process Calculator", "simulation/process_calculator.md"),
+            ("Integrated Workflow", "simulation/INTEGRATED_WORKFLOW_GUIDE.md"),
+            ("Differentiable Thermo", "simulation/differentiable_thermodynamics.md"),
+            ("Derivatives", "simulation/derivatives_and_gradients.md"),
+            ("Equipment Factory", "simulation/equipment_factory.md"),
         ],
     },
 }

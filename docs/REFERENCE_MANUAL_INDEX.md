@@ -271,6 +271,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Networks | [docs/process/equipment/networks.md](process/equipment/networks.md) | Pipeline network modeling |
 | **Looped Network Solver** | [docs/process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT.md](process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT.md) | **Hardy Cross looped network solver for ring mains and parallel pipelines** |
 | **Looped Network Tutorial** | [docs/examples/LoopedPipelineNetworkExample.ipynb](examples/LoopedPipelineNetworkExample.ipynb) | **Interactive notebook: ring mains, offshore rings, loop detection, Hardy Cross** |
+| **Network Solver Tutorial** | [docs/examples/NetworkSolverTutorial.md](examples/NetworkSolverTutorial.md) | **Tutorial for pipeline network solvers with worked examples** |
+| **Pipe Fittings & Equivalent Length** | [docs/process/PIPE_FITTINGS_EQUIVALENT_LENGTH.md](process/PIPE_FITTINGS_EQUIVALENT_LENGTH.md) | **Equivalent length method for fittings: elbows, tees, valves, reducers per CRANE TP-410** |
 | Reservoirs | [docs/process/equipment/reservoirs.md](process/equipment/reservoirs.md) | Reservoir modeling |
 | Subsea Systems | [docs/process/equipment/subsea_systems.md](process/equipment/subsea_systems.md) | Subsea wells and flowlines |
 | Subsea Equipment | [docs/process/equipment/subsea_equipment.md](process/equipment/subsea_equipment.md) | SubseaWell, SimpleFlowLine, flow assurance |
@@ -309,6 +311,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Production Optimization Guide** | [docs/examples/PRODUCTION_OPTIMIZATION_GUIDE.md](examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | **Complete guide to production optimization with Java and Python examples** |
 | **Pressure Boundary Optimization** | [docs/process/pressure_boundary_optimization.md](process/pressure_boundary_optimization.md) | **Calculate flow rates for pressure boundaries, generate Eclipse VFP lift curves, optimize compressor power** |
 | **Flow Rate Optimization** | [docs/process/optimization/flow-rate-optimization.md](process/optimization/flow-rate-optimization.md) | **Comprehensive flow rate optimizer with lift curve generation for Eclipse reservoir simulation** |
+| **Compressor Optimization Guide** | [docs/process/optimization/COMPRESSOR_OPTIMIZATION_GUIDE.md](process/optimization/COMPRESSOR_OPTIMIZATION_GUIDE.md) | **Specialized guide for compressor train optimization, anti-surge control, and power minimization** |
+| **Practical Examples** | [docs/process/optimization/PRACTICAL_EXAMPLES.md](process/optimization/PRACTICAL_EXAMPLES.md) | **Working examples for optimization scenarios including gas processing, LNG, and offshore platforms** |
 
 ### Chapter 23: Mechanical Design
 | Document | Path | Description |
@@ -469,6 +473,7 @@ Comprehensive operational risk simulation framework for equipment failure analys
 | **Mathematical Reference** | [docs/risk/mathematical-reference.md](risk/mathematical-reference.md) | Complete formulas: reliability, system availability, Monte Carlo, risk calculations |
 | **API Reference** | [docs/risk/api-reference.md](risk/api-reference.md) | Full API documentation for all risk simulation classes |
 | **Reliability Data Guide** | [docs/risk/RELIABILITY_DATA_GUIDE.md](risk/RELIABILITY_DATA_GUIDE.md) | OREDA-based reliability data, failure rate sources, equipment categories |
+| **Physics-Based Integration** | [docs/risk/PHYSICS_BASED_RISK_INTEGRATION.md](risk/PHYSICS_BASED_RISK_INTEGRATION.md) | **Integration of physics-based models with risk simulation for dynamic failure analysis** |
 
 ### Chapter 35a: Advanced Risk Framework (**NEW**)
 
@@ -639,11 +644,13 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 ### Chapter 48: Field Development
 | Document | Path | Description |
 |----------|------|-------------|
+| Field Development Overview | [docs/fielddevelopment/README.md](fielddevelopment/README.md) | Field development module overview |
 | **Digital Field Twin** | [docs/fielddevelopment/DIGITAL_FIELD_TWIN.md](fielddevelopment/DIGITAL_FIELD_TWIN.md) | **NEW** Comprehensive architecture for lifecycle consistency |
 | **Mathematical Reference** | [docs/fielddevelopment/MATHEMATICAL_REFERENCE.md](fielddevelopment/MATHEMATICAL_REFERENCE.md) | **NEW** Mathematical foundations for all calculations |
 | **API Guide** | [docs/fielddevelopment/API_GUIDE.md](fielddevelopment/API_GUIDE.md) | **NEW** Detailed usage examples for all components |
 | **Integrated Framework** | [docs/fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md) | PVT→Reservoir→Well→Process integration guide |
 | **Strategy** | [docs/fielddevelopment/FIELD_DEVELOPMENT_STRATEGY.md](fielddevelopment/FIELD_DEVELOPMENT_STRATEGY.md) | Field development strategy and roadmap |
+| **Late-Life Operations** | [docs/fielddevelopment/LATE_LIFE_OPERATIONS.md](fielddevelopment/LATE_LIFE_OPERATIONS.md) | **Turndown, debottlenecking, and decommissioning timing analysis** |
 | Field Planning | [docs/wiki/field_development_planning.md](wiki/field_development_planning.md) | Field development planning |
 | Field Engine | [docs/simulation/field_development_engine.md](simulation/field_development_engine.md) | Field development engine |
 | **Economics** | [docs/process/economics/README.md](process/economics/README.md) | Economics module: NPV, IRR, tax models, decline curves |
@@ -695,6 +702,14 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Transient Slug Example | [docs/examples/transient_slug_separator_control_example.md](examples/transient_slug_separator_control_example.md) | Transient slug example |
 | Selective Logic | [docs/examples/selective-logic-execution.md](examples/selective-logic-execution.md) | Selective logic execution |
 | Comparison Quickstart | [docs/examples/comparesimulations_quickstart.md](examples/comparesimulations_quickstart.md) | Simulation comparison |
+| **PVT Simulation & Tuning** | [docs/examples/PVT_Simulation_and_Tuning.md](examples/PVT_Simulation_and_Tuning.md) | **PVT simulation setup, EoS tuning, and characterization examples** |
+| **TVP/RVP Study** | [docs/examples/TVP_RVP_Study.md](examples/TVP_RVP_Study.md) | **True Vapor Pressure and Reid Vapor Pressure calculations** |
+| **ESP Pump Tutorial** | [docs/examples/ESP_Pump_Tutorial.md](examples/ESP_Pump_Tutorial.md) | **Electric Submersible Pump simulation and sizing** |
+| **Graph-Based Simulation** | [docs/examples/GraphBasedProcessSimulation.md](examples/GraphBasedProcessSimulation.md) | **Graph-based process simulation tutorial** |
+| **Field Development Workflow** | [docs/examples/FieldDevelopmentWorkflow.md](examples/FieldDevelopmentWorkflow.md) | **End-to-end field development workflow example** |
+| **MPC Integration Tutorial** | [docs/examples/MPC_Integration_Tutorial.md](examples/MPC_Integration_Tutorial.md) | **Model Predictive Control integration example** |
+| **AI Platform Integration** | [docs/examples/AIPlatformIntegration.md](examples/AIPlatformIntegration.md) | **AI platform integration tutorial** |
+| Examples Index | [docs/examples/index.md](examples/index.md) | Examples documentation index |
 
 ### Chapter 52: Documentation Infrastructure
 | Document | Path | Description |
@@ -756,21 +771,21 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 |----------|-------|
 | Wiki/Tutorials | 60 |
 | Thermodynamics | 25 |
-| Process Simulation | 45 |
+| Process Simulation | 47 |
 | Safety Systems | 18 |
-| **Risk Simulation** | **12** |
-| Field Development | 10 |
+| **Risk Simulation** | **13** |
+| Field Development | 11 |
 | Integration/AI | 12 |
-| Pipeline/Flow | 15 |
+| Pipeline/Flow | 17 |
 | PVT/Reservoir | 15 |
 | Standards | 6 |
 | Development | 8 |
 | Statistics | 4 |
-| Examples | 3 |
-| **Optimization** | **3** |
+| Examples | 12 |
+| **Optimization** | **5** |
 | **Templates & Design** | **2** |
 | Other | 24 |
-| **Total** | **262** |
+| **Total** | **279** |
 
 ---
 
