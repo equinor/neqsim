@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   convert-notebooks:
@@ -36,11 +37,17 @@ jobs:
         run: |
           git diff --exit-code docs/examples/*.md || echo "changes=true" >> $GITHUB_OUTPUT
       
-      - name: Commit and push changes
+      - name: Create Pull Request
         if: steps.git-check.outputs.changes == 'true'
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add docs/examples/*.md
-          git commit -m "Auto-convert notebooks to Markdown for GitHub Pages"
-          git push
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Auto-convert notebooks to Markdown for GitHub Pages"
+          title: "docs: Auto-convert notebooks to Markdown"
+          body: |
+            This PR was automatically generated to convert Jupyter notebooks to Markdown for GitHub Pages.
+            
+            Changes include updated markdown versions of notebooks in `docs/examples/`.
+          branch: auto-convert-notebooks
+          delete-branch: true
+          labels: documentation, automated
