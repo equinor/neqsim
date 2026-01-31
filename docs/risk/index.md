@@ -13,6 +13,7 @@ This documentation covers NeqSim's comprehensive **Operational Risk Simulation F
 ## 📚 Documentation Structure
 
 ### Core Framework
+
 | Section | Description |
 |---------|-------------|
 | [Overview](overview.md) | Framework architecture and key concepts |
@@ -28,6 +29,7 @@ This documentation covers NeqSim's comprehensive **Operational Risk Simulation F
 | [API Reference](api-reference.md) | Complete Java API documentation |
 
 ### Advanced Risk Framework (P1-P7)
+
 | Section | Description |
 |---------|-------------|
 | [**Advanced Framework Overview**](README.md) | Overview of all 7 priority packages |
