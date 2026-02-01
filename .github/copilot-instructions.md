@@ -190,6 +190,65 @@ Before committing, run `./mvnw javadoc:javadoc` to catch JavaDoc errors early.
 - **Jupyter Notebook Examples**: When creating Jupyter notebook examples, ensure they run end-to-end and reflect the latest API changes; place them in the `notebooks/` directory and link to them from the main documentation. Follow the neqsim-python direct Java API bindings as shown at https://github.com/equinor/neqsim-python?tab=readme-ov-file#4-direct-java-access-full-control
 - **Add markdown files with documentation**: When adding documentation as markdown files be sure to update REFERENCE_MANUAL_INDEX.md applyTo: **/*.md
 
+## Markdown Documentation Guidelines (MANDATORY)
+
+When creating or editing markdown documentation files:
+
+### HTML and Markdown Mixing Rules
+
+**NEVER mix markdown syntax inside HTML block elements.** Many markdown parsers don't process markdown inside `<div>` tags.
+
+| Problematic Pattern | Why It Fails | Solution |
+|---------------------|--------------|----------|
+| `<div>` containing markdown tables (`\|---\|`) | Parser ignores markdown inside HTML blocks | Use pure markdown OR pure HTML |
+| `<div>` containing numbered lists (`1. Item`) | Lists don't render as lists | Remove div wrapper or use `<ol><li>` |
+| `<div>` containing bullet lists (`- Item`) | Lists don't render as lists | Remove div wrapper or use `<ul><li>` |
+
+### Correct Patterns
+
+**For styled content boxes, choose ONE approach:**
+
+1. **Pure Markdown (preferred for tables/lists):**
+   ```markdown
+   ### Section Title
+   
+   **Heading text:**
+   
+   | Column 1 | Column 2 |
+   |----------|----------|
+   | Data     | Data     |
+   
+   > *Note: Use blockquotes for callouts*
+   ```
+
+2. **Pure HTML (for complex styling):**
+   ```html
+   <div style="background: #e8f5e9; padding: 1rem;">
+   <h4>Title</h4>
+   <ul>
+   <li>Item one</li>
+   <li>Item two</li>
+   </ul>
+   </div>
+   ```
+
+### Table Formatting
+
+- Always include a blank line before and after tables
+- Use consistent column separator widths: `|----------|` not `|---|`
+- Ensure header separator row has same column count as data rows
+
+### List Formatting
+
+- Always include a blank line before numbered/bullet lists
+- For nested content after bold headers, add a blank line:
+  ```markdown
+  **Suggested Approach:**
+  
+  1. **Step one:** Description here
+  2. **Step two:** Description here
+  ```
+
 ## Mechanical Design Implementation Pattern (MANDATORY)
 
 When implementing mechanical design for any process equipment, follow this established architecture pattern:
