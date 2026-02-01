@@ -428,21 +428,17 @@ Online emission monitoring enables cultural transformation:
 
 ### Expected Emission Reduction Outcomes
 
-<div style="background: #e8f5e9; border: 2px solid #4caf50; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0;">
-
 **Potential Benefits from Online Emission Monitoring:**
 
 | Emission Source | Potential Improvement | Approach |
-|-----------------|-------------------|-----|
+|-----------------|----------------------|----------|
 | **Produced Water Degassing** | Varies by system | Optimized separator pressures/temperatures |
 | **Flaring** | Significant potential | Real-time flare minimization, better recovery |
 | **Fugitive Emissions** | Case-dependent | Earlier leak detection, faster repair |
 | **Compressor Venting** | Moderate potential | Optimized recycle, reduced blowdowns |
 | **Overall Platform** | Site-specific | Integrated optimization across sources |
 
-*Actual results will depend on specific site conditions and implementation*
-
-</div>
+> *Actual results will depend on specific site conditions and implementation*
 
 ---
 
@@ -543,8 +539,6 @@ Online emission monitoring enables cultural transformation:
 
 ### Implementation Recommendation
 
-<div style="background: #e8f5e9; border: 2px solid #4caf50; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0;">
-
 **NeqSim offers several advantages for emission reporting:**
 
 1. ✅ **Production experience** at Equinor platforms
@@ -556,12 +550,11 @@ Online emission monitoring enables cultural transformation:
 7. ✅ **Extensible** for digital twin and optimization applications
 
 **Suggested Pilot Approach:**
-1. Week 1: Run existing Jupyter tutorials on actual platform data
-2. Week 2: Compare results with current methods
-3. Week 3-4: Develop production workflow with IT integration
-4. Month 2+: Operationalize with monitoring and support procedures
 
-</div>
+1. **Week 1:** Run existing Jupyter tutorials on actual platform data
+2. **Week 2:** Compare results with current methods
+3. **Week 3-4:** Develop production workflow with IT integration
+4. **Month 2+:** Operationalize with monitoring and support procedures
 
 ---
 
