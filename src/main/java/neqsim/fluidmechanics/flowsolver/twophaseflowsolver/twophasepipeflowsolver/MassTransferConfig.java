@@ -8,7 +8,9 @@ package neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolv
  * options. Default values are based on literature recommendations and numerical stability analysis.
  * </p>
  *
- * <h3>Literature References:</h3>
+ * <p>
+ * <strong>Literature References:</strong>
+ * </p>
  * <ul>
  * <li>Krishna, R., Standart, G.L. (1976). Mass and energy transfer in multicomponent systems.
  * Chemical Engineering Communications, 3(4-5), 201-275.</li>

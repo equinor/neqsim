@@ -79,6 +79,15 @@ title: NeqSim Documentation
 </ul>
 </div>
 
+<div class="nav-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border: 1px solid #e1e4e8; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #00897b; color: #24292e; font-size: 1.25rem;">🌱 Emissions & Sustainability</h3>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="emissions/index.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Emissions Hub</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Landing page for all emission documentation</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="emissions/OFFSHORE_EMISSION_REPORTING.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Offshore Reporting Guide</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Regulatory framework, methods, validation</span></li>
+<li style="padding: 0.5rem 0;"><a href="examples/ProducedWaterEmissions_Tutorial.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Emissions Tutorial</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">CO₂, methane, nmVOC from produced water</span></li>
+</ul>
+</div>
+
 </div>
 
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
@@ -128,7 +137,8 @@ System.out.println("Compressibility: " + gas.getZ());
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="process/optimization/OPTIMIZATION_OVERVIEW.html">🎯 Optimization</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Production optimization, multi-objective, constraints</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="risk/index.html">⚠️ Risk & Reliability</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Equipment failure, Monte Carlo, SIS/SIF, bow-tie</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="safety/README.html">🛡️ Safety Systems</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">ESD, HIPPS, PSV, blowdown, alarms</td></tr>
-<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="process/COST_ESTIMATION_FRAMEWORK.html">💰 Cost Estimation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">CAPEX, OPEX, financial metrics (NPV, ROI)</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="examples/ProducedWaterEmissions_Tutorial.html">🌱 Emissions & Sustainability</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">CO₂, methane, nmVOC virtual measurement, Norwegian methods</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="process/COST_ESTIMATION_FRAMEWORK.html">💰 Cost Estimation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">CAPEX, OPEX, financial metrics (NPV, ROI)</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="examples/">💡 Examples</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Tutorials, Jupyter notebooks, code samples</td></tr>
 <tr><td style="padding: 0.875rem 1rem; background: #f6f8fa;"><a href="development/README.html">🔧 Development</a></td><td style="padding: 0.875rem 1rem; background: #f6f8fa;">Contributing guidelines, developer setup</td></tr>
 </tbody>
