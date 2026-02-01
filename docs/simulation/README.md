@@ -23,6 +23,13 @@ This folder contains guides for advanced process simulation topics including pro
 | [RuntimeLogicFlexibility.md](RuntimeLogicFlexibility.md) | Runtime logic flexibility |
 | [process_calculator.md](process_calculator.md) | Process calculators |
 
+### Dynamic & Transient Simulation
+
+| Document | Description |
+|----------|-------------|
+| [dynamic_simulation_guide.md](dynamic_simulation_guide.md) | **Comprehensive dynamic/transient simulation guide** |
+| [derivatives_and_gradients.md](derivatives_and_gradients.md) | Derivatives and gradients for dynamic systems |
+
 ### Simulation Techniques
 
 | Document | Description |
