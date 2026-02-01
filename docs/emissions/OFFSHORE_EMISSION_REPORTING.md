@@ -67,6 +67,13 @@ This document provides comprehensive guidance for calculating and reporting gree
 └──────────────────┴──────────────────┴───────────────────────┘
 ```
 
+> **Implementation Note:** All emission sources shown above are supported in NeqSim. Key classes include:
+> - **Combustion:** `GasTurbine`, `Flare`, `FlareStack`, `FurnaceBurner`, `DetailedEmissionsCalculator`
+> - **Venting:** `ProducedWaterDegassingSystem` (multi-stage CPA-EoS), `EmissionsCalculator`, `Tank`
+> - **Fugitive:** `CompressorMechanicalLosses` (API 692 dry gas seals), EPA component count methods
+>
+> See `DetailedEmissionsCalculator` for facility-level emission inventory calculations.
+
 ### Key Emission Components
 
 | Component | GWP-100 (AR5) | Primary Sources |
