@@ -66,6 +66,8 @@ public class ConfigurableLogicExample {
 
   /**
    * Creates a simple process for demonstration.
+   *
+   * @return the created ProcessSystem with feed, valves, and separator
    */
   private static ProcessSystem createSimpleProcess() {
     ProcessSystem system = new ProcessSystem();
@@ -107,6 +109,9 @@ public class ConfigurableLogicExample {
 
   /**
    * Creates equipment name-to-object mapping for logic factory.
+   *
+   * @param system the ProcessSystem containing equipment to map
+   * @return map of equipment names to their ProcessEquipmentInterface objects
    */
   private static Map<String, ProcessEquipmentInterface> createEquipmentMap(ProcessSystem system) {
     Map<String, ProcessEquipmentInterface> equipmentMap = new HashMap<>();
@@ -121,6 +126,8 @@ public class ConfigurableLogicExample {
 
   /**
    * Demonstrates loading logic from configuration strings.
+   *
+   * @param factory the LogicFactory to use for creating logic instances
    */
   private static void demonstrateConfigStringLogic(LogicFactory factory) {
     System.out.println("\n=== EXAMPLE 1: CONFIGURATION STRING LOGIC ===");
@@ -150,6 +157,8 @@ public class ConfigurableLogicExample {
 
   /**
    * Demonstrates loading logic from simulated configuration file.
+   *
+   * @param factory the LogicFactory to use for creating logic instances
    */
   private static void demonstrateConfigFileLogic(LogicFactory factory) {
     System.out.println("\n=== EXAMPLE 2: CONFIGURATION FILE LOGIC ===");
@@ -187,6 +196,8 @@ public class ConfigurableLogicExample {
 
   /**
    * Demonstrates creating logic from user input.
+   *
+   * @param factory the LogicFactory to use for creating logic instances
    */
   private static void demonstrateUserDefinedLogic(LogicFactory factory) {
     System.out.println("\n=== EXAMPLE 3: USER-DEFINED LOGIC ===");
@@ -228,6 +239,9 @@ public class ConfigurableLogicExample {
 
   /**
    * Parses configuration file content into logic configurations.
+   *
+   * @param content the configuration file content to parse
+   * @return list of ProcessLogicConfig objects parsed from the content
    */
   private static List<ProcessLogicConfig> parseConfigFile(String content) {
     List<ProcessLogicConfig> configs = new ArrayList<>();

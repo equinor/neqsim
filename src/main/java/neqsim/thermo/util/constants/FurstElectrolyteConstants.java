@@ -692,7 +692,6 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * <li>MEG + NaCl gives MORE hydrate inhibition than MEG alone</li>
    * <li>Effects are approximately additive per Hu-Lee-Sum correlation</li>
    * </ul>
-   * </p>
    */
   public static double[] furstParamsOIIon = {
       // Methanol-ion interactions - fitted for additive hydrate inhibition with NaCl
