@@ -60,6 +60,32 @@ Additional documentation and guides:
 
 ---
 
+## 🌱 Emissions & Sustainability
+
+Virtual measurement and reporting of offshore emissions using thermodynamic models. Compliant with Norwegian regulations (Aktivitetsforskriften §70).
+
+**📖 See the full [Emissions Documentation Hub](../emissions/index.html) for comprehensive guides, regulatory references, and API documentation.**
+
+| Document | Description | Run Options |
+|----------|-------------|-------------|
+| **[Produced Water Emissions Tutorial](ProducedWaterEmissions_Tutorial.html)** | Complete guide to emission calculations from produced water. Covers CPA setup, multi-stage degassing, Norwegian handbook comparison, salinity effects, validation. | [Jupyter](ProducedWaterEmissions_Tutorial.ipynb) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/ProducedWaterEmissions_Tutorial.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/ProducedWaterEmissions_Tutorial.ipynb) |
+| **[Norwegian Emission Methods Comparison](NorwegianEmissionMethods_Comparison.html)** | NeqSim vs Norwegian handbook. Validation from Gudrun (GFMW 2023), uncertainty analysis, regulatory context. | Markdown only |
+| **[Offshore Emission Reporting Guide](../emissions/OFFSHORE_EMISSION_REPORTING.html)** | Comprehensive reference: regulatory framework, calculation methods, API, validation, literature. | [Emissions Hub](../emissions/index.html) |
+| **[Java Example](https://github.com/equinor/neqsim/blob/master/docs/examples/OffshoreEmissionReportingExample.java)** | Complete Java code sample for offshore emission reporting. | [View Source](https://github.com/equinor/neqsim/blob/master/docs/examples/OffshoreEmissionReportingExample.java) |
+
+**Topics Covered in Notebook:**
+- ✅ Simple flash calculation setup
+- ✅ Multi-stage degassing (Degasser → CFU → Caisson)
+- ✅ Norwegian handbook method (f_CH4=14, f_nmVOC=3.5)
+- ✅ Method comparison and validation
+- ✅ Salinity effects on gas solubility
+- ✅ Binary interaction parameters (kij)
+- ✅ CO₂ equivalent and GWP calculations
+- ✅ TEG regeneration emissions example
+- ✅ Troubleshooting diagnostics
+
+---
+
 ## Running the Notebooks
 
 ### Prerequisites

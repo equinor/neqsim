@@ -593,10 +593,14 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | ML Surrogate | [docs/process/ml/README.md](process/ml/README.md) | ML surrogate models |
 | Integration Overview | [docs/integration/README.md](integration/README.md) | Integration module |
 
-### Chapter 43: Sustainability
+### Chapter 43: Sustainability & Emissions
 | Document | Path | Description |
 |----------|------|-------------|
-| Emissions Tracking | [docs/process/sustainability/README.md](process/sustainability/README.md) | Emissions tracking |
+| Emissions Tracking | [docs/process/sustainability/README.md](process/sustainability/README.md) | Emissions tracking overview |
+| **Offshore Emission Reporting Guide** | [docs/emissions/OFFSHORE_EMISSION_REPORTING.md](emissions/OFFSHORE_EMISSION_REPORTING.md) | **Comprehensive guide for offshore platform GHG emission reporting with regulatory references** |
+| **Produced Water Emissions Tutorial** | [docs/examples/ProducedWaterEmissions_Tutorial.md](examples/ProducedWaterEmissions_Tutorial.md) | **Comprehensive tutorial for produced water degassing emissions calculation** |
+| **Norwegian Emission Methods Comparison** | [docs/examples/NorwegianEmissionMethods_Comparison.md](examples/NorwegianEmissionMethods_Comparison.md) | **NeqSim vs Norwegian handbook method: validation, uncertainty, regulatory compliance** |
+| **NeqSimLive Integration** | [docs/GFMW_2023_Emissions_Paper.txt](GFMW_2023_Emissions_Paper.txt) | **GFMW 2023 paper: Virtual measurement of emissions using online process simulator** |
 
 ### Chapter 44: Optimization
 | Document | Path | Description |
