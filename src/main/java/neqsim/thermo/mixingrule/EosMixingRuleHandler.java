@@ -3343,7 +3343,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       }
 
       // Handle gas-ion interactions for salting out effect
-      // CO2 and CH4 have specific interaction parameters with ions
+      // CO2, CH4, and other hydrocarbons have specific interaction parameters with ions
       // The Wij compensates for implicit salting effect from FSR2eps*epsi term
       //
       // The implicit salting effect from FSR2eps*epsi varies significantly across
@@ -3353,6 +3353,10 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       // Current approach: Use fixed parameters calibrated for Na+/Cl- (the most common
       // electrolyte in process simulations). This gives ~10% salting out at 1 mol/kg,
       // matching the experimental Setchenow coefficient k_s ~ 0.1 L/mol.
+      //
+      // Heavier hydrocarbons (ethane, propane, butane, pentane) also need proper
+      // gas-ion interaction parameters to exhibit correct salting-out behavior.
+      // Without these, adding hydrocarbons can cause incorrect salting-in effects.
       //
       // Limitations: Other ion pairs (K+, MDEA+, HCO3-, Ca++, etc.) may show different
       // salting behavior. For accurate predictions with specific ion pairs, ion-specific
@@ -3364,35 +3368,62 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       // 2.0 mol/kg: ~18% salting out
 
       for (int i = 0; i < numbcomp; i++) {
-        String nameI = compArray[i].getComponentName();
-        boolean isCO2 = nameI.equals("CO2") || nameI.equalsIgnoreCase("carbon dioxide");
-        boolean isCH4 = nameI.equals("methane") || nameI.equalsIgnoreCase("CH4");
+        String nameI = compArray[i].getComponentName().toLowerCase();
+        boolean isCO2 = nameI.equals("co2") || nameI.equals("carbon dioxide");
+        boolean isCH4 = nameI.equals("methane") || nameI.equals("ch4");
+        boolean isC2H6 = nameI.equals("ethane") || nameI.equals("c2h6");
+        boolean isC3H8 = nameI.equals("propane") || nameI.equals("c3h8");
+        boolean isC4 = nameI.equals("n-butane") || nameI.equals("i-butane") || nameI.equals("n-c4")
+            || nameI.equals("i-c4") || nameI.equals("butane");
+        boolean isC5plus = nameI.equals("n-pentane") || nameI.equals("i-pentane")
+            || nameI.equals("n-c5") || nameI.equals("i-c5") || nameI.equals("pentane")
+            || nameI.equals("n-hexane") || nameI.equals("hexane") || nameI.equals("n-c6")
+            || nameI.equals("n-heptane") || nameI.equals("heptane") || nameI.equals("n-c7")
+            || nameI.equals("n-octane") || nameI.equals("octane") || nameI.equals("n-c8")
+            || nameI.equals("n-nonane") || nameI.equals("nonane") || nameI.equals("n-c9")
+            || nameI.equals("n-decane") || nameI.equals("decane") || nameI.equals("n-c10");
 
-        if (isCO2 || isCH4) {
+        // Check if this is a non-polar hydrocarbon that needs gas-ion parameters
+        boolean isNonPolarHydrocarbon = isCO2 || isCH4 || isC2H6 || isC3H8 || isC4 || isC5plus;
+
+        if (isNonPolarHydrocarbon) {
           for (int j = 0; j < numbcomp; j++) {
             if (wijCalcOrFitted[i][j] == 0) {
               double ionCharge = compArray[j].getIonicCharge();
 
+              // Determine parameter indices based on component type
+              int cationParamIndex;
+              int anionParamIndex;
+              if (isCO2) {
+                cationParamIndex = 0;
+                anionParamIndex = 1;
+              } else if (isCH4) {
+                cationParamIndex = 2;
+                anionParamIndex = 3;
+              } else if (isC2H6) {
+                cationParamIndex = 4;
+                anionParamIndex = 5;
+              } else if (isC3H8) {
+                cationParamIndex = 6;
+                anionParamIndex = 7;
+              } else if (isC4) {
+                cationParamIndex = 8;
+                anionParamIndex = 9;
+              } else { // isC5plus
+                cationParamIndex = 10;
+                anionParamIndex = 11;
+              }
+
               // Gas-cation interaction
               if (ionCharge > 0.01) {
-                if (isCO2) {
-                  wij[0][i][j] =
-                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamGasIon(0);
-                } else { // CH4
-                  wij[0][i][j] =
-                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamGasIon(2);
-                }
+                wij[0][i][j] = neqsim.thermo.util.constants.FurstElectrolyteConstants
+                    .getFurstParamGasIon(cationParamIndex);
                 wij[0][j][i] = wij[0][i][j];
               }
               // Gas-anion interaction
               else if (ionCharge < -0.01) {
-                if (isCO2) {
-                  wij[0][i][j] =
-                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamGasIon(1);
-                } else { // CH4
-                  wij[0][i][j] =
-                      neqsim.thermo.util.constants.FurstElectrolyteConstants.getFurstParamGasIon(3);
-                }
+                wij[0][i][j] = neqsim.thermo.util.constants.FurstElectrolyteConstants
+                    .getFurstParamGasIon(anionParamIndex);
                 wij[0][j][i] = wij[0][i][j];
               }
             }

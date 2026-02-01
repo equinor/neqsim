@@ -622,14 +622,27 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       1.27e-4, // [1] W_CO2-anion
       // CH4-ion interactions - k_s ~ 0.12 L/mol for CH4
       1.05e-4, // [2] W_CH4-cation
-      1.05e-4 // [3] W_CH4-anion
+      1.05e-4, // [3] W_CH4-anion
+      // C2H6 (ethane) - ion interactions - k_s ~ 0.13 L/mol
+      1.10e-4, // [4] W_C2H6-cation
+      1.10e-4, // [5] W_C2H6-anion
+      // C3H8 (propane) - ion interactions - k_s ~ 0.14 L/mol
+      1.15e-4, // [6] W_C3H8-cation
+      1.15e-4, // [7] W_C3H8-anion
+      // C4 (butanes) - ion interactions - k_s ~ 0.15 L/mol
+      1.20e-4, // [8] W_C4-cation
+      1.20e-4, // [9] W_C4-anion
+      // C5+ (pentanes and heavier) - ion interactions - k_s ~ 0.16 L/mol
+      1.25e-4, // [10] W_C5plus-cation
+      1.25e-4 // [11] W_C5plus-anion
   };
 
   /**
    * Get gas-ion interaction parameter.
    *
-   * @param i index: 0-3=legacy fixed params, 4=CO2-ion slope, 5=CO2-ion intercept, 6=CH4-ion slope,
-   *        7=CH4-ion intercept
+   * @param i index: 0=W_CO2-cation, 1=W_CO2-anion, 2=W_CH4-cation, 3=W_CH4-anion, 4=W_C2H6-cation,
+   *        5=W_C2H6-anion, 6=W_C3H8-cation, 7=W_C3H8-anion, 8=W_C4-cation, 9=W_C4-anion,
+   *        10=W_C5plus-cation, 11=W_C5plus-anion
    * @return the Wij parameter value
    */
   public static double getFurstParamGasIon(int i) {
