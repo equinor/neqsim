@@ -2,6 +2,7 @@ package neqsim.process.equipment.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
@@ -77,7 +78,7 @@ public class EmissionsCalculatorTest {
     assertTrue(totalCO2eq >= 0, "CO2 equivalents should be non-negative");
 
     // Verify JSON export works
-    var data = system.toMap();
+    Map<String, Object> data = system.toMap();
     assertTrue(data.containsKey("processConditions"));
     assertTrue(data.containsKey("totalEmissions"));
   }
@@ -109,7 +110,7 @@ public class EmissionsCalculatorTest {
     System.out.println(calc.generateReport());
 
     // Gas composition should show emissions
-    var composition = calc.getGasCompositionMass();
+    Map<String, Double> composition = calc.getGasCompositionMass();
     assertTrue(composition.size() > 0 || calc.getTotalGasRate("kg/hr") == 0,
         "Should have composition or no gas");
   }
@@ -215,7 +216,7 @@ public class EmissionsCalculatorTest {
     assertEquals(expectedNMVOC, calculatedNMVOC, 0.1, "Conventional nmVOC calculation");
 
     // Test combined emissions calculation
-    var convEmissions =
+    Map<String, Double> convEmissions =
         EmissionsCalculator.calculateConventionalEmissions(annualWaterVolume, pressureDrop);
     assertEquals(expectedCH4, convEmissions.get("CH4_tonnes"), 0.1);
     assertEquals(expectedNMVOC, convEmissions.get("nmVOC_tonnes"), 0.1);
@@ -272,7 +273,7 @@ public class EmissionsCalculatorTest {
     // Run and check validation
     system.run();
 
-    var validation = system.getValidationResults();
+    Map<String, Object> validation = system.getValidationResults();
     assertTrue(validation != null, "Validation results should be available");
     assertTrue(validation.containsKey("GWR"), "Should have GWR results");
     assertTrue(validation.containsKey("passesRegulatoryCriteria"),
@@ -281,7 +282,7 @@ public class EmissionsCalculatorTest {
 
     // Check GWR details
     @SuppressWarnings("unchecked")
-    var gwrResults = (java.util.Map<String, Double>) validation.get("GWR");
+    Map<String, Double> gwrResults = (java.util.Map<String, Double>) validation.get("GWR");
     assertTrue(gwrResults.containsKey("model_Sm3_Sm3"), "Should have model GWR");
     assertTrue(gwrResults.containsKey("lab_Sm3_Sm3"), "Should have lab GWR");
     assertTrue(gwrResults.containsKey("deviation_percent"), "Should have deviation");

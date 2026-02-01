@@ -4,11 +4,13 @@
 
 **All code MUST compile with Java 8.** The CI build will FAIL if you use Java 9+ features.
 
+**This applies to ALL Java files including test classes in `src/test/java/`.**
+
 ### FORBIDDEN Java 9+ Features (NEVER USE):
 | Forbidden | Java 8 Alternative |
 |-----------|-------------------|
 | `"str".repeat(n)` | `StringUtils.repeat("str", n)` (Apache Commons) |
-| `var x = ...` | Explicit type declaration: `String x = ...` |
+| `var x = ...` | Explicit type declaration: `String x = ...`, `Map<String, Object> map = ...` |
 | `List.of(a, b)` | `Arrays.asList(a, b)` or `Collections.singletonList(a)` |
 | `Set.of(a, b)` | `new HashSet<>(Arrays.asList(a, b))` |
 | `Map.of(k, v)` | `Collections.singletonMap(k, v)` or HashMap |
@@ -19,6 +21,19 @@
 | Text blocks `"""..."""` | Regular strings with `\n` |
 | Records | Regular class with fields |
 | Pattern matching `instanceof` | Traditional instanceof + cast |
+
+### Common `var` Replacement Examples:
+```java
+// WRONG (Java 10+):
+var map = someMethod.toMap();
+var list = getItems();
+var result = calculate();
+
+// CORRECT (Java 8):
+Map<String, Object> map = someMethod.toMap();
+List<String> list = getItems();
+CalculationResult result = calculate();
+```
 
 ### Required Import for String Repeat:
 ```java

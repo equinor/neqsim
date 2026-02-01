@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -111,7 +112,7 @@ class OREDADataImporterTest {
   void testToMap() {
     OREDADataImporter.ReliabilityRecord record = importer.getRecord("Valve", "Control");
     assertNotNull(record);
-    var map = record.toMap();
+    Map<String, Object> map = record.toMap();
     assertEquals("Valve", map.get("equipmentType"));
     assertEquals("Control", map.get("equipmentClass"));
     assertTrue((Double) map.get("availability") > 0.99);

@@ -84,12 +84,12 @@ This document provides comprehensive guidance for calculating and reporting gree
 
 | Aspect | Conventional (Handbook) | Thermodynamic (NeqSim) |
 |--------|------------------------|------------------------|
-| **Accuracy** | ±50% or worse | ±3.6% (validated) |
-| **CO2 captured** | ❌ No | ✅ Yes |
-| **Salinity effects** | ❌ No | ✅ Yes |
-| **Temperature effects** | Limited | ✅ Full |
-| **Real-time capability** | ❌ No | ✅ Yes |
-| **Regulatory acceptance** | Legacy | Recommended |
+| **Accuracy** | Varies by application | Improved for complex systems |
+| **CO2 accounting** | Simplified approach | Full phase equilibrium |
+| **Salinity effects** | Typically not included | ✅ Included |
+| **Temperature effects** | Basic correlations | ✅ Full thermodynamic |
+| **Real-time capability** | Batch-oriented | ✅ Yes |
+| **Regulatory acceptance** | Established | Increasingly adopted |
 
 ### Conventional Method (Norwegian Handbook)
 
@@ -106,9 +106,9 @@ Where:
 ```
 
 **Limitations:**
-- Ignores CO2 completely (often 50-80% of emissions!)
+- Uses simplified CO2 handling
 - Assumes fixed solubility factors
-- No composition dependency
+- Limited composition dependency
 - No salinity correction
 
 ### Thermodynamic Method (NeqSim)
@@ -136,9 +136,9 @@ NeqSim provides unique advantages for integrating emission calculations into ind
 
 | Advantage | Description | Impact |
 |-----------|-------------|--------|
-| **Physics-Based Modeling** | Rigorous thermodynamic calculations using CPA, SRK, PR equations of state | Accuracy ±3.6% vs ±50% for empirical methods |
-| **Full Component Accounting** | Captures CO2 (often 50-80% of emissions), CH4, nmVOC, H2S, N2 | No hidden emission sources |
-| **Composition Sensitivity** | Tracks changing reservoir composition over field life | Accurate lifetime emission profiles |
+| **Physics-Based Modeling** | Rigorous thermodynamic calculations using CPA, SRK, PR equations of state | Improved accuracy for complex systems |
+| **Full Component Accounting** | Captures CO2, CH4, nmVOC, H2S, N2 | More complete emission inventory |
+| **Composition Sensitivity** | Tracks changing reservoir composition over field life | Composition-dependent emission profiles |
 | **Process Integration** | Emission calculations embedded in full process simulation | Consistent material/energy balances |
 | **Open Source** | Apache 2.0 license, transparent algorithms | Auditable, reproducible, no vendor lock-in |
 
@@ -178,10 +178,10 @@ NeqSim enables high-fidelity digital twins with embedded emission tracking:
 
 | Capability | Traditional Approach | NeqSim-Enabled |
 |------------|---------------------|----------------|
-| Emission tracking | Periodic estimates | Continuous real-time |
-| What-if analysis | Not possible | Full scenario modeling |
-| Optimization target | Process only | Process + emissions |
-| Regulatory reporting | Manual, delayed | Automated, instant |
+| Emission tracking | Periodic estimates | More frequent updates possible |
+| What-if analysis | Limited | Full scenario modeling |
+| Optimization target | Process-focused | Can include emissions |
+| Regulatory reporting | Manual processes | Can be automated |
 
 ```
 Digital Twin Benefits:
@@ -255,17 +255,17 @@ NeqSim provides physics-based foundation for machine learning enhancement:
 | **Soft Sensors** | NeqSim-calibrated emission inferencing | Fill measurement gaps |
 | **Anomaly Detection** | Compare measured vs NeqSim-predicted | Identify fugitive leaks |
 
-### Competitive Advantages vs Commercial Software
+### Comparison with Commercial Software
 
 | Feature | NeqSim | Commercial Tools |
 |---------|--------|------------------|
-| **Cost** | Free (Apache 2.0) | €50k-500k/year licenses |
-| **Transparency** | Full source code access | Black box |
-| **Customization** | Modify/extend freely | Limited/expensive |
+| **Cost** | Free (Apache 2.0) | License fees vary |
+| **Transparency** | Full source code access | Typically limited |
+| **Customization** | Modify/extend freely | Vendor-dependent |
 | **Reproducibility** | Version-controlled, auditable | Vendor-dependent |
-| **API Integration** | Java, Python, REST | Often limited |
-| **Regulatory Defense** | Algorithms visible to auditors | "Trust the vendor" |
-| **Long-term Availability** | Open source community | Vendor business risk |
+| **API Integration** | Java, Python, REST | Varies by product |
+| **Regulatory Defense** | Algorithms visible to auditors | Established track record |
+| **Long-term Availability** | Open source community | Vendor support agreements |
 
 ### Industry 4.0 / IIoT Deployment
 
@@ -318,28 +318,28 @@ NeqSim provides physics-based foundation for machine learning enhancement:
    - Version-controlled calculations
    - Reproducible by third-party verifiers
 
-### Summary: Strategic Value Proposition
+### Summary: Value Proposition
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                    NEQSIM EMISSION INTEGRATION VALUE                │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│   TODAY                         TOMORROW                            │
-│   ─────                         ────────                            │
-│   ✓ Accurate emission reporting  → Automated ESG compliance         │
-│   ✓ Regulatory compliance        → Carbon trading optimization      │
-│   ✓ Digital twin foundation      → Autonomous emission control      │
-│   ✓ Process + emission modeling  → Integrated decarbonization       │
-│   ✓ Open source transparency     → Industry standard adoption       │
+│   CURRENT CAPABILITIES              FUTURE POTENTIAL                │
+│   ────────────────────              ────────────────                │
+│   ✓ Emission reporting              → ESG compliance support         │
+│   ✓ Regulatory support              → Carbon trading integration     │
+│   ✓ Digital twin applications       → Enhanced emission control      │
+│   ✓ Process + emission modeling     → Decarbonization studies        │
+│   ✓ Open source transparency        → Broader industry adoption      │
 │                                                                     │
-│   COMPETITIVE EDGE                                                  │
-│   ────────────────                                                  │
-│   • Physics-based accuracy (±3.6%) beats empirical methods (±50%)   │
-│   • Full component accounting captures hidden CO2 emissions         │
-│   • Open source eliminates vendor lock-in and audit concerns        │
-│   • API-first design enables digital transformation                 │
-│   • Thermodynamic rigor supports emerging H2/NH3/CCUS technologies  │
+│   KEY BENEFITS                                                      │
+│   ────────────                                                      │
+│   • Physics-based calculations for improved accuracy                │
+│   • Full component accounting including dissolved gases             │
+│   • Open source with no vendor lock-in                              │
+│   • API-first design for system integration                         │
+│   • Thermodynamic foundation supports H2/NH3/CCUS applications      │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
@@ -597,7 +597,7 @@ Studies comparing NeqSim virtual measurements with physical sampling:
 |-------|-----------|-------|
 | North Sea field (2022) | 3.6% | 12-month continuous operation |
 | PVT lab validation | 2.1% | Controlled conditions |
-| Conventional method | 50-200% | Systematic under-reporting |
+| Conventional method comparison | Varies | Different assumptions and scope |
 
 ---
 

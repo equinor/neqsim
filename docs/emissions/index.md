@@ -11,7 +11,7 @@ has_children: true
 NeqSim provides physics-based emission calculations for offshore oil & gas operations, enabling accurate regulatory reporting and decarbonization planning.
 
 <div class="highlight-box" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left: 4px solid #4caf50; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-<strong>Key Capability:</strong> Thermodynamic emission calculations achieve <strong>±3.6% accuracy</strong> compared to ±50% for conventional handbook methods, with full CO₂ capture that traditional methods miss entirely.
+<strong>Key Capability:</strong> Thermodynamic emission calculations can provide improved accuracy over conventional methods in many scenarios, with the ability to account for dissolved CO₂ that simplified methods may not fully capture.
 </div>
 
 ---
@@ -81,12 +81,12 @@ NeqSim specializes in **venting emissions** from:
 
 | Aspect | Conventional (Handbook) | Thermodynamic (NeqSim) |
 |--------|------------------------|------------------------|
-| **Accuracy** | ±50% or worse | ±3.6% (validated) |
-| **CO₂ captured** | ❌ No | ✅ Yes (50-80% of total!) |
-| **Salinity effects** | ❌ No | ✅ Yes |
-| **Temperature effects** | Limited | ✅ Full |
-| **Real-time capability** | ❌ No | ✅ Yes |
-| **Regulatory acceptance** | Legacy | Recommended |
+| **Accuracy** | Varies by application | Improved for complex systems |
+| **CO₂ accounting** | Simplified approach | Full phase equilibrium |
+| **Salinity effects** | Typically not included | ✅ Included |
+| **Temperature effects** | Basic correlations | ✅ Full thermodynamic |
+| **Real-time capability** | Batch-oriented | ✅ Yes |
+| **Regulatory acceptance** | Established | Increasingly adopted |
 
 ---
 
@@ -154,7 +154,7 @@ Physics-based CPA equation of state captures water-hydrocarbon interactions prec
 
 <div style="background: #fff3e0; padding: 1rem; border-radius: 8px;">
 <h4 style="margin-top: 0; color: #e65100;">📊 Full Accounting</h4>
-Captures CO₂ (often 50-80% of emissions) that handbook methods miss entirely.
+Captures CO₂ (often ~50% of emissions) that handbook methods miss entirely.
 </div>
 
 <div style="background: #e8f5e9; padding: 1rem; border-radius: 8px;">
@@ -164,7 +164,7 @@ Transparent algorithms auditable by regulators. No vendor lock-in.
 
 <div style="background: #fce4ec; padding: 1rem; border-radius: 8px;">
 <h4 style="margin-top: 0; color: #c2185b;">🚀 Future-Ready</h4>
-Supports digital twins, MPC, CCUS, hydrogen value chains.
+Supports digital twins, live monitoring, online optimization, CO2 and hydrogen value chains.
 </div>
 
 </div>
@@ -195,10 +195,10 @@ Traditional emission reporting is **retrospective** — operators only see their
 │                         X tonnes           │     X kg/hr — let's       │
 │                         last quarter"      │     reduce it NOW"        │
 │                                            │                            │
-│   ❌ Too late to act                       ✅ Immediate feedback        │
-│   ❌ No cause-effect visibility            ✅ Link operations→emissions │
-│   ❌ Compliance-driven only                ✅ Optimization-driven       │
-│   ❌ Annual improvement cycles             ✅ Continuous improvement    │
+│   Limited time to act                      ✅ Faster feedback           │
+│   Less cause-effect visibility             ✅ Better operations linkage │
+│   Primarily compliance-driven              ✅ Enables optimization      │
+│   Periodic improvement cycles              ✅ Supports continuous review│
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -249,13 +249,13 @@ Traditional emission reporting is **retrospective** — operators only see their
 
 Online emission calculation transforms the operator mindset:
 
-| Traditional Mindset | Online-Enabled Mindset |
+| Traditional Approach | Online-Enabled Approach |
 |---------------------|------------------------|
-| "Emissions are someone else's problem" | "I can see and influence emissions" |
-| "We report annually for compliance" | "We optimize daily for lower emissions" |
-| "Reduction targets feel arbitrary" | "I see exactly what drives emissions" |
-| "No feedback on my actions" | "Immediate impact visibility" |
-| "Emissions are just reported" | "Emissions are actively reduced" |
+| "Emissions reporting is periodic" | "I can monitor emissions more frequently" |
+| "We focus on compliance requirements" | "We can combine compliance with optimization" |
+| "Targets are set at planning stage" | "Better understanding of emission drivers" |
+| "Feedback comes in reports" | "More timely feedback available" |
+| "Emissions are reported as required" | "Emissions can be tracked and optimized" |
 
 ### Key Use Cases for Operators
 
@@ -430,17 +430,17 @@ Online emission monitoring enables cultural transformation:
 
 <div style="background: #e8f5e9; border: 2px solid #4caf50; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0;">
 
-**Typical Results from Online Emission Monitoring:**
+**Potential Benefits from Online Emission Monitoring:**
 
-| Emission Source | Typical Reduction | How |
+| Emission Source | Potential Improvement | Approach |
 |-----------------|-------------------|-----|
-| **Produced Water Degassing** | 15-40% | Optimized separator pressures/temperatures |
-| **Flaring** | 20-50% | Real-time flare minimization, better recovery |
-| **Fugitive Emissions** | 10-30% | Early leak detection, faster repair |
-| **Compressor Venting** | 10-25% | Optimized recycle, reduced blowdowns |
-| **Overall Platform** | 10-25% | Integrated optimization across sources |
+| **Produced Water Degassing** | Varies by system | Optimized separator pressures/temperatures |
+| **Flaring** | Significant potential | Real-time flare minimization, better recovery |
+| **Fugitive Emissions** | Case-dependent | Earlier leak detection, faster repair |
+| **Compressor Venting** | Moderate potential | Optimized recycle, reduced blowdowns |
+| **Overall Platform** | Site-specific | Integrated optimization across sources |
 
-*Results based on field deployments at Norwegian offshore platforms*
+*Actual results will depend on specific site conditions and implementation*
 
 </div>
 
@@ -451,18 +451,6 @@ Online emission monitoring enables cultural transformation:
 <div class="highlight-box" style="background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%); border-left: 4px solid #3f51b5; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
 <strong>Key Question:</strong> "Is NeqSim mature enough for implementation considering support, documentation, and expertise?"
 </div>
-
-### ✅ Maturity & Production Track Record
-
-| Aspect | Evidence |
-|--------|----------|
-| **Development History** | 20+ years of continuous development (started 2000s at NTNU/Statoil) |
-| **Production Use** | Deployed at Equinor platforms including Gudrun, Gina Krog, Johan Sverdrup |
-| **Validation** | Validated against field data with ±3.6% accuracy (GFMW 2023 paper) |
-| **Regulatory Acceptance** | Approved by Norwegian Petroleum Directorate for emission reporting |
-| **Industry Recognition** | Published in SPE/IOGP conferences, peer-reviewed journals |
-| **Active Development** | Regular releases on Maven Central, 1000+ commits/year |
-| **Test Coverage** | Comprehensive test suite, CI/CD with Azure Pipelines |
 
 ### ✅ Support Infrastructure
 
@@ -544,32 +532,32 @@ Online emission monitoring enables cultural transformation:
 
 | Aspect | NeqSim | Commercial Tools |
 |--------|--------|------------------|
-| **License Cost** | Free (Apache 2.0) | €50k-500k/year |
-| **Source Code Access** | ✅ Full | ❌ Black box |
-| **Customization** | ✅ Unlimited | Limited/expensive |
+| **License Cost** | Free (Apache 2.0) | Varies by vendor |
+| **Source Code Access** | ✅ Full | Typically limited |
+| **Customization** | ✅ Open | Vendor-dependent |
 | **Audit Trail** | ✅ Git history | Vendor-dependent |
-| **Regulatory Defense** | ✅ Show algorithms | "Trust the vendor" |
-| **Long-term Availability** | ✅ Open source | Vendor business risk |
-| **Integration Flexibility** | ✅ Java/Python/REST | Often limited |
+| **Regulatory Defense** | ✅ Transparent algorithms | Established track record |
+| **Long-term Availability** | ✅ Open source | Vendor support agreements |
+| **Integration Flexibility** | ✅ Java/Python/REST | Varies by product |
 | **Support** | Community + Equinor | Vendor SLA |
 
 ### Implementation Recommendation
 
 <div style="background: #e8f5e9; border: 2px solid #4caf50; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0;">
 
-**For emission reporting implementation, NeqSim is recommended because:**
+**NeqSim offers several advantages for emission reporting:**
 
-1. ✅ **Proven in production** at Equinor platforms for 5+ years
-2. ✅ **Validated accuracy** (±3.6%) accepted by Norwegian authorities  
-3. ✅ **Complete documentation** from quick-start to advanced API
-4. ✅ **Multiple support channels** including internal Equinor experts
-5. ✅ **Low barrier to entry** with browser-runnable notebooks
-6. ✅ **No vendor lock-in** or recurring license costs
-7. ✅ **Future-proof** for digital twin, MPC, decarbonization initiatives
+1. ✅ **Production experience** at Equinor platforms
+2. ✅ **Validation studies** performed against field data  
+3. ✅ **Documentation available** from quick-start to advanced API
+4. ✅ **Support channels** including community and internal experts
+5. ✅ **Accessible** with browser-runnable notebooks
+6. ✅ **Open source** with no recurring license costs
+7. ✅ **Extensible** for digital twin and optimization applications
 
 **Suggested Pilot Approach:**
 1. Week 1: Run existing Jupyter tutorials on actual platform data
-2. Week 2: Compare results with current handbook method
+2. Week 2: Compare results with current methods
 3. Week 3-4: Develop production workflow with IT integration
 4. Month 2+: Operationalize with monitoring and support procedures
 
@@ -865,14 +853,14 @@ plt.show()
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Emission Reduction Impact
+### Potential Emission Reduction Impact
 
-| Metric | Typical Improvement | Environmental Benefit |
+| Metric | Potential Range | Environmental Benefit |
 |--------|--------------------|-----------------------|
-| **CO₂ Equivalent Reduction** | 10-30% | 5,000-50,000 tonnes CO₂eq/year avoided |
-| **Methane Reduction** | 15-40% | High-GWP gas reduction (28× CO₂ impact) |
-| **Flaring Reduction** | 20-50% | Direct combustion emissions avoided |
-| **Reporting Accuracy** | ±50% → ±5% | Correct baseline for improvement tracking |
+| **CO₂ Equivalent Reduction** | Site-dependent | Tonnes CO₂eq/year reduction possible |
+| **Methane Reduction** | Varies by source | High-GWP gas reduction (28× CO₂ impact) |
+| **Flaring Reduction** | Varies by operation | Direct combustion emissions avoided |
+| **Reporting Accuracy** | Improved | Better baseline for improvement tracking |
 
 ### Integration with NeqSim Production Optimizer
 
