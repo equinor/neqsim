@@ -3382,11 +3382,17 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
             || nameI.equals("n-octane") || nameI.equals("octane") || nameI.equals("n-c8")
             || nameI.equals("n-nonane") || nameI.equals("nonane") || nameI.equals("n-c9")
             || nameI.equals("n-decane") || nameI.equals("decane") || nameI.equals("n-c10");
+        // Inert gases
+        boolean isN2 = nameI.equals("nitrogen") || nameI.equals("n2");
+        boolean isH2S = nameI.equals("h2s") || nameI.equals("hydrogen sulfide")
+            || nameI.equals("hydrogensulfide");
+        boolean isH2 = nameI.equals("hydrogen") || nameI.equals("h2");
 
-        // Check if this is a non-polar hydrocarbon that needs gas-ion parameters
-        boolean isNonPolarHydrocarbon = isCO2 || isCH4 || isC2H6 || isC3H8 || isC4 || isC5plus;
+        // Check if this is a non-polar gas/hydrocarbon that needs gas-ion parameters
+        boolean isNonPolarGas =
+            isCO2 || isCH4 || isC2H6 || isC3H8 || isC4 || isC5plus || isN2 || isH2S || isH2;
 
-        if (isNonPolarHydrocarbon) {
+        if (isNonPolarGas) {
           for (int j = 0; j < numbcomp; j++) {
             if (wijCalcOrFitted[i][j] == 0) {
               double ionCharge = compArray[j].getIonicCharge();
@@ -3409,6 +3415,15 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
               } else if (isC4) {
                 cationParamIndex = 8;
                 anionParamIndex = 9;
+              } else if (isN2) {
+                cationParamIndex = 12;
+                anionParamIndex = 13;
+              } else if (isH2S) {
+                cationParamIndex = 14;
+                anionParamIndex = 15;
+              } else if (isH2) {
+                cationParamIndex = 16;
+                anionParamIndex = 17;
               } else { // isC5plus
                 cationParamIndex = 10;
                 anionParamIndex = 11;
@@ -3425,6 +3440,63 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                 wij[0][i][j] = neqsim.thermo.util.constants.FurstElectrolyteConstants
                     .getFurstParamGasIon(anionParamIndex);
                 wij[0][j][i] = wij[0][i][j];
+              }
+            }
+          }
+        }
+      }
+
+      // Handle organic inhibitor-ion (OI-ion) interactions for additive hydrate inhibition
+      // Per Hu-Lee-Sum correlation (AIChE Journal, 2017-2018), the water activity effects
+      // from salts and organic inhibitors should be ADDITIVE:
+      // ln(a_w) = ln(a_w^salt) + ln(a_w^OI)
+      //
+      // These parameters ensure that combined methanol+salt or MEG+salt gives MORE
+      // hydrate inhibition than the inhibitor alone, not less.
+      for (int i = 0; i < numbcomp; i++) {
+        String nameI = compArray[i].getComponentName().toLowerCase();
+        boolean isMeOH = nameI.equals("methanol") || nameI.equals("meoh");
+        boolean isMEG = nameI.equals("meg") || nameI.equals("ethylene glycol");
+        boolean isEtOH = nameI.equals("ethanol") || nameI.equals("etoh");
+
+        boolean isOI = isMeOH || isMEG || isEtOH;
+
+        if (isOI) {
+          for (int j = 0; j < numbcomp; j++) {
+            if (wijCalcOrFitted[i][j] == 0) {
+              double ionCharge = compArray[j].getIonicCharge();
+
+              // Determine parameter indices based on organic inhibitor type
+              int cationParamIndex;
+              int anionParamIndex;
+              if (isMeOH) {
+                cationParamIndex = 0;
+                anionParamIndex = 1;
+              } else if (isMEG) {
+                cationParamIndex = 2;
+                anionParamIndex = 3;
+              } else { // isEtOH
+                cationParamIndex = 4;
+                anionParamIndex = 5;
+              }
+
+              // OI-cation interaction - only apply if parameter is non-zero
+              if (ionCharge > 0.01) {
+                double oiCationParam = neqsim.thermo.util.constants.FurstElectrolyteConstants
+                    .getFurstParamOIIon(cationParamIndex);
+                if (Math.abs(oiCationParam) > 1e-20) {
+                  wij[0][i][j] = oiCationParam;
+                  wij[0][j][i] = wij[0][i][j];
+                }
+              }
+              // OI-anion interaction - only apply if parameter is non-zero
+              else if (ionCharge < -0.01) {
+                double oiAnionParam = neqsim.thermo.util.constants.FurstElectrolyteConstants
+                    .getFurstParamOIIon(anionParamIndex);
+                if (Math.abs(oiAnionParam) > 1e-20) {
+                  wij[0][i][j] = oiAnionParam;
+                  wij[0][j][i] = wij[0][i][j];
+                }
               }
             }
           }

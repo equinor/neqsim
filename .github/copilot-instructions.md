@@ -169,8 +169,47 @@ When writing JavaDoc, ensure HTML5 compatibility for the Maven JavaDoc plugin:
 | "reference not found" | Invalid `@see` reference | Use valid class/method reference or move to description |
 | "no @param for X" | Missing parameter documentation | Add `@param X description` |
 | "no @return" | Missing return documentation | Add `@return description` |
+| "no @throws for X" | Method throws exception without doc | Add `@throws X description` |
+| "unexpected end tag" | Mismatched HTML tags like extra `</p>` | Check tag nesting, remove orphan closing tags |
 | "semicolon missing" | Malformed HTML in JavaDoc | Check HTML tag closure |
 | "bad use of '>'" | Lambda arrow `->` or comparison `>` in JavaDoc | Use `&gt;` for `>` or rewrite lambdas as anonymous classes |
+
+### Methods with throws Clause (CRITICAL)
+- **EVERY** method with a `throws` clause MUST have `@throws` documentation for each exception
+- This applies to ALL methods including private methods
+- Format:
+```java
+/**
+ * Writes data to the output.
+ *
+ * @param out the appendable to write to
+ * @param data the data to write
+ * @throws IOException if an I/O error occurs during writing
+ */
+private void writeData(Appendable out, String data) throws IOException {
+```
+
+### HTML Tag Nesting
+- **NEVER** have orphan closing tags (e.g., `</p>` without matching `<p>`)
+- Check that `<ul>` lists end with `</ul>`, not `</p>`
+- Common mistake: ending a list with `</ul></p>` when there's no opening `<p>` after the list
+- Wrong:
+```java
+/**
+ * <ul>
+ * <li>Item one</li>
+ * </ul>
+ * </p>
+ */
+```
+- Correct:
+```java
+/**
+ * <ul>
+ * <li>Item one</li>
+ * </ul>
+ */
+```
 
 ### Lambda Expressions in JavaDoc Examples
 - **NEVER** use lambda arrow syntax (`->`) in JavaDoc code examples - it causes HTML parsing errors

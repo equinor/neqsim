@@ -270,6 +270,9 @@ public class EclipseVFPExporter implements Serializable {
 
   /**
    * Writes VFPINJ content.
+   *
+   * @param out the appendable to write content to
+   * @throws IOException if an I/O error occurs
    */
   private void writeVFPINJContent(Appendable out) throws IOException {
     out.append("-- ").append(tableTitle).append("\n");
@@ -298,6 +301,9 @@ public class EclipseVFPExporter implements Serializable {
 
   /**
    * Writes VFPEXP (export system) table.
+   *
+   * @param writer the writer to write the table to
+   * @throws IOException if an I/O error occurs
    */
   private void writeVFPEXP(BufferedWriter writer) throws IOException {
     StringBuilder sb = new StringBuilder();
@@ -337,6 +343,10 @@ public class EclipseVFPExporter implements Serializable {
 
   /**
    * Writes an array of values in Eclipse format.
+   *
+   * @param out the appendable to write values to
+   * @param values the array of values to write
+   * @throws IOException if an I/O error occurs
    */
   private void writeArray(Appendable out, double[] values) throws IOException {
     if (values == null || values.length == 0) {
@@ -360,6 +370,7 @@ public class EclipseVFPExporter implements Serializable {
    * @param out output appendable
    * @param values array of values
    * @param valuesPerLine number of values per line before wrapping
+   * @throws IOException if an I/O error occurs
    */
   private void writeArraySplitLines(Appendable out, double[] values, int valuesPerLine)
       throws IOException {
@@ -390,6 +401,9 @@ public class EclipseVFPExporter implements Serializable {
    * <p>
    * Missing values are filled with nearest valid value from same row.
    * </p>
+   *
+   * @param out the appendable to write tables to
+   * @throws IOException if an I/O error occurs
    */
   private void writeBHPTablesWithIndex(Appendable out) throws IOException {
     if (BHPTable == null) {
@@ -471,6 +485,9 @@ public class EclipseVFPExporter implements Serializable {
 
   /**
    * Writes BHP tables (5D array).
+   *
+   * @param out the appendable to write tables to
+   * @throws IOException if an I/O error occurs
    */
   private void writeBHPTables(Appendable out) throws IOException {
     if (BHPTable == null) {
@@ -507,6 +524,9 @@ public class EclipseVFPExporter implements Serializable {
 
   /**
    * Writes injection BHP table (2D).
+   *
+   * @param out the appendable to write table to
+   * @throws IOException if an I/O error occurs
    */
   private void writeInjectionBHPTable(Appendable out) throws IOException {
     int nFlow = flowRates != null ? flowRates.length : 0;
