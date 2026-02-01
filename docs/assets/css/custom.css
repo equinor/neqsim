@@ -102,8 +102,13 @@
   height: 10px;
 }
 
-.nav-dropdown:hover .nav-dropdown-content {
+.nav-dropdown:hover .nav-dropdown-content,
+.nav-dropdown.is-open .nav-dropdown-content {
   display: block;
+}
+
+.nav-dropdown.is-open .nav-dropdown-btn svg {
+  transform: rotate(180deg);
 }
 
 .nav-dropdown-content a {

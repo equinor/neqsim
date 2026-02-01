@@ -3,6 +3,7 @@
  * - Copy button for code blocks
  * - Auto-generated table of contents
  * - Edit on GitHub link
+ * - Mobile-friendly dropdown menus
  */
 
 (function() {
@@ -12,7 +13,55 @@
     addCopyButtons();
     generateTableOfContents();
     addEditLink();
+    initMobileDropdowns();
   });
+
+  /**
+   * Initialize mobile-friendly dropdown menus
+   * Adds click/touch support for dropdown buttons since :hover doesn't work on touch devices
+   */
+  function initMobileDropdowns() {
+    var dropdownBtns = document.querySelectorAll('.nav-dropdown-btn');
+    
+    dropdownBtns.forEach(function(btn) {
+      var dropdown = btn.closest('.nav-dropdown');
+      var content = dropdown.querySelector('.nav-dropdown-content');
+      
+      // Handle click/touch on dropdown button
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Close all other dropdowns first
+        document.querySelectorAll('.nav-dropdown').forEach(function(d) {
+          if (d !== dropdown) {
+            d.classList.remove('is-open');
+          }
+        });
+        
+        // Toggle this dropdown
+        dropdown.classList.toggle('is-open');
+      });
+    });
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.nav-dropdown')) {
+        document.querySelectorAll('.nav-dropdown').forEach(function(d) {
+          d.classList.remove('is-open');
+        });
+      }
+    });
+    
+    // Close dropdowns when pressing Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.nav-dropdown').forEach(function(d) {
+          d.classList.remove('is-open');
+        });
+      }
+    });
+  }
 
   /**
    * Add copy buttons to all code blocks
