@@ -991,12 +991,11 @@ public abstract class Component implements ComponentInterface {
     }
     if (newx < 0) {
       x = 1.0e-50;
-    }
-    if (newx > 0) {
-      x = newx;
-    }
-    if (newx > 5) {
+    } else if (newx > 5) {
       x = 5;
+    } else {
+      // Accept zero and positive values (including exact 0.0)
+      x = newx;
     }
   }
 

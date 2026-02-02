@@ -416,6 +416,18 @@ public class TPmultiflash extends TPflash {
       }
     }
     // boolean checkdForHCmix = false;
+
+    // OPTIMIZATION: Check if system has ions - if so, we know an aqueous phase must exist
+    // and we can skip water as a trial component (water-rich phase is guaranteed stable)
+    boolean systemHasIons = false;
+    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+      if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+          && system.getPhase(0).getComponent(i).getz() > 1e-20) {
+        systemHasIons = true;
+        break;
+      }
+    }
+
     for (int j = system.getPhase(0).getNumberOfComponents() - 1; j >= 0; j--) {
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getx() < 1e-100
           || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getIonicCharge() != 0)
@@ -423,10 +435,31 @@ public class TPmultiflash extends TPflash {
               && j != hydrocarbonTestCompNumb && j != lightTestCompNumb)) {
         continue;
       }
+
+      // OPTIMIZATION: Skip water and MEG as trial components when ions are present
+      // Ions force existence of an aqueous phase, so water-rich trial is redundant
+      if (systemHasIons) {
+        String compName = minimumGibbsEnergySystem.getPhase(0).getComponent(j).getName();
+        if (compName.equals("water") || compName.equals("MEG") || compName.equals("TEG")
+            || compName.equals("DEG") || compName.equals("methanol")
+            || compName.equals("ethanol")) {
+          // Mark as stable (tm > 0 means stable)
+          tm[j] = 1.0;
+          continue;
+        }
+      }
+
       double nomb = 0.0;
       for (int cc = 0; cc < system.getPhase(0).getNumberOfComponents(); cc++) {
         // Pure component trial phase: component j = 1.0, others = trace
-        nomb = cc == j ? 1.0 : 1.0e-12;
+        // OPTIMIZATION: Set ions to exactly 0 to skip expensive electrolyte calculations
+        // Ions don't participate in vapor-liquid equilibrium, so their trial phase
+        // contribution is not needed for stability analysis
+        if (system.getPhase(0).getComponent(cc).getIonicCharge() != 0) {
+          nomb = 0.0;
+        } else {
+          nomb = cc == j ? 1.0 : 1.0e-12;
+        }
         if (system.getPhase(0).getComponent(cc).getz() < 1e-100) {
           nomb = 0.0;
         }
@@ -1070,6 +1103,17 @@ public class TPmultiflash extends TPflash {
       }
     }
 
+    // OPTIMIZATION: Check if system has ions - if so, we know an aqueous phase must exist
+    // and we can skip water as a trial component (water-rich phase is guaranteed stable)
+    boolean systemHasIons = false;
+    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+      if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+          && system.getPhase(0).getComponent(i).getz() > 1e-20) {
+        systemHasIons = true;
+        break;
+      }
+    }
+
     for (int j = 0; j < system.getNumberOfComponents(); j++) {
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getx() < 1e-100
           || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getIonicCharge() != 0)
@@ -1078,9 +1122,27 @@ public class TPmultiflash extends TPflash {
         continue;
       }
 
+      // OPTIMIZATION: Skip water and MEG as trial components when ions are present
+      // Ions force existence of an aqueous phase, so water-rich trial is redundant
+      if (systemHasIons) {
+        String compName = minimumGibbsEnergySystem.getPhase(0).getComponent(j).getName();
+        if (compName.equals("water") || compName.equals("MEG") || compName.equals("TEG")
+            || compName.equals("DEG") || compName.equals("methanol")
+            || compName.equals("ethanol")) {
+          // Mark as stable (tm > 0 means stable)
+          tm[j] = 1.0;
+          continue;
+        }
+      }
+
       double nomb = 0.0;
       for (int cc = 0; cc < system.getPhase(0).getNumberOfComponents(); cc++) {
-        nomb = cc == j ? 1.0 : 1.0e-12;
+        // OPTIMIZATION: Set ions to exactly 0 to skip expensive electrolyte calculations
+        if (system.getPhase(0).getComponent(cc).getIonicCharge() != 0) {
+          nomb = 0.0;
+        } else {
+          nomb = cc == j ? 1.0 : 1.0e-12;
+        }
         if (system.getPhase(0).getComponent(cc).getz() < 1e-100) {
           nomb = 0.0;
         }
