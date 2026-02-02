@@ -22,13 +22,14 @@
    */
   function initMobileDropdowns() {
     var dropdownBtns = document.querySelectorAll('.nav-dropdown-btn');
+    var isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     
     dropdownBtns.forEach(function(btn) {
       var dropdown = btn.closest('.nav-dropdown');
       var content = dropdown.querySelector('.nav-dropdown-content');
       
-      // Handle click/touch on dropdown button
-      btn.addEventListener('click', function(e) {
+      // Function to toggle dropdown
+      function toggleDropdown(e) {
         e.preventDefault();
         e.stopPropagation();
         
@@ -41,17 +42,34 @@
         
         // Toggle this dropdown
         dropdown.classList.toggle('is-open');
-      });
+      }
+      
+      // Handle both click and touch events
+      btn.addEventListener('click', toggleDropdown);
+      
+      // For touch devices, also listen for touchend to ensure responsiveness
+      if (isTouchDevice) {
+        btn.addEventListener('touchend', function(e) {
+          // Prevent the click event from also firing
+          e.preventDefault();
+          toggleDropdown(e);
+        }, { passive: false });
+      }
     });
     
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function(e) {
+    // Close dropdowns when clicking/touching outside
+    function closeAllDropdowns(e) {
       if (!e.target.closest('.nav-dropdown')) {
         document.querySelectorAll('.nav-dropdown').forEach(function(d) {
           d.classList.remove('is-open');
         });
       }
-    });
+    }
+    
+    document.addEventListener('click', closeAllDropdowns);
+    if (isTouchDevice) {
+      document.addEventListener('touchend', closeAllDropdowns);
+    }
     
     // Close dropdowns when pressing Escape
     document.addEventListener('keydown', function(e) {
@@ -60,6 +78,15 @@
           d.classList.remove('is-open');
         });
       }
+    });
+    
+    // Close dropdown when a link inside is clicked/touched
+    document.querySelectorAll('.nav-dropdown-content a').forEach(function(link) {
+      link.addEventListener('click', function() {
+        document.querySelectorAll('.nav-dropdown').forEach(function(d) {
+          d.classList.remove('is-open');
+        });
+      });
     });
   }
 
