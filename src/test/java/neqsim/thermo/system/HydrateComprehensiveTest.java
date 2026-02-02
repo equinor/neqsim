@@ -550,7 +550,8 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
     fluid.setTemperature(273.15 + hydrateTemp - 5.0); // 5°C below hydrate point
     ops.hydrateTPflash(); // Use hydrate-specific flash
 
-    System.out.println("\nAt " + (hydrateTemp - 5.0) + "°C (below hydrate point) using hydrateTPflash:");
+    System.out
+        .println("\nAt " + (hydrateTemp - 5.0) + "°C (below hydrate point) using hydrateTPflash:");
     System.out.println("Number of phases: " + fluid.getNumberOfPhases());
     boolean hasHydrate = false;
     boolean hasGas = false;
@@ -586,7 +587,8 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
     System.out.println("\nGas-hydrate equilibrium test completed!");
     System.out.println("The hydrateFormationTemperature algorithm correctly calculates");
     System.out.println("the temperature where water fugacity in gas equals hydrate fugacity.");
-    System.out.println("This handles gas-hydrate equilibrium regardless of aqueous phase presence.");
+    System.out
+        .println("This handles gas-hydrate equilibrium regardless of aqueous phase presence.");
   }
 
   /**
