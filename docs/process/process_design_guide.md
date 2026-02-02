@@ -257,7 +257,7 @@ if (validation.isValid()) {
     System.out.println("All equipment meets design requirements");
 } else {
     System.out.println("Design issues found:");
-    for (var msg : validation.getMessages()) {
+    for (DesignValidationResult.Message msg : validation.getMessages()) {
         System.out.println("  " + msg.getSeverity() + ": " + msg.getMessage());
     }
 }
@@ -471,7 +471,7 @@ public class ProcessDesignExample {
             System.out.println(orchestrator.generateDesignReport());
         } else {
             System.out.println("Design FAILED");
-            for (var msg : validation.getMessagesBySeverity(
+            for (DesignValidationResult.Message msg : validation.getMessagesBySeverity(
                     DesignValidationResult.Severity.ERROR)) {
                 System.err.println("ERROR: " + msg.getMessage());
             }

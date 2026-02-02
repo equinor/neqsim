@@ -166,7 +166,7 @@ PredictionResult prediction = runLookAhead(process, mpcHorizon);
 
 // Extract predicted values for MPC
 Map<String, PredictedValue> values = prediction.getAllPredictedValues();
-for (var entry : values.entrySet()) {
+for (Map.Entry<String, PredictedValue> entry : values.entrySet()) {
     mpc.setDisturbanceForecast(
         entry.getKey(), 
         entry.getValue().getMean()

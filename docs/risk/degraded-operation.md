@@ -62,11 +62,12 @@ for (OperatingAdjustment adj : result.getAdjustments()) {
 ```java
 // Optimize for revenue (considers product prices)
 optimizer.setObjective(OptimizationObjective.MAXIMIZE_REVENUE);
-optimizer.setProductPrices(Map.of(
-    "gas", 500.0,
-    "oil", 600.0,
-    "condensate", 400.0
-));
+
+Map<String, Double> productPrices = new HashMap<>();
+productPrices.put("gas", 500.0);
+productPrices.put("oil", 600.0);
+productPrices.put("condensate", 400.0);
+optimizer.setProductPrices(productPrices);
 
 DegradedOperationResult result = optimizer.optimizeWithEquipmentDown(failure);
 ```
@@ -181,12 +182,12 @@ When multiple products are possible, optimize the product mix:
 optimizer.setObjective(OptimizationObjective.MAXIMIZE_REVENUE);
 
 // Different products have different values
-optimizer.setProductPrices(Map.of(
-    "export_gas", 500.0,    // USD/tonne
-    "lpg", 450.0,
-    "condensate", 400.0,
-    "fuel_gas", 100.0       // Low value
-));
+Map<String, Double> productPrices = new HashMap<>();
+productPrices.put("export_gas", 500.0);    // USD/tonne
+productPrices.put("lpg", 450.0);
+productPrices.put("condensate", 400.0);
+productPrices.put("fuel_gas", 100.0);       // Low value
+optimizer.setProductPrices(productPrices);
 
 // Optimizer may recommend maximizing high-value products
 DegradedOperationResult result = optimizer.optimizeWithEquipmentDown(failure);

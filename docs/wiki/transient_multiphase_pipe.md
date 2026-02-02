@@ -180,8 +180,8 @@ pipe.setElevationProfile(elevations);
 pipe.run();
 
 // Check for liquid accumulation
-var accumTracker = pipe.getAccumulationTracker();
-for (var zone : accumTracker.getAccumulationZones()) {
+AccumulationTracker accumTracker = pipe.getAccumulationTracker();
+for (AccumulationZone zone : accumTracker.getAccumulationZones()) {
     System.out.println("Accumulation at position: " + zone.getPosition());
     System.out.println("Accumulated volume: " + zone.getAccumulatedVolume() + " m³");
 }
@@ -322,7 +322,7 @@ System.out.println(stats);
 ```java
 LiquidAccumulationTracker tracker = pipe.getAccumulationTracker();
 
-for (var zone : tracker.getAccumulationZones()) {
+for (AccumulationZone zone : tracker.getAccumulationZones()) {
     System.out.println("Zone position: " + zone.getPosition() + " m");
     System.out.println("Accumulated volume: " + zone.getAccumulatedVolume() + " m³");
     System.out.println("Current holdup: " + zone.getCurrentHoldup());

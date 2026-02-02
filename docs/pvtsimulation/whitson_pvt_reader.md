@@ -238,7 +238,7 @@ double apiGravity = sepTest.getStockTankAPIGravity();
 double stockTankDensity = sepTest.getStockTankOilDensity();  // kg/m³
 
 // Get oil properties at each separator stage
-for (var stage : sepTest.getStageResults()) {
+for (SeparatorStageResult stage : sepTest.getStageResults()) {
     double oilDensity = stage.getOilDensity();     // kg/m³
     double oilViscosity = stage.getOilViscosity(); // cP
 }

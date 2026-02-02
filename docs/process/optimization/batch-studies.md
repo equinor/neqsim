@@ -242,7 +242,7 @@ for (int stages = 1; stages <= 4; stages++) {
 }
 
 // Compare concepts
-for (var entry : conceptResults.entrySet()) {
+for (Map.Entry<Integer, BatchStudyResult> entry : conceptResults.entrySet()) {
     CaseResult best = entry.getValue().getBestCase("power");
     System.out.printf("%d stages: %.0f kW power%n", 
         entry.getKey(), 
