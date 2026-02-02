@@ -78,34 +78,43 @@ $$B_o = 1 + C_1 R_s + C_2 (T - 60) \left( \frac{API}{\gamma_{g,100}} \right) + C
 
 ### BlackOilPVTTable
 
+The `BlackOilPVTTable` class stores PVT properties at multiple pressure points with linear interpolation.
+
 ```java
 import neqsim.blackoil.BlackOilPVTTable;
+import neqsim.blackoil.BlackOilPVTTable.Record;
+import java.util.Arrays;
+import java.util.List;
 
-// Create PVT table
-BlackOilPVTTable pvtTable = new BlackOilPVTTable();
+// Create PVT records at each pressure point
+// Record(p, Rs, Bo, mu_o, Bg, mu_g, Rv, Bw, mu_w)
+List<Record> records = Arrays.asList(
+    new Record(50.0, 80.0, 1.25, 0.0015, 0.010, 0.000015, 0.0, 1.01, 0.001),
+    new Record(100.0, 100.0, 1.30, 0.0012, 0.008, 0.000016, 0.0, 1.01, 0.001),
+    new Record(150.0, 120.0, 1.35, 0.0010, 0.006, 0.000017, 0.0, 1.02, 0.001),
+    new Record(200.0, 140.0, 1.40, 0.0009, 0.005, 0.000018, 0.0, 1.02, 0.001),
+    new Record(250.0, 160.0, 1.45, 0.0008, 0.004, 0.000019, 0.0, 1.03, 0.001),
+    new Record(300.0, 180.0, 1.50, 0.0007, 0.003, 0.000020, 0.0, 1.03, 0.001)
+);
 
-// Set pressure points
-double[] pressures = {50, 100, 150, 200, 250, 300};
-pvtTable.setPressures(pressures);
-
-// Set properties at each pressure
-pvtTable.setRs(new double[]{80, 100, 120, 140, 160, 180});
-pvtTable.setBo(new double[]{1.25, 1.30, 1.35, 1.40, 1.45, 1.50});
-pvtTable.setBg(new double[]{0.010, 0.008, 0.006, 0.005, 0.004, 0.003});
-pvtTable.setMuO(new double[]{1.5, 1.2, 1.0, 0.9, 0.8, 0.7});
-pvtTable.setMuG(new double[]{0.015, 0.016, 0.017, 0.018, 0.019, 0.020});
+// Create PVT table with bubble point pressure
+double bubblePointPressure = 250.0;  // bar
+BlackOilPVTTable pvtTable = new BlackOilPVTTable(records, bubblePointPressure);
 ```
 
 ### Interpolation
 
 ```java
-// Get properties at any pressure
+// Get properties at any pressure (linear interpolation)
 double P = 175.0;  // bar
-double Rs = pvtTable.Rs(P);
-double Bo = pvtTable.Bo(P);
-double Bg = pvtTable.Bg(P);
-double muO = pvtTable.mu_o(P);
-double muG = pvtTable.mu_g(P);
+double Rs = pvtTable.Rs(P);      // Solution GOR
+double Bo = pvtTable.Bo(P);      // Oil FVF
+double Bg = pvtTable.Bg(P);      // Gas FVF
+double muO = pvtTable.mu_o(P);   // Oil viscosity (Pa·s)
+double muG = pvtTable.mu_g(P);   // Gas viscosity (Pa·s)
+
+// Above bubble point, Rs stays constant
+double RsEffective = pvtTable.RsEffective(P);
 ```
 
 ---

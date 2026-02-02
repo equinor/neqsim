@@ -120,16 +120,19 @@ Where:
 
 ### Thermodynamic Method (NeqSim)
 
-Uses Cubic-Plus-Association (CPA) equation of state for rigorous vapor-liquid equilibrium:
+Uses Cubic-Plus-Association (CPA) equation of state for rigorous vapor-liquid equilibrium, with the **Søreide-Whitson model** for accurate salinity correction in produced water systems:
 
 ```
 Benefits:
 • Accounts for actual fluid composition
 • Includes all gas components (CO2, CH4, C2+, N2, H2S)
-• Handles salinity/ionic effects
+• Handles salinity/ionic effects via Søreide-Whitson model
 • Temperature and pressure dependent
 • Validated against lab data
+• Used in NeqSimLive for real-time emission monitoring
 ```
+
+> **NeqSimLive Integration**: The Søreide-Whitson model is the primary thermodynamic model used in **NeqSimLive** for calculating emissions from produced water degassing on offshore platforms. See [Søreide-Whitson Model Documentation](../thermo/SoreideWhitsonModel.md) for detailed model description and references.
 
 ---
 
@@ -484,12 +487,47 @@ calc2.calculate()
 total_co2eq = calc1.getCO2Equivalents("tonnes/year") + calc2.getCO2Equivalents("tonnes/year")
 ```
 
-### Salinity Effects (Salting-Out)
+### Salinity Effects (Salting-Out) - Søreide-Whitson Model
 
-Higher salinity reduces gas solubility, affecting emissions:
+Higher salinity reduces gas solubility, affecting emissions. **NeqSim uses the Søreide-Whitson model** to accurately account for this "salting-out" effect in produced water systems:
 
 ```python
-# Salinity correction factor (approximate)
+# Using Søreide-Whitson for accurate salinity correction
+from neqsim import jneqsim
+
+SystemSoreideWhitson = jneqsim.thermo.system.SystemSoreideWhitson
+
+# Create produced water with Søreide-Whitson model
+produced_water = SystemSoreideWhitson(273.15 + 80.0, 30.0)
+produced_water.addComponent("water", 0.92)
+produced_water.addComponent("methane", 0.05)
+produced_water.addComponent("CO2", 0.02)
+produced_water.addComponent("ethane", 0.01)
+
+# Set formation water salinity (~80,000 ppm TDS)
+produced_water.addSalinity("NaCl", 1.2, "mole/sec")  # Dominant salt
+produced_water.addSalinity("CaCl2", 0.08, "mole/sec")
+
+# The Søreide-Whitson model modifies the water alpha function:
+# alpha = A² where A(Tr,cs) = 1 + 0.453[1-Tr(1-0.0103·cs^1.1)] + 0.0034(Tr^-3 - 1)
+# This reduces gas solubility as salinity increases
+```
+
+The Søreide-Whitson model accounts for salinity effects through a modified Peng-Robinson alpha function for water:
+
+| Salinity (ppm TDS) | CH₄ Solubility Reduction | Emission Impact |
+|--------------------|--------------------------|-----------------|
+| 0 (fresh water) | 0% (baseline) | Overestimates dissolved gas if used |
+| 35,000 (seawater) | ~15-20% | Moderate correction needed |
+| 100,000 | ~35-45% | Significant correction |
+| 200,000 | ~55-65% | Major correction required |
+
+> **Reference**: Søreide, I. & Whitson, C.H. (1992). "Peng-Robinson predictions for hydrocarbons, CO₂, N₂, and H₂S with pure water and NaCl brine". *Fluid Phase Equilibria*, 77, 217-240. [DOI: 10.1016/0378-3812(92)85105-H](https://doi.org/10.1016/0378-3812(92)85105-H)
+>
+> For detailed model documentation, see [Søreide-Whitson Model](../thermo/SoreideWhitsonModel.md).
+
+```python
+# Simplified salting-out estimation (for comparison/validation)
 # Reference: Duan & Sun (2003) - Geochimica et Cosmochimica Acta
 
 def salting_out_factor(salinity_ppm):
@@ -518,22 +556,35 @@ print(f"Gas solubility reduced to {factor*100:.0f}% of freshwater value")
 
 ### Real-Time Integration (NeqSimLive)
 
-NeqSim can be deployed as a "virtual sensor" for continuous emission monitoring:
+NeqSim can be deployed as a "virtual sensor" for continuous emission monitoring. **NeqSimLive** uses the **Søreide-Whitson thermodynamic model** for accurate produced water emission calculations, accounting for formation water salinity effects that are critical for accurate emission reporting on the Norwegian Continental Shelf.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    VIRTUAL MEASUREMENT FLOW                  │
+│                    (NeqSimLive Architecture)                 │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │   DCS/SCADA ──► NeqSimLive ──► Emission Rates ──► Reporting │
 │      │              │               │                │       │
-│  • Temperature   • CPA-EoS     • CO2 kg/hr      • EU ETS    │
-│  • Pressure      • Flash calc  • CH4 kg/hr      • NPD       │
-│  • Flow rates    • Composition • nmVOC kg/hr    • Dashboard │
-│  • Composition   • GWP calc    • CO2eq          • Alerts    │
+│  • Temperature   • Søreide-   • CO2 kg/hr      • EU ETS    │
+│  • Pressure       Whitson     • CH4 kg/hr      • NPD       │
+│  • Flow rates    • Flash calc  • nmVOC kg/hr    • Dashboard │
+│  • Composition   • Salinity    • CO2eq          • Alerts    │
+│  • Salinity      correction                                  │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+#### Why Søreide-Whitson for NeqSimLive?
+
+The Søreide-Whitson model is specifically chosen for NeqSimLive produced water emission calculations because:
+
+1. **Formation Water Salinity**: Norwegian Continental Shelf formation water typically has 20,000-200,000 ppm TDS
+2. **Salting-Out Effect**: High salinity significantly reduces gas solubility (up to 65% reduction)
+3. **Regulatory Accuracy**: Accurate salinity correction ensures compliant emission reporting
+4. **Industry Standard**: The model is well-established in the petroleum industry since 1992
+
+For more details on the Søreide-Whitson model implementation, see [Søreide-Whitson Model Documentation](../thermo/SoreideWhitsonModel.md).
 
 ### Validation Requirements
 
@@ -637,10 +688,12 @@ Studies comparing NeqSim virtual measurements with physical sampling:
    - Chemical Geology, 193(3-4), 257-271
    - DOI: [10.1016/S0009-2541(02)00263-2](https://doi.org/10.1016/S0009-2541(02)00263-2)
 
-6. **Søreide, I. & Whitson, C.H. (1992)**
-   - "Peng-Robinson predictions for hydrocarbons, CO2, N2, and H2S with pure water and NaCl brine"
+6. **Søreide, I. & Whitson, C.H. (1992)** ⭐ *Key Model for NeqSimLive*
+   - "Peng-Robinson predictions for hydrocarbons, CO₂, N₂, and H₂S with pure water and NaCl brine"
    - Fluid Phase Equilibria, 77, 217-240
    - DOI: [10.1016/0378-3812(92)85105-H](https://doi.org/10.1016/0378-3812(92)85105-H)
+   - **This is the thermodynamic model used in NeqSimLive for produced water emission calculations**
+   - See also: [NeqSim Søreide-Whitson Model Documentation](../thermo/SoreideWhitsonModel.md)
 
 7. **Michelsen, M.L. & Mollerup, J.M. (2007)**
    - "Thermodynamic Models: Fundamentals & Computational Aspects"

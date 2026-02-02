@@ -52,11 +52,11 @@ runner.addLogic(startupLogic);    // "System Startup"
 
 // Scenario 1: Test only HIPPS
 runner.runScenarioWithLogic("HIPPS Test", scenario1, 30.0, 1.0, 
-    List.of("HIPPS Protection"));
+    Arrays.asList("HIPPS Protection"));
 
 // Scenario 2: Test ESD without HIPPS
 runner.runScenarioWithLogic("ESD Test", scenario2, 30.0, 1.0, 
-    List.of("ESD Level 1", "System Startup"));
+    Arrays.asList("ESD Level 1", "System Startup"));
 
 // Scenario 3: Run all logic (pass null or empty list)
 runner.runScenarioWithLogic("Full Test", scenario3, 30.0, 1.0, null);
@@ -98,7 +98,7 @@ runner.runScenario("All Logic", scenario3, 30.0, 1.0);
 | `removeLogic("name")` | Remove logic by name |
 | `clearAllLogic()` | Remove all registered logic |
 | `runScenario(...)` | Run with all registered logic |
-| `runScenarioWithLogic(..., List.of("Logic1", "Logic2"))` | Run with specific logic by name |
+| `runScenarioWithLogic(..., Arrays.asList("Logic1", "Logic2"))` | Run with specific logic by name |
 | `findLogic("name")` | Find a logic sequence by name |
 | `activateLogic("name")` | Activate a logic sequence by name |
 

@@ -101,7 +101,9 @@ For faster convergence, acceleration methods can be used:
 ### Wegstein Acceleration
 
 ```java
-recycle.setAccelerationMethod("wegstein");
+import neqsim.process.equipment.util.AccelerationMethod;
+
+recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
 ```
 
 ### Broyden Acceleration
@@ -272,7 +274,7 @@ for (int i = 0; i < errorHistory.length; i++) {
 
 ```java
 // Try Wegstein acceleration
-recycle.setAccelerationMethod("wegstein");
+recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
 recycle.setDampingFactor(0.8);
 ```
 
