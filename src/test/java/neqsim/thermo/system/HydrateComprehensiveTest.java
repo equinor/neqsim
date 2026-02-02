@@ -533,8 +533,8 @@ public class HydrateComprehensiveTest extends neqsim.NeqSimTest {
     System.out.println("At 30°C (above hydrate point):");
     System.out.println("Number of phases: " + fluid.getNumberOfPhases());
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-      System.out
-          .println("  Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta=" + fluid.getBeta(i));
+      System.out.println(
+          "  Phase " + i + ": " + fluid.getPhase(i).getType() + ", beta=" + fluid.getBeta(i));
     }
 
     // Now calculate hydrate formation temperature
