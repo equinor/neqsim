@@ -139,12 +139,14 @@ process.run();
 ### Convergence Settings
 
 ```java
+import neqsim.process.equipment.util.AccelerationMethod;
+
 recycle.setTolerance(1e-6);
 recycle.setMaximumIterations(100);
 
 // Acceleration methods
-recycle.setAccelerationMethod("wegstein");
-// Options: "direct", "wegstein", "broyden"
+recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
+// Options: DIRECT_SUBSTITUTION, WEGSTEIN, BROYDEN
 ```
 
 ---

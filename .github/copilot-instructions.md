@@ -691,3 +691,201 @@ String jsonReport = design.toJson();
 
 ---
 
+## Jupyter Notebook Creation Guidelines (MANDATORY)
+
+When creating Jupyter notebooks for NeqSim examples, follow these critical patterns:
+
+### Import Pattern (USE THIS EXACT PATTERN)
+
+**CORRECT** - Use the `jneqsim` gateway for direct Java access:
+```python
+# Import NeqSim - Direct Java Access via jneqsim
+from neqsim import jneqsim
+
+# Import commonly used Java classes through the jneqsim gateway
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+Stream = jneqsim.process.equipment.stream.Stream
+Separator = jneqsim.process.equipment.separator.Separator
+Compressor = jneqsim.process.equipment.compressor.Compressor
+Cooler = jneqsim.process.equipment.heatexchanger.Cooler
+Heater = jneqsim.process.equipment.heatexchanger.Heater
+```
+
+**WRONG** - Do NOT use jpype imports directly for new notebooks:
+```python
+# WRONG - This pattern may not work reliably
+import jpype
+import jpype.imports
+from jpype.types import *
+if not jpype.isJVMStarted():
+    jpype.startJVM(classpath=['../target/classes'])
+from neqsim.thermo.system import SystemSrkEos  # Direct jpype import
+```
+
+### Common Problems and Solutions
+
+| Problem | Cause | Solution |
+|---------|-------|----------|
+| `ModuleNotFoundError: No module named 'neqsim'` | neqsim-python not installed | Run `pip install neqsim` |
+| `AttributeError: 'NoneType' object has no attribute...` | JVM not started | Use `from neqsim import jneqsim` which auto-starts JVM |
+| `TypeError: No matching overloads found` | Wrong parameter types | Cast Python types explicitly: `float(value)`, `str(name)` |
+| Import fails for nested classes | Wrong import path | Use `jneqsim.package.subpackage.ClassName` pattern |
+| `RuntimeError: JVM cannot be restarted` | JVM already started/stopped | Restart the kernel |
+
+### Temperature and Pressure Units
+
+**CRITICAL**: NeqSim Java API uses **Kelvin** for temperatures and **bara** for pressures by default!
+
+```python
+# Creating fluid - temperature in KELVIN, pressure in bara
+fluid = SystemSrkEos(273.15 + 25.0, 60.0)  # 25°C, 60 bara
+
+# Setting stream conditions - can use unit strings
+stream.setTemperature(30.0, "C")    # Celsius
+stream.setPressure(60.0, "bara")    # bara
+
+# Getting values - returns KELVIN
+temp_kelvin = stream.getTemperature()
+temp_celsius = stream.getTemperature() - 273.15  # Convert to Celsius
+
+# WRONG - forgetting Kelvin conversion
+temp = fluid.getTemperature()  # This is in Kelvin!
+print(f"Temperature: {temp}°C")  # WRONG - will show ~298°C instead of 25°C
+```
+
+### Required Steps for Fluid Creation
+
+Always follow this sequence:
+```python
+# 1. Create fluid with (T_Kelvin, P_bara)
+fluid = SystemSrkEos(273.15 + 25.0, 60.0)
+
+# 2. Add components (name, mole_fraction)
+fluid.addComponent("methane", 0.85)
+fluid.addComponent("ethane", 0.10)
+fluid.addComponent("propane", 0.05)
+
+# 3. MANDATORY: Set mixing rule
+fluid.setMixingRule("classic")
+
+# 4. Optional but recommended for custom components
+# fluid.createDatabase(True)
+```
+
+**NEVER skip the mixing rule** - simulations will fail or give wrong results without it.
+
+### Process Equipment Connections
+
+```python
+# Create process system
+process = ProcessSystem("My Process")
+
+# Feed stream
+feed = Stream("Feed", fluid)
+feed.setFlowRate(50000.0, "kg/hr")
+process.add(feed)
+
+# Equipment takes inlet stream in constructor
+separator = Separator("HP Sep", feed)  # Stream object, not name
+process.add(separator)
+
+# Get outlet streams from equipment
+gas_out = separator.getGasOutStream()      # Gas phase
+liquid_out = separator.getLiquidOutStream() # Liquid phase
+
+# Connect to next equipment
+compressor = Compressor("Comp", gas_out)
+process.add(compressor)
+
+# For equipment outlet
+next_stream = compressor.getOutletStream()
+```
+
+### Common Class Import Paths
+
+```python
+# Thermo systems
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+SystemPrEos = jneqsim.thermo.system.SystemPrEos
+SystemSrkCPAstatoil = jneqsim.thermo.system.SystemSrkCPAstatoil
+
+# Process equipment
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+Stream = jneqsim.process.equipment.stream.Stream
+Separator = jneqsim.process.equipment.separator.Separator
+ThreePhaseSeparator = jneqsim.process.equipment.separator.ThreePhaseSeparator
+Compressor = jneqsim.process.equipment.compressor.Compressor
+Expander = jneqsim.process.equipment.expander.Expander
+Heater = jneqsim.process.equipment.heatexchanger.Heater
+Cooler = jneqsim.process.equipment.heatexchanger.Cooler
+HeatExchanger = jneqsim.process.equipment.heatexchanger.HeatExchanger
+Mixer = jneqsim.process.equipment.mixer.Mixer
+Splitter = jneqsim.process.equipment.splitter.Splitter
+ThrottlingValve = jneqsim.process.equipment.valve.ThrottlingValve
+Recycle = jneqsim.process.equipment.util.Recycle
+Adjuster = jneqsim.process.equipment.util.Adjuster
+
+# Pipes
+AdiabaticPipe = jneqsim.process.equipment.pipeline.AdiabaticPipe
+PipeBeggsAndBrills = jneqsim.process.equipment.pipeline.PipeBeggsAndBrills
+
+# Distillation
+DistillationColumn = jneqsim.process.equipment.distillation.DistillationColumn
+```
+
+### Getting Results
+
+```python
+# After running process
+process.run()
+
+# Stream properties
+stream.getTemperature()         # Kelvin
+stream.getPressure()            # bara
+stream.getFlowRate("kg/hr")     # Mass flow with unit
+
+# Fluid properties
+fluid = stream.getFluid()
+fluid.getDensity("kg/m3")       # Density
+fluid.getMolarMass("kg/mol")    # Molar mass
+fluid.getZ()                    # Compressibility factor
+fluid.getNumberOfPhases()       # Phase count
+fluid.hasPhaseType("gas")       # Check phase presence
+
+# Compressor
+comp.getPower("kW")             # Power consumption
+comp.getOutletStream()          # Outlet stream
+
+# Heat exchangers
+heater.getDuty()                # Heat duty in Watts
+cooler.getDuty()                # Cooling duty (positive = heat removed)
+```
+
+### Notebook Structure Best Practice
+
+1. **Introduction cell** - Describe what the notebook demonstrates
+2. **Setup cell** - All imports in one cell
+3. **Fluid creation** - Separate cell for creating thermodynamic system
+4. **Process building** - Build process step by step
+5. **Run simulation** - Single `process.run()` call
+6. **Results** - Extract and display results
+7. **Visualization** - Plots using matplotlib
+8. **Tips/Next steps** - Summary and links to related examples
+
+### Type Conversion for Java
+
+When passing values to Java methods, ensure correct types:
+```python
+# Explicitly convert to float for numeric parameters
+pressure = 60.0  # Already float
+comp.setOutletPressure(float(pressure))  # Explicit conversion if unsure
+
+# String parameters
+stream.setFlowRate(50000.0, str("kg/hr"))  # Usually not needed but safe
+
+# Boolean
+fluid.setMultiPhaseCheck(True)  # Python bool works
+```
+
+---

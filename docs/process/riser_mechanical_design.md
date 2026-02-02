@@ -471,7 +471,7 @@ design.readDesignSpecifications();
 design.calcDesign();
 
 // Results
-var calc = design.getRiserCalculator();
+RiserDesignCalculator calc = design.getRiserCalculator();
 System.out.println("=== SCR Design Results ===");
 System.out.println("Top Tension: " + calc.getTopTension() + " kN");
 System.out.println("TDP Stress: " + calc.getTouchdownPointStress() + " MPa");
@@ -495,7 +495,7 @@ ttrDesign.setMaxOperationPressure(200.0);
 ttrDesign.setMaterialGrade("X65");
 ttrDesign.calcDesign();
 
-var ttrCalc = ttrDesign.getRiserCalculator();
+RiserDesignCalculator ttrCalc = ttrDesign.getRiserCalculator();
 System.out.println("TTR Tension: " + ttrCalc.getTopTension() + " kN");
 System.out.println("Min Tension: " + ttrCalc.getMinTopTension() + " kN");
 System.out.println("Stroke Req: " + ttrCalc.getStrokeRequirement() + " m");

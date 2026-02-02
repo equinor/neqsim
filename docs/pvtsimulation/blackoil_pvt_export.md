@@ -254,7 +254,7 @@ import java.nio.file.Path;
 public class PVTExportExample {
     public static void main(String[] args) {
         // 1. Create compositional fluid model
-        var fluid = new SystemSrkEos(373.15, 250.0);
+        SystemSrkEos fluid = new SystemSrkEos(373.15, 250.0);
         fluid.addComponent("methane", 0.60);
         fluid.addComponent("ethane", 0.08);
         fluid.addComponent("propane", 0.05);
@@ -265,13 +265,13 @@ public class PVTExportExample {
         fluid.setMixingRule("classic");
         
         // 2. Export to Eclipse (METRIC units)
-        var eclipseConfig = new EclipseEOSExporter.ExportConfig()
+        EclipseEOSExporter.ExportConfig eclipseConfig = new EclipseEOSExporter.ExportConfig()
             .setUnits(EclipseEOSExporter.Units.METRIC)
             .setComment("Light oil reservoir - Block A");
         EclipseEOSExporter.toFile(fluid, Path.of("eclipse_pvt.inc"), eclipseConfig);
         
         // 3. Export to CMG IMEX (FIELD units)
-        var cmgConfig = new CMGEOSExporter.ExportConfig()
+        CMGEOSExporter.ExportConfig cmgConfig = new CMGEOSExporter.ExportConfig()
             .setSimulator(CMGEOSExporter.Simulator.IMEX)
             .setUnits(CMGEOSExporter.Units.FIELD)
             .setModelName("BLOCK_A_FLUID");

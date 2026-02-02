@@ -122,11 +122,11 @@ the next optimisation. Supplying these predictions enables proactive responses
 to known feed changes and improves constraint tracking on multivariate systems.
 
 ```java
-controller.updateFeedConditions(Map.of(
-    "methane", 0.82,
-    "ethane", 0.08,
-    "propane", 0.03),
-    12.4);    // kmol/hr
+Map<String, Double> composition = new HashMap<>();
+composition.put("methane", 0.82);
+composition.put("ethane", 0.08);
+composition.put("propane", 0.03);
+controller.updateFeedConditions(composition, 12.4);    // kmol/hr
 ```
 
 ### Moving horizon estimation

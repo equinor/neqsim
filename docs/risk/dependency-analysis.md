@@ -374,7 +374,7 @@ for (CrossInstallationDependency cross : result.getCrossInstallationEffects()) {
 }
 
 System.out.printf("%n💰 TOTAL PRODUCTION LOSS: %.1f%%%n", result.getTotalProductionLoss());
-System.out.println("═".repeat(70));
+System.out.println(StringUtils.repeat("═", 70));
 ```
 
 Output:

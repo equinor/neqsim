@@ -452,7 +452,7 @@ public class ProducedWaterEmissionsExample {
             return;
         }
         
-        var gasPhase = separator.getGasOutStream().getFluid().getPhase("gas");
+        PhaseInterface gasPhase = separator.getGasOutStream().getFluid().getPhase("gas");
         
         System.out.printf("%s Emissions:%n", name);
         System.out.printf("  Total gas:  %.4f kg/hr%n", gasPhase.getFlowRate("kg/hr"));
@@ -470,7 +470,7 @@ public class ProducedWaterEmissionsExample {
     }
     
     private static double getNMVOCFlow(ThreePhaseSeparator sep) {
-        var gasPhase = sep.getGasOutStream().getFluid().getPhase("gas");
+        PhaseInterface gasPhase = sep.getGasOutStream().getFluid().getPhase("gas");
         double nmvoc = 0;
         
         // nmVOC = C2+ hydrocarbons (excluding methane)

@@ -271,7 +271,9 @@ for (String input : inputNames) {
 }
 
 // Propagate input variances to output variances
-Map<String, Double> inputVariances = Map.of("pressure", 0.01, "temperature", 0.0025);
+Map<String, Double> inputVariances = new HashMap<>();
+inputVariances.put("pressure", 0.01);
+inputVariances.put("temperature", 0.0025);
 Map<String, Double> outputVariances = matrix.propagateUncertainty(inputVariances);
 ```
 
@@ -385,14 +387,13 @@ calibrator.setTunableParameters(Arrays.asList(
 calibrator.setDeviationThreshold(0.1);  // 10%
 
 // Record measurements and predictions
-Map<String, Double> measurements = Map.of(
-    "outlet_pressure", 45.2,
-    "outlet_temperature", 35.5
-);
-Map<String, Double> predictions = Map.of(
-    "outlet_pressure", 44.8,
-    "outlet_temperature", 36.1
-);
+Map<String, Double> measurements = new HashMap<>();
+measurements.put("outlet_pressure", 45.2);
+measurements.put("outlet_temperature", 35.5);
+
+Map<String, Double> predictions = new HashMap<>();
+predictions.put("outlet_pressure", 44.8);
+predictions.put("outlet_temperature", 36.1);
 
 // Check if recalibration is needed
 boolean needsRecalibration = calibrator.recordDataPoint(measurements, predictions);

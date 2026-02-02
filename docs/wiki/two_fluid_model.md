@@ -806,9 +806,9 @@ The tracker automatically identifies terrain low points where liquid accumulates
 
 ```java
 // Get accumulation zones after running
-var zones = pipe.getAccumulationTracker().getAccumulationZones();
+List<AccumulationZone> zones = pipe.getAccumulationTracker().getAccumulationZones();
 
-for (var zone : zones) {
+for (AccumulationZone zone : zones) {
     System.out.println("Zone at position: " + zone.startPosition + " m");
     System.out.println("  Volume: " + zone.liquidVolume + " m³");
     System.out.println("  Max capacity: " + zone.maxVolume + " m³");
@@ -834,7 +834,7 @@ System.out.println("Avg slug length: " + tracker.getAverageSlugLength() + " m");
 System.out.println("Slug frequency: " + tracker.getSlugFrequency() + " Hz");
 
 // Detailed per-slug information
-for (var slug : tracker.getSlugs()) {
+for (SlugInfo slug : tracker.getSlugs()) {
     System.out.println("Slug #" + slug.id);
     System.out.println("  Position: " + slug.frontPosition + " m");
     System.out.println("  Length: " + slug.slugBodyLength + " m");

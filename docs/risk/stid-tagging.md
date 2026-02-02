@@ -264,7 +264,7 @@ List<String> system23 = topology.getEquipmentBySystem("23");
 
 ```java
 System.out.println("Equipment with STID Tags:");
-System.out.println("─".repeat(70));
+System.out.println(StringUtils.repeat("─", 70));
 
 for (Map.Entry<String, EquipmentNode> entry : topology.getNodes().entrySet()) {
     EquipmentNode node = entry.getValue();

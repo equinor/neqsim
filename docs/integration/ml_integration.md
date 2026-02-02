@@ -135,7 +135,7 @@ while (!env.isDone()) {
     actions.put("compressor", compressorPolicy.predict(compObs));
     
     // Step
-    var result = env.step(actions);
+    StepResult result = env.step(actions);
     
     // Get rewards (shared in cooperative mode)
     double sepReward = result.rewards.get("separator");
