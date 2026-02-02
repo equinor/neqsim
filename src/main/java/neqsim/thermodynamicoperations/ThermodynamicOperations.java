@@ -1534,13 +1534,17 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       factor -= 2 * system.getPhase(0).getComponent("MEG").getz()
           / system.getPhase(0).getComponent("water").getz();
     }
-    if (factor < 2) {
-      factor = 2;
+    // Ensure factor is positive but allow inhibitor effects
+    if (factor < 0.1) {
+      factor = 0.1;
     }
 
     system.setTemperature(273.0 + system.getPressure() / 100.0 * 20.0 * factor - 20.0);
     if (system.getTemperature() > 298.15) {
       system.setTemperature(273.0 + 25.0);
+    }
+    if (system.getTemperature() < 200.0) {
+      system.setTemperature(200.0); // Don't start too low
     }
     // logger.info("guess hydrate temperature " + system.getTemperature());
     operation = new HydrateFormationTemperatureFlash(system);

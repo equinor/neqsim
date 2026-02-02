@@ -124,8 +124,14 @@ public class TPmultiflash extends TPflash {
             }
           } else {
             // Non-ionic components: normal flash calculation
-            double newX = system.getPhase(0).getComponent(i).getz() / Erow[i]
-                / system.getPhase(k).getComponent(i).getFugacityCoefficient();
+            // Bound fugacity coefficient to avoid numerical overflow
+            double phi = system.getPhase(k).getComponent(i).getFugacityCoefficient();
+            if (phi < 1e-100) {
+              phi = 1e-100;
+            } else if (phi > 1e100) {
+              phi = 1e100;
+            }
+            double newX = system.getPhase(0).getComponent(i).getz() / Erow[i] / phi;
             if (!Double.isFinite(newX) || newX <= 0.0) {
               newX = Math.max(system.getPhase(0).getComponent(i).getz(), 1.0e-30);
             }
@@ -148,11 +154,24 @@ public class TPmultiflash extends TPflash {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       Erow[i] = 0.0;
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
-        Erow[i] += system.getPhase(k).getBeta()
-            / system.getPhase(k).getComponent(i).getFugacityCoefficient();
+        double phi = system.getPhase(k).getComponent(i).getFugacityCoefficient();
+        // Bound fugacity coefficient to avoid numerical overflow in E calculation.
+        // Extremely small phi values (< 1e-100) occur due to severe non-ideality
+        // (e.g., ions with hydrocarbons having kij=1.0) and cause overflow in beta/phi.
+        // Extremely large phi values (> 1e100) are also non-physical for typical systems.
+        if (phi < 1e-100) {
+          phi = 1e-100;
+        } else if (phi > 1e100) {
+          phi = 1e100;
+        }
+        Erow[i] += system.getPhase(k).getBeta() / phi;
       }
-      if (Erow[i] < 1e-100)
+      if (Erow[i] < 1e-100) {
         Erow[i] = 1e-100;
+      }
+      if (Erow[i] > 1e100) {
+        Erow[i] = 1e100;
+      }
       if (Double.isNaN(Erow[i])) {
         logger.error("Erow is NaN for component " + system.getPhase(0).getComponent(i).getName());
         Erow[i] = 1e-100;
@@ -186,7 +205,14 @@ public class TPmultiflash extends TPflash {
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
       dQdbeta[k][0] = 1.0;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        dQdbeta[k][0] -= multTerm[i] / system.getPhase(k).getComponent(i).getFugacityCoefficient();
+        // Bound fugacity coefficient to avoid numerical overflow
+        double phi = system.getPhase(k).getComponent(i).getFugacityCoefficient();
+        if (phi < 1e-100) {
+          phi = 1e-100;
+        } else if (phi > 1e100) {
+          phi = 1e100;
+        }
+        dQdbeta[k][0] -= multTerm[i] / phi;
       }
     }
 
@@ -194,9 +220,20 @@ public class TPmultiflash extends TPflash {
       for (int j = 0; j < system.getNumberOfPhases(); j++) {
         Qmatrix[i][j] = 0.0;
         for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
-          Qmatrix[i][j] +=
-              multTerm2[k] / (system.getPhase(j).getComponent(k).getFugacityCoefficient()
-                  * system.getPhase(i).getComponent(k).getFugacityCoefficient());
+          // Bound fugacity coefficients to avoid numerical overflow
+          double phiI = system.getPhase(i).getComponent(k).getFugacityCoefficient();
+          double phiJ = system.getPhase(j).getComponent(k).getFugacityCoefficient();
+          if (phiI < 1e-100) {
+            phiI = 1e-100;
+          } else if (phiI > 1e100) {
+            phiI = 1e100;
+          }
+          if (phiJ < 1e-100) {
+            phiJ = 1e-100;
+          } else if (phiJ > 1e100) {
+            phiJ = 1e100;
+          }
+          Qmatrix[i][j] += multTerm2[k] / (phiI * phiJ);
         }
         if (i == j) {
           Qmatrix[i][j] += 1.0e-3;
