@@ -77,6 +77,22 @@ NeqSim specializes in **venting emissions** from:
 
 ---
 
+## Thermodynamic Model: Søreide-Whitson
+
+For accurate produced water emission calculations, **NeqSimLive uses the Søreide-Whitson thermodynamic model** to account for the effect of formation water salinity on gas solubility (the "salting-out" effect).
+
+**Key features:**
+- Modified Peng-Robinson equation of state with salinity-dependent alpha function for water
+- Accounts for 15-65% reduction in gas solubility depending on salinity
+- Supports multiple salt types (NaCl, CaCl₂, MgCl₂, etc.)
+- Validated against experimental data for CH₄, CO₂, H₂S, and N₂ in brine
+
+**Reference:** Søreide, I. & Whitson, C.H. (1992). "Peng-Robinson predictions for hydrocarbons, CO₂, N₂, and H₂S with pure water and NaCl brine". *Fluid Phase Equilibria*, 77, 217-240.
+
+📖 [**Detailed Søreide-Whitson Model Documentation**](../thermo/SoreideWhitsonModel.md) — Mathematical formulation, salt type coefficients, validation data, and code examples.
+
+---
+
 ## Method Comparison
 
 | Aspect | Conventional (Handbook) | Thermodynamic (NeqSim) |
