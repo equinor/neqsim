@@ -427,6 +427,7 @@ def flash_density(T, P, z):
     
     ops = ThermodynamicOperations(system)
     ops.TPflash()
+    system.initProperties()  # Required for volume-corrected density
     
     return system.getDensity("kg/m3")
 
@@ -436,6 +437,7 @@ def flash_density_fwd(T, P, z):
     system = create_system(T, P, z)
     ops = ThermodynamicOperations(system)
     ops.TPflash()
+    system.initProperties()  # Required for volume-corrected density
     
     value = system.getDensity("kg/m3")
     
@@ -473,6 +475,7 @@ class FlashDensity(Function):
         system = create_system(T.item(), P.item(), z.numpy())
         ops = ThermodynamicOperations(system)
         ops.TPflash()
+        system.initProperties()  # Required for volume-corrected density
         
         value = system.getDensity("kg/m3")
         
@@ -536,10 +539,12 @@ double analyticalGrad = densityGrad.getDerivativeWrtTemperature();
 double h = 1e-4;
 system.setTemperature(T + h);
 ops.TPflash();
+system.initProperties();  // Required before getting density
 double rhoPlus = system.getDensity("kg/m3");
 
 system.setTemperature(T - h);
 ops.TPflash();
+system.initProperties();  // Required before getting density
 double rhoMinus = system.getDensity("kg/m3");
 
 double numericalGrad = (rhoPlus - rhoMinus) / (2 * h);

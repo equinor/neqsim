@@ -524,6 +524,7 @@ oil.setPressure(50.0, "bara")
 # Flash and print
 from neqsim.thermodynamicoperations import TPflash
 TPflash(oil)
+oil.initProperties()
 oil.prettyPrint()
 ```
 

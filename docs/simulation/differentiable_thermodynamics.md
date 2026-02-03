@@ -122,6 +122,7 @@ def flash_density(T, P, z):
     
     ops = ThermodynamicOperations(system)
     ops.TPflash()
+    system.initProperties()  # Required for volume-corrected density
     
     return system.getDensity("kg/m3")
 

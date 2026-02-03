@@ -225,6 +225,7 @@ gas.setTemperature(298.15, "K")
 gas.setPressure(50.0, "bara")
 
 TPflash(gas)
+gas.initProperties()
 print(f"Gas density: {gas.getDensity('kg/m3'):.2f} kg/m³")
 ```
 

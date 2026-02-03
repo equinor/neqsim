@@ -438,6 +438,7 @@ fluid1.setTemperature(80.0, 'C')
 fluid1.setPressure(30.0, 'bara')
 
 TPflash(fluid1)
+fluid1.initProperties()
 printFrame(fluid1)
 ```
 

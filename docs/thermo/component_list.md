@@ -83,6 +83,7 @@ fluid1.setTemperature(20.0, 'C')
 fluid1.setPressure(1.1, 'bara')
 fluid1.addComponent('furoin', 1.0)  # Available only in extended database
 TPflash(fluid1)
+fluid1.initProperties()
 printFrame(fluid1)
 
 # Switch back to standard for normal operations

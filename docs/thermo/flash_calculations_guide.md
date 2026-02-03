@@ -113,6 +113,7 @@ fluid.setMixingRule("classic");
 
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
+fluid.initProperties();  // Required before reading physical properties
 
 // Results
 double vaporFraction = fluid.getBeta();  // Molar vapor fraction
