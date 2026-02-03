@@ -786,6 +786,10 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Development Overview | [docs/development/README.md](development/README.md) | Development overview |
 | Contributing Structure | [docs/development/contributing-structure.md](development/contributing-structure.md) | Contributing guidelines |
 | Developer Setup | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP.md) | Developer setup |
+| **Extending Process Equipment** | [docs/development/extending_process_equipment.md](development/extending_process_equipment.md) | **NEW: Add custom separators, reactors, unit operations** |
+| **Extending Physical Properties** | [docs/development/extending_physical_properties.md](development/extending_physical_properties.md) | **NEW: Add viscosity, conductivity, diffusivity models** |
+| **Extending Thermodynamic Models** | [docs/development/extending_thermodynamic_models.md](development/extending_thermodynamic_models.md) | **NEW: Add custom equations of state** |
+| **Python Extension Patterns** | [docs/development/python_extension_patterns.md](development/python_extension_patterns.md) | **NEW: Python integration, wrappers, JPype interfaces** |
 
 ### Chapter 50: Testing
 
