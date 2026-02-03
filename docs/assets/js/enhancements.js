@@ -80,13 +80,36 @@
       }
     });
     
-    // Close dropdown when a link inside is clicked/touched
+    // Close dropdown when a link inside is clicked/touched and navigate
     document.querySelectorAll('.nav-dropdown-content a').forEach(function(link) {
-      link.addEventListener('click', function() {
+      // Handler that closes dropdown and allows navigation
+      function handleLinkClick(e) {
+        // Get the href before closing dropdown
+        var href = link.getAttribute('href');
+        
+        // Close all dropdowns
         document.querySelectorAll('.nav-dropdown').forEach(function(d) {
           d.classList.remove('is-open');
         });
-      });
+        
+        // For touchend, we need to manually navigate since some browsers
+        // don't reliably fire click events after touchend on dynamically shown elements
+        if (e.type === 'touchend' && href) {
+          e.preventDefault();
+          // Small delay to allow dropdown close animation
+          setTimeout(function() {
+            window.location.href = href;
+          }, 10);
+        }
+        // For click events, the default behavior will handle navigation
+      }
+      
+      link.addEventListener('click', handleLinkClick);
+      
+      // On touch devices, also handle touchend for reliable navigation
+      if (isTouchDevice) {
+        link.addEventListener('touchend', handleLinkClick, { passive: false });
+      }
     });
   }
 

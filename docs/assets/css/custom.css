@@ -128,8 +128,12 @@
   text-decoration: none;
   font-size: 0.9rem;
   transition: background 0.2s ease;
+  cursor: pointer;
   /* Improve touch targets */
   -webkit-tap-highlight-color: transparent;
+  /* Ensure links are clickable and above any pseudo-elements */
+  position: relative;
+  z-index: 1;
 }
 
 .nav-dropdown-content a:hover,
