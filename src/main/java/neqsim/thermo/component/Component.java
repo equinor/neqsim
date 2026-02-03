@@ -989,12 +989,12 @@ public abstract class Component implements ComponentInterface {
     if (Double.isNaN(newx) || Double.isInfinite(newx)) {
       return;
     }
-    if (newx < 0) {
+    if (newx < 1.0e-50) {
+      // Enforce minimum to prevent division by zero and log(0) issues
       x = 1.0e-50;
     } else if (newx > 5) {
       x = 5;
     } else {
-      // Accept zero and positive values (including exact 0.0)
       x = newx;
     }
   }
