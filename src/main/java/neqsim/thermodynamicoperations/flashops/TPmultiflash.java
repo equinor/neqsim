@@ -124,14 +124,8 @@ public class TPmultiflash extends TPflash {
             }
           } else {
             // Non-ionic components: normal flash calculation
-            // Bound fugacity coefficient to avoid numerical overflow
-            double phi = system.getPhase(k).getComponent(i).getFugacityCoefficient();
-            if (phi < 1e-100) {
-              phi = 1e-100;
-            } else if (phi > 1e100) {
-              phi = 1e100;
-            }
-            double newX = system.getPhase(0).getComponent(i).getz() / Erow[i] / phi;
+            double newX = system.getPhase(0).getComponent(i).getz() / Erow[i]
+                / system.getPhase(k).getComponent(i).getFugacityCoefficient();
             if (!Double.isFinite(newX) || newX <= 0.0) {
               newX = Math.max(system.getPhase(0).getComponent(i).getz(), 1.0e-30);
             }
@@ -154,24 +148,11 @@ public class TPmultiflash extends TPflash {
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       Erow[i] = 0.0;
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
-        double phi = system.getPhase(k).getComponent(i).getFugacityCoefficient();
-        // Bound fugacity coefficient to avoid numerical overflow in E calculation.
-        // Extremely small phi values (< 1e-100) occur due to severe non-ideality
-        // (e.g., ions with hydrocarbons having kij=1.0) and cause overflow in beta/phi.
-        // Extremely large phi values (> 1e100) are also non-physical for typical systems.
-        if (phi < 1e-100) {
-          phi = 1e-100;
-        } else if (phi > 1e100) {
-          phi = 1e100;
-        }
-        Erow[i] += system.getPhase(k).getBeta() / phi;
+        Erow[i] += system.getPhase(k).getBeta()
+            / system.getPhase(k).getComponent(i).getFugacityCoefficient();
       }
-      if (Erow[i] < 1e-100) {
+      if (Erow[i] < 1e-100)
         Erow[i] = 1e-100;
-      }
-      if (Erow[i] > 1e100) {
-        Erow[i] = 1e100;
-      }
       if (Double.isNaN(Erow[i])) {
         logger.error("Erow is NaN for component " + system.getPhase(0).getComponent(i).getName());
         Erow[i] = 1e-100;
@@ -205,14 +186,7 @@ public class TPmultiflash extends TPflash {
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
       dQdbeta[k][0] = 1.0;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        // Bound fugacity coefficient to avoid numerical overflow
-        double phi = system.getPhase(k).getComponent(i).getFugacityCoefficient();
-        if (phi < 1e-100) {
-          phi = 1e-100;
-        } else if (phi > 1e100) {
-          phi = 1e100;
-        }
-        dQdbeta[k][0] -= multTerm[i] / phi;
+        dQdbeta[k][0] -= multTerm[i] / system.getPhase(k).getComponent(i).getFugacityCoefficient();
       }
     }
 
@@ -220,20 +194,9 @@ public class TPmultiflash extends TPflash {
       for (int j = 0; j < system.getNumberOfPhases(); j++) {
         Qmatrix[i][j] = 0.0;
         for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
-          // Bound fugacity coefficients to avoid numerical overflow
-          double phiI = system.getPhase(i).getComponent(k).getFugacityCoefficient();
-          double phiJ = system.getPhase(j).getComponent(k).getFugacityCoefficient();
-          if (phiI < 1e-100) {
-            phiI = 1e-100;
-          } else if (phiI > 1e100) {
-            phiI = 1e100;
-          }
-          if (phiJ < 1e-100) {
-            phiJ = 1e-100;
-          } else if (phiJ > 1e100) {
-            phiJ = 1e100;
-          }
-          Qmatrix[i][j] += multTerm2[k] / (phiI * phiJ);
+          Qmatrix[i][j] +=
+              multTerm2[k] / (system.getPhase(j).getComponent(k).getFugacityCoefficient()
+                  * system.getPhase(i).getComponent(k).getFugacityCoefficient());
         }
         if (i == j) {
           Qmatrix[i][j] += 1.0e-3;
@@ -416,18 +379,6 @@ public class TPmultiflash extends TPflash {
       }
     }
     // boolean checkdForHCmix = false;
-
-    // OPTIMIZATION: Check if system has ions - if so, we know an aqueous phase must exist
-    // and we can skip water as a trial component (water-rich phase is guaranteed stable)
-    boolean systemHasIons = false;
-    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-          && system.getPhase(0).getComponent(i).getz() > 1e-20) {
-        systemHasIons = true;
-        break;
-      }
-    }
-
     for (int j = system.getPhase(0).getNumberOfComponents() - 1; j >= 0; j--) {
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getx() < 1e-100
           || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getIonicCharge() != 0)
@@ -435,31 +386,10 @@ public class TPmultiflash extends TPflash {
               && j != hydrocarbonTestCompNumb && j != lightTestCompNumb)) {
         continue;
       }
-
-      // OPTIMIZATION: Skip water and MEG as trial components when ions are present
-      // Ions force existence of an aqueous phase, so water-rich trial is redundant
-      if (systemHasIons) {
-        String compName = minimumGibbsEnergySystem.getPhase(0).getComponent(j).getName();
-        if (compName.equals("water") || compName.equals("MEG") || compName.equals("TEG")
-            || compName.equals("DEG") || compName.equals("methanol")
-            || compName.equals("ethanol")) {
-          // Mark as stable (tm > 0 means stable)
-          tm[j] = 1.0;
-          continue;
-        }
-      }
-
       double nomb = 0.0;
       for (int cc = 0; cc < system.getPhase(0).getNumberOfComponents(); cc++) {
         // Pure component trial phase: component j = 1.0, others = trace
-        // OPTIMIZATION: Set ions to exactly 0 to skip expensive electrolyte calculations
-        // Ions don't participate in vapor-liquid equilibrium, so their trial phase
-        // contribution is not needed for stability analysis
-        if (system.getPhase(0).getComponent(cc).getIonicCharge() != 0) {
-          nomb = 0.0;
-        } else {
-          nomb = cc == j ? 1.0 : 1.0e-12;
-        }
+        nomb = cc == j ? 1.0 : 1.0e-12;
         if (system.getPhase(0).getComponent(cc).getz() < 1e-100) {
           nomb = 0.0;
         }
@@ -1103,17 +1033,6 @@ public class TPmultiflash extends TPflash {
       }
     }
 
-    // OPTIMIZATION: Check if system has ions - if so, we know an aqueous phase must exist
-    // and we can skip water as a trial component (water-rich phase is guaranteed stable)
-    boolean systemHasIons = false;
-    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-      if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-          && system.getPhase(0).getComponent(i).getz() > 1e-20) {
-        systemHasIons = true;
-        break;
-      }
-    }
-
     for (int j = 0; j < system.getNumberOfComponents(); j++) {
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getx() < 1e-100
           || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getIonicCharge() != 0)
@@ -1122,27 +1041,9 @@ public class TPmultiflash extends TPflash {
         continue;
       }
 
-      // OPTIMIZATION: Skip water and MEG as trial components when ions are present
-      // Ions force existence of an aqueous phase, so water-rich trial is redundant
-      if (systemHasIons) {
-        String compName = minimumGibbsEnergySystem.getPhase(0).getComponent(j).getName();
-        if (compName.equals("water") || compName.equals("MEG") || compName.equals("TEG")
-            || compName.equals("DEG") || compName.equals("methanol")
-            || compName.equals("ethanol")) {
-          // Mark as stable (tm > 0 means stable)
-          tm[j] = 1.0;
-          continue;
-        }
-      }
-
       double nomb = 0.0;
       for (int cc = 0; cc < system.getPhase(0).getNumberOfComponents(); cc++) {
-        // OPTIMIZATION: Set ions to exactly 0 to skip expensive electrolyte calculations
-        if (system.getPhase(0).getComponent(cc).getIonicCharge() != 0) {
-          nomb = 0.0;
-        } else {
-          nomb = cc == j ? 1.0 : 1.0e-12;
-        }
+        nomb = cc == j ? 1.0 : 1.0e-12;
         if (system.getPhase(0).getComponent(cc).getz() < 1e-100) {
           nomb = 0.0;
         }
