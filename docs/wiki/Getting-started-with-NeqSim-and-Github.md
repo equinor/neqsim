@@ -56,6 +56,7 @@ Navigate through the documentation organized from introductory concepts to advan
 | 11 | [Process Calculations in NeqSim](https://github.com/equinor/neqsimsource/wiki/Process-Calculations-in-NeqSim) | Process simulation fundamentals |
 
 #### Equipment-Specific Guides
+
 | Topic | Description |
 |-------|-------------|
 | [Compressor calculations](https://github.com/equinor/neqsimsource/wiki/Compressor-Calc) | Compressor modeling |

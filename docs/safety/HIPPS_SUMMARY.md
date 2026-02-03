@@ -352,6 +352,7 @@ boolean trippedCorrectly = hipps.hasTripped();
 - Consider pressure surge effects
 
 ### 2. Voting Logic Selection
+
 | Application | Recommended Voting | SIL Level |
 |-------------|-------------------|-----------|
 | Low risk, simple | 1oo1 | SIL 1 |

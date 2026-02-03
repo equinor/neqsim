@@ -937,6 +937,7 @@ ops.hydrateTPflash();
 Most flash methods accept unit specifications for flexibility:
 
 ### Enthalpy Units (PH Flash)
+
 | Unit | Description |
 |------|-------------|
 | `J` | Joules (total) |
@@ -945,6 +946,7 @@ Most flash methods accept unit specifications for flexibility:
 | `kJ/kg` | Kilojoules per kilogram |
 
 ### Entropy Units (PS Flash)
+
 | Unit | Description |
 |------|-------------|
 | `J/K` | Joules per Kelvin (total) |
@@ -953,6 +955,7 @@ Most flash methods accept unit specifications for flexibility:
 | `kJ/kgK` | Kilojoules per kg-Kelvin |
 
 ### Volume Units
+
 | Unit | Description |
 |------|-------------|
 | `m3` | Cubic meters |

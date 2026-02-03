@@ -315,6 +315,7 @@ membrane.setInletStream(feedCooler.getOutletStream());
 - Higher stage cut → lower product purity
 
 ### Membrane Selection
+
 | Type | Applications | Selectivity |
 |------|--------------|-------------|
 | Cellulose acetate | CO₂/CH₄ | 15-25 |

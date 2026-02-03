@@ -165,6 +165,7 @@ public static double calculateDpFromFlowVenturi(double massFlowKgPerHour, double
 The calculator requires the following inputs:
 
 ### Geometry Parameters (flowData array)
+
 | Index | Parameter | Unit |
 |-------|-----------|------|
 | 0 | Pipe diameter (D) | mm |
@@ -172,6 +173,7 @@ The calculator requires the following inputs:
 | 2 | Discharge coefficient (optional) | - |
 
 ### Operating Conditions
+
 | Parameter | Unit |
 |-----------|------|
 | Pressure | barg |

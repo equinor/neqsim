@@ -104,6 +104,7 @@ The GERG-2008-H2 model includes:
 - Extended validation range for hydrogen-containing mixtures
 
 ### Expected Differences from GERG-2008
+
 | Binary System | Typical Density Difference |
 |---------------|---------------------------|
 | CH₄-H₂        | ~0.1-0.25%               |

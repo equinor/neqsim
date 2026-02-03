@@ -377,6 +377,7 @@ public class MyControlEnv extends RLEnvironment {
 The following equipment classes implement `StateVectorProvider`:
 
 ### Separator
+
 | State Variable | Unit | Description |
 |---------------|------|-------------|
 | pressure | bar | Separator pressure |
@@ -389,6 +390,7 @@ The following equipment classes implement `StateVectorProvider`:
 | gas_load_factor | - | Gas load factor |
 
 ### Compressor
+
 | State Variable | Unit | Description |
 |---------------|------|-------------|
 | inlet_pressure | bar | Inlet pressure |
@@ -405,6 +407,7 @@ The following equipment classes implement `StateVectorProvider`:
 | inlet_flow | kg/s | Inlet mass flow |
 
 ### HeatExchanger
+
 | State Variable | Unit | Description |
 |---------------|------|-------------|
 | hot_inlet_temp | K | Hot side inlet temperature |

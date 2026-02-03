@@ -123,6 +123,7 @@ Time: 200-300s: PCV reopens, pressure drops to 30 bara
 ```
 
 ### Key Observations
+
 | Metric | Value |
 |--------|-------|
 | Burst pressure | 55.0 bara |

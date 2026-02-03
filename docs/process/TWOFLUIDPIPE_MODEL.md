@@ -40,6 +40,7 @@ Separate momentum equations for each phase:
 | Interfacial friction | Flow-regime dependent correlations |
 
 ### Energy Conservation
+
 | Feature | Description |
 |---------|-------------|
 | Mixture energy equation | Full energy balance including kinetic and potential terms |
@@ -183,6 +184,7 @@ double drainageRate = Math.sqrt(2 * g * dz * holdup);
 2. **MultilayerThermalCalculator** - Calculates U-value and transient heat transfer
 
 ### Supported Layer Materials
+
 | Material | k [W/(m·K)] | ρ [kg/m³] | Cp [J/(kg·K)] |
 |----------|-------------|-----------|---------------|
 | Carbon Steel | 50.0 | 7850 | 480 |
@@ -279,6 +281,7 @@ System.out.println(pipe.getThermalSummary());
 - `testDownhillDrainage` - 50m downhill slope, liquid drainage validation
 
 ### Test Coverage Summary
+
 | Test Category | Tests | Status |
 |--------------|-------|--------|
 | Integration Tests | 24 | ✅ All passing |

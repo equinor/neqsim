@@ -58,6 +58,7 @@ For **three-phase separators** (gas, oil, aqueous), outlets follow gravity:
 The diagram system supports all NeqSim equipment types with industry-standard shapes:
 
 #### Separators & Vessels
+
 | Equipment | Shape | Color |
 |-----------|-------|-------|
 | Separator | Cylinder | Green |
@@ -68,6 +69,7 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | Flash | Cylinder | Light Green |
 
 #### Columns
+
 | Equipment | Shape | Color |
 |-----------|-------|-------|
 | DistillationColumn | Tall Cylinder | Green |
@@ -76,6 +78,7 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | WaterStripperColumn | Rectangle | Light Green |
 
 #### Compressors & Expanders
+
 | Equipment | Shape | Symbol |
 |-----------|-------|--------|
 | Compressor | Trapezoid | Standard P&ID trapezoid |
@@ -84,6 +87,7 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | TurbineExpander | Inverted Trapezium | Inverted trapezoid |
 
 #### Pumps
+
 | Equipment | Shape | Symbol |
 |-----------|-------|--------|
 | Pump | Circle with impeller | Circle on triangle base |
@@ -91,6 +95,7 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | ESP (Electrical Submersible Pump) | Circle with impeller | Circle on triangle base |
 
 #### Heat Exchangers
+
 | Equipment | Shape | Symbol |
 |-----------|-------|--------|
 | HeatExchanger | Circle | Simple circle |
@@ -102,6 +107,7 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | DirectContactHeater | Circle | Simple circle |
 
 #### Valves
+
 | Equipment | Shape | Symbol |
 |-----------|-------|--------|
 | ThrottlingValve | Bowtie (▶◀) | Two triangles tip-to-tip |
@@ -113,6 +119,7 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | HIPPSValve | Bowtie (▶◀) | Two triangles tip-to-tip |
 
 #### Reactors
+
 | Equipment | Shape | Color |
 |-----------|-------|-------|
 | Reactor | Hexagon | Orange |
@@ -121,6 +128,7 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | ElectrolyzerCell | Hexagon | Light Blue |
 
 #### Other Equipment
+
 | Equipment | Shape | Color |
 |-----------|-------|-------|
 | Mixer | Triangle | Light Gray |
@@ -136,6 +144,7 @@ The diagram system supports all NeqSim equipment types with industry-standard sh
 | GasGenerator/GasTurbine | Octagon | Steel Blue |
 
 #### Control Equipment
+
 | Equipment | Shape | Color |
 |-----------|-------|-------|
 | Recycle | Rectangle (dashed) | Gray |

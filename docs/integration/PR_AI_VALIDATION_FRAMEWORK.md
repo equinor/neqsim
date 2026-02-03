@@ -19,6 +19,7 @@ This framework addresses all these needs.
 ### New Packages
 
 #### `neqsim.util.validation`
+
 | File | Description |
 |------|-------------|
 | `ValidationResult.java` | Structured container for validation issues with severity levels |
@@ -26,6 +27,7 @@ This framework addresses all these needs.
 | `AIIntegrationHelper.java` | Unified entry point combining validation, RL, and documentation |
 
 #### `neqsim.util.validation.contracts`
+
 | File | Description |
 |------|-------------|
 | `ModuleContract.java` | Base interface for pre/post-condition checking |
@@ -35,6 +37,7 @@ This framework addresses all these needs.
 | `ProcessSystemContract.java` | Validates `ProcessSystem` flowsheets |
 
 #### `neqsim.util.annotation`
+
 | File | Description |
 |------|-------------|
 | `AIExposable.java` | Annotation marking methods for AI discovery |

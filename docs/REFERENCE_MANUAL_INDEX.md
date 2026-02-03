@@ -55,6 +55,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 ## Part I: Getting Started
 
 ### Chapter 1: Introduction
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Overview | [docs/README.md](README.md) | Package overview and quick start |
@@ -62,6 +63,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | **O&G Design Review** | [docs/NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW.md](NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW.md) | **Comprehensive capability review for oil & gas design and operations** |
 
 ### Chapter 2: Installation & Setup
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Getting Started | [docs/wiki/getting_started.md](wiki/getting_started.md) | Installation and first steps |
@@ -69,6 +71,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Developer Setup | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP.md) | Development environment setup |
 
 ### Chapter 3: Quick Start Examples
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Usage Examples | [docs/wiki/usage_examples.md](wiki/usage_examples.md) | Basic usage patterns |
@@ -90,6 +93,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 ## Part II: Thermodynamics
 
 ### Chapter 4: Fundamentals
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Thermo Overview | [docs/thermo/README.md](thermo/README.md) | Thermodynamics module overview |
@@ -97,6 +101,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | System Types | [docs/thermo/system/README.md](thermo/system/README.md) | EoS system implementations |
 
 ### Chapter 5: Fluid Creation & Components
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Fluid Creation Guide | [docs/thermo/fluid_creation_guide.md](thermo/fluid_creation_guide.md) | Creating thermodynamic systems |
@@ -106,6 +111,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Mathematical Models | [docs/thermo/mathematical_models.md](thermo/mathematical_models.md) | Underlying mathematical models |
 
 ### Chapter 6: Equations of State
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Thermodynamic Models | [docs/thermo/thermodynamic_models.md](thermo/thermodynamic_models.md) | **Comprehensive guide** to all thermodynamic models (EoS, CPA, GERG, electrolytes, GE models) with theory and usage |
@@ -117,6 +123,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Electrolyte CPA | [docs/thermo/ElectrolyteCPAModel.md](thermo/ElectrolyteCPAModel.md) | Electrolyte CPA model |
 
 ### Chapter 7: Flash Calculations
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Flash Guide | [docs/thermo/flash_calculations_guide.md](thermo/flash_calculations_guide.md) | Flash calculation methods |
@@ -139,6 +146,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Char Mathematics | [docs/pvtsimulation/fluid_characterization_mathematics.md](pvtsimulation/fluid_characterization_mathematics.md) | Characterization mathematics with lumping equations |
 
 ### Chapter 9: Physical Properties
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Properties Overview | [docs/thermo/physical_properties.md](thermo/physical_properties.md) | Physical property calculations |
@@ -155,6 +163,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Interaction Tables | [docs/thermo/inter_table_guide.md](thermo/inter_table_guide.md) | Binary interaction parameters |
 
 ### Chapter 10: Hydrates & Flow Assurance
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Hydrate Models | [docs/thermo/hydrate_models.md](thermo/hydrate_models.md) | Hydrate equilibrium models |
@@ -167,6 +176,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 ## Part III: Process Simulation
 
 ### Chapter 11: Process Fundamentals
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Process Overview | [docs/process/README.md](process/README.md) | Process simulation module |
@@ -178,6 +188,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Optimization Roadmap | [docs/process/OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](process/OPTIMIZATION_IMPROVEMENT_PROPOSAL.md) | Optimization implementation status |
 
 ### Chapter 12: Process Systems & Models
+
 | Document | Path | Description |
 |----------|------|-------------|
 | ProcessModel Overview | [docs/process/processmodel/README.md](process/processmodel/README.md) | Process system management |
@@ -189,6 +200,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | DEXPI Architecture | [docs/process/processmodel/DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY.md](process/processmodel/DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY.md) | DEXPI integration |
 
 ### Chapter 13: Streams & Mixers
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Streams | [docs/process/equipment/streams.md](process/equipment/streams.md) | Stream models |
@@ -196,6 +208,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Equipment Overview | [docs/process/equipment/README.md](process/equipment/README.md) | Equipment module overview |
 
 ### Chapter 14: Separation Equipment
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Separators | [docs/process/equipment/separators.md](process/equipment/separators.md) | Two/three-phase separators, scrubbers, design parameters, performance constraints (K-value, droplet cut size, retention time), Equinor TR3500 & API 12J compliance |
@@ -208,6 +221,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Water Treatment | [docs/process/equipment/water_treatment.md](process/equipment/water_treatment.md) | Hydrocyclones, produced water treatment trains, OIW limits |
 
 ### Chapter 15: Rotating Equipment
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Compressors | [docs/process/equipment/compressors.md](process/equipment/compressors.md) | Compressor models, drivers, speed-dependent power |
@@ -221,6 +235,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Ejectors | [docs/process/equipment/ejectors.md](process/equipment/ejectors.md) | Ejector systems |
 
 ### Chapter 16: Heat Transfer Equipment
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Heat Exchangers | [docs/process/equipment/heat_exchangers.md](process/equipment/heat_exchangers.md) | Heat exchanger models |
@@ -230,6 +245,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Mechanical Design | [docs/wiki/heat_exchanger_mechanical_design.md](wiki/heat_exchanger_mechanical_design.md) | HX mechanical design |
 
 ### Chapter 17: Valves & Flow Control
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Valves | [docs/process/equipment/valves.md](process/equipment/valves.md) | Valve models |
@@ -242,6 +258,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Measurement Devices** | [docs/process/equipment/measurement_devices.md](process/equipment/measurement_devices.md) | **CO2 emissions, FIV analysis, NMVOC, dew points, safety detectors** |
 
 ### Chapter 18: Special Equipment
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Reactors | [docs/process/equipment/reactors.md](process/equipment/reactors.md) | Reactor models |
@@ -257,6 +274,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Solar Panel | [docs/wiki/solar_panel.md](wiki/solar_panel.md) | Solar panel models |
 
 ### Chapter 19: Wells, Pipelines & Subsea
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Wells | [docs/process/equipment/wells.md](process/equipment/wells.md) | Well equipment |
@@ -280,6 +298,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **SURF Subsea Equipment** | [docs/process/SURF_SUBSEA_EQUIPMENT.md](process/SURF_SUBSEA_EQUIPMENT.md) | **Comprehensive SURF equipment: PLET, PLEM, manifolds, trees, jumpers, umbilicals, flexible pipes, boosters with mechanical design and cost estimation** |
 
 ### Chapter 20: Utility Equipment
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Utility Overview | [docs/process/equipment/util/README.md](process/equipment/util/README.md) | Utility equipment |
@@ -289,6 +308,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Stream Fitters** | [docs/process/equipment/util/stream_fitters.md](process/equipment/util/stream_fitters.md) | **GORfitter, MPFMfitter: GOR/GVF adjustment, MPFM reference fluids** |
 
 ### Chapter 21: Process Control
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Controllers | [docs/process/controllers.md](process/controllers.md) | Process controllers |
@@ -316,6 +336,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Practical Examples** | [docs/process/optimization/PRACTICAL_EXAMPLES.md](process/optimization/PRACTICAL_EXAMPLES.md) | **Working examples for optimization scenarios including gas processing, LNG, and offshore platforms** |
 
 ### Chapter 23: Mechanical Design
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Mechanical Design | [docs/process/mechanical_design.md](process/mechanical_design.md) | Mechanical design overview, process design parameters, validation, and JSON export |
@@ -335,6 +356,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Field Development | [docs/process/field_development_orchestration.md](process/field_development_orchestration.md) | Field development orchestration |
 
 ### Chapter 23b: Cost Estimation
+
 | Document | Path | Description |
 |----------|------|-------------|
 | **Cost Estimation Framework** | [docs/process/COST_ESTIMATION_FRAMEWORK.md](process/COST_ESTIMATION_FRAMEWORK.md) | **Comprehensive capital and operating cost estimation framework** |
@@ -350,6 +372,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Financial Metrics | [docs/process/COST_ESTIMATION_FRAMEWORK.md#financial-metrics](process/COST_ESTIMATION_FRAMEWORK.md#financial-metrics) | Payback, ROI, NPV calculations |
 
 ### Chapter 24: Serialization & Persistence
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Process Serialization | [docs/simulation/process_serialization.md](simulation/process_serialization.md) | Save/load process models |
@@ -360,6 +383,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 ## Part IV: Pipeline & Multiphase Flow
 
 ### Chapter 24: Pipeline Fundamentals
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Fluid Mechanics Overview | [docs/fluidmechanics/README.md](fluidmechanics/README.md) | Fluid mechanics module |
@@ -370,6 +394,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Flow Pattern Detection** | [docs/fluidmechanics/flow_pattern_detection.md](fluidmechanics/flow_pattern_detection.md) | **Taitel-Dukler, Baker, Barnea models, FlowPatternDetector API** |
 
 ### Chapter 25: Pressure Drop Calculations
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Pressure Drop | [docs/wiki/pipeline_pressure_drop.md](wiki/pipeline_pressure_drop.md) | Pressure drop calculation |
@@ -377,6 +402,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Friction Factors | [docs/wiki/friction_factor_models.md](wiki/friction_factor_models.md) | Friction factor models |
 
 ### Chapter 26: Heat Transfer in Pipelines
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Heat Transfer | [docs/wiki/pipeline_heat_transfer.md](wiki/pipeline_heat_transfer.md) | Pipeline heat transfer |
@@ -389,6 +415,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Model Improvements** | [docs/fluidmechanics/MASS_TRANSFER_MODEL_IMPROVEMENTS.md](fluidmechanics/MASS_TRANSFER_MODEL_IMPROVEMENTS.md) | **Technical review of mass transfer model with improvement recommendations** |
 
 ### Chapter 27: Two-Phase & Multiphase Flow
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Two-Phase Model | [docs/fluidmechanics/TwoPhasePipeFlowModel.md](fluidmechanics/TwoPhasePipeFlowModel.md) | Two-phase pipe flow |
@@ -398,6 +425,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Development Plan | [docs/fluidmechanics/TwoPhasePipeFlowSystem_Development_Plan.md](fluidmechanics/TwoPhasePipeFlowSystem_Development_Plan.md) | Development plan |
 
 ### Chapter 28: Transient Pipeline Simulation
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Transient Simulation | [docs/wiki/pipeline_transient_simulation.md](wiki/pipeline_transient_simulation.md) | Transient pipeline |
@@ -409,6 +437,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 ## Part V: Safety & Reliability
 
 ### Chapter 29: Safety Overview
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Safety Overview | [docs/safety/README.md](safety/README.md) | Safety systems module |
@@ -417,6 +446,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Process Safety | [docs/process/safety/README.md](process/safety/README.md) | Process safety module |
 
 ### Chapter 30: Alarm Systems
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Alarm System Guide | [docs/safety/alarm_system_guide.md](safety/alarm_system_guide.md) | Alarm system configuration |
@@ -424,6 +454,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | ESD Fire Alarm | [docs/wiki/esd_fire_alarm_system.md](wiki/esd_fire_alarm_system.md) | ESD/Fire alarm systems |
 
 ### Chapter 31: Pressure Relief Systems
+
 | Document | Path | Description |
 |----------|------|-------------|
 | PSV Dynamic Sizing Wiki | [docs/wiki/psv_dynamic_sizing_example.md](wiki/psv_dynamic_sizing_example.md) | PSV dynamic sizing |
@@ -432,6 +463,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Rupture Disks | [docs/safety/rupture_disk_dynamic_behavior.md](safety/rupture_disk_dynamic_behavior.md) | Rupture disk behavior |
 
 ### Chapter 32: HIPPS Systems
+
 | Document | Path | Description |
 |----------|------|-------------|
 | HIPPS Summary | [docs/safety/HIPPS_SUMMARY.md](safety/HIPPS_SUMMARY.md) | HIPPS summary |
@@ -439,6 +471,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | HIPPS Safety Logic | [docs/safety/hipps_safety_logic.md](safety/hipps_safety_logic.md) | HIPPS safety logic |
 
 ### Chapter 33: ESD & Fire Systems
+
 | Document | Path | Description |
 |----------|------|-------------|
 | ESD Blowdown | [docs/safety/ESD_BLOWDOWN_SYSTEM.md](safety/ESD_BLOWDOWN_SYSTEM.md) | ESD blowdown system |
@@ -447,6 +480,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Fire Blowdown | [docs/safety/fire_blowdown_capabilities.md](safety/fire_blowdown_capabilities.md) | Fire blowdown capabilities |
 
 ### Chapter 34: Integrated Safety Systems
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Integrated Safety | [docs/safety/INTEGRATED_SAFETY_SYSTEMS.md](safety/INTEGRATED_SAFETY_SYSTEMS.md) | Integrated safety systems |
@@ -503,6 +537,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | `process.safety.risk.examples` | Quick-start examples | `RiskFrameworkQuickStart` |
 
 #### Key Classes in Risk Framework
+
 | Class | Package | Purpose |
 |-------|---------|---------|
 | `EquipmentFailureMode` | `process.equipment.failure` | Failure mode definitions with OREDA data |
@@ -520,6 +555,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 ## Part VI: PVT & Flow Assurance
 
 ### Chapter 35: PVT Simulation
+
 | Document | Path | Description |
 |----------|------|-------------|
 | PVT Overview | [docs/pvtsimulation/README.md](pvtsimulation/README.md) | PVT simulation module |
@@ -530,6 +566,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Solution Gas-Water Ratio | [docs/pvtsimulation/SolutionGasWaterRatio.md](pvtsimulation/SolutionGasWaterRatio.md) | Rsw calculation methods (McCain, Søreide-Whitson, Electrolyte CPA) |
 
 ### Chapter 36: Black Oil Models
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Black Oil Overview | [docs/blackoil/README.md](blackoil/README.md) | Black oil module |
@@ -537,6 +574,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Black Oil Export | [docs/pvtsimulation/blackoil_pvt_export.md](pvtsimulation/blackoil_pvt_export.md) | Black oil PVT export and E300 compositional export |
 
 ### Chapter 37: Flow Assurance
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Flow Assurance | [docs/pvtsimulation/flowassurance/README.md](pvtsimulation/flowassurance/README.md) | Flow assurance module |
@@ -548,6 +586,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Validation | [docs/pvtsimulation/flowassurance/asphaltene_validation.md](pvtsimulation/flowassurance/asphaltene_validation.md) | Validation |
 
 ### Chapter 38: Gas Quality
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Gas Quality Standards | [docs/wiki/gas_quality_standards_from_tests.md](wiki/gas_quality_standards_from_tests.md) | Gas quality standards |
@@ -558,6 +597,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 ## Part VII: Standards & Quality
 
 ### Chapter 39: ISO Standards
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Standards Overview | [docs/standards/README.md](standards/README.md) | Standards module |
@@ -573,18 +613,21 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 ## Part VIII: Advanced Topics
 
 ### Chapter 40: Future Infrastructure
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Future Infrastructure | [docs/process/future-infrastructure.md](process/future-infrastructure.md) | Future infrastructure classes |
 | API Reference | [docs/process/future-api-reference.md](process/future-api-reference.md) | Future API reference |
 
 ### Chapter 41: Digital Twins
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Digital Twin | [docs/process/digital-twin-integration.md](process/digital-twin-integration.md) | Digital twin integration |
 | Lifecycle | [docs/process/lifecycle/README.md](process/lifecycle/README.md) | Lifecycle management |
 
 ### Chapter 42: AI/ML Integration
+
 | Document | Path | Description |
 |----------|------|-------------|
 | AI Platform | [docs/integration/ai_platform_integration.md](integration/ai_platform_integration.md) | AI platform integration |
@@ -595,6 +638,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Integration Overview | [docs/integration/README.md](integration/README.md) | Integration module |
 
 ### Chapter 43: Sustainability & Emissions
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Emissions Tracking | [docs/process/sustainability/README.md](process/sustainability/README.md) | Emissions tracking overview |
@@ -604,6 +648,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **NeqSimLive Integration** | [docs/GFMW_2023_Emissions_Paper.txt](GFMW_2023_Emissions_Paper.txt) | **GFMW 2023 paper: Virtual measurement of emissions using online process simulator** |
 
 ### Chapter 44: Optimization
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Optimization Overview | [docs/process/optimization/README.md](process/optimization/README.md) | Optimization module |
@@ -616,6 +661,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Advisory | [docs/process/advisory/README.md](process/advisory/README.md) | Advisory systems |
 
 ### Chapter 45: Real-Time Integration
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Real-Time Guide | [docs/integration/REAL_TIME_INTEGRATION_GUIDE.md](integration/REAL_TIME_INTEGRATION_GUIDE.md) | Real-time integration |
@@ -623,12 +669,14 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Industrial MPC | [docs/integration/neqsim_industrial_mpc_integration.md](integration/neqsim_industrial_mpc_integration.md) | Industrial MPC |
 
 ### Chapter 46: External Integrations
+
 | Document | Path | Description |
 |----------|------|-------------|
 | DEXPI Reader | [docs/integration/dexpi-reader.md](integration/dexpi-reader.md) | DEXPI reader |
 | QRA Integration | [docs/integration/QRA_INTEGRATION_GUIDE.md](integration/QRA_INTEGRATION_GUIDE.md) | QRA integration |
 
 ### Chapter 47: Process Logic Framework
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Simulation Overview | [docs/simulation/README.md](simulation/README.md) | Simulation module |
@@ -647,6 +695,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Equipment Factory | [docs/simulation/equipment_factory.md](simulation/equipment_factory.md) | Equipment factory |
 
 ### Chapter 48: Field Development
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Field Development Overview | [docs/fielddevelopment/README.md](fielddevelopment/README.md) | Field development module overview |
@@ -662,6 +711,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Subsea Systems** | [docs/process/equipment/subsea_systems.md](process/equipment/subsea_systems.md) | Subsea production systems, tieback analysis |
 
 #### Digital Field Twin Lifecycle Components
+
 | Lifecycle Phase | Documentation | Key Capabilities |
 |----------------|---------------|------------------|
 | Screening (DG0-DG1) | DIGITAL_FIELD_TWIN §3 | Concept comparison, flow assurance screening, tieback analysis |
@@ -672,6 +722,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Late-Life | LATE_LIFE_OPERATIONS | Turndown, debottlenecking, decommissioning timing |
 
 #### New Classes in This PR
+
 | Class | Package | Purpose |
 |-------|---------|---------|
 | `PortfolioOptimizer` | `economics` | Multi-project investment optimization |
@@ -687,6 +738,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 ## Part IX: Developer Guide
 
 ### Chapter 49: Contributing
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Development Overview | [docs/development/README.md](development/README.md) | Development overview |
@@ -694,6 +746,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Developer Setup | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP.md) | Developer setup |
 
 ### Chapter 50: Testing
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Test Overview | [docs/wiki/test-overview.md](wiki/test-overview.md) | Test overview |
@@ -701,6 +754,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Safety Tests | [docs/safety/integration_safety_chain_tests.md](safety/integration_safety_chain_tests.md) | Safety chain tests |
 
 ### Chapter 51: Notebooks & Examples
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Colab Notebooks | [docs/wiki/java_simulation_from_colab_notebooks.md](wiki/java_simulation_from_colab_notebooks.md) | Colab notebooks |
@@ -717,6 +771,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Examples Index | [docs/examples/index.md](examples/index.md) | Examples documentation index |
 
 ### Chapter 52: Documentation Infrastructure
+
 | Document | Path | Description |
 |----------|------|-------------|
 | **GitHub Pages Setup** | [docs/GITHUB_PAGES_SETUP.md](GITHUB_PAGES_SETUP.md) | **NEW** Enable GitHub Pages for hosted documentation |
@@ -728,12 +783,14 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 ## Appendices
 
 ### Appendix A: Chemical Reactions
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Chemical Reactions | [docs/chemicalreactions/README.md](chemicalreactions/README.md) | Chemical reactions module |
 | Deep Review | [docs/chemicalreactions/CHEMICAL_REACTION_DEEP_REVIEW.md](chemicalreactions/CHEMICAL_REACTION_DEEP_REVIEW.md) | Chemical reaction deep review |
 
 ### Appendix B: Statistics
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Statistics | [docs/statistics/README.md](statistics/README.md) | Statistics module |
@@ -742,11 +799,13 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Data Analysis | [docs/statistics/data_analysis.md](statistics/data_analysis.md) | Data analysis |
 
 ### Appendix C: Mathematical Library
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Math Library | [docs/mathlib/README.md](mathlib/README.md) | Mathematical library |
 
 ### Appendix D: Utilities
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Utilities | [docs/util/README.md](util/README.md) | Utility functions |
@@ -754,16 +813,19 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Optimizer Guide** | [docs/util/optimizer_guide.md](util/optimizer_guide.md) | **NEW** Comprehensive optimization framework with BFGS, Pareto, sensitivity analysis |
 
 ### Appendix F: Process Design Templates
+
 | Document | Path | Description |
 |----------|------|-------------|
 | **Templates Guide** | [docs/process/design/templates_guide.md](process/design/templates_guide.md) | **NEW** Pre-built process templates (compression, dehydration, CO2 capture) |
 
 ### Appendix G: Mechanical Design Standards
+
 | Document | Path | Description |
 |----------|------|-------------|
 | **TEMA Standard Guide** | [docs/process/mechanical_design/tema_standard_guide.md](process/mechanical_design/tema_standard_guide.md) | **NEW** TEMA shell and tube heat exchanger design standards |
 
 ### Appendix E: Wiki Reference
+
 | Document | Path | Description |
 |----------|------|-------------|
 | Wiki Overview | [docs/wiki/README.md](wiki/README.md) | Wiki documentation |
