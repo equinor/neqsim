@@ -1,3 +1,8 @@
+---
+title: "Venturi Flow Calculation in NeqSim"
+description: "This document describes the Venturi flow meter calculation methods implemented in NeqSim for computing mass flow rates from differential pressure measurements, and vice versa."
+---
+
 # Venturi Flow Calculation in NeqSim
 
 This document describes the Venturi flow meter calculation methods implemented in NeqSim for computing mass flow rates from differential pressure measurements, and vice versa.

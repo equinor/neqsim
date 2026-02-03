@@ -1,3 +1,8 @@
+---
+title: Density Models
+description: This guide documents the density correction models available in NeqSim for improving volumetric predictions.
+---
+
 # Density Models
 
 This guide documents the density correction models available in NeqSim for improving volumetric predictions.

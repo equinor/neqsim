@@ -1,3 +1,8 @@
+---
+title: Derivatives and Gradients in NeqSim
+description: NeqSim provides two complementary approaches for computing derivatives of simulation results. This guide covers both methods with mathematical background, usage examples, and guidance on when to use e...
+---
+
 # Derivatives and Gradients in NeqSim
 
 NeqSim provides two complementary approaches for computing derivatives of simulation results. This guide covers both methods with mathematical background, usage examples, and guidance on when to use each approach.

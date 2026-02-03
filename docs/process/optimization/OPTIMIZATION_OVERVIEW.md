@@ -1,3 +1,8 @@
+---
+title: Process Optimization in NeqSim - Overview
+description: This document provides a high-level introduction to the process optimization capabilities in NeqSim, explaining how the different components relate to each other and when to use each one.
+---
+
 # Process Optimization in NeqSim - Overview
 
 This document provides a high-level introduction to the process optimization capabilities in NeqSim, explaining how the different components relate to each other and when to use each one.

@@ -1,3 +1,8 @@
+---
+title: Machine Learning Integration
+description: This module provides infrastructure for integrating machine learning models with physics-based simulation.
+---
+
 # Machine Learning Integration
 
 This module provides infrastructure for integrating machine learning models with physics-based simulation.

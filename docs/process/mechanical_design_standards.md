@@ -1,3 +1,8 @@
+---
+title: Mechanical Design Standards in NeqSim
+description: NeqSim provides comprehensive support for international design standards used in process equipment mechanical design. The framework enables engineers to apply company-specific and international standa...
+---
+
 # Mechanical Design Standards in NeqSim
 
 ## Overview

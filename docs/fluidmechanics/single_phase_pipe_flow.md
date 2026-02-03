@@ -1,3 +1,8 @@
+---
+title: Single-Phase Gas Pipe Flow Simulation
+description: NeqSim provides single-phase gas pipeline simulation capabilities through the `PipeFlowSystem` class, implementing a staggered grid finite volume method with TDMA (Tri-Diagonal Matrix Algorithm) solve...
+---
+
 # Single-Phase Gas Pipe Flow Simulation
 
 ## Overview

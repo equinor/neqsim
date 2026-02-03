@@ -1,3 +1,8 @@
+---
+title: Ejector Equipment
+description: Documentation for ejector equipment in NeqSim process simulation.
+---
+
 # Ejector Equipment
 
 Documentation for ejector equipment in NeqSim process simulation.

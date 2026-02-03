@@ -1,3 +1,8 @@
+---
+title: Pull Request: AI-Friendly Validation Framework
+description: This PR introduces a comprehensive validation and AI integration framework for NeqSim, designed to make the library more accessible to AI/ML agents and provide structured error handling with actionabl...
+---
+
 # Pull Request: AI-Friendly Validation Framework
 
 ## Summary

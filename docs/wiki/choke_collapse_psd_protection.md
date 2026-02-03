@@ -1,3 +1,8 @@
+---
+title: "Choke Collapse PSD Protection Scenario"
+description: "This document describes a critical safety scenario where an inlet choke valve (throttle valve) suddenly fails open to 100%, causing rapid pressure rise in downstream equipment. A Process Shutdown (PSD..."
+---
+
 # Choke Collapse PSD Protection Scenario
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+title: TORG (Technical Requirements Document) Integration
+description: A TORG (Technical Requirements Document, also known as TR or Technical Requirements Governing Document) defines the standards, methods, and requirements to be used in process design for a specific pro...
+---
+
 # TORG (Technical Requirements Document) Integration
 
 ## Overview

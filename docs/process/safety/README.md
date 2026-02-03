@@ -1,3 +1,8 @@
+---
+title: Safety Systems Package
+description: Documentation for safety systems modeling in NeqSim.
+---
+
 # Safety Systems Package
 
 Documentation for safety systems modeling in NeqSim.

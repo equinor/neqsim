@@ -1,3 +1,8 @@
+---
+title: Process Flow Diagram (PFD) Export
+description: NeqSim can generate professional oil & gas style process flow diagrams (PFDs) that follow industry conventions, comparable to UniSim, Aspen, and HYSYS.
+---
+
 # Process Flow Diagram (PFD) Export
 
 NeqSim can generate professional oil & gas style process flow diagrams (PFDs) that follow industry conventions, comparable to UniSim, Aspen, and HYSYS.

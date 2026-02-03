@@ -1,3 +1,8 @@
+---
+title: Future Infrastructure API Reference
+description: Quick reference for the future infrastructure APIs added to NeqSim.
+---
+
 # Future Infrastructure API Reference
 
 Quick reference for the future infrastructure APIs added to NeqSim.

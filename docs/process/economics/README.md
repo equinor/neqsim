@@ -1,3 +1,8 @@
+---
+title: Field Development Economics Module
+description: The NeqSim field development economics module provides comprehensive tools for economic analysis
+---
+
 # Field Development Economics Module
 
 The NeqSim field development economics module provides comprehensive tools for economic analysis

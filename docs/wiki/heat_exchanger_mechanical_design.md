@@ -1,3 +1,8 @@
+---
+title: "Heat Exchanger Mechanical Design"
+description: "The `HeatExchangerMechanicalDesign` class provides sizing estimates for shell-and-tube, plate-and-frame, air cooler, and double-pipe exchangers. It can be attached to a full two-stream `HeatExchanger`..."
+---
+
 # Heat Exchanger Mechanical Design
 
 ## Overview

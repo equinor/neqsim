@@ -1,3 +1,8 @@
+---
+title: Topside Piping Mechanical Design
+description: Comprehensive documentation for topside (offshore platform and onshore facility) piping design in NeqSim, including velocity analysis, support spacing, vibration screening, and stress analysis per ind...
+---
+
 # Topside Piping Mechanical Design
 
 Comprehensive documentation for topside (offshore platform and onshore facility) piping design in NeqSim, including velocity analysis, support spacing, vibration screening, and stress analysis per industry standards.

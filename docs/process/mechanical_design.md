@@ -1,3 +1,8 @@
+---
+title: Mechanical Design Framework
+description: NeqSim provides a comprehensive mechanical design framework for sizing and specifying process equipment according to industry standards. This document describes the architecture, usage patterns, and J...
+---
+
 # Mechanical Design Framework
 
 NeqSim provides a comprehensive mechanical design framework for sizing and specifying process equipment according to industry standards. This document describes the architecture, usage patterns, and JSON export capabilities.

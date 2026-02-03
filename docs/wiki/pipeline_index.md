@@ -1,3 +1,8 @@
+---
+title: "Pipeline Modeling Documentation"
+description: "This documentation covers pipeline pressure drop, flow, and heat transfer calculations in NeqSim."
+---
+
 # Pipeline Modeling Documentation
 
 ## Documentation Index

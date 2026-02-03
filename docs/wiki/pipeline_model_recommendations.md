@@ -1,3 +1,8 @@
+---
+title: "Pipeline Model Recommendations"
+description: "AdiabaticPipe pipe = new AdiabaticPipe(\"transmission\", feed);"
+---
+
 # Pipeline Model Recommendations
 
 ## Quick Reference Guide

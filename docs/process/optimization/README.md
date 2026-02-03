@@ -1,3 +1,8 @@
+---
+title: Process Optimization Framework
+description: The `neqsim.process.calibration` package provides a comprehensive optimization framework for parameter estimation in process simulations. This document details the **Levenberg-Marquardt batch optimiza...
+---
+
 # Process Optimization Framework
 
 The `neqsim.process.calibration` package provides a comprehensive optimization framework for parameter estimation in process simulations. This document details the **Levenberg-Marquardt batch optimization** capabilities for fitting process model parameters to historical or batch data.

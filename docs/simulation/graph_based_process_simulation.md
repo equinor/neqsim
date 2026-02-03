@@ -1,3 +1,8 @@
+---
+title: Graph-Based Process Simulation in NeqSim
+description: NeqSim now supports **graph-based process representation**, enabling topology-aware simulation execution, automatic parallelization, and advanced analysis of process flowsheets. This document explains...
+---
+
 # Graph-Based Process Simulation in NeqSim
 
 ## Overview

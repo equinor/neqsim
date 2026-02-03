@@ -1,3 +1,8 @@
+---
+title: Flow Assurance in NeqSim
+description: Flow assurance is the discipline ensuring that hydrocarbon fluids can be produced, transported, and processed safely and economically throughout the life of a field. NeqSim provides comprehensive tool...
+---
+
 # Flow Assurance in NeqSim
 
 Flow assurance is the discipline ensuring that hydrocarbon fluids can be produced, transported, and processed safely and economically throughout the life of a field. NeqSim provides comprehensive tools for predicting and managing flow assurance challenges.

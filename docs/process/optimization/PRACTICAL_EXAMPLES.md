@@ -1,3 +1,8 @@
+---
+title: Process Optimization Practical Examples
+description: This document provides practical examples for using the optimizer plugin architecture with process simulations, including both Java and Python code samples.
+---
+
 # Process Optimization Practical Examples
 
 > **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.

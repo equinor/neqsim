@@ -1,3 +1,8 @@
+---
+title: "Wax Characterization"
+description: "Documentation for wax modeling and characterization in NeqSim."
+---
+
 # Wax Characterization
 
 Documentation for wax modeling and characterization in NeqSim.

@@ -1,3 +1,8 @@
+---
+title: Electrolyzer Equipment
+description: Documentation for electrolyzer equipment in NeqSim process simulation.
+---
+
 # Electrolyzer Equipment
 
 Documentation for electrolyzer equipment in NeqSim process simulation.

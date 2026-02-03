@@ -1,3 +1,8 @@
+---
+title: DEXPI XML reader
+description: The `DexpiXmlReader` utility converts [DEXPI](https://dexpi.org/) XML P&ID exports into
+---
+
 # DEXPI XML reader
 
 The `DexpiXmlReader` utility converts [DEXPI](https://dexpi.org/) XML P&ID exports into

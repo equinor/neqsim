@@ -1,3 +1,8 @@
+---
+title: Water Treatment Equipment
+description: Documentation for produced water treatment equipment in NeqSim.
+---
+
 # Water Treatment Equipment
 
 Documentation for produced water treatment equipment in NeqSim.

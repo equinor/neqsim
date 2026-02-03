@@ -1,3 +1,8 @@
+---
+title: Field Development Framework Documentation
+description: This folder contains comprehensive documentation for NeqSim's field development capabilities, enabling the creation of **digital field twins** that provide consistency from exploration through decommi...
+---
+
 # Field Development Framework Documentation
 
 This folder contains comprehensive documentation for NeqSim's field development capabilities, enabling the creation of **digital field twins** that provide consistency from exploration through decommissioning.

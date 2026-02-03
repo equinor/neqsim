@@ -1,3 +1,8 @@
+---
+title: "Viscosity Models in NeqSim"
+description: "NeqSim provides a comprehensive suite of methods for calculating fluid viscosity, ranging from standard empirical correlations to advanced corresponding states models and specialized pure-component eq..."
+---
+
 # Viscosity Models in NeqSim
 
 NeqSim provides a comprehensive suite of methods for calculating fluid viscosity, ranging from standard empirical correlations to advanced corresponding states models and specialized pure-component equations. This document details the available models, their applications, and how to use them in simulations.

@@ -1,3 +1,8 @@
+---
+title: Viscosity Models
+description: This guide documents the viscosity calculation methods available in NeqSim for gas, liquid, and multiphase systems.
+---
+
 # Viscosity Models
 
 This guide documents the viscosity calculation methods available in NeqSim for gas, liquid, and multiphase systems.

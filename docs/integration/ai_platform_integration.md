@@ -1,3 +1,8 @@
+---
+title: AI Platform Integration Guide
+description: This document describes the NeqSim extensions designed for integration with AI-based production optimization platforms and real-time digital twin systems.
+---
+
 # AI Platform Integration Guide
 
 This document describes the NeqSim extensions designed for integration with AI-based production optimization platforms and real-time digital twin systems.

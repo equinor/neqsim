@@ -1,3 +1,8 @@
+---
+title: "Steam heater"
+description: "The `SteamHeater` heats process streams while forcing the water property package. It estimates the required steam flow rate using the **IAPWS IF97** steam tables."
+---
+
 # Steam heater
 
 The `SteamHeater` heats process streams while forcing the water property package. It estimates the required steam flow rate using the **IAPWS IF97** steam tables.

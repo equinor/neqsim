@@ -1,3 +1,8 @@
+---
+title: Valve Mechanical Design
+description: This document describes the mechanical design calculations for control valves in NeqSim, implemented in the `ValveMechanicalDesign` class.
+---
+
 # Valve Mechanical Design
 
 This document describes the mechanical design calculations for control valves in NeqSim, implemented in the `ValveMechanicalDesign` class.

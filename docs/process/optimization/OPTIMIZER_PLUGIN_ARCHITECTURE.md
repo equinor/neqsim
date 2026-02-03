@@ -1,3 +1,8 @@
+---
+title: Optimizer Plugin Architecture
+description: The Optimizer Plugin Architecture provides a flexible, extensible framework for evaluating equipment capacity constraints and optimizing process throughput. It enables automated bottleneck detection, ...
+---
+
 # Optimizer Plugin Architecture
 
 > **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.

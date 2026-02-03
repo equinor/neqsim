@@ -1,3 +1,8 @@
+---
+title: Pipeline Networks
+description: Documentation for pipeline network modeling in NeqSim.
+---
+
 # Pipeline Networks
 
 Documentation for pipeline network modeling in NeqSim.

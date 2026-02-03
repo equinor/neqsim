@@ -1,3 +1,8 @@
+---
+title: Digital Twin Integration Guide
+description: This guide demonstrates how to integrate NeqSim's process simulation capabilities with digital twin architectures for real-time operations.
+---
+
 # Digital Twin Integration Guide
 
 This guide demonstrates how to integrate NeqSim's process simulation capabilities with digital twin architectures for real-time operations.

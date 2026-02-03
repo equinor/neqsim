@@ -1,3 +1,8 @@
+---
+title: "Reservoir Fluid Classification"
+description: "This document describes NeqSim's reservoir fluid classification capabilities using the `FluidClassifier` utility class based on the Whitson methodology."
+---
+
 # Reservoir Fluid Classification
 
 This document describes NeqSim's reservoir fluid classification capabilities using the `FluidClassifier` utility class based on the Whitson methodology.

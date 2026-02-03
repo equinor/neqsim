@@ -1,3 +1,8 @@
+---
+title: Manifolds
+description: Documentation for manifold equipment that combines stream mixing and splitting in NeqSim.
+---
+
 # Manifolds
 
 Documentation for manifold equipment that combines stream mixing and splitting in NeqSim.

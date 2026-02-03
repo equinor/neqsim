@@ -1,3 +1,8 @@
+---
+title: "PSD Valve with High-High Alarm Trip"
+description: "The `PSDValve` (Process Shutdown Valve) is a safety isolation valve that automatically closes when a High-High (HIHI) pressure alarm is triggered. It provides emergency shutdown protection by monitori..."
+---
+
 # PSD Valve with High-High Alarm Trip
 
 ## Overview

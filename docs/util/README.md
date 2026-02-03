@@ -1,3 +1,8 @@
+---
+title: "Utilities Package"
+description: "The `util` package provides common utilities for database access, unit conversion, serialization, exceptions, and threading."
+---
+
 # Utilities Package
 
 The `util` package provides common utilities for database access, unit conversion, serialization, exceptions, and threading.

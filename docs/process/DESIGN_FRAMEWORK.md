@@ -1,3 +1,8 @@
+---
+title: NeqSim Design Framework
+description: The Design Framework provides an integrated workflow for automated equipment sizing, process template-based design, and production optimization. This document describes the key components and usage pa...
+---
+
 # NeqSim Design Framework
 
 The Design Framework provides an integrated workflow for automated equipment sizing, process template-based design, and production optimization. This document describes the key components and usage patterns.

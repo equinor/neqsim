@@ -1,3 +1,8 @@
+---
+title: Production Optimization Improvement Proposal
+description: This document outlines improvements to NeqSim's production optimization framework to support:
+---
+
 # Production Optimization Improvement Proposal
 
 ## Executive Summary

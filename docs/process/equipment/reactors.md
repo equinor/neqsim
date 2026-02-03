@@ -1,3 +1,8 @@
+---
+title: Reactors
+description: Documentation for chemical reactor equipment in NeqSim.
+---
+
 # Reactors
 
 Documentation for chemical reactor equipment in NeqSim.

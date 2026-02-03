@@ -1,3 +1,8 @@
+---
+title: "Process Simulation Guides"
+description: "Advanced guides for process simulation features in NeqSim."
+---
+
 # Process Simulation Guides
 
 Advanced guides for process simulation features in NeqSim.

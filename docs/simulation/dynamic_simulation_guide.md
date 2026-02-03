@@ -1,3 +1,8 @@
+---
+title: Dynamic Simulation Guide
+description: Comprehensive guide to transient and dynamic simulation in NeqSim.
+---
+
 # Dynamic Simulation Guide
 
 Comprehensive guide to transient and dynamic simulation in NeqSim.

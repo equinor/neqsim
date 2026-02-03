@@ -1,3 +1,8 @@
+---
+title: Adjusters
+description: Documentation for adjuster equipment in NeqSim process simulation.
+---
+
 # Adjusters
 
 Documentation for adjuster equipment in NeqSim process simulation.

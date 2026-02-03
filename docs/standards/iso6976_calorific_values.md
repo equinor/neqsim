@@ -1,3 +1,8 @@
+---
+title: "ISO 6976 - Calorific Values from Composition"
+description: "ISO 6976 provides methods for calculating calorific values, density, relative density, and Wobbe indices from natural gas composition."
+---
+
 # ISO 6976 - Calorific Values from Composition
 
 ISO 6976 provides methods for calculating calorific values, density, relative density, and Wobbe indices from natural gas composition.

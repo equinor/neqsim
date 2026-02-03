@@ -1,3 +1,8 @@
+---
+title: ProcessSystem Class
+description: Documentation for the ProcessSystem class in NeqSim.
+---
+
 # ProcessSystem Class
 
 Documentation for the ProcessSystem class in NeqSim.

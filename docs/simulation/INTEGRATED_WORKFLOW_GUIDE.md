@@ -1,3 +1,8 @@
+---
+title: NeqSim as an Integrated Thermodynamic Backbone
+description: A strategic guide for using NeqSim to unify production, flow assurance, and process safety workflows across the asset lifecycle.
+---
+
 # NeqSim as an Integrated Thermodynamic Backbone
 
 A strategic guide for using NeqSim to unify production, flow assurance, and process safety workflows across the asset lifecycle.

@@ -1,3 +1,8 @@
+---
+title: "PVT Simulation Workflows"
+description: "This guide covers PVT simulation workflows in NeqSim, backed by regression tests under `src/test/java/neqsim/pvtsimulation/simulation`. Use these tested setups to reproduce experiments in your own stu..."
+---
+
 # PVT Simulation Workflows
 
 This guide covers PVT simulation workflows in NeqSim, backed by regression tests under `src/test/java/neqsim/pvtsimulation/simulation`. Use these tested setups to reproduce experiments in your own studies.

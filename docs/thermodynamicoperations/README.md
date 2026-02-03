@@ -1,3 +1,8 @@
+---
+title: "Thermodynamic Operations Package"
+description: "The `thermodynamicoperations` package provides flash calculations, phase envelope construction, and chemical equilibrium solvers."
+---
+
 # Thermodynamic Operations Package
 
 The `thermodynamicoperations` package provides flash calculations, phase envelope construction, and chemical equilibrium solvers.

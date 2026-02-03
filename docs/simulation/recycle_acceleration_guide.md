@@ -1,3 +1,8 @@
+---
+title: "Recycle Convergence Acceleration Guide"
+description: "This guide explains the recycle system in NeqSim, the available convergence acceleration methods, and best practices for optimizing process simulations."
+---
+
 # Recycle Convergence Acceleration Guide
 
 This guide explains the recycle system in NeqSim, the available convergence acceleration methods, and best practices for optimizing process simulations.

@@ -1,3 +1,8 @@
+---
+title: Physical Properties Package
+description: This documentation covers NeqSim's physical properties calculation system, including transport properties (viscosity, thermal conductivity, diffusivity), interfacial properties (surface tension), and ...
+---
+
 # Physical Properties Package
 
 This documentation covers NeqSim's physical properties calculation system, including transport properties (viscosity, thermal conductivity, diffusivity), interfacial properties (surface tension), and density correlations.

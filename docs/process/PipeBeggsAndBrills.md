@@ -1,3 +1,8 @@
+---
+title: PipeBeggsAndBrills - Multiphase Pipeline Simulation
+description: The `PipeBeggsAndBrills` class implements the Beggs and Brill (1973) empirical correlations for pressure drop and liquid holdup prediction in multiphase pipeline flow. It supports single-phase (gas or...
+---
+
 # PipeBeggsAndBrills - Multiphase Pipeline Simulation
 
 ## Overview

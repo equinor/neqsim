@@ -1,3 +1,8 @@
+---
+title: Interfacial Properties
+description: This guide documents the interfacial property calculations available in NeqSim, including surface tension and related phenomena.
+---
+
 # Interfacial Properties
 
 This guide documents the interfacial property calculations available in NeqSim, including surface tension and related phenomena.

@@ -1,3 +1,8 @@
+---
+title: NeqSim Functionality Review for Oil & Gas Installation Design and Operations
+description: NeqSim is a comprehensive Java-based thermodynamic and process simulation toolkit with strong capabilities for oil and gas applications. This review evaluates its functionality for designing and opera...
+---
+
 # NeqSim Functionality Review for Oil & Gas Installation Design and Operations
 
 **Review Date:** January 31, 2026  

@@ -1,3 +1,8 @@
+---
+title: Calculators and Setters
+description: Documentation for calculator and setter equipment in NeqSim process simulation.
+---
+
 # Calculators and Setters
 
 Documentation for calculator and setter equipment in NeqSim process simulation.

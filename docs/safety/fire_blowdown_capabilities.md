@@ -1,3 +1,8 @@
+---
+title: Fire/blowdown helper capabilities
+description: This note summarizes the current fire, heat-transfer, and structural integrity helpers available in NeqSim and how to apply them in process simulations.
+---
+
 # Fire/blowdown helper capabilities
 
 This note summarizes the current fire, heat-transfer, and structural integrity helpers available in NeqSim and how to apply them in process simulations.

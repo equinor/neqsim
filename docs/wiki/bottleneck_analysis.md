@@ -1,3 +1,8 @@
+---
+title: "Bottleneck Analysis and Capacity Utilization"
+description: "NeqSim provides functionality to analyze capacity utilization and identify bottlenecks in a process simulation. This feature is useful for production optimization and debottlenecking studies."
+---
+
 # Bottleneck Analysis and Capacity Utilization
 
 NeqSim provides functionality to analyze capacity utilization and identify bottlenecks in a process simulation. This feature is useful for production optimization and debottlenecking studies.

@@ -1,3 +1,8 @@
+---
+title: Subsea SURF Equipment - NeqSim Documentation
+description: NeqSim provides comprehensive support for modeling Subsea, Umbilicals, Risers, and Flowlines (SURF) equipment used in offshore oil and gas field development. The subsea equipment package (`neqsim.proc...
+---
+
 # Subsea SURF Equipment - NeqSim Documentation
 
 ## Overview

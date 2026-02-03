@@ -1,3 +1,8 @@
+---
+title: Diffusivity Models
+description: This guide documents the diffusion coefficient calculation methods available in NeqSim for gas and liquid systems.
+---
+
 # Diffusivity Models
 
 This guide documents the diffusion coefficient calculation methods available in NeqSim for gas and liquid systems.

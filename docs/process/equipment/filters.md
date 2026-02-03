@@ -1,3 +1,8 @@
+---
+title: Filter Equipment
+description: Documentation for filter equipment in NeqSim process simulation.
+---
+
 # Filter Equipment
 
 Documentation for filter equipment in NeqSim process simulation.

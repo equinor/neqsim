@@ -1,3 +1,8 @@
+---
+title: "Saving and Loading Process Simulations in NeqSim"
+description: "This document describes how to save and load process simulations in NeqSim using JSON/XML serialization. NeqSim uses the **XStream** library for object serialization, supporting both uncompressed XML ..."
+---
+
 # Saving and Loading Process Simulations in NeqSim
 
 This document describes how to save and load process simulations in NeqSim using JSON/XML serialization. NeqSim uses the **XStream** library for object serialization, supporting both uncompressed XML and compressed `.neqsim` file formats.

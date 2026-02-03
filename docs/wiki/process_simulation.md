@@ -1,3 +1,8 @@
+---
+title: "Introduction to Process Simulation in NeqSim"
+description: "NeqSim provides a powerful framework for modeling chemical and petroleum process plants. By connecting unit operations (separators, compressors, heat exchangers, valves) with streams, you can build co..."
+---
+
 # Introduction to Process Simulation in NeqSim
 
 NeqSim provides a powerful framework for modeling chemical and petroleum process plants. By connecting unit operations (separators, compressors, heat exchangers, valves) with streams, you can build complete process flowsheets for steady-state and dynamic simulation.

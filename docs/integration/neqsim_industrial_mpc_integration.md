@@ -1,3 +1,8 @@
+---
+title: NeqSim Industrial MPC Integration Guide
+description: This document describes how NeqSim thermodynamic and process simulation capabilities can be integrated with industrial Model Predictive Control (MPC) systems for real-time optimization and production ...
+---
+
 # NeqSim Industrial MPC Integration Guide
 
 This document describes how NeqSim thermodynamic and process simulation capabilities can be integrated with industrial Model Predictive Control (MPC) systems for real-time optimization and production optimization.

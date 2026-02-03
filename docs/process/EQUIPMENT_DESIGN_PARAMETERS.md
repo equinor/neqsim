@@ -1,3 +1,8 @@
+---
+title: Equipment Design Parameters Guide
+description: This guide describes how to manually set design parameters for process equipment in NeqSim when not using `autoSizeEquipment()`. Understanding these parameters is essential for accurate capacity utili...
+---
+
 # Equipment Design Parameters Guide
 
 This guide describes how to manually set design parameters for process equipment in NeqSim when not using `autoSizeEquipment()`. Understanding these parameters is essential for accurate capacity utilization tracking and bottleneck analysis.

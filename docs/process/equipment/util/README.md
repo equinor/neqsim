@@ -1,3 +1,8 @@
+---
+title: Utility Equipment
+description: This folder contains documentation for utility and control equipment in NeqSim.
+---
+
 # Utility Equipment
 
 This folder contains documentation for utility and control equipment in NeqSim.

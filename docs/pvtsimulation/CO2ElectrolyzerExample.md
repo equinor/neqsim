@@ -1,3 +1,8 @@
+---
+title: CO₂ Electrolyzer usage example
+description: The snippet below illustrates how to couple the new `CO2Electrolyzer` with a CO₂-rich feed, a
+---
+
 # CO₂ Electrolyzer usage example
 
 The snippet below illustrates how to couple the new `CO2Electrolyzer` with a CO₂-rich feed, a

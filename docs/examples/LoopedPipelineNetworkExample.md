@@ -1,3 +1,8 @@
+---
+title: Looped Pipeline Network Solver - Hardy Cross Method
+description: This tutorial demonstrates NeqSim's Hardy Cross looped network solver for pipeline networks with multiple flow paths and ring mains.
+---
+
 # Looped Pipeline Network Solver - Hardy Cross Method
 
 This tutorial demonstrates NeqSim's Hardy Cross looped network solver for pipeline networks with multiple flow paths and ring mains.

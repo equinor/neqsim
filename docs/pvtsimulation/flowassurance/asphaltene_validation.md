@@ -1,3 +1,8 @@
+---
+title: Asphaltene Model Validation
+description: This document summarizes the validation of NeqSim's asphaltene models against published literature and field data. The validation demonstrates that the implemented models correctly capture the physics...
+---
+
 # Asphaltene Model Validation
 
 ## Overview

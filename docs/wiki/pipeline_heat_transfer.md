@@ -1,3 +1,8 @@
+---
+title: "Heat Transfer in Pipelines"
+description: "NeqSim's `PipeBeggsAndBrills` class supports non-adiabatic operation with heat exchange to/from the surroundings. This is important for:"
+---
+
 # Heat Transfer in Pipelines
 
 ## Overview

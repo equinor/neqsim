@@ -1,3 +1,8 @@
+---
+title: HIPPS Implementation Summary for NeqSim
+description: A complete **HIPPS (High Integrity Pressure Protection System)** implementation has been added to NeqSim for safety simulation and analysis. HIPPS is a Safety Instrumented System (SIS) that prevents o...
+---
+
 # HIPPS Implementation Summary for NeqSim
 
 ## Executive Summary

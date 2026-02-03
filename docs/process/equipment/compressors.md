@@ -1,3 +1,8 @@
+---
+title: Compressor Equipment
+description: Documentation for compression equipment in NeqSim process simulation.
+---
+
 # Compressor Equipment
 
 Documentation for compression equipment in NeqSim process simulation.

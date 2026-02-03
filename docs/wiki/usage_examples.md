@@ -1,3 +1,8 @@
+---
+title: "Usage Examples"
+description: "Comprehensive examples demonstrating NeqSim capabilities for thermodynamic calculations and process simulation."
+---
+
 # Usage Examples
 
 Comprehensive examples demonstrating NeqSim capabilities for thermodynamic calculations and process simulation.

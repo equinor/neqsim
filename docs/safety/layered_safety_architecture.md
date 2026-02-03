@@ -1,3 +1,8 @@
+---
+title: Layered Safety System Architecture
+description: NeqSim now implements a comprehensive **defense-in-depth** safety architecture with multiple independent protection layers. This document describes how HIPPS, fire/gas detection, and ESD systems work ...
+---
+
 # Layered Safety System Architecture
 
 ## Overview

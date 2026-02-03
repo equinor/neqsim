@@ -1,3 +1,8 @@
+---
+title: Process Calibration Framework
+description: The `neqsim.process.calibration` package provides tools for online parameter estimation and calibration of process simulations using real-time measurement data. This is essential for digital twin appl...
+---
+
 # Process Calibration Framework
 
 The `neqsim.process.calibration` package provides tools for online parameter estimation and calibration of process simulations using real-time measurement data. This is essential for digital twin applications where simulation model parameters must be continuously updated to match actual plant behavior.

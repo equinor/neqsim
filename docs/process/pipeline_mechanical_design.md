@@ -1,3 +1,8 @@
+---
+title: Pipeline Mechanical Design
+description: Comprehensive documentation for pipeline mechanical design in NeqSim, including wall thickness calculations, stress analysis, cost estimation, and detailed design per industry standards.
+---
+
 # Pipeline Mechanical Design
 
 Comprehensive documentation for pipeline mechanical design in NeqSim, including wall thickness calculations, stress analysis, cost estimation, and detailed design per industry standards.

@@ -1,3 +1,8 @@
+---
+title: "Flash calculations validated by tests"
+description: "NeqSim's flash algorithms are exercised heavily in the JUnit suite under `src/test/java/neqsim/thermodynamicoperations/flashops`. The tests document how the solvers are configured and what outputs the..."
+---
+
 # Flash calculations validated by tests
 
 NeqSim's flash algorithms are exercised heavily in the JUnit suite under `src/test/java/neqsim/thermodynamicoperations/flashops`. The tests document how the solvers are configured and what outputs they must reproduce, giving a reproducible view of the underlying theory.

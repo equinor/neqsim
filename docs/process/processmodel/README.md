@@ -1,3 +1,8 @@
+---
+title: Process System and Flowsheet Management
+description: This folder contains documentation for process system and flowsheet management in NeqSim.
+---
+
 # Process System and Flowsheet Management
 
 This folder contains documentation for process system and flowsheet management in NeqSim.

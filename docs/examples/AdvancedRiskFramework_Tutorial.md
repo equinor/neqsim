@@ -1,3 +1,8 @@
+---
+title: NeqSim Advanced Risk Framework Tutorial
+description: This tutorial demonstrates the advanced risk analysis capabilities of NeqSim.
+---
+
 # NeqSim Advanced Risk Framework Tutorial
 
 This tutorial demonstrates the advanced risk analysis capabilities of NeqSim.

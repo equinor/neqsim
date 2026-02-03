@@ -1,3 +1,8 @@
+---
+title: "Parameter Fitting"
+description: "The parameter fitting subsystem provides robust nonlinear regression capabilities for thermodynamic model calibration."
+---
+
 # Parameter Fitting
 
 The parameter fitting subsystem provides robust nonlinear regression capabilities for thermodynamic model calibration.

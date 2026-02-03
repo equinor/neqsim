@@ -1,3 +1,8 @@
+---
+title: "NeqSim Thermodynamics Guide"
+description: "NeqSim (Non-Equilibrium Simulator) is a comprehensive library for thermodynamic calculations, specializing in oil and gas fluids, CO2 systems, and aqueous electrolytes. This guide provides an overview..."
+---
+
 # NeqSim Thermodynamics Guide
 
 NeqSim (Non-Equilibrium Simulator) is a comprehensive library for thermodynamic calculations, specializing in oil and gas fluids, CO2 systems, and aqueous electrolytes. This guide provides an overview of the available models, methods, and how to use them.

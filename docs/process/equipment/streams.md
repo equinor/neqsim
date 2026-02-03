@@ -1,3 +1,8 @@
+---
+title: Streams
+description: Comprehensive documentation for process streams in NeqSim.
+---
+
 # Streams
 
 Comprehensive documentation for process streams in NeqSim.

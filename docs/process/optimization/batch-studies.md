@@ -1,3 +1,8 @@
+---
+title: Batch Studies
+description: This document describes the batch study infrastructure for parallel parameter studies and concept screening.
+---
+
 # Batch Studies
 
 > **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.

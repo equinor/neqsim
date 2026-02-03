@@ -1,3 +1,8 @@
+---
+title: "Solar Panel Unit Operation"
+description: "The `SolarPanel` unit converts solar irradiance into electrical power using a"
+---
+
 # Solar Panel Unit Operation
 
 The `SolarPanel` unit converts solar irradiance into electrical power using a

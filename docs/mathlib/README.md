@@ -1,3 +1,8 @@
+---
+title: Mathematical Library Package
+description: The `mathlib` package provides mathematical utilities, nonlinear solvers, and numerical methods.
+---
+
 # Mathematical Library Package
 
 The `mathlib` package provides mathematical utilities, nonlinear solvers, and numerical methods.

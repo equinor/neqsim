@@ -1,3 +1,8 @@
+---
+title: Differentiable Thermodynamics
+description: NeqSim provides automatic differentiation capabilities for thermodynamic calculations through the `neqsim.thermo.util.derivatives` package. This enables gradient-based optimization, integration with M...
+---
+
 # Differentiable Thermodynamics
 
 NeqSim provides automatic differentiation capabilities for thermodynamic calculations through the `neqsim.thermo.util.derivatives` package. This enables gradient-based optimization, integration with ML frameworks, and sensitivity analysis.

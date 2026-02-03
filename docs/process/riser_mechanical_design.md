@@ -1,3 +1,8 @@
+---
+title: Riser Mechanical Design
+description: Comprehensive documentation for riser mechanical design in NeqSim, including catenary mechanics, VIV analysis, fatigue life estimation, and dynamic response calculations per industry standards.
+---
+
 # Riser Mechanical Design
 
 Comprehensive documentation for riser mechanical design in NeqSim, including catenary mechanics, VIV analysis, fatigue life estimation, and dynamic response calculations per industry standards.

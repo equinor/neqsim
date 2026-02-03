@@ -1,3 +1,8 @@
+---
+title: "Frequently Asked Questions (FAQ)"
+description: "NeqSim (Non-Equilibrium Simulator) is a Java library for thermodynamic calculations and process simulation, specializing in oil and gas applications. It provides:"
+---
+
 # Frequently Asked Questions (FAQ)
 
 ## Table of Contents

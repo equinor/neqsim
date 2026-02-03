@@ -1,3 +1,8 @@
+---
+title: Absorbers and Strippers
+description: Documentation for mass transfer columns in NeqSim.
+---
+
 # Absorbers and Strippers
 
 Documentation for mass transfer columns in NeqSim.

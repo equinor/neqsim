@@ -1,3 +1,8 @@
+---
+title: Rupture Disk Dynamic Behavior
+description: This document explains the rupture disk implementation in NeqSim, demonstrating the key difference between rupture disks and pressure safety valves (PSVs).
+---
+
 # Rupture Disk Dynamic Behavior
 
 This document explains the rupture disk implementation in NeqSim, demonstrating the key difference between rupture disks and pressure safety valves (PSVs).

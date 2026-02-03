@@ -1,3 +1,8 @@
+---
+title: Graph-Based Process Simulation
+description: Documentation for graph-based execution in NeqSim.
+---
+
 # Graph-Based Process Simulation
 
 Documentation for graph-based execution in NeqSim.

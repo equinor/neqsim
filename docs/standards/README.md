@@ -1,3 +1,8 @@
+---
+title: "Standards Package"
+description: "The NeqSim standards package implements international standards for gas and oil quality calculations, enabling compliance verification and sales contract management."
+---
+
 # Standards Package
 
 The NeqSim standards package implements international standards for gas and oil quality calculations, enabling compliance verification and sales contract management.

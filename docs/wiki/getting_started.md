@@ -1,3 +1,8 @@
+---
+title: "Getting Started with NeqSim"
+description: "Use this page as a launchpad into the NeqSim documentation. It mirrors the high-level structure from the Colab introduction notebook and links directly to reference guides and examples."
+---
+
 # Getting Started with NeqSim
 
 Use this page as a launchpad into the NeqSim documentation. It mirrors the high-level structure from the Colab introduction notebook and links directly to reference guides and examples.

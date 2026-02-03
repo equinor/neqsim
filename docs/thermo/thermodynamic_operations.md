@@ -1,3 +1,8 @@
+---
+title: "Thermodynamic Operations"
+description: "Thermodynamic operations execute equilibrium and property tasks using a configured fluid. Most workflows create a `ThermodynamicOperations` object once and reuse it for multiple calls."
+---
+
 # Thermodynamic Operations
 
 Thermodynamic operations execute equilibrium and property tasks using a configured fluid. Most workflows create a `ThermodynamicOperations` object once and reuse it for multiple calls.

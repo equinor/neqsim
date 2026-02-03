@@ -1,3 +1,8 @@
+---
+title: Heat Exchanger Equipment
+description: Documentation for heat transfer equipment in NeqSim process simulation.
+---
+
 # Heat Exchanger Equipment
 
 Documentation for heat transfer equipment in NeqSim process simulation.

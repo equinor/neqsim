@@ -1,3 +1,8 @@
+---
+title: Process Design Templates
+description: The `neqsim.process.design.template` package provides pre-built process templates for common industrial applications. These templates simplify the creation of standard process configurations while all...
+---
+
 # Process Design Templates
 
 The `neqsim.process.design.template` package provides pre-built process templates for common industrial applications. These templates simplify the creation of standard process configurations while allowing customization through a parameter-based API.

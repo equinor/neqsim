@@ -1,3 +1,8 @@
+---
+title: Virtual Measurement of Emissions from Produced Water
+description: This tutorial describes how to use NeqSim to calculate greenhouse gas emissions (CO₂, methane, nmVOC) from produced water handling systems on offshore oil and gas facilities.
+---
+
 # Virtual Measurement of Emissions from Produced Water
 
 ## Overview

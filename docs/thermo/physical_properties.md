@@ -1,3 +1,8 @@
+---
+title: "Physical Property Calculations"
+description: "NeqSim computes phase and mixture properties after thermodynamic initialization. This guide highlights the most used methods and how to choose appropriate models."
+---
+
 # Physical Property Calculations
 
 NeqSim computes phase and mixture properties after thermodynamic initialization. This guide highlights the most used methods and how to choose appropriate models.

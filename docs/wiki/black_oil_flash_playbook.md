@@ -1,3 +1,8 @@
+---
+title: "Black-oil flash playbook from regression tests"
+description: "The black-oil flash workflow is exercised in `SystemBlackOilTest`, which demonstrates both Eclipse deck import and direct tabular setup before running a flash. The following notes pair the tested setu..."
+---
+
 # Black-oil flash playbook from regression tests
 
 The black-oil flash workflow is exercised in `SystemBlackOilTest`, which demonstrates both Eclipse deck import and direct tabular setup before running a flash. The following notes pair the tested setup with the theory it relies on so you can reproduce the flow efficiently.

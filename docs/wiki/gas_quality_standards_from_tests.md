@@ -1,3 +1,8 @@
+---
+title: "Gas quality standards validated by ISO 6976 tests"
+description: "The ISO 6976 calorific value and Wobbe index calculations are verified in `Standard_ISO6976Test`. This page summarizes the tested configurations and equations so you can align custom gas-quality runs ..."
+---
+
 # Gas quality standards validated by ISO 6976 tests
 
 The ISO 6976 calorific value and Wobbe index calculations are verified in `Standard_ISO6976Test`. This page summarizes the tested configurations and equations so you can align custom gas-quality runs with the regression suite.

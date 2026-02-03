@@ -1,3 +1,8 @@
+---
+title: ESD Blowdown System Implementation
+description: This implementation adds a complete Emergency Shutdown (ESD) blowdown system to NeqSim, including:
+---
+
 # ESD Blowdown System Implementation
 
 ## Overview

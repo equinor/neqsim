@@ -1,3 +1,8 @@
+---
+title: Safety Systems Documentation
+description: Documentation for safety-related features and systems in NeqSim.
+---
+
 # Safety Systems Documentation
 
 Documentation for safety-related features and systems in NeqSim.

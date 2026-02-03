@@ -1,3 +1,8 @@
+---
+title: "Fluid Characterization in NeqSim"
+description: "Real reservoir fluids often contain a complex mixture of heavy hydrocarbons (C7+) that cannot be represented by standard pure components. NeqSim provides a robust characterization framework to model t..."
+---
+
 # Fluid Characterization in NeqSim
 
 Real reservoir fluids often contain a complex mixture of heavy hydrocarbons (C7+) that cannot be represented by standard pure components. NeqSim provides a robust characterization framework to model these fluids using TBP (True Boiling Point) fractions and Plus fractions.

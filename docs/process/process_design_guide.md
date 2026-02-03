@@ -1,3 +1,8 @@
+---
+title: Process Design Guide for NeqSim
+description: This guide describes the complete process design workflow using NeqSim, from initial process simulation through mechanical design and final validation. NeqSim provides an integrated framework for:
+---
+
 # Process Design Guide for NeqSim
 
 ## Introduction

@@ -1,3 +1,8 @@
+---
+title: "Friction Factor Models in NeqSim Pipelines"
+description: "Friction factor is a critical parameter in pressure drop calculations. NeqSim implements industry-standard correlations for both laminar and turbulent flow."
+---
+
 # Friction Factor Models in NeqSim Pipelines
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+title: Equipment factory usage
+description: The `EquipmentFactory` provides a single entry-point for instantiating process equipment that can
+---
+
 # Equipment factory usage
 
 The `EquipmentFactory` provides a single entry-point for instantiating process equipment that can

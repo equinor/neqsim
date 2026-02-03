@@ -1,3 +1,8 @@
+---
+title: "Creating Fluids in NeqSim"
+description: "This guide provides comprehensive documentation on how to create and configure thermodynamic fluids in NeqSim, including available equations of state, mixing rules, and best practices."
+---
+
 # Creating Fluids in NeqSim
 
 This guide provides comprehensive documentation on how to create and configure thermodynamic fluids in NeqSim, including available equations of state, mixing rules, and best practices.

@@ -1,3 +1,8 @@
+---
+title: Advanced Process Logic Features
+description: NeqSim's process logic framework has been extended with powerful advanced features for complex process control, startup/shutdown sequences, and decision-making. This document covers the new capabiliti...
+---
+
 # Advanced Process Logic Features
 
 ## Overview

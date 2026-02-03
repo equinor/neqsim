@@ -1,3 +1,8 @@
+---
+title: "Two-Fluid Transient Multiphase Flow Model"
+description: "This document describes the two-fluid model implementation in NeqSim for transient multiphase pipeline simulation."
+---
+
 # Two-Fluid Transient Multiphase Flow Model
 
 This document describes the two-fluid model implementation in NeqSim for transient multiphase pipeline simulation.

@@ -1,3 +1,8 @@
+---
+title: "Mixing Rules in NeqSim"
+description: "This guide provides comprehensive documentation on mixing rules available in NeqSim, including mathematical formulations, usage patterns, and recommendations for different applications."
+---
+
 # Mixing Rules in NeqSim
 
 This guide provides comprehensive documentation on mixing rules available in NeqSim, including mathematical formulations, usage patterns, and recommendations for different applications.

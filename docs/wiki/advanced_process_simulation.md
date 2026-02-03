@@ -1,3 +1,8 @@
+---
+title: "Advanced Process Simulation"
+description: "This guide covers advanced features of NeqSim's process simulation capabilities, including execution optimization, recycles, control systems, and dynamic simulation."
+---
+
 # Advanced Process Simulation
 
 This guide covers advanced features of NeqSim's process simulation capabilities, including execution optimization, recycles, control systems, and dynamic simulation.

@@ -1,3 +1,8 @@
+---
+title: Thermal Conductivity Models
+description: This guide documents the thermal conductivity calculation methods available in NeqSim for gas, liquid, and multiphase systems.
+---
+
 # Thermal Conductivity Models
 
 This guide documents the thermal conductivity calculation methods available in NeqSim for gas, liquid, and multiphase systems.

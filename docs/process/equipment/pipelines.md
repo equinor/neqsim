@@ -1,3 +1,8 @@
+---
+title: Pipelines and Pipes
+description: Documentation for pipeline equipment in NeqSim.
+---
+
 # Pipelines and Pipes
 
 Documentation for pipeline equipment in NeqSim.

@@ -1,3 +1,8 @@
+---
+title: Heat Transfer Modeling in NeqSim
+description: This document provides detailed documentation of the heat transfer models implemented in the NeqSim fluid mechanics package.
+---
+
 # Heat Transfer Modeling in NeqSim
 
 This document provides detailed documentation of the heat transfer models implemented in the NeqSim fluid mechanics package.

@@ -1,3 +1,8 @@
+---
+title: NeqSim Field Development Strategy
+description: This document outlines a comprehensive plan to transform NeqSim into a premier tool for **field development screening**, **production scheduling**, **tie-back analysis**, and **new development plannin...
+---
+
 # NeqSim Field Development Strategy
 
 ## Executive Summary

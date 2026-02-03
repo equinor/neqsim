@@ -1,3 +1,8 @@
+---
+title: NeqSim ML Integration Guide
+description: This module provides infrastructure for integrating NeqSim with modern AI/ML systems including Reinforcement Learning, neural network surrogates, and multi-agent control.
+---
+
 # NeqSim ML Integration Guide
 
 This module provides infrastructure for integrating NeqSim with modern AI/ML systems including Reinforcement Learning, neural network surrogates, and multi-agent control.

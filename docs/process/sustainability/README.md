@@ -1,3 +1,8 @@
+---
+title: Sustainability and Emissions Tracking
+description: This module provides CO2 equivalent emissions tracking and energy consumption monitoring for process systems.
+---
+
 # Sustainability and Emissions Tracking
 
 This module provides CO2 equivalent emissions tracking and energy consumption monitoring for process systems.

@@ -1,3 +1,8 @@
+---
+title: "Thermodynamic Models in NeqSim"
+description: "This document provides a comprehensive overview of the thermodynamic models available in NeqSim, their theoretical foundations, and practical guidance on when and how to use each model. Models are cla..."
+---
+
 # Thermodynamic Models in NeqSim
 
 This document provides a comprehensive overview of the thermodynamic models available in NeqSim, their theoretical foundations, and practical guidance on when and how to use each model. Models are classified into categories based on their mathematical formulation and application domain.

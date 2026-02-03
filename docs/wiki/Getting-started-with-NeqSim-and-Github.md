@@ -1,3 +1,8 @@
+---
+title: "Getting started with NeqSim and Github"
+description: "The NeqSim library as a jar files can be downloaded from the [NeqSim release pages](https://github.com/equinor/neqsimsource/releases). A shaded library is distributed including all dependent libraries..."
+---
+
 # Getting started with NeqSim and Github
 
 The NeqSim library as a jar files can be downloaded from the [NeqSim release pages](https://github.com/equinor/neqsimsource/releases). A shaded library is distributed including all dependent libraries used by NeqSim. Use of NeqSim in a Java program is done by adding NeqSim.jar to the classpath.

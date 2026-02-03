@@ -1,3 +1,8 @@
+---
+title: Production Optimization Guide
+description: This guide provides comprehensive examples for setting up and running production optimization simulations in NeqSim, covering both Java and Python implementations.
+---
+
 # Production Optimization Guide
 
 > **New to process optimization?** Start with the [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.

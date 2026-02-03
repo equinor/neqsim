@@ -1,3 +1,8 @@
+---
+title: PFD Diagram System: Architecture Alignment and DEXPI Synergy
+description: The PFD diagram system integrates cleanly at three architectural levels:
+---
+
 # PFD Diagram System: Architecture Alignment and DEXPI Synergy
 
 ## 1. Architectural Fit Assessment

@@ -1,3 +1,8 @@
+---
+title: Adsorbers
+description: Documentation for adsorption equipment in NeqSim.
+---
+
 # Adsorbers
 
 Documentation for adsorption equipment in NeqSim.

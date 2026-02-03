@@ -1,3 +1,8 @@
+---
+title: Fluid Characterization in NeqSim: Mathematical Foundations
+description: This document provides detailed mathematical documentation of the fluid characterization methods implemented in NeqSim, with emphasis on plus fraction (C7+) modeling, TBP fraction property correlation...
+---
+
 # Fluid Characterization in NeqSim: Mathematical Foundations
 
 This document provides detailed mathematical documentation of the fluid characterization methods implemented in NeqSim, with emphasis on plus fraction (C7+) modeling, TBP fraction property correlations, and pseudo-component generation.

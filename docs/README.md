@@ -1,3 +1,8 @@
+---
+title: NeqSim Documentation
+description: Comprehensive Java library for thermodynamic, physical property, and process simulation. Includes guides for all major packages and application development.
+---
+
 # NeqSim Documentation
 
 **NeqSim** (Non-Equilibrium Simulator) is a comprehensive Java library for thermodynamic, physical property, and process simulation. This documentation covers all major packages and provides detailed guides for developing applications.

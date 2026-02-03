@@ -1,3 +1,8 @@
+---
+title: "Distillation column algorithm"
+description: "This document describes the mathematical model and solver implementations that power the"
+---
+
 # Distillation column algorithm
 
 This document describes the mathematical model and solver implementations that power the

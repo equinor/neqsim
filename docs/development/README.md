@@ -1,3 +1,8 @@
+---
+title: Development Documentation
+description: Guides for developers contributing to NeqSim.
+---
+
 # Development Documentation
 
 Guides for developers contributing to NeqSim.

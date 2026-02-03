@@ -1,3 +1,8 @@
+---
+title: ProcessModel Class
+description: Documentation for the ProcessModel class in NeqSim.
+---
+
 # ProcessModel Class
 
 Documentation for the ProcessModel class in NeqSim.

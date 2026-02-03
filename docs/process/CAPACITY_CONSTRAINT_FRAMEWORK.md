@@ -1,3 +1,8 @@
+---
+title: Capacity Constraint Framework
+description: The Capacity Constraint Framework extends NeqSim's existing bottleneck analysis capability with multi-constraint support. It provides:
+---
+
 # Capacity Constraint Framework
 
 ## Overview

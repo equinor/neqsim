@@ -1,3 +1,8 @@
+---
+title: "Field Development Planning Module"
+description: "The Field Development Planning module provides a comprehensive set of tools for modeling, scheduling, and optimizing oil and gas field development projects. This module integrates with NeqSim's existi..."
+---
+
 # Field Development Planning Module
 
 The Field Development Planning module provides a comprehensive set of tools for modeling, scheduling, and optimizing oil and gas field development projects. This module integrates with NeqSim's existing process simulation capabilities to enable full-lifecycle field development planning.

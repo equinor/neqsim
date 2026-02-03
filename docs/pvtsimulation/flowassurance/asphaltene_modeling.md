@@ -1,3 +1,8 @@
+---
+title: Asphaltene Modeling in NeqSim
+description: Asphaltenes are the heaviest and most polar fraction of crude oil, defined operationally as the fraction soluble in aromatic solvents (toluene) but insoluble in paraffinic solvents (n-heptane or n-pen...
+---
+
 # Asphaltene Modeling in NeqSim
 
 ## Introduction

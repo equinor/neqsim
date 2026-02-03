@@ -231,6 +231,35 @@ Before committing, run `./mvnw javadoc:javadoc` to catch JavaDoc errors early.
 
 ## Markdown Documentation Guidelines (MANDATORY)
 
+### Jekyll Front Matter (REQUIRED for Search)
+
+**ALL markdown documentation files in `docs/` MUST have Jekyll YAML front matter** at the very beginning of the file for proper search indexing. Without front matter, files may not appear in search results with proper titles.
+
+**Required format:**
+```yaml
+---
+title: Your Document Title
+description: A concise description (1-2 sentences) of what the document covers. Include key terms users might search for.
+---
+```
+
+**Example for a thermodynamics guide:**
+```yaml
+---
+title: Reading Fluid Properties in NeqSim
+description: Comprehensive guide to calculating and reading thermodynamic and physical properties from fluids, phases, and components. Covers init levels, TPflash, density, enthalpy, viscosity, units, volume translation, and JSON reports.
+---
+```
+
+**Rules:**
+1. Front matter MUST be the first thing in the file (before any content)
+2. Use three dashes `---` to delimit the YAML block
+3. `title` should be descriptive but concise (appears in search results)
+4. `description` should include searchable keywords relevant to the content
+5. Do NOT duplicate the title as an H1 heading immediately after front matter (Jekyll handles this)
+
+**Files that already have front matter:** Check if they have both `title` and `description`. If missing `description`, add it.
+
 When creating or editing markdown documentation files:
 
 ### HTML and Markdown Mixing Rules

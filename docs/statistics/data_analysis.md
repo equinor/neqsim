@@ -1,3 +1,8 @@
+---
+title: "Data Analysis"
+description: "The data analysis subsystem provides tools for preprocessing, smoothing, and statistical analysis of experimental data."
+---
+
 # Data Analysis
 
 The data analysis subsystem provides tools for preprocessing, smoothing, and statistical analysis of experimental data.

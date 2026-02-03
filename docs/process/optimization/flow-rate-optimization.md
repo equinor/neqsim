@@ -1,3 +1,8 @@
+---
+title: Flow Rate Optimization
+description: This guide covers the `FlowRateOptimizer` class for calculating optimal flow rates given pressure boundary conditions and generating lift curve tables for Eclipse reservoir simulation.
+---
+
 # Flow Rate Optimization
 
 > **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.

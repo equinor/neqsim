@@ -1,3 +1,8 @@
+---
+title: Integrated Field Development Framework
+description: This document describes how NeqSim integrates PVT, reservoir, well, and process simulations
+---
+
 # Integrated Field Development Framework
 
 ## Overview

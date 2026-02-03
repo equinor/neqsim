@@ -1,3 +1,8 @@
+---
+title: Valve Equipment
+description: Documentation for valve equipment in NeqSim process simulation.
+---
+
 # Valve Equipment
 
 Documentation for valve equipment in NeqSim process simulation.

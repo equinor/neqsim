@@ -1,3 +1,8 @@
+---
+title: "Well and choke simulation in NeqSim"
+description: "NeqSim combines well inflow performance relationships with hydraulic flowline models and production chokes to represent surface networks. A `WellFlowlineNetwork` assembles wells, optional chokes, and ..."
+---
+
 # Well and choke simulation in NeqSim
 
 ## Overview

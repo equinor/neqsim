@@ -1,3 +1,8 @@
+---
+title: NeqSim QRA Integration Guide
+description: A comprehensive guide for integrating NeqSim thermodynamic calculations into Quantitative Risk Assessment (QRA) workflows.
+---
+
 # NeqSim QRA Integration Guide
 
 A comprehensive guide for integrating NeqSim thermodynamic calculations into Quantitative Risk Assessment (QRA) workflows.

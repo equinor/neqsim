@@ -1,3 +1,8 @@
+---
+title: "GERG-2008 and EOS-CG Equations of State"
+description: "NeqSim supports the **GERG-2008** and **EOS-CG** equations of state, which are reference-quality models explicit in the Helmholtz free energy. These models are widely used for high-accuracy property c..."
+---
+
 # GERG-2008 and EOS-CG Equations of State
 
 NeqSim supports the **GERG-2008** and **EOS-CG** equations of state, which are reference-quality models explicit in the Helmholtz free energy. These models are widely used for high-accuracy property calculations in natural gas and CCS (Carbon Capture and Storage) applications.

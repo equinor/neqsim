@@ -1,3 +1,8 @@
+---
+title: "Process Optimization Module"
+description: "The `neqsim.process.util.optimizer` package provides a comprehensive optimization framework for process simulation, including gradient-based optimizers, multi-objective optimization with Pareto front ..."
+---
+
 # Process Optimization Module
 
 > **New to process optimization?** Start with the [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.

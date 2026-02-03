@@ -1,3 +1,8 @@
+---
+title: "Thermodynamic Workflows"
+description: "Use these recipes to configure fluids and run equilibrium calculations with NeqSim. The Java snippets mirror the workflow used in other language bindings."
+---
+
 # Thermodynamic Workflows
 
 Use these recipes to configure fluids and run equilibrium calculations with NeqSim. The Java snippets mirror the workflow used in other language bindings.

@@ -1,3 +1,8 @@
+---
+title: Integrated Safety Systems Example
+description: The `IntegratedSafetySystemExample` demonstrates a comprehensive safety system implementation for process facilities, incorporating multiple layers of protection following the principles of **Safety I...
+---
+
 # Integrated Safety Systems Example
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+title: "Hydrate Models in NeqSim"
+description: "This document describes the gas hydrate thermodynamic models implemented in NeqSim for predicting hydrate formation, stability, and phase equilibrium."
+---
+
 # Hydrate Models in NeqSim
 
 This document describes the gas hydrate thermodynamic models implemented in NeqSim for predicting hydrate formation, stability, and phase equilibrium.

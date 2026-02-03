@@ -1,3 +1,8 @@
+---
+title: Process Simulation Package
+description: The `process` package provides process equipment, unit operations, controllers, and process system management for building complete flowsheets.
+---
+
 # Process Simulation Package
 
 The `process` package provides process equipment, unit operations, controllers, and process system management for building complete flowsheets.

@@ -1,3 +1,8 @@
+---
+title: "Water Hammer Simulation in NeqSim"
+description: "NeqSim provides water hammer (hydraulic transient) simulation through the `WaterHammerPipe` class. This model uses the **Method of Characteristics (MOC)** to simulate fast pressure transients caused b..."
+---
+
 # Water Hammer Simulation in NeqSim
 
 ## Overview

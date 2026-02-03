@@ -1,3 +1,8 @@
+---
+title: Process Model Lifecycle Management
+description: Documentation for process model state management, versioning, and lifecycle tracking.
+---
+
 # Process Model Lifecycle Management
 
 Documentation for process model state management, versioning, and lifecycle tracking.

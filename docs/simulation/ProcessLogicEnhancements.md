@@ -1,3 +1,8 @@
+---
+title: Process Logic and Scenario Simulation Enhancements
+description: This document describes the enhancements made to the NeqSim process logic framework to support advanced safety system simulation with logic sequences and scenario testing.
+---
+
 # Process Logic and Scenario Simulation Enhancements
 
 This document describes the enhancements made to the NeqSim process logic framework to support advanced safety system simulation with logic sequences and scenario testing.

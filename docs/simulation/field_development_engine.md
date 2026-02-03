@@ -1,3 +1,8 @@
+---
+title: Field Development Engine
+description: The Field Development Engine is a rapid concept screening toolkit within NeqSim designed to accelerate early-phase field development decisions. It enables engineers to quickly evaluate multiple develo...
+---
+
 # Field Development Engine
 
 The Field Development Engine is a rapid concept screening toolkit within NeqSim designed to accelerate early-phase field development decisions. It enables engineers to quickly evaluate multiple development concepts, comparing technical feasibility, economics, emissions, and safety aspects in hours rather than weeks.

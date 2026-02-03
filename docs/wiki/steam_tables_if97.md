@@ -1,3 +1,8 @@
+---
+title: "IF97 Steam Tables"
+description: "This page documents the basic equations implemented in `Iapws_if97`."
+---
+
 # IF97 Steam Tables
 
 This page documents the basic equations implemented in `Iapws_if97`.

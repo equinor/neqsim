@@ -1,3 +1,8 @@
+---
+title: "Mathematical Models in NeqSim"
+description: "NeqSim bundles several thermodynamic and transport models so you can switch between correlations without rewriting system setup code. The sections below summarize the most commonly used options and wh..."
+---
+
 # Mathematical Models in NeqSim
 
 NeqSim bundles several thermodynamic and transport models so you can switch between correlations without rewriting system setup code. The sections below summarize the most commonly used options and when to consider them.

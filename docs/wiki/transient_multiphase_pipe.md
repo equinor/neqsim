@@ -1,3 +1,8 @@
+---
+title: "Transient Multiphase Pipe Model"
+description: "The `TransientPipe` class provides a 1D transient multiphase (gas-liquid) flow simulator for pipelines. It uses the drift-flux formulation combined with mechanistic flow regime detection to model comp..."
+---
+
 # Transient Multiphase Pipe Model
 
 ## Overview

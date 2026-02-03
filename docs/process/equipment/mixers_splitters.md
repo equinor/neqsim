@@ -1,3 +1,8 @@
+---
+title: Mixers and Splitters
+description: Documentation for stream mixing and splitting equipment in NeqSim.
+---
+
 # Mixers and Splitters
 
 Documentation for stream mixing and splitting equipment in NeqSim.

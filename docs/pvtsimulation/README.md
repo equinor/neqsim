@@ -1,3 +1,8 @@
+---
+title: PVT Simulation Package
+description: The `pvtsimulation` package provides tools for simulating standard PVT laboratory experiments used in reservoir fluid characterization.
+---
+
 # PVT Simulation Package
 
 The `pvtsimulation` package provides tools for simulating standard PVT laboratory experiments used in reservoir fluid characterization.

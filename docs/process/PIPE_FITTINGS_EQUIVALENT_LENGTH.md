@@ -1,3 +1,8 @@
+---
+title: Pipe Fittings and Equivalent Length Method
+description: NeqSim supports pressure drop calculations through pipe fittings (bends, valves, tees, reducers, etc.) using the **equivalent length method**. This method converts the pressure loss through each fitti...
+---
+
 # Pipe Fittings and Equivalent Length Method
 
 ## Overview

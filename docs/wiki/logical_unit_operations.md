@@ -1,3 +1,8 @@
+---
+title: "Logical Unit Operations"
+description: "NeqSim provides several \"logical\" unit operations that do not represent physical equipment but are used to control the simulation, transfer data, or perform calculations. These include `Calculator`, `..."
+---
+
 # Logical Unit Operations
 
 NeqSim provides several "logical" unit operations that do not represent physical equipment but are used to control the simulation, transfer data, or perform calculations. These include `Calculator`, `Adjuster`, `SetPoint`, and `Recycle`.

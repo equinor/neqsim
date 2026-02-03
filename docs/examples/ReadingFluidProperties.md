@@ -1,3 +1,8 @@
+---
+title: Reading Fluid Properties Tutorial
+description: Tutorial demonstrating how to calculate and read fluid properties in NeqSim including init levels, density, enthalpy, viscosity, units, and Peneloux volume correction.
+---
+
 # Reading Fluid Properties in NeqSim
 
 This tutorial demonstrates how to calculate and read thermodynamic and physical properties from fluids, phases, and components in NeqSim.
@@ -155,7 +160,7 @@ gas_phase = fluid.getPhase("gas") if fluid.hasPhaseType("gas") else None
 oil_phase = fluid.getPhase("oil") if fluid.hasPhaseType("oil") else None
 
 for i in range(fluid.getNumberOfComponents()):
-    comp_name = fluid.getComponent(i).getComponentName()
+    comp_name = str(fluid.getComponent(i).getComponentName())  # Convert to Python string
     z = fluid.getComponent(i).getz()
     
     x_gas = gas_phase.getComponent(i).getx() if gas_phase else 0
@@ -175,7 +180,7 @@ print(f"{'Component':<12} {'φ (gas)':<15} {'φ (oil)':<15}")
 print("-" * 42)
 
 for i in range(fluid.getNumberOfComponents()):
-    comp_name = fluid.getComponent(i).getComponentName()
+    comp_name = str(fluid.getComponent(i).getComponentName())  # Convert to Python string
     
     phi_gas = gas_phase.getComponent(i).getFugacityCoefficient() if gas_phase else 0
     phi_oil = oil_phase.getComponent(i).getFugacityCoefficient() if oil_phase else 0
@@ -192,9 +197,10 @@ print("-" * 60)
 
 for i in range(fluid.getNumberOfComponents()):
     comp = fluid.getComponent(i)
-    print(f"{comp.getComponentName():<12} "
+    comp_name = str(comp.getComponentName())  # Convert to Python string
+    print(f"{comp_name:<12} "
           f"{comp.getTC():<12.2f} "
-          f"{comp.getPC() / 1e5:<12.2f} "
+          f"{comp.getPC():<12.2f} "  # getPC() returns bara
           f"{comp.getAcentricFactor():<12.4f} "
           f"{comp.getMolarMass() * 1000:<12.4f}")
 ```

@@ -1,3 +1,8 @@
+---
+title: Pressure Boundary Optimization
+description: This guide explains how to use the `PressureBoundaryOptimizer` class to calculate flow rates for given inlet and outlet pressure boundaries, generate lift curve tables for Eclipse reservoir simulation...
+---
+
 # Pressure Boundary Optimization
 
 This guide explains how to use the `PressureBoundaryOptimizer` class to calculate flow rates for given inlet and outlet pressure boundaries, generate lift curve tables for Eclipse reservoir simulation, and optimize process operations.

@@ -1,3 +1,8 @@
+---
+title: NeqSim Future Infrastructure Overview
+description: This document provides an overview of the foundational infrastructure added to NeqSim to support the future of process simulation.
+---
+
 # NeqSim Future Infrastructure Overview
 
 This document provides an overview of the foundational infrastructure added to NeqSim to support the future of process simulation.

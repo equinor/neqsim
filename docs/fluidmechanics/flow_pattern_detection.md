@@ -1,3 +1,8 @@
+---
+title: Flow Pattern Detection
+description: Automatic detection and classification of two-phase flow regimes in pipe flow using mechanistic models.
+---
+
 # Flow Pattern Detection
 
 Automatic detection and classification of two-phase flow regimes in pipe flow using mechanistic models.

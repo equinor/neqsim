@@ -1,3 +1,8 @@
+---
+title: Fire and blowdown calculation enhancements
+description: This note summarizes how to extend NeqSim blowdown calculations with rigorous fire exposure models.
+---
+
 # Fire and blowdown calculation enhancements
 
 This note summarizes how to extend NeqSim blowdown calculations with rigorous fire exposure models.

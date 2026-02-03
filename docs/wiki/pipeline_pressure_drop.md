@@ -1,3 +1,8 @@
+---
+title: "Pipeline Pressure Drop Calculations in NeqSim"
+description: "NeqSim provides three main pipeline models for calculating pressure drop:"
+---
+
 # Pipeline Pressure Drop Calculations in NeqSim
 
 ## Overview

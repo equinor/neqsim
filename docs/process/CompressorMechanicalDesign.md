@@ -1,3 +1,8 @@
+---
+title: Compressor Mechanical Design
+description: This document describes the mechanical design calculations for centrifugal compressors in NeqSim, implemented in the `CompressorMechanicalDesign` class.
+---
+
 # Compressor Mechanical Design
 
 This document describes the mechanical design calculations for centrifugal compressors in NeqSim, implemented in the `CompressorMechanicalDesign` class.

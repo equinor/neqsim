@@ -1,3 +1,8 @@
+---
+title: Mechanical Design Database and Data Sources
+description: NeqSim supports loading mechanical design parameters from various data sources including databases and CSV files. This allows organizations to maintain centralized repositories of design data, materia...
+---
+
 # Mechanical Design Database and Data Sources
 
 ## Overview

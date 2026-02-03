@@ -1,3 +1,8 @@
+---
+title: NeqSim Base Modules
+description: This document provides an overview of the seven foundational modules that make up NeqSim. Each module resides under `src/main/java/neqsim` and works together to support fluid characterization and proc...
+---
+
 # NeqSim Base Modules
 
 This document provides an overview of the seven foundational modules that make up NeqSim. Each module resides under `src/main/java/neqsim` and works together to support fluid characterization and process design.

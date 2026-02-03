@@ -1,3 +1,8 @@
+---
+title: "Pump Theory and Implementation in NeqSim"
+description: "NeqSim provides comprehensive centrifugal pump simulation through the `Pump` and `PumpChart` classes. The implementation supports:"
+---
+
 # Pump Theory and Implementation in NeqSim
 
 ## Overview

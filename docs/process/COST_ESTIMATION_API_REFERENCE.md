@@ -1,3 +1,8 @@
+---
+title: Cost Estimation API Reference
+description: This document provides detailed API reference for all cost estimation classes in NeqSim.
+---
+
 # Cost Estimation API Reference
 
 This document provides detailed API reference for all cost estimation classes in NeqSim.

@@ -1,3 +1,8 @@
+---
+title: TwoFluidPipe Model Tutorial
+description: This tutorial demonstrates the use of NeqSim's `TwoFluidPipe` model for simulating multiphase (gas-liquid) flow in pipelines.
+---
+
 # TwoFluidPipe Model Tutorial
 
 ## Multiphase Pipeline Flow Simulation with NeqSim

@@ -1,3 +1,8 @@
+---
+title: "Beggs & Brill Correlation for Multiphase Pipe Flow"
+description: "The Beggs & Brill correlation (1973) is a widely-used empirical method for predicting pressure drop and liquid holdup in multiphase pipe flow. It handles:"
+---
+
 # Beggs & Brill Correlation for Multiphase Pipe Flow
 
 ## Overview

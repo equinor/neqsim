@@ -1,3 +1,8 @@
+---
+title: "Electrolyte CPA Model Documentation"
+description: "The electrolyte CPA (Cubic Plus Association) model in NeqSim extends the standard CPA equation of state to handle aqueous electrolyte solutions. The model is based on the work of Solbraa (2002) and co..."
+---
+
 # Electrolyte CPA Model Documentation
 
 ## Overview

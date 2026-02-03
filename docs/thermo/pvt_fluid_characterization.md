@@ -1,3 +1,8 @@
+---
+title: "PVT and Fluid Characterization"
+description: "Accurate phase behavior predictions start with a realistic fluid description. NeqSim supports full compositional models, TBP cuts, and black-oil style pseudo-components."
+---
+
 # PVT and Fluid Characterization
 
 Accurate phase behavior predictions start with a realistic fluid description. NeqSim supports full compositional models, TBP cuts, and black-oil style pseudo-components.

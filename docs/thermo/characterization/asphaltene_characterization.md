@@ -1,3 +1,8 @@
+---
+title: "Asphaltene Characterization"
+description: "Documentation for asphaltene modeling using SARA analysis in NeqSim."
+---
+
 # Asphaltene Characterization
 
 Documentation for asphaltene modeling using SARA analysis in NeqSim.

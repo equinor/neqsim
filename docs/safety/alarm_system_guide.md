@@ -1,3 +1,8 @@
+---
+title: NeqSim Alarm System Configuration Guide
+description: The NeqSim alarm system provides a comprehensive framework for monitoring process variables and managing alarm states throughout the lifecycle of process operations. This guide demonstrates how to con...
+---
+
 # NeqSim Alarm System Configuration Guide
 
 ## Overview

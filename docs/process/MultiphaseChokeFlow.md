@@ -1,3 +1,8 @@
+---
+title: Multiphase Choke Flow Models in NeqSim
+description: NeqSim provides comprehensive two-phase choke flow calculations through the `neqsim.process.mechanicaldesign.valve.choke` package. This module implements both mechanistic models (Sachdeva et al.) and ...
+---
+
 # Multiphase Choke Flow Models in NeqSim
 
 ## Overview

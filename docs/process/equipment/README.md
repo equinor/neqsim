@@ -1,3 +1,8 @@
+---
+title: Process Equipment Documentation
+description: This folder contains detailed documentation for all process equipment in NeqSim.
+---
+
 # Process Equipment Documentation
 
 This folder contains detailed documentation for all process equipment in NeqSim.

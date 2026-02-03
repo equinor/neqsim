@@ -1,3 +1,8 @@
+---
+title: Field Development Framework - API Guide
+description: This guide provides detailed usage examples for all components added in the field development framework PR.
+---
+
 # Field Development Framework - API Guide
 
 This guide provides detailed usage examples for all components added in the field development framework PR.

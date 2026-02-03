@@ -1,3 +1,8 @@
+---
+title: NeqSim Reference Manual - Master Index
+description: This document maps all 230+ documentation files to the reference manual structure. Use this as a comprehensive table of contents and navigation guide.
+---
+
 # NeqSim Reference Manual - Master Index
 
 This document maps all 230+ documentation files to the reference manual structure. Use this as a comprehensive table of contents and navigation guide.

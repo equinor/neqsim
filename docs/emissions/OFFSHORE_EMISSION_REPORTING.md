@@ -1,3 +1,8 @@
+---
+title: Offshore Platform Emission Reporting with NeqSim
+description: This document provides guidance for calculating and reporting greenhouse gas (GHG) emissions from offshore oil and gas operations using NeqSim's thermodynamic simulation capabilities.
+---
+
 # Offshore Platform Emission Reporting with NeqSim
 
 ## Overview

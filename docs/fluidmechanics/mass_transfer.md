@@ -1,3 +1,8 @@
+---
+title: Mass Transfer Modeling in NeqSim
+description: This document provides detailed documentation of the mass transfer models implemented in the NeqSim fluid mechanics package, focusing on diffusivity correlations and reactive mass transfer.
+---
+
 # Mass Transfer Modeling in NeqSim
 
 This document provides detailed documentation of the mass transfer models implemented in the NeqSim fluid mechanics package, focusing on diffusivity correlations and reactive mass transfer.

@@ -1,3 +1,8 @@
+---
+title: TwoFluidPipe Model Documentation
+description: The NeqSim `TwoFluidPipe` model implements a transient two-fluid multiphase flow solver for pipeline and riser simulations. It solves separate conservation equations for gas and liquid phases, enablin...
+---
+
 # TwoFluidPipe Model Documentation
 
 ## Overview

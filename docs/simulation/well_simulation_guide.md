@@ -1,3 +1,8 @@
+---
+title: "NeqSim Well Simulation Guide"
+description: "This guide covers NeqSim's well simulation capabilities, providing functionality for"
+---
+
 # NeqSim Well Simulation Guide
 
 This guide covers NeqSim's well simulation capabilities, providing functionality for

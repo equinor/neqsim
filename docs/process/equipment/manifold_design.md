@@ -1,3 +1,8 @@
+---
+title: Manifold Mechanical Design Guide
+description: This guide documents the manifold mechanical design capabilities in NeqSim, covering topside, onshore, and subsea applications.
+---
+
 # Manifold Mechanical Design Guide
 
 This guide documents the manifold mechanical design capabilities in NeqSim, covering topside, onshore, and subsea applications.

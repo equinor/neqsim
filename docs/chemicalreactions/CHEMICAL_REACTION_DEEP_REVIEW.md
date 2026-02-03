@@ -1,3 +1,8 @@
+---
+title: Deep Review: Chemical Reaction Initialization and Solving in NeqSim
+description: This document provides a comprehensive deep-dive into how NeqSim initializes, sets up, and solves chemical reactions during thermodynamic calculations, with particular focus on integration with TP fla...
+---
+
 # Deep Review: Chemical Reaction Initialization and Solving in NeqSim
 
 This document provides a comprehensive deep-dive into how NeqSim initializes, sets up, and solves chemical reactions during thermodynamic calculations, with particular focus on integration with TP flash operations.

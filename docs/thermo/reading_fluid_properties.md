@@ -1,3 +1,8 @@
+---
+title: Reading Fluid Properties in NeqSim
+description: Comprehensive guide to calculating and reading thermodynamic and physical properties from fluids, phases, and components. Covers init levels, TPflash, density, enthalpy, viscosity, units, volume translation, and JSON reports.
+---
+
 # Reading Fluid Properties in NeqSim
 
 This guide provides comprehensive documentation for calculating and reading thermodynamic and physical properties from fluids, phases, and components in NeqSim.

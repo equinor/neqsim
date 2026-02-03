@@ -1,3 +1,8 @@
+---
+title: Well and Reservoir Equipment
+description: Documentation for well and reservoir equipment in NeqSim process simulation.
+---
+
 # Well and Reservoir Equipment
 
 Documentation for well and reservoir equipment in NeqSim process simulation.

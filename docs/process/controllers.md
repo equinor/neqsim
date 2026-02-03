@@ -1,3 +1,8 @@
+---
+title: Process Controllers and Logic
+description: Documentation for controllers, adjusters, recycles, and process logic in NeqSim.
+---
+
 # Process Controllers and Logic
 
 Documentation for controllers, adjusters, recycles, and process logic in NeqSim.

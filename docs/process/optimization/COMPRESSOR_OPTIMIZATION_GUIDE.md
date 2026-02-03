@@ -1,3 +1,8 @@
+---
+title: Compressor-Based Production Optimization Guide
+description: This guide covers production optimization for facilities with compressors, including variable speed drives (VFD), multi-speed, and compressor maps.
+---
+
 # Compressor-Based Production Optimization Guide
 
 This guide covers production optimization for facilities with compressors, including variable speed drives (VFD), multi-speed, and compressor maps.

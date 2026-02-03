@@ -1,3 +1,8 @@
+---
+title: Vessel Depressurization and Blowdown
+description: Comprehensive modeling of pressure vessel filling, depressurization, and blowdown scenarios.
+---
+
 # Vessel Depressurization and Blowdown
 
 Comprehensive modeling of pressure vessel filling, depressurization, and blowdown scenarios.

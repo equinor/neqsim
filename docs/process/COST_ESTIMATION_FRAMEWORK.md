@@ -1,3 +1,8 @@
+---
+title: NeqSim Cost Estimation Framework
+description: This document provides comprehensive documentation for the NeqSim cost estimation framework, which enables capital and operating cost estimation for process equipment and complete process systems.
+---
+
 # NeqSim Cost Estimation Framework
 
 This document provides comprehensive documentation for the NeqSim cost estimation framework, which enables capital and operating cost estimation for process equipment and complete process systems.

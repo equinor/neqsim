@@ -1,3 +1,8 @@
+---
+title: "Process Logic Framework Implementation Summary"
+description: "A comprehensive **Process Logic Framework** for NeqSim that enables coordinated, multi-step automation sequences for ESD, startup, shutdown, and general process control."
+---
+
 # Process Logic Framework Implementation Summary
 
 ## What Was Implemented

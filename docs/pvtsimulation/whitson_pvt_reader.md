@@ -1,3 +1,8 @@
+---
+title: Whitson PVT Parameter File Reader
+description: The `WhitsonPVTReader` class enables NeqSim to read PVT parameter files exported from Whitson+ and similar PVT software, creating fully configured fluid systems with accurate thermodynamic properties....
+---
+
 # Whitson PVT Parameter File Reader
 
 The `WhitsonPVTReader` class enables NeqSim to read PVT parameter files exported from Whitson+ and similar PVT software, creating fully configured fluid systems with accurate thermodynamic properties.

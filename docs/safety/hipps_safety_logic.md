@@ -1,3 +1,8 @@
+---
+title: HIPPS Safety Logic Implementation
+description: High Integrity Pressure Protection System (HIPPS) is a Safety Instrumented System (SIS) designed to prevent overpressure in process equipment by rapidly closing isolation valves when pressure exceeds ...
+---
+
 # HIPPS Safety Logic Implementation
 
 ## Overview

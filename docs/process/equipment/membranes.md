@@ -1,3 +1,8 @@
+---
+title: Membrane Separation Equipment
+description: Documentation for membrane separation equipment in NeqSim process simulation.
+---
+
 # Membrane Separation Equipment
 
 Documentation for membrane separation equipment in NeqSim process simulation.

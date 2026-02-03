@@ -1,3 +1,8 @@
+---
+title: Separator Equipment
+description: Documentation for separator equipment in NeqSim process simulation.
+---
+
 # Separator Equipment
 
 Documentation for separator equipment in NeqSim process simulation.

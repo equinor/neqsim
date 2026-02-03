@@ -1,3 +1,8 @@
+---
+title: Pumps
+description: Documentation for liquid pumping equipment in NeqSim.
+---
+
 # Pumps
 
 Documentation for liquid pumping equipment in NeqSim.

@@ -1,3 +1,8 @@
+---
+title: Pipeline Simulation Guide
+description: Comprehensive documentation for pipeline simulation in NeqSim, covering all pipeline types, common interface, flow modeling, and integration with mechanical design.
+---
+
 # Pipeline Simulation Guide
 
 Comprehensive documentation for pipeline simulation in NeqSim, covering all pipeline types, common interface, flow modeling, and integration with mechanical design.

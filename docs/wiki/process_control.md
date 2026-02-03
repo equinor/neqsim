@@ -1,3 +1,8 @@
+---
+title: "Process control framework"
+description: "NeqSim contains a flexible process control framework for dynamic simulations."
+---
+
 # Process control framework
 
 NeqSim contains a flexible process control framework for dynamic simulations.

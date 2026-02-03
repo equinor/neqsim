@@ -1,3 +1,8 @@
+---
+title: "Humid air mathematics"
+description: "This page summarises the equations implemented in the `HumidAir` utility class for psychrometric calculations. The correlations are based on the ASHRAE Handbook Fundamentals (2017), CoolProp and the I..."
+---
+
 # Humid air mathematics
 
 This page summarises the equations implemented in the `HumidAir` utility class for psychrometric calculations. The correlations are based on the ASHRAE Handbook Fundamentals (2017), CoolProp and the IAPWS formulation for the saturation pressure of water.

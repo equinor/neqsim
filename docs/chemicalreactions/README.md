@@ -1,3 +1,8 @@
+---
+title: Chemical Reactions Package
+description: The `chemicalreactions` package provides tools for chemical equilibrium calculations and reaction kinetics.
+---
+
 # Chemical Reactions Package
 
 The `chemicalreactions` package provides tools for chemical equilibrium calculations and reaction kinetics.

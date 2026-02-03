@@ -1,3 +1,8 @@
+---
+title: "ESD Fire Alarm System with Voting Logic"
+description: "This implementation demonstrates a comprehensive Emergency Shutdown (ESD) system with fire alarm voting logic in NeqSim. The system showcases how multiple fire detectors can be used in a voting config..."
+---
+
 # ESD Fire Alarm System with Voting Logic
 
 ## Overview

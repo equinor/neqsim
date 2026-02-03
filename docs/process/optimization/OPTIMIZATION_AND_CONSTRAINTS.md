@@ -1,3 +1,8 @@
+---
+title: Optimization and Constraints in NeqSim
+description: This document provides an integrated view of NeqSim's optimization and constraint framework, covering the mathematical foundations, equipment capacity constraints, optimization algorithms, and practic...
+---
+
 # Optimization and Constraints in NeqSim
 
 > **Comprehensive guide to process optimization, equipment constraints, and bottleneck analysis in NeqSim**

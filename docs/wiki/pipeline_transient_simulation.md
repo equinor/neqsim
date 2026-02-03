@@ -1,3 +1,8 @@
+---
+title: "Pipeline Transient Simulation in NeqSim"
+description: "NeqSim supports dynamic (transient) simulation of pipelines using the `PipeBeggsAndBrills` class. This allows modeling of:"
+---
+
 # Pipeline Transient Simulation in NeqSim
 
 ## Overview

@@ -1,3 +1,8 @@
+---
+title: "Phase Package"
+description: "Documentation for phase modeling in NeqSim."
+---
+
 # Phase Package
 
 Documentation for phase modeling in NeqSim.

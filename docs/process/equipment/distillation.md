@@ -1,3 +1,8 @@
+---
+title: Distillation Equipment
+description: Documentation for distillation column equipment in NeqSim process simulation.
+---
+
 # Distillation Equipment
 
 Documentation for distillation column equipment in NeqSim process simulation.

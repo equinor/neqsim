@@ -1,3 +1,8 @@
+---
+title: Black Oil Package
+description: The `blackoil` package provides black oil model capabilities for reservoir engineering applications, including PVT table handling and flash calculations.
+---
+
 # Black Oil Package
 
 The `blackoil` package provides black oil model capabilities for reservoir engineering applications, including PVT table handling and flash calculations.

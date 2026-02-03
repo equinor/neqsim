@@ -1,3 +1,8 @@
+---
+title: "Water cooler"
+description: "The `WaterCooler` equipment cools water streams using the dedicated water physical"
+---
+
 # Water cooler
 
 The `WaterCooler` equipment cools water streams using the dedicated water physical

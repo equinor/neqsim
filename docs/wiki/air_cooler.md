@@ -1,3 +1,8 @@
+---
+title: "Air cooler unit operation"
+description: "The `AirCooler` is a simple process unit for estimating the amount of cooling air needed when a process stream is cooled by ambient air. The calculation makes use of the humid air utility in NeqSim to..."
+---
+
 # Air cooler unit operation
 
 The `AirCooler` is a simple process unit for estimating the amount of cooling air needed when a process stream is cooled by ambient air. The calculation makes use of the humid air utility in NeqSim to evaluate the enthalpy rise of the air between the inlet and outlet temperature.

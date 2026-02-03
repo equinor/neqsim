@@ -1,3 +1,8 @@
+---
+title: "Gibbs Reactor"
+description: "The Gibbs Reactor is a chemical equilibrium reactor that computes outlet compositions by minimizing the total Gibbs free energy of the system. It is used for modeling chemical reactions at thermodynam..."
+---
+
 # Gibbs Reactor
 
 The Gibbs Reactor is a chemical equilibrium reactor that computes outlet compositions by minimizing the total Gibbs free energy of the system. It is used for modeling chemical reactions at thermodynamic equilibrium.

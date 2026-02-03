@@ -1,3 +1,8 @@
+---
+title: GitHub Pages Setup Guide for NeqSim Documentation
+description: This guide explains how to enable GitHub Pages for the NeqSim repository to host the documentation at `https://equinor.github.io/neqsim/`.
+---
+
 # GitHub Pages Setup Guide for NeqSim Documentation
 
 This guide explains how to enable GitHub Pages for the NeqSim repository to host the documentation at `https://equinor.github.io/neqsim/`.
