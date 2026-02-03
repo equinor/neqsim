@@ -28,7 +28,7 @@ This document provides guidance for calculating and reporting greenhouse gas (GH
 |------------|-------------|-----------|
 | **Aktivitetsforskriften §70** | Measurement and calculation of emissions | [Lovdata](https://lovdata.no/dokument/SF/forskrift/2010-04-29-613) |
 | **Rammeforskriften** | Framework regulations for petroleum activities | [Lovdata](https://lovdata.no/dokument/SF/forskrift/2010-02-12-158) |
-| **CO2 Tax Act** | Norwegian carbon tax (~NOK 1,565/tonne CO2 in 2024) | [Skatteetaten](https://www.skatteetaten.no/bedrift-og-organisasjon/avgifter/saravgifter/co2-avgift/) |
+| **CO2 Tax Act** | Norwegian carbon tax (rate updated annually) | [Skatteetaten](https://www.skatteetaten.no/bedrift-og-organisasjon/avgifter/saravgifter/co2-avgift/) |
 
 ### European Union
 
@@ -57,7 +57,8 @@ This document provides guidance for calculating and reporting greenhouse gas (GH
 │                 OFFSHORE PLATFORM EMISSIONS                  │
 ├──────────────────┬──────────────────┬───────────────────────┤
 │   COMBUSTION     │    VENTING       │     FUGITIVE          │
-│   (60-80%)       │    (5-20%)       │     (0.5-3%)          │
+│  (typically      │   (typically     │    (typically         │
+│   dominant)      │     5-20%)       │       <5%)            │
 ├──────────────────┼──────────────────┼───────────────────────┤
 │ • Gas turbines   │ • Cold vents     │ • Valve/flange leaks  │
 │ • Diesel engines │ • Tank breathing │ • Compressor seals    │
@@ -65,6 +66,8 @@ This document provides guidance for calculating and reporting greenhouse gas (GH
 │ • Heaters        │ • TEG regeneration│ • Pipe connections   │
 │ • Boilers        │ • Loading ops    │ • Instrumentation     │
 └──────────────────┴──────────────────┴───────────────────────┘
+
+*Note: Source distribution percentages vary significantly by facility type, age, and operations.*
 ```
 
 > **Implementation Note:** All emission sources shown above are supported in NeqSim. Key classes include:
@@ -91,12 +94,12 @@ This document provides guidance for calculating and reporting greenhouse gas (GH
 
 | Aspect | Conventional (Handbook) | Thermodynamic (NeqSim) |
 |--------|------------------------|------------------------|
-| **Accuracy** | Varies by application | Improved for complex systems |
-| **CO2 accounting** | Simplified approach | Full phase equilibrium |
-| **Salinity effects** | Typically not included | ✅ Included |
-| **Temperature effects** | Basic correlations | ✅ Full thermodynamic |
-| **Real-time capability** | Batch-oriented | ✅ Yes |
-| **Regulatory acceptance** | Established | Increasingly adopted |
+| **Approach** | Empirical correlations with fixed factors | Rigorous phase equilibrium calculation |
+| **CO2 accounting** | Simplified factors | Explicit component tracking |
+| **Salinity effects** | Typically not included | Søreide-Whitson salting-out model |
+| **Temperature effects** | Linear correlations | Full equation of state |
+| **Computational cost** | Low (spreadsheet) | Moderate (requires simulator) |
+| **Regulatory acceptance** | Widely established | Accepted under Aktivitetsforskriften §70 |
 
 ### Conventional Method (Norwegian Handbook)
 
@@ -112,24 +115,30 @@ Where:
   Result = Methane emission (tonnes)
 ```
 
-**Limitations:**
-- Uses simplified CO2 handling
-- Assumes fixed solubility factors
+**Characteristics:**
+- Uses standardized solubility factors
+- Established regulatory acceptance
+- Simple implementation (spreadsheet-compatible)
+- Does not include salinity correction
 - Limited composition dependency
-- No salinity correction
 
 ### Thermodynamic Method (NeqSim)
 
-Uses Cubic-Plus-Association (CPA) equation of state for rigorous vapor-liquid equilibrium, with the **Søreide-Whitson model** for accurate salinity correction in produced water systems:
+Uses Cubic-Plus-Association (CPA) equation of state for rigorous vapor-liquid equilibrium, with the **Søreide-Whitson model** for salinity correction in produced water systems:
 
 ```
-Benefits:
+Capabilities:
 • Accounts for actual fluid composition
 • Includes all gas components (CO2, CH4, C2+, N2, H2S)
 • Handles salinity/ionic effects via Søreide-Whitson model
 • Temperature and pressure dependent
-• Validated against lab data
+• Can be validated against lab PVT data
 • Used in NeqSimLive for real-time emission monitoring
+
+Considerations:
+• Requires thermodynamic software or programming
+• Model parameters should be validated for site-specific fluids
+• More complex than handbook methods
 ```
 
 > **NeqSimLive Integration**: The Søreide-Whitson model is the primary thermodynamic model used in **NeqSimLive** for calculating emissions from produced water degassing on offshore platforms. See [Søreide-Whitson Model Documentation](../thermo/SoreideWhitsonModel.md) for detailed model description and references.
@@ -140,15 +149,15 @@ Benefits:
 
 ### Why NeqSim for Emission Calculations?
 
-NeqSim provides unique advantages for integrating emission calculations into industrial workflows, digital twins, and emerging decarbonization technologies.
+NeqSim provides capabilities for integrating emission calculations into industrial workflows, digital twins, and emerging decarbonization technologies.
 
 ### Core Technical Advantages
 
-| Advantage | Description | Impact |
+| Advantage | Description | Benefit |
 |-----------|-------------|--------|
-| **Physics-Based Modeling** | Rigorous thermodynamic calculations using CPA, SRK, PR equations of state | Improved accuracy for complex systems |
-| **Full Component Accounting** | Captures CO2, CH4, nmVOC, H2S, N2 | More complete emission inventory |
-| **Composition Sensitivity** | Tracks changing reservoir composition over field life | Composition-dependent emission profiles |
+| **Physics-Based Modeling** | Rigorous thermodynamic calculations using CPA, SRK, PR equations of state | Captures composition and condition effects |
+| **Full Component Accounting** | Tracks CO2, CH4, nmVOC, H2S, N2 | Comprehensive emission inventory |
+| **Composition Sensitivity** | Tracks changing reservoir composition over field life | Time-varying emission profiles |
 | **Process Integration** | Emission calculations embedded in full process simulation | Consistent material/energy balances |
 | **Open Source** | Apache 2.0 license, transparent algorithms | Auditable, reproducible, no vendor lock-in |
 
@@ -184,21 +193,21 @@ NeqSim provides unique advantages for integrating emission calculations into ind
 
 #### 1. Digital Twin Integration
 
-NeqSim enables high-fidelity digital twins with embedded emission tracking:
+NeqSim can support digital twins with embedded emission tracking:
 
-| Capability | Traditional Approach | NeqSim-Enabled |
-|------------|---------------------|----------------|
-| Emission tracking | Periodic estimates | More frequent updates possible |
-| What-if analysis | Limited | Full scenario modeling |
-| Optimization target | Process-focused | Can include emissions |
-| Regulatory reporting | Manual processes | Can be automated |
+| Capability | Periodic Reporting | Online Calculation |
+|------------|---------------------|--------------------|
+| Emission tracking | Periodic (monthly/quarterly) | Continuous or more frequent |
+| What-if analysis | Limited to historical data | Full scenario modeling |
+| Optimization scope | Process-focused | Can include emissions |
+| Regulatory reporting | Manual compilation | Supports automation |
 
 ```
-Digital Twin Benefits:
-• Live emission monitoring from process state
-• Predictive emission forecasting
+Digital Twin Capabilities:
+• Emission monitoring from process state
+• Scenario-based emission forecasting
 • Optimization with emission constraints
-• Automatic regulatory compliance tracking
+• Automated compliance reporting support
 ```
 
 #### 2. Model Predictive Control (MPC)
@@ -256,14 +265,14 @@ Each step: Embedded emission accounting with NeqSim
 
 #### 5. AI/ML Hybrid Models
 
-NeqSim provides physics-based foundation for machine learning enhancement:
+NeqSim can provide a physics-based foundation for machine learning applications:
 
-| Approach | Description | Advantage |
-|----------|-------------|-----------|
-| **Physics-Informed Neural Networks** | NeqSim VLE as constraints | Faster convergence, physical consistency |
-| **Surrogate Models** | NeqSim training data generation | Rapid emission estimation |
+| Approach | Description | Potential Benefit |
+|----------|-------------|-------------------|
+| **Physics-Informed Neural Networks** | NeqSim VLE as constraints | Improved convergence, physical consistency |
+| **Surrogate Models** | NeqSim training data generation | Faster emission estimation |
 | **Soft Sensors** | NeqSim-calibrated emission inferencing | Fill measurement gaps |
-| **Anomaly Detection** | Compare measured vs NeqSim-predicted | Identify fugitive leaks |
+| **Anomaly Detection** | Compare measured vs NeqSim-predicted | Support leak detection |
 
 ### Comparison with Commercial Software
 
@@ -274,8 +283,9 @@ NeqSim provides physics-based foundation for machine learning enhancement:
 | **Customization** | Modify/extend freely | Vendor-dependent |
 | **Reproducibility** | Version-controlled, auditable | Vendor-dependent |
 | **API Integration** | Java, Python, REST | Varies by product |
-| **Regulatory Defense** | Algorithms visible to auditors | Established track record |
+| **Regulatory Defense** | Algorithms visible to auditors | Established vendor support |
 | **Long-term Availability** | Open source community | Vendor support agreements |
+| **Validation/Certification** | User responsibility | Often pre-validated |
 
 ### Industry 4.0 / IIoT Deployment
 
@@ -464,14 +474,16 @@ produced_water.addSalinity("CaCl2", 0.08, "mole/sec")
 # This reduces gas solubility as salinity increases
 ```
 
-The Søreide-Whitson model accounts for salinity effects through a modified Peng-Robinson alpha function for water:
+The Søreide-Whitson model accounts for salinity effects through a modified Peng-Robinson alpha function for water. The magnitude of the salting-out effect depends on salinity level, salt type, gas species, and temperature:
 
-| Salinity (ppm TDS) | CH₄ Solubility Reduction | Emission Impact |
-|--------------------|--------------------------|-----------------|
-| 0 (fresh water) | 0% (baseline) | Overestimates dissolved gas if used |
-| 35,000 (seawater) | ~15-20% | Moderate correction needed |
-| 100,000 | ~35-45% | Significant correction |
-| 200,000 | ~55-65% | Major correction required |
+| Salinity (ppm TDS) | Approximate CH₄ Solubility Reduction* | Comment |
+|--------------------|-----------------------------------------|---------|
+| 0 (fresh water) | 0% (baseline) | Reference state |
+| 35,000 (seawater) | ~15-20% | Typical seawater conditions |
+| 100,000 | ~35-45% | High salinity formation water |
+| 200,000 | ~55-65% | Very high salinity |
+
+*Values are approximate and depend on temperature, pressure, and salt composition. Actual reduction should be calculated using the Søreide-Whitson model with site-specific conditions.
 
 > **Reference**: Søreide, I. & Whitson, C.H. (1992). "Peng-Robinson predictions for hydrocarbons, CO₂, N₂, and H₂S with pure water and NaCl brine". *Fluid Phase Equilibria*, 77, 217-240. [DOI: 10.1016/0378-3812(92)85105-H](https://doi.org/10.1016/0378-3812(92)85105-H)
 >
@@ -507,7 +519,7 @@ print(f"Gas solubility reduced to {factor*100:.0f}% of freshwater value")
 
 ### Real-Time Integration (NeqSimLive)
 
-NeqSim can be deployed as a "virtual sensor" for continuous emission monitoring. **NeqSimLive** uses the **Søreide-Whitson thermodynamic model** for accurate produced water emission calculations, accounting for formation water salinity effects that are critical for accurate emission reporting on the Norwegian Continental Shelf.
+NeqSim can be deployed as a "virtual sensor" for continuous emission monitoring. **NeqSimLive** uses the **Søreide-Whitson thermodynamic model** for produced water emission calculations, accounting for formation water salinity effects relevant for emission reporting on the Norwegian Continental Shelf.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -528,12 +540,12 @@ NeqSim can be deployed as a "virtual sensor" for continuous emission monitoring.
 
 #### Why Søreide-Whitson for NeqSimLive?
 
-The Søreide-Whitson model is specifically chosen for NeqSimLive produced water emission calculations because:
+The Søreide-Whitson model is used for NeqSimLive produced water emission calculations because:
 
 1. **Formation Water Salinity**: Norwegian Continental Shelf formation water typically has 20,000-200,000 ppm TDS
-2. **Salting-Out Effect**: High salinity significantly reduces gas solubility (up to 65% reduction)
-3. **Regulatory Accuracy**: Accurate salinity correction ensures compliant emission reporting
-4. **Industry Standard**: The model is well-established in the petroleum industry since 1992
+2. **Salting-Out Effect**: High salinity reduces gas solubility (magnitude depends on conditions)
+3. **Regulatory Applicability**: Salinity correction supports accurate emission reporting
+4. **Industry Acceptance**: The model has been used in petroleum industry since 1992
 
 For more details on the Søreide-Whitson model implementation, see [Søreide-Whitson Model Documentation](../thermo/SoreideWhitsonModel.md).
 
@@ -590,23 +602,25 @@ def monte_carlo_emissions(base_calc, n_samples=1000):
 
 ### Thermodynamic Model Validation
 
-The CPA equation of state has been validated for water-hydrocarbon systems:
+The CPA equation of state has been validated for water-hydrocarbon systems. Typical reported errors from literature:
 
-| Property | Typical Error | Reference |
-|----------|---------------|-----------|
-| CH4 solubility in water | <3% | Kontogeorgis & Folas (2010) |
-| CO2 solubility in water | <2% | Duan & Sun (2003) |
-| VLE phase split | <5% | Multiple validation studies |
+| Property | Typical Error Range | Reference |
+|----------|---------------------|-----------|
+| CH4 solubility in water | <5% | Kontogeorgis & Folas (2010) |
+| CO2 solubility in water | <3% | Duan & Sun (2003) |
+| VLE phase split | <5% | Various validation studies |
+
+*Note: Actual errors depend on system conditions, composition complexity, and data quality.*
 
 ### Comparison with Field Data
 
-Studies comparing NeqSim virtual measurements with physical sampling:
+Published studies comparing thermodynamic virtual measurements with physical sampling on Norwegian Continental Shelf operations:
 
-| Study | Deviation | Notes |
+| Study | Reported Deviation | Notes |
 |-------|-----------|-------|
-| North Sea field (2022) | 3.6% | 12-month continuous operation |
-| PVT lab validation | 2.1% | Controlled conditions |
-| Conventional method comparison | Varies | Different assumptions and scope |
+| North Sea field study | ~4% average | 12-month continuous operation |
+| PVT lab validation | ~2% | Controlled laboratory conditions |
+| Conventional method comparison | Varies | Different model assumptions |
 
 ---
 
@@ -664,6 +678,7 @@ Studies comparing NeqSim virtual measurements with physical sampling:
 10. **IPCC AR5 (2014)**
     - "Climate Change 2014: Synthesis Report"
     - Global Warming Potentials (Table 8.A.1)
+    - *Note: AR6 (2021) is now available with updated GWP values*
     - URL: https://www.ipcc.ch/report/ar5/syr/
 
 ### Software & Tools
@@ -703,6 +718,8 @@ Studies comparing NeqSim virtual measurements with physical sampling:
 | bbl water | m³ water | × 0.159 |
 
 ## Appendix B: Typical Emission Factors
+
+*Note: These are representative values. Actual factors depend on fuel composition, equipment efficiency, and operating conditions. Consult applicable standards for specific applications.*
 
 | Source | CO2 Factor | Unit | Reference |
 |--------|------------|------|-----------|
