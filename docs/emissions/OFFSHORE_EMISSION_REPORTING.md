@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides comprehensive guidance for calculating and reporting greenhouse gas (GHG) emissions from offshore oil and gas operations using NeqSim's thermodynamic simulation capabilities.
+This document provides guidance for calculating and reporting greenhouse gas (GHG) emissions from offshore oil and gas operations using NeqSim's thermodynamic simulation capabilities.
 
 ---
 
@@ -11,7 +11,7 @@ This document provides comprehensive guidance for calculating and reporting gree
 1. [Regulatory Framework](#regulatory-framework)
 2. [Emission Sources](#emission-sources)
 3. [Calculation Methods](#calculation-methods)
-4. [NeqSim Advantages for Emission Integration](#neqsim-advantages-for-emission-integration)
+4. [NeqSim for Emission Integration](#neqsim-advantages-for-emission-integration)
 5. [NeqSim API Reference](#neqsim-api-reference)
 6. [Produced Water Degassing](#produced-water-degassing)
 7. [Virtual Measurement Methodology](#virtual-measurement-methodology)
@@ -303,55 +303,6 @@ NeqSim provides physics-based foundation for machine learning enhancement:
 │                          └──────────────┘         └────────────────┘  │
 │                                                                        │
 └────────────────────────────────────────────────────────────────────────┘
-```
-
-### Key Differentiators for Decarbonization
-
-1. **Methane Quantification Accuracy**
-   - EU Methane Regulation 2024/1787 requires source-level measurement
-   - NeqSim provides composition-specific emission factors
-   - Enables OGMP 2.0 Level 4/5 reporting
-
-2. **Scope 1, 2, 3 Readiness**
-   - Direct emissions: Full process modeling
-   - Indirect emissions: Fuel consumption tracking
-   - Value chain: Product carbon intensity
-
-3. **Net-Zero Pathway Modeling**
-   - Electrification scenarios
-   - Process heat decarbonization
-   - Flare reduction optimization
-   - CCS integration studies
-
-4. **Regulatory Audit Trail**
-   - Open algorithms satisfy EU MRV requirements
-   - Version-controlled calculations
-   - Reproducible by third-party verifiers
-
-### Summary: Value Proposition
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    NEQSIM EMISSION INTEGRATION VALUE                │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│   CURRENT CAPABILITIES              FUTURE POTENTIAL                │
-│   ────────────────────              ────────────────                │
-│   ✓ Emission reporting              → ESG compliance support         │
-│   ✓ Regulatory support              → Carbon trading integration     │
-│   ✓ Digital twin applications       → Enhanced emission control      │
-│   ✓ Process + emission modeling     → Decarbonization studies        │
-│   ✓ Open source transparency        → Broader industry adoption      │
-│                                                                     │
-│   KEY BENEFITS                                                      │
-│   ────────────                                                      │
-│   • Physics-based calculations for improved accuracy                │
-│   • Full component accounting including dissolved gases             │
-│   • Open source with no vendor lock-in                              │
-│   • API-first design for system integration                         │
-│   • Thermodynamic foundation supports H2/NH3/CCUS applications      │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
