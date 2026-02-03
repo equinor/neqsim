@@ -419,7 +419,66 @@ double omega = fluid.getComponent("methane").getAcentricFactor();
 
 ## Unit Specifications
 
-NeqSim supports various unit systems. When a unit is specified, the method applies appropriate conversion.
+NeqSim supports various unit systems. Units can be specified both when **setting** values (input) and when **getting** values (output).
+
+### Input Units (Setter Methods)
+
+When creating a fluid or setting conditions, you can specify units for input values:
+
+#### System Creation (Constructor)
+
+```java
+// Constructor takes temperature in KELVIN and pressure in BARA (always!)
+SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 50.0);  // 298.15 K, 50 bara
+```
+
+#### Temperature and Pressure Setters
+
+| Method | Description | Supported Units |
+|--------|-------------|-----------------|
+| `setTemperature(value, unit)` | Set temperature | `"K"`, `"C"`, `"F"`, `"R"` |
+| `setPressure(value, unit)` | Set pressure | `"Pa"`, `"bara"`, `"barg"`, `"psia"`, `"psig"`, `"atm"`, `"MPa"` |
+
+```java
+fluid.setTemperature(25.0, "C");      // 25 degrees Celsius
+fluid.setTemperature(298.15, "K");    // 298.15 Kelvin
+fluid.setPressure(50.0, "bara");      // 50 bar absolute
+fluid.setPressure(725.0, "psia");     // 725 psi absolute
+```
+
+#### Flow Rate Setters
+
+| Method | Description | Supported Units |
+|--------|-------------|-----------------|
+| `setTotalFlowRate(value, unit)` | Set total flow | `"kg/sec"`, `"kg/min"`, `"kg/hr"`, `"kg/day"`, `"m3/sec"`, `"m3/min"`, `"m3/hr"`, `"Sm3/sec"`, `"Sm3/hr"`, `"Sm3/day"`, `"MSm3/day"`, `"mole/sec"`, `"mole/min"`, `"mole/hr"` |
+| `setFlowRate(value, unit)` | Set stream flow | Same as above |
+
+```java
+fluid.setTotalFlowRate(1000.0, "kg/hr");   // Mass flow
+fluid.setTotalFlowRate(10000.0, "Sm3/hr"); // Standard volumetric flow
+fluid.setTotalFlowRate(50.0, "mole/sec");  // Molar flow
+```
+
+#### Component Addition
+
+```java
+// Components are added with moles (not mole fraction!)
+// The values are normalized internally
+fluid.addComponent("methane", 0.70);   // 0.70 moles
+fluid.addComponent("ethane", 0.20);    // 0.20 moles
+fluid.addComponent("propane", 0.10);   // 0.10 moles
+// Total = 1.0 moles, so these become mole fractions
+
+// Or use addComponent with flow rate and unit
+fluid.addComponent("methane", 100.0, "kg/hr");  // Mass flow of component
+fluid.addComponent("ethane", 50.0, "mole/hr");  // Molar flow of component
+```
+
+### Output Units (Getter Methods)
+
+When reading properties, you can either:
+1. **No unit specified** → Returns value in default (internal) unit
+2. **Unit specified** → Returns value converted to requested unit
 
 ### Global Unit Systems
 
@@ -481,6 +540,26 @@ neqsim.util.unit.Units.activateMetricUnits();
 - `"Pas"` - Pascal-seconds
 - `"cP"` - centipoise (= mPa·s)
 
+#### Thermal Conductivity
+- `"W/mK"` - Watts per meter-Kelvin (default)
+- `"W/cmK"` - Watts per centimeter-Kelvin
+
+#### Interfacial Tension
+- Default unit: N/m (Newton per meter)
+
+#### Joule-Thomson Coefficient
+- Default unit: K/Pa
+- `"C/bar"` - Celsius per bar (metric)
+- `"F/psi"` - Fahrenheit per psi (field)
+
+#### Speed of Sound
+- Default unit: m/s (meters per second)
+
+#### Molar Mass
+- `"kg/mol"` - kilograms per mole (default)
+- `"gr/mol"` - grams per mole
+- `"lbm/lbmol"` - pounds per pound-mole (field)
+
 #### Flow Rate
 - `"kg/sec"`, `"kg/min"`, `"kg/hr"`, `"kg/day"` - mass flow
 - `"m3/sec"`, `"m3/min"`, `"m3/hr"` - actual volumetric flow
@@ -495,17 +574,30 @@ neqsim.util.unit.Units.activateMetricUnits();
 
 ### Default Units (When Not Specified)
 
-| Property | Default Unit | Notes |
-|----------|--------------|-------|
-| Temperature | K | Kelvin |
+When you call a getter method **without** specifying a unit, it returns the value in the internal/default unit:
+
+| Property | Default Unit (no unit arg) | Notes |
+|----------|---------------------------|-------|
+| Temperature | K | Kelvin (always internal) |
 | Pressure | bara | bar absolute |
-| Density | kg/m³ | **Without** Peneloux correction |
-| Molar Volume | m³/mol × 10⁵ | Legacy unit, use `"m3/mol"` |
-| Enthalpy | J | Total, not specific |
-| Entropy | J/K | Total, not specific |
-| Cp, Cv | J/K | Total, not specific |
+| Density | kg/m³ | **Without** Peneloux correction! |
+| Molar Volume | m³/mol × 10⁵ | Legacy unit - always specify `"m3/mol"` |
+| Molar Mass | kg/mol | Use `"gr/mol"` for grams |
+| Enthalpy | J | Total (extensive), not specific |
+| Entropy | J/K | Total (extensive), not specific |
+| Cp, Cv | J/K | Total (extensive), not specific |
 | Viscosity | kg/(m·s) | Same as Pa·s |
-| Conductivity | W/(m·K) | |
+| Thermal Conductivity | W/(m·K) | |
+| Interfacial Tension | N/m | |
+| Speed of Sound | m/s | |
+| Joule-Thomson Coeff. | K/Pa | |
+| Compressibility (Z) | - | Dimensionless |
+| Fugacity Coefficient | - | Dimensionless |
+
+> **Important Notes:**
+> - For **density**, always specify a unit like `"kg/m3"` to get Peneloux-corrected values
+> - For **molar volume**, always specify `"m3/mol"` to avoid the legacy ×10⁵ scaling
+> - For **temperature**, the getter always returns Kelvin; use `getTemperature() - 273.15` for Celsius
 
 ---
 
