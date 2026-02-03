@@ -370,7 +370,7 @@ for (double t = 0; t < 3600; t += 1.0) {
 
 ## Related Documentation
 
-- [Process Package](./ - Package overview
+- [Process Package](./\) - Package overview
 - [Equipment](equipment/) - Process equipment
 - [Alarm System](../safety/alarm_system_guide) - Alarms
 - [Process Logic Framework](../simulation/process_logic_framework) - Advanced logic

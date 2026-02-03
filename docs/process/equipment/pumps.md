@@ -242,6 +242,6 @@ System.out.println("Total pump power: " + totalPower + " kW");
 
 ## Related Documentation
 
-- [Equipment Index](./ - All equipment
+- [Equipment Index](./\) - All equipment
 - [Compressors](compressors) - Gas compression
 - [Separators](separators) - Phase separation

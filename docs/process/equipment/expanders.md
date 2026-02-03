@@ -266,7 +266,7 @@ System.out.println("Power recovered: " + expander.getPower("kW") + " kW");
 
 ## Related Documentation
 
-- [Equipment Index](./ - All equipment
+- [Equipment Index](./\) - All equipment
 - [Compressors](compressors) - Gas compression
 - [Valves](valves) - JT valves
 - [Heat Exchangers](heat_exchangers) - Heat integration

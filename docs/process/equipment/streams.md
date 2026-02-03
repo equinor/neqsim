@@ -904,7 +904,7 @@ StreamInterface processedFeed = process.getMeasurementDevice("Feed");
 
 ## Related Documentation
 
-- [Equipment Index](./ - All process equipment
+- [Equipment Index](./\) - All process equipment
 - [Mixers and Splitters](mixers_splitters) - Combining and dividing streams
 - [Separators](separators) - Phase separation equipment
 - [Heat Exchangers](heat_exchangers) - Thermal processing

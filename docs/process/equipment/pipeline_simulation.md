@@ -592,4 +592,4 @@ String json = design.toJson();
 - [Mechanical Design Standards](../mechanical_design_standards) - ASME, DNV, API standards
 - [Fluid Mechanics](../../fluidmechanics/) - Detailed flow modeling
 - [Valves](valves) - Flow control devices
-- [Equipment Index](./ - All equipment types
+- [Equipment Index](./\) - All equipment types

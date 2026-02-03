@@ -504,6 +504,6 @@ for (int i = 0; i < flow.getNumberOfNodes(); i++) {
 ## Related Documentation
 
 - [Mass Transfer Modeling](mass_transfer) - Companion mass transfer documentation
-- [Fluid Mechanics Overview](./ - Main fluid mechanics documentation
+- [Fluid Mechanics Overview](./) - Main fluid mechanics documentation
 - [Physical Properties](../physical_properties/) - Thermal conductivity models
 - [Pipeline Simulation](../wiki/pipeline_transient_simulation) - Transient pipeline modeling

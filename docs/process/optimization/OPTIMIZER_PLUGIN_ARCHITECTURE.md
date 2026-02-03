@@ -1410,7 +1410,7 @@ import org.apache.logging.log4j.Logger;
 ## See Also
 
 - [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) - Detailed constraint system documentation
-- [Process Optimization Framework](./ - Parameter estimation and calibration
+- [Process Optimization Framework](./\) - Parameter estimation and calibration
 - [Multi-Objective Optimization](multi-objective-optimization) - Pareto optimization
 - [Batch Studies](batch-studies) - Sensitivity analysis
 

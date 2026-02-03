@@ -641,7 +641,7 @@ For detailed FIV documentation, see [Capacity Constraint Framework](../CAPACITY_
 
 ## Related Documentation
 
-- [Equipment Index](./ - All equipment
+- [Equipment Index](./\) - All equipment
 - [Fluid Mechanics](../../fluidmechanics/) - Detailed pipe flow
 - [Pipeline Mechanical Design](../pipeline_mechanical_design) - Wall thickness, stress, costs
 - [Riser Mechanical Design](../riser_mechanical_design) - Riser-specific design

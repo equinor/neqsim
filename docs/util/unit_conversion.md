@@ -370,6 +370,6 @@ double outputPressure_psia = new PressureUnit(internalPressure_bara, "bara").get
 
 ## Related Documentation
 
-- [Utilities Package](./ - Main utilities documentation
+- [Utilities Package](./) - Main utilities documentation
 - [Process Equipment](../process/equipment/) - Equipment with unit parameters
 - [Thermodynamic Systems](../thermo/) - Fluid property units

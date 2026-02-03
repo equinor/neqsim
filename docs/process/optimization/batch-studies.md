@@ -582,7 +582,7 @@ for stages in range(1, 5):
 
 ## Related Documentation
 
-- [Optimization Package](./ - General optimization capabilities
+- [Optimization Package](./\) - General optimization capabilities
 - [Multi-Objective Optimization](multi-objective-optimization) - Pareto fronts
 - [Python Optimization Tutorial](../../examples/NeqSim_Python_Optimization) - SciPy integration
 - [Safety Scenario Generation](../safety/scenario-generation) - Generate scenarios for batch studies
