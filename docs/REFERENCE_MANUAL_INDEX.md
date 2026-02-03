@@ -67,7 +67,23 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | Modules | [docs/modules.md](modules.md) | Architecture and module structure |
 | **O&G Design Review** | [docs/NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW.md](NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW.md) | **Comprehensive capability review for oil & gas design and operations** |
 
-### Chapter 2: Installation & Setup
+### Chapter 2: Quickstart Guides (NEW!)
+
+| Document | Path | Description |
+|----------|------|-------------|
+| **Quickstart Hub** | [docs/quickstart/index.md](quickstart/index.md) | **Get running in 5 minutes** - choose your platform |
+| Java Quickstart | [docs/quickstart/java-quickstart.md](quickstart/java-quickstart.md) | Maven setup, first flash, first process |
+| Python Quickstart | [docs/quickstart/python-quickstart.md](quickstart/python-quickstart.md) | pip install, jneqsim imports, gotchas |
+| Colab Quickstart | [docs/quickstart/colab-quickstart.md](quickstart/colab-quickstart.md) | One-click notebooks, no setup required |
+
+### Chapter 3: Tutorials & Learning Paths (NEW!)
+
+| Document | Path | Description |
+|----------|------|-------------|
+| **Tutorials Hub** | [docs/tutorials/index.md](tutorials/index.md) | All tutorials organized by topic |
+| Learning Paths | [docs/tutorials/learning-paths.md](tutorials/learning-paths.md) | PVT Engineer, Process Engineer, Developer tracks |
+
+### Chapter 4: Installation & Setup
 
 | Document | Path | Description |
 |----------|------|-------------|
@@ -75,13 +91,24 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | GitHub Setup | [docs/wiki/Getting-started-with-NeqSim-and-Github.md](wiki/Getting-started-with-NeqSim-and-Github.md) | NeqSim and GitHub setup |
 | Developer Setup | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP.md) | Development environment setup |
 
-### Chapter 3: Quick Start Examples
+### Chapter 5: Quick Start Examples
 
 | Document | Path | Description |
 |----------|------|-------------|
 | Usage Examples | [docs/wiki/usage_examples.md](wiki/usage_examples.md) | Basic usage patterns |
 | FAQ | [docs/wiki/faq.md](wiki/faq.md) | Frequently asked questions |
 | Wiki Index | [docs/wiki/index.md](wiki/index.md) | Wiki documentation index |
+
+### Chapter 6: Cookbook & Troubleshooting (NEW!)
+
+| Document | Path | Description |
+|----------|------|-------------|
+| **Cookbook Index** | [docs/cookbook/index.md](cookbook/index.md) | **Quick copy-paste recipes for common tasks** |
+| Thermodynamics Recipes | [docs/cookbook/thermodynamics-recipes.md](cookbook/thermodynamics-recipes.md) | Fluids, flash, properties, phase envelopes |
+| Process Recipes | [docs/cookbook/process-recipes.md](cookbook/process-recipes.md) | Separators, compressors, heat exchangers |
+| Pipeline Recipes | [docs/cookbook/pipeline-recipes.md](cookbook/pipeline-recipes.md) | Pressure drop, multiphase flow |
+| Unit Conversion | [docs/cookbook/unit-conversion-recipes.md](cookbook/unit-conversion-recipes.md) | All supported unit strings |
+| **Troubleshooting** | [docs/troubleshooting/index.md](troubleshooting/index.md) | **Solutions to common problems** |
 
 ### External Getting Started Guides
 

@@ -117,7 +117,56 @@ System.out.println("Compressibility: " + gas.getZ());
 
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
 
-## 📖 Documentation Sections
+## � New: Quickstart & Learning Resources
+
+<div class="nav-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin: 2rem 0;">
+
+<div class="nav-card" style="background: linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%); border: 2px solid #4caf50; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #4caf50; color: #24292e; font-size: 1.25rem;">⚡ Quickstart Guides</h3>
+<p style="color: #6a737d; margin-bottom: 1rem;">Get running in 5 minutes!</p>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.4rem 0;"><a href="quickstart/java-quickstart.html" style="color: #155799; text-decoration: none;">☕ Java Quickstart</a></li>
+<li style="padding: 0.4rem 0;"><a href="quickstart/python-quickstart.html" style="color: #155799; text-decoration: none;">🐍 Python Quickstart</a></li>
+<li style="padding: 0.4rem 0;"><a href="quickstart/colab-quickstart.html" style="color: #155799; text-decoration: none;">☁️ Google Colab (No Install)</a></li>
+</ul>
+</div>
+
+<div class="nav-card" style="background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%); border: 2px solid #2196f3; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #2196f3; color: #24292e; font-size: 1.25rem;">📖 Cookbook</h3>
+<p style="color: #6a737d; margin-bottom: 1rem;">Copy-paste recipes for common tasks</p>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.4rem 0;"><a href="cookbook/thermodynamics-recipes.html" style="color: #155799; text-decoration: none;">🔬 Thermodynamics Recipes</a></li>
+<li style="padding: 0.4rem 0;"><a href="cookbook/process-recipes.html" style="color: #155799; text-decoration: none;">⚙️ Process Recipes</a></li>
+<li style="padding: 0.4rem 0;"><a href="cookbook/pipeline-recipes.html" style="color: #155799; text-decoration: none;">🔧 Pipeline Recipes</a></li>
+<li style="padding: 0.4rem 0;"><a href="cookbook/unit-conversion-recipes.html" style="color: #155799; text-decoration: none;">📏 Unit Conversion</a></li>
+</ul>
+</div>
+
+<div class="nav-card" style="background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%); border: 2px solid #ff9800; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #ff9800; color: #24292e; font-size: 1.25rem;">🎓 Learning Paths</h3>
+<p style="color: #6a737d; margin-bottom: 1rem;">Structured tracks by role</p>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#pvt-engineer-track" style="color: #155799; text-decoration: none;">🛢️ PVT Engineer Track</a></li>
+<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#process-engineer-track" style="color: #155799; text-decoration: none;">⚙️ Process Engineer Track</a></li>
+<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#developer-track" style="color: #155799; text-decoration: none;">💻 Developer Track</a></li>
+</ul>
+</div>
+
+<div class="nav-card" style="background: linear-gradient(135deg, #ffebee 0%, #ffffff 100%); border: 2px solid #f44336; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #f44336; color: #24292e; font-size: 1.25rem;">🔧 Troubleshooting</h3>
+<p style="color: #6a737d; margin-bottom: 1rem;">Solutions to common problems</p>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#flash-convergence-issues" style="color: #155799; text-decoration: none;">Flash Convergence</a></li>
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#density-issues" style="color: #155799; text-decoration: none;">Density Issues</a></li>
+<li style="padding: 0.4rem 0;"><a href="troubleshooting/index.html#python-integration-issues" style="color: #155799; text-decoration: none;">Python Integration</a></li>
+</ul>
+</div>
+
+</div>
+
+<hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
+
+## �📖 Documentation Sections
 
 <div style="overflow-x: auto; margin: 1.5rem 0;">
 <table style="width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
