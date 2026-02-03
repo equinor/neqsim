@@ -419,7 +419,7 @@ Wax model parameters can be estimated from experimental data:
 
 ## See Also
 
-- [Asphaltene Characterization](asphaltene_characterization.md) - Asphaltene modeling
-- [Flow Assurance](../../pvtsimulation/flow_assurance.md) - Complete flow assurance guide
-- [PVT Characterization](../pvt_fluid_characterization.md) - Fluid characterization
-- [TBP Fractions](../characterization/tbp_fractions.md) - Plus fraction handling
+- [Asphaltene Characterization](asphaltene_characterization) - Asphaltene modeling
+- [Flow Assurance](../../pvtsimulation/flow_assurance) - Complete flow assurance guide
+- [PVT Characterization](../pvt_fluid_characterization) - Fluid characterization
+- [TBP Fractions](../characterization/tbp_fractions) - Plus fraction handling

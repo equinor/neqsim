@@ -13,106 +13,106 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Streams | [streams.md](streams.md) | Material and energy streams |
-| Mixers & Splitters | [mixers_splitters.md](mixers_splitters.md) | Stream mixing and splitting |
+| Streams | [streams.md](streams) | Material and energy streams |
+| Mixers & Splitters | [mixers_splitters.md](mixers_splitters) | Stream mixing and splitting |
 
 ### Separation Equipment
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Separators | [separators.md](separators.md) | 2-phase and 3-phase separators, scrubbers |
-| Distillation | [distillation.md](distillation.md) | Distillation columns |
-| Absorbers | [absorbers.md](absorbers.md) | Absorption/stripping columns |
-| Membranes | [membranes.md](membranes.md) | Membrane separation units |
-| Filters | [filters.md](filters.md) | Particulate and charcoal filters |
+| Separators | [separators.md](separators) | 2-phase and 3-phase separators, scrubbers |
+| Distillation | [distillation.md](distillation) | Distillation columns |
+| Absorbers | [absorbers.md](absorbers) | Absorption/stripping columns |
+| Membranes | [membranes.md](membranes) | Membrane separation units |
+| Filters | [filters.md](filters) | Particulate and charcoal filters |
 
 ### Heat Transfer Equipment
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Heat Exchangers | [heat_exchangers.md](heat_exchangers.md) | Heaters, coolers, condensers, reboilers |
+| Heat Exchangers | [heat_exchangers.md](heat_exchangers) | Heaters, coolers, condensers, reboilers |
 
 ### Rotating Equipment
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Compressors | [compressors.md](compressors.md) | Gas compression, mechanical losses, seal gas |
-| Pumps | [pumps.md](pumps.md) | Liquid pumping |
-| Expanders | [expanders.md](expanders.md) | Power recovery, turboexpanders |
+| Compressors | [compressors.md](compressors) | Gas compression, mechanical losses, seal gas |
+| Pumps | [pumps.md](pumps) | Liquid pumping |
+| Expanders | [expanders.md](expanders) | Power recovery, turboexpanders |
 
 ### Flow Control
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Valves | [valves.md](valves.md) | Throttling valves, chokes, safety valves |
+| Valves | [valves.md](valves) | Throttling valves, chokes, safety valves |
 
 ### Reactors
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Reactors | [reactors.md](reactors.md) | CSTR, PFR, equilibrium reactors |
-| Electrolyzers | [electrolyzers.md](electrolyzers.md) | Water and CO₂ electrolysis |
+| Reactors | [reactors.md](reactors) | CSTR, PFR, equilibrium reactors |
+| Electrolyzers | [electrolyzers.md](electrolyzers) | Water and CO₂ electrolysis |
 
 ### Ejectors
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Ejectors | [ejectors.md](ejectors.md) | Steam and gas ejectors |
+| Ejectors | [ejectors.md](ejectors) | Steam and gas ejectors |
 
 ### Safety Equipment
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Flares | [flares.md](flares.md) | Flare systems and combustion |
+| Flares | [flares.md](flares) | Flare systems and combustion |
 
 ### Well/Reservoir
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Wells | [wells.md](wells.md) | Production wells, chokes |
-| Reservoirs | [reservoirs.md](reservoirs.md) | Material balance reservoir modeling |
-| Subsea Systems | [subsea_systems.md](subsea_systems.md) | Subsea wells and flowlines |
+| Wells | [wells.md](wells) | Production wells, chokes |
+| Reservoirs | [reservoirs.md](reservoirs) | Material balance reservoir modeling |
+| Subsea Systems | [subsea_systems.md](subsea_systems) | Subsea wells and flowlines |
 
 ### Pipeline/Network
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Pipelines | [pipelines.md](pipelines.md) | Pipe flow, pressure drop |
+| Pipelines | [pipelines.md](pipelines) | Pipe flow, pressure drop |
 | **Risers** | [pipelines.md#risers](pipelines.md#risers) | **SCR, TTR, Flexible, Lazy-Wave risers** |
-| Networks | [networks.md](networks.md) | Pipeline network modeling |
-| Manifolds | [manifolds.md](manifolds.md) | Multi-stream routing |
+| Networks | [networks.md](networks) | Pipeline network modeling |
+| Manifolds | [manifolds.md](manifolds) | Multi-stream routing |
 
 ### Flow Measurement
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Differential Pressure | [differential_pressure.md](differential_pressure.md) | Orifice plates, flow measurement |
+| Differential Pressure | [differential_pressure.md](differential_pressure) | Orifice plates, flow measurement |
 
 ### Storage
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Tanks | [tanks.md](tanks.md) | Storage tanks, LNG boil-off |
+| Tanks | [tanks.md](tanks) | Storage tanks, LNG boil-off |
 
 ### Gas Treatment
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Adsorbers | [adsorbers.md](adsorbers.md) | CO₂ and gas adsorption |
+| Adsorbers | [adsorbers.md](adsorbers) | CO₂ and gas adsorption |
 
 ### Power Generation
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Power Equipment | [power_generation.md](power_generation.md) | Gas turbines, fuel cells, renewables |
+| Power Equipment | [power_generation.md](power_generation) | Gas turbines, fuel cells, renewables |
 
 ### Utility Equipment
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Adjusters | [util/adjusters.md](util/adjusters.md) | Variable adjustment to meet specs |
-| Recycles | [util/recycles.md](util/recycles.md) | Recycle stream handling |
-| Calculators | [util/calculators.md](util/calculators.md) | Custom calculations and setters |
+| Adjusters | [util/adjusters.md](util/adjusters) | Variable adjustment to meet specs |
+| Recycles | [util/recycles.md](util/recycles) | Recycle stream handling |
+| Calculators | [util/calculators.md](util/calculators) | Custom calculations and setters |
 
 ---
 
@@ -201,9 +201,9 @@ ProcessEquipmentInterface
 
 ## Related Documentation
 
-- [Process Package](../README.md) - Package overview
-- [ProcessSystem](../processmodel/process_system.md) - Process system guide
-- [ProcessModule](../processmodel/process_module.md) - Modular process units
-- [Controllers](../controllers.md) - Control equipment
-- [Safety Systems](../safety/README.md) - Safety equipment
+- [Process Package](../README) - Package overview
+- [ProcessSystem](../processmodel/process_system) - Process system guide
+- [ProcessModule](../processmodel/process_module) - Modular process units
+- [Controllers](../controllers) - Control equipment
+- [Safety Systems](../safety/README) - Safety equipment
 

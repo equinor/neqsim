@@ -5,7 +5,7 @@ description: This guide covers the `FlowRateOptimizer` class for calculating opt
 
 # Flow Rate Optimization
 
-> **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
+> **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW) to understand when to use which optimizer.
 
 This guide covers the `FlowRateOptimizer` class for calculating optimal flow rates given pressure boundary conditions and generating lift curve tables for Eclipse reservoir simulation.
 
@@ -13,9 +13,9 @@ This guide covers the `FlowRateOptimizer` class for calculating optimal flow rat
 
 | Document | Description |
 |----------|-------------|
-| [Optimization Overview](OPTIMIZATION_OVERVIEW.md) | When to use which optimizer |
-| [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md) | ProcessOptimizationEngine and VFP export |
-| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | ProductionOptimizer examples |
+| [Optimization Overview](OPTIMIZATION_OVERVIEW) | When to use which optimizer |
+| [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE) | ProcessOptimizationEngine and VFP export |
+| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) | ProductionOptimizer examples |
 
 ## Overview
 
@@ -691,10 +691,10 @@ plt.show()
 
 ## Related Documentation
 
-- [OPTIMIZER_PLUGIN_ARCHITECTURE.md](OPTIMIZER_PLUGIN_ARCHITECTURE.md) - Equipment capacity strategies
-- [EXTERNAL_OPTIMIZER_INTEGRATION.md](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) - Python/SciPy integration
-- [pressure_boundary_optimization.md](../pressure_boundary_optimization.md) - Simplified optimizer wrapper
-- [PRODUCTION_OPTIMIZATION_GUIDE.md](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) - Complete examples
+- [OPTIMIZER_PLUGIN_ARCHITECTURE.md](OPTIMIZER_PLUGIN_ARCHITECTURE) - Equipment capacity strategies
+- [EXTERNAL_OPTIMIZER_INTEGRATION.md](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) - Python/SciPy integration
+- [pressure_boundary_optimization.md](../pressure_boundary_optimization) - Simplified optimizer wrapper
+- [PRODUCTION_OPTIMIZATION_GUIDE.md](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) - Complete examples
 
 ---
 

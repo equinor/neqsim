@@ -1229,7 +1229,7 @@ System.out.printf("TOTAL | | | | $%,.0f%n", bomTotal);
 
 ## See Also
 
-- [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT.md)
-- [Digital Field Twin Architecture](DIGITAL_FIELD_TWIN.md)
-- [Mathematical Reference](MATHEMATICAL_REFERENCE.md)
-- [Late Life Operations](LATE_LIFE_OPERATIONS.md)
+- [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT)
+- [Digital Field Twin Architecture](DIGITAL_FIELD_TWIN)
+- [Mathematical Reference](MATHEMATICAL_REFERENCE)
+- [Late Life Operations](LATE_LIFE_OPERATIONS)

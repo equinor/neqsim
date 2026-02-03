@@ -974,8 +974,8 @@ Annual carbon cost: NOK 26,952,680
 
 ### 📚 Further Resources
 
-- [Full Tutorial Documentation](ProducedWaterEmissions_Tutorial.md)
-- [Norwegian Methods Comparison](NorwegianEmissionMethods_Comparison.md)
+- [Full Tutorial Documentation](ProducedWaterEmissions_Tutorial)
+- [Norwegian Methods Comparison](NorwegianEmissionMethods_Comparison)
 - [NeqSim Documentation](https://equinor.github.io/neqsim/)
 - [neqsim-python GitHub](https://github.com/equinor/neqsim-python)
 - [GFMW 2023 Paper](../GFMW_2023_Emissions_Paper.txt)

@@ -81,7 +81,7 @@ pvtsimulation/
 
 | Package | Documentation | Description |
 |---------|---------------|-------------|
-| `flowassurance` | [flowassurance/](flowassurance/README.md) | Asphaltene stability, De Boer screening, CPA onset calculations |
+| `flowassurance` | [flowassurance/](flowassurance/README) | Asphaltene stability, De Boer screening, CPA onset calculations |
 
 ---
 
@@ -433,6 +433,6 @@ System.out.println("Oil density at STC: " + sep.getOilDensity() + " kg/m3");
 
 ## Related Documentation
 
-- [PVT Workflow](pvt_workflow.md) - End-to-end PVT workflow
-- [Fluid Characterization](../thermo/pvt_fluid_characterization.md) - Heavy end characterization
-- [Black Oil Package](../blackoil/README.md) - Black oil model export
+- [PVT Workflow](pvt_workflow) - End-to-end PVT workflow
+- [Fluid Characterization](../thermo/pvt_fluid_characterization) - Heavy end characterization
+- [Black Oil Package](../blackoil/README) - Black oil model export

@@ -23,8 +23,8 @@ This folder contains documentation for:
 
 | Document | Description |
 |----------|-------------|
-| [DEVELOPER_SETUP.md](DEVELOPER_SETUP.md) | Development environment setup |
-| [contributing-structure.md](contributing-structure.md) | Contributing guidelines and code structure |
+| [DEVELOPER_SETUP.md](DEVELOPER_SETUP) | Development environment setup |
+| [contributing-structure.md](contributing-structure) | Contributing guidelines and code structure |
 
 ---
 
@@ -34,10 +34,10 @@ These guides explain how to add new functionality to NeqSim:
 
 | Guide | Description |
 |-------|-------------|
-| [Extending Process Equipment](extending_process_equipment.md) | Add custom separators, reactors, and other unit operations |
-| [Extending Physical Properties](extending_physical_properties.md) | Add custom viscosity, conductivity, and diffusivity models |
-| [Extending Thermodynamic Models](extending_thermodynamic_models.md) | Add custom equations of state and activity models |
-| [Python Extension Patterns](python_extension_patterns.md) | Use NeqSim from Python, create wrappers, implement interfaces |
+| [Extending Process Equipment](extending_process_equipment) | Add custom separators, reactors, and other unit operations |
+| [Extending Physical Properties](extending_physical_properties) | Add custom viscosity, conductivity, and diffusivity models |
+| [Extending Thermodynamic Models](extending_thermodynamic_models) | Add custom equations of state and activity models |
+| [Python Extension Patterns](python_extension_patterns) | Use NeqSim from Python, create wrappers, implement interfaces |
 
 ### Extension Quick Reference
 
@@ -87,7 +87,7 @@ For deeper understanding of NeqSim's architecture:
 | Thermodynamic Systems | [../thermo/](../thermo/) |
 | Process Equipment | [../process/](../process/) |
 | Physical Properties | [../physical_properties/](../physical_properties/) |
-| Validation Framework | [../integration/ai_validation_framework.md](../integration/ai_validation_framework.md) |
+| Validation Framework | [../integration/ai_validation_framework.md](../integration/ai_validation_framework) |
 
 ---
 
@@ -95,6 +95,6 @@ For deeper understanding of NeqSim's architecture:
 
 - [NeqSim GitHub Repository](https://github.com/equinor/neqsim)
 - [NeqSim Python Package](https://github.com/equinor/neqsim-python)
-- [Main Documentation](../README.md)
-- [Reference Manual](../REFERENCE_MANUAL_INDEX.md)
+- [Main Documentation](../README)
+- [Reference Manual](../REFERENCE_MANUAL_INDEX)
 

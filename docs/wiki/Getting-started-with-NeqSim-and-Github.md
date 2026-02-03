@@ -104,46 +104,46 @@ Navigate through the documentation organized from introductory concepts to advan
 The repository contains extensive documentation organized by module:
 
 #### Core Modules
-- [Modules Overview](https://github.com/equinor/neqsim/blob/master/docs/modules.md) - Architecture and module structure
-- [Reference Manual Index](https://github.com/equinor/neqsim/blob/master/docs/REFERENCE_MANUAL_INDEX.md) - Complete documentation index
+- [Modules Overview](https://github.com/equinor/neqsim/blob/master/docs/modules) - Architecture and module structure
+- [Reference Manual Index](https://github.com/equinor/neqsim/blob/master/docs/REFERENCE_MANUAL_INDEX) - Complete documentation index
 
 #### Thermodynamics
-- [Thermodynamics Guide](https://github.com/equinor/neqsim/blob/master/docs/wiki/thermodynamics_guide.md) - Comprehensive thermodynamics overview
-- [Flash Equations and Tests](https://github.com/equinor/neqsim/blob/master/docs/wiki/flash_equations_and_tests.md) - Flash calculation methods
-- [Viscosity Models](https://github.com/equinor/neqsim/blob/master/docs/wiki/viscosity_models.md) - Viscosity calculation models
-- [Steam Tables IF97](https://github.com/equinor/neqsim/blob/master/docs/wiki/steam_tables_if97.md) - Steam table implementation
+- [Thermodynamics Guide](https://github.com/equinor/neqsim/blob/master/docs/wiki/thermodynamics_guide) - Comprehensive thermodynamics overview
+- [Flash Equations and Tests](https://github.com/equinor/neqsim/blob/master/docs/wiki/flash_equations_and_tests) - Flash calculation methods
+- [Viscosity Models](https://github.com/equinor/neqsim/blob/master/docs/wiki/viscosity_models) - Viscosity calculation models
+- [Steam Tables IF97](https://github.com/equinor/neqsim/blob/master/docs/wiki/steam_tables_if97) - Steam table implementation
 
 #### Process Simulation
-- [Process Simulation Guide](https://github.com/equinor/neqsim/blob/master/docs/wiki/process_simulation.md) - Process modeling patterns
-- [Advanced Process Simulation](https://github.com/equinor/neqsim/blob/master/docs/wiki/advanced_process_simulation.md) - Advanced techniques
-- [Distillation Column](https://github.com/equinor/neqsim/blob/master/docs/wiki/distillation_column.md) - Column modeling
-- [Pump Usage Guide](https://github.com/equinor/neqsim/blob/master/docs/wiki/pump_usage_guide.md) - Pump calculations
+- [Process Simulation Guide](https://github.com/equinor/neqsim/blob/master/docs/wiki/process_simulation) - Process modeling patterns
+- [Advanced Process Simulation](https://github.com/equinor/neqsim/blob/master/docs/wiki/advanced_process_simulation) - Advanced techniques
+- [Distillation Column](https://github.com/equinor/neqsim/blob/master/docs/wiki/distillation_column) - Column modeling
+- [Pump Usage Guide](https://github.com/equinor/neqsim/blob/master/docs/wiki/pump_usage_guide) - Pump calculations
 
 #### Pipeline & Multiphase Flow
-- [Pipeline Index](https://github.com/equinor/neqsim/blob/master/docs/wiki/pipeline_index.md) - Pipeline documentation hub
-- [Two-Fluid Model](https://github.com/equinor/neqsim/blob/master/docs/wiki/two_fluid_model.md) - Two-phase flow
-- [Beggs and Brill Correlation](https://github.com/equinor/neqsim/blob/master/docs/wiki/beggs_and_brill_correlation.md) - Pressure drop
-- [Pipeline Heat Transfer](https://github.com/equinor/neqsim/blob/master/docs/wiki/pipeline_heat_transfer.md) - Thermal modeling
+- [Pipeline Index](https://github.com/equinor/neqsim/blob/master/docs/wiki/pipeline_index) - Pipeline documentation hub
+- [Two-Fluid Model](https://github.com/equinor/neqsim/blob/master/docs/wiki/two_fluid_model) - Two-phase flow
+- [Beggs and Brill Correlation](https://github.com/equinor/neqsim/blob/master/docs/wiki/beggs_and_brill_correlation) - Pressure drop
+- [Pipeline Heat Transfer](https://github.com/equinor/neqsim/blob/master/docs/wiki/pipeline_heat_transfer) - Thermal modeling
 
 #### Safety & Dynamics
-- [PSV Dynamic Sizing](https://github.com/equinor/neqsim/blob/master/docs/wiki/psv_dynamic_sizing_example.md) - Relief valve sizing
-- [Process Transient Simulation Guide](https://github.com/equinor/neqsim/blob/master/docs/wiki/process_transient_simulation_guide.md) - Dynamic simulation
-- [ESD Fire Alarm System](https://github.com/equinor/neqsim/blob/master/docs/wiki/esd_fire_alarm_system.md) - Safety systems
+- [PSV Dynamic Sizing](https://github.com/equinor/neqsim/blob/master/docs/wiki/psv_dynamic_sizing_example) - Relief valve sizing
+- [Process Transient Simulation Guide](https://github.com/equinor/neqsim/blob/master/docs/wiki/process_transient_simulation_guide) - Dynamic simulation
+- [ESD Fire Alarm System](https://github.com/equinor/neqsim/blob/master/docs/wiki/esd_fire_alarm_system) - Safety systems
 
 #### PVT & Characterization
-- [PVT Simulation Workflows](https://github.com/equinor/neqsim/blob/master/docs/wiki/pvt_simulation_workflows.md) - PVT studies
-- [Fluid Characterization](https://github.com/equinor/neqsim/blob/master/docs/wiki/fluid_characterization.md) - Fluid setup
-- [Black Oil Flash Playbook](https://github.com/equinor/neqsim/blob/master/docs/wiki/black_oil_flash_playbook.md) - Black oil models
+- [PVT Simulation Workflows](https://github.com/equinor/neqsim/blob/master/docs/wiki/pvt_simulation_workflows) - PVT studies
+- [Fluid Characterization](https://github.com/equinor/neqsim/blob/master/docs/wiki/fluid_characterization) - Fluid setup
+- [Black Oil Flash Playbook](https://github.com/equinor/neqsim/blob/master/docs/wiki/black_oil_flash_playbook) - Black oil models
 
 #### Integration
-- [AI Platform Integration](https://github.com/equinor/neqsim/blob/master/docs/integration/ai_platform_integration.md) - AI/ML integration
-- [MPC Integration](https://github.com/equinor/neqsim/blob/master/docs/integration/mpc_integration.md) - Model predictive control
-- [Real-Time Integration Guide](https://github.com/equinor/neqsim/blob/master/docs/integration/REAL_TIME_INTEGRATION_GUIDE.md) - Real-time systems
+- [AI Platform Integration](https://github.com/equinor/neqsim/blob/master/docs/integration/ai_platform_integration) - AI/ML integration
+- [MPC Integration](https://github.com/equinor/neqsim/blob/master/docs/integration/mpc_integration) - Model predictive control
+- [Real-Time Integration Guide](https://github.com/equinor/neqsim/blob/master/docs/integration/REAL_TIME_INTEGRATION_GUIDE) - Real-time systems
 
 #### Development
-- [Developer Setup](https://github.com/equinor/neqsim/blob/master/docs/development/DEVELOPER_SETUP.md) - Environment setup
-- [Test Overview](https://github.com/equinor/neqsim/blob/master/docs/wiki/test-overview.md) - Testing guidelines
-- [Usage Examples](https://github.com/equinor/neqsim/blob/master/docs/wiki/usage_examples.md) - Code examples
+- [Developer Setup](https://github.com/equinor/neqsim/blob/master/docs/development/DEVELOPER_SETUP) - Environment setup
+- [Test Overview](https://github.com/equinor/neqsim/blob/master/docs/wiki/test-overview) - Testing guidelines
+- [Usage Examples](https://github.com/equinor/neqsim/blob/master/docs/wiki/usage_examples) - Code examples
 
 ---
 

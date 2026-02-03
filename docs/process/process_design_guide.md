@@ -13,15 +13,15 @@ This guide describes the complete process design workflow using NeqSim, from ini
 - **Mechanical Design** - Equipment sizing based on international standards
 - **TORG Integration** - Project-specific technical requirements
 - **Design Orchestration** - Coordinated workflows for field development
-- **Automated Design** - Auto-sizing and optimization via [Design Framework](DESIGN_FRAMEWORK.md)
+- **Automated Design** - Auto-sizing and optimization via [Design Framework](DESIGN_FRAMEWORK)
 
 ## Related Documentation
 
 | Document | Description |
 |----------|-------------|
-| [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK.md) | **AutoSizeable interface, ProcessTemplates, DesignOptimizer** |
-| [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | Production optimization examples |
-| [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK.md) | Equipment capacity constraints |
+| [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK) | **AutoSizeable interface, ProcessTemplates, DesignOptimizer** |
+| [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE) | Production optimization examples |
+| [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK) | Equipment capacity constraints |
 
 ## Process Design Workflow Overview
 
@@ -112,7 +112,7 @@ torgManager.addDataSource(new CsvTorgDataSource("project_torg.csv"));
 Optional<TechnicalRequirementsDocument> optTorg = torgManager.load("TROLL-WEST-2025");
 ```
 
-> 📖 **See:** [TORG Integration](torg_integration.md) for detailed TORG configuration
+> 📖 **See:** [TORG Integration](torg_integration) for detailed TORG configuration
 
 ---
 
@@ -164,7 +164,7 @@ for (DesignCase designCase : designCases) {
 }
 ```
 
-> 📖 **See:** [Field Development Orchestration](field_development_orchestration.md) for design case details
+> 📖 **See:** [Field Development Orchestration](field_development_orchestration) for design case details
 
 ---
 
@@ -188,7 +188,7 @@ if (optTorg.isPresent()) {
 }
 ```
 
-> 📖 **See:** [Mechanical Design Standards](mechanical_design_standards.md) for available standards
+> 📖 **See:** [Mechanical Design Standards](mechanical_design_standards) for available standards
 
 ### 3.2 Run Mechanical Design Calculations
 
@@ -225,7 +225,7 @@ for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
 }
 ```
 
-> 📖 **See:** [Mechanical Design Database](mechanical_design_database.md) for data sources
+> 📖 **See:** [Mechanical Design Database](mechanical_design_database) for data sources
 
 ---
 
@@ -338,7 +338,7 @@ String report = orchestrator.generateDesignReport();
 System.out.println(report);
 ```
 
-> 📖 **See:** [Field Development Orchestration](field_development_orchestration.md) for complete workflow details
+> 📖 **See:** [Field Development Orchestration](field_development_orchestration) for complete workflow details
 
 ---
 
@@ -385,7 +385,7 @@ NeqSim supports 30+ international standards:
 | **Materials** | ASTM, NACE MR0175 |
 | **Safety** | API 521, ISO 23251 |
 
-> 📖 **See:** [Mechanical Design Standards](mechanical_design_standards.md) for complete list
+> 📖 **See:** [Mechanical Design Standards](mechanical_design_standards) for complete list
 
 ---
 
@@ -406,7 +406,7 @@ StandardBasedCsvDataSource csvSource =
 StandardRegistry.registerDataSource(StandardType.NORSOK_P002, csvSource);
 ```
 
-> 📖 **See:** [Mechanical Design Database](mechanical_design_database.md) for data configuration
+> 📖 **See:** [Mechanical Design Database](mechanical_design_database) for data configuration
 
 ---
 
@@ -491,10 +491,10 @@ public class ProcessDesignExample {
 
 | Document | Description |
 |----------|-------------|
-| [Mechanical Design Standards](mechanical_design_standards.md) | StandardType enum, StandardRegistry, applying standards |
-| [Mechanical Design Database](mechanical_design_database.md) | Data sources, schemas, CSV configuration |
-| [TORG Integration](torg_integration.md) | Technical requirements documents |
-| [Field Development Orchestration](field_development_orchestration.md) | Design phases, cases, orchestrator |
+| [Mechanical Design Standards](mechanical_design_standards) | StandardType enum, StandardRegistry, applying standards |
+| [Mechanical Design Database](mechanical_design_database) | Data sources, schemas, CSV configuration |
+| [TORG Integration](torg_integration) | Technical requirements documents |
+| [Field Development Orchestration](field_development_orchestration) | Design phases, cases, orchestrator |
 
 ---
 

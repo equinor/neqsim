@@ -415,6 +415,6 @@ for (String eq : affected) {
 
 ## See Also
 
-- [STID & Functional Location](stid-tagging.md)
-- [Dependency Analysis](dependency-analysis.md)
+- [STID & Functional Location](stid-tagging)
+- [Dependency Analysis](dependency-analysis)
 - [API Reference](api-reference.md#processtopologyanalyzer)

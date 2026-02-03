@@ -584,7 +584,7 @@ System.out.println("Retentate CO2: " + membrane.getRetentateStream().getFluid().
 
 For more examples, see:
 - [Java Test Suite](https://github.com/equinor/neqsim/tree/master/src/test/java/neqsim) - Extensive test cases demonstrating functionality
-- [Process Simulation Guide](process_simulation.md) - Detailed process simulation documentation
-- [Thermodynamics Guide](thermodynamics_guide.md) - Complete thermodynamic modeling guide
-- [Pipeline Index](pipeline_index.md) - Pipeline modeling documentation
+- [Process Simulation Guide](process_simulation) - Detailed process simulation documentation
+- [Thermodynamics Guide](thermodynamics_guide) - Complete thermodynamic modeling guide
+- [Pipeline Index](pipeline_index) - Pipeline modeling documentation
 - [Example Notebooks](https://github.com/equinor/neqsim/tree/master/docs/examples) - Jupyter notebook examples

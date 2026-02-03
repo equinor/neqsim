@@ -373,7 +373,7 @@ double paybackPeriod = investmentCost / netAnnualBenefit;  // 25 years
 
 ## See Also
 
-- [Monte Carlo Simulation](monte-carlo.md)
-- [Production Impact Analysis](production-impact.md)
-- [Mathematical Reference](mathematical-reference.md)
+- [Monte Carlo Simulation](monte-carlo)
+- [Production Impact Analysis](production-impact)
+- [Mathematical Reference](mathematical-reference)
 - [API Reference](api-reference.md#riskmatrix)

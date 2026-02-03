@@ -1202,9 +1202,9 @@ T_K = uc.C_to_K(25)  # 298.15 K
 
 ## See Also
 
-- [Extending Process Equipment](extending_process_equipment.md)
-- [Extending Physical Properties](extending_physical_properties.md)
-- [Extending Thermodynamic Models](extending_thermodynamic_models.md)
+- [Extending Process Equipment](extending_process_equipment)
+- [Extending Physical Properties](extending_physical_properties)
+- [Extending Thermodynamic Models](extending_thermodynamic_models)
 - [NeqSim Python Documentation](https://equinor.github.io/neqsim-python/)
 - [JPype Documentation](https://jpype.readthedocs.io/)
 

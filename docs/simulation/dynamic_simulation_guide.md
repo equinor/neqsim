@@ -606,7 +606,7 @@ for (int step = 0; step < 300; step++) {
 
 ### Example 2: Slug Arrival at Separator
 
-See [transient_slug_separator_control_example.md](../examples/transient_slug_separator_control_example.md)
+See [transient_slug_separator_control_example.md](../examples/transient_slug_separator_control_example)
 
 ### Example 3: Compressor Startup
 
@@ -642,14 +642,14 @@ for (int step = 0; step < 600; step++) {
 ## Related Documentation
 
 ### Core Transient Documentation
-- [Process Transient Simulation Guide](../wiki/process_transient_simulation_guide.md) - Control loop patterns
-- [Pipeline Transient Simulation](../wiki/pipeline_transient_simulation.md) - PipeBeggsAndBrills details
-- [Transient Multiphase Pipe](../wiki/transient_multiphase_pipe.md) - Drift-flux model
+- [Process Transient Simulation Guide](../wiki/process_transient_simulation_guide) - Control loop patterns
+- [Pipeline Transient Simulation](../wiki/pipeline_transient_simulation) - PipeBeggsAndBrills details
+- [Transient Multiphase Pipe](../wiki/transient_multiphase_pipe) - Drift-flux model
 
 ### Equipment-Specific
 - [Compressor Dynamic Features](../process/equipment/compressor_curves.md#dynamic-simulation-features) - State machines, events
-- [Controllers](../process/controllers.md) - PID control for dynamics
-- [Separators](../process/equipment/separators.md) - Level tracking
+- [Controllers](../process/controllers) - PID control for dynamics
+- [Separators](../process/equipment/separators) - Level tracking
 
 ### Interactive Notebooks (Google Colab)
 
@@ -663,9 +663,9 @@ These Colab notebooks provide hands-on dynamic simulation examples:
 | [Dynamic Separator](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/process/dynsep.ipynb) | Separator level dynamics and control |
 
 ### Local Examples
-- [Transient Slug Separator Control](../examples/transient_slug_separator_control_example.md)
+- [Transient Slug Separator Control](../examples/transient_slug_separator_control_example)
 - [ESP Pump Tutorial](../examples/ESP_Pump_Tutorial.ipynb)
 
 ### Process Logic
-- [Process Logic Framework](process_logic_framework.md) - runTransient integration
-- [Integrated Workflow Guide](INTEGRATED_WORKFLOW_GUIDE.md) - Transient scenario analysis
+- [Process Logic Framework](process_logic_framework) - runTransient integration
+- [Integrated Workflow Guide](INTEGRATED_WORKFLOW_GUIDE) - Transient scenario analysis

@@ -130,7 +130,7 @@ For produced water emission calculations, NeqSim provides the **Søreide-Whitson
 
 **Reference:** Søreide, I. & Whitson, C.H. (1992). "Peng-Robinson predictions for hydrocarbons, CO₂, N₂, and H₂S with pure water and NaCl brine". *Fluid Phase Equilibria*, 77, 217-240.
 
-📖 [**Detailed Søreide-Whitson Model Documentation**](../thermo/SoreideWhitsonModel.md) — Mathematical formulation, salt type coefficients, validation data, and code examples.
+📖 [**Detailed Søreide-Whitson Model Documentation**](../thermo/SoreideWhitsonModel) — Mathematical formulation, salt type coefficients, validation data, and code examples.
 
 ---
 

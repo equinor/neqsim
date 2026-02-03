@@ -1068,11 +1068,11 @@ if (!hasComponent("water") && modelRequiresWater()) {
 
 ## See Also
 
-- [Mathematical Models Overview](../thermo/mathematical_models.md)
-- [EoS System Types](../thermo/system/README.md)
-- [Mixing Rules Guide](../thermo/mixing_rules_guide.md)
-- [Extending Physical Properties](extending_physical_properties.md)
-- [Python Extension Patterns](python_extension_patterns.md)
+- [Mathematical Models Overview](../thermo/mathematical_models)
+- [EoS System Types](../thermo/system/README)
+- [Mixing Rules Guide](../thermo/mixing_rules_guide)
+- [Extending Physical Properties](extending_physical_properties)
+- [Python Extension Patterns](python_extension_patterns)
 
 ---
 

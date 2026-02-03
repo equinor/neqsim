@@ -51,10 +51,10 @@ System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m3");
 
 | Guide | Description |
 |-------|-------------|
-| [Getting Started](getting_started.md) | Installation, first calculations, and basic concepts |
-| [Usage Examples](usage_examples.md) | Comprehensive code examples |
-| [FAQ](faq.md) | Frequently asked questions |
-| [GitHub Guide](Getting-started-with-NeqSim-and-Github.md) | Complete documentation index |
+| [Getting Started](getting_started) | Installation, first calculations, and basic concepts |
+| [Usage Examples](usage_examples) | Comprehensive code examples |
+| [FAQ](faq) | Frequently asked questions |
+| [GitHub Guide](Getting-started-with-NeqSim-and-Github) | Complete documentation index |
 
 ---
 
@@ -62,10 +62,10 @@ System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m3");
 
 | Guide | Description |
 |-------|-------------|
-| [Thermodynamics Guide](thermodynamics_guide.md) | Equations of state, flash calculations, mixing rules |
-| [Fluid Characterization](fluid_characterization.md) | Plus fractions, pseudo-components, TBP modeling |
-| [Flash Equations & Tests](flash_equations_and_tests.md) | Flash calculations validated by tests |
-| [Property Flash Workflows](property_flash_workflows.md) | PH, PS, UV flash calculations |
+| [Thermodynamics Guide](thermodynamics_guide) | Equations of state, flash calculations, mixing rules |
+| [Fluid Characterization](fluid_characterization) | Plus fractions, pseudo-components, TBP modeling |
+| [Flash Equations & Tests](flash_equations_and_tests) | Flash calculations validated by tests |
+| [Property Flash Workflows](property_flash_workflows) | PH, PS, UV flash calculations |
 
 ---
 
@@ -73,12 +73,12 @@ System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m3");
 
 | Guide | Description |
 |-------|-------------|
-| [Process Simulation Guide](process_simulation.md) | Building flowsheets, running simulations |
-| [Advanced Process Simulation](advanced_process_simulation.md) | Recycles, adjusters, complex systems |
-| [Logical Unit Operations](logical_unit_operations.md) | Controllers, splitters, recycles |
-| [Transient Simulation Guide](process_transient_simulation_guide.md) | Dynamic process modeling |
-| [Process Control Framework](process_control.md) | PID controllers, automation |
-| [Bottleneck Analysis](bottleneck_analysis.md) | Capacity constraints, production optimization |
+| [Process Simulation Guide](process_simulation) | Building flowsheets, running simulations |
+| [Advanced Process Simulation](advanced_process_simulation) | Recycles, adjusters, complex systems |
+| [Logical Unit Operations](logical_unit_operations) | Controllers, splitters, recycles |
+| [Transient Simulation Guide](process_transient_simulation_guide) | Dynamic process modeling |
+| [Process Control Framework](process_control) | PID controllers, automation |
+| [Bottleneck Analysis](bottleneck_analysis) | Capacity constraints, production optimization |
 
 ---
 
@@ -86,15 +86,15 @@ System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m3");
 
 | Equipment | Documentation |
 |-----------|---------------|
-| [Distillation Column](distillation_column.md) | Sequential, damped, inside-out solvers |
-| [Gibbs Reactor](gibbs_reactor.md) | Chemical equilibrium reactor |
-| [Flow Meter Models](flow_meter_models.md) | Orifice, venturi, ultrasonic meters |
-| [Air Cooler](air_cooler.md) | Air-cooled heat exchanger |
-| [Heat Exchanger Design](heat_exchanger_mechanical_design.md) | Mechanical design methods |
-| [Water Cooler](water_cooler.md) | Water-cooled systems |
-| [Steam Heater](steam_heater.md) | Steam heating systems |
-| [Battery Storage](battery_storage.md) | Energy storage unit |
-| [Solar Panel](solar_panel.md) | Solar power generation |
+| [Distillation Column](distillation_column) | Sequential, damped, inside-out solvers |
+| [Gibbs Reactor](gibbs_reactor) | Chemical equilibrium reactor |
+| [Flow Meter Models](flow_meter_models) | Orifice, venturi, ultrasonic meters |
+| [Air Cooler](air_cooler) | Air-cooled heat exchanger |
+| [Heat Exchanger Design](heat_exchanger_mechanical_design) | Mechanical design methods |
+| [Water Cooler](water_cooler) | Water-cooled systems |
+| [Steam Heater](steam_heater) | Steam heating systems |
+| [Battery Storage](battery_storage) | Energy storage unit |
+| [Solar Panel](solar_panel) | Solar power generation |
 
 ---
 
@@ -102,9 +102,9 @@ System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m3");
 
 | Guide | Description |
 |-------|-------------|
-| [PVT Simulation Workflows](pvt_simulation_workflows.md) | CVD, CCE, DL simulations |
-| [Black-Oil Flash Playbook](black_oil_flash_playbook.md) | Black-oil modeling techniques |
-| [Humid Air Mathematics](humid_air_math.md) | Psychrometric calculations |
+| [PVT Simulation Workflows](pvt_simulation_workflows) | CVD, CCE, DL simulations |
+| [Black-Oil Flash Playbook](black_oil_flash_playbook) | Black-oil modeling techniques |
+| [Humid Air Mathematics](humid_air_math) | Psychrometric calculations |
 
 ---
 
@@ -112,7 +112,7 @@ System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m3");
 
 | Guide | Description |
 |-------|-------------|
-| [Gas Quality Standards](gas_quality_standards_from_tests.md) | ISO 6976, GPA standards |
+| [Gas Quality Standards](gas_quality_standards_from_tests) | ISO 6976, GPA standards |
 
 ---
 
@@ -120,8 +120,8 @@ System.out.println("Density: " + fluid.getDensity("kg/m3") + " kg/m3");
 
 | Guide | Description |
 |-------|-------------|
-| [Java from Colab](java_simulation_from_colab_notebooks.md) | Running NeqSim in Google Colab |
-| [JUnit Test Overview](test-overview.md) | Test suite structure |
+| [Java from Colab](java_simulation_from_colab_notebooks) | Running NeqSim in Google Colab |
+| [JUnit Test Overview](test-overview) | Test suite structure |
 
 ---
 

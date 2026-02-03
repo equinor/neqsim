@@ -5,7 +5,7 @@ description: This guide provides comprehensive examples for setting up and runni
 
 # Production Optimization Guide
 
-> **New to process optimization?** Start with the [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
+> **New to process optimization?** Start with the [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW) to understand when to use which optimizer.
 
 This guide provides comprehensive examples for setting up and running production optimization simulations in NeqSim, covering both Java and Python implementations.
 
@@ -35,13 +35,13 @@ This guide provides comprehensive examples for setting up and running production
 
 | Document | Description |
 |----------|-------------|
-| [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) | **START HERE**: When to use which optimizer |
-| [Optimizer Plugin Architecture](../process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md) | ProcessOptimizationEngine and equipment strategies |
-| [Multi-Objective Optimization](../process/optimization/multi-objective-optimization.md) | Pareto fronts and trade-offs |
-| [Flow Rate Optimization](../process/optimization/flow-rate-optimization.md) | FlowRateOptimizer and lift curves |
-| [Batch Studies](../process/optimization/batch-studies.md) | Parallel parameter sweeps |
-| [External Optimizer Integration](../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) | Python/SciPy integration |
-| [CAPACITY_CONSTRAINT_FRAMEWORK.md](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md) | Multi-constraint equipment and bottleneck detection |
+| [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW) | **START HERE**: When to use which optimizer |
+| [Optimizer Plugin Architecture](../process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE) | ProcessOptimizationEngine and equipment strategies |
+| [Multi-Objective Optimization](../process/optimization/multi-objective-optimization) | Pareto fronts and trade-offs |
+| [Flow Rate Optimization](../process/optimization/flow-rate-optimization) | FlowRateOptimizer and lift curves |
+| [Batch Studies](../process/optimization/batch-studies) | Parallel parameter sweeps |
+| [External Optimizer Integration](../integration/EXTERNAL_OPTIMIZER_INTEGRATION) | Python/SciPy integration |
+| [CAPACITY_CONSTRAINT_FRAMEWORK.md](../process/CAPACITY_CONSTRAINT_FRAMEWORK) | Multi-constraint equipment and bottleneck detection |
 
 ---
 
@@ -1178,10 +1178,10 @@ try {
 
 ## Related Documentation
 
-- [Bottleneck Analysis](../wiki/bottleneck_analysis.md) - Detailed bottleneck detection API
-- [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md) - Multi-constraint architecture
-- [Process Simulation Guide](../wiki/process_simulation.md) - Building process models
-- [Advanced Process Simulation](../wiki/advanced_process_simulation.md) - Recycles and complex systems
+- [Bottleneck Analysis](../wiki/bottleneck_analysis) - Detailed bottleneck detection API
+- [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK) - Multi-constraint architecture
+- [Process Simulation Guide](../wiki/process_simulation) - Building process models
+- [Advanced Process Simulation](../wiki/advanced_process_simulation) - Recycles and complex systems
 
 ---
 

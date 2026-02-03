@@ -323,13 +323,13 @@ state.setVersion("1.0.0");
 state.saveToFile("field_model_v1.0.0.json");
 ```
 
-For full documentation on serialization options, see [Process Serialization Guide](../../simulation/process_serialization.md).
+For full documentation on serialization options, see [Process Serialization Guide](../../simulation/process_serialization).
 
 ---
 
 ## Related Documentation
 
-- [ProcessSystem](process_system.md) - Individual process flowsheets
-- [ProcessModule](process_module.md) - Modular process units
-- [Process Serialization](../../simulation/process_serialization.md) - Save/load processes
-- [AI Validation Framework](../../integration/ai_validation_framework.md) - Validation integration
+- [ProcessSystem](process_system) - Individual process flowsheets
+- [ProcessModule](process_module) - Modular process units
+- [Process Serialization](../../simulation/process_serialization) - Save/load processes
+- [AI Validation Framework](../../integration/ai_validation_framework) - Validation integration

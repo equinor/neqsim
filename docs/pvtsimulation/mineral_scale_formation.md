@@ -692,8 +692,8 @@ Test at saturated conditions where SR should equal approximately 1.0.
 
 ## See Also
 
-- [Scale Potential Calculation Details](../physical_properties/scale_potential.md) - Detailed API reference
-- [pH Stabilization and Corrosion Control](ph_stabilization_corrosion.md) - FeCO3 protection
-- [Flow Assurance Overview](flow_assurance_overview.md) - Integrated flow assurance
-- [Component Reference](../thermo/component_list.md) - Available ions
-- [Chemical Reactions](../chemicalreactions/README.md) - Ionic equilibrium
+- [Scale Potential Calculation Details](../physical_properties/scale_potential) - Detailed API reference
+- [pH Stabilization and Corrosion Control](ph_stabilization_corrosion) - FeCO3 protection
+- [Flow Assurance Overview](flow_assurance_overview) - Integrated flow assurance
+- [Component Reference](../thermo/component_list) - Available ions
+- [Chemical Reactions](../chemicalreactions/README) - Ionic equilibrium

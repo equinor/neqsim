@@ -460,7 +460,7 @@ String json = result.toJson();
 
 ## See Also
 
-- [Process Topology Analysis](topology.md)
-- [STID & Functional Location](stid-tagging.md)
-- [Production Impact Analysis](production-impact.md)
+- [Process Topology Analysis](topology)
+- [STID & Functional Location](stid-tagging)
+- [Production Impact Analysis](production-impact)
 - [API Reference](api-reference.md#dependencyanalyzer)

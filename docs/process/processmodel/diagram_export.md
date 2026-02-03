@@ -524,7 +524,7 @@ ProcessDiagramExporter exporter = DexpiDiagramBridge.createExporter(system);
 ProcessDiagramExporter detailed = DexpiDiagramBridge.createDetailedExporter(system);
 ```
 
-See [DEXPI XML Reader](../../integration/dexpi-reader.md) for complete DEXPI import/export documentation.
+See [DEXPI XML Reader](../../integration/dexpi-reader) for complete DEXPI import/export documentation.
 
 ## Customization
 

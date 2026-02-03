@@ -302,6 +302,6 @@ oil.setMixingRule("classic");
 
 ## Related Documentation
 
-- [PVT Fluid Characterization](../pvt_fluid_characterization.md) - Detailed characterization guide
-- [Fluid Creation Guide](../fluid_creation_guide.md) - Creating fluids
-- [Thermo Package](../README.md) - Package overview
+- [PVT Fluid Characterization](../pvt_fluid_characterization) - Detailed characterization guide
+- [Fluid Creation Guide](../fluid_creation_guide) - Creating fluids
+- [Thermo Package](../README) - Package overview

@@ -5,7 +5,7 @@ description: This document describes the batch study infrastructure for parallel
 
 # Batch Studies
 
-> **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
+> **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW) to understand when to use which optimizer.
 
 This document describes the batch study infrastructure for parallel parameter studies and concept screening.
 
@@ -13,9 +13,9 @@ This document describes the batch study infrastructure for parallel parameter st
 
 | Document | Description |
 |----------|-------------|
-| [Optimization Overview](OPTIMIZATION_OVERVIEW.md) | When to use which optimizer |
-| [Multi-Objective Optimization](multi-objective-optimization.md) | Pareto fronts and trade-offs |
-| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | ProductionOptimizer examples |
+| [Optimization Overview](OPTIMIZATION_OVERVIEW) | When to use which optimizer |
+| [Multi-Objective Optimization](multi-objective-optimization) | Pareto fronts and trade-offs |
+| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) | ProductionOptimizer examples |
 
 ## Overview
 
@@ -582,8 +582,8 @@ for stages in range(1, 5):
 
 ## Related Documentation
 
-- [Optimization Package](README.md) - General optimization capabilities
-- [Multi-Objective Optimization](multi-objective-optimization.md) - Pareto fronts
-- [Python Optimization Tutorial](../../examples/NeqSim_Python_Optimization.md) - SciPy integration
-- [Safety Scenario Generation](../safety/scenario-generation.md) - Generate scenarios for batch studies
-- [Future Infrastructure Overview](../future-infrastructure.md) - Full infrastructure overview
+- [Optimization Package](README) - General optimization capabilities
+- [Multi-Objective Optimization](multi-objective-optimization) - Pareto fronts
+- [Python Optimization Tutorial](../../examples/NeqSim_Python_Optimization) - SciPy integration
+- [Safety Scenario Generation](../safety/scenario-generation) - Generate scenarios for batch studies
+- [Future Infrastructure Overview](../future-infrastructure) - Full infrastructure overview

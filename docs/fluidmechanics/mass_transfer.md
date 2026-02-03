@@ -8,9 +8,9 @@ description: This document provides detailed documentation of the mass transfer 
 This document provides detailed documentation of the mass transfer models implemented in the NeqSim fluid mechanics package, focusing on diffusivity correlations and reactive mass transfer.
 
 **Related Documentation:**
-- [MassTransferAPI.md](MassTransferAPI.md) - API reference for interfacial area and kL/kG methods
-- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer.md) - Theory for interphase transfer
-- [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial.md) - Practical tutorial
+- [MassTransferAPI.md](MassTransferAPI) - API reference for interfacial area and kL/kG methods
+- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer) - Theory for interphase transfer
+- [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial) - Practical tutorial
 
 ## Table of Contents
 - [Overview](#overview)
@@ -566,7 +566,7 @@ fluid.setMixingRule(10);  // CPA mixing rule
 
 ## Related Documentation
 
-- [Heat Transfer Modeling](heat_transfer.md) - Companion heat transfer documentation
-- [Fluid Mechanics Overview](README.md) - Main fluid mechanics documentation
-- [Physical Properties](../physical_properties/README.md) - Diffusivity models
-- [Thermodynamics](../thermo/README.md) - Activity coefficients and phase equilibria
+- [Heat Transfer Modeling](heat_transfer) - Companion heat transfer documentation
+- [Fluid Mechanics Overview](README) - Main fluid mechanics documentation
+- [Physical Properties](../physical_properties/README) - Diffusivity models
+- [Thermodynamics](../thermo/README) - Activity coefficients and phase equilibria

@@ -154,12 +154,12 @@ Detailed documentation for each module:
 
 | Module | Documentation |
 |--------|---------------|
-| Lifecycle Management | [lifecycle/README.md](lifecycle/README.md) |
-| Sustainability | [sustainability/README.md](sustainability/README.md) |
-| Advisory Systems | [advisory/README.md](advisory/README.md) |
-| ML Integration | [ml/README.md](ml/README.md) |
-| Safety Scenarios | [safety/README.md](safety/README.md) |
-| Batch Studies | [optimization/README.md](optimization/README.md) |
+| Lifecycle Management | [lifecycle/README.md](lifecycle/README) |
+| Sustainability | [sustainability/README.md](sustainability/README) |
+| Advisory Systems | [advisory/README.md](advisory/README) |
+| ML Integration | [ml/README.md](ml/README) |
+| Safety Scenarios | [safety/README.md](safety/README) |
+| Batch Studies | [optimization/README.md](optimization/README) |
 
 ## Architecture Principles
 
@@ -232,6 +232,6 @@ When extending these modules:
 
 ## Related Resources
 
-- [NeqSim Main Documentation](../README.md)
-- [Developer Setup](../development/DEVELOPER_SETUP.md)
-- [Contributing Guide](../development/contributing-structure.md)
+- [NeqSim Main Documentation](../README)
+- [Developer Setup](../development/DEVELOPER_SETUP)
+- [Contributing Guide](../development/contributing-structure)

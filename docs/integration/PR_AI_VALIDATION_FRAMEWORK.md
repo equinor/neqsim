@@ -313,6 +313,6 @@ Run all tests:
 
 ## Related Documentation
 
-- [AI Validation Framework Reference](ai_validation_framework.md)
-- [NeqSim ML Integration](ml_integration.md)
-- [MPC Integration Guide](mpc_integration.md)
+- [AI Validation Framework Reference](ai_validation_framework)
+- [NeqSim ML Integration](ml_integration)
+- [MPC Integration Guide](mpc_integration)

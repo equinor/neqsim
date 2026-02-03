@@ -57,7 +57,7 @@ On Windows:
 mvnw.cmd install
 ```
 
-The command downloads dependencies, compiles the project, and runs the test suite. For environment notes and troubleshooting tips, see the [README](../../README.md) and [developer setup guide](../development/DEVELOPER_SETUP.md).
+The command downloads dependencies, compiles the project, and runs the test suite. For environment notes and troubleshooting tips, see the [README](../../README) and [developer setup guide](../development/DEVELOPER_SETUP).
 
 ### Requirements
 - Java 8 or higher (Java 11+ recommended)
@@ -162,7 +162,7 @@ process.runOptimized();
 System.out.println(process.getExecutionPartitionInfo());
 ```
 
-See [ProcessSystem documentation](../process/processmodel/process_system.md) for details.
+See [ProcessSystem documentation](../process/processmodel/process_system) for details.
 
 ---
 
@@ -179,10 +179,10 @@ NeqSim supports multiple equations of state for different applications:
 | GERG-2008 | `SystemGERG2008Eos` | Natural gas custody transfer |
 
 ### Documentation Links
-- Read the [Thermodynamics Guide](thermodynamics_guide.md) for an overview of models, correlations, and implementation notes.
-- Explore validated calculations in [Flash equations and tests](flash_equations_and_tests.md) and the [Thermodynamics of gas processing](process_simulation.md#thermodynamics).
-- Review property-focused workflows in [Property flash workflows](property_flash_workflows.md) and viscosity models in [Viscosity models](viscosity_models.md).
-- See [Steam Tables IF97](steam_tables_if97.md) for water/steam calculations.
+- Read the [Thermodynamics Guide](thermodynamics_guide) for an overview of models, correlations, and implementation notes.
+- Explore validated calculations in [Flash equations and tests](flash_equations_and_tests) and the [Thermodynamics of gas processing](process_simulation.md#thermodynamics).
+- Review property-focused workflows in [Property flash workflows](property_flash_workflows) and viscosity models in [Viscosity models](viscosity_models).
+- See [Steam Tables IF97](steam_tables_if97) for water/steam calculations.
 
 ---
 
@@ -208,10 +208,10 @@ oil.getCharacterization().characterisePlusFraction();
 ```
 
 ### Documentation Links
-- Follow [Fluid Characterization](fluid_characterization.md) for setting up equations of state and component data.
-- Use the [PVT simulation workflows](pvt_simulation_workflows.md) and [Black-oil flash playbook](black_oil_flash_playbook.md) for reservoir-focused setups.
-- See [TBP Fraction Models](tbp_fraction_models.md) for detailed characterization methods.
-- See [Gas quality standards from tests](gas_quality_standards_from_tests.md) for handling analytical measurements.
+- Follow [Fluid Characterization](fluid_characterization) for setting up equations of state and component data.
+- Use the [PVT simulation workflows](pvt_simulation_workflows) and [Black-oil flash playbook](black_oil_flash_playbook) for reservoir-focused setups.
+- See [TBP Fraction Models](tbp_fraction_models) for detailed characterization methods.
+- See [Gas quality standards from tests](gas_quality_standards_from_tests) for handling analytical measurements.
 
 ---
 
@@ -230,9 +230,9 @@ NeqSim includes 50+ unit operations:
 | **Specialty** | Electrolyzer, WindTurbine, SolarPanel, Battery |
 
 ### Documentation Links
-- Start with the [Process Simulation Guide](process_simulation.md) for steady-state modeling patterns.
-- Dive deeper into [Advanced process simulation](advanced_process_simulation.md) and [Logical unit operations](logical_unit_operations.md) for custom flowsheets.
-- Consult the [Modules overview](../modules.md) and [Process calculator](../simulation/process_calculator.md) when wiring NeqSim into larger systems.
+- Start with the [Process Simulation Guide](process_simulation) for steady-state modeling patterns.
+- Dive deeper into [Advanced process simulation](advanced_process_simulation) and [Logical unit operations](logical_unit_operations) for custom flowsheets.
+- Consult the [Modules overview](../modules) and [Process calculator](../simulation/process_calculator) when wiring NeqSim into larger systems.
 
 ---
 
@@ -250,11 +250,11 @@ pipeline.run();
 ```
 
 ### Documentation Links
-- See the [Pipeline Index](pipeline_index.md) for all pipeline documentation
-- [Beggs and Brill Correlation](beggs_and_brill_correlation.md) for multiphase pressure drop
-- [Pipeline Heat Transfer](pipeline_heat_transfer.md) for non-adiabatic flow
-- [Multiphase Transient Model](multiphase_transient_model.md) for dynamic simulation
-- [Water Hammer Implementation](water_hammer_implementation.md) for fast transients
+- See the [Pipeline Index](pipeline_index) for all pipeline documentation
+- [Beggs and Brill Correlation](beggs_and_brill_correlation) for multiphase pressure drop
+- [Pipeline Heat Transfer](pipeline_heat_transfer) for non-adiabatic flow
+- [Multiphase Transient Model](multiphase_transient_model) for dynamic simulation
+- [Water Hammer Implementation](water_hammer_implementation) for fast transients
 
 ---
 
@@ -271,27 +271,27 @@ psv.setReliefPressure(55.0, "bara");
 ```
 
 ### Documentation Links
-- Study dynamic blowdown and protection behavior in [ESD blowdown systems](../safety/ESD_BLOWDOWN_SYSTEM.md), [PSV dynamic sizing](psv_dynamic_sizing_example.md), and [HIPPS implementation](../safety/hipps_implementation.md).
-- Review layered safety topics in [Integrated safety systems](../safety/INTEGRATED_SAFETY_SYSTEMS.md), [HIPPS summary](../safety/HIPPS_SUMMARY.md), and [Layered safety architecture](../safety/layered_safety_architecture.md).
-- For alarm logic and shutdown sequencing, see [Alarm system guide](../safety/alarm_system_guide.md), [SIS logic implementation](../safety/sis_logic_implementation.md), and [Integration safety chain tests](../safety/integration_safety_chain_tests.md).
-- See [Process Transient Simulation Guide](process_transient_simulation_guide.md) for dynamic simulations.
+- Study dynamic blowdown and protection behavior in [ESD blowdown systems](../safety/ESD_BLOWDOWN_SYSTEM), [PSV dynamic sizing](psv_dynamic_sizing_example), and [HIPPS implementation](../safety/hipps_implementation).
+- Review layered safety topics in [Integrated safety systems](../safety/INTEGRATED_SAFETY_SYSTEMS), [HIPPS summary](../safety/HIPPS_SUMMARY), and [Layered safety architecture](../safety/layered_safety_architecture).
+- For alarm logic and shutdown sequencing, see [Alarm system guide](../safety/alarm_system_guide), [SIS logic implementation](../safety/sis_logic_implementation), and [Integration safety chain tests](../safety/integration_safety_chain_tests).
+- See [Process Transient Simulation Guide](process_transient_simulation_guide) for dynamic simulations.
 
 ---
 
 ## Unit operations and equipment models
 
 ### Equipment Categories
-- **Compressors**: [Compressor calculations](../process/equipment/compressors.md), performance curves, staging
-- **Pumps**: [Pump usage guide](pump_usage_guide.md), [Pump theory](pump_theory_and_implementation.md)
-- **Separation**: [Distillation column](distillation_column.md), [Membrane separation](membrane_separation.md)
-- **Heat Exchange**: [Air cooler](air_cooler.md), [Water cooler](water_cooler.md), [Steam heater](steam_heater.md)
-- **Metering**: [Flow meter models](flow_meter_models.md), [Venturi calculation](venturi_calculation.md)
-- **Specialty**: [Battery storage](battery_storage.md), [Solar panel](solar_panel.md), [Gibbs reactor](gibbs_reactor.md)
+- **Compressors**: [Compressor calculations](../process/equipment/compressors), performance curves, staging
+- **Pumps**: [Pump usage guide](pump_usage_guide), [Pump theory](pump_theory_and_implementation)
+- **Separation**: [Distillation column](distillation_column), [Membrane separation](membrane_separation)
+- **Heat Exchange**: [Air cooler](air_cooler), [Water cooler](water_cooler), [Steam heater](steam_heater)
+- **Metering**: [Flow meter models](flow_meter_models), [Venturi calculation](venturi_calculation)
+- **Specialty**: [Battery storage](battery_storage), [Solar panel](solar_panel), [Gibbs reactor](gibbs_reactor)
 
 ### Documentation Links
-- Browse individual equipment pages such as [Distillation column](distillation_column.md), [Air cooler](air_cooler.md), [Water cooler](water_cooler.md), and [Heat exchanger mechanical design](heat_exchanger_mechanical_design.md).
-- For specialized models, see [Flow meter models](flow_meter_models.md), [Battery storage unit](battery_storage.md), [Solar panel](solar_panel.md), and [Pump usage guide](pump_usage_guide.md).
-- Additional unit operations and mechanical details are covered in the [Process logic enhancements](../simulation/ProcessLogicEnhancements.md) series.
+- Browse individual equipment pages such as [Distillation column](distillation_column), [Air cooler](air_cooler), [Water cooler](water_cooler), and [Heat exchanger mechanical design](heat_exchanger_mechanical_design).
+- For specialized models, see [Flow meter models](flow_meter_models), [Battery storage unit](battery_storage), [Solar panel](solar_panel), and [Pump usage guide](pump_usage_guide).
+- Additional unit operations and mechanical details are covered in the [Process logic enhancements](../simulation/ProcessLogicEnhancements) series.
 
 ---
 
@@ -307,11 +307,11 @@ valve.setController(controller);
 ```
 
 ### Documentation Links
-- Connect NeqSim to control systems using the [Process control framework](process_control.md) and [Real-time integration guide](../integration/REAL_TIME_INTEGRATION_GUIDE.md).
-- Learn about runtime flexibility in [Runtime logic flexibility](../simulation/RuntimeLogicFlexibility.md) and alarm handling in [Alarm triggered logic example](../safety/alarm_triggered_logic_example.md).
-- For AI/ML integration, see [AI Platform Integration](../integration/ai_platform_integration.md) and [ML Integration](../integration/ml_integration.md).
-- For MPC, see [MPC Integration](../integration/mpc_integration.md) and [Industrial MPC Integration](../integration/neqsim_industrial_mpc_integration.md).
-- For scripting and hybrid workflows, see [Java simulations from Colab notebooks](java_simulation_from_colab_notebooks.md) and [Java/Python usage examples](usage_examples.md).
+- Connect NeqSim to control systems using the [Process control framework](process_control) and [Real-time integration guide](../integration/REAL_TIME_INTEGRATION_GUIDE).
+- Learn about runtime flexibility in [Runtime logic flexibility](../simulation/RuntimeLogicFlexibility) and alarm handling in [Alarm triggered logic example](../safety/alarm_triggered_logic_example).
+- For AI/ML integration, see [AI Platform Integration](../integration/ai_platform_integration) and [ML Integration](../integration/ml_integration).
+- For MPC, see [MPC Integration](../integration/mpc_integration) and [Industrial MPC Integration](../integration/neqsim_industrial_mpc_integration).
+- For scripting and hybrid workflows, see [Java simulations from Colab notebooks](java_simulation_from_colab_notebooks) and [Java/Python usage examples](usage_examples).
 
 ---
 
@@ -325,9 +325,9 @@ valve.setController(controller);
 - [Graph-Based Simulation](../examples/GraphBasedProcessSimulation.ipynb)
 
 ### Documentation Links
-- Work through the [Usage examples](usage_examples.md) for end-to-end flows in both Java and Python.
-- Try the [Process transient simulation guide](process_transient_simulation_guide.md) and [Process simulation using NeqSim](process_simulation.md) for hands-on modeling patterns.
-- Explore extended topics such as [Process automation and logic implementation summary](../simulation/process_logic_implementation_summary.md) and integration tests in [Test overview](test-overview.md).
+- Work through the [Usage examples](usage_examples) for end-to-end flows in both Java and Python.
+- Try the [Process transient simulation guide](process_transient_simulation_guide) and [Process simulation using NeqSim](process_simulation) for hands-on modeling patterns.
+- Explore extended topics such as [Process automation and logic implementation summary](../simulation/process_logic_implementation_summary) and integration tests in [Test overview](test-overview).
 
 ### External Resources
 - [NeqSim Colab Demo](https://colab.research.google.com/drive/1JiszeCxfpcJZT2vejVWuNWGmd9SJdNC7)

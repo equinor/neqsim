@@ -40,49 +40,49 @@ System.out.println("Compressibility: " + gas.getZ());
 
 | Package | Documentation | Description |
 |---------|---------------|-------------|
-| `neqsim.thermo` | [thermo/](thermo/README.md) | Thermodynamic systems, phases, components, equations of state, mixing rules, fluid characterization |
-| `neqsim.thermodynamicoperations` | [thermodynamicoperations/](thermodynamicoperations/README.md) | Flash calculations, phase envelopes, saturation operations |
-| `neqsim.physicalproperties` | [physical_properties/](physical_properties/README.md) | Transport properties: viscosity, thermal conductivity, diffusivity, interfacial tension |
+| `neqsim.thermo` | [thermo/](thermo/README) | Thermodynamic systems, phases, components, equations of state, mixing rules, fluid characterization |
+| `neqsim.thermodynamicoperations` | [thermodynamicoperations/](thermodynamicoperations/README) | Flash calculations, phase envelopes, saturation operations |
+| `neqsim.physicalproperties` | [physical_properties/](physical_properties/README) | Transport properties: viscosity, thermal conductivity, diffusivity, interfacial tension |
 
 ### Process Simulation
 
 | Package | Documentation | Description |
 |---------|---------------|-------------|
-| `neqsim.process` | [process/](process/README.md) | Process equipment, unit operations, controllers, process systems, safety systems |
-| `neqsim.fluidmechanics` | [fluidmechanics/](fluidmechanics/README.md) | Pipeline flow, pressure drop, two-phase flow, flow nodes |
+| `neqsim.process` | [process/](process/README) | Process equipment, unit operations, controllers, process systems, safety systems |
+| `neqsim.fluidmechanics` | [fluidmechanics/](fluidmechanics/README) | Pipeline flow, pressure drop, two-phase flow, flow nodes |
 
 ### PVT and Reservoir
 
 | Package | Documentation | Description |
 |---------|---------------|-------------|
-| `neqsim.pvtsimulation` | [pvtsimulation/](pvtsimulation/README.md) | PVT experiments: CME, CVD, DL, separator tests, swelling tests |
-| `neqsim.blackoil` | [blackoil/](blackoil/README.md) | Black oil model, PVT tables, Rs, Bo, Bg correlations |
+| `neqsim.pvtsimulation` | [pvtsimulation/](pvtsimulation/README) | PVT experiments: CME, CVD, DL, separator tests, swelling tests |
+| `neqsim.blackoil` | [blackoil/](blackoil/README) | Black oil model, PVT tables, Rs, Bo, Bg correlations |
 
 ### Flow Assurance
 
 | Package | Documentation | Description |
 |---------|---------------|-------------|
-| `neqsim.pvtsimulation.flowassurance` | [pvtsimulation/flowassurance/](pvtsimulation/flowassurance/README.md) | Asphaltene stability, De Boer screening, CPA-based onset calculations |
+| `neqsim.pvtsimulation.flowassurance` | [pvtsimulation/flowassurance/](pvtsimulation/flowassurance/README) | Asphaltene stability, De Boer screening, CPA-based onset calculations |
 
 ### Chemical Reactions
 
 | Package | Documentation | Description |
 |---------|---------------|-------------|
-| `neqsim.chemicalreactions` | [chemicalreactions/](chemicalreactions/README.md) | Chemical equilibrium, reaction kinetics |
+| `neqsim.chemicalreactions` | [chemicalreactions/](chemicalreactions/README) | Chemical equilibrium, reaction kinetics |
 
 ### Quality Standards
 
 | Package | Documentation | Description |
 |---------|---------------|-------------|
-| `neqsim.standards` | [standards/](standards/README.md) | ISO 6976, ISO 6578, ISO 15403, ASTM D6377, sales contracts |
-| `neqsim.statistics` | [statistics/](statistics/README.md) | Parameter fitting, Monte Carlo simulation, data analysis |
+| `neqsim.standards` | [standards/](standards/README) | ISO 6976, ISO 6578, ISO 15403, ASTM D6377, sales contracts |
+| `neqsim.statistics` | [statistics/](statistics/README) | Parameter fitting, Monte Carlo simulation, data analysis |
 
 ### Utilities
 
 | Package | Documentation | Description |
 |---------|---------------|-------------|
-| `neqsim.util` | [util/](util/README.md) | Database access, unit conversion, serialization, exceptions |
-| `neqsim.mathlib` | [mathlib/](mathlib/README.md) | Mathematical utilities, nonlinear solvers |
+| `neqsim.util` | [util/](util/README) | Database access, unit conversion, serialization, exceptions |
+| `neqsim.mathlib` | [mathlib/](mathlib/README) | Mathematical utilities, nonlinear solvers |
 
 ---
 
@@ -190,79 +190,79 @@ Specialized guides for advanced features and use cases:
 
 | Guide | Description |
 |-------|-------------|
-| [ESD_BLOWDOWN_SYSTEM.md](safety/ESD_BLOWDOWN_SYSTEM.md) | Emergency shutdown and blowdown systems |
-| [HIPPS_SUMMARY.md](safety/HIPPS_SUMMARY.md) | High Integrity Pressure Protection Systems |
-| [hipps_implementation.md](safety/hipps_implementation.md) | HIPPS implementation details |
-| [hipps_safety_logic.md](safety/hipps_safety_logic.md) | HIPPS safety logic |
-| [INTEGRATED_SAFETY_SYSTEMS.md](safety/INTEGRATED_SAFETY_SYSTEMS.md) | Integrated safety systems overview |
-| [layered_safety_architecture.md](safety/layered_safety_architecture.md) | Layered safety architecture |
-| [sis_logic_implementation.md](safety/sis_logic_implementation.md) | SIS logic implementation |
-| [SAFETY_SIMULATION_ROADMAP.md](safety/SAFETY_SIMULATION_ROADMAP.md) | Safety simulation roadmap |
+| [ESD_BLOWDOWN_SYSTEM.md](safety/ESD_BLOWDOWN_SYSTEM) | Emergency shutdown and blowdown systems |
+| [HIPPS_SUMMARY.md](safety/HIPPS_SUMMARY) | High Integrity Pressure Protection Systems |
+| [hipps_implementation.md](safety/hipps_implementation) | HIPPS implementation details |
+| [hipps_safety_logic.md](safety/hipps_safety_logic) | HIPPS safety logic |
+| [INTEGRATED_SAFETY_SYSTEMS.md](safety/INTEGRATED_SAFETY_SYSTEMS) | Integrated safety systems overview |
+| [layered_safety_architecture.md](safety/layered_safety_architecture) | Layered safety architecture |
+| [sis_logic_implementation.md](safety/sis_logic_implementation) | SIS logic implementation |
+| [SAFETY_SIMULATION_ROADMAP.md](safety/SAFETY_SIMULATION_ROADMAP) | Safety simulation roadmap |
 
 ### Process Logic and Control
 
 | Guide | Description |
 |-------|-------------|
-| [process_logic_framework.md](simulation/process_logic_framework.md) | Process logic framework |
-| [ProcessLogicEnhancements.md](simulation/ProcessLogicEnhancements.md) | Logic enhancements |
-| [advanced_process_logic.md](simulation/advanced_process_logic.md) | Advanced process logic |
-| [alarm_system_guide.md](safety/alarm_system_guide.md) | Alarm system guide |
-| [alarm_triggered_logic_example.md](safety/alarm_triggered_logic_example.md) | Alarm-triggered logic |
-| [mpc_integration.md](integration/mpc_integration.md) | MPC integration |
+| [process_logic_framework.md](simulation/process_logic_framework) | Process logic framework |
+| [ProcessLogicEnhancements.md](simulation/ProcessLogicEnhancements) | Logic enhancements |
+| [advanced_process_logic.md](simulation/advanced_process_logic) | Advanced process logic |
+| [alarm_system_guide.md](safety/alarm_system_guide) | Alarm system guide |
+| [alarm_triggered_logic_example.md](safety/alarm_triggered_logic_example) | Alarm-triggered logic |
+| [mpc_integration.md](integration/mpc_integration) | MPC integration |
 
 ### Dynamic Simulation
 
 | Guide | Description |
 |-------|-------------|
-| [fire_blowdown_capabilities.md](safety/fire_blowdown_capabilities.md) | Fire and blowdown simulation |
-| [fire_heat_transfer_enhancements.md](safety/fire_heat_transfer_enhancements.md) | Fire heat transfer |
-| [psv_dynamic_sizing_example.md](safety/psv_dynamic_sizing_example.md) | PSV dynamic sizing |
-| [rupture_disk_dynamic_behavior.md](safety/rupture_disk_dynamic_behavior.md) | Rupture disk behavior |
-| [turboexpander_compressor_model.md](simulation/turboexpander_compressor_model.md) | Turboexpander modeling |
+| [fire_blowdown_capabilities.md](safety/fire_blowdown_capabilities) | Fire and blowdown simulation |
+| [fire_heat_transfer_enhancements.md](safety/fire_heat_transfer_enhancements) | Fire heat transfer |
+| [psv_dynamic_sizing_example.md](safety/psv_dynamic_sizing_example) | PSV dynamic sizing |
+| [rupture_disk_dynamic_behavior.md](safety/rupture_disk_dynamic_behavior) | Rupture disk behavior |
+| [turboexpander_compressor_model.md](simulation/turboexpander_compressor_model) | Turboexpander modeling |
 
 ### Well and Reservoir
 
 | Guide | Description |
 |-------|-------------|
-| [well_simulation_guide.md](simulation/well_simulation_guide.md) | Well simulation guide |
-| [well_and_choke_simulation.md](simulation/well_and_choke_simulation.md) | Choke simulation |
-| [field_development_engine.md](simulation/field_development_engine.md) | Field development |
+| [well_simulation_guide.md](simulation/well_simulation_guide) | Well simulation guide |
+| [well_and_choke_simulation.md](simulation/well_and_choke_simulation) | Choke simulation |
+| [field_development_engine.md](simulation/field_development_engine) | Field development |
 
 ### PVT and Characterization
 
 | Guide | Description |
 |-------|-------------|
-| [pvt_workflow.md](pvtsimulation/pvt_workflow.md) | PVT workflow |
-| [blackoil_pvt_export.md](pvtsimulation/blackoil_pvt_export.md) | Black oil PVT export |
-| [whitson_pvt_reader.md](pvtsimulation/whitson_pvt_reader.md) | Whitson PVT reader |
-| [fluid_characterization_mathematics.md](pvtsimulation/fluid_characterization_mathematics.md) | Characterization math |
+| [pvt_workflow.md](pvtsimulation/pvt_workflow) | PVT workflow |
+| [blackoil_pvt_export.md](pvtsimulation/blackoil_pvt_export) | Black oil PVT export |
+| [whitson_pvt_reader.md](pvtsimulation/whitson_pvt_reader) | Whitson PVT reader |
+| [fluid_characterization_mathematics.md](pvtsimulation/fluid_characterization_mathematics) | Characterization math |
 
 ### Advanced Features
 
 | Guide | Description |
 |-------|-------------|
-| [parallel_process_simulation.md](simulation/parallel_process_simulation.md) | Parallel simulation |
-| [recycle_acceleration_guide.md](simulation/recycle_acceleration_guide.md) | Recycle convergence |
-| [graph_based_process_simulation.md](simulation/graph_based_process_simulation.md) | Graph-based simulation |
-| [differentiable_thermodynamics.md](simulation/differentiable_thermodynamics.md) | Auto-differentiation |
-| [equipment_factory.md](simulation/equipment_factory.md) | Equipment factory |
-| [dexpi-reader.md](integration/dexpi-reader.md) | DEXPI P&ID reader |
+| [parallel_process_simulation.md](simulation/parallel_process_simulation) | Parallel simulation |
+| [recycle_acceleration_guide.md](simulation/recycle_acceleration_guide) | Recycle convergence |
+| [graph_based_process_simulation.md](simulation/graph_based_process_simulation) | Graph-based simulation |
+| [differentiable_thermodynamics.md](simulation/differentiable_thermodynamics) | Auto-differentiation |
+| [equipment_factory.md](simulation/equipment_factory) | Equipment factory |
+| [dexpi-reader.md](integration/dexpi-reader) | DEXPI P&ID reader |
 
 ### Integration
 
 | Guide | Description |
 |-------|-------------|
-| [ai_platform_integration.md](integration/ai_platform_integration.md) | AI/ML integration |
-| [ml_integration.md](integration/ml_integration.md) | Machine learning |
-| [REAL_TIME_INTEGRATION_GUIDE.md](integration/REAL_TIME_INTEGRATION_GUIDE.md) | Real-time systems |
-| [QRA_INTEGRATION_GUIDE.md](integration/QRA_INTEGRATION_GUIDE.md) | QRA integration |
+| [ai_platform_integration.md](integration/ai_platform_integration) | AI/ML integration |
+| [ml_integration.md](integration/ml_integration) | Machine learning |
+| [REAL_TIME_INTEGRATION_GUIDE.md](integration/REAL_TIME_INTEGRATION_GUIDE) | Real-time systems |
+| [QRA_INTEGRATION_GUIDE.md](integration/QRA_INTEGRATION_GUIDE) | QRA integration |
 
 ### Development
 
 | Guide | Description |
 |-------|-------------|
-| [DEVELOPER_SETUP.md](development/DEVELOPER_SETUP.md) | Development environment setup |
-| [contributing-structure.md](development/contributing-structure.md) | Contributing guidelines |
+| [DEVELOPER_SETUP.md](development/DEVELOPER_SETUP) | Development environment setup |
+| [contributing-structure.md](development/contributing-structure) | Contributing guidelines |
 
 ---
 
@@ -323,5 +323,5 @@ Specialized guides for advanced features and use cases:
 
 - [NeqSim GitHub Repository](https://github.com/equinor/neqsim)
 - [neqsim-python](https://github.com/equinor/neqsim-python)
-- [Example Notebooks](examples/index.md)
+- [Example Notebooks](examples/index)
 

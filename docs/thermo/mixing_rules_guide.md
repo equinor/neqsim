@@ -579,7 +579,7 @@ ops.TPflash();
 
 ## See Also
 
-- [Fluid Creation Guide](fluid_creation_guide.md) - Complete guide to creating fluids
-- [Mathematical Models](mathematical_models.md) - EoS equations and derivations
-- [Thermodynamic Workflows](thermodynamic_workflows.md) - Flash calculations and operations
-- [PVT and Fluid Characterization](pvt_fluid_characterization.md) - Heavy fraction handling
+- [Fluid Creation Guide](fluid_creation_guide) - Complete guide to creating fluids
+- [Mathematical Models](mathematical_models) - EoS equations and derivations
+- [Thermodynamic Workflows](thermodynamic_workflows) - Flash calculations and operations
+- [PVT and Fluid Characterization](pvt_fluid_characterization) - Heavy fraction handling

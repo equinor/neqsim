@@ -345,11 +345,11 @@ exportLine.getPipeline().setLength(15000.0);
 
 ## Related Documentation
 
-- [Reservoirs](reservoirs.md) - Reservoir modeling
-- [Pipelines](pipelines.md) - Pipeline flow models
+- [Reservoirs](reservoirs) - Reservoir modeling
+- [Pipelines](pipelines) - Pipeline flow models
 - [Risers](pipelines.md#risers) - Riser types (SCR, TTR, Flexible, Lazy-Wave)
-- [Riser Mechanical Design](../riser_mechanical_design.md) - Riser mechanical design
-- [Valves](valves.md) - Choke valves
-- [Manifolds](manifolds.md) - Subsea manifolds
-- [Networks](networks.md) - Pipeline networks
-- [Two-Phase Pipe Flow](../../fluidmechanics/TwoPhasePipeFlowModel.md) - Flow correlations
+- [Riser Mechanical Design](../riser_mechanical_design) - Riser mechanical design
+- [Valves](valves) - Choke valves
+- [Manifolds](manifolds) - Subsea manifolds
+- [Networks](networks) - Pipeline networks
+- [Two-Phase Pipe Flow](../../fluidmechanics/TwoPhasePipeFlowModel) - Flow correlations

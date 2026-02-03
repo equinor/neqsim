@@ -379,6 +379,6 @@ for (String well : result.getWellNames()) {
 
 ## See Also
 
-- [AI Platform Integration](../../integration/ai_platform_integration.md) - Full AI integration guide
-- [Production Optimization](../../fielddevelopment/API_GUIDE.md) - Field development optimization
-- [Wells](../wells.md) - Well equipment modeling
+- [AI Platform Integration](../../integration/ai_platform_integration) - Full AI integration guide
+- [Production Optimization](../../fielddevelopment/API_GUIDE) - Field development optimization
+- [Wells](../wells) - Well equipment modeling

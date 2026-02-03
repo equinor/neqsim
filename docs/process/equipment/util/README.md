@@ -13,9 +13,9 @@ This folder contains documentation for utility and control equipment in NeqSim.
 
 | Equipment | File | Description |
 |-----------|------|-------------|
-| Adjusters | [adjusters.md](adjusters.md) | Parameter adjustment to meet specifications |
-| Recycles | [recycles.md](recycles.md) | Recycle stream handling |
-| Calculators | [calculators.md](calculators.md) | Custom calculations |
+| Adjusters | [adjusters.md](adjusters) | Parameter adjustment to meet specifications |
+| Recycles | [recycles.md](recycles) | Recycle stream handling |
+| Calculators | [calculators.md](calculators) | Custom calculations |
 
 ---
 
@@ -44,5 +44,5 @@ process.add(recycle);
 
 ## Related Documentation
 
-- [Process Controllers](../../controllers.md) - Controller documentation
-- [Equipment Overview](../README.md) - All equipment
+- [Process Controllers](../../controllers) - Controller documentation
+- [Equipment Overview](../README) - All equipment

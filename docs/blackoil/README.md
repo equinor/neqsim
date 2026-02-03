@@ -332,6 +332,6 @@ for (double P : new double[]{50, 100, 150, 200}) {
 
 ## Related Documentation
 
-- [PVT Simulation](../pvtsimulation/README.md) - Laboratory experiments
-- [PVT Workflow](../pvtsimulation/pvt_workflow.md) - End-to-end workflow
-- [Black Oil PVT Export](../pvtsimulation/blackoil_pvt_export.md) - Export details
+- [PVT Simulation](../pvtsimulation/README) - Laboratory experiments
+- [PVT Workflow](../pvtsimulation/pvt_workflow) - End-to-end workflow
+- [Black Oil PVT Export](../pvtsimulation/blackoil_pvt_export) - Export details

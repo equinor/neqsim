@@ -233,7 +233,7 @@ ops.checkScalePotential(aqPhase);
 | **FeCO3 saturation ratio** | 1-10 | SR > 1 required for precipitation |
 | **Flow velocity** | < 3 m/s | Avoid erosion of layer |
 
-> **📚 See [pH Stabilization and Corrosion Control](ph_stabilization_corrosion.md)** for comprehensive documentation including NaOH dosing calculations, combined MEG/pH stabilization for subsea systems, and corrosion rate estimation.
+> **📚 See [pH Stabilization and Corrosion Control](ph_stabilization_corrosion)** for comprehensive documentation including NaOH dosing calculations, combined MEG/pH stabilization for subsea systems, and corrosion rate estimation.
 
 ---
 
@@ -499,11 +499,11 @@ if (outletT < hydrateT) {
 
 ## See Also
 
-- [Mineral Scale Formation](mineral_scale_formation.md) - Comprehensive scale guide
-- [pH Stabilization and Corrosion Control](ph_stabilization_corrosion.md) - Electrolyte CPA, FeCO3 protection
-- [Scale Potential Calculations](../physical_properties/scale_potential.md) - Scale potential API details
-- [Hydrate Guide](hydrates/README.md) - Detailed hydrate prediction
-- [Wax Modeling](wax_modeling.md) - Wax calculations
-- [Asphaltene Precipitation](flowassurance/asphaltene_precipitation.md) - Asphaltene stability
-- [Pipeline Modeling](../process/pipelines.md) - Multiphase flow
-- [Pipeline Recipes](../cookbook/pipeline-recipes.md) - Quick code recipes
+- [Mineral Scale Formation](mineral_scale_formation) - Comprehensive scale guide
+- [pH Stabilization and Corrosion Control](ph_stabilization_corrosion) - Electrolyte CPA, FeCO3 protection
+- [Scale Potential Calculations](../physical_properties/scale_potential) - Scale potential API details
+- [Hydrate Guide](hydrates/README) - Detailed hydrate prediction
+- [Wax Modeling](wax_modeling) - Wax calculations
+- [Asphaltene Precipitation](flowassurance/asphaltene_precipitation) - Asphaltene stability
+- [Pipeline Modeling](../process/pipelines) - Multiphase flow
+- [Pipeline Recipes](../cookbook/pipeline-recipes) - Quick code recipes

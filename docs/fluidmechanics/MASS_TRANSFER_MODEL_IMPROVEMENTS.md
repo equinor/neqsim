@@ -12,9 +12,9 @@ This document provides a technical review of NeqSim's evaporation and dissolutio
 **STATUS: IMPLEMENTED** - All recommendations in this document have been implemented as of the current version. See the Implementation Status section at the end of this document.
 
 **Related Documentation:**
-- [MassTransferAPI.md](MassTransferAPI.md) - **Complete API reference with method signatures, parameters, and examples**
-- [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial.md) - Practical tutorial with worked examples
-- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer.md) - Theory background
+- [MassTransferAPI.md](MassTransferAPI) - **Complete API reference with method signatures, parameters, and examples**
+- [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial) - Practical tutorial with worked examples
+- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer) - Theory background
 
 ## Current Implementation Overview
 

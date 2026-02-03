@@ -219,7 +219,7 @@ double TwaterDew = fluid.getTemperature();
 
 ### Hydrate Equilibrium
 
-> **📚 See [Hydrate Flash Operations](hydrate_flash_operations.md) for complete documentation**
+> **📚 See [Hydrate Flash Operations](hydrate_flash_operations) for complete documentation**
 
 ```java
 // Hydrate formation temperature
@@ -381,6 +381,6 @@ ops.setTolerance(1e-10);
 
 ## Related Documentation
 
-- [Flash Calculations Guide](../thermo/flash_calculations_guide.md) - Detailed flash examples
-- [Fluid Creation Guide](../thermo/fluid_creation_guide.md) - Setting up fluids
-- [Mathematical Models](../thermo/mathematical_models.md) - EoS formulations
+- [Flash Calculations Guide](../thermo/flash_calculations_guide) - Detailed flash examples
+- [Fluid Creation Guide](../thermo/fluid_creation_guide) - Setting up fluids
+- [Mathematical Models](../thermo/mathematical_models) - EoS formulations

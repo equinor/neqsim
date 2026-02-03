@@ -15,7 +15,7 @@ NeqSim provides comprehensive centrifugal pump simulation through the `Pump` and
 - Cavitation detection and operating status monitoring
 - Surge and stonewall detection
 
-Also see [pump usage guide](https://github.com/equinor/neqsim/blob/master/docs/wiki/pump_usage_guide.md).
+Also see [pump usage guide](https://github.com/equinor/neqsim/blob/master/docs/wiki/pump_usage_guide).
 
 ---
 

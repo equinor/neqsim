@@ -573,6 +573,6 @@ public class FieldDevelopmentDesignExample {
 
 ## See Also
 
-- [Mechanical Design Standards](mechanical_design_standards.md) - Available standards and categories
-- [Mechanical Design Database](mechanical_design_database.md) - Data source configuration
-- [TORG Integration](torg_integration.md) - Technical requirements documents
+- [Mechanical Design Standards](mechanical_design_standards) - Available standards and categories
+- [Mechanical Design Database](mechanical_design_database) - Data source configuration
+- [TORG Integration](torg_integration) - Technical requirements documents

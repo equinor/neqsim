@@ -455,7 +455,7 @@ double wallThickness = design.getWallThickness();  // mm
 String json = design.toJson();  // Complete report
 ```
 
-See [Pipeline Mechanical Design](../pipeline_mechanical_design.md) for detailed mechanical design documentation.
+See [Pipeline Mechanical Design](../pipeline_mechanical_design) for detailed mechanical design documentation.
 
 ---
 
@@ -588,8 +588,8 @@ String json = design.toJson();
 
 ## Related Documentation
 
-- [Pipeline Mechanical Design](../pipeline_mechanical_design.md) - Wall thickness, stress analysis, cost estimation
-- [Mechanical Design Standards](../mechanical_design_standards.md) - ASME, DNV, API standards
-- [Fluid Mechanics](../../fluidmechanics/README.md) - Detailed flow modeling
-- [Valves](valves.md) - Flow control devices
-- [Equipment Index](README.md) - All equipment types
+- [Pipeline Mechanical Design](../pipeline_mechanical_design) - Wall thickness, stress analysis, cost estimation
+- [Mechanical Design Standards](../mechanical_design_standards) - ASME, DNV, API standards
+- [Fluid Mechanics](../../fluidmechanics/README) - Detailed flow modeling
+- [Valves](valves) - Flow control devices
+- [Equipment Index](README) - All equipment types

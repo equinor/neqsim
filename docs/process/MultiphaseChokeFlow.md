@@ -385,6 +385,6 @@ The models have been validated against literature data:
 
 ## See Also
 
-- [Valve Sizing (IEC 60534)](./equipment/valves.md) - Single-phase control valve sizing
-- [Valve Mechanical Design](./ValveMechanicalDesign.md) - Valve body and actuator sizing
-- [Well & Choke Simulation](../simulation/well_and_choke_simulation.md) - Complete well simulation
+- [Valve Sizing (IEC 60534)](./equipment/valves) - Single-phase control valve sizing
+- [Valve Mechanical Design](./ValveMechanicalDesign) - Valve body and actuator sizing
+- [Well & Choke Simulation](../simulation/well_and_choke_simulation) - Complete well simulation

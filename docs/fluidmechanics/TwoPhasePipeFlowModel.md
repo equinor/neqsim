@@ -10,10 +10,10 @@ description: The NeqSim two-phase pipe flow model implements a **non-equilibrium
 The NeqSim two-phase pipe flow model implements a **non-equilibrium thermodynamic approach** for simulating gas-liquid flow in pipes. This document describes the theoretical foundation, numerical methods, and practical usage in NeqSim.
 
 **Related Documentation:**
-- [MassTransferAPI.md](MassTransferAPI.md) - API reference for mass transfer calculations
-- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer.md) - Detailed transfer theory
-- [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial.md) - Practical examples
-- [flow_pattern_detection.md](flow_pattern_detection.md) - Flow regime identification
+- [MassTransferAPI.md](MassTransferAPI) - API reference for mass transfer calculations
+- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer) - Detailed transfer theory
+- [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial) - Practical examples
+- [flow_pattern_detection.md](flow_pattern_detection) - Flow regime identification
 
 **Key Features:**
 - Non-equilibrium mass and heat transfer between phases

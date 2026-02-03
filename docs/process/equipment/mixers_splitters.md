@@ -271,6 +271,6 @@ System.out.println("Bypass temp control: " + remix.getOutletStream().getTemperat
 
 ## Related Documentation
 
-- [Equipment Index](README.md) - All equipment
-- [Streams](streams.md) - Stream handling
-- [Controllers](../controllers.md) - Adjusters and recycles
+- [Equipment Index](README) - All equipment
+- [Streams](streams) - Stream handling
+- [Controllers](../controllers) - Adjusters and recycles

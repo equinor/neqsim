@@ -516,6 +516,6 @@ See [PVTRegressionTest.java](../src/test/java/neqsim/pvtsimulation/regression/PV
 
 ## Related Documentation
 
-- [Black Oil PVT Export](blackoil_pvt_export.md)
-- [Fluid Characterization Mathematics](fluid_characterization_mathematics.md)
-- [Whitson PVT Reader](whitson_pvt_reader.md)
+- [Black Oil PVT Export](blackoil_pvt_export)
+- [Fluid Characterization Mathematics](fluid_characterization_mathematics)
+- [Whitson PVT Reader](whitson_pvt_reader)

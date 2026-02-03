@@ -409,6 +409,6 @@ Check that specifications are achievable before troubleshooting solver settings.
 
 ## Related Documentation
 
-- [Recycles](recycles.md) - Recycle handling
-- [Calculators](calculators.md) - Custom calculations
-- [Process Controllers](../../controllers.md) - PID and logic control
+- [Recycles](recycles) - Recycle handling
+- [Calculators](calculators) - Custom calculations
+- [Process Controllers](../../controllers) - PID and logic control

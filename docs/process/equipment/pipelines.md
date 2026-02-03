@@ -10,11 +10,11 @@ Documentation for pipeline equipment in NeqSim.
 > **📘 Comprehensive Documentation Available**
 > 
 > For detailed documentation on all pipeline types, the `PipeLineInterface`, flow regime detection, heat transfer, profile methods, and complete examples, see:
-> - [Pipeline Simulation Guide](pipeline_simulation.md) - Complete simulation documentation
-> - [Pipeline Mechanical Design](../pipeline_mechanical_design.md) - Wall thickness, stress analysis, cost estimation
-> - [Topside Piping Design](../topside_piping_design.md) - **Platform piping with velocity, support spacing, vibration (AIV/FIV)**
-> - [Riser Mechanical Design](../riser_mechanical_design.md) - Riser design with catenary, VIV, fatigue
-> - [Pipeline Mechanical Design Math](../pipeline_mechanical_design_math.md) - Mathematical formulas reference
+> - [Pipeline Simulation Guide](pipeline_simulation) - Complete simulation documentation
+> - [Pipeline Mechanical Design](../pipeline_mechanical_design) - Wall thickness, stress analysis, cost estimation
+> - [Topside Piping Design](../topside_piping_design) - **Platform piping with velocity, support spacing, vibration (AIV/FIV)**
+> - [Riser Mechanical Design](../riser_mechanical_design) - Riser design with catenary, VIV, fatigue
+> - [Pipeline Mechanical Design Math](../pipeline_mechanical_design_math) - Mathematical formulas reference
 
 ## Table of Contents
 - [Overview](#overview)
@@ -42,7 +42,7 @@ Documentation for pipeline equipment in NeqSim.
 | `TopsidePiping` | Topside/platform piping with service types and mechanical design | ✅ | ✅ |
 | `Riser` | Subsea risers (SCR, TTR, Flexible, Lazy-Wave) | - | - |
 
-For detailed pipe flow modeling, see also [Fluid Mechanics](../../fluidmechanics/README.md).
+For detailed pipe flow modeling, see also [Fluid Mechanics](../../fluidmechanics/README).
 
 ---
 
@@ -110,7 +110,7 @@ double[] holdup = pipeline.getLiquidHoldupProfile();
 
 The `TopsidePiping` class provides specialized modeling for offshore platform and onshore facility piping with service type configuration and comprehensive mechanical design.
 
-> **📘 Complete Documentation:** [Topside Piping Design](../topside_piping_design.md)
+> **📘 Complete Documentation:** [Topside Piping Design](../topside_piping_design)
 
 ### Service Types
 
@@ -641,8 +641,8 @@ For detailed FIV documentation, see [Capacity Constraint Framework](../CAPACITY_
 
 ## Related Documentation
 
-- [Equipment Index](README.md) - All equipment
-- [Fluid Mechanics](../../fluidmechanics/README.md) - Detailed pipe flow
-- [Pipeline Mechanical Design](../pipeline_mechanical_design.md) - Wall thickness, stress, costs
-- [Riser Mechanical Design](../riser_mechanical_design.md) - Riser-specific design
-- [Valves](valves.md) - Flow control
+- [Equipment Index](README) - All equipment
+- [Fluid Mechanics](../../fluidmechanics/README) - Detailed pipe flow
+- [Pipeline Mechanical Design](../pipeline_mechanical_design) - Wall thickness, stress, costs
+- [Riser Mechanical Design](../riser_mechanical_design) - Riser-specific design
+- [Valves](valves) - Flow control

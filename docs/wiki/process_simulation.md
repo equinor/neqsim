@@ -297,7 +297,7 @@ recycle.setMaximumIterations(50);
 process.add(recycle);
 ```
 
-See [Advanced Process Simulation](advanced_process_simulation.md) for complete examples.
+See [Advanced Process Simulation](advanced_process_simulation) for complete examples.
 
 ### Controllers (PID)
 
@@ -356,7 +356,7 @@ adjuster.setTargetValueCalculator(equipment -> {
 });
 ```
 
-See [Logical Unit Operations](logical_unit_operations.md) for complete functional interface documentation.
+See [Logical Unit Operations](logical_unit_operations) for complete functional interface documentation.
 
 ---
 
@@ -364,12 +364,12 @@ See [Logical Unit Operations](logical_unit_operations.md) for complete functiona
 
 | Topic | Documentation |
 |-------|---------------|
-| **Advanced Topics** | [Advanced Process Simulation](advanced_process_simulation.md) |
-| **Control Logic** | [Logical Unit Operations](logical_unit_operations.md) |
-| **Equipment Details** | [Process Equipment](../process/README.md) |
-| **Dynamic Simulation** | [Process Transient Guide](process_transient_simulation_guide.md) |
-| **Safety Systems** | [Integrated Safety Systems](../safety/INTEGRATED_SAFETY_SYSTEMS.md) |
-| **Bottleneck Analysis** | [Bottleneck Analysis](bottleneck_analysis.md) |
-| **Examples** | [Usage Examples](usage_examples.md) |
+| **Advanced Topics** | [Advanced Process Simulation](advanced_process_simulation) |
+| **Control Logic** | [Logical Unit Operations](logical_unit_operations) |
+| **Equipment Details** | [Process Equipment](../process/README) |
+| **Dynamic Simulation** | [Process Transient Guide](process_transient_simulation_guide) |
+| **Safety Systems** | [Integrated Safety Systems](../safety/INTEGRATED_SAFETY_SYSTEMS) |
+| **Bottleneck Analysis** | [Bottleneck Analysis](bottleneck_analysis) |
+| **Examples** | [Usage Examples](usage_examples) |
 
 For equipment-specific documentation, see the [equipment documentation](../process/equipment/).

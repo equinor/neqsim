@@ -5,7 +5,7 @@ description: This document provides practical examples for using the optimizer p
 
 # Process Optimization Practical Examples
 
-> **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
+> **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW) to understand when to use which optimizer.
 
 This document provides practical examples for using the optimizer plugin architecture with process simulations, including both Java and Python code samples.
 
@@ -13,10 +13,10 @@ This document provides practical examples for using the optimizer plugin archite
 
 | Document | Description |
 |----------|-------------|
-| [Optimization Overview](OPTIMIZATION_OVERVIEW.md) | When to use which optimizer |
-| [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md) | ProcessOptimizationEngine API |
-| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | ProductionOptimizer examples |
-| [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) | Python/SciPy integration |
+| [Optimization Overview](OPTIMIZATION_OVERVIEW) | When to use which optimizer |
+| [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE) | ProcessOptimizationEngine API |
+| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) | ProductionOptimizer examples |
+| [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) | Python/SciPy integration |
 
 ## Table of Contents
 
@@ -847,6 +847,6 @@ if __name__ == "__main__":
 
 ## See Also
 
-- [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md) - Full API documentation
-- [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) - Core constraint system
+- [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE) - Full API documentation
+- [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) - Core constraint system
 - [NeqSim Python Guide](https://github.com/equinor/neqsim-python) - Python integration guide

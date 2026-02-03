@@ -415,7 +415,7 @@ String json = state.toJson(options);
 
 ## See Also
 
-- [ProcessModel](../processmodel/ProcessModel.md) - Multi-system process modeling
-- [ProcessSystem](../processmodel/ProcessSystem.md) - Single process system
-- [Serialization Guide](../../util/serialization.md) - General serialization utilities
-- [Digital Twin Integration](../../integration/digital_twins.md) - Digital twin concepts
+- [ProcessModel](../processmodel/ProcessModel) - Multi-system process modeling
+- [ProcessSystem](../processmodel/ProcessSystem) - Single process system
+- [Serialization Guide](../../util/serialization) - General serialization utilities
+- [Digital Twin Integration](../../integration/digital_twins) - Digital twin concepts

@@ -161,5 +161,5 @@ Comparison of NeqSim friction factor implementation against Colebrook-White:
 
 ## See Also
 
-- [Pipeline Pressure Drop Overview](pipeline_pressure_drop.md)
-- [Beggs & Brill Correlation](beggs_and_brill_correlation.md)
+- [Pipeline Pressure Drop Overview](pipeline_pressure_drop)
+- [Beggs & Brill Correlation](beggs_and_brill_correlation)

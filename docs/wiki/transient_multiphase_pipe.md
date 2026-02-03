@@ -586,6 +586,6 @@ System.out.println("TransientPipe: " + dpTransient + " bar");
 
 ## See Also
 
-- [Pipeline Flow Equations](pipeline_flow_equations.md)
-- [Pipeline Model Recommendations](pipeline_model_recommendations.md)
-- [Process Simulation](advanced_process_simulation.md)
+- [Pipeline Flow Equations](pipeline_flow_equations)
+- [Pipeline Model Recommendations](pipeline_model_recommendations)
+- [Process Simulation](advanced_process_simulation)

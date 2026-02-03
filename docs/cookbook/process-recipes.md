@@ -349,6 +349,6 @@ print(f"Adjusted pressure: {compressor.getOutletPressure():.2f} bara")
 
 ## See Also
 
-- **[Process Equipment Documentation](../process/equipment/README.md)** - All equipment types
-- **[Optimization Guide](../process/optimization/README.md)** - Process optimization
+- **[Process Equipment Documentation](../process/equipment/README)** - All equipment types
+- **[Optimization Guide](../process/optimization/README)** - Process optimization
 - **[JavaDoc: ProcessSystem](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/process/processmodel/ProcessSystem.html)** - Complete API

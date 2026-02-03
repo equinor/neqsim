@@ -664,5 +664,5 @@ Properties for ethane:
 - [SystemInterface API](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermo/system/SystemInterface.java)
 - [PhaseInterface API](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermo/phase/PhaseInterface.java)
 - [ComponentInterface API](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermo/component/ComponentInterface.java)
-- [Reading Properties Documentation](../../docs/thermo/reading_fluid_properties.md)
+- [Reading Properties Documentation](../../docs/thermo/reading_fluid_properties)
 

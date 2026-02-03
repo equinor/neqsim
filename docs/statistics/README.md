@@ -80,9 +80,9 @@ Detailed guides for each major subsystem:
 
 | Guide | Description |
 |-------|-------------|
-| [Parameter Fitting](parameter_fitting.md) | Levenberg-Marquardt optimization, creating objective functions, bounds |
-| [Monte Carlo Simulation](monte_carlo_simulation.md) | Uncertainty propagation, confidence intervals, distribution sampling |
-| [Data Analysis](data_analysis.md) | Data smoothing, filtering, statistical measures |
+| [Parameter Fitting](parameter_fitting) | Levenberg-Marquardt optimization, creating objective functions, bounds |
+| [Monte Carlo Simulation](monte_carlo_simulation) | Uncertainty propagation, confidence intervals, distribution sampling |
+| [Data Analysis](data_analysis) | Data smoothing, filtering, statistical measures |
 
 ---
 

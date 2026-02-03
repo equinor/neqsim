@@ -282,7 +282,7 @@ P₂ > 2 × P_vapor
 
 ## Related Documentation
 
-- [Valves](valves.md) - Control valves and safety valves
-- [Flow Meters](../../wiki/flow_meter_models.md) - Flow metering models
-- [Venturi Calculation](../../wiki/venturi_calculation.md) - Venturi flow meters
-- [Pipeline Pressure Drop](../../wiki/pipeline_pressure_drop.md) - Pressure drop calculations
+- [Valves](valves) - Control valves and safety valves
+- [Flow Meters](../../wiki/flow_meter_models) - Flow metering models
+- [Venturi Calculation](../../wiki/venturi_calculation) - Venturi flow meters
+- [Pipeline Pressure Drop](../../wiki/pipeline_pressure_drop) - Pressure drop calculations

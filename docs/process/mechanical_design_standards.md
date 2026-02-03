@@ -207,6 +207,6 @@ System.out.println("Total Volume: " + sysMechDesign.getTotalVolume() + " m³");
 
 ## See Also
 
-- [Mechanical Design Database](mechanical_design_database.md) - Data sources for design parameters
-- [TORG Document Integration](torg_integration.md) - Technical Requirements Documents
-- [Field Development Orchestration](field_development_orchestration.md) - Complete design workflows
+- [Mechanical Design Database](mechanical_design_database) - Data sources for design parameters
+- [TORG Document Integration](torg_integration) - Technical Requirements Documents
+- [Field Development Orchestration](field_development_orchestration) - Complete design workflows

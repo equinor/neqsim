@@ -986,11 +986,11 @@ public double calcViscosity() {
 
 ## See Also
 
-- [Physical Properties Package Overview](../physical_properties/README.md)
-- [Viscosity Models](../physical_properties/viscosity_models.md)
-- [Thermal Conductivity Models](../physical_properties/thermal_conductivity_models.md)
-- [Extending Thermodynamic Models](extending_thermodynamic_models.md)
-- [Python Extension Patterns](python_extension_patterns.md)
+- [Physical Properties Package Overview](../physical_properties/README)
+- [Viscosity Models](../physical_properties/viscosity_models)
+- [Thermal Conductivity Models](../physical_properties/thermal_conductivity_models)
+- [Extending Thermodynamic Models](extending_thermodynamic_models)
+- [Python Extension Patterns](python_extension_patterns)
 
 ---
 

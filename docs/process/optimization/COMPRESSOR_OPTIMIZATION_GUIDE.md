@@ -24,7 +24,7 @@ This guide covers production optimization for facilities with compressors, inclu
 
 ---
 
-> **January 2026 Update:** ProductionOptimizer now includes `GRADIENT_DESCENT_SCORE` algorithm for smooth multi-variable problems, configuration validation with `config.validate()`, stagnation detection, warm start support, bounded LRU cache, and infeasibility diagnostics. See [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) for details.
+> **January 2026 Update:** ProductionOptimizer now includes `GRADIENT_DESCENT_SCORE` algorithm for smooth multi-variable problems, configuration validation with `config.validate()`, stagnation detection, warm start support, bounded LRU cache, and infeasibility diagnostics. See [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) for details.
 
 ---
 
@@ -834,8 +834,8 @@ print(f"Feasible: {result.isFeasible()}")
 
 ## Related Documentation
 
-- [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) - General optimization guide
-- [ProductionOptimizer Tutorial](../../examples/ProductionOptimizer_Tutorial.md) - Interactive Jupyter tutorial
-- [Bottleneck Analysis](../../wiki/bottleneck_analysis.md) - Constraint framework
-- [Optimization Overview](OPTIMIZATION_OVERVIEW.md) - When to use which optimizer
-- [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) - SciPy/NLopt integration
+- [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) - General optimization guide
+- [ProductionOptimizer Tutorial](../../examples/ProductionOptimizer_Tutorial) - Interactive Jupyter tutorial
+- [Bottleneck Analysis](../../wiki/bottleneck_analysis) - Constraint framework
+- [Optimization Overview](OPTIMIZATION_OVERVIEW) - When to use which optimizer
+- [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) - SciPy/NLopt integration

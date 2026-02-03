@@ -322,7 +322,7 @@ public enum CalculationMethod {
 
 ## See Also
 
-- [PVT Simulation](README.md) - PVT simulation overview
-- [PVT Workflow](pvt_workflow.md) - End-to-end PVT workflow
-- [Electrolyte CPA Model](../thermo/ElectrolyteCPAModel.md) - CPA electrolyte model
-- [Thermodynamic Models](../thermo/thermodynamic_models.md) - Equation of state details
+- [PVT Simulation](README) - PVT simulation overview
+- [PVT Workflow](pvt_workflow) - End-to-end PVT workflow
+- [Electrolyte CPA Model](../thermo/ElectrolyteCPAModel) - CPA electrolyte model
+- [Thermodynamic Models](../thermo/thermodynamic_models) - Equation of state details

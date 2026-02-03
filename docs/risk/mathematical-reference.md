@@ -356,7 +356,7 @@ $$X_p = X_k + (p \cdot n - k)(X_{k+1} - X_k)$$
 
 ## See Also
 
-- [Monte Carlo Simulation](monte-carlo.md)
-- [Risk Matrix](risk-matrix.md)
-- [Equipment Failure Modeling](equipment-failure.md)
-- [API Reference](api-reference.md)
+- [Monte Carlo Simulation](monte-carlo)
+- [Risk Matrix](risk-matrix)
+- [Equipment Failure Modeling](equipment-failure)
+- [API Reference](api-reference)

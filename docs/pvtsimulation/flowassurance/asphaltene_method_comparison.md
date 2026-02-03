@@ -432,6 +432,6 @@ public class AsphalteneStudy {
 
 ## See Also
 
-- [Asphaltene Modeling Overview](asphaltene_modeling.md)
-- [CPA-Based Calculations](asphaltene_cpa_calculations.md)
-- [De Boer Screening](asphaltene_deboer_screening.md)
+- [Asphaltene Modeling Overview](asphaltene_modeling)
+- [CPA-Based Calculations](asphaltene_cpa_calculations)
+- [De Boer Screening](asphaltene_deboer_screening)

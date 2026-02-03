@@ -9,10 +9,10 @@ Comprehensive documentation for topside (offshore platform and onshore facility)
 
 > **📘 Related Documentation**
 > 
-> - [Pipeline Mechanical Design](pipeline_mechanical_design.md) - Subsea/onshore pipeline design
-> - [Riser Mechanical Design](riser_mechanical_design.md) - Riser design with catenary and VIV
-> - [Mechanical Design Standards](mechanical_design_standards.md) - Standards database reference
-> - [Beggs and Brills Pipe Model](PipeBeggsAndBrills.md) - Flow modeling documentation
+> - [Pipeline Mechanical Design](pipeline_mechanical_design) - Subsea/onshore pipeline design
+> - [Riser Mechanical Design](riser_mechanical_design) - Riser design with catenary and VIV
+> - [Mechanical Design Standards](mechanical_design_standards) - Standards database reference
+> - [Beggs and Brills Pipe Model](PipeBeggsAndBrills) - Flow modeling documentation
 
 ## Table of Contents
 
@@ -773,8 +773,8 @@ dataSource.loadVibrationParameters(calc, "Equinor");
 
 ## See Also
 
-- [Pipeline Mechanical Design](pipeline_mechanical_design.md) - Subsea and onshore pipeline design
-- [Riser Mechanical Design](riser_mechanical_design.md) - Riser mechanical design
-- [Mechanical Design Standards](mechanical_design_standards.md) - Standards database
-- [PipeBeggsAndBrills](PipeBeggsAndBrills.md) - Flow modeling documentation
-- [Process Design Guide](process_design_guide.md) - Overall process design guide
+- [Pipeline Mechanical Design](pipeline_mechanical_design) - Subsea and onshore pipeline design
+- [Riser Mechanical Design](riser_mechanical_design) - Riser mechanical design
+- [Mechanical Design Standards](mechanical_design_standards) - Standards database
+- [PipeBeggsAndBrills](PipeBeggsAndBrills) - Flow modeling documentation
+- [Process Design Guide](process_design_guide) - Overall process design guide

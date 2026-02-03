@@ -552,7 +552,7 @@ DegradedOperationResult optResult = opt.optimizeWithEquipmentDown(failure);
 
 ## See Also
 
-- [Overview](overview.md)
-- [Mathematical Reference](mathematical-reference.md)
+- [Overview](overview)
+- [Mathematical Reference](mathematical-reference)
 - [Advanced Risk Framework Tutorial](../examples/AdvancedRiskFramework_Tutorial.ipynb)
-- [Examples Index](../examples/index.md)
+- [Examples Index](../examples/index)

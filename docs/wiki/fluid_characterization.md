@@ -8,7 +8,7 @@ description: "Real reservoir fluids often contain a complex mixture of heavy hyd
 Real reservoir fluids often contain a complex mixture of heavy hydrocarbons (C7+) that cannot be represented by standard pure components. NeqSim provides a robust characterization framework to model these fluids using TBP (True Boiling Point) fractions and Plus fractions.
 
 > **Related Documentation:**
-> - [TBP Fraction Models](tbp_fraction_models.md) - Detailed guide on all available TBP models (Pedersen, Lee-Kesler, Riazi-Daubert, Twu, Cavett, Standing), model selection, and mathematical correlations
+> - [TBP Fraction Models](tbp_fraction_models) - Detailed guide on all available TBP models (Pedersen, Lee-Kesler, Riazi-Daubert, Twu, Cavett, Standing), model selection, and mathematical correlations
 
 ## 1. Adding Heavy Fractions
 
@@ -62,7 +62,7 @@ NeqSim provides 10 TBP models for estimating critical properties (Tc, Pc, ω) fr
 | `Cavett` | Refining industry, API gravity corrections |
 | `Standing` | Reservoir engineering |
 
-See [TBP Fraction Models](tbp_fraction_models.md) for detailed mathematical correlations and model selection guidelines.
+See [TBP Fraction Models](tbp_fraction_models) for detailed mathematical correlations and model selection guidelines.
 
 #### Available Plus Fraction Models
 

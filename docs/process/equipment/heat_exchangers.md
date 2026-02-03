@@ -322,6 +322,6 @@ for (HeatExchangerSizingResult result : results) {
 
 ## Related Documentation
 
-- [Process Package](../README.md) - Package overview
-- [Compressors](compressors.md) - Compression equipment
-- [Design Framework](../DESIGN_FRAMEWORK.md) - AutoSizeable interface
+- [Process Package](../README) - Package overview
+- [Compressors](compressors) - Compression equipment
+- [Design Framework](../DESIGN_FRAMEWORK) - AutoSizeable interface

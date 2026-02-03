@@ -450,6 +450,6 @@ char.characterisePlusFraction();
 
 ## See Also
 
-- [Fluid Characterization](../pvtsimulation/fluid_characterization.md) - Plus fraction characterization
-- [Thermodynamic Models](../thermo/thermodynamic_models.md) - EoS selection
-- [Phase Envelope Guide](../pvtsimulation/phase_envelope_guide.md) - PT diagrams
+- [Fluid Characterization](../pvtsimulation/fluid_characterization) - Plus fraction characterization
+- [Thermodynamic Models](../thermo/thermodynamic_models) - EoS selection
+- [Phase Envelope Guide](../pvtsimulation/phase_envelope_guide) - PT diagrams

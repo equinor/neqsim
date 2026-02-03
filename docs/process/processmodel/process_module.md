@@ -406,7 +406,7 @@ List<CapacityConstrainedEquipment> allConstrained = facilityModule.getConstraine
 BottleneckResult bottleneck = facilityModule.findBottleneck();
 ```
 
-For detailed constraint management, see [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md).
+For detailed constraint management, see [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK).
 
 ---
 
@@ -492,6 +492,6 @@ Constraints are evaluated across **all nested ProcessSystems** in the module hie
 
 ## Related Documentation
 
-- [ProcessSystem](process_system.md) - Process system management
-- [Graph Simulation](graph_simulation.md) - Graph-based execution
-- [Equipment Overview](../equipment/README.md) - Process equipment
+- [ProcessSystem](process_system) - Process system management
+- [Graph Simulation](graph_simulation) - Graph-based execution
+- [Equipment Overview](../equipment/README) - Process equipment

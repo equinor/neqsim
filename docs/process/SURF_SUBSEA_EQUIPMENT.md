@@ -819,6 +819,6 @@ String designJson = tree.getMechanicalDesign().toJson();
 
 ## See Also
 
-- [Pipeline Mechanical Design](pipeline_design.md)
-- [Process Equipment Overview](equipment_overview.md)
-- [Field Development Module](../fielddevelopment/API_GUIDE.md)
+- [Pipeline Mechanical Design](pipeline_design)
+- [Process Equipment Overview](equipment_overview)
+- [Field Development Module](../fielddevelopment/API_GUIDE)

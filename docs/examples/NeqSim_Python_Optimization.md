@@ -1583,6 +1583,6 @@ This notebook demonstrated:
 ### Related Documentation
 
 - [ProductionOptimizer Tutorial](ProductionOptimizer_Tutorial.ipynb) - NeqSim's built-in optimizer
-- [External Optimizer Integration](../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) - ProcessSimulationEvaluator API
-- [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) - All optimization options
+- [External Optimizer Integration](../integration/EXTERNAL_OPTIMIZER_INTEGRATION) - ProcessSimulationEvaluator API
+- [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW) - All optimization options
 

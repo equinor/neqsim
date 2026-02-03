@@ -376,7 +376,7 @@ ops.setPTphaseEnvelopeStepsize(0.5);  // Smaller step for better resolution
 
 ## See Also
 
-- [Flash Calculations Guide](../thermo/flash_calculations_guide.md) - TP/PH/PS flash
-- [Thermodynamic Operations](../thermo/thermodynamic_operations.md) - All thermo operations
-- [Flow Assurance Overview](flow_assurance_overview.md) - HCDP in context
-- [Gas Quality Standards](../standards/gas_quality.md) - Pipeline specifications
+- [Flash Calculations Guide](../thermo/flash_calculations_guide) - TP/PH/PS flash
+- [Thermodynamic Operations](../thermo/thermodynamic_operations) - All thermo operations
+- [Flow Assurance Overview](flow_assurance_overview) - HCDP in context
+- [Gas Quality Standards](../standards/gas_quality) - Pipeline specifications

@@ -753,5 +753,5 @@ print("="*60)
 
 3. Whitson, C.H., Brulé, M.R. (2000). "Phase Behavior." SPE Monograph Series, Vol. 20.
 
-4. NeqSim Documentation: [docs/fluid_characterization_mathematics.md](../fluid_characterization_mathematics.md)
+4. NeqSim Documentation: [docs/fluid_characterization_mathematics.md](../fluid_characterization_mathematics)
 

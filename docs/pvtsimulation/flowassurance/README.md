@@ -22,12 +22,12 @@ Flow assurance encompasses the prevention and remediation of:
 
 | Topic | Description |
 |-------|-------------|
-| [Asphaltene Modeling](asphaltene_modeling.md) | Overview of asphaltene stability analysis |
-| [CPA-Based Asphaltene Calculations](asphaltene_cpa_calculations.md) | Thermodynamic onset pressure/temperature |
-| [De Boer Asphaltene Screening](asphaltene_deboer_screening.md) | Empirical screening correlation |
-| [Asphaltene Parameter Fitting](asphaltene_parameter_fitting.md) | Tuning CPA parameters to experimental data |
-| [Asphaltene Method Comparison](asphaltene_method_comparison.md) | Comparing CPA vs De Boer approaches |
-| [Asphaltene Model Validation](asphaltene_validation.md) | Validation against SPE-24987 field data |
+| [Asphaltene Modeling](asphaltene_modeling) | Overview of asphaltene stability analysis |
+| [CPA-Based Asphaltene Calculations](asphaltene_cpa_calculations) | Thermodynamic onset pressure/temperature |
+| [De Boer Asphaltene Screening](asphaltene_deboer_screening) | Empirical screening correlation |
+| [Asphaltene Parameter Fitting](asphaltene_parameter_fitting) | Tuning CPA parameters to experimental data |
+| [Asphaltene Method Comparison](asphaltene_method_comparison) | Comparing CPA vs De Boer approaches |
+| [Asphaltene Model Validation](asphaltene_validation) | Validation against SPE-24987 field data |
 
 ## Key Classes
 
@@ -143,10 +143,10 @@ if (fluid.hasPhaseType(PhaseType.ASPHALTENE)) {
 }
 ```
 
-See [Asphaltene Modeling](asphaltene_modeling.md) for more details on `PhaseType.ASPHALTENE`.
+See [Asphaltene Modeling](asphaltene_modeling) for more details on `PhaseType.ASPHALTENE`.
 
 ## Related Topics
 
-- [Thermodynamic Models](../../thermo/README.md) - Equation of state fundamentals
-- [PVT Simulation](../README.md) - Fluid characterization
-- [Process Equipment](../../process/README.md) - Separator and pipeline modeling
+- [Thermodynamic Models](../../thermo/README) - Equation of state fundamentals
+- [PVT Simulation](../README) - Fluid characterization
+- [Process Equipment](../../process/README) - Separator and pipeline modeling

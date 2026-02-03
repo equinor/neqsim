@@ -415,7 +415,7 @@ Base class for stream-based measurement devices.
 
 ## See Also
 
-- [Process Simulation](../wiki/process_simulation.md)
-- [Safety Systems](../safety/README.md)
-- [Pipeline Simulation](../fluidmechanics/README.md)
-- [Capacity Constraints](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md) - FIV/AIV limits
+- [Process Simulation](../wiki/process_simulation)
+- [Safety Systems](../safety/README)
+- [Pipeline Simulation](../fluidmechanics/README)
+- [Capacity Constraints](../process/CAPACITY_CONSTRAINT_FRAMEWORK) - FIV/AIV limits

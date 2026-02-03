@@ -535,7 +535,7 @@ public class FieldDevelopmentExample {
 
 ## Related Documentation
 
-- [Bottleneck Analysis Guide](bottleneck_analysis.md)
+- [Bottleneck Analysis Guide](bottleneck_analysis)
 - [ProductionOptimizer Reference](../javadoc/ProductionOptimizer.html)
 - [Monte Carlo Statistics](../thermo/statistics/MonteCarloSimulation.html)
 

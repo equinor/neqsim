@@ -306,10 +306,10 @@ The example tracks and reports:
 
 ## Related Documentation
 
-- [ESD Blowdown System](./ESD_BLOWDOWN_SYSTEM.md)
-- [HIPPS Implementation](./HIPPS_SUMMARY.md)
-- [PSV Dynamic Sizing](./psv_dynamic_sizing_example.md)
-- [Pressure Monitoring](./PRESSURE_MONITORING_ESD.md)
+- [ESD Blowdown System](./ESD_BLOWDOWN_SYSTEM)
+- [HIPPS Implementation](./HIPPS_SUMMARY)
+- [PSV Dynamic Sizing](./psv_dynamic_sizing_example)
+- [Pressure Monitoring](./PRESSURE_MONITORING_ESD)
 
 ## API Reference
 

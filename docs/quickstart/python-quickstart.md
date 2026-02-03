@@ -172,9 +172,9 @@ enthalpy = fluid.getEnthalpy("kJ/kg")
 
 ## Next Steps
 
-- **[Reading Fluid Properties](../thermo/reading_fluid_properties.md)** - Init levels and property access
-- **[Python Examples](../examples/index.md)** - Jupyter notebook tutorials
-- **[Cookbook](../cookbook/index.md)** - Quick recipes for common tasks
+- **[Reading Fluid Properties](../thermo/reading_fluid_properties)** - Init levels and property access
+- **[Python Examples](../examples/index)** - Jupyter notebook tutorials
+- **[Cookbook](../cookbook/index)** - Quick recipes for common tasks
 - **[JavaDoc API](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html)** - Complete API reference (Java methods work in Python too!)
 
 ## Jupyter Notebook Tips

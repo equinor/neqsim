@@ -368,7 +368,7 @@ print(separator.getGasOutStream().getFlowRate("kg/hr"))
 
 2. **Search GitHub Issues**: [https://github.com/equinor/neqsim/issues](https://github.com/equinor/neqsim/issues)
 
-3. **Check documentation**: [Reference Manual](../REFERENCE_MANUAL_INDEX.md)
+3. **Check documentation**: [Reference Manual](../REFERENCE_MANUAL_INDEX)
 
 4. **Open a new issue** with:
    - NeqSim version

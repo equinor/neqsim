@@ -814,10 +814,10 @@ well.setVLPSolverMode(VLPSolverMode.TWO_FLUID);   // Separate momentum equations
 
 ## See Also
 
-- [Wells Documentation](../process/equipment/wells.md) - Well models and IPR
-- [Pipeline Modeling](../process/PipeBeggsAndBrills.md) - PipeBeggsAndBrills correlation
-- [Process System](../process/processmodel/process_system.md) - ProcessSystem class
-- [NeqSim Modules](../modules.md) - Module overview
+- [Wells Documentation](../process/equipment/wells) - Well models and IPR
+- [Pipeline Modeling](../process/PipeBeggsAndBrills) - PipeBeggsAndBrills correlation
+- [Process System](../process/processmodel/process_system) - ProcessSystem class
+- [NeqSim Modules](../modules) - Module overview
 
 ## References
 

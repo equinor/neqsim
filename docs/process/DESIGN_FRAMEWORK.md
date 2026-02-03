@@ -11,11 +11,11 @@ The Design Framework provides an integrated workflow for automated equipment siz
 
 | Document | Description |
 |----------|-------------|
-| [OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](OPTIMIZATION_IMPROVEMENT_PROPOSAL.md) | Implementation roadmap and status |
-| [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | Production optimization examples |
-| [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK.md) | Multi-constraint equipment framework |
-| [process_design_guide.md](process_design_guide.md) | Complete process design workflow |
-| [mechanical_design.md](mechanical_design.md) | Mechanical design integration |
+| [OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](OPTIMIZATION_IMPROVEMENT_PROPOSAL) | Implementation roadmap and status |
+| [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE) | Production optimization examples |
+| [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK) | Multi-constraint equipment framework |
+| [process_design_guide.md](process_design_guide) | Complete process design workflow |
+| [mechanical_design.md](mechanical_design) | Mechanical design integration |
 
 ## Overview
 

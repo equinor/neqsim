@@ -337,6 +337,6 @@ fluid.addTBPfraction("MyHeavy", 0.05, 350.0, 0.88);  // MW=350, SG=0.88
 
 ## See Also
 
-- [Fluid Creation Guide](fluid_creation_guide.md) - How to create and configure fluids
-- [Component Database Guide](component_database_guide.md) - Database structure and customization
-- [Thermodynamic Models](thermodynamic_models.md) - EoS selection guide
+- [Fluid Creation Guide](fluid_creation_guide) - How to create and configure fluids
+- [Component Database Guide](component_database_guide) - Database structure and customization
+- [Thermodynamic Models](thermodynamic_models) - EoS selection guide

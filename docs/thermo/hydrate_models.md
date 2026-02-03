@@ -425,10 +425,10 @@ For combined salt + organic inhibitor systems, explicit OI-ion interaction param
 
 ## Related Documentation
 
-- [Hydrate Flash Operations](../thermodynamicoperations/hydrate_flash_operations.md) - Detailed flash calculations
-- [Flash Calculations Guide](flash_calculations_guide.md) - General flash operations
-- [CPA Equation of State](ElectrolyteCPAModel.md) - CPA model details
-- [Component Database Guide](component_database_guide.md) - Component parameters
+- [Hydrate Flash Operations](../thermodynamicoperations/hydrate_flash_operations) - Detailed flash calculations
+- [Flash Calculations Guide](flash_calculations_guide) - General flash operations
+- [CPA Equation of State](ElectrolyteCPAModel) - CPA model details
+- [Component Database Guide](component_database_guide) - Component parameters
 
 ---
 

@@ -7,22 +7,22 @@ description: The `neqsim.process.calibration` package provides a comprehensive o
 
 The `neqsim.process.calibration` package provides a comprehensive optimization framework for parameter estimation in process simulations. This document details the **Levenberg-Marquardt batch optimization** capabilities for fitting process model parameters to historical or batch data.
 
-> **New to process optimization?** Start with the [Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS.md) for a comprehensive overview of all optimization and constraint capabilities.
+> **New to process optimization?** Start with the [Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS) for a comprehensive overview of all optimization and constraint capabilities.
 
 ## Related Documentation
 
 | Document | Description |
 |----------|-------------|
-| **[Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS.md)** | **COMPREHENSIVE: Complete guide to optimization algorithms, constraint types, bottleneck analysis** |
-| [Optimization Overview](OPTIMIZATION_OVERVIEW.md) | **START HERE**: When to use which optimizer |
-| [Compressor Optimization Guide](COMPRESSOR_OPTIMIZATION_GUIDE.md) | Multi-train compressor optimization with VFD, driver curves, and two-stage approach |
-| [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md) | Equipment capacity strategies, constraint evaluation, throughput optimization, sensitivity analysis, and FlowRateOptimizer integration |
-| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | Complete examples for ProductionOptimizer |
-| [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) | Core constraint definition and bottleneck detection |
-| [Batch Studies](batch-studies.md) | Sensitivity analysis with parameter sweeps |
-| [Multi-Objective Optimization](multi-objective-optimization.md) | Pareto optimization for conflicting objectives |
-| [Flow Rate Optimization](flow-rate-optimization.md) | FlowRateOptimizer and lift curves |
-| [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) | Python/SciPy integration |
+| **[Optimization & Constraints Guide](OPTIMIZATION_AND_CONSTRAINTS)** | **COMPREHENSIVE: Complete guide to optimization algorithms, constraint types, bottleneck analysis** |
+| [Optimization Overview](OPTIMIZATION_OVERVIEW) | **START HERE**: When to use which optimizer |
+| [Compressor Optimization Guide](COMPRESSOR_OPTIMIZATION_GUIDE) | Multi-train compressor optimization with VFD, driver curves, and two-stage approach |
+| [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE) | Equipment capacity strategies, constraint evaluation, throughput optimization, sensitivity analysis, and FlowRateOptimizer integration |
+| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) | Complete examples for ProductionOptimizer |
+| [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) | Core constraint definition and bottleneck detection |
+| [Batch Studies](batch-studies) | Sensitivity analysis with parameter sweeps |
+| [Multi-Objective Optimization](multi-objective-optimization) | Pareto optimization for conflicting objectives |
+| [Flow Rate Optimization](flow-rate-optimization) | FlowRateOptimizer and lift curves |
+| [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) | Python/SciPy integration |
 
 ## Table of Contents
 
@@ -724,9 +724,9 @@ For independent data points, consider:
 
 ## Related Documentation
 
-- [Process Calibration Framework](../calibration/README.md) - EnKF estimator and test harness
-- [Numerical Derivatives](../../statistics/README.md) - Romberg extrapolation details
-- [NeqSim Process Module](../README.md) - Process simulation overview
+- [Process Calibration Framework](../calibration/README) - EnKF estimator and test harness
+- [Numerical Derivatives](../../statistics/README) - Romberg extrapolation details
+- [NeqSim Process Module](../README) - Process simulation overview
 
 ---
 

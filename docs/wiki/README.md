@@ -10,70 +10,70 @@ Welcome to the NeqSim Wiki - your comprehensive guide to thermodynamic and proce
 ## 📚 Documentation by Topic
 
 ### 🚀 Getting Started
-- [Getting Started Guide](getting_started.md) - Installation and first steps
-- [Usage Examples](usage_examples.md) - Basic usage patterns
-- [FAQ](faq.md) - Frequently asked questions
+- [Getting Started Guide](getting_started) - Installation and first steps
+- [Usage Examples](usage_examples) - Basic usage patterns
+- [FAQ](faq) - Frequently asked questions
 
 ### 🔬 Thermodynamics
-- [Thermodynamics Guide](thermodynamics_guide.md) - Comprehensive thermodynamics overview
-- [Fluid Characterization](fluid_characterization.md) - Characterizing petroleum fluids
-- [TBP Fraction Models](tbp_fraction_models.md) - True boiling point fractions
-- [Viscosity Models](viscosity_models.md) - Viscosity calculation methods
-- [Steam Tables (IF97)](steam_tables_if97.md) - Water/steam properties
+- [Thermodynamics Guide](thermodynamics_guide) - Comprehensive thermodynamics overview
+- [Fluid Characterization](fluid_characterization) - Characterizing petroleum fluids
+- [TBP Fraction Models](tbp_fraction_models) - True boiling point fractions
+- [Viscosity Models](viscosity_models) - Viscosity calculation methods
+- [Steam Tables (IF97)](steam_tables_if97) - Water/steam properties
 
 ### ⚙️ Process Simulation
-- [Process Simulation Guide](process_simulation.md) - Building process flowsheets
-- [Advanced Process Simulation](advanced_process_simulation.md) - Advanced techniques
-- [Logical Unit Operations](logical_unit_operations.md) - Logic and control
-- [Process Control](process_control.md) - Control systems
-- [Transient Simulation](process_transient_simulation_guide.md) - Dynamic simulation
+- [Process Simulation Guide](process_simulation) - Building process flowsheets
+- [Advanced Process Simulation](advanced_process_simulation) - Advanced techniques
+- [Logical Unit Operations](logical_unit_operations) - Logic and control
+- [Process Control](process_control) - Control systems
+- [Transient Simulation](process_transient_simulation_guide) - Dynamic simulation
 
 ### 🔧 Equipment Models
-- **Separation**: [Distillation Column](distillation_column.md) | [Membrane Separation](membrane_separation.md)
-- **Rotating**: [Pump Usage](pump_usage_guide.md)
-- **Heat Transfer**: [Air Cooler](air_cooler.md) | [Water Cooler](water_cooler.md) | [Steam Heater](steam_heater.md) | [Mechanical Design](heat_exchanger_mechanical_design.md)
-- **Flow Control**: [Flow Meters](flow_meter_models.md) | [Venturi](venturi_calculation.md)
-- **Special**: [Gibbs Reactor](gibbs_reactor.md) | [Battery Storage](battery_storage.md) | [Solar Panel](solar_panel.md)
+- **Separation**: [Distillation Column](distillation_column) | [Membrane Separation](membrane_separation)
+- **Rotating**: [Pump Usage](pump_usage_guide)
+- **Heat Transfer**: [Air Cooler](air_cooler) | [Water Cooler](water_cooler) | [Steam Heater](steam_heater) | [Mechanical Design](heat_exchanger_mechanical_design)
+- **Flow Control**: [Flow Meters](flow_meter_models) | [Venturi](venturi_calculation)
+- **Special**: [Gibbs Reactor](gibbs_reactor) | [Battery Storage](battery_storage) | [Solar Panel](solar_panel)
 
 ### 🔄 Pipeline & Flow
-- [Pipeline Index](pipeline_index.md) - Pipeline documentation hub
-- [Flow Equations](pipeline_flow_equations.md) - Fundamental equations
-- [Pressure Drop](pipeline_pressure_drop.md) - Pressure loss calculations
-- [Beggs & Brill](beggs_and_brill_correlation.md) - Two-phase correlation
-- [Friction Factors](friction_factor_models.md) - Friction factor models
-- [Heat Transfer](pipeline_heat_transfer.md) - Pipeline heat loss
-- [Two-Fluid Model](two_fluid_model.md) - Two-fluid approach
-- [Transient Pipeline](pipeline_transient_simulation.md) - Dynamic flow
-- [Water Hammer](water_hammer_implementation.md) - Pressure surge
+- [Pipeline Index](pipeline_index) - Pipeline documentation hub
+- [Flow Equations](pipeline_flow_equations) - Fundamental equations
+- [Pressure Drop](pipeline_pressure_drop) - Pressure loss calculations
+- [Beggs & Brill](beggs_and_brill_correlation) - Two-phase correlation
+- [Friction Factors](friction_factor_models) - Friction factor models
+- [Heat Transfer](pipeline_heat_transfer) - Pipeline heat loss
+- [Two-Fluid Model](two_fluid_model) - Two-fluid approach
+- [Transient Pipeline](pipeline_transient_simulation) - Dynamic flow
+- [Water Hammer](water_hammer_implementation) - Pressure surge
 
 ### 🛡️ Safety Systems
-- [PSV Dynamic Sizing](psv_dynamic_sizing_example.md) - Relief valve sizing
-- [PSD Valve Trip](psd_valve_hihi_trip.md) - Shutdown valve logic
-- [ESD/Fire Alarm](esd_fire_alarm_system.md) - Emergency systems
-- [Choke Protection](choke_collapse_psd_protection.md) - Choke failure protection
+- [PSV Dynamic Sizing](psv_dynamic_sizing_example) - Relief valve sizing
+- [PSD Valve Trip](psd_valve_hihi_trip) - Shutdown valve logic
+- [ESD/Fire Alarm](esd_fire_alarm_system) - Emergency systems
+- [Choke Protection](choke_collapse_psd_protection) - Choke failure protection
 
 ### 📊 PVT & Reservoir
-- [PVT Workflows](pvt_simulation_workflows.md) - PVT simulation methods
-- [Property Flash](property_flash_workflows.md) - Flash calculations
-- [Black Oil Playbook](black_oil_flash_playbook.md) - Black oil models
-- [Gas Quality](gas_quality_standards_from_tests.md) - Gas specifications
+- [PVT Workflows](pvt_simulation_workflows) - PVT simulation methods
+- [Property Flash](property_flash_workflows) - Flash calculations
+- [Black Oil Playbook](black_oil_flash_playbook) - Black oil models
+- [Gas Quality](gas_quality_standards_from_tests) - Gas specifications
 
 ### 🔍 Advanced Topics
-- [Bottleneck Analysis](bottleneck_analysis.md) - System optimization
-- [Field Development](field_development_planning.md) - Field planning
-- [Humid Air](humid_air_math.md) - Psychrometric calculations
+- [Bottleneck Analysis](bottleneck_analysis) - System optimization
+- [Field Development](field_development_planning) - Field planning
+- [Humid Air](humid_air_math) - Psychrometric calculations
 
 ### 👨‍💻 Development
-- [Test Overview](test-overview.md) - Testing guide
-- [Flash Tests](flash_equations_and_tests.md) - Equation testing
-- [Colab Notebooks](java_simulation_from_colab_notebooks.md) - Running in Colab
+- [Test Overview](test-overview) - Testing guide
+- [Flash Tests](flash_equations_and_tests) - Equation testing
+- [Colab Notebooks](java_simulation_from_colab_notebooks) - Running in Colab
 
 ---
 
 ## 📖 Complete Reference Manual
 
 For the complete structured documentation, see:
-- **[Reference Manual Index](../REFERENCE_MANUAL_INDEX.md)** - Master table of contents
+- **[Reference Manual Index](../REFERENCE_MANUAL_INDEX)** - Master table of contents
 
 ## 🔗 Quick Links
 

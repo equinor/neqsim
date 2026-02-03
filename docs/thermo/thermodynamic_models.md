@@ -464,7 +464,7 @@ ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
 ```
 
-> **📖 Detailed Documentation:** For complete mathematical formulation, salt type coefficients, validation data, and literature references, see [Søreide-Whitson Model Documentation](SoreideWhitsonModel.md).
+> **📖 Detailed Documentation:** For complete mathematical formulation, salt type coefficients, validation data, and literature references, see [Søreide-Whitson Model Documentation](SoreideWhitsonModel).
 >
 > **Reference:** Søreide, I. & Whitson, C.H. (1992). "Peng-Robinson predictions for hydrocarbons, CO₂, N₂, and H₂S with pure water and NaCl brine". *Fluid Phase Equilibria*, 77, 217-240.
 
@@ -826,14 +826,14 @@ fluid.autoSelectMixingRule();  // Automatically sets appropriate mixing rule
 
 ## See Also
 
-- [Fluid Creation Guide](fluid_creation_guide.md) - Complete guide to creating fluids
-- [Mixing Rules Guide](mixing_rules_guide.md) - Detailed mixing rule documentation
-- [GERG-2008 and EOS-CG](gerg2008_eoscg.md) - Reference equation details
-- [Electrolyte CPA Model](ElectrolyteCPAModel.md) - Electrolyte model documentation
-- [Søreide-Whitson Model](SoreideWhitsonModel.md) - Gas solubility in brine, produced water emissions
-- [Flash Calculations Guide](flash_calculations_guide.md) - Thermodynamic operations
-- [Mathematical Models](mathematical_models.md) - Equation derivations
-- [Offshore Emission Reporting](../emissions/OFFSHORE_EMISSION_REPORTING.md) - Emission calculations using Søreide-Whitson
+- [Fluid Creation Guide](fluid_creation_guide) - Complete guide to creating fluids
+- [Mixing Rules Guide](mixing_rules_guide) - Detailed mixing rule documentation
+- [GERG-2008 and EOS-CG](gerg2008_eoscg) - Reference equation details
+- [Electrolyte CPA Model](ElectrolyteCPAModel) - Electrolyte model documentation
+- [Søreide-Whitson Model](SoreideWhitsonModel) - Gas solubility in brine, produced water emissions
+- [Flash Calculations Guide](flash_calculations_guide) - Thermodynamic operations
+- [Mathematical Models](mathematical_models) - Equation derivations
+- [Offshore Emission Reporting](../emissions/OFFSHORE_EMISSION_REPORTING) - Emission calculations using Søreide-Whitson
 
 ---
 

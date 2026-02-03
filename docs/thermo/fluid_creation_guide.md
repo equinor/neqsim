@@ -661,8 +661,8 @@ public class OilCharacterizationExample {
 
 ## See Also
 
-- [Thermodynamic Workflows](thermodynamic_workflows.md) - Flash calculations and operations
-- [PVT and Fluid Characterization](pvt_fluid_characterization.md) - Heavy fraction handling
-- [Mathematical Models](mathematical_models.md) - Equation details
-- [GERG-2008 and EOS-CG](gerg2008_eoscg.md) - Reference equation details
-- [Physical Properties](physical_properties.md) - Transport property calculations
+- [Thermodynamic Workflows](thermodynamic_workflows) - Flash calculations and operations
+- [PVT and Fluid Characterization](pvt_fluid_characterization) - Heavy fraction handling
+- [Mathematical Models](mathematical_models) - Equation details
+- [GERG-2008 and EOS-CG](gerg2008_eoscg) - Reference equation details
+- [Physical Properties](physical_properties) - Transport property calculations

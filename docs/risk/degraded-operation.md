@@ -420,6 +420,6 @@ Recommended adjustments:
 
 ## See Also
 
-- [Production Impact Analysis](production-impact.md)
-- [Dependency Analysis](dependency-analysis.md)
+- [Production Impact Analysis](production-impact)
+- [Dependency Analysis](dependency-analysis)
 - [API Reference](api-reference.md#degradedoperationoptimizer)

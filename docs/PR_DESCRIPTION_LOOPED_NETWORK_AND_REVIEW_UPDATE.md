@@ -170,7 +170,7 @@ Models fuel gas conditioning for gas turbines, heaters, and other consumers.
 
 ### 3. Oil & Gas Design Operations Review
 
-Major update to [NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW.md](NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW.md):
+Major update to [NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW.md](NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW):
 
 #### Updated Sections
 
@@ -228,7 +228,7 @@ Major update to [NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW.md](NEQSIM_OIL_GAS_DESI
 
 ### 4. Reference Manual Index Update
 
-Updated [REFERENCE_MANUAL_INDEX.md](REFERENCE_MANUAL_INDEX.md):
+Updated [REFERENCE_MANUAL_INDEX.md](REFERENCE_MANUAL_INDEX):
 
 | Addition | Description |
 |----------|-------------|
@@ -240,7 +240,7 @@ Updated [REFERENCE_MANUAL_INDEX.md](REFERENCE_MANUAL_INDEX.md):
 
 ### 5. Pipeline Network Enhancement Proposal
 
-Updated [PIPELINE_NETWORK_SOLVER_ENHANCEMENT.md](process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT.md):
+Updated [PIPELINE_NETWORK_SOLVER_ENHANCEMENT.md](process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT):
 
 - Added "Implementation Status: ✅ COMPLETE" header
 - Listed implemented classes with links

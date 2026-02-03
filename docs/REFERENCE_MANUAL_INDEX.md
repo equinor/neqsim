@@ -63,55 +63,55 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Overview | [docs/README.md](README.md) | Package overview and quick start |
-| Modules | [docs/modules.md](modules.md) | Architecture and module structure |
-| **O&G Design Review** | [docs/NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW.md](NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW.md) | **Comprehensive capability review for oil & gas design and operations** |
+| Overview | [docs/README.md](README) | Package overview and quick start |
+| Modules | [docs/modules.md](modules) | Architecture and module structure |
+| **O&G Design Review** | [docs/NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW.md](NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW) | **Comprehensive capability review for oil & gas design and operations** |
 
 ### Chapter 2: Quickstart Guides (NEW!)
 
 | Document | Path | Description |
 |----------|------|-------------|
-| **Quickstart Hub** | [docs/quickstart/index.md](quickstart/index.md) | **Get running in 5 minutes** - choose your platform |
-| Java Quickstart | [docs/quickstart/java-quickstart.md](quickstart/java-quickstart.md) | Maven setup, first flash, first process |
-| Python Quickstart | [docs/quickstart/python-quickstart.md](quickstart/python-quickstart.md) | pip install, jneqsim imports, gotchas |
-| Colab Quickstart | [docs/quickstart/colab-quickstart.md](quickstart/colab-quickstart.md) | One-click notebooks, no setup required |
+| **Quickstart Hub** | [docs/quickstart/index.md](quickstart/index) | **Get running in 5 minutes** - choose your platform |
+| Java Quickstart | [docs/quickstart/java-quickstart.md](quickstart/java-quickstart) | Maven setup, first flash, first process |
+| Python Quickstart | [docs/quickstart/python-quickstart.md](quickstart/python-quickstart) | pip install, jneqsim imports, gotchas |
+| Colab Quickstart | [docs/quickstart/colab-quickstart.md](quickstart/colab-quickstart) | One-click notebooks, no setup required |
 
 ### Chapter 3: Tutorials & Learning Paths (NEW!)
 
 | Document | Path | Description |
 |----------|------|-------------|
-| **Tutorials Hub** | [docs/tutorials/index.md](tutorials/index.md) | All tutorials organized by topic |
-| Learning Paths | [docs/tutorials/learning-paths.md](tutorials/learning-paths.md) | PVT Engineer, Process Engineer, Developer tracks |
-| **TEG Dehydration** | [docs/tutorials/teg_dehydration_tutorial.md](tutorials/teg_dehydration_tutorial.md) | **Complete TEG gas dehydration plant modeling** |
-| **GOSP Tutorial** | [docs/tutorials/gosp_tutorial.md](tutorials/gosp_tutorial.md) | **Gas-oil separation plant (multi-stage separation)** |
-| **PVT Lab Tests** | [docs/pvtsimulation/pvt_lab_tests.md](pvtsimulation/pvt_lab_tests.md) | **CCE, CVD, DL, separator test simulations** |
+| **Tutorials Hub** | [docs/tutorials/index.md](tutorials/index) | All tutorials organized by topic |
+| Learning Paths | [docs/tutorials/learning-paths.md](tutorials/learning-paths) | PVT Engineer, Process Engineer, Developer tracks |
+| **TEG Dehydration** | [docs/tutorials/teg_dehydration_tutorial.md](tutorials/teg_dehydration_tutorial) | **Complete TEG gas dehydration plant modeling** |
+| **GOSP Tutorial** | [docs/tutorials/gosp_tutorial.md](tutorials/gosp_tutorial) | **Gas-oil separation plant (multi-stage separation)** |
+| **PVT Lab Tests** | [docs/pvtsimulation/pvt_lab_tests.md](pvtsimulation/pvt_lab_tests) | **CCE, CVD, DL, separator test simulations** |
 
 ### Chapter 4: Installation & Setup
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Getting Started | [docs/wiki/getting_started.md](wiki/getting_started.md) | Installation and first steps |
-| GitHub Setup | [docs/wiki/Getting-started-with-NeqSim-and-Github.md](wiki/Getting-started-with-NeqSim-and-Github.md) | NeqSim and GitHub setup |
-| Developer Setup | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP.md) | Development environment setup |
+| Getting Started | [docs/wiki/getting_started.md](wiki/getting_started) | Installation and first steps |
+| GitHub Setup | [docs/wiki/Getting-started-with-NeqSim-and-Github.md](wiki/Getting-started-with-NeqSim-and-Github) | NeqSim and GitHub setup |
+| Developer Setup | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP) | Development environment setup |
 
 ### Chapter 5: Quick Start Examples
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Usage Examples | [docs/wiki/usage_examples.md](wiki/usage_examples.md) | Basic usage patterns |
-| FAQ | [docs/wiki/faq.md](wiki/faq.md) | Frequently asked questions |
-| Wiki Index | [docs/wiki/index.md](wiki/index.md) | Wiki documentation index |
+| Usage Examples | [docs/wiki/usage_examples.md](wiki/usage_examples) | Basic usage patterns |
+| FAQ | [docs/wiki/faq.md](wiki/faq) | Frequently asked questions |
+| Wiki Index | [docs/wiki/index.md](wiki/index) | Wiki documentation index |
 
 ### Chapter 6: Cookbook & Troubleshooting (NEW!)
 
 | Document | Path | Description |
 |----------|------|-------------|
-| **Cookbook Index** | [docs/cookbook/index.md](cookbook/index.md) | **Quick copy-paste recipes for common tasks** |
-| Thermodynamics Recipes | [docs/cookbook/thermodynamics-recipes.md](cookbook/thermodynamics-recipes.md) | Fluids, flash, properties, phase envelopes |
-| Process Recipes | [docs/cookbook/process-recipes.md](cookbook/process-recipes.md) | Separators, compressors, heat exchangers |
-| Pipeline Recipes | [docs/cookbook/pipeline-recipes.md](cookbook/pipeline-recipes.md) | Pressure drop, multiphase flow |
-| Unit Conversion | [docs/cookbook/unit-conversion-recipes.md](cookbook/unit-conversion-recipes.md) | All supported unit strings |
-| **Troubleshooting** | [docs/troubleshooting/index.md](troubleshooting/index.md) | **Solutions to common problems** |
+| **Cookbook Index** | [docs/cookbook/index.md](cookbook/index) | **Quick copy-paste recipes for common tasks** |
+| Thermodynamics Recipes | [docs/cookbook/thermodynamics-recipes.md](cookbook/thermodynamics-recipes) | Fluids, flash, properties, phase envelopes |
+| Process Recipes | [docs/cookbook/process-recipes.md](cookbook/process-recipes) | Separators, compressors, heat exchangers |
+| Pipeline Recipes | [docs/cookbook/pipeline-recipes.md](cookbook/pipeline-recipes) | Pressure drop, multiphase flow |
+| Unit Conversion | [docs/cookbook/unit-conversion-recipes.md](cookbook/unit-conversion-recipes) | All supported unit strings |
+| **Troubleshooting** | [docs/troubleshooting/index.md](troubleshooting/index) | **Solutions to common problems** |
 
 ### External Getting Started Guides
 
@@ -131,42 +131,42 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Thermo Overview | [docs/thermo/README.md](thermo/README.md) | Thermodynamics module overview |
-| Thermodynamics Guide | [docs/wiki/thermodynamics_guide.md](wiki/thermodynamics_guide.md) | Comprehensive thermodynamics guide |
-| System Types | [docs/thermo/system/README.md](thermo/system/README.md) | EoS system implementations |
+| Thermo Overview | [docs/thermo/README.md](thermo/README) | Thermodynamics module overview |
+| Thermodynamics Guide | [docs/wiki/thermodynamics_guide.md](wiki/thermodynamics_guide) | Comprehensive thermodynamics guide |
+| System Types | [docs/thermo/system/README.md](thermo/system/README) | EoS system implementations |
 
 ### Chapter 5: Fluid Creation & Components
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Fluid Creation Guide | [docs/thermo/fluid_creation_guide.md](thermo/fluid_creation_guide.md) | Creating thermodynamic systems |
-| **Fluid Classification** | [docs/thermo/fluid_classification.md](thermo/fluid_classification.md) | **Whitson methodology: FluidClassifier, ReservoirFluidType, GOR/C7+ classification** |
-| **Component List** | [docs/thermo/component_list.md](thermo/component_list.md) | **Complete searchable list of all ~150+ components with CAS numbers and EoS availability** |
-| Component Database | [docs/thermo/component_database_guide.md](thermo/component_database_guide.md) | Component properties and database |
-| Component Package | [docs/thermo/component/README.md](thermo/component/README.md) | Component class documentation |
-| Mathematical Models | [docs/thermo/mathematical_models.md](thermo/mathematical_models.md) | Underlying mathematical models |
+| Fluid Creation Guide | [docs/thermo/fluid_creation_guide.md](thermo/fluid_creation_guide) | Creating thermodynamic systems |
+| **Fluid Classification** | [docs/thermo/fluid_classification.md](thermo/fluid_classification) | **Whitson methodology: FluidClassifier, ReservoirFluidType, GOR/C7+ classification** |
+| **Component List** | [docs/thermo/component_list.md](thermo/component_list) | **Complete searchable list of all ~150+ components with CAS numbers and EoS availability** |
+| Component Database | [docs/thermo/component_database_guide.md](thermo/component_database_guide) | Component properties and database |
+| Component Package | [docs/thermo/component/README.md](thermo/component/README) | Component class documentation |
+| Mathematical Models | [docs/thermo/mathematical_models.md](thermo/mathematical_models) | Underlying mathematical models |
 
 ### Chapter 6: Equations of State
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Thermodynamic Models | [docs/thermo/thermodynamic_models.md](thermo/thermodynamic_models.md) | **Comprehensive guide** to all thermodynamic models (EoS, CPA, GERG, electrolytes, GE models) with theory and usage |
-| **Søreide-Whitson Model** | [docs/thermo/SoreideWhitsonModel.md](thermo/SoreideWhitsonModel.md) | **Gas solubility in brine** - Modified PR EoS with salinity effects, used in NeqSimLive for produced water emissions |
-| GERG-2008 | [docs/thermo/gerg2008_eoscg.md](thermo/gerg2008_eoscg.md) | GERG-2008 equation of state |
-| Mixing Rules | [docs/thermo/mixing_rules_guide.md](thermo/mixing_rules_guide.md) | Mixing rules and BIPs |
-| Mixing Rule Package | [docs/thermo/mixingrule/README.md](thermo/mixingrule/README.md) | Mixing rule implementations |
-| Phase Package | [docs/thermo/phase/README.md](thermo/phase/README.md) | Phase modeling |
-| Electrolyte CPA | [docs/thermo/ElectrolyteCPAModel.md](thermo/ElectrolyteCPAModel.md) | Electrolyte CPA model |
+| Thermodynamic Models | [docs/thermo/thermodynamic_models.md](thermo/thermodynamic_models) | **Comprehensive guide** to all thermodynamic models (EoS, CPA, GERG, electrolytes, GE models) with theory and usage |
+| **Søreide-Whitson Model** | [docs/thermo/SoreideWhitsonModel.md](thermo/SoreideWhitsonModel) | **Gas solubility in brine** - Modified PR EoS with salinity effects, used in NeqSimLive for produced water emissions |
+| GERG-2008 | [docs/thermo/gerg2008_eoscg.md](thermo/gerg2008_eoscg) | GERG-2008 equation of state |
+| Mixing Rules | [docs/thermo/mixing_rules_guide.md](thermo/mixing_rules_guide) | Mixing rules and BIPs |
+| Mixing Rule Package | [docs/thermo/mixingrule/README.md](thermo/mixingrule/README) | Mixing rule implementations |
+| Phase Package | [docs/thermo/phase/README.md](thermo/phase/README) | Phase modeling |
+| Electrolyte CPA | [docs/thermo/ElectrolyteCPAModel.md](thermo/ElectrolyteCPAModel) | Electrolyte CPA model |
 
 ### Chapter 7: Flash Calculations
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Flash Guide | [docs/thermo/flash_calculations_guide.md](thermo/flash_calculations_guide.md) | Flash calculation methods |
-| Flash Equations | [docs/wiki/flash_equations_and_tests.md](wiki/flash_equations_and_tests.md) | Flash equations and testing |
-| Thermo Operations | [docs/thermo/thermodynamic_operations.md](thermo/thermodynamic_operations.md) | Thermodynamic operations |
-| TP Flash Algorithm | [docs/thermodynamicoperations/TPflash_algorithm.md](thermodynamicoperations/TPflash_algorithm.md) | TP flash algorithm details |
-| Thermo Ops Overview | [docs/thermodynamicoperations/README.md](thermodynamicoperations/README.md) | Thermodynamic operations module |
+| Flash Guide | [docs/thermo/flash_calculations_guide.md](thermo/flash_calculations_guide) | Flash calculation methods |
+| Flash Equations | [docs/wiki/flash_equations_and_tests.md](wiki/flash_equations_and_tests) | Flash equations and testing |
+| Thermo Operations | [docs/thermo/thermodynamic_operations.md](thermo/thermodynamic_operations) | Thermodynamic operations |
+| TP Flash Algorithm | [docs/thermodynamicoperations/TPflash_algorithm.md](thermodynamicoperations/TPflash_algorithm) | TP flash algorithm details |
+| Thermo Ops Overview | [docs/thermodynamicoperations/README.md](thermodynamicoperations/README) | Thermodynamic operations module |
 
 ### Chapter 8: Fluid Characterization
 
@@ -174,42 +174,42 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Characterization | [docs/wiki/fluid_characterization.md](wiki/fluid_characterization.md) | Fluid characterization guide with lumping API |
-| TBP Fractions | [docs/wiki/tbp_fraction_models.md](wiki/tbp_fraction_models.md) | TBP fraction modeling |
-| PVT Characterization | [docs/thermo/pvt_fluid_characterization.md](thermo/pvt_fluid_characterization.md) | PVT fluid characterization with lumping |
-| Characterization Package | [docs/thermo/characterization/README.md](thermo/characterization/README.md) | Characterization module |
-| Combining Methods | [docs/thermo/characterization/fluid_characterization_combining.md](thermo/characterization/fluid_characterization_combining.md) | Fluid combining methods |
-| Char Mathematics | [docs/pvtsimulation/fluid_characterization_mathematics.md](pvtsimulation/fluid_characterization_mathematics.md) | Characterization mathematics with lumping equations |
+| Characterization | [docs/wiki/fluid_characterization.md](wiki/fluid_characterization) | Fluid characterization guide with lumping API |
+| TBP Fractions | [docs/wiki/tbp_fraction_models.md](wiki/tbp_fraction_models) | TBP fraction modeling |
+| PVT Characterization | [docs/thermo/pvt_fluid_characterization.md](thermo/pvt_fluid_characterization) | PVT fluid characterization with lumping |
+| Characterization Package | [docs/thermo/characterization/README.md](thermo/characterization/README) | Characterization module |
+| Combining Methods | [docs/thermo/characterization/fluid_characterization_combining.md](thermo/characterization/fluid_characterization_combining) | Fluid combining methods |
+| Char Mathematics | [docs/pvtsimulation/fluid_characterization_mathematics.md](pvtsimulation/fluid_characterization_mathematics) | Characterization mathematics with lumping equations |
 
 ### Chapter 9: Physical Properties
 
 | Document | Path | Description |
 |----------|------|-------------|
-| **Reading Fluid Properties** | [docs/thermo/reading_fluid_properties.md](thermo/reading_fluid_properties.md) | **Comprehensive guide to calculating and reading properties from fluids, phases, and components** |
-| Properties Overview | [docs/thermo/physical_properties.md](thermo/physical_properties.md) | Physical property calculations |
-| Physical Props Module | [docs/physical_properties/README.md](physical_properties/README.md) | Physical properties module |
-| Viscosity Models | [docs/wiki/viscosity_models.md](wiki/viscosity_models.md) | Viscosity calculation models |
-| Viscosity Detailed | [docs/physical_properties/viscosity_models.md](physical_properties/viscosity_models.md) | Detailed viscosity models |
-| Density Models | [docs/physical_properties/density_models.md](physical_properties/density_models.md) | Density calculation models |
-| Thermal Conductivity | [docs/physical_properties/thermal_conductivity_models.md](physical_properties/thermal_conductivity_models.md) | Thermal conductivity models |
-| Diffusivity | [docs/physical_properties/diffusivity_models.md](physical_properties/diffusivity_models.md) | Diffusivity models |
-| Interfacial Props | [docs/physical_properties/interfacial_properties.md](physical_properties/interfacial_properties.md) | Interfacial tension, etc. |
-| Scale Potential | [docs/physical_properties/scale_potential.md](physical_properties/scale_potential.md) | Scale potential calculations |
-| Steam Tables | [docs/wiki/steam_tables_if97.md](wiki/steam_tables_if97.md) | IF97 steam table implementation |
-| Thermodynamic Workflows | [docs/thermo/thermodynamic_workflows.md](thermo/thermodynamic_workflows.md) | Common thermodynamic workflows |
-| Interaction Tables | [docs/thermo/inter_table_guide.md](thermo/inter_table_guide.md) | Binary interaction parameters |
+| **Reading Fluid Properties** | [docs/thermo/reading_fluid_properties.md](thermo/reading_fluid_properties) | **Comprehensive guide to calculating and reading properties from fluids, phases, and components** |
+| Properties Overview | [docs/thermo/physical_properties.md](thermo/physical_properties) | Physical property calculations |
+| Physical Props Module | [docs/physical_properties/README.md](physical_properties/README) | Physical properties module |
+| Viscosity Models | [docs/wiki/viscosity_models.md](wiki/viscosity_models) | Viscosity calculation models |
+| Viscosity Detailed | [docs/physical_properties/viscosity_models.md](physical_properties/viscosity_models) | Detailed viscosity models |
+| Density Models | [docs/physical_properties/density_models.md](physical_properties/density_models) | Density calculation models |
+| Thermal Conductivity | [docs/physical_properties/thermal_conductivity_models.md](physical_properties/thermal_conductivity_models) | Thermal conductivity models |
+| Diffusivity | [docs/physical_properties/diffusivity_models.md](physical_properties/diffusivity_models) | Diffusivity models |
+| Interfacial Props | [docs/physical_properties/interfacial_properties.md](physical_properties/interfacial_properties) | Interfacial tension, etc. |
+| Scale Potential | [docs/physical_properties/scale_potential.md](physical_properties/scale_potential) | Scale potential calculations |
+| Steam Tables | [docs/wiki/steam_tables_if97.md](wiki/steam_tables_if97) | IF97 steam table implementation |
+| Thermodynamic Workflows | [docs/thermo/thermodynamic_workflows.md](thermo/thermodynamic_workflows) | Common thermodynamic workflows |
+| Interaction Tables | [docs/thermo/inter_table_guide.md](thermo/inter_table_guide) | Binary interaction parameters |
 
 ### Chapter 10: Hydrates & Flow Assurance
 
 | Document | Path | Description |
 |----------|------|-------------|
-| **Flow Assurance Overview** | [docs/pvtsimulation/flow_assurance_overview.md](pvtsimulation/flow_assurance_overview.md) | **Integrated guide: hydrates, wax, asphaltenes, scale screening** |
-| **Mineral Scale Formation** | [docs/pvtsimulation/mineral_scale_formation.md](pvtsimulation/mineral_scale_formation.md) | **Carbonate/sulfate scale, seawater mixing, SR calculations** |
-| **pH Stabilization & Corrosion** | [docs/pvtsimulation/ph_stabilization_corrosion.md](pvtsimulation/ph_stabilization_corrosion.md) | **Corrosion control, FeCO3 layer, Electrolyte CPA EoS** |
-| Hydrate Models | [docs/thermo/hydrate_models.md](thermo/hydrate_models.md) | Hydrate equilibrium models |
-| Hydrate Flash | [docs/thermodynamicoperations/hydrate_flash_operations.md](thermodynamicoperations/hydrate_flash_operations.md) | Hydrate flash operations |
-| Wax Characterization | [docs/thermo/characterization/wax_characterization.md](thermo/characterization/wax_characterization.md) | Wax modeling, WAT calculation, flow assurance |
-| Asphaltene Characterization | [docs/thermo/characterization/asphaltene_characterization.md](thermo/characterization/asphaltene_characterization.md) | SARA analysis, CII, CPA parameters |
+| **Flow Assurance Overview** | [docs/pvtsimulation/flow_assurance_overview.md](pvtsimulation/flow_assurance_overview) | **Integrated guide: hydrates, wax, asphaltenes, scale screening** |
+| **Mineral Scale Formation** | [docs/pvtsimulation/mineral_scale_formation.md](pvtsimulation/mineral_scale_formation) | **Carbonate/sulfate scale, seawater mixing, SR calculations** |
+| **pH Stabilization & Corrosion** | [docs/pvtsimulation/ph_stabilization_corrosion.md](pvtsimulation/ph_stabilization_corrosion) | **Corrosion control, FeCO3 layer, Electrolyte CPA EoS** |
+| Hydrate Models | [docs/thermo/hydrate_models.md](thermo/hydrate_models) | Hydrate equilibrium models |
+| Hydrate Flash | [docs/thermodynamicoperations/hydrate_flash_operations.md](thermodynamicoperations/hydrate_flash_operations) | Hydrate flash operations |
+| Wax Characterization | [docs/thermo/characterization/wax_characterization.md](thermo/characterization/wax_characterization) | Wax modeling, WAT calculation, flow assurance |
+| Asphaltene Characterization | [docs/thermo/characterization/asphaltene_characterization.md](thermo/characterization/asphaltene_characterization) | SARA analysis, CII, CPA parameters |
 
 ---
 
@@ -219,142 +219,142 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Process Overview | [docs/process/README.md](process/README.md) | Process simulation module |
-| Process Guide | [docs/wiki/process_simulation.md](wiki/process_simulation.md) | Process simulation guide |
-| Advanced Process | [docs/wiki/advanced_process_simulation.md](wiki/advanced_process_simulation.md) | Advanced techniques |
-| Logical Operations | [docs/wiki/logical_unit_operations.md](wiki/logical_unit_operations.md) | Logical unit operations |
-| Process Design | [docs/process/process_design_guide.md](process/process_design_guide.md) | Process design guide |
-| Design Framework | [docs/process/DESIGN_FRAMEWORK.md](process/DESIGN_FRAMEWORK.md) | Automated design & optimization framework |
-| Optimization Roadmap | [docs/process/OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](process/OPTIMIZATION_IMPROVEMENT_PROPOSAL.md) | Optimization implementation status |
+| Process Overview | [docs/process/README.md](process/README) | Process simulation module |
+| Process Guide | [docs/wiki/process_simulation.md](wiki/process_simulation) | Process simulation guide |
+| Advanced Process | [docs/wiki/advanced_process_simulation.md](wiki/advanced_process_simulation) | Advanced techniques |
+| Logical Operations | [docs/wiki/logical_unit_operations.md](wiki/logical_unit_operations) | Logical unit operations |
+| Process Design | [docs/process/process_design_guide.md](process/process_design_guide) | Process design guide |
+| Design Framework | [docs/process/DESIGN_FRAMEWORK.md](process/DESIGN_FRAMEWORK) | Automated design & optimization framework |
+| Optimization Roadmap | [docs/process/OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](process/OPTIMIZATION_IMPROVEMENT_PROPOSAL) | Optimization implementation status |
 
 ### Chapter 12: Process Systems & Models
 
 | Document | Path | Description |
 |----------|------|-------------|
-| ProcessModel Overview | [docs/process/processmodel/README.md](process/processmodel/README.md) | Process system management |
-| ProcessSystem | [docs/process/processmodel/process_system.md](process/processmodel/process_system.md) | ProcessSystem class |
-| ProcessModel | [docs/process/processmodel/process_model.md](process/processmodel/process_model.md) | Multi-process models |
-| ProcessModule | [docs/process/processmodel/process_module.md](process/processmodel/process_module.md) | Modular process units |
-| Graph Simulation | [docs/process/processmodel/graph_simulation.md](process/processmodel/graph_simulation.md) | Graph-based simulation |
-| Diagram Export | [docs/process/processmodel/diagram_export.md](process/processmodel/diagram_export.md) | PFD diagram export |
-| DEXPI Architecture | [docs/process/processmodel/DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY.md](process/processmodel/DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY.md) | DEXPI integration |
+| ProcessModel Overview | [docs/process/processmodel/README.md](process/processmodel/README) | Process system management |
+| ProcessSystem | [docs/process/processmodel/process_system.md](process/processmodel/process_system) | ProcessSystem class |
+| ProcessModel | [docs/process/processmodel/process_model.md](process/processmodel/process_model) | Multi-process models |
+| ProcessModule | [docs/process/processmodel/process_module.md](process/processmodel/process_module) | Modular process units |
+| Graph Simulation | [docs/process/processmodel/graph_simulation.md](process/processmodel/graph_simulation) | Graph-based simulation |
+| Diagram Export | [docs/process/processmodel/diagram_export.md](process/processmodel/diagram_export) | PFD diagram export |
+| DEXPI Architecture | [docs/process/processmodel/DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY.md](process/processmodel/DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY) | DEXPI integration |
 
 ### Chapter 13: Streams & Mixers
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Streams | [docs/process/equipment/streams.md](process/equipment/streams.md) | Stream models |
-| Mixers/Splitters | [docs/process/equipment/mixers_splitters.md](process/equipment/mixers_splitters.md) | Mixer and splitter models |
-| Equipment Overview | [docs/process/equipment/README.md](process/equipment/README.md) | Equipment module overview |
+| Streams | [docs/process/equipment/streams.md](process/equipment/streams) | Stream models |
+| Mixers/Splitters | [docs/process/equipment/mixers_splitters.md](process/equipment/mixers_splitters) | Mixer and splitter models |
+| Equipment Overview | [docs/process/equipment/README.md](process/equipment/README) | Equipment module overview |
 
 ### Chapter 14: Separation Equipment
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Separators | [docs/process/equipment/separators.md](process/equipment/separators.md) | Two/three-phase separators, scrubbers, design parameters, performance constraints (K-value, droplet cut size, retention time), Equinor TR3500 & API 12J compliance |
-| Distillation | [docs/process/equipment/distillation.md](process/equipment/distillation.md) | Distillation columns |
-| Distillation Wiki | [docs/wiki/distillation_column.md](wiki/distillation_column.md) | Distillation column details |
-| Absorbers | [docs/process/equipment/absorbers.md](process/equipment/absorbers.md) | Absorption equipment |
-| Membrane | [docs/wiki/membrane_separation.md](wiki/membrane_separation.md) | Membrane separation |
-| Membrane Equipment | [docs/process/equipment/membranes.md](process/equipment/membranes.md) | Membrane equipment |
-| Filters | [docs/process/equipment/filters.md](process/equipment/filters.md) | Filter equipment |
-| Water Treatment | [docs/process/equipment/water_treatment.md](process/equipment/water_treatment.md) | Hydrocyclones, produced water treatment trains, OIW limits |
+| Separators | [docs/process/equipment/separators.md](process/equipment/separators) | Two/three-phase separators, scrubbers, design parameters, performance constraints (K-value, droplet cut size, retention time), Equinor TR3500 & API 12J compliance |
+| Distillation | [docs/process/equipment/distillation.md](process/equipment/distillation) | Distillation columns |
+| Distillation Wiki | [docs/wiki/distillation_column.md](wiki/distillation_column) | Distillation column details |
+| Absorbers | [docs/process/equipment/absorbers.md](process/equipment/absorbers) | Absorption equipment |
+| Membrane | [docs/wiki/membrane_separation.md](wiki/membrane_separation) | Membrane separation |
+| Membrane Equipment | [docs/process/equipment/membranes.md](process/equipment/membranes) | Membrane equipment |
+| Filters | [docs/process/equipment/filters.md](process/equipment/filters) | Filter equipment |
+| Water Treatment | [docs/process/equipment/water_treatment.md](process/equipment/water_treatment) | Hydrocyclones, produced water treatment trains, OIW limits |
 
 ### Chapter 15: Rotating Equipment
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Compressors | [docs/process/equipment/compressors.md](process/equipment/compressors.md) | Compressor models, drivers, speed-dependent power |
-| Compressor Curves | [docs/process/equipment/compressor_curves.md](process/equipment/compressor_curves.md) | Compressor performance curves |
-| Compressor Design | [docs/process/CompressorMechanicalDesign.md](process/CompressorMechanicalDesign.md) | Compressor mechanical design |
-| Pumps | [docs/process/equipment/pumps.md](process/equipment/pumps.md) | Pump models |
-| Pump Guide | [docs/wiki/pump_usage_guide.md](wiki/pump_usage_guide.md) | Pump usage guide |
-| Pump Theory | [docs/wiki/pump_theory_and_implementation.md](wiki/pump_theory_and_implementation.md) | Pump theory |
-| Expanders | [docs/process/equipment/expanders.md](process/equipment/expanders.md) | Expander models |
-| Turboexpander | [docs/simulation/turboexpander_compressor_model.md](simulation/turboexpander_compressor_model.md) | Turboexpander model |
-| Ejectors | [docs/process/equipment/ejectors.md](process/equipment/ejectors.md) | Ejector systems |
+| Compressors | [docs/process/equipment/compressors.md](process/equipment/compressors) | Compressor models, drivers, speed-dependent power |
+| Compressor Curves | [docs/process/equipment/compressor_curves.md](process/equipment/compressor_curves) | Compressor performance curves |
+| Compressor Design | [docs/process/CompressorMechanicalDesign.md](process/CompressorMechanicalDesign) | Compressor mechanical design |
+| Pumps | [docs/process/equipment/pumps.md](process/equipment/pumps) | Pump models |
+| Pump Guide | [docs/wiki/pump_usage_guide.md](wiki/pump_usage_guide) | Pump usage guide |
+| Pump Theory | [docs/wiki/pump_theory_and_implementation.md](wiki/pump_theory_and_implementation) | Pump theory |
+| Expanders | [docs/process/equipment/expanders.md](process/equipment/expanders) | Expander models |
+| Turboexpander | [docs/simulation/turboexpander_compressor_model.md](simulation/turboexpander_compressor_model) | Turboexpander model |
+| Ejectors | [docs/process/equipment/ejectors.md](process/equipment/ejectors) | Ejector systems |
 
 ### Chapter 16: Heat Transfer Equipment
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Heat Exchangers | [docs/process/equipment/heat_exchangers.md](process/equipment/heat_exchangers.md) | Heat exchanger models |
-| Air Cooler | [docs/wiki/air_cooler.md](wiki/air_cooler.md) | Air cooler models |
-| Water Cooler | [docs/wiki/water_cooler.md](wiki/water_cooler.md) | Water cooler models |
-| Steam Heater | [docs/wiki/steam_heater.md](wiki/steam_heater.md) | Steam heater models |
-| Mechanical Design | [docs/wiki/heat_exchanger_mechanical_design.md](wiki/heat_exchanger_mechanical_design.md) | HX mechanical design |
+| Heat Exchangers | [docs/process/equipment/heat_exchangers.md](process/equipment/heat_exchangers) | Heat exchanger models |
+| Air Cooler | [docs/wiki/air_cooler.md](wiki/air_cooler) | Air cooler models |
+| Water Cooler | [docs/wiki/water_cooler.md](wiki/water_cooler) | Water cooler models |
+| Steam Heater | [docs/wiki/steam_heater.md](wiki/steam_heater) | Steam heater models |
+| Mechanical Design | [docs/wiki/heat_exchanger_mechanical_design.md](wiki/heat_exchanger_mechanical_design) | HX mechanical design |
 
 ### Chapter 17: Valves & Flow Control
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Valves | [docs/process/equipment/valves.md](process/equipment/valves.md) | Valve models |
-| Valve Design | [docs/process/ValveMechanicalDesign.md](process/ValveMechanicalDesign.md) | Valve mechanical design |
-| **Multiphase Choke Flow** | [docs/process/MultiphaseChokeFlow.md](process/MultiphaseChokeFlow.md) | **Sachdeva, Gilbert two-phase choke models** |
-| Flow Meters | [docs/wiki/flow_meter_models.md](wiki/flow_meter_models.md) | Flow metering |
-| Venturi | [docs/wiki/venturi_calculation.md](wiki/venturi_calculation.md) | Venturi calculations |
-| Tanks | [docs/process/equipment/tanks.md](process/equipment/tanks.md) | Tank models |
-| **Vessel Depressurization** | [docs/process/equipment/vessel_depressurization.md](process/equipment/vessel_depressurization.md) | **Blowdown simulation, fire scenarios, transient analysis** |
-| **Measurement Devices** | [docs/process/equipment/measurement_devices.md](process/equipment/measurement_devices.md) | **CO2 emissions, FIV analysis, NMVOC, dew points, safety detectors** |
+| Valves | [docs/process/equipment/valves.md](process/equipment/valves) | Valve models |
+| Valve Design | [docs/process/ValveMechanicalDesign.md](process/ValveMechanicalDesign) | Valve mechanical design |
+| **Multiphase Choke Flow** | [docs/process/MultiphaseChokeFlow.md](process/MultiphaseChokeFlow) | **Sachdeva, Gilbert two-phase choke models** |
+| Flow Meters | [docs/wiki/flow_meter_models.md](wiki/flow_meter_models) | Flow metering |
+| Venturi | [docs/wiki/venturi_calculation.md](wiki/venturi_calculation) | Venturi calculations |
+| Tanks | [docs/process/equipment/tanks.md](process/equipment/tanks) | Tank models |
+| **Vessel Depressurization** | [docs/process/equipment/vessel_depressurization.md](process/equipment/vessel_depressurization) | **Blowdown simulation, fire scenarios, transient analysis** |
+| **Measurement Devices** | [docs/process/equipment/measurement_devices.md](process/equipment/measurement_devices) | **CO2 emissions, FIV analysis, NMVOC, dew points, safety detectors** |
 
 ### Chapter 18: Special Equipment
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Reactors | [docs/process/equipment/reactors.md](process/equipment/reactors.md) | Reactor models |
-| Gibbs Reactor | [docs/wiki/gibbs_reactor.md](wiki/gibbs_reactor.md) | Gibbs reactor |
-| Electrolyzers | [docs/process/equipment/electrolyzers.md](process/equipment/electrolyzers.md) | Electrolyzer systems |
-| CO2 Electrolyzer | [docs/pvtsimulation/CO2ElectrolyzerExample.md](pvtsimulation/CO2ElectrolyzerExample.md) | CO2 electrolyzer example |
-| Flares | [docs/process/equipment/flares.md](process/equipment/flares.md) | Flare systems |
-| Adsorbers | [docs/process/equipment/adsorbers.md](process/equipment/adsorbers.md) | Gas adsorption equipment |
-| Power Generation | [docs/process/equipment/power_generation.md](process/equipment/power_generation.md) | Gas turbines, fuel cells, renewables |
-| Diff. Pressure | [docs/process/equipment/differential_pressure.md](process/equipment/differential_pressure.md) | Orifice plates, flow measurement |
-| Manifolds | [docs/process/equipment/manifolds.md](process/equipment/manifolds.md) | Multi-stream routing |
-| Battery Storage | [docs/wiki/battery_storage.md](wiki/battery_storage.md) | Battery storage |
-| Solar Panel | [docs/wiki/solar_panel.md](wiki/solar_panel.md) | Solar panel models |
+| Reactors | [docs/process/equipment/reactors.md](process/equipment/reactors) | Reactor models |
+| Gibbs Reactor | [docs/wiki/gibbs_reactor.md](wiki/gibbs_reactor) | Gibbs reactor |
+| Electrolyzers | [docs/process/equipment/electrolyzers.md](process/equipment/electrolyzers) | Electrolyzer systems |
+| CO2 Electrolyzer | [docs/pvtsimulation/CO2ElectrolyzerExample.md](pvtsimulation/CO2ElectrolyzerExample) | CO2 electrolyzer example |
+| Flares | [docs/process/equipment/flares.md](process/equipment/flares) | Flare systems |
+| Adsorbers | [docs/process/equipment/adsorbers.md](process/equipment/adsorbers) | Gas adsorption equipment |
+| Power Generation | [docs/process/equipment/power_generation.md](process/equipment/power_generation) | Gas turbines, fuel cells, renewables |
+| Diff. Pressure | [docs/process/equipment/differential_pressure.md](process/equipment/differential_pressure) | Orifice plates, flow measurement |
+| Manifolds | [docs/process/equipment/manifolds.md](process/equipment/manifolds) | Multi-stream routing |
+| Battery Storage | [docs/wiki/battery_storage.md](wiki/battery_storage) | Battery storage |
+| Solar Panel | [docs/wiki/solar_panel.md](wiki/solar_panel) | Solar panel models |
 
 ### Chapter 19: Wells, Pipelines & Subsea
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Wells | [docs/process/equipment/wells.md](process/equipment/wells.md) | Well equipment |
-| Well Simulation | [docs/simulation/well_simulation_guide.md](simulation/well_simulation_guide.md) | Well simulation guide |
-| Well & Choke | [docs/simulation/well_and_choke_simulation.md](simulation/well_and_choke_simulation.md) | Choke valve simulation |
-| Well Allocation | [docs/process/equipment/well_allocation.md](process/equipment/well_allocation.md) | Production allocation for commingled wells, VFM, well test methods |
-| Pipelines | [docs/process/equipment/pipelines.md](process/equipment/pipelines.md) | Pipeline and riser models |
-| **TwoFluidPipe Model** | [docs/process/TWOFLUIDPIPE_MODEL.md](process/TWOFLUIDPIPE_MODEL.md) | **Two-fluid multiphase flow model** |
-| **TwoFluidPipe OLGA Comparison** | [docs/wiki/two_fluid_model_olga_comparison.md](wiki/two_fluid_model_olga_comparison.md) | **Mathematical equations, slug flow physics, Lagrangian tracking** |
+| Wells | [docs/process/equipment/wells.md](process/equipment/wells) | Well equipment |
+| Well Simulation | [docs/simulation/well_simulation_guide.md](simulation/well_simulation_guide) | Well simulation guide |
+| Well & Choke | [docs/simulation/well_and_choke_simulation.md](simulation/well_and_choke_simulation) | Choke valve simulation |
+| Well Allocation | [docs/process/equipment/well_allocation.md](process/equipment/well_allocation) | Production allocation for commingled wells, VFM, well test methods |
+| Pipelines | [docs/process/equipment/pipelines.md](process/equipment/pipelines) | Pipeline and riser models |
+| **TwoFluidPipe Model** | [docs/process/TWOFLUIDPIPE_MODEL.md](process/TWOFLUIDPIPE_MODEL) | **Two-fluid multiphase flow model** |
+| **TwoFluidPipe OLGA Comparison** | [docs/wiki/two_fluid_model_olga_comparison.md](wiki/two_fluid_model_olga_comparison) | **Mathematical equations, slug flow physics, Lagrangian tracking** |
 | **TwoFluidPipe Tutorial (Jupyter)** | [docs/examples/TwoFluidPipe_Tutorial.ipynb](examples/TwoFluidPipe_Tutorial.ipynb) | **Interactive notebook: multiphase flow, slug tracking, terrain effects, heat transfer** |
 | **Risers** | [docs/process/equipment/pipelines.md#risers](process/equipment/pipelines.md#risers) | **SCR, TTR, Flexible, Lazy-Wave risers** |
-| Beggs & Brill | [docs/process/PipeBeggsAndBrills.md](process/PipeBeggsAndBrills.md) | Beggs & Brill correlation |
-| Networks | [docs/process/equipment/networks.md](process/equipment/networks.md) | Pipeline network modeling |
-| **Looped Network Solver** | [docs/process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT.md](process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT.md) | **Hardy Cross looped network solver for ring mains and parallel pipelines** |
+| Beggs & Brill | [docs/process/PipeBeggsAndBrills.md](process/PipeBeggsAndBrills) | Beggs & Brill correlation |
+| Networks | [docs/process/equipment/networks.md](process/equipment/networks) | Pipeline network modeling |
+| **Looped Network Solver** | [docs/process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT.md](process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT) | **Hardy Cross looped network solver for ring mains and parallel pipelines** |
 | **Looped Network Tutorial** | [docs/examples/LoopedPipelineNetworkExample.ipynb](examples/LoopedPipelineNetworkExample.ipynb) | **Interactive notebook: ring mains, offshore rings, loop detection, Hardy Cross** |
-| **Network Solver Tutorial** | [docs/examples/NetworkSolverTutorial.md](examples/NetworkSolverTutorial.md) | **Tutorial for pipeline network solvers with worked examples** |
-| **Pipe Fittings & Equivalent Length** | [docs/process/PIPE_FITTINGS_EQUIVALENT_LENGTH.md](process/PIPE_FITTINGS_EQUIVALENT_LENGTH.md) | **Equivalent length method for fittings: elbows, tees, valves, reducers per CRANE TP-410** |
-| Reservoirs | [docs/process/equipment/reservoirs.md](process/equipment/reservoirs.md) | Reservoir modeling |
-| Subsea Systems | [docs/process/equipment/subsea_systems.md](process/equipment/subsea_systems.md) | Subsea wells and flowlines |
-| Subsea Equipment | [docs/process/equipment/subsea_equipment.md](process/equipment/subsea_equipment.md) | SubseaWell, SimpleFlowLine, flow assurance |
-| **SURF Subsea Equipment** | [docs/process/SURF_SUBSEA_EQUIPMENT.md](process/SURF_SUBSEA_EQUIPMENT.md) | **Comprehensive SURF equipment: PLET, PLEM, manifolds, trees, jumpers, umbilicals, flexible pipes, boosters with mechanical design and cost estimation** |
+| **Network Solver Tutorial** | [docs/examples/NetworkSolverTutorial.md](examples/NetworkSolverTutorial) | **Tutorial for pipeline network solvers with worked examples** |
+| **Pipe Fittings & Equivalent Length** | [docs/process/PIPE_FITTINGS_EQUIVALENT_LENGTH.md](process/PIPE_FITTINGS_EQUIVALENT_LENGTH) | **Equivalent length method for fittings: elbows, tees, valves, reducers per CRANE TP-410** |
+| Reservoirs | [docs/process/equipment/reservoirs.md](process/equipment/reservoirs) | Reservoir modeling |
+| Subsea Systems | [docs/process/equipment/subsea_systems.md](process/equipment/subsea_systems) | Subsea wells and flowlines |
+| Subsea Equipment | [docs/process/equipment/subsea_equipment.md](process/equipment/subsea_equipment) | SubseaWell, SimpleFlowLine, flow assurance |
+| **SURF Subsea Equipment** | [docs/process/SURF_SUBSEA_EQUIPMENT.md](process/SURF_SUBSEA_EQUIPMENT) | **Comprehensive SURF equipment: PLET, PLEM, manifolds, trees, jumpers, umbilicals, flexible pipes, boosters with mechanical design and cost estimation** |
 
 ### Chapter 20: Utility Equipment
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Utility Overview | [docs/process/equipment/util/README.md](process/equipment/util/README.md) | Utility equipment |
-| Adjusters | [docs/process/equipment/util/adjusters.md](process/equipment/util/adjusters.md) | Adjuster units |
-| Recycles | [docs/process/equipment/util/recycles.md](process/equipment/util/recycles.md) | Recycle units |
-| Calculators | [docs/process/equipment/util/calculators.md](process/equipment/util/calculators.md) | Calculator units |
-| **Stream Fitters** | [docs/process/equipment/util/stream_fitters.md](process/equipment/util/stream_fitters.md) | **GORfitter, MPFMfitter: GOR/GVF adjustment, MPFM reference fluids** |
+| Utility Overview | [docs/process/equipment/util/README.md](process/equipment/util/README) | Utility equipment |
+| Adjusters | [docs/process/equipment/util/adjusters.md](process/equipment/util/adjusters) | Adjuster units |
+| Recycles | [docs/process/equipment/util/recycles.md](process/equipment/util/recycles) | Recycle units |
+| Calculators | [docs/process/equipment/util/calculators.md](process/equipment/util/calculators) | Calculator units |
+| **Stream Fitters** | [docs/process/equipment/util/stream_fitters.md](process/equipment/util/stream_fitters) | **GORfitter, MPFMfitter: GOR/GVF adjustment, MPFM reference fluids** |
 
 ### Chapter 21: Process Control
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Controllers | [docs/process/controllers.md](process/controllers.md) | Process controllers |
-| Process Control | [docs/wiki/process_control.md](wiki/process_control.md) | Control systems |
-| Dynamic Simulation Guide | [docs/simulation/dynamic_simulation_guide.md](simulation/dynamic_simulation_guide.md) | Comprehensive dynamic/transient simulation guide |
-| Transient Simulation | [docs/wiki/process_transient_simulation_guide.md](wiki/process_transient_simulation_guide.md) | Transient simulation patterns |
+| Controllers | [docs/process/controllers.md](process/controllers) | Process controllers |
+| Process Control | [docs/wiki/process_control.md](wiki/process_control) | Control systems |
+| Dynamic Simulation Guide | [docs/simulation/dynamic_simulation_guide.md](simulation/dynamic_simulation_guide) | Comprehensive dynamic/transient simulation guide |
+| Transient Simulation | [docs/wiki/process_transient_simulation_guide.md](wiki/process_transient_simulation_guide) | Transient simulation patterns |
 
 ### Chapter 22: Optimization and Constraints
 
@@ -362,45 +362,45 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 | Document | Path | Description |
 |----------|------|-------------|
-| **Optimization & Constraints Guide** | [docs/process/optimization/OPTIMIZATION_AND_CONSTRAINTS.md](process/optimization/OPTIMIZATION_AND_CONSTRAINTS.md) | **COMPREHENSIVE: Complete guide to optimization algorithms, constraint types, bottleneck analysis, and practical examples** |
-| **Optimization Overview** | [docs/process/optimization/OPTIMIZATION_OVERVIEW.md](process/optimization/OPTIMIZATION_OVERVIEW.md) | **START HERE: Introduction to process optimization, when to use ProcessOptimizationEngine vs ProductionOptimizer** |
-| **ProductionOptimizer Tutorial** | [docs/examples/ProductionOptimizer_Tutorial.md](examples/ProductionOptimizer_Tutorial.md) | **Interactive Jupyter notebook with complete ProductionOptimizer guide: algorithms, single/multi-variable, Pareto, constraints** |
-| **Python Optimization Tutorial** | [docs/examples/NeqSim_Python_Optimization.md](examples/NeqSim_Python_Optimization.md) | **Using SciPy/Python optimizers with NeqSim process simulations: constraints, Pareto, global optimization** |
-| **Capacity Constraint Framework** | [docs/process/CAPACITY_CONSTRAINT_FRAMEWORK.md](process/CAPACITY_CONSTRAINT_FRAMEWORK.md) | **Framework for equipment capacity limits, bottleneck detection, utilization tracking, and AIV/FIV vibration analysis** |
-| **Optimizer Plugin Architecture** | [docs/process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md](process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md) | **Equipment capacity strategies, throughput optimization, gradient descent, sensitivity analysis, shadow prices, and Eclipse VFP export** |
-| **External Optimizer Integration** | [docs/integration/EXTERNAL_OPTIMIZER_INTEGRATION.md](integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) | **ProcessSimulationEvaluator for Python/SciPy/NLopt/Pyomo integration with gradient estimation** |
-| **Production Optimization Guide** | [docs/examples/PRODUCTION_OPTIMIZATION_GUIDE.md](examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | **Complete guide to production optimization with Java and Python examples** |
-| **Pressure Boundary Optimization** | [docs/process/pressure_boundary_optimization.md](process/pressure_boundary_optimization.md) | **Calculate flow rates for pressure boundaries, generate Eclipse VFP lift curves, optimize compressor power** |
-| **Flow Rate Optimization** | [docs/process/optimization/flow-rate-optimization.md](process/optimization/flow-rate-optimization.md) | **Comprehensive flow rate optimizer with lift curve generation for Eclipse reservoir simulation** |
-| **Compressor Optimization Guide** | [docs/process/optimization/COMPRESSOR_OPTIMIZATION_GUIDE.md](process/optimization/COMPRESSOR_OPTIMIZATION_GUIDE.md) | **Specialized guide for compressor train optimization, anti-surge control, and power minimization** |
-| **Practical Examples** | [docs/process/optimization/PRACTICAL_EXAMPLES.md](process/optimization/PRACTICAL_EXAMPLES.md) | **Working examples for optimization scenarios including gas processing, LNG, and offshore platforms** |
+| **Optimization & Constraints Guide** | [docs/process/optimization/OPTIMIZATION_AND_CONSTRAINTS.md](process/optimization/OPTIMIZATION_AND_CONSTRAINTS) | **COMPREHENSIVE: Complete guide to optimization algorithms, constraint types, bottleneck analysis, and practical examples** |
+| **Optimization Overview** | [docs/process/optimization/OPTIMIZATION_OVERVIEW.md](process/optimization/OPTIMIZATION_OVERVIEW) | **START HERE: Introduction to process optimization, when to use ProcessOptimizationEngine vs ProductionOptimizer** |
+| **ProductionOptimizer Tutorial** | [docs/examples/ProductionOptimizer_Tutorial.md](examples/ProductionOptimizer_Tutorial) | **Interactive Jupyter notebook with complete ProductionOptimizer guide: algorithms, single/multi-variable, Pareto, constraints** |
+| **Python Optimization Tutorial** | [docs/examples/NeqSim_Python_Optimization.md](examples/NeqSim_Python_Optimization) | **Using SciPy/Python optimizers with NeqSim process simulations: constraints, Pareto, global optimization** |
+| **Capacity Constraint Framework** | [docs/process/CAPACITY_CONSTRAINT_FRAMEWORK.md](process/CAPACITY_CONSTRAINT_FRAMEWORK) | **Framework for equipment capacity limits, bottleneck detection, utilization tracking, and AIV/FIV vibration analysis** |
+| **Optimizer Plugin Architecture** | [docs/process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md](process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE) | **Equipment capacity strategies, throughput optimization, gradient descent, sensitivity analysis, shadow prices, and Eclipse VFP export** |
+| **External Optimizer Integration** | [docs/integration/EXTERNAL_OPTIMIZER_INTEGRATION.md](integration/EXTERNAL_OPTIMIZER_INTEGRATION) | **ProcessSimulationEvaluator for Python/SciPy/NLopt/Pyomo integration with gradient estimation** |
+| **Production Optimization Guide** | [docs/examples/PRODUCTION_OPTIMIZATION_GUIDE.md](examples/PRODUCTION_OPTIMIZATION_GUIDE) | **Complete guide to production optimization with Java and Python examples** |
+| **Pressure Boundary Optimization** | [docs/process/pressure_boundary_optimization.md](process/pressure_boundary_optimization) | **Calculate flow rates for pressure boundaries, generate Eclipse VFP lift curves, optimize compressor power** |
+| **Flow Rate Optimization** | [docs/process/optimization/flow-rate-optimization.md](process/optimization/flow-rate-optimization) | **Comprehensive flow rate optimizer with lift curve generation for Eclipse reservoir simulation** |
+| **Compressor Optimization Guide** | [docs/process/optimization/COMPRESSOR_OPTIMIZATION_GUIDE.md](process/optimization/COMPRESSOR_OPTIMIZATION_GUIDE) | **Specialized guide for compressor train optimization, anti-surge control, and power minimization** |
+| **Practical Examples** | [docs/process/optimization/PRACTICAL_EXAMPLES.md](process/optimization/PRACTICAL_EXAMPLES) | **Working examples for optimization scenarios including gas processing, LNG, and offshore platforms** |
 
 ### Chapter 23: Mechanical Design
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Mechanical Design | [docs/process/mechanical_design.md](process/mechanical_design.md) | Mechanical design overview, process design parameters, validation, and JSON export |
-| **Equipment Design Parameters** | [docs/process/EQUIPMENT_DESIGN_PARAMETERS.md](process/EQUIPMENT_DESIGN_PARAMETERS.md) | **Comprehensive guide to autoSize vs MechanicalDesign, manual sizing, validation methods, and capacity constraints** |
+| Mechanical Design | [docs/process/mechanical_design.md](process/mechanical_design) | Mechanical design overview, process design parameters, validation, and JSON export |
+| **Equipment Design Parameters** | [docs/process/EQUIPMENT_DESIGN_PARAMETERS.md](process/EQUIPMENT_DESIGN_PARAMETERS) | **Comprehensive guide to autoSize vs MechanicalDesign, manual sizing, validation methods, and capacity constraints** |
 | **Process Design Parameters** | [docs/process/mechanical_design.md#process-design-parameters](process/mechanical_design.md#process-design-parameters) | **Industry-standard process design parameters for separators, compressors, pumps, heat exchangers** |
 | **Design Validation** | [docs/process/mechanical_design.md#design-validation](process/mechanical_design.md#design-validation) | **Validation methods per API-610, API-617, TEMA, API-12J standards** |
 | **Mechanical Design Report** | [docs/process/mechanical_design.md#comprehensive-mechanical-design-report-json](process/mechanical_design.md#comprehensive-mechanical-design-report-json) | **Combined JSON output for all mechanical design data (equipment + piping)** |
-| Design Standards | [docs/process/mechanical_design_standards.md](process/mechanical_design_standards.md) | Design standards |
-| Design Database | [docs/process/mechanical_design_database.md](process/mechanical_design_database.md) | Design database |
-| **Pipeline Mechanical Design** | [docs/process/pipeline_mechanical_design.md](process/pipeline_mechanical_design.md) | **Comprehensive pipeline mechanical design with wall thickness, stress analysis, cost estimation** |
-| **Topside Piping Design** | [docs/process/topside_piping_design.md](process/topside_piping_design.md) | **Topside piping design with velocity, support spacing, vibration (AIV/FIV), stress analysis per ASME B31.3** |
-| **Manifold Mechanical Design** | [docs/process/equipment/manifold_design.md](process/equipment/manifold_design.md) | **Manifold design for topside, onshore, and subsea with velocity limits, reinforcement, support per ASME B31.3 and DNV-ST-F101** |
-| **Riser Mechanical Design** | [docs/process/riser_mechanical_design.md](process/riser_mechanical_design.md) | **Riser design with catenary mechanics, VIV, fatigue per DNV-OS-F201** |
-| **Pipeline Design Math** | [docs/process/pipeline_mechanical_design_math.md](process/pipeline_mechanical_design_math.md) | **Mathematical methods and formulas for pipeline design** |
+| Design Standards | [docs/process/mechanical_design_standards.md](process/mechanical_design_standards) | Design standards |
+| Design Database | [docs/process/mechanical_design_database.md](process/mechanical_design_database) | Design database |
+| **Pipeline Mechanical Design** | [docs/process/pipeline_mechanical_design.md](process/pipeline_mechanical_design) | **Comprehensive pipeline mechanical design with wall thickness, stress analysis, cost estimation** |
+| **Topside Piping Design** | [docs/process/topside_piping_design.md](process/topside_piping_design) | **Topside piping design with velocity, support spacing, vibration (AIV/FIV), stress analysis per ASME B31.3** |
+| **Manifold Mechanical Design** | [docs/process/equipment/manifold_design.md](process/equipment/manifold_design) | **Manifold design for topside, onshore, and subsea with velocity limits, reinforcement, support per ASME B31.3 and DNV-ST-F101** |
+| **Riser Mechanical Design** | [docs/process/riser_mechanical_design.md](process/riser_mechanical_design) | **Riser design with catenary mechanics, VIV, fatigue per DNV-OS-F201** |
+| **Pipeline Design Math** | [docs/process/pipeline_mechanical_design_math.md](process/pipeline_mechanical_design_math) | **Mathematical methods and formulas for pipeline design** |
 | **Subsea SURF Mechanical Design** | [docs/process/SURF_SUBSEA_EQUIPMENT.md#mechanical-design](process/SURF_SUBSEA_EQUIPMENT.md#mechanical-design) | **Mechanical design for PLET, PLEM, trees, manifolds, jumpers, umbilicals, flexible pipes, boosters per DNV, API, ISO, NORSOK** |
-| TORG Integration | [docs/process/torg_integration.md](process/torg_integration.md) | TORG integration |
-| Field Development | [docs/process/field_development_orchestration.md](process/field_development_orchestration.md) | Field development orchestration |
+| TORG Integration | [docs/process/torg_integration.md](process/torg_integration) | TORG integration |
+| Field Development | [docs/process/field_development_orchestration.md](process/field_development_orchestration) | Field development orchestration |
 
 ### Chapter 23b: Cost Estimation
 
 | Document | Path | Description |
 |----------|------|-------------|
-| **Cost Estimation Framework** | [docs/process/COST_ESTIMATION_FRAMEWORK.md](process/COST_ESTIMATION_FRAMEWORK.md) | **Comprehensive capital and operating cost estimation framework** |
-| **Cost Estimation API** | [docs/process/COST_ESTIMATION_API_REFERENCE.md](process/COST_ESTIMATION_API_REFERENCE.md) | **Detailed API reference for all cost estimation classes** |
+| **Cost Estimation Framework** | [docs/process/COST_ESTIMATION_FRAMEWORK.md](process/COST_ESTIMATION_FRAMEWORK) | **Comprehensive capital and operating cost estimation framework** |
+| **Cost Estimation API** | [docs/process/COST_ESTIMATION_API_REFERENCE.md](process/COST_ESTIMATION_API_REFERENCE) | **Detailed API reference for all cost estimation classes** |
 | **Subsea SURF Cost Estimation** | [docs/process/SURF_SUBSEA_EQUIPMENT.md#cost-estimation](process/SURF_SUBSEA_EQUIPMENT.md#cost-estimation) | **Cost estimation for all SURF equipment with regional factors, labor rates, vessel costs, BOM generation** |
 | Equipment Costs | [docs/process/COST_ESTIMATION_FRAMEWORK.md#equipment-cost-estimation](process/COST_ESTIMATION_FRAMEWORK.md#equipment-cost-estimation) | Equipment-specific cost correlations |
 | Tank Costs | [docs/process/COST_ESTIMATION_FRAMEWORK.md#tank-cost](process/COST_ESTIMATION_FRAMEWORK.md#tank-cost) | Storage tank cost estimation (API 650/620) |
@@ -415,8 +415,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Process Serialization | [docs/simulation/process_serialization.md](simulation/process_serialization.md) | Save/load process models |
-| Process Model Lifecycle | [docs/process/lifecycle/process_model_lifecycle.md](process/lifecycle/process_model_lifecycle.md) | ProcessModelState, versioning, checkpointing, digital twin lifecycle |
+| Process Serialization | [docs/simulation/process_serialization.md](simulation/process_serialization) | Save/load process models |
+| Process Model Lifecycle | [docs/process/lifecycle/process_model_lifecycle.md](process/lifecycle/process_model_lifecycle) | ProcessModelState, versioning, checkpointing, digital twin lifecycle |
 
 ---
 
@@ -426,51 +426,51 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Fluid Mechanics Overview | [docs/fluidmechanics/README.md](fluidmechanics/README.md) | Fluid mechanics module |
-| Pipeline Index | [docs/wiki/pipeline_index.md](wiki/pipeline_index.md) | Pipeline documentation index |
-| **Pipeline Simulation** | [docs/process/equipment/pipeline_simulation.md](process/equipment/pipeline_simulation.md) | **Comprehensive pipeline simulation guide with PipeLineInterface, all pipe types, flow regimes, heat transfer** |
-| Flow Equations | [docs/wiki/pipeline_flow_equations.md](wiki/pipeline_flow_equations.md) | Pipeline flow equations |
-| Single Phase Flow | [docs/fluidmechanics/single_phase_pipe_flow.md](fluidmechanics/single_phase_pipe_flow.md) | Single phase pipe flow |
-| **Flow Pattern Detection** | [docs/fluidmechanics/flow_pattern_detection.md](fluidmechanics/flow_pattern_detection.md) | **Taitel-Dukler, Baker, Barnea models, FlowPatternDetector API** |
+| Fluid Mechanics Overview | [docs/fluidmechanics/README.md](fluidmechanics/README) | Fluid mechanics module |
+| Pipeline Index | [docs/wiki/pipeline_index.md](wiki/pipeline_index) | Pipeline documentation index |
+| **Pipeline Simulation** | [docs/process/equipment/pipeline_simulation.md](process/equipment/pipeline_simulation) | **Comprehensive pipeline simulation guide with PipeLineInterface, all pipe types, flow regimes, heat transfer** |
+| Flow Equations | [docs/wiki/pipeline_flow_equations.md](wiki/pipeline_flow_equations) | Pipeline flow equations |
+| Single Phase Flow | [docs/fluidmechanics/single_phase_pipe_flow.md](fluidmechanics/single_phase_pipe_flow) | Single phase pipe flow |
+| **Flow Pattern Detection** | [docs/fluidmechanics/flow_pattern_detection.md](fluidmechanics/flow_pattern_detection) | **Taitel-Dukler, Baker, Barnea models, FlowPatternDetector API** |
 
 ### Chapter 25: Pressure Drop Calculations
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Pressure Drop | [docs/wiki/pipeline_pressure_drop.md](wiki/pipeline_pressure_drop.md) | Pressure drop calculation |
-| Beggs & Brill | [docs/wiki/beggs_and_brill_correlation.md](wiki/beggs_and_brill_correlation.md) | Beggs & Brill correlation |
-| Friction Factors | [docs/wiki/friction_factor_models.md](wiki/friction_factor_models.md) | Friction factor models |
+| Pressure Drop | [docs/wiki/pipeline_pressure_drop.md](wiki/pipeline_pressure_drop) | Pressure drop calculation |
+| Beggs & Brill | [docs/wiki/beggs_and_brill_correlation.md](wiki/beggs_and_brill_correlation) | Beggs & Brill correlation |
+| Friction Factors | [docs/wiki/friction_factor_models.md](wiki/friction_factor_models) | Friction factor models |
 
 ### Chapter 26: Heat Transfer in Pipelines
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Heat Transfer | [docs/wiki/pipeline_heat_transfer.md](wiki/pipeline_heat_transfer.md) | Pipeline heat transfer |
-| Heat Transfer Module | [docs/fluidmechanics/heat_transfer.md](fluidmechanics/heat_transfer.md) | Heat transfer module |
-| Pipe Wall | [docs/wiki/pipe_wall_heat_transfer.md](wiki/pipe_wall_heat_transfer.md) | Pipe wall heat transfer |
-| Interphase | [docs/fluidmechanics/InterphaseHeatMassTransfer.md](fluidmechanics/InterphaseHeatMassTransfer.md) | Interphase heat/mass transfer |
-| Mass Transfer | [docs/fluidmechanics/mass_transfer.md](fluidmechanics/mass_transfer.md) | Mass transfer models |
-| **Mass Transfer API** | [docs/fluidmechanics/MassTransferAPI.md](fluidmechanics/MassTransferAPI.md) | **Complete API documentation for mass transfer with methods, parameters, and examples** |
-| **Evaporation & Dissolution Tutorial** | [docs/fluidmechanics/EvaporationDissolutionTutorial.md](fluidmechanics/EvaporationDissolutionTutorial.md) | **Practical tutorial for liquid evaporation and gas dissolution with worked examples** |
-| **Model Improvements** | [docs/fluidmechanics/MASS_TRANSFER_MODEL_IMPROVEMENTS.md](fluidmechanics/MASS_TRANSFER_MODEL_IMPROVEMENTS.md) | **Technical review of mass transfer model with improvement recommendations** |
+| Heat Transfer | [docs/wiki/pipeline_heat_transfer.md](wiki/pipeline_heat_transfer) | Pipeline heat transfer |
+| Heat Transfer Module | [docs/fluidmechanics/heat_transfer.md](fluidmechanics/heat_transfer) | Heat transfer module |
+| Pipe Wall | [docs/wiki/pipe_wall_heat_transfer.md](wiki/pipe_wall_heat_transfer) | Pipe wall heat transfer |
+| Interphase | [docs/fluidmechanics/InterphaseHeatMassTransfer.md](fluidmechanics/InterphaseHeatMassTransfer) | Interphase heat/mass transfer |
+| Mass Transfer | [docs/fluidmechanics/mass_transfer.md](fluidmechanics/mass_transfer) | Mass transfer models |
+| **Mass Transfer API** | [docs/fluidmechanics/MassTransferAPI.md](fluidmechanics/MassTransferAPI) | **Complete API documentation for mass transfer with methods, parameters, and examples** |
+| **Evaporation & Dissolution Tutorial** | [docs/fluidmechanics/EvaporationDissolutionTutorial.md](fluidmechanics/EvaporationDissolutionTutorial) | **Practical tutorial for liquid evaporation and gas dissolution with worked examples** |
+| **Model Improvements** | [docs/fluidmechanics/MASS_TRANSFER_MODEL_IMPROVEMENTS.md](fluidmechanics/MASS_TRANSFER_MODEL_IMPROVEMENTS) | **Technical review of mass transfer model with improvement recommendations** |
 
 ### Chapter 27: Two-Phase & Multiphase Flow
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Two-Phase Model | [docs/fluidmechanics/TwoPhasePipeFlowModel.md](fluidmechanics/TwoPhasePipeFlowModel.md) | Two-phase pipe flow |
-| Two-Fluid Model | [docs/wiki/two_fluid_model.md](wiki/two_fluid_model.md) | Two-fluid model |
-| Multiphase Transient | [docs/wiki/multiphase_transient_model.md](wiki/multiphase_transient_model.md) | Multiphase transient |
-| Transient Pipe Wiki | [docs/wiki/transient_multiphase_pipe.md](wiki/transient_multiphase_pipe.md) | Transient multiphase pipe |
-| Development Plan | [docs/fluidmechanics/TwoPhasePipeFlowSystem_Development_Plan.md](fluidmechanics/TwoPhasePipeFlowSystem_Development_Plan.md) | Development plan |
+| Two-Phase Model | [docs/fluidmechanics/TwoPhasePipeFlowModel.md](fluidmechanics/TwoPhasePipeFlowModel) | Two-phase pipe flow |
+| Two-Fluid Model | [docs/wiki/two_fluid_model.md](wiki/two_fluid_model) | Two-fluid model |
+| Multiphase Transient | [docs/wiki/multiphase_transient_model.md](wiki/multiphase_transient_model) | Multiphase transient |
+| Transient Pipe Wiki | [docs/wiki/transient_multiphase_pipe.md](wiki/transient_multiphase_pipe) | Transient multiphase pipe |
+| Development Plan | [docs/fluidmechanics/TwoPhasePipeFlowSystem_Development_Plan.md](fluidmechanics/TwoPhasePipeFlowSystem_Development_Plan) | Development plan |
 
 ### Chapter 28: Transient Pipeline Simulation
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Transient Simulation | [docs/wiki/pipeline_transient_simulation.md](wiki/pipeline_transient_simulation.md) | Transient pipeline |
-| Model Recommendations | [docs/wiki/pipeline_model_recommendations.md](wiki/pipeline_model_recommendations.md) | Model recommendations |
-| Water Hammer | [docs/wiki/water_hammer_implementation.md](wiki/water_hammer_implementation.md) | Water hammer |
+| Transient Simulation | [docs/wiki/pipeline_transient_simulation.md](wiki/pipeline_transient_simulation) | Transient pipeline |
+| Model Recommendations | [docs/wiki/pipeline_model_recommendations.md](wiki/pipeline_model_recommendations) | Model recommendations |
+| Water Hammer | [docs/wiki/water_hammer_implementation.md](wiki/water_hammer_implementation) | Water hammer |
 
 ---
 
@@ -480,54 +480,54 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Safety Overview | [docs/safety/README.md](safety/README.md) | Safety systems module |
-| Safety Roadmap | [docs/safety/SAFETY_SIMULATION_ROADMAP.md](safety/SAFETY_SIMULATION_ROADMAP.md) | Safety simulation roadmap |
-| Layered Architecture | [docs/safety/layered_safety_architecture.md](safety/layered_safety_architecture.md) | Layered safety architecture |
-| Process Safety | [docs/process/safety/README.md](process/safety/README.md) | Process safety module |
+| Safety Overview | [docs/safety/README.md](safety/README) | Safety systems module |
+| Safety Roadmap | [docs/safety/SAFETY_SIMULATION_ROADMAP.md](safety/SAFETY_SIMULATION_ROADMAP) | Safety simulation roadmap |
+| Layered Architecture | [docs/safety/layered_safety_architecture.md](safety/layered_safety_architecture) | Layered safety architecture |
+| Process Safety | [docs/process/safety/README.md](process/safety/README) | Process safety module |
 
 ### Chapter 30: Alarm Systems
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Alarm System Guide | [docs/safety/alarm_system_guide.md](safety/alarm_system_guide.md) | Alarm system configuration |
-| Alarm Logic Example | [docs/safety/alarm_triggered_logic_example.md](safety/alarm_triggered_logic_example.md) | Alarm-triggered logic |
-| ESD Fire Alarm | [docs/wiki/esd_fire_alarm_system.md](wiki/esd_fire_alarm_system.md) | ESD/Fire alarm systems |
+| Alarm System Guide | [docs/safety/alarm_system_guide.md](safety/alarm_system_guide) | Alarm system configuration |
+| Alarm Logic Example | [docs/safety/alarm_triggered_logic_example.md](safety/alarm_triggered_logic_example) | Alarm-triggered logic |
+| ESD Fire Alarm | [docs/wiki/esd_fire_alarm_system.md](wiki/esd_fire_alarm_system) | ESD/Fire alarm systems |
 
 ### Chapter 31: Pressure Relief Systems
 
 | Document | Path | Description |
 |----------|------|-------------|
-| PSV Dynamic Sizing Wiki | [docs/wiki/psv_dynamic_sizing_example.md](wiki/psv_dynamic_sizing_example.md) | PSV dynamic sizing |
-| PSV Dynamic Sizing | [docs/safety/psv_dynamic_sizing_example.md](safety/psv_dynamic_sizing_example.md) | PSV sizing example |
-| PSD Valve Trip | [docs/wiki/psd_valve_hihi_trip.md](wiki/psd_valve_hihi_trip.md) | PSD valve HIHI trip |
-| Rupture Disks | [docs/safety/rupture_disk_dynamic_behavior.md](safety/rupture_disk_dynamic_behavior.md) | Rupture disk behavior |
+| PSV Dynamic Sizing Wiki | [docs/wiki/psv_dynamic_sizing_example.md](wiki/psv_dynamic_sizing_example) | PSV dynamic sizing |
+| PSV Dynamic Sizing | [docs/safety/psv_dynamic_sizing_example.md](safety/psv_dynamic_sizing_example) | PSV sizing example |
+| PSD Valve Trip | [docs/wiki/psd_valve_hihi_trip.md](wiki/psd_valve_hihi_trip) | PSD valve HIHI trip |
+| Rupture Disks | [docs/safety/rupture_disk_dynamic_behavior.md](safety/rupture_disk_dynamic_behavior) | Rupture disk behavior |
 
 ### Chapter 32: HIPPS Systems
 
 | Document | Path | Description |
 |----------|------|-------------|
-| HIPPS Summary | [docs/safety/HIPPS_SUMMARY.md](safety/HIPPS_SUMMARY.md) | HIPPS summary |
-| HIPPS Implementation | [docs/safety/hipps_implementation.md](safety/hipps_implementation.md) | HIPPS implementation |
-| HIPPS Safety Logic | [docs/safety/hipps_safety_logic.md](safety/hipps_safety_logic.md) | HIPPS safety logic |
+| HIPPS Summary | [docs/safety/HIPPS_SUMMARY.md](safety/HIPPS_SUMMARY) | HIPPS summary |
+| HIPPS Implementation | [docs/safety/hipps_implementation.md](safety/hipps_implementation) | HIPPS implementation |
+| HIPPS Safety Logic | [docs/safety/hipps_safety_logic.md](safety/hipps_safety_logic) | HIPPS safety logic |
 
 ### Chapter 33: ESD & Fire Systems
 
 | Document | Path | Description |
 |----------|------|-------------|
-| ESD Blowdown | [docs/safety/ESD_BLOWDOWN_SYSTEM.md](safety/ESD_BLOWDOWN_SYSTEM.md) | ESD blowdown system |
-| Pressure Monitoring | [docs/safety/PRESSURE_MONITORING_ESD.md](safety/PRESSURE_MONITORING_ESD.md) | Pressure monitoring ESD |
-| Fire Heat Transfer | [docs/safety/fire_heat_transfer_enhancements.md](safety/fire_heat_transfer_enhancements.md) | Fire heat transfer |
-| Fire Blowdown | [docs/safety/fire_blowdown_capabilities.md](safety/fire_blowdown_capabilities.md) | Fire blowdown capabilities |
+| ESD Blowdown | [docs/safety/ESD_BLOWDOWN_SYSTEM.md](safety/ESD_BLOWDOWN_SYSTEM) | ESD blowdown system |
+| Pressure Monitoring | [docs/safety/PRESSURE_MONITORING_ESD.md](safety/PRESSURE_MONITORING_ESD) | Pressure monitoring ESD |
+| Fire Heat Transfer | [docs/safety/fire_heat_transfer_enhancements.md](safety/fire_heat_transfer_enhancements) | Fire heat transfer |
+| Fire Blowdown | [docs/safety/fire_blowdown_capabilities.md](safety/fire_blowdown_capabilities) | Fire blowdown capabilities |
 
 ### Chapter 34: Integrated Safety Systems
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Integrated Safety | [docs/safety/INTEGRATED_SAFETY_SYSTEMS.md](safety/INTEGRATED_SAFETY_SYSTEMS.md) | Integrated safety systems |
-| SIS Logic | [docs/safety/sis_logic_implementation.md](safety/sis_logic_implementation.md) | SIS logic implementation |
-| Choke Protection | [docs/wiki/choke_collapse_psd_protection.md](wiki/choke_collapse_psd_protection.md) | Choke collapse protection |
-| Safety Chain Tests | [docs/safety/integration_safety_chain_tests.md](safety/integration_safety_chain_tests.md) | Safety chain tests |
-| Scenario Generation | [docs/process/safety/scenario-generation.md](process/safety/scenario-generation.md) | Automatic scenario generation |
+| Integrated Safety | [docs/safety/INTEGRATED_SAFETY_SYSTEMS.md](safety/INTEGRATED_SAFETY_SYSTEMS) | Integrated safety systems |
+| SIS Logic | [docs/safety/sis_logic_implementation.md](safety/sis_logic_implementation) | SIS logic implementation |
+| Choke Protection | [docs/wiki/choke_collapse_psd_protection.md](wiki/choke_collapse_psd_protection) | Choke collapse protection |
+| Safety Chain Tests | [docs/safety/integration_safety_chain_tests.md](safety/integration_safety_chain_tests) | Safety chain tests |
+| Scenario Generation | [docs/process/safety/scenario-generation.md](process/safety/scenario-generation) | Automatic scenario generation |
 
 ### Chapter 35: Risk Simulation Framework
 
@@ -535,20 +535,20 @@ Comprehensive operational risk simulation framework for equipment failure analys
 
 | Document | Path | Description |
 |----------|------|-------------|
-| **Risk Framework Index** | [docs/risk/index.md](risk/index.md) | **START HERE**: Quick start guide, architecture overview, package structure |
-| **Framework Overview** | [docs/risk/overview.md](risk/overview.md) | Core concepts, capabilities, industry standards compliance (ISO 14224, OREDA, NORSOK) |
-| **Equipment Failure Modeling** | [docs/risk/equipment-failure.md](risk/equipment-failure.md) | FailureType enum, capacity factors, OREDA reliability data, λ/R(t)/MTTF formulas |
-| **Risk Matrix** | [docs/risk/risk-matrix.md](risk/risk-matrix.md) | 5×5 probability/consequence matrix, risk scoring, cost calculations |
-| **Monte Carlo Simulation** | [docs/risk/monte-carlo.md](risk/monte-carlo.md) | OperationalRiskSimulator, exponential sampling, P10/P50/P90 statistics, convergence |
-| **Production Impact Analysis** | [docs/risk/production-impact.md](risk/production-impact.md) | Loss calculations, criticality index, cascade analysis, economic impact |
-| **Degraded Operation** | [docs/risk/degraded-operation.md](risk/degraded-operation.md) | DegradedOperationOptimizer, recovery planning, operating modes |
-| **Process Topology** | [docs/risk/topology.md](risk/topology.md) | ProcessTopologyAnalyzer, graph extraction, topological ordering, DOT/JSON export |
-| **STID Tagging** | [docs/risk/stid-tagging.md](risk/stid-tagging.md) | FunctionalLocation class, PPPP-TT-NNNNN[S] format, installation/equipment codes |
-| **Dependency Analysis** | [docs/risk/dependency-analysis.md](risk/dependency-analysis.md) | DependencyAnalyzer, cascade failure trees, cross-installation effects |
-| **Mathematical Reference** | [docs/risk/mathematical-reference.md](risk/mathematical-reference.md) | Complete formulas: reliability, system availability, Monte Carlo, risk calculations |
-| **API Reference** | [docs/risk/api-reference.md](risk/api-reference.md) | Full API documentation for all risk simulation classes |
-| **Reliability Data Guide** | [docs/risk/RELIABILITY_DATA_GUIDE.md](risk/RELIABILITY_DATA_GUIDE.md) | OREDA-based reliability data, failure rate sources, equipment categories |
-| **Physics-Based Integration** | [docs/risk/PHYSICS_BASED_RISK_INTEGRATION.md](risk/PHYSICS_BASED_RISK_INTEGRATION.md) | **Integration of physics-based models with risk simulation for dynamic failure analysis** |
+| **Risk Framework Index** | [docs/risk/index.md](risk/index) | **START HERE**: Quick start guide, architecture overview, package structure |
+| **Framework Overview** | [docs/risk/overview.md](risk/overview) | Core concepts, capabilities, industry standards compliance (ISO 14224, OREDA, NORSOK) |
+| **Equipment Failure Modeling** | [docs/risk/equipment-failure.md](risk/equipment-failure) | FailureType enum, capacity factors, OREDA reliability data, λ/R(t)/MTTF formulas |
+| **Risk Matrix** | [docs/risk/risk-matrix.md](risk/risk-matrix) | 5×5 probability/consequence matrix, risk scoring, cost calculations |
+| **Monte Carlo Simulation** | [docs/risk/monte-carlo.md](risk/monte-carlo) | OperationalRiskSimulator, exponential sampling, P10/P50/P90 statistics, convergence |
+| **Production Impact Analysis** | [docs/risk/production-impact.md](risk/production-impact) | Loss calculations, criticality index, cascade analysis, economic impact |
+| **Degraded Operation** | [docs/risk/degraded-operation.md](risk/degraded-operation) | DegradedOperationOptimizer, recovery planning, operating modes |
+| **Process Topology** | [docs/risk/topology.md](risk/topology) | ProcessTopologyAnalyzer, graph extraction, topological ordering, DOT/JSON export |
+| **STID Tagging** | [docs/risk/stid-tagging.md](risk/stid-tagging) | FunctionalLocation class, PPPP-TT-NNNNN[S] format, installation/equipment codes |
+| **Dependency Analysis** | [docs/risk/dependency-analysis.md](risk/dependency-analysis) | DependencyAnalyzer, cascade failure trees, cross-installation effects |
+| **Mathematical Reference** | [docs/risk/mathematical-reference.md](risk/mathematical-reference) | Complete formulas: reliability, system availability, Monte Carlo, risk calculations |
+| **API Reference** | [docs/risk/api-reference.md](risk/api-reference) | Full API documentation for all risk simulation classes |
+| **Reliability Data Guide** | [docs/risk/RELIABILITY_DATA_GUIDE.md](risk/RELIABILITY_DATA_GUIDE) | OREDA-based reliability data, failure rate sources, equipment categories |
+| **Physics-Based Integration** | [docs/risk/PHYSICS_BASED_RISK_INTEGRATION.md](risk/PHYSICS_BASED_RISK_INTEGRATION) | **Integration of physics-based models with risk simulation for dynamic failure analysis** |
 
 ### Chapter 35a: Advanced Risk Framework (**NEW**)
 
@@ -556,11 +556,11 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 
 | Document | Path | Description |
 |----------|------|-------------|
-| **Advanced Framework Overview** | [docs/risk/README.md](risk/README.md) | **START HERE**: Overview of all 7 priority packages |
-| **P1: Dynamic Simulation** | [docs/risk/dynamic-simulation.md](risk/dynamic-simulation.md) | Monte Carlo with transient effects, shutdown/startup modeling |
-| **P2: SIS/SIF Integration** | [docs/risk/sis-integration.md](risk/sis-integration.md) | IEC 61508/61511, LOPA analysis, SIL verification |
-| **P4: Bow-Tie Analysis** | [docs/risk/bowtie-analysis.md](risk/bowtie-analysis.md) | Barrier analysis, threat/consequence visualization |
-| **P6: Condition-Based Reliability** | [docs/risk/condition-based.md](risk/condition-based.md) | Health monitoring, RUL estimation, predictive maintenance |
+| **Advanced Framework Overview** | [docs/risk/README.md](risk/README) | **START HERE**: Overview of all 7 priority packages |
+| **P1: Dynamic Simulation** | [docs/risk/dynamic-simulation.md](risk/dynamic-simulation) | Monte Carlo with transient effects, shutdown/startup modeling |
+| **P2: SIS/SIF Integration** | [docs/risk/sis-integration.md](risk/sis-integration) | IEC 61508/61511, LOPA analysis, SIL verification |
+| **P4: Bow-Tie Analysis** | [docs/risk/bowtie-analysis.md](risk/bowtie-analysis) | Barrier analysis, threat/consequence visualization |
+| **P6: Condition-Based Reliability** | [docs/risk/condition-based.md](risk/condition-based) | Health monitoring, RUL estimation, predictive maintenance |
 | **Tutorial Notebook** | [docs/examples/AdvancedRiskFramework_Tutorial.ipynb](examples/AdvancedRiskFramework_Tutorial.ipynb) | Comprehensive Jupyter tutorial |
 
 #### Advanced Risk Framework Packages
@@ -598,41 +598,41 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 
 | Document | Path | Description |
 |----------|------|-------------|
-| **Phase Envelope Guide** | [docs/pvtsimulation/phase_envelope_guide.md](pvtsimulation/phase_envelope_guide.md) | **Cricondenbar, cricondentherm, HCDP, bubble/dew points** |
-| **PVT Lab Tests** | [docs/pvtsimulation/pvt_lab_tests.md](pvtsimulation/pvt_lab_tests.md) | **CCE, CVD, DL, separator test, swelling test simulations** |
-| PVT Overview | [docs/pvtsimulation/README.md](pvtsimulation/README.md) | PVT simulation module |
-| PVT Workflows | [docs/wiki/pvt_simulation_workflows.md](wiki/pvt_simulation_workflows.md) | PVT simulation workflows |
-| PVT Workflow Module | [docs/pvtsimulation/pvt_workflow.md](pvtsimulation/pvt_workflow.md) | PVT workflow module |
-| Property Flash | [docs/wiki/property_flash_workflows.md](wiki/property_flash_workflows.md) | Property flash workflows |
-| Whitson Reader | [docs/pvtsimulation/whitson_pvt_reader.md](pvtsimulation/whitson_pvt_reader.md) | Whitson PVT reader |
-| Solution Gas-Water Ratio | [docs/pvtsimulation/SolutionGasWaterRatio.md](pvtsimulation/SolutionGasWaterRatio.md) | Rsw calculation methods (McCain, Søreide-Whitson, Electrolyte CPA) |
+| **Phase Envelope Guide** | [docs/pvtsimulation/phase_envelope_guide.md](pvtsimulation/phase_envelope_guide) | **Cricondenbar, cricondentherm, HCDP, bubble/dew points** |
+| **PVT Lab Tests** | [docs/pvtsimulation/pvt_lab_tests.md](pvtsimulation/pvt_lab_tests) | **CCE, CVD, DL, separator test, swelling test simulations** |
+| PVT Overview | [docs/pvtsimulation/README.md](pvtsimulation/README) | PVT simulation module |
+| PVT Workflows | [docs/wiki/pvt_simulation_workflows.md](wiki/pvt_simulation_workflows) | PVT simulation workflows |
+| PVT Workflow Module | [docs/pvtsimulation/pvt_workflow.md](pvtsimulation/pvt_workflow) | PVT workflow module |
+| Property Flash | [docs/wiki/property_flash_workflows.md](wiki/property_flash_workflows) | Property flash workflows |
+| Whitson Reader | [docs/pvtsimulation/whitson_pvt_reader.md](pvtsimulation/whitson_pvt_reader) | Whitson PVT reader |
+| Solution Gas-Water Ratio | [docs/pvtsimulation/SolutionGasWaterRatio.md](pvtsimulation/SolutionGasWaterRatio) | Rsw calculation methods (McCain, Søreide-Whitson, Electrolyte CPA) |
 
 ### Chapter 36: Black Oil Models
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Black Oil Overview | [docs/blackoil/README.md](blackoil/README.md) | Black oil module |
-| Flash Playbook | [docs/wiki/black_oil_flash_playbook.md](wiki/black_oil_flash_playbook.md) | Black oil flash playbook |
-| Black Oil Export | [docs/pvtsimulation/blackoil_pvt_export.md](pvtsimulation/blackoil_pvt_export.md) | Black oil PVT export and E300 compositional export |
+| Black Oil Overview | [docs/blackoil/README.md](blackoil/README) | Black oil module |
+| Flash Playbook | [docs/wiki/black_oil_flash_playbook.md](wiki/black_oil_flash_playbook) | Black oil flash playbook |
+| Black Oil Export | [docs/pvtsimulation/blackoil_pvt_export.md](pvtsimulation/blackoil_pvt_export) | Black oil PVT export and E300 compositional export |
 
 ### Chapter 37: Flow Assurance
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Flow Assurance | [docs/pvtsimulation/flowassurance/README.md](pvtsimulation/flowassurance/README.md) | Flow assurance module |
-| Asphaltene Modeling | [docs/pvtsimulation/flowassurance/asphaltene_modeling.md](pvtsimulation/flowassurance/asphaltene_modeling.md) | Asphaltene modeling |
-| Asphaltene CPA | [docs/pvtsimulation/flowassurance/asphaltene_cpa_calculations.md](pvtsimulation/flowassurance/asphaltene_cpa_calculations.md) | CPA calculations |
-| De Boer Screening | [docs/pvtsimulation/flowassurance/asphaltene_deboer_screening.md](pvtsimulation/flowassurance/asphaltene_deboer_screening.md) | De Boer screening |
-| Method Comparison | [docs/pvtsimulation/flowassurance/asphaltene_method_comparison.md](pvtsimulation/flowassurance/asphaltene_method_comparison.md) | Method comparison |
-| Parameter Fitting | [docs/pvtsimulation/flowassurance/asphaltene_parameter_fitting.md](pvtsimulation/flowassurance/asphaltene_parameter_fitting.md) | Parameter fitting |
-| Validation | [docs/pvtsimulation/flowassurance/asphaltene_validation.md](pvtsimulation/flowassurance/asphaltene_validation.md) | Validation |
+| Flow Assurance | [docs/pvtsimulation/flowassurance/README.md](pvtsimulation/flowassurance/README) | Flow assurance module |
+| Asphaltene Modeling | [docs/pvtsimulation/flowassurance/asphaltene_modeling.md](pvtsimulation/flowassurance/asphaltene_modeling) | Asphaltene modeling |
+| Asphaltene CPA | [docs/pvtsimulation/flowassurance/asphaltene_cpa_calculations.md](pvtsimulation/flowassurance/asphaltene_cpa_calculations) | CPA calculations |
+| De Boer Screening | [docs/pvtsimulation/flowassurance/asphaltene_deboer_screening.md](pvtsimulation/flowassurance/asphaltene_deboer_screening) | De Boer screening |
+| Method Comparison | [docs/pvtsimulation/flowassurance/asphaltene_method_comparison.md](pvtsimulation/flowassurance/asphaltene_method_comparison) | Method comparison |
+| Parameter Fitting | [docs/pvtsimulation/flowassurance/asphaltene_parameter_fitting.md](pvtsimulation/flowassurance/asphaltene_parameter_fitting) | Parameter fitting |
+| Validation | [docs/pvtsimulation/flowassurance/asphaltene_validation.md](pvtsimulation/flowassurance/asphaltene_validation) | Validation |
 
 ### Chapter 38: Gas Quality
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Gas Quality Standards | [docs/wiki/gas_quality_standards_from_tests.md](wiki/gas_quality_standards_from_tests.md) | Gas quality standards |
-| Humid Air | [docs/wiki/humid_air_math.md](wiki/humid_air_math.md) | Humid air calculations |
+| Gas Quality Standards | [docs/wiki/gas_quality_standards_from_tests.md](wiki/gas_quality_standards_from_tests) | Gas quality standards |
+| Humid Air | [docs/wiki/humid_air_math.md](wiki/humid_air_math) | Humid air calculations |
 
 ---
 
@@ -642,13 +642,13 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Standards Overview | [docs/standards/README.md](standards/README.md) | Standards module |
-| ISO 6976 | [docs/standards/iso6976_calorific_values.md](standards/iso6976_calorific_values.md) | ISO 6976 calorific values |
-| ISO 6578 | [docs/standards/iso6578_lng_density.md](standards/iso6578_lng_density.md) | ISO 6578 LNG density |
-| ISO 15403 | [docs/standards/iso15403_cng_quality.md](standards/iso15403_cng_quality.md) | ISO 15403 CNG quality |
-| Dew Point | [docs/standards/dew_point_standards.md](standards/dew_point_standards.md) | Dew point standards |
-| ASTM D6377 | [docs/standards/astm_d6377_rvp.md](standards/astm_d6377_rvp.md) | ASTM D6377 RVP |
-| Sales Contracts | [docs/standards/sales_contracts.md](standards/sales_contracts.md) | Sales contracts |
+| Standards Overview | [docs/standards/README.md](standards/README) | Standards module |
+| ISO 6976 | [docs/standards/iso6976_calorific_values.md](standards/iso6976_calorific_values) | ISO 6976 calorific values |
+| ISO 6578 | [docs/standards/iso6578_lng_density.md](standards/iso6578_lng_density) | ISO 6578 LNG density |
+| ISO 15403 | [docs/standards/iso15403_cng_quality.md](standards/iso15403_cng_quality) | ISO 15403 CNG quality |
+| Dew Point | [docs/standards/dew_point_standards.md](standards/dew_point_standards) | Dew point standards |
+| ASTM D6377 | [docs/standards/astm_d6377_rvp.md](standards/astm_d6377_rvp) | ASTM D6377 RVP |
+| Sales Contracts | [docs/standards/sales_contracts.md](standards/sales_contracts) | Sales contracts |
 
 ---
 
@@ -658,99 +658,99 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Future Infrastructure | [docs/process/future-infrastructure.md](process/future-infrastructure.md) | Future infrastructure classes |
-| API Reference | [docs/process/future-api-reference.md](process/future-api-reference.md) | Future API reference |
+| Future Infrastructure | [docs/process/future-infrastructure.md](process/future-infrastructure) | Future infrastructure classes |
+| API Reference | [docs/process/future-api-reference.md](process/future-api-reference) | Future API reference |
 
 ### Chapter 41: Digital Twins
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Digital Twin | [docs/process/digital-twin-integration.md](process/digital-twin-integration.md) | Digital twin integration |
-| Lifecycle | [docs/process/lifecycle/README.md](process/lifecycle/README.md) | Lifecycle management |
+| Digital Twin | [docs/process/digital-twin-integration.md](process/digital-twin-integration) | Digital twin integration |
+| Lifecycle | [docs/process/lifecycle/README.md](process/lifecycle/README) | Lifecycle management |
 
 ### Chapter 42: AI/ML Integration
 
 | Document | Path | Description |
 |----------|------|-------------|
-| AI Platform | [docs/integration/ai_platform_integration.md](integration/ai_platform_integration.md) | AI platform integration |
-| AI Validation | [docs/integration/ai_validation_framework.md](integration/ai_validation_framework.md) | AI validation framework |
-| AI Validation PR | [docs/integration/PR_AI_VALIDATION_FRAMEWORK.md](integration/PR_AI_VALIDATION_FRAMEWORK.md) | AI validation PR docs |
-| ML Integration | [docs/integration/ml_integration.md](integration/ml_integration.md) | ML integration guide |
-| ML Surrogate | [docs/process/ml/README.md](process/ml/README.md) | ML surrogate models |
-| Integration Overview | [docs/integration/README.md](integration/README.md) | Integration module |
+| AI Platform | [docs/integration/ai_platform_integration.md](integration/ai_platform_integration) | AI platform integration |
+| AI Validation | [docs/integration/ai_validation_framework.md](integration/ai_validation_framework) | AI validation framework |
+| AI Validation PR | [docs/integration/PR_AI_VALIDATION_FRAMEWORK.md](integration/PR_AI_VALIDATION_FRAMEWORK) | AI validation PR docs |
+| ML Integration | [docs/integration/ml_integration.md](integration/ml_integration) | ML integration guide |
+| ML Surrogate | [docs/process/ml/README.md](process/ml/README) | ML surrogate models |
+| Integration Overview | [docs/integration/README.md](integration/README) | Integration module |
 
 ### Chapter 43: Sustainability & Emissions
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Emissions Tracking | [docs/process/sustainability/README.md](process/sustainability/README.md) | Emissions tracking overview |
-| **Offshore Emission Reporting Guide** | [docs/emissions/OFFSHORE_EMISSION_REPORTING.md](emissions/OFFSHORE_EMISSION_REPORTING.md) | **Comprehensive guide for offshore platform GHG emission reporting with regulatory references** |
-| **Produced Water Emissions Tutorial** | [docs/examples/ProducedWaterEmissions_Tutorial.md](examples/ProducedWaterEmissions_Tutorial.md) | **Comprehensive tutorial for produced water degassing emissions calculation** |
-| **Norwegian Emission Methods Comparison** | [docs/examples/NorwegianEmissionMethods_Comparison.md](examples/NorwegianEmissionMethods_Comparison.md) | **NeqSim vs Norwegian handbook method: validation, uncertainty, regulatory compliance** |
+| Emissions Tracking | [docs/process/sustainability/README.md](process/sustainability/README) | Emissions tracking overview |
+| **Offshore Emission Reporting Guide** | [docs/emissions/OFFSHORE_EMISSION_REPORTING.md](emissions/OFFSHORE_EMISSION_REPORTING) | **Comprehensive guide for offshore platform GHG emission reporting with regulatory references** |
+| **Produced Water Emissions Tutorial** | [docs/examples/ProducedWaterEmissions_Tutorial.md](examples/ProducedWaterEmissions_Tutorial) | **Comprehensive tutorial for produced water degassing emissions calculation** |
+| **Norwegian Emission Methods Comparison** | [docs/examples/NorwegianEmissionMethods_Comparison.md](examples/NorwegianEmissionMethods_Comparison) | **NeqSim vs Norwegian handbook method: validation, uncertainty, regulatory compliance** |
 | **NeqSimLive Integration** | [docs/GFMW_2023_Emissions_Paper.txt](GFMW_2023_Emissions_Paper.txt) | **GFMW 2023 paper: Virtual measurement of emissions using online process simulator** |
 
 ### Chapter 44: Optimization
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Optimization Overview | [docs/process/optimization/README.md](process/optimization/README.md) | Optimization module |
-| **Flow Rate Optimization** | [docs/process/optimization/flow-rate-optimization.md](process/optimization/flow-rate-optimization.md) | **Comprehensive flow rate optimizer with lift curve generation for Eclipse reservoir simulation** |
-| **Multi-Objective Optimization** | [docs/process/optimization/multi-objective-optimization.md](process/optimization/multi-objective-optimization.md) | **Pareto front generation for competing objectives (throughput vs energy)** |
-| Batch Studies | [docs/process/optimization/batch-studies.md](process/optimization/batch-studies.md) | Batch studies |
-| Bottleneck Analysis | [docs/wiki/bottleneck_analysis.md](wiki/bottleneck_analysis.md) | Bottleneck analysis and ProductionOptimizer |
+| Optimization Overview | [docs/process/optimization/README.md](process/optimization/README) | Optimization module |
+| **Flow Rate Optimization** | [docs/process/optimization/flow-rate-optimization.md](process/optimization/flow-rate-optimization) | **Comprehensive flow rate optimizer with lift curve generation for Eclipse reservoir simulation** |
+| **Multi-Objective Optimization** | [docs/process/optimization/multi-objective-optimization.md](process/optimization/multi-objective-optimization) | **Pareto front generation for competing objectives (throughput vs energy)** |
+| Batch Studies | [docs/process/optimization/batch-studies.md](process/optimization/batch-studies) | Batch studies |
+| Bottleneck Analysis | [docs/wiki/bottleneck_analysis.md](wiki/bottleneck_analysis) | Bottleneck analysis and ProductionOptimizer |
 | **Multi-Variable Optimization** | [docs/wiki/bottleneck_analysis.md#multi-variable-optimization-with-manipulatedvariable](wiki/bottleneck_analysis.md#multi-variable-optimization-with-manipulatedvariable) | **ManipulatedVariable for split factors, dual feeds, pressure setpoints** |
-| Calibration | [docs/process/calibration/README.md](process/calibration/README.md) | Model calibration |
-| Advisory | [docs/process/advisory/README.md](process/advisory/README.md) | Advisory systems |
+| Calibration | [docs/process/calibration/README.md](process/calibration/README) | Model calibration |
+| Advisory | [docs/process/advisory/README.md](process/advisory/README) | Advisory systems |
 
 ### Chapter 45: Real-Time Integration
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Real-Time Guide | [docs/integration/REAL_TIME_INTEGRATION_GUIDE.md](integration/REAL_TIME_INTEGRATION_GUIDE.md) | Real-time integration |
-| MPC Integration | [docs/integration/mpc_integration.md](integration/mpc_integration.md) | MPC integration |
-| Industrial MPC | [docs/integration/neqsim_industrial_mpc_integration.md](integration/neqsim_industrial_mpc_integration.md) | Industrial MPC |
+| Real-Time Guide | [docs/integration/REAL_TIME_INTEGRATION_GUIDE.md](integration/REAL_TIME_INTEGRATION_GUIDE) | Real-time integration |
+| MPC Integration | [docs/integration/mpc_integration.md](integration/mpc_integration) | MPC integration |
+| Industrial MPC | [docs/integration/neqsim_industrial_mpc_integration.md](integration/neqsim_industrial_mpc_integration) | Industrial MPC |
 
 ### Chapter 46: External Integrations
 
 | Document | Path | Description |
 |----------|------|-------------|
-| DEXPI Reader | [docs/integration/dexpi-reader.md](integration/dexpi-reader.md) | DEXPI reader |
-| QRA Integration | [docs/integration/QRA_INTEGRATION_GUIDE.md](integration/QRA_INTEGRATION_GUIDE.md) | QRA integration |
+| DEXPI Reader | [docs/integration/dexpi-reader.md](integration/dexpi-reader) | DEXPI reader |
+| QRA Integration | [docs/integration/QRA_INTEGRATION_GUIDE.md](integration/QRA_INTEGRATION_GUIDE) | QRA integration |
 
 ### Chapter 47: Process Logic Framework
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Simulation Overview | [docs/simulation/README.md](simulation/README.md) | Simulation module |
-| Process Logic | [docs/simulation/process_logic_framework.md](simulation/process_logic_framework.md) | Process logic framework |
-| Advanced Logic | [docs/simulation/advanced_process_logic.md](simulation/advanced_process_logic.md) | Advanced process logic |
-| Implementation | [docs/simulation/process_logic_implementation_summary.md](simulation/process_logic_implementation_summary.md) | Implementation summary |
-| Enhancements | [docs/simulation/ProcessLogicEnhancements.md](simulation/ProcessLogicEnhancements.md) | Logic enhancements |
-| Runtime Flexibility | [docs/simulation/RuntimeLogicFlexibility.md](simulation/RuntimeLogicFlexibility.md) | Runtime flexibility |
-| Graph-Based | [docs/simulation/graph_based_process_simulation.md](simulation/graph_based_process_simulation.md) | Graph-based simulation |
-| Parallel Simulation | [docs/simulation/parallel_process_simulation.md](simulation/parallel_process_simulation.md) | Parallel simulation |
-| Recycle Acceleration | [docs/simulation/recycle_acceleration_guide.md](simulation/recycle_acceleration_guide.md) | Recycle acceleration |
-| Process Calculator | [docs/simulation/process_calculator.md](simulation/process_calculator.md) | Process calculator |
-| Integrated Workflow | [docs/simulation/INTEGRATED_WORKFLOW_GUIDE.md](simulation/INTEGRATED_WORKFLOW_GUIDE.md) | Integrated workflow |
-| Differentiable Thermo | [docs/simulation/differentiable_thermodynamics.md](simulation/differentiable_thermodynamics.md) | Auto-differentiation |
-| Derivatives | [docs/simulation/derivatives_and_gradients.md](simulation/derivatives_and_gradients.md) | Derivatives and gradients |
-| Equipment Factory | [docs/simulation/equipment_factory.md](simulation/equipment_factory.md) | Equipment factory |
+| Simulation Overview | [docs/simulation/README.md](simulation/README) | Simulation module |
+| Process Logic | [docs/simulation/process_logic_framework.md](simulation/process_logic_framework) | Process logic framework |
+| Advanced Logic | [docs/simulation/advanced_process_logic.md](simulation/advanced_process_logic) | Advanced process logic |
+| Implementation | [docs/simulation/process_logic_implementation_summary.md](simulation/process_logic_implementation_summary) | Implementation summary |
+| Enhancements | [docs/simulation/ProcessLogicEnhancements.md](simulation/ProcessLogicEnhancements) | Logic enhancements |
+| Runtime Flexibility | [docs/simulation/RuntimeLogicFlexibility.md](simulation/RuntimeLogicFlexibility) | Runtime flexibility |
+| Graph-Based | [docs/simulation/graph_based_process_simulation.md](simulation/graph_based_process_simulation) | Graph-based simulation |
+| Parallel Simulation | [docs/simulation/parallel_process_simulation.md](simulation/parallel_process_simulation) | Parallel simulation |
+| Recycle Acceleration | [docs/simulation/recycle_acceleration_guide.md](simulation/recycle_acceleration_guide) | Recycle acceleration |
+| Process Calculator | [docs/simulation/process_calculator.md](simulation/process_calculator) | Process calculator |
+| Integrated Workflow | [docs/simulation/INTEGRATED_WORKFLOW_GUIDE.md](simulation/INTEGRATED_WORKFLOW_GUIDE) | Integrated workflow |
+| Differentiable Thermo | [docs/simulation/differentiable_thermodynamics.md](simulation/differentiable_thermodynamics) | Auto-differentiation |
+| Derivatives | [docs/simulation/derivatives_and_gradients.md](simulation/derivatives_and_gradients) | Derivatives and gradients |
+| Equipment Factory | [docs/simulation/equipment_factory.md](simulation/equipment_factory) | Equipment factory |
 
 ### Chapter 48: Field Development
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Field Development Overview | [docs/fielddevelopment/README.md](fielddevelopment/README.md) | Field development module overview |
-| **Digital Field Twin** | [docs/fielddevelopment/DIGITAL_FIELD_TWIN.md](fielddevelopment/DIGITAL_FIELD_TWIN.md) | **NEW** Comprehensive architecture for lifecycle consistency |
-| **Mathematical Reference** | [docs/fielddevelopment/MATHEMATICAL_REFERENCE.md](fielddevelopment/MATHEMATICAL_REFERENCE.md) | **NEW** Mathematical foundations for all calculations |
-| **API Guide** | [docs/fielddevelopment/API_GUIDE.md](fielddevelopment/API_GUIDE.md) | **NEW** Detailed usage examples for all components |
-| **Integrated Framework** | [docs/fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md) | PVT→Reservoir→Well→Process integration guide |
-| **Strategy** | [docs/fielddevelopment/FIELD_DEVELOPMENT_STRATEGY.md](fielddevelopment/FIELD_DEVELOPMENT_STRATEGY.md) | Field development strategy and roadmap |
-| **Late-Life Operations** | [docs/fielddevelopment/LATE_LIFE_OPERATIONS.md](fielddevelopment/LATE_LIFE_OPERATIONS.md) | **Turndown, debottlenecking, and decommissioning timing analysis** |
-| Field Planning | [docs/wiki/field_development_planning.md](wiki/field_development_planning.md) | Field development planning |
-| Field Engine | [docs/simulation/field_development_engine.md](simulation/field_development_engine.md) | Field development engine |
-| **Economics** | [docs/process/economics/README.md](process/economics/README.md) | Economics module: NPV, IRR, tax models, decline curves |
-| **Subsea Systems** | [docs/process/equipment/subsea_systems.md](process/equipment/subsea_systems.md) | Subsea production systems, tieback analysis |
+| Field Development Overview | [docs/fielddevelopment/README.md](fielddevelopment/README) | Field development module overview |
+| **Digital Field Twin** | [docs/fielddevelopment/DIGITAL_FIELD_TWIN.md](fielddevelopment/DIGITAL_FIELD_TWIN) | **NEW** Comprehensive architecture for lifecycle consistency |
+| **Mathematical Reference** | [docs/fielddevelopment/MATHEMATICAL_REFERENCE.md](fielddevelopment/MATHEMATICAL_REFERENCE) | **NEW** Mathematical foundations for all calculations |
+| **API Guide** | [docs/fielddevelopment/API_GUIDE.md](fielddevelopment/API_GUIDE) | **NEW** Detailed usage examples for all components |
+| **Integrated Framework** | [docs/fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK) | PVT→Reservoir→Well→Process integration guide |
+| **Strategy** | [docs/fielddevelopment/FIELD_DEVELOPMENT_STRATEGY.md](fielddevelopment/FIELD_DEVELOPMENT_STRATEGY) | Field development strategy and roadmap |
+| **Late-Life Operations** | [docs/fielddevelopment/LATE_LIFE_OPERATIONS.md](fielddevelopment/LATE_LIFE_OPERATIONS) | **Turndown, debottlenecking, and decommissioning timing analysis** |
+| Field Planning | [docs/wiki/field_development_planning.md](wiki/field_development_planning) | Field development planning |
+| Field Engine | [docs/simulation/field_development_engine.md](simulation/field_development_engine) | Field development engine |
+| **Economics** | [docs/process/economics/README.md](process/economics/README) | Economics module: NPV, IRR, tax models, decline curves |
+| **Subsea Systems** | [docs/process/equipment/subsea_systems.md](process/equipment/subsea_systems) | Subsea production systems, tieback analysis |
 
 #### Digital Field Twin Lifecycle Components
 
@@ -783,47 +783,47 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Development Overview | [docs/development/README.md](development/README.md) | Development overview |
-| Contributing Structure | [docs/development/contributing-structure.md](development/contributing-structure.md) | Contributing guidelines |
-| Developer Setup | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP.md) | Developer setup |
-| **Extending Process Equipment** | [docs/development/extending_process_equipment.md](development/extending_process_equipment.md) | **NEW: Add custom separators, reactors, unit operations** |
-| **Extending Physical Properties** | [docs/development/extending_physical_properties.md](development/extending_physical_properties.md) | **NEW: Add viscosity, conductivity, diffusivity models** |
-| **Extending Thermodynamic Models** | [docs/development/extending_thermodynamic_models.md](development/extending_thermodynamic_models.md) | **NEW: Add custom equations of state** |
-| **Python Extension Patterns** | [docs/development/python_extension_patterns.md](development/python_extension_patterns.md) | **NEW: Python integration, wrappers, JPype interfaces** |
+| Development Overview | [docs/development/README.md](development/README) | Development overview |
+| Contributing Structure | [docs/development/contributing-structure.md](development/contributing-structure) | Contributing guidelines |
+| Developer Setup | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP) | Developer setup |
+| **Extending Process Equipment** | [docs/development/extending_process_equipment.md](development/extending_process_equipment) | **NEW: Add custom separators, reactors, unit operations** |
+| **Extending Physical Properties** | [docs/development/extending_physical_properties.md](development/extending_physical_properties) | **NEW: Add viscosity, conductivity, diffusivity models** |
+| **Extending Thermodynamic Models** | [docs/development/extending_thermodynamic_models.md](development/extending_thermodynamic_models) | **NEW: Add custom equations of state** |
+| **Python Extension Patterns** | [docs/development/python_extension_patterns.md](development/python_extension_patterns) | **NEW: Python integration, wrappers, JPype interfaces** |
 
 ### Chapter 50: Testing
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Test Overview | [docs/wiki/test-overview.md](wiki/test-overview.md) | Test overview |
-| Flash Tests | [docs/wiki/flash_equations_and_tests.md](wiki/flash_equations_and_tests.md) | Flash equation tests |
-| Safety Tests | [docs/safety/integration_safety_chain_tests.md](safety/integration_safety_chain_tests.md) | Safety chain tests |
+| Test Overview | [docs/wiki/test-overview.md](wiki/test-overview) | Test overview |
+| Flash Tests | [docs/wiki/flash_equations_and_tests.md](wiki/flash_equations_and_tests) | Flash equation tests |
+| Safety Tests | [docs/safety/integration_safety_chain_tests.md](safety/integration_safety_chain_tests) | Safety chain tests |
 
 ### Chapter 51: Notebooks & Examples
 
 | Document | Path | Description |
 |----------|------|-------------|
-| **Reading Fluid Properties** | [docs/examples/ReadingFluidProperties.md](examples/ReadingFluidProperties.md) | **NEW: Comprehensive guide to reading thermodynamic and physical properties** |
-| Colab Notebooks | [docs/wiki/java_simulation_from_colab_notebooks.md](wiki/java_simulation_from_colab_notebooks.md) | Colab notebooks |
-| Transient Slug Example | [docs/examples/transient_slug_separator_control_example.md](examples/transient_slug_separator_control_example.md) | Transient slug example |
-| Selective Logic | [docs/examples/selective-logic-execution.md](examples/selective-logic-execution.md) | Selective logic execution |
-| Comparison Quickstart | [docs/examples/comparesimulations_quickstart.md](examples/comparesimulations_quickstart.md) | Simulation comparison |
-| **PVT Simulation & Tuning** | [docs/examples/PVT_Simulation_and_Tuning.md](examples/PVT_Simulation_and_Tuning.md) | **PVT simulation setup, EoS tuning, and characterization examples** |
-| **TVP/RVP Study** | [docs/examples/TVP_RVP_Study.md](examples/TVP_RVP_Study.md) | **True Vapor Pressure and Reid Vapor Pressure calculations** |
-| **ESP Pump Tutorial** | [docs/examples/ESP_Pump_Tutorial.md](examples/ESP_Pump_Tutorial.md) | **Electric Submersible Pump simulation and sizing** |
-| **Graph-Based Simulation** | [docs/examples/GraphBasedProcessSimulation.md](examples/GraphBasedProcessSimulation.md) | **Graph-based process simulation tutorial** |
-| **Field Development Workflow** | [docs/examples/FieldDevelopmentWorkflow.md](examples/FieldDevelopmentWorkflow.md) | **End-to-end field development workflow example** |
-| **MPC Integration Tutorial** | [docs/examples/MPC_Integration_Tutorial.md](examples/MPC_Integration_Tutorial.md) | **Model Predictive Control integration example** |
-| **AI Platform Integration** | [docs/examples/AIPlatformIntegration.md](examples/AIPlatformIntegration.md) | **AI platform integration tutorial** |
-| Examples Index | [docs/examples/index.md](examples/index.md) | Examples documentation index |
+| **Reading Fluid Properties** | [docs/examples/ReadingFluidProperties.md](examples/ReadingFluidProperties) | **NEW: Comprehensive guide to reading thermodynamic and physical properties** |
+| Colab Notebooks | [docs/wiki/java_simulation_from_colab_notebooks.md](wiki/java_simulation_from_colab_notebooks) | Colab notebooks |
+| Transient Slug Example | [docs/examples/transient_slug_separator_control_example.md](examples/transient_slug_separator_control_example) | Transient slug example |
+| Selective Logic | [docs/examples/selective-logic-execution.md](examples/selective-logic-execution) | Selective logic execution |
+| Comparison Quickstart | [docs/examples/comparesimulations_quickstart.md](examples/comparesimulations_quickstart) | Simulation comparison |
+| **PVT Simulation & Tuning** | [docs/examples/PVT_Simulation_and_Tuning.md](examples/PVT_Simulation_and_Tuning) | **PVT simulation setup, EoS tuning, and characterization examples** |
+| **TVP/RVP Study** | [docs/examples/TVP_RVP_Study.md](examples/TVP_RVP_Study) | **True Vapor Pressure and Reid Vapor Pressure calculations** |
+| **ESP Pump Tutorial** | [docs/examples/ESP_Pump_Tutorial.md](examples/ESP_Pump_Tutorial) | **Electric Submersible Pump simulation and sizing** |
+| **Graph-Based Simulation** | [docs/examples/GraphBasedProcessSimulation.md](examples/GraphBasedProcessSimulation) | **Graph-based process simulation tutorial** |
+| **Field Development Workflow** | [docs/examples/FieldDevelopmentWorkflow.md](examples/FieldDevelopmentWorkflow) | **End-to-end field development workflow example** |
+| **MPC Integration Tutorial** | [docs/examples/MPC_Integration_Tutorial.md](examples/MPC_Integration_Tutorial) | **Model Predictive Control integration example** |
+| **AI Platform Integration** | [docs/examples/AIPlatformIntegration.md](examples/AIPlatformIntegration) | **AI platform integration tutorial** |
+| Examples Index | [docs/examples/index.md](examples/index) | Examples documentation index |
 
 ### Chapter 52: Documentation Infrastructure
 
 | Document | Path | Description |
 |----------|------|-------------|
-| **GitHub Pages Setup** | [docs/GITHUB_PAGES_SETUP.md](GITHUB_PAGES_SETUP.md) | **NEW** Enable GitHub Pages for hosted documentation |
+| **GitHub Pages Setup** | [docs/GITHUB_PAGES_SETUP.md](GITHUB_PAGES_SETUP) | **NEW** Enable GitHub Pages for hosted documentation |
 | Reference Manual | [docs/manual/neqsim_reference_manual.html](manual/neqsim_reference_manual.html) | Interactive reference manual |
-| Documentation Index | [docs/index.md](index.md) | GitHub Pages home page |
+| Documentation Index | [docs/index.md](index) | GitHub Pages home page |
 
 ---
 
@@ -833,65 +833,65 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Chemical Reactions | [docs/chemicalreactions/README.md](chemicalreactions/README.md) | Chemical reactions module |
-| Deep Review | [docs/chemicalreactions/CHEMICAL_REACTION_DEEP_REVIEW.md](chemicalreactions/CHEMICAL_REACTION_DEEP_REVIEW.md) | Chemical reaction deep review |
+| Chemical Reactions | [docs/chemicalreactions/README.md](chemicalreactions/README) | Chemical reactions module |
+| Deep Review | [docs/chemicalreactions/CHEMICAL_REACTION_DEEP_REVIEW.md](chemicalreactions/CHEMICAL_REACTION_DEEP_REVIEW) | Chemical reaction deep review |
 
 ### Appendix B: Statistics
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Statistics | [docs/statistics/README.md](statistics/README.md) | Statistics module |
-| Parameter Fitting | [docs/statistics/parameter_fitting.md](statistics/parameter_fitting.md) | Parameter fitting |
-| Monte Carlo | [docs/statistics/monte_carlo_simulation.md](statistics/monte_carlo_simulation.md) | Monte Carlo simulation |
-| Data Analysis | [docs/statistics/data_analysis.md](statistics/data_analysis.md) | Data analysis |
+| Statistics | [docs/statistics/README.md](statistics/README) | Statistics module |
+| Parameter Fitting | [docs/statistics/parameter_fitting.md](statistics/parameter_fitting) | Parameter fitting |
+| Monte Carlo | [docs/statistics/monte_carlo_simulation.md](statistics/monte_carlo_simulation) | Monte Carlo simulation |
+| Data Analysis | [docs/statistics/data_analysis.md](statistics/data_analysis) | Data analysis |
 
 ### Appendix C: Mathematical Library
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Math Library | [docs/mathlib/README.md](mathlib/README.md) | Mathematical library |
+| Math Library | [docs/mathlib/README.md](mathlib/README) | Mathematical library |
 
 ### Appendix D: Utilities
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Utilities | [docs/util/README.md](util/README.md) | Utility functions |
-| Unit Conversion | [docs/util/unit_conversion.md](util/unit_conversion.md) | Unit conversion guide |
-| **Unit Conversion Recipes** | [docs/cookbook/unit-conversion-recipes.md](cookbook/unit-conversion-recipes.md) | **NEW** Quick reference for all supported unit strings |
-| **Optimizer Guide** | [docs/util/optimizer_guide.md](util/optimizer_guide.md) | **NEW** Comprehensive optimization framework with BFGS, Pareto, sensitivity analysis |
+| Utilities | [docs/util/README.md](util/README) | Utility functions |
+| Unit Conversion | [docs/util/unit_conversion.md](util/unit_conversion) | Unit conversion guide |
+| **Unit Conversion Recipes** | [docs/cookbook/unit-conversion-recipes.md](cookbook/unit-conversion-recipes) | **NEW** Quick reference for all supported unit strings |
+| **Optimizer Guide** | [docs/util/optimizer_guide.md](util/optimizer_guide) | **NEW** Comprehensive optimization framework with BFGS, Pareto, sensitivity analysis |
 
 ### Appendix F: Process Design Templates
 
 | Document | Path | Description |
 |----------|------|-------------|
-| **Templates Guide** | [docs/process/design/templates_guide.md](process/design/templates_guide.md) | **NEW** Pre-built process templates (compression, dehydration, CO2 capture) |
+| **Templates Guide** | [docs/process/design/templates_guide.md](process/design/templates_guide) | **NEW** Pre-built process templates (compression, dehydration, CO2 capture) |
 
 ### Appendix G: Mechanical Design Standards
 
 | Document | Path | Description |
 |----------|------|-------------|
-| **TEMA Standard Guide** | [docs/process/mechanical_design/tema_standard_guide.md](process/mechanical_design/tema_standard_guide.md) | **NEW** TEMA shell and tube heat exchanger design standards |
+| **TEMA Standard Guide** | [docs/process/mechanical_design/tema_standard_guide.md](process/mechanical_design/tema_standard_guide) | **NEW** TEMA shell and tube heat exchanger design standards |
 
 ### Appendix H: Cookbook (Quick Recipes)
 
 | Document | Path | Description |
 |----------|------|-------------|
-| **Cookbook Index** | [docs/cookbook/index.md](cookbook/index.md) | **NEW** Quick copy-paste recipes for common tasks |
-| Thermodynamics Recipes | [docs/cookbook/thermodynamics-recipes.md](cookbook/thermodynamics-recipes.md) | Fluids, flash, properties, phase envelopes |
-| Process Recipes | [docs/cookbook/process-recipes.md](cookbook/process-recipes.md) | Separators, compressors, heat exchangers |
-| Pipeline Recipes | [docs/cookbook/pipeline-recipes.md](cookbook/pipeline-recipes.md) | Pressure drop, multiphase flow |
+| **Cookbook Index** | [docs/cookbook/index.md](cookbook/index) | **NEW** Quick copy-paste recipes for common tasks |
+| Thermodynamics Recipes | [docs/cookbook/thermodynamics-recipes.md](cookbook/thermodynamics-recipes) | Fluids, flash, properties, phase envelopes |
+| Process Recipes | [docs/cookbook/process-recipes.md](cookbook/process-recipes) | Separators, compressors, heat exchangers |
+| Pipeline Recipes | [docs/cookbook/pipeline-recipes.md](cookbook/pipeline-recipes) | Pressure drop, multiphase flow |
 
 ### Appendix I: Troubleshooting
 
 | Document | Path | Description |
 |----------|------|-------------|
-| **Troubleshooting Guide** | [docs/troubleshooting/index.md](troubleshooting/index.md) | **NEW** Solutions to common problems |
+| **Troubleshooting Guide** | [docs/troubleshooting/index.md](troubleshooting/index) | **NEW** Solutions to common problems |
 
 ### Appendix E: Wiki Reference
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Wiki Overview | [docs/wiki/README.md](wiki/README.md) | Wiki documentation |
+| Wiki Overview | [docs/wiki/README.md](wiki/README) | Wiki documentation |
 
 ---
 
@@ -925,14 +925,14 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 
 ## Navigation Tips
 
-1. **Start Here**: If new to NeqSim, begin with [Quickstart Guides](quickstart/index.md) or [Getting Started](wiki/getting_started.md)
-2. **Learning Path**: Follow the [Learning Paths](tutorials/learning-paths.md) for structured learning
-3. **Quick Recipes**: Use the [Cookbook](cookbook/index.md) for copy-paste solutions
+1. **Start Here**: If new to NeqSim, begin with [Quickstart Guides](quickstart/index) or [Getting Started](wiki/getting_started)
+2. **Learning Path**: Follow the [Learning Paths](tutorials/learning-paths) for structured learning
+3. **Quick Recipes**: Use the [Cookbook](cookbook/index) for copy-paste solutions
 4. **By Task**: Use the chapter structure above to find relevant sections
 5. **By Equipment**: See Part III, Chapters 13-20 for equipment-specific docs
 6. **For Developers**: Jump to Part IX for contribution guidelines
-7. **Problems?**: Check the [Troubleshooting Guide](troubleshooting/index.md)
-8. **Process Serialization**: See [Chapter 23](simulation/process_serialization.md) for save/load
+7. **Problems?**: Check the [Troubleshooting Guide](troubleshooting/index)
+8. **Process Serialization**: See [Chapter 23](simulation/process_serialization) for save/load
 
 ---
 

@@ -371,6 +371,6 @@ Stream leanSolvent = stripper.getLiquidOutStream();
 
 ## Related Documentation
 
-- [Process Package](../README.md) - Package overview
-- [Heat Exchangers](heat_exchangers.md) - Condensers and reboilers
-- [Absorbers](absorbers.md) - Absorption columns
+- [Process Package](../README) - Package overview
+- [Heat Exchangers](heat_exchangers) - Condensers and reboilers
+- [Absorbers](absorbers) - Absorption columns

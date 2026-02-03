@@ -5,7 +5,7 @@ description: This guide explains how to use NeqSim's `ProcessSimulationEvaluator
 
 # External Optimizer Integration Guide
 
-> **New to process optimization?** Start with the [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
+> **New to process optimization?** Start with the [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW) to understand when to use which optimizer.
 
 This guide explains how to use NeqSim's `ProcessSimulationEvaluator` to integrate process simulation with external optimization frameworks like Python's SciPy, NLopt, or other optimization libraries.
 
@@ -13,9 +13,9 @@ This guide explains how to use NeqSim's `ProcessSimulationEvaluator` to integrat
 
 | Document | Description |
 |----------|-------------|
-| [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) | When to use which optimizer |
-| [Production Optimization Guide](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | ProductionOptimizer examples |
-| [Practical Examples](../process/optimization/PRACTICAL_EXAMPLES.md) | Code samples |
+| [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW) | When to use which optimizer |
+| [Production Optimization Guide](../examples/PRODUCTION_OPTIMIZATION_GUIDE) | ProductionOptimizer examples |
+| [Practical Examples](../process/optimization/PRACTICAL_EXAMPLES) | Code samples |
 
 ## Overview
 
@@ -537,7 +537,7 @@ jpype.shutdownJVM()
 
 ## See Also
 
-- [OPTIMIZER_PLUGIN_ARCHITECTURE.md](../process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md) - Plugin architecture for equipment-specific optimization
-- [flow-rate-optimization.md](../process/optimization/flow-rate-optimization.md) - FlowRateOptimizer for lift curve generation
-- [pressure_boundary_optimization.md](../process/pressure_boundary_optimization.md) - Simplified pressure boundary optimizer
-- [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) - Complete production optimization examples
+- [OPTIMIZER_PLUGIN_ARCHITECTURE.md](../process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE) - Plugin architecture for equipment-specific optimization
+- [flow-rate-optimization.md](../process/optimization/flow-rate-optimization) - FlowRateOptimizer for lift curve generation
+- [pressure_boundary_optimization.md](../process/pressure_boundary_optimization) - Simplified pressure boundary optimizer
+- [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE) - Complete production optimization examples

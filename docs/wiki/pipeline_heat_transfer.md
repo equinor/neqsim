@@ -195,6 +195,6 @@ Heat transfer coefficients are higher for two-phase flow due to turbulence.
 
 ## See Also
 
-- [Pipeline Pressure Drop Overview](pipeline_pressure_drop.md)
-- [Beggs & Brill Correlation](beggs_and_brill_correlation.md)
-- [Thermodynamic Properties](../thermo/physical_properties.md)
+- [Pipeline Pressure Drop Overview](pipeline_pressure_drop)
+- [Beggs & Brill Correlation](beggs_and_brill_correlation)
+- [Thermodynamic Properties](../thermo/physical_properties)

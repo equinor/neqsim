@@ -342,6 +342,6 @@ System.out.println("CO₂ loading: " + CO2loading + " mol CO₂/mol MEA");
 
 ## Related Documentation
 
-- [Thermodynamic Operations](../thermodynamicoperations/README.md) - Flash calculations
-- [Fluid Creation Guide](../thermo/fluid_creation_guide.md) - Creating reactive systems
-- [Electrolyte Models](../thermo/README.md) - Electrolyte CPA for ionic reactions
+- [Thermodynamic Operations](../thermodynamicoperations/README) - Flash calculations
+- [Fluid Creation Guide](../thermo/fluid_creation_guide) - Creating reactive systems
+- [Electrolyte Models](../thermo/README) - Electrolyte CPA for ionic reactions

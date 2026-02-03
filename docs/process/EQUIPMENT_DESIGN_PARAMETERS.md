@@ -11,10 +11,10 @@ This guide describes how to manually set design parameters for process equipment
 >
 > | Topic | Documentation |
 > |-------|---------------|
-> | **Mechanical Design** | [mechanical_design.md](mechanical_design.md) - Equipment sizing, weights, JSON export |
-> | **Constraints & Optimization** | [optimization/OPTIMIZATION_AND_CONSTRAINTS.md](optimization/OPTIMIZATION_AND_CONSTRAINTS.md) - Complete optimization guide |
-> | **Capacity Constraints** | [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK.md) - Multi-constraint bottleneck detection |
-> | **Cost Estimation** | [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK.md) - CAPEX, OPEX, financial metrics |
+> | **Mechanical Design** | [mechanical_design.md](mechanical_design) - Equipment sizing, weights, JSON export |
+> | **Constraints & Optimization** | [optimization/OPTIMIZATION_AND_CONSTRAINTS.md](optimization/OPTIMIZATION_AND_CONSTRAINTS) - Complete optimization guide |
+> | **Capacity Constraints** | [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK) - Multi-constraint bottleneck detection |
+> | **Cost Estimation** | [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK) - CAPEX, OPEX, financial metrics |
 
 ## Table of Contents
 
@@ -907,7 +907,7 @@ List<String> nearLimit = process.getEquipmentNearCapacityLimit();
 ## See Also
 
 - [AutoSizeable Interface](../src/main/java/neqsim/process/design/AutoSizeable.java)
-- [Capacity Constraint Framework](CAPACITY_CONSTRAINT_FRAMEWORK.md)
-- [Mechanical Design Framework](mechanical_design.md)
-- [Optimization & Constraints Guide](optimization/OPTIMIZATION_AND_CONSTRAINTS.md)
-- [Cost Estimation Framework](COST_ESTIMATION_FRAMEWORK.md)
+- [Capacity Constraint Framework](CAPACITY_CONSTRAINT_FRAMEWORK)
+- [Mechanical Design Framework](mechanical_design)
+- [Optimization & Constraints Guide](optimization/OPTIMIZATION_AND_CONSTRAINTS)
+- [Cost Estimation Framework](COST_ESTIMATION_FRAMEWORK)

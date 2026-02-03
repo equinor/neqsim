@@ -311,6 +311,6 @@ System.out.println("Compliant: " + pwTrain.isCompliant());
 
 ## See Also
 
-- [Separators](separators.md) - Three-phase separators
-- [Filters](filters.md) - Filtration equipment
-- [Membrane Separators](membrane.md) - Membrane-based separation
+- [Separators](separators) - Three-phase separators
+- [Filters](filters) - Filtration equipment
+- [Membrane Separators](membrane) - Membrane-based separation

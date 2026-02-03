@@ -10,11 +10,11 @@ This documentation covers NeqSim's physical properties calculation system, inclu
 ## Contents
 
 - **Overview** (this page) - Package architecture and basic usage
-- [Viscosity Models](viscosity_models.md) - Dynamic viscosity calculation methods
-- [Thermal Conductivity Models](thermal_conductivity_models.md) - Thermal conductivity methods
-- [Diffusivity Models](diffusivity_models.md) - Binary and multicomponent diffusion coefficients
-- [Interfacial Properties](interfacial_properties.md) - Surface tension and related calculations
-- [Density Models](density_models.md) - Liquid density correlations
+- [Viscosity Models](viscosity_models) - Dynamic viscosity calculation methods
+- [Thermal Conductivity Models](thermal_conductivity_models) - Thermal conductivity methods
+- [Diffusivity Models](diffusivity_models) - Binary and multicomponent diffusion coefficients
+- [Interfacial Properties](interfacial_properties) - Surface tension and related calculations
+- [Density Models](density_models) - Liquid density correlations
 
 ---
 
@@ -350,6 +350,6 @@ for (double T : temperatures) {
 
 ## See Also
 
-- [Fluid Creation Guide](../thermo/fluid_creation_guide.md) - Creating thermodynamic systems
-- [Flash Calculations Guide](../thermo/flash_calculations_guide.md) - Phase equilibrium calculations
-- [Thermodynamic Operations](../thermo/thermodynamic_operations.md) - Property calculation workflow
+- [Fluid Creation Guide](../thermo/fluid_creation_guide) - Creating thermodynamic systems
+- [Flash Calculations Guide](../thermo/flash_calculations_guide) - Phase equilibrium calculations
+- [Thermodynamic Operations](../thermo/thermodynamic_operations) - Property calculation workflow

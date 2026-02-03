@@ -354,6 +354,6 @@ System.out.printf("Summary: %d of %d reservoirs require further analysis%n",
 
 ## See Also
 
-- [Asphaltene Modeling Overview](asphaltene_modeling.md)
-- [CPA-Based Calculations](asphaltene_cpa_calculations.md)
-- [Method Comparison](asphaltene_method_comparison.md)
+- [Asphaltene Modeling Overview](asphaltene_modeling)
+- [CPA-Based Calculations](asphaltene_cpa_calculations)
+- [Method Comparison](asphaltene_method_comparison)

@@ -900,11 +900,11 @@ public void run(UUID id) {
 
 ## See Also
 
-- [Process Simulation Introduction](../wiki/process_simulation.md)
-- [Equipment Hierarchy](../process/README.md)
-- [Mechanical Design Framework](../process/mechanical_design.md)
-- [Validation Framework](../integration/ai_validation_framework.md)
-- [Python Extension Patterns](python_extension_patterns.md)
+- [Process Simulation Introduction](../wiki/process_simulation)
+- [Equipment Hierarchy](../process/README)
+- [Mechanical Design Framework](../process/mechanical_design)
+- [Validation Framework](../integration/ai_validation_framework)
+- [Python Extension Patterns](python_extension_patterns)
 
 ---
 

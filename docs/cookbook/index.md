@@ -11,10 +11,10 @@ Quick, copy-paste recipes for common tasks. Each recipe is self-contained and re
 
 | Category | Description |
 |----------|-------------|
-| [Thermodynamics Recipes](thermodynamics-recipes.md) | Fluids, flash, properties, phase envelopes |
-| [Process Recipes](process-recipes.md) | Equipment, flowsheets, streams |
-| [Pipeline Recipes](pipeline-recipes.md) | Pressure drop, multiphase flow, slugging |
-| [Unit Conversion](unit-conversion-recipes.md) | Working with units in NeqSim |
+| [Thermodynamics Recipes](thermodynamics-recipes) | Fluids, flash, properties, phase envelopes |
+| [Process Recipes](process-recipes) | Equipment, flowsheets, streams |
+| [Pipeline Recipes](pipeline-recipes) | Pressure drop, multiphase flow, slugging |
+| [Unit Conversion](unit-conversion-recipes) | Working with units in NeqSim |
 
 ## Most Popular Recipes
 
@@ -45,4 +45,4 @@ Each recipe includes:
 
 For complete API documentation, see:
 - **[JavaDoc API](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html)** - All classes and methods
-- **[Reference Manual](../REFERENCE_MANUAL_INDEX.md)** - Comprehensive guides
+- **[Reference Manual](../REFERENCE_MANUAL_INDEX)** - Comprehensive guides

@@ -239,7 +239,7 @@ if (process.isAnyEquipmentOverloaded()) {
 | **Separator** | Gas load factor (vs design K-factor) |
 | **Compressor** | Speed, Power, Surge margin |
 
-For detailed documentation on extending to other equipment, see [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md).
+For detailed documentation on extending to other equipment, see [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK).
 
 ## Production Optimization
 

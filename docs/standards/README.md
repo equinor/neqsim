@@ -73,12 +73,12 @@ Detailed guides for each major standard:
 
 | Guide | Description |
 |-------|-------------|
-| [ISO 6976 - Calorific Values](iso6976_calorific_values.md) | GCV, LCV, Wobbe index, density from composition |
-| [ISO 6578 - LNG Density](iso6578_lng_density.md) | LNG density calculation method |
-| [ISO 15403 - CNG Quality](iso15403_cng_quality.md) | Methane number and MON for vehicle fuel |
-| [Dew Point Standards](dew_point_standards.md) | Water and hydrocarbon dew point methods |
-| [ASTM D6377 - RVP](astm_d6377_rvp.md) | Reid vapor pressure for crude and condensate |
-| [Sales Contracts](sales_contracts.md) | Contract specification and compliance checking |
+| [ISO 6976 - Calorific Values](iso6976_calorific_values) | GCV, LCV, Wobbe index, density from composition |
+| [ISO 6578 - LNG Density](iso6578_lng_density) | LNG density calculation method |
+| [ISO 15403 - CNG Quality](iso15403_cng_quality) | Methane number and MON for vehicle fuel |
+| [Dew Point Standards](dew_point_standards) | Water and hydrocarbon dew point methods |
+| [ASTM D6377 - RVP](astm_d6377_rvp) | Reid vapor pressure for crude and condensate |
+| [Sales Contracts](sales_contracts) | Contract specification and compliance checking |
 
 ---
 

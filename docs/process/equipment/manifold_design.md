@@ -411,9 +411,9 @@ DNV-ST-F101 and API RP 17A parameters for subsea manifolds.
 
 ## See Also
 
-- [Pipeline Mechanical Design](../pipeline_mechanical_design.md)
-- [Riser Mechanical Design](../riser_mechanical_design.md)
-- [Subsea Systems](subsea_systems.md)
+- [Pipeline Mechanical Design](../pipeline_mechanical_design)
+- [Riser Mechanical Design](../riser_mechanical_design)
+- [Subsea Systems](subsea_systems)
 
 ## API Reference
 

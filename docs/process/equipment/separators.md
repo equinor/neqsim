@@ -737,7 +737,7 @@ System.out.println("\n" + separator.toJson());
 
 ## Related Documentation
 
-- [Process Package](../README.md) - Package overview
-- [Streams](streams.md) - Stream handling
-- [Design Framework](../DESIGN_FRAMEWORK.md) - Auto-sizing and design specifications
-- [Bottleneck Analysis](../../wiki/bottleneck_analysis.md) - Capacity utilization
+- [Process Package](../README) - Package overview
+- [Streams](streams) - Stream handling
+- [Design Framework](../DESIGN_FRAMEWORK) - Auto-sizing and design specifications
+- [Bottleneck Analysis](../../wiki/bottleneck_analysis) - Capacity utilization

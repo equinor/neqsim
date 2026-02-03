@@ -212,6 +212,6 @@ for (double t = 0; t < 7200; t += 60) {
 
 ## Related Documentation
 
-- [Equipment Index](README.md) - All equipment
-- [Separators](separators.md) - Phase separation
-- [Controllers](../controllers.md) - Level control
+- [Equipment Index](README) - All equipment
+- [Separators](separators) - Phase separation
+- [Controllers](../controllers) - Level control

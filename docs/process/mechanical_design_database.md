@@ -330,6 +330,6 @@ mechDesign.addDataSource(new DatabaseMechanicalDesignDataSource());    // 3rd pr
 
 ## See Also
 
-- [Mechanical Design Standards](mechanical_design_standards.md) - Standard types and categories
-- [TORG Document Integration](torg_integration.md) - Project-level requirements
-- [Field Development Orchestration](field_development_orchestration.md) - Complete workflows
+- [Mechanical Design Standards](mechanical_design_standards) - Standard types and categories
+- [TORG Document Integration](torg_integration) - Project-level requirements
+- [Field Development Orchestration](field_development_orchestration) - Complete workflows

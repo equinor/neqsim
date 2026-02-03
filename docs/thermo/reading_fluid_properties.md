@@ -938,9 +938,9 @@ for i in range(fluid.getNumberOfPhases()):
 
 ## Related Documentation
 
-- [Density Models](../physical_properties/density_models.md) - Volume correction details
-- [Flash Calculations](flash_calculations_guide.md) - Phase equilibrium calculations
-- [Thermodynamic Models](thermodynamic_models.md) - EoS selection guide
+- [Density Models](../physical_properties/density_models) - Volume correction details
+- [Flash Calculations](flash_calculations_guide) - Phase equilibrium calculations
+- [Thermodynamic Models](thermodynamic_models) - EoS selection guide
 - [SystemInterface API](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermo/system/SystemInterface.java)
 - [PhaseInterface API](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermo/phase/PhaseInterface.java)
 - [ComponentInterface API](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/thermo/component/ComponentInterface.java)

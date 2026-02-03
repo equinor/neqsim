@@ -443,9 +443,9 @@ The COMP table works with several related tables:
 
 ## See Also
 
-- [Fluid Creation Guide](fluid_creation_guide.md) - How to create fluids using these parameters
-- [Mixing Rules Guide](mixing_rules_guide.md) - Binary interaction parameters (kij)
-- [Mathematical Models](mathematical_models.md) - Model equations using these parameters
+- [Fluid Creation Guide](fluid_creation_guide) - How to create fluids using these parameters
+- [Mixing Rules Guide](mixing_rules_guide) - Binary interaction parameters (kij)
+- [Mathematical Models](mathematical_models) - Model equations using these parameters
 
 ---
 

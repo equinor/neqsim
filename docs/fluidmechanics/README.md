@@ -26,14 +26,14 @@ The `fluidmechanics` package provides models for pipeline flow, pressure drop ca
 
 | Document | Description |
 |----------|-------------|
-| [MassTransferAPI.md](MassTransferAPI.md) | **Complete API documentation** for mass transfer with methods, parameters, and examples |
-| [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial.md) | **Practical tutorial** for liquid evaporation and gas dissolution with worked examples |
-| [MASS_TRANSFER_MODEL_IMPROVEMENTS.md](MASS_TRANSFER_MODEL_IMPROVEMENTS.md) | **Technical review** of mass transfer model with improvement recommendations |
-| [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer.md) | Complete theory for interphase mass and heat transfer |
-| [mass_transfer.md](mass_transfer.md) | Diffusivity models, correlations, and reactive mass transfer |
-| [heat_transfer.md](heat_transfer.md) | Heat transfer correlations and wall boundary conditions |
-| [TwoPhasePipeFlowModel.md](TwoPhasePipeFlowModel.md) | Two-phase flow governing equations and numerical methods |
-| [flow_pattern_detection.md](flow_pattern_detection.md) | Flow regime identification algorithms |
+| [MassTransferAPI.md](MassTransferAPI) | **Complete API documentation** for mass transfer with methods, parameters, and examples |
+| [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial) | **Practical tutorial** for liquid evaporation and gas dissolution with worked examples |
+| [MASS_TRANSFER_MODEL_IMPROVEMENTS.md](MASS_TRANSFER_MODEL_IMPROVEMENTS) | **Technical review** of mass transfer model with improvement recommendations |
+| [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer) | Complete theory for interphase mass and heat transfer |
+| [mass_transfer.md](mass_transfer) | Diffusivity models, correlations, and reactive mass transfer |
+| [heat_transfer.md](heat_transfer) | Heat transfer correlations and wall boundary conditions |
+| [TwoPhasePipeFlowModel.md](TwoPhasePipeFlowModel) | Two-phase flow governing equations and numerical methods |
+| [flow_pattern_detection.md](flow_pattern_detection) | Flow regime identification algorithms |
 
 ---
 
@@ -831,7 +831,7 @@ Some advanced test scenarios are disabled pending solver optimization:
 - Transient water drying simulations (solver timeout)
 - Subsea pipeline with large temperature gradients (temperature calculation issues)
 
-See [TwoPhasePipeFlowSystem_Development_Plan.md](TwoPhasePipeFlowSystem_Development_Plan.md) for details.
+See [TwoPhasePipeFlowSystem_Development_Plan.md](TwoPhasePipeFlowSystem_Development_Plan) for details.
 
 ---
 
@@ -854,9 +854,9 @@ See [TwoPhasePipeFlowSystem_Development_Plan.md](TwoPhasePipeFlowSystem_Developm
 
 ## Related Documentation
 
-- [Mass Transfer Modeling](mass_transfer.md) - Detailed multicomponent mass transfer models
-- [Heat Transfer Modeling](heat_transfer.md) - Detailed heat transfer correlations and models
-- [Process Pipeline Equipment](../process/equipment/pipelines.md) - Pipeline in process simulation
-- [Physical Properties](../physical_properties/README.md) - Viscosity, diffusivity, and density models
-- [Thermodynamics](../thermo/README.md) - Equations of state and phase equilibria
-- [Transient Pipeline Simulation](../wiki/pipeline_transient_simulation.md) - Dynamic pipeline modeling
+- [Mass Transfer Modeling](mass_transfer) - Detailed multicomponent mass transfer models
+- [Heat Transfer Modeling](heat_transfer) - Detailed heat transfer correlations and models
+- [Process Pipeline Equipment](../process/equipment/pipelines) - Pipeline in process simulation
+- [Physical Properties](../physical_properties/README) - Viscosity, diffusivity, and density models
+- [Thermodynamics](../thermo/README) - Equations of state and phase equilibria
+- [Transient Pipeline Simulation](../wiki/pipeline_transient_simulation) - Dynamic pipeline modeling

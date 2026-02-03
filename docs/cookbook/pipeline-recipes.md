@@ -165,7 +165,7 @@ holdups = pipe.getLiquidHoldupProfile()
 | Countercurrent flow | Two-fluid |
 | Long transient simulations | Drift-flux (faster) |
 
-> **Further Reading**: See [Multiphase Transient Model](../wiki/multiphase_transient_model.md) for detailed drift-flux equations and numerical methods.
+> **Further Reading**: See [Multiphase Transient Model](../wiki/multiphase_transient_model) for detailed drift-flux equations and numerical methods.
 
 ---
 
@@ -386,7 +386,7 @@ for step in range(600):  # 5 minutes @ 0.5s steps
 | Terrain-induced slugging | ✅ | Empirical |
 | Transient dynamics | ✅ Full | Pseudo-steady |
 
-> **Further Reading**: See [TwoFluidPipe Tutorial](../examples/TwoFluidPipe_Tutorial.md) for comprehensive examples including slug visualization and transient analysis.
+> **Further Reading**: See [TwoFluidPipe Tutorial](../examples/TwoFluidPipe_Tutorial) for comprehensive examples including slug visualization and transient analysis.
 
 ---
 
@@ -749,11 +749,11 @@ print(f"Total flow: {export.getOutletStream().getFlowRate('kg/hr'):.0f} kg/hr")
 
 ## See Also
 
-- **[Pipeline Documentation](../process/equipment/pipelines.md)** - Detailed pipeline guide
-- **[Multiphase Transient Model](../wiki/multiphase_transient_model.md)** - Drift-flux equations and numerics
-- **[Beggs and Brill](../wiki/beggs_and_brill_correlation.md)** - Correlation details
-- **[Two-Fluid Model](../wiki/two_fluid_model.md)** - Advanced two-fluid equations
-- **[TwoFluidPipe Tutorial](../examples/TwoFluidPipe_Tutorial.md)** - Complete tutorial with slug tracking
-- **[Pipeline Network Example](../examples/LoopedPipelineNetworkExample.md)** - Complex network modeling
-- **[Dynamic Simulation Guide](../simulation/dynamic_simulation_guide.md)** - Transient simulation concepts
+- **[Pipeline Documentation](../process/equipment/pipelines)** - Detailed pipeline guide
+- **[Multiphase Transient Model](../wiki/multiphase_transient_model)** - Drift-flux equations and numerics
+- **[Beggs and Brill](../wiki/beggs_and_brill_correlation)** - Correlation details
+- **[Two-Fluid Model](../wiki/two_fluid_model)** - Advanced two-fluid equations
+- **[TwoFluidPipe Tutorial](../examples/TwoFluidPipe_Tutorial)** - Complete tutorial with slug tracking
+- **[Pipeline Network Example](../examples/LoopedPipelineNetworkExample)** - Complex network modeling
+- **[Dynamic Simulation Guide](../simulation/dynamic_simulation_guide)** - Transient simulation concepts
 - **[JavaDoc API](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html)** - Complete reference

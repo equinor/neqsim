@@ -199,7 +199,7 @@ choke.runTransient(0.1);
 double calculatedFlow = choke.getOutletStream().getFlowRate("kg/hr");
 ```
 
-**See:** [Multiphase Choke Flow Models](../MultiphaseChokeFlow.md) for detailed documentation.
+**See:** [Multiphase Choke Flow Models](../MultiphaseChokeFlow) for detailed documentation.
 
 ### IEC 60534 Gas Sizing
 
@@ -278,7 +278,7 @@ System.out.println("Actuator Thrust: " + mechDesign.getRequiredActuatorThrust() 
 
 ### Detailed Documentation
 
-See [Valve Mechanical Design](../ValveMechanicalDesign.md) for complete documentation including:
+See [Valve Mechanical Design](../ValveMechanicalDesign) for complete documentation including:
 - ANSI pressure class selection criteria
 - Wall thickness calculations per ASME B16.34
 - Actuator sizing methodology
@@ -426,8 +426,8 @@ double muJT = inletStream.getJouleThomsonCoefficient();  // K/bar
 
 ## Related Documentation
 
-- [Valve Mechanical Design](../ValveMechanicalDesign.md) - Complete mechanical design calculations
-- [Compressor Mechanical Design](../CompressorMechanicalDesign.md) - Similar approach for compressors
-- [Process Package](../README.md) - Package overview
-- [Separators](separators.md) - Separation equipment
+- [Valve Mechanical Design](../ValveMechanicalDesign) - Complete mechanical design calculations
+- [Compressor Mechanical Design](../CompressorMechanicalDesign) - Similar approach for compressors
+- [Process Package](../README) - Package overview
+- [Separators](separators) - Separation equipment
 - [Safety Systems](../safety/) - Safety valve sizing

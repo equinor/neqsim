@@ -488,6 +488,6 @@ When combining pseudo-components, NeqSim calculates mass-weighted averages for t
 
 ## See Also
 
-- [Fluid Creation Guide](../fluid_creation_guide.md)
-- [PVT Fluid Characterization](../pvt_fluid_characterization.md)
-- [Mixing Rules Guide](../mixing_rules_guide.md)
+- [Fluid Creation Guide](../fluid_creation_guide)
+- [PVT Fluid Characterization](../pvt_fluid_characterization)
+- [Mixing Rules Guide](../mixing_rules_guide)

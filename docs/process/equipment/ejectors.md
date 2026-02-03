@@ -261,6 +261,6 @@ for (double Ps : suctionPressures) {
 
 ## Related Documentation
 
-- [Compressors](compressors.md) - Gas compression alternatives
-- [Streams](streams.md) - Stream handling
-- [Process Package](../README.md) - Package overview
+- [Compressors](compressors) - Gas compression alternatives
+- [Streams](streams) - Stream handling
+- [Process Package](../README) - Package overview

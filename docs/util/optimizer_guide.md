@@ -5,7 +5,7 @@ description: "The `neqsim.process.util.optimizer` package provides a comprehensi
 
 # Process Optimization Module
 
-> **New to process optimization?** Start with the [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
+> **New to process optimization?** Start with the [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW) to understand when to use which optimizer.
 
 The `neqsim.process.util.optimizer` package provides a comprehensive optimization framework for process simulation, including gradient-based optimizers, multi-objective optimization with Pareto front generation, and sensitivity analysis tools.
 
@@ -13,10 +13,10 @@ The `neqsim.process.util.optimizer` package provides a comprehensive optimizatio
 
 | Document | Description |
 |----------|-------------|
-| [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW.md) | When to use which optimizer |
-| [Optimizer Plugin Architecture](../process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md) | Equipment capacity strategies |
-| [Production Optimization Guide](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | ProductionOptimizer examples |
-| [Multi-Objective Optimization](../process/optimization/multi-objective-optimization.md) | Pareto fronts |
+| [Optimization Overview](../process/optimization/OPTIMIZATION_OVERVIEW) | When to use which optimizer |
+| [Optimizer Plugin Architecture](../process/optimization/OPTIMIZER_PLUGIN_ARCHITECTURE) | Equipment capacity strategies |
+| [Production Optimization Guide](../examples/PRODUCTION_OPTIMIZATION_GUIDE) | ProductionOptimizer examples |
+| [Multi-Objective Optimization](../process/optimization/multi-objective-optimization) | Pareto fronts |
 
 ## Table of Contents
 

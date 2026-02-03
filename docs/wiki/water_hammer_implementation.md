@@ -419,6 +419,6 @@ Current implementation limitations:
 
 ## See Also
 
-- [Pipeline Transient Simulation](pipeline_transient_simulation.md) - Slow transients with PipeBeggsAndBrills
-- [Pipeline Pressure Drop](pipeline_pressure_drop.md) - Steady-state pressure drop
-- [Pipeline Index](pipeline_index.md) - All pipeline documentation
+- [Pipeline Transient Simulation](pipeline_transient_simulation) - Slow transients with PipeBeggsAndBrills
+- [Pipeline Pressure Drop](pipeline_pressure_drop) - Steady-state pressure drop
+- [Pipeline Index](pipeline_index) - All pipeline documentation

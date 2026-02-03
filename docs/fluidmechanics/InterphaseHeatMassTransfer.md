@@ -10,10 +10,10 @@ description: This document provides a detailed description of the theoretical mo
 This document provides a detailed description of the theoretical models and numerical methods used in NeqSim for calculating **interphase mass and heat transfer** in two-phase gas-liquid pipe flow. The approach is based on **non-equilibrium thermodynamics** where the gas and liquid phases are not assumed to be in thermodynamic equilibrium at the interface.
 
 **Related Documentation:**
-- [MassTransferAPI.md](MassTransferAPI.md) - API reference for mass transfer methods
-- [mass_transfer.md](mass_transfer.md) - Diffusivity correlations
-- [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial.md) - Practical tutorial
-- [heat_transfer.md](heat_transfer.md) - Heat transfer correlations
+- [MassTransferAPI.md](MassTransferAPI) - API reference for mass transfer methods
+- [mass_transfer.md](mass_transfer) - Diffusivity correlations
+- [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial) - Practical tutorial
+- [heat_transfer.md](heat_transfer) - Heat transfer correlations
 
 **Key Concepts:**
 - Phases exchange mass and heat across the interface
@@ -73,7 +73,7 @@ $$-\frac{x_i}{RT}\nabla\mu_i = \sum_{j=1, j\neq i}^{n} \frac{x_i N_j - x_j N_i}{
 | $R$ | Gas constant | [J/(mol·K)] |
 | $T$ | Temperature | [K] |
 
-> **📘 Diffusivity Models:** The Maxwell-Stefan diffusivities $D_{ij}$ are calculated using correlations documented in [mass_transfer.md](mass_transfer.md). NeqSim provides multiple models:
+> **📘 Diffusivity Models:** The Maxwell-Stefan diffusivities $D_{ij}$ are calculated using correlations documented in [mass_transfer.md](mass_transfer). NeqSim provides multiple models:
 > - **Gas phase:** Chapman-Enskog kinetic theory
 > - **Liquid phase:** Siddiqi-Lucas, Hayduk-Minhas (hydrocarbons), CO2-water (Tamimi)
 > - **High pressure:** Mathur-Thodos correction for P > 100 bar

@@ -608,6 +608,6 @@ print(f"Pc = {fluid.getComponent(0).getPC()} bar")
 
 ## See Also
 
-- [Fluid Characterization](fluid_characterization.md) - Plus fraction models and lumping
-- [PVT Simulation Workflows](pvt_simulation_workflows.md) - Complete PVT analysis
-- [Thermodynamics Guide](thermodynamics_guide.md) - Equation of state selection
+- [Fluid Characterization](fluid_characterization) - Plus fraction models and lumping
+- [PVT Simulation Workflows](pvt_simulation_workflows) - Complete PVT analysis
+- [Thermodynamics Guide](thermodynamics_guide) - Equation of state selection

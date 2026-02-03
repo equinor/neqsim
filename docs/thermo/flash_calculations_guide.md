@@ -833,8 +833,8 @@ void PSflashVega(double Sspec)
 NeqSim provides comprehensive calculations for gas hydrate formation, including multi-phase equilibrium with hydrate, inhibitor effects, and cavity occupancy calculations.
 
 > **📚 Detailed Documentation:**
-> - [Hydrate Models](hydrate_models.md) - Thermodynamic models (vdWP, CPA, PVTsim)
-> - [Hydrate Flash Operations](../thermodynamicoperations/hydrate_flash_operations.md) - Complete flash API
+> - [Hydrate Models](hydrate_models) - Thermodynamic models (vdWP, CPA, PVTsim)
+> - [Hydrate Flash Operations](../thermodynamicoperations/hydrate_flash_operations) - Complete flash API
 
 ### Hydrate TPflash
 
@@ -1057,10 +1057,10 @@ if (Double.isNaN(fluid.getTemperature())) {
 
 ## See Also
 
-- [Fluid Creation Guide](fluid_creation_guide.md) - Creating thermodynamic systems
-- [Mixing Rules Guide](mixing_rules_guide.md) - Configuring phase equilibrium models
-- [Component Database Guide](component_database_guide.md) - Pure component parameters
-- [Thermodynamic Operations](thermodynamic_operations.md) - Overview of operations
+- [Fluid Creation Guide](fluid_creation_guide) - Creating thermodynamic systems
+- [Mixing Rules Guide](mixing_rules_guide) - Configuring phase equilibrium models
+- [Component Database Guide](component_database_guide) - Pure component parameters
+- [Thermodynamic Operations](thermodynamic_operations) - Overview of operations
 
 ---
 

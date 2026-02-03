@@ -6,8 +6,8 @@ description: This document compares the **conventional Norwegian handbook method
 # NeqSim vs Norwegian Handbook: Emission Calculation Methods Comparison
 
 > **📖 Related Documentation:**  
-> - [Produced Water Emissions Tutorial](ProducedWaterEmissions_Tutorial.md) - Complete implementation guide  
-> - [Examples Index](index.md) - All tutorials and examples  
+> - [Produced Water Emissions Tutorial](ProducedWaterEmissions_Tutorial) - Complete implementation guide  
+> - [Examples Index](index) - All tutorials and examples  
 > - [REFERENCE_MANUAL_INDEX - Chapter 43](../REFERENCE_MANUAL_INDEX.md#chapter-43-sustainability--emissions) - Full API documentation
 
 ## Overview
@@ -356,4 +356,4 @@ For facilities with significant produced water handling, implementing NeqSim-bas
 
 ---
 
-*Document generated from NeqSim emission calculation framework. See [ProducedWaterEmissions_Tutorial.md](ProducedWaterEmissions_Tutorial.md) for implementation details.*
+*Document generated from NeqSim emission calculation framework. See [ProducedWaterEmissions_Tutorial.md](ProducedWaterEmissions_Tutorial) for implementation details.*

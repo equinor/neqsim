@@ -528,7 +528,7 @@ System.out.println("Lazy-Wave Top Tension: " +
 
 ## Related Documentation
 
-- [Pipelines](equipment/pipelines.md) - Riser class and configuration
-- [Pipeline Mechanical Design](pipeline_mechanical_design.md) - Base calculations
-- [Pipeline Design Math](pipeline_mechanical_design_math.md) - Formula reference
-- [Subsea Systems](equipment/subsea_systems.md) - Subsea wells and flowlines
+- [Pipelines](equipment/pipelines) - Riser class and configuration
+- [Pipeline Mechanical Design](pipeline_mechanical_design) - Base calculations
+- [Pipeline Design Math](pipeline_mechanical_design_math) - Formula reference
+- [Subsea Systems](equipment/subsea_systems) - Subsea wells and flowlines

@@ -591,51 +591,51 @@ neqsim/
 ## Appendix B: Key Documentation Links
 
 ### Core Documentation
-- [Modules Overview](modules.md)
-- [Reference Manual Index](REFERENCE_MANUAL_INDEX.md)
-- [Developer Setup](development/DEVELOPER_SETUP.md)
+- [Modules Overview](modules)
+- [Reference Manual Index](REFERENCE_MANUAL_INDEX)
+- [Developer Setup](development/DEVELOPER_SETUP)
 
 ### Process & Equipment
-- [Process Design Guide](process/process_design_guide.md)
-- [Equipment Design Parameters](process/EQUIPMENT_DESIGN_PARAMETERS.md)
-- [Capacity Constraint Framework](process/CAPACITY_CONSTRAINT_FRAMEWORK.md)
-- [TwoFluidPipe Transient Model](process/TWOFLUIDPIPE_MODEL.md)
-- [Pipeline Network Solver Enhancement](process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT.md)
+- [Process Design Guide](process/process_design_guide)
+- [Equipment Design Parameters](process/EQUIPMENT_DESIGN_PARAMETERS)
+- [Capacity Constraint Framework](process/CAPACITY_CONSTRAINT_FRAMEWORK)
+- [TwoFluidPipe Transient Model](process/TWOFLUIDPIPE_MODEL)
+- [Pipeline Network Solver Enhancement](process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT)
 
 ### Mechanical Design
-- [Mechanical Design Overview](process/mechanical_design.md)
-- [Design Standards](process/mechanical_design_standards.md)
-- [Pipeline Mechanical Design](process/pipeline_mechanical_design.md)
-- [Riser Mechanical Design](process/riser_mechanical_design.md)
-- [Topside Piping Design](process/topside_piping_design.md)
-- [Compressor Mechanical Design](process/CompressorMechanicalDesign.md)
-- [Valve Mechanical Design](process/ValveMechanicalDesign.md)
+- [Mechanical Design Overview](process/mechanical_design)
+- [Design Standards](process/mechanical_design_standards)
+- [Pipeline Mechanical Design](process/pipeline_mechanical_design)
+- [Riser Mechanical Design](process/riser_mechanical_design)
+- [Topside Piping Design](process/topside_piping_design)
+- [Compressor Mechanical Design](process/CompressorMechanicalDesign)
+- [Valve Mechanical Design](process/ValveMechanicalDesign)
 
 ### Safety & Risk
-- [Safety Systems Overview](safety/README.md)
-- [ESD & Blowdown System](safety/ESD_BLOWDOWN_SYSTEM.md)
-- [HIPPS Implementation](safety/hipps_implementation.md)
-- [Integrated Safety Systems](safety/INTEGRATED_SAFETY_SYSTEMS.md)
-- [Layered Safety Architecture](safety/layered_safety_architecture.md)
+- [Safety Systems Overview](safety/README)
+- [ESD & Blowdown System](safety/ESD_BLOWDOWN_SYSTEM)
+- [HIPPS Implementation](safety/hipps_implementation)
+- [Integrated Safety Systems](safety/INTEGRATED_SAFETY_SYSTEMS)
+- [Layered Safety Architecture](safety/layered_safety_architecture)
 
 ### Risk Analysis
-- [Risk Framework Overview](risk/README.md)
-- [Monte Carlo Simulation](risk/monte-carlo.md)
-- [Bow-Tie Analysis](risk/bowtie-analysis.md)
-- [Condition-Based Reliability](risk/condition-based.md)
-- [SIS Integration](risk/sis-integration.md)
-- [Dynamic Risk Simulation](risk/dynamic-simulation.md)
-- [Reliability Data Guide](risk/RELIABILITY_DATA_GUIDE.md)
+- [Risk Framework Overview](risk/README)
+- [Monte Carlo Simulation](risk/monte-carlo)
+- [Bow-Tie Analysis](risk/bowtie-analysis)
+- [Condition-Based Reliability](risk/condition-based)
+- [SIS Integration](risk/sis-integration)
+- [Dynamic Risk Simulation](risk/dynamic-simulation)
+- [Reliability Data Guide](risk/RELIABILITY_DATA_GUIDE)
 
 ### Cost Estimation
-- [Cost Estimation Framework](process/COST_ESTIMATION_FRAMEWORK.md)
-- [Cost Estimation API Reference](process/COST_ESTIMATION_API_REFERENCE.md)
+- [Cost Estimation Framework](process/COST_ESTIMATION_FRAMEWORK)
+- [Cost Estimation API Reference](process/COST_ESTIMATION_API_REFERENCE)
 
 ### Subsea Systems
-- [SURF & Subsea Equipment](process/SURF_SUBSEA_EQUIPMENT.md)
+- [SURF & Subsea Equipment](process/SURF_SUBSEA_EQUIPMENT)
 
 ### Examples
-- [Example Index](examples/index.md)
+- [Example Index](examples/index)
 - [Looped Pipeline Network Example](examples/LoopedPipelineNetworkExample.ipynb)
 - [Production Optimizer Tutorial](examples/ProductionOptimizer_Tutorial.ipynb)
 - [Network Solver Tutorial](examples/NetworkSolverTutorial.ipynb)

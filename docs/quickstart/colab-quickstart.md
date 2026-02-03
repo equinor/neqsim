@@ -157,7 +157,7 @@ plt.show()
 
 ## Next Steps
 
-- **[Python Quickstart](python-quickstart.md)** - Local Python installation
-- **[Examples](../examples/index.md)** - More notebook tutorials
-- **[Cookbook](../cookbook/index.md)** - Quick recipes
+- **[Python Quickstart](python-quickstart)** - Local Python installation
+- **[Examples](../examples/index)** - More notebook tutorials
+- **[Cookbook](../cookbook/index)** - Quick recipes
 - **[JavaDoc API](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html)** - Complete API reference

@@ -75,7 +75,7 @@ NeqSim performs various types of equilibrium calculations (flashes) via the `The
 Once a flash is performed, physical properties are available from the `Phase` objects.
 
 *   **Density**: `phase.getDensity("kg/m3")`
-*   **Viscosity**: `phase.getViscosity("kg/msec")`. See [Viscosity Models](viscosity_models.md).
+*   **Viscosity**: `phase.getViscosity("kg/msec")`. See [Viscosity Models](viscosity_models).
 *   **Thermal Conductivity**: `phase.getThermalConductivity("W/mK")`
 *   **Surface Tension**: `system.getInterfacialTension(phase1, phase2)`
 *   **Heat Capacity (Cp/Cv)**: `phase.getCp()`, `phase.getCv()`
@@ -153,4 +153,4 @@ For real reservoir fluids containing heavy fractions (C7+), NeqSim provides tool
 *   **Whitson Gamma**: Use `setPlusFractionModel("Whitson Gamma")` if you have specific gamma distribution parameters.
 *   **No Lumping**: To keep all individual carbon number components (C6, C7... C80), use `setLumpingModel("no lumping")`.
 
-See [Fluid Characterization](fluid_characterization.md) for details.
+See [Fluid Characterization](fluid_characterization) for details.

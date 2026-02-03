@@ -240,6 +240,6 @@ registry.register("trained-model", trained, meta);
 
 ## Related Documentation
 
-- [Advisory Systems](../advisory/README.md) - Use predictions for operator guidance
-- [Batch Studies](../optimization/README.md) - Generate training data efficiently
-- [AI Platform Integration](../../integration/ai_platform_integration.md) - External ML platform integration
+- [Advisory Systems](../advisory/README) - Use predictions for operator guidance
+- [Batch Studies](../optimization/README) - Generate training data efficiently
+- [AI Platform Integration](../../integration/ai_platform_integration) - External ML platform integration

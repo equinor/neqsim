@@ -626,11 +626,11 @@ for (int step = 0; step < 1000; step++) {
 double maxP = pipe.getMaxPressure("bar");
 ```
 
-For detailed implementation, see [Water Hammer Implementation Guide](water_hammer_implementation.md).
+For detailed implementation, see [Water Hammer Implementation Guide](water_hammer_implementation).
 
 ## See Also
 
-- [Pipeline Pressure Drop Overview](pipeline_pressure_drop.md)
-- [Beggs & Brill Correlation](beggs_and_brill_correlation.md)
-- [Water Hammer Implementation Guide](water_hammer_implementation.md)
-- [Process Simulation Basics](../simulation/process_calculator.md)
+- [Pipeline Pressure Drop Overview](pipeline_pressure_drop)
+- [Beggs & Brill Correlation](beggs_and_brill_correlation)
+- [Water Hammer Implementation Guide](water_hammer_implementation)
+- [Process Simulation Basics](../simulation/process_calculator)

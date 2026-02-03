@@ -360,7 +360,7 @@ System.out.println("Maximum rate at this back pressure: " + maxRate + " m³/d");
 
 ## See Also
 
-- [Pipelines](../pipeline/README.md) - General pipeline modeling
-- [Wells](../well/README.md) - Well modeling
-- [Flow Assurance](../../pvtsimulation/flow_assurance.md) - Hydrate and wax management
-- [Networks](../network/README.md) - Network modeling
+- [Pipelines](../pipeline/README) - General pipeline modeling
+- [Wells](../well/README) - Well modeling
+- [Flow Assurance](../../pvtsimulation/flow_assurance) - Hydrate and wax management
+- [Networks](../network/README) - Network modeling

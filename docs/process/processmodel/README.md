@@ -11,13 +11,13 @@ This folder contains documentation for process system and flowsheet management i
 
 | Document | Description |
 |----------|-------------|
-| [ProcessSystem](process_system.md) | Main process system class and execution strategies |
-| [ProcessModel](process_model.md) | Multi-process coordination and management |
-| [ProcessModule](process_module.md) | Modular process units |
-| [Graph-Based Simulation](graph_simulation.md) | Graph-based execution and optimization |
-| [PFD Diagram Export](diagram_export.md) | Professional process flow diagram generation |
-| [Architecture & DEXPI](DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY.md) | Diagram architecture and DEXPI integration |
-| [Process Serialization](../../simulation/process_serialization.md) | Saving and loading process models |
+| [ProcessSystem](process_system) | Main process system class and execution strategies |
+| [ProcessModel](process_model) | Multi-process coordination and management |
+| [ProcessModule](process_module) | Modular process units |
+| [Graph-Based Simulation](graph_simulation) | Graph-based execution and optimization |
+| [PFD Diagram Export](diagram_export) | Professional process flow diagram generation |
+| [Architecture & DEXPI](DIAGRAM_ARCHITECTURE_DEXPI_SYNERGY) | Diagram architecture and DEXPI integration |
+| [Process Serialization](../../simulation/process_serialization) | Saving and loading process models |
 
 ---
 
@@ -109,14 +109,14 @@ model.saveToNeqsim("field_model.neqsim");
 ProcessModel loaded = ProcessModel.loadFromNeqsim("field_model.neqsim");
 ```
 
-For full documentation, see [Process Serialization Guide](../../simulation/process_serialization.md).
+For full documentation, see [Process Serialization Guide](../../simulation/process_serialization).
 
 ---
 
 ## Related Documentation
 
-- [Equipment Overview](../equipment/README.md) - Process equipment
-- [Controllers](../controllers.md) - Control systems
-- [Safety Systems](../safety/README.md) - Safety equipment
-- [Process Serialization](../../simulation/process_serialization.md) - Save/load processes
-- [DEXPI Integration](../../integration/dexpi-reader.md) - DEXPI P&ID data exchange
+- [Equipment Overview](../equipment/README) - Process equipment
+- [Controllers](../controllers) - Control systems
+- [Safety Systems](../safety/README) - Safety equipment
+- [Process Serialization](../../simulation/process_serialization) - Save/load processes
+- [DEXPI Integration](../../integration/dexpi-reader) - DEXPI P&ID data exchange

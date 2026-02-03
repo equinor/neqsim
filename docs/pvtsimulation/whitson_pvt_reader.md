@@ -422,6 +422,6 @@ For gas condensates, an oil (condensate) phase forms below the dew point pressur
 
 ## See Also
 
-- [Fluid Characterization](fluid_characterization_mathematics.md) - Mathematical background for C7+ characterization
-- [PVT Workflow](pvt_workflow.md) - End-to-end PVT workflow
-- [Viscosity Models](../physical_properties/viscosity_models.md) - LBC and other viscosity model documentation
+- [Fluid Characterization](fluid_characterization_mathematics) - Mathematical background for C7+ characterization
+- [PVT Workflow](pvt_workflow) - End-to-end PVT workflow
+- [Viscosity Models](../physical_properties/viscosity_models) - LBC and other viscosity model documentation

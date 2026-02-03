@@ -10,9 +10,9 @@ description: This tutorial provides practical guidance for modeling **complete e
 This tutorial provides practical guidance for modeling **complete evaporation of liquids into gas** and **dissolution of gas into liquids** using NeqSim's non-equilibrium two-phase pipe flow model.
 
 **Related Documentation:**
-- [MassTransferAPI.md](MassTransferAPI.md) - Complete API reference with method signatures and parameters
-- [MASS_TRANSFER_MODEL_IMPROVEMENTS.md](MASS_TRANSFER_MODEL_IMPROVEMENTS.md) - Technical model review
-- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer.md) - Theory background
+- [MassTransferAPI.md](MassTransferAPI) - Complete API reference with method signatures and parameters
+- [MASS_TRANSFER_MODEL_IMPROVEMENTS.md](MASS_TRANSFER_MODEL_IMPROVEMENTS) - Technical model review
+- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer) - Theory background
 
 **Common Industrial Applications:**
 - Gas lift wells where injected gas dissolves into oil
@@ -568,10 +568,10 @@ fluid.addComponent("MDEA", 200.0, "kg/hr", 1);
 
 ### Further Reading
 
-- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer.md) - Complete theoretical background
-- [mass_transfer.md](mass_transfer.md) - Diffusivity models and correlations
-- [TwoPhasePipeFlowModel.md](TwoPhasePipeFlowModel.md) - Two-phase flow equations
-- [flow_pattern_detection.md](flow_pattern_detection.md) - Flow regime effects
+- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer) - Complete theoretical background
+- [mass_transfer.md](mass_transfer) - Diffusivity models and correlations
+- [TwoPhasePipeFlowModel.md](TwoPhasePipeFlowModel) - Two-phase flow equations
+- [flow_pattern_detection.md](flow_pattern_detection) - Flow regime effects
 
 ---
 

@@ -113,7 +113,7 @@ As pressure drops below the bubble point:
 
 ### 1. Empirical Screening (De Boer)
 
-Fast, conservative screening based on field correlations. See [De Boer Screening](asphaltene_deboer_screening.md).
+Fast, conservative screening based on field correlations. See [De Boer Screening](asphaltene_deboer_screening).
 
 **Advantages:**
 - Quick calculation (milliseconds)
@@ -127,7 +127,7 @@ Fast, conservative screening based on field correlations. See [De Boer Screening
 
 ### 2. Thermodynamic Modeling (CPA EOS)
 
-Rigorous equation of state approach. See [CPA Calculations](asphaltene_cpa_calculations.md).
+Rigorous equation of state approach. See [CPA Calculations](asphaltene_cpa_calculations).
 
 **Advantages:**
 - Predicts onset pressure/temperature
@@ -341,7 +341,7 @@ Based on the Pedersen correlations, asphaltene components show these typical pro
 
 ### 4. Combined Approach
 
-Use De Boer for initial screening, then CPA or Pedersen method for detailed analysis of flagged cases. See [Method Comparison](asphaltene_method_comparison.md).
+Use De Boer for initial screening, then CPA or Pedersen method for detailed analysis of flagged cases. See [Method Comparison](asphaltene_method_comparison).
 
 ## Best Practices
 

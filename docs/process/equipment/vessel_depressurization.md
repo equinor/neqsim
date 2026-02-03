@@ -582,9 +582,9 @@ plt.savefig('blowdown_results.png', dpi=150)
 
 ## Related Documentation
 
-- [QRA Integration Guide](../../integration/QRA_INTEGRATION_GUIDE.md) - Safety analysis integration
-- [Tank Equipment](tanks.md) - General tank modeling
-- [Safety Simulation](../../safety/README.md) - Safety system modeling
+- [QRA Integration Guide](../../integration/QRA_INTEGRATION_GUIDE) - Safety analysis integration
+- [Tank Equipment](tanks) - General tank modeling
+- [Safety Simulation](../../safety/README) - Safety system modeling
 
 ---
 

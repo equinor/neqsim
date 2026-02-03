@@ -689,12 +689,12 @@ OptimizationResult result = ProductionOptimizer.optimize(process, feed, config);
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Optimization Overview | [OPTIMIZATION_OVERVIEW.md](OPTIMIZATION_OVERVIEW.md) | When to use which optimizer |
-| Capacity Constraint Framework | [../CAPACITY_CONSTRAINT_FRAMEWORK.md](../CAPACITY_CONSTRAINT_FRAMEWORK.md) | Detailed constraint architecture |
-| Production Optimization Guide | [../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | Complete Java/Python examples |
-| External Integration | [../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md) | SciPy/NLopt integration |
-| Batch Studies | [batch-studies.md](batch-studies.md) | Parameter sensitivity analysis |
-| Multi-Objective | [multi-objective-optimization.md](multi-objective-optimization.md) | Pareto optimization details |
+| Optimization Overview | [OPTIMIZATION_OVERVIEW.md](OPTIMIZATION_OVERVIEW) | When to use which optimizer |
+| Capacity Constraint Framework | [../CAPACITY_CONSTRAINT_FRAMEWORK.md](../CAPACITY_CONSTRAINT_FRAMEWORK) | Detailed constraint architecture |
+| Production Optimization Guide | [../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) | Complete Java/Python examples |
+| External Integration | [../../integration/EXTERNAL_OPTIMIZER_INTEGRATION.md](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) | SciPy/NLopt integration |
+| Batch Studies | [batch-studies.md](batch-studies) | Parameter sensitivity analysis |
+| Multi-Objective | [multi-objective-optimization.md](multi-objective-optimization) | Pareto optimization details |
 
 ### Source Code References
 

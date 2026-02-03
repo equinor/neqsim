@@ -11,12 +11,12 @@ NeqSim provides a comprehensive mechanical design framework for sizing and speci
 >
 > | Topic | Documentation |
 > |-------|---------------|
-> | **Pipelines** | [Pipeline Mechanical Design](pipeline_mechanical_design.md) - Wall thickness, stress analysis, cost estimation |
-> | **Mathematical Methods** | [Pipeline Design Math](pipeline_mechanical_design_math.md) - Complete formula reference |
-> | **Design Standards** | [Mechanical Design Standards](mechanical_design_standards.md) - Industry standards reference |
-> | **Database** | [Mechanical Design Database](mechanical_design_database.md) - Material properties, design factors |
-> | **Cost Estimation** | [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK.md) - CAPEX, OPEX, currency, location factors |
-> | **Design Parameters** | [EQUIPMENT_DESIGN_PARAMETERS.md](EQUIPMENT_DESIGN_PARAMETERS.md) - autoSize vs manual sizing guide |
+> | **Pipelines** | [Pipeline Mechanical Design](pipeline_mechanical_design) - Wall thickness, stress analysis, cost estimation |
+> | **Mathematical Methods** | [Pipeline Design Math](pipeline_mechanical_design_math) - Complete formula reference |
+> | **Design Standards** | [Mechanical Design Standards](mechanical_design_standards) - Industry standards reference |
+> | **Database** | [Mechanical Design Database](mechanical_design_database) - Material properties, design factors |
+> | **Cost Estimation** | [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK) - CAPEX, OPEX, currency, location factors |
+> | **Design Parameters** | [EQUIPMENT_DESIGN_PARAMETERS.md](EQUIPMENT_DESIGN_PARAMETERS) - autoSize vs manual sizing guide |
 
 ## Overview
 
@@ -66,7 +66,7 @@ The `PipelineMechanicalDesign` class provides comprehensive pipeline design incl
 | **Fatigue Analysis** | S-N curves per DNV-RP-C203 |
 | **Cost Estimation** | Complete project cost with BOM |
 
-See [Pipeline Mechanical Design](pipeline_mechanical_design.md) for details.
+See [Pipeline Mechanical Design](pipeline_mechanical_design) for details.
 
 ### Response Classes for JSON Export
 
@@ -827,8 +827,8 @@ For detailed cost estimation including OPEX, financial metrics, currency convers
 
 | Document | Description |
 |----------|-------------|
-| [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK.md) | **Comprehensive guide to capital and operating cost estimation** |
-| [COST_ESTIMATION_API_REFERENCE.md](COST_ESTIMATION_API_REFERENCE.md) | **Detailed API reference for all cost estimation classes** |
+| [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK) | **Comprehensive guide to capital and operating cost estimation** |
+| [COST_ESTIMATION_API_REFERENCE.md](COST_ESTIMATION_API_REFERENCE) | **Detailed API reference for all cost estimation classes** |
 
 **Key Features:**
 - Equipment costs using Turton et al., Peters & Timmerhaus, GPSA correlations
@@ -923,6 +923,6 @@ System.out.println("Driver power: " + compResponse.getDriverPower() + " kW");
 
 ## See Also
 
-- [Process Equipment](README.md)
-- [Pipeline Mechanical Design](pipeline_mechanical_design.md)
-- [Design Standards](../standards/README.md)
+- [Process Equipment](README)
+- [Pipeline Mechanical Design](pipeline_mechanical_design)
+- [Design Standards](../standards/README)

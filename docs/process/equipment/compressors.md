@@ -19,7 +19,7 @@ Documentation for compression equipment in NeqSim process simulation.
 
 > **📖 Detailed Curve Documentation:** For comprehensive information on compressor curves, 
 > including multi-speed vs single-speed handling, surge curves, and stone wall curves, 
-> see [Compressor Curves and Performance Maps](compressor_curves.md).
+> see [Compressor Curves and Performance Maps](compressor_curves).
 
 ---
 
@@ -111,7 +111,7 @@ Where:
 
 ## Performance Curves
 
-NeqSim supports detailed compressor performance maps with multiple speed curves. For comprehensive documentation, see [Compressor Curves and Performance Maps](compressor_curves.md).
+NeqSim supports detailed compressor performance maps with multiple speed curves. For comprehensive documentation, see [Compressor Curves and Performance Maps](compressor_curves).
 
 ### Setting Compressor Map
 
@@ -182,7 +182,7 @@ double[] stoneWallHead = {112.65};
 compressor.getCompressorChart().getStoneWallCurve().setCurve(chartConditions, stoneWallFlow, stoneWallHead);
 ```
 
-> **📖 See Also:** [Compressor Curves and Performance Maps](compressor_curves.md) for detailed
+> **📖 See Also:** [Compressor Curves and Performance Maps](compressor_curves) for detailed
 > documentation on curve setup, interpolation methods, and Python examples.
 
 ---
@@ -805,7 +805,7 @@ print(f"Mechanical efficiency: {comp.getMechanicalEfficiency()*100:.1f}%")
 
 ## Related Documentation
 
-- [Compressor Curves](compressor_curves.md) - Detailed curve documentation, templates, and MW correction
-- [Process Package](../README.md) - Package overview
-- [Expanders](expanders.md) - Expansion equipment
-- [Pumps](pumps.md) - Liquid compression
+- [Compressor Curves](compressor_curves) - Detailed curve documentation, templates, and MW correction
+- [Process Package](../README) - Package overview
+- [Expanders](expanders) - Expansion equipment
+- [Pumps](pumps) - Liquid compression

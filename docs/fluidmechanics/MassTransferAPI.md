@@ -865,7 +865,7 @@ System.out.printf("Status: %s%n", kLValid ? "✓ PASS" : "✗ FAIL");
 
 ## See Also
 
-- [MASS_TRANSFER_MODEL_IMPROVEMENTS.md](MASS_TRANSFER_MODEL_IMPROVEMENTS.md) - Technical review document
-- [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial.md) - Tutorial with practical examples
-- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer.md) - Complete theory for interphase transfer
-- [mass_transfer.md](mass_transfer.md) - Diffusivity models and correlations
+- [MASS_TRANSFER_MODEL_IMPROVEMENTS.md](MASS_TRANSFER_MODEL_IMPROVEMENTS) - Technical review document
+- [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial) - Tutorial with practical examples
+- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer) - Complete theory for interphase transfer
+- [mass_transfer.md](mass_transfer) - Diffusivity models and correlations

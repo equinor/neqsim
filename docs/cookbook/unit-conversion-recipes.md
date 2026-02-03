@@ -247,6 +247,6 @@ fluid.display()
 
 ## See Also
 
-- **[Reading Fluid Properties](../thermo/reading_fluid_properties.md)** - Complete property guide
-- **[Unit Conversion Documentation](../util/unit_conversion.md)** - Detailed unit handling
+- **[Reading Fluid Properties](../thermo/reading_fluid_properties)** - Complete property guide
+- **[Unit Conversion Documentation](../util/unit_conversion)** - Detailed unit handling
 - **[JavaDoc: Units](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/util/unit/Units.html)** - Unit API

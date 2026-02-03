@@ -13,9 +13,9 @@ This folder contains comprehensive documentation for NeqSim's field development 
 
 | Document | Description |
 |----------|-------------|
-| [DIGITAL_FIELD_TWIN.md](DIGITAL_FIELD_TWIN.md) | **Start here!** Architecture showing how NeqSim integrates all lifecycle phases |
-| [MATHEMATICAL_REFERENCE.md](MATHEMATICAL_REFERENCE.md) | Mathematical foundations for all calculations (EoS, economics, flow) |
-| [API_GUIDE.md](API_GUIDE.md) | Detailed usage examples for every class and method |
+| [DIGITAL_FIELD_TWIN.md](DIGITAL_FIELD_TWIN) | **Start here!** Architecture showing how NeqSim integrates all lifecycle phases |
+| [MATHEMATICAL_REFERENCE.md](MATHEMATICAL_REFERENCE) | Mathematical foundations for all calculations (EoS, economics, flow) |
+| [API_GUIDE.md](API_GUIDE) | Detailed usage examples for every class and method |
 
 ---
 
@@ -215,7 +215,7 @@ Each equipment type has a dedicated mechanical design class with:
 - Bill of materials generation
 - JSON export for reporting
 
-See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT.md) for detailed documentation.
+See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT) for detailed documentation.
 
 ---
 
@@ -223,16 +223,16 @@ See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT.md) for detai
 
 | Topic | Document |
 |-------|----------|
-| SURF Subsea Equipment | [SURF_SUBSEA_EQUIPMENT.md](../process/SURF_SUBSEA_EQUIPMENT.md) |
-| Late-Life Operations | [LATE_LIFE_OPERATIONS.md](LATE_LIFE_OPERATIONS.md) |
-| Field Development Strategy | [FIELD_DEVELOPMENT_STRATEGY.md](FIELD_DEVELOPMENT_STRATEGY.md) |
-| Integrated Framework | [INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md) |
+| SURF Subsea Equipment | [SURF_SUBSEA_EQUIPMENT.md](../process/SURF_SUBSEA_EQUIPMENT) |
+| Late-Life Operations | [LATE_LIFE_OPERATIONS.md](LATE_LIFE_OPERATIONS) |
+| Field Development Strategy | [FIELD_DEVELOPMENT_STRATEGY.md](FIELD_DEVELOPMENT_STRATEGY) |
+| Integrated Framework | [INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK) |
 
 ---
 
 ## See Also
 
-- [Process Simulation Guide](../wiki/process_simulation.md)
-- [Thermodynamic Models](../thermo/thermodynamic_models.md)
-- [Economics Module](../process/economics/README.md)
-- [Reference Manual Index](../REFERENCE_MANUAL_INDEX.md)
+- [Process Simulation Guide](../wiki/process_simulation)
+- [Thermodynamic Models](../thermo/thermodynamic_models)
+- [Economics Module](../process/economics/README)
+- [Reference Manual Index](../REFERENCE_MANUAL_INDEX)

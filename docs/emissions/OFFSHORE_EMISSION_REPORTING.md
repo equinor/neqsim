@@ -146,7 +146,7 @@ Considerations:
 • More complex than handbook methods
 ```
 
-> **NeqSimLive Integration**: The Søreide-Whitson model is the primary thermodynamic model used in **NeqSimLive** for calculating emissions from produced water degassing on offshore platforms. See [Søreide-Whitson Model Documentation](../thermo/SoreideWhitsonModel.md) for detailed model description and references.
+> **NeqSimLive Integration**: The Søreide-Whitson model is the primary thermodynamic model used in **NeqSimLive** for calculating emissions from produced water degassing on offshore platforms. See [Søreide-Whitson Model Documentation](../thermo/SoreideWhitsonModel) for detailed model description and references.
 
 ---
 
@@ -492,7 +492,7 @@ The Søreide-Whitson model accounts for salinity effects through a modified Peng
 
 > **Reference**: Søreide, I. & Whitson, C.H. (1992). "Peng-Robinson predictions for hydrocarbons, CO₂, N₂, and H₂S with pure water and NaCl brine". *Fluid Phase Equilibria*, 77, 217-240. [DOI: 10.1016/0378-3812(92)85105-H](https://doi.org/10.1016/0378-3812(92)85105-H)
 >
-> For detailed model documentation, see [Søreide-Whitson Model](../thermo/SoreideWhitsonModel.md).
+> For detailed model documentation, see [Søreide-Whitson Model](../thermo/SoreideWhitsonModel).
 
 ```python
 # Simplified salting-out estimation (for comparison/validation)
@@ -552,7 +552,7 @@ The Søreide-Whitson model is used for NeqSimLive produced water emission calcul
 3. **Regulatory Applicability**: Salinity correction supports accurate emission reporting
 4. **Industry Acceptance**: The model has been used in petroleum industry since 1992
 
-For more details on the Søreide-Whitson model implementation, see [Søreide-Whitson Model Documentation](../thermo/SoreideWhitsonModel.md).
+For more details on the Søreide-Whitson model implementation, see [Søreide-Whitson Model Documentation](../thermo/SoreideWhitsonModel).
 
 ### Validation Requirements
 
@@ -663,7 +663,7 @@ Published studies comparing thermodynamic virtual measurements with physical sam
    - Fluid Phase Equilibria, 77, 217-240
    - DOI: [10.1016/0378-3812(92)85105-H](https://doi.org/10.1016/0378-3812(92)85105-H)
    - **This is the thermodynamic model used in NeqSimLive for produced water emission calculations**
-   - See also: [NeqSim Søreide-Whitson Model Documentation](../thermo/SoreideWhitsonModel.md)
+   - See also: [NeqSim Søreide-Whitson Model Documentation](../thermo/SoreideWhitsonModel)
 
 7. **Michelsen, M.L. & Mollerup, J.M. (2007)**
    - "Thermodynamic Models: Fundamentals & Computational Aspects"

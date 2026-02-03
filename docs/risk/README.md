@@ -57,19 +57,19 @@ For comprehensive examples, see:
 
 ### P1: Dynamic Simulation Integration
 
-See [Dynamic Simulation Guide](dynamic-simulation.md)
+See [Dynamic Simulation Guide](dynamic-simulation)
 
 ### P2: SIS/SIF Integration
 
-See [SIS Integration Guide](sis-integration.md)
+See [SIS Integration Guide](sis-integration)
 
 ### P3: Real-time Digital Twin
 
-See [Real-time Monitoring Guide](../integration/REAL_TIME_INTEGRATION_GUIDE.md)
+See [Real-time Monitoring Guide](../integration/REAL_TIME_INTEGRATION_GUIDE)
 
 ### P4: Bow-Tie Analysis
 
-See [Bow-Tie Analysis Guide](bowtie-analysis.md)
+See [Bow-Tie Analysis Guide](bowtie-analysis)
 
 ### P5: Portfolio Risk
 
@@ -77,11 +77,11 @@ See [Portfolio Risk Guide](overview.md#portfolio-risk-analysis)
 
 ### P6: Condition-Based Reliability
 
-See [Condition-Based Reliability Guide](condition-based.md)
+See [Condition-Based Reliability Guide](condition-based)
 
 ### P7: ML/AI Integration
 
-See [ML Integration Guide](../integration/ml_integration.md)
+See [ML Integration Guide](../integration/ml_integration)
 
 ## Industry Standards
 
@@ -98,5 +98,5 @@ The framework implements or aligns with:
 
 ## API Reference
 
-- [API Reference](api-reference.md)
-- [Mathematical Reference](mathematical-reference.md)
+- [API Reference](api-reference)
+- [Mathematical Reference](mathematical-reference)

@@ -982,4 +982,4 @@ When `result.isAnomalyDetected()` returns `true`:
 
 ## See Also
 
-- [Adjusters](../equipment/util/adjusters.md) - Variable adjustment patterns
+- [Adjusters](../equipment/util/adjusters) - Variable adjustment patterns

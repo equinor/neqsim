@@ -647,4 +647,4 @@ ProductionIndex=  8
 
 - [ModelPredictiveController](../controllerdevice) - Underlying MPC implementation
 - [ProcessSystem](../processmodel) - NeqSim process simulation
-- [AI Platform Integration](ai_platform_integration.md) - Broader AI integration guide
+- [AI Platform Integration](ai_platform_integration) - Broader AI integration guide

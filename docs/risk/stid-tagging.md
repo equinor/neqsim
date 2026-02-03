@@ -378,7 +378,7 @@ try {
 
 ## See Also
 
-- [Process Topology Analysis](topology.md)
-- [Dependency Analysis](dependency-analysis.md)
+- [Process Topology Analysis](topology)
+- [Dependency Analysis](dependency-analysis)
 - [API Reference](api-reference.md#functionallocation)
 - [ISO 14224 Standard](https://www.iso.org/standard/64076.html)

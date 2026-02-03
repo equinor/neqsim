@@ -1514,7 +1514,7 @@ Deviation from literature: 83.1%
 When combining oils from different sources (e.g., commingled production), each fluid may have different pseudo-component characterizations. NeqSim provides methods to combine these fluids while preserving thermodynamic consistency.
 
 > **📖 Reference**: For detailed mathematical background and implementation details, see the comprehensive documentation:
-> **[Combining and Re-Characterizing Fluids in NeqSim](../thermo/characterization/fluid_characterization_combining.md)**
+> **[Combining and Re-Characterizing Fluids in NeqSim](../thermo/characterization/fluid_characterization_combining)**
 > 
 > This document covers:
 > - Mathematical foundations (mass/mole conservation, property weighting)

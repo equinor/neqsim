@@ -238,7 +238,7 @@ For production choke sizing, additional methods are available:
 | `getChokeDiameter()` | Get choke diameter in meters |
 | `setChokeDischargeCoefficient(Cd)` | Set discharge coefficient (0.75-0.90 typical) |
 
-See [Multiphase Choke Flow Models](./MultiphaseChokeFlow.md) for detailed two-phase choke documentation.
+See [Multiphase Choke Flow Models](./MultiphaseChokeFlow) for detailed two-phase choke documentation.
 
 ## Valve Characteristics
 
@@ -285,9 +285,9 @@ $$x_{effective} = F_\gamma \cdot x_T$$
 
 ## Related Documentation
 
-- [Valve Equipment](equipment/valves.md) - Valve simulation overview
-- [Compressor Mechanical Design](CompressorMechanicalDesign.md) - Compressor mechanical design
-- [Process Package](README.md) - Package overview
+- [Valve Equipment](equipment/valves) - Valve simulation overview
+- [Compressor Mechanical Design](CompressorMechanicalDesign) - Compressor mechanical design
+- [Process Package](README) - Package overview
 - [Safety Systems](safety/) - Safety valve sizing
 
 ---

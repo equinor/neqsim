@@ -137,9 +137,9 @@ public class FirstProcess {
 
 ## Next Steps
 
-- **[Reading Fluid Properties](../thermo/reading_fluid_properties.md)** - Understanding init levels and property access
-- **[Thermodynamic Models](../thermo/thermodynamic_models.md)** - Choosing the right equation of state
-- **[Process Equipment](../process/equipment/README.md)** - All available unit operations
+- **[Reading Fluid Properties](../thermo/reading_fluid_properties)** - Understanding init levels and property access
+- **[Thermodynamic Models](../thermo/thermodynamic_models)** - Choosing the right equation of state
+- **[Process Equipment](../process/equipment/README)** - All available unit operations
 - **[JavaDoc API](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html)** - Complete API reference
 
 ## API Quick Reference

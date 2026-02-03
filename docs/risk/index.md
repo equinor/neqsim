@@ -16,27 +16,27 @@ This documentation covers NeqSim's comprehensive **Operational Risk Simulation F
 
 | Section | Description |
 |---------|-------------|
-| [Overview](overview.md) | Framework architecture and key concepts |
-| [Equipment Failure Modeling](equipment-failure.md) | Failure modes, types, and reliability data |
-| [Risk Matrix](risk-matrix.md) | 5×5 risk matrix with probability, consequence, and cost |
-| [Monte Carlo Simulation](monte-carlo.md) | Stochastic simulation for availability analysis |
-| [Production Impact Analysis](production-impact.md) | Analyzing failure effects on production |
-| [Degraded Operation](degraded-operation.md) | Optimizing plant operation during outages |
-| [Process Topology](topology.md) | Graph structure extraction and analysis |
-| [STID & Functional Location](stid-tagging.md) | Equipment tagging following ISO 14224 |
-| [Dependency Analysis](dependency-analysis.md) | Cascade failure and cross-installation effects |
-| [Mathematical Reference](mathematical-reference.md) | Formulas and statistical methods |
-| [API Reference](api-reference.md) | Complete Java API documentation |
+| [Overview](overview) | Framework architecture and key concepts |
+| [Equipment Failure Modeling](equipment-failure) | Failure modes, types, and reliability data |
+| [Risk Matrix](risk-matrix) | 5×5 risk matrix with probability, consequence, and cost |
+| [Monte Carlo Simulation](monte-carlo) | Stochastic simulation for availability analysis |
+| [Production Impact Analysis](production-impact) | Analyzing failure effects on production |
+| [Degraded Operation](degraded-operation) | Optimizing plant operation during outages |
+| [Process Topology](topology) | Graph structure extraction and analysis |
+| [STID & Functional Location](stid-tagging) | Equipment tagging following ISO 14224 |
+| [Dependency Analysis](dependency-analysis) | Cascade failure and cross-installation effects |
+| [Mathematical Reference](mathematical-reference) | Formulas and statistical methods |
+| [API Reference](api-reference) | Complete Java API documentation |
 
 ### Advanced Risk Framework (P1-P7)
 
 | Section | Description |
 |---------|-------------|
-| [**Advanced Framework Overview**](README.md) | Overview of all 7 priority packages |
-| [P1: Dynamic Simulation](dynamic-simulation.md) | Monte Carlo with transient modeling |
-| [P2: SIS/SIF Integration](sis-integration.md) | IEC 61508/61511, LOPA, SIL verification |
-| [P4: Bow-Tie Analysis](bowtie-analysis.md) | Barrier analysis, threat/consequence visualization |
-| [P6: Condition-Based Reliability](condition-based.md) | Health monitoring, RUL estimation |
+| [**Advanced Framework Overview**](README) | Overview of all 7 priority packages |
+| [P1: Dynamic Simulation](dynamic-simulation) | Monte Carlo with transient modeling |
+| [P2: SIS/SIF Integration](sis-integration) | IEC 61508/61511, LOPA, SIL verification |
+| [P4: Bow-Tie Analysis](bowtie-analysis) | Barrier analysis, threat/consequence visualization |
+| [P6: Condition-Based Reliability](condition-based) | Health monitoring, RUL estimation |
 
 ---
 
@@ -193,10 +193,10 @@ neqsim.process
 
 ## 🔗 Related Resources
 
-- [NeqSim Main Documentation](../index.md)
-- [Process Simulation Guide](../process/README.md)
+- [NeqSim Main Documentation](../index)
+- [Process Simulation Guide](../process/README)
 - [Advanced Risk Framework Tutorial (Jupyter)](../examples/AdvancedRiskFramework_Tutorial.ipynb)
-- [Examples Index](../examples/index.md)
+- [Examples Index](../examples/index)
 - [OREDA Handbook](https://www.oreda.com/)
 - [ISO 14224 - Petroleum and natural gas industries](https://www.iso.org/standard/64076.html)
 - [NORSOK Z-013 - Risk and emergency preparedness assessment](https://www.standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/z-regularity--emergency/z-0132/)

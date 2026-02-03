@@ -335,10 +335,10 @@ print(f"Result GVF: {gvf_fitter.getGFV() * 100:.1f}%")
 
 ## Related Documentation
 
-- [Well Allocation](well_allocation.md) - Production allocation methods
-- [Streams](streams.md) - Stream creation and manipulation
-- [Separators](separators.md) - Test separator modeling
-- [Digital Twin Integration](../digital-twin-integration.md) - Real-time calibration
+- [Well Allocation](well_allocation) - Production allocation methods
+- [Streams](streams) - Stream creation and manipulation
+- [Separators](separators) - Test separator modeling
+- [Digital Twin Integration](../digital-twin-integration) - Real-time calibration
 
 ---
 

@@ -5,7 +5,7 @@ description: The Optimizer Plugin Architecture provides a flexible, extensible f
 
 # Optimizer Plugin Architecture
 
-> **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW.md) to understand when to use which optimizer.
+> **New to process optimization?** Start with the [Optimization Overview](OPTIMIZATION_OVERVIEW) to understand when to use which optimizer.
 
 ## Overview
 
@@ -15,11 +15,11 @@ The Optimizer Plugin Architecture provides a flexible, extensible framework for 
 
 | Document | Description |
 |----------|-------------|
-| [Optimization Overview](OPTIMIZATION_OVERVIEW.md) | When to use which optimizer |
-| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | ProductionOptimizer examples |
-| [Multi-Objective Optimization](multi-objective-optimization.md) | Pareto fronts and trade-offs |
-| [Flow Rate Optimization](flow-rate-optimization.md) | FlowRateOptimizer and lift curves |
-| [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) | Equipment constraints |
+| [Optimization Overview](OPTIMIZATION_OVERVIEW) | When to use which optimizer |
+| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) | ProductionOptimizer examples |
+| [Multi-Objective Optimization](multi-objective-optimization) | Pareto fronts and trade-offs |
+| [Flow Rate Optimization](flow-rate-optimization) | FlowRateOptimizer and lift curves |
+| [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) | Equipment constraints |
 
 ### Key Components
 
@@ -1409,10 +1409,10 @@ import org.apache.logging.log4j.Logger;
 
 ## See Also
 
-- [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) - Detailed constraint system documentation
-- [Process Optimization Framework](README.md) - Parameter estimation and calibration
-- [Multi-Objective Optimization](multi-objective-optimization.md) - Pareto optimization
-- [Batch Studies](batch-studies.md) - Sensitivity analysis
+- [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) - Detailed constraint system documentation
+- [Process Optimization Framework](README) - Parameter estimation and calibration
+- [Multi-Objective Optimization](multi-objective-optimization) - Pareto optimization
+- [Batch Studies](batch-studies) - Sensitivity analysis
 
 ---
 

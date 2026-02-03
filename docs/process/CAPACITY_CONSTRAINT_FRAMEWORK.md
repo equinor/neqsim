@@ -1665,7 +1665,7 @@ registry.registerStrategy(new MyCustomStrategy());
 | `PipeCapacityStrategy` | Pipeline | velocity, pressureDrop |
 | `HeatExchangerCapacityStrategy` | HeatExchanger | duty, outletTemperature |
 
-For detailed usage and integration with the ProcessOptimizationEngine, see [Optimizer Plugin Architecture](optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md).
+For detailed usage and integration with the ProcessOptimizationEngine, see [Optimizer Plugin Architecture](optimization/OPTIMIZER_PLUGIN_ARCHITECTURE).
 
 ## Integration with OilGasProcessSimulationOptimization
 
@@ -1697,8 +1697,8 @@ BottleneckResult bottleneck = process.findBottleneck();
 
 ## See Also
 
-- [Process Equipment Documentation](README.md)
-- [Mechanical Design](mechanical_design.md)
-- [Optimizer Plugin Architecture](optimization/OPTIMIZER_PLUGIN_ARCHITECTURE.md)
-- [Optimization Examples](../examples/index.md)
+- [Process Equipment Documentation](README)
+- [Mechanical Design](mechanical_design)
+- [Optimizer Plugin Architecture](optimization/OPTIMIZER_PLUGIN_ARCHITECTURE)
+- [Optimization Examples](../examples/index)
 

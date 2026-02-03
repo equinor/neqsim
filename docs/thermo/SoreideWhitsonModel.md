@@ -563,11 +563,11 @@ For systems requiring higher accuracy or outside the Søreide-Whitson validity r
 
 ## See Also
 
-- [Thermodynamic Models](thermodynamic_models.md) - Overview of all NeqSim thermodynamic models
-- [Electrolyte CPA Model](ElectrolyteCPAModel.md) - For full electrolyte thermodynamics
-- [Offshore Emission Reporting](../emissions/OFFSHORE_EMISSION_REPORTING.md) - Comprehensive emission calculation guide
-- [Fluid Creation Guide](fluid_creation_guide.md) - Creating fluids in NeqSim
-- [Flash Calculations Guide](flash_calculations_guide.md) - Performing thermodynamic calculations
+- [Thermodynamic Models](thermodynamic_models) - Overview of all NeqSim thermodynamic models
+- [Electrolyte CPA Model](ElectrolyteCPAModel) - For full electrolyte thermodynamics
+- [Offshore Emission Reporting](../emissions/OFFSHORE_EMISSION_REPORTING) - Comprehensive emission calculation guide
+- [Fluid Creation Guide](fluid_creation_guide) - Creating fluids in NeqSim
+- [Flash Calculations Guide](flash_calculations_guide) - Performing thermodynamic calculations
 
 ---
 

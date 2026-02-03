@@ -42,7 +42,7 @@ This document outlines improvements to NeqSim's production optimization framewor
 
 ### Documentation
 
-- [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK.md) - Complete documentation with examples
+- [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK) - Complete documentation with examples
 - Integration with MechanicalDesign and TechnicalRequirements database
 
 ---
@@ -375,7 +375,7 @@ public class EquipmentConstraintRegistry {
 11. ✅ Full test coverage in `DesignFrameworkTest` (13 tests passing)
 
 **Location**: `neqsim.process.design` package  
-**Documentation**: [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK.md)
+**Documentation**: [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK)
 
 ### Phase 2: Extended Equipment Support ✅ COMPLETE
 1. ✅ Add `CapacityConstrainedEquipment` to Heater/Cooler
@@ -398,7 +398,7 @@ Implementation provides Pareto optimization for competing objectives like throug
 
 **Package:** `neqsim.process.util.optimizer`
 
-**Documentation:** See [Multi-Objective Optimization Guide](optimization/multi-objective-optimization.md)
+**Documentation:** See [Multi-Objective Optimization Guide](optimization/multi-objective-optimization)
 
 ---
 
@@ -457,7 +457,7 @@ System.out.println(separator.getSizingReport());
 ```
 
 **See also:**
-- [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK.md) - Complete API documentation
+- [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK) - Complete API documentation
 - Package `neqsim.process.design` - Source code and JavaDoc
 
 ---
@@ -479,5 +479,5 @@ NeqSim now has a comprehensive design-to-optimization framework with the Phase 1
 2. **More Templates**: Gas compression, dehydration, CO2 capture
 3. **Multi-Objective**: Pareto optimization support
 
-See [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK.md) for complete API documentation and usage examples.
+See [DESIGN_FRAMEWORK.md](DESIGN_FRAMEWORK) for complete API documentation and usage examples.
 

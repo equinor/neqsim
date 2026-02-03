@@ -405,7 +405,7 @@ riskMatrix.addRiskItem("HP Compressor", prob, cons, estimatedCost);
 
 ## See Also
 
-- [Equipment Failure Modeling](equipment-failure.md)
-- [Risk Matrix](risk-matrix.md)
-- [Mathematical Reference](mathematical-reference.md)
+- [Equipment Failure Modeling](equipment-failure)
+- [Risk Matrix](risk-matrix)
+- [Mathematical Reference](mathematical-reference)
 - [API Reference](api-reference.md#operationalrisksimulator)

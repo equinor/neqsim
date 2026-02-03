@@ -322,6 +322,6 @@ process.run();
 
 ## Related Documentation
 
-- [Adjusters](adjusters.md) - Variable adjustment
-- [Calculators](calculators.md) - Custom calculations
-- [Process System](../../processmodel/README.md) - Process execution
+- [Adjusters](adjusters) - Variable adjustment
+- [Calculators](calculators) - Custom calculations
+- [Process System](../../processmodel/README) - Process execution

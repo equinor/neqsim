@@ -9,8 +9,8 @@ Comprehensive documentation for pipeline mechanical design in NeqSim, including 
 
 > **📘 See Also: Related Design Documentation**
 > 
-> - [Topside Piping Design](topside_piping_design.md) - Topside/platform piping with velocity, support spacing, vibration (AIV/FIV), stress analysis per ASME B31.3
-> - [Riser Mechanical Design](riser_mechanical_design.md) - Riser design with catenary mechanics, VIV analysis, fatigue life per DNV-OS-F201
+> - [Topside Piping Design](topside_piping_design) - Topside/platform piping with velocity, support spacing, vibration (AIV/FIV), stress analysis per ASME B31.3
+> - [Riser Mechanical Design](riser_mechanical_design) - Riser design with catenary mechanics, VIV analysis, fatigue life per DNV-OS-F201
 
 ## Table of Contents
 
@@ -819,7 +819,7 @@ System.out.println(jsonReport);
 
 ## Related Documentation
 
-- [Pipeline Simulation](equipment/pipeline_simulation.md) - Flow modeling
-- [Mechanical Design Standards](mechanical_design_standards.md) - Standard details
-- [Mechanical Design Database](mechanical_design_database.md) - Database tables
-- [Mechanical Design Framework](mechanical_design.md) - Overall framework
+- [Pipeline Simulation](equipment/pipeline_simulation) - Flow modeling
+- [Mechanical Design Standards](mechanical_design_standards) - Standard details
+- [Mechanical Design Database](mechanical_design_database) - Database tables
+- [Mechanical Design Framework](mechanical_design) - Overall framework

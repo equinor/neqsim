@@ -319,6 +319,6 @@ fluid_copy.setTemperature(300.0)
 
 ## See Also
 
-- **[Reading Fluid Properties Guide](../thermo/reading_fluid_properties.md)** - Comprehensive property access
-- **[Thermodynamic Models](../thermo/thermodynamic_models.md)** - All EoS details
+- **[Reading Fluid Properties Guide](../thermo/reading_fluid_properties)** - Comprehensive property access
+- **[Thermodynamic Models](../thermo/thermodynamic_models)** - All EoS details
 - **[JavaDoc: SystemInterface](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/thermo/system/SystemInterface.html)** - Complete API
