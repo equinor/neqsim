@@ -790,6 +790,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 
 | Document | Path | Description |
 |----------|------|-------------|
+| **Reading Fluid Properties** | [docs/examples/ReadingFluidProperties.md](examples/ReadingFluidProperties.md) | **NEW: Comprehensive guide to reading thermodynamic and physical properties** |
 | Colab Notebooks | [docs/wiki/java_simulation_from_colab_notebooks.md](wiki/java_simulation_from_colab_notebooks.md) | Colab notebooks |
 | Transient Slug Example | [docs/examples/transient_slug_separator_control_example.md](examples/transient_slug_separator_control_example.md) | Transient slug example |
 | Selective Logic | [docs/examples/selective-logic-execution.md](examples/selective-logic-execution.md) | Selective logic execution |
@@ -843,6 +844,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 |----------|------|-------------|
 | Utilities | [docs/util/README.md](util/README.md) | Utility functions |
 | Unit Conversion | [docs/util/unit_conversion.md](util/unit_conversion.md) | Unit conversion guide |
+| **Unit Conversion Recipes** | [docs/cookbook/unit-conversion-recipes.md](cookbook/unit-conversion-recipes.md) | **NEW** Quick reference for all supported unit strings |
 | **Optimizer Guide** | [docs/util/optimizer_guide.md](util/optimizer_guide.md) | **NEW** Comprehensive optimization framework with BFGS, Pareto, sensitivity analysis |
 
 ### Appendix F: Process Design Templates
@@ -857,6 +859,21 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 |----------|------|-------------|
 | **TEMA Standard Guide** | [docs/process/mechanical_design/tema_standard_guide.md](process/mechanical_design/tema_standard_guide.md) | **NEW** TEMA shell and tube heat exchanger design standards |
 
+### Appendix H: Cookbook (Quick Recipes)
+
+| Document | Path | Description |
+|----------|------|-------------|
+| **Cookbook Index** | [docs/cookbook/index.md](cookbook/index.md) | **NEW** Quick copy-paste recipes for common tasks |
+| Thermodynamics Recipes | [docs/cookbook/thermodynamics-recipes.md](cookbook/thermodynamics-recipes.md) | Fluids, flash, properties, phase envelopes |
+| Process Recipes | [docs/cookbook/process-recipes.md](cookbook/process-recipes.md) | Separators, compressors, heat exchangers |
+| Pipeline Recipes | [docs/cookbook/pipeline-recipes.md](cookbook/pipeline-recipes.md) | Pressure drop, multiphase flow |
+
+### Appendix I: Troubleshooting
+
+| Document | Path | Description |
+|----------|------|-------------|
+| **Troubleshooting Guide** | [docs/troubleshooting/index.md](troubleshooting/index.md) | **NEW** Solutions to common problems |
+
 ### Appendix E: Wiki Reference
 
 | Document | Path | Description |
@@ -870,7 +887,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Category | Count |
 |----------|-------|
 | Wiki/Tutorials | 60 |
-| Thermodynamics | 25 |
+| Thermodynamics | 26 |
 | Process Simulation | 47 |
 | Safety Systems | 18 |
 | **Risk Simulation** | **13** |
@@ -881,23 +898,29 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Standards | 6 |
 | Development | 8 |
 | Statistics | 4 |
-| Examples | 12 |
+| Examples | 13 |
 | **Optimization** | **5** |
 | **Templates & Design** | **2** |
+| **Quickstart Guides** | **4** |
+| **Cookbook** | **5** |
+| **Tutorials/Learning** | **2** |
+| **Troubleshooting** | **1** |
 | Other | 24 |
-| **Total** | **279** |
+| **Total** | **293** |
 
 ---
 
 ## Navigation Tips
 
-1. **Start Here**: If new to NeqSim, begin with [Getting Started](wiki/getting_started.md)
-2. **By Task**: Use the chapter structure above to find relevant sections
-3. **By Equipment**: See Part III, Chapters 13-20 for equipment-specific docs
-4. **For Developers**: Jump to Part IX for contribution guidelines
-5. **Search**: Use MkDocs search (if enabled) for keyword searches
-6. **Process Serialization**: See [Chapter 23](simulation/process_serialization.md) for save/load
+1. **Start Here**: If new to NeqSim, begin with [Quickstart Guides](quickstart/index.md) or [Getting Started](wiki/getting_started.md)
+2. **Learning Path**: Follow the [Learning Paths](tutorials/learning-paths.md) for structured learning
+3. **Quick Recipes**: Use the [Cookbook](cookbook/index.md) for copy-paste solutions
+4. **By Task**: Use the chapter structure above to find relevant sections
+5. **By Equipment**: See Part III, Chapters 13-20 for equipment-specific docs
+6. **For Developers**: Jump to Part IX for contribution guidelines
+7. **Problems?**: Check the [Troubleshooting Guide](troubleshooting/index.md)
+8. **Process Serialization**: See [Chapter 23](simulation/process_serialization.md) for save/load
 
 ---
 
-*This index was updated after comprehensive documentation review. Last updated: January 2026*
+*This index was updated after comprehensive documentation review. Last updated: February 2026*
