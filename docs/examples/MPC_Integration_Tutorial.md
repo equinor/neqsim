@@ -20,20 +20,19 @@ nav_order: 1
 First, we'll create a simple gas separation process with a control valve and separator.
 
 ```python
-import jpype
-import jpype.imports
+# Import NeqSim - Direct Java Access via jneqsim
+from neqsim import jneqsim
 
-# Start JVM with NeqSim
-if not jpype.isJVMStarted():
-    jpype.startJVM(classpath=['path/to/neqsim.jar'])
+# Import Java classes through the jneqsim gateway
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+Stream = jneqsim.process.equipment.stream.Stream
+ThrottlingValve = jneqsim.process.equipment.valve.ThrottlingValve
+Separator = jneqsim.process.equipment.separator.Separator
+ProcessLinkedMPC = jneqsim.process.mpc.ProcessLinkedMPC
+StateSpaceExporter = jneqsim.process.mpc.StateSpaceExporter
 
-# Import NeqSim classes
-from neqsim.thermo.system import SystemSrkEos
-from neqsim.process.processmodel import ProcessSystem
-from neqsim.process.equipment.stream import Stream
-from neqsim.process.equipment.valve import ThrottlingValve
-from neqsim.process.equipment.separator import Separator
-from neqsim.process.mpc import ProcessLinkedMPC, StateSpaceExporter
+print("NeqSim MPC Framework loaded successfully!")
 ```
 
 ```python

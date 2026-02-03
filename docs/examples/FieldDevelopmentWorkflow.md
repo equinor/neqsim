@@ -31,21 +31,21 @@ The `FieldDevelopmentWorkflow` class provides a unified interface for:
 Make sure you have jpype installed with neqsim:
 
 ```python
-import jpype
-import jpype.imports
-from jpype.types import *
+# Import NeqSim - Direct Java Access via jneqsim
+from neqsim import jneqsim
 
-# Start JVM with NeqSim
-if not jpype.isJVMStarted():
-    jpype.startJVM(classpath=['path/to/neqsim.jar'])
+# Import Java classes through the jneqsim gateway
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+SystemSrkCPAstatoil = jneqsim.thermo.system.SystemSrkCPAstatoil
+Stream = jneqsim.process.equipment.stream.Stream
+WellSystem = jneqsim.process.equipment.reservoir.WellSystem
+SimpleReservoir = jneqsim.process.equipment.reservoir.SimpleReservoir
+FieldDevelopmentWorkflow = jneqsim.process.fielddevelopment.workflow.FieldDevelopmentWorkflow
+CashFlowEngine = jneqsim.process.fielddevelopment.economics.CashFlowEngine
+NorwegianTaxModel = jneqsim.process.fielddevelopment.economics.NorwegianTaxModel
+FlowAssuranceResult = jneqsim.process.fielddevelopment.screening.FlowAssuranceResult
 
-# Import NeqSim classes
-from neqsim.thermo.system import SystemSrkEos, SystemSrkCPAstatoil
-from neqsim.process.equipment.stream import Stream
-from neqsim.process.equipment.reservoir import WellSystem, SimpleReservoir
-from neqsim.process.fielddevelopment.workflow import FieldDevelopmentWorkflow
-from neqsim.process.fielddevelopment.economics import CashFlowEngine, NorwegianTaxModel
-from neqsim.process.fielddevelopment.screening import FlowAssuranceResult
+print("NeqSim Field Development Framework loaded successfully!")
 ```
 
 ## 1. Screening Level Study
