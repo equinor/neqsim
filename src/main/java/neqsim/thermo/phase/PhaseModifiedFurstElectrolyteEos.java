@@ -88,37 +88,6 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   double sr2On = 1.0;
   double lrOn = 1.0;
   double bornOn = 1.0;
-
-  /**
-   * Cached temperature for volInit caching. When temperature matches, we can reuse some
-   * calculations.
-   */
-  private double cachedVolInitTemperature = -1.0;
-
-  /**
-   * Flag indicating if volInit temperature-dependent caching is valid. Set to false when
-   * composition changes.
-   */
-  private boolean volInitCacheValid = false;
-
-  /**
-   * Cached value for hasSignificantIons check.
-   */
-  private boolean cachedHasSignificantIons = false;
-
-  /**
-   * Cached W, WT, WTT values (only depend on temperature and composition, not volume).
-   */
-  private double cachedW = 0.0;
-  private double cachedWT = 0.0;
-  private double cachedWTT = 0.0;
-
-  /**
-   * Cached solvent dielectric constant values.
-   */
-  private double cachedSolventDiElectricConstant = 0.0;
-  private double cachedSolventDiElectricConstantdT = 0.0;
-  private double cachedSolventDiElectricConstantdTdT = 0.0;
   // double gammLRdV=0.0;
   // PhaseInterface[] refPhase; // = new PhaseInterface[10];
 
@@ -158,8 +127,6 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   @Override
   public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
       double beta) {
-    // Invalidate volInit cache when phase is reinitialized (composition may have changed)
-    volInitCacheValid = false;
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     if (initType == 0) {
       electrolyteMixingRule = mixSelect.getElectrolyteMixingRule(this);
@@ -175,10 +142,6 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
-    // Invalidate cache in cloned phase - it needs to recalculate for its own state
-    if (clonedPhase != null) {
-      clonedPhase.volInitCacheValid = false;
-    }
     // clonedPhase.electrolyteMixingRule =
     // (thermo.mixingRule.ElectrolyteMixingRulesInterface)
     // electrolyteMixingRule.clone();
@@ -192,138 +155,74 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
    * </p>
    */
   public void volInit() {
-    // Performance optimization: Skip expensive electrolyte calculations when ion
-    // concentrations are negligible. This significantly speeds up stability analysis
-    // during multiphase flash calculations.
-
-    // Check if we can use cached values (same temperature, composition hasn't changed)
-    boolean canUseCachedValues = volInitCacheValid && (temperature == cachedVolInitTemperature);
-
-    // If cache is invalid, recalculate the ion check
-    if (!canUseCachedValues) {
-      double totalIonMoleFraction = 0.0;
-      for (int i = 0; i < numberOfComponents; i++) {
-        if (componentArray[i] != null && componentArray[i].getIonicCharge() != 0) {
-          totalIonMoleFraction += componentArray[i].getx();
-        }
-      }
-      cachedHasSignificantIons = totalIonMoleFraction > 1e-30;
-      cachedVolInitTemperature = temperature;
-      volInitCacheValid = true;
-    }
-
-    // eps (packing fraction) is always needed for EOS calculations
+    W = electrolyteMixingRule.calcW(this, temperature, pressure, numberOfComponents);
+    WT = electrolyteMixingRule.calcWT(this, temperature, pressure, numberOfComponents);
+    WTT = electrolyteMixingRule.calcWTT(this, temperature, pressure, numberOfComponents);
     eps = calcEps();
     epsdV = calcEpsV();
     epsdVdV = calcEpsVV();
+    epsIonic = calcEpsIonic();
+    epsIonicdV = calcEpsIonicdV();
+    epsIonicdVdV = calcEpsIonicdVdV();
+    solventDiElectricConstant = calcSolventDiElectricConstant(temperature);
+    solventDiElectricConstantdT = calcSolventDiElectricConstantdT(temperature);
+    solventDiElectricConstantdTdT = calcSolventDiElectricConstantdTdT(temperature);
 
-    if (cachedHasSignificantIons) {
-      // Full electrolyte calculations - all these are only needed when ions are present
-      // W, WT, WTT are O(n^2) calculations
-      W = electrolyteMixingRule.calcW(this, temperature, pressure, numberOfComponents);
-      WT = electrolyteMixingRule.calcWT(this, temperature, pressure, numberOfComponents);
-      WTT = electrolyteMixingRule.calcWTT(this, temperature, pressure, numberOfComponents);
-      epsIonic = calcEpsIonic();
-      epsIonicdV = calcEpsIonicdV();
-      epsIonicdVdV = calcEpsIonicdVdV();
-
-      // Dielectric constant calculations - needed for ion interactions
-      solventDiElectricConstant = calcSolventDiElectricConstant(temperature);
-      solventDiElectricConstantdT = calcSolventDiElectricConstantdT(temperature);
-      solventDiElectricConstantdTdT = calcSolventDiElectricConstantdTdT(temperature);
-
-      diElectricConstant = calcDiElectricConstant(temperature);
-      diElectricConstantdT = calcDiElectricConstantdT(temperature);
-      diElectricConstantdTdT = calcDiElectricConstantdTdT(temperature);
-      diElectricConstantdV = calcDiElectricConstantdV(temperature);
-      diElectricConstantdVdV = calcDiElectricConstantdVdV(temperature);
-      diElectricConstantdTdV = calcDiElectricConstantdTdV(temperature);
-
-      // Long-range electrostatic calculations
-      alphaLR2 = electronCharge * electronCharge * avagadroNumber
-          / (vacumPermittivity * diElectricConstant * R * temperature);
-      alphaLRdT = -electronCharge * electronCharge * avagadroNumber
-          / (vacumPermittivity * diElectricConstant * R * temperature * temperature)
-          - electronCharge * electronCharge * avagadroNumber
-              / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature)
-              * diElectricConstantdT;
-      alphaLRdV = -electronCharge * electronCharge * avagadroNumber
-          / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature)
-          * diElectricConstantdV;
-      alphaLRdTdT = 2.0 * electronCharge * electronCharge * avagadroNumber
-          / (vacumPermittivity * diElectricConstant * R * Math.pow(temperature, 3.0))
-          + electronCharge * electronCharge * avagadroNumber
-              / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature
-                  * temperature)
-              * diElectricConstantdT
-          - electronCharge * electronCharge * avagadroNumber
-              / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature)
-              * diElectricConstantdTdT
-          + electronCharge * electronCharge * avagadroNumber
-              / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature
-                  * temperature)
-              * diElectricConstantdT
-          + 2.0 * electronCharge * electronCharge * avagadroNumber
-              / (vacumPermittivity * Math.pow(diElectricConstant, 3.0) * R * temperature)
-              * Math.pow(diElectricConstantdT, 2.0);
-      alphaLRdTdV = electronCharge * electronCharge * avagadroNumber
-          / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature
-              * temperature)
-          * diElectricConstantdV
-          + 2.0 * electronCharge * electronCharge * avagadroNumber
-              / (vacumPermittivity * diElectricConstant * diElectricConstant * diElectricConstant
-                  * R * temperature)
-              * diElectricConstantdT * diElectricConstantdV
-          - electronCharge * electronCharge * avagadroNumber
-              / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature)
-              * diElectricConstantdTdV;
-      alphaLRdVdV = -electronCharge * electronCharge * avagadroNumber
-          / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature)
-          * diElectricConstantdVdV
-          + 2.0 * electronCharge * electronCharge * avagadroNumber
-              / (vacumPermittivity * Math.pow(diElectricConstant, 3.0) * R * temperature)
-              * diElectricConstantdV * diElectricConstantdV;
-      shieldingParameter = calcShieldingParameter();
-      shieldingParameterdT = calcShieldingParameterdT();
-      XLR = calcXLR();
-      XLRdT = calcXLRdT();
-      bornX = calcBornX();
-    } else {
-      // Skip all expensive electrolyte calculations when ions are negligible
-      // W, WT, WTT are zero when no ions (wij matrix is zero for neutral-neutral pairs)
-      W = 0.0;
-      WT = 0.0;
-      WTT = 0.0;
-      epsIonic = 0.0;
-      epsIonicdV = 0.0;
-      epsIonicdVdV = 0.0;
-
-      // For dielectric constants, use default values (water at room temperature)
-      // These won't affect calculations since there are no ion interactions
-      solventDiElectricConstant = 78.0;
-      solventDiElectricConstantdT = 0.0;
-      solventDiElectricConstantdTdT = 0.0;
-      diElectricConstant = solventDiElectricConstant;
-      diElectricConstantdT = 0.0;
-      diElectricConstantdTdT = 0.0;
-      diElectricConstantdV = 0.0;
-      diElectricConstantdVdV = 0.0;
-      diElectricConstantdTdV = 0.0;
-
-      // All alpha and LR terms are zero
-      alphaLR2 = 0.0;
-      alphaLRdT = 0.0;
-      alphaLRdV = 0.0;
-      alphaLRdTdT = 0.0;
-      alphaLRdTdV = 0.0;
-      alphaLRdVdV = 0.0;
-      shieldingParameter = 0.0;
-      shieldingParameterdT = 0.0;
-      XLR = 0.0;
-      XLRdT = 0.0;
-      bornX = 0.0;
-    }
+    diElectricConstant = calcDiElectricConstant(temperature);
+    diElectricConstantdT = calcDiElectricConstantdT(temperature);
+    diElectricConstantdTdT = calcDiElectricConstantdTdT(temperature);
+    diElectricConstantdV = calcDiElectricConstantdV(temperature);
+    diElectricConstantdVdV = calcDiElectricConstantdVdV(temperature);
+    diElectricConstantdTdV = calcDiElectricConstantdTdV(temperature);
+    alphaLR2 = electronCharge * electronCharge * avagadroNumber
+        / (vacumPermittivity * diElectricConstant * R * temperature);
+    alphaLRdT = -electronCharge * electronCharge * avagadroNumber
+        / (vacumPermittivity * diElectricConstant * R * temperature * temperature)
+        - electronCharge * electronCharge * avagadroNumber
+            / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature)
+            * diElectricConstantdT;
+    alphaLRdV = -electronCharge * electronCharge * avagadroNumber
+        / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature)
+        * diElectricConstantdV;
+    alphaLRdTdT = 2.0 * electronCharge * electronCharge * avagadroNumber
+        / (vacumPermittivity * diElectricConstant * R * Math.pow(temperature, 3.0))
+        + electronCharge * electronCharge * avagadroNumber
+            / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature
+                * temperature)
+            * diElectricConstantdT
+        - electronCharge * electronCharge * avagadroNumber
+            / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature)
+            * diElectricConstantdTdT
+        + electronCharge * electronCharge * avagadroNumber
+            / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature
+                * temperature)
+            * diElectricConstantdT
+        + 2.0 * electronCharge * electronCharge * avagadroNumber
+            / (vacumPermittivity * Math.pow(diElectricConstant, 3.0) * R * temperature)
+            * Math.pow(diElectricConstantdT, 2.0);
+    alphaLRdTdV = electronCharge * electronCharge * avagadroNumber
+        / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature
+            * temperature)
+        * diElectricConstantdV
+        + 2.0 * electronCharge * electronCharge * avagadroNumber
+            / (vacumPermittivity * diElectricConstant * diElectricConstant * diElectricConstant * R
+                * temperature)
+            * diElectricConstantdT * diElectricConstantdV
+        - electronCharge * electronCharge * avagadroNumber
+            / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature)
+            * diElectricConstantdTdV;
+    alphaLRdVdV = -electronCharge * electronCharge * avagadroNumber
+        / (vacumPermittivity * diElectricConstant * diElectricConstant * R * temperature)
+        * diElectricConstantdVdV
+        + 2.0 * electronCharge * electronCharge * avagadroNumber
+            / (vacumPermittivity * Math.pow(diElectricConstant, 3.0) * R * temperature)
+            * diElectricConstantdV * diElectricConstantdV;
+    shieldingParameter = calcShieldingParameter();
+    shieldingParameterdT = calcShieldingParameterdT();
     // gammLRdV = calcGammaLRdV();
+    XLR = calcXLR();
+    XLRdT = calcXLRdT();
+    bornX = calcBornX();
   }
 
   /** {@inheritDoc} */
@@ -833,25 +732,9 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws neqsim.util.exception.IsNaNException,
       neqsim.util.exception.TooManyIterationsException {
-    // Use current molar volume as initial guess if available and reasonable
-    double BonV;
-    double Btemp = getB();
-    if (Btemp <= 0) {
-      logger.info("b negative in volume calc");
-      Btemp = 1e-10; // Avoid division by zero
-    }
-
-    // Try to use current molar volume as starting point for faster convergence
-    double currentMolarVolume = getMolarVolume();
-    if (currentMolarVolume > 0 && Double.isFinite(currentMolarVolume)) {
-      BonV = Btemp / (numberOfMolesInPhase * currentMolarVolume);
-      // Validate the initial guess is in reasonable range
-      if (BonV <= 0 || BonV >= 1.0) {
-        BonV = pt == PhaseType.LIQUID ? 0.99 : 1e-5;
-      }
-    } else {
-      BonV = pt == PhaseType.LIQUID ? 0.99 : 1e-5;
-    }
+    // double BonV = phase== 0 ?
+    // 2.0/(2.0+temperature/getPseudoCriticalTemperature()):0.1*pressure*getB()/(numberOfMolesInPhase*temperature*R);
+    double BonV = pt == PhaseType.LIQUID ? 0.99 : 1e-5;
 
     if (BonV < 0) {
       BonV = 1.0e-6;
@@ -860,11 +743,16 @@ public class PhaseModifiedFurstElectrolyteEos extends PhaseSrkEos {
       BonV = 1.0 - 1.0e-6;
     }
     double BonVold = BonV;
+    double Btemp = 0;
     double h = 0;
     double dh = 0;
     double dhh = 0;
     double d1 = 0;
     double d2 = 0;
+    Btemp = getB();
+    if (Btemp <= 0) {
+      logger.info("b negative in volume calc");
+    }
     setMolarVolume(1.0 / BonV * Btemp / numberOfMolesInPhase);
     int iterations = 0;
     int maxIterations = 1000;
