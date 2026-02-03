@@ -420,7 +420,7 @@ for (FieldConcept concept : concepts) {
 
 ## See Also
 
-- [Field Development Framework](../../fielddevelopment/README)
+- [Field Development Framework](../../fielddevelopment/)
 
 ## References
 

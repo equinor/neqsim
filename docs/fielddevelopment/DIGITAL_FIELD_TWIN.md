@@ -1046,5 +1046,5 @@ FieldConcept concept = FieldConcept.builder("My Field")
 
 - [Field Development Strategy](FIELD_DEVELOPMENT_STRATEGY)
 - [Integrated Field Development Framework](INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK)
-- [Process Simulation Guide](../process/README)
-- [PVT Simulation Guide](../pvtsimulation/README)
+- [Process Simulation Guide](../process/)
+- [PVT Simulation Guide](../pvtsimulation/)

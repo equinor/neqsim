@@ -22,16 +22,16 @@ Quick, copy-paste recipes for common tasks. Each recipe is self-contained and re
 
 | Task | Recipe |
 |------|--------|
-| Create a natural gas fluid | [thermodynamics-recipes.md#create-natural-gas](thermodynamics-recipes.md#create-natural-gas) |
-| Run a flash calculation | [thermodynamics-recipes.md#run-tp-flash](thermodynamics-recipes.md#run-tp-flash) |
-| Get density (correct way) | [thermodynamics-recipes.md#get-density-correctly](thermodynamics-recipes.md#get-density-correctly) |
-| Calculate phase envelope | [thermodynamics-recipes.md#phase-envelope](thermodynamics-recipes.md#phase-envelope) |
-| Simple separator | [process-recipes.md#two-phase-separator](process-recipes.md#two-phase-separator) |
-| Compressor with efficiency | [process-recipes.md#compressor-with-efficiency](process-recipes.md#compressor-with-efficiency) |
-| Pipeline pressure drop | [pipeline-recipes.md#simple-pressure-drop](pipeline-recipes.md#simple-pressure-drop) |
-| Export to JSON | [thermodynamics-recipes.md#export-to-json](thermodynamics-recipes.md#export-to-json) |
-| Set up recycle | [process-recipes.md#recycle-stream](process-recipes.md#recycle-stream) |
-| Which EoS to use? | [thermodynamics-recipes.md#which-eos-should-i-use](thermodynamics-recipes.md#which-eos-should-i-use) |
+| Create a natural gas fluid | [thermodynamics-recipes.md#create-natural-gas](thermodynamics-recipes#create-natural-gas) |
+| Run a flash calculation | [thermodynamics-recipes.md#run-tp-flash](thermodynamics-recipes#run-tp-flash) |
+| Get density (correct way) | [thermodynamics-recipes.md#get-density-correctly](thermodynamics-recipes#get-density-correctly) |
+| Calculate phase envelope | [thermodynamics-recipes.md#phase-envelope](thermodynamics-recipes#phase-envelope) |
+| Simple separator | [process-recipes.md#two-phase-separator](process-recipes#two-phase-separator) |
+| Compressor with efficiency | [process-recipes.md#compressor-with-efficiency](process-recipes#compressor-with-efficiency) |
+| Pipeline pressure drop | [pipeline-recipes.md#simple-pressure-drop](pipeline-recipes#simple-pressure-drop) |
+| Export to JSON | [thermodynamics-recipes.md#export-to-json](thermodynamics-recipes#export-to-json) |
+| Set up recycle | [process-recipes.md#recycle-stream](process-recipes#recycle-stream) |
+| Which EoS to use? | [thermodynamics-recipes.md#which-eos-should-i-use](thermodynamics-recipes#which-eos-should-i-use) |
 
 ## Recipe Format
 

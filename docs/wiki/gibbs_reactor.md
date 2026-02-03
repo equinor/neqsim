@@ -238,4 +238,4 @@ Custom components can be added to the database files following the existing form
 
 - [Process Equipment Overview](./index)
 - [Stream Documentation](./getting_started)
-- [Thermodynamic Systems](../thermo/README)
+- [Thermodynamic Systems](../thermo/)

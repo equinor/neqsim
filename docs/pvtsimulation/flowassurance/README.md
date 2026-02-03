@@ -147,6 +147,6 @@ See [Asphaltene Modeling](asphaltene_modeling) for more details on `PhaseType.AS
 
 ## Related Topics
 
-- [Thermodynamic Models](../../thermo/README) - Equation of state fundamentals
-- [PVT Simulation](../README) - Fluid characterization
-- [Process Equipment](../../process/README) - Separator and pipeline modeling
+- [Thermodynamic Models](../../thermo/) - Equation of state fundamentals
+- [PVT Simulation](../) - Fluid characterization
+- [Process Equipment](../../process/) - Separator and pipeline modeling

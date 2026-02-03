@@ -289,7 +289,7 @@ manifold.autoSize(1.2);  // 20% safety factor
 System.out.println(manifold.getSizingReport());
 ```
 
-For detailed FIV documentation, see [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md#flow-induced-vibration-fiv-analysis).
+For detailed FIV documentation, see [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK#flow-induced-vibration-fiv-analysis).
 
 ---
 

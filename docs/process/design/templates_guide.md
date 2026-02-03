@@ -500,4 +500,4 @@ if (stages <= 0) {
 - [Process Design Guide](../process_design_guide)
 - [Design Framework](../DESIGN_FRAMEWORK)
 - [Optimizer Guide](../../util/optimizer_guide)
-- [Equipment Documentation](../equipment/README)
+- [Equipment Documentation](../equipment/)

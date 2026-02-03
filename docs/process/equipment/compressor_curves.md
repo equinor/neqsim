@@ -2724,4 +2724,4 @@ print(str(comp.getOperatingHistory().generateSummary()))
 ## Related Documentation
 
 - [Compressor Equipment](compressors) - Basic compressor usage
-- [Process Simulation](../../simulation/README) - Process simulation overview
+- [Process Simulation](../../simulation/) - Process simulation overview

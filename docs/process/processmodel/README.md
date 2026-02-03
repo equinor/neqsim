@@ -115,8 +115,8 @@ For full documentation, see [Process Serialization Guide](../../simulation/proce
 
 ## Related Documentation
 
-- [Equipment Overview](../equipment/README) - Process equipment
+- [Equipment Overview](../equipment/) - Process equipment
 - [Controllers](../controllers) - Control systems
-- [Safety Systems](../safety/README) - Safety equipment
+- [Safety Systems](../safety/) - Safety equipment
 - [Process Serialization](../../simulation/process_serialization) - Save/load processes
 - [DEXPI Integration](../../integration/dexpi-reader) - DEXPI P&ID data exchange

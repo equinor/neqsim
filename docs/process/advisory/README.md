@@ -208,6 +208,6 @@ prediction.setOverallConfidence(0.85);
 
 ## Related Documentation
 
-- [Physics Constraint Validation](../ml/README) - Validate predictions against physics
-- [Safety Scenarios](../safety/README) - What-if analysis
+- [Physics Constraint Validation](../ml/) - Validate predictions against physics
+- [Safety Scenarios](../safety/) - What-if analysis
 - [MPC Integration](../../integration/mpc_integration) - Real-time control integration

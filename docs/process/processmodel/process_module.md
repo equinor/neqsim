@@ -494,4 +494,4 @@ Constraints are evaluated across **all nested ProcessSystems** in the module hie
 
 - [ProcessSystem](process_system) - Process system management
 - [Graph Simulation](graph_simulation) - Graph-based execution
-- [Equipment Overview](../equipment/README) - Process equipment
+- [Equipment Overview](../equipment/) - Process equipment

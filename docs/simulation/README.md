@@ -65,7 +65,7 @@ This folder contains guides for advanced process simulation topics including pro
 
 ## Related Documentation
 
-- [Process Package](../process/README) - Process equipment and systems
-- [Process Equipment](../process/equipment/README) - Equipment documentation
-- [Thermodynamic Operations](../thermodynamicoperations/README) - Flash calculations
+- [Process Package](../process/) - Process equipment and systems
+- [Process Equipment](../process/equipment/) - Equipment documentation
+- [Thermodynamic Operations](../thermodynamicoperations/) - Flash calculations
 

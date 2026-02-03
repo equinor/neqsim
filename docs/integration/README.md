@@ -49,7 +49,7 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 
 ## Related Documentation
 
-- [Process Package](../process/README) - Process simulation
-- [Simulation Guides](../simulation/README) - Advanced simulation
+- [Process Package](../process/) - Process simulation
+- [Simulation Guides](../simulation/) - Advanced simulation
 - [PFD Diagram Export](../process/processmodel/diagram_export) - Professional diagram generation
 

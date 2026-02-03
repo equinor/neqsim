@@ -45,4 +45,4 @@ process.add(recycle);
 ## Related Documentation
 
 - [Process Controllers](../../controllers) - Controller documentation
-- [Equipment Overview](../README) - All equipment
+- [Equipment Overview](../) - All equipment

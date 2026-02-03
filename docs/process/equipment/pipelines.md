@@ -42,7 +42,7 @@ Documentation for pipeline equipment in NeqSim.
 | `TopsidePiping` | Topside/platform piping with service types and mechanical design | ✅ | ✅ |
 | `Riser` | Subsea risers (SCR, TTR, Flexible, Lazy-Wave) | - | - |
 
-For detailed pipe flow modeling, see also [Fluid Mechanics](../../fluidmechanics/README).
+For detailed pipe flow modeling, see also [Fluid Mechanics](../../fluidmechanics/).
 
 ---
 
@@ -635,14 +635,14 @@ System.out.println(pipe.getSizingReport());
 System.out.println(pipe.getSizingReportJson());
 ```
 
-For detailed FIV documentation, see [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md#flow-induced-vibration-fiv-analysis).
+For detailed FIV documentation, see [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK#flow-induced-vibration-fiv-analysis).
 
 ---
 
 ## Related Documentation
 
-- [Equipment Index](README) - All equipment
-- [Fluid Mechanics](../../fluidmechanics/README) - Detailed pipe flow
+- [Equipment Index](./ - All equipment
+- [Fluid Mechanics](../../fluidmechanics/) - Detailed pipe flow
 - [Pipeline Mechanical Design](../pipeline_mechanical_design) - Wall thickness, stress, costs
 - [Riser Mechanical Design](../riser_mechanical_design) - Riser-specific design
 - [Valves](valves) - Flow control

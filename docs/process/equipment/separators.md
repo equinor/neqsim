@@ -269,7 +269,7 @@ NeqSim separators include a constraint system for performance monitoring and cap
 
 > **⚠️ Important:** All separator constraints are **disabled by default** for backward compatibility with the optimizer. Use the constraint selection methods (`useEquinorConstraints()`, `useAPIConstraints()`, `useAllConstraints()`, or `enableConstraints()`) to enable constraints for capacity analysis. The optimizer automatically falls back to traditional capacity methods when no enabled constraints exist.
 >
-> For detailed information on how the optimizer handles constraints, see [Capacity Constraint Framework - Constraints Disabled by Default](../CAPACITY_CONSTRAINT_FRAMEWORK.md#important-constraints-disabled-by-default).
+> For detailed information on how the optimizer handles constraints, see [Capacity Constraint Framework - Constraints Disabled by Default](../CAPACITY_CONSTRAINT_FRAMEWORK#important-constraints-disabled-by-default).
 
 ### Available Constraints
 
@@ -737,7 +737,7 @@ System.out.println("\n" + separator.toJson());
 
 ## Related Documentation
 
-- [Process Package](../README) - Package overview
+- [Process Package](../) - Package overview
 - [Streams](streams) - Stream handling
 - [Design Framework](../DESIGN_FRAMEWORK) - Auto-sizing and design specifications
 - [Bottleneck Analysis](../../wiki/bottleneck_analysis) - Capacity utilization

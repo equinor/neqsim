@@ -413,7 +413,7 @@ Stream dryGas = tegModule.getGasOutStream();
 
 ## See Also
 
-- [SimpleTEGAbsorber](../process/absorbers) - Absorber equipment documentation
-- [Water Dew Point Guide](../pvtsimulation/water_dew_point_guide) - Water content calculations
+- [Absorber Equipment](../process/equipment/absorbers) - Absorber equipment documentation
+- [Thermodynamics Recipes](../cookbook/thermodynamics-recipes) - Thermodynamic calculations
 - [Process Recipes](../cookbook/process-recipes) - Quick recipes for common operations
-- [Component List](component_list) - TEG and glycol properties
+- [Component List](../thermo/component_list) - TEG and glycol properties

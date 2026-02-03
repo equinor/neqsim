@@ -200,7 +200,7 @@ double[] recovery = slimTube.getOilRecovery();
 
 ## Related Documentation
 
-- [PVT Module Overview](../pvtsimulation/README)
+- [PVT Module Overview](../pvtsimulation/)
 - [Fluid Characterization](fluid_characterization)
 - [Black Oil Flash Playbook](black_oil_flash_playbook)
 - [Thermodynamics Guide](thermodynamics_guide)

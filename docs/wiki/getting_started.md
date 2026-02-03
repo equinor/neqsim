@@ -57,7 +57,7 @@ On Windows:
 mvnw.cmd install
 ```
 
-The command downloads dependencies, compiles the project, and runs the test suite. For environment notes and troubleshooting tips, see the [README](../../README) and [developer setup guide](../development/DEVELOPER_SETUP).
+The command downloads dependencies, compiles the project, and runs the test suite. For environment notes and troubleshooting tips, see the [README](../../) and [developer setup guide](../development/DEVELOPER_SETUP).
 
 ### Requirements
 - Java 8 or higher (Java 11+ recommended)
@@ -180,7 +180,7 @@ NeqSim supports multiple equations of state for different applications:
 
 ### Documentation Links
 - Read the [Thermodynamics Guide](thermodynamics_guide) for an overview of models, correlations, and implementation notes.
-- Explore validated calculations in [Flash equations and tests](flash_equations_and_tests) and the [Thermodynamics of gas processing](process_simulation.md#thermodynamics).
+- Explore validated calculations in [Flash equations and tests](flash_equations_and_tests) and the [Thermodynamics of gas processing](process_simulation#thermodynamics).
 - Review property-focused workflows in [Property flash workflows](property_flash_workflows) and viscosity models in [Viscosity models](viscosity_models).
 - See [Steam Tables IF97](steam_tables_if97) for water/steam calculations.
 

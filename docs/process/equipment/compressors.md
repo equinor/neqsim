@@ -372,7 +372,7 @@ comp.run();
 | LNG/refrigeration | `REFRIGERATION` |
 | General purpose | `CENTRIFUGAL_STANDARD` |
 
-> **📖 Detailed Documentation:** See [Compressor Curves - Automatic Generation](compressor_curves.md#automatic-curve-generation) 
+> **📖 Detailed Documentation:** See [Compressor Curves - Automatic Generation](compressor_curves#automatic-curve-generation) 
 > for complete API reference, advanced corrections, and examples.
 
 ---
@@ -806,6 +806,6 @@ print(f"Mechanical efficiency: {comp.getMechanicalEfficiency()*100:.1f}%")
 ## Related Documentation
 
 - [Compressor Curves](compressor_curves) - Detailed curve documentation, templates, and MW correction
-- [Process Package](../README) - Package overview
+- [Process Package](../) - Package overview
 - [Expanders](expanders) - Expansion equipment
 - [Pumps](pumps) - Liquid compression

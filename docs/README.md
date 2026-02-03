@@ -40,49 +40,49 @@ System.out.println("Compressibility: " + gas.getZ());
 
 | Package | Documentation | Description |
 |---------|---------------|-------------|
-| `neqsim.thermo` | [thermo/](thermo/README) | Thermodynamic systems, phases, components, equations of state, mixing rules, fluid characterization |
-| `neqsim.thermodynamicoperations` | [thermodynamicoperations/](thermodynamicoperations/README) | Flash calculations, phase envelopes, saturation operations |
-| `neqsim.physicalproperties` | [physical_properties/](physical_properties/README) | Transport properties: viscosity, thermal conductivity, diffusivity, interfacial tension |
+| `neqsim.thermo` | [thermo/](thermo/) | Thermodynamic systems, phases, components, equations of state, mixing rules, fluid characterization |
+| `neqsim.thermodynamicoperations` | [thermodynamicoperations/](thermodynamicoperations/) | Flash calculations, phase envelopes, saturation operations |
+| `neqsim.physicalproperties` | [physical_properties/](physical_properties/) | Transport properties: viscosity, thermal conductivity, diffusivity, interfacial tension |
 
 ### Process Simulation
 
 | Package | Documentation | Description |
 |---------|---------------|-------------|
-| `neqsim.process` | [process/](process/README) | Process equipment, unit operations, controllers, process systems, safety systems |
-| `neqsim.fluidmechanics` | [fluidmechanics/](fluidmechanics/README) | Pipeline flow, pressure drop, two-phase flow, flow nodes |
+| `neqsim.process` | [process/](process/) | Process equipment, unit operations, controllers, process systems, safety systems |
+| `neqsim.fluidmechanics` | [fluidmechanics/](fluidmechanics/) | Pipeline flow, pressure drop, two-phase flow, flow nodes |
 
 ### PVT and Reservoir
 
 | Package | Documentation | Description |
 |---------|---------------|-------------|
-| `neqsim.pvtsimulation` | [pvtsimulation/](pvtsimulation/README) | PVT experiments: CME, CVD, DL, separator tests, swelling tests |
-| `neqsim.blackoil` | [blackoil/](blackoil/README) | Black oil model, PVT tables, Rs, Bo, Bg correlations |
+| `neqsim.pvtsimulation` | [pvtsimulation/](pvtsimulation/) | PVT experiments: CME, CVD, DL, separator tests, swelling tests |
+| `neqsim.blackoil` | [blackoil/](blackoil/) | Black oil model, PVT tables, Rs, Bo, Bg correlations |
 
 ### Flow Assurance
 
 | Package | Documentation | Description |
 |---------|---------------|-------------|
-| `neqsim.pvtsimulation.flowassurance` | [pvtsimulation/flowassurance/](pvtsimulation/flowassurance/README) | Asphaltene stability, De Boer screening, CPA-based onset calculations |
+| `neqsim.pvtsimulation.flowassurance` | [pvtsimulation/flowassurance/](pvtsimulation/flowassurance/) | Asphaltene stability, De Boer screening, CPA-based onset calculations |
 
 ### Chemical Reactions
 
 | Package | Documentation | Description |
 |---------|---------------|-------------|
-| `neqsim.chemicalreactions` | [chemicalreactions/](chemicalreactions/README) | Chemical equilibrium, reaction kinetics |
+| `neqsim.chemicalreactions` | [chemicalreactions/](chemicalreactions/) | Chemical equilibrium, reaction kinetics |
 
 ### Quality Standards
 
 | Package | Documentation | Description |
 |---------|---------------|-------------|
-| `neqsim.standards` | [standards/](standards/README) | ISO 6976, ISO 6578, ISO 15403, ASTM D6377, sales contracts |
-| `neqsim.statistics` | [statistics/](statistics/README) | Parameter fitting, Monte Carlo simulation, data analysis |
+| `neqsim.standards` | [standards/](standards/) | ISO 6976, ISO 6578, ISO 15403, ASTM D6377, sales contracts |
+| `neqsim.statistics` | [statistics/](statistics/) | Parameter fitting, Monte Carlo simulation, data analysis |
 
 ### Utilities
 
 | Package | Documentation | Description |
 |---------|---------------|-------------|
-| `neqsim.util` | [util/](util/README) | Database access, unit conversion, serialization, exceptions |
-| `neqsim.mathlib` | [mathlib/](mathlib/README) | Mathematical utilities, nonlinear solvers |
+| `neqsim.util` | [util/](util/) | Database access, unit conversion, serialization, exceptions |
+| `neqsim.mathlib` | [mathlib/](mathlib/) | Mathematical utilities, nonlinear solvers |
 
 ---
 

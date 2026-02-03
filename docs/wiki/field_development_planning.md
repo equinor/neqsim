@@ -536,15 +536,9 @@ public class FieldDevelopmentExample {
 ## Related Documentation
 
 - [Bottleneck Analysis Guide](bottleneck_analysis)
-- [ProductionOptimizer Reference](../javadoc/ProductionOptimizer.html)
-- [Monte Carlo Statistics](../thermo/statistics/MonteCarloSimulation.html)
+- [Process Optimization Overview](../process/optimization/)
 
 ## API Reference
 
-See the Javadoc documentation for complete API details:
-
-- [`ProductionProfile`](../javadoc/neqsim/process/util/fielddevelopment/ProductionProfile.html)
-- [`WellScheduler`](../javadoc/neqsim/process/util/fielddevelopment/WellScheduler.html)
-- [`FacilityCapacity`](../javadoc/neqsim/process/util/fielddevelopment/FacilityCapacity.html)
-- [`SensitivityAnalysis`](../javadoc/neqsim/process/util/fielddevelopment/SensitivityAnalysis.html)
+See the [JavaDoc API Documentation](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html) for complete API details.
 

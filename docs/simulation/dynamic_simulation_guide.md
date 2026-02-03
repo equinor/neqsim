@@ -647,7 +647,7 @@ for (int step = 0; step < 600; step++) {
 - [Transient Multiphase Pipe](../wiki/transient_multiphase_pipe) - Drift-flux model
 
 ### Equipment-Specific
-- [Compressor Dynamic Features](../process/equipment/compressor_curves.md#dynamic-simulation-features) - State machines, events
+- [Compressor Dynamic Features](../process/equipment/compressor_curves#dynamic-simulation-features) - State machines, events
 - [Controllers](../process/controllers) - PID control for dynamics
 - [Separators](../process/equipment/separators) - Level tracking
 

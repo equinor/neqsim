@@ -194,6 +194,6 @@ The `AutomaticScenarioGenerator` complements the existing safety framework:
 
 ## Related Documentation
 
-- [Safety Systems Package](README) - Safety equipment modeling
+- [Safety Systems Package](./ - Safety equipment modeling
 - [Batch Studies](../optimization/batch-studies) - Run many scenarios in parallel
 - [Future Infrastructure Overview](../future-infrastructure) - Full infrastructure overview

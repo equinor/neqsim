@@ -260,6 +260,6 @@ System.out.println("Ammonia mole fraction: " + nh3Prod);
 
 ## Related Documentation
 
-- [Equipment Index](README) - All equipment
-- [Chemical Reactions](../../chemicalreactions/README) - Reaction modeling
+- [Equipment Index](./ - All equipment
+- [Chemical Reactions](../../chemicalreactions/) - Reaction modeling
 - [Heat Exchangers](heat_exchangers) - Reactor heat exchange

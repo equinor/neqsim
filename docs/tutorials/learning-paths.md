@@ -31,7 +31,7 @@ Choose the learning path that matches your role and goals.
 
 1. **[Thermodynamic Models Guide](../thermo/thermodynamic_models)** - All EoS options
 2. **[Mixing Rules Guide](../thermo/mixing_rules_guide)** - BIPs and mixing rules
-3. **Reference**: [Which EoS should I use?](../cookbook/thermodynamics-recipes.md#which-eos-should-i-use)
+3. **Reference**: [Which EoS should I use?](../cookbook/thermodynamics-recipes#which-eos-should-i-use)
 
 | Fluid Type | Recommended EoS |
 |------------|-----------------|
@@ -116,7 +116,7 @@ Choose the learning path that matches your role and goals.
 
 - [JavaDoc: ProcessSystem](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/process/processmodel/ProcessSystem.html)
 - [JavaDoc: ProcessEquipmentInterface](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/neqsim/process/equipment/ProcessEquipmentInterface.html)
-- [Equipment Index](../process/equipment/README)
+- [Equipment Index](../process/equipment/)
 
 ---
 
@@ -128,7 +128,7 @@ Choose the learning path that matches your role and goals.
 
 1. **[Developer Setup](../development/DEVELOPER_SETUP)** - Build from source
 2. **[Modules Overview](../modules)** - Package architecture
-3. **[Contributing Guide](../development/README)** - Code standards
+3. **[Contributing Guide](../development/)** - Code standards
 
 ### Level 2: Core APIs (2 hours)
 
@@ -139,12 +139,12 @@ Choose the learning path that matches your role and goals.
 ### Level 3: Thermodynamic Implementation (2 hours)
 
 1. **[Mathematical Models](../thermo/mathematical_models)** - EoS implementation
-2. **[Phase Package](../thermo/phase/README)** - Phase calculations
-3. **[Component Package](../thermo/component/README)** - Component properties
+2. **[Phase Package](../thermo/phase/)** - Phase calculations
+3. **[Component Package](../thermo/component/)** - Component properties
 
 ### Level 4: Process Implementation (2 hours)
 
-1. **[Equipment Base Classes](../process/README)** - Equipment patterns
+1. **[Equipment Base Classes](../process/)** - Equipment patterns
 2. **[Mechanical Design](../process/mechanical_design)** - Design calculations
 3. **[Graph Simulation](../process/processmodel/graph_simulation)** - Topology analysis
 

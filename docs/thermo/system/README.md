@@ -328,7 +328,7 @@ copy.setTemperature(400.0);
 
 ## Related Documentation
 
-- [Phase Package](../phase/README) - Phase modeling
-- [Component Package](../component/README) - Component properties
-- [Mixing Rules](../mixingrule/README) - Binary interactions
-- [Thermo Package](../README) - Package overview
+- [Phase Package](../phase/) - Phase modeling
+- [Component Package](../component/) - Component properties
+- [Mixing Rules](../mixingrule/) - Binary interactions
+- [Thermo Package](../) - Package overview

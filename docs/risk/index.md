@@ -32,7 +32,7 @@ This documentation covers NeqSim's comprehensive **Operational Risk Simulation F
 
 | Section | Description |
 |---------|-------------|
-| [**Advanced Framework Overview**](README) | Overview of all 7 priority packages |
+| [**Advanced Framework Overview**](./ | Overview of all 7 priority packages |
 | [P1: Dynamic Simulation](dynamic-simulation) | Monte Carlo with transient modeling |
 | [P2: SIS/SIF Integration](sis-integration) | IEC 61508/61511, LOPA, SIL verification |
 | [P4: Bow-Tie Analysis](bowtie-analysis) | Barrier analysis, threat/consequence visualization |
@@ -194,7 +194,7 @@ neqsim.process
 ## 🔗 Related Resources
 
 - [NeqSim Main Documentation](../index)
-- [Process Simulation Guide](../process/README)
+- [Process Simulation Guide](../process/)
 - [Advanced Risk Framework Tutorial (Jupyter)](../examples/AdvancedRiskFramework_Tutorial.ipynb)
 - [Examples Index](../examples/index)
 - [OREDA Handbook](https://www.oreda.com/)

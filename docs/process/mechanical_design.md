@@ -923,6 +923,6 @@ System.out.println("Driver power: " + compResponse.getDriverPower() + " kW");
 
 ## See Also
 
-- [Process Equipment](README)
+- [Process Equipment](./
 - [Pipeline Mechanical Design](pipeline_mechanical_design)
-- [Design Standards](../standards/README)
+- [Design Standards](../standards/)

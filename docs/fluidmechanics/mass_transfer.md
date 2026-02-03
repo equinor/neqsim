@@ -567,6 +567,6 @@ fluid.setMixingRule(10);  // CPA mixing rule
 ## Related Documentation
 
 - [Heat Transfer Modeling](heat_transfer) - Companion heat transfer documentation
-- [Fluid Mechanics Overview](README) - Main fluid mechanics documentation
-- [Physical Properties](../physical_properties/README) - Diffusivity models
-- [Thermodynamics](../thermo/README) - Activity coefficients and phase equilibria
+- [Fluid Mechanics Overview](./ - Main fluid mechanics documentation
+- [Physical Properties](../physical_properties/) - Diffusivity models
+- [Thermodynamics](../thermo/) - Activity coefficients and phase equilibria

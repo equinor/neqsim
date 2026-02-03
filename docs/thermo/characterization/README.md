@@ -158,7 +158,7 @@ fluid.getCharacterization().configureLumping()
 | Match specific PVT lab groupings | `.customBoundaries(6, 10, 20)` |
 | Keep all SCN components | `.noLumping()` |
 
-For complete mathematical details, see [Fluid Characterization Mathematics](../../pvtsimulation/fluid_characterization_mathematics.md#lumping-methods).
+For complete mathematical details, see [Fluid Characterization Mathematics](../../pvtsimulation/fluid_characterization_mathematics#lumping-methods).
 
 ---
 
@@ -304,4 +304,4 @@ oil.setMixingRule("classic");
 
 - [PVT Fluid Characterization](../pvt_fluid_characterization) - Detailed characterization guide
 - [Fluid Creation Guide](../fluid_creation_guide) - Creating fluids
-- [Thermo Package](../README) - Package overview
+- [Thermo Package](../) - Package overview

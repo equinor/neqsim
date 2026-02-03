@@ -1100,7 +1100,7 @@ for p in pareto_scipy:
 
 ## Related Documentation
 
-- [Production Optimization Framework](README) - Single-objective optimization
+- [Production Optimization Framework](./ - Single-objective optimization
 - [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) - Equipment constraints
 - [Batch Parameter Estimation](batch-studies) - Parameter fitting
 - [Python Optimization Tutorial](../../examples/NeqSim_Python_Optimization) - SciPy integration

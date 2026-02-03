@@ -417,6 +417,4 @@ DNV-ST-F101 and API RP 17A parameters for subsea manifolds.
 
 ## API Reference
 
-- [ManifoldMechanicalDesign](../api/neqsim/process/mechanicaldesign/manifold/ManifoldMechanicalDesign.html)
-- [ManifoldMechanicalDesignCalculator](../api/neqsim/process/mechanicaldesign/manifold/ManifoldMechanicalDesignCalculator.html)
-- [ManifoldMechanicalDesignDataSource](../api/neqsim/process/mechanicaldesign/manifold/ManifoldMechanicalDesignDataSource.html)
+See the [JavaDoc API Documentation](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html) for class details.

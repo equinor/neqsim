@@ -344,6 +344,6 @@ System.out.println("Annual CO2 emissions: " + annualCO2 + " tonnes/year");
 
 ## Related Documentation
 
-- [Safety Systems](../safety/README) - PSV and blowdown
+- [Safety Systems](../safety/) - PSV and blowdown
 - [Valves](valves) - Blowdown valves
 - [Tanks](tanks) - Vessel depressuring

@@ -382,6 +382,5 @@ System.out.println("Risk: " + risk);
 ## See Also
 
 - [Wax Characterization](wax_characterization) - Wax modeling
-- [Flow Assurance](../../pvtsimulation/flow_assurance) - Complete guide
+- [Flow Assurance](../../pvtsimulation/flow_assurance_overview) - Complete guide
 - [Electrolyte CPA](../ElectrolyteCPAModel) - CPA model details
-- [De Boer Screening](../../pvtsimulation/de_boer_screening) - Detailed screening method

@@ -355,7 +355,7 @@ public class KafkaStreamProcessor {
 
 ## Related Documentation
 
-- [Lifecycle Management](lifecycle/README) - State management and versioning
-- [ML Integration](ml/README) - Surrogate models and physics validation
-- [Advisory Systems](advisory/README) - Prediction results
-- [Sustainability](sustainability/README) - Emissions tracking
+- [Lifecycle Management](lifecycle/) - State management and versioning
+- [ML Integration](ml/) - Surrogate models and physics validation
+- [Advisory Systems](advisory/) - Prediction results
+- [Sustainability](sustainability/) - Emissions tracking

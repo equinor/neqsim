@@ -287,7 +287,7 @@ $$x_{effective} = F_\gamma \cdot x_T$$
 
 - [Valve Equipment](equipment/valves) - Valve simulation overview
 - [Compressor Mechanical Design](CompressorMechanicalDesign) - Compressor mechanical design
-- [Process Package](README) - Package overview
+- [Process Package](./ - Package overview
 - [Safety Systems](safety/) - Safety valve sizing
 
 ---

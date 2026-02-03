@@ -590,6 +590,6 @@ String json = design.toJson();
 
 - [Pipeline Mechanical Design](../pipeline_mechanical_design) - Wall thickness, stress analysis, cost estimation
 - [Mechanical Design Standards](../mechanical_design_standards) - ASME, DNV, API standards
-- [Fluid Mechanics](../../fluidmechanics/README) - Detailed flow modeling
+- [Fluid Mechanics](../../fluidmechanics/) - Detailed flow modeling
 - [Valves](valves) - Flow control devices
-- [Equipment Index](README) - All equipment types
+- [Equipment Index](./ - All equipment types

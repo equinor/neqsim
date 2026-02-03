@@ -448,6 +448,6 @@ for (int p = 0; p < fluid.getNumberOfPhases(); p++) {
 
 ## Related Documentation
 
-- [System Package](../system/README) - Fluid systems
-- [Component Package](../component/README) - Component properties
-- [Thermo Package](../README) - Package overview
+- [System Package](../system/) - Fluid systems
+- [Component Package](../component/) - Component properties
+- [Thermo Package](../) - Package overview

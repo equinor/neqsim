@@ -380,4 +380,4 @@ List<String> downstream = topology.getDownstreamEquipment("HP Separator");
 - [Degraded Operation Optimization](degraded-operation)
 - [Risk Matrix](risk-matrix)
 - [Topology Analysis](topology)
-- [API Reference](api-reference.md#productionimpactanalyzer)
+- [API Reference](api-reference#productionimpactanalyzer)

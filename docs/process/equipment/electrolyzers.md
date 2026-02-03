@@ -301,4 +301,4 @@ double current = electrolyzer.getCurrent();  // A
 - [Reactors](reactors) - Chemical reactors
 - [Compressors](compressors) - H2 compression
 - [Membrane Separators](membranes) - Gas purification
-- [Process Package](../README) - Package overview
+- [Process Package](../) - Package overview

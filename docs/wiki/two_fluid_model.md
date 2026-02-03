@@ -1179,7 +1179,7 @@ The model includes comprehensive unit tests:
 
 ## Related Documentation
 
-- [Fluid Mechanics README](../fluidmechanics/README) - Low-level pipe flow modeling
+- [Fluid Mechanics README](../fluidmechanics/) - Low-level pipe flow modeling
 - [TwoPhasePipeFlowModel](../fluidmechanics/TwoPhasePipeFlowModel) - Non-equilibrium mass/heat transfer
 - [TwoPhasePipeFlowSystem Development Plan](../fluidmechanics/TwoPhasePipeFlowSystem_Development_Plan) - Implementation status
 - [Pipeline Index](pipeline_index) - Overview of all pipeline models

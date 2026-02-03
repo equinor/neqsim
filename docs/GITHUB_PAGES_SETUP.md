@@ -143,8 +143,8 @@ Check the Actions tab in GitHub for build logs. Common issues:
 ### Links Not Working
 
 Ensure you're using relative paths without the `/docs` prefix:
-- ✅ `[Thermo](thermo/README)`
-- ❌ `[Thermo](/docs/thermo/README)`
+- ✅ `[Thermo](thermo/)`
+- ❌ `[Thermo](/docs/thermo/)`
 
 ### Images Not Loading
 

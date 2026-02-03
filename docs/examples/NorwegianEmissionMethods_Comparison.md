@@ -8,7 +8,7 @@ description: This document compares the **conventional Norwegian handbook method
 > **📖 Related Documentation:**  
 > - [Produced Water Emissions Tutorial](ProducedWaterEmissions_Tutorial) - Complete implementation guide  
 > - [Examples Index](index) - All tutorials and examples  
-> - [REFERENCE_MANUAL_INDEX - Chapter 43](../REFERENCE_MANUAL_INDEX.md#chapter-43-sustainability--emissions) - Full API documentation
+> - [REFERENCE_MANUAL_INDEX - Chapter 43](../REFERENCE_MANUAL_INDEX#chapter-43-sustainability--emissions) - Full API documentation
 
 ## Overview
 

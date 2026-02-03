@@ -200,7 +200,7 @@ System.out.println("Vessel height: " + design.getTotalHeight() + " m");
 - [Absorbers](absorbers) - Liquid absorption equipment (TEG, amine)
 - [Separators](separators) - Gas-liquid separation
 - [Membrane](membranes) - Membrane separation for CO2
-- [Chemical Reactions](../../chemicalreactions/README) - Reaction chemistry
+- [Chemical Reactions](../../chemicalreactions/) - Reaction chemistry
 
 ---
 

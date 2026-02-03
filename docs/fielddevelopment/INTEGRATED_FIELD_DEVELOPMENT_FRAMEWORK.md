@@ -1666,7 +1666,7 @@ each topic maps to NeqSim capabilities:
 
 ## See Also
 
-- [Economics Module](../process/economics/README) - NPV, tax models, cash flow
+- [Economics Module](../process/economics/) - NPV, tax models, cash flow
 - [Well Simulation Guide](../simulation/well_simulation_guide) - IPR/VLP details
 - [PVT Workflow](../pvtsimulation/pvt_workflow) - EOS tuning guide
 - [Reservoir Modeling](../process/equipment/reservoirs) - SimpleReservoir API

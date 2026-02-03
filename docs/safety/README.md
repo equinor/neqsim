@@ -67,7 +67,7 @@ This folder contains guides for implementing safety systems in process simulatio
 
 ## Related Documentation
 
-- [Process Package](../process/README) - Process simulation overview
-- [Process Safety](../process/safety/README) - Safety equipment classes
+- [Process Package](../process/) - Process simulation overview
+- [Process Safety](../process/safety/) - Safety equipment classes
 - [Controllers](../process/controllers) - Controller devices
 

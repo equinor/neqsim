@@ -328,4 +328,4 @@ $$|f(x_n)| < \epsilon$$
 ## Related Documentation
 
 - [Flash Calculations](../thermo/flash_calculations_guide) - Flash solver internals
-- [Physical Properties](../physical_properties/README) - Property correlations
+- [Physical Properties](../physical_properties/) - Property correlations

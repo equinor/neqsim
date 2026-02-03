@@ -68,7 +68,7 @@ For detailed non-equilibrium mass and heat transfer calculations, the `TwoPhaseP
 - **Wall heat transfer** with multiple boundary conditions
 - **Bidirectional mass transfer** (evaporation and dissolution)
 
-See [Fluid Mechanics README](../fluidmechanics/README) and [Two-Phase Pipe Flow Model](../fluidmechanics/TwoPhasePipeFlowModel) for details.
+See [Fluid Mechanics README](../fluidmechanics/) and [Two-Phase Pipe Flow Model](../fluidmechanics/TwoPhasePipeFlowModel) for details.
 
 ## Common Parameters
 

@@ -724,9 +724,9 @@ For independent data points, consider:
 
 ## Related Documentation
 
-- [Process Calibration Framework](../calibration/README) - EnKF estimator and test harness
-- [Numerical Derivatives](../../statistics/README) - Romberg extrapolation details
-- [NeqSim Process Module](../README) - Process simulation overview
+- [Process Calibration Framework](../calibration/) - EnKF estimator and test harness
+- [Numerical Derivatives](../../statistics/) - Romberg extrapolation details
+- [NeqSim Process Module](../) - Process simulation overview
 
 ---
 

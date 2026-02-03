@@ -448,7 +448,7 @@ Key performance indicators for GOSP operations:
 
 ## See Also
 
-- [Separator Equipment](../process/separators) - Detailed separator documentation
-- [Compressor Guide](../process/compressors) - Compression calculations
+- [Separator Equipment](../process/equipment/separators) - Detailed separator documentation
+- [Compressor Guide](../process/equipment/compressors) - Compression calculations
 - [Process Recipes](../cookbook/process-recipes) - Quick recipes
-- [Flow Assurance](../pvtsimulation/flowassurance/README) - Flow assurance considerations
+- [Flow Assurance](../pvtsimulation/flowassurance/) - Flow assurance considerations

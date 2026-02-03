@@ -159,6 +159,6 @@ git log --oneline -- model_*.json
 
 ## Related Documentation
 
-- [Emissions Tracking](../sustainability/README)
-- [Safety Scenarios](../safety/README)
-- [Batch Studies](../optimization/README)
+- [Emissions Tracking](../sustainability/)
+- [Safety Scenarios](../safety/)
+- [Batch Studies](../optimization/)

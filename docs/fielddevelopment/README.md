@@ -234,5 +234,5 @@ See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT) for detailed
 
 - [Process Simulation Guide](../wiki/process_simulation)
 - [Thermodynamic Models](../thermo/thermodynamic_models)
-- [Economics Module](../process/economics/README)
+- [Economics Module](../process/economics/)
 - [Reference Manual Index](../REFERENCE_MANUAL_INDEX)

@@ -73,7 +73,7 @@ See [Bow-Tie Analysis Guide](bowtie-analysis)
 
 ### P5: Portfolio Risk
 
-See [Portfolio Risk Guide](overview.md#portfolio-risk-analysis)
+See [Portfolio Risk Guide](overview#portfolio-risk-analysis)
 
 ### P6: Condition-Based Reliability
 

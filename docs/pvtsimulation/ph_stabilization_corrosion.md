@@ -633,6 +633,6 @@ The Electrolyte CPA model supports these ionic species:
 
 - [Scale Potential Calculations](../physical_properties/scale_potential) - Detailed scale modeling
 - [Flow Assurance Overview](flow_assurance_overview) - Integrated flow assurance
-- [Hydrate Prediction](hydrates/README) - Hydrate equilibrium
+- [Hydrate Models Guide](../thermo/hydrate_models) - Hydrate equilibrium
 - [Component Reference](../thermo/component_list) - Available ions
-- [Chemical Reactions](../chemicalreactions/README) - Reaction equilibrium
+- [Chemical Reactions](../chemicalreactions/) - Reaction equilibrium

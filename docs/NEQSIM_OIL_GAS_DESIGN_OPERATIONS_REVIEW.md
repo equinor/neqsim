@@ -612,14 +612,14 @@ neqsim/
 - [Valve Mechanical Design](process/ValveMechanicalDesign)
 
 ### Safety & Risk
-- [Safety Systems Overview](safety/README)
+- [Safety Systems Overview](safety/)
 - [ESD & Blowdown System](safety/ESD_BLOWDOWN_SYSTEM)
 - [HIPPS Implementation](safety/hipps_implementation)
 - [Integrated Safety Systems](safety/INTEGRATED_SAFETY_SYSTEMS)
 - [Layered Safety Architecture](safety/layered_safety_architecture)
 
 ### Risk Analysis
-- [Risk Framework Overview](risk/README)
+- [Risk Framework Overview](risk/)
 - [Monte Carlo Simulation](risk/monte-carlo)
 - [Bow-Tie Analysis](risk/bowtie-analysis)
 - [Condition-Based Reliability](risk/condition-based)

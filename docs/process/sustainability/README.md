@@ -183,5 +183,5 @@ for (ProcessSystem alternative : alternatives) {
 
 ## Related Documentation
 
-- [Batch Studies](../optimization/README) - Multi-objective optimization including emissions
-- [Lifecycle Management](../lifecycle/README) - Track emissions over model lifecycle
+- [Batch Studies](../optimization/) - Multi-objective optimization including emissions
+- [Lifecycle Management](../lifecycle/) - Track emissions over model lifecycle

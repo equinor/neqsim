@@ -366,7 +366,7 @@ See [Logical Unit Operations](logical_unit_operations) for complete functional i
 |-------|---------------|
 | **Advanced Topics** | [Advanced Process Simulation](advanced_process_simulation) |
 | **Control Logic** | [Logical Unit Operations](logical_unit_operations) |
-| **Equipment Details** | [Process Equipment](../process/README) |
+| **Equipment Details** | [Process Equipment](../process/) |
 | **Dynamic Simulation** | [Process Transient Guide](process_transient_simulation_guide) |
 | **Safety Systems** | [Integrated Safety Systems](../safety/INTEGRATED_SAFETY_SYSTEMS) |
 | **Bottleneck Analysis** | [Bottleneck Analysis](bottleneck_analysis) |

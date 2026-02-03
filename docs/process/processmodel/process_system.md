@@ -794,4 +794,4 @@ For full documentation on serialization options, see [Process Serialization Guid
 - [ProcessModule](process_module) - Modular process units
 - [Process Serialization](../../simulation/process_serialization) - Save/load processes
 - [Graph Simulation](graph_simulation) - Graph-based execution
-- [Equipment Overview](../equipment/README) - Process equipment
+- [Equipment Overview](../equipment/) - Process equipment

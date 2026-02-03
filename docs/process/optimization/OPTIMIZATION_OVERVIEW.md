@@ -30,10 +30,10 @@ This document provides a high-level introduction to the process optimization cap
 | Do multi-objective Pareto optimization | `ProductionOptimizer.optimizePareto()` | [Multi-Objective Optimization](multi-objective-optimization) |
 | Run batch parameter studies | `BatchStudy` | [Batch Studies](batch-studies) |
 | Calculate flow rates for pressure boundaries | `FlowRateOptimizer` | [Flow Rate Optimization](flow-rate-optimization) |
-| Generate Eclipse lift curves (VFP tables) | `EclipseVFPExporter` | [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md#eclipsevfpexporter) |
+| Generate Eclipse lift curves (VFP tables) | `EclipseVFPExporter` | [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE#eclipsevfpexporter) |
 | Evaluate equipment constraints | `ProcessConstraintEvaluator` | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) |
 | Integrate with external optimizers (SciPy, NLopt) | `ProcessSimulationEvaluator` | [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) |
-| Calibrate model parameters to data | `BatchParameterEstimator` | [README.md](README) |
+| Calibrate model parameters to data | `BatchParameterEstimator` | [README.md](./ |
 | Load optimization config from YAML/JSON | `ProductionOptimizationSpecLoader` | [YAML Spec Format](#yaml-specification-files) |
 
 ---
@@ -53,7 +53,7 @@ This document provides a high-level introduction to the process optimization cap
 | [Batch Studies](batch-studies) | Parallel parameter sweeps and sensitivity analysis |
 | [Flow Rate Optimization](flow-rate-optimization) | FlowRateOptimizer and lift curve tables |
 | [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) | ProcessSimulationEvaluator for Python/SciPy integration |
-| [README.md](README) | BatchParameterEstimator for Levenberg-Marquardt calibration |
+| [README.md](./ | BatchParameterEstimator for Levenberg-Marquardt calibration |
 | [Optimizer Guide](../../util/optimizer_guide) | Detailed API reference for all optimizer classes |
 | [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) | Equipment constraints and bottleneck detection |
 
@@ -269,7 +269,7 @@ Equipment constraints define operating limits. Each equipment type has a strateg
 > separator.enableConstraints();       // Enable all constraints
 > ```
 > 
-> See [Capacity Constraint Framework - Constraints Disabled by Default](../CAPACITY_CONSTRAINT_FRAMEWORK.md#important-constraints-disabled-by-default) for details.
+> See [Capacity Constraint Framework - Constraints Disabled by Default](../CAPACITY_CONSTRAINT_FRAMEWORK#important-constraints-disabled-by-default) for details.
 
 ### Utilization Ratio
 
@@ -540,9 +540,9 @@ for (ScenarioRequest scenario : scenarios) {
 | `BatchStudy` | Parallel parameter sweeps | `run()` | [Batch Studies](batch-studies) |
 | `ProcessConstraintEvaluator` | Constraint evaluation | `evaluate()` | [Capacity Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) |
 | `ProcessSimulationEvaluator` | External optimizer interface | `evaluate()` | [External Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) |
-| `EclipseVFPExporter` | Eclipse VFP tables | `exportVFPPROD()` | [Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE.md#eclipsevfpexporter) |
+| `EclipseVFPExporter` | Eclipse VFP tables | `exportVFPPROD()` | [Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE#eclipsevfpexporter) |
 | `LiftCurveGenerator` | Lift curve tables | `generateLiftCurve()` | [Flow Rate Optimization](flow-rate-optimization) |
-| `BatchParameterEstimator` | Model calibration | `solve()` | [README.md](README) |
+| `BatchParameterEstimator` | Model calibration | `solve()` | [README.md](./ |
 | `ProductionOptimizationSpecLoader` | YAML/JSON config loading | `load()` | [YAML Format](#yaml-specification-files) |
 
 ---

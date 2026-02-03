@@ -280,4 +280,4 @@ The `classifyWithPhaseEnvelope` method refines composition-based classification 
 - [Fluid Creation Guide](fluid_creation_guide)
 - [PVT Characterization](pvt_fluid_characterization)
 - [Fluid Characterization](../wiki/fluid_characterization)
-- [Black Oil Models](../blackoil/README)
+- [Black Oil Models](../blackoil/)

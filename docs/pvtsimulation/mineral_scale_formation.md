@@ -696,4 +696,4 @@ Test at saturated conditions where SR should equal approximately 1.0.
 - [pH Stabilization and Corrosion Control](ph_stabilization_corrosion) - FeCO3 protection
 - [Flow Assurance Overview](flow_assurance_overview) - Integrated flow assurance
 - [Component Reference](../thermo/component_list) - Available ions
-- [Chemical Reactions](../chemicalreactions/README) - Ionic equilibrium
+- [Chemical Reactions](../chemicalreactions/) - Ionic equilibrium

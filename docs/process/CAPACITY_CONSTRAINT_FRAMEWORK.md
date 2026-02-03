@@ -1697,7 +1697,7 @@ BottleneckResult bottleneck = process.findBottleneck();
 
 ## See Also
 
-- [Process Equipment Documentation](README)
+- [Process Equipment Documentation](./
 - [Mechanical Design](mechanical_design)
 - [Optimizer Plugin Architecture](optimization/OPTIMIZER_PLUGIN_ARCHITECTURE)
 - [Optimization Examples](../examples/index)

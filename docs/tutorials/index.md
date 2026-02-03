@@ -14,9 +14,9 @@ Curated sequences of tutorials based on your role:
 | Path | Description | Time |
 |------|-------------|------|
 | **[Learning Paths Overview](learning-paths)** | Choose your learning track | - |
-| [PVT Engineer Track](learning-paths.md#pvt-engineer-path) | Fluids, flash, characterization | 4-6 hours |
-| [Process Engineer Track](learning-paths.md#process-engineer-path) | Equipment, flowsheets, optimization | 6-8 hours |
-| [Developer Track](learning-paths.md#developer-path) | API, architecture, extensions | 8-10 hours |
+| [PVT Engineer Track](learning-paths#pvt-engineer-path) | Fluids, flash, characterization | 4-6 hours |
+| [Process Engineer Track](learning-paths#process-engineer-path) | Equipment, flowsheets, optimization | 6-8 hours |
+| [Developer Track](learning-paths#developer-path) | API, architecture, extensions | 8-10 hours |
 
 ## Quick Start Guides
 

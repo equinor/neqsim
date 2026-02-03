@@ -502,8 +502,8 @@ if (outletT < hydrateT) {
 - [Mineral Scale Formation](mineral_scale_formation) - Comprehensive scale guide
 - [pH Stabilization and Corrosion Control](ph_stabilization_corrosion) - Electrolyte CPA, FeCO3 protection
 - [Scale Potential Calculations](../physical_properties/scale_potential) - Scale potential API details
-- [Hydrate Guide](hydrates/README) - Detailed hydrate prediction
-- [Wax Modeling](wax_modeling) - Wax calculations
-- [Asphaltene Precipitation](flowassurance/asphaltene_precipitation) - Asphaltene stability
-- [Pipeline Modeling](../process/pipelines) - Multiphase flow
+- [Hydrate Models Guide](../thermo/hydrate_models) - Detailed hydrate prediction
+- [Wax Characterization](../thermo/characterization/wax_characterization) - Wax calculations
+- [Asphaltene Modeling](flowassurance/asphaltene_modeling) - Asphaltene stability
+- [Pipeline Modeling](../process/equipment/pipelines) - Multiphase flow
 - [Pipeline Recipes](../cookbook/pipeline-recipes) - Quick code recipes

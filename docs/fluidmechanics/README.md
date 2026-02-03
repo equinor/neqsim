@@ -857,6 +857,6 @@ See [TwoPhasePipeFlowSystem_Development_Plan.md](TwoPhasePipeFlowSystem_Developm
 - [Mass Transfer Modeling](mass_transfer) - Detailed multicomponent mass transfer models
 - [Heat Transfer Modeling](heat_transfer) - Detailed heat transfer correlations and models
 - [Process Pipeline Equipment](../process/equipment/pipelines) - Pipeline in process simulation
-- [Physical Properties](../physical_properties/README) - Viscosity, diffusivity, and density models
-- [Thermodynamics](../thermo/README) - Equations of state and phase equilibria
+- [Physical Properties](../physical_properties/) - Viscosity, diffusivity, and density models
+- [Thermodynamics](../thermo/) - Equations of state and phase equilibria
 - [Transient Pipeline Simulation](../wiki/pipeline_transient_simulation) - Dynamic pipeline modeling

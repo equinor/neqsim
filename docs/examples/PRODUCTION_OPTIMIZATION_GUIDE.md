@@ -273,7 +273,7 @@ boolean hasEnabled = equipment.getCapacityConstraints().values().stream()
     .anyMatch(CapacityConstraint::isEnabled);
 ```
 
-For detailed information, see [Capacity Constraint Framework - Constraints Disabled by Default](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md#important-constraints-disabled-by-default).
+For detailed information, see [Capacity Constraint Framework - Constraints Disabled by Default](../process/CAPACITY_CONSTRAINT_FRAMEWORK#important-constraints-disabled-by-default).
 
 ### Constraint Types and Their Behavior
 

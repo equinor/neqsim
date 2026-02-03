@@ -136,4 +136,4 @@ $$k_{ij}(T) = k_{ij}^0 + k_{ij}^1 \cdot T + k_{ij}^2 \cdot T^2$$
 
 - [INTER Table Guide](../inter_table_guide) - Binary parameters database
 - [Mixing Rules Guide](../mixing_rules_guide) - Detailed guide
-- [Thermo Package](../README) - Package overview
+- [Thermo Package](../) - Package overview

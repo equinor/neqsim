@@ -518,7 +518,7 @@ CompressorConstraintConfig api617 = CompressorConstraintConfig.createAPI617Confi
 
 Generate VFP tables for reservoir simulation. **Capacity constraints directly affect the maximum flow rates in VFP tables**.
 
-> **📘 See Also:** [Capacity Constraint Framework - VFP Section](../CAPACITY_CONSTRAINT_FRAMEWORK.md#constraints-in-eclipse-vfp-table-generation) for detailed documentation on constraint management for VFP studies.
+> **📘 See Also:** [Capacity Constraint Framework - VFP Section](../CAPACITY_CONSTRAINT_FRAMEWORK#constraints-in-eclipse-vfp-table-generation) for detailed documentation on constraint management for VFP studies.
 
 ### How Constraints Affect VFP Tables
 
@@ -1410,7 +1410,7 @@ import org.apache.logging.log4j.Logger;
 ## See Also
 
 - [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) - Detailed constraint system documentation
-- [Process Optimization Framework](README) - Parameter estimation and calibration
+- [Process Optimization Framework](./ - Parameter estimation and calibration
 - [Multi-Objective Optimization](multi-objective-optimization) - Pareto optimization
 - [Batch Studies](batch-studies) - Sensitivity analysis
 

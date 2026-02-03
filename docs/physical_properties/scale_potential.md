@@ -502,4 +502,4 @@ Several salt correlations were corrected:
 - [pH Stabilization and Corrosion Control](../pvtsimulation/ph_stabilization_corrosion) - FeCO3 protective layer
 - [Flow Assurance Overview](../pvtsimulation/flow_assurance_overview) - Integrated flow assurance
 - [Electrolyte CPA Model](../thermo/ElectrolyteCPAModel)
-- [Chemical Equilibrium](../chemicalreactions/README)
+- [Chemical Equilibrium](../chemicalreactions/)

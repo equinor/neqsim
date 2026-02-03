@@ -95,6 +95,6 @@ For deeper understanding of NeqSim's architecture:
 
 - [NeqSim GitHub Repository](https://github.com/equinor/neqsim)
 - [NeqSim Python Package](https://github.com/equinor/neqsim-python)
-- [Main Documentation](../README)
+- [Main Documentation](../)
 - [Reference Manual](../REFERENCE_MANUAL_INDEX)
 

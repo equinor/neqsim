@@ -78,7 +78,7 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 | Equipment | File | Description |
 |-----------|------|-------------|
 | Pipelines | [pipelines.md](pipelines) | Pipe flow, pressure drop |
-| **Risers** | [pipelines.md#risers](pipelines.md#risers) | **SCR, TTR, Flexible, Lazy-Wave risers** |
+| **Risers** | [pipelines.md#risers](pipelines#risers) | **SCR, TTR, Flexible, Lazy-Wave risers** |
 | Networks | [networks.md](networks) | Pipeline network modeling |
 | Manifolds | [manifolds.md](manifolds) | Multi-stream routing |
 
@@ -201,9 +201,9 @@ ProcessEquipmentInterface
 
 ## Related Documentation
 
-- [Process Package](../README) - Package overview
+- [Process Package](../) - Package overview
 - [ProcessSystem](../processmodel/process_system) - Process system guide
 - [ProcessModule](../processmodel/process_module) - Modular process units
 - [Controllers](../controllers) - Control equipment
-- [Safety Systems](../safety/README) - Safety equipment
+- [Safety Systems](../safety/) - Safety equipment
 

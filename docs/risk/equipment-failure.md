@@ -307,7 +307,7 @@ System.out.println("Affected equipment: " + result.getAffectedEquipment());
 
 ## See Also
 
-- [Reliability Data Source](api-reference.md#reliabilitydatasource)
+- [Reliability Data Source](api-reference#reliabilitydatasource)
 - [Production Impact Analysis](production-impact)
 - [Monte Carlo Simulation](monte-carlo)
 - [Mathematical Reference](mathematical-reference)

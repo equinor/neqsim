@@ -222,6 +222,6 @@ System.out.println("Methanol in clean gas: " + meohRemaining + " mol%");
 
 ## Related Documentation
 
-- [Equipment Index](README) - All equipment
+- [Equipment Index](./ - All equipment
 - [Distillation](distillation) - Distillation columns
 - [Separators](separators) - Phase separation

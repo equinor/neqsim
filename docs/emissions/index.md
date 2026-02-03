@@ -500,10 +500,10 @@ Online emission monitoring can support cultural transformation toward emission a
 
 | Documentation Type | Status | Location |
 |--------------------|--------|----------|
-| **API Reference** | ✅ Complete | [JavaDoc](https://equinor.github.io/neqsim/javadoc/), [Reference Manual](../REFERENCE_MANUAL_INDEX.html) |
-| **Getting Started** | ✅ Complete | [Wiki](../wiki/getting_started.html) |
-| **Emission Calculations** | ✅ Complete | This page + [Guide](OFFSHORE_EMISSION_REPORTING.html) |
-| **Interactive Tutorials** | ✅ Complete | [Jupyter Notebooks](../examples/index.html) with Colab links |
+| **API Reference** | ✅ Complete | [JavaDoc](https://equinor.github.io/neqsim/javadoc/), [Reference Manual](../REFERENCE_MANUAL_INDEX) |
+| **Getting Started** | ✅ Complete | [Wiki](../wiki/getting_started) |
+| **Emission Calculations** | ✅ Complete | This page + [Guide](OFFSHORE_EMISSION_REPORTING) |
+| **Interactive Tutorials** | ✅ Complete | [Jupyter Notebooks](../examples/index) with Colab links |
 | **Code Examples** | ✅ Complete | Java + Python examples for all features |
 | **Regulatory Context** | ✅ Complete | Norwegian/EU framework documented |
 | **Validation Data** | ✅ Complete | Gudrun case study, uncertainty analysis |
@@ -887,9 +887,9 @@ List<Solution> paretoFront = optimizer.getParetoFront();
 
 ### Related Documentation
 
-- [Production Optimizer Tutorial](../examples/ProductionOptimizer_Tutorial.html) — Multi-variable optimization with constraints
-- [MPC Integration Tutorial](../examples/MPC_Integration_Tutorial.html) — Model Predictive Control integration
-- [External Optimizer Integration](../integration/EXTERNAL_OPTIMIZER_INTEGRATION.html) — Python/SciPy integration patterns
+- [Production Optimizer Tutorial](../examples/ProductionOptimizer_Tutorial) — Multi-variable optimization with constraints
+- [MPC Integration Tutorial](../examples/MPC_Integration_Tutorial) — Model Predictive Control integration
+- [External Optimizer Integration](../integration/EXTERNAL_OPTIMIZER_INTEGRATION) — Python/SciPy integration patterns
 
 ---
 
@@ -897,9 +897,9 @@ List<Solution> paretoFront = optimizer.getParetoFront();
 
 | Document | Purpose | Audience |
 |----------|---------|----------|
-| [**Offshore Emission Reporting Guide**](OFFSHORE_EMISSION_REPORTING.html) | Reference with regulatory framework, methods, API, validation, literature | Engineers, Regulators, Auditors |
-| [**Produced Water Emissions Tutorial**](../examples/ProducedWaterEmissions_Tutorial.html) | Step-by-step Jupyter notebook with runnable code | Data Scientists, Developers |
-| [**Norwegian Methods Comparison**](../examples/NorwegianEmissionMethods_Comparison.html) | Validation against handbook, uncertainty analysis | Engineers, Regulators |
+| [**Offshore Emission Reporting Guide**](OFFSHORE_EMISSION_REPORTING) | Reference with regulatory framework, methods, API, validation, literature | Engineers, Regulators, Auditors |
+| [**Produced Water Emissions Tutorial**](../examples/ProducedWaterEmissions_Tutorial) | Step-by-step Jupyter notebook with runnable code | Data Scientists, Developers |
+| [**Norwegian Methods Comparison**](../examples/NorwegianEmissionMethods_Comparison) | Validation against handbook, uncertainty analysis | Engineers, Regulators |
 | [**Java Example**](https://github.com/equinor/neqsim/blob/master/docs/examples/OffshoreEmissionReportingExample.java) | Complete Java code sample | Java Developers |
 | [**API Reference**](../REFERENCE_MANUAL_INDEX.html#chapter-43-sustainability--emissions) | EmissionsCalculator class documentation | All Developers |
 

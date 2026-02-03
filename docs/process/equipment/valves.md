@@ -428,6 +428,6 @@ double muJT = inletStream.getJouleThomsonCoefficient();  // K/bar
 
 - [Valve Mechanical Design](../ValveMechanicalDesign) - Complete mechanical design calculations
 - [Compressor Mechanical Design](../CompressorMechanicalDesign) - Similar approach for compressors
-- [Process Package](../README) - Package overview
+- [Process Package](../) - Package overview
 - [Separators](separators) - Separation equipment
 - [Safety Systems](../safety/) - Safety valve sizing

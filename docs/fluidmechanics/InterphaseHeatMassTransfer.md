@@ -78,7 +78,7 @@ $$-\frac{x_i}{RT}\nabla\mu_i = \sum_{j=1, j\neq i}^{n} \frac{x_i N_j - x_j N_i}{
 > - **Liquid phase:** Siddiqi-Lucas, Hayduk-Minhas (hydrocarbons), CO2-water (Tamimi)
 > - **High pressure:** Mathur-Thodos correction for P > 100 bar
 > 
-> See the [Model Selection Guide](mass_transfer.md#model-selection-guide) for recommendations.
+> See the [Model Selection Guide](mass_transfer#model-selection-guide) for recommendations.
 
 ### 2.2 Matrix Formulation
 

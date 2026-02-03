@@ -603,7 +603,7 @@ SensitivityMatrix result = analyzer
 String report = analyzer.generateReport(result);
 ```
 
-See [Graph-Based Process Simulation - Process Sensitivity Analysis](graph_based_process_simulation.md#process-sensitivity-analysis) for full documentation.
+See [Graph-Based Process Simulation - Process Sensitivity Analysis](graph_based_process_simulation#process-sensitivity-analysis) for full documentation.
 
 ---
 

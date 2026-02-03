@@ -298,7 +298,7 @@ for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
 
 ## Related Documentation
 
-- [System Package](../system/README) - Fluid systems
-- [Phase Package](../phase/README) - Phase modeling
-- [Mixing Rules](../mixingrule/README) - Binary interactions
-- [Thermo Package](../README) - Package overview
+- [System Package](../system/) - Fluid systems
+- [Phase Package](../phase/) - Phase modeling
+- [Mixing Rules](../mixingrule/) - Binary interactions
+- [Thermo Package](../) - Package overview

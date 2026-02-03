@@ -326,4 +326,4 @@ System.out.println("Total renewable power: " + totalGeneration / 1e6 + " MW");
 - [Electrolyzers](electrolyzers) - Hydrogen production
 - [Compressors](compressors) - Gas compression
 - [Heat Exchangers](heat_exchangers) - Heat recovery
-- [Sustainability](../../process/sustainability/README) - Emissions tracking
+- [Sustainability](../sustainability/) - Emissions tracking

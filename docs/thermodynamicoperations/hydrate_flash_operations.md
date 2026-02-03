@@ -517,4 +517,4 @@ This is expected behavior. Use `gasHydrateTPflash()` for systems with trace wate
 - [Hydrate Models](../thermo/hydrate_models) - Thermodynamic model details
 - [Flash Calculations Guide](../thermo/flash_calculations_guide) - General flash operations
 - [Fluid Creation Guide](../thermo/fluid_creation_guide) - Setting up fluids
-- [Process Equipment](../process/README) - Process integration
+- [Process Equipment](../process/) - Process integration
