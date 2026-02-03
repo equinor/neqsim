@@ -63,7 +63,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Overview | [docs/README.md](./ | Package overview and quick start |
+| Overview | [docs/README.md](README) | Package overview and quick start |
 | Modules | [docs/modules.md](modules) | Architecture and module structure |
 | **O&G Design Review** | [docs/NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW.md](NEQSIM_OIL_GAS_DESIGN_OPERATIONS_REVIEW) | **Comprehensive capability review for oil & gas design and operations** |
 

@@ -425,7 +425,7 @@ def create_cover_page(title, subtitle, version):
         <h1>{title}</h1>
         <p class="subtitle">{subtitle}</p>
         <p class="version">Version {version}</p>
-        <p class="version">Generated: January 2026</p>
+        <p class="version">Generated: February 2026</p>
     </div>
     """
 
@@ -985,7 +985,7 @@ def main():
         sections=sections,
         title="NeqSim Reference Manual",
         subtitle="Complete Technical Documentation",
-        version="3.0.0",
+        version="3.4.0",
         output_file="neqsim_reference_manual.html"
     )
     

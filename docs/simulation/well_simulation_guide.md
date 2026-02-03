@@ -697,7 +697,7 @@ System.out.println("Zone C: " + zoneFlows[2] + " MSm³/day");
 ## Complete Production System Example
 
 For a comprehensive example demonstrating the full integration of well simulation with
-downstream processing, see [WellToOilStabilizationExample.java](examples/WellToOilStabilizationExample.java).
+downstream processing, see [WellToOilStabilizationExample.java](../examples/WellToOilStabilizationExample.java).
 
 This example includes:
 - **Reservoir**: SimpleReservoir with oil, gas, and water phases
