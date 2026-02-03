@@ -1,11 +1,11 @@
 ---
 title: NeqSim Reference Manual - Master Index
-description: This document maps all 230+ documentation files to the reference manual structure. Use this as a comprehensive table of contents and navigation guide.
+description: This document maps all 360+ documentation files to the reference manual structure. Use this as a comprehensive table of contents and navigation guide.
 ---
 
 # NeqSim Reference Manual - Master Index
 
-This document maps all 230+ documentation files to the reference manual structure. Use this as a comprehensive table of contents and navigation guide.
+This document maps all 360+ documentation files to the reference manual structure. Use this as a comprehensive table of contents and navigation guide.
 
 **NeqSim Homepage:** [https://equinor.github.io/neqsimhome/](https://equinor.github.io/neqsimhome/)
 
