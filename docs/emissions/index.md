@@ -426,7 +426,7 @@ for scenario in scenarios:
 
 ### Emission Reduction Strategies Enabled by Online Monitoring
 
-| Strategy | How Online Monitoring Helps | Typical Reduction |
+| Strategy | How Online Monitoring Helps | Reduction Potential |
 |----------|----------------------------|-------------------|
 | **Operating Envelope Optimization** | Find sweet spots where production is maintained but emissions drop | 5-15% |
 | **Flare Minimization** | Real-time flare gas tracking enables immediate response | 20-50% |
@@ -479,20 +479,6 @@ Online emission monitoring enables cultural transformation:
 | **2. Expand** | 2-3 months | Add all major emission sources | Complete visibility |
 | **3. Integrate** | 1-2 months | Connect to SCADA, build dashboards | Real-time monitoring |
 | **4. Optimize** | Ongoing | Implement reduction strategies | Continuous improvement |
-
-### Expected Emission Reduction Outcomes
-
-**Potential Benefits from Online Emission Monitoring:**
-
-| Emission Source | Potential Improvement | Approach |
-|-----------------|----------------------|----------|
-| **Produced Water Degassing** | Varies by system | Optimized separator pressures/temperatures |
-| **Flaring** | Significant potential | Real-time flare minimization, better recovery |
-| **Fugitive Emissions** | Case-dependent | Earlier leak detection, faster repair |
-| **Compressor Venting** | Moderate potential | Optimized recycle, reduced blowdowns |
-| **Overall Platform** | Site-specific | Integrated optimization across sources |
-
-> *Actual results will depend on specific site conditions and implementation*
 
 ---
 
