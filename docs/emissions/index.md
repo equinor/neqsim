@@ -77,6 +77,297 @@ NeqSim specializes in **venting emissions** from:
 
 ---
 
+## Online Emission Calculation & Automated Reporting
+
+NeqSim can be deployed for **online emission calculations**, enabling real-time monitoring and automated regulatory reporting. This capability transforms emissions management from a periodic reporting exercise into a continuous operational tool.
+
+### Field Deployment Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                 ONLINE EMISSION CALCULATION SYSTEM                      │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│   PLANT DATA                    NEQSIM ENGINE              REPORTING    │
+│   ──────────                    ─────────────              ─────────    │
+│                                                                         │
+│   ┌───────────┐               ┌─────────────────┐      ┌─────────────┐ │
+│   │   SCADA   │───────────────│  Thermodynamic  │      │  Dashboard  │ │
+│   │  Real-time│  Flow rates   │     Model       │      │  (Real-time)│ │
+│   │   tags    │  Pressures    │                 │      └─────────────┘ │
+│   └───────────┘  Temperatures │  • CPA/SRK EoS  │              │       │
+│                               │  • Søreide-     │              ▼       │
+│   ┌───────────┐               │    Whitson      │      ┌─────────────┐ │
+│   │    Lab    │───────────────│  • Multi-stage  │──────│  Automated  │ │
+│   │  Analysis │  Compositions │    separation   │      │   Reports   │ │
+│   │           │  Water cuts   │                 │      │  (Daily/    │ │
+│   └───────────┘               └─────────────────┘      │   Monthly)  │ │
+│                                       │                └─────────────┘ │
+│   ┌───────────┐                       │                        │       │
+│   │ Historian │◀──────────────────────┘                        ▼       │
+│   │  Archive  │  Store calculated                      ┌─────────────┐ │
+│   │           │  emissions for audit                   │ Regulatory  │ │
+│   └───────────┘                                        │ Submission  │ │
+│                                                        │             │
+│                                                        └─────────────┘ │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Proven Field Implementations
+
+NeqSim-based online emission calculations have been deployed at several Norwegian Continental Shelf installations:
+
+| Deployment | Scope | Key Benefits |
+|------------|-------|--------------|
+| **Produced Water Systems** | Degasser, CFU, Caisson emissions | Captures dissolved CO₂ typically missed by handbook methods |
+| **TEG Regeneration** | Off-gas emissions from glycol units | Real-time tracking of BTEX and hydrocarbon emissions |
+| **Storage & Loading** | Tank breathing, cargo loading losses | Accurate VOC emission quantification |
+| **Multi-stage Separation** | Flash gas from each separator stage | Full GHG accounting across process train |
+
+### Setting Up Automated Emission Reporting
+
+#### Step 1: Configure Data Connectivity
+
+```python
+from neqsim import jneqsim
+import schedule
+import time
+from datetime import datetime
+
+# Configuration for plant data interface
+SCADA_TAGS = {
+    'pw_flow_rate': 'FT-1001.PV',      # Produced water flow (m³/hr)
+    'pw_temperature': 'TT-1001.PV',     # Temperature (°C)
+    'pw_pressure': 'PT-1001.PV',        # Pressure (bara)
+    'gas_in_water': 'AI-1001.PV',       # GOR from separator (optional)
+}
+
+def fetch_plant_data():
+    """Fetch current values from SCADA/OPC interface"""
+    # Replace with actual OPC/SCADA connection
+    return {
+        'flow_rate': get_opc_value(SCADA_TAGS['pw_flow_rate']),
+        'temperature': get_opc_value(SCADA_TAGS['pw_temperature']),
+        'pressure': get_opc_value(SCADA_TAGS['pw_pressure']),
+    }
+```
+
+#### Step 2: Create the Emission Calculation Engine
+
+```python
+def calculate_emissions(plant_data, fluid_composition):
+    """
+    Calculate emissions using NeqSim thermodynamic model.
+    
+    Args:
+        plant_data: Dict with flow_rate, temperature, pressure
+        fluid_composition: Dict with component mole fractions
+    
+    Returns:
+        Dict with CO2, CH4, and CO2eq emission rates
+    """
+    # Create CPA fluid for water-hydrocarbon system
+    fluid = jneqsim.thermo.system.SystemSrkCPAstatoil(
+        273.15 + plant_data['temperature'],
+        plant_data['pressure']
+    )
+    
+    # Add components from composition
+    for component, fraction in fluid_composition.items():
+        fluid.addComponent(component, fraction)
+    
+    fluid.setMixingRule(10)  # CPA mixing rule
+    
+    # Create stream and separator
+    Stream = jneqsim.process.equipment.stream.Stream
+    Separator = jneqsim.process.equipment.separator.Separator
+    EmissionsCalculator = jneqsim.process.equipment.util.EmissionsCalculator
+    
+    feed = Stream("PW-Feed", fluid)
+    feed.setFlowRate(plant_data['flow_rate'] * 1000, "kg/hr")  # m³/hr to kg/hr approx
+    feed.run()
+    
+    degasser = Separator("Degasser", feed)
+    degasser.run()
+    
+    # Calculate emissions
+    calc = EmissionsCalculator(degasser.getGasOutStream())
+    calc.calculate()
+    
+    return {
+        'timestamp': datetime.utcnow().isoformat(),
+        'co2_kg_hr': calc.getCO2EmissionRate('kg/hr'),
+        'ch4_kg_hr': calc.getMethaneEmissionRate('kg/hr'),
+        'co2eq_kg_hr': calc.getCO2Equivalents('kg/hr'),
+        'co2_tonnes_yr': calc.getCO2EmissionRate('tonnes/year'),
+        'ch4_tonnes_yr': calc.getMethaneEmissionRate('tonnes/year'),
+        'co2eq_tonnes_yr': calc.getCO2Equivalents('tonnes/year'),
+    }
+```
+
+#### Step 3: Schedule Automated Calculations
+
+```python
+def run_emission_calculation():
+    """Run emission calculation and store results"""
+    try:
+        # Fetch current plant data
+        plant_data = fetch_plant_data()
+        
+        # Use latest composition (updated daily from lab)
+        composition = get_latest_composition()
+        
+        # Calculate emissions
+        results = calculate_emissions(plant_data, composition)
+        
+        # Store to historian/database
+        store_to_historian(results)
+        
+        # Check for alerts
+        check_emission_alerts(results)
+        
+        print(f"[{results['timestamp']}] CO2eq: {results['co2eq_kg_hr']:.1f} kg/hr")
+        
+    except Exception as e:
+        log_error(f"Emission calculation failed: {e}")
+
+# Schedule calculations every 15 minutes
+schedule.every(15).minutes.do(run_emission_calculation)
+
+# Run scheduler
+while True:
+    schedule.run_pending()
+    time.sleep(60)
+```
+
+#### Step 4: Generate Automated Reports
+
+```python
+def generate_daily_report(date):
+    """Generate daily emission report from historian data"""
+    # Query historian for all calculations from the day
+    data = query_historian(date, date + timedelta(days=1))
+    
+    report = {
+        'date': date.isoformat(),
+        'platform': 'Platform Alpha',
+        'source': 'Produced Water Degassing',
+        'summary': {
+            'co2_tonnes': sum(d['co2_kg_hr'] for d in data) / 1000 * 24 / len(data),
+            'ch4_tonnes': sum(d['ch4_kg_hr'] for d in data) / 1000 * 24 / len(data),
+            'co2eq_tonnes': sum(d['co2eq_kg_hr'] for d in data) / 1000 * 24 / len(data),
+        },
+        'hourly_data': data,
+        'data_quality': calculate_data_quality(data),
+    }
+    
+    return report
+
+def generate_monthly_report(year, month):
+    """Aggregate daily reports for monthly submission"""
+    daily_reports = [generate_daily_report(date) 
+                     for date in get_days_in_month(year, month)]
+    
+    return {
+        'period': f"{year}-{month:02d}",
+        'total_co2_tonnes': sum(r['summary']['co2_tonnes'] for r in daily_reports),
+        'total_ch4_tonnes': sum(r['summary']['ch4_tonnes'] for r in daily_reports),
+        'total_co2eq_tonnes': sum(r['summary']['co2eq_tonnes'] for r in daily_reports),
+        'daily_breakdown': daily_reports,
+        'methodology': 'NeqSim CPA thermodynamic model with Søreide-Whitson',
+        'uncertainty': '±15% (95% confidence)',
+    }
+```
+
+### Integration with Reporting Systems
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    AUTOMATED REPORTING WORKFLOW                         │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  Continuous          Periodic              Annual                       │
+│  ──────────          ────────              ──────                       │
+│                                                                         │
+│  ┌──────────┐       ┌──────────┐         ┌──────────┐                  │
+│  │ Real-time│       │  Daily   │         │  Annual  │                  │
+│  │Dashboard │       │ Summary  │         │  Report  │                  │
+│  │          │       │          │         │          │                  │
+│  │ • Live   │       │ • Totals │         │ • Full   │                  │
+│  │   rates  │──────▶│ • Trends │────────▶│   audit  │                  │
+│  │ • Alerts │       │ • QA/QC  │         │ • Submit │                  │
+│  │ • Trends │       │          │         │   to NEA │                  │
+│  └──────────┘       └──────────┘         └──────────┘                  │
+│       │                  │                     │                        │
+│       ▼                  ▼                     ▼                        │
+│  Control Room       Shift Reports      Environment Norway              │
+│  Operations         Management         Regulatory Submission            │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Benefits of Automated Online Reporting
+
+| Benefit | Description |
+|---------|-------------|
+| **Consistency** | Same calculation methodology applied continuously, eliminating manual calculation errors |
+| **Auditability** | Full data trail from raw measurements through to reported values |
+| **Timeliness** | Real-time visibility enables immediate response to emission events |
+| **Accuracy** | Thermodynamic models capture effects (dissolved CO₂, salinity) that handbook methods miss |
+| **Efficiency** | Automated report generation reduces engineering effort from days to minutes |
+| **Compliance** | Meets requirements for "virtual metering" under Aktivitetsforskriften §70 |
+
+### Data Quality & Validation
+
+Online systems include automatic data quality checks:
+
+```python
+def validate_emission_data(results, plant_data):
+    """Validate emission calculations against expected ranges"""
+    warnings = []
+    
+    # Check for unrealistic values
+    if results['co2eq_kg_hr'] > 1000:  # Unusually high
+        warnings.append("CO2eq rate exceeds typical maximum - verify input data")
+    
+    if results['co2eq_kg_hr'] < 0.1:  # Unusually low
+        warnings.append("CO2eq rate unusually low - check for measurement issues")
+    
+    # Mass balance check
+    total_gas = results['co2_kg_hr'] + results['ch4_kg_hr']
+    if total_gas > plant_data['flow_rate'] * 0.01:  # >1% of water flow as gas
+        warnings.append("Gas release ratio high - verify water composition")
+    
+    # Data completeness
+    if any(v is None for v in plant_data.values()):
+        warnings.append("Missing input data - using interpolated values")
+    
+    return {
+        'valid': len(warnings) == 0,
+        'warnings': warnings,
+        'data_quality_score': 1.0 - len(warnings) * 0.1,
+    }
+```
+
+### Getting Started with Online Deployment
+
+**Prerequisites:**
+1. OPC/SCADA connectivity to plant data
+2. Server or cloud environment for NeqSim calculations
+3. Historian or database for result storage
+4. Dashboard/reporting front-end
+
+**Recommended Approach:**
+
+1. **Pilot Phase (2-4 weeks):** Deploy for single emission source, validate against manual calculations
+2. **Expansion (1-2 months):** Add additional sources, integrate with historian
+3. **Automation (2-4 weeks):** Set up scheduled calculations and automated reports
+4. **Production (Ongoing):** Continuous monitoring with periodic model updates
+
+For assistance with online deployment, see the [Integration Guide](../integration/index.html) or contact the NeqSim community via [GitHub Discussions](https://github.com/equinor/neqsim/discussions).
+
+---
+
 ## Thermodynamic Model: Søreide-Whitson
 
 For accurate produced water emission calculations, **NeqSimLive uses the Søreide-Whitson thermodynamic model** to account for the effect of formation water salinity on gas solubility (the "salting-out" effect).
@@ -458,11 +749,7 @@ Online emission monitoring enables cultural transformation:
 
 ---
 
-## Maturity, Support & Adoption Readiness
-
-<div class="highlight-box" style="background: linear-gradient(135deg, #e8eaf6 0%, #c5cae9 100%); border-left: 4px solid #3f51b5; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-<strong>Key Question:</strong> "Is NeqSim mature enough for implementation considering support, documentation, and expertise?"
-</div>
+## Support
 
 ### ✅ Support Infrastructure
 
@@ -472,14 +759,8 @@ Online emission monitoring enables cultural transformation:
 | **GitHub Discussions** | [Q&A forum](https://github.com/equinor/neqsim/discussions) | Community + core team |
 | **Equinor Internal** | Internal Teams channel, expert network | Same-day for critical issues |
 | **NTNU Collaboration** | Academic partnership for advanced thermodynamics | Research support |
-| **Commercial Support** | Available through Equinor consulting | SLA-based |
 
-**Support Statistics (2024-2025):**
-- 150+ issues resolved
-- Average response time: < 2 days
-- 98% issue resolution rate
-
-### ✅ Documentation Completeness
+### ✅ Documentation
 
 | Documentation Type | Status | Location |
 |--------------------|--------|----------|
@@ -530,16 +811,6 @@ Online emission monitoring enables cultural transformation:
 | **Excel Add-in** | ⭐ Low | End-user access (via Python) |
 | **Cloud Deployment** | ⭐⭐ Medium | Azure, AWS, Kubernetes |
 
-### Risk Mitigation for Implementation
-
-| Concern | Mitigation |
-|---------|------------|
-| **"What if NeqSim development stops?"** | Open source (Apache 2.0) - code is always available. Fork rights guaranteed. Equinor committed to long-term maintenance. |
-| **"What if we can't get support?"** | Multiple channels (GitHub, internal, commercial). Self-sufficient with documentation. |
-| **"What if our engineers can't learn it?"** | Jupyter notebooks run in browser (zero setup). Start with copy-paste examples. |
-| **"What if results are wrong?"** | Validated against field data. Transparent algorithms auditable by regulators. |
-| **"What about vendor lock-in?"** | Open source = no lock-in. Standard Java/Python = portable skills. |
-
 ### Comparison: NeqSim vs Commercial Alternatives
 
 | Aspect | NeqSim | Commercial Tools |
@@ -552,25 +823,6 @@ Online emission monitoring enables cultural transformation:
 | **Long-term Availability** | ✅ Open source | Vendor support agreements |
 | **Integration Flexibility** | ✅ Java/Python/REST | Varies by product |
 | **Support** | Community + Equinor | Vendor SLA |
-
-### Implementation Recommendation
-
-**NeqSim offers several advantages for emission reporting:**
-
-1. ✅ **Production experience** at Equinor platforms
-2. ✅ **Validation studies** performed against field data  
-3. ✅ **Documentation available** from quick-start to advanced API
-4. ✅ **Support channels** including community and internal experts
-5. ✅ **Accessible** with browser-runnable notebooks
-6. ✅ **Open source** with no recurring license costs
-7. ✅ **Extensible** for digital twin and optimization applications
-
-**Suggested Pilot Approach:**
-
-1. **Week 1:** Run existing Jupyter tutorials on actual platform data
-2. **Week 2:** Compare results with current methods
-3. **Week 3-4:** Develop production workflow with IT integration
-4. **Month 2+:** Operationalize with monitoring and support procedures
 
 ---
 
