@@ -11,7 +11,7 @@ has_children: true
 NeqSim provides physics-based emission calculations for offshore oil & gas operations, enabling accurate regulatory reporting and decarbonization planning.
 
 <div class="highlight-box" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left: 4px solid #4caf50; padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
-<strong>Key Capability:</strong> Thermodynamic emission calculations can provide improved accuracy over conventional methods in many scenarios, with the ability to account for dissolved CO₂ that simplified methods may not fully capture.
+<strong>Key Capability:</strong> Thermodynamic emission calculations use rigorous phase equilibrium modeling to account for process conditions, fluid composition, and dissolved gases including CO₂—factors that simplified handbook correlations may approximate differently.
 </div>
 
 ---
@@ -48,7 +48,8 @@ NeqSim provides physics-based emission calculations for offshore oil & gas opera
 │                 OFFSHORE PLATFORM EMISSIONS                  │
 ├──────────────────┬──────────────────┬───────────────────────┤
 │   COMBUSTION     │    VENTING       │     FUGITIVE          │
-│   (60-80%)       │    (5-20%)       │     (0.5-3%)          │
+│   (typically     │    (typically    │     (typically        │
+│    dominant)     │    5-20%)        │      <5%)             │
 ├──────────────────┼──────────────────┼───────────────────────┤
 │ • Gas turbines   │ • Cold vents     │ • Valve/flange leaks  │
 │ • Diesel engines │ • Tank breathing │ • Compressor seals    │
@@ -56,6 +57,8 @@ NeqSim provides physics-based emission calculations for offshore oil & gas opera
 │ • Heaters        │ • TEG regen.     │ • Pipe connections    │
 └──────────────────┴──────────────────┴───────────────────────┘
 ```
+
+*Source distribution varies significantly by facility type, age, and operations.*
 
 NeqSim specializes in **venting emissions** from:
 - Produced water degassing (Degasser, CFU, Caisson)
@@ -67,13 +70,13 @@ NeqSim specializes in **venting emissions** from:
 
 ## Regulatory Compliance
 
-| Regulation | Jurisdiction | NeqSim Support |
-|------------|--------------|----------------|
-| **Aktivitetsforskriften §70** | Norway | ✅ Virtual measurement methodology |
-| **EU ETS Directive** | European Union | ✅ CO₂ equivalent reporting |
-| **EU Methane Regulation 2024/1787** | European Union | ✅ Source-level CH₄ quantification |
-| **OGMP 2.0** | International | ✅ Level 4/5 site-specific |
-| **ISO 14064-1:2018** | International | ✅ Organization-level GHG |
+| Regulation/Framework | Jurisdiction | NeqSim Capability |
+|----------------------|--------------|-------------------|
+| **Aktivitetsforskriften §70** | Norway | Virtual measurement methodology |
+| **EU ETS Directive** | European Union | CO₂ equivalent reporting |
+| **EU Methane Regulation 2024/1787** | European Union | Source-level CH₄ quantification |
+| **OGMP 2.0** (voluntary) | International | Supports Level 4/5 site-specific methods |
+| **ISO 14064-1:2018** | International | Organization-level GHG inventory |
 
 ---
 
@@ -117,11 +120,11 @@ NeqSim can be deployed for **online emission calculations**, enabling real-time 
 
 ## Thermodynamic Model: Søreide-Whitson
 
-For accurate produced water emission calculations, **NeqSimLive uses the Søreide-Whitson thermodynamic model** to account for the effect of formation water salinity on gas solubility (the "salting-out" effect).
+For produced water emission calculations, NeqSim provides the **Søreide-Whitson thermodynamic model** to account for the effect of formation water salinity on gas solubility (the "salting-out" effect). This model is used in **NeqSimLive** for real-time emission calculations on offshore platforms.
 
 **Key features:**
-- Modified Peng-Robinson equation of state with salinity-dependent alpha function for water
-- Accounts for 15-65% reduction in gas solubility depending on salinity
+- Modified Peng-Robinson equation of state with salinity-dependent parameters for water
+- Accounts for reduction in gas solubility due to ionic strength
 - Supports multiple salt types (NaCl, CaCl₂, MgCl₂, etc.)
 - Validated against experimental data for CH₄, CO₂, H₂S, and N₂ in brine
 
@@ -135,12 +138,13 @@ For accurate produced water emission calculations, **NeqSimLive uses the Søreid
 
 | Aspect | Conventional (Handbook) | Thermodynamic (NeqSim) |
 |--------|------------------------|------------------------|
-| **Accuracy** | Varies by application | Improved for complex systems |
-| **CO₂ accounting** | Simplified approach | Full phase equilibrium |
-| **Salinity effects** | Typically not included | ✅ Included |
-| **Temperature effects** | Basic correlations | ✅ Full thermodynamic |
-| **Real-time capability** | Batch-oriented | ✅ Yes |
-| **Regulatory acceptance** | Established | Increasingly adopted |
+| **Approach** | Empirical correlations | Rigorous phase equilibrium (CPA-EoS) |
+| **CO₂ accounting** | Simplified factors | Explicit component tracking |
+| **Salinity effects** | Typically not included | Søreide-Whitson salting-out model |
+| **Temperature effects** | Linear correlations | Full equation of state |
+| **Computational cost** | Low (spreadsheet) | Moderate (requires simulator) |
+| **Regulatory acceptance** | Widely established | Accepted under Aktivitetsforskriften §70 |
+| **Transparency** | Published factors | Open-source algorithms |
 
 ---
 
@@ -202,13 +206,13 @@ System.out.println("CO2 Equivalent: " + co2eq + " tonnes/year");
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
 
 <div style="background: #e3f2fd; padding: 1rem; border-radius: 8px;">
-<h4 style="margin-top: 0; color: #1565c0;">🎯 Accuracy</h4>
-Physics-based CPA equation of state captures water-hydrocarbon interactions precisely.
+<h4 style="margin-top: 0; color: #1565c0;">🎯 Rigorous Thermodynamics</h4>
+Physics-based CPA equation of state models water-hydrocarbon phase behavior including associating interactions.
 </div>
 
 <div style="background: #fff3e0; padding: 1rem; border-radius: 8px;">
-<h4 style="margin-top: 0; color: #e65100;">📊 Full Accounting</h4>
-Captures CO₂ (often ~50% of emissions) that handbook methods miss entirely.
+<h4 style="margin-top: 0; color: #e65100;">📊 Comprehensive Accounting</h4>
+Explicitly models all gas components including CO₂, which can be significant in produced water emissions depending on reservoir fluid composition.
 </div>
 
 <div style="background: #e8f5e9; padding: 1rem; border-radius: 8px;">
@@ -227,32 +231,31 @@ Supports digital twins, live monitoring, online optimization, CO2 and hydrogen v
 
 ## Online Emission Calculation: Transforming Operator Visibility
 
-### The Problem with Traditional Emission Reporting
+### The Value of Online Emission Monitoring
 
-Traditional emission reporting is **retrospective** — operators only see their emissions weeks or months after they occur:
+Traditional emission reporting is typically **retrospective** — operators compile emission data periodically (monthly, quarterly). Online monitoring provides more frequent visibility:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│              TRADITIONAL vs ONLINE EMISSION MONITORING                  │
+│              PERIODIC vs ONLINE EMISSION MONITORING                     │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
-│   TRADITIONAL (Retrospective)          ONLINE (Real-Time)               │
-│   ─────────────────────────           ────────────────────              │
+│   PERIODIC (Retrospective)             ONLINE (Continuous)              │
+│   ───────────────────────────          ────────────────────             │
 │                                                                         │
-│   ┌─────┐    ┌─────┐    ┌─────┐       ┌─────┐    ┌─────┐               │
-│   │Month│───▶│Month│───▶│Report│      │ NOW │───▶│Action│              │
+│   ┌─────┐    ┌─────┐    ┌─────┐       ┌─────┐    ┌──────┐              │
+│   │Month│───▶│Month│───▶│Report│      │ Now │───▶│Review│              │
 │   │  1  │    │  2  │    │      │      │     │    │      │              │
-│   └─────┘    └─────┘    └─────┘       └─────┘    └─────┘               │
+│   └─────┘    └─────┘    └─────┘       └─────┘    └──────┘              │
 │                              │              │         │                 │
 │                              ▼              │         ▼                 │
-│                        "We emitted         │    "We ARE emitting       │
-│                         X tonnes           │     X kg/hr — let's       │
-│                         last quarter"      │     reduce it NOW"        │
-│                                            │                            │
-│   Limited time to act                      ✅ Faster feedback           │
-│   Less cause-effect visibility             ✅ Better operations linkage │
-│   Primarily compliance-driven              ✅ Enables optimization      │
-│   Periodic improvement cycles              ✅ Supports continuous review│
+│                        "Emissions for       │    "Current emission      │
+│                         Q3: X tonnes"       │     rate: Y kg/hr"        │
+│                                             │                           │
+│   Established regulatory workflow           More frequent feedback      │
+│   Aggregated reporting                      Better operations linkage   │
+│   Compliance-oriented                       Supports optimization       │
+│   Clear audit trail                         Enables trend analysis      │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -274,7 +277,7 @@ Traditional emission reporting is **retrospective** — operators only see their
 <h4 style="margin-top: 0; color: #1565c0;">🔗 Cause-Effect Understanding</h4>
 <ul style="margin-bottom: 0;">
 <li>Link operational decisions to emission impact</li>
-<li>"When I changed separator pressure, emissions dropped 15%"</li>
+<li>Correlate process changes with emission response</li>
 <li>Data-driven decision making</li>
 </ul>
 </div>
@@ -291,9 +294,9 @@ Traditional emission reporting is **retrospective** — operators only see their
 <div style="background: #fce4ec; border-left: 4px solid #e91e63; padding: 1rem; border-radius: 0 8px 8px 0;">
 <h4 style="margin-top: 0; color: #c2185b;">📈 Continuous Improvement</h4>
 <ul style="margin-bottom: 0;">
-<li>Shift from annual to daily improvement cycles</li>
-<li>Gamification: daily/weekly emission targets</li>
-<li>Operator engagement through transparency</li>
+<li>More frequent improvement cycles</li>
+<li>Operational targets with emission KPIs</li>
+<li>Team engagement through transparency</li>
 </ul>
 </div>
 
@@ -305,11 +308,11 @@ Online emission calculation transforms the operator mindset:
 
 | Traditional Approach | Online-Enabled Approach |
 |---------------------|------------------------|
-| "Emissions reporting is periodic" | "I can monitor emissions more frequently" |
-| "We focus on compliance requirements" | "We can combine compliance with optimization" |
-| "Targets are set at planning stage" | "Better understanding of emission drivers" |
-| "Feedback comes in reports" | "More timely feedback available" |
-| "Emissions are reported as required" | "Emissions can be tracked and optimized" |
+| Emissions reported periodically (monthly/quarterly) | Emissions calculated continuously |
+| Compliance-focused reporting | Combines compliance with operational insight |
+| Targets set during planning | Better visibility into emission drivers |
+| Feedback through periodic reports | More timely feedback on operational changes |
+| Focus on meeting reporting requirements | Enables data-driven emission management |
 
 ### Key Use Cases for Operators
 
@@ -426,18 +429,18 @@ for scenario in scenarios:
 
 ### Emission Reduction Strategies Enabled by Online Monitoring
 
-| Strategy | How Online Monitoring Helps | Reduction Potential |
+| Strategy | How Online Monitoring Helps | Potential Benefit |
 |----------|----------------------------|-------------------|
-| **Operating Envelope Optimization** | Find sweet spots where production is maintained but emissions drop | 5-15% |
-| **Flare Minimization** | Real-time flare gas tracking enables immediate response | 20-50% |
-| **Leak Detection (LDAR)** | Anomaly detection flags fugitive emission increases | 10-30% |
-| **Produced Water Management** | Optimize degassing stages based on actual dissolved gas | 15-40% |
-| **Compressor Optimization** | Balance power consumption vs venting from recycle | 5-20% |
-| **Predictive Scheduling** | Plan maintenance during low-emission windows | 5-10% |
+| **Operating Envelope Optimization** | Identify conditions where production is maintained with lower emissions | Site-specific; depends on operating flexibility |
+| **Flare Minimization** | Real-time flare gas tracking enables faster response | Depends on current flaring levels |
+| **Leak Detection (LDAR)** | Anomaly detection can flag fugitive emission increases | Depends on baseline fugitive levels |
+| **Produced Water Management** | Optimize degassing stages based on modeled dissolved gas | Depends on water volume and gas content |
+| **Compressor Optimization** | Balance power consumption vs venting from recycle | Depends on compressor operating range |
+| **Predictive Scheduling** | Plan maintenance during low-emission windows | Depends on maintenance flexibility |
 
 ### Building an Emission-Aware Culture
 
-Online emission monitoring enables cultural transformation:
+Online emission monitoring can support cultural transformation toward emission awareness:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -446,27 +449,27 @@ Online emission monitoring enables cultural transformation:
 │                                                                         │
 │  LEVEL 1: AWARENESS                                                     │
 │  ─────────────────────                                                  │
-│  "I can see our emissions in real-time"                                 │
-│  → Dashboards visible in control room                                   │
-│  → Daily emission reports in morning meetings                           │
+│  Real-time emissions visible in control room                            │
+│  → Dashboards display current emission rates                           │
+│  → Daily reports included in morning meetings                          │
 │                                                                         │
 │  LEVEL 2: UNDERSTANDING                                                 │
 │  ─────────────────────────                                              │
-│  "I understand what drives emissions"                                   │
-│  → Training on emission sources and mechanisms                          │
-│  → What-if tools available to operators                                 │
+│  Operations understand emission drivers                                 │
+│  → Training on emission sources and mechanisms                         │
+│  → What-if analysis tools available                                    │
 │                                                                         │
 │  LEVEL 3: OWNERSHIP                                                     │
 │  ─────────────────────                                                  │
-│  "I take responsibility for emission performance"                       │
-│  → Emission KPIs included in shift targets                              │
-│  → Operators suggest and test reduction ideas                           │
+│  Teams take responsibility for emission performance                     │
+│  → Emission KPIs included in operational targets                       │
+│  → Operators propose and test reduction ideas                          │
 │                                                                         │
 │  LEVEL 4: OPTIMIZATION                                                  │
 │  ────────────────────────                                               │
-│  "I actively optimize for minimum emissions"                            │
-│  → Automated optimization with emission constraints                     │
-│  → Continuous improvement integrated in daily work                      │
+│  Active optimization for reduced emissions                              │
+│  → Automated advisory systems with emission constraints                 │
+│  → Continuous improvement integrated in daily operations                │
 │                                                                         │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -549,13 +552,14 @@ Online emission monitoring enables cultural transformation:
 | Aspect | NeqSim | Commercial Tools |
 |--------|--------|------------------|
 | **License Cost** | Free (Apache 2.0) | Varies by vendor |
-| **Source Code Access** | ✅ Full | Typically limited |
-| **Customization** | ✅ Open | Vendor-dependent |
-| **Audit Trail** | ✅ Git history | Vendor-dependent |
-| **Regulatory Defense** | ✅ Transparent algorithms | Established track record |
-| **Long-term Availability** | ✅ Open source | Vendor support agreements |
-| **Integration Flexibility** | ✅ Java/Python/REST | Varies by product |
+| **Source Code Access** | Full access | Typically limited |
+| **Customization** | Unlimited | Vendor-dependent |
+| **Audit Trail** | Git history | Vendor-dependent |
+| **Regulatory Defense** | Transparent algorithms, peer review | Established vendor support |
+| **Long-term Availability** | Open source, community-maintained | Vendor support agreements |
+| **Integration Flexibility** | Java/Python/REST | Varies by product |
 | **Support** | Community + Equinor | Vendor SLA |
+| **Validation/Certification** | User responsibility | Often pre-validated |
 
 ---
 
@@ -594,14 +598,14 @@ Modern offshore operations face competing objectives that must be optimized simu
 
 ### NeqSim Integrated Optimization Capabilities
 
-NeqSim uniquely enables **simultaneous optimization** of production, emissions, and energy because all three are calculated from the same thermodynamic model:
+NeqSim enables **simultaneous optimization** of production, emissions, and energy because all three are calculated from the same thermodynamic model:
 
-| Capability | How NeqSim Enables It |
+| Capability | How NeqSim Supports It |
 |------------|----------------------|
-| **Consistent Material Balance** | Single process model tracks mass flows for production AND emissions |
+| **Consistent Material Balance** | Single process model tracks mass flows for production and emissions |
 | **Energy Integration** | Heat/power duties calculated from same thermodynamic properties |
-| **Real-time Feasibility** | Fast enough for online optimization (seconds, not hours) |
-| **Gradient Information** | Analytical derivatives for efficient optimization algorithms |
+| **Computational Speed** | Suitable for online optimization applications |
+| **Gradient Information** | Supports efficient optimization algorithms |
 | **What-If Analysis** | Rapid scenario evaluation for operational decisions |
 
 ### Optimization Problem Formulation
@@ -847,14 +851,16 @@ plt.show()
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Potential Emission Reduction Impact
+### Potential Benefits of Online Emission Monitoring
 
-| Metric | Potential Range | Environmental Benefit |
+*Note: Actual benefits depend on facility-specific factors including current monitoring practices, operational flexibility, and emission source distribution.*
+
+| Metric | Potential Benefit | Environmental Relevance |
 |--------|--------------------|-----------------------|
-| **CO₂ Equivalent Reduction** | Site-dependent | Tonnes CO₂eq/year reduction possible |
-| **Methane Reduction** | Varies by source | High-GWP gas reduction (28× CO₂ impact) |
-| **Flaring Reduction** | Varies by operation | Direct combustion emissions avoided |
-| **Reporting Accuracy** | Improved | Better baseline for improvement tracking |
+| **Emission Visibility** | Real-time monitoring vs periodic reporting | Enables faster response to deviations |
+| **Methane Tracking** | Source-level attribution | High-GWP gas (28× CO₂ over 100 years) |
+| **Flare Monitoring** | Improved flare efficiency tracking | Direct combustion emission quantification |
+| **Reporting Quality** | More frequent, data-driven reports | Better baseline for improvement tracking |
 
 ### Integration with NeqSim Production Optimizer
 
@@ -918,10 +924,17 @@ Key references for emission calculations:
    [IOGP Bookstore](https://www.iogp.org/bookstore/product/methods-for-estimating-atmospheric-emissions-from-e-p-operations/)
 
 3. **IPCC AR5 (2014)** - Global Warming Potentials (GWP)  
-   [IPCC Report](https://www.ipcc.ch/report/ar5/syr/)
+   [IPCC Report](https://www.ipcc.ch/report/ar5/syr/)  
+   *Note: NeqSim uses AR5 GWP100 values (CH₄=28, N₂O=265) by default. AR6 (2021) values (CH₄=27.9) are also available.*
 
-4. **EU Methane Regulation 2024/1787** - Methane emission requirements  
+4. **Søreide & Whitson (1992)** - Peng-Robinson predictions for hydrocarbons in brine  
+   *Fluid Phase Equilibria*, 77, 217-240
+
+5. **EU Methane Regulation 2024/1787** - Methane emission requirements  
    [EUR-Lex](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1787)
+
+6. **Aktivitetsforskriften §70** - Norwegian offshore emission quantification requirements  
+   [Lovdata](https://lovdata.no/dokument/SF/forskrift/2010-04-29-613)
 
 See [full literature list](OFFSHORE_EMISSION_REPORTING.html#literature-references) in the guide.
 
