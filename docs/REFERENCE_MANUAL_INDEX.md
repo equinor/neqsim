@@ -82,6 +82,9 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 |----------|------|-------------|
 | **Tutorials Hub** | [docs/tutorials/index.md](tutorials/index.md) | All tutorials organized by topic |
 | Learning Paths | [docs/tutorials/learning-paths.md](tutorials/learning-paths.md) | PVT Engineer, Process Engineer, Developer tracks |
+| **TEG Dehydration** | [docs/tutorials/teg_dehydration_tutorial.md](tutorials/teg_dehydration_tutorial.md) | **Complete TEG gas dehydration plant modeling** |
+| **GOSP Tutorial** | [docs/tutorials/gosp_tutorial.md](tutorials/gosp_tutorial.md) | **Gas-oil separation plant (multi-stage separation)** |
+| **PVT Lab Tests** | [docs/pvtsimulation/pvt_lab_tests.md](pvtsimulation/pvt_lab_tests.md) | **CCE, CVD, DL, separator test simulations** |
 
 ### Chapter 4: Installation & Setup
 
@@ -138,6 +141,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 |----------|------|-------------|
 | Fluid Creation Guide | [docs/thermo/fluid_creation_guide.md](thermo/fluid_creation_guide.md) | Creating thermodynamic systems |
 | **Fluid Classification** | [docs/thermo/fluid_classification.md](thermo/fluid_classification.md) | **Whitson methodology: FluidClassifier, ReservoirFluidType, GOR/C7+ classification** |
+| **Component List** | [docs/thermo/component_list.md](thermo/component_list.md) | **Complete searchable list of all ~150+ components with CAS numbers and EoS availability** |
 | Component Database | [docs/thermo/component_database_guide.md](thermo/component_database_guide.md) | Component properties and database |
 | Component Package | [docs/thermo/component/README.md](thermo/component/README.md) | Component class documentation |
 | Mathematical Models | [docs/thermo/mathematical_models.md](thermo/mathematical_models.md) | Underlying mathematical models |
@@ -199,6 +203,9 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 | Document | Path | Description |
 |----------|------|-------------|
+| **Flow Assurance Overview** | [docs/pvtsimulation/flow_assurance_overview.md](pvtsimulation/flow_assurance_overview.md) | **Integrated guide: hydrates, wax, asphaltenes, scale screening** |
+| **Mineral Scale Formation** | [docs/pvtsimulation/mineral_scale_formation.md](pvtsimulation/mineral_scale_formation.md) | **Carbonate/sulfate scale, seawater mixing, SR calculations** |
+| **pH Stabilization & Corrosion** | [docs/pvtsimulation/ph_stabilization_corrosion.md](pvtsimulation/ph_stabilization_corrosion.md) | **Corrosion control, FeCO3 layer, Electrolyte CPA EoS** |
 | Hydrate Models | [docs/thermo/hydrate_models.md](thermo/hydrate_models.md) | Hydrate equilibrium models |
 | Hydrate Flash | [docs/thermodynamicoperations/hydrate_flash_operations.md](thermodynamicoperations/hydrate_flash_operations.md) | Hydrate flash operations |
 | Wax Characterization | [docs/thermo/characterization/wax_characterization.md](thermo/characterization/wax_characterization.md) | Wax modeling, WAT calculation, flow assurance |
@@ -591,6 +598,8 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 
 | Document | Path | Description |
 |----------|------|-------------|
+| **Phase Envelope Guide** | [docs/pvtsimulation/phase_envelope_guide.md](pvtsimulation/phase_envelope_guide.md) | **Cricondenbar, cricondentherm, HCDP, bubble/dew points** |
+| **PVT Lab Tests** | [docs/pvtsimulation/pvt_lab_tests.md](pvtsimulation/pvt_lab_tests.md) | **CCE, CVD, DL, separator test, swelling test simulations** |
 | PVT Overview | [docs/pvtsimulation/README.md](pvtsimulation/README.md) | PVT simulation module |
 | PVT Workflows | [docs/wiki/pvt_simulation_workflows.md](wiki/pvt_simulation_workflows.md) | PVT simulation workflows |
 | PVT Workflow Module | [docs/pvtsimulation/pvt_workflow.md](pvtsimulation/pvt_workflow.md) | PVT workflow module |

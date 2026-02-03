@@ -28,6 +28,17 @@ Get up and running fast:
 | [Python Quickstart](../quickstart/python-quickstart.md) | 5 min | Python/pip |
 | [Colab Quickstart](../quickstart/colab-quickstart.md) | 1 min | Browser |
 
+## Process Tutorials
+
+Complete walkthroughs for common applications:
+
+| Tutorial | Description | Level |
+|----------|-------------|-------|
+| **[TEG Gas Dehydration](teg_dehydration_tutorial.md)** | Complete TEG loop with contactor and regeneration | Intermediate |
+| **[Gas-Oil Separation Plant (GOSP)](gosp_tutorial.md)** | Multi-stage separation with compression | Intermediate |
+| **[PVT Lab Test Simulations](../pvtsimulation/pvt_lab_tests.md)** | CCE, CVD, DL, separator tests | Intermediate |
+| **[Flow Assurance Overview](../pvtsimulation/flow_assurance_overview.md)** | Hydrates, wax, asphaltenes screening | Intermediate |
+
 ## Video Tutorials
 
 Coming soon! For now, see the [NeqSim Colab notebooks](https://github.com/EvenSol/NeqSim-Colab) for interactive examples.
