@@ -14,7 +14,7 @@ NeqSim combines well inflow performance relationships with hydraulic flowline mo
 - **Production index (PI)** – Constant PI using squared-pressure drawdown.
 - **Vogel** – Empirical oil well relationship using a reference test to derive the productivity curve.
 - **Fetkovich** – Gas deliverability using C and n coefficients in squared-pressure space.
-- **Backpressure with non-Darcy term** – Deliverability equation \(p_r^2 - p_{wf}^2 = a \cdot q + b \cdot q^2\) where the quadratic term captures turbulence/non-Darcy skin. The model is solved in either direction, with guards for insufficient drawdown.
+- **Backpressure with non-Darcy term** – Deliverability equation $p_r^2 - p_{wf}^2 = a \cdot q + b \cdot q^2$ where the quadratic term captures turbulence/non-Darcy skin. The model is solved in either direction, with guards for insufficient drawdown.
 - **Table-driven inflow** – User-supplied pairs of bottom-hole pressure and flow rate are sorted and linearly interpolated to compute flow or back-calculate the required pressure for a requested rate.
 
 All models can switch between computing outlet pressure or flow via `solveFlowFromOutletPressure(boolean)`, enabling backpressure solves from downstream network pressure when desired.

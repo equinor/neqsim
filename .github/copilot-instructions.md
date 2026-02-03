@@ -317,6 +317,52 @@ When creating or editing markdown documentation files:
   2. **Step two:** Description here
   ```
 
+### LaTeX Math Equations (MANDATORY for KaTeX Rendering)
+
+The documentation site uses **KaTeX** for math rendering. Use the correct delimiters to ensure equations render properly.
+
+#### Display Math (Block Equations)
+
+**USE `$$...$$`** for display/block equations:
+
+```markdown
+The cubic equation of state:
+
+$$
+P = \frac{RT}{v - b} - \frac{a(T)}{(v + \epsilon b)(v + \sigma b)}
+$$
+
+Where $P$ is pressure and $T$ is temperature.
+```
+
+**NEVER use `\[...\]`** - these delimiters are often stripped by markdown processors and render as plain text like `[ P = \frac{RT}{v-b} ]`.
+
+#### Inline Math
+
+**USE `$...$`** for inline math:
+
+```markdown
+The acentric factor $\omega$ affects the alpha function $\alpha(T_r, \omega)$.
+```
+
+**NEVER use `\(...\)`** - these are less reliably rendered.
+
+#### Common LaTeX Mistakes to Avoid
+
+| Wrong | Correct | Issue |
+|-------|---------|-------|
+| `\[ P = \frac{RT}{v-b} \]` | `$$ P = \frac{RT}{v-b} $$` | `\[...\]` stripped by parser |
+| `\(T_r\)` | `$T_r$` | `\(...\)` less reliable |
+| `$$ P = ... $$ where` | `$$ P = ... $$` + newline + `where` | No text on same line as `$$` |
+| Equation inside `<div>` | Move equation outside HTML block | Markdown not processed in HTML |
+
+#### Verification
+
+After adding equations, preview locally or check that:
+1. Display equations appear centered on their own line
+2. Inline math renders within the text flow
+3. No raw LaTeX syntax (backslashes, braces) appears in rendered output
+
 ## Mechanical Design Implementation Pattern (MANDATORY)
 
 When implementing mechanical design for any process equipment, follow this established architecture pattern:

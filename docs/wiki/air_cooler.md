@@ -9,9 +9,9 @@ The `AirCooler` is a simple process unit for estimating the amount of cooling ai
 
 For a given inlet temperature, outlet temperature and relative humidity of the air, the mass flow of dry air is obtained from
 
-\[
+$
 \dot m_{air} = \frac{Q}{h_{out}-h_{in}}
-\]
+$
 
 where `Q` is the heat removed from the process stream in watt and `h_{in}` and `h_{out}` are the specific humid–air enthalpies in kJ per kg dry air. The volumetric flow is calculated from the ideal–gas relation at the inlet conditions.
 

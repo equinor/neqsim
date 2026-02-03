@@ -9,11 +9,11 @@ NeqSim's flash algorithms are exercised heavily in the JUnit suite under `src/te
 
 ## Rachford-Rice vapor fraction solving
 
-`RachfordRiceTest` switches between the Nielsen (2023) and Michelsen (2001) variants of the Rachford–Rice solver to verify that all implementations converge to the same vapor fraction for the same `K`-values and overall composition.【F:src/test/java/neqsim/thermodynamicoperations/flashops/RachfordRiceTest.java†L14-L39】 The test uses a binary mixture with `z=[0.7, 0.3]` and `K=[2.0, 0.01]` and asserts a vapor fraction (\(\beta\)) of 0.40707, which is the root of the classic balance equation:
+`RachfordRiceTest` switches between the Nielsen (2023) and Michelsen (2001) variants of the Rachford–Rice solver to verify that all implementations converge to the same vapor fraction for the same `K`-values and overall composition.【F:src/test/java/neqsim/thermodynamicoperations/flashops/RachfordRiceTest.java†L14-L39】 The test uses a binary mixture with `z=[0.7, 0.3]` and `K=[2.0, 0.01]` and asserts a vapor fraction ($\beta$) of 0.40707, which is the root of the classic balance equation:
 
-\[
+$
 \sum_i z_i \frac{K_i - 1}{1 + \beta (K_i - 1)} = 0
-\]
+$
 
 The converged solution satisfies material balance between vapor and liquid while honoring the phase equilibrium ratios supplied by the `K`-values. Switching `RachfordRice.setMethod(...)` in the test demonstrates that NeqSim exposes multiple solver strategies for the same equation without altering the target root.【F:src/test/java/neqsim/thermodynamicoperations/flashops/RachfordRiceTest.java†L21-L33】 When modeling your own flashes, choose a method that matches your numerical preferences; the test shows that the default and named methods must agree on the fundamental solution.
 

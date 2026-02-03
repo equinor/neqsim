@@ -18,13 +18,13 @@ Key steps mirrored from the test:
 3. Set the current pressure, temperature, and standard volumes (`setStdTotals`) before calling `flash()`.
 4. Inspect reservoir volumes, viscosities, and densities from the returned system object— the test only asserts positivity but those values correspond to the PVTO/PVTG/PVTW correlations.
 
-The flash solves phase-split mass balance for three pseudo-phases using deck-derived formation volume factors \(B_o, B_g, B_w\), dissolved gas–oil ratio \(R_s\), and vaporized oil–gas ratio \(R_v\). Reservoir volumes are calculated as
+The flash solves phase-split mass balance for three pseudo-phases using deck-derived formation volume factors $B_o, B_g, B_w$, dissolved gas–oil ratio $R_s$, and vaporized oil–gas ratio $R_v$. Reservoir volumes are calculated as
 
-\[
+$$
 V_{res} = B_x \times V_{std}
-\]
+$$
 
-for each phase \(x\in\{o,g,w\}\), with viscosities pulled directly from the tables.
+for each phase $x\in\{o,g,w\}$, with viscosities pulled directly from the tables.
 
 ## Building PVT tables in code
 
@@ -32,6 +32,6 @@ for each phase \(x\in\{o,g,w\}\), with viscosities pulled directly from the tabl
 
 When scripting your own tests:
 
-- Provide monotone pressure arrays for \(B_o\), \(B_g\), \(B_w\), \(R_s\), and \(R_v\) to avoid interpolation ambiguity.
+- Provide monotone pressure arrays for $B_o$, $B_g$, $B_w$, $R_s$, and $R_v$ to avoid interpolation ambiguity.
 - Use consistent viscosity units (Pa·s) and choose a bubblepoint (`Pb`) inside the pressure grid so gas liberation follows expected two-phase behavior.
 - After `flash()`, validate density, viscosity, and reservoir volume signs as sanity checks, then compare against lab or simulator references.

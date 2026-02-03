@@ -11,9 +11,9 @@ NeqSim bundles several thermodynamic and transport models so you can switch betw
 
 NeqSim primarily uses cubic equations of state of the general form:
 
-\[
+$$
 P = \frac{RT}{v - b} - \frac{a(T)}{(v + \epsilon b)(v + \sigma b)}
-\]
+$$
 
 where $P$ is pressure, $T$ is temperature, $v$ is molar volume, $R$ is the gas constant, and $a(T), b$ are the energy and co-volume parameters.
 
@@ -27,9 +27,11 @@ where $P$ is pressure, $T$ is temperature, $v$ is molar volume, $R$ is the gas c
 
 - **Cubic-Plus-Association (CPA)**:
   Adds an association term to the SRK or PR equation to represent hydrogen bonding:
-  \[
+  
+  $$
   P = P_{\text{cubic}} - \frac{1}{2} RT \rho \sum_i x_i \sum_{A_i} \left( 1 - X_{A_i} \right) \frac{\partial \ln g}{\partial v}
-  \]
+  $$
+  
   where $X_{A_i}$ is the fraction of site A on molecule i not bonded to other active sites.
 
 - **Activity-coefficient hybrids**:

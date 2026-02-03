@@ -16,47 +16,47 @@ Each ideal-equilibrium tray satisfies the familiar MESH relationships:
 
 1. **Total mass balance (tray j)**
 
-   \[
+   $
    V_{j-1} + L_{j+1} + F_j = V_j + L_j
-   \]
+   $
 
 2. **Component balances**
 
-   \[
+   $
    V_{j-1} y_{i,j-1} + L_{j+1} x_{i,j+1} + F_j z_{i,j}
    = V_j y_{i,j} + L_j x_{i,j}
-   \]
+   $
 
 3. **Phase equilibrium (K-values)**
 
-   \[
+   $
    y_{i,j} = K_{i,j} x_{i,j}, \qquad K_{i,j} = \frac{\hat f_{i,j}^{\text{vap}}}{\hat f_{i,j}^{\text{liq}}}
-   \]
+   $
 
 4. **Energy balance**
 
-   \[
+   $
    V_{j-1} h_{j-1}^{V} + L_{j+1} h_{j+1}^{L} + F_j h_j^{F} + Q_j
    = V_j h_j^{V} + L_j h_j^{L}
-   \]
+   $
 
 NeqSim evaluates fugacity-based K-values and molar enthalpies through the active
 `SystemInterface`. The matrix solver also uses linearized component balances in
 tridiagonal form:
 
-\[
+$
 A_j l_{i,j-1} + B_j l_{i,j} + C_j l_{i,j+1} = D_{i,j}
-\]
+$
 
-with stripping factors \(S_j = K_{i,j} V_j / L_j\) embedded in the diagonal terms.
+with stripping factors $S_j = K_{i,j} V_j / L_j$ embedded in the diagonal terms.
 
-Temperature updates rely on the log-Newton step derived from \(\sum_i y_{i,j}=1\):
+Temperature updates rely on the log-Newton step derived from $\sum_i y_{i,j}=1$:
 
-\[
+$
 \Delta T_j = -\frac{\ln(\sum_i K_{i,j} x_{i,j}) R T_j^2}{h_j^{V} - h_j^{L}}
-\]
+$
 
-The code limits \(\Delta T_j\) to ±5 K and enforces bounds of 50–1000 K for numerical
+The code limits $\Delta T_j$ to ±5 K and enforces bounds of 50–1000 K for numerical
 stability.
 
 ## Column preparation
@@ -104,10 +104,10 @@ stability.
 ### Matrix solver specifics
 
 - Precomputes feed molar contributions (`feedFlows`, vapor/liquid split) per tray.
-- Builds stripping factors \(S_j\) to couple component molar flows between neighbouring trays.
+- Builds stripping factors $S_j$ to couple component molar flows between neighbouring trays.
 - Uses constant molar overflow anchors (bottom vapour, top liquid) blended with instantaneous
-  sum-rate flows: \( L_j = w L_{\text{CMO},j} + (1-w) L_{\text{SR},j} \) with default
-  \(w = 0.95\).
+  sum-rate flows: $L_j = w L_{\text{CMO},j} + (1-w) L_{\text{SR},j}$ with default
+  $w = 0.95$.
 - Applies damping on both component flows and total holdups to keep the linear update stable.
 - Temperature correction follows the same log-Newton formula, requiring `system.init(2)` for
   enthalpy data and `system.init(1)` afterwards to refresh K-values.
