@@ -149,6 +149,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 | Document | Path | Description |
 |----------|------|-------------|
+| **Reading Fluid Properties** | [docs/thermo/reading_fluid_properties.md](thermo/reading_fluid_properties.md) | **Comprehensive guide to calculating and reading properties from fluids, phases, and components** |
 | Properties Overview | [docs/thermo/physical_properties.md](thermo/physical_properties.md) | Physical property calculations |
 | Physical Props Module | [docs/physical_properties/README.md](physical_properties/README.md) | Physical properties module |
 | Viscosity Models | [docs/wiki/viscosity_models.md](wiki/viscosity_models.md) | Viscosity calculation models |

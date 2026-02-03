@@ -16,6 +16,7 @@ Interactive Python notebooks using NeqSim through [neqsim-python](https://github
 
 | Notebook | Description | View Options |
 |----------|-------------|--------------|
+| **Reading Fluid Properties** | Complete guide to init levels, density, units, volume correction | [Markdown](ReadingFluidProperties.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/ReadingFluidProperties.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/ReadingFluidProperties.ipynb) |
 | **AIPlatformIntegration** | AI/ML platform integration patterns | [Markdown](AIPlatformIntegration.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/AIPlatformIntegration.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/AIPlatformIntegration.ipynb) |
 | **ESP Pump Tutorial** | Electric submersible pump modeling | [Markdown](ESP_Pump_Tutorial.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/ESP_Pump_Tutorial.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/ESP_Pump_Tutorial.ipynb) |
 | **FieldDevelopmentWorkflow** | Concept screening, MCDA, economics | [Markdown](FieldDevelopmentWorkflow.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb) |
