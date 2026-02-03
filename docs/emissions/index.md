@@ -23,7 +23,7 @@ NeqSim provides physics-based emission calculations for offshore oil & gas opera
 <div style="background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1rem;">
 <h3 style="margin-top: 0;">📚 Documentation</h3>
 <ul style="list-style: none; padding: 0; margin: 0;">
-<li style="padding: 0.3rem 0;"><a href="OFFSHORE_EMISSION_REPORTING.html"><strong>Offshore Emission Reporting Guide</strong></a> — Comprehensive reference</li>
+<li style="padding: 0.3rem 0;"><a href="OFFSHORE_EMISSION_REPORTING.html"><strong>Offshore Emission Reporting Guide</strong></a> — Reference</li>
 <li style="padding: 0.3rem 0;"><a href="../REFERENCE_MANUAL_INDEX.html#chapter-43-sustainability--emissions">API Reference (Chapter 43)</a> — EmissionsCalculator class</li>
 </ul>
 </div>
@@ -499,7 +499,7 @@ Online emission monitoring enables cultural transformation:
 |--------------------|--------|----------|
 | **API Reference** | ✅ Complete | [JavaDoc](https://equinor.github.io/neqsim/javadoc/), [Reference Manual](../REFERENCE_MANUAL_INDEX.html) |
 | **Getting Started** | ✅ Complete | [Wiki](../wiki/getting_started.html) |
-| **Emission Calculations** | ✅ Complete | This page + [Comprehensive Guide](OFFSHORE_EMISSION_REPORTING.html) |
+| **Emission Calculations** | ✅ Complete | This page + [Guide](OFFSHORE_EMISSION_REPORTING.html) |
 | **Interactive Tutorials** | ✅ Complete | [Jupyter Notebooks](../examples/index.html) with Colab links |
 | **Code Examples** | ✅ Complete | Java + Python examples for all features |
 | **Regulatory Context** | ✅ Complete | Norwegian/EU framework documented |
@@ -891,7 +891,7 @@ List<Solution> paretoFront = optimizer.getParetoFront();
 
 | Document | Purpose | Audience |
 |----------|---------|----------|
-| [**Offshore Emission Reporting Guide**](OFFSHORE_EMISSION_REPORTING.html) | Comprehensive reference with regulatory framework, methods, API, validation, literature | Engineers, Regulators, Auditors |
+| [**Offshore Emission Reporting Guide**](OFFSHORE_EMISSION_REPORTING.html) | Reference with regulatory framework, methods, API, validation, literature | Engineers, Regulators, Auditors |
 | [**Produced Water Emissions Tutorial**](../examples/ProducedWaterEmissions_Tutorial.html) | Step-by-step Jupyter notebook with runnable code | Data Scientists, Developers |
 | [**Norwegian Methods Comparison**](../examples/NorwegianEmissionMethods_Comparison.html) | Validation against handbook, uncertainty analysis | Engineers, Regulators |
 | [**Java Example**](https://github.com/equinor/neqsim/blob/master/docs/examples/OffshoreEmissionReportingExample.java) | Complete Java code sample | Java Developers |
@@ -923,7 +923,7 @@ Key references for emission calculations:
 4. **EU Methane Regulation 2024/1787** - Methane emission requirements  
    [EUR-Lex](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1787)
 
-See [full literature list](OFFSHORE_EMISSION_REPORTING.html#literature-references) in the comprehensive guide.
+See [full literature list](OFFSHORE_EMISSION_REPORTING.html#literature-references) in the guide.
 
 ---
 
