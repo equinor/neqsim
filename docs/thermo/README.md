@@ -56,6 +56,11 @@ thermo/
 - [Mathematical Models](mathematical_models): Equations of state, activity-coefficient formulations, and transport correlations available in NeqSim.
 - [GERG-2008 and EOS-CG](gerg2008_eoscg): Detailed guide to the reference equations of state for natural gas and CCS applications.
 
+### Acid Gas and Sour Fluid Modeling
+
+- [H2S Distribution Guide](H2S_distribution_guide): **H2S phase distribution modeling** between gas, oil, and water using SRK, PR, CPA, and Electrolyte-CPA equations of state. Covers acid-base chemistry, pH effects, and salinity impacts.
+- [H2S Distribution Modeling (Detailed)](H2S_DISTRIBUTION_MODELING): **Comprehensive H2S modeling** including chemical reactions, model selection guidance, and validation examples.
+
 ### Application Guides
 
 - [Thermodynamic Workflows](thermodynamic_workflows): How to set up systems, select models, and perform common equilibrium calculations.

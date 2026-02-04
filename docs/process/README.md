@@ -127,6 +127,7 @@ This documentation is organized into the following sections:
 | Flares | [flares.md](equipment/flares) | Flare, FlareStack |
 | Electrolyzers | [electrolyzers.md](equipment/electrolyzers) | Electrolyzer, CO2Electrolyzer |
 | Filters | [filters.md](equipment/filters) | Filter, CharCoalFilter |
+| H2S Scavengers | [H2S_scavenger_guide.md](H2S_scavenger_guide) | H2S chemical scavenging (triazine, glyoxal, iron sponge) |
 | Reactors | [reactors.md](equipment/reactors) | GibbsReactor |
 | Pipelines | [pipelines.md](equipment/pipelines) | Pipeline, AdiabaticPipe, TopsidePiping, Riser |
 | Looped Networks | [looped_networks.md](equipment/looped_networks) | LoopedPipeNetwork, Hardy Cross solver |
