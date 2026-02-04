@@ -1,6 +1,6 @@
 ---
-title: NeqSim vs Norwegian Handbook: Emission Calculation Methods Comparison
-description: This document compares the **conventional Norwegian handbook method** for emission reporting with the **NeqSim thermodynamic method** implemented via NeqSimLive. The comparison is based on the methodo...
+title: "NeqSim vs Norwegian Handbook: Emission Calculation Methods Comparison"
+description: "This document compares the conventional Norwegian handbook method for emission reporting with the NeqSim thermodynamic method implemented via NeqSimLive."
 ---
 
 # NeqSim vs Norwegian Handbook: Emission Calculation Methods Comparison

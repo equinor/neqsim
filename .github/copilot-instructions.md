@@ -261,6 +261,17 @@ description: Comprehensive guide to calculating and reading thermodynamic and ph
 3. `title` should be descriptive but concise (appears in search results)
 4. `description` should include searchable keywords relevant to the content
 5. Do NOT duplicate the title as an H1 heading immediately after front matter (Jekyll handles this)
+6. **CRITICAL: Quote values containing colons** - In YAML, colons have special meaning. If your title or description contains a colon (`:`), wrap the entire value in double quotes:
+   ```yaml
+   # WRONG - causes YAML parse error:
+   title: PVT Workflow: From Lab Data to Model
+   description: This guide covers: setup, configuration, and testing.
+   
+   # CORRECT - quoted values:
+   title: "PVT Workflow: From Lab Data to Model"
+   description: "This guide covers: setup, configuration, and testing."
+   ```
+7. **Avoid trailing colons** - Don't end descriptions with a colon (e.g., `description: "Features include:"`) - complete the sentence instead
 
 **Files that already have front matter:** Check if they have both `title` and `description`. If missing `description`, add it.
 

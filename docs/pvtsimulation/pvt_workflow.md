@@ -1,5 +1,5 @@
 ---
-title: PVT Workflow: From Lab Data to Tuned Fluid Model
+title: "PVT Workflow: From Lab Data to Tuned Fluid Model"
 description: This document describes the complete workflow for generating and tuning fluid models from laboratory PVT data in NeqSim.
 ---
 

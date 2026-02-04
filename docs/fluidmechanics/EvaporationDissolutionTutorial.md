@@ -1,6 +1,6 @@
 ---
-title: Evaporation and Dissolution in Pipelines: A Practical Tutorial
-description: This tutorial provides practical guidance for modeling **complete evaporation of liquids into gas** and **dissolution of gas into liquids** using NeqSim's non-equilibrium two-phase pipe flow model.
+title: "Evaporation and Dissolution in Pipelines: A Practical Tutorial"
+description: "This tutorial provides practical guidance for modeling complete evaporation of liquids into gas and dissolution of gas into liquids using NeqSim's non-equilibrium two-phase pipe flow model."
 ---
 
 # Evaporation and Dissolution in Pipelines: A Practical Tutorial

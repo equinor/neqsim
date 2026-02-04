@@ -1,6 +1,6 @@
 ---
 title: Asphaltene Method Comparison
-description: NeqSim provides two complementary approaches for asphaltene stability analysis:
+description: "NeqSim provides two complementary approaches for asphaltene stability analysis."
 ---
 
 # Asphaltene Method Comparison

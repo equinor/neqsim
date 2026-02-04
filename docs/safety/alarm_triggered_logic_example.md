@@ -1,6 +1,6 @@
 ---
 title: Alarm-Triggered Process Logic Integration Example
-description: The example implements a comprehensive 5-layer safety system:
+description: "The example implements a comprehensive 5-layer safety system for process control."
 ---
 
 # Alarm-Triggered Process Logic Integration Example

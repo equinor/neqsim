@@ -1,6 +1,6 @@
 ---
-title: Pull Request: Hardy Cross Looped Network Solver & O&G Review Update
-description: This PR addresses a comprehensive review request for NeqSim's Oil & Gas design and operations capabilities. The original requirements were:
+title: "Pull Request: Hardy Cross Looped Network Solver and O&G Review Update"
+description: "This PR addresses a comprehensive review request for NeqSim's Oil and Gas design and operations capabilities."
 ---
 
 # Pull Request: Hardy Cross Looped Network Solver & O&G Review Update
