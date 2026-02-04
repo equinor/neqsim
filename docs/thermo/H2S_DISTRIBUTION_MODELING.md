@@ -5,6 +5,10 @@ description: Comprehensive guide to modeling hydrogen sulfide (H2S) distribution
 
 # H2S Distribution Modeling in NeqSim
 
+> **Related Resources:**
+> - For a quick overview with Python examples, see [H2S Distribution Guide (quick)](H2S_distribution_guide)
+> - For a hands-on Python notebook, see [H2S Distribution Modeling Tutorial](../examples/H2S_Distribution_Modeling)
+
 ## Introduction
 
 Hydrogen sulfide (H2S) is a critical component in oil and gas processing due to its:

@@ -5,6 +5,10 @@ description: Comprehensive guide to modeling hydrogen sulfide (H2S) phase distri
 
 # H2S Distribution Between Gas, Oil, and Water Phases
 
+> **Related Resources:**
+> - For a more detailed treatment with Java examples, see [H2S Distribution Modeling (detailed)](H2S_DISTRIBUTION_MODELING)
+> - For a hands-on Python notebook, see [H2S Distribution Modeling Tutorial](../examples/H2S_Distribution_Modeling)
+
 ## Overview
 
 Hydrogen sulfide (H2S) distribution between phases is critical for:

@@ -188,7 +188,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Reading Fluid Properties** | [docs/thermo/reading_fluid_properties.md](thermo/reading_fluid_properties) | **Comprehensive guide to calculating and reading properties from fluids, phases, and components** |
 | Properties Overview | [docs/thermo/physical_properties.md](thermo/physical_properties) | Physical property calculations |
 | Physical Props Module | [docs/physical_properties/README.md](physical_properties/) | Physical properties module |
-| **H2S Distribution** | [docs/thermo/H2S_distribution_guide.md](thermo/H2S_distribution_guide) | **H2S phase distribution modeling with SRK, PR, CPA, Electrolyte-CPA** |
+| **H2S Distribution (Quick)** | [docs/thermo/H2S_distribution_guide.md](thermo/H2S_distribution_guide) | **H2S phase distribution with Python examples - quick reference** |
+| **H2S Distribution (Detailed)** | [docs/thermo/H2S_DISTRIBUTION_MODELING.md](thermo/H2S_DISTRIBUTION_MODELING) | **Comprehensive H2S modeling with Java examples and theory** |
 | Viscosity Models | [docs/wiki/viscosity_models.md](wiki/viscosity_models) | Viscosity calculation models |
 | Viscosity Detailed | [docs/physical_properties/viscosity_models.md](physical_properties/viscosity_models) | Detailed viscosity models |
 | Density Models | [docs/physical_properties/density_models.md](physical_properties/density_models) | Density calculation models |

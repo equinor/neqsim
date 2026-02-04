@@ -362,6 +362,19 @@ print(separator.getGasOutStream().getFlowRate("kg/hr"))
 
 ---
 
+## Quick Fix Recipes
+
+For copy-paste solutions to common tasks, see the **[Cookbook](../cookbook/index)**:
+
+| Problem | Recipe |
+|---------|--------|
+| Get density correctly | [thermodynamics-recipes.md#get-density-correctly](../cookbook/thermodynamics-recipes#get-density-correctly) |
+| Which EoS to use? | [thermodynamics-recipes.md#which-eos-should-i-use](../cookbook/thermodynamics-recipes#which-eos-should-i-use) |
+| Set up recycle | [process-recipes.md#recycle-stream](../cookbook/process-recipes#recycle-stream) |
+| Pipeline pressure drop | [pipeline-recipes.md#simple-pressure-drop](../cookbook/pipeline-recipes#simple-pressure-drop) |
+
+---
+
 ## Getting Help
 
 1. **Check the JavaDoc API**: [https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html)
@@ -370,7 +383,9 @@ print(separator.getGasOutStream().getFlowRate("kg/hr"))
 
 3. **Check documentation**: [Reference Manual](../REFERENCE_MANUAL_INDEX)
 
-4. **Open a new issue** with:
+4. **Browse the Cookbook**: [Quick recipes](../cookbook/index) for common tasks
+
+5. **Open a new issue** with:
    - NeqSim version
    - Python version (if using Python)
    - Minimal code to reproduce
