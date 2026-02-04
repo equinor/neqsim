@@ -227,7 +227,11 @@ Before committing, run `./mvnw javadoc:javadoc` to catch JavaDoc errors early.
 - **Auto-Validation for New Equipment**: When creating a new class that extends `ProcessEquipmentBaseClass`, ALWAYS generate a `validateSetup()` method that checks: (1) required input streams are connected, (2) required parameters are set and within valid ranges, (3) return `ValidationResult` with remediation hints for each issue.
 - **Auto-Annotation for Public Methods**: When adding new public methods to core classes (SystemInterface, ProcessEquipmentInterface), consider adding `@AIExposable` annotation with description, category, example, and `@AIParameter` annotations documenting valid ranges/options.
 - **Jupyter Notebook Examples**: When creating Jupyter notebook examples, ensure they run end-to-end and reflect the latest API changes; place them in the `notebooks/` directory and link to them from the main documentation. Follow the neqsim-python direct Java API bindings as shown at https://github.com/equinor/neqsim-python?tab=readme-ov-file#4-direct-java-access-full-control
-- **Add markdown files with documentation**: When adding documentation as markdown files be sure to update REFERENCE_MANUAL_INDEX.md applyTo: **/*.md
+- **Add markdown files with documentation**: When adding documentation as markdown files:
+  1. Update `REFERENCE_MANUAL_INDEX.md` with the new file entry
+  2. Update the relevant section's `index.md` (e.g., `docs/examples/index.md`)
+  3. Verify ALL links to other docs using `file_search` before adding them
+  4. See "Documentation Links (MANDATORY)" section below for link guidelines
 
 ## Markdown Documentation Guidelines (MANDATORY)
 
@@ -362,6 +366,87 @@ After adding equations, preview locally or check that:
 1. Display equations appear centered on their own line
 2. Inline math renders within the text flow
 3. No raw LaTeX syntax (backslashes, braces) appears in rendered output
+
+### Documentation Links (MANDATORY)
+
+When adding links to other documentation files, follow these rules to prevent broken links:
+
+#### Link Verification Rules
+
+1. **ALWAYS verify target files exist** before adding links:
+   - Use `file_search` to confirm the file exists in the repository
+   - Check the exact path and filename (case-sensitive on some systems)
+
+2. **Use correct relative paths** based on the source file location:
+   - From `docs/fielddevelopment/` to `docs/process/`: use `../process/filename.md`
+   - From `docs/examples/` to `docs/tutorials/`: use `../tutorials/filename.md`
+   - Within same folder: use just `filename.md`
+
+3. **Prefer existing documentation** over creating placeholder links:
+   - If a linked file doesn't exist, either create it OR link to an existing alternative
+   - NEVER add links to files that don't exist
+
+#### Common Documentation Paths
+
+| Documentation Area | Path | Example Files |
+|--------------------|------|---------------|
+| Process equipment | `docs/process/` | `separators.md`, `compressors.md`, `heat-exchangers.md` |
+| Field development | `docs/fielddevelopment/` | `pressure_boundary_optimization.md`, `CAPACITY_CONSTRAINT_FRAMEWORK.md` |
+| Thermodynamics | `docs/thermo/` | `equations-of-state.md`, `flash-calculations.md` |
+| Examples | `docs/examples/` | `*.ipynb`, `*.java`, `index.md` |
+| Tutorials | `docs/tutorials/` | Getting started guides |
+| Troubleshooting | `docs/troubleshooting/` | Common issues and solutions |
+
+#### When Adding New Documentation
+
+1. **Update index files** when creating new documentation:
+   - Add entry to `docs/REFERENCE_MANUAL_INDEX.md` (master index of 360+ files)
+   - Add entry to the relevant section's `index.md` (e.g., `docs/examples/index.md`)
+
+2. **Cross-reference related docs** with verified links:
+   ```markdown
+   ## Related Documentation
+   
+   - [Pressure Boundary Optimization](pressure_boundary_optimization.md)
+   - [Capacity Constraint Framework](CAPACITY_CONSTRAINT_FRAMEWORK.md)
+   ```
+
+3. **For Jupyter notebooks**, also add to:
+   - `docs/examples/index.md` - Examples index
+   - `docs/REFERENCE_MANUAL_INDEX.md` - Master reference
+
+#### Link Format Examples
+
+```markdown
+<!-- Same directory -->
+[Related Topic](related-topic.md)
+
+<!-- Parent directory -->
+[Process Overview](../process/index.md)
+
+<!-- Sibling directory -->
+[Tutorial](../tutorials/getting-started.md)
+
+<!-- Link to specific section -->
+[VFP Tables](pressure_boundary_optimization.md#vfp-generation)
+
+<!-- Link to Java example -->
+[Java Example](MultiScenarioVFPExample.java)
+
+<!-- Link to notebook -->
+[Notebook Tutorial](ProductionSystem_BottleneckAnalysis.ipynb)
+```
+
+#### Broken Link Prevention Checklist
+
+Before finalizing documentation with links:
+
+- [ ] All linked `.md` files exist (use `file_search("**/filename.md")`)
+- [ ] All linked `.ipynb` notebooks exist
+- [ ] All linked `.java` examples exist
+- [ ] Relative paths are correct for source file location
+- [ ] Index files updated for new documentation
+- [ ] No links to planned-but-not-created files
 
 ## Mechanical Design Implementation Pattern (MANDATORY)
 

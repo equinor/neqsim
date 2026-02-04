@@ -188,6 +188,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Reading Fluid Properties** | [docs/thermo/reading_fluid_properties.md](thermo/reading_fluid_properties) | **Comprehensive guide to calculating and reading properties from fluids, phases, and components** |
 | Properties Overview | [docs/thermo/physical_properties.md](thermo/physical_properties) | Physical property calculations |
 | Physical Props Module | [docs/physical_properties/README.md](physical_properties/) | Physical properties module |
+| **H2S Distribution** | [docs/thermo/H2S_distribution_guide.md](thermo/H2S_distribution_guide) | **H2S phase distribution modeling with SRK, PR, CPA, Electrolyte-CPA** |
 | Viscosity Models | [docs/wiki/viscosity_models.md](wiki/viscosity_models) | Viscosity calculation models |
 | Viscosity Detailed | [docs/physical_properties/viscosity_models.md](physical_properties/viscosity_models) | Detailed viscosity models |
 | Density Models | [docs/physical_properties/density_models.md](physical_properties/density_models) | Density calculation models |
@@ -197,7 +198,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Scale Potential | [docs/physical_properties/scale_potential.md](physical_properties/scale_potential) | Scale potential calculations |
 | Steam Tables | [docs/wiki/steam_tables_if97.md](wiki/steam_tables_if97) | IF97 steam table implementation |
 | Thermodynamic Workflows | [docs/thermo/thermodynamic_workflows.md](thermo/thermodynamic_workflows) | Common thermodynamic workflows |
-| Interaction Tables | [docs/thermo/inter_table_guide.md](thermo/inter_table_guide) | Binary interaction parameters |
+| Interaction Tables | [docs/thermo/inter_table_guide.md](thermo/inter_table_guide) | Binary interaction parameters | |
 
 ### Chapter 10: Hydrates & Flow Assurance
 
@@ -255,6 +256,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Distillation | [docs/process/equipment/distillation.md](process/equipment/distillation) | Distillation columns |
 | Distillation Wiki | [docs/wiki/distillation_column.md](wiki/distillation_column) | Distillation column details |
 | Absorbers | [docs/process/equipment/absorbers.md](process/equipment/absorbers) | Absorption equipment |
+| **H2S Scavenger** | [docs/process/H2S_scavenger_guide.md](process/H2S_scavenger_guide) | **Chemical scavenging of H2S from gas - triazine, glyoxal, iron sponge, caustic, liquid redox** |
 | Membrane | [docs/wiki/membrane_separation.md](wiki/membrane_separation) | Membrane separation |
 | Membrane Equipment | [docs/process/equipment/membranes.md](process/equipment/membranes) | Membrane equipment |
 | Filters | [docs/process/equipment/filters.md](process/equipment/filters) | Filter equipment |
@@ -753,6 +755,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Integrated Framework** | [docs/fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](fielddevelopment/INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK) | PVT→Reservoir→Well→Process integration guide |
 | **Strategy** | [docs/fielddevelopment/FIELD_DEVELOPMENT_STRATEGY.md](fielddevelopment/FIELD_DEVELOPMENT_STRATEGY) | Field development strategy and roadmap |
 | **Late-Life Operations** | [docs/fielddevelopment/LATE_LIFE_OPERATIONS.md](fielddevelopment/LATE_LIFE_OPERATIONS) | **Turndown, debottlenecking, and decommissioning timing analysis** |
+| **Multi-Scenario VFP Generation** | [docs/fielddevelopment/MULTI_SCENARIO_PRODUCTION_OPTIMIZATION.md](fielddevelopment/MULTI_SCENARIO_PRODUCTION_OPTIMIZATION) | VFP tables with varying GOR/water cut for reservoir simulation coupling |
 | Field Planning | [docs/wiki/field_development_planning.md](wiki/field_development_planning) | Field development planning |
 | Field Engine | [docs/simulation/field_development_engine.md](simulation/field_development_engine) | Field development engine |
 | **Economics** | [docs/process/economics/README.md](process/economics/) | Economics module: NPV, IRR, tax models, decline curves |
@@ -819,6 +822,8 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **ESP Pump Tutorial** | [docs/examples/ESP_Pump_Tutorial.md](examples/ESP_Pump_Tutorial) | **Electric Submersible Pump simulation and sizing** |
 | **Graph-Based Simulation** | [docs/examples/GraphBasedProcessSimulation.md](examples/GraphBasedProcessSimulation) | **Graph-based process simulation tutorial** |
 | **Field Development Workflow** | [docs/examples/FieldDevelopmentWorkflow.md](examples/FieldDevelopmentWorkflow) | **End-to-end field development workflow example** |
+| **Multi-Scenario VFP Tutorial** | [docs/examples/MultiScenarioVFP_Tutorial.ipynb](examples/MultiScenarioVFP_Tutorial) | **VFP generation with varying GOR/water cut scenarios** |
+| **Production System Bottleneck Analysis** | [docs/examples/ProductionSystem_BottleneckAnalysis.ipynb](examples/ProductionSystem_BottleneckAnalysis) | **Multi-well system optimization, bottleneck identification, and well prioritization** |
 | **MPC Integration Tutorial** | [docs/examples/MPC_Integration_Tutorial.md](examples/MPC_Integration_Tutorial) | **Model Predictive Control integration example** |
 | **AI Platform Integration** | [docs/examples/AIPlatformIntegration.md](examples/AIPlatformIntegration) | **AI platform integration tutorial** |
 | Examples Index | [docs/examples/index.md](examples/index) | Examples documentation index |
