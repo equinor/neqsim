@@ -532,8 +532,8 @@ public class MultiScenarioVFPGenerator implements Serializable {
    */
   public void setFluidInput(FluidMagicInput fluidInput) {
     this.flashGenerator = new RecombinationFlashGenerator(fluidInput);
-    this.waterCuts = fluidInput.getWaterCutValues();
-    this.GORs = fluidInput.getGORValues();
+    this.waterCuts = fluidInput.generateWaterCutValues();
+    this.GORs = fluidInput.generateGORValues();
   }
 
   /**
