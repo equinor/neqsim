@@ -129,8 +129,15 @@ This documentation is organized into the following sections:
 | Filters | [filters.md](equipment/filters) | Filter, CharCoalFilter |
 | Reactors | [reactors.md](equipment/reactors) | GibbsReactor |
 | Pipelines | [pipelines.md](equipment/pipelines) | Pipeline, AdiabaticPipe, TopsidePiping, Riser |
+| Looped Networks | [looped_networks.md](equipment/looped_networks) | LoopedPipeNetwork, Hardy Cross solver |
 | Tanks | [tanks.md](equipment/tanks) | Tank, VesselDepressurization |
 | Wells | [wells.md](equipment/wells) | Well equipment |
+| Subsea Trees | [subsea_trees.md](equipment/subsea_trees) | SubseaTree, valve control |
+| Subsea Manifolds | [subsea_manifolds.md](equipment/subsea_manifolds) | SubseaManifold |
+| Subsea Boosters | [subsea_boosters.md](equipment/subsea_boosters) | SubseaBooster, multiphase pumps |
+| Umbilicals | [umbilicals.md](equipment/umbilicals) | Umbilical systems |
+| Battery Storage | [battery_storage.md](equipment/battery_storage) | BatteryStorage |
+| Failure Modes | [failure_modes.md](equipment/failure_modes) | EquipmentFailureMode, reliability |
 | Mixers/Splitters | [mixers_splitters.md](equipment/mixers_splitters) | Mixer, Splitter |
 | Utility | [util/](equipment/util/) | Adjuster, Recycle, Calculator |
 

@@ -73,6 +73,15 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 | Reservoirs | [reservoirs.md](reservoirs) | Material balance reservoir modeling |
 | Subsea Systems | [subsea_systems.md](subsea_systems) | Subsea wells and flowlines |
 
+### Subsea Equipment
+
+| Equipment | File | Description |
+|-----------|------|-------------|
+| Subsea Trees | [subsea_trees.md](subsea_trees) | Christmas trees, valve control |
+| Subsea Manifolds | [subsea_manifolds.md](subsea_manifolds) | Multi-slot production manifolds |
+| Subsea Boosters | [subsea_boosters.md](subsea_boosters) | Multiphase pumps, compressors |
+| Umbilicals | [umbilicals.md](umbilicals) | Hydraulic, chemical, electrical supply |
+
 ### Pipeline/Network
 
 | Equipment | File | Description |
@@ -80,6 +89,7 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 | Pipelines | [pipelines.md](pipelines) | Pipe flow, pressure drop |
 | **Risers** | [pipelines.md#risers](pipelines#risers) | **SCR, TTR, Flexible, Lazy-Wave risers** |
 | Networks | [networks.md](networks) | Pipeline network modeling |
+| Looped Networks | [looped_networks.md](looped_networks) | Hardy Cross solver for loops |
 | Manifolds | [manifolds.md](manifolds) | Multi-stream routing |
 
 ### Flow Measurement
@@ -105,6 +115,7 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 | Equipment | File | Description |
 |-----------|------|-------------|
 | Power Equipment | [power_generation.md](power_generation) | Gas turbines, fuel cells, renewables |
+| Battery Storage | [battery_storage.md](battery_storage) | Energy storage systems |
 
 ### Utility Equipment
 
@@ -113,6 +124,12 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 | Adjusters | [util/adjusters.md](util/adjusters) | Variable adjustment to meet specs |
 | Recycles | [util/recycles.md](util/recycles) | Recycle stream handling |
 | Calculators | [util/calculators.md](util/calculators) | Custom calculations and setters |
+
+### Reliability & Failure
+
+| Equipment | File | Description |
+|-----------|------|-------------|
+| Failure Modes | [failure_modes.md](failure_modes) | Equipment failure modeling for risk analysis |
 
 ---
 

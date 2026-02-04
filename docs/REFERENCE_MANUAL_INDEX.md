@@ -310,8 +310,9 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Power Generation | [docs/process/equipment/power_generation.md](process/equipment/power_generation) | Gas turbines, fuel cells, renewables |
 | Diff. Pressure | [docs/process/equipment/differential_pressure.md](process/equipment/differential_pressure) | Orifice plates, flow measurement |
 | Manifolds | [docs/process/equipment/manifolds.md](process/equipment/manifolds) | Multi-stream routing |
-| Battery Storage | [docs/wiki/battery_storage.md](wiki/battery_storage) | Battery storage |
+| **Battery Storage** | [docs/process/equipment/battery_storage.md](process/equipment/battery_storage) | **Energy storage systems, charge/discharge cycles, grid integration** |
 | Solar Panel | [docs/wiki/solar_panel.md](wiki/solar_panel) | Solar panel models |
+| **Failure Mode Modeling** | [docs/process/equipment/failure_modes.md](process/equipment/failure_modes) | **Equipment failure modes, reliability analysis, MTBF/MTTR calculations** |
 
 ### Chapter 19: Wells, Pipelines & Subsea
 
@@ -328,6 +329,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Risers** | [docs/process/equipment/pipelines.md#risers](process/equipment/pipelines#risers) | **SCR, TTR, Flexible, Lazy-Wave risers** |
 | Beggs & Brill | [docs/process/PipeBeggsAndBrills.md](process/PipeBeggsAndBrills) | Beggs & Brill correlation |
 | Networks | [docs/process/equipment/networks.md](process/equipment/networks) | Pipeline network modeling |
+| **Looped Pipeline Networks** | [docs/process/equipment/looped_networks.md](process/equipment/looped_networks) | **Hardy Cross solver, ring mains, parallel pipelines, loop detection** |
 | **Looped Network Solver** | [docs/process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT.md](process/PIPELINE_NETWORK_SOLVER_ENHANCEMENT) | **Hardy Cross looped network solver for ring mains and parallel pipelines** |
 | **Looped Network Tutorial** | [docs/examples/LoopedPipelineNetworkExample.ipynb](examples/LoopedPipelineNetworkExample.ipynb) | **Interactive notebook: ring mains, offshore rings, loop detection, Hardy Cross** |
 | **Network Solver Tutorial** | [docs/examples/NetworkSolverTutorial.md](examples/NetworkSolverTutorial) | **Tutorial for pipeline network solvers with worked examples** |
@@ -335,6 +337,10 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Reservoirs | [docs/process/equipment/reservoirs.md](process/equipment/reservoirs) | Reservoir modeling |
 | Subsea Systems | [docs/process/equipment/subsea_systems.md](process/equipment/subsea_systems) | Subsea wells and flowlines |
 | Subsea Equipment | [docs/process/equipment/subsea_equipment.md](process/equipment/subsea_equipment) | SubseaWell, SimpleFlowLine, flow assurance |
+| **Subsea Trees** | [docs/process/equipment/subsea_trees.md](process/equipment/subsea_trees) | **Christmas trees: horizontal/vertical, dual-bore, valve configurations, wellhead integration** |
+| **Subsea Manifolds** | [docs/process/equipment/subsea_manifolds.md](process/equipment/subsea_manifolds) | **Production/injection manifolds, valve skids, well routing, gathering systems** |
+| **Subsea Boosters** | [docs/process/equipment/subsea_boosters.md](process/equipment/subsea_boosters) | **Subsea pumps & compressors, helico-axial/multiphase, performance curves** |
+| **Umbilicals** | [docs/process/equipment/umbilicals.md](process/equipment/umbilicals) | **Control umbilicals: hydraulic, electrical, chemical injection lines** |
 | **SURF Subsea Equipment** | [docs/process/SURF_SUBSEA_EQUIPMENT.md](process/SURF_SUBSEA_EQUIPMENT) | **Comprehensive SURF equipment: PLET, PLEM, manifolds, trees, jumpers, umbilicals, flexible pipes, boosters with mechanical design and cost estimation** |
 
 ### Chapter 20: Utility Equipment
