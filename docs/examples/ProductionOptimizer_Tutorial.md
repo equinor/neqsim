@@ -824,7 +824,7 @@ The `ProductionOptimizer` provides:
 ✅ **JSON export** for analysis  
 
 For more details, see:
-- [OPTIMIZATION_OVERVIEW.md](../process/optimization/OPTIMIZATION_OVERVIEW)
-- [PRODUCTION_OPTIMIZATION_GUIDE.md](PRODUCTION_OPTIMIZATION_GUIDE)
-- [multi-objective-optimization.md](../process/optimization/multi-objective-optimization)
+- [OPTIMIZATION_OVERVIEW.md](../process/optimization/OPTIMIZATION_OVERVIEW.md)
+- [PRODUCTION_OPTIMIZATION_GUIDE.md](PRODUCTION_OPTIMIZATION_GUIDE.md)
+- [multi-objective-optimization.md](../process/optimization/multi-objective-optimization.md)
 
