@@ -564,7 +564,8 @@ The reservoir simulator will automatically interpolate across:
 ## Related Documentation
 
 - [Field Development Module](index.md) - Overview of field development tools
-- [VFP Tables Guide](../process/vfp-tables.md) - Standard VFP generation
+- [Pressure Boundary Optimization](../process/pressure_boundary_optimization.md) - VFP lift curve generation
+- [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md) - Constraints in VFP generation
 - [Thermodynamic Systems](../thermo/index.md) - Fluid modeling
 - [Pipeline Simulation](../fluidmechanics/index.md) - Flow modeling
 

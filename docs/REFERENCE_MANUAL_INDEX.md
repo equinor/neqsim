@@ -823,6 +823,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Graph-Based Simulation** | [docs/examples/GraphBasedProcessSimulation.md](examples/GraphBasedProcessSimulation) | **Graph-based process simulation tutorial** |
 | **Field Development Workflow** | [docs/examples/FieldDevelopmentWorkflow.md](examples/FieldDevelopmentWorkflow) | **End-to-end field development workflow example** |
 | **Multi-Scenario VFP Tutorial** | [docs/examples/MultiScenarioVFP_Tutorial.ipynb](examples/MultiScenarioVFP_Tutorial) | **VFP generation with varying GOR/water cut scenarios** |
+| **Production System Bottleneck Analysis** | [docs/examples/ProductionSystem_BottleneckAnalysis.ipynb](examples/ProductionSystem_BottleneckAnalysis) | **Multi-well system optimization, bottleneck identification, and well prioritization** |
 | **MPC Integration Tutorial** | [docs/examples/MPC_Integration_Tutorial.md](examples/MPC_Integration_Tutorial) | **Model Predictive Control integration example** |
 | **AI Platform Integration** | [docs/examples/AIPlatformIntegration.md](examples/AIPlatformIntegration) | **AI platform integration tutorial** |
 | Examples Index | [docs/examples/index.md](examples/index) | Examples documentation index |
