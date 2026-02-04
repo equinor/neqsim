@@ -282,9 +282,11 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Document | Path | Description |
 |----------|------|-------------|
 | Heat Exchangers | [docs/process/equipment/heat_exchangers.md](process/equipment/heat_exchangers) | Heat exchanger models |
+| **Multi-Stream Heat Exchanger** | [docs/process/equipment/multistream_heat_exchanger.md](process/equipment/multistream_heat_exchanger) | **Comprehensive guide: composite curves, pinch analysis, LMTD, 1-3 unknown solvers for LNG/cryogenic applications** |
 | Air Cooler | [docs/wiki/air_cooler.md](wiki/air_cooler) | Air cooler models |
 | Water Cooler | [docs/wiki/water_cooler.md](wiki/water_cooler) | Water cooler models |
 | Steam Heater | [docs/wiki/steam_heater.md](wiki/steam_heater) | Steam heater models |
+| **Water Cooler & Reboiler** | [docs/process/equipment/water_cooler_reboiler.md](process/equipment/water_cooler_reboiler) | **WaterCooler (IAPWS), ReBoiler for distillation** |
 | Mechanical Design | [docs/wiki/heat_exchanger_mechanical_design.md](wiki/heat_exchanger_mechanical_design) | HX mechanical design |
 
 ### Chapter 17: Valves & Flow Control
@@ -292,6 +294,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Document | Path | Description |
 |----------|------|-------------|
 | Valves | [docs/process/equipment/valves.md](process/equipment/valves) | Valve models |
+| **Control Valves** | [docs/process/equipment/control_valves.md](process/equipment/control_valves) | **CheckValve, LevelControlValve, PressureControlValve, ESD/PSD valves** |
 | Valve Design | [docs/process/ValveMechanicalDesign.md](process/ValveMechanicalDesign) | Valve mechanical design |
 | **Multiphase Choke Flow** | [docs/process/MultiphaseChokeFlow.md](process/MultiphaseChokeFlow) | **Sachdeva, Gilbert two-phase choke models** |
 | Flow Meters | [docs/wiki/flow_meter_models.md](wiki/flow_meter_models) | Flow metering |
@@ -354,7 +357,11 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Adjusters | [docs/process/equipment/util/adjusters.md](process/equipment/util/adjusters) | Adjuster units |
 | Recycles | [docs/process/equipment/util/recycles.md](process/equipment/util/recycles) | Recycle units |
 | Calculators | [docs/process/equipment/util/calculators.md](process/equipment/util/calculators) | Calculator units |
+| **Stream Saturator** | [docs/process/equipment/util/saturators.md](process/equipment/util/saturators) | **Water saturation utility for simulating reservoir conditions and wet gas systems** |
 | **Stream Fitters** | [docs/process/equipment/util/stream_fitters.md](process/equipment/util/stream_fitters) | **GORfitter, MPFMfitter: GOR/GVF adjustment, MPFM reference fluids** |
+| **Fuel Gas System** | [docs/process/equipment/util/fuel_gas_system.md](process/equipment/util/fuel_gas_system) | **Complete fuel gas conditioning: gas turbines, fired heaters, pilots, Wobbe Index, JT cooling** |
+| **Utility Air System** | [docs/process/equipment/util/utility_air_system.md](process/equipment/util/utility_air_system) | **ISO 8573-1 utility air: instrument/plant/breathing air, compressor/dryer sizing** |
+| **Produced Water Degassing** | [docs/process/equipment/util/produced_water_degassing.md](process/equipment/util/produced_water_degassing) | **Multi-stage degassing with GHG emissions per Norwegian regulations (Aktivitetsforskriften)** |
 
 ### Chapter 21: Process Control
 

@@ -25,6 +25,14 @@ Documentation for heat transfer equipment in NeqSim process simulation.
 - `HeatExchanger` - Shell-tube heat exchanger
 - `NeqHeater` - Non-equilibrium heater
 - `Condenser` - Overhead condenser
+- `WaterCooler` - Seawater/cooling water cooler with IAPWS
+- `ReBoiler` - Column reboiler with duty specification
+
+> **📖 Additional Heat Exchanger Documentation:**
+> - [Multi-Stream Heat Exchanger](multistream_heat_exchanger) - Comprehensive MSHE guide with composite curves, pinch analysis
+> - [Water Cooler and Reboiler](water_cooler_reboiler) - WaterCooler and ReBoiler documentation
+> - [Air Cooler](../../wiki/air_cooler) - Air-cooled heat exchangers
+> - [Steam Heater](../../wiki/steam_heater) - Steam heating with IAPWS
 
 ---
 
@@ -88,16 +96,31 @@ double LMTD = hx.getLMTD();
 
 ### Multi-Stream Heat Exchanger
 
+For detailed documentation including mathematical foundations, composite curves, and advanced usage, see:
+
+> **📖 [Multi-Stream Heat Exchanger Guide](multistream_heat_exchanger.md)**
+
+Quick example:
+
 ```java
-import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger;
+import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger2;
 
-MultiStreamHeatExchanger mshx = new MultiStreamHeatExchanger("LNG-100");
-mshx.addStream(stream1, "hot");
-mshx.addStream(stream2, "hot");
-mshx.addStream(stream3, "cold");
+MultiStreamHeatExchanger2 mshx = new MultiStreamHeatExchanger2("LNG-100");
 
-mshx.setUAvalue(50000.0);
+// Add streams: (stream, "hot"/"cold", outletTemp or null for unknown)
+mshx.addInStreamMSHE(stream1, "hot", 40.0);    // Known outlet
+mshx.addInStreamMSHE(stream2, "hot", null);    // Solve for this
+mshx.addInStreamMSHE(stream3, "cold", null);   // Solve for this
+mshx.addInStreamMSHE(stream4, "cold", 80.0);   // Known outlet
+
+// Set approach temperature (required for 2+ unknowns)
+mshx.setTemperatureApproach(5.0);
+
 mshx.run();
+
+// Get results
+double solvedTemp = mshx.getOutStream(1).getTemperature("C");
+double ua = mshx.getUA();
 ```
 
 ---

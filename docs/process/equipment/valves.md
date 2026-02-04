@@ -30,6 +30,10 @@ Documentation for valve equipment in NeqSim process simulation.
 - `BlowdownValve` - Emergency blowdown valve
 - `ControlValve` - Specialized control valve
 
+> **📖 Additional Valve Documentation:**
+> - [Control Valves Guide](control_valves) - CheckValve, LevelControlValve, PressureControlValve, ESD/PSD valves
+> - [HIPPS Implementation](../safety/hipps_implementation) - High Integrity Pressure Protection
+
 **Mechanical Design:** `neqsim.process.mechanicaldesign.valve`
 - `ValveMechanicalDesign` - Body sizing, weight, actuator calculations
 - `ControlValveSizing` - IEC 60534 Cv/Kv calculations

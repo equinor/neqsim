@@ -17,6 +17,21 @@ This folder contains documentation for utility and control equipment in NeqSim.
 | Recycles | [recycles.md](recycles) | Recycle stream handling |
 | Calculators | [calculators.md](calculators) | Custom calculations |
 
+### Stream Utilities
+
+| Equipment | File | Description |
+|-----------|------|-------------|
+| Saturators | [saturators.md](saturators) | Water saturation for wet gas simulation |
+| Stream Fitters | [stream_fitters.md](stream_fitters) | Stream property fitting |
+
+### Facility Systems
+
+| Equipment | File | Description |
+|-----------|------|-------------|
+| Fuel Gas System | [fuel_gas_system.md](fuel_gas_system) | Fuel gas conditioning for turbines, heaters, pilots |
+| Utility Air System | [utility_air_system.md](utility_air_system) | Instrument/plant air per ISO 8573-1 |
+| Produced Water Degassing | [produced_water_degassing.md](produced_water_degassing) | Multi-stage degassing with emissions |
+
 ---
 
 ## Quick Reference
