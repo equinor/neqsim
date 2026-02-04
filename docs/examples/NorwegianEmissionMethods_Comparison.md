@@ -16,7 +16,7 @@ This document compares the **conventional Norwegian handbook method** for emissi
 
 > **"Virtual Measurement of Emissions from Produced Water Using an Online Process Simulator"**  
 > Kristiansen et al., Global Flow Measurement Workshop (GFMW), October 2023  
-> [Full paper available in docs/GFMW_2023_Emissions_Paper.txt](../GFMW_2023_Emissions_Paper.txt)
+> *Paper presented at GFMW 2023 conference*
 
 ---
 

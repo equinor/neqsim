@@ -50,7 +50,7 @@ NeqSim is a comprehensive Java-based thermodynamic and process simulation toolki
   - Diffusion coefficients
   - Sound velocity
 
-**Code Example Location:** [src/main/java/neqsim/thermo/system](src/main/java/neqsim/thermo/system)
+**Code Example Location:** [src/main/java/neqsim/thermo/system](../src/main/java/neqsim/thermo/system)
 
 ### 1.2 Process Equipment Library (Very Good)
 
@@ -75,8 +75,8 @@ NeqSim is a comprehensive Java-based thermodynamic and process simulation toolki
 - Auto-sizing capabilities for separators, compressors, pumps
 
 **Code Locations:**
-- Equipment: [src/main/java/neqsim/process/equipment](src/main/java/neqsim/process/equipment)
-- Compressor charts: [src/main/java/neqsim/process/equipment/compressor](src/main/java/neqsim/process/equipment/compressor)
+- Equipment: [src/main/java/neqsim/process/equipment](../src/main/java/neqsim/process/equipment)
+- Compressor charts: [src/main/java/neqsim/process/equipment/compressor](../src/main/java/neqsim/process/equipment/compressor)
 
 ### 1.3 Mechanical Design Framework (Very Good)
 
@@ -106,7 +106,7 @@ NeqSim is a comprehensive Java-based thermodynamic and process simulation toolki
   - Equinor TR1400-series for pipelines
   - Design factor overrides
 
-**Code Location:** [src/main/java/neqsim/process/mechanicaldesign](src/main/java/neqsim/process/mechanicaldesign)
+**Code Location:** [src/main/java/neqsim/process/mechanicaldesign](../src/main/java/neqsim/process/mechanicaldesign)
 
 ### 1.4 Safety Systems (Very Good)
 
@@ -130,9 +130,9 @@ NeqSim is a comprehensive Java-based thermodynamic and process simulation toolki
 - Condition-based reliability
 
 **Code Locations:**
-- Safety: [src/main/java/neqsim/process/safety](src/main/java/neqsim/process/safety)
-- Fire: [src/main/java/neqsim/process/util/fire](src/main/java/neqsim/process/util/fire)
-- Risk: [src/main/java/neqsim/process/safety/risk](src/main/java/neqsim/process/safety/risk)
+- Safety: [src/main/java/neqsim/process/safety](../src/main/java/neqsim/process/safety)
+- Fire: [src/main/java/neqsim/process/util/fire](../src/main/java/neqsim/process/util/fire)
+- Risk: [src/main/java/neqsim/process/safety/risk](../src/main/java/neqsim/process/safety/risk)
 
 ### 1.5 Gas Quality & Standards (Very Good)
 
@@ -145,7 +145,7 @@ NeqSim is a comprehensive Java-based thermodynamic and process simulation toolki
 - **GERG-2004/2008:** Reference equation of state
 - **UK ICF SI:** UK gas quality specifications
 
-**Code Location:** [src/main/java/neqsim/standards/gasquality](src/main/java/neqsim/standards/gasquality)
+**Code Location:** [src/main/java/neqsim/standards/gasquality](../src/main/java/neqsim/standards/gasquality)
 
 ### 1.6 ProcessSystem & Flowsheet Management (Very Good)
 
@@ -158,7 +158,7 @@ NeqSim is a comprehensive Java-based thermodynamic and process simulation toolki
 - JSON/reporting output
 - Measurement history tracking
 
-**Code Location:** [src/main/java/neqsim/process/processmodel](src/main/java/neqsim/process/processmodel)
+**Code Location:** [src/main/java/neqsim/process/processmodel](../src/main/java/neqsim/process/processmodel)
 
 ---
 
@@ -242,7 +242,7 @@ boolean safe = actualV < ve * 0.8;  // 80% margin
 - ❌ No OPC-UA/OPC-DA connectors built-in
 - ❌ Limited tuning guidance
 
-**Code Location:** [src/main/java/neqsim/process/mpc](src/main/java/neqsim/process/mpc)
+**Code Location:** [src/main/java/neqsim/process/mpc](../src/main/java/neqsim/process/mpc)
 
 ### 2.4 Field Development Tools (Good, Needs Enhancement)
 
@@ -281,7 +281,7 @@ boolean safe = actualV < ve * 0.8;  // 80% margin
 - ⚠️ No internal decline curve analysis (use external reservoir models)
 - ⚠️ No offshore logistics/marine operations
 
-**Code Location:** [src/main/java/neqsim/process/fielddevelopment](src/main/java/neqsim/process/fielddevelopment)
+**Code Location:** [src/main/java/neqsim/process/fielddevelopment](../src/main/java/neqsim/process/fielddevelopment)
 
 ---
 

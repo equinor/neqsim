@@ -263,5 +263,5 @@ The `toJson()` method provides comprehensive results:
 ## See Also
 
 - [H2S Distribution Modeling Guide](../thermo/H2S_distribution_guide.md)
-- [Simple Absorber](SimpleAbsorber.md)
-- [Gas Sweetening Overview](gas_sweetening_overview.md)
+- [Absorber Equipment Guide](equipment/absorbers.md)
+- [Process Index](index.md)

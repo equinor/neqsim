@@ -696,7 +696,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Offshore Emission Reporting Guide** | [docs/emissions/OFFSHORE_EMISSION_REPORTING.md](emissions/OFFSHORE_EMISSION_REPORTING) | **Comprehensive guide for offshore platform GHG emission reporting with regulatory references** |
 | **Produced Water Emissions Tutorial** | [docs/examples/ProducedWaterEmissions_Tutorial.md](examples/ProducedWaterEmissions_Tutorial) | **Comprehensive tutorial for produced water degassing emissions calculation** |
 | **Norwegian Emission Methods Comparison** | [docs/examples/NorwegianEmissionMethods_Comparison.md](examples/NorwegianEmissionMethods_Comparison) | **NeqSim vs Norwegian handbook method: validation, uncertainty, regulatory compliance** |
-| **NeqSimLive Integration** | [docs/GFMW_2023_Emissions_Paper.txt](GFMW_2023_Emissions_Paper.txt) | **GFMW 2023 paper: Virtual measurement of emissions using online process simulator** |
+| **GFMW 2023 Reference** | *External publication* | **"Virtual Measurement of Emissions from Produced Water Using an Online Process Simulator" - Kristiansen et al., GFMW 2023** |
 
 ### Chapter 44: Optimization
 
