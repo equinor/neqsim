@@ -4081,12 +4081,18 @@ public class ProcessSystem extends SimulationBaseClass {
    * process would do without constraints. To re-enable, call {@link #enableAllConstraints()}.
    * </p>
    *
+   * <p>
+   * This method also sets {@code capacityAnalysisEnabled = false} on each equipment, which prevents
+   * the optimizer from using fallback capacity rules for equipment types.
+   * </p>
+   *
    * @return the total number of constraints that were disabled
    */
   public int disableAllConstraints() {
     int totalCount = 0;
     for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
       totalCount += equip.disableAllConstraints();
+      equip.setCapacityAnalysisEnabled(false);
     }
     return totalCount;
   }
@@ -4099,11 +4105,16 @@ public class ProcessSystem extends SimulationBaseClass {
    * analysis mode for the entire process.
    * </p>
    *
+   * <p>
+   * This method also sets {@code capacityAnalysisEnabled = true} on each equipment.
+   * </p>
+   *
    * @return the total number of constraints that were enabled
    */
   public int enableAllConstraints() {
     int totalCount = 0;
     for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
+      equip.setCapacityAnalysisEnabled(true);
       totalCount += equip.enableAllConstraints();
     }
     return totalCount;

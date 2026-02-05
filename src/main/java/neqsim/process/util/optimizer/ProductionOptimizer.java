@@ -3971,10 +3971,19 @@ public class ProductionOptimizer {
     if (unit instanceof neqsim.process.equipment.capacity.CapacityConstrainedEquipment) {
       neqsim.process.equipment.capacity.CapacityConstrainedEquipment constrained =
           (neqsim.process.equipment.capacity.CapacityConstrainedEquipment) unit;
+
+      // If capacity analysis is disabled, skip this equipment entirely by returning
+      // a rule that always returns 0.0 utilization. This respects the user's intent
+      // to exclude this equipment from capacity analysis (e.g., when using
+      // disableAllConstraints() and then selectively re-enabling specific equipment).
+      if (!constrained.isCapacityAnalysisEnabled()) {
+        return new CapacityRule(equipment -> 0.0, equipment -> Double.MAX_VALUE);
+      }
+
       // Check if any constraint is enabled
       boolean hasEnabledConstraints = constrained.getCapacityConstraints().values().stream()
           .anyMatch(neqsim.process.equipment.capacity.CapacityConstraint::isEnabled);
-      if (constrained.isCapacityAnalysisEnabled() && hasEnabledConstraints) {
+      if (hasEnabledConstraints) {
         // Use getMaxUtilization() which returns the actual capacity utilization (0-1
         // scale)
         // from the equipment's capacity constraint framework

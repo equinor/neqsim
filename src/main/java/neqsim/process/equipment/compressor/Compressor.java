@@ -3226,20 +3226,34 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   /**
    * Set the compressor driver model.
    *
+   * <p>
+   * Setting a new driver will reinitialize capacity constraints to incorporate
+   * the driver's rated speed limit into the speed constraint.
+   * </p>
+   *
    * @param driver the driver model
    */
   public void setDriver(CompressorDriver driver) {
     this.driver = driver;
+    // Reinitialize constraints since speed constraint depends on driver rated speed
+    reinitializeCapacityConstraints();
   }
 
   /**
    * Create and set a new driver with specified type and rated power.
+   *
+   * <p>
+   * Setting a new driver will reinitialize capacity constraints to incorporate
+   * the driver's rated speed limit into the speed constraint.
+   * </p>
    *
    * @param type       driver type
    * @param ratedPower rated power in kW
    */
   public void setDriver(DriverType type, double ratedPower) {
     this.driver = new CompressorDriver(type, ratedPower);
+    // Reinitialize constraints since speed constraint depends on driver rated speed
+    reinitializeCapacityConstraints();
   }
 
   /**
@@ -4011,7 +4025,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    * </p>
    */
   protected void initializeCapacityConstraints() {
-    // Determine max speed from curve or mechanical limit
+    // Determine max speed from curve, mechanical limit, OR driver rated speed
+    // Priority: Use driver rated speed if available, otherwise mechanical limit, otherwise chart max
     double effectiveMaxSpeed = maxspeed;
     double effectiveMinSpeed = minspeed;
     if (getCompressorChart() != null && getCompressorChart().isUseCompressorChart()) {
@@ -4025,7 +4040,15 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       }
     }
 
-    // Max speed constraint (from curve or mechanical limit)
+    // CRITICAL: If a VFD driver is present, use its rated speed as the hard limit
+    // VFD motors have a rated speed that should not be exceeded in normal operation
+    // The chart may extend beyond rated speed, but that's for contingency analysis
+    if (driver != null && driver.getRatedSpeed() > 0) {
+      // Use the more restrictive of (current effective max, driver rated speed)
+      effectiveMaxSpeed = Math.min(effectiveMaxSpeed, driver.getRatedSpeed());
+    }
+
+    // Max speed constraint (from curve, mechanical limit, or driver rated speed)
     // Design value = max speed, so utilization = currentSpeed / maxSpeed
     // This gives proper utilization: 87% speed = 87% utilization
     final double maxSpeedLimit = effectiveMaxSpeed;
