@@ -2,6 +2,7 @@ package neqsim.process.util.optimizer;
 
 import java.io.Serializable;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
@@ -149,7 +150,7 @@ public class FluidMagicInput implements Serializable {
    * @return FluidMagicInput with imported fluid
    */
   public static FluidMagicInput fromE300File(String e300FilePath) {
-    return fromE300File(Path.of(e300FilePath));
+    return fromE300File(Paths.get(e300FilePath));
   }
 
   /**

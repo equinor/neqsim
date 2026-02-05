@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -403,7 +404,7 @@ public class MultiScenarioVFPGenerator implements Serializable {
    * @throws IOException if writing fails
    */
   public void exportVFPEXP(String filePath, int tableNumber) throws IOException {
-    exportVFPEXP(Path.of(filePath), tableNumber);
+    exportVFPEXP(Paths.get(filePath), tableNumber);
   }
 
   /**
