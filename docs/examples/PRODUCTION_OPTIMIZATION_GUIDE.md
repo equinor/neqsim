@@ -28,6 +28,9 @@ This guide provides comprehensive examples for setting up and running production
 - **Warm Start**: `initialGuess(double[])` to start near known good solutions
 - **LRU Cache Control**: `maxCacheSize(int)` to limit memory usage (default: 1000)
 - **Infeasibility Diagnostics**: `result.getInfeasibilityDiagnosis()` for detailed violation reports
+- **Batch Constraint Control**: `equipment.disableAllConstraints()` and `enableAllConstraints()` for what-if analysis
+- **Process-Wide Constraint Control**: `processSystem.disableAllConstraints()` and `processModule.disableAllConstraints()` to control all equipment at once
+- **Full Equipment Exclusion**: Equipment with `setCapacityAnalysisEnabled(false)` is now fully excluded from optimization feasibility checks
 
 ---
 
@@ -282,6 +285,94 @@ For detailed information, see [Capacity Constraint Framework - Constraints Disab
 | **HARD** | Physical or safety limit - cannot exceed | Optimization stops before exceeding | Compressor trip speed, vessel MAWP |
 | **SOFT** | Operational limit - penalty for exceeding | Can exceed with warning/penalty | Efficiency degradation zone |
 | **DESIGN** | Normal operating envelope | Target for optimal operation | Design K-factor, rated capacity |
+
+### Disabling Constraints for What-If Analysis
+
+You can disable constraints at three levels for what-if scenarios or focused analysis:
+
+#### 1. Disable Individual Constraint
+
+```java
+// Get a specific constraint and disable it
+Map<String, CapacityConstraint> constraints = compressor.getCapacityConstraints();
+constraints.get("surgeMargin").setEnabled(false);  // Disable just surge constraint
+
+// Re-enable later
+constraints.get("surgeMargin").setEnabled(true);
+```
+
+#### 2. Disable All Constraints on One Equipment
+
+```java
+// Disable all constraints on a single equipment
+int disabled = compressor.disableAllConstraints();
+System.out.println("Disabled " + disabled + " constraints on compressor");
+
+// Re-enable all constraints
+int enabled = compressor.enableAllConstraints();
+```
+
+#### 3. Disable All Constraints in ProcessSystem or ProcessModule
+
+```java
+// Disable all constraints on ALL equipment in the process
+int total = processSystem.disableAllConstraints();
+System.out.println("Disabled " + total + " constraints across the process");
+
+// Re-enable all constraints
+processSystem.enableAllConstraints();
+
+// For process modules (same API)
+processModule.disableAllConstraints();
+processModule.enableAllConstraints();
+```
+
+#### 4. Exclude Equipment from Optimization Entirely
+
+To **completely exclude** an equipment from optimization feasibility checks (not just disable its constraints), use `setCapacityAnalysisEnabled()`:
+
+```java
+// Completely exclude this compressor from optimization
+compressor.setCapacityAnalysisEnabled(false);
+
+// The optimizer will skip this equipment entirely
+// It won't be included in utilization summaries or bottleneck detection
+
+// Re-include in optimization
+compressor.setCapacityAnalysisEnabled(true);
+```
+
+#### Comparison: Constraint Disable vs Capacity Analysis Disabled
+
+| Method | Effect on Equipment | Effect on Optimization |
+|--------|---------------------|------------------------|
+| `constraint.setEnabled(false)` | Specific constraint disabled | Falls back to other constraints or type-specific rules |
+| `equipment.disableAllConstraints()` | All constraints disabled | Falls back to type-specific capacity rules |
+| `equipment.setCapacityAnalysisEnabled(false)` | Equipment excluded from analysis | **Fully excluded** - no capacity checks at all |
+
+**Use cases:**
+- `disableAllConstraints()` - What-if without constraint limits, still subject to basic capacity rules
+- `setCapacityAnalysisEnabled(false)` - Exclude equipment from sizing analysis entirely (e.g., utilities)
+
+```python
+# Python example for disabling constraints in optimization
+from neqsim import jneqsim
+
+# Get the equipment
+compressor = process_system.getUnit("MyCompressor")
+
+# Option 1: Disable all constraints but keep in optimization (uses fallback rules)
+compressor.disableAllConstraints()
+
+# Option 2: Fully exclude from optimization
+compressor.setCapacityAnalysisEnabled(False)
+
+# Process-wide: disable all constraints on all equipment
+process_system.disableAllConstraints()
+
+# Re-enable all constraints
+process_system.enableAllConstraints()
+```
 
 ### Full Process Example: Finding Active Constraint
 

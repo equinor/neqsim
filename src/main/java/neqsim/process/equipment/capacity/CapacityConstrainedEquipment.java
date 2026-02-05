@@ -235,4 +235,57 @@ public interface CapacityConstrainedEquipment {
    * Clears all capacity constraints from this equipment.
    */
   void clearCapacityConstraints();
+
+  /**
+   * Disables all capacity constraints for this equipment.
+   *
+   * <p>
+   * When constraints are disabled, they are excluded from utilization calculations, bottleneck
+   * detection, and optimization feasibility checks. Use this for what-if scenarios or to exclude
+   * specific equipment from capacity analysis.
+   * </p>
+   *
+   * <p>
+   * To re-enable constraints, call {@link #enableAllConstraints()}.
+   * </p>
+   *
+   * @return the number of constraints that were disabled
+   */
+  default int disableAllConstraints() {
+    Map<String, CapacityConstraint> constraints = getCapacityConstraints();
+    int count = 0;
+    if (constraints != null) {
+      for (CapacityConstraint constraint : constraints.values()) {
+        if (constraint.isEnabled()) {
+          constraint.setEnabled(false);
+          count++;
+        }
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Enables all capacity constraints for this equipment.
+   *
+   * <p>
+   * Re-enables all constraints that were previously disabled. This restores the equipment to normal
+   * capacity analysis mode.
+   * </p>
+   *
+   * @return the number of constraints that were enabled
+   */
+  default int enableAllConstraints() {
+    Map<String, CapacityConstraint> constraints = getCapacityConstraints();
+    int count = 0;
+    if (constraints != null) {
+      for (CapacityConstraint constraint : constraints.values()) {
+        if (!constraint.isEnabled()) {
+          constraint.setEnabled(true);
+          count++;
+        }
+      }
+    }
+    return count;
+  }
 }
