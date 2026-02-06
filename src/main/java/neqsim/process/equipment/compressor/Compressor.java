@@ -2312,7 +2312,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    * Getter for the field <code>outTemperature</code>.
    * </p>
    *
-   * @return a double
+   * @return outlet temperature in Kelvin
    */
   public double getOutTemperature() {
     if (useOutTemperature) {
@@ -2324,14 +2324,52 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
 
   /**
    * <p>
+   * Set the outlet temperature of the compressor.
+   * </p>
+   *
+   * @param outTemperature outlet temperature in Kelvin
+   */
+  @Override
+  public void setOutletTemperature(double outTemperature) {
+    useOutTemperature = true;
+    this.outTemperature = outTemperature;
+  }
+
+  /**
+   * <p>
+   * Set the outlet temperature of the compressor with unit specification.
+   * </p>
+   *
+   * @param temperature outlet temperature value
+   * @param unit temperature unit (e.g., "K", "C", "R", "F")
+   */
+  @Override
+  public void setOutletTemperature(double temperature, String unit) {
+    useOutTemperature = true;
+    if (unit.equalsIgnoreCase("K") || unit.equalsIgnoreCase("Kelvin")) {
+      this.outTemperature = temperature;
+    } else if (unit.equalsIgnoreCase("C") || unit.equalsIgnoreCase("Celsius")) {
+      this.outTemperature = temperature + 273.15;
+    } else if (unit.equalsIgnoreCase("F") || unit.equalsIgnoreCase("Fahrenheit")) {
+      this.outTemperature = (temperature - 32.0) * 5.0 / 9.0 + 273.15;
+    } else if (unit.equalsIgnoreCase("R") || unit.equalsIgnoreCase("Rankine")) {
+      this.outTemperature = temperature * 5.0 / 9.0;
+    } else {
+      this.outTemperature = temperature;
+    }
+  }
+
+  /**
+   * <p>
    * Setter for the field <code>outTemperature</code>.
    * </p>
    *
-   * @param outTemperature a double
+   * @param outTemperature outlet temperature in Kelvin
+   * @deprecated use {@link #setOutletTemperature(double)} instead
    */
+  @Deprecated
   public void setOutTemperature(double outTemperature) {
-    useOutTemperature = true;
-    this.outTemperature = outTemperature;
+    setOutletTemperature(outTemperature);
   }
 
   /**

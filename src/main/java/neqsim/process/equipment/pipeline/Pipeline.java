@@ -414,13 +414,13 @@ public class Pipeline extends TwoPortEquipment
 
   /** {@inheritDoc} */
   @Override
-  public void setOutPressure(double pressure) {
+  public void setOutletPressure(double pressure) {
     // Default implementation - subclasses may override
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setOutTemperature(double temperature) {
+  public void setOutletTemperature(double temperature) {
     // Default implementation - subclasses may override
   }
 

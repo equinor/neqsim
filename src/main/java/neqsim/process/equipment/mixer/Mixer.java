@@ -481,13 +481,38 @@ public class Mixer extends ProcessEquipmentBaseClass
 
   /**
    * <p>
+   * Getter for the outlet temperature.
+   * </p>
+   *
+   * @return outlet temperature in Kelvin
+   */
+  public double getOutletTemperature() {
+    return outTemperature;
+  }
+
+  /**
+   * <p>
    * Getter for the field <code>outTemperature</code>.
    * </p>
    *
-   * @return a double
+   * @return outlet temperature in Kelvin
+   * @deprecated use {@link #getOutletTemperature()} instead
    */
+  @Deprecated
   public double getOutTemperature() {
-    return outTemperature;
+    return getOutletTemperature();
+  }
+
+  /**
+   * <p>
+   * Set the outlet temperature of the mixer.
+   * </p>
+   *
+   * @param outTemperature outlet temperature in Kelvin
+   */
+  public void setOutletTemperature(double outTemperature) {
+    isSetOutTemperature(true);
+    this.outTemperature = outTemperature;
   }
 
   /**
@@ -495,11 +520,12 @@ public class Mixer extends ProcessEquipmentBaseClass
    * Setter for the field <code>outTemperature</code>.
    * </p>
    *
-   * @param outTemperature a double
+   * @param outTemperature outlet temperature in Kelvin
+   * @deprecated use {@link #setOutletTemperature(double)} instead
    */
+  @Deprecated
   public void setOutTemperature(double outTemperature) {
-    isSetOutTemperature(true);
-    this.outTemperature = outTemperature;
+    setOutletTemperature(outTemperature);
   }
 
   /**

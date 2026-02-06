@@ -112,13 +112,24 @@ public class EclipseFluidReadWrite {
    *
    * @param inputFile a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
+   * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
   public static SystemInterface read(String inputFile) {
+    File file = new File(inputFile);
+    if (!file.exists()) {
+      throw new IllegalArgumentException(
+          "Eclipse fluid file does not exist: " + inputFile + ". Provide a valid file path.");
+    }
+    if (!file.canRead()) {
+      throw new IllegalArgumentException(
+          "Eclipse fluid file cannot be read: " + inputFile + ". Check file permissions.");
+    }
+
     neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
         ThermodynamicConstantsInterface.referencePressure);
 
     Double[][] kij = null;
-    try (BufferedReader br = new BufferedReader(new FileReader(new File(inputFile)))) {
+    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
       String st;
 
       ArrayList<String> names = new ArrayList<String>();
@@ -420,8 +431,12 @@ public class EclipseFluidReadWrite {
         // Apply Pedersen (PFCT) viscosity model if PEDERSEN keyword was found
         applyPFCTViscosityModel(fluid);
       }
+    } catch (IOException ex) {
+      throw new IllegalArgumentException(
+          "Failed to read Eclipse fluid file: " + inputFile + ". " + ex.getMessage(), ex);
     } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
+      throw new IllegalArgumentException(
+          "Error parsing Eclipse fluid file: " + inputFile + ". " + ex.getMessage(), ex);
     }
     return fluid;
   }
@@ -436,13 +451,24 @@ public class EclipseFluidReadWrite {
    *        fluids
    * @return a {@link neqsim.thermo.system.SystemInterface} object representing the thermodynamic
    *         system
+   * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
   public static SystemInterface read(String inputFile, String[] fluidNames) {
+    File file = new File(inputFile);
+    if (!file.exists()) {
+      throw new IllegalArgumentException(
+          "Eclipse fluid file does not exist: " + inputFile + ". Provide a valid file path.");
+    }
+    if (!file.canRead()) {
+      throw new IllegalArgumentException(
+          "Eclipse fluid file cannot be read: " + inputFile + ". Check file permissions.");
+    }
+
     neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
         ThermodynamicConstantsInterface.referencePressure);
 
     Double[][] kij = null;
-    try (BufferedReader br = new BufferedReader(new FileReader(new File(inputFile)))) {
+    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
       String st;
 
       ArrayList<String> names = new ArrayList<String>();
@@ -779,10 +805,12 @@ public class EclipseFluidReadWrite {
         // Apply Pedersen (PFCT) viscosity model if PEDERSEN keyword was found
         applyPFCTViscosityModel(fluid);
       }
-    } catch (
-
-    Exception ex) {
-      logger.error(ex.getMessage(), ex);
+    } catch (IOException ex) {
+      throw new IllegalArgumentException(
+          "Failed to read Eclipse fluid file: " + inputFile + ". " + ex.getMessage(), ex);
+    } catch (Exception ex) {
+      throw new IllegalArgumentException(
+          "Error parsing Eclipse fluid file: " + inputFile + ". " + ex.getMessage(), ex);
     }
     return fluid;
   }
@@ -794,12 +822,23 @@ public class EclipseFluidReadWrite {
    *
    * @param inputFile a {@link java.lang.String} object
    * @return a {@link neqsim.thermo.system.SystemInterface} object
+   * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
    */
   public static SystemInterface readE300File(String inputFile) {
+    File file = new File(inputFile);
+    if (!file.exists()) {
+      throw new IllegalArgumentException(
+          "E300 fluid file does not exist: " + inputFile + ". Provide a valid file path.");
+    }
+    if (!file.canRead()) {
+      throw new IllegalArgumentException(
+          "E300 fluid file cannot be read: " + inputFile + ". Check file permissions.");
+    }
+
     neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(288.15,
         ThermodynamicConstantsInterface.referencePressure);
 
-    try (BufferedReader br = new BufferedReader(new FileReader(new File(inputFile)))) {
+    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
       String line;
       ArrayList<String> names = new ArrayList<>();
       ArrayList<Double> TC = new ArrayList<>();
@@ -885,8 +924,12 @@ public class EclipseFluidReadWrite {
       fluid.setMixingRule(2);
       fluid.useVolumeCorrection(true);
       fluid.init(0);
+    } catch (IOException ex) {
+      throw new IllegalArgumentException(
+          "Failed to read E300 file: " + inputFile + ". " + ex.getMessage(), ex);
     } catch (Exception ex) {
-      logger.error("Error reading E300 file: " + ex.getMessage(), ex);
+      throw new IllegalArgumentException(
+          "Error parsing E300 file: " + inputFile + ". " + ex.getMessage(), ex);
     }
 
     return fluid;

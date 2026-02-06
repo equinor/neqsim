@@ -168,14 +168,14 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
 
   /** {@inheritDoc} */
   @Override
-  public void setOutTemperature(double temperature) {
+  public void setOutletTemperature(double temperature) {
     setTemperature = true;
     this.temperatureOut = temperature;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setOutPressure(double pressure) {
+  public void setOutletPressure(double pressure) {
     setPressureOut = true;
     this.pressureOut = pressure;
   }
