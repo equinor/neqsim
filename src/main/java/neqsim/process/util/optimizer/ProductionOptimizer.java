@@ -295,8 +295,16 @@ public class ProductionOptimizer {
     }
   }
 
-  /** Simple container for constraint configuration. */
-  public static final class OptimizationConstraint {
+  /**
+   * Constraint on a process-level metric such as total power, pressure, or temperature.
+   *
+   * <p>
+   * Implements the unified {@link ProcessConstraint} interface so that constraints defined for the
+   * internal optimizer are interchangeable with those used by external solvers via
+   * {@link ProcessSimulationEvaluator}.
+   * </p>
+   */
+  public static final class OptimizationConstraint implements ProcessConstraint {
     private final String name;
     private final ToDoubleFunction<ProcessSystem> metric;
     private final double limit;
@@ -331,22 +339,59 @@ public class ProductionOptimizer {
           severity, penaltyWeight, description);
     }
 
+    /** {@inheritDoc} */
+    @Override
     public String getName() {
       return name;
     }
 
+    /**
+     * Returns the optimizer-level severity.
+     *
+     * @return HARD or SOFT severity
+     */
     public ConstraintSeverity getSeverity() {
       return severity;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public ConstraintSeverityLevel getSeverityLevel() {
+      return ConstraintSeverityLevel.fromOptimizerSeverity(severity);
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public double getPenaltyWeight() {
       return penaltyWeight;
     }
 
+    /** {@inheritDoc} */
+    @Override
     public String getDescription() {
       return description;
     }
 
+    /**
+     * Returns the constraint limit value.
+     *
+     * @return the limit
+     */
+    public double getLimit() {
+      return limit;
+    }
+
+    /**
+     * Returns the constraint direction.
+     *
+     * @return LESS_THAN or GREATER_THAN
+     */
+    public ConstraintDirection getDirection() {
+      return direction;
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public double margin(ProcessSystem process) {
       double value = metric.applyAsDouble(process);
       if (direction == ConstraintDirection.LESS_THAN) {
@@ -355,8 +400,33 @@ public class ProductionOptimizer {
       return value - limit;
     }
 
+    /** {@inheritDoc} */
+    @Override
     public boolean isSatisfied(ProcessSystem process) {
       return margin(process) >= 0.0;
+    }
+
+    /**
+     * Converts this constraint to a {@link ProcessSimulationEvaluator.ConstraintDefinition} for use
+     * with external optimizers.
+     *
+     * @return equivalent ConstraintDefinition
+     */
+    public ProcessSimulationEvaluator.ConstraintDefinition toConstraintDefinition() {
+      ProcessSimulationEvaluator.ConstraintDefinition cd =
+          new ProcessSimulationEvaluator.ConstraintDefinition();
+      cd.setName(name);
+      cd.setEvaluator(metric);
+      cd.setHard(severity == ConstraintSeverity.HARD);
+      cd.setPenaltyWeight(penaltyWeight);
+      if (direction == ConstraintDirection.LESS_THAN) {
+        cd.setUpperBound(limit);
+        cd.setType(ProcessSimulationEvaluator.ConstraintDefinition.Type.UPPER_BOUND);
+      } else {
+        cd.setLowerBound(limit);
+        cd.setType(ProcessSimulationEvaluator.ConstraintDefinition.Type.LOWER_BOUND);
+      }
+      return cd;
     }
   }
 
