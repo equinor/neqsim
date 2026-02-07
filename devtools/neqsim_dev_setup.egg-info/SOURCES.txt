@@ -1,3 +1,4 @@
+README.md
 neqsim_dev_setup.py
 pyproject.toml
 neqsim_dev_setup.egg-info/PKG-INFO

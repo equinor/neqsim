@@ -89,10 +89,19 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
     classes_dir = root / "target" / "classes"
     resources_dir = root / "src" / "main" / "resources"
 
-    shaded_jars = sorted(root.glob("target/neqsim-*-shaded.jar"))
+    # The shade plugin produces the shaded JAR as the main artifact
+    # (neqsim-X.Y.Z.jar) and renames the original to original-neqsim-X.Y.Z.jar.
+    # Exclude original-*, -sources, -javadoc JARs.
+    all_jars = sorted(root.glob("target/neqsim-*.jar"))
+    shaded_jars = [
+        j for j in all_jars
+        if not j.name.startswith("original-")
+        and "-sources" not in j.name
+        and "-javadoc" not in j.name
+    ]
     if not shaded_jars:
         raise FileNotFoundError(
-            f"No shaded JAR found in {root / 'target'}. "
+            f"No NeqSim JAR found in {root / 'target'}. "
             "Run: mvnw.cmd package -DskipTests"
         )
     shaded_jar = shaded_jars[-1]
