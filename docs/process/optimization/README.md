@@ -23,6 +23,7 @@ The `neqsim.process.calibration` package provides a comprehensive optimization f
 | [Multi-Objective Optimization](multi-objective-optimization) | Pareto optimization for conflicting objectives |
 | [Flow Rate Optimization](flow-rate-optimization) | FlowRateOptimizer and lift curves |
 | [Constraint Framework](constraint-framework) | Unified ProcessConstraint interface for all optimizer layers |
+| [Data Reconciliation](data-reconciliation) | WLS data reconciliation for plant measurements with gross error detection |
 | [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) | Python/SciPy integration |
 
 ## Table of Contents
