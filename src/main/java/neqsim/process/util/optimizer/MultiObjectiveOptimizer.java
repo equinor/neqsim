@@ -544,13 +544,18 @@ public class MultiObjectiveOptimizer implements Serializable {
   }
 
   /**
-   * Check feasibility of current process state using equipment utilization and constraints.
+   * Checks process feasibility against equipment utilization limits and hard constraints.
+   *
+   * @param process the process system to check
+   * @param config optimization configuration providing the utilization limit
+   * @param constraints list of explicit optimization constraints
+   * @return true if all utilization and hard constraints are satisfied
    */
   private boolean checkFeasibility(ProcessSystem process, OptimizationConfig config,
       List<OptimizationConstraint> constraints) {
-    // Check equipment utilization limits
-    // Use the configured default utilization limit (directly access the field)
-    double utilizationLimit = ProductionOptimizer.DEFAULT_UTILIZATION_LIMIT;
+    // Check equipment utilization limits using the configured limit from OptimizationConfig
+    double utilizationLimit = config != null ? config.getDefaultUtilizationLimit()
+        : ProductionOptimizer.DEFAULT_UTILIZATION_LIMIT;
 
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       double duty = unit.getCapacityDuty();
@@ -573,7 +578,12 @@ public class MultiObjectiveOptimizer implements Serializable {
   }
 
   /**
-   * Generate weight combinations for n objectives.
+   * Generates weight combinations for n objectives using linear interpolation (2 objectives) or
+   * simplex lattice design (3+ objectives).
+   *
+   * @param numObjectives the number of objectives
+   * @param numCombinations the number of weight combinations to generate
+   * @return list of weight arrays, each summing to 1.0
    */
   private List<double[]> generateWeights(int numObjectives, int numCombinations) {
     List<double[]> weights = new ArrayList<>();
@@ -594,7 +604,14 @@ public class MultiObjectiveOptimizer implements Serializable {
   }
 
   /**
-   * Recursive generation of simplex lattice weights.
+   * Recursively generates simplex lattice weights where all entries sum to 1.0.
+   *
+   * @param weights accumulator list for generated weight arrays
+   * @param numObjectives total number of objectives
+   * @param divisions number of divisions along each axis
+   * @param current working array holding the current partial weight assignment
+   * @param index current dimension being filled
+   * @param remaining remaining weight budget (starts at 1.0)
    */
   private void generateSimplexWeights(List<double[]> weights, int numObjectives, int divisions,
       double[] current, int index, double remaining) {
@@ -615,7 +632,11 @@ public class MultiObjectiveOptimizer implements Serializable {
   }
 
   /**
-   * Create weighted objective for ProductionOptimizer.
+   * Creates a single weighted objective that combines multiple objectives with the given weights.
+   *
+   * @param objectives the list of objective functions
+   * @param weights array of weights (same length as objectives), should sum to 1.0
+   * @return a ProductionOptimizer objective representing the weighted sum
    */
   private ProductionOptimizer.OptimizationObjective createWeightedObjective(
       List<ObjectiveFunction> objectives, double[] weights) {
@@ -635,7 +656,10 @@ public class MultiObjectiveOptimizer implements Serializable {
   }
 
   /**
-   * Convert ObjectiveFunction to ProductionOptimizer.OptimizationObjective.
+   * Converts an {@link ObjectiveFunction} to a {@link ProductionOptimizer.OptimizationObjective}.
+   *
+   * @param objective the objective function to convert
+   * @return the equivalent ProductionOptimizer objective
    */
   private ProductionOptimizer.OptimizationObjective objectiveFunctionToConfig(
       ObjectiveFunction objective) {
@@ -648,7 +672,11 @@ public class MultiObjectiveOptimizer implements Serializable {
   }
 
   /**
-   * Evaluate all objectives for the current process state.
+   * Evaluates all objectives for the current process state.
+   *
+   * @param process the process system
+   * @param objectives the list of objective functions
+   * @return array of objective values in the same order as the input list
    */
   private double[] evaluateObjectives(ProcessSystem process, List<ObjectiveFunction> objectives) {
     double[] values = new double[objectives.size()];
@@ -659,7 +687,13 @@ public class MultiObjectiveOptimizer implements Serializable {
   }
 
   /**
-   * Find bounds for each objective by optimizing individually.
+   * Finds the min/max bounds for each objective by running single-objective optimization.
+   *
+   * @param process the process system template (will be copied)
+   * @param feedStream the feed stream to vary
+   * @param objectives the objectives to bound
+   * @param baseConfig the base optimization configuration
+   * @return map from each objective to a [min, max] array
    */
   private Map<ObjectiveFunction, double[]> findObjectiveBounds(ProcessSystem process,
       StreamInterface feedStream, List<ObjectiveFunction> objectives,
@@ -710,7 +744,12 @@ public class MultiObjectiveOptimizer implements Serializable {
   }
 
   /**
-   * Generate epsilon grid for epsilon-constraint method.
+   * Generates an epsilon grid for the epsilon-constraint method.
+   *
+   * @param objectives the constrained objectives
+   * @param bounds map of objective bounds ([min, max])
+   * @param gridPoints number of grid divisions per objective
+   * @return list of epsilon value arrays
    */
   private List<double[]> generateEpsilonGrid(List<ObjectiveFunction> objectives,
       Map<ObjectiveFunction, double[]> bounds, int gridPoints) {
@@ -733,7 +772,14 @@ public class MultiObjectiveOptimizer implements Serializable {
   }
 
   /**
-   * Recursive grid generation.
+   * Recursively generates a full combinatorial grid of epsilon values.
+   *
+   * @param grid accumulator list for generated epsilon arrays
+   * @param objectives the constrained objectives
+   * @param bounds map of objective bounds ([min, max])
+   * @param gridPoints number of grid divisions per objective
+   * @param current working array for the current grid point
+   * @param index current dimension being filled
    */
   private void generateGrid(List<double[]> grid, List<ObjectiveFunction> objectives,
       Map<ObjectiveFunction, double[]> bounds, int gridPoints, double[] current, int index) {
@@ -751,7 +797,11 @@ public class MultiObjectiveOptimizer implements Serializable {
   }
 
   /**
-   * Create epsilon constraint for an objective.
+   * Creates an epsilon constraint bounding an objective from above or below.
+   *
+   * @param objective the objective function to constrain
+   * @param epsilon the epsilon bound value
+   * @return an optimization constraint enforcing the bound
    */
   private OptimizationConstraint createEpsilonConstraint(ObjectiveFunction objective,
       double epsilon) {

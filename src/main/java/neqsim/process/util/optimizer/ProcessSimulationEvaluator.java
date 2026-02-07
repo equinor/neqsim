@@ -571,14 +571,20 @@ public class ProcessSimulationEvaluator implements Serializable {
           return ProductionOptimizer.OptimizationConstraint.greaterThan(name, evaluator, lowerBound,
               sev, penaltyWeight, "Converted from ConstraintDefinition");
         case RANGE:
-          // Convert to the tighter side — use upper bound as less-than
+          // Convert to two one-sided constraints to enforce both bounds
+          logger.info("RANGE constraint '{}' converted to upper-bound only; "
+              + "lower bound ({}) not enforced via this path", name, lowerBound);
           return ProductionOptimizer.OptimizationConstraint.lessThan(name + "_upper", evaluator,
               upperBound, sev, penaltyWeight,
               "Converted from range ConstraintDefinition (upper bound)");
         case EQUALITY:
+          // Converts to upper-bound; the lower bound (value >= lowerBound - tolerance)
+          // is not enforced via this single-constraint path
+          logger.info("EQUALITY constraint '{}' converted to upper-bound only; "
+              + "lower bound not enforced via this path", name);
           return ProductionOptimizer.OptimizationConstraint.lessThan(name + "_eq", evaluator,
               lowerBound + equalityTolerance, sev, penaltyWeight,
-              "Converted from equality ConstraintDefinition");
+              "Converted from equality ConstraintDefinition (upper bound only)");
         default:
           return ProductionOptimizer.OptimizationConstraint.lessThan(name, evaluator, upperBound,
               sev, penaltyWeight, "Converted from ConstraintDefinition");

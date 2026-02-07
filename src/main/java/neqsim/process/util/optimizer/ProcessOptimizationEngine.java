@@ -370,12 +370,13 @@ public class ProcessOptimizationEngine implements Serializable {
   public ConstraintReport evaluateAllConstraints() {
     ConstraintReport report = new ConstraintReport();
 
-    if (processSystem == null) {
+    if (!hasProcess()) {
       return report;
     }
 
-    for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
-      ProcessEquipmentInterface equipment = processSystem.getUnitOperations().get(i);
+    List<ProcessEquipmentInterface> units = getAllUnitOperations();
+    for (int i = 0; i < units.size(); i++) {
+      ProcessEquipmentInterface equipment = units.get(i);
       EquipmentCapacityStrategy strategy = getStrategyRegistry().findStrategy(equipment);
 
       if (strategy != null) {
@@ -410,15 +411,16 @@ public class ProcessOptimizationEngine implements Serializable {
    * @return name of bottleneck equipment or null if no bottleneck
    */
   public String findBottleneckEquipment() {
-    if (processSystem == null) {
+    if (!hasProcess()) {
       return null;
     }
 
     String bottleneck = null;
     double highestUtilization = 0.0;
 
-    for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
-      ProcessEquipmentInterface equipment = processSystem.getUnitOperations().get(i);
+    List<ProcessEquipmentInterface> units = getAllUnitOperations();
+    for (int i = 0; i < units.size(); i++) {
+      ProcessEquipmentInterface equipment = units.get(i);
       EquipmentCapacityStrategy strategy = getStrategyRegistry().findStrategy(equipment);
 
       if (strategy != null) {
@@ -669,8 +671,13 @@ public class ProcessOptimizationEngine implements Serializable {
       if (strategy != null) {
         List<CapacityConstraint> eqViolations = strategy.getViolations(equipment);
         for (CapacityConstraint c : eqViolations) {
-          violations.add(equipment.getName() + ": " + c.getName() + " (" + c.getCurrentValue()
-              + " > " + c.getMaxValue() + ")");
+          if (c.isMinimumConstraint()) {
+            violations.add(equipment.getName() + ": " + c.getName() + " (" + c.getCurrentValue()
+                + " < " + c.getMinValue() + ")");
+          } else {
+            violations.add(equipment.getName() + ": " + c.getName() + " (" + c.getCurrentValue()
+                + " > " + c.getMaxValue() + ")");
+          }
         }
       }
     }
@@ -679,7 +686,16 @@ public class ProcessOptimizationEngine implements Serializable {
   }
 
   /**
-   * Finds max flow at current conditions.
+   * Finds the maximum achievable flow at the given inlet pressure.
+   *
+   * <p>
+   * Uses golden section search with a hardcoded outlet pressure of 1.0 bara and a flow range from 0
+   * to 1,000,000 kg/hr. These defaults are intended for quick sensitivity analysis; for precise
+   * work, use {@link #findMaximumThroughput} with explicit bounds.
+   * </p>
+   *
+   * @param inletPressure the inlet pressure in bara
+   * @return the maximum feasible flow in kg/hr
    */
   private double findMaxFlowAtConditions(double inletPressure) {
     double minFlow = 0.0;

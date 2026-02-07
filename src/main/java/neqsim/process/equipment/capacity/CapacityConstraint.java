@@ -297,8 +297,7 @@ public class CapacityConstraint implements Serializable {
    * @return this constraint for method chaining
    */
   public CapacityConstraint setUnit(String unit) {
-    // Since unit is final, we need to use reflection or create a new instance
-    // For now, we'll just store it in a separate mutable field
+    // The constructor-assigned unit field is final; store the override in a mutable field
     this.unitOverride = unit;
     return this;
   }

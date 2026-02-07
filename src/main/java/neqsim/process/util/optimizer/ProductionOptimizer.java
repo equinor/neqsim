@@ -1233,9 +1233,24 @@ public class ProductionOptimizer {
       return this;
     }
 
+    /**
+     * Sets the default equipment utilization limit.
+     *
+     * @param defaultUtilizationLimit the utilization limit (0.0 to 1.0)
+     * @return this config for method chaining
+     */
     public OptimizationConfig defaultUtilizationLimit(double defaultUtilizationLimit) {
       this.defaultUtilizationLimit = defaultUtilizationLimit;
       return this;
+    }
+
+    /**
+     * Gets the default equipment utilization limit.
+     *
+     * @return the utilization limit (0.0 to 1.0)
+     */
+    public double getDefaultUtilizationLimit() {
+      return defaultUtilizationLimit;
     }
 
     public OptimizationConfig utilizationMarginFraction(double utilizationMarginFraction) {
@@ -2361,26 +2376,28 @@ public class ProductionOptimizer {
     }
 
     List<ScenarioResult> results = new ArrayList<>();
-    for (Future<ScenarioResult> future : futures) {
-      try {
-        results.add(future.get());
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new RuntimeException("Scenario optimization interrupted", e);
-      } catch (ExecutionException e) {
-        throw new RuntimeException("Scenario optimization failed", e.getCause());
-      }
-    }
-
-    executor.shutdown();
     try {
-      if (!executor.awaitTermination(300, java.util.concurrent.TimeUnit.SECONDS)) {
-        executor.shutdownNow();
-        logger.warn("Scenario parallel executor did not terminate within timeout");
+      for (Future<ScenarioResult> future : futures) {
+        try {
+          results.add(future.get());
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new RuntimeException("Scenario optimization interrupted", e);
+        } catch (ExecutionException e) {
+          throw new RuntimeException("Scenario optimization failed", e.getCause());
+        }
       }
-    } catch (InterruptedException e) {
-      executor.shutdownNow();
-      Thread.currentThread().interrupt();
+    } finally {
+      executor.shutdown();
+      try {
+        if (!executor.awaitTermination(300, java.util.concurrent.TimeUnit.SECONDS)) {
+          executor.shutdownNow();
+          logger.warn("Scenario parallel executor did not terminate within timeout");
+        }
+      } catch (InterruptedException e) {
+        executor.shutdownNow();
+        Thread.currentThread().interrupt();
+      }
     }
     return results;
   }
@@ -2581,7 +2598,16 @@ public class ProductionOptimizer {
   }
 
   /**
-   * Parallel execution of Pareto weight combinations.
+   * Runs Pareto weight combinations in parallel using a fixed thread pool.
+   *
+   * @param process the process system template (copied per thread)
+   * @param feedStream the feed stream to vary
+   * @param config optimization configuration
+   * @param objectives the optimization objectives
+   * @param constraints the optimization constraints
+   * @param weightCombinations the weight vectors to evaluate
+   * @param objectiveNames names for each objective
+   * @return list of Pareto points, one per weight combination
    */
   private List<ParetoPoint> optimizeParetoParallel(ProcessSystem process,
       StreamInterface feedStream, OptimizationConfig config, List<OptimizationObjective> objectives,
@@ -2606,32 +2632,43 @@ public class ProductionOptimizer {
     }
 
     List<ParetoPoint> points = new ArrayList<>();
-    for (Future<ParetoPoint> future : futures) {
-      try {
-        points.add(future.get());
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new RuntimeException("Pareto optimization interrupted", e);
-      } catch (ExecutionException e) {
-        throw new RuntimeException("Pareto optimization failed", e.getCause());
-      }
-    }
-
-    executor.shutdown();
     try {
-      if (!executor.awaitTermination(300, java.util.concurrent.TimeUnit.SECONDS)) {
-        executor.shutdownNow();
-        logger.warn("Pareto parallel executor did not terminate within timeout");
+      for (Future<ParetoPoint> future : futures) {
+        try {
+          points.add(future.get());
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new RuntimeException("Pareto optimization interrupted", e);
+        } catch (ExecutionException e) {
+          throw new RuntimeException("Pareto optimization failed", e.getCause());
+        }
       }
-    } catch (InterruptedException e) {
-      executor.shutdownNow();
-      Thread.currentThread().interrupt();
+    } finally {
+      executor.shutdown();
+      try {
+        if (!executor.awaitTermination(300, java.util.concurrent.TimeUnit.SECONDS)) {
+          executor.shutdownNow();
+          logger.warn("Pareto parallel executor did not terminate within timeout");
+        }
+      } catch (InterruptedException e) {
+        executor.shutdownNow();
+        Thread.currentThread().interrupt();
+      }
     }
     return points;
   }
 
   /**
-   * Generate all weight combinations for a given number of objectives and grid size.
+   * Generates all weight combinations for a given number of objectives and grid size.
+   *
+   * <p>
+   * For 2 objectives, uses linear interpolation. For 3+ objectives, uses recursive simplex lattice
+   * design.
+   * </p>
+   *
+   * @param numObjectives the number of objectives
+   * @param gridSize the number of grid points (must be at least 2)
+   * @return list of weight arrays, each summing to 1.0
    */
   private List<double[]> generateWeightCombinations(int numObjectives, int gridSize) {
     List<double[]> combinations = new ArrayList<>();
@@ -2650,7 +2687,14 @@ public class ProductionOptimizer {
   }
 
   /**
-   * Recursively generate weight combinations that sum to 1.
+   * Recursively generates weight combinations that sum to 1.0 on a simplex lattice.
+   *
+   * @param numObjectives total number of objectives
+   * @param divisions number of divisions along each axis
+   * @param current working array for partial weight assignment
+   * @param index current objective dimension being filled
+   * @param remaining remaining weight budget
+   * @param combinations accumulator list for completed weight arrays
    */
   private void generateWeightCombinationsRecursive(int numObjectives, int divisions,
       double[] current, int index, double remaining, List<double[]> combinations) {
