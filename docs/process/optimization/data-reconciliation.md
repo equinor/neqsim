@@ -1,14 +1,27 @@
 ---
-title: "Data Reconciliation Engine"
-description: "Weighted least squares data reconciliation for process measurements. Adjusts plant measurements to satisfy mass and energy balance constraints, detects gross errors, and supports iterative sensor fault identification."
+title: "Data Reconciliation and Steady-State Detection"
+description: "Weighted least squares data reconciliation for process measurements with steady-state detection. Adjusts plant measurements to satisfy mass and energy balance constraints, detects gross errors, and supports iterative sensor fault identification. Includes R-statistic based steady-state detection for online monitoring."
 ---
 
-# Data Reconciliation Engine
+# Data Reconciliation and Steady-State Detection
 
-The `neqsim.process.util.reconciliation` package provides a **weighted least squares (WLS) data reconciliation engine** that adjusts plant measurements so that mass (and optionally energy) balance constraints are exactly satisfied, while minimizing weighted deviations from raw readings.
+The `neqsim.process.util.reconciliation` package provides:
+
+1. A **weighted least squares (WLS) data reconciliation engine** that adjusts plant measurements so that mass (and optionally energy) balance constraints are exactly satisfied.
+2. A **steady-state detector (SSD)** based on the R-statistic method that monitors process variables and determines when the plant has reached steady state — a prerequisite for meaningful reconciliation.
 
 ## Contents
 
+- [Steady-State Detection](#steady-state-detection)
+  - [Why Detect Steady State?](#why-detect-steady-state)
+  - [The R-Statistic Method](#the-r-statistic-method)
+  - [SSD Step-by-Step Usage](#ssd-step-by-step-usage)
+  - [SSD Java Example](#ssd-java-example)
+  - [SSD Python Example](#ssd-python-example)
+  - [SSD API Reference](#ssd-api-reference)
+  - [Tuning the Detector](#tuning-the-detector)
+  - [Bridging to Data Reconciliation](#bridging-to-data-reconciliation)
+- [Data Reconciliation](#data-reconciliation)
 - [Overview](#overview)
 - [When to Use Data Reconciliation](#when-to-use-data-reconciliation)
 - [Mathematical Background](#mathematical-background)
@@ -33,6 +46,281 @@ The `neqsim.process.util.reconciliation` package provides a **weighted least squ
 - [Related Documentation](#related-documentation)
 
 ---
+
+## Steady-State Detection
+
+### Why Detect Steady State?
+
+Data reconciliation assumes that the measured values represent a single operating point governed by conservation laws. If the plant is actively transitioning (e.g., a rate change, startup, or upset), reconciling transient data produces meaningless results. Steady-state detection (SSD) answers the question: **Are the current readings stable enough to reconcile?**
+
+### The R-Statistic Method
+
+The detector uses the **Cao-Rhinehart R-statistic** (Cao & Rhinehart, 1995) — a ratio of the *filtered variance* to the *unfiltered variance*:
+
+$$
+R = \frac{\sigma^2_f}{\sigma^2_u}
+$$
+
+Where:
+
+- **Filtered variance** $\sigma^2_f$ — computed from successive differences: $\frac{1}{2(n-1)} \sum_{i=2}^{n} (x_i - x_{i-1})^2$. This captures sample-to-sample noise.
+- **Unfiltered variance** $\sigma^2_u$ — the ordinary sample variance: $\frac{1}{n-1} \sum_{i=1}^{n} (x_i - \bar{x})^2$. This captures both noise and any trend.
+
+**Interpretation:**
+
+| R value | Meaning |
+|---------|---------|
+| R close to 1.0 | White noise only — steady state |
+| R much less than 1.0 | Trend, drift, or step change — transient |
+| R greater than 1.0 | Oscillation or alternating pattern |
+
+The default threshold is **R &ge; 0.5**. Optional supplementary tests:
+
+| Test | Purpose | Default |
+|------|---------|---------|
+| **Slope test** | Catches slow monotonic drift that R might miss | Disabled (threshold = 0) |
+| **Std.dev test** | Rejects signals that are technically "steady" but too noisy | Disabled (threshold = 0) |
+
+### SSD Step-by-Step Usage
+
+#### Step 1 — Create the detector
+
+```java
+// Window of 30 samples, R-threshold 0.5
+SteadyStateDetector detector = new SteadyStateDetector(30);
+detector.setRThreshold(0.5);
+```
+
+#### Step 2 — Register variables
+
+```java
+// By name (uses default window size)
+detector.addVariable("FI-1001");
+detector.addVariable("TI-2001");
+
+// Or with explicit window and uncertainty
+SteadyStateVariable v = new SteadyStateVariable("FI-1001", 30);
+v.setUnit("kg/hr");
+v.setUncertainty(20.0); // needed if bridging to reconciliation
+detector.addVariable(v);
+```
+
+#### Step 3 — Feed data (streaming loop)
+
+```java
+// In your scan loop (e.g., every 10 seconds):
+detector.updateVariable("FI-1001", readTag("FI-1001"));
+detector.updateVariable("TI-2001", readTag("TI-2001"));
+```
+
+Or update all at once:
+
+```java
+Map<String, Double> snapshot = new LinkedHashMap<String, Double>();
+snapshot.put("FI-1001", readTag("FI-1001"));
+snapshot.put("TI-2001", readTag("TI-2001"));
+detector.updateAll(snapshot);
+```
+
+#### Step 4 — Evaluate
+
+```java
+SteadyStateResult result = detector.evaluate();
+
+if (result.isAtSteadyState()) {
+    System.out.println("Plant is at steady state — safe to reconcile");
+} else {
+    System.out.println("Transient variables: " + result.getTransientVariables());
+}
+```
+
+Or combine update + evaluate:
+
+```java
+SteadyStateResult result = detector.updateAndEvaluate(snapshot);
+```
+
+#### Step 5 — Read results
+
+```java
+// Per-variable diagnostics
+for (SteadyStateVariable v : result.getVariables()) {
+    System.out.printf("%-12s  R=%.3f  mean=%.1f  steady=%s%n",
+        v.getName(), v.getRStatistic(), v.getMean(), v.isAtSteadyState());
+}
+
+// Reports
+System.out.println(result.toReport()); // formatted table
+String json = result.toJson();          // machine-readable
+```
+
+### SSD Java Example
+
+```java
+import neqsim.process.util.reconciliation.*;
+
+// Create detector
+SteadyStateDetector ssd = new SteadyStateDetector(30);
+ssd.setRThreshold(0.5);
+ssd.setSlopeThreshold(0.5);   // Optional: catch slow drifts
+
+// Register variables with uncertainties
+SteadyStateVariable feed = new SteadyStateVariable("feed_flow", 30);
+feed.setUnit("kg/hr").setUncertainty(20.0);
+ssd.addVariable(feed);
+
+SteadyStateVariable gas = new SteadyStateVariable("gas_flow", 30);
+gas.setUnit("kg/hr").setUncertainty(15.0);
+ssd.addVariable(gas);
+
+SteadyStateVariable liquid = new SteadyStateVariable("liquid_flow", 30);
+liquid.setUnit("kg/hr").setUncertainty(10.0);
+ssd.addVariable(liquid);
+
+// Simulate 30 readings at steady state
+for (int i = 0; i < 30; i++) {
+    ssd.updateVariable("feed_flow", 1000.0 + (Math.random() - 0.5) * 2);
+    ssd.updateVariable("gas_flow", 605.0 + (Math.random() - 0.5) * 2);
+    ssd.updateVariable("liquid_flow", 398.0 + (Math.random() - 0.5) * 2);
+}
+
+SteadyStateResult ssResult = ssd.evaluate();
+System.out.println(ssResult.toReport());
+
+if (ssResult.isAtSteadyState()) {
+    // Bridge directly to reconciliation
+    DataReconciliationEngine engine = ssd.createReconciliationEngine();
+    engine.addMassBalanceConstraint("separator",
+        new String[]{"feed_flow"},
+        new String[]{"gas_flow", "liquid_flow"});
+    ReconciliationResult recResult = engine.reconcile();
+    System.out.println(recResult.toReport());
+}
+```
+
+### SSD Python Example
+
+```python
+from neqsim import jneqsim
+
+SteadyStateDetector = jneqsim.process.util.reconciliation.SteadyStateDetector
+SteadyStateVariable = jneqsim.process.util.reconciliation.SteadyStateVariable
+
+# Create detector with window=30
+ssd = SteadyStateDetector(30)
+ssd.setRThreshold(0.5)
+
+# Register variables
+feed = SteadyStateVariable("feed_flow", 30)
+feed.setUnit("kg/hr").setUncertainty(20.0)
+ssd.addVariable(feed)
+
+gas = SteadyStateVariable("gas_flow", 30)
+gas.setUnit("kg/hr").setUncertainty(15.0)
+ssd.addVariable(gas)
+
+# Push 30 constant-ish readings
+import random
+for i in range(30):
+    ssd.updateVariable("feed_flow", 1000.0 + random.uniform(-1, 1))
+    ssd.updateVariable("gas_flow", 600.0 + random.uniform(-1, 1))
+
+result = ssd.evaluate()
+print(result.toReport())
+
+if result.isAtSteadyState():
+    engine = ssd.createReconciliationEngine()
+    # ... add constraints and reconcile
+```
+
+### SSD API Reference
+
+#### SteadyStateDetector
+
+| Method | Description |
+|--------|-------------|
+| `SteadyStateDetector(int windowSize)` | Create detector with given default window size |
+| `addVariable(SteadyStateVariable v)` | Register a pre-configured variable |
+| `addVariable(String name)` | Register by name using default window; returns created variable |
+| `removeVariable(String name)` | Unregister a variable; returns true if found |
+| `getVariable(String name)` | Get variable by name (null if not found) |
+| `getVariableCount()` | Number of registered variables |
+| `updateVariable(String name, double value)` | Push a new sample for one variable |
+| `updateAll(Map name, Double value)` | Push new samples for all variables |
+| `evaluate()` | Evaluate all variables; returns `SteadyStateResult` |
+| `updateAndEvaluate(Map)` | Convenience: updateAll + evaluate |
+| `createReconciliationEngine()` | Build a `DataReconciliationEngine` from steady-state variables |
+| `setRThreshold(double)` | Set R-statistic threshold (default 0.5) |
+| `setSlopeThreshold(double)` | Set max absolute slope (0 = disabled) |
+| `setStdDevThreshold(double)` | Set max standard deviation (0 = disabled) |
+| `setRequiredFraction(double)` | Fraction of variables that must be steady (default 1.0) |
+| `setRequireFullWindow(boolean)` | Require window to be full before evaluating (default true) |
+| `clear()` | Remove all variables and reset |
+
+#### SteadyStateVariable
+
+| Method | Description |
+|--------|-------------|
+| `SteadyStateVariable(String name, int windowSize)` | Create with name and sliding window size (min 3) |
+| `addValue(double value)` | Add a sample; recomputes statistics |
+| `clear()` | Clear all samples |
+| `getMean()` | Window mean |
+| `getStandardDeviation()` | Window standard deviation |
+| `getRStatistic()` | Cao-Rhinehart R-statistic |
+| `getSlope()` | Linear regression slope (per sample) |
+| `isAtSteadyState()` | Whether last evaluation flagged as steady |
+| `getCount()` | Number of samples in window |
+| `getWindowSize()` | Configured window size |
+| `setUnit(String)` | Set engineering unit (fluent) |
+| `setUncertainty(double)` | Set measurement uncertainty for reconciliation (fluent) |
+
+#### SteadyStateResult
+
+| Method | Description |
+|--------|-------------|
+| `isAtSteadyState()` | Overall SSD verdict |
+| `getSteadyCount()` | Number of steady variables |
+| `getTransientCount()` | Number of transient variables |
+| `getVariables()` | All variables with their per-variable statistics |
+| `getTransientVariables()` | Only the variables that failed the SSD test |
+| `toReport()` | Human-readable formatted text report |
+| `toJson()` | Machine-readable JSON |
+
+### Tuning the Detector
+
+| Parameter | Typical range | Guidance |
+|-----------|--------------|----------|
+| **Window size** | 20-60 | Larger = more stable but slower response. 30 is a good default for 10-second scan intervals (~5 min window) |
+| **R-threshold** | 0.3-0.8 | Lower = more tolerant of trends. 0.5 works well for most process variables |
+| **Slope threshold** | 0-1.0 | Enable only if you need to catch very slow drifts. Units depend on your variable's scale |
+| **Std.dev threshold** | 0-inf | Enable to reject signals that are "steady" but too noisy to be useful |
+| **Required fraction** | 0.5-1.0 | Set below 1.0 to allow reconciliation even if some variables are still settling |
+
+### Bridging to Data Reconciliation
+
+The `createReconciliationEngine()` method creates a `DataReconciliationEngine` pre-populated with variables that:
+
+1. **Are at steady state** (per R-statistic evaluation)
+2. **Have defined uncertainty** (from `setUncertainty()`)
+
+The bridge uses each variable's **window mean** as the measurement value and the configured uncertainty as sigma. Transient variables and variables without uncertainty are excluded.
+
+```java
+// Typical workflow
+SteadyStateDetector ssd = new SteadyStateDetector(30);
+// ... add variables, push data, evaluate() ...
+
+if (ssd.evaluate().isAtSteadyState()) {
+    DataReconciliationEngine engine = ssd.createReconciliationEngine();
+    // Variables are already populated with mean values and uncertainties
+    engine.addMassBalanceConstraint("node1", inlets, outlets);
+    ReconciliationResult result = engine.reconcile();
+}
+```
+
+---
+
+## Data Reconciliation
 
 ## Overview
 
@@ -788,3 +1076,9 @@ String report = result.toReport();
 - [Constraint Framework](constraint-framework) — Unified ProcessConstraint interface
 - [Batch Studies](batch-studies) — Sensitivity analysis with parameter sweeps
 - [External Optimizer Integration](../../integration/EXTERNAL_OPTIMIZER_INTEGRATION) — Python/SciPy integration patterns
+
+### References
+
+- Cao, S. & Rhinehart, R.R. (1995). "An efficient method for on-line identification of steady state." *Journal of Process Control*, 5(6), 363-374.
+- Jiang, T., Chen, B. & He, X. (2003). "Industrial application of wavelet transform to the on-line prediction of side draw qualities of crude unit." *Computers & Chemical Engineering*, 27(4), 519-527.
+- Narasimhan, S. & Jordache, C. (2000). *Data Reconciliation and Gross Error Detection*. Gulf Publishing.
