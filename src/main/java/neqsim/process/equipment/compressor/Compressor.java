@@ -4024,15 +4024,17 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       }
     }
 
-    // CRITICAL: If a VFD driver is present, use its rated speed as the hard limit
-    // VFD motors have a rated speed that should not be exceeded in normal operation
-    // The chart may extend beyond rated speed, but that's for contingency analysis
-    if (driver != null && driver.getRatedSpeed() > 0) {
-      // Use the more restrictive of (current effective max, driver rated speed)
-      effectiveMaxSpeed = Math.min(effectiveMaxSpeed, driver.getRatedSpeed());
-    }
+    // NOTE: The driver rated speed is NOT used to clamp effectiveMaxSpeed.
+    // For VFD motors, the rated speed is the base speed (constant torque region).
+    // Above base speed the motor enters field-weakening (constant power region)
+    // with reduced torque — but this power limitation is already captured by the
+    // power constraint which uses driver.getMaxAvailablePowerAtSpeed(speed).
+    // Using the driver rated speed as a hard speed limit would double-count the
+    // limitation and make all operating points above base speed appear infeasible.
+    // The speed constraint should reflect the MECHANICAL maximum (chart max or
+    // compressor design limit), not the electrical base speed.
 
-    // Max speed constraint (from curve, mechanical limit, or driver rated speed)
+    // Max speed constraint (from curve or mechanical limit)
     // Design value = max speed, so utilization = currentSpeed / maxSpeed
     // This gives proper utilization: 87% speed = 87% utilization
     final double maxSpeedLimit = effectiveMaxSpeed;

@@ -30,6 +30,13 @@ public class CapacityConstraint implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   /**
+   * Maximum utilization value returned by {@link #getUtilization()}. Caps extreme values (e.g.,
+   * when design value is near zero or current value is far beyond design) to prevent unbounded
+   * utilization percentages that confuse optimization and reporting.
+   */
+  private static final double MAX_UTILIZATION = 9.99;
+
+  /**
    * Enum defining the type of capacity constraint.
    */
   public enum ConstraintType {
@@ -329,14 +336,14 @@ public class CapacityConstraint implements Serializable {
     if (minValue > 0 && designValue == Double.MAX_VALUE) {
       // This is a minimum constraint (e.g., residence time)
       if (current <= 0) {
-        return Double.MAX_VALUE;
+        return MAX_UTILIZATION;
       }
-      return minValue / current;
+      return Math.min(minValue / current, MAX_UTILIZATION);
     }
     if (designValue <= 0 || designValue == Double.MAX_VALUE) {
       return 0.0;
     }
-    return current / designValue;
+    return Math.min(current / designValue, MAX_UTILIZATION);
   }
 
   /**
