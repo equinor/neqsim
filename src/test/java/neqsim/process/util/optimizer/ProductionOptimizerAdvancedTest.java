@@ -94,9 +94,8 @@ class ProductionOptimizerAdvancedTest {
         new OptimizationConfig(50.0, 300.0).searchMode(SearchMode.GRADIENT_DESCENT_SCORE)
             .rateUnit("kg/hr").maxIterations(15).tolerance(1.0);
 
-    OptimizationResult result =
-        optimizer.optimize(process, Arrays.asList(flowVar, pressureVar), config,
-            Collections.emptyList(), Collections.emptyList());
+    OptimizationResult result = optimizer.optimize(process, Arrays.asList(flowVar, pressureVar),
+        config, Collections.emptyList(), Collections.emptyList());
 
     Assertions.assertNotNull(result, "Multi-variable gradient descent should return a result");
     Assertions.assertNotNull(result.getDecisionVariables(), "Should have decision variables");
@@ -116,9 +115,9 @@ class ProductionOptimizerAdvancedTest {
     Stream feed = (Stream) setup[1];
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
-    OptimizationConfig config = new OptimizationConfig(50.0, 500.0)
-        .searchMode(SearchMode.PARTICLE_SWARM_SCORE).rateUnit("kg/hr").maxIterations(10)
-        .tolerance(1.0).randomSeed(42L).useFixedSeed(true);
+    OptimizationConfig config =
+        new OptimizationConfig(50.0, 500.0).searchMode(SearchMode.PARTICLE_SWARM_SCORE)
+            .rateUnit("kg/hr").maxIterations(10).tolerance(1.0).randomSeed(42L).useFixedSeed(true);
 
     OptimizationResult result1 =
         optimizer.optimize(process, feed, config, Collections.emptyList(), Collections.emptyList());
@@ -142,9 +141,9 @@ class ProductionOptimizerAdvancedTest {
     ProductionOptimizer optimizer = new ProductionOptimizer();
 
     // Stream-based call (delegates internally)
-    OptimizationConfig config = new OptimizationConfig(50.0, 500.0)
-        .searchMode(SearchMode.GOLDEN_SECTION_SCORE).rateUnit("kg/hr").maxIterations(15)
-        .tolerance(1.0);
+    OptimizationConfig config =
+        new OptimizationConfig(50.0, 500.0).searchMode(SearchMode.GOLDEN_SECTION_SCORE)
+            .rateUnit("kg/hr").maxIterations(15).tolerance(1.0);
 
     OptimizationResult streamResult =
         optimizer.optimize(process, feed, config, Collections.emptyList(), Collections.emptyList());
@@ -258,9 +257,9 @@ class ProductionOptimizerAdvancedTest {
     Stream feed = (Stream) setup[1];
 
     ProductionOptimizer optimizer = new ProductionOptimizer();
-    OptimizationConfig config = new OptimizationConfig(50.0, 500.0)
-        .searchMode(SearchMode.NELDER_MEAD_SCORE).rateUnit("kg/hr").maxIterations(20)
-        .tolerance(1.0);
+    OptimizationConfig config =
+        new OptimizationConfig(50.0, 500.0).searchMode(SearchMode.NELDER_MEAD_SCORE)
+            .rateUnit("kg/hr").maxIterations(20).tolerance(1.0);
 
     OptimizationResult result =
         optimizer.optimize(process, feed, config, Collections.emptyList(), Collections.emptyList());
@@ -291,9 +290,8 @@ class ProductionOptimizerAdvancedTest {
     OptimizationConfig config2 =
         new OptimizationConfig(100.0, 500.0).rateUnit("kg/hr").maxIterations(10);
 
-    ProductionOptimizer.ScenarioRequest scenario1 =
-        new ProductionOptimizer.ScenarioRequest("Low Pressure", process1, feed1, config1,
-            Collections.emptyList(), Collections.emptyList());
+    ProductionOptimizer.ScenarioRequest scenario1 = new ProductionOptimizer.ScenarioRequest(
+        "Low Pressure", process1, feed1, config1, Collections.emptyList(), Collections.emptyList());
     ProductionOptimizer.ScenarioRequest scenario2 =
         new ProductionOptimizer.ScenarioRequest("High Pressure", process2, feed2, config2,
             Collections.emptyList(), Collections.emptyList());
