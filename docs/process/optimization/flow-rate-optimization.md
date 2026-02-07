@@ -14,6 +14,7 @@ This guide covers the `FlowRateOptimizer` class for calculating optimal flow rat
 | Document | Description |
 |----------|-------------|
 | [Optimization Overview](OPTIMIZATION_OVERVIEW) | When to use which optimizer |
+| [Constraint Framework](constraint-framework) | Unified constraint system for all optimizers |
 | [Optimizer Plugin Architecture](OPTIMIZER_PLUGIN_ARCHITECTURE) | ProcessOptimizationEngine and VFP export |
 | [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) | ProductionOptimizer examples |
 

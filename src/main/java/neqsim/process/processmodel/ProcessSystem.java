@@ -4073,6 +4073,53 @@ public class ProcessSystem extends SimulationBaseClass {
     return nearLimit;
   }
 
+  /**
+   * Disables all capacity constraints on all equipment in the process system.
+   *
+   * <p>
+   * Use this for what-if scenarios where you want to ignore capacity limits and see what the
+   * process would do without constraints. To re-enable, call {@link #enableAllConstraints()}.
+   * </p>
+   *
+   * <p>
+   * This method also sets {@code capacityAnalysisEnabled = false} on each equipment, which prevents
+   * the optimizer from using fallback capacity rules for equipment types.
+   * </p>
+   *
+   * @return the total number of constraints that were disabled
+   */
+  public int disableAllConstraints() {
+    int totalCount = 0;
+    for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
+      totalCount += equip.disableAllConstraints();
+      equip.setCapacityAnalysisEnabled(false);
+    }
+    return totalCount;
+  }
+
+  /**
+   * Enables all capacity constraints on all equipment in the process system.
+   *
+   * <p>
+   * Re-enables all constraints that were previously disabled. This restores normal capacity
+   * analysis mode for the entire process.
+   * </p>
+   *
+   * <p>
+   * This method also sets {@code capacityAnalysisEnabled = true} on each equipment.
+   * </p>
+   *
+   * @return the total number of constraints that were enabled
+   */
+  public int enableAllConstraints() {
+    int totalCount = 0;
+    for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
+      equip.setCapacityAnalysisEnabled(true);
+      totalCount += equip.enableAllConstraints();
+    }
+    return totalCount;
+  }
+
   // ==========================================================================
   // AUTO-SIZING METHODS
   // ==========================================================================

@@ -225,14 +225,36 @@ public interface PipeLineInterface extends SimulationInterface, TwoPortInterface
    *
    * @param pressure outlet pressure in bara
    */
-  public void setOutPressure(double pressure);
+  public void setOutletPressure(double pressure);
+
+  /**
+   * Set the outlet pressure for flow rate calculation mode.
+   *
+   * @param pressure outlet pressure in bara
+   * @deprecated use {@link #setOutletPressure(double)} instead
+   */
+  @Deprecated
+  public default void setOutPressure(double pressure) {
+    setOutletPressure(pressure);
+  }
 
   /**
    * Set the outlet temperature.
    *
    * @param temperature outlet temperature in Kelvin
    */
-  public void setOutTemperature(double temperature);
+  public void setOutletTemperature(double temperature);
+
+  /**
+   * Set the outlet temperature.
+   *
+   * @param temperature outlet temperature in Kelvin
+   * @deprecated use {@link #setOutletTemperature(double)} instead
+   */
+  @Deprecated
+  public default void setOutTemperature(double temperature) {
+    setOutletTemperature(temperature);
+  }
 
   // ============================================================================
   // RESULTS METHODS - Common output from all pipeline models

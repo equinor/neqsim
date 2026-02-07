@@ -14,6 +14,7 @@ The `neqsim.process.util.optimizer` package provides a comprehensive **multi-obj
 | Document | Description |
 |----------|-------------|
 | [Optimization Overview](OPTIMIZATION_OVERVIEW) | When to use which optimizer |
+| [Constraint Framework](constraint-framework) | Unified constraint system for all optimizers |
 | [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) | ProductionOptimizer examples |
 | [Batch Studies](batch-studies) | Parallel parameter sweeps |
 
@@ -197,6 +198,7 @@ The `StandardObjective` enum provides pre-built objectives for common optimizati
 | `MINIMIZE_COOLING_DUTY` | Minimize | Total cooler duty | kW |
 | `MINIMIZE_TOTAL_ENERGY` | Minimize | Power + heating + cooling | kW |
 | `MAXIMIZE_SPECIFIC_PRODUCTION` | Maximize | Throughput per unit power | kg/kWh |
+| `MAXIMIZE_LIQUID_RECOVERY` | Maximize | Liquid recovery fraction | - |
 
 ### Using Standard Objectives
 
@@ -1100,10 +1102,10 @@ for p in pareto_scipy:
 
 ## Related Documentation
 
-- [Production Optimization Framework](./\) - Single-objective optimization
-- [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) - Equipment constraints
+- [Optimizer Guide](../../util/optimizer_guide) - Main optimization module documentation
+- [Constraint Framework](constraint-framework) - Unified constraint system (ProcessConstraint, ConstraintPenaltyCalculator)
+- [Flow Rate Optimization](flow-rate-optimization) - FlowRateOptimizer and Eclipse VFP
 - [Batch Parameter Estimation](batch-studies) - Parameter fitting
-- [Python Optimization Tutorial](../../examples/NeqSim_Python_Optimization) - SciPy integration
 
 ---
 

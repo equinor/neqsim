@@ -86,24 +86,24 @@ public class AdiabaticTwoPhasePipe extends Pipeline {
 
   /**
    * <p>
-   * setOutTemperature.
+   * Set outlet temperature.
    * </p>
    *
-   * @param temperature a double
+   * @param temperature outlet temperature in Kelvin
    */
-  public void setOutTemperature(double temperature) {
+  public void setOutletTemperature(double temperature) {
     setTemperature = true;
     this.temperatureOut = temperature;
   }
 
   /**
    * <p>
-   * setOutPressure.
+   * Set outlet pressure.
    * </p>
    *
-   * @param pressure a double
+   * @param pressure outlet pressure in bara
    */
-  public void setOutPressure(double pressure) {
+  public void setOutletPressure(double pressure) {
     setPressureOut = true;
     this.pressureOut = pressure;
   }

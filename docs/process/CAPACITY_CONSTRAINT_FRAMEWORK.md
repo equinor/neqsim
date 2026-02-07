@@ -47,23 +47,69 @@ separator.enableConstraints();      // Enables all constraints on this equipment
 separator.disableConstraints();     // Disables all constraints
 ```
 
-### How the Optimizer Uses Constraints
+### How to Disable Constraints for What-If Analysis
 
-The `ProductionOptimizer` uses a smart fallback mechanism:
+For what-if scenarios or focused analysis, you can disable constraints at multiple levels:
 
 ```java
-// In determineCapacityRule(), the optimizer checks:
+// Method 1: Disable a specific constraint
+Map<String, CapacityConstraint> constraints = separator.getCapacityConstraints();
+constraints.get("gasLoadFactor").setEnabled(false);  // Disable one constraint
+constraints.get("gasLoadFactor").setEnabled(true);   // Re-enable
+
+// Method 2: Disable all constraints on a single equipment
+int disabled = separator.disableAllConstraints();  // Returns count of disabled constraints
+int enabled = separator.enableAllConstraints();    // Re-enable all
+
+// Method 3: Disable all constraints across entire ProcessSystem
+int total = processSystem.disableAllConstraints();  // All equipment, all constraints
+processSystem.enableAllConstraints();               // Re-enable all
+
+// Method 4: Disable all constraints across ProcessModule
+processModule.disableAllConstraints();
+processModule.enableAllConstraints();
+
+// Method 5: FULLY exclude equipment from optimization (not just disable constraints)
+separator.setCapacityAnalysisEnabled(false);  // Completely excluded from capacity analysis
+separator.setCapacityAnalysisEnabled(true);   // Re-include
+```
+
+**Comparison of Disable Methods:**
+
+| Method | Scope | Effect on Optimization |
+|--------|-------|------------------------|
+| `constraint.setEnabled(false)` | One constraint | Uses other constraints or fallback rules |
+| `equipment.disableAllConstraints()` | All constraints on equipment | Falls back to type-specific capacity rules |
+| `processSystem.disableAllConstraints()` | All equipment in system | All use fallback capacity rules |
+| `equipment.setCapacityAnalysisEnabled(false)` | Equipment level | **Fully excluded** from optimization |
+
+### How the Optimizer Uses Constraints
+
+The `ProductionOptimizer` uses a multi-level decision process:
+
+```java
+// Step 1: In evaluateProcess(), the optimizer FIRST checks if equipment is excluded
+if (!constrained.isCapacityAnalysisEnabled()) {
+    continue;  // FULLY SKIP this equipment - no capacity checks at all
+}
+
+// Step 2: In determineCapacityRule(), for included equipment:
 boolean hasEnabledConstraints = constrained.getCapacityConstraints().values().stream()
     .anyMatch(CapacityConstraint::isEnabled);
 
-if (constrained.isCapacityAnalysisEnabled() && hasEnabledConstraints) {
-    // Use multi-constraint capacity analysis
+if (hasEnabledConstraints) {
+    // Use multi-constraint capacity analysis (getMaxUtilization())
     return new ConstrainedCapacityRule(equipment);
 } else {
-    // Fall back to traditional getCapacityMax()/getCapacityDuty()
-    return new TraditionalCapacityRule(equipment);
+    // Fall back to type-specific rules (separator level, valve opening, etc.)
+    return new TypeSpecificCapacityRule(equipment);
 }
 ```
+
+**Key behavior:**
+- `setCapacityAnalysisEnabled(false)` → Equipment completely skipped by optimizer
+- `disableAllConstraints()` → Equipment still checked using fallback capacity rules
+- Individual constraints enabled → Uses `getMaxUtilization()` from constraint framework
 
 ### Summary: Constraint Enablement by Equipment Type
 

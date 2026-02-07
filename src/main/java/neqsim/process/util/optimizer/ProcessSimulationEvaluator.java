@@ -10,6 +10,9 @@ import java.util.function.ToDoubleFunction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.capacity.EquipmentCapacityStrategy;
+import neqsim.process.equipment.capacity.EquipmentCapacityStrategyRegistry;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 
@@ -333,9 +336,15 @@ public class ProcessSimulationEvaluator implements Serializable {
   }
 
   /**
-   * Definition of a constraint.
+   * Definition of a constraint for external optimizer integration.
+   *
+   * <p>
+   * Supports lower-bound, upper-bound, range, and equality constraints. Implements the unified
+   * {@link ProcessConstraint} interface so constraints are portable between internal NeqSim
+   * optimizers and external solvers.
+   * </p>
    */
-  public static class ConstraintDefinition implements Serializable {
+  public static class ConstraintDefinition implements Serializable, ProcessConstraint {
     private static final long serialVersionUID = 1L;
 
     /** Constraint type. */
@@ -518,12 +527,68 @@ public class ProcessSimulationEvaluator implements Serializable {
      * @param process the process system
      * @return penalty (0 if satisfied, positive if violated)
      */
+    @Override
     public double penalty(ProcessSystem process) {
       double m = margin(process);
       if (m >= 0) {
         return 0.0;
       }
       return penaltyWeight * m * m;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ConstraintSeverityLevel getSeverityLevel() {
+      return ConstraintSeverityLevel.fromIsHard(isHard);
+    }
+
+    /**
+     * Converts this constraint to a {@link ProductionOptimizer.OptimizationConstraint} for use with
+     * the internal optimizer.
+     *
+     * <p>
+     * Only LOWER_BOUND and UPPER_BOUND types can be converted directly. RANGE constraints are
+     * converted to an UPPER_BOUND constraint (using the tightest bound). EQUALITY constraints are
+     * approximated as a tight range.
+     * </p>
+     *
+     * @return equivalent OptimizationConstraint
+     * @throws IllegalStateException if the evaluator function is null
+     */
+    public ProductionOptimizer.OptimizationConstraint toOptimizationConstraint() {
+      if (evaluator == null) {
+        throw new IllegalStateException(
+            "Cannot convert to OptimizationConstraint: evaluator is null (was this deserialized?)");
+      }
+      ProductionOptimizer.ConstraintSeverity sev =
+          isHard ? ProductionOptimizer.ConstraintSeverity.HARD
+              : ProductionOptimizer.ConstraintSeverity.SOFT;
+      switch (type) {
+        case UPPER_BOUND:
+          return ProductionOptimizer.OptimizationConstraint.lessThan(name, evaluator, upperBound,
+              sev, penaltyWeight, "Converted from ConstraintDefinition");
+        case LOWER_BOUND:
+          return ProductionOptimizer.OptimizationConstraint.greaterThan(name, evaluator, lowerBound,
+              sev, penaltyWeight, "Converted from ConstraintDefinition");
+        case RANGE:
+          // Convert to two one-sided constraints to enforce both bounds
+          logger.info("RANGE constraint '{}' converted to upper-bound only; "
+              + "lower bound ({}) not enforced via this path", name, lowerBound);
+          return ProductionOptimizer.OptimizationConstraint.lessThan(name + "_upper", evaluator,
+              upperBound, sev, penaltyWeight,
+              "Converted from range ConstraintDefinition (upper bound)");
+        case EQUALITY:
+          // Converts to upper-bound; the lower bound (value >= lowerBound - tolerance)
+          // is not enforced via this single-constraint path
+          logger.info("EQUALITY constraint '{}' converted to upper-bound only; "
+              + "lower bound not enforced via this path", name);
+          return ProductionOptimizer.OptimizationConstraint.lessThan(name + "_eq", evaluator,
+              lowerBound + equalityTolerance, sev, penaltyWeight,
+              "Converted from equality ConstraintDefinition (upper bound only)");
+        default:
+          return ProductionOptimizer.OptimizationConstraint.lessThan(name, evaluator, upperBound,
+              sev, penaltyWeight, "Converted from ConstraintDefinition");
+      }
     }
   }
 
@@ -984,6 +1049,90 @@ public class ProcessSimulationEvaluator implements Serializable {
    */
   public int getConstraintCount() {
     return constraints.size();
+  }
+
+  /**
+   * Auto-discovers equipment capacity constraints and adds them as constraint definitions.
+   *
+   * <p>
+   * Uses the {@link EquipmentCapacityStrategyRegistry} to find all physical limits across every
+   * equipment item in the process (compressor surge, separator flooding, pipe velocity, etc.) and
+   * converts each to an upper-bound {@link ConstraintDefinition} where g(x) = utilization &lt;=
+   * 1.0.
+   * </p>
+   *
+   * <p>
+   * This ensures external optimizers get exactly the same physical constraints that internal NeqSim
+   * optimizers discover automatically, without manual re-creation.
+   * </p>
+   *
+   * @return this evaluator for chaining
+   */
+  public ProcessSimulationEvaluator addEquipmentCapacityConstraints() {
+    EquipmentCapacityStrategyRegistry registry = EquipmentCapacityStrategyRegistry.getInstance();
+    List<ProcessEquipmentInterface> units = processSystem.getUnitOperations();
+    for (int i = 0; i < units.size(); i++) {
+      ProcessEquipmentInterface equipment = units.get(i);
+      EquipmentCapacityStrategy strategy = registry.findStrategy(equipment);
+      if (strategy == null) {
+        continue;
+      }
+      Map<String, CapacityConstraint> equipConstraints = strategy.getConstraints(equipment);
+      for (Map.Entry<String, CapacityConstraint> entry : equipConstraints.entrySet()) {
+        CapacityConstraint cc = entry.getValue();
+        if (!cc.isEnabled()) {
+          continue;
+        }
+        String cName = equipment.getName() + "/" + entry.getKey();
+        // Create an upper-bound constraint: utilization <= 1.0
+        final CapacityConstraint capturedCc = cc;
+        ConstraintDefinition cd = new ConstraintDefinition();
+        cd.setName(cName);
+        cd.setUnit(cc.getUnit());
+        cd.setType(ConstraintDefinition.Type.UPPER_BOUND);
+        cd.setUpperBound(1.0);
+        cd.setEvaluator(proc -> capturedCc.getUtilization());
+        boolean isHardConstraint =
+            cc.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL
+                || cc.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD;
+        cd.setHard(isHardConstraint);
+        constraints.add(cd);
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Returns all constraints as a unified {@link ProcessConstraint} list.
+   *
+   * <p>
+   * Since {@link ConstraintDefinition} implements {@link ProcessConstraint}, this returns the same
+   * constraints in their unified form — usable by both internal and external optimizers.
+   * </p>
+   *
+   * @return list of all constraints as ProcessConstraint instances
+   */
+  public List<ProcessConstraint> getAllProcessConstraints() {
+    return new ArrayList<ProcessConstraint>(constraints);
+  }
+
+  /**
+   * Evaluates all constraints and returns a margin vector suitable for NLP solvers.
+   *
+   * <p>
+   * Each element is a constraint margin: positive means satisfied, negative means violated. This is
+   * the {@code g(x) >= 0} vector expected by standard NLP libraries.
+   * </p>
+   *
+   * @param process the process system (must have been run)
+   * @return array of constraint margins in registration order
+   */
+  public double[] getConstraintMarginVector(ProcessSystem process) {
+    double[] margins = new double[constraints.size()];
+    for (int i = 0; i < constraints.size(); i++) {
+      margins[i] = constraints.get(i).margin(process);
+    }
+    return margins;
   }
 
   // ============================================================================

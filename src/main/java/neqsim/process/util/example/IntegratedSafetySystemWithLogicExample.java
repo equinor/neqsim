@@ -360,6 +360,8 @@ public class IntegratedSafetySystemWithLogicExample {
 
   /**
    * Main method demonstrating the integrated safety system with process logic.
+   *
+   * @param args command-line arguments (not used)
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
@@ -514,6 +516,8 @@ public class IntegratedSafetySystemWithLogicExample {
 
   /**
    * Run all safety scenarios.
+   *
+   * @param runner the scenario runner to execute scenarios with
    */
   private static void runAllScenarios(ScenarioRunner runner) {
     // Scenario 1: Normal operation

@@ -72,6 +72,8 @@ public class ProcessLogicIntegratedExample {
 
   /**
    * Main method demonstrating process logic integration.
+   *
+   * @param args command-line arguments (not used)
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
@@ -107,6 +109,8 @@ public class ProcessLogicIntegratedExample {
 
   /**
    * Builds the complete process system.
+   *
+   * @return the configured process system
    */
   private static ProcessSystem buildProcessSystem() {
     ProcessSystem system = new ProcessSystem();

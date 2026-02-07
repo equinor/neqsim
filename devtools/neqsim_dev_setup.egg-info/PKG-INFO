@@ -1,0 +1,6 @@
+Metadata-Version: 2.4
+Name: neqsim-dev-setup
+Version: 0.1.0
+Summary: JVM bootstrap helpers for NeqSim Jupyter development notebooks
+Requires-Python: >=3.8
+Requires-Dist: jpype1

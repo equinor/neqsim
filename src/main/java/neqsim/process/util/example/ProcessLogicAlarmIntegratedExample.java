@@ -92,6 +92,8 @@ public class ProcessLogicAlarmIntegratedExample {
 
   /**
    * Main method demonstrating integrated alarm-triggered process logic.
+   *
+   * @param args command-line arguments (not used)
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {

@@ -275,4 +275,32 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   public void setTemperature(double temperature) {
     getFluid().setTemperature(temperature);
   }
+
+  /**
+   * Disables all capacity constraints on all equipment in this module.
+   *
+   * <p>
+   * Use this for what-if scenarios where you want to ignore capacity limits. Delegates to the
+   * internal {@link ProcessSystem#disableAllConstraints()}.
+   * </p>
+   *
+   * @return the total number of constraints that were disabled
+   */
+  public int disableAllConstraints() {
+    return getOperations().disableAllConstraints();
+  }
+
+  /**
+   * Enables all capacity constraints on all equipment in this module.
+   *
+   * <p>
+   * Re-enables all constraints that were previously disabled. Delegates to the internal
+   * {@link ProcessSystem#enableAllConstraints()}.
+   * </p>
+   *
+   * @return the total number of constraints that were enabled
+   */
+  public int enableAllConstraints() {
+    return getOperations().enableAllConstraints();
+  }
 }

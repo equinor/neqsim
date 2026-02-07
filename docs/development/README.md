@@ -25,6 +25,7 @@ This folder contains documentation for:
 |----------|-------------|
 | [DEVELOPER_SETUP.md](DEVELOPER_SETUP) | Development environment setup |
 | [contributing-structure.md](contributing-structure) | Contributing guidelines and code structure |
+| [jupyter_development_workflow.md](jupyter_development_workflow) | Jupyter notebooks for live Java development |
 
 ---
 

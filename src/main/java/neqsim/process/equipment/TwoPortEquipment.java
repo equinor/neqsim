@@ -100,6 +100,12 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public void setOutletPressure(double pressure, String unit) {
+    this.outStream.setPressure(pressure, unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setOutletStream(StreamInterface stream) {
     this.outStream = stream;
   }
@@ -107,7 +113,13 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public void setOutletTemperature(double temperature) {
-    this.outStream.setTemperature(temperature, "unit");
+    this.outStream.setTemperature(temperature, "K");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setOutletTemperature(double temperature, String unit) {
+    this.outStream.setTemperature(temperature, unit);
   }
 
   /** {@inheritDoc} */

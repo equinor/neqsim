@@ -712,6 +712,8 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Optimization Overview | [docs/process/optimization/README.md](process/optimization/) | Optimization module |
 | **Flow Rate Optimization** | [docs/process/optimization/flow-rate-optimization.md](process/optimization/flow-rate-optimization) | **Comprehensive flow rate optimizer with lift curve generation for Eclipse reservoir simulation** |
 | **Multi-Objective Optimization** | [docs/process/optimization/multi-objective-optimization.md](process/optimization/multi-objective-optimization) | **Pareto front generation for competing objectives (throughput vs energy)** |
+| **Constraint Framework** | [docs/process/optimization/constraint-framework.md](process/optimization/constraint-framework) | **Unified ProcessConstraint interface bridging equipment, internal, and external optimizer constraints** |
+| **Data Reconciliation and Steady-State Detection** | [docs/process/optimization/data-reconciliation.md](process/optimization/data-reconciliation) | **R-statistic steady-state detection, WLS data reconciliation, gross error detection, SSD-to-reconciliation bridge** |
 | Batch Studies | [docs/process/optimization/batch-studies.md](process/optimization/batch-studies) | Batch studies |
 | Bottleneck Analysis | [docs/wiki/bottleneck_analysis.md](wiki/bottleneck_analysis) | Bottleneck analysis and ProductionOptimizer |
 | **Multi-Variable Optimization** | [docs/wiki/bottleneck_analysis.md#multi-variable-optimization-with-manipulatedvariable](wiki/bottleneck_analysis#multi-variable-optimization-with-manipulatedvariable) | **ManipulatedVariable for split factors, dual feeds, pressure setpoints** |
@@ -807,6 +809,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Extending Physical Properties** | [docs/development/extending_physical_properties.md](development/extending_physical_properties) | **NEW: Add viscosity, conductivity, diffusivity models** |
 | **Extending Thermodynamic Models** | [docs/development/extending_thermodynamic_models.md](development/extending_thermodynamic_models) | **NEW: Add custom equations of state** |
 | **Python Extension Patterns** | [docs/development/python_extension_patterns.md](development/python_extension_patterns) | **NEW: Python integration, wrappers, JPype interfaces** |
+| **Jupyter Development Workflow** | [docs/development/jupyter_development_workflow.md](development/jupyter_development_workflow) | **Live Java development from Jupyter notebooks with auto-compile and kernel restart** |
 
 ### Chapter 50: Testing
 
