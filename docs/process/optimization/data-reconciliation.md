@@ -41,6 +41,17 @@ The `neqsim.process.util.reconciliation` package provides:
 - [Multi-Node Network Example](#multi-node-network-example)
 - [Gross Error Elimination](#gross-error-elimination)
 - [Integration with ProcessSystem](#integration-with-processsystem)
+- [Building Live NeqSim Models (Python)](#building-live-neqsim-models-python)
+  - [Architecture — Python Orchestrator, Java Engine](#architecture--python-orchestrator-java-engine)
+  - [The Four-Stage Pipeline](#the-four-stage-pipeline)
+  - [Stage 1 — Collect and Buffer Measurements](#stage-1--collect-and-buffer-measurements)
+  - [Stage 2 — Steady-State Gate](#stage-2--steady-state-gate)
+  - [Stage 3 — Data Reconciliation](#stage-3--data-reconciliation)
+  - [Stage 4 — Model Update and Optimization](#stage-4--model-update-and-optimization)
+  - [Complete Python Live-Loop Example](#complete-python-live-loop-example)
+  - [Design Guidelines for Live Models](#design-guidelines-for-live-models)
+  - [Choosing the Right Update Strategy](#choosing-the-right-update-strategy)
+  - [Failure Handling and Fallback](#failure-handling-and-fallback)
 - [JSON and Text Reports](#json-and-text-reports)
 - [Troubleshooting](#troubleshooting)
 - [Related Documentation](#related-documentation)
@@ -1005,6 +1016,498 @@ for (ReconciliationVariable v : result.getVariables()) {
 feed.setFlowRate(engine.getVariable("feed").getReconciledValue(), "kg/hr");
 process.run();
 ```
+
+---
+
+## Building Live NeqSim Models (Python)
+
+A "live model" (or digital twin) continuously reads plant data, validates it, and keeps a NeqSim simulation synchronized with reality. In NeqSim the **computation engine is Java**, but the **orchestration layer is Python** — Python owns the scheduling, data acquisition (OPC-UA, PI, CSV, database), visualization, and alarm logic, while Java handles the thermodynamics, process simulation, and numerical optimization.
+
+This section describes the optimal architecture for combining the **SteadyStateDetector**, **DataReconciliationEngine**, and **ProcessSystem** in a live Python application.
+
+### Architecture — Python Orchestrator, Java Engine
+
+```
+┌───────────────────────────────────────────────────────────────────┐
+│  Python Application (scheduling, I/O, dashboards, alerts)        │
+│                                                                   │
+│  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────────┐  │
+│  │  Data     │──▶│  Steady  │──▶│  Data    │──▶│ NeqSim Model │  │
+│  │  Source   │   │  State   │   │  Recon   │   │ Update +     │  │
+│  │ (OPC/PI)  │   │  Detect  │   │  Engine  │   │ Optimizer    │  │
+│  └──────────┘   └──────────┘   └──────────┘   └──────────────┘  │
+│       ▲                                              │           │
+│       │              via jneqsim (JPype JVM)         ▼           │
+│       │                                       Reconciled +       │
+│       │                                       Optimized Results  │
+│       └──────────────────────────────────────────────────────────┘
+│                                                                   │
+│  Python libraries: pandas, schedule/APScheduler, opcua, matplotlib│
+└───────────────────────────────────────────────────────────────────┘
+```
+
+**Why this split?**
+
+| Layer | Python | Java (via jneqsim) |
+|-------|--------|---------------------|
+| **Data acquisition** | OPC-UA, PI SDK, REST APIs, CSV/DB | — |
+| **Scheduling** | `schedule`, `APScheduler`, `asyncio` | — |
+| **SSD** | Pushes values to Java detector | `SteadyStateDetector` (R-statistic) |
+| **Reconciliation** | Reads results as dicts | `DataReconciliationEngine` (WLS) |
+| **Process simulation** | Sets inputs, calls `run()` | `ProcessSystem`, EOS solvers |
+| **Optimization** | SciPy, or calls Java optimizer | `ProcessSensitivityAnalyzer`, LM |
+| **Dashboards** | Plotly, Streamlit, Grafana | — |
+| **Alerting** | Email, Teams, PagerDuty | — |
+
+### The Four-Stage Pipeline
+
+Every scan cycle (typically 30-120 seconds) executes four stages:
+
+```
+  ┌───────────┐     ┌──────────┐     ┌──────────────┐     ┌────────────┐
+  │ 1. COLLECT │────▶│ 2. SSD   │────▶│ 3. RECONCILE │────▶│ 4. UPDATE  │
+  │   plant    │     │  gate    │     │   balance    │     │   model +  │
+  │   tags     │     │ (R-stat) │     │   enforce    │     │  optimize  │
+  └───────────┘     └──────────┘     └──────────────┘     └────────────┘
+       │                 │                  │                    │
+    raw tags       steady/transient   reconciled vals      model predictions
+    + timestamps    per variable       + gross errors       + KPIs
+```
+
+**Stage 2 is the gate** — if the process is not at steady state, stages 3 and 4 are skipped and the previous good model state is retained. This prevents the model from chasing transients.
+
+### Stage 1 — Collect and Buffer Measurements
+
+```python
+import time
+from collections import OrderedDict
+
+def read_plant_tags():
+    """Read current tag values from your data source.
+    Replace this with your OPC-UA / PI / historian reader."""
+    return OrderedDict([
+        ("FI-1001", 10050.0),   # feed flow, kg/hr
+        ("FI-2001",  3520.0),   # gas out flow
+        ("FI-3001",  4780.0),   # oil out flow
+        ("FI-4001",  1880.0),   # water out flow
+        ("TI-1001",    82.3),   # separator temperature, C
+        ("PI-1001",    65.2),   # separator pressure, bara
+    ])
+```
+
+The data source is entirely Python — OPC-UA (`opcua` or `asyncua`), OSIsoft PI (`PIconnect`), CSV polling, or a database query. NeqSim never touches the I/O layer directly.
+
+### Stage 2 — Steady-State Gate
+
+Push each new reading into the `SteadyStateDetector` and evaluate:
+
+```python
+from neqsim import jneqsim
+
+SteadyStateDetector = jneqsim.process.util.reconciliation.SteadyStateDetector
+SteadyStateVariable = jneqsim.process.util.reconciliation.SteadyStateVariable
+
+# One-time setup (keep alive across scan cycles)
+def create_ssd():
+    ssd = SteadyStateDetector(30)   # 30-sample sliding window
+    ssd.setRThreshold(0.5)
+
+    # Register all monitored tags with instrument uncertainties
+    tags = {
+        "FI-1001": {"unit": "kg/hr", "sigma": 200.0},
+        "FI-2001": {"unit": "kg/hr", "sigma": 100.0},
+        "FI-3001": {"unit": "kg/hr", "sigma": 150.0},
+        "FI-4001": {"unit": "kg/hr", "sigma":  80.0},
+        "TI-1001": {"unit": "C",     "sigma":   0.5},
+        "PI-1001": {"unit": "bara",  "sigma":   0.2},
+    }
+    for name, info in tags.items():
+        v = SteadyStateVariable(name, 30)
+        v.setUnit(info["unit"]).setUncertainty(info["sigma"])
+        ssd.addVariable(v)
+
+    return ssd
+
+# Per-cycle call
+def check_steady_state(ssd, plant_tags):
+    """Push new readings and evaluate.
+    Returns (is_steady, result_object)."""
+    java_map = jneqsim.java.util.LinkedHashMap()
+    for tag, value in plant_tags.items():
+        java_map.put(tag, float(value))
+    result = ssd.updateAndEvaluate(java_map)
+    return result.isAtSteadyState(), result
+```
+
+**Key point**: The `SteadyStateDetector` instance is long-lived — it accumulates history across scan cycles. Do **not** recreate it every cycle.
+
+### Stage 3 — Data Reconciliation
+
+Once the SSD gate passes, bridge directly to reconciliation:
+
+```python
+def reconcile_measurements(ssd):
+    """Bridge SSD to reconciliation engine and solve."""
+    engine = ssd.createReconciliationEngine()
+
+    # Add mass balance constraints (separator: feed = gas + oil + water)
+    engine.addMassBalanceConstraint(
+        "3-Phase Sep",
+        ["FI-1001"],                            # inlets
+        ["FI-2001", "FI-3001", "FI-4001"]       # outlets
+    )
+
+    result = engine.reconcileWithGrossErrorElimination(2)
+
+    if not result.isConverged():
+        print(f"Reconciliation failed: {result.getErrorMessage()}")
+        return None
+
+    if result.hasGrossErrors():
+        for ge in result.getGrossErrors():
+            print(f"WARNING: gross error on {ge.getName()} "
+                  f"(|r|={abs(ge.getNormalizedResidual()):.2f})")
+
+    return result
+```
+
+The `createReconciliationEngine()` bridge automatically:
+- Uses window **means** as measured values (noise filtered)
+- Carries the configured **uncertainties** (sigma)
+- Excludes any variable that was **transient** or has **no uncertainty**
+
+### Stage 4 — Model Update and Optimization
+
+With reconciled (balanced) values, update the NeqSim process model:
+
+```python
+from neqsim import jneqsim
+
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+Stream = jneqsim.process.equipment.stream.Stream
+Separator = jneqsim.process.equipment.separator.ThreePhaseSeparator
+
+# One-time model build
+def build_model():
+    fluid = SystemSrkEos(273.15 + 80.0, 65.0)
+    fluid.addComponent("methane", 0.70)
+    fluid.addComponent("ethane", 0.10)
+    fluid.addComponent("propane", 0.05)
+    fluid.addComponent("nC10", 0.10)
+    fluid.addComponent("water", 0.05)
+    fluid.setMixingRule("classic")
+    fluid.setMultiPhaseCheck(True)
+
+    feed = Stream("Feed", fluid)
+    feed.setFlowRate(10000.0, "kg/hr")
+    feed.setTemperature(80.0, "C")
+    feed.setPressure(65.0, "bara")
+
+    sep = Separator("HP Sep", feed)
+
+    process = ProcessSystem()
+    process.add(feed)
+    process.add(sep)
+    return process, feed, sep
+
+# Per-cycle update
+def update_model(process, feed, sep, rec_result):
+    """Push reconciled values into the simulation and re-run."""
+    engine = rec_result  # the ReconciliationResult
+
+    # Get reconciled flows
+    rec_feed  = rec_result.getVariable("FI-1001").getReconciledValue()
+    rec_temp  = rec_result.getVariable("TI-1001").getReconciledValue()
+    rec_press = rec_result.getVariable("PI-1001").getReconciledValue()
+
+    # Update simulation inputs
+    feed.setFlowRate(float(rec_feed), "kg/hr")
+    feed.setTemperature(float(rec_temp), "C")
+    feed.setPressure(float(rec_press), "bara")
+
+    # Re-run the process model
+    process.run()
+
+    # Extract model predictions for comparison
+    model_gas  = sep.getGasOutStream().getFlowRate("kg/hr")
+    model_oil  = sep.getOilOutStream().getFlowRate("kg/hr")
+    model_water = sep.getWaterOutStream().getFlowRate("kg/hr")
+
+    return {
+        "model_gas": model_gas,
+        "model_oil": model_oil,
+        "model_water": model_water,
+    }
+```
+
+**Optimization** (optional, Stage 4b): If model predictions diverge from reconciled plant values, use a parameter tuning step:
+
+```python
+from scipy.optimize import minimize
+
+def tune_model(process, feed, sep, rec_result):
+    """Tune model parameters (e.g., fluid composition) to match
+    reconciled outflows. Uses SciPy on the Python side,
+    NeqSim ProcessSystem on the Java side."""
+
+    rec_gas = rec_result.getVariable("FI-2001").getReconciledValue()
+    rec_oil = rec_result.getVariable("FI-3001").getReconciledValue()
+
+    def objective(params):
+        # params = [methane_frac, nC10_frac]
+        fluid = feed.getFluid()
+        fluid.setMolarComposition([params[0], 0.10, 0.05, params[1],
+                                   1.0 - params[0] - 0.10 - 0.05 - params[1]])
+        process.run()
+        pred_gas = sep.getGasOutStream().getFlowRate("kg/hr")
+        pred_oil = sep.getOilOutStream().getFlowRate("kg/hr")
+        return ((pred_gas - rec_gas)**2 / rec_gas**2
+              + (pred_oil - rec_oil)**2 / rec_oil**2)
+
+    result = minimize(objective, x0=[0.70, 0.10],
+                      bounds=[(0.5, 0.9), (0.05, 0.20)],
+                      method="Nelder-Mead")
+    return result
+```
+
+### Complete Python Live-Loop Example
+
+This is the recommended end-to-end pattern for a live NeqSim model:
+
+```python
+"""
+Live NeqSim digital twin — complete four-stage pipeline.
+
+Run this as a long-running Python process (e.g., systemd service, Docker
+container, or Azure Function on a timer trigger).
+"""
+import time
+import json
+import logging
+from collections import OrderedDict
+from neqsim import jneqsim
+
+# ---------- Java imports via jneqsim ----------
+SteadyStateDetector = jneqsim.process.util.reconciliation.SteadyStateDetector
+SteadyStateVariable = jneqsim.process.util.reconciliation.SteadyStateVariable
+DataReconciliationEngine = jneqsim.process.util.reconciliation.DataReconciliationEngine
+ReconciliationVariable = jneqsim.process.util.reconciliation.ReconciliationVariable
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+Stream = jneqsim.process.equipment.stream.Stream
+Separator = jneqsim.process.equipment.separator.ThreePhaseSeparator
+
+log = logging.getLogger("live_model")
+SCAN_INTERVAL = 60  # seconds
+
+# --------- 1. TAG CONFIGURATION ---------
+TAG_CONFIG = OrderedDict([
+    ("FI-1001", {"desc": "Feed flow",  "unit": "kg/hr", "sigma": 200.0}),
+    ("FI-2001", {"desc": "Gas out",    "unit": "kg/hr", "sigma": 100.0}),
+    ("FI-3001", {"desc": "Oil out",    "unit": "kg/hr", "sigma": 150.0}),
+    ("FI-4001", {"desc": "Water out",  "unit": "kg/hr", "sigma":  80.0}),
+    ("TI-1001", {"desc": "Sep temp",   "unit": "C",     "sigma":   0.5}),
+    ("PI-1001", {"desc": "Sep press",  "unit": "bara",  "sigma":   0.2}),
+])
+
+# --------- 2. BUILD OBJECTS (once) ---------
+
+# SSD detector
+ssd = SteadyStateDetector(30)
+ssd.setRThreshold(0.5)
+for tag, cfg in TAG_CONFIG.items():
+    v = SteadyStateVariable(tag, 30)
+    v.setUnit(cfg["unit"]).setUncertainty(cfg["sigma"])
+    ssd.addVariable(v)
+
+# Process model
+fluid = SystemSrkEos(273.15 + 80.0, 65.0)
+fluid.addComponent("methane", 0.70)
+fluid.addComponent("ethane", 0.10)
+fluid.addComponent("propane", 0.05)
+fluid.addComponent("nC10", 0.10)
+fluid.addComponent("water", 0.05)
+fluid.setMixingRule("classic")
+fluid.setMultiPhaseCheck(True)
+
+feed = Stream("Feed", fluid)
+feed.setFlowRate(10000.0, "kg/hr")
+feed.setTemperature(80.0, "C")
+feed.setPressure(65.0, "bara")
+
+sep = Separator("HP Sep", feed)
+
+process = ProcessSystem()
+process.add(feed)
+process.add(sep)
+process.run()  # initial steady-state solve
+
+log.info("Live model initialized")
+
+# --------- 3. MAIN LOOP ---------
+
+def read_plant_tags():
+    """Replace with your OPC-UA / PI / historian reader."""
+    # Placeholder — in production, query your data source here
+    return {tag: 0.0 for tag in TAG_CONFIG}
+
+last_good_result = None
+
+while True:
+    try:
+        # Stage 1: Collect
+        tags = read_plant_tags()
+
+        # Stage 2: SSD gate
+        java_map = jneqsim.java.util.LinkedHashMap()
+        for tag, value in tags.items():
+            java_map.put(tag, float(value))
+        ss_result = ssd.updateAndEvaluate(java_map)
+
+        if not ss_result.isAtSteadyState():
+            transient_names = [v.getName()
+                               for v in ss_result.getTransientVariables()]
+            log.info("Transient — skipping (%s)", ", ".join(transient_names))
+            time.sleep(SCAN_INTERVAL)
+            continue
+
+        # Stage 3: Reconcile
+        engine = ssd.createReconciliationEngine()
+        engine.addMassBalanceConstraint(
+            "3-Phase Sep",
+            ["FI-1001"],
+            ["FI-2001", "FI-3001", "FI-4001"]
+        )
+        rec_result = engine.reconcileWithGrossErrorElimination(2)
+
+        if not rec_result.isConverged():
+            log.warning("Reconciliation failed: %s",
+                        rec_result.getErrorMessage())
+            time.sleep(SCAN_INTERVAL)
+            continue
+
+        if rec_result.hasGrossErrors():
+            for ge in rec_result.getGrossErrors():
+                log.warning("Gross error: %s |r|=%.2f",
+                            ge.getName(),
+                            abs(ge.getNormalizedResidual()))
+
+        # Stage 4: Update model
+        feed.setFlowRate(
+            float(rec_result.getVariable("FI-1001").getReconciledValue()),
+            "kg/hr")
+        feed.setTemperature(
+            float(rec_result.getVariable("TI-1001").getReconciledValue()),
+            "C")
+        feed.setPressure(
+            float(rec_result.getVariable("PI-1001").getReconciledValue()),
+            "bara")
+        process.run()
+
+        # Compare model vs reconciled
+        model_gas = sep.getGasOutStream().getFlowRate("kg/hr")
+        rec_gas = rec_result.getVariable("FI-2001").getReconciledValue()
+        gap_pct = abs(model_gas - rec_gas) / rec_gas * 100
+
+        log.info("OK  feed=%.0f  gas=%.0f (model=%.0f, gap=%.1f%%)",
+                 rec_result.getVariable("FI-1001").getReconciledValue(),
+                 rec_gas, model_gas, gap_pct)
+
+        last_good_result = rec_result
+
+    except Exception as e:
+        log.exception("Scan cycle error: %s", e)
+
+    time.sleep(SCAN_INTERVAL)
+```
+
+### Design Guidelines for Live Models
+
+**1. Object lifetime**
+
+| Object | Lifetime | Rationale |
+|--------|----------|------------|
+| `SteadyStateDetector` | Application lifetime | Accumulates sliding window history across scans |
+| `ProcessSystem` | Application lifetime | Expensive to build; re-run with updated inputs each cycle |
+| `DataReconciliationEngine` | Per-cycle (disposable) | Created fresh from SSD bridge each cycle |
+| `ReconciliationResult` | Per-cycle | Store `last_good_result` for fallback |
+
+**2. Scan interval selection**
+
+The scan interval determines how often you push a new sample to the SSD and (if steady) reconcile + re-run the model.
+
+| Scenario | Scan interval | SSD window | Effective detection window |
+|----------|--------------|------------|---------------------------|
+| Fast-changing platform | 10 s | 30 | 5 min |
+| Typical offshore separator | 30-60 s | 30 | 15-30 min |
+| Slow pipeline or storage | 5 min | 20 | 100 min |
+
+Rule of thumb: The SSD window should cover **3-5 process time constants** to reliably detect transitions.
+
+**3. Keep the model simple**
+
+A live model should converge in under 2 seconds per cycle. Avoid:
+- Deep distillation columns (many stages)
+- Multiple nested recycles
+- Full multi-phase flash with many components
+
+If the model is complex, consider running the heavy simulation on a coarser schedule (every 5 min) and using a simplified proxy for the fast cycle.
+
+**4. Separate flow variables from condition variables**
+
+In the reconciliation step, only **flow-rate** tags participate in mass balance constraints. Temperature and pressure tags are "condition" variables — they do not enter the balance but are still useful for:
+- SSD evaluation (is the process stable?)
+- Model input update (feed T and P)
+
+You can either reconcile them with separate energy balance constraints, or simply use their raw (or SSD-filtered mean) values as direct model inputs.
+
+### Choosing the Right Update Strategy
+
+NeqSim provides several layers that can be combined. Choose based on your needs:
+
+| Strategy | When to use | NeqSim classes |
+|----------|------------|----------------|
+| **SSD + Reconciliation only** | You trust the model structure; just need balanced inputs | `SteadyStateDetector` + `DataReconciliationEngine` |
+| **SSD + Reconciliation + Model re-run** | Balanced inputs, then predict unmeasured outputs | Above + `ProcessSystem.run()` |
+| **SSD + Reconciliation + Parameter tuning** | Model predictions diverge; tune composition, UA, etc. | Above + SciPy `minimize` or `ProcessSensitivityAnalyzer` |
+| **SSD + Reconciliation + LM optimizer** | Formal model calibration with uncertainty | Above + `LevenbergMarquardtOptimizer` (batch) |
+| **Direct EnKF (no SSD)** | Streaming updates without explicit SSD gate | `EnKFParameterEstimator` handles both detection and update |
+
+**Recommended starting point**: SSD + Reconciliation + Model re-run. This gives you balanced measurements, a validated model, and predicted KPIs with minimal complexity. Add parameter tuning only when the model-vs-plant gap consistently exceeds 5-10%.
+
+### Failure Handling and Fallback
+
+```python
+def run_cycle(ssd, process, feed, sep, tags):
+    """A single scan cycle with proper fallback logic."""
+
+    # Gate 1: SSD
+    ss_result = push_and_evaluate(ssd, tags)
+    if not ss_result.isAtSteadyState():
+        return {"status": "transient", "action": "hold_previous_model"}
+
+    # Gate 2: Reconciliation
+    rec_result = reconcile(ssd)
+    if rec_result is None or not rec_result.isConverged():
+        return {"status": "recon_failed", "action": "hold_previous_model"}
+
+    if not rec_result.isGlobalTestPassed():
+        # Measurements are inconsistent — could be a bad sensor
+        rec_result = engine.reconcileWithGrossErrorElimination(2)
+        if rec_result.hasGrossErrors():
+            log.warning("Eliminated gross errors, proceeding with caution")
+
+    # Gate 3: Model convergence
+    try:
+        update_and_run(process, feed, rec_result)
+    except Exception:
+        return {"status": "model_failed", "action": "hold_previous_model"}
+
+    return {"status": "ok", "result": rec_result}
+```
+
+**The golden rule**: If any stage fails, **hold the previous good model state**. Never push a diverged or unconverged model to downstream consumers (dashboards, optimizers, MPC). Log the failure, alert if it persists for N consecutive cycles, and re-try next scan.
 
 ---
 
