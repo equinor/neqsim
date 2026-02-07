@@ -1775,6 +1775,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     CompressorChartReader reader = new CompressorChartReader(filePath);
     reader.setCurvesToCompressor(this);
     compressorChart.setUseCompressorChart(true);
+    // Reinitialize constraints so min/max speed limits reflect the loaded chart curves
+    reinitializeCapacityConstraints();
   }
 
   /**
@@ -1792,6 +1794,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     CompressorChartJsonReader reader = new CompressorChartJsonReader(filePath);
     reader.setCurvesToCompressor(this);
     compressorChart.setUseCompressorChart(true);
+    // Reinitialize constraints so min/max speed limits reflect the loaded chart curves
+    reinitializeCapacityConstraints();
   }
 
   /**
@@ -1804,6 +1808,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     CompressorChartJsonReader reader = new CompressorChartJsonReader(jsonString, true);
     reader.setCurvesToCompressor(this);
     compressorChart.setUseCompressorChart(true);
+    // Reinitialize constraints so min/max speed limits reflect the loaded chart curves
+    reinitializeCapacityConstraints();
   }
 
   /**
