@@ -3741,33 +3741,36 @@ public class ProductionOptimizer {
     if (evaluation.utilizationWithinLimits() && evaluation.hardOk()) {
       return evaluation.score();
     }
-    // Adaptive penalty base: use the larger of the absolute objective value or 1.0
-    // so the penalty always dominates the objective regardless of units/scale.
-    double penaltyBase = Math.max(Math.abs(evaluation.score()), 1.0);
 
-    double penalty = 0.0;
+    // Collect hard constraint margins
+    List<Double> hardList = new ArrayList<Double>();
     for (ConstraintStatus status : evaluation.constraintStatuses()) {
-      if (status.getSeverity() == ConstraintSeverity.HARD && status.violated()) {
-        // Penalty proportional to constraint margin and objective scale
-        penalty -= penaltyBase * (1.0 + Math.abs(status.getMargin()));
+      if (status.getSeverity() == ConstraintSeverity.HARD) {
+        hardList
+            .add(status.violated() ? -Math.abs(status.getMargin()) : Math.abs(status.getMargin()));
       }
     }
+
+    // Convert utilization violations to hard margins (margin = limit - utilization)
     if (!evaluation.utilizationWithinLimits()) {
-      // Find the maximum over-utilization from utilization records
-      double maxOverUtil = 0.0;
       for (UtilizationRecord record : evaluation.utilizationRecords()) {
         double overUtil = record.getUtilization() - record.getUtilizationLimit();
-        if (overUtil > maxOverUtil) {
-          maxOverUtil = overUtil;
+        if (overUtil > 0) {
+          // Quadratic margin: use -overUtil² so the shared formula's linear penalty
+          // yields the same quadratic scaling as the original implementation
+          hardList.add(-(overUtil * overUtil));
         }
       }
-      // Quadratic penalty scaled by objective magnitude
-      if (maxOverUtil > 0) {
-        penalty -= penaltyBase * (1.0 + maxOverUtil * maxOverUtil);
-      }
     }
-    // Ensure result is always worse than any feasible solution
-    return Math.min(-penaltyBase, evaluation.score() + penalty);
+
+    double[] hardMargins = new double[hardList.size()];
+    for (int i = 0; i < hardMargins.length; i++) {
+      hardMargins[i] = hardList.get(i);
+    }
+
+    // Delegate to shared penalty formula (no soft constraints in this path)
+    return ConstraintPenaltyCalculator.applyPenaltyFormula(evaluation.score(), hardMargins,
+        new double[0], new double[0]);
   }
 
   private double determineUtilizationLimit(ProcessEquipmentInterface unit,

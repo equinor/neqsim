@@ -774,12 +774,18 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
     // Apply safety factor to duty
     double designDuty = calculatedDuty * safetyFactor;
 
+    // Update instance field so constraint init picks it up
+    this.designDuty = designDuty;
+
     // Initialize and calculate mechanical design
     HeatExchangerMechanicalDesign mechDesign = getMechanicalDesign();
     if (mechDesign != null) {
       mechDesign.maxDesignDuty = designDuty;
       mechDesign.calcDesign();
     }
+
+    // Reinitialize capacity constraints with the new design values
+    initializeHxCapacityConstraints();
 
     // Mark as auto-sized (don't call super.autoSize as it will fail on inStream check)
     setAutoSized(true);

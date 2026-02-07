@@ -1013,6 +1013,7 @@ public class Pump extends TwoPortEquipment
    * </p>
    */
   protected void initializeCapacityConstraints() {
+    capacityConstraints.clear();
     // Power constraint (HARD limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("power", "kW",
         neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)

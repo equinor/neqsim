@@ -581,18 +581,37 @@ OptimizationConstraint opt = def.toOptimizationConstraint();
 
 ## Best Practices
 
-### 1. Run Process Before Optimizing
+### 1. Run → AutoSize → Run → Optimize
 
-Always run the process once to establish a feasible baseline:
+Always follow this workflow when combining equipment sizing with optimization. Auto-sizing
+sets design limits from current operating conditions, so the process must be run first. After
+sizing, run again so stream conditions reflect the new equipment dimensions before optimizing.
 
 ```java
+// 1. Establish baseline operating point
 process.run();
 
-// Then optimize
+// 2. Size all equipment (20 % safety margin by default)
+int count = process.autoSizeEquipment(1.2);
+
+// 3. Re-run to update thermodynamics with new geometry
+process.run();
+
+// 4. Optimize — constraints now reflect the auto-sized design limits
 OptimizationConfig config = new OptimizationConfig(1000.0, 20000.0)
     .searchMode(SearchMode.GOLDEN_SECTION_SCORE);
 OptimizationResult result = optimizer.optimize(process, feed, config);
 ```
+
+Company-standard sizing is also supported:
+
+```java
+process.autoSizeEquipment("Equinor", "TR2000");
+```
+
+After `autoSizeEquipment`, each equipment's `CapacityConstraint` objects are rebuilt with the
+new design limits. The optimizer reads these live via lambda suppliers, so no manual constraint
+sync is needed.
 
 ### 2. Validate Configuration
 

@@ -218,26 +218,32 @@ public class ConstraintPenaltyCalculator implements Serializable {
    * @return penalized objective (equals rawObjective if feasible, worse if infeasible)
    */
   public double penalize(double rawObjective, ProcessSystem process) {
-    boolean anyViolation = false;
-    double penaltyBase = Math.max(Math.abs(rawObjective), 1.0);
-    double penalty = 0.0;
+    List<Double> hardList = new ArrayList<Double>();
+    List<Double> softList = new ArrayList<Double>();
+    List<Double> weightList = new ArrayList<Double>();
 
     for (ProcessConstraint c : constraints) {
       double m = c.margin(process);
-      if (m < 0.0) {
-        anyViolation = true;
-        if (c.isHard()) {
-          penalty -= penaltyBase * (1.0 + Math.abs(m));
-        } else {
-          penalty -= penaltyBase * c.getPenaltyWeight() * m * m;
-        }
+      if (c.isHard()) {
+        hardList.add(m);
+      } else {
+        softList.add(m);
+        weightList.add(c.getPenaltyWeight());
       }
     }
 
-    if (!anyViolation) {
-      return rawObjective;
+    double[] hardMargins = new double[hardList.size()];
+    for (int i = 0; i < hardMargins.length; i++) {
+      hardMargins[i] = hardList.get(i);
     }
-    return Math.min(-penaltyBase, rawObjective + penalty);
+    double[] softMargins = new double[softList.size()];
+    double[] softWeights = new double[weightList.size()];
+    for (int i = 0; i < softMargins.length; i++) {
+      softMargins[i] = softList.get(i);
+      softWeights[i] = weightList.get(i);
+    }
+
+    return applyPenaltyFormula(rawObjective, hardMargins, softMargins, softWeights);
   }
 
   /**
@@ -261,6 +267,52 @@ public class ConstraintPenaltyCalculator implements Serializable {
    */
   public void clear() {
     constraints.clear();
+  }
+
+  // ============================================================================
+  // Shared penalty formula
+  // ============================================================================
+
+  /**
+   * Applies the shared adaptive penalty formula to a raw objective value given pre-evaluated
+   * constraint margins and severity flags.
+   *
+   * <p>
+   * This is the single source of truth for the penalty computation used by both
+   * {@link ConstraintPenaltyCalculator#penalize(double, ProcessSystem)} and
+   * {@link ProductionOptimizer}'s internal feasibility scoring. Extracting it here prevents the two
+   * formulations from diverging.
+   * </p>
+   *
+   * @param rawObjective the raw (unpenalized) objective value
+   * @param hardMargins array of margins for hard/critical constraints (negative = violated)
+   * @param softMargins array of margins for soft/advisory constraints (negative = violated)
+   * @param softWeights array of penalty weights for each soft constraint (same length as
+   *        softMargins)
+   * @return penalized objective (equals rawObjective if all margins &gt;= 0)
+   */
+  public static double applyPenaltyFormula(double rawObjective, double[] hardMargins,
+      double[] softMargins, double[] softWeights) {
+    double penaltyBase = Math.max(Math.abs(rawObjective), 1.0);
+    double penalty = 0.0;
+    boolean anyViolation = false;
+
+    for (int i = 0; i < hardMargins.length; i++) {
+      if (hardMargins[i] < 0.0) {
+        anyViolation = true;
+        penalty -= penaltyBase * (1.0 + Math.abs(hardMargins[i]));
+      }
+    }
+    for (int i = 0; i < softMargins.length; i++) {
+      if (softMargins[i] < 0.0) {
+        anyViolation = true;
+        penalty -= penaltyBase * softWeights[i] * softMargins[i] * softMargins[i];
+      }
+    }
+    if (!anyViolation) {
+      return rawObjective;
+    }
+    return Math.min(-penaltyBase, rawObjective + penalty);
   }
 
   // ============================================================================
