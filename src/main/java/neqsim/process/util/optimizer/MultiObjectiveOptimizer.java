@@ -148,12 +148,14 @@ public class MultiObjectiveOptimizer implements Serializable {
    * solutions that lie on the <em>convex</em> hull of the true Pareto front. Non-convex regions of
    * the front will be missed because no weight vector maps to those solutions. For problems where
    * the Pareto front may be non-convex, prefer {@link #optimizeEpsilonConstraint} or
-   * {@link ProductionOptimizer#sampleParetoFront} which can find non-convex Pareto-optimal points.
+   * {@link #sampleParetoFront} which can find non-convex Pareto-optimal points.
    * </p>
    *
-   * @apiNote This method is best suited for convex Pareto fronts. If you observe large gaps between
-   *          adjacent solutions, the front is likely non-convex and epsilon-constraint or direct
-   *          sampling methods should be used instead.
+   * <p>
+   * <em>Note:</em> This method is best suited for convex Pareto fronts. If you observe large gaps
+   * between adjacent solutions, the front is likely non-convex and epsilon-constraint or direct
+   * sampling methods should be used instead.
+   * </p>
    *
    * @param process the process system to optimize
    * @param feedStream the feed stream to manipulate
@@ -399,6 +401,13 @@ public class MultiObjectiveOptimizer implements Serializable {
 
   /**
    * Optimize a single objective (convenience method).
+   *
+   * @param process the process system to optimize
+   * @param feedStream the feed stream to manipulate
+   * @param objective the single objective function to optimize
+   * @param baseConfig base optimization configuration
+   * @param constraints additional optimization constraints
+   * @return Pareto front containing the single optimal solution
    */
   private ParetoFront optimizeSingleObjective(ProcessSystem process, StreamInterface feedStream,
       ObjectiveFunction objective, OptimizationConfig baseConfig,

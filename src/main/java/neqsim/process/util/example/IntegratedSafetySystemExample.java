@@ -198,6 +198,8 @@ public class IntegratedSafetySystemExample {
 
   /**
    * Main method demonstrating integrated safety systems and scenarios.
+   *
+   * @param args command-line arguments (not used)
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
@@ -712,6 +714,15 @@ public class IntegratedSafetySystemExample {
 
   /**
    * Reset system to normal operation.
+   *
+   * @param hippsValve the HIPPS isolation valve to reset
+   * @param esdInletValve the ESD inlet valve to reset
+   * @param gasSplitter the gas splitter to reset split factors
+   * @param bdValve the blowdown valve to reset
+   * @param separator the separator to reset to steady-state calculation
+   * @param hippsController the HIPPS controller to reset
+   * @param esdController the ESD controller to reset
+   * @param esdButton the ESD push button to reset
    */
   private static void resetSystem(ThrottlingValve hippsValve, ThrottlingValve esdInletValve,
       Splitter gasSplitter, BlowdownValve bdValve, Separator separator,

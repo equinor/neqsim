@@ -712,6 +712,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Optimization Overview | [docs/process/optimization/README.md](process/optimization/) | Optimization module |
 | **Flow Rate Optimization** | [docs/process/optimization/flow-rate-optimization.md](process/optimization/flow-rate-optimization) | **Comprehensive flow rate optimizer with lift curve generation for Eclipse reservoir simulation** |
 | **Multi-Objective Optimization** | [docs/process/optimization/multi-objective-optimization.md](process/optimization/multi-objective-optimization) | **Pareto front generation for competing objectives (throughput vs energy)** |
+| **Constraint Framework** | [docs/process/optimization/constraint-framework.md](process/optimization/constraint-framework) | **Unified ProcessConstraint interface bridging equipment, internal, and external optimizer constraints** |
 | Batch Studies | [docs/process/optimization/batch-studies.md](process/optimization/batch-studies) | Batch studies |
 | Bottleneck Analysis | [docs/wiki/bottleneck_analysis.md](wiki/bottleneck_analysis) | Bottleneck analysis and ProductionOptimizer |
 | **Multi-Variable Optimization** | [docs/wiki/bottleneck_analysis.md#multi-variable-optimization-with-manipulatedvariable](wiki/bottleneck_analysis#multi-variable-optimization-with-manipulatedvariable) | **ManipulatedVariable for split factors, dual feeds, pressure setpoints** |
