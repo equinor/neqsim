@@ -39,6 +39,12 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 | [REAL_TIME_INTEGRATION_GUIDE.md](REAL_TIME_INTEGRATION_GUIDE) | Real-time systems integration |
 | [QRA_INTEGRATION_GUIDE.md](QRA_INTEGRATION_GUIDE) | Quantitative Risk Assessment integration |
 
+### Web API and Online Simulation
+
+| Document | Description |
+|----------|-------------|
+| [web_api_json_process_builder.md](web_api_json_process_builder) | **JSON Process Builder, structured error responses, stream wiring API, and session management for online simulators** |
+
 ### P&ID and Design
 
 | Document | Description |

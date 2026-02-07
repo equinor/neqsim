@@ -538,6 +538,70 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Validates the process setup and returns a structured SimulationResult.
+   *
+   * <p>
+   * Converts ValidationResult issues into SimulationResult.ErrorDetail objects for web API
+   * consumption. Returns a success result if no critical errors are found.
+   * </p>
+   *
+   * @return a SimulationResult with validation errors or success status
+   */
+  public SimulationResult validateAndReport() {
+    neqsim.util.validation.ValidationResult valResult = validateSetup();
+    List<SimulationResult.ErrorDetail> errorDetails = new ArrayList<>();
+    List<String> warningMessages = new ArrayList<>();
+
+    for (neqsim.util.validation.ValidationResult.ValidationIssue issue : valResult.getIssues()) {
+      if (issue.getSeverity() == neqsim.util.validation.ValidationResult.Severity.CRITICAL) {
+        errorDetails.add(new SimulationResult.ErrorDetail(
+            "VALIDATION_" + issue.getCategory().toUpperCase().replace('.', '_'), issue.getMessage(),
+            issue.getCategory().contains(".") ? issue.getCategory().split("\\.")[0] : null,
+            issue.getRemediation()));
+      } else {
+        warningMessages.add(issue.toString());
+      }
+    }
+
+    if (!errorDetails.isEmpty()) {
+      return SimulationResult.failure(this, errorDetails, warningMessages);
+    }
+    return SimulationResult.success(this, null, warningMessages);
+  }
+
+  /**
+   * Runs the process system and returns a structured SimulationResult.
+   *
+   * <p>
+   * Validates the setup first, then runs the simulation. Returns a structured result containing the
+   * full JSON report on success, or detailed errors on failure. Designed for web API integration.
+   * </p>
+   *
+   * @return a SimulationResult with the simulation report or errors
+   */
+  public SimulationResult runAndReport() {
+    // Validate first
+    SimulationResult validation = validateAndReport();
+    if (validation.isError()) {
+      return validation;
+    }
+
+    List<String> warningMessages = new ArrayList<>(validation.getWarnings());
+
+    try {
+      run();
+      String report = getReport_json();
+      return SimulationResult.success(this, report, warningMessages);
+    } catch (Exception e) {
+      List<SimulationResult.ErrorDetail> errorDetails = new ArrayList<>();
+      errorDetails.add(new SimulationResult.ErrorDetail("SIMULATION_ERROR",
+          "Simulation failed: " + e.getMessage(), null,
+          "Check equipment configuration, fluid definitions, and stream connections"));
+      return SimulationResult.failure(this, errorDetails, warningMessages);
+    }
+  }
+
+  /**
    * <p>
    * removeUnit.
    * </p>
@@ -3124,6 +3188,155 @@ public class ProcessSystem extends SimulationBaseClass {
       neqsim.process.processmodel.ProcessLoader.loadProcessFromYaml(yamlFile, this);
     } catch (Exception e) {
       logger.error("Error loading process from YAML file", e);
+    }
+  }
+
+  /**
+   * Builds a ProcessSystem from a JSON process definition string.
+   *
+   * <p>
+   * This is the primary entry point for web API and Python integration. Accepts a declarative JSON
+   * definition of fluids, equipment, and stream connections and returns a structured result with
+   * the built ProcessSystem or detailed error information.
+   * </p>
+   *
+   * @param json the JSON process definition string
+   * @return a SimulationResult containing the built process or errors
+   * @see JsonProcessBuilder
+   */
+  public static SimulationResult fromJson(String json) {
+    return new JsonProcessBuilder().build(json);
+  }
+
+  /**
+   * Builds and immediately runs a ProcessSystem from a JSON definition.
+   *
+   * <p>
+   * Convenience method that combines building and execution in a single call. The result contains
+   * the full simulation report JSON.
+   * </p>
+   *
+   * @param json the JSON process definition string
+   * @return a SimulationResult containing the executed process and report, or errors
+   * @see JsonProcessBuilder#buildAndRun(String)
+   */
+  public static SimulationResult fromJsonAndRun(String json) {
+    return JsonProcessBuilder.buildAndRun(json);
+  }
+
+  /**
+   * Resolves a named stream reference within this process system.
+   *
+   * <p>
+   * Supports dot-notation for specific outlet ports:
+   * <ul>
+   * <li>"unitName" — default outlet stream</li>
+   * <li>"unitName.gasOut" — gas outlet of separator</li>
+   * <li>"unitName.liquidOut" — liquid outlet of separator</li>
+   * <li>"unitName.outlet" — explicit outlet stream</li>
+   * </ul>
+   *
+   * @param ref the stream reference (e.g., "feed", "HP Sep.gasOut")
+   * @return the resolved StreamInterface, or null if not found
+   */
+  public StreamInterface resolveStreamReference(String ref) {
+    if (ref == null || ref.trim().isEmpty()) {
+      return null;
+    }
+
+    String unitName;
+    String port = "outlet";
+
+    if (ref.contains(".")) {
+      String[] parts = ref.split("\\.", 2);
+      unitName = parts[0];
+      port = parts[1].toLowerCase();
+    } else {
+      unitName = ref;
+    }
+
+    ProcessEquipmentInterface unit = getUnit(unitName);
+    if (unit == null) {
+      return null;
+    }
+
+    // If the unit is a Stream, return it directly
+    if (unit instanceof StreamInterface) {
+      return (StreamInterface) unit;
+    }
+
+    try {
+      switch (port) {
+        case "gasout":
+        case "gas":
+          return (StreamInterface) unit.getClass().getMethod("getGasOutStream").invoke(unit);
+        case "liquidout":
+        case "liquid":
+          return (StreamInterface) unit.getClass().getMethod("getLiquidOutStream").invoke(unit);
+        case "oilout":
+        case "oil":
+          return (StreamInterface) unit.getClass().getMethod("getOilOutStream").invoke(unit);
+        case "waterout":
+        case "water":
+          return (StreamInterface) unit.getClass().getMethod("getWaterOutStream").invoke(unit);
+        case "outlet":
+        default:
+          return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
+      }
+    } catch (NoSuchMethodException e) {
+      try {
+        return (StreamInterface) unit.getClass().getMethod("getOutStream").invoke(unit);
+      } catch (Exception ex) {
+        return null;
+      }
+    } catch (Exception e) {
+      return null;
+    }
+  }
+
+  /**
+   * Wires an inlet stream from a named reference to a target equipment unit.
+   *
+   * <p>
+   * Resolves the stream reference by name and connects it to the target unit.
+   * </p>
+   *
+   * @param targetUnitName the name of the equipment to wire the inlet to
+   * @param sourceRef the stream reference (e.g., "feed", "HP Sep.gasOut")
+   * @return true if wiring succeeded, false if source or target not found
+   */
+  public boolean wireStream(String targetUnitName, String sourceRef) {
+    ProcessEquipmentInterface target = getUnit(targetUnitName);
+    if (target == null) {
+      logger.warn("wireStream: target unit '{}' not found", targetUnitName);
+      return false;
+    }
+
+    StreamInterface stream = resolveStreamReference(sourceRef);
+    if (stream == null) {
+      logger.warn("wireStream: source reference '{}' could not be resolved", sourceRef);
+      return false;
+    }
+
+    try {
+      java.lang.reflect.Method setInlet =
+          target.getClass().getMethod("setInletStream", StreamInterface.class);
+      setInlet.invoke(target, stream);
+      return true;
+    } catch (NoSuchMethodException e) {
+      try {
+        java.lang.reflect.Method addStream =
+            target.getClass().getMethod("addStream", StreamInterface.class);
+        addStream.invoke(target, stream);
+        return true;
+      } catch (Exception ex) {
+        logger.warn("wireStream: cannot set inlet on '{}': {}", targetUnitName, ex.getMessage());
+        return false;
+      }
+    } catch (Exception e) {
+      logger.warn("wireStream: error wiring '{}' to '{}': {}", sourceRef, targetUnitName,
+          e.getMessage());
+      return false;
     }
   }
 
