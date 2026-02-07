@@ -718,6 +718,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Bottleneck Analysis | [docs/wiki/bottleneck_analysis.md](wiki/bottleneck_analysis) | Bottleneck analysis and ProductionOptimizer |
 | **Multi-Variable Optimization** | [docs/wiki/bottleneck_analysis.md#multi-variable-optimization-with-manipulatedvariable](wiki/bottleneck_analysis#multi-variable-optimization-with-manipulatedvariable) | **ManipulatedVariable for split factors, dual feeds, pressure setpoints** |
 | Calibration | [docs/process/calibration/README.md](process/calibration/) | Model calibration |
+| **Data Reconciliation → Parameter Estimation Workflow** | [docs/calibration/data_reconciliation_parameter_estimation.md](calibration/data_reconciliation_parameter_estimation) | **End-to-end plant-data-to-model-tuning: DataReconciliationEngine, BatchParameterEstimator (L-M), EnKF, Python helper** |
 | Advisory | [docs/process/advisory/README.md](process/advisory/) | Advisory systems |
 
 ### Chapter 45: Real-Time Integration
