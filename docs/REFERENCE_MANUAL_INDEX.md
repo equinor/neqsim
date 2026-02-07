@@ -807,6 +807,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Extending Physical Properties** | [docs/development/extending_physical_properties.md](development/extending_physical_properties) | **NEW: Add viscosity, conductivity, diffusivity models** |
 | **Extending Thermodynamic Models** | [docs/development/extending_thermodynamic_models.md](development/extending_thermodynamic_models) | **NEW: Add custom equations of state** |
 | **Python Extension Patterns** | [docs/development/python_extension_patterns.md](development/python_extension_patterns) | **NEW: Python integration, wrappers, JPype interfaces** |
+| **Jupyter Development Workflow** | [docs/development/jupyter_development_workflow.md](development/jupyter_development_workflow) | **Live Java development from Jupyter notebooks with auto-compile and kernel restart** |
 
 ### Chapter 50: Testing
 

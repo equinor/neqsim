@@ -66,8 +66,7 @@ Additional documentation and guides:
 - [Production Optimization Guide](PRODUCTION_OPTIMIZATION_GUIDE.md)
 - [Comparesimulations Quickstart](comparesimulations_quickstart.md)
 - [Selective Logic Execution](selective-logic-execution.md)
-- [Transient Slug Separator Control Example](transient_slug_separator_control_example.md)
-
+- [Transient Slug Separator Control Example](transient_slug_separator_control_example.md)- [Jupyter Development Notebook](../../examples/notebooks/neqsim_dev.ipynb) — live Java development from notebooks ([setup guide](../development/jupyter_development_workflow))
 ---
 
 ## Running the Notebooks
