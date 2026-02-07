@@ -21,12 +21,10 @@ import neqsim.process.processmodel.ProcessSystem;
  * This class provides a comprehensive API for process optimization combining:
  * </p>
  * <ul>
- * <li>Flow rate optimization (finding max throughput for given pressure
- * drop)</li>
+ * <li>Flow rate optimization (finding max throughput for given pressure drop)</li>
  * <li>Pressure optimization (finding required pressures for target flow)</li>
  * <li>Equipment constraint evaluation across entire process</li>
- * <li>Multi-objective optimization (maximize throughput while minimizing
- * power)</li>
+ * <li>Multi-objective optimization (maximize throughput while minimizing power)</li>
  * <li>Gradient-based optimization for faster convergence</li>
  * <li>Sensitivity analysis for constraint insights</li>
  * </ul>
@@ -36,10 +34,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * </p>
  * <ul>
  * <li><strong>Low-level:</strong> Single equipment constraint evaluation</li>
- * <li><strong>Mid-level:</strong> Process segment optimization (inlet to
- * outlet)</li>
- * <li><strong>High-level:</strong> Full process system optimization with
- * recycles</li>
+ * <li><strong>Mid-level:</strong> Process segment optimization (inlet to outlet)</li>
+ * <li><strong>High-level:</strong> Full process system optimization with recycles</li>
  * </ul>
  *
  * <p>
@@ -51,7 +47,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * 
  * // Find maximum throughput with gradient acceleration
  * engine.setSearchAlgorithm(SearchAlgorithm.GRADIENT_ACCELERATED);
- * OptimizationResult result = engine.findMaximumThroughput(inletPressure, outletPressure, minFlow, maxFlow);
+ * OptimizationResult result =
+ *     engine.findMaximumThroughput(inletPressure, outletPressure, minFlow, maxFlow);
  * 
  * // Get sensitivity analysis
  * SensitivityResult sens = engine.analyzeSensitivity(result.getOptimalValue());
@@ -124,13 +121,33 @@ public class ProcessOptimizationEngine implements Serializable {
     NELDER_MEAD,
     /** Particle swarm optimization for global search. */
     PARTICLE_SWARM,
-    /** Gradient descent with adaptive step size. */
+    /**
+     * Steepest ascent with adaptive step size.
+     *
+     * <p>
+     * Uses finite-difference gradient estimation with exponential step-size decay. First-order
+     * method; convergence may be slow near the optimum.
+     * </p>
+     */
     GRADIENT_DESCENT,
     /**
-     * Gradient descent with Armijo-Wolfe line search for guaranteed convergence.
+     * Steepest ascent with Armijo-Wolfe line search for guaranteed convergence.
+     *
+     * <p>
+     * Ensures sufficient decrease (Armijo) and curvature (Wolfe) conditions at each step. More
+     * robust than plain gradient descent but still first-order.
+     * </p>
      */
     GRADIENT_DESCENT_ARMIJO_WOLFE,
-    /** BFGS quasi-Newton method for fast convergence. */
+    /**
+     * Scalar BFGS quasi-Newton method for 1-D flow optimization.
+     *
+     * <p>
+     * Maintains an approximation of the inverse second derivative using secant updates. Provides
+     * superlinear convergence near the optimum for smooth 1-D problems. Note: this is a scalar
+     * (1-D) simplification, not a full matrix BFGS.
+     * </p>
+     */
     BFGS
   }
 
@@ -237,10 +254,10 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Finds the maximum throughput for given inlet and outlet pressures.
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param minFlow        minimum flow to search in kg/hr
-   * @param maxFlow        maximum flow to search in kg/hr
+   * @param minFlow minimum flow to search in kg/hr
+   * @param maxFlow maximum flow to search in kg/hr
    * @return optimization result
    */
   public OptimizationResult findMaximumThroughput(double inletPressure, double outletPressure,
@@ -294,7 +311,8 @@ public class ProcessOptimizationEngine implements Serializable {
 
         // Auto-generate sensitivity analysis
         try {
-          SensitivityResult sensitivity = analyzeSensitivity(optimalFlow, inletPressure, outletPressure);
+          SensitivityResult sensitivity =
+              analyzeSensitivity(optimalFlow, inletPressure, outletPressure);
           result.setSensitivity(sensitivity);
         } catch (Exception sensEx) {
           logger.debug("Sensitivity analysis failed: {}", sensEx.getMessage());
@@ -313,10 +331,10 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Finds the required inlet pressure for a target flow rate.
    *
-   * @param targetFlow     target flow in kg/hr
+   * @param targetFlow target flow in kg/hr
    * @param outletPressure outlet pressure in bara
-   * @param minPressure    minimum inlet pressure to search in bara
-   * @param maxPressure    maximum inlet pressure to search in bara
+   * @param minPressure minimum inlet pressure to search in bara
+   * @param maxPressure maximum inlet pressure to search in bara
    * @return optimization result with optimal inlet pressure
    */
   public OptimizationResult findRequiredInletPressure(double targetFlow, double outletPressure,
@@ -325,7 +343,8 @@ public class ProcessOptimizationEngine implements Serializable {
     result.setObjective("Required Inlet Pressure");
 
     try {
-      double optimalPressure = pressureBinarySearch(targetFlow, outletPressure, minPressure, maxPressure);
+      double optimalPressure =
+          pressureBinarySearch(targetFlow, outletPressure, minPressure, maxPressure);
 
       result.setOptimalValue(optimalPressure);
       result.setConverged(true);
@@ -361,7 +380,8 @@ public class ProcessOptimizationEngine implements Serializable {
 
       if (strategy != null) {
         Map<String, CapacityConstraint> constraintMap = strategy.getConstraints(equipment);
-        List<CapacityConstraint> constraints = new ArrayList<CapacityConstraint>(constraintMap.values());
+        List<CapacityConstraint> constraints =
+            new ArrayList<CapacityConstraint>(constraintMap.values());
         double utilization = strategy.evaluateCapacity(equipment);
 
         EquipmentConstraintStatus status = new EquipmentConstraintStatus();
@@ -416,10 +436,10 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Generates a lift curve for the process.
    *
-   * @param pressures    array of inlet pressures to evaluate in bara
+   * @param pressures array of inlet pressures to evaluate in bara
    * @param temperatures array of inlet temperatures in Kelvin
-   * @param waterCuts    array of water cuts as fraction
-   * @param GORs         array of gas-oil ratios in Sm3/Sm3
+   * @param waterCuts array of water cuts as fraction
+   * @param GORs array of gas-oil ratios in Sm3/Sm3
    * @return lift curve data
    */
   public LiftCurveData generateLiftCurve(double[] pressures, double[] temperatures,
@@ -677,14 +697,13 @@ public class ProcessOptimizationEngine implements Serializable {
    * Performs gradient descent optimization to find maximum flow.
    *
    * <p>
-   * Uses finite-difference gradient estimation with adaptive step size. More
-   * efficient than
+   * Uses finite-difference gradient estimation with adaptive step size. More efficient than
    * bracket-based methods when near the optimum.
    * </p>
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param initialFlow    starting flow rate in kg/hr
+   * @param initialFlow starting flow rate in kg/hr
    * @return optimal flow rate in kg/hr
    */
   public double gradientDescentSearch(double inletPressure, double outletPressure,
@@ -732,9 +751,9 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Estimates the gradient of the objective function using finite differences.
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param flow           current flow rate in kg/hr
+   * @param flow current flow rate in kg/hr
    * @return estimated gradient
    */
   private double estimateGradient(double inletPressure, double outletPressure, double flow) {
@@ -758,11 +777,16 @@ public class ProcessOptimizationEngine implements Serializable {
   }
 
   /**
-   * Evaluates the objective function with constraint penalty.
+   * Evaluates the objective function with adaptive constraint penalty.
    *
-   * @param inletPressure  inlet pressure in bara
+   * <p>
+   * The penalty magnitude scales with the flow rate so that the penalty always dominates the
+   * objective regardless of problem scale.
+   * </p>
+   *
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param flow           flow rate in kg/hr
+   * @param flow flow rate in kg/hr
    * @return objective value (flow rate with penalty for constraint violations)
    */
   private double evaluateConstrainedObjective(double inletPressure, double outletPressure,
@@ -772,9 +796,10 @@ public class ProcessOptimizationEngine implements Serializable {
     }
 
     if (!canAchieveFlow(inletPressure, outletPressure, flow)) {
-      // Apply quadratic penalty for infeasible solutions
+      // Adaptive quadratic penalty scaled by the flow magnitude itself
       double violation = calculateConstraintViolationMagnitude();
-      return flow - 10000.0 * violation * violation;
+      double penaltyScale = Math.max(flow, 1.0);
+      return flow - penaltyScale * violation * violation;
     }
 
     return flow; // Maximize flow when feasible
@@ -822,21 +847,18 @@ public class ProcessOptimizationEngine implements Serializable {
    * The Armijo-Wolfe conditions ensure:
    * </p>
    * <ul>
-   * <li><strong>Sufficient decrease (Armijo):</strong> f(x + alpha*d) &lt;= f(x)
-   * + c1*alpha*grad'*d
+   * <li><strong>Sufficient decrease (Armijo):</strong> f(x + alpha*d) &lt;= f(x) + c1*alpha*grad'*d
    * </li>
-   * <li><strong>Curvature condition (Wolfe):</strong> |grad(x + alpha*d)'*d|
-   * &lt;=
+   * <li><strong>Curvature condition (Wolfe):</strong> |grad(x + alpha*d)'*d| &lt;=
    * c2*|grad'*d|</li>
    * </ul>
    * <p>
-   * These conditions guarantee convergence and avoid too-small or too-large
-   * steps.
+   * These conditions guarantee convergence and avoid too-small or too-large steps.
    * </p>
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param initialFlow    starting flow rate in kg/hr
+   * @param initialFlow starting flow rate in kg/hr
    * @return optimal flow rate in kg/hr
    */
   public double gradientDescentArmijoWolfeSearch(double inletPressure, double outletPressure,
@@ -898,18 +920,16 @@ public class ProcessOptimizationEngine implements Serializable {
   }
 
   /**
-   * Performs Armijo-Wolfe line search to find step size satisfying both
-   * conditions.
+   * Performs Armijo-Wolfe line search to find step size satisfying both conditions.
    *
-   * @param inletPressure         inlet pressure in bara
-   * @param outletPressure        outlet pressure in bara
-   * @param flow                  current flow rate
-   * @param direction             search direction
-   * @param f0                    objective at current point
+   * @param inletPressure inlet pressure in bara
+   * @param outletPressure outlet pressure in bara
+   * @param flow current flow rate
+   * @param direction search direction
+   * @param f0 objective at current point
    * @param directionalDerivative gradient dot direction
-   * @param initialAlpha          initial step size guess
-   * @return step size satisfying Armijo-Wolfe conditions, or initial alpha if
-   *         failed
+   * @param initialAlpha initial step size guess
+   * @return step size satisfying Armijo-Wolfe conditions, or initial alpha if failed
    */
   private double armijoWolfeLineSearch(double inletPressure, double outletPressure, double flow,
       double direction, double f0, double directionalDerivative, double initialAlpha) {
@@ -969,7 +989,8 @@ public class ProcessOptimizationEngine implements Serializable {
       double newDirectionalDerivative = gradNew * direction;
 
       // For maximization: |grad_new| <= c2 * |grad_old|
-      boolean wolfeSatisfied = Math.abs(newDirectionalDerivative) <= wolfeC2 * Math.abs(directionalDerivative);
+      boolean wolfeSatisfied =
+          Math.abs(newDirectionalDerivative) <= wolfeC2 * Math.abs(directionalDerivative);
 
       if (wolfeSatisfied) {
         return alpha; // Found acceptable step
@@ -1000,24 +1021,21 @@ public class ProcessOptimizationEngine implements Serializable {
    * Performs BFGS (Broyden-Fletcher-Goldfarb-Shanno) quasi-Newton optimization.
    *
    * <p>
-   * BFGS is a quasi-Newton method that approximates the inverse Hessian matrix
-   * using gradient
-   * information. This provides superlinear convergence near the optimum,
-   * typically much faster than
+   * BFGS is a quasi-Newton method that approximates the inverse Hessian matrix using gradient
+   * information. This provides superlinear convergence near the optimum, typically much faster than
    * steepest descent.
    * </p>
    *
    * <p>
-   * For the 1D flow optimization problem, this simplifies to a scalar version
-   * that maintains an
+   * For the 1D flow optimization problem, this simplifies to a scalar version that maintains an
    * approximation of the inverse second derivative.
    * </p>
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param initialFlow    starting flow rate in kg/hr
-   * @param minFlow        minimum allowed flow in kg/hr
-   * @param maxFlow        maximum allowed flow in kg/hr
+   * @param initialFlow starting flow rate in kg/hr
+   * @param minFlow minimum allowed flow in kg/hr
+   * @param maxFlow maximum allowed flow in kg/hr
    * @return optimal flow rate in kg/hr
    */
   public double bfgsSearch(double inletPressure, double outletPressure, double initialFlow,
@@ -1131,8 +1149,7 @@ public class ProcessOptimizationEngine implements Serializable {
    * Sets the Wolfe curvature condition parameter (c2).
    *
    * <p>
-   * Typical values: 0.9 for quasi-Newton methods (default), 0.1 for conjugate
-   * gradient. Must
+   * Typical values: 0.9 for quasi-Newton methods (default), 0.1 for conjugate gradient. Must
    * satisfy 0 &lt; c1 &lt; c2 &lt; 1.
    * </p>
    *
@@ -1170,8 +1187,8 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Analyzes the sensitivity of the optimal solution to flow rate changes.
    *
-   * @param optimalFlow    the optimal flow rate in kg/hr
-   * @param inletPressure  inlet pressure in bara
+   * @param optimalFlow the optimal flow rate in kg/hr
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
    * @return sensitivity result with gradient and margin information
    */
@@ -1225,8 +1242,8 @@ public class ProcessOptimizationEngine implements Serializable {
   /**
    * Estimates how much flow can increase before hitting a constraint.
    *
-   * @param currentFlow    current flow rate in kg/hr
-   * @param inletPressure  inlet pressure in bara
+   * @param currentFlow current flow rate in kg/hr
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
    * @return estimated flow buffer in kg/hr
    */
@@ -1245,18 +1262,25 @@ public class ProcessOptimizationEngine implements Serializable {
   }
 
   /**
-   * Calculates shadow prices for each constraint.
+   * Calculates shadow prices for each constraint using finite-difference perturbation.
    *
    * <p>
-   * Shadow price indicates how much the objective would improve if the constraint
-   * were relaxed by
-   * one unit.
+   * Shadow price indicates how much the objective (flow rate) would improve if the equipment's
+   * capacity constraint were relaxed by a small fraction. A positive shadow price means the
+   * constraint is binding and relaxing it would increase throughput.
    * </p>
    *
-   * @param optimalFlow    the optimal flow rate in kg/hr
-   * @param inletPressure  inlet pressure in bara
+   * <p>
+   * The method perturbs the flow rate slightly above the optimum and measures which equipment
+   * constraints become violated. The shadow price is estimated as the ratio of obtainable flow
+   * increase to the constraint relaxation needed, giving a dimensionless sensitivity. Equipment
+   * that is not near its capacity limit receives a shadow price of zero.
+   * </p>
+   *
+   * @param optimalFlow the optimal flow rate in kg/hr
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @return map of equipment name to shadow price
+   * @return map of equipment name to shadow price (higher means more binding)
    */
   public Map<String, Double> calculateShadowPrices(double optimalFlow, double inletPressure,
       double outletPressure) {
@@ -1266,29 +1290,52 @@ public class ProcessOptimizationEngine implements Serializable {
       return shadowPrices;
     }
 
-    // Run at optimal
+    // Run at optimal flow to capture baseline capacity utilizations
     setFeedFlowRate(optimalFlow);
     runSimulation();
 
-    // For each equipment, estimate how much relaxing its constraint would help
     List<ProcessEquipmentInterface> units = getAllUnitOperations();
+    Map<String, Double> baselineUtil = new HashMap<String, Double>();
     for (int i = 0; i < units.size(); i++) {
       ProcessEquipmentInterface equipment = units.get(i);
       EquipmentCapacityStrategy strategy = getStrategyRegistry().findStrategy(equipment);
-
       if (strategy != null) {
-        double utilization = strategy.evaluateCapacity(equipment);
+        baselineUtil.put(equipment.getName(), strategy.evaluateCapacity(equipment));
+      }
+    }
 
-        // Equipment near capacity has higher shadow price
-        if (utilization > 0.9) {
-          // Shadow price is proportional to how binding the constraint is
-          double shadowPrice = (utilization - 0.9) / 0.1 * 1000.0; // Scale factor
-          shadowPrices.put(equipment.getName(), shadowPrice);
+    // Perturb flow upward by a small fraction (1%) to measure constraint sensitivity
+    double perturbFraction = 0.01;
+    double perturbedFlow = optimalFlow * (1.0 + perturbFraction);
+    setFeedFlowRate(perturbedFlow);
+    runSimulation();
+
+    for (int i = 0; i < units.size(); i++) {
+      ProcessEquipmentInterface equipment = units.get(i);
+      EquipmentCapacityStrategy strategy = getStrategyRegistry().findStrategy(equipment);
+      if (strategy != null) {
+        double baseUtil = baselineUtil.getOrDefault(equipment.getName(), 0.0);
+        double perturbedUtil = strategy.evaluateCapacity(equipment);
+
+        if (baseUtil > 0.85) {
+          // Shadow price = change in utilization per unit change in flow,
+          // normalized so that "fully binding at limit" yields a high value.
+          double deltaUtil = perturbedUtil - baseUtil;
+          double deltaFlow = perturbedFlow - optimalFlow;
+          // Sensitivity: how fast utilization grows relative to flow increase
+          double sensitivity = (deltaFlow > 0) ? (deltaUtil / deltaFlow) * optimalFlow : 0.0;
+          // Scale by how close to the limit we already are (0.85-1.0 range)
+          double bindingFactor = Math.max(0.0, (baseUtil - 0.85) / 0.15);
+          shadowPrices.put(equipment.getName(), sensitivity * bindingFactor);
         } else {
           shadowPrices.put(equipment.getName(), 0.0);
         }
       }
     }
+
+    // Restore original optimal flow
+    setFeedFlowRate(optimalFlow);
+    runSimulation();
 
     return shadowPrices;
   }
@@ -1301,10 +1348,8 @@ public class ProcessOptimizationEngine implements Serializable {
    * Creates and configures a FlowRateOptimizer for this process system.
    *
    * <p>
-   * This integrates the detailed FlowRateOptimizer with the
-   * ProcessOptimizationEngine, allowing for
-   * more sophisticated optimization scenarios including lift curve generation and
-   * reservoir
+   * This integrates the detailed FlowRateOptimizer with the ProcessOptimizationEngine, allowing for
+   * more sophisticated optimization scenarios including lift curve generation and reservoir
    * integration.
    * </p>
    *
@@ -1406,7 +1451,7 @@ public class ProcessOptimizationEngine implements Serializable {
    * Calculates flow sensitivities for all equipment.
    *
    * @param baseFlowRate base flow rate in kg/hr
-   * @param flowUnit     flow rate unit
+   * @param flowUnit flow rate unit
    * @return map of equipment name to sensitivity value
    */
   public Map<String, Double> calculateFlowSensitivities(double baseFlowRate, String flowUnit) {
@@ -1421,7 +1466,7 @@ public class ProcessOptimizationEngine implements Serializable {
    * Estimates maximum feasible flow rate.
    *
    * @param currentFlowRate current flow rate
-   * @param flowUnit        flow rate unit
+   * @param flowUnit flow rate unit
    * @return estimated maximum flow rate
    */
   public double estimateMaximumFlow(double currentFlowRate, String flowUnit) {
@@ -1438,8 +1483,7 @@ public class ProcessOptimizationEngine implements Serializable {
    * Sets the feed flow rate.
    *
    * <p>
-   * If a feed stream name is specified via {@link #setFeedStreamName(String)},
-   * that stream will be
+   * If a feed stream name is specified via {@link #setFeedStreamName(String)}, that stream will be
    * used. Otherwise, the first unit operation is assumed to be the feed stream.
    * </p>
    *
@@ -1468,8 +1512,7 @@ public class ProcessOptimizationEngine implements Serializable {
    * Gets the feed stream being used for optimization.
    *
    * <p>
-   * If a feed stream name is specified, finds that stream by name. Otherwise,
-   * returns the first
+   * If a feed stream name is specified, finds that stream by name. Otherwise, returns the first
    * unit operation.
    * </p>
    *
@@ -1499,8 +1542,7 @@ public class ProcessOptimizationEngine implements Serializable {
    * Sets the name of the feed stream to vary during optimization.
    *
    * <p>
-   * Use this method to explicitly specify which stream should have its flow rate
-   * varied. If not
+   * Use this method to explicitly specify which stream should have its flow rate varied. If not
    * set, the first unit operation in the process is used by default.
    * </p>
    *
@@ -1540,8 +1582,7 @@ public class ProcessOptimizationEngine implements Serializable {
    * Gets the outlet stream used for optimization.
    *
    * <p>
-   * If {@link #setOutletStreamName(String)} was called, returns that stream.
-   * Otherwise returns the
+   * If {@link #setOutletStreamName(String)} was called, returns that stream. Otherwise returns the
    * last unit operation in the process.
    * </p>
    *
@@ -1571,10 +1612,8 @@ public class ProcessOptimizationEngine implements Serializable {
    * Sets the name of the outlet stream to monitor during optimization.
    *
    * <p>
-   * Use this method to explicitly specify which stream should be monitored for
-   * outlet conditions
-   * (pressure, temperature, flow rate). If not set, the last unit operation in
-   * the process is used
+   * Use this method to explicitly specify which stream should be monitored for outlet conditions
+   * (pressure, temperature, flow rate). If not set, the last unit operation in the process is used
    * by default.
    * </p>
    *
@@ -1627,12 +1666,10 @@ public class ProcessOptimizationEngine implements Serializable {
   }
 
   /**
-   * Gets the outlet temperature from the configured outlet stream in specified
-   * unit.
+   * Gets the outlet temperature from the configured outlet stream in specified unit.
    *
    * @param unit temperature unit ("K", "C", "R", "F")
-   * @return outlet temperature in specified unit, or 0.0 if no outlet stream
-   *         found
+   * @return outlet temperature in specified unit, or 0.0 if no outlet stream found
    */
   public double getOutletTemperature(String unit) {
     ProcessEquipmentInterface outletUnit = getOutletStream();
@@ -1826,10 +1863,8 @@ public class ProcessOptimizationEngine implements Serializable {
      * Gets the sensitivity analysis result.
      *
      * <p>
-     * The sensitivity result is automatically generated when optimization
-     * completes, providing
-     * information about constraint margins, flow gradients, and bottleneck
-     * equipment.
+     * The sensitivity result is automatically generated when optimization completes, providing
+     * information about constraint margins, flow gradients, and bottleneck equipment.
      * </p>
      *
      * @return the sensitivity result, or null if not available
@@ -1903,8 +1938,7 @@ public class ProcessOptimizationEngine implements Serializable {
      * Convenience method that delegates to the sensitivity result.
      * </p>
      *
-     * @return margin as a fraction (0.05 = 5% headroom), or 1.0 if sensitivity not
-     *         available
+     * @return margin as a fraction (0.05 = 5% headroom), or 1.0 if sensitivity not available
      */
     public double getAvailableMargin() {
       return sensitivity != null ? sensitivity.getTightestMargin() : 1.0;
@@ -1916,7 +1950,8 @@ public class ProcessOptimizationEngine implements Serializable {
    */
   public static class ConstraintReport implements Serializable {
     private static final long serialVersionUID = 1L;
-    private List<EquipmentConstraintStatus> equipmentStatuses = new ArrayList<EquipmentConstraintStatus>();
+    private List<EquipmentConstraintStatus> equipmentStatuses =
+        new ArrayList<EquipmentConstraintStatus>();
 
     public void addEquipmentStatus(EquipmentConstraintStatus status) {
       equipmentStatuses.add(status);
@@ -2161,7 +2196,8 @@ public class ProcessOptimizationEngine implements Serializable {
    * @return list of Adjuster units
    */
   public List<neqsim.process.equipment.util.Adjuster> getAdjusters() {
-    List<neqsim.process.equipment.util.Adjuster> adjusters = new ArrayList<neqsim.process.equipment.util.Adjuster>();
+    List<neqsim.process.equipment.util.Adjuster> adjusters =
+        new ArrayList<neqsim.process.equipment.util.Adjuster>();
     if (processSystem == null) {
       return adjusters;
     }
@@ -2177,16 +2213,15 @@ public class ProcessOptimizationEngine implements Serializable {
    * Temporarily disables all Adjusters during optimization.
    *
    * <p>
-   * Adjusters can interfere with optimization by trying to converge to their own
-   * targets. This
-   * method disables them and returns a list of the disabled adjusters for later
-   * re-enabling.
+   * Adjusters can interfere with optimization by trying to converge to their own targets. This
+   * method disables them and returns a list of the disabled adjusters for later re-enabling.
    * </p>
    *
    * @return list of adjusters that were disabled
    */
   public List<neqsim.process.equipment.util.Adjuster> disableAdjusters() {
-    List<neqsim.process.equipment.util.Adjuster> disabled = new ArrayList<neqsim.process.equipment.util.Adjuster>();
+    List<neqsim.process.equipment.util.Adjuster> disabled =
+        new ArrayList<neqsim.process.equipment.util.Adjuster>();
     for (neqsim.process.equipment.util.Adjuster adj : getAdjusters()) {
       if (adj.isActive()) {
         adj.setActive(false);
@@ -2211,16 +2246,14 @@ public class ProcessOptimizationEngine implements Serializable {
    * Optimizes with Adjusters temporarily disabled.
    *
    * <p>
-   * This method disables all Adjusters during optimization, runs the
-   * optimization, and then
-   * re-enables them. This prevents the Adjusters from interfering with the
-   * optimization search.
+   * This method disables all Adjusters during optimization, runs the optimization, and then
+   * re-enables them. This prevents the Adjusters from interfering with the optimization search.
    * </p>
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param minFlow        minimum flow rate in kg/hr
-   * @param maxFlow        maximum flow rate in kg/hr
+   * @param minFlow minimum flow rate in kg/hr
+   * @param maxFlow maximum flow rate in kg/hr
    * @return optimization result
    */
   public OptimizationResult optimizeWithAdjustersDisabled(double inletPressure,
@@ -2237,18 +2270,16 @@ public class ProcessOptimizationEngine implements Serializable {
    * Creates an Adjuster to optimize flow rate for a target variable.
    *
    * <p>
-   * This method creates a new Adjuster that adjusts the feed stream flow rate to
-   * achieve a target
+   * This method creates a new Adjuster that adjusts the feed stream flow rate to achieve a target
    * value for a specified variable (e.g., outlet pressure, temperature).
    * </p>
    *
-   * @param name                name for the new Adjuster
-   * @param feedStreamName      name of the feed stream to adjust
+   * @param name name for the new Adjuster
+   * @param feedStreamName name of the feed stream to adjust
    * @param targetEquipmentName name of the equipment with the target variable
-   * @param targetVariable      name of the target variable (e.g., "pressure",
-   *                            "temperature")
-   * @param targetValue         target value for the variable
-   * @param targetUnit          unit for the target value
+   * @param targetVariable name of the target variable (e.g., "pressure", "temperature")
+   * @param targetValue target value for the variable
+   * @param targetUnit unit for the target value
    * @return the created Adjuster, or null if creation fails
    */
   public neqsim.process.equipment.util.Adjuster createFlowAdjuster(String name,
@@ -2267,7 +2298,8 @@ public class ProcessOptimizationEngine implements Serializable {
       return null;
     }
 
-    neqsim.process.equipment.util.Adjuster adjuster = new neqsim.process.equipment.util.Adjuster(name);
+    neqsim.process.equipment.util.Adjuster adjuster =
+        new neqsim.process.equipment.util.Adjuster(name);
     adjuster.setAdjustedVariable(feedStream, "flow rate", "kg/hr");
     adjuster.setTargetVariable(targetEquipment, targetVariable, targetValue, targetUnit);
 
@@ -2278,16 +2310,14 @@ public class ProcessOptimizationEngine implements Serializable {
    * Coordinates optimization with existing Adjusters.
    *
    * <p>
-   * This method performs optimization while respecting the targets set by
-   * existing Adjusters. It
-   * finds the maximum flow rate that still allows all Adjusters to converge to
-   * their targets.
+   * This method performs optimization while respecting the targets set by existing Adjusters. It
+   * finds the maximum flow rate that still allows all Adjusters to converge to their targets.
    * </p>
    *
-   * @param inletPressure  inlet pressure in bara
+   * @param inletPressure inlet pressure in bara
    * @param outletPressure outlet pressure in bara
-   * @param minFlow        minimum flow rate in kg/hr
-   * @param maxFlow        maximum flow rate in kg/hr
+   * @param minFlow minimum flow rate in kg/hr
+   * @param maxFlow maximum flow rate in kg/hr
    * @return optimization result with Adjuster-compatible flow rate
    */
   public OptimizationResult optimizeWithAdjusterTargets(double inletPressure, double outletPressure,
@@ -2296,7 +2326,8 @@ public class ProcessOptimizationEngine implements Serializable {
     result.setObjective("Maximum Throughput with Adjuster Targets");
 
     // First, find the unconstrained maximum
-    OptimizationResult unconstrained = findMaximumThroughput(inletPressure, outletPressure, minFlow, maxFlow);
+    OptimizationResult unconstrained =
+        findMaximumThroughput(inletPressure, outletPressure, minFlow, maxFlow);
 
     // Now check if Adjusters can converge at this flow rate
     double testFlow = unconstrained.getOptimalValue();

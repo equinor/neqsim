@@ -143,6 +143,18 @@ public class MultiObjectiveOptimizer implements Serializable {
   /**
    * Find Pareto front using weighted-sum scalarization with additional constraints.
    *
+   * <p>
+   * <strong>Limitation:</strong> Weighted-sum scalarization can only discover Pareto-optimal
+   * solutions that lie on the <em>convex</em> hull of the true Pareto front. Non-convex regions of
+   * the front will be missed because no weight vector maps to those solutions. For problems where
+   * the Pareto front may be non-convex, prefer {@link #optimizeEpsilonConstraint} or
+   * {@link ProductionOptimizer#sampleParetoFront} which can find non-convex Pareto-optimal points.
+   * </p>
+   *
+   * @apiNote This method is best suited for convex Pareto fronts. If you observe large gaps between
+   *          adjacent solutions, the front is likely non-convex and epsilon-constraint or direct
+   *          sampling methods should be used instead.
+   *
    * @param process the process system to optimize
    * @param feedStream the feed stream to manipulate
    * @param objectives list of objectives to optimize
