@@ -59,6 +59,8 @@ $$\dot{m}_{out} \cdot h_{out} = \sum_i \dot{m}_i \cdot h_i$$
 
 $$x_{j,out} = \frac{\sum_i \dot{m}_i \cdot x_{j,i}}{\sum_i \dot{m}_i}$$
 
+> **Note:** The outlet temperature of a mixer is **calculated** from the energy balance of the inlet streams — there is no `setOutletTemperature()` method for the mixer. If you need to control the temperature after mixing, use a downstream `Heater` or `Cooler`.
+
 ### Pressure Handling
 
 ```java
