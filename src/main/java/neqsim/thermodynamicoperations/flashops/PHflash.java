@@ -83,6 +83,9 @@ public class PHflash extends Flash {
     boolean correctFactor = true;
     double maxTemperature = 1e10;
     double minTemperature = 0.0;
+    int noProgressCount = 0;
+    double bestError = Double.MAX_VALUE;
+    double prevBestError = Double.MAX_VALUE;
 
     do {
       if (Math.abs(error) > Math.abs(errorOld) && factor > 0.1 && correctFactor) {
@@ -128,6 +131,27 @@ public class PHflash extends Flash {
       } else if (error < 0 && system.getTemperature() < minTemperature) {
         minTemperature = system.getTemperature();
       }
+
+      // Detect convergence stagnation due to numerical noise floor.
+      // In multi-phase CPA systems, phase equilibrium tolerances in constituent
+      // solvers (RR, stability analysis, volume root) create an error floor
+      // typically around 1e-6 to 1e-5. Once error stops improving for several
+      // consecutive iterations, we accept the solution.
+      double absError = Math.abs(error);
+      if (absError < bestError) {
+        prevBestError = bestError;
+        bestError = absError;
+        noProgressCount = 0;
+      } else {
+        noProgressCount++;
+      }
+      if (noProgressCount >= 3 && bestError < 1e-3 && iterations > 5) {
+        break;
+      }
+      if (bestError < 1e-4 && prevBestError < 1e-3 && iterations > 10
+          && bestError / prevBestError > 0.5) {
+        break;
+      }
     } while (((Math.abs(error) + Math.abs(errorOld)) > 1e-8 || iterations < 3) && iterations < 200);
     return 1.0 / nyTemp;
   }
@@ -149,6 +173,9 @@ public class PHflash extends Flash {
     double newCorr = 1.0;
     system.init(2);
     boolean correctFactor = true;
+    int noProgressCount = 0;
+    double bestError = Double.MAX_VALUE;
+    double prevBestError = Double.MAX_VALUE;
     // System.out.println("temp start " + system.getTemperature());
     do {
       if (error > errorOld && factor > 0.1 && correctFactor) {
@@ -178,13 +205,23 @@ public class PHflash extends Flash {
       system.init(2);
       errorOld = error;
       error = Math.abs(calcdQdT());
-      // error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp));
-      // if(iterations>100) System.out.println("temp " + system.getTemperature() + "
-      // iter "+ iterations + " error "+ error + " correction " + newCorr + " factor
-      // "+ factor);
+
+      // Detect convergence stagnation due to numerical noise floor.
+      if (error < bestError) {
+        prevBestError = bestError;
+        bestError = error;
+        noProgressCount = 0;
+      } else {
+        noProgressCount++;
+      }
+      if (noProgressCount >= 3 && bestError < 1e-3 && iterations > 5) {
+        break;
+      }
+      if (bestError < 1e-4 && prevBestError < 1e-3 && iterations > 10
+          && bestError / prevBestError > 0.5) {
+        break;
+      }
     } while (((error + errorOld) > 1e-8 || iterations < 3) && iterations < 200);
-    // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
-    // " error "+ error );
     return 1.0 / nyTemp;
   }
 
