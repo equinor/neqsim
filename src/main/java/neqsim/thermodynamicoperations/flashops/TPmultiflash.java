@@ -254,7 +254,9 @@ public class TPmultiflash extends TPflash {
         }
       }
       system.normalizeBeta();
-      system.init(1);
+      // Beta changes don't affect fugacity coefficients (intensive property depending only on
+      // T, P, x[i]). The second init(1) from the previous iteration already computed correct
+      // fugacities for the current compositions, so we skip the redundant first init(1) here.
       calcE();
       setXY();
       system.init(1);
@@ -1405,7 +1407,8 @@ public class TPmultiflash extends TPflash {
         (clonedSystem.get(i)).getPhase(1).getComponent(j).setx(numb);
       }
       if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
-        (clonedSystem.get(i)).init(1);
+        // Only re-init phase 1 (trial phase) since phase 0 (reference) is unchanged
+        (clonedSystem.get(i)).init(1, 1);
       }
     }
 
