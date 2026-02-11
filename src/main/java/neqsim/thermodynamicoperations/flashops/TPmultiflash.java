@@ -763,6 +763,7 @@ public class TPmultiflash extends TPflash {
     // Test stability for EACH existing phase as reference phase
     for (int refPhase = 0; refPhase < numPhases; refPhase++) {
       double[] d = dRef[refPhase];
+      PhaseType refType = system.getPhase(refPhase).getType();
 
       // Test with three different initial guesses:
       // trialType = 1: Vapor-like trial phase (use Wilson K directly) - for VLE gas detection
@@ -772,6 +773,17 @@ public class TPmultiflash extends TPflash {
       // but LLE is driven by activity coefficient differences (polarity, H-bonding),
       // so we use a different initialization strategy for LLE detection.
       for (int trialType = 1; trialType >= -1; trialType--) {
+        // Skip trials where the trial phase type matches the reference phase type.
+        // A vapor-like trial (K) against a gas reference converges to the trivial solution,
+        // and a liquid-like trial (1/K) against a liquid reference does the same.
+        // The LLE trial (trialType=0) is always run for liquid-liquid detection.
+        if (trialType == 1 && refType == PhaseType.GAS) {
+          continue;
+        }
+        if (trialType == -1 && (refType == PhaseType.LIQUID || refType == PhaseType.OIL
+            || refType == PhaseType.AQUEOUS)) {
+          continue;
+        }
         // Initialize logWi based on trial type
         for (int j = 0; j < numComponents; j++) {
           if (!validComponent[j]) {
