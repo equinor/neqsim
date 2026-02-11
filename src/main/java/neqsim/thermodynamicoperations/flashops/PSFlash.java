@@ -98,8 +98,17 @@ public class PSFlash extends QfuncFlash {
       }
 
       system.setTemperature(nyTemp);
-      tpFlash.run();
-      system.init(2);
+      try {
+        tpFlash.run();
+        system.init(2);
+      } catch (Exception ex) {
+        // Flash or init can fail at extreme temperatures during Newton iteration.
+        // Recover by stepping temperature back toward the old value.
+        nyTemp = 0.5 * (nyTemp + oldTemp);
+        system.setTemperature(nyTemp);
+        tpFlash.run();
+        system.init(2);
+      }
       errorOld = error;
       error = Math.abs(calcdQdT()); // Math.abs((nyTemp - oldTemp) / (nyTemp));
 
