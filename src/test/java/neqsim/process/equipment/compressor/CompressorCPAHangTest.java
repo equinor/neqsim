@@ -13,8 +13,8 @@ import neqsim.thermo.system.SystemPrEos;
  * Tests for compressor with CPA equation of state and water wash scenarios.
  *
  * <p>
- * These tests verify that compressor calculations complete without hanging when the inlet fluid uses
- * CPA EOS (autoSelectModel with water/MEG) and has two phases (gas + aqueous). Previously, the
+ * These tests verify that compressor calculations complete without hanging when the inlet fluid
+ * uses CPA EOS (autoSelectModel with water/MEG) and has two phases (gas + aqueous). Previously, the
  * PSflash Newton iteration would oscillate at 1e-6 error due to expensive stability analysis noise,
  * never reaching the 1e-8 convergence criterion.
  * </p>
@@ -29,8 +29,8 @@ public class CompressorCPAHangTest extends neqsim.NeqSimTest {
    *
    * <p>
    * Simulates gas compression from 27.9 to 122 bara with a mixed gas+water feed produced by
-   * scrubbing and water wash injection. The fluid uses CPA EOS via autoSelectModel due to
-   * water/MEG components.
+   * scrubbing and water wash injection. The fluid uses CPA EOS via autoSelectModel due to water/MEG
+   * components.
    * </p>
    */
   @Test
