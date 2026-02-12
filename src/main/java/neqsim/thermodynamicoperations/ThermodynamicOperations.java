@@ -2637,6 +2637,483 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Perform flashes in parallel using multiple CPU cores and return System properties per set of
+   * Spec1 and Spec2. This method clones the system for each calculation to enable thread-safe
+   * parallel execution.
+   *
+   * @param Spec1 Flash pressure in bar absolute.
+   * @param Spec2 Flash specification. Depends on FlashMode. Temperature in Kelvin, enthalpy in
+   *        J/mol or entropy in J/molK.
+   * @param FlashMode 1 - PT 2 - PH 3 - PS
+   * @param components Not yet in use.
+   * @param onlineFractions Specify fractions per sample instance or null to use static composition
+   *        specified in system.
+   * @return Object CalculationResult object
+   */
+  public CalculationResult propertyFlashParallel(List<Double> Spec1, List<Double> Spec2,
+      int FlashMode, List<String> components, List<List<Double>> onlineFractions) {
+    return propertyFlashParallel(Spec1, Spec2, FlashMode, components, onlineFractions, 0);
+  }
+
+  /**
+   * Perform flashes in parallel using multiple CPU cores and return System properties per set of
+   * Spec1 and Spec2. This method clones the system for each calculation to enable thread-safe
+   * parallel execution.
+   *
+   * @param Spec1 Flash pressure in bar absolute.
+   * @param Spec2 Flash specification. Depends on FlashMode. Temperature in Kelvin, enthalpy in
+   *        J/mol or entropy in J/molK.
+   * @param FlashMode 1 - PT 2 - PH 3 - PS
+   * @param components Not yet in use.
+   * @param onlineFractions Specify fractions per sample instance or null to use static composition
+   *        specified in system.
+   * @param numThreads Number of threads to use for parallel execution. If 0 or negative, uses all
+   *        available CPU cores.
+   * @return Object CalculationResult object
+   */
+  public CalculationResult propertyFlashParallel(List<Double> Spec1, List<Double> Spec2,
+      int FlashMode, List<String> components, List<List<Double>> onlineFractions, int numThreads) {
+
+    final FlashType flashType;
+    if (FlashMode == 1) {
+      flashType = FlashType.PT;
+    } else if (FlashMode == 2) {
+      flashType = FlashType.PH;
+    } else if (FlashMode == 3) {
+      flashType = FlashType.PS;
+    } else {
+      flashType = null;
+    }
+
+    int size = Spec1.size();
+    Double[][] fluidProperties = new Double[size][SystemProperties.nCols];
+    String[] calculationError = new String[size];
+
+    // Early validation of flash type
+    if (flashType == null) {
+      String error = "FlashMode must be 1, 2 or 3";
+      for (int t = 0; t < size; t++) {
+        calculationError[t] = error;
+      }
+      return new CalculationResult(fluidProperties, calculationError);
+    }
+
+    // Validate components
+    final String[] systemComponents = this.system.getComponentNames();
+    final List<String> finalComponents;
+    if (components != null) {
+      for (String inputCompName : components) {
+        if (!this.system.hasComponent(inputCompName)) {
+          String error = "Input component list does not match fluid component list.";
+          for (int t = 0; t < size; t++) {
+            calculationError[t] = error;
+          }
+          return new CalculationResult(fluidProperties, calculationError);
+        }
+      }
+      finalComponents = components;
+    } else {
+      finalComponents = Arrays.asList(systemComponents);
+    }
+
+    // Verify fractions and pre-calculate sums
+    final boolean hasOnlineFractions = onlineFractions != null;
+    Double[] sum = new Double[size];
+
+    if (hasOnlineFractions) {
+      double range = 5;
+      for (int t = 0; t < sum.length; t++) {
+        sum[t] = 0.0;
+        for (int comp = 0; comp < onlineFractions.size(); comp++) {
+          sum[t] = sum[t] + onlineFractions.get(comp).get(t).doubleValue();
+        }
+        if (!((sum[t] >= 1 - range / 100 && sum[t] <= 1 + range / 100)
+            || (sum[t] >= 100 - range && sum[t] <= 100 + range))) {
+          calculationError[t] = "Sum of fractions must be approximately 1 or 100, currently ("
+              + String.valueOf(sum[t]) + ")";
+        }
+      }
+
+      if (this.system.getTotalNumberOfMoles() == 0) {
+        this.system.setTotalNumberOfMoles(1);
+      }
+    } else {
+      double[] fraction = this.system.getMolarComposition();
+      sum[0] = 0.0;
+      for (int comp = 0; comp < fraction.length; comp++) {
+        sum[0] = sum[0] + fraction[comp];
+      }
+
+      double range = 1e-8;
+      if (!((sum[0] >= 1 - range && sum[0] <= 1 + range)
+          || (sum[0] >= 100 - range && sum[0] <= 100 + range))) {
+        for (int t = 0; t < size; t++) {
+          calculationError[t] = "Sum of fractions must be approximately to 1 or 100, currently ("
+              + String.valueOf(sum[0]) + ")";
+          if (sum[0] == 0.0) {
+            calculationError[t] = calculationError[t] + ". Have you called init(0)?";
+          }
+        }
+      }
+    }
+
+    // Determine effective thread count
+    int effectiveThreads = numThreads > 0 ? numThreads : Runtime.getRuntime().availableProcessors();
+    effectiveThreads = Math.min(effectiveThreads, size);
+
+    // Create thread pool and completion service
+    java.util.concurrent.ExecutorService executor =
+        java.util.concurrent.Executors.newFixedThreadPool(effectiveThreads);
+    java.util.concurrent.CompletionService<PropertyFlashResult> completionService =
+        new java.util.concurrent.ExecutorCompletionService<>(executor);
+
+    // Pre-clone systems for each calculation (must be done in main thread)
+    final SystemInterface[] clonedSystems = new SystemInterface[size];
+    for (int t = 0; t < size; t++) {
+      if (calculationError[t] == null) {
+        clonedSystems[t] = this.system.clone();
+      }
+    }
+
+    // Capture final references for lambda
+    final List<List<Double>> finalOnlineFractions = onlineFractions;
+    final String[] preValidatedErrors = calculationError.clone();
+
+    // Submit all tasks
+    for (int t = 0; t < size; t++) {
+      final int index = t;
+      completionService.submit(() -> {
+        PropertyFlashResult result = new PropertyFlashResult(index);
+
+        if (preValidatedErrors[index] != null) {
+          result.error = preValidatedErrors[index];
+          return result;
+        }
+
+        Double Sp1 = Spec1.get(index);
+        Double Sp2 = Spec2.get(index);
+
+        if (Sp1 == null || Sp2 == null || Double.isNaN(Sp1) || Double.isNaN(Sp2)) {
+          result.error = "Sp1 or Sp2 is NaN";
+          return result;
+        }
+
+        try {
+          SystemInterface localSystem = clonedSystems[index];
+          localSystem.init(0);
+          ThermodynamicOperations localOps = new ThermodynamicOperations(localSystem);
+
+          if (hasOnlineFractions) {
+            double[] fraction = new double[localSystem.getNumberOfComponents()];
+            for (int compIndex = 0; compIndex < fraction.length; compIndex++) {
+              for (int idx = 0; idx < finalComponents.size(); idx++) {
+                if (systemComponents[compIndex] == ComponentInterface
+                    .getComponentNameFromAlias(finalComponents.get(idx))) {
+                  fraction[compIndex] = finalOnlineFractions.get(idx).get(index).doubleValue();
+                  break;
+                }
+              }
+            }
+            localSystem.setMolarComposition(fraction);
+            localSystem.init(0);
+          }
+
+          localSystem.setPressure(Sp1);
+          switch (flashType) {
+            case PT:
+              localSystem.setTemperature(Sp2);
+              localOps.TPflash();
+              break;
+            case PH:
+              localOps.PHflash(Sp2, "J/mol");
+              break;
+            case PS:
+              localOps.PSflash(Sp2, "J/molK");
+              break;
+            default:
+              throw new RuntimeException("Invalid FlashMode");
+          }
+          localSystem.init(2);
+          localSystem.initPhysicalProperties();
+
+          result.properties = localSystem.getProperties().getValues();
+        } catch (Exception ex) {
+          result.error = ex.getMessage();
+        }
+
+        return result;
+      });
+    }
+
+    // Collect all results
+    for (int t = 0; t < size; t++) {
+      try {
+        java.util.concurrent.Future<PropertyFlashResult> future = completionService.take();
+        PropertyFlashResult result = future.get();
+        fluidProperties[result.index] = result.properties;
+        if (result.error != null) {
+          calculationError[result.index] = result.error;
+          logger.warn("Parallel flash error at index {}: {}", result.index, result.error);
+        }
+      } catch (InterruptedException | java.util.concurrent.ExecutionException ex) {
+        logger.error("Error in parallel property flash", ex);
+      }
+    }
+
+    // Shutdown executor
+    executor.shutdown();
+
+    return new CalculationResult(fluidProperties, calculationError);
+  }
+
+  /**
+   * Perform flashes in parallel using multiple CPU cores with batch processing for optimal
+   * performance. This method processes calculations in batches to optimize memory usage and reduce
+   * overhead when dealing with very large datasets.
+   *
+   * @param Spec1 Flash pressure in bar absolute.
+   * @param Spec2 Flash specification. Depends on FlashMode. Temperature in Kelvin, enthalpy in
+   *        J/mol or entropy in J/molK.
+   * @param FlashMode 1 - PT 2 - PH 3 - PS
+   * @param components Not yet in use.
+   * @param onlineFractions Specify fractions per sample instance or null to use static composition
+   *        specified in system.
+   * @param batchSize Number of calculations per batch. If 0 or negative, uses
+   *        size/availableProcessors.
+   * @return Object CalculationResult object
+   */
+  public CalculationResult propertyFlashBatch(List<Double> Spec1, List<Double> Spec2, int FlashMode,
+      List<String> components, List<List<Double>> onlineFractions, int batchSize) {
+
+    int size = Spec1.size();
+    int numProcessors = Runtime.getRuntime().availableProcessors();
+    int effectiveBatchSize = batchSize > 0 ? batchSize : Math.max(1, size / numProcessors);
+
+    Double[][] fluidProperties = new Double[size][SystemProperties.nCols];
+    String[] calculationError = new String[size];
+
+    // Process in batches
+    for (int batchStart = 0; batchStart < size; batchStart += effectiveBatchSize) {
+      int batchEnd = Math.min(batchStart + effectiveBatchSize, size);
+
+      // Extract batch data
+      List<Double> batchSpec1 = Spec1.subList(batchStart, batchEnd);
+      List<Double> batchSpec2 = Spec2.subList(batchStart, batchEnd);
+
+      List<List<Double>> batchFractions = null;
+      if (onlineFractions != null) {
+        batchFractions = new java.util.ArrayList<>();
+        for (List<Double> compFractions : onlineFractions) {
+          batchFractions.add(compFractions.subList(batchStart, batchEnd));
+        }
+      }
+
+      // Run batch in parallel
+      CalculationResult batchResult =
+          propertyFlashParallel(batchSpec1, batchSpec2, FlashMode, components, batchFractions);
+
+      // Copy results to output arrays
+      for (int i = 0; i < batchResult.fluidProperties.length; i++) {
+        fluidProperties[batchStart + i] = batchResult.fluidProperties[i];
+        calculationError[batchStart + i] = batchResult.calculationError[i];
+      }
+    }
+
+    return new CalculationResult(fluidProperties, calculationError);
+  }
+
+  /**
+   * Result container for property derivatives calculation.
+   */
+  public static class DerivativesResult {
+    /** Base property values at each point [numPoints][numProperties]. */
+    public Double[][] properties;
+    /**
+     * Derivative of each property with respect to pressure (dProp/dP) [numPoints][numProperties].
+     */
+    public Double[][] dPdP;
+    /**
+     * Derivative of each property with respect to temperature (dProp/dT)
+     * [numPoints][numProperties].
+     */
+    public Double[][] dPdT;
+    /** Error messages per point (null if successful). */
+    public String[] calculationError;
+
+    /**
+     * Constructor for DerivativesResult.
+     *
+     * @param properties Base property values
+     * @param dPdP Pressure derivatives
+     * @param dPdT Temperature derivatives
+     * @param calculationError Error messages
+     */
+    public DerivativesResult(Double[][] properties, Double[][] dPdP, Double[][] dPdT,
+        String[] calculationError) {
+      this.properties = properties;
+      this.dPdP = dPdP;
+      this.dPdT = dPdT;
+      this.calculationError = calculationError;
+    }
+  }
+
+  /**
+   * Calculate property derivatives with respect to pressure and temperature using central finite
+   * differences. This method efficiently computes numerical derivatives by running all required
+   * flash calculations (base point + stencil points) in parallel.
+   *
+   * <p>
+   * Uses central differences for 2nd order accuracy:
+   * <ul>
+   * <li>dProp/dP = (Prop(P+dP, T) - Prop(P-dP, T)) / (2*dP)</li>
+   * <li>dProp/dT = (Prop(P, T+dT) - Prop(P, T-dT)) / (2*dT)</li>
+   * </ul>
+   *
+   * @param pressures List of pressures in bar absolute
+   * @param temperatures List of temperatures in Kelvin
+   * @return DerivativesResult containing properties and their P,T derivatives
+   */
+  public DerivativesResult propertyFlashDerivatives(List<Double> pressures,
+      List<Double> temperatures) {
+    return propertyFlashDerivatives(pressures, temperatures, 0.01, 0.1, 0);
+  }
+
+  /**
+   * Calculate property derivatives with respect to pressure and temperature using central finite
+   * differences with custom step sizes.
+   *
+   * @param pressures List of pressures in bar absolute
+   * @param temperatures List of temperatures in Kelvin
+   * @param deltaP Pressure step size in bar (default 0.01)
+   * @param deltaT Temperature step size in Kelvin (default 0.1)
+   * @return DerivativesResult containing properties and their P,T derivatives
+   */
+  public DerivativesResult propertyFlashDerivatives(List<Double> pressures,
+      List<Double> temperatures, double deltaP, double deltaT) {
+    return propertyFlashDerivatives(pressures, temperatures, deltaP, deltaT, 0);
+  }
+
+  /**
+   * Calculate property derivatives with respect to pressure and temperature using central finite
+   * differences with custom step sizes and specified number of threads.
+   *
+   * @param pressures List of pressures in bar absolute
+   * @param temperatures List of temperatures in Kelvin
+   * @param deltaP Pressure step size in bar (default 0.01)
+   * @param deltaT Temperature step size in Kelvin (default 0.1)
+   * @param numThreads Number of threads to use (0 or negative = use all available CPU cores)
+   * @return DerivativesResult containing properties and their P,T derivatives
+   */
+  public DerivativesResult propertyFlashDerivatives(List<Double> pressures,
+      List<Double> temperatures, double deltaP, double deltaT, int numThreads) {
+
+    int numPoints = pressures.size();
+    int numProperties = SystemProperties.nCols;
+
+    // Build expanded lists for all stencil points
+    // Order: base, P+dP, P-dP, T+dT, T-dT (5 points per input)
+    List<Double> allPressures = new java.util.ArrayList<>(numPoints * 5);
+    List<Double> allTemperatures = new java.util.ArrayList<>(numPoints * 5);
+
+    for (int i = 0; i < numPoints; i++) {
+      double P = pressures.get(i);
+      double T = temperatures.get(i);
+
+      // Base point
+      allPressures.add(P);
+      allTemperatures.add(T);
+
+      // P + deltaP
+      allPressures.add(P + deltaP);
+      allTemperatures.add(T);
+
+      // P - deltaP
+      allPressures.add(P - deltaP);
+      allTemperatures.add(T);
+
+      // T + deltaT
+      allPressures.add(P);
+      allTemperatures.add(T + deltaT);
+
+      // T - deltaT
+      allPressures.add(P);
+      allTemperatures.add(T - deltaT);
+    }
+
+    // Run all points in parallel with a single call using specified thread count
+    CalculationResult allResults =
+        propertyFlashParallel(allPressures, allTemperatures, 1, null, null, numThreads);
+
+    // Extract results and compute derivatives
+    Double[][] properties = new Double[numPoints][numProperties];
+    Double[][] dPdP = new Double[numPoints][numProperties];
+    Double[][] dPdT = new Double[numPoints][numProperties];
+    String[] calculationError = new String[numPoints];
+
+    for (int i = 0; i < numPoints; i++) {
+      int baseIdx = i * 5;
+
+      // Check for errors in any of the 5 stencil points
+      String error = null;
+      for (int j = 0; j < 5; j++) {
+        if (allResults.calculationError[baseIdx + j] != null) {
+          error = "Derivative calculation failed: " + allResults.calculationError[baseIdx + j];
+          break;
+        }
+      }
+
+      if (error != null) {
+        calculationError[i] = error;
+        continue;
+      }
+
+      // Get stencil values
+      Double[] propBase = allResults.fluidProperties[baseIdx];
+      Double[] propPplus = allResults.fluidProperties[baseIdx + 1];
+      Double[] propPminus = allResults.fluidProperties[baseIdx + 2];
+      Double[] propTplus = allResults.fluidProperties[baseIdx + 3];
+      Double[] propTminus = allResults.fluidProperties[baseIdx + 4];
+
+      // Copy base properties
+      properties[i] = propBase;
+
+      // Compute central difference derivatives for each property
+      for (int j = 0; j < numProperties; j++) {
+        // dProp/dP using central difference
+        if (propPplus[j] != null && propPminus[j] != null && !Double.isNaN(propPplus[j])
+            && !Double.isNaN(propPminus[j])) {
+          dPdP[i][j] = (propPplus[j] - propPminus[j]) / (2.0 * deltaP);
+        } else {
+          dPdP[i][j] = Double.NaN;
+        }
+
+        // dProp/dT using central difference
+        if (propTplus[j] != null && propTminus[j] != null && !Double.isNaN(propTplus[j])
+            && !Double.isNaN(propTminus[j])) {
+          dPdT[i][j] = (propTplus[j] - propTminus[j]) / (2.0 * deltaT);
+        } else {
+          dPdT[i][j] = Double.NaN;
+        }
+      }
+    }
+
+    return new DerivativesResult(properties, dPdP, dPdT, calculationError);
+  }
+
+  /**
+   * Internal result holder for parallel property flash calculations.
+   */
+  private static class PropertyFlashResult {
+    int index;
+    Double[] properties;
+    String error;
+
+    PropertyFlashResult(int index) {
+      this.index = index;
+    }
+  }
+
+  /**
    * Definitions of flash types.
    */
   public static enum FlashType {
