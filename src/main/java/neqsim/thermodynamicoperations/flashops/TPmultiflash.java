@@ -254,9 +254,7 @@ public class TPmultiflash extends TPflash {
         }
       }
       system.normalizeBeta();
-      // Beta changes don't affect fugacity coefficients (intensive property depending only on
-      // T, P, x[i]). The second init(1) from the previous iteration already computed correct
-      // fugacities for the current compositions, so we skip the redundant first init(1) here.
+      system.init(1);
       calcE();
       setXY();
       system.init(1);
@@ -433,10 +431,8 @@ public class TPmultiflash extends TPflash {
       int iter = 0;
       double errOld = 1.0e100;
       boolean useaccsubst = true;
-      int maxsucssubiter = 60;
-      int maxiter = 80;
-      int noProgressCount = 0;
-      double bestErr = Double.MAX_VALUE;
+      int maxsucssubiter = 150;
+      int maxiter = 200;
       do {
         errOld = err;
         iter++;
@@ -600,22 +596,6 @@ public class TPmultiflash extends TPflash {
             clonedSystem.get(0).getPhase(1).getComponent(i).setx(1e-50);
           }
         }
-
-        // Early termination for stalled convergence
-        if (err < bestErr) {
-          bestErr = err;
-          noProgressCount = 0;
-        } else {
-          noProgressCount++;
-        }
-        // Break if no progress for 8 consecutive iterations and error is reasonably small
-        if (noProgressCount >= 8 && bestErr < 1e-4 && iter > 10) {
-          break;
-        }
-        // Break if error is clearly increasing (diverging trial)
-        if (iter > 15 && err > 10.0 * bestErr && bestErr < 1.0) {
-          break;
-        }
       } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
       // logger.info("err: " + err + " ITER " + iter);
       double xTrivialCheck0 = 0.0;
@@ -765,7 +745,6 @@ public class TPmultiflash extends TPflash {
     // Test stability for EACH existing phase as reference phase
     for (int refPhase = 0; refPhase < numPhases; refPhase++) {
       double[] d = dRef[refPhase];
-      PhaseType refType = system.getPhase(refPhase).getType();
 
       // Test with three different initial guesses:
       // trialType = 1: Vapor-like trial phase (use Wilson K directly) - for VLE gas detection
@@ -775,17 +754,6 @@ public class TPmultiflash extends TPflash {
       // but LLE is driven by activity coefficient differences (polarity, H-bonding),
       // so we use a different initialization strategy for LLE detection.
       for (int trialType = 1; trialType >= -1; trialType--) {
-        // Skip trials where the trial phase type matches the reference phase type.
-        // A vapor-like trial (K) against a gas reference converges to the trivial solution,
-        // and a liquid-like trial (1/K) against a liquid reference does the same.
-        // The LLE trial (trialType=0) is always run for liquid-liquid detection.
-        if (trialType == 1 && refType == PhaseType.GAS) {
-          continue;
-        }
-        if (trialType == -1 && (refType == PhaseType.LIQUID || refType == PhaseType.OIL
-            || refType == PhaseType.AQUEOUS)) {
-          continue;
-        }
         // Initialize logWi based on trial type
         for (int j = 0; j < numComponents; j++) {
           if (!validComponent[j]) {
@@ -828,10 +796,8 @@ public class TPmultiflash extends TPflash {
         int iter = 0;
         double err = 1.0e10;
         double errOld = 1.0e100;
-        int maxiter = 80;
+        int maxiter = 150; // Reduced from 200 - Wilson init converges faster
         boolean useAcceleration = true;
-        int noProgressCountE = 0;
-        double bestErrE = Double.MAX_VALUE;
 
         do {
           errOld = err;
@@ -895,20 +861,6 @@ public class TPmultiflash extends TPflash {
           // Update trial phase compositions
           for (int i = 0; i < numComponents; i++) {
             clonedSystem.getPhase(1).getComponent(i).setx(validComponent[i] ? Wi[i] : 1e-50);
-          }
-
-          // Early termination for stalled convergence
-          if (err < bestErrE) {
-            bestErrE = err;
-            noProgressCountE = 0;
-          } else {
-            noProgressCountE++;
-          }
-          if (noProgressCountE >= 8 && bestErrE < 1e-4 && iter > 10) {
-            break;
-          }
-          if (iter > 15 && err > 10.0 * bestErrE && bestErrE < 1.0) {
-            break;
           }
         } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
 
@@ -1112,10 +1064,8 @@ public class TPmultiflash extends TPflash {
       int iter = 0;
       double errOld = 1.0e100;
       boolean useaccsubst = true;
-      int maxsucssubiter = 60;
-      int maxiter = 80;
-      int noProgressCount3 = 0;
-      double bestErr3 = Double.MAX_VALUE;
+      int maxsucssubiter = 150;
+      int maxiter = 200;
       do {
         errOld = err;
         iter++;
@@ -1286,20 +1236,6 @@ public class TPmultiflash extends TPflash {
             clonedSystem.get(0).getPhase(1).getComponent(i).setx(1e-50);
           }
         }
-
-        // Early termination for stalled convergence
-        if (err < bestErr3) {
-          bestErr3 = err;
-          noProgressCount3 = 0;
-        } else {
-          noProgressCount3++;
-        }
-        if (noProgressCount3 >= 8 && bestErr3 < 1e-4 && iter > 10) {
-          break;
-        }
-        if (iter > 15 && err > 10.0 * bestErr3 && bestErr3 < 1.0) {
-          break;
-        }
       } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
       // logger.info("err: " + err + " ITER " + iter);
       double xTrivialCheck0 = 0.0;
@@ -1407,8 +1343,7 @@ public class TPmultiflash extends TPflash {
         (clonedSystem.get(i)).getPhase(1).getComponent(j).setx(numb);
       }
       if (system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
-        // Only re-init phase 1 (trial phase) since phase 0 (reference) is unchanged
-        (clonedSystem.get(i)).init(1, 1);
+        (clonedSystem.get(i)).init(1);
       }
     }
 
@@ -1498,14 +1433,12 @@ public class TPmultiflash extends TPflash {
       // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).isInert()) break;
       int iter = 0;
       double errOld = 1.0e100;
-      int noProgressCount2 = 0;
-      double bestErr2 = Double.MAX_VALUE;
       do {
         errOld = err;
         iter++;
         err = 0;
 
-        if (iter <= 60 || !system.isImplementedCompositionDeriativesofFugacity()) {
+        if (iter <= 150 || !system.isImplementedCompositionDeriativesofFugacity()) {
           if (iter % 7 == 0) {
             double vec1 = 0.0;
 
@@ -1654,26 +1587,12 @@ public class TPmultiflash extends TPflash {
             (clonedSystem.get(j)).getPhase(1).getComponent(i).setx(1e-50);
           }
         }
-
-        // Early termination for stalled convergence
-        if (err < bestErr2) {
-          bestErr2 = err;
-          noProgressCount2 = 0;
-        } else {
-          noProgressCount2++;
-        }
-        if (noProgressCount2 >= 8 && bestErr2 < 1e-4 && iter > 10) {
-          break;
-        }
-        if (iter > 15 && err > 10.0 * bestErr2 && bestErr2 < 1.0) {
-          break;
-        }
-      } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < 80);
-      if (iter > 78) {
+      } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < 200);
+      if (iter > 198) {
         // System.out.println("too many iterations....." + err + " temperature "
         // + system.getTemperature("C") + " C " + system.getPressure("bara") + " bara");
         throw new RuntimeException(
-            new neqsim.util.exception.TooManyIterationsException(this, "stabilityAnalysis2", 80));
+            new neqsim.util.exception.TooManyIterationsException(this, "stabilityAnalysis2", 200));
       }
       // logger.info("err: " + err + " ITER " + iter);
       double xTrivialCheck0 = 0.0;
@@ -1691,7 +1610,7 @@ public class TPmultiflash extends TPflash {
         xTrivialCheck0 += Math.abs(x[j][i] - system.getPhase(0).getComponent(i).getx());
         xTrivialCheck1 += Math.abs(x[j][i] - system.getPhase(1).getComponent(i).getx());
       }
-      if (iter >= 79) {
+      if (iter >= 199) {
         logger.info("iter > maxiter multiphase stability ");
         logger.info("error " + Math.abs(err));
         logger.info("tm: " + tm[j]);

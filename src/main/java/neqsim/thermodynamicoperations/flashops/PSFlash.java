@@ -67,9 +67,6 @@ public class PSFlash extends QfuncFlash {
 
     boolean correctFactor = true;
     double newCorr = 1.0;
-    int noProgressCount = 0;
-    double bestError = Double.MAX_VALUE;
-    double prevBestError = Double.MAX_VALUE;
     system.init(2);
 
     do {
@@ -98,44 +95,13 @@ public class PSFlash extends QfuncFlash {
       }
 
       system.setTemperature(nyTemp);
-      try {
-        tpFlash.run();
-        system.init(2);
-      } catch (Exception ex) {
-        // Flash or init can fail at extreme temperatures during Newton iteration.
-        // Recover by stepping temperature back toward the old value.
-        nyTemp = 0.5 * (nyTemp + oldTemp);
-        system.setTemperature(nyTemp);
-        tpFlash.run();
-        system.init(2);
-      }
+      tpFlash.run();
+      system.init(2);
       errorOld = error;
       error = Math.abs(calcdQdT()); // Math.abs((nyTemp - oldTemp) / (nyTemp));
-
-      // Detect convergence stagnation due to numerical noise floor.
-      // In multi-phase CPA systems, phase equilibrium tolerances in constituent
-      // solvers (RR, stability analysis, volume root) create an error floor
-      // typically around 1e-6 to 1e-5. The error oscillates at this level and
-      // never reaches the 1e-8 convergence criterion.
-      // Track both non-improvement count and slowing convergence rate.
-      if (error < bestError) {
-        prevBestError = bestError;
-        bestError = error;
-        noProgressCount = 0;
-      } else {
-        noProgressCount++;
-      }
-      // Break if no improvement for 3 consecutive iterations and error is small
-      if (noProgressCount >= 3 && bestError < 1e-3 && iterations > 5) {
-        break;
-      }
-      // Also break if error reduction has slowed dramatically (ratio > 0.5)
-      // and reached a reasonably small level
-      if (bestError < 1e-4 && prevBestError < 1e-3 && iterations > 10
-          && bestError / prevBestError > 0.5) {
-        break;
-      }
-
+      // if(error>errorOld) factor *= -1.0;
+      // System.out.println("temp " + system.getTemperature() + " iter "+ iterations +
+      // " error "+ error + " correction " + newCorr + " factor "+ factor);
       // newCorr = Math.abs(factor * calcdQdT() / calcdQdTT());
     } while (((error + errorOld) > 1e-8 || iterations < 3) && iterations < 200);
     return nyTemp;
