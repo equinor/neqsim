@@ -85,7 +85,6 @@ public class TPflash extends Flash {
                 / system.getPhase(0).getComponent(i).getFugacityCoefficient() * presdiff);
         if (Double.isNaN(system.getPhase(0).getComponent(i).getK())) {
           system.getPhase(0).getComponent(i).setK(Kold);
-          system.init(1);
         }
         system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
         deviation += Math.abs(Math.log(system.getPhase(0).getComponent(i).getK()) - Math.log(Kold));
