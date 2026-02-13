@@ -297,6 +297,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Control Valves** | [docs/process/equipment/control_valves.md](process/equipment/control_valves) | **CheckValve, LevelControlValve, PressureControlValve, ESD/PSD valves** |
 | Valve Design | [docs/process/ValveMechanicalDesign.md](process/ValveMechanicalDesign) | Valve mechanical design |
 | **Multiphase Choke Flow** | [docs/process/MultiphaseChokeFlow.md](process/MultiphaseChokeFlow) | **Sachdeva, Gilbert two-phase choke models** |
+| **Well Choke Implementation** | [docs/process/well_choke_implementation.md](process/well_choke_implementation) | **Architecture, models, ThrottlingValve integration, Python usage** |
 | Flow Meters | [docs/wiki/flow_meter_models.md](wiki/flow_meter_models) | Flow metering |
 | Venturi | [docs/wiki/venturi_calculation.md](wiki/venturi_calculation) | Venturi calculations |
 | Tanks | [docs/process/equipment/tanks.md](process/equipment/tanks) | Tank models |
