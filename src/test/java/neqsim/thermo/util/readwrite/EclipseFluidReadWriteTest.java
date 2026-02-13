@@ -1059,4 +1059,118 @@ class EclipseFluidReadWriteTest extends neqsim.NeqSimTest {
     // Clean up test file
     java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(outputFile));
   }
+
+  @Test
+  void testReadWithAddWater() throws IOException {
+    // Read fluid without water
+    SystemInterface fluidNoWater = EclipseFluidReadWrite.read(fileFluid1);
+    int nCompsNoWater = fluidNoWater.getNumberOfComponents();
+    Assertions.assertFalse(fluidNoWater.hasComponent("water"),
+        "Fluid without water should not have water component");
+
+    // Read same fluid with water added
+    SystemInterface fluidWithWater = EclipseFluidReadWrite.read(fileFluid1, true);
+    int nCompsWithWater = fluidWithWater.getNumberOfComponents();
+    Assertions.assertTrue(fluidWithWater.hasComponent("water"),
+        "Fluid with water should have water component");
+    Assertions.assertEquals(nCompsNoWater + 1, nCompsWithWater,
+        "Fluid with water should have one more component");
+
+    // Verify water kij = 0.5 against all other components
+    int waterIdx = fluidWithWater.getPhase(0).getComponent("water").getComponentNumber();
+    for (int i = 0; i < nCompsNoWater; i++) {
+      double kij = ((PhaseEos) fluidWithWater.getPhase(0)).getMixingRule()
+          .getBinaryInteractionParameter(i, waterIdx);
+      Assertions.assertEquals(0.5, kij, 1e-9, "Water kij with component " + i + " should be 0.5");
+    }
+
+    // Verify original kij values are preserved between non-water components
+    double kijOriginal =
+        ((PhaseEos) fluidNoWater.getPhase(0)).getMixingRule().getBinaryInteractionParameter(0, 1);
+    double kijPreserved =
+        ((PhaseEos) fluidWithWater.getPhase(0)).getMixingRule().getBinaryInteractionParameter(0, 1);
+    Assertions.assertEquals(kijOriginal, kijPreserved, 1e-9,
+        "Original kij between non-water components should be preserved");
+
+    // Flash the fluid with water and verify 3-phase behavior
+    fluidWithWater.setMultiPhaseCheck(true);
+    fluidWithWater.setPressure(60.0, "bara");
+    fluidWithWater.setTemperature(65.0, "C");
+
+    // Set composition with some water to test phase splitting
+    double[] molcomp = new double[nCompsWithWater];
+    for (int i = 0; i < nCompsNoWater; i++) {
+      molcomp[i] = fluidWithWater.getComponent(i).getz() * 0.99;
+    }
+    molcomp[waterIdx] = 0.01; // 1 mol% water
+    fluidWithWater.setMolarComposition(molcomp);
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(fluidWithWater);
+    testOps.TPflash();
+    Assertions.assertTrue(fluidWithWater.hasPhaseType("aqueous"),
+        "Fluid with water should form aqueous phase");
+  }
+
+  @Test
+  void testReadWithAddWaterCustomKij() throws IOException {
+    // Read fluid with custom water kij = 0.3
+    SystemInterface fluidCustomKij = EclipseFluidReadWrite.read(fileFluid1, true, 0.3);
+    Assertions.assertTrue(fluidCustomKij.hasComponent("water"),
+        "Fluid should have water component");
+
+    int waterIdx = fluidCustomKij.getPhase(0).getComponent("water").getComponentNumber();
+    double kij = ((PhaseEos) fluidCustomKij.getPhase(0)).getMixingRule()
+        .getBinaryInteractionParameter(0, waterIdx);
+    Assertions.assertEquals(0.3, kij, 1e-9, "Water kij should be 0.3");
+  }
+
+  @Test
+  void testReadWithAddWaterAlreadyHasWater() throws IOException {
+    // Read fluid that already has water (fluid_water.E300)
+    SystemInterface fluidAlreadyWater = EclipseFluidReadWrite.read(fluid_water);
+    int nCompsBefore = fluidAlreadyWater.getNumberOfComponents();
+    Assertions.assertTrue(fluidAlreadyWater.hasComponent("water"),
+        "Fluid should already have water");
+
+    // Adding water again should be a no-op
+    EclipseFluidReadWrite.addWaterToFluid(fluidAlreadyWater, 0.5);
+    Assertions.assertEquals(nCompsBefore, fluidAlreadyWater.getNumberOfComponents(),
+        "Component count should not change when water already present");
+  }
+
+  @Test
+  void testReadWithAddWaterMatchesExplicitWaterFile() throws IOException {
+    // Read a fluid without water, then add water programmatically
+    SystemInterface fluidAddedWater = EclipseFluidReadWrite.read(fileFluid1, true);
+
+    // Read fluid that was explicitly created with water in the E300 file
+    SystemInterface fluidExplicit = EclipseFluidReadWrite.read(fluid_water);
+
+    // Both should have water
+    Assertions.assertTrue(fluidAddedWater.hasComponent("water"));
+    Assertions.assertTrue(fluidExplicit.hasComponent("water"));
+
+    // Water kij should be 0.5 in both cases
+    int waterIdx1 = fluidAddedWater.getPhase(0).getComponent("water").getComponentNumber();
+    int waterIdx2 = fluidExplicit.getPhase(0).getComponent("water").getComponentNumber();
+
+    double kij1 = ((PhaseEos) fluidAddedWater.getPhase(0)).getMixingRule()
+        .getBinaryInteractionParameter(0, waterIdx1);
+    double kij2 = ((PhaseEos) fluidExplicit.getPhase(0)).getMixingRule()
+        .getBinaryInteractionParameter(0, waterIdx2);
+    Assertions.assertEquals(kij2, kij1, 1e-9,
+        "Water kij should match between added and explicit water");
+  }
+
+  @Test
+  void testAddWaterToFluidStandalone() throws IOException {
+    // Test using addWaterToFluid on a fluid that was read without addWater flag
+    SystemInterface fluid = EclipseFluidReadWrite.read(fileFluid1);
+    Assertions.assertFalse(fluid.hasComponent("water"));
+
+    EclipseFluidReadWrite.addWaterToFluid(fluid, 0.5);
+    Assertions.assertTrue(fluid.hasComponent("water"));
+    Assertions.assertTrue(fluid.doMultiPhaseCheck(),
+        "Multi-phase check should be enabled after adding water");
+  }
 }

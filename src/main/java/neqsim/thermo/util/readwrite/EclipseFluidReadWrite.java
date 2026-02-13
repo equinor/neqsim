@@ -442,6 +442,160 @@ public class EclipseFluidReadWrite {
   }
 
   /**
+   * Read an Eclipse E300 fluid file and optionally add a water component.
+   *
+   * <p>
+   * When {@code addWater} is true and the fluid does not already contain water, a water component
+   * is added with zero mole fraction and binary interaction parameters (kij) of 0.5 against all
+   * other components. This matches the water parameterization used in PVTsim-generated E300 files
+   * (e.g., osebergfluid_water.e300). Multi-phase check is also enabled so that an aqueous phase can
+   * form.
+   * </p>
+   *
+   * @param inputFile path to the Eclipse E300 fluid file
+   * @param addWater if true, add a water component with default kij = 0.5
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
+   */
+  public static SystemInterface read(String inputFile, boolean addWater) {
+    return read(inputFile, addWater, 0.5);
+  }
+
+  /**
+   * Read an Eclipse E300 fluid file and optionally add a water component with a custom kij value.
+   *
+   * <p>
+   * When {@code addWater} is true and the fluid does not already contain water, a water component
+   * is added with zero mole fraction and the specified binary interaction parameter (kij) against
+   * all other components. Multi-phase check is enabled so that an aqueous phase can form.
+   * </p>
+   *
+   * @param inputFile path to the Eclipse E300 fluid file
+   * @param addWater if true, add a water component
+   * @param waterKij binary interaction parameter between water and all other components (typical
+   *        value: 0.5)
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
+   */
+  public static SystemInterface read(String inputFile, boolean addWater, double waterKij) {
+    SystemInterface fluid = read(inputFile);
+    if (addWater) {
+      addWaterToFluid(fluid, waterKij);
+    }
+    return fluid;
+  }
+
+  /**
+   * Read an Eclipse E300 fluid file with a pseudo-name suffix and optionally add a water component.
+   *
+   * @param inputFile path to the Eclipse E300 fluid file
+   * @param pseudoNameIn pseudo-name suffix appended to pseudo-component names
+   * @param addWater if true, add a water component with default kij = 0.5
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
+   */
+  public static SystemInterface read(String inputFile, String pseudoNameIn, boolean addWater) {
+    return read(inputFile, pseudoNameIn, addWater, 0.5);
+  }
+
+  /**
+   * Read an Eclipse E300 fluid file with a pseudo-name suffix and optionally add a water component
+   * with a custom kij value.
+   *
+   * @param inputFile path to the Eclipse E300 fluid file
+   * @param pseudoNameIn pseudo-name suffix appended to pseudo-component names
+   * @param addWater if true, add a water component
+   * @param waterKij binary interaction parameter between water and all other components
+   * @return a {@link neqsim.thermo.system.SystemInterface} object
+   * @throws java.lang.IllegalArgumentException if the input file does not exist or cannot be read
+   */
+  public static SystemInterface read(String inputFile, String pseudoNameIn, boolean addWater,
+      double waterKij) {
+    pseudoName = pseudoNameIn;
+    SystemInterface fluid = read(inputFile);
+    if (addWater) {
+      addWaterToFluid(fluid, waterKij);
+    }
+    return fluid;
+  }
+
+  /**
+   * Add a water component to an existing fluid with specified binary interaction parameters.
+   *
+   * <p>
+   * This method adds water as a component with zero mole fraction to a fluid that was typically
+   * read from an E300 file without water. The water component is added with standard NeqSim water
+   * properties from the component database, a specified kij value against all other components
+   * (default: 0.5), a volume correction constant of 0.084004, and a parachor parameter of 10.0
+   * (matching PVTsim water calibration). Multi-phase check is enabled so that an aqueous phase can
+   * be identified.
+   * </p>
+   * <p>
+   * If the fluid already contains a water component, this method does nothing.
+   * </p>
+   *
+   * @param fluid the fluid to add water to
+   * @param waterKij binary interaction parameter between water and all other components (typical
+   *        value: 0.5)
+   */
+  public static void addWaterToFluid(SystemInterface fluid, double waterKij) {
+    if (fluid.hasComponent("water")) {
+      logger.info("Fluid already contains water component, skipping water addition");
+      return;
+    }
+
+    int nComps = fluid.getNumberOfComponents();
+
+    // Save existing kij values before modifying the mixing rule
+    double[][] savedKij = new double[nComps][nComps];
+    for (int i = 0; i < nComps; i++) {
+      for (int j = 0; j < nComps; j++) {
+        savedKij[i][j] = ((PhaseEosInterface) fluid.getPhase(0)).getEosMixingRule()
+            .getBinaryInteractionParameter(i, j);
+      }
+    }
+
+    // Add water component with zero mole fraction
+    fluid.addComponent("water", 0.0);
+
+    // Set water-specific volume correction and parachor matching PVTsim parameterization
+    for (int phaseIdx = 0; phaseIdx < fluid.getMaxNumberOfPhases(); phaseIdx++) {
+      fluid.getPhase(phaseIdx).getComponent("water").setVolumeCorrectionConst(0.084004);
+      fluid.getPhase(phaseIdx).getComponent("water").setParachorParameter(10.0);
+    }
+
+    // Re-initialize mixing rule to include the new water component
+    fluid.setMixingRule(2);
+    fluid.useVolumeCorrection(true);
+    fluid.init(0);
+
+    // Restore original kij values for all non-water component pairs
+    for (int i = 0; i < nComps; i++) {
+      for (int j = i; j < nComps; j++) {
+        for (int phaseNum = 0; phaseNum < fluid.getMaxNumberOfPhases(); phaseNum++) {
+          ((PhaseEosInterface) fluid.getPhase(phaseNum)).getEosMixingRule()
+              .setBinaryInteractionParameter(i, j, savedKij[i][j]);
+          ((PhaseEosInterface) fluid.getPhase(phaseNum)).getEosMixingRule()
+              .setBinaryInteractionParameter(j, i, savedKij[i][j]);
+        }
+      }
+    }
+
+    // Set water kij with all other components
+    int waterIdx = nComps; // water was added as the last component
+    for (int i = 0; i < nComps; i++) {
+      for (int phaseNum = 0; phaseNum < fluid.getMaxNumberOfPhases(); phaseNum++) {
+        ((PhaseEosInterface) fluid.getPhase(phaseNum)).getEosMixingRule()
+            .setBinaryInteractionParameter(i, waterIdx, waterKij);
+        ((PhaseEosInterface) fluid.getPhase(phaseNum)).getEosMixingRule()
+            .setBinaryInteractionParameter(waterIdx, i, waterKij);
+      }
+    }
+
+    fluid.setMultiPhaseCheck(true);
+  }
+
+  /**
    * <p>
    * read.
    * </p>

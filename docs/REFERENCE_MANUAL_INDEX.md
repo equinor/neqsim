@@ -631,7 +631,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 |----------|------|-------------|
 | Black Oil Overview | [docs/blackoil/README.md](blackoil/) | Black oil module |
 | Flash Playbook | [docs/wiki/black_oil_flash_playbook.md](wiki/black_oil_flash_playbook) | Black oil flash playbook |
-| Black Oil Export | [docs/pvtsimulation/blackoil_pvt_export.md](pvtsimulation/blackoil_pvt_export) | Black oil PVT export and E300 compositional export |
+| Black Oil Export | [docs/pvtsimulation/blackoil_pvt_export.md](pvtsimulation/blackoil_pvt_export) | Black oil PVT export, E300 compositional export, and E300 import with automatic water addition |
 
 ### Chapter 37: Flow Assurance
 
