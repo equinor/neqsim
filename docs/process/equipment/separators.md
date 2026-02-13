@@ -1,6 +1,6 @@
 ---
 title: Separator Equipment
-description: Documentation for separator equipment in NeqSim process simulation.
+description: "Documentation for separator equipment in NeqSim process simulation including two-phase separators, three-phase separators, gas scrubbers, entrainment specification, and design constraints."
 ---
 
 # Separator Equipment
@@ -10,6 +10,8 @@ Documentation for separator equipment in NeqSim process simulation.
 ## Table of Contents
 - [Overview](#overview)
 - [Separator Types](#separator-types)
+- [Three-Phase Separator in Detail](#three-phase-separator-in-detail)
+- [Entrainment](#entrainment)
 - [Horizontal Separator Design Parameters](#horizontal-separator-design-parameters)
 - [Three-Phase Separator Design Parameters](#three-phase-separator-design-parameters)
 - [Gas Scrubber Design Parameters](#gas-scrubber-design-parameters)
@@ -86,6 +88,323 @@ Stream condensate = scrubber.getLiquidOutStream();
 
 > **Note:** Gas scrubbers automatically use K-value only constraints (`useGasScrubberConstraints()`). 
 > This is appropriate since scrubbers focus on gas-phase separation efficiency rather than liquid retention time.
+
+---
+
+## Three-Phase Separator in Detail
+
+The `ThreePhaseSeparator` extends `Separator` and separates a multiphase feed into three outlet streams: gas, oil, and water (aqueous). It requires the fluid to have `setMultiPhaseCheck(true)` so the thermodynamic flash produces distinct oil and aqueous phases.
+
+### Creating a Three-Phase Separator
+
+```java
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
+
+// Create a fluid with gas, oil, and water components
+SystemSrkCPAstatoil fluid = new SystemSrkCPAstatoil(273.15 + 42.0, 10.0);
+fluid.addComponent("methane", 72.0);
+fluid.addComponent("n-heptane", 14.0);
+fluid.addComponent("water", 40.0);
+fluid.setMixingRule(10);
+fluid.setMultiPhaseCheck(true);  // REQUIRED for three-phase separation
+
+Stream feed = new Stream("Feed", fluid);
+feed.setTemperature(72.0, "C");
+feed.setPressure(10.7, "bara");
+feed.setFlowRate(720.0, "kg/hr");
+feed.run();
+
+// Create three-phase separator
+ThreePhaseSeparator separator = new ThreePhaseSeparator("1st Stage Sep", feed);
+separator.run();
+```
+
+### Outlet Streams
+
+```java
+// Gas outlet
+StreamInterface gasOut = separator.getGasOutStream();
+double gasRate = gasOut.getFlowRate("kg/hr");
+
+// Oil outlet
+StreamInterface oilOut = separator.getOilOutStream();
+double oilRate = oilOut.getFlowRate("kg/hr");
+
+// Water outlet
+StreamInterface waterOut = separator.getWaterOutStream();
+double waterRate = waterOut.getFlowRate("kg/hr");
+```
+
+### Connecting to Downstream Equipment
+
+```java
+ProcessSystem process = new ProcessSystem();
+process.add(feed);
+
+ThreePhaseSeparator separator = new ThreePhaseSeparator("HP Sep", feed);
+process.add(separator);
+
+// Gas to compressor
+Compressor compressor = new Compressor("Gas Compressor", separator.getGasOutStream());
+process.add(compressor);
+
+// Oil to heater and next stage
+Heater oilHeater = new Heater("Oil Heater", separator.getOilOutStream());
+oilHeater.setOutTemperature(85.0, "C");
+process.add(oilHeater);
+
+// Water to treatment
+ThrottlingValve waterValve = new ThrottlingValve("Water Valve", separator.getWaterOutStream());
+waterValve.setOutletPressure(1.01325);
+process.add(waterValve);
+
+process.run();
+```
+
+### Adding Multiple Inlet Streams
+
+```java
+ThreePhaseSeparator separator = new ThreePhaseSeparator("HP Sep", primaryFeed);
+separator.addStream(recycleFeed);  // Additional inlet stream
+separator.run();
+```
+
+### Vessel Dimensions and Dynamic Simulation
+
+```java
+// Set physical dimensions
+separator.setInternalDiameter(2.5, "m");
+separator.setSeparatorLength(10.0);
+
+// Water and oil levels (for dynamic mode)
+separator.setWaterLevel(0.3);  // meters from bottom
+separator.setOilLevel(0.6);    // meters from bottom (includes water below)
+double oilThickness = separator.getOilThickness();  // oil layer thickness
+
+// Outlet valve fractions for dynamic control (0.0 = closed, 1.0 = open)
+separator.setGasOutletFlowFraction(1.0);
+separator.setOilOutletFlowFraction(0.8);
+separator.setWaterOutletFlowFraction(0.9);
+```
+
+---
+
+## Entrainment
+
+Entrainment models imperfect separation by transferring a fraction of one phase into another outlet stream. Both `Separator` and `ThreePhaseSeparator` support entrainment specification through the `setEntrainment()` method.
+
+### Method Signature
+
+```java
+void setEntrainment(double val, String specType, String specifiedStream,
+                    String phaseFrom, String phaseTo)
+```
+
+| Parameter | Description | Values |
+|-----------|-------------|--------|
+| `val` | Fraction of the source phase to entrain | 0.0 to 1.0 (e.g., 0.05 = 5%) |
+| `specType` | Basis for the fraction | `"mole"`, `"mass"`, or `"volume"` |
+| `specifiedStream` | Reference stream for the fraction | `"feed"` or `"product"` |
+| `phaseFrom` | Phase being entrained (source) | `"gas"`, `"oil"`, `"aqueous"` |
+| `phaseTo` | Phase receiving the entrainment (destination) | `"gas"`, `"oil"`, `"aqueous"`, `"liquid"` |
+
+### Specification Type (`specType`)
+
+- **`"mole"`** - Fraction is on a molar basis (moles of source phase transferred / total moles of reference)
+- **`"mass"`** - Fraction is on a mass basis (kg transferred / total kg of reference)
+- **`"volume"`** - Fraction is on a volumetric basis (m3 transferred / total m3 of reference)
+
+### Specified Stream (`specifiedStream`)
+
+- **`"feed"`** - The fraction is relative to the feed stream composition
+- **`"product"`** - The fraction is relative to the outlet product stream composition
+
+### Two-Phase Separator Entrainment
+
+The `Separator` class supports three entrainment paths:
+
+| From Phase | To Phase | Description |
+|------------|----------|-------------|
+| `"oil"` | `"gas"` | Oil droplets carried over into the gas outlet |
+| `"aqueous"` | `"gas"` | Water droplets carried over into the gas outlet |
+| `"gas"` | `"liquid"` | Gas bubbles carried under into the liquid outlet |
+
+```java
+Separator separator = new Separator("HP Sep", feed);
+
+// 10% of feed oil moles entrained into gas
+separator.setEntrainment(0.10, "mole", "feed", "oil", "gas");
+
+// 5% of feed water moles entrained into gas
+separator.setEntrainment(0.05, "mole", "feed", "aqueous", "gas");
+
+// 8% of feed gas moles entrained into liquid
+separator.setEntrainment(0.08, "mole", "feed", "gas", "liquid");
+
+separator.run();
+```
+
+> **Note:** When using `"gas"` to `"liquid"` entrainment in a system with both oil and aqueous phases (but no combined "liquid" phase), the entrained gas is split proportionally between the oil and aqueous phases based on their molar content.
+
+### Three-Phase Separator Entrainment
+
+The `ThreePhaseSeparator` supports six entrainment paths covering all phase-to-phase combinations:
+
+| From Phase | To Phase | Description |
+|------------|----------|-------------|
+| `"oil"` | `"gas"` | Oil droplets in gas outlet |
+| `"aqueous"` | `"gas"` | Water droplets in gas outlet |
+| `"gas"` | `"oil"` | Gas bubbles in oil outlet |
+| `"gas"` | `"aqueous"` | Gas bubbles in water outlet |
+| `"oil"` | `"aqueous"` | Oil droplets in water outlet |
+| `"aqueous"` | `"oil"` | Water droplets in oil outlet (water-in-oil) |
+
+```java
+ThreePhaseSeparator separator = new ThreePhaseSeparator("1st Stage Sep", feed);
+
+// Water-in-oil: 0.5% by mass in the product oil stream
+separator.setEntrainment(0.005, "mass", "product", "aqueous", "oil");
+
+// Oil-in-water: 500 ppm by mole in the product water stream
+separator.setEntrainment(500e-6, "mole", "product", "oil", "aqueous");
+
+separator.run();
+
+// Verify water content in oil
+double waterInOilVolPct = separator.getOilOutStream().getFluid()
+    .getPhase("aqueous").getFlowRate("m3/hr")
+    / (separator.getOilOutStream().getFluid().getPhase("oil").getFlowRate("m3/hr")
+       + separator.getOilOutStream().getFluid().getPhase("aqueous").getFlowRate("m3/hr"))
+    * 100.0;
+```
+
+### Example: Full Entrainment Specification
+
+```java
+ThreePhaseSeparator separator = new ThreePhaseSeparator("Production Sep", feed);
+
+// Liquid carryover into gas
+separator.setEntrainment(0.001, "mole", "feed", "oil", "gas");
+separator.setEntrainment(0.001, "mole", "feed", "aqueous", "gas");
+
+// Gas carry-under into liquids
+separator.setEntrainment(0.002, "mole", "feed", "gas", "oil");
+separator.setEntrainment(0.001, "mole", "feed", "gas", "aqueous");
+
+// Oil-water cross-contamination
+separator.setEntrainment(0.05, "volume", "product", "aqueous", "oil");  // 5 vol% water-in-oil
+separator.setEntrainment(0.01, "volume", "product", "oil", "aqueous");  // 1 vol% oil-in-water
+
+separator.run();
+```
+
+### Example: Offshore Three-Stage Separation with Entrainment
+
+```java
+// Create fluid
+SystemInterface fluid = new neqsim.thermo.Fluid().create("black oil with water");
+
+Stream wellStream = new Stream("Well Stream", fluid);
+wellStream.setFlowRate(14.23, "MSm3/day");
+wellStream.setTemperature(41.0, "C");
+wellStream.setPressure(120.0, "bara");
+
+// Inlet choke
+ThrottlingValve chokeValve = new ThrottlingValve("Inlet Choke", wellStream);
+chokeValve.setOutletPressure(35.0);
+
+// 1st stage separator with entrainment
+ThreePhaseSeparator hpSep = new ThreePhaseSeparator("HP Separator", chokeValve.getOutletStream());
+hpSep.setEntrainment(0.005, "mass", "product", "aqueous", "oil");   // 0.5% water in oil
+hpSep.setEntrainment(500e-6, "mole", "product", "oil", "aqueous");  // 500 ppm oil in water
+
+// 2nd stage: heat oil and reduce pressure
+Heater oilHeater = new Heater("Oil Heater", hpSep.getOilOutStream());
+oilHeater.setOutTemperature(85.0, "C");
+
+ThrottlingValve mpValve = new ThrottlingValve("MP Valve", oilHeater.getOutletStream());
+mpValve.setOutletPressure(7.0);
+
+// 2nd stage separator
+ThreePhaseSeparator mpSep = new ThreePhaseSeparator("MP Separator", mpValve.getOutletStream());
+mpSep.setEntrainment(0.003, "mass", "product", "aqueous", "oil");
+
+// Water treatment
+ThrottlingValve waterValve = new ThrottlingValve("Water DP Valve", hpSep.getWaterOutStream());
+waterValve.setOutletPressure(1.01325);
+Separator waterDegasser = new Separator("Water Degasser", waterValve.getOutletStream());
+
+// Build and run process
+ProcessSystem process = new ProcessSystem();
+process.add(wellStream);
+process.add(chokeValve);
+process.add(hpSep);
+process.add(oilHeater);
+process.add(mpValve);
+process.add(mpSep);
+process.add(waterValve);
+process.add(waterDegasser);
+process.run();
+```
+
+### Zero Entrainment (Perfect Separation)
+
+Setting entrainment to 0.0 or not calling `setEntrainment()` at all both result in ideal (perfect) separation where each phase goes entirely to its designated outlet:
+
+```java
+// These are equivalent:
+Separator idealSep = new Separator("Ideal Sep", feed);
+idealSep.run();
+
+Separator explicitZero = new Separator("Zero Entrainment Sep", feed);
+explicitZero.setEntrainment(0.0, "mole", "feed", "oil", "gas");
+explicitZero.setEntrainment(0.0, "mole", "feed", "aqueous", "gas");
+explicitZero.setEntrainment(0.0, "mole", "feed", "gas", "liquid");
+explicitZero.run();
+// Both produce identical outlet compositions
+```
+
+### Entrainment with Python (neqsim-python)
+
+```python
+from neqsim import jneqsim
+
+SystemSrkCPAstatoil = jneqsim.thermo.system.SystemSrkCPAstatoil
+ThreePhaseSeparator = jneqsim.process.equipment.separator.ThreePhaseSeparator
+Stream = jneqsim.process.equipment.stream.Stream
+ProcessSystem = jneqsim.process.processmodel.ProcessSystem
+
+# Create fluid
+fluid = SystemSrkCPAstatoil(273.15 + 42.0, 10.0)
+fluid.addComponent("methane", 72.0)
+fluid.addComponent("n-heptane", 14.0)
+fluid.addComponent("water", 40.0)
+fluid.setMixingRule(10)
+fluid.setMultiPhaseCheck(True)
+
+feed = Stream("Feed", fluid)
+feed.setTemperature(72.0, "C")
+feed.setPressure(10.7, "bara")
+feed.setFlowRate(720.0, "kg/hr")
+
+# Create separator with entrainment
+separator = ThreePhaseSeparator("HP Sep", feed)
+separator.setEntrainment(0.005, "mass", "product", "aqueous", "oil")
+separator.setEntrainment(500e-6, "mole", "product", "oil", "aqueous")
+
+process = ProcessSystem()
+process.add(feed)
+process.add(separator)
+process.run()
+
+# Read results
+oil_rate = separator.getOilOutStream().getFlowRate("kg/hr")
+water_rate = separator.getWaterOutStream().getFlowRate("kg/hr")
+gas_rate = separator.getGasOutStream().getFlowRate("kg/hr")
+print(f"Oil: {oil_rate:.1f} kg/hr, Water: {water_rate:.1f} kg/hr, Gas: {gas_rate:.1f} kg/hr")
+```
 
 ---
 
@@ -452,11 +771,15 @@ for (int i = 0; i < 100; i++) {
 
 ## Separation Efficiency
 
+For basic efficiency controls:
+
 ```java
 // Set droplet removal efficiency
 separator.setGasCarryUnderFraction(0.001);  // 0.1% liquid in gas
 separator.setLiquidCarryOverFraction(0.0001); // 0.01% gas in liquid
 ```
+
+For detailed phase-to-phase entrainment specification, see the [Entrainment](#entrainment) section above.
 
 ---
 

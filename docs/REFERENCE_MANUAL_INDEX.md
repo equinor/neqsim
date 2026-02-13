@@ -253,7 +253,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Separators | [docs/process/equipment/separators.md](process/equipment/separators) | Two/three-phase separators, scrubbers, design parameters, performance constraints (K-value, droplet cut size, retention time), Equinor TR3500 & API 12J compliance |
+| Separators | [docs/process/equipment/separators.md](process/equipment/separators) | Two/three-phase separators, scrubbers, **entrainment specification (setEntrainment)**, design parameters, performance constraints (K-value, droplet cut size, retention time), Equinor TR3500 & API 12J compliance |
 | Distillation | [docs/process/equipment/distillation.md](process/equipment/distillation) | Distillation columns |
 | Distillation Wiki | [docs/wiki/distillation_column.md](wiki/distillation_column) | Distillation column details |
 | Absorbers | [docs/process/equipment/absorbers.md](process/equipment/absorbers) | Absorption equipment |
