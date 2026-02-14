@@ -120,6 +120,7 @@ This documentation is organized into the following sections:
 | Pumps | [pumps.md](equipment/pumps) | Pump, PumpChart |
 | Expanders | [expanders.md](equipment/expanders) | Expander, TurboExpanderCompressor |
 | Valves | [valves.md](equipment/valves) | ThrottlingValve, SafetyValve, BlowdownValve |
+| **Well Chokes** | [well_choke_implementation.md](well_choke_implementation) | Sachdeva, Gilbert choke models, ThrottlingValve integration |
 | Distillation | [distillation.md](equipment/distillation) | DistillationColumn, SimpleTray |
 | Absorbers | [absorbers.md](equipment/absorbers) | SimpleAbsorber, SimpleTEGAbsorber |
 | Ejectors | [ejectors.md](equipment/ejectors) | Ejector |

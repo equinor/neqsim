@@ -521,6 +521,17 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     thermoOps = new ThermodynamicOperations(getThermoSystem());
     getThermoSystem().init(3);
     getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+
+    // Optimization: multiPhaseCheck (stability analysis) is only needed to detect
+    // 3+ phase splits. With 1 or 2 phases at inlet, the standard flash handles
+    // compression correctly. Disabling avoids expensive stability analysis at
+    // every PSflash/PHflash Newton iteration.
+    boolean originalMultiPhaseCheck = getThermoSystem().doMultiPhaseCheck();
+    int inletPhases = getThermoSystem().getNumberOfPhases();
+    if (inletPhases <= 2 && originalMultiPhaseCheck) {
+      getThermoSystem().setMultiPhaseCheck(false);
+    }
+
     double presinn = getThermoSystem().getPressure();
     double hinn = getThermoSystem().getEnthalpy();
     double densInn = getThermoSystem().getDensity();
@@ -604,6 +615,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
         polytropicFluidHead = polytropicHead;
         polytropicHeadMeter =
             polytropicFluidHead * 1000.0 / ThermodynamicConstantsInterface.gravity;
+        getThermoSystem().setMultiPhaseCheck(originalMultiPhaseCheck);
         return;
       } else {
         double MW = thermoSystem.getMolarMass();
@@ -704,6 +716,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
             polytropicHead = polytropicFluidHead;
           }
         }
+        getThermoSystem().setMultiPhaseCheck(originalMultiPhaseCheck);
         outStream.setThermoSystem(getThermoSystem());
         outStream.setCalculationIdentifier(id);
         setCalculationIdentifier(id);
@@ -858,6 +871,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
               run();
               setSolveSpeed(true);
               setCalcPressureOut(false);
+              getThermoSystem().setMultiPhaseCheck(originalMultiPhaseCheck);
               return;
             } else {
               // throw new IllegalArgumentException(
@@ -1233,6 +1247,10 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
       thermoSystem.setTotalNumberOfMoles(orginalMolarFLow);
       thermoSystem.init(3);
     }
+
+    // Restore original multiPhaseCheck setting
+    getThermoSystem().setMultiPhaseCheck(originalMultiPhaseCheck);
+
     thermoSystem.initProperties();
     outStream.setThermoSystem(getThermoSystem());
     outStream.setCalculationIdentifier(id);

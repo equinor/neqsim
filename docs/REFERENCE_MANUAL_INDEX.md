@@ -253,7 +253,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 | Document | Path | Description |
 |----------|------|-------------|
-| Separators | [docs/process/equipment/separators.md](process/equipment/separators) | Two/three-phase separators, scrubbers, design parameters, performance constraints (K-value, droplet cut size, retention time), Equinor TR3500 & API 12J compliance |
+| Separators | [docs/process/equipment/separators.md](process/equipment/separators) | Two/three-phase separators, scrubbers, **entrainment specification (setEntrainment)**, design parameters, performance constraints (K-value, droplet cut size, retention time), Equinor TR3500 & API 12J compliance |
 | Distillation | [docs/process/equipment/distillation.md](process/equipment/distillation) | Distillation columns |
 | Distillation Wiki | [docs/wiki/distillation_column.md](wiki/distillation_column) | Distillation column details |
 | Absorbers | [docs/process/equipment/absorbers.md](process/equipment/absorbers) | Absorption equipment |
@@ -297,6 +297,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Control Valves** | [docs/process/equipment/control_valves.md](process/equipment/control_valves) | **CheckValve, LevelControlValve, PressureControlValve, ESD/PSD valves** |
 | Valve Design | [docs/process/ValveMechanicalDesign.md](process/ValveMechanicalDesign) | Valve mechanical design |
 | **Multiphase Choke Flow** | [docs/process/MultiphaseChokeFlow.md](process/MultiphaseChokeFlow) | **Sachdeva, Gilbert two-phase choke models** |
+| **Well Choke Implementation** | [docs/process/well_choke_implementation.md](process/well_choke_implementation) | **Architecture, models, ThrottlingValve integration, Python usage** |
 | Flow Meters | [docs/wiki/flow_meter_models.md](wiki/flow_meter_models) | Flow metering |
 | Venturi | [docs/wiki/venturi_calculation.md](wiki/venturi_calculation) | Venturi calculations |
 | Tanks | [docs/process/equipment/tanks.md](process/equipment/tanks) | Tank models |
@@ -630,7 +631,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 |----------|------|-------------|
 | Black Oil Overview | [docs/blackoil/README.md](blackoil/) | Black oil module |
 | Flash Playbook | [docs/wiki/black_oil_flash_playbook.md](wiki/black_oil_flash_playbook) | Black oil flash playbook |
-| Black Oil Export | [docs/pvtsimulation/blackoil_pvt_export.md](pvtsimulation/blackoil_pvt_export) | Black oil PVT export and E300 compositional export |
+| Black Oil Export | [docs/pvtsimulation/blackoil_pvt_export.md](pvtsimulation/blackoil_pvt_export) | Black oil PVT export, E300 compositional export, and E300 import with automatic water addition |
 
 ### Chapter 37: Flow Assurance
 
