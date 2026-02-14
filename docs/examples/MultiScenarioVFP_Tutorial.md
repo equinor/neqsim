@@ -617,10 +617,10 @@ FluidMagicInput fluidInput = FluidMagicInput.fromFluid(referenceFluid);
 fluidInput.setGORRange(80.0, 350.0, 5);    // min, max, count
 fluidInput.setWaterCutRange(0.0, 0.6, 4);  // min, max, count
 
-// 2. Define process supplier (well model)
-// VFP generator replaces the feed fluid and rate for each point
+// 2. Define process factory (well model)
 Supplier<ProcessSystem> wellFactory = () -> {
     ProcessSystem process = new ProcessSystem();
+    
     SystemInterface fluid = referenceFluid.clone();
     Stream wellhead = new Stream("wellhead", fluid);
     wellhead.setFlowRate(100.0, "m3/hr");
