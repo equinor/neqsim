@@ -111,8 +111,11 @@
       this.field('content');
       this.field('tags', { boost: 3 });
 
-      // Enable fuzzy matching
+      // Remove stemmer from both pipelines so exact words are matched.
+      // Without this, the index stores unstemmed tokens while the search
+      // pipeline stems query terms, causing mismatches (e.g. "valve" -> "valv").
       this.pipeline.remove(lunr.stemmer);
+      this.searchPipeline.remove(lunr.stemmer);
       
       var self = this;
       data.forEach(function(doc) {
