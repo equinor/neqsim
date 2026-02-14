@@ -57,15 +57,12 @@ Reference fluid configuration from E300/FluidMagic exports or NeqSim fluids.
 ```java
 // From E300 file
 FluidMagicInput input = FluidMagicInput.fromE300File(
-    "path/to/fluid.inc",
-    "SRK-EOS"
+    "path/to/fluid.inc"
 );
 
 // Or from existing NeqSim fluid
 FluidMagicInput input = FluidMagicInput.fromFluid(
-    existingFluid,
-    150.0,  // Reference GOR (Sm3/Sm3)
-    0.0     // Reference water cut
+    existingFluid
 );
 
 // Configure scenarios
@@ -111,11 +108,15 @@ Generates complete VFP tables with all scenario combinations.
 - Comprehensive statistics and feasibility tracking
 
 ```java
-// Define process factory (creates fresh process for each calculation)
-ProcessFactory factory = (fluid, rate) -> {
+// Define process supplier (creates fresh process for each calculation)
+// The VFP generator will set the fluid and rate on the feed stream
+Supplier<ProcessSystem> factory = () -> {
     ProcessSystem process = new ProcessSystem();
+    SystemInterface fluid = new SystemSrkEos(288.15, 100.0);
+    fluid.addComponent("methane", 0.8);
+    fluid.setMixingRule("classic");
     Stream feed = new Stream("feed", fluid);
-    feed.setFlowRate(rate, "m3/hr");
+    feed.setFlowRate(100.0, "m3/hr");
     process.add(feed);
     
     AdiabaticPipe pipe = new AdiabaticPipe("well", feed);
@@ -140,8 +141,8 @@ vfpGen.setFlashGenerator(flashGen);
 // Configure dimensions
 vfpGen.setFlowRates(new double[]{50, 100, 200, 400, 800});  // m³/h
 vfpGen.setOutletPressures(new double[]{10, 20, 30, 40});    // bara
-vfpGen.setWaterCuts(fluidInput.getWaterCutValues());        // from fluid input
-vfpGen.setGORs(fluidInput.getGORValues());                  // from fluid input
+vfpGen.setWaterCuts(fluidInput.generateWaterCutValues());        // from fluid input
+vfpGen.setGORs(fluidInput.generateGORValues());                  // from fluid input
 vfpGen.setMinInletPressure(50.0);
 vfpGen.setMaxInletPressure(500.0);
 
@@ -165,7 +166,7 @@ table.printSlice(wcIdx, gorIdx);
 
 // Statistics
 int feasible = table.getFeasibleCount();
-int total = table.getTotalCount();
+int total = table.getTotalPoints();
 double coverage = (double) feasible / total * 100;
 ```
 
@@ -230,14 +231,16 @@ For each combination of (rate, outlet_pressure, water_cut, GOR):
 
 ### Parallel Execution
 
-The generator uses a process factory pattern to enable thread-safe parallel execution:
+The generator uses a process supplier pattern to enable thread-safe parallel execution:
 
 ```java
-// Each thread gets its own process instance
-@FunctionalInterface
-public interface ProcessFactory {
-    ProcessSystem createProcess(SystemInterface fluid, double rate);
-}
+// Each thread gets its own process instance via Supplier
+import java.util.function.Supplier;
+
+Supplier<ProcessSystem> factory = () -> {
+    // Return a fresh process system for each VFP point
+    return createProcess();
+};
 ```
 
 ## Complete Example
@@ -269,21 +272,20 @@ public class VFPGenerationExample {
         
         // 2. Create fluid input with GOR/WC scenarios
         FluidMagicInput fluidInput = FluidMagicInput.fromFluid(
-            referenceFluid,
-            150.0,  // Initial GOR (Sm3/Sm3)
-            0.0     // Initial water cut
+            referenceFluid
         );
         fluidInput.setGORRange(80.0, 400.0);
         fluidInput.setNumberOfGORPoints(5);       // 5 GOR values
         fluidInput.setWaterCutRange(0.0, 0.6);
         fluidInput.setNumberOfWaterCutPoints(4);  // 4 WC values
         
-        // 3. Define process factory (well model)
-        ProcessFactory wellFactory = (fluid, rate) -> {
+        // 3. Define process supplier (well model)
+        // VFP generator will replace the fluid and rate
+        Supplier<ProcessSystem> wellFactory = () -> {
             ProcessSystem process = new ProcessSystem();
-            
+            SystemInterface fluid = referenceFluid.clone();
             Stream wellhead = new Stream("wellhead", fluid);
-            wellhead.setFlowRate(rate, "m3/hr");
+            wellhead.setFlowRate(100.0, "m3/hr");
             process.add(wellhead);
             
             AdiabaticPipe tubing = new AdiabaticPipe("tubing", wellhead);
@@ -306,8 +308,8 @@ public class VFPGenerationExample {
         // 5. Configure rate and pressure dimensions
         vfpGen.setFlowRates(new double[]{50, 100, 200, 400, 600, 800});
         vfpGen.setOutletPressures(new double[]{15, 20, 30, 40, 50});
-        vfpGen.setWaterCuts(fluidInput.getWaterCutValues());
-        vfpGen.setGORs(fluidInput.getGORValues());
+        vfpGen.setWaterCuts(fluidInput.generateWaterCutValues());
+        vfpGen.setGORs(fluidInput.generateGORValues());
         vfpGen.setMinInletPressure(80.0);
         vfpGen.setMaxInletPressure(450.0);
         vfpGen.setPressureTolerance(0.5);  // 0.5 bar tolerance
@@ -319,10 +321,10 @@ public class VFPGenerationExample {
         // 7. Report results
         System.out.println("\n=== VFP Generation Complete ===");
         System.out.println("Feasible points: " + table.getFeasibleCount() 
-            + " / " + table.getTotalCount());
+            + " / " + table.getTotalPoints());
         
         // 8. Print sample slice
-        System.out.println("\nSample: WC=0%, GOR=" + fluidInput.getGORValues()[2]);
+        System.out.println("\nSample: WC=0%, GOR=" + fluidInput.generateGORValues()[2]);
         table.printSlice(0, 2);
         
         // 9. Export to Eclipse
@@ -366,7 +368,7 @@ Compare tubing sizes across production scenarios:
 
 ```java
 for (double diameter : new double[]{0.076, 0.10, 0.127}) {
-    ProcessFactory factory = createWellFactory(diameter);
+    Supplier<ProcessSystem> factory = createWellFactory(diameter);
     VFPTable table = generateVFP(factory, fluidInput);
     // Compare deliverability
 }
@@ -413,8 +415,8 @@ vfpGen.setPressureTolerance(0.5);    // Pressure tolerance (bar)
 
 | Method | Description |
 |--------|-------------|
-| `fromE300File(path, eosType)` | Parse E300 fluid export file |
-| `fromFluid(fluid, gor, wc)` | Create from NeqSim fluid |
+| `fromE300File(path)` | Parse E300 fluid export file |
+| `fromFluid(fluid)` | Create from NeqSim fluid |
 | `builder()` | Get builder for custom configuration |
 | `setGORRange(min, max)` | Set GOR range (Sm³/Sm³) |
 | `setNumberOfGORPoints(count)` | Set number of GOR values |
@@ -422,8 +424,8 @@ vfpGen.setPressureTolerance(0.5);    // Pressure tolerance (bar)
 | `setWaterCutRange(min, max)` | Set water cut range (0-1) |
 | `setNumberOfWaterCutPoints(count)` | Set number of WC values |
 | `separateToStandardConditions()` | Separate into gas/oil/water |
-| `getGORValues()` | Get configured GOR array |
-| `getWaterCutValues()` | Get configured water cut array |
+| `generateGORValues()` | Get configured GOR array |
+| `generateWaterCutValues()` | Get configured water cut array |
 
 ### RecombinationFlashGenerator
 
@@ -454,7 +456,7 @@ vfpGen.setPressureTolerance(0.5);    // Pressure tolerance (bar)
 | `getBHP(r, p, w, g)` | Get BHP at indices |
 | `printSlice(wcIdx, gorIdx)` | Print 2D slice |
 | `getFeasibleCount()` | Count feasible points |
-| `getTotalCount()` | Total point count |
+| `getTotalPoints()` | Total point count |
 
 ## Performance Guidelines
 

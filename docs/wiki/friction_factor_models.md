@@ -93,7 +93,7 @@ $$S = \frac{\ln(y)}{-0.0523 + 3.18\ln(y) - 0.872[\ln(y)]^2 + 0.01853[\ln(y)]^4}$
 pipe.setPipeWallRoughness(4.6e-5);  // meters
 
 // For AdiabaticPipe
-pipe.setWallRoughness(4.6e-5);      // meters
+pipe.setPipeWallRoughness(4.6e-5);  // meters
 ```
 
 ## Implementation Details

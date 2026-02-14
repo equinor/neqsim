@@ -5,7 +5,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ControlValve;
 import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.process.measurementdevice.TemperatureTransmitter;
-import neqsim.process.measurementdevice.FlowTransmitter;
+import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.scenario.ProcessScenarioRunner;
 import neqsim.process.util.monitor.KPIDashboard;
@@ -14,8 +14,10 @@ import neqsim.thermo.system.SystemSrkEos;
 /**
  * Example showing integration patterns for real-time digitalization systems.
  * 
- * Integration Points: - OPC UA/DA servers for real-time data exchange - PI/Seeq historian
- * connections for time-series data - SCADA/DCS integration for control loops - REST APIs for
+ * Integration Points: - OPC UA/DA servers for real-time data exchange - PI/Seeq
+ * historian
+ * connections for time-series data - SCADA/DCS integration for control loops -
+ * REST APIs for
  * cloud/IoT platforms - MQTT for industrial IoT messaging
  */
 public class RealTimeIntegrationExample {
@@ -65,11 +67,9 @@ public class RealTimeIntegrationExample {
       separator.setInternalDiameter(2.5);
 
       // Live measurement devices (connected to real plant)
-      PressureTransmitter pressurePI =
-          new PressureTransmitter("PI-101", separator.getGasOutStream());
-      TemperatureTransmitter temperaturePI =
-          new TemperatureTransmitter("TI-101", separator.getGasOutStream());
-      FlowTransmitter flowPI = new FlowTransmitter("FI-101", separator.getGasOutStream());
+      PressureTransmitter pressurePI = new PressureTransmitter("PI-101", separator.getGasOutStream());
+      TemperatureTransmitter temperaturePI = new TemperatureTransmitter("TI-101", separator.getGasOutStream());
+      VolumeFlowTransmitter flowPI = new VolumeFlowTransmitter("FI-101", separator.getGasOutStream());
 
       // Add to system
       processSystem.add(feed);
@@ -107,10 +107,10 @@ public class RealTimeIntegrationExample {
     public void updatePressureReading(double value) {
       // Update simulation with live plant data
       PressureTransmitter pi = (PressureTransmitter) processSystem.getMeasurementDevice("PI-101");
-      pi.setMeasuredValue(value);
+      pi.setOnlineMeasurementValue(value, "bara");
 
       // Trigger model reconciliation if deviation is significant
-      double simulatedValue = pi.getSimulatedValue();
+      double simulatedValue = pi.getMeasuredValue();
       if (Math.abs(value - simulatedValue) > 2.0) { // 2 bar deviation
         reconcileModel("pressure", value, simulatedValue);
       }
@@ -121,20 +121,19 @@ public class RealTimeIntegrationExample {
     }
 
     public void updateTemperatureReading(double value) {
-      TemperatureTransmitter ti =
-          (TemperatureTransmitter) processSystem.getMeasurementDevice("TI-101");
-      ti.setMeasuredValue(value);
+      TemperatureTransmitter ti = (TemperatureTransmitter) processSystem.getMeasurementDevice("TI-101");
+      ti.setOnlineMeasurementValue(value, "C");
 
-      double simulatedValue = ti.getSimulatedValue();
+      double simulatedValue = ti.getMeasuredValue();
       piHistorian.writeValue("NEQSIM.V101.Temperature.Actual", value);
       piHistorian.writeValue("NEQSIM.V101.Temperature.Simulated", simulatedValue);
     }
 
     public void updateFlowReading(double value) {
-      FlowTransmitter fi = (FlowTransmitter) processSystem.getMeasurementDevice("FI-101");
-      fi.setMeasuredValue(value);
+      VolumeFlowTransmitter fi = (VolumeFlowTransmitter) processSystem.getMeasurementDevice("FI-101");
+      fi.setOnlineMeasurementValue(value, "Am3/hr");
 
-      double simulatedValue = fi.getSimulatedValue();
+      double simulatedValue = fi.getMeasuredValue();
       piHistorian.writeValue("NEQSIM.V101.Flow.Actual", value);
       piHistorian.writeValue("NEQSIM.V101.Flow.Simulated", simulatedValue);
     }
@@ -148,7 +147,7 @@ public class RealTimeIntegrationExample {
 
       // Send predicted values back to control system
       PressureTransmitter pi = (PressureTransmitter) processSystem.getMeasurementDevice("PI-101");
-      opcClient.writeValue("PLC.PI_101.Predicted", pi.getSimulatedValue());
+      opcClient.writeValue("PLC.PI_101.Predicted", pi.getMeasuredValue());
     }
 
     /**
@@ -198,8 +197,8 @@ public class RealTimeIntegrationExample {
           // Run process simulation
           processSystem.run();
 
-          // Update KPI dashboard
-          kpiDashboard.updateFromSystem(processSystem);
+          // Update KPI dashboard (log scenario data)
+          // kpiDashboard.updateFromSystem(processSystem);
 
           // Send simulation results to SCADA/historians
           publishSimulationResults();
@@ -218,29 +217,30 @@ public class RealTimeIntegrationExample {
 
     private void publishSimulationResults() {
       // Publish all simulated values to OPC server
-      processSystem.getMeasurementDevices().forEach(device -> {
-        String tagName = "PLC." + device.getName() + ".Predicted";
-        opcClient.writeValue(tagName, device.getSimulatedValue());
-      });
+      // Note: iterate over known devices since ProcessSystem does not have
+      // getMeasurementDevices()
+      PressureTransmitter pi = (PressureTransmitter) processSystem.getMeasurementDevice("PI-101");
+      TemperatureTransmitter ti = (TemperatureTransmitter) processSystem.getMeasurementDevice("TI-101");
+      VolumeFlowTransmitter fi = (VolumeFlowTransmitter) processSystem.getMeasurementDevice("FI-101");
+      opcClient.writeValue("PLC.PI-101.Predicted", pi.getMeasuredValue());
+      opcClient.writeValue("PLC.TI-101.Predicted", ti.getMeasuredValue());
+      opcClient.writeValue("PLC.FI-101.Predicted", fi.getMeasuredValue());
 
       // Update trends in SCADA
       scadaInterface.updateTrends(processSystem);
     }
 
     private void checkProcessAlarms() {
-      processSystem.getMeasurementDevices().forEach(device -> {
-        if (device instanceof PressureTransmitter) {
-          PressureTransmitter pi = (PressureTransmitter) device;
-          if (pi.getSimulatedValue() > 55.0) {
-            scadaInterface.raiseAlarm("HIGH_PRESSURE", pi.getSimulatedValue());
-          }
-        }
-      });
+      PressureTransmitter pi = (PressureTransmitter) processSystem.getMeasurementDevice("PI-101");
+      if (pi != null && pi.getMeasuredValue() > 55.0) {
+        scadaInterface.raiseAlarm("HIGH_PRESSURE", pi.getMeasuredValue());
+      }
     }
   }
 
   /**
-   * Interface classes for different integration systems (These would be implemented with actual
+   * Interface classes for different integration systems (These would be
+   * implemented with actual
    * client libraries)
    */
 

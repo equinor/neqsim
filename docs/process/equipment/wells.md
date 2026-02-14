@@ -103,7 +103,7 @@ well.setBackpressureExponent(0.85);
 ```java
 well.setWellDepth(3000.0, "m");
 well.setTubingDiameter(0.1, "m");
-well.setWallRoughness(0.00005, "m");
+well.setRoughness(0.00005);  // meters
 
 // Correlation selection
 well.setPressureDropCorrelation("beggs-brill");

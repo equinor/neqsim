@@ -10,12 +10,14 @@ import neqsim.thermo.system.SystemSrkEos;
  * Example demonstrating the two-fluid transient multiphase pipe model.
  * 
  * <p>
- * This example simulates gas-condensate flow through a 10 km pipeline with terrain undulations,
+ * This example simulates gas-condensate flow through a 10 km pipeline with
+ * terrain undulations,
  * demonstrating liquid accumulation in low points.
  * </p>
  * 
  * <p>
- * The two-fluid model solves separate mass and momentum equations for each phase, enabling accurate
+ * The two-fluid model solves separate mass and momentum equations for each
+ * phase, enabling accurate
  * prediction of:
  * </p>
  * <ul>
@@ -79,7 +81,7 @@ public class TwoFluidPipeExample {
     pipe.setLength(10000); // 10 km
     pipe.setDiameter(0.4); // 400 mm ID
     pipe.setNumberOfSections(200);
-    pipe.setWallRoughness(4.5e-5); // Steel pipe roughness (45 µm)
+    pipe.setRoughness(4.5e-5); // Steel pipe roughness (45 µm)
 
     // Run steady-state
     pipe.run();

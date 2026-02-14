@@ -15,6 +15,7 @@ import neqsim.process.util.optimizer.MultiScenarioVFPGenerator.VFPTable;
 import neqsim.process.util.optimizer.RecombinationFlashGenerator;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import java.util.function.Supplier;
 
 /**
  * Example demonstrating multi-scenario VFP generation.
@@ -52,15 +53,15 @@ public class MultiScenarioVFPExample {
 
       // Step 2: Configure fluid input with GOR/WC scenarios
       System.out.println("2. Configuring GOR and water cut scenarios...");
-      FluidMagicInput fluidInput = FluidMagicInput.fromFluid(referenceFluid, 120.0, 0.0);
+      FluidMagicInput fluidInput = FluidMagicInput.fromFluid(referenceFluid);
 
       // GOR: 80 to 350 Sm3/Sm3 (5 values) - using convenience method
       fluidInput.setGORRange(80.0, 350.0, 5);
-      System.out.println("   GOR values: " + arrayToString(fluidInput.getGORValues()));
+      System.out.println("   GOR values: " + arrayToString(fluidInput.generateGORValues()));
 
       // Water cut: 0% to 60% (4 values) - using convenience method
       fluidInput.setWaterCutRange(0.0, 0.6, 4);
-      System.out.println("   WC values: " + arrayToString(fluidInput.getWaterCutValues()));
+      System.out.println("   WC values: " + arrayToString(fluidInput.generateWaterCutValues()));
 
       // Step 3: Demonstrate recombination generator
       System.out.println("\n3. Testing recombination fluid generator...");
@@ -83,8 +84,8 @@ public class MultiScenarioVFPExample {
       // Step 6: Report results
       System.out.println("\n6. VFP Table Results:");
       System.out.println(
-          "   Feasible points: " + table.getFeasibleCount() + " / " + table.getTotalCount());
-      double coverage = 100.0 * table.getFeasibleCount() / table.getTotalCount();
+          "   Feasible points: " + table.getFeasibleCount() + " / " + table.getTotalPoints());
+      double coverage = 100.0 * table.getFeasibleCount() / table.getTotalPoints();
       System.out.println("   Coverage: " + String.format("%.1f", coverage) + "%");
 
       // Check for low coverage warning
@@ -143,8 +144,6 @@ public class MultiScenarioVFPExample {
     fluid.setMultiPhaseCheck(true);
 
     System.out.println("   Components: " + fluid.getNumberOfComponents());
-    System.out
-        .println("   Total mole fraction: " + String.format("%.4f", fluid.getTotalMoleFraction()));
 
     return fluid;
   }
@@ -158,8 +157,8 @@ public class MultiScenarioVFPExample {
     RecombinationFlashGenerator generator = new RecombinationFlashGenerator(fluidInput);
 
     // Generate a few sample fluids
-    double[] testGORs = {100.0, 200.0, 300.0};
-    double[] testWCs = {0.0, 0.3};
+    double[] testGORs = { 100.0, 200.0, 300.0 };
+    double[] testWCs = { 0.0, 0.3 };
 
     for (double gor : testGORs) {
       for (double wc : testWCs) {
@@ -186,12 +185,13 @@ public class MultiScenarioVFPExample {
    */
   private static MultiScenarioVFPGenerator createVFPGenerator(FluidMagicInput fluidInput) {
     // Process factory creates a fresh well model for each calculation
-    MultiScenarioVFPGenerator.ProcessFactory wellFactory = (fluid, rate) -> {
+    Supplier<ProcessSystem> wellFactory = () -> {
       ProcessSystem process = new ProcessSystem();
 
-      // Wellhead stream
+      // Wellhead stream - use reference fluid
+      SystemInterface fluid = fluidInput.getReferenceFluid().clone();
       Stream wellhead = new Stream("wellhead", fluid);
-      wellhead.setFlowRate(rate, "m3/hr");
+      wellhead.setFlowRate(100.0, "m3/hr");
       process.add(wellhead);
 
       // Well tubing
@@ -206,18 +206,18 @@ public class MultiScenarioVFPExample {
     };
 
     // Create generator using convenience method
-    MultiScenarioVFPGenerator generator =
-        new MultiScenarioVFPGenerator(wellFactory, "wellhead", "tubing");
+    MultiScenarioVFPGenerator generator = new MultiScenarioVFPGenerator(wellFactory, "wellhead", "tubing");
 
-    // Use convenience method to set fluid input (creates flash generator + sets GOR/WC arrays)
+    // Use convenience method to set fluid input (creates flash generator + sets
+    // GOR/WC arrays)
     generator.setFluidInput(fluidInput);
 
     // Configure rate dimension (liquid rates at stock tank conditions)
-    generator.setFlowRates(new double[] {50.0, 100.0, 200.0, 400.0, 600.0});
+    generator.setFlowRates(new double[] { 50.0, 100.0, 200.0, 400.0, 600.0 });
     System.out.println("   Rates: [50, 100, 200, 400, 600] m3/hr");
 
     // Configure outlet pressure dimension (THP)
-    generator.setOutletPressures(new double[] {15.0, 25.0, 35.0, 45.0});
+    generator.setOutletPressures(new double[] { 15.0, 25.0, 35.0, 45.0 });
     System.out.println("   THPs: [15, 25, 35, 45] bara");
 
     // GOR and water cut dimensions already set by setFluidInput()
@@ -237,12 +237,12 @@ public class MultiScenarioVFPExample {
   /**
    * Prints sample slices of the VFP table.
    *
-   * @param table the VFP table
+   * @param table      the VFP table
    * @param fluidInput the fluid input for labels
    */
   private static void printSampleSlices(VFPTable table, FluidMagicInput fluidInput) {
-    double[] gorValues = fluidInput.getGORValues();
-    double[] wcValues = fluidInput.getWaterCutValues();
+    double[] gorValues = fluidInput.generateGORValues();
+    double[] wcValues = fluidInput.generateWaterCutValues();
 
     // Print slice at WC=0%, lowest GOR
     System.out.println("\n   Slice: WC=0%, GOR=" + gorValues[0] + " Sm3/Sm3");
@@ -264,7 +264,7 @@ public class MultiScenarioVFPExample {
   /**
    * Prints the first N lines of a string.
    *
-   * @param text the text to print
+   * @param text     the text to print
    * @param maxLines maximum lines to print
    */
   private static void printFirstLines(String text, int maxLines) {

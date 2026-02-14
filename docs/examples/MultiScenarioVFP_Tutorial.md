@@ -613,16 +613,17 @@ java_example = '''
 import neqsim.process.util.optimizer.*;
 
 // 1. Create fluid input (using convenience methods)
-FluidMagicInput fluidInput = FluidMagicInput.fromFluid(referenceFluid, 120.0, 0.0);
+FluidMagicInput fluidInput = FluidMagicInput.fromFluid(referenceFluid);
 fluidInput.setGORRange(80.0, 350.0, 5);    // min, max, count
 fluidInput.setWaterCutRange(0.0, 0.6, 4);  // min, max, count
 
-// 2. Define process factory (well model)
-ProcessFactory wellFactory = (fluid, rate) -> {
+// 2. Define process supplier (well model)
+// VFP generator replaces the feed fluid and rate for each point
+Supplier<ProcessSystem> wellFactory = () -> {
     ProcessSystem process = new ProcessSystem();
-    
+    SystemInterface fluid = referenceFluid.clone();
     Stream wellhead = new Stream("wellhead", fluid);
-    wellhead.setFlowRate(rate, "m3/hr");
+    wellhead.setFlowRate(100.0, "m3/hr");
     process.add(wellhead);
     
     AdiabaticPipe tubing = new AdiabaticPipe("tubing", wellhead);
@@ -651,8 +652,8 @@ try {
     VFPTable table = vfpGen.generateVFPTable();
     vfpGen.exportVFPEXP("WELL_A_VFP.inc", 1);
     
-    double coverage = 100.0 * table.getFeasibleCount() / table.getTotalCount();
-    System.out.println("Feasible: " + table.getFeasibleCount() + " / " + table.getTotalCount());
+    double coverage = 100.0 * table.getFeasibleCount() / table.getTotalPoints();
+    System.out.println("Feasible: " + table.getFeasibleCount() + " / " + table.getTotalPoints());
     System.out.println("Coverage: " + String.format("%.1f", coverage) + "%");
     
     if (coverage < 50.0) {

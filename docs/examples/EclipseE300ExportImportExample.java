@@ -6,7 +6,8 @@ import neqsim.thermo.util.readwrite.EclipseFluidReadWrite;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Example demonstrating how to export a NeqSim fluid to Eclipse E300 compositional format and read
+ * Example demonstrating how to export a NeqSim fluid to Eclipse E300
+ * compositional format and read
  * it back.
  *
  * <p>
@@ -136,7 +137,7 @@ public class EclipseE300ExportImportExample {
     }
     if (fluid.hasPhaseType("oil")) {
       System.out.println("  Oil density: "
-          + String.format("%.2f", fluid.getOilPhase().getDensity("kg/m3")) + " kg/m3");
+          + String.format("%.2f", fluid.getPhase("oil").getDensity("kg/m3")) + " kg/m3");
     }
   }
 
@@ -159,8 +160,8 @@ public class EclipseE300ExportImportExample {
     }
 
     if (original.hasPhaseType("oil") && imported.hasPhaseType("oil")) {
-      double origOilDens = original.getOilPhase().getDensity("kg/m3");
-      double impOilDens = imported.getOilPhase().getDensity("kg/m3");
+      double origOilDens = original.getPhase("oil").getDensity("kg/m3");
+      double impOilDens = imported.getPhase("oil").getDensity("kg/m3");
       double oilDiff = Math.abs(origOilDens - impOilDens) / origOilDens * 100;
       System.out.println("  Oil density difference: " + String.format("%.2f", oilDiff) + "%");
     }

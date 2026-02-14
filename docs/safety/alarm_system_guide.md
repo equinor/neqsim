@@ -102,7 +102,7 @@ alarmManager.register(tt);
 ### Flow Alarms (with Low Limits)
 
 ```java
-FlowTransmitter ft = new FlowTransmitter("FT-201", stream);
+VolumeFlowTransmitter ft = new VolumeFlowTransmitter("FT-201", stream);
 
 AlarmConfig flowAlarms = AlarmConfig.builder()
     .lowLowLimit(100.0)       // LOLO: 100 kg/hr

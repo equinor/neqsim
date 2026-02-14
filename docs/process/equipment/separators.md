@@ -175,8 +175,8 @@ separator.run();
 
 ```java
 // Set physical dimensions
-separator.setInternalDiameter(2.5, "m");
-separator.setSeparatorLength(10.0);
+separator.setInternalDiameter(2.5);  // meters
+separator.setSeparatorLength(10.0);  // meters
 
 // Water and oil levels (for dynamic mode)
 separator.setWaterLevel(0.3);  // meters from bottom
@@ -416,7 +416,7 @@ Horizontal separators have specific geometry parameters for sizing and level cal
 
 | Parameter | Method | Description | Unit |
 |-----------|--------|-------------|------|
-| Internal Diameter | `setInternalDiameter(value, unit)` | Vessel ID | m |
+| Internal Diameter | `setInternalDiameter(value)` | Vessel ID (meters) | m |
 | Length | `setLength(value, unit)` | Tan-to-tan length | m |
 | L/D Ratio | `getLengthDiameterRatio()` | Length to diameter ratio (design target: 3-5) | - |
 
@@ -528,8 +528,8 @@ design.setWeirHeight(design.getNIL() * 1.05);  // 5% above NIL
 
 ```java
 ThreePhaseSeparator separator = new ThreePhaseSeparator("V-200", inletStream);
-separator.setInternalDiameter(2.5, "m");
-separator.setLength(12.0, "m");
+separator.setInternalDiameter(2.5);  // meters
+separator.setSeparatorLength(12.0);  // meters
 separator.run();
 
 // Oil retention time (from NLL to NIL)
@@ -552,8 +552,8 @@ Gas scrubbers (vertical separators) focus on gas phase quality with minimal liqu
 
 | Parameter | Method | Description |
 |-----------|--------|-------------|
-| Internal Diameter | `setInternalDiameter(value, unit)` | Vessel ID |
-| Height | `setLength(value, unit)` | Tan-to-tan height |
+| Internal Diameter | `setInternalDiameter(value)` | Vessel ID |
+| Height | `setSeparatorLength(value)` | Tan-to-tan height (meters) |
 | K-value | `calcKValueAtHLL()` | Souders-Brown coefficient |
 
 ### Automatic Constraint Configuration
@@ -732,19 +732,16 @@ separator.getConstraints().forEach((type, constraint) -> {
 
 ```java
 // Set dimensions
-separator.setInternalDiameter(2.0, "m");
-separator.setLiquidVolume(10.0, "m3");
-
-// Or specify residence time
-separator.setLiquidResidenceTime(120.0, "sec");
+separator.setInternalDiameter(2.0);  // meters
+separator.setSeparatorLength(5.0);  // meters
 ```
 
 ### Horizontal Separator
 
 ```java
-separator.setSeparatorType("horizontal");
-separator.setLength(10.0, "m");
-separator.setInternalDiameter(2.5, "m");
+separator.setOrientation("horizontal");
+separator.setSeparatorLength(10.0);  // meters
+separator.setInternalDiameter(2.5);  // meters
 ```
 
 ---
