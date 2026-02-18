@@ -19,7 +19,7 @@ import org.apache.logging.log4j.Logger;
  * concurrent access control.
  * </p>
  *
- * <h3>Usage from Python (via JPype):</h3>
+ * <h2>Usage from Python (via JPype):</h2>
  *
  * <pre>{@code
  * # Create a session manager with a template process
