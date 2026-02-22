@@ -28,8 +28,18 @@ Flow assurance encompasses the prevention and remediation of:
 | [Asphaltene Parameter Fitting](asphaltene_parameter_fitting) | Tuning CPA parameters to experimental data |
 | [Asphaltene Method Comparison](asphaltene_method_comparison) | Comparing CPA vs De Boer approaches |
 | [Asphaltene Model Validation](asphaltene_validation) | Validation against SPE-24987 field data |
+| [Flow Assurance Screening Tools](flow_assurance_screening_tools) | Pipeline cooldown, CO2 corrosion, scale prediction, wax curve monotonicity |
 
 ## Key Classes
+
+### Flow Assurance Screening Tools
+
+| Class | Package | Purpose |
+|-------|---------|---------|
+| `PipelineCooldownCalculator` | `neqsim.pvtsimulation.flowassurance` | Lumped-parameter pipeline shutdown cooldown |
+| `DeWaardMilliamsCorrosion` | `neqsim.pvtsimulation.flowassurance` | CO2 corrosion rate (de Waard-Milliams 1991) |
+| `ScalePredictionCalculator` | `neqsim.pvtsimulation.flowassurance` | Saturation index for CaCO3, BaSO4, SrSO4, CaSO4, FeCO3 |
+| `WaxCurveCalculator` | `neqsim.pvtsimulation.flowassurance` | Wax fraction curves with monotonicity enforcement |
 
 ### Asphaltene Analysis
 

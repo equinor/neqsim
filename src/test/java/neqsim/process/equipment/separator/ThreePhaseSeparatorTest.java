@@ -260,6 +260,287 @@ class ThreePhaseSeparatorTest {
   }
 
   /**
+   * Test that three-phase separator entrainment correctly transfers material between all six
+   * phase-to-phase paths. Verifies mass balance and that the specified fractions appear in the
+   * correct outlet streams.
+   */
+  @Test
+  void testThreePhaseSeparatorEntrainmentAllPaths() {
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.0);
+    fluid.addComponent("methane", 72.0);
+    fluid.addComponent("n-heptane", 14.0);
+    fluid.addComponent("water", 40.0);
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+
+    // --- Baseline (no entrainment) ---
+    Stream baselineFeed = new Stream("baselineFeed", fluid);
+    baselineFeed.setTemperature(72.0, "C");
+    baselineFeed.setPressure(10.7, "bara");
+    baselineFeed.setFlowRate(720.0, "kg/hr");
+    baselineFeed.run();
+
+    ThreePhaseSeparator baselineSep =
+        new ThreePhaseSeparator("baselineSep", baselineFeed);
+    baselineSep.run();
+
+    double baseGasMass = baselineSep.getGasOutStream().getFlowRate("kg/hr");
+    double baseOilMass = baselineSep.getOilOutStream().getFlowRate("kg/hr");
+    double baseWaterMass = baselineSep.getWaterOutStream().getFlowRate("kg/hr");
+
+    Assertions.assertTrue(baseGasMass > 1.0, "Baseline should have gas outlet flow");
+    Assertions.assertTrue(baseOilMass > 1.0, "Baseline should have oil outlet flow");
+    Assertions.assertTrue(baseWaterMass > 1.0, "Baseline should have water outlet flow");
+
+    // --- With entrainment: aqueous into oil and oil into aqueous ---
+    Stream entrainFeed1 = new Stream("entrainFeed1", fluid.clone());
+    entrainFeed1.setTemperature(72.0, "C");
+    entrainFeed1.setPressure(10.7, "bara");
+    entrainFeed1.setFlowRate(720.0, "kg/hr");
+    entrainFeed1.run();
+
+    ThreePhaseSeparator entrainSep1 =
+        new ThreePhaseSeparator("entrainSep1", entrainFeed1);
+    entrainSep1.setEntrainment(0.05, "mole", "product", "aqueous", "oil");
+    entrainSep1.setEntrainment(0.02, "mole", "product", "oil", "aqueous");
+    entrainSep1.run();
+
+    // Verify aqueous phase is present in oil outlet stream
+    Assertions.assertTrue(
+        entrainSep1.getOilOutStream().getFluid().hasPhaseType("aqueous"),
+        "Oil outlet should contain entrained aqueous phase");
+
+    // Verify oil phase is present in water outlet stream
+    Assertions.assertTrue(
+        entrainSep1.getOilOutStream().getFluid().hasPhaseType("oil"),
+        "Oil outlet should still contain oil phase");
+
+    // Check aqueous fraction in oil outlet is approximately 5%
+    double aqMolesInOil = entrainSep1.getOilOutStream().getFluid()
+        .getPhase("aqueous").getNumberOfMolesInPhase();
+    double oilMolesInOil = entrainSep1.getOilOutStream().getFluid()
+        .getPhase("oil").getNumberOfMolesInPhase();
+    double aqFractionInOilOut = aqMolesInOil / (aqMolesInOil + oilMolesInOil);
+    Assertions.assertEquals(0.05, aqFractionInOilOut, 0.005,
+        "Aqueous mole fraction in oil outlet should be ~5%");
+
+    // Mass balance: total outlet mass should match inlet
+    double totalOutMass1 = entrainSep1.getGasOutStream().getFlowRate("kg/hr")
+        + entrainSep1.getOilOutStream().getFlowRate("kg/hr")
+        + entrainSep1.getWaterOutStream().getFlowRate("kg/hr");
+    Assertions.assertEquals(720.0, totalOutMass1, 1.0,
+        "Total outlet mass flow should match inlet within 1 kg/hr");
+
+    // --- With entrainment: oil into gas and gas into oil ---
+    Stream entrainFeed2 = new Stream("entrainFeed2", fluid.clone());
+    entrainFeed2.setTemperature(72.0, "C");
+    entrainFeed2.setPressure(10.7, "bara");
+    entrainFeed2.setFlowRate(720.0, "kg/hr");
+    entrainFeed2.run();
+
+    ThreePhaseSeparator entrainSep2 =
+        new ThreePhaseSeparator("entrainSep2", entrainFeed2);
+    entrainSep2.setEntrainment(0.03, "mole", "feed", "oil", "gas");
+    entrainSep2.setEntrainment(0.04, "mole", "feed", "gas", "oil");
+    entrainSep2.run();
+
+    // Gas outlet should have oil-origin components entrained
+    double gasOutMoles2 = entrainSep2.getGasOutStream().getFluid()
+        .getPhase("gas").getNumberOfMolesInPhase();
+    // Oil outlet should still have flow
+    double oilOutMass2 = entrainSep2.getOilOutStream().getFlowRate("kg/hr");
+    Assertions.assertTrue(oilOutMass2 > 0.0,
+        "Oil outlet should have flow when gas is entrained into oil");
+
+    // Mass balance
+    double gasOutMass2 = entrainSep2.getGasOutStream().getFlowRate("kg/hr");
+    double totalOutMass2 = gasOutMass2 + oilOutMass2
+        + entrainSep2.getWaterOutStream().getFlowRate("kg/hr");
+    Assertions.assertEquals(720.0, totalOutMass2, 1.0,
+        "Total outlet mass flow should match inlet within 1 kg/hr");
+
+    // --- With entrainment: aqueous into gas and gas into aqueous ---
+    Stream entrainFeed3 = new Stream("entrainFeed3", fluid.clone());
+    entrainFeed3.setTemperature(72.0, "C");
+    entrainFeed3.setPressure(10.7, "bara");
+    entrainFeed3.setFlowRate(720.0, "kg/hr");
+    entrainFeed3.run();
+
+    ThreePhaseSeparator entrainSep3 =
+        new ThreePhaseSeparator("entrainSep3", entrainFeed3);
+    entrainSep3.setEntrainment(0.01, "mole", "feed", "aqueous", "gas");
+    entrainSep3.setEntrainment(0.02, "mole", "feed", "gas", "aqueous");
+    entrainSep3.run();
+
+    // Water outlet should still have flow with entrained gas
+    double waterOutMass3 = entrainSep3.getWaterOutStream().getFlowRate("kg/hr");
+    Assertions.assertTrue(waterOutMass3 > 0.0,
+        "Water outlet should have flow when gas is entrained into aqueous");
+
+    // Mass balance
+    double gasOutMass3 = entrainSep3.getGasOutStream().getFlowRate("kg/hr");
+    double totalOutMass3 = gasOutMass3
+        + entrainSep3.getOilOutStream().getFlowRate("kg/hr") + waterOutMass3;
+    Assertions.assertEquals(720.0, totalOutMass3, 1.0,
+        "Total outlet mass flow should match inlet within 1 kg/hr");
+  }
+
+  /**
+   * Test that all six entrainment paths work together and mass balance holds for the three-phase
+   * separator with simultaneous entrainment on every phase pair.
+   */
+  @Test
+  void testThreePhaseSeparatorFullEntrainmentMassBalance() {
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.0);
+    fluid.addComponent("methane", 72.0);
+    fluid.addComponent("n-heptane", 14.0);
+    fluid.addComponent("water", 40.0);
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+
+    Stream feed = new Stream("fullEntrainFeed", fluid);
+    feed.setTemperature(72.0, "C");
+    feed.setPressure(10.7, "bara");
+    feed.setFlowRate(720.0, "kg/hr");
+    feed.run();
+
+    ThreePhaseSeparator sep = new ThreePhaseSeparator("fullEntrainSep", feed);
+
+    // Set all six entrainment paths
+    sep.setEntrainment(0.01, "mole", "feed", "oil", "gas");
+    sep.setEntrainment(0.005, "mole", "feed", "aqueous", "gas");
+    sep.setEntrainment(0.02, "mole", "feed", "gas", "oil");
+    sep.setEntrainment(0.01, "mole", "feed", "gas", "aqueous");
+    sep.setEntrainment(0.03, "mole", "feed", "aqueous", "oil");
+    sep.setEntrainment(0.02, "mole", "feed", "oil", "aqueous");
+    sep.run();
+
+    // All three outlet streams should have flow
+    double gasMass = sep.getGasOutStream().getFlowRate("kg/hr");
+    double oilMass = sep.getOilOutStream().getFlowRate("kg/hr");
+    double waterMass = sep.getWaterOutStream().getFlowRate("kg/hr");
+
+    Assertions.assertTrue(gasMass > 0.0, "Gas outlet should have flow");
+    Assertions.assertTrue(oilMass > 0.0, "Oil outlet should have flow");
+    Assertions.assertTrue(waterMass > 0.0, "Water outlet should have flow");
+
+    // Mass balance
+    double totalOutMass = gasMass + oilMass + waterMass;
+    Assertions.assertEquals(720.0, totalOutMass, 1.0,
+        "Total outlet mass flow should match inlet (720 kg/hr) within 1 kg/hr");
+  }
+
+  /**
+   * Test that zero entrainment on a three-phase separator matches a separator with no entrainment
+   * set (perfect separation baseline).
+   */
+  @Test
+  void testThreePhaseSeparatorZeroEntrainmentMatchesBaseline() {
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.0);
+    fluid.addComponent("methane", 72.0);
+    fluid.addComponent("n-heptane", 14.0);
+    fluid.addComponent("water", 40.0);
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+
+    // Baseline - no entrainment
+    Stream baselineFeed = new Stream("baselineFeed2", fluid);
+    baselineFeed.setTemperature(72.0, "C");
+    baselineFeed.setPressure(10.7, "bara");
+    baselineFeed.setFlowRate(720.0, "kg/hr");
+    baselineFeed.run();
+
+    ThreePhaseSeparator baselineSep =
+        new ThreePhaseSeparator("baselineSep2", baselineFeed);
+    baselineSep.run();
+
+    // Zero entrainment
+    Stream zeroFeed = new Stream("zeroFeed", fluid.clone());
+    zeroFeed.setTemperature(72.0, "C");
+    zeroFeed.setPressure(10.7, "bara");
+    zeroFeed.setFlowRate(720.0, "kg/hr");
+    zeroFeed.run();
+
+    ThreePhaseSeparator zeroSep = new ThreePhaseSeparator("zeroSep", zeroFeed);
+    zeroSep.setEntrainment(0.0, "mole", "feed", "oil", "gas");
+    zeroSep.setEntrainment(0.0, "mole", "feed", "aqueous", "gas");
+    zeroSep.setEntrainment(0.0, "mole", "feed", "gas", "oil");
+    zeroSep.setEntrainment(0.0, "mole", "feed", "gas", "aqueous");
+    zeroSep.setEntrainment(0.0, "mole", "feed", "oil", "aqueous");
+    zeroSep.setEntrainment(0.0, "mole", "feed", "aqueous", "oil");
+    zeroSep.run();
+
+    double tolerance = 1e-6;
+
+    // Gas outlet moles should match
+    double baseGasMoles = baselineSep.getGasOutStream().getFluid()
+        .getPhase("gas").getNumberOfMolesInPhase();
+    double zeroGasMoles = zeroSep.getGasOutStream().getFluid()
+        .getPhase("gas").getNumberOfMolesInPhase();
+    Assertions.assertEquals(baseGasMoles, zeroGasMoles, tolerance,
+        "Gas outlet moles should match baseline when entrainment is zero");
+
+    // Oil outlet moles should match
+    double baseOilMoles = baselineSep.getOilOutStream().getFluid()
+        .getPhase("oil").getNumberOfMolesInPhase();
+    double zeroOilMoles = zeroSep.getOilOutStream().getFluid()
+        .getPhase("oil").getNumberOfMolesInPhase();
+    Assertions.assertEquals(baseOilMoles, zeroOilMoles, tolerance,
+        "Oil outlet moles should match baseline when entrainment is zero");
+
+    // Water outlet moles should match
+    double baseWaterMoles = baselineSep.getWaterOutStream().getFluid()
+        .getPhase("aqueous").getNumberOfMolesInPhase();
+    double zeroWaterMoles = zeroSep.getWaterOutStream().getFluid()
+        .getPhase("aqueous").getNumberOfMolesInPhase();
+    Assertions.assertEquals(baseWaterMoles, zeroWaterMoles, tolerance,
+        "Water outlet moles should match baseline when entrainment is zero");
+  }
+
+  /**
+   * Test entrainment with mass and volume specification types on three-phase separator and verify
+   * the specified fractions are achieved.
+   */
+  @ParameterizedTest
+  @ValueSource(strings = {"mole", "mass", "volume"})
+  void testThreePhaseSeparatorEntrainmentSpecTypes(String specType) {
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.0);
+    fluid.addComponent("methane", 72.0);
+    fluid.addComponent("n-heptane", 14.0);
+    fluid.addComponent("water", 40.0);
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+
+    Stream feed = new Stream("specTypeFeed_" + specType, fluid);
+    feed.setTemperature(72.0, "C");
+    feed.setPressure(10.7, "bara");
+    feed.setFlowRate(720.0, "kg/hr");
+    feed.run();
+
+    double targetFraction = 0.08;
+    ThreePhaseSeparator sep =
+        new ThreePhaseSeparator("specTypeSep_" + specType, feed);
+    sep.setEntrainment(targetFraction, specType, "product", "aqueous", "oil");
+    sep.run();
+
+    // Verify the aqueous fraction in the oil outlet matches the target
+    PhaseInterface aqPhase = sep.getOilOutStream().getFluid().getPhase("aqueous");
+    PhaseInterface oilPhase = sep.getOilOutStream().getFluid().getPhase("oil");
+
+    double aqBasis = getPhaseBasis(specType, aqPhase);
+    double oilBasis = getPhaseBasis(specType, oilPhase);
+    double actualFraction = aqBasis / (aqBasis + oilBasis);
+
+    Assertions.assertEquals(targetFraction, actualFraction, 0.005,
+        "Aqueous " + specType + " fraction in oil outlet should be ~"
+            + (targetFraction * 100) + "%");
+  }
+
+  /**
    * Test method for transient/dynamic calculation of three phase separator.
    */
   @Test
