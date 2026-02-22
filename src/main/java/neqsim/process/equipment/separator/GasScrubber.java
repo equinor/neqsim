@@ -20,7 +20,7 @@ import neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign;
  * factor) rather than liquid retention time.
  * </p>
  *
- * <h3>Capacity Utilization Setup</h3>
+ * <h2>Capacity Utilization Setup</h2>
  *
  * <p>
  * To get meaningful capacity utilization from {@link #getCapacityUtilization()}, set:

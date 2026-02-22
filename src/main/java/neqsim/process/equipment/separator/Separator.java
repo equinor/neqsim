@@ -47,7 +47,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Separator class.
  * </p>
  *
- * <h3>Capacity Utilization Calculations</h3>
+ * <h2>Capacity Utilization Calculations</h2>
  *
  * <p>
  * To get meaningful capacity utilization results from {@link #getCapacityUtilization()}, the
