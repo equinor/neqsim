@@ -35,13 +35,11 @@ public class RhonePoulencVelocityTest {
 
       // At density=10 kg/m3: V = 60 * 10^(-0.44) ≈ 21.8 m/s
       double v10 = calc.getMaxVelocity(10.0);
-      assertTrue(v10 > 20.0 && v10 < 25.0,
-          "At 10 kg/m3, expected ~22 m/s but got " + v10);
+      assertTrue(v10 > 20.0 && v10 < 25.0, "At 10 kg/m3, expected ~22 m/s but got " + v10);
 
       // At density=100 kg/m3: V = 60 * 100^(-0.44) ≈ 7.9 m/s
       double v100 = calc.getMaxVelocity(100.0);
-      assertTrue(v100 > 6.0 && v100 < 10.0,
-          "At 100 kg/m3, expected ~8 m/s but got " + v100);
+      assertTrue(v100 > 6.0 && v100 < 10.0, "At 100 kg/m3, expected ~8 m/s but got " + v100);
 
       // At density=500 kg/m3: V = 60 * 500^(-0.44) ≈ 3.5 m/s, min is 3 m/s
       double v500 = calc.getMaxVelocity(500.0);
@@ -116,8 +114,7 @@ public class RhonePoulencVelocityTest {
 
       // Between 50 and 100 kg/m3: should be between 8 and 11 m/s
       double v75 = calc.getMaxVelocity(75.0);
-      assertTrue(v75 > 8.0 && v75 < 11.0,
-          "At 75 kg/m3, expected between 8-11 m/s but got " + v75);
+      assertTrue(v75 > 8.0 && v75 < 11.0, "At 75 kg/m3, expected between 8-11 m/s but got " + v75);
     }
 
     @Test
@@ -149,8 +146,7 @@ public class RhonePoulencVelocityTest {
 
       assertTrue(vNonCorrosive > 0, "Non-corrosive velocity should be positive");
       assertTrue(vCorrosive > 0, "Corrosive velocity should be positive");
-      assertTrue(vNonCorrosive > vCorrosive,
-          "Non-corrosive should be higher than corrosive");
+      assertTrue(vNonCorrosive > vCorrosive, "Non-corrosive should be higher than corrosive");
     }
 
     @Test
@@ -168,8 +164,7 @@ public class RhonePoulencVelocityTest {
     @DisplayName("Default constructor creates non-corrosive gas calculator")
     void testDefaultConstructor() {
       RhonePoulencVelocity calc = new RhonePoulencVelocity();
-      assertEquals(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS,
-          calc.getServiceType());
+      assertEquals(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS, calc.getServiceType());
       assertFalse(calc.isUseInterpolation());
     }
   }
@@ -232,8 +227,7 @@ public class RhonePoulencVelocityTest {
       pipe.setLength(50000.0);
       pipe.setDiameter(0.4);
       pipe.setPipeWallRoughness(5e-6);
-      pipe.setRhonePoulencServiceType(
-          RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
+      pipe.setRhonePoulencServiceType(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
 
       ProcessSystem process = new ProcessSystem();
       process.add(inlet);
@@ -281,18 +275,15 @@ public class RhonePoulencVelocityTest {
       process.run();
 
       // Non-corrosive
-      pipe.setRhonePoulencServiceType(
-          RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
+      pipe.setRhonePoulencServiceType(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
       double nonCorrosiveVel = pipe.getRhonePoulencMaxVelocity();
 
       // Corrosive
-      pipe.setRhonePoulencServiceType(
-          RhonePoulencVelocity.ServiceType.CORROSIVE_GAS);
+      pipe.setRhonePoulencServiceType(RhonePoulencVelocity.ServiceType.CORROSIVE_GAS);
       double corrosiveVel = pipe.getRhonePoulencMaxVelocity();
 
-      assertTrue(nonCorrosiveVel > corrosiveVel,
-          "Non-corrosive max velocity (" + nonCorrosiveVel
-              + ") should be higher than corrosive (" + corrosiveVel + ")");
+      assertTrue(nonCorrosiveVel > corrosiveVel, "Non-corrosive max velocity (" + nonCorrosiveVel
+          + ") should be higher than corrosive (" + corrosiveVel + ")");
     }
   }
 
@@ -323,8 +314,7 @@ public class RhonePoulencVelocityTest {
       pipe.setPipeWallRoughness(1.0e-5);
       pipe.setNumberOfIncrements(5);
 
-      pipe.setRhonePoulencServiceType(
-          RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
+      pipe.setRhonePoulencServiceType(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
 
       ProcessSystem process = new ProcessSystem();
       process.add(inlet);
@@ -409,8 +399,7 @@ public class RhonePoulencVelocityTest {
       pipe.setNumberOfIncrements(5);
 
       // Enable with interpolation
-      pipe.setRhonePoulencServiceType(
-          RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS, true);
+      pipe.setRhonePoulencServiceType(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS, true);
 
       ProcessSystem process = new ProcessSystem();
       process.add(inlet);

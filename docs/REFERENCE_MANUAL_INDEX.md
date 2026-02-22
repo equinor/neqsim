@@ -410,6 +410,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Riser Mechanical Design** | [docs/process/riser_mechanical_design.md](process/riser_mechanical_design) | **Riser design with catenary mechanics, VIV, fatigue per DNV-OS-F201** |
 | **Pipeline Design Math** | [docs/process/pipeline_mechanical_design_math.md](process/pipeline_mechanical_design_math) | **Mathematical methods and formulas for pipeline design** |
 | **Subsea SURF Mechanical Design** | [docs/process/SURF_SUBSEA_EQUIPMENT.md#mechanical-design](process/SURF_SUBSEA_EQUIPMENT#mechanical-design) | **Mechanical design for PLET, PLEM, trees, manifolds, jumpers, umbilicals, flexible pipes, boosters per DNV, API, ISO, NORSOK** |
+| **Equipment Datasheet Generator** | [docs/process/equipment_datasheets.md](process/equipment_datasheets) | **Structured JSON equipment datasheets from process simulation (separator, compressor, heater, valve)** |
+| **Dual EoS Comparison** | [docs/process/dual_eos_comparison.md](process/dual_eos_comparison) | **SRK vs PR78 cross-check per TR1244 for field development QA** |
 | TORG Integration | [docs/process/torg_integration.md](process/torg_integration) | TORG integration |
 | Field Development | [docs/process/field_development_orchestration.md](process/field_development_orchestration) | Field development orchestration |
 
@@ -517,6 +519,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 |----------|------|-------------|
 | PSV Dynamic Sizing Wiki | [docs/wiki/psv_dynamic_sizing_example.md](wiki/psv_dynamic_sizing_example) | PSV dynamic sizing |
 | PSV Dynamic Sizing | [docs/safety/psv_dynamic_sizing_example.md](safety/psv_dynamic_sizing_example) | PSV sizing example |
+| **Relief Valve Sizing API** | [docs/safety/relief_valve_sizing_api.md](safety/relief_valve_sizing_api) | **API 520/521 PSV sizing for gas, liquid, and two-phase relief with fire heat input** |
 | PSD Valve Trip | [docs/wiki/psd_valve_hihi_trip.md](wiki/psd_valve_hihi_trip) | PSD valve HIHI trip |
 | Rupture Disks | [docs/safety/rupture_disk_dynamic_behavior.md](safety/rupture_disk_dynamic_behavior) | Rupture disk behavior |
 
@@ -644,6 +647,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Method Comparison | [docs/pvtsimulation/flowassurance/asphaltene_method_comparison.md](pvtsimulation/flowassurance/asphaltene_method_comparison) | Method comparison |
 | Parameter Fitting | [docs/pvtsimulation/flowassurance/asphaltene_parameter_fitting.md](pvtsimulation/flowassurance/asphaltene_parameter_fitting) | Parameter fitting |
 | Validation | [docs/pvtsimulation/flowassurance/asphaltene_validation.md](pvtsimulation/flowassurance/asphaltene_validation) | Validation |
+| **Flow Assurance Screening Tools** | [docs/pvtsimulation/flowassurance/flow_assurance_screening_tools.md](pvtsimulation/flowassurance/flow_assurance_screening_tools) | **Pipeline cooldown, CO2 corrosion (de Waard-Milliams), scale prediction, wax curve monotonicity** |
 
 ### Chapter 38: Gas Quality
 

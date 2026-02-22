@@ -3410,8 +3410,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     result.put("maxAllowableVelocity_m_s", getMaxAllowableVelocity());
     if (rhonePoulencVelocity != null) {
       result.put("rhonePoulencMaxVelocity_m_s", getRhonePoulencMaxVelocity());
-      result.put("rhonePoulencServiceType",
-          rhonePoulencVelocity.getServiceType().name());
+      result.put("rhonePoulencServiceType", rhonePoulencVelocity.getServiceType().name());
       double rpMaxVel = getRhonePoulencMaxVelocity();
       result.put("rhonePoulencVelocityRatio",
           rpMaxVel > 0 ? getMixtureVelocity() / rpMaxVel : Double.NaN);
@@ -3474,8 +3473,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    *
    * @param serviceType the gas service type (NON_CORROSIVE_GAS or CORROSIVE_GAS)
    */
-  public void setRhonePoulencServiceType(
-      RhonePoulencVelocity.ServiceType serviceType) {
+  public void setRhonePoulencServiceType(RhonePoulencVelocity.ServiceType serviceType) {
     this.rhonePoulencVelocity = new RhonePoulencVelocity(serviceType);
     clearCapacityConstraints();
   }
@@ -3484,8 +3482,7 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * Enable Rhone-Poulenc maximum velocity calculation with default non-corrosive gas settings.
    *
    * <p>
-   * Equivalent to calling
-   * {@code setRhonePoulencServiceType(ServiceType.NON_CORROSIVE_GAS)}.
+   * Equivalent to calling {@code setRhonePoulencServiceType(ServiceType.NON_CORROSIVE_GAS)}.
    * </p>
    */
   public void useRhonePoulencVelocity() {
@@ -3501,8 +3498,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * @param serviceType the gas service type
    * @param useInterpolation true to use tabulated interpolation, false for power-law formula
    */
-  public void setRhonePoulencServiceType(
-      RhonePoulencVelocity.ServiceType serviceType, boolean useInterpolation) {
+  public void setRhonePoulencServiceType(RhonePoulencVelocity.ServiceType serviceType,
+      boolean useInterpolation) {
     this.rhonePoulencVelocity = new RhonePoulencVelocity(serviceType);
     this.rhonePoulencVelocity.setUseInterpolation(useInterpolation);
     clearCapacityConstraints();

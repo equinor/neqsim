@@ -59,9 +59,9 @@ import java.io.Serializable;
  * </p>
  *
  * <p>
- * Comparison with API RP 14E: The API RP 14E formula uses $V_e = C / \sqrt{\rho}$ (exponent =
- * 0.5), while Rhone-Poulenc uses an exponent of approximately 0.44, giving a less aggressive
- * velocity reduction at higher densities.
+ * Comparison with API RP 14E: The API RP 14E formula uses $V_e = C / \sqrt{\rho}$ (exponent = 0.5),
+ * while Rhone-Poulenc uses an exponent of approximately 0.44, giving a less aggressive velocity
+ * reduction at higher densities.
  * </p>
  *
  * @author Even Solbraa
@@ -87,8 +87,7 @@ public class RhonePoulencVelocity implements Serializable {
     NON_CORROSIVE_GAS(60.0, 0.44, 60.0, 3.0),
 
     /**
-     * Corrosive gas service (wet gas, sour gas with CO2/H2S). Uses C=30, V_max=30 m/s, V_min=2
-     * m/s.
+     * Corrosive gas service (wet gas, sour gas with CO2/H2S). Uses C=30, V_max=30 m/s, V_min=2 m/s.
      */
     CORROSIVE_GAS(30.0, 0.44, 30.0, 2.0);
 
@@ -112,8 +111,7 @@ public class RhonePoulencVelocity implements Serializable {
      * @param maxVelocityLimit upper velocity limit in m/s
      * @param minVelocityLimit lower velocity limit in m/s
      */
-    ServiceType(double cFactor, double exponent, double maxVelocityLimit,
-        double minVelocityLimit) {
+    ServiceType(double cFactor, double exponent, double maxVelocityLimit, double minVelocityLimit) {
       this.cFactor = cFactor;
       this.exponent = exponent;
       this.maxVelocityLimit = maxVelocityLimit;

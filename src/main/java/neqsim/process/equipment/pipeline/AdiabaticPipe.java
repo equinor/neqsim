@@ -478,8 +478,7 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
    *
    * @param serviceType the gas service type (NON_CORROSIVE_GAS or CORROSIVE_GAS)
    */
-  public void setRhonePoulencServiceType(
-      RhonePoulencVelocity.ServiceType serviceType) {
+  public void setRhonePoulencServiceType(RhonePoulencVelocity.ServiceType serviceType) {
     this.rhonePoulencVelocity = new RhonePoulencVelocity(serviceType);
   }
 
@@ -487,8 +486,7 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
    * Enable Rhone-Poulenc maximum velocity calculation with default non-corrosive gas settings.
    *
    * <p>
-   * Equivalent to calling
-   * {@code setRhonePoulencServiceType(ServiceType.NON_CORROSIVE_GAS)}.
+   * Equivalent to calling {@code setRhonePoulencServiceType(ServiceType.NON_CORROSIVE_GAS)}.
    * </p>
    */
   public void useRhonePoulencVelocity() {
@@ -503,8 +501,8 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
    * @param serviceType the gas service type
    * @param useInterpolation true to use tabulated interpolation, false for power-law formula
    */
-  public void setRhonePoulencServiceType(
-      RhonePoulencVelocity.ServiceType serviceType, boolean useInterpolation) {
+  public void setRhonePoulencServiceType(RhonePoulencVelocity.ServiceType serviceType,
+      boolean useInterpolation) {
     this.rhonePoulencVelocity = new RhonePoulencVelocity(serviceType);
     this.rhonePoulencVelocity.setUseInterpolation(useInterpolation);
   }
@@ -788,8 +786,7 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
     result.put("maxAllowableVelocity_m_s", getMaxAllowableVelocity());
     if (rhonePoulencVelocity != null) {
       result.put("rhonePoulencMaxVelocity_m_s", getRhonePoulencMaxVelocity());
-      result.put("rhonePoulencServiceType",
-          rhonePoulencVelocity.getServiceType().name());
+      result.put("rhonePoulencServiceType", rhonePoulencVelocity.getServiceType().name());
       double rpMaxVel = getRhonePoulencMaxVelocity();
       result.put("rhonePoulencVelocityRatio",
           rpMaxVel > 0 ? getMixtureVelocity() / rpMaxVel : Double.NaN);
@@ -1060,15 +1057,14 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
 
     report.append("\nFlow Characteristics:\n");
     report.append(String.format("  Velocity: %.2f m/s\n", velocity));
-    report.append(String.format("  Erosional Velocity (API RP 14E): %.2f m/s\n",
-        getErosionalVelocity()));
+    report.append(
+        String.format("  Erosional Velocity (API RP 14E): %.2f m/s\n", getErosionalVelocity()));
     if (rhonePoulencVelocity != null) {
       report.append(String.format("  Rhone-Poulenc Max Velocity: %.2f m/s (%s)\n",
-          getRhonePoulencMaxVelocity(),
-          rhonePoulencVelocity.getServiceType().name()));
+          getRhonePoulencMaxVelocity(), rhonePoulencVelocity.getServiceType().name()));
     }
-    report.append(String.format("  Max Allowable Velocity (%s): %.2f m/s\n",
-        getMaxVelocityMethod(), getMaxAllowableVelocity()));
+    report.append(String.format("  Max Allowable Velocity (%s): %.2f m/s\n", getMaxVelocityMethod(),
+        getMaxAllowableVelocity()));
     report.append(String.format("  Flow Regime: %s\n", flowRegime));
     report.append(String.format("  Reynolds Number: %.0f\n", reynoldsNumber));
 
@@ -1111,8 +1107,7 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
       velocities.put("maxVelocityMethod", getMaxVelocityMethod());
       if (rhonePoulencVelocity != null) {
         velocities.put("rhonePoulencMaxVelocity_ms", getRhonePoulencMaxVelocity());
-        velocities.put("rhonePoulencServiceType",
-            rhonePoulencVelocity.getServiceType().name());
+        velocities.put("rhonePoulencServiceType", rhonePoulencVelocity.getServiceType().name());
       }
       reportData.put("velocities", velocities);
 

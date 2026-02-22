@@ -14,9 +14,9 @@ Flow assurance ensures reliable hydrocarbon transport from reservoir to processi
 | **Hydrates** | Water + gas at low T, high P | Blockage | ✅ Full prediction |
 | **Wax** | Paraffin precipitation at low T | Deposition, restart | ✅ WAT calculation |
 | **Asphaltenes** | Pressure/composition change | Deposition, fouling | ✅ CPA model |
-| **Scale** | Mineral precipitation | Blockage, corrosion | ⚠️ Basic |
+| **Scale** | Mineral precipitation | Blockage, corrosion | ✅ Saturation Index (CaCO3, BaSO4, SrSO4, CaSO4, FeCO3) |
 | **Slugging** | Multiphase flow instability | Equipment damage | ✅ Transient models |
-| **Corrosion** | CO₂, H₂S, water | Pipe failure | ⚠️ Indirect |
+| **Corrosion** | CO₂, H₂S, water | Pipe failure | ✅ de Waard-Milliams CO₂ model |
 
 ---
 
