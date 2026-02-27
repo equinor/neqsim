@@ -651,6 +651,9 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Parameter Fitting | [docs/pvtsimulation/flowassurance/asphaltene_parameter_fitting.md](pvtsimulation/flowassurance/asphaltene_parameter_fitting) | Parameter fitting |
 | Validation | [docs/pvtsimulation/flowassurance/asphaltene_validation.md](pvtsimulation/flowassurance/asphaltene_validation) | Validation |
 | **Flow Assurance Screening Tools** | [docs/pvtsimulation/flowassurance/flow_assurance_screening_tools.md](pvtsimulation/flowassurance/flow_assurance_screening_tools) | **Pipeline cooldown, CO2 corrosion (de Waard-Milliams), scale prediction, wax curve monotonicity** |
+| **Erosion Prediction** | [docs/pvtsimulation/flowassurance/erosion_prediction.md](pvtsimulation/flowassurance/erosion_prediction) | **API RP 14E erosional velocity, DNV RP O501 sand erosion, risk assessment** |
+| **Emulsion Viscosity** | [docs/pvtsimulation/flowassurance/emulsion_viscosity_calculator.md](pvtsimulation/flowassurance/emulsion_viscosity_calculator) | **Einstein, Taylor, Brinkman, Pal-Rhodes, Woelflin, Richardson models, phase inversion** |
+
 
 ### Chapter 38: Gas Quality
 
@@ -673,6 +676,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | ISO 15403 | [docs/standards/iso15403_cng_quality.md](standards/iso15403_cng_quality) | ISO 15403 CNG quality |
 | Dew Point | [docs/standards/dew_point_standards.md](standards/dew_point_standards) | Dew point standards |
 | ASTM D6377 | [docs/standards/astm_d6377_rvp.md](standards/astm_d6377_rvp) | ASTM D6377 RVP |
+| **Oil Quality Standards** | [docs/standards/oil_quality_standards.md](standards/oil_quality_standards) | **ASTM D86, D445, D4052, D4294, D2500, D97, BS&W** |
 | Sales Contracts | [docs/standards/sales_contracts.md](standards/sales_contracts) | Sales contracts |
 
 ---

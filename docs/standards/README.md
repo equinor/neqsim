@@ -24,7 +24,7 @@ The NeqSim standards package implements international standards for gas and oil 
 The standards package provides implementations of:
 
 1. **Gas Quality Standards** - ISO 6976, ISO 6974, ISO 6578, ISO 15403, ISO 18453
-2. **Oil Quality Standards** - ASTM D6377 for vapor pressure
+2. **Oil Quality Standards** - ASTM D86 (distillation), D445 (viscosity), D4052 (density/API gravity), D4294 (sulfur), D2500 (cloud point), D97 (pour point), D6377 (RVP), BS&W
 3. **Sales Contracts** - Specification verification against contractual limits
 
 **Key Applications:**
@@ -57,7 +57,14 @@ standards/
 │   └── UKspecifications_ICF_SI.java # UK ICF/SI specifications
 │
 ├── oilquality/                      # Oil quality standards
-│   └── Standard_ASTM_D6377.java     # Reid vapor pressure (RVP)
+│   ├── Standard_ASTM_D6377.java     # Reid vapor pressure (RVP)
+│   ├── Standard_ASTM_D86.java       # Atmospheric distillation curve
+│   ├── Standard_ASTM_D445.java      # Kinematic viscosity & VI
+│   ├── Standard_ASTM_D4052.java     # Density, SG, API gravity
+│   ├── Standard_ASTM_D4294.java     # Total sulfur content
+│   ├── Standard_ASTM_D2500.java     # Cloud point (WAT)
+│   ├── Standard_ASTM_D97.java       # Pour point
+│   └── Standard_BSW.java            # Basic sediment & water
 │
 └── salescontract/                   # Contract management
     ├── BaseContract.java            # Contract implementation
@@ -78,6 +85,7 @@ Detailed guides for each major standard:
 | [ISO 15403 - CNG Quality](iso15403_cng_quality) | Methane number and MON for vehicle fuel |
 | [Dew Point Standards](dew_point_standards) | Water and hydrocarbon dew point methods |
 | [ASTM D6377 - RVP](astm_d6377_rvp) | Reid vapor pressure for crude and condensate |
+| [Oil Quality Standards](oil_quality_standards) | ASTM D86, D445, D4052, D4294, D2500, D97, BS&W |
 | [Sales Contracts](sales_contracts) | Contract specification and compliance checking |
 
 ---
