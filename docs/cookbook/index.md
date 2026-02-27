@@ -13,6 +13,7 @@ Quick, copy-paste recipes for common tasks. Each recipe is self-contained and re
 |----------|-------------|
 | [Thermodynamics Recipes](thermodynamics-recipes) | Fluids, flash, properties, phase envelopes |
 | [Process Recipes](process-recipes) | Equipment, flowsheets, streams |
+| [Adsorption Recipes](adsorption-recipes) | Isotherm evaluation, PSA/TSA cycles, breakthrough curves |
 | [Pipeline Recipes](pipeline-recipes) | Pressure drop, multiphase flow, slugging |
 | [Unit Conversion](unit-conversion-recipes) | Working with units in NeqSim |
 

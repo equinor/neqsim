@@ -197,6 +197,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Diffusivity | [docs/physical_properties/diffusivity_models.md](physical_properties/diffusivity_models) | Diffusivity models |
 | Interfacial Props | [docs/physical_properties/interfacial_properties.md](physical_properties/interfacial_properties) | Interfacial tension, etc. |
 | Scale Potential | [docs/physical_properties/scale_potential.md](physical_properties/scale_potential) | Scale potential calculations |
+| **Adsorption Isotherm Models** | [docs/thermo/adsorption_isotherms.md](thermo/adsorption_isotherms) | **Langmuir, BET, Freundlich, Sips, DRA potential theory, capillary condensation** |
+| Adsorption Review | [docs/physical_properties/adsorption_review.md](physical_properties/adsorption_review) | Adsorption modeling review and enhancement proposal |
 | Steam Tables | [docs/wiki/steam_tables_if97.md](wiki/steam_tables_if97) | IF97 steam table implementation |
 | Thermodynamic Workflows | [docs/thermo/thermodynamic_workflows.md](thermo/thermodynamic_workflows) | Common thermodynamic workflows |
 | Interaction Tables | [docs/thermo/inter_table_guide.md](thermo/inter_table_guide) | Binary interaction parameters | |
@@ -313,7 +315,8 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Electrolyzers | [docs/process/equipment/electrolyzers.md](process/equipment/electrolyzers) | Electrolyzer systems |
 | CO2 Electrolyzer | [docs/pvtsimulation/CO2ElectrolyzerExample.md](pvtsimulation/CO2ElectrolyzerExample) | CO2 electrolyzer example |
 | Flares | [docs/process/equipment/flares.md](process/equipment/flares) | Flare systems |
-| Adsorbers | [docs/process/equipment/adsorbers.md](process/equipment/adsorbers) | Gas adsorption equipment |
+| Adsorbers (SimpleAdsorber) | [docs/process/equipment/adsorbers.md](process/equipment/adsorbers) | Simplified gas absorption with MDEA |
+| **Adsorption Bed (Transient)** | [docs/process/equipment/adsorption_bed.md](process/equipment/adsorption_bed) | **Fixed-bed adsorption with LDF mass transfer, MTZ, PSA/TSA cycles** |
 | Power Generation | [docs/process/equipment/power_generation.md](process/equipment/power_generation) | Gas turbines, fuel cells, renewables |
 | Diff. Pressure | [docs/process/equipment/differential_pressure.md](process/equipment/differential_pressure) | Orifice plates, flow measurement |
 | Manifolds | [docs/process/equipment/manifolds.md](process/equipment/manifolds) | Multi-stream routing |

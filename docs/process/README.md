@@ -39,6 +39,7 @@ This documentation is organized into the following sections:
 | Section | Description |
 |---------|-------------|
 | [equipment/](equipment/) | Equipment documentation (separators, compressors, etc.) |
+| [equipment/adsorption_bed.md](equipment/adsorption_bed) | **Adsorption bed** — transient simulation, LDF mass transfer, PSA/TSA cycles |
 | [processmodel/](processmodel/) | ProcessSystem and flowsheet management |
 | [safety/](safety/) | Safety systems (PSV, ESD, blowdown) |
 | [controllers.md](controllers) | Process controllers and logic |

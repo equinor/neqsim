@@ -64,6 +64,7 @@ thermo/
 ### Application Guides
 
 - [Thermodynamic Workflows](thermodynamic_workflows): How to set up systems, select models, and perform common equilibrium calculations.
+- [Adsorption Isotherm Models](adsorption_isotherms): **Complete reference** for all adsorption isotherm models — Langmuir, Extended Langmuir, BET, Freundlich, Sips, DRA potential theory, capillary condensation, and the parameter database.
 - [PVT and Fluid Characterization](pvt_fluid_characterization): Building realistic fluid descriptions, including heavy-end handling and lab-data reconciliation.
 - [Thermodynamic Operations](thermodynamic_operations): Flash calculations, phase envelopes, and other process-centric operations.
 - [Physical Properties](physical_properties): Density, viscosity, surface tension, and transport-property calculations.
