@@ -13,6 +13,8 @@ NeqSim provides a set of quantitative screening tools for the main flow assuranc
 | CO2 corrosion rate | `DeWaardMilliamsCorrosion` | Corrosion rate (mm/yr), severity |
 | Mineral scale | `ScalePredictionCalculator` | Saturation Index for CaCO3, BaSO4, etc. |
 | Wax curves | `WaxCurveCalculator` | WAT, wax fraction vs temperature |
+| [Sand erosion](erosion_prediction) | `ErosionPredictionCalculator` | API RP 14E velocity, DNV RP O501 erosion rate |
+| [Emulsion viscosity](emulsion_viscosity_calculator) | `EmulsionViscosityCalculator` | Effective viscosity, phase inversion |
 
 All classes live in `neqsim.pvtsimulation.flowassurance`.
 
