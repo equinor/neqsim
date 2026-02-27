@@ -9,7 +9,12 @@ package neqsim.physicalproperties.interfaceproperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.interfaceproperties.solidadsorption.AdsorptionInterface;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.BETAdsorption;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.FreundlichAdsorption;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.IsothermType;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.LangmuirAdsorption;
 import neqsim.physicalproperties.interfaceproperties.solidadsorption.PotentialTheoryAdsorption;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.SipsAdsorption;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.FirozabadiRamleyInterfaceTension;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.GTSurfaceTension;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.GTSurfaceTensionSimple;
@@ -108,6 +113,39 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
 
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       getAdsorptionCalc()[i] = new PotentialTheoryAdsorption(system);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initAdsorption(IsothermType type) {
+    setAdsorptionCalc(new AdsorptionInterface[system.getNumberOfPhases()]);
+
+    for (int i = 0; i < system.getNumberOfPhases(); i++) {
+      getAdsorptionCalc()[i] = createAdsorptionModel(type);
+    }
+  }
+
+  /**
+   * Create an adsorption model instance for the given isotherm type.
+   *
+   * @param type the isotherm type
+   * @return a new adsorption model instance
+   */
+  private AdsorptionInterface createAdsorptionModel(IsothermType type) {
+    switch (type) {
+      case LANGMUIR:
+      case EXTENDED_LANGMUIR:
+        return new LangmuirAdsorption(system);
+      case BET:
+        return new BETAdsorption(system);
+      case FREUNDLICH:
+        return new FreundlichAdsorption(system);
+      case SIPS:
+        return new SipsAdsorption(system);
+      case DRA:
+      default:
+        return new PotentialTheoryAdsorption(system);
     }
   }
 

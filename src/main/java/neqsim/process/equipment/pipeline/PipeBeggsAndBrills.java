@@ -3047,6 +3047,12 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   private double maxDesignAIV = 25.0;
 
   /**
+   * Rhone-Poulenc velocity calculator. When non-null, maximum velocity is determined from the
+   * Rhone-Poulenc curves instead of API RP 14E.
+   */
+  private RhonePoulencVelocity rhonePoulencVelocity = null;
+
+  /**
    * Get support arrangement for FIV calculations.
    *
    * @return support arrangement (Stiff, Medium stiff, Medium, Flexible)
@@ -3399,6 +3405,17 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
     result.put("velocityRatio",
         getErosionalVelocity() > 0 ? getMixtureVelocity() / getErosionalVelocity() : Double.NaN);
 
+    // Rhone-Poulenc max velocity (if enabled)
+    result.put("maxVelocityMethod", getMaxVelocityMethod());
+    result.put("maxAllowableVelocity_m_s", getMaxAllowableVelocity());
+    if (rhonePoulencVelocity != null) {
+      result.put("rhonePoulencMaxVelocity_m_s", getRhonePoulencMaxVelocity());
+      result.put("rhonePoulencServiceType", rhonePoulencVelocity.getServiceType().name());
+      double rpMaxVel = getRhonePoulencMaxVelocity();
+      result.put("rhonePoulencVelocityRatio",
+          rpMaxVel > 0 ? getMixtureVelocity() / rpMaxVel : Double.NaN);
+    }
+
     // FIV (Flow-Induced Vibration) analysis
     double lof = calculateLOF();
     result.put("LOF", lof);
@@ -3439,6 +3456,147 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   public String getFIVAnalysisJson() {
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
         .toJson(getFIVAnalysis());
+  }
+
+  // ============================================================================
+  // Rhone-Poulenc Maximum Velocity
+  // ============================================================================
+
+  /**
+   * Enable Rhone-Poulenc maximum velocity calculation for gas pipes.
+   *
+   * <p>
+   * When enabled, the maximum allowable velocity is determined from the Rhone-Poulenc curves
+   * instead of the API RP 14E erosional velocity. The Rhone-Poulenc method uses a power-law
+   * correlation between gas density and maximum velocity, with service-type-dependent constants.
+   * </p>
+   *
+   * @param serviceType the gas service type (NON_CORROSIVE_GAS or CORROSIVE_GAS)
+   */
+  public void setRhonePoulencServiceType(RhonePoulencVelocity.ServiceType serviceType) {
+    this.rhonePoulencVelocity = new RhonePoulencVelocity(serviceType);
+    clearCapacityConstraints();
+  }
+
+  /**
+   * Enable Rhone-Poulenc maximum velocity calculation with default non-corrosive gas settings.
+   *
+   * <p>
+   * Equivalent to calling {@code setRhonePoulencServiceType(ServiceType.NON_CORROSIVE_GAS)}.
+   * </p>
+   */
+  public void useRhonePoulencVelocity() {
+    this.rhonePoulencVelocity =
+        new RhonePoulencVelocity(RhonePoulencVelocity.ServiceType.NON_CORROSIVE_GAS);
+    clearCapacityConstraints();
+  }
+
+  /**
+   * Enable Rhone-Poulenc maximum velocity calculation using tabulated data with log-log
+   * interpolation for higher accuracy.
+   *
+   * @param serviceType the gas service type
+   * @param useInterpolation true to use tabulated interpolation, false for power-law formula
+   */
+  public void setRhonePoulencServiceType(RhonePoulencVelocity.ServiceType serviceType,
+      boolean useInterpolation) {
+    this.rhonePoulencVelocity = new RhonePoulencVelocity(serviceType);
+    this.rhonePoulencVelocity.setUseInterpolation(useInterpolation);
+    clearCapacityConstraints();
+  }
+
+  /**
+   * Disable Rhone-Poulenc maximum velocity and revert to API RP 14E erosional velocity.
+   */
+  public void disableRhonePoulencVelocity() {
+    this.rhonePoulencVelocity = null;
+    clearCapacityConstraints();
+  }
+
+  /**
+   * Check if Rhone-Poulenc maximum velocity is enabled.
+   *
+   * @return true if Rhone-Poulenc method is active
+   */
+  public boolean isRhonePoulencEnabled() {
+    return rhonePoulencVelocity != null;
+  }
+
+  /**
+   * Get the Rhone-Poulenc velocity calculator, or null if not enabled.
+   *
+   * @return the RhonePoulencVelocity calculator or null
+   */
+  public RhonePoulencVelocity getRhonePoulencCalculator() {
+    return rhonePoulencVelocity;
+  }
+
+  /**
+   * Calculate the maximum allowable gas velocity using the Rhone-Poulenc curves.
+   *
+   * <p>
+   * This method uses the current gas/mixture density from the simulation to look up the maximum
+   * velocity from the Rhone-Poulenc correlation. If Rhone-Poulenc is not enabled, returns 0.0.
+   * </p>
+   *
+   * @return maximum allowable velocity in m/s, or 0.0 if not enabled or density unavailable
+   */
+  public double getRhonePoulencMaxVelocity() {
+    if (rhonePoulencVelocity == null) {
+      return 0.0;
+    }
+    double density = getGasDensityForVelocity();
+    if (density <= 0) {
+      return 0.0;
+    }
+    return rhonePoulencVelocity.getMaxVelocity(density);
+  }
+
+  /**
+   * Get the effective maximum allowable velocity using the currently configured method.
+   *
+   * <p>
+   * Returns Rhone-Poulenc max velocity if enabled, otherwise the API RP 14E erosional velocity.
+   * </p>
+   *
+   * @return maximum allowable velocity in m/s
+   */
+  public double getMaxAllowableVelocity() {
+    if (rhonePoulencVelocity != null) {
+      double rpVel = getRhonePoulencMaxVelocity();
+      return rpVel > 0 ? rpVel : getErosionalVelocity();
+    }
+    return getErosionalVelocity();
+  }
+
+  /**
+   * Get the name of the currently active maximum velocity method.
+   *
+   * @return "RHONE_POULENC" or "API_RP_14E"
+   */
+  public String getMaxVelocityMethod() {
+    return rhonePoulencVelocity != null ? "RHONE_POULENC" : "API_RP_14E";
+  }
+
+  /**
+   * Get the gas density used for velocity calculations.
+   *
+   * <p>
+   * Uses mixture density from Beggs and Brill calculations if available; otherwise falls back to
+   * the inlet stream density.
+   * </p>
+   *
+   * @return gas density in kg/m3, or 0.0 if unavailable
+   */
+  private double getGasDensityForVelocity() {
+    if (mixtureDensity > 0 && !Double.isNaN(mixtureDensity)) {
+      // mixtureDensity is stored in lb/ft3 internally
+      return mixtureDensity * 16.0185;
+    }
+    if (getInletStream() != null && getInletStream().getFluid() != null) {
+      return getInletStream().getFluid().getDensity("kg/m3");
+    }
+    return 0.0;
   }
 
   /**
@@ -3482,11 +3640,12 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    */
   @Override
   protected void initializeCapacityConstraints() {
-    // Velocity constraint (SOFT limit - erosional is a guideline)
+    // Velocity constraint (SOFT limit - uses Rhone-Poulenc if enabled, else erosional)
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("velocity",
         "m/s", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(maxDesignVelocity).setMaxValue(getErosionalVelocity())
-            .setWarningThreshold(0.9).setDescription("Mixture velocity vs erosional limit")
+            .setDesignValue(maxDesignVelocity).setMaxValue(getMaxAllowableVelocity())
+            .setWarningThreshold(0.9)
+            .setDescription("Mixture velocity vs " + getMaxVelocityMethod() + " limit")
             .setValueSupplier(() -> getMixtureVelocity()));
 
     // LOF (Likelihood of Failure) - FIV constraint for multiphase flow
