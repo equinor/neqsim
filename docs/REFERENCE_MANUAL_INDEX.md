@@ -654,6 +654,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Erosion Prediction** | [docs/pvtsimulation/flowassurance/erosion_prediction.md](pvtsimulation/flowassurance/erosion_prediction) | **API RP 14E erosional velocity, DNV RP O501 sand erosion, risk assessment** |
 | **Emulsion Viscosity** | [docs/pvtsimulation/flowassurance/emulsion_viscosity_calculator.md](pvtsimulation/flowassurance/emulsion_viscosity_calculator) | **Einstein, Taylor, Brinkman, Pal-Rhodes, Woelflin, Richardson models, phase inversion** |
 
+
 ### Chapter 38: Gas Quality
 
 | Document | Path | Description |
