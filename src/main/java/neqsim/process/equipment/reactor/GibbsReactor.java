@@ -478,6 +478,21 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
+   * Get the component map containing GibbsComponent data for all loaded components.
+   *
+   * <p>
+   * This method provides protected access to the component database for subclasses that need to
+   * access thermodynamic properties such as element composition, heat capacity coefficients, and
+   * standard formation properties.
+   * </p>
+   *
+   * @return Map from component name (lowercase) to GibbsComponent
+   */
+  protected Map<String, GibbsComponent> getComponentMap() {
+    return componentMap;
+  }
+
+  /**
    * Constructor for GibbsReactor.
    *
    * @param name Name of GibbsReactor
