@@ -40,6 +40,7 @@ This documentation is organized into the following sections:
 |---------|-------------|
 | [equipment/](equipment/) | Equipment documentation (separators, compressors, etc.) |
 | [equipment/adsorption_bed.md](equipment/adsorption_bed) | **Adsorption bed** — transient simulation, LDF mass transfer, PSA/TSA cycles |
+| [bioprocessing.md](bioprocessing) | **Bio-processing** — reactors, fermenters, solid-liquid separators, LLE, evaporators, dryers, crystallizers |
 | [processmodel/](processmodel/) | ProcessSystem and flowsheet management |
 | [safety/](safety/) | Safety systems (PSV, ESD, blowdown) |
 | [controllers.md](controllers) | Process controllers and logic |
