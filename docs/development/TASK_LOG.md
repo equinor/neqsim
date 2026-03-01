@@ -27,6 +27,22 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-03-01 — Well mechanical design and cost estimation system
+**Type:** F (Design)
+**Keywords:** well, subsea, casing, tubing, mechanical design, NORSOK D-010, API 5CT, cost estimation, drilling, completion, barrier verification, WellMechanicalDesign, WellDesignCalculator, WellCostEstimator
+**Solution:** `src/main/java/neqsim/process/mechanicaldesign/subsea/WellMechanicalDesign.java`, `WellDesignCalculator.java`, `WellCostEstimator.java`, `src/test/java/.../WellMechanicalDesignTest.java`
+**Notes:**
+- SubseaWell was the only subsea equipment type WITHOUT a mechanical design class
+- Added WellType, CompletionType, RigType enums to SubseaWell
+- Three-layer pattern: SubseaWell → WellMechanicalDesign → WellDesignCalculator + WellCostEstimator
+- Casing design: burst/collapse/tension per API Bull 5C3, supports 14 casing grades (H40 through 25Cr)
+- Well barrier verification per NORSOK D-010 two-barrier principle
+- Cost estimation with regional factors (Norway 1.35x, GOM 1.0x, etc.)
+- Wired into FieldDevelopmentCostEstimator via setWellParameters()
+- CSV data files: WellCostData.csv, CasingProperties.csv
+- 21 tests all passing
+- Documentation: docs/process/well_mechanical_design.md
+
 ### 2026-03-01 — Task log and context system created
 **Type:** E (Feature)
 **Keywords:** context, documentation, workflow, onboarding, task-solving

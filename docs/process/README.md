@@ -92,6 +92,7 @@ This documentation is organized into the following sections:
 | [pipeline_mechanical_design.md](pipeline_mechanical_design) | Pipeline mechanical design (wall thickness, stress, buckling) |
 | [topside_piping_design.md](topside_piping_design) | **Topside piping design (velocity, support, vibration per ASME B31.3)** |
 | [riser_mechanical_design.md](riser_mechanical_design) | Riser design (catenary, VIV, fatigue per DNV-OS-F201) |
+| [well_mechanical_design.md](well_mechanical_design) | **Well casing/tubing design, barrier verification, cost estimation per NORSOK D-010, API 5CT** |
 | [torg_integration.md](torg_integration) | Technical Requirements Documents (TORG) integration |
 | [field_development_orchestration.md](field_development_orchestration) | Complete design workflow orchestration |
 

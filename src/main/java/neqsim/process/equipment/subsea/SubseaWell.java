@@ -8,29 +8,285 @@ import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.subsea.WellMechanicalDesign;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
+ * Subsea well equipment class.
+ *
  * <p>
- * SubseaWell class.
+ * Represents a subsea well including wellbore, casing, tubing and completion. The well uses an
+ * internal {@link AdiabaticTwoPhasePipe} to model tubing flow performance (VLP), and provides well
+ * design properties for mechanical design and cost estimation.
  * </p>
  *
+ * <h2>Well Types</h2>
+ * <ul>
+ * <li><b>OIL_PRODUCER</b> - Oil production well</li>
+ * <li><b>GAS_PRODUCER</b> - Gas production well</li>
+ * <li><b>WATER_INJECTOR</b> - Water injection well</li>
+ * <li><b>GAS_INJECTOR</b> - Gas injection well</li>
+ * <li><b>OBSERVATION</b> - Observation/monitoring well</li>
+ * </ul>
+ *
+ * <h2>Completion Types</h2>
+ * <ul>
+ * <li><b>CASED_PERFORATED</b> - Standard cased and perforated completion</li>
+ * <li><b>OPEN_HOLE</b> - Open hole completion with screens or gravel pack</li>
+ * <li><b>GRAVEL_PACK</b> - Gravel pack completion for sand control</li>
+ * <li><b>ICD</b> - Inflow control device completion</li>
+ * <li><b>AICD</b> - Autonomous inflow control device (water/gas shut-off)</li>
+ * <li><b>MULTI_ZONE</b> - Multi-zone intelligent completion</li>
+ * </ul>
+ *
+ * <h2>Design Standards</h2>
+ * <ul>
+ * <li>NORSOK D-010 - Well Integrity in Drilling and Well Operations</li>
+ * <li>API 5CT - Casing and Tubing</li>
+ * <li>ISO 11960 - Steel Pipes for Use as Casing or Tubing</li>
+ * <li>API RP 90 - Annular Casing Pressure Management</li>
+ * </ul>
+ *
+ * <h2>Usage Example</h2>
+ *
+ * <pre>{@code
+ * SubseaWell well = new SubseaWell("Producer-1", reservoirStream);
+ * well.setWellType(SubseaWell.WellType.OIL_PRODUCER);
+ * well.setMeasuredDepth(3800.0);
+ * well.setTrueVerticalDepth(3200.0);
+ * well.setWaterDepth(350.0);
+ * well.setCompletionType(SubseaWell.CompletionType.CASED_PERFORATED);
+ * well.setTubingDiameter(0.1397); // 5.5 inch
+ * well.getPipeline().setDiameter(0.1397);
+ * well.getPipeline().setLength(3800.0);
+ * well.run();
+ *
+ * // Mechanical design and cost
+ * well.initMechanicalDesign();
+ * WellMechanicalDesign design = (WellMechanicalDesign) well.getMechanicalDesign();
+ * design.calcDesign();
+ * design.calculateCostEstimate();
+ * String report = design.toJson();
+ * }</pre>
+ *
  * @author asmund
- * @version $Id: $Id
+ * @version 2.0
+ * @see WellMechanicalDesign
+ * @see SubseaTree
  */
 public class SubseaWell extends TwoPortEquipment {
   /** Serialization version UID. */
-  private static final long serialVersionUID = 1000;
-
-  public double height = 1000.0;
-  public double length = 1200.0;
-  AdiabaticTwoPhasePipe pipeline;
+  private static final long serialVersionUID = 1001;
 
   /**
-   * <p>
+   * Well type classification.
+   */
+  public enum WellType {
+    /** Oil production well. */
+    OIL_PRODUCER("Oil Producer"),
+    /** Gas production well. */
+    GAS_PRODUCER("Gas Producer"),
+    /** Water injection well. */
+    WATER_INJECTOR("Water Injector"),
+    /** Gas injection well. */
+    GAS_INJECTOR("Gas Injector"),
+    /** Observation/monitoring well. */
+    OBSERVATION("Observation");
+
+    private final String displayName;
+
+    WellType(String displayName) {
+      this.displayName = displayName;
+    }
+
+    /**
+     * Get display name.
+     *
+     * @return display name
+     */
+    public String getDisplayName() {
+      return displayName;
+    }
+  }
+
+  /**
+   * Completion type.
+   */
+  public enum CompletionType {
+    /** Cased and perforated. */
+    CASED_PERFORATED("Cased & Perforated"),
+    /** Open hole with screens. */
+    OPEN_HOLE("Open Hole"),
+    /** Gravel pack for sand control. */
+    GRAVEL_PACK("Gravel Pack"),
+    /** Inflow control devices. */
+    ICD("ICD"),
+    /** Autonomous inflow control devices. */
+    AICD("AICD"),
+    /** Multi-zone intelligent completion. */
+    MULTI_ZONE("Multi-Zone");
+
+    private final String displayName;
+
+    CompletionType(String displayName) {
+      this.displayName = displayName;
+    }
+
+    /**
+     * Get display name.
+     *
+     * @return display name
+     */
+    public String getDisplayName() {
+      return displayName;
+    }
+  }
+
+  /**
+   * Rig type used for drilling.
+   */
+  public enum RigType {
+    /** Semi-submersible drilling rig. */
+    SEMI_SUBMERSIBLE("Semi-Submersible"),
+    /** Drillship. */
+    DRILLSHIP("Drillship"),
+    /** Jack-up rig. */
+    JACK_UP("Jack-Up"),
+    /** Platform rig (from fixed facility). */
+    PLATFORM_RIG("Platform Rig");
+
+    private final String displayName;
+
+    RigType(String displayName) {
+      this.displayName = displayName;
+    }
+
+    /**
+     * Get display name.
+     *
+     * @return display name
+     */
+    public String getDisplayName() {
+      return displayName;
+    }
+  }
+
+  // ============ Well Geometry ============
+  /** Height (elevation change) in meters. */
+  public double height = 1000.0;
+
+  /** Well length (measured depth of tubing) in meters. */
+  public double length = 1200.0;
+
+  /** Measured depth (MD) of the well in meters. */
+  private double measuredDepth = 3800.0;
+
+  /** True vertical depth (TVD) in meters. */
+  private double trueVerticalDepth = 3200.0;
+
+  /** Water depth at wellhead in meters. */
+  private double waterDepth = 350.0;
+
+  /** Kick-off point depth in meters MD. */
+  private double kickOffPoint = 1500.0;
+
+  /** Maximum inclination angle in degrees. */
+  private double maxInclination = 45.0;
+
+  // ============ Well Classification ============
+  /** Well type. */
+  private WellType wellType = WellType.OIL_PRODUCER;
+
+  /** Completion type. */
+  private CompletionType completionType = CompletionType.CASED_PERFORATED;
+
+  /** Rig type. */
+  private RigType rigType = RigType.SEMI_SUBMERSIBLE;
+
+  // ============ Casing Program ============
+  /** Conductor casing OD in inches. */
+  private double conductorOD = 30.0;
+
+  /** Conductor casing depth in meters MD. */
+  private double conductorDepth = 100.0;
+
+  /** Surface casing OD in inches. */
+  private double surfaceCasingOD = 20.0;
+
+  /** Surface casing depth in meters MD. */
+  private double surfaceCasingDepth = 800.0;
+
+  /** Intermediate casing OD in inches. */
+  private double intermediateCasingOD = 13.375;
+
+  /** Intermediate casing depth in meters MD. */
+  private double intermediateCasingDepth = 2500.0;
+
+  /** Production casing OD in inches. */
+  private double productionCasingOD = 9.625;
+
+  /** Production casing depth in meters MD. */
+  private double productionCasingDepth = 3800.0;
+
+  /** Production liner OD in inches (0 = no liner). */
+  private double productionLinerOD = 7.0;
+
+  /** Production liner depth in meters MD (0 = no liner). */
+  private double productionLinerDepth = 0.0;
+
+  // ============ Tubing ============
+  /** Tubing OD in inches. */
+  private double tubingOD = 5.5;
+
+  /** Tubing weight in lb/ft. */
+  private double tubingWeight = 23.0;
+
+  /** Tubing grade per API 5CT. */
+  private String tubingGrade = "L80";
+
+  // ============ Drilling ============
+  /** Estimated drilling duration in days. */
+  private double drillingDays = 55.0;
+
+  /** Estimated completion duration in days. */
+  private double completionDays = 20.0;
+
+  /** Rig day rate in USD. */
+  private double rigDayRate = 350000.0;
+
+  // ============ Well Barriers ============
+  /** Whether well has DHSV (downhole safety valve / SSSV). */
+  private boolean hasDHSV = true;
+
+  /** Number of well barrier elements in primary barrier. */
+  private int primaryBarrierElements = 4;
+
+  /** Number of well barrier elements in secondary barrier. */
+  private int secondaryBarrierElements = 3;
+
+  // ============ Design Conditions ============
+  /** Maximum expected wellhead pressure in bara. */
+  private double maxWellheadPressure = 345.0;
+
+  /** Maximum expected bottomhole temperature in Celsius. */
+  private double maxBottomholeTemperature = 120.0;
+
+  /** Reservoir pressure in bara. */
+  private double reservoirPressure = 400.0;
+
+  /** Reservoir temperature in Celsius. */
+  private double reservoirTemperature = 100.0;
+
+  /** Internal pipeline for tubing flow model. */
+  AdiabaticTwoPhasePipe pipeline;
+
+  /** Mechanical design instance. */
+  private WellMechanicalDesign mechanicalDesign;
+
+  /**
    * Constructor for SubseaWell.
-   * </p>
    *
    * @param name Name of well
    * @param instream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -42,14 +298,29 @@ public class SubseaWell extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>pipeline</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe} object
    */
   public AdiabaticTwoPhasePipe getPipeline() {
     return pipeline;
+  }
+
+  /**
+   * Initialize mechanical design for this well.
+   */
+  public void initMechanicalDesign() {
+    mechanicalDesign = new WellMechanicalDesign(this);
+  }
+
+  /**
+   * Get mechanical design.
+   *
+   * @return the mechanical design instance, or null if not initialized
+   */
+  @Override
+  public MechanicalDesign getMechanicalDesign() {
+    return mechanicalDesign;
   }
 
   /** {@inheritDoc} */
@@ -77,10 +348,612 @@ public class SubseaWell extends TwoPortEquipment {
     setCalculationIdentifier(id);
   }
 
+  // ============ Getters and Setters ============
+
   /**
-   * <p>
+   * Get well type.
+   *
+   * @return well type
+   */
+  public WellType getWellType() {
+    return wellType;
+  }
+
+  /**
+   * Set well type.
+   *
+   * @param wellType well type
+   */
+  public void setWellType(WellType wellType) {
+    this.wellType = wellType;
+  }
+
+  /**
+   * Get completion type.
+   *
+   * @return completion type
+   */
+  public CompletionType getCompletionType() {
+    return completionType;
+  }
+
+  /**
+   * Set completion type.
+   *
+   * @param completionType completion type
+   */
+  public void setCompletionType(CompletionType completionType) {
+    this.completionType = completionType;
+  }
+
+  /**
+   * Get rig type.
+   *
+   * @return rig type
+   */
+  public RigType getRigType() {
+    return rigType;
+  }
+
+  /**
+   * Set rig type.
+   *
+   * @param rigType rig type
+   */
+  public void setRigType(RigType rigType) {
+    this.rigType = rigType;
+  }
+
+  /**
+   * Get measured depth in meters.
+   *
+   * @return measured depth
+   */
+  public double getMeasuredDepth() {
+    return measuredDepth;
+  }
+
+  /**
+   * Set measured depth in meters.
+   *
+   * @param measuredDepth measured depth
+   */
+  public void setMeasuredDepth(double measuredDepth) {
+    this.measuredDepth = measuredDepth;
+  }
+
+  /**
+   * Get true vertical depth in meters.
+   *
+   * @return true vertical depth
+   */
+  public double getTrueVerticalDepth() {
+    return trueVerticalDepth;
+  }
+
+  /**
+   * Set true vertical depth in meters.
+   *
+   * @param trueVerticalDepth true vertical depth
+   */
+  public void setTrueVerticalDepth(double trueVerticalDepth) {
+    this.trueVerticalDepth = trueVerticalDepth;
+  }
+
+  /**
+   * Get water depth in meters.
+   *
+   * @return water depth
+   */
+  public double getWaterDepth() {
+    return waterDepth;
+  }
+
+  /**
+   * Set water depth in meters.
+   *
+   * @param waterDepth water depth
+   */
+  public void setWaterDepth(double waterDepth) {
+    this.waterDepth = waterDepth;
+  }
+
+  /**
+   * Get kick-off point in meters MD.
+   *
+   * @return kick-off point depth
+   */
+  public double getKickOffPoint() {
+    return kickOffPoint;
+  }
+
+  /**
+   * Set kick-off point in meters MD.
+   *
+   * @param kickOffPoint kick-off point depth
+   */
+  public void setKickOffPoint(double kickOffPoint) {
+    this.kickOffPoint = kickOffPoint;
+  }
+
+  /**
+   * Get maximum inclination angle in degrees.
+   *
+   * @return max inclination
+   */
+  public double getMaxInclination() {
+    return maxInclination;
+  }
+
+  /**
+   * Set maximum inclination angle in degrees.
+   *
+   * @param maxInclination max inclination
+   */
+  public void setMaxInclination(double maxInclination) {
+    this.maxInclination = maxInclination;
+  }
+
+  /**
+   * Get conductor casing OD in inches.
+   *
+   * @return conductor OD
+   */
+  public double getConductorOD() {
+    return conductorOD;
+  }
+
+  /**
+   * Set conductor casing OD in inches.
+   *
+   * @param conductorOD conductor OD
+   */
+  public void setConductorOD(double conductorOD) {
+    this.conductorOD = conductorOD;
+  }
+
+  /**
+   * Get conductor casing depth in meters MD.
+   *
+   * @return conductor depth
+   */
+  public double getConductorDepth() {
+    return conductorDepth;
+  }
+
+  /**
+   * Set conductor casing depth in meters MD.
+   *
+   * @param conductorDepth conductor depth
+   */
+  public void setConductorDepth(double conductorDepth) {
+    this.conductorDepth = conductorDepth;
+  }
+
+  /**
+   * Get surface casing OD in inches.
+   *
+   * @return surface casing OD
+   */
+  public double getSurfaceCasingOD() {
+    return surfaceCasingOD;
+  }
+
+  /**
+   * Set surface casing OD in inches.
+   *
+   * @param surfaceCasingOD surface casing OD
+   */
+  public void setSurfaceCasingOD(double surfaceCasingOD) {
+    this.surfaceCasingOD = surfaceCasingOD;
+  }
+
+  /**
+   * Get surface casing depth in meters MD.
+   *
+   * @return surface casing depth
+   */
+  public double getSurfaceCasingDepth() {
+    return surfaceCasingDepth;
+  }
+
+  /**
+   * Set surface casing depth in meters MD.
+   *
+   * @param surfaceCasingDepth surface casing depth
+   */
+  public void setSurfaceCasingDepth(double surfaceCasingDepth) {
+    this.surfaceCasingDepth = surfaceCasingDepth;
+  }
+
+  /**
+   * Get intermediate casing OD in inches.
+   *
+   * @return intermediate casing OD
+   */
+  public double getIntermediateCasingOD() {
+    return intermediateCasingOD;
+  }
+
+  /**
+   * Set intermediate casing OD in inches.
+   *
+   * @param intermediateCasingOD intermediate casing OD
+   */
+  public void setIntermediateCasingOD(double intermediateCasingOD) {
+    this.intermediateCasingOD = intermediateCasingOD;
+  }
+
+  /**
+   * Get intermediate casing depth in meters MD.
+   *
+   * @return intermediate casing depth
+   */
+  public double getIntermediateCasingDepth() {
+    return intermediateCasingDepth;
+  }
+
+  /**
+   * Set intermediate casing depth in meters MD.
+   *
+   * @param intermediateCasingDepth intermediate casing depth
+   */
+  public void setIntermediateCasingDepth(double intermediateCasingDepth) {
+    this.intermediateCasingDepth = intermediateCasingDepth;
+  }
+
+  /**
+   * Get production casing OD in inches.
+   *
+   * @return production casing OD
+   */
+  public double getProductionCasingOD() {
+    return productionCasingOD;
+  }
+
+  /**
+   * Set production casing OD in inches.
+   *
+   * @param productionCasingOD production casing OD
+   */
+  public void setProductionCasingOD(double productionCasingOD) {
+    this.productionCasingOD = productionCasingOD;
+  }
+
+  /**
+   * Get production casing depth in meters MD.
+   *
+   * @return production casing depth
+   */
+  public double getProductionCasingDepth() {
+    return productionCasingDepth;
+  }
+
+  /**
+   * Set production casing depth in meters MD.
+   *
+   * @param productionCasingDepth production casing depth
+   */
+  public void setProductionCasingDepth(double productionCasingDepth) {
+    this.productionCasingDepth = productionCasingDepth;
+  }
+
+  /**
+   * Get production liner OD in inches (0 = no liner).
+   *
+   * @return production liner OD
+   */
+  public double getProductionLinerOD() {
+    return productionLinerOD;
+  }
+
+  /**
+   * Set production liner OD in inches (0 = no liner).
+   *
+   * @param productionLinerOD production liner OD
+   */
+  public void setProductionLinerOD(double productionLinerOD) {
+    this.productionLinerOD = productionLinerOD;
+  }
+
+  /**
+   * Get production liner depth in meters MD.
+   *
+   * @return production liner depth
+   */
+  public double getProductionLinerDepth() {
+    return productionLinerDepth;
+  }
+
+  /**
+   * Set production liner depth in meters MD.
+   *
+   * @param productionLinerDepth production liner depth
+   */
+  public void setProductionLinerDepth(double productionLinerDepth) {
+    this.productionLinerDepth = productionLinerDepth;
+  }
+
+  /**
+   * Get tubing OD in inches.
+   *
+   * @return tubing OD
+   */
+  public double getTubingOD() {
+    return tubingOD;
+  }
+
+  /**
+   * Set tubing OD in inches.
+   *
+   * @param tubingOD tubing OD
+   */
+  public void setTubingOD(double tubingOD) {
+    this.tubingOD = tubingOD;
+  }
+
+  /**
+   * Set tubing diameter in meters (convenience method for pipeline configuration).
+   *
+   * @param diameterM tubing diameter in meters
+   */
+  public void setTubingDiameter(double diameterM) {
+    this.tubingOD = diameterM / 0.0254; // Convert meters to inches
+    pipeline.setDiameter(diameterM);
+  }
+
+  /**
+   * Get tubing weight in lb/ft.
+   *
+   * @return tubing weight
+   */
+  public double getTubingWeight() {
+    return tubingWeight;
+  }
+
+  /**
+   * Set tubing weight in lb/ft.
+   *
+   * @param tubingWeight tubing weight
+   */
+  public void setTubingWeight(double tubingWeight) {
+    this.tubingWeight = tubingWeight;
+  }
+
+  /**
+   * Get tubing grade per API 5CT.
+   *
+   * @return tubing grade
+   */
+  public String getTubingGrade() {
+    return tubingGrade;
+  }
+
+  /**
+   * Set tubing grade per API 5CT.
+   *
+   * @param tubingGrade tubing grade (e.g., "L80", "P110", "13Cr")
+   */
+  public void setTubingGrade(String tubingGrade) {
+    this.tubingGrade = tubingGrade;
+  }
+
+  /**
+   * Get estimated drilling duration in days.
+   *
+   * @return drilling days
+   */
+  public double getDrillingDays() {
+    return drillingDays;
+  }
+
+  /**
+   * Set estimated drilling duration in days.
+   *
+   * @param drillingDays drilling days
+   */
+  public void setDrillingDays(double drillingDays) {
+    this.drillingDays = drillingDays;
+  }
+
+  /**
+   * Get estimated completion duration in days.
+   *
+   * @return completion days
+   */
+  public double getCompletionDays() {
+    return completionDays;
+  }
+
+  /**
+   * Set estimated completion duration in days.
+   *
+   * @param completionDays completion days
+   */
+  public void setCompletionDays(double completionDays) {
+    this.completionDays = completionDays;
+  }
+
+  /**
+   * Get rig day rate in USD.
+   *
+   * @return rig day rate
+   */
+  public double getRigDayRate() {
+    return rigDayRate;
+  }
+
+  /**
+   * Set rig day rate in USD.
+   *
+   * @param rigDayRate rig day rate
+   */
+  public void setRigDayRate(double rigDayRate) {
+    this.rigDayRate = rigDayRate;
+  }
+
+  /**
+   * Check if well has downhole safety valve.
+   *
+   * @return true if DHSV installed
+   */
+  public boolean hasDHSV() {
+    return hasDHSV;
+  }
+
+  /**
+   * Set whether well has DHSV.
+   *
+   * @param hasDHSV true if DHSV installed
+   */
+  public void setHasDHSV(boolean hasDHSV) {
+    this.hasDHSV = hasDHSV;
+  }
+
+  /**
+   * Get number of primary barrier elements.
+   *
+   * @return primary barrier element count
+   */
+  public int getPrimaryBarrierElements() {
+    return primaryBarrierElements;
+  }
+
+  /**
+   * Set number of primary barrier elements.
+   *
+   * @param count primary barrier element count
+   */
+  public void setPrimaryBarrierElements(int count) {
+    this.primaryBarrierElements = count;
+  }
+
+  /**
+   * Get number of secondary barrier elements.
+   *
+   * @return secondary barrier element count
+   */
+  public int getSecondaryBarrierElements() {
+    return secondaryBarrierElements;
+  }
+
+  /**
+   * Set number of secondary barrier elements.
+   *
+   * @param count secondary barrier element count
+   */
+  public void setSecondaryBarrierElements(int count) {
+    this.secondaryBarrierElements = count;
+  }
+
+  /**
+   * Get maximum wellhead pressure in bara.
+   *
+   * @return max wellhead pressure
+   */
+  public double getMaxWellheadPressure() {
+    return maxWellheadPressure;
+  }
+
+  /**
+   * Set maximum wellhead pressure in bara.
+   *
+   * @param maxWellheadPressure max wellhead pressure
+   */
+  public void setMaxWellheadPressure(double maxWellheadPressure) {
+    this.maxWellheadPressure = maxWellheadPressure;
+  }
+
+  /**
+   * Get maximum bottomhole temperature in Celsius.
+   *
+   * @return max bottomhole temperature
+   */
+  public double getMaxBottomholeTemperature() {
+    return maxBottomholeTemperature;
+  }
+
+  /**
+   * Set maximum bottomhole temperature in Celsius.
+   *
+   * @param maxBottomholeTemperature max bottomhole temperature
+   */
+  public void setMaxBottomholeTemperature(double maxBottomholeTemperature) {
+    this.maxBottomholeTemperature = maxBottomholeTemperature;
+  }
+
+  /**
+   * Get reservoir pressure in bara.
+   *
+   * @return reservoir pressure
+   */
+  public double getReservoirPressure() {
+    return reservoirPressure;
+  }
+
+  /**
+   * Set reservoir pressure in bara.
+   *
+   * @param reservoirPressure reservoir pressure
+   */
+  public void setReservoirPressure(double reservoirPressure) {
+    this.reservoirPressure = reservoirPressure;
+  }
+
+  /**
+   * Get reservoir temperature in Celsius.
+   *
+   * @return reservoir temperature
+   */
+  public double getReservoirTemperature() {
+    return reservoirTemperature;
+  }
+
+  /**
+   * Set reservoir temperature in Celsius.
+   *
+   * @param reservoirTemperature reservoir temperature
+   */
+  public void setReservoirTemperature(double reservoirTemperature) {
+    this.reservoirTemperature = reservoirTemperature;
+  }
+
+  /**
+   * Check if this is a production well.
+   *
+   * @return true if producer
+   */
+  public boolean isProducer() {
+    return wellType == WellType.OIL_PRODUCER || wellType == WellType.GAS_PRODUCER;
+  }
+
+  /**
+   * Check if this is an injection well.
+   *
+   * @return true if injector
+   */
+  public boolean isInjector() {
+    return wellType == WellType.WATER_INJECTOR || wellType == WellType.GAS_INJECTOR;
+  }
+
+  /**
+   * Get total number of casing strings (not counting liner).
+   *
+   * @return number of casing strings
+   */
+  public int getNumberOfCasingStrings() {
+    int count = 3; // Conductor, surface, production
+    if (intermediateCasingDepth > 0) {
+      count++;
+    }
+    if (productionLinerDepth > 0) {
+      count++;
+    }
+    return count;
+  }
+
+  /**
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
