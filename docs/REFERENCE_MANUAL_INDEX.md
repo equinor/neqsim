@@ -628,6 +628,8 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | PVT Workflows | [docs/wiki/pvt_simulation_workflows.md](wiki/pvt_simulation_workflows) | PVT simulation workflows |
 | PVT Workflow Module | [docs/pvtsimulation/pvt_workflow.md](pvtsimulation/pvt_workflow) | PVT workflow module |
 | Property Flash | [docs/wiki/property_flash_workflows.md](wiki/property_flash_workflows) | Property flash workflows |
+| **Relative Permeability** | [docs/pvtsimulation/relative_permeability.md](pvtsimulation/relative_permeability) | **Corey and LET relative permeability models, Eclipse table export (SWOF/SGOF/SOF3)** |
+| **Gas Pseudopressure & Pseudocritical** | [docs/pvtsimulation/gas_pseudopressure_pseudocritical.md](pvtsimulation/gas_pseudopressure_pseudocritical) | **Real gas pseudopressure integral, Standing/Sutton/Piper pseudocritical correlations, Wichert-Aziz correction** |
 | Whitson Reader | [docs/pvtsimulation/whitson_pvt_reader.md](pvtsimulation/whitson_pvt_reader) | Whitson PVT reader |
 | Solution Gas-Water Ratio | [docs/pvtsimulation/SolutionGasWaterRatio.md](pvtsimulation/SolutionGasWaterRatio) | Rsw calculation methods (McCain, Søreide-Whitson, Electrolyte CPA) |
 

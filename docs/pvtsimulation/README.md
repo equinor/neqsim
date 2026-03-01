@@ -63,12 +63,18 @@ pvtsimulation/
 │   └── ModelTuning.java
 │
 ├── reservoirproperties/             # Reservoir calculations
-│   └── ReservoirProperties.java
+│   ├── ReservoirProperties.java
+│   └── relpermeability/             # Relative permeability tables
+│       ├── RelativePermeabilityGenerator.java
+│       ├── RelPermModelFamily.java  # Corey / LET
+│       └── RelPermTableType.java    # SWOF, SGOF, SOF3, SLGOF
 │
 ├── util/                            # Utilities
 │   ├── parameterfitting/            # Parameter fitting utilities
 │   │   ├── AsphalteneOnsetFunction.java
 │   │   └── AsphalteneOnsetFitting.java
+│   ├── GasPseudoPressure.java       # Real gas pseudopressure integral
+│   ├── GasPseudoCriticalProperties.java # Pseudocritical Tpc/Ppc correlations
 │   └── PVTUtil.java
 │
 └── flowassurance/                   # Flow assurance analysis
@@ -82,6 +88,8 @@ pvtsimulation/
 | Package | Documentation | Description |
 |---------|---------------|-------------|
 | `flowassurance` | [flowassurance/](flowassurance/) | Asphaltene stability, De Boer screening, CPA onset calculations |
+| `reservoirproperties.relpermeability` | [relative_permeability.md](relative_permeability.md) | Corey and LET relative permeability curve generation, Eclipse table export |
+| `util` | [gas_pseudopressure_pseudocritical.md](gas_pseudopressure_pseudocritical.md) | Gas pseudopressure integral, pseudocritical correlations (Standing, Sutton, Piper), Wichert-Aziz acid gas correction |
 
 ---
 

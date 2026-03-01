@@ -3732,7 +3732,7 @@ public class Separator extends ProcessEquipmentBaseClass
       if (liquidLevel >= 0) {
         sep.setLiquidLevel(liquidLevel);
       } else {
-        sep.setLiquidLevel(internalDiameter * designLiquidLevelFraction);
+        sep.setLiquidLevel(designLiquidLevelFraction);
       }
 
       sep.setDesignLiquidLevelFraction(designLiquidLevelFraction);
