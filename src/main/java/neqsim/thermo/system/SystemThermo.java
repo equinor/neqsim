@@ -5494,7 +5494,8 @@ public abstract class SystemThermo implements SystemInterface {
     }
     double density = 0.0;
     if (flowunit.equals("Am3/hr") || flowunit.equals("Am3/min") || flowunit.equals("gallons/min")
-        || flowunit.equals("Am3/sec")) {
+        || flowunit.equals("Am3/sec") || flowunit.equals("m3/hr") || flowunit.equals("m3/min")
+        || flowunit.equals("m3/sec") || flowunit.equals("m3/day")) {
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     }
 
