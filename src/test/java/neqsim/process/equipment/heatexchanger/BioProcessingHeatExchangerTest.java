@@ -1,13 +1,18 @@
 package neqsim.process.equipment.heatexchanger;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
- * Test class for bio-processing heat exchanger equipment: MultiEffectEvaporator and Dryer.
+ * Test class for bio-processing heat exchanger equipment: MultiEffectEvaporator and Dryer. Uses
+ * COMP_EXT database for bio-relevant components such as glucose, d-sorbitol, glycerol, and other
+ * bio-processing solutes.
  *
  * @author NeqSim team
  * @version 1.0
@@ -15,13 +20,30 @@ import neqsim.thermo.system.SystemSrkEos;
 public class BioProcessingHeatExchangerTest {
 
   /**
+   * Enable extended component database before each test.
+   */
+  @BeforeEach
+  public void setUp() {
+    NeqSimDataBase.useExtendedComponentDatabase(true);
+  }
+
+  /**
+   * Reset to default database after each test.
+   */
+  @AfterEach
+  public void tearDown() {
+    NeqSimDataBase.useExtendedComponentDatabase(false);
+  }
+
+  /**
    * Test MultiEffectEvaporator basic operation.
    */
   @Test
   public void testMultiEffectEvaporatorBasic() {
+    // Concentrating a glucose solution (sugar syrup evaporation)
     SystemInterface system = new SystemSrkEos(373.15, 2.0); // 100 C, 2 bara
     system.addComponent("water", 10.0);
-    system.addComponent("methane", 0.1); // proxy for dissolved solute
+    system.addComponent("glucose", 0.1);
     system.setMixingRule("classic");
 
     Stream feed = new Stream("feed", system);
@@ -45,9 +67,10 @@ public class BioProcessingHeatExchangerTest {
    */
   @Test
   public void testMultiEffectEvaporatorSingleEffect() {
+    // Concentrating a glycerol solution from biodiesel production
     SystemInterface system = new SystemSrkEos(373.15, 3.0);
     system.addComponent("water", 10.0);
-    system.addComponent("ethane", 0.2);
+    system.addComponent("glycerol", 0.2);
     system.setMixingRule("classic");
 
     Stream feed = new Stream("feed", system);
@@ -92,9 +115,10 @@ public class BioProcessingHeatExchangerTest {
    */
   @Test
   public void testDryerBasic() {
-    SystemInterface system = new SystemSrkEos(353.15, 1.0); // 80 C, 1 bara
+    // Drying d-sorbitol crystals from aqueous slurry
+    SystemInterface system = new SystemSrkEos(353.15, 1.01325); // 80 C, 1 bara
     system.addComponent("water", 5.0);
-    system.addComponent("methane", 0.5); // proxy for solids
+    system.addComponent("d-sorbitol", 0.5);
     system.setMixingRule("classic");
 
     Stream feed = new Stream("feed", system);
@@ -147,9 +171,10 @@ public class BioProcessingHeatExchangerTest {
    */
   @Test
   public void testDryerWithPressureDrop() {
+    // Drying xylitol crystals
     SystemInterface system = new SystemSrkEos(353.15, 3.0);
     system.addComponent("water", 5.0);
-    system.addComponent("methane", 0.5);
+    system.addComponent("xylitol", 0.5);
     system.setMixingRule("classic");
 
     Stream feed = new Stream("feed", system);

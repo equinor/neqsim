@@ -1,14 +1,18 @@
 package neqsim.process.equipment.reactor;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  * Test class for bio-processing reactor equipment: StoichiometricReaction, StirredTankReactor,
- * Fermenter, and EnzymeTreatment.
+ * Fermenter, and EnzymeTreatment. Uses COMP_EXT database for bio-relevant components such as
+ * glucose, ethanol, lactic acid, succinic acid, and glycerol.
  *
  * @author NeqSim team
  * @version 1.0
@@ -16,43 +20,58 @@ import neqsim.thermo.system.SystemSrkEos;
 public class BioProcessingReactorTest {
 
   /**
+   * Enable extended component database before each test.
+   */
+  @BeforeEach
+  public void setUp() {
+    NeqSimDataBase.useExtendedComponentDatabase(true);
+  }
+
+  /**
+   * Reset to default database after each test.
+   */
+  @AfterEach
+  public void tearDown() {
+    NeqSimDataBase.useExtendedComponentDatabase(false);
+  }
+
+  /**
    * Test StoichiometricReaction basic functionality.
    */
   @Test
   public void testStoichiometricReaction() {
-    // Create a system with methane and ethane
-    SystemInterface system = new SystemSrkEos(298.15, 10.0);
-    system.addComponent("methane", 1.0);
-    system.addComponent("ethane", 0.5);
+    // Create a system with glucose, ethanol, CO2, and water for fermentation
+    SystemInterface system = new SystemSrkEos(298.15, 1.01325);
+    system.addComponent("glucose", 1.0);
+    system.addComponent("ethanol", 0.0);
     system.addComponent("CO2", 0.0);
-    system.addComponent("water", 0.0);
+    system.addComponent("water", 10.0);
     system.setMixingRule("classic");
 
-    // Create a reaction: methane + 2O2 -> CO2 + 2H2O (simplified, no O2)
-    // We'll just test the stoichiometry mechanism
-    StoichiometricReaction rxn = new StoichiometricReaction("TestReaction");
-    rxn.addReactant("methane", 1.0);
-    rxn.addProduct("CO2", 1.0);
-    rxn.addProduct("water", 2.0);
-    rxn.setLimitingReactant("methane");
-    rxn.setConversion(0.50);
+    // Gay-Lussac fermentation: C6H12O6 -> 2 C2H5OH + 2 CO2
+    StoichiometricReaction rxn = new StoichiometricReaction("GlucoseFermentation");
+    rxn.addReactant("glucose", 1.0);
+    rxn.addProduct("ethanol", 2.0);
+    rxn.addProduct("CO2", 2.0);
+    rxn.setLimitingReactant("glucose");
+    rxn.setConversion(0.90);
 
     double molesReacted = rxn.react(system);
 
-    // 50% of 1.0 mol methane = 0.5 mol reacted
-    Assertions.assertEquals(0.5, molesReacted, 1e-6, "Moles reacted should be 0.5");
+    // 90% of 1.0 mol glucose = 0.9 mol reacted
+    Assertions.assertEquals(0.9, molesReacted, 1e-6, "Moles reacted should be 0.9");
 
-    // After reaction: methane should be 0.5 mol
-    double methaneMoles = system.getComponent("methane").getNumberOfmoles();
-    Assertions.assertEquals(0.5, methaneMoles, 1e-6, "Methane should have 0.5 mol remaining");
+    // After reaction: glucose should be 0.1 mol remaining
+    double glucoseMoles = system.getComponent("glucose").getNumberOfmoles();
+    Assertions.assertEquals(0.1, glucoseMoles, 1e-6, "Glucose should have 0.1 mol remaining");
 
-    // CO2 should be 0.5 mol (1.0 * 0.5 = 0.5)
+    // Ethanol should be 1.8 mol (2.0 * 0.9 = 1.8)
+    double ethanolMoles = system.getComponent("ethanol").getNumberOfmoles();
+    Assertions.assertEquals(1.8, ethanolMoles, 1e-6, "Ethanol should have 1.8 mol");
+
+    // CO2 should be 1.8 mol (2.0 * 0.9 = 1.8)
     double co2Moles = system.getComponent("CO2").getNumberOfmoles();
-    Assertions.assertEquals(0.5, co2Moles, 1e-6, "CO2 should have 0.5 mol");
-
-    // Water should be 1.0 mol (2.0 * 0.5 = 1.0)
-    double waterMoles = system.getComponent("water").getNumberOfmoles();
-    Assertions.assertEquals(1.0, waterMoles, 1e-6, "Water should have 1.0 mol");
+    Assertions.assertEquals(1.8, co2Moles, 1e-6, "CO2 should have 1.8 mol");
   }
 
   /**
@@ -70,18 +89,17 @@ public class BioProcessingReactorTest {
    */
   @Test
   public void testStoichiometricReactionToString() {
-    StoichiometricReaction rxn = new StoichiometricReaction("Fermentation");
+    // Lactic acid fermentation: C6H12O6 -> 2 C3H6O3
+    StoichiometricReaction rxn = new StoichiometricReaction("LacticFermentation");
     rxn.addReactant("glucose", 1.0);
-    rxn.addProduct("ethanol", 2.0);
-    rxn.addProduct("CO2", 2.0);
+    rxn.addProduct("lactic acid", 2.0);
     rxn.setLimitingReactant("glucose");
-    rxn.setConversion(0.9);
+    rxn.setConversion(0.85);
 
     String str = rxn.toString();
     Assertions.assertTrue(str.contains("glucose"), "Should contain glucose");
-    Assertions.assertTrue(str.contains("ethanol"), "Should contain ethanol");
-    Assertions.assertTrue(str.contains("CO2"), "Should contain CO2");
-    Assertions.assertTrue(str.contains("0.9"), "Should contain conversion 0.9");
+    Assertions.assertTrue(str.contains("lactic acid"), "Should contain lactic acid");
+    Assertions.assertTrue(str.contains("0.85"), "Should contain conversion 0.85");
   }
 
   /**
@@ -89,21 +107,21 @@ public class BioProcessingReactorTest {
    */
   @Test
   public void testStirredTankReactorBasic() {
-    // Create a simple gas system
-    SystemInterface system = new SystemSrkEos(298.15, 10.0);
-    system.addComponent("methane", 0.8);
-    system.addComponent("ethane", 0.1);
-    system.addComponent("CO2", 0.1);
+    // Aqueous glucose solution for bio-reactor
+    SystemInterface system = new SystemSrkEos(303.15, 1.01325);
+    system.addComponent("water", 0.85);
+    system.addComponent("glucose", 0.10);
+    system.addComponent("ethanol", 0.05);
     system.setMixingRule("classic");
 
     Stream feed = new Stream("feed", system);
-    feed.setFlowRate(100.0, "kg/hr");
+    feed.setFlowRate(1000.0, "kg/hr");
     feed.run();
 
     StirredTankReactor reactor = new StirredTankReactor("CSTR", feed);
-    reactor.setReactorTemperature(310.0); // ~37 C
+    reactor.setReactorTemperature(305.15); // ~32 C, typical fermentation temp
     reactor.setVesselVolume(50.0);
-    reactor.setResidenceTime(2.0, "hr");
+    reactor.setResidenceTime(24.0, "hr");
     reactor.setAgitatorPowerPerVolume(1.5);
     reactor.run();
 
@@ -113,7 +131,7 @@ public class BioProcessingReactorTest {
 
     // Temperature should be set to reactor temperature
     double outTemp = reactor.getOutletStream().getThermoSystem().getTemperature();
-    Assertions.assertEquals(310.0, outTemp, 0.1, "Outlet temperature should be 310 K");
+    Assertions.assertEquals(305.15, outTemp, 0.1, "Outlet temperature should be 305.15 K");
 
     // Check agitator power
     Assertions.assertEquals(75.0, reactor.getAgitatorPower(), 1e-6,
@@ -125,33 +143,35 @@ public class BioProcessingReactorTest {
    */
   @Test
   public void testStirredTankReactorWithReaction() {
-    SystemInterface system = new SystemSrkEos(298.15, 10.0);
-    system.addComponent("methane", 1.0);
+    // Glucose to ethanol fermentation in CSTR
+    SystemInterface system = new SystemSrkEos(303.15, 1.01325);
+    system.addComponent("glucose", 1.0);
+    system.addComponent("ethanol", 0.0);
     system.addComponent("CO2", 0.0);
-    system.addComponent("water", 0.0);
+    system.addComponent("water", 10.0);
     system.setMixingRule("classic");
 
     Stream feed = new Stream("feed", system);
     feed.run();
 
-    StoichiometricReaction rxn = new StoichiometricReaction("MethaneConversion");
-    rxn.addReactant("methane", 1.0);
-    rxn.addProduct("CO2", 1.0);
-    rxn.addProduct("water", 2.0);
-    rxn.setLimitingReactant("methane");
-    rxn.setConversion(0.5);
+    StoichiometricReaction rxn = new StoichiometricReaction("EthanolFermentation");
+    rxn.addReactant("glucose", 1.0);
+    rxn.addProduct("ethanol", 2.0);
+    rxn.addProduct("CO2", 2.0);
+    rxn.setLimitingReactant("glucose");
+    rxn.setConversion(0.90);
 
     StirredTankReactor reactor = new StirredTankReactor("CSTR", feed);
     reactor.addReaction(rxn);
-    reactor.setReactorTemperature(350.0);
+    reactor.setReactorTemperature(305.15);
     reactor.run();
 
     SystemInterface outSys = reactor.getOutletStream().getThermoSystem();
     Assertions.assertNotNull(outSys);
 
-    // Check that reaction has been applied
-    double methaneMoles = outSys.getComponent("methane").getNumberOfmoles();
-    Assertions.assertTrue(methaneMoles < 1.0, "Methane should be partially consumed");
+    // Check that glucose has been consumed by fermentation reaction
+    double glucoseMoles = outSys.getComponent("glucose").getNumberOfmoles();
+    Assertions.assertTrue(glucoseMoles < 1.0, "Glucose should be partially consumed");
   }
 
   /**
@@ -159,13 +179,17 @@ public class BioProcessingReactorTest {
    */
   @Test
   public void testFermenterBasic() {
-    SystemInterface system = new SystemSrkEos(298.15, 1.0);
-    system.addComponent("water", 10.0);
+    // Typical ethanol fermentation broth with glucose substrate
+    SystemInterface system = new SystemSrkEos(303.15, 1.01325);
+    system.addComponent("water", 0.80);
+    system.addComponent("glucose", 0.15);
     system.addComponent("ethanol", 0.0);
     system.addComponent("CO2", 0.0);
+    system.addComponent("glycerol", 0.05);
     system.setMixingRule("classic");
 
     Stream feed = new Stream("feed", system);
+    feed.setFlowRate(5000.0, "kg/hr");
     feed.run();
 
     Fermenter fermenter = new Fermenter("EtOH Fermenter", feed);
@@ -185,18 +209,22 @@ public class BioProcessingReactorTest {
    */
   @Test
   public void testFermenterAerobicPower() {
-    SystemInterface system = new SystemSrkEos(298.15, 1.0);
-    system.addComponent("water", 10.0);
+    // Aerobic citric acid production with glucose substrate
+    SystemInterface system = new SystemSrkEos(303.15, 1.01325);
+    system.addComponent("water", 0.85);
+    system.addComponent("glucose", 0.10);
+    system.addComponent("citric acid", 0.05);
     system.setMixingRule("classic");
 
     Stream feed = new Stream("feed", system);
+    feed.setFlowRate(2000.0, "kg/hr");
     feed.run();
 
-    Fermenter fermenter = new Fermenter("Aerobic", feed);
+    Fermenter fermenter = new Fermenter("CitricAcid", feed);
     fermenter.setAerobic(true);
     fermenter.setAerationRate(1.0); // 1 vvm
     fermenter.setVesselVolume(100.0);
-    fermenter.setReactorTemperature(310.0);
+    fermenter.setReactorTemperature(303.15);
     fermenter.run();
 
     Assertions.assertTrue(fermenter.isAerobic());
@@ -209,26 +237,29 @@ public class BioProcessingReactorTest {
    */
   @Test
   public void testEnzymeTreatmentBasic() {
-    SystemInterface system = new SystemSrkEos(323.15, 1.0); // 50 C
-    system.addComponent("water", 10.0);
-    system.addComponent("methane", 0.1); // proxy for substrate
+    // Enzymatic hydrolysis of sucrose to glucose and fructose
+    SystemInterface system = new SystemSrkEos(323.15, 1.01325); // 50 C
+    system.addComponent("water", 0.80);
+    system.addComponent("sucrose", 0.15);
+    system.addComponent("glucose", 0.03);
+    system.addComponent("fructose", 0.02);
     system.setMixingRule("classic");
 
     Stream feed = new Stream("feed", system);
     feed.setFlowRate(1000.0, "kg/hr");
     feed.run();
 
-    EnzymeTreatment treatment = new EnzymeTreatment("Hydrolysis", feed);
-    treatment.setEnzymeType("cellulase");
-    treatment.setEnzymeLoading(20.0);
-    treatment.setOptimalPH(5.0);
+    EnzymeTreatment treatment = new EnzymeTreatment("Invertase", feed);
+    treatment.setEnzymeType("invertase");
+    treatment.setEnzymeLoading(5.0);
+    treatment.setOptimalPH(4.5);
     treatment.setReactorTemperature(323.15);
-    treatment.setResidenceTime(72.0, "hr");
+    treatment.setResidenceTime(4.0, "hr");
     treatment.run();
 
     Assertions.assertNotNull(treatment.getOutletStream());
-    Assertions.assertEquals("cellulase", treatment.getEnzymeType());
-    Assertions.assertEquals(20.0, treatment.getEnzymeLoading(), 1e-6);
+    Assertions.assertEquals("invertase", treatment.getEnzymeType());
+    Assertions.assertEquals(5.0, treatment.getEnzymeLoading(), 1e-6);
 
     // At optimal temperature, relative activity should be 1.0
     Assertions.assertEquals(1.0, treatment.getRelativeActivity(), 1e-6);
@@ -284,9 +315,11 @@ public class BioProcessingReactorTest {
    */
   @Test
   public void testStirredTankReactorAdiabatic() {
-    SystemInterface system = new SystemSrkEos(350.0, 5.0);
-    system.addComponent("methane", 0.7);
-    system.addComponent("ethane", 0.3);
+    // Adiabatic reactor with succinic acid production broth
+    SystemInterface system = new SystemSrkEos(310.0, 1.01325);
+    system.addComponent("water", 0.85);
+    system.addComponent("succinic acid", 0.10);
+    system.addComponent("acetic acid", 0.05);
     system.setMixingRule("classic");
 
     Stream feed = new Stream("feed", system);

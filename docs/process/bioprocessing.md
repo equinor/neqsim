@@ -63,6 +63,40 @@ ProcessEquipmentBaseClass
         +-- Dryer
 ```
 
+### Using Bio-Processing Components (COMP_EXT)
+
+Bio-processing simulations typically require components such as sugars, organic acids, and sugar alcohols that are not in the default component database (COMP). NeqSim's **extended component database** (COMP_EXT) contains thousands of additional components including many bio-relevant species.
+
+**Enable COMP_EXT before creating the fluid system:**
+
+```java
+import neqsim.util.database.NeqSimDataBase;
+
+// Enable extended database
+NeqSimDataBase.useExtendedComponentDatabase(true);
+
+SystemInterface fluid = new SystemSrkEos(273.15 + 30.0, 1.01325);
+fluid.addComponent("glucose", 0.10);
+fluid.addComponent("ethanol", 0.05);
+fluid.addComponent("water", 0.85);
+fluid.setMixingRule("classic");
+
+// Reset when done (especially in tests)
+NeqSimDataBase.useExtendedComponentDatabase(false);
+```
+
+**Available bio-processing components in COMP_EXT:**
+
+| Category | Components |
+|----------|------------|
+| **Sugars** | glucose, fructose, sucrose, dl-Xylose, arabinose, mannose, galactose, cellobiose, maltose monohydrate |
+| **Organic acids** | lactic acid, citric acid, succinic acid, gluconic acid, acetic acid, propionic acid, butyric acid, itaconic acid, levulinic acid, pyruvic acid, fumaric acid, malic acid |
+| **Alcohols** | ethanol, methanol, 1-butanol, 2-butanol, glycerol, 2-methyl-1-propanol (isobutanol) |
+| **Sugar alcohols** | d-sorbitol, xylitol, d-mannitol, erythritol |
+| **Platform chemicals** | 5-hydroxymethylfurfural, 5-methylfurfural, furfural, vanillin, phenol |
+| **Amino acids** | l-lysine, l-glutamic acid |
+| **Other** | urea, ethylene glycol, 1,2-propanediol, acetone, 2,3-butanediol |
+
 ---
 
 ## Reactors
@@ -184,11 +218,15 @@ where $P/V$ is the specific power in kW/m$^3$ and $V$ is the vessel volume.
 #### Simulation Example
 
 ```java
-// Create fluid system
+// Enable extended component database for bio-relevant components
+NeqSimDataBase.useExtendedComponentDatabase(true);
+
+// Create fluid system with bio-processing components from COMP_EXT
 SystemInterface fluid = new SystemSrkEos(273.15 + 30.0, 1.01325);
-fluid.addComponent("methane", 0.8);
-fluid.addComponent("ethane", 0.15);
-fluid.addComponent("propane", 0.05);
+fluid.addComponent("water", 0.80);
+fluid.addComponent("glucose", 0.10);
+fluid.addComponent("ethanol", 0.05);
+fluid.addComponent("lactic acid", 0.05);
 fluid.setMixingRule("classic");
 
 // Feed stream
@@ -196,20 +234,19 @@ Stream feed = new Stream("Reactor Feed", fluid);
 feed.setFlowRate(1000.0, "kg/hr");
 feed.run();
 
-// Create CSTR
+// Create CSTR for lactic acid fermentation
 StirredTankReactor cstr = new StirredTankReactor("CSTR-1", feed);
-cstr.setReactorTemperature(273.15 + 60.0);  // 60 C, isothermal
+cstr.setReactorTemperature(273.15 + 37.0);  // 37 C, isothermal
 cstr.setVesselVolume(20.0);                  // 20 m3
-cstr.setResidenceTime(2.0, "hr");
+cstr.setResidenceTime(24.0, "hr");
 cstr.setAgitatorPowerPerVolume(1.5);         // 1.5 kW/m3
 
-// Define and add reaction
-StoichiometricReaction rxn = new StoichiometricReaction("Cracking");
-rxn.addReactant("propane", 1.0);
-rxn.addProduct("methane", 1.0);
-rxn.addProduct("ethane", 1.0);
-rxn.setLimitingReactant("propane");
-rxn.setConversion(0.50);
+// Define lactic acid fermentation: C6H12O6 -> 2 C3H6O3
+StoichiometricReaction rxn = new StoichiometricReaction("LacticFermentation");
+rxn.addReactant("glucose", 1.0);
+rxn.addProduct("lactic acid", 2.0);
+rxn.setLimitingReactant("glucose");
+rxn.setConversion(0.90);
 cstr.addReaction(rxn);
 
 // Run
@@ -289,9 +326,14 @@ where $\Delta S$ is the substrate consumed [g] and $\Delta X$ is the biomass pro
 #### Simulation Example
 
 ```java
+NeqSimDataBase.useExtendedComponentDatabase(true);
+
 SystemInterface broth = new SystemSrkEos(273.15 + 32.0, 1.01325);
-broth.addComponent("water", 50.0);
-broth.addComponent("ethanol", 0.01);
+broth.addComponent("water", 0.80);
+broth.addComponent("glucose", 0.15);
+broth.addComponent("ethanol", 0.0);
+broth.addComponent("CO2", 0.0);
+broth.addComponent("glycerol", 0.05);
 broth.setMixingRule("classic");
 
 Stream feed = new Stream("Broth Feed", broth);
@@ -304,11 +346,13 @@ fermenter.setResidenceTime(48.0, "hr");
 fermenter.setVesselVolume(200.0);
 fermenter.setAerobic(false);  // anaerobic ethanol fermentation
 
+// Gay-Lussac equation: C6H12O6 -> 2 C2H5OH + 2 CO2
 StoichiometricReaction etoh = new StoichiometricReaction("EtOHFermentation");
-etoh.addReactant("water", 1.0);     // placeholder for glucose
+etoh.addReactant("glucose", 1.0);
 etoh.addProduct("ethanol", 2.0);
-etoh.setLimitingReactant("water");
-etoh.setConversion(0.05);
+etoh.addProduct("CO2", 2.0);
+etoh.setLimitingReactant("glucose");
+etoh.setConversion(0.90);
 fermenter.addReaction(etoh);
 
 fermenter.run();
@@ -378,29 +422,34 @@ $$
 #### Simulation Example
 
 ```java
+NeqSimDataBase.useExtendedComponentDatabase(true);
+
 SystemInterface substrate = new SystemSrkEos(273.15 + 50.0, 1.01325);
-substrate.addComponent("water", 90.0);
-substrate.addComponent("methane", 10.0);  // placeholder for cellulose
+substrate.addComponent("water", 0.80);
+substrate.addComponent("sucrose", 0.15);
+substrate.addComponent("glucose", 0.03);
+substrate.addComponent("fructose", 0.02);
 substrate.setMixingRule("classic");
 
 Stream feed = new Stream("Substrate Feed", substrate);
 feed.setFlowRate(2000.0, "kg/hr");
 feed.run();
 
-EnzymeTreatment hydrolysis = new EnzymeTreatment("Saccharification", feed);
+EnzymeTreatment hydrolysis = new EnzymeTreatment("Invertase Treatment", feed);
 hydrolysis.setReactorTemperature(273.15 + 50.0);
-hydrolysis.setResidenceTime(72.0, "hr");
-hydrolysis.setEnzymeLoading(20.0);
-hydrolysis.setEnzymeType("cellulase");
-hydrolysis.setOptimalPH(5.0);
+hydrolysis.setResidenceTime(4.0, "hr");
+hydrolysis.setEnzymeLoading(5.0);
+hydrolysis.setEnzymeType("invertase");
+hydrolysis.setOptimalPH(4.5);
 hydrolysis.setEnzymeCostPerKg(10.0);
 
-// Define hydrolysis reaction (simplified)
-StoichiometricReaction rxn = new StoichiometricReaction("Hydrolysis");
-rxn.addReactant("methane", 1.0);
-rxn.addProduct("water", 0.5);
-rxn.setLimitingReactant("methane");
-rxn.setConversion(0.80);
+// Sucrose inversion: C12H22O11 + H2O -> C6H12O6 + C6H12O6
+StoichiometricReaction rxn = new StoichiometricReaction("SucroseInversion");
+rxn.addReactant("sucrose", 1.0);
+rxn.addProduct("glucose", 1.0);
+rxn.addProduct("fructose", 1.0);
+rxn.setLimitingReactant("sucrose");
+rxn.setConversion(0.95);
 hydrolysis.addReaction(rxn);
 
 hydrolysis.run();
@@ -464,10 +513,12 @@ where $E_s$ is the specific energy [kWh/m$^3$] and $\dot{V}_\text{feed}$ is the 
 #### Simulation Example
 
 ```java
+NeqSimDataBase.useExtendedComponentDatabase(true);
+
 SystemInterface slurry = new SystemSrkEos(273.15 + 25.0, 1.01325);
 slurry.addComponent("water", 0.85);
-slurry.addComponent("methane", 0.10);   // placeholder for biomass
-slurry.addComponent("ethane", 0.05);    // placeholder for fiber
+slurry.addComponent("glucose", 0.10);
+slurry.addComponent("lactic acid", 0.05);
 slurry.setMixingRule("classic");
 
 Stream feed = new Stream("Slurry Feed", slurry);
@@ -475,8 +526,8 @@ feed.setFlowRate(500.0, "kg/hr");
 feed.run();
 
 SolidsSeparator sep = new SolidsSeparator("Separator", feed);
-sep.setSolidsSplitFraction("methane", 0.95);  // 95% biomass to solids
-sep.setSolidsSplitFraction("ethane", 0.90);   // 90% fiber to solids
+sep.setSolidsSplitFraction("glucose", 0.95);      // 95% glucose to solids
+sep.setSolidsSplitFraction("lactic acid", 0.10);   // 10% acid to solids
 // water defaults to 0% solids
 sep.setMoistureContent(0.50);
 sep.run();
@@ -623,17 +674,19 @@ This is computed rigorously from the equation of state (SRK, PR, CPA, etc.) — 
 When combining feed and solvent systems, both systems must contain all the same components (use 0.0 moles for absent components). This ensures the mixing rule interaction parameter matrices are consistently sized.
 
 ```java
+NeqSimDataBase.useExtendedComponentDatabase(true);
+
 // CORRECT: Both systems have all 3 components
 SystemInterface feedSys = new SystemSrkEos(298.15, 1.01325);
 feedSys.addComponent("water", 5.0);
-feedSys.addComponent("methane", 0.5);
-feedSys.addComponent("n-hexane", 0.0);   // absent but declared
+feedSys.addComponent("lactic acid", 0.5);
+feedSys.addComponent("1-butanol", 0.0);   // absent but declared
 feedSys.setMixingRule("classic");
 
 SystemInterface solventSys = new SystemSrkEos(298.15, 1.01325);
-solventSys.addComponent("water", 0.0);    // absent but declared
-solventSys.addComponent("methane", 0.0);  // absent but declared
-solventSys.addComponent("n-hexane", 3.0);
+solventSys.addComponent("water", 0.0);         // absent but declared
+solventSys.addComponent("lactic acid", 0.0);   // absent but declared
+solventSys.addComponent("1-butanol", 3.0);
 solventSys.setMixingRule("classic");
 ```
 
@@ -727,9 +780,11 @@ $$
 #### Simulation Example
 
 ```java
+NeqSimDataBase.useExtendedComponentDatabase(true);
+
 SystemInterface juice = new SystemSrkEos(273.15 + 80.0, 1.5);
 juice.addComponent("water", 0.85);
-juice.addComponent("ethanol", 0.15);  // placeholder for dissolved solids
+juice.addComponent("glucose", 0.15);
 juice.setMixingRule("classic");
 
 Stream feed = new Stream("Dilute Juice", juice);
@@ -805,9 +860,11 @@ where $\eta_\text{thermal}$ is the thermal efficiency (fraction of heat input us
 #### Simulation Example
 
 ```java
+NeqSimDataBase.useExtendedComponentDatabase(true);
+
 SystemInterface wetProduct = new SystemSrkEos(273.15 + 60.0, 1.01325);
 wetProduct.addComponent("water", 0.70);
-wetProduct.addComponent("ethanol", 0.30);  // placeholder for dry solids
+wetProduct.addComponent("d-sorbitol", 0.30);
 wetProduct.setMixingRule("classic");
 
 Stream feed = new Stream("Wet Feed", wetProduct);
@@ -825,7 +882,6 @@ System.out.println("Heat duty: " + dryer.getHeatDuty("kW") + " kW");
 StreamInterface dried = dryer.getDriedProductStream();
 StreamInterface vapor = dryer.getVaporStream();
 ```
-
 ---
 
 ## Crystallization
@@ -893,9 +949,11 @@ where $H_\text{out}$ is evaluated at the target temperature/pressure after a TP-
 #### Simulation Example
 
 ```java
+NeqSimDataBase.useExtendedComponentDatabase(true);
+
 SystemInterface solution = new SystemSrkEos(273.15 + 80.0, 1.01325);
 solution.addComponent("water", 0.70);
-solution.addComponent("ethanol", 0.30);  // placeholder for solute
+solution.addComponent("citric acid", 0.30);
 solution.setMixingRule("classic");
 
 Stream feed = new Stream("Saturated Solution", solution);
@@ -905,7 +963,7 @@ feed.run();
 Crystallizer cryst = new Crystallizer("Cooling Crystallizer", feed);
 cryst.setCrystallizationType("cooling");
 cryst.setOutletTemperature(30.0, "C");
-cryst.setTargetSolute("ethanol");
+cryst.setTargetSolute("citric acid");
 cryst.setSolidRecovery(0.85);
 cryst.setCrystalPurity(0.98);
 cryst.setResidenceTime(4.0);
@@ -970,23 +1028,30 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.util.database.NeqSimDataBase;
 
-// 1. Create feed fluid
+// Enable extended component database for bio-processing components
+NeqSimDataBase.useExtendedComponentDatabase(true);
+
+// 1. Create feed fluid with glucose substrate
 SystemInterface feedFluid = new SystemSrkEos(273.15 + 30.0, 1.01325);
 feedFluid.addComponent("water", 0.80);
-feedFluid.addComponent("ethanol", 0.01);
-feedFluid.addComponent("methane", 0.19);  // placeholder for sugar substrate
+feedFluid.addComponent("glucose", 0.15);
+feedFluid.addComponent("ethanol", 0.0);
+feedFluid.addComponent("CO2", 0.0);
+feedFluid.addComponent("glycerol", 0.05);
 feedFluid.setMixingRule("classic");
 
 Stream feed = new Stream("Sugar Feed", feedFluid);
 feed.setFlowRate(5000.0, "kg/hr");
 feed.run();
 
-// 2. Fermentation
-StoichiometricReaction fermentation = new StoichiometricReaction("SugarToEthanol");
-fermentation.addReactant("methane", 1.0);
+// 2. Fermentation: C6H12O6 -> 2 C2H5OH + 2 CO2
+StoichiometricReaction fermentation = new StoichiometricReaction("GlucoseToEthanol");
+fermentation.addReactant("glucose", 1.0);
 fermentation.addProduct("ethanol", 2.0);
-fermentation.setLimitingReactant("methane");
+fermentation.addProduct("CO2", 2.0);
+fermentation.setLimitingReactant("glucose");
 fermentation.setConversion(0.90);
 
 Fermenter fermenter = new Fermenter("Fermenter", feed);
@@ -997,10 +1062,10 @@ fermenter.setAerobic(false);
 fermenter.addReaction(fermentation);
 fermenter.run();
 
-// 3. Centrifuge - remove cell mass
+// 3. Centrifuge - remove cell mass and residual glucose
 SolidsCentrifuge centrifuge = new SolidsCentrifuge("Cell Separator",
     fermenter.getOutletStream());
-centrifuge.setSolidsSplitFraction("methane", 0.95);
+centrifuge.setSolidsSplitFraction("glucose", 0.95);
 centrifuge.setGForce(5000.0);
 centrifuge.run();
 
@@ -1018,6 +1083,9 @@ System.out.println("Fermenter heat duty: " + fermenter.getHeatDuty("kW") + " kW"
 System.out.println("Fermenter total power: " + fermenter.getTotalPower() + " kW");
 System.out.println("Centrifuge power: " + centrifuge.getPowerConsumption() + " kW");
 System.out.println("Evaporator steam economy: " + evaporator.getSteamEconomy());
+
+// Reset database
+NeqSimDataBase.useExtendedComponentDatabase(false);
 ```
 
 ---
