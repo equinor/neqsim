@@ -1,14 +1,19 @@
 package neqsim.process.equipment.separator;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.util.database.NeqSimDataBase;
 
 /**
  * Test class for bio-processing separator equipment: SolidsSeparator, SolidsCentrifuge,
- * RotaryVacuumFilter, PressureFilter, ScrewPress, LiquidLiquidExtractor, and Crystallizer.
+ * RotaryVacuumFilter, PressureFilter, ScrewPress, LiquidLiquidExtractor, and Crystallizer. Uses
+ * COMP_EXT database for bio-relevant components such as glucose, lactic acid, citric acid, succinic
+ * acid, and glycerol.
  *
  * @author NeqSim team
  * @version 1.0
@@ -16,22 +21,39 @@ import neqsim.thermo.system.SystemSrkEos;
 public class BioProcessingSeparatorTest {
 
   /**
+   * Enable extended component database before each test.
+   */
+  @BeforeEach
+  public void setUp() {
+    NeqSimDataBase.useExtendedComponentDatabase(true);
+  }
+
+  /**
+   * Reset to default database after each test.
+   */
+  @AfterEach
+  public void tearDown() {
+    NeqSimDataBase.useExtendedComponentDatabase(false);
+  }
+
+  /**
    * Test SolidsSeparator basic split operation.
    */
   @Test
   public void testSolidsSeparatorBasicSplit() {
-    SystemInterface system = new SystemSrkEos(298.15, 1.0);
+    // Fermentation broth with glucose (dissolved sugar) and lactic acid
+    SystemInterface system = new SystemSrkEos(298.15, 1.01325);
     system.addComponent("water", 10.0);
-    system.addComponent("methane", 0.5); // proxy for solids
-    system.addComponent("ethane", 0.3); // proxy for dissolved solute
+    system.addComponent("glucose", 0.5);
+    system.addComponent("lactic acid", 0.3);
     system.setMixingRule("classic");
 
     Stream feed = new Stream("feed", system);
     feed.run();
 
     SolidsSeparator separator = new SolidsSeparator("TestSep", feed);
-    separator.setSolidsSplitFraction("methane", 0.95); // 95% recovery of "solids"
-    separator.setSolidsSplitFraction("ethane", 0.10); // 10% of dissolved component
+    separator.setSolidsSplitFraction("glucose", 0.95); // 95% recovery of solids
+    separator.setSolidsSplitFraction("lactic acid", 0.10); // 10% of dissolved acid
     separator.setDefaultSolidsSplit(0.02); // 2% default entrainment
     separator.setMoistureContent(0.40);
     separator.run();
@@ -59,16 +81,17 @@ public class BioProcessingSeparatorTest {
    */
   @Test
   public void testSolidsCentrifugeDefaults() {
-    SystemInterface system = new SystemSrkEos(298.15, 1.0);
+    // Yeast cell separation from ethanol fermentation broth
+    SystemInterface system = new SystemSrkEos(298.15, 1.01325);
     system.addComponent("water", 10.0);
-    system.addComponent("methane", 1.0);
+    system.addComponent("succinic acid", 1.0);
     system.setMixingRule("classic");
 
     Stream feed = new Stream("feed", system);
     feed.run();
 
     SolidsCentrifuge centrifuge = new SolidsCentrifuge("Centrifuge", feed);
-    centrifuge.setSolidsSplitFraction("methane", 0.99);
+    centrifuge.setSolidsSplitFraction("succinic acid", 0.99);
     centrifuge.run();
 
     Assertions.assertEquals(3000.0, centrifuge.getGForce(), 1e-6);
@@ -82,16 +105,17 @@ public class BioProcessingSeparatorTest {
    */
   @Test
   public void testRotaryVacuumFilterDefaults() {
-    SystemInterface system = new SystemSrkEos(298.15, 1.0);
+    // Citric acid crystal filtration
+    SystemInterface system = new SystemSrkEos(298.15, 1.01325);
     system.addComponent("water", 10.0);
-    system.addComponent("methane", 1.0);
+    system.addComponent("citric acid", 1.0);
     system.setMixingRule("classic");
 
     Stream feed = new Stream("feed", system);
     feed.run();
 
     RotaryVacuumFilter filter = new RotaryVacuumFilter("RVF", feed);
-    filter.setSolidsSplitFraction("methane", 0.95);
+    filter.setSolidsSplitFraction("citric acid", 0.95);
     filter.run();
 
     Assertions.assertEquals(0.60, filter.getMoistureContent(), 1e-6);
@@ -127,21 +151,21 @@ public class BioProcessingSeparatorTest {
    */
   @Test
   public void testLiquidLiquidExtractorBasic() {
-    // Create an aqueous feed - include all components in both systems
-    SystemInterface feed = new SystemSrkEos(298.15, 1.0);
+    // Extract lactic acid from aqueous broth using 1-butanol as solvent
+    SystemInterface feed = new SystemSrkEos(298.15, 1.01325);
     feed.addComponent("water", 10.0);
-    feed.addComponent("methane", 0.5);
-    feed.addComponent("n-hexane", 0.0);
+    feed.addComponent("lactic acid", 0.5);
+    feed.addComponent("1-butanol", 0.0);
     feed.setMixingRule("classic");
 
     Stream feedStream = new Stream("feed", feed);
     feedStream.run();
 
-    // Create a solvent stream with same components
-    SystemInterface solvent = new SystemSrkEos(298.15, 1.0);
+    // 1-butanol solvent stream with same components
+    SystemInterface solvent = new SystemSrkEos(298.15, 1.01325);
     solvent.addComponent("water", 0.0);
-    solvent.addComponent("methane", 0.0);
-    solvent.addComponent("n-hexane", 5.0);
+    solvent.addComponent("lactic acid", 0.0);
+    solvent.addComponent("1-butanol", 5.0);
     solvent.setMixingRule("classic");
 
     Stream solventStream = new Stream("solvent", solvent);
@@ -172,10 +196,11 @@ public class BioProcessingSeparatorTest {
    */
   @Test
   public void testCrystallizerBasic() {
-    SystemInterface system = new SystemSrkEos(343.15, 1.0); // 70 C
+    // Cooling crystallization of citric acid from aqueous solution
+    SystemInterface system = new SystemSrkEos(343.15, 1.01325); // 70 C
     system.addComponent("water", 10.0);
-    system.addComponent("methane", 0.5); // proxy for solute
-    system.addComponent("ethane", 0.2);
+    system.addComponent("citric acid", 0.5);
+    system.addComponent("succinic acid", 0.2);
     system.setMixingRule("classic");
 
     Stream feed = new Stream("feed", system);
@@ -184,7 +209,7 @@ public class BioProcessingSeparatorTest {
     Crystallizer cryst = new Crystallizer("Crystallizer", feed);
     cryst.setCrystallizationType("cooling");
     cryst.setOutletTemperature(303.15); // cool to 30 C
-    cryst.setTargetSolute("methane"); // proxy
+    cryst.setTargetSolute("citric acid");
     cryst.setSolidRecovery(0.85);
     cryst.run();
 
@@ -239,16 +264,17 @@ public class BioProcessingSeparatorTest {
    */
   @Test
   public void testSolidsSeparatorWithPressureDrop() {
+    // Glycerol solution separation with pressure drop
     SystemInterface system = new SystemSrkEos(298.15, 5.0);
     system.addComponent("water", 10.0);
-    system.addComponent("methane", 1.0);
+    system.addComponent("glycerol", 1.0);
     system.setMixingRule("classic");
 
     Stream feed = new Stream("feed", system);
     feed.run();
 
     SolidsSeparator separator = new SolidsSeparator("Sep", feed);
-    separator.setSolidsSplitFraction("methane", 0.90);
+    separator.setSolidsSplitFraction("glycerol", 0.90);
     separator.setPressureDrop(0.5);
     separator.run();
 
