@@ -29,6 +29,18 @@ This folder contains documentation for:
 
 ---
 
+## AI-Assisted Task Solving
+
+| Document | Description |
+|----------|-------------|
+| [TASK_SOLVING_GUIDE.md](TASK_SOLVING_GUIDE) | Complete workflow for solving tasks with AI while developing the physics engine |
+| [CODE_PATTERNS.md](CODE_PATTERNS) | Copy-paste code starters for every common task type |
+| [TASK_LOG.md](TASK_LOG) | Persistent memory — searchable log of all solved tasks |
+
+Start with `CONTEXT.md` in the repo root for a 60-second orientation.
+
+---
+
 ## Extending NeqSim
 
 These guides explain how to add new functionality to NeqSim:

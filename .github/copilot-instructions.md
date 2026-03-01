@@ -1,5 +1,21 @@
 # NeqSim AI Guidance for Coding Agents
 
+## Quick Orientation
+
+> **Start here:** Read `CONTEXT.md` in the repo root for a 60-second overview of the
+> entire codebase — repo map, code patterns, build commands, and constraints.
+>
+> **Solving a task?** See `docs/development/TASK_SOLVING_GUIDE.md` for the step-by-step
+> workflow: classify the task, find similar past solutions, write code, verify, log it.
+>
+> **Looking for code patterns?** `docs/development/CODE_PATTERNS.md` has copy-paste
+> starters for every common task (fluids, flash, equipment, PVT, tests, notebooks).
+>
+> **Was this solved before?** Search `docs/development/TASK_LOG.md` for keywords.
+> Every solved task gets an entry there — check before starting from scratch.
+
+---
+
 ## ⚠️ CRITICAL: Java 8 Compatibility (READ FIRST)
 
 **All code MUST compile with Java 8.** The CI build will FAIL if you use Java 9+ features.
@@ -1060,3 +1076,38 @@ fluid.setMultiPhaseCheck(True)  # Python bool works
 ```
 
 ---
+
+## Task-Solving Workflow (MANDATORY)
+
+Every task solved in this repo MUST follow this workflow to build persistent,
+searchable knowledge across sessions.
+
+### Before Starting
+
+1. Read `CONTEXT.md` for orientation (60 seconds)
+2. Search `docs/development/TASK_LOG.md` for similar past tasks
+3. Classify the task (Type A–F, see `docs/development/TASK_SOLVING_GUIDE.md`)
+4. Find the closest existing code (test, notebook, or source file)
+
+### While Working
+
+5. Follow patterns from `docs/development/CODE_PATTERNS.md`
+6. Verify using the checklist in `docs/development/TASK_SOLVING_GUIDE.md`
+7. Use the appropriate Copilot Chat agent (see `.github/agents/`)
+
+### After Completing
+
+8. **Always** add an entry to `docs/development/TASK_LOG.md` with:
+   - Date, title, task type, keywords, solution location, and notes
+9. If the solution is reusable: write a test, notebook, or doc page
+10. If you discovered a new pattern: add it to `docs/development/CODE_PATTERNS.md`
+
+### Task Log Entry Format
+
+```markdown
+### YYYY-MM-DD — Short task title
+**Type:** A (Property) | B (Process) | C (PVT) | D (Standards) | E (Feature) | F (Design)
+**Keywords:** comma, separated, search, terms
+**Solution:** path/to/test/or/notebook
+**Notes:** Key decisions, gotchas, or results
+```

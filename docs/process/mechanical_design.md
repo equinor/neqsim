@@ -48,7 +48,10 @@ MechanicalDesign (base class)
 ├── AdsorberMechanicalDesign       → ASME VIII
 ├── AbsorberMechanicalDesign       → ASME VIII
 ├── EjectorMechanicalDesign        → HEI
-└── SafetyValveMechanicalDesign    → API 520/521
+├── SafetyValveMechanicalDesign    → API 520/521
+└── WellMechanicalDesign           → NORSOK D-010 / API 5CT / API Bull 5C3
+    ├── WellDesignCalculator (casing burst, collapse, tension)
+    └── WellCostEstimator (drilling, completion, wellhead costs)
 ```
 
 ### Pipeline Mechanical Design Features

@@ -11,6 +11,8 @@ import neqsim.process.costestimation.ProcessCostEstimate;
 import neqsim.process.costestimation.UnitCostEstimateBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
+import neqsim.process.mechanicaldesign.subsea.SubseaCostEstimator;
+import neqsim.process.mechanicaldesign.subsea.WellCostEstimator;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -220,6 +222,18 @@ public class FieldDevelopmentCostEstimator implements Serializable {
   /** Water depth in meters. */
   private double waterDepth = 100.0;
 
+  /** Number of subsea wells for cost estimation. */
+  private int numberOfWells = 0;
+
+  /** Number of production wells. */
+  private int numberOfProducers = 0;
+
+  /** Number of injection wells. */
+  private int numberOfInjectors = 0;
+
+  /** Average well measured depth in meters. */
+  private double averageWellDepth = 3500.0;
+
   /**
    * Constructor with process system.
    *
@@ -288,6 +302,21 @@ public class FieldDevelopmentCostEstimator implements Serializable {
     this.includeSubseaCosts = true;
     this.subseaTiebackLength = tiebackLength;
     this.waterDepth = waterDepthM;
+  }
+
+  /**
+   * Set well parameters for subsea cost estimation.
+   *
+   * @param producers number of production wells
+   * @param injectors number of injection wells
+   * @param avgDepthM average measured depth in meters
+   */
+  public void setWellParameters(int producers, int injectors, double avgDepthM) {
+    this.numberOfProducers = producers;
+    this.numberOfInjectors = injectors;
+    this.numberOfWells = producers + injectors;
+    this.averageWellDepth = avgDepthM;
+    this.includeSubseaCosts = true;
   }
 
   /**
@@ -386,10 +415,50 @@ public class FieldDevelopmentCostEstimator implements Serializable {
     double riserCost = waterDepth * 50000.0; // ~$50k per meter depth
     totalSubseaCost += riserCost;
 
+    // Well costs using WellCostEstimator
+    if (numberOfWells > 0 || numberOfProducers > 0 || numberOfInjectors > 0) {
+      totalSubseaCost += estimateWellCosts();
+    }
+
     // Apply location factor
     totalSubseaCost *= locationFactor;
 
     return totalSubseaCost;
+  }
+
+  /**
+   * Estimate drilling and completion costs for all wells.
+   *
+   * <p>
+   * Uses {@link WellCostEstimator} for detailed well cost estimation with regional cost factors and
+   * well-type-specific parameters.
+   * </p>
+   *
+   * @return total well CAPEX in USD
+   */
+  private double estimateWellCosts() {
+    double totalWellCosts = 0.0;
+
+    int producers = numberOfProducers > 0 ? numberOfProducers : numberOfWells;
+    int injectors = numberOfInjectors;
+
+    // Estimate producer costs
+    if (producers > 0) {
+      WellCostEstimator prodEstimator = new WellCostEstimator();
+      prodEstimator.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "CASED_PERFORATED",
+          averageWellDepth, waterDepth, 45.0, 25.0, 0.0, true, 4);
+      totalWellCosts += prodEstimator.getTotalCost() * producers;
+    }
+
+    // Estimate injector costs
+    if (injectors > 0) {
+      WellCostEstimator injEstimator = new WellCostEstimator();
+      injEstimator.calculateWellCost("WATER_INJECTOR", "SEMI_SUBMERSIBLE", "CASED_PERFORATED",
+          averageWellDepth, waterDepth, 35.0, 15.0, 0.0, true, 4);
+      totalWellCosts += injEstimator.getTotalCost() * injectors;
+    }
+
+    return totalWellCosts;
   }
 
   /**

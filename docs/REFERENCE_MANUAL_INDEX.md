@@ -358,6 +358,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Subsea Boosters** | [docs/process/equipment/subsea_boosters.md](process/equipment/subsea_boosters) | **Subsea pumps & compressors, helico-axial/multiphase, performance curves** |
 | **Umbilicals** | [docs/process/equipment/umbilicals.md](process/equipment/umbilicals) | **Control umbilicals: hydraulic, electrical, chemical injection lines** |
 | **SURF Subsea Equipment** | [docs/process/SURF_SUBSEA_EQUIPMENT.md](process/SURF_SUBSEA_EQUIPMENT) | **Comprehensive SURF equipment: PLET, PLEM, manifolds, trees, jumpers, umbilicals, flexible pipes, boosters with mechanical design and cost estimation** |
+| **Well Mechanical Design** | [docs/process/well_mechanical_design.md](process/well_mechanical_design) | **Subsea well casing/tubing design, barrier verification per NORSOK D-010/API 5CT, drilling cost estimation** |
 
 ### Chapter 20: Utility Equipment
 
@@ -419,6 +420,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Riser Mechanical Design** | [docs/process/riser_mechanical_design.md](process/riser_mechanical_design) | **Riser design with catenary mechanics, VIV, fatigue per DNV-OS-F201** |
 | **Pipeline Design Math** | [docs/process/pipeline_mechanical_design_math.md](process/pipeline_mechanical_design_math) | **Mathematical methods and formulas for pipeline design** |
 | **Subsea SURF Mechanical Design** | [docs/process/SURF_SUBSEA_EQUIPMENT.md#mechanical-design](process/SURF_SUBSEA_EQUIPMENT#mechanical-design) | **Mechanical design for PLET, PLEM, trees, manifolds, jumpers, umbilicals, flexible pipes, boosters per DNV, API, ISO, NORSOK** |
+| **Well Mechanical Design** | [docs/process/well_mechanical_design.md](process/well_mechanical_design) | **Subsea well casing/tubing design per NORSOK D-010 and API 5CT/Bull 5C3 with barrier verification and cost estimation** |
 | **Equipment Datasheet Generator** | [docs/process/equipment_datasheets.md](process/equipment_datasheets) | **Structured JSON equipment datasheets from process simulation (separator, compressor, heater, valve)** |
 | **Dual EoS Comparison** | [docs/process/dual_eos_comparison.md](process/dual_eos_comparison) | **SRK vs PR78 cross-check per TR1244 for field development QA** |
 | TORG Integration | [docs/process/torg_integration.md](process/torg_integration) | TORG integration |
