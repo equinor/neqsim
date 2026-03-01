@@ -1,0 +1,201 @@
+# NeqSim — Fast Context for Task Solving
+
+> **Purpose:** Get oriented in 60 seconds. This file is the single entry point for anyone
+> (human or AI) solving engineering tasks inside the NeqSim repo.
+
+## What Is NeqSim?
+
+Java library for thermodynamic fluid properties and process simulation.
+Developed at NTNU, maintained by Equinor. Apache-2.0 license.
+`com.equinor.neqsim:neqsim` version 3.4.0 — **must compile with Java 8**.
+
+## Repo Map
+
+```
+src/main/java/neqsim/
+  thermo/system/         60 EOS classes (SystemSrkEos, SystemPrEos, ...)
+  thermo/phase/          Phase implementations
+  thermodynamicoperations/  Flash calculations (TP, PH, PS, dew, bubble)
+  physicalproperties/    Density, viscosity, conductivity, surface tension
+  process/equipment/     33 equipment packages:
+    stream/ separator/ compressor/ pump/ valve/ heatexchanger/
+    pipeline/ distillation/ mixer/ splitter/ expander/ reactor/
+    well/ reservoir/ membrane/ ejector/ filter/ flare/ ...
+  process/processmodel/  ProcessSystem — the flowsheet orchestrator
+  pvtsimulation/         CME, CVD, DL, saturation, GOR, swelling, MMP
+  standards/             Gas quality, oil quality, sales contracts
+  fluidmechanics/        Pipeline hydraulics
+  chemicalreactions/     Reaction equilibrium/kinetics
+  statistics/            Parameter fitting, Monte Carlo
+  util/                  Validation, exceptions, named interfaces
+
+src/test/java/neqsim/   Mirrors production structure. JUnit 5. Extend NeqSimTest.
+src/main/resources/      Component databases, design data CSVs
+examples/notebooks/      28+ Jupyter notebooks
+docs/                    350+ markdown files, Jekyll site
+.github/agents/          12 Copilot Chat agents (thermo, process, test, PVT, ...)
+devtools/                neqsim_dev_setup.py for Jupyter development
+```
+
+## Build & Test (30 seconds)
+
+```powershell
+# Full build
+.\mvnw.cmd install
+
+# Tests only
+.\mvnw.cmd test
+
+# Single test class
+.\mvnw.cmd test -Dtest=SeparatorTest
+
+# Single test method
+.\mvnw.cmd test -Dtest=SeparatorTest#testTwoPhase
+
+# Skip slow tests (default)
+.\mvnw.cmd test                              # excludes @Tag("slow")
+.\mvnw.cmd test -DexcludedTestGroups=         # runs everything
+
+# Static analysis
+.\mvnw.cmd checkstyle:check spotbugs:check pmd:check
+
+# Package JAR + copy to Python
+.\mvnw.cmd package -DskipTests
+Copy-Item target\neqsim-3.3.0.jar C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\java11\ -Force
+```
+
+## Code Patterns — Copy-Paste Starters
+
+### Create a Fluid
+
+```java
+SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 60.0); // T in Kelvin, P in bara
+fluid.addComponent("methane", 0.85);
+fluid.addComponent("ethane", 0.10);
+fluid.addComponent("propane", 0.05);
+fluid.setMixingRule("classic"); // NEVER skip this
+```
+
+### Run a Flash
+
+```java
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPflash();
+fluid.init(3); // full property init after flash
+double density = fluid.getDensity("kg/m3");
+double viscosity = fluid.getPhase("gas").getViscosity("kg/msec");
+```
+
+### Build a Process
+
+```java
+ProcessSystem process = new ProcessSystem();
+
+Stream feed = new Stream("feed", fluid);
+feed.setFlowRate(50000.0, "kg/hr");
+feed.setTemperature(30.0, "C");
+feed.setPressure(60.0, "bara");
+process.add(feed);
+
+Separator sep = new Separator("HP Sep", feed);
+process.add(sep);
+
+Compressor comp = new Compressor("Compressor", sep.getGasOutStream());
+comp.setOutletPressure(120.0, "bara");
+process.add(comp);
+
+process.run();
+System.out.println("Compressor power: " + comp.getPower("kW") + " kW");
+```
+
+### Write a Test
+
+```java
+public class MyFeatureTest extends neqsim.NeqSimTest {
+    @Test
+    void testSomething() {
+        // 1. Create fluid
+        // 2. Build process
+        // 3. process.run()
+        // 4. Assert on physical outputs
+        assertEquals(expected, actual, tolerance);
+    }
+}
+```
+
+### Jupyter Notebook (Python)
+
+```python
+from neqsim import jneqsim
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+Stream = jneqsim.process.equipment.stream.Stream
+# ... see devtools/neqsim_dev_setup.py for local dev workflow
+```
+
+## EOS Selection Quick Reference
+
+| Fluid Type | Class | Mixing Rule |
+|------------|-------|-------------|
+| Dry/lean gas | `SystemSrkEos` | `"classic"` |
+| Oil systems | `SystemPrEos` | `"classic"` |
+| Water/MEG/methanol | `SystemSrkCPAstatoil` | `10` |
+| Fiscal metering | `SystemGERG2008Eos` | — |
+| Electrolytes | `SystemElectrolyteCPAstatoil` | `10` |
+
+## Equipment Package → Class Cheat Sheet
+
+| Equipment | Package | Key Class |
+|-----------|---------|-----------|
+| Stream | `stream` | `Stream`, `EquilibriumStream` |
+| Separator | `separator` | `Separator`, `ThreePhaseSeparator` |
+| Compressor | `compressor` | `Compressor` |
+| Pump | `pump` | `Pump` |
+| Valve | `valve` | `ThrottlingValve` |
+| Heat exchanger | `heatexchanger` | `Cooler`, `Heater`, `HeatExchanger` |
+| Pipeline | `pipeline` | `AdiabaticPipe`, `PipeBeggsAndBrills` |
+| Mixer | `mixer` | `Mixer` |
+| Splitter | `splitter` | `Splitter` |
+| Distillation | `distillation` | `DistillationColumn` |
+| Expander | `expander` | `Expander` |
+| Ejector | `ejector` | `Ejector` |
+| Well | `well` | `SimpleWell` |
+| Recycle | `util` | `Recycle` |
+| Adjuster | `util` | `Adjuster` |
+
+Full package path: `neqsim.process.equipment.<package>.<Class>`
+
+## Where to Find Things
+
+| I need to... | Look in... |
+|-------------|-----------|
+| Pick an EOS | `src/main/java/neqsim/thermo/system/` |
+| Add equipment | `src/main/java/neqsim/process/equipment/<type>/` |
+| Run a PVT experiment | `src/main/java/neqsim/pvtsimulation/simulation/` |
+| Check gas quality | `src/main/java/neqsim/standards/gasquality/` |
+| See a working example | `examples/notebooks/` or `src/test/java/neqsim/process/` |
+| Read documentation | `docs/wiki/` (60+ topics) or `docs/REFERENCE_MANUAL_INDEX.md` |
+| Use an AI agent | `.github/agents/` (12 specialist agents) |
+| Set up Jupyter dev | `devtools/neqsim_dev_setup.py` |
+| Find design data | `src/main/resources/designdata/` |
+| Component database | `src/main/resources/` |
+
+## Key Constraints
+
+- **Java 8 only** — no `var`, `List.of()`, `Map.of()`, `String.repeat()`, text blocks, records
+- **Temperature in Kelvin** — constructors take `(T_kelvin, P_bara)`
+- **Always set mixing rule** — simulations fail silently without it
+- **Unique equipment names** — `ProcessSystem` enforces unique names
+- **Clone before branching** — `fluid.clone()` to avoid shared state
+- **Google Java Style** — 2-space indent, checkstyle enforced
+
+## Deeper Context
+
+| Topic | File |
+|-------|------|
+| Full AI coding instructions | `.github/copilot-instructions.md` |
+| Task-solving workflow | `docs/development/TASK_SOLVING_GUIDE.md` |
+| Solved task history | `docs/development/TASK_LOG.md` |
+| Developer setup | `docs/development/DEVELOPER_SETUP.md` |
+| Module architecture | `docs/modules.md` |
+| Contributing guide | `CONTRIBUTING.md` |
+| All documentation index | `docs/REFERENCE_MANUAL_INDEX.md` |
