@@ -251,6 +251,12 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Mixers/Splitters | [docs/process/equipment/mixers_splitters.md](process/equipment/mixers_splitters) | Mixer and splitter models |
 | Equipment Overview | [docs/process/equipment/README.md](process/equipment/) | Equipment module overview |
 
+### Chapter 13b: Bio-Processing Unit Operations
+
+| Document | Path | Description |
+|----------|------|-------------|
+| Bio-Processing Guide | [docs/process/bioprocessing.md](process/bioprocessing) | **Reactors, fermenters, enzyme treatment, solid-liquid separators, liquid-liquid extraction, multi-effect evaporators, dryers, crystallizers — mathematical models, design equations, simulation examples** |
+
 ### Chapter 14: Separation Equipment
 
 | Document | Path | Description |
