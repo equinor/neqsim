@@ -200,7 +200,7 @@ public enum PoreType {
 
 1. **AbstractAdsorptionModel** - Base class with common functionality
 2. **LangmuirAdsorption** - Langmuir isotherm implementation
-3. **FreundlichAdsorption** - Freundlich isotherm implementation  
+3. **FreundlichAdsorption** - Freundlich isotherm implementation
 4. **BETAdsorption** - BET multilayer model
 5. **SipsAdsorption** - Sips isotherm implementation
 6. **ExtendedLangmuirAdsorption** - Multi-component competitive adsorption
@@ -282,8 +282,8 @@ double co2Uptake = ads.getSurfaceExcess("CO2");  // mol/kg
 double ch4Uptake = ads.getSurfaceExcess("methane");
 
 // Calculate selectivity
-double selectivity = (co2Uptake / ch4Uptake) / 
-    (gas.getPhase(0).getComponent("CO2").getx() / 
+double selectivity = (co2Uptake / ch4Uptake) /
+    (gas.getPhase(0).getComponent("CO2").getx() /
      gas.getPhase(0).getComponent("methane").getx());
 
 // With capillary condensation (for mesoporous materials)
@@ -308,5 +308,5 @@ double totalUptake = ads.getTotalUptake("CO2");
 ## Related Documentation
 
 - [Interfacial Properties](interfacial_properties.md)
-- [Thermodynamic Models](../thermo/equations-of-state.md)
+- [Thermodynamic Models](../thermo/thermodynamic_models.md)
 - [Component Database Guide](../thermo/component_database_guide.md)

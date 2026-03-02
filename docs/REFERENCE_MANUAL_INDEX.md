@@ -834,6 +834,9 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Extending Thermodynamic Models** | [docs/development/extending_thermodynamic_models.md](development/extending_thermodynamic_models) | **NEW: Add custom equations of state** |
 | **Python Extension Patterns** | [docs/development/python_extension_patterns.md](development/python_extension_patterns) | **NEW: Python integration, wrappers, JPype interfaces** |
 | **Jupyter Development Workflow** | [docs/development/jupyter_development_workflow.md](development/jupyter_development_workflow) | **Live Java development from Jupyter notebooks with auto-compile and kernel restart** |
+| **Task Solving Guide** | [docs/development/TASK_SOLVING_GUIDE.md](development/TASK_SOLVING_GUIDE) | **Step-by-step workflow for solving engineering tasks** |
+| **Code Patterns** | [docs/development/CODE_PATTERNS.md](development/CODE_PATTERNS) | **Copy-paste starters for common coding tasks** |
+| **Task Log** | [docs/development/TASK_LOG.md](development/TASK_LOG) | **Searchable log of all solved tasks** |
 
 ### Chapter 50: Testing
 
@@ -862,6 +865,12 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Integrated Production & Risk Analysis** | [docs/examples/IntegratedProductionRiskAnalysis.ipynb](examples/IntegratedProductionRiskAnalysis) | **Complete operational workflow combining bottleneck analysis with risk simulation, Monte Carlo, and risk matrix** |
 | **MPC Integration Tutorial** | [docs/examples/MPC_Integration_Tutorial.md](examples/MPC_Integration_Tutorial) | **Model Predictive Control integration example** |
 | **AI Platform Integration** | [docs/examples/AIPlatformIntegration.md](examples/AIPlatformIntegration) | **AI platform integration tutorial** |
+| **Beer Brewing Bio-Process** | [docs/examples/BeerBrewing_BioProcess_Simulation.md](examples/BeerBrewing_BioProcess_Simulation) | **Bio-process simulation for brewing applications** |
+| **H2S Distribution Modeling** | [docs/examples/H2S_Distribution_Modeling.md](examples/H2S_Distribution_Modeling) | **H2S distribution and partitioning across phases** |
+| **Multiphase Flow Pipeline Riser** | [docs/examples/MultiphaseFlowPipelineRiser_Interactive.md](examples/MultiphaseFlowPipelineRiser_Interactive) | **Interactive multiphase pipeline-riser simulation** |
+| **Looped Pipeline Network** | [docs/examples/LoopedPipelineNetworkExample.md](examples/LoopedPipelineNetworkExample) | **Looped pipeline network simulation example** |
+| **Advanced Risk Framework** | [docs/examples/AdvancedRiskFramework_Tutorial.md](examples/AdvancedRiskFramework_Tutorial) | **Advanced risk framework tutorial** |
+| **Two-Fluid Pipe Tutorial** | [docs/examples/TwoFluidPipe_Tutorial.md](examples/TwoFluidPipe_Tutorial) | **Two-fluid pipe model tutorial** |
 | Examples Index | [docs/examples/index.md](examples/index) | Examples documentation index |
 
 ### Chapter 52: Documentation Infrastructure
@@ -927,6 +936,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Thermodynamics Recipes | [docs/cookbook/thermodynamics-recipes.md](cookbook/thermodynamics-recipes) | Fluids, flash, properties, phase envelopes |
 | Process Recipes | [docs/cookbook/process-recipes.md](cookbook/process-recipes) | Separators, compressors, heat exchangers |
 | Pipeline Recipes | [docs/cookbook/pipeline-recipes.md](cookbook/pipeline-recipes) | Pressure drop, multiphase flow |
+| **Adsorption Recipes** | [docs/cookbook/adsorption-recipes.md](cookbook/adsorption-recipes) | **Adsorption bed simulation recipes and workflows** |
 
 ### Appendix I: Troubleshooting
 
@@ -956,17 +966,17 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Pipeline/Flow | 17 |
 | PVT/Reservoir | 15 |
 | Standards | 6 |
-| Development | 8 |
+| Development | 11 |
 | Statistics | 4 |
-| Examples | 13 |
+| Examples | 19 |
 | **Optimization** | **5** |
 | **Templates & Design** | **2** |
 | **Quickstart Guides** | **4** |
-| **Cookbook** | **5** |
+| **Cookbook** | **6** |
 | **Tutorials/Learning** | **2** |
 | **Troubleshooting** | **1** |
 | Other | 24 |
-| **Total** | **293** |
+| **Total** | **303** |
 
 ---
 

@@ -97,7 +97,7 @@ Set via `setIsothermType(IsothermType)`:
 | `SIPS` | `SipsAdsorption` |
 | `DRA` | `PotentialTheoryAdsorption` |
 
-See [Adsorption Isotherm Models](../thermo/adsorption_isotherms.md) for the mathematical details of each isotherm.
+See [Adsorption Isotherm Models](../../thermo/adsorption_isotherms.md) for the mathematical details of each isotherm.
 
 ---
 
@@ -673,7 +673,7 @@ For sharper fronts, increase $N$. Higher-order schemes (TVD, WENO) are not curre
 
 ## Related Documentation
 
-- [Adsorption Isotherm Models](../thermo/adsorption_isotherms.md) — Mathematical details of all isotherm models
-- [Adsorption Cookbook](../cookbook/adsorption-recipes.md) — Quick-start recipes and common workflows
+- [Adsorption Isotherm Models](../../thermo/adsorption_isotherms.md) — Mathematical details of all isotherm models
+- [Adsorption Cookbook](../../cookbook/adsorption-recipes.md) — Quick-start recipes and common workflows
 - [Adsorbers (SimpleAdsorber)](adsorbers.md) — The simplified chemical absorption model
 - [Process Simulation Fundamentals](../process/) — NeqSim process equipment framework
