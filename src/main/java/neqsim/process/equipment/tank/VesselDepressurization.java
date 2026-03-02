@@ -2009,7 +2009,20 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       }
     }
 
-    thermoSystem.init(3);
+    try {
+      thermoSystem.init(3);
+    } catch (Exception e) {
+      logger.warn("init(3) failed after flash: " + e.getMessage()
+          + ", reverting to previous temperature " + initialT + " K");
+      thermoSystem.setTemperature(initialT);
+      try {
+        ThermodynamicOperations opsRecover = new ThermodynamicOperations(thermoSystem);
+        opsRecover.TPflash();
+        thermoSystem.init(3);
+      } catch (Exception e2) {
+        logger.error("Recovery TPflash also failed after init: " + e2.getMessage());
+      }
+    }
 
     // Sanity check: if flash produced a non-physical temperature, clamp it
     double flashedT = thermoSystem.getTemperature();
