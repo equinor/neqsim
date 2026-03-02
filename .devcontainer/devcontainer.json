@@ -10,7 +10,6 @@
 			"MAVEN_VERSION": "3.9.8"
 		}
 	},
-
 	// Add Python 3.12 for Jupyter notebook development with neqsim-python
 	"features": {
 		"ghcr.io/devcontainers/features/python:1": {
@@ -21,10 +20,8 @@
 			"version": "lts"
 		}
 	},
-
 	// Run after container creation: install neqsim-python and dev tools
 	"postCreateCommand": "pip install --user neqsim matplotlib pandas numpy && ./mvnw dependency:resolve",
-
 	"customizations": {
 		"vscode": {
 			"settings": {
@@ -34,24 +31,23 @@
 				"java.format.settings.url": "neqsim_formatter.xml",
 				"java.checkstyle.configuration": "${workspaceFolder}/checkstyle_neqsim.xml",
 				"java.test.defaultConfig": "default",
-
 				// Editor settings
 				"editor.formatOnSave": true,
-				"editor.rulers": [120],
+				"editor.rulers": [
+					120
+				],
 				"files.trimTrailingWhitespace": true,
-
 				// Copilot settings — auto-approve agent actions
 				"github.copilot.chat.agent.autoApprove": true,
-				"chat.agent.maxRequests": 100,
-
+				"github.copilot.chat.autoCommit.enabled": false,
+				"github.copilot.chat.confirmEditGeneration": false,
+				"chat.agent.maxRequests": 2500,
 				// Terminal
 				"terminal.integrated.defaultProfile.linux": "bash",
-
 				// Python / Jupyter
-				"python.defaultInterpreterPath": "/usr/local/bin/python3",
+				"python.defaultInterpreterPath": "/usr/local/python/current/bin/python3",
 				"jupyter.notebookFileRoot": "${workspaceFolder}"
 			},
-
 			"extensions": [
 				// Java development
 				"redhat.java",
@@ -59,27 +55,21 @@
 				"vscjava.vscode-java-test",
 				"vscjava.vscode-maven",
 				"shengchen.vscode-checkstyle",
-
 				// AI / Copilot
 				"GitHub.copilot",
 				"GitHub.copilot-chat",
-
 				// Python / Jupyter
 				"ms-python.python",
 				"ms-toolsai.jupyter",
-
 				// Data / CSV
 				"mechatroner.rainbow-csv",
 				"janisdd.vscode-edit-csv",
-
 				// XML / Markdown
 				"redhat.vscode-xml",
 				"yzhang.markdown-all-in-one",
-
 				// Git
 				"mhutchie.git-graph",
 				"eamodio.gitlens",
-
 				// Utilities
 				"ms-vscode.test-adapter-converter"
 			]
