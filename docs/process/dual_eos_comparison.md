@@ -157,6 +157,6 @@ The `toJson()` method returns a JSON object containing:
 
 ## Related Documentation
 
-- [Fluid Characterisation](../thermo/characterization/characterization_workflow.md) - TBP fraction tuning
-- [Flash Calculations](../thermo/flash-calculations.md) - TPflash and phase equilibrium
+- [Fluid Characterisation](../thermo/characterization/fluid_characterization_combining.md) - TBP fraction tuning
+- [Flash Calculations](../thermo/flash_calculations_guide.md) - TPflash and phase equilibrium
 - [Field Development Improvements](../fielddevelopment/NEQSIM_FIELD_DEVELOPMENT_IMPROVEMENTS.md) - TR1244 compliance gaps
