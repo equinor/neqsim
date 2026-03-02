@@ -509,6 +509,8 @@ Before considering a task done:
 - [ ] **Style**: `.\mvnw.cmd checkstyle:check` passes
 - [ ] **JavaDoc**: All methods documented with `@param`, `@return`, `@throws`
 - [ ] **Logged**: Entry added to `docs/development/TASK_LOG.md`
+- [ ] **Figures saved**: All plots saved to `figures/` directory (not just displayed inline)
+- [ ] **Report generated** (if deliverable): Word document builds end-to-end via `python generate_report.py`
 
 ---
 
@@ -532,6 +534,41 @@ Put a notebook in `examples/notebooks/` with:
 - Colab badge for one-click running from a browser
 - Dual-boot setup cell (works with both `devtools` and `pip install neqsim`)
 - Markdown cells explaining the engineering reasoning
+- **Save all figures to disk** — every plot should be saved as a PNG/SVG file
+  alongside the notebook so results survive kernel restarts and can be reused
+  in reports (see Option 5 below)
+
+**Figure-saving pattern** (do this for every plot cell):
+
+```python
+import matplotlib
+matplotlib.use('Agg')          # non-interactive backend, no GUI needed
+import matplotlib.pyplot as plt
+import os
+
+FIG_DIR = os.path.join(os.path.dirname(os.path.abspath('__file__')), 'figures')
+os.makedirs(FIG_DIR, exist_ok=True)
+
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(time_hrs, temperature_C, 'b-', linewidth=2)
+ax.set_xlabel('Time (hours)')
+ax.set_ylabel('Temperature (°C)')
+ax.set_title('Gas Temperature During Filling')
+ax.grid(True, alpha=0.3)
+fig.tight_layout()
+fig.savefig(os.path.join(FIG_DIR, 'filling_temperature.png'), dpi=150)
+plt.close(fig)                 # free memory, avoid display issues
+print(f"Saved: {os.path.join(FIG_DIR, 'filling_temperature.png')}")
+```
+
+**Key rules for figure saving:**
+- Use `matplotlib.use('Agg')` at the top of the notebook to avoid GUI backend
+  issues when running headless or via scripts
+- Always call `plt.close(fig)` after saving to prevent memory leaks in long
+  simulation loops
+- Save to a `figures/` subdirectory next to the notebook
+- Use descriptive filenames: `filling_temperature.png`, not `fig1.png`
+- Print the saved path so the report generator can find them
 
 ### Option 3: Add a Doc Page (for recurring questions)
 
@@ -542,6 +579,189 @@ Update `docs/REFERENCE_MANUAL_INDEX.md` with the link.
 
 Add an entry to `docs/development/TASK_LOG.md`. This is the searchable
 memory that survives across AI sessions.
+
+### Option 5: Generate a Word Report (best for deliverables)
+
+For engineering studies and client deliverables, generate a Word document
+using `python-docx`. This was proven on the CNG Tank Modelling project
+(`examples/CNGtankmodelling/generate_report.py`).
+
+**Architecture: a standalone report-generator script:**
+
+```
+your_project/
+├── simulation_notebook.ipynb   # Interactive exploration
+├── generate_report.py          # Headless: runs sims + writes .docx
+├── figures/                    # PNG files saved by both notebook and script
+└── YourReport.docx             # Output
+```
+
+**Why a separate script instead of the notebook?**
+- Reproducible: runs end-to-end without Jupyter kernel state
+- Headless: works on CI/CD or via `python generate_report.py`
+- Figures and text stay in sync because both are generated in one pass
+- Version-controllable (`.py` diffs cleanly; `.ipynb` JSON does not)
+
+**Report generator pattern:**
+
+```python
+import matplotlib
+matplotlib.use('Agg')  # MUST be before any pyplot import
+import matplotlib.pyplot as plt
+from docx import Document
+from docx.shared import Inches, Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+import os
+
+# ── Constants ────────────────────────────────────────────
+FIG_DIR = os.path.join(os.path.dirname(__file__), 'figures')
+os.makedirs(FIG_DIR, exist_ok=True)
+
+# ── 1. Run simulations ──────────────────────────────────
+def run_baseline():
+    """Run the baseline simulation and return results dict."""
+    # ... NeqSim simulation code ...
+    return {'time': time_list, 'temperature': temp_list, 'pressure': pres_list}
+
+# ── 2. Generate figures ─────────────────────────────────
+def make_temperature_figure(results):
+    """Create and save temperature plot, return path."""
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(results['time'], results['temperature'], 'b-', lw=2)
+    ax.set_xlabel('Time (hours)')
+    ax.set_ylabel('Temperature (°C)')
+    ax.set_title('Gas Temperature')
+    ax.grid(True, alpha=0.3)
+    path = os.path.join(FIG_DIR, 'temperature.png')
+    fig.savefig(path, dpi=150, bbox_inches='tight')
+    plt.close(fig)
+    return path
+
+# ── 3. Build Word document ──────────────────────────────
+def build_report(results, fig_paths):
+    """Assemble the Word document."""
+    doc = Document()
+    doc.add_heading('Simulation Report', level=0)
+
+    doc.add_heading('1. Introduction', level=1)
+    doc.add_paragraph('This report presents the simulation results for ...')
+
+    doc.add_heading('2. Results', level=1)
+    doc.add_paragraph(
+        f"Peak temperature: {max(results['temperature']):.1f} °C"
+    )
+    doc.add_picture(fig_paths['temperature'], width=Inches(6.0))
+    last = doc.paragraphs[-1]
+    last.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+    doc.save('MyReport.docx')
+    print('Report saved: MyReport.docx')
+
+# ── 4. Main ─────────────────────────────────────────────
+if __name__ == '__main__':
+    results = run_baseline()
+    fig_paths = {
+        'temperature': make_temperature_figure(results),
+    }
+    build_report(results, fig_paths)
+```
+
+**Key lessons from the CNG report project:**
+
+| Lesson | Detail |
+|--------|--------|
+| `matplotlib.use('Agg')` first | Must come before `import matplotlib.pyplot`. Otherwise the script hangs or crashes without a display. |
+| Separate sim from plotting | Run all simulations first, collect results dicts, then generate all figures. Keeps the script restartable. |
+| Use f-strings for dynamic text | Report text should reference computed values (`f"{max_temp:.1f} °C"`) so the document stays in sync with simulation. |
+| `plt.close(fig)` always | Without this, memory grows with each figure in a loop (sensitivity studies generate many). |
+| `bbox_inches='tight'` | Prevents axis labels from being clipped in the saved PNG. |
+| Handle simulation failures | Wrap each simulation batch in try/except so one failure doesn't kill the whole report. Log the error and skip. |
+| `dpi=150` is enough | Higher DPI makes the .docx file huge with no visible quality gain in print. |
+| Save figures AND embed them | Save to `figures/` for reuse, and embed in the .docx. Both are needed. |
+
+**Rendering equations natively in Word (OMML):**
+
+Word supports native Office Math Markup Language (OMML) equations that render
+beautifully — the same typeset quality as the Word equation editor. Use the
+`latex2mathml` + XSLT approach to convert LaTeX strings into OMML XML and
+insert them directly into the document.
+
+```python
+import latex2mathml.converter
+from lxml import etree
+from docx.oxml.ns import qn
+
+# ── XSLT stylesheet (ships with Word / Office) ──────────
+# Download MML2OMML.XSL from your Office install or from:
+# C:\Program Files\Microsoft Office\root\Office16\MML2OMML.XSL
+# or bundle it with the project.
+XSLT_PATH = os.path.join(os.path.dirname(__file__), 'MML2OMML.XSL')
+xslt = etree.parse(XSLT_PATH)
+transform = etree.XSLT(xslt)
+
+def add_latex_equation(paragraph, latex_str):
+    """Insert a LaTeX equation as a native Word OMML equation.
+
+    Args:
+        paragraph: A python-docx Paragraph object to append the equation to.
+        latex_str: LaTeX math string WITHOUT delimiters (no $ or $$).
+                   Example: r'P = \\frac{RT}{V - b}'
+    """
+    # 1. LaTeX → MathML
+    mathml_str = latex2mathml.converter.convert(latex_str)
+
+    # 2. MathML → OMML via Microsoft's XSLT
+    mathml_tree = etree.fromstring(mathml_str.encode('utf-8'))
+    omml_tree = transform(mathml_tree)
+
+    # 3. Insert into paragraph's XML
+    for omml_element in omml_tree.getroot():
+        paragraph._element.append(omml_element)
+
+# ── Usage ────────────────────────────────────────────────
+doc = Document()
+doc.add_heading('Energy Balance', level=1)
+
+p = doc.add_paragraph('The first law for a constant-volume system:')
+p = doc.add_paragraph()  # new paragraph for equation
+add_latex_equation(p, r'm \\, c_v \\, \\frac{dT}{dt} = \\dot{Q} - \\dot{m} \\, h')
+
+p = doc.add_paragraph('The SRK equation of state:')
+p = doc.add_paragraph()
+add_latex_equation(p, r'P = \\frac{RT}{V-b} - \\frac{a(T)}{V(V+b)}')
+
+doc.save('report_with_equations.docx')
+```
+
+The equations above render in Word exactly like the built-in equation editor —
+fully scalable, editable, and print-quality. No images, no blurry screenshots.
+
+**Setup for OMML equations:**
+
+1. Install `latex2mathml` and `lxml`:
+   ```
+   pip install latex2mathml lxml
+   ```
+2. Copy `MML2OMML.XSL` from your Office installation:
+   ```
+   C:\Program Files\Microsoft Office\root\Office16\MML2OMML.XSL
+   ```
+   Bundle it next to `generate_report.py` so the script is self-contained.
+
+3. Common LaTeX expressions for NeqSim reports:
+
+   | What | LaTeX |
+   |------|-------|
+   | SRK EOS | `r'P = \frac{RT}{V-b} - \frac{a(T)}{V(V+b)}'` |
+   | Energy balance | `r'm c_v \frac{dT}{dt} = \dot{Q} - \dot{m} h'` |
+   | Churchill-Chu | `r'Nu = \left[0.825 + \frac{0.387 Ra^{1/6}}{(1+(0.492/Pr)^{9/16})^{8/27}}\right]^2'` |
+   | Heat transfer | `r'Q = h A (T_w - T_f)'` |
+   | Compressibility | `r'Z = \frac{PV}{nRT}'` |
+
+**Dependencies:**
+```
+pip install python-docx matplotlib latex2mathml lxml neqsim
+```
 
 ---
 
@@ -559,6 +779,10 @@ memory that survives across AI sessions.
 | Wrong mixing rule number for CPA | Convergence failure | Use `10` (numeric) for CPA EOS |
 | Not setting `setMultiPhaseCheck(true)` | Missing liquid phase | Required for water/heavy systems |
 | Forgot `setFlowRate` on stream | Zero flow everywhere | Set before running |
+| `matplotlib.use('Agg')` after pyplot | Script hangs or crashes | Put `matplotlib.use('Agg')` before any `import matplotlib.pyplot` |
+| Not closing figures in loops | Memory grows, OOM | Always call `plt.close(fig)` after `savefig()` |
+| Hardcoded results in report text | Report drifts from simulation | Use f-strings: `f"{value:.1f}"` so text updates automatically |
+| Saving figures without `bbox_inches='tight'` | Axis labels clipped | Add `bbox_inches='tight'` to `savefig()` |
 
 ---
 
