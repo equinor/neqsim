@@ -21,6 +21,7 @@ A rigorous, step-by-step thermodynamic and kinetic simulation of the beer brewin
 using NeqSim's bio-processing equipment and the **CPA equation of state** for accurate
 modelling of associating fluids (water, ethanol, glycerol).
 
+
 ## Process Overview
 
 ```
@@ -124,7 +125,7 @@ from neqsim_dev_setup import neqsim_init, neqsim_classes
 import jpype
 
 # Start JVM with project classpath (set recompile=True to rebuild Java first)
-ns = neqsim_init(recompile=True)
+ns = neqsim_init(recompile=False)
 
 # Import standard NeqSim classes into namespace
 ns = neqsim_classes(ns)
@@ -163,8 +164,12 @@ print("Bio-processing classes available: Fermenter, EnzymeTreatment, Stoichiomet
 <summary>Output</summary>
 
 ```
-JVM already running — compiling before restart... Compiling... OK
+Classpath:
+  1. C:\Users\ESOL\Documents\GitHub\neqsim2\target\classes
+  2. C:\Users\ESOL\Documents\GitHub\neqsim2\src\main\resources
+  3. C:\Users\ESOL\Documents\GitHub\neqsim2\target\neqsim-3.4.0.jar
 
+<<<<<<< HEAD
 Error: ---------------------------------------------------------------------------
 AttributeError                            Traceback (most recent call last)
 Cell In[40], line 11
@@ -189,6 +194,13 @@ Please review the code in the cell(s) to identify a possible cause of the failur
 Click <a href='https://aka.ms/vscodeJupyterKernelCrash'>here</a> for more info.
 
 View Jupyter <a href='command:jupyter.viewOutput'>log</a> for further details.
+=======
+JVM started: C:\Users\ESOL\graalvm\graalvm-jdk-25.0.1+8.1\bin\server\jvm.dll
+Ready — call neqsim_classes(ns) to import classes
+All NeqSim classes imported OK
+NeqSim loaded via devtools. Extended component database enabled.
+Bio-processing classes available: Fermenter, EnzymeTreatment, StoichiometricReaction
+>>>>>>> ec1c592f7acf626f2c4b23309157201167c2a2a6
 ```
 
 </details>
