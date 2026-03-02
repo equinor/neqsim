@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Tests for VesselDepressurization class.
@@ -1027,5 +1028,291 @@ public class VesselDepressurizationTest {
     for (java.util.Map.Entry<String, String> entry : risks.entrySet()) {
       System.out.println(entry.getKey() + ": " + entry.getValue());
     }
+  }
+
+  @Test
+  @DisplayName("Test fixed mass flow rate filling with energy balance")
+  void testFillingWithFixedFlowRate() {
+    // Create a vessel initially at low pressure (simulating start of CNG filling)
+    SystemInterface gas = new SystemSrkEos(288.15, 20.0); // 15 C, 20 bar
+    gas.addComponent("methane", 0.85);
+    gas.addComponent("ethane", 0.10);
+    gas.addComponent("propane", 0.05);
+    gas.setMixingRule("classic");
+    gas.init(0);
+    gas.init(1);
+
+    Stream feed = new Stream("feed", gas);
+    feed.setTemperature(288.15, "K");
+    feed.setPressure(20.0, "bar");
+    feed.run();
+
+    VesselDepressurization vessel = new VesselDepressurization("CNG Tank", feed);
+    vessel.setVesselGeometry(2.0, 0.5, VesselDepressurization.VesselOrientation.VERTICAL);
+    vessel.setCalculationType(VesselDepressurization.CalculationType.ENERGY_BALANCE);
+    vessel.setHeatTransferType(VesselDepressurization.HeatTransferType.CALCULATED);
+    vessel.setVesselMaterial(0.015, VesselDepressurization.VesselMaterial.CARBON_STEEL);
+    vessel.setFlowDirection(VesselDepressurization.FlowDirection.FILLING);
+    vessel.setFixedMassFlowRate(0.01); // 0.01 kg/s filling rate
+    vessel.setInletTemperature(288.15); // 15 C inlet gas temperature
+    vessel.setAmbientTemperature(288.15); // 15 C ambient
+    vessel.run();
+
+    double initialP = vessel.getPressure("bar");
+    double initialMass = vessel.getMass();
+
+    // Run transient filling
+    UUID id = UUID.randomUUID();
+    for (int i = 0; i < 100; i++) {
+      vessel.runTransient(1.0, id);
+    }
+
+    double finalP = vessel.getPressure("bar");
+    double finalMass = vessel.getMass();
+
+    assertTrue(finalP > initialP, "Pressure should increase during filling. Initial: " + initialP
+        + ", Final: " + finalP);
+    assertTrue(finalMass > initialMass,
+        "Mass should increase during filling. Initial: " + initialMass + ", Final: " + finalMass);
+  }
+
+  @Test
+  @DisplayName("Test filling with target pressure stop condition")
+  void testFillingWithTargetPressure() {
+    SystemInterface gas = new SystemSrkEos(288.15, 20.0);
+    gas.addComponent("methane", 0.9);
+    gas.addComponent("ethane", 0.1);
+    gas.setMixingRule("classic");
+    gas.init(0);
+    gas.init(1);
+
+    Stream feed = new Stream("feed", gas);
+    feed.setTemperature(288.15, "K");
+    feed.setPressure(20.0, "bar");
+    feed.run();
+
+    VesselDepressurization vessel = new VesselDepressurization("Tank", feed);
+    vessel.setVesselGeometry(1.0, 0.3, VesselDepressurization.VesselOrientation.VERTICAL);
+    vessel.setCalculationType(VesselDepressurization.CalculationType.ENERGY_BALANCE);
+    vessel.setHeatTransferType(VesselDepressurization.HeatTransferType.CALCULATED);
+    vessel.setVesselMaterial(0.01, VesselDepressurization.VesselMaterial.CARBON_STEEL);
+    vessel.setFlowDirection(VesselDepressurization.FlowDirection.FILLING);
+    vessel.setFixedMassFlowRate(0.05); // Faster rate for test
+    vessel.setInletTemperature(288.15);
+    vessel.setTargetPressure(50.0); // Stop at 50 bar
+    vessel.run();
+
+    // Run simulation with very long end time - should stop at target pressure
+    VesselDepressurization.SimulationResult result =
+        vessel.runSimulation(100000.0, 1.0, 100);
+
+    assertTrue(vessel.isTargetPressureReached(),
+        "Target pressure should be reached");
+    assertTrue(vessel.getPressure("bar") >= 49.0,
+        "Final pressure should be near target. Actual: " + vessel.getPressure("bar"));
+  }
+
+  @Test
+  @DisplayName("Test fixed volumetric flow rate setting")
+  void testFixedVolumetricFlowRate() {
+    Stream feed = createTestStream(288.15, 20.0);
+
+    VesselDepressurization vessel = new VesselDepressurization("Tank", feed);
+    vessel.setVolume(1.0);
+    vessel.setFlowDirection(VesselDepressurization.FlowDirection.FILLING);
+    vessel.setFixedVolumetricFlowRate(1783.4, "Sm3/day");
+    vessel.setInletTemperature(288.15);
+    vessel.run();
+
+    // Verify mass increases during filling
+    double initialMass = vessel.getMass();
+    UUID id = UUID.randomUUID();
+    for (int i = 0; i < 20; i++) {
+      vessel.runTransient(1.0, id);
+    }
+    double finalMass = vessel.getMass();
+
+    assertTrue(finalMass > initialMass,
+        "Mass should increase with volumetric flow filling");
+  }
+
+  @Test
+  @DisplayName("Test external HTC auto-calculation")
+  void testCalculateExternalHTC() {
+    Stream feed = createTestStream(300.0, 50.0);
+
+    VesselDepressurization vessel = new VesselDepressurization("Tank", feed);
+    vessel.setVolume(1.0);
+    vessel.setVesselGeometry(2.0, 0.5, VesselDepressurization.VesselOrientation.VERTICAL);
+    vessel.setCalculationType(VesselDepressurization.CalculationType.ENERGY_BALANCE);
+    vessel.setHeatTransferType(VesselDepressurization.HeatTransferType.TRANSIENT_WALL);
+    vessel.setVesselMaterial(0.015, VesselDepressurization.VesselMaterial.CARBON_STEEL);
+    vessel.setCalculateExternalHTC(true); // Enable auto-calculation
+    vessel.setAmbientTemperature(288.15);
+    vessel.setOrificeDiameter(0.005);
+    vessel.setBackPressure(1.0);
+    vessel.run();
+
+    double initialP = vessel.getPressure("bar");
+
+    UUID id = UUID.randomUUID();
+    for (int i = 0; i < 50; i++) {
+      vessel.runTransient(0.5, id);
+    }
+
+    double finalP = vessel.getPressure("bar");
+
+    assertTrue(finalP < initialP, "Pressure should decrease during blowdown");
+  }
+
+  @Test
+  @DisplayName("Test hemispheric geometry volume calculation")
+  void testHemisphericGeometry() {
+    Stream feed = createTestStream(288.15, 20.0);
+
+    VesselDepressurization vessel = new VesselDepressurization("Tank", feed);
+    // CNG tank: 19m length, 0.999m inner diameter
+    vessel.setVesselGeometry(19.0, 0.999,
+        VesselDepressurization.VesselOrientation.VERTICAL);
+
+    double expectedCylinder = Math.PI * 0.999 * 0.999 / 4.0 * 19.0;
+    double expectedHemisphere = Math.PI * 0.999 * 0.999 * 0.999 / 6.0;
+    double expectedTotal = expectedCylinder + expectedHemisphere;
+
+    assertEquals(expectedTotal, vessel.getVolume(), 0.01,
+        "Volume should include cylinder + hemispheric caps");
+    assertTrue(vessel.getVolume() > 14.0 && vessel.getVolume() < 16.0,
+        "Volume should be approximately 15.4 m3 for CNG tank geometry");
+  }
+
+  @Test
+  @DisplayName("Diagnostic: trace CNG filling energy balance")
+  void testCNGFillingDiagnostic() {
+    // Minimal test to trace the energy balance at each step
+    SystemInterface gas = new SystemSrkEos(288.15, 20.0);
+    gas.addComponent("methane", 0.90);
+    gas.addComponent("ethane", 0.07);
+    gas.addComponent("propane", 0.03);
+    gas.setMixingRule("classic");
+    gas.init(0);
+    gas.init(1);
+
+    Stream feed = new Stream("diag feed", gas);
+    feed.setTemperature(288.15, "K");
+    feed.setPressure(20.0, "bar");
+    feed.run();
+
+    VesselDepressurization vessel = new VesselDepressurization("Diag Tank", feed);
+    vessel.setVesselGeometry(10.0, 1.0,
+        VesselDepressurization.VesselOrientation.VERTICAL);
+    vessel.setCalculationType(VesselDepressurization.CalculationType.ENERGY_BALANCE);
+    vessel.setHeatTransferType(VesselDepressurization.HeatTransferType.ADIABATIC);
+    vessel.setFlowDirection(VesselDepressurization.FlowDirection.FILLING);
+    vessel.setFixedVolumetricFlowRate(1000.0, "Sm3/day");
+    vessel.setInletTemperature(288.15);
+    vessel.run();
+
+    System.out.println("=== CNG Filling Diagnostic (ADIABATIC) ===");
+    System.out.println("Initial: T=" + (vessel.getTemperature() - 273.15) + "C, P="
+        + vessel.getPressure("bar") + " bar, mass=" + vessel.getMass() + " kg");
+
+    // Get access to the thermoSystem state via fluid properties
+    SystemInterface sys = feed.getThermoSystem().clone();
+    sys.setTemperature(288.15);
+    sys.setPressure(20.0);
+    sys.init(0);
+    sys.init(1);
+    ThermodynamicOperations tOps = new ThermodynamicOperations(sys);
+    tOps.TPflash();
+    sys.init(3);
+    System.out.println("Feed fluid at 288K, 20bar: H=" + sys.getEnthalpy() + " J, U="
+        + sys.getInternalEnergy() + " J, mass=" + (sys.getTotalNumberOfMoles() * sys.getMolarMass())
+        + " kg");
+    System.out.println("Feed specific h=" + sys.getEnthalpy() / (sys.getTotalNumberOfMoles() * sys.getMolarMass())
+        + " J/kg");
+    System.out.println("Feed specific u=" + sys.getInternalEnergy() / (sys.getTotalNumberOfMoles() * sys.getMolarMass())
+        + " J/kg");
+
+    UUID id = UUID.randomUUID();
+    for (int i = 0; i < 10; i++) {
+      vessel.runTransient(10.0, id);
+      System.out.println("Step " + (i + 1) + ": T=" + String.format("%.2f", vessel.getTemperature() - 273.15)
+          + "C, P=" + String.format("%.4f", vessel.getPressure("bar"))
+          + " bar, mass=" + String.format("%.4f", vessel.getMass()) + " kg");
+    }
+
+    double finalT = vessel.getTemperature() - 273.15;
+    System.out.println("After 10 steps: T=" + finalT + " C");
+    // For adiabatic filling from 20 bar, expect moderate temperature increase
+    assertTrue(finalT < 100.0,
+        "Adiabatic filling temperature " + finalT + " C should be < 100 C for 10 small steps");
+  }
+
+  @Test
+  @DisplayName("Test CNG natural gas filling scenario")
+  void testCNGNaturalGasFilling() {
+    // Create natural gas at initial tank conditions
+    SystemInterface gas = new SystemSrkEos(288.15, 20.0); // 15 C, 20 bar
+    gas.addComponent("nitrogen", 0.02);
+    gas.addComponent("CO2", 0.054);
+    gas.addComponent("methane", 0.85);
+    gas.addComponent("ethane", 0.0461);
+    gas.addComponent("propane", 0.018);
+    gas.addComponent("i-butane", 0.0025);
+    gas.addComponent("n-butane", 0.0044);
+    gas.addComponent("i-pentane", 0.0016);
+    gas.addComponent("n-pentane", 0.001);
+    gas.addComponent("n-hexane", 0.0024);
+    gas.setMixingRule("classic");
+    gas.init(0);
+    gas.init(1);
+
+    Stream feed = new Stream("CNG feed", gas);
+    feed.setTemperature(288.15, "K");
+    feed.setPressure(20.0, "bar");
+    feed.run();
+
+    VesselDepressurization vessel = new VesselDepressurization("CNG Tank", feed);
+    // CNG tank geometry
+    double innerDiam = 1.066 - 2 * 0.0335; // 0.999 m
+    vessel.setVesselGeometry(19.0, innerDiam,
+        VesselDepressurization.VesselOrientation.VERTICAL);
+    vessel.setCalculationType(VesselDepressurization.CalculationType.ENERGY_BALANCE);
+    vessel.setHeatTransferType(VesselDepressurization.HeatTransferType.TRANSIENT_WALL);
+    vessel.setVesselProperties(0.0335, 7850.0, 480.0, 50.0); // X80 steel
+    vessel.setFlowDirection(VesselDepressurization.FlowDirection.FILLING);
+    vessel.setFixedVolumetricFlowRate(1783.4, "Sm3/day");
+    vessel.setInletTemperature(288.15); // 15 C
+    vessel.setAmbientTemperature(288.15);
+    vessel.setCalculateExternalHTC(true);
+    vessel.run();
+
+    double initialP = vessel.getPressure("bar");
+    double initialMass = vessel.getMass();
+
+    // Run for a few hundred seconds (short test)
+    UUID id = UUID.randomUUID();
+    for (int i = 0; i < 200; i++) {
+      vessel.runTransient(10.0, id);
+    }
+
+    double finalP = vessel.getPressure("bar");
+    double finalMass = vessel.getMass();
+    double finalT = vessel.getTemperature();
+    double wallT = vessel.getWallTemperature();
+
+    System.out.println("CNG Filling test results:");
+    System.out.println("  Initial P: " + initialP + " bar, Final P: " + finalP + " bar");
+    System.out.println("  Initial mass: " + initialMass + " kg, Final mass: " + finalMass + " kg");
+    System.out.println("  Gas temperature: " + (finalT - 273.15) + " C");
+    System.out.println("  Wall temperature: " + (wallT - 273.15) + " C");
+
+    assertTrue(finalP > initialP, "Pressure should increase during CNG filling");
+    assertTrue(finalMass > initialMass, "Mass should increase during CNG filling");
+    // Temperature should be physically reasonable (10-80 C for filling from 15 C)
+    assertTrue((finalT - 273.15) > 10.0 && (finalT - 273.15) < 80.0,
+        "Gas temperature " + (finalT - 273.15) + " C should be between 10 and 80 C");
+    assertTrue((wallT - 273.15) > 0.0 && (wallT - 273.15) < 50.0,
+        "Wall temperature " + (wallT - 273.15) + " C should be between 0 and 50 C");
   }
 }

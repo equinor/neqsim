@@ -27,6 +27,21 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2025-07-17 — CNG tank temperature estimation improvements and Jupyter notebooks
+**Type:** E (Feature)
+**Keywords:** CNG, tank, filling, emptying, depressurization, VU-flash, heat transfer, Churchill-Chu, Gnielinski, natural convection, mixed convection, transient wall, VesselDepressurization, temperature estimation, MDMT
+**Solution:** `src/main/java/neqsim/process/equipment/tank/VesselDepressurization.java`, `examples/CNGtankmodelling/CNG_FillingSimulation.ipynb`, `examples/CNGtankmodelling/CNG_EmptyingSimulation.ipynb`, `examples/CNGtankmodelling/CNG_GasProperties_HTC.ipynb`
+**Notes:**
+- 6 Java improvements to VesselDepressurization: fixed flow rate filling, filling energy balance with VU-flash, external HTC (Churchill-Chu + Gnielinski), target pressure control, hemispheric geometry, mole-scaling fix
+- Bug fixes: (1) Cp*1000 in 3 HTC methods inflated coefficients 1000x, (2) OptimizedVUflash static variables contaminating between calls, (3) temperature guards for non-physical VU-flash results
+- Critical finding: VU-flash convergence fails when dt switches from 10s to 60s at low pressure — use constant dt=10s
+- Filling: 20→250 bar in 52 hr, gas T: 15→30°C, no liquid dropout
+- Emptying: 250→20 bar in 57 hr, min gas T: -0.4°C, MDMT check passed (-46°C margin)
+- Ambient sensitivity: even at -20°C ambient, min wall T = -34.4°C (above MDMT)
+- HT model comparison: ADIABATIC=-94°C, CALCULATED=+9°C, TRANSIENT_WALL=-0.4°C
+- Cp notebook bug: getMolarMass() returns kg/mol, so * 1000 in Cp conversion was wrong (same root cause as Java Cp*1000 bug)
+- 41 unit tests passing, devtools workflow used (target/classes, no JAR packaging)
+
 ### 2026-03-01 — Well mechanical design and cost estimation system
 **Type:** F (Design)
 **Keywords:** well, subsea, casing, tubing, mechanical design, NORSOK D-010, API 5CT, cost estimation, drilling, completion, barrier verification, WellMechanicalDesign, WellDesignCalculator, WellCostEstimator

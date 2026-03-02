@@ -254,6 +254,21 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   private double valveOpeningTime = 0.0; // s, time for valve to fully open (0 = instant)
   private double valveOpeningFraction = 1.0; // Current valve opening (0-1)
 
+  // Fixed flow rate parameters (overrides orifice calculation when set)
+  private boolean useFixedFlowRate = false;
+  private double fixedMassFlowRate = 0.0; // kg/s (positive value, sign applied by flow direction)
+
+  // Filling parameters
+  private double inletTemperature = Double.NaN; // K, temperature of incoming gas during filling
+  private SystemInterface inletFluid = null; // Clone of feed fluid for computing inlet enthalpy
+
+  // Target pressure for filling stop condition
+  private double targetPressure = Double.NaN; // Pa, simulation stops when reached
+  private boolean targetPressureReached = false;
+
+  // External HTC calculation
+  private boolean calculateExternalHTC = false;
+
   // Calculation settings
   private CalculationType calculationType = CalculationType.ENERGY_BALANCE;
   private HeatTransferType heatTransferType = HeatTransferType.CALCULATED;
@@ -321,6 +336,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   public void setInletStream(StreamInterface inletStream) {
     this.thermoSystem = inletStream.getThermoSystem().clone();
     this.initialBeta = inletStream.getThermoSystem().getBeta();
+    this.inletFluid = inletStream.getThermoSystem().clone();
     this.outletStream = new Stream(getName() + "_outlet", thermoSystem.clone());
     this.wallTemperature = thermoSystem.getTemperature();
     initializeWallModel();
@@ -613,15 +629,23 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   /**
    * Sets the vessel geometry.
    *
-   * @param length Vessel length [m]
-   * @param diameter Vessel diameter [m]
+   * <p>
+   * Volume is calculated as cylinder + two hemispheres (one full sphere):
+   * V = pi/4 * D^2 * L + pi/6 * D^3
+   * </p>
+   *
+   * @param length Vessel cylindrical length [m] (excluding hemispheric caps)
+   * @param diameter Vessel inner diameter [m]
    * @param orientation Vessel orientation
    */
   public void setVesselGeometry(double length, double diameter, VesselOrientation orientation) {
     this.vesselLength = length;
     this.vesselDiameter = diameter;
     this.orientation = orientation;
-    this.volume = Math.PI * diameter * diameter / 4.0 * length;
+    // Cylinder volume + two hemispheres (= one sphere)
+    double cylinderVolume = Math.PI * diameter * diameter / 4.0 * length;
+    double hemisphereVolume = Math.PI * diameter * diameter * diameter / 6.0;
+    this.volume = cylinderVolume + hemisphereVolume;
   }
 
   /**
@@ -868,6 +892,130 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    */
   public void setFlowDirection(FlowDirection direction) {
     this.flowDirection = direction;
+  }
+
+  /**
+   * Sets a fixed mass flow rate, overriding the orifice-based calculation.
+   *
+   * <p>
+   * When set, the specified mass flow rate is used instead of computing flow from
+   * pressure difference across an orifice. The sign convention is handled
+   * automatically based on the flow direction.
+   * </p>
+   *
+   * @param rate Mass flow rate [kg/s] (positive value)
+   */
+  public void setFixedMassFlowRate(double rate) {
+    this.fixedMassFlowRate = Math.abs(rate);
+    this.useFixedFlowRate = true;
+  }
+
+  /**
+   * Sets a fixed volumetric flow rate at standard conditions, overriding the orifice calculation.
+   *
+   * <p>
+   * The volumetric rate at standard conditions is converted to mass flow rate using the
+   * standard gas density derived from the fluid molar mass and ideal gas law at 15 deg C, 1 atm.
+   * </p>
+   *
+   * @param rate Volumetric flow rate (positive value)
+   * @param unit Unit string, e.g. "Sm3/day", "Sm3/hr", "Sm3/sec"
+   */
+  public void setFixedVolumetricFlowRate(double rate, String unit) {
+    double rateSm3PerSec;
+    if (unit.equalsIgnoreCase("Sm3/day")) {
+      rateSm3PerSec = rate / 86400.0;
+    } else if (unit.equalsIgnoreCase("Sm3/hr")) {
+      rateSm3PerSec = rate / 3600.0;
+    } else if (unit.equalsIgnoreCase("Sm3/sec") || unit.equalsIgnoreCase("Sm3/s")) {
+      rateSm3PerSec = rate;
+    } else {
+      throw new IllegalArgumentException("Unknown volumetric flow unit: " + unit
+          + ". Use Sm3/day, Sm3/hr, or Sm3/sec.");
+    }
+    // Standard conditions: 15 deg C (288.15 K), 1 atm (101325 Pa)
+    // rho_std = P * MW / (Z * R * T) where Z ~ 1.0 for ideal gas at std conditions
+    double molarMass = thermoSystem.getMolarMass(); // kg/mol
+    double rhoStd = 101325.0 * molarMass / (8.314 * 288.15); // kg/m3 at std
+    this.fixedMassFlowRate = rateSm3PerSec * rhoStd;
+    this.useFixedFlowRate = true;
+  }
+
+  /**
+   * Clears the fixed flow rate setting, reverting to orifice-based flow calculation.
+   */
+  public void clearFixedFlowRate() {
+    this.useFixedFlowRate = false;
+    this.fixedMassFlowRate = 0.0;
+  }
+
+  /**
+   * Sets the inlet gas temperature for filling operations.
+   *
+   * <p>
+   * During filling, incoming gas enters at this temperature. The energy balance
+   * uses the enthalpy of the incoming gas at the inlet temperature and vessel
+   * pressure. If not set, the vessel gas temperature is used (less accurate).
+   * </p>
+   *
+   * @param temperature Inlet temperature [K]
+   */
+  public void setInletTemperature(double temperature) {
+    this.inletTemperature = temperature;
+  }
+
+  /**
+   * Sets the inlet gas temperature for filling operations.
+   *
+   * @param temperature Inlet temperature
+   * @param unit Temperature unit ("K", "C")
+   */
+  public void setInletTemperature(double temperature, String unit) {
+    if (unit.equalsIgnoreCase("C") || unit.equalsIgnoreCase("Celsius")) {
+      this.inletTemperature = temperature + 273.15;
+    } else {
+      this.inletTemperature = temperature;
+    }
+  }
+
+  /**
+   * Sets the target pressure for stopping the simulation.
+   *
+   * <p>
+   * For filling: simulation stops when vessel pressure reaches or exceeds the target.
+   * For discharge: simulation stops when vessel pressure drops to or below the target.
+   * </p>
+   *
+   * @param pressure Target pressure [bar]
+   */
+  public void setTargetPressure(double pressure) {
+    this.targetPressure = pressure * 1e5; // Convert bar to Pa
+    this.targetPressureReached = false;
+  }
+
+  /**
+   * Returns whether the target pressure has been reached.
+   *
+   * @return true if target pressure was reached
+   */
+  public boolean isTargetPressureReached() {
+    return targetPressureReached;
+  }
+
+  /**
+   * Enables or disables automatic calculation of external heat transfer coefficient.
+   *
+   * <p>
+   * When enabled, the external HTC is calculated using Churchill-Chu natural convection
+   * correlation for a vertical or horizontal cylinder, based on the outer wall temperature
+   * and ambient air properties. When disabled, the fixed value from
+   * {@link #setExternalHeatTransferCoefficient(double)} is used.
+   * </p>
+   *
+   * @param calculate true to enable automatic calculation
+   */
+  public void setCalculateExternalHTC(boolean calculate) {
+    this.calculateExternalHTC = calculate;
   }
 
   /**
@@ -1195,6 +1343,11 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * @return Mass flow rate [kg/s] (positive for discharge)
    */
   private double calculateMassFlowRate() {
+    // If a fixed flow rate is specified, use it directly
+    if (useFixedFlowRate) {
+      return (flowDirection == FlowDirection.DISCHARGE) ? fixedMassFlowRate : -fixedMassFlowRate;
+    }
+
     double P1 = thermoSystem.getPressure() * 1e5; // Pa
     double P2 = backPressure; // Pa
     double T = thermoSystem.getTemperature();
@@ -1271,13 +1424,18 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double Twall = getWallTemperature();
     double Tfluid = thermoSystem.getTemperature();
 
+    // Guard against non-physical temperatures from flash convergence issues
+    if (Twall <= 0.0 || Tfluid <= 0.0 || !Double.isFinite(Twall) || !Double.isFinite(Tfluid)) {
+      return 5.0; // Reasonable fallback [W/(m2*K)]
+    }
+
     // Get fluid properties
     double k, Cp, mu, rho;
     try {
       // Assuming gas phase dominates
       k = thermoSystem.getPhase(0).getThermalConductivity();
       Cp = thermoSystem.getPhase(0).getCp() / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
-          / thermoSystem.getPhase(0).getMolarMass() * 1000.0; // J/(kg*K)
+          / thermoSystem.getPhase(0).getMolarMass(); // J/(kg*K)
       mu = thermoSystem.getPhase(0).getViscosity();
       rho = thermoSystem.getPhase(0).getDensity("kg/m3");
     } catch (Exception e) {
@@ -1288,15 +1446,26 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       rho = 10.0;
     }
 
+    // Guard against non-physical fluid properties
+    if (k <= 0.0 || mu <= 0.0 || rho <= 0.0 || !Double.isFinite(k) || !Double.isFinite(mu)
+        || !Double.isFinite(rho)) {
+      return 5.0;
+    }
+
     boolean isVertical = (orientation == VesselOrientation.VERTICAL);
 
-    if (flowDirection == FlowDirection.FILLING) {
-      double massFlowRate = Math.abs(calculateMassFlowRate());
-      return VesselHeatTransferCalculator.calculateMixedConvectionCoefficient(L, Twall, Tfluid,
-          massFlowRate, orificeDiameter, k, Cp, mu, rho, isVertical);
-    } else {
-      return VesselHeatTransferCalculator.calculateInternalFilmCoefficient(L, Twall, Tfluid, k, Cp,
-          mu, rho, isVertical);
+    try {
+      if (flowDirection == FlowDirection.FILLING) {
+        double massFlowRate = Math.abs(calculateMassFlowRate());
+        return VesselHeatTransferCalculator.calculateMixedConvectionCoefficient(L, Twall, Tfluid,
+            massFlowRate, orificeDiameter, k, Cp, mu, rho, isVertical);
+      } else {
+        return VesselHeatTransferCalculator.calculateInternalFilmCoefficient(L, Twall, Tfluid, k,
+            Cp, mu, rho, isVertical);
+      }
+    } catch (Exception e) {
+      logger.warn("Internal HTC calculation failed, using fallback: " + e.getMessage());
+      return 5.0; // Reasonable fallback [W/(m2*K)]
     }
   }
 
@@ -1314,6 +1483,11 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double Twall = twoPhaseHeatTransfer ? gasWallTemperature : getWallTemperature();
     double Tfluid = thermoSystem.getTemperature();
 
+    // Guard against non-physical temperatures
+    if (Twall <= 0.0 || Tfluid <= 0.0 || !Double.isFinite(Twall) || !Double.isFinite(Tfluid)) {
+      return 5.0;
+    }
+
     // Get gas phase properties
     double k = 0.02, Cp = 1000.0, mu = 1e-5, rho = 10.0;
     try {
@@ -1321,7 +1495,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
         if (thermoSystem.getPhase(i).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
           k = thermoSystem.getPhase(i).getThermalConductivity();
           Cp = thermoSystem.getPhase(i).getCp() / thermoSystem.getPhase(i).getNumberOfMolesInPhase()
-              / thermoSystem.getPhase(i).getMolarMass() * 1000.0;
+              / thermoSystem.getPhase(i).getMolarMass(); // J/(kg*K)
           mu = thermoSystem.getPhase(i).getViscosity();
           rho = thermoSystem.getPhase(i).getDensity("kg/m3");
           break;
@@ -1331,15 +1505,26 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       // Use fallback values
     }
 
+    // Guard against non-physical fluid properties
+    if (k <= 0.0 || mu <= 0.0 || rho <= 0.0 || !Double.isFinite(k) || !Double.isFinite(mu)
+        || !Double.isFinite(rho)) {
+      return 5.0;
+    }
+
     boolean isVertical = (orientation == VesselOrientation.VERTICAL);
 
-    if (flowDirection == FlowDirection.FILLING) {
-      double massFlowRate = Math.abs(calculateMassFlowRate());
-      return VesselHeatTransferCalculator.calculateMixedConvectionCoefficient(L, Twall, Tfluid,
-          massFlowRate, orificeDiameter, k, Cp, mu, rho, isVertical);
-    } else {
-      return VesselHeatTransferCalculator.calculateInternalFilmCoefficient(L, Twall, Tfluid, k, Cp,
-          mu, rho, isVertical);
+    try {
+      if (flowDirection == FlowDirection.FILLING) {
+        double massFlowRate = Math.abs(calculateMassFlowRate());
+        return VesselHeatTransferCalculator.calculateMixedConvectionCoefficient(L, Twall, Tfluid,
+            massFlowRate, orificeDiameter, k, Cp, mu, rho, isVertical);
+      } else {
+        return VesselHeatTransferCalculator.calculateInternalFilmCoefficient(L, Twall, Tfluid, k,
+            Cp, mu, rho, isVertical);
+      }
+    } catch (Exception e) {
+      logger.warn("Gas HTC calculation failed, using fallback: " + e.getMessage());
+      return 5.0;
     }
   }
 
@@ -1374,7 +1559,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
         if (!thermoSystem.getPhase(i).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
           k = thermoSystem.getPhase(i).getThermalConductivity();
           Cp = thermoSystem.getPhase(i).getCp() / thermoSystem.getPhase(i).getNumberOfMolesInPhase()
-              / thermoSystem.getPhase(i).getMolarMass() * 1000.0;
+              / thermoSystem.getPhase(i).getMolarMass(); // J/(kg*K)
           mu = thermoSystem.getPhase(i).getViscosity();
           rho = thermoSystem.getPhase(i).getDensity("kg/m3");
           break;
@@ -1401,11 +1586,121 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Calculates the specific enthalpy of the incoming gas during filling.
+   *
+   * <p>
+   * If an inlet temperature is set, the enthalpy is computed at the inlet temperature
+   * and the current vessel pressure using a clone of the feed fluid. Otherwise, the
+   * vessel gas enthalpy is used as a fallback.
+   * </p>
+   *
+   * @return Specific enthalpy of incoming gas [J/kg]
+   */
+  private double calculateInletSpecificEnthalpy() {
+    if (!Double.isNaN(inletTemperature) && inletFluid != null) {
+      try {
+        SystemInterface inletCalc = inletFluid.clone();
+        inletCalc.setTemperature(inletTemperature);
+        inletCalc.setPressure(thermoSystem.getPressure());
+        inletCalc.init(0);
+        inletCalc.init(1);
+        ThermodynamicOperations opsInlet = new ThermodynamicOperations(inletCalc);
+        opsInlet.TPflash();
+        inletCalc.init(3);
+        inletCalc.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+        double inletH = inletCalc.getEnthalpy(); // J
+        double inletMass = inletCalc.getTotalNumberOfMoles() * inletCalc.getMolarMass(); // kg
+        return inletH / inletMass; // J/kg
+      } catch (Exception e) {
+        logger.warn("Failed to compute inlet enthalpy at inlet temperature, "
+            + "using vessel gas enthalpy: " + e.getMessage());
+      }
+    }
+    // Fallback: use vessel gas specific enthalpy
+    double mass = thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarMass();
+    if (mass > 0.0) {
+      return thermoSystem.getEnthalpy() / mass;
+    }
+    return 0.0;
+  }
+
+  /**
+   * Calculates the external heat transfer coefficient using natural convection correlations.
+   *
+   * <p>
+   * Uses Churchill-Chu correlation for natural convection on a vertical or horizontal
+   * cylinder in still air. Air properties are evaluated at the film temperature
+   * (average of outer wall and ambient temperatures).
+   * </p>
+   *
+   * @return External heat transfer coefficient [W/(m2*K)]
+   */
+  private double calculateExternalHeatTransferCoefficient() {
+    if (!calculateExternalHTC) {
+      return externalHeatTransferCoeff;
+    }
+
+    double Twall_outer;
+    if (wallModel != null && heatTransferType == HeatTransferType.TRANSIENT_WALL) {
+      Twall_outer = wallModel.getOuterWallTemperature();
+    } else {
+      Twall_outer = wallTemperature;
+    }
+
+    // Guard against non-physical wall temperatures
+    if (Twall_outer <= 0.0 || !Double.isFinite(Twall_outer) || ambientTemperature <= 0.0) {
+      return 5.0; // Reasonable fallback for external natural convection
+    }
+
+    double deltaT = Math.abs(Twall_outer - ambientTemperature);
+    if (deltaT < 0.1) {
+      return 3.0; // Minimum natural convection in still air
+    }
+
+    double Tfilm = (Twall_outer + ambientTemperature) / 2.0;
+
+    // Air properties at film temperature (approximate correlations)
+    // Density from ideal gas law at 1 atm
+    double rhoAir = 101325.0 * 0.0289 / (8.314 * Tfilm); // kg/m3
+    // Dynamic viscosity (Sutherland's law approximation)
+    double muAir = 1.716e-5 * Math.pow(Tfilm / 273.15, 1.5) * (273.15 + 110.4) / (Tfilm + 110.4);
+    // Thermal conductivity of air
+    double kAir = 0.0241 * Math.pow(Tfilm / 273.15, 0.81);
+    // Specific heat of air
+    double CpAir = 1005.0; // J/(kg*K), roughly constant
+    // Thermal expansion coefficient (ideal gas)
+    double beta = 1.0 / Tfilm;
+
+    double L = (orientation == VesselOrientation.VERTICAL) ? vesselLength : vesselDiameter;
+    boolean isVertical = (orientation == VesselOrientation.VERTICAL);
+
+    double nuAir = muAir / rhoAir; // kinematic viscosity [m2/s]
+    double Pr = VesselHeatTransferCalculator.calculatePrandtlNumber(CpAir, muAir, kAir);
+    double Gr = VesselHeatTransferCalculator.calculateGrashofNumber(L, ambientTemperature,
+        Twall_outer, beta, nuAir);
+    double Ra = VesselHeatTransferCalculator.calculateRayleighNumber(Gr, Pr);
+
+    double Nu;
+    if (isVertical) {
+      Nu = VesselHeatTransferCalculator.calculateNusseltVerticalSurface(Ra, Pr);
+    } else {
+      Nu = VesselHeatTransferCalculator.calculateNusseltHorizontalCylinder(Ra, Pr);
+    }
+
+    double hExt = Nu * kAir / L;
+    // Clamp to reasonable range
+    return Math.max(2.0, Math.min(hExt, 50.0));
+  }
+
+  /**
    * Calculates the heat transfer rate to the fluid.
    *
    * @return Heat rate [W] (positive = heat into fluid)
    */
   private double calculateHeatRate() {
+    // Update external HTC if auto-calculation is enabled
+    double hExternal = calculateExternalHeatTransferCoefficient();
+
     double Q = 0.0;
 
     switch (heatTransferType) {
@@ -1477,10 +1772,12 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * @return Wall area [m²]
    */
   private double getWallArea() {
-    // Cylindrical vessel with hemispherical ends approximation
+    // Cylindrical vessel with hemispherical ends
+    // Cylinder lateral area = pi * D * L
+    // Two hemispheres = one complete sphere = pi * D^2
     double cylinderArea = Math.PI * vesselDiameter * vesselLength;
-    double endArea = Math.PI * vesselDiameter * vesselDiameter;
-    return cylinderArea + endArea;
+    double hemisphereArea = Math.PI * vesselDiameter * vesselDiameter;
+    return cylinderArea + hemisphereArea;
   }
 
   /** {@inheritDoc} */
@@ -1634,13 +1931,17 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double newMass = initialMass - deltaMass;
     double moleFactor = newMass / initialMass;
 
-    // Scale moles for each component in each phase
-    for (int j = 0; j < thermoSystem.getMaxNumberOfPhases(); j++) {
-      for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
-        double currentMoles = thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase();
-        double scaledMoles = currentMoles * moleFactor;
-        thermoSystem.getPhase(j).getComponent(i).setNumberOfmoles(scaledMoles);
-        thermoSystem.getPhase(j).getComponent(i).setNumberOfMolesInPhase(scaledMoles);
+    // Scale moles for each component consistently across all phases.
+    // Use overall component moles (not phase-specific) to set total moles correctly,
+    // then scale phase-specific moles proportionally.
+    for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
+      // Get total moles for this component (independent of phase distribution)
+      double totalCompMoles = thermoSystem.getPhase(0).getComponent(i).getNumberOfmoles();
+      double scaledTotal = totalCompMoles * moleFactor;
+      for (int j = 0; j < thermoSystem.getMaxNumberOfPhases(); j++) {
+        thermoSystem.getPhase(j).getComponent(i).setNumberOfmoles(scaledTotal);
+        double phaseMoles = thermoSystem.getPhase(j).getComponent(i).getNumberOfMolesInPhase();
+        thermoSystem.getPhase(j).getComponent(i).setNumberOfMolesInPhase(phaseMoles * moleFactor);
       }
     }
     thermoSystem.setTotalNumberOfMoles(thermoSystem.getTotalNumberOfMoles() * moleFactor);
@@ -1686,8 +1987,14 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
 
         case ENERGY_BALANCE:
           // Full energy balance: U_new = U_old - mdot*h_out*dt + Q*dt
-          double hOut = (flowDirection == FlowDirection.DISCHARGE) ? initialH / initialMass
-              : thermoSystem.getEnthalpy() / newMass;
+          double hOut;
+          if (flowDirection == FlowDirection.DISCHARGE) {
+            // Gas leaving carries its own specific enthalpy
+            hOut = initialH / initialMass;
+          } else {
+            // FILLING: incoming gas enthalpy at inlet temperature and vessel pressure
+            hOut = calculateInletSpecificEnthalpy();
+          }
           double newU = initialU - massFlowRate * hOut * dt + heatInput;
           ops.VUflash(volume, newU, "m3", "J");
           break;
@@ -1702,21 +2009,50 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       }
     }
 
-    thermoSystem.init(3);
+    try {
+      thermoSystem.init(3);
+    } catch (Exception e) {
+      logger.warn("init(3) failed after flash: " + e.getMessage()
+          + ", reverting to previous temperature " + initialT + " K");
+      thermoSystem.setTemperature(initialT);
+      try {
+        ThermodynamicOperations opsRecover = new ThermodynamicOperations(thermoSystem);
+        opsRecover.TPflash();
+        thermoSystem.init(3);
+      } catch (Exception e2) {
+        logger.error("Recovery TPflash also failed after init: " + e2.getMessage());
+      }
+    }
+
+    // Sanity check: if flash produced a non-physical temperature, clamp it
+    double flashedT = thermoSystem.getTemperature();
+    if (flashedT < 50.0 || flashedT > 2000.0 || !Double.isFinite(flashedT)) {
+      logger.warn("VU flash produced non-physical temperature " + flashedT
+          + " K, clamping to previous temperature " + initialT + " K");
+      thermoSystem.setTemperature(initialT);
+      try {
+        ThermodynamicOperations opsRecover = new ThermodynamicOperations(thermoSystem);
+        opsRecover.TVflash(volume, "m3");
+        thermoSystem.init(3);
+      } catch (Exception e) {
+        logger.error("Recovery TVflash also failed: " + e.getMessage());
+      }
+    }
 
     // Update wall temperature
+    double hExternal = calculateExternalHeatTransferCoefficient();
     if (heatTransferType == HeatTransferType.TRANSIENT_WALL && wallModel != null) {
       if (twoPhaseHeatTransfer && thermoSystem.getNumberOfPhases() > 1) {
         // Update gas wall model
         double hGas = calculateGasHeatTransferCoeff();
         gasWallModel.advanceTimeStep(dt, thermoSystem.getTemperature(), hGas, ambientTemperature,
-            externalHeatTransferCoeff);
+            hExternal);
         gasWallTemperature = gasWallModel.getMeanWallTemperature();
 
         // Update liquid wall model
         double hLiquid = calculateLiquidHeatTransferCoeff();
         liquidWallModel.advanceTimeStep(dt, thermoSystem.getTemperature(), hLiquid,
-            ambientTemperature, externalHeatTransferCoeff);
+            ambientTemperature, hExternal);
         liquidWallTemperature = liquidWallModel.getMeanWallTemperature();
 
         // Average wall temperature weighted by area
@@ -1730,7 +2066,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       } else {
         double hInner = calculateInternalHeatTransferCoeff();
         wallModel.advanceTimeStep(dt, thermoSystem.getTemperature(), hInner, ambientTemperature,
-            externalHeatTransferCoeff);
+            hExternal);
         wallTemperature = wallModel.getMeanWallTemperature();
       }
     } else if (calculationType == CalculationType.ENERGY_BALANCE) {
@@ -1744,7 +2080,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
         double gasWallMass = wallDensity * gasArea * wallThicknessTotal;
         if (gasWallMass > 0) {
           double QinGas =
-              externalHeatTransferCoeff * gasArea * (ambientTemperature - gasWallTemperature);
+              hExternal * gasArea * (ambientTemperature - gasWallTemperature);
           double QoutGas = calculateGasHeatTransferCoeff() * gasArea
               * (gasWallTemperature - thermoSystem.getTemperature());
           gasWallTemperature += (QinGas - QoutGas) * dt / (gasWallMass * wallHeatCapacity);
@@ -1754,7 +2090,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
         double liquidWallMass = wallDensity * liquidArea * wallThicknessTotal;
         if (liquidWallMass > 0) {
           double QinLiquid =
-              externalHeatTransferCoeff * liquidArea * (ambientTemperature - liquidWallTemperature);
+              hExternal * liquidArea * (ambientTemperature - liquidWallTemperature);
           double QoutLiquid = calculateLiquidHeatTransferCoeff() * liquidArea
               * (liquidWallTemperature - thermoSystem.getTemperature());
           liquidWallTemperature +=
@@ -1772,7 +2108,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
         double wallMass = wallDensity * getWallArea()
             * (hasLiner ? wallThickness + linerThickness : wallThickness);
         double Qin =
-            externalHeatTransferCoeff * getWallArea() * (ambientTemperature - wallTemperature);
+            hExternal * getWallArea() * (ambientTemperature - wallTemperature);
         double Qout = calculateInternalHeatTransferCoeff() * getWallArea()
             * (wallTemperature - thermoSystem.getTemperature());
         wallTemperature += (Qin - Qout) * dt / (wallMass * wallHeatCapacity);
@@ -2093,6 +2429,18 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     double prevMass = getMass();
 
     for (double t = dt; t <= endTime + dt / 2; t += dt) {
+      // Check target pressure stop condition
+      if (!Double.isNaN(targetPressure)) {
+        double currentP = thermoSystem.getPressure() * 1e5;
+        if (flowDirection == FlowDirection.FILLING && currentP >= targetPressure) {
+          targetPressureReached = true;
+          break;
+        } else if (flowDirection == FlowDirection.DISCHARGE && currentP <= targetPressure) {
+          targetPressureReached = true;
+          break;
+        }
+      }
+
       runTransient(dt, uuid);
       step++;
 
