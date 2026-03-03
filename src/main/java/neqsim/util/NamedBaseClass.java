@@ -9,8 +9,10 @@ package neqsim.util;
 public abstract class NamedBaseClass implements NamedInterface, java.io.Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /* Descriptive name of process object */
   public String name;
-  private String tagName = "";
+  /* Tag name for identifying the object in a process system. */
+  private String tagNumber = "";
 
   /**
    * Constructor for NamedBaseClass
@@ -35,16 +37,16 @@ public abstract class NamedBaseClass implements NamedInterface, java.io.Serializ
 
   /** {@inheritDoc} */
   @Override
-  public void setTagName(String tagName) {
-    if (tagName == null) {
-      throw new IllegalArgumentException("Tag name cannot be null.");
+  public void setTagNumber(String tagNumber) {
+    if (tagNumber == null) {
+      throw new IllegalArgumentException("Tag number cannot be null.");
     }
-    this.tagName = tagName;
+    this.tagNumber = tagNumber;
   }
 
   /** {@inheritDoc} */
   @Override
-  public String getTagName() {
-    return tagName;
+  public String getTagNumber() {
+    return this.tagNumber;
   }
 }
