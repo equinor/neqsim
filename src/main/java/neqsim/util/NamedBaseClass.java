@@ -11,7 +11,7 @@ public abstract class NamedBaseClass implements NamedInterface, java.io.Serializ
   private static final long serialVersionUID = 1000;
   /* Descriptive name of process object */
   public String name;
-  /* Tag name for identifying the object in a process system. */
+  /* Tag number for identifying the object in a process system. */
   private String tagNumber = "";
 
   /**
