@@ -240,8 +240,10 @@ public abstract class Phase implements PhaseInterface {
     double tolerance = 1e-12 * numbmoles;
     if (newPhaseMoles < -tolerance) {
       String msg = "will lead to negative number of moles in phase." + newPhaseMoles;
-      neqsim.util.exception.InvalidInputException ex =
-          new neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
+      /*
+       * neqsim.util.exception.InvalidInputException ex = new
+       * neqsim.util.exception.InvalidInputException(this, "addMolesChemReac", "dn", msg);
+       */
       logger.debug(msg);
       dn = -numberOfMolesInPhase;
       newPhaseMoles = 0;
@@ -1262,9 +1264,13 @@ public abstract class Phase implements PhaseInterface {
     }
   }
 
-  /**
-   * Calculates the internal energy in the specified units. {@inheritDoc}
-   */
+  /** {@inheritDoc} */
+  @Override
+  public double getInternalEnergy() {
+    return getEnthalpy() - pressure * getMolarVolume() * numberOfMolesInPhase;
+  }
+
+  /** {@inheritDoc} */
   @Override
   public double getInternalEnergy(String unit) {
     // The reference internal energy (refInternalEnergy) is the total internal energy for the phase
@@ -1699,18 +1705,6 @@ public abstract class Phase implements PhaseInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getActivityCoefficientSymetric(int k) {
-    if (refPhase == null) {
-      initRefPhases(true);
-    }
-    double fug = 0.0;
-    double oldFug = getComponent(k).getLogFugacityCoefficient();
-    fug = getLogPureComponentFugacity(k);
-    return Math.exp(oldFug - fug);
-  }
-
-  /** {@inheritDoc} */
-  @Override
   public double getActivityCoefficient(int k, String scale) {
     double gammaX = getActivityCoefficient(k); // mole fraction scale
 
@@ -1753,6 +1747,18 @@ public abstract class Phase implements PhaseInterface {
 
     // Unknown scale - return mole fraction
     return gammaX;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getActivityCoefficientSymetric(int k) {
+    if (refPhase == null) {
+      initRefPhases(true);
+    }
+    double fug = 0.0;
+    double oldFug = getComponent(k).getLogFugacityCoefficient();
+    fug = getLogPureComponentFugacity(k);
+    return Math.exp(oldFug - fug);
   }
 
   /** {@inheritDoc} */
@@ -1831,24 +1837,24 @@ public abstract class Phase implements PhaseInterface {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * <p>
    * Calculates the osmotic coefficient using the Robinson &amp; Stokes (1965) definition on the
    * molality scale. The formula used is mathematically equivalent to:
    * </p>
-   * 
+   *
    * <pre>
    * φ = -ln(a_w) / (M_w * Σm_i)
    * </pre>
-   * 
+   *
    * <p>
    * but is expressed in terms of mole fractions for computational convenience:
    * </p>
-   * 
+   *
    * <pre>
    * φ = -x_w * ln(a_w) / Σx_i
    * </pre>
-   * 
+   *
    * <p>
    * where a_w is water activity, x_w is water mole fraction, and Σx_i is sum of ion mole fractions.
    * </p>
@@ -1935,12 +1941,6 @@ public abstract class Phase implements PhaseInterface {
   @Override
   public double getGibbsEnergy() {
     return getEnthalpy() - temperature * getEntropy();
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getInternalEnergy() {
-    return getEnthalpy() - pressure * getMolarVolume() * numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
@@ -2101,7 +2101,7 @@ public abstract class Phase implements PhaseInterface {
     double tempVar = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       tempVar += componentArray[i].getNumberOfMolesInPhase()
-          * componentArray[i].getDiElectricConstant(temperature);
+          * componentArray[i].getDielectricConstant(temperature);
     }
     return tempVar / numberOfMolesInPhase;
   }
@@ -2118,7 +2118,7 @@ public abstract class Phase implements PhaseInterface {
     double tempVar = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       tempVar += componentArray[i].getNumberOfMolesInPhase()
-          * componentArray[i].getDiElectricConstantdT(temperature);
+          * componentArray[i].getDielectricConstantdT(temperature);
     }
     return tempVar / numberOfMolesInPhase;
   }
@@ -2135,7 +2135,7 @@ public abstract class Phase implements PhaseInterface {
     double tempVar = 0;
     for (int i = 0; i < numberOfComponents; i++) {
       tempVar += componentArray[i].getNumberOfMolesInPhase()
-          * componentArray[i].getDiElectricConstantdTdT(temperature);
+          * componentArray[i].getDielectricConstantdTdT(temperature);
     }
     return tempVar / numberOfMolesInPhase;
   }
@@ -2147,7 +2147,7 @@ public abstract class Phase implements PhaseInterface {
    *
    * @return a double
    */
-  public final double getDiElectricConstant() {
+  public final double getDielectricConstant() {
     return diElectricConstant;
   }
 
@@ -2165,7 +2165,7 @@ public abstract class Phase implements PhaseInterface {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * <p>
    * Default uses activity-based pH since NeqSim's chemical reaction equilibrium constants are
    * defined on the mole fraction scale.

@@ -765,7 +765,7 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getDiElectricConstant(double temperature) {
+  public double getDielectricConstant(double temperature) {
     return dielectricParameter[0] + dielectricParameter[1] / temperature
         + dielectricParameter[2] * temperature + dielectricParameter[3] * temperature * temperature
         + dielectricParameter[4] * Math.pow(temperature, 3.0);
@@ -773,7 +773,7 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getDiElectricConstantdT(double temperature) {
+  public double getDielectricConstantdT(double temperature) {
     return -dielectricParameter[1] / Math.pow(temperature, 2.0) + dielectricParameter[2]
         + 2.0 * dielectricParameter[3] * temperature
         + 3.0 * dielectricParameter[4] * Math.pow(temperature, 2.0);
@@ -781,7 +781,7 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getDiElectricConstantdTdT(double temperature) {
+  public double getDielectricConstantdTdT(double temperature) {
     return 2.0 * dielectricParameter[1] / Math.pow(temperature, 3.0) + 2.0 * dielectricParameter[3]
         + 6.0 * dielectricParameter[4] * Math.pow(temperature, 1.0);
   }

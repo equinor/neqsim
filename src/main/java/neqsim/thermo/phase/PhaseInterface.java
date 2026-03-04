@@ -1663,20 +1663,20 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
 
   /**
    * <p>
-   * getInternalEnergy.
+   * Calcualte the total internal energy for the phase in Joules.
    * </p>
    *
-   * @return a double
+   * @return internal energy for the phase in Joules
    */
   public double getInternalEnergy();
 
   /**
    * <p>
-   * getInternalEnergy.
+   * Calculates the internal energy in the specified units.
    * </p>
    *
    * @param unit a {@link java.lang.String} object
-   * @return a double
+   * @return internal energy for the phase in specified unit
    */
   public double getInternalEnergy(String unit);
 
@@ -2008,7 +2008,7 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
   /**
    * Get the osmotic coefficient of water on the molality scale. This is the definition used by
    * Robinson and Stokes (1965):
-   * 
+   *
    * <pre>
    * φ = -ln(a_w) / (M_w * Σm_i)
    * </pre>
