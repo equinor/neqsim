@@ -8,9 +8,9 @@ nav_order: 1
 
 # PVT Simulation and Tuning
 
-> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
+> **Note:** This is an auto-generated Markdown version of the Jupyter notebook 
 > [`PVT_Simulation_and_Tuning.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/PVT_Simulation_and_Tuning.ipynb).
-> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/PVT_Simulation_and_Tuning.ipynb)
+> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/PVT_Simulation_and_Tuning.ipynb) 
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/PVT_Simulation_and_Tuning.ipynb).
 
 ---
@@ -112,7 +112,7 @@ for i in range(fluid.getNumberOfComponents()):
     mw = comp.getMolarMass() * 1000  # Convert to g/mol
     tc = comp.getTC()
     pc = comp.getPC()
-
+    
     if molfrac > 0.01:  # Only show significant components
         print(f"{name:<12} {molfrac:>8.3f} {mw:>12.1f} {tc:>10.1f} {pc:>10.2f}")
 ```
@@ -159,7 +159,7 @@ valid_p = [p for p in pressures if p > 0]
 valid_v = [v for p, v in zip(pressures, relative_volumes) if p > 0]
 
 ax.plot(valid_p, valid_v, 'b-o', linewidth=2, markersize=6, label='Calculated')
-ax.axvline(x=sat_pressure, color='r', linestyle='--', linewidth=2,
+ax.axvline(x=sat_pressure, color='r', linestyle='--', linewidth=2, 
            label=f'Saturation P = {sat_pressure:.1f} bara')
 
 ax.set_xlabel('Pressure (bara)', fontsize=12)
@@ -314,7 +314,7 @@ ax1.set_title('Differential Liberation - Solution GOR', fontsize=14)
 ax1.grid(True, alpha=0.3)
 ax1.invert_xaxis()
 
-# Bo curve
+# Bo curve  
 ax2.plot(pressures_dle[:n_dle], bo_values[:n_dle], 'b-s', linewidth=2, markersize=8)
 ax2.set_xlabel('Pressure (bara)', fontsize=12)
 ax2.set_ylabel('Oil FVF, Bo (m³/Sm³)', fontsize=12)
@@ -336,7 +336,7 @@ sep_test = jneqsim.pvtsimulation.simulation.SeparatorTest(black_oil.clone())
 
 # Define separator stages (temperature in K, pressure in bara)
 # Stage 1: High pressure separator
-# Stage 2: Low pressure separator
+# Stage 2: Low pressure separator  
 # Stage 3: Stock tank
 sep_temps = [323.15, 303.15, 288.15]  # 50°C, 30°C, 15°C
 sep_pressures = [50.0, 5.0, 1.01325]  # 50 bar, 5 bar, atmospheric
@@ -424,9 +424,9 @@ RegressionParameter = jneqsim.pvtsimulation.regression.RegressionParameter
 # Add regression parameters with bounds
 # BIP between methane and C7+ (primary tuning parameter for saturation pressure)
 regression.addRegressionParameter(
-    RegressionParameter.BIP_METHANE_C7PLUS,
+    RegressionParameter.BIP_METHANE_C7PLUS, 
     0.0,    # Lower bound
-    0.10,   # Upper bound
+    0.10,   # Upper bound  
     0.03    # Initial guess
 )
 
@@ -465,21 +465,21 @@ print("(This may take a moment)")
 
 try:
     result = regression.runRegression()
-
+    
     # Get optimized parameter values
     opt_bip = result.getOptimizedValue(RegressionParameter.BIP_METHANE_C7PLUS)
     opt_vshift = result.getOptimizedValue(RegressionParameter.VOLUME_SHIFT_C7PLUS)
-
+    
     print("\n=== Regression Results ===")
     print(f"Optimized BIP (CH4-C7+): {opt_bip:.6f}")
     print(f"Optimized Volume Shift: {opt_vshift:.6f}")
     print(f"Final Chi-Square: {result.getFinalChiSquare():.6f}")
-
+    
     # Get uncertainty analysis
     uncertainty = result.getUncertainty()
     if uncertainty is not None:
         print(f"\nDegrees of freedom: {uncertainty.getDegreesOfFreedom()}")
-
+        
 except Exception as e:
     print(f"Regression encountered an issue: {e}")
     print("This is expected with simplified test data.")
@@ -627,7 +627,7 @@ well_b_fluid.addTBPfraction("C20", 0.05, 0.280, 0.88)
 # Combine into a single fluid with 4 pseudo-components
 combined_fluid = PseudoComponentCombiner.combineReservoirFluids(
     4,  # Target number of pseudo-components
-    well_a_fluid,
+    well_a_fluid, 
     well_b_fluid
 )
 
@@ -690,8 +690,8 @@ options = CharacterizationOptions.builder() \
 
 # Characterize with options - BIPs will be copied from reference
 matched_with_bips = PseudoComponentCombiner.characterizeToReference(
-    new_sample,
-    ref_with_bips,
+    new_sample, 
+    ref_with_bips, 
     options
 )
 
@@ -753,5 +753,5 @@ print("="*60)
 
 3. Whitson, C.H., Brulé, M.R. (2000). "Phase Behavior." SPE Monograph Series, Vol. 20.
 
-4. NeqSim Documentation: [docs/pvtsimulation/fluid_characterization_mathematics.md](../pvtsimulation/fluid_characterization_mathematics.md)
+4. NeqSim Documentation: [docs/fluid_characterization_mathematics.md](../fluid_characterization_mathematics.md)
 
