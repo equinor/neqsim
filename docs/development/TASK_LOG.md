@@ -27,6 +27,19 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-03-04 — Sulfur deposition and corrosion analysis system
+**Type:** E (Feature)
+**Keywords:** sulfur, S8, H2S, deposition, precipitation, solubility, Gibbs reactor, Claus, FeS, corrosion, NACE, sour gas, solid flash, TPSolidflash, SulfurDepositionAnalyser, GibbsReactor, SO2, pipeline, subsea, onshore
+**Solution:** `src/main/java/neqsim/process/equipment/reactor/SulfurDepositionAnalyser.java`, `src/test/java/neqsim/process/equipment/reactor/SulfurDepositionAnalyserTest.java`, `examples/sulfurtask/SulfurDepositionAnalysis.ipynb`, `docs/chemicalreactions/sulfur_deposition_analysis.md`
+**Notes:**
+- New `SulfurDepositionAnalyser` unit operation combining Gibbs equilibrium, TP-solid flash, temperature sweep, and corrosion assessment in a single run()
+- Added FeS, Fe2O3, FeS2 species to GibbsReactDatabase.csv
+- Corrosion module: NACE MR0175 sour severity classification, FeS/SO2/H2SO4 risk assessment
+- Temperature sweep identifies sulfur deposition onset temperature
+- 6 tests passing (solubility, equilibrium, corrosion, full analysis, edge cases, JSON output)
+- Jupyter notebook (15 sections): solubility maps, saturation envelope, Gibbs reactor sweeps, O2/H2S sensitivity, pipeline simulation, onshore processing risk, H2S sensitivity
+- Uses neqsim_dev_setup for notebook JVM bootstrap
+
 ### 2025-07-17 — CNG tank temperature estimation improvements and Jupyter notebooks
 **Type:** E (Feature)
 **Keywords:** CNG, tank, filling, emptying, depressurization, VU-flash, heat transfer, Churchill-Chu, Gnielinski, natural convection, mixed convection, transient wall, VesselDepressurization, temperature estimation, MDMT
@@ -69,13 +82,13 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 ---
 
-<!-- 
+<!--
 TEMPLATE — copy this block for each new entry:
 
 ### YYYY-MM-DD — Title
-**Type:** 
-**Keywords:** 
-**Solution:** 
-**Notes:** 
+**Type:**
+**Keywords:**
+**Solution:**
+**Notes:**
 
 -->

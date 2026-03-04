@@ -27,8 +27,9 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 def _run_compile(root):
     """Run mvnw compile and raise on failure."""
     print("Compiling... ", end="", flush=True)
+    mvnw = root / "mvnw.cmd" if os.name == "nt" else root / "mvnw"
     result = subprocess.run(
-        [str(root / "mvnw.cmd"), "compile", "-q"],
+        [str(mvnw), "compile", "-q"],
         cwd=str(root),
         capture_output=True,
         text=True,
@@ -75,7 +76,8 @@ def neqsim_init(project_root=None, extra_classpath=None, recompile=False, verbos
     # If JVM is already running, we must restart the kernel to reload classes
     if jpype.isJVMStarted():
         if recompile:
-            print("JVM already running — compiling before restart... ", end="", flush=True)
+            print("JVM already running — compiling before restart... ",
+                  end="", flush=True)
             _run_compile(root)
         else:
             print("JVM already running — restarting kernel to reload classes...")
@@ -171,8 +173,10 @@ def neqsim_classes(ns):
     )
     ns.Mixer = JClass("neqsim.process.equipment.mixer.Mixer")
     ns.Splitter = JClass("neqsim.process.equipment.splitter.Splitter")
-    ns.ThrottlingValve = JClass("neqsim.process.equipment.valve.ThrottlingValve")
-    ns.AdiabaticPipe = JClass("neqsim.process.equipment.pipeline.AdiabaticPipe")
+    ns.ThrottlingValve = JClass(
+        "neqsim.process.equipment.valve.ThrottlingValve")
+    ns.AdiabaticPipe = JClass(
+        "neqsim.process.equipment.pipeline.AdiabaticPipe")
     ns.PipeBeggsAndBrills = JClass(
         "neqsim.process.equipment.pipeline.PipeBeggsAndBrills"
     )
