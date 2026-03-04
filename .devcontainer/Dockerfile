@@ -13,7 +13,8 @@ RUN if [ "${INSTALL_MAVEN}" = "true" ]; then \
     fi
 
 # Install useful OS packages for development
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+RUN rm -f /etc/apt/sources.list.d/yarn.list /etc/apt/sources.list.d/yarn.list.save \
+    && apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
         graphviz \
         fonts-liberation \
