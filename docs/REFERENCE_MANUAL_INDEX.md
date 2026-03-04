@@ -309,7 +309,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Flow Meters | [docs/wiki/flow_meter_models.md](wiki/flow_meter_models) | Flow metering |
 | Venturi | [docs/wiki/venturi_calculation.md](wiki/venturi_calculation) | Venturi calculations |
 | Tanks | [docs/process/equipment/tanks.md](process/equipment/tanks) | Tank models |
-| **Vessel Depressurization** | [docs/process/equipment/vessel_depressurization.md](process/equipment/vessel_depressurization) | **Filling, blowdown, fire cases, transient wall HT, composite vessels, CNG/H2 tanks, flow assurance, API reference** |
+| **Vessel Depressurization** | [docs/process/equipment/vessel_depressurization.md](process/equipment/vessel_depressurization) | **Filling, blowdown, fire cases, transient wall HT, composite vessels, CNG/H2 tanks, flow assurance, real-gas beta, Biot correction, Rohsenow boiling, API reference** |
 | **Measurement Devices** | [docs/process/equipment/measurement_devices.md](process/equipment/measurement_devices) | **CO2 emissions, FIV analysis, NMVOC, dew points, safety detectors** |
 
 ### Chapter 18: Special Equipment
