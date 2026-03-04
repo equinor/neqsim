@@ -41,16 +41,16 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  *      <p>
  *      Usage example:
- * 
+ *
  *      <pre>
  *      SystemInterface gas = new SystemSrkEos(298.0, 100.0);
  *      gas.addComponent("hydrogen", 1.0);
  *      gas.setMixingRule("classic");
- * 
+ *
  *      Stream feed = new Stream("feed", gas);
  *      feed.setFlowRate(0.0, "kg/hr"); // Closed vessel
  *      feed.run();
- * 
+ *
  *      VesselDepressurization vessel = new VesselDepressurization("HP Vessel", feed);
  *      vessel.setVolume(0.1); // 100 liters
  *      vessel.setCalculationType(CalculationType.ENERGY_BALANCE);
@@ -58,7 +58,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *      vessel.setOrificeDiameter(0.005); // 5mm orifice
  *      vessel.setBackPressure(1.0); // 1 bara
  *      vessel.run();
- * 
+ *
  *      // Transient simulation
  *      for (double t = 0; t &lt;= 100; t += 0.5) {
  *        vessel.runTransient(0.5, UUID.randomUUID());
@@ -133,7 +133,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    *
    * <p>
    * Usage:
-   * 
+   *
    * <pre>
    * vessel.setVesselMaterial(VesselMaterial.CARBON_STEEL);
    * </pre>
@@ -630,8 +630,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Sets the vessel geometry.
    *
    * <p>
-   * Volume is calculated as cylinder + two hemispheres (one full sphere):
-   * V = pi/4 * D^2 * L + pi/6 * D^3
+   * Volume is calculated as cylinder + two hemispheres (one full sphere): V = pi/4 * D^2 * L + pi/6
+   * * D^3
    * </p>
    *
    * @param length Vessel cylindrical length [m] (excluding hemispheric caps)
@@ -670,7 +670,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    *
    * <p>
    * Example:
-   * 
+   *
    * <pre>
    * vessel.setVesselMaterial(0.015, VesselMaterial.CARBON_STEEL);
    * </pre>
@@ -706,7 +706,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    *
    * <p>
    * Example for Type IV vessel (CFRP shell with HDPE liner):
-   * 
+   *
    * <pre>
    * vessel.setVesselMaterial(0.017, VesselMaterial.CFRP);
    * vessel.setLinerMaterial(0.007, LinerMaterial.HDPE);
@@ -898,9 +898,9 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Sets a fixed mass flow rate, overriding the orifice-based calculation.
    *
    * <p>
-   * When set, the specified mass flow rate is used instead of computing flow from
-   * pressure difference across an orifice. The sign convention is handled
-   * automatically based on the flow direction.
+   * When set, the specified mass flow rate is used instead of computing flow from pressure
+   * difference across an orifice. The sign convention is handled automatically based on the flow
+   * direction.
    * </p>
    *
    * @param rate Mass flow rate [kg/s] (positive value)
@@ -914,8 +914,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Sets a fixed volumetric flow rate at standard conditions, overriding the orifice calculation.
    *
    * <p>
-   * The volumetric rate at standard conditions is converted to mass flow rate using the
-   * standard gas density derived from the fluid molar mass and ideal gas law at 15 deg C, 1 atm.
+   * The volumetric rate at standard conditions is converted to mass flow rate using the standard
+   * gas density derived from the fluid molar mass and ideal gas law at 15 deg C, 1 atm.
    * </p>
    *
    * @param rate Volumetric flow rate (positive value)
@@ -930,8 +930,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     } else if (unit.equalsIgnoreCase("Sm3/sec") || unit.equalsIgnoreCase("Sm3/s")) {
       rateSm3PerSec = rate;
     } else {
-      throw new IllegalArgumentException("Unknown volumetric flow unit: " + unit
-          + ". Use Sm3/day, Sm3/hr, or Sm3/sec.");
+      throw new IllegalArgumentException(
+          "Unknown volumetric flow unit: " + unit + ". Use Sm3/day, Sm3/hr, or Sm3/sec.");
     }
     // Standard conditions: 15 deg C (288.15 K), 1 atm (101325 Pa)
     // rho_std = P * MW / (Z * R * T) where Z ~ 1.0 for ideal gas at std conditions
@@ -953,9 +953,9 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Sets the inlet gas temperature for filling operations.
    *
    * <p>
-   * During filling, incoming gas enters at this temperature. The energy balance
-   * uses the enthalpy of the incoming gas at the inlet temperature and vessel
-   * pressure. If not set, the vessel gas temperature is used (less accurate).
+   * During filling, incoming gas enters at this temperature. The energy balance uses the enthalpy
+   * of the incoming gas at the inlet temperature and vessel pressure. If not set, the vessel gas
+   * temperature is used (less accurate).
    * </p>
    *
    * @param temperature Inlet temperature [K]
@@ -982,8 +982,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Sets the target pressure for stopping the simulation.
    *
    * <p>
-   * For filling: simulation stops when vessel pressure reaches or exceeds the target.
-   * For discharge: simulation stops when vessel pressure drops to or below the target.
+   * For filling: simulation stops when vessel pressure reaches or exceeds the target. For
+   * discharge: simulation stops when vessel pressure drops to or below the target.
    * </p>
    *
    * @param pressure Target pressure [bar]
@@ -1006,9 +1006,9 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Enables or disables automatic calculation of external heat transfer coefficient.
    *
    * <p>
-   * When enabled, the external HTC is calculated using Churchill-Chu natural convection
-   * correlation for a vertical or horizontal cylinder, based on the outer wall temperature
-   * and ambient air properties. When disabled, the fixed value from
+   * When enabled, the external HTC is calculated using Churchill-Chu natural convection correlation
+   * for a vertical or horizontal cylinder, based on the outer wall temperature and ambient air
+   * properties. When disabled, the fixed value from
    * {@link #setExternalHeatTransferCoefficient(double)} is used.
    * </p>
    *
@@ -1135,15 +1135,15 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    *
    * <p>
    * Example integration with flare system:
-   * 
+   *
    * <pre>
    * VesselDepressurization vessel = new VesselDepressurization("Tank", feed);
    * vessel.run();
-   * 
+   *
    * // Connect to flare
    * Flare flare = new Flare("Emergency Flare", vessel.getOutletStream());
    * flare.setFlameHeight(50.0);
-   * 
+   *
    * // Or connect via flare header
    * Mixer flareHeader = new Mixer("Flare Header");
    * flareHeader.addStream(vessel.getOutletStream());
@@ -1411,6 +1411,44 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Computes the volumetric thermal expansion coefficient from the equation of state.
+   *
+   * <p>
+   * The real-gas thermal expansion coefficient is defined as:
+   * </p>
+   *
+   * <pre>
+   * beta = -(1 / rho) * (drho / dT)_P
+   * </pre>
+   *
+   * <p>
+   * At high pressures this can deviate significantly from the ideal-gas value 1/T, which directly
+   * affects the Grashof number used in natural-convection correlations.
+   * </p>
+   *
+   * @param phase The thermodynamic phase to evaluate
+   * @param density Phase density [kg/m^3]
+   * @param temperatureK Phase temperature [K]
+   * @return Thermal expansion coefficient [1/K], falls back to 1/T if EoS derivative is unavailable
+   */
+  private double computeThermalExpansionCoeff(neqsim.thermo.phase.PhaseInterface phase,
+      double density, double temperatureK) {
+    try {
+      double drhodT = phase.getdrhodT(); // kg/(m^3 * K)
+      if (Double.isFinite(drhodT) && density > 0.0) {
+        double beta = -drhodT / density;
+        // Sanity: beta should be positive for normal fluids and not excessively large
+        if (beta > 0.0 && beta < 1.0) {
+          return beta;
+        }
+      }
+    } catch (Exception e) {
+      // EoS derivative not available; use ideal-gas approximation
+    }
+    return 1.0 / temperatureK;
+  }
+
+  /**
    * Calculates the internal heat transfer coefficient.
    *
    * @return Internal film coefficient [W/(m²*K)]
@@ -1454,15 +1492,25 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
 
     boolean isVertical = (orientation == VesselOrientation.VERTICAL);
 
+    // Compute real-gas thermal expansion coefficient: beta = -(1/rho)*(drho/dT)_P
+    double beta = computeThermalExpansionCoeff(thermoSystem.getPhase(0), rho, Tfluid);
+
+    // Maximum physically reasonable HTC for gas [W/(m2*K)]
+    double maxGasHtc = 500.0;
+
     try {
+      double h;
       if (flowDirection == FlowDirection.FILLING) {
         double massFlowRate = Math.abs(calculateMassFlowRate());
-        return VesselHeatTransferCalculator.calculateMixedConvectionCoefficient(L, Twall, Tfluid,
-            massFlowRate, orificeDiameter, k, Cp, mu, rho, isVertical);
+        h = VesselHeatTransferCalculator.calculateMixedConvectionCoefficient(L, Twall, Tfluid,
+            massFlowRate, orificeDiameter, vesselDiameter, k, Cp, mu, rho, isVertical, beta);
       } else {
-        return VesselHeatTransferCalculator.calculateInternalFilmCoefficient(L, Twall, Tfluid, k,
-            Cp, mu, rho, isVertical);
+        // During discharge the outflow jet creates internal circulation
+        double massFlowRate = Math.abs(calculateMassFlowRate());
+        h = VesselHeatTransferCalculator.calculateDischargeConvectionCoefficient(L, Twall, Tfluid,
+            massFlowRate, orificeDiameter, vesselDiameter, k, Cp, mu, rho, isVertical, beta);
       }
+      return Math.min(h, maxGasHtc);
     } catch (Exception e) {
       logger.warn("Internal HTC calculation failed, using fallback: " + e.getMessage());
       return 5.0; // Reasonable fallback [W/(m2*K)]
@@ -1513,15 +1561,34 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
 
     boolean isVertical = (orientation == VesselOrientation.VERTICAL);
 
+    // Compute real-gas thermal expansion coefficient from gas phase
+    double beta = 1.0 / Tfluid; // default ideal-gas fallback
     try {
+      for (int i = 0; i < thermoSystem.getNumberOfPhases(); i++) {
+        if (thermoSystem.getPhase(i).getType().equals(neqsim.thermo.phase.PhaseType.GAS)) {
+          beta = computeThermalExpansionCoeff(thermoSystem.getPhase(i), rho, Tfluid);
+          break;
+        }
+      }
+    } catch (Exception e) {
+      // Keep ideal-gas fallback
+    }
+
+    // Maximum physically reasonable HTC for gas [W/(m2*K)]
+    double maxGasHtc = 500.0;
+
+    try {
+      double h;
       if (flowDirection == FlowDirection.FILLING) {
         double massFlowRate = Math.abs(calculateMassFlowRate());
-        return VesselHeatTransferCalculator.calculateMixedConvectionCoefficient(L, Twall, Tfluid,
-            massFlowRate, orificeDiameter, k, Cp, mu, rho, isVertical);
+        h = VesselHeatTransferCalculator.calculateMixedConvectionCoefficient(L, Twall, Tfluid,
+            massFlowRate, orificeDiameter, vesselDiameter, k, Cp, mu, rho, isVertical, beta);
       } else {
-        return VesselHeatTransferCalculator.calculateInternalFilmCoefficient(L, Twall, Tfluid, k,
-            Cp, mu, rho, isVertical);
+        double massFlowRate = Math.abs(calculateMassFlowRate());
+        h = VesselHeatTransferCalculator.calculateDischargeConvectionCoefficient(L, Twall, Tfluid,
+            massFlowRate, orificeDiameter, vesselDiameter, k, Cp, mu, rho, isVertical, beta);
       }
+      return Math.min(h, maxGasHtc);
     } catch (Exception e) {
       logger.warn("Gas HTC calculation failed, using fallback: " + e.getMessage());
       return 5.0;
@@ -1589,9 +1656,9 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Calculates the specific enthalpy of the incoming gas during filling.
    *
    * <p>
-   * If an inlet temperature is set, the enthalpy is computed at the inlet temperature
-   * and the current vessel pressure using a clone of the feed fluid. Otherwise, the
-   * vessel gas enthalpy is used as a fallback.
+   * If an inlet temperature is set, the enthalpy is computed at the inlet temperature and the
+   * current vessel pressure using a clone of the feed fluid. Otherwise, the vessel gas enthalpy is
+   * used as a fallback.
    * </p>
    *
    * @return Specific enthalpy of incoming gas [J/kg]
@@ -1628,9 +1695,9 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * Calculates the external heat transfer coefficient using natural convection correlations.
    *
    * <p>
-   * Uses Churchill-Chu correlation for natural convection on a vertical or horizontal
-   * cylinder in still air. Air properties are evaluated at the film temperature
-   * (average of outer wall and ambient temperatures).
+   * Uses Churchill-Chu correlation for natural convection on a vertical or horizontal cylinder in
+   * still air. Air properties are evaluated at the film temperature (average of outer wall and
+   * ambient temperatures).
    * </p>
    *
    * @return External heat transfer coefficient [W/(m2*K)]
@@ -2076,23 +2143,32 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
         double liquidArea = getWettedWallArea();
         double wallThicknessTotal = hasLiner ? wallThickness + linerThickness : wallThickness;
 
-        // Gas wall energy balance
+        // Gas wall energy balance with Biot correction
         double gasWallMass = wallDensity * gasArea * wallThicknessTotal;
         if (gasWallMass > 0) {
-          double QinGas =
-              hExternal * gasArea * (ambientTemperature - gasWallTemperature);
-          double QoutGas = calculateGasHeatTransferCoeff() * gasArea
-              * (gasWallTemperature - thermoSystem.getTemperature());
+          double hGasInner = calculateGasHeatTransferCoeff();
+          double effectiveThicknessGas = hasLiner
+              ? linerThickness / linerThermalConductivity
+                  + wallThickness / (2.0 * wallThermalConductivity)
+              : wallThickness / (2.0 * wallThermalConductivity);
+          double hGasEff = 1.0 / (1.0 / hGasInner + effectiveThicknessGas);
+          double QinGas = hExternal * gasArea * (ambientTemperature - gasWallTemperature);
+          double QoutGas = hGasEff * gasArea * (gasWallTemperature - thermoSystem.getTemperature());
           gasWallTemperature += (QinGas - QoutGas) * dt / (gasWallMass * wallHeatCapacity);
         }
 
-        // Liquid wall energy balance
+        // Liquid wall energy balance with Biot correction
         double liquidWallMass = wallDensity * liquidArea * wallThicknessTotal;
         if (liquidWallMass > 0) {
-          double QinLiquid =
-              hExternal * liquidArea * (ambientTemperature - liquidWallTemperature);
-          double QoutLiquid = calculateLiquidHeatTransferCoeff() * liquidArea
-              * (liquidWallTemperature - thermoSystem.getTemperature());
+          double hLiqInner = calculateLiquidHeatTransferCoeff();
+          double effectiveThicknessLiq = hasLiner
+              ? linerThickness / linerThermalConductivity
+                  + wallThickness / (2.0 * wallThermalConductivity)
+              : wallThickness / (2.0 * wallThermalConductivity);
+          double hLiqEff = 1.0 / (1.0 / hLiqInner + effectiveThicknessLiq);
+          double QinLiquid = hExternal * liquidArea * (ambientTemperature - liquidWallTemperature);
+          double QoutLiquid =
+              hLiqEff * liquidArea * (liquidWallTemperature - thermoSystem.getTemperature());
           liquidWallTemperature +=
               (QinLiquid - QoutLiquid) * dt / (liquidWallMass * wallHeatCapacity);
         }
@@ -2104,13 +2180,24 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
               (gasWallTemperature * gasArea + liquidWallTemperature * liquidArea) / totalArea;
         }
       } else {
-        // Simple wall energy balance
+        // Simple wall energy balance with Biot-number correction.
+        // The lumped model assumes uniform wall temperature, but for walls with
+        // finite thermal conductivity the inner surface temperature differs from
+        // the mean. A first-order correction adds half the wall conduction
+        // resistance so that the effective internal resistance is
+        // R_eff = 1/h_int + t_wall/(2*k_wall)
+        // giving h_eff = 1 / (1/h_int + t_wall/(2*k_wall)).
         double wallMass = wallDensity * getWallArea()
             * (hasLiner ? wallThickness + linerThickness : wallThickness);
-        double Qin =
-            hExternal * getWallArea() * (ambientTemperature - wallTemperature);
-        double Qout = calculateInternalHeatTransferCoeff() * getWallArea()
-            * (wallTemperature - thermoSystem.getTemperature());
+        double hInner = calculateInternalHeatTransferCoeff();
+        double effectiveThickness = hasLiner
+            ? linerThickness / linerThermalConductivity
+                + wallThickness / (2.0 * wallThermalConductivity)
+            : wallThickness / (2.0 * wallThermalConductivity);
+        double hEffective = 1.0 / (1.0 / hInner + effectiveThickness);
+        double Qin = hExternal * getWallArea() * (ambientTemperature - wallTemperature);
+        double Qout =
+            hEffective * getWallArea() * (wallTemperature - thermoSystem.getTemperature());
         wallTemperature += (Qin - Qout) * dt / (wallMass * wallHeatCapacity);
       }
     }
@@ -2377,7 +2464,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    *
    * <p>
    * Example:
-   * 
+   *
    * <pre>
    * vessel.run();
    * SimulationResult result = vessel.runSimulation(300.0, 0.5); // 5 min, 0.5s steps
@@ -2591,7 +2678,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    *
    * <p>
    * Example:
-   * 
+   *
    * <pre>
    * // Create CO2 at 250K with 60% vapor, 40% liquid
    * SystemInterface co2 = VesselDepressurization.createTwoPhaseFluid("CO2", 250.0, 0.6);

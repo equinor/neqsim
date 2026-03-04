@@ -103,6 +103,7 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 | Equipment | File | Description |
 |-----------|------|-------------|
 | Tanks | [tanks.md](tanks) | Storage tanks, LNG boil-off |
+| Vessel Depressurization | [vessel_depressurization.md](vessel_depressurization) | Filling, blowdown, fire cases, CNG/H2 tanks, heat transfer models |
 
 ### Gas Treatment
 
