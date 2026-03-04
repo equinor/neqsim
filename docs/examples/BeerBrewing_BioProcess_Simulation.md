@@ -8,9 +8,9 @@ nav_order: 1
 
 # BeerBrewing BioProcess Simulation
 
-> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
+> **Note:** This is an auto-generated Markdown version of the Jupyter notebook 
 > [`BeerBrewing_BioProcess_Simulation.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/BeerBrewing_BioProcess_Simulation.ipynb).
-> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/BeerBrewing_BioProcess_Simulation.ipynb)
+> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/BeerBrewing_BioProcess_Simulation.ipynb) 
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/BeerBrewing_BioProcess_Simulation.ipynb).
 
 ---
@@ -25,32 +25,32 @@ modelling of associating fluids (water, ethanol, glycerol).
 ## Process Overview
 
 ```
-Malt Slurry
-    │
-    ▼
+Malt Slurry                                                    
+    │                                                           
+    ▼                                                           
 ┌──────────────┐    ┌──────────────┐    ┌──────────────────┐
 │   MASHING    │───►│  LAUTERING   │───►│  WORT BOILING    │
 │ EnzymeTreat. │    │ SolidsSep.   │    │  Heater/Cooler   │
 │ (65 °C, 1hr) │    │ (grain sep.) │    │  (100 °C, 1hr)   │
 └──────────────┘    └──────────────┘    └──────────────────┘
-                                                │
-                                                ▼
-                                        ┌──────────────────┐
-                                        │  FERMENTATION    │
-                                        │  Fermenter       │
-                                        │ Glucose→EtOH+CO₂ │
-                                        │  (20 °C, 5 days) │
-                                        └──────────────────┘
-                                                │
-                                                ▼
-                                        ┌──────────────────┐
-                                        │  CONDITIONING    │
-                                        │  Cooler          │
-                                        │   (2 °C)         │
-                                        └──────────────────┘
-                                                │
-                                                ▼
-                                            🍺 Beer
+                                                │              
+                                                ▼              
+                                        ┌──────────────────┐   
+                                        │  FERMENTATION    │   
+                                        │  Fermenter       │   
+                                        │ Glucose→EtOH+CO₂ │   
+                                        │  (20 °C, 5 days) │   
+                                        └──────────────────┘   
+                                                │              
+                                                ▼              
+                                        ┌──────────────────┐   
+                                        │  CONDITIONING    │   
+                                        │  Cooler          │   
+                                        │   (2 °C)         │   
+                                        └──────────────────┘   
+                                                │              
+                                                ▼              
+                                            🍺 Beer           
 ```
 
 ## Key Equations
@@ -169,38 +169,11 @@ Classpath:
   2. C:\Users\ESOL\Documents\GitHub\neqsim2\src\main\resources
   3. C:\Users\ESOL\Documents\GitHub\neqsim2\target\neqsim-3.4.0.jar
 
-<<<<<<< HEAD
-Error: ---------------------------------------------------------------------------
-AttributeError                            Traceback (most recent call last)
-Cell In[40], line 11
-      8 ns = neqsim_init(recompile=True)
-     10 # Import standard NeqSim classes into namespace
----> 11 ns = neqsim_classes(ns)
-     13 # Extract standard classes into local scope (so rest of notebook works unchanged)
-     14 SystemSrkCPAstatoil  = ns.SystemSrkCPAstatoil
-
-File ~\Documents\GitHub\neqsim2\devtools\neqsim_dev_setup.py:152, in neqsim_classes(ns)
-    149 JClass = jpype.JClass
-    151 # Thermo systems
---> 152 ns.SystemSrkEos = JClass("neqsim.thermo.system.SystemSrkEos")
-    153 ns.SystemPrEos = JClass("neqsim.thermo.system.SystemPrEos")
-    154 ns.SystemSrkCPAstatoil = JClass("neqsim.thermo.system.SystemSrkCPAstatoil")
-
-AttributeError: 'NoneType' object has no attribute 'SystemSrkEos'
-Error: The Kernel crashed while executing code in the current cell or a previous cell.
-
-Please review the code in the cell(s) to identify a possible cause of the failure.
-
-Click <a href='https://aka.ms/vscodeJupyterKernelCrash'>here</a> for more info.
-
-View Jupyter <a href='command:jupyter.viewOutput'>log</a> for further details.
-=======
 JVM started: C:\Users\ESOL\graalvm\graalvm-jdk-25.0.1+8.1\bin\server\jvm.dll
 Ready — call neqsim_classes(ns) to import classes
 All NeqSim classes imported OK
 NeqSim loaded via devtools. Extended component database enabled.
 Bio-processing classes available: Fermenter, EnzymeTreatment, StoichiometricReaction
->>>>>>> ec1c592f7acf626f2c4b23309157201167c2a2a6
 ```
 
 </details>
@@ -688,7 +661,7 @@ for **conditioning** (also called lagering or cold crashing):
 
 - **Temperature**: 2 °C
 - **Duration**: 1–4 weeks (we model the thermodynamic state change)
-- **Purpose**:
+- **Purpose**: 
   - Yeast settles out (flocculation)
   - Proteins precipitate (chill haze reduction)
   - Flavours mature and mellow
@@ -1659,12 +1632,12 @@ Hop-forward (Burton)       275    40    25     35    610    260     0.1     -7
 Bicarbonate buffering effect on mash pH (65°C, electrolyte CPA):
 Higher HCO3⁻ → higher pH → needs more dark malt or acid to correct
 
- HCO3 ppm     RA  pH (CO2 eq.)  Style note
+ HCO3 ppm     RA  pH (CO2 eq.)  Style note                    
 ------------------------------------------------------------
-        0      0          4.82  No buffer — RO water
-       15     12          4.95  Soft (Pilsen) — pale lagers
-       50     41          5.23  Moderate — pale ales
-      120     98          5.57  London — amber/brown ales
+        0      0          4.82  No buffer — RO water          
+       15     12          4.95  Soft (Pilsen) — pale lagers   
+       50     41          5.23  Moderate — pale ales          
+      120     98          5.57  London — amber/brown ales     
       260    213          5.89  Burton — needs dark malt for pH
 ------------------------------------------------------------
 
@@ -1755,24 +1728,24 @@ def fermentation_ph_odes(y, t):
     X, S, P, CO2, lac, ace, suc, cit = y
     S = max(S, 0)
     X = max(X, 0)
-
+    
     # Monod growth with ethanol inhibition
     mu = mu_max_ph * S / (Ks_ph + S) * (1 - P / Ki_ph)
     mu = max(mu, 0)
-
+    
     # Rates
     dX = mu * X - kd_ph * X
     glucose_consumed_rate = mu * X / Yxs_ph + ms_ph * X  # g/L/hr
     dS = -glucose_consumed_rate
     dP = Yps_ph * glucose_consumed_rate
     dCO2 = 0.489 * glucose_consumed_rate   # 2×44.01/180.16 = 0.489 g CO2/g glucose
-
+    
     # Organic acid production (proportional to glucose consumption)
     dlac = Y_lactic * glucose_consumed_rate
     dace = Y_acetic * glucose_consumed_rate
     dsuc = Y_succinic * glucose_consumed_rate
     dcit = Y_citric * glucose_consumed_rate
-
+    
     return [dX, dS, dP, dCO2, dlac, dace, dsuc, dcit]
 
 # Solve ODEs
@@ -1800,14 +1773,14 @@ for i in range(len(t_ph)):
     meq_acetic  = ace_ph[i] / 60.05 * 1000.0   # MW acetic = 60.05
     meq_succinic = suc_ph[i] / 118.09 * 1000.0 # MW succinic = 118.09
     meq_citric  = cit_ph[i] / 192.12 * 1000.0  # MW citric = 192.12
-
+    
     total_meq = meq_lactic + meq_acetic + meq_succinic + meq_citric
-
+    
     # CO2 contribution (dissolved CO2 → H2CO3 → H+ + HCO3-)
     # Ka1 of carbonic acid = 4.3e-7, pKa = 6.37
     meq_co2 = CO2_ph[i] / 44.01 * 1000.0 * 0.003  # ~0.3% CO2 hydrates to H2CO3
     total_meq += meq_co2
-
+    
     # pH = initial_pH - (total acid meq) / buffer_capacity
     pH_profile[i] = pH_initial - total_meq / beta_wort
     pH_profile[i] = max(pH_profile[i], 3.0)  # Physical lower bound
@@ -1858,26 +1831,26 @@ for ace_mgL in ace_test_levels:
         ecpa_a = SystemElectrolyteCPAstatoil(273.15 + 20.0, 1.013)
         ecpa_a.addComponent("water", 0.98)
         ecpa_a.addComponent("CO2", 0.005)
-
+        
         if ace_mgL > 0:
             # Convert mg/L to mole fraction
             mol_ace = (ace_mgL / 1000.0) / 60.05  # mol/L
             x_ace = mol_ace / 55.5
             ecpa_a.addComponent("acetic acid", max(x_ace, 1e-8))
-
+        
         ecpa_a.chemicalReactionInit()
         ecpa_a.createDatabase(True)
         ecpa_a.setMixingRule(10)
         ecpa_a.setMultiPhaseCheck(True)
-
+        
         ecpa_a_ops = ThermodynamicOperations(ecpa_a)
         ecpa_a_ops.TPflash()
-
+        
         if ecpa_a.hasPhaseType("aqueous"):
             pH_ecpa = float(ecpa_a.getPhase("aqueous").getpH())
         else:
             pH_ecpa = float(ecpa_a.getPhase(0).getpH())
-
+        
         # Henderson-Hasselbalch comparison
         if ace_mgL > 0:
             conc_mol = ace_mgL / 60.05 / 1000.0  # mol/L
@@ -1885,7 +1858,7 @@ for ace_mgL in ace_test_levels:
             pH_hh = 0.5 * (pKa_acetic + (-np.log10(conc_mol)))
         else:
             pH_hh = 7.0  # Pure water
-
+        
         pH_ecpa_str = f"{pH_ecpa:.2f}" if 0 < pH_ecpa < 14 else "N/A"
         print(f"{ace_mgL:20d}  {pH_ecpa_str:>8s}  {pH_hh:8.2f}")
     except Exception as e:
@@ -2233,42 +2206,42 @@ def multi_sugar_odes(y, t):
     Mt = max(Mt, 0)
     X = max(X, 0)
     P = max(P, 0)
-
+    
     # Sigmoid lag factor: yeast adaptation (0→1 over lag_hours)
     f_lag = 1.0 / (1.0 + np.exp(-(t - lag_hours) / 3.0))
-
+    
     # Ethanol inhibition (common to all)
     f_eth = max(0, 1 - P / Ki_eth)
-
+    
     # Growth rates for each sugar
     # Glucose: standard Monod
     mu_glc = mu_max_glc * Glc / (Ks_glc + Glc) * f_eth * f_lag
-
+    
     # Maltose: competitive inhibition by glucose
     mu_mal = mu_max_mal * Mal / (Ks_mal + Mal) * (1 / (1 + Glc / Ki_glc_mal)) * f_eth * f_lag
-
+    
     # Maltotriose: competitive inhibition by glucose AND maltose
     mu_mt = mu_max_mt * Mt / (Ks_mt + Mt) * (1 / (1 + Glc / Ki_glc_mt)) * (1 / (1 + Mal / Ki_mal_mt)) * f_eth * f_lag
-
+    
     # Total growth rate
     mu_total = mu_glc + mu_mal + mu_mt
-
+    
     # Biomass
     dX = mu_total * X - kd_ms * X
-
+    
     # Sugar consumption
     total_sugar = Glc + Mal + Mt + 0.001  # prevent /0
     r_glc = mu_glc * X / Yxs_ms + ms_ms * X * Glc / total_sugar
     r_mal = mu_mal * X / Yxs_ms + ms_ms * X * Mal / total_sugar
     r_mt  = mu_mt * X / Yxs_ms + ms_ms * X * Mt / total_sugar
-
+    
     dGlc = -r_glc
     dMal = -r_mal
     dMt  = -r_mt
-
+    
     # Ethanol production from all sugars
     dP = Yps_ms * (r_glc + r_mal + r_mt)
-
+    
     return [dX, dGlc, dMal, dMt, dP]
 
 # Solve
@@ -2425,7 +2398,7 @@ recipe), here's a recap of the NeqSim `ProcessSystem` we built:
 ### Further Reading
 
 - [NeqSim Bio-Processing Documentation](../process/bioprocessing.md)
-- [NeqSim Thermodynamic Models](../thermo/thermodynamic_models.md)
+- [NeqSim Thermodynamic Models](../thermo/equations-of-state.md)
 - [CPA Equation of State](https://en.wikipedia.org/wiki/Cubic-plus-association_equation_of_state)
 
 ## Step 17 — Bridging Brew Day and Thermodynamics: ABV from First Principles
@@ -2698,10 +2671,10 @@ for name, wt, alpha, time, temp, stage in hop_schedule:
         ibu_t = tinseth_ibu(alpha, wt, V_wort, SG_wort, time)
         ibu_a = extended_ibu(alpha, wt, V_wort, SG_wort, time, temp)
         util_t = tinseth_utilization(SG_wort, time) * 100
-
+        
         total_ibu_tinseth += ibu_t
         total_ibu_arrhenius += ibu_a
-
+        
         print(f"{name:<25s} {wt:4d} {alpha:5.1f} {time:5d} {temp:4d}"
               f" {util_t:5.1f}% {ibu_t:6.1f} {ibu_a:6.1f}")
     else:
@@ -3583,26 +3556,26 @@ CO2_0 = 0.0         # Initial CO2 (g/L)
 # --- ODE System ---
 def neipa_fermentation(y, t, mu_max, Ks, Yx_s, Yp_s, Yco2_s, P_max, n_inh, m_s):
     X, S, P, CO2 = y
-
+    
     # Monod growth with ethanol inhibition
     if S > 0 and P < P_max:
         mu = mu_max * (S / (Ks + S)) * (1.0 - P / P_max) ** n_inh
     else:
         mu = 0.0
-
+    
     # Rates
     dXdt   = mu * X                                # Biomass growth
     dSdt   = -(mu / Yx_s) * X - m_s * X            # Substrate consumption
     dPdt   = (mu / Yx_s) * Yp_s * X                # Ethanol production
     dCO2dt = (mu / Yx_s) * Yco2_s * X              # CO2 production
-
+    
     # Prevent negative substrate
     if S <= 0:
         dXdt = 0.0
         dSdt = 0.0
         dPdt = 0.0
         dCO2dt = 0.0
-
+    
     return [dXdt, dSdt, dPdt, dCO2dt]
 
 # --- Solve ODE for 14 days (336 hours) ---
@@ -3827,11 +3800,11 @@ for T_C in temps_C:
         beer_fluid.addComponent("glucose",  x_glucose_beer)
         beer_fluid.setMixingRule(10)
         beer_fluid.setMultiPhaseCheck(True)
-
+        
         ops_co2 = ThermodynamicOperations(beer_fluid)
         ops_co2.TPflash()
         beer_fluid.initProperties()
-
+        
         # CO2 mole fraction in liquid phase
         try:
             if beer_fluid.hasPhaseType("aqueous") or beer_fluid.hasPhaseType("oil"):
@@ -3986,17 +3959,17 @@ print("Skaal! -- E.C. Dahls G.O.D.S. NEIPA on Grainfather G30v3, simulated with 
 Parameter                        Planned      Actual         Sim   Match
 --------------------------------------------------------------------------------
 ABV (%)                              7.5        6.96       12.05       ~
-OG                                 1.068       1.064     (input)
-FG                                 1.011       1.011     (input)
-Pre-boil SG                        1.056       1.050
-Pre-boil volume (L)                   28          27
-Post-boil volume (L)                  23          22
-Vol. to fermenter (L)                 20        19.5
+OG                                 1.068       1.064     (input)        
+FG                                 1.011       1.011     (input)        
+Pre-boil SG                        1.056       1.050                    
+Pre-boil volume (L)                   28          27                    
+Post-boil volume (L)                  23          22                    
+Vol. to fermenter (L)                 20        19.5                    
 Apparent Attenuation (%)            83.8        82.8       100.0       ~
 Ferm. Temp (C)                        19          19        19.0      OK
 Ferm. Time (days)                     14          14          14      OK
-Ethanol produced (g)                1628                    1902
-CO2 produced (g)                    1558                    1820
+Ethanol produced (g)                1628                    1902        
+CO2 produced (g)                    1558                    1820        
 --------------------------------------------------------------------------------
 
 --- GRAINFATHER G30v3 ENERGY ANALYSIS ---
