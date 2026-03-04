@@ -1,6 +1,6 @@
 ---
 title: "Vessel Depressurization and Filling"
-description: "Dynamic modeling of pressure vessel filling, depressurization, and blowdown using VesselDepressurization. Covers thermodynamic modes, heat transfer models, fire cases, composite vessels, flow assurance, CNG tank scenarios, and Python/Java API reference."
+description: "Dynamic modeling of pressure vessel filling, depressurization, and blowdown using VesselDepressurization. Covers thermodynamic modes, heat transfer models (real-gas beta, momentum-based mixed convection, Biot correction, Rohsenow boiling), fire cases, composite vessels, flow assurance, CNG tank scenarios, and Python/Java API reference."
 ---
 
 # Vessel Depressurization and Filling
@@ -21,6 +21,7 @@ Dynamic modeling of pressure vessel filling, depressurization, and blowdown usin
 - [Results and History](#results-and-history)
 - [Flow Assurance Checks](#flow-assurance-checks)
 - [Convenience Methods](#convenience-methods)
+- [Heat Transfer Model Improvements (2025-2026)](#heat-transfer-model-improvements-20252026)
 - [Bug Fixes (2025)](#bug-fixes-2025)
 - [Java Examples](#java-examples)
 - [Python Examples](#python-examples)
@@ -33,7 +34,7 @@ Dynamic modeling of pressure vessel filling, depressurization, and blowdown usin
 The `VesselDepressurization` class models dynamic filling and depressurization of pressure vessels. It supports:
 
 1. **Multiple thermodynamic processes**: isothermal, isenthalpic, isentropic, isenergetic, and full energy balance
-2. **Heat transfer models**: adiabatic, fixed U-value, fixed Q, calculated natural/mixed convection, and transient 1-D wall conduction
+2. **Heat transfer models**: adiabatic, fixed U-value, fixed Q, calculated natural/mixed convection (momentum-based with real-gas beta and Biot correction), and transient 1-D wall conduction
 3. **Multi-component mixtures**: full thermodynamic calculations via NeqSim equation of state (SRK, PR, CPA, etc.)
 4. **Orifice flow or fixed flow rates**: choked/subsonic discharge, or user-specified mass/volumetric rates
 5. **Filling (pressurization)**: inlet enthalpy calculated at supply temperature and vessel pressure
@@ -292,10 +293,66 @@ vessel.setInitialLiquidLevel(0.5);
 
 | Flow Direction | Correlation | Description |
 |----------------|-------------|-------------|
-| DISCHARGE | Churchill-Chu | Natural convection on vertical/horizontal surface |
-| FILLING | Mixed convection | Gnielinski (forced) + Churchill-Chu (natural), combined asymptotically: h = (h_forced^3 + h_natural^3)^(1/3) |
+| DISCHARGE | Momentum-based mixed convection | Circulation velocity from orifice momentum (area-ratio scaling), Gnielinski Nu with vessel diameter as length scale, blended asymptotically with Churchill-Chu natural convection |
+| FILLING | Momentum-based mixed convection (1.5x enhancement) | Same as discharge but with 1.5x filling enhancement factor on circulation velocity to account for the stronger mixing from incoming jet |
+| Natural convection | Churchill-Chu | Vertical surface or horizontal cylinder correlation, with real-gas thermal expansion coefficient |
+| Liquid (wetted wall) | Rohsenow + natural convection | Nucleate boiling via Rohsenow correlation when wall superheat exists, otherwise natural convection |
 
 The `VesselHeatTransferCalculator` class (in `neqsim.process.util.fire`) implements these correlations.
+
+#### Momentum-Based Forced Convection Model
+
+Both filling and discharge use the same physical approach to estimate forced convection:
+
+1. Compute orifice exit velocity: $v_{orifice} = \dot{m} / (\rho \cdot A_{orifice})$
+2. Estimate bulk circulation velocity from area ratio: $v_{circ} = v_{orifice} \cdot A_{orifice} / A_{vessel}$
+3. For filling, apply 1.5x enhancement: $v_{circ,fill} = 1.5 \cdot v_{circ}$
+4. Compute Re based on vessel diameter: $Re = \rho \cdot v_{circ} \cdot D_{vessel} / \mu$
+5. Evaluate Gnielinski correlation for Nu
+6. Convert: $h_{forced} = Nu \cdot k / D_{vessel}$
+7. Blend with natural convection: $h_{mixed} = (h_{forced}^3 + h_{natural}^3)^{1/3}$
+
+Using the vessel diameter as the length scale (rather than the orifice diameter) prevents non-physical HTC spikes at low pressure when orifice velocities are large.
+
+#### Real-Gas Thermal Expansion Coefficient
+
+Natural convection uses a real-gas thermal expansion coefficient computed from the equation of state:
+
+$$\beta = -\frac{1}{\rho} \left(\frac{\partial \rho}{\partial T}\right)_P$$
+
+This can differ significantly from the ideal-gas approximation $\beta = 1/T$ at high pressures. Falls back to $1/T$ if the EoS derivative is unavailable.
+
+#### Biot-Number Wall Correction
+
+The lumped wall model applies a first-order Biot correction to account for the temperature gradient through the wall:
+
+$$h_{eff} = \frac{1}{\frac{1}{h_{int}} + \frac{t_{wall}}{2 k_{wall}}}$$
+
+For composite vessels with liner:
+
+$$h_{eff} = \frac{1}{\frac{1}{h_{int}} + \frac{t_{liner}}{k_{liner}} + \frac{t_{wall}}{2 k_{wall}}}$$
+
+This ensures that walls with low thermal conductivity (e.g., CFRP composites) correctly limit the heat transfer rate.
+
+#### Nucleate Boiling (Wetted Wall)
+
+When the wall temperature exceeds the saturation temperature in two-phase systems, the Rohsenow correlation estimates nucleate boiling heat flux:
+
+$$q = \mu_l h_{fg} \sqrt{\frac{g (\rho_l - \rho_v)}{\sigma}} \left[\frac{C_{p,l} \Delta T_{sat}}{C_{sf} h_{fg} Pr^n}\right]^3$$
+
+Default surface–fluid constants: $C_{sf} = 0.013$, $n = 1.7$ (water-steel). Falls back to simplified estimate $h = 1000 \Delta T^{0.3}$ if Rohsenow gives unreasonably low values. Capped at 5000 W/(m²·K).
+
+#### Impinging Jet Correlation (Available)
+
+The Martin correlation for axisymmetric impinging jets (VDI Heat Atlas) is available in `VesselHeatTransferCalculator.calculateNusseltImpingingJet()` for specialized analysis:
+
+$$Nu = F(Re) \cdot K(H/D, D/r) \cdot Pr^{0.42}$$
+
+Valid for $2000 < Re < 400{,}000$, $2 < H/D < 12$, $2.5 < r/D < 7.5$. Not used in the default simulation path (the momentum-based model is preferred for stability).
+
+#### HTC Safety Cap
+
+Gas-phase HTC is capped at 500 W/(m²·K) to prevent numerical instability from extreme flow conditions (e.g., very low pressure with high orifice velocity).
 
 ### External HTC
 
@@ -542,6 +599,48 @@ SystemInterface fluid = VesselDepressurization.createTwoPhaseFluid(
 SystemInterface fluid = VesselDepressurization.createTwoPhaseFluidAtPressure(
     "propane", 10.0, 0.5);  // P=10 bar, 50% vapor
 ```
+
+---
+
+## Heat Transfer Model Improvements (2025–2026)
+
+Five improvements were made to the internal heat transfer model based on validation against published experimental data (CNG filling, H₂ filling, air charging/discharging):
+
+### 1. Real-Gas Thermal Expansion Coefficient
+
+**Before:** Ideal-gas approximation $\beta = 1/T$ used for all Grashof number calculations.
+
+**After:** Uses EoS derivative $\beta = -(1/\rho)(\partial\rho/\partial T)_P$ via `phase.getdrhodT()`. Falls back to $1/T$ only when the derivative is unavailable or non-physical.
+
+**Impact:** Improves natural convection accuracy at high pressures where $\beta$ can differ significantly from $1/T$.
+
+### 2. Momentum-Based Forced Convection
+
+**Before:** Filling used inlet orifice diameter as the length scale for both Re and the Nu-to-h conversion. At low pressure with small orifices, this produced extreme HTC values (>10,000 W/m²K) causing numerical instability.
+
+**After:** Both filling and discharge estimate a bulk circulation velocity from orifice momentum (area-ratio scaling) and use the vessel diameter as the length scale. Filling applies a 1.5x enhancement factor. This approach is physically consistent — the entire gas volume circulates, not just the jet core.
+
+**Impact:** Eliminates oscillations in CNG filling simulation. Case 1 gas temperature RMS error improved from 40.4°C to 16.0°C.
+
+### 3. Biot-Number Wall Correction
+
+**Before:** Lumped wall model equated inner surface temperature with mean wall temperature for the internal heat flux calculation.
+
+**After:** Applies Biot correction: $h_{eff} = 1/(1/h_{int} + t_{wall}/(2k_{wall}))$. For composite vessels, includes liner resistance.
+
+**Impact:** More accurate wall temperature predictions for thick walls and low-conductivity composites (CFRP, fiberglass).
+
+### 4. Rohsenow Nucleate Boiling
+
+**Before:** Wetted wall boiling used ad-hoc formula $h = 1000 \cdot \Delta T^{0.3}$.
+
+**After:** Uses Rohsenow correlation for nucleate pool boiling with fallback to simplified estimate when Rohsenow gives unreasonably low values. Cap raised to 5000 W/(m²·K).
+
+**Impact:** Physics-based boiling HTC for two-phase scenarios.
+
+### 5. HTC Safety Cap
+
+Gas-phase HTC is capped at 500 W/(m²·K) to prevent energy balance overcorrection from extreme transient conditions.
 
 ---
 
@@ -862,7 +961,9 @@ print(f"Min gas T: {float(vessel.getMinimumTemperatureReached('C')):.1f} C")
 - [CNG Tank Filling Notebook](../../../examples/CNGtankmodelling/CNG_FillingSimulation.ipynb) - Filling simulation example
 - [CNG Tank Emptying Notebook](../../../examples/CNGtankmodelling/CNG_EmptyingSimulation.ipynb) - Depressurization example
 - [CNG Gas Properties Notebook](../../../examples/CNGtankmodelling/CNG_GasProperties_HTC.ipynb) - Gas properties and HTC calculations
+- [HTC Literature Comparison](../../../examples/CNGtankmodelling/CNG_HTC_Literature_Comparison.ipynb) - Validation against published experimental data
 - [QRA Integration Guide](../../integration/QRA_INTEGRATION_GUIDE.md) - Safety analysis integration
+- [Fire Heat Transfer](../../safety/fire_heat_transfer_enhancements.md) - Fire exposure and blowdown enhancements
 - [Tank Equipment](tanks.md) - General tank modeling
 
 ---
