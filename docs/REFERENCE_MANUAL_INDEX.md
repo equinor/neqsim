@@ -323,6 +323,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Flares | [docs/process/equipment/flares.md](process/equipment/flares) | Flare systems |
 | Adsorbers (SimpleAdsorber) | [docs/process/equipment/adsorbers.md](process/equipment/adsorbers) | Simplified gas absorption with MDEA |
 | **Adsorption Bed (Transient)** | [docs/process/equipment/adsorption_bed.md](process/equipment/adsorption_bed) | **Fixed-bed adsorption with LDF mass transfer, MTZ, PSA/TSA cycles** |
+| **Mercury Removal Guard Bed** | [docs/process/mercury_removal.md](process/mercury_removal) | **Chemisorption (PuraSpec), transient bed loading, breakthrough, degradation, mechanical design, cost estimation** |
 | Power Generation | [docs/process/equipment/power_generation.md](process/equipment/power_generation) | Gas turbines, fuel cells, renewables |
 | Diff. Pressure | [docs/process/equipment/differential_pressure.md](process/equipment/differential_pressure) | Orifice plates, flow measurement |
 | Manifolds | [docs/process/equipment/manifolds.md](process/equipment/manifolds) | Multi-stream routing |
