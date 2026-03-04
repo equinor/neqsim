@@ -195,7 +195,7 @@ public class PTphaseEnvelope1 extends BaseOperation {
           cricondenBar[1] = system.getPressure();
         }
 
-        if (Double.isNaN(system.getTemperature()) || Double.isNaN(system.getTemperature())
+        if (Double.isNaN(system.getTemperature()) || Double.isNaN(system.getPressure())
             || system.getPressure() < startPres) {
           points[0][np - 1] = points[0][np - 3];
           points[1][np - 1] = points[1][np - 3];
