@@ -27,6 +27,18 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-03-05 — Stefan-Boltzmann fire model for VesselDepressurization
+**Type:** E (Feature)
+**Keywords:** fire, Stefan-Boltzmann, blowdown, depressurization, radiation, Scandpower, API 521, jet fire, pool fire, wall temperature, TransientWallHeatTransfer, FireType, FireModelType
+**Solution:** `src/main/java/neqsim/process/equipment/tank/VesselDepressurization.java`, `src/main/java/neqsim/process/util/fire/TransientWallHeatTransfer.java`, `examples/CNGtankmodelling/run_sb_fire_test.py`
+**Notes:**
+- Added S-B fire model: $q_f = \alpha_s \varepsilon_f \sigma T_f^4 + h_f (T_f - T_s) - \varepsilon_s \sigma T_s^4$
+- Fire heat applied at outer wall boundary (not directly to gas) — physically correct, matches HydDown/Unisim
+- New enums: FireModelType (NONE, CONSTANT_FLUX, STEFAN_BOLTZMANN), FireType (SCANDPOWER_JET/POOL, API_JET/POOL, CUSTOM)
+- TransientWallHeatTransfer: added overloaded advanceTimeStep with additionalOuterFluxWPerM2 parameter
+- Validation: constant flux gives unrealistic 451°C gas temp; S-B gives realistic 47°C gas, 110°C wall
+- Flame temperature back-calculated from incident flux via Newton-Raphson
+
 ### 2025-07-17 — CNG tank temperature estimation improvements and Jupyter notebooks
 **Type:** E (Feature)
 **Keywords:** CNG, tank, filling, emptying, depressurization, VU-flash, heat transfer, Churchill-Chu, Gnielinski, natural convection, mixed convection, transient wall, VesselDepressurization, temperature estimation, MDMT
@@ -69,13 +81,13 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 ---
 
-<!-- 
+<!--
 TEMPLATE — copy this block for each new entry:
 
 ### YYYY-MM-DD — Title
-**Type:** 
-**Keywords:** 
-**Solution:** 
-**Notes:** 
+**Type:**
+**Keywords:**
+**Solution:**
+**Notes:**
 
 -->

@@ -14,6 +14,7 @@ This note summarizes the current fire, heat-transfer, and structural integrity h
 ## Heat-transfer / wall-temperature treatment
 - `FireHeatTransferCalculator` solves a steady 1-D wall model for wetted and unwetted regions using caller-supplied internal/external film coefficients.
 - `SurfaceTemperatureResult` reports inner/outer metal temperatures and heat flux for each region so process models can track thermal response during depressurization.
+- **VesselDepressurization S-B fire model:** The `VesselDepressurization` class has a built-in Stefan-Boltzmann fire model that applies fire radiative and convective heat to the **outer wall boundary** of the transient wall heat conduction solver (`TransientWallHeatTransfer`). Preset fire types (`SCANDPOWER_JET`, `SCANDPOWER_POOL`, `API_JET`, `API_POOL`) are available via `setFireType()`, or custom parameters can be set with `setSBFireParameters()`. This is the recommended approach for blowdown fire cases — see [Vessel Depressurization - Stefan-Boltzmann Fire Model](../process/equipment/vessel_depressurization.md#stefan-boltzmann-fire-model).
 
 ## Structural integrity / rupture logic
 - `VesselRuptureCalculator` provides thin-wall von-Mises stress plus helpers to compute rupture margin or boolean likelihood when allowable tensile strength is supplied (optionally temperature-dependent when paired with wall temperatures from the heat-transfer step).

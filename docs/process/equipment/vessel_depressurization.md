@@ -364,7 +364,10 @@ Auto-calculated external HTC uses Churchill-Chu for natural convection in still 
 
 ## Fire Case Modeling
 
-API 521 fire exposure with configurable heat flux and wetted surface fraction.
+### Legacy Constant Flux (API 521)
+
+Constant fire heat flux applied directly to the gas energy balance. Simple but may overpredict
+gas temperature because heat bypasses the vessel wall.
 
 ```java
 vessel.setFireCase(true);
@@ -379,6 +382,122 @@ double fireHeat = vessel.getFireHeatInput("kW");  // total heat rate
 ```
 
 Fire heat is added to the energy balance regardless of the HeatTransferType setting.
+
+### Stefan-Boltzmann Fire Model
+
+Physically correct fire model that applies fire heat to the **outer wall surface**
+rather than directly to the gas. The wall then conducts heat inward to the gas
+through the normal heat transfer path (1-D conduction or lumped model).
+
+The net fire heat flux at the outer wall surface is computed as:
+
+$$
+q_f = \alpha_s \cdot \varepsilon_f \cdot \sigma \cdot T_f^4
+    + h_f \cdot (T_f - T_s)
+    - \varepsilon_s \cdot \sigma \cdot T_s^4
+$$
+
+where $\alpha_s$ is surface absorptivity, $\varepsilon_f$ is flame emissivity,
+$\varepsilon_s$ is surface emissivity, $h_f$ is fire convection coefficient,
+$T_f$ is flame temperature, and $T_s$ is the outer wall temperature.
+
+As the wall heats up, the re-radiation term ($\varepsilon_s \sigma T_s^4$) increases
+and the net heat input naturally decreases — this is physically correct and matches
+HydDown/Unisim behavior.
+
+#### Preset Fire Types
+
+Use a preset fire type for standard Scandpower or API fire scenarios:
+
+```java
+// Scandpower jet fire (100 kW/m2 incident)
+vessel.setFireType(FireType.SCANDPOWER_JET);
+
+// Scandpower pool fire (100 kW/m2 incident, lower convection)
+vessel.setFireType(FireType.SCANDPOWER_POOL);
+
+// API 521 jet fire
+vessel.setFireType(FireType.API_JET);
+
+// API 521 pool fire (43.2 kW/m2 incident)
+vessel.setFireType(FireType.API_POOL);
+
+vessel.setWettedSurfaceFraction(1.0);  // fraction of surface exposed to fire
+```
+
+Preset parameters:
+
+| Fire Type | $\alpha_s$ | $\varepsilon_f$ | $\varepsilon_s$ | $h_f$ [W/(m2K)] | Incident flux [kW/m2] |
+|-----------|:---:|:---:|:---:|:---:|:---:|
+| SCANDPOWER_JET  | 0.85 | 1.0  | 0.85 | 100 | 100 |
+| SCANDPOWER_POOL | 0.85 | 1.0  | 0.85 | 30  | 100 |
+| API_JET         | 0.75 | 0.33 | 0.75 | 40  | 100 |
+| API_POOL        | 0.75 | 0.3  | 0.75 | 15  | 43.2 |
+
+#### Custom Parameters
+
+```java
+// Set model type explicitly
+vessel.setFireModelType(FireModelType.STEFAN_BOLTZMANN);
+
+// Custom S-B parameters: absorptivity, flame emissivity, surface emissivity, h_conv
+vessel.setSBFireParameters(0.85, 1.0, 0.85, 100.0);
+
+// Set incident heat flux (flame temperature is back-calculated)
+vessel.setIncidentHeatFlux(100.0, "kW/m2");
+
+// Or set flame temperature directly
+vessel.setFlameTemperature(933.0);  // K
+
+vessel.setWettedSurfaceFraction(1.0);
+```
+
+#### Python Example (S-B Fire Blowdown)
+
+```python
+from neqsim import jneqsim
+import jpype
+
+VesselDepressurization = jpype.JClass(
+    'neqsim.process.equipment.tank.VesselDepressurization')
+FireType = jpype.JClass(
+    'neqsim.process.equipment.tank.VesselDepressurization$FireType')
+# ... other imports ...
+
+vessel = VesselDepressurization("Fire case", feed)
+vessel.setVesselGeometry(9.0, 3.0, VesselOrientation.VERTICAL)
+vessel.setVesselProperties(0.136, 7700.0, 500.0, 50.0)
+vessel.setCalculationType(CalculationType.ENERGY_BALANCE)
+vessel.setHeatTransferType(HeatTransferType.TRANSIENT_WALL)
+vessel.setFlowDirection(FlowDirection.DISCHARGE)
+
+# Use Scandpower jet fire preset
+vessel.setFireType(FireType.SCANDPOWER_JET)
+vessel.setWettedSurfaceFraction(1.0)
+vessel.run()
+
+# Run blowdown
+sim_id = UUID.randomUUID()
+for i in range(900):
+    vessel.runTransient(1.0, sim_id)
+    T_gas = float(vessel.getTemperature()) - 273.15
+    T_wall = float(vessel.getWallTemperature()) - 273.15
+```
+
+#### Comparison: Constant Flux vs Stefan-Boltzmann
+
+For a 9 m x 3 m steel vessel (136 mm wall), methane at 115 bar, 25 degC,
+100 kW/m2 jet fire, 15-minute blowdown:
+
+| Metric | Constant flux (to gas) | S-B Scandpower jet (to wall) |
+|--------|:---:|:---:|
+| Final pressure [bar] | 115 | 61 |
+| Max gas temp [degC] | 451 (unrealistic) | 47 |
+| Max wall temp [degC] | 149 | 110 |
+
+The constant flux model overpredicts gas temperature because fire heat bypasses
+the wall thermal resistance. The S-B model produces physically realistic results
+consistent with HydDown and Unisim.
 
 ---
 
