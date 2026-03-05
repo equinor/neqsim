@@ -13,7 +13,7 @@ import java.util.Arrays;
  *
  * <p>
  * The model solves the 1-D heat equation:
- * 
+ *
  * <pre>
  * rho * Cp * dT/dt = k * d2T/dx2
  * </pre>
@@ -162,7 +162,7 @@ public class TransientWallHeatTransfer {
    *
    * <p>
    * Uses convective (Robin) boundary conditions at both surfaces:
-   * 
+   *
    * <pre>
    * -k * dT/dx = h_inner * (T_inner - T_fluid_inner) at x = 0
    * -k * dT/dx = h_outer * (T_outer - T_ambient) at x = L
@@ -177,6 +177,39 @@ public class TransientWallHeatTransfer {
   public void advanceTimeStep(double dt, double innerFluidTemperatureK,
       double innerFilmCoefficientWPerM2K, double outerAmbientTemperatureK,
       double outerFilmCoefficientWPerM2K) {
+    advanceTimeStep(dt, innerFluidTemperatureK, innerFilmCoefficientWPerM2K,
+        outerAmbientTemperatureK, outerFilmCoefficientWPerM2K, 0.0);
+  }
+
+  /**
+   * Advances the temperature profile by one time step with additional outer heat flux.
+   *
+   * <p>
+   * This overload adds an additional heat flux at the outer boundary, which is used for
+   * Stefan-Boltzmann fire models where the fire heat is applied to the outer wall surface
+   * rather than directly to the gas.
+   * </p>
+   *
+   * <p>
+   * The outer boundary condition becomes:
+   *
+   * <pre>
+   * -k * dT/dx = h_outer * (T_outer - T_ambient) - additionalOuterFlux
+   * </pre>
+   *
+   * where additionalOuterFlux is positive into the wall (e.g., fire radiation + convection).
+   *
+   * @param dt Time step [s]
+   * @param innerFluidTemperatureK Process fluid temperature [K]
+   * @param innerFilmCoefficientWPerM2K Internal film coefficient [W/(m^2*K)]
+   * @param outerAmbientTemperatureK Ambient temperature [K]
+   * @param outerFilmCoefficientWPerM2K External film coefficient [W/(m^2*K)]
+   * @param additionalOuterFluxWPerM2 Additional heat flux at outer boundary [W/m^2],
+   *        positive into wall (e.g., fire heat flux)
+   */
+  public void advanceTimeStep(double dt, double innerFluidTemperatureK,
+      double innerFilmCoefficientWPerM2K, double outerAmbientTemperatureK,
+      double outerFilmCoefficientWPerM2K, double additionalOuterFluxWPerM2) {
     if (dt <= 0.0) {
       throw new IllegalArgumentException("Time step must be positive");
     }
@@ -190,20 +223,27 @@ public class TransientWallHeatTransfer {
       double subDt = dt / subSteps;
       for (int s = 0; s < subSteps; s++) {
         advanceTimeStepInternal(subDt, innerFluidTemperatureK, innerFilmCoefficientWPerM2K,
-            outerAmbientTemperatureK, outerFilmCoefficientWPerM2K);
+            outerAmbientTemperatureK, outerFilmCoefficientWPerM2K, additionalOuterFluxWPerM2);
       }
     } else {
       advanceTimeStepInternal(dt, innerFluidTemperatureK, innerFilmCoefficientWPerM2K,
-          outerAmbientTemperatureK, outerFilmCoefficientWPerM2K);
+          outerAmbientTemperatureK, outerFilmCoefficientWPerM2K, additionalOuterFluxWPerM2);
     }
   }
 
   /**
    * Internal time step advancement (assumes stability is already checked).
+   *
+   * @param dt Time step [s]
+   * @param innerFluidTemperatureK Process fluid temperature [K]
+   * @param innerFilmCoefficientWPerM2K Internal film coefficient [W/(m^2*K)]
+   * @param outerAmbientTemperatureK Ambient temperature [K]
+   * @param outerFilmCoefficientWPerM2K External film coefficient [W/(m^2*K)]
+   * @param additionalOuterFluxWPerM2 Additional heat flux at outer boundary [W/m^2]
    */
   private void advanceTimeStepInternal(double dt, double innerFluidTemperatureK,
       double innerFilmCoefficientWPerM2K, double outerAmbientTemperatureK,
-      double outerFilmCoefficientWPerM2K) {
+      double outerFilmCoefficientWPerM2K, double additionalOuterFluxWPerM2) {
     double[] newTemp = new double[numNodes];
 
     // Interior nodes - explicit finite difference
@@ -234,15 +274,19 @@ public class TransientWallHeatTransfer {
     newTemp[0] = temperatureProfile[0] + 2.0 * FoInner * (temperatureProfile[1]
         - temperatureProfile[0] + BiInner * (innerFluidTemperatureK - temperatureProfile[0]));
 
-    // Outer boundary (x = L): convective BC with ambient/fire
+    // Outer boundary (x = L): convective BC with ambient/fire + additional flux
     int n = numNodes - 1;
     double kOuter = thermalConductivity[n];
     double BiOuter = outerFilmCoefficientWPerM2K * dx / kOuter;
     double alphaOuter = thermalDiffusivity[n];
     double FoOuter = alphaOuter * dt / (dx * dx);
 
+    // Additional flux term: q_additional * dx / k converts flux to temperature equivalent
+    double fluxTerm = additionalOuterFluxWPerM2 * dx / kOuter;
+
     newTemp[n] = temperatureProfile[n] + 2.0 * FoOuter * (temperatureProfile[n - 1]
-        - temperatureProfile[n] + BiOuter * (outerAmbientTemperatureK - temperatureProfile[n]));
+        - temperatureProfile[n] + BiOuter * (outerAmbientTemperatureK - temperatureProfile[n])
+        + fluxTerm);
 
     // Update temperature profile
     temperatureProfile = newTemp;

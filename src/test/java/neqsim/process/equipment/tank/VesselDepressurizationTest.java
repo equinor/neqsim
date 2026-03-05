@@ -489,7 +489,7 @@ public class VesselDepressurizationTest {
 
   /**
    * Test that setInitialLiquidLevel works for pure components (like CO2).
-   * 
+   *
    * Note: For pure components at saturation, the liquid level is determined by the total mass and
    * must be at saturation T/P. The setInitialLiquidLevel() adjusts the phase distribution to match
    * the specified level by scaling moles in each phase.
@@ -1314,5 +1314,225 @@ public class VesselDepressurizationTest {
         "Gas temperature " + (finalT - 273.15) + " C should be between 10 and 80 C");
     assertTrue((wallT - 273.15) > 0.0 && (wallT - 273.15) < 50.0,
         "Wall temperature " + (wallT - 273.15) + " C should be between 0 and 50 C");
+  }
+
+  @Test
+  @DisplayName("Test Stefan-Boltzmann fire model with Scandpower jet preset")
+  void testStefanBoltzmannFireScandpowerJet() {
+    SystemInterface gas = new SystemSrkEos(298.15, 115.0);
+    gas.addComponent("methane", 1.0);
+    gas.setMixingRule("classic");
+    gas.init(0);
+    gas.init(1);
+
+    Stream feed = new Stream("SB fire feed", gas);
+    feed.setTemperature(298.15, "K");
+    feed.setPressure(115.0, "bar");
+    feed.run();
+
+    VesselDepressurization vessel = new VesselDepressurization("SB Fire Test", feed);
+    vessel.setVesselGeometry(9.0, 3.0, VesselDepressurization.VesselOrientation.VERTICAL);
+    vessel.setVesselProperties(0.136, 7700.0, 500.0, 50.0);
+    vessel.setCalculationType(VesselDepressurization.CalculationType.ENERGY_BALANCE);
+    vessel.setHeatTransferType(VesselDepressurization.HeatTransferType.TRANSIENT_WALL);
+    vessel.setFlowDirection(VesselDepressurization.FlowDirection.DISCHARGE);
+    vessel.setOrificeDiameter(0.05);
+    vessel.setBackPressure(1.0);
+    vessel.setAmbientTemperature(288.15);
+
+    // Enable S-B fire model with Scandpower jet fire preset
+    vessel.setFireType(VesselDepressurization.FireType.SCANDPOWER_JET);
+    vessel.setWettedSurfaceFraction(1.0);
+    vessel.run();
+
+    assertEquals(VesselDepressurization.FireModelType.STEFAN_BOLTZMANN,
+        vessel.getFireModelType(), "Fire model type should be STEFAN_BOLTZMANN");
+    assertEquals(VesselDepressurization.FireType.SCANDPOWER_JET,
+        vessel.getFireType(), "Fire type should be SCANDPOWER_JET");
+    assertTrue(vessel.getFlameTemperature() > 800.0,
+        "Flame temperature should be > 800 K, got " + vessel.getFlameTemperature());
+    assertTrue(vessel.isFireCase(), "Fire case should be enabled");
+
+    double initialP = vessel.getPressure("bar");
+    double initialT = vessel.getTemperature();
+
+    UUID id = UUID.randomUUID();
+    for (int i = 0; i < 300; i++) {
+      vessel.runTransient(1.0, id);
+    }
+
+    double finalP = vessel.getPressure("bar");
+    double finalT = vessel.getTemperature() - 273.15;
+    double wallT = vessel.getWallTemperature() - 273.15;
+
+    // Pressure should drop significantly during blowdown
+    assertTrue(finalP < initialP * 0.85,
+        "Pressure should decrease significantly. Initial: " + initialP + ", Final: " + finalP);
+
+    // With S-B fire on wall, gas temp should remain physically reasonable (not 400+ C)
+    assertTrue(finalT < 150.0,
+        "S-B fire gas temp " + finalT + " C should be < 150 C (physically realistic)");
+    assertTrue(finalT > -50.0,
+        "S-B fire gas temp " + finalT + " C should be > -50 C");
+
+    // Wall should heat up from fire but not exceed flame temperature
+    assertTrue(wallT > 25.0,
+        "Wall temperature " + wallT + " C should exceed initial temp due to fire");
+    assertTrue(wallT < 500.0,
+        "Wall temperature " + wallT + " C should be below flame temperature");
+  }
+
+  @Test
+  @DisplayName("Test Stefan-Boltzmann fire flux calculation")
+  void testCalculateSBFireFlux() {
+    Stream feed = createTestStream(300.0, 50.0);
+
+    VesselDepressurization vessel = new VesselDepressurization("flux test", feed);
+    vessel.setVolume(1.0);
+    vessel.setFireType(VesselDepressurization.FireType.SCANDPOWER_JET);
+    vessel.run();
+
+    // At ambient wall temperature (~300 K), net flux should be close to incident flux
+    double fluxAtAmbient = vessel.calculateSBFireFlux(300.0);
+    assertTrue(fluxAtAmbient > 50000.0,
+        "Fire flux at 300 K wall should be > 50 kW/m2, got " + fluxAtAmbient / 1000.0);
+    assertTrue(fluxAtAmbient < 150000.0,
+        "Fire flux at 300 K wall should be < 150 kW/m2, got " + fluxAtAmbient / 1000.0);
+
+    // At higher wall temperature, flux should decrease due to re-radiation
+    double fluxAtHotWall = vessel.calculateSBFireFlux(600.0);
+    assertTrue(fluxAtHotWall < fluxAtAmbient,
+        "Fire flux should decrease with increasing wall temperature");
+    assertTrue(fluxAtHotWall > 0.0,
+        "Fire flux should still be positive at 600 K wall");
+
+    // At very high wall temperature, flux should be much lower
+    double fluxAtVeryHot = vessel.calculateSBFireFlux(900.0);
+    assertTrue(fluxAtVeryHot < fluxAtHotWall,
+        "Fire flux at 900 K should be less than at 600 K");
+  }
+
+  @Test
+  @DisplayName("Test custom S-B fire parameters")
+  void testCustomSBFireParameters() {
+    Stream feed = createTestStream(298.15, 50.0);
+
+    VesselDepressurization vessel = new VesselDepressurization("custom SB", feed);
+    vessel.setVolume(1.0);
+    vessel.setFireModelType(VesselDepressurization.FireModelType.STEFAN_BOLTZMANN);
+    vessel.setSBFireParameters(0.85, 1.0, 0.85, 100.0);
+    vessel.setIncidentHeatFlux(100.0, "kW/m2");
+    vessel.run();
+
+    assertEquals(VesselDepressurization.FireType.CUSTOM,
+        vessel.getFireType(), "Fire type should be CUSTOM after setSBFireParameters");
+    assertEquals(VesselDepressurization.FireModelType.STEFAN_BOLTZMANN,
+        vessel.getFireModelType(), "Model type should be STEFAN_BOLTZMANN");
+
+    // Flame temperature should have been calculated
+    double flameT = vessel.getFlameTemperature();
+    assertTrue(flameT > 700.0 && flameT < 1500.0,
+        "Flame temperature " + flameT + " K should be between 700 and 1500 K");
+
+    // Setting flame temperature directly should work
+    vessel.setFlameTemperature(1000.0);
+    assertEquals(1000.0, vessel.getFlameTemperature(), 0.01,
+        "Flame temperature should be settable directly");
+  }
+
+  @Test
+  @DisplayName("Test S-B fire produces lower gas temp than constant flux")
+  void testSBFireVsConstantFlux() {
+    // Create identical vessels with different fire models
+    SystemInterface gas1 = new SystemSrkEos(298.15, 80.0);
+    gas1.addComponent("methane", 1.0);
+    gas1.setMixingRule("classic");
+    gas1.init(0);
+    gas1.init(1);
+
+    SystemInterface gas2 = gas1.clone();
+
+    Stream feed1 = new Stream("const fire feed", gas1);
+    feed1.setTemperature(298.15, "K");
+    feed1.setPressure(80.0, "bar");
+    feed1.run();
+
+    Stream feed2 = new Stream("sb fire feed", gas2);
+    feed2.setTemperature(298.15, "K");
+    feed2.setPressure(80.0, "bar");
+    feed2.run();
+
+    // Vessel 1: constant flux fire (legacy)
+    VesselDepressurization vesselConst = new VesselDepressurization("Const Fire", feed1);
+    vesselConst.setVesselGeometry(5.0, 2.0, VesselDepressurization.VesselOrientation.VERTICAL);
+    vesselConst.setVesselProperties(0.05, 7700.0, 500.0, 50.0);
+    vesselConst.setCalculationType(VesselDepressurization.CalculationType.ENERGY_BALANCE);
+    vesselConst.setHeatTransferType(VesselDepressurization.HeatTransferType.TRANSIENT_WALL);
+    vesselConst.setFlowDirection(VesselDepressurization.FlowDirection.DISCHARGE);
+    vesselConst.setOrificeDiameter(0.03);
+    vesselConst.setBackPressure(1.0);
+    vesselConst.setFireCase(true);
+    vesselConst.setFireHeatFlux(100.0, "kW/m2");
+    vesselConst.setWettedSurfaceFraction(1.0);
+    vesselConst.run();
+
+    // Vessel 2: S-B fire model
+    VesselDepressurization vesselSB = new VesselDepressurization("SB Fire", feed2);
+    vesselSB.setVesselGeometry(5.0, 2.0, VesselDepressurization.VesselOrientation.VERTICAL);
+    vesselSB.setVesselProperties(0.05, 7700.0, 500.0, 50.0);
+    vesselSB.setCalculationType(VesselDepressurization.CalculationType.ENERGY_BALANCE);
+    vesselSB.setHeatTransferType(VesselDepressurization.HeatTransferType.TRANSIENT_WALL);
+    vesselSB.setFlowDirection(VesselDepressurization.FlowDirection.DISCHARGE);
+    vesselSB.setOrificeDiameter(0.03);
+    vesselSB.setBackPressure(1.0);
+    vesselSB.setFireType(VesselDepressurization.FireType.SCANDPOWER_JET);
+    vesselSB.setWettedSurfaceFraction(1.0);
+    vesselSB.run();
+
+    UUID id1 = UUID.randomUUID();
+    UUID id2 = UUID.randomUUID();
+    for (int i = 0; i < 200; i++) {
+      vesselConst.runTransient(1.0, id1);
+      vesselSB.runTransient(1.0, id2);
+    }
+
+    double constGasT = vesselConst.getTemperature() - 273.15;
+    double sbGasT = vesselSB.getTemperature() - 273.15;
+
+    // S-B model should produce more physically realistic (lower) gas temperature
+    // because heat goes through the wall instead of directly to gas
+    assertTrue(sbGasT < constGasT,
+        "S-B gas temp (" + sbGasT + " C) should be lower than constant flux ("
+            + constGasT + " C)");
+  }
+
+  @Test
+  @DisplayName("Test all FireType presets configure correctly")
+  void testAllFireTypePresets() {
+    Stream feed = createTestStream(300.0, 50.0);
+
+    VesselDepressurization.FireType[] presets = {
+        VesselDepressurization.FireType.SCANDPOWER_JET,
+        VesselDepressurization.FireType.SCANDPOWER_POOL,
+        VesselDepressurization.FireType.API_JET,
+        VesselDepressurization.FireType.API_POOL
+    };
+
+    for (VesselDepressurization.FireType preset : presets) {
+      VesselDepressurization vessel = new VesselDepressurization("preset_" + preset.name(), feed);
+      vessel.setVolume(1.0);
+      vessel.setFireType(preset);
+      vessel.run();
+
+      assertEquals(VesselDepressurization.FireModelType.STEFAN_BOLTZMANN,
+          vessel.getFireModelType(),
+          preset.name() + ": should set model to STEFAN_BOLTZMANN");
+      assertTrue(vessel.isFireCase(),
+          preset.name() + ": fire case should be enabled");
+      assertTrue(vessel.getFlameTemperature() > 500.0,
+          preset.name() + ": flame temp should be > 500 K, got " + vessel.getFlameTemperature());
+      assertTrue(vessel.calculateSBFireFlux(300.0) > 0,
+          preset.name() + ": flux at 300 K wall should be positive");
+    }
   }
 }

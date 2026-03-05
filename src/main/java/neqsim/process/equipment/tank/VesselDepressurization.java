@@ -129,6 +129,87 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Fire model type for external fire heat transfer.
+   */
+  public enum FireModelType {
+    /** No fire model. */
+    NONE,
+    /** Constant heat flux applied directly to gas (legacy API 521 approach). */
+    CONSTANT_FLUX,
+    /**
+     * Stefan-Boltzmann radiation model applied to outer wall boundary.
+     *
+     * <p>
+     * Net fire flux as function of outer wall temperature:
+     * q_fire = absorptivity * flameEmissivity * sigma * T_flame^4
+     *        + fireConvectionCoeff * (T_flame - T_wall)
+     *        - surfaceEmissivity * sigma * T_wall^4
+     * </p>
+     */
+    STEFAN_BOLTZMANN
+  }
+
+  /**
+   * Preset fire type configurations per industry standards.
+   *
+   * <p>
+   * Parameters based on Scandpower (Gexcon) guidelines and API 521.
+   * </p>
+   */
+  public enum FireType {
+    /** Scandpower jet fire: high convection, full flame emissivity. */
+    SCANDPOWER_JET(0.85, 1.0, 0.85, 100.0, 100000.0),
+    /** Scandpower pool fire: lower convection coefficient. */
+    SCANDPOWER_POOL(0.85, 1.0, 0.85, 30.0, 100000.0),
+    /** API 521 jet fire. */
+    API_JET(0.75, 0.33, 0.75, 40.0, 100000.0),
+    /** API 521 pool fire. */
+    API_POOL(0.75, 0.3, 0.75, 15.0, 43200.0),
+    /** Custom parameters set by user. */
+    CUSTOM(0.85, 1.0, 0.85, 100.0, 100000.0);
+
+    private final double absorptivity;
+    private final double flameEmissivity;
+    private final double surfaceEmissivity;
+    private final double convectionCoeff;
+    private final double incidentFlux;
+
+    FireType(double absorptivity, double flameEmissivity, double surfaceEmissivity,
+        double convectionCoeff, double incidentFlux) {
+      this.absorptivity = absorptivity;
+      this.flameEmissivity = flameEmissivity;
+      this.surfaceEmissivity = surfaceEmissivity;
+      this.convectionCoeff = convectionCoeff;
+      this.incidentFlux = incidentFlux;
+    }
+
+    /** @return Surface absorptivity [-] */
+    public double getAbsorptivity() {
+      return absorptivity;
+    }
+
+    /** @return Flame emissivity [-] */
+    public double getFlameEmissivity() {
+      return flameEmissivity;
+    }
+
+    /** @return Surface emissivity [-] */
+    public double getSurfaceEmissivity() {
+      return surfaceEmissivity;
+    }
+
+    /** @return Fire convection coefficient [W/(m^2*K)] */
+    public double getConvectionCoeff() {
+      return convectionCoeff;
+    }
+
+    /** @return Incident heat flux [W/m^2] */
+    public double getIncidentFlux() {
+      return incidentFlux;
+    }
+  }
+
+  /**
    * Preset material properties for common vessel constructions.
    *
    * <p>
@@ -248,6 +329,18 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   private double fireHeatFlux = 0.0; // W/m² incident heat flux
   private double wetSurfaceFraction = 1.0; // Fraction of surface wetted (for fire relief)
 
+  // Stefan-Boltzmann fire model
+  private FireModelType fireModelType = FireModelType.NONE;
+  private FireType fireType = FireType.SCANDPOWER_JET;
+  /** Stefan-Boltzmann constant [W/(m^2*K^4)]. */
+  private static final double STEFAN_BOLTZMANN = 5.670374419e-8;
+  private double surfaceAbsorptivity = 0.85;
+  private double flameEmissivity = 1.0;
+  private double surfaceEmissivity = 0.85;
+  private double fireConvectionCoeff = 100.0; // W/(m²*K)
+  private double flameTemperature = Double.NaN; // K, calculated from incident flux
+  private double incidentHeatFlux = 100000.0; // W/m² (100 kW/m²)
+
   // Orifice/valve parameters
   private double orificeDiameter = 0.01; // m
   private double dischargeCoefficient = 0.61; // Sharp-edge orifice
@@ -277,6 +370,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   // Fixed heat transfer parameters
   private double fixedU = 10.0; // W/(m²*K)
   private double fixedQ = 0.0; // W
+  private double fixedInternalHTC = Double.NaN; // W/(m²*K), NaN = auto-calculate
 
   // State variables
   private SystemInterface thermoSystem;
@@ -854,6 +948,190 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Sets the fire model type.
+   *
+   * <p>
+   * CONSTANT_FLUX: Legacy model that applies fire heat directly to gas (existing behavior).
+   * STEFAN_BOLTZMANN: Physically correct model that applies fire heat to the outer wall surface.
+   * The wall then conducts heat inward to the gas via the normal heat transfer path.
+   * </p>
+   *
+   * @param type Fire model type
+   */
+  public void setFireModelType(FireModelType type) {
+    this.fireModelType = type;
+    if (type != FireModelType.NONE) {
+      this.fireCase = true;
+    }
+  }
+
+  /**
+   * Gets the fire model type.
+   *
+   * @return Current fire model type
+   */
+  public FireModelType getFireModelType() {
+    return fireModelType;
+  }
+
+  /**
+   * Sets a preset fire type with standard parameters.
+   *
+   * <p>
+   * Automatically configures the Stefan-Boltzmann fire model with industry-standard parameters
+   * and calculates the flame temperature from the incident heat flux.
+   * </p>
+   *
+   * @param type Preset fire type (SCANDPOWER_JET, SCANDPOWER_POOL, API_JET, API_POOL)
+   */
+  public void setFireType(FireType type) {
+    this.fireType = type;
+    this.fireModelType = FireModelType.STEFAN_BOLTZMANN;
+    this.fireCase = true;
+    this.surfaceAbsorptivity = type.getAbsorptivity();
+    this.flameEmissivity = type.getFlameEmissivity();
+    this.surfaceEmissivity = type.getSurfaceEmissivity();
+    this.fireConvectionCoeff = type.getConvectionCoeff();
+    this.incidentHeatFlux = type.getIncidentFlux();
+    calculateFlameTemperature();
+  }
+
+  /**
+   * Gets the current fire type.
+   *
+   * @return Current fire type
+   */
+  public FireType getFireType() {
+    return fireType;
+  }
+
+  /**
+   * Sets the incident heat flux for the Stefan-Boltzmann fire model.
+   *
+   * <p>
+   * The flame temperature is back-calculated from this flux assuming the initial wall temperature
+   * equals ambient temperature. This is standard practice for Scandpower-type fire models.
+   * </p>
+   *
+   * @param flux Incident heat flux [W/m^2]
+   */
+  public void setIncidentHeatFlux(double flux) {
+    this.incidentHeatFlux = flux;
+    calculateFlameTemperature();
+  }
+
+  /**
+   * Sets the incident heat flux with unit.
+   *
+   * @param flux Heat flux value
+   * @param unit Unit ("W/m2", "kW/m2", "BTU/hr/ft2")
+   */
+  public void setIncidentHeatFlux(double flux, String unit) {
+    double fluxWm2 = flux;
+    if ("kW/m2".equalsIgnoreCase(unit)) {
+      fluxWm2 = flux * 1000.0;
+    } else if ("BTU/hr/ft2".equalsIgnoreCase(unit)) {
+      fluxWm2 = flux * 3.15459;
+    }
+    setIncidentHeatFlux(fluxWm2);
+  }
+
+  /**
+   * Sets the Stefan-Boltzmann fire model parameters directly.
+   *
+   * @param absorptivity Surface absorptivity [-], typically 0.75-0.90
+   * @param flameEmissivity Flame emissivity [-], typically 0.3-1.0
+   * @param surfaceEmissivity Surface emissivity [-], typically 0.75-0.90
+   * @param convCoeff Fire convection coefficient [W/(m^2*K)], typically 30-100
+   */
+  public void setSBFireParameters(double absorptivity, double flameEmissivity,
+      double surfaceEmissivity, double convCoeff) {
+    this.surfaceAbsorptivity = absorptivity;
+    this.flameEmissivity = flameEmissivity;
+    this.surfaceEmissivity = surfaceEmissivity;
+    this.fireConvectionCoeff = convCoeff;
+    this.fireType = FireType.CUSTOM;
+    calculateFlameTemperature();
+  }
+
+  /**
+   * Sets the flame temperature directly for the Stefan-Boltzmann fire model.
+   *
+   * @param temperatureK Flame temperature [K]
+   */
+  public void setFlameTemperature(double temperatureK) {
+    this.flameTemperature = temperatureK;
+  }
+
+  /**
+   * Gets the flame temperature used by the Stefan-Boltzmann fire model.
+   *
+   * @return Flame temperature [K]
+   */
+  public double getFlameTemperature() {
+    return flameTemperature;
+  }
+
+  /**
+   * Calculates the net fire heat flux at the outer wall surface using the Stefan-Boltzmann model.
+   *
+   * <p>
+   * The net heat flux is:
+   * q_fire = alpha_s * epsilon_f * sigma * T_f^4
+   *        + h_f * (T_f - T_wall)
+   *        - epsilon_s * sigma * T_wall^4
+   * </p>
+   *
+   * <p>
+   * This models the combined radiation from the fire (absorbed by the wall), convection from
+   * the fire, and re-radiation from the hot wall surface back to the surroundings.
+   * </p>
+   *
+   * @param outerWallTemperatureK Outer wall surface temperature [K]
+   * @return Net fire heat flux [W/m^2], positive into wall
+   */
+  public double calculateSBFireFlux(double outerWallTemperatureK) {
+    if (Double.isNaN(flameTemperature)) {
+      calculateFlameTemperature();
+    }
+    double radiationIn =
+        surfaceAbsorptivity * flameEmissivity * STEFAN_BOLTZMANN * Math.pow(flameTemperature, 4);
+    double convectionIn = fireConvectionCoeff * (flameTemperature - outerWallTemperatureK);
+    double reRadiation =
+        surfaceEmissivity * STEFAN_BOLTZMANN * Math.pow(outerWallTemperatureK, 4);
+    return radiationIn + convectionIn - reRadiation;
+  }
+
+  /**
+   * Calculates the flame temperature from the incident heat flux.
+   *
+   * <p>
+   * Uses Newton-Raphson iteration to solve:
+   * q_incident = alpha_s * epsilon_f * sigma * T_f^4 + h_f * (T_f - T_ref)
+   * for T_f, where T_ref is the ambient temperature.
+   * </p>
+   */
+  private void calculateFlameTemperature() {
+    double Tref = ambientTemperature;
+    double Tf = 900.0; // Initial guess [K]
+    for (int iter = 0; iter < 100; iter++) {
+      double f =
+          surfaceAbsorptivity * flameEmissivity * STEFAN_BOLTZMANN * Math.pow(Tf, 4)
+          + fireConvectionCoeff * (Tf - Tref)
+          - incidentHeatFlux;
+      double df =
+          4.0 * surfaceAbsorptivity * flameEmissivity * STEFAN_BOLTZMANN * Math.pow(Tf, 3)
+          + fireConvectionCoeff;
+      double dT = f / df;
+      Tf -= dT;
+      if (Math.abs(dT) < 0.01) {
+        break;
+      }
+    }
+    this.flameTemperature = Tf;
+  }
+
+  /**
    * Sets the valve opening time for ESD valve dynamics.
    *
    * <p>
@@ -1026,6 +1304,21 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   public void setFixedU(double u) {
     this.fixedU = u;
     this.heatTransferType = HeatTransferType.FIXED_U;
+  }
+
+  /**
+   * Sets a fixed internal (gas-side) heat transfer coefficient.
+   *
+   * <p>
+   * When set (non-NaN), this value overrides the Churchill-Chu / mixed-convection correlation in
+   * CALCULATED and TRANSIENT_WALL modes. Use with TRANSIENT_WALL to keep transient wall conduction
+   * while fixing the internal film coefficient.
+   * </p>
+   *
+   * @param h Internal film coefficient [W/(m2*K)], or NaN to auto-calculate
+   */
+  public void setFixedInternalHTC(double h) {
+    this.fixedInternalHTC = h;
   }
 
   /**
@@ -1457,6 +1750,9 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     if (heatTransferType == HeatTransferType.ADIABATIC) {
       return 0.0;
     }
+    if (!Double.isNaN(fixedInternalHTC)) {
+      return fixedInternalHTC;
+    }
 
     double L = (orientation == VesselOrientation.VERTICAL) ? vesselLength : vesselDiameter;
     double Twall = getWallTemperature();
@@ -1797,7 +2093,8 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     }
 
     // Add fire heat input if fire case is enabled (API 521)
-    if (fireCase && fireHeatFlux > 0) {
+    // Only for CONSTANT_FLUX mode (legacy). STEFAN_BOLTZMANN mode routes heat through the wall.
+    if (fireCase && fireHeatFlux > 0 && fireModelType != FireModelType.STEFAN_BOLTZMANN) {
       double fireHeat = fireHeatFlux * wetSurfaceFraction * getWallArea();
       Q += fireHeat;
     }
@@ -2108,18 +2405,41 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
 
     // Update wall temperature
     double hExternal = calculateExternalHeatTransferCoefficient();
+
+    // Calculate S-B fire flux for outer wall boundary (if applicable)
+    double sbFireFlux = 0.0;
+    if (fireModelType == FireModelType.STEFAN_BOLTZMANN && fireCase) {
+      double outerWallT;
+      if (heatTransferType == HeatTransferType.TRANSIENT_WALL && wallModel != null) {
+        outerWallT = wallModel.getOuterWallTemperature();
+      } else {
+        outerWallT = wallTemperature;
+      }
+      sbFireFlux = calculateSBFireFlux(outerWallT) * wetSurfaceFraction;
+    }
+
     if (heatTransferType == HeatTransferType.TRANSIENT_WALL && wallModel != null) {
       if (twoPhaseHeatTransfer && thermoSystem.getNumberOfPhases() > 1) {
+        // Calculate S-B fire flux for each wall model
+        double sbFluxGas = 0.0;
+        double sbFluxLiquid = 0.0;
+        if (fireModelType == FireModelType.STEFAN_BOLTZMANN && fireCase) {
+          sbFluxGas =
+              calculateSBFireFlux(gasWallModel.getOuterWallTemperature()) * wetSurfaceFraction;
+          sbFluxLiquid =
+              calculateSBFireFlux(liquidWallModel.getOuterWallTemperature()) * wetSurfaceFraction;
+        }
+
         // Update gas wall model
         double hGas = calculateGasHeatTransferCoeff();
         gasWallModel.advanceTimeStep(dt, thermoSystem.getTemperature(), hGas, ambientTemperature,
-            hExternal);
+            hExternal, sbFluxGas);
         gasWallTemperature = gasWallModel.getMeanWallTemperature();
 
         // Update liquid wall model
         double hLiquid = calculateLiquidHeatTransferCoeff();
         liquidWallModel.advanceTimeStep(dt, thermoSystem.getTemperature(), hLiquid,
-            ambientTemperature, hExternal);
+            ambientTemperature, hExternal, sbFluxLiquid);
         liquidWallTemperature = liquidWallModel.getMeanWallTemperature();
 
         // Average wall temperature weighted by area
@@ -2133,7 +2453,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
       } else {
         double hInner = calculateInternalHeatTransferCoeff();
         wallModel.advanceTimeStep(dt, thermoSystem.getTemperature(), hInner, ambientTemperature,
-            hExternal);
+            hExternal, sbFireFlux);
         wallTemperature = wallModel.getMeanWallTemperature();
       }
     } else if (calculationType == CalculationType.ENERGY_BALANCE) {
@@ -2153,6 +2473,10 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
               : wallThickness / (2.0 * wallThermalConductivity);
           double hGasEff = 1.0 / (1.0 / hGasInner + effectiveThicknessGas);
           double QinGas = hExternal * gasArea * (ambientTemperature - gasWallTemperature);
+          // Add S-B fire heat to outer wall
+          if (fireModelType == FireModelType.STEFAN_BOLTZMANN && fireCase) {
+            QinGas += calculateSBFireFlux(gasWallTemperature) * wetSurfaceFraction * gasArea;
+          }
           double QoutGas = hGasEff * gasArea * (gasWallTemperature - thermoSystem.getTemperature());
           gasWallTemperature += (QinGas - QoutGas) * dt / (gasWallMass * wallHeatCapacity);
         }
@@ -2167,6 +2491,11 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
               : wallThickness / (2.0 * wallThermalConductivity);
           double hLiqEff = 1.0 / (1.0 / hLiqInner + effectiveThicknessLiq);
           double QinLiquid = hExternal * liquidArea * (ambientTemperature - liquidWallTemperature);
+          // Add S-B fire heat to outer wall
+          if (fireModelType == FireModelType.STEFAN_BOLTZMANN && fireCase) {
+            QinLiquid +=
+                calculateSBFireFlux(liquidWallTemperature) * wetSurfaceFraction * liquidArea;
+          }
           double QoutLiquid =
               hLiqEff * liquidArea * (liquidWallTemperature - thermoSystem.getTemperature());
           liquidWallTemperature +=
@@ -2181,12 +2510,6 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
         }
       } else {
         // Simple wall energy balance with Biot-number correction.
-        // The lumped model assumes uniform wall temperature, but for walls with
-        // finite thermal conductivity the inner surface temperature differs from
-        // the mean. A first-order correction adds half the wall conduction
-        // resistance so that the effective internal resistance is
-        // R_eff = 1/h_int + t_wall/(2*k_wall)
-        // giving h_eff = 1 / (1/h_int + t_wall/(2*k_wall)).
         double wallMass = wallDensity * getWallArea()
             * (hasLiner ? wallThickness + linerThickness : wallThickness);
         double hInner = calculateInternalHeatTransferCoeff();
@@ -2196,6 +2519,10 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
             : wallThickness / (2.0 * wallThermalConductivity);
         double hEffective = 1.0 / (1.0 / hInner + effectiveThickness);
         double Qin = hExternal * getWallArea() * (ambientTemperature - wallTemperature);
+        // Add S-B fire heat to outer wall
+        if (fireModelType == FireModelType.STEFAN_BOLTZMANN && fireCase) {
+          Qin += calculateSBFireFlux(wallTemperature) * wetSurfaceFraction * getWallArea();
+        }
         double Qout =
             hEffective * getWallArea() * (wallTemperature - thermoSystem.getTemperature());
         wallTemperature += (Qin - Qout) * dt / (wallMass * wallHeatCapacity);
