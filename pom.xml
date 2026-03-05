@@ -11,7 +11,7 @@
 	<url>https://github.com/equinor/neqsim</url>
 	<packaging>jar</packaging>
 	<version>${revision}</version>
-	
+
 
 	<scm>
 		<connection>scm:git:https://github.com/equinor/neqsim.git</connection>
@@ -20,7 +20,7 @@
 	</scm>
 
         <properties>
-                <revision>3.4.0</revision>
+                <revision>3.5.0</revision>
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                 <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
                 <checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
@@ -314,7 +314,7 @@
 					<compilerArgs>
 						<arg>-Xlint</arg>
 					</compilerArgs>
-					<showWarnings>true</showWarnings> 
+					<showWarnings>true</showWarnings>
 					Uncomment above to get compiler warnings -->
 				</configuration>
 			</plugin>

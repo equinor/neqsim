@@ -54,37 +54,37 @@ List<ProcessSafetyScenario> combinations = process.generateCombinationScenarios(
 
 ## Failure Modes
 
-| Mode | Description | HAZOP Deviation | Applicable To |
-|------|-------------|-----------------|---------------|
-| `COOLING_LOSS` | Complete loss of cooling | No flow | Coolers |
-| `HEATING_LOSS` | Complete loss of heating | No flow | Heaters |
-| `VALVE_STUCK_CLOSED` | Valve stuck closed | No flow | Valves |
-| `VALVE_STUCK_OPEN` | Valve stuck open | More flow | Valves |
-| `VALVE_CONTROL_FAILURE` | Control valve failure | Other | Control valves |
-| `COMPRESSOR_TRIP` | Compressor emergency stop | No flow | Compressors |
-| `PUMP_TRIP` | Pump emergency stop | No flow | Pumps |
-| `BLOCKED_OUTLET` | Downstream blockage | No flow | Separators |
-| `POWER_FAILURE` | Loss of electrical power | Other | All electrical |
-| `INSTRUMENT_FAILURE` | Instrument/control failure | Other | All |
-| `EXTERNAL_FIRE` | Fire exposure | High temperature | All |
-| `LOSS_OF_CONTAINMENT` | Leak or rupture | Less pressure | All |
+| Mode                    | Description                | HAZOP Deviation  | Applicable To  |
+| ----------------------- | -------------------------- | ---------------- | -------------- |
+| `COOLING_LOSS`          | Complete loss of cooling   | No flow          | Coolers        |
+| `HEATING_LOSS`          | Complete loss of heating   | No flow          | Heaters        |
+| `VALVE_STUCK_CLOSED`    | Valve stuck closed         | No flow          | Valves         |
+| `VALVE_STUCK_OPEN`      | Valve stuck open           | More flow        | Valves         |
+| `VALVE_CONTROL_FAILURE` | Control valve failure      | Other            | Control valves |
+| `COMPRESSOR_TRIP`       | Compressor emergency stop  | No flow          | Compressors    |
+| `PUMP_TRIP`             | Pump emergency stop        | No flow          | Pumps          |
+| `BLOCKED_OUTLET`        | Downstream blockage        | No flow          | Separators     |
+| `POWER_FAILURE`         | Loss of electrical power   | Other            | All electrical |
+| `INSTRUMENT_FAILURE`    | Instrument/control failure | Other            | All            |
+| `EXTERNAL_FIRE`         | Fire exposure              | High temperature | All            |
+| `LOSS_OF_CONTAINMENT`   | Leak or rupture            | Less pressure    | All            |
 
 ## HAZOP Deviations
 
-| Deviation | Description |
-|-----------|-------------|
-| `NO_FLOW` | Complete loss of flow |
-| `LESS_FLOW` | Reduced flow rate |
-| `MORE_FLOW` | Increased flow rate |
-| `REVERSE_FLOW` | Flow in wrong direction |
-| `HIGH_PRESSURE` | Pressure above normal |
-| `LOW_PRESSURE` / `LESS_PRESSURE` | Pressure below normal |
-| `HIGH_TEMPERATURE` | Temperature above normal |
-| `LOW_TEMPERATURE` | Temperature below normal |
-| `HIGH_LEVEL` | Liquid level too high |
-| `LOW_LEVEL` | Liquid level too low |
-| `CONTAMINATION` | Unwanted substance present |
-| `CORROSION` | Material degradation |
+| Deviation                        | Description                |
+| -------------------------------- | -------------------------- |
+| `NO_FLOW`                        | Complete loss of flow      |
+| `LESS_FLOW`                      | Reduced flow rate          |
+| `MORE_FLOW`                      | Increased flow rate        |
+| `REVERSE_FLOW`                   | Flow in wrong direction    |
+| `HIGH_PRESSURE`                  | Pressure above normal      |
+| `LOW_PRESSURE` / `LESS_PRESSURE` | Pressure below normal      |
+| `HIGH_TEMPERATURE`               | Temperature above normal   |
+| `LOW_TEMPERATURE`                | Temperature below normal   |
+| `HIGH_LEVEL`                     | Liquid level too high      |
+| `LOW_LEVEL`                      | Liquid level too low       |
+| `CONTAMINATION`                  | Unwanted substance present |
+| `CORROSION`                      | Material degradation       |
 
 ## Running Scenarios
 
@@ -97,17 +97,17 @@ List<ProcessSafetyScenario> scenarios = generator.generateSingleFailures();
 for (ProcessSafetyScenario scenario : scenarios) {
     // Create a copy of the process for each scenario
     ProcessSystem copy = process.copy();
-    
+
     // Apply the scenario
     scenario.applyTo(copy);
-    
+
     // Run simulation
     try {
         copy.run();
-        
+
         // Analyze results
         analyzeScenarioResults(scenario, copy);
-        
+
     } catch (Exception e) {
         // Scenario caused simulation failure - important finding!
         recordFailedScenario(scenario, e);
@@ -136,13 +136,13 @@ System.out.println(summary);
 
 Each result contains:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `scenario` | ProcessSafetyScenario | The scenario that was run |
-| `successful` | boolean | Whether simulation completed without error |
-| `errorMessage` | String | Error message if failed (null otherwise) |
-| `resultValues` | Map<String, Double> | Key results: pressures, temperatures, levels |
-| `executionTimeMs` | long | Execution time in milliseconds |
+| Field             | Type                  | Description                                  |
+| ----------------- | --------------------- | -------------------------------------------- |
+| `scenario`        | ProcessSafetyScenario | The scenario that was run                    |
+| `successful`      | boolean               | Whether simulation completed without error   |
+| `errorMessage`    | String                | Error message if failed (null otherwise)     |
+| `resultValues`    | Map<String, Double>   | Key results: pressures, temperatures, levels |
+| `executionTimeMs` | long                  | Execution time in milliseconds               |
 
 #### Example Summary Output
 
@@ -194,6 +194,6 @@ The `AutomaticScenarioGenerator` complements the existing safety framework:
 
 ## Related Documentation
 
-- [Safety Systems Package](./\) - Safety equipment modeling
+- [Safety Systems Package](index.md) - Safety equipment modeling
 - [Batch Studies](../optimization/batch-studies) - Run many scenarios in parallel
 - [Future Infrastructure Overview](../future-infrastructure) - Full infrastructure overview
