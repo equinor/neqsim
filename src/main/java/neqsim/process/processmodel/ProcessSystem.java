@@ -199,7 +199,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
-  public void add(ProcessEquipmentInterface operation) {
+  public synchronized void add(ProcessEquipmentInterface operation) {
     // Add to end
     add(this.getUnitOperations().size(), operation);
   }
@@ -212,7 +212,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param position 0-based position
    * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
-  public void add(int position, ProcessEquipmentInterface operation) {
+  public synchronized void add(int position, ProcessEquipmentInterface operation) {
     List<ProcessEquipmentInterface> units = this.getUnitOperations();
 
     for (ProcessEquipmentInterface unit : units) {
@@ -244,7 +244,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param measurementDevice a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
    *        object
    */
-  public void add(MeasurementDeviceInterface measurementDevice) {
+  public synchronized void add(MeasurementDeviceInterface measurementDevice) {
     measurementDevices.add(measurementDevice);
     alarmManager.register(measurementDevice);
   }
@@ -372,7 +372,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param unitName a {@link java.lang.String} object
    * @param operation a {@link neqsim.process.equipment.ProcessEquipmentBaseClass} object
    */
-  public void replaceObject(String unitName, ProcessEquipmentBaseClass operation) {
+  public synchronized void replaceObject(String unitName, ProcessEquipmentBaseClass operation) {
     Objects.requireNonNull(unitName, "unitName");
     Objects.requireNonNull(operation, "operation");
 
@@ -608,7 +608,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @param name a {@link java.lang.String} object
    */
-  public void removeUnit(String name) {
+  public synchronized void removeUnit(String name) {
     for (int i = 0; i < unitOperations.size(); i++) {
       if (unitOperations.get(i).getName().equals(name)) {
         unitOperations.remove(i);
@@ -622,7 +622,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * clearAll.
    * </p>
    */
-  public void clearAll() {
+  public synchronized void clearAll() {
     unitOperations.clear();
     graphDirty = true; // Invalidate graph when structure changes
   }
@@ -632,7 +632,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * clear.
    * </p>
    */
-  public void clear() {
+  public synchronized void clear() {
     unitOperations = new ArrayList<ProcessEquipmentInterface>(0);
     graphDirty = true; // Invalidate graph when structure changes
   }
@@ -890,7 +890,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param id calculation identifier for tracking
    * @throws InterruptedException if thread is interrupted during parallel execution
    */
-  public void runHybrid(UUID id) throws InterruptedException {
+  public synchronized void runHybrid(UUID id) throws InterruptedException {
     ProcessGraph graph = buildGraph();
     ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
     java.util.Set<ProcessNode> recycleNodes = graph.getNodesInRecycleLoops();
@@ -1209,7 +1209,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param id calculation identifier for tracking
    * @throws InterruptedException if the thread is interrupted while waiting for tasks
    */
-  public void runParallel(UUID id) throws InterruptedException {
+  public synchronized void runParallel(UUID id) throws InterruptedException {
     ProcessGraph graph = buildGraph();
     ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
 
@@ -1494,7 +1494,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void run(UUID id) {
+  public synchronized void run(UUID id) {
     // Use optimized execution by default for best performance
     if (useOptimizedExecution) {
       runOptimized(id);
@@ -1515,7 +1515,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @param id calculation identifier for tracking
    */
-  public void runSequential(UUID id) {
+  public synchronized void runSequential(UUID id) {
     // Determine execution order: use graph-based if enabled, otherwise use
     // insertion order
     List<ProcessEquipmentInterface> executionOrder;
@@ -1938,7 +1938,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void runTransient(double dt, UUID id) {
+  public synchronized void runTransient(double dt, UUID id) {
     ensureInitialStateSnapshot();
     for (int i = 0; i < unitOperations.size(); i++) {
       ProcessEquipmentInterface unit = unitOperations.get(i);
@@ -2557,7 +2557,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @return a {@link neqsim.process.processmodel.ProcessSystem} object
    */
-  public ProcessSystem copy() {
+  public synchronized ProcessSystem copy() {
     ProcessSystem snapshot = initialStateSnapshot;
     try {
       initialStateSnapshot = null;
