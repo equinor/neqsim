@@ -27,16 +27,16 @@ import org.apache.logging.log4j.Logger;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * ReliabilityDataSource dataSource = ReliabilityDataSource.getInstance();
- * 
+ *
  * // Get reliability data for a compressor
  * ReliabilityData data = dataSource.getReliabilityData("Compressor", "Centrifugal");
  * System.out.println("MTBF: " + data.getMtbf() + " hours");
  * System.out.println("MTTR: " + data.getMttr() + " hours");
- * 
+ *
  * // Get failure modes
  * List<FailureModeData> modes = dataSource.getFailureModes("Compressor", "Centrifugal");
  * for (FailureModeData mode : modes) {
@@ -56,7 +56,7 @@ public class ReliabilityDataSource implements Serializable {
   private static final Logger logger = LogManager.getLogger(ReliabilityDataSource.class);
 
   /** Singleton instance. */
-  private static ReliabilityDataSource instance;
+  private static volatile ReliabilityDataSource instance;
 
   /** Equipment reliability data. */
   private Map<String, ReliabilityData> reliabilityData;

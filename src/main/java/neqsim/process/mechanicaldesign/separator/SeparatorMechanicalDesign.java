@@ -728,7 +728,7 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
   /**
    * Calculate liquid retention time based on effective length and NLL.
-   * 
+   *
    * @return liquid retention time in seconds
    */
   public double calcLiquidRetentionTime() {
@@ -1816,13 +1816,13 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
    * Loads process design parameters from the TechnicalRequirements_Process database.
    */
   public void loadProcessDesignParameters() {
-    try {
-      neqsim.util.database.NeqSimProcessDesignDataBase database =
-          new neqsim.util.database.NeqSimProcessDesignDataBase();
-      java.sql.ResultSet dataSet =
-          database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
-              + "EQUIPMENTTYPE='Separator' AND Company='" + getCompanySpecificDesignStandards()
-              + "'");
+    try (
+        neqsim.util.database.NeqSimProcessDesignDataBase database =
+            new neqsim.util.database.NeqSimProcessDesignDataBase();
+        java.sql.ResultSet dataSet =
+            database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
+                + "EQUIPMENTTYPE='Separator' AND Company='" + getCompanySpecificDesignStandards()
+                + "'")) {
 
       while (dataSet.next()) {
         String spec = dataSet.getString("SPECIFICATION");
@@ -1875,7 +1875,6 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
             break;
         }
       }
-      dataSet.close();
     } catch (Exception ex) {
       // Use default values if database lookup fails
     }

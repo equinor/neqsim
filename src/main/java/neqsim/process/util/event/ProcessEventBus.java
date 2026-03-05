@@ -33,14 +33,14 @@ import java.util.concurrent.Executors;
 public class ProcessEventBus implements Serializable {
   private static final long serialVersionUID = 1000L;
 
-  private static ProcessEventBus instance;
+  private static volatile ProcessEventBus instance;
 
   private final List<ProcessEventListener> globalListeners;
   private final Map<ProcessEvent.EventType, List<ProcessEventListener>> typeListeners;
   private final List<ProcessEvent> eventHistory;
   private int maxHistorySize = 1000;
   private boolean asyncDelivery = false;
-  private transient ExecutorService executor;
+  private transient volatile ExecutorService executor;
 
   /**
    * Gets the singleton event bus instance.

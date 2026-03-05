@@ -13,10 +13,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.NamedBaseClass;
 
 /**
- * Base implementation for measurement devices supplying values to controllers
- * and process equipment. The class offers unit handling as well as configurable
- * Gaussian noise and discrete sample delay to mimic realistic transmitter
- * behaviour.
+ * Base implementation for measurement devices supplying values to controllers and process
+ * equipment. The class offers unit handling as well as configurable Gaussian noise and discrete
+ * sample delay to mimic realistic transmitter behaviour.
  *
  * @author ESOL
  * @version $Id: $Id
@@ -40,7 +39,7 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   private final Deque<Double> delayBuffer = new LinkedList<>();
   private int delaySteps = 0;
   private double noiseStdDev = 0.0;
-  private transient Random random = new Random();
+  private transient volatile Random random = new Random();
 
   private boolean conditionAnalysis = true;
   private String conditionAnalysisMessage = "";
@@ -198,10 +197,12 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
    * @return value after noise and delay are applied
    */
   protected double applySignalModifiers(double rawValue) {
-    if (random == null) {
-      random = new Random();
+    Random r = random;
+    if (r == null) {
+      r = new Random();
+      random = r;
     }
-    double noisyValue = rawValue + random.nextGaussian() * noiseStdDev;
+    double noisyValue = rawValue + r.nextGaussian() * noiseStdDev;
     delayBuffer.addLast(noisyValue);
     if (delayBuffer.size() > delaySteps) {
       return delayBuffer.removeFirst();
@@ -247,8 +248,8 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   }
 
   /**
-   * Set the random seed used for noise generation to achieve deterministic
-   * measurements when required.
+   * Set the random seed used for noise generation to achieve deterministic measurements when
+   * required.
    *
    * @param seed random seed
    */

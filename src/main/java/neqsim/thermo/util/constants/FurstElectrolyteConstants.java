@@ -888,7 +888,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * Fitted to Robinson &amp; Stokes (1965) data where generalized correlations give &gt;15% error.
    * </p>
    */
-  private static java.util.Map<String, double[]> ionSpecificWij = null;
+  private static volatile java.util.Map<String, double[]> ionSpecificWij = null;
 
   /**
    * Get ion-specific Wij parameters for a cation-anion pair.
@@ -897,7 +897,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * @param anion the anion name (e.g., "NO3-")
    * @return array {Wij_cation_water, Wij_cation_anion} or null if not specified
    */
-  public static double[] getIonSpecificWij(String cation, String anion) {
+  public static synchronized double[] getIonSpecificWij(String cation, String anion) {
     if (ionSpecificWij == null) {
       initializeIonSpecificWij();
     }
@@ -912,7 +912,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * @param anion the anion name
    * @return true if ion-specific parameters exist
    */
-  public static boolean hasIonSpecificWij(String cation, String anion) {
+  public static synchronized boolean hasIonSpecificWij(String cation, String anion) {
     if (ionSpecificWij == null) {
       initializeIonSpecificWij();
     }
@@ -950,7 +950,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * @param wijCatWater Wij for cation-water interaction
    * @param wijCatAnion Wij for cation-anion interaction
    */
-  public static void setIonSpecificWij(String cation, String anion, double wijCatWater,
+  public static synchronized void setIonSpecificWij(String cation, String anion, double wijCatWater,
       double wijCatAnion) {
     if (ionSpecificWij == null) {
       initializeIonSpecificWij();
@@ -961,7 +961,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   /**
    * Clear all ion-specific Wij parameters.
    */
-  public static void clearIonSpecificWij() {
+  public static synchronized void clearIonSpecificWij() {
     if (ionSpecificWij != null) {
       ionSpecificWij.clear();
     }

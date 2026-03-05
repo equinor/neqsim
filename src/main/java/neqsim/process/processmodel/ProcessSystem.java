@@ -199,7 +199,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
-  public void add(ProcessEquipmentInterface operation) {
+  public synchronized void add(ProcessEquipmentInterface operation) {
     // Add to end
     add(this.getUnitOperations().size(), operation);
   }
@@ -212,7 +212,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param position 0-based position
    * @param operation a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
-  public void add(int position, ProcessEquipmentInterface operation) {
+  public synchronized void add(int position, ProcessEquipmentInterface operation) {
     List<ProcessEquipmentInterface> units = this.getUnitOperations();
 
     for (ProcessEquipmentInterface unit : units) {
@@ -244,7 +244,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param measurementDevice a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
    *        object
    */
-  public void add(MeasurementDeviceInterface measurementDevice) {
+  public synchronized void add(MeasurementDeviceInterface measurementDevice) {
     measurementDevices.add(measurementDevice);
     alarmManager.register(measurementDevice);
   }
@@ -372,7 +372,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param unitName a {@link java.lang.String} object
    * @param operation a {@link neqsim.process.equipment.ProcessEquipmentBaseClass} object
    */
-  public void replaceObject(String unitName, ProcessEquipmentBaseClass operation) {
+  public synchronized void replaceObject(String unitName, ProcessEquipmentBaseClass operation) {
     Objects.requireNonNull(unitName, "unitName");
     Objects.requireNonNull(operation, "operation");
 
@@ -608,7 +608,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @param name a {@link java.lang.String} object
    */
-  public void removeUnit(String name) {
+  public synchronized void removeUnit(String name) {
     for (int i = 0; i < unitOperations.size(); i++) {
       if (unitOperations.get(i).getName().equals(name)) {
         unitOperations.remove(i);
@@ -622,7 +622,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * clearAll.
    * </p>
    */
-  public void clearAll() {
+  public synchronized void clearAll() {
     unitOperations.clear();
     graphDirty = true; // Invalidate graph when structure changes
   }
@@ -632,7 +632,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * clear.
    * </p>
    */
-  public void clear() {
+  public synchronized void clear() {
     unitOperations = new ArrayList<ProcessEquipmentInterface>(0);
     graphDirty = true; // Invalidate graph when structure changes
   }
@@ -890,7 +890,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param id calculation identifier for tracking
    * @throws InterruptedException if thread is interrupted during parallel execution
    */
-  public void runHybrid(UUID id) throws InterruptedException {
+  public synchronized void runHybrid(UUID id) throws InterruptedException {
     ProcessGraph graph = buildGraph();
     ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
     java.util.Set<ProcessNode> recycleNodes = graph.getNodesInRecycleLoops();
@@ -1209,7 +1209,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param id calculation identifier for tracking
    * @throws InterruptedException if the thread is interrupted while waiting for tasks
    */
-  public void runParallel(UUID id) throws InterruptedException {
+  public synchronized void runParallel(UUID id) throws InterruptedException {
     ProcessGraph graph = buildGraph();
     ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
 
@@ -1494,7 +1494,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void run(UUID id) {
+  public synchronized void run(UUID id) {
     // Use optimized execution by default for best performance
     if (useOptimizedExecution) {
       runOptimized(id);
@@ -1515,7 +1515,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @param id calculation identifier for tracking
    */
-  public void runSequential(UUID id) {
+  public synchronized void runSequential(UUID id) {
     // Determine execution order: use graph-based if enabled, otherwise use
     // insertion order
     List<ProcessEquipmentInterface> executionOrder;
@@ -1654,12 +1654,12 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * <p>
    * Example usage in Python/Jupyter:
-   * 
+   *
    * <pre>
    * class MyListener(ProcessSystem.SimulationProgressListener):
    *     def onUnitComplete(self, unit, index, total, iteration):
    *         print(f"Completed {unit.getName()} ({index+1}/{total})")
-   * 
+   *
    * process.setProgressListener(MyListener())
    * process.run()
    * </pre>
@@ -1686,7 +1686,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * <p>
    * Example usage in Python/Jupyter:
-   * 
+   *
    * <pre>
    * def on_complete(unit):
    *     print(f"Completed: {unit.getName()}")
@@ -1938,7 +1938,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void runTransient(double dt, UUID id) {
+  public synchronized void runTransient(double dt, UUID id) {
     ensureInitialStateSnapshot();
     for (int i = 0; i < unitOperations.size(); i++) {
       ProcessEquipmentInterface unit = unitOperations.get(i);
@@ -2035,7 +2035,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Calculate total system mass across all equipment and streams.
-   * 
+   *
    * @return Total mass in kg
    */
   private double calculateTotalSystemMass() {
@@ -2055,7 +2055,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Enable or disable mass balance tracking during transient simulations.
-   * 
+   *
    * @param enable true to enable tracking
    */
   public void setEnableMassBalanceTracking(boolean enable) {
@@ -2067,7 +2067,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Get the current mass balance error percentage.
-   * 
+   *
    * @return Mass balance error in percent
    */
   public double getMassBalanceError() {
@@ -2076,12 +2076,12 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Set the maximum number of iterations within each transient time step.
-   * 
+   *
    * <p>
    * Multiple iterations help converge circular dependencies between equipment. Default is 3. Set to
    * 1 to disable iterative convergence.
    * </p>
-   * 
+   *
    * @param iterations Number of iterations (must be &gt;= 1)
    */
   public void setMaxTransientIterations(int iterations) {
@@ -2093,7 +2093,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Get the maximum number of iterations within each transient time step.
-   * 
+   *
    * @return Number of iterations
    */
   public int getMaxTransientIterations() {
@@ -2557,7 +2557,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * @return a {@link neqsim.process.processmodel.ProcessSystem} object
    */
-  public ProcessSystem copy() {
+  public synchronized ProcessSystem copy() {
     ProcessSystem snapshot = initialStateSnapshot;
     try {
       initialStateSnapshot = null;
@@ -3013,7 +3013,7 @@ public class ProcessSystem extends SimulationBaseClass {
     } catch (NoSuchMethodException ignored) {
       // If the method does not exist, do nothing
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error("Error setting inlet stream on equipment: " + e.getMessage(), e);
     }
 
     this.add(unit);
@@ -3076,7 +3076,7 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     } catch (NoSuchMethodException ignored) {
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error("Error in autoConnect: " + e.getMessage(), e);
     }
   }
 
@@ -4350,7 +4350,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * processSystem.run(); // Run first to establish flow conditions
    * int sized = processSystem.autoSizeEquipment(); // Size all equipment
@@ -4421,7 +4421,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * processSystem.run();
    * processSystem.autoSizeEquipment();
@@ -4545,7 +4545,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * ProcessOptimizationEngine engine = process.createOptimizer();
    * engine.setSearchAlgorithm(SearchAlgorithm.BFGS);
@@ -4696,7 +4696,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * double maxFlow = process.optimize().withPressures(50, 10).withFlowBounds(1000, 100000)
    *     .usingAlgorithm(SearchAlgorithm.BFGS).findMaxThroughput();
@@ -4922,7 +4922,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * <p>
    * Example:
    * </p>
-   * 
+   *
    * <pre>
    * {@code
    * process.run();
@@ -4957,7 +4957,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * <p>
    * Example:
    * </p>
-   * 
+   *
    * <pre>
    * {@code
    * process.run();
@@ -4994,7 +4994,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * <p>
    * Example:
    * </p>
-   * 
+   *
    * <pre>
    * {@code
    * process.run();
