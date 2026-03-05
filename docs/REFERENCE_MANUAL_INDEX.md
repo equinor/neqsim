@@ -640,6 +640,8 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Relative Permeability**               | [docs/pvtsimulation/relative_permeability.md](pvtsimulation/relative_permeability)                         | **Corey and LET relative permeability models, Eclipse table export (SWOF/SGOF/SOF3)**                            |
 | **Gas Pseudopressure & Pseudocritical** | [docs/pvtsimulation/gas_pseudopressure_pseudocritical.md](pvtsimulation/gas_pseudopressure_pseudocritical) | **Real gas pseudopressure integral, Standing/Sutton/Piper pseudocritical correlations, Wichert-Aziz correction** |
 | Whitson Reader                          | [docs/pvtsimulation/whitson_pvt_reader.md](pvtsimulation/whitson_pvt_reader)                               | Whitson PVT reader                                                                                               |
+| **Eclipse E300 Fluid Import**           | [docs/pvtsimulation/eclipse_e300_fluid_import.md](pvtsimulation/eclipse_e300_fluid_import)                 | **E300 file format reference, reading/writing Eclipse fluids, PVTsim integration, reservoir coupling workflows** |
+| **JSON Fluid Format**                   | [docs/pvtsimulation/json_fluid_format.md](pvtsimulation/json_fluid_format)                                 | **JSON fluid file format reference, reading/writing/converting fluids, E300 interconversion, API integration**   |
 | Solution Gas-Water Ratio                | [docs/pvtsimulation/SolutionGasWaterRatio.md](pvtsimulation/SolutionGasWaterRatio)                         | Rsw calculation methods (McCain, Søreide-Whitson, Electrolyte CPA)                                               |
 
 ### Chapter 36: Black Oil Models
