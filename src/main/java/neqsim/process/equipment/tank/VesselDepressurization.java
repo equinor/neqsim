@@ -2473,6 +2473,10 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
               : wallThickness / (2.0 * wallThermalConductivity);
           double hGasEff = 1.0 / (1.0 / hGasInner + effectiveThicknessGas);
           double QinGas = hExternal * gasArea * (ambientTemperature - gasWallTemperature);
+          // Add S-B fire heat to outer wall
+          if (fireModelType == FireModelType.STEFAN_BOLTZMANN && fireCase) {
+            QinGas += calculateSBFireFlux(gasWallTemperature) * wetSurfaceFraction * gasArea;
+          }
           double QoutGas = hGasEff * gasArea * (gasWallTemperature - thermoSystem.getTemperature());
           gasWallTemperature += (QinGas - QoutGas) * dt / (gasWallMass * wallHeatCapacity);
         }
@@ -2487,6 +2491,11 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
               : wallThickness / (2.0 * wallThermalConductivity);
           double hLiqEff = 1.0 / (1.0 / hLiqInner + effectiveThicknessLiq);
           double QinLiquid = hExternal * liquidArea * (ambientTemperature - liquidWallTemperature);
+          // Add S-B fire heat to outer wall
+          if (fireModelType == FireModelType.STEFAN_BOLTZMANN && fireCase) {
+            QinLiquid +=
+                calculateSBFireFlux(liquidWallTemperature) * wetSurfaceFraction * liquidArea;
+          }
           double QoutLiquid =
               hLiqEff * liquidArea * (liquidWallTemperature - thermoSystem.getTemperature());
           liquidWallTemperature +=
@@ -2501,12 +2510,6 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
         }
       } else {
         // Simple wall energy balance with Biot-number correction.
-        // The lumped model assumes uniform wall temperature, but for walls with
-        // finite thermal conductivity the inner surface temperature differs from
-        // the mean. A first-order correction adds half the wall conduction
-        // resistance so that the effective internal resistance is
-        // R_eff = 1/h_int + t_wall/(2*k_wall)
-        // giving h_eff = 1 / (1/h_int + t_wall/(2*k_wall)).
         double wallMass = wallDensity * getWallArea()
             * (hasLiner ? wallThickness + linerThickness : wallThickness);
         double hInner = calculateInternalHeatTransferCoeff();
@@ -2516,6 +2519,10 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
             : wallThickness / (2.0 * wallThermalConductivity);
         double hEffective = 1.0 / (1.0 / hInner + effectiveThickness);
         double Qin = hExternal * getWallArea() * (ambientTemperature - wallTemperature);
+        // Add S-B fire heat to outer wall
+        if (fireModelType == FireModelType.STEFAN_BOLTZMANN && fireCase) {
+          Qin += calculateSBFireFlux(wallTemperature) * wetSurfaceFraction * getWallArea();
+        }
         double Qout =
             hEffective * getWallArea() * (wallTemperature - thermoSystem.getTemperature());
         wallTemperature += (Qin - Qout) * dt / (wallMass * wallHeatCapacity);
