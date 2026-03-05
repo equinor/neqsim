@@ -815,7 +815,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
     /**
      * getbij.
-     * 
+     *
      * @param compi first component
      * @param compj second component
      * @return binary interaction parameter bij
@@ -919,8 +919,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       if (bmixType == 0) {
         double B = 0.0;
         final ComponentEosInterface[] comp = (ComponentEosInterface[]) phase.getcomponentArray();
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < n; i++) {
           B += comp[i].getNumberOfMolesInPhase() * comp[i].getb();
+        }
         return Btot = B;
       }
       // fallback: your current general double-sum
@@ -930,8 +931,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** {@inheritDoc} */
     @Override
     public double calcBi(int i, PhaseInterface phase, double T, double P, int n) {
-      if (bmixType == 0)
+      if (bmixType == 0) {
         return ((ComponentEosInterface[]) phase.getcomponentArray())[i].getb();
+      }
       return calcBiFull(i, phase, T, P, n);
     }
 
@@ -1248,8 +1250,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
       for (int j = 0; j < numbcomp; j++) {
         final double nj = comp[j].getNumberOfMolesInPhase();
-        if (nj < 1e-100)
+        if (nj < 1e-100) {
           continue; // negligible in this phase
+        }
 
         // j-component caches
         final double aj = comp[j].getaT();
@@ -1367,24 +1370,27 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
     /** {@inheritDoc} */
     @Override
     public double getkij(double temperature, int i, int j) {
-      if (type == 1)
+      if (type == 1) {
         return intparam[i][j] + intparamT[i][j] / temperature;
-      else
+      } else {
         return intparam[i][j] + intparamT[i][j] * (temperature / 273.15 - 1.0);
+      }
     }
 
     public double getkijdT(double temperature, int i, int j) {
-      if (type == 1)
+      if (type == 1) {
         return -intparamT[i][j] / (temperature * temperature);
-      else
+      } else {
         return intparamT[i][j] * (1.0 / 273.15);
+      }
     }
 
     public double getkijdTdT(double temperature, int i, int j) {
-      if (type == 1)
+      if (type == 1) {
         return 2 * intparamT[i][j] / (temperature * temperature * temperature);
-      else
+      } else {
         return 0.0;
+      }
     }
 
     /** {@inheritDoc} */
@@ -2006,8 +2012,6 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       if (!phase.hasComponent("water")) {
         return super.calcATT(phase, temperature, pressure, numbcomp);
       }
-      double aij = 0;
-      double temp1;
       double[] sqrtai = new double[numbcomp];
       ComponentEosInterface[] compArray = (ComponentEosInterface[]) phase.getcomponentArray();
       boolean isAqueous = phase.getComponent("water").getx() > 0.8;
@@ -2028,9 +2032,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
           if (compArray[j].getNumberOfmoles() < 1e-100) {
             continue;
           }
-          temp1 = compArray[i].getaT() * compArray[j].getaDiffT()
+          double temp1 = compArray[i].getaT() * compArray[j].getaDiffT()
               + compArray[j].getaT() * compArray[i].getaDiffT();
-          aij = 0.5 * ((2.0 * compArray[i].getaDiffT() * compArray[j].getaDiffT()
+          double aij = 0.5 * ((2.0 * compArray[i].getaDiffT() * compArray[j].getaDiffT()
               + compArray[i].getaT() * compArray[j].getaDiffDiffT()
               + compArray[j].getaT() * compArray[i].getaDiffDiffT()) / sqrtai[i] / sqrtai[j]
               - temp1 * temp1
@@ -2732,7 +2736,6 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
           * Math.log((1.0 + compArray[0].getDeltaEosParameters()[1])
               / (1.0 + compArray[0].getDeltaEosParameters()[0])));
 
-      double term = 0.0;
       qPure = new double[numbcomp];
       qPuredT = new double[numbcomp];
       qPuredTdT = new double[numbcomp];
@@ -2776,7 +2779,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       alpha_mix = 0.0;
       dadt = 0.0;
       for (int i = 0; i < numbcomp; i++) {
-        term =
+        double term =
             qPure[i] + hwfc * Math.log(((ComponentGEInterface) gePhase.getComponent(i)).getGamma());
         alpha_mix += phase.getComponent(i).getNumberOfMolesInPhase()
             / phase.getNumberOfMolesInPhase() * term;
@@ -3244,7 +3247,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
               } else if (compArray[j].getIonicCharge() == 0) {
                 // Unknown neutral solvent: use predictive model based on dielectric constant
                 // Get solvent dielectric constant at 298.15 K (reference temperature)
-                double solventEpsilon = compArray[j].getDiElectricConstant(298.15);
+                double solventEpsilon = compArray[j].getDielectricConstant(298.15);
                 if (solventEpsilon < 1.0) {
                   // Fallback for components without dielectric data: use water parameters
                   solventEpsilon =
@@ -3429,14 +3432,13 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                 anionParamIndex = 11;
               }
 
-              // Gas-cation interaction
               if (ionCharge > 0.01) {
+                // Gas-cation interaction
                 wij[0][i][j] = neqsim.thermo.util.constants.FurstElectrolyteConstants
                     .getFurstParamGasIon(cationParamIndex);
                 wij[0][j][i] = wij[0][i][j];
-              }
-              // Gas-anion interaction
-              else if (ionCharge < -0.01) {
+              } else if (ionCharge < -0.01) {
+                // Gas-anion interaction
                 wij[0][i][j] = neqsim.thermo.util.constants.FurstElectrolyteConstants
                     .getFurstParamGasIon(anionParamIndex);
                 wij[0][j][i] = wij[0][i][j];
@@ -3488,9 +3490,8 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
                   wij[0][i][j] = oiCationParam;
                   wij[0][j][i] = wij[0][i][j];
                 }
-              }
-              // OI-anion interaction - only apply if parameter is non-zero
-              else if (ionCharge < -0.01) {
+              } else if (ionCharge < -0.01) {
+                // OI-anion interaction - only apply if parameter is non-zero
                 double oiAnionParam = neqsim.thermo.util.constants.FurstElectrolyteConstants
                     .getFurstParamOIIon(anionParamIndex);
                 if (Math.abs(oiAnionParam) > 1e-20) {

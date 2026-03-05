@@ -818,13 +818,13 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getDiElectricConstantdTdT.
+   * getDielectricConstantdTdT.
    * </p>
    *
    * @param temperature a double
    * @return a double
    */
-  public double getDiElectricConstantdTdT(double temperature);
+  public double getDielectricConstantdTdT(double temperature);
 
   /**
    * <p>
@@ -837,13 +837,13 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getDiElectricConstantdT.
+   * getDielectricConstantdT.
    * </p>
    *
    * @param temperature a double
    * @return a double
    */
-  public double getDiElectricConstantdT(double temperature);
+  public double getDielectricConstantdT(double temperature);
 
   /**
    * <p>
@@ -1188,13 +1188,13 @@ public interface ComponentInterface extends ThermodynamicConstantsInterface, Clo
 
   /**
    * <p>
-   * getDiElectricConstant.
+   * getDielectricConstant.
    * </p>
    *
    * @param temperature a double
    * @return a double
    */
-  public double getDiElectricConstant(double temperature);
+  public double getDielectricConstant(double temperature);
 
   /**
    * <p>

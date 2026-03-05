@@ -92,3 +92,6 @@ src/main/**/*.gif
 
 # Gemini Agent
 .gemini/
+
+output/
+*.dot

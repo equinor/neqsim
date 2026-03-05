@@ -27,17 +27,18 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
-### 2026-03-05 — Stefan-Boltzmann fire model for VesselDepressurization
+### 2026-03-04 — Sulfur deposition and corrosion analysis system
 **Type:** E (Feature)
-**Keywords:** fire, Stefan-Boltzmann, blowdown, depressurization, radiation, Scandpower, API 521, jet fire, pool fire, wall temperature, TransientWallHeatTransfer, FireType, FireModelType
-**Solution:** `src/main/java/neqsim/process/equipment/tank/VesselDepressurization.java`, `src/main/java/neqsim/process/util/fire/TransientWallHeatTransfer.java`, `examples/CNGtankmodelling/run_sb_fire_test.py`
+**Keywords:** sulfur, S8, H2S, deposition, precipitation, solubility, Gibbs reactor, Claus, FeS, corrosion, NACE, sour gas, solid flash, TPSolidflash, SulfurDepositionAnalyser, GibbsReactor, SO2, pipeline, subsea, onshore
+**Solution:** `src/main/java/neqsim/process/equipment/reactor/SulfurDepositionAnalyser.java`, `src/test/java/neqsim/process/equipment/reactor/SulfurDepositionAnalyserTest.java`, `examples/sulfurtask/SulfurDepositionAnalysis.ipynb`, `docs/chemicalreactions/sulfur_deposition_analysis.md`
 **Notes:**
-- Added S-B fire model: $q_f = \alpha_s \varepsilon_f \sigma T_f^4 + h_f (T_f - T_s) - \varepsilon_s \sigma T_s^4$
-- Fire heat applied at outer wall boundary (not directly to gas) — physically correct, matches HydDown/Unisim
-- New enums: FireModelType (NONE, CONSTANT_FLUX, STEFAN_BOLTZMANN), FireType (SCANDPOWER_JET/POOL, API_JET/POOL, CUSTOM)
-- TransientWallHeatTransfer: added overloaded advanceTimeStep with additionalOuterFluxWPerM2 parameter
-- Validation: constant flux gives unrealistic 451°C gas temp; S-B gives realistic 47°C gas, 110°C wall
-- Flame temperature back-calculated from incident flux via Newton-Raphson
+- New `SulfurDepositionAnalyser` unit operation combining Gibbs equilibrium, TP-solid flash, temperature sweep, and corrosion assessment in a single run()
+- Added FeS, Fe2O3, FeS2 species to GibbsReactDatabase.csv
+- Corrosion module: NACE MR0175 sour severity classification, FeS/SO2/H2SO4 risk assessment
+- Temperature sweep identifies sulfur deposition onset temperature
+- 6 tests passing (solubility, equilibrium, corrosion, full analysis, edge cases, JSON output)
+- Jupyter notebook (15 sections): solubility maps, saturation envelope, Gibbs reactor sweeps, O2/H2S sensitivity, pipeline simulation, onshore processing risk, H2S sensitivity
+- Uses neqsim_dev_setup for notebook JVM bootstrap
 
 ### 2025-07-17 — CNG tank temperature estimation improvements and Jupyter notebooks
 **Type:** E (Feature)

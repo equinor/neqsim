@@ -40,6 +40,7 @@ This documentation is organized into the following sections:
 |---------|-------------|
 | [equipment/](equipment/) | Equipment documentation (separators, compressors, etc.) |
 | [equipment/adsorption_bed.md](equipment/adsorption_bed) | **Adsorption bed** — transient simulation, LDF mass transfer, PSA/TSA cycles |
+| [mercury_removal.md](mercury_removal) | **Mercury removal guard beds** — chemisorption (PuraSpec), bed loading, breakthrough, degradation, mechanical design, cost |
 | [bioprocessing.md](bioprocessing) | **Bio-processing** — reactors, fermenters, solid-liquid separators, LLE, evaporators, dryers, crystallizers |
 | [processmodel/](processmodel/) | ProcessSystem and flowsheet management |
 | [safety/](safety/) | Safety systems (PSV, ESD, blowdown) |
@@ -346,9 +347,9 @@ process.add(separator);
 process.runOptimized();
 
 // Get results
-System.out.println("Separator gas rate: " + 
+System.out.println("Separator gas rate: " +
     separator.getGasOutStream().getFlowRate("kg/hr") + " kg/hr");
-System.out.println("Separator liquid rate: " + 
+System.out.println("Separator liquid rate: " +
     separator.getLiquidOutStream().getFlowRate("kg/hr") + " kg/hr");
 ```
 
@@ -566,9 +567,9 @@ double timeStep = 1.0;           // 1 second
 process.setTimeStep(timeStep);
 for (double t = 0; t < simulationTime; t += timeStep) {
     process.runTransient();
-    
+
     // Log data
-    System.out.println(t + ", " + 
+    System.out.println(t + ", " +
         separator.getPressure() + ", " +
         separator.getGasOutStream().getFlowRate("kg/hr"));
 }
