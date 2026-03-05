@@ -118,6 +118,7 @@ neqsim.process.controllerdevice
 neqsim.process.controllerdevice.structure
 neqsim.process.costestimation
 neqsim.process.costestimation.absorber
+neqsim.process.costestimation.adsorber
 neqsim.process.costestimation.column
 neqsim.process.costestimation.compressor
 neqsim.process.costestimation.ejector
@@ -250,6 +251,7 @@ neqsim.process.safety.risk.sis
 neqsim.process.safety.scenario
 neqsim.process.streaming
 neqsim.process.sustainability
+neqsim.process.util
 neqsim.process.util.event
 neqsim.process.util.example
 neqsim.process.util.export
@@ -257,6 +259,7 @@ neqsim.process.util.fielddevelopment
 neqsim.process.util.fire
 neqsim.process.util.monitor
 neqsim.process.util.optimizer
+neqsim.process.util.reconciliation
 neqsim.process.util.report
 neqsim.process.util.report.safety
 neqsim.process.util.scenario
@@ -267,6 +270,7 @@ neqsim.pvtsimulation.flowassurance
 neqsim.pvtsimulation.modeltuning
 neqsim.pvtsimulation.regression
 neqsim.pvtsimulation.reservoirproperties
+neqsim.pvtsimulation.reservoirproperties.relpermeability
 neqsim.pvtsimulation.simulation
 neqsim.pvtsimulation.util
 neqsim.pvtsimulation.util.parameterfitting
