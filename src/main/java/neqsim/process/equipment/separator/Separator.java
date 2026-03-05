@@ -2497,7 +2497,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * Creates constraints for gas load factor based on the separator's design parameters. Additional
    * constraints like liquid residence time can be added after construction.
    * </p>
-   * 
+   *
    * <p>
    * Note: All separator constraints (gas load factor, K-value, droplet cut size, inlet momentum,
    * retention times) are disabled by default for backwards compatibility with the optimizer. Use
@@ -2767,7 +2767,7 @@ public class Separator extends ProcessEquipmentBaseClass
 
   /**
    * Enable only the specified constraints by name. All other constraints are removed.
-   * 
+   *
    * <p>
    * Available constraint names:
    * <ul>
@@ -2963,7 +2963,6 @@ public class Separator extends ProcessEquipmentBaseClass
       // For vertical separator, gas area is above the liquid
       return sepCrossArea;
     }
-    double r = internalDiameter / 2.0;
     double h = Math.min(liquidLevelHeight, internalDiameter);
     if (h <= 0) {
       return sepCrossArea; // Full cross-section is gas
@@ -3446,7 +3445,7 @@ public class Separator extends ProcessEquipmentBaseClass
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * Separator sep = Separator.builder("V-100").inletStream(feed).orientation("horizontal")
    *     .length(5.0).diameter(2.0).liquidLevel(0.5).build();

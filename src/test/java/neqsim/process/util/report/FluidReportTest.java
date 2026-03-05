@@ -15,10 +15,10 @@ public class FluidReportTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
     ops.TPflash();
 
-    String report = testSystem.toJson();
+    testSystem.toJson();
     // System.out.println(report);
     neqsim.util.unit.Units.activateFieldUnits();
-    report = testSystem.toJson();
+    testSystem.toJson();
     // System.out.println(report);
   }
 }

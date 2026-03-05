@@ -150,7 +150,7 @@ public class TopsidePipingTest {
 
     calc.calculateActualVelocity();
     calc.calculateErosionalVelocity();
-    boolean passed = calc.checkVelocityLimits();
+    calc.checkVelocityLimits();
 
     assertTrue(calc.getActualVelocity() > 0);
     assertTrue(calc.getErosionalVelocity() > 0);
@@ -291,7 +291,7 @@ public class TopsidePipingTest {
     calc.setLiquidFraction(0.0);
     calc.setMaterialGrade("A106-B");
 
-    boolean passed = calc.performDesignVerification();
+    calc.performDesignVerification();
 
     // Should pass for reasonable design
     assertTrue(calc.getSupportSpacing() > 0);

@@ -4306,14 +4306,16 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public SystemInterface readObject(int ID) {
-    java.sql.ResultSet rs = null;
     SystemThermo tempSystem = null;
     neqsim.util.database.NeqSimBlobDatabase database =
         new neqsim.util.database.NeqSimBlobDatabase();
+    java.sql.Connection con = null;
+    java.sql.PreparedStatement ps = null;
+    java.sql.ResultSet rs = null;
     try {
-      java.sql.Connection con = database.openConnection();
+      con = database.openConnection();
       String sqlStr = "SELECT FLUID FROM fluid_blobdb WHERE ID=" + Integer.toString(ID);
-      java.sql.PreparedStatement ps = con.prepareStatement(sqlStr);
+      ps = con.prepareStatement(sqlStr);
       rs = ps.executeQuery();
 
       if (rs.next()) {
@@ -4326,6 +4328,15 @@ public abstract class SystemThermo implements SystemInterface {
       logger.error(ex.getMessage(), ex);
     } finally {
       try {
+        if (rs != null) {
+          rs.close();
+        }
+        if (ps != null) {
+          ps.close();
+        }
+        if (con != null) {
+          con.close();
+        }
         if (database.getStatement() != null) {
           database.getStatement().close();
         }
@@ -4565,12 +4576,12 @@ public abstract class SystemThermo implements SystemInterface {
 
     neqsim.util.database.NeqSimBlobDatabase database =
         new neqsim.util.database.NeqSimBlobDatabase();
-
+    java.sql.Connection con = null;
+    java.sql.PreparedStatement ps = null;
     try {
-      java.sql.Connection con = database.openConnection();
+      con = database.openConnection();
 
-      java.sql.PreparedStatement ps =
-          con.prepareStatement("REPLACE INTO fluid_blobdb (ID, FLUID) VALUES (?,?)");
+      ps = con.prepareStatement("REPLACE INTO fluid_blobdb (ID, FLUID) VALUES (?,?)");
       ps.setInt(1, ID);
       ps.setBlob(2, inpStream);
 
@@ -4586,6 +4597,12 @@ public abstract class SystemThermo implements SystemInterface {
       logger.error(ex.getMessage(), ex);
     } finally {
       try {
+        if (ps != null) {
+          ps.close();
+        }
+        if (con != null) {
+          con.close();
+        }
         if (database.getStatement() != null) {
           database.getStatement().close();
         }
