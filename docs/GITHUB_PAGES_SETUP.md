@@ -1,6 +1,6 @@
 ---
 title: GitHub Pages Setup Guide for NeqSim Documentation
-description: This guide explains how to enable GitHub Pages for the NeqSim repository to host the documentation at `https://equinor.github.io/neqsim/`.
+description: "This guide explains how to enable GitHub Pages for the NeqSim repository to host the documentation at https://equinor.github.io/neqsim/."
 ---
 
 # GitHub Pages Setup Guide for NeqSim Documentation
@@ -55,14 +55,14 @@ The documentation home page with:
 
 Once enabled, documentation will be accessible at:
 
-| Local Path | GitHub Pages URL |
-|------------|------------------|
-| `docs/index.md` | `https://equinor.github.io/neqsim/` |
-| `docs/thermo/README.md` | `https://equinor.github.io/neqsim/thermo/README` |
-| `docs/process/README.md` | `https://equinor.github.io/neqsim/process/README` |
-| `docs/safety/SAFETY_SIMULATION_ROADMAP.md` | `https://equinor.github.io/neqsim/safety/SAFETY_SIMULATION_ROADMAP` |
+| Local Path                                 | GitHub Pages URL                                                       |
+| ------------------------------------------ | ---------------------------------------------------------------------- |
+| `docs/index.md`                            | `https://equinor.github.io/neqsim/`                                    |
+| `docs/thermo/README.md`                    | `https://equinor.github.io/neqsim/thermo/README`                       |
+| `docs/process/README.md`                   | `https://equinor.github.io/neqsim/process/README`                      |
+| `docs/safety/SAFETY_SIMULATION_ROADMAP.md` | `https://equinor.github.io/neqsim/safety/SAFETY_SIMULATION_ROADMAP`    |
 | `docs/manual/neqsim_reference_manual.html` | `https://equinor.github.io/neqsim/manual/neqsim_reference_manual.html` |
-| `docs/wiki/getting_started.md` | `https://equinor.github.io/neqsim/wiki/getting_started` |
+| `docs/wiki/getting_started.md`             | `https://equinor.github.io/neqsim/wiki/getting_started`                |
 
 **Important**: Jekyll converts `.md` files to `.html`. Links should **not** include the `.md` extension when hosted.
 
@@ -173,19 +173,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
           bundler-cache: true
           working-directory: docs
-          
+
       - name: Build site
         run: |
           cd docs
           bundle exec jekyll build
-          
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:

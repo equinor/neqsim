@@ -1,6 +1,6 @@
 ---
 title: DEXPI XML reader
-description: The `DexpiXmlReader` utility converts [DEXPI](https://dexpi.org/) XML P&ID exports into
+description: "The DexpiXmlReader utility converts DEXPI XML P&ID exports into NeqSim ProcessSystem models."
 ---
 
 # DEXPI XML reader

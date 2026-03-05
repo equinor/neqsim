@@ -23,13 +23,13 @@ Documentation for chemical reactor equipment in NeqSim.
 **Location:** `neqsim.process.equipment.reactor`
 
 **Classes:**
-| Class | Description |
-|-------|-------------|
-| `Reactor` | Base reactor class |
-| `CSTRReactor` | Continuous stirred tank reactor |
-| `PFRReactor` | Plug flow reactor |
-| `EquilibriumReactor` | Chemical equilibrium reactor |
-| `GibbsReactor` | Gibbs energy minimization reactor |
+| Class                | Description                       |
+| -------------------- | --------------------------------- |
+| `Reactor`            | Base reactor class                |
+| `CSTRReactor`        | Continuous stirred tank reactor   |
+| `PFRReactor`         | Plug flow reactor                 |
+| `EquilibriumReactor` | Chemical equilibrium reactor      |
+| `GibbsReactor`       | Gibbs energy minimization reactor |
 
 ---
 
@@ -37,12 +37,12 @@ Documentation for chemical reactor equipment in NeqSim.
 
 ### Selection Guide
 
-| Reactor | When to Use |
-|---------|-------------|
-| CSTR | Liquid-phase reactions, good mixing |
-| PFR | Gas-phase reactions, no back-mixing |
-| Equilibrium | Fast reactions at equilibrium |
-| Gibbs | Complex equilibrium without specifying reactions |
+| Reactor     | When to Use                                      |
+| ----------- | ------------------------------------------------ |
+| CSTR        | Liquid-phase reactions, good mixing              |
+| PFR         | Gas-phase reactions, no back-mixing              |
+| Equilibrium | Fast reactions at equilibrium                    |
+| Gibbs       | Complex equilibrium without specifying reactions |
 
 ---
 
@@ -228,8 +228,8 @@ smr.run();
 Stream product = smr.getOutletStream();
 System.out.println("H2 mole fraction: " + product.getFluid().getMoleFraction("hydrogen"));
 System.out.println("CO mole fraction: " + product.getFluid().getMoleFraction("CO"));
-System.out.println("CH4 conversion: " + 
-    (1 - product.getFluid().getMoleFraction("methane") / 
+System.out.println("CH4 conversion: " +
+    (1 - product.getFluid().getMoleFraction("methane") /
      feedStream.getFluid().getMoleFraction("methane")) * 100 + " %");
 ```
 
@@ -260,6 +260,6 @@ System.out.println("Ammonia mole fraction: " + nh3Prod);
 
 ## Related Documentation
 
-- [Equipment Index](./\) - All equipment
+- [Equipment Index](index.md) - All equipment
 - [Chemical Reactions](../../chemicalreactions/) - Reaction modeling
 - [Heat Exchangers](heat_exchangers) - Reactor heat exchange

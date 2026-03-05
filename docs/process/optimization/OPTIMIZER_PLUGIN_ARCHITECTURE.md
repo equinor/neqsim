@@ -13,24 +13,24 @@ The Optimizer Plugin Architecture provides a flexible, extensible framework for 
 
 ### Related Documentation
 
-| Document | Description |
-|----------|-------------|
-| [Optimization Overview](OPTIMIZATION_OVERVIEW) | When to use which optimizer |
-| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) | ProductionOptimizer examples |
-| [Multi-Objective Optimization](multi-objective-optimization) | Pareto fronts and trade-offs |
-| [Flow Rate Optimization](flow-rate-optimization) | FlowRateOptimizer and lift curves |
-| [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) | Equipment constraints |
+| Document                                                                      | Description                       |
+| ----------------------------------------------------------------------------- | --------------------------------- |
+| [Optimization Overview](OPTIMIZATION_OVERVIEW)                                | When to use which optimizer       |
+| [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) | ProductionOptimizer examples      |
+| [Multi-Objective Optimization](multi-objective-optimization)                  | Pareto fronts and trade-offs      |
+| [Flow Rate Optimization](flow-rate-optimization)                              | FlowRateOptimizer and lift curves |
+| [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK)             | Equipment constraints             |
 
 ### Key Components
 
-| Component | Description | Location |
-|-----------|-------------|----------|
-| **EquipmentCapacityStrategy** | Interface for equipment-specific constraint evaluation | `neqsim.process.equipment.capacity` |
-| **EquipmentCapacityStrategyRegistry** | Singleton registry with auto-discovery | `neqsim.process.equipment.capacity` |
-| **ProcessOptimizationEngine** | Unified API for process optimization | `neqsim.process.util.optimizer` |
-| **EclipseVFPExporter** | Eclipse VFP table generation | `neqsim.process.util.optimizer` |
-| **Driver Package** | Driver curves for compressors | `neqsim.process.equipment.compressor.driver` |
-| **OperatingEnvelope** | Compressor operating envelope tracking | `neqsim.process.equipment.compressor` |
+| Component                             | Description                                            | Location                                     |
+| ------------------------------------- | ------------------------------------------------------ | -------------------------------------------- |
+| **EquipmentCapacityStrategy**         | Interface for equipment-specific constraint evaluation | `neqsim.process.equipment.capacity`          |
+| **EquipmentCapacityStrategyRegistry** | Singleton registry with auto-discovery                 | `neqsim.process.equipment.capacity`          |
+| **ProcessOptimizationEngine**         | Unified API for process optimization                   | `neqsim.process.util.optimizer`              |
+| **EclipseVFPExporter**                | Eclipse VFP table generation                           | `neqsim.process.util.optimizer`              |
+| **Driver Package**                    | Driver curves for compressors                          | `neqsim.process.equipment.compressor.driver` |
+| **OperatingEnvelope**                 | Compressor operating envelope tracking                 | `neqsim.process.equipment.compressor`        |
 
 ---
 
@@ -113,7 +113,7 @@ ProcessOptimizationEngine.ConstraintReport report = engine.evaluateAllConstraint
 
 // Print equipment status
 for (ProcessOptimizationEngine.EquipmentConstraintStatus status : report.getEquipmentStatuses()) {
-    System.out.println(status.getEquipmentName() + ": " + 
+    System.out.println(status.getEquipmentName() + ": " +
         String.format("%.1f%%", status.getUtilization() * 100) + " utilization");
     if (!status.isWithinLimits()) {
         System.out.println("  WARNING: Exceeds limits!");
@@ -134,7 +134,7 @@ double outletPressure = 40.0; // bara
 double minFlow = 10000.0;     // kg/hr
 double maxFlow = 500000.0;    // kg/hr
 
-ProcessOptimizationEngine.OptimizationResult result = 
+ProcessOptimizationEngine.OptimizationResult result =
     engine.findMaximumThroughput(inletPressure, outletPressure, minFlow, maxFlow);
 
 System.out.println("Optimal flow rate: " + result.getOptimalFlowRate() + " kg/hr");
@@ -160,25 +160,25 @@ Each equipment type has a dedicated strategy that understands its specific const
 public interface EquipmentCapacityStrategy {
     // Check if strategy supports this equipment
     boolean supports(ProcessEquipmentInterface equipment);
-    
+
     // Get strategy priority (higher = more specific)
     int getPriority();
-    
+
     // Evaluate current capacity utilization (0.0 to 1.0+)
     double evaluateCapacity(ProcessEquipmentInterface equipment);
-    
+
     // Get all constraints for equipment
     Map<String, CapacityConstraint> getConstraints(ProcessEquipmentInterface equipment);
-    
+
     // Get violated constraints
     List<CapacityConstraint> getViolations(ProcessEquipmentInterface equipment);
-    
+
     // Get the limiting constraint
     CapacityConstraint getBottleneckConstraint(ProcessEquipmentInterface equipment);
-    
+
     // Check if within hard limits (safety)
     boolean isWithinHardLimits(ProcessEquipmentInterface equipment);
-    
+
     // Check if within soft limits (design)
     boolean isWithinSoftLimits(ProcessEquipmentInterface equipment);
 }
@@ -190,13 +190,13 @@ public interface EquipmentCapacityStrategy {
 
 Evaluates compressor constraints including:
 
-| Constraint | Type | Description |
-|------------|------|-------------|
-| `speed` | HARD | Rotational speed vs max/min limits |
-| `power` | HARD | Shaft power vs driver capacity |
-| `surgeMargin` | HARD | Distance to surge line |
-| `stonewallMargin` | SOFT | Distance to stonewall |
-| `dischargeTemperature` | HARD | Outlet temperature vs limits |
+| Constraint             | Type | Description                        |
+| ---------------------- | ---- | ---------------------------------- |
+| `speed`                | HARD | Rotational speed vs max/min limits |
+| `power`                | HARD | Shaft power vs driver capacity     |
+| `surgeMargin`          | HARD | Distance to surge line             |
+| `stonewallMargin`      | SOFT | Distance to stonewall              |
+| `dischargeTemperature` | HARD | Outlet temperature vs limits       |
 
 ```java
 import neqsim.process.equipment.capacity.CompressorCapacityStrategy;
@@ -223,9 +223,9 @@ if (surgeConstraint != null) {
 
 Evaluates separator constraints:
 
-| Constraint | Type | Description |
-|------------|------|-------------|
-| `liquidLevel` | SOFT | Liquid level vs max allowed |
+| Constraint      | Type | Description                          |
+| --------------- | ---- | ------------------------------------ |
+| `liquidLevel`   | SOFT | Liquid level vs max allowed          |
 | `gasLoadFactor` | SOFT | Gas velocity/terminal velocity ratio |
 
 ```java
@@ -243,11 +243,11 @@ Map<String, CapacityConstraint> constraints = strategy.getConstraints(separator)
 
 Evaluates pump constraints:
 
-| Constraint | Type | Description |
-|------------|------|-------------|
-| `power` | HARD | Motor power vs rating |
+| Constraint   | Type | Description               |
+| ------------ | ---- | ------------------------- |
+| `power`      | HARD | Motor power vs rating     |
 | `npshMargin` | HARD | NPSH available - required |
-| `flowRate` | SOFT | Flow vs minimum flow |
+| `flowRate`   | SOFT | Flow vs minimum flow      |
 
 ```java
 import neqsim.process.equipment.capacity.PumpCapacityStrategy;
@@ -262,28 +262,28 @@ PumpCapacityStrategy strategy = new PumpCapacityStrategy(
 
 Evaluates valve constraints:
 
-| Constraint | Type | Description |
-|------------|------|-------------|
-| `valveOpening` | SOFT | Opening % vs min/max range |
-| `pressureDropRatio` | SOFT | ΔP/inlet pressure ratio |
+| Constraint          | Type | Description                |
+| ------------------- | ---- | -------------------------- |
+| `valveOpening`      | SOFT | Opening % vs min/max range |
+| `pressureDropRatio` | SOFT | ΔP/inlet pressure ratio    |
 
 #### 5. PipeCapacityStrategy
 
 Evaluates pipe/pipeline constraints:
 
-| Constraint | Type | Description |
-|------------|------|-------------|
-| `velocity` | SOFT | Superficial velocity vs erosional |
-| `pressureDrop` | SOFT | Pressure drop vs allowable |
+| Constraint     | Type | Description                       |
+| -------------- | ---- | --------------------------------- |
+| `velocity`     | SOFT | Superficial velocity vs erosional |
+| `pressureDrop` | SOFT | Pressure drop vs allowable        |
 
 #### 6. HeatExchangerCapacityStrategy
 
 Evaluates heat exchanger constraints:
 
-| Constraint | Type | Description |
-|------------|------|-------------|
-| `duty` | SOFT | Heat transfer duty vs design |
-| `outletTemperature` | SOFT | Outlet temperature |
+| Constraint          | Type | Description                  |
+| ------------------- | ---- | ---------------------------- |
+| `duty`              | SOFT | Heat transfer duty vs design |
+| `outletTemperature` | SOFT | Outlet temperature           |
 
 ### Custom Strategy Registration
 
@@ -299,32 +299,32 @@ public class MyCustomEquipmentStrategy implements EquipmentCapacityStrategy {
     public boolean supports(ProcessEquipmentInterface equipment) {
         return equipment instanceof MyCustomEquipment;
     }
-    
+
     @Override
     public int getPriority() {
         return 100;  // High priority for specific equipment
     }
-    
+
     @Override
     public double evaluateCapacity(ProcessEquipmentInterface equipment) {
         MyCustomEquipment eq = (MyCustomEquipment) equipment;
         return eq.getCurrentLoad() / eq.getMaxLoad();
     }
-    
+
     @Override
     public Map<String, CapacityConstraint> getConstraints(ProcessEquipmentInterface equipment) {
         Map<String, CapacityConstraint> constraints = new HashMap<>();
         MyCustomEquipment eq = (MyCustomEquipment) equipment;
-        
-        constraints.put("customConstraint", 
+
+        constraints.put("customConstraint",
             new CapacityConstraint("customConstraint", "units", ConstraintType.HARD)
                 .setDesignValue(100.0)
                 .setMaxValue(120.0)
                 .setValueSupplier(() -> eq.getCurrentValue()));
-        
+
         return constraints;
     }
-    
+
     // ... implement other methods
 }
 
@@ -345,18 +345,18 @@ The driver package provides compressor driver models with performance curves.
 public interface DriverCurve {
     // Get available power at current conditions
     double getMaxAvailablePower();
-    
+
     // Get rated power
     double getRatedPower();
-    
+
     // Calculate efficiency at given load
     double getEfficiency(double loadFraction);
-    
+
     // Calculate fuel/energy consumption
     double getFuelConsumption(double power);
-    
+
     // Calculate speed change during transients
-    double calculateSpeedChange(double currentSpeed, double targetSpeed, 
+    double calculateSpeedChange(double currentSpeed, double targetSpeed,
                                 double power, double timeStep);
 }
 ```
@@ -719,10 +719,10 @@ System.out.println("Feed stream: " + engine.getFeedStreamName());
 
 By default, the optimization engine varies the **first unit operation** in the process. For complex processes or modules, you should explicitly specify the feed stream:
 
-| Method | Description |
-|--------|-------------|
+| Method                           | Description                                            |
+| -------------------------------- | ------------------------------------------------------ |
 | `setFeedStreamName(String name)` | Set the name of the stream to vary during optimization |
-| `getFeedStreamName()` | Get the name of the stream being varied |
+| `getFeedStreamName()`            | Get the name of the stream being varied                |
 
 ```java
 // Explicitly set which stream to vary
@@ -741,13 +741,13 @@ System.out.println("Optimizing flow rate of: " + engine.getFeedStreamName());
 
 By default, the optimization engine monitors the **last unit operation** for outlet conditions. For complex processes or modules, you can explicitly specify the outlet stream:
 
-| Method | Description |
-|--------|-------------|
-| `setOutletStreamName(String name)` | Set the name of the outlet stream to monitor |
-| `getOutletStreamName()` | Get the name of the outlet stream being monitored |
-| `getOutletTemperature()` | Get outlet temperature in Kelvin |
-| `getOutletTemperature(String unit)` | Get outlet temperature in specified unit ("C", "K", "F", "R") |
-| `getOutletFlowRate(String flowUnit)` | Get outlet flow rate in specified unit ("kg/hr", "MSm3/day") |
+| Method                               | Description                                                   |
+| ------------------------------------ | ------------------------------------------------------------- |
+| `setOutletStreamName(String name)`   | Set the name of the outlet stream to monitor                  |
+| `getOutletStreamName()`              | Get the name of the outlet stream being monitored             |
+| `getOutletTemperature()`             | Get outlet temperature in Kelvin                              |
+| `getOutletTemperature(String unit)`  | Get outlet temperature in specified unit ("C", "K", "F", "R") |
+| `getOutletFlowRate(String flowUnit)` | Get outlet flow rate in specified unit ("kg/hr", "MSm3/day")  |
 
 ```java
 // Configure both feed and outlet streams
@@ -797,21 +797,21 @@ OptimizationResult result = engine.findMaximumThroughput(85.0, 40.0, 5000.0, 200
 
 ### Core Methods
 
-| Method | Returns | Description |
-|--------|---------|-------------|
-| `evaluateAllConstraints()` | `ConstraintReport` | Evaluate constraints on all equipment |
-| `findMaximumThroughput(pin, pout, minQ, maxQ)` | `OptimizationResult` | Find max flow for pressure constraints |
-| `findRequiredInletPressure(outletP, flowRate)` | `OptimizationResult` | Find inlet pressure for target flow |
-| `findBottleneckEquipment()` | `String` | Get name of bottleneck equipment |
-| `generateLiftCurve(pins, pouts, temps, wcuts, gors)` | `LiftCurveData` | Generate multi-dimensional lift curve |
-| `analyzeSensitivity(flow, inletP, outletP)` | `SensitivityResult` | Analyze flow sensitivity and margins |
-| `calculateShadowPrices(flow, inletP, outletP)` | `Map<String, Double>` | Calculate constraint shadow prices |
-| `createFlowRateOptimizer()` | `FlowRateOptimizer` | Create integrated FlowRateOptimizer |
-| `generateComprehensiveLiftCurve(stream, pressures, outletP)` | `FlowRateOptimizer` | Generate lift curves via FlowRateOptimizer |
-| `evaluateConstraintsWithCache()` | `ConstraintEvaluationResult` | Evaluate with caching enabled |
-| `calculateFlowSensitivities(flow, unit)` | `Map<String, Double>` | Calculate flow sensitivities by equipment |
-| `estimateMaximumFlow(currentFlow, unit)` | `double` | Estimate max feasible flow |
-| `getConstraintEvaluator()` | `ProcessConstraintEvaluator` | Get underlying constraint evaluator |
+| Method                                                       | Returns                      | Description                                |
+| ------------------------------------------------------------ | ---------------------------- | ------------------------------------------ |
+| `evaluateAllConstraints()`                                   | `ConstraintReport`           | Evaluate constraints on all equipment      |
+| `findMaximumThroughput(pin, pout, minQ, maxQ)`               | `OptimizationResult`         | Find max flow for pressure constraints     |
+| `findRequiredInletPressure(outletP, flowRate)`               | `OptimizationResult`         | Find inlet pressure for target flow        |
+| `findBottleneckEquipment()`                                  | `String`                     | Get name of bottleneck equipment           |
+| `generateLiftCurve(pins, pouts, temps, wcuts, gors)`         | `LiftCurveData`              | Generate multi-dimensional lift curve      |
+| `analyzeSensitivity(flow, inletP, outletP)`                  | `SensitivityResult`          | Analyze flow sensitivity and margins       |
+| `calculateShadowPrices(flow, inletP, outletP)`               | `Map<String, Double>`        | Calculate constraint shadow prices         |
+| `createFlowRateOptimizer()`                                  | `FlowRateOptimizer`          | Create integrated FlowRateOptimizer        |
+| `generateComprehensiveLiftCurve(stream, pressures, outletP)` | `FlowRateOptimizer`          | Generate lift curves via FlowRateOptimizer |
+| `evaluateConstraintsWithCache()`                             | `ConstraintEvaluationResult` | Evaluate with caching enabled              |
+| `calculateFlowSensitivities(flow, unit)`                     | `Map<String, Double>`        | Calculate flow sensitivities by equipment  |
+| `estimateMaximumFlow(currentFlow, unit)`                     | `double`                     | Estimate max feasible flow                 |
+| `getConstraintEvaluator()`                                   | `ProcessConstraintEvaluator` | Get underlying constraint evaluator        |
 
 ### OptimizationResult Class
 
@@ -870,25 +870,25 @@ public class ProductionOptimizationExample {
         wellFluid.addComponent("water", 0.05);
         wellFluid.setMixingRule("classic");
         wellFluid.setMultiPhaseCheck(true);
-        
+
         // Create process
         Stream wellStream = new Stream("wellStream", wellFluid);
         wellStream.setFlowRate(50000, "kg/hr");
         wellStream.setPressure(80.0, "bara");
         wellStream.setTemperature(330.0, "K");
-        
+
         ThreePhaseSeparator hpSeparator = new ThreePhaseSeparator("HP Separator", wellStream);
-        
+
         Heater gasHeater = new Heater("Gas Heater", hpSeparator.getGasOutStream());
         gasHeater.setOutTemperature(320.0);
-        
+
         Compressor exportCompressor = new Compressor("Export Compressor", gasHeater.getOutletStream());
         exportCompressor.setOutletPressure(150.0);
         exportCompressor.setPolytropicEfficiency(0.78);
-        
+
         Cooler aftercooler = new Cooler("Aftercooler", exportCompressor.getOutletStream());
         aftercooler.setOutTemperature(313.15);
-        
+
         ProcessSystem process = new ProcessSystem();
         process.add(wellStream);
         process.add(hpSeparator);
@@ -896,18 +896,18 @@ public class ProductionOptimizationExample {
         process.add(exportCompressor);
         process.add(aftercooler);
         process.run();
-        
+
         // Create optimization engine
         ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
-        
+
         // Evaluate current constraints
         ProcessOptimizationEngine.ConstraintReport report = engine.evaluateAllConstraints();
-        
+
         System.out.println("=== Current Operating Status ===");
         for (ProcessOptimizationEngine.EquipmentConstraintStatus status : report.getEquipmentStatuses()) {
-            System.out.printf("%s: %.1f%% utilization%n", 
+            System.out.printf("%s: %.1f%% utilization%n",
                 status.getEquipmentName(), status.getUtilization() * 100);
-            
+
             for (CapacityConstraint constraint : status.getConstraints()) {
                 System.out.printf("  - %s: %.2f %s (%.1f%% of design)%n",
                     constraint.getName(),
@@ -916,16 +916,16 @@ public class ProductionOptimizationExample {
                     constraint.getUtilizationPercent());
             }
         }
-        
+
         // Find maximum throughput
         System.out.println("\n=== Optimization Results ===");
-        ProcessOptimizationEngine.OptimizationResult result = 
+        ProcessOptimizationEngine.OptimizationResult result =
             engine.findMaximumThroughput(80.0, 150.0, 10000.0, 200000.0);
-        
+
         System.out.printf("Maximum throughput: %.0f kg/hr%n", result.getOptimalFlowRate());
         System.out.printf("Bottleneck: %s%n", result.getBottleneckEquipment());
         System.out.printf("Total power: %.1f kW%n", result.getTotalPower());
-        
+
         if (!result.getConstraintViolations().isEmpty()) {
             System.out.println("Constraint violations at max rate:");
             for (String violation : result.getConstraintViolations()) {
@@ -943,30 +943,30 @@ public class ProductionOptimizationExample {
 public class LiftCurveExample {
     public static void main(String[] args) {
         // ... create process as above ...
-        
+
         ProcessOptimizationEngine engine = new ProcessOptimizationEngine(process);
-        
+
         // Define parameter ranges for lift curve
         double[] wellheadPressures = {30.0, 40.0, 50.0, 60.0, 70.0, 80.0};
         double[] separatorPressures = {20.0, 25.0, 30.0};
         double[] temperatures = {20.0, 40.0, 60.0};
         double[] waterCuts = {0.0, 0.1, 0.3, 0.5};
         double[] gors = {100.0, 200.0, 500.0};
-        
+
         // Generate lift curve data
-        ProcessOptimizationEngine.LiftCurveData liftCurve = 
+        ProcessOptimizationEngine.LiftCurveData liftCurve =
             engine.generateLiftCurve(
-                wellheadPressures, 
-                separatorPressures, 
-                temperatures, 
-                waterCuts, 
+                wellheadPressures,
+                separatorPressures,
+                temperatures,
+                waterCuts,
                 gors
             );
-        
+
         // Export to Eclipse format
         EclipseVFPExporter exporter = new EclipseVFPExporter(process);
         exporter.setTableNumber(1);
-        
+
         String vfpTable = exporter.generateVFPPROD(
             wellheadPressures,
             waterCuts,
@@ -976,7 +976,7 @@ public class LiftCurveExample {
             "bara",
             "kg/hr"
         );
-        
+
         // Save to file
         Files.writeString(Path.of("VFPPROD_TABLE1.INC"), vfpTable);
         System.out.println("VFP table written to VFPPROD_TABLE1.INC");
@@ -991,20 +991,20 @@ public class LiftCurveExample {
 public class StrategyUsageExample {
     public static void main(String[] args) {
         // Get registry singleton
-        EquipmentCapacityStrategyRegistry registry = 
+        EquipmentCapacityStrategyRegistry registry =
             EquipmentCapacityStrategyRegistry.getInstance();
-        
+
         // Find strategy for specific equipment
         Compressor compressor = new Compressor("test", feedStream);
         compressor.setOutletPressure(100.0);
         compressor.run();
-        
+
         EquipmentCapacityStrategy strategy = registry.findStrategy(compressor);
-        
+
         if (strategy != null) {
             // Get all constraints
             Map<String, CapacityConstraint> constraints = strategy.getConstraints(compressor);
-            
+
             System.out.println("Compressor Constraints:");
             for (Map.Entry<String, CapacityConstraint> entry : constraints.entrySet()) {
                 CapacityConstraint c = entry.getValue();
@@ -1015,7 +1015,7 @@ public class StrategyUsageExample {
                     c.getUnit(),
                     c.getUtilizationPercent());
             }
-            
+
             // Check for violations
             List<CapacityConstraint> violations = strategy.getViolations(compressor);
             if (!violations.isEmpty()) {
@@ -1025,7 +1025,7 @@ public class StrategyUsageExample {
                         v.getName(), v.getCurrentValue(), v.getDesignValue(), v.getUnit());
                 }
             }
-            
+
             // Get bottleneck
             CapacityConstraint bottleneck = strategy.getBottleneckConstraint(compressor);
             if (bottleneck != null) {
@@ -1077,22 +1077,22 @@ System.out.println("Elapsed time: " + result.getElapsedTimeSeconds() + " s");
 
 The `Status` enum tracks optimization state:
 
-| Status | Description |
-|--------|-------------|
-| `NOT_STARTED` | Optimization not yet begun |
-| `IN_PROGRESS` | Currently running |
-| `CONVERGED` | Successfully converged |
-| `MAX_ITERATIONS_REACHED` | Hit iteration limit |
-| `INFEASIBLE` | No feasible solution found |
-| `FAILED` | Error during optimization |
-| `CANCELLED` | User cancelled |
+| Status                   | Description                |
+| ------------------------ | -------------------------- |
+| `NOT_STARTED`            | Optimization not yet begun |
+| `IN_PROGRESS`            | Currently running          |
+| `CONVERGED`              | Successfully converged     |
+| `MAX_ITERATIONS_REACHED` | Hit iteration limit        |
+| `INFEASIBLE`             | No feasible solution found |
+| `FAILED`                 | Error during optimization  |
+| `CANCELLED`              | User cancelled             |
 
 ### ConstraintViolation Class
 
 Track constraint violations with detailed information:
 
 ```java
-OptimizationResultBase.ConstraintViolation violation = 
+OptimizationResultBase.ConstraintViolation violation =
     new OptimizationResultBase.ConstraintViolation(
         "Compressor1",     // equipment name
         "MaxPower",        // constraint name
@@ -1129,7 +1129,7 @@ System.out.println("Feasible: " + result.isFeasible());
 System.out.println("Violations: " + result.getTotalViolationCount());
 
 // Get per-equipment summaries
-for (Map.Entry<String, ProcessConstraintEvaluator.EquipmentConstraintSummary> entry : 
+for (Map.Entry<String, ProcessConstraintEvaluator.EquipmentConstraintSummary> entry :
         result.getEquipmentSummaries().entrySet()) {
     ProcessConstraintEvaluator.EquipmentConstraintSummary summary = entry.getValue();
     System.out.printf("%s: %.1f%% utilization, margin to limit: %.1f%%%n",
@@ -1161,7 +1161,7 @@ evaluator.clearCache();
 Manual cache management:
 
 ```java
-ProcessConstraintEvaluator.CachedConstraints cache = 
+ProcessConstraintEvaluator.CachedConstraints cache =
     new ProcessConstraintEvaluator.CachedConstraints();
 
 cache.setFlowRate(5000.0);
@@ -1205,10 +1205,10 @@ The `ProcessOptimizationEngine` supports gradient descent optimization for smoot
 
 ### Search Algorithms
 
-| Algorithm | Description | Best For |
-|-----------|-------------|----------|
-| `BINARY_SEARCH` | Binary search for feasibility boundary | Simple monotonic problems |
-| `GOLDEN_SECTION` | Golden section search | Unimodal objectives |
+| Algorithm          | Description                              | Best For                       |
+| ------------------ | ---------------------------------------- | ------------------------------ |
+| `BINARY_SEARCH`    | Binary search for feasibility boundary   | Simple monotonic problems      |
+| `GOLDEN_SECTION`   | Golden section search                    | Unimodal objectives            |
 | `GRADIENT_DESCENT` | Gradient descent with finite differences | Smooth multi-variable problems |
 
 ### Using Gradient Descent
@@ -1223,7 +1223,7 @@ engine.setMaxIterations(100);
 engine.setEnforceConstraints(true);
 
 // Find maximum throughput
-ProcessOptimizationEngine.OptimizationResult result = 
+ProcessOptimizationEngine.OptimizationResult result =
     engine.findMaximumThroughput(50.0, 10.0, 1000.0, 100000.0);
 
 System.out.println("Optimal flow: " + result.getOptimalValue() + " kg/hr");
@@ -1250,7 +1250,7 @@ Analyze how the optimal solution responds to parameter changes.
 ProcessOptimizationEngine engine = new ProcessOptimizationEngine(processSystem);
 
 // Analyze sensitivity at current operating point
-ProcessOptimizationEngine.SensitivityResult sensitivity = 
+ProcessOptimizationEngine.SensitivityResult sensitivity =
     engine.analyzeSensitivity(5000.0, 50.0, 10.0);
 
 System.out.println("Base flow: " + sensitivity.getBaseFlow() + " kg/hr");
@@ -1283,7 +1283,7 @@ Map<String, Double> shadowPrices = engine.calculateShadowPrices(5000.0, 50.0, 10
 System.out.println("Shadow Prices (flow increase per unit constraint relaxation):");
 for (Map.Entry<String, Double> entry : shadowPrices.entrySet()) {
     if (entry.getValue() > 0) {
-        System.out.printf("  %s: %.2f kg/hr per unit%n", 
+        System.out.printf("  %s: %.2f kg/hr per unit%n",
             entry.getKey(), entry.getValue());
     }
 }
@@ -1323,7 +1323,7 @@ double[] inletPressures = {30.0, 40.0, 50.0, 60.0, 70.0, 80.0};
 double outletPressure = 10.0;
 
 // Generate comprehensive lift curves
-FlowRateOptimizer liftOptimizer = 
+FlowRateOptimizer liftOptimizer =
     engine.generateComprehensiveLiftCurve("feed", inletPressures, outletPressure);
 
 // Use the optimizer for additional calculations
@@ -1353,15 +1353,15 @@ engine.setMaxIterations(50);
 
 When multiple strategies support the same equipment type, the one with highest priority is used:
 
-| Strategy | Default Priority |
-|----------|-----------------|
-| Custom strategies | User-defined |
-| CompressorCapacityStrategy | 10 |
-| SeparatorCapacityStrategy | 10 |
-| PumpCapacityStrategy | 10 |
-| ValveCapacityStrategy | 10 |
-| PipeCapacityStrategy | 10 |
-| HeatExchangerCapacityStrategy | 10 |
+| Strategy                      | Default Priority |
+| ----------------------------- | ---------------- |
+| Custom strategies             | User-defined     |
+| CompressorCapacityStrategy    | 10               |
+| SeparatorCapacityStrategy     | 10               |
+| PumpCapacityStrategy          | 10               |
+| ValveCapacityStrategy         | 10               |
+| PipeCapacityStrategy          | 10               |
+| HeatExchangerCapacityStrategy | 10               |
 
 To override, create a custom strategy with higher priority:
 
@@ -1371,7 +1371,7 @@ public class MySpecialCompressorStrategy extends CompressorCapacityStrategy {
     public int getPriority() {
         return 100;  // Higher than default 10
     }
-    
+
     @Override
     public boolean supports(ProcessEquipmentInterface equipment) {
         // Only for specific compressor types
@@ -1386,12 +1386,12 @@ public class MySpecialCompressorStrategy extends CompressorCapacityStrategy {
 
 ### Common Issues
 
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| No strategy found | Equipment type not registered | Register custom strategy |
-| Constraints return 0 | Equipment not run | Call `equipment.run()` first |
-| Invalid utilization values | Missing design values | Set design values in constraints |
-| VFP export fails | Process not converging | Check fluid composition and conditions |
+| Issue                      | Cause                         | Solution                               |
+| -------------------------- | ----------------------------- | -------------------------------------- |
+| No strategy found          | Equipment type not registered | Register custom strategy               |
+| Constraints return 0       | Equipment not run             | Call `equipment.run()` first           |
+| Invalid utilization values | Missing design values         | Set design values in constraints       |
+| VFP export fails           | Process not converging        | Check fluid composition and conditions |
 
 ### Debug Mode
 
@@ -1410,7 +1410,7 @@ import org.apache.logging.log4j.Logger;
 ## See Also
 
 - [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) - Detailed constraint system documentation
-- [Process Optimization Framework](./\) - Parameter estimation and calibration
+- [Process Optimization Framework](index.md) - Parameter estimation and calibration
 - [Multi-Objective Optimization](multi-objective-optimization) - Pareto optimization
 - [Batch Studies](batch-studies) - Sensitivity analysis
 
@@ -1418,12 +1418,12 @@ import org.apache.logging.log4j.Logger;
 
 ## Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2026-01 | Initial release with plugin architecture |
-| 1.1 | 2026-01 | Added driver package and operating envelope |
-| 1.2 | 2026-01 | Added Eclipse VFP export support |
-| 1.3 | 2026-01 | Added OptimizationResultBase unified result class |
-| 1.4 | 2026-01 | Added ProcessConstraintEvaluator with caching and sensitivity |
-| 1.5 | 2026-01 | Added gradient descent optimization |
-| 1.6 | 2026-01 | Added FlowRateOptimizer integration and shadow prices |
+| Version | Date    | Changes                                                       |
+| ------- | ------- | ------------------------------------------------------------- |
+| 1.0     | 2026-01 | Initial release with plugin architecture                      |
+| 1.1     | 2026-01 | Added driver package and operating envelope                   |
+| 1.2     | 2026-01 | Added Eclipse VFP export support                              |
+| 1.3     | 2026-01 | Added OptimizationResultBase unified result class             |
+| 1.4     | 2026-01 | Added ProcessConstraintEvaluator with caching and sensitivity |
+| 1.5     | 2026-01 | Added gradient descent optimization                           |
+| 1.6     | 2026-01 | Added FlowRateOptimizer integration and shadow prices         |

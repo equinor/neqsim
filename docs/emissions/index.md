@@ -70,13 +70,13 @@ NeqSim specializes in **venting emissions** from:
 
 ## Regulatory Compliance
 
-| Regulation/Framework | Jurisdiction | NeqSim Capability |
-|----------------------|--------------|-------------------|
-| **Aktivitetsforskriften §70** | Norway | Virtual measurement methodology |
-| **EU ETS Directive** | European Union | CO₂ equivalent reporting |
-| **EU Methane Regulation 2024/1787** | European Union | Source-level CH₄ quantification |
-| **OGMP 2.0** (voluntary) | International | Supports Level 4/5 site-specific methods |
-| **ISO 14064-1:2018** | International | Organization-level GHG inventory |
+| Regulation/Framework                | Jurisdiction   | NeqSim Capability                        |
+| ----------------------------------- | -------------- | ---------------------------------------- |
+| **Aktivitetsforskriften §70**       | Norway         | Virtual measurement methodology          |
+| **EU ETS Directive**                | European Union | CO₂ equivalent reporting                 |
+| **EU Methane Regulation 2024/1787** | European Union | Source-level CH₄ quantification          |
+| **OGMP 2.0** (voluntary)            | International  | Supports Level 4/5 site-specific methods |
+| **ISO 14064-1:2018**                | International  | Organization-level GHG inventory         |
 
 ---
 
@@ -136,15 +136,15 @@ For produced water emission calculations, NeqSim provides the **Søreide-Whitson
 
 ## Method Comparison
 
-| Aspect | Conventional (Handbook) | Thermodynamic (NeqSim) |
-|--------|------------------------|------------------------|
-| **Approach** | Empirical correlations | Rigorous phase equilibrium (CPA-EoS) |
-| **CO₂ accounting** | Simplified factors | Explicit component tracking |
-| **Salinity effects** | Typically not included | Søreide-Whitson salting-out model |
-| **Temperature effects** | Linear correlations | Full equation of state |
-| **Computational cost** | Low (spreadsheet) | Moderate (requires simulator) |
-| **Regulatory acceptance** | Widely established | Accepted under Aktivitetsforskriften §70 |
-| **Transparency** | Published factors | Open-source algorithms |
+| Aspect                    | Conventional (Handbook) | Thermodynamic (NeqSim)                   |
+| ------------------------- | ----------------------- | ---------------------------------------- |
+| **Approach**              | Empirical correlations  | Rigorous phase equilibrium (CPA-EoS)     |
+| **CO₂ accounting**        | Simplified factors      | Explicit component tracking              |
+| **Salinity effects**      | Typically not included  | Søreide-Whitson salting-out model        |
+| **Temperature effects**   | Linear correlations     | Full equation of state                   |
+| **Computational cost**    | Low (spreadsheet)       | Moderate (requires simulator)            |
+| **Regulatory acceptance** | Widely established      | Accepted under Aktivitetsforskriften §70 |
+| **Transparency**          | Published factors       | Open-source algorithms                   |
 
 ---
 
@@ -306,13 +306,13 @@ Traditional emission reporting is typically **retrospective** — operators comp
 
 Online emission calculation transforms the operator mindset:
 
-| Traditional Approach | Online-Enabled Approach |
-|---------------------|------------------------|
-| Emissions reported periodically (monthly/quarterly) | Emissions calculated continuously |
-| Compliance-focused reporting | Combines compliance with operational insight |
-| Targets set during planning | Better visibility into emission drivers |
-| Feedback through periodic reports | More timely feedback on operational changes |
-| Focus on meeting reporting requirements | Enables data-driven emission management |
+| Traditional Approach                                | Online-Enabled Approach                      |
+| --------------------------------------------------- | -------------------------------------------- |
+| Emissions reported periodically (monthly/quarterly) | Emissions calculated continuously            |
+| Compliance-focused reporting                        | Combines compliance with operational insight |
+| Targets set during planning                         | Better visibility into emission drivers      |
+| Feedback through periodic reports                   | More timely feedback on operational changes  |
+| Focus on meeting reporting requirements             | Enables data-driven emission management      |
 
 ### Key Use Cases for Operators
 
@@ -429,14 +429,14 @@ for scenario in scenarios:
 
 ### Emission Reduction Strategies Enabled by Online Monitoring
 
-| Strategy | How Online Monitoring Helps | Potential Benefit |
-|----------|----------------------------|-------------------|
+| Strategy                            | How Online Monitoring Helps                                             | Potential Benefit                               |
+| ----------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------- |
 | **Operating Envelope Optimization** | Identify conditions where production is maintained with lower emissions | Site-specific; depends on operating flexibility |
-| **Flare Minimization** | Real-time flare gas tracking enables faster response | Depends on current flaring levels |
-| **Leak Detection (LDAR)** | Anomaly detection can flag fugitive emission increases | Depends on baseline fugitive levels |
-| **Produced Water Management** | Optimize degassing stages based on modeled dissolved gas | Depends on water volume and gas content |
-| **Compressor Optimization** | Balance power consumption vs venting from recycle | Depends on compressor operating range |
-| **Predictive Scheduling** | Plan maintenance during low-emission windows | Depends on maintenance flexibility |
+| **Flare Minimization**              | Real-time flare gas tracking enables faster response                    | Depends on current flaring levels               |
+| **Leak Detection (LDAR)**           | Anomaly detection can flag fugitive emission increases                  | Depends on baseline fugitive levels             |
+| **Produced Water Management**       | Optimize degassing stages based on modeled dissolved gas                | Depends on water volume and gas content         |
+| **Compressor Optimization**         | Balance power consumption vs venting from recycle                       | Depends on compressor operating range           |
+| **Predictive Scheduling**           | Plan maintenance during low-emission windows                            | Depends on maintenance flexibility              |
 
 ### Building an Emission-Aware Culture
 
@@ -476,12 +476,12 @@ Online emission monitoring can support cultural transformation toward emission a
 
 ### Implementation Roadmap
 
-| Phase | Duration | Activities | Outcome |
-|-------|----------|------------|---------|
-| **1. Pilot** | 1-2 months | Deploy NeqSim model for one emission source | Proof of concept |
-| **2. Expand** | 2-3 months | Add all major emission sources | Complete visibility |
-| **3. Integrate** | 1-2 months | Connect to SCADA, build dashboards | Real-time monitoring |
-| **4. Optimize** | Ongoing | Implement reduction strategies | Continuous improvement |
+| Phase            | Duration   | Activities                                  | Outcome                |
+| ---------------- | ---------- | ------------------------------------------- | ---------------------- |
+| **1. Pilot**     | 1-2 months | Deploy NeqSim model for one emission source | Proof of concept       |
+| **2. Expand**    | 2-3 months | Add all major emission sources              | Complete visibility    |
+| **3. Integrate** | 1-2 months | Connect to SCADA, build dashboards          | Real-time monitoring   |
+| **4. Optimize**  | Ongoing    | Implement reduction strategies              | Continuous improvement |
 
 ---
 
@@ -489,35 +489,35 @@ Online emission monitoring can support cultural transformation toward emission a
 
 ### ✅ Support Infrastructure
 
-| Support Channel | Description | Response |
-|-----------------|-------------|----------|
-| **GitHub Issues** | [equinor/neqsim/issues](https://github.com/equinor/neqsim/issues) | Active maintainers, typically < 48h |
-| **GitHub Discussions** | [Q&A forum](https://github.com/equinor/neqsim/discussions) | Community + core team |
-| **Equinor Internal** | Internal Teams channel, expert network | Same-day for critical issues |
-| **NTNU Collaboration** | Academic partnership for advanced thermodynamics | Research support |
+| Support Channel        | Description                                                       | Response                            |
+| ---------------------- | ----------------------------------------------------------------- | ----------------------------------- |
+| **GitHub Issues**      | [equinor/neqsim/issues](https://github.com/equinor/neqsim/issues) | Active maintainers, typically < 48h |
+| **GitHub Discussions** | [Q&A forum](https://github.com/equinor/neqsim/discussions)        | Community + core team               |
+| **Equinor Internal**   | Internal Teams channel, expert network                            | Same-day for critical issues        |
+| **NTNU Collaboration** | Academic partnership for advanced thermodynamics                  | Research support                    |
 
 ### ✅ Documentation
 
-| Documentation Type | Status | Location |
-|--------------------|--------|----------|
-| **API Reference** | ✅ Complete | [JavaDoc](https://equinor.github.io/neqsim/javadoc/), [Reference Manual](../REFERENCE_MANUAL_INDEX) |
-| **Getting Started** | ✅ Complete | [Wiki](../wiki/getting_started) |
-| **Emission Calculations** | ✅ Complete | This page + [Guide](OFFSHORE_EMISSION_REPORTING) |
-| **Interactive Tutorials** | ✅ Complete | [Jupyter Notebooks](../examples/index) with Colab links |
-| **Code Examples** | ✅ Complete | Java + Python examples for all features |
-| **Regulatory Context** | ✅ Complete | Norwegian/EU framework documented |
-| **Validation Data** | ✅ Complete | Gudrun case study, uncertainty analysis |
+| Documentation Type        | Status     | Location                                                                                            |
+| ------------------------- | ---------- | --------------------------------------------------------------------------------------------------- |
+| **API Reference**         | ✅ Complete | [JavaDoc](https://equinor.github.io/neqsim/javadoc/), [Reference Manual](../REFERENCE_MANUAL_INDEX) |
+| **Getting Started**       | ✅ Complete | [Wiki](../wiki/getting_started)                                                                     |
+| **Emission Calculations** | ✅ Complete | This page + [Guide](OFFSHORE_EMISSION_REPORTING)                                                    |
+| **Interactive Tutorials** | ✅ Complete | [Jupyter Notebooks](../examples/index) with Colab links                                             |
+| **Code Examples**         | ✅ Complete | Java + Python examples for all features                                                             |
+| **Regulatory Context**    | ✅ Complete | Norwegian/EU framework documented                                                                   |
+| **Validation Data**       | ✅ Complete | Gudrun case study, uncertainty analysis                                                             |
 
 ### ✅ Expertise & Learning Path
 
 **Time to Competency:**
 
-| Level | Timeframe | Deliverable |
-|-------|-----------|-------------|
-| **Basic User** | 1-2 days | Run emission calculations using provided notebooks |
-| **Process Engineer** | 1-2 weeks | Build custom process models, interpret results |
-| **Developer** | 2-4 weeks | Integrate into applications, extend functionality |
-| **Expert** | 2-3 months | Customize thermodynamic models, contribute code |
+| Level                | Timeframe  | Deliverable                                        |
+| -------------------- | ---------- | -------------------------------------------------- |
+| **Basic User**       | 1-2 days   | Run emission calculations using provided notebooks |
+| **Process Engineer** | 1-2 weeks  | Build custom process models, interpret results     |
+| **Developer**        | 2-4 weeks  | Integrate into applications, extend functionality  |
+| **Expert**           | 2-3 months | Customize thermodynamic models, contribute code    |
 
 **Learning Resources:**
 
@@ -538,28 +538,28 @@ Online emission monitoring can support cultural transformation toward emission a
 
 ### ✅ Integration & Deployment Options
 
-| Deployment | Complexity | Use Case |
-|------------|------------|----------|
-| **Python Notebook** | ⭐ Low | Ad-hoc analysis, prototyping |
-| **Python Script** | ⭐ Low | Batch processing, automation |
-| **Java Application** | ⭐⭐ Medium | Enterprise integration |
-| **REST API/Microservice** | ⭐⭐ Medium | Real-time digital twins |
-| **Excel Add-in** | ⭐ Low | End-user access (via Python) |
-| **Cloud Deployment** | ⭐⭐ Medium | Azure, AWS, Kubernetes |
+| Deployment                | Complexity | Use Case                     |
+| ------------------------- | ---------- | ---------------------------- |
+| **Python Notebook**       | ⭐ Low      | Ad-hoc analysis, prototyping |
+| **Python Script**         | ⭐ Low      | Batch processing, automation |
+| **Java Application**      | ⭐⭐ Medium  | Enterprise integration       |
+| **REST API/Microservice** | ⭐⭐ Medium  | Real-time digital twins      |
+| **Excel Add-in**          | ⭐ Low      | End-user access (via Python) |
+| **Cloud Deployment**      | ⭐⭐ Medium  | Azure, AWS, Kubernetes       |
 
 ### Comparison: NeqSim vs Commercial Alternatives
 
-| Aspect | NeqSim | Commercial Tools |
-|--------|--------|------------------|
-| **License Cost** | Free (Apache 2.0) | Varies by vendor |
-| **Source Code Access** | Full access | Typically limited |
-| **Customization** | Unlimited | Vendor-dependent |
-| **Audit Trail** | Git history | Vendor-dependent |
-| **Regulatory Defense** | Transparent algorithms, peer review | Established vendor support |
-| **Long-term Availability** | Open source, community-maintained | Vendor support agreements |
-| **Integration Flexibility** | Java/Python/REST | Varies by product |
-| **Support** | Community + Equinor | Vendor SLA |
-| **Validation/Certification** | User responsibility | Often pre-validated |
+| Aspect                       | NeqSim                              | Commercial Tools           |
+| ---------------------------- | ----------------------------------- | -------------------------- |
+| **License Cost**             | Free (Apache 2.0)                   | Varies by vendor           |
+| **Source Code Access**       | Full access                         | Typically limited          |
+| **Customization**            | Unlimited                           | Vendor-dependent           |
+| **Audit Trail**              | Git history                         | Vendor-dependent           |
+| **Regulatory Defense**       | Transparent algorithms, peer review | Established vendor support |
+| **Long-term Availability**   | Open source, community-maintained   | Vendor support agreements  |
+| **Integration Flexibility**  | Java/Python/REST                    | Varies by product          |
+| **Support**                  | Community + Equinor                 | Vendor SLA                 |
+| **Validation/Certification** | User responsibility                 | Often pre-validated        |
 
 ---
 
@@ -600,13 +600,13 @@ Modern offshore operations face competing objectives that must be optimized simu
 
 NeqSim enables **simultaneous optimization** of production, emissions, and energy because all three are calculated from the same thermodynamic model:
 
-| Capability | How NeqSim Supports It |
-|------------|----------------------|
+| Capability                      | How NeqSim Supports It                                              |
+| ------------------------------- | ------------------------------------------------------------------- |
 | **Consistent Material Balance** | Single process model tracks mass flows for production and emissions |
-| **Energy Integration** | Heat/power duties calculated from same thermodynamic properties |
-| **Computational Speed** | Suitable for online optimization applications |
-| **Gradient Information** | Supports efficient optimization algorithms |
-| **What-If Analysis** | Rapid scenario evaluation for operational decisions |
+| **Energy Integration**          | Heat/power duties calculated from same thermodynamic properties     |
+| **Computational Speed**         | Suitable for online optimization applications                       |
+| **Gradient Information**        | Supports efficient optimization algorithms                          |
+| **What-If Analysis**            | Rapid scenario evaluation for operational decisions                 |
 
 ### Optimization Problem Formulation
 
@@ -647,7 +647,7 @@ import numpy as np
 # === SETUP NEQSIM PROCESS MODEL ===
 def create_process(sep_pressure, sep_temp, compressor_speed):
     """Create offshore process with given operating parameters."""
-    
+
     # Reservoir fluid
     fluid = jneqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 80, 50.0)
     fluid.addComponent("water", 0.15)
@@ -657,53 +657,53 @@ def create_process(sep_pressure, sep_temp, compressor_speed):
     fluid.addComponent("propane", 0.08)
     fluid.addComponent("n-butane", 0.05)
     fluid.setMixingRule(10)
-    
+
     # Build process
     Stream = jneqsim.process.equipment.stream.Stream
     Separator = jneqsim.process.equipment.separator.Separator
     Compressor = jneqsim.process.equipment.compressor.Compressor
-    
+
     inlet = Stream("Well-Feed", fluid)
     inlet.setFlowRate(50000, "kg/hr")
     inlet.setTemperature(sep_temp, "C")
     inlet.setPressure(sep_pressure, "bara")
-    
+
     sep = Separator("HP-Sep", inlet)
-    
+
     compressor = Compressor("Export-Comp", sep.getGasOutStream())
     compressor.setOutletPressure(120.0, "bara")
     compressor.setPolytropicEfficiency(0.75)
-    
+
     # Run simulation
     process = jneqsim.process.processmodel.ProcessSystem()
     process.add(inlet)
     process.add(sep)
     process.add(compressor)
     process.run()
-    
+
     return process, sep, compressor
 
 # === OBJECTIVE FUNCTIONS ===
 def evaluate_operation(x):
     """Evaluate production, emissions, and energy for given operation."""
     sep_pressure, sep_temp = x
-    
+
     try:
         process, sep, compressor = create_process(sep_pressure, sep_temp, 1.0)
-        
+
         # 1. PRODUCTION: Gas export rate (maximize)
         gas_rate = sep.getGasOutStream().getFlowRate("MSm3/day")
         oil_rate = sep.getLiquidOutStream().getFlowRate("m3/hr")
-        
+
         # 2. EMISSIONS: From liquid degassing (minimize)
         EmissionsCalculator = jneqsim.process.equipment.util.EmissionsCalculator
         calc = EmissionsCalculator(sep.getGasOutStream())
         calc.calculate()
         co2eq = calc.getCO2Equivalents("tonnes/year")
-        
+
         # 3. ENERGY: Compressor power (minimize)
         power_MW = compressor.getPower("MW")
-        
+
         return {
             'gas_rate': gas_rate,
             'oil_rate': oil_rate,
@@ -718,10 +718,10 @@ def evaluate_operation(x):
 def weighted_objective(x, weights={'production': 1.0, 'emissions': 0.5, 'energy': 0.3}):
     """Combined objective with configurable weights."""
     result = evaluate_operation(x)
-    
+
     if not result['feasible']:
         return 1e10  # Penalty for infeasible
-    
+
     # Normalize and combine (negative production because we maximize it)
     obj = (
         -weights['production'] * result['gas_rate'] / 10.0 +  # Normalize ~10 MSm3/d
@@ -764,9 +764,9 @@ import matplotlib.pyplot as plt
 
 def generate_pareto_front(n_points=20):
     """Generate Pareto-optimal solutions trading off objectives."""
-    
+
     pareto_points = []
-    
+
     # Sweep emission weight from 0 (production only) to 1 (emissions only)
     for emission_weight in np.linspace(0.0, 1.0, n_points):
         weights = {
@@ -774,14 +774,14 @@ def generate_pareto_front(n_points=20):
             'emissions': emission_weight,
             'energy': 0.2  # Fixed energy weight
         }
-        
+
         result = differential_evolution(
             lambda x: weighted_objective(x, weights),
             bounds=[(20, 80), (40, 100)],
             maxiter=30,
             seed=42
         )
-        
+
         if result.success:
             eval_result = evaluate_operation(result.x)
             if eval_result['feasible']:
@@ -793,7 +793,7 @@ def generate_pareto_front(n_points=20):
                     'power': eval_result['power_MW'],
                     'emission_weight': emission_weight
                 })
-    
+
     return pareto_points
 
 # Generate and plot Pareto front
@@ -855,12 +855,12 @@ plt.show()
 
 *Note: Actual benefits depend on facility-specific factors including current monitoring practices, operational flexibility, and emission source distribution.*
 
-| Metric | Potential Benefit | Environmental Relevance |
-|--------|--------------------|-----------------------|
-| **Emission Visibility** | Real-time monitoring vs periodic reporting | Enables faster response to deviations |
-| **Methane Tracking** | Source-level attribution | High-GWP gas (28× CO₂ over 100 years) |
-| **Flare Monitoring** | Improved flare efficiency tracking | Direct combustion emission quantification |
-| **Reporting Quality** | More frequent, data-driven reports | Better baseline for improvement tracking |
+| Metric                  | Potential Benefit                          | Environmental Relevance                   |
+| ----------------------- | ------------------------------------------ | ----------------------------------------- |
+| **Emission Visibility** | Real-time monitoring vs periodic reporting | Enables faster response to deviations     |
+| **Methane Tracking**    | Source-level attribution                   | High-GWP gas (28× CO₂ over 100 years)     |
+| **Flare Monitoring**    | Improved flare efficiency tracking         | Direct combustion emission quantification |
+| **Reporting Quality**   | More frequent, data-driven reports         | Better baseline for improvement tracking  |
 
 ### Integration with NeqSim Production Optimizer
 
@@ -895,13 +895,13 @@ List<Solution> paretoFront = optimizer.getParetoFront();
 
 ## Documentation Structure
 
-| Document | Purpose | Audience |
-|----------|---------|----------|
-| [**Offshore Emission Reporting Guide**](OFFSHORE_EMISSION_REPORTING) | Reference with regulatory framework, methods, API, validation, literature | Engineers, Regulators, Auditors |
-| [**Produced Water Emissions Tutorial**](../examples/ProducedWaterEmissions_Tutorial) | Step-by-step Jupyter notebook with runnable code | Data Scientists, Developers |
-| [**Norwegian Methods Comparison**](../examples/NorwegianEmissionMethods_Comparison) | Validation against handbook, uncertainty analysis | Engineers, Regulators |
-| [**Java Example**](https://github.com/equinor/neqsim/blob/master/docs/examples/OffshoreEmissionReportingExample.java) | Complete Java code sample | Java Developers |
-| [**API Reference**](../REFERENCE_MANUAL_INDEX.html#chapter-43-sustainability--emissions) | EmissionsCalculator class documentation | All Developers |
+| Document                                                                                                              | Purpose                                                                   | Audience                        |
+| --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------- |
+| [**Offshore Emission Reporting Guide**](OFFSHORE_EMISSION_REPORTING)                                                  | Reference with regulatory framework, methods, API, validation, literature | Engineers, Regulators, Auditors |
+| [**Produced Water Emissions Tutorial**](../examples/ProducedWaterEmissions_Tutorial)                                  | Step-by-step Jupyter notebook with runnable code                          | Data Scientists, Developers     |
+| [**Norwegian Methods Comparison**](../examples/NorwegianEmissionMethods_Comparison)                                   | Validation against handbook, uncertainty analysis                         | Engineers, Regulators           |
+| [**Java Example**](https://github.com/equinor/neqsim/blob/master/docs/examples/OffshoreEmissionReportingExample.java) | Complete Java code sample                                                 | Java Developers                 |
+| [**API Reference**](../REFERENCE_MANUAL_INDEX.md#chapter-43-sustainability--emissions)                                | EmissionsCalculator class documentation                                   | All Developers                  |
 
 ---
 
@@ -917,26 +917,26 @@ Click to open the tutorial in Google Colab:
 
 Key references for emission calculations:
 
-1. **Kontogeorgis & Folas (2010)** - CPA equation of state theory  
+1. **Kontogeorgis & Folas (2010)** - CPA equation of state theory
    DOI: [10.1002/9780470747537](https://doi.org/10.1002/9780470747537)
 
-2. **IOGP Report 521 (2019)** - E&P emission estimation methods  
+2. **IOGP Report 521 (2019)** - E&P emission estimation methods
    [IOGP Bookstore](https://www.iogp.org/bookstore/product/methods-for-estimating-atmospheric-emissions-from-e-p-operations/)
 
-3. **IPCC AR5 (2014)** - Global Warming Potentials (GWP)  
-   [IPCC Report](https://www.ipcc.ch/report/ar5/syr/)  
+3. **IPCC AR5 (2014)** - Global Warming Potentials (GWP)
+   [IPCC Report](https://www.ipcc.ch/report/ar5/syr/)
    *Note: NeqSim uses AR5 GWP100 values (CH₄=28, N₂O=265) by default. AR6 (2021) values (CH₄=27.9) are also available.*
 
-4. **Søreide & Whitson (1992)** - Peng-Robinson predictions for hydrocarbons in brine  
+4. **Søreide & Whitson (1992)** - Peng-Robinson predictions for hydrocarbons in brine
    *Fluid Phase Equilibria*, 77, 217-240
 
-5. **EU Methane Regulation 2024/1787** - Methane emission requirements  
+5. **EU Methane Regulation 2024/1787** - Methane emission requirements
    [EUR-Lex](https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1787)
 
-6. **Aktivitetsforskriften §70** - Norwegian offshore emission quantification requirements  
+6. **Aktivitetsforskriften §70** - Norwegian offshore emission quantification requirements
    [Lovdata](https://lovdata.no/dokument/SF/forskrift/2010-04-29-613)
 
-See [full literature list](OFFSHORE_EMISSION_REPORTING.html#literature-references) in the guide.
+See [full literature list](OFFSHORE_EMISSION_REPORTING.md#literature-references) in the guide.
 
 ---
 

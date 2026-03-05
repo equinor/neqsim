@@ -19,13 +19,13 @@ The valve mechanical design module provides sizing and design calculations for c
 
 ## Design Standards Reference
 
-| Standard | Description |
-|----------|-------------|
-| IEC 60534 | Industrial-process control valves |
-| ANSI/ISA-75.01 | Flow Equations for Sizing Control Valves |
+| Standard       | Description                                                          |
+| -------------- | -------------------------------------------------------------------- |
+| IEC 60534      | Industrial-process control valves                                    |
+| ANSI/ISA-75.01 | Flow Equations for Sizing Control Valves                             |
 | ANSI/ISA-75.08 | Face-to-Face Dimensions for Flanged Globe-Style Control Valve Bodies |
-| ASME B16.34 | Valves - Flanged, Threaded, and Welding End |
-| API 6D | Pipeline and Piping Valves |
+| ASME B16.34    | Valves - Flanged, Threaded, and Welding End                          |
+| API 6D         | Pipeline and Piping Valves                                           |
 
 ## Design Calculations
 
@@ -34,13 +34,13 @@ The valve mechanical design module provides sizing and design calculations for c
 The pressure class is automatically selected based on the design pressure:
 
 | Design Pressure | ANSI Class |
-|-----------------|------------|
-| ≤ 19.6 bara | Class 150 |
-| ≤ 51.1 bara | Class 300 |
-| ≤ 102.1 bara | Class 600 |
-| ≤ 153.2 bara | Class 900 |
-| ≤ 255.3 bara | Class 1500 |
-| ≤ 425.5 bara | Class 2500 |
+| --------------- | ---------- |
+| ≤ 19.6 bara     | Class 150  |
+| ≤ 51.1 bara     | Class 300  |
+| ≤ 102.1 bara    | Class 600  |
+| ≤ 153.2 bara    | Class 900  |
+| ≤ 255.3 bara    | Class 1500 |
+| ≤ 425.5 bara    | Class 2500 |
 
 ```java
 // Design pressure with 10% margin
@@ -68,18 +68,18 @@ The calculated size is then rounded to the nearest standard pipe size:
 
 Face-to-face dimensions are per ANSI/ISA-75.08 for globe-style control valves:
 
-| Nominal Size (in) | Face-to-Face (mm) |
-|-------------------|-------------------|
-| ≤ 1.0 | 108 |
-| 1.5 | 117 |
-| 2.0 | 152 |
-| 3.0 | 203 |
-| 4.0 | 241 |
-| 6.0 | 292 |
-| 8.0 | 356 |
-| 10.0 | 432 |
-| 12.0 | 495 |
-| > 12.0 | 508 + (size - 12) × 30 |
+| Nominal Size (in) | Face-to-Face (mm)      |
+| ----------------- | ---------------------- |
+| ≤ 1.0             | 108                    |
+| 1.5               | 117                    |
+| 2.0               | 152                    |
+| 3.0               | 203                    |
+| 4.0               | 241                    |
+| 6.0               | 292                    |
+| 8.0               | 356                    |
+| 10.0              | 432                    |
+| 12.0              | 495                    |
+| > 12.0            | 508 + (size - 12) × 30 |
 
 **Adjustment for Pressure Class:**
 - Class 600+: multiply by 1.05
@@ -178,18 +178,18 @@ System.out.println("Total Weight: " + mechDesign.getWeightTotal() + " kg");
 
 ### `ValveMechanicalDesign` Class
 
-| Method | Return | Description |
-|--------|--------|-------------|
-| `calcDesign()` | void | Performs all mechanical design calculations |
-| `getAnsiPressureClass()` | int | Returns ANSI class (150, 300, 600, 900, 1500, 2500) |
-| `getNominalSizeInches()` | double | Returns nominal valve size in inches |
-| `getFaceToFace()` | double | Returns face-to-face dimension in mm |
-| `getBodyWallThickness()` | double | Returns body wall thickness in mm |
-| `getRequiredActuatorThrust()` | double | Returns required actuator thrust in N |
-| `getActuatorWeight()` | double | Returns estimated actuator weight in kg |
-| `getDesignPressure()` | double | Returns design pressure in bara |
-| `getDesignTemperature()` | double | Returns design temperature in °C |
-| `getWeightTotal()` | double | Returns total valve weight in kg |
+| Method                        | Return | Description                                         |
+| ----------------------------- | ------ | --------------------------------------------------- |
+| `calcDesign()`                | void   | Performs all mechanical design calculations         |
+| `getAnsiPressureClass()`      | int    | Returns ANSI class (150, 300, 600, 900, 1500, 2500) |
+| `getNominalSizeInches()`      | double | Returns nominal valve size in inches                |
+| `getFaceToFace()`             | double | Returns face-to-face dimension in mm                |
+| `getBodyWallThickness()`      | double | Returns body wall thickness in mm                   |
+| `getRequiredActuatorThrust()` | double | Returns required actuator thrust in N               |
+| `getActuatorWeight()`         | double | Returns estimated actuator weight in kg             |
+| `getDesignPressure()`         | double | Returns design pressure in bara                     |
+| `getDesignTemperature()`      | double | Returns design temperature in °C                    |
+| `getWeightTotal()`            | double | Returns total valve weight in kg                    |
 
 ## Valve Sizing Standards
 
@@ -197,22 +197,22 @@ NeqSim supports multiple valve sizing standards that can be selected via `setVal
 
 ### Single-Phase Standards (Control Valves)
 
-| Standard | Description | Best For |
-|----------|-------------|----------|
-| `default` | IEC 60534-based calculation | General control valves |
-| `IEC 60534` | Full IEC 60534-2-1 implementation | Engineering calculations |
-| `IEC 60534 full` | Extended IEC 60534 with all factors | Detailed sizing studies |
-| `prod choke` | Production choke sizing with Cd | Wellhead chokes |
+| Standard         | Description                         | Best For                 |
+| ---------------- | ----------------------------------- | ------------------------ |
+| `default`        | IEC 60534-based calculation         | General control valves   |
+| `IEC 60534`      | Full IEC 60534-2-1 implementation   | Engineering calculations |
+| `IEC 60534 full` | Extended IEC 60534 with all factors | Detailed sizing studies  |
+| `prod choke`     | Production choke sizing with Cd     | Wellhead chokes          |
 
 ### Multiphase Standards (Production Chokes)
 
-| Standard | Description | Best For |
-|----------|-------------|----------|
-| `Sachdeva` | Mechanistic two-phase model (SPE 15657) | When fluid composition is known |
-| `Gilbert` | Empirical correlation (1954) | Quick estimates, field matching |
-| `Baxendell` | Empirical correlation (1958) | Higher flow rates |
-| `Ros` | Empirical correlation (1960) | Low GLR systems |
-| `Achong` | Empirical correlation (1961) | High GLR systems |
+| Standard    | Description                             | Best For                        |
+| ----------- | --------------------------------------- | ------------------------------- |
+| `Sachdeva`  | Mechanistic two-phase model (SPE 15657) | When fluid composition is known |
+| `Gilbert`   | Empirical correlation (1954)            | Quick estimates, field matching |
+| `Baxendell` | Empirical correlation (1958)            | Higher flow rates               |
+| `Ros`       | Empirical correlation (1960)            | Low GLR systems                 |
+| `Achong`    | Empirical correlation (1961)            | High GLR systems                |
 
 ### Example: Setting Sizing Standard
 
@@ -232,11 +232,11 @@ mechDesign.setChokeDischargeCoefficient(0.84);
 
 For production choke sizing, additional methods are available:
 
-| Method | Description |
-|--------|-------------|
-| `setChokeDiameter(value, unit)` | Set choke diameter (units: "m", "mm", "in", "64ths") |
-| `getChokeDiameter()` | Get choke diameter in meters |
-| `setChokeDischargeCoefficient(Cd)` | Set discharge coefficient (0.75-0.90 typical) |
+| Method                             | Description                                          |
+| ---------------------------------- | ---------------------------------------------------- |
+| `setChokeDiameter(value, unit)`    | Set choke diameter (units: "m", "mm", "in", "64ths") |
+| `getChokeDiameter()`               | Get choke diameter in meters                         |
+| `setChokeDischargeCoefficient(Cd)` | Set discharge coefficient (0.75-0.90 typical)        |
 
 See [Multiphase Choke Flow Models](./MultiphaseChokeFlow) for detailed two-phase choke documentation.
 
@@ -244,12 +244,12 @@ See [Multiphase Choke Flow Models](./MultiphaseChokeFlow) for detailed two-phase
 
 Available valve characteristics for flow control:
 
-| Characteristic | Formula | Application |
-|----------------|---------|-------------|
-| Linear | `Cv/Cv₁₀₀ = opening/100` | Constant ΔP systems |
-| Equal Percentage | `Cv/Cv₁₀₀ = R^((opening/100)-1)` | Variable ΔP, process control |
-| Quick Opening | `Cv/Cv₁₀₀ = sqrt(opening/100)` | On/off, safety applications |
-| Modified Parabolic | `Cv/Cv₁₀₀ = opening²/10000` | Compromise between linear/EQ% |
+| Characteristic     | Formula                          | Application                   |
+| ------------------ | -------------------------------- | ----------------------------- |
+| Linear             | `Cv/Cv₁₀₀ = opening/100`         | Constant ΔP systems           |
+| Equal Percentage   | `Cv/Cv₁₀₀ = R^((opening/100)-1)` | Variable ΔP, process control  |
+| Quick Opening      | `Cv/Cv₁₀₀ = sqrt(opening/100)`   | On/off, safety applications   |
+| Modified Parabolic | `Cv/Cv₁₀₀ = opening²/10000`      | Compromise between linear/EQ% |
 
 ### Example: Setting Valve Characteristic
 
@@ -287,7 +287,7 @@ $$x_{effective} = F_\gamma \cdot x_T$$
 
 - [Valve Equipment](equipment/valves) - Valve simulation overview
 - [Compressor Mechanical Design](CompressorMechanicalDesign) - Compressor mechanical design
-- [Process Package](./\) - Package overview
+- [Process Package](index.md) - Package overview
 - [Safety Systems](safety/) - Safety valve sizing
 
 ---
@@ -311,12 +311,12 @@ Where:
 
 ### AIV Risk Levels
 
-| Acoustic Power (kW) | Risk Level | Action Required |
-|---------------------|------------|-----------------|
-| < 1 | LOW | No action required |
-| 1 - 10 | MEDIUM | Review piping layout |
-| 10 - 25 | HIGH | Detailed analysis required |
-| > 25 | VERY HIGH | Mitigation required |
+| Acoustic Power (kW) | Risk Level | Action Required            |
+| ------------------- | ---------- | -------------------------- |
+| < 1                 | LOW        | No action required         |
+| 1 - 10              | MEDIUM     | Review piping layout       |
+| 10 - 25             | HIGH       | Detailed analysis required |
+| > 25                | VERY HIGH  | Mitigation required        |
 
 ### Using AIV Analysis
 

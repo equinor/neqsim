@@ -11,10 +11,10 @@ This document describes the batch study infrastructure for parallel parameter st
 
 ## Related Documentation
 
-| Document | Description |
-|----------|-------------|
-| [Optimization Overview](OPTIMIZATION_OVERVIEW) | When to use which optimizer |
-| [Multi-Objective Optimization](multi-objective-optimization) | Pareto fronts and trade-offs |
+| Document                                                                      | Description                  |
+| ----------------------------------------------------------------------------- | ---------------------------- |
+| [Optimization Overview](OPTIMIZATION_OVERVIEW)                                | When to use which optimizer  |
+| [Multi-Objective Optimization](multi-objective-optimization)                  | Pareto fronts and trade-offs |
 | [Production Optimization Guide](../../examples/PRODUCTION_OPTIMIZATION_GUIDE) | ProductionOptimizer examples |
 
 ## Overview
@@ -56,20 +56,20 @@ BatchStudy study = BatchStudy.builder(baseCase)
     // Vary parameters
     .vary("heater.duty", 1.0e6, 5.0e6, 5)       // 5 values from 1-5 MW
     .vary("compressor.pressure", 30.0, 80.0, 6)  // 6 values from 30-80 bar
-    
+
     // Define objectives
-    .addObjective("power", Objective.MINIMIZE, 
+    .addObjective("power", Objective.MINIMIZE,
         process -> process.getTotalPowerConsumption())
     .addObjective("throughput", Objective.MAXIMIZE,
         process -> process.getThroughput())
     .addObjective("emissions", Objective.MINIMIZE,
         process -> process.getTotalCO2Emissions())
-    
+
     // Configure execution
     .parallelism(8)
     .name("HeaterCompressorStudy")
     .stopOnFailure(false)
-    
+
     .build();
 
 // Run the study
@@ -109,20 +109,20 @@ BatchStudy.Builder studyBuilder = process.createBatchStudy();
 
 Parameters are specified as `equipment.property`:
 
-| Property | Equipment Types | Example |
-|----------|-----------------|---------|
-| `duty` | Heaters, Coolers | `heater.duty` |
-| `pressure` | Valves, Separators | `valve.pressure` |
-| `outletPressure` | Valves, Compressors, Pumps | `compressor.outletPressure` |
-| `opening` | Valves | `valve.opening` |
-| `percentValveOpening` | Valves | `valve.percentValveOpening` |
-| `cv` | Valves | `valve.cv` |
-| `outletTemperature` | Heaters, Coolers | `heater.outletTemperature` |
-| `polytropicEfficiency` | Compressors | `compressor.polytropicEfficiency` |
-| `isentropicEfficiency` | Compressors | `compressor.isentropicEfficiency` |
-| `temperature` | Streams | `stream.temperature` |
-| `flowRate` | Streams | `stream.flowRate` |
-| `internalDiameter` | Separators | `separator.internalDiameter` |
+| Property               | Equipment Types            | Example                           |
+| ---------------------- | -------------------------- | --------------------------------- |
+| `duty`                 | Heaters, Coolers           | `heater.duty`                     |
+| `pressure`             | Valves, Separators         | `valve.pressure`                  |
+| `outletPressure`       | Valves, Compressors, Pumps | `compressor.outletPressure`       |
+| `opening`              | Valves                     | `valve.opening`                   |
+| `percentValveOpening`  | Valves                     | `valve.percentValveOpening`       |
+| `cv`                   | Valves                     | `valve.cv`                        |
+| `outletTemperature`    | Heaters, Coolers           | `heater.outletTemperature`        |
+| `polytropicEfficiency` | Compressors                | `compressor.polytropicEfficiency` |
+| `isentropicEfficiency` | Compressors                | `compressor.isentropicEfficiency` |
+| `temperature`          | Streams                    | `stream.temperature`              |
+| `flowRate`             | Streams                    | `stream.flowRate`                 |
+| `internalDiameter`     | Separators                 | `separator.internalDiameter`      |
 
 *Note: The parameter path system is extensible for additional properties.*
 
@@ -184,7 +184,7 @@ BatchStudy study = BatchStudy.builder(baseCase)
     .vary("pressure", 20.0, 80.0, 7)
     .addObjective("capex", Objective.MINIMIZE, this::estimateCAPEX)
     .addObjective("opex", Objective.MINIMIZE, this::estimateOPEX)
-    .addObjective("emissions", Objective.MINIMIZE, 
+    .addObjective("emissions", Objective.MINIMIZE,
         p -> p.getEmissions().getTotalCO2e("ton/yr"))
     .addObjective("recovery", Objective.MAXIMIZE, this::calculateRecovery)
     .build();
@@ -215,13 +215,13 @@ List<CaseResult> paretoFront = result.getParetoFront(
 for (ProcessSafetyScenario scenario : scenarios) {
     ProcessSystem scenarioCase = baseCase.copy();
     scenario.applyTo(scenarioCase);
-    
+
     BatchStudy study = BatchStudy.builder(scenarioCase)
         .vary("pressure", 20.0, 80.0, 5)
-        .addObjective("safety_margin", Objective.MAXIMIZE, 
+        .addObjective("safety_margin", Objective.MAXIMIZE,
             this::calculateSafetyMargin)
         .build();
-    
+
     BatchStudyResult result = study.run();
     // Analyze results for this scenario
 }
@@ -233,7 +233,7 @@ for (ProcessSafetyScenario scenario : scenarios) {
 // Screen compressor staging options
 for (int stages = 1; stages <= 4; stages++) {
     ProcessSystem concept = createCompressorConcept(stages);
-    
+
     BatchStudy study = BatchStudy.builder(concept)
         .name("Concept-" + stages + "-stages")
         .vary("totalPressureRatio", 3.0, 10.0, 8)
@@ -241,7 +241,7 @@ for (int stages = 1; stages <= 4; stages++) {
         .addObjective("capex", Objective.MINIMIZE, this::estimateCAPEX)
         .parallelism(4)
         .build();
-    
+
     BatchStudyResult result = study.run();
     conceptResults.put(stages, result);
 }
@@ -249,20 +249,20 @@ for (int stages = 1; stages <= 4; stages++) {
 // Compare concepts
 for (Map.Entry<Integer, BatchStudyResult> entry : conceptResults.entrySet()) {
     CaseResult best = entry.getValue().getBestCase("power");
-    System.out.printf("%d stages: %.0f kW power%n", 
-        entry.getKey(), 
+    System.out.printf("%d stages: %.0f kW power%n",
+        entry.getKey(),
         best.objectiveValues.get("power"));
 }
 ```
 
 ## Performance Considerations
 
-| Factor | Recommendation |
-|--------|----------------|
+| Factor      | Recommendation                               |
+| ----------- | -------------------------------------------- |
 | Parallelism | Start with CPU cores, adjust based on memory |
-| Case Count | Thousands OK, millions need distribution |
-| Memory | Each case clones the process system |
-| Timeout | Consider case-level timeouts for robustness |
+| Case Count  | Thousands OK, millions need distribution     |
+| Memory      | Each case clones the process system          |
+| Timeout     | Consider case-level timeouts for robustness  |
 
 ## Best Practices
 
@@ -421,16 +421,16 @@ for case_result in result.getAllResults():
         'failed': case_result.failed,
         'error': case_result.errorMessage if case_result.failed else None
     }
-    
+
     # Add parameters
     for name, value in case_result.parameters.values.items():
         row[f'param_{name}'] = value
-    
+
     # Add objectives (if successful)
     if not case_result.failed:
         for name, value in case_result.objectiveValues.items():
             row[f'obj_{name}'] = value
-    
+
     rows.append(row)
 
 df = pd.DataFrame(rows)
@@ -472,7 +472,7 @@ if 'param_heater.outletTemperature' in df_success.columns:
 
 # Plot 2: Pareto front
 ax2 = axes[1]
-ax2.scatter(df_success['obj_power'], df_success['obj_throughput'], 
+ax2.scatter(df_success['obj_power'], df_success['obj_throughput'],
             s=100, alpha=0.6, label='All cases')
 
 # Highlight Pareto front
@@ -520,23 +520,23 @@ print(f"Evaluated {result.getTotalCases()} combinations")
 def create_staged_compressor(num_stages, fluid):
     """Create a compressor train with specified stages"""
     process = ProcessSystem()
-    
+
     feed = Stream("feed", fluid)
     feed.setFlowRate(10000.0, "kg/hr")
     feed.setPressure(30.0, "bara")
     process.add(feed)
-    
+
     inlet_stream = feed
     total_ratio = 5.0  # Total pressure ratio
     stage_ratio = total_ratio ** (1.0 / num_stages)
-    
+
     for i in range(num_stages):
         comp = Compressor(f"stage{i+1}", inlet_stream)
         outlet_p = 30.0 * (stage_ratio ** (i + 1))
         comp.setOutletPressure(outlet_p, "bara")
         comp.setPolytropicEfficiency(0.78)
         process.add(comp)
-        
+
         if i < num_stages - 1:  # Add intercooler
             cooler = jneqsim.process.equipment.heatexchanger.Cooler(
                 f"cooler{i+1}", comp.getOutletStream())
@@ -545,7 +545,7 @@ def create_staged_compressor(num_stages, fluid):
             inlet_stream = cooler.getOutletStream()
         else:
             inlet_stream = comp.getOutletStream()
-    
+
     process.run()
     return process
 
@@ -553,7 +553,7 @@ def create_staged_compressor(num_stages, fluid):
 concept_results = {}
 for stages in range(1, 5):
     concept = create_staged_compressor(stages, fluid.clone())
-    
+
     @JImplements("java.util.function.ToDoubleFunction")
     class TotalPowerObj:
         @JOverride
@@ -563,17 +563,17 @@ for stages in range(1, 5):
                 if unit.getClass().getSimpleName() == "Compressor":
                     total += unit.getPower("kW")
             return total
-    
+
     study = BatchStudy.builder(concept) \
         .name(f"Concept-{stages}-stages") \
         .vary("stage1.outletPressure", 40.0, 60.0, 3) \
         .addObjective("totalPower", Objective.MINIMIZE, TotalPowerObj()) \
         .parallelism(2) \
         .build()
-    
+
     result = study.run()
     concept_results[stages] = result
-    
+
     best = result.getBestCase("totalPower")
     print(f"{stages} stages: Best power = {best.objectiveValues.get('totalPower'):.1f} kW")
 ```
@@ -582,7 +582,7 @@ for stages in range(1, 5):
 
 ## Related Documentation
 
-- [Optimization Package](./\) - General optimization capabilities
+- [Optimization Package](index.md) - General optimization capabilities
 - [Multi-Objective Optimization](multi-objective-optimization) - Pareto fronts
 - [Python Optimization Tutorial](../../examples/NeqSim_Python_Optimization) - SciPy integration
 - [Safety Scenario Generation](../safety/scenario-generation) - Generate scenarios for batch studies

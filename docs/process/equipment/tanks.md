@@ -21,9 +21,9 @@ Documentation for liquid storage tanks in NeqSim.
 **Location:** `neqsim.process.equipment.tank`
 
 **Classes:**
-| Class | Description |
-|-------|-------------|
-| `Tank` | Basic storage tank |
+| Class     | Description                    |
+| --------- | ------------------------------ |
+| `Tank`    | Basic storage tank             |
 | `LNGTank` | LNG storage tank with boil-off |
 
 ---
@@ -66,7 +66,7 @@ tank.run();
 for (double t = 0; t < 3600; t += 60) {
     tank.setInletStream(inletStream);
     tank.runTransient();
-    
+
     double level = tank.getLiquidLevel();
     System.out.println("Time: " + t + " s, Level: " + level * 100 + " %");
 }
@@ -201,9 +201,9 @@ for (double t = 0; t < 7200; t += 60) {
     if (Math.abs(t - 1800) < 30) {
         feed.setFlowRate(150.0, "m3/hr");
     }
-    
+
     process.runTransient();
-    System.out.printf("%.0f, %.3f, %.1f%n", 
+    System.out.printf("%.0f, %.3f, %.1f%n",
         t, tank.getLiquidLevel(), outlet.getOpening() * 100);
 }
 ```
@@ -212,6 +212,6 @@ for (double t = 0; t < 7200; t += 60) {
 
 ## Related Documentation
 
-- [Equipment Index](./\) - All equipment
+- [Equipment Index](index.md) - All equipment
 - [Separators](separators) - Phase separation
 - [Controllers](../controllers) - Level control

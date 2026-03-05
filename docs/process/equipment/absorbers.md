@@ -21,11 +21,11 @@ Documentation for mass transfer columns in NeqSim.
 **Location:** `neqsim.process.equipment.absorber`
 
 **Classes:**
-| Class | Description |
-|-------|-------------|
-| `Absorber` | General absorption column |
-| `SimpleAbsorber` | Simplified absorber model |
-| `WaterStripperColumn` | Water stripping column |
+| Class                 | Description               |
+| --------------------- | ------------------------- |
+| `Absorber`            | General absorption column |
+| `SimpleAbsorber`      | Simplified absorber model |
+| `WaterStripperColumn` | Water stripping column    |
 
 Absorbers transfer components from gas to liquid phase, while strippers transfer from liquid to gas.
 
@@ -222,6 +222,6 @@ System.out.println("Methanol in clean gas: " + meohRemaining + " mol%");
 
 ## Related Documentation
 
-- [Equipment Index](./\) - All equipment
+- [Equipment Index](index.md) - All equipment
 - [Distillation](distillation) - Distillation columns
 - [Separators](separators) - Phase separation

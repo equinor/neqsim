@@ -43,73 +43,67 @@ public class CompressorChartReader {
   }
 
   private void parseCSV(String csvFilePath) throws Exception {
-    BufferedReader reader = new BufferedReader(new FileReader(csvFilePath));
+    try (BufferedReader reader = new BufferedReader(new FileReader(csvFilePath))) {
 
-    String headerLine = reader.readLine();
-    String[] headers = headerLine.split(";");
+      String headerLine = reader.readLine();
+      String[] headers = headerLine.split(";");
 
-    int speedIdx = Arrays.asList(headers).indexOf("speed");
-    int flowIdx = Arrays.asList(headers).indexOf("flow");
-    int headIdx = Arrays.asList(headers).indexOf("head");
-    int polyEffIdx = Arrays.asList(headers).indexOf("polyEff");
-    int stonewallIdx = Arrays.asList(headers).indexOf("stonewall");
-    int surgeIdx = Arrays.asList(headers).indexOf("surge");
+      int speedIdx = Arrays.asList(headers).indexOf("speed");
+      int flowIdx = Arrays.asList(headers).indexOf("flow");
+      int headIdx = Arrays.asList(headers).indexOf("head");
+      int polyEffIdx = Arrays.asList(headers).indexOf("polyEff");
 
-    Map<Double, List<String[]>> groupedData = new TreeMap<>();
+      Map<Double, List<String[]>> groupedData = new TreeMap<>();
 
-    List<Double> stonewallList = new ArrayList<>();
-    List<Double> surgeList = new ArrayList<>();
+      List<Double> stonewallList = new ArrayList<>();
+      List<Double> surgeList = new ArrayList<>();
 
-    String line;
-    while ((line = reader.readLine()) != null) {
-      String[] parts = line.split(";");
-      Double speedVal = Double.parseDouble(parts[speedIdx]);
-      groupedData.computeIfAbsent(speedVal, k -> new ArrayList<>()).add(parts);
-
-      // stonewallList.add(Double.parseDouble(parts[stonewallIdx]));
-      // surgeList.add(Double.parseDouble(parts[surgeIdx]));
-    }
-
-    speeds = new double[groupedData.size()];
-    flowLines = new double[groupedData.size()][];
-    headLines = new double[groupedData.size()][];
-    polyEffLines = new double[groupedData.size()][];
-    surgeFlow = new double[groupedData.size()];
-    surgeHead = new double[groupedData.size()];
-    chokeFlow = new double[groupedData.size()];
-    chokeHead = new double[groupedData.size()];
-
-    int i = 0;
-    for (Double speed : groupedData.keySet()) {
-      speeds[i] = speed;
-      List<String[]> group = groupedData.get(speed);
-
-      int groupSize = group.size();
-      flowLines[i] = new double[groupSize];
-      headLines[i] = new double[groupSize];
-      polyEffLines[i] = new double[groupSize];
-
-      for (int j = 0; j < groupSize; j++) {
-        flowLines[i][j] = Double.parseDouble(group.get(j)[flowIdx]);
-        headLines[i][j] = Double.parseDouble(group.get(j)[headIdx]);
-        polyEffLines[i][j] = Double.parseDouble(group.get(j)[polyEffIdx]);
+      String line;
+      while ((line = reader.readLine()) != null) {
+        String[] parts = line.split(";");
+        Double speedVal = Double.parseDouble(parts[speedIdx]);
+        groupedData.computeIfAbsent(speedVal, k -> new ArrayList<>()).add(parts);
       }
 
-      int idxMinFlow = minIndex(flowLines[i]);
-      int idxMaxFlow = maxIndex(flowLines[i]);
+      speeds = new double[groupedData.size()];
+      flowLines = new double[groupedData.size()][];
+      headLines = new double[groupedData.size()][];
+      polyEffLines = new double[groupedData.size()][];
+      surgeFlow = new double[groupedData.size()];
+      surgeHead = new double[groupedData.size()];
+      chokeFlow = new double[groupedData.size()];
+      chokeHead = new double[groupedData.size()];
 
-      surgeFlow[i] = flowLines[i][idxMinFlow];
-      surgeHead[i] = headLines[i][idxMinFlow];
-      chokeFlow[i] = flowLines[i][idxMaxFlow];
-      chokeHead[i] = headLines[i][idxMaxFlow];
+      int i = 0;
+      for (Double speed : groupedData.keySet()) {
+        speeds[i] = speed;
+        List<String[]> group = groupedData.get(speed);
 
-      i++;
-    }
+        int groupSize = group.size();
+        flowLines[i] = new double[groupSize];
+        headLines[i] = new double[groupSize];
+        polyEffLines[i] = new double[groupSize];
 
-    stonewallCurve = stonewallList.stream().mapToDouble(Double::doubleValue).toArray();
-    surgeCurve = surgeList.stream().mapToDouble(Double::doubleValue).toArray();
+        for (int j = 0; j < groupSize; j++) {
+          flowLines[i][j] = Double.parseDouble(group.get(j)[flowIdx]);
+          headLines[i][j] = Double.parseDouble(group.get(j)[headIdx]);
+          polyEffLines[i][j] = Double.parseDouble(group.get(j)[polyEffIdx]);
+        }
 
-    reader.close();
+        int idxMinFlow = minIndex(flowLines[i]);
+        int idxMaxFlow = maxIndex(flowLines[i]);
+
+        surgeFlow[i] = flowLines[i][idxMinFlow];
+        surgeHead[i] = headLines[i][idxMinFlow];
+        chokeFlow[i] = flowLines[i][idxMaxFlow];
+        chokeHead[i] = headLines[i][idxMaxFlow];
+
+        i++;
+      }
+
+      stonewallCurve = stonewallList.stream().mapToDouble(Double::doubleValue).toArray();
+      surgeCurve = surgeList.stream().mapToDouble(Double::doubleValue).toArray();
+    } // end try-with-resources
   }
 
   private int minIndex(double[] array) {

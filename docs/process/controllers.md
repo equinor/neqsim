@@ -50,24 +50,24 @@ process.add(tempControl);
 
 ### Adjustable Variables
 
-| Equipment | Variable | Description |
-|-----------|----------|-------------|
-| Heater/Cooler | `"duty"` | Heat duty |
+| Equipment     | Variable           | Description        |
+| ------------- | ------------------ | ------------------ |
+| Heater/Cooler | `"duty"`           | Heat duty          |
 | Heater/Cooler | `"outTemperature"` | Outlet temperature |
-| Compressor | `"outletPressure"` | Discharge pressure |
-| Valve | `"outletPressure"` | Outlet pressure |
-| Splitter | `"splitFactor"` | Split ratio |
-| Stream | `"flowRate"` | Flow rate |
+| Compressor    | `"outletPressure"` | Discharge pressure |
+| Valve         | `"outletPressure"` | Outlet pressure    |
+| Splitter      | `"splitFactor"`    | Split ratio        |
+| Stream        | `"flowRate"`       | Flow rate          |
 
 ### Target Variables
 
-| Equipment | Variable | Description |
-|-----------|----------|-------------|
-| Stream | `"temperature"` | Temperature |
-| Stream | `"pressure"` | Pressure |
-| Stream | `"flowRate"` | Flow rate |
-| Stream | `"moleFraction"` | Component mole fraction |
-| Separator | `"liquidLevel"` | Liquid level |
+| Equipment | Variable         | Description             |
+| --------- | ---------------- | ----------------------- |
+| Stream    | `"temperature"`  | Temperature             |
+| Stream    | `"pressure"`     | Pressure                |
+| Stream    | `"flowRate"`     | Flow rate               |
+| Stream    | `"moleFraction"` | Component mole fraction |
+| Separator | `"liquidLevel"`  | Liquid level            |
 
 ### Example: Dew Point Control
 
@@ -247,11 +247,11 @@ levelControl.setAntiWindup(true);
 // Run transient with controllers
 for (double t = 0; t < 3600; t += 1.0) {
     process.runTransient();
-    
+
     double pv = levelControl.getProcessVariable();
     double sp = levelControl.getSetPoint();
     double out = levelControl.getOutput();
-    
+
     System.out.printf("%.1f, %.3f, %.3f, %.1f%n", t, pv, sp, out);
 }
 ```
@@ -361,7 +361,7 @@ for (double t = 0; t < 3600; t += 1.0) {
     if (Math.abs(t - 600) < 0.5) {
         feed.setFlowRate(1200.0, "kg/hr");
     }
-    
+
     process.runTransient();
 }
 ```
@@ -370,7 +370,7 @@ for (double t = 0; t < 3600; t += 1.0) {
 
 ## Related Documentation
 
-- [Process Package](./\) - Package overview
+- [Process Package](index.md) - Package overview
 - [Equipment](equipment/) - Process equipment
 - [Alarm System](../safety/alarm_system_guide) - Alarms
 - [Process Logic Framework](../simulation/process_logic_framework) - Advanced logic

@@ -878,11 +878,11 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 
 ### Chapter 52: Documentation Infrastructure
 
-| Document               | Path                                                                       | Description                                          |
-| ---------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------- |
-| **GitHub Pages Setup** | [docs/GITHUB_PAGES_SETUP.md](GITHUB_PAGES_SETUP)                           | **NEW** Enable GitHub Pages for hosted documentation |
-| Reference Manual       | [docs/manual/neqsim_reference_manual.html](manual/neqsim_reference_manual) | Interactive reference manual                         |
-| Documentation Index    | [docs/index.md](index)                                                     | GitHub Pages home page                               |
+| Document               | Path                                                                            | Description                                          |
+| ---------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| **GitHub Pages Setup** | [docs/GITHUB_PAGES_SETUP.md](GITHUB_PAGES_SETUP)                                | **NEW** Enable GitHub Pages for hosted documentation |
+| Reference Manual       | [docs/manual/neqsim_reference_manual.html](manual/neqsim_reference_manual.html) | Interactive reference manual                         |
+| Documentation Index    | [docs/index.md](index)                                                          | GitHub Pages home page                               |
 
 ---
 
