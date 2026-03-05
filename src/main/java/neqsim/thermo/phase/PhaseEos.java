@@ -389,7 +389,10 @@ public abstract class PhaseEos extends Phase implements PhaseEosInterface {
       roots[2] = Double.NaN;
     } else {
       double r = Math.sqrt(-p * p * p / 27.0);
-      double phi = Math.acos(-q / (2.0 * r));
+      double acosArg = -q / (2.0 * r);
+      // Clamp to [-1, 1] to guard against floating-point overshoot near disc=0
+      acosArg = Math.max(-1.0, Math.min(1.0, acosArg));
+      double phi = Math.acos(acosArg);
       double m = 2.0 * Math.cbrt(r);
       roots[0] = m * Math.cos(phi / 3.0) - b / (3.0 * a);
       roots[1] = m * Math.cos((phi + 2.0 * Math.PI) / 3.0) - b / (3.0 * a);

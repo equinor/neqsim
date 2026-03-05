@@ -95,8 +95,18 @@ public class PSFlash extends QfuncFlash {
       }
 
       system.setTemperature(nyTemp);
-      tpFlash.run();
-      system.init(2);
+      try {
+        tpFlash.run();
+        system.init(2);
+      } catch (Exception ex) {
+        // EOS solver failed at this temperature, revert and reduce step
+        nyTemp = oldTemp;
+        system.setTemperature(oldTemp);
+        tpFlash.run();
+        system.init(2);
+        factor *= 0.5;
+        correctFactor = false;
+      }
       errorOld = error;
       error = Math.abs(calcdQdT()); // Math.abs((nyTemp - oldTemp) / (nyTemp));
       // if(error>errorOld) factor *= -1.0;
