@@ -85,11 +85,11 @@ pvtsimulation/
 
 ### Sub-packages
 
-| Package | Documentation | Description |
-|---------|---------------|-------------|
-| `flowassurance` | [flowassurance/](flowassurance/) | Asphaltene stability, De Boer screening, CPA onset calculations |
-| `reservoirproperties.relpermeability` | [relative_permeability.md](relative_permeability.md) | Corey and LET relative permeability curve generation, Eclipse table export |
-| `util` | [gas_pseudopressure_pseudocritical.md](gas_pseudopressure_pseudocritical.md) | Gas pseudopressure integral, pseudocritical correlations (Standing, Sutton, Piper), Wichert-Aziz acid gas correction |
+| Package                               | Documentation                                                                | Description                                                                                                          |
+| ------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `flowassurance`                       | [flowassurance/](flowassurance/)                                             | Asphaltene stability, De Boer screening, CPA onset calculations                                                      |
+| `reservoirproperties.relpermeability` | [relative_permeability.md](relative_permeability.md)                         | Corey and LET relative permeability curve generation, Eclipse table export                                           |
+| `util`                                | [gas_pseudopressure_pseudocritical.md](gas_pseudopressure_pseudocritical.md) | Gas pseudopressure integral, pseudocritical correlations (Standing, Sutton, Piper), Wichert-Aziz acid gas correction |
 
 ---
 
@@ -266,7 +266,7 @@ MultiStageSeparatorTest mst = new MultiStageSeparatorTest(oil);
 
 // Configure stages
 mst.addSeparator(50.0, 323.15);   // HP separator
-mst.addSeparator(10.0, 308.15);   // LP separator  
+mst.addSeparator(10.0, 308.15);   // LP separator
 mst.addSeparator(1.01325, 288.15); // Stock tank
 
 mst.run();
@@ -444,3 +444,5 @@ System.out.println("Oil density at STC: " + sep.getOilDensity() + " kg/m3");
 - [PVT Workflow](pvt_workflow) - End-to-end PVT workflow
 - [Fluid Characterization](../thermo/pvt_fluid_characterization) - Heavy end characterization
 - [Black Oil Package](../blackoil/) - Black oil model export
+- [Eclipse E300 Fluid Import](eclipse_e300_fluid_import) - Reading/writing Eclipse E300 fluid files
+- [JSON Fluid Format](json_fluid_format) - JSON-based fluid file format with full EOS fidelity
