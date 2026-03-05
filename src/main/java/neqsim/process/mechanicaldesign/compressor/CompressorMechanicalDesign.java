@@ -1261,13 +1261,13 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
    * Loads compressor design parameters from the database based on company standards.
    */
   public void loadProcessDesignParameters() {
-    try {
-      neqsim.util.database.NeqSimProcessDesignDataBase database =
-          new neqsim.util.database.NeqSimProcessDesignDataBase();
-      java.sql.ResultSet dataSet =
-          database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
-              + "EQUIPMENTTYPE='Compressor' AND Company='" + getCompanySpecificDesignStandards()
-              + "'");
+    try (
+        neqsim.util.database.NeqSimProcessDesignDataBase database =
+            new neqsim.util.database.NeqSimProcessDesignDataBase();
+        java.sql.ResultSet dataSet =
+            database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
+                + "EQUIPMENTTYPE='Compressor' AND Company='" + getCompanySpecificDesignStandards()
+                + "'")) {
 
       while (dataSet.next()) {
         String spec = dataSet.getString("SPECIFICATION");
@@ -1305,7 +1305,6 @@ public class CompressorMechanicalDesign extends MechanicalDesign {
             break;
         }
       }
-      dataSet.close();
     } catch (Exception ex) {
       // Use default values if database lookup fails
     }

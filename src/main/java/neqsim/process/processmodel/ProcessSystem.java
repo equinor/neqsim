@@ -1654,12 +1654,12 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * <p>
    * Example usage in Python/Jupyter:
-   * 
+   *
    * <pre>
    * class MyListener(ProcessSystem.SimulationProgressListener):
    *     def onUnitComplete(self, unit, index, total, iteration):
    *         print(f"Completed {unit.getName()} ({index+1}/{total})")
-   * 
+   *
    * process.setProgressListener(MyListener())
    * process.run()
    * </pre>
@@ -1686,7 +1686,7 @@ public class ProcessSystem extends SimulationBaseClass {
    *
    * <p>
    * Example usage in Python/Jupyter:
-   * 
+   *
    * <pre>
    * def on_complete(unit):
    *     print(f"Completed: {unit.getName()}")
@@ -2035,7 +2035,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Calculate total system mass across all equipment and streams.
-   * 
+   *
    * @return Total mass in kg
    */
   private double calculateTotalSystemMass() {
@@ -2055,7 +2055,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Enable or disable mass balance tracking during transient simulations.
-   * 
+   *
    * @param enable true to enable tracking
    */
   public void setEnableMassBalanceTracking(boolean enable) {
@@ -2067,7 +2067,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Get the current mass balance error percentage.
-   * 
+   *
    * @return Mass balance error in percent
    */
   public double getMassBalanceError() {
@@ -2076,12 +2076,12 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Set the maximum number of iterations within each transient time step.
-   * 
+   *
    * <p>
    * Multiple iterations help converge circular dependencies between equipment. Default is 3. Set to
    * 1 to disable iterative convergence.
    * </p>
-   * 
+   *
    * @param iterations Number of iterations (must be &gt;= 1)
    */
   public void setMaxTransientIterations(int iterations) {
@@ -2093,7 +2093,7 @@ public class ProcessSystem extends SimulationBaseClass {
 
   /**
    * Get the maximum number of iterations within each transient time step.
-   * 
+   *
    * @return Number of iterations
    */
   public int getMaxTransientIterations() {
@@ -3013,7 +3013,7 @@ public class ProcessSystem extends SimulationBaseClass {
     } catch (NoSuchMethodException ignored) {
       // If the method does not exist, do nothing
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error("Error setting inlet stream on equipment: " + e.getMessage(), e);
     }
 
     this.add(unit);
@@ -3076,7 +3076,7 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     } catch (NoSuchMethodException ignored) {
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.error("Error in autoConnect: " + e.getMessage(), e);
     }
   }
 
@@ -4350,7 +4350,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * processSystem.run(); // Run first to establish flow conditions
    * int sized = processSystem.autoSizeEquipment(); // Size all equipment
@@ -4421,7 +4421,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * processSystem.run();
    * processSystem.autoSizeEquipment();
@@ -4545,7 +4545,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * ProcessOptimizationEngine engine = process.createOptimizer();
    * engine.setSearchAlgorithm(SearchAlgorithm.BFGS);
@@ -4696,7 +4696,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * double maxFlow = process.optimize().withPressures(50, 10).withFlowBounds(1000, 100000)
    *     .usingAlgorithm(SearchAlgorithm.BFGS).findMaxThroughput();
@@ -4922,7 +4922,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * <p>
    * Example:
    * </p>
-   * 
+   *
    * <pre>
    * {@code
    * process.run();
@@ -4957,7 +4957,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * <p>
    * Example:
    * </p>
-   * 
+   *
    * <pre>
    * {@code
    * process.run();
@@ -4994,7 +4994,7 @@ public class ProcessSystem extends SimulationBaseClass {
    * <p>
    * Example:
    * </p>
-   * 
+   *
    * <pre>
    * {@code
    * process.run();

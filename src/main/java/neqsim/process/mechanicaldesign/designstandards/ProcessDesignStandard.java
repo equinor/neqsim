@@ -115,13 +115,13 @@ public class ProcessDesignStandard extends DesignStandard {
     }
 
     // Load from TechnicalRequirements_Process table
-    try {
-      neqsim.util.database.NeqSimProcessDesignDataBase database =
-          new neqsim.util.database.NeqSimProcessDesignDataBase();
-      java.sql.ResultSet dataSet =
-          database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
-              + "EQUIPMENTTYPE='" + equipmentType + "' AND Company='"
-              + getMechanicalDesign().getCompanySpecificDesignStandards() + "'");
+    try (
+        neqsim.util.database.NeqSimProcessDesignDataBase database =
+            new neqsim.util.database.NeqSimProcessDesignDataBase();
+        java.sql.ResultSet dataSet =
+            database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
+                + "EQUIPMENTTYPE='" + equipmentType + "' AND Company='"
+                + getMechanicalDesign().getCompanySpecificDesignStandards() + "'")) {
 
       while (dataSet.next()) {
         String spec = dataSet.getString("SPECIFICATION");
@@ -145,7 +145,6 @@ public class ProcessDesignStandard extends DesignStandard {
           this.areaMargin = value;
         }
       }
-      dataSet.close();
     } catch (Exception ex) {
       // Use default values if database lookup fails
     }

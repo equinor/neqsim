@@ -149,7 +149,13 @@ public class Standard_ISO6976 extends neqsim.standards.Standard
             logger.error(ex2.getMessage());
           }
           componentsNotDefinedByStandard
-              .add("this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
+              .add(this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
+        }
+
+        if (dataSet == null) {
+          logger.error("No ISO6976 data found for component "
+              + this.thermoSystem.getPhase(0).getComponent(i).getName());
+          continue;
         }
         carbonNumber[i] = Integer.parseInt(dataSet.getString("numberOfCarbon"));
         M[i] = Double.parseDouble(dataSet.getString("MolarMass"));

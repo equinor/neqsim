@@ -31,9 +31,9 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
   private static String dataBaseType = "H2fromCSV";
   private static String connectionString = "jdbc:h2:mem:neqsimprocessdesigndatabase";
   /** True if h2 database has been initialized, i.e., populated with tables */
-  private static boolean h2IsInitialized = false;
+  private static volatile boolean h2IsInitialized = false;
   /** True while h2 database is being initialized. */
-  private static boolean h2IsInitalizing = false;
+  private static volatile boolean h2IsInitalizing = false;
   // static String dataBaseType = "MSAccessUCanAccess";
   // public static String connectionString =
   // "jdbc:ucanaccess://C:/Users/esol/OneDrive -
@@ -49,8 +49,10 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
    */
   public NeqSimProcessDesignDataBase() {
     // Fill tables from csv-files if not initialized and not currently being initialized.
-    if ("H2fromCSV".equals(dataBaseType) && !h2IsInitialized && !h2IsInitalizing) {
-      initH2DatabaseFromCSVfiles();
+    synchronized (NeqSimProcessDesignDataBase.class) {
+      if ("H2fromCSV".equals(dataBaseType) && !h2IsInitialized && !h2IsInitalizing) {
+        initH2DatabaseFromCSVfiles();
+      }
     }
     setDataBaseType(dataBaseType);
 

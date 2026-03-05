@@ -30,8 +30,8 @@ public class NeqSimContractDataBase extends NeqSimDataBase {
   // Default databasetype
   private static String dataBaseType = "H2fromCSV";
   private static String connectionString = "jdbc:h2:mem:neqsimcontractdatabase";
-  private static boolean h2IsInitialized = false;
-  private static boolean h2IsInitalizing = false;
+  private static volatile boolean h2IsInitialized = false;
+  private static volatile boolean h2IsInitalizing = false;
 
   private Statement statement = null;
   protected Connection databaseConnection = null;
@@ -43,8 +43,10 @@ public class NeqSimContractDataBase extends NeqSimDataBase {
    */
   public NeqSimContractDataBase() {
     // Fill tables from csv-files if not initialized and not currently being initialized.
-    if ("H2fromCSV".equals(dataBaseType) && !h2IsInitialized && !h2IsInitalizing) {
-      initH2DatabaseFromCSVfiles();
+    synchronized (NeqSimContractDataBase.class) {
+      if ("H2fromCSV".equals(dataBaseType) && !h2IsInitialized && !h2IsInitalizing) {
+        initH2DatabaseFromCSVfiles();
+      }
     }
     setDataBaseType(dataBaseType);
 

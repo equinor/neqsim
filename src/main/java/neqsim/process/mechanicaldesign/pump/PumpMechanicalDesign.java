@@ -1191,12 +1191,13 @@ public class PumpMechanicalDesign extends MechanicalDesign {
    * Loads pump design parameters from the database.
    */
   public void loadProcessDesignParameters() {
-    try {
-      neqsim.util.database.NeqSimProcessDesignDataBase database =
-          new neqsim.util.database.NeqSimProcessDesignDataBase();
-      java.sql.ResultSet dataSet =
-          database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
-              + "EQUIPMENTTYPE='Pump' AND Company='" + getCompanySpecificDesignStandards() + "'");
+    try (
+        neqsim.util.database.NeqSimProcessDesignDataBase database =
+            new neqsim.util.database.NeqSimProcessDesignDataBase();
+        java.sql.ResultSet dataSet =
+            database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
+                + "EQUIPMENTTYPE='Pump' AND Company='" + getCompanySpecificDesignStandards()
+                + "'")) {
 
       while (dataSet.next()) {
         String spec = dataSet.getString("SPECIFICATION");
@@ -1231,7 +1232,6 @@ public class PumpMechanicalDesign extends MechanicalDesign {
             break;
         }
       }
-      dataSet.close();
     } catch (Exception ex) {
       // Use default values if database lookup fails
     }
