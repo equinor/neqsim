@@ -2195,7 +2195,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
               - R * Math.log(((ComponentGEInterface) gePhase.getComponent(compNumb)).getGamma())
                   / hwfc
               - R * temperature
-                  * ((ComponentGEInterface) gePhase.getComponent(compNumb)).getlnGammadt() / hwfc)
+                  * ((ComponentGEInterface) gePhase.getComponent(compNumb)).getLnGammadt() / hwfc)
           + compArray[compNumb].getb() * calcAT(phase, temperature, pressure, numbcomp) / getB();
       // 0.5/Math.sqrt(compArray[compNumb].getaT()*compArray[j].getaT())*(compArray[compNumb].getaT()
       // * compArray[j].getaDiffT() +compArray[j].getaT() *
@@ -2215,7 +2215,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         A += compArray[i].getNumberOfMolesInPhase()
             * (compArray[i].getaDiffT() / compArray[i].getb()
                 - R * Math.log(((ComponentGEInterface) gePhase.getComponent(i)).getGamma()) / hwfc
-                - R * temperature * ((ComponentGEInterface) gePhase.getComponent(i)).getlnGammadt()
+                - R * temperature * ((ComponentGEInterface) gePhase.getComponent(i)).getLnGammadt()
                     / Math.log(2.0));
         // ....);
         // 0.5/Math.sqrt(compArray[compNumb].getaT()*compArray[j].getaT())*(compArray[compNumb].getaT()
@@ -2237,7 +2237,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
           * (compArray[compNumb].getaT() / compArray[compNumb].getb() - R * temperature
               * Math.log(((ComponentGEInterface) gePhase.getComponent(compNumb)).getGamma()) / hwfc)
           - getB() * R * temperature / hwfc
-              * ((ComponentGEInterface) gePhase.getComponent(compNumb)).getlnGammadn(compNumbj)
+              * ((ComponentGEInterface) gePhase.getComponent(compNumb)).getLnGammadn(compNumbj)
           + compArray[compNumb].getb()
               * (compArray[compNumbj].getaT() / compArray[compNumbj].getb() - R * temperature
                   * Math.log(((ComponentGEInterface) gePhase.getComponents()[compNumbj]).getGamma())
@@ -2463,9 +2463,9 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
 
         if (phase.getInitType() > 1) {
           term =
-              qPuredT[i] + hwfc * ((ComponentGEInterface) gePhase.getComponent(i)).getlnGammadt();
+              qPuredT[i] + hwfc * ((ComponentGEInterface) gePhase.getComponent(i)).getLnGammadt();
           dubdert += (qPuredTdT[i]
-              + hwfc * ((ComponentGEInterface) gePhase.getComponent(i)).getlnGammadtdt())
+              + hwfc * ((ComponentGEInterface) gePhase.getComponent(i)).getLnGammadtdt())
               * phase.getComponent(i).getNumberOfMolesInPhase() / phase.getNumberOfMolesInPhase();
           dadt += term * phase.getComponent(i).getNumberOfMolesInPhase()
               / phase.getNumberOfMolesInPhase();
@@ -2479,7 +2479,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       if (phase.getInitType() > 2) {
         for (int i = 0; i < numbcomp; i++) {
           for (int j = 0; j < numbcomp; j++) {
-            ad2[i][j] = hwfc * ((ComponentGEInterface) gePhase.getComponent(i)).getlnGammadn(j);
+            ad2[i][j] = hwfc * ((ComponentGEInterface) gePhase.getComponent(i)).getLnGammadn(j);
             compArray[i].setdAdndn(j, ad2[i][j]);
           }
         }
@@ -2786,7 +2786,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
         ader[i] = term;
         compArray[i].setAder(ader[i]);
 
-        term = qPuredT[i] + hwfc * ((ComponentGEInterface) gePhase.getComponent(i)).getlnGammadt();
+        term = qPuredT[i] + hwfc * ((ComponentGEInterface) gePhase.getComponent(i)).getLnGammadt();
         dadt += term * phase.getComponent(i).getNumberOfMolesInPhase()
             / phase.getNumberOfMolesInPhase();
         adert[i] = term;
@@ -2796,7 +2796,7 @@ public class EosMixingRuleHandler extends MixingRuleHandler {
       // TODO implment hex and Cpex and set dAdTdT
       for (int i = 0; i < numbcomp; i++) {
         for (int j = 0; j < numbcomp; j++) {
-          ad2[i][j] = hwfc * ((ComponentGEInterface) gePhase.getComponent(i)).getlnGammadn(j);
+          ad2[i][j] = hwfc * ((ComponentGEInterface) gePhase.getComponent(i)).getLnGammadn(j);
           compArray[i].setdAdndn(j, ad2[i][j]);
         }
       }
