@@ -49,6 +49,32 @@ figures, and reports.
 
 ---
 
+## Prerequisites
+
+| Requirement | Install / Setup | Used In |
+|-------------|----------------|---------|
+| Python 3.8+ | [python.org](https://python.org) | All steps |
+| Java JDK 8+ | Bundled via `devtools/` setup | Step 2 simulations |
+| NeqSim dev tools | `pip install -e devtools/` (from repo root) | Step 2 — boots the JVM and gives you `neqsim_dev_setup` |
+| VS Code + GitHub Copilot Chat | VS Code marketplace | Steps 2-4 AI assistance |
+| python-docx | `pip install python-docx matplotlib` | Step 4 Word report |
+| Google NotebookLM (optional) | [notebooklm.google.com](https://notebooklm.google.com) | Step 1 research (or use Copilot — see below) |
+
+> **Important:** For the task-solving workflow use `pip install -e devtools/` — this
+> installs the `neqsim_dev_setup` helper that boots the JVM from your local build.
+> Do **not** use `pip install neqsim` here (that installs the released package, not
+> your working copy).
+
+**Quick setup (one-time):**
+
+```powershell
+cd path/to/neqsim
+pip install -e devtools/          # installs neqsim_dev_setup for Jupyter
+pip install python-docx matplotlib # for Word reports and plots
+```
+
+---
+
 ## Who Is This For?
 
 ### Path A: Process Engineer (I just want answers)
@@ -77,7 +103,7 @@ You're producing a deliverable — a report, technology screening, or design
 study. The 4 steps map directly to a professional workflow.
 
 1. Run: `python devtools/new_task.py "CCS pipeline design assessment" --type F --author "Your Name"`
-2. Step 1: Literature review in NotebookLM
+2. Step 1: Literature review (NotebookLM or Copilot)
 3. Step 2: NeqSim simulations with Copilot
 4. Step 3: Iterate with Claude Opus 4.6 to refine
 5. Step 4: Generate Word report
@@ -104,16 +130,47 @@ study. The 4 steps map directly to a professional workflow.
  Research            Technical Analysis  Iterative Result    Final Technical
                      via NeqSim &        Evaluation          Writing
  Google NotebookLM   Copilot                                 -> Word Report
- + open sources                          GitHub Copilot
+   or Copilot                            GitHub Copilot
                      NeqSim API +        + Claude Opus 4.6   Claude Opus 4.6
- Build knowledge     GitHub Copilot                          + GitHub Copilot
- base                Deep analysis       Refine results
-                                                             Synthesize into
+ + open sources      GitHub Copilot                          + GitHub Copilot
+ Build knowledge     Deep analysis       Refine results
+ base                                                        Synthesize into
                                                              assessment
 ```
 
-### Step 1: Research with Google NotebookLM
-- Conduct initial literature searches using open-source information
+### Step 1: Research (Google NotebookLM or GitHub Copilot)
+
+Use **either** tool — or both — depending on your workflow:
+
+#### Option A: Google NotebookLM (best for deep literature review)
+- Upload PDFs, standards documents, and technical papers
+- Ask questions across all your sources at once
+- Get cited answers with references back to source pages
+- Good for: collecting correlations, comparing standards, summarising long documents
+
+#### Option B: GitHub Copilot in VS Code (best for code-adjacent research)
+- Open Copilot Chat and ask research questions directly
+- Copilot can search the web, read repo docs, and summarise findings
+- Create a markdown file in `step1_research/` and ask Copilot to populate it
+- Good for: quick lookups, NeqSim API questions, formula verification
+
+**Copilot research workflow:**
+
+1. Open VS Code Copilot Chat (Ctrl+Shift+I)
+2. Paste this prompt:
+   ```
+   I'm researching [TOPIC] for a NeqSim task.
+   Search the web and this repository for:
+   1. Key physical principles and governing equations
+   2. Typical operating ranges and design rules of thumb
+   3. Relevant industry standards (API, ASME, ISO, NORSOK, DNV)
+   4. What NeqSim classes/methods already exist for this
+   Write the findings to step1_research/notes.md in my task folder.
+   ```
+3. Review and refine — ask follow-up questions
+4. Save the final notes in `step1_research/`
+
+**General guidance for Step 1:**
 - Build a comprehensive knowledge base on the topic
 - Collect relevant papers, standards, correlations, and reference data
 - Save research notes and sources in `step1_research/`
@@ -195,7 +252,7 @@ TASK_README = r"""# Task: [Title]
 - [ ] Reference data collected
 - [ ] Key sources documented in `step1_research/notes.md`
 
-**AI prompt - paste into Google NotebookLM or any AI chat:**
+**Option A — Google NotebookLM** (upload PDFs, get cited answers):
 
 ```
 I need to understand [TOPIC] for oil & gas process engineering.
@@ -205,6 +262,18 @@ Give me:
 3. Relevant industry standards (API, ASME, ISO, NORSOK, DNV)
 4. Common correlations used in practice
 5. Known limitations or edge cases
+```
+
+**Option B — VS Code Copilot Chat** (Ctrl+Shift+I, web search + repo context):
+
+```
+I'm researching [TOPIC] for a NeqSim task.
+Search the web and this repository for:
+1. Key physical principles and governing equations
+2. Typical operating ranges and design rules of thumb
+3. Relevant industry standards (API, ASME, ISO, NORSOK, DNV)
+4. What NeqSim classes/methods already exist for this
+Write the findings to step1_research/notes.md in my task folder.
 ```
 
 ---
