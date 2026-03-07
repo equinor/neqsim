@@ -531,7 +531,16 @@ The report generator (`step3_report/generate_report.py`) auto-reads a `results.j
 file from the task root. Add a cell at the end of your notebook to save results:
 
 ```python
-import json, os
+import json, os, pathlib
+
+# Resolve task directory from the notebook's own location
+# (os.getcwd() is unreliable in VS Code notebooks — it returns workspace root)
+NOTEBOOK_DIR = pathlib.Path(globals().get(
+    "__vsc_ipynb_file__", os.path.abspath("step2_analysis/notebook.ipynb")
+)).resolve().parent
+TASK_DIR = NOTEBOOK_DIR.parent
+FIGURES_DIR = TASK_DIR / "figures"
+FIGURES_DIR.mkdir(exist_ok=True)
 
 results = {
     "key_results": {
@@ -550,16 +559,38 @@ results = {
     },
     "approach": "Used SRK EOS with classic mixing rule. Process: ...",
     "conclusions": "The analysis shows that ...",
+    # Optional: custom figure captions (map filename -> caption text)
+    "figure_captions": {
+        # "my_plot.png": "Temperature and pressure profiles during simulation",
+    },
+    # Optional: key equations used in the analysis (rendered in reports)
+    "equations": [
+        # {"label": "Energy Balance", "latex": "Q = m C_p \\\\Delta T"},
+    ],
 }
 
-results_path = os.path.join(os.path.dirname(os.getcwd()), "results.json")
+results_path = str(TASK_DIR / "results.json")
 with open(results_path, "w") as f:
     json.dump(results, f, indent=2)
 print(f"Results saved to {results_path}")
 ```
 
+**Saving figures** — use `FIGURES_DIR` (set above) so plots end up in the right place:
+
+```python
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots()
+ax.plot(x, y)
+ax.set_xlabel("X Label")
+ax.set_ylabel("Y Label")
+fig.savefig(str(FIGURES_DIR / "my_plot.png"), dpi=150, bbox_inches="tight")
+plt.show()
+```
+
 When you run `python step3_report/generate_report.py`, the Results and Validation
 sections are auto-populated from this file. Figures in `figures/` are also embedded.
+Equations from results.json are rendered with KaTeX in HTML and as images in Word.
 
 ---
 
@@ -807,6 +838,9 @@ Document any parameter sweeps performed:
 - [ ] key_results section populated with all key outputs
 - [ ] validation section populated with all checks above
 - [ ] approach and conclusions fields filled in
+- [ ] figure_captions populated with custom captions for key plots
+- [ ] equations populated with key equations used in the analysis
+- [ ] Figures saved to figures/ using absolute TASK_DIR path (not os.getcwd!)
 """
 
 GENERATE_REPORT = '''"""
@@ -820,10 +854,12 @@ This script AUTO-READS data from the task folder:
   - step1_scope_and_research/task_spec.md  -> populates Scope & Standards
   - results.json (task root)               -> populates Results + Validation
   - figures/*.png                          -> embeds all plots
+  - results.json "equations"               -> renders equations (KaTeX/images)
+  - results.json "figure_captions"         -> custom captions for figures
 
 It produces:
   - step3_report/Report.docx  (Word document for formal distribution)
-  - step3_report/Report.html  (navigable HTML with sidebar)
+  - step3_report/Report.html  (navigable HTML with sidebar, KaTeX equations)
 
 If results.json or task_spec.md are missing, the report uses placeholder text.
 Customize MANUAL_SECTIONS below for content that can't be auto-generated.
@@ -833,15 +869,28 @@ import sys
 import glob
 import json
 import base64
+import io
 from datetime import date
 
 try:
     from docx import Document
-    from docx.shared import Inches, Pt
+    from docx.shared import Inches, Pt, RGBColor
     from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.enum.table import WD_TABLE_ALIGNMENT
+    from docx.oxml.ns import nsdecls
+    from docx.oxml import parse_xml
 except ImportError:
     print("ERROR: python-docx not installed. Run: pip install python-docx")
     sys.exit(1)
+
+# Optional: matplotlib for rendering equations to images (Word report)
+try:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    HAS_MATPLOTLIB = True
+except ImportError:
+    HAS_MATPLOTLIB = False
 
 # ── Paths ────────────────────────────────────────────────
 TASK_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -930,8 +979,82 @@ def extract_spec_section(spec_text, heading):
 
 
 def get_figures():
-    """Collect all PNG figures from the figures/ directory."""
-    return sorted(glob.glob(os.path.join(FIG_DIR, "*.png")))
+    """Collect all PNG/SVG figures from the figures/ directory."""
+    pngs = sorted(glob.glob(os.path.join(FIG_DIR, "*.png")))
+    svgs = sorted(glob.glob(os.path.join(FIG_DIR, "*.svg")))
+    return pngs + svgs
+
+
+def get_figure_caption(fig_path, results, fig_index):
+    """Get a caption for a figure: custom from results.json or auto-generated."""
+    fig_name = os.path.basename(fig_path)
+    captions = {}
+    if results:
+        captions = results.get("figure_captions", {})
+    if fig_name in captions:
+        return "Figure {}: {}".format(fig_index, captions[fig_name])
+    # Auto-generate from filename
+    auto = fig_name.rsplit(".", 1)[0].replace("_", " ").replace("-", " ").title()
+    return "Figure {}: {}".format(fig_index, auto)
+
+
+def get_equations(results):
+    """Get equations from results.json. Returns list of {label, latex}."""
+    if not results:
+        return []
+    return results.get("equations", [])
+
+
+def render_equation_to_image(latex_str, output_path):
+    """Render a LaTeX equation to a high-quality PNG image using matplotlib.
+
+    Uses display-style math, large font, and 300 DPI for crisp rendering
+    in Word documents. Returns True if the image was created, False otherwise.
+    """
+    if not HAS_MATPLOTLIB:
+        return False
+    try:
+        fig = plt.figure(figsize=(8, 1.2))
+        fig.text(
+            0.5, 0.5,
+            "${}$".format(latex_str),
+            fontsize=24, ha="center", va="center",
+            math_fontfamily="cm",
+        )
+        fig.savefig(output_path, dpi=300, bbox_inches="tight",
+                    pad_inches=0.15, facecolor="white", edgecolor="none")
+        plt.close(fig)
+        return True
+    except Exception as e:
+        print("  Warning: could not render equation: {}".format(e))
+        return False
+
+
+def _parse_key_name(key):
+    """Parse a key_results key into (label, unit). Splits on last known unit suffix."""
+    unit_suffixes = [
+        ("_pct", "%"), ("_percent", "%"),
+        ("_bar", "bar"), ("_bara", "bara"), ("_barg", "barg"),
+        ("_psi", "psi"), ("_psia", "psia"),
+        ("_C", "\u00b0C"), ("_K", "K"), ("_F", "\u00b0F"),
+        ("_kg", "kg"), ("_g", "g"), ("_lb", "lb"),
+        ("_m3", "m\u00b3"), ("_m2", "m\u00b2"), ("_m", "m"),
+        ("_mm", "mm"), ("_cm", "cm"), ("_km", "km"),
+        ("_ft", "ft"), ("_in", "in"),
+        ("_kW", "kW"), ("_MW", "MW"), ("_W", "W"),
+        ("_kJ", "kJ"), ("_MJ", "MJ"), ("_J", "J"),
+        ("_kg_hr", "kg/hr"), ("_kg_s", "kg/s"),
+        ("_m3_hr", "m\u00b3/hr"), ("_m3_s", "m\u00b3/s"),
+        ("_Sm3_day", "Sm\u00b3/day"), ("_Sm3_hr", "Sm\u00b3/hr"),
+        ("_hours", "hours"), ("_hr", "hr"), ("_min", "min"), ("_s", "s"),
+        ("_rpm", "rpm"), ("_Hz", "Hz"),
+    ]
+    for suffix, unit in unit_suffixes:
+        if key.endswith(suffix):
+            name_part = key[:len(key) - len(suffix)]
+            label = name_part.replace("_", " ").title()
+            return label, unit
+    return key.replace("_", " ").title(), ""
 
 
 def format_results_table(results):
@@ -941,11 +1064,15 @@ def format_results_table(results):
         return "[No key_results in results.json]"
     lines = []
     for key, value in key_results.items():
-        label = key.replace("_", " ").title()
+        label, unit = _parse_key_name(key)
         if isinstance(value, float):
-            lines.append("{}: {:.4g}".format(label, value))
+            val_str = "{:.4g}".format(value)
         else:
-            lines.append("{}: {}".format(label, value))
+            val_str = str(value)
+        if unit:
+            lines.append("{}: {} {}".format(label, val_str, unit))
+        else:
+            lines.append("{}: {}".format(label, val_str))
     return "\\n".join(lines)
 
 
@@ -977,16 +1104,194 @@ def format_validation_html(results):
         label = check.replace("_", " ").title()
         if isinstance(outcome, bool):
             status = "PASS" if outcome else "FAIL"
-            color = "#28a745" if outcome else "#dc3545"
+            css_class = ' class="pass"' if outcome else ' class="fail"'
         elif isinstance(outcome, (int, float)):
             status = "{:.4g}".format(outcome)
-            color = "#333"
+            css_class = ""
         else:
             status = str(outcome)
-            color = "#333"
-        rows += \'<tr><td>{}</td><td style="color: {}; font-weight: bold;">{}</td></tr>\\n\'.format(
-            label, color, status)
-    return \'<table><tr><th>Check</th><th>Result</th></tr>\\n{}</table>\'.format(rows)
+            css_class = ""
+        rows += \'<tr><td>{}</td><td{}>{}</td></tr>\\n\'.format(
+            label, css_class, status)
+    return \'<table class="validation-table"><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody>\\n{}</tbody></table>\'.format(rows)
+
+
+def format_results_html(results):
+    """Format key_results dict as a styled HTML table with units column."""
+    key_results = results.get("key_results", {})
+    if not key_results:
+        return ""
+    rows = ""
+    for key, value in key_results.items():
+        label, unit = _parse_key_name(key)
+        if isinstance(value, float):
+            val_str = "{:.4g}".format(value)
+        else:
+            val_str = str(value)
+        rows += \'<tr><td>{}</td><td class="num">{}</td><td>{}</td></tr>\\n\'.format(
+            label, val_str, unit)
+    return (
+        \'<table class="results-table"><thead>\'
+        \'<tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>\'
+        \'</thead><tbody>\\n{}</tbody></table>\'.format(rows)
+    )
+
+
+def format_custom_tables_html(results):
+    """Format custom tables from results.json 'tables' key as HTML."""
+    tables = results.get("tables", [])
+    if not tables:
+        return ""
+    html_parts = []
+    for tbl in tables:
+        title = tbl.get("title", "")
+        headers = tbl.get("headers", [])
+        data_rows = tbl.get("rows", [])
+        if not headers or not data_rows:
+            continue
+        h = ""
+        if title:
+            h += \'<h3>{}</h3>\\n\'.format(title)
+        h += \'<table class="custom-table"><thead><tr>\'
+        for col in headers:
+            h += \'<th>{}</th>\'.format(col)
+        h += \'</tr></thead><tbody>\\n\'
+        for row in data_rows:
+            h += "<tr>"
+            for i, cell in enumerate(row):
+                css = \' class="num"\' if i > 0 and isinstance(cell, (int, float)) else ""
+                if isinstance(cell, float):
+                    h += \'<td{}>{:.4g}</td>\'.format(css, cell)
+                else:
+                    h += \'<td{}>{}</td>\'.format(css, cell)
+            h += "</tr>\\n"
+        h += "</tbody></table>"
+        html_parts.append(h)
+    return "\\n".join(html_parts)
+
+
+def add_word_table(doc, headers, data_rows, col_widths=None):
+    """Add a professionally styled table to a Word document.
+
+    Args:
+        doc: Document object.
+        headers: list of column header strings.
+        data_rows: list of lists (each inner list = one row of cell values).
+        col_widths: optional list of Inches widths per column.
+    """
+    table = doc.add_table(rows=1, cols=len(headers))
+    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+    table.style = "Table Grid"
+
+    # Header row
+    hdr = table.rows[0]
+    for i, text in enumerate(headers):
+        cell = hdr.cells[i]
+        cell.text = str(text)
+        # Style header: bold, white text on dark blue background
+        for paragraph in cell.paragraphs:
+            for run in paragraph.runs:
+                run.font.bold = True
+                run.font.size = Pt(9)
+                run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+        shading = parse_xml(
+            \'<w:shd {} w:fill="2F5496"/>\'.format(nsdecls(\'w\'))
+        )
+        cell._tc.get_or_add_tcPr().append(shading)
+
+    # Data rows
+    for row_data in data_rows:
+        row = table.add_row()
+        for i, val in enumerate(row_data):
+            cell = row.cells[i]
+            cell.text = str(val)
+            for paragraph in cell.paragraphs:
+                for run in paragraph.runs:
+                    run.font.size = Pt(9)
+
+    # Apply column widths if specified
+    if col_widths:
+        for i, width in enumerate(col_widths):
+            for row in table.rows:
+                row.cells[i].width = width
+
+    doc.add_paragraph("")  # spacing after table
+    return table
+
+
+def add_results_word_table(doc, results):
+    """Add key_results as a styled Word table with units column."""
+    key_results = results.get("key_results", {})
+    if not key_results:
+        return
+    headers = ["Parameter", "Value", "Unit"]
+    data_rows = []
+    for key, value in key_results.items():
+        label, unit = _parse_key_name(key)
+        if isinstance(value, float):
+            val_str = "{:.4g}".format(value)
+        else:
+            val_str = str(value)
+        data_rows.append([label, val_str, unit])
+    add_word_table(doc, headers, data_rows,
+                   col_widths=[Inches(3.0), Inches(1.5), Inches(1.5)])
+
+
+def add_validation_word_table(doc, results):
+    """Add validation checks as a styled Word table."""
+    validation = results.get("validation", {})
+    if not validation:
+        return
+    headers = ["Check", "Result"]
+    data_rows = []
+    for check, outcome in validation.items():
+        label = check.replace("_", " ").title()
+        if isinstance(outcome, bool):
+            status = "PASS" if outcome else "FAIL"
+        elif isinstance(outcome, (int, float)):
+            status = "{:.4g}".format(outcome)
+        else:
+            status = str(outcome)
+        data_rows.append([label, status])
+    table = add_word_table(doc, headers, data_rows,
+                           col_widths=[Inches(4.0), Inches(2.0)])
+    # Color-code PASS/FAIL cells
+    for row in table.rows[1:]:
+        cell = row.cells[1]
+        text = cell.text.strip()
+        for paragraph in cell.paragraphs:
+            for run in paragraph.runs:
+                run.font.bold = True
+                if text == "PASS":
+                    run.font.color.rgb = RGBColor(0x28, 0xA7, 0x45)
+                elif text == "FAIL":
+                    run.font.color.rgb = RGBColor(0xDC, 0x35, 0x45)
+
+
+def add_custom_word_tables(doc, results):
+    """Add custom tables from results.json 'tables' key."""
+    tables = results.get("tables", [])
+    if not tables:
+        return
+    for tbl in tables:
+        title = tbl.get("title", "")
+        headers = tbl.get("headers", [])
+        data_rows = tbl.get("rows", [])
+        if not headers or not data_rows:
+            continue
+        if title:
+            doc.add_heading(title, level=2)
+        # Format numeric values
+        formatted_rows = []
+        for row in data_rows:
+            formatted = []
+            for cell in row:
+                if isinstance(cell, float):
+                    formatted.append("{:.4g}".format(cell))
+                else:
+                    formatted.append(str(cell))
+            formatted_rows.append(formatted)
+        add_word_table(doc, headers, formatted_rows)
 
 
 # ══════════════════════════════════════════════════════════
@@ -1040,6 +1345,7 @@ def build_sections(results, task_spec):
     sections.append({
         "heading": "4. Approach",
         "content": approach,
+        "has_equations": True,
     })
 
     # 5. Results (auto-populated from results.json)
@@ -1091,8 +1397,8 @@ def build_sections(results, task_spec):
 # Word report
 # ══════════════════════════════════════════════════════════
 
-def build_word_report(sections):
-    """Build the Word document."""
+def build_word_report(sections, results=None):
+    """Build the Word document with numbered figures, captions, and equations."""
     doc = Document()
 
     # Title page
@@ -1105,25 +1411,37 @@ def build_word_report(sections):
     # Add all sections
     for section in sections:
         doc.add_heading(section["heading"], level=1)
-        # Split content into paragraphs
-        for para_text in section["content"].split("\\n\\n"):
-            if para_text.strip():
-                doc.add_paragraph(para_text.strip())
+
+        # Results section: use Word table instead of plain text
+        if section.get("has_figures") and results and results.get("key_results"):
+            add_results_word_table(doc, results)
+            # Custom tables
+            if results.get("tables"):
+                add_custom_word_tables(doc, results)
+        elif section.get("has_figures"):
+            # No results data — show placeholder text
+            for para_text in section["content"].split("\\n\\n"):
+                if para_text.strip():
+                    doc.add_paragraph(para_text.strip())
+        elif "Validation" in section["heading"] and results and results.get("validation"):
+            # Validation section: use Word table
+            add_validation_word_table(doc, results)
+        else:
+            # Regular text content
+            for para_text in section["content"].split("\\n\\n"):
+                if para_text.strip():
+                    doc.add_paragraph(para_text.strip())
 
         # Embed figures after Results section
         if section.get("has_figures"):
             figures = get_figures()
             if figures:
-                for fig_path in figures:
-                    fig_name = os.path.basename(fig_path)
+                for fig_idx, fig_path in enumerate(figures, 1):
+                    caption_text = get_figure_caption(fig_path, results, fig_idx)
                     doc.add_picture(fig_path, width=Inches(6.0))
                     last_para = doc.paragraphs[-1]
                     last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                    caption = doc.add_paragraph(
-                        "Figure: {}".format(
-                            fig_name.replace("_", " ").replace(".png", "")
-                        )
-                    )
+                    caption = doc.add_paragraph(caption_text)
                     caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     caption.runs[0].font.size = Pt(9)
                     caption.runs[0].font.italic = True
@@ -1133,6 +1451,37 @@ def build_word_report(sections):
                     "[No figures found in figures/ directory. "
                     "Save plots as PNG files there and re-run this script.]"
                 )
+
+        # Embed equations after Approach section
+        if section.get("has_equations"):
+            equations = get_equations(results)
+            if equations:
+                doc.add_heading("Key Equations", level=2)
+                eq_img_dir = os.path.join(REPORT_DIR, "_eq_images")
+                if not os.path.exists(eq_img_dir):
+                    os.makedirs(eq_img_dir)
+                for eq_idx, eq in enumerate(equations, 1):
+                    label = eq.get("label", "Equation {}".format(eq_idx))
+                    latex = eq.get("latex", "")
+                    if not latex:
+                        continue
+                    # Try to render equation as image
+                    eq_img_path = os.path.join(eq_img_dir, "eq_{}.png".format(eq_idx))
+                    if render_equation_to_image(latex, eq_img_path):
+                        doc.add_paragraph("")
+                        doc.add_picture(eq_img_path, width=Inches(5.5))
+                        last_para = doc.paragraphs[-1]
+                        last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                        caption = doc.add_paragraph(
+                            "Equation {}: {}".format(eq_idx, label)
+                        )
+                        caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                        caption.runs[0].font.size = Pt(9)
+                        caption.runs[0].font.italic = True
+                    else:
+                        # Fallback: text representation
+                        doc.add_paragraph("{}: {}".format(label, latex))
+                    doc.add_paragraph("")
 
     # Save
     doc.save(DOCX_FILE)
@@ -1144,25 +1493,64 @@ def build_word_report(sections):
 # ══════════════════════════════════════════════════════════
 
 def build_html_report(sections, results=None):
-    """Build an HTML report with embedded figures and navigation sidebar."""
+    """Build an HTML report with embedded figures, KaTeX equations, and navigation."""
     figures = get_figures()
 
-    # Build figure HTML with base64-embedded images
+    # Build figure HTML with base64-embedded images and numbered captions
     figure_html = ""
     if figures:
-        for fig_path in figures:
+        for fig_idx, fig_path in enumerate(figures, 1):
             fig_name = os.path.basename(fig_path)
-            caption = fig_name.replace("_", " ").replace(".png", "")
+            caption_text = get_figure_caption(fig_path, results, fig_idx)
+            # Determine MIME type
+            if fig_path.endswith(".svg"):
+                mime = "image/svg+xml"
+            else:
+                mime = "image/png"
             with open(fig_path, "rb") as f:
                 img_data = base64.b64encode(f.read()).decode("utf-8")
             figure_html += """
             <div class="figure">
-                <img src="data:image/png;base64,{}" alt="{}">
-                <p class="caption">Figure: {}</p>
+                <img src="data:{};base64,{}" alt="{}">
+                <p class="caption">{}</p>
             </div>
-            """.format(img_data, caption, caption)
+            """.format(mime, img_data, caption_text, caption_text)
     else:
         figure_html = "<p><em>No figures found in figures/ directory.</em></p>"
+
+    # Build equation HTML (KaTeX rendering with embedded image fallbacks)
+    equation_html = ""
+    equations = get_equations(results)
+    if equations:
+        equation_html += '<h3>Key Equations</h3>\\n'
+        # Pre-render equation images for offline fallback
+        eq_img_dir = os.path.join(REPORT_DIR, "_eq_images")
+        if not os.path.exists(eq_img_dir):
+            os.makedirs(eq_img_dir)
+        for eq_idx, eq in enumerate(equations, 1):
+            label = eq.get("label", "Equation {}".format(eq_idx))
+            latex = eq.get("latex", "")
+            if not latex:
+                continue
+            # Render fallback image
+            fallback_img = ""
+            eq_img_path = os.path.join(eq_img_dir, "eq_{}.png".format(eq_idx))
+            if render_equation_to_image(latex, eq_img_path):
+                with open(eq_img_path, "rb") as imgf:
+                    img_b64 = base64.b64encode(imgf.read()).decode("utf-8")
+                fallback_img = (
+                    '<img class="eq-fallback" '
+                    'src="data:image/png;base64,{}" '
+                    'alt="{}" style="display:none; max-width:90%;">'.format(
+                        img_b64, label)
+                )
+            equation_html += """
+            <div class="equation-block">
+                <div class="equation katex-eq">$${}$$</div>
+                {}
+                <p class="equation-label">Equation {}: {}</p>
+            </div>
+            """.format(latex, fallback_img, eq_idx, label)
 
     # Build validation HTML
     validation_html = ""
@@ -1172,15 +1560,12 @@ def build_html_report(sections, results=None):
     # Build key results HTML table
     results_table_html = ""
     if results and results.get("key_results"):
-        rows = ""
-        for key, value in results["key_results"].items():
-            label = key.replace("_", " ").title()
-            if isinstance(value, float):
-                val_str = "{:.4g}".format(value)
-            else:
-                val_str = str(value)
-            rows += "<tr><td>{}</td><td>{}</td></tr>\\n".format(label, val_str)
-        results_table_html = \'<table><tr><th>Parameter</th><th>Value</th></tr>\\n{}</table>\'.format(rows)
+        results_table_html = format_results_html(results)
+
+    # Build custom tables HTML
+    custom_tables_html = ""
+    if results and results.get("tables"):
+        custom_tables_html = format_custom_tables_html(results)
 
     # Build section HTML and navigation
     nav_items = ""
@@ -1195,9 +1580,12 @@ def build_html_report(sections, results=None):
         # Insert auto-generated HTML for special sections
         if section.get("has_figures"):
             if results_table_html:
-                content = results_table_html + figure_html
+                content = results_table_html + custom_tables_html + figure_html
             else:
                 content += figure_html
+
+        if section.get("has_equations") and equation_html:
+            content += equation_html
 
         if "Validation" in section["heading"] and validation_html:
             content = validation_html
@@ -1209,12 +1597,45 @@ def build_html_report(sections, results=None):
         </section>
         """.format(section_id, section["heading"], content)
 
+    # KaTeX CDN for equation rendering (only if equations exist)
+    katex_head = ""
+    katex_body_script = ""
+    if equations:
+        katex_head = """
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>"""
+        katex_body_script = """
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            if (typeof renderMathInElement === "function") {
+                renderMathInElement(document.body, {
+                    delimiters: [
+                        {left: "$$", right: "$$", display: true},
+                        {left: "$", right: "$", display: false}
+                    ],
+                    throwOnError: false
+                });
+            } else {
+                // KaTeX not available (offline) — show fallback images
+                var eqs = document.querySelectorAll(".katex-eq");
+                for (var i = 0; i < eqs.length; i++) {
+                    eqs[i].style.display = "none";
+                }
+                var imgs = document.querySelectorAll(".eq-fallback");
+                for (var j = 0; j < imgs.length; j++) {
+                    imgs[j].style.display = "inline";
+                }
+            }
+        });
+    </script>"""
+
     html = """<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{title}</title>
+    <title>{title}</title>{katex_head}
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -1231,17 +1652,32 @@ def build_html_report(sections, results=None):
         h1 {{ margin-bottom: 0.5rem; color: #1a1a1a; }}
         h2 {{ margin-top: 2rem; margin-bottom: 1rem; color: #1a1a1a;
              border-bottom: 1px solid #eee; padding-bottom: 0.3rem; }}
+        h3 {{ margin-top: 1.5rem; margin-bottom: 0.5rem; color: #333; }}
         .meta {{ color: #666; margin-bottom: 2rem; }}
         section {{ margin-bottom: 2rem; }}
         .figure {{ text-align: center; margin: 1.5rem 0; }}
         .figure img {{ max-width: 100%; border: 1px solid #ddd; border-radius: 4px; }}
         .caption {{ font-size: 0.85rem; color: #666; font-style: italic;
                     margin-top: 0.3rem; }}
-        table {{ border-collapse: collapse; width: 100%; margin: 1rem 0; }}
-        th, td {{ border: 1px solid #ddd; padding: 0.5rem 0.75rem; text-align: left; }}
-        th {{ background: #f5f5f5; }}
+        .equation-block {{ margin: 1.5rem 0; text-align: center; }}
+        .equation {{ font-size: 1.2rem; padding: 0.5rem 0; }}
+        .equation-label {{ font-size: 0.85rem; color: #666; font-style: italic;
+                           margin-top: 0.2rem; }}
+        table {{ border-collapse: collapse; width: 100%; margin: 1.5rem 0;
+                font-size: 0.92rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }}
+        thead th {{ background: #2F5496; color: #fff; font-weight: 600;
+                    padding: 0.6rem 0.75rem; text-align: left;
+                    border: 1px solid #2a4a85; }}
+        tbody td {{ border: 1px solid #e0e0e0; padding: 0.5rem 0.75rem;
+                    text-align: left; }}
+        tbody tr:nth-child(even) {{ background: #f8f9fa; }}
+        tbody tr:hover {{ background: #e9ecef; }}
+        td.num {{ text-align: right; font-variant-numeric: tabular-nums; }}
         .pass {{ color: #28a745; font-weight: bold; }}
         .fail {{ color: #dc3545; font-weight: bold; }}
+        .results-table {{ max-width: 600px; }}
+        .validation-table {{ max-width: 500px; }}
+        .custom-table {{ margin-top: 0.5rem; }}
         @media (max-width: 768px) {{
             nav {{ position: static; width: 100%; min-height: auto; }}
             main {{ margin-left: 0; padding: 1rem; }}
@@ -1261,7 +1697,7 @@ def build_html_report(sections, results=None):
         <h1>{title}</h1>
         <p class="meta">Author: {author} | Date: {date}</p>
 {sections}
-    </main>
+    </main>{katex_body_script}
 </body>
 </html>""".format(
         title=TITLE,
@@ -1269,6 +1705,8 @@ def build_html_report(sections, results=None):
         date=TASK_DATE,
         nav=nav_items,
         sections=section_html,
+        katex_head=katex_head,
+        katex_body_script=katex_body_script,
     )
 
     with open(HTML_FILE, "w", encoding="utf-8") as f:
@@ -1293,7 +1731,7 @@ if __name__ == "__main__":
 
     # Generate both formats
     print("")
-    build_word_report(sections)
+    build_word_report(sections, results)
     build_html_report(sections, results)
     print("")
     print("Both reports generated.")

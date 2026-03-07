@@ -100,18 +100,44 @@ except ImportError:
 ### Save results.json (end of every notebook)
 
 ```python
-import json, os
+import json, os, pathlib
+
+# Resolve task directory from notebook location (NOT os.getcwd — unreliable in VS Code)
+NOTEBOOK_DIR = pathlib.Path(globals().get(
+    "__vsc_ipynb_file__", os.path.abspath("step2_analysis/notebook.ipynb")
+)).resolve().parent
+TASK_DIR = NOTEBOOK_DIR.parent
+FIGURES_DIR = TASK_DIR / "figures"
+FIGURES_DIR.mkdir(exist_ok=True)
+
 results = {
     "key_results": {"outlet_temperature_C": -18.5, "pressure_drop_bar": 3.2},
     "validation": {"mass_balance_error_pct": 0.01, "acceptance_criteria_met": True},
     "approach": "Used SRK EOS with classic mixing rule...",
     "conclusions": "The analysis shows...",
+    "figure_captions": {
+        # "plot.png": "Description of the figure"
+    },
+    "equations": [
+        # {"label": "Energy Balance", "latex": "Q = m C_p \\Delta T"}
+    ],
+    "tables": [
+        # {"title": "Sensitivity Analysis",
+        #  "headers": ["Parameter", "Base Case", "Low", "High"],
+        #  "rows": [["Pressure (bar)", 60.0, 40.0, 80.0],
+        #           ["Temperature (C)", 25.0, 15.0, 35.0]]}
+    ],
 }
-with open(os.path.join(os.path.dirname(os.getcwd()), "results.json"), "w") as f:
+with open(str(TASK_DIR / "results.json"), "w") as f:
     json.dump(results, f, indent=2)
 ```
 
 The report generator auto-reads this file to populate Results and Validation sections.
+- **key_results**: Rendered as styled table with auto-detected units (use suffixes like `_C`, `_bar`, `_kg`, `_hours`)
+- **validation**: Rendered as pass/fail table with color coding
+- **equations**: KaTeX in HTML, PNG images in Word
+- **figures**: Numbered captions from `figure_captions`
+- **tables**: Custom tables rendered in both HTML and Word with headers/rows
 
 ## Code Patterns
 

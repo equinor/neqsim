@@ -140,7 +140,18 @@ Your deliverable is a populated task folder under `task_solve/`.
     - Rerun the notebook
     - Document the iteration in `step2_analysis/notes.md`
 
-12. **Save figures** to `figures/` directory as PNG files.
+12. **Save figures** to `figures/` directory as PNG files. **CRITICAL: use absolute paths, NOT os.getcwd():**
+    ```python
+    import pathlib, os
+    NOTEBOOK_DIR = pathlib.Path(globals().get(
+        "__vsc_ipynb_file__", os.path.abspath("step2_analysis/notebook.ipynb")
+    )).resolve().parent
+    TASK_DIR = NOTEBOOK_DIR.parent
+    FIGURES_DIR = TASK_DIR / "figures"
+    FIGURES_DIR.mkdir(exist_ok=True)
+    # Then save plots:
+    fig.savefig(str(FIGURES_DIR / "my_plot.png"), dpi=150, bbox_inches="tight")
+    ```
 
 13. **Write validation notes** to `step2_analysis/notes.md`:
     - What was tested and what passed
@@ -150,7 +161,15 @@ Your deliverable is a populated task folder under `task_solve/`.
 
 14. **Save results.json** in the task root folder. Add a final notebook cell:
     ```python
-    import json, os
+    import json, os, pathlib
+    # Resolve task directory from the notebook's own location
+    # (os.getcwd() is unreliable in VS Code notebooks — it returns workspace root)
+    NOTEBOOK_DIR = pathlib.Path(globals().get(
+        "__vsc_ipynb_file__", os.path.abspath("step2_analysis/notebook.ipynb")
+    )).resolve().parent
+    TASK_DIR = NOTEBOOK_DIR.parent
+    FIGURES_DIR = TASK_DIR / "figures"
+    FIGURES_DIR.mkdir(exist_ok=True)
     results = {
         "key_results": {
             # All key numerical outputs with units in the key name
@@ -162,8 +181,14 @@ Your deliverable is a populated task folder under `task_solve/`.
         },
         "approach": "Brief description of methodology used",
         "conclusions": "Key finding and recommendation",
+        "figure_captions": {
+            # "plot_name.png": "Description of what the figure shows"
+        },
+        "equations": [
+            # {"label": "Energy Balance", "latex": "Q = m C_p \\Delta T"}
+        ],
     }
-    results_path = os.path.join(os.path.dirname(os.getcwd()), "results.json")
+    results_path = str(TASK_DIR / "results.json")
     with open(results_path, "w") as f:
         json.dump(results, f, indent=2)
     ```
@@ -176,7 +201,9 @@ Your deliverable is a populated task folder under `task_solve/`.
 - [ ] `results.json` exists in the task root with `key_results` and `validation` sections
 - [ ] All acceptance criteria from `task_spec.md` have been checked (pass or documented fail)
 - [ ] All required deliverables from `task_spec.md` are produced
-- [ ] Figures saved to `figures/` directory as PNG files
+- [ ] Figures saved to `figures/` directory as PNG files (verify files exist at absolute path, not via cwd)
+- [ ] `figure_captions` populated in results.json for key plots
+- [ ] `equations` populated in results.json with key equations used
 - [ ] Validation notes populated in `step2_analysis/notes.md`
 
 **If any gate fails, iterate on Step 2** — do NOT proceed to reporting with
@@ -372,7 +399,7 @@ in sequence. Coordinate them through the task_spec.md requirements.
 5. **Verify physics.** Mass balance, energy balance, reasonable ranges. Flag anything suspicious.
 6. **Check acceptance criteria.** Results must meet the criteria defined in `task_spec.md`.
 7. **Document assumptions.** Every engineering default you choose must be stated explicitly.
-8. **Save figures.** All plots go to `figures/` as PNG for reports.
+8. **Save figures.** All plots go to `figures/` as PNG for reports. **NEVER use `os.getcwd()` or `pathlib.Path.cwd()` to resolve figure paths** — VS Code notebooks set cwd to the workspace root, not the notebook directory. Always use the absolute path pattern from the notebook template.
 9. **Write all notes.** Research notes AND validation notes must be populated, not left as templates.
 10. **API verification.** If unsure about a NeqSim method, search the Java source to confirm it exists. Do NOT guess method names.
 11. **Units matter.** Kelvin for constructors, unit strings for setters. Always state units in output.

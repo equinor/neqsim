@@ -21,7 +21,7 @@
 		}
 	},
 	// Run after container creation: install neqsim-python and dev tools
-	"postCreateCommand": "pip install --user neqsim matplotlib pandas numpy && ./mvnw dependency:resolve",
+	"postCreateCommand": "pip install --user neqsim matplotlib pandas numpy python-docx && ./mvnw dependency:resolve",
 	"customizations": {
 		"vscode": {
 			"settings": {
