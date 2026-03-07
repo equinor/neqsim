@@ -34,6 +34,7 @@ This folder contains documentation for:
 | Document | Description |
 |----------|-------------|
 | [TASK_SOLVING_GUIDE.md](TASK_SOLVING_GUIDE) | Complete workflow for solving tasks with AI while developing the physics engine |
+| [Solve an Engineering Task](../tutorials/solve-engineering-task) | Hands-on tutorial: from blank screen to validated report |
 | [CODE_PATTERNS.md](CODE_PATTERNS) | Copy-paste code starters for every common task type |
 | [TASK_LOG.md](TASK_LOG) | Persistent memory — searchable log of all solved tasks |
 

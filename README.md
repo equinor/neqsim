@@ -88,6 +88,10 @@ NeqSim can be built using the Maven build system (https://maven.apache.org/). Al
 
 NeqSim includes an AI-assisted workflow for solving engineering tasks — from quick property lookups to full design studies — while simultaneously improving the toolbox.
 
+LLMs are excellent at engineering intent but hallucinate thermodynamics. NeqSim is exact on physics but blind to context. Together, they form a complete reasoning engine:
+
+![Separation of Concerns: Reasoning vs. Physics](docs/assets/images/separation_of_concerns.png)
+
 **Fastest way to start** (requires VS Code + GitHub Copilot Chat):
 
 ```
@@ -103,7 +107,7 @@ pip install -e devtools/
 python devtools/new_task.py "hydrate formation temperature" --type A
 ```
 
-See [task-solving workflow guide](docs/development/TASK_SOLVING_GUIDE.md) for the full 4-step process.
+See the [step-by-step tutorial](docs/tutorials/solve-engineering-task.md) or the [full workflow reference](docs/development/TASK_SOLVING_GUIDE.md).
 
 ### Initial setup
 
