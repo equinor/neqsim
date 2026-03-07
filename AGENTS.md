@@ -52,9 +52,10 @@ engineering task (hydrate prediction, pipeline sizing, compressor design, etc.):
    - Use the dual-boot setup cell (see below)
    - Run all cells, validate results against acceptance criteria
    - Save plots to `figures/` as PNG
+   - **Save results.json** in the task root (see pattern below)
 
    **Step 3 — Report**
-   - Update `step3_report/generate_report.py` with findings
+   - `generate_report.py` auto-reads `task_spec.md` and `results.json`
    - Run `python step3_report/generate_report.py` to produce Word + HTML
 
 4. **Create a PR** with reusable outputs:
@@ -95,6 +96,22 @@ except ImportError:
 - **Quick** — single property/question → minimal task_spec, few cells, brief summary
 - **Standard** — process sim, PVT study → full task_spec, complete notebook, Word + HTML
 - **Comprehensive** — multi-discipline, Class A study → detailed task_spec, multiple notebooks, full HTML with navigation
+
+### Save results.json (end of every notebook)
+
+```python
+import json, os
+results = {
+    "key_results": {"outlet_temperature_C": -18.5, "pressure_drop_bar": 3.2},
+    "validation": {"mass_balance_error_pct": 0.01, "acceptance_criteria_met": True},
+    "approach": "Used SRK EOS with classic mixing rule...",
+    "conclusions": "The analysis shows...",
+}
+with open(os.path.join(os.path.dirname(os.getcwd()), "results.json"), "w") as f:
+    json.dump(results, f, indent=2)
+```
+
+The report generator auto-reads this file to populate Results and Validation sections.
 
 ## Code Patterns
 

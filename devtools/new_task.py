@@ -525,6 +525,44 @@ Generate both Word (.docx) and HTML output.
 
 ---
 
+## Saving Results for the Report (results.json)
+
+The report generator (`step3_report/generate_report.py`) auto-reads a `results.json`
+file from the task root. Add a cell at the end of your notebook to save results:
+
+```python
+import json, os
+
+results = {
+    "key_results": {
+        # Add your key numerical results here (units in the key name)
+        "outlet_temperature_C": 25.3,
+        "pressure_drop_bar": 5.2,
+        "power_kW": 1250.0,
+    },
+    "validation": {
+        # Each check: True = pass, False = fail, or a numeric value
+        "mass_balance_error_pct": 0.01,
+        "energy_balance_error_pct": 0.5,
+        "temperature_in_range": True,
+        "pressure_positive": True,
+        "acceptance_criteria_met": True,
+    },
+    "approach": "Used SRK EOS with classic mixing rule. Process: ...",
+    "conclusions": "The analysis shows that ...",
+}
+
+results_path = os.path.join(os.path.dirname(os.getcwd()), "results.json")
+with open(results_path, "w") as f:
+    json.dump(results, f, indent=2)
+print(f"Results saved to {results_path}")
+```
+
+When you run `python step3_report/generate_report.py`, the Results and Validation
+sections are auto-populated from this file. Figures in `figures/` are also embedded.
+
+---
+
 ## Contribute Back - Reusable Outputs
 
 When your task is done, promote valuable work back into the repo so others
@@ -656,6 +694,64 @@ Reference any input data files, lab reports, or composition tables.
 - [ ] Operating conditions: [source]
 - [ ] Equipment data: [source]
 - [ ] Other: [specify]
+
+## Reference Fluid Compositions
+
+Pick a starting composition or define your own. All values in mol%.
+
+### Typical Lean Pipeline Gas
+
+| Component | mol% |
+|-----------|------|
+| methane | 85.0 |
+| ethane | 7.0 |
+| propane | 3.0 |
+| i-butane | 0.5 |
+| n-butane | 0.5 |
+| i-pentane | 0.1 |
+| n-pentane | 0.1 |
+| nitrogen | 1.5 |
+| CO2 | 2.3 |
+
+### Typical Rich Gas (with condensate potential)
+
+| Component | mol% |
+|-----------|------|
+| methane | 75.0 |
+| ethane | 10.0 |
+| propane | 5.0 |
+| i-butane | 1.5 |
+| n-butane | 2.0 |
+| i-pentane | 0.5 |
+| n-pentane | 0.5 |
+| n-hexane | 0.3 |
+| nitrogen | 1.0 |
+| CO2 | 4.2 |
+
+### Typical Wet Gas (with water for hydrate/dehydration studies)
+
+| Component | mol% |
+|-----------|------|
+| methane | 80.0 |
+| ethane | 6.0 |
+| propane | 3.0 |
+| n-butane | 1.0 |
+| CO2 | 2.0 |
+| nitrogen | 1.0 |
+| water | 7.0 |
+
+### Typical CO2-Rich Stream (CCS)
+
+| Component | mol% |
+|-----------|------|
+| CO2 | 95.0 |
+| nitrogen | 2.0 |
+| methane | 1.5 |
+| water | 1.0 |
+| H2S | 0.5 |
+
+> **Note:** Adapt these to your specific project data. For oil systems with
+> C7+ fractions, use the `@thermo.fluid` agent or define TBP/plus fractions.
 """
 
 STEP2_NOTES = """# Step 2: Analysis & Validation Notes
@@ -674,17 +770,43 @@ STEP2_NOTES = """# Step 2: Analysis & Validation Notes
 
 ---
 
-## Validation Checklist
+## Validation Summary
 
-- [ ] Mass balance closes (in = out +/- tolerance from task spec)
-- [ ] Energy balance closes
-- [ ] Temperatures in reasonable range
-- [ ] Pressures positive
-- [ ] Densities in expected range
-- [ ] Results consistent with literature/correlations
-- [ ] Results meet acceptance criteria from task spec
-- [ ] Sensitivity to key parameters checked
-- [ ] All required deliverables from task spec produced
+Fill this table as you validate each check. This maps directly to the
+`validation` section in `results.json` and auto-populates the report.
+
+| Check | Status | Value / Note |
+|-------|--------|--------------|
+| Mass balance (in = out +/- tolerance) | | |
+| Energy balance | | |
+| Temperatures in reasonable range | | |
+| Pressures positive | | |
+| Densities in expected range | | |
+| Results consistent with literature | | |
+| Acceptance criteria from task_spec met | | |
+| Sensitivity to key parameters checked | | |
+| All deliverables from task_spec produced | | |
+
+## Sensitivity Analysis (if applicable)
+
+Document any parameter sweeps performed:
+
+| Parameter Varied | Range | Effect on Output | Conclusion |
+|------------------|-------|------------------|------------|
+| | | | |
+
+## Comparison with Reference Data (if applicable)
+
+| Source | Parameter | Reference Value | NeqSim Value | Deviation |
+|--------|-----------|----------------|--------------|----------|
+| | | | | |
+
+## results.json Status
+
+- [ ] results.json saved from notebook (see task README for pattern)
+- [ ] key_results section populated with all key outputs
+- [ ] validation section populated with all checks above
+- [ ] approach and conclusions fields filled in
 """
 
 GENERATE_REPORT = '''"""
@@ -694,17 +816,22 @@ Usage:
     pip install python-docx matplotlib   (one-time setup)
     python step3_report/generate_report.py
 
-This script runs headless (no Jupyter kernel needed). It:
-1. Collects results from step2_analysis/
-2. Embeds figures from figures/
-3. Produces a .docx Word report in step3_report/
-4. Produces an .html report in step3_report/ (for large workflows)
+This script AUTO-READS data from the task folder:
+  - step1_scope_and_research/task_spec.md  -> populates Scope & Standards
+  - results.json (task root)               -> populates Results + Validation
+  - figures/*.png                          -> embeds all plots
 
-Customize the sections below for your specific task.
+It produces:
+  - step3_report/Report.docx  (Word document for formal distribution)
+  - step3_report/Report.html  (navigable HTML with sidebar)
+
+If results.json or task_spec.md are missing, the report uses placeholder text.
+Customize MANUAL_SECTIONS below for content that can't be auto-generated.
 """
 import os
 import sys
 import glob
+import json
 import base64
 from datetime import date
 
@@ -716,52 +843,90 @@ except ImportError:
     print("ERROR: python-docx not installed. Run: pip install python-docx")
     sys.exit(1)
 
-# Paths
+# ── Paths ────────────────────────────────────────────────
 TASK_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FIG_DIR = os.path.join(TASK_DIR, "figures")
 REPORT_DIR = os.path.dirname(os.path.abspath(__file__))
 DOCX_FILE = os.path.join(REPORT_DIR, "Report.docx")
 HTML_FILE = os.path.join(REPORT_DIR, "Report.html")
+RESULTS_FILE = os.path.join(TASK_DIR, "results.json")
+TASK_SPEC_FILE = os.path.join(TASK_DIR, "step1_scope_and_research", "task_spec.md")
 
-# Configuration (edit these)
+# ── Configuration (edit these) ───────────────────────────
 TITLE = "Task Report"           # <-- Change to your task title
 AUTHOR = ""                     # <-- Your name
 TASK_DATE = date.today().isoformat()
 
-# Report sections — edit content for your specific task
-SECTIONS = [
-    {
-        "heading": "1. Executive Summary",
-        "content": "[Replace this with a 3-5 sentence summary of the task, approach, "
-                   "and key findings.]",
-    },
-    {
-        "heading": "2. Problem Description",
-        "content": "[Describe the engineering question or task that was solved.]",
-    },
-    {
-        "heading": "3. Scope and Standards",
-        "content": "[List applicable standards, calculation methods, and acceptance "
-                   "criteria from the task specification.]",
-    },
-    {
-        "heading": "4. Approach",
-        "content": "[Describe the methodology: EOS used, process configuration, "
-                   "simulation setup, key assumptions.]",
-    },
-    {
-        "heading": "5. Results",
-        "content": "[Present key numerical results. Add tables and figures below.]",
-    },
-    {
-        "heading": "6. Conclusions and Recommendations",
-        "content": "[Summarize key findings and provide recommendations.]",
-    },
-    {
-        "heading": "7. References",
-        "content": "[List references from step1_scope_and_research/notes.md.]",
-    },
-]
+# ── Manual sections (edit content for your specific task) ─
+# These are used when auto-read data is not available.
+# If results.json exists, sections 5-6 are auto-populated.
+MANUAL_SECTIONS = {
+    "executive_summary": (
+        "[Replace with a 3-5 sentence summary of the task, approach, "
+        "and key findings.]"
+    ),
+    "problem_description": (
+        "[Describe the engineering question or task that was solved.]"
+    ),
+    "approach": (
+        "[Describe the methodology: EOS used, process configuration, "
+        "simulation setup, key assumptions.]"
+    ),
+    "conclusions": (
+        "[Summarize key findings and provide recommendations.]"
+    ),
+    "references": (
+        "[List references from step1_scope_and_research/notes.md.]"
+    ),
+}
+
+
+# ══════════════════════════════════════════════════════════
+# Auto-read functions
+# ══════════════════════════════════════════════════════════
+
+def load_results():
+    """Load results.json if it exists. Returns dict or None."""
+    if os.path.exists(RESULTS_FILE):
+        with open(RESULTS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        print("  Loaded results.json ({} keys)".format(len(data)))
+        return data
+    print("  No results.json found (using manual sections)")
+    return None
+
+
+def load_task_spec():
+    """Load task_spec.md and extract standards/methods/criteria sections."""
+    if not os.path.exists(TASK_SPEC_FILE):
+        print("  No task_spec.md found (using placeholder for scope)")
+        return None
+    with open(TASK_SPEC_FILE, "r", encoding="utf-8") as f:
+        content = f.read()
+    print("  Loaded task_spec.md ({} chars)".format(len(content)))
+    return content
+
+
+def extract_spec_section(spec_text, heading):
+    """Extract a section from task_spec.md by heading."""
+    if not spec_text:
+        return ""
+    lines = spec_text.split("\\n")
+    capturing = False
+    result = []
+    for line in lines:
+        if line.startswith("## ") and heading.lower() in line.lower():
+            capturing = True
+            continue
+        elif line.startswith("## ") and capturing:
+            break
+        elif capturing:
+            result.append(line)
+    text = "\\n".join(result).strip()
+    # Skip if still placeholder
+    if text and "| | | |" not in text and "[e.g.," not in text:
+        return text
+    return ""
 
 
 def get_figures():
@@ -769,7 +934,164 @@ def get_figures():
     return sorted(glob.glob(os.path.join(FIG_DIR, "*.png")))
 
 
-def build_word_report():
+def format_results_table(results):
+    """Format key_results dict as a text table."""
+    key_results = results.get("key_results", {})
+    if not key_results:
+        return "[No key_results in results.json]"
+    lines = []
+    for key, value in key_results.items():
+        label = key.replace("_", " ").title()
+        if isinstance(value, float):
+            lines.append("{}: {:.4g}".format(label, value))
+        else:
+            lines.append("{}: {}".format(label, value))
+    return "\\n".join(lines)
+
+
+def format_validation_table(results):
+    """Format validation checks as a text table."""
+    validation = results.get("validation", {})
+    if not validation:
+        return "[No validation data in results.json]"
+    lines = ["Validation Summary:", ""]
+    for check, outcome in validation.items():
+        label = check.replace("_", " ").title()
+        if isinstance(outcome, bool):
+            status = "PASS" if outcome else "FAIL"
+        elif isinstance(outcome, (int, float)):
+            status = "{:.4g}".format(outcome)
+        else:
+            status = str(outcome)
+        lines.append("  {}: {}".format(label, status))
+    return "\\n".join(lines)
+
+
+def format_validation_html(results):
+    """Format validation checks as an HTML table."""
+    validation = results.get("validation", {})
+    if not validation:
+        return "<p><em>No validation data in results.json</em></p>"
+    rows = ""
+    for check, outcome in validation.items():
+        label = check.replace("_", " ").title()
+        if isinstance(outcome, bool):
+            status = "PASS" if outcome else "FAIL"
+            color = "#28a745" if outcome else "#dc3545"
+        elif isinstance(outcome, (int, float)):
+            status = "{:.4g}".format(outcome)
+            color = "#333"
+        else:
+            status = str(outcome)
+            color = "#333"
+        rows += \'<tr><td>{}</td><td style="color: {}; font-weight: bold;">{}</td></tr>\\n\'.format(
+            label, color, status)
+    return \'<table><tr><th>Check</th><th>Result</th></tr>\\n{}</table>\'.format(rows)
+
+
+# ══════════════════════════════════════════════════════════
+# Build sections (auto-populated where possible)
+# ══════════════════════════════════════════════════════════
+
+def build_sections(results, task_spec):
+    """Build report sections, auto-populating from results.json and task_spec.md."""
+    sections = []
+
+    # 1. Executive Summary
+    sections.append({
+        "heading": "1. Executive Summary",
+        "content": MANUAL_SECTIONS["executive_summary"],
+    })
+
+    # 2. Problem Description
+    sections.append({
+        "heading": "2. Problem Description",
+        "content": MANUAL_SECTIONS["problem_description"],
+    })
+
+    # 3. Scope and Standards (auto-populated from task_spec.md)
+    scope_parts = []
+    standards = extract_spec_section(task_spec, "Applicable Standards")
+    if standards:
+        scope_parts.append("Applicable Standards:\\n" + standards)
+    methods = extract_spec_section(task_spec, "Calculation Methods")
+    if methods:
+        scope_parts.append("Calculation Methods:\\n" + methods)
+    criteria = extract_spec_section(task_spec, "Acceptance Criteria")
+    if criteria:
+        scope_parts.append("Acceptance Criteria:\\n" + criteria)
+    envelope = extract_spec_section(task_spec, "Operating Envelope")
+    if envelope:
+        scope_parts.append("Operating Envelope:\\n" + envelope)
+
+    scope_content = "\\n\\n".join(scope_parts) if scope_parts else (
+        "[Auto-populated from task_spec.md when filled in. "
+        "Edit step1_scope_and_research/task_spec.md and re-run.]"
+    )
+    sections.append({
+        "heading": "3. Scope and Standards",
+        "content": scope_content,
+    })
+
+    # 4. Approach
+    approach = MANUAL_SECTIONS["approach"]
+    if results and results.get("approach"):
+        approach = results["approach"]
+    sections.append({
+        "heading": "4. Approach",
+        "content": approach,
+    })
+
+    # 5. Results (auto-populated from results.json)
+    if results and results.get("key_results"):
+        results_text = format_results_table(results)
+    else:
+        results_text = (
+            "[Auto-populated from results.json when created by notebook. "
+            "Save results with the pattern shown in the task README.]"
+        )
+    sections.append({
+        "heading": "5. Results",
+        "content": results_text,
+        "has_figures": True,
+    })
+
+    # 6. Validation Summary (auto-populated from results.json)
+    if results and results.get("validation"):
+        validation_text = format_validation_table(results)
+    else:
+        validation_text = (
+            "[Auto-populated from results.json validation section. "
+            "Add validation checks to your notebook results output.]"
+        )
+    sections.append({
+        "heading": "6. Validation Summary",
+        "content": validation_text,
+    })
+
+    # 7. Conclusions and Recommendations
+    conclusions = MANUAL_SECTIONS["conclusions"]
+    if results and results.get("conclusions"):
+        conclusions = results["conclusions"]
+    sections.append({
+        "heading": "7. Conclusions and Recommendations",
+        "content": conclusions,
+    })
+
+    # 8. References
+    sections.append({
+        "heading": "8. References",
+        "content": MANUAL_SECTIONS["references"],
+    })
+
+    return sections
+
+
+# ══════════════════════════════════════════════════════════
+# Word report
+# ══════════════════════════════════════════════════════════
+
+def build_word_report(sections):
     """Build the Word document."""
     doc = Document()
 
@@ -781,12 +1103,15 @@ def build_word_report():
     doc.add_page_break()
 
     # Add all sections
-    for section in SECTIONS:
+    for section in sections:
         doc.add_heading(section["heading"], level=1)
-        doc.add_paragraph(section["content"])
+        # Split content into paragraphs
+        for para_text in section["content"].split("\\n\\n"):
+            if para_text.strip():
+                doc.add_paragraph(para_text.strip())
 
         # Embed figures after Results section
-        if "Results" in section["heading"]:
+        if section.get("has_figures"):
             figures = get_figures()
             if figures:
                 for fig_path in figures:
@@ -814,7 +1139,11 @@ def build_word_report():
     print("Word report saved: {}".format(DOCX_FILE))
 
 
-def build_html_report():
+# ══════════════════════════════════════════════════════════
+# HTML report
+# ══════════════════════════════════════════════════════════
+
+def build_html_report(sections, results=None):
     """Build an HTML report with embedded figures and navigation sidebar."""
     figures = get_figures()
 
@@ -835,22 +1164,48 @@ def build_html_report():
     else:
         figure_html = "<p><em>No figures found in figures/ directory.</em></p>"
 
+    # Build validation HTML
+    validation_html = ""
+    if results and results.get("validation"):
+        validation_html = format_validation_html(results)
+
+    # Build key results HTML table
+    results_table_html = ""
+    if results and results.get("key_results"):
+        rows = ""
+        for key, value in results["key_results"].items():
+            label = key.replace("_", " ").title()
+            if isinstance(value, float):
+                val_str = "{:.4g}".format(value)
+            else:
+                val_str = str(value)
+            rows += "<tr><td>{}</td><td>{}</td></tr>\\n".format(label, val_str)
+        results_table_html = \'<table><tr><th>Parameter</th><th>Value</th></tr>\\n{}</table>\'.format(rows)
+
     # Build section HTML and navigation
     nav_items = ""
     section_html = ""
-    for section in SECTIONS:
+    for section in sections:
         section_id = section["heading"].lower().replace(" ", "-").replace(".", "")
         nav_items += \'    <li><a href="#{}">{}</a></li>\\n\'.format(
             section_id, section["heading"]
         )
-        content = section["content"]
-        # Insert figures after Results section
-        if "Results" in section["heading"]:
-            content += figure_html
+        content = section["content"].replace("\\n", "<br>")
+
+        # Insert auto-generated HTML for special sections
+        if section.get("has_figures"):
+            if results_table_html:
+                content = results_table_html + figure_html
+            else:
+                content += figure_html
+
+        if "Validation" in section["heading"] and validation_html:
+            content = validation_html
+
         section_html += """
         <section id="{}">
             <h2>{}</h2>
-            <p>{}</p>
+            <div>{}</div>
         </section>
         """.format(section_id, section["heading"], content)
 
@@ -885,6 +1240,8 @@ def build_html_report():
         table {{ border-collapse: collapse; width: 100%; margin: 1rem 0; }}
         th, td {{ border: 1px solid #ddd; padding: 0.5rem 0.75rem; text-align: left; }}
         th {{ background: #f5f5f5; }}
+        .pass {{ color: #28a745; font-weight: bold; }}
+        .fail {{ color: #dc3545; font-weight: bold; }}
         @media (max-width: 768px) {{
             nav {{ position: static; width: 100%; min-height: auto; }}
             main {{ margin-left: 0; padding: 1rem; }}
@@ -919,12 +1276,34 @@ def build_html_report():
     print("HTML report saved: {}".format(HTML_FILE))
 
 
+# ══════════════════════════════════════════════════════════
+# Main
+# ══════════════════════════════════════════════════════════
+
 if __name__ == "__main__":
-    build_word_report()
-    build_html_report()
+    print("Generating reports for: {}".format(TITLE))
     print("")
-    print("Both reports generated. Open Report.html in a browser for")
-    print("navigable view, or Report.docx for formal distribution.")
+
+    # Auto-read task data
+    results = load_results()
+    task_spec = load_task_spec()
+
+    # Build sections (auto-populated where data exists)
+    sections = build_sections(results, task_spec)
+
+    # Generate both formats
+    print("")
+    build_word_report(sections)
+    build_html_report(sections, results)
+    print("")
+    print("Both reports generated.")
+    print("  Open Report.html in a browser for navigable view.")
+    print("  Open Report.docx for formal distribution.")
+    if not results:
+        print("")
+        print("TIP: Create results.json in the task root to auto-populate")
+        print("     the Results and Validation sections. See the task README")
+        print("     for the results.json pattern.")
 '''
 
 

@@ -623,6 +623,94 @@ Before considering a task done:
 
 ---
 
+## Engineering Rigor: Data Flow Between Steps
+
+A strong engineering workflow is not just three steps — it's a **connected
+pipeline** where each step feeds data into the next. The task-solving framework
+enforces this connection through two mechanisms:
+
+### The Data Bridge: results.json
+
+The notebook in Step 2 produces a `results.json` file that the report generator
+in Step 3 reads automatically. This eliminates manual copy-paste of results
+into reports and ensures the report always reflects the latest simulation run.
+
+```
+  Step 1                 Step 2                   Step 3
+  task_spec.md  ──────>  notebook reads spec  ──>  generate_report.py
+                         notebook produces   ──>    auto-reads
+                         results.json              results.json
+                         figures/*.png             figures/*.png
+```
+
+**How it works:**
+
+1. Fill `task_spec.md` with standards, methods, and acceptance criteria
+2. The notebook reads the spec and runs the simulation
+3. At the end of the notebook, save structured results:
+   ```python
+   import json, os
+   results = {
+       "key_results": {
+           "outlet_temperature_C": -18.5,
+           "pressure_drop_bar": 3.2,
+       },
+       "validation": {
+           "mass_balance_error_pct": 0.01,
+           "acceptance_criteria_met": True,
+       },
+       "approach": "Used SRK EOS with classic mixing rule...",
+       "conclusions": "The JT cooling achieves the required dew point...",
+   }
+   with open(os.path.join(os.path.dirname(os.getcwd()), "results.json"), "w") as f:
+       json.dump(results, f, indent=2)
+   ```
+4. Run `python step3_report/generate_report.py` — the Results, Validation, and
+   Scope sections auto-populate from `results.json` and `task_spec.md`
+
+### Quality Gates
+
+The workflow enforces quality gates between steps:
+
+**Gate 1: Step 1 → Step 2** (scope must be defined before analysis)
+- task_spec.md must have at least: EOS/method, acceptance criteria, and
+  operating conditions filled in
+- For Standard/Comprehensive tasks: standards, deliverables, and envelope defined
+
+**Gate 2: Step 2 → Step 3** (results must be validated before reporting)
+- Every notebook cell executes without errors
+- `results.json` exists with `key_results` and `validation` sections
+- All acceptance criteria from task_spec.md have been checked
+- All deliverables from task_spec.md are produced
+- Figures saved to `figures/` as PNG
+
+### Structured Validation
+
+The `step2_analysis/notes.md` template includes a validation summary table
+that maps directly to the `validation` section in `results.json`:
+
+| Check | Status | Value / Note |
+|-------|--------|--------------|
+| Mass balance | PASS | 0.01% error |
+| Energy balance | PASS | 0.3% error |
+| Acceptance criteria met | PASS | All 3 criteria satisfied |
+
+For tasks that involve comparison with reference data, the template also
+includes a comparison table:
+
+| Source | Parameter | Reference | NeqSim | Deviation |
+|--------|-----------|----------|--------|-----------|
+| NIST | Density kg/m3 | 820.3 | 818.7 | 0.2% |
+
+### Reference Fluid Compositions
+
+The `task_spec.md` template includes common fluid compositions (lean gas,
+rich gas, wet gas, CO2 stream) that users can pick as starting points. This
+eliminates the common problem of spending time looking up typical compositions
+and ensures consistency across tasks.
+
+---
+
 ## Making Solutions Reusable
 
 Every solved task should be findable by the next person (or AI session).

@@ -148,14 +148,48 @@ Your deliverable is a populated task folder under `task_solve/`.
     - Whether acceptance criteria from task spec are met
     - Any sensitivity analysis performed
 
+14. **Save results.json** in the task root folder. Add a final notebook cell:
+    ```python
+    import json, os
+    results = {
+        "key_results": {
+            # All key numerical outputs with units in the key name
+        },
+        "validation": {
+            # Each check maps to True/False or a numeric value
+            "mass_balance_error_pct": 0.01,
+            "acceptance_criteria_met": True,
+        },
+        "approach": "Brief description of methodology used",
+        "conclusions": "Key finding and recommendation",
+    }
+    results_path = os.path.join(os.path.dirname(os.getcwd()), "results.json")
+    with open(results_path, "w") as f:
+        json.dump(results, f, indent=2)
+    ```
+
+### Quality Gate: Step 2 → Step 3
+
+**Before moving to Step 3 (Report), verify ALL of these:**
+
+- [ ] Every notebook cell executes without errors
+- [ ] `results.json` exists in the task root with `key_results` and `validation` sections
+- [ ] All acceptance criteria from `task_spec.md` have been checked (pass or documented fail)
+- [ ] All required deliverables from `task_spec.md` are produced
+- [ ] Figures saved to `figures/` directory as PNG files
+- [ ] Validation notes populated in `step2_analysis/notes.md`
+
+**If any gate fails, iterate on Step 2** — do NOT proceed to reporting with
+incomplete or unvalidated results.
+
 ### Phase 3: Report (Step 3)
 
 14. **Update `generate_report.py`** in `step3_report/`:
+    - The report **auto-reads** `task_spec.md` and `results.json` — verify both exist
     - Fill in the executive summary with actual findings
-    - Add a results table with key numerical values
-    - Fill in the "Scope and Standards" section from task_spec.md
+    - Add conclusions and recommendations to `MANUAL_SECTIONS` (or rely on `results.json`)
     - Ensure all figures from `figures/` will be embedded
-    - Add conclusions and recommendations
+    - The Scope/Standards, Results, and Validation sections auto-populate from data files
 
 15. **Run the report generator** to produce both Word and HTML:
     ```
