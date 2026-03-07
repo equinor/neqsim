@@ -96,5 +96,9 @@ src/main/**/*.gif
 output/
 *.dot
 
+# Python bytecode
+__pycache__/
+*.pyc
+
 # Task-solving workspace (local working area, not tracked)
 task_solve/
