@@ -45,7 +45,22 @@ This folder is a **local working area** for solving engineering tasks using the
 Each task gets its own subfolder with research notes, simulation results,
 figures, and reports.
 
-> **New to NeqSim?** Run `python devtools/new_task.py "your task"` to get started.
+## Quick Start
+
+Open VS Code Copilot Chat and type:
+
+```
+@solve.task JT cooling for rich gas at 100 bara
+```
+
+That's it. The agent creates the folder, researches the topic, builds and runs
+a simulation, evaluates the results, and generates a Word report starter — all
+in one session. You solve advanced engineering tasks while simultaneously
+improving the NeqSim toolbox.
+
+> **Alternative:** If you prefer a manual step-by-step approach, run
+> `python devtools/new_task.py "your task"` and follow the prompts in the
+> generated README.
 
 ---
 
@@ -82,31 +97,30 @@ pip install python-docx matplotlib # for Word reports and plots
 You have an engineering question — "What's the hydrate temperature for this
 gas?" or "Size a 3-stage compressor train." You don't want to learn Java or git.
 
-1. Run: `python devtools/new_task.py "hydrate temperature for wet gas" --type A`
-2. Open VS Code Copilot Chat
-3. Paste the prompt from the generated README
-4. The AI creates a notebook, runs it, and gives you results
+1. Open VS Code Copilot Chat
+2. Type: `@solve.task hydrate temperature for wet gas at 100 bara`
+3. The agent creates a folder, runs the simulation, and gives you results
+4. Find the Word report in `task_solve/.../step4_report/Report.docx`
 
 ### Path B: Developer (I want to extend NeqSim)
 
 You're solving a task AND improving the NeqSim codebase. When the API is
 missing something, you add it mid-task — new methods, equipment, or models.
 
-1. Run: `python devtools/new_task.py "add JT coefficient method" --type E`
-2. Work through all 4 steps
-3. Promote reusable code back into `src/main/`, `src/test/`, or `examples/`
-4. Log the solution in `docs/development/TASK_LOG.md`
+1. Type: `@solve.task add JT coefficient method` (or run `python devtools/new_task.py` for manual control)
+2. Work through all 4 steps — the agent flags API gaps as it goes
+3. Add the missing Java code, rebuild, and the notebook picks it up immediately
+4. Promote reusable code back into `src/main/`, `src/test/`, or `examples/`
 
 ### Path C: Researcher (I need a technical assessment)
 
 You're producing a deliverable — a report, technology screening, or design
 study. The 4 steps map directly to a professional workflow.
 
-1. Run: `python devtools/new_task.py "CCS pipeline design assessment" --type F --author "Your Name"`
-2. Step 1: Literature review (NotebookLM or Copilot)
-3. Step 2: NeqSim simulations with Copilot
-4. Step 3: Iterate with Claude Opus 4.6 to refine
-5. Step 4: Generate Word report
+1. Type: `@solve.task CCS pipeline design assessment per DNV-OS-F101`
+2. Review and refine the research notes the agent produces
+3. Iterate on evaluation with the agent or Claude Opus 4.6
+4. Run `python step4_report/generate_report.py` to produce the final Word doc
 
 ---
 
@@ -201,6 +215,7 @@ The deliverable for every completed task is a **Word report** (`.docx`).
 
 | Agent | Best For | Example |
 |-------|----------|---------|
+| `@solve.task` | **Full 4-step workflow** (does everything) | "JT cooling for rich gas at 100 bara" |
 | `@thermo.fluid` | Fluid setup, EOS, flash, properties | "Density of CO2-methane mix at 200 bar" |
 | `@solve.process` | Complete simulation -> notebook | "TEG dehydration for 50 MMSCFD" |
 | `@pvt.simulation` | PVT lab experiments | "CME test at 100C for this oil" |
@@ -678,13 +693,15 @@ def create_task(title, task_type="B", author=""):
 
     print("Created: task_solve/{}".format(folder_name))
     print("")
-    print("Next steps:")
-    print("  1. Edit task_solve/{}/README.md".format(folder_name))
-    print("  2. Or paste this into VS Code Copilot Chat:")
+    print("Next steps (pick one):")
     print("")
-    print("     I'm working on a task in task_solve/{}/".format(folder_name))
-    print("     Task: {}".format(title))
-    print("     Follow the 4-step workflow in task_solve/README.md.")
+    print("  Recommended - Let Copilot do everything:")
+    print("    Open VS Code Copilot Chat and type:")
+    print("")
+    print("    @solve.task {}".format(title))
+    print("")
+    print("  Alternative - Follow prompts manually:")
+    print("    Open task_solve/{}/README.md".format(folder_name))
     print("")
     return task_dir
 
