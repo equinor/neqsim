@@ -16,6 +16,10 @@ validates results, and generates a Word report — all in one session. The scrip
 alternative is `python devtools/new_task.py "your task"`. See
 `docs/development/TASK_SOLVING_GUIDE.md` for the full workflow.
 
+**Using OpenAI Codex?** It reads `AGENTS.md` (repo root) automatically and
+`.openapi/codex.yaml` sets up the sandbox. Give it a one-shot prompt and it
+runs the full workflow including PR creation.
+
 ## What Is NeqSim?
 
 Java library for thermodynamic fluid properties and process simulation.

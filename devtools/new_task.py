@@ -30,6 +30,7 @@ TASK_TYPES = {
     "D": "Standards",
     "E": "Feature",
     "F": "Design",
+    "G": "Workflow",
 }
 
 
@@ -41,8 +42,8 @@ TASK_TYPES = {
 WORKSPACE_README = r"""# AI-Supported Task Solving While Developing
 
 This folder is a **local working area** for solving engineering tasks using the
-4-step AI-assisted workflow. It is in `.gitignore` — nothing here is committed.
-Each task gets its own subfolder with research notes, simulation results,
+3-step AI-assisted workflow. It is in `.gitignore` — nothing here is committed.
+Each task gets its own subfolder with scope & research notes, simulation results,
 figures, and reports.
 
 ## Quick Start
@@ -54,7 +55,7 @@ Open VS Code Copilot Chat and type:
 ```
 
 That's it. The agent creates the folder, researches the topic, builds and runs
-a simulation, evaluates the results, and generates a Word report starter — all
+a simulation, validates the results, and generates reports (Word + HTML) — all
 in one session. You solve advanced engineering tasks while simultaneously
 improving the NeqSim toolbox.
 
@@ -71,8 +72,8 @@ improving the NeqSim toolbox.
 | Python 3.8+ | [python.org](https://python.org) | All steps |
 | Java JDK 8+ | Bundled via `devtools/` setup | Step 2 simulations |
 | NeqSim dev tools | `pip install -e devtools/` (from repo root) | Step 2 — boots the JVM and gives you `neqsim_dev_setup` |
-| VS Code + GitHub Copilot Chat | VS Code marketplace | Steps 2-4 AI assistance |
-| python-docx | `pip install python-docx matplotlib` | Step 4 Word report |
+| VS Code + GitHub Copilot Chat | VS Code marketplace | All steps |
+| python-docx | `pip install python-docx matplotlib` | Step 3 reports |
 | Google NotebookLM (optional) | [notebooklm.google.com](https://notebooklm.google.com) | Step 1 research (or use Copilot — see below) |
 
 > **Important:** For the task-solving workflow use `pip install -e devtools/` — this
@@ -100,7 +101,7 @@ gas?" or "Size a 3-stage compressor train." You don't want to learn Java or git.
 1. Open VS Code Copilot Chat
 2. Type: `@solve.task hydrate temperature for wet gas at 100 bara`
 3. The agent creates a folder, runs the simulation, and gives you results
-4. Find the Word report in `task_solve/.../step4_report/Report.docx`
+4. Find reports in `task_solve/.../step3_report/`
 
 ### Path B: Developer (I want to extend NeqSim)
 
@@ -108,19 +109,50 @@ You're solving a task AND improving the NeqSim codebase. When the API is
 missing something, you add it mid-task — new methods, equipment, or models.
 
 1. Type: `@solve.task add JT coefficient method` (or run `python devtools/new_task.py` for manual control)
-2. Work through all 4 steps — the agent flags API gaps as it goes
+2. Work through all 3 steps — the agent flags API gaps as it goes
 3. Add the missing Java code, rebuild, and the notebook picks it up immediately
 4. Promote reusable code back into `src/main/`, `src/test/`, or `examples/`
 
 ### Path C: Researcher (I need a technical assessment)
 
 You're producing a deliverable — a report, technology screening, or design
-study. The 4 steps map directly to a professional workflow.
+study. The 3 steps map directly to a professional workflow.
 
-1. Type: `@solve.task CCS pipeline design assessment per DNV-OS-F101`
-2. Review and refine the research notes the agent produces
-3. Iterate on evaluation with the agent or Claude Opus 4.6
-4. Run `python step4_report/generate_report.py` to produce the final Word doc
+1. Type: `@solve.task field development concept selection for deepwater gas`
+2. Review and refine the scope and research notes the agent produces
+3. Iterate on analysis — the agent refines until results validate
+4. Run report generation to produce Word + HTML deliverables
+
+### Path D: Other AI Tools (OpenAI Codex, Claude Code, Cursor, etc.)
+
+The workflow is **not tied to VS Code Copilot Chat**. The script, folder
+structure, templates, and report generator work from any terminal. Any AI
+coding agent that can read files and run commands can drive the workflow.
+
+**How to start a task from OpenAI Codex (or any AI agent):**
+
+1. Run the setup: `python devtools/new_task.py "your task" --type B`
+2. Point the agent to the guide:
+   ```
+   Read docs/development/TASK_SOLVING_GUIDE.md for the full workflow.
+   Read the task README at task_solve/YYYY-MM-DD_your_task/README.md.
+   Follow the 3-step workflow: fill task_spec.md, create a notebook
+   in step2_analysis/, then run step3_report/generate_report.py.
+   ```
+3. The AI agent reads the templates, fills in the task spec, creates notebooks,
+   and runs the report generator — same output, different tool.
+
+**What works everywhere** (no VS Code required):
+- `python devtools/new_task.py` — creates task folders
+- `task_spec.md` — scope document (plain markdown)
+- Jupyter notebooks — work in any Python environment
+- `python step3_report/generate_report.py` — generates Word + HTML
+- `git` + `gh pr create` — contributing back via PR
+
+**What's VS Code Copilot-specific** (optional convenience):
+- `@solve.task` agent — automates the full workflow (the agent reads
+  `.github/agents/solve.task.agent.md` for its instructions)
+- Specialist agents (`@thermo.fluid`, `@solve.process`, etc.)
 
 ---
 
@@ -134,39 +166,92 @@ study. The 4 steps map directly to a professional workflow.
 | **D - Standards** | Wobbe index per ISO 6976; hydrocarbon dew point; AGA flow measurement |
 | **E - Feature** | Add anti-surge to compressor; fix CPA solver for CO2-water; new property method |
 | **F - Design** | Pipeline wall thickness per DNV; separator mechanical design; PSV sizing |
+| **G - Workflow** | Field development concept selection; technology screening; design basis |
 
 ---
 
-## The 4-Step Workflow
+## Adaptive Complexity — One Workflow, Any Scale
+
+The framework adapts automatically. You don't need to configure anything — the
+agent scales its depth based on what you ask for:
+
+| Scale | Example | What Happens |
+|-------|---------|-------------|
+| **Quick** | "density of CO2 at 200 bar" | Minimal task_spec, one notebook cell, brief summary — done in minutes |
+| **Standard** | "TEG dehydration for 50 MMSCFD" | Full task_spec, complete notebook, Word + HTML reports |
+| **Comprehensive** | "field development concept selection per NORSOK" | Detailed task_spec with all standards, multiple notebooks per discipline, full HTML report with navigation |
+
+**The same `@solve.task` command handles all of these.** The agent reads your
+request and decides how deep to go. Specify standards ("per DNV-OS-F101") and
+deliverables ("with sensitivity analysis and cost estimate") to guide depth.
+
+### Guiding the Analysis
+
+You control the scope through your request — the more you specify, the deeper
+the analysis. Compare:
+
+- **Simple:** `@solve.task hydrate temperature for wet gas at 100 bara`
+  → Quick calculation, one-page result
+
+- **Medium:** `@solve.task hydrate temperature for wet gas at 100 bara, per NORSOK P-001, with inhibitor dosing curve`
+  → Standard analysis with standards compliance and sensitivity plot
+
+- **Full study:** `@solve.task field development flow assurance assessment per NORSOK P-001 and DNV-RP-F109, covering hydrate, wax, corrosion, and slugging for 50 km subsea tieback, deliver phase envelopes, inhibitor curves, pipeline profiles, and design basis document`
+  → Multi-notebook comprehensive study with full deliverable set
+
+---
+
+## The 3-Step Workflow
 
 ```
- STEP 1              STEP 2              STEP 3              STEP 4
- Research            Technical Analysis  Iterative Result    Final Technical
-                     via NeqSim &        Evaluation          Writing
- Google NotebookLM   Copilot                                 -> Word Report
-   or Copilot                            GitHub Copilot
-                     NeqSim API +        + Claude Opus 4.6   Claude Opus 4.6
- + open sources      GitHub Copilot                          + GitHub Copilot
- Build knowledge     Deep analysis       Refine results
- base                                                        Synthesize into
-                                                             assessment
+ STEP 1                    STEP 2                    STEP 3
+ Scope & Research          Analysis & Evaluation     Report
+
+ Define standards,         Build simulation,         Word + HTML
+ methods, deliverables     run, validate, iterate    deliverables
+
+ Google NotebookLM         NeqSim API +              python-docx
+  or Copilot               GitHub Copilot            + HTML template
+ + open sources
+                           Iteration is implicit:
+ Build knowledge base      refine until validated
 ```
 
-### Step 1: Research (Google NotebookLM or GitHub Copilot)
+### Step 1: Scope & Research
 
-Use **either** tool — or both — depending on your workflow:
+This step has two parts: **define the scope** (what to do) and **research** (gather background).
 
-#### Option A: Google NotebookLM (best for deep literature review)
+#### Part A: Task Specification (scope)
+
+Before any analysis, define what governs the work:
+
+- **Applicable standards**: Which codes and standards apply? (e.g., NORSOK P-001,
+  ISO 6976, DNV-OS-F101, API 520, ASME B31.3, company TR documents)
+- **Calculation methods/models**: Which EOS, correlations, or pipe flow models
+  to use? (e.g., SRK-CPA for polar systems, Beggs & Brill for multiphase flow,
+  OLGA-style thermal-hydraulic)
+- **Required deliverables**: What must the final output include? (e.g., phase
+  envelopes, pressure profiles, sizing calculations, sensitivity plots, VFP tables)
+- **Acceptance criteria**: Tolerances, design factors, safety margins, convergence
+  targets (e.g., mass balance < 0.1%, design factor per DNV = 0.72)
+- **Operating envelope**: Range of conditions to cover (pressures, temperatures,
+  flow rates, compositions)
+
+Fill in `step1_scope_and_research/task_spec.md` — this is the "brief" that
+guides everything in Step 2.
+
+#### Part B: Research (background knowledge)
+
+Use **either** Google NotebookLM or Copilot — or both:
+
+**Option A: Google NotebookLM** (best for deep literature review)
 - Upload PDFs, standards documents, and technical papers
 - Ask questions across all your sources at once
 - Get cited answers with references back to source pages
-- Good for: collecting correlations, comparing standards, summarising long documents
 
-#### Option B: GitHub Copilot in VS Code (best for code-adjacent research)
+**Option B: GitHub Copilot in VS Code** (best for code-adjacent research)
 - Open Copilot Chat and ask research questions directly
 - Copilot can search the web, read repo docs, and summarise findings
-- Create a markdown file in `step1_research/` and ask Copilot to populate it
-- Good for: quick lookups, NeqSim API questions, formula verification
 
 **Copilot research workflow:**
 
@@ -179,35 +264,35 @@ Use **either** tool — or both — depending on your workflow:
    2. Typical operating ranges and design rules of thumb
    3. Relevant industry standards (API, ASME, ISO, NORSOK, DNV)
    4. What NeqSim classes/methods already exist for this
-   Write the findings to step1_research/notes.md in my task folder.
+   Write the findings to step1_scope_and_research/notes.md in my task folder.
    ```
 3. Review and refine — ask follow-up questions
-4. Save the final notes in `step1_research/`
+4. Save the final notes in `step1_scope_and_research/`
 
-**General guidance for Step 1:**
-- Build a comprehensive knowledge base on the topic
-- Collect relevant papers, standards, correlations, and reference data
-- Save research notes and sources in `step1_research/`
+### Step 2: Analysis & Evaluation
 
-### Step 2: Technical Analysis via NeqSim & Copilot
-- Combine GitHub Copilot with the NeqSim physics-based API
-- Use operational data for deep technology analysis
-- Write simulations (Java tests or Jupyter notebooks) inside the repo
-- Save simulation code, results, and data in `step2_analysis/`
+This step combines building, running, and validating the simulation in one
+iterative flow. You don't need to separate "analysis" from "evaluation" — it's
+a natural loop:
 
-### Step 3: Iterative Result Evaluation
-- Use GitHub Copilot and Claude Opus 4.6 to evaluate results
-- Refine the analysis through continuous iterations
-- Compare against literature, experimental data, and known benchmarks
-- Validate physics: mass balance, energy balance, reasonable ranges
-- Document iterations and refinements in `step3_evaluation/`
+1. Build the simulation (notebook or Java test)
+2. Run it and inspect results
+3. Check physics (mass/energy balance, reasonable ranges)
+4. Compare against reference data from Step 1
+5. If results are off → adjust and rerun (iteration is implicit)
+6. When satisfied → save final results and figures
 
-### Step 4: Final Technical Writing -> Word Report
-The deliverable for every completed task is a **Word report** (`.docx`).
-- Synthesize all findings into a professional technology assessment
-- Generate Word report using `python-docx` via `generate_report.py`
-- Include all figures from `figures/` directory
-- Run: `python step4_report/generate_report.py`
+All simulation code, results, and validation notes go to `step2_analysis/`.
+
+### Step 3: Report (Word + HTML)
+
+The deliverables are a **Word report** (`.docx`) and optionally an **HTML report**.
+
+- Word report: formal document for sharing/review, generated via `generate_report.py`
+- HTML report: interactive, navigable document — ideal for large workflows with
+  many sections, embedded plots, and linked references
+- Run: `python step3_report/generate_report.py`
+- Both formats embed all figures from `figures/` directory
 
 ---
 
@@ -215,7 +300,7 @@ The deliverable for every completed task is a **Word report** (`.docx`).
 
 | Agent | Best For | Example |
 |-------|----------|---------|
-| `@solve.task` | **Full 4-step workflow** (does everything) | "JT cooling for rich gas at 100 bara" |
+| `@solve.task` | **Full 3-step workflow** (does everything) | "JT cooling for rich gas at 100 bara" |
 | `@thermo.fluid` | Fluid setup, EOS, flash, properties | "Density of CO2-methane mix at 200 bar" |
 | `@solve.process` | Complete simulation -> notebook | "TEG dehydration for 50 MMSCFD" |
 | `@pvt.simulation` | PVT lab experiments | "CME test at 100C for this oil" |
@@ -237,6 +322,31 @@ Copy your notebook to `examples/notebooks/`.
 ### Full (if you extended the API)
 Write a test in `src/test/java/neqsim/` and run `mvnw.cmd test`.
 
+### Create a Pull Request (if you want to contribute code or examples)
+
+When your task produces reusable outputs — new methods, tests, notebooks, or
+documentation — create a PR directly from the task:
+
+```powershell
+# 1. Create a branch from your current branch
+git checkout -b task/your-task-name
+
+# 2. Stage the files you want to contribute
+git add src/test/java/neqsim/...             # tests
+git add examples/notebooks/your_notebook.ipynb # notebook
+git add docs/development/TASK_LOG.md          # task log entry
+
+# 3. Commit and push
+git commit -m "Add [description] from task solving workflow"
+git push -u origin task/your-task-name
+
+# 4. Create the PR (requires GitHub CLI: https://cli.github.com/)
+gh pr create --title "Add [description]" --body "From task: [task title]"
+```
+
+> **Tip:** The `@solve.task` agent can do this for you — just ask
+> "create a PR with the reusable outputs from this task".
+
 ---
 
 ## Troubleshooting
@@ -247,12 +357,45 @@ Write a test in `src/test/java/neqsim/` and run `mvnw.cmd test`.
 | Copilot Chat doesn't know NeqSim | Start prompt with "Read CONTEXT.md for orientation" |
 | Simulation gives wrong numbers | Check EOS choice, mixing rule, units (Kelvin vs Celsius!) |
 | Want to share task with colleague | Zip the task folder and send it - it's self-contained |
+
+---
+
+## Large Workflows (e.g., Field Development, Class A Studies)
+
+For complex tasks that span multiple engineering disciplines (field development
+concept selection, design basis studies, technology screening, Class A/B
+estimates), the framework scales naturally:
+
+1. **Step 1 (Scope)** becomes critical — define ALL standards, methods, and
+   deliverables upfront in `task_spec.md`. For Class A studies, this may
+   reference 10+ standards and produce a detailed work breakdown.
+2. **Step 2 (Analysis)** can contain multiple notebooks, each covering a
+   sub-analysis (e.g., `01_reservoir_fluid.ipynb`, `02_pipeline_sizing.ipynb`,
+   `03_process_train.ipynb`, `04_flow_assurance.ipynb`, `05_cost_estimation.ipynb`)
+3. **Step 3 (Report)** produces a comprehensive HTML document with navigation
+   sidebar, linking all sub-analyses — plus a Word summary for formal distribution
+
+The task type **G (Workflow)** is intended for these multi-discipline studies.
+
+### Example: Field Development Concept Selection
+
+```
+@solve.task field development concept selection for 200 MMSCFD deepwater gas,
+  per NORSOK P-001, Z-013, L-001, and DNV-OS-F101.
+  Evaluate subsea tieback vs. FPSO vs. fixed platform.
+  Deliver: reservoir fluid characterization, process train sizing,
+  pipeline hydraulics, flow assurance assessment (hydrate + wax + corrosion),
+  mechanical design summary, CAPEX/OPEX ranking, and recommendation report.
+```
+
+This generates 5-8 notebooks, a full task_spec.md referencing all standards,
+and a navigable HTML report — a complete engineering study.
 """
 
 TASK_README = r"""# Task: [Title]
 
 **Date:** YYYY-MM-DD
-**Type:** A (Property) | B (Process) | C (PVT) | D (Standards) | E (Feature) | F (Design)
+**Type:** A (Property) | B (Process) | C (PVT) | D (Standards) | E (Feature) | F (Design) | G (Workflow)
 **Status:** In Progress | Complete
 
 ## Problem Statement
@@ -261,11 +404,23 @@ TASK_README = r"""# Task: [Title]
 
 ---
 
-## Step 1: Research
+## Step 1: Scope & Research
+
+### Part A: Task Specification
+
+Fill in `step1_scope_and_research/task_spec.md` before starting analysis.
+
+- [ ] Applicable standards defined
+- [ ] Calculation methods/models specified
+- [ ] Required deliverables listed
+- [ ] Acceptance criteria set
+- [ ] Operating envelope defined
+
+### Part B: Research
 
 - [ ] Literature search completed
 - [ ] Reference data collected
-- [ ] Key sources documented in `step1_research/notes.md`
+- [ ] Key sources documented in `step1_scope_and_research/notes.md`
 
 **Option A — Google NotebookLM** (upload PDFs, get cited answers):
 
@@ -283,35 +438,42 @@ Give me:
 
 ```
 I'm researching [TOPIC] for a NeqSim task.
+Read the task specification in step1_scope_and_research/task_spec.md first.
 Search the web and this repository for:
 1. Key physical principles and governing equations
-2. Typical operating ranges and design rules of thumb
-3. Relevant industry standards (API, ASME, ISO, NORSOK, DNV)
-4. What NeqSim classes/methods already exist for this
-Write the findings to step1_research/notes.md in my task folder.
+2. Requirements from the specified standards
+3. What NeqSim classes/methods already exist for this
+Write the findings to step1_scope_and_research/notes.md in my task folder.
 ```
 
 ---
 
-## Step 2: Technical Analysis
+## Step 2: Analysis & Evaluation
 
 - [ ] NeqSim simulation written (notebook or test)
 - [ ] Results extracted and saved
+- [ ] Results validated against references and acceptance criteria
+- [ ] Physics checks passed (mass/energy balance, ranges)
 - [ ] API gaps identified (if any)
+
+The analysis and evaluation happen in one iterative loop — build, run, validate,
+refine until results meet the acceptance criteria from Step 1.
 
 **AI prompt - paste into VS Code Copilot Chat:**
 
 ```
 I'm working on a task in task_solve/[THIS_FOLDER]/.
-Read task_solve/README.md for the 4-step workflow.
+Read the task specification in step1_scope_and_research/task_spec.md.
+Read the research notes in step1_scope_and_research/notes.md.
 
 Task: [DESCRIBE YOUR TASK]
 
 Create a Jupyter notebook in step2_analysis/ that:
-1. Sets up the fluid system with appropriate EOS
+1. Sets up the fluid system with appropriate EOS (per task spec)
 2. Builds the process flowsheet
 3. Runs the simulation
-4. Extracts key results and saves figures to figures/
+4. Validates results against acceptance criteria
+5. Extracts key results and saves figures to figures/
 ```
 
 **Which VS Code agent to use:**
@@ -328,58 +490,31 @@ Create a Jupyter notebook in step2_analysis/ that:
 
 ---
 
-## Step 3: Iterative Evaluation
+## Step 3: Report (Word + HTML)
 
-- [ ] Results validated against references
-- [ ] Physics checks passed (mass/energy balance, ranges)
-- [ ] Iterations documented in `step3_evaluation/notes.md`
-
-**AI prompt - paste into VS Code Copilot Chat:**
-
-```
-Review the simulation results in step2_analysis/.
-Check:
-- Are temperatures, pressures, and densities in physically reasonable ranges?
-- Does mass balance close (in = out)?
-- Does energy balance close?
-- How do results compare against the reference data in step1_research/notes.md?
-- What sensitivity analysis should we run?
-Suggest refinements and iterate.
-```
-
----
-
-## Step 4: Final Report (Word Document)
-
-The deliverable is a **Word report** (`.docx`). Use the `generate_report.py`
-starter in `step4_report/` to create it.
+The deliverables are a **Word report** (`.docx`) and optionally an **HTML report**.
 
 - [ ] Figures saved to `figures/`
-- [ ] `generate_report.py` created and runs end-to-end
-- [ ] Word report generated: `step4_report/Report.docx`
+- [ ] `generate_report.py` customized and runs end-to-end
+- [ ] Report(s) generated in `step3_report/`
+- [ ] All required deliverables from task spec produced
 - [ ] Task logged in `docs/development/TASK_LOG.md`
 
-**To generate the report:**
+**To generate reports:**
 
 ```powershell
 pip install python-docx matplotlib    # one-time setup
-python step4_report/generate_report.py
+python step3_report/generate_report.py
 ```
 
 **AI prompt - paste into VS Code Copilot Chat:**
 
 ```
-Create a generate_report.py in step4_report/ that produces a Word document.
-Use python-docx. The report must include:
-1. Title page with task name, date, and author
-2. Executive summary (3-5 sentences)
-3. Problem description and approach
-4. Key results with figures embedded from figures/
-5. Table of key numerical results
-6. Conclusions and recommendations
-7. References from step1_research/notes.md
-Use matplotlib.use('Agg') for headless figure generation.
-The script must run end-to-end without Jupyter: python step4_report/generate_report.py
+Customize step3_report/generate_report.py for this task.
+Read the task spec in step1_scope_and_research/task_spec.md for required deliverables.
+Fill in the report sections with actual results from step2_analysis/.
+Embed all figures from figures/.
+Generate both Word (.docx) and HTML output.
 ```
 
 ---
@@ -403,6 +538,33 @@ benefit. Check what applies:
 
 Don't worry if you can't do all of these. Even just the task log entry helps
 the next person (or AI session) find your solution.
+
+### Create a Pull Request
+
+If this task produced reusable code, tests, or notebooks, create a PR to
+contribute them back:
+
+```powershell
+# Create a feature branch
+git checkout -b task/[SHORT_NAME]
+
+# Stage reusable outputs (pick what applies)
+git add src/test/java/neqsim/...              # new tests
+git add examples/notebooks/...                 # example notebooks
+git add docs/...                               # documentation
+git add docs/development/TASK_LOG.md           # task log entry
+
+# Commit and push
+git commit -m "Add [description] from task: [TITLE]"
+git push -u origin task/[SHORT_NAME]
+
+# Create PR (requires GitHub CLI)
+gh pr create --title "Add [description]" \\
+  --body "From task-solving workflow: [TITLE]"
+```
+
+> **Tip:** Ask the `@solve.task` agent to do this:
+> "create a PR with the test and notebook from this task"
 """
 
 STEP1_NOTES = """# Step 1: Research Notes
@@ -426,50 +588,124 @@ STEP1_NOTES = """# Step 1: Research Notes
 - [ ]
 """
 
-STEP3_NOTES = """# Step 3: Evaluation Notes
+TASK_SPEC = """# Task Specification
 
-## Iteration Log
+This file defines the scope and requirements that guide the analysis in Step 2.
+Fill this in before starting any simulation work.
 
-### Iteration 1 - YYYY-MM-DD
+## Applicable Standards
 
-**What was tested:**
+List the codes, standards, and company requirements that govern this task.
+
+| Standard | Scope | Key Requirements |
+|----------|-------|-----------------|
+| | | |
+
+Examples: NORSOK P-001, ISO 6976, DNV-OS-F101, API 520, ASME B31.3, Equinor TR1414
+
+## Calculation Methods & Models
+
+Specify which methods, equations of state, and correlations to use.
+
+- **Equation of State:** [e.g., SRK, PR, SRK-CPA for polar systems]
+- **Pipe flow model:** [e.g., Beggs & Brill, OLGA-style, single-phase]
+- **Heat transfer:** [e.g., adiabatic, U-value based, ambient loss]
+- **Other correlations:** [e.g., API 520 for PSV sizing, NORSOK M-001 for materials]
+
+## Required Deliverables
+
+What must the final output include? Check all that apply and add specifics.
+
+- [ ] Phase envelope / phase diagram
+- [ ] Pressure-temperature profiles
+- [ ] Equipment sizing calculations
+- [ ] Sensitivity analysis (specify parameters)
+- [ ] Comparison with reference/experimental data
+- [ ] VFP tables
+- [ ] Material selection
+- [ ] Cost estimation
+- [ ] Other: [specify]
+
+## Acceptance Criteria
+
+Define what \"good enough\" means for this task.
+
+- **Mass balance tolerance:** [e.g., < 0.1%]
+- **Energy balance tolerance:** [e.g., < 1%]
+- **Design factor:** [e.g., 0.72 per DNV]
+- **Safety margin:** [e.g., 10% on design pressure]
+- **Convergence:** [e.g., solver residual < 1e-6]
+- **Other:** [specify]
+
+## Operating Envelope
+
+Define the range of conditions to be covered.
+
+| Parameter | Min | Design | Max | Unit |
+|-----------|-----|--------|-----|------|
+| Pressure | | | | bara |
+| Temperature | | | | C |
+| Flow rate | | | | kg/hr |
+| Composition | | | | mol% |
+
+## Input Data
+
+Reference any input data files, lab reports, or composition tables.
+
+- [ ] Fluid composition: [source]
+- [ ] Operating conditions: [source]
+- [ ] Equipment data: [source]
+- [ ] Other: [specify]
+"""
+
+STEP2_NOTES = """# Step 2: Analysis & Validation Notes
+
+## Analysis Log
+
+### Run 1 - YYYY-MM-DD
+
+**Setup:**
 
 **Results:**
 
-**Comparison against reference:**
+**Validation against acceptance criteria:**
 
-**Decision:** Accept / Refine / Reject
+**Status:** Pass / Needs refinement
 
 ---
 
 ## Validation Checklist
 
-- [ ] Mass balance closes (in = out +/- 0.1%)
+- [ ] Mass balance closes (in = out +/- tolerance from task spec)
 - [ ] Energy balance closes
 - [ ] Temperatures in reasonable range
 - [ ] Pressures positive
 - [ ] Densities in expected range
 - [ ] Results consistent with literature/correlations
+- [ ] Results meet acceptance criteria from task spec
 - [ ] Sensitivity to key parameters checked
+- [ ] All required deliverables from task spec produced
 """
 
 GENERATE_REPORT = '''"""
-generate_report.py - Generate a Word report for this task.
+generate_report.py - Generate Word and HTML reports for this task.
 
 Usage:
     pip install python-docx matplotlib   (one-time setup)
-    python step4_report/generate_report.py
+    python step3_report/generate_report.py
 
 This script runs headless (no Jupyter kernel needed). It:
 1. Collects results from step2_analysis/
 2. Embeds figures from figures/
-3. Produces a .docx Word report in step4_report/
+3. Produces a .docx Word report in step3_report/
+4. Produces an .html report in step3_report/ (for large workflows)
 
 Customize the sections below for your specific task.
 """
 import os
 import sys
 import glob
+import base64
 from datetime import date
 
 try:
@@ -484,15 +720,56 @@ except ImportError:
 TASK_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FIG_DIR = os.path.join(TASK_DIR, "figures")
 REPORT_DIR = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_FILE = os.path.join(REPORT_DIR, "Report.docx")
+DOCX_FILE = os.path.join(REPORT_DIR, "Report.docx")
+HTML_FILE = os.path.join(REPORT_DIR, "Report.html")
 
 # Configuration (edit these)
 TITLE = "Task Report"           # <-- Change to your task title
 AUTHOR = ""                     # <-- Your name
 TASK_DATE = date.today().isoformat()
 
+# Report sections — edit content for your specific task
+SECTIONS = [
+    {
+        "heading": "1. Executive Summary",
+        "content": "[Replace this with a 3-5 sentence summary of the task, approach, "
+                   "and key findings.]",
+    },
+    {
+        "heading": "2. Problem Description",
+        "content": "[Describe the engineering question or task that was solved.]",
+    },
+    {
+        "heading": "3. Scope and Standards",
+        "content": "[List applicable standards, calculation methods, and acceptance "
+                   "criteria from the task specification.]",
+    },
+    {
+        "heading": "4. Approach",
+        "content": "[Describe the methodology: EOS used, process configuration, "
+                   "simulation setup, key assumptions.]",
+    },
+    {
+        "heading": "5. Results",
+        "content": "[Present key numerical results. Add tables and figures below.]",
+    },
+    {
+        "heading": "6. Conclusions and Recommendations",
+        "content": "[Summarize key findings and provide recommendations.]",
+    },
+    {
+        "heading": "7. References",
+        "content": "[List references from step1_scope_and_research/notes.md.]",
+    },
+]
 
-def build_report():
+
+def get_figures():
+    """Collect all PNG figures from the figures/ directory."""
+    return sorted(glob.glob(os.path.join(FIG_DIR, "*.png")))
+
+
+def build_word_report():
     """Build the Word document."""
     doc = Document()
 
@@ -503,72 +780,151 @@ def build_report():
     doc.add_paragraph("Date: {}".format(TASK_DATE))
     doc.add_page_break()
 
-    # 1. Executive Summary
-    doc.add_heading("1. Executive Summary", level=1)
-    doc.add_paragraph(
-        "[Replace this with a 3-5 sentence summary of the task, approach, "
-        "and key findings.]"
-    )
+    # Add all sections
+    for section in SECTIONS:
+        doc.add_heading(section["heading"], level=1)
+        doc.add_paragraph(section["content"])
 
-    # 2. Problem Description
-    doc.add_heading("2. Problem Description", level=1)
-    doc.add_paragraph(
-        "[Describe the engineering question or task that was solved.]"
-    )
+        # Embed figures after Results section
+        if "Results" in section["heading"]:
+            figures = get_figures()
+            if figures:
+                for fig_path in figures:
+                    fig_name = os.path.basename(fig_path)
+                    doc.add_picture(fig_path, width=Inches(6.0))
+                    last_para = doc.paragraphs[-1]
+                    last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    caption = doc.add_paragraph(
+                        "Figure: {}".format(
+                            fig_name.replace("_", " ").replace(".png", "")
+                        )
+                    )
+                    caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    caption.runs[0].font.size = Pt(9)
+                    caption.runs[0].font.italic = True
+                    doc.add_paragraph("")
+            else:
+                doc.add_paragraph(
+                    "[No figures found in figures/ directory. "
+                    "Save plots as PNG files there and re-run this script.]"
+                )
 
-    # 3. Approach
-    doc.add_heading("3. Approach", level=1)
-    doc.add_paragraph(
-        "[Describe the methodology: EOS used, process configuration, "
-        "simulation setup, key assumptions.]"
-    )
+    # Save
+    doc.save(DOCX_FILE)
+    print("Word report saved: {}".format(DOCX_FILE))
 
-    # 4. Results
-    doc.add_heading("4. Results", level=1)
-    doc.add_paragraph(
-        "[Present key numerical results. Add tables and figures below.]"
-    )
 
-    # Embed all figures from figures/ directory
-    figures = sorted(glob.glob(os.path.join(FIG_DIR, "*.png")))
+def build_html_report():
+    """Build an HTML report with embedded figures and navigation sidebar."""
+    figures = get_figures()
+
+    # Build figure HTML with base64-embedded images
+    figure_html = ""
     if figures:
         for fig_path in figures:
             fig_name = os.path.basename(fig_path)
-            doc.add_picture(fig_path, width=Inches(6.0))
-            last_para = doc.paragraphs[-1]
-            last_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            caption = doc.add_paragraph(
-                "Figure: {}".format(fig_name.replace("_", " ").replace(".png", ""))
-            )
-            caption.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            caption.runs[0].font.size = Pt(9)
-            caption.runs[0].font.italic = True
-            doc.add_paragraph("")
+            caption = fig_name.replace("_", " ").replace(".png", "")
+            with open(fig_path, "rb") as f:
+                img_data = base64.b64encode(f.read()).decode("utf-8")
+            figure_html += """
+            <div class="figure">
+                <img src="data:image/png;base64,{}" alt="{}">
+                <p class="caption">Figure: {}</p>
+            </div>
+            """.format(img_data, caption, caption)
     else:
-        doc.add_paragraph(
-            "[No figures found in figures/ directory. "
-            "Save plots as PNG files there and re-run this script.]"
+        figure_html = "<p><em>No figures found in figures/ directory.</em></p>"
+
+    # Build section HTML and navigation
+    nav_items = ""
+    section_html = ""
+    for section in SECTIONS:
+        section_id = section["heading"].lower().replace(" ", "-").replace(".", "")
+        nav_items += \'    <li><a href="#{}">{}</a></li>\\n\'.format(
+            section_id, section["heading"]
         )
+        content = section["content"]
+        # Insert figures after Results section
+        if "Results" in section["heading"]:
+            content += figure_html
+        section_html += """
+        <section id="{}">
+            <h2>{}</h2>
+            <p>{}</p>
+        </section>
+        """.format(section_id, section["heading"], content)
 
-    # 5. Conclusions
-    doc.add_heading("5. Conclusions and Recommendations", level=1)
-    doc.add_paragraph(
-        "[Summarize key findings and provide recommendations.]"
+    html = """<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{title}</title>
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+               display: flex; line-height: 1.6; color: #333; }}
+        nav {{ width: 260px; min-height: 100vh; background: #f5f5f5; padding: 1.5rem;
+              position: fixed; overflow-y: auto; border-right: 1px solid #ddd; }}
+        nav h3 {{ margin-bottom: 1rem; color: #555; font-size: 0.9rem;
+                  text-transform: uppercase; letter-spacing: 0.05em; }}
+        nav ul {{ list-style: none; }}
+        nav li {{ margin-bottom: 0.5rem; }}
+        nav a {{ color: #0366d6; text-decoration: none; font-size: 0.9rem; }}
+        nav a:hover {{ text-decoration: underline; }}
+        main {{ margin-left: 260px; max-width: 900px; padding: 2rem 3rem; }}
+        h1 {{ margin-bottom: 0.5rem; color: #1a1a1a; }}
+        h2 {{ margin-top: 2rem; margin-bottom: 1rem; color: #1a1a1a;
+             border-bottom: 1px solid #eee; padding-bottom: 0.3rem; }}
+        .meta {{ color: #666; margin-bottom: 2rem; }}
+        section {{ margin-bottom: 2rem; }}
+        .figure {{ text-align: center; margin: 1.5rem 0; }}
+        .figure img {{ max-width: 100%; border: 1px solid #ddd; border-radius: 4px; }}
+        .caption {{ font-size: 0.85rem; color: #666; font-style: italic;
+                    margin-top: 0.3rem; }}
+        table {{ border-collapse: collapse; width: 100%; margin: 1rem 0; }}
+        th, td {{ border: 1px solid #ddd; padding: 0.5rem 0.75rem; text-align: left; }}
+        th {{ background: #f5f5f5; }}
+        @media (max-width: 768px) {{
+            nav {{ position: static; width: 100%; min-height: auto; }}
+            main {{ margin-left: 0; padding: 1rem; }}
+        }}
+    </style>
+</head>
+<body>
+    <nav>
+        <h3>Contents</h3>
+        <ul>
+{nav}
+        </ul>
+        <hr style="margin: 1rem 0;">
+        <p style="font-size: 0.8rem; color: #999;">Generated {date}</p>
+    </nav>
+    <main>
+        <h1>{title}</h1>
+        <p class="meta">Author: {author} | Date: {date}</p>
+{sections}
+    </main>
+</body>
+</html>""".format(
+        title=TITLE,
+        author=AUTHOR or "(not specified)",
+        date=TASK_DATE,
+        nav=nav_items,
+        sections=section_html,
     )
 
-    # 6. References
-    doc.add_heading("6. References", level=1)
-    doc.add_paragraph(
-        "[List references from step1_research/notes.md.]"
-    )
-
-    # Save
-    doc.save(OUTPUT_FILE)
-    print("Report saved: {}".format(OUTPUT_FILE))
+    with open(HTML_FILE, "w", encoding="utf-8") as f:
+        f.write(html)
+    print("HTML report saved: {}".format(HTML_FILE))
 
 
 if __name__ == "__main__":
-    build_report()
+    build_word_report()
+    build_html_report()
+    print("")
+    print("Both reports generated. Open Report.html in a browser for")
+    print("navigable view, or Report.docx for formal distribution.")
 '''
 
 
@@ -614,10 +970,11 @@ def setup_workspace():
     # Template structure
     template_files = {
         os.path.join(TEMPLATE_DIR, "README.md"): TASK_README,
-        os.path.join(TEMPLATE_DIR, "step1_research", "notes.md"): STEP1_NOTES,
+        os.path.join(TEMPLATE_DIR, "step1_scope_and_research", "task_spec.md"): TASK_SPEC,
+        os.path.join(TEMPLATE_DIR, "step1_scope_and_research", "notes.md"): STEP1_NOTES,
+        os.path.join(TEMPLATE_DIR, "step2_analysis", "notes.md"): STEP2_NOTES,
         os.path.join(TEMPLATE_DIR, "step2_analysis", ".gitkeep"): "",
-        os.path.join(TEMPLATE_DIR, "step3_evaluation", "notes.md"): STEP3_NOTES,
-        os.path.join(TEMPLATE_DIR, "step4_report", "generate_report.py"): GENERATE_REPORT,
+        os.path.join(TEMPLATE_DIR, "step3_report", "generate_report.py"): GENERATE_REPORT,
         os.path.join(TEMPLATE_DIR, "figures", ".gitkeep"): "",
     }
 
@@ -657,7 +1014,7 @@ def create_task(title, task_type="B", author=""):
     content = content.replace("[Title]", title)
     content = content.replace("YYYY-MM-DD", today)
     content = content.replace(
-        "A (Property) | B (Process) | C (PVT) | D (Standards) | E (Feature) | F (Design)",
+        "A (Property) | B (Process) | C (PVT) | D (Standards) | E (Feature) | F (Design) | G (Workflow)",
         type_label,
     )
     content = content.replace("[THIS_FOLDER]", folder_name)
@@ -671,7 +1028,7 @@ def create_task(title, task_type="B", author=""):
         f.write(content)
 
     # Fill in the step1 notes
-    notes_path = os.path.join(task_dir, "step1_research", "notes.md")
+    notes_path = os.path.join(task_dir, "step1_scope_and_research", "notes.md")
     with open(notes_path, "r", encoding="utf-8") as f:
         notes = f.read()
     notes = notes.replace(
@@ -682,7 +1039,7 @@ def create_task(title, task_type="B", author=""):
         f.write(notes)
 
     # Fill in generate_report.py
-    report_path = os.path.join(task_dir, "step4_report", "generate_report.py")
+    report_path = os.path.join(task_dir, "step3_report", "generate_report.py")
     with open(report_path, "r", encoding="utf-8") as f:
         report = f.read()
     report = report.replace('TITLE = "Task Report"', 'TITLE = "{}"'.format(title))
