@@ -83,6 +83,7 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | **Tutorials Hub**   | [docs/tutorials/index.md](tutorials/index)                                       | All tutorials organized by topic                      |
 | Learning Paths      | [docs/tutorials/learning-paths.md](tutorials/learning-paths)                     | PVT Engineer, Process Engineer, Developer tracks      |
 | **TEG Dehydration** | [docs/tutorials/teg_dehydration_tutorial.md](tutorials/teg_dehydration_tutorial) | **Complete TEG gas dehydration plant modeling**       |
+| **Solve Engineering Task** | [docs/tutorials/solve-engineering-task.md](tutorials/solve-engineering-task) | **Complete hands-on guide to the 3-step AI task-solving workflow** |
 | **GOSP Tutorial**   | [docs/tutorials/gosp_tutorial.md](tutorials/gosp_tutorial)                       | **Gas-oil separation plant (multi-stage separation)** |
 | **PVT Lab Tests**   | [docs/pvtsimulation/pvt_lab_tests.md](pvtsimulation/pvt_lab_tests)               | **CCE, CVD, DL, separator test simulations**          |
 

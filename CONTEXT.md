@@ -3,6 +3,24 @@
 > **Purpose:** Get oriented in 60 seconds. This file is the single entry point for anyone
 > (human or AI) solving engineering tasks inside the NeqSim repo.
 
+## Solve a Task (Start Here)
+
+The fastest way to solve an engineering task is the `@solve.task` Copilot agent:
+
+```
+@solve.task hydrate formation temperature for wet gas at 100 bara
+```
+
+It creates a `task_solve/` folder, researches the topic, builds a simulation,
+validates results, and generates a Word report — all in one session. The script
+alternative is `python devtools/new_task.py "your task"`. See
+`docs/tutorials/solve-engineering-task.md` for a hands-on tutorial or
+`docs/development/TASK_SOLVING_GUIDE.md` for the full reference.
+
+**Using OpenAI Codex?** It reads `AGENTS.md` (repo root) automatically and
+`.openapi/codex.yaml` sets up the sandbox. Give it a one-shot prompt and it
+runs the full workflow including PR creation.
+
 ## What Is NeqSim?
 
 Java library for thermodynamic fluid properties and process simulation.

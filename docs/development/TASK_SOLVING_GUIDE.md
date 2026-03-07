@@ -1,6 +1,6 @@
 ---
 title: "Task Solving Guide"
-description: "Step-by-step workflow for solving engineering tasks inside the NeqSim repo using AI (Copilot + Claude). Covers the develop-while-solving loop, task classification, AI agent coordination, and how to build persistent knowledge."
+description: "Step-by-step workflow for solving engineering tasks inside the NeqSim repo using AI (Copilot + Claude). Covers the 3-step workflow (Scope & Research, Analysis & Evaluation, Report), adaptive complexity scaling from quick lookups to Class A studies, task classification, AI agent coordination, PR generation, and building persistent knowledge."
 ---
 
 # Task Solving Guide
@@ -8,6 +8,94 @@ description: "Step-by-step workflow for solving engineering tasks inside the Neq
 How to solve engineering tasks inside the NeqSim repo using AI, while
 simultaneously developing the physics engine — and making every solution
 findable for the next session.
+
+The workflow **adapts to any scale** — from a 5-minute property lookup to a
+multi-discipline Class A field development study. You describe the task, the
+agent decides how deep to go based on what you ask for.
+
+---
+
+## AI-Supported Task Solving While Developing
+
+Every engineering task follows a **3-step workflow** that combines AI research
+tools with NeqSim's physics-based API. Each task gets its own folder in
+`task_solve/` (gitignored — local working area only).
+
+```
+ STEP 1                    STEP 2                    STEP 3
+ Scope & Research          Analysis & Evaluation     Report
+
+ Define standards,         Build simulation,         Word + HTML
+ methods, deliverables     run, validate, iterate    deliverables
+
+ + task_spec.md            NeqSim API +              python-docx
+ + literature review       GitHub Copilot            + HTML template
+```
+
+### How to Start a New Task
+
+**Recommended — let Copilot do everything:**
+
+```
+Open VS Code Copilot Chat and type:
+@solve.task JT cooling for rich gas at 100 bara
+```
+
+The agent creates the folder, fills in the task specification, researches the
+topic, builds and runs a simulation, validates results, and generates Word +
+HTML reports — all in one session.
+
+**Alternative — manual step-by-step:**
+
+1. **Run the setup script** (auto-creates `task_solve/` on first use):
+   ```powershell
+   python devtools/new_task.py "JT cooling for rich gas"
+   python devtools/new_task.py "TEG dehydration sizing" --type B --author "Your Name"
+   python devtools/new_task.py "field development study" --type G --author "Your Name"
+   ```
+2. **Open the generated README** — it has AI prompts ready to paste for each step
+3. **Work through Steps 1–3**, saving artifacts in the corresponding subfolder
+4. **When done**, promote reusable outputs and optionally create a PR:
+   - Tests → `src/test/java/neqsim/`
+   - Notebooks → `examples/notebooks/`
+   - API extensions → `src/main/java/neqsim/`
+   - Task log entry → `docs/development/TASK_LOG.md`
+
+> **New user?** The script is in `devtools/` (tracked in git), so it's available
+> immediately after `git clone`. It creates `task_solve/` automatically on first run.
+
+### Task Folder Structure
+
+```
+task_solve/
+├── README.md                                        ← workflow overview
+├── TASK_TEMPLATE/                                   ← copy this to start
+│   ├── README.md                                    ← task checklist
+│   ├── step1_scope_and_research/task_spec.md         ← standards, methods, deliverables
+│   ├── step1_scope_and_research/notes.md             ← literature, sources
+│   ├── step1_scope_and_research/references/          ← PDFs, standards, lab reports
+│   ├── step2_analysis/                               ← simulations, notebooks
+│   ├── step2_analysis/notes.md                       ← validation log
+│   ├── step3_report/generate_report.py               ← produces Word + HTML
+│   └── figures/                                      ← all saved plots
+└── 2026-03-07_jt_cooling_rich_gas/                   ← example real task
+```
+
+See `task_solve/README.md` for the full workflow description and details.
+
+### Adaptive Complexity — One Workflow, Any Scale
+
+The same workflow handles everything. The agent (or you) decides the depth
+based on the task:
+
+| Scale | Example | Task Spec | Notebooks | Report |
+|-------|---------|-----------|-----------|--------|
+| **Quick** | "density of CO2 at 200 bar" | Minimal — just EOS + condition | 1 notebook, few cells | Brief summary |
+| **Standard** | "TEG dehydration for 50 MMSCFD" | Full — all sections filled | 1 complete notebook | Word + HTML |
+| **Comprehensive** | "field development per NORSOK" | Detailed — all standards with clause numbers | Multiple numbered notebooks | Full HTML with navigation |
+
+You control depth through your request — mentioning standards, deliverables,
+and acceptance criteria naturally increases analysis depth.
 
 ---
 
@@ -144,7 +232,7 @@ CPA not needed since no water in this case.
 
 ## Task Classification
 
-Every NeqSim task falls into one of six types. Each has a different starting
+Every NeqSim task falls into one of seven types. Each has a different starting
 point, verification strategy, and AI agent.
 
 ### Type A: Property Calculation
@@ -244,6 +332,25 @@ Key patterns:
 | Pattern | Mechanical Design section in `.github/copilot-instructions.md` |
 | Design data | `src/main/resources/designdata/` |
 | AI agent | `@mechanical.design` |
+
+---
+
+### Type G: Workflow (Multi-Discipline)
+
+**"Field development concept selection for deepwater gas" / "Design basis study per NORSOK"**
+
+| Aspect | Detail |
+|--------|--------|
+| Scale | Comprehensive — multiple standards, multiple disciplines |
+| Scope | task_spec.md is critical — define ALL standards, methods, deliverables upfront |
+| Notebooks | Multiple numbered notebooks per discipline (01_reservoir_fluid, 02_pipeline, etc.) |
+| Report | Full HTML with navigation sidebar + Word summary |
+| AI agent | `@solve.task` (orchestrates specialist agents) |
+
+Type G tasks span multiple engineering disciplines and produce a comprehensive
+assessment. The HTML report becomes a navigable multi-section document linking
+all sub-analyses. These are the framework's most powerful use case — Class A/B
+field development studies, technology screening, concept evaluation.
 
 ---
 
@@ -511,6 +618,97 @@ Before considering a task done:
 - [ ] **Logged**: Entry added to `docs/development/TASK_LOG.md`
 - [ ] **Figures saved**: All plots saved to `figures/` directory (not just displayed inline)
 - [ ] **Report generated** (if deliverable): Word document builds end-to-end via `python generate_report.py`
+- [ ] **Task folder complete**: All 3 steps documented in `task_solve/YYYY-MM-DD_description/`
+- [ ] **Reusable outputs promoted**: Tests, notebooks, or API extensions moved back into the repo
+- [ ] **PR created** (if applicable): Reusable outputs contributed via Pull Request
+
+---
+
+## Engineering Rigor: Data Flow Between Steps
+
+A strong engineering workflow is not just three steps — it's a **connected
+pipeline** where each step feeds data into the next. The task-solving framework
+enforces this connection through two mechanisms:
+
+### The Data Bridge: results.json
+
+The notebook in Step 2 produces a `results.json` file that the report generator
+in Step 3 reads automatically. This eliminates manual copy-paste of results
+into reports and ensures the report always reflects the latest simulation run.
+
+```
+  Step 1                 Step 2                   Step 3
+  task_spec.md  ──────>  notebook reads spec  ──>  generate_report.py
+                         notebook produces   ──>    auto-reads
+                         results.json              results.json
+                         figures/*.png             figures/*.png
+```
+
+**How it works:**
+
+1. Fill `task_spec.md` with standards, methods, and acceptance criteria
+2. The notebook reads the spec and runs the simulation
+3. At the end of the notebook, save structured results:
+   ```python
+   import json, os
+   results = {
+       "key_results": {
+           "outlet_temperature_C": -18.5,
+           "pressure_drop_bar": 3.2,
+       },
+       "validation": {
+           "mass_balance_error_pct": 0.01,
+           "acceptance_criteria_met": True,
+       },
+       "approach": "Used SRK EOS with classic mixing rule...",
+       "conclusions": "The JT cooling achieves the required dew point...",
+   }
+   with open(os.path.join(os.path.dirname(os.getcwd()), "results.json"), "w") as f:
+       json.dump(results, f, indent=2)
+   ```
+4. Run `python step3_report/generate_report.py` — the Results, Validation, and
+   Scope sections auto-populate from `results.json` and `task_spec.md`
+
+### Quality Gates
+
+The workflow enforces quality gates between steps:
+
+**Gate 1: Step 1 → Step 2** (scope must be defined before analysis)
+- task_spec.md must have at least: EOS/method, acceptance criteria, and
+  operating conditions filled in
+- For Standard/Comprehensive tasks: standards, deliverables, and envelope defined
+
+**Gate 2: Step 2 → Step 3** (results must be validated before reporting)
+- Every notebook cell executes without errors
+- `results.json` exists with `key_results` and `validation` sections
+- All acceptance criteria from task_spec.md have been checked
+- All deliverables from task_spec.md are produced
+- Figures saved to `figures/` as PNG
+
+### Structured Validation
+
+The `step2_analysis/notes.md` template includes a validation summary table
+that maps directly to the `validation` section in `results.json`:
+
+| Check | Status | Value / Note |
+|-------|--------|--------------|
+| Mass balance | PASS | 0.01% error |
+| Energy balance | PASS | 0.3% error |
+| Acceptance criteria met | PASS | All 3 criteria satisfied |
+
+For tasks that involve comparison with reference data, the template also
+includes a comparison table:
+
+| Source | Parameter | Reference | NeqSim | Deviation |
+|--------|-----------|----------|--------|-----------|
+| NIST | Density kg/m3 | 820.3 | 818.7 | 0.2% |
+
+### Reference Fluid Compositions
+
+The `task_spec.md` template includes common fluid compositions (lean gas,
+rich gas, wet gas, CO2 stream) that users can pick as starting points. This
+eliminates the common problem of spending time looking up typical compositions
+and ensures consistency across tasks.
 
 ---
 
@@ -788,10 +986,11 @@ pip install python-docx matplotlib latex2mathml lxml neqsim
 
 ## Copilot Chat Agents
 
-12 specialist agents in `.github/agents/`:
+13 specialist agents in `.github/agents/`:
 
 | Agent | Best For |
 |-------|----------|
+| `@solve.task` | **Full 3-step workflow** (does everything end-to-end) |
 | `@thermo.fluid` | EOS selection, fluid creation, flash, properties |
 | `@solve.process` | Complete process simulation → working notebook |
 | `@process.model` | Process flowsheet design |
@@ -824,19 +1023,166 @@ Search docs/development/TASK_LOG.md for similar past tasks.
 If you're a process engineer (not a developer):
 
 1. Open VS Code with the NeqSim repo
-2. Open Copilot Chat
-3. Type: `@solve.process [describe what you want to simulate]`
-4. The agent creates a notebook, runs every cell, and hands back results
-5. Open the notebook in `examples/notebooks/` to see the code and plots
+2. Open Copilot Chat and type: `@solve.task your engineering question`
+3. The agent creates the folder, runs simulations, and hands back results + reports
+4. Find Word and HTML reports in `task_solve/.../step3_report/`
 
-You don't need to know Java, Maven, or git. The agent handles everything.
+Alternatively, for manual control:
+
+1. Run: `python devtools/new_task.py "your question" --type B`
+2. Open Copilot Chat and paste the prompts from the generated README
+3. Run `python step3_report/generate_report.py` to create Word + HTML reports
+
+You don't need to know Java, Maven, or git. The script and agent handle everything.
+
+---
+
+## Using Other AI Tools (OpenAI Codex, Claude Code, Cursor, etc.)
+
+The workflow is **not tied to VS Code Copilot Chat**. The script, folder
+structure, templates, and report generator work from any terminal. Any AI
+coding agent that can read files and run commands can follow the same workflow.
+
+### Quick Start for Any AI Agent
+
+1. **Create the task folder** (from terminal):
+   ```bash
+   python devtools/new_task.py "your task" --type B
+   ```
+
+2. **Point the agent to the workflow** — paste this prompt:
+   ```
+   I'm working in the NeqSim repo (Java thermodynamics + process simulation).
+   Read docs/development/TASK_SOLVING_GUIDE.md for the task-solving workflow.
+   Read the task README at task_solve/YYYY-MM-DD_your_task/README.md.
+
+   Follow the 3-step workflow:
+   1. Fill in step1_scope_and_research/task_spec.md (standards, methods, deliverables)
+   2. Create a Jupyter notebook in step2_analysis/ using NeqSim
+   3. Run step3_report/generate_report.py to produce Word + HTML reports
+
+   Task: [describe your task here]
+   ```
+
+3. The AI agent reads the templates, fills in the task spec, creates notebooks,
+   and runs the report generator — same output, different tool.
+
+### What Works Everywhere (No VS Code Required)
+
+| Component | How to Use | Works In |
+|-----------|-----------|----------|
+| `python devtools/new_task.py` | Creates task folders | Any terminal |
+| `task_spec.md` | Scope document (plain markdown) | Any editor / AI tool |
+| Jupyter notebooks | Simulation code | JupyterLab, Colab, Codex, any Python env |
+| `python generate_report.py` | Produces Word + HTML | Any terminal |
+| `git` + `gh pr create` | Contribute back via PR | Any terminal |
+
+### What's VS Code Copilot-Specific (Optional Convenience)
+
+| Feature | Purpose | Alternative |
+|---------|---------|-------------|
+| `@solve.task` agent | Automates the full 3-step workflow | Give any AI the prompt above |
+| Specialist agents (`@thermo.fluid`, etc.) | Deep sub-task automation | Use the agent files in `.github/agents/` as prompts |
+| Notebook cell execution | Run cells from chat | Run notebooks in JupyterLab or via `jupyter execute` |
+
+### Tips for Non-VS-Code AI Tools
+
+- **OpenAI Codex**: Can read repo files, run terminal commands, and write code.
+  Point it at `TASK_SOLVING_GUIDE.md` and it follows the workflow.
+- **Claude Code**: Same approach — give it the workflow prompt and task folder path.
+- **Cursor**: Supports custom instructions — paste the agent instructions from
+  `.github/agents/solve.task.agent.md` into Cursor's rules.
+- **Google Colab + AI**: Use `pip install neqsim` instead of `pip install -e devtools/`.
+  The dual-boot setup cell in notebooks handles this automatically.
+
+### End-to-End with OpenAI Codex (Solve Task + Create PR)
+
+Codex can run the **full workflow autonomously** — from task creation to PR —
+because:
+
+1. It reads `AGENTS.md` at the repo root for project-level instructions
+2. The `.openapi/codex.yaml` installs Java 8, Maven, Python, and `gh` CLI in the sandbox
+3. It can run terminal commands, create files, execute Python, and use `gh pr create`
+
+**One-shot prompt for Codex** (paste this into Codex Web or CLI):
+
+```
+Solve this engineering task and create a PR with the results:
+
+Task: [describe your task, e.g. "hydrate formation temperature for wet gas at 100 bara"]
+
+Instructions:
+1. Read AGENTS.md for project guidance
+2. Run: python devtools/new_task.py "[task title]" --type [A-G]
+3. Fill step1_scope_and_research/task_spec.md with standards and methods
+4. Create a Jupyter notebook in step2_analysis/ using NeqSim (pip install neqsim)
+5. Run the notebook and validate results
+6. Save plots to figures/
+7. Update and run step3_report/generate_report.py
+8. Copy reusable outputs to proper locations:
+   - Notebook → examples/notebooks/
+   - Tests → src/test/java/neqsim/
+9. Create a PR:
+   git checkout -b task/[slug]
+   git add examples/notebooks/ src/test/java/ docs/development/TASK_LOG.md
+   git commit -m "Add [description] from task: [title]"
+   git push -u origin task/[slug]
+   gh pr create --title "Add [description]" --body "From task-solving workflow"
+```
+
+**Codex Cloud vs Codex CLI:**
+
+| Capability | Codex Cloud (chatgpt.com/codex) | Codex CLI (local) |
+|------------|-------------------------------|-------------------|
+| Java/Maven | Installed via `.openapi/codex.yaml` | Uses your local JDK |
+| Python/pip | Available by default | Uses your local Python |
+| `gh pr create` | Via Codex's GitHub integration | Via local `gh` CLI |
+| Network access | Restricted (sandbox) | Sandboxed but configurable |
+| `AGENTS.md` | Read automatically | Read automatically |
+| NeqSim mode | `pip install neqsim` (released) | `pip install -e devtools/` (local dev) |
+
+**Key difference:** Codex Cloud uses the released `neqsim` PyPI package, so it
+can solve tasks using the existing API but cannot extend the Java source code
+mid-task. Use Codex CLI or VS Code Copilot for tasks that require adding new
+Java methods (Type E tasks).
+
+---
+
+## Contributing Back via Pull Request
+
+When your task produces reusable outputs (tests, notebooks, docs, API
+extensions), contribute them back via PR:
+
+```powershell
+# Create a feature branch
+git checkout -b task/your-task-name
+
+# Copy and stage reusable outputs (don't commit task_solve/ contents)
+git add src/test/java/neqsim/...              # tests
+git add examples/notebooks/...                 # notebooks
+git add docs/development/TASK_LOG.md           # task log entry
+
+# Commit and push
+git commit -m "Add [description] from task: [title]"
+git push -u origin task/your-task-name
+
+# Create PR (requires GitHub CLI)
+gh pr create --title "Add [description]" --body "From task-solving workflow"
+```
+
+> **Tip:** The `@solve.task` agent can do this for you — just ask
+> "create a PR with the test and notebook from this task".
 
 ---
 
 ## Related Documentation
 
 | Document | Purpose |
-|----------|---------|
+|----------|--------|
+| `devtools/new_task.py` | Script to create task folders (auto-bootstraps `task_solve/`) |
+| `task_solve/README.md` | AI-supported task-solving workflow (3-step process) |
+| `task_solve/TASK_TEMPLATE/` | Template folder with task_spec, prompts, and report generator |
+| `.github/agents/solve.task.agent.md` | The `@solve.task` Copilot agent (does everything end-to-end) |
 | `CONTEXT.md` | 60-second repo orientation |
 | `docs/development/CODE_PATTERNS.md` | Copy-paste code starters |
 | `docs/development/TASK_LOG.md` | Persistent task memory |

@@ -40,6 +40,22 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 - Jupyter notebook (15 sections): solubility maps, saturation envelope, Gibbs reactor sweeps, O2/H2S sensitivity, pipeline simulation, onshore processing risk, H2S sensitivity
 - Uses neqsim_dev_setup for notebook JVM bootstrap
 
+### 2026-03-07 — CNG tank filling and emptying temperature estimation (workflow test)
+**Type:** B (Process)
+**Keywords:** CNG, tank, filling, emptying, depressurization, pressurization, temperature, wall temperature, MDMT, heat transfer, transient wall, VesselDepressurization, X80 steel, energy balance, Churchill-Chu, natural convection
+**Solution:** `task_solve/2026-03-07_cng_tank_filling_and_emptying_temperature_estimation/step2_analysis/CNG_Tank_Temperature_Estimation.ipynb`
+**Notes:**
+- Full end-to-end test of solve.task workflow: task creation, scope/research, simulation notebook, results.json, Word+HTML reports
+- Tank: 19m height, 1.066m OD, 33.5mm wall (X80 steel), vertical with hemispheric caps
+- Gas: lean natural gas (90% CH4, 5% C2, 2% C3, 0.5% iC4, 0.5% nC4, 1% N2, 1% CO2), SRK EOS
+- Filling: 20→250 bar at 1783.4 Sm3/day, duration 51.2 hr, max gas T = 31.0°C
+- Emptying: 250→20 bar at 1783.4 Sm3/day, duration 50.8 hr, min gas T = 1.4°C, min wall T = 2.0°C
+- MDMT check: margin 48.0°C above -46°C, PASS
+- HTC model comparison: ADIABATIC min T = -91.7°C, CALCULATED = 1.7°C, TRANSIENT_WALL = 1.4°C
+- No liquid dropout during emptying
+- dt=10s constant for VU-flash stability, recordInterval=60 (every 10 min)
+- Report auto-generated from results.json + task_spec.md via generate_report.py
+
 ### 2025-07-17 — CNG tank temperature estimation improvements and Jupyter notebooks
 **Type:** E (Feature)
 **Keywords:** CNG, tank, filling, emptying, depressurization, VU-flash, heat transfer, Churchill-Chu, Gnielinski, natural convection, mixed convection, transient wall, VesselDepressurization, temperature estimation, MDMT
