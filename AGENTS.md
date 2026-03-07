@@ -46,6 +46,8 @@ engineering task (hydrate prediction, pipeline sizing, compressor design, etc.):
    **Step 1 — Scope & Research**
    - Fill `step1_scope_and_research/task_spec.md` (standards, methods, deliverables, acceptance criteria)
    - Write research notes to `step1_scope_and_research/notes.md`
+   - Place literature papers, standards PDFs, and lab reports in `step1_scope_and_research/references/`
+   - Summarise each document's key contributions in `notes.md` under "Literature & Reference Documents"
 
    **Step 2 — Analysis & Evaluation**
    - Create a Jupyter notebook in `step2_analysis/` using NeqSim
@@ -127,6 +129,11 @@ results = {
         #  "rows": [["Pressure (bar)", 60.0, 40.0, 80.0],
         #           ["Temperature (C)", 25.0, 15.0, 35.0]]}
     ],
+    "references": [
+        # {"id": "Smith2019", "text": "Smith, J. (2019). CNG Tank Thermal Analysis. J. Energy Storage, 25, 100-115."},
+        # {"id": "API521", "text": "API 521, 7th Edition (2020). Pressure-Relieving and Depressuring Systems."},
+        # {"id": "DNV-ST-F101", "text": "DNV-ST-F101 (2021). Submarine Pipeline Systems."}
+    ],
 }
 with open(str(TASK_DIR / "results.json"), "w") as f:
     json.dump(results, f, indent=2)
@@ -138,6 +145,7 @@ The report generator auto-reads this file to populate Results and Validation sec
 - **equations**: KaTeX in HTML, PNG images in Word
 - **figures**: Numbered captions from `figure_captions`
 - **tables**: Custom tables rendered in both HTML and Word with headers/rows
+- **references**: Numbered reference list rendered in the References section of the report
 
 ## Code Patterns
 

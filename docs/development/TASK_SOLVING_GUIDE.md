@@ -73,6 +73,7 @@ task_solve/
 │   ├── README.md                                    ← task checklist
 │   ├── step1_scope_and_research/task_spec.md         ← standards, methods, deliverables
 │   ├── step1_scope_and_research/notes.md             ← literature, sources
+│   ├── step1_scope_and_research/references/          ← PDFs, standards, lab reports
 │   ├── step2_analysis/                               ← simulations, notebooks
 │   ├── step2_analysis/notes.md                       ← validation log
 │   ├── step3_report/generate_report.py               ← produces Word + HTML

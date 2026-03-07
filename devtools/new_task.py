@@ -242,16 +242,26 @@ guides everything in Step 2.
 
 #### Part B: Research (background knowledge)
 
+**Providing literature papers and reference documents:**
+
+If you have PDF papers, standards documents, lab reports, or other background
+material, place them in the `step1_scope_and_research/references/` folder.
+Then summarise their key contributions in `notes.md` under "Literature &
+Reference Documents". See `references/README.md` for naming conventions and
+tips on how the AI can use these files.
+
 Use **either** Google NotebookLM or Copilot — or both:
 
 **Option A: Google NotebookLM** (best for deep literature review)
-- Upload PDFs, standards documents, and technical papers
+- Upload PDFs from `step1_scope_and_research/references/` to NotebookLM
 - Ask questions across all your sources at once
 - Get cited answers with references back to source pages
+- Paste findings into `notes.md`
 
 **Option B: GitHub Copilot in VS Code** (best for code-adjacent research)
 - Open Copilot Chat and ask research questions directly
 - Copilot can search the web, read repo docs, and summarise findings
+- For PDFs, extract key sections as text or summarise them in `notes.md`
 
 **Copilot research workflow:**
 
@@ -419,8 +429,17 @@ Fill in `step1_scope_and_research/task_spec.md` before starting analysis.
 ### Part B: Research
 
 - [ ] Literature search completed
+- [ ] Reference documents placed in `step1_scope_and_research/references/`
 - [ ] Reference data collected
 - [ ] Key sources documented in `step1_scope_and_research/notes.md`
+
+**Providing literature papers and reference documents:**
+
+If you have PDF papers, standards documents, lab reports, or other background
+material, place them in the `step1_scope_and_research/references/` folder.
+Then summarise their key contributions in `notes.md` under "Literature &
+Reference Documents". See `references/README.md` for naming conventions and
+tips on how the AI can use these files.
 
 **Option A — Google NotebookLM** (upload PDFs, get cited answers):
 
@@ -567,6 +586,18 @@ results = {
     "equations": [
         # {"label": "Energy Balance", "latex": "Q = m C_p \\\\Delta T"},
     ],
+    # Optional: custom tables (rendered in both Word and HTML)
+    "tables": [
+        # {"title": "Sensitivity Analysis",
+        #  "headers": ["Parameter", "Base Case", "Low", "High"],
+        #  "rows": [["Pressure (bar)", 60.0, 40.0, 80.0],
+        #           ["Temperature (C)", 25.0, 15.0, 35.0]]}
+    ],
+    # Optional: references (rendered as numbered list in References section)
+    "references": [
+        # {"id": "Smith2019", "text": "Smith, J. (2019). CNG Tank Thermal Analysis. J. Energy Storage, 25, 100-115."},
+        # {"id": "API521", "text": "API 521, 7th Edition (2020). Pressure-Relieving and Depressuring Systems."},
+    ],
 }
 
 results_path = str(TASK_DIR / "results.json")
@@ -644,6 +675,29 @@ STEP1_NOTES = """# Step 1: Research Notes
 |---|--------|------|-------------|
 | 1 | | | |
 
+## Literature & Reference Documents
+
+Place PDF papers, standards, and technical reports in the `references/` folder
+next to this file. Then summarise each document's key contributions here.
+
+**How to add a reference:**
+1. Copy the PDF/document to `step1_scope_and_research/references/`
+2. Add a row to the Sources table above
+3. Write a brief summary below noting the relevant equations, data, or design rules
+
+### Paper/Document Summaries
+
+<!--
+For each reference document, add a subsection like this:
+
+### Smith (2019) — CNG Tank Thermal Analysis
+- **File:** `references/Smith_2019_CNG_Tank_Thermal_Analysis.pdf`
+- **Relevance:** Provides heat transfer correlations for compressed gas filling
+- **Key equations:** Eq. 12 — convective HTC = 15-25 W/m2K for turbulent fill
+- **Key data:** Table 3 — experimental fill temperatures vs. time
+- **Limitations:** Only covers Type III tanks, ambient temperature 20C
+-->
+
 ## Background
 
 [Summary of the engineering context]
@@ -655,6 +709,58 @@ STEP1_NOTES = """# Step 1: Research Notes
 ## Open Questions
 
 - [ ]
+"""
+
+REFERENCES_README = """# References Folder
+
+Place literature papers, standards documents, and other reference material here.
+
+## What to put in this folder
+
+- **PDF papers** -- journal articles, conference papers, technical reports
+- **Standards excerpts** -- relevant sections from ASME, API, DNV, ISO, NORSOK, etc.
+- **Company documents** -- TR documents, design basis, operating philosophy
+- **Data sheets** -- equipment data sheets, material certificates
+- **Lab reports** -- PVT reports, fluid analysis, corrosion test results
+
+## How the AI uses these files
+
+1. **Google NotebookLM (recommended for PDFs):** Upload the PDFs from this
+   folder to NotebookLM. It can read, cross-reference, and cite multiple
+   documents at once. Ask it targeted questions and paste the answers into
+   `notes.md`.
+
+2. **VS Code Copilot Chat:** Copilot can read text-based files (`.txt`, `.md`,
+   `.csv`) placed here. For PDFs, extract key sections as text or summarise
+   them in `notes.md` so the AI can reference the content.
+
+3. **Manual notes:** Read the papers yourself and capture key equations,
+   data points, and design rules in `notes.md` under the "Literature &
+   Reference Documents" section.
+
+## Naming convention
+
+Use descriptive filenames that include author/org and year:
+
+```
+Smith_2019_CNG_Tank_Thermal_Analysis.pdf
+API_521_6th_Ed_Relief_Systems.pdf
+DNV-ST-F101_2021_Submarine_Pipelines.pdf
+Equinor_TR2000_Pressure_Vessel_Design.pdf
+Lab_Report_Fluid_Analysis_2024.pdf
+```
+
+## Documenting references
+
+After placing files here, add each to the Sources table in `notes.md`:
+
+| # | Source | Type | Key Finding |
+|---|--------|------|-------------|
+| 1 | Smith (2019) -- see `references/Smith_2019_CNG_Tank_...pdf` | Paper | Heat transfer coefficient 15-25 W/m2K |
+| 2 | API 521 6th Ed | Standard | Relief sizing per Section 5.4 |
+
+And add structured entries to the `references` list in `results.json` so they
+appear in the final report (see `results.json` schema in AGENTS.md).
 """
 
 TASK_SPEC = """# Task Specification
@@ -724,6 +830,7 @@ Reference any input data files, lab reports, or composition tables.
 - [ ] Fluid composition: [source]
 - [ ] Operating conditions: [source]
 - [ ] Equipment data: [source]
+- [ ] Literature papers: [place PDFs in `references/` folder, summarise in `notes.md`]
 - [ ] Other: [specify]
 
 ## Reference Fluid Compositions
@@ -1170,6 +1277,24 @@ def format_custom_tables_html(results):
     return "\\n".join(html_parts)
 
 
+def format_references_html(results):
+    """Format the references list from results.json as a styled HTML ordered list."""
+    refs = results.get("references", [])
+    if not refs:
+        return ""
+    h = \'<ol class="reference-list">\\n\'
+    for ref in refs:
+        ref_id = ref.get("id", "")
+        ref_text = ref.get("text", "")
+        if ref_id:
+            h += \'  <li id="ref-{}"><strong>[{}]</strong> {}</li>\\n\'.format(
+                ref_id, ref_id, ref_text)
+        else:
+            h += \'  <li>{}</li>\\n\'.format(ref_text)
+    h += \'</ol>\'
+    return h
+
+
 def add_word_table(doc, headers, data_rows, col_widths=None):
     """Add a professionally styled table to a Word document.
 
@@ -1384,10 +1509,22 @@ def build_sections(results, task_spec):
         "content": conclusions,
     })
 
-    # 8. References
+    # 8. References (auto-populated from results.json if available)
+    refs_content = MANUAL_SECTIONS["references"]
+    if results and results.get("references"):
+        ref_lines = []
+        for i, ref in enumerate(results["references"], 1):
+            ref_id = ref.get("id", "")
+            ref_text = ref.get("text", "")
+            if ref_id:
+                ref_lines.append("[{}] {}".format(i, ref_text))
+            else:
+                ref_lines.append("[{}] {}".format(i, ref_text))
+        refs_content = "\\n".join(ref_lines)
     sections.append({
         "heading": "8. References",
-        "content": MANUAL_SECTIONS["references"],
+        "content": refs_content,
+        "has_references": True,
     })
 
     return sections
@@ -1590,6 +1727,9 @@ def build_html_report(sections, results=None):
         if "Validation" in section["heading"] and validation_html:
             content = validation_html
 
+        if section.get("has_references") and results and results.get("references"):
+            content = format_references_html(results)
+
         section_html += """
         <section id="{}">
             <h2>{}</h2>
@@ -1678,6 +1818,10 @@ def build_html_report(sections, results=None):
         .results-table {{ max-width: 600px; }}
         .validation-table {{ max-width: 500px; }}
         .custom-table {{ margin-top: 0.5rem; }}
+        .reference-list {{ list-style: none; padding-left: 0; }}
+        .reference-list li {{ margin-bottom: 0.6rem; padding: 0.4rem 0.6rem;
+            border-left: 3px solid #2F5496; background: #f8f9fa; }}
+        .reference-list li strong {{ color: #2F5496; }}
         @media (max-width: 768px) {{
             nav {{ position: static; width: 100%; min-height: auto; }}
             main {{ margin-left: 0; padding: 1rem; }}
@@ -1789,6 +1933,7 @@ def setup_workspace():
         os.path.join(TEMPLATE_DIR, "README.md"): TASK_README,
         os.path.join(TEMPLATE_DIR, "step1_scope_and_research", "task_spec.md"): TASK_SPEC,
         os.path.join(TEMPLATE_DIR, "step1_scope_and_research", "notes.md"): STEP1_NOTES,
+        os.path.join(TEMPLATE_DIR, "step1_scope_and_research", "references", "README.md"): REFERENCES_README,
         os.path.join(TEMPLATE_DIR, "step2_analysis", "notes.md"): STEP2_NOTES,
         os.path.join(TEMPLATE_DIR, "step2_analysis", ".gitkeep"): "",
         os.path.join(TEMPLATE_DIR, "step3_report", "generate_report.py"): GENERATE_REPORT,
