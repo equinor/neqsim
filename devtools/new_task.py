@@ -1085,6 +1085,172 @@ def extract_spec_section(spec_text, heading):
     return ""
 
 
+def _md_table_to_html(lines):
+    """Convert markdown table lines to an HTML table string."""
+    if len(lines) < 2:
+        return ""
+    # Parse header
+    header_cells = [c.strip() for c in lines[0].strip().strip("|").split("|")]
+    # Skip separator line (line 1)
+    html = '<table class="scope-table"><thead><tr>'
+    for cell in header_cells:
+        html += "<th>{}</th>".format(_md_inline(cell))
+    html += "</tr></thead><tbody>\\n"
+    for row_line in lines[2:]:
+        cells = [c.strip() for c in row_line.strip().strip("|").split("|")]
+        html += "<tr>"
+        for cell in cells:
+            html += "<td>{}</td>".format(_md_inline(cell))
+        html += "</tr>\\n"
+    html += "</tbody></table>"
+    return html
+
+
+def _md_inline(text):
+    """Convert inline markdown (bold) to HTML."""
+    import re as _re
+    # **bold**
+    text = _re.sub(r"\\*\\*(.+?)\\*\\*", r"<strong>\\1</strong>", text)
+    return text
+
+
+def _md_list_to_html(lines):
+    """Convert markdown bullet list lines to an HTML list."""
+    html = "<ul>\\n"
+    for line in lines:
+        item = line.lstrip("- ").strip()
+        html += "  <li>{}</li>\\n".format(_md_inline(item))
+    html += "</ul>"
+    return html
+
+
+def scope_content_to_html(content):
+    """Convert scope section content (from task_spec.md) to styled HTML.
+
+    Handles markdown tables, bold text, bullet lists, and sub-headings.
+    """
+    lines = content.split("\\n")
+    html_parts = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+
+        # Blank line
+        if not line.strip():
+            i += 1
+            continue
+
+        # Sub-heading (e.g., "Applicable Standards:")
+        if (line.strip().endswith(":") and not line.strip().startswith("-")
+                and not line.strip().startswith("|") and not line.strip().startswith("*")):
+            html_parts.append("<h3>{}</h3>".format(_md_inline(line.strip())))
+            i += 1
+            continue
+
+        # Markdown table (starts with |)
+        if line.strip().startswith("|"):
+            table_lines = []
+            while i < len(lines) and lines[i].strip().startswith("|"):
+                table_lines.append(lines[i])
+                i += 1
+            # Check if second line is separator (|---|)
+            if len(table_lines) >= 2 and set(table_lines[1].replace("|", "").replace("-", "").replace(":", "").strip()) <= set(""):
+                html_parts.append(_md_table_to_html(table_lines))
+            else:
+                # Not a real table, just text with pipes
+                for tl in table_lines:
+                    html_parts.append("<p>{}</p>".format(_md_inline(tl.strip())))
+            continue
+
+        # Bullet list (starts with -)
+        if line.strip().startswith("- "):
+            list_lines = []
+            while i < len(lines) and lines[i].strip().startswith("- "):
+                list_lines.append(lines[i])
+                i += 1
+            html_parts.append(_md_list_to_html(list_lines))
+            continue
+
+        # Regular paragraph
+        html_parts.append("<p>{}</p>".format(_md_inline(line.strip())))
+        i += 1
+
+    return "\\n".join(html_parts)
+
+
+def render_scope_to_word(doc, content):
+    """Render scope section content (from task_spec.md) into a Word document.
+
+    Parses markdown tables into Word tables, bold text into runs, and
+    bullet lists into formatted paragraphs.
+    """
+    lines = content.split("\\n")
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+
+        # Blank line
+        if not line.strip():
+            i += 1
+            continue
+
+        # Sub-heading (e.g., "Applicable Standards:")
+        if (line.strip().endswith(":") and not line.strip().startswith("-")
+                and not line.strip().startswith("|") and not line.strip().startswith("*")):
+            doc.add_heading(line.strip(), level=2)
+            i += 1
+            continue
+
+        # Markdown table
+        if line.strip().startswith("|"):
+            table_lines = []
+            while i < len(lines) and lines[i].strip().startswith("|"):
+                table_lines.append(lines[i])
+                i += 1
+            if len(table_lines) >= 2:
+                _md_table_to_word(doc, table_lines)
+            else:
+                for tl in table_lines:
+                    doc.add_paragraph(tl.strip())
+            continue
+
+        # Bullet list
+        if line.strip().startswith("- "):
+            while i < len(lines) and lines[i].strip().startswith("- "):
+                item_text = lines[i].strip()[2:]  # Remove "- "
+                p = doc.add_paragraph(style="List Bullet")
+                _add_bold_runs(p, item_text)
+                i += 1
+            continue
+
+        # Regular paragraph
+        p = doc.add_paragraph()
+        _add_bold_runs(p, line.strip())
+        i += 1
+
+
+def _md_table_to_word(doc, table_lines):
+    """Convert markdown table lines to a styled Word table."""
+    header_cells = [c.strip() for c in table_lines[0].strip().strip("|").split("|")]
+    data_rows = []
+    for row_line in table_lines[2:]:  # skip header and separator
+        cells = [c.strip() for c in row_line.strip().strip("|").split("|")]
+        data_rows.append(cells)
+    add_word_table(doc, header_cells, data_rows)
+
+
+def _add_bold_runs(paragraph, text):
+    """Add text with **bold** sections as separate runs."""
+    import re as _re
+    parts = _re.split(r"(\\*\\*.+?\\*\\*)", text)
+    for part in parts:
+        if part.startswith("**") and part.endswith("**"):
+            run = paragraph.add_run(part[2:-2])
+            run.bold = True
+        else:
+            paragraph.add_run(part)
+
+
 def get_figures():
     """Collect all PNG/SVG figures from the figures/ directory."""
     pngs = sorted(glob.glob(os.path.join(FIG_DIR, "*.png")))
@@ -1461,6 +1627,7 @@ def build_sections(results, task_spec):
     sections.append({
         "heading": "3. Scope and Standards",
         "content": scope_content,
+        "has_scope": True,
     })
 
     # 4. Approach
@@ -1560,6 +1727,9 @@ def build_word_report(sections, results=None):
             for para_text in section["content"].split("\\n\\n"):
                 if para_text.strip():
                     doc.add_paragraph(para_text.strip())
+        elif section.get("has_scope"):
+            # Scope section: parse markdown tables, bold, and lists
+            render_scope_to_word(doc, section["content"])
         elif "Validation" in section["heading"] and results and results.get("validation"):
             # Validation section: use Word table
             add_validation_word_table(doc, results)
@@ -1712,7 +1882,11 @@ def build_html_report(sections, results=None):
         nav_items += \'    <li><a href="#{}">{}</a></li>\\n\'.format(
             section_id, section["heading"]
         )
-        content = section["content"].replace("\\n", "<br>")
+        # Convert scope section markdown to HTML
+        if section.get("has_scope"):
+            content = scope_content_to_html(section["content"])
+        else:
+            content = section["content"].replace("\\n", "<br>")
 
         # Insert auto-generated HTML for special sections
         if section.get("has_figures"):
@@ -1818,6 +1992,11 @@ def build_html_report(sections, results=None):
         .results-table {{ max-width: 600px; }}
         .validation-table {{ max-width: 500px; }}
         .custom-table {{ margin-top: 0.5rem; }}
+        .scope-table {{ margin: 0.5rem 0 1rem 0; }}
+        section h3 {{ color: #2F5496; margin-top: 1.2rem; margin-bottom: 0.4rem;
+            font-size: 1.1rem; border-bottom: 1px solid #ddd; padding-bottom: 0.2rem; }}
+        section ul {{ margin: 0.3rem 0 0.8rem 1.5rem; }}
+        section ul li {{ margin-bottom: 0.3rem; }}
         .reference-list {{ list-style: none; padding-left: 0; }}
         .reference-list li {{ margin-bottom: 0.6rem; padding: 0.4rem 0.6rem;
             border-left: 3px solid #2F5496; background: #f8f9fa; }}
