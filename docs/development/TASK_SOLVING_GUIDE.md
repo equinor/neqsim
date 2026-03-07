@@ -11,6 +11,61 @@ findable for the next session.
 
 ---
 
+## AI-Supported Task Solving While Developing
+
+Every engineering task follows a 4-step workflow that combines AI research
+tools with NeqSim's physics-based API. Each task gets its own folder in
+`task_solve/` (gitignored — local working area only).
+
+```
+ STEP 1              STEP 2              STEP 3              STEP 4
+ Research            Technical Analysis  Iterative Result    Final Technical
+                     via NeqSim &        Evaluation          Writing
+ Google NotebookLM   Copilot
+ + open sources                          GitHub Copilot      Claude Opus 4.6
+                     NeqSim API +        + Claude Opus 4.6   + GitHub Copilot
+ Build knowledge     GitHub Copilot
+ base                Deep analysis       Refine results      Synthesize into
+                                                             assessment
+```
+
+### How to Start a New Task
+
+1. **Run the setup script** (auto-creates `task_solve/` on first use):
+   ```powershell
+   python devtools/new_task.py "JT cooling for rich gas"
+   python devtools/new_task.py "TEG dehydration sizing" --type B --author "Your Name"
+   ```
+2. **Open the generated README** — it has AI prompts ready to paste for each step
+3. **Work through Steps 1–4**, saving artifacts in the corresponding subfolder
+4. **When done**, promote reusable outputs back into the repo:
+   - Tests → `src/test/java/neqsim/`
+   - Notebooks → `examples/notebooks/`
+   - API extensions → `src/main/java/neqsim/`
+   - Task log entry → `docs/development/TASK_LOG.md`
+
+> **New user?** The script is in `devtools/` (tracked in git), so it's available
+> immediately after `git clone`. It creates `task_solve/` automatically on first run.
+
+### Task Folder Structure
+
+```
+task_solve/
+├── README.md                              ← workflow overview
+├── TASK_TEMPLATE/                         ← copy this to start
+│   ├── README.md                          ← task checklist
+│   ├── step1_research/notes.md            ← literature, sources
+│   ├── step2_analysis/                    ← simulations, notebooks
+│   ├── step3_evaluation/notes.md          ← validation, iterations
+│   ├── step4_report/                      ← reports, deliverables
+│   └── figures/                           ← all saved plots
+└── 2026-03-07_jt_cooling_rich_gas/        ← example real task
+```
+
+See `task_solve/README.md` for the full workflow description and details.
+
+---
+
 ## Why Solve Tasks Inside the Repo?
 
 NeqSim is both the *tool* you use and the *codebase* you develop. When you
@@ -511,6 +566,8 @@ Before considering a task done:
 - [ ] **Logged**: Entry added to `docs/development/TASK_LOG.md`
 - [ ] **Figures saved**: All plots saved to `figures/` directory (not just displayed inline)
 - [ ] **Report generated** (if deliverable): Word document builds end-to-end via `python generate_report.py`
+- [ ] **Task folder complete**: All 4 steps documented in `task_solve/YYYY-MM-DD_description/`
+- [ ] **Reusable outputs promoted**: Tests, notebooks, or API extensions moved back into the repo
 
 ---
 
@@ -824,12 +881,12 @@ Search docs/development/TASK_LOG.md for similar past tasks.
 If you're a process engineer (not a developer):
 
 1. Open VS Code with the NeqSim repo
-2. Open Copilot Chat
-3. Type: `@solve.process [describe what you want to simulate]`
+2. Run: `python devtools/new_task.py "your engineering question" --type B`
+3. Open Copilot Chat and paste the prompt from the generated README
 4. The agent creates a notebook, runs every cell, and hands back results
-5. Open the notebook in `examples/notebooks/` to see the code and plots
+5. Run `python step4_report/generate_report.py` to create a Word report
 
-You don't need to know Java, Maven, or git. The agent handles everything.
+You don't need to know Java, Maven, or git. The script and agent handle everything.
 
 ---
 
@@ -837,6 +894,9 @@ You don't need to know Java, Maven, or git. The agent handles everything.
 
 | Document | Purpose |
 |----------|---------|
+| `devtools/new_task.py` | Script to create task folders (auto-bootstraps `task_solve/`) |
+| `task_solve/README.md` | AI-supported task-solving workflow (4-step process) |
+| `task_solve/TASK_TEMPLATE/` | Template folder with prompts and report generator |
 | `CONTEXT.md` | 60-second repo orientation |
 | `docs/development/CODE_PATTERNS.md` | Copy-paste code starters |
 | `docs/development/TASK_LOG.md` | Persistent task memory |
