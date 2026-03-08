@@ -53,7 +53,30 @@ engineering task (hydrate prediction, pipeline sizing, compressor design, etc.):
    - Create a Jupyter notebook in `step2_analysis/` using NeqSim
    - Use the dual-boot setup cell (see below)
    - Run all cells, validate results against acceptance criteria
-   - Save plots to `figures/` as PNG
+   - **MANDATORY: Include detailed results table** with all key outputs and units
+   - **MANDATORY: Include at least 2-3 matplotlib figures** (profiles, sensitivities, comparisons) with axis labels, units, titles, legends, and grids
+   - Save all figures to `figures/` as PNG (dpi=150, bbox_inches="tight")
+   - **MANDATORY: Create a separate benchmark validation notebook** (`XX_benchmark_validation.ipynb`) comparing NeqSim results against independent reference data (NIST, textbook examples, published cases, industry benchmarks). Include at least 3 data points, a parity/deviation plot, and save `benchmark_validation` results to `results.json`
+   - **MANDATORY: Create a separate uncertainty & risk notebook** (`XX_uncertainty_risk_analysis.ipynb`) that:
+     - Identifies key uncertain input parameters and assigns realistic ranges (low/base/high or distribution)
+     - **MUST use full NeqSim process simulations inside the Monte Carlo loop** — do NOT
+       use simplified Python correlations when NeqSim classes exist for the calculation
+       (e.g., use `SimpleReservoir` + `PipeBeggsAndBrills` for production profiles, not
+       a Python exponential decline). Simplified models are only acceptable when NeqSim
+       has no equivalent class.
+     - **Resource/reserve estimates MUST be uncertain parameters** — always include
+       GIP or STOIIP as a triangular/lognormal input. Report P10/P50/P90 for GIP,
+       recovery factor, and total production alongside the main output.
+     - Runs Monte Carlo simulation (N≥200 with NeqSim, N≥1000 for simplified models)
+       to produce P10/P50/P90 estimates of the main output
+     - **Performance optimisation pattern**: Cache expensive NeqSim results that don't
+       change between iterations (e.g., compute base SURF cost once, scale by multiplier).
+       In tornado sensitivity, classify parameters as "technical" (require NeqSim re-run)
+       vs "economic" (reuse base production profile, recalculate cash flow only).
+     - Generates a tornado diagram showing input sensitivity ranking
+     - Includes a risk register with 6-10 risks across categories (Market, Technical,
+       Cost, Schedule, HSE, Regulatory), using ISO 31000 5×5 matrix
+     - Saves `uncertainty` and `risk_evaluation` results to `results.json`
    - **Save results.json** in the task root (see pattern below)
 
    **Step 3 — Report**
@@ -92,6 +115,30 @@ except ImportError:
     NEQSIM_MODE = "pip"
     print("NeqSim loaded via pip package")
 ```
+
+### Follow-up Questions (ASK BEFORE STARTING)
+
+Before beginning any Standard or Comprehensive task, ask the user these scoping
+questions to avoid rework and produce better results:
+
+1. **Fluid / resource**: What is the reservoir fluid composition? If unavailable,
+   what type (lean gas, rich gas, oil, condensate)? What is the estimated
+   resource volume (GIP/STOIIP) and its uncertainty range?
+2. **Operating envelope**: What are the design pressure, temperature, and flow
+   rate ranges? Any constraints (backpressure limit, arrival temperature)?
+3. **Standards & jurisdiction**: Which design codes apply (NORSOK, DNV, API,
+   ASME)? Which fiscal/tax regime (Norwegian NCS, UK, generic)?
+4. **Economics**: What gas/oil price range and currency? What discount rate?
+   Are cost estimates needed (CAPEX breakdown, OPEX)?
+5. **Uncertainty scope**: Which parameters are most uncertain? Should Monte
+   Carlo use full NeqSim process simulations (slower, more accurate) or
+   simplified correlations (faster)?
+6. **Deliverables**: What output format — quick answer, notebook only, or full
+   Word + HTML report? Are benchmarks against published data required?
+7. **Risk categories**: Which risk categories matter most (market, technical,
+   HSE, regulatory, schedule)?
+
+For Quick-scale tasks, skip questions and proceed directly.
 
 ### Adaptive scale
 
@@ -134,6 +181,41 @@ results = {
         # {"id": "API521", "text": "API 521, 7th Edition (2020). Pressure-Relieving and Depressuring Systems."},
         # {"id": "DNV-ST-F101", "text": "DNV-ST-F101 (2021). Submarine Pipeline Systems."}
     ],
+    "uncertainty": {
+        # "method": "Monte Carlo with full NeqSim process simulation",
+        # "n_simulations": 200,
+        # "simulation_engine": "NeqSim (SRK EOS, SimpleReservoir, PipeBeggsAndBrills)",
+        # "input_parameters": [
+        #     {"name": "GIP Volume", "unit": "m3", "low": 0.65e9, "base": 1.0e9, "high": 1.45e9, "distribution": "triangular"},
+        #     {"name": "Gas Price", "unit": "NOK/Sm3", "low": 0.8, "base": 1.5, "high": 2.5, "distribution": "triangular"},
+        #     {"name": "CAPEX Multiplier", "unit": "-", "low": 0.85, "base": 1.0, "high": 1.4, "distribution": "triangular"},
+        # ],
+        # "output_parameter": "NPV after tax (MNOK)",
+        # "p10": -22.0,
+        # "p50": 3352.0,
+        # "p90": 7086.0,
+        # "mean": 3471.0,
+        # "std": 2617.0,
+        # "prob_negative_pct": 10.5,
+        # "resource_estimate": {
+        #     "gip_GSm3_p10": 105.0, "gip_GSm3_p50": 135.0, "gip_GSm3_p90": 169.0,
+        #     "recovery_factor_pct_p10": 45.0, "recovery_factor_pct_p50": 57.0, "recovery_factor_pct_p90": 66.0,
+        #     "total_production_GSm3_p10": 67.0, "total_production_GSm3_p50": 77.0, "total_production_GSm3_p90": 86.0
+        # },
+        # "capex_mnok": {"p10": 13100.0, "p50": 14700.0, "p90": 17500.0},
+        # "tornado": [
+        #     {"parameter": "Gas Price (0.8-2.5 NOK/Sm3)", "npv_low": -688, "npv_high": 10302, "swing": 10990},
+        # ]
+    },
+    "risk_evaluation": {
+        # "risks": [
+        #     {"id": "R1", "description": "Gas price below breakeven", "category": "Market",
+        #      "likelihood": "Possible", "consequence": "Major", "risk_level": "High",
+        #      "mitigation": "Long-term sales contracts, hedging"},
+        # ],
+        # "overall_risk_level": "Medium",
+        # "risk_matrix_used": "5x5 (ISO 31000)"
+    },
 }
 with open(str(TASK_DIR / "results.json"), "w") as f:
     json.dump(results, f, indent=2)
@@ -146,6 +228,8 @@ The report generator auto-reads this file to populate Results and Validation sec
 - **figures**: Numbered captions from `figure_captions`
 - **tables**: Custom tables rendered in both HTML and Word with headers/rows
 - **references**: Numbered reference list rendered in the References section of the report
+- **uncertainty**: Monte Carlo results (P10/P50/P90, tornado data, probability of negative outcome) rendered in the Uncertainty Analysis section
+- **risk_evaluation**: Risk register with likelihood/consequence ratings rendered in the Risk Evaluation section
 
 ## Code Patterns
 
@@ -189,12 +273,42 @@ fluid.addComponent("methane", 0.85)
 fluid.setMixingRule("classic")
 ```
 
+### Subsea well design (mechanical design + cost)
+
+```java
+SubseaWell well = new SubseaWell("Producer-1", stream);
+well.setWellType(SubseaWell.WellType.OIL_PRODUCER);
+well.setMeasuredDepth(3800.0);
+well.setWaterDepth(350.0);
+well.setMaxWellheadPressure(345.0);
+well.setReservoirPressure(400.0);
+well.setProductionCasingOD(9.625);
+well.setProductionCasingDepth(3800.0);
+well.setTubingOD(5.5); well.setTubingWeight(23.0); well.setTubingGrade("L80");
+well.setHasDHSV(true);
+well.setPrimaryBarrierElements(3);
+well.setSecondaryBarrierElements(3);
+well.setDrillingDays(45.0);
+well.setCompletionDays(25.0);
+
+well.initMechanicalDesign();
+WellMechanicalDesign design = (WellMechanicalDesign) well.getMechanicalDesign();
+design.calcDesign();           // API 5C3 burst/collapse/tension + NORSOK D-010
+design.calculateCostEstimate(); // drilling, completion, wellhead, logging
+String json = design.toJson();
+```
+
+**Standards:** API 5CT/ISO 11960 (casing grades), API Bull 5C3 (burst/collapse/tension),
+NORSOK D-010 (design factors, barriers), API RP 90 (annular pressure).
+
 ## Key Paths
 
 | Path | Purpose |
 |------|---------|
 | `src/main/java/neqsim/` | Main source (thermo, process, pvt, standards) |
 | `src/test/java/neqsim/` | JUnit 5 tests (mirrors src structure) |
+| `src/main/java/neqsim/process/mechanicaldesign/subsea/` | Well & SURF design, cost estimation |
+| `src/main/java/neqsim/process/equipment/subsea/` | SubseaWell, SubseaTree equipment |
 | `examples/notebooks/` | Jupyter notebook examples |
 | `devtools/new_task.py` | Task-solving script |
 | `docs/development/TASK_SOLVING_GUIDE.md` | Full workflow guide |

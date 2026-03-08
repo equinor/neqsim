@@ -38,7 +38,12 @@ src/main/java/neqsim/
   process/equipment/     33 equipment packages:
     stream/ separator/ compressor/ pump/ valve/ heatexchanger/
     pipeline/ distillation/ mixer/ splitter/ expander/ reactor/
-    well/ reservoir/ membrane/ ejector/ filter/ flare/ ...
+    well/ reservoir/ membrane/ ejector/ filter/ flare/
+    subsea/              SubseaWell, SubseaTree (subsea equipment)
+  process/mechanicaldesign/
+    subsea/              WellMechanicalDesign, WellDesignCalculator,
+                         WellCostEstimator, SURFCostEstimator,
+                         SubseaCostEstimator (mechanical design & cost)
   process/processmodel/  ProcessSystem — the flowsheet orchestrator
   pvtsimulation/         CME, CVD, DL, saturation, GOR, swelling, MMP
   standards/             Gas quality, oil quality, sales contracts
@@ -150,6 +155,47 @@ Stream = jneqsim.process.equipment.stream.Stream
 # ... see devtools/neqsim_dev_setup.py for local dev workflow
 ```
 
+### Subsea Well Design (mechanical design + cost)
+
+```java
+// Create fluid & stream
+SystemInterface fluid = new SystemSrkEos(273.15 + 80.0, 200.0);
+fluid.addComponent("methane", 0.80);
+fluid.setMixingRule("classic");
+Stream stream = new Stream("reservoir", fluid);
+stream.setFlowRate(50000.0, "kg/hr");
+
+// Create subsea well
+SubseaWell well = new SubseaWell("Producer-1", stream);
+well.setWellType(SubseaWell.WellType.OIL_PRODUCER);
+well.setCompletionType(SubseaWell.CompletionType.CASED_PERFORATED);
+well.setRigType(SubseaWell.RigType.SEMI_SUBMERSIBLE);
+well.setMeasuredDepth(3800.0);
+well.setWaterDepth(350.0);
+well.setMaxWellheadPressure(345.0);
+well.setReservoirPressure(400.0);
+
+// Casing program (conductor, surface, intermediate, production)
+well.setConductorOD(30.0);  well.setConductorDepth(100.0);
+well.setSurfaceCasingOD(20.0); well.setSurfaceCasingDepth(800.0);
+well.setIntermediateCasingOD(13.375); well.setIntermediateCasingDepth(2500.0);
+well.setProductionCasingOD(9.625); well.setProductionCasingDepth(3800.0);
+well.setTubingOD(5.5); well.setTubingWeight(23.0); well.setTubingGrade("L80");
+
+// Mechanical design — casing per API 5C3/5CT, barriers per NORSOK D-010
+well.initMechanicalDesign();
+WellMechanicalDesign design = (WellMechanicalDesign) well.getMechanicalDesign();
+design.calcDesign();          // burst, collapse, tension, weights, cement, barriers
+design.calculateCostEstimate(); // drilling, completion, wellhead, logging, contingency
+System.out.println(design.toJson());
+```
+
+**Standards used in well design:**
+- API 5CT / ISO 11960 — casing & tubing grades and SMYS lookup
+- API Bull 5C3 — Barlow burst, yield-strength / plastic / transition / elastic collapse
+- NORSOK D-010 — design factors (burst ≥ 1.10, collapse ≥ 1.00, tension ≥ 1.60, VME ≥ 1.25), two-barrier principle, DHSV requirements
+- API RP 90 — annular casing pressure management
+
 ## EOS Selection Quick Reference
 
 | Fluid Type | Class | Mixing Rule |
@@ -177,6 +223,7 @@ Stream = jneqsim.process.equipment.stream.Stream
 | Expander | `expander` | `Expander` |
 | Ejector | `ejector` | `Ejector` |
 | Well | `well` | `SimpleWell` |
+| Subsea Well | `subsea` | `SubseaWell` (casing, tubing, barriers, cost) |
 | Recycle | `util` | `Recycle` |
 | Adjuster | `util` | `Adjuster` |
 
@@ -195,6 +242,8 @@ Full package path: `neqsim.process.equipment.<package>.<Class>`
 | Use an AI agent | `.github/agents/` (12 specialist agents) |
 | Set up Jupyter dev | `devtools/neqsim_dev_setup.py` |
 | Find design data | `src/main/resources/designdata/` |
+| Well design & cost | `src/main/java/neqsim/process/mechanicaldesign/subsea/` |
+| SURF cost estimation | `src/main/java/neqsim/process/mechanicaldesign/subsea/SURFCostEstimator.java` |
 | Component database | `src/main/resources/` |
 
 ## Key Constraints

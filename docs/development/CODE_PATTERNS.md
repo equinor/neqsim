@@ -18,8 +18,11 @@ description: "Copy-paste code patterns for every common NeqSim task. Covers flui
 - [Recycle and Adjuster](#recycle-and-adjuster)
 - [PVT Simulations](#pvt-simulations)
 - [Standards Calculations](#standards-calculations)
+- [Field Development Economics](#field-development-economics-npv--cash-flow)
+- [SURF Cost Estimation](#surf-cost-estimation-subsea-field-development)
 - [Test Patterns](#test-patterns)
 - [Jupyter Notebook Patterns](#jupyter-notebook-patterns)
+- [Benchmark Validation Notebook](#benchmark-validation-notebook)
 - [Unit Conversion Reference](#unit-conversion-reference)
 
 ---
@@ -402,6 +405,211 @@ double wobbe = iso.getValue("WobbeIndex");
 
 ---
 
+## Field Development Economics (NPV / Cash Flow)
+
+### Norwegian Petroleum Tax Model
+
+```java
+// Norwegian tax: corporate (22%) + special petroleum (56%) on INDEPENDENT bases
+double corporateTaxRate = 0.22;
+double specialTaxRate = 0.56;
+double upliftRate = 0.055;  // 5.5% per year for 4 years
+int upliftYears = 4;
+int depreciationYears = 6;  // Straight-line
+
+// Depreciation (straight-line over 6 years)
+double annualDepreciation = (year >= 1 && year <= depreciationYears)
+    ? totalCapex / depreciationYears : 0.0;
+
+// Uplift (only for special petroleum tax base)
+double uplift = (year >= 1 && year <= upliftYears)
+    ? totalCapex * upliftRate : 0.0;
+
+// INDEPENDENT taxable incomes (NOT cascaded)
+double taxableIncomeCorp = revenue - opex - annualDepreciation - tariff;
+double taxableIncomePetro = revenue - opex - annualDepreciation - tariff - uplift;
+
+// Loss carry-forward per pool (no interest on carried losses)
+double corpLoss = Math.max(0, -taxableIncomeCorp + carriedCorpLoss);
+double petroLoss = Math.max(0, -taxableIncomePetro + carriedPetroLoss);
+
+double corpTax = Math.max(0, taxableIncomeCorp - carriedCorpLoss) * corporateTaxRate;
+double petroTax = Math.max(0, taxableIncomePetro - carriedPetroLoss) * specialTaxRate;
+double totalTax = corpTax + petroTax;
+
+// Cash flow: Year 0 = CAPEX only, revenue starts Year 1
+double cashFlow = (year == 0) ? -totalCapex : revenue - opex - tariff - totalTax;
+```
+
+### Production Profile (Plateau + Decline)
+
+```python
+import numpy as np
+
+def production_profile(reserves_Sm3, plateau_rate_Sm3_yr, decline_rate, years):
+    """Generate plateau + exponential decline production profile."""
+    production = np.zeros(years)
+    cumulative = 0.0
+    for yr in range(years):
+        if cumulative < reserves_Sm3 * 0.3:  # plateau phase
+            annual = min(plateau_rate_Sm3_yr, reserves_Sm3 - cumulative)
+        else:  # decline phase
+            annual = production[yr-1] * (1 - decline_rate) if yr > 0 else plateau_rate_Sm3_yr
+        annual = min(annual, reserves_Sm3 - cumulative)
+        production[yr] = max(0, annual)
+        cumulative += production[yr]
+    return production
+```
+
+### NPV Calculation
+
+```python
+def calculate_npv(cash_flows, discount_rate):
+    """Calculate NPV from array of annual cash flows (year 0 at index 0)."""
+    return sum(cf / (1 + discount_rate)**t for t, cf in enumerate(cash_flows))
+```
+
+### Using CashFlowEngine (Java)
+
+```java
+import neqsim.process.fielddevelopment.economics.CashFlowEngine;
+import neqsim.process.fielddevelopment.economics.CashFlowEngine.CashFlowResult;
+
+// Create engine with Norwegian tax model ("NO")
+CashFlowEngine engine = new CashFlowEngine("NO");
+
+// Prices (units match your currency — e.g., NOK/Sm3 for Norwegian gas)
+engine.setGasPrice(1.5);           // NOK/Sm3
+engine.setGasTariff(0.015);        // NOK/Sm3
+engine.setFixedOpexPerYear(200.0); // MNOK/year
+
+// CAPEX schedule by calendar year
+engine.addCapex(50.0, 2020);   // Pre-DG3
+engine.addCapex(150.0, 2021);
+engine.addCapex(4033.0, 2022); // DG3-DG4 construction
+engine.addCapex(4033.0, 2023);
+engine.addCapex(4033.0, 2024);
+
+// Annual production (year, oilBbl, gasSm3, nglBbl)
+engine.addAnnualProduction(2025, 0, 3.4e9, 0);
+engine.addAnnualProduction(2026, 0, 3.4e9, 0);
+engine.addAnnualProduction(2027, 0, 3.0e9, 0);
+// ... more years
+
+// Calculate
+CashFlowResult result = engine.calculate(0.08); // 8% discount rate
+
+double npv = result.getNpv();
+double irr = result.getIrr();
+double payback = result.getPaybackYears();
+String summary = result.getSummary();
+String table = result.toMarkdownTable();
+
+// Breakeven analysis
+double breakevenGasPrice = engine.calculateBreakevenGasPrice(0.08);
+```
+
+---
+
+## SURF Cost Estimation (Subsea Field Development)
+
+### Using SURFCostEstimator (Java)
+
+```java
+import neqsim.process.mechanicaldesign.subsea.SURFCostEstimator;
+import neqsim.process.mechanicaldesign.subsea.SubseaCostEstimator;
+
+// Constructor: (numberOfWells, waterDepthM, region)
+SURFCostEstimator surf = new SURFCostEstimator(6, 300.0, SubseaCostEstimator.Region.NORWAY);
+
+// S — Subsea infrastructure
+surf.setTreePressureRatingPsi(10000.0);
+surf.setTreeBoreSizeInches(5.0);
+surf.setHorizontalTrees(true);
+surf.setManifoldSlots(6);
+surf.setManifoldWeightTonnes(140.0);
+surf.setNumberOfPLETs(2);
+surf.setNumberOfJumpers(6);
+
+// U — Umbilicals
+surf.setUmbilicalLengthKm(10.0);
+surf.setUmbilicalDynamic(true);
+
+// R — Risers
+surf.setIncludeRisers(true);
+surf.setFlexibleRiser(true);
+surf.setRiserDiameterInches(8.0);
+surf.setNumberOfProductionRisers(1);
+
+// F — Flowlines
+surf.setInfieldFlowlineLengthKm(10.0);
+surf.setInfieldFlowlineDiameterInches(14.0);
+surf.setExportPipelineLengthKm(80.0);
+surf.setExportPipelineDiameterInches(24.0);
+surf.setPipelineMaterialGrade("X65");
+surf.setPipelineDesignPressureBar(165.0);
+surf.setPipelineInstallMethod("S-lay");
+surf.setContingencyPct(0.15);
+
+double totalUSD = surf.calculate();
+
+// Get cost breakdown
+double subseaCost = surf.getSubseaCostUSD();
+double umbilicalCost = surf.getUmbilicalCostUSD();
+double riserCost = surf.getRiserCostUSD();
+double flowlineCost = surf.getFlowlineCostUSD();
+double totalNOK = surf.getTotalCostInCurrency(10.5); // exchange rate
+String json = surf.toJson();
+```
+
+### Using SURFCostEstimator from Python Notebook
+
+```python
+import jpype
+
+# Load from local build if not in pip package
+try:
+    SURFCostEstimator = jpype.JClass(
+        "neqsim.process.mechanicaldesign.subsea.SURFCostEstimator")
+    SubseaCostEstimator = jpype.JClass(
+        "neqsim.process.mechanicaldesign.subsea.SubseaCostEstimator")
+except Exception:
+    import glob, pathlib
+    jar = glob.glob(str(pathlib.Path("target") / "neqsim-*-shaded.jar"))
+    if jar:
+        jpype.addClassPath(jar[0])
+    SURFCostEstimator = jpype.JClass(
+        "neqsim.process.mechanicaldesign.subsea.SURFCostEstimator")
+    SubseaCostEstimator = jpype.JClass(
+        "neqsim.process.mechanicaldesign.subsea.SubseaCostEstimator")
+
+surf = SURFCostEstimator(6, 300.0, SubseaCostEstimator.Region.NORWAY)
+surf.setExportPipelineLengthKm(80.0)
+surf.setExportPipelineDiameterInches(24.0)
+surf.setNumberOfPLETs(2)
+surf.setNumberOfJumpers(6)
+surf.calculate()
+
+total_usd = float(surf.getTotalSURFCostUSD())
+total_nok = float(surf.getTotalCostInCurrency(10.5))
+```
+
+### Typical NCS SURF Cost Benchmarks
+
+| Component | Typical Range (MUSD) | Notes |
+|-----------|---------------------|-------|
+| Subsea tree | 5-15 per tree | Vertical or horizontal |
+| Manifold | 10-25 each | 4-slot or 8-slot |
+| PLET | 2-5 each | Per flowline end |
+| Jumper | 3-8 each | Rigid or flexible |
+| Umbilical | 800-2,000/km | Static + dynamic |
+| Riser | 15-50 each | Flexible; more for SCR |
+| Flowline (rigid) | 1,500-5,000/m | Depends on diameter and wall thickness |
+| Export pipeline | 1,500-4,000/m | Material + installation |
+| SURF as % of total CAPEX | 40-60% | NCS subsea tieback |
+
+---
+
 ## Test Patterns
 
 ### Basic Process Test
@@ -514,6 +722,103 @@ results = {
     ],
 }
 pd.DataFrame(results)
+```
+
+### Benchmark Validation Notebook
+
+Every task MUST include a separate benchmark notebook. Use this template:
+
+```python
+# Cell 1: Introduction (markdown)
+# ## Benchmark Validation
+# Compare NeqSim results against independent reference data to verify
+# that the model and equations are producing trustworthy results.
+
+# Cell 2: Reference data
+import pandas as pd
+import numpy as np
+
+benchmark_data = pd.DataFrame({
+    "Condition": ["25C, 1 bar", "25C, 50 bar", "25C, 100 bar", "50C, 100 bar"],
+    "Source": ["NIST", "NIST", "NIST", "NIST"],
+    "density_kg_m3": [0.656, 35.18, 77.50, 60.12],  # reference values
+    "Cp_J_kgK": [2226, 2950, 4100, 3200],
+})
+print("Reference data from NIST Webbook (methane)")
+benchmark_data
+
+# Cell 3: NeqSim calculation at same conditions
+from neqsim import jneqsim
+ThermodynamicOperations = jneqsim.thermodynamicoperations.ThermodynamicOperations
+
+def calc_properties(T_C, P_bar):
+    fluid = jneqsim.thermo.system.SystemSrkEos(273.15 + T_C, P_bar)
+    fluid.addComponent("methane", 1.0)
+    fluid.setMixingRule("classic")
+    ops = ThermodynamicOperations(fluid)
+    ops.TPflash()
+    fluid.init(3)
+    return {
+        "density_kg_m3": float(fluid.getDensity("kg/m3")),
+        "Cp_J_kgK": float(fluid.getCp("J/kgK")),
+    }
+
+conditions = [(25, 1), (25, 50), (25, 100), (50, 100)]
+neqsim_results = [calc_properties(T, P) for T, P in conditions]
+
+# Cell 4: Comparison table
+for i, res in enumerate(neqsim_results):
+    benchmark_data.loc[i, "neqsim_density"] = res["density_kg_m3"]
+    benchmark_data.loc[i, "density_dev_pct"] = abs(
+        res["density_kg_m3"] - benchmark_data.loc[i, "density_kg_m3"]
+    ) / benchmark_data.loc[i, "density_kg_m3"] * 100
+
+print("\nComparison: Benchmark vs NeqSim")
+benchmark_data[["Condition", "density_kg_m3", "neqsim_density", "density_dev_pct"]]
+
+# Cell 5: Parity plot
+import matplotlib.pyplot as plt
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+
+# Parity plot
+ax = axes[0]
+ax.scatter(benchmark_data["density_kg_m3"], benchmark_data["neqsim_density"])
+lims = [0, max(benchmark_data["density_kg_m3"].max(), benchmark_data["neqsim_density"].max()) * 1.1]
+ax.plot(lims, lims, 'k--', label='Perfect agreement')
+ax.set_xlabel("Benchmark density (kg/m\u00b3)")
+ax.set_ylabel("NeqSim density (kg/m\u00b3)")
+ax.set_title("Parity Plot: Density")
+ax.legend(); ax.grid(True)
+
+# Deviation bar chart
+ax = axes[1]
+ax.bar(benchmark_data["Condition"], benchmark_data["density_dev_pct"])
+ax.axhline(y=5.0, color='r', linestyle='--', label='5% tolerance')
+ax.set_ylabel("Deviation (%)")
+ax.set_title("Deviation from NIST Benchmark")
+ax.legend(); ax.grid(True, axis='y')
+
+plt.tight_layout()
+# fig.savefig(str(FIGURES_DIR / "benchmark_parity.png"), dpi=150, bbox_inches="tight")
+plt.show()
+
+# Cell 6: Save benchmark results to results.json
+benchmark_validation = {
+    "benchmark_source": "NIST Webbook",
+    "comparisons": [
+        {"parameter": "density_kg_m3",
+         "benchmark": float(row["density_kg_m3"]),
+         "neqsim": float(row["neqsim_density"]),
+         "deviation_pct": round(float(row["density_dev_pct"]), 2),
+         "condition": row["Condition"]}
+        for _, row in benchmark_data.iterrows()
+    ],
+    "max_deviation_pct": round(float(benchmark_data["density_dev_pct"].max()), 2),
+    "all_within_tolerance": bool(benchmark_data["density_dev_pct"].max() < 5.0),
+    "tolerance_pct": 5.0,
+}
+# Add to results dict: results["benchmark_validation"] = benchmark_validation
 ```
 
 ---

@@ -99,14 +99,20 @@ print("Classes imported OK")
 - Print convergence confirmation
 
 ### Results Cell — Extract & Display (code)
-- Print key results in a clear table format
+- Print key results in a clear table format (use pandas DataFrame or formatted columns)
 - Use `f-strings` with units
 - Include mass/energy balance check
+- **MANDATORY**: Create a summary results table with ALL key outputs and units
 
 ### Visualization Cell — Plots (code)
-- Use `matplotlib` for charts
-- Label axes with units, add title and grid
-- Common plots: T-s diagram, pressure profile, composition bars
+- **MANDATORY: Every notebook MUST include at least 2-3 matplotlib figures**
+- Use `matplotlib` for charts with professional styling
+- Label axes with units, add title, legend, and grid for readability
+- Save all figures to disk as PNG (dpi=150, bbox_inches="tight")
+- Common plots: T-s diagram, pressure profile, composition bars, equipment
+  performance curves, sensitivity/parametric charts, cost breakdowns
+- For process trains: plot property profiles along the process (T, P, flow vs. stage/equipment)
+- For parametric studies: plot key output vs. varied parameter
 
 ### Summary Cell — Key Takeaways (markdown)
 - Bullet list of main results

@@ -27,6 +27,21 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-03-08 — NeqSim-based Monte Carlo uncertainty and risk evaluation for NPV
+**Type:** G (Workflow)
+**Keywords:** uncertainty, Monte Carlo, risk, NPV, GIP, resource estimate, tornado, sensitivity, ISO 31000, risk matrix, NeqSim simulation, SRK EOS, SimpleReservoir, Beggs & Brill, SURFCostEstimator, triangular distribution, P10 P50 P90, field development
+**Solution:** `task_solve/2026-03-07_npv_calculation_of_field_development_subsea_tieback/step2_analysis/03_uncertainty_risk_analysis.ipynb`, `step3_report/generate_report.py` (Sections 9-10)
+**Notes:**
+- Full NeqSim process simulation (SRK EOS, SimpleReservoir, WellFlow, Beggs & Brill pipeline) in every Monte Carlo iteration
+- 7 uncertain parameters: GIP volume (0.65-1.45 GSm3), reservoir pressure (120-170 bara), plateau rate (7-12 MSm3/d), gas price, CAPEX multiplier, OPEX, discount rate
+- N=200 iterations, ~5.5 min total runtime with full NeqSim re-simulation per iteration
+- Results: P10=-22, P50=3,352, P90=7,086 MNOK; P(NPV<0)=10.5%
+- Resource estimate uncertainty: GIP P10=105, P50=135, P90=169 GSm3; Recovery P10=45%, P50=57%, P90=66%
+- Tornado: gas price is dominant driver (swing 10,990 MNOK), followed by discount rate (5,744) and plateau rate (3,833)
+- Risk register: 8 risks across Market/Technical/Cost/Schedule/HSE/Regulatory, overall: High
+- Report generator updated with Sections 9 (Uncertainty Analysis) and 10 (Risk Evaluation) — auto-populated from results.json
+- Updated AGENTS.md and copilot-instructions.md to make uncertainty/risk MANDATORY for all AI tasks
+
 ### 2026-03-04 — Sulfur deposition and corrosion analysis system
 **Type:** E (Feature)
 **Keywords:** sulfur, S8, H2S, deposition, precipitation, solubility, Gibbs reactor, Claus, FeS, corrosion, NACE, sour gas, solid flash, TPSolidflash, SulfurDepositionAnalyser, GibbsReactor, SO2, pipeline, subsea, onshore
