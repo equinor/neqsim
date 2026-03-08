@@ -754,37 +754,45 @@ public class ProcessSystem extends SimulationBaseClass {
    * This method automatically selects the best execution mode:
    * </p>
    * <ul>
-   * <li>For processes WITHOUT recycles: uses parallel execution for maximum speed</li>
-   * <li>For processes WITH recycles: uses hybrid execution - parallel for feed-forward sections,
-   * then graph-based iteration for recycle sections</li>
+   * <li>For processes with adjusters: sequential execution (adjusters modify upstream variables and
+   * read downstream targets, creating implicit feedback loops)</li>
+   * <li>For processes with recycles (no adjusters): hybrid execution - parallel for feed-forward
+   * sections, then sequential iteration for recycle sections</li>
+   * <li>For feed-forward processes (including those with multi-input equipment like Mixers and
+   * HeatExchangers): parallel execution using level-based partitioning</li>
    * </ul>
+   *
+   * <p>
+   * Multi-input equipment (Mixer, HeatExchanger, Ejector, etc.) is handled safely by the
+   * level-based parallel execution: the graph places multi-input units at a level after all their
+   * inputs, and {@code groupNodesBySharedInputStreams()} prevents race conditions on shared
+   * streams.
+   * </p>
    *
    * @param id calculation identifier for tracking
    */
   public void runOptimized(UUID id) {
-    if (hasRecycles()) {
-      // Process has Recycle units - use sequential execution for full convergence
-      // This ensures all units are re-evaluated in each iteration using insertion
-      // order
-      runSequential(id);
-    } else if (hasMultiInputEquipment()) {
-      // Process has multi-input equipment (Mixer, Manifold, TurboExpanderCompressor)
-      // - these
-      // require sequential execution to ensure correct mass balance
-      runSequential(id);
-    } else if (hasAdjusters()) {
+    if (hasAdjusters()) {
       // Adjusters create implicit feedback loops (they modify upstream variables
       // and read downstream targets), requiring all units to re-run each iteration.
       // Use sequential execution for correct convergence.
       runSequential(id);
+    } else if (hasRecycles()) {
+      // Process has Recycle units - use sequential execution for full convergence.
+      // This ensures all units are re-evaluated in each iteration using insertion
+      // order, which may be carefully chosen for convergence in complex processes
+      // (e.g. TEG dehydration with regen column and makeup).
+      runSequential(id);
     } else {
-      // Feed-forward process - use parallel execution for maximum speed
-      // Units at the same level (no dependencies) run concurrently
+      // Feed-forward process (may include multi-input equipment like Mixers,
+      // HeatExchangers, Ejectors, etc.) - use parallel execution for maximum speed.
+      // Level-based partitioning ensures multi-input units run after all inputs.
+      // groupNodesBySharedInputStreams() prevents race conditions on shared streams.
       try {
         runParallel(id);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        logger.warn("Parallel execution interrupted, falling back to regular run");
+        logger.warn("Parallel execution interrupted, falling back to sequential");
         runSequential(id);
       }
     }
@@ -1404,7 +1412,7 @@ public class ProcessSystem extends SimulationBaseClass {
       return false;
     }
 
-    // Check for recycles - they require sequential iterative execution
+    // Check for recycles and adjusters - they require iterative execution
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Recycle) {
         return false;
@@ -1412,14 +1420,11 @@ public class ProcessSystem extends SimulationBaseClass {
       if (unit instanceof Adjuster) {
         return false;
       }
-      // Multi-input equipment requires sequential execution for correct mass balance
-      if (unit instanceof MixerInterface || unit instanceof Manifold
-          || unit instanceof TurboExpanderCompressor || unit instanceof Ejector
-          || unit instanceof HeatExchanger || unit instanceof MultiStreamHeatExchangerInterface
-          || unit instanceof FurnaceBurner || unit instanceof FlareStack) {
-        return false;
-      }
     }
+    // Note: multi-input equipment (Mixer, HeatExchanger, etc.) is handled safely
+    // by level-based parallel execution - multi-input units are placed at a level
+    // after all their inputs, and groupNodesBySharedInputStreams() prevents race
+    // conditions on shared streams.
 
     // Check parallel partition
     ProcessGraph.ParallelPartition partition = getParallelPartition();
