@@ -82,6 +82,17 @@ engineering task (hydrate prediction, pipeline sizing, compressor design, etc.):
    **Step 3 — Report**
    - `generate_report.py` auto-reads `task_spec.md` and `results.json`
    - Run `python step3_report/generate_report.py` to produce Word + HTML
+   - Add `--paper` to also generate a scientific paper: `Paper.docx` + `Paper.html`
+   - Use `--paper-only` to generate only the paper (skips technical report)
+   - For the paper, configure `PAPER_TITLE`, `PAPER_AUTHORS`, `PAPER_KEYWORDS`,
+     and `PAPER_SECTIONS` in `generate_report.py`
+   - **Important:** The template now has built-in styled formatting for
+     Benchmark Validation, Uncertainty Analysis, and Risk Evaluation sections
+     (color-coded risk badges, P10/P50/P90 tables, tornado tables, benchmark
+     PASS/FAIL tables). These render automatically when the corresponding keys
+     exist in `results.json`. Ensure `figure_captions` in results.json covers
+     figures from ALL notebooks, not just the main one. When design parameters
+     change, update hardcoded numbers in MANUAL_SECTIONS.
 
 4. **Create a PR** with reusable outputs:
    ```bash
@@ -240,8 +251,9 @@ The report generator auto-reads this file to populate Results and Validation sec
 - **figures**: Numbered captions from `figure_captions`
 - **tables**: Custom tables rendered in both HTML and Word with headers/rows
 - **references**: Numbered reference list rendered in the References section of the report
-- **uncertainty**: Monte Carlo results (P10/P50/P90, tornado data, probability of negative outcome) rendered in the Uncertainty Analysis section
-- **risk_evaluation**: Risk register with likelihood/consequence ratings rendered in the Risk Evaluation section
+- **uncertainty**: Monte Carlo results (P10/P50/P90, tornado data, probability of negative outcome) rendered as styled tables in the Uncertainty Analysis section
+- **risk_evaluation**: Risk register with color-coded risk levels (High=red, Medium=orange, Low=green), summary badges, and mitigation table in the Risk Evaluation section
+- **benchmark_validation**: Benchmark tests rendered as a table with PASS/FAIL color coding and detail columns
 
 ## Code Patterns
 

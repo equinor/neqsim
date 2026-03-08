@@ -428,6 +428,16 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | TORG Integration                  | [docs/process/torg_integration.md](process/torg_integration)                                                                                           | TORG integration                                                                                                                 |
 | Field Development                 | [docs/process/field_development_orchestration.md](process/field_development_orchestration)                                                             | Field development orchestration                                                                                                  |
 
+### Chapter 24: Electrical Design
+
+| Document                          | Path                                                                                                       | Description                                                                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Electrical Design Guide**       | [docs/process/electrical-design.md](process/electrical-design)                                             | **Comprehensive guide to electrical design: motor sizing (IEC 60034), VFD topology, cable sizing, transformer, switchgear, hazardous area, load list, power triangle** |
+| **Compressor Electrical Design**  | [examples/notebooks/electrical/compressor_electrical_design.ipynb](../examples/notebooks/electrical/compressor_electrical_design.ipynb) | **Jupyter notebook: 2-stage compression electrical design with motor curves, power triangle, efficiency chain** |
+| **Process Plant Load List**       | [examples/notebooks/electrical/process_plant_load_list.ipynb](../examples/notebooks/electrical/process_plant_load_list.ipynb) | **Jupyter notebook: plant-wide electrical load list, demand/diversity factors, transformer sizing** |
+| **Motor & VFD Analysis**          | [examples/notebooks/electrical/motor_vfd_analysis.ipynb](../examples/notebooks/electrical/motor_vfd_analysis.ipynb) | **Jupyter notebook: motor efficiency classes IE1-IE4, VFD topology selection, harmonics, efficiency maps, cable sizing, hazardous area** |
+| **Power-from-Shore Feasibility**  | [examples/notebooks/electrical/power_from_shore_feasibility.ipynb](../examples/notebooks/electrical/power_from_shore_feasibility.ipynb) | **Jupyter notebook: submarine cable sizing, HVAC/HVDC, cost estimation, CO₂ comparison, regional analysis (Norway, UK, Brazil, GoM)** |
+
 ### Chapter 23b: Cost Estimation
 
 | Document                        | Path                                                                                                                                         | Description                                                                                                 |

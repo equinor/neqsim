@@ -27,6 +27,18 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-03-08 — Mercury Removal in LNG Pre-Treatment — NeqSim Chemisorption Model
+**Type:** B (Process), F (Design)
+**Keywords:** mercury, Hg, removal, guard bed, chemisorption, CuS, sorbent, adsorber, NTU, Ergun, packed bed, LNG, pre-treatment, Snøhvit, HLNG, mass transfer zone, breakthrough, transient, bed lifetime, mechanical design, ASME VIII, cost estimation, CAPEX, OPEX, sorbent replacement, fuel gas strategy
+**Solution:** `src/main/java/neqsim/process/equipment/adsorber/MercuryRemovalBed.java`, `src/test/java/neqsim/process/equipment/adsorber/MercuryRemovalBedTest.java`, `task_solve/2026-03-08_mercury_removal_lng_pretreatment/`
+**Notes:**
+- MercuryRemovalBed: NTU-based steady-state + cell-by-cell transient PDE (upwind scheme, CFL sub-stepping), Ergun pressure drop, Arrhenius kinetics, bypass/degradation, bed lifetime estimation
+- MercuryRemovalMechanicalDesign: ASME VIII Div 1, SA-516-70, hoop stress wall thickness, weight breakdown, BOM
+- MercuryRemovalCostEstimate: Factored CAPEX (PEC→BMC→TMC→GRC), sorbent replacement OPEX
+- 24/24 unit tests passing covering construction, steady-state, transient, degradation, lifetime, JSON, mechdesign, cost
+- Benchmark validated against analytical NTU formula, hand-calculated Ergun dP, literature bed lifetime (Carnell 2007, Eckersley 2010)
+- Monte Carlo 250 iterations with full NeqSim simulation per iteration; tornado on 6 uncertain parameters
+
 ### 2026-03-08 — NeqSim-based Monte Carlo uncertainty and risk evaluation for NPV
 **Type:** G (Workflow)
 **Keywords:** uncertainty, Monte Carlo, risk, NPV, GIP, resource estimate, tornado, sensitivity, ISO 31000, risk matrix, NeqSim simulation, SRK EOS, SimpleReservoir, Beggs & Brill, SURFCostEstimator, triangular distribution, P10 P50 P90, field development

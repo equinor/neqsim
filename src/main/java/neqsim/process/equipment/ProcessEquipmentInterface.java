@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import neqsim.process.SimulationInterface;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
+import neqsim.process.electricaldesign.ElectricalDesign;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.process.util.report.ReportConfig;
@@ -42,6 +43,24 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    * @return a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    */
   public MechanicalDesign getMechanicalDesign();
+
+  /**
+   * <p>
+   * Initialize an <code>electricalDesign</code> for the equipment.
+   * </p>
+   */
+  default void initElectricalDesign() {}
+
+  /**
+   * <p>
+   * Get an <code>electricalDesign</code> for the equipment.
+   * </p>
+   *
+   * @return a {@link neqsim.process.electricaldesign.ElectricalDesign} object
+   */
+  default ElectricalDesign getElectricalDesign() {
+    return new ElectricalDesign(this);
+  }
 
   /**
    * <p>
@@ -332,7 +351,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
 
   /**
    * Validate the process equipment before execution.
-   * 
+   *
    * <p>
    * Checks for common setup errors:
    * <ul>
@@ -340,7 +359,7 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    * <li>Input streams connected</li>
    * <li>Operating parameters in valid ranges</li>
    * </ul>
-   * 
+   *
    * @return validation result with errors and warnings
    */
   public default neqsim.util.validation.ValidationResult validateSetup() {

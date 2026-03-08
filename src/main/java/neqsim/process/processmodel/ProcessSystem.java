@@ -5115,4 +5115,119 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     return mecDesign;
   }
+
+  // ============================================================================
+  // Electrical Design API
+  // ============================================================================
+
+  /**
+   * Initialize electrical design for all equipment in the process.
+   *
+   * <p>
+   * Calls initElectricalDesign() on each equipment item, preparing them for electrical design
+   * calculations. Should be called after process simulation has run.
+   * </p>
+   */
+  public void initAllElectricalDesigns() {
+    for (ProcessEquipmentInterface equipment : unitOperations) {
+      if (equipment != null) {
+        equipment.initElectricalDesign();
+      }
+    }
+  }
+
+  /**
+   * Run electrical design calculations for all equipment in the process.
+   *
+   * <p>
+   * Calls calcDesign() on each equipment's electrical design. Automatically initializes electrical
+   * designs that have not been initialized.
+   * </p>
+   */
+  public void runAllElectricalDesigns() {
+    for (ProcessEquipmentInterface equipment : unitOperations) {
+      if (equipment != null) {
+        neqsim.process.electricaldesign.ElectricalDesign elecDesign =
+            equipment.getElectricalDesign();
+        if (elecDesign != null) {
+          elecDesign.calcDesign();
+        }
+      }
+    }
+  }
+
+  /**
+   * Get the electrical load list for all equipment in the process.
+   *
+   * <p>
+   * Aggregates electrical loads from all equipment into a single load list with summary
+   * calculations for transformer and generator sizing.
+   * </p>
+   *
+   * <p>
+   * Example:
+   * </p>
+   *
+   * <pre>
+   * {@code
+   * process.run();
+   * process.runAllElectricalDesigns();
+   * ElectricalLoadList loadList = process.getElectricalLoadList();
+   * System.out.println("Total demand: " + loadList.getMaximumDemandKW() + " kW");
+   * System.out.println(loadList.toJson());
+   * }
+   * </pre>
+   *
+   * @return the electrical load list
+   */
+  public neqsim.process.electricaldesign.loadanalysis.ElectricalLoadList getElectricalLoadList() {
+    neqsim.process.electricaldesign.loadanalysis.ElectricalLoadList loadList =
+        new neqsim.process.electricaldesign.loadanalysis.ElectricalLoadList(getName());
+
+    for (ProcessEquipmentInterface equipment : unitOperations) {
+      if (equipment == null) {
+        continue;
+      }
+      neqsim.process.electricaldesign.ElectricalDesign elecDesign =
+          equipment.getElectricalDesign();
+      if (elecDesign == null || elecDesign.getElectricalInputKW() <= 0) {
+        continue;
+      }
+
+      neqsim.process.electricaldesign.loadanalysis.LoadItem item =
+          new neqsim.process.electricaldesign.loadanalysis.LoadItem(equipment.getName(),
+              equipment.getClass().getSimpleName(), elecDesign.getMotor().getRatedPowerKW());
+      item.setAbsorbedPowerKW(elecDesign.getElectricalInputKW());
+      item.setApparentPowerKVA(elecDesign.getApparentPowerKVA());
+      item.setPowerFactor(elecDesign.getPowerFactor());
+      item.setRatedVoltageV(elecDesign.getRatedVoltageV());
+      item.setRatedCurrentA(elecDesign.getFullLoadCurrentA());
+      item.setHasVFD(elecDesign.isUseVFD());
+      item.setDiversityFactor(elecDesign.getDiversityFactor());
+
+      loadList.addLoadItem(item);
+    }
+
+    loadList.calculateSummary();
+    return loadList;
+  }
+
+  /**
+   * Get electrical design for a specific equipment by name.
+   *
+   * @param equipmentName name of the equipment
+   * @return the electrical design, or null if not found
+   */
+  public neqsim.process.electricaldesign.ElectricalDesign getEquipmentElectricalDesign(
+      String equipmentName) {
+    ProcessEquipmentInterface equipment = getUnit(equipmentName);
+    if (equipment == null) {
+      return null;
+    }
+    neqsim.process.electricaldesign.ElectricalDesign elecDesign = equipment.getElectricalDesign();
+    if (elecDesign != null) {
+      elecDesign.calcDesign();
+    }
+    return elecDesign;
+  }
 }
