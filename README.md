@@ -90,7 +90,7 @@ NeqSim includes an AI-assisted workflow for solving engineering tasks — from q
 
 LLMs are excellent at engineering intent but hallucinate thermodynamics. NeqSim is exact on physics but blind to context. Together, they form a complete reasoning engine:
 
-![Separation of Concerns: Reasoning vs. Physics](docs/assets/images/separation_of_concerns.png)
+![Separation of Concerns: Reasoning vs. Physics](docs/assets/images/separation_of_concerns.svg)
 
 **Fastest way to start** (requires VS Code + GitHub Copilot Chat):
 

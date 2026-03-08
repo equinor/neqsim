@@ -12,6 +12,7 @@ import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
+import neqsim.process.electricaldesign.pump.PumpElectricalDesign;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.pump.PumpMechanicalDesign;
@@ -45,7 +46,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * // Simple usage with outlet pressure
  * Pump pump = new Pump("MainPump", feedStream);
@@ -81,6 +82,9 @@ public class Pump extends TwoPortEquipment
   /** Mechanical design for the pump. */
   private PumpMechanicalDesign mechanicalDesign;
 
+  /** Electrical design for the pump. */
+  private PumpElectricalDesign electricalDesign;
+
   SystemInterface thermoSystem;
   double dH = 0.0;
   double pressure = 0.0;
@@ -107,6 +111,7 @@ public class Pump extends TwoPortEquipment
   public Pump(String name) {
     super(name);
     initMechanicalDesign();
+    initElectricalDesign();
   }
 
   /**
@@ -132,6 +137,18 @@ public class Pump extends TwoPortEquipment
   @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new PumpMechanicalDesign(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public PumpElectricalDesign getElectricalDesign() {
+    return electricalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initElectricalDesign() {
+    electricalDesign = new PumpElectricalDesign(this);
   }
 
   /** {@inheritDoc} */

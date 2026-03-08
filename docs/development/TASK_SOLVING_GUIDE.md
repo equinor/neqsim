@@ -60,6 +60,8 @@ HTML reports — all in one session.
    - Notebooks → `examples/notebooks/`
    - API extensions → `src/main/java/neqsim/`
    - Task log entry → `docs/development/TASK_LOG.md`
+   - **Documentation fixes and improvements** → include in the same PR
+     (wrong API signatures, missing docs, better examples, new warnings)
 
 > **New user?** The script is in `devtools/` (tracked in git), so it's available
 > immediately after `git clone`. It creates `task_solve/` automatically on first run.
@@ -76,7 +78,7 @@ task_solve/
 │   ├── step1_scope_and_research/references/          ← PDFs, standards, lab reports
 │   ├── step2_analysis/                               ← simulations, notebooks
 │   ├── step2_analysis/notes.md                       ← validation log
-│   ├── step3_report/generate_report.py               ← produces Word + HTML
+│   ├── step3_report/generate_report.py               ← produces Word + HTML + Paper
 │   └── figures/                                      ← all saved plots
 └── 2026-03-07_jt_cooling_rich_gas/                   ← example real task
 ```
@@ -622,6 +624,7 @@ Before considering a task done:
 - [ ] **Task folder complete**: All 3 steps documented in `task_solve/YYYY-MM-DD_description/`
 - [ ] **Reusable outputs promoted**: Tests, notebooks, or API extensions moved back into the repo
 - [ ] **PR created** (if applicable): Reusable outputs contributed via Pull Request
+- [ ] **Documentation updated**: Errors fixed, missing docs added, improvements included in PR
 
 ---
 
@@ -669,6 +672,17 @@ into reports and ensures the report always reflects the latest simulation run.
    ```
 4. Run `python step3_report/generate_report.py` — the Results, Validation, and
    Scope sections auto-populate from `results.json` and `task_spec.md`
+5. To also generate a scientific paper: `python step3_report/generate_report.py --paper`
+   - Produces `Paper.docx` and `Paper.html` in academic format
+   - Configure `PAPER_TITLE`, `PAPER_AUTHORS`, `PAPER_KEYWORDS`, and `PAPER_SECTIONS`
+     in `generate_report.py` for best results
+   - Use `--paper-only` to skip the technical report and generate only the paper
+6. **Built-in styled formatting:** The template automatically renders these sections
+   when the corresponding keys exist in `results.json`:
+   - **Benchmark Validation** (`benchmark_validation`): PASS/FAIL table with color coding
+   - **Uncertainty Analysis** (`uncertainty`): input parameters, P10/P50/P90 distribution, tornado table
+   - **Risk Assessment** (`risk_evaluation`): summary card with risk badges, color-coded risk table
+   - All four outputs (Report.docx, Report.html, Paper.docx, Paper.html) share the same formatters
 
 ### Quality Gates
 
@@ -705,6 +719,49 @@ includes a comparison table:
 | Source | Parameter | Reference | NeqSim | Deviation |
 |--------|-----------|----------|--------|-----------|
 | NIST | Density kg/m3 | 820.3 | 818.7 | 0.2% |
+
+---
+
+### Report Generation Best Practices
+
+The `generate_report.py` template needs customisation for each task. Common failure
+modes and how to avoid them:
+
+**1. Section completeness:** The default template only renders Results, Validation,
+Conclusions, and References. For Standard/Comprehensive tasks, you must add sections
+for Benchmark Validation, Uncertainty Analysis, and Risk Evaluation. Each section
+requires changes in three places:
+- `build_sections()` — define the section heading, content, and a flag (e.g. `has_benchmark`)
+- `build_word_report()` — Word-specific rendering (tables via `add_word_table()`, figures)
+- `build_html_report()` — HTML-specific rendering (styled tables, base64-embedded images)
+
+**2. Recommended section numbering** for a complete task report:
+
+| # | Section | Data Source | Figures |
+|---|---------|-------------|---------|
+| 1 | Executive Summary | MANUAL_SECTIONS | — |
+| 2 | Problem Description | MANUAL_SECTIONS | — |
+| 3 | Scope & Standards | task_spec.md | — |
+| 4 | Approach | results.json or MANUAL | — |
+| 5 | Results | results.json key_results + tables | Main notebook figs |
+| 6 | Validation Summary | results.json validation | — |
+| 7 | Benchmark Validation | results.json benchmark_validation | benchmark_*.png |
+| 8 | Uncertainty Analysis | results.json uncertainty | uncertainty_*.png |
+| 9 | Risk Evaluation | results.json risk_evaluation | risk_matrix.png |
+| 10 | Conclusions | MANUAL_SECTIONS or results.json | — |
+| 11 | References | results.json references | — |
+
+**3. Figure captions:** Every PNG in `figures/` should have a caption entry in
+`results.json["figure_captions"]`. Use the exact filename as key. Figures from
+all notebooks (main, benchmark, uncertainty) must be captioned.
+
+**4. Stale numbers:** When design parameters change iteratively, hardcoded text in
+`MANUAL_SECTIONS["executive_summary"]` and `MANUAL_SECTIONS["conclusions"]` becomes
+stale. Prefer writing conclusions programmatically from results.json where possible.
+At minimum, re-verify all hardcoded numbers after each parameter change.
+
+**5. Figure placement:** Embed figures in their relevant section, not all at the end of
+Results. Use section flags to control which figures appear where.
 
 ---
 
@@ -1075,6 +1132,11 @@ pip install python-docx matplotlib latex2mathml lxml neqsim
 | Missing loss carry-forward in tax model | Tax paid in loss years, wrong NPV | Track cumulative tax loss per pool; only pay tax when taxable income > 0 |
 | Formula from memory without verification | Incorrect equations compound through calculation | Always verify governing equations against the applicable standard or textbook |
 | Old JAR in Python site-packages | `jpype.JClass()` loads stale class | Remove old JARs; rebuild with `mvnw.cmd package -DskipTests`; use `jpype.addClassPath()` for local JAR |
+| Report generator missing sections | Benchmark/uncertainty/risk data in results.json but absent from report | Add rendering to `build_sections()`, `build_word_report()`, AND `build_html_report()` for each data section |
+| Figure captions only from main notebook | Benchmark/uncertainty figures show generic captions | Add ALL figure filenames to `results.json["figure_captions"]` from every notebook |
+| Stale numbers in MANUAL_SECTIONS | Executive summary/conclusions don't match latest results | Write conclusions in `results.json["conclusions"]`; update MANUAL_SECTIONS when parameters change |
+| Design change not propagated to all notebooks | Benchmark/uncertainty results reflect old parameters | Re-run ALL notebooks (restart kernels) when base case parameters change |
+| All figures dumped in one report section | 12 figures after Results, none in Benchmark/Uncertainty/Risk | Use section flags (`has_benchmark`, `has_uncertainty`, `has_risk`) to embed figures in their own section |
 
 ---
 
@@ -1169,6 +1231,7 @@ coding agent that can read files and run commands can follow the same workflow.
 | `task_spec.md` | Scope document (plain markdown) | Any editor / AI tool |
 | Jupyter notebooks | Simulation code | JupyterLab, Colab, Codex, any Python env |
 | `python generate_report.py` | Produces Word + HTML | Any terminal |
+| `python generate_report.py --paper` | Also produces Paper.docx + Paper.html | Any terminal |
 | `git` + `gh pr create` | Contribute back via PR | Any terminal |
 
 ### What's VS Code Copilot-Specific (Optional Convenience)

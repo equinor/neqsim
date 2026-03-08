@@ -438,6 +438,8 @@ Your deliverable is a populated task folder under `task_solve/`.
 - [ ] `uncertainty` section populated in results.json with P10/P50/P90 and tornado data
 - [ ] `risk_evaluation` section populated in results.json with risk register
 - [ ] Resource/reserve P10/P50/P90 reported in `resource_estimate` sub-object
+- [ ] `figure_captions` in results.json covers figures from **ALL** notebooks (main, benchmark, uncertainty/risk), not just the main notebook
+- [ ] Numbers in notebooks are consistent — if design parameters changed, ALL notebooks have been re-run
 
 **If any gate fails, iterate on Step 2** — do NOT proceed to reporting with
 incomplete or unvalidated results.
@@ -457,10 +459,58 @@ incomplete or unvalidated results.
     - **Risk evaluation section** must appear with risk register table and overall
       risk level from `results.json["risk_evaluation"]`
 
+    **IMPORTANT — Report generator completeness checks (common failure mode):**
+    The default `generate_report.py` template only renders basic sections (Results,
+    Validation, Conclusions, References). You MUST add rendering for ALL data sections
+    that exist in `results.json`. For each section:
+    1. Add it to `build_sections()` with appropriate flags (e.g. `has_benchmark`, `has_uncertainty`, `has_risk`)
+    2. Add Word rendering in `build_word_report()` — table builders, figure embedding
+    3. Add HTML rendering in `build_html_report()` — HTML table builders, base64 figures
+    4. Add figure captions for ALL figures from ALL notebooks to `results.json["figure_captions"]`
+
+    Typical section numbering for a complete report:
+    1. Executive Summary | 2. Problem Description | 3. Scope & Standards |
+    4. Approach | 5. Results | 6. Validation Summary | 7. Benchmark Validation |
+    8. Uncertainty Analysis | 9. Risk Evaluation | 10. Conclusions | 11. References
+
+    **Stale numbers trap:** MANUAL_SECTIONS text (executive_summary, conclusions)
+    contains hardcoded numbers. When design parameters change (dimensions, flow rates),
+    you MUST update these strings to match the latest results. Where possible, let
+    conclusions come from `results.json["conclusions"]` instead of hardcoding.
+
 15. **Run the report generator** to produce both Word and HTML:
     ```
     Run in terminal: python step3_report/generate_report.py
     ```
+    To also generate a scientific paper (academic format):
+    ```
+    Run in terminal: python step3_report/generate_report.py --paper
+    ```
+    Or to generate only the scientific paper:
+    ```
+    Run in terminal: python step3_report/generate_report.py --paper-only
+    ```
+
+    **Scientific paper output** (`Paper.docx` and `Paper.html`):
+    - Standard engineering paper structure: Abstract, Introduction, Methodology,
+      Results & Discussion (with Validation and Benchmark sub-sections),
+      Uncertainty Analysis, Risk Assessment, Conclusions, References
+    - Configure in `generate_report.py`: set `PAPER_TITLE`, `PAPER_AUTHORS`,
+      `PAPER_KEYWORDS`, and fill in `PAPER_SECTIONS` (abstract, introduction,
+      methodology) for best results
+    - The paper auto-populates from the same `results.json` data as the report
+    - Academic formatting: Times New Roman, numbered sections, right-aligned
+      equation numbers, centered figures with captions, hanging-indent references
+
+    **Styled section formatting** (built into the template):
+    - Risk Assessment: summary card with color-coded badges (High=red,
+      Medium=orange, Low=green), professional table with risk levels,
+      likelihood/consequence columns, and mitigation
+    - Uncertainty Analysis: blue summary card, input parameters table,
+      P10/P50/P90 output distribution table, tornado sensitivity table
+    - Benchmark Validation: table with PASS/FAIL color coding and detail columns
+    - All formatting renders automatically when corresponding keys exist in
+      `results.json` — no custom rendering code needed per task
 
 16. **Update the task README** (`README.md` in the task folder):
     - Fill in the Problem Statement
@@ -474,7 +524,18 @@ incomplete or unvalidated results.
     - If a NeqSim API gap was found → document it for future development
     - If a new pattern was discovered → note it for `CODE_PATTERNS.md`
 
-18. **Draft a task log entry** (but don't write to the file directly):
+18. **Fix and improve documentation** encountered during the task:
+    - If you found **errors** in existing docs (wrong API signatures, outdated
+      patterns, incorrect examples), fix them and include the fixes in the PR.
+    - If you discovered **missing documentation** (undocumented classes, missing
+      cookbook recipes, gaps in guides), add it and include in the PR.
+    - If you identified **improvements** (clearer explanations, better examples,
+      additional warnings), make the changes and include in the PR.
+    - Update index files (`REFERENCE_MANUAL_INDEX.md`, section `index.md`)
+      when adding new doc pages.
+    - Documentation fixes go in the **same PR** as the task outputs.
+
+19. **Draft a task log entry** (but don't write to the file directly):
     ```
     ### YYYY-MM-DD — Task Title
     **Type:** X (TypeName)
@@ -484,7 +545,7 @@ incomplete or unvalidated results.
     ```
     Show this to the user for them to add to `docs/development/TASK_LOG.md`.
 
-19. **Create a Pull Request** (if the user asks, or if reusable outputs were produced):
+20. **Create a Pull Request** (if the user asks, or if reusable outputs were produced):
 
     When the task produces reusable code (tests, notebooks, docs, API extensions),
     offer to create a PR. If the user confirms, execute these steps:
@@ -530,7 +591,7 @@ incomplete or unvalidated results.
 
 ### Type A — Property Tasks
 - Use `ThermodynamicOperations` for flash calculations
-- Always call `fluid.init(3)` before reading properties
+- Always call `fluid.initProperties()` after flash before reading properties — `init(3)` alone does NOT initialize transport properties (viscosity, thermal conductivity will return zero)
 - Compare against NIST, DIPPR, or experimental data where possible
 - Plot property vs. T or P curves for validation
 
@@ -732,9 +793,105 @@ After completing all 3 steps, summarize to the user:
 6. **Reports generated**: Word (.docx) and/or HTML locations
 7. **API gaps found** (if any): what NeqSim is missing for this type of task
 8. **Suggested next steps**: promote notebook to examples, add test, log the task
-9. **Task log entry**: the draft entry for `TASK_LOG.md`
-10. **PR opportunity**: if reusable outputs were produced, offer to create a PR —
-    "Shall I create a PR to contribute the [test/notebook/docs] back to the repo?"
+9. **Documentation fixes**: list any doc errors fixed, missing docs added, or improvements made
+10. **Task log entry**: the draft entry for `TASK_LOG.md`
+11. **PR opportunity**: if reusable outputs were produced, offer to create a PR —
+    "Shall I create a PR to contribute the [test/notebook/docs/doc fixes] back to the repo?"
 
 If the task revealed a missing NeqSim capability, highlight it clearly — this is
 how the development flywheel works: tasks surface gaps, gaps become features.
+
+---
+
+## 8 ── LESSONS LEARNED (from solved tasks)
+
+These are practical pitfalls discovered while solving real engineering tasks.
+Review before starting any Standard or Comprehensive task.
+
+### 8.1 Report Generator Pitfalls
+
+1. **The `generate_report.py` template now includes built-in styled formatting**
+   for Benchmark Validation, Uncertainty Analysis, and Risk Evaluation sections.
+   These render automatically when the corresponding keys exist in `results.json`
+   (`benchmark_validation`, `uncertainty`, `risk_evaluation`). You do NOT need to
+   add custom rendering logic per task — just populate the results.json correctly.
+   The formatters produce color-coded risk badges, P10/P50/P90 tables, tornado
+   tables, and PASS/FAIL benchmark tables in all four outputs (Report.docx,
+   Report.html, Paper.docx, Paper.html).
+
+2. **Four layers must stay synchronised for every report section:**
+   - `build_sections()` — defines the section with heading, content, and flags
+   - `build_word_report()` — renders Word-specific content (tables, figures)
+   - `build_html_report()` — renders HTML-specific content (styled tables, base64 images)
+   - `build_paper_docx()` / `build_paper_html()` — paper equivalents
+   The template has all four pre-wired for standard section types. Only add
+   custom handling if you need task-specific rendering beyond the built-in formatters.
+   If any one layer is missing, that section will render as plain text or be blank.
+
+3. **Hardcoded numbers in MANUAL_SECTIONS go stale.** When equipment dimensions,
+   flow rates, or other design parameters change during iterative design, the
+   executive summary and conclusions text must be updated manually. The report
+   generator does not auto-update these strings from results.json.
+   **Best practice:** Write conclusions in `results.json["conclusions"]` and let
+   the generator read from there. Only use MANUAL_SECTIONS as a fallback.
+
+4. **Figure captions must cover ALL notebooks.** Each notebook (main analysis,
+   benchmark validation, uncertainty/risk) generates its own figures. All figure
+   filenames must appear in `results.json["figure_captions"]`, otherwise the
+   report shows generic captions like "Figure 10: benchmark_ntu_validation.png".
+
+### 8.2 Multi-Notebook Coordination
+
+5. **Design parameter changes cascade across all notebooks.** If the user requests
+   a design change (e.g., vessel dimensions, flow rate), you must re-run ALL
+   notebooks in order, since benchmark and uncertainty results depend on the
+   base case. Re-running only the main notebook leaves stale results in the
+   benchmark and uncertainty notebooks.
+
+6. **Each notebook should save its portion of results.json independently.**
+   The main notebook writes `key_results`, `validation`, and main `figure_captions`.
+   The benchmark notebook appends `benchmark_validation`.
+   The uncertainty notebook appends `uncertainty` and `risk_evaluation`.
+   This avoids a single monolithic save cell that can't be run from any notebook.
+
+7. **Notebook kernel must be restarted before re-running.** When NeqSim classes
+   are loaded via JPype, stale Java object state can persist between runs.
+   Always restart the kernel before a full re-execution.
+
+### 8.3 Figure Management
+
+8. **Use descriptive filenames with notebook prefix.** Files like `fig1_xxx.png`
+   are for the main notebook; `benchmark_xxx.png` for benchmarks;
+   `uncertainty_xxx.png` and `risk_matrix.png` for uncertainty/risk. This makes
+   it clear which section each figure belongs to.
+
+9. **Embed section-specific figures in their own section.** Don't dump all 12
+   figures after the Results section. Benchmark figures should appear in the
+   Benchmark Validation section, uncertainty figures in Uncertainty Analysis, etc.
+   The report generator should check section flags (`has_benchmark`,
+   `has_uncertainty`, `has_risk`) and embed the right subset of figures.
+
+### 8.4 Iterative Design Workflow
+
+10. **Expect at least one design iteration.** The first simulation run rarely
+    gives optimal results. Budget time for changing key parameters (bed size,
+    vessel diameter, number of stages) and re-running. Document the rationale
+    for each iteration in `step2_analysis/notes.md`.
+
+11. **Sensitivity analysis reveals the right parameters to iterate on.** Run the
+    Monte Carlo / tornado analysis early — it tells you which parameters dominate
+    the outcome. Focus design iterations on the high-swing parameters.
+
+### 8.5 Results.json Best Practices
+
+12. **Keep key_results flat and machine-readable.** Use descriptive key names with
+    unit suffixes: `pressure_drop_mbar`, `bed_lifetime_years`, `wall_thickness_mm`.
+    These suffixes enable automatic unit detection in the report renderer.
+
+13. **Include a `tables` array for structured data.** Complex comparison tables
+    (literature validation, strategy comparison, cost breakdown) should go into
+    `results.json["tables"]` with headers and rows, not just as text in conclusions.
+
+14. **Tornado data should be sorted by swing.** When writing tornado results to
+    results.json, store all parameters even those with zero swing. The renderer
+    should sort by swing magnitude for the tornado chart.

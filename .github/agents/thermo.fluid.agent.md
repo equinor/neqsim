@@ -48,9 +48,18 @@ ops.bubblePointPressureFlash();
 ```
 
 ## Property Retrieval
-After flash: `fluid.init(3)` for full property initialization, then:
+After flash: call `fluid.initProperties()` — this initializes BOTH thermodynamic AND transport properties.
+**WARNING:** `init(3)` alone does NOT initialize transport properties (viscosity, thermal conductivity) — they will return zero!
+
+```java
+ops.TPflash();
+fluid.initProperties(); // MANDATORY before reading any properties
+```
+
+Then read properties:
 - `fluid.getDensity("kg/m3")`, `fluid.getMolarMass("kg/mol")`, `fluid.getZ()`
-- `fluid.getPhase("gas").getDensity()`, `fluid.getPhase("oil").getViscosity()`
+- `fluid.getPhase("gas").getDensity("kg/m3")`, `fluid.getPhase("oil").getViscosity("kg/msec")`
+- `fluid.getPhase("gas").getThermalConductivity("W/mK")`, `fluid.getPhase("gas").getCp("J/kgK")`
 - `fluid.getNumberOfPhases()`, `fluid.hasPhaseType("gas")`
 - Phase envelope: `ops.calcPTphaseEnvelope()`
 
