@@ -773,15 +773,10 @@ public class ProcessSystem extends SimulationBaseClass {
       // require sequential execution to ensure correct mass balance
       runSequential(id);
     } else if (hasAdjusters()) {
-      // Process has adjusters but no recycles - use hybrid execution
-      // Adjusters need iteration but feed-forward sections can run in parallel
-      try {
-        runHybrid(id);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        logger.warn("Hybrid execution interrupted, falling back to sequential run");
-        runSequential(id);
-      }
+      // Adjusters create implicit feedback loops (they modify upstream variables
+      // and read downstream targets), requiring all units to re-run each iteration.
+      // Use sequential execution for correct convergence.
+      runSequential(id);
     } else {
       // Feed-forward process - use parallel execution for maximum speed
       // Units at the same level (no dependencies) run concurrently
@@ -5188,8 +5183,7 @@ public class ProcessSystem extends SimulationBaseClass {
       if (equipment == null) {
         continue;
       }
-      neqsim.process.electricaldesign.ElectricalDesign elecDesign =
-          equipment.getElectricalDesign();
+      neqsim.process.electricaldesign.ElectricalDesign elecDesign = equipment.getElectricalDesign();
       if (elecDesign == null || elecDesign.getElectricalInputKW() <= 0) {
         continue;
       }
