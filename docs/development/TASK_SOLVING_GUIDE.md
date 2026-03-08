@@ -617,6 +617,7 @@ Before considering a task done:
 - [ ] **JavaDoc**: All methods documented with `@param`, `@return`, `@throws`
 - [ ] **Logged**: Entry added to `docs/development/TASK_LOG.md`
 - [ ] **Figures saved**: All plots saved to `figures/` directory (not just displayed inline)
+- [ ] **Benchmark validation**: Separate benchmark notebook with comparison against reference data
 - [ ] **Report generated** (if deliverable): Word document builds end-to-end via `python generate_report.py`
 - [ ] **Task folder complete**: All 3 steps documented in `task_solve/YYYY-MM-DD_description/`
 - [ ] **Reusable outputs promoted**: Tests, notebooks, or API extensions moved back into the repo
@@ -684,6 +685,8 @@ The workflow enforces quality gates between steps:
 - All acceptance criteria from task_spec.md have been checked
 - All deliverables from task_spec.md are produced
 - Figures saved to `figures/` as PNG
+- **Benchmark validation notebook** exists with comparison table and deviation plot
+- `benchmark_validation` section populated in results.json
 
 ### Structured Validation
 
@@ -702,6 +705,89 @@ includes a comparison table:
 | Source | Parameter | Reference | NeqSim | Deviation |
 |--------|-----------|----------|--------|-----------|
 | NIST | Density kg/m3 | 820.3 | 818.7 | 0.2% |
+
+---
+
+## Benchmark Validation (MANDATORY)
+
+Every task MUST include a dedicated benchmark validation notebook that compares
+NeqSim results against independent reference data. This is a separate notebook
+from the main analysis — it focuses exclusively on demonstrating that the
+calculations are trustworthy.
+
+### Why Benchmark?
+
+Without benchmarking, results are unverifiable assumptions. Benchmarking:
+- Builds confidence that the EOS/model is appropriate for the conditions
+- Catches systematic errors (wrong units, missing terms, incorrect correlations)
+- Provides defensible evidence for engineering decisions
+- Creates reusable validation datasets for future regression testing
+
+### Benchmark Sources by Task Type
+
+| Task Type | Primary Benchmark Sources | Secondary Sources |
+|-----------|--------------------------|-------------------|
+| A — Property | NIST Webbook, DIPPR, experimental data | Published correlations, other simulators |
+| B — Process | Textbook worked examples, published simulation cases | Vendor datasheets, plant operating data |
+| C — PVT | Lab PVT reports, ECLIPSE/PVTsim results | Published fluid studies, slim tube data |
+| D — Standards | Standard worked examples (ISO, AGA, EN) | Certified lab results, round-robin results |
+| E — Feature | Unit test baselines, solver convergence benchmarks | Literature solver comparisons |
+| F — Design | Hand calculations, vendor catalogs, design tables | Published case studies, design codes |
+| G — Workflow | Industry benchmarks, analogous fields, public reports | Cost databases (Rystad, IHS), government data |
+
+### Benchmark Notebook Structure
+
+Name: `XX_benchmark_validation.ipynb` (numbered to fit in the notebook sequence)
+
+1. **Introduction** — State what is being benchmarked and the acceptance tolerance
+2. **Reference data** — Tabulate benchmark values with full source citations
+3. **NeqSim calculation** — Reproduce same conditions and extract results
+4. **Comparison table** — Side-by-side: Benchmark | NeqSim | Deviation %
+5. **Parity plot / deviation chart** — Visual comparison saved to `figures/`
+6. **Conclusion** — Whether results are within tolerance; explain any deviations > 5%
+
+### Minimum Requirements
+
+- At least **3 benchmark data points** (different conditions, components, or cases)
+- A **parity plot** or **deviation bar chart** saved to `figures/`
+- A **summary comparison table** with: Parameter | Benchmark | NeqSim | Deviation % | Source
+- Results in `results.json` under `"benchmark_validation"` key:
+
+```python
+results["benchmark_validation"] = {
+    "benchmark_source": "NIST Webbook, Reference Paper Smith et al. (2019)",
+    "comparisons": [
+        {"parameter": "density_kg_m3", "benchmark": 820.5, "neqsim": 818.3,
+         "deviation_pct": 0.27, "condition": "25C, 60 bar"},
+        {"parameter": "Cp_J_kgK", "benchmark": 2150.0, "neqsim": 2180.0,
+         "deviation_pct": 1.4, "condition": "25C, 60 bar"},
+    ],
+    "max_deviation_pct": 1.4,
+    "all_within_tolerance": True,
+    "tolerance_pct": 5.0
+}
+```
+
+### Examples of Good Benchmarks
+
+**Thermodynamic property:**
+> Compare methane density from NeqSim (SRK EOS) against NIST Webbook at
+> 10 points across 1–200 bar at 25°C. Plot parity chart. Max deviation: 2.1%.
+
+**Process simulation:**
+> Reproduce the 3-stage compression example from Smith & Van Ness
+> (Introduction to Chemical Engineering Thermodynamics, Example 7.9).
+> Compare outlet temperatures and work per stage. Max deviation: 0.8%.
+
+**CAPEX estimation:**
+> Compare SURFCostEstimator output for a 6-well NCS tieback against
+> Rystad Energy benchmark data and Equinor project analogues.
+> Deviation: +8% (conservative, as expected for early-phase estimates).
+
+**Norwegian tax model:**
+> Reproduce the NPD Resource Report worked example for a generic NCS field.
+> Compare year-by-year tax, NPV, and government take. Max deviation: 0.1%
+> (rounding differences only).
 
 ### Reference Fluid Compositions
 
@@ -981,6 +1067,14 @@ pip install python-docx matplotlib latex2mathml lxml neqsim
 | Not closing figures in loops | Memory grows, OOM | Always call `plt.close(fig)` after `savefig()` |
 | Hardcoded results in report text | Report drifts from simulation | Use f-strings: `f"{value:.1f}"` so text updates automatically |
 | Saving figures without `bbox_inches='tight'` | Axis labels clipped | Add `bbox_inches='tight'` to `savefig()` |
+| Cascaded tax model instead of independent | Effective tax rate wrong (e.g. 65% instead of 78%) | Norwegian petroleum tax: corporate (22%) + special (56%) on independent taxable incomes |
+| CAPEX double-counted in cash flow | NPV too negative, payback too long | Include CAPEX only once — either in investment line OR in operating costs, not both |
+| Year-0 includes revenue | NPV inflated | Year 0 is investment only; production revenue starts Year 1 |
+| Flat CAPEX lump sum for SURF | Cannot validate or break down costs | Use component-level estimators (SURFCostEstimator, SubseaCostEstimator) |
+| Hardcoded exchange rates in formulas | Rate change requires editing every formula | Define `USD_TO_NOK = 10.5` as a variable; reference throughout |
+| Missing loss carry-forward in tax model | Tax paid in loss years, wrong NPV | Track cumulative tax loss per pool; only pay tax when taxable income > 0 |
+| Formula from memory without verification | Incorrect equations compound through calculation | Always verify governing equations against the applicable standard or textbook |
+| Old JAR in Python site-packages | `jpype.JClass()` loads stale class | Remove old JARs; rebuild with `mvnw.cmd package -DskipTests`; use `jpype.addClassPath()` for local JAR |
 
 ---
 

@@ -375,4 +375,102 @@ public class WellMechanicalDesignTest {
     assertTrue(well.isInjector(), "WATER_INJECTOR should be an injector");
     assertTrue(!well.isProducer(), "WATER_INJECTOR should not be a producer");
   }
+
+  // ============ Standards-Based Calculation Tests ============
+
+  @Test
+  public void testAPI5CTCasingGradeSMYS() {
+    WellDesignCalculator calc = new WellDesignCalculator();
+    // API 5CT / ISO 11960 Table C.6 specified minimum yield strengths
+    assertEquals(276.0, calc.getCasingGradeSMYS("H40"), 0.01, "H40 SMYS per API 5CT");
+    assertEquals(379.0, calc.getCasingGradeSMYS("K55"), 0.01, "K55 SMYS per API 5CT");
+    assertEquals(379.0, calc.getCasingGradeSMYS("J55"), 0.01, "J55 SMYS per API 5CT");
+    assertEquals(552.0, calc.getCasingGradeSMYS("N80"), 0.01, "N80 SMYS per API 5CT");
+    assertEquals(552.0, calc.getCasingGradeSMYS("L80"), 0.01, "L80 SMYS per API 5CT");
+    assertEquals(621.0, calc.getCasingGradeSMYS("C90"), 0.01, "C90 SMYS per API 5CT");
+    assertEquals(758.0, calc.getCasingGradeSMYS("P110"), 0.01, "P110 SMYS per API 5CT");
+    assertEquals(862.0, calc.getCasingGradeSMYS("Q125"), 0.01, "Q125 SMYS per API 5CT");
+  }
+
+  @Test
+  public void testAPI5CTCasingGradeSMTS() {
+    WellDesignCalculator calc = new WellDesignCalculator();
+    // API 5CT / ISO 11960 Table C.6 specified minimum tensile strengths
+    assertEquals(414.0, calc.getCasingGradeSMTS("H40"), 0.01, "H40 SMTS per API 5CT");
+    assertEquals(517.0, calc.getCasingGradeSMTS("K55"), 0.01, "K55 SMTS per API 5CT");
+    assertEquals(689.0, calc.getCasingGradeSMTS("N80"), 0.01, "N80 SMTS per API 5CT");
+    assertEquals(689.0, calc.getCasingGradeSMTS("L80"), 0.01, "L80 SMTS per API 5CT");
+    assertEquals(862.0, calc.getCasingGradeSMTS("P110"), 0.01, "P110 SMTS per API 5CT");
+    assertEquals(931.0, calc.getCasingGradeSMTS("Q125"), 0.01, "Q125 SMTS per API 5CT");
+  }
+
+  @Test
+  public void testVMEDesignFactor() {
+    // NORSOK D-010 requires VME DF >= 1.25
+    well.initMechanicalDesign();
+    WellMechanicalDesign design = (WellMechanicalDesign) well.getMechanicalDesign();
+    design.calcDesign();
+
+    assertTrue(design.getProductionCasingVME_DF() >= 1.25,
+        "Production casing VME DF must be >= 1.25 (NORSOK D-010 Table 18)");
+    assertTrue(design.getProductionCasingVME_DF() < 99.0,
+        "VME DF should be calculated (not default 99)");
+  }
+
+  @Test
+  public void testTemperatureDeratingFactor() {
+    // API 5CT / API TR 5C3 temperature derating
+    // Default maxBottomholeTemperature is 120 degC, so derating should apply
+    well.setMaxBottomholeTemperature(120.0);
+    well.initMechanicalDesign();
+    WellMechanicalDesign design = (WellMechanicalDesign) well.getMechanicalDesign();
+    design.calcDesign();
+
+    assertTrue(design.getTemperatureDeratingFactor() < 1.0,
+        "Temperature derating should reduce SMYS at 120 degC per API 5CT");
+    assertTrue(design.getTemperatureDeratingFactor() > 0.9,
+        "At 120 degC, derating factor should be > 0.9");
+  }
+
+  @Test
+  public void testNoTemperatureDeratingBelowThreshold() {
+    // Below 100 degC, no derating per API 5CT
+    well.setMaxBottomholeTemperature(80.0);
+    well.initMechanicalDesign();
+    WellMechanicalDesign design = (WellMechanicalDesign) well.getMechanicalDesign();
+    design.calcDesign();
+
+    assertEquals(1.0, design.getTemperatureDeratingFactor(), 0.001,
+        "No temperature derating below 100 degC per API 5CT");
+  }
+
+  @Test
+  public void testHighTemperatureDerating() {
+    // At 250 degC, significant derating per API TR 5C3 Table D.1
+    well.setMaxBottomholeTemperature(250.0);
+    well.initMechanicalDesign();
+    WellMechanicalDesign design = (WellMechanicalDesign) well.getMechanicalDesign();
+    design.calcDesign();
+
+    assertTrue(design.getTemperatureDeratingFactor() <= 0.87,
+        "At 250 degC, derating factor should be <= 0.87 per API TR 5C3");
+    assertTrue(design.getTemperatureDeratingFactor() >= 0.80,
+        "At 250 degC, derating factor should be >= 0.80");
+    // VME DF should still be calculated
+    assertTrue(design.getProductionCasingVME_DF() > 0,
+        "VME DF should be positive even with temperature derating");
+  }
+
+  @Test
+  public void testVMEandDesignFactorsInJson() {
+    well.initMechanicalDesign();
+    WellMechanicalDesign design = (WellMechanicalDesign) well.getMechanicalDesign();
+    design.calcDesign();
+    design.calculateCostEstimate();
+
+    String json = design.toJson();
+    assertTrue(json.contains("productionCasingVME_DF"), "JSON should include VME design factor");
+    assertTrue(json.contains("temperatureDeratingFactor"),
+        "JSON should include temperature derating factor");
+  }
 }

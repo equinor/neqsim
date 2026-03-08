@@ -102,6 +102,12 @@ public class WellMechanicalDesign extends MechanicalDesign {
   /** Tubing burst design factor. */
   private double tubingBurstDF = 0.0;
 
+  /** Production casing VME (triaxial) design factor per NORSOK D-010. */
+  private double productionCasingVME_DF = 0.0;
+
+  /** Temperature derating factor applied per API 5CT / API TR 5C3. */
+  private double temperatureDeratingFactor = 1.0;
+
   /** Total casing weight in tonnes. */
   private double totalCasingWeight = 0.0;
 
@@ -204,6 +210,9 @@ public class WellMechanicalDesign extends MechanicalDesign {
     productionCasingCollapseDF = calc.getProductionCasingCollapseDF();
     productionCasingTensionDF = calc.getProductionCasingTensionDF();
     tubingBurstDF = calc.getTubingBurstDF();
+
+    productionCasingVME_DF = calc.getProductionCasingVME_DF();
+    temperatureDeratingFactor = calc.getTemperatureDeratingFactor();
 
     totalCasingWeight = calc.getTotalCasingWeight();
     totalTubingWeight = calc.getTotalTubingWeight();
@@ -347,6 +356,8 @@ public class WellMechanicalDesign extends MechanicalDesign {
     casing.put("productionCasingBurstDF", productionCasingBurstDF);
     casing.put("productionCasingCollapseDF", productionCasingCollapseDF);
     casing.put("productionCasingTensionDF", productionCasingTensionDF);
+    casing.put("productionCasingVME_DF", productionCasingVME_DF);
+    casing.put("temperatureDeratingFactor", temperatureDeratingFactor);
     result.put("casingDesign", casing);
 
     Map<String, Object> weights = new LinkedHashMap<String, Object>();
@@ -420,6 +431,8 @@ public class WellMechanicalDesign extends MechanicalDesign {
     designResults.addProperty("productionCasingBurstDF", productionCasingBurstDF);
     designResults.addProperty("productionCasingCollapseDF", productionCasingCollapseDF);
     designResults.addProperty("productionCasingTensionDF", productionCasingTensionDF);
+    designResults.addProperty("productionCasingVME_DF", productionCasingVME_DF);
+    designResults.addProperty("temperatureDeratingFactor", temperatureDeratingFactor);
     designResults.addProperty("tubingBurstDF", tubingBurstDF);
     jsonObj.add("designResults", designResults);
 
@@ -631,5 +644,32 @@ public class WellMechanicalDesign extends MechanicalDesign {
    */
   public double getProductionCasingTensionDF() {
     return productionCasingTensionDF;
+  }
+
+  /**
+   * Get production casing VME (triaxial) design factor per NORSOK D-010.
+   *
+   * <p>
+   * Must be &gt;= 1.25 per NORSOK D-010 Table 18.
+   * </p>
+   *
+   * @return VME design factor
+   */
+  public double getProductionCasingVME_DF() {
+    return productionCasingVME_DF;
+  }
+
+  /**
+   * Get API 5CT / API TR 5C3 temperature derating factor.
+   *
+   * <p>
+   * Factor of 1.0 means no derating (temperature &lt;= 100 degC). Lower values indicate SMYS
+   * reduction at elevated temperatures.
+   * </p>
+   *
+   * @return derating factor (0 to 1)
+   */
+  public double getTemperatureDeratingFactor() {
+    return temperatureDeratingFactor;
   }
 }

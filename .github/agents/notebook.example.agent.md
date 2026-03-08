@@ -29,8 +29,8 @@ NEVER use raw `jpype` imports or `jpype.startJVM()` for new notebooks.
 3. **Fluid Creation** (Code) — Create and configure the thermodynamic system
 4. **Process/Model Building** (Code+Markdown) — Build the flowsheet or model step by step, with explanatory markdown between code cells
 5. **Run Simulation** (Code) — Single `process.run()` or equivalent
-6. **Results Extraction** (Code) — Extract key results into Python variables
-7. **Visualization** (Code) — matplotlib/pandas plots and tables
+6. **Results Extraction** (Code) — Extract key results into Python variables, display as formatted table with units (use pandas DataFrame or formatted print)
+7. **Visualization** (Code) — **MANDATORY: At least 2-3 matplotlib figures** showing key relationships. Save all figures as PNG. Include axis labels with units, titles, legends, and grids. Common plots: property profiles, composition charts, sensitivity curves, equipment performance, bar charts for comparisons
 8. **Summary & Next Steps** (Markdown) — Key takeaways and links to related examples
 
 ## Critical Rules
@@ -65,11 +65,16 @@ jneqsim.process.processmodel.ProcessSystem
 ```
 
 ## Visualization Tips
+- **Every notebook MUST produce at least 2-3 matplotlib figures** — never deliver a notebook without visualization
 - Use `matplotlib` for plots, `pandas` for tables
 - Label axes with units
-- Add titles and grid for readability
+- Add titles, legends, and grid for readability
+- Save all figures as PNG (dpi=150, bbox_inches="tight") for report embedding
 - For phase envelopes: plot T vs P with phase boundary lines
 - For PVT: relative volume, density, GOR vs pressure plots
+- For process trains: plot profiles of T, P, flow along the process equipment
+- For economics: bar charts for cost breakdown, line plots for NPV vs time
+- For sensitivity studies: tornado charts or multi-line parametric plots
 
 ## Place notebooks in `examples/notebooks/`
 After creating, update `docs/examples/index.md` if documenting it.
