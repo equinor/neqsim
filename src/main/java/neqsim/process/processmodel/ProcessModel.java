@@ -2,9 +2,13 @@ package neqsim.process.processmodel;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -319,23 +323,8 @@ public class ProcessModel implements Runnable, Serializable {
 
       int iterations = 0;
       while (!Thread.currentThread().isInterrupted() && iterations < maxIterations) {
-        // Run all processes
-        for (ProcessSystem process : processes.values()) {
-          if (Thread.currentThread().isInterrupted()) {
-            logger.debug("Thread was interrupted, exiting run()...");
-            return;
-          }
-          try {
-            if (useOptimizedExecution) {
-              process.runOptimized();
-            } else {
-              process.run();
-            }
-          } catch (Exception e) {
-            System.err.println("Error running process: " + e.getMessage());
-            e.printStackTrace();
-          }
-        }
+        // Run all processes - use parallel execution for independent systems
+        runAllProcesses();
         iterations++;
 
         // Capture current stream states and calculate errors
@@ -373,6 +362,145 @@ public class ProcessModel implements Runnable, Serializable {
         logger.warn("ProcessModel reached max iterations (" + maxIterations
             + ") without full convergence. Flow error: " + lastMaxFlowError + ", Temp error: "
             + lastMaxTemperatureError);
+      }
+    }
+  }
+
+  /**
+   * Runs all ProcessSystems, using parallel execution for independent systems.
+   *
+   * <p>
+   * If there are multiple independent ProcessSystems (no shared streams between them), they are
+   * executed concurrently using the NeqSim thread pool. Systems that depend on each other are
+   * executed sequentially in insertion order.
+   * </p>
+   */
+  private void runAllProcesses() {
+    if (processes.size() <= 1) {
+      // Single process - run directly, no parallelism overhead
+      for (ProcessSystem process : processes.values()) {
+        runSingleProcess(process);
+      }
+      return;
+    }
+
+    // Check for inter-process dependencies via shared streams
+    // Two processes are independent if they share no stream objects
+    List<List<ProcessSystem>> independentGroups = findIndependentProcessGroups();
+
+    if (independentGroups.size() == 1 && independentGroups.get(0).size() > 1) {
+      // All processes are independent - run them all in parallel
+      List<Future<?>> futures = new ArrayList<>();
+      for (ProcessSystem process : independentGroups.get(0)) {
+        final ProcessSystem proc = process;
+        futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
+          runSingleProcess(proc);
+        }));
+      }
+      waitForFutures(futures);
+    } else {
+      // Mixed or all dependent - run sequentially in insertion order
+      for (ProcessSystem process : processes.values()) {
+        if (Thread.currentThread().isInterrupted()) {
+          return;
+        }
+        runSingleProcess(process);
+      }
+    }
+  }
+
+  /**
+   * Runs a single ProcessSystem using the configured execution strategy.
+   *
+   * @param process the process to run
+   */
+  private void runSingleProcess(ProcessSystem process) {
+    try {
+      if (useOptimizedExecution) {
+        process.runOptimized();
+      } else {
+        process.run();
+      }
+    } catch (Exception e) {
+      logger.error("Error running process " + process.getName() + ": " + e.getMessage(), e);
+    }
+  }
+
+  /**
+   * Finds groups of independent ProcessSystems that can run in parallel.
+   *
+   * <p>
+   * Two ProcessSystems are dependent if any outlet stream of one is used as an inlet stream of
+   * another. Independent systems have no shared stream references.
+   * </p>
+   *
+   * @return list of groups, where systems within each group are independent of each other
+   */
+  private List<List<ProcessSystem>> findIndependentProcessGroups() {
+    List<ProcessSystem> allProcesses = new ArrayList<>(processes.values());
+
+    if (allProcesses.size() <= 1) {
+      List<List<ProcessSystem>> result = new ArrayList<>();
+      result.add(allProcesses);
+      return result;
+    }
+
+    // Collect all stream objects for each process
+    List<java.util.Set<Object>> processStreams = new ArrayList<>();
+    for (ProcessSystem process : allProcesses) {
+      java.util.Set<Object> streams =
+          java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+      for (Object unit : process.getUnitOperations()) {
+        if (unit instanceof StreamInterface) {
+          streams.add(unit);
+        }
+      }
+      processStreams.add(streams);
+    }
+
+    // Check if any two processes share stream objects
+    boolean hasSharedStreams = false;
+    for (int i = 0; i < allProcesses.size() && !hasSharedStreams; i++) {
+      for (int j = i + 1; j < allProcesses.size() && !hasSharedStreams; j++) {
+        for (Object stream : processStreams.get(i)) {
+          if (processStreams.get(j).contains(stream)) {
+            hasSharedStreams = true;
+            break;
+          }
+        }
+      }
+    }
+
+    List<List<ProcessSystem>> result = new ArrayList<>();
+    if (!hasSharedStreams) {
+      // All independent - single group with all processes
+      result.add(allProcesses);
+    } else {
+      // Has dependencies - each process is its own group (sequential execution)
+      for (ProcessSystem process : allProcesses) {
+        List<ProcessSystem> single = new ArrayList<>();
+        single.add(process);
+        result.add(single);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Waits for all futures to complete and logs any errors.
+   *
+   * @param futures list of futures to wait for
+   */
+  private void waitForFutures(List<Future<?>> futures) {
+    for (Future<?> future : futures) {
+      try {
+        future.get();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.warn("ProcessModel execution interrupted");
+        break;
+      } catch (ExecutionException e) {
+        logger.error("ProcessModel parallel execution error: " + e.getMessage(), e);
       }
     }
   }
@@ -1157,7 +1285,7 @@ public class ProcessModel implements Runnable, Serializable {
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * ProcessModel model = new ProcessModel();
    * model.add("upstream", upstreamProcess);

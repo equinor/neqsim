@@ -48,6 +48,9 @@ public class Adjuster extends ProcessEquipmentBaseClass {
   private double error = 1e6;
   private double oldError = 1.0e6;
   int iterations = 0;
+  private int consecutiveBoundHits = 0;
+  private static final int MAX_CONSECUTIVE_BOUND_HITS = 3;
+  private static final double MAX_RELATIVE_STEP = 0.5;
   private boolean activateWhenLess = false;
   private boolean active = true;
   private Function<ProcessEquipmentInterface, Double> targetValueCalculator;
@@ -63,6 +66,18 @@ public class Adjuster extends ProcessEquipmentBaseClass {
    */
   public Adjuster(String name) {
     super(name);
+  }
+
+  /**
+   * Checks if the given value is at or very near one of the adjusted variable bounds.
+   *
+   * @param value the value to check
+   * @return true if the value is within a small tolerance of maxAdjustedValue or minAdjustedValue
+   */
+  private boolean isNearBound(double value) {
+    double boundTolerance = Math.max(Math.abs(value) * 1e-6, 1e-10);
+    return Math.abs(value - maxAdjustedValue) < boundTolerance
+        || Math.abs(value - minAdjustedValue) < boundTolerance;
   }
 
   /**
@@ -305,31 +320,37 @@ public class Adjuster extends ProcessEquipmentBaseClass {
       if (Math.abs(error) < tolerance) {
         return;
       }
+      // Value is at or near a bound and target is unreachable - accept current state
+      if (isNearBound(inputValue)) {
+        error = tolerance * 0.9;
+        setCalculationIdentifier(id);
+        return;
+      }
       iterations = 1;
     }
 
+    double newAdjustedValue = inputValue;
+
     if (iterations < 2) {
       if (adjustedValueSetter != null) {
-        // For custom setter, we use a 1% perturbation in the direction of deviation
         double perturbation = inputValue * 0.01 * Math.signum(deviation);
         if (Math.abs(perturbation) < 1e-6) {
           perturbation = 1e-3 * Math.signum(deviation);
         }
-        adjustedValueSetter.accept(adjustedEquipment, inputValue + perturbation);
+        newAdjustedValue = inputValue + perturbation;
       } else if (adjustedVariable.equals("mass flow")) {
-        adjustedStream.getThermoSystem().setTotalFlowRate(inputValue + deviation, "kg/hr");
+        newAdjustedValue = inputValue + deviation;
       } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null
           && !adjustedVariableUnit.isEmpty()) {
-        adjustedStream.getThermoSystem().setTotalFlowRate(
-            inputValue + Math.signum(deviation) * inputValue / 100.0, adjustedVariableUnit);
+        newAdjustedValue = inputValue + Math.signum(deviation) * inputValue / 100.0;
       } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null
           && !adjustedVariableUnit.isEmpty()) {
-        adjustedStream.setPressure(inputValue + deviation / 10.0, adjustedVariableUnit);
+        newAdjustedValue = inputValue + deviation / 10.0;
       } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null
           && !adjustedVariableUnit.isEmpty()) {
-        adjustedStream.setTemperature(inputValue + deviation / 10.0, adjustedVariableUnit);
+        newAdjustedValue = inputValue + deviation / 10.0;
       } else {
-        adjustedStream.getThermoSystem().setTotalFlowRate(inputValue + deviation, "mol/sec");
+        newAdjustedValue = inputValue + deviation;
       }
     } else {
       double derivate = (error - oldError) / (inputValue - oldInputValue);
@@ -337,36 +358,54 @@ public class Adjuster extends ProcessEquipmentBaseClass {
         derivate = 1e-12;
       }
       double newVal = error / derivate;
-      if (inputValue - newVal > maxAdjustedValue) {
-        newVal = inputValue - maxAdjustedValue;
-        if (Math.abs(oldInputValue - inputValue) < 1e-10) {
-          error = tolerance * 0.9;
-        }
-      }
-      if (inputValue - newVal < minAdjustedValue) {
-        newVal = inputValue - minAdjustedValue;
-        if (Math.abs(oldInputValue - inputValue) < 1e-10) {
-          error = tolerance * 0.9;
-        }
+
+      // Apply step damping: limit the step to MAX_RELATIVE_STEP of the current value
+      double maxStep = Math.max(Math.abs(inputValue) * MAX_RELATIVE_STEP, 1e-6);
+      if (Math.abs(newVal) > maxStep) {
+        newVal = Math.signum(newVal) * maxStep;
       }
 
-      if (adjustedValueSetter != null) {
-        adjustedValueSetter.accept(adjustedEquipment, inputValue - newVal);
-      } else if (adjustedVariable.equals("mass flow")) {
-        adjustedStream.getThermoSystem().setTotalFlowRate(inputValue - newVal, "kg/hr");
-      } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null
-          && !adjustedVariableUnit.isEmpty()) {
-        adjustedStream.getThermoSystem().setTotalFlowRate(inputValue - newVal,
-            adjustedVariableUnit);
-      } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null
-          && !adjustedVariableUnit.isEmpty()) {
-        adjustedStream.setPressure(inputValue - newVal, adjustedVariableUnit);
-      } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null
-          && !adjustedVariableUnit.isEmpty()) {
-        adjustedStream.setTemperature(inputValue - newVal, adjustedVariableUnit);
-      } else {
-        adjustedStream.getThermoSystem().setTotalFlowRate(inputValue - newVal, "mol/sec");
+      newAdjustedValue = inputValue - newVal;
+    }
+
+    // Clamp to bounds and track consecutive bound hits
+    boolean hitBound = false;
+    if (newAdjustedValue > maxAdjustedValue) {
+      newAdjustedValue = maxAdjustedValue;
+      hitBound = true;
+    }
+    if (newAdjustedValue < minAdjustedValue) {
+      newAdjustedValue = minAdjustedValue;
+      hitBound = true;
+    }
+
+    if (hitBound) {
+      consecutiveBoundHits++;
+      if (consecutiveBoundHits >= MAX_CONSECUTIVE_BOUND_HITS) {
+        // Target is unreachable within bounds - accept current state
+        error = tolerance * 0.9;
+        consecutiveBoundHits = 0;
       }
+    } else {
+      consecutiveBoundHits = 0;
+    }
+
+    // Apply the new adjusted value
+    if (adjustedValueSetter != null) {
+      adjustedValueSetter.accept(adjustedEquipment, newAdjustedValue);
+    } else if (adjustedVariable.equals("mass flow")) {
+      adjustedStream.getThermoSystem().setTotalFlowRate(newAdjustedValue, "kg/hr");
+    } else if (adjustedVariable.equals("flow") && adjustedVariableUnit != null
+        && !adjustedVariableUnit.isEmpty()) {
+      adjustedStream.getThermoSystem().setTotalFlowRate(newAdjustedValue, adjustedVariableUnit);
+    } else if (adjustedVariable.equals("pressure") && adjustedVariableUnit != null
+        && !adjustedVariableUnit.isEmpty()) {
+      adjustedStream.setPressure(newAdjustedValue, adjustedVariableUnit);
+    } else if (adjustedVariable.equals("temperature") && adjustedVariableUnit != null
+        && !adjustedVariableUnit.isEmpty()) {
+      adjustedStream.setTemperature(newAdjustedValue, adjustedVariableUnit);
+    } else {
+      adjustedStream.getThermoSystem().setTotalFlowRate(newAdjustedValue, "mol/sec");
     }
 
     oldInputValue = inputValue;

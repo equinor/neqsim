@@ -103,6 +103,12 @@ public class ProcessSystem extends SimulationBaseClass {
   private transient ProcessGraph cachedGraph = null;
   /** Flag indicating if the cached graph needs to be rebuilt. */
   private boolean graphDirty = true;
+  /** Cached parallel execution plan: grouped nodes per level for runParallel(). */
+  private transient List<List<List<ProcessNode>>> cachedParallelPlan = null;
+  /** Cached result of hasAdjusters() - null means not yet computed. */
+  private transient Boolean cachedHasAdjusters = null;
+  /** Cached result of hasRecycles() - null means not yet computed. */
+  private transient Boolean cachedHasRecycles = null;
   /** Whether to use graph-based execution order instead of insertion order. */
   private boolean useGraphBasedExecution = false;
   /**
@@ -231,6 +237,9 @@ public class ProcessSystem extends SimulationBaseClass {
 
     getUnitOperations().add(position, operation);
     graphDirty = true; // Mark graph for rebuild when units change
+    cachedParallelPlan = null;
+    cachedHasAdjusters = null;
+    cachedHasRecycles = null;
     if (operation instanceof ModuleInterface) {
       ((ModuleInterface) operation).initializeModule();
     }
@@ -613,6 +622,9 @@ public class ProcessSystem extends SimulationBaseClass {
       if (unitOperations.get(i).getName().equals(name)) {
         unitOperations.remove(i);
         graphDirty = true; // Invalidate graph when structure changes
+        cachedParallelPlan = null;
+        cachedHasAdjusters = null;
+        cachedHasRecycles = null;
       }
     }
   }
@@ -625,6 +637,9 @@ public class ProcessSystem extends SimulationBaseClass {
   public synchronized void clearAll() {
     unitOperations.clear();
     graphDirty = true; // Invalidate graph when structure changes
+    cachedParallelPlan = null;
+    cachedHasAdjusters = null;
+    cachedHasRecycles = null;
   }
 
   /**
@@ -635,6 +650,9 @@ public class ProcessSystem extends SimulationBaseClass {
   public synchronized void clear() {
     unitOperations = new ArrayList<ProcessEquipmentInterface>(0);
     graphDirty = true; // Invalidate graph when structure changes
+    cachedParallelPlan = null;
+    cachedHasAdjusters = null;
+    cachedHasRecycles = null;
   }
 
   /**
@@ -754,42 +772,45 @@ public class ProcessSystem extends SimulationBaseClass {
    * This method automatically selects the best execution mode:
    * </p>
    * <ul>
-   * <li>For processes WITHOUT recycles: uses parallel execution for maximum speed</li>
-   * <li>For processes WITH recycles: uses hybrid execution - parallel for feed-forward sections,
-   * then graph-based iteration for recycle sections</li>
+   * <li>For processes with adjusters: sequential execution (adjusters modify upstream variables and
+   * read downstream targets, creating implicit feedback loops)</li>
+   * <li>For processes with recycles (no adjusters): hybrid execution - parallel for feed-forward
+   * sections, then sequential iteration for recycle sections</li>
+   * <li>For feed-forward processes (including those with multi-input equipment like Mixers and
+   * HeatExchangers): parallel execution using level-based partitioning</li>
    * </ul>
+   *
+   * <p>
+   * Multi-input equipment (Mixer, HeatExchanger, Ejector, etc.) is handled safely by the
+   * level-based parallel execution: the graph places multi-input units at a level after all their
+   * inputs, and {@code groupNodesBySharedInputStreams()} prevents race conditions on shared
+   * streams.
+   * </p>
    *
    * @param id calculation identifier for tracking
    */
   public void runOptimized(UUID id) {
-    if (hasRecycles()) {
-      // Process has Recycle units - use sequential execution for full convergence
+    if (hasAdjusters()) {
+      // Adjusters create implicit feedback loops (they modify upstream variables
+      // and read downstream targets), requiring all units to re-run each iteration.
+      // Use sequential execution for correct convergence.
+      runSequential(id);
+    } else if (hasRecycles()) {
+      // Process has Recycle units - use sequential execution for full convergence.
       // This ensures all units are re-evaluated in each iteration using insertion
-      // order
+      // order, which may be carefully chosen for convergence in complex processes
+      // (e.g. TEG dehydration with regen column and makeup).
       runSequential(id);
-    } else if (hasMultiInputEquipment()) {
-      // Process has multi-input equipment (Mixer, Manifold, TurboExpanderCompressor)
-      // - these
-      // require sequential execution to ensure correct mass balance
-      runSequential(id);
-    } else if (hasAdjusters()) {
-      // Process has adjusters but no recycles - use hybrid execution
-      // Adjusters need iteration but feed-forward sections can run in parallel
-      try {
-        runHybrid(id);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        logger.warn("Hybrid execution interrupted, falling back to sequential run");
-        runSequential(id);
-      }
     } else {
-      // Feed-forward process - use parallel execution for maximum speed
-      // Units at the same level (no dependencies) run concurrently
+      // Feed-forward process (may include multi-input equipment like Mixers,
+      // HeatExchangers, Ejectors, etc.) - use parallel execution for maximum speed.
+      // Level-based partitioning ensures multi-input units run after all inputs.
+      // groupNodesBySharedInputStreams() prevents race conditions on shared streams.
       try {
         runParallel(id);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        logger.warn("Parallel execution interrupted, falling back to regular run");
+        logger.warn("Parallel execution interrupted, falling back to sequential");
         runSequential(id);
       }
     }
@@ -801,11 +822,16 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return true if there are Adjuster units in the process
    */
   public boolean hasAdjusters() {
+    if (cachedHasAdjusters != null) {
+      return cachedHasAdjusters;
+    }
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Adjuster) {
+        cachedHasAdjusters = true;
         return true;
       }
     }
+    cachedHasAdjusters = false;
     return false;
   }
 
@@ -820,11 +846,16 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return true if there are Recycle units in the process
    */
   public boolean hasRecycles() {
+    if (cachedHasRecycles != null) {
+      return cachedHasRecycles;
+    }
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Recycle) {
+        cachedHasRecycles = true;
         return true;
       }
     }
+    cachedHasRecycles = false;
     return false;
   }
 
@@ -1210,8 +1241,23 @@ public class ProcessSystem extends SimulationBaseClass {
    * @throws InterruptedException if the thread is interrupted while waiting for tasks
    */
   public synchronized void runParallel(UUID id) throws InterruptedException {
-    ProcessGraph graph = buildGraph();
-    ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
+    // Build and cache the parallel execution plan (grouped nodes per level)
+    if (cachedParallelPlan == null) {
+      ProcessGraph graph = buildGraph();
+      ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
+      List<List<List<ProcessNode>>> plan = new ArrayList<>();
+      for (List<ProcessNode> level : partition.getLevels()) {
+        if (level.size() <= 1) {
+          // Single node level - wrap as single group
+          List<List<ProcessNode>> singleGroup = new ArrayList<>();
+          singleGroup.add(level);
+          plan.add(singleGroup);
+        } else {
+          plan.add(groupNodesBySharedInputStreams(level));
+        }
+      }
+      cachedParallelPlan = plan;
+    }
 
     // Run setters first (sequential, they set conditions)
     for (ProcessEquipmentInterface unit : unitOperations) {
@@ -1220,11 +1266,11 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
 
-    // Execute each level
-    for (List<ProcessNode> level : partition.getLevels()) {
-      if (level.size() == 1) {
-        // Single unit at this level - run directly
-        ProcessEquipmentInterface unit = level.get(0).getEquipment();
+    // Execute each level using the cached plan
+    for (List<List<ProcessNode>> levelGroups : cachedParallelPlan) {
+      if (levelGroups.size() == 1 && levelGroups.get(0).size() == 1) {
+        // Single unit at this level - run directly (no thread pool overhead)
+        ProcessEquipmentInterface unit = levelGroups.get(0).get(0).getEquipment();
         if (!(unit instanceof Setter)) {
           try {
             unit.run(id);
@@ -1232,22 +1278,25 @@ public class ProcessSystem extends SimulationBaseClass {
             logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
           }
         }
-      } else if (level.size() > 1) {
-        // Multiple units at this level - group by shared input streams
-        // Units that share the same input stream must run sequentially to avoid race
-        // conditions
-        List<List<ProcessNode>> parallelGroups = groupNodesBySharedInputStreams(level);
-
-        // Run each group - groups can run in parallel, but units within a group run
-        // sequentially
+      } else if (levelGroups.size() == 1) {
+        // Single group with multiple units sharing input streams - run sequentially
+        for (ProcessNode node : levelGroups.get(0)) {
+          ProcessEquipmentInterface unit = node.getEquipment();
+          if (!(unit instanceof Setter)) {
+            try {
+              unit.run(id);
+            } catch (Exception ex) {
+              logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+            }
+          }
+        }
+      } else {
+        // Multiple independent groups - run in parallel
         List<java.util.concurrent.Future<?>> futures = new ArrayList<>();
-
-        for (List<ProcessNode> group : parallelGroups) {
+        for (List<ProcessNode> group : levelGroups) {
           if (group.size() == 1) {
-            // Single unit in group - can run in parallel with other groups
-            ProcessEquipmentInterface unit = group.get(0).getEquipment();
-            if (!(unit instanceof Setter)) {
-              final ProcessEquipmentInterface unitToRun = unit;
+            final ProcessEquipmentInterface unitToRun = group.get(0).getEquipment();
+            if (!(unitToRun instanceof Setter)) {
               final UUID calcId = id;
               futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
                 try {
@@ -1259,7 +1308,6 @@ public class ProcessSystem extends SimulationBaseClass {
               }));
             }
           } else {
-            // Multiple units share input streams - run them sequentially as a group
             final List<ProcessNode> groupToRun = group;
             final UUID calcId = id;
             futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
@@ -1276,7 +1324,6 @@ public class ProcessSystem extends SimulationBaseClass {
             }));
           }
         }
-
         // Wait for all groups at this level to complete before moving to next level
         for (java.util.concurrent.Future<?> future : futures) {
           try {
@@ -1409,7 +1456,7 @@ public class ProcessSystem extends SimulationBaseClass {
       return false;
     }
 
-    // Check for recycles - they require sequential iterative execution
+    // Check for recycles and adjusters - they require iterative execution
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Recycle) {
         return false;
@@ -1417,14 +1464,11 @@ public class ProcessSystem extends SimulationBaseClass {
       if (unit instanceof Adjuster) {
         return false;
       }
-      // Multi-input equipment requires sequential execution for correct mass balance
-      if (unit instanceof MixerInterface || unit instanceof Manifold
-          || unit instanceof TurboExpanderCompressor || unit instanceof Ejector
-          || unit instanceof HeatExchanger || unit instanceof MultiStreamHeatExchangerInterface
-          || unit instanceof FurnaceBurner || unit instanceof FlareStack) {
-        return false;
-      }
     }
+    // Note: multi-input equipment (Mixer, HeatExchanger, etc.) is handled safely
+    // by level-based parallel execution - multi-input units are placed at a level
+    // after all their inputs, and groupNodesBySharedInputStreams() prevents race
+    // conditions on shared streams.
 
     // Check parallel partition
     ProcessGraph.ParallelPartition partition = getParallelPartition();
@@ -3463,6 +3507,9 @@ public class ProcessSystem extends SimulationBaseClass {
   public void invalidateGraph() {
     graphDirty = true;
     cachedGraph = null;
+    cachedParallelPlan = null;
+    cachedHasAdjusters = null;
+    cachedHasRecycles = null;
   }
 
   /**
@@ -5188,8 +5235,7 @@ public class ProcessSystem extends SimulationBaseClass {
       if (equipment == null) {
         continue;
       }
-      neqsim.process.electricaldesign.ElectricalDesign elecDesign =
-          equipment.getElectricalDesign();
+      neqsim.process.electricaldesign.ElectricalDesign elecDesign = equipment.getElectricalDesign();
       if (elecDesign == null || elecDesign.getElectricalInputKW() <= 0) {
         continue;
       }

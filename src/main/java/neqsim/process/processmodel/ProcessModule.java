@@ -195,30 +195,47 @@ public class ProcessModule extends SimulationBaseClass {
   public void run(UUID id) {
     logger.info("Running module " + getName());
     checkModulesRecycles();
-    int iteration = 0;
-    do {
+
+    if (recycleModules.isEmpty()) {
+      // No recycles - each ProcessSystem can use its own optimized execution
+      // (parallel for feed-forward, sequential with recycle handling, etc.)
       for (int i = 0; i < unitIndex; i++) {
         if (operationsIndex.contains(i)) {
           int index = operationsIndex.indexOf(i);
           ProcessSystem processSystem = addedUnitOperations.get(index);
-          // Use runWithProgress if a listener is set, otherwise run units directly
-          if (processSystem.getProgressListener() != null) {
-            processSystem.runWithProgress(id);
-          } else {
-            for (ProcessEquipmentInterface unitOperation : processSystem.getUnitOperations()) {
-              if (iteration == 0 || unitOperation.needRecalculation()) {
-                unitOperation.run(id);
-              }
-            }
-          }
+          processSystem.run(id);
         } else if (modulesIndex.contains(i)) {
           int index = modulesIndex.indexOf(i);
           addedModules.get(index).run(id);
         }
       }
-      iteration++;
-      logger.info("Iteration : " + iteration + "  module : " + getName() + " ");
-    } while (!recyclesSolved() && iteration <= 100);
+    } else {
+      // Has recycles - use flat unit-by-unit iteration for module-level convergence
+      int iteration = 0;
+      do {
+        for (int i = 0; i < unitIndex; i++) {
+          if (operationsIndex.contains(i)) {
+            int index = operationsIndex.indexOf(i);
+            ProcessSystem processSystem = addedUnitOperations.get(index);
+            // Use runWithProgress if a listener is set, otherwise run units directly
+            if (processSystem.getProgressListener() != null) {
+              processSystem.runWithProgress(id);
+            } else {
+              for (ProcessEquipmentInterface unitOperation : processSystem.getUnitOperations()) {
+                if (iteration == 0 || unitOperation.needRecalculation()) {
+                  unitOperation.run(id);
+                }
+              }
+            }
+          } else if (modulesIndex.contains(i)) {
+            int index = modulesIndex.indexOf(i);
+            addedModules.get(index).run(id);
+          }
+        }
+        iteration++;
+        logger.info("Iteration : " + iteration + "  module : " + getName() + " ");
+      } while (!recyclesSolved() && iteration <= 100);
+    }
     logger.info("Finished running module " + getName());
     solved = true;
   }
