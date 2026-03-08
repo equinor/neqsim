@@ -104,9 +104,11 @@ fluid.setMixingRule("classic"); // NEVER skip this
 ```java
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
-fluid.init(3); // full property init after flash
+fluid.initProperties(); // MANDATORY: initializes thermodynamic + transport properties
+// NOTE: init(3) alone does NOT initialize transport properties (viscosity, thermal conductivity)
 double density = fluid.getDensity("kg/m3");
 double viscosity = fluid.getPhase("gas").getViscosity("kg/msec");
+double thermalCond = fluid.getPhase("gas").getThermalConductivity("W/mK");
 ```
 
 ### Build a Process

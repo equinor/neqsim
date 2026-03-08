@@ -115,6 +115,7 @@ When creating example files or documentation that references existing classes:
 
 - **Mission Focus**: NeqSim is a Java toolkit for thermodynamics and process simulation; changes usually affect physical property models (`src/main/java/neqsim/thermo`) or process equipment (`src/main/java/neqsim/process`).
 - **Architecture Overview**: Packages map to the seven base modules in docs/modules.md; keep new code within the existing package boundaries so thermodynamic, property, and process layers stay decoupled.
+- **⚠️ Property Initialization After Flash (CRITICAL)**: After any flash calculation (`TPflash`, `PHflash`, `PSflash`, etc.), you MUST call `fluid.initProperties()` before reading physical/transport properties. `init(3)` alone does NOT initialize transport properties (viscosity, thermal conductivity). Use `fluid.initProperties()` which calls both `init(2)` + `initPhysicalProperties()`. Without this, `getViscosity()`, `getThermalConductivity()`, and `getDensity()` may return **zero**.
 - **Thermo Systems**: Fluids are represented by `SystemInterface` implementations such as `SystemSrkEos` or `SystemSrkCPAstatoil`; always set a mixing rule (`setMixingRule("classic")` or numeric CPA rule) and call `createDatabase(true)` when introducing new components.
 - **Process Equipment Pattern**: Equipment extends `ProcessEquipmentBaseClass` and is registered inside a `ProcessSystem`; `ProcessSystem` enforces unique names and handles recycle/adjuster coordination, so reuse it for multi-unit workflows.
 - **Streams & Cloning**: Instantiate feeds with `Stream`/`StreamInterface`, call `setFlowRate`, `setTemperature`, `setPressure`, then `run()`; clone fluids (`system.clone()`) before branching to avoid shared state between trays or unit operations.
@@ -1135,13 +1136,21 @@ stream.getTemperature()         # Kelvin
 stream.getPressure()            # bara
 stream.getFlowRate("kg/hr")     # Mass flow with unit
 
-# Fluid properties
+# Fluid properties (after standalone flash, NOT needed after process.run())
+# CRITICAL: Call initProperties() after flash before reading transport properties
 fluid = stream.getFluid()
+fluid.initProperties()          # MANDATORY before reading viscosity, thermal conductivity, density
 fluid.getDensity("kg/m3")       # Density
 fluid.getMolarMass("kg/mol")    # Molar mass
 fluid.getZ()                    # Compressibility factor
 fluid.getNumberOfPhases()       # Phase count
 fluid.hasPhaseType("gas")       # Check phase presence
+
+# Transport properties (REQUIRE initProperties() first)
+fluid.getPhase("gas").getViscosity("kg/msec")          # Dynamic viscosity
+fluid.getPhase("gas").getThermalConductivity("W/mK")   # Thermal conductivity
+fluid.getPhase("gas").getDensity("kg/m3")              # Phase density
+fluid.getPhase("gas").getCp("J/kgK")                   # Heat capacity
 
 # Compressor
 comp.getPower("kW")             # Power consumption
@@ -1233,6 +1242,15 @@ searchable knowledge across sessions.
    - Date, title, task type, keywords, solution location, and notes
 15. If the solution is reusable: write a test, notebook, or doc page
 16. If you discovered a new pattern: add it to `docs/development/CODE_PATTERNS.md`
+17. **Fix and improve documentation (MANDATORY):** During the task, if you find errors
+    in existing docs, discover missing documentation, or identify improvements:
+    - **Errors**: Fix wrong API signatures, outdated patterns, incorrect examples.
+    - **Missing docs**: Add documentation for undocumented classes, missing cookbook
+      recipes, or gaps in guides.
+    - **Improvements**: Clearer explanations, better examples, additional warnings.
+    - Include all documentation changes in the **same PR** as the task outputs.
+    - Update index files (`REFERENCE_MANUAL_INDEX.md`, section `index.md`) when
+      adding new doc pages.
 
 ### Task Log Entry Format
 

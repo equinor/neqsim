@@ -44,7 +44,7 @@ gas.setMixingRule("classic");
 // 2. Run flash at standard conditions
 ThermodynamicOperations ops = new ThermodynamicOperations(gas);
 ops.TPflash();
-gas.init(3);
+gas.initProperties(); // MANDATORY: initializes thermo + transport properties (init(3) alone misses transport props)
 
 // 3. Apply standard
 Standard_ISO6976 iso6976 = new Standard_ISO6976(gas);

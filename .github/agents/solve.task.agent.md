@@ -530,7 +530,7 @@ incomplete or unvalidated results.
 
 ### Type A — Property Tasks
 - Use `ThermodynamicOperations` for flash calculations
-- Always call `fluid.init(3)` before reading properties
+- Always call `fluid.initProperties()` after flash before reading properties — `init(3)` alone does NOT initialize transport properties (viscosity, thermal conductivity will return zero)
 - Compare against NIST, DIPPR, or experimental data where possible
 - Plot property vs. T or P curves for validation
 

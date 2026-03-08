@@ -126,8 +126,11 @@ double[][] phaseEnvelope = ops.get2phaseTVPdata();
 ## Reading Properties
 
 ```java
-// IMPORTANT: call init(3) after flash for full property calculation
-fluid.init(3);
+// CRITICAL: call initProperties() after flash — this initializes BOTH
+// thermodynamic properties (Cp, enthalpy, entropy) AND transport properties
+// (viscosity, thermal conductivity, density). Using init(3) alone will NOT
+// initialize transport properties — they will return zero!
+fluid.initProperties();
 
 // System-level
 double density = fluid.getDensity("kg/m3");
@@ -135,9 +138,11 @@ double molarMass = fluid.getMolarMass("kg/mol");
 double Z = fluid.getZ();
 int numPhases = fluid.getNumberOfPhases();
 
-// Phase-level
+// Phase-level (transport properties REQUIRE initProperties())
 double gasDensity = fluid.getPhase("gas").getDensity("kg/m3");
 double oilVisc = fluid.getPhase("oil").getViscosity("kg/msec");
+double gasThermCond = fluid.getPhase("gas").getThermalConductivity("W/mK");
+double gasCp = fluid.getPhase("gas").getCp("J/kgK");
 double surfTension = fluid.getInterphaseProperties().getSurfaceTension(
     fluid.getPhaseIndex("gas"), fluid.getPhaseIndex("oil"));
 
@@ -757,7 +762,7 @@ def calc_properties(T_C, P_bar):
     fluid.setMixingRule("classic")
     ops = ThermodynamicOperations(fluid)
     ops.TPflash()
-    fluid.init(3)
+    fluid.initProperties()  # initializes thermo + transport properties
     return {
         "density_kg_m3": float(fluid.getDensity("kg/m3")),
         "Cp_J_kgK": float(fluid.getCp("J/kgK")),

@@ -95,6 +95,18 @@ engineering task (hydrate prediction, pipeline sizing, compressor design, etc.):
    gh pr create --title "Add [description]" --body "From task-solving workflow"
    ```
 
+5. **Fix and improve documentation** encountered during the task:
+   - If you find **errors** in existing docs (wrong API signatures, outdated
+     patterns, incorrect examples), fix them and include the fixes in the PR.
+   - If you discover **missing documentation** (undocumented classes, missing
+     cookbook recipes, gaps in guides), add it and include in the PR.
+   - If you identify **improvements** (clearer explanations, better examples,
+     additional warnings), make the changes and include in the PR.
+   - Update the relevant index files (`REFERENCE_MANUAL_INDEX.md`, section
+     `index.md`) when adding new doc pages.
+   - Documentation fixes go in the **same PR** as the task outputs so
+     reviewers see the full context of what was learned.
+
 ### Dual-boot notebook cell (use in every notebook)
 
 ```python
@@ -248,8 +260,11 @@ fluid.setMixingRule("classic"); // NEVER skip
 ```java
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
-fluid.init(3);
+fluid.initProperties();  // MANDATORY: initializes both thermodynamic AND transport properties
+// NOTE: init(3) alone does NOT initialize transport properties (viscosity, thermal conductivity)
 double density = fluid.getDensity("kg/m3");
+double viscosity = fluid.getPhase("gas").getViscosity("kg/msec");
+double thermalCond = fluid.getPhase("gas").getThermalConductivity("W/mK");
 ```
 
 ### Process simulation
