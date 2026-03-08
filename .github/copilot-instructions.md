@@ -282,7 +282,7 @@ description: Comprehensive guide to calculating and reading thermodynamic and ph
    # WRONG - causes YAML parse error:
    title: PVT Workflow: From Lab Data to Model
    description: This guide covers: setup, configuration, and testing.
-   
+
    # CORRECT - quoted values:
    title: "PVT Workflow: From Lab Data to Model"
    description: "This guide covers: setup, configuration, and testing."
@@ -310,13 +310,13 @@ When creating or editing markdown documentation files:
 1. **Pure Markdown (preferred for tables/lists):**
    ```markdown
    ### Section Title
-   
+
    **Heading text:**
-   
+
    | Column 1 | Column 2 |
    |----------|----------|
    | Data     | Data     |
-   
+
    > *Note: Use blockquotes for callouts*
    ```
 
@@ -343,7 +343,7 @@ When creating or editing markdown documentation files:
 - For nested content after bold headers, add a blank line:
   ```markdown
   **Suggested Approach:**
-  
+
   1. **Step one:** Description here
   2. **Step two:** Description here
   ```
@@ -433,7 +433,7 @@ When adding links to other documentation files, follow these rules to prevent br
 2. **Cross-reference related docs** with verified links:
    ```markdown
    ## Related Documentation
-   
+
    - [Pressure Boundary Optimization](pressure_boundary_optimization.md)
    - [Capacity Constraint Framework](CAPACITY_CONSTRAINT_FRAMEWORK.md)
    ```
@@ -510,19 +510,19 @@ public class VesselMechanicalDesign extends MechanicalDesign {
     private VesselDesignCalculator calculator;
     private String materialGrade = "SA-516-70";
     private String designStandardCode = "ASME-VIII-Div1";
-    
+
     public VesselMechanicalDesign(ProcessEquipmentInterface equipment) {
         super(equipment);
         this.dataSource = new VesselMechanicalDesignDataSource();
         this.calculator = new VesselDesignCalculator();
     }
-    
+
     @Override
     public void readDesignSpecifications() {
-        dataSource.loadIntoCalculator(calculator, 
+        dataSource.loadIntoCalculator(calculator,
             getCompanySpecificDesignStandards(), designStandardCode, "Vessel");
     }
-    
+
     @Override
     public void calcDesign() {
         calculator.setDesignPressure(getMaxOperationPressure() * 1.1);
@@ -530,7 +530,7 @@ public class VesselMechanicalDesign extends MechanicalDesign {
         calculator.calculate();
         setWallThickness(calculator.getRequiredWallThickness());
     }
-    
+
     @Override
     public String toJson() {
         // Return comprehensive JSON with all design data
@@ -544,15 +544,15 @@ Create a data source class for database queries in `neqsim.process.mechanicaldes
 
 ```java
 public class VesselMechanicalDesignDataSource {
-    
-    public void loadIntoCalculator(VesselDesignCalculator calc, 
+
+    public void loadIntoCalculator(VesselDesignCalculator calc,
             String company, String designCode, String equipmentType) {
         // Query TechnicalRequirements_Process for company-specific values
         // Query standards tables based on designCode
         // Set values on calculator
     }
-    
-    public void loadFromStandardsTable(VesselDesignCalculator calc, 
+
+    public void loadFromStandardsTable(VesselDesignCalculator calc,
             String designCode) {
         // Query appropriate standards table (asme_standards, dnv_iso_en_standards, etc.)
         // Apply standard-specific design factors
@@ -573,17 +573,17 @@ public class VesselDesignCalculator {
     private double smys;  // Specified Minimum Yield Strength
     private double jointEfficiency;
     private double designFactor;
-    
+
     public void calculate() {
         calculateWallThicknessASME();
         calculateStresses();
         checkDesignMargins();
     }
-    
+
     public Map<String, Object> toMap() {
         // Return all calculation results as Map
     }
-    
+
     public String toJson() {
         return new GsonBuilder().setPrettyPrinting().create()
             .toJson(toMap());
@@ -601,12 +601,12 @@ public String toJson() {
     MechanicalDesignResponse response = new MechanicalDesignResponse(this);
     JsonObject jsonObj = JsonParser.parseString(response.toJson()).getAsJsonObject();
     JsonObject calcObj = JsonParser.parseString(calculator.toJson()).getAsJsonObject();
-    
+
     // Add equipment-specific fields
     jsonObj.addProperty("materialGrade", materialGrade);
     jsonObj.addProperty("designStandardCode", designStandardCode);
     jsonObj.add("designCalculations", calcObj);
-    
+
     return new GsonBuilder().setPrettyPrinting()
         .serializeSpecialFloatingPointValues().create().toJson(jsonObj);
 }
@@ -622,10 +622,10 @@ Ensure `NeqSimProcessDesignDataBase.initH2DatabaseFromCSVfiles()` loads your CSV
 
 When adding design standards, include values from:
 - **ASME**: B31.3 (Process Piping), B31.4 (Liquid Pipelines), B31.8 (Gas Pipelines), Section VIII (Vessels)
-- **API**: 5L (Line Pipe), 650 (Storage Tanks), 510 (Inspection), 620 (Low-Pressure Tanks)
+- **API**: 5L (Line Pipe), 5CT/ISO 11960 (Casing & Tubing), Bull 5C3/TR 5C3 (Casing Formulas), RP 90 (Annular Pressure), 650 (Storage Tanks), 510 (Inspection), 620 (Low-Pressure Tanks)
 - **DNV**: ST-F101 (Submarine Pipelines), OS-F101, RP-C203 (Fatigue)
-- **ISO**: 13623 (Pipelines), 3183 (Line Pipe), 14692 (GRP Piping)
-- **NORSOK**: L-001/L-002 (Piping), M-001/M-630 (Materials), P-001 (Process)
+- **ISO**: 13623 (Pipelines), 3183 (Line Pipe), 14692 (GRP Piping), 11960 (Casing & Tubing)
+- **NORSOK**: D-010 (Well Integrity), L-001/L-002 (Piping), M-001/M-630 (Materials), P-001 (Process)
 
 ### 8. TR Document Specifications (Company Technical Requirements)
 
@@ -661,8 +661,8 @@ Shell,DEP-31.38.01.11,Pressure Vessels,Separator,DesignPressureMargin,1.1,,3.2,2
 
 ```java
 public class VesselMechanicalDesignDataSource {
-    
-    public void loadTRRequirements(VesselDesignCalculator calc, 
+
+    public void loadTRRequirements(VesselDesignCalculator calc,
             String company, String equipmentType) {
         try (Connection conn = NeqSimProcessDesignDataBase.createConnection()) {
             // Query TR-specific requirements
@@ -674,19 +674,19 @@ public class VesselMechanicalDesignDataSource {
             stmt.setString(1, company);
             stmt.setString(2, equipmentType);
             ResultSet rs = stmt.executeQuery();
-            
+
             while (rs.next()) {
                 String param = rs.getString("ParameterName");
                 double value = rs.getDouble("Value");
                 String trDoc = rs.getString("Standard");
-                
+
                 // Apply TR-specific values (override industry standards)
                 applyTRParameter(calc, param, value, trDoc);
             }
         }
     }
-    
-    private void applyTRParameter(VesselDesignCalculator calc, 
+
+    private void applyTRParameter(VesselDesignCalculator calc,
             String param, double value, String trDoc) {
         // TR values take precedence over industry standards
         switch (param) {
@@ -718,13 +718,13 @@ When loading design parameters, apply in this order (later overrides earlier):
 public void readDesignSpecifications() {
     // 1. Load industry standard defaults
     dataSource.loadFromStandardsTable(calculator, designStandardCode);
-    
+
     // 2. Load company-specific values
-    dataSource.loadIntoCalculator(calculator, 
+    dataSource.loadIntoCalculator(calculator,
         getCompanySpecificDesignStandards(), designStandardCode, equipmentType);
-    
+
     // 3. Load TR document requirements (highest priority)
-    dataSource.loadTRRequirements(calculator, 
+    dataSource.loadTRRequirements(calculator,
         getCompanySpecificDesignStandards(), equipmentType);
 }
 ```
@@ -737,7 +737,7 @@ Include TR document references in JSON output for traceability:
 @Override
 public String toJson() {
     // ... existing code ...
-    
+
     // Add TR document references
     JsonArray appliedStandards = new JsonArray();
     for (String std : calculator.getAppliedStandards()) {
@@ -745,7 +745,7 @@ public String toJson() {
     }
     jsonObj.add("appliedStandards", appliedStandards);
     jsonObj.addProperty("trDocumentReference", trDocumentNumber);
-    
+
     return gson.toJson(jsonObj);
 }
 ```
@@ -773,7 +773,7 @@ All mechanical design calculator classes should include cost estimation and deta
 public void calculateWeightsAndAreas();       // Steel, coating, insulation weights
 public double calculateSubmergedWeight(double contentDensity);  // For subsea
 
-// Quantity calculations  
+// Quantity calculations
 public void calculateJointsAndWelds();        // Number of joints, welds
 public int selectFlangeClass();               // Per ASME B16.5
 
@@ -798,7 +798,7 @@ public double calculateAllowableSpanLength(double currentVelocity);
 public double estimateFatigueLife(double stressRange, double cycles);
 
 // Thermal design
-public double calculateInsulationThickness(double inletT, double arrivalT, 
+public double calculateInsulationThickness(double inletT, double arrivalT,
     double massFlow, double specificHeat);
 ```
 
@@ -875,6 +875,98 @@ design.readDesignSpecifications();
 design.calcDesign();
 String jsonReport = design.toJson();
 ```
+
+## Well Mechanical Design Pattern
+
+When implementing or using subsea well design, follow the established `SubseaWell` → `WellMechanicalDesign` → `WellDesignCalculator`/`WellCostEstimator` architecture.
+
+### Applicable Standards
+
+| Standard | Scope | Used In |
+|----------|-------|---------|
+| API 5CT / ISO 11960 | Casing & tubing grades, SMYS, SMTS | `WellDesignCalculator.getCasingGradeSMYS()` |
+| API Bull 5C3 / API TR 5C3 | Burst (Barlow), collapse (4-mode), tension formulas | `WellDesignCalculator.calculateCasingDesign()` |
+| NORSOK D-010 | Design factors (burst ≥ 1.10, collapse ≥ 1.00, tension ≥ 1.60, VME ≥ 1.25), well barriers, DHSV requirements | `WellDesignCalculator`, `WellMechanicalDesign.verifyWellBarriers()` |
+| API RP 90 | Annular casing pressure management | `WellDesignCalculator` |
+
+### Design Factor Requirements (NORSOK D-010 Table 18)
+
+```java
+MIN_BURST_DF    = 1.10  // Burst design factor
+MIN_COLLAPSE_DF = 1.00  // Collapse design factor
+MIN_TENSION_DF  = 1.60  // Tension design factor
+MIN_VME_DF      = 1.25  // Triaxial (von Mises) design factor
+```
+
+### Well Design Usage Example
+
+```java
+// Create subsea well with stream
+SubseaWell well = new SubseaWell("Producer-1", stream);
+well.setWellType(SubseaWell.WellType.OIL_PRODUCER);
+well.setCompletionType(SubseaWell.CompletionType.CASED_PERFORATED);
+well.setRigType(SubseaWell.RigType.SEMI_SUBMERSIBLE);
+
+// Well geometry
+well.setMeasuredDepth(3800.0);
+well.setTrueVerticalDepth(3200.0);
+well.setWaterDepth(350.0);
+well.setMaxWellheadPressure(345.0);
+well.setReservoirPressure(400.0);
+
+// Casing program
+well.setConductorOD(30.0);  well.setConductorDepth(100.0);
+well.setSurfaceCasingOD(20.0); well.setSurfaceCasingDepth(800.0);
+well.setIntermediateCasingOD(13.375); well.setIntermediateCasingDepth(2500.0);
+well.setProductionCasingOD(9.625); well.setProductionCasingDepth(3800.0);
+well.setTubingOD(5.5); well.setTubingWeight(23.0); well.setTubingGrade("L80");
+
+// Barrier elements (NORSOK D-010 two-barrier principle)
+well.setPrimaryBarrierElements(3);
+well.setSecondaryBarrierElements(3);
+well.setHasDHSV(true);
+
+// Drilling schedule and cost parameters
+well.setDrillingDays(45.0);
+well.setCompletionDays(25.0);
+well.setRigDayRate(540000.0);
+
+// Run mechanical design and cost estimation
+well.initMechanicalDesign();
+WellMechanicalDesign design = (WellMechanicalDesign) well.getMechanicalDesign();
+design.calcDesign();           // API 5C3 burst/collapse/tension + NORSOK D-010 barriers
+design.calculateCostEstimate(); // Drilling, completion, wellhead, logging, contingency
+
+// Access results
+double burstDF = design.getProductionCasingBurstDF();   // Must be >= 1.10
+double collapseDF = design.getProductionCasingCollapseDF(); // Must be >= 1.00
+double tensionDF = design.getProductionCasingTensionDF();   // Must be >= 1.60
+boolean barrierOk = design.isBarrierVerificationPassed();
+double totalCostUSD = design.getTotalCostUSD();
+String jsonReport = design.toJson();
+```
+
+### Key Classes
+
+| Class | Package | Responsibility |
+|-------|---------|---------------|
+| `SubseaWell` | `process.equipment.subsea` | Process equipment — well type, casing program, tubing, barriers, drilling schedule |
+| `WellMechanicalDesign` | `process.mechanicaldesign.subsea` | Orchestrator — transfers params, runs design + cost, barrier verification, JSON reporting |
+| `WellDesignCalculator` | `process.mechanicaldesign.subsea` | Casing & tubing design per API 5C3 / NORSOK D-010 |
+| `WellCostEstimator` | `process.mechanicaldesign.subsea` | Cost estimation with regional factors and BOM |
+| `SURFCostEstimator` | `process.mechanicaldesign.subsea` | SURF CAPEX — trees, manifolds, umbilicals, risers, flowlines |
+| `SubseaCostEstimator` | `process.mechanicaldesign.subsea` | Base cost estimator with Region enum (NORWAY, UK, GOM, BRAZIL, WEST_AFRICA) |
+
+### API 5CT Casing Grades (SMYS values used)
+
+| Grade | SMYS (MPa) | Typical Use |
+|-------|------------|-------------|
+| H40 | 276 | Conductor |
+| K55 | 379 | Surface casing |
+| N80 / L80 | 552 | Intermediate casing, tubing |
+| C90 | 621 | Sour service |
+| P110 | 758 | Production casing (high pressure) |
+| Q125 | 862 | Ultra-deep / HP-HT |
 
 ---
 
@@ -1019,6 +1111,17 @@ PipeBeggsAndBrills = jneqsim.process.equipment.pipeline.PipeBeggsAndBrills
 
 # Distillation
 DistillationColumn = jneqsim.process.equipment.distillation.DistillationColumn
+
+# Mechanical design and cost estimation
+# Use jpype.JClass() for classes not exposed through jneqsim gateway:
+# SURFCostEstimator = jpype.JClass("neqsim.process.mechanicaldesign.subsea.SURFCostEstimator")
+# SubseaCostEstimator = jpype.JClass("neqsim.process.mechanicaldesign.subsea.SubseaCostEstimator")
+# WellDesignCalculator = jpype.JClass("neqsim.process.mechanicaldesign.subsea.WellDesignCalculator")
+# WellCostEstimator = jpype.JClass("neqsim.process.mechanicaldesign.subsea.WellCostEstimator")
+# WellMechanicalDesign = jpype.JClass("neqsim.process.mechanicaldesign.subsea.WellMechanicalDesign")
+
+# Subsea equipment
+SubseaWell = jneqsim.process.equipment.subsea.SubseaWell
 ```
 
 ### Getting Results
@@ -1056,8 +1159,8 @@ cooler.getDuty()                # Cooling duty (positive = heat removed)
 3. **Fluid creation** - Separate cell for creating thermodynamic system
 4. **Process building** - Build process step by step
 5. **Run simulation** - Single `process.run()` call
-6. **Results** - Extract and display results
-7. **Visualization** - Plots using matplotlib
+6. **Results** - Extract and display results as formatted table with units (pandas DataFrame or formatted print)
+7. **Visualization (MANDATORY)** - **Every notebook MUST include at least 2-3 matplotlib figures** showing key relationships (profiles, sensitivities, comparisons). All figures must have axis labels with units, titles, legends, and grids. Save figures as PNG (dpi=150, bbox_inches="tight") for report embedding.
 8. **Tips/Next steps** - Summary and links to related examples
 
 ### Type Conversion for Java
@@ -1086,7 +1189,7 @@ searchable knowledge across sessions.
 
 1. Read `CONTEXT.md` for orientation (60 seconds)
 2. Search `docs/development/TASK_LOG.md` for similar past tasks
-3. Classify the task (Type A–F, see `docs/development/TASK_SOLVING_GUIDE.md`)
+3. Classify the task (Type A–G, see `docs/development/TASK_SOLVING_GUIDE.md`)
 4. Find the closest existing code (test, notebook, or source file)
 
 ### While Working
@@ -1094,19 +1197,48 @@ searchable knowledge across sessions.
 5. Follow patterns from `docs/development/CODE_PATTERNS.md`
 6. Verify using the checklist in `docs/development/TASK_SOLVING_GUIDE.md`
 7. Use the appropriate Copilot Chat agent (see `.github/agents/`)
+8. **For economic/financial calculations:** Verify every formula against the jurisdiction's actual tax law or financial standard. Test with a manual hand-calculation. Check: independent vs cascaded tax bases, correct CAPEX timing (year-0 only), loss carry-forward, and no double-counting.
+9. **For cost estimation:** Use component-level NeqSim classes (e.g., `SURFCostEstimator`, `SubseaCostEstimator`) instead of flat lump-sum estimates. Break down CAPEX into verifiable subcategories.
+10. **Self-review before delivering:** Re-read all formulas checking for sign errors, double-counting, wrong time indexing, and missing terms. Compare key outputs against industry benchmarks.
+11. **Benchmark validation (MANDATORY):** Create a separate benchmark notebook (`XX_benchmark_validation.ipynb`) comparing NeqSim results against independent reference data (NIST, textbook examples, published cases, industry benchmarks). Include at least 3 data points, a parity/deviation plot, and save `benchmark_validation` results to `results.json`. Include benchmark comparison in the final report.
+12. **Uncertainty analysis (MANDATORY):** Create a separate uncertainty notebook (`XX_uncertainty_risk_analysis.ipynb`) that:
+    - Identifies key uncertain input parameters with realistic ranges (low/base/high or probability distributions)
+    - **MUST use full NeqSim process simulations inside the Monte Carlo loop** — do NOT
+      use simplified Python correlations when NeqSim classes exist for the calculation
+      (e.g., use `SimpleReservoir` + `PipeBeggsAndBrills` for production profiles, not
+      a Python exponential decline). Simplified models are only acceptable when NeqSim
+      has no equivalent class.
+    - **Resource/reserve estimates MUST be uncertain parameters** — always include
+      GIP or STOIIP as a triangular/lognormal input. Report P10/P50/P90 for GIP,
+      recovery factor, and total production alongside the main output.
+    - Runs Monte Carlo simulation (N≥200 with NeqSim, N≥1000 for simplified models)
+      to produce P10/P50/P90 estimates of the main output
+    - **Performance optimisation pattern**: Cache expensive NeqSim results that don't
+      change between iterations (e.g., compute base SURF cost once, scale by multiplier).
+      In tornado sensitivity, classify parameters as "technical" (require NeqSim re-run)
+      vs "economic" (reuse base production profile, recalculate cash flow only).
+    - Generates a tornado diagram showing input sensitivity ranking
+    - Reports probability of unfavourable outcomes (e.g., NPV < 0, temperature above hydrate limit)
+    - Saves `uncertainty` results to `results.json` (method, n_simulations, P10/P50/P90, tornado data)
+13. **Risk evaluation (MANDATORY):** In the same or a companion notebook, include a risk register with:
+    - Identified risks (technical, commercial, schedule, HSE) with likelihood/consequence ratings
+    - Risk matrix classification (e.g., ISO 31000 5x5 matrix)
+    - Mitigation measures for high and very high risks
+    - Overall project risk level
+    - Saves `risk_evaluation` results to `results.json`
 
 ### After Completing
 
-8. **Always** add an entry to `docs/development/TASK_LOG.md` with:
+14. **Always** add an entry to `docs/development/TASK_LOG.md` with:
    - Date, title, task type, keywords, solution location, and notes
-9. If the solution is reusable: write a test, notebook, or doc page
-10. If you discovered a new pattern: add it to `docs/development/CODE_PATTERNS.md`
+15. If the solution is reusable: write a test, notebook, or doc page
+16. If you discovered a new pattern: add it to `docs/development/CODE_PATTERNS.md`
 
 ### Task Log Entry Format
 
 ```markdown
 ### YYYY-MM-DD — Short task title
-**Type:** A (Property) | B (Process) | C (PVT) | D (Standards) | E (Feature) | F (Design)
+**Type:** A (Property) | B (Process) | C (PVT) | D (Standards) | E (Feature) | F (Design) | G (Workflow)
 **Keywords:** comma, separated, search, terms
 **Solution:** path/to/test/or/notebook
 **Notes:** Key decisions, gotchas, or results

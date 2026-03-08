@@ -161,6 +161,12 @@ public class WellDesignCalculator implements Serializable {
   /** Total cuttings volume in m3. */
   private double totalCuttingsVolume = 0.0;
 
+  /** Production casing VME (triaxial) design factor. */
+  private double productionCasingVME_DF = 0.0;
+
+  /** Temperature derating factor applied to production casing (0-1). */
+  private double temperatureDeratingFactor = 1.0;
+
   // ============ Design Factors (NORSOK D-010) ============
   /** Minimum burst design factor. */
   private static final double MIN_BURST_DF = 1.10;
@@ -170,6 +176,9 @@ public class WellDesignCalculator implements Serializable {
 
   /** Minimum tension design factor. */
   private static final double MIN_TENSION_DF = 1.60;
+
+  /** Minimum triaxial (von Mises Equivalent) design factor per NORSOK D-010. */
+  private static final double MIN_VME_DF = 1.25;
 
   /** Pore pressure gradient (bar/m) — typical hydrostatic. */
   private static final double PORE_PRESSURE_GRADIENT = 0.1013;
@@ -266,6 +275,19 @@ public class WellDesignCalculator implements Serializable {
     double yieldTension = smys * crossSection / 1000.0; // kN
 
     productionCasingTensionDF = tensionLoad > 0 ? yieldTension / tensionLoad : 99.0;
+
+    // ---- VME triaxial check (NORSOK D-010 / API TR 5C3) ----
+    // von Mises Equivalent stress combines hoop, axial, and radial stresses
+    double derated = applyTemperatureDerating(smys, maxBottomholeTemperature);
+    temperatureDeratingFactor = derated / smys;
+
+    double hoopStress = netBurstSurface * 0.1 * odMm / (2.0 * productionCasingWallThickness);
+    double axialStress = tensionLoad * 1000.0 / crossSection; // kN to N, area in mm2 gives MPa
+    double radialStress = -netBurstSurface * 0.1 / 2.0; // approximation
+
+    double vmeStress = Math.sqrt(0.5 * (Math.pow(hoopStress - axialStress, 2)
+        + Math.pow(axialStress - radialStress, 2) + Math.pow(radialStress - hoopStress, 2)));
+    productionCasingVME_DF = vmeStress > 0 ? derated / vmeStress : 99.0;
   }
 
   /**
@@ -497,12 +519,79 @@ public class WellDesignCalculator implements Serializable {
   }
 
   /**
-   * Get SMYS for a casing grade per API 5CT.
+   * Apply API 5CT temperature derating to yield strength.
+   *
+   * <p>
+   * Per API 5CT / ISO 11960, yield strength is derated at elevated temperatures. The derating
+   * factors are from API TR 5C3 Table D.1 (typical carbon/low-alloy).
+   * </p>
+   *
+   * @param smysMPa SMYS at ambient temperature in MPa
+   * @param temperatureC design temperature in Celsius
+   * @return derated yield strength in MPa
+   */
+  private double applyTemperatureDerating(double smysMPa, double temperatureC) {
+    // API 5CT / API TR 5C3 temperature derating factors
+    // Below 100 degC: no derating
+    if (temperatureC <= 100.0) {
+      return smysMPa;
+    }
+    // Linear interpolation of typical derating from API TR 5C3 Table D.1:
+    // 100C -> 1.00, 150C -> 0.97, 200C -> 0.93, 250C -> 0.87, 300C -> 0.80
+    double factor;
+    if (temperatureC <= 150.0) {
+      factor = 1.0 - 0.03 * (temperatureC - 100.0) / 50.0;
+    } else if (temperatureC <= 200.0) {
+      factor = 0.97 - 0.04 * (temperatureC - 150.0) / 50.0;
+    } else if (temperatureC <= 250.0) {
+      factor = 0.93 - 0.06 * (temperatureC - 200.0) / 50.0;
+    } else if (temperatureC <= 300.0) {
+      factor = 0.87 - 0.07 * (temperatureC - 250.0) / 50.0;
+    } else {
+      factor = 0.80; // Beyond 300C, use minimum factor
+    }
+    return smysMPa * factor;
+  }
+
+  /**
+   * Get SMTS (Specified Minimum Tensile Strength) for a casing grade per API 5CT / ISO 11960.
+   *
+   * @param grade casing grade string (e.g., "L80", "P110", "K55")
+   * @return SMTS in MPa
+   */
+  public double getCasingGradeSMTS(String grade) {
+    // API 5CT Table C.6 / ISO 11960 tensile strength values
+    if ("H40".equals(grade)) {
+      return 414.0;
+    } else if ("J55".equals(grade) || "K55".equals(grade)) {
+      return 517.0;
+    } else if ("N80".equals(grade) || "L80".equals(grade)) {
+      return 689.0;
+    } else if ("C90".equals(grade)) {
+      return 689.0;
+    } else if ("C95".equals(grade) || "T95".equals(grade)) {
+      return 724.0;
+    } else if ("P110".equals(grade)) {
+      return 862.0;
+    } else if ("Q125".equals(grade)) {
+      return 931.0;
+    } else if ("13Cr".equals(grade) || "13CR".equals(grade)) {
+      return 689.0;
+    } else if ("S13Cr".equals(grade) || "Super13Cr".equals(grade)) {
+      return 724.0;
+    } else if ("25Cr".equals(grade)) {
+      return 862.0;
+    }
+    return 689.0; // Default to L80/N80 SMTS
+  }
+
+  /**
+   * Get SMYS for a casing grade per API 5CT / ISO 11960.
    *
    * @param grade casing grade string (e.g., "L80", "P110", "K55")
    * @return SMYS in MPa
    */
-  private double getCasingGradeSMYS(String grade) {
+  public double getCasingGradeSMYS(String grade) {
     // API 5CT casing grades and minimum yield strengths
     if ("H40".equals(grade)) {
       return 276.0;
@@ -543,6 +632,8 @@ public class WellDesignCalculator implements Serializable {
     casingDesign.put("productionCasingBurstDF", productionCasingBurstDF);
     casingDesign.put("productionCasingCollapseDF", productionCasingCollapseDF);
     casingDesign.put("productionCasingTensionDF", productionCasingTensionDF);
+    casingDesign.put("productionCasingVME_DF", productionCasingVME_DF);
+    casingDesign.put("temperatureDeratingFactor", temperatureDeratingFactor);
     result.put("casingDesign", casingDesign);
 
     Map<String, Object> tubingDesign = new LinkedHashMap<String, Object>();
@@ -801,5 +892,33 @@ public class WellDesignCalculator implements Serializable {
    */
   public double getTotalCuttingsVolume() {
     return totalCuttingsVolume;
+  }
+
+  /**
+   * Get production casing VME (triaxial) design factor per NORSOK D-010.
+   *
+   * <p>
+   * The von Mises Equivalent combines hoop, axial, and radial stresses. Must be &gt;= 1.25 per
+   * NORSOK D-010 Table 18.
+   * </p>
+   *
+   * @return VME design factor
+   */
+  public double getProductionCasingVME_DF() {
+    return productionCasingVME_DF;
+  }
+
+  /**
+   * Get the temperature derating factor applied to production casing SMYS.
+   *
+   * <p>
+   * Per API 5CT / API TR 5C3 Table D.1, yield strength is derated at elevated temperatures. Factor
+   * of 1.0 means no derating (&lt;= 100 degC).
+   * </p>
+   *
+   * @return derating factor (0 to 1)
+   */
+  public double getTemperatureDeratingFactor() {
+    return temperatureDeratingFactor;
   }
 }

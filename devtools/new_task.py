@@ -291,6 +291,10 @@ a natural loop:
 4. Compare against reference data from Step 1
 5. If results are off → adjust and rerun (iteration is implicit)
 6. When satisfied → save final results and figures
+7. **Create a benchmark validation notebook** (`XX_benchmark_validation.ipynb`)
+   comparing NeqSim results against independent reference data (NIST, textbook,
+   published cases, industry benchmarks). Include at least 3 data points, a
+   parity/deviation plot, and save `benchmark_validation` to `results.json`.
 
 All simulation code, results, and validation notes go to `step2_analysis/`.
 

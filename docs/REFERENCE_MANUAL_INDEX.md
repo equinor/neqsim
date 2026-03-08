@@ -814,6 +814,9 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 
 | Class                       | Package      | Purpose                                  |
 | --------------------------- | ------------ | ---------------------------------------- |
+| `CashFlowEngine`            | `economics`  | Full-lifecycle NPV with tax models       |
+| `NorwegianTaxModel`         | `economics`  | NCS fiscal regime (22% + 56%)            |
+| `SURFCostEstimator`         | `subsea`     | SURF CAPEX with regional factors         |
 | `PortfolioOptimizer`        | `economics`  | Multi-project investment optimization    |
 | `DevelopmentOptionRanker`   | `evaluation` | MCDA-based concept ranking               |
 | `MonteCarloRunner`          | `evaluation` | Probabilistic uncertainty analysis       |
