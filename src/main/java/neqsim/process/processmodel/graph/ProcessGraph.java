@@ -221,6 +221,9 @@ public class ProcessGraph implements Serializable {
   /** Cached SCC result (null if not computed or invalidated). */
   private transient SCCResult cachedSCCResult;
 
+  /** Cached parallel partition (null if not computed or invalidated). */
+  private transient ParallelPartition cachedPartition;
+
   /** Whether the graph structure has changed since last analysis. */
   private transient boolean structureChanged = true;
 
@@ -369,6 +372,7 @@ public class ProcessGraph implements Serializable {
     cachedTopologicalOrder = null;
     cachedCycleAnalysis = null;
     cachedSCCResult = null;
+    cachedPartition = null;
   }
 
   /**
@@ -621,6 +625,10 @@ public class ProcessGraph implements Serializable {
    * @return parallel partition result
    */
   public ParallelPartition partitionForParallelExecution() {
+    if (!structureChanged && cachedPartition != null) {
+      return cachedPartition;
+    }
+
     // First ensure we have topological order and back edges identified
     analyzeCycles();
     List<ProcessNode> topoOrder = getTopologicalOrder();
@@ -657,7 +665,8 @@ public class ProcessGraph implements Serializable {
       nodeToLevel.put(node, level);
     }
 
-    return new ParallelPartition(levels, nodeToLevel);
+    cachedPartition = new ParallelPartition(levels, nodeToLevel);
+    return cachedPartition;
   }
 
   // ============ GNN COMPATIBLE REPRESENTATION ============

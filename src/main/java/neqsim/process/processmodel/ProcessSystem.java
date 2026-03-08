@@ -103,6 +103,12 @@ public class ProcessSystem extends SimulationBaseClass {
   private transient ProcessGraph cachedGraph = null;
   /** Flag indicating if the cached graph needs to be rebuilt. */
   private boolean graphDirty = true;
+  /** Cached parallel execution plan: grouped nodes per level for runParallel(). */
+  private transient List<List<List<ProcessNode>>> cachedParallelPlan = null;
+  /** Cached result of hasAdjusters() - null means not yet computed. */
+  private transient Boolean cachedHasAdjusters = null;
+  /** Cached result of hasRecycles() - null means not yet computed. */
+  private transient Boolean cachedHasRecycles = null;
   /** Whether to use graph-based execution order instead of insertion order. */
   private boolean useGraphBasedExecution = false;
   /**
@@ -231,6 +237,9 @@ public class ProcessSystem extends SimulationBaseClass {
 
     getUnitOperations().add(position, operation);
     graphDirty = true; // Mark graph for rebuild when units change
+    cachedParallelPlan = null;
+    cachedHasAdjusters = null;
+    cachedHasRecycles = null;
     if (operation instanceof ModuleInterface) {
       ((ModuleInterface) operation).initializeModule();
     }
@@ -613,6 +622,9 @@ public class ProcessSystem extends SimulationBaseClass {
       if (unitOperations.get(i).getName().equals(name)) {
         unitOperations.remove(i);
         graphDirty = true; // Invalidate graph when structure changes
+        cachedParallelPlan = null;
+        cachedHasAdjusters = null;
+        cachedHasRecycles = null;
       }
     }
   }
@@ -625,6 +637,9 @@ public class ProcessSystem extends SimulationBaseClass {
   public synchronized void clearAll() {
     unitOperations.clear();
     graphDirty = true; // Invalidate graph when structure changes
+    cachedParallelPlan = null;
+    cachedHasAdjusters = null;
+    cachedHasRecycles = null;
   }
 
   /**
@@ -635,6 +650,9 @@ public class ProcessSystem extends SimulationBaseClass {
   public synchronized void clear() {
     unitOperations = new ArrayList<ProcessEquipmentInterface>(0);
     graphDirty = true; // Invalidate graph when structure changes
+    cachedParallelPlan = null;
+    cachedHasAdjusters = null;
+    cachedHasRecycles = null;
   }
 
   /**
@@ -804,11 +822,16 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return true if there are Adjuster units in the process
    */
   public boolean hasAdjusters() {
+    if (cachedHasAdjusters != null) {
+      return cachedHasAdjusters;
+    }
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Adjuster) {
+        cachedHasAdjusters = true;
         return true;
       }
     }
+    cachedHasAdjusters = false;
     return false;
   }
 
@@ -823,11 +846,16 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return true if there are Recycle units in the process
    */
   public boolean hasRecycles() {
+    if (cachedHasRecycles != null) {
+      return cachedHasRecycles;
+    }
     for (ProcessEquipmentInterface unit : unitOperations) {
       if (unit instanceof Recycle) {
+        cachedHasRecycles = true;
         return true;
       }
     }
+    cachedHasRecycles = false;
     return false;
   }
 
@@ -1213,8 +1241,23 @@ public class ProcessSystem extends SimulationBaseClass {
    * @throws InterruptedException if the thread is interrupted while waiting for tasks
    */
   public synchronized void runParallel(UUID id) throws InterruptedException {
-    ProcessGraph graph = buildGraph();
-    ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
+    // Build and cache the parallel execution plan (grouped nodes per level)
+    if (cachedParallelPlan == null) {
+      ProcessGraph graph = buildGraph();
+      ProcessGraph.ParallelPartition partition = graph.partitionForParallelExecution();
+      List<List<List<ProcessNode>>> plan = new ArrayList<>();
+      for (List<ProcessNode> level : partition.getLevels()) {
+        if (level.size() <= 1) {
+          // Single node level - wrap as single group
+          List<List<ProcessNode>> singleGroup = new ArrayList<>();
+          singleGroup.add(level);
+          plan.add(singleGroup);
+        } else {
+          plan.add(groupNodesBySharedInputStreams(level));
+        }
+      }
+      cachedParallelPlan = plan;
+    }
 
     // Run setters first (sequential, they set conditions)
     for (ProcessEquipmentInterface unit : unitOperations) {
@@ -1223,11 +1266,11 @@ public class ProcessSystem extends SimulationBaseClass {
       }
     }
 
-    // Execute each level
-    for (List<ProcessNode> level : partition.getLevels()) {
-      if (level.size() == 1) {
-        // Single unit at this level - run directly
-        ProcessEquipmentInterface unit = level.get(0).getEquipment();
+    // Execute each level using the cached plan
+    for (List<List<ProcessNode>> levelGroups : cachedParallelPlan) {
+      if (levelGroups.size() == 1 && levelGroups.get(0).size() == 1) {
+        // Single unit at this level - run directly (no thread pool overhead)
+        ProcessEquipmentInterface unit = levelGroups.get(0).get(0).getEquipment();
         if (!(unit instanceof Setter)) {
           try {
             unit.run(id);
@@ -1235,22 +1278,25 @@ public class ProcessSystem extends SimulationBaseClass {
             logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
           }
         }
-      } else if (level.size() > 1) {
-        // Multiple units at this level - group by shared input streams
-        // Units that share the same input stream must run sequentially to avoid race
-        // conditions
-        List<List<ProcessNode>> parallelGroups = groupNodesBySharedInputStreams(level);
-
-        // Run each group - groups can run in parallel, but units within a group run
-        // sequentially
+      } else if (levelGroups.size() == 1) {
+        // Single group with multiple units sharing input streams - run sequentially
+        for (ProcessNode node : levelGroups.get(0)) {
+          ProcessEquipmentInterface unit = node.getEquipment();
+          if (!(unit instanceof Setter)) {
+            try {
+              unit.run(id);
+            } catch (Exception ex) {
+              logger.error("equipment: " + unit.getName() + " error: " + ex.getMessage(), ex);
+            }
+          }
+        }
+      } else {
+        // Multiple independent groups - run in parallel
         List<java.util.concurrent.Future<?>> futures = new ArrayList<>();
-
-        for (List<ProcessNode> group : parallelGroups) {
+        for (List<ProcessNode> group : levelGroups) {
           if (group.size() == 1) {
-            // Single unit in group - can run in parallel with other groups
-            ProcessEquipmentInterface unit = group.get(0).getEquipment();
-            if (!(unit instanceof Setter)) {
-              final ProcessEquipmentInterface unitToRun = unit;
+            final ProcessEquipmentInterface unitToRun = group.get(0).getEquipment();
+            if (!(unitToRun instanceof Setter)) {
               final UUID calcId = id;
               futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
                 try {
@@ -1262,7 +1308,6 @@ public class ProcessSystem extends SimulationBaseClass {
               }));
             }
           } else {
-            // Multiple units share input streams - run them sequentially as a group
             final List<ProcessNode> groupToRun = group;
             final UUID calcId = id;
             futures.add(neqsim.util.NeqSimThreadPool.submit(() -> {
@@ -1279,7 +1324,6 @@ public class ProcessSystem extends SimulationBaseClass {
             }));
           }
         }
-
         // Wait for all groups at this level to complete before moving to next level
         for (java.util.concurrent.Future<?> future : futures) {
           try {
@@ -3463,6 +3507,9 @@ public class ProcessSystem extends SimulationBaseClass {
   public void invalidateGraph() {
     graphDirty = true;
     cachedGraph = null;
+    cachedParallelPlan = null;
+    cachedHasAdjusters = null;
+    cachedHasRecycles = null;
   }
 
   /**
