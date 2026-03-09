@@ -27,6 +27,18 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-03-09 — CO2 Corrosion Analyzer with Electrolyte CPA pH
+**Type:** E (Feature)
+**Keywords:** corrosion, CO2, pH, electrolyte CPA, de Waard-Milliams, NORSOK M-506, chemical reaction equilibrium, H3O+, carbonic acid, HCO3-, CCS, pipeline, corrosion rate, scale, FeCO3, inhibitor, brine, NaCl, severity, aqueous speciation
+**Solution:** `src/main/java/neqsim/pvtsimulation/flowassurance/CO2CorrosionAnalyzer.java`, `src/test/java/neqsim/pvtsimulation/flowassurance/CO2CorrosionAnalyzerTest.java`, `examples/notebooks/CO2_Corrosion_Analysis_ElectrolyteCPA.ipynb`
+**Notes:** Facade class coupling electrolyte CPA EOS (SystemElectrolyteCPAstatoil) with de Waard-Milliams corrosion model and ScalePredictionCalculator. Key insight: must call `chemicalReactionInit()` → `createDatabase(true)` → `setMixingRule(10)` → `init(0)` to enable aqueous chemical equilibrium (CO2 + 2H2O → HCO3- + H3O+). Without this, pH returns 7.0 (no H3O+ component). The analyzer auto-creates the electrolyte system, runs flash with chemical reactions, extracts rigorous pH from H3O+ activity, and feeds it into the corrosion model. Supports temperature/pressure sweeps, brine (Na+/Cl-), inhibitor efficiency, and JSON reporting. 12/12 tests passing.
+
+### 2026-03-09 — Water Solubility in Gas and Liquid CO2 Phase Behaviour
+**Type:** A (Property)
+**Keywords:** water, solubility, CO2, CPA, SRK, PR, equation of state, phase equilibrium, CCS, carbon capture, dehydration, pipeline, gas phase, liquid phase, supercritical, mutual solubility, Wiebe, Gaddy, Bamberger, Spycher, King, Song, Kobayashi, benchmark, validation, ISO 27913, ppmv, water content
+**Solution:** task_solve/2026-03-09_water_solubility_in_gas_and_liquid_co2_phase_behaviour/
+**Notes:** Investigated water solubility in CO2 across gas, liquid, and supercritical conditions (5-200 bar, 10-80 C) using CPA EOS (SystemSrkCPAstatoil, mixing rule 10). Key findings: gas-phase water content decreases with pressure (Raoult's law dilution), liquid CO2 has low solubility (1000-3000 ppmv), characteristic minimum at CO2 saturation pressure. Benchmark: 9/13 points within 30% tolerance, mean error 25.2%. CPA under-predicts at 60 C (40-50% error vs Bamberger data). CPA outperforms SRK/PR at high pressures. Monte Carlo (N=300): P10/P50/P90 = 2986/3616/4253 ppmv for CCS conditions — dehydration always required (100% exceed 500 ppmv ISO limit). Tornado: EOS model uncertainty dominates (1729 ppmv swing), then pressure (1068), then temperature (945). Overall risk: Medium (2 high, 3 medium, 2 low).
+
 ### 2026-03-09 — Sulfur Deposition Analysis
 **Type:** B (Process)
 **Keywords:** sulfur, S8, deposition, desublimation, Joule-Thomson, JT cooling, backflow, letdown, valve, H2S, Draupner, pressure reduction, solid flash, GibbsReactor, SulfurDepositionAnalyser, preheating, mitigation
