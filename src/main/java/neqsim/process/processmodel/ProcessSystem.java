@@ -774,18 +774,11 @@ public class ProcessSystem extends SimulationBaseClass {
    * <ul>
    * <li>For processes with adjusters: sequential execution (adjusters modify upstream variables and
    * read downstream targets, creating implicit feedback loops)</li>
-   * <li>For processes with recycles (no adjusters): hybrid execution - parallel for feed-forward
-   * sections, then sequential iteration for recycle sections</li>
-   * <li>For feed-forward processes (including those with multi-input equipment like Mixers and
-   * HeatExchangers): parallel execution using level-based partitioning</li>
+   * <li>For processes with recycles (no adjusters): sequential execution for full convergence</li>
+   * <li>For processes with multi-input equipment (Mixer, Manifold, HeatExchanger, etc.): sequential
+   * execution to ensure correct mass balance</li>
+   * <li>For simple feed-forward processes: parallel execution for maximum speed</li>
    * </ul>
-   *
-   * <p>
-   * Multi-input equipment (Mixer, HeatExchanger, Ejector, etc.) is handled safely by the
-   * level-based parallel execution: the graph places multi-input units at a level after all their
-   * inputs, and {@code groupNodesBySharedInputStreams()} prevents race conditions on shared
-   * streams.
-   * </p>
    *
    * @param id calculation identifier for tracking
    */
@@ -801,11 +794,14 @@ public class ProcessSystem extends SimulationBaseClass {
       // order, which may be carefully chosen for convergence in complex processes
       // (e.g. TEG dehydration with regen column and makeup).
       runSequential(id);
+    } else if (hasMultiInputEquipment()) {
+      // Process has multi-input equipment (Mixer, Manifold, HeatExchanger, etc.)
+      // These require sequential execution to ensure correct mass balance.
+      // Parallel execution can change the order in which input streams are processed.
+      runSequential(id);
     } else {
-      // Feed-forward process (may include multi-input equipment like Mixers,
-      // HeatExchangers, Ejectors, etc.) - use parallel execution for maximum speed.
-      // Level-based partitioning ensures multi-input units run after all inputs.
-      // groupNodesBySharedInputStreams() prevents race conditions on shared streams.
+      // Feed-forward process with single-input equipment only - use parallel execution.
+      // Units at the same level (no dependencies) run concurrently for maximum speed.
       try {
         runParallel(id);
       } catch (InterruptedException e) {
