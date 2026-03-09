@@ -29,7 +29,7 @@
 				"java.configuration.updateBuildConfiguration": "automatic",
 				"java.compile.nullAnalysis.mode": "automatic",
 				"java.format.settings.url": "neqsim_formatter.xml",
-				"java.checkstyle.configuration": "${workspaceFolder}/checkstyle_neqsim.xml",
+				"java.checkstyle.configuration": "${workspaceFolder}/.config/checkstyle_neqsim.xml",
 				"java.test.defaultConfig": "default",
 				// Editor settings
 				"editor.formatOnSave": true,
