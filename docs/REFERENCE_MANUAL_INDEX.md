@@ -454,6 +454,15 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | OPEX Estimation                 | [docs/process/COST_ESTIMATION_FRAMEWORK.md#operating-cost-opex-estimation](process/COST_ESTIMATION_FRAMEWORK#operating-cost-opex-estimation) | Operating cost calculation                                                                                  |
 | Financial Metrics               | [docs/process/COST_ESTIMATION_FRAMEWORK.md#financial-metrics](process/COST_ESTIMATION_FRAMEWORK#financial-metrics)                           | Payback, ROI, NPV calculations                                                                              |
 
+### Chapter 23c: Corrosion Analysis
+
+| Document                              | Path                                                                                                             | Description                                                                                                     |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Corrosion Module Overview**         | [docs/process/corrosion/index.md](process/corrosion/)                                                           | **Package overview, quick start, standards coverage for NORSOK M-506 and M-001**                                 |
+| **NORSOK M-506 Corrosion Rate**       | [docs/process/corrosion/norsok_m506_corrosion_rate.md](process/corrosion/norsok_m506_corrosion_rate)             | **CO2 corrosion rate prediction — fugacity, pH, correction factors, parameter sweeps, JSON reporting**           |
+| **NORSOK M-001 Material Selection**   | [docs/process/corrosion/norsok_m001_material_selection.md](process/corrosion/norsok_m001_material_selection)     | **Material grade recommendation — sweet/sour classification, CRA selection, chloride SCC, corrosion allowance** |
+| **Pipeline Corrosion Integration**    | [docs/process/corrosion/pipeline_corrosion_integration.md](process/corrosion/pipeline_corrosion_integration)     | **Automated corrosion analysis from process simulation — stream extraction, combined mechanical + corrosion**    |
+
 ### Chapter 24: Serialization & Persistence
 
 | Document                | Path                                                                                           | Description                                                          |

@@ -30,10 +30,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class FlowAssuranceScreen {
     public static void main(String[] args) {
-        
+
         // Create production fluid
         SystemSrkCPAstatoil fluid = new SystemSrkCPAstatoil(293.15, 100.0);
-        
+
         // Typical Gulf of Mexico fluid
         fluid.addComponent("nitrogen", 0.005);
         fluid.addComponent("CO2", 0.02);
@@ -51,15 +51,15 @@ public class FlowAssuranceScreen {
         fluid.addTBPfraction("C20", 0.08, 280.0, 0.85);
         fluid.addTBPfraction("C30+", 0.06, 450.0, 0.91);
         fluid.addComponent("water", 0.05);
-        
+
         fluid.setMixingRule(10);  // CPA mixing rule
         fluid.setMultiPhaseCheck(true);
-        
+
         ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-        
+
         System.out.println("========== FLOW ASSURANCE SCREENING ==========");
         System.out.println();
-        
+
         // === 1. HYDRATE SCREENING ===
         System.out.println("--- HYDRATE RISK ---");
         try {
@@ -68,7 +68,7 @@ public class FlowAssuranceScreen {
             ops.hydrateFormationTemperature();
             double hydrateT = fluid.getTemperature("C");
             System.out.printf("Hydrate formation temperature at 150 bara: %.1f °C%n", hydrateT);
-            
+
             if (hydrateT > 4.0) {
                 System.out.println("⚠️  HIGH HYDRATE RISK - Inhibition required");
             } else {
@@ -78,14 +78,14 @@ public class FlowAssuranceScreen {
             System.out.println("Could not calculate hydrate temperature");
         }
         System.out.println();
-        
+
         // === 2. WAX SCREENING ===
         System.out.println("--- WAX RISK ---");
         try {
             ops.calcWAT();
             double waxT = fluid.getWAT("C");
             System.out.printf("Wax Appearance Temperature (WAT): %.1f °C%n", waxT);
-            
+
             if (waxT > 20.0) {
                 System.out.println("⚠️  HIGH WAX RISK - Pigging/inhibition needed");
             } else if (waxT > 4.0) {
@@ -97,23 +97,23 @@ public class FlowAssuranceScreen {
             System.out.println("WAT calculation not available - check C20+ content");
         }
         System.out.println();
-        
+
         // === 3. ASPHALTENE SCREENING (De Boer) ===
         System.out.println("--- ASPHALTENE RISK ---");
         double reservoirP = 350.0;  // bara
         double bubblePointP = 180.0;  // bara (estimate)
         double asphalteneContent = 2.5;  // wt%
         double apiGravity = 32.0;
-        
+
         // De Boer screening criterion
         double deltaP = reservoirP - bubblePointP;
         double deBoerRisk = deltaP * asphalteneContent / 100.0;
-        
+
         System.out.printf("Reservoir pressure: %.0f bara%n", reservoirP);
         System.out.printf("Bubble point: %.0f bara%n", bubblePointP);
         System.out.printf("ΔP (supersaturation): %.0f bar%n", deltaP);
         System.out.printf("De Boer risk parameter: %.2f%n", deBoerRisk);
-        
+
         if (apiGravity > 40 && deltaP > 200) {
             System.out.println("⚠️  HIGH ASPHALTENE RISK - Light oil with high supersaturation");
         } else if (deBoerRisk > 1.5) {
@@ -122,17 +122,17 @@ public class FlowAssuranceScreen {
             System.out.println("✅ Low asphaltene risk");
         }
         System.out.println();
-        
+
         // === 4. SCALE SCREENING ===
         System.out.println("--- SCALE RISK (Qualitative) ---");
         double co2Content = fluid.getComponent("CO2").getx() * 100;
         double h2sContent = fluid.getComponent("H2S").getx() * 100;
         double waterCut = fluid.getComponent("water").getx() * 100;
-        
+
         System.out.printf("CO2 content: %.2f mol%%%n", co2Content);
         System.out.printf("H2S content: %.3f mol%%%n", h2sContent);
         System.out.printf("Water content: %.1f mol%%%n", waterCut);
-        
+
         if (co2Content > 2.0 && waterCut > 5.0) {
             System.out.println("⚠️  CARBONATE SCALE RISK - CO2 + water present");
         }
@@ -140,7 +140,7 @@ public class FlowAssuranceScreen {
             System.out.println("⚠️  SULFIDE SCALE RISK - H2S present");
         }
         System.out.println();
-        
+
         // === 5. CORROSION SCREENING ===
         System.out.println("--- CORROSION RISK ---");
         if (co2Content > 0.5 && waterCut > 1.0) {
@@ -150,7 +150,7 @@ public class FlowAssuranceScreen {
             System.out.println("⚠️  H2S CORROSION RISK - Sour service materials required");
         }
         System.out.println();
-        
+
         // === 6. pH STABILIZATION CHECK ===
         System.out.println("--- pH STABILIZATION ---");
         if (co2Content > 0.5 && waterCut > 1.0) {
@@ -159,7 +159,7 @@ public class FlowAssuranceScreen {
             System.out.println("   Use Electrolyte CPA EoS for detailed calculations");
         }
         System.out.println();
-        
+
         // === SUMMARY ===
         System.out.println("========== SCREENING SUMMARY ==========");
         System.out.println("Use detailed models for high-risk areas");
@@ -234,6 +234,8 @@ ops.checkScalePotential(aqPhase);
 | **Flow velocity** | < 3 m/s | Avoid erosion of layer |
 
 > **📚 See [pH Stabilization and Corrosion Control](ph_stabilization_corrosion)** for comprehensive documentation including NaOH dosing calculations, combined MEG/pH stabilization for subsea systems, and corrosion rate estimation.
+
+> **📚 See [NORSOK M-506 Corrosion Rate](../process/corrosion/norsok_m506_corrosion_rate)** for the full standard implementation with fugacity-based CO2, wall shear stress correction, and pH model. Combined with **[NORSOK M-001 Material Selection](../process/corrosion/norsok_m001_material_selection)** for automated CRA vs carbon steel decisions. Both integrate with [Pipeline Mechanical Design](../process/corrosion/pipeline_corrosion_integration).
 
 ---
 
@@ -368,7 +370,7 @@ double[] pressures = {300, 250, 200, 180, 160, 140, 120, 100};
 for (double p : pressures) {
     fluid.setPressure(p);
     ops.TPflash();
-    
+
     // Check if asphaltene-rich phase forms
     int nPhases = fluid.getNumberOfPhases();
     String stability = (nPhases > 2) ? "⚠️ UNSTABLE" : "✅ Stable";
