@@ -23,7 +23,7 @@
                 <revision>3.5.0</revision>
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                 <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-                <checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
+                <checkstyle.config.location>.config/checkstyle_neqsim.xml</checkstyle.config.location>
                 <skipFlattening>false</skipFlattening>
                 <argLine></argLine>
                 <!-- Exclude slow tests by default. Run with -DexcludedTestGroups= to include all tests -->
