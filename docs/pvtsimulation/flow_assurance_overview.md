@@ -235,7 +235,7 @@ ops.checkScalePotential(aqPhase);
 
 > **📚 See [pH Stabilization and Corrosion Control](ph_stabilization_corrosion)** for comprehensive documentation including NaOH dosing calculations, combined MEG/pH stabilization for subsea systems, and corrosion rate estimation.
 
-> **📚 See [NORSOK M-506 Corrosion Rate](../process/corrosion/norsok_m506_corrosion_rate)** for the full standard implementation with fugacity-based CO2, wall shear stress correction, and pH model. Combined with **[NORSOK M-001 Material Selection](../process/corrosion/norsok_m001_material_selection)** for automated CRA vs carbon steel decisions. Both integrate with [Pipeline Mechanical Design](../process/corrosion/pipeline_corrosion_integration).
+> **📚 See [NORSOK M-506 Corrosion Rate](../process/corrosion/norsok_m506_corrosion_rate)** for the full standard implementation with fugacity-based CO2, wall shear stress correction, and pH model. Combined with **[NORSOK M-001 Material Selection](../process/corrosion/norsok_m001_material_selection)** for automated CRA vs carbon steel decisions. Both integrate with [Pipeline Corrosion Integration](../process/corrosion/pipeline_corrosion_integration).
 
 ---
 
