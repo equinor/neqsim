@@ -199,6 +199,13 @@ $$
 | High | 0.3 - 1.0 |
 | Very High | greater than 1.0 |
 
+> **Full NORSOK M-506 implementation:** For the complete standard with fugacity-based CO2 calculation,
+> wall shear stress correction, bicarbonate/ionic-strength pH model, and integration with
+> pipeline mechanical design, see the **[NORSOK M-506 Corrosion Rate](../../process/corrosion/norsok_m506_corrosion_rate)**
+> module in `neqsim.process.corrosion`. The De Waard-Milliams class above provides a simpler
+> screening-level estimate; the M-506 module adds all correction factors from the standard and
+> couples with **[NORSOK M-001 Material Selection](../../process/corrosion/norsok_m001_material_selection)**.
+
 ---
 
 ## Scale Prediction Calculator
