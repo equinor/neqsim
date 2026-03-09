@@ -127,18 +127,111 @@ Your deliverable is a populated task folder under `task_solve/`.
    - Search `docs/development/CODE_PATTERNS.md` for relevant patterns
    - Use web search if available for engineering reference data
 
-6. **Write research notes** to `step1_scope_and_research/notes.md`:
-   - **Sources**: list what you found (NeqSim classes, docs, web references)
-   - **Background**: key physical principles, governing equations
-   - **Key Data**: typical operating ranges, design rules of thumb, correlations
-   - **Relevant Standards**: details from the standards specified in task_spec.md
-   - **NeqSim API coverage**: what already exists, what's missing
+6. **Write comprehensive research notes** to `step1_scope_and_research/notes.md`.
+   These notes must be **substantive and detailed** — not a skeleton template.
+   The notes are the knowledge base that informs the analysis document (Phase 1.5).
+
+   **MANDATORY sections** (leave no section empty):
+   - **Sources** (table): Every source consulted — NeqSim classes, papers, standards,
+     web references, textbooks. Minimum 5 entries for Standard tasks, 10+ for Comprehensive.
+   - **Literature & Reference Documents**: For each key reference, write a structured
+     summary with: file location, relevance, key equations cited, key data extracted,
+     limitations, and how it applies to this specific task.
+   - **Background — Engineering Context**: Explain the real-world engineering problem
+     in 2-3 paragraphs. Why does this matter? What goes wrong in practice? What are
+     the consequences of getting it wrong? Include industry context.
+   - **Background — Physical Mechanisms**: Describe the underlying physics. What
+     thermodynamic, chemical, or transport phenomena are involved? Include governing
+     equations with variable definitions.
+   - **Key Data / Correlations**: Reference values, design rules of thumb, typical
+     operating ranges. These are the "sanity check" values used during validation.
+   - **Industry Experience / Case Studies**: Known field cases, operational incidents,
+     lessons learned. This grounds the analysis in reality.
+   - **Relevant Standards — Detailed Requirements**: For each standard in task_spec,
+     extract the specific clauses, equations, tables, and design factors that apply.
+     Don't just list the standard — quote the requirement.
+   - **NeqSim API Coverage — Detailed Inventory**: For each capability needed, check
+     if NeqSim has it. Search the Java source code. List class names, key methods,
+     and any limitations found. This feeds directly into Phase 1.5.
+   - **Open Questions**: Uncertainties, missing data, things to clarify with the user
+
+### Phase 1.5: Deep Analysis & Solution Design (MANDATORY for Standard/Comprehensive)
+
+Before writing any simulation code, produce a **thorough engineering analysis
+document** that gives the reader (and yourself) deep insight into the problem
+and a clear solution path. This is the intellectual core of the task — it
+transforms a vague request into a rigorous engineering proposal.
+
+6b. **Write a detailed problem analysis** to `step1_scope_and_research/analysis.md`.
+    This document must contain ALL of the following sections:
+
+    #### 6b.1 — Physics & Theory Deep-Dive
+    Explain the fundamental physics/engineering behind the problem at a level
+    suitable for a senior engineer review:
+    - **Governing equations** with derivations or references (use LaTeX notation)
+    - **Physical mechanisms** — what causes the phenomenon, why it matters
+    - **Thermodynamic basis** — which EOS is appropriate and why, phase behavior
+    - **Transport phenomena** — heat/mass transfer, fluid mechanics if relevant
+    - **Key assumptions** — what simplifications are being made and their impact
+    - **Dimensional analysis** — key dimensionless groups if applicable
+    - **Order-of-magnitude estimates** — quick hand calculations to set expectations
+      (e.g., "JT coefficient ~0.5 K/bar → expect ~25°C drop across 50 bar valve")
+
+    #### 6b.2 — Alternative Solution Approaches
+    List at least 2-3 different ways to solve this problem, with pros/cons:
+
+    | Approach | Description | Pros | Cons | Recommended? |
+    |----------|-------------|------|------|--------------|
+    | A | ... | ... | ... | ✓ / ✗ |
+    | B | ... | ... | ... | ✓ / ✗ |
+    | C | ... | ... | ... | ✓ / ✗ |
+
+    Justify the chosen approach with engineering reasoning.
+
+    #### 6b.3 — NeqSim Capability Assessment
+    Systematically evaluate what NeqSim can do for this task:
+
+    | Capability Needed | NeqSim Class/Method | Status | Gap Description |
+    |-------------------|---------------------|--------|------------------|
+    | JT flash | ThrottlingValve | ✅ Available | — |
+    | S8 solid flash | TPSolidflash | ✅ Available | — |
+    | Nucleation model | — | ❌ Missing | Need CNT-based nucleation rate |
+    | Corrosion rate | DeWaardMilliamsCorrosion | ⚠️ Partial | Missing S8 direct corrosion path |
+
+    **For every ❌ Missing or ⚠️ Partial gap, write a NeqSim Improvement Proposal**
+    (see Section 9 below). This is how the development flywheel turns: tasks
+    surface gaps → gaps become proposals → proposals become implementations.
+
+    #### 6b.4 — Solution Architecture
+    Describe the simulation/calculation architecture:
+    - **Flowsheet diagram** (text-based or markdown table showing equipment order)
+    - **Data flow** — what feeds into what, what outputs are needed
+    - **Iteration strategy** — recycles, adjusters, convergence approach
+    - **Parametric studies** — what sensitivity sweeps to run and why
+    - **Expected results** — what ranges you expect before running (from hand calcs)
+
+    #### 6b.5 — Risk & Failure Mode Analysis
+    Before building the simulation, anticipate what could go wrong:
+    - **Numerical risks** — convergence failure, phase identification issues
+    - **Physical risks** — conditions outside EOS validity, near-critical behavior
+    - **Data risks** — missing BIPs, uncertain component properties
+    - **Mitigation** — fallback approaches for each risk
+
+    #### 6b.6 — Engineering Insight Questions
+    List 5-10 engineering questions the analysis should answer. These go beyond
+    "what is the answer" to "what does it mean and what should we do":
+    - Example: "At what H2S level does sulfur deposition become operationally significant?"
+    - Example: "Is pre-heating more cost-effective than chemical inhibition?"
+    - Example: "How sensitive is the NPV to gas price vs. CAPEX uncertainty?"
+    These questions drive the analysis and ensure the report provides actionable insight.
 
 ### Phase 2: Analysis & Evaluation (Step 2)
 
-7. **Determine the right approach**:
-   - Identify EOS, equipment classes, and methods needed (per task spec)
-   - Check if all needed API methods exist — if not, note the gap
+7. **Determine the right approach** (refined from Phase 1.5):
+   - Use the solution architecture from the analysis document
+   - Implement the recommended approach from the alternatives assessment
+   - Address each engineering insight question in the notebook
+   - For every NeqSim gap: implement the proposed improvement or use a workaround
    - Choose reasonable engineering defaults for missing input data (document assumptions)
 
 8. **Create a Jupyter notebook** in `step2_analysis/`:
@@ -155,6 +248,65 @@ Your deliverable is a populated task folder under `task_solve/`.
      - Figure captions added to `results.json` under `figure_captions`
      - A **summary comparison table** when comparing cases or validating against
        reference data
+   - **MANDATORY: Figure Discussion Cells** — after EVERY figure cell, add a
+     **markdown discussion cell** that interprets the results. This is the critical
+     link between calculations and conclusions. Each discussion cell MUST follow
+     this pattern:
+
+     ```markdown
+     ### Discussion: [Figure Title]
+
+     **Observation:** [What does the figure show? State the key finding with numbers.]
+
+     **Physical Mechanism:** [Why does this happen? Explain the underlying physics,
+     chemistry, or engineering reason.]
+
+     **Engineering Implication:** [What does this mean for the design or operation?
+     Compare against design limits, typical values, or industry experience.]
+
+     **Recommendation:** [What action should be taken based on this result?
+     Be specific: material selection, operating limits, equipment sizing, etc.]
+
+     > *Links to: [reference specific key_results entries], answers insight question Q[N]*
+     ```
+
+     **Example figure discussion cell:**
+     ```markdown
+     ### Discussion: Temperature Profile Along Pipeline
+
+     **Observation:** The gas temperature drops from 45°C at the inlet to -12°C at
+     the outlet (Figure 2). The temperature crosses the sulfur deposition onset
+     temperature (0°C) at approximately 12 km from the inlet.
+
+     **Physical Mechanism:** The temperature drop is driven by Joule-Thomson cooling
+     across the letdown valve (ΔT = -35°C for this gas composition at 120→45 bara)
+     combined with heat loss to the 4°C seabed. The JT coefficient of 0.45°C/bar
+     is typical for lean gas with 85% methane.
+
+     **Engineering Implication:** Solid S₈ will precipitate in the pipeline between
+     12 km and the outlet. The deposition rate peaks at approximately 25 km where
+     the gas reaches maximum supersaturation. This represents a flow assurance risk
+     requiring mitigation.
+
+     **Recommendation:** Install direct electrical heating (DEH) between 10-30 km
+     to maintain gas temperature above 5°C (with 5°C safety margin above deposition
+     onset). Alternatively, pre-heat gas to minimum 60°C upstream of the valve to
+     keep the entire pipeline above 0°C.
+
+     > *Links to: outlet_temperature_C = -12°C, sulfur_deposition_onset_C = 0°C.
+     > Answers insight question Q3: "At what distance does deposition begin?"*
+     ```
+
+   - **MANDATORY: Traceability Chain** — the notebook must establish a clear chain:
+     1. **Calculation** → produces numerical results
+     2. **Figure** → visualizes the results
+     3. **Discussion cell** → interprets the figure (observation, mechanism, implication)
+     4. **Recommendation** → specific action based on the discussion
+     5. **results.json** → captures the chain in `figure_discussion` entries
+
+     Every conclusion in the final report MUST trace back to specific figures and
+     their discussion cells. No conclusion without evidence.
+
    - For **Type G (Workflow)** tasks: create multiple notebooks, numbered sequentially
      (e.g., `01_reservoir_fluid.ipynb`, `02_pipeline_sizing.ipynb`, etc.)
 
@@ -267,8 +419,37 @@ Your deliverable is a populated task folder under `task_solve/`.
             "mass_balance_error_pct": 0.01,
             "acceptance_criteria_met": True,
         },
-        "approach": "Brief description of methodology used",
-        "conclusions": "Key finding and recommendation",
+        "approach": "Brief description of methodology used — reference analysis.md for full rationale",
+        "approach_justification": "Why this approach was chosen over alternatives (from analysis.md Section 2)",
+        "conclusions": "Key findings with engineering interpretation and actionable recommendations",
+        "engineering_insights": {
+            # Answers to insight questions from analysis.md Section 6
+            # "Q1: At what H2S level does deposition become significant?": "Above 20 ppm...",
+        },
+        "design_recommendations": [
+            # Specific actionable engineering recommendations
+            # "Specify CRA material (22Cr duplex) for first 3D downstream of valve",
+            # "Pre-heat gas to minimum 60°C before letdown valve",
+        ],
+        "neqsim_gaps": [
+            # Summary of gaps found and NIPs written
+            # {"nip_id": "NIP-01", "title": "CNT Nucleation Model", "priority": "Medium", "implemented": false}
+        ],
+        "remaining_uncertainties": [
+            # What the analysis could not resolve
+            # "Actual O2 ingress rate at Draupner — assumed 10 ppm based on operator data",
+        ],
+        "figure_discussion": [
+            # MANDATORY: One entry per figure — links figure → observation → mechanism → recommendation
+            # {"figure": "temperature_profile.png",
+            #  "title": "Temperature Profile Along Pipeline",
+            #  "observation": "Temperature drops below 0°C at 12 km, entering sulfur deposition zone",
+            #  "mechanism": "Joule-Thomson cooling combined with heat loss to seabed at 4°C ambient",
+            #  "implication": "Solid S8 will precipitate in the pipeline between 12-35 km",
+            #  "recommendation": "Install DEH (direct electrical heating) or pre-heat gas to 60°C",
+            #  "linked_results": ["outlet_temperature_C", "sulfur_deposition_onset_C"],
+            #  "insight_question_ref": "Q3"},
+        ],
         "figure_captions": {
             # "plot_name.png": "Description of what the figure shows"
         },
@@ -418,6 +599,19 @@ Your deliverable is a populated task folder under `task_solve/`.
      }
      ```
 
+### Quality Gate: Phase 1.5 → Phase 2
+
+**Before starting any notebook code (Standard/Comprehensive tasks), verify:**
+
+- [ ] `analysis.md` exists with all 6 sections populated (not templates)
+- [ ] Physics/Theory section has governing equations and order-of-magnitude estimates
+- [ ] At least 2-3 alternative approaches listed with justified selection
+- [ ] NeqSim Capability Assessment table completed for every needed capability
+- [ ] For every ❌/⚠️ gap: NIP written in `neqsim_improvements.md`
+- [ ] Solution architecture described with flowsheet and expected result ranges
+- [ ] 5-10 engineering insight questions written that the analysis must answer
+- [ ] Research notes (`notes.md`) are substantive — no empty template sections
+
 ### Quality Gate: Step 2 → Step 3
 
 **Before moving to Step 3 (Report), verify ALL of these:**
@@ -440,6 +634,14 @@ Your deliverable is a populated task folder under `task_solve/`.
 - [ ] Resource/reserve P10/P50/P90 reported in `resource_estimate` sub-object
 - [ ] `figure_captions` in results.json covers figures from **ALL** notebooks (main, benchmark, uncertainty/risk), not just the main notebook
 - [ ] Numbers in notebooks are consistent — if design parameters changed, ALL notebooks have been re-run
+- [ ] Every engineering insight question from Phase 1.5 is answered in the notebook
+- [ ] Engineering interpretation provided for every key result (context + implication + recommendation)
+- [ ] **Figure discussion cells** present in notebook after EVERY figure (observation + mechanism + implication + recommendation)
+- [ ] `figure_discussion` populated in results.json with one entry per figure
+- [ ] Every `figure_discussion` entry links to specific `key_results` entries via `linked_results`
+- [ ] Every `design_recommendations` entry traces back to at least one `figure_discussion`
+- [ ] `neqsim_improvements.md` populated with NIPs for any gaps found (or "No gaps found")
+- [ ] Validation notes populated in `step2_analysis/notes.md` (not left as template)
 
 **If any gate fails, iterate on Step 2** — do NOT proceed to reporting with
 incomplete or unvalidated results.
@@ -451,7 +653,10 @@ incomplete or unvalidated results.
     - Fill in the executive summary with actual findings
     - Add conclusions and recommendations to `MANUAL_SECTIONS` (or rely on `results.json`)
     - Ensure all figures from `figures/` will be embedded, **including benchmark plots**
-    - The Scope/Standards, Results, and Validation sections auto-populate from data files
+    - The Scope/Standards, Results, Discussion, and Validation sections auto-populate from data files
+    - **Discussion section** auto-populates from `results.json["figure_discussion"]` —
+      renders each figure's observation, mechanism, implication, and recommendation
+      with traceability links. This is the core analytic content of the report.
     - **Benchmark validation section** must appear in the report with the comparison
       table and deviation analysis from `results.json["benchmark_validation"]`
     - **Uncertainty analysis section** must appear with P10/P50/P90 table, resource
@@ -460,18 +665,21 @@ incomplete or unvalidated results.
       risk level from `results.json["risk_evaluation"]`
 
     **IMPORTANT — Report generator completeness checks (common failure mode):**
-    The default `generate_report.py` template only renders basic sections (Results,
-    Validation, Conclusions, References). You MUST add rendering for ALL data sections
-    that exist in `results.json`. For each section:
-    1. Add it to `build_sections()` with appropriate flags (e.g. `has_benchmark`, `has_uncertainty`, `has_risk`)
-    2. Add Word rendering in `build_word_report()` — table builders, figure embedding
-    3. Add HTML rendering in `build_html_report()` — HTML table builders, base64 figures
-    4. Add figure captions for ALL figures from ALL notebooks to `results.json["figure_captions"]`
+    The default `generate_report.py` template renders: Results, Discussion,
+    Validation, Benchmark, Uncertainty, Risk, Conclusions, and References
+    automatically from `results.json`. You MUST ensure all data keys are populated.
+    The Discussion section (from `figure_discussion`) is the most important analytical
+    content — it provides the traceability chain from results to recommendations.
 
     Typical section numbering for a complete report:
     1. Executive Summary | 2. Problem Description | 3. Scope & Standards |
-    4. Approach | 5. Results | 6. Validation Summary | 7. Benchmark Validation |
-    8. Uncertainty Analysis | 9. Risk Evaluation | 10. Conclusions | 11. References
+    4. Approach | 5. Results | 6. Discussion | 7. Validation Summary |
+    8. Benchmark Validation | 9. Uncertainty Analysis | 10. Risk Evaluation |
+    11. Conclusions | 12. References
+
+    For the **scientific paper**, the discussion content appears inline within
+    the "Results and Discussion" section (Section 3), combining figures with
+    their interpretations in academic format.
 
     **Stale numbers trap:** MANUAL_SECTIONS text (executive_summary, conclusions)
     contains hardcoded numbers. When design parameters change (dimensions, flow rates),
@@ -613,9 +821,11 @@ incomplete or unvalidated results.
 
 ### Type E — Feature Tasks
 - Search existing source code first to avoid duplication
-- Note: you cannot modify Java source directly — document the needed change
-- Write a test case showing expected behavior in the notebook
-- Flag for developer follow-up
+- **Implement the Java class** with complete JavaDoc (Java 8 compatible)
+- Write JUnit 5 tests that validate against known physical results
+- Build with `mvnw.cmd package -DskipTests` to verify compilation
+- Write a notebook showing the new feature in action
+- Include a NIP documenting the design rationale
 
 ### Type F — Design Tasks
 - Use `MechanicalDesign` classes where they exist
@@ -757,53 +967,284 @@ in sequence. Coordinate them through the task_spec.md requirements.
 
 ---
 
-## 6 ── CRITICAL RULES
+## 6 ── NEQSIM IMPROVEMENT PROPOSALS (MANDATORY when gaps found)
+
+When the capability assessment in Phase 1.5 identifies NeqSim gaps (❌ Missing
+or ⚠️ Partial), you MUST write concrete improvement proposals. These proposals
+are a **key deliverable** — they turn task-solving into development planning.
+
+### 6.1 — When to Write Proposals
+
+Write a NeqSim Improvement Proposal (NIP) for every gap that:
+- Blocked or limited the analysis quality
+- Required a Python workaround that should be in Java
+- Would make future similar tasks significantly easier
+- Represents a commonly needed engineering capability
+
+Proposals go into `step1_scope_and_research/neqsim_improvements.md`.
+
+### 6.2 — Proposal Structure (for each gap)
+
+```markdown
+### NIP-XX: [Short Title]
+
+**Gap:** [What NeqSim cannot do today]
+**Impact on task:** [How this limited the current analysis]
+**Priority:** Critical / High / Medium / Low
+
+#### Proposed Implementation
+
+**Package:** `neqsim.process.equipment.[package]` (or `thermo`, `pvtsimulation`, etc.)
+**Class name:** `ProposedClassName`
+**Extends:** `[BaseClass]`
+
+**Key methods:**
+| Method | Parameters | Returns | Description |
+|--------|-----------|---------|-------------|
+| `calculate()` | — | void | Main calculation |
+| `getResult()` | String unit | double | Primary output |
+
+**Constructor:**
+```java
+public ProposedClassName(String name, StreamInterface inletStream) {
+    super(name, inletStream);
+}
+```
+
+**Governing equations:**
+$$ [key equation in LaTeX] $$
+
+**Standards implemented:** [e.g., API 520 Section 4.3, DNV-OS-F101 Sec. 5]
+
+**Test case:**
+```java
+@Test
+void testBasicCase() {
+    // Describe what the test should verify
+    // Expected output: [value] ± [tolerance]
+}
+```
+
+**Estimated complexity:** Small (1-2 days) / Medium (3-5 days) / Large (1-2 weeks)
+```
+
+### 6.3 — Implementation During Task (Optional but Encouraged)
+
+If the proposed improvement is achievable within the current task session:
+
+1. **Implement the Java class** under the appropriate package
+2. **Write complete JavaDoc** (per MANDATORY requirements)
+3. **Add a JUnit 5 test** with physical validation
+4. **Build and verify**: `mvnw.cmd package -DskipTests`
+5. **Use the new class** in the task notebook
+6. **Include in the PR** as a NeqSim contribution
+
+This turns every task into a potential NeqSim enhancement — the development
+flywheel: **task → gap → proposal → implementation → better task answers**.
+
+### 6.4 — Workaround Documentation
+
+When a NeqSim gap cannot be implemented during the task, document the
+Python workaround used AND why the Java implementation would be better:
+
+```markdown
+#### Workaround Used
+```python
+# Python workaround for missing CNT nucleation model
+def estimate_nucleation_rate(supersaturation, temperature):
+    # Classical Nucleation Theory — simplified
+    J = A * exp(-16*pi*sigma**3*v**2 / (3*kT**3 * (ln(S))**2))
+    return J
+```
+
+#### Why Java Implementation Is Better
+- Accessible from all notebooks without copy-paste
+- Integrated with NeqSim thermodynamics (no manual property lookups)
+- Can use NeqSim's fugacity coefficients directly
+- Testable with JUnit, maintained as part of the codebase
+```
+
+---
+
+## 7 ── ENGINEERING INTERPRETATION IN REPORTS (MANDATORY)
+
+Reports must go beyond presenting numbers — they must provide **engineering
+insight and actionable recommendations**. Every report section must answer
+"so what?" for the reader.
+
+### 7.1 — Results Interpretation Requirements
+
+For every key result, the report must include:
+
+1. **The number** — what was calculated, with units and uncertainty
+2. **The context** — how does this compare to typical values, design limits, or
+   industry experience?
+3. **The implication** — what does this mean for the engineering decision?
+4. **The recommendation** — what should the engineer do based on this result?
+
+**Example (bad — numbers only):**
+> The JT outlet temperature is -20.8°C. The corrosion rate is 0.037 mm/yr.
+
+**Example (good — with engineering interpretation):**
+> The JT outlet temperature of -20.8°C is well below the sulfur deposition
+> onset temperature (0°C), confirming that S8 desublimation will occur across
+> the letdown valve under all operating scenarios. This temperature is also
+> below the MDMT (-29°C for carbon steel per ASME B31.3 Table A-1), so material
+> selection must account for low-temperature service.
+>
+> The combined corrosion rate of 0.037 mm/yr (CO2 + H2S + S8 mechanisms) is
+> classified as "Low" per NORSOK M-001 Table A.1 (<0.1 mm/yr). However, the
+> presence of non-protective mackinawite FeS at this temperature means the
+> rate may accelerate under high-velocity or two-phase conditions. **Recommendation:**
+> specify CRA material (22Cr duplex) for the first 3 pipe diameters downstream
+> of the valve, and carbon steel with 3 mm corrosion allowance beyond.
+
+### 7.2 — Conclusions Must Be Actionable
+
+The conclusions section must contain:
+1. **Summary of key findings** — 3-5 bullet points with numbers
+2. **Engineering recommendations** — specific, actionable advice
+3. **Design implications** — what parameters should be used in detailed design
+4. **Remaining uncertainties** — what the analysis could not resolve
+5. **Suggested follow-up** — next steps, additional studies needed
+
+### 7.3 — Figure-by-Figure Discussion (Traceability Chain)
+
+Every figure in the notebook and report MUST have a corresponding discussion
+that creates a traceable chain from calculation to recommendation:
+
+```
+Calculation → Figure → Discussion → Conclusion → Recommendation
+     ↓           ↓          ↓            ↓              ↓
+  results.json  figures/  figure_discussion  conclusions  design_recommendations
+```
+
+#### In the Notebook
+
+After every figure cell, add a **markdown discussion cell** with this structure:
+1. **Observation** — what does the figure show? (cite specific numbers from the plot)
+2. **Physical Mechanism** — why does this happen? (refer to the underlying physics)
+3. **Engineering Implication** — what does this mean for the design/operation?
+4. **Recommendation** — what specific action should be taken?
+5. **Traceability** — which results.json entries and insight questions this addresses
+
+#### In results.json
+
+Populate the `figure_discussion` array with one entry per figure:
+```python
+"figure_discussion": [
+    {
+        "figure": "temperature_profile.png",
+        "title": "Temperature Profile Along Pipeline",
+        "observation": "Temperature drops below 0°C at 12 km from inlet",
+        "mechanism": "JT cooling (µ_JT = 0.45°C/bar) combined with 4°C seabed",
+        "implication": "Solid S8 precipitates between 12-35 km, blocking risk",
+        "recommendation": "Install DEH heating between 10-30 km",
+        "linked_results": ["outlet_temperature_C", "deposition_onset_C"],
+        "insight_question_ref": "Q3"
+    },
+]
+```
+
+#### In the Report
+
+The report generator auto-renders `figure_discussion` entries as a structured
+"Discussion" section (section 6) between Results and Validation. Each discussion
+block shows observation, mechanism, implication, and recommendation with
+traceability references. The paper generator includes the same discussion
+inline within the "Results and Discussion" section.
+
+#### Quality Check
+
+- Every figure in `figure_captions` MUST have a matching entry in `figure_discussion`
+- Every entry in `design_recommendations` MUST trace back to at least one `figure_discussion`
+- Every conclusion MUST reference specific figures and observations
+
+### 7.4 — Report Section Enhancement
+
+Add these sections to the report (in `generate_report.py` MANUAL_SECTIONS):
+
+- **Engineering Context**: Why this analysis matters, what problem it solves,
+  consequences of the wrong answer (1-2 paragraphs)
+- **Solution Approach Justification**: Why the chosen method/EOS/model is
+  appropriate — with reference to alternatives considered in Phase 1.5
+- **Results Discussion**: Auto-populated from `figure_discussion` entries —
+  shows observation, mechanism, implication, and recommendation for each figure
+- **Design Recommendations**: Specific actionable recommendations with
+  reference values, material selections, operating limits
+- **NeqSim Capabilities & Gaps**: Summary of what NeqSim enabled, what
+  workarounds were needed, and proposed improvements (from NIPs)
+
+---
+
+## 8 ── CRITICAL RULES
 
 1. **Create the folder first.** Always run `python devtools/new_task.py` before writing any files.
 2. **Scale to the task.** Quick tasks get minimal ceremony. Comprehensive tasks get full documentation. Don't over-engineer a simple property lookup or under-deliver a field development study.
 3. **Fill in the task spec.** Standards, methods, and deliverables must be defined in `task_spec.md` before analysis. For Quick scale, only essential fields.
-4. **Run every notebook cell.** Do not deliver unexecuted notebooks. Fix errors immediately.
-5. **Verify physics.** Mass balance, energy balance, reasonable ranges. Flag anything suspicious.
-6. **Check acceptance criteria.** Results must meet the criteria defined in `task_spec.md`.
-7. **Document assumptions.** Every engineering default you choose must be stated explicitly.
-8. **Save figures.** All plots go to `figures/` as PNG for reports. **NEVER use `os.getcwd()` or `pathlib.Path.cwd()` to resolve figure paths** — VS Code notebooks set cwd to the workspace root, not the notebook directory. Always use the absolute path pattern from the notebook template.
-9. **Write all notes.** Research notes AND validation notes must be populated, not left as templates.
-10. **API verification.** If unsure about a NeqSim method, search the Java source to confirm it exists. Do NOT guess method names.
-11. **Verify every formula against domain standards.** Do not assume a formula from memory is correct — look up the governing equation in the applicable standard or textbook. Common errors: cascaded vs independent tax bases, missing terms (uplift, depreciation), wrong operator precedence in compound expressions. After implementing, verify with a manual hand-calculation for at least one data point.
-12. **Use NeqSim Java classes for cost/design — never flat estimates.** When CAPEX or mechanical design values are needed, search for existing classes in `neqsim.process.mechanicaldesign` (e.g., `SubseaCostEstimator`, `SURFCostEstimator`, `PipeMechanicalDesignCalculator`). Use component-level estimates, not a single lump-sum number. If a needed class doesn't exist, implement it with proper JavaDoc and unit tests before using it in notebooks.
-13. **Cross-check results against industry benchmarks.** Every key output should be sanity-checked: typical SURF costs are 40-60% of total field development CAPEX; Norwegian petroleum tax is ~78% marginal; subsea tree costs are $5-15M; pipeline costs for NCS are $1,500-5,000/m. If results diverge significantly from benchmarks, investigate before accepting.
-14. **Currency and unit conversions must be explicit and parameterized.** Never hardcode exchange rates inside formulas. Define them as named variables (e.g., `USD_TO_NOK = 10.5`) at the top of the notebook and reference throughout. State the assumed rate in `results.json` and report text.
-15. **Notebooks used for teaching must have theory cells.** When the task has educational value, include: (a) governing equations with LaTeX rendering, (b) explanation of why each parameter matters, (c) 2-3 exercises for the reader, (d) academic references. This applies especially to Type G workflow tasks.
-16. **After first draft, always self-review calculations.** Before delivering, re-read every formula cell and check: correct signs (revenue positive, cost negative in cash flow), no double-counting (CAPEX in both investment and operating cost), correct time indexing (year-0 vs year-1), tax model matches the jurisdiction's actual law.
-11. **Units matter.** Kelvin for constructors, unit strings for setters. Always state units in output.
-12. **No `pip install neqsim` for local dev.** Use `pip install -e devtools/` pattern. The dual-boot cell handles both cases.
-13. **PR safety.** Never commit `task_solve/` contents. Copy reusable files to proper locations first. Always ask before `git push`.
+4. **Deep analysis before code.** For Standard/Comprehensive tasks, the analysis document (`analysis.md`) must be written BEFORE any notebook. No code without theory.
+5. **Run every notebook cell.** Do not deliver unexecuted notebooks. Fix errors immediately.
+6. **Verify physics.** Mass balance, energy balance, reasonable ranges. Flag anything suspicious.
+7. **Check acceptance criteria.** Results must meet the criteria defined in `task_spec.md`.
+8. **Document assumptions.** Every engineering default you choose must be stated explicitly.
+9. **Save figures.** All plots go to `figures/` as PNG for reports. **NEVER use `os.getcwd()` or `pathlib.Path.cwd()` to resolve figure paths** — VS Code notebooks set cwd to the workspace root, not the notebook directory. Always use the absolute path pattern from the notebook template.
+10. **Write all notes.** Research notes, analysis document, AND validation notes must be populated — not left as templates.
+11. **API verification.** If unsure about a NeqSim method, search the Java source to confirm it exists. Do NOT guess method names.
+12. **Verify every formula against domain standards.** Do not assume a formula from memory is correct — look up the governing equation in the applicable standard or textbook. Common errors: cascaded vs independent tax bases, missing terms (uplift, depreciation), wrong operator precedence in compound expressions. After implementing, verify with a manual hand-calculation for at least one data point.
+13. **Use NeqSim Java classes for cost/design — never flat estimates.** When CAPEX or mechanical design values are needed, search for existing classes in `neqsim.process.mechanicaldesign` (e.g., `SubseaCostEstimator`, `SURFCostEstimator`, `PipeMechanicalDesignCalculator`). Use component-level estimates, not a single lump-sum number. If a needed class doesn't exist, implement it with proper JavaDoc and unit tests before using it in notebooks.
+14. **Cross-check results against industry benchmarks.** Every key output should be sanity-checked: typical SURF costs are 40-60% of total field development CAPEX; Norwegian petroleum tax is ~78% marginal; subsea tree costs are $5-15M; pipeline costs for NCS are $1,500-5,000/m. If results diverge significantly from benchmarks, investigate before accepting.
+15. **Currency and unit conversions must be explicit and parameterized.** Never hardcode exchange rates inside formulas. Define them as named variables (e.g., `USD_TO_NOK = 10.5`) at the top of the notebook and reference throughout. State the assumed rate in `results.json` and report text.
+16. **Notebooks used for teaching must have theory cells.** When the task has educational value, include: (a) governing equations with LaTeX rendering, (b) explanation of why each parameter matters, (c) 2-3 exercises for the reader, (d) academic references. This applies especially to Type G workflow tasks.
+17. **After first draft, always self-review calculations.** Before delivering, re-read every formula cell and check: correct signs (revenue positive, cost negative in cash flow), no double-counting (CAPEX in both investment and operating cost), correct time indexing (year-0 vs year-1), tax model matches the jurisdiction's actual law.
+18. **Units matter.** Kelvin for constructors, unit strings for setters. Always state units in output.
+19. **No `pip install neqsim` for local dev.** Use `pip install -e devtools/` pattern. The dual-boot cell handles both cases.
+20. **Always propose NeqSim improvements.** When a NeqSim gap is found, write a NIP (NeqSim Improvement Proposal) in `neqsim_improvements.md`. If the improvement is achievable, implement it during the task.
+21. **Engineering interpretation is mandatory.** Reports must explain what results mean, not just what the numbers are. Every key result needs context, implication, and recommendation.
+22. **Answer the insight questions.** Every engineering insight question from Phase 1.5 must be explicitly answered in the report conclusions.
+23. **Discuss every figure.** After every figure cell in a notebook, add a markdown discussion cell with observation, mechanism, implication, and recommendation. Populate `figure_discussion` in results.json with one entry per figure. No figure without discussion. No conclusion without a figure that supports it.
+24. **Traceability is mandatory.** Every design recommendation must trace back through: recommendation ← figure discussion ← figure ← calculation ← results.json. If a recommendation cannot be traced to a specific figure and observation, it should not be in the report.
+25. **PR safety.** Never commit `task_solve/` contents. Copy reusable files to proper locations first. Always ask before `git push`.
 
 ---
 
-## 7 ── DELIVERING THE TASK
+## 9 ── DELIVERING THE TASK
 
-After completing all 3 steps, summarize to the user:
+After completing all phases, summarize to the user:
 
 1. **Task folder location**: `task_solve/YYYY-MM-DD_task_slug/`
 2. **Task scale**: Quick / Standard / Comprehensive (and why)
-3. **Key results**: 2-3 sentences with the main engineering findings
-4. **What was created**: list the files you populated
-5. **Standards applied**: which standards and methods were used (from task_spec.md)
-6. **Reports generated**: Word (.docx) and/or HTML locations
-7. **API gaps found** (if any): what NeqSim is missing for this type of task
-8. **Suggested next steps**: promote notebook to examples, add test, log the task
-9. **Documentation fixes**: list any doc errors fixed, missing docs added, or improvements made
-10. **Task log entry**: the draft entry for `TASK_LOG.md`
-11. **PR opportunity**: if reusable outputs were produced, offer to create a PR —
-    "Shall I create a PR to contribute the [test/notebook/docs/doc fixes] back to the repo?"
+3. **Engineering insight summary**: 3-5 sentences answering the main engineering
+   questions from Phase 1.5, with specific numbers and recommendations
+4. **Key results**: Table of critical outputs with units and context
+5. **What was created**: List all populated files including:
+   - `task_spec.md` — scope and requirements
+   - `notes.md` — research notes with literature review
+   - `analysis.md` — deep analysis with theory, alternatives, and solution design
+   - `neqsim_improvements.md` — NIPs for NeqSim gaps (or "No gaps")
+   - Notebooks (numbered) — simulations and analysis
+   - `results.json` — machine-readable results
+   - Reports (.docx, .html) — formatted deliverables
+6. **Standards applied**: Which standards and methods were used (from task_spec.md)
+7. **Reports generated**: Word (.docx) and/or HTML locations
+8. **NeqSim Improvement Proposals**: Summary of NIPs written, with priority.
+   For each gap: what was the workaround, and what would the proper implementation
+   look like? If any were implemented during the task, highlight them.
+9. **Design recommendations**: Specific actionable engineering advice
+10. **Remaining uncertainties**: What the analysis could not resolve
+11. **Suggested next steps**: promote notebook to examples, implement NIPs, add test, log the task
+12. **Documentation fixes**: list any doc errors fixed, missing docs added
+13. **Task log entry**: the draft entry for `TASK_LOG.md`
+14. **PR opportunity**: if reusable outputs were produced (especially new Java classes
+    from NIPs), offer to create a PR —
+    "Shall I create a PR to contribute the [new class/test/notebook/docs] back to the repo?"
 
-If the task revealed a missing NeqSim capability, highlight it clearly — this is
-how the development flywheel works: tasks surface gaps, gaps become features.
+The delivery message should read like a **consultant's executive summary** —
+the reader should understand the problem, the approach, the answer, and what to
+do next, without opening any files.
 
 ---
 
-## 8 ── LESSONS LEARNED (from solved tasks)
+## 10 ── LESSONS LEARNED (from solved tasks)
 
 These are practical pitfalls discovered while solving real engineering tasks.
 Review before starting any Standard or Comprehensive task.

@@ -1170,6 +1170,10 @@ cooler.getDuty()                # Cooling duty (positive = heat removed)
 5. **Run simulation** - Single `process.run()` call
 6. **Results** - Extract and display results as formatted table with units (pandas DataFrame or formatted print)
 7. **Visualization (MANDATORY)** - **Every notebook MUST include at least 2-3 matplotlib figures** showing key relationships (profiles, sensitivities, comparisons). All figures must have axis labels with units, titles, legends, and grids. Save figures as PNG (dpi=150, bbox_inches="tight") for report embedding.
+   - **MANDATORY: After EVERY figure, add a discussion markdown cell** with:
+     observation (what the figure shows with numbers), physical mechanism (why),
+     engineering implication (what it means for design), and recommendation
+     (specific action). Populate `figure_discussion` in results.json.
 8. **Tips/Next steps** - Summary and links to related examples
 
 ### Type Conversion for Java
