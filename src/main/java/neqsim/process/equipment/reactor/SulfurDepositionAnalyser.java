@@ -17,37 +17,31 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.pvtsimulation.flowassurance.DeWaardMilliamsCorrosion;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Analyser for elemental sulfur formation, deposition, and corrosion in natural
- * gas systems.
+ * Analyser for elemental sulfur formation, deposition, and corrosion in natural gas systems.
  *
  * <p>
- * This unit operation combines multiple analysis capabilities for understanding
- * sulfur behaviour in
+ * This unit operation combines multiple analysis capabilities for understanding sulfur behaviour in
  * gas value chains (offshore and onshore):
  * </p>
  * <ul>
- * <li><b>Chemical equilibrium:</b> Uses the Gibbs reactor to compute
- * equilibrium products from H2S
+ * <li><b>Chemical equilibrium:</b> Uses the Gibbs reactor to compute equilibrium products from H2S
  * and O2 reactions, including S8, SO2, SO3, and sulfuric acid formation.</li>
- * <li><b>Sulfur solubility:</b> Calculates S8 solubility in the gas phase at
- * given conditions and
+ * <li><b>Sulfur solubility:</b> Calculates S8 solubility in the gas phase at given conditions and
  * identifies precipitation (solid formation) via TP-solid flash.</li>
- * <li><b>Temperature sweep:</b> Scans across a range of temperatures to find
- * the onset temperature
+ * <li><b>Temperature sweep:</b> Scans across a range of temperatures to find the onset temperature
  * for solid sulfur deposition and maps the deposition profile.</li>
- * <li><b>Corrosion assessment:</b> Evaluates FeS (iron sulfide) formation
- * potential and corrosion
+ * <li><b>Corrosion assessment:</b> Evaluates FeS (iron sulfide) formation potential and corrosion
  * risk from H2S and SO2 in the presence of water.</li>
  * </ul>
  *
  * <h2>Key Reactions Modelled</h2>
  *
  * <table>
- * <caption>Sulfur-related chemical reactions modelled by this
- * analyser</caption>
+ * <caption>Sulfur-related chemical reactions modelled by this analyser</caption>
  * <tr>
  * <th>Reaction</th>
  * <th>Description</th>
@@ -115,8 +109,8 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   private static final double S8_MOLAR_MASS = 256.48e-3;
 
   /** Conversion factor from mol fraction to mg/Sm3. */
-  private static final double MOL_FRAC_TO_MG_SM3 = S8_MOLAR_MASS * 1e6
-      * (101325.0 / (ThermodynamicConstantsInterface.R * 288.15));
+  private static final double MOL_FRAC_TO_MG_SM3 =
+      S8_MOLAR_MASS * 1e6 * (101325.0 / (ThermodynamicConstantsInterface.R * 288.15));
 
   // ========== Configuration ==========
 
@@ -176,7 +170,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   /**
    * Creates a new SulfurDepositionAnalyser with an inlet stream.
    *
-   * @param name   equipment name
+   * @param name equipment name
    * @param stream inlet stream
    */
   public SulfurDepositionAnalyser(String name, StreamInterface stream) {
@@ -187,8 +181,8 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
    * Sets the temperature range for the deposition sweep analysis.
    *
    * @param startC start temperature in Celsius
-   * @param endC   end temperature in Celsius
-   * @param stepC  step size in Celsius
+   * @param endC end temperature in Celsius
+   * @param stepC step size in Celsius
    */
   public void setTemperatureSweepRange(double startC, double endC, double stepC) {
     this.tempSweepStartC = startC;
@@ -304,8 +298,8 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
       return;
     }
 
-    double pressure = analysisPressueBara > 0 ? analysisPressueBara
-        : inlet.getThermoSystem().getPressure();
+    double pressure =
+        analysisPressueBara > 0 ? analysisPressueBara : inlet.getThermoSystem().getPressure();
 
     // Step 1: Chemical equilibrium with Gibbs reactor (H2S + O2 reactions)
     if (runChemicalEquilibrium) {
@@ -347,11 +341,10 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   }
 
   /**
-   * Performs Gibbs free energy minimisation to determine equilibrium products
-   * from H2S and O2
+   * Performs Gibbs free energy minimisation to determine equilibrium products from H2S and O2
    * reactions at the inlet conditions.
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   private void performChemicalEquilibrium(StreamInterface inlet, double pressure) {
@@ -392,7 +385,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
       reactionSummary.put("temperatureC", sys.getTemperature() - 273.15);
       reactionSummary.put("pressureBara", pressure);
 
-      String[] sulfurSpecies = { "H2S", "S8", "SO2", "SO3", "sulfuric acid", "S", "S2" };
+      String[] sulfurSpecies = {"H2S", "S8", "SO2", "SO3", "sulfuric acid", "S", "S2"};
       for (String sp : sulfurSpecies) {
         try {
           double ppm = outSys.getComponent(sp).getz() * 1e6;
@@ -410,17 +403,16 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   }
 
   /**
-   * Marks hydrocarbon components as inert in the Gibbs reactor so they do not
-   * participate in
+   * Marks hydrocarbon components as inert in the Gibbs reactor so they do not participate in
    * reactions.
    *
    * @param reactor the Gibbs reactor
-   * @param sys     the thermo system
+   * @param sys the thermo system
    */
   private void setHydrocarbonInert(GibbsReactor reactor, SystemInterface sys) {
-    String[] inertNames = { "nitrogen", "CO2", "methane", "ethane", "propane", "i-butane",
+    String[] inertNames = {"nitrogen", "CO2", "methane", "ethane", "propane", "i-butane",
         "n-butane", "i-pentane", "n-pentane", "n-hexane", "n-heptane", "n-octane", "n-nonane",
-        "n-decane", "benzene", "toluene", "CO", "COS", "argon" };
+        "n-decane", "benzene", "toluene", "CO", "COS", "argon"};
     for (String name : inertNames) {
       try {
         if (sys.getComponent(name) != null) {
@@ -433,11 +425,10 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   }
 
   /**
-   * Analyses sulfur solubility in the gas phase and checks for solid S8 formation
-   * using TP-solid
+   * Analyses sulfur solubility in the gas phase and checks for solid S8 formation using TP-solid
    * flash at inlet conditions.
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   private void performSulfurSolubilityAnalysis(StreamInterface inlet, double pressure) {
@@ -482,8 +473,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
         sulfurSolubilityMgSm3 = sulfurSolubilityMolFrac * MOL_FRAC_TO_MG_SM3;
       }
 
-      logger.info(
-          "Sulfur solubility analysis: solid present={}, S8 in gas={} mol frac, {} mg/Sm3",
+      logger.info("Sulfur solubility analysis: solid present={}, S8 in gas={} mol frac, {} mg/Sm3",
           solidSulfurPresent, sulfurSolubilityMolFrac, sulfurSolubilityMgSm3);
 
     } catch (Exception e) {
@@ -492,12 +482,10 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   }
 
   /**
-   * Sweeps temperature to find the sulfur deposition onset temperature and build
-   * a deposition
-   * profile. At each temperature, performs a TP-solid flash and records S8 in gas
-   * vs solid.
+   * Sweeps temperature to find the sulfur deposition onset temperature and build a deposition
+   * profile. At each temperature, performs a TP-solid flash and records S8 in gas vs solid.
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   private void performTemperatureSweep(StreamInterface inlet, double pressure) {
@@ -595,22 +583,25 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
     if (foundOnset) {
       logger.info("Sulfur deposition onset temperature: {} C", sulfurDepositionOnsetTemperatureC);
     } else {
-      logger.info(
-          "No solid sulfur deposition found in temperature range {} - {} C at {} bara",
+      logger.info("No solid sulfur deposition found in temperature range {} - {} C at {} bara",
           tempSweepStartC, tempSweepEndC, pressure);
     }
   }
 
   /**
-   * Assesses corrosion risk from sulfur species. Evaluates:
+   * Assesses corrosion risk from sulfur species and CO2. Evaluates:
    * <ul>
    * <li>FeS formation potential from H2S in presence of water</li>
-   * <li>Sour corrosion severity based on H2S partial pressure</li>
-   * <li>SO2 corrosion risk</li>
-   * <li>Sulfuric acid formation risk</li>
+   * <li>Sour corrosion severity based on H2S partial pressure (NACE MR0175)</li>
+   * <li>SO2 corrosion risk and sulfuric acid formation risk</li>
+   * <li>Direct S8 + Fe corrosion: S8 + 8Fe -&gt; 8FeS</li>
+   * <li>CO2 corrosion rate via de Waard-Milliams (1991) model</li>
+   * <li>FeCO3 (siderite) scale formation tendency</li>
+   * <li>FeS scale morphology (mackinawite / troilite / pyrrhotite)</li>
+   * <li>Combined CO2 + H2S + S8 quantitative corrosion rate</li>
    * </ul>
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   private void performCorrosionAssessment(StreamInterface inlet, double pressure) {
@@ -704,10 +695,6 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
               + "Consider corrosion-resistant alloys or inhibitors.");
     }
 
-    // Overall corrosion risk
-    boolean anyCorrosionRisk = feSFormationRisk || so2CorrosionRisk;
-    corrosionAssessment.put("overallCorrosionRisk", anyCorrosionRisk);
-
     // Sulfuric acid formation assessment
     double so3MolFrac = 0.0;
     try {
@@ -717,6 +704,105 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
     }
     boolean h2so4Risk = (so2MolFrac > 1e-8 || so3MolFrac > 1e-8) && waterPresent;
     corrosionAssessment.put("H2SO4_formationRisk", h2so4Risk);
+
+    // ========== Direct S8 + Fe corrosion pathway ==========
+    // Elemental sulfur deposited on carbon steel reacts: S8 + 8Fe -> 8FeS
+    // This mechanism is independent of H2S and occurs wherever solid sulfur
+    // contacts bare steel, particularly aggressive below 120 C where
+    // non-protective mackinawite FeS scale forms.
+    boolean s8CorrosionRisk = solidSulfurPresent && waterPresent;
+    corrosionAssessment.put("S8_directCorrosionRisk", s8CorrosionRisk);
+    if (s8CorrosionRisk) {
+      corrosionAssessment.put("S8_corrosionNote",
+          "Solid elemental sulfur (S8) reacts directly with carbon steel: "
+              + "S8 + 8Fe -> 8FeS. This polysulfide corrosion mechanism is "
+              + "independent of H2S partial pressure and occurs wherever solid "
+              + "sulfur deposits on steel surfaces. Particularly aggressive in "
+              + "the presence of water at temperatures below 120 C where "
+              + "non-protective mackinawite forms.");
+    }
+
+    // ========== CO2 corrosion via de Waard-Milliams model ==========
+    double co2MolFrac = 0.0;
+    try {
+      co2MolFrac = sys.getComponent("CO2").getz();
+    } catch (Exception e) {
+      // no CO2
+    }
+    double co2PartialPressureBar = co2MolFrac * pressure;
+    corrosionAssessment.put("CO2_molFraction", co2MolFrac);
+    corrosionAssessment.put("CO2_partialPressure_bar", co2PartialPressureBar);
+
+    boolean co2CorrosionRisk = co2MolFrac > 1e-6 && waterPresent;
+    corrosionAssessment.put("CO2_corrosionRisk", co2CorrosionRisk);
+
+    if (co2CorrosionRisk || h2sPartialPressureKPa > 0.3 || s8CorrosionRisk) {
+      // Quantitative combined corrosion rate using de Waard-Milliams model
+      double tempC = sys.getTemperature() - 273.15;
+      DeWaardMilliamsCorrosion dwModel = new DeWaardMilliamsCorrosion(tempC, co2PartialPressureBar);
+      dwModel.setTotalPressure(pressure);
+      dwModel.setH2SPartialPressure(h2sMolFrac * pressure);
+
+      // Estimate pH from CO2 partial pressure (simplified NORSOK M-506)
+      double estPH = co2PartialPressureBar > 0.01
+          ? 3.71 - 0.5 * Math.log10(co2PartialPressureBar) + 0.00133 * tempC
+          : 6.5;
+      dwModel.setPH(estPH);
+
+      // Link elemental sulfur deposition to corrosion model
+      if (solidSulfurPresent && solidSulfurFraction > 0.0) {
+        // Estimate S8 mass deposition rate from solid fraction and gas flow
+        // solidSulfurFraction is fraction of total S8 that precipitates as solid
+        double s8MolFracInGas = 0.0;
+        try {
+          s8MolFracInGas = sys.getComponent("S8").getz();
+        } catch (Exception e) {
+          // no S8 component
+        }
+        if (s8MolFracInGas > 0.0) {
+          // Mass flow of solid S8 depositing per unit pipe wall area
+          // Convert mol fraction to kg/Sm3, multiply by gas flow, divide by pipe area
+          double s8Concentration = s8MolFracInGas * solidSulfurFraction * S8_MOLAR_MASS
+              * (101325.0 / (ThermodynamicConstantsInterface.R * 288.15));
+          double pipeCircumference = Math.PI * pipeDiameterM;
+          double s8DepRate =
+              s8Concentration * gasFlowRateSm3h * 8760.0 / (pipeCircumference * pipeSegmentLengthM);
+          dwModel.setSulfurDepositionRate(s8DepRate);
+          corrosionAssessment.put("S8_depositionRate_kgM2Yr", s8DepRate);
+        }
+      }
+
+      // Comprehensive corrosion assessment from de Waard-Milliams model
+      Map<String, Object> dwAssessment = dwModel.getComprehensiveAssessment();
+      corrosionAssessment.put("deWaardMilliams_assessment", dwAssessment);
+      corrosionAssessment.put("totalCorrosionRate_mmyr",
+          dwAssessment.get("totalCorrosionRate_mmyr"));
+      corrosionAssessment.put("corrosionSeverity", dwAssessment.get("severity"));
+
+      // ========== FeCO3 scale formation assessment ==========
+      double feCO3SI = dwModel.getFeCO3SaturationIndex();
+      corrosionAssessment.put("FeCO3_saturationIndex", feCO3SI);
+      boolean feCO3ScaleForming = feCO3SI > 1.0;
+      corrosionAssessment.put("FeCO3_scaleForming", feCO3ScaleForming);
+      if (feCO3ScaleForming) {
+        corrosionAssessment.put("FeCO3_note",
+            "FeCO3 (siderite) scale is supersaturated (SI=" + String.format("%.2f", feCO3SI)
+                + "). Protective scale may form, reducing CO2 corrosion rate. "
+                + "Scale protectiveness increases with temperature above 60 C.");
+      } else if (co2CorrosionRisk) {
+        corrosionAssessment.put("FeCO3_note",
+            "FeCO3 undersaturated (SI=" + String.format("%.2f", feCO3SI)
+                + "). No protective scale. Bare steel corrosion expected.");
+      }
+
+      // FeS scale morphology from integrated model
+      corrosionAssessment.put("FeS_scaleMorphology", dwModel.getFeSScaleMorphology());
+    }
+
+    // Overall corrosion risk (combining all mechanisms)
+    boolean anyCorrosionRisk =
+        feSFormationRisk || so2CorrosionRisk || s8CorrosionRisk || co2CorrosionRisk;
+    corrosionAssessment.put("overallCorrosionRisk", anyCorrosionRisk);
 
     // Process location risk assessment
     List<String> riskLocations = new ArrayList<>();
@@ -728,37 +814,37 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
     if (waterPresent) {
       riskLocations.add("Water condensation points (below water dew point)");
     }
+    if (s8CorrosionRisk) {
+      riskLocations.add("Sulfur deposition zones (cold spots, low-velocity regions)");
+    }
     corrosionAssessment.put("typicalDepositionLocations", riskLocations);
 
-    logger.info("Corrosion assessment completed: overall risk={}, sour severity={}",
-        anyCorrosionRisk, sourSeverity);
+    logger.info(
+        "Corrosion assessment completed: overall risk={}, sour severity={}, "
+            + "CO2 corrosion={}, S8 corrosion={}",
+        anyCorrosionRisk, sourSeverity, co2CorrosionRisk, s8CorrosionRisk);
   }
 
   // ========== Kinetic, Supersaturation, and Blockage Analysis ==========
 
   /**
-   * Performs kinetic analysis of sulfur-related reactions. Evaluates whether
-   * reactions are kinetically feasible at the given conditions by comparing
-   * reaction half-lives with typical process residence times.
+   * Performs kinetic analysis of sulfur-related reactions. Evaluates whether reactions are
+   * kinetically feasible at the given conditions by comparing reaction half-lives with typical
+   * process residence times.
    *
    * <p>
    * Literature-based rate models used:
    * </p>
    * <ul>
-   * <li>H2S thermal oxidation: Ea ~ 50-65 kJ/mol (Monnery et al., 1993;
-   * Cheremisinoff, 2000).
+   * <li>H2S thermal oxidation: Ea ~ 50-65 kJ/mol (Monnery et al., 1993; Cheremisinoff, 2000).
    * Negligible below 200 C.</li>
-   * <li>Claus reaction (catalytic): k = A*exp(-Ea/RT), Ea ~ 30-40 kJ/mol on
-   * Al2O3 catalyst</li>
-   * <li>FeS formation: diffusion-controlled at steel surface, rate depends on
-   * H2S partial pressure
-   * and temperature. Approximate Arrhenius with Ea ~ 20 kJ/mol (Sun &amp;
-   * Nesic, 2009)</li>
-   * <li>Polysulfane formation: H2S + Sx = H2(S)x+1, intermediate step in
-   * sulfur precipitation</li>
+   * <li>Claus reaction (catalytic): k = A*exp(-Ea/RT), Ea ~ 30-40 kJ/mol on Al2O3 catalyst</li>
+   * <li>FeS formation: diffusion-controlled at steel surface, rate depends on H2S partial pressure
+   * and temperature. Approximate Arrhenius with Ea ~ 20 kJ/mol (Sun &amp; Nesic, 2009)</li>
+   * <li>Polysulfane formation: H2S + Sx = H2(S)x+1, intermediate step in sulfur precipitation</li>
    * </ul>
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   private void performKineticAnalysis(StreamInterface inlet, double pressure) {
@@ -788,8 +874,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
     kineticAnalysis.put("H2S_oxidation_preExp_1s", preExpH2SOxidation);
     kineticAnalysis.put("H2S_oxidation_rateConst_1s", kH2SOxidation);
     kineticAnalysis.put("H2S_oxidation_halfLife_s", halfLifeH2SOxidation);
-    kineticAnalysis.put("H2S_oxidation_halfLife_days",
-        halfLifeH2SOxidation / 86400.0);
+    kineticAnalysis.put("H2S_oxidation_halfLife_days", halfLifeH2SOxidation / 86400.0);
 
     // Assess kinetic feasibility at process conditions
     // Typical pipeline residence time: 1-24 hours
@@ -878,14 +963,12 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
     // Based on kinetics + thermodynamics, classify the sulfur source
     List<String> rootCauses = new ArrayList<>();
     if (tempC < 200) {
-      rootCauses.add(
-          "PRIMARY: Thermodynamic precipitation - S8 dissolved from reservoir "
-              + "exceeds solubility limit upon cooling/depressurisation");
+      rootCauses.add("PRIMARY: Thermodynamic precipitation - S8 dissolved from reservoir "
+          + "exceeds solubility limit upon cooling/depressurisation");
     }
     if (tempC >= 200) {
-      rootCauses.add(
-          "PRIMARY: Chemical reaction - H2S + O2 reaction produces S8 at "
-              + "elevated temperature");
+      rootCauses.add("PRIMARY: Chemical reaction - H2S + O2 reaction produces S8 at "
+          + "elevated temperature");
     }
     double o2MolFrac = 0.0;
     try {
@@ -894,23 +977,20 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
       // no O2
     }
     if (o2MolFrac > 1e-6) {
-      rootCauses.add(
-          "CONTRIBUTING: Air ingress detected (O2 = "
-              + String.format("%.1f", o2MolFrac * 1e6)
+      rootCauses
+          .add("CONTRIBUTING: Air ingress detected (O2 = " + String.format("%.1f", o2MolFrac * 1e6)
               + " ppm). Even trace O2 can slowly form elemental sulfur "
               + "over weeks in stagnant zones via H2S + O2 reaction.");
     }
     boolean waterPresent = false;
     try {
-      waterPresent = sys.getComponent("water") != null
-          && sys.getComponent("water").getz() > 1e-10;
+      waterPresent = sys.getComponent("water") != null && sys.getComponent("water").getz() > 1e-10;
     } catch (Exception e) {
       // no water
     }
     if (waterPresent && h2sMolFrac > 1e-4) {
-      rootCauses.add(
-          "CONTRIBUTING: Wet sour conditions enable FeS formation on steel "
-              + "surfaces, providing nucleation sites for S8 deposition");
+      rootCauses.add("CONTRIBUTING: Wet sour conditions enable FeS formation on steel "
+          + "surfaces, providing nucleation sites for S8 deposition");
     }
 
     kineticAnalysis.put("rootCauseClassification", rootCauses);
@@ -919,27 +999,25 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   }
 
   /**
-   * Analyses the supersaturation state of dissolved S8 and estimates nucleation
-   * risk using classical nucleation theory.
+   * Analyses the supersaturation state of dissolved S8 and estimates nucleation risk using
+   * classical nucleation theory.
    *
    * <p>
-   * The supersaturation ratio sigma = y_S8_actual / y_S8_sat determines whether
-   * precipitation will occur:
+   * The supersaturation ratio sigma = y_S8_actual / y_S8_sat determines whether precipitation will
+   * occur:
    * </p>
    * <ul>
    * <li>sigma &lt; 1: Undersaturated. No deposition risk.</li>
-   * <li>1 &lt; sigma &lt; 1.5: Metastable zone. Nucleation unlikely without
-   * seed crystals.</li>
-   * <li>sigma &gt; 1.5: Labile zone. Spontaneous homogeneous nucleation
-   * expected.</li>
+   * <li>1 &lt; sigma &lt; 1.5: Metastable zone. Nucleation unlikely without seed crystals.</li>
+   * <li>sigma &gt; 1.5: Labile zone. Spontaneous homogeneous nucleation expected.</li>
    * </ul>
    *
    * <p>
-   * Literature: Mersmann (2001), Mullin (2001) - Crystallization. The
-   * interfacial energy of solid S8 is approx. 0.025-0.035 J/m2.
+   * Literature: Mersmann (2001), Mullin (2001) - Crystallization. The interfacial energy of solid
+   * S8 is approx. 0.025-0.035 J/m2.
    * </p>
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   private void performSupersaturationAnalysis(StreamInterface inlet, double pressure) {
@@ -1021,21 +1099,16 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
 
       if (sigma > 1.0) {
         double lnSigma = Math.log(sigma);
-        double dGstar = 16.0 * Math.PI * Math.pow(gammaS8, 3)
-            * Math.pow(volMolecularS8, 2)
+        double dGstar = 16.0 * Math.PI * Math.pow(gammaS8, 3) * Math.pow(volMolecularS8, 2)
             / (3.0 * Math.pow(kB * tempK, 3) * Math.pow(lnSigma, 2));
         // This is dimensionless barrier dG*/(kBT)^3 -- correct form for nucleation
-        double barrierKbT = 16.0 * Math.PI * Math.pow(gammaS8, 3)
-            * Math.pow(volMolecularS8, 2)
-            / (3.0 * kB * kB * kB * tempK * tempK * tempK
-                * lnSigma * lnSigma);
+        double barrierKbT = 16.0 * Math.PI * Math.pow(gammaS8, 3) * Math.pow(volMolecularS8, 2)
+            / (3.0 * kB * kB * kB * tempK * tempK * tempK * lnSigma * lnSigma);
         // Critical nucleus radius
-        double rCritical = 2.0 * gammaS8 * volMolecularS8
-            / (kB * tempK * lnSigma);
+        double rCritical = 2.0 * gammaS8 * volMolecularS8 / (kB * tempK * lnSigma);
 
         supersaturationAnalysis.put("nucleationBarrier_kBT", barrierKbT);
-        supersaturationAnalysis.put("criticalNucleusRadius_nm",
-            rCritical * 1e9);
+        supersaturationAnalysis.put("criticalNucleusRadius_nm", rCritical * 1e9);
 
         // Induction time estimate (Kashchiev & van Rosmalen, 2003)
         // t_ind ~ 1/J, where J = A * exp(-barrier)
@@ -1047,8 +1120,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
         if (nucleationRate > 1e-10) {
           double inductionTimeS = 1.0 / nucleationRate;
           supersaturationAnalysis.put("inductionTime_s", inductionTimeS);
-          supersaturationAnalysis.put("inductionTime_hours",
-              inductionTimeS / 3600.0);
+          supersaturationAnalysis.put("inductionTime_hours", inductionTimeS / 3600.0);
         }
       }
 
@@ -1072,26 +1144,21 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
    * Compares S8 solubility in gas phase versus liquid hydrocarbon phase.
    *
    * <p>
-   * S8 is approximately 100-1000x more soluble in liquid hydrocarbons than in the
-   * gas phase (Roof, 1971; Roberts, 1997). This has critical implications:
+   * S8 is approximately 100-1000x more soluble in liquid hydrocarbons than in the gas phase (Roof,
+   * 1971; Roberts, 1997). This has critical implications:
    * </p>
    * <ul>
-   * <li>When liquid HC condenses (crossing hydrocarbon dew point), it acts as a
-   * "sulfur sponge" - absorbing S8 from the gas phase and reducing gas-phase
-   * supersaturation.</li>
-   * <li>Conversely, when liquid HC is flashed to gas (e.g., JT valve,
-   * separator),
-   * S8 that was dissolved in the liquid has nowhere to go - massive S8
-   * precipitation can occur.</li>
-   * <li>In two-phase (gas + liquid HC) flow, the liquid phase carries most of
-   * the dissolved sulfur. Pipeline liquid holdup influences where sulfur
-   * deposits.</li>
-   * <li>Retrograde condensation near the cricondentherm temporarily provides
-   * liquid to dissolve S8, but re-vaporisation at lower pressure releases
-   * it.</li>
+   * <li>When liquid HC condenses (crossing hydrocarbon dew point), it acts as a "sulfur sponge" -
+   * absorbing S8 from the gas phase and reducing gas-phase supersaturation.</li>
+   * <li>Conversely, when liquid HC is flashed to gas (e.g., JT valve, separator), S8 that was
+   * dissolved in the liquid has nowhere to go - massive S8 precipitation can occur.</li>
+   * <li>In two-phase (gas + liquid HC) flow, the liquid phase carries most of the dissolved sulfur.
+   * Pipeline liquid holdup influences where sulfur deposits.</li>
+   * <li>Retrograde condensation near the cricondentherm temporarily provides liquid to dissolve S8,
+   * but re-vaporisation at lower pressure releases it.</li>
    * </ul>
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   private void performGasVsLiquidSolubilityComparison(StreamInterface inlet, double pressure) {
@@ -1165,71 +1232,61 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
         // Fraction of total S8 in each phase
         double totalS8 = s8InGas * gasBeta + s8InLiquid * liquidBeta;
         if (totalS8 > 0) {
-          gasVsLiquidSolubility.put("S8_fractionInGas",
-              s8InGas * gasBeta / totalS8);
-          gasVsLiquidSolubility.put("S8_fractionInLiquid",
-              s8InLiquid * liquidBeta / totalS8);
+          gasVsLiquidSolubility.put("S8_fractionInGas", s8InGas * gasBeta / totalS8);
+          gasVsLiquidSolubility.put("S8_fractionInLiquid", s8InLiquid * liquidBeta / totalS8);
         }
       }
 
       // Implications analysis
       List<String> implications = new ArrayList<>();
       if (hasLiquidPhase && s8InLiquid > s8InGas) {
-        implications.add(
-            "LIQUID ACTS AS SULFUR SPONGE: S8 is "
-                + String.format("%.0f", s8InLiquid / Math.max(s8InGas, 1e-30))
-                + "x more soluble in the liquid HC phase than in gas. "
-                + "The liquid phase carries the majority of dissolved sulfur.");
-        implications.add(
-            "FLASH RISK: If this liquid is flashed (JT valve, separator), "
-                + "the released vapor cannot hold the S8 that was dissolved "
-                + "in the liquid. Massive sulfur precipitation will occur "
-                + "downstream of the flash.");
-        implications.add(
-            "SEPARATOR DESIGN: Liquid from separators is sulfur-rich. "
-                + "Downstream heating or pressure reduction of this liquid "
-                + "stream requires sulfur management.");
+        implications.add("LIQUID ACTS AS SULFUR SPONGE: S8 is "
+            + String.format("%.0f", s8InLiquid / Math.max(s8InGas, 1e-30))
+            + "x more soluble in the liquid HC phase than in gas. "
+            + "The liquid phase carries the majority of dissolved sulfur.");
+        implications.add("FLASH RISK: If this liquid is flashed (JT valve, separator), "
+            + "the released vapor cannot hold the S8 that was dissolved "
+            + "in the liquid. Massive sulfur precipitation will occur "
+            + "downstream of the flash.");
+        implications.add("SEPARATOR DESIGN: Liquid from separators is sulfur-rich. "
+            + "Downstream heating or pressure reduction of this liquid "
+            + "stream requires sulfur management.");
       } else if (!hasLiquidPhase) {
-        implications.add(
-            "SINGLE-PHASE GAS: No liquid HC present at these conditions. "
-                + "All S8 is dissolved in the gas phase only. Deposition risk "
-                + "depends purely on gas-phase supersaturation upon cooling.");
-        implications.add(
-            "DEW POINT TRANSITION: If conditions change to form liquid "
-                + "(crossing HC dew point), the liquid will preferentially "
-                + "absorb S8, temporarily reducing gas-phase supersaturation "
-                + "and deposition risk on pipe walls.");
+        implications.add("SINGLE-PHASE GAS: No liquid HC present at these conditions. "
+            + "All S8 is dissolved in the gas phase only. Deposition risk "
+            + "depends purely on gas-phase supersaturation upon cooling.");
+        implications.add("DEW POINT TRANSITION: If conditions change to form liquid "
+            + "(crossing HC dew point), the liquid will preferentially "
+            + "absorb S8, temporarily reducing gas-phase supersaturation "
+            + "and deposition risk on pipe walls.");
       }
       gasVsLiquidSolubility.put("implications", implications);
 
     } catch (Exception e) {
-      logger.error("Gas vs liquid solubility comparison failed: {}",
-          e.getMessage());
+      logger.error("Gas vs liquid solubility comparison failed: {}", e.getMessage());
     }
   }
 
   /**
-   * Assesses the risk of pipeline or equipment blockage from sulfur deposition.
-   * Estimates sulfur accumulation rate, time to critical restriction, and
-   * identifies pipe sections most vulnerable to plugging.
+   * Assesses the risk of pipeline or equipment blockage from sulfur deposition. Estimates sulfur
+   * accumulation rate, time to critical restriction, and identifies pipe sections most vulnerable
+   * to plugging.
    *
    * <p>
    * The blockage model considers:
    * </p>
    * <ul>
    * <li>Sulfur dropout rate from supersaturated gas (kg/h per km)</li>
-   * <li>Critical accumulation thickness to restrict flow (&gt;5% diameter
-   * reduction)</li>
+   * <li>Critical accumulation thickness to restrict flow (&gt;5% diameter reduction)</li>
    * <li>Flow velocity effect on deposition vs re-entrainment</li>
    * <li>Susceptibility of different equipment types to blockage</li>
    * </ul>
    *
    * <p>
-   * References: Pack (2005), Wilkes &amp; McMahon (2007) - Sulfur deposition
-   * in gas pipelines.
+   * References: Pack (2005), Wilkes &amp; McMahon (2007) - Sulfur deposition in gas pipelines.
    * </p>
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   private void performBlockageRiskAssessment(StreamInterface inlet, double pressure) {
@@ -1267,10 +1324,8 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
 
       blockageRiskAssessment.put("sulfurDropout_mgSm3", sulfurDropoutMgSm3);
       blockageRiskAssessment.put("sulfurMassDeposition_kgPerHour", sulfurMassFlowKgH);
-      blockageRiskAssessment.put("sulfurMassDeposition_kgPerDay",
-          sulfurMassFlowKgH * 24.0);
-      blockageRiskAssessment.put("sulfurMassDeposition_kgPerYear",
-          sulfurMassFlowKgH * 8760.0);
+      blockageRiskAssessment.put("sulfurMassDeposition_kgPerDay", sulfurMassFlowKgH * 24.0);
+      blockageRiskAssessment.put("sulfurMassDeposition_kgPerYear", sulfurMassFlowKgH * 8760.0);
 
       // Pipe geometry calculations
       double pipeAreaM2 = Math.PI * pipeDiameterM * pipeDiameterM / 4.0;
@@ -1283,27 +1338,26 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
       double depositionVolumeM3Year = sulfurMassFlowKgH * 8760.0 / rhoSolidS8;
       double depositionThicknessMmYear = 0.0;
       if (pipeCircumM > 0 && pipeSegmentLengthM > 0) {
-        depositionThicknessMmYear = depositionVolumeM3Year
-            / (pipeCircumM * pipeSegmentLengthM) * 1000.0;
+        depositionThicknessMmYear =
+            depositionVolumeM3Year / (pipeCircumM * pipeSegmentLengthM) * 1000.0;
       }
-      blockageRiskAssessment.put("depositionThickness_mmPerYear",
-          depositionThicknessMmYear);
+      blockageRiskAssessment.put("depositionThickness_mmPerYear", depositionThicknessMmYear);
       blockageRiskAssessment.put("pipeDiameter_m", pipeDiameterM);
 
       // Time to critical restriction (5% diameter reduction = 10% flow area
       // reduction)
       double criticalThicknessMm = pipeDiameterM * 0.05 * 1000.0; // 5% of diameter
-      double yearsToCritical = (depositionThicknessMmYear > 0)
-          ? criticalThicknessMm / depositionThicknessMmYear
-          : Double.MAX_VALUE;
+      double yearsToCritical =
+          (depositionThicknessMmYear > 0) ? criticalThicknessMm / depositionThicknessMmYear
+              : Double.MAX_VALUE;
       blockageRiskAssessment.put("criticalThickness_mm", criticalThicknessMm);
       blockageRiskAssessment.put("yearsToCriticalRestriction", yearsToCritical);
 
       // Time to complete blockage (pipe center filled)
       double fullBlockThicknessMm = pipeDiameterM * 500.0; // radius in mm
-      double yearsToFullBlock = (depositionThicknessMmYear > 0)
-          ? fullBlockThicknessMm / depositionThicknessMmYear
-          : Double.MAX_VALUE;
+      double yearsToFullBlock =
+          (depositionThicknessMmYear > 0) ? fullBlockThicknessMm / depositionThicknessMmYear
+              : Double.MAX_VALUE;
       blockageRiskAssessment.put("yearsToFullBlockage", yearsToFullBlock);
 
       // Flow velocity effect on deposition
@@ -1312,8 +1366,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
       double criticalVelocityMs = 4.0;
       boolean depositionDominated = flowVelocityMs < criticalVelocityMs;
       blockageRiskAssessment.put("flowVelocity_ms", flowVelocityMs);
-      blockageRiskAssessment.put("criticalReentrainmentVelocity_ms",
-          criticalVelocityMs);
+      blockageRiskAssessment.put("criticalReentrainmentVelocity_ms", criticalVelocityMs);
       blockageRiskAssessment.put("depositionDominated", depositionDominated);
 
       // Blockage risk classification
@@ -1324,8 +1377,8 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
         piggingRecommendation = "Standard pigging schedule sufficient.";
       } else if (yearsToCritical > 10) {
         blockageRisk = "Low";
-        piggingRecommendation = "Annual pigging recommended. Monitor DP across "
-            + "pipeline for sulfur accumulation.";
+        piggingRecommendation =
+            "Annual pigging recommended. Monitor DP across " + "pipeline for sulfur accumulation.";
       } else if (yearsToCritical > 2) {
         blockageRisk = "Medium";
         piggingRecommendation = "Quarterly pigging recommended. Consider sulfur "
@@ -1347,26 +1400,19 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
 
       // Equipment-specific blockage susceptibility
       List<Map<String, String>> equipmentRisk = new ArrayList<>();
-      addEquipmentRisk(equipmentRisk, "Orifice plates / flow meters",
-          "Very High",
+      addEquipmentRisk(equipmentRisk, "Orifice plates / flow meters", "Very High",
           "Small orifice easily blocked by sulfur particles");
-      addEquipmentRisk(equipmentRisk, "Control valves / chokes",
-          "Very High",
+      addEquipmentRisk(equipmentRisk, "Control valves / chokes", "Very High",
           "Sulfur deposits on valve trim cause sticking and erosion");
-      addEquipmentRisk(equipmentRisk, "JT valves",
-          "High",
+      addEquipmentRisk(equipmentRisk, "JT valves", "High",
           "Temperature drop causes rapid S8 precipitation on valve internals");
-      addEquipmentRisk(equipmentRisk, "Heat exchanger tubes",
-          "High",
+      addEquipmentRisk(equipmentRisk, "Heat exchanger tubes", "High",
           "S8 deposits reduce heat transfer and increase DP");
-      addEquipmentRisk(equipmentRisk, "Pipeline low points / dead legs",
-          "High",
+      addEquipmentRisk(equipmentRisk, "Pipeline low points / dead legs", "High",
           "Low velocity allows sulfur particles to settle and accumulate");
-      addEquipmentRisk(equipmentRisk, "Filters / strainers",
-          "Medium (by design)",
+      addEquipmentRisk(equipmentRisk, "Filters / strainers", "Medium (by design)",
           "Require frequent cleaning; indicate upstream deposition");
-      addEquipmentRisk(equipmentRisk, "Turboexpanders",
-          "Very High",
+      addEquipmentRisk(equipmentRisk, "Turboexpanders", "Very High",
           "Sulfur particles cause blade erosion and rotor imbalance");
       blockageRiskAssessment.put("equipmentSusceptibility", equipmentRisk);
 
@@ -1378,13 +1424,13 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   /**
    * Adds an equipment risk entry to the equipment risk list.
    *
-   * @param list        the risk list to add to
-   * @param equipment   equipment name
-   * @param riskLevel   risk level string
+   * @param list the risk list to add to
+   * @param equipment equipment name
+   * @param riskLevel risk level string
    * @param description risk description
    */
-  private void addEquipmentRisk(List<Map<String, String>> list,
-      String equipment, String riskLevel, String description) {
+  private void addEquipmentRisk(List<Map<String, String>> list, String equipment, String riskLevel,
+      String description) {
     Map<String, String> entry = new LinkedHashMap<>();
     entry.put("equipment", equipment);
     entry.put("riskLevel", riskLevel);
@@ -1393,9 +1439,9 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   }
 
   /**
-   * Evaluates catalytic pathways for elemental sulfur formation from the gas
-   * composition. Analyses homogeneous, heterogeneous, and aqueous-phase catalysis
-   * mechanisms based on inlet gas composition and conditions.
+   * Evaluates catalytic pathways for elemental sulfur formation from the gas composition. Analyses
+   * homogeneous, heterogeneous, and aqueous-phase catalysis mechanisms based on inlet gas
+   * composition and conditions.
    *
    * <p>
    * Literature-based catalysis pathways evaluated:
@@ -1453,7 +1499,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
    * </tr>
    * </table>
    *
-   * @param inlet    the inlet stream
+   * @param inlet the inlet stream
    * @param pressure the analysis pressure in bara
    */
   @SuppressWarnings("unchecked")
@@ -1476,8 +1522,8 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
 
     // Heavy HC fraction (C3+) as proxy for "rich gas"
     double heavyHCFrac = 0.0;
-    String[] heavyHCs = { "propane", "i-butane", "n-butane", "i-pentane",
-        "n-pentane", "n-hexane", "n-heptane", "n-octane" };
+    String[] heavyHCs = {"propane", "i-butane", "n-butane", "i-pentane", "n-pentane", "n-hexane",
+        "n-heptane", "n-octane"};
     for (String hc : heavyHCs) {
       heavyHCFrac += getComponentMolFrac(sys, hc);
     }
@@ -1501,8 +1547,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
     // Negligible below 200 C; appreciable above 400 C
     double eaUncatalysed = 160000.0; // J/mol
     double kUncatalysed = 1.0e10 * Math.exp(-eaUncatalysed / (rGas * tempK));
-    double halfLifeUncatDays = Math.log(2.0) / Math.max(kUncatalysed, 1e-30)
-        / 86400.0;
+    double halfLifeUncatDays = Math.log(2.0) / Math.max(kUncatalysed, 1e-30) / 86400.0;
     Map<String, Object> pw1 = new LinkedHashMap<>();
     pw1.put("pathway", "Uncatalysed thermal H2S + O2");
     pw1.put("reaction", "2 H2S + O2 -> 2 H2O + 1/4 S8");
@@ -1511,15 +1556,14 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
     pw1.put("rateConstant_1s", kUncatalysed);
     pw1.put("halfLife_days", halfLifeUncatDays);
     pw1.put("active", tempC > 200 && o2MolFrac > 1e-8);
-    pw1.put("significance", tempC > 300 ? "HIGH"
-        : tempC > 200 ? "MODERATE"
-            : "NEGLIGIBLE");
+    pw1.put("significance", tempC > 300 ? "HIGH" : tempC > 200 ? "MODERATE" : "NEGLIGIBLE");
     pw1.put("reference", "Monnery et al. (1993); Karan et al. (1999)");
-    pw1.put("note", tempC < 200
-        ? "Below 200 C, uncatalysed gas-phase oxidation half-life exceeds "
-            + "years. This pathway is irrelevant at pipeline conditions."
-        : "Thermal oxidation active. Radical chain mechanism: "
-            + "initiation H2S + O2 -> HSO + OH, then propagation.");
+    pw1.put("note",
+        tempC < 200
+            ? "Below 200 C, uncatalysed gas-phase oxidation half-life exceeds "
+                + "years. This pathway is irrelevant at pipeline conditions."
+            : "Thermal oxidation active. Radical chain mechanism: "
+                + "initiation H2S + O2 -> HSO + OH, then propagation.");
     pathways.add(pw1);
 
     // ====== PATHWAY 2: Claus catalytic reaction (Al2O3 / TiO2) ======
@@ -1540,12 +1584,13 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
     pw2.put("rateConst_Al2O3_1s", kClausAl2O3);
     pw2.put("rateConst_TiO2_1s", kClausTiO2);
     pw2.put("active", clausActive);
-    pw2.put("significance", clausActive ? "HIGH - dominant industrial pathway"
-        : "INACTIVE - no SO2 present");
+    pw2.put("significance",
+        clausActive ? "HIGH - dominant industrial pathway" : "INACTIVE - no SO2 present");
     pw2.put("reference", "Kerr & Jagodzinski (1973); Linde (2006)");
-    pw2.put("note", "Claus reaction requires 2:1 H2S:SO2 stoichiometry. "
-        + "In Claus SRU, conversion reaches 95-97%. "
-        + "Sub-dewpoint Claus achieves 99%+ by condensing S8.");
+    pw2.put("note",
+        "Claus reaction requires 2:1 H2S:SO2 stoichiometry. "
+            + "In Claus SRU, conversion reaches 95-97%. "
+            + "Sub-dewpoint Claus achieves 99%+ by condensing S8.");
     pathways.add(pw2);
     if (clausActive) {
       activeCatalysts.add("Al2O3 / TiO2 (Claus catalyst)");
@@ -1562,21 +1607,20 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
     boolean ironOxideActive = h2sMolFrac > 1e-7; // Any H2S on steel
     Map<String, Object> pw3 = new LinkedHashMap<>();
     pw3.put("pathway", "Iron oxide (Fe2O3) surface catalysis");
-    pw3.put("reaction",
-        "Fe2O3 + 3 H2S -> Fe2S3 + 3 H2O; then 2 Fe2S3 + 3 O2 -> 2 Fe2O3 + 6 S");
+    pw3.put("reaction", "Fe2O3 + 3 H2S -> Fe2S3 + 3 H2O; then 2 Fe2S3 + 3 O2 -> 2 Fe2O3 + 6 S");
     pw3.put("Ea_kJmol", 20.0);
     pw3.put("rateConst_1s", kIronOxide);
     pw3.put("active", ironOxideActive);
-    pw3.put("significance", ironOxideActive
-        ? "MODERATE - always present on carbon steel pipeline walls"
-        : "INACTIVE");
+    pw3.put("significance",
+        ironOxideActive ? "MODERATE - always present on carbon steel pipeline walls" : "INACTIVE");
     pw3.put("reference", "Kohl & Nielsen (1997)");
-    pw3.put("note", "Pipeline rust (Fe2O3/FeOOH) reacts with H2S to form "
-        + "iron sulfide. If any O2 ingress occurs (e.g., compressor seals, "
-        + "instrument tubing), the iron sulfide can be re-oxidised, "
-        + "releasing elemental sulfur directly on the pipe wall. "
-        + "This is a KEY mechanism for sulfur deposits at valves "
-        + "and fittings in sour gas pipelines.");
+    pw3.put("note",
+        "Pipeline rust (Fe2O3/FeOOH) reacts with H2S to form "
+            + "iron sulfide. If any O2 ingress occurs (e.g., compressor seals, "
+            + "instrument tubing), the iron sulfide can be re-oxidised, "
+            + "releasing elemental sulfur directly on the pipe wall. "
+            + "This is a KEY mechanism for sulfur deposits at valves "
+            + "and fittings in sour gas pipelines.");
     pathways.add(pw3);
     if (ironOxideActive) {
       activeCatalysts.add("Fe2O3 / FeOOH (pipeline rust)");
@@ -1591,20 +1635,20 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
     double kFeSCatalysis = 1.0e7 * Math.exp(-eaFeSCatalysis / (rGas * tempK));
     Map<String, Object> pw4 = new LinkedHashMap<>();
     pw4.put("pathway", "FeS surface catalysis");
-    pw4.put("reaction",
-        "FeS + H2S -> FeS2 + H2; catalytic H2S + 1/2 O2 -> S + H2O on FeS surface");
+    pw4.put("reaction", "FeS + H2S -> FeS2 + H2; catalytic H2S + 1/2 O2 -> S + H2O on FeS surface");
     pw4.put("Ea_kJmol", 60.0);
     pw4.put("rateConst_1s", kFeSCatalysis);
     pw4.put("active", ironOxideActive);
-    pw4.put("significance", o2MolFrac > 1e-7 ? "HIGH - FeS + O2 co-presence"
-        : "LOW - no O2 for regeneration cycle");
+    pw4.put("significance",
+        o2MolFrac > 1e-7 ? "HIGH - FeS + O2 co-presence" : "LOW - no O2 for regeneration cycle");
     pw4.put("reference", "Sun & Nesic (2009); Smith & Pacheco (2002)");
-    pw4.put("note", "FeS corrosion scale on pipe wall is a "
-        + "heterogeneous catalyst. Mackinawite (< 60 C) is more reactive "
-        + "than pyrrhotite (> 120 C). With trace O2, the FeS/Fe2O3 redox "
-        + "cycle continuously generates elemental sulfur at the pipe wall. "
-        + "This explains deposits found at valves and bends where "
-        + "turbulence exposes fresh steel and disrupts the FeS layer.");
+    pw4.put("note",
+        "FeS corrosion scale on pipe wall is a "
+            + "heterogeneous catalyst. Mackinawite (< 60 C) is more reactive "
+            + "than pyrrhotite (> 120 C). With trace O2, the FeS/Fe2O3 redox "
+            + "cycle continuously generates elemental sulfur at the pipe wall. "
+            + "This explains deposits found at valves and bends where "
+            + "turbulence exposes fresh steel and disrupts the FeS layer.");
     pathways.add(pw4);
     if (ironOxideActive && o2MolFrac > 1e-7) {
       activeCatalysts.add("FeS (corrosion product) + O2 trace");
@@ -1619,18 +1663,18 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
     boolean liquidRedoxRelevant = waterMolFrac > 0.001 && h2sMolFrac > 1e-6;
     Map<String, Object> pw5 = new LinkedHashMap<>();
     pw5.put("pathway", "Liquid redox (Fe3+ chelate: LO-CAT, SulFerox)");
-    pw5.put("reaction",
-        "2 Fe3+ + H2S -> 2 Fe2+ + S + 2H+; net: H2S + 1/2 O2 -> S + H2O");
+    pw5.put("reaction", "2 Fe3+ + H2S -> 2 Fe2+ + S + 2H+; net: H2S + 1/2 O2 -> S + H2O");
     pw5.put("Ea_kJmol", "Near zero (chelate-mediated)");
     pw5.put("active", liquidRedoxRelevant);
-    pw5.put("significance", liquidRedoxRelevant
-        ? "MODERATE - relevant if iron ions dissolved in produced water"
-        : "INACTIVE - no aqueous phase");
+    pw5.put("significance",
+        liquidRedoxRelevant ? "MODERATE - relevant if iron ions dissolved in produced water"
+            : "INACTIVE - no aqueous phase");
     pw5.put("reference", "GPSA (2004); Dalrymple et al. (1994)");
-    pw5.put("note", "Dissolved Fe2+/Fe3+ ions in produced water or MEG can "
-        + "catalytically convert H2S to elemental sulfur. This is a key "
-        + "mechanism for sulfur found in MEG/water filters on multiphase "
-        + "pipelines. Iron comes from upstream corrosion.");
+    pw5.put("note",
+        "Dissolved Fe2+/Fe3+ ions in produced water or MEG can "
+            + "catalytically convert H2S to elemental sulfur. This is a key "
+            + "mechanism for sulfur found in MEG/water filters on multiphase "
+            + "pipelines. Iron comes from upstream corrosion.");
     pathways.add(pw5);
     if (liquidRedoxRelevant) {
       activeCatalysts.add("Dissolved Fe ions in produced water/MEG");
@@ -1643,8 +1687,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
     // Polysulfide decomposition: Sn2- + H+ -> HS- + (n-1)/8 S8
     // Kamyshny et al. (2007); Giggenbach (1972)
     // This pathway is important in MEG/water systems!
-    boolean aqueousSulfurRelevant = waterMolFrac > 0.001
-        && h2sMolFrac > 1e-5;
+    boolean aqueousSulfurRelevant = waterMolFrac > 0.001 && h2sMolFrac > 1e-5;
     double pKa1H2S = 6.98; // at 25 C
     // Temperature correction: pKa1(T) ~ 6.98 + 0.012*(T-25)
     double pKa1AtTemp = pKa1H2S + 0.012 * (tempC - 25.0);
@@ -1653,9 +1696,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
       // Estimate pH from CO2 partial pressure
       double pCO2Bar = co2MolFrac * pressure;
       // pH ~ 3.5 + log10(1/pCO2) for CO2-buffered water (rough)
-      double estimatedPH = (pCO2Bar > 0.01)
-          ? 3.5 + Math.log10(1.0 / pCO2Bar)
-          : 7.0;
+      double estimatedPH = (pCO2Bar > 0.01) ? 3.5 + Math.log10(1.0 / pCO2Bar) : 7.0;
       estimatedPH = Math.max(3.0, Math.min(estimatedPH, 9.0));
       // HS- fraction = 1 / (1 + 10^(pKa1-pH))
       hsFraction = 1.0 / (1.0 + Math.pow(10.0, pKa1AtTemp - estimatedPH));
@@ -1664,31 +1705,28 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
       catalysisAnalysis.put("pKa1_H2S_atTemp", pKa1AtTemp);
     }
     Map<String, Object> pw6 = new LinkedHashMap<>();
-    pw6.put("pathway",
-        "Polysulfide / HS- aqueous chemistry");
-    pw6.put("reaction",
-        "H2S -> HS- + H+; HS- + (n-1)/8 S8 -> Sn2- + H+ (polysulfide equilibrium)");
+    pw6.put("pathway", "Polysulfide / HS- aqueous chemistry");
+    pw6.put("reaction", "H2S -> HS- + H+; HS- + (n-1)/8 S8 -> Sn2- + H+ (polysulfide equilibrium)");
     pw6.put("pKa1_H2S_25C", pKa1H2S);
     pw6.put("pKa1_H2S_atProcessTemp", pKa1AtTemp);
     pw6.put("HS_minus_fraction", hsFraction);
     pw6.put("active", aqueousSulfurRelevant);
-    pw6.put("significance", aqueousSulfurRelevant && hsFraction > 0.1
-        ? "HIGH - significant HS- available for polysulfide formation"
-        : aqueousSulfurRelevant
-            ? "LOW - pH too low for significant HS-"
-            : "INACTIVE - no aqueous phase");
-    pw6.put("reference",
-        "Kamyshny et al. (2007); Giggenbach (1972); Rickard & Luther (2007)");
-    pw6.put("note", "HS- ions can form polysulfide chains (S2^2-, S3^2-, "
-        + "S4^2-, S5^2-) which are metastable intermediates. These "
-        + "decompose to release elemental sulfur upon pH decrease "
-        + "(e.g., CO2 ingress), temperature change, or oxidation. "
-        + "In MEG/glycol systems, the lower dielectric constant "
-        + "shifts equilibria towards molecular H2S rather than HS-. "
-        + "NeqSim's electrolyte models (SystemElectrolyteCPAstatoil) "
-        + "can model H2S dissociation: H2S + H2O -> HS- + H3O+ "
-        + "(reaction 8 in REACTIONDATA.csv) and HS- + H2O -> S2- + H3O+ "
-        + "(reaction 9).");
+    pw6.put("significance",
+        aqueousSulfurRelevant && hsFraction > 0.1
+            ? "HIGH - significant HS- available for polysulfide formation"
+            : aqueousSulfurRelevant ? "LOW - pH too low for significant HS-"
+                : "INACTIVE - no aqueous phase");
+    pw6.put("reference", "Kamyshny et al. (2007); Giggenbach (1972); Rickard & Luther (2007)");
+    pw6.put("note",
+        "HS- ions can form polysulfide chains (S2^2-, S3^2-, "
+            + "S4^2-, S5^2-) which are metastable intermediates. These "
+            + "decompose to release elemental sulfur upon pH decrease "
+            + "(e.g., CO2 ingress), temperature change, or oxidation. "
+            + "In MEG/glycol systems, the lower dielectric constant "
+            + "shifts equilibria towards molecular H2S rather than HS-. "
+            + "NeqSim's electrolyte models (SystemElectrolyteCPAstatoil) "
+            + "can model H2S dissociation: H2S + H2O -> HS- + H3O+ "
+            + "(reaction 8 in REACTIONDATA.csv) and HS- + H2O -> S2- + H3O+ " + "(reaction 9).");
     pathways.add(pw6);
     if (aqueousSulfurRelevant && hsFraction > 0.01) {
       activeCatalysts.add("HS-/polysulfide aqueous pathway");
@@ -1710,14 +1748,14 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
     pw7.put("rateConst_1s", kCOS);
     pw7.put("COS_molFrac", cosMolFrac);
     pw7.put("active", cosPresent);
-    pw7.put("significance", cosPresent
-        ? "MODERATE - COS hydrolysis adds to total H2S/sulfur budget"
+    pw7.put("significance", cosPresent ? "MODERATE - COS hydrolysis adds to total H2S/sulfur budget"
         : "INACTIVE - no COS detected");
     pw7.put("reference", "George (1974); Ferm (1957)");
-    pw7.put("note", "COS is a common impurity in natural gas (1-100 ppm). "
-        + "It hydrolyses to H2S on Al2O3 molecular sieve beds during "
-        + "gas dehydration, increasing the total sulfur species downstream. "
-        + "This indirect pathway feeds the S8 precipitation mechanism.");
+    pw7.put("note",
+        "COS is a common impurity in natural gas (1-100 ppm). "
+            + "It hydrolyses to H2S on Al2O3 molecular sieve beds during "
+            + "gas dehydration, increasing the total sulfur species downstream. "
+            + "This indirect pathway feeds the S8 precipitation mechanism.");
     pathways.add(pw7);
     if (cosPresent) {
       activeCatalysts.add("COS hydrolysis (molecular sieve beds)");
@@ -1735,15 +1773,14 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
     pw8.put("Ea_kJmol", 25.0);
     pw8.put("rateConst_1s", kAC);
     pw8.put("active", o2MolFrac > 1e-8 && h2sMolFrac > 1e-7);
-    pw8.put("significance", o2MolFrac > 1e-8
-        ? "MODERATE - requires activated carbon bed in process"
+    pw8.put("significance", o2MolFrac > 1e-8 ? "MODERATE - requires activated carbon bed in process"
         : "INACTIVE - requires O2 trace");
     pw8.put("reference", "Bandosz (2002); Abatzoglou & Boivin (2009)");
-    pw8.put("note", "Activated carbon is used in some gas treating "
-        + "applications. The microporous structure adsorbs H2S which "
-        + "then reacts with dissolved O2 on the AC surface. Sulfur "
-        + "deposits within the carbon pores, eventually deactivating "
-        + "the bed.");
+    pw8.put("note",
+        "Activated carbon is used in some gas treating "
+            + "applications. The microporous structure adsorbs H2S which "
+            + "then reacts with dissolved O2 on the AC surface. Sulfur "
+            + "deposits within the carbon pores, eventually deactivating " + "the bed.");
     pathways.add(pw8);
 
     // ====== PATHWAY 9: Mercury-catalysed H2S oxidation ======
@@ -1752,17 +1789,18 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
     // Wilhelm & Bloom (2000)
     Map<String, Object> pw9 = new LinkedHashMap<>();
     pw9.put("pathway", "Mercury-catalysed surface reaction");
-    pw9.put("reaction",
-        "H2S + Hg(surface) -> HgS(surface) + S-radical chain");
+    pw9.put("reaction", "H2S + Hg(surface) -> HgS(surface) + S-radical chain");
     pw9.put("active", false);
-    pw9.put("significance", "POTENTIAL - relevant if reservoir contains Hg. "
-        + "Hg amalgamates with equipment metals and catalyses sulfur "
-        + "deposition on aluminium heat exchangers.");
+    pw9.put("significance",
+        "POTENTIAL - relevant if reservoir contains Hg. "
+            + "Hg amalgamates with equipment metals and catalyses sulfur "
+            + "deposition on aluminium heat exchangers.");
     pw9.put("reference", "Wilhelm & Bloom (2000)");
-    pw9.put("note", "Mercury is present in some SE Asian and North Sea "
-        + "gas fields at 1-1000 ug/Nm3. Hg catalyses sulfur formation "
-        + "and causes liquid metal embrittlement of aluminium "
-        + "brazed heat exchangers in LNG/NGL plants.");
+    pw9.put("note",
+        "Mercury is present in some SE Asian and North Sea "
+            + "gas fields at 1-1000 ug/Nm3. Hg catalyses sulfur formation "
+            + "and causes liquid metal embrittlement of aluminium "
+            + "brazed heat exchangers in LNG/NGL plants.");
     pathways.add(pw9);
 
     catalysisAnalysis.put("pathways", pathways);
@@ -1775,14 +1813,15 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
     // Rich gas effect
     boolean richGas = heavyHCFrac > 0.05;
     compositionEffects.put("richGas_C3plus_pct", heavyHCFrac * 100.0);
-    compositionEffects.put("richGas_effect", richGas
-        ? "Rich gas (C3+ > 5 mol%) increases S8 solubility in gas "
-            + "phase. At JT/dewpoint conditions, liquid HC formation "
-            + "extracts dissolved S8 ('sulfur sponge'). On subsequent "
-            + "flash/separation, S8 exceeds liquid solubility and "
-            + "precipitates heavily at valves and control equipment."
-        : "Lean gas. S8 solubility is lower. Precipitation onset "
-            + "occurs at higher temperature during pipeline cooling.");
+    compositionEffects.put("richGas_effect",
+        richGas
+            ? "Rich gas (C3+ > 5 mol%) increases S8 solubility in gas "
+                + "phase. At JT/dewpoint conditions, liquid HC formation "
+                + "extracts dissolved S8 ('sulfur sponge'). On subsequent "
+                + "flash/separation, S8 exceeds liquid solubility and "
+                + "precipitates heavily at valves and control equipment."
+            : "Lean gas. S8 solubility is lower. Precipitation onset "
+                + "occurs at higher temperature during pipeline cooling.");
 
     // CO2 effect on aqueous sulfur chemistry
     compositionEffects.put("CO2_pct", co2MolFrac * 100.0);
@@ -1790,8 +1829,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
         co2MolFrac > 0.01
             ? "CO2 > 1 mol% acidifies produced water (pH ~ "
                 + String.format("%.1f",
-                    co2MolFrac * pressure > 0.01
-                        ? 3.5 + Math.log10(1.0 / (co2MolFrac * pressure))
+                    co2MolFrac * pressure > 0.01 ? 3.5 + Math.log10(1.0 / (co2MolFrac * pressure))
                         : 7.0)
                 + "). Lower pH shifts H2S equilibrium towards molecular H2S "
                 + "(less HS-). This REDUCES polysulfide formation but "
@@ -1820,19 +1858,20 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
 
     // O2 trace effect (critical catalyst!)
     compositionEffects.put("O2_ppm", o2MolFrac * 1e6);
-    compositionEffects.put("O2_effect", o2MolFrac > 1e-6
-        ? "CRITICAL: O2 detected at " + String.format("%.1f", o2MolFrac * 1e6)
-            + " ppm. Even 1-2 ppm O2 catalyses sulfur formation:"
-            + " (1) Direct: 2H2S + O2 -> 2S + 2H2O (slow gas phase, fast "
-            + "on FeS surface); (2) Indirect: FeS + O2 -> Fe2O3 + S "
-            + "(releases solid sulfur on pipe wall); (3) Regenerative: "
-            + "Fe2O3 + H2S -> FeS + H2O then FeS + O2 -> Fe2O3 + S "
-            + "(continuous catalytic cycle). O2 ingress sources: "
-            + "compressor seals, instrument air leaks, chemical injection "
-            + "lines, pig launcher/receiver operations."
-        : "No O2 detected. Without O2, the Fe2O3/FeS catalytic cycle "
-            + "cannot regenerate. Sulfur deposits are purely from "
-            + "thermodynamic precipitation (solubility decrease).");
+    compositionEffects.put("O2_effect",
+        o2MolFrac > 1e-6
+            ? "CRITICAL: O2 detected at " + String.format("%.1f", o2MolFrac * 1e6)
+                + " ppm. Even 1-2 ppm O2 catalyses sulfur formation:"
+                + " (1) Direct: 2H2S + O2 -> 2S + 2H2O (slow gas phase, fast "
+                + "on FeS surface); (2) Indirect: FeS + O2 -> Fe2O3 + S "
+                + "(releases solid sulfur on pipe wall); (3) Regenerative: "
+                + "Fe2O3 + H2S -> FeS + H2O then FeS + O2 -> Fe2O3 + S "
+                + "(continuous catalytic cycle). O2 ingress sources: "
+                + "compressor seals, instrument air leaks, chemical injection "
+                + "lines, pig launcher/receiver operations."
+            : "No O2 detected. Without O2, the Fe2O3/FeS catalytic cycle "
+                + "cannot regenerate. Sulfur deposits are purely from "
+                + "thermodynamic precipitation (solubility decrease).");
 
     // SO2 co-presence
     compositionEffects.put("SO2_ppm", so2MolFrac * 1e6);
@@ -1856,8 +1895,8 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
       dominantMechanism = "HIGH-TEMPERATURE OXIDATION: Direct thermal "
           + "H2S + O2 reaction dominates above 300 C.";
     } else if (clausActive) {
-      dominantMechanism = "CLAUS REACTION: SO2 + H2S produces sulfur "
-          + "catalytically at moderate temperatures.";
+      dominantMechanism =
+          "CLAUS REACTION: SO2 + H2S produces sulfur " + "catalytically at moderate temperatures.";
     } else if (o2MolFrac > 1e-6 && ironOxideActive) {
       dominantMechanism = "SURFACE CATALYSIS: Fe2O3/FeS redox cycle on "
           + "pipe wall generates sulfur where O2 and H2S coexist. "
@@ -1877,15 +1916,15 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
     // Catalysis enhancement factor vs uncatalysed
     // Compare rate constants: catalysed/uncatalysed
     if (kUncatalysed > 0) {
-      double maxCatalysedK = Math.max(Math.max(kClausAl2O3, kIronOxide),
-          Math.max(kFeSCatalysis, kCOS));
+      double maxCatalysedK =
+          Math.max(Math.max(kClausAl2O3, kIronOxide), Math.max(kFeSCatalysis, kCOS));
       double enhancementFactor = maxCatalysedK / Math.max(kUncatalysed, 1e-30);
       catalysisAnalysis.put("catalyticEnhancementFactor", enhancementFactor);
       catalysisAnalysis.put("catalyticEnhancementNote",
           "Surface catalysts (Fe2O3, FeS, Al2O3) lower Ea from "
               + "160 kJ/mol to 20-35 kJ/mol, increasing reaction rate by "
-              + String.format("%.2e", enhancementFactor) + "x at "
-              + String.format("%.0f", tempC) + " C.");
+              + String.format("%.2e", enhancementFactor) + "x at " + String.format("%.0f", tempC)
+              + " C.");
     }
 
     logger.info("Catalysis analysis completed: {} active pathways at {}C, {}bar",
@@ -1893,10 +1932,9 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   }
 
   /**
-   * Gets the mole fraction of a component from the system, returning 0 if not
-   * present.
+   * Gets the mole fraction of a component from the system, returning 0 if not present.
    *
-   * @param sys  the thermodynamic system
+   * @param sys the thermodynamic system
    * @param name the component name
    * @return mole fraction, or 0 if component not found
    */
@@ -1914,8 +1952,8 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   // ========== Result Accessors ==========
 
   /**
-   * Gets the catalysis analysis results including all evaluated pathways,
-   * composition effects, and dominant mechanism assessment.
+   * Gets the catalysis analysis results including all evaluated pathways, composition effects, and
+   * dominant mechanism assessment.
    *
    * @return map of catalysis analysis data
    */
@@ -1942,8 +1980,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   }
 
   /**
-   * Gets the temperature at which solid sulfur first deposits (in Celsius).
-   * Returns NaN if no solid
+   * Gets the temperature at which solid sulfur first deposits (in Celsius). Returns NaN if no solid
    * deposition occurs in the sweep range.
    *
    * @return onset temperature in Celsius, or NaN
@@ -2017,8 +2054,8 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   }
 
   /**
-   * Gets the kinetic analysis results including reaction rates, FeS corrosion
-   * rate, root cause classification, and wall loss estimates.
+   * Gets the kinetic analysis results including reaction rates, FeS corrosion rate, root cause
+   * classification, and wall loss estimates.
    *
    * @return map of kinetic analysis data
    */
@@ -2029,8 +2066,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   /**
    * Gets the supersaturation and nucleation analysis results.
    *
-   * @return map of supersaturation data including ratio, zone, and nucleation
-   *         rate
+   * @return map of supersaturation data including ratio, zone, and nucleation rate
    */
   public Map<String, Object> getSupersaturationAnalysis() {
     return new LinkedHashMap<>(supersaturationAnalysis);
@@ -2048,8 +2084,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
   /**
    * Gets the blockage risk assessment results.
    *
-   * @return map of blockage risk data including accumulation rate and plugging
-   *         time
+   * @return map of blockage risk data including accumulation rate and plugging time
    */
   public Map<String, Object> getBlockageRiskAssessment() {
     return new LinkedHashMap<>(blockageRiskAssessment);
@@ -2137,6 +2172,10 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
           corrosion.addProperty(entry.getKey(), ((Number) entry.getValue()).doubleValue());
         } else if (entry.getValue() instanceof Boolean) {
           corrosion.addProperty(entry.getKey(), (Boolean) entry.getValue());
+        } else if (entry.getValue() instanceof Map) {
+          @SuppressWarnings("unchecked")
+          Map<String, Object> nestedMap = (Map<String, Object>) entry.getValue();
+          corrosion.add(entry.getKey(), mapToJsonObject(nestedMap));
         } else if (entry.getValue() instanceof List) {
           JsonArray arr = new JsonArray();
           for (Object item : (List<?>) entry.getValue()) {
@@ -2189,15 +2228,15 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
 
     try {
       SystemInterface sys = getInletStream().getThermoSystem();
-      sb.append(String.format("Inlet: %.1f C, %.1f bara%n",
-          sys.getTemperature() - 273.15, sys.getPressure()));
+      sb.append(String.format("Inlet: %.1f C, %.1f bara%n", sys.getTemperature() - 273.15,
+          sys.getPressure()));
     } catch (Exception e) {
       // skip
     }
 
     sb.append("\n--- Sulfur Solubility ---\n");
-    sb.append(String.format("S8 in gas: %.4e mol frac = %.4f mg/Sm3%n",
-        sulfurSolubilityMolFrac, sulfurSolubilityMgSm3));
+    sb.append(String.format("S8 in gas: %.4e mol frac = %.4f mg/Sm3%n", sulfurSolubilityMolFrac,
+        sulfurSolubilityMgSm3));
     sb.append("Solid S8 present: ").append(solidSulfurPresent).append("\n");
     if (solidSulfurPresent) {
       sb.append(String.format("Solid fraction: %.6e%n", solidSulfurFraction));
@@ -2224,8 +2263,8 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
       sb.append("\n--- Kinetic Analysis ---\n");
       Object crRate = kineticAnalysis.get("FeS_corrosionRate_mmYear");
       if (crRate instanceof Number) {
-        sb.append(String.format("FeS corrosion rate: %.2f mm/year%n",
-            ((Number) crRate).doubleValue()));
+        sb.append(
+            String.format("FeS corrosion rate: %.2f mm/year%n", ((Number) crRate).doubleValue()));
       }
       Object morphology = kineticAnalysis.get("FeS_scaleMorphology");
       if (morphology != null) {
@@ -2241,8 +2280,7 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
       sb.append("\n--- Supersaturation Analysis ---\n");
       Object sigma = supersaturationAnalysis.get("supersaturationRatio");
       if (sigma instanceof Number) {
-        sb.append(String.format("Supersaturation ratio: %.4f%n",
-            ((Number) sigma).doubleValue()));
+        sb.append(String.format("Supersaturation ratio: %.4f%n", ((Number) sigma).doubleValue()));
       }
       Object zone = supersaturationAnalysis.get("supersaturationZone");
       if (zone != null) {
@@ -2254,19 +2292,18 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
       sb.append("\n--- Gas vs Liquid S8 Solubility ---\n");
       Object ratio = gasVsLiquidSolubility.get("S8_liquidGasSolubilityRatio");
       if (ratio instanceof Number) {
-        sb.append(String.format("Liquid/gas solubility ratio: %.0fx%n",
-            ((Number) ratio).doubleValue()));
+        sb.append(
+            String.format("Liquid/gas solubility ratio: %.0fx%n", ((Number) ratio).doubleValue()));
       }
     }
 
     if (!blockageRiskAssessment.isEmpty()) {
       sb.append("\n--- Blockage Risk ---\n");
-      sb.append("Risk level: ").append(blockageRiskAssessment.get("blockageRisk"))
-          .append("\n");
+      sb.append("Risk level: ").append(blockageRiskAssessment.get("blockageRisk")).append("\n");
       Object yrs = blockageRiskAssessment.get("yearsToCriticalRestriction");
       if (yrs instanceof Number) {
-        sb.append(String.format("Years to critical restriction: %.1f%n",
-            ((Number) yrs).doubleValue()));
+        sb.append(
+            String.format("Years to critical restriction: %.1f%n", ((Number) yrs).doubleValue()));
       }
       Object pigging = blockageRiskAssessment.get("piggingRecommendation");
       if (pigging != null) {
@@ -2276,14 +2313,13 @@ public class SulfurDepositionAnalyser extends TwoPortEquipment {
 
     if (!corrosionAssessment.isEmpty()) {
       sb.append("\n--- Corrosion Assessment ---\n");
-      sb.append("Sour severity: ").append(corrosionAssessment.get("sourSeverityNACE"))
-          .append("\n");
+      sb.append("Sour severity: ").append(corrosionAssessment.get("sourSeverityNACE")).append("\n");
       sb.append("FeS formation risk: ").append(corrosionAssessment.get("FeS_formationRisk"))
           .append("\n");
       sb.append("SO2 corrosion risk: ").append(corrosionAssessment.get("SO2_corrosionRisk"))
           .append("\n");
-      sb.append("Overall corrosion risk: ")
-          .append(corrosionAssessment.get("overallCorrosionRisk")).append("\n");
+      sb.append("Overall corrosion risk: ").append(corrosionAssessment.get("overallCorrosionRisk"))
+          .append("\n");
     }
 
     if (!catalysisAnalysis.isEmpty()) {

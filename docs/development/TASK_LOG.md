@@ -27,6 +27,12 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-03-09 — Sulfur Deposition Analysis
+**Type:** B (Process)
+**Keywords:** sulfur, S8, deposition, desublimation, Joule-Thomson, JT cooling, backflow, letdown, valve, H2S, Draupner, pressure reduction, solid flash, GibbsReactor, SulfurDepositionAnalyser, preheating, mitigation
+**Solution:** task_solve/2026-03-09_draupner_backflow_letdown_sulfur_deposition_analysis/
+**Notes:** Analysed elemental sulfur deposition in a backflow letdown system (70→15 bara). JT cooling gives ~-20°C outlet (JT coeff 0.46-0.58 K/bar). 100% of Monte Carlo scenarios (N=300) produce solid S8. Primary mechanism is desublimation, not chemical reaction. Air ingress (O2) contributes via H2S oxidation at Gibbs equilibrium. Preheating helps but S8 solid persists even at 100°C preheat with >0.01 ppb S8 feed. Used SRK EOS, ThrottlingValve, TPSolidflash, GibbsReactor, SulfurDepositionAnalyser. 9/9 benchmarks PASS (JT coefficients within 15%, S8 solubility within literature order-of-magnitude). Overall risk: High (5 high, 4 medium, 1 low risks).
+
 ### 2026-03-08 — Mercury Removal in LNG Pre-Treatment — NeqSim Chemisorption Model
 **Type:** B (Process), F (Design)
 **Keywords:** mercury, Hg, removal, guard bed, chemisorption, CuS, sorbent, adsorber, NTU, Ergun, packed bed, LNG, pre-treatment, Snøhvit, HLNG, mass transfer zone, breakthrough, transient, bed lifetime, mechanical design, ASME VIII, cost estimation, CAPEX, OPEX, sorbent replacement, fuel gas strategy
