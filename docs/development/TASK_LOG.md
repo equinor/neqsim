@@ -27,6 +27,12 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-03-09 — H₂S/CO₂ Distribution Between Gas, Oil, Water — EOS Model Comparison
+**Type:** A (Property)
+**Keywords:** H2S, CO2, acid gas, distribution, solubility, water, oil, gas, produced water, brine, salinity, SRK, PR, CPA, electrolyte CPA, chemical reactions, three-phase, salting-out, pH, NACE MR0175, sour service, model selection, decision matrix, Duan Sun, Carroll Mather, Soreide Whitson, Monte Carlo, benchmark
+**Solution:** task_solve/2026-03-09_h2s_co2_distribution_gas_oil_water_produced_water_eos_comparison/
+**Notes:** Systematic comparison of 4 EOS models (SRK, PR, SRK-CPA, Electrolyte-CPA) across 10 scenarios for acid gas partitioning. Critical findings: (1) SRK/PR give near-zero CO₂ solubility in water — unsuitable for acid gas-water systems; (2) Only Electrolyte-CPA correctly predicts three phases (gas/oil/aqueous); (3) chemicalReactionInit() is mandatory for pH, salting-out, and ionic speciation; (4) H₂S shows retrograde solubility (max 60-70°C); (5) Water content is dominant sensitivity (1.42% swing in Monte Carlo). Benchmark: 5/5 tests PASS (13.8-25.0% deviation vs Duan & Sun 2003, Carroll & Mather 1991). Monte Carlo N=300: H₂S aqueous P10/P50/P90 = 0.51/0.92/1.35%. Decision matrix maps 12 applications to recommended models. 6 NIPs proposed (acid gas report, produced water builder, pH calculator, salting-out DB, compliance checker, model advisor).
+
 ### 2026-03-09 — CO2 Corrosion Analyzer with Electrolyte CPA pH
 **Type:** E (Feature)
 **Keywords:** corrosion, CO2, pH, electrolyte CPA, de Waard-Milliams, NORSOK M-506, chemical reaction equilibrium, H3O+, carbonic acid, HCO3-, CCS, pipeline, corrosion rate, scale, FeCO3, inhibitor, brine, NaCl, severity, aqueous speciation
