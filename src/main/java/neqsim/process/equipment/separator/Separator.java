@@ -396,6 +396,25 @@ public class Separator extends ProcessEquipmentBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public List<StreamInterface> getInletStreams() {
+    return inletStreamMixer.getInletStreams();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    List<StreamInterface> outlets = new ArrayList<StreamInterface>(2);
+    if (gasOutStream != null) {
+      outlets.add(gasOutStream);
+    }
+    if (liquidOutStream != null) {
+      outlets.add(liquidOutStream);
+    }
+    return Collections.unmodifiableList(outlets);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public SystemInterface getThermoSystem() {
     return thermoSystem;
   }

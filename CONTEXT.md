@@ -40,11 +40,18 @@ src/main/java/neqsim/
     pipeline/ distillation/ mixer/ splitter/ expander/ reactor/
     well/ reservoir/ membrane/ ejector/ filter/ flare/
     subsea/              SubseaWell, SubseaTree (subsea equipment)
+    MultiPortEquipment   Abstract base for multi-inlet/outlet equipment
+  process/               ProcessElementInterface — unified marker for all elements
+  process/controllerdevice/  ControllerDeviceInterface (extends ProcessElementInterface)
+  process/measurementdevice/ MeasurementDeviceInterface (extends ProcessElementInterface)
   process/mechanicaldesign/
     subsea/              WellMechanicalDesign, WellDesignCalculator,
                          WellCostEstimator, SURFCostEstimator,
                          SubseaCostEstimator (mechanical design & cost)
   process/processmodel/  ProcessSystem — the flowsheet orchestrator
+                         ProcessConnection — typed connection metadata (MATERIAL/ENERGY/SIGNAL)
+    dexpi/               DEXPI P&ID import/export/round-trip, topology resolver,
+                         equipment factory, simulation builder, cycle detection, column support
   pvtsimulation/         CME, CVD, DL, saturation, GOR, swelling, MMP
   standards/             Gas quality, oil quality, sales contracts
   fluidmechanics/        Pipeline hydraulics
@@ -131,6 +138,19 @@ process.add(comp);
 
 process.run();
 System.out.println("Compressor power: " + comp.getPower("kW") + " kW");
+
+// Stream introspection (works on any equipment, no casting needed)
+List<StreamInterface> inlets = sep.getInletStreams();   // [feed]
+List<StreamInterface> outlets = sep.getOutletStreams();  // [gasOut, liquidOut]
+
+// Named controllers (multiple per equipment)
+valve.addController("LC-100", levelController);
+valve.addController("PC-200", pressureController);
+ControllerDeviceInterface lc = valve.getController("LC-100");
+
+// Explicit connections (metadata for DEXPI/diagrams)
+process.connect(feed, sep, feed.getOutletStream(),
+    ProcessConnection.ConnectionType.MATERIAL, "Feed");
 ```
 
 ### Write a Test

@@ -1,6 +1,8 @@
 package neqsim.process.equipment.splitter;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -232,6 +234,24 @@ public class Splitter extends ProcessEquipmentBaseClass
   @Override
   public StreamInterface getSplitStream(int i) {
     return splitStream[i];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    if (inletStream != null) {
+      return Collections.singletonList(inletStream);
+    }
+    return Collections.emptyList();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    if (splitStream != null) {
+      return Collections.unmodifiableList(Arrays.asList(splitStream));
+    }
+    return Collections.emptyList();
   }
 
   /** {@inheritDoc} */

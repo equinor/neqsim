@@ -40,7 +40,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
  * Enhanced integrated safety system example using the complete NeqSim process logic framework.
- * 
+ *
  * <p>
  * This example demonstrates:
  * <ul>
@@ -50,7 +50,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <li>ProcessSafetyScenario for systematic perturbation testing</li>
  * <li>Integration of safety instrumented functions (SIF)</li>
  * </ul>
- * 
+ *
  * <p>
  * Safety architecture:
  * <ul>
@@ -253,6 +253,10 @@ public class ProcessLogicIntegratedExample {
 
   /**
    * Sets up process logic sequences.
+   *
+   * @param system the process system containing equipment
+   * @param instruments the instrumentation setup with sensors and actuators
+   * @return the configured process logic setup
    */
   private static ProcessLogicSetup setupProcessLogic(ProcessSystem system,
       InstrumentationSetup instruments) {
@@ -315,6 +319,8 @@ public class ProcessLogicIntegratedExample {
 
   /**
    * Runs comprehensive test scenarios using the batch execution API.
+   *
+   * @param runner the process scenario runner to execute scenarios
    */
   private static void runTestScenarios(ProcessScenarioRunner runner) {
     // Create test runner with automatic KPI collection
@@ -381,17 +387,17 @@ public class ProcessLogicIntegratedExample {
 
   /**
    * Example: Custom logic class for gradual pressure reduction.
-   * 
+   *
    * <p>
    * This demonstrates how to create custom logic not in the library by implementing the
    * ProcessLogic interface. For production use, move this to a separate file like:
    * neqsim/process/logic/control/GradualPressureReductionLogic.java
    * </p>
-   * 
+   *
    * <p>
    * Usage example:
    * </p>
-   * 
+   *
    * <pre>
    * // Create instance
    * ProcessLogic customLogic =
@@ -399,10 +405,10 @@ public class ProcessLogicIntegratedExample {
    *                                                                              // %
    *         2.0 // step size %
    *     );
-   * 
+   *
    * // Add to runner
    * runner.addLogic(customLogic);
-   * 
+   *
    * // Activate and execute
    * customLogic.activate();
    * while (!customLogic.isComplete()) {
@@ -421,7 +427,7 @@ public class ProcessLogicIntegratedExample {
 
     /**
      * Creates gradual pressure reduction logic.
-     * 
+     *
      * @param name logic name
      * @param valve control valve to adjust
      * @param targetOpening target valve opening (%)
