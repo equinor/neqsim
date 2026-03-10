@@ -237,7 +237,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Document              | Path                                                                                                                       | Description               |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
 | ProcessModel Overview | [docs/process/processmodel/README.md](process/processmodel/)                                                               | Process system management |
-| ProcessSystem         | [docs/process/processmodel/process_system.md](process/processmodel/process_system)                                         | ProcessSystem class       |
+| ProcessSystem         | [docs/process/processmodel/process_system.md](process/processmodel/process_system)                                         | ProcessSystem class (connections, stream introspection, named controllers, unified elements) |
 | ProcessModel          | [docs/process/processmodel/process_model.md](process/processmodel/process_model)                                           | Multi-process models      |
 | ProcessModule         | [docs/process/processmodel/process_module.md](process/processmodel/process_module)                                         | Modular process units     |
 | Graph Simulation      | [docs/process/processmodel/graph_simulation.md](process/processmodel/graph_simulation)                                     | Graph-based simulation    |
@@ -867,7 +867,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Development Overview               | [docs/development/README.md](development/)                                                       | Development overview                                                                  |
 | Contributing Structure             | [docs/development/contributing-structure.md](development/contributing-structure)                 | Contributing guidelines                                                               |
 | Developer Setup                    | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP)                               | Developer setup                                                                       |
-| **Extending Process Equipment**    | [docs/development/extending_process_equipment.md](development/extending_process_equipment)       | **NEW: Add custom separators, reactors, unit operations**                             |
+| **Extending Process Equipment**    | [docs/development/extending_process_equipment.md](development/extending_process_equipment)       | **Add custom equipment, stream introspection, MultiPortEquipment base class**         |
 | **Extending Physical Properties**  | [docs/development/extending_physical_properties.md](development/extending_physical_properties)   | **NEW: Add viscosity, conductivity, diffusivity models**                              |
 | **Extending Thermodynamic Models** | [docs/development/extending_thermodynamic_models.md](development/extending_thermodynamic_models) | **NEW: Add custom equations of state**                                                |
 | **Python Extension Patterns**      | [docs/development/python_extension_patterns.md](development/python_extension_patterns)           | **NEW: Python integration, wrappers, JPype interfaces**                               |

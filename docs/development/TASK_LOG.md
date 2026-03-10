@@ -27,6 +27,12 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-03-10 — Process architecture improvements: stream introspection, named controllers, connections, unified elements
+**Type:** E (Feature)
+**Keywords:** architecture, ProcessElementInterface, ProcessConnection, MultiPortEquipment, getInletStreams, getOutletStreams, controller map, named controllers, runTransient, controller scan, getAllElements, DEXPI, topology, stream introspection, connections
+**Solution:** src/main/java/neqsim/process/ProcessElementInterface.java, src/main/java/neqsim/process/equipment/MultiPortEquipment.java, src/main/java/neqsim/process/processmodel/ProcessConnection.java, src/main/java/neqsim/process/equipment/ProcessEquipmentInterface.java, src/main/java/neqsim/process/equipment/ProcessEquipmentBaseClass.java, src/test/java/neqsim/process/processmodel/ProcessArchitectureTest.java
+**Notes:** Six backward-compatible architecture improvements motivated by DEXPI integration friction. (1) Stream introspection: `getInletStreams()`/`getOutletStreams()` on ProcessEquipmentInterface with default empty lists; overridden in TwoPortEquipment, Separator, ThreePhaseSeparator, Mixer, Splitter — all return unmodifiable lists. (2) Named controller map: `addController(tag, ctrl)`, `getController(tag)`, `getControllers()` on ProcessEquipmentBaseClass alongside legacy `setController()`. (3) ProcessElementInterface: unified marker extending NamedInterface + Serializable; adopted by ProcessEquipmentInterface, MeasurementDeviceInterface, ControllerDeviceInterface. (4) Controller scan in runTransient: explicit loop over system-level controllerDevices after equipment loop. (5) ProcessConnection: typed connection metadata (MATERIAL/ENERGY/SIGNAL) with `ProcessSystem.connect()` and `getConnections()`. (6) MultiPortEquipment: abstract base class for multi-inlet/outlet equipment. 173 tests passing (14 architecture + 42 DEXPI + 117 core process). Documentation updated in process_system.md, extending_process_equipment.md, controllers.md, dynamic_simulation_guide.md, CODE_PATTERNS.md, CONTEXT.md.
+
 ### 2026-03-10 — DEXPI review: multi-outlet nozzles, stream identity matching, namespace support
 **Type:** E (Feature)
 **Keywords:** DEXPI, multi-outlet, nozzle, separator, stream identity, connection, pass-through, namespace, absorber, stripper, column subtype, instrument rename, DexpiStreamUtils, DexpiXmlWriter, DexpiEquipmentFactory, DexpiSimulationBuilder

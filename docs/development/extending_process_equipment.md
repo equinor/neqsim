@@ -29,14 +29,16 @@ This guide explains how to add new process equipment to NeqSim. Whether you're c
 All process equipment in NeqSim follows this inheritance hierarchy:
 
 ```
-SimulationInterface
-    └── SimulationBaseClass
+ProcessElementInterface (marker — extends NamedInterface, Serializable)
+    └── ProcessEquipmentInterface (extends SimulationInterface)
             └── ProcessEquipmentBaseClass (abstract)
                     ├── TwoPortEquipment (single inlet/outlet)
                     │   ├── Heater, Cooler
                     │   ├── Compressor, Pump
                     │   ├── ThrottlingValve
                     │   └── AdiabaticPipe
+                    ├── MultiPortEquipment (abstract — multiple inlets/outlets)
+                    │   └── Your Custom Multi-Port Equipment
                     ├── Separator (multiple outlets)
                     │   ├── ThreePhaseSeparator
                     │   └── GasScrubber
@@ -48,8 +50,11 @@ SimulationInterface
 
 | Interface | Purpose |
 |-----------|---------|
-| `ProcessEquipmentInterface` | Core interface all equipment must implement |
+| `ProcessElementInterface` | Common marker for all process system elements (equipment, controllers, sensors) |
+| `ProcessEquipmentInterface` | Core interface all equipment must implement — extends `ProcessElementInterface` |
 | `SimulationInterface` | Defines `run()`, `getName()`, `solved()` |
+| `ControllerDeviceInterface` | Feedback controllers — also extends `ProcessElementInterface` |
+| `MeasurementDeviceInterface` | Sensors and transmitters — also extends `ProcessElementInterface` |
 | `CapacityConstrainedEquipment` | Optional: for capacity-constrained equipment |
 | `StateVectorProvider` | Optional: for ML/digital twin integration |
 
@@ -84,32 +89,32 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * StaticMixer performs inline mixing of a main stream with an injection stream.
- * 
+ *
  * @author YourName
  * @version 1.0
  */
 public class StaticMixer extends ProcessEquipmentBaseClass {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
-    
+
     /** Main process stream. */
     private StreamInterface mainStream;
-    
+
     /** Injection stream (chemical, water, etc.). */
     private StreamInterface injectionStream;
-    
+
     /** Mixed outlet stream. */
     private StreamInterface outletStream;
-    
+
     /** Internal thermodynamic system for calculations. */
     private SystemInterface thermoSystem;
-    
+
     /** Pressure drop across mixer in bar. */
     private double pressureDrop = 0.0;
-    
+
     /** Mixing efficiency (0-1). */
     private double mixingEfficiency = 1.0;
-    
+
     /**
      * Constructor for StaticMixer.
      *
@@ -118,7 +123,7 @@ public class StaticMixer extends ProcessEquipmentBaseClass {
     public StaticMixer(String name) {
         super(name);
     }
-    
+
     /**
      * Constructor for StaticMixer with main stream.
      *
@@ -143,7 +148,7 @@ public class StaticMixer extends ProcessEquipmentBaseClass {
     public void setMainStream(StreamInterface mainStream) {
         this.mainStream = mainStream;
     }
-    
+
     /**
      * Sets the injection stream.
      *
@@ -152,7 +157,7 @@ public class StaticMixer extends ProcessEquipmentBaseClass {
     public void setInjectionStream(StreamInterface injectionStream) {
         this.injectionStream = injectionStream;
     }
-    
+
     /**
      * Gets the outlet stream.
      *
@@ -161,7 +166,7 @@ public class StaticMixer extends ProcessEquipmentBaseClass {
     public StreamInterface getOutletStream() {
         return outletStream;
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public SystemInterface getThermoSystem() {
@@ -185,19 +190,19 @@ The `run(UUID id)` method is where all calculations happen. This method is calle
         if (mainStream == null) {
             throw new RuntimeException("Main stream not set for " + getName());
         }
-        
+
         // Step 2: Clone inlet fluid(s) to avoid modifying upstream
         thermoSystem = mainStream.getThermoSystem().clone();
-        
+
         // Step 3: Mix streams if injection is present
         if (injectionStream != null) {
             SystemInterface injectionFluid = injectionStream.getThermoSystem();
-            
+
             // Add components from injection stream
             for (int i = 0; i < injectionFluid.getNumberOfComponents(); i++) {
                 String compName = injectionFluid.getComponent(i).getName();
                 double moles = injectionFluid.getComponent(i).getNumberOfmoles();
-                
+
                 if (thermoSystem.hasComponent(compName)) {
                     thermoSystem.addComponent(compName, moles * mixingEfficiency);
                 } else {
@@ -205,17 +210,17 @@ The `run(UUID id)` method is where all calculations happen. This method is calle
                 }
             }
         }
-        
+
         // Step 4: Apply pressure drop
         if (pressureDrop > 0) {
             thermoSystem.setPressure(thermoSystem.getPressure() - pressureDrop);
         }
-        
+
         // Step 5: Run thermodynamic flash
         ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
         ops.TPflash();
         thermoSystem.initProperties();
-        
+
         // Step 6: Create/update outlet stream
         if (outletStream == null) {
             outletStream = new Stream("Mixed Stream", thermoSystem);
@@ -223,7 +228,7 @@ The `run(UUID id)` method is where all calculations happen. This method is calle
             outletStream.setThermoSystem(thermoSystem);
         }
         outletStream.run(id);
-        
+
         // Step 7: Mark as solved
         setCalculationIdentifier(id);
     }
@@ -238,25 +243,25 @@ For equipment with multiple outlets (like separators):
     @Override
     public void run(UUID id) {
         // ... inlet processing ...
-        
+
         // Run flash calculation
         ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
         ops.TPflash();
         thermoSystem.initProperties();
-        
+
         // Create phase-specific outlet streams
         if (thermoSystem.hasPhaseType("gas")) {
             gasSystem = thermoSystem.phaseToSystem("gas");
             gasOutStream.setThermoSystem(gasSystem);
             gasOutStream.run(id);
         }
-        
+
         if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
             liquidSystem = thermoSystem.phaseToSystem(1); // liquid phase
             liquidOutStream.setThermoSystem(liquidSystem);
             liquidOutStream.run(id);
         }
-        
+
         setCalculationIdentifier(id);
     }
 ```
@@ -305,6 +310,59 @@ public StreamInterface getLiquidOutStream() {
 }
 ```
 
+### Stream Introspection (getInletStreams / getOutletStreams)
+
+Every equipment class should override `getInletStreams()` and `getOutletStreams()` so that generic tools (DEXPI export, graph builders, topology analysis) can discover the process topology without casting to specific equipment types.
+
+**`TwoPortEquipment`** already provides default overrides returning single-element lists, so subclasses like Heater, Compressor, and Valve get this for free. Custom equipment with multiple ports must override explicitly:
+
+```java
+@Override
+public List<StreamInterface> getInletStreams() {
+    // For equipment with an internal Mixer, delegate:
+    return inletMixer.getInletStreams();
+}
+
+@Override
+public List<StreamInterface> getOutletStreams() {
+    List<StreamInterface> outlets = new ArrayList<>(2);
+    if (gasOutStream != null) {
+        outlets.add(gasOutStream);
+    }
+    if (liquidOutStream != null) {
+        outlets.add(liquidOutStream);
+    }
+    return Collections.unmodifiableList(outlets);
+}
+```
+
+The returned lists must be **unmodifiable**. Returning `Collections.emptyList()` is correct when a stream is not yet connected.
+
+### MultiPortEquipment Base Class
+
+For new equipment with arbitrary numbers of inlets and outlets, extend `MultiPortEquipment` instead of `ProcessEquipmentBaseClass`:
+
+```java
+import neqsim.process.equipment.MultiPortEquipment;
+
+public class HeatExchangerNetwork extends MultiPortEquipment {
+    public HeatExchangerNetwork(String name) {
+        super(name);
+    }
+
+    public void addHotStream(StreamInterface stream) {
+        addInletStream(stream);  // inherited from MultiPortEquipment
+    }
+
+    public void addColdStream(StreamInterface stream) {
+        addInletStream(stream);  // inherited
+    }
+    // getInletStreams() and getOutletStreams() are already implemented
+}
+```
+
+`MultiPortEquipment` manages `inletStreams` and `outletStreams` lists and returns unmodifiable views from the getter methods. Existing equipment classes (Separator, Mixer, Splitter) were not refactored to extend this class to preserve backward compatibility.
+
 ### Using in ProcessSystem
 
 ```java
@@ -340,30 +398,30 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * Mechanical design for static mixer equipment.
  */
 public class StaticMixerMechanicalDesign extends MechanicalDesign {
-    
+
     private double pipeDiameter = 0.1; // meters
     private int numberOfElements = 6;
     private String materialGrade = "316SS";
-    
+
     public StaticMixerMechanicalDesign(ProcessEquipmentInterface equipment) {
         super(equipment);
     }
-    
+
     @Override
     public void calcDesign() {
         // Calculate design parameters based on process conditions
         double flowRate = getProcessEquipment().getFluid()
             .getFlowRate("m3/hr");
-        
+
         // Size based on velocity (typical 1-3 m/s)
         double velocity = 2.0; // m/s target
         double area = flowRate / 3600.0 / velocity;
         pipeDiameter = Math.sqrt(4.0 * area / Math.PI);
-        
+
         // Number of elements based on mixing requirements
         numberOfElements = (int) Math.ceil(pipeDiameter * 20);
     }
-    
+
     // Getters and setters...
 }
 ```
@@ -372,14 +430,14 @@ public class StaticMixerMechanicalDesign extends MechanicalDesign {
 
 ```java
 public class StaticMixer extends ProcessEquipmentBaseClass {
-    
+
     private StaticMixerMechanicalDesign mechanicalDesign;
-    
+
     @Override
     public void initMechanicalDesign() {
         mechanicalDesign = new StaticMixerMechanicalDesign(this);
     }
-    
+
     @Override
     public StaticMixerMechanicalDesign getMechanicalDesign() {
         if (mechanicalDesign == null) {
@@ -400,7 +458,7 @@ Implement `validateSetup()` to catch configuration errors early:
 import neqsim.util.validation.ValidationResult;
 
 public class StaticMixer extends ProcessEquipmentBaseClass {
-    
+
     /**
      * Validates equipment setup before running.
      *
@@ -409,27 +467,27 @@ public class StaticMixer extends ProcessEquipmentBaseClass {
     @Override
     public ValidationResult validateSetup() {
         ValidationResult result = new ValidationResult(getName());
-        
+
         // Check required inputs
         if (mainStream == null) {
-            result.addError("mainStream", 
+            result.addError("mainStream",
                 "Main stream not connected",
                 "Call setMainStream() with a valid stream");
         }
-        
+
         // Check parameter ranges
         if (pressureDrop < 0) {
             result.addError("pressureDrop",
                 "Pressure drop cannot be negative: " + pressureDrop,
                 "Set pressureDrop to a positive value or zero");
         }
-        
+
         if (mixingEfficiency < 0 || mixingEfficiency > 1) {
             result.addWarning("mixingEfficiency",
                 "Efficiency outside 0-1 range: " + mixingEfficiency,
                 "Consider setting efficiency between 0 and 1");
         }
-        
+
         return result;
     }
 }
@@ -457,7 +515,7 @@ import neqsim.util.validation.ValidationResult;
 
 /**
  * StaticMixer performs inline mixing of a main stream with an injection stream.
- * 
+ *
  * <p>Static mixers use fixed internal elements to create turbulent mixing without
  * moving parts. This class models the thermodynamic mixing and pressure drop.</p>
  *
@@ -467,19 +525,19 @@ import neqsim.util.validation.ValidationResult;
 public class StaticMixer extends ProcessEquipmentBaseClass {
     /** Serialization version UID. */
     private static final long serialVersionUID = 1000;
-    
+
     /** Logger object for class. */
     static Logger logger = LogManager.getLogger(StaticMixer.class);
-    
+
     private StreamInterface mainStream;
     private StreamInterface injectionStream;
     private StreamInterface outletStream;
     private SystemInterface thermoSystem;
-    
+
     private double pressureDrop = 0.0;
     private double mixingEfficiency = 1.0;
     private StaticMixerMechanicalDesign mechanicalDesign;
-    
+
     /**
      * Constructor for StaticMixer.
      *
@@ -488,7 +546,7 @@ public class StaticMixer extends ProcessEquipmentBaseClass {
     public StaticMixer(String name) {
         super(name);
     }
-    
+
     /**
      * Constructor for StaticMixer with main stream.
      *
@@ -499,7 +557,7 @@ public class StaticMixer extends ProcessEquipmentBaseClass {
         this(name);
         setMainStream(mainStream);
     }
-    
+
     /**
      * Sets the main process stream.
      *
@@ -508,7 +566,7 @@ public class StaticMixer extends ProcessEquipmentBaseClass {
     public void setMainStream(StreamInterface mainStream) {
         this.mainStream = mainStream;
     }
-    
+
     /**
      * Sets the injection stream.
      *
@@ -517,7 +575,7 @@ public class StaticMixer extends ProcessEquipmentBaseClass {
     public void setInjectionStream(StreamInterface injectionStream) {
         this.injectionStream = injectionStream;
     }
-    
+
     /**
      * Gets the outlet stream.
      *
@@ -526,7 +584,7 @@ public class StaticMixer extends ProcessEquipmentBaseClass {
     public StreamInterface getOutletStream() {
         return outletStream;
     }
-    
+
     /**
      * Sets the pressure drop across the mixer.
      *
@@ -535,7 +593,7 @@ public class StaticMixer extends ProcessEquipmentBaseClass {
     public void setPressureDrop(double pressureDrop) {
         this.pressureDrop = pressureDrop;
     }
-    
+
     /**
      * Gets the pressure drop across the mixer.
      *
@@ -544,7 +602,7 @@ public class StaticMixer extends ProcessEquipmentBaseClass {
     public double getPressureDrop() {
         return pressureDrop;
     }
-    
+
     /**
      * Sets the mixing efficiency.
      *
@@ -553,19 +611,19 @@ public class StaticMixer extends ProcessEquipmentBaseClass {
     public void setMixingEfficiency(double efficiency) {
         this.mixingEfficiency = efficiency;
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public SystemInterface getThermoSystem() {
         return thermoSystem;
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public void initMechanicalDesign() {
         mechanicalDesign = new StaticMixerMechanicalDesign(this);
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public StaticMixerMechanicalDesign getMechanicalDesign() {
@@ -574,68 +632,68 @@ public class StaticMixer extends ProcessEquipmentBaseClass {
         }
         return mechanicalDesign;
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public ValidationResult validateSetup() {
         ValidationResult result = new ValidationResult(getName());
-        
+
         if (mainStream == null) {
-            result.addError("mainStream", 
+            result.addError("mainStream",
                 "Main stream not connected",
                 "Call setMainStream() with a valid stream");
         }
-        
+
         if (pressureDrop < 0) {
             result.addError("pressureDrop",
                 "Pressure drop cannot be negative: " + pressureDrop,
                 "Set pressureDrop to a positive value or zero");
         }
-        
+
         if (mixingEfficiency < 0 || mixingEfficiency > 1) {
             result.addWarning("mixingEfficiency",
                 "Efficiency outside 0-1 range: " + mixingEfficiency,
                 "Consider setting efficiency between 0 and 1");
         }
-        
+
         return result;
     }
-    
+
     /** {@inheritDoc} */
     @Override
     public void run(UUID id) {
         // Validate setup
         ValidationResult validation = validateSetup();
         if (validation.hasErrors()) {
-            throw new RuntimeException("Validation failed: " + 
+            throw new RuntimeException("Validation failed: " +
                 validation.getErrors().get(0).getMessage());
         }
-        
+
         // Clone inlet fluid
         thermoSystem = mainStream.getThermoSystem().clone();
-        
+
         // Mix streams if injection is present
         if (injectionStream != null) {
             SystemInterface injectionFluid = injectionStream.getThermoSystem();
-            
+
             for (int i = 0; i < injectionFluid.getNumberOfComponents(); i++) {
                 String compName = injectionFluid.getComponent(i).getName();
                 double moles = injectionFluid.getComponent(i).getNumberOfmoles();
-                
+
                 thermoSystem.addComponent(compName, moles * mixingEfficiency);
             }
         }
-        
+
         // Apply pressure drop
         if (pressureDrop > 0) {
             thermoSystem.setPressure(thermoSystem.getPressure() - pressureDrop);
         }
-        
+
         // Run thermodynamic flash
         ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
         ops.TPflash();
         thermoSystem.initProperties();
-        
+
         // Create/update outlet stream
         if (outletStream == null) {
             outletStream = new Stream(getName() + " outlet", thermoSystem);
@@ -643,7 +701,7 @@ public class StaticMixer extends ProcessEquipmentBaseClass {
             outletStream.setThermoSystem(thermoSystem);
         }
         outletStream.run(id);
-        
+
         setCalculationIdentifier(id);
     }
 }
@@ -666,59 +724,59 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class StaticMixerTest {
-    
+
     private SystemSrkEos mainFluid;
     private SystemSrkEos injectionFluid;
-    
+
     @BeforeEach
     void setUp() {
         mainFluid = new SystemSrkEos(298.15, 50.0);
         mainFluid.addComponent("methane", 0.9);
         mainFluid.addComponent("ethane", 0.1);
         mainFluid.setMixingRule("classic");
-        
+
         injectionFluid = new SystemSrkEos(298.15, 50.0);
         injectionFluid.addComponent("MEG", 1.0);
         injectionFluid.setMixingRule("classic");
     }
-    
+
     @Test
     void testBasicMixing() {
         ProcessSystem process = new ProcessSystem();
-        
+
         Stream mainStream = new Stream("Main", mainFluid);
         mainStream.setFlowRate(1000.0, "kg/hr");
         process.add(mainStream);
-        
+
         Stream injection = new Stream("Injection", injectionFluid);
         injection.setFlowRate(10.0, "kg/hr");
         process.add(injection);
-        
+
         StaticMixer mixer = new StaticMixer("Chemical Injection", mainStream);
         mixer.setInjectionStream(injection);
         mixer.setPressureDrop(0.5);
         process.add(mixer);
-        
+
         process.run();
-        
+
         // Verify outlet contains all components
         assertTrue(mixer.getOutletStream().getFluid().hasComponent("MEG"));
         assertTrue(mixer.getOutletStream().getFluid().hasComponent("methane"));
-        
+
         // Verify pressure drop
         assertEquals(49.5, mixer.getOutletStream().getPressure(), 0.01);
-        
+
         // Verify mass balance
         double inMass = mainStream.getFlowRate("kg/hr") + injection.getFlowRate("kg/hr");
         double outMass = mixer.getOutletStream().getFlowRate("kg/hr");
         assertEquals(inMass, outMass, 0.1);
     }
-    
+
     @Test
     void testValidation() {
         StaticMixer mixer = new StaticMixer("Test");
         // No main stream set
-        
+
         var result = mixer.validateSetup();
         assertTrue(result.hasErrors());
     }
@@ -790,11 +848,11 @@ class CustomObjective:
     def evaluate(self, process):
         mixer = process.getUnit("Chemical Injection")
         return mixer.getPressureDrop()
-    
+
     @JOverride
     def getName(self):
         return "Mixer Pressure Drop"
-    
+
     @JOverride
     def getDirection(self):
         return jneqsim.process.util.optimizer.ObjectiveFunction.Direction.MINIMIZE
@@ -859,16 +917,16 @@ import org.apache.logging.log4j.Logger;
 
 public class StaticMixer extends ProcessEquipmentBaseClass {
     static Logger logger = LogManager.getLogger(StaticMixer.class);
-    
+
     @Override
     public void run(UUID id) {
         logger.debug("Running {} with inlet T={} K, P={} bar",
             getName(),
             mainStream.getTemperature(),
             mainStream.getPressure());
-        
+
         // ... calculations ...
-        
+
         logger.debug("{} completed: outlet T={} K, P={} bar",
             getName(),
             outletStream.getTemperature(),
@@ -882,7 +940,7 @@ public class StaticMixer extends ProcessEquipmentBaseClass {
 ```java
 /**
  * Calculates the outlet conditions after mixing.
- * 
+ *
  * <p>The mixing process is adiabatic unless heat input is specified.
  * Pressure drop is applied after mixing.</p>
  *

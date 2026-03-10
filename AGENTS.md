@@ -310,6 +310,45 @@ process.add(sep);
 process.run();
 ```
 
+### Stream introspection
+
+Every `ProcessEquipmentInterface` exposes its connected streams:
+
+```java
+List<StreamInterface> inlets = sep.getInletStreams();   // [feed]
+List<StreamInterface> outlets = sep.getOutletStreams();  // [gasOut, liquidOut]
+```
+
+### Named controllers
+
+Attach multiple controllers to any equipment by tag name:
+
+```java
+valve.addController("LC-100", levelController);
+valve.addController("PC-200", pressureController);
+ControllerDeviceInterface lc = valve.getController("LC-100");
+Map<String, ControllerDeviceInterface> all = valve.getControllers();
+```
+
+### Explicit connections
+
+Record typed connection metadata on a `ProcessSystem`:
+
+```java
+process.connect(feed, sep,
+    ProcessConnection.ConnectionType.MATERIAL, "Feed");
+List<ProcessConnection> conns = process.getConnections();
+```
+
+### Unified element query
+
+`ProcessElementInterface` is the common supertype for equipment, controllers,
+and measurement devices. Query all elements at once:
+
+```java
+List<ProcessElementInterface> all = process.getAllElements();
+```
+
 ### Python (Jupyter) fluid
 
 ```python
@@ -353,6 +392,8 @@ NORSOK D-010 (design factors, barriers), API RP 90 (annular pressure).
 |------|---------|
 | `src/main/java/neqsim/` | Main source (thermo, process, pvt, standards) |
 | `src/test/java/neqsim/` | JUnit 5 tests (mirrors src structure) |
+| `src/main/java/neqsim/process/equipment/` | ProcessEquipmentInterface, MultiPortEquipment, stream introspection |
+| `src/main/java/neqsim/process/processmodel/` | ProcessSystem, ProcessConnection, ProcessElementInterface |
 | `src/main/java/neqsim/process/mechanicaldesign/subsea/` | Well & SURF design, cost estimation |
 | `src/main/java/neqsim/process/equipment/subsea/` | SubseaWell, SubseaTree equipment |
 | `examples/notebooks/` | Jupyter notebook examples |
