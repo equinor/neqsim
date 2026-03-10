@@ -3,6 +3,7 @@ package neqsim.process.equipment.pipeline;
 import java.util.UUID;
 import com.google.gson.GsonBuilder;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
+import neqsim.process.electricaldesign.pipeline.PipelineElectricalDesign;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -73,6 +74,7 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
   // Override with local insideDiameter for backward compatibility
   double insideDiameter = 0.1;
   double pipeWallRoughnessLocal = 1e-5;
+  PipelineElectricalDesign electricalDesign;
 
   /**
    * Constructor for AdiabaticPipe.
@@ -94,6 +96,21 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
     this(name);
     this.inStream = inStream;
     outStream = inStream.clone();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public PipelineElectricalDesign getElectricalDesign() {
+    if (electricalDesign == null) {
+      initElectricalDesign();
+    }
+    return electricalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initElectricalDesign() {
+    electricalDesign = new PipelineElectricalDesign(this);
   }
 
   /** {@inheritDoc} */
@@ -225,7 +242,7 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
    * <p>
    * The effective length includes both physical pipe length and equivalent length from fittings:
    * </p>
-   * 
+   *
    * <pre>
    * L_eff = L_physical + Σ(L/D)_i × D
    * </pre>

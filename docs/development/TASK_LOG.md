@@ -149,6 +149,22 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 ---
 
+### 2026-03-10 — Electrical design: equipment-specific classes and system integration
+**Type:** E (Feature)
+**Keywords:** electrical design, separator, heater, cooler, pipeline, heat tracing, cathodic protection, system electrical design, load list, transformer sizing, emergency generator
+**Solution:** `src/main/java/neqsim/process/electricaldesign/separator/SeparatorElectricalDesign.java`, `heatexchanger/HeatExchangerElectricalDesign.java`, `pipeline/PipelineElectricalDesign.java`, `system/SystemElectricalDesign.java`
+**Notes:**
+- Implemented Phases 2-3 of ELECTRICAL_DESIGN_PROPOSAL.md
+- SeparatorElectricalDesign: models control valves, instrumentation, lighting, optional heat tracing (no shaft power)
+- HeatExchangerElectricalDesign: auto-detects type (ELECTRIC_HEATER / AIR_COOLER / SHELL_AND_TUBE) from equipment class
+- PipelineElectricalDesign: heat tracing (W/m × length), cathodic protection, instrumentation
+- SystemElectricalDesign: plant-wide aggregation with utility/UPS loads, main transformer and emergency generator sizing
+- Integrated into Separator (eager init), Heater/Cooler (lazy init), AdiabaticPipe and PipeBeggsAndBrills (lazy init)
+- Added ProcessSystem.getSystemElectricalDesign() for one-call plant electrical summary
+- 24 unit tests all passing in ElectricalDesignTest
+
+---
+
 <!--
 TEMPLATE — copy this block for each new entry:
 

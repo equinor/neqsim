@@ -708,50 +708,50 @@ print(ed.toJson())
 
 ## 11. Implementation Roadmap
 
-### Phase 1 — Foundation (Priority: High)
+### Phase 1 — Foundation (Priority: High) ✅ IMPLEMENTED
 
-| Task | Description |
-|------|-------------|
-| 1.1 | Create `ElectricalDesign` base class with power/voltage/PF fields |
-| 1.2 | Create `ElectricalMotor` component with IEC sizing logic |
-| 1.3 | Create `VariableFrequencyDrive` component |
-| 1.4 | Create `ElectricalCable` component with voltage drop calc |
-| 1.5 | Add `getElectricalDesign()` / `initElectricalDesign()` to interface/base |
-| 1.6 | Implement `CompressorElectricalDesign` (most valuable use case) |
-| 1.7 | CSV data files for motor frames and cable ampacity |
-| 1.8 | Unit tests for all Phase 1 classes |
+| Task | Description | Status |
+|------|-------------|--------|
+| 1.1 | Create `ElectricalDesign` base class with power/voltage/PF fields | ✅ Done |
+| 1.2 | Create `ElectricalMotor` component with IEC sizing logic | ✅ Done |
+| 1.3 | Create `VariableFrequencyDrive` component | ✅ Done |
+| 1.4 | Create `ElectricalCable` component with voltage drop calc | ✅ Done |
+| 1.5 | Add `getElectricalDesign()` / `initElectricalDesign()` to interface/base | ✅ Done |
+| 1.6 | Implement `CompressorElectricalDesign` (most valuable use case) | ✅ Done |
+| 1.7 | CSV data files for motor frames and cable ampacity | ✅ Done (embedded in Java) |
+| 1.8 | Unit tests for all Phase 1 classes | ✅ Done |
 
-### Phase 2 — Equipment Coverage
+### Phase 2 — Equipment Coverage ✅ IMPLEMENTED
 
-| Task | Description |
-|------|-------------|
-| 2.1 | `PumpElectricalDesign` |
-| 2.2 | `SeparatorElectricalDesign` (actuated valves, level instruments) |
-| 2.3 | `HeatExchangerElectricalDesign` (electric heaters, fans for air coolers) |
-| 2.4 | `PipelineElectricalDesign` (heat tracing, cathodic protection) |
-| 2.5 | `Transformer` component |
-| 2.6 | `Switchgear` component |
+| Task | Description | Status |
+|------|-------------|--------|
+| 2.1 | `PumpElectricalDesign` | ✅ Done |
+| 2.2 | `SeparatorElectricalDesign` (actuated valves, level instruments) | ✅ Done |
+| 2.3 | `HeatExchangerElectricalDesign` (electric heaters, fans for air coolers) | ✅ Done |
+| 2.4 | `PipelineElectricalDesign` (heat tracing, cathodic protection) | ✅ Done |
+| 2.5 | `Transformer` component | ✅ Done |
+| 2.6 | `Switchgear` component | ✅ Done |
 
-### Phase 3 — System Integration
+### Phase 3 — System Integration ✅ IMPLEMENTED
 
-| Task | Description |
-|------|-------------|
-| 3.1 | `ElectricalLoadList` and `LoadItem` classes |
-| 3.2 | `ProcessSystem.getElectricalLoadList()` |
-| 3.3 | `SystemElectricalDesign` for plant-wide summary |
-| 3.4 | Power balance report generation |
-| 3.5 | One-line diagram data export (JSON/XML) |
+| Task | Description | Status |
+|------|-------------|--------|
+| 3.1 | `ElectricalLoadList` and `LoadItem` classes | ✅ Done |
+| 3.2 | `ProcessSystem.getElectricalLoadList()` | ✅ Done |
+| 3.3 | `SystemElectricalDesign` for plant-wide summary | ✅ Done |
+| 3.4 | Power balance report generation | Planned |
+| 3.5 | One-line diagram data export (JSON/XML) | Planned |
 
-### Phase 4 — Advanced Features
+### Phase 4 — Advanced Features (Partially Implemented)
 
-| Task | Description |
-|------|-------------|
-| 4.1 | `HazardousAreaClassification` (ATEX/IECEx zone mapping) |
-| 4.2 | Harmonic analysis for VFD installations |
-| 4.3 | Short-circuit current calculations |
-| 4.4 | `ElectricalHeatTracing` for pipeline insulation |
-| 4.5 | Integration with cost estimation framework |
-| 4.6 | Subsea power distribution (power umbilicals, step-out distance) |
+| Task | Description | Status |
+|------|-------------|--------|
+| 4.1 | `HazardousAreaClassification` (ATEX/IECEx zone mapping) | ✅ Done |
+| 4.2 | Harmonic analysis for VFD installations | Planned |
+| 4.3 | Short-circuit current calculations | Planned |
+| 4.4 | `ElectricalHeatTracing` for pipeline insulation | ✅ Done (via `PipelineElectricalDesign`) |
+| 4.5 | Integration with cost estimation framework | Planned |
+| 4.6 | Subsea power distribution (power umbilicals, step-out distance) | Planned |
 
 ---
 
@@ -766,6 +766,9 @@ print(ed.toJson())
 | `ProcessSystem` | Add `initAllElectricalDesigns()`, `runAllElectricalDesigns()`, `getElectricalLoadList()` | Low — additive only |
 | `Compressor` | Override `initElectricalDesign()`, `getElectricalDesign()` | Low — follows existing pattern |
 | `Pump` | Same override pattern | Low |
+| `Separator` | Override `initElectricalDesign()`, `getElectricalDesign()` — eager init in constructor | Low |
+| `Heater` / `Cooler` | Override with lazy init (null-check in getter) | Low — Cooler inherits from Heater |
+| `AdiabaticPipe` / `PipeBeggsAndBrills` | Override with lazy init (null-check in getter) | Low |
 
 ### What stays the same
 

@@ -32,6 +32,10 @@ Equipment-specific subclasses provide additional detail:
 |-----------|------------------------|------------------|
 | Compressor | `CompressorElectricalDesign` | Auxiliary loads (lube oil, seal gas, cooling), VFD auto-detection |
 | Pump | `PumpElectricalDesign` | Auto voltage selection, single-phase for small pumps |
+| Separator | `SeparatorElectricalDesign` | Control valve actuators, instrumentation, lighting, optional heat tracing |
+| Heater / Cooler | `HeatExchangerElectricalDesign` | Auto-detects type: electric heater (full duty), air cooler (fan motors), shell-and-tube (auxiliary only) |
+| Pipeline | `PipelineElectricalDesign` | Electrical heat tracing (W/m × length), cathodic protection, instrumentation |
+| System (plant-wide) | `SystemElectricalDesign` | Aggregates all equipment loads, adds utility/UPS, sizes main transformer and emergency generator |
 
 ## Quick Start
 
@@ -635,5 +639,123 @@ System.out.println("Total with auxiliaries: " + ced.getTotalConnectedLoadKW() + 
 | `HazardousAreaClassification` | `process.electricaldesign.components` | Zone / Ex marking |
 | `CompressorElectricalDesign` | `process.electricaldesign.compressor` | Compressor-specific design |
 | `PumpElectricalDesign` | `process.electricaldesign.pump` | Pump-specific design |
+| `SeparatorElectricalDesign` | `process.electricaldesign.separator` | Separator auxiliary loads (valves, instruments, lighting, heat tracing) |
+| `HeatExchangerElectricalDesign` | `process.electricaldesign.heatexchanger` | Heat exchanger design (electric heater / air cooler / shell-and-tube) |
+| `PipelineElectricalDesign` | `process.electricaldesign.pipeline` | Pipeline heat tracing, cathodic protection, instrumentation |
+| `SystemElectricalDesign` | `process.electricaldesign.system` | Plant-wide aggregation, transformer and generator sizing |
 | `LoadItem` | `process.electricaldesign.loadanalysis` | Single load entry |
 | `ElectricalLoadList` | `process.electricaldesign.loadanalysis` | Plant-wide load aggregation |
+
+---
+
+## Equipment-Specific Electrical Design Details
+
+### Separator Electrical Design
+
+Separators have no rotating equipment. All electrical loads are auxiliary:
+
+| Load | Default | Typical Range |
+|:---|:---:|:---:|
+| Control valve actuators | 3 × 1.0 kW = 3.0 kW | 0.5–2 kW each |
+| Instrumentation | 2.0 kW | 1–3 kW |
+| Lighting (hazardous area rated) | 0.5 kW | 0.5–1 kW |
+| Heat tracing (optional) | 0 kW | 5–20 kW |
+
+```java
+Separator sep = new Separator("HP Sep", feed);
+sep.run();
+
+SeparatorElectricalDesign elecDesign =
+    (SeparatorElectricalDesign) sep.getElectricalDesign();
+elecDesign.setNumberOfControlValves(4);
+elecDesign.setHasHeatTracing(true);
+elecDesign.setHeatTracingKW(10.0);
+elecDesign.calcDesign();
+
+System.out.println("Total auxiliary: " + elecDesign.getTotalAuxiliaryKW() + " kW");
+```
+
+### Heat Exchanger Electrical Design
+
+The design auto-detects the type from the equipment class:
+
+| Equipment Class | Detected Type | Electrical Scope |
+|:---|:---|:---|
+| `Heater` | `ELECTRIC_HEATER` | Full thermal duty as electrical — motor/cable sizing via base class |
+| `Cooler` | `AIR_COOLER` | Fan motors sized at ~1% of duty (min 2 kW per fan) |
+| Manual override | `SHELL_AND_TUBE` | Instrumentation + CW pump only (no motor) |
+
+```java
+Heater heater = new Heater("Electric Heater", feed);
+heater.setOutTemperature(273.15 + 80.0);
+heater.run();
+
+HeatExchangerElectricalDesign hxDesign =
+    (HeatExchangerElectricalDesign) heater.getElectricalDesign();
+hxDesign.calcDesign();
+
+System.out.println("Type: " + hxDesign.getHeatExchangerType());
+System.out.println("Input: " + hxDesign.getElectricalInputKW() + " kW");
+```
+
+### Pipeline Electrical Design
+
+Pipelines have no shaft power but may have significant distributed loads:
+
+| Load | Default | Formula |
+|:---|:---:|:---|
+| Heat tracing | Off | $P_{\text{EHT}} = W_{\text{per\_m}} \times L / 1000$ (kW) |
+| Cathodic protection | Off | Fixed kW (default 2.0 kW per TR unit) |
+| Instrumentation | 1.0 kW | Fixed |
+
+```java
+AdiabaticPipe pipe = new AdiabaticPipe("Export Line", feed);
+pipe.setLength(50000.0);
+pipe.setDiameter(0.508);
+pipe.run();
+
+PipelineElectricalDesign pipeDesign =
+    (PipelineElectricalDesign) pipe.getElectricalDesign();
+pipeDesign.setHasHeatTracing(true);
+pipeDesign.setHeatTracingWPerM(25.0);  // 25 W/m
+pipeDesign.setHasCathodicProtection(true);
+pipeDesign.setCathodicProtectionKW(3.0);
+pipeDesign.calcDesign();
+
+// Heat tracing: 25 W/m × 50000 m = 1250 kW
+System.out.println("Total: " + pipeDesign.getTotalAuxiliaryKW() + " kW");
+```
+
+### System Electrical Design (Plant-Wide)
+
+Aggregates all equipment loads and adds system-level requirements:
+
+$$
+P_{\text{plant}} = P_{\text{process}} + P_{\text{utility}} + P_{\text{UPS}}
+$$
+
+$$
+S_{\text{transformer}} = \frac{P_{\text{plant}} \times (1 + f_{\text{expansion}})}{\cos\varphi}
+$$
+
+| Parameter | Default | Description |
+|:---|:---:|:---|
+| Utility load | 7% of process | HVAC, lighting, fire & gas |
+| UPS load | 2% of process | Critical instrumentation |
+| Future expansion | 15% | Design margin for growth |
+| Emergency generator | 35% of plant | Essential loads |
+| Main bus voltage | 11 kV | HV distribution |
+| Distribution voltage | 400 V | LV distribution |
+
+```java
+ProcessSystem process = new ProcessSystem();
+// ... add equipment ...
+process.run();
+
+SystemElectricalDesign sysDesign = process.getSystemElectricalDesign();
+
+System.out.println("Process load:    " + sysDesign.getTotalProcessLoadKW() + " kW");
+System.out.println("Plant load:      " + sysDesign.getTotalPlantLoadKW() + " kW");
+System.out.println("Main transformer: " + sysDesign.getMainTransformerKVA() + " kVA");
+System.out.println("Emergency gen:   " + sysDesign.getEmergencyGeneratorKVA() + " kVA");
+```

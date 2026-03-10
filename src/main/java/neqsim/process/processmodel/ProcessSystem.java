@@ -5272,4 +5272,21 @@ public class ProcessSystem extends SimulationBaseClass {
     }
     return elecDesign;
   }
+
+  /**
+   * Create a system-level electrical design for the entire process.
+   *
+   * <p>
+   * Runs all equipment-level electrical designs and produces a plant-wide summary including utility
+   * loads, UPS loads, and main transformer/generator sizing.
+   * </p>
+   *
+   * @return the system electrical design with aggregated results
+   */
+  public neqsim.process.electricaldesign.system.SystemElectricalDesign getSystemElectricalDesign() {
+    neqsim.process.electricaldesign.system.SystemElectricalDesign systemDesign =
+        new neqsim.process.electricaldesign.system.SystemElectricalDesign(this);
+    systemDesign.calcDesign();
+    return systemDesign;
+  }
 }

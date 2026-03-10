@@ -92,6 +92,18 @@ This documentation is organized into the following sections:
 | [corrosion/norsok_m001_material_selection.md](corrosion/norsok_m001_material_selection) | **NORSOK M-001 API** — Material grade recommendation, sour service, chloride SCC |
 | [corrosion/pipeline_corrosion_integration.md](corrosion/pipeline_corrosion_integration) | **Pipeline integration** — Automated corrosion analysis from process simulation |
 
+### Electrical Design Documentation
+
+| Document | Description |
+|----------|-------------|
+| [electrical-design.md](electrical-design) | **Electrical design framework — motor sizing, VFD, cable, transformer, switchgear, hazardous area, equipment-specific designs, plant-wide load analysis** |
+
+**Key Features:**
+- Equipment-specific designs: Compressor, Pump, Separator, Heater/Cooler, Pipeline
+- `SystemElectricalDesign` for plant-wide load aggregation, transformer and generator sizing
+- IEC standards: 60034 (motors), 60502 (cables), 60076 (transformers), 61439 (switchgear)
+- `ProcessSystem.getSystemElectricalDesign()` for one-call plant electrical summary
+
 ### Mechanical Design Documentation
 
 | Document | Description |

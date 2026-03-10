@@ -30,6 +30,7 @@ import neqsim.process.equipment.separator.sectiontype.SeparatorSection;
 import neqsim.process.equipment.separator.sectiontype.ValveSection;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.electricaldesign.separator.SeparatorElectricalDesign;
 import neqsim.process.mechanicaldesign.separator.SeparatorMechanicalDesign;
 import neqsim.process.ml.StateVector;
 import neqsim.process.ml.StateVectorProvider;
@@ -209,6 +210,7 @@ public class Separator extends ProcessEquipmentBaseClass
   ArrayList<SeparatorSection> separatorSection = new ArrayList<SeparatorSection>();
 
   SeparatorMechanicalDesign separatorMechanicalDesign;
+  SeparatorElectricalDesign electricalDesign;
   private double lastEnthalpy;
   private double lastFlowRate;
   private double lastPressure;
@@ -247,6 +249,7 @@ public class Separator extends ProcessEquipmentBaseClass
     enforceHeadspace();
     setCalculateSteadyState(true);
     initMechanicalDesign();
+    initElectricalDesign();
     initializeCapacityConstraints();
   }
 
@@ -272,6 +275,18 @@ public class Separator extends ProcessEquipmentBaseClass
   @Override
   public void initMechanicalDesign() {
     separatorMechanicalDesign = new SeparatorMechanicalDesign(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public SeparatorElectricalDesign getElectricalDesign() {
+    return electricalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initElectricalDesign() {
+    electricalDesign = new SeparatorElectricalDesign(this);
   }
 
   /**
