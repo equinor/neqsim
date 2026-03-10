@@ -79,6 +79,19 @@ frameworks for engineering maturity (AACE 18R-97, IPA Front-End Loading):
 Do not create extra notebooks, uncertainty studies, or formal reports unless they
 materially improve decision quality or are explicitly requested.
 
+**Mode ↔ Scale mapping:** The *modes* above (Screening / Design / Development)
+correspond to the *scales* used in Phase 0 Step 2 (Quick / Standard / Comprehensive):
+
+| Scale (Phase 0) | Mode (Section 0) | AACE Class | Notes |
+|-----------------|-------------------|------------|-------|
+| Quick | Screening | 4–5 | Minimal ceremony, directional answers |
+| Standard | Design | 3 | Full task_spec, validation, report |
+| Comprehensive | Development | 1–2 | Multi-notebook, NIPs, Java contributions |
+
+Throughout this document, "Screening" and "Quick", "Design" and "Standard",
+"Development" and "Comprehensive" are interchangeable. When in doubt, use the
+mode name (Screening / Design / Development) for deliverable decisions.
+
 ### Validation Rule
 
 Validation is mandatory, but the validation method is task-dependent. Use the
@@ -506,7 +519,7 @@ condensed analysis section in notes and proceed.
     - Rerun the notebook
     - Document the iteration in `step2_analysis/notes.md`
 
-### Benchmark Validation (required when suitable benchmark data exists)
+### Benchmark Validation (required for Development; recommended for Design when benchmark data exists)
 
 12b. Create benchmark validation evidence in one of these forms:
   - Separate notebook (`XX_benchmark_validation.ipynb`) for Standard/Comprehensive tasks
@@ -1455,7 +1468,7 @@ Review before starting any Standard or Comprehensive task.
 
 ### 10.1 Report Generator Pitfalls
 
-1. **The `generate_report.py` template now includes built-in styled formatting**
+L1. **The `generate_report.py` template now includes built-in styled formatting**
    for Benchmark Validation, Uncertainty Analysis, and Risk Evaluation sections.
    These render automatically when the corresponding keys exist in `results.json`
    (`benchmark_validation`, `uncertainty`, `risk_evaluation`). You do NOT need to
@@ -1464,7 +1477,7 @@ Review before starting any Standard or Comprehensive task.
    tables, and PASS/FAIL benchmark tables in all four outputs (Report.docx,
    Report.html, Paper.docx, Paper.html).
 
-2. **Four layers must stay synchronised for every report section:**
+L2. **Four layers must stay synchronised for every report section:**
    - `build_sections()` — defines the section with heading, content, and flags
    - `build_word_report()` — renders Word-specific content (tables, figures)
    - `build_html_report()` — renders HTML-specific content (styled tables, base64 images)
@@ -1473,44 +1486,44 @@ Review before starting any Standard or Comprehensive task.
    custom handling if you need task-specific rendering beyond the built-in formatters.
    If any one layer is missing, that section will render as plain text or be blank.
 
-3. **Hardcoded numbers in MANUAL_SECTIONS go stale.** When equipment dimensions,
+L3. **Hardcoded numbers in MANUAL_SECTIONS go stale.** When equipment dimensions,
    flow rates, or other design parameters change during iterative design, the
    executive summary and conclusions text must be updated manually. The report
    generator does not auto-update these strings from results.json.
    **Best practice:** Write conclusions in `results.json["conclusions"]` and let
    the generator read from there. Only use MANUAL_SECTIONS as a fallback.
 
-4. **Figure captions must cover ALL notebooks.** Each notebook (main analysis,
+L4. **Figure captions must cover ALL notebooks.** Each notebook (main analysis,
    benchmark validation, uncertainty/risk) generates its own figures. All figure
    filenames must appear in `results.json["figure_captions"]`, otherwise the
    report shows generic captions like "Figure 10: benchmark_ntu_validation.png".
 
 ### 10.2 Multi-Notebook Coordination
 
-5. **Design parameter changes cascade across all notebooks.** If the user requests
+L5. **Design parameter changes cascade across all notebooks.** If the user requests
    a design change (e.g., vessel dimensions, flow rate), you must re-run ALL
    notebooks in order, since benchmark and uncertainty results depend on the
    base case. Re-running only the main notebook leaves stale results in the
    benchmark and uncertainty notebooks.
 
-6. **Each notebook should save its portion of results.json independently.**
+L6. **Each notebook should save its portion of results.json independently.**
    The main notebook writes `key_results`, `validation`, and main `figure_captions`.
    The benchmark notebook appends `benchmark_validation`.
    The uncertainty notebook appends `uncertainty` and `risk_evaluation`.
    This avoids a single monolithic save cell that can't be run from any notebook.
 
-7. **Notebook kernel must be restarted before re-running.** When NeqSim classes
+L7. **Notebook kernel must be restarted before re-running.** When NeqSim classes
    are loaded via JPype, stale Java object state can persist between runs.
    Always restart the kernel before a full re-execution.
 
 ### 10.3 Figure Management
 
-8. **Use descriptive filenames with notebook prefix.** Files like `fig1_xxx.png`
+L8. **Use descriptive filenames with notebook prefix.** Files like `fig1_xxx.png`
    are for the main notebook; `benchmark_xxx.png` for benchmarks;
    `uncertainty_xxx.png` and `risk_matrix.png` for uncertainty/risk. This makes
    it clear which section each figure belongs to.
 
-9. **Embed section-specific figures in their own section.** Don't dump all 12
+L9. **Embed section-specific figures in their own section.** Don't dump all 12
    figures after the Results section. Benchmark figures should appear in the
    Benchmark Validation section, uncertainty figures in Uncertainty Analysis, etc.
    The report generator should check section flags (`has_benchmark`,
@@ -1518,25 +1531,25 @@ Review before starting any Standard or Comprehensive task.
 
 ### 10.4 Iterative Design Workflow
 
-10. **Expect at least one design iteration.** The first simulation run rarely
+L10. **Expect at least one design iteration.** The first simulation run rarely
     gives optimal results. Budget time for changing key parameters (bed size,
     vessel diameter, number of stages) and re-running. Document the rationale
     for each iteration in `step2_analysis/notes.md`.
 
-11. **Sensitivity analysis reveals the right parameters to iterate on.** Run the
+L11. **Sensitivity analysis reveals the right parameters to iterate on.** Run the
     Monte Carlo / tornado analysis early — it tells you which parameters dominate
     the outcome. Focus design iterations on the high-swing parameters.
 
 ### 10.5 Results.json Best Practices
 
-12. **Keep key_results flat and machine-readable.** Use descriptive key names with
+L12. **Keep key_results flat and machine-readable.** Use descriptive key names with
     unit suffixes: `pressure_drop_mbar`, `bed_lifetime_years`, `wall_thickness_mm`.
     These suffixes enable automatic unit detection in the report renderer.
 
-13. **Include a `tables` array for structured data.** Complex comparison tables
+L13. **Include a `tables` array for structured data.** Complex comparison tables
     (literature validation, strategy comparison, cost breakdown) should go into
     `results.json["tables"]` with headers and rows, not just as text in conclusions.
 
-14. **Tornado data should be sorted by swing.** When writing tornado results to
+L14. **Tornado data should be sorted by swing.** When writing tornado results to
     results.json, store all parameters even those with zero swing. The renderer
     should sort by swing magnitude for the tornado chart.
