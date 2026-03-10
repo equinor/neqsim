@@ -310,7 +310,7 @@ public final class DexpiXmlWriter {
    * @param unit the process equipment
    * @param usedIds set of used IDs
    * @param inletNozzleId the inlet nozzle ID to create
-   * @param outletNozzleId the outlet nozzle ID to create
+   * @param outletNozzleIds the outlet nozzle IDs to create
    */
   private static void appendNativeEquipment(Document document, Element parent,
       ProcessEquipmentInterface unit, Set<String> usedIds, String inletNozzleId,

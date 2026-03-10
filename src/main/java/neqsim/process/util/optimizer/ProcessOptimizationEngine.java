@@ -41,21 +41,21 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * <strong>Example Usage:</strong>
  * </p>
- * 
+ *
  * <pre>
  * ProcessOptimizationEngine engine = new ProcessOptimizationEngine(processSystem);
- * 
+ *
  * // Find maximum throughput with gradient acceleration
  * engine.setSearchAlgorithm(SearchAlgorithm.GRADIENT_ACCELERATED);
  * OptimizationResult result =
  *     engine.findMaximumThroughput(inletPressure, outletPressure, minFlow, maxFlow);
- * 
+ *
  * // Get sensitivity analysis
  * SensitivityResult sens = engine.analyzeSensitivity(result.getOptimalValue());
- * 
+ *
  * // Evaluate all constraints
  * ConstraintReport report = engine.evaluateAllConstraints();
- * 
+ *
  * // Generate lift curve
  * LiftCurve curve = engine.generateLiftCurve(pressures, temperatures, waterCuts, GORs);
  * </pre>
@@ -529,6 +529,12 @@ public class ProcessOptimizationEngine implements Serializable {
 
   /**
    * Binary search for maximum flow.
+   *
+   * @param inletPressure the inlet pressure in bara
+   * @param outletPressure the outlet pressure in bara
+   * @param minFlow the minimum flow rate to search
+   * @param maxFlow the maximum flow rate to search
+   * @return the maximum achievable flow rate
    */
   private double binarySearch(double inletPressure, double outletPressure, double minFlow,
       double maxFlow) {

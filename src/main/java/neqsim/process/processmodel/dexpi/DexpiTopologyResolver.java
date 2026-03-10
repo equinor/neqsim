@@ -500,8 +500,8 @@ public final class DexpiTopologyResolver {
 
   /**
    * Collapses raw edges that pass through intermediate piping components into direct
-   * equipment-to-equipment edges. For example, Equipment-A -> Valve-1 -> Equipment-B becomes
-   * Equipment-A -> Equipment-B.
+   * equipment-to-equipment edges. For example, Equipment-A &gt; Valve-1 &gt; Equipment-B becomes
+   * Equipment-A &gt; Equipment-B.
    *
    * @param rawEdges the raw edges from Connection elements
    * @param equipmentIds the set of actual equipment IDs

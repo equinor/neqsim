@@ -53,7 +53,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Basic decline curve calculation
  * DeclineParameters params = new DeclineParameters(10000.0, // initial rate: 10,000 Sm3/day
@@ -946,6 +946,10 @@ public class ProductionProfile implements Serializable {
 
   /**
    * Fits exponential decline using linear regression on ln(q) vs t.
+   *
+   * @param times the time values for the production data
+   * @param rates the production rate values
+   * @return array of [qi, d] where qi is initial rate and d is decline rate
    */
   private double[] fitExponentialDecline(List<Double> times, List<Double> rates) {
     int n = times.size();
@@ -972,6 +976,10 @@ public class ProductionProfile implements Serializable {
 
   /**
    * Fits hyperbolic decline using grid search over b values.
+   *
+   * @param times the time values for the production data
+   * @param rates the production rate values
+   * @return array of [qi, d, b] where qi is initial rate, d is decline rate, and b is exponent
    */
   private double[] fitHyperbolicDecline(List<Double> times, List<Double> rates) {
     double bestError = Double.MAX_VALUE;
@@ -1007,6 +1015,11 @@ public class ProductionProfile implements Serializable {
 
   /**
    * Fits hyperbolic decline for a fixed b value.
+   *
+   * @param times the time values for the production data
+   * @param rates the production rate values
+   * @param b the fixed hyperbolic exponent
+   * @return array of [qi, d] where qi is initial rate and d is decline rate
    */
   private double[] fitHyperbolicForB(List<Double> times, List<Double> rates, double b) {
     // Linearize: q^(-b) = qi^(-b) + (b*D/qi^b) * t
