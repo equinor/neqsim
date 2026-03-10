@@ -144,6 +144,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   CompressorMechanicalDesign mechanicalDesign;
 
   CompressorElectricalDesign electricalDesign;
+  neqsim.process.instrumentdesign.compressor.CompressorInstrumentDesign instrumentDesign;
 
   /** Mechanical losses model for seal gas and bearing calculations. */
   private CompressorMechanicalLosses mechanicalLosses = null;
@@ -168,6 +169,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
     super(name);
     initMechanicalDesign();
     initElectricalDesign();
+    initInstrumentDesign();
     initializeCapacityConstraints();
   }
 
@@ -221,6 +223,19 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   @Override
   public void initElectricalDesign() {
     electricalDesign = new CompressorElectricalDesign(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public neqsim.process.instrumentdesign.compressor.CompressorInstrumentDesign getInstrumentDesign() {
+    return instrumentDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initInstrumentDesign() {
+    instrumentDesign =
+        new neqsim.process.instrumentdesign.compressor.CompressorInstrumentDesign(this);
   }
 
   /**

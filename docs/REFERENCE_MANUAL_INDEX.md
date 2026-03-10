@@ -432,11 +432,23 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 | Document                          | Path                                                                                                       | Description                                                                                                                      |
 | --------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| **Electrical Design Guide**       | [docs/process/electrical-design.md](process/electrical-design)                                             | **Comprehensive guide to electrical design: motor sizing (IEC 60034), VFD topology, cable sizing, transformer, switchgear, hazardous area, load list, power triangle** |
+| **Electrical Design Guide**       | [docs/process/electrical-design.md](process/electrical-design)                                             | **Comprehensive guide to electrical design: motor sizing (IEC 60034), VFD topology, cable sizing, transformer, switchgear, hazardous area, load list, equipment-specific designs (separator, heater/cooler, pipeline), plant-wide SystemElectricalDesign** |
 | **Compressor Electrical Design**  | [examples/notebooks/electrical/compressor_electrical_design.ipynb](../examples/notebooks/electrical/compressor_electrical_design.ipynb) | **Jupyter notebook: 2-stage compression electrical design with motor curves, power triangle, efficiency chain** |
 | **Process Plant Load List**       | [examples/notebooks/electrical/process_plant_load_list.ipynb](../examples/notebooks/electrical/process_plant_load_list.ipynb) | **Jupyter notebook: plant-wide electrical load list, demand/diversity factors, transformer sizing** |
 | **Motor & VFD Analysis**          | [examples/notebooks/electrical/motor_vfd_analysis.ipynb](../examples/notebooks/electrical/motor_vfd_analysis.ipynb) | **Jupyter notebook: motor efficiency classes IE1-IE4, VFD topology selection, harmonics, efficiency maps, cable sizing, hazardous area** |
 | **Power-from-Shore Feasibility**  | [examples/notebooks/electrical/power_from_shore_feasibility.ipynb](../examples/notebooks/electrical/power_from_shore_feasibility.ipynb) | **Jupyter notebook: submarine cable sizing, HVAC/HVDC, cost estimation, CO₂ comparison, regional analysis (Norway, UK, Brazil, GoM)** |
+
+### Chapter 25: Instrument Design
+
+| Document                          | Path                                                                                                       | Description                                                                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Instrument Design Guide**       | [docs/process/instrument-design.md](process/instrument-design)                                             | **Comprehensive guide to instrument design: ISA-5.1 identification, SIL-rated safety instruments, I/O counting, DCS/SIS cabinet sizing, cost estimation, equipment-specific designs (separator, compressor, heat exchanger, pipeline, valve), plant-wide SystemInstrumentDesign** |
+
+### Chapter 26: Dynamic Simulation
+
+| Document                          | Path                                                                                                       | Description                                                                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Dynamic Simulation Guide**      | [docs/process/dynamic-simulation.md](process/dynamic-simulation)                                           | **DynamicProcessHelper utility — auto-instruments a sized steady-state process with transmitters and PID controllers for transient simulation, configurable PID tuning, flow and temperature control loops** |
 
 ### Chapter 23b: Cost Estimation
 

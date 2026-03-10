@@ -12,10 +12,18 @@ import neqsim.process.electricaldesign.components.HazardousAreaClassification;
 import neqsim.process.electricaldesign.components.Switchgear;
 import neqsim.process.electricaldesign.components.Transformer;
 import neqsim.process.electricaldesign.components.VariableFrequencyDrive;
+import neqsim.process.electricaldesign.heatexchanger.HeatExchangerElectricalDesign;
 import neqsim.process.electricaldesign.loadanalysis.ElectricalLoadList;
 import neqsim.process.electricaldesign.loadanalysis.LoadItem;
+import neqsim.process.electricaldesign.pipeline.PipelineElectricalDesign;
+import neqsim.process.electricaldesign.separator.SeparatorElectricalDesign;
+import neqsim.process.electricaldesign.system.SystemElectricalDesign;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
@@ -86,8 +94,7 @@ public class ElectricalDesignTest {
     VariableFrequencyDrive vfd = new VariableFrequencyDrive();
     vfd.sizeVFD(motor);
 
-    assertTrue(vfd.getRatedPowerKW() >= motor.getRatedPowerKW(),
-        "VFD should cover motor rating");
+    assertTrue(vfd.getRatedPowerKW() >= motor.getRatedPowerKW(), "VFD should cover motor rating");
     assertTrue(vfd.getEfficiencyPercent() > 90.0, "VFD efficiency should be above 90%");
     assertNotNull(vfd.getTopologyType(), "Topology should be selected");
 
@@ -123,8 +130,7 @@ public class ElectricalDesignTest {
     Transformer transformer = new Transformer();
     transformer.sizeTransformer(800.0, 11000, 400);
 
-    assertTrue(transformer.getRatedPowerKVA() >= 800.0,
-        "Transformer should cover load");
+    assertTrue(transformer.getRatedPowerKVA() >= 800.0, "Transformer should cover load");
     assertEquals(11000.0, transformer.getPrimaryVoltageV());
     assertEquals(400.0, transformer.getSecondaryVoltageV());
     assertTrue(transformer.getEfficiencyPercent() > 95.0,
@@ -177,8 +183,7 @@ public class ElectricalDesignTest {
     assertTrue(elecDesign.getShaftPowerKW() > 0, "Shaft power should be positive after run");
     assertTrue(elecDesign.getElectricalInputKW() >= elecDesign.getShaftPowerKW(),
         "Electrical input should be >= shaft power");
-    assertTrue(elecDesign.getMotor().getRatedPowerKW() > 0,
-        "Motor should be sized");
+    assertTrue(elecDesign.getMotor().getRatedPowerKW() > 0, "Motor should be sized");
 
     String json = elecDesign.toJson();
     assertNotNull(json);
@@ -291,5 +296,197 @@ public class ElectricalDesignTest {
     assertNotNull(json);
     assertTrue(json.contains("equipmentName"));
     assertTrue(json.contains("motorData"));
+  }
+
+  @Test
+  void testSeparatorElectricalDesign() {
+    Separator separator = new Separator("TestSep", testStream);
+    separator.run();
+
+    SeparatorElectricalDesign elecDesign =
+        (SeparatorElectricalDesign) separator.getElectricalDesign();
+    assertNotNull(elecDesign, "Separator should have electrical design");
+
+    elecDesign.calcDesign();
+
+    // Separator has no shaft power — only auxiliary loads
+    assertEquals(0.0, elecDesign.getShaftPowerKW(), 0.001);
+    assertTrue(elecDesign.getTotalAuxiliaryKW() > 0, "Separator should have auxiliary loads");
+    assertTrue(elecDesign.getElectricalInputKW() > 0,
+        "Electrical input should reflect auxiliary loads");
+    assertEquals(400.0, elecDesign.getRatedVoltageV(), 0.01, "Separator should use 400V");
+  }
+
+  @Test
+  void testSeparatorElectricalDesignWithHeatTracing() {
+    Separator separator = new Separator("HeatTracedSep", testStream);
+    separator.run();
+
+    SeparatorElectricalDesign elecDesign =
+        (SeparatorElectricalDesign) separator.getElectricalDesign();
+    elecDesign.setHasHeatTracing(true);
+    elecDesign.setHeatTracingKW(15.0);
+    elecDesign.calcDesign();
+
+    double withoutTracing =
+        elecDesign.getNumberOfControlValves() * elecDesign.getControlValvePowerKW()
+            + elecDesign.getInstrumentationKW() + elecDesign.getLightingKW();
+    assertTrue(elecDesign.getTotalAuxiliaryKW() > withoutTracing,
+        "Heat tracing should add to auxiliary load");
+  }
+
+  @Test
+  void testHeaterElectricalDesign() {
+    Heater heater = new Heater("TestHeater", testStream);
+    heater.setOutTemperature(273.15 + 80.0);
+    heater.run();
+
+    HeatExchangerElectricalDesign elecDesign =
+        (HeatExchangerElectricalDesign) heater.getElectricalDesign();
+    assertNotNull(elecDesign, "Heater should have electrical design");
+    assertEquals(HeatExchangerElectricalDesign.HeatExchangerType.ELECTRIC_HEATER,
+        elecDesign.getHeatExchangerType(), "Heater should be detected as electric heater");
+
+    elecDesign.calcDesign();
+
+    assertTrue(elecDesign.getShaftPowerKW() > 0, "Electric heater should have power from duty");
+    assertTrue(elecDesign.getElectricalInputKW() > 0, "Electrical input should be positive");
+  }
+
+  @Test
+  void testCoolerElectricalDesign() {
+    Cooler cooler = new Cooler("TestCooler", testStream);
+    cooler.setOutTemperature(273.15 + 10.0);
+    cooler.run();
+
+    HeatExchangerElectricalDesign elecDesign =
+        (HeatExchangerElectricalDesign) cooler.getElectricalDesign();
+    assertNotNull(elecDesign, "Cooler should have electrical design");
+    assertEquals(HeatExchangerElectricalDesign.HeatExchangerType.AIR_COOLER,
+        elecDesign.getHeatExchangerType(), "Cooler should be detected as air cooler");
+
+    elecDesign.calcDesign();
+
+    // Air cooler fan power should be a fraction of thermal duty
+    assertTrue(elecDesign.getShaftPowerKW() > 0, "Fan power should be positive");
+    assertTrue(elecDesign.getElectricalInputKW() > 0, "Electrical input should be positive");
+  }
+
+  @Test
+  void testCoolerShellAndTubeType() {
+    Cooler cooler = new Cooler("S&TCooler", testStream);
+    cooler.setOutTemperature(273.15 + 10.0);
+    cooler.run();
+
+    HeatExchangerElectricalDesign elecDesign =
+        (HeatExchangerElectricalDesign) cooler.getElectricalDesign();
+    elecDesign.setHeatExchangerType(HeatExchangerElectricalDesign.HeatExchangerType.SHELL_AND_TUBE);
+    elecDesign.calcDesign();
+
+    // Shell-and-tube has only auxiliary loads (instrumentation, CW pump)
+    assertEquals(0.0, elecDesign.getShaftPowerKW(), 0.001);
+  }
+
+  @Test
+  void testPipelineElectricalDesign() {
+    AdiabaticPipe pipe = new AdiabaticPipe("TestPipe", testStream);
+    pipe.setLength(5000.0);
+    pipe.setDiameter(0.3);
+    pipe.run();
+
+    PipelineElectricalDesign elecDesign = (PipelineElectricalDesign) pipe.getElectricalDesign();
+    assertNotNull(elecDesign, "Pipeline should have electrical design");
+
+    // Without heat tracing or CP, only instrumentation
+    elecDesign.calcDesign();
+    assertEquals(0.0, elecDesign.getShaftPowerKW(), 0.001);
+    assertTrue(elecDesign.getTotalAuxiliaryKW() > 0, "Should have at least instrumentation load");
+  }
+
+  @Test
+  void testPipelineWithHeatTracing() {
+    AdiabaticPipe pipe = new AdiabaticPipe("TracedPipe", testStream);
+    pipe.setLength(2000.0);
+    pipe.setDiameter(0.3);
+    pipe.run();
+
+    PipelineElectricalDesign elecDesign = (PipelineElectricalDesign) pipe.getElectricalDesign();
+    elecDesign.setHasHeatTracing(true);
+    elecDesign.setHeatTracingWPerM(30.0);
+    elecDesign.setHasCathodicProtection(true);
+    elecDesign.setCathodicProtectionKW(3.0);
+    elecDesign.calcDesign();
+
+    // Heat tracing: 30 W/m * 2000 m = 60 kW
+    double expectedTracing = 30.0 * 2000.0 / 1000.0;
+    assertTrue(elecDesign.getTotalAuxiliaryKW() >= expectedTracing,
+        "Heat tracing should contribute 60 kW");
+    assertTrue(elecDesign.getElectricalInputKW() > 0,
+        "Electrical input should include heat tracing");
+  }
+
+  @Test
+  void testSystemElectricalDesign() {
+    SystemInterface gas = new SystemSrkEos(273.15 + 25.0, 10.0);
+    gas.addComponent("methane", 0.90);
+    gas.addComponent("ethane", 0.10);
+    gas.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", gas);
+    feed.setFlowRate(10000.0, "kg/hr");
+
+    Compressor comp = new Compressor("comp", feed);
+    comp.setOutletPressure(50.0);
+
+    Separator sep = new Separator("sep", comp.getOutletStream());
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(comp);
+    process.add(sep);
+    process.run();
+
+    SystemElectricalDesign sysDesign = process.getSystemElectricalDesign();
+    assertNotNull(sysDesign, "System electrical design should not be null");
+    assertTrue(sysDesign.getTotalProcessLoadKW() > 0, "Total process load should be positive");
+    assertTrue(sysDesign.getTotalPlantLoadKW() > sysDesign.getTotalProcessLoadKW(),
+        "Plant load should include utility and UPS");
+    assertTrue(sysDesign.getMainTransformerKVA() > 0, "Main transformer should be sized");
+    assertTrue(sysDesign.getEmergencyGeneratorKVA() > 0, "Emergency generator should be sized");
+    assertNotNull(sysDesign.getLoadList(), "Load list should be populated");
+  }
+
+  @Test
+  void testProcessSystemWithAllEquipmentTypes() {
+    SystemInterface gas = new SystemSrkEos(273.15 + 25.0, 10.0);
+    gas.addComponent("methane", 0.90);
+    gas.addComponent("ethane", 0.10);
+    gas.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", gas);
+    feed.setFlowRate(10000.0, "kg/hr");
+
+    Separator sep = new Separator("inlet sep", feed);
+
+    Compressor comp = new Compressor("comp", sep.getGasOutStream());
+    comp.setOutletPressure(50.0);
+
+    Cooler cooler = new Cooler("aftercooler", comp.getOutletStream());
+    cooler.setOutTemperature(273.15 + 30.0);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(sep);
+    process.add(comp);
+    process.add(cooler);
+    process.run();
+
+    // Run all electrical designs and get load list
+    process.runAllElectricalDesigns();
+    ElectricalLoadList loadList = process.getElectricalLoadList();
+    assertNotNull(loadList);
+    // Compressor should contribute a load; separator and cooler may also contribute
+    assertTrue(loadList.getLoadCount() >= 1, "Should have at least one load from compressor");
+    assertTrue(loadList.getMaximumDemandKW() > 0, "Max demand should be positive");
   }
 }

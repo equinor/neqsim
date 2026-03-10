@@ -14,6 +14,8 @@ import neqsim.process.design.AutoSizeable;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.electricaldesign.heatexchanger.HeatExchangerElectricalDesign;
+import neqsim.process.instrumentdesign.heatexchanger.HeatExchangerInstrumentDesign;
 import neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerMechanicalDesign;
 import neqsim.process.util.monitor.HeaterResponse;
 import neqsim.process.util.report.ReportConfig;
@@ -78,6 +80,8 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
   protected double lastPressureDrop = 0.0;
 
   protected transient HeatExchangerMechanicalDesign mechanicalDesign;
+  HeatExchangerElectricalDesign electricalDesign;
+  HeatExchangerInstrumentDesign instrumentDesign;
   private UtilityStreamSpecification utilitySpecification = new UtilityStreamSpecification();
 
   /**
@@ -117,6 +121,36 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
   @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new HeatExchangerMechanicalDesign(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public HeatExchangerElectricalDesign getElectricalDesign() {
+    if (electricalDesign == null) {
+      initElectricalDesign();
+    }
+    return electricalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initElectricalDesign() {
+    electricalDesign = new HeatExchangerElectricalDesign(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public HeatExchangerInstrumentDesign getInstrumentDesign() {
+    if (instrumentDesign == null) {
+      initInstrumentDesign();
+    }
+    return instrumentDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initInstrumentDesign() {
+    instrumentDesign = new HeatExchangerInstrumentDesign(this);
   }
 
   /** {@inheritDoc} */
@@ -445,7 +479,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
 
   /**
    * Sets the maximum design duty (heating or cooling capacity) for capacity constraint checking.
-   * 
+   *
    * <p>
    * The duty is specified in Watts (W). Positive values indicate heating capacity, negative values
    * indicate cooling capacity. For constraint checking, the absolute value is used.

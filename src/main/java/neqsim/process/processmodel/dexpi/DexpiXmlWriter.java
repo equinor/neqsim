@@ -33,8 +33,10 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -72,6 +74,22 @@ public final class DexpiXmlWriter {
    * @throws IOException if writing fails
    */
   public static void write(ProcessSystem processSystem, File file) throws IOException {
+    write(processSystem, file, null, null);
+  }
+
+  /**
+   * Writes the provided {@link ProcessSystem} to a DEXPI XML file, including instrument and
+   * controller data when provided.
+   *
+   * @param processSystem process model to export
+   * @param file output file
+   * @param transmitters map of tag name to transmitter (may be null)
+   * @param controllers map of tag name to controller (may be null)
+   * @throws IOException if writing fails
+   */
+  public static void write(ProcessSystem processSystem, File file,
+      Map<String, MeasurementDeviceInterface> transmitters,
+      Map<String, ControllerDeviceInterface> controllers) throws IOException {
     Objects.requireNonNull(processSystem, "processSystem");
     Objects.requireNonNull(file, "file");
     Path parent = file.toPath().getParent();
@@ -79,7 +97,7 @@ public final class DexpiXmlWriter {
       Files.createDirectories(parent);
     }
     try (OutputStream outputStream = new FileOutputStream(file)) {
-      write(processSystem, outputStream);
+      write(processSystem, outputStream, transmitters, controllers);
     }
   }
 
@@ -92,6 +110,22 @@ public final class DexpiXmlWriter {
    */
   public static void write(ProcessSystem processSystem, OutputStream outputStream)
       throws IOException {
+    write(processSystem, outputStream, null, null);
+  }
+
+  /**
+   * Writes the provided {@link ProcessSystem} to a DEXPI XML stream, including instrument and
+   * controller data when provided.
+   *
+   * @param processSystem process model to export
+   * @param outputStream destination stream
+   * @param transmitters map of tag name to transmitter (may be null)
+   * @param controllers map of tag name to controller (may be null)
+   * @throws IOException if writing fails
+   */
+  public static void write(ProcessSystem processSystem, OutputStream outputStream,
+      Map<String, MeasurementDeviceInterface> transmitters,
+      Map<String, ControllerDeviceInterface> controllers) throws IOException {
     Objects.requireNonNull(processSystem, "processSystem");
     Objects.requireNonNull(outputStream, "outputStream");
 
@@ -122,6 +156,10 @@ public final class DexpiXmlWriter {
 
     for (Map.Entry<String, List<DexpiStream>> entry : segmentsBySystem.entrySet()) {
       appendPipingNetworkSystem(document, root, entry.getKey(), entry.getValue(), usedIds);
+    }
+
+    if (transmitters != null && !transmitters.isEmpty()) {
+      appendInstruments(document, root, transmitters, controllers, usedIds);
     }
 
     writeDocument(document, outputStream);
@@ -278,6 +316,187 @@ public final class DexpiXmlWriter {
       return;
     }
     appendGenericAttribute(document, parent, name, DECIMAL_FORMAT.get().format(value), unit);
+  }
+
+  /**
+   * Appends DEXPI instrumentation elements for transmitters and controllers.
+   *
+   * <p>
+   * Each transmitter becomes a {@code ProcessInstrumentationFunction} with a
+   * {@code ProcessSignalGeneratingFunction} child. Controllers that share a loop tag with a
+   * transmitter are linked via {@code SignalConveyingFunction} and {@code ActuatingFunction}.
+   * Finally, an {@code InstrumentationLoopFunction} groups each loop's elements.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the root element to append to
+   * @param transmitters map of tag to transmitter
+   * @param controllers map of tag to controller (may be null)
+   * @param usedIds set of already used XML IDs
+   */
+  private static void appendInstruments(Document document, Element parent,
+      Map<String, MeasurementDeviceInterface> transmitters,
+      Map<String, ControllerDeviceInterface> controllers, Set<String> usedIds) {
+
+    int loopIndex = 1;
+    for (Map.Entry<String, MeasurementDeviceInterface> entry : transmitters.entrySet()) {
+      String tag = entry.getKey();
+      MeasurementDeviceInterface device = entry.getValue();
+
+      String[] parsed = parseIsaTag(tag);
+      String category = parsed[0];
+      String functions = parsed[1];
+      String loopNumber = parsed[2];
+
+      // ProcessInstrumentationFunction (the instrument bubble)
+      String pifId = uniqueIdentifier("ProcessInstrumentationFunction", tag, usedIds);
+      Element pif = document.createElement("ProcessInstrumentationFunction");
+      pif.setAttribute("ID", pifId);
+      pif.setAttribute("ComponentClass", "ProcessInstrumentationFunction");
+
+      Element pifAttrs = document.createElement("GenericAttributes");
+      appendGenericAttribute(document, pifAttrs, DexpiMetadata.INSTRUMENTATION_CATEGORY, category);
+      appendGenericAttribute(document, pifAttrs, DexpiMetadata.INSTRUMENTATION_FUNCTIONS,
+          functions);
+      appendGenericAttribute(document, pifAttrs, DexpiMetadata.INSTRUMENTATION_NUMBER, loopNumber);
+      appendGenericAttribute(document, pifAttrs, DexpiMetadata.TAG_NAME, tag);
+      appendGenericAttribute(document, pifAttrs, "MeasurementUnit", device.getUnit());
+      if (pifAttrs.hasChildNodes()) {
+        pif.appendChild(pifAttrs);
+      }
+
+      // ProcessSignalGeneratingFunction (the sensor)
+      String psgfId = uniqueIdentifier("ProcessSignalGeneratingFunction", tag, usedIds);
+      Element psgf = document.createElement("ProcessSignalGeneratingFunction");
+      psgf.setAttribute("ID", psgfId);
+      psgf.setAttribute("ComponentClass", "ProcessSignalGeneratingFunction");
+
+      Element psgfAttrs = document.createElement("GenericAttributes");
+      appendGenericAttribute(document, psgfAttrs, DexpiMetadata.SIGNAL_GENERATING_NUMBER, tag);
+      if (psgfAttrs.hasChildNodes()) {
+        psgf.appendChild(psgfAttrs);
+      }
+      pif.appendChild(psgf);
+
+      // Look for matching controller (e.g. PT-xxx -> PC-xxx, LT-xxx -> LC-xxx)
+      String controllerTag = deriveControllerTag(tag);
+      ControllerDeviceInterface matchedController = null;
+      if (controllers != null && controllerTag != null) {
+        matchedController = controllers.get(controllerTag);
+      }
+
+      if (matchedController != null) {
+        // ActuatingFunction
+        String afId = uniqueIdentifier("ActuatingFunction", controllerTag, usedIds);
+        Element af = document.createElement("ActuatingFunction");
+        af.setAttribute("ID", afId);
+        af.setAttribute("ComponentClass", "ActuatingFunction");
+
+        Element afAttrs = document.createElement("GenericAttributes");
+        appendGenericAttribute(document, afAttrs, DexpiMetadata.ACTUATING_FUNCTION_NUMBER,
+            controllerTag);
+        if (afAttrs.hasChildNodes()) {
+          af.appendChild(afAttrs);
+        }
+
+        // Signal conveying function (signal line from instrument to actuator)
+        String scfId = uniqueIdentifier("SignalConveyingFunction", controllerTag, usedIds);
+        Element scf = document.createElement("InformationFlow");
+        scf.setAttribute("ID", scfId);
+        scf.setAttribute("ComponentClass", "SignalConveyingFunction");
+
+        Element scfAssocStart = document.createElement("Association");
+        scfAssocStart.setAttribute("Type", "has logical start");
+        scfAssocStart.setAttribute("ItemID", pifId);
+        scf.appendChild(scfAssocStart);
+
+        Element scfAssocEnd = document.createElement("Association");
+        scfAssocEnd.setAttribute("Type", "has logical end");
+        scfAssocEnd.setAttribute("ItemID", afId);
+        scf.appendChild(scfAssocEnd);
+
+        pif.appendChild(scf);
+        pif.appendChild(af);
+      }
+
+      parent.appendChild(pif);
+
+      // InstrumentationLoopFunction (groups everything in the loop)
+      String loopId = uniqueIdentifier("InstrumentationLoopFunction", "Loop-" + loopIndex, usedIds);
+      Element loop = document.createElement("InstrumentationLoopFunction");
+      loop.setAttribute("ID", loopId);
+      loop.setAttribute("ComponentClass", "InstrumentationLoopFunction");
+
+      Element loopAttrs = document.createElement("GenericAttributes");
+      appendGenericAttribute(document, loopAttrs, DexpiMetadata.LOOP_NUMBER, loopNumber);
+      if (loopAttrs.hasChildNodes()) {
+        loop.appendChild(loopAttrs);
+      }
+
+      Element loopAssoc = document.createElement("Association");
+      loopAssoc.setAttribute("Type", "is a collection including");
+      loopAssoc.setAttribute("ItemID", pifId);
+      loop.appendChild(loopAssoc);
+
+      parent.appendChild(loop);
+      loopIndex++;
+    }
+  }
+
+  /**
+   * Parses an ISA-style tag (e.g. "PT-HP sep") into category, function letters, and loop number.
+   *
+   * @param tag the ISA tag string
+   * @return array of [category, functions, loopNumber]
+   */
+  private static String[] parseIsaTag(String tag) {
+    if (tag == null || tag.isEmpty()) {
+      return new String[] {"", "", tag};
+    }
+    int dashIndex = tag.indexOf('-');
+    if (dashIndex <= 0) {
+      return new String[] {"", "", tag};
+    }
+    String prefix = tag.substring(0, dashIndex);
+    String loopNumber = tag.substring(dashIndex + 1);
+
+    // First letter is the category (P, T, L, F, etc.)
+    String category = prefix.substring(0, 1);
+    // Remaining letters are the function (T, IC, C, etc.)
+    String functions = prefix.length() > 1 ? prefix.substring(1) : "T";
+
+    return new String[] {category, functions, loopNumber};
+  }
+
+  /**
+   * Derives the controller tag from a transmitter tag. For example, "PT-HP sep" becomes "PC-HP
+   * sep", "LT-HP sep" becomes "LC-HP sep".
+   *
+   * @param transmitterTag the transmitter tag
+   * @return the expected controller tag, or null if not derivable
+   */
+  private static String deriveControllerTag(String transmitterTag) {
+    if (transmitterTag == null || transmitterTag.isEmpty()) {
+      return null;
+    }
+    int dashIndex = transmitterTag.indexOf('-');
+    if (dashIndex <= 0) {
+      return null;
+    }
+    String prefix = transmitterTag.substring(0, dashIndex);
+    String suffix = transmitterTag.substring(dashIndex);
+
+    // Map transmitter prefix to controller prefix
+    if ("PT".equals(prefix)) {
+      return "PC" + suffix;
+    } else if ("LT".equals(prefix)) {
+      return "LC" + suffix;
+    } else if ("FT".equals(prefix)) {
+      return "FC" + suffix;
+    } else if ("TT".equals(prefix)) {
+      return "TC" + suffix;
+    }
+    return null;
   }
 
   private static String defaultComponentClass(EquipmentEnum mapped, String elementName) {

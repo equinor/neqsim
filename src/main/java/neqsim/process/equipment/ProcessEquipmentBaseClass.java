@@ -166,6 +166,10 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public void initInstrumentDesign() {}
+
+  /** {@inheritDoc} */
+  @Override
   public String getSpecification() {
     return specification;
   }

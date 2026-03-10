@@ -27,6 +27,18 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-03-10 — DynamicProcessHelper utility for steady-state to dynamic conversion
+**Type:** E (Feature)
+**Keywords:** dynamic, transient, simulation, DynamicProcessHelper, transmitter, PID, controller, instrument, auto-instrument, pressure, level, flow, temperature, control loop, PC, LC, FC, TC, runTransient, setCalculateSteadyState
+**Solution:** src/main/java/neqsim/process/util/DynamicProcessHelper.java, src/test/java/neqsim/process/util/DynamicProcessHelperTest.java, docs/process/dynamic-simulation.md
+**Notes:** Utility that converts a sized steady-state ProcessSystem into a dynamic simulation. Auto-creates transmitters (PT, LT, TT) and PID controllers (PC, LC, WLC) by scanning equipment and matching stream identity to downstream valves. Handles Separator, ThreePhaseSeparator, Compressor, Heater, Cooler. Convenience methods for addFlowController() and addTemperatureController(). Default PID tuning with per-type customization. Key gotcha: transmitters implement MeasurementDeviceInterface (NOT ProcessEquipmentInterface), so ProcessSystem.add(MeasurementDeviceInterface) must be used. 10 tests passing.
+
+### 2026-03-10 — Implement InstrumentDesign framework
+**Type:** E (Feature)
+**Keywords:** instrument, design, ISA, SIL, I/O, DCS, SIS, instrumentation, ISA-5.1, IEC 61508, IEC 61511, API 670, safety, compressor, separator, heat exchanger, pipeline, valve, tag number, cabinet sizing, cost estimation
+**Solution:** src/main/java/neqsim/process/instrumentdesign/
+**Notes:** Mirrors ElectricalDesign pattern. Base class InstrumentDesign with InstrumentSpecification (ISA-5.1 data sheets) and InstrumentList (I/O counting, cost aggregation, tag generation). Equipment-specific designs for separator (PT×2 + PSH + TT + LT×2 + LSH + LSLL + ZT×2; three-phase adds interface LT + water ZT), compressor (API 617/670 suite: ~18 instruments including VT×4 vibration probes, anti-surge FT/FCV, bearing TTs, lube oil PT/PSLL), heat exchanger (auto-detects shell-and-tube/air cooler/electric heater), pipeline (pig detection ZS×2, leak detection PSLL, metering FT), and valve (ZT + ZC; safety valves add XV + ZSO/ZSC). System-level SystemInstrumentDesign aggregates across ProcessSystem and sizes DCS (~16 ch/card, ~16 cards/cab), SIS (~8 ch/card, ~8 cards/cab), and marshalling cabinets. Integrated via ProcessEquipmentInterface.getInstrumentDesign() and ProcessSystem.getSystemInstrumentDesign(). 12 tests passing.
+
 ### 2026-03-09 — H₂S/CO₂ Distribution Between Gas, Oil, Water — EOS Model Comparison
 **Type:** A (Property)
 **Keywords:** H2S, CO2, acid gas, distribution, solubility, water, oil, gas, produced water, brine, salinity, SRK, PR, CPA, electrolyte CPA, chemical reactions, three-phase, salting-out, pH, NACE MR0175, sour service, model selection, decision matrix, Duan Sun, Carroll Mather, Soreide Whitson, Monte Carlo, benchmark
@@ -146,6 +158,22 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 - `CONTEXT.md` — 60-second orientation (repo map, patterns, constraints)
 - `TASK_SOLVING_GUIDE.md` — workflow for classifying and solving tasks
 - `TASK_LOG.md` — this file, persistent memory across sessions
+
+---
+
+### 2026-03-10 — Electrical design: equipment-specific classes and system integration
+**Type:** E (Feature)
+**Keywords:** electrical design, separator, heater, cooler, pipeline, heat tracing, cathodic protection, system electrical design, load list, transformer sizing, emergency generator
+**Solution:** `src/main/java/neqsim/process/electricaldesign/separator/SeparatorElectricalDesign.java`, `heatexchanger/HeatExchangerElectricalDesign.java`, `pipeline/PipelineElectricalDesign.java`, `system/SystemElectricalDesign.java`
+**Notes:**
+- Implemented Phases 2-3 of ELECTRICAL_DESIGN_PROPOSAL.md
+- SeparatorElectricalDesign: models control valves, instrumentation, lighting, optional heat tracing (no shaft power)
+- HeatExchangerElectricalDesign: auto-detects type (ELECTRIC_HEATER / AIR_COOLER / SHELL_AND_TUBE) from equipment class
+- PipelineElectricalDesign: heat tracing (W/m × length), cathodic protection, instrumentation
+- SystemElectricalDesign: plant-wide aggregation with utility/UPS loads, main transformer and emergency generator sizing
+- Integrated into Separator (eager init), Heater/Cooler (lazy init), AdiabaticPipe and PipeBeggsAndBrills (lazy init)
+- Added ProcessSystem.getSystemElectricalDesign() for one-call plant electrical summary
+- 24 unit tests all passing in ElectricalDesignTest
 
 ---
 

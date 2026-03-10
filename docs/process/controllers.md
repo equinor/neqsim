@@ -370,6 +370,7 @@ for (double t = 0; t < 3600; t += 1.0) {
 
 ## Related Documentation
 
+- [Dynamic Simulation Helper](dynamic-simulation) - Auto-instrument a process for dynamic simulation
 - [Process Package](index.md) - Package overview
 - [Equipment](equipment/) - Process equipment
 - [Alarm System](../safety/alarm_system_guide) - Alarms
