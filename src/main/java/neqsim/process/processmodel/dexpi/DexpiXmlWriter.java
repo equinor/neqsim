@@ -53,6 +53,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.equipment.TwoPortEquipment;
 
 /**
  * Utility for exporting {@link ProcessSystem}s created from DEXPI data back into a lightweight
@@ -156,8 +157,9 @@ public final class DexpiXmlWriter {
     int nozzleCounter = 1;
 
     // Track equipment IDs -> outlet nozzle IDs for connection wiring
-    Map<String, String> equipmentOutletNozzle = new LinkedHashMap<>();
     Map<String, String> equipmentInletNozzle = new LinkedHashMap<>();
+    // Map from outlet stream identity hash to its nozzle ID
+    Map<Integer, String> outletStreamToNozzle = new HashMap<>();
 
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit instanceof DexpiStream) {
@@ -172,23 +174,39 @@ public final class DexpiXmlWriter {
         segmentsBySystem.computeIfAbsent(systemKey, key -> new ArrayList<>()).add(stream);
       } else if (unit instanceof DexpiProcessUnit) {
         String inNozzle = "Nozzle-" + nozzleCounter++;
-        String outNozzle = "Nozzle-" + nozzleCounter++;
-        appendProcessUnit(document, root, (DexpiProcessUnit) unit, usedIds, inNozzle, outNozzle);
+        List<String> outNozzles = new ArrayList<>();
+        outNozzles.add("Nozzle-" + nozzleCounter++);
+        if (DexpiStreamUtils.isMultiOutlet(unit)) {
+          outNozzles.add("Nozzle-" + nozzleCounter++);
+          if (unit instanceof ThreePhaseSeparator) {
+            outNozzles.add("Nozzle-" + nozzleCounter++);
+          }
+        }
+        appendProcessUnit(document, root, (DexpiProcessUnit) unit, usedIds, inNozzle, outNozzles);
         equipmentInletNozzle.put(unit.getName(), inNozzle);
-        equipmentOutletNozzle.put(unit.getName(), outNozzle);
+        registerOutletNozzles(unit, outNozzles, outletStreamToNozzle);
       } else if (!(unit instanceof Stream)) {
         // Native NeqSim equipment — use reverse mapping
         String inNozzle = "Nozzle-" + nozzleCounter++;
-        String outNozzle = "Nozzle-" + nozzleCounter++;
-        appendNativeEquipment(document, root, unit, usedIds, inNozzle, outNozzle);
+        List<String> outNozzles = new ArrayList<>();
+        outNozzles.add("Nozzle-" + nozzleCounter++);
+        if (DexpiStreamUtils.isMultiOutlet(unit)) {
+          outNozzles.add("Nozzle-" + nozzleCounter++);
+          if (unit instanceof ThreePhaseSeparator) {
+            outNozzles.add("Nozzle-" + nozzleCounter++);
+          }
+        }
+        appendNativeEquipment(document, root, unit, usedIds, inNozzle, outNozzles);
         equipmentInletNozzle.put(unit.getName(), inNozzle);
-        equipmentOutletNozzle.put(unit.getName(), outNozzle);
+        registerOutletNozzles(unit, outNozzles, outletStreamToNozzle);
       }
     }
 
-    // Build connections from process wiring
-    buildConnections(processSystem, equipmentOutletNozzle, equipmentInletNozzle, connections,
-        usedIds);
+    // Register pass-through streams (e.g., Stream wrapping a separator outlet)
+    registerPassThroughStreams(processSystem, outletStreamToNozzle);
+
+    // Build connections from process wiring using stream identity matching
+    buildConnections(processSystem, outletStreamToNozzle, equipmentInletNozzle, connections);
 
     for (Map.Entry<String, List<DexpiStream>> entry : segmentsBySystem.entrySet()) {
       appendPipingNetworkSystem(document, root, entry.getKey(), entry.getValue(), usedIds);
@@ -247,7 +265,7 @@ public final class DexpiXmlWriter {
 
   private static void appendProcessUnit(Document document, Element parent,
       DexpiProcessUnit processUnit, Set<String> usedIds, String inletNozzleId,
-      String outletNozzleId) {
+      List<String> outletNozzleIds) {
     EquipmentEnum mapped = processUnit.getMappedEquipment();
     boolean isPipingComponent = mapped == EquipmentEnum.ThrottlingValve;
     String elementName = isPipingComponent ? "PipingComponent" : "Equipment";
@@ -260,7 +278,9 @@ public final class DexpiXmlWriter {
 
     // Add Nozzle children
     appendNozzle(document, element, inletNozzleId, usedIds);
-    appendNozzle(document, element, outletNozzleId, usedIds);
+    for (String outNozzle : outletNozzleIds) {
+      appendNozzle(document, element, outNozzle, usedIds);
+    }
 
     Element genericAttributes = document.createElement("GenericAttributes");
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.TAG_NAME,
@@ -294,7 +314,7 @@ public final class DexpiXmlWriter {
    */
   private static void appendNativeEquipment(Document document, Element parent,
       ProcessEquipmentInterface unit, Set<String> usedIds, String inletNozzleId,
-      String outletNozzleId) {
+      List<String> outletNozzleIds) {
     String componentClass = reverseMapComponentClass(unit);
     boolean isPipingComponent = unit instanceof ThrottlingValve;
     String elementName = isPipingComponent ? "PipingComponent" : "Equipment";
@@ -305,7 +325,9 @@ public final class DexpiXmlWriter {
 
     // Add Nozzle children
     appendNozzle(document, element, inletNozzleId, usedIds);
-    appendNozzle(document, element, outletNozzleId, usedIds);
+    for (String outNozzle : outletNozzleIds) {
+      appendNozzle(document, element, outNozzle, usedIds);
+    }
 
     Element genericAttributes = document.createElement("GenericAttributes");
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.TAG_NAME, unit.getName());
@@ -376,24 +398,7 @@ public final class DexpiXmlWriter {
    * @return the outlet stream, or null if not available
    */
   private static StreamInterface getEquipmentOutlet(ProcessEquipmentInterface unit) {
-    if (unit instanceof Separator) {
-      return ((Separator) unit).getGasOutStream();
-    }
-    if (unit instanceof Splitter) {
-      return ((Splitter) unit).getSplitStream(0);
-    }
-    if (unit instanceof Stream) {
-      return (StreamInterface) unit;
-    }
-    try {
-      return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
-    } catch (Exception e1) {
-      try {
-        return (StreamInterface) unit.getClass().getMethod("getOutStream").invoke(unit);
-      } catch (Exception e2) {
-        return null;
-      }
-    }
+    return DexpiStreamUtils.getGasOutletStream(unit);
   }
 
   /**
@@ -453,30 +458,121 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Builds connections between equipment by examining process wiring in the ProcessSystem.
+   * Registers outlet stream identity hashes to their nozzle IDs.
+   *
+   * <p>
+   * For single-outlet equipment, the first (and only) nozzle maps to the gas/primary outlet. For
+   * separators, the first nozzle maps to the gas outlet, the second to the liquid outlet, and for
+   * three-phase separators, the third maps to the water outlet.
+   * </p>
+   *
+   * @param unit the process equipment
+   * @param outNozzles the list of outlet nozzle IDs
+   * @param outletStreamToNozzle map to populate with identity hash to nozzle ID
+   */
+  private static void registerOutletNozzles(ProcessEquipmentInterface unit, List<String> outNozzles,
+      Map<Integer, String> outletStreamToNozzle) {
+    StreamInterface gasOut = DexpiStreamUtils.getGasOutletStream(unit);
+    if (gasOut != null && !outNozzles.isEmpty()) {
+      outletStreamToNozzle.put(System.identityHashCode(gasOut), outNozzles.get(0));
+    }
+    if (outNozzles.size() > 1) {
+      StreamInterface liqOut = DexpiStreamUtils.getLiquidOutletStream(unit);
+      if (liqOut != null) {
+        outletStreamToNozzle.put(System.identityHashCode(liqOut), outNozzles.get(1));
+      }
+    }
+    if (outNozzles.size() > 2) {
+      StreamInterface waterOut = DexpiStreamUtils.getWaterOutletStream(unit);
+      if (waterOut != null) {
+        outletStreamToNozzle.put(System.identityHashCode(waterOut), outNozzles.get(2));
+      }
+    }
+  }
+
+  /**
+   * Registers pass-through Streams in the outlet-stream-to-nozzle map.
+   *
+   * <p>
+   * When a user creates {@code new Stream("gas-out", separator.getGasOutStream())}, the wrapping
+   * Stream delegates {@code getFluid()} to the source. This method detects such wrappers by
+   * matching fluid identity and registers the wrapper itself so downstream equipment that took the
+   * wrapper as its inlet can be connected.
+   * </p>
    *
    * @param processSystem the process system
-   * @param outletNozzles map of equipment name to outlet nozzle ID
+   * @param outletStreamToNozzle map of outlet stream identity hash to nozzle ID
+   */
+  private static void registerPassThroughStreams(ProcessSystem processSystem,
+      Map<Integer, String> outletStreamToNozzle) {
+    // Build a lookup of registered outlet fluid identity -> nozzle ID
+    Map<Integer, String> fluidToNozzle = new HashMap<>();
+    for (Map.Entry<Integer, String> entry : outletStreamToNozzle.entrySet()) {
+      // Find the stream object matching this identity hash
+      for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
+        StreamInterface outStream = DexpiStreamUtils.getGasOutletStream(unit);
+        if (outStream != null && System.identityHashCode(outStream) == entry.getKey()
+            && outStream.getFluid() != null) {
+          fluidToNozzle.put(System.identityHashCode(outStream.getFluid()), entry.getValue());
+        }
+        StreamInterface liqStream = DexpiStreamUtils.getLiquidOutletStream(unit);
+        if (liqStream != null && System.identityHashCode(liqStream) == entry.getKey()
+            && liqStream.getFluid() != null) {
+          fluidToNozzle.put(System.identityHashCode(liqStream.getFluid()), entry.getValue());
+        }
+        StreamInterface waterStream = DexpiStreamUtils.getWaterOutletStream(unit);
+        if (waterStream != null && System.identityHashCode(waterStream) == entry.getKey()
+            && waterStream.getFluid() != null) {
+          fluidToNozzle.put(System.identityHashCode(waterStream.getFluid()), entry.getValue());
+        }
+      }
+    }
+    // For each plain Stream in the process, check if its fluid delegates to a registered outlet
+    for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
+      if (unit instanceof Stream && !(unit instanceof DexpiStream)) {
+        Stream stream = (Stream) unit;
+        if (stream.getFluid() != null) {
+          String nozzle = fluidToNozzle.get(System.identityHashCode(stream.getFluid()));
+          if (nozzle != null) {
+            outletStreamToNozzle.put(System.identityHashCode(stream), nozzle);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Builds connections between equipment by matching inlet stream identity to outlet stream
+   * nozzles.
+   *
+   * <p>
+   * For each equipment that extends {@link TwoPortEquipment}, the inlet stream is looked up in the
+   * outlet-stream-to-nozzle map to find the upstream nozzle. This correctly resolves branching
+   * (e.g. separator gas and liquid outlets going to different downstream equipment).
+   * </p>
+   *
+   * @param processSystem the process system
+   * @param outletStreamToNozzle map of outlet stream identity hash to nozzle ID
    * @param inletNozzles map of equipment name to inlet nozzle ID
    * @param connections list to populate with connections
-   * @param usedIds set of used IDs
    */
   private static void buildConnections(ProcessSystem processSystem,
-      Map<String, String> outletNozzles, Map<String, String> inletNozzles,
-      List<NozzleConnection> connections, Set<String> usedIds) {
-    List<ProcessEquipmentInterface> units = processSystem.getUnitOperations();
-    // Heuristic: consecutive non-stream equipment are connected in order
-    String previousOutNozzle = null;
-    for (ProcessEquipmentInterface unit : units) {
-      if (unit instanceof DexpiStream || unit instanceof Stream) {
-        // Streams act as pipes; link the previous equipment to the next
+      Map<Integer, String> outletStreamToNozzle, Map<String, String> inletNozzles,
+      List<NozzleConnection> connections) {
+    for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
+      if (unit instanceof Stream || unit instanceof DexpiStream) {
         continue;
       }
-      String inNozzle = inletNozzles.get(unit.getName());
-      if (previousOutNozzle != null && inNozzle != null) {
-        connections.add(new NozzleConnection(previousOutNozzle, inNozzle));
+      if (unit instanceof TwoPortEquipment) {
+        StreamInterface inletStream = ((TwoPortEquipment) unit).getInletStream();
+        if (inletStream != null) {
+          String fromNozzle = outletStreamToNozzle.get(System.identityHashCode(inletStream));
+          String toNozzle = inletNozzles.get(unit.getName());
+          if (fromNozzle != null && toNozzle != null) {
+            connections.add(new NozzleConnection(fromNozzle, toNozzle));
+          }
+        }
       }
-      previousOutNozzle = outletNozzles.get(unit.getName());
     }
   }
 

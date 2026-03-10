@@ -1,5 +1,7 @@
 package neqsim.process.equipment;
 
+import java.util.Collections;
+import java.util.List;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -127,6 +129,24 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
   public double getMassBalance(String unit) {
     return outStream.getThermoSystem().getFlowRate(unit)
         - inStream.getThermoSystem().getFlowRate(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    if (inStream != null) {
+      return Collections.singletonList(inStream);
+    }
+    return Collections.emptyList();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    if (outStream != null) {
+      return Collections.singletonList(outStream);
+    }
+    return Collections.emptyList();
   }
 
   /** {@inheritDoc} */

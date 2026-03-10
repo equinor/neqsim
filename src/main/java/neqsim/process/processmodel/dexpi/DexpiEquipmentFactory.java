@@ -345,7 +345,22 @@ public final class DexpiEquipmentFactory {
   private static DistillationColumn createColumn(String name, StreamInterface inletStream,
       DexpiProcessUnit unit) {
     int numberOfTrays = (int) unit.getSizingAttributeAsDouble(DexpiMetadata.NUMBER_OF_TRAYS, 5);
-    DistillationColumn column = new DistillationColumn(name, numberOfTrays, true, true);
+    String dexpiClass = unit.getDexpiClass();
+
+    boolean hasReboiler = true;
+    boolean hasCondenser = true;
+    if (dexpiClass != null) {
+      String lower = dexpiClass.toLowerCase(java.util.Locale.ROOT);
+      if (lower.contains("absorb") || lower.contains("absorption")) {
+        hasCondenser = false;
+        hasReboiler = false;
+      } else if (lower.contains("strip")) {
+        hasCondenser = false;
+      }
+    }
+
+    DistillationColumn column =
+        new DistillationColumn(name, numberOfTrays, hasReboiler, hasCondenser);
 
     if (inletStream != null) {
       int feedTray = (int) unit.getSizingAttributeAsDouble(DexpiMetadata.FEED_TRAY, -1);
@@ -356,7 +371,8 @@ public final class DexpiEquipmentFactory {
       }
     }
 
-    logger.debug("Created DistillationColumn '{}' (trays={})", name, numberOfTrays);
+    logger.debug("Created DistillationColumn '{}' (trays={}, reboiler={}, condenser={})", name,
+        numberOfTrays, hasReboiler, hasCondenser);
     return column;
   }
 

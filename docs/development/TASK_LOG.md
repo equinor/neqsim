@@ -27,6 +27,12 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-03-10 — DEXPI review: multi-outlet nozzles, stream identity matching, namespace support
+**Type:** E (Feature)
+**Keywords:** DEXPI, multi-outlet, nozzle, separator, stream identity, connection, pass-through, namespace, absorber, stripper, column subtype, instrument rename, DexpiStreamUtils, DexpiXmlWriter, DexpiEquipmentFactory, DexpiSimulationBuilder
+**Solution:** src/main/java/neqsim/process/processmodel/dexpi/DexpiStreamUtils.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiXmlWriter.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiEquipmentFactory.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiSimulationBuilder.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiXmlReader.java
+**Notes:** Implemented all 11 recommendations from DEXPI code review. (1) DexpiStreamUtils: shared outlet-stream resolution utility replacing duplicated reflection-based code. (2) Reflection removal: outlet access via TwoPortEquipment/Separator casts instead of Method.invoke. (3) Multi-outlet nozzles: writer creates 2 outlet nozzles for Separator, 3 for ThreePhaseSeparator. (4) Stream identity matching: connections built by matching System.identityHashCode of inlet/outlet streams; registerPassThroughStreams handles wrapper Streams that delegate getFluid(). (5) Column subtype: DexpiEquipmentFactory detects "absorb"/"strip" in DEXPI class to configure condenser/reboiler flags. (6) Namespace-aware parsing: setNamespaceAware(boolean) on builder and reader. (7) Instrument renaming: applyAutoInstrumentation now calls setName() on transmitters and controllers (ControllerDeviceBaseClass cast). 4 new tests (cyclic topology, multi-outlet separator, 2 round-trip profile); 68 tests total, all passing.
+
 ### 2026-03-10 — DEXPI round-trip export, cycle detection, and column support
 **Type:** E (Feature)
 **Keywords:** DEXPI, P&ID, round-trip, export, XML writer, connection, nozzle, reverse mapping, cycle detection, distillation column, simulation results, instrument wiring, DexpiXmlWriter, DexpiXmlWriterTest

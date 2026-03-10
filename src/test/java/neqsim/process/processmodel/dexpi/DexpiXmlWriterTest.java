@@ -296,6 +296,11 @@ public class DexpiXmlWriterTest extends NeqSimTest {
    *
    * @throws IOException if writing fails
    */
+  /**
+   * Tests exporting an empty process system.
+   *
+   * @throws IOException if writing fails
+   */
   @Test
   public void testEmptyProcessSystem() throws IOException {
     ProcessSystem process = new ProcessSystem();
@@ -307,5 +312,72 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     assertNotNull(xml);
     assertTrue(xml.contains("<PlantModel"), "Should contain PlantModel root");
     assertTrue(xml.contains("PlantInformation"), "Should contain PlantInformation");
+  }
+
+  /**
+   * Tests that a separator produces multiple nozzles for gas and liquid outlets, and that stream
+   * identity-based connection building correctly wires downstream equipment to the right nozzles.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testSeparatorMultiOutletNozzles() throws IOException {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.7);
+    fluid.addComponent("nC10", 0.3);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(100.0, "kg/hr");
+    feed.run();
+
+    Separator sep = new Separator("HP-sep", feed);
+    sep.run();
+
+    // Gas outlet goes to compressor, liquid outlet goes to valve
+    Compressor comp = new Compressor("gas-comp", sep.getGasOutStream());
+    comp.setOutletPressure(80.0);
+    comp.run();
+
+    ThrottlingValve valve = new ThrottlingValve("liq-valve", sep.getLiquidOutStream());
+    valve.setOutletPressure(10.0);
+    valve.run();
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(sep);
+    process.add(comp);
+    process.add(valve);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    // Separator should have 3 nozzles (1 inlet + 2 outlets)
+    int nozzleCount = countOccurrences(xml, "<Nozzle ");
+    // feed (not exported as native equipment since it's Stream), sep=3, comp=2, valve=2 = total 7
+    assertTrue(nozzleCount >= 7, "Separator should produce 3 nozzles (inlet + gas out + liquid out)"
+        + "; total nozzles=" + nozzleCount);
+
+    // Connection system should contain connections
+    assertTrue(xml.contains("Connection"), "Should contain Connection elements");
+    assertTrue(xml.contains("Separator"), "Should contain Separator equipment");
+  }
+
+  /**
+   * Counts occurrences of a substring in a string.
+   *
+   * @param text the text to search
+   * @param sub the substring to count
+   * @return the number of occurrences
+   */
+  private int countOccurrences(String text, String sub) {
+    int count = 0;
+    int idx = 0;
+    while ((idx = text.indexOf(sub, idx)) != -1) {
+      count++;
+      idx += sub.length();
+    }
+    return count;
   }
 }

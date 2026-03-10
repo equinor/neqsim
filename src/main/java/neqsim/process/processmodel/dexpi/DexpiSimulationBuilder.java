@@ -22,11 +22,10 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
+import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.ProcessEquipmentInterface;
-import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
@@ -86,6 +85,7 @@ public class DexpiSimulationBuilder {
   private double feedFlowRate = 1.0;
   private String feedFlowRateUnit = "MSm3/day";
   private boolean autoInstrument = false;
+  private boolean namespaceAware = false;
 
   /**
    * Creates a new simulation builder for the given DEXPI XML file.
@@ -160,6 +160,19 @@ public class DexpiSimulationBuilder {
   }
 
   /**
+   * Enables namespace-aware XML parsing. When enabled, the parser will respect namespace prefixes
+   * in element names. By default, namespace awareness is disabled for compatibility with DEXPI
+   * files that may use local names without namespace declarations.
+   *
+   * @param namespaceAware true to enable namespace-aware parsing
+   * @return this builder for chaining
+   */
+  public DexpiSimulationBuilder setNamespaceAware(boolean namespaceAware) {
+    this.namespaceAware = namespaceAware;
+    return this;
+  }
+
+  /**
    * Builds the NeqSim {@link ProcessSystem} from the DEXPI XML file.
    *
    * @return a fully wired ProcessSystem ready for {@code process.run()}
@@ -171,7 +184,7 @@ public class DexpiSimulationBuilder {
 
     Document document;
     try (InputStream is = new FileInputStream(dexpiFile)) {
-      document = parseDocument(is);
+      document = parseDocument(is, namespaceAware);
     }
     if (document == null) {
       throw new DexpiXmlReaderException("Failed to parse DEXPI XML document");
@@ -316,26 +329,7 @@ public class DexpiSimulationBuilder {
    * @return the outlet stream, or null if not available
    */
   private StreamInterface getOutletStream(ProcessEquipmentInterface equipment) {
-    if (equipment instanceof Separator) {
-      return ((Separator) equipment).getGasOutStream();
-    }
-    if (equipment instanceof Splitter) {
-      return ((Splitter) equipment).getSplitStream(0);
-    }
-    if (equipment instanceof Stream) {
-      return (StreamInterface) equipment;
-    }
-    // For TwoPortEquipment (Compressor, Pump, Valve, HeatExchanger, etc.)
-    try {
-      return (StreamInterface) equipment.getClass().getMethod("getOutletStream").invoke(equipment);
-    } catch (Exception e1) {
-      try {
-        return (StreamInterface) equipment.getClass().getMethod("getOutStream").invoke(equipment);
-      } catch (Exception e2) {
-        logger.debug("No outlet stream method on {}", equipment.getClass().getSimpleName());
-        return null;
-      }
-    }
+    return DexpiStreamUtils.getGasOutletStream(equipment);
   }
 
   /**
@@ -353,7 +347,7 @@ public class DexpiSimulationBuilder {
       helper.instrumentAndControl();
       logger.info("Auto-instrumentation applied");
 
-      // Wire DEXPI instrument tags: associate auto-generated tags with DEXPI tags
+      // Wire DEXPI instrument tags: rename auto-generated tags to match DEXPI names
       if (!dexpiInstruments.isEmpty()) {
         Map<String, MeasurementDeviceInterface> transmitters = helper.getTransmitters();
         Map<String, ControllerDeviceInterface> controllers = helper.getControllers();
@@ -367,8 +361,9 @@ public class DexpiSimulationBuilder {
           String autoPrefix = category + "T-";
           for (Map.Entry<String, MeasurementDeviceInterface> entry : transmitters.entrySet()) {
             if (entry.getKey().startsWith(autoPrefix) && info.getTagName() != null) {
-              logger.info("DEXPI instrument '{}' maps to transmitter '{}'", info.getTagName(),
-                  entry.getKey());
+              entry.getValue().setName(info.getTagName());
+              logger.info("Renamed transmitter '{}' to DEXPI tag '{}'", entry.getKey(),
+                  info.getTagName());
               break;
             }
           }
@@ -376,8 +371,12 @@ public class DexpiSimulationBuilder {
             String autoControlPrefix = category + "C-";
             for (Map.Entry<String, ControllerDeviceInterface> entry : controllers.entrySet()) {
               if (entry.getKey().startsWith(autoControlPrefix) && info.getTagName() != null) {
-                logger.info("DEXPI instrument '{}' maps to controller '{}'", info.getTagName(),
-                    entry.getKey());
+                String controlTag = info.getTagName().replaceFirst("^(" + category + ")T", "$1C");
+                if (entry.getValue() instanceof ControllerDeviceBaseClass) {
+                  ((ControllerDeviceBaseClass) entry.getValue()).setName(controlTag);
+                }
+                logger.info("Renamed controller '{}' to DEXPI tag '{}'", entry.getKey(),
+                    controlTag);
                 break;
               }
             }
@@ -425,10 +424,12 @@ public class DexpiSimulationBuilder {
    * Parses a DEXPI XML document with security hardening.
    *
    * @param inputStream the input stream
+   * @param nsAware whether to enable namespace-aware parsing
    * @return the parsed Document
    * @throws DexpiXmlReaderException if parsing fails
    */
-  private static Document parseDocument(InputStream inputStream) throws DexpiXmlReaderException {
+  private static Document parseDocument(InputStream inputStream, boolean nsAware)
+      throws DexpiXmlReaderException {
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -437,7 +438,7 @@ public class DexpiSimulationBuilder {
       factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
       factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
       factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-      factory.setNamespaceAware(false);
+      factory.setNamespaceAware(nsAware);
       factory.setExpandEntityReferences(false);
       factory.setXIncludeAware(false);
       DocumentBuilder builder = factory.newDocumentBuilder();

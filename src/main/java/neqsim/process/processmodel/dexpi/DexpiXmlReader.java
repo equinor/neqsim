@@ -227,10 +227,26 @@ public final class DexpiXmlReader {
    */
   public static void load(InputStream inputStream, ProcessSystem processSystem,
       Stream templateStream) throws IOException, DexpiXmlReaderException {
+    load(inputStream, processSystem, templateStream, false);
+  }
+
+  /**
+   * Populates an existing {@link ProcessSystem} with units parsed from a DEXPI XML stream.
+   *
+   * @param inputStream XML input stream
+   * @param processSystem target process system
+   * @param templateStream stream providing default fluid, temperature, pressure, and flow rate for
+   *        generated piping segments. If {@code null}, a methane/ethane default is used.
+   * @param namespaceAware whether to enable namespace-aware XML parsing
+   * @throws IOException if reading fails
+   * @throws DexpiXmlReaderException if the stream cannot be parsed
+   */
+  public static void load(InputStream inputStream, ProcessSystem processSystem,
+      Stream templateStream, boolean namespaceAware) throws IOException, DexpiXmlReaderException {
     Objects.requireNonNull(inputStream, "inputStream");
     Objects.requireNonNull(processSystem, "processSystem");
 
-    Document document = parseDocument(inputStream);
+    Document document = parseDocument(inputStream, namespaceAware);
     if (document == null) {
       return;
     }
@@ -272,7 +288,7 @@ public final class DexpiXmlReader {
   public static List<DexpiInstrumentInfo> readInstruments(InputStream inputStream)
       throws IOException, DexpiXmlReaderException {
     Objects.requireNonNull(inputStream, "inputStream");
-    Document document = parseDocument(inputStream);
+    Document document = parseDocument(inputStream, false);
     if (document == null) {
       return Collections.emptyList();
     }
@@ -383,7 +399,8 @@ public final class DexpiXmlReader {
     return instruments;
   }
 
-  private static Document parseDocument(InputStream inputStream) throws DexpiXmlReaderException {
+  private static Document parseDocument(InputStream inputStream, boolean nsAware)
+      throws DexpiXmlReaderException {
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -392,7 +409,7 @@ public final class DexpiXmlReader {
       factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
       factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
       factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-      factory.setNamespaceAware(false);
+      factory.setNamespaceAware(nsAware);
       factory.setExpandEntityReferences(false);
       factory.setXIncludeAware(false);
       DocumentBuilder builder = factory.newDocumentBuilder();

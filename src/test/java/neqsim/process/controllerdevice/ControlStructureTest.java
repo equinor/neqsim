@@ -14,8 +14,28 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 public class ControlStructureTest {
   /** Dummy controller returning set-point as response without dynamics. */
   static class DummyController implements ControllerDeviceInterface {
+    private static final long serialVersionUID = 1L;
+    private String name = "dummy";
     double setPoint;
     double response;
+
+    @Override
+    public String getName() {
+      return name;
+    }
+
+    @Override
+    public void setName(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public String getTagNumber() {
+      return "";
+    }
+
+    @Override
+    public void setTagNumber(String tagNumber) {}
 
     @Override
     public double getMeasuredValue() {

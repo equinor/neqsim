@@ -236,6 +236,32 @@ public class DexpiTopologyResolverTest extends NeqSimTest {
   }
 
   /**
+   * Tests that a cyclic topology (A -> B -> A) is correctly detected.
+   *
+   * @throws Exception if XML parsing or topology resolution fails
+   */
+  @Test
+  public void testHasCycleReturnsTrueForCycle() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "  <Equipment>"
+        + "    <CentrifugalPump ComponentClass=\"CentrifugalPump\" ID=\"A\">"
+        + "      <Nozzle ID=\"N-A-in\"/>" + "      <Nozzle ID=\"N-A-out\"/>"
+        + "    </CentrifugalPump>" + "  </Equipment>" + "  <Equipment>"
+        + "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"B\">"
+        + "      <Nozzle ID=\"N-B-in\"/>" + "      <Nozzle ID=\"N-B-out\"/>"
+        + "    </PlateHeatExchanger>" + "  </Equipment>"
+        + "  <PipingNetworkSystem ID=\"PNS-1\" ComponentClass=\"PipingNetworkSystem\">"
+        + "    <PipingNetworkSegment ID=\"Seg-1\" ComponentClass=\"PipingNetworkSegment\">"
+        + "      <Connection FromID=\"N-A-out\" ToID=\"N-B-in\"/>" + "    </PipingNetworkSegment>"
+        + "    <PipingNetworkSegment ID=\"Seg-2\" ComponentClass=\"PipingNetworkSegment\">"
+        + "      <Connection FromID=\"N-B-out\" ToID=\"N-A-in\"/>" + "    </PipingNetworkSegment>"
+        + "  </PipingNetworkSystem>" + "</PlantModel>";
+
+    Document doc = parseXml(xml);
+    ResolvedTopology topology = DexpiTopologyResolver.resolve(doc);
+    assertTrue(topology.hasCycle(), "Cyclic topology A -> B -> A should be detected");
+  }
+
+  /**
    * Tests empty document handling.
    *
    * @throws Exception if XML parsing fails
