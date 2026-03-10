@@ -15,6 +15,7 @@ import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.electricaldesign.heatexchanger.HeatExchangerElectricalDesign;
+import neqsim.process.instrumentdesign.heatexchanger.HeatExchangerInstrumentDesign;
 import neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerMechanicalDesign;
 import neqsim.process.util.monitor.HeaterResponse;
 import neqsim.process.util.report.ReportConfig;
@@ -80,6 +81,7 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
 
   protected transient HeatExchangerMechanicalDesign mechanicalDesign;
   HeatExchangerElectricalDesign electricalDesign;
+  HeatExchangerInstrumentDesign instrumentDesign;
   private UtilityStreamSpecification utilitySpecification = new UtilityStreamSpecification();
 
   /**
@@ -134,6 +136,21 @@ public class Heater extends TwoPortEquipment implements HeaterInterface,
   @Override
   public void initElectricalDesign() {
     electricalDesign = new HeatExchangerElectricalDesign(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public HeatExchangerInstrumentDesign getInstrumentDesign() {
+    if (instrumentDesign == null) {
+      initInstrumentDesign();
+    }
+    return instrumentDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initInstrumentDesign() {
+    instrumentDesign = new HeatExchangerInstrumentDesign(this);
   }
 
   /** {@inheritDoc} */

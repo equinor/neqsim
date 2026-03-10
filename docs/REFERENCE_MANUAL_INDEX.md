@@ -438,6 +438,12 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | **Motor & VFD Analysis**          | [examples/notebooks/electrical/motor_vfd_analysis.ipynb](../examples/notebooks/electrical/motor_vfd_analysis.ipynb) | **Jupyter notebook: motor efficiency classes IE1-IE4, VFD topology selection, harmonics, efficiency maps, cable sizing, hazardous area** |
 | **Power-from-Shore Feasibility**  | [examples/notebooks/electrical/power_from_shore_feasibility.ipynb](../examples/notebooks/electrical/power_from_shore_feasibility.ipynb) | **Jupyter notebook: submarine cable sizing, HVAC/HVDC, cost estimation, CO₂ comparison, regional analysis (Norway, UK, Brazil, GoM)** |
 
+### Chapter 25: Instrument Design
+
+| Document                          | Path                                                                                                       | Description                                                                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Instrument Design Guide**       | [docs/process/instrument-design.md](process/instrument-design)                                             | **Comprehensive guide to instrument design: ISA-5.1 identification, SIL-rated safety instruments, I/O counting, DCS/SIS cabinet sizing, cost estimation, equipment-specific designs (separator, compressor, heat exchanger, pipeline, valve), plant-wide SystemInstrumentDesign** |
+
 ### Chapter 23b: Cost Estimation
 
 | Document                        | Path                                                                                                                                         | Description                                                                                                 |

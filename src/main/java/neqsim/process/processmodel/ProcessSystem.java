@@ -5289,4 +5289,19 @@ public class ProcessSystem extends SimulationBaseClass {
     systemDesign.calcDesign();
     return systemDesign;
   }
+
+  /**
+   * <p>
+   * Get a system-wide instrument design summary that aggregates instrument lists, I/O counts, DCS
+   * and SIS cabinet sizing, and cost estimates across all equipment in this process system.
+   * </p>
+   *
+   * @return the system instrument design with aggregated results
+   */
+  public neqsim.process.instrumentdesign.system.SystemInstrumentDesign getSystemInstrumentDesign() {
+    neqsim.process.instrumentdesign.system.SystemInstrumentDesign systemDesign =
+        new neqsim.process.instrumentdesign.system.SystemInstrumentDesign(this);
+    systemDesign.calcDesign();
+    return systemDesign;
+  }
 }

@@ -27,6 +27,12 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-03-10 — Implement InstrumentDesign framework
+**Type:** E (Feature)
+**Keywords:** instrument, design, ISA, SIL, I/O, DCS, SIS, instrumentation, ISA-5.1, IEC 61508, IEC 61511, API 670, safety, compressor, separator, heat exchanger, pipeline, valve, tag number, cabinet sizing, cost estimation
+**Solution:** src/main/java/neqsim/process/instrumentdesign/
+**Notes:** Mirrors ElectricalDesign pattern. Base class InstrumentDesign with InstrumentSpecification (ISA-5.1 data sheets) and InstrumentList (I/O counting, cost aggregation, tag generation). Equipment-specific designs for separator (PT×2 + PSH + TT + LT×2 + LSH + LSLL + ZT×2; three-phase adds interface LT + water ZT), compressor (API 617/670 suite: ~18 instruments including VT×4 vibration probes, anti-surge FT/FCV, bearing TTs, lube oil PT/PSLL), heat exchanger (auto-detects shell-and-tube/air cooler/electric heater), pipeline (pig detection ZS×2, leak detection PSLL, metering FT), and valve (ZT + ZC; safety valves add XV + ZSO/ZSC). System-level SystemInstrumentDesign aggregates across ProcessSystem and sizes DCS (~16 ch/card, ~16 cards/cab), SIS (~8 ch/card, ~8 cards/cab), and marshalling cabinets. Integrated via ProcessEquipmentInterface.getInstrumentDesign() and ProcessSystem.getSystemInstrumentDesign(). 12 tests passing.
+
 ### 2026-03-09 — H₂S/CO₂ Distribution Between Gas, Oil, Water — EOS Model Comparison
 **Type:** A (Property)
 **Keywords:** H2S, CO2, acid gas, distribution, solubility, water, oil, gas, produced water, brine, salinity, SRK, PR, CPA, electrolyte CPA, chemical reactions, three-phase, salting-out, pH, NACE MR0175, sour service, model selection, decision matrix, Duan Sun, Carroll Mather, Soreide Whitson, Monte Carlo, benchmark

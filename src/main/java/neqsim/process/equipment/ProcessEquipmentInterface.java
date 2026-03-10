@@ -5,6 +5,7 @@ import java.util.List;
 import neqsim.process.SimulationInterface;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.electricaldesign.ElectricalDesign;
+import neqsim.process.instrumentdesign.InstrumentDesign;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.process.util.report.ReportConfig;
@@ -60,6 +61,20 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    */
   default ElectricalDesign getElectricalDesign() {
     return new ElectricalDesign(this);
+  }
+
+  /**
+   * Initialize an <code>instrumentDesign</code> for the equipment.
+   */
+  default void initInstrumentDesign() {}
+
+  /**
+   * Get an <code>instrumentDesign</code> for the equipment.
+   *
+   * @return a {@link neqsim.process.instrumentdesign.InstrumentDesign} object
+   */
+  default InstrumentDesign getInstrumentDesign() {
+    return new InstrumentDesign(this);
   }
 
   /**

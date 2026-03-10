@@ -4,6 +4,7 @@ import java.util.UUID;
 import com.google.gson.GsonBuilder;
 import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.process.electricaldesign.pipeline.PipelineElectricalDesign;
+import neqsim.process.instrumentdesign.pipeline.PipelineInstrumentDesign;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -75,6 +76,7 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
   double insideDiameter = 0.1;
   double pipeWallRoughnessLocal = 1e-5;
   PipelineElectricalDesign electricalDesign;
+  PipelineInstrumentDesign instrumentDesign;
 
   /**
    * Constructor for AdiabaticPipe.
@@ -111,6 +113,21 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
   @Override
   public void initElectricalDesign() {
     electricalDesign = new PipelineElectricalDesign(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public PipelineInstrumentDesign getInstrumentDesign() {
+    if (instrumentDesign == null) {
+      initInstrumentDesign();
+    }
+    return instrumentDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initInstrumentDesign() {
+    instrumentDesign = new PipelineInstrumentDesign(this);
   }
 
   /** {@inheritDoc} */

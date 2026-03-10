@@ -98,6 +98,12 @@ This documentation is organized into the following sections:
 |----------|-------------|
 | [electrical-design.md](electrical-design) | **Electrical design framework — motor sizing, VFD, cable, transformer, switchgear, hazardous area, equipment-specific designs, plant-wide load analysis** |
 
+### Instrument Design Documentation
+
+| Document | Description |
+|----------|-------------|
+| [instrument-design.md](instrument-design) | **Instrument design framework — ISA-5.1 identification, SIL-rated safety instruments, I/O counting, DCS/SIS cabinet sizing, cost estimation, equipment-specific designs (separator, compressor, heat exchanger, pipeline, valve), plant-wide SystemInstrumentDesign** |
+
 **Key Features:**
 - Equipment-specific designs: Compressor, Pump, Separator, Heater/Cooler, Pipeline
 - `SystemElectricalDesign` for plant-wide load aggregation, transformer and generator sizing
