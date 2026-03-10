@@ -280,6 +280,17 @@ public final class DexpiXmlReader {
   }
 
   /**
+   * Parses instruments from an already-parsed DEXPI XML Document. Package-visible for use by
+   * {@link DexpiSimulationBuilder}.
+   *
+   * @param document the parsed XML document
+   * @return list of instrument info records
+   */
+  static List<DexpiInstrumentInfo> parseInstrumentsFromDocument(Document document) {
+    return parseInstruments(document);
+  }
+
+  /**
    * Parses all ProcessInstrumentationFunction elements from the document, resolving loop and
    * actuator associations.
    *

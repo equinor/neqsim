@@ -22,12 +22,14 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
+import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.dexpi.DexpiTopologyResolver.ResolvedTopology;
 import neqsim.process.processmodel.dexpi.DexpiTopologyResolver.TopologyEdge;
@@ -246,9 +248,10 @@ public class DexpiSimulationBuilder {
       }
     }
 
-    // Step 5: Optionally auto-instrument
+    // Step 5: Optionally auto-instrument, using DEXPI tags if available
     if (autoInstrument) {
-      applyAutoInstrumentation(processSystem);
+      List<DexpiInstrumentInfo> dexpiInstruments = parseDexpiInstruments(document);
+      applyAutoInstrumentation(processSystem, dexpiInstruments);
     }
 
     logger.info("Built ProcessSystem with {} units from DEXPI",
@@ -336,18 +339,68 @@ public class DexpiSimulationBuilder {
   }
 
   /**
-   * Applies auto-instrumentation using the DynamicProcessHelper if available.
+   * Applies auto-instrumentation using the DynamicProcessHelper, then logs associations between
+   * DEXPI instrument tags and auto-generated transmitters/controllers.
    *
    * @param processSystem the process system to instrument
+   * @param dexpiInstruments the DEXPI instrument info list (may be empty)
    */
-  private void applyAutoInstrumentation(ProcessSystem processSystem) {
+  private void applyAutoInstrumentation(ProcessSystem processSystem,
+      List<DexpiInstrumentInfo> dexpiInstruments) {
     try {
       neqsim.process.util.DynamicProcessHelper helper =
           new neqsim.process.util.DynamicProcessHelper(processSystem);
       helper.instrumentAndControl();
       logger.info("Auto-instrumentation applied");
+
+      // Wire DEXPI instrument tags: associate auto-generated tags with DEXPI tags
+      if (!dexpiInstruments.isEmpty()) {
+        Map<String, MeasurementDeviceInterface> transmitters = helper.getTransmitters();
+        Map<String, ControllerDeviceInterface> controllers = helper.getControllers();
+
+        for (DexpiInstrumentInfo info : dexpiInstruments) {
+          String category = info.getCategory();
+          if (category == null) {
+            continue;
+          }
+          // Match DEXPI instrument to auto-generated tag by category (P->PT, L->LT, T->TT, F->FT)
+          String autoPrefix = category + "T-";
+          for (Map.Entry<String, MeasurementDeviceInterface> entry : transmitters.entrySet()) {
+            if (entry.getKey().startsWith(autoPrefix) && info.getTagName() != null) {
+              logger.info("DEXPI instrument '{}' maps to transmitter '{}'", info.getTagName(),
+                  entry.getKey());
+              break;
+            }
+          }
+          if (info.hasControlFunction()) {
+            String autoControlPrefix = category + "C-";
+            for (Map.Entry<String, ControllerDeviceInterface> entry : controllers.entrySet()) {
+              if (entry.getKey().startsWith(autoControlPrefix) && info.getTagName() != null) {
+                logger.info("DEXPI instrument '{}' maps to controller '{}'", info.getTagName(),
+                    entry.getKey());
+                break;
+              }
+            }
+          }
+        }
+      }
     } catch (Exception e) {
       logger.warn("Auto-instrumentation failed: {}", e.getMessage());
+    }
+  }
+
+  /**
+   * Parses DEXPI instrument info from the XML document.
+   *
+   * @param document the parsed XML document
+   * @return list of DEXPI instrument info records (may be empty)
+   */
+  private List<DexpiInstrumentInfo> parseDexpiInstruments(Document document) {
+    try {
+      return DexpiXmlReader.parseInstrumentsFromDocument(document);
+    } catch (Exception e) {
+      logger.debug("No instruments parsed from DEXPI: {}", e.getMessage());
+      return new ArrayList<>();
     }
   }
 

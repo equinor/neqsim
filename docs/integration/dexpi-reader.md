@@ -75,6 +75,47 @@ not available) to generate simple `<PipingNetworkSystem>` elements with associat
 values (stored in the default NeqSim units, but accompanied by explicit `Unit` annotations) so that
 downstream thermodynamic simulators can reproduce NeqSim's state without bespoke mappings.
 
+#### Native equipment and reverse mapping
+
+The writer also handles **native NeqSim equipment** (i.e. equipment that was not imported from
+DEXPI) by reverse-mapping Java classes to DEXPI `ComponentClass` strings:
+
+| NeqSim class | DEXPI ComponentClass |
+|---|---|
+| `ThreePhaseSeparator` | `ThreePhaseSeparator` |
+| `Separator` | `Separator` |
+| `Compressor` | `CentrifugalCompressor` |
+| `Pump` | `CentrifugalPump` |
+| `Cooler` | `AirCooledHeatExchanger` |
+| `HeatExchanger` | `ShellAndTubeHeatExchanger` |
+| `Heater` | `FiredHeater` |
+| `ThrottlingValve` | `GlobeValve` |
+| `Expander` | `Expander` |
+| `Mixer` | `Mixer` |
+| `Splitter` | `Splitter` |
+
+This means you can build a process model entirely in NeqSim and export it to DEXPI XML without
+having to import from DEXPI first.
+
+#### Nozzles and connections
+
+Every exported equipment piece receives `<Nozzle>` child elements (one inlet, one outlet). The
+writer then builds `<Connection>` elements linking outlet nozzles to inlet nozzles based on the
+process wiring in the `ProcessSystem`. This produces a valid DEXPI topology graph that downstream
+tools can traverse.
+
+#### Sizing attribute export
+
+When equipment originates from a `DexpiProcessUnit`, the writer preserves all sizing attributes
+(e.g. `InsideDiameter`, `TangentToTangentLength`, `DesignPressure`, `NumberOfTrays`) as
+`GenericAttribute` entries in the exported XML.
+
+#### Simulation results
+
+After `process.run()`, the writer exports simulation results (operating pressure, temperature and
+flow rate) as `GenericAttribute` entries on each native equipment element. This provides a complete
+snapshot of the converged simulation state in the DEXPI output.
+
 Each piping network is also labelled with a `NeqSimGroupingKey` generic attribute so that
 visualisation libraries—such as [pyDEXPI](https://github.com/process-intelligence-research/pyDEXPI)
 or Graphviz exports—can easily recreate line-centric layouts without additional heuristics.
@@ -151,17 +192,19 @@ The builder performs these steps internally:
 
 1. **Topology resolution** — `DexpiTopologyResolver` parses `<Equipment>`, `<Nozzle>` and
    `<Connection>` elements into a directed graph, collapses inline piping components (valves,
-   reducers) into equipment-level edges, and produces a topological ordering via Kahn's algorithm.
-2. **Equipment mapping** — `DexpiMappingLoader` reads `dexpi_equipment_mapping.properties` and
+   reducers) into equipment-level edges, and produces a topological ordering via Kahn's algorithm.   The resolver also detects cycles and logs warnings when cyclic dependencies are found;
+   `ResolvedTopology.hasCycle()` can be queried programmatically.2. **Equipment mapping** — `DexpiMappingLoader` reads `dexpi_equipment_mapping.properties` and
    `dexpi_piping_component_mapping.properties` from the classpath to translate DEXPI ComponentClass
    strings (e.g. `CentrifugalCompressor`) into `EquipmentEnum` values.
 3. **Equipment instantiation** — `DexpiEquipmentFactory` creates real NeqSim equipment from the
    mapped enum, applying sizing attributes such as `InsideDiameter`, `TangentToTangentLength`,
-   `DesignPressure`, `ValveCv` and `Orientation`.
+   `DesignPressure`, `ValveCv` and `Orientation`. Distillation columns are instantiated with
+   `NumberOfTrays` and `FeedTray` attributes when present.
 4. **Stream wiring** — The builder walks the topology in upstream-to-downstream order, connecting
    outlet streams of upstream equipment to inlets of downstream equipment.
 5. **Auto-instrumentation** — When enabled, `DynamicProcessHelper.instrumentAndControl()` adds
-   transmitters and PID controllers to separators, compressors and heat exchangers.
+   transmitters and PID controllers to separators, compressors and heat exchangers. DEXPI
+   instrument tags are associated with auto-generated transmitters and controllers for traceability.
 
 ### Component classes
 
@@ -171,6 +214,7 @@ The builder performs these steps internally:
 | `DexpiTopologyResolver` | Parses nozzle/connection graph, topological sort, edge collapsing |
 | `DexpiEquipmentFactory` | Converts DEXPI placeholders to real equipment with sizing |
 | `DexpiMappingLoader` | Thread-safe cached loader for `.properties` mapping files |
+| `DexpiXmlWriterTest` | Tests for round-trip, reverse mapping, connections, nozzles, results export |
 
 ### Sizing attributes
 
@@ -184,6 +228,8 @@ The following DEXPI GenericAttributes are automatically extracted and applied to
 | `DesignPressure` | Compressors, Valves | Sets outlet pressure |
 | `DesignTemperature` | Heat exchangers | Sets outlet temperature |
 | `ValveCv` | Valves | Sets flow coefficient via `setCv()` |
+| `NumberOfTrays` | Distillation columns | Sets number of trays |
+| `FeedTray` | Distillation columns | Sets feed tray location |
 
 ## Tested example
 

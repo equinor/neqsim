@@ -231,6 +231,54 @@ public final class DexpiTopologyResolver {
       }
       return result;
     }
+
+    /**
+     * Checks whether the topology contains a cycle. A cycle exists when the number of topologically
+     * sorted nodes is less than the total number of equipment nodes, meaning Kahn's algorithm could
+     * not resolve all dependencies.
+     *
+     * @return true if a cycle was detected
+     */
+    public boolean hasCycle() {
+      // Recompute Kahn's sort to detect cycles
+      Map<String, Integer> inDegree = new LinkedHashMap<>();
+      Map<String, List<String>> adjacency = new HashMap<>();
+
+      for (String id : orderedEquipmentIds) {
+        inDegree.put(id, 0);
+        adjacency.put(id, new ArrayList<String>());
+      }
+
+      for (TopologyEdge edge : edges) {
+        if (inDegree.containsKey(edge.getSourceEquipmentId())
+            && inDegree.containsKey(edge.getTargetEquipmentId())) {
+          adjacency.get(edge.getSourceEquipmentId()).add(edge.getTargetEquipmentId());
+          inDegree.put(edge.getTargetEquipmentId(), inDegree.get(edge.getTargetEquipmentId()) + 1);
+        }
+      }
+
+      Queue<String> queue = new LinkedList<>();
+      for (Map.Entry<String, Integer> entry : inDegree.entrySet()) {
+        if (entry.getValue() == 0) {
+          queue.add(entry.getKey());
+        }
+      }
+
+      int count = 0;
+      while (!queue.isEmpty()) {
+        String current = queue.poll();
+        count++;
+        for (String neighbor : adjacency.get(current)) {
+          int newDegree = inDegree.get(neighbor) - 1;
+          inDegree.put(neighbor, newDegree);
+          if (newDegree == 0) {
+            queue.add(neighbor);
+          }
+        }
+      }
+
+      return count < orderedEquipmentIds.size();
+    }
   }
 
   /**
@@ -573,12 +621,18 @@ public final class DexpiTopologyResolver {
       }
     }
 
-    // Add any remaining equipment not in a connected graph
+    // Add any remaining equipment not in a connected graph — may indicate a cycle
     Set<String> sortedSet = new LinkedHashSet<>(sorted);
+    List<String> unsorted = new ArrayList<>();
     for (String id : equipmentIds) {
       if (!sortedSet.contains(id)) {
+        unsorted.add(id);
         sorted.add(id);
       }
+    }
+    if (!unsorted.isEmpty()) {
+      logger.warn("Cycle detected in topology: {} equipment nodes could not be topologically"
+          + " sorted and were appended in discovery order: {}", unsorted.size(), unsorted);
     }
 
     return sorted;

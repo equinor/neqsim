@@ -199,6 +199,43 @@ public class DexpiTopologyResolverTest extends NeqSimTest {
   }
 
   /**
+   * Tests that a linear topology has no cycle.
+   *
+   * @throws Exception if XML parsing or topology resolution fails
+   */
+  @Test
+  public void testHasCycleReturnsFalseForLinear() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<PlantModel>" + "  <Equipment>"
+        + "    <CentrifugalPump ComponentClass=\"CentrifugalPump\" ID=\"Pump-1\">"
+        + "      <Nozzle ID=\"N-1\"/>" + "      <Nozzle ID=\"N-2\"/>" + "    </CentrifugalPump>"
+        + "  </Equipment>" + "  <Equipment>"
+        + "    <PlateHeatExchanger ComponentClass=\"PlateHeatExchanger\" ID=\"HX-1\">"
+        + "      <Nozzle ID=\"N-3\"/>" + "      <Nozzle ID=\"N-4\"/>" + "    </PlateHeatExchanger>"
+        + "  </Equipment>"
+        + "  <PipingNetworkSystem ID=\"PNS-1\" ComponentClass=\"PipingNetworkSystem\">"
+        + "    <PipingNetworkSegment ID=\"Seg-1\" ComponentClass=\"PipingNetworkSegment\">"
+        + "      <Connection FromID=\"N-2\" FromNode=\"1\" ToID=\"N-3\" ToNode=\"1\"/>"
+        + "    </PipingNetworkSegment>" + "  </PipingNetworkSystem>" + "</PlantModel>";
+
+    Document doc = parseXml(xml);
+    ResolvedTopology topology = DexpiTopologyResolver.resolve(doc);
+    assertFalse(topology.hasCycle(), "Linear topology should not have a cycle");
+  }
+
+  /**
+   * Tests that an empty topology has no cycle.
+   *
+   * @throws Exception if XML parsing fails
+   */
+  @Test
+  public void testHasCycleReturnsFalseForEmpty() throws Exception {
+    String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><PlantModel/>";
+    Document doc = parseXml(xml);
+    ResolvedTopology topology = DexpiTopologyResolver.resolve(doc);
+    assertFalse(topology.hasCycle(), "Empty topology should not have a cycle");
+  }
+
+  /**
    * Tests empty document handling.
    *
    * @throws Exception if XML parsing fails

@@ -77,14 +77,14 @@ NeqSim already has comprehensive DEXPI support:
 | Component | Purpose |
 |-----------|---------|
 | `DexpiXmlReader` | Import DEXPI P&ID XML → ProcessSystem |
-| `DexpiXmlWriter` | Export ProcessSystem → DEXPI XML |
+| `DexpiXmlWriter` | Export ProcessSystem → DEXPI XML (with nozzles, connections, simulation results) |
 | `DexpiProcessUnit` | Lightweight placeholder for imported equipment |
 | `DexpiStream` | Runnable stream with DEXPI metadata |
-| `DexpiMetadata` | Shared constants (tag names, line numbers, etc.) |
+| `DexpiMetadata` | Shared constants (tag names, line numbers, sizing, etc.) |
 | `DexpiRoundTripProfile` | Validation for round-trip fidelity |
-| `DexpiSimulationBuilder` | High-level builder: DEXPI XML → runnable ProcessSystem |
-| `DexpiTopologyResolver` | Nozzle/connection graph parsing, topological sort, edge collapsing |
-| `DexpiEquipmentFactory` | Converts placeholders to real equipment with sizing attributes |
+| `DexpiSimulationBuilder` | High-level builder: DEXPI XML → runnable ProcessSystem (with instrument wiring) |
+| `DexpiTopologyResolver` | Nozzle/connection graph parsing, topological sort, edge collapsing, cycle detection |
+| `DexpiEquipmentFactory` | Converts placeholders to real equipment including distillation columns |
 | `DexpiMappingLoader` | Thread-safe cached loader for mapping properties files |
 | `dexpi_equipment_mapping.properties` | DEXPI class → EquipmentEnum mapping (~65 entries) |
 | `dexpi_piping_component_mapping.properties` | Piping component → EquipmentEnum mapping (~28 entries) |

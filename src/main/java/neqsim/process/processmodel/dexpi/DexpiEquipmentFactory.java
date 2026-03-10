@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
@@ -81,6 +82,7 @@ public final class DexpiEquipmentFactory {
       case Splitter:
         return createSplitter(name, inletStream);
       case Column:
+        return createColumn(name, inletStream, unit);
       case Reactor:
       case Tank:
       case Calculator:
@@ -330,6 +332,32 @@ public final class DexpiEquipmentFactory {
     splitter.setSplitNumber(2);
     logger.debug("Created Splitter '{}'", name);
     return splitter;
+  }
+
+  /**
+   * Creates a DistillationColumn using tray count and feed tray from sizing attributes.
+   *
+   * @param name the equipment name
+   * @param inletStream the feed stream
+   * @param unit the DEXPI process unit with sizing data
+   * @return the configured DistillationColumn
+   */
+  private static DistillationColumn createColumn(String name, StreamInterface inletStream,
+      DexpiProcessUnit unit) {
+    int numberOfTrays = (int) unit.getSizingAttributeAsDouble(DexpiMetadata.NUMBER_OF_TRAYS, 5);
+    DistillationColumn column = new DistillationColumn(name, numberOfTrays, true, true);
+
+    if (inletStream != null) {
+      int feedTray = (int) unit.getSizingAttributeAsDouble(DexpiMetadata.FEED_TRAY, -1);
+      if (feedTray > 0) {
+        column.addFeedStream(inletStream, feedTray);
+      } else {
+        column.addFeedStream(inletStream, numberOfTrays / 2 + 1);
+      }
+    }
+
+    logger.debug("Created DistillationColumn '{}' (trays={})", name, numberOfTrays);
+    return column;
   }
 
   /**

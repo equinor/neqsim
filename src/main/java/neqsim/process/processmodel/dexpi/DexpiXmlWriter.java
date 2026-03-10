@@ -12,6 +12,8 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -36,6 +38,19 @@ import org.w3c.dom.Element;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.expander.Expander;
+import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
+import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.processmodel.ProcessSystem;
 
@@ -137,11 +152,15 @@ public final class DexpiXmlWriter {
 
     Set<String> usedIds = new LinkedHashSet<>();
     Map<String, List<DexpiStream>> segmentsBySystem = new LinkedHashMap<>();
+    List<NozzleConnection> connections = new ArrayList<>();
+    int nozzleCounter = 1;
+
+    // Track equipment IDs -> outlet nozzle IDs for connection wiring
+    Map<String, String> equipmentOutletNozzle = new LinkedHashMap<>();
+    Map<String, String> equipmentInletNozzle = new LinkedHashMap<>();
 
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
-      if (unit instanceof DexpiProcessUnit) {
-        appendProcessUnit(document, root, (DexpiProcessUnit) unit, usedIds);
-      } else if (unit instanceof DexpiStream) {
+      if (unit instanceof DexpiStream) {
         DexpiStream stream = (DexpiStream) unit;
         String systemKey = stream.getLineNumber();
         if (isBlank(systemKey)) {
@@ -151,11 +170,33 @@ public final class DexpiXmlWriter {
           systemKey = "Segment";
         }
         segmentsBySystem.computeIfAbsent(systemKey, key -> new ArrayList<>()).add(stream);
+      } else if (unit instanceof DexpiProcessUnit) {
+        String inNozzle = "Nozzle-" + nozzleCounter++;
+        String outNozzle = "Nozzle-" + nozzleCounter++;
+        appendProcessUnit(document, root, (DexpiProcessUnit) unit, usedIds, inNozzle, outNozzle);
+        equipmentInletNozzle.put(unit.getName(), inNozzle);
+        equipmentOutletNozzle.put(unit.getName(), outNozzle);
+      } else if (!(unit instanceof Stream)) {
+        // Native NeqSim equipment — use reverse mapping
+        String inNozzle = "Nozzle-" + nozzleCounter++;
+        String outNozzle = "Nozzle-" + nozzleCounter++;
+        appendNativeEquipment(document, root, unit, usedIds, inNozzle, outNozzle);
+        equipmentInletNozzle.put(unit.getName(), inNozzle);
+        equipmentOutletNozzle.put(unit.getName(), outNozzle);
       }
     }
 
+    // Build connections from process wiring
+    buildConnections(processSystem, equipmentOutletNozzle, equipmentInletNozzle, connections,
+        usedIds);
+
     for (Map.Entry<String, List<DexpiStream>> entry : segmentsBySystem.entrySet()) {
       appendPipingNetworkSystem(document, root, entry.getKey(), entry.getValue(), usedIds);
+    }
+
+    // Write Connection elements in a PipingNetworkSystem
+    if (!connections.isEmpty()) {
+      appendConnectionSystem(document, root, connections, usedIds);
     }
 
     if (transmitters != null && !transmitters.isEmpty()) {
@@ -205,7 +246,8 @@ public final class DexpiXmlWriter {
   }
 
   private static void appendProcessUnit(Document document, Element parent,
-      DexpiProcessUnit processUnit, Set<String> usedIds) {
+      DexpiProcessUnit processUnit, Set<String> usedIds, String inletNozzleId,
+      String outletNozzleId) {
     EquipmentEnum mapped = processUnit.getMappedEquipment();
     boolean isPipingComponent = mapped == EquipmentEnum.ThrottlingValve;
     String elementName = isPipingComponent ? "PipingComponent" : "Equipment";
@@ -216,6 +258,10 @@ public final class DexpiXmlWriter {
     element.setAttribute("ComponentClass", componentClass);
     element.setAttribute("ID", uniqueIdentifier(elementName, processUnit.getName(), usedIds));
 
+    // Add Nozzle children
+    appendNozzle(document, element, inletNozzleId, usedIds);
+    appendNozzle(document, element, outletNozzleId, usedIds);
+
     Element genericAttributes = document.createElement("GenericAttributes");
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.TAG_NAME,
         processUnit.getName());
@@ -224,11 +270,244 @@ public final class DexpiXmlWriter {
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.FLUID_CODE,
         processUnit.getFluidCode());
 
+    // Export sizing attributes
+    for (Map.Entry<String, String> sizing : processUnit.getSizingAttributes().entrySet()) {
+      appendGenericAttribute(document, genericAttributes, sizing.getKey(), sizing.getValue());
+    }
+
     if (genericAttributes.hasChildNodes()) {
       element.appendChild(genericAttributes);
     }
 
     parent.appendChild(element);
+  }
+
+  /**
+   * Appends a native NeqSim equipment (non-DEXPI-origin) to the document using reverse mapping.
+   *
+   * @param document the XML document
+   * @param parent the parent element
+   * @param unit the process equipment
+   * @param usedIds set of used IDs
+   * @param inletNozzleId the inlet nozzle ID to create
+   * @param outletNozzleId the outlet nozzle ID to create
+   */
+  private static void appendNativeEquipment(Document document, Element parent,
+      ProcessEquipmentInterface unit, Set<String> usedIds, String inletNozzleId,
+      String outletNozzleId) {
+    String componentClass = reverseMapComponentClass(unit);
+    boolean isPipingComponent = unit instanceof ThrottlingValve;
+    String elementName = isPipingComponent ? "PipingComponent" : "Equipment";
+    Element element = document.createElement(elementName);
+
+    element.setAttribute("ComponentClass", componentClass);
+    element.setAttribute("ID", uniqueIdentifier(elementName, unit.getName(), usedIds));
+
+    // Add Nozzle children
+    appendNozzle(document, element, inletNozzleId, usedIds);
+    appendNozzle(document, element, outletNozzleId, usedIds);
+
+    Element genericAttributes = document.createElement("GenericAttributes");
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.TAG_NAME, unit.getName());
+
+    // Export simulation results if the equipment has been run
+    appendSimulationResults(document, genericAttributes, unit);
+
+    if (genericAttributes.hasChildNodes()) {
+      element.appendChild(genericAttributes);
+    }
+
+    parent.appendChild(element);
+  }
+
+  /**
+   * Appends a Nozzle child element to the parent equipment element.
+   *
+   * @param document the XML document
+   * @param parent the equipment element
+   * @param nozzleId the nozzle ID
+   * @param usedIds set of used IDs
+   */
+  private static void appendNozzle(Document document, Element parent, String nozzleId,
+      Set<String> usedIds) {
+    if (isBlank(nozzleId)) {
+      return;
+    }
+    Element nozzle = document.createElement("Nozzle");
+    nozzle.setAttribute("ID", nozzleId);
+    usedIds.add(nozzleId);
+    parent.appendChild(nozzle);
+  }
+
+  /**
+   * Appends simulation result attributes (P, T, flow) from equipment outlet streams.
+   *
+   * @param document the XML document
+   * @param genericAttributes the GenericAttributes element to append to
+   * @param unit the process equipment
+   */
+  private static void appendSimulationResults(Document document, Element genericAttributes,
+      ProcessEquipmentInterface unit) {
+    StreamInterface outStream = getEquipmentOutlet(unit);
+    if (outStream == null) {
+      return;
+    }
+    try {
+      double pressure = outStream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+      appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_PRESSURE_VALUE,
+          pressure, DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+
+      double temperature = outStream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+      appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_TEMPERATURE_VALUE,
+          temperature, DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+
+      double flowRate = outStream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT);
+      appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_FLOW_VALUE,
+          flowRate, DexpiMetadata.DEFAULT_FLOW_UNIT);
+    } catch (Exception ignored) {
+      // Simulation may not have been run
+    }
+  }
+
+  /**
+   * Gets the outlet stream of a process equipment for simulation result extraction.
+   *
+   * @param unit the process equipment
+   * @return the outlet stream, or null if not available
+   */
+  private static StreamInterface getEquipmentOutlet(ProcessEquipmentInterface unit) {
+    if (unit instanceof Separator) {
+      return ((Separator) unit).getGasOutStream();
+    }
+    if (unit instanceof Splitter) {
+      return ((Splitter) unit).getSplitStream(0);
+    }
+    if (unit instanceof Stream) {
+      return (StreamInterface) unit;
+    }
+    try {
+      return (StreamInterface) unit.getClass().getMethod("getOutletStream").invoke(unit);
+    } catch (Exception e1) {
+      try {
+        return (StreamInterface) unit.getClass().getMethod("getOutStream").invoke(unit);
+      } catch (Exception e2) {
+        return null;
+      }
+    }
+  }
+
+  /**
+   * Returns the DEXPI ComponentClass string for a native NeqSim equipment type.
+   *
+   * @param unit the process equipment
+   * @return the DEXPI ComponentClass name
+   */
+  private static String reverseMapComponentClass(ProcessEquipmentInterface unit) {
+    if (unit instanceof ThreePhaseSeparator) {
+      return "ThreePhaseSeparator";
+    }
+    if (unit instanceof Separator) {
+      return "Separator";
+    }
+    if (unit instanceof Compressor) {
+      return "CentrifugalCompressor";
+    }
+    if (unit instanceof Pump) {
+      return "CentrifugalPump";
+    }
+    if (unit instanceof Cooler) {
+      return "AirCooledHeatExchanger";
+    }
+    if (unit instanceof HeatExchanger) {
+      return "ShellAndTubeHeatExchanger";
+    }
+    if (unit instanceof Heater) {
+      return "FiredHeater";
+    }
+    if (unit instanceof ThrottlingValve) {
+      return "GlobeValve";
+    }
+    if (unit instanceof Expander) {
+      return "Expander";
+    }
+    if (unit instanceof Mixer) {
+      return "Mixer";
+    }
+    if (unit instanceof Splitter) {
+      return "Splitter";
+    }
+    return "Equipment";
+  }
+
+  /**
+   * Simple connection descriptor linking an outlet nozzle to an inlet nozzle.
+   */
+  private static class NozzleConnection {
+    private final String fromNozzle;
+    private final String toNozzle;
+
+    NozzleConnection(String fromNozzle, String toNozzle) {
+      this.fromNozzle = fromNozzle;
+      this.toNozzle = toNozzle;
+    }
+  }
+
+  /**
+   * Builds connections between equipment by examining process wiring in the ProcessSystem.
+   *
+   * @param processSystem the process system
+   * @param outletNozzles map of equipment name to outlet nozzle ID
+   * @param inletNozzles map of equipment name to inlet nozzle ID
+   * @param connections list to populate with connections
+   * @param usedIds set of used IDs
+   */
+  private static void buildConnections(ProcessSystem processSystem,
+      Map<String, String> outletNozzles, Map<String, String> inletNozzles,
+      List<NozzleConnection> connections, Set<String> usedIds) {
+    List<ProcessEquipmentInterface> units = processSystem.getUnitOperations();
+    // Heuristic: consecutive non-stream equipment are connected in order
+    String previousOutNozzle = null;
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit instanceof DexpiStream || unit instanceof Stream) {
+        // Streams act as pipes; link the previous equipment to the next
+        continue;
+      }
+      String inNozzle = inletNozzles.get(unit.getName());
+      if (previousOutNozzle != null && inNozzle != null) {
+        connections.add(new NozzleConnection(previousOutNozzle, inNozzle));
+      }
+      previousOutNozzle = outletNozzles.get(unit.getName());
+    }
+  }
+
+  /**
+   * Appends a PipingNetworkSystem containing Connection elements for equipment wiring.
+   *
+   * @param document the XML document
+   * @param parent the root element
+   * @param connections the list of connections
+   * @param usedIds set of used IDs
+   */
+  private static void appendConnectionSystem(Document document, Element parent,
+      List<NozzleConnection> connections, Set<String> usedIds) {
+    Element systemElement = document.createElement("PipingNetworkSystem");
+    systemElement.setAttribute("ComponentClass", "PipingNetworkSystem");
+    systemElement.setAttribute("ID",
+        uniqueIdentifier("PipingNetworkSystem", "Connections", usedIds));
+
+    Element segmentElement = document.createElement("PipingNetworkSegment");
+    segmentElement.setAttribute("ComponentClass", "PipingNetworkSegment");
+    segmentElement.setAttribute("ID", uniqueIdentifier("PipingNetworkSegment", "ConnSeg", usedIds));
+
+    for (NozzleConnection conn : connections) {
+      Element connElement = document.createElement("Connection");
+      connElement.setAttribute("FromID", conn.fromNozzle);
+      connElement.setAttribute("ToID", conn.toNozzle);
+      segmentElement.appendChild(connElement);
+    }
+
+    systemElement.appendChild(segmentElement);
+    parent.appendChild(systemElement);
   }
 
   private static void appendPipingNetworkSystem(Document document, Element parent, String key,

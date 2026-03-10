@@ -102,6 +102,12 @@ public final class DexpiMetadata {
   /** Generic attribute for the piping class code (e.g. "2500#"). */
   public static final String PIPING_CLASS_CODE = "PipingClassCode";
 
+  /** Generic attribute for the number of trays in a distillation column. */
+  public static final String NUMBER_OF_TRAYS = "NumberOfTrays";
+
+  /** Generic attribute for the feed tray number in a distillation column. */
+  public static final String FEED_TRAY = "FeedTray";
+
   /** DEXPI URI prefix for RDL references. */
   public static final String DEXPI_RDL_PREFIX = "http://sandbox.dexpi.org/rdl/";
 
@@ -124,10 +130,10 @@ public final class DexpiMetadata {
           FLUID_CODE, INSIDE_DIAMETER, NOMINAL_DIAMETER, TANGENT_TO_TANGENT_LENGTH, DESIGN_PRESSURE,
           DESIGN_TEMPERATURE, ORIENTATION, VALVE_CV, WALL_THICKNESS, WEIGHT)));
 
-  private static final Set<String> SIZING_ATTRIBUTES =
-      Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(INSIDE_DIAMETER,
-          NOMINAL_DIAMETER, TANGENT_TO_TANGENT_LENGTH, DESIGN_PRESSURE, DESIGN_TEMPERATURE,
-          ORIENTATION, VALVE_CV, WALL_THICKNESS, WEIGHT, PIPING_CLASS_CODE)));
+  private static final Set<String> SIZING_ATTRIBUTES = Collections
+      .unmodifiableSet(new LinkedHashSet<>(Arrays.asList(INSIDE_DIAMETER, NOMINAL_DIAMETER,
+          TANGENT_TO_TANGENT_LENGTH, DESIGN_PRESSURE, DESIGN_TEMPERATURE, ORIENTATION, VALVE_CV,
+          WALL_THICKNESS, WEIGHT, PIPING_CLASS_CODE, NUMBER_OF_TRAYS, FEED_TRAY)));
 
   /**
    * Returns the recommended generic attributes that should accompany DEXPI piping segments.

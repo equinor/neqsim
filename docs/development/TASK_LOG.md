@@ -27,6 +27,12 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-03-10 — DEXPI round-trip export, cycle detection, and column support
+**Type:** E (Feature)
+**Keywords:** DEXPI, P&ID, round-trip, export, XML writer, connection, nozzle, reverse mapping, cycle detection, distillation column, simulation results, instrument wiring, DexpiXmlWriter, DexpiXmlWriterTest
+**Solution:** src/main/java/neqsim/process/processmodel/dexpi/DexpiXmlWriter.java, src/test/java/neqsim/process/processmodel/dexpi/DexpiXmlWriterTest.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiTopologyResolver.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiEquipmentFactory.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiSimulationBuilder.java
+**Notes:** Completed 7 round-trip (DEXPI↔NeqSim) improvements. DexpiXmlWriter gains Connection/Nozzle export (buildConnections, appendNozzle, appendConnectionSystem), native equipment reverse mapping (reverseMapComponentClass maps Separator→VesselForStorage, Compressor→CompressorUnit, etc.), and simulation results export (appendSimulationResults writes temperature/pressure/flow as GenericAttributes). DexpiTopologyResolver gains hasCycle() via DFS-based detection. DexpiEquipmentFactory gains createColumn() for DistillationColumn instantiation with NumberOfTrays and FeedTray sizing attributes. DexpiSimulationBuilder instrument tag wiring replaced setName() calls with logging-based tag association (ControllerDeviceInterface/MeasurementDeviceInterface lack setName). Fixed instanceof ordering bug: Cooler extends Heater, so Cooler must be checked before Heater in reverseMapComponentClass. 15 new tests (11 in DexpiXmlWriterTest, 2 cycle-detection, 2 column-creation); 64 tests total, all passing.
+
 ### 2026-03-10 — DEXPI topology resolver, equipment factory, and simulation builder
 **Type:** E (Feature)
 **Keywords:** DEXPI, P&ID, topology, nozzle, connection, equipment factory, simulation builder, mapping loader, sizing, DexpiTopologyResolver, DexpiEquipmentFactory, DexpiSimulationBuilder, DexpiMappingLoader, GenericAttribute, Kahn, topological sort

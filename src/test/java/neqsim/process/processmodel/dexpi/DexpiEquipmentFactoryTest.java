@@ -9,6 +9,7 @@ import neqsim.NeqSimTest;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -217,6 +218,39 @@ public class DexpiEquipmentFactoryTest extends NeqSimTest {
 
     assertNotNull(result);
     assertTrue(result instanceof Stream);
+  }
+
+  /**
+   * Tests creation of a DistillationColumn with default tray count.
+   */
+  @Test
+  public void testCreateColumnDefault() {
+    Stream feed = createTestStream();
+    DexpiProcessUnit unit =
+        new DexpiProcessUnit("Column-1", "DistillationColumn", EquipmentEnum.Column, null, null);
+
+    ProcessEquipmentInterface result = DexpiEquipmentFactory.create(unit, feed);
+
+    assertNotNull(result);
+    assertTrue(result instanceof DistillationColumn, "Should create a DistillationColumn");
+    assertEquals("Column-1", result.getName());
+  }
+
+  /**
+   * Tests creation of a DistillationColumn with explicit tray count and feed tray.
+   */
+  @Test
+  public void testCreateColumnWithTrays() {
+    Stream feed = createTestStream();
+    DexpiProcessUnit unit =
+        new DexpiProcessUnit("Column-2", "DistillationColumn", EquipmentEnum.Column, null, null);
+    unit.setSizingAttribute(DexpiMetadata.NUMBER_OF_TRAYS, "10");
+    unit.setSizingAttribute(DexpiMetadata.FEED_TRAY, "5");
+
+    ProcessEquipmentInterface result = DexpiEquipmentFactory.create(unit, feed);
+
+    assertNotNull(result);
+    assertTrue(result instanceof DistillationColumn, "Should create a DistillationColumn");
   }
 
   /**
