@@ -18,6 +18,99 @@ deeper and more formal output. Simple question → quick answer with minimal cer
 
 ---
 
+## 0 ── OPERATING PRINCIPLES (read before execution)
+
+### Proportionality Rule
+
+Solve the user’s engineering problem with the **smallest complete package** that
+credibly supports the decision.
+
+- **Screening mode**: prioritize speed, directional insight, and transparent assumptions.
+- **Design mode**: prioritize standards alignment, validation depth, and traceability.
+- **Development mode**: prioritize reusable NeqSim code, tests, and documented improvements.
+
+Do not create extra notebooks, uncertainty studies, or formal reports unless they
+materially improve decision quality or are explicitly requested.
+
+### Validation Rule
+
+Validation is mandatory, but the validation method is task-dependent. Use the
+strongest available method that is proportionate to the task:
+
+- External benchmark data
+- Hand calculations
+- Literature comparison
+- Prior NeqSim example comparison
+- Limiting-case checks
+- Conservation checks (mass/energy)
+- Sensitivity sanity checks
+
+### Assumption Rule
+
+If key data is missing, proceed with documented assumptions **unless** the missing
+data would fundamentally change the method or decision. Record each key assumption:
+
+- Assumption
+- Why it was needed
+- Likely impact on results
+- Confidence level (high/medium/low)
+- How to replace it with project data
+
+### Task Intent Rule
+
+Before starting, determine and state:
+
+1. The decision being supported
+2. The required fidelity (screening, design, or verification)
+3. Deliverable mode (answer-first, notebook-first, or report-first)
+4. Evidence level proportionate to that decision
+
+### Stop Conditions
+
+Stop when all are true:
+
+- The engineering question is answered
+- Validation is proportionate and documented
+- Major assumptions are visible
+- Additional work would mostly add documentation rather than decision value
+
+### Failure Handling
+
+If the primary path fails (missing NeqSim capability, convergence issues,
+insufficient data, conflicting references):
+
+1. Explain failure mode clearly
+2. Try one practical fallback method
+3. Provide a bounded engineering estimate where possible
+4. State what additional data or implementation would remove uncertainty
+
+### Deliverable Matrix
+
+Use this table to determine the minimum deliverables for the current task.
+Anything beyond the minimum is optional unless explicitly requested or needed
+for the decision.
+
+| Deliverable | Screening | Design | Development |
+|-------------|-----------|--------|-------------|
+| Task folder (`task_solve/`) | ✓ | ✓ | ✓ |
+| `task_spec.md` (minimal) | ✓ | ✓ | ✓ |
+| `task_spec.md` (full) | — | ✓ | ✓ |
+| `notes.md` (condensed) | ✓ | — | — |
+| `notes.md` (full research) | — | ✓ | ✓ |
+| `analysis.md` (deep analysis) | — | When high-consequence | ✓ |
+| Main notebook | ✓ | ✓ | ✓ |
+| Multiple notebooks | — | When multi-discipline | ✓ |
+| Benchmark notebook | — | When external data available | ✓ |
+| Uncertainty/risk notebook | — | When economics/reserves | When economics/reserves |
+| `results.json` (core keys) | ✓ | ✓ | ✓ |
+| `results.json` (full schema) | — | ✓ | ✓ |
+| Figures saved to `figures/` | 0–1 | 2–3+ | 2–3+ |
+| Word + HTML report | — | ✓ | ✓ |
+| NIPs (`neqsim_improvements.md`) | — | When material gap | ✓ |
+| Java implementation + tests | — | — | When gap is achievable |
+
+---
+
 ## 1 ── OVERVIEW
 
 You follow the **3-step AI-Supported Task Solving While Developing** workflow:
@@ -60,10 +153,11 @@ Your deliverable is a populated task folder under `task_solve/`.
    - User asks a single question with no standards → Quick
    - When in doubt, ask the user: "This looks like a [scale] task — should I go deeper or keep it light?"
 
-   **Follow-up questions (ASK BEFORE STARTING for Standard/Comprehensive tasks):**
+  **Follow-up questions (ask only when method-critical data is missing):**
 
-   Before beginning any Standard or Comprehensive task, ask these scoping questions
-   to avoid rework and produce better results:
+  Ask these scoping questions only when missing inputs would materially change
+  the calculation method, acceptance criteria, or decision recommendation.
+  Otherwise proceed with explicit assumptions and continue without blocking.
 
    1. **Fluid / resource**: What is the reservoir fluid composition? If unavailable,
       what type (lean gas, rich gas, oil, condensate)? What is the estimated
@@ -128,10 +222,13 @@ Your deliverable is a populated task folder under `task_solve/`.
    - Use web search if available for engineering reference data
 
 6. **Write comprehensive research notes** to `step1_scope_and_research/notes.md`.
-   These notes must be **substantive and detailed** — not a skeleton template.
-   The notes are the knowledge base that informs the analysis document (Phase 1.5).
+   These notes must be **substantive** — not a skeleton template.
+   The depth should be proportional to the task mode.
 
-   **MANDATORY sections** (leave no section empty):
+   **Screening mode:** A condensed version covering: sources consulted, key
+   data / sanity-check values, NeqSim classes used, and assumptions made.
+
+   **Design / Development mode (full sections):**
    - **Sources** (table): Every source consulted — NeqSim classes, papers, standards,
      web references, textbooks. Minimum 5 entries for Standard tasks, 10+ for Comprehensive.
    - **Literature & Reference Documents**: For each key reference, write a structured
@@ -155,15 +252,15 @@ Your deliverable is a populated task folder under `task_solve/`.
      and any limitations found. This feeds directly into Phase 1.5.
    - **Open Questions**: Uncertainties, missing data, things to clarify with the user
 
-### Phase 1.5: Deep Analysis & Solution Design (MANDATORY for Standard/Comprehensive)
+### Phase 1.5: Deep Analysis & Solution Design (required for high-consequence work)
 
-Before writing any simulation code, produce a **thorough engineering analysis
-document** that gives the reader (and yourself) deep insight into the problem
-and a clear solution path. This is the intellectual core of the task — it
-transforms a vague request into a rigorous engineering proposal.
+Before writing simulation code for design, workflow, safety-critical, or
+high-value economics tasks, produce a **thorough engineering analysis document**
+that gives deep insight and a clear solution path. For smaller tasks, use a
+condensed analysis section in notes and proceed.
 
 6b. **Write a detailed problem analysis** to `step1_scope_and_research/analysis.md`.
-    This document must contain ALL of the following sections:
+    Include the following sections (depth proportional to task consequence):
 
     #### 6b.1 — Physics & Theory Deep-Dive
     Explain the fundamental physics/engineering behind the problem at a level
@@ -238,20 +335,23 @@ transforms a vague request into a rigorous engineering proposal.
    - Use the dual-boot setup pattern (devtools + pip fallback)
    - Follow the notebook structure from the `@solve.process` agent
    - Include clear markdown cells explaining each step
-   - **MANDATORY: Results & Figures** — every notebook MUST include:
-     - A **detailed results section** that extracts all key numerical outputs into
+   - **Results & Figures (proportional requirement):**
+     - Quick: at least one clear results table and at least one informative figure when visualization adds value
+     - Standard/Comprehensive: detailed results tables and typically 2-3+ informative figures
+     - Development/design deliverables should include enough figures to support recommendations
+     - A **results section** that extracts key numerical outputs into
        a formatted table (pandas DataFrame or formatted print) with units
-     - At least **2-3 matplotlib figures** showing the most important relationships
+     - Typically **2-3+ matplotlib figures** for Standard/Comprehensive tasks showing the most important relationships
        (e.g., production profile vs time, pressure vs distance, temperature vs stage,
        cost breakdown bar chart, sensitivity tornado chart)
      - All figures saved to `figures/` as PNG with descriptive filenames
      - Figure captions added to `results.json` under `figure_captions`
      - A **summary comparison table** when comparing cases or validating against
        reference data
-   - **MANDATORY: Figure Discussion Cells** — after EVERY figure cell, add a
-     **markdown discussion cell** that interprets the results. This is the critical
-     link between calculations and conclusions. Each discussion cell MUST follow
-     this pattern:
+   - **Figure Discussion Cells** — add discussion cells for all decision-critical
+     figures (and for all major figures in Design/Development mode). This is the
+     critical link between calculations and conclusions. Each discussion cell should
+     follow this pattern:
 
      ```markdown
      ### Discussion: [Figure Title]
@@ -297,15 +397,16 @@ transforms a vague request into a rigorous engineering proposal.
      > Answers insight question Q3: "At what distance does deposition begin?"*
      ```
 
-   - **MANDATORY: Traceability Chain** — the notebook must establish a clear chain:
+   - **Traceability Chain** (Design/Development mode, recommended for all):
      1. **Calculation** → produces numerical results
      2. **Figure** → visualizes the results
      3. **Discussion cell** → interprets the figure (observation, mechanism, implication)
      4. **Recommendation** → specific action based on the discussion
      5. **results.json** → captures the chain in `figure_discussion` entries
 
-     Every conclusion in the final report MUST trace back to specific figures and
-     their discussion cells. No conclusion without evidence.
+     For Design/Development deliverables, every conclusion should trace back to
+     specific figures and discussion cells. For Screening tasks, a brief
+     interpretation paragraph after key figures is sufficient.
 
    - For **Type G (Workflow)** tasks: create multiple notebooks, numbered sequentially
      (e.g., `01_reservoir_fluid.ipynb`, `02_pipeline_sizing.ipynb`, etc.)
@@ -325,14 +426,16 @@ transforms a vague request into a rigorous engineering proposal.
     - Rerun the notebook
     - Document the iteration in `step2_analysis/notes.md`
 
-### Benchmark Validation (MANDATORY — separate notebook)
+### Benchmark Validation (required when suitable benchmark data exists)
 
-11b. **Create a dedicated benchmark notebook** in `step2_analysis/` named
-     `XX_benchmark_validation.ipynb` (e.g., `02_benchmark_validation.ipynb` or
-     the last numbered notebook before `results.json`).
+11b. Create benchmark validation evidence in one of these forms:
+  - Separate notebook (`XX_benchmark_validation.ipynb`) for Standard/Comprehensive tasks
+  - Section within the main notebook for Quick tasks
 
-     **Every calculation must be compared against independent reference data.**
-     The type of benchmark depends on the task:
+    Use independent reference data when available. If no suitable benchmark
+    exists, use cross-validation: hand calculations, limiting-case checks,
+    conservation checks, prior NeqSim comparisons, and sensitivity sanity checks.
+    The type of validation depends on the task:
 
      | Task Type | Benchmark Sources | What to Compare |
      |-----------|-------------------|------------------|
@@ -352,7 +455,7 @@ transforms a vague request into a rigorous engineering proposal.
      5. **Deviation analysis** — Plot parity chart (benchmark vs calculated), explain any deviations > 5%
      6. **Conclusion** — State whether results are within acceptable tolerance
 
-     **Minimum requirements:**
+    **Minimum requirements (when external benchmarking is used):**
      - At least 3 benchmark data points (different conditions, components, or cases)
      - A parity plot or deviation bar chart saved to `figures/`
      - A summary table with columns: Parameter | Benchmark Value | NeqSim Value | Deviation % | Source
@@ -386,7 +489,8 @@ transforms a vague request into a rigorous engineering proposal.
     # Then save plots:
     fig.savefig(str(FIGURES_DIR / "my_plot.png"), dpi=150, bbox_inches="tight")
     ```
-    **Every notebook MUST produce at least 2-3 saved figures.** Common figure types:
+    **Figure count should be proportional to task scale and decision complexity.**
+    Common figure types:
     - Process profiles (T, P, flow vs. position or time)
     - Sensitivity/parametric studies (property vs. variable)
     - Bar charts for cost breakdowns, composition, or comparisons
@@ -410,6 +514,8 @@ transforms a vague request into a rigorous engineering proposal.
     TASK_DIR = NOTEBOOK_DIR.parent
     FIGURES_DIR = TASK_DIR / "figures"
     FIGURES_DIR.mkdir(exist_ok=True)
+    # ── results.json schema ──
+    # TIER 1 — Always required (all modes)
     results = {
         "key_results": {
             # All key numerical outputs with units in the key name
@@ -419,59 +525,46 @@ transforms a vague request into a rigorous engineering proposal.
             "mass_balance_error_pct": 0.01,
             "acceptance_criteria_met": True,
         },
-        "approach": "Brief description of methodology used — reference analysis.md for full rationale",
-        "approach_justification": "Why this approach was chosen over alternatives (from analysis.md Section 2)",
-        "conclusions": "Key findings with engineering interpretation and actionable recommendations",
-        "engineering_insights": {
-            # Answers to insight questions from analysis.md Section 6
-            # "Q1: At what H2S level does deposition become significant?": "Above 20 ppm...",
-        },
-        "design_recommendations": [
-            # Specific actionable engineering recommendations
-            # "Specify CRA material (22Cr duplex) for first 3D downstream of valve",
-            # "Pre-heat gas to minimum 60°C before letdown valve",
+        "approach": "Brief description of methodology used",
+        "conclusions": "Key findings with engineering interpretation",
+        "assumptions": [
+            # Key engineering assumptions made during the analysis
+            # {"assumption": "...", "impact": "low/medium/high",
+            #  "confidence": "low/medium/high", "replace_with": "project data X"}
         ],
-        "neqsim_gaps": [
-            # Summary of gaps found and NIPs written
-            # {"nip_id": "NIP-01", "title": "CNT Nucleation Model", "priority": "Medium", "implemented": false}
-        ],
-        "remaining_uncertainties": [
-            # What the analysis could not resolve
-            # "Actual O2 ingress rate at Draupner — assumed 10 ppm based on operator data",
-        ],
-        "figure_discussion": [
-            # MANDATORY: One entry per figure — links figure → observation → mechanism → recommendation
-            # {"figure": "temperature_profile.png",
-            #  "title": "Temperature Profile Along Pipeline",
-            #  "observation": "Temperature drops below 0°C at 12 km, entering sulfur deposition zone",
-            #  "mechanism": "Joule-Thomson cooling combined with heat loss to seabed at 4°C ambient",
-            #  "implication": "Solid S8 will precipitate in the pipeline between 12-35 km",
-            #  "recommendation": "Install DEH (direct electrical heating) or pre-heat gas to 60°C",
-            #  "linked_results": ["outlet_temperature_C", "sulfur_deposition_onset_C"],
-            #  "insight_question_ref": "Q3"},
-        ],
-        "figure_captions": {
-            # "plot_name.png": "Description of what the figure shows"
-        },
-        "equations": [
-            # {"label": "Energy Balance", "latex": "Q = m C_p \\Delta T"}
-        ],
-        "uncertainty": {
-            # See Uncertainty & Risk Analysis section below for full schema
-        },
-        "risk_evaluation": {
-            # See Uncertainty & Risk Analysis section below for full schema
-        },
     }
+
+    # TIER 2 — Populate when relevant (Design/Development or when produced)
+    # The report generator renders these sections only if present;
+    # missing keys are silently skipped (graceful degradation).
+    #
+    # results["approach_justification"] = "Why this approach was chosen..."
+    # results["engineering_insights"] = {"Q1: ...": "Answer..."}
+    # results["design_recommendations"] = ["Recommendation 1", ...]
+    # results["neqsim_gaps"] = [{"nip_id": "NIP-01", ...}]
+    # results["remaining_uncertainties"] = ["Uncertainty 1", ...]
+    # results["figure_discussion"] = [{"figure": "...", "title": "...",
+    #     "observation": "...", "mechanism": "...", "implication": "...",
+    #     "recommendation": "...", "linked_results": [...],
+    #     "insight_question_ref": "Q..."}]
+    # results["figure_captions"] = {"plot.png": "Description"}
+    # results["equations"] = [{"label": "...", "latex": "..."}]
+    #
+    # TIER 3 — Populate only when uncertainty/risk/benchmark work is performed
+    # results["benchmark_validation"] = {"benchmark_source": "...", ...}
+    # results["uncertainty"] = {"method": "...", "p10": ..., ...}
+    # results["risk_evaluation"] = {"risks": [...], ...}
     results_path = str(TASK_DIR / "results.json")
     with open(results_path, "w") as f:
         json.dump(results, f, indent=2)
     ```
 
-### Uncertainty & Risk Analysis (MANDATORY — separate notebook)
+### Uncertainty & Risk Analysis (conditional)
 
-14b. **Create a dedicated notebook** named `XX_uncertainty_risk_analysis.ipynb` in
-     `step2_analysis/` (e.g., `03_uncertainty_risk_analysis.ipynb`).
+14b. Create a dedicated uncertainty/risk notebook for workflow, economics,
+  reserves/resource, concept selection, or when explicitly requested.
+  For smaller design/process/property tasks, uncertainty can be a compact
+  section in the main notebook unless deeper treatment is needed.
 
      **Core principle: use NeqSim process simulations, not simplified Python models.**
      Every Monte Carlo iteration should run the same NeqSim equipment classes used
@@ -522,7 +615,7 @@ transforms a vague request into a rigorous engineering proposal.
      | **Early exit** | Break production loop when rate < threshold (e.g., 0.5 MSm³/d) | Skip tail years |
      | **Seed RNG** | `np.random.seed(42)` for reproducibility | Deterministic reports |
 
-     #### Minimum Simulation Count
+    #### Minimum Simulation Count (when Monte Carlo is used)
 
      - **With NeqSim simulations:** N ≥ 200 (each takes ~0.5–1.0 sec)
      - **Simplified models only:** N ≥ 1000
@@ -601,47 +694,46 @@ transforms a vague request into a rigorous engineering proposal.
 
 ### Quality Gate: Phase 1.5 → Phase 2
 
-**Before starting any notebook code (Standard/Comprehensive tasks), verify:**
+**When Phase 1.5 applies (high-consequence / Design / Development), verify:**
 
-- [ ] `analysis.md` exists with all 6 sections populated (not templates)
+- [ ] `analysis.md` exists with sections populated proportionate to the task
 - [ ] Physics/Theory section has governing equations and order-of-magnitude estimates
 - [ ] At least 2-3 alternative approaches listed with justified selection
 - [ ] NeqSim Capability Assessment table completed for every needed capability
-- [ ] For every ❌/⚠️ gap: NIP written in `neqsim_improvements.md`
+- [ ] For material gaps: improvement noted (NIP or notes.md)
 - [ ] Solution architecture described with flowsheet and expected result ranges
-- [ ] 5-10 engineering insight questions written that the analysis must answer
-- [ ] Research notes (`notes.md`) are substantive — no empty template sections
+- [ ] 3-10 engineering insight questions (scale to task complexity)
+- [ ] Research notes (`notes.md`) are substantive — not empty templates
+
+**When Phase 1.5 is skipped (Screening mode):** verify that notes.md has
+at minimum: sources consulted, key assumptions, and NeqSim classes used.
 
 ### Quality Gate: Step 2 → Step 3
 
-**Before moving to Step 3 (Report), verify ALL of these:**
+**Core checks (all modes):**
 
 - [ ] Every notebook cell executes without errors
-- [ ] `results.json` exists in the task root with `key_results` and `validation` sections
-- [ ] All acceptance criteria from `task_spec.md` have been checked (pass or documented fail)
-- [ ] All required deliverables from `task_spec.md` are produced
-- [ ] **At least 2-3 figures** saved to `figures/` directory as PNG files (verify files exist at absolute path, not via cwd)
-- [ ] `figure_captions` populated in results.json for **every** saved figure
-- [ ] `equations` populated in results.json with key equations used
-- [ ] Detailed results table printed in notebook (not just raw numbers)
-- [ ] Validation notes populated in `step2_analysis/notes.md`
-- [ ] **Benchmark validation notebook** exists with comparison table and parity/deviation plot
-- [ ] `benchmark_validation` section populated in results.json with deviations
-- [ ] All deviations > 5% are explained in the benchmark notebook
-- [ ] **Uncertainty & risk notebook** exists with NeqSim-based Monte Carlo (N≥200)
-- [ ] `uncertainty` section populated in results.json with P10/P50/P90 and tornado data
-- [ ] `risk_evaluation` section populated in results.json with risk register
-- [ ] Resource/reserve P10/P50/P90 reported in `resource_estimate` sub-object
-- [ ] `figure_captions` in results.json covers figures from **ALL** notebooks (main, benchmark, uncertainty/risk), not just the main notebook
-- [ ] Numbers in notebooks are consistent — if design parameters changed, ALL notebooks have been re-run
-- [ ] Every engineering insight question from Phase 1.5 is answered in the notebook
-- [ ] Engineering interpretation provided for every key result (context + implication + recommendation)
-- [ ] **Figure discussion cells** present in notebook after EVERY figure (observation + mechanism + implication + recommendation)
-- [ ] `figure_discussion` populated in results.json with one entry per figure
-- [ ] Every `figure_discussion` entry links to specific `key_results` entries via `linked_results`
-- [ ] Every `design_recommendations` entry traces back to at least one `figure_discussion`
-- [ ] `neqsim_improvements.md` populated with NIPs for any gaps found (or "No gaps found")
-- [ ] Validation notes populated in `step2_analysis/notes.md` (not left as template)
+- [ ] `results.json` exists with Tier 1 keys (`key_results`, `validation`, `approach`, `conclusions`, `assumptions`)
+- [ ] Acceptance criteria checked — pass or documented fail
+- [ ] Results table printed in notebook with units
+- [ ] Some form of validation evidence documented (benchmark, hand calc, sanity check)
+- [ ] Key assumptions listed in results.json `assumptions` array
+
+**Additional checks (Design / Development mode):**
+
+- [ ] Figures saved to `figures/` as PNG; `figure_captions` populated for each
+- [ ] `equations` populated with key equations used
+- [ ] Validation notes in `step2_analysis/notes.md`
+- [ ] If benchmark notebook used: `benchmark_validation` in results.json
+- [ ] If uncertainty/risk performed: `uncertainty` and `risk_evaluation` in results.json
+- [ ] If resource uncertainty in scope: P10/P50/P90 in `resource_estimate`
+- [ ] `figure_captions` covers figures from ALL notebooks
+- [ ] Numbers consistent across notebooks (re-run all after parameter changes)
+- [ ] Engineering insight questions answered in notebook and/or results.json
+- [ ] Discussion cells for decision-critical figures
+- [ ] `figure_discussion` populated for discussed figures
+- [ ] `design_recommendations` traceable to figure discussions
+- [ ] Material NeqSim gaps documented (NIPs or notes)
 
 **If any gate fails, iterate on Step 2** — do NOT proceed to reporting with
 incomplete or unvalidated results.
@@ -657,19 +749,20 @@ incomplete or unvalidated results.
     - **Discussion section** auto-populates from `results.json["figure_discussion"]` —
       renders each figure's observation, mechanism, implication, and recommendation
       with traceability links. This is the core analytic content of the report.
-    - **Benchmark validation section** must appear in the report with the comparison
-      table and deviation analysis from `results.json["benchmark_validation"]`
-    - **Uncertainty analysis section** must appear with P10/P50/P90 table, resource
-      estimate table, tornado sensitivity table, and probability of negative outcome
-    - **Risk evaluation section** must appear with risk register table and overall
-      risk level from `results.json["risk_evaluation"]`
+    - If benchmark validation is performed, include a benchmark section with
+      comparison table and deviation analysis from `results.json["benchmark_validation"]`
+    - If uncertainty analysis is performed, include uncertainty outputs
+      (P10/P50/P90, resource estimate, tornado, probability metrics)
+    - If risk evaluation is performed, include a risk section with risk register
+      and overall risk level from `results.json["risk_evaluation"]`
 
-    **IMPORTANT — Report generator completeness checks (common failure mode):**
-    The default `generate_report.py` template renders: Results, Discussion,
-    Validation, Benchmark, Uncertainty, Risk, Conclusions, and References
-    automatically from `results.json`. You MUST ensure all data keys are populated.
-    The Discussion section (from `figure_discussion`) is the most important analytical
-    content — it provides the traceability chain from results to recommendations.
+    **Report generator behaviour:**
+    The `generate_report.py` template renders sections from `results.json`
+    automatically. Sections with populated keys render fully; missing keys are
+    silently skipped (graceful degradation). At minimum, ensure Tier 1 keys are
+    present (`key_results`, `validation`, `approach`, `conclusions`, `assumptions`).
+    For Design/Development tasks, also populate `figure_discussion` — it provides
+    the traceability chain from results to recommendations.
 
     Typical section numbering for a complete report:
     1. Executive Summary | 2. Problem Description | 3. Scope & Standards |
@@ -967,15 +1060,18 @@ in sequence. Coordinate them through the task_spec.md requirements.
 
 ---
 
-## 6 ── NEQSIM IMPROVEMENT PROPOSALS (MANDATORY when gaps found)
+## 6 ── NEQSIM IMPROVEMENT PROPOSALS (when material gaps are found)
 
-When the capability assessment in Phase 1.5 identifies NeqSim gaps (❌ Missing
-or ⚠️ Partial), you MUST write concrete improvement proposals. These proposals
-are a **key deliverable** — they turn task-solving into development planning.
+When capability assessment identifies material NeqSim gaps (❌ Missing or ⚠️ Partial),
+write concrete improvement proposals. Use proportionality:
+
+- Required for Development mode and high-impact Design/Workflow tasks
+- Recommended for recurring or high-value gaps
+- Optional for one-off low-impact gaps (document limitation and workaround in notes)
 
 ### 6.1 — When to Write Proposals
 
-Write a NeqSim Improvement Proposal (NIP) for every gap that:
+Write a NeqSim Improvement Proposal (NIP) when the gap:
 - Blocked or limited the analysis quality
 - Required a Python workaround that should be in Java
 - Would make future similar tasks significantly easier
@@ -1066,11 +1162,12 @@ def estimate_nucleation_rate(supersaturation, temperature):
 
 ---
 
-## 7 ── ENGINEERING INTERPRETATION IN REPORTS (MANDATORY)
+## 7 ── ENGINEERING INTERPRETATION IN REPORTS
 
-Reports must go beyond presenting numbers — they must provide **engineering
-insight and actionable recommendations**. Every report section must answer
-"so what?" for the reader.
+Reports should go beyond presenting numbers — they should provide **engineering
+insight and actionable recommendations**. The depth of interpretation should be
+proportional to the task mode: Screening tasks need brief context; Design and
+Development deliverables need full interpretation with traceability.
 
 ### 7.1 — Results Interpretation Requirements
 
@@ -1099,9 +1196,9 @@ For every key result, the report must include:
 > specify CRA material (22Cr duplex) for the first 3 pipe diameters downstream
 > of the valve, and carbon steel with 3 mm corrosion allowance beyond.
 
-### 7.2 — Conclusions Must Be Actionable
+### 7.2 — Conclusions Should Be Actionable
 
-The conclusions section must contain:
+For Design/Development deliverables, the conclusions section should contain:
 1. **Summary of key findings** — 3-5 bullet points with numbers
 2. **Engineering recommendations** — specific, actionable advice
 3. **Design implications** — what parameters should be used in detailed design
@@ -1110,8 +1207,9 @@ The conclusions section must contain:
 
 ### 7.3 — Figure-by-Figure Discussion (Traceability Chain)
 
-Every figure in the notebook and report MUST have a corresponding discussion
-that creates a traceable chain from calculation to recommendation:
+For Design/Development deliverables, decision-critical figures should have a
+corresponding discussion that creates a traceable chain from calculation
+to recommendation. For Screening tasks, brief inline comments suffice:
 
 ```
 Calculation → Figure → Discussion → Conclusion → Recommendation
@@ -1121,44 +1219,30 @@ Calculation → Figure → Discussion → Conclusion → Recommendation
 
 #### In the Notebook
 
-After every figure cell, add a **markdown discussion cell** with this structure:
-1. **Observation** — what does the figure show? (cite specific numbers from the plot)
-2. **Physical Mechanism** — why does this happen? (refer to the underlying physics)
-3. **Engineering Implication** — what does this mean for the design/operation?
-4. **Recommendation** — what specific action should be taken?
+After decision-critical figure cells, add a **markdown discussion cell** with:
+1. **Observation** — what the figure shows (with numbers)
+2. **Physical Mechanism** — why it happens
+3. **Engineering Implication** — what it means for design/operation
+4. **Recommendation** — specific action to take
 5. **Traceability** — which results.json entries and insight questions this addresses
+
+(See Section 2 step 8 for the full template and example.)
 
 #### In results.json
 
-Populate the `figure_discussion` array with one entry per figure:
-```python
-"figure_discussion": [
-    {
-        "figure": "temperature_profile.png",
-        "title": "Temperature Profile Along Pipeline",
-        "observation": "Temperature drops below 0°C at 12 km from inlet",
-        "mechanism": "JT cooling (µ_JT = 0.45°C/bar) combined with 4°C seabed",
-        "implication": "Solid S8 precipitates between 12-35 km, blocking risk",
-        "recommendation": "Install DEH heating between 10-30 km",
-        "linked_results": ["outlet_temperature_C", "deposition_onset_C"],
-        "insight_question_ref": "Q3"
-    },
-]
-```
+Populate the `figure_discussion` array — schema shown in the results.json
+template (Section 2, step 14, Tier 2).
 
 #### In the Report
 
 The report generator auto-renders `figure_discussion` entries as a structured
-"Discussion" section (section 6) between Results and Validation. Each discussion
-block shows observation, mechanism, implication, and recommendation with
-traceability references. The paper generator includes the same discussion
-inline within the "Results and Discussion" section.
+"Discussion" section between Results and Validation. The paper generator
+includes the same discussion inline within "Results and Discussion".
 
-#### Quality Check
+#### Quality Check (Design / Development mode)
 
-- Every figure in `figure_captions` MUST have a matching entry in `figure_discussion`
-- Every entry in `design_recommendations` MUST trace back to at least one `figure_discussion`
-- Every conclusion MUST reference specific figures and observations
+- Decision-critical figures should have matching entries in `figure_discussion`
+- `design_recommendations` entries should trace back to figure discussions
 
 ### 7.4 — Report Section Enhancement
 
@@ -1182,7 +1266,7 @@ Add these sections to the report (in `generate_report.py` MANUAL_SECTIONS):
 1. **Create the folder first.** Always run `python devtools/new_task.py` before writing any files.
 2. **Scale to the task.** Quick tasks get minimal ceremony. Comprehensive tasks get full documentation. Don't over-engineer a simple property lookup or under-deliver a field development study.
 3. **Fill in the task spec.** Standards, methods, and deliverables must be defined in `task_spec.md` before analysis. For Quick scale, only essential fields.
-4. **Deep analysis before code.** For Standard/Comprehensive tasks, the analysis document (`analysis.md`) must be written BEFORE any notebook. No code without theory.
+4. **Deep analysis before code (when applicable).** For high-consequence Design/Development tasks, write `analysis.md` before coding. For Screening tasks, a condensed analysis in notes.md is sufficient.
 5. **Run every notebook cell.** Do not deliver unexecuted notebooks. Fix errors immediately.
 6. **Verify physics.** Mass balance, energy balance, reasonable ranges. Flag anything suspicious.
 7. **Check acceptance criteria.** Results must meet the criteria defined in `task_spec.md`.
@@ -1198,11 +1282,11 @@ Add these sections to the report (in `generate_report.py` MANUAL_SECTIONS):
 17. **After first draft, always self-review calculations.** Before delivering, re-read every formula cell and check: correct signs (revenue positive, cost negative in cash flow), no double-counting (CAPEX in both investment and operating cost), correct time indexing (year-0 vs year-1), tax model matches the jurisdiction's actual law.
 18. **Units matter.** Kelvin for constructors, unit strings for setters. Always state units in output.
 19. **No `pip install neqsim` for local dev.** Use `pip install -e devtools/` pattern. The dual-boot cell handles both cases.
-20. **Always propose NeqSim improvements.** When a NeqSim gap is found, write a NIP (NeqSim Improvement Proposal) in `neqsim_improvements.md`. If the improvement is achievable, implement it during the task.
-21. **Engineering interpretation is mandatory.** Reports must explain what results mean, not just what the numbers are. Every key result needs context, implication, and recommendation.
-22. **Answer the insight questions.** Every engineering insight question from Phase 1.5 must be explicitly answered in the report conclusions.
-23. **Discuss every figure.** After every figure cell in a notebook, add a markdown discussion cell with observation, mechanism, implication, and recommendation. Populate `figure_discussion` in results.json with one entry per figure. No figure without discussion. No conclusion without a figure that supports it.
-24. **Traceability is mandatory.** Every design recommendation must trace back through: recommendation ← figure discussion ← figure ← calculation ← results.json. If a recommendation cannot be traced to a specific figure and observation, it should not be in the report.
+20. **Propose NeqSim improvements when material.** For impactful or recurring gaps, write a NIP in `neqsim_improvements.md`. For minor one-off gaps, document limitation and workaround.
+21. **Engineering interpretation matters.** Reports should explain what results mean, not just what the numbers are. In Design/Development mode, every key result needs context, implication, and recommendation. In Screening mode, brief interpretation of key findings is sufficient.
+22. **Answer the insight questions.** When Phase 1.5 was performed, engineering insight questions should be explicitly answered in the report conclusions.
+23. **Discuss key figures proportionately.** Provide discussion cells for all decision-critical figures, and for all figures in Design/Development mode deliverables. Populate `figure_discussion` accordingly.
+24. **Traceability supports credibility.** In Design/Development mode, design recommendations should trace back through: recommendation ← figure discussion ← figure ← calculation ← results.json. For Screening, direct citation of key results is sufficient.
 25. **PR safety.** Never commit `task_solve/` contents. Copy reusable files to proper locations first. Always ask before `git push`.
 
 ---
