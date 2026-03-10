@@ -45,6 +45,8 @@ src/main/java/neqsim/
                          WellCostEstimator, SURFCostEstimator,
                          SubseaCostEstimator (mechanical design & cost)
   process/processmodel/  ProcessSystem — the flowsheet orchestrator
+    dexpi/               DEXPI P&ID import/export, topology resolver,
+                         equipment factory, simulation builder
   pvtsimulation/         CME, CVD, DL, saturation, GOR, swelling, MMP
   standards/             Gas quality, oil quality, sales contracts
   fluidmechanics/        Pipeline hydraulics

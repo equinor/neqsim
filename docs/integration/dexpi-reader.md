@@ -123,6 +123,68 @@ is enabled, external entity resolution is disabled and `ACCESS_EXTERNAL_DTD` /
 `ACCESS_EXTERNAL_SCHEMA` properties are cleared. These guardrails mirror the guidance in the
 regression tests and should be preserved if the parsing/serialisation logic is extended.
 
+## Building runnable simulations from DEXPI
+
+The `DexpiSimulationBuilder` provides a high-level API that goes beyond basic import: it resolves
+the P&ID topology (nozzle/connection graph), instantiates real NeqSim equipment (separators,
+compressors, valves, heat exchangers, etc.) with sizing attributes from DEXPI GenericAttributes,
+and wires them into a runnable `ProcessSystem`.
+
+```java
+SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+fluid.addComponent("methane", 0.9);
+fluid.addComponent("ethane", 0.1);
+fluid.setMixingRule("classic");
+
+ProcessSystem process = new DexpiSimulationBuilder(new File("plant.xml"))
+    .setFluidTemplate(fluid)
+    .setFeedPressure(50.0, "bara")
+    .setFeedTemperature(30.0, "C")
+    .setFeedFlowRate(1.0, "MSm3/day")
+    .setAutoInstrument(true)
+    .build();
+
+process.run();
+```
+
+The builder performs these steps internally:
+
+1. **Topology resolution** — `DexpiTopologyResolver` parses `<Equipment>`, `<Nozzle>` and
+   `<Connection>` elements into a directed graph, collapses inline piping components (valves,
+   reducers) into equipment-level edges, and produces a topological ordering via Kahn's algorithm.
+2. **Equipment mapping** — `DexpiMappingLoader` reads `dexpi_equipment_mapping.properties` and
+   `dexpi_piping_component_mapping.properties` from the classpath to translate DEXPI ComponentClass
+   strings (e.g. `CentrifugalCompressor`) into `EquipmentEnum` values.
+3. **Equipment instantiation** — `DexpiEquipmentFactory` creates real NeqSim equipment from the
+   mapped enum, applying sizing attributes such as `InsideDiameter`, `TangentToTangentLength`,
+   `DesignPressure`, `ValveCv` and `Orientation`.
+4. **Stream wiring** — The builder walks the topology in upstream-to-downstream order, connecting
+   outlet streams of upstream equipment to inlets of downstream equipment.
+5. **Auto-instrumentation** — When enabled, `DynamicProcessHelper.instrumentAndControl()` adds
+   transmitters and PID controllers to separators, compressors and heat exchangers.
+
+### Component classes
+
+| Class | Purpose |
+|-------|--------|
+| `DexpiSimulationBuilder` | High-level builder: DEXPI XML → runnable `ProcessSystem` |
+| `DexpiTopologyResolver` | Parses nozzle/connection graph, topological sort, edge collapsing |
+| `DexpiEquipmentFactory` | Converts DEXPI placeholders to real equipment with sizing |
+| `DexpiMappingLoader` | Thread-safe cached loader for `.properties` mapping files |
+
+### Sizing attributes
+
+The following DEXPI GenericAttributes are automatically extracted and applied to equipment:
+
+| Attribute | Applied to | Effect |
+|-----------|-----------|--------|
+| `InsideDiameter` | Separators | Sets `setInternalDiameter()` |
+| `TangentToTangentLength` | Separators | Sets `setSeparatorLength()` |
+| `Orientation` | Separators | Sets vertical orientation flag |
+| `DesignPressure` | Compressors, Valves | Sets outlet pressure |
+| `DesignTemperature` | Heat exchangers | Sets outlet temperature |
+| `ValveCv` | Valves | Sets flow coefficient via `setCv()` |
+
 ## Tested example
 
 A regression test (`DexpiXmlReaderTest`) imports the

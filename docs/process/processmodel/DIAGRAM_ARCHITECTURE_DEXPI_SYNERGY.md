@@ -82,7 +82,12 @@ NeqSim already has comprehensive DEXPI support:
 | `DexpiStream` | Runnable stream with DEXPI metadata |
 | `DexpiMetadata` | Shared constants (tag names, line numbers, etc.) |
 | `DexpiRoundTripProfile` | Validation for round-trip fidelity |
-| `dexpi_equipment_mapping.properties` | DEXPI class → EquipmentEnum mapping |
+| `DexpiSimulationBuilder` | High-level builder: DEXPI XML → runnable ProcessSystem |
+| `DexpiTopologyResolver` | Nozzle/connection graph parsing, topological sort, edge collapsing |
+| `DexpiEquipmentFactory` | Converts placeholders to real equipment with sizing attributes |
+| `DexpiMappingLoader` | Thread-safe cached loader for mapping properties files |
+| `dexpi_equipment_mapping.properties` | DEXPI class → EquipmentEnum mapping (~65 entries) |
+| `dexpi_piping_component_mapping.properties` | Piping component → EquipmentEnum mapping (~28 entries) |
 
 ### 2.2 Synergy Opportunities
 
@@ -123,7 +128,7 @@ public class ProcessDiagramExporter {
         // 2. Add layout coordinates as GenericAttributes
         // 3. Write via DexpiXmlWriter with coordinates
     }
-    
+
     // Import DEXPI and preserve P&ID layout
     public static ProcessDiagramExporter fromDexpi(Path dexpiXml) {
         ProcessSystem system = DexpiXmlReader.read(dexpiXml, template);
@@ -144,7 +149,7 @@ public class ProcessDiagramExporter {
 ```java
 private String buildNodeLabel(ProcessEquipmentInterface equipment) {
     StringBuilder label = new StringBuilder(equipment.getName());
-    
+
     if (equipment instanceof DexpiProcessUnit) {
         DexpiProcessUnit dexpi = (DexpiProcessUnit) equipment;
         if (dexpi.getLineNumber() != null) {
@@ -172,12 +177,12 @@ public enum EquipmentSymbol {
     VESSEL(5.1, "cylinder", "#90EE90"),
     COLUMN(5.2, "cylinder", "#90EE90"),
     HEAT_EXCHANGER(5.3, "rectangle", "#FFD700"),
-    
+
     // ISO 10628-2 Section 6: Piping components
     VALVE(6.1, "diamond", "#FFB6C1"),
     PUMP(6.2, "circle", "#4169E1"),
     COMPRESSOR(6.3, "parallelogram", "#87CEEB");
-    
+
     private final String isoSection;
     private final String graphvizShape;
     private final String defaultColor;
@@ -234,7 +239,7 @@ package neqsim.process.equipment;
  * Unified equipment type resolution service.
  */
 public final class EquipmentTypeResolver {
-    
+
     /**
      * Resolves equipment to canonical EquipmentEnum.
      */
@@ -246,7 +251,7 @@ public final class EquipmentTypeResolver {
         String className = equipment.getClass().getSimpleName();
         return EquipmentEnum.valueOf(className);
     }
-    
+
     /**
      * Resolves DEXPI class name to EquipmentEnum using mapping file.
      */
@@ -265,7 +270,7 @@ package neqsim.process.processmodel.diagram;
  * Bridge between DEXPI metadata and PFD visualization.
  */
 public class DexpiDiagramBridge {
-    
+
     /**
      * Creates diagram exporter optimized for DEXPI-imported processes.
      */
@@ -274,7 +279,7 @@ public class DexpiDiagramBridge {
             .setShowDexpiMetadata(true)
             .setPreserveDexpiLayout(true);
     }
-    
+
     /**
      * Exports ProcessSystem to DEXPI XML with embedded layout coordinates.
      */

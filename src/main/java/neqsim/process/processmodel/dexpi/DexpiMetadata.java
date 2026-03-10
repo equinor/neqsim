@@ -70,6 +70,38 @@ public final class DexpiMetadata {
   /** Generic attribute for an actuating function number (e.g. "PV4712.02"). */
   public static final String ACTUATING_FUNCTION_NUMBER = "ActuatingFunctionNumberAssignmentClass";
 
+  // ---- Equipment sizing attributes (DEXPI GenericAttributes) ----
+
+  /** Generic attribute for equipment inside diameter (metres). */
+  public static final String INSIDE_DIAMETER = "InsideDiameter";
+
+  /** Generic attribute for equipment nominal diameter (e.g. "DN 80"). */
+  public static final String NOMINAL_DIAMETER = "NominalDiameter";
+
+  /** Generic attribute for tangent-to-tangent length of vessels (metres). */
+  public static final String TANGENT_TO_TANGENT_LENGTH = "TangentToTangentLength";
+
+  /** Generic attribute for equipment design pressure (bara). */
+  public static final String DESIGN_PRESSURE = "DesignPressure";
+
+  /** Generic attribute for equipment design temperature (C). */
+  public static final String DESIGN_TEMPERATURE = "DesignTemperature";
+
+  /** Generic attribute for vessel orientation (Horizontal or Vertical). */
+  public static final String ORIENTATION = "Orientation";
+
+  /** Generic attribute for valve flow coefficient (Cv). */
+  public static final String VALVE_CV = "Cv";
+
+  /** Generic attribute for wall thickness (metres). */
+  public static final String WALL_THICKNESS = "WallThickness";
+
+  /** Generic attribute for equipment weight (kg). */
+  public static final String WEIGHT = "Weight";
+
+  /** Generic attribute for the piping class code (e.g. "2500#"). */
+  public static final String PIPING_CLASS_CODE = "PipingClassCode";
+
   /** DEXPI URI prefix for RDL references. */
   public static final String DEXPI_RDL_PREFIX = "http://sandbox.dexpi.org/rdl/";
 
@@ -87,8 +119,15 @@ public final class DexpiMetadata {
           OPERATING_PRESSURE_VALUE, OPERATING_PRESSURE_UNIT, OPERATING_TEMPERATURE_VALUE,
           OPERATING_TEMPERATURE_UNIT, OPERATING_FLOW_VALUE, OPERATING_FLOW_UNIT)));
 
-  private static final Set<String> RECOMMENDED_EQUIPMENT_ATTRIBUTES = Collections
-      .unmodifiableSet(new LinkedHashSet<>(Arrays.asList(TAG_NAME, LINE_NUMBER, FLUID_CODE)));
+  private static final Set<String> RECOMMENDED_EQUIPMENT_ATTRIBUTES =
+      Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(TAG_NAME, LINE_NUMBER,
+          FLUID_CODE, INSIDE_DIAMETER, NOMINAL_DIAMETER, TANGENT_TO_TANGENT_LENGTH, DESIGN_PRESSURE,
+          DESIGN_TEMPERATURE, ORIENTATION, VALVE_CV, WALL_THICKNESS, WEIGHT)));
+
+  private static final Set<String> SIZING_ATTRIBUTES =
+      Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(INSIDE_DIAMETER,
+          NOMINAL_DIAMETER, TANGENT_TO_TANGENT_LENGTH, DESIGN_PRESSURE, DESIGN_TEMPERATURE,
+          ORIENTATION, VALVE_CV, WALL_THICKNESS, WEIGHT, PIPING_CLASS_CODE)));
 
   /**
    * Returns the recommended generic attributes that should accompany DEXPI piping segments.
@@ -106,5 +145,15 @@ public final class DexpiMetadata {
    */
   public static Set<String> recommendedEquipmentAttributes() {
     return RECOMMENDED_EQUIPMENT_ATTRIBUTES;
+  }
+
+  /**
+   * Returns the set of sizing-related generic attributes that the reader should extract from DEXPI
+   * equipment and piping component elements.
+   *
+   * @return immutable set of sizing attribute names
+   */
+  public static Set<String> sizingAttributes() {
+    return SIZING_ATTRIBUTES;
   }
 }

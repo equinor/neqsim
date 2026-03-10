@@ -27,6 +27,12 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-03-10 — DEXPI topology resolver, equipment factory, and simulation builder
+**Type:** E (Feature)
+**Keywords:** DEXPI, P&ID, topology, nozzle, connection, equipment factory, simulation builder, mapping loader, sizing, DexpiTopologyResolver, DexpiEquipmentFactory, DexpiSimulationBuilder, DexpiMappingLoader, GenericAttribute, Kahn, topological sort
+**Solution:** src/main/java/neqsim/process/processmodel/dexpi/DexpiTopologyResolver.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiEquipmentFactory.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiSimulationBuilder.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiMappingLoader.java
+**Notes:** Resolved 7 critical gaps in DEXPI implementation. DexpiTopologyResolver parses Nozzle/Connection/Equipment XML elements into a directed graph, collapses inline piping components (valves, reducers) to equipment-level edges, and produces topological ordering via Kahn's algorithm. DexpiEquipmentFactory converts DexpiProcessUnit placeholders to real NeqSim equipment (Separator, Compressor, Pump, HeatExchanger, Heater, Cooler, Valve, Expander, Mixer, Splitter) with sizing attributes applied. DexpiSimulationBuilder is a fluent builder API: setFluidTemplate/setFeedPressure/setFeedTemperature/setFeedFlowRate/setAutoInstrument → build() returns runnable ProcessSystem. DexpiMappingLoader provides thread-safe cached loading of .properties mapping files from classpath. DexpiMetadata expanded with 10 sizing constants. DexpiProcessUnit gains sizingAttributes map and dexpiId. Equipment mapping expanded from ~30 to ~65 entries; piping component mapping from ~15 to ~28. 49 tests across 7 test classes (all passing).
+
 ### 2026-03-10 — DynamicProcessHelper utility for steady-state to dynamic conversion
 **Type:** E (Feature)
 **Keywords:** dynamic, transient, simulation, DynamicProcessHelper, transmitter, PID, controller, instrument, auto-instrument, pressure, level, flow, temperature, control loop, PC, LC, FC, TC, runTransient, setCalculateSteadyState

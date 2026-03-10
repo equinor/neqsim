@@ -51,46 +51,58 @@ public final class DexpiXmlReader {
   private static final Map<String, EquipmentEnum> PIPING_COMPONENT_MAP;
 
   static {
-    Map<String, EquipmentEnum> equipmentMap = new HashMap<>();
-    equipmentMap.put("PlateHeatExchanger", EquipmentEnum.HeatExchanger);
-    equipmentMap.put("ShellAndTubeHeatExchanger", EquipmentEnum.HeatExchanger);
-    equipmentMap.put("TubularHeatExchanger", EquipmentEnum.HeatExchanger);
-    equipmentMap.put("AirCooledHeatExchanger", EquipmentEnum.HeatExchanger);
-    equipmentMap.put("CentrifugalPump", EquipmentEnum.Pump);
-    equipmentMap.put("ReciprocatingPump", EquipmentEnum.Pump);
-    equipmentMap.put("CentrifugalCompressor", EquipmentEnum.Compressor);
-    equipmentMap.put("ReciprocatingCompressor", EquipmentEnum.Compressor);
-    equipmentMap.put("Tank", EquipmentEnum.Tank);
-    equipmentMap.put("StirredTankReactor", EquipmentEnum.Reactor);
-    equipmentMap.put("PlugFlowReactor", EquipmentEnum.Reactor);
-    equipmentMap.put("PackedBedReactor", EquipmentEnum.Reactor);
-    equipmentMap.put("Column", EquipmentEnum.Column);
-    equipmentMap.put("Agitator", EquipmentEnum.Mixer);
-    equipmentMap.put("Boiler", EquipmentEnum.Heater);
-    equipmentMap.put("Filter", EquipmentEnum.Separator);
-    equipmentMap.put("Cyclone", EquipmentEnum.Separator);
-    equipmentMap.put("InlineAnalyzer", EquipmentEnum.Calculator);
-    equipmentMap.put("GasAnalyzer", EquipmentEnum.Calculator);
-    equipmentMap.put("Spectrometer", EquipmentEnum.Calculator);
-    EQUIPMENT_CLASS_MAP = Collections.unmodifiableMap(equipmentMap);
+    // Load from properties files; fall back to built-in defaults if load fails
+    Map<String, EquipmentEnum> equipFromProps = DexpiMappingLoader.loadEquipmentMapping();
+    Map<String, EquipmentEnum> pipingFromProps = DexpiMappingLoader.loadPipingComponentMapping();
 
-    Map<String, EquipmentEnum> pipingMap = new HashMap<>();
-    pipingMap.put("GlobeValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("ButterflyValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("CheckValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("ControlValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("PressureSafetyValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("PressureReliefValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("PressureReducingValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("BallValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("GateValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("PlugValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("DiaphragmValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("NeedleValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("OrificePlate", EquipmentEnum.Calculator);
-    pipingMap.put("FlowMeter", EquipmentEnum.Calculator);
-    pipingMap.put("RuptureDisk", EquipmentEnum.ThrottlingValve);
-    PIPING_COMPONENT_MAP = Collections.unmodifiableMap(pipingMap);
+    if (equipFromProps.isEmpty()) {
+      Map<String, EquipmentEnum> equipmentMap = new HashMap<>();
+      equipmentMap.put("PlateHeatExchanger", EquipmentEnum.HeatExchanger);
+      equipmentMap.put("ShellAndTubeHeatExchanger", EquipmentEnum.HeatExchanger);
+      equipmentMap.put("TubularHeatExchanger", EquipmentEnum.HeatExchanger);
+      equipmentMap.put("AirCooledHeatExchanger", EquipmentEnum.HeatExchanger);
+      equipmentMap.put("CentrifugalPump", EquipmentEnum.Pump);
+      equipmentMap.put("ReciprocatingPump", EquipmentEnum.Pump);
+      equipmentMap.put("CentrifugalCompressor", EquipmentEnum.Compressor);
+      equipmentMap.put("ReciprocatingCompressor", EquipmentEnum.Compressor);
+      equipmentMap.put("Tank", EquipmentEnum.Tank);
+      equipmentMap.put("StirredTankReactor", EquipmentEnum.Reactor);
+      equipmentMap.put("PlugFlowReactor", EquipmentEnum.Reactor);
+      equipmentMap.put("PackedBedReactor", EquipmentEnum.Reactor);
+      equipmentMap.put("Column", EquipmentEnum.Column);
+      equipmentMap.put("Agitator", EquipmentEnum.Mixer);
+      equipmentMap.put("Boiler", EquipmentEnum.Heater);
+      equipmentMap.put("Filter", EquipmentEnum.Separator);
+      equipmentMap.put("Cyclone", EquipmentEnum.Separator);
+      equipmentMap.put("InlineAnalyzer", EquipmentEnum.Calculator);
+      equipmentMap.put("GasAnalyzer", EquipmentEnum.Calculator);
+      equipmentMap.put("Spectrometer", EquipmentEnum.Calculator);
+      EQUIPMENT_CLASS_MAP = Collections.unmodifiableMap(equipmentMap);
+    } else {
+      EQUIPMENT_CLASS_MAP = equipFromProps;
+    }
+
+    if (pipingFromProps.isEmpty()) {
+      Map<String, EquipmentEnum> pipingMap = new HashMap<>();
+      pipingMap.put("GlobeValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("ButterflyValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("CheckValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("ControlValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("PressureSafetyValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("PressureReliefValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("PressureReducingValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("BallValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("GateValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("PlugValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("DiaphragmValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("NeedleValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("OrificePlate", EquipmentEnum.Calculator);
+      pipingMap.put("FlowMeter", EquipmentEnum.Calculator);
+      pipingMap.put("RuptureDisk", EquipmentEnum.ThrottlingValve);
+      PIPING_COMPONENT_MAP = Collections.unmodifiableMap(pipingMap);
+    } else {
+      PIPING_COMPONENT_MAP = pipingFromProps;
+    }
   }
 
   private DexpiXmlReader() {}
@@ -484,6 +496,16 @@ public final class DexpiXmlReader {
     String fluidCode = attributeValue(element, DexpiMetadata.FLUID_CODE);
     DexpiProcessUnit unit =
         new DexpiProcessUnit(uniqueName, componentClass, equipmentEnum, lineNumber, fluidCode);
+    unit.setDexpiId(element.getAttribute("ID"));
+
+    // Extract sizing attributes from GenericAttributes
+    for (String sizingAttr : DexpiMetadata.sizingAttributes()) {
+      String value = attributeValue(element, sizingAttr);
+      if (value != null) {
+        unit.setSizingAttribute(sizingAttr, value);
+      }
+    }
+
     processSystem.addUnit(uniqueName, unit);
   }
 
