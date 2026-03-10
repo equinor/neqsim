@@ -27,6 +27,12 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-03-10 — DynamicProcessHelper utility for steady-state to dynamic conversion
+**Type:** E (Feature)
+**Keywords:** dynamic, transient, simulation, DynamicProcessHelper, transmitter, PID, controller, instrument, auto-instrument, pressure, level, flow, temperature, control loop, PC, LC, FC, TC, runTransient, setCalculateSteadyState
+**Solution:** src/main/java/neqsim/process/util/DynamicProcessHelper.java, src/test/java/neqsim/process/util/DynamicProcessHelperTest.java, docs/process/dynamic-simulation.md
+**Notes:** Utility that converts a sized steady-state ProcessSystem into a dynamic simulation. Auto-creates transmitters (PT, LT, TT) and PID controllers (PC, LC, WLC) by scanning equipment and matching stream identity to downstream valves. Handles Separator, ThreePhaseSeparator, Compressor, Heater, Cooler. Convenience methods for addFlowController() and addTemperatureController(). Default PID tuning with per-type customization. Key gotcha: transmitters implement MeasurementDeviceInterface (NOT ProcessEquipmentInterface), so ProcessSystem.add(MeasurementDeviceInterface) must be used. 10 tests passing.
+
 ### 2026-03-10 — Implement InstrumentDesign framework
 **Type:** E (Feature)
 **Keywords:** instrument, design, ISA, SIL, I/O, DCS, SIS, instrumentation, ISA-5.1, IEC 61508, IEC 61511, API 670, safety, compressor, separator, heat exchanger, pipeline, valve, tag number, cabinet sizing, cost estimation

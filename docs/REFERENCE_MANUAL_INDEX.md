@@ -444,6 +444,12 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | --------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | **Instrument Design Guide**       | [docs/process/instrument-design.md](process/instrument-design)                                             | **Comprehensive guide to instrument design: ISA-5.1 identification, SIL-rated safety instruments, I/O counting, DCS/SIS cabinet sizing, cost estimation, equipment-specific designs (separator, compressor, heat exchanger, pipeline, valve), plant-wide SystemInstrumentDesign** |
 
+### Chapter 26: Dynamic Simulation
+
+| Document                          | Path                                                                                                       | Description                                                                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Dynamic Simulation Guide**      | [docs/process/dynamic-simulation.md](process/dynamic-simulation)                                           | **DynamicProcessHelper utility — auto-instruments a sized steady-state process with transmitters and PID controllers for transient simulation, configurable PID tuning, flow and temperature control loops** |
+
 ### Chapter 23b: Cost Estimation
 
 | Document                        | Path                                                                                                                                         | Description                                                                                                 |

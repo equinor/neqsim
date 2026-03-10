@@ -98,6 +98,19 @@ This documentation is organized into the following sections:
 |----------|-------------|
 | [electrical-design.md](electrical-design) | **Electrical design framework — motor sizing, VFD, cable, transformer, switchgear, hazardous area, equipment-specific designs, plant-wide load analysis** |
 
+### Dynamic Simulation
+
+| Document | Description |
+|----------|-------------|
+| [dynamic-simulation.md](dynamic-simulation) | **Dynamic simulation helper — auto-instruments a sized steady-state process with transmitters and PID controllers for transient simulation** |
+
+**Key Features:**
+- `DynamicProcessHelper` — one-call conversion from steady-state to dynamic
+- Auto-creates PT, LT, TT transmitters per equipment type
+- Auto-wires PID controllers (PC, LC, WLC) to downstream valves
+- Configurable PID tuning with sensible defaults
+- Convenience methods for flow and temperature control loops
+
 ### Instrument Design Documentation
 
 | Document | Description |

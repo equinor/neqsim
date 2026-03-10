@@ -231,6 +231,135 @@ public final class DexpiXmlReader {
     addPipingSegments(document, processSystem, streamTemplate);
   }
 
+  /**
+   * Reads instrument metadata from a DEXPI XML file. This returns structured
+   * {@link DexpiInstrumentInfo} records that describe the P&amp;ID instrumentation without creating
+   * live transmitter/controller objects (which require connected streams).
+   *
+   * @param file DEXPI XML file
+   * @return list of instrument info records parsed from the file
+   * @throws IOException if the file cannot be read
+   * @throws DexpiXmlReaderException if the file cannot be parsed
+   */
+  public static List<DexpiInstrumentInfo> readInstruments(File file)
+      throws IOException, DexpiXmlReaderException {
+    Objects.requireNonNull(file, "file");
+    try (InputStream inputStream = new FileInputStream(file)) {
+      return readInstruments(inputStream);
+    }
+  }
+
+  /**
+   * Reads instrument metadata from a DEXPI XML stream.
+   *
+   * @param inputStream stream containing DEXPI XML data
+   * @return list of instrument info records parsed from the stream
+   * @throws IOException if the stream cannot be read
+   * @throws DexpiXmlReaderException if the stream cannot be parsed
+   */
+  public static List<DexpiInstrumentInfo> readInstruments(InputStream inputStream)
+      throws IOException, DexpiXmlReaderException {
+    Objects.requireNonNull(inputStream, "inputStream");
+    Document document = parseDocument(inputStream);
+    if (document == null) {
+      return Collections.emptyList();
+    }
+    return parseInstruments(document);
+  }
+
+  /**
+   * Parses all ProcessInstrumentationFunction elements from the document, resolving loop and
+   * actuator associations.
+   *
+   * @param document the parsed XML document
+   * @return list of instrument info records
+   */
+  private static List<DexpiInstrumentInfo> parseInstruments(Document document) {
+    // Build a map of loop ID -> loop element for association resolution
+    Map<String, String> loopNumbers = new HashMap<>();
+    NodeList loopNodes = document.getElementsByTagName("InstrumentationLoopFunction");
+    for (int i = 0; i < loopNodes.getLength(); i++) {
+      Node node = loopNodes.item(i);
+      if (node.getNodeType() != Node.ELEMENT_NODE) {
+        continue;
+      }
+      Element loopElement = (Element) node;
+      String loopId = loopElement.getAttribute("ID");
+      String loopNum = getGenericAttribute(loopElement, DexpiMetadata.LOOP_NUMBER);
+      if (loopNum == null) {
+        loopNum = loopId;
+      }
+      // Find which instrument IDs are in this loop via Association elements
+      List<Element> associations = directChildElements(loopElement, "Association");
+      for (Element assoc : associations) {
+        String itemId = assoc.getAttribute("ItemID");
+        if (!isBlank(itemId)) {
+          loopNumbers.put(itemId, loopNum);
+        }
+      }
+    }
+
+    // Build a map of instrument ID -> actuating function tag
+    Map<String, String> actuatingTags = new HashMap<>();
+    NodeList allElements = document.getElementsByTagName("*");
+    for (int i = 0; i < allElements.getLength(); i++) {
+      Node node = allElements.item(i);
+      if (node.getNodeType() != Node.ELEMENT_NODE) {
+        continue;
+      }
+      Element element = (Element) node;
+      if ("ActuatingFunction".equals(element.getTagName())
+          || "ActuatingFunction".equals(element.getAttribute("ComponentClass"))) {
+        String afId = element.getAttribute("ID");
+        String afNumber = getGenericAttribute(element, DexpiMetadata.ACTUATING_FUNCTION_NUMBER);
+        if (afNumber == null) {
+          afNumber = afId;
+        }
+        // Find parent instrument via traversal
+        Node parentNode = element.getParentNode();
+        while (parentNode != null && parentNode.getNodeType() == Node.ELEMENT_NODE) {
+          Element parentEl = (Element) parentNode;
+          if ("ProcessInstrumentationFunction".equals(parentEl.getTagName())) {
+            actuatingTags.put(parentEl.getAttribute("ID"), afNumber);
+            break;
+          }
+          parentNode = parentNode.getParentNode();
+        }
+      }
+    }
+
+    // Parse all ProcessInstrumentationFunction elements
+    List<DexpiInstrumentInfo> instruments = new ArrayList<>();
+    NodeList pifNodes = document.getElementsByTagName("ProcessInstrumentationFunction");
+    for (int i = 0; i < pifNodes.getLength(); i++) {
+      Node node = pifNodes.item(i);
+      if (node.getNodeType() != Node.ELEMENT_NODE) {
+        continue;
+      }
+      Element pif = (Element) node;
+      String id = pif.getAttribute("ID");
+      String category = getGenericAttribute(pif, DexpiMetadata.INSTRUMENTATION_CATEGORY);
+      String functions = getGenericAttribute(pif, DexpiMetadata.INSTRUMENTATION_FUNCTIONS);
+      String number = getGenericAttribute(pif, DexpiMetadata.INSTRUMENTATION_NUMBER);
+      String tagName = getGenericAttribute(pif, DexpiMetadata.TAG_NAME);
+      String unit = getGenericAttribute(pif, "MeasurementUnit");
+
+      if (tagName == null) {
+        tagName = (category != null ? category : "") + (functions != null ? functions : "") + " "
+            + (number != null ? number : id);
+      }
+
+      String loopNum = loopNumbers.get(id);
+      String actuator = actuatingTags.get(id);
+
+      instruments.add(new DexpiInstrumentInfo(id, tagName.trim(), category, functions, number,
+          loopNum, unit, actuator));
+    }
+
+    logger.info("Parsed {} instruments from DEXPI XML", instruments.size());
+    return instruments;
+  }
+
   private static Document parseDocument(InputStream inputStream) throws DexpiXmlReaderException {
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

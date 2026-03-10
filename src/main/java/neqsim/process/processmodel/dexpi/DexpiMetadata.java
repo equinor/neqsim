@@ -41,6 +41,38 @@ public final class DexpiMetadata {
   /** Generic attribute containing the unit of the operating flow value of a segment. */
   public static final String OPERATING_FLOW_UNIT = "OperatingFlowUnit";
 
+  // ---- Instrumentation attributes (DEXPI P&ID) ----
+
+  /**
+   * Generic attribute for the ISA-5.1 category letter (e.g. "P" for pressure, "L" for level).
+   */
+  public static final String INSTRUMENTATION_CATEGORY =
+      "ProcessInstrumentationFunctionCategoryAssignmentClass";
+
+  /**
+   * Generic attribute for the ISA-5.1 function letters (e.g. "IC" for indicating controller, "T"
+   * for transmitter).
+   */
+  public static final String INSTRUMENTATION_FUNCTIONS =
+      "ProcessInstrumentationFunctionsAssignmentClass";
+
+  /** Generic attribute for the instrumentation function number (e.g. "4712.02"). */
+  public static final String INSTRUMENTATION_NUMBER =
+      "ProcessInstrumentationFunctionNumberAssignmentClass";
+
+  /** Generic attribute for the instrumentation loop number. */
+  public static final String LOOP_NUMBER = "InstrumentationLoopFunctionNumberAssignmentClass";
+
+  /** Generic attribute for a process signal generating function number (sensor tag). */
+  public static final String SIGNAL_GENERATING_NUMBER =
+      "ProcessSignalGeneratingFunctionNumberAssignmentClass";
+
+  /** Generic attribute for an actuating function number (e.g. "PV4712.02"). */
+  public static final String ACTUATING_FUNCTION_NUMBER = "ActuatingFunctionNumberAssignmentClass";
+
+  /** DEXPI URI prefix for RDL references. */
+  public static final String DEXPI_RDL_PREFIX = "http://sandbox.dexpi.org/rdl/";
+
   /** Default pressure unit written to DEXPI documents. */
   public static final String DEFAULT_PRESSURE_UNIT = "bara";
 
