@@ -99,7 +99,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
   }
 
   /**
-   * Tests that a ThrottlingValve is reverse-mapped to GlobeValve and exported as PipingComponent.
+   * Tests that a ThrottlingValve is reverse-mapped to GlobeValve and exported as Equipment.
    *
    * @throws IOException if writing fails
    */
@@ -119,8 +119,10 @@ public class DexpiXmlWriterTest extends NeqSimTest {
 
     assertTrue(xml.contains("ComponentClass=\"GlobeValve\""),
         "Should map ThrottlingValve to GlobeValve");
-    // Valves should be exported as PipingComponent, not Equipment
-    assertTrue(xml.contains("<PipingComponent"), "Valve should be exported as PipingComponent");
+    // Valves should be exported as PipingComponent inside PipingNetworkSegment
+    assertTrue(xml.contains("<PipingComponent"),
+        "Valve should be exported as PipingComponent, not Equipment");
+    assertFalse(xml.contains("<Equipment"), "Valve should NOT appear as top-level Equipment");
   }
 
   /**
@@ -145,7 +147,7 @@ public class DexpiXmlWriterTest extends NeqSimTest {
   }
 
   /**
-   * Tests that a Cooler is reverse-mapped to AirCooledHeatExchanger.
+   * Tests that a Cooler is reverse-mapped to AirCoolingSystem.
    *
    * @throws IOException if writing fails
    */
@@ -162,8 +164,8 @@ public class DexpiXmlWriterTest extends NeqSimTest {
     DexpiXmlWriter.write(process, out);
     String xml = out.toString(StandardCharsets.UTF_8.name());
 
-    assertTrue(xml.contains("ComponentClass=\"AirCooledHeatExchanger\""),
-        "Should map Cooler to AirCooledHeatExchanger");
+    assertTrue(xml.contains("ComponentClass=\"AirCoolingSystem\""),
+        "Should map Cooler to AirCoolingSystem");
   }
 
   /**
@@ -355,7 +357,8 @@ public class DexpiXmlWriterTest extends NeqSimTest {
 
     // Separator should have 3 nozzles (1 inlet + 2 outlets)
     int nozzleCount = countOccurrences(xml, "<Nozzle ");
-    // feed (not exported as native equipment since it's Stream), sep=3, comp=2, valve=2 = total 7
+    // feed (Stream, not exported) = 0, sep = 3, comp = 2, valve PipingComponent = 2,
+    // inline PipingComponent for sep->comp connection = 2 => total >= 9
     assertTrue(nozzleCount >= 7, "Separator should produce 3 nozzles (inlet + gas out + liquid out)"
         + "; total nozzles=" + nozzleCount);
 

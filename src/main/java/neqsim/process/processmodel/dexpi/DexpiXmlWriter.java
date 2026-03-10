@@ -14,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -160,6 +161,8 @@ public final class DexpiXmlWriter {
     Map<String, String> equipmentInletNozzle = new LinkedHashMap<>();
     // Map from outlet stream identity hash to its nozzle ID
     Map<Integer, String> outletStreamToNozzle = new HashMap<>();
+    // Pre-built PipingComponent elements for valves, keyed by inlet nozzle ID
+    Map<String, Element> valvePipingComponents = new LinkedHashMap<>();
 
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit instanceof DexpiStream) {
@@ -196,7 +199,14 @@ public final class DexpiXmlWriter {
             outNozzles.add("Nozzle-" + nozzleCounter++);
           }
         }
-        appendNativeEquipment(document, root, unit, usedIds, inNozzle, outNozzles);
+        if (isValveType(unit)) {
+          // Valves are PipingComponents in DEXPI — embed in PipingNetworkSegment, not top-level
+          Element valveElement =
+              buildValvePipingComponent(document, unit, usedIds, inNozzle, outNozzles);
+          valvePipingComponents.put(inNozzle, valveElement);
+        } else {
+          appendNativeEquipment(document, root, unit, usedIds, inNozzle, outNozzles);
+        }
         equipmentInletNozzle.put(unit.getName(), inNozzle);
         registerOutletNozzles(unit, outNozzles, outletStreamToNozzle);
       }
@@ -212,9 +222,9 @@ public final class DexpiXmlWriter {
       appendPipingNetworkSystem(document, root, entry.getKey(), entry.getValue(), usedIds);
     }
 
-    // Write Connection elements in a PipingNetworkSystem
-    if (!connections.isEmpty()) {
-      appendConnectionSystem(document, root, connections, usedIds);
+    // Write Connection elements and valve PipingComponents in a PipingNetworkSystem
+    if (!connections.isEmpty() || !valvePipingComponents.isEmpty()) {
+      appendConnectionSystem(document, root, connections, usedIds, valvePipingComponents);
     }
 
     if (transmitters != null && !transmitters.isEmpty()) {
@@ -267,8 +277,7 @@ public final class DexpiXmlWriter {
       DexpiProcessUnit processUnit, Set<String> usedIds, String inletNozzleId,
       List<String> outletNozzleIds) {
     EquipmentEnum mapped = processUnit.getMappedEquipment();
-    boolean isPipingComponent = mapped == EquipmentEnum.ThrottlingValve;
-    String elementName = isPipingComponent ? "PipingComponent" : "Equipment";
+    String elementName = "Equipment";
     Element element = document.createElement(elementName);
 
     String componentClass =
@@ -283,6 +292,7 @@ public final class DexpiXmlWriter {
     }
 
     Element genericAttributes = document.createElement("GenericAttributes");
+    genericAttributes.setAttribute("Set", "DexpiAttributes");
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.TAG_NAME,
         processUnit.getName());
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.LINE_NUMBER,
@@ -316,8 +326,7 @@ public final class DexpiXmlWriter {
       ProcessEquipmentInterface unit, Set<String> usedIds, String inletNozzleId,
       List<String> outletNozzleIds) {
     String componentClass = reverseMapComponentClass(unit);
-    boolean isPipingComponent = unit instanceof ThrottlingValve;
-    String elementName = isPipingComponent ? "PipingComponent" : "Equipment";
+    String elementName = "Equipment";
     Element element = document.createElement(elementName);
 
     element.setAttribute("ComponentClass", componentClass);
@@ -330,6 +339,7 @@ public final class DexpiXmlWriter {
     }
 
     Element genericAttributes = document.createElement("GenericAttributes");
+    genericAttributes.setAttribute("Set", "DexpiAttributes");
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.TAG_NAME, unit.getName());
 
     // Export simulation results if the equipment has been run
@@ -386,8 +396,8 @@ public final class DexpiXmlWriter {
       double flowRate = outStream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT);
       appendNumericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_FLOW_VALUE,
           flowRate, DexpiMetadata.DEFAULT_FLOW_UNIT);
-    } catch (Exception ignored) {
-      // Simulation may not have been run
+    } catch (RuntimeException ignored) {
+      // Simulation may not have been run — properties unavailable
     }
   }
 
@@ -421,7 +431,7 @@ public final class DexpiXmlWriter {
       return "CentrifugalPump";
     }
     if (unit instanceof Cooler) {
-      return "AirCooledHeatExchanger";
+      return "AirCoolingSystem";
     }
     if (unit instanceof HeatExchanger) {
       return "ShellAndTubeHeatExchanger";
@@ -442,6 +452,52 @@ public final class DexpiXmlWriter {
       return "Splitter";
     }
     return "Equipment";
+  }
+
+  /**
+   * Returns {@code true} if the unit represents a DEXPI piping component (valve) rather than an
+   * Equipment element. In the DEXPI schema, valves are PipingComponent elements and should be
+   * embedded inside PipingNetworkSegment elements rather than exported as top-level Equipment.
+   *
+   * @param unit the process equipment to check
+   * @return true if the unit should be rendered as a PipingComponent
+   */
+  private static boolean isValveType(ProcessEquipmentInterface unit) {
+    return unit instanceof ThrottlingValve;
+  }
+
+  /**
+   * Builds a PipingComponent XML element for a valve unit.
+   *
+   * @param document the XML document
+   * @param unit the valve unit
+   * @param usedIds set of used IDs
+   * @param inletNozzleId the inlet nozzle ID
+   * @param outletNozzleIds the outlet nozzle IDs
+   * @return the PipingComponent element
+   */
+  private static Element buildValvePipingComponent(Document document,
+      ProcessEquipmentInterface unit, Set<String> usedIds, String inletNozzleId,
+      List<String> outletNozzleIds) {
+    String componentClass = reverseMapComponentClass(unit);
+    Element element = document.createElement("PipingComponent");
+    element.setAttribute("ComponentClass", componentClass);
+    element.setAttribute("ID", uniqueIdentifier("PipingComponent", unit.getName(), usedIds));
+
+    appendNozzle(document, element, inletNozzleId, usedIds);
+    for (String outNozzle : outletNozzleIds) {
+      appendNozzle(document, element, outNozzle, usedIds);
+    }
+
+    Element genericAttributes = document.createElement("GenericAttributes");
+    genericAttributes.setAttribute("Set", "DexpiAttributes");
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.TAG_NAME, unit.getName());
+    appendSimulationResults(document, genericAttributes, unit);
+    if (genericAttributes.hasChildNodes()) {
+      element.appendChild(genericAttributes);
+    }
+
+    return element;
   }
 
   /**
@@ -583,26 +639,69 @@ public final class DexpiXmlWriter {
    * @param parent the root element
    * @param connections the list of connections
    * @param usedIds set of used IDs
+   * @param valvePipingComponents pre-built PipingComponent elements for valves, keyed by inlet
+   *        nozzle ID
    */
   private static void appendConnectionSystem(Document document, Element parent,
-      List<NozzleConnection> connections, Set<String> usedIds) {
+      List<NozzleConnection> connections, Set<String> usedIds,
+      Map<String, Element> valvePipingComponents) {
     Element systemElement = document.createElement("PipingNetworkSystem");
     systemElement.setAttribute("ComponentClass", "PipingNetworkSystem");
     systemElement.setAttribute("ID",
         uniqueIdentifier("PipingNetworkSystem", "Connections", usedIds));
 
-    Element segmentElement = document.createElement("PipingNetworkSegment");
-    segmentElement.setAttribute("ComponentClass", "PipingNetworkSegment");
-    segmentElement.setAttribute("ID", uniqueIdentifier("PipingNetworkSegment", "ConnSeg", usedIds));
+    Set<String> consumedValveNozzles = new HashSet<>();
 
     for (NozzleConnection conn : connections) {
+      Element segmentElement = document.createElement("PipingNetworkSegment");
+      segmentElement.setAttribute("ComponentClass", "PipingNetworkSegment");
+      segmentElement.setAttribute("ID", uniqueIdentifier("PipingNetworkSegment", "Conn", usedIds));
+
+      // Check if the target nozzle belongs to a pre-built valve PipingComponent
+      Element valveElement = valvePipingComponents.get(conn.toNozzle);
+      if (valveElement != null) {
+        // Embed the valve as a PipingComponent inside this segment
+        segmentElement.appendChild(valveElement);
+        consumedValveNozzles.add(conn.toNozzle);
+      } else {
+        // Add an inline PipingComponent so the segment has at least one item.
+        // pyDEXPI requires non-empty segment items for connection resolution.
+        String pipeId = uniqueIdentifier("PipingComponent", "Conn", usedIds);
+        Element pipeElement = document.createElement("PipingComponent");
+        pipeElement.setAttribute("ComponentClass", "PipingComponent");
+        pipeElement.setAttribute("ID", pipeId);
+        String pipeNozzleIn = uniqueIdentifier("Nozzle", pipeId + "-in", usedIds);
+        String pipeNozzleOut = uniqueIdentifier("Nozzle", pipeId + "-out", usedIds);
+        Element pipeNzIn = document.createElement("Nozzle");
+        pipeNzIn.setAttribute("ID", pipeNozzleIn);
+        pipeElement.appendChild(pipeNzIn);
+        Element pipeNzOut = document.createElement("Nozzle");
+        pipeNzOut.setAttribute("ID", pipeNozzleOut);
+        pipeElement.appendChild(pipeNzOut);
+        segmentElement.appendChild(pipeElement);
+      }
+
+      // Single Connection element per segment (pyDEXPI requirement)
       Element connElement = document.createElement("Connection");
       connElement.setAttribute("FromID", conn.fromNozzle);
       connElement.setAttribute("ToID", conn.toNozzle);
       segmentElement.appendChild(connElement);
+
+      systemElement.appendChild(segmentElement);
     }
 
-    systemElement.appendChild(segmentElement);
+    // Add standalone segments for any valve PipingComponents not consumed by connections
+    for (Map.Entry<String, Element> entry : valvePipingComponents.entrySet()) {
+      if (!consumedValveNozzles.contains(entry.getKey())) {
+        Element segmentElement = document.createElement("PipingNetworkSegment");
+        segmentElement.setAttribute("ComponentClass", "PipingNetworkSegment");
+        segmentElement.setAttribute("ID",
+            uniqueIdentifier("PipingNetworkSegment", "Valve", usedIds));
+        segmentElement.appendChild(entry.getValue());
+        systemElement.appendChild(segmentElement);
+      }
+    }
+
     parent.appendChild(systemElement);
   }
 
@@ -613,6 +712,7 @@ public final class DexpiXmlWriter {
     systemElement.setAttribute("ID", uniqueIdentifier("Line", key, usedIds));
 
     Element systemAttributes = document.createElement("GenericAttributes");
+    systemAttributes.setAttribute("Set", "DexpiAttributes");
     String lineNumber = streams.stream().map(DexpiStream::getLineNumber)
         .filter(value -> !isBlank(value)).findFirst().orElse(null);
     appendGenericAttribute(document, systemAttributes, DexpiMetadata.LINE_NUMBER, lineNumber);
@@ -639,6 +739,7 @@ public final class DexpiXmlWriter {
     segmentElement.setAttribute("ID", uniqueIdentifier("Segment", stream.getName(), usedIds));
 
     Element genericAttributes = document.createElement("GenericAttributes");
+    genericAttributes.setAttribute("Set", "DexpiAttributes");
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.SEGMENT_NUMBER,
         stream.getName());
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.LINE_NUMBER,
@@ -730,6 +831,7 @@ public final class DexpiXmlWriter {
       pif.setAttribute("ComponentClass", "ProcessInstrumentationFunction");
 
       Element pifAttrs = document.createElement("GenericAttributes");
+      pifAttrs.setAttribute("Set", "DexpiAttributes");
       appendGenericAttribute(document, pifAttrs, DexpiMetadata.INSTRUMENTATION_CATEGORY, category);
       appendGenericAttribute(document, pifAttrs, DexpiMetadata.INSTRUMENTATION_FUNCTIONS,
           functions);
@@ -747,6 +849,7 @@ public final class DexpiXmlWriter {
       psgf.setAttribute("ComponentClass", "ProcessSignalGeneratingFunction");
 
       Element psgfAttrs = document.createElement("GenericAttributes");
+      psgfAttrs.setAttribute("Set", "DexpiAttributes");
       appendGenericAttribute(document, psgfAttrs, DexpiMetadata.SIGNAL_GENERATING_NUMBER, tag);
       if (psgfAttrs.hasChildNodes()) {
         psgf.appendChild(psgfAttrs);
@@ -761,37 +864,10 @@ public final class DexpiXmlWriter {
       }
 
       if (matchedController != null) {
-        // ActuatingFunction
-        String afId = uniqueIdentifier("ActuatingFunction", controllerTag, usedIds);
-        Element af = document.createElement("ActuatingFunction");
-        af.setAttribute("ID", afId);
-        af.setAttribute("ComponentClass", "ActuatingFunction");
-
-        Element afAttrs = document.createElement("GenericAttributes");
-        appendGenericAttribute(document, afAttrs, DexpiMetadata.ACTUATING_FUNCTION_NUMBER,
-            controllerTag);
-        if (afAttrs.hasChildNodes()) {
-          af.appendChild(afAttrs);
-        }
-
-        // Signal conveying function (signal line from instrument to actuator)
-        String scfId = uniqueIdentifier("SignalConveyingFunction", controllerTag, usedIds);
-        Element scf = document.createElement("InformationFlow");
-        scf.setAttribute("ID", scfId);
-        scf.setAttribute("ComponentClass", "SignalConveyingFunction");
-
-        Element scfAssocStart = document.createElement("Association");
-        scfAssocStart.setAttribute("Type", "has logical start");
-        scfAssocStart.setAttribute("ItemID", pifId);
-        scf.appendChild(scfAssocStart);
-
-        Element scfAssocEnd = document.createElement("Association");
-        scfAssocEnd.setAttribute("Type", "has logical end");
-        scfAssocEnd.setAttribute("ItemID", afId);
-        scf.appendChild(scfAssocEnd);
-
-        pif.appendChild(scf);
-        pif.appendChild(af);
+        // Record controller tag as a generic attribute on the PIF.
+        // Full ActuatingSystem/ActuatingFunction modelling requires valve linkage
+        // data not yet available in the NeqSim controller model.
+        appendGenericAttribute(document, pifAttrs, "ControllerTag", controllerTag);
       }
 
       parent.appendChild(pif);
@@ -803,6 +879,7 @@ public final class DexpiXmlWriter {
       loop.setAttribute("ComponentClass", "InstrumentationLoopFunction");
 
       Element loopAttrs = document.createElement("GenericAttributes");
+      loopAttrs.setAttribute("Set", "DexpiAttributes");
       appendGenericAttribute(document, loopAttrs, DexpiMetadata.LOOP_NUMBER, loopNumber);
       if (loopAttrs.hasChildNodes()) {
         loop.appendChild(loopAttrs);
