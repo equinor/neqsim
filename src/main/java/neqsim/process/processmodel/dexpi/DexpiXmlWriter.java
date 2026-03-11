@@ -57,12 +57,15 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.equipment.TwoPortEquipment;
 
 /**
- * Utility for exporting {@link ProcessSystem}s created from DEXPI data back into a lightweight
+ * Utility for exporting {@link ProcessSystem}s created from DEXPI data back
+ * into a lightweight
  * DEXPI XML representation.
  *
  * <p>
- * The writer groups all discovered {@link DexpiStream} segments by line number (or fluid code when
- * a line is not available) to generate simple {@code <PipingNetworkSystem>} elements with
+ * The writer groups all discovered {@link DexpiStream} segments by line number
+ * (or fluid code when
+ * a line is not available) to generate simple {@code <PipingNetworkSystem>}
+ * elements with
  * associated {@code <PipingNetworkSegment>} children.
  * </p>
  *
@@ -72,22 +75,22 @@ import neqsim.process.equipment.TwoPortEquipment;
  */
 public final class DexpiXmlWriter {
   private static final Pattern NON_IDENTIFIER = Pattern.compile("[^A-Za-z0-9_-]");
-  private static final transient ThreadLocal<DecimalFormat> DECIMAL_FORMAT =
-      ThreadLocal.withInitial(() -> {
-        DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.ROOT);
-        DecimalFormat format = new DecimalFormat("0.############", symbols);
-        format.setMaximumFractionDigits(12);
-        format.setGroupingUsed(false);
-        return format;
-      });
+  private static final transient ThreadLocal<DecimalFormat> DECIMAL_FORMAT = ThreadLocal.withInitial(() -> {
+    DecimalFormatSymbols symbols = DecimalFormatSymbols.getInstance(Locale.ROOT);
+    DecimalFormat format = new DecimalFormat("0.############", symbols);
+    format.setMaximumFractionDigits(12);
+    format.setGroupingUsed(false);
+    return format;
+  });
 
-  private DexpiXmlWriter() {}
+  private DexpiXmlWriter() {
+  }
 
   /**
    * Writes the provided {@link ProcessSystem} to a DEXPI XML file.
    *
    * @param processSystem process model to export
-   * @param file output file
+   * @param file          output file
    * @throws IOException if writing fails
    */
   public static void write(ProcessSystem processSystem, File file) throws IOException {
@@ -95,13 +98,14 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Writes the provided {@link ProcessSystem} to a DEXPI XML file, including instrument and
+   * Writes the provided {@link ProcessSystem} to a DEXPI XML file, including
+   * instrument and
    * controller data when provided.
    *
    * @param processSystem process model to export
-   * @param file output file
-   * @param transmitters map of tag name to transmitter (may be null)
-   * @param controllers map of tag name to controller (may be null)
+   * @param file          output file
+   * @param transmitters  map of tag name to transmitter (may be null)
+   * @param controllers   map of tag name to controller (may be null)
    * @throws IOException if writing fails
    */
   public static void write(ProcessSystem processSystem, File file,
@@ -122,7 +126,7 @@ public final class DexpiXmlWriter {
    * Writes the provided {@link ProcessSystem} to a DEXPI XML stream.
    *
    * @param processSystem process model to export
-   * @param outputStream destination stream
+   * @param outputStream  destination stream
    * @throws IOException if writing fails
    */
   public static void write(ProcessSystem processSystem, OutputStream outputStream)
@@ -131,13 +135,14 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Writes the provided {@link ProcessSystem} to a DEXPI XML stream, including instrument and
+   * Writes the provided {@link ProcessSystem} to a DEXPI XML stream, including
+   * instrument and
    * controller data when provided.
    *
    * @param processSystem process model to export
-   * @param outputStream destination stream
-   * @param transmitters map of tag name to transmitter (may be null)
-   * @param controllers map of tag name to controller (may be null)
+   * @param outputStream  destination stream
+   * @param transmitters  map of tag name to transmitter (may be null)
+   * @param controllers   map of tag name to controller (may be null)
    * @throws IOException if writing fails
    */
   public static void write(ProcessSystem processSystem, OutputStream outputStream,
@@ -200,9 +205,9 @@ public final class DexpiXmlWriter {
           }
         }
         if (isValveType(unit)) {
-          // Valves are PipingComponents in DEXPI — embed in PipingNetworkSegment, not top-level
-          Element valveElement =
-              buildValvePipingComponent(document, unit, usedIds, inNozzle, outNozzles);
+          // Valves are PipingComponents in DEXPI — embed in PipingNetworkSegment, not
+          // top-level
+          Element valveElement = buildValvePipingComponent(document, unit, usedIds, inNozzle, outNozzles);
           valvePipingComponents.put(inNozzle, valveElement);
         } else {
           appendNativeEquipment(document, root, unit, usedIds, inNozzle, outNozzles);
@@ -280,8 +285,7 @@ public final class DexpiXmlWriter {
     String elementName = "Equipment";
     Element element = document.createElement(elementName);
 
-    String componentClass =
-        firstNonBlank(processUnit.getDexpiClass(), defaultComponentClass(mapped, elementName));
+    String componentClass = firstNonBlank(processUnit.getDexpiClass(), defaultComponentClass(mapped, elementName));
     element.setAttribute("ComponentClass", componentClass);
     element.setAttribute("ID", uniqueIdentifier(elementName, processUnit.getName(), usedIds));
 
@@ -313,13 +317,14 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Appends a native NeqSim equipment (non-DEXPI-origin) to the document using reverse mapping.
+   * Appends a native NeqSim equipment (non-DEXPI-origin) to the document using
+   * reverse mapping.
    *
-   * @param document the XML document
-   * @param parent the parent element
-   * @param unit the process equipment
-   * @param usedIds set of used IDs
-   * @param inletNozzleId the inlet nozzle ID to create
+   * @param document        the XML document
+   * @param parent          the parent element
+   * @param unit            the process equipment
+   * @param usedIds         set of used IDs
+   * @param inletNozzleId   the inlet nozzle ID to create
    * @param outletNozzleIds the outlet nozzle IDs to create
    */
   private static void appendNativeEquipment(Document document, Element parent,
@@ -356,9 +361,9 @@ public final class DexpiXmlWriter {
    * Appends a Nozzle child element to the parent equipment element.
    *
    * @param document the XML document
-   * @param parent the equipment element
+   * @param parent   the equipment element
    * @param nozzleId the nozzle ID
-   * @param usedIds set of used IDs
+   * @param usedIds  set of used IDs
    */
   private static void appendNozzle(Document document, Element parent, String nozzleId,
       Set<String> usedIds) {
@@ -372,11 +377,12 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Appends simulation result attributes (P, T, flow) from equipment outlet streams.
+   * Appends simulation result attributes (P, T, flow) from equipment outlet
+   * streams.
    *
-   * @param document the XML document
+   * @param document          the XML document
    * @param genericAttributes the GenericAttributes element to append to
-   * @param unit the process equipment
+   * @param unit              the process equipment
    */
   private static void appendSimulationResults(Document document, Element genericAttributes,
       ProcessEquipmentInterface unit) {
@@ -402,7 +408,8 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Gets the outlet stream of a process equipment for simulation result extraction.
+   * Gets the outlet stream of a process equipment for simulation result
+   * extraction.
    *
    * @param unit the process equipment
    * @return the outlet stream, or null if not available
@@ -455,9 +462,12 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Returns {@code true} if the unit represents a DEXPI piping component (valve) rather than an
-   * Equipment element. In the DEXPI schema, valves are PipingComponent elements and should be
-   * embedded inside PipingNetworkSegment elements rather than exported as top-level Equipment.
+   * Returns {@code true} if the unit represents a DEXPI piping component (valve)
+   * rather than an
+   * Equipment element. In the DEXPI schema, valves are PipingComponent elements
+   * and should be
+   * embedded inside PipingNetworkSegment elements rather than exported as
+   * top-level Equipment.
    *
    * @param unit the process equipment to check
    * @return true if the unit should be rendered as a PipingComponent
@@ -469,10 +479,10 @@ public final class DexpiXmlWriter {
   /**
    * Builds a PipingComponent XML element for a valve unit.
    *
-   * @param document the XML document
-   * @param unit the valve unit
-   * @param usedIds set of used IDs
-   * @param inletNozzleId the inlet nozzle ID
+   * @param document        the XML document
+   * @param unit            the valve unit
+   * @param usedIds         set of used IDs
+   * @param inletNozzleId   the inlet nozzle ID
    * @param outletNozzleIds the outlet nozzle IDs
    * @return the PipingComponent element
    */
@@ -517,13 +527,15 @@ public final class DexpiXmlWriter {
    * Registers outlet stream identity hashes to their nozzle IDs.
    *
    * <p>
-   * For single-outlet equipment, the first (and only) nozzle maps to the gas/primary outlet. For
-   * separators, the first nozzle maps to the gas outlet, the second to the liquid outlet, and for
+   * For single-outlet equipment, the first (and only) nozzle maps to the
+   * gas/primary outlet. For
+   * separators, the first nozzle maps to the gas outlet, the second to the liquid
+   * outlet, and for
    * three-phase separators, the third maps to the water outlet.
    * </p>
    *
-   * @param unit the process equipment
-   * @param outNozzles the list of outlet nozzle IDs
+   * @param unit                 the process equipment
+   * @param outNozzles           the list of outlet nozzle IDs
    * @param outletStreamToNozzle map to populate with identity hash to nozzle ID
    */
   private static void registerOutletNozzles(ProcessEquipmentInterface unit, List<String> outNozzles,
@@ -550,13 +562,16 @@ public final class DexpiXmlWriter {
    * Registers pass-through Streams in the outlet-stream-to-nozzle map.
    *
    * <p>
-   * When a user creates {@code new Stream("gas-out", separator.getGasOutStream())}, the wrapping
-   * Stream delegates {@code getFluid()} to the source. This method detects such wrappers by
-   * matching fluid identity and registers the wrapper itself so downstream equipment that took the
+   * When a user creates
+   * {@code new Stream("gas-out", separator.getGasOutStream())}, the wrapping
+   * Stream delegates {@code getFluid()} to the source. This method detects such
+   * wrappers by
+   * matching fluid identity and registers the wrapper itself so downstream
+   * equipment that took the
    * wrapper as its inlet can be connected.
    * </p>
    *
-   * @param processSystem the process system
+   * @param processSystem        the process system
    * @param outletStreamToNozzle map of outlet stream identity hash to nozzle ID
    */
   private static void registerPassThroughStreams(ProcessSystem processSystem,
@@ -583,7 +598,8 @@ public final class DexpiXmlWriter {
         }
       }
     }
-    // For each plain Stream in the process, check if its fluid delegates to a registered outlet
+    // For each plain Stream in the process, check if its fluid delegates to a
+    // registered outlet
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit instanceof Stream && !(unit instanceof DexpiStream)) {
         Stream stream = (Stream) unit;
@@ -598,19 +614,23 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Builds connections between equipment by matching inlet stream identity to outlet stream
+   * Builds connections between equipment by matching inlet stream identity to
+   * outlet stream
    * nozzles.
    *
    * <p>
-   * For each equipment that extends {@link TwoPortEquipment}, the inlet stream is looked up in the
-   * outlet-stream-to-nozzle map to find the upstream nozzle. This correctly resolves branching
-   * (e.g. separator gas and liquid outlets going to different downstream equipment).
+   * For each equipment that extends {@link TwoPortEquipment}, the inlet stream is
+   * looked up in the
+   * outlet-stream-to-nozzle map to find the upstream nozzle. This correctly
+   * resolves branching
+   * (e.g. separator gas and liquid outlets going to different downstream
+   * equipment).
    * </p>
    *
-   * @param processSystem the process system
+   * @param processSystem        the process system
    * @param outletStreamToNozzle map of outlet stream identity hash to nozzle ID
-   * @param inletNozzles map of equipment name to inlet nozzle ID
-   * @param connections list to populate with connections
+   * @param inletNozzles         map of equipment name to inlet nozzle ID
+   * @param connections          list to populate with connections
    */
   private static void buildConnections(ProcessSystem processSystem,
       Map<Integer, String> outletStreamToNozzle, Map<String, String> inletNozzles,
@@ -633,14 +653,16 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Appends a PipingNetworkSystem containing Connection elements for equipment wiring.
+   * Appends a PipingNetworkSystem containing Connection elements for equipment
+   * wiring.
    *
-   * @param document the XML document
-   * @param parent the root element
-   * @param connections the list of connections
-   * @param usedIds set of used IDs
-   * @param valvePipingComponents pre-built PipingComponent elements for valves, keyed by inlet
-   *        nozzle ID
+   * @param document              the XML document
+   * @param parent                the root element
+   * @param connections           the list of connections
+   * @param usedIds               set of used IDs
+   * @param valvePipingComponents pre-built PipingComponent elements for valves,
+   *                              keyed by inlet
+   *                              nozzle ID
    */
   private static void appendConnectionSystem(Document document, Element parent,
       List<NozzleConnection> connections, Set<String> usedIds,
@@ -690,7 +712,8 @@ public final class DexpiXmlWriter {
       systemElement.appendChild(segmentElement);
     }
 
-    // Add standalone segments for any valve PipingComponents not consumed by connections
+    // Add standalone segments for any valve PipingComponents not consumed by
+    // connections
     for (Map.Entry<String, Element> entry : valvePipingComponents.entrySet()) {
       if (!consumedValveNozzles.contains(entry.getKey())) {
         Element segmentElement = document.createElement("PipingNetworkSegment");
@@ -799,16 +822,18 @@ public final class DexpiXmlWriter {
    *
    * <p>
    * Each transmitter becomes a {@code ProcessInstrumentationFunction} with a
-   * {@code ProcessSignalGeneratingFunction} child. Controllers that share a loop tag with a
-   * transmitter are linked via {@code SignalConveyingFunction} and {@code ActuatingFunction}.
+   * {@code ProcessSignalGeneratingFunction} child. Controllers that share a loop
+   * tag with a
+   * transmitter are linked via {@code SignalConveyingFunction} and
+   * {@code ActuatingFunction}.
    * Finally, an {@code InstrumentationLoopFunction} groups each loop's elements.
    * </p>
    *
-   * @param document the XML document
-   * @param parent the root element to append to
+   * @param document     the XML document
+   * @param parent       the root element to append to
    * @param transmitters map of tag to transmitter
-   * @param controllers map of tag to controller (may be null)
-   * @param usedIds set of already used XML IDs
+   * @param controllers  map of tag to controller (may be null)
+   * @param usedIds      set of already used XML IDs
    */
   private static void appendInstruments(Document document, Element parent,
       Map<String, MeasurementDeviceInterface> transmitters,
@@ -863,11 +888,32 @@ public final class DexpiXmlWriter {
         matchedController = controllers.get(controllerTag);
       }
 
+      String scfId = null;
+      String afId = null;
       if (matchedController != null) {
-        // Record controller tag as a generic attribute on the PIF.
-        // Full ActuatingSystem/ActuatingFunction modelling requires valve linkage
-        // data not yet available in the NeqSim controller model.
         appendGenericAttribute(document, pifAttrs, "ControllerTag", controllerTag);
+
+        // SignalConveyingFunction: signal line from transmitter to controller
+        scfId = uniqueIdentifier("SignalConveyingFunction", tag, usedIds);
+        Element scf = document.createElement("SignalConveyingFunction");
+        scf.setAttribute("ID", scfId);
+        scf.setAttribute("ComponentClass", "SignalConveyingFunction");
+        pif.appendChild(scf);
+
+        // ActuatingFunction: controller output to final element
+        afId = uniqueIdentifier("ActuatingFunction", controllerTag, usedIds);
+        Element af = document.createElement("ActuatingFunction");
+        af.setAttribute("ID", afId);
+        af.setAttribute("ComponentClass", "ActuatingFunction");
+
+        Element afAttrs = document.createElement("GenericAttributes");
+        afAttrs.setAttribute("Set", "DexpiAttributes");
+        appendGenericAttribute(document, afAttrs,
+            "ActuatingFunctionNumberAssignmentClass", controllerTag);
+        if (afAttrs.hasChildNodes()) {
+          af.appendChild(afAttrs);
+        }
+        pif.appendChild(af);
       }
 
       parent.appendChild(pif);
@@ -896,18 +942,19 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Parses an ISA-style tag (e.g. "PT-HP sep") into category, function letters, and loop number.
+   * Parses an ISA-style tag (e.g. "PT-HP sep") into category, function letters,
+   * and loop number.
    *
    * @param tag the ISA tag string
    * @return array of [category, functions, loopNumber]
    */
   private static String[] parseIsaTag(String tag) {
     if (tag == null || tag.isEmpty()) {
-      return new String[] {"", "", tag};
+      return new String[] { "", "", tag };
     }
     int dashIndex = tag.indexOf('-');
     if (dashIndex <= 0) {
-      return new String[] {"", "", tag};
+      return new String[] { "", "", tag };
     }
     String prefix = tag.substring(0, dashIndex);
     String loopNumber = tag.substring(dashIndex + 1);
@@ -917,11 +964,12 @@ public final class DexpiXmlWriter {
     // Remaining letters are the function (T, IC, C, etc.)
     String functions = prefix.length() > 1 ? prefix.substring(1) : "T";
 
-    return new String[] {category, functions, loopNumber};
+    return new String[] { category, functions, loopNumber };
   }
 
   /**
-   * Derives the controller tag from a transmitter tag. For example, "PT-HP sep" becomes "PC-HP
+   * Derives the controller tag from a transmitter tag. For example, "PT-HP sep"
+   * becomes "PC-HP
    * sep", "LT-HP sep" becomes "LC-HP sep".
    *
    * @param transmitterTag the transmitter tag
