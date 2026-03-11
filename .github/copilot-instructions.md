@@ -1202,6 +1202,14 @@ fluid.setMultiPhaseCheck(True)  # Python bool works
 Every task solved in this repo MUST follow this workflow to build persistent,
 searchable knowledge across sessions.
 
+### ⚠️ MANDATORY: All output goes to `task_solve/` folder
+
+**Every task MUST create a folder under `task_solve/` FIRST** by running
+`python devtools/new_task.py "task title" --type X --author "Name"`.
+All deliverables (task_spec.md, notebooks, notes.md, results.json, figures/)
+are placed inside this folder. Never write task analysis files to `examples/`,
+docs, or the workspace root.
+
 ### Before Starting
 
 1. Read `CONTEXT.md` for orientation (60 seconds)

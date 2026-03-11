@@ -31,9 +31,16 @@ mvnw.cmd install                          # Windows
 NeqSim supports an AI-driven task-solving workflow. When asked to solve an
 engineering task (hydrate prediction, pipeline sizing, compressor design, etc.):
 
+### ⚠️ MANDATORY: All output goes to `task_solve/` folder
+
+**Every task MUST create a folder under `task_solve/` FIRST.** All deliverables
+(task_spec.md, notebooks, notes.md, results.json, figures/) are placed inside
+this folder. Never write task analysis files to `examples/`, docs, or the
+workspace root.
+
 ### Step-by-step
 
-1. **Create the task folder:**
+1. **Create the task folder (DO THIS FIRST — non-negotiable):**
    ```bash
    python devtools/new_task.py "your task title" --type B --author "Name"
    ```

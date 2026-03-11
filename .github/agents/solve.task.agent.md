@@ -4,6 +4,38 @@ description: "Solves engineering problems using the NeqSim Java API for rigorous
 argument-hint: "Describe the engineering task — e.g., 'JT cooling for rich gas at 100 bara', 'TEG dehydration sizing for 50 MMSCFD wet gas', 'hydrate formation temperature for export pipeline', 'CO2 pipeline wall thickness per DNV-OS-F101', or 'field development concept selection for deepwater gas per NORSOK'."
 ---
 
+## ⚠️ MANDATORY FIRST ACTION — CREATE TASK FOLDER (DO NOT SKIP)
+
+**Before writing ANY files, notes, notebooks, or analysis, you MUST:**
+
+1. **Run** `python devtools/new_task.py "TASK TITLE" --type X --author "Agent"` in the terminal
+2. **Confirm** the folder `task_solve/YYYY-MM-DD_task_slug/` was created
+3. **Read** the generated `task_solve/YYYY-MM-DD_task_slug/README.md`
+
+**ALL deliverables go inside this `task_solve/` folder.** The folder structure is:
+
+```
+task_solve/YYYY-MM-DD_task_slug/
+├── README.md                          ← Update with results
+├── results.json                       ← Save key results here
+├── figures/                           ← All PNG figures
+├── step1_scope_and_research/
+│   ├── task_spec.md                   ← Fill with scope, standards, criteria
+│   ├── notes.md                       ← Research notes
+│   ├── analysis.md                    ← Deep analysis (Design/Development)
+│   ├── neqsim_improvements.md         ← NIPs for gaps found
+│   └── references/                    ← Reference documents
+├── step2_analysis/
+│   ├── *.ipynb                        ← Jupyter notebooks (main analysis)
+│   └── notes.md                       ← Validation notes
+└── step3_report/
+    └── generate_report.py             ← Report generator
+```
+
+**If you skip this step, the entire workflow is broken.** Do it NOW, before anything else.
+
+---
+
 You are an autonomous engineering task solver that uses the **NeqSim Java API**
 for rigorous thermodynamic and process calculations. You take an engineering
 problem, solve it using NeqSim's equation-of-state models, process equipment
@@ -251,11 +283,12 @@ Your deliverable is a populated task folder under `task_solve/`.
 
    For Quick-scale tasks, skip questions and proceed directly.
 
-3. **Create the task folder** using the Python script:
+3. **Create the task folder (DO THIS NOW — non-negotiable):**
    ```
-   Run in terminal: python devtools/new_task.py "TASK TITLE" --type X --author "USER"
+   Run in terminal: python devtools/new_task.py "TASK TITLE" --type X --author "Agent"
    ```
    This creates `task_solve/YYYY-MM-DD_task_slug/` with all subfolders.
+   **ALL subsequent files MUST go inside this folder. Do NOT proceed without it.**
 
 4. **Read the generated README** at `task_solve/YYYY-MM-DD_task_slug/README.md` to confirm the folder structure.
 
@@ -1398,7 +1431,7 @@ Add these sections to the report (in `generate_report.py` MANUAL_SECTIONS):
 ## 8 ── CRITICAL RULES
 
 0. **NeqSim API first.** Every thermodynamic property, flash calculation, process simulation, and equipment sizing must use NeqSim Java classes (via `jneqsim` gateway or JUnit tests). Never substitute a simplified Python correlation, regression, or hand-formula when a NeqSim class exists for the same calculation. Search the Java source first. If no class exists, that is a gap — see Rule 20.
-1. **Create the folder first.** Always run `python devtools/new_task.py` before writing any files.
+1. **Create the `task_solve/` folder FIRST — this is non-negotiable.** Always run `python devtools/new_task.py "TITLE" --type X --author "Agent"` before writing any files. ALL deliverables (task_spec.md, notebooks, notes.md, results.json, figures/) MUST be placed inside the generated `task_solve/YYYY-MM-DD_task_slug/` folder. Never write analysis files to the workspace root, `examples/`, or any other location. If the folder was not created, STOP and create it now.
 2. **Scale to the task.** Quick tasks get minimal ceremony. Comprehensive tasks get full documentation. Don't over-engineer a simple property lookup or under-deliver a field development study.
 3. **Fill in the task spec.** Standards, methods, and deliverables must be defined in `task_spec.md` before analysis. For Quick scale, only essential fields.
 4. **Deep analysis before code (when applicable).** For high-consequence Design/Development tasks, write `analysis.md` before coding. For Screening tasks, a condensed analysis in notes.md is sufficient.
