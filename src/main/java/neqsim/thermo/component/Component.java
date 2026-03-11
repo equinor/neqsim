@@ -248,9 +248,29 @@ public abstract class Component implements ComponentInterface {
             // logger.info("no parameters in tempcomp -- trying comp.. " +
             // name);
             dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
-            dataSet.next();
+            if (!dataSet.next()) {
+              if (name.contains("_PC")) {
+                dataSet.close();
+                dataSet = database.getResultSet("SELECT * FROM comp WHERE name='default'");
+                if (!dataSet.next()) {
+                  throw new RuntimeException("Default component not found in database");
+                }
+              } else {
+                throw new RuntimeException(
+                    "Component " + name + " not found in comp database table");
+              }
+            }
           } catch (Exception e2) {
-            throw new RuntimeException(e2);
+            if (name.contains("_PC")) {
+              try {
+                dataSet.close();
+              } catch (Exception ignored) {
+              }
+              dataSet = database.getResultSet("SELECT * FROM comp WHERE name='default'");
+              dataSet.next();
+            } else {
+              throw new RuntimeException(e2);
+            }
           }
         }
 
