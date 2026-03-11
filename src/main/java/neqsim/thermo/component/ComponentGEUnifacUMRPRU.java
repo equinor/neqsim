@@ -101,6 +101,29 @@ public class ComponentGEUnifacUMRPRU extends ComponentGEUnifac {
   }
 
   /**
+   * Reinitialize UNIFAC groups for pseudo-components (_PC) based on current molar mass. Call this
+   * after setting the correct molar mass on a pseudo-component that was created with a "default"
+   * database fallback.
+   */
+  public void initPCUNIFACGroups() {
+    double number = getMolarMass() / 0.014;
+    int intNumb = (int) Math.round(number) - 2;
+    if (intNumb < 0) {
+      intNumb = 0;
+    }
+    unifacGroups.clear();
+    unifacGroups.add(new UNIFACgroup(1, 2));
+    unifacGroups.add(new UNIFACgroup(2, intNumb));
+    unifacGroupsArray = unifacGroups.toArray(unifacGroupsArray);
+    for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
+      getUnifacGroup(i).calcXComp(this);
+    }
+    for (int i = 0; i < getNumberOfUNIFACgroups(); i++) {
+      getUnifacGroup(i).calcQComp(this);
+    }
+  }
+
+  /**
    * <p>
    * calcTempExpaij.
    * </p>
