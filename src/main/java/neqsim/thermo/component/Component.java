@@ -1475,7 +1475,9 @@ public abstract class Component implements ComponentInterface {
   @Override
   public void setAcentricFactor(double val) {
     acentricFactor = val;
-    getAttractiveTerm().init();
+    if (getAttractiveTerm() != null) {
+      getAttractiveTerm().init();
+    }
   }
 
   /** {@inheritDoc} */

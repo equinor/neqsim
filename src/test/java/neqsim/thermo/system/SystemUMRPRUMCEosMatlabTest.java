@@ -227,42 +227,37 @@ public class SystemUMRPRUMCEosMatlabTest {
     oilFluid.initProperties();
 
     // --- Combine gas + oil (scrubber fluid) ---
-    // Note: addFluid with UMR-PRU mixing rule can cause NullPointerException on attractive term
-    // when new components are added. The MATLAB code handles this with roboustAddfluids try-catch.
+    // addFluid adds TBP components from oil that don't exist in gas (C12_PC, C13_PC, C14_PC).
+    // This previously caused NullPointerException in setAcentricFactor when adding to hydrate
+    // phase.
     SystemInterface scrubberFluid = gasFluid.clone();
-    boolean addFluidSuccess = true;
-    try {
-      scrubberFluid.addFluid(oilFluid);
-    } catch (Exception e) {
-      addFluidSuccess = false;
-    }
+    assertDoesNotThrow(() -> scrubberFluid.addFluid(oilFluid),
+        "addFluid should not throw when combining UMR-PRU fluids with different TBP components");
 
-    if (addFluidSuccess) {
-      ThermodynamicOperations scrubOps = new ThermodynamicOperations(scrubberFluid);
-      scrubberFluid.setMultiPhaseCheck(true);
-      scrubberFluid.useVolumeCorrection(true);
-      scrubberFluid.setTemperature(T_C, "C");
-      scrubberFluid.setPressure(P, "bara");
-      scrubOps.TPflash();
-      scrubberFluid.initProperties();
+    ThermodynamicOperations scrubOps = new ThermodynamicOperations(scrubberFluid);
+    scrubberFluid.setMultiPhaseCheck(true);
+    scrubberFluid.useVolumeCorrection(true);
+    scrubberFluid.setTemperature(T_C, "C");
+    scrubberFluid.setPressure(P, "bara");
+    scrubOps.TPflash();
+    scrubberFluid.initProperties();
 
-      assertTrue(scrubberFluid.getNumberOfPhases() >= 1, "Should have at least 1 phase");
+    assertTrue(scrubberFluid.getNumberOfPhases() >= 1, "Should have at least 1 phase");
 
-      // --- Subcooling sweep (this is the core operation) ---
-      double[] temperatures = {21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0};
-      for (double subcoolT : temperatures) {
-        SystemInterface subcooledFluid = scrubberFluid.clone();
-        subcooledFluid.setTemperature(subcoolT, "C");
-        subcooledFluid.setPressure(P, "bara");
+    // --- Subcooling sweep (this is the core operation) ---
+    double[] temperatures = {21.0, 22.0, 23.0, 24.0, 25.0, 26.0, 27.0, 28.0, 29.0, 30.0};
+    for (double subcoolT : temperatures) {
+      SystemInterface subcooledFluid = scrubberFluid.clone();
+      subcooledFluid.setTemperature(subcoolT, "C");
+      subcooledFluid.setPressure(P, "bara");
 
-        ThermodynamicOperations subOps = new ThermodynamicOperations(subcooledFluid);
-        assertDoesNotThrow(() -> subOps.TPflash(),
-            "TPflash should not throw at T=" + subcoolT + " C");
+      ThermodynamicOperations subOps = new ThermodynamicOperations(subcooledFluid);
+      assertDoesNotThrow(() -> subOps.TPflash(),
+          "TPflash should not throw at T=" + subcoolT + " C");
 
-        if (subcooledFluid.hasPhaseType("oil")) {
-          double oilVolFrac = subcooledFluid.getPhase("oil").getVolume("litre");
-          assertTrue(oilVolFrac >= 0, "Oil volume should be non-negative at T=" + subcoolT);
-        }
+      if (subcooledFluid.hasPhaseType("oil")) {
+        double oilVolFrac = subcooledFluid.getPhase("oil").getVolume("litre");
+        assertTrue(oilVolFrac >= 0, "Oil volume should be non-negative at T=" + subcoolT);
       }
     }
   }
