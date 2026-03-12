@@ -19,6 +19,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.processmodel.dexpi.DexpiInstrumentInfo;
+import neqsim.process.processmodel.dexpi.DexpiXmlReaderException;
 import neqsim.process.util.DynamicProcessHelper;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -92,9 +94,11 @@ public class DexpiInstrumentTest extends NeqSimTest {
    * Tests that the writer without instruments still works (backwards compatibility).
    *
    * @throws IOException if file operations fail
+   * @throws DexpiXmlReaderException if parsing fails
    */
   @Test
-  public void testWriterWithoutInstrumentsIsBackwardsCompatible() throws IOException {
+  public void testWriterWithoutInstrumentsIsBackwardsCompatible()
+      throws IOException, DexpiXmlReaderException {
     ProcessSystem process = buildSeparatorProcess();
 
     File tempFile = File.createTempFile("dexpi-noinstru-test", ".xml");
@@ -103,8 +107,10 @@ public class DexpiInstrumentTest extends NeqSimTest {
 
     String xml = new String(Files.readAllBytes(tempFile.toPath()), StandardCharsets.UTF_8);
     assertTrue(xml.contains("PlantModel"), "XML should contain PlantModel root");
-    assertFalse(xml.contains("ProcessInstrumentationFunction"),
-        "XML should NOT contain instruments when none provided");
+    // ShapeCatalogue contains ProcessInstrumentationFunction shape definitions,
+    // but no actual instrument instances should be present outside ShapeCatalogue
+    List<DexpiInstrumentInfo> instruments = DexpiXmlReader.readInstruments(tempFile);
+    assertEquals(0, instruments.size(), "Should have no actual instruments when none provided");
   }
 
   /**
@@ -169,8 +175,9 @@ public class DexpiInstrumentTest extends NeqSimTest {
     helper.instrumentAndControl();
 
     Map<String, MeasurementDeviceInterface> transmitters = helper.getTransmitters();
-    int transmitterCount = transmitters.size();
-    assertTrue(transmitterCount > 0, "Should have at least 1 transmitter");
+    Map<String, ControllerDeviceInterface> controllers = helper.getControllers();
+    int expectedInstrumentCount = transmitters.size() + controllers.size();
+    assertTrue(transmitters.size() > 0, "Should have at least 1 transmitter");
 
     // Export
     File tempFile = File.createTempFile("dexpi-roundtrip", ".xml");
@@ -180,7 +187,7 @@ public class DexpiInstrumentTest extends NeqSimTest {
     // Import
     List<DexpiInstrumentInfo> instruments = helper.readDexpiInstruments(tempFile);
     assertNotNull(instruments);
-    assertEquals(transmitterCount, instruments.size(),
+    assertEquals(expectedInstrumentCount, instruments.size(),
         "Round-trip should preserve instrument count");
   }
 

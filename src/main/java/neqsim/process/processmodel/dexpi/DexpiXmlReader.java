@@ -375,6 +375,10 @@ public final class DexpiXmlReader {
       if (node.getNodeType() != Node.ELEMENT_NODE) {
         continue;
       }
+      // Skip shape definitions inside ShapeCatalogue
+      if (isInsideShapeCatalogue(node)) {
+        continue;
+      }
       Element pif = (Element) node;
       String id = pif.getAttribute("ID");
       String category = getGenericAttribute(pif, DexpiMetadata.INSTRUMENTATION_CATEGORY);
@@ -704,6 +708,23 @@ public final class DexpiXmlReader {
       }
     }
     return null;
+  }
+
+  /**
+   * Checks whether the given node is inside a ShapeCatalogue element.
+   *
+   * @param node the XML node to check
+   * @return true if the node has a ShapeCatalogue ancestor
+   */
+  private static boolean isInsideShapeCatalogue(Node node) {
+    Node parent = node.getParentNode();
+    while (parent != null && parent.getNodeType() == Node.ELEMENT_NODE) {
+      if ("ShapeCatalogue".equals(((Element) parent).getTagName())) {
+        return true;
+      }
+      parent = parent.getParentNode();
+    }
+    return false;
   }
 
   private static boolean isBlank(String value) {
