@@ -102,6 +102,18 @@ public final class DexpiMetadata {
   /** Generic attribute for the piping class code (e.g. "2500#"). */
   public static final String PIPING_CLASS_CODE = "PipingClassCode";
 
+  /** Generic attribute for the valve fail position (FC, FO, FL per NORSOK Z-003). */
+  public static final String FAIL_POSITION = "FailPosition";
+
+  /** Generic attribute for SIL level on safety instruments (1, 2, or 3 per IEC 61511). */
+  public static final String SIL_LEVEL = "SILLevel";
+
+  /** Generic attribute for insulation code (H = hot, C = cold, P = personnel protection). */
+  public static final String INSULATION_CODE = "InsulationCode";
+
+  /** Generic attribute for pipe/line nominal size (e.g. "6\"", "DN 150"). */
+  public static final String LINE_SIZE = "LineSize";
+
   /** Generic attribute for the number of trays in a distillation column. */
   public static final String NUMBER_OF_TRAYS = "NumberOfTrays";
 

@@ -287,6 +287,21 @@ public final class DexpiXmlWriter {
     DexpiLayoutEngine.appendDrawing(document, root, drawingName, "PID-001", "0", today,
         sheetSize[0], sheetSize[1]);
 
+    // Battery limit boundary (NORSOK Z-003)
+    DexpiLayoutEngine.appendBatteryLimitBoundary(document, root, layoutPositions, drawingName);
+
+    // Symbol legend (ISO 10628)
+    List<String[]> legendEntries = new ArrayList<>();
+    legendEntries.add(new String[] {"Process", "Process Line", "0"});
+    legendEntries.add(new String[] {"Signal", "Signal Line (dashed)", "1"});
+    legendEntries.add(new String[] {"Utility", "Utility Line (dash-dot)", "3"});
+    DexpiLayoutEngine.appendSymbolLegend(document, root, legendEntries);
+
+    // Revision history (NORSOK Z-003)
+    List<String[]> revisions = new ArrayList<>();
+    revisions.add(new String[] {"0", today, "Issued for Design", "NeqSim", ""});
+    DexpiLayoutEngine.appendRevisionHistory(document, root, revisions, sheetSize[0]);
+
     writeDocument(document, outputStream);
   }
 
@@ -426,6 +441,12 @@ public final class DexpiXmlWriter {
       // Add equipment bar label with P/T/flow data
       appendEquipmentBarFromSimulation(document, element, unit, position,
           "EquipmentBarLabel-" + labelIndex, equipmentId);
+      // Equipment orientation marker (ISO 10628)
+      String orientation = detectOrientation(unit);
+      if (orientation != null) {
+        DexpiLayoutEngine.appendOrientationMarker(document, element, orientation, position.x,
+            position.y);
+      }
     }
 
     // Add Nozzle children
@@ -698,7 +719,7 @@ public final class DexpiXmlWriter {
       return "FiredHeater";
     }
     if (unit instanceof ThrottlingValve) {
-      return "GlobeValve";
+      return reverseMapValveClass(unit);
     }
     if (unit instanceof Expander) {
       return "Expander";
@@ -769,6 +790,17 @@ public final class DexpiXmlWriter {
     genericAttributes.setAttribute("Set", "DexpiAttributes");
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.TAG_NAME, unit.getName());
     appendSimulationResults(document, genericAttributes, unit);
+
+    // Valve fail position marker (NORSOK Z-003)
+    String failPos = detectFailPosition(unit);
+    if (failPos != null) {
+      appendGenericAttribute(document, genericAttributes, DexpiMetadata.FAIL_POSITION, failPos);
+      if (position != null) {
+        DexpiLayoutEngine.appendFailPositionMarker(document, element, failPos, position.x,
+            position.y);
+      }
+    }
+
     if (genericAttributes.hasChildNodes()) {
       element.appendChild(genericAttributes);
     }
@@ -1327,12 +1359,17 @@ public final class DexpiXmlWriter {
 
       pif.appendChild(psgf);
 
-      // System assignment (DCS by default; could be SIS for safety tags)
-      String systemAssignment = "DCS";
+      // System assignment (DCS by default; SIS for safety tags)
+      String systemAssignment = detectSafetySystem(tag) ? "SIS" : "DCS";
       Element sysAttrs = document.createElement("GenericAttributes");
       sysAttrs.setAttribute("Set", "SystemAssignment");
       appendGenericAttribute(document, sysAttrs, "ControlSystem", systemAssignment);
       pif.appendChild(sysAttrs);
+
+      // SIL marking for safety-instrumented functions (NORSOK Z-003 / IEC 61511)
+      if ("SIS".equals(systemAssignment) && hasPosition) {
+        DexpiLayoutEngine.appendSilMarker(document, pif, 1, cx, cy);
+      }
 
       // Look for matching controller (e.g. PT-xxx -> PC-xxx)
       String controllerTag = deriveControllerTag(tag);
@@ -1848,6 +1885,97 @@ public final class DexpiXmlWriter {
 
   private static boolean isBlank(String value) {
     return value == null || value.trim().isEmpty();
+  }
+
+  /**
+   * Detects equipment orientation from the type. Per ISO 10628, separators are typically marked
+   * vertical (V) while rotating and heat-transfer equipment are horizontal (H).
+   *
+   * @param unit the process equipment
+   * @return "V" for vertical, "H" for horizontal, or null if not applicable
+   */
+  private static String detectOrientation(ProcessEquipmentInterface unit) {
+    if (unit instanceof ThreePhaseSeparator || unit instanceof Separator) {
+      return "V";
+    }
+    if (unit instanceof Compressor || unit instanceof Pump || unit instanceof HeatExchanger
+        || unit instanceof Cooler || unit instanceof Heater) {
+      return "H";
+    }
+    return null;
+  }
+
+  /**
+   * Detects valve fail position from the tag name convention per NORSOK Z-003.
+   *
+   * <p>
+   * Tags starting with "XV", "ESD", or "HIPPS" are assumed fail-closed (FC). Tags starting with
+   * "HV" are assumed fail-open (FO). Other valves return null (no automatic fail position).
+   * </p>
+   *
+   * @param unit the valve equipment
+   * @return fail position code (FC, FO), or null
+   */
+  private static String detectFailPosition(ProcessEquipmentInterface unit) {
+    String name = unit.getName();
+    if (name == null) {
+      return null;
+    }
+    String upper = name.toUpperCase(Locale.ROOT);
+    if (upper.startsWith("XV") || upper.contains("ESD") || upper.contains("HIPPS")
+        || upper.contains("SDV")) {
+      return "FC";
+    }
+    if (upper.startsWith("HV")) {
+      return "FO";
+    }
+    return null;
+  }
+
+  /**
+   * Determines the DEXPI valve ComponentClass from the tag name. Different valve prefixes indicate
+   * different valve types per ISA/NORSOK conventions.
+   *
+   * @param unit the valve equipment
+   * @return the DEXPI ComponentClass (GlobeValve, GateValve, BallValve, CheckValve, ButterflyValve)
+   */
+  private static String reverseMapValveClass(ProcessEquipmentInterface unit) {
+    String name = unit.getName();
+    if (name != null) {
+      String upper = name.toUpperCase(Locale.ROOT);
+      if (upper.startsWith("XV") || upper.contains("ESD") || upper.contains("SDV")) {
+        return "GateValve";
+      }
+      if (upper.startsWith("BV")) {
+        return "BallValve";
+      }
+      if (upper.startsWith("NRV") || upper.contains("CHECK")) {
+        return "CheckValve";
+      }
+      if (upper.startsWith("BFV") || upper.contains("BUTTERFLY")) {
+        return "ButterflyValve";
+      }
+    }
+    return "GlobeValve";
+  }
+
+  /**
+   * Detects whether an instrument tag indicates a Safety Instrumented System (SIS) device rather
+   * than a DCS device. Safety tags typically have key letters like XV (shutdown), SD (shutdown), ZS
+   * (limit switch on safety valve), or SV (safety valve).
+   *
+   * @param tag the ISA instrument tag
+   * @return true if the tag indicates a safety-instrumented function
+   */
+  private static boolean detectSafetySystem(String tag) {
+    if (tag == null || tag.isEmpty()) {
+      return false;
+    }
+    int dashIndex = tag.indexOf('-');
+    String prefix = dashIndex > 0 ? tag.substring(0, dashIndex) : tag;
+    String upper = prefix.toUpperCase(Locale.ROOT);
+    return upper.startsWith("XV") || upper.startsWith("SD") || upper.startsWith("ZS")
+        || upper.startsWith("SV") || upper.contains("ESD") || upper.contains("HIPPS");
   }
 
   private static void writeDocument(Document document, OutputStream outputStream)

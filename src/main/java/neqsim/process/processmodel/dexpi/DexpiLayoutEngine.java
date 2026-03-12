@@ -114,6 +114,24 @@ final class DexpiLayoutEngine {
   /** Top of the stream table (Y coordinate). */
   private static final double TABLE_TOP_Y = 55.0;
 
+  // ---- Battery limit boundary constants ----
+  /** Padding around equipment for battery limit boundary (mm). */
+  private static final double BATTERY_LIMIT_PADDING = 30.0;
+  /** Line weight for battery limit boundary (bold dashed). */
+  private static final double BATTERY_LIMIT_LINE_WEIGHT = 0.7;
+
+  // ---- Symbol legend constants ----
+  /** Width of the symbol legend box (mm). */
+  private static final double LEGEND_WIDTH = 70.0;
+  /** Row height in the legend box (mm). */
+  private static final double LEGEND_ROW_HEIGHT = 5.0;
+  /** Font height for legend text. */
+  private static final double LEGEND_FONT_HEIGHT = 2.2;
+
+  // ---- Revision table constants ----
+  /** Row height in revision history table (mm). */
+  private static final double REVISION_ROW_HEIGHT = 4.5;
+
   private DexpiLayoutEngine() {}
 
   /**
@@ -1493,5 +1511,720 @@ final class DexpiLayoutEngine {
       this.flowKgHr = flowKgHr;
       this.phase = phase;
     }
+  }
+
+  // ==== Battery limit boundary (NORSOK Z-003 / ISO 10628) ====
+
+  /**
+   * Appends a dashed battery-limit boundary rectangle around all equipment.
+   *
+   * <p>
+   * Per NORSOK Z-003 and ISO 10628, battery limits are shown as bold dash-dot lines enclosing the
+   * process unit boundary. The boundary is computed from the extremes of all equipment positions
+   * with padding.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the Drawing or PlantModel element
+   * @param positions all equipment positions
+   * @param areaLabel the battery limit label (e.g. "AREA 100 - GAS PROCESSING")
+   */
+  static void appendBatteryLimitBoundary(Document document, Element parent,
+      Map<String, EquipmentPosition> positions, String areaLabel) {
+    if (positions == null || positions.isEmpty()) {
+      return;
+    }
+    double minX = Double.MAX_VALUE;
+    double maxX = -Double.MAX_VALUE;
+    double minY = Double.MAX_VALUE;
+    double maxY = -Double.MAX_VALUE;
+    for (EquipmentPosition pos : positions.values()) {
+      if (pos.x < minX) {
+        minX = pos.x;
+      }
+      if (pos.x > maxX) {
+        maxX = pos.x;
+      }
+      if (pos.y < minY) {
+        minY = pos.y;
+      }
+      if (pos.y > maxY) {
+        maxY = pos.y;
+      }
+    }
+
+    double bLeft = minX - BATTERY_LIMIT_PADDING;
+    double bRight = maxX + BATTERY_LIMIT_PADDING;
+    double bBottom = minY - BATTERY_LIMIT_PADDING;
+    double bTop = maxY + BATTERY_LIMIT_PADDING;
+
+    Element label = document.createElement("Label");
+    label.setAttribute("ID", "BatteryLimit-1");
+    label.setAttribute("ComponentClass", "Label");
+
+    // Dashed rectangle (LineType=3 = dash-dot per DEXPI schema)
+    Element poly = document.createElement("PolyLine");
+    poly.setAttribute("NumPoints", "5");
+    Element pres = document.createElement("Presentation");
+    pres.setAttribute("LineType", "3");
+    pres.setAttribute("LineWeight", String.valueOf(BATTERY_LIMIT_LINE_WEIGHT));
+    pres.setAttribute("R", "0");
+    pres.setAttribute("G", "0");
+    pres.setAttribute("B", "0");
+    poly.appendChild(pres);
+    appendCoordinate(document, poly, bLeft, bBottom);
+    appendCoordinate(document, poly, bRight, bBottom);
+    appendCoordinate(document, poly, bRight, bTop);
+    appendCoordinate(document, poly, bLeft, bTop);
+    appendCoordinate(document, poly, bLeft, bBottom);
+    label.appendChild(poly);
+
+    // Area label at top-left corner
+    if (areaLabel != null && !areaLabel.trim().isEmpty()) {
+      Element text = document.createElement("Text");
+      text.setAttribute("String", areaLabel);
+      text.setAttribute("Font", FONT_NAME);
+      text.setAttribute("Height", "3.5");
+      text.setAttribute("Width", "0");
+      text.setAttribute("Justification", "LeftBottom");
+      Element textPres = document.createElement("Presentation");
+      textPres.setAttribute("R", "0");
+      textPres.setAttribute("G", "0");
+      textPres.setAttribute("B", "0");
+      text.appendChild(textPres);
+      Element position = document.createElement("Position");
+      Element location = document.createElement("Location");
+      location.setAttribute("X", String.valueOf(bLeft + 2.0));
+      location.setAttribute("Y", String.valueOf(bTop + 2.0));
+      location.setAttribute("Z", "0");
+      position.appendChild(location);
+      Element axis = document.createElement("Axis");
+      axis.setAttribute("X", "0");
+      axis.setAttribute("Y", "0");
+      axis.setAttribute("Z", "1");
+      position.appendChild(axis);
+      Element ref = document.createElement("Reference");
+      ref.setAttribute("X", "1");
+      ref.setAttribute("Y", "0");
+      ref.setAttribute("Z", "0");
+      position.appendChild(ref);
+      text.appendChild(position);
+      label.appendChild(text);
+    }
+
+    parent.appendChild(label);
+  }
+
+  // ==== Valve fail position marker (NORSOK Z-003) ====
+
+  /**
+   * Appends a valve fail-position marker text (FC, FO, FL) near a valve position.
+   *
+   * <p>
+   * Per NORSOK Z-003, valve fail positions are marked adjacent to the valve symbol: FC = fail
+   * closed, FO = fail open, FL = fail last position.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the PipingComponent (valve) element
+   * @param failPosition the fail position code (FC, FO, or FL)
+   * @param x the valve X coordinate
+   * @param y the valve Y coordinate
+   */
+  static void appendFailPositionMarker(Document document, Element parent, String failPosition,
+      double x, double y) {
+    if (failPosition == null || failPosition.trim().isEmpty()) {
+      return;
+    }
+    Element text = document.createElement("Text");
+    text.setAttribute("String", failPosition.trim().toUpperCase(Locale.ROOT));
+    text.setAttribute("Font", FONT_NAME);
+    text.setAttribute("Height", "2.5");
+    text.setAttribute("Width", "0");
+    text.setAttribute("Justification", "CenterTop");
+    Element pres = document.createElement("Presentation");
+    pres.setAttribute("R", "0.501960784");
+    pres.setAttribute("G", "0");
+    pres.setAttribute("B", "0");
+    text.appendChild(pres);
+    Element position = document.createElement("Position");
+    Element location = document.createElement("Location");
+    location.setAttribute("X", String.valueOf(x));
+    location.setAttribute("Y", String.valueOf(y - 5.0));
+    location.setAttribute("Z", "0");
+    position.appendChild(location);
+    Element axis = document.createElement("Axis");
+    axis.setAttribute("X", "0");
+    axis.setAttribute("Y", "0");
+    axis.setAttribute("Z", "1");
+    position.appendChild(axis);
+    Element ref = document.createElement("Reference");
+    ref.setAttribute("X", "1");
+    ref.setAttribute("Y", "0");
+    ref.setAttribute("Z", "0");
+    position.appendChild(ref);
+    text.appendChild(position);
+    parent.appendChild(text);
+  }
+
+  // ==== Insulation symbol (ISO 10628 / NORSOK Z-003) ====
+
+  /**
+   * Appends insulation marking on a process line between two points.
+   *
+   * <p>
+   * Per ISO 10628 and NORSOK Z-003, insulation is indicated by a short perpendicular tick mark on
+   * the process line with a code letter: H = hot insulation, C = cold insulation, P = personnel
+   * protection, A = acoustic.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the PipingNetworkSegment element
+   * @param insulationCode the insulation code (H, C, P, A)
+   * @param fromX source X
+   * @param fromY source Y
+   * @param toX destination X
+   * @param toY destination Y
+   */
+  static void appendInsulationMark(Document document, Element parent, String insulationCode,
+      double fromX, double fromY, double toX, double toY) {
+    if (insulationCode == null || insulationCode.trim().isEmpty()) {
+      return;
+    }
+    // Place tick marks at 25% and 75% along the line
+    for (double frac : new double[] {0.25, 0.75}) {
+      double mx = fromX + frac * (toX - fromX);
+      double my = fromY + frac * (toY - fromY);
+
+      // Perpendicular tick mark
+      Element tick = document.createElement("PolyLine");
+      tick.setAttribute("NumPoints", "2");
+      Element tickPres = document.createElement("Presentation");
+      tickPres.setAttribute("LineType", "0");
+      tickPres.setAttribute("LineWeight", "0.3");
+      tickPres.setAttribute("R", LINE_COLOR_R);
+      tickPres.setAttribute("G", LINE_COLOR_G);
+      tickPres.setAttribute("B", LINE_COLOR_B);
+      tick.appendChild(tickPres);
+      if (Math.abs(fromY - toY) < 0.5) {
+        // Horizontal line: tick is vertical
+        appendCoordinate(document, tick, mx, my - 2.5);
+        appendCoordinate(document, tick, mx, my + 2.5);
+      } else {
+        // Vertical line: tick is horizontal
+        appendCoordinate(document, tick, mx - 2.5, my);
+        appendCoordinate(document, tick, mx + 2.5, my);
+      }
+      parent.appendChild(tick);
+    }
+
+    // Insulation code text at midpoint
+    double midX = (fromX + toX) / 2.0;
+    double midY = (fromY + toY) / 2.0;
+    Element text = document.createElement("Text");
+    text.setAttribute("String", insulationCode.trim().toUpperCase(Locale.ROOT));
+    text.setAttribute("Font", FONT_NAME);
+    text.setAttribute("Height", "2.0");
+    text.setAttribute("Width", "0");
+    text.setAttribute("Justification", "CenterBottom");
+    Element pres = document.createElement("Presentation");
+    pres.setAttribute("R", LINE_COLOR_R);
+    pres.setAttribute("G", LINE_COLOR_G);
+    pres.setAttribute("B", LINE_COLOR_B);
+    text.appendChild(pres);
+    Element position = document.createElement("Position");
+    Element location = document.createElement("Location");
+    location.setAttribute("X", String.valueOf(midX));
+    location.setAttribute("Y", String.valueOf(midY + 4.5));
+    location.setAttribute("Z", "0");
+    position.appendChild(location);
+    Element axis = document.createElement("Axis");
+    axis.setAttribute("X", "0");
+    axis.setAttribute("Y", "0");
+    axis.setAttribute("Z", "1");
+    position.appendChild(axis);
+    Element ref = document.createElement("Reference");
+    ref.setAttribute("X", "1");
+    ref.setAttribute("Y", "0");
+    ref.setAttribute("Z", "0");
+    position.appendChild(ref);
+    text.appendChild(position);
+    parent.appendChild(text);
+  }
+
+  // ==== Equipment orientation marker (ISO 10628) ====
+
+  /**
+   * Appends an orientation marker (H or V) next to equipment, per ISO 10628 convention.
+   *
+   * @param document the XML document
+   * @param parent the equipment element
+   * @param orientation the orientation string ("H" or "V")
+   * @param x equipment center X
+   * @param y equipment center Y
+   */
+  static void appendOrientationMarker(Document document, Element parent, String orientation,
+      double x, double y) {
+    if (orientation == null || orientation.trim().isEmpty()) {
+      return;
+    }
+    Element text = document.createElement("Text");
+    text.setAttribute("String", "(" + orientation.trim().toUpperCase(Locale.ROOT) + ")");
+    text.setAttribute("Font", FONT_NAME);
+    text.setAttribute("Height", "2.5");
+    text.setAttribute("Width", "0");
+    text.setAttribute("Justification", "LeftCenter");
+    Element pres = document.createElement("Presentation");
+    pres.setAttribute("R", "0.501960784");
+    pres.setAttribute("G", "0");
+    pres.setAttribute("B", "0");
+    text.appendChild(pres);
+    Element position = document.createElement("Position");
+    Element location = document.createElement("Location");
+    location.setAttribute("X", String.valueOf(x + 15.0));
+    location.setAttribute("Y", String.valueOf(y + 12.0));
+    location.setAttribute("Z", "0");
+    position.appendChild(location);
+    Element axis = document.createElement("Axis");
+    axis.setAttribute("X", "0");
+    axis.setAttribute("Y", "0");
+    axis.setAttribute("Z", "1");
+    position.appendChild(axis);
+    Element ref = document.createElement("Reference");
+    ref.setAttribute("X", "1");
+    ref.setAttribute("Y", "0");
+    ref.setAttribute("Z", "0");
+    position.appendChild(ref);
+    text.appendChild(position);
+    parent.appendChild(text);
+  }
+
+  // ==== SIL level marker on instruments (IEC 61511 / NORSOK Z-003) ====
+
+  /**
+   * Appends a SIL level marker below an instrument bubble.
+   *
+   * <p>
+   * Per NORSOK Z-003 and IEC 61511, safety instrumented functions are marked with their SIL level
+   * (SIL 1, SIL 2, SIL 3) below the instrument bubble. The text is shown in a distinctive style.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the ProcessInstrumentationFunction element
+   * @param silLevel the SIL level (1, 2, or 3)
+   * @param x the instrument bubble center X
+   * @param y the instrument bubble center Y
+   */
+  static void appendSilMarker(Document document, Element parent, int silLevel, double x, double y) {
+    if (silLevel < 1 || silLevel > 4) {
+      return;
+    }
+    Element text = document.createElement("Text");
+    text.setAttribute("String", "SIL " + silLevel);
+    text.setAttribute("Font", FONT_NAME);
+    text.setAttribute("Height", "2.0");
+    text.setAttribute("Width", "0");
+    text.setAttribute("Justification", "CenterTop");
+    Element pres = document.createElement("Presentation");
+    pres.setAttribute("R", "0.8");
+    pres.setAttribute("G", "0");
+    pres.setAttribute("B", "0");
+    text.appendChild(pres);
+    Element position = document.createElement("Position");
+    Element location = document.createElement("Location");
+    location.setAttribute("X", String.valueOf(x));
+    location.setAttribute("Y", String.valueOf(y - INSTRUMENT_BUBBLE_RADIUS - 1.5));
+    location.setAttribute("Z", "0");
+    position.appendChild(location);
+    Element axis = document.createElement("Axis");
+    axis.setAttribute("X", "0");
+    axis.setAttribute("Y", "0");
+    axis.setAttribute("Z", "1");
+    position.appendChild(axis);
+    Element ref = document.createElement("Reference");
+    ref.setAttribute("X", "1");
+    ref.setAttribute("Y", "0");
+    ref.setAttribute("Z", "0");
+    position.appendChild(ref);
+    text.appendChild(position);
+    parent.appendChild(text);
+  }
+
+  // ==== Utility line type rendering ====
+
+  /**
+   * Appends a connection line with a specific line type for utility services.
+   *
+   * <p>
+   * Per ISO 10628 and NORSOK Z-003, different piping services use distinct line styles: solid for
+   * process, dashed for steam/utility, dotted for drain, dash-dot for instrument air, etc.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the PipingNetworkSegment element
+   * @param fromX source X
+   * @param fromY source Y
+   * @param toX destination X
+   * @param toY destination Y
+   * @param lineType ISO/DEXPI line type (0=solid, 1=dashed, 2=dotted, 3=dash-dot)
+   * @param colorR red component (0-1)
+   * @param colorG green component (0-1)
+   * @param colorB blue component (0-1)
+   */
+  static void appendStyledConnectionLine(Document document, Element parent, double fromX,
+      double fromY, double toX, double toY, int lineType, String colorR, String colorG,
+      String colorB) {
+    boolean sameY = Math.abs(fromY - toY) < 0.5;
+    if (sameY) {
+      // Simple horizontal line
+      Element poly = document.createElement("PolyLine");
+      poly.setAttribute("NumPoints", "2");
+      Element pres = document.createElement("Presentation");
+      pres.setAttribute("LineType", String.valueOf(lineType));
+      pres.setAttribute("LineWeight", String.valueOf(PROCESS_LINE_WEIGHT));
+      pres.setAttribute("R", colorR);
+      pres.setAttribute("G", colorG);
+      pres.setAttribute("B", colorB);
+      poly.appendChild(pres);
+      appendCoordinate(document, poly, fromX, fromY);
+      appendCoordinate(document, poly, toX, toY);
+      parent.appendChild(poly);
+    } else {
+      // Orthogonal routing: H-V-H
+      double midX = (fromX + toX) / 2.0;
+      Element poly = document.createElement("PolyLine");
+      poly.setAttribute("NumPoints", "4");
+      Element pres = document.createElement("Presentation");
+      pres.setAttribute("LineType", String.valueOf(lineType));
+      pres.setAttribute("LineWeight", String.valueOf(PROCESS_LINE_WEIGHT));
+      pres.setAttribute("R", colorR);
+      pres.setAttribute("G", colorG);
+      pres.setAttribute("B", colorB);
+      poly.appendChild(pres);
+      appendCoordinate(document, poly, fromX, fromY);
+      appendCoordinate(document, poly, midX, fromY);
+      appendCoordinate(document, poly, midX, toY);
+      appendCoordinate(document, poly, toX, toY);
+      parent.appendChild(poly);
+    }
+  }
+
+  // ==== Line ID format label (ISO 10628 / NORSOK Z-003) ====
+
+  /**
+   * Appends a formatted line identification label per ISO 10628 / NORSOK Z-003.
+   *
+   * <p>
+   * The standard line ID format is: SIZE"-FLUID_CODE-LINE_NUMBER-PIPING_CLASS. For example:
+   * 6"-HC-001-A1B. The label is placed above the pipe midpoint.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the PipingNetworkSegment element
+   * @param lineSize pipe nominal size (e.g. "6\"")
+   * @param fluidCode fluid code (e.g. "HC")
+   * @param lineNumber line number (e.g. "001")
+   * @param pipingClass piping class code (e.g. "A1B", "150#")
+   * @param fromX source X
+   * @param fromY source Y
+   * @param toX destination X
+   * @param toY destination Y
+   */
+  static void appendLineIdLabel(Document document, Element parent, String lineSize,
+      String fluidCode, String lineNumber, String pipingClass, double fromX, double fromY,
+      double toX, double toY) {
+    StringBuilder sb = new StringBuilder();
+    if (lineSize != null && !lineSize.trim().isEmpty()) {
+      sb.append(lineSize.trim());
+    }
+    if (fluidCode != null && !fluidCode.trim().isEmpty()) {
+      if (sb.length() > 0) {
+        sb.append("-");
+      }
+      sb.append(fluidCode.trim());
+    }
+    if (lineNumber != null && !lineNumber.trim().isEmpty()) {
+      if (sb.length() > 0) {
+        sb.append("-");
+      }
+      sb.append(lineNumber.trim());
+    }
+    if (pipingClass != null && !pipingClass.trim().isEmpty()) {
+      if (sb.length() > 0) {
+        sb.append("-");
+      }
+      sb.append(pipingClass.trim());
+    }
+    if (sb.length() == 0) {
+      return;
+    }
+
+    double midX = (fromX + toX) / 2.0;
+    double midY = (fromY + toY) / 2.0;
+    double labelY = midY + 6.0;
+
+    Element text = document.createElement("Text");
+    text.setAttribute("String", sb.toString());
+    text.setAttribute("Font", FONT_NAME);
+    text.setAttribute("Height", "2.2");
+    text.setAttribute("Width", "0");
+    text.setAttribute("Justification", "CenterBottom");
+    Element pres = document.createElement("Presentation");
+    pres.setAttribute("R", "0");
+    pres.setAttribute("G", "0");
+    pres.setAttribute("B", "0.501960784");
+    text.appendChild(pres);
+    Element position = document.createElement("Position");
+    Element location = document.createElement("Location");
+    location.setAttribute("X", String.valueOf(midX));
+    location.setAttribute("Y", String.valueOf(labelY));
+    location.setAttribute("Z", "0");
+    position.appendChild(location);
+    Element axis = document.createElement("Axis");
+    axis.setAttribute("X", "0");
+    axis.setAttribute("Y", "0");
+    axis.setAttribute("Z", "1");
+    position.appendChild(axis);
+    Element ref = document.createElement("Reference");
+    ref.setAttribute("X", "1");
+    ref.setAttribute("Y", "0");
+    ref.setAttribute("Z", "0");
+    position.appendChild(ref);
+    text.appendChild(position);
+    parent.appendChild(text);
+  }
+
+  // ==== Revision history table (NORSOK Z-003) ====
+
+  /**
+   * Appends a revision history table above the title block.
+   *
+   * <p>
+   * Per NORSOK Z-003, the P&amp;ID title block includes a revision history showing rev number,
+   * date, description, drawn by, and checked by for each revision.
+   * </p>
+   *
+   * @param document the XML document
+   * @param drawing the Drawing element
+   * @param revisions list of revision entries [rev, date, description, drawnBy, checkedBy]
+   * @param sheetWidth the drawing sheet width
+   */
+  static void appendRevisionHistory(Document document, Element drawing, List<String[]> revisions,
+      double sheetWidth) {
+    if (revisions == null || revisions.isEmpty()) {
+      return;
+    }
+    Element label = document.createElement("Label");
+    label.setAttribute("ID", "RevisionHistory-1");
+    label.setAttribute("ComponentClass", "Label");
+
+    double blockLeft = sheetWidth - BORDER_MARGIN - TITLE_BLOCK_WIDTH;
+    double blockRight = sheetWidth - BORDER_MARGIN;
+    double tableBottom = BORDER_MARGIN + TITLE_BLOCK_HEIGHT;
+
+    // Column positions
+    double colRev = blockLeft;
+    double colDate = blockLeft + 12.0;
+    double colDesc = blockLeft + 32.0;
+    double colDrawn = blockLeft + 82.0;
+    double colChecked = blockLeft + 100.0;
+
+    // Header row
+    double headerBottom = tableBottom;
+    double headerTop = headerBottom + REVISION_ROW_HEIGHT;
+    appendRevisionCell(document, label, colRev, headerBottom, colDate, headerTop, "REV");
+    appendRevisionCell(document, label, colDate, headerBottom, colDesc, headerTop, "DATE");
+    appendRevisionCell(document, label, colDesc, headerBottom, colDrawn, headerTop, "DESCRIPTION");
+    appendRevisionCell(document, label, colDrawn, headerBottom, colChecked, headerTop, "BY");
+    appendRevisionCell(document, label, colChecked, headerBottom, blockRight, headerTop, "CHK");
+
+    // Revision rows
+    for (int i = 0; i < revisions.size(); i++) {
+      String[] rev = revisions.get(i);
+      double rowBottom = headerTop + i * REVISION_ROW_HEIGHT;
+      double rowTop = rowBottom + REVISION_ROW_HEIGHT;
+      appendRevisionCell(document, label, colRev, rowBottom, colDate, rowTop,
+          rev.length > 0 ? rev[0] : "");
+      appendRevisionCell(document, label, colDate, rowBottom, colDesc, rowTop,
+          rev.length > 1 ? rev[1] : "");
+      appendRevisionCell(document, label, colDesc, rowBottom, colDrawn, rowTop,
+          rev.length > 2 ? rev[2] : "");
+      appendRevisionCell(document, label, colDrawn, rowBottom, colChecked, rowTop,
+          rev.length > 3 ? rev[3] : "");
+      appendRevisionCell(document, label, colChecked, rowBottom, blockRight, rowTop,
+          rev.length > 4 ? rev[4] : "");
+    }
+
+    drawing.appendChild(label);
+  }
+
+  /**
+   * Appends a cell for the revision history table.
+   *
+   * @param document the XML document
+   * @param parent the label element
+   * @param x1 left X
+   * @param y1 bottom Y
+   * @param x2 right X
+   * @param y2 top Y
+   * @param text the cell text
+   */
+  private static void appendRevisionCell(Document document, Element parent, double x1, double y1,
+      double x2, double y2, String text) {
+    appendBorderRect(document, parent, x1, y1, x2, y2, 0.2);
+    Element textElem = document.createElement("Text");
+    textElem.setAttribute("String", text != null ? text : "");
+    textElem.setAttribute("Font", FONT_NAME);
+    textElem.setAttribute("Height", String.valueOf(LEGEND_FONT_HEIGHT));
+    textElem.setAttribute("Width", "0");
+    textElem.setAttribute("Justification", "LeftBottom");
+    Element pres = document.createElement("Presentation");
+    pres.setAttribute("R", "0");
+    pres.setAttribute("G", "0");
+    pres.setAttribute("B", "0");
+    textElem.appendChild(pres);
+    Element position = document.createElement("Position");
+    Element location = document.createElement("Location");
+    location.setAttribute("X", String.valueOf(x1 + 0.8));
+    location.setAttribute("Y", String.valueOf(y1 + 1.0));
+    location.setAttribute("Z", "0");
+    position.appendChild(location);
+    Element axis = document.createElement("Axis");
+    axis.setAttribute("X", "0");
+    axis.setAttribute("Y", "0");
+    axis.setAttribute("Z", "1");
+    position.appendChild(axis);
+    Element ref = document.createElement("Reference");
+    ref.setAttribute("X", "1");
+    ref.setAttribute("Y", "0");
+    ref.setAttribute("Z", "0");
+    position.appendChild(ref);
+    textElem.appendChild(position);
+    parent.appendChild(textElem);
+  }
+
+  // ==== Symbol legend / key box (ISO 10628 / NORSOK Z-003) ====
+
+  /**
+   * Appends a symbol legend box listing line types, valve symbols, and abbreviations.
+   *
+   * <p>
+   * Per ISO 10628, P&amp;IDs include a legend explaining line type conventions and abbreviations.
+   * The legend is placed bottom-left to avoid overlap with the stream table and title block.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the Drawing or PlantModel element
+   * @param entries list of legend entries [lineType, description]
+   */
+  static void appendSymbolLegend(Document document, Element parent, List<String[]> entries) {
+    if (entries == null || entries.isEmpty()) {
+      return;
+    }
+    Element label = document.createElement("Label");
+    label.setAttribute("ID", "SymbolLegend-1");
+    label.setAttribute("ComponentClass", "Label");
+
+    double legendLeft = BORDER_MARGIN + 2.0;
+    double legendBottom = BORDER_MARGIN + 2.0;
+    int rows = entries.size() + 1; // +1 for header
+    double legendTop = legendBottom + rows * LEGEND_ROW_HEIGHT;
+
+    // Outer box
+    appendBorderRect(document, label, legendLeft, legendBottom, legendLeft + LEGEND_WIDTH,
+        legendTop, 0.3);
+
+    // Header
+    double headerBottom = legendTop - LEGEND_ROW_HEIGHT;
+    appendBorderRect(document, label, legendLeft, headerBottom, legendLeft + LEGEND_WIDTH,
+        legendTop, 0.2);
+    appendLegendText(document, label, "SYMBOL LEGEND", legendLeft + LEGEND_WIDTH / 2.0,
+        headerBottom + LEGEND_ROW_HEIGHT / 2.0, "CenterCenter", "2.5");
+
+    // Entry rows
+    double sampleLeft = legendLeft + 2.0;
+    double sampleRight = legendLeft + 18.0;
+    double descLeft = legendLeft + 20.0;
+
+    for (int i = 0; i < entries.size(); i++) {
+      String[] entry = entries.get(i);
+      double rowTop = headerBottom - i * LEGEND_ROW_HEIGHT;
+      double rowBottom = rowTop - LEGEND_ROW_HEIGHT;
+      double rowMidY = (rowTop + rowBottom) / 2.0;
+
+      appendBorderRect(document, label, legendLeft, rowBottom, legendLeft + LEGEND_WIDTH, rowTop,
+          0.15);
+
+      // Sample line
+      int lineType = 0;
+      try {
+        lineType = entry.length > 2 ? Integer.parseInt(entry[2]) : 0;
+      } catch (NumberFormatException ignored) {
+        // Default to solid
+      }
+      Element sampleLine = document.createElement("PolyLine");
+      sampleLine.setAttribute("NumPoints", "2");
+      Element samplePres = document.createElement("Presentation");
+      samplePres.setAttribute("LineType", String.valueOf(lineType));
+      samplePres.setAttribute("LineWeight", String.valueOf(PROCESS_LINE_WEIGHT));
+      samplePres.setAttribute("R", LINE_COLOR_R);
+      samplePres.setAttribute("G", LINE_COLOR_G);
+      samplePres.setAttribute("B", LINE_COLOR_B);
+      sampleLine.appendChild(samplePres);
+      appendCoordinate(document, sampleLine, sampleLeft, rowMidY);
+      appendCoordinate(document, sampleLine, sampleRight, rowMidY);
+      label.appendChild(sampleLine);
+
+      // Description text
+      String desc = entry.length > 1 ? entry[1] : entry[0];
+      appendLegendText(document, label, desc, descLeft, rowMidY - 0.5, "LeftCenter",
+          String.valueOf(LEGEND_FONT_HEIGHT));
+    }
+
+    parent.appendChild(label);
+  }
+
+  /**
+   * Appends text for the symbol legend box.
+   *
+   * @param document the XML document
+   * @param parent the label element
+   * @param text the text string
+   * @param x X position
+   * @param y Y position
+   * @param justification text justification
+   * @param fontSize font height as string
+   */
+  private static void appendLegendText(Document document, Element parent, String text, double x,
+      double y, String justification, String fontSize) {
+    Element textElem = document.createElement("Text");
+    textElem.setAttribute("String", text);
+    textElem.setAttribute("Font", FONT_NAME);
+    textElem.setAttribute("Height", fontSize);
+    textElem.setAttribute("Width", "0");
+    textElem.setAttribute("Justification", justification);
+    Element pres = document.createElement("Presentation");
+    pres.setAttribute("R", "0");
+    pres.setAttribute("G", "0");
+    pres.setAttribute("B", "0");
+    textElem.appendChild(pres);
+    Element position = document.createElement("Position");
+    Element location = document.createElement("Location");
+    location.setAttribute("X", String.valueOf(x));
+    location.setAttribute("Y", String.valueOf(y));
+    location.setAttribute("Z", "0");
+    position.appendChild(location);
+    Element axis = document.createElement("Axis");
+    axis.setAttribute("X", "0");
+    axis.setAttribute("Y", "0");
+    axis.setAttribute("Z", "1");
+    position.appendChild(axis);
+    Element ref = document.createElement("Reference");
+    ref.setAttribute("X", "1");
+    ref.setAttribute("Y", "0");
+    ref.setAttribute("Z", "0");
+    position.appendChild(ref);
+    textElem.appendChild(position);
+    parent.appendChild(textElem);
   }
 }

@@ -35,6 +35,14 @@ final class DexpiShapeCatalog {
   static final String HEAT_EXCHANGER_SHAPE = "SHELL_AND_TUBE_HEAT_EXCHANGER_SHAPE";
   /** Shape name for globe valves. */
   static final String GLOBE_VALVE_SHAPE = "GLOBE_VALVE_SHAPE";
+  /** Shape name for gate valves (ISO 10628:2012-X8062-A). */
+  static final String GATE_VALVE_SHAPE = "GATE_VALVE_SHAPE";
+  /** Shape name for ball valves (ISO 10628:2012-X8038-A). */
+  static final String BALL_VALVE_SHAPE = "BALL_VALVE_SHAPE";
+  /** Shape name for check/non-return valves (ISO 10628:2012-X8072-A). */
+  static final String CHECK_VALVE_SHAPE = "CHECK_VALVE_SHAPE";
+  /** Shape name for butterfly valves (ISO 10628:2012-X8042-A). */
+  static final String BUTTERFLY_VALVE_SHAPE = "BUTTERFLY_VALVE_SHAPE";
   /** Shape name for expanders / turbines. */
   static final String EXPANDER_SHAPE = "EXPANDER_TURBINE_SHAPE";
   /** Shape name for mixers. */
@@ -88,6 +96,10 @@ final class DexpiShapeCatalog {
     appendHeaterShape(document, catalogue);
     appendHeatExchangerShape(document, catalogue);
     appendGlobeValveShape(document, catalogue);
+    appendGateValveShape(document, catalogue);
+    appendBallValveShape(document, catalogue);
+    appendCheckValveShape(document, catalogue);
+    appendButterflyValveShape(document, catalogue);
     appendExpanderShape(document, catalogue);
     appendMixerShape(document, catalogue);
     appendSplitterShape(document, catalogue);
@@ -126,6 +138,14 @@ final class DexpiShapeCatalog {
         return HEAT_EXCHANGER_SHAPE;
       case "GlobeValve":
         return GLOBE_VALVE_SHAPE;
+      case "GateValve":
+        return GATE_VALVE_SHAPE;
+      case "BallValve":
+        return BALL_VALVE_SHAPE;
+      case "CheckValve":
+        return CHECK_VALVE_SHAPE;
+      case "ButterflyValve":
+        return BUTTERFLY_VALVE_SHAPE;
       case "Expander":
         return EXPANDER_SHAPE;
       case "Mixer":
@@ -249,6 +269,55 @@ final class DexpiShapeCatalog {
     appendPolyLine(document, shape,
         new double[][] {{-5, 2.5}, {5, -2.5}, {5, 2.5}, {-5, -2.5}, {-5, 2.5}});
     appendCircle(document, shape, 1.25, 0, 0, true);
+    catalogue.appendChild(shape);
+  }
+
+  // --- Gate valve (ISO 10628:2012-X8062-A: bowtie without center mark) ---
+
+  private static void appendGateValveShape(Document document, Element catalogue) {
+    Element shape = createShapeElement(document, "PipingComponent", "PipingComponentShape-GtV",
+        GATE_VALVE_SHAPE, "ISO10628:2012-X8062-A");
+    // Bowtie only (no center dot distinguishes gate from globe)
+    appendPolyLine(document, shape,
+        new double[][] {{-5, 2.5}, {5, -2.5}, {5, 2.5}, {-5, -2.5}, {-5, 2.5}});
+    catalogue.appendChild(shape);
+  }
+
+  // --- Ball valve (ISO 10628:2012-X8038-A: bowtie with center line) ---
+
+  private static void appendBallValveShape(Document document, Element catalogue) {
+    Element shape = createShapeElement(document, "PipingComponent", "PipingComponentShape-BV",
+        BALL_VALVE_SHAPE, "ISO10628:2012-X8038-A");
+    // Bowtie
+    appendPolyLine(document, shape,
+        new double[][] {{-5, 2.5}, {5, -2.5}, {5, 2.5}, {-5, -2.5}, {-5, 2.5}});
+    // Center stem line (distinguishes ball valve)
+    appendPolyLine(document, shape, new double[][] {{0, -2.5}, {0, 2.5}});
+    catalogue.appendChild(shape);
+  }
+
+  // --- Check / non-return valve (ISO 10628:2012-X8072-A: triangle + bar) ---
+
+  private static void appendCheckValveShape(Document document, Element catalogue) {
+    Element shape = createShapeElement(document, "PipingComponent", "PipingComponentShape-CV",
+        CHECK_VALVE_SHAPE, "ISO10628:2012-X8072-A");
+    // Triangle pointing in flow direction (right)
+    appendPolyLine(document, shape, new double[][] {{-5, 2.5}, {5, 0}, {-5, -2.5}, {-5, 2.5}});
+    // Vertical bar at outlet side (prevents backflow)
+    appendPolyLine(document, shape, new double[][] {{5, 2.5}, {5, -2.5}});
+    catalogue.appendChild(shape);
+  }
+
+  // --- Butterfly valve (ISO 10628:2012-X8042-A: bowtie with open circle) ---
+
+  private static void appendButterflyValveShape(Document document, Element catalogue) {
+    Element shape = createShapeElement(document, "PipingComponent", "PipingComponentShape-BtV",
+        BUTTERFLY_VALVE_SHAPE, "ISO10628:2012-X8042-A");
+    // Bowtie
+    appendPolyLine(document, shape,
+        new double[][] {{-5, 2.5}, {5, -2.5}, {5, 2.5}, {-5, -2.5}, {-5, 2.5}});
+    // Open circle in center (disc indicator)
+    appendCircle(document, shape, 1.25, 0, 0, false);
     catalogue.appendChild(shape);
   }
 
