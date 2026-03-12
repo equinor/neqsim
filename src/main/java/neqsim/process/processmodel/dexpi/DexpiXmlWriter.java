@@ -445,6 +445,9 @@ public final class DexpiXmlWriter {
       element.appendChild(genericAttributes);
     }
 
+    // Export mechanical design attributes
+    appendMechanicalDesignAttributes(document, element, unit);
+
     parent.appendChild(element);
   }
 
@@ -511,6 +514,63 @@ public final class DexpiXmlWriter {
   }
 
   /**
+   * Appends a GenericAttributes set with mechanical design parameters for the equipment. Only
+   * attributes with non-zero/non-default values are exported.
+   *
+   * @param document the XML document
+   * @param parent the equipment element
+   * @param unit the process equipment
+   */
+  private static void appendMechanicalDesignAttributes(Document document, Element parent,
+      ProcessEquipmentInterface unit) {
+    neqsim.process.mechanicaldesign.MechanicalDesign md = unit.getMechanicalDesign();
+    if (md == null) {
+      return;
+    }
+
+    Element attrs = document.createElement("GenericAttributes");
+    attrs.setAttribute("Set", "MechanicalDesign");
+
+    if (md.getInnerDiameter() > 0) {
+      appendNumericAttribute(document, attrs, "InnerDiameter", md.getInnerDiameter(), "mm");
+    }
+    if (md.getOuterDiameter() > 0) {
+      appendNumericAttribute(document, attrs, "OuterDiameter", md.getOuterDiameter(), "mm");
+    }
+    if (md.getWallThickness() > 0) {
+      appendNumericAttribute(document, attrs, "WallThickness", md.getWallThickness(), "mm");
+    }
+    if (md.getTantanLength() > 0) {
+      appendNumericAttribute(document, attrs, "TanTanLength", md.getTantanLength(), "mm");
+    }
+    String material = md.getConstrutionMaterial();
+    if (material != null && !material.trim().isEmpty()) {
+      appendGenericAttribute(document, attrs, "ConstructionMaterial", material);
+    }
+    if (md.getMaxOperationPressure() > 0) {
+      appendNumericAttribute(document, attrs, "MaxOperationPressure", md.getMaxOperationPressure(),
+          "bara");
+    }
+    if (md.getMaxDesignPressure() > 0 && md.getMaxOperationPressure() > 0) {
+      appendNumericAttribute(document, attrs, "MaxDesignPressure", md.getMaxDesignPressure(),
+          "bara");
+    }
+    if (md.getWeightTotal() > 0) {
+      appendNumericAttribute(document, attrs, "WeightTotal", md.getWeightTotal(), "kg");
+    }
+    if (md.getPower() > 0) {
+      appendNumericAttribute(document, attrs, "DesignPower", md.getPower(), "kW");
+    }
+    if (md.getDuty() > 0) {
+      appendNumericAttribute(document, attrs, "DesignDuty", md.getDuty(), "kW");
+    }
+
+    if (attrs.hasChildNodes()) {
+      parent.appendChild(attrs);
+    }
+  }
+
+  /**
    * Appends an EquipmentBarLabel using simulation results from the equipment outlet.
    *
    * @param document the XML document
@@ -524,24 +584,79 @@ public final class DexpiXmlWriter {
       ProcessEquipmentInterface unit, DexpiLayoutEngine.EquipmentPosition position, String labelId,
       String equipmentId) {
     StreamInterface outStream = getEquipmentOutlet(unit);
-    if (outStream == null) {
-      return;
-    }
     double pressure = Double.NaN;
     double temperature = Double.NaN;
     double flowRate = Double.NaN;
-    try {
-      pressure = outStream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT);
-      temperature = outStream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
-      flowRate = outStream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT);
-    } catch (RuntimeException ignored) {
-      // Simulation unavailable
+    if (outStream != null) {
+      try {
+        pressure = outStream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+        temperature = outStream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+        flowRate = outStream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT);
+      } catch (RuntimeException ignored) {
+        // Simulation unavailable
+      }
     }
-    if (Double.isNaN(pressure) && Double.isNaN(temperature) && Double.isNaN(flowRate)) {
+
+    // Collect mechanical design parameters
+    List<String[]> mechRows = collectMechanicalDesignRows(unit);
+
+    boolean hasSimData =
+        !Double.isNaN(pressure) || !Double.isNaN(temperature) || !Double.isNaN(flowRate);
+    if (!hasSimData && mechRows.isEmpty()) {
       return;
     }
+
     DexpiLayoutEngine.appendEquipmentBarLabel(document, element, unit.getName(), position, labelId,
-        equipmentId, pressure, temperature, flowRate);
+        equipmentId, pressure, temperature, flowRate, mechRows.isEmpty() ? null : mechRows);
+  }
+
+  /**
+   * Collects mechanical design parameters from equipment for display in the bar label. Returns rows
+   * only for parameters that have been set (non-zero, non-default).
+   *
+   * @param unit the process equipment
+   * @return list of label-value pairs (may be empty)
+   */
+  private static List<String[]> collectMechanicalDesignRows(ProcessEquipmentInterface unit) {
+    List<String[]> rows = new ArrayList<>();
+    neqsim.process.mechanicaldesign.MechanicalDesign md = unit.getMechanicalDesign();
+    if (md == null) {
+      return rows;
+    }
+
+    if (md.getInnerDiameter() > 0) {
+      rows.add(new String[] {"ID", formatMechValue(md.getInnerDiameter()) + " mm"});
+    }
+    if (md.getWallThickness() > 0) {
+      rows.add(new String[] {"Wall Thk.", formatMechValue(md.getWallThickness()) + " mm"});
+    }
+    if (md.getTantanLength() > 0) {
+      rows.add(new String[] {"Length", formatMechValue(md.getTantanLength()) + " mm"});
+    }
+    String material = md.getConstrutionMaterial();
+    if (material != null && !material.trim().isEmpty() && !"steel".equals(material)) {
+      rows.add(new String[] {"Material", material});
+    }
+    if (md.getMaxDesignPressure() > 0 && md.getMaxOperationPressure() > 0) {
+      rows.add(new String[] {"Design P.", formatMechValue(md.getMaxDesignPressure()) + " bara"});
+    }
+    if (md.getWeightTotal() > 0) {
+      rows.add(new String[] {"Weight", formatMechValue(md.getWeightTotal()) + " kg"});
+    }
+    return rows;
+  }
+
+  /**
+   * Formats a mechanical design value for display.
+   *
+   * @param value the value to format
+   * @return formatted string
+   */
+  private static String formatMechValue(double value) {
+    if (Math.abs(value - Math.round(value)) < 0.01) {
+      return String.valueOf((long) Math.round(value));
+    }
+    return String.format(Locale.ROOT, "%.1f", value);
   }
 
   /**

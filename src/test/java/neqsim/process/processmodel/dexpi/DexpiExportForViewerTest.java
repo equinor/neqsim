@@ -253,6 +253,25 @@ public class DexpiExportForViewerTest extends NeqSimTest {
     process.add(oilHeater);
     process.run();
 
+    // Set mechanical design parameters on key equipment
+    inletSep.initMechanicalDesign();
+    inletSep.getMechanicalDesign().setInnerDiameter(2400);
+    inletSep.getMechanicalDesign().setWallThickness(25.0);
+    inletSep.getMechanicalDesign().setTantanLength(6000);
+    inletSep.getMechanicalDesign().setMaxOperationPressure(65.0);
+    inletSep.getMechanicalDesign().setWeightTotal(18500);
+    inletSep.getMechanicalDesign().setConstrutionMaterial("SA-516-70");
+
+    gasComp.initMechanicalDesign();
+    gasComp.getMechanicalDesign().setMaxOperationPressure(130.0);
+    gasComp.getMechanicalDesign().setWeightTotal(8200);
+
+    scrubber.initMechanicalDesign();
+    scrubber.getMechanicalDesign().setInnerDiameter(1200);
+    scrubber.getMechanicalDesign().setWallThickness(18.0);
+    scrubber.getMechanicalDesign().setTantanLength(3500);
+    scrubber.getMechanicalDesign().setMaxOperationPressure(130.0);
+
     // Add instruments via ProcessSystem (auto-collected by DEXPI writer)
     PressureTransmitter ptSep = new PressureTransmitter("PT-1001", inletSep.getGasOutStream());
     process.add(ptSep);

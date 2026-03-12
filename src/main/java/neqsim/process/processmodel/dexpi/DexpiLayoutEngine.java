@@ -529,6 +529,27 @@ final class DexpiLayoutEngine {
   static void appendEquipmentBarLabel(Document document, Element element, String tagName,
       EquipmentPosition pos, String labelId, String equipmentId, double pressure,
       double temperature, double flowRate) {
+    appendEquipmentBarLabel(document, element, tagName, pos, labelId, equipmentId, pressure,
+        temperature, flowRate, null);
+  }
+
+  /**
+   * Appends an equipment bar label with operating data and optional extra rows.
+   *
+   * @param document the XML document
+   * @param element the equipment element
+   * @param tagName the equipment tag name
+   * @param pos the equipment position
+   * @param labelId the unique label ID
+   * @param equipmentId the equipment element ID
+   * @param pressure operating pressure in bara (NaN to omit)
+   * @param temperature operating temperature in C (NaN to omit)
+   * @param flowRate operating flow rate in MSm3/day (NaN to omit)
+   * @param extraRows additional label-value pairs to display (may be null)
+   */
+  static void appendEquipmentBarLabel(Document document, Element element, String tagName,
+      EquipmentPosition pos, String labelId, String equipmentId, double pressure,
+      double temperature, double flowRate, List<String[]> extraRows) {
     Element label = document.createElement("Label");
     label.setAttribute("ID", labelId);
     label.setAttribute("ComponentClass", "EquipmentBarLabel");
@@ -551,6 +572,9 @@ final class DexpiLayoutEngine {
     }
     if (!Double.isNaN(flowRate)) {
       rows.add(new String[] {"Flow Rate", formatValue(flowRate) + " MSm3/d"});
+    }
+    if (extraRows != null) {
+      rows.addAll(extraRows);
     }
 
     // Top border
