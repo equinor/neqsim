@@ -290,6 +290,24 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Returns the list of measurement devices registered in this process system.
+   *
+   * @return list of {@link MeasurementDeviceInterface} objects
+   */
+  public List<MeasurementDeviceInterface> getMeasurementDevices() {
+    return Collections.unmodifiableList(measurementDevices);
+  }
+
+  /**
+   * Returns the list of controller devices registered in this process system.
+   *
+   * @return list of {@link ControllerDeviceInterface} objects
+   */
+  public List<ControllerDeviceInterface> getControllerDevices() {
+    return Collections.unmodifiableList(controllerDevices);
+  }
+
+  /**
    * Declares an explicit connection between two equipment ports. This is a metadata record; it does
    * not create or wire stream objects. Interchange formats like DEXPI and topology analyses can
    * query the connection list via {@link #getConnections()}.

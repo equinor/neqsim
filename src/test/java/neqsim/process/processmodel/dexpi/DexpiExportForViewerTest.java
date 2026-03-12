@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import neqsim.NeqSimTest;
+import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
+import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -200,5 +202,89 @@ public class DexpiExportForViewerTest extends NeqSimTest {
     File outFile = new File("target/dexpi-viewer/instruments_test.xml");
     DexpiXmlWriter.write(process, outFile, transmitters, null);
     System.out.println("DEXPI XML with instruments written to: " + outFile.getAbsolutePath());
+  }
+
+  /**
+   * Generates a professional P&ID demonstrating all features: drawing border with title block, flow
+   * arrows, stream labels, stream table, valve layout with shape, and auto-collected instruments
+   * from ProcessSystem. Writes to target/dexpi-viewer/professional_pid.xml.
+   *
+   * @throws Exception if export fails
+   */
+  @Test
+  public void generateProfessionalPID() throws Exception {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 30.0, 65.0);
+    fluid.addComponent("methane", 0.82);
+    fluid.addComponent("ethane", 0.07);
+    fluid.addComponent("propane", 0.04);
+    fluid.addComponent("nC5", 0.04);
+    fluid.addComponent("nC10", 0.03);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("Feed-001", fluid);
+    feed.setFlowRate(60000.0, "kg/hr");
+    feed.setPressure(65.0, "bara");
+    feed.setTemperature(35.0, "C");
+
+    ThreePhaseSeparator inletSep = new ThreePhaseSeparator("V-100 Inlet Sep", feed);
+
+    Compressor gasComp = new Compressor("K-101 Gas Comp", inletSep.getGasOutStream());
+    gasComp.setOutletPressure(130.0);
+
+    Cooler aftercooler = new Cooler("E-101 Aftercooler", gasComp.getOutletStream());
+    aftercooler.setOutTemperature(273.15 + 40.0);
+
+    Separator scrubber = new Separator("V-102 Scrubber", aftercooler.getOutletStream());
+
+    ThrottlingValve liqValve =
+        new ThrottlingValve("XV-103 Liq Valve", inletSep.getLiquidOutStream());
+    liqValve.setOutletPressure(10.0);
+
+    Heater oilHeater = new Heater("E-102 Oil Heater", liqValve.getOutletStream());
+    oilHeater.setOutTemperature(273.15 + 65.0);
+
+    ProcessSystem process = new ProcessSystem("Gas Processing Plant - PID-001");
+    process.add(feed);
+    process.add(inletSep);
+    process.add(gasComp);
+    process.add(aftercooler);
+    process.add(scrubber);
+    process.add(liqValve);
+    process.add(oilHeater);
+    process.run();
+
+    // Add instruments via ProcessSystem (auto-collected by DEXPI writer)
+    PressureTransmitter ptSep = new PressureTransmitter("PT-1001", inletSep.getGasOutStream());
+    process.add(ptSep);
+
+    TemperatureTransmitter ttSep =
+        new TemperatureTransmitter("TT-1002", inletSep.getGasOutStream());
+    process.add(ttSep);
+
+    PressureTransmitter ptComp = new PressureTransmitter("PT-1003", gasComp.getOutletStream());
+    process.add(ptComp);
+
+    TemperatureTransmitter ttCooler =
+        new TemperatureTransmitter("TT-1004", aftercooler.getOutletStream());
+    process.add(ttCooler);
+
+    // Add controllers (auto-collected by DEXPI writer, matched to transmitters via tag)
+    ControllerDeviceBaseClass pcSep = new ControllerDeviceBaseClass("PC-1001");
+    pcSep.setControllerSetPoint(65.0);
+    pcSep.setControllerParameters(1.2, 120.0, 5.0);
+    pcSep.setTransmitter(ptSep);
+    process.add(pcSep);
+
+    ControllerDeviceBaseClass tcCooler = new ControllerDeviceBaseClass("TC-1004");
+    tcCooler.setControllerSetPoint(40.0);
+    tcCooler.setControllerParameters(0.8, 60.0, 0.0);
+    tcCooler.setReverseActing(true);
+    tcCooler.setTransmitter(ttCooler);
+    process.add(tcCooler);
+
+    // Write with auto-instrument collection (no explicit transmitter map needed)
+    File outFile = new File("target/dexpi-viewer/professional_pid.xml");
+    DexpiXmlWriter.write(process, outFile);
+    System.out.println("Professional P&ID written to: " + outFile.getAbsolutePath());
   }
 }
