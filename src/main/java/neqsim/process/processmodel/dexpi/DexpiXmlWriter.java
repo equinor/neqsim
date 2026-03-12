@@ -1236,8 +1236,8 @@ public final class DexpiXmlWriter {
         String ctrlCategory = ctrlParsed[0];
         String ctrlFunctions = ctrlParsed[1];
 
-        controllerPifId = uniqueIdentifier("ProcessInstrumentationFunction", controllerTag,
-            usedIds);
+        controllerPifId =
+            uniqueIdentifier("ProcessInstrumentationFunction", controllerTag, usedIds);
         Element ctrlPif = document.createElement("ProcessInstrumentationFunction");
         ctrlPif.setAttribute("ID", controllerPifId);
         ctrlPif.setAttribute("ComponentClass", "ProcessInstrumentationFunction");
@@ -1252,8 +1252,8 @@ public final class DexpiXmlWriter {
           appendInstrumentPosition(document, ctrlPif, ctrlCx, ctrlCy);
 
           // Controller label
-          String ctrlLabelId = uniqueIdentifier("ProcessInstrumentationFunctionLabel",
-              controllerTag, usedIds);
+          String ctrlLabelId =
+              uniqueIdentifier("ProcessInstrumentationFunctionLabel", controllerTag, usedIds);
           Element ctrlLabel = document.createElement("Label");
           ctrlLabel.setAttribute("ID", ctrlLabelId);
           ctrlLabel.setAttribute("ComponentClass", "ProcessInstrumentationFunctionLabel");
@@ -1265,8 +1265,7 @@ public final class DexpiXmlWriter {
               controllerPifId, new String[] {"ProcessInstrumentationFunctionCategory",
                   "ProcessInstrumentationFunctions"});
           appendInstrumentLabelText(document, ctrlLabel, loopNumber, ctrlCx, ctrlCy - 1.2,
-              controllerPifId,
-              new String[] {"ProcessInstrumentationFunctionNumber"});
+              controllerPifId, new String[] {"ProcessInstrumentationFunctionNumber"});
           ctrlPif.appendChild(ctrlLabel);
         }
 
@@ -1322,8 +1321,8 @@ public final class DexpiXmlWriter {
           ctrlPif.appendChild(sigFlow);
 
           // Signal line from controller bubble down to the process line (to the valve)
-          String actuateFlowId = uniqueIdentifier("ActuatingInformationFlow", controllerTag,
-              usedIds);
+          String actuateFlowId =
+              uniqueIdentifier("ActuatingInformationFlow", controllerTag, usedIds);
           Element actuateFlow = document.createElement("InformationFlow");
           actuateFlow.setAttribute("ID", actuateFlowId);
           actuateFlow.setAttribute("ComponentClass", "ActuatingSystemFunction");
