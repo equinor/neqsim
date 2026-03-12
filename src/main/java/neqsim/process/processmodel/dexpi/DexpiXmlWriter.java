@@ -840,13 +840,30 @@ public final class DexpiXmlWriter {
     if (position == null) {
       return;
     }
-    // Inlet nozzle at left edge of equipment shape
+    // Inlet nozzle at left edge of equipment shape (center height)
     nozzlePositions.put(inNozzle, new double[] {position.x - 18.0, position.y});
-    // Outlet nozzles at right edge; multiple outlets spread vertically
-    for (int i = 0; i < outNozzles.size(); i++) {
-      double yOffset = outNozzles.size() > 1 ? (i - (outNozzles.size() - 1) / 2.0) * 8.0 : 0.0;
-      nozzlePositions.put(outNozzles.get(i),
-          new double[] {position.x + 18.0, position.y + yOffset});
+
+    // Phase-aware nozzle placement per P&ID convention (ISO 10628):
+    // Gas exits TOP of equipment (highest Y in Y-up coords)
+    // Oil/liquid exits BOTTOM of equipment
+    // Water exits below oil (heaviest phase at very bottom)
+    if (outNozzles.size() == 1) {
+      // Single outlet — same height as center (TwoPortEquipment)
+      nozzlePositions.put(outNozzles.get(0), new double[] {position.x + 18.0, position.y});
+    } else if (outNozzles.size() == 2) {
+      // 2-phase separator: gas at top, liquid at bottom
+      nozzlePositions.put(outNozzles.get(0), new double[] {position.x + 18.0, position.y + 8.0}); // gas
+                                                                                                  // (top)
+      nozzlePositions.put(outNozzles.get(1), new double[] {position.x + 18.0, position.y - 8.0}); // liquid
+                                                                                                  // (bottom)
+    } else if (outNozzles.size() >= 3) {
+      // 3-phase separator: gas top, oil middle, water bottom
+      nozzlePositions.put(outNozzles.get(0), new double[] {position.x + 18.0, position.y + 8.0}); // gas
+                                                                                                  // (top)
+      nozzlePositions.put(outNozzles.get(1), new double[] {position.x + 18.0, position.y - 4.0}); // oil
+                                                                                                  // (middle-low)
+      nozzlePositions.put(outNozzles.get(2), new double[] {position.x + 18.0, position.y - 12.0}); // water
+                                                                                                   // (bottom)
     }
   }
 
