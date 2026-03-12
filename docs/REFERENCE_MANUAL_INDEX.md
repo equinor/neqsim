@@ -791,7 +791,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 
 | Document        | Path                                                                           | Description     |
 | --------------- | ------------------------------------------------------------------------------ | --------------- |
-| DEXPI Reader & Simulation Builder | [docs/integration/dexpi-reader.md](integration/dexpi-reader) | DEXPI import/export/round-trip, topology, equipment factory, simulation builder, cycle detection, column support |
+| DEXPI P&ID Import, Export & Visualization | [docs/integration/dexpi-reader.md](integration/dexpi-reader) | DEXPI import/export/round-trip, ISO 10628 shapes, auto-layout, instruments, SIL markers, fail-position, mechanical design, stream table, drawing border, symbol legend, configurable layout, topology, equipment factory, simulation builder |
 | QRA Integration | [docs/integration/QRA_INTEGRATION_GUIDE.md](integration/QRA_INTEGRATION_GUIDE) | QRA integration |
 
 ### Chapter 47: Process Logic Framework

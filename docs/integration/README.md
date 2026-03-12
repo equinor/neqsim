@@ -49,7 +49,7 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 
 | Document | Description |
 |----------|-------------|
-| [dexpi-reader.md](dexpi-reader) | DEXPI P&ID import/export and diagram generation |
+| [dexpi-reader.md](dexpi-reader) | **DEXPI P&ID import/export with ISO 10628 shapes, auto-layout, instruments, mechanical design data, configurable visualization, and round-trip support** |
 
 ---
 
