@@ -41,6 +41,7 @@ import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
@@ -84,6 +85,34 @@ public final class DexpiXmlWriter {
       });
 
   private DexpiXmlWriter() {}
+
+  /**
+   * Performs a bi-directional DEXPI round-trip: reads an existing DEXPI XML P&amp;ID, creates a
+   * NeqSim process model from it using the provided fluid template, runs the simulation, and writes
+   * the enriched results back to DEXPI XML.
+   *
+   * <p>
+   * This enables a "digital twin" workflow where P&amp;ID designs are imported, simulated with
+   * rigorous thermodynamics, and exported back with updated process data (temperatures, pressures,
+   * flow rates, compositions).
+   * </p>
+   *
+   * @param inputFile the source DEXPI XML file to read
+   * @param outputFile the destination file for the enriched DEXPI XML
+   * @param templateStream the template stream providing fluid composition for simulation
+   * @throws IOException if reading or writing fails
+   * @throws DexpiXmlReaderException if the DEXPI XML cannot be parsed
+   */
+  public static void roundTrip(File inputFile, File outputFile, Stream templateStream)
+      throws IOException, DexpiXmlReaderException {
+    Objects.requireNonNull(inputFile, "inputFile");
+    Objects.requireNonNull(outputFile, "outputFile");
+    Objects.requireNonNull(templateStream, "templateStream");
+
+    ProcessSystem process = DexpiXmlReader.read(inputFile, templateStream);
+    process.run();
+    write(process, outputFile);
+  }
 
   /**
    * Writes the provided {@link ProcessSystem} to a DEXPI XML file.
@@ -150,6 +179,10 @@ public final class DexpiXmlWriter {
 
     Document document = createDocument();
     Element root = document.createElement("PlantModel");
+    root.setAttribute("xmlns", "http://sandbox.dexpi.org/xml");
+    root.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
+    root.setAttribute("xsi:schemaLocation",
+        "http://sandbox.dexpi.org/xml http://sandbox.dexpi.org/xml/dexpi-4.1.1.xsd");
     document.appendChild(root);
 
     root.appendChild(createPlantInformation(document));
@@ -314,7 +347,7 @@ public final class DexpiXmlWriter {
       factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
       factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
       factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-      factory.setNamespaceAware(false);
+      factory.setNamespaceAware(true);
       factory.setExpandEntityReferences(false);
       factory.setXIncludeAware(false);
       DocumentBuilder builder = factory.newDocumentBuilder();
@@ -357,6 +390,12 @@ public final class DexpiXmlWriter {
     element.setAttribute("ComponentClass", componentClass);
     String equipmentId = uniqueIdentifier(elementName, processUnit.getName(), usedIds);
     element.setAttribute("ID", equipmentId);
+
+    // DEXPI RDL ComponentClassURI
+    String classUri = mapComponentClassUri(componentClass);
+    if (classUri != null) {
+      element.setAttribute("ComponentClassURI", classUri);
+    }
 
     // Add ComponentName referencing shape in ShapeCatalogue
     String shapeName = DexpiShapeCatalog.getShapeName(componentClass);
@@ -424,6 +463,12 @@ public final class DexpiXmlWriter {
     element.setAttribute("ComponentClass", componentClass);
     String equipmentId = uniqueIdentifier(elementName, unit.getName(), usedIds);
     element.setAttribute("ID", equipmentId);
+
+    // DEXPI RDL ComponentClassURI
+    String classUri = mapComponentClassUri(componentClass);
+    if (classUri != null) {
+      element.setAttribute("ComponentClassURI", classUri);
+    }
 
     // Add ComponentName referencing shape in ShapeCatalogue
     String shapeName = DexpiShapeCatalog.getShapeName(componentClass);
@@ -576,6 +621,11 @@ public final class DexpiXmlWriter {
       appendNumericAttribute(document, attrs, "MaxDesignPressure", md.getMaxDesignPressure(),
           "bara");
     }
+    if (md.getMaxOperationTemperature() > 0) {
+      // Design temperature is typically 1.1x max operating temperature
+      double designTemp = md.getMaxOperationTemperature();
+      appendNumericAttribute(document, attrs, "DesignTemperature", designTemp, "K");
+    }
     if (md.getWeightTotal() > 0) {
       appendNumericAttribute(document, attrs, "WeightTotal", md.getWeightTotal(), "kg");
     }
@@ -661,6 +711,10 @@ public final class DexpiXmlWriter {
     if (md.getMaxDesignPressure() > 0 && md.getMaxOperationPressure() > 0) {
       rows.add(new String[] {"Design P.", formatMechValue(md.getMaxDesignPressure()) + " bara"});
     }
+    if (md.getMaxOperationTemperature() > 0) {
+      double designTempC = md.getMaxOperationTemperature() - 273.15;
+      rows.add(new String[] {"Design T.", formatMechValue(designTempC) + " \u00B0C"});
+    }
     if (md.getWeightTotal() > 0) {
       rows.add(new String[] {"Weight", formatMechValue(md.getWeightTotal()) + " kg"});
     }
@@ -723,6 +777,9 @@ public final class DexpiXmlWriter {
     }
     if (unit instanceof Expander) {
       return "Expander";
+    }
+    if (unit instanceof DistillationColumn) {
+      return "DistillationColumn";
     }
     if (unit instanceof Mixer) {
       return "Mixer";
@@ -798,6 +855,14 @@ public final class DexpiXmlWriter {
       if (position != null) {
         DexpiLayoutEngine.appendFailPositionMarker(document, element, failPos, position.x,
             position.y);
+      }
+    }
+
+    // Export valve Cv (flow coefficient)
+    if (unit instanceof ThrottlingValve) {
+      double cv = ((ThrottlingValve) unit).getCv();
+      if (cv > 0 && !Double.isNaN(cv) && !Double.isInfinite(cv)) {
+        appendNumericAttribute(document, genericAttributes, DexpiMetadata.VALVE_CV, cv, "");
       }
     }
 
@@ -1129,6 +1194,13 @@ public final class DexpiXmlWriter {
         stream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT), DexpiMetadata.DEFAULT_FLOW_UNIT);
     appendGenericAttribute(document, genericAttributes, DexpiMetadata.OPERATING_FLOW_UNIT,
         DexpiMetadata.DEFAULT_FLOW_UNIT);
+
+    // Piping class and line size (exported when DexpiStream carries metadata)
+    // These are currently placeholder attributes — populated when the stream source provides
+    // piping class or line size data via generic attributes on the imported segment.
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.PIPING_CLASS_CODE, null);
+    appendGenericAttribute(document, genericAttributes, DexpiMetadata.LINE_SIZE, null);
+
     if (genericAttributes.hasChildNodes()) {
       segmentElement.appendChild(genericAttributes);
     }
@@ -1976,6 +2048,54 @@ public final class DexpiXmlWriter {
     String upper = prefix.toUpperCase(Locale.ROOT);
     return upper.startsWith("XV") || upper.startsWith("SD") || upper.startsWith("ZS")
         || upper.startsWith("SV") || upper.contains("ESD") || upper.contains("HIPPS");
+  }
+
+  /**
+   * Maps a DEXPI ComponentClass name to its RDL URI.
+   *
+   * @param componentClass the DEXPI ComponentClass
+   * @return the RDL URI, or null if no mapping exists
+   */
+  private static String mapComponentClassUri(String componentClass) {
+    if (componentClass == null) {
+      return null;
+    }
+    switch (componentClass) {
+      case "Separator":
+        return "http://data.posccaesar.org/rdl/RDS327962";
+      case "ThreePhaseSeparator":
+        return "http://data.posccaesar.org/rdl/RDS327962";
+      case "CentrifugalCompressor":
+        return "http://data.posccaesar.org/rdl/RDS414622";
+      case "CentrifugalPump":
+        return "http://data.posccaesar.org/rdl/RDS415550";
+      case "AirCoolingSystem":
+        return "http://data.posccaesar.org/rdl/RDS327938";
+      case "ShellAndTubeHeatExchanger":
+        return "http://data.posccaesar.org/rdl/RDS327918";
+      case "FiredHeater":
+        return "http://data.posccaesar.org/rdl/RDS327914";
+      case "GlobeValve":
+        return "http://data.posccaesar.org/rdl/RDS415212";
+      case "GateValve":
+        return "http://data.posccaesar.org/rdl/RDS415208";
+      case "BallValve":
+        return "http://data.posccaesar.org/rdl/RDS415196";
+      case "CheckValve":
+        return "http://data.posccaesar.org/rdl/RDS415204";
+      case "ButterflyValve":
+        return "http://data.posccaesar.org/rdl/RDS415200";
+      case "Expander":
+        return "http://data.posccaesar.org/rdl/RDS414776";
+      case "Mixer":
+        return "http://data.posccaesar.org/rdl/RDS4149564";
+      case "Splitter":
+        return "http://data.posccaesar.org/rdl/RDS4112354";
+      case "DistillationColumn":
+        return "http://data.posccaesar.org/rdl/RDS327902";
+      default:
+        return null;
+    }
   }
 
   private static void writeDocument(Document document, OutputStream outputStream)

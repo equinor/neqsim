@@ -346,10 +346,18 @@ final class DexpiLayoutEngine {
     axis.setAttribute("Z", "1");
     position.appendChild(axis);
 
+    // Apply rotation via Reference vector
     Element reference = document.createElement("Reference");
-    reference.setAttribute("X", "1");
-    reference.setAttribute("Y", "0");
-    reference.setAttribute("Z", "0");
+    if (Math.abs(pos.rotation) > 0.01) {
+      double rad = Math.toRadians(pos.rotation);
+      reference.setAttribute("X", String.valueOf(Math.cos(rad)));
+      reference.setAttribute("Y", String.valueOf(Math.sin(rad)));
+      reference.setAttribute("Z", "0");
+    } else {
+      reference.setAttribute("X", "1");
+      reference.setAttribute("Y", "0");
+      reference.setAttribute("Z", "0");
+    }
     position.appendChild(reference);
 
     element.appendChild(position);
@@ -508,9 +516,11 @@ final class DexpiLayoutEngine {
     final double scaleX;
     /** Scale factor in Y direction. */
     final double scaleY;
+    /** Rotation angle in degrees (0 = no rotation). */
+    final double rotation;
 
     /**
-     * Creates a new equipment position.
+     * Creates a new equipment position with no rotation.
      *
      * @param x x coordinate
      * @param y y coordinate
@@ -518,10 +528,24 @@ final class DexpiLayoutEngine {
      * @param scaleY y scale factor
      */
     EquipmentPosition(double x, double y, double scaleX, double scaleY) {
+      this(x, y, scaleX, scaleY, 0.0);
+    }
+
+    /**
+     * Creates a new equipment position with rotation.
+     *
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param scaleX x scale factor
+     * @param scaleY y scale factor
+     * @param rotation rotation angle in degrees
+     */
+    EquipmentPosition(double x, double y, double scaleX, double scaleY, double rotation) {
       this.x = x;
       this.y = y;
       this.scaleX = scaleX;
       this.scaleY = scaleY;
+      this.rotation = rotation;
     }
   }
 
@@ -910,6 +934,129 @@ final class DexpiLayoutEngine {
     double width = Math.max(MIN_SHEET_WIDTH, maxX + BORDER_MARGIN + 40.0);
     double height = Math.max(MIN_SHEET_HEIGHT, maxY + BORDER_MARGIN + 40.0);
     return new double[] {width, height};
+  }
+
+  /**
+   * Computes the number of drawing pages needed for a large flowsheet.
+   *
+   * <p>
+   * When the total equipment extent exceeds an A1 landscape sheet (841 x 594 mm), the flowsheet is
+   * split into multiple pages. Each page has its own Drawing element with border, title block, and
+   * continuation markings.
+   * </p>
+   *
+   * @param totalWidth the total layout width in mm
+   * @param totalHeight the total layout height in mm
+   * @param maxPageWidth maximum page width (default 841 mm for A1)
+   * @param maxPageHeight maximum page height (default 594 mm for A1)
+   * @return the number of pages as [columns, rows]
+   */
+  static int[] computePageGrid(double totalWidth, double totalHeight, double maxPageWidth,
+      double maxPageHeight) {
+    int cols = Math.max(1, (int) Math.ceil(totalWidth / maxPageWidth));
+    int rows = Math.max(1, (int) Math.ceil(totalHeight / maxPageHeight));
+    return new int[] {cols, rows};
+  }
+
+  /**
+   * Appends a continuation arrow marking at the edge of a drawing page.
+   *
+   * <p>
+   * Per ISO 10628 and NORSOK Z-003, when a P&amp;ID spans multiple sheets, continuation arrows
+   * indicate where the process continues on adjacent sheets. The arrow is labeled with the
+   * destination sheet number.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the Drawing element
+   * @param x the arrow X position
+   * @param y the arrow Y position
+   * @param direction "RIGHT", "LEFT", "UP", or "DOWN"
+   * @param targetSheet the destination sheet identifier (e.g. "Sheet 2")
+   */
+  static void appendContinuationArrow(Document document, Element parent, double x, double y,
+      String direction, String targetSheet) {
+    double dx = 0;
+    double dy = 0;
+    double arrowLen = 8.0;
+    if ("RIGHT".equals(direction)) {
+      dx = arrowLen;
+    } else if ("LEFT".equals(direction)) {
+      dx = -arrowLen;
+    } else if ("UP".equals(direction)) {
+      dy = arrowLen;
+    } else if ("DOWN".equals(direction)) {
+      dy = -arrowLen;
+    }
+
+    // Arrow line
+    Element polyLine = document.createElement("PolyLine");
+    polyLine.setAttribute("NumPoints", "2");
+    Element pres = document.createElement("Presentation");
+    pres.setAttribute("LineType", "0");
+    pres.setAttribute("LineWeight", "0.35");
+    pres.setAttribute("R", "0");
+    pres.setAttribute("G", "0");
+    pres.setAttribute("B", "0");
+    polyLine.appendChild(pres);
+    appendCoordinate(document, polyLine, x, y);
+    appendCoordinate(document, polyLine, x + dx, y + dy);
+    parent.appendChild(polyLine);
+
+    // Arrowhead
+    double headSize = 2.0;
+    Element head = document.createElement("PolyLine");
+    head.setAttribute("NumPoints", "3");
+    Element headPres = document.createElement("Presentation");
+    headPres.setAttribute("LineType", "0");
+    headPres.setAttribute("LineWeight", "0.35");
+    headPres.setAttribute("R", "0");
+    headPres.setAttribute("G", "0");
+    headPres.setAttribute("B", "0");
+    head.appendChild(headPres);
+    if ("RIGHT".equals(direction) || "LEFT".equals(direction)) {
+      appendCoordinate(document, head, x + dx - Math.signum(dx) * headSize, y + headSize);
+      appendCoordinate(document, head, x + dx, y);
+      appendCoordinate(document, head, x + dx - Math.signum(dx) * headSize, y - headSize);
+    } else {
+      appendCoordinate(document, head, x + headSize, y + dy - Math.signum(dy) * headSize);
+      appendCoordinate(document, head, x, y + dy);
+      appendCoordinate(document, head, x - headSize, y + dy - Math.signum(dy) * headSize);
+    }
+    parent.appendChild(head);
+
+    // Sheet reference label
+    Element text = document.createElement("Text");
+    text.setAttribute("String", targetSheet);
+    text.setAttribute("Font", FONT_NAME);
+    text.setAttribute("Height", "2.5");
+    text.setAttribute("Width", "0");
+    text.setAttribute("Justification", "CenterCenter");
+    Element textPres = document.createElement("Presentation");
+    textPres.setAttribute("R", "0");
+    textPres.setAttribute("G", "0");
+    textPres.setAttribute("B", "0");
+    text.appendChild(textPres);
+    Element textPos = document.createElement("Position");
+    Element textLoc = document.createElement("Location");
+    double labelOffsetX = "RIGHT".equals(direction) ? 4.0 : ("LEFT".equals(direction) ? -4.0 : 0);
+    double labelOffsetY = "UP".equals(direction) ? 4.0 : ("DOWN".equals(direction) ? -4.0 : 0);
+    textLoc.setAttribute("X", String.valueOf(x + dx + labelOffsetX));
+    textLoc.setAttribute("Y", String.valueOf(y + dy + labelOffsetY));
+    textLoc.setAttribute("Z", "0");
+    textPos.appendChild(textLoc);
+    Element textAxis = document.createElement("Axis");
+    textAxis.setAttribute("X", "0");
+    textAxis.setAttribute("Y", "0");
+    textAxis.setAttribute("Z", "1");
+    textPos.appendChild(textAxis);
+    Element textRefEl = document.createElement("Reference");
+    textRefEl.setAttribute("X", "1");
+    textRefEl.setAttribute("Y", "0");
+    textRefEl.setAttribute("Z", "0");
+    textPos.appendChild(textRefEl);
+    text.appendChild(textPos);
+    parent.appendChild(text);
   }
 
   /**
@@ -1636,16 +1783,34 @@ final class DexpiLayoutEngine {
     if (failPosition == null || failPosition.trim().isEmpty()) {
       return;
     }
+    String fp = failPosition.trim().toUpperCase(Locale.ROOT);
+    // Color coding per NORSOK Z-003: FC=red, FO=green, FL=amber/orange
+    String colorR = "0.501960784";
+    String colorG = "0";
+    String colorB = "0";
+    if ("FC".equals(fp)) {
+      colorR = "0.8";
+      colorG = "0";
+      colorB = "0";
+    } else if ("FO".equals(fp)) {
+      colorR = "0";
+      colorG = "0.6";
+      colorB = "0";
+    } else if ("FL".equals(fp)) {
+      colorR = "0.8";
+      colorG = "0.5";
+      colorB = "0";
+    }
     Element text = document.createElement("Text");
-    text.setAttribute("String", failPosition.trim().toUpperCase(Locale.ROOT));
+    text.setAttribute("String", fp);
     text.setAttribute("Font", FONT_NAME);
     text.setAttribute("Height", "2.5");
     text.setAttribute("Width", "0");
     text.setAttribute("Justification", "CenterTop");
     Element pres = document.createElement("Presentation");
-    pres.setAttribute("R", "0.501960784");
-    pres.setAttribute("G", "0");
-    pres.setAttribute("B", "0");
+    pres.setAttribute("R", colorR);
+    pres.setAttribute("G", colorG);
+    pres.setAttribute("B", colorB);
     text.appendChild(pres);
     Element position = document.createElement("Position");
     Element location = document.createElement("Location");
@@ -1664,6 +1829,405 @@ final class DexpiLayoutEngine {
     ref.setAttribute("Z", "0");
     position.appendChild(ref);
     text.appendChild(position);
+    parent.appendChild(text);
+  }
+
+  // ==== PST (Partial Stroke Test) marker (IEC 61508 / IEC 61511) ====
+
+  /**
+   * Appends a PST (Partial Stroke Test) annotation marker near a safety valve.
+   *
+   * <p>
+   * Per IEC 61508 and IEC 61511, valves with partial stroke test capability are annotated with a
+   * "PST" label and a distinctive marker to indicate online diagnostic capability.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the parent element
+   * @param x the valve center X
+   * @param y the valve center Y
+   */
+  static void appendPstMarker(Document document, Element parent, double x, double y) {
+    // Small rectangle outline for PST annotation box
+    Element polyLine = document.createElement("PolyLine");
+    polyLine.setAttribute("NumPoints", "5");
+    Element pres = document.createElement("Presentation");
+    pres.setAttribute("LineType", "0");
+    pres.setAttribute("LineWeight", "0.2");
+    pres.setAttribute("R", "0.6");
+    pres.setAttribute("G", "0");
+    pres.setAttribute("B", "0.6");
+    polyLine.appendChild(pres);
+    double bx = x + 7.0;
+    double by = y + 3.0;
+    appendCoordinate(document, polyLine, bx - 5, by - 2);
+    appendCoordinate(document, polyLine, bx + 5, by - 2);
+    appendCoordinate(document, polyLine, bx + 5, by + 2);
+    appendCoordinate(document, polyLine, bx - 5, by + 2);
+    appendCoordinate(document, polyLine, bx - 5, by - 2);
+    parent.appendChild(polyLine);
+
+    // PST label text
+    Element text = document.createElement("Text");
+    text.setAttribute("String", "PST");
+    text.setAttribute("Font", FONT_NAME);
+    text.setAttribute("Height", "2.0");
+    text.setAttribute("Width", "0");
+    text.setAttribute("Justification", "CenterCenter");
+    Element textPres = document.createElement("Presentation");
+    textPres.setAttribute("R", "0.6");
+    textPres.setAttribute("G", "0");
+    textPres.setAttribute("B", "0.6");
+    text.appendChild(textPres);
+    Element textPos = document.createElement("Position");
+    Element textLoc = document.createElement("Location");
+    textLoc.setAttribute("X", String.valueOf(bx));
+    textLoc.setAttribute("Y", String.valueOf(by));
+    textLoc.setAttribute("Z", "0");
+    textPos.appendChild(textLoc);
+    Element textAxis = document.createElement("Axis");
+    textAxis.setAttribute("X", "0");
+    textAxis.setAttribute("Y", "0");
+    textAxis.setAttribute("Z", "1");
+    textPos.appendChild(textAxis);
+    Element textRef = document.createElement("Reference");
+    textRef.setAttribute("X", "1");
+    textRef.setAttribute("Y", "0");
+    textRef.setAttribute("Z", "0");
+    textPos.appendChild(textRef);
+    text.appendChild(textPos);
+    parent.appendChild(text);
+  }
+
+  // ==== Heat trace indication (ISO 10628 / NORSOK Z-003) ====
+
+  /**
+   * Appends a heat trace indication on a pipe segment.
+   *
+   * <p>
+   * Per ISO 10628 and NORSOK Z-003, heat traced lines are indicated with a zigzag marking along the
+   * pipe and an "HT" or specific heat trace type code.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the parent element
+   * @param traceType the heat trace type code (e.g. "ET" for electric, "ST" for steam)
+   * @param fromX source X
+   * @param fromY source Y
+   * @param toX destination X
+   * @param toY destination Y
+   */
+  static void appendHeatTraceMark(Document document, Element parent, String traceType, double fromX,
+      double fromY, double toX, double toY) {
+    if (traceType == null || traceType.trim().isEmpty()) {
+      return;
+    }
+    // Place zigzag marks at 33% and 66% along the line
+    for (double frac : new double[] {0.33, 0.66}) {
+      double mx = fromX + (toX - fromX) * frac;
+      double my = fromY + (toY - fromY) * frac;
+      // Zigzag (3 small chevrons)
+      Element zigzag = document.createElement("PolyLine");
+      zigzag.setAttribute("NumPoints", "4");
+      Element zPres = document.createElement("Presentation");
+      zPres.setAttribute("LineType", "0");
+      zPres.setAttribute("LineWeight", "0.2");
+      zPres.setAttribute("R", "0.8");
+      zPres.setAttribute("G", "0.4");
+      zPres.setAttribute("B", "0");
+      zigzag.appendChild(zPres);
+      appendCoordinate(document, zigzag, mx - 2, my + 1);
+      appendCoordinate(document, zigzag, mx - 1, my - 1);
+      appendCoordinate(document, zigzag, mx + 1, my + 1);
+      appendCoordinate(document, zigzag, mx + 2, my - 1);
+      parent.appendChild(zigzag);
+    }
+
+    // Heat trace type label at midpoint
+    double midX = (fromX + toX) / 2.0;
+    double midY = (fromY + toY) / 2.0;
+    Element text = document.createElement("Text");
+    text.setAttribute("String", traceType.trim().toUpperCase(Locale.ROOT));
+    text.setAttribute("Font", FONT_NAME);
+    text.setAttribute("Height", "2.0");
+    text.setAttribute("Width", "0");
+    text.setAttribute("Justification", "CenterBottom");
+    Element textPres = document.createElement("Presentation");
+    textPres.setAttribute("R", "0.8");
+    textPres.setAttribute("G", "0.4");
+    textPres.setAttribute("B", "0");
+    text.appendChild(textPres);
+    Element textPos = document.createElement("Position");
+    Element textLoc = document.createElement("Location");
+    textLoc.setAttribute("X", String.valueOf(midX));
+    textLoc.setAttribute("Y", String.valueOf(midY + 3.0));
+    textLoc.setAttribute("Z", "0");
+    textPos.appendChild(textLoc);
+    Element textAxis = document.createElement("Axis");
+    textAxis.setAttribute("X", "0");
+    textAxis.setAttribute("Y", "0");
+    textAxis.setAttribute("Z", "1");
+    textPos.appendChild(textAxis);
+    Element textRef = document.createElement("Reference");
+    textRef.setAttribute("X", "1");
+    textRef.setAttribute("Y", "0");
+    textRef.setAttribute("Z", "0");
+    textPos.appendChild(textRef);
+    text.appendChild(textPos);
+    parent.appendChild(text);
+  }
+
+  // ==== Equipment weight & COG annotation ====
+
+  /**
+   * Appends an equipment weight and center-of-gravity annotation marker.
+   *
+   * <p>
+   * Shows the equipment dry weight and operating weight in a small annotation box below the
+   * equipment symbol. Used for mechanical design and layout planning.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the parent element
+   * @param dryWeightKg the equipment dry weight in kg (0 to omit)
+   * @param operatingWeightKg the operating weight in kg (0 to omit)
+   * @param x the equipment center X
+   * @param y the equipment symbol bottom Y
+   */
+  static void appendWeightAnnotation(Document document, Element parent, double dryWeightKg,
+      double operatingWeightKg, double x, double y) {
+    if (dryWeightKg <= 0 && operatingWeightKg <= 0) {
+      return;
+    }
+    StringBuilder sb = new StringBuilder();
+    if (dryWeightKg > 0) {
+      sb.append("Dry: ").append(String.format(Locale.ROOT, "%.0f", dryWeightKg)).append(" kg");
+    }
+    if (operatingWeightKg > 0) {
+      if (sb.length() > 0) {
+        sb.append(" / ");
+      }
+      sb.append("Op: ").append(String.format(Locale.ROOT, "%.0f", operatingWeightKg)).append(" kg");
+    }
+    Element text = document.createElement("Text");
+    text.setAttribute("String", sb.toString());
+    text.setAttribute("Font", FONT_NAME);
+    text.setAttribute("Height", "1.8");
+    text.setAttribute("Width", "0");
+    text.setAttribute("Justification", "CenterTop");
+    Element pres = document.createElement("Presentation");
+    pres.setAttribute("R", "0.35");
+    pres.setAttribute("G", "0.35");
+    pres.setAttribute("B", "0.35");
+    text.appendChild(pres);
+    Element position = document.createElement("Position");
+    Element location = document.createElement("Location");
+    location.setAttribute("X", String.valueOf(x));
+    location.setAttribute("Y", String.valueOf(y - 18.0));
+    location.setAttribute("Z", "0");
+    position.appendChild(location);
+    Element axis = document.createElement("Axis");
+    axis.setAttribute("X", "0");
+    axis.setAttribute("Y", "0");
+    axis.setAttribute("Z", "1");
+    position.appendChild(axis);
+    Element ref = document.createElement("Reference");
+    ref.setAttribute("X", "1");
+    ref.setAttribute("Y", "0");
+    ref.setAttribute("Z", "0");
+    position.appendChild(ref);
+    text.appendChild(position);
+    parent.appendChild(text);
+  }
+
+  // ==== Sample point symbol (ISO 10628) ====
+
+  /**
+   * Appends a sample point symbol on a process line.
+   *
+   * <p>
+   * Per ISO 10628, sample points are indicated with a small circle (or filled dot) with an "SP"
+   * label on the process line where grab or online samples can be taken.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the parent element
+   * @param tag the sample point tag (e.g. "SP-001")
+   * @param x the sample point X
+   * @param y the sample point Y
+   */
+  static void appendSamplePoint(Document document, Element parent, String tag, double x, double y) {
+    // Small filled circle on process line
+    Element circle = document.createElement("Circle");
+    circle.setAttribute("Radius", "1.5");
+    circle.setAttribute("Filled", "Solid");
+    Element circPres = document.createElement("Presentation");
+    circPres.setAttribute("LineType", "0");
+    circPres.setAttribute("LineWeight", "0.2");
+    circPres.setAttribute("R", "0");
+    circPres.setAttribute("G", "0");
+    circPres.setAttribute("B", "0");
+    circle.appendChild(circPres);
+    Element circPos = document.createElement("Position");
+    Element circLoc = document.createElement("Location");
+    circLoc.setAttribute("X", String.valueOf(x));
+    circLoc.setAttribute("Y", String.valueOf(y));
+    circLoc.setAttribute("Z", "0");
+    circPos.appendChild(circLoc);
+    Element circAxis = document.createElement("Axis");
+    circAxis.setAttribute("X", "0");
+    circAxis.setAttribute("Y", "0");
+    circAxis.setAttribute("Z", "1");
+    circPos.appendChild(circAxis);
+    Element circRef = document.createElement("Reference");
+    circRef.setAttribute("X", "1");
+    circRef.setAttribute("Y", "0");
+    circRef.setAttribute("Z", "0");
+    circPos.appendChild(circRef);
+    circle.appendChild(circPos);
+    parent.appendChild(circle);
+
+    // Sample stem line going down
+    Element stem = document.createElement("PolyLine");
+    stem.setAttribute("NumPoints", "2");
+    Element stemPres = document.createElement("Presentation");
+    stemPres.setAttribute("LineType", "0");
+    stemPres.setAttribute("LineWeight", "0.25");
+    stemPres.setAttribute("R", "0");
+    stemPres.setAttribute("G", "0");
+    stemPres.setAttribute("B", "0");
+    stem.appendChild(stemPres);
+    appendCoordinate(document, stem, x, y);
+    appendCoordinate(document, stem, x, y - 6.0);
+    parent.appendChild(stem);
+
+    // Tag label below
+    if (tag != null && !tag.trim().isEmpty()) {
+      Element text = document.createElement("Text");
+      text.setAttribute("String", tag);
+      text.setAttribute("Font", FONT_NAME);
+      text.setAttribute("Height", "2.0");
+      text.setAttribute("Width", "0");
+      text.setAttribute("Justification", "CenterTop");
+      Element textPres = document.createElement("Presentation");
+      textPres.setAttribute("R", "0");
+      textPres.setAttribute("G", "0");
+      textPres.setAttribute("B", "0");
+      text.appendChild(textPres);
+      Element textPos = document.createElement("Position");
+      Element textLoc = document.createElement("Location");
+      textLoc.setAttribute("X", String.valueOf(x));
+      textLoc.setAttribute("Y", String.valueOf(y - 7.5));
+      textLoc.setAttribute("Z", "0");
+      textPos.appendChild(textLoc);
+      Element textAxis = document.createElement("Axis");
+      textAxis.setAttribute("X", "0");
+      textAxis.setAttribute("Y", "0");
+      textAxis.setAttribute("Z", "1");
+      textPos.appendChild(textAxis);
+      Element textRef = document.createElement("Reference");
+      textRef.setAttribute("X", "1");
+      textRef.setAttribute("Y", "0");
+      textRef.setAttribute("Z", "0");
+      textPos.appendChild(textRef);
+      text.appendChild(textPos);
+      parent.appendChild(text);
+    }
+  }
+
+  // ==== Gauge glass symbol (ISO 10628) ====
+
+  /**
+   * Appends a gauge glass (level gauge) symbol on a vessel.
+   *
+   * <p>
+   * Per ISO 10628, sight/gauge glasses on vessels are represented as a narrow rectangle alongside
+   * the vessel with connection stubs at top and bottom.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the parent element
+   * @param x the gauge glass X position (vessel wall edge)
+   * @param yTop the top connection Y
+   * @param yBottom the bottom connection Y
+   */
+  static void appendGaugeGlass(Document document, Element parent, double x, double yTop,
+      double yBottom) {
+    double gx = x + 5.0;
+    // Narrow rectangle for gauge glass tube
+    Element rect = document.createElement("PolyLine");
+    rect.setAttribute("NumPoints", "5");
+    Element rectPres = document.createElement("Presentation");
+    rectPres.setAttribute("LineType", "0");
+    rectPres.setAttribute("LineWeight", "0.2");
+    rectPres.setAttribute("R", "0");
+    rectPres.setAttribute("G", "0");
+    rectPres.setAttribute("B", "0");
+    rect.appendChild(rectPres);
+    appendCoordinate(document, rect, gx - 1, yBottom);
+    appendCoordinate(document, rect, gx + 1, yBottom);
+    appendCoordinate(document, rect, gx + 1, yTop);
+    appendCoordinate(document, rect, gx - 1, yTop);
+    appendCoordinate(document, rect, gx - 1, yBottom);
+    parent.appendChild(rect);
+
+    // Top connection stub
+    Element topStub = document.createElement("PolyLine");
+    topStub.setAttribute("NumPoints", "2");
+    Element topPres = document.createElement("Presentation");
+    topPres.setAttribute("LineType", "0");
+    topPres.setAttribute("LineWeight", "0.25");
+    topPres.setAttribute("R", "0");
+    topPres.setAttribute("G", "0");
+    topPres.setAttribute("B", "0");
+    topStub.appendChild(topPres);
+    appendCoordinate(document, topStub, x, yTop);
+    appendCoordinate(document, topStub, gx - 1, yTop);
+    parent.appendChild(topStub);
+
+    // Bottom connection stub
+    Element botStub = document.createElement("PolyLine");
+    botStub.setAttribute("NumPoints", "2");
+    Element botPres = document.createElement("Presentation");
+    botPres.setAttribute("LineType", "0");
+    botPres.setAttribute("LineWeight", "0.25");
+    botPres.setAttribute("R", "0");
+    botPres.setAttribute("G", "0");
+    botPres.setAttribute("B", "0");
+    botStub.appendChild(botPres);
+    appendCoordinate(document, botStub, x, yBottom);
+    appendCoordinate(document, botStub, gx - 1, yBottom);
+    parent.appendChild(botStub);
+
+    // LG label
+    Element text = document.createElement("Text");
+    text.setAttribute("String", "LG");
+    text.setAttribute("Font", FONT_NAME);
+    text.setAttribute("Height", "2.0");
+    text.setAttribute("Width", "0");
+    text.setAttribute("Justification", "CenterCenter");
+    Element textPres = document.createElement("Presentation");
+    textPres.setAttribute("R", "0");
+    textPres.setAttribute("G", "0");
+    textPres.setAttribute("B", "0");
+    text.appendChild(textPres);
+    Element textPos = document.createElement("Position");
+    Element textLoc = document.createElement("Location");
+    textLoc.setAttribute("X", String.valueOf(gx + 4));
+    textLoc.setAttribute("Y", String.valueOf((yTop + yBottom) / 2.0));
+    textLoc.setAttribute("Z", "0");
+    textPos.appendChild(textLoc);
+    Element textAxis = document.createElement("Axis");
+    textAxis.setAttribute("X", "0");
+    textAxis.setAttribute("Y", "0");
+    textAxis.setAttribute("Z", "1");
+    textPos.appendChild(textAxis);
+    Element textRef = document.createElement("Reference");
+    textRef.setAttribute("X", "1");
+    textRef.setAttribute("Y", "0");
+    textRef.setAttribute("Z", "0");
+    textPos.appendChild(textRef);
+    text.appendChild(textPos);
     parent.appendChild(text);
   }
 
@@ -1819,6 +2383,37 @@ final class DexpiLayoutEngine {
     if (silLevel < 1 || silLevel > 4) {
       return;
     }
+    // SIL 2+ instruments get a concentric double-border circle (IEC 61511 / NORSOK Z-003)
+    if (silLevel >= 2) {
+      double outerRadius = INSTRUMENT_BUBBLE_RADIUS + 1.5;
+      Element outerCircle = document.createElement("Circle");
+      outerCircle.setAttribute("Radius", String.valueOf(outerRadius));
+      Element outerPres = document.createElement("Presentation");
+      outerPres.setAttribute("LineType", "0");
+      outerPres.setAttribute("LineWeight", "0.25");
+      outerPres.setAttribute("R", "0.8");
+      outerPres.setAttribute("G", "0");
+      outerPres.setAttribute("B", "0");
+      outerCircle.appendChild(outerPres);
+      Element outerPos = document.createElement("Position");
+      Element outerLoc = document.createElement("Location");
+      outerLoc.setAttribute("X", String.valueOf(x));
+      outerLoc.setAttribute("Y", String.valueOf(y));
+      outerLoc.setAttribute("Z", "0");
+      outerPos.appendChild(outerLoc);
+      Element outerAxis = document.createElement("Axis");
+      outerAxis.setAttribute("X", "0");
+      outerAxis.setAttribute("Y", "0");
+      outerAxis.setAttribute("Z", "1");
+      outerPos.appendChild(outerAxis);
+      Element outerRef = document.createElement("Reference");
+      outerRef.setAttribute("X", "1");
+      outerRef.setAttribute("Y", "0");
+      outerRef.setAttribute("Z", "0");
+      outerPos.appendChild(outerRef);
+      outerCircle.appendChild(outerPos);
+      parent.appendChild(outerCircle);
+    }
     Element text = document.createElement("Text");
     text.setAttribute("String", "SIL " + silLevel);
     text.setAttribute("Font", FONT_NAME);
@@ -1851,6 +2446,91 @@ final class DexpiLayoutEngine {
   }
 
   // ==== Utility line type rendering ====
+
+  // ==== Solenoid actuator marker (ISA 5.1) ====
+
+  /**
+   * Appends a solenoid actuator diamond symbol near a valve position.
+   *
+   * <p>
+   * Per ISA 5.1, solenoid-actuated valves (ESD, blowdown, HIPPS) are indicated with a small diamond
+   * symbol on the valve actuator stem, connected to the controller by a signal line.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the parent element to append drawing primitives to
+   * @param valveX the valve center X
+   * @param valveY the valve center Y
+   * @param controllerX the controller bubble center X
+   * @param controllerY the controller bubble center Y
+   */
+  static void appendSolenoidMarker(Document document, Element parent, double valveX, double valveY,
+      double controllerX, double controllerY) {
+    double solY = valveY + 6.0;
+    double solSize = 2.5;
+
+    // Diamond shape for solenoid
+    Element polyLine = document.createElement("PolyLine");
+    polyLine.setAttribute("NumPoints", "5");
+    Element pres = document.createElement("Presentation");
+    pres.setAttribute("LineType", "0");
+    pres.setAttribute("LineWeight", "0.2");
+    pres.setAttribute("R", "0");
+    pres.setAttribute("G", "0");
+    pres.setAttribute("B", "1");
+    polyLine.appendChild(pres);
+    appendCoordinate(document, polyLine, valveX, solY + solSize);
+    appendCoordinate(document, polyLine, valveX + solSize, solY);
+    appendCoordinate(document, polyLine, valveX, solY - solSize);
+    appendCoordinate(document, polyLine, valveX - solSize, solY);
+    appendCoordinate(document, polyLine, valveX, solY + solSize);
+    parent.appendChild(polyLine);
+
+    // "S" label inside the diamond
+    Element text = document.createElement("Text");
+    text.setAttribute("String", "S");
+    text.setAttribute("Font", FONT_NAME);
+    text.setAttribute("Height", "2.0");
+    text.setAttribute("Width", "0");
+    text.setAttribute("Justification", "CenterCenter");
+    Element textPres = document.createElement("Presentation");
+    textPres.setAttribute("R", "0");
+    textPres.setAttribute("G", "0");
+    textPres.setAttribute("B", "1");
+    text.appendChild(textPres);
+    Element textPos = document.createElement("Position");
+    Element textLoc = document.createElement("Location");
+    textLoc.setAttribute("X", String.valueOf(valveX));
+    textLoc.setAttribute("Y", String.valueOf(solY));
+    textLoc.setAttribute("Z", "0");
+    textPos.appendChild(textLoc);
+    Element textAxis = document.createElement("Axis");
+    textAxis.setAttribute("X", "0");
+    textAxis.setAttribute("Y", "0");
+    textAxis.setAttribute("Z", "1");
+    textPos.appendChild(textAxis);
+    Element textRef = document.createElement("Reference");
+    textRef.setAttribute("X", "1");
+    textRef.setAttribute("Y", "0");
+    textRef.setAttribute("Z", "0");
+    textPos.appendChild(textRef);
+    text.appendChild(textPos);
+    parent.appendChild(text);
+
+    // Signal line from controller to solenoid
+    Element sigLine = document.createElement("CenterLine");
+    sigLine.setAttribute("NumPoints", "2");
+    Element sigPres = document.createElement("Presentation");
+    sigPres.setAttribute("LineType", "2");
+    sigPres.setAttribute("LineWeight", String.valueOf(SIGNAL_LINE_WEIGHT));
+    sigPres.setAttribute("R", "0");
+    sigPres.setAttribute("G", "0");
+    sigPres.setAttribute("B", "1");
+    sigLine.appendChild(sigPres);
+    appendCoordinate(document, sigLine, controllerX, controllerY - INSTRUMENT_BUBBLE_RADIUS);
+    appendCoordinate(document, sigLine, valveX, solY + solSize);
+    parent.appendChild(sigLine);
+  }
 
   /**
    * Appends a connection line with a specific line type for utility services.
@@ -1907,6 +2587,61 @@ final class DexpiLayoutEngine {
       appendCoordinate(document, poly, toX, toY);
       parent.appendChild(poly);
     }
+  }
+
+  // ==== Utility supply connection points (ISO 10628) ====
+
+  /**
+   * Appends a utility supply connection point with label and dashed connection line.
+   *
+   * <p>
+   * Per ISO 10628, utility connections (instrument air, steam, cooling water, nitrogen) are shown
+   * as labeled connection stubs with dashed lines and a utility code identifier.
+   * </p>
+   *
+   * @param document the XML document
+   * @param parent the parent element
+   * @param utilityCode short code for the utility (e.g. "IA", "STM", "CW", "N2")
+   * @param x connection X coordinate
+   * @param y connection Y coordinate
+   * @param targetX equipment or valve X coordinate the utility connects to
+   * @param targetY equipment or valve Y coordinate the utility connects to
+   */
+  static void appendUtilityConnectionPoint(Document document, Element parent, String utilityCode,
+      double x, double y, double targetX, double targetY) {
+    // Utility label text
+    Element text = document.createElement("Text");
+    text.setAttribute("String", utilityCode);
+    text.setAttribute("Font", FONT_NAME);
+    text.setAttribute("Height", "2.5");
+    text.setAttribute("Width", "0");
+    text.setAttribute("Justification", "CenterCenter");
+    Element textPres = document.createElement("Presentation");
+    textPres.setAttribute("R", "0.4");
+    textPres.setAttribute("G", "0.4");
+    textPres.setAttribute("B", "0.4");
+    text.appendChild(textPres);
+    Element textPos = document.createElement("Position");
+    Element textLoc = document.createElement("Location");
+    textLoc.setAttribute("X", String.valueOf(x));
+    textLoc.setAttribute("Y", String.valueOf(y + 4.0));
+    textLoc.setAttribute("Z", "0");
+    textPos.appendChild(textLoc);
+    Element textAxis = document.createElement("Axis");
+    textAxis.setAttribute("X", "0");
+    textAxis.setAttribute("Y", "0");
+    textAxis.setAttribute("Z", "1");
+    textPos.appendChild(textAxis);
+    Element textRef = document.createElement("Reference");
+    textRef.setAttribute("X", "1");
+    textRef.setAttribute("Y", "0");
+    textRef.setAttribute("Z", "0");
+    textPos.appendChild(textRef);
+    text.appendChild(textPos);
+    parent.appendChild(text);
+
+    // Dashed utility line (line type 1 = dashed)
+    appendStyledConnectionLine(document, parent, x, y, targetX, targetY, 1, "0.4", "0.4", "0.4");
   }
 
   // ==== Line ID format label (ISO 10628 / NORSOK Z-003) ====

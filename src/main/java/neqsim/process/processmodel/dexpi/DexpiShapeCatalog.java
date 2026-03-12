@@ -53,6 +53,14 @@ final class DexpiShapeCatalog {
   static final String NOZZLE_SHAPE = "NOZZLE_SHAPE";
   /** Shape name for generic equipment. */
   static final String GENERIC_EQUIPMENT_SHAPE = "GENERIC_EQUIPMENT_SHAPE";
+  /** Shape name for distillation/tray columns. */
+  static final String DISTILLATION_COLUMN_SHAPE = "DISTILLATION_COLUMN_SHAPE";
+  /** Shape name for safety/relief valves (ISO 10628:2012-X8088-A). */
+  static final String RELIEF_VALVE_SHAPE = "RELIEF_VALVE_SHAPE";
+  /** Shape name for solenoid valve actuator symbol (ISA 5.1). */
+  static final String SOLENOID_SHAPE = "SOLENOID_VALVE_SHAPE";
+  /** Shape name for utility connection point (instrument air, steam, etc.). */
+  static final String UTILITY_SUPPLY_SHAPE = "UTILITY_SUPPLY_SHAPE";
   /** Shape name for field-mounted instrument bubble (ISA 5.1). */
   static final String INSTRUMENT_BUBBLE_FIELD_SHAPE = "INSTRUMENTATION_BUBBLE_SHAPE_FIELD";
   /** Shape name for central/panel-mounted instrument bubble (ISA 5.1). */
@@ -104,6 +112,10 @@ final class DexpiShapeCatalog {
     appendMixerShape(document, catalogue);
     appendSplitterShape(document, catalogue);
     appendNozzleShape(document, catalogue);
+    appendDistillationColumnShape(document, catalogue);
+    appendReliefValveShape(document, catalogue);
+    appendSolenoidShape(document, catalogue);
+    appendUtilitySupplyShape(document, catalogue);
     appendGenericEquipmentShape(document, catalogue);
     appendInstrumentBubbleFieldShape(document, catalogue);
     appendInstrumentBubbleCentralShape(document, catalogue);
@@ -148,6 +160,8 @@ final class DexpiShapeCatalog {
         return BUTTERFLY_VALVE_SHAPE;
       case "Expander":
         return EXPANDER_SHAPE;
+      case "DistillationColumn":
+        return DISTILLATION_COLUMN_SHAPE;
       case "Mixer":
         return MIXER_SHAPE;
       case "Splitter":
@@ -359,6 +373,64 @@ final class DexpiShapeCatalog {
         "ISO10628:2012-X8160-A");
     appendPolyLine(document, shape, new double[][] {{5, 2.5}, {5, -2.5}});
     appendPolyLine(document, shape, new double[][] {{5, 0}, {0, 0}});
+    catalogue.appendChild(shape);
+  }
+
+  // --- Distillation / tray column (ISO 10628:2012-2092-A: tall vessel with tray lines) ---
+
+  private static void appendDistillationColumnShape(Document document, Element catalogue) {
+    Element shape = createShapeElement(document, "Equipment", "TaggedPlantItemShape-Col",
+        DISTILLATION_COLUMN_SHAPE, "ISO10628:2012-2092-A");
+    // Tall vertical vessel outline (taller than separator, aspect ~3:1)
+    appendPolyLine(document, shape, new double[][] {{10, -20}, {10, 20}});
+    appendTrimmedCurve(document, shape, 61.93, 118.07, 21.25, 0, -13.75);
+    appendPolyLine(document, shape, new double[][] {{-10, 20}, {-10, -20}});
+    appendTrimmedCurve(document, shape, 241.93, 298.07, 21.25, 0, 13.75);
+    // Internal tray lines (horizontal lines representing trays)
+    appendPolyLine(document, shape, new double[][] {{-8, 12}, {8, 12}});
+    appendPolyLine(document, shape, new double[][] {{-8, 6}, {8, 6}});
+    appendPolyLine(document, shape, new double[][] {{-8, 0}, {8, 0}});
+    appendPolyLine(document, shape, new double[][] {{-8, -6}, {8, -6}});
+    appendPolyLine(document, shape, new double[][] {{-8, -12}, {8, -12}});
+    catalogue.appendChild(shape);
+  }
+
+  // --- Safety / relief valve (ISO 10628:2012-X8088-A: angle body with spring) ---
+
+  private static void appendReliefValveShape(Document document, Element catalogue) {
+    Element shape = createShapeElement(document, "PipingComponent", "PipingComponentShape-RV",
+        RELIEF_VALVE_SHAPE, "ISO10628:2012-X8088-A");
+    // Valve body (triangle pointing up = discharge direction)
+    appendPolyLine(document, shape, new double[][] {{-5, -2.5}, {0, 2.5}, {5, -2.5}, {-5, -2.5}});
+    // Spring / bonnet line on top
+    appendPolyLine(document, shape, new double[][] {{0, 2.5}, {0, 5}});
+    // Arrow head (set pressure indicator)
+    appendPolyLine(document, shape, new double[][] {{-1.5, 4}, {0, 5}, {1.5, 4}});
+    catalogue.appendChild(shape);
+  }
+
+  // --- Solenoid valve actuator (ISA 5.1: diamond with 'S') ---
+
+  private static void appendSolenoidShape(Document document, Element catalogue) {
+    Element shape = createShapeElement(document, "PipingComponent", "PipingComponentShape-SOV",
+        SOLENOID_SHAPE, "");
+    // Diamond outline representing solenoid actuator
+    appendPolyLine(document, shape, new double[][] {{0, 3}, {3, 0}, {0, -3}, {-3, 0}, {0, 3}});
+    // Vertical line inside diamond (coil symbol)
+    appendPolyLine(document, shape, new double[][] {{0, -1.5}, {0, 1.5}});
+    catalogue.appendChild(shape);
+  }
+
+  // --- Utility supply connection point (ISO 10628:2012: circle with arrow) ---
+
+  private static void appendUtilitySupplyShape(Document document, Element catalogue) {
+    Element shape = createShapeElement(document, "Equipment", "TaggedPlantItemShape-Util",
+        UTILITY_SUPPLY_SHAPE, "");
+    // Small circle with incoming arrow representing utility connection
+    appendCircle(document, shape, 3.0, 0, 0, false);
+    // Arrow entering from left
+    appendPolyLine(document, shape, new double[][] {{-7, 0}, {-3, 0}});
+    appendPolyLine(document, shape, new double[][] {{-5, 1.5}, {-3, 0}, {-5, -1.5}});
     catalogue.appendChild(shape);
   }
 
