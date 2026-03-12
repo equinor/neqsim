@@ -5,6 +5,7 @@ import java.util.UUID;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.mechanicaldesign.expander.TurboExpanderCompressorMechanicalDesign;
 import neqsim.process.util.monitor.TurboExpanderCompressorResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -26,6 +27,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 public class TurboExpanderCompressor extends Expander {
   private static final long serialVersionUID = 1001;
+
+  /** Coupled mechanical design for the combined expander-compressor unit. */
+  private TurboExpanderCompressorMechanicalDesign tecMechanicalDesign;
 
   // --- Expander/Compressor Configuration ---
   /** Expander outlet pressure [bar abs]. */
@@ -517,8 +521,9 @@ public class TurboExpanderCompressor extends Expander {
     double denom = 0.0;
     for (int i = 0; i < n; i++) {
       double dx = ucValues[i] - h;
-      num += (efficiencyValues[i] - k) * (dx);
-      denom += dx * dx;
+      double dx2 = dx * dx;
+      num += (efficiencyValues[i] - k) * dx2;
+      denom += dx2 * dx2;
     }
     if (denom != 0.0) {
       ucCurveA = num / denom;
@@ -534,7 +539,10 @@ public class TurboExpanderCompressor extends Expander {
    * @return the efficiency
    */
   public double getEfficiencyFromUC(double uc) {
-    // return ucCurveA * (uc - ucCurveH) * (uc - ucCurveH) + ucCurveK;
+    if (ucCurveA != 0.0) {
+      return ucCurveA * (uc - ucCurveH) * (uc - ucCurveH) + ucCurveK;
+    }
+    // Default parabola when no curve has been fitted
     return -3.56 * (uc - 1) * (uc - 1) + 1;
   }
 
@@ -1362,5 +1370,21 @@ public class TurboExpanderCompressor extends Expander {
     }
 
     return expanderBalance + compressorBalance;
+  }
+
+  /**
+   * Get the coupled mechanical design for this turbo-expander-compressor.
+   *
+   * @return the coupled mechanical design
+   */
+  public TurboExpanderCompressorMechanicalDesign getTECMechanicalDesign() {
+    return tecMechanicalDesign;
+  }
+
+  /**
+   * Initialize the coupled mechanical design for this turbo-expander-compressor.
+   */
+  public void initTECMechanicalDesign() {
+    tecMechanicalDesign = new TurboExpanderCompressorMechanicalDesign(this);
   }
 }
