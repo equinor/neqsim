@@ -19,6 +19,13 @@ public class ComponentBWRS extends ComponentSrk {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ComponentBWRS.class);
 
+  /**
+   * Unit conversion factor for MBWR-32 parameters. The database coefficients are calibrated in
+   * MPa-based units (density in mol/L), while the framework uses R_SI = 8.3144621 J/(mol·K). Since
+   * R_SI / R_MPa = 1000, this factor compensates for the unit mismatch in Helmholtz functions.
+   */
+  private static final double MBWR_UNIT_FACTOR = 1e3;
+
   int OP = 9;
   int OE = 6;
   private double[] aBWRS = new double[32];
@@ -182,8 +189,7 @@ public class ComponentBWRS extends ComponentSrk {
   @Override
   public double dFdN(PhaseInterface phase, int numberOfComponentphases, double temperature,
       double pressure) {
-    return 1e3 * (getFpoldn(phase, numberOfComponentphases, temperature, pressure)
-        + getFexpdn(phase, numberOfComponentphases, temperature, pressure));
+    return ((PhaseBWRSEos) phase).getdFdN(componentNumber);
   }
 
   /**
