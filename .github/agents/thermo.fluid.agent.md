@@ -63,8 +63,9 @@ Then read properties:
 - `fluid.getNumberOfPhases()`, `fluid.hasPhaseType("gas")`
 - Phase envelope: `ops.calcPTphaseEnvelope()`
 
-## Java 8 Only
-No `var`, `List.of()`, `String.repeat()`. All types explicitly declared.
+## Shared Skills
+- Java 8 rules: See `neqsim-java8-rules` skill for forbidden features and alternatives
+- API patterns: See `neqsim-api-patterns` skill for EOS selection, fluid creation, flash, and property retrieval
 
 ## API Verification
 ALWAYS read actual class source files to verify method signatures exist before calling them.

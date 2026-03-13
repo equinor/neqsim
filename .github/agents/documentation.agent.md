@@ -57,7 +57,8 @@ description: Concise description with searchable keywords. Include key terms use
 - Always include blank lines before/after tables and lists
 
 ## Code Examples in Docs
-- Python: use `from neqsim import jneqsim` gateway
-- Java: Java 8 compatible, explicit types
+- Python: use `from neqsim import jneqsim` gateway (see `neqsim-notebook-patterns` skill)
+- Java: Java 8 compatible (see `neqsim-java8-rules` skill)
 - Always verify API exists before writing examples — read the actual class source
 - All code examples must be tested to make sure they work in a real example (eg. by running tests)
+- See `neqsim-api-patterns` skill for common code recipes

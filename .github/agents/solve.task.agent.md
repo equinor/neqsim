@@ -1153,27 +1153,8 @@ When a task involves economic evaluation (NPV, IRR, cash flow, breakeven):
 
 ## 4 ── NOTEBOOK SETUP PATTERN
 
-Use this exact dual-boot pattern for Cell 2 of every notebook:
-
-```python
-# ── Environment setup (works locally and in Google Colab) ──
-import importlib, subprocess, sys
-
-try:
-    from neqsim_dev_setup import neqsim_init, neqsim_classes
-    ns = neqsim_init(recompile=False)
-    ns = neqsim_classes(ns)
-    NEQSIM_MODE = "devtools"
-    print("NeqSim loaded via devtools (local dev mode)")
-except ImportError:
-    try:
-        import neqsim
-    except ImportError:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "neqsim"])
-    from neqsim import jneqsim
-    NEQSIM_MODE = "pip"
-    print("NeqSim loaded via pip package")
-```
+See the `neqsim-notebook-patterns` skill for the complete dual-boot setup cell,
+class import patterns, and notebook structure template.
 
 ### Loading Custom Java Classes in Notebooks
 
