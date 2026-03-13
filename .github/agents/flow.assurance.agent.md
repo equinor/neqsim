@@ -78,5 +78,6 @@ For pipelines with heat transfer to surroundings:
 - Calculate arrival temperature
 - Determine insulation requirements
 
-## Java 8 Only
-No `var`, `List.of()`, or any Java 9+ syntax.
+## Shared Skills
+- Java 8 rules: See `neqsim-java8-rules` skill
+- API patterns: See `neqsim-api-patterns` skill for fluid/equipment usage

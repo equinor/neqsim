@@ -87,8 +87,6 @@ public class SeparatorNewFeatureTest extends neqsim.NeqSimTest {
 - Single class: `./mvnw test -Dtest=SeparatorNewFeatureTest`
 - Single method: `./mvnw test -Dtest=SeparatorNewFeatureTest#testTwoPhaseOutput`
 
-## Java 8 MANDATORY
-- NO `var` — always explicit types: `SystemInterface fluid = ...`
-- NO `List.of()`, `Map.of()`, `Set.of()` — use `Arrays.asList()`, `new HashMap<>()`
-- NO `String.repeat()` — use `StringUtils.repeat()`
-- NO text blocks, records, pattern matching instanceof
+## Shared Skills
+- Java 8 rules: See `neqsim-java8-rules` skill for forbidden features and alternatives
+- API patterns: See `neqsim-api-patterns` skill for fluid creation and equipment usage
