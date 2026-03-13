@@ -103,6 +103,187 @@ public abstract class Flash extends BaseOperation {
   }
 
   /**
+   * Retry stability analysis with amplified Wilson K-values using an independent system clone.
+   * Called when the standard stability analysis declares the system stable, to catch near-critical
+   * instability (e.g. near the cricondenbar where Wilson K values approach 1 and standard trials
+   * converge to trivial solutions).
+   *
+   * <p>
+   * Only runs when Wilson K-values indicate near-critical conditions (trial sums close to 1.0),
+   * avoiding false positives in clearly non-critical systems.
+   *
+   * @return true if instability was found (K-values on system are updated)
+   */
+  private boolean amplifiedKStabilityRetry() {
+    int numComp = system.getPhase(0).getNumberOfComponents();
+    double tempK = system.getTemperature();
+    double presBar = system.getPressure();
+
+    // Check if near-critical: compute Wilson K vapor trial sum.
+    // Near the cricondenbar, sumw ≈ 1; far from critical, sumw >> 1 or << 1.
+    double sumwVapor = 0.0;
+    double[] wilsonK = new double[numComp];
+    for (int i = 0; i < numComp; i++) {
+      double zi = system.getPhase(0).getComponent(i).getz();
+      if (zi < 1e-100 || system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+        wilsonK[i] = 1.0;
+        continue;
+      }
+      double tc = system.getPhase(0).getComponent(i).getTC();
+      double pc = system.getPhase(0).getComponent(i).getPC();
+      double omega = system.getPhase(0).getComponent(i).getAcentricFactor();
+      wilsonK[i] = (pc / presBar) * Math.exp(5.373 * (1.0 + omega) * (1.0 - tc / tempK));
+      sumwVapor += zi * wilsonK[i];
+    }
+    // Only retry when near-critical: at least one of the Wilson K sums
+    // should be close to 1.0. Near a bubble point, sumwVapor ≈ 1; near a dew
+    // point, sumwLiquid ≈ 1. For clearly non-critical systems (all components
+    // supercritical or subcritical), both sums are far from 1.
+    double sumwLiquid = 0.0;
+    for (int i = 0; i < numComp; i++) {
+      double zi = system.getPhase(0).getComponent(i).getz();
+      if (zi < 1e-100 || wilsonK[i] < 1e-30) {
+        continue;
+      }
+      sumwLiquid += zi / wilsonK[i];
+    }
+    boolean nearBubblePoint = (sumwVapor > 0.5 && sumwVapor < 2.5);
+    boolean nearDewPoint = (sumwLiquid > 0.5 && sumwLiquid < 2.5);
+    if (!nearBubblePoint && !nearDewPoint) {
+      return false;
+    }
+
+    // Compute reference chemical potentials (d vector)
+    double[] d = new double[numComp];
+    for (int i = 0; i < numComp; i++) {
+      d[i] = minGibsPhaseLogZ[i] + minGibsLogFugCoef[i];
+    }
+
+    // Use a fresh clone to avoid modifying any shared state
+    SystemInterface testSystem = system.clone();
+
+    // Try both vapor-like and liquid-like amplified trials
+    for (int trial = 0; trial < 2; trial++) {
+      double[] Wi = new double[numComp];
+      double[] logWi = new double[numComp];
+      double[] oldlogw = new double[numComp];
+
+      // Initialize Wi with amplified Wilson K-values
+      double sumwTrial = 0.0;
+      for (int i = 0; i < numComp; i++) {
+        double zi = testSystem.getPhase(0).getComponent(i).getz();
+        if (zi < 1e-100 || testSystem.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+          Wi[i] = 1e-50;
+          logWi[i] = Math.log(Wi[i]);
+          oldlogw[i] = logWi[i];
+          sumwTrial += Wi[i];
+          continue;
+        }
+        double tc = testSystem.getPhase(0).getComponent(i).getTC();
+        double pc = testSystem.getPhase(0).getComponent(i).getPC();
+        double omega = testSystem.getPhase(0).getComponent(i).getAcentricFactor();
+        double lnKwilson = Math.log(pc / presBar) + 5.373 * (1.0 + omega) * (1.0 - tc / tempK);
+        double amplifiedLnK = 2.5 * lnKwilson;
+
+        if (trial == 0) {
+          Wi[i] = zi * Math.exp(amplifiedLnK);
+        } else {
+          Wi[i] = zi * Math.exp(-amplifiedLnK);
+        }
+        logWi[i] = Math.log(Wi[i]);
+        oldlogw[i] = logWi[i];
+        sumwTrial += Wi[i];
+      }
+
+      // Normalize and set trial composition on phase 1 of the test system
+      for (int i = 0; i < numComp; i++) {
+        testSystem.getPhase(1).getComponent(i).setx(Wi[i] / sumwTrial);
+      }
+
+      // Successive substitution iteration
+      int maxiter = 100;
+      double err;
+      Matrix f = new Matrix(numComp, 1);
+      double fNorm = 1e10;
+      double fNormOld;
+      boolean converged = false;
+      for (int iter = 1; iter <= maxiter; iter++) {
+        err = 0.0;
+        System.arraycopy(logWi, 0, oldlogw, 0, numComp);
+
+        testSystem.init(1, 1);
+        fNormOld = fNorm;
+        for (int i = 0; i < numComp; i++) {
+          f.set(i, 0, Math.sqrt(Wi[i]) * (Math.log(Wi[i])
+              + testSystem.getPhase(1).getComponent(i).getLogFugacityCoefficient() - d[i]));
+        }
+        fNorm = f.norm2();
+        if (fNorm > fNormOld && iter > 3) {
+          if (iter > 10) {
+            break;
+          }
+        }
+
+        for (int i = 0; i < numComp; i++) {
+          logWi[i] = d[i] - testSystem.getPhase(1).getComponent(i).getLogFugacityCoefficient();
+          err += Math.abs(logWi[i] - oldlogw[i]);
+          Wi[i] = safeExp(logWi[i]);
+        }
+
+        sumwTrial = 0.0;
+        for (int i = 0; i < numComp; i++) {
+          sumwTrial += Wi[i];
+        }
+        for (int i = 0; i < numComp; i++) {
+          testSystem.getPhase(1).getComponent(i).setx(Wi[i] / sumwTrial);
+        }
+
+        if (f.norm1() < 1e-6 && err < 1e-6) {
+          converged = true;
+          break;
+        }
+      }
+
+      // Compute tm = 1 - sum(Wi)
+      double tmVal = 1.0;
+      for (int i = 0; i < numComp; i++) {
+        tmVal -= Wi[i];
+      }
+
+      // Only accept instability if SS converged and tm is clearly negative.
+      // Non-converged results are unreliable and may give spurious instability.
+      if (converged && tmVal < -5e-5) {
+        // Verify non-trivial: trial composition different from feed
+        double dot = 0.0;
+        double nW = 0.0;
+        double nF = 0.0;
+        for (int i = 0; i < numComp; i++) {
+          double xT = testSystem.getPhase(1).getComponent(i).getx();
+          double xF = testSystem.getPhase(0).getComponent(i).getz();
+          dot += xT * xF;
+          nW += xT * xT;
+          nF += xF * xF;
+        }
+        double cos = dot / (Math.sqrt(nW) * Math.sqrt(nF) + 1e-100);
+        if (cos < 0.9999) {
+          // Found genuine instability — set K-values on the system
+          for (int i = 0; i < numComp; i++) {
+            double xTrial = testSystem.getPhase(1).getComponent(i).getx();
+            double zFeed = testSystem.getPhase(0).getComponent(i).getz();
+            if (zFeed > 1e-100 && xTrial > 1e-100) {
+              double kVal = zFeed / xTrial;
+              system.getPhase(0).getComponent(i).setK(kVal);
+              system.getPhase(1).getComponent(i).setK(kVal);
+            }
+          }
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
    * <p>
    * stabilityAnalysis.
    * </p>
@@ -389,7 +570,6 @@ public abstract class Flash extends BaseOperation {
    */
   public boolean stabilityCheck() {
     boolean stable = false;
-    // logger.info("starting stability analysis....");
     lowestGibbsEnergyPhase = findLowestGibbsEnergyPhase();
     if (system.getPhase(lowestGibbsEnergyPhase).getNumberOfComponents() > 1) {
       try {
@@ -399,20 +579,38 @@ public abstract class Flash extends BaseOperation {
       }
     }
     if (tm[0] > tmLimit && tm[1] > tmLimit || system.getPhase(0).getNumberOfComponents() == 1) {
-      stable = true;
-      system.init(0);
-      // logger.info("system is stable");
-      // logger.info("Stable phase is : " + lowestGibbsEnergyPhase);
-      system.setNumberOfPhases(1);
-
-      if (lowestGibbsEnergyPhase == 0) {
-        system.setPhaseType(0, PhaseType.GAS);
+      // Standard analysis declares stable. Try amplified K-value trials with a
+      // separate clone to catch near-critical instability that the standard
+      // analysis misses (e.g. near the cricondenbar where Wilson K ≈ 1).
+      boolean retryFoundInstability = amplifiedKStabilityRetry();
+      if (retryFoundInstability) {
+        // Retry found instability — set up the system for two-phase flash
+        RachfordRice rachfordRice = new RachfordRice();
+        try {
+          system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
+        } catch (Exception ex) {
+          if (!Double.isNaN(rachfordRice.getBeta()[0])) {
+            system.setBeta(rachfordRice.getBeta()[0]);
+          } else {
+            system.setBeta(Double.NaN);
+          }
+        }
+        system.calc_x_y();
+        system.init(1);
+        stable = false;
       } else {
-        system.setPhaseType(0, PhaseType.LIQUID);
-      }
-      system.init(1);
-      if (solidCheck && !system.doMultiPhaseCheck()) {
-        this.solidPhaseFlash();
+        stable = true;
+        system.init(0);
+        system.setNumberOfPhases(1);
+        if (lowestGibbsEnergyPhase == 0) {
+          system.setPhaseType(0, PhaseType.GAS);
+        } else {
+          system.setPhaseType(0, PhaseType.LIQUID);
+        }
+        system.init(1);
+        if (solidCheck && !system.doMultiPhaseCheck()) {
+          this.solidPhaseFlash();
+        }
       }
     } else {
       RachfordRice rachfordRice = new RachfordRice();
