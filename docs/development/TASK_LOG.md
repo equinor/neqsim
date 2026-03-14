@@ -27,6 +27,12 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-03-14 — Fix IEC 60534 gas valve sizing: use standard volumetric flow (issue #1918)
+**Type:** D (Standards)
+**Keywords:** valve sizing, IEC 60534, Cv, Kv, gas valve, standard flow, actual flow, control valve, throttling valve, choked flow, N9
+**Solution:** src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534.java, src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534_full.java, src/test/java/neqsim/process/mechanicaldesign/valve/ControlValveSizingTest.java
+**Notes:** Gas valve Cv was severely underestimated (~98% too low at 50 bara) because IEC 60534 equation was applied with actual volumetric flow instead of standard volumetric flow (273.15 K, 101.325 kPa). Fix: convert Q_actual to Q_std = Q_actual × (P₁/P_std) × (T_std/T₁) / Z before applying the IEC formula. Fixed in sizeControlValveGas(), calculateFlowRateFromKvAndValveOpeningGas(), and calculateValveOpeningFromFlowRateGas() in both base and _full classes. Added regression test matching Python fluids library result (Cv ≈ 16.2 for 10000 kg/hr methane at 50 bara). Liquid valves were not affected.
+
 ### 2026-03-10 — Process architecture improvements: stream introspection, named controllers, connections, unified elements
 **Type:** E (Feature)
 **Keywords:** architecture, ProcessElementInterface, ProcessConnection, MultiPortEquipment, getInletStreams, getOutletStreams, controller map, named controllers, runTransient, controller scan, getAllElements, DEXPI, topology, stream introspection, connections
