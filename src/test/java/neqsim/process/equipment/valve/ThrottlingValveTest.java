@@ -129,15 +129,15 @@ public class ThrottlingValveTest {
     valve1.run();
     assertEquals(7000.0000000, valve1.getOutletStream().getFlowRate("Sm3/hr"), 7000 / 100);
     // Kv now calculated using IEC 60534 formula with Cd = 0.85 discharge coefficient
-    assertEquals(7.64, valve1.getKv(), 0.1);
+    assertEquals(9.14, valve1.getKv(), 0.1);
 
     Map<String, Object> result = valve1.getMechanicalDesign().calcValveSize();
     double Cv = (double) result.get("Cv");
-    assertEquals(8.83, Cv, 0.1);
+    assertEquals(10.57, Cv, 0.1);
 
     // Cg = Cv * Cl where Cl = 1360 (constant in current implementation)
-    assertEquals(12010, valve1.getCg(), 50.0);
-    assertEquals(7.64, valve1.getCv("SI"), 0.1);
+    assertEquals(14370, valve1.getCg(), 50.0);
+    assertEquals(9.14, valve1.getCv("SI"), 0.1);
     assertEquals(100.0, valve1.getPercentValveOpening(), 1e-2);
 
     valve1.setCalculateSteadyState(false);

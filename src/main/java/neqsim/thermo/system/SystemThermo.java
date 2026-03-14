@@ -2170,12 +2170,13 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public double getDensity() {
+    double totalVolume = getVolume();
+    if (totalVolume == 0.0) {
+      return 0.0;
+    }
     double density = 0.0;
     for (int i = 0; i < numberOfPhases; i++) {
-      // Use the phase densities directly to avoid assumptions about the internal
-      // molar-volume scaling (some specialised phases, like the ammonia reference
-      // EOS, provide densities directly).
-      density += beta[phaseIndex[i]] * getPhase(i).getDensity();
+      density += getPhase(i).getVolume() / totalVolume * getPhase(i).getDensity();
     }
     return density;
   }
@@ -2184,9 +2185,13 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public double getDensity(String unit) {
     double density = 0;
+    double totalVolume = getVolume();
     for (int i = 0; i < getNumberOfPhases(); i++) {
-      density +=
-          getPhase(i).getVolume() / getVolume() * getPhase(i).getPhysicalProperties().getDensity();
+      double volFrac = getCorrectedVolumeFraction(i);
+      if (Double.isNaN(volFrac) || Double.isInfinite(volFrac)) {
+        volFrac = totalVolume > 0 ? getPhase(i).getVolume() / totalVolume : 0;
+      }
+      density += volFrac * getPhase(i).getPhysicalProperties().getDensity();
     }
     double refDensity = density; // density in kg/m3
     double conversionFactor = 1.0;
