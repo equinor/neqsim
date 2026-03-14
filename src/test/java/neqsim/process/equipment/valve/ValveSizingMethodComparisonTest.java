@@ -272,8 +272,10 @@ public class ValveSizingMethodComparisonTest {
     double Fgamma = gamma / 1.40;
     double Y = Math.max(1.0 - x / (3.0 * Fgamma * xT), 2.0 / 3.0);
 
-    // IEC 60534 formula: Kv = Q / (N9 * P1 * Y) * sqrt(M * T * Z / x)
-    double expectedKv = actualFlowM3hr / (N9 * P1_kPa * Y) * Math.sqrt(MW * temperature * Z / x);
+    // IEC 60534 formula requires standard volumetric flow (273.15 K, 101.325 kPa)
+    double stdFlowM3hr = gasStream.getFlowRate("Sm3/hr");
+    // IEC 60534 formula: Kv = Q_std / (N9 * P1 * Y) * sqrt(M * T * Z / x)
+    double expectedKv = stdFlowM3hr / (N9 * P1_kPa * Y) * Math.sqrt(MW * temperature * Z / x);
 
     System.out.println("Flow rate: " + flowRateSm3hr + " Sm3/hr = " + actualFlowM3hr + " m3/hr");
     System.out.println("Inlet P: " + inletPressure + " bara = " + P1_kPa + " kPa");
