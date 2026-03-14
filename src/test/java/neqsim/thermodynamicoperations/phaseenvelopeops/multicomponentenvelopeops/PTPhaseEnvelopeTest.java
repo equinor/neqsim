@@ -313,6 +313,63 @@ public class PTPhaseEnvelopeTest {
     // assertTrue(bubblePointVolumes.length > 20);
   }
 
+  /**
+   * Test that calcPTphaseEnvelope traces both dew-point and bubble-point branches for a rich
+   * natural gas. Previously only the dew-point branch was traced because the restart mechanism
+   * failed to initialize the second branch properly after crashing near the cricondenbar.
+   */
+  @Test
+  void testRichGasBubblePointBranch() {
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemSrkEos(273.15, 50.0);
+    fluid.addComponent("nitrogen", 3.43);
+    fluid.addComponent("CO2", 0.34);
+    fluid.addComponent("methane", 62.51);
+    fluid.addComponent("ethane", 15.65);
+    fluid.addComponent("propane", 13.22);
+    fluid.addComponent("i-butane", 1.61);
+    fluid.addComponent("n-butane", 2.48);
+    fluid.addComponent("i-pentane", 0.35);
+    fluid.addComponent("n-pentane", 0.29);
+    fluid.addComponent("n-hexane", 0.12);
+    fluid.setMixingRule(2);
+    fluid.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.calcPTphaseEnvelope();
+
+    double[][] data = ops.getData();
+    // getData() returns points2 which has arrays at indices 0..7
+    // Count all non-empty T arrays: data[0], data[2], data[4], data[6] are temperatures
+    int totalPoints = 0;
+    for (int idx = 0; idx < data.length; idx += 2) {
+      if (data[idx] != null) {
+        totalPoints += data[idx].length;
+      }
+    }
+
+    // The complete phase envelope should have significantly more than 31 points
+    // (the old dew-only result). Both branches together should yield > 40.
+    assertTrue(totalPoints > 40,
+        "Phase envelope should have both dew and bubble branches (> 40 points), got: "
+            + totalPoints);
+
+    // Also verify using the named accessors
+    double[] dewT = ops.get("dewT");
+    double[] bubT = ops.get("bubT");
+
+    assertTrue(dewT != null && dewT.length > 10,
+        "Dew-point branch should have > 10 points, got: " + (dewT != null ? dewT.length : 0));
+    assertTrue(bubT != null && bubT.length > 5,
+        "Bubble-point branch should have > 5 points, got: " + (bubT != null ? bubT.length : 0));
+
+    // Cricondenbar should be around 105 bar
+    double[] cricondenbar = ops.get("cricondenbar");
+    assertTrue(cricondenbar != null && cricondenbar[1] > 80.0,
+        "Cricondenbar pressure should be > 80 bar, got: "
+            + (cricondenbar != null ? cricondenbar[1] : 0));
+  }
+
   @Test
   void testFailingCase4() {
     neqsim.thermo.system.SystemInterface fluid =

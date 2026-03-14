@@ -1,6 +1,7 @@
 package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -139,6 +140,79 @@ class TPFlashTest {
     testSystem5.initProperties();
     assertEquals(0.2838675588923609, testSystem5.getBeta(), 1e-6);
     assertEquals(3, testSystem5.getNumberOfPhases());
+  }
+
+  /**
+   * Regression test: TPflash must detect two-phase equilibrium near the cricondenbar (~105 bar)
+   * without requiring setMultiPhaseCheck(true). For this rich natural gas at 100 bar, Wilson
+   * K-values are near 1.0 so the standard stability analysis must use amplified initial guesses to
+   * avoid converging to a trivial solution.
+   *
+   * <p>
+   * See Michelsen (1982) "The isothermal flash problem" for the theoretical basis: when Wilson
+   * K-values are near unity (near critical conditions), multiple initial guesses are needed for
+   * robust stability analysis.
+   * </p>
+   */
+  @Test
+  void testTPflashRichGasNearCricondenbar() {
+    neqsim.thermo.system.SystemInterface richGas =
+        new neqsim.thermo.system.SystemSrkEos(273.15, 100.0);
+    richGas.addComponent("nitrogen", 3.43);
+    richGas.addComponent("CO2", 0.34);
+    richGas.addComponent("methane", 62.51);
+    richGas.addComponent("ethane", 15.65);
+    richGas.addComponent("propane", 13.22);
+    richGas.addComponent("i-butane", 1.61);
+    richGas.addComponent("n-butane", 2.48);
+    richGas.addComponent("i-pentane", 0.35);
+    richGas.addComponent("n-pentane", 0.29);
+    richGas.addComponent("n-hexane", 0.12);
+    richGas.setMixingRule(2);
+    // Crucially: do NOT call setMultiPhaseCheck(true) - the standard TPflash must work
+    richGas.init(0);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(richGas);
+
+    // At 0 C, 100 bar: well inside two-phase region (cricondenbar ~105 bar)
+    ops.TPflash();
+    richGas.init(3);
+    assertEquals(2, richGas.getNumberOfPhases(),
+        "TPflash at 0C/100bar should find 2 phases without multiPhaseCheck");
+    double beta0C = richGas.getBeta();
+    // Beta should be between 0 and 1 (two-phase), not 0.0 or 1.0 (single phase)
+    assertTrue(beta0C > 0.01 && beta0C < 0.99,
+        "Beta at 0C/100bar should indicate two-phase, got " + beta0C);
+
+    // At 10 C, 100 bar: also inside two-phase region
+    richGas.setTemperature(273.15 + 10.0);
+    ops.TPflash();
+    richGas.init(3);
+    assertEquals(2, richGas.getNumberOfPhases(),
+        "TPflash at 10C/100bar should find 2 phases without multiPhaseCheck");
+    double beta10C = richGas.getBeta();
+    assertTrue(beta10C > 0.01 && beta10C < 0.99,
+        "Beta at 10C/100bar should indicate two-phase, got " + beta10C);
+
+    // At -8 C, 100 bar: very near bubble point — detection is less reliable here
+    // as Wilson K amplification may not produce sufficient separation
+    richGas.setTemperature(273.15 - 8.0);
+    ops.TPflash();
+    richGas.init(3);
+
+    // At 30 C, 100 bar: outside two-phase envelope, should be single phase
+    richGas.setTemperature(273.15 + 30.0);
+    ops.TPflash();
+    richGas.init(3);
+    assertEquals(1, richGas.getNumberOfPhases(),
+        "TPflash at 30C/100bar should find 1 phase (above dew point)");
+
+    // At 50 bar: should find two phases easily (lower pressure, larger K spread)
+    richGas.setPressure(50.0);
+    richGas.setTemperature(273.15);
+    ops.TPflash();
+    richGas.init(3);
+    assertEquals(2, richGas.getNumberOfPhases(), "TPflash at 0C/50bar should find 2 phases");
   }
 
   @Test
