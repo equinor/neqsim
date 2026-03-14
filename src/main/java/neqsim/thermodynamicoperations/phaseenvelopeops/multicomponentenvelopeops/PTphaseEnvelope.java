@@ -572,6 +572,23 @@ public class PTphaseEnvelope extends BaseOperation {
       }
     } catch (Exception e2) {
     }
+
+    // Merge cricondenTherm/Bar from first and second branches (keep the best)
+    if (hascopiedPoints) {
+      // Cricondentherm: keep whichever branch found the highest temperature
+      if (cricondenThermfirst[0] > cricondenTherm[0]) {
+        cricondenTherm = cricondenThermfirst;
+        cricondenThermX = cricondenThermXfirst;
+        cricondenThermY = cricondenThermYfirst;
+      }
+      // Cricondenbar: keep whichever branch found the highest pressure
+      if (cricondenBarfirst[1] > cricondenBar[1]) {
+        cricondenBar = cricondenBarfirst;
+        cricondenBarX = cricondenBarXfirst;
+        cricondenBarY = cricondenBarYfirst;
+      }
+    }
+
     if (!Double.isFinite(cricondenBar[0]) || !Double.isFinite(cricondenBar[1])
         || (cricondenBar[0] == 0.0 && cricondenBar[1] == 0.0)) {
       cricondenBar[0] = initialTemp;
