@@ -2185,8 +2185,13 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public double getDensity(String unit) {
     double density = 0;
+    double totalVolume = getVolume();
     for (int i = 0; i < getNumberOfPhases(); i++) {
-      density += getCorrectedVolumeFraction(i) * getPhase(i).getPhysicalProperties().getDensity();
+      double volFrac = getCorrectedVolumeFraction(i);
+      if (Double.isNaN(volFrac) || Double.isInfinite(volFrac)) {
+        volFrac = totalVolume > 0 ? getPhase(i).getVolume() / totalVolume : 0;
+      }
+      density += volFrac * getPhase(i).getPhysicalProperties().getDensity();
     }
     double refDensity = density; // density in kg/m3
     double conversionFactor = 1.0;
