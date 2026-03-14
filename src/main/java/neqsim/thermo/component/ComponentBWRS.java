@@ -56,25 +56,54 @@ public class ComponentBWRS extends ComponentSrk {
   public ComponentBWRS(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
 
+    boolean paramsFound = false;
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
         dataSet = database.getResultSet(("SELECT * FROM mbwr32param WHERE name='" + name + "'"));
-        dataSet.next();
-        dataSet.getClob("name");
+        if (dataSet.next()) {
+          dataSet.getClob("name");
+          for (int i = 0; i < 32; i++) {
+            aBWRS[i] = Double.parseDouble(dataSet.getString("a" + i));
+          }
+          rhoc = Double.parseDouble(dataSet.getString("rhoc"));
+          gammaBWRS = 1.0 / (rhoc * rhoc);
+          paramsFound = true;
+        }
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }
-
-      for (int i = 0; i < 32; i++) {
-        aBWRS[i] = Double.parseDouble(dataSet.getString("a" + i));
-        // System.out.println(aBWRS[i]);
-      }
-      rhoc = Double.parseDouble(dataSet.getString("rhoc"));
-      gammaBWRS = 1.0 / (rhoc * rhoc);
-      // logger.info("gamma " + gammaBWRS);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
+    }
+
+    if (!paramsFound) {
+      // Estimate rhoc from critical volume so the mixture gamma mixing rule works.
+      // criticalVolume is in cm3/mol (set by parent Component class from database).
+      // rhoc in mol/L = 1000 / Vc(cm3/mol).
+      double Vc = getCriticalVolume();
+      if (Vc > 0) {
+        rhoc = 1000.0 / Vc;
+      } else {
+        // Last resort: use critical properties via Zc = Pc*Vc/(R*Tc)
+        // Approximate rhoc using Pc/(Zc*R_MPa*Tc) with Zc~0.27
+        double Tc = getTC();
+        double Pc = getPC() / 10.0; // bara to MPa
+        if (Tc > 0 && Pc > 0) {
+          rhoc = Pc / (0.27 * 0.008314 * Tc);
+        } else {
+          rhoc = 10.0; // safe default ~methane-like
+        }
+      }
+      gammaBWRS = 1.0 / (rhoc * rhoc);
+
+      logger.warn(
+          "MBWR-32 parameters not found for component '{}'. "
+              + "Only methane and ethane have MBWR-32 parameters. "
+              + "This component will behave as ideal gas in BWRS calculations "
+              + "(estimated rhoc={} mol/L from critical volume). "
+              + "Consider using GERG-2008 (SystemGERG2008Eos) for multi-component gas mixtures.",
+          name, String.format("%.2f", rhoc));
     }
   }
 
@@ -166,23 +195,34 @@ public class ComponentBWRS extends ComponentSrk {
         - 3.0 * aBWRS[30] / Math.pow(temperature, 4.0)
         - 4.0 * aBWRS[31] / Math.pow(temperature, 5.0)); // *Math.exp(-gammaBWRS*Math.pow(getMolarDensity(),2.0));
 
-    // disse deriverte er ennaa ikke satt inn (finnes i Odvar's avhandling)
+    // Second temperature derivatives of BP and BE arrays
     BPdTdT[0] = 0;
-    BPdTdT[1] = 0;
-    BPdTdT[2] = 0;
-    BPdTdT[3] = 0;
+    BPdTdT[1] = -aBWRS[1] / (4.0 * Math.pow(temperature, 1.5))
+        + 2.0 * aBWRS[3] / Math.pow(temperature, 3.0) + 6.0 * aBWRS[4] / Math.pow(temperature, 4.0);
+    BPdTdT[2] =
+        2.0 * aBWRS[7] / Math.pow(temperature, 3.0) + 6.0 * aBWRS[8] / Math.pow(temperature, 4.0);
+    BPdTdT[3] = 2.0 * aBWRS[11] / Math.pow(temperature, 3.0);
     BPdTdT[4] = 0;
-    BPdTdT[5] = 0;
-    BPdTdT[6] = 0;
-    BPdTdT[7] = 0;
-    BPdTdT[8] = 0;
+    BPdTdT[5] =
+        2.0 * aBWRS[13] / Math.pow(temperature, 3.0) + 6.0 * aBWRS[14] / Math.pow(temperature, 4.0);
+    BPdTdT[6] = 2.0 * aBWRS[15] / Math.pow(temperature, 3.0);
+    BPdTdT[7] =
+        2.0 * aBWRS[16] / Math.pow(temperature, 3.0) + 6.0 * aBWRS[17] / Math.pow(temperature, 4.0);
+    BPdTdT[8] = 6.0 * aBWRS[18] / Math.pow(temperature, 4.0);
 
-    BEdTdT[0] = 0.0;
-    BEdTdT[1] = 0.0;
-    BEdTdT[2] = 0.0;
-    BEdTdT[3] = 0.0;
-    BEdTdT[4] = 0.0;
-    BEdTdT[5] = 0.0;
+    BEdTdT[0] = 6.0 * aBWRS[19] / Math.pow(temperature, 4.0)
+        + 12.0 * aBWRS[20] / Math.pow(temperature, 5.0);
+    BEdTdT[1] = 6.0 * aBWRS[21] / Math.pow(temperature, 4.0)
+        + 20.0 * aBWRS[22] / Math.pow(temperature, 6.0);
+    BEdTdT[2] = 6.0 * aBWRS[23] / Math.pow(temperature, 4.0)
+        + 12.0 * aBWRS[24] / Math.pow(temperature, 5.0);
+    BEdTdT[3] = 6.0 * aBWRS[25] / Math.pow(temperature, 4.0)
+        + 20.0 * aBWRS[26] / Math.pow(temperature, 6.0);
+    BEdTdT[4] = 6.0 * aBWRS[27] / Math.pow(temperature, 4.0)
+        + 12.0 * aBWRS[28] / Math.pow(temperature, 5.0);
+    BEdTdT[5] =
+        6.0 * aBWRS[29] / Math.pow(temperature, 4.0) + 12.0 * aBWRS[30] / Math.pow(temperature, 5.0)
+            + 20.0 * aBWRS[31] / Math.pow(temperature, 6.0);
   }
 
   /** {@inheritDoc} */
@@ -450,6 +490,26 @@ public class ComponentBWRS extends ComponentSrk {
    */
   public void setBEdT(double[] BEdT) {
     this.BEdT = BEdT;
+  }
+
+  /**
+   * Getter for property BPdTdT.
+   *
+   * @param i array index
+   * @return Value of BPdTdT[i].
+   */
+  public double getBPdTdT(int i) {
+    return this.BPdTdT[i];
+  }
+
+  /**
+   * Getter for property BEdTdT.
+   *
+   * @param i array index
+   * @return Value of BEdTdT[i].
+   */
+  public double getBEdTdT(int i) {
+    return this.BEdTdT[i];
   }
 
   /**

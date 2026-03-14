@@ -38,6 +38,10 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   private double[] mixBPdT = new double[9];
   /** Mole-fraction-weighted exponential temperature derivatives for the mixture. */
   private double[] mixBEdT = new double[6];
+  /** Mole-fraction-weighted polynomial second temperature derivatives for the mixture. */
+  private double[] mixBPdTdT = new double[9];
+  /** Mole-fraction-weighted exponential second temperature derivatives for the mixture. */
+  private double[] mixBEdTdT = new double[6];
   /** Mixed gamma parameter = 1/rhoc_mix^2 for one-fluid mixing. */
   private double mixGamma;
 
@@ -58,6 +62,8 @@ public class PhaseBWRSEos extends PhaseSrkEos {
       clonedPhase.mixBE = mixBE.clone();
       clonedPhase.mixBPdT = mixBPdT.clone();
       clonedPhase.mixBEdT = mixBEdT.clone();
+      clonedPhase.mixBPdTdT = mixBPdTdT.clone();
+      clonedPhase.mixBEdTdT = mixBEdTdT.clone();
     } catch (Exception ex) {
       logger.error("Cloning failed.", ex);
     }
@@ -75,6 +81,8 @@ public class PhaseBWRSEos extends PhaseSrkEos {
     Arrays.fill(mixBE, 0.0);
     Arrays.fill(mixBPdT, 0.0);
     Arrays.fill(mixBEdT, 0.0);
+    Arrays.fill(mixBPdTdT, 0.0);
+    Arrays.fill(mixBEdTdT, 0.0);
     double rhocMix = 0.0;
     for (int j = 0; j < numberOfComponents; j++) {
       double xj = componentArray[j].getNumberOfMolesInPhase() / numberOfMolesInPhase;
@@ -84,10 +92,12 @@ public class PhaseBWRSEos extends PhaseSrkEos {
       for (int k = 0; k < OP; k++) {
         mixBP[k] += xj * comp.getBP(k);
         mixBPdT[k] += xj * comp.getBPdT(k);
+        mixBPdTdT[k] += xj * comp.getBPdTdT(k);
       }
       for (int k = 0; k < OE; k++) {
         mixBE[k] += xj * comp.getBE(k);
         mixBEdT[k] += xj * comp.getBEdT(k);
+        mixBEdTdT[k] += xj * comp.getBEdTdT(k);
       }
     }
     mixGamma = 1.0 / (rhocMix * rhocMix);
@@ -99,8 +109,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
    */
   private void recomputeLight() {
     for (int i = 0; i < numberOfComponents; i++) {
-      componentArray[i]
-          .setx(componentArray[i].getNumberOfMolesInPhase() / numberOfMolesInPhase);
+      componentArray[i].setx(componentArray[i].getNumberOfMolesInPhase() / numberOfMolesInPhase);
     }
     computeMixedParameters();
   }
@@ -326,13 +335,16 @@ public class PhaseBWRSEos extends PhaseSrkEos {
   private double getFpoldTdT() {
     double term1 = 0.0;
     double term2 = 0.0;
+    double term3 = 0.0;
     double rho = getMolarDensity();
     for (int i = 1; i < OP; i++) {
-      term1 += mixBP[i] / (i + 0.0) * Math.pow(rho, i);
-      term2 += mixBPdT[i] / (i + 0.0) * Math.pow(rho, i);
+      double rhoPow = Math.pow(rho, i);
+      term1 += mixBP[i] / (i + 0.0) * rhoPow;
+      term2 += mixBPdT[i] / (i + 0.0) * rhoPow;
+      term3 += mixBPdTdT[i] / (i + 0.0) * rhoPow;
     }
-    return numberOfMolesInPhase / R
-        * (2.0 * term1 / Math.pow(temperature, 3.0) - 2.0 * term2 / Math.pow(temperature, 2.0));
+    return numberOfMolesInPhase / R * (2.0 * term1 / Math.pow(temperature, 3.0)
+        - 2.0 * term2 / Math.pow(temperature, 2.0) + term3 / temperature);
   }
 
   /**
@@ -586,7 +598,7 @@ public class PhaseBWRSEos extends PhaseSrkEos {
 
     double oldTemp = -mixBEdT[0] / (2.0 * gamma) * elMinus1;
     double oldTemp2 = -mixBE[0] / (2.0 * gamma) * elMinus1;
-    double doldTemp = 0.0; // BEdTdT terms are zero
+    double doldTemp = -mixBEdTdT[0] / (2.0 * gamma) * elMinus1;
     double doldTemp2 = -mixBEdT[0] / (2.0 * gamma) * elMinus1;
     double temp = oldTemp;
     double dtemp = doldTemp;
@@ -599,13 +611,16 @@ public class PhaseBWRSEos extends PhaseSrkEos {
       double term3 = mixBE[i] / (2.0 * gamma) * ((2.0 * i) / mixBE[i - 1] * oldTemp);
       oldTemp = term1 + term2 + term3;
 
-      double dterm1 = -mixBEdT[i] / (2.0 * gamma) * (-(2.0 * i) / mixBE[i - 1] * doldTemp2
-          + (2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * mixBEdT[i - 1] * oldTemp2);
+      double dterm1 = -mixBEdTdT[i] / (2.0 * gamma)
+          * (getEL() * Math.pow(rho, 2.0 * i) - (2.0 * i) / mixBE[i - 1] * oldTemp2)
+          - mixBEdT[i] / (2.0 * gamma) * (-(2.0 * i) / mixBE[i - 1] * doldTemp2
+              + (2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * mixBEdT[i - 1] * oldTemp2);
       double dterm2 = -(mixBEdT[i] / (2.0 * gamma))
           * ((2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * oldTemp2 * mixBEdT[i - 1])
           - (mixBE[i] / (2.0 * gamma)) * ((2.0 * i) * (-2.0) / Math.pow(mixBE[i - 1], 3.0)
               * mixBEdT[i - 1] * oldTemp2 * mixBEdT[i - 1]
-              + (2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * doldTemp2 * mixBEdT[i - 1]);
+              + (2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * doldTemp2 * mixBEdT[i - 1]
+              + (2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * oldTemp2 * mixBEdTdT[i - 1]);
       double dterm3 = (mixBEdT[i] / (2.0 * gamma)) * ((2.0 * i) / mixBE[i - 1] * oldTemp)
           + (mixBE[i] / (2.0 * gamma)) * ((2.0 * i) / mixBE[i - 1] * doldTemp
               - (2.0 * i) / Math.pow(mixBE[i - 1], 2.0) * mixBEdT[i - 1] * oldTemp);
