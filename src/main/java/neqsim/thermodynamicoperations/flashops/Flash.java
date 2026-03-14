@@ -119,9 +119,15 @@ public abstract class Flash extends BaseOperation {
     double tempK = system.getTemperature();
     double presBar = system.getPressure();
 
-    // Check if near-critical: compute Wilson K vapor trial sum.
-    // Near the cricondenbar, sumw ≈ 1; far from critical, sumw >> 1 or << 1.
+    // Check if near-critical: near the cricondenbar, Wilson K ≈ 1 for all
+    // components, and the sum(z*K) ≈ 1 (near bubble point) or sum(z/K) ≈ 1
+    // (near dew point). Only retry at moderate-to-high pressures where
+    // near-critical VLE issues occur.
+    if (presBar < 50.0) {
+      return false;
+    }
     double sumwVapor = 0.0;
+    double sumwLiquid = 0.0;
     double[] wilsonK = new double[numComp];
     for (int i = 0; i < numComp; i++) {
       double zi = system.getPhase(0).getComponent(i).getz();
@@ -134,22 +140,25 @@ public abstract class Flash extends BaseOperation {
       double omega = system.getPhase(0).getComponent(i).getAcentricFactor();
       wilsonK[i] = (pc / presBar) * Math.exp(5.373 * (1.0 + omega) * (1.0 - tc / tempK));
       sumwVapor += zi * wilsonK[i];
-    }
-    // Only retry when near-critical: at least one of the Wilson K sums
-    // should be close to 1.0. Near a bubble point, sumwVapor ≈ 1; near a dew
-    // point, sumwLiquid ≈ 1. For clearly non-critical systems (all components
-    // supercritical or subcritical), both sums are far from 1.
-    double sumwLiquid = 0.0;
-    for (int i = 0; i < numComp; i++) {
-      double zi = system.getPhase(0).getComponent(i).getz();
-      if (zi < 1e-100 || wilsonK[i] < 1e-30) {
-        continue;
+      if (wilsonK[i] > 1e-30) {
+        sumwLiquid += zi / wilsonK[i];
       }
-      sumwLiquid += zi / wilsonK[i];
     }
-    boolean nearBubblePoint = (sumwVapor > 0.5 && sumwVapor < 2.5);
-    boolean nearDewPoint = (sumwLiquid > 0.5 && sumwLiquid < 2.5);
+    // Only retry when Wilson K sums indicate proximity to a phase boundary.
+    // At the bubble point sum(z*K)=1; at the dew point sum(z/K)=1.
+    // Use range [0.7, 2.4] to catch near-cricondenbar (sumw ≈ 0.7-1.8)
+    // while excluding supercritical single-component systems (e.g. CO2 at
+    // 100 bar, 298K gives sumwVapor ≈ 0.65) and well-separated phases.
+    boolean nearBubblePoint = (sumwVapor > 0.7 && sumwVapor < 2.4);
+    boolean nearDewPoint = (sumwLiquid > 0.7 && sumwLiquid < 2.4);
     if (!nearBubblePoint && !nearDewPoint) {
+      return false;
+    }
+    // Skip retry for near-pure component systems: for a single component,
+    // sumwVapor * sumwLiquid = K * (1/K) = 1. For multicomponent mixtures
+    // near a phase boundary, this product is >> 1 due to K-value spread.
+    // A threshold of 2.0 reliably discriminates the two cases.
+    if (sumwVapor * sumwLiquid < 2.0) {
       return false;
     }
 
@@ -252,7 +261,7 @@ public abstract class Flash extends BaseOperation {
 
       // Only accept instability if SS converged and tm is clearly negative.
       // Non-converged results are unreliable and may give spurious instability.
-      if (converged && tmVal < -5e-5) {
+      if (converged && tmVal < -1e-4) {
         // Verify non-trivial: trial composition different from feed
         double dot = 0.0;
         double nW = 0.0;
