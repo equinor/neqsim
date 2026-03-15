@@ -112,8 +112,7 @@ public class TPflash extends Flash {
       system.setBeta(phaseFractionMinimumLimit);
     }
     system.calc_x_y();
-    system.init(1, 0);
-    system.init(1, 1);
+    system.init(1);
   }
 
   /**
@@ -153,8 +152,7 @@ public class TPflash extends Flash {
     }
 
     system.calc_x_y();
-    system.init(1, 0);
-    system.init(1, 1);
+    system.init(1);
     // sucsSubs();
   }
 
@@ -191,8 +189,7 @@ public class TPflash extends Flash {
     try {
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
       system.calc_x_y();
-      system.init(1, 0);
-      system.init(1, 1);
+      system.init(1);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -377,11 +374,6 @@ public class TPflash extends Flash {
     }
 
     if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta())) {
-      // Pre-set lowestGibbsEnergyPhase to skip clone + Gibbs comparison in
-      // findLowestGibbsEnergyPhase. The clone will be lazily created by
-      // stabilityAnalysis only when actually needed.
-      lowestGibbsEnergyPhase = minGibbsPhase;
-      findLowestGibbsPhaseIsChecked = true;
       if (system.checkStability() && stabilityCheck()) {
         if (system.doMultiPhaseCheck()) {
           // logger.info("one phase flash is stable - checking multiphase flash....");
@@ -439,8 +431,9 @@ public class TPflash extends Flash {
 
     // Reduced acceleration interval for faster convergence
     int accelerateInterval = 5;
-    // Newton switch: line search on Q enables earlier switch (globally convergent)
-    int newtonLimit = 8;
+    // Newton limit: number of SS iterations before switching to Newton-Raphson.
+    // Reduced from 15 to 12 (line search on Q enables earlier switch).
+    int newtonLimit = 12;
     int timeFromLastGibbsFail = 0;
 
     double chemdev = 0;
