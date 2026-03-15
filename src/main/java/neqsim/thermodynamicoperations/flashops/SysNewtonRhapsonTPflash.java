@@ -4,8 +4,12 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * Newton-Raphson solver for two-phase TP flash using Michelsen's u-variable formulation.
+ *
  * <p>
- * sysNewtonRhapsonTPflash class.
+ * Variables: u[i] = beta * y[i] (Michelsen 1982b). Residual: g[i] = ln(f_gas_i) - ln(f_liq_i).
+ * Jacobian: Hessian of the reduced Gibbs energy Q(u). Uses Armijo backtracking line search on Q for
+ * global convergence (Michelsen &amp; Mollerup 2007, Ch. 12).
  * </p>
  *
  * @author asmund
@@ -16,32 +20,14 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
   private static final long serialVersionUID = 1000;
   int neq = 0;
   int iter = 0;
-  int ic02p = -100;
-  int ic03p = -100;
-  int testcrit = 0;
-  int npCrit = 0;
-  double beta = 0;
-  double ds = 0;
-  double dTmax = 1;
-  double dPmax = 1;
-  double avscp = 0.1;
-  double TC1 = 0;
-  double TC2 = 0;
-  double PC1 = 0;
-  double PC2 = 0;
   Matrix Jac;
   Matrix fvec;
   Matrix u;
-  Matrix uold;
-  Matrix Xgij;
   SystemInterface system;
   int numberOfComponents;
-  int speceq = 0;
-  Matrix a = new Matrix(4, 4);
-  Matrix s = new Matrix(1, 4);
-  Matrix xg;
   Matrix dx;
-  Matrix xcoef;
+  /** Cached feed compositions (constant during flash). */
+  private double[] z;
 
   /**
    * <p>
@@ -60,10 +46,11 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     Jac = new Matrix(neq, neq);
     fvec = new Matrix(neq, 1);
     u = new Matrix(neq, 1);
-    Xgij = new Matrix(neq, 4);
     setu();
-    uold = u.copy();
-    // System.out.println("Spec : " +speceq);
+    z = new double[numberOfComponents];
+    for (int i = 0; i < numberOfComponents; i++) {
+      z[i] = system.getPhase(0).getComponent(i).getz();
+    }
   }
 
   /**
@@ -75,9 +62,9 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
     for (int i = 0; i < numberOfComponents; i++) {
       fvec.set(i, 0,
           Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient()
-              * system.getPhase(0).getComponent(i).getx() * system.getPressure())
+              * system.getPhase(0).getComponent(i).getx())
               - Math.log(system.getPhase(1).getComponent(i).getFugacityCoefficient()
-                  * system.getPhase(1).getComponent(i).getx() * system.getPressure()));
+                  * system.getPhase(1).getComponent(i).getx()));
     }
   }
 
@@ -87,13 +74,11 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * </p>
    */
   public void setJac() {
-    Jac.timesEquals(0.0);
-    double dij = 0.0;
-
-    double tempJ = 0.0;
+    double dij;
+    double tempJ;
     for (int i = 0; i < numberOfComponents; i++) {
       for (int j = 0; j < numberOfComponents; j++) {
-        dij = i == j ? 1.0 : 0.0; // Kroneckers delta
+        dij = i == j ? 1.0 : 0.0;
         tempJ = 1.0 / system.getBeta()
             * (dij / system.getPhase(0).getComponent(i).getx() - 1.0
                 + system.getPhase(0).getComponent(i).getdfugdx(j))
@@ -130,14 +115,68 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
 
     for (int i = 0; i < numberOfComponents; i++) {
       system.getPhase(0).getComponent(i).setx(u.get(i, 0) / system.getBeta());
-      system.getPhase(1).getComponent(i).setx(
-          (system.getPhase(0).getComponent(i).getz() - u.get(i, 0)) / (1.0 - system.getBeta()));
+      system.getPhase(1).getComponent(i).setx((z[i] - u.get(i, 0)) / (1.0 - system.getBeta()));
       system.getPhase(0).getComponent(i).setK(
           system.getPhase(0).getComponent(i).getx() / system.getPhase(1).getComponent(i).getx());
       system.getPhase(1).getComponent(i).setK(system.getPhase(0).getComponent(i).getK());
     }
 
     system.init(3);
+  }
+
+  /**
+   * Compute Michelsen's reduced Gibbs energy Q(u). Q = sum[u_i * ln(y_i * phi_gas_i) + (z_i - u_i)
+   * * ln(x_i * phi_liq_i)]. Gradient of Q equals fvec; Hessian of Q equals Jac.
+   *
+   * @return Q value
+   */
+  private double computeQ() {
+    double q = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      double yi = system.getPhase(0).getComponent(i).getx();
+      double xi = system.getPhase(1).getComponent(i).getx();
+      double lnFugGas = Math.log(yi * system.getPhase(0).getComponent(i).getFugacityCoefficient());
+      double lnFugLiq = Math.log(xi * system.getPhase(1).getComponent(i).getFugacityCoefficient());
+      q += u.get(i, 0) * lnFugGas + (z[i] - u.get(i, 0)) * lnFugLiq;
+    }
+    return q;
+  }
+
+  /**
+   * Check physical feasibility of trial u values.
+   *
+   * @param uTrial trial u vector
+   * @return true if all compositions and beta are in valid range
+   */
+  private boolean isFeasible(double[] uTrial) {
+    double betaTrial = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (uTrial[i] < 1e-15 || uTrial[i] > z[i] - 1e-15) {
+        return false;
+      }
+      betaTrial += uTrial[i];
+    }
+    return betaTrial > 1e-12 && betaTrial < 1.0 - 1e-12;
+  }
+
+  /**
+   * Set compositions from trial u vector and compute fugacities only (init level 1). Used for line
+   * search Q evaluation at trial points.
+   *
+   * @param uTrial trial u vector
+   */
+  private void setTrialAndComputeFugacities(double[] uTrial) {
+    double betaTrial = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      betaTrial += uTrial[i];
+    }
+    system.setBeta(betaTrial);
+    for (int i = 0; i < numberOfComponents; i++) {
+      system.getPhase(0).getComponent(i).setx(uTrial[i] / betaTrial);
+      system.getPhase(1).getComponent(i).setx((z[i] - uTrial[i]) / (1.0 - betaTrial));
+    }
+    system.init(1, 0);
+    system.init(1, 1);
   }
 
   /**
@@ -148,47 +187,67 @@ public class SysNewtonRhapsonTPflash implements java.io.Serializable {
    * @return a double
    */
   public double solve() {
-    try {
-      iter++;
-      init();
-      setfvec();
-      setJac();
+    iter++;
+    init();
 
-      // Check condition number and add regularization if needed
-      double jacTrace = 0.0;
-      for (int i = 0; i < neq; i++) {
-        jacTrace += Math.abs(Jac.get(i, i));
+    double qCurrent = computeQ();
+    setfvec();
+    setJac();
+
+    // Levenberg-Marquardt regularization for stability
+    double jacTrace = 0.0;
+    for (int i = 0; i < neq; i++) {
+      jacTrace += Math.abs(Jac.get(i, i));
+    }
+    double lambda = 1e-8 * jacTrace / neq;
+    for (int i = 0; i < neq; i++) {
+      Jac.set(i, i, Jac.get(i, i) + lambda);
+    }
+
+    dx = Jac.solve(fvec);
+
+    // Directional derivative: slope = fvec^T * dx = grad(Q)^T * (Jac^-1 * grad(Q)) > 0
+    double slope = 0.0;
+    for (int i = 0; i < neq; i++) {
+      slope += fvec.get(i, 0) * dx.get(i, 0);
+    }
+
+    // Armijo backtracking line search on Michelsen Q function
+    double alpha = 1.0;
+    double c1 = 1e-4;
+    int maxBacktrack = 8;
+    double[] uTrial = new double[numberOfComponents];
+
+    for (int bt = 0; bt < maxBacktrack; bt++) {
+      for (int i = 0; i < numberOfComponents; i++) {
+        uTrial[i] = u.get(i, 0) - alpha * dx.get(i, 0);
       }
-      double diagAvg = jacTrace / neq;
-      // Add Levenberg-Marquardt regularization for stability
-      double lambda = 1e-8 * diagAvg;
-      for (int i = 0; i < neq; i++) {
-        Jac.set(i, i, Jac.get(i, i) + lambda);
-      }
 
-      dx = Jac.solve(fvec);
-
-      // Trust region: limit maximum step size
-      double maxDeltaLnK = 2.0; // Maximum ~7x change in K per iteration
-      for (int i = 0; i < neq; i++) {
-        double delta = dx.get(i, 0);
-        if (Math.abs(delta) > maxDeltaLnK) {
-          dx.set(i, 0, Math.signum(delta) * maxDeltaLnK);
+      if (isFeasible(uTrial)) {
+        try {
+          setTrialAndComputeFugacities(uTrial);
+          double qTrial = computeQ();
+          // Armijo condition: Q_trial <= Q_current - c1 * alpha * slope
+          if (qTrial <= qCurrent - c1 * alpha * slope) {
+            break;
+          }
+        } catch (Exception ex) {
+          // Cubic solver failed at trial point — try shorter step
         }
       }
 
-      // Damped Newton: reduce step size for large updates
-      double stepNorm = dx.norm2();
-      double dampingFactor = 1.0;
-      if (stepNorm > 1.0) {
-        dampingFactor = 1.0 / stepNorm;
-        dampingFactor = Math.max(dampingFactor, 0.1); // Minimum 10% step
-      }
-
-      u.minusEquals(dx.times(dampingFactor));
-      return (dx.norm2() * dampingFactor / Math.max(u.norm2(), 1e-10));
-    } catch (Exception ex) {
-      throw ex;
+      alpha *= 0.5;
     }
+
+    // Update u with accepted step
+    double stepNormSq = 0.0;
+    double uNormSq = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      double step = alpha * dx.get(i, 0);
+      u.set(i, 0, u.get(i, 0) - step);
+      stepNormSq += step * step;
+      uNormSq += u.get(i, 0) * u.get(i, 0);
+    }
+    return Math.sqrt(stepNormSq) / Math.max(Math.sqrt(uNormSq), 1e-10);
   }
 }

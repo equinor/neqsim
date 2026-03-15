@@ -439,8 +439,8 @@ public class TPflash extends Flash {
 
     // Reduced acceleration interval for faster convergence
     int accelerateInterval = 5;
-    // Adaptive Newton limit: switch earlier when close to convergence
-    int newtonLimit = 15;
+    // Newton switch: line search on Q enables earlier switch (globally convergent)
+    int newtonLimit = 8;
     int timeFromLastGibbsFail = 0;
 
     double chemdev = 0;
