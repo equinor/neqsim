@@ -112,19 +112,12 @@ public class TPmultiflash extends TPflash {
           if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
               || system.getPhase(0).getComponent(i).isIsIon()) {
             // Ions only exist in aqueous phases, near-zero in gas/oil
-            if (isAqueous) {
-              // In aqueous phase, calculate ion x from moles
-              double totalMoles = system.getPhase(k).getNumberOfMolesInPhase();
-              if (totalMoles > 1e-100) {
-                system.getPhase(k).getComponent(i)
-                    .setx(system.getPhase(k).getComponent(i).getNumberOfmoles() / totalMoles);
-              } else {
-                system.getPhase(k).getComponent(i).setx(system.getPhase(0).getComponent(i).getz());
-              }
-            } else {
+            if (!isAqueous) {
               // No ions in gas or oil phases
               system.getPhase(k).getComponent(i).setx(1e-50);
             }
+            // In aqueous phase: ion composition is set by chemical equilibrium,
+            // not by phase flash. Keep current mole fraction unchanged.
           } else {
             // Non-ionic components: normal flash calculation
             // Use cached fugacity coefficients when available
@@ -284,8 +277,8 @@ public class TPmultiflash extends TPflash {
         }
       }
       system.normalizeBeta();
-      // Note: init(1) not needed here — only beta changed, compositions are unchanged,
-      // so fugacity coefficients from previous iteration are still valid
+      // No init(1) needed here: only beta changed, compositions are unchanged,
+      // so fugacity coefficients from previous iteration are still valid.
       calcE();
       setXY();
       system.init(1);
