@@ -25,6 +25,7 @@ public class TPflash extends Flash {
 
   SystemInterface clonedSystem;
   double presdiff = 1.0;
+  private final RachfordRice rachfordRice = new RachfordRice();
 
   /**
    * <p>
@@ -94,7 +95,6 @@ public class TPflash extends Flash {
 
     double oldBeta = system.getBeta();
 
-    RachfordRice rachfordRice = new RachfordRice();
     try {
       // system.setBeta(rachfordRice.calcBetaS(system));
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
@@ -112,7 +112,8 @@ public class TPflash extends Flash {
       system.setBeta(phaseFractionMinimumLimit);
     }
     system.calc_x_y();
-    system.init(1);
+    system.init(1, 0);
+    system.init(1, 1);
   }
 
   /**
@@ -138,7 +139,6 @@ public class TPflash extends Flash {
       system.getPhase(1).getComponent(i).setK(Math.exp(lnK[i]));
     }
     double oldBeta = system.getBeta();
-    RachfordRice rachfordRice = new RachfordRice();
     try {
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     } catch (Exception ex) {
@@ -153,7 +153,8 @@ public class TPflash extends Flash {
     }
 
     system.calc_x_y();
-    system.init(1);
+    system.init(1, 0);
+    system.init(1, 1);
     // sucsSubs();
   }
 
@@ -188,10 +189,10 @@ public class TPflash extends Flash {
       system.getPhase(1).getComponent(i).setK(Math.exp(lnK[i]));
     }
     try {
-      RachfordRice rachfordRice = new RachfordRice();
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
       system.calc_x_y();
-      system.init(1);
+      system.init(1, 0);
+      system.init(1, 1);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -281,7 +282,6 @@ public class TPflash extends Flash {
 
     // Calculates phase fractions and initial composition based on Wilson K-factors
     try {
-      RachfordRice rachfordRice = new RachfordRice();
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     } catch (Exception ex) {
       logger.error(ex.getMessage());
