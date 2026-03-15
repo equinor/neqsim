@@ -1354,14 +1354,8 @@ public class PhaseElectrolyteCPA extends PhaseModifiedFurstElectrolyteEos
     // " +dh + " B
     // " + Btemp + " gv" + gV() + " fv " + fv() + " fvv" + fVV());
     if (Double.isNaN(getMolarVolume())) {
-      // Fallback: use ideal gas molar volume to avoid crashing
-      // The flash algorithm will discard this phase if it is thermodynamically unstable
-      double idealGasVolume = R * temperature / pressure;
-      setMolarVolume(idealGasVolume);
-      Z = pressure * getMolarVolume() / (R * temperature);
-      // System.out.println("BonV: " + BonV + " "+" itert: " + iterations +" " +h + "
-      // " +dh + " B " + Btemp + " D " + Dtemp + " gv" + gV() + " fv " + fv() + " fvv"
-      // + fVV());
+      throw new neqsim.util.exception.IsNaNException(this, "molarVolumeChangePhase",
+          "Molar volume");
     }
 
     return getMolarVolume();
