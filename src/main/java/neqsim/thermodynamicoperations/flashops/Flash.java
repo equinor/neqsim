@@ -168,8 +168,12 @@ public abstract class Flash extends BaseOperation {
       d[i] = minGibsPhaseLogZ[i] + minGibsLogFugCoef[i];
     }
 
-    // Use a fresh clone to avoid modifying any shared state
-    SystemInterface testSystem = system.clone();
+    // Reuse the existing clone from findLowestGibbsEnergyPhase() instead of creating
+    // a second clone. stabilityAnalysis() has already run on this system, but
+    // amplifiedKStabilityRetry sets its own trial compositions and re-initializes,
+    // so the prior state doesn't matter. The calling code (stabilityCheck) always
+    // reinitializes the original system after this method returns.
+    SystemInterface testSystem = minimumGibbsEnergySystem;
 
     // Try both vapor-like and liquid-like amplified trials
     for (int trial = 0; trial < 2; trial++) {
