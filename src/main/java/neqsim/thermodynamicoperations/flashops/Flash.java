@@ -168,8 +168,13 @@ public abstract class Flash extends BaseOperation {
       d[i] = minGibsPhaseLogZ[i] + minGibsLogFugCoef[i];
     }
 
-    // Use a fresh clone to avoid modifying any shared state
-    SystemInterface testSystem = system.clone();
+    // Use system directly with save/restore for phase 1 compositions
+    SystemInterface testSystem = system;
+    double[] _savedX1 = new double[numComp];
+    for (int i = 0; i < numComp; i++) {
+      _savedX1[i] = system.getPhase(1).getComponent(i).getx();
+    }
+    try {
 
     // Try both vapor-like and liquid-like amplified trials
     for (int trial = 0; trial < 2; trial++) {
@@ -290,6 +295,12 @@ public abstract class Flash extends BaseOperation {
       }
     }
     return false;
+    } finally {
+      // Restore phase 1 compositions after amplified K stability retry
+      for (int i = 0; i < numComp; i++) {
+        system.getPhase(1).getComponent(i).setx(_savedX1[i]);
+      }
+    }
   }
 
   /**
@@ -329,6 +340,15 @@ public abstract class Flash extends BaseOperation {
       d[i] = minGibsPhaseLogZ[i] + minGibsLogFugCoef[i];
     }
 
+    // Use minimumGibbsEnergySystem (clone) as workspace for stability analysis.
+    // Lazily create if not yet initialized (when lowestGibbsEnergyPhase was pre-set).
+    if (minimumGibbsEnergySystem == null) {
+      minimumGibbsEnergySystem = system.clone();
+      minimumGibbsEnergySystem.init(0);
+      if (minimumGibbsEnergySystem.getTotalNumberOfMoles() < 1e-20) {
+        minimumGibbsEnergySystem.setTotalNumberOfMoles(1.0);
+      }
+    }
     SystemInterface clonedSystem = minimumGibbsEnergySystem;
     double[] sumw = new double[2];
     sumw[1] = 0.0;
@@ -625,7 +645,7 @@ public abstract class Flash extends BaseOperation {
       RachfordRice rachfordRice = new RachfordRice();
       try {
         system.setBeta(
-            rachfordRice.calcBeta(system.getKvector(), minimumGibbsEnergySystem.getzvector()));
+            rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
       } catch (Exception ex) {
         if (!Double.isNaN(rachfordRice.getBeta()[0])) {
           system.setBeta(rachfordRice.getBeta()[0]);

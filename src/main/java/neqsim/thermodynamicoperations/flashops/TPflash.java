@@ -377,6 +377,11 @@ public class TPflash extends Flash {
     }
 
     if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta())) {
+      // Pre-set lowestGibbsEnergyPhase to skip clone + Gibbs comparison in
+      // findLowestGibbsEnergyPhase. The clone will be lazily created by
+      // stabilityAnalysis only when actually needed.
+      lowestGibbsEnergyPhase = minGibbsPhase;
+      findLowestGibbsPhaseIsChecked = true;
       if (system.checkStability() && stabilityCheck()) {
         if (system.doMultiPhaseCheck()) {
           // logger.info("one phase flash is stable - checking multiphase flash....");
