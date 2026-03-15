@@ -693,6 +693,7 @@ public class TPmultiflash extends TPflash {
             oldoldlogw[i] = oldlogw[i];
             oldlogw[i] = logWi[i];
           }
+          // Newton needs fugcoef + composition derivatives
           clonedSystem.get(0).init(3, 1);
           alpha = new double[nc];
 
