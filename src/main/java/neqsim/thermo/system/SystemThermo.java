@@ -3738,8 +3738,7 @@ public abstract class SystemThermo implements SystemInterface {
       }
       if (type > 2) {
         for (int j = 0; j < numberOfComponents; j++) {
-          getPhase(phaseNum).getComponent(j).logfugcoefdT(getPhase(phaseNum));
-          getPhase(phaseNum).getComponent(j).logfugcoefdP(getPhase(phaseNum));
+          // dT/dP already computed in type > 1 block above — only compute dN here
           getPhase(phaseNum).getComponent(j).logfugcoefdN(getPhase(phaseNum));
         }
       }
