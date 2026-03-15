@@ -25,6 +25,7 @@ public class TPflash extends Flash {
 
   SystemInterface clonedSystem;
   double presdiff = 1.0;
+  private final RachfordRice rachfordRice = new RachfordRice();
 
   /**
    * <p>
@@ -94,7 +95,6 @@ public class TPflash extends Flash {
 
     double oldBeta = system.getBeta();
 
-    RachfordRice rachfordRice = new RachfordRice();
     try {
       // system.setBeta(rachfordRice.calcBetaS(system));
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
@@ -138,7 +138,6 @@ public class TPflash extends Flash {
       system.getPhase(1).getComponent(i).setK(Math.exp(lnK[i]));
     }
     double oldBeta = system.getBeta();
-    RachfordRice rachfordRice = new RachfordRice();
     try {
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     } catch (Exception ex) {
@@ -188,7 +187,6 @@ public class TPflash extends Flash {
       system.getPhase(1).getComponent(i).setK(Math.exp(lnK[i]));
     }
     try {
-      RachfordRice rachfordRice = new RachfordRice();
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
       system.calc_x_y();
       system.init(1);
@@ -281,7 +279,6 @@ public class TPflash extends Flash {
 
     // Calculates phase fractions and initial composition based on Wilson K-factors
     try {
-      RachfordRice rachfordRice = new RachfordRice();
       system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     } catch (Exception ex) {
       logger.error(ex.getMessage());
@@ -434,8 +431,9 @@ public class TPflash extends Flash {
 
     // Reduced acceleration interval for faster convergence
     int accelerateInterval = 5;
-    // Adaptive Newton limit: switch earlier when close to convergence
-    int newtonLimit = 15;
+    // Newton limit: number of SS iterations before switching to Newton-Raphson.
+    // Reduced from 15 to 12 (line search on Q enables earlier switch).
+    int newtonLimit = 12;
     int timeFromLastGibbsFail = 0;
 
     double chemdev = 0;
