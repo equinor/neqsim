@@ -3745,10 +3745,11 @@ public abstract class SystemThermo implements SystemInterface {
       }
     }
 
-    for (PhaseInterface tmpPhase : phaseArray) {
-      if (tmpPhase != null && tmpPhase.getType() == PhaseType.GAS) {
-        tmpPhase.setType(PhaseType.OIL);
-      }
+    // Only reclassify the initialized phase (not all phases).
+    // Phase 0 is the reference phase and is allowed to remain GAS.
+    // This is consistent with initAnalytic(type) which only reclassifies phases >= 1.
+    if (phaseNum >= 1 && getPhase(phaseNum).getType() == PhaseType.GAS) {
+      getPhase(phaseNum).setType(PhaseType.OIL);
     }
 
     this.isInitialized = true;
