@@ -593,7 +593,8 @@ public abstract class Flash extends BaseOperation {
         logger.debug("Stability analysis did not converge: {}", ex.getMessage());
       }
     }
-    if (tm[0] > tmLimit && tm[1] > tmLimit || system.getPhase(0).getNumberOfComponents() == 1) {
+    if (tm[0] > tmLimit && tm[1] > tmLimit && !system.isChemicalSystem()
+        || system.getPhase(0).getNumberOfComponents() == 1) {
       // Standard analysis declares stable. Try amplified K-value trials with a
       // separate clone to catch near-critical instability that the standard
       // analysis misses (e.g. near the cricondenbar where Wilson K ≈ 1).
