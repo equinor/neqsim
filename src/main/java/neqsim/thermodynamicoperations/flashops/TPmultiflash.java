@@ -12,7 +12,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
-import org.ejml.dense.row.NormOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
@@ -47,7 +46,6 @@ public class TPmultiflash extends TPflash {
 
   double[] multTerm;
   double[] multTerm2;
-  double[][] fugCoeffCache;
 
   /**
    * <p>
@@ -99,33 +97,35 @@ public class TPmultiflash extends TPflash {
    * </p>
    */
   public void setXY() {
-    int numComp = system.getPhase(0).getNumberOfComponents();
     // Check for ions directly - ions must be handled specially regardless of whether
     // chemical reactions are defined. Ions can only exist in aqueous phases.
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
       boolean isAqueous = system.getPhase(k).getType() == PhaseType.AQUEOUS;
 
-      for (int i = 0; i < numComp; i++) {
+      for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
         if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
           // Check for ions - ions can only exist in aqueous phases
           // This check must happen regardless of isChemicalSystem() status
           if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
               || system.getPhase(0).getComponent(i).isIsIon()) {
             // Ions only exist in aqueous phases, near-zero in gas/oil
-            if (!isAqueous) {
+            if (isAqueous) {
+              // In aqueous phase, calculate ion x from moles
+              double totalMoles = system.getPhase(k).getNumberOfMolesInPhase();
+              if (totalMoles > 1e-100) {
+                system.getPhase(k).getComponent(i)
+                    .setx(system.getPhase(k).getComponent(i).getNumberOfmoles() / totalMoles);
+              } else {
+                system.getPhase(k).getComponent(i).setx(system.getPhase(0).getComponent(i).getz());
+              }
+            } else {
               // No ions in gas or oil phases
               system.getPhase(k).getComponent(i).setx(1e-50);
             }
-            // In aqueous phase: ion composition is set by chemical equilibrium,
-            // not by phase flash. Keep current mole fraction unchanged.
           } else {
             // Non-ionic components: normal flash calculation
-            // Use cached fugacity coefficients when available
-            double fugCoeff =
-                (fugCoeffCache != null && fugCoeffCache.length > k && fugCoeffCache[k].length > i)
-                    ? fugCoeffCache[k][i]
-                    : system.getPhase(k).getComponent(i).getFugacityCoefficient();
-            double newX = system.getPhase(0).getComponent(i).getz() / Erow[i] / fugCoeff;
+            double newX = system.getPhase(0).getComponent(i).getz() / Erow[i]
+                / system.getPhase(k).getComponent(i).getFugacityCoefficient();
             if (!Double.isFinite(newX) || newX <= 0.0) {
               newX = Math.max(system.getPhase(0).getComponent(i).getz(), 1.0e-30);
             }
@@ -144,28 +144,15 @@ public class TPmultiflash extends TPflash {
    * </p>
    */
   public void calcE() {
-    int numComp = system.getPhase(0).getNumberOfComponents();
-    int numPhases = system.getNumberOfPhases();
-
-    // Cache fugacity coefficients to avoid repeated virtual method dispatch
-    if (fugCoeffCache == null || fugCoeffCache.length != numPhases
-        || fugCoeffCache[0].length != numComp) {
-      fugCoeffCache = new double[numPhases][numComp];
-    }
-    for (int k = 0; k < numPhases; k++) {
-      for (int i = 0; i < numComp; i++) {
-        fugCoeffCache[k][i] = system.getPhase(k).getComponent(i).getFugacityCoefficient();
-      }
-    }
-
-    for (int i = 0; i < numComp; i++) {
+    // E = new double[system.getPhase(0).getNumberOfComponents()];
+    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       Erow[i] = 0.0;
-      for (int k = 0; k < numPhases; k++) {
-        Erow[i] += system.getPhase(k).getBeta() / fugCoeffCache[k][i];
+      for (int k = 0; k < system.getNumberOfPhases(); k++) {
+        Erow[i] += system.getPhase(k).getBeta()
+            / system.getPhase(k).getComponent(i).getFugacityCoefficient();
       }
-      if (Erow[i] < 1e-100) {
+      if (Erow[i] < 1e-100)
         Erow[i] = 1e-100;
-      }
       if (Double.isNaN(Erow[i])) {
         logger.error("Erow is NaN for component " + system.getPhase(0).getComponent(i).getName());
         Erow[i] = 1e-100;
@@ -181,28 +168,35 @@ public class TPmultiflash extends TPflash {
    * @return a double
    */
   public double calcQ() {
+    /*
+     * double betaTotal = 0; for (int k = 0; k < system.getNumberOfPhases(); k++) { betaTotal +=
+     * system.getPhase(k).getBeta(); } Q = betaTotal;
+     */
     this.calcE();
+    /*
+     * for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) { Q -= Math.log(E[i]) *
+     * system.getPhase(0).getComponent(i).getz(); }
+     */
 
-    int numComp = system.getPhase(0).getNumberOfComponents();
-    int numPhases = system.getNumberOfPhases();
-
-    for (int i = 0; i < numComp; i++) {
+    for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       multTerm[i] = system.getPhase(0).getComponent(i).getz() / Erow[i];
       multTerm2[i] = system.getPhase(0).getComponent(i).getz() / (Erow[i] * Erow[i]);
     }
 
-    for (int k = 0; k < numPhases; k++) {
+    for (int k = 0; k < system.getNumberOfPhases(); k++) {
       dQdbeta[k][0] = 1.0;
-      for (int i = 0; i < numComp; i++) {
-        dQdbeta[k][0] -= multTerm[i] / fugCoeffCache[k][i];
+      for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+        dQdbeta[k][0] -= multTerm[i] / system.getPhase(k).getComponent(i).getFugacityCoefficient();
       }
     }
 
-    for (int i = 0; i < numPhases; i++) {
-      for (int j = 0; j < numPhases; j++) {
+    for (int i = 0; i < system.getNumberOfPhases(); i++) {
+      for (int j = 0; j < system.getNumberOfPhases(); j++) {
         Qmatrix[i][j] = 0.0;
-        for (int k = 0; k < numComp; k++) {
-          Qmatrix[i][j] += multTerm2[k] / (fugCoeffCache[j][k] * fugCoeffCache[i][k]);
+        for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
+          Qmatrix[i][j] +=
+              multTerm2[k] / (system.getPhase(j).getComponent(k).getFugacityCoefficient()
+                  * system.getPhase(i).getComponent(k).getFugacityCoefficient());
         }
         if (i == j) {
           Qmatrix[i][j] += 1.0e-3;
@@ -220,46 +214,29 @@ public class TPmultiflash extends TPflash {
    * @return a double
    */
   public double solveBeta() {
-    int numPhases = system.getNumberOfPhases();
-
-    // Pre-allocate EJML matrices (reused across iterations)
-    DMatrixRMaj gradVec = new DMatrixRMaj(numPhases, 1);
-    DMatrixRMaj hessianMat = new DMatrixRMaj(numPhases, numPhases);
-    DMatrixRMaj stepVec = new DMatrixRMaj(numPhases, 1);
-    double[] betaArr = new double[numPhases];
-
+    SimpleMatrix betaMatrix = new SimpleMatrix(1, system.getNumberOfPhases());
+    SimpleMatrix ans = null;
     double err = 1.0;
     int iter = 1;
     do {
       iter++;
-      for (int k = 0; k < numPhases; k++) {
-        betaArr[k] = system.getPhase(k).getBeta();
+      for (int k = 0; k < system.getNumberOfPhases(); k++) {
+        betaMatrix.set(0, k, system.getPhase(k).getBeta());
       }
 
       calcQ();
-
-      // Fill pre-allocated EJML matrices from calcQ results
-      for (int k = 0; k < numPhases; k++) {
-        gradVec.set(k, 0, dQdbeta[k][0]);
-        for (int j = 0; j < numPhases; j++) {
-          hessianMat.set(k, j, Qmatrix[k][j]);
-        }
-      }
-
+      SimpleMatrix dQM = new SimpleMatrix(dQdbeta);
+      SimpleMatrix dQdBM = new SimpleMatrix(Qmatrix);
       try {
-        if (!CommonOps_DDRM.solve(hessianMat, gradVec, stepVec)) {
-          logger.error("Matrix solve failed in solveBeta");
-          break;
-        }
+        ans = dQdBM.solve(dQM).transpose();
       } catch (Exception ex) {
         logger.error(ex.getMessage());
         break;
       }
-
-      double damping = iter / (iter + 3.0);
+      betaMatrix = betaMatrix.minus(ans.scale(iter / (iter + 3.0)));
       removePhase = false;
-      for (int k = 0; k < numPhases; k++) {
-        double currBeta = betaArr[k] - damping * stepVec.get(k, 0);
+      for (int k = 0; k < system.getNumberOfPhases(); k++) {
+        double currBeta = betaMatrix.get(0, k);
         if (currBeta < phaseFractionMinimumLimit) {
           system.setBeta(k, phaseFractionMinimumLimit);
           if (checkOneRemove) {
@@ -277,12 +254,11 @@ public class TPmultiflash extends TPflash {
         }
       }
       system.normalizeBeta();
-      // No init(1) needed here: only beta changed, compositions are unchanged,
-      // so fugacity coefficients from previous iteration are still valid.
+      system.init(1);
       calcE();
       setXY();
       system.init(1);
-      err = NormOps_DDRM.normF(stepVec);
+      err = ans.normF();
     } while ((err > 1e-12 && iter < 50) || iter < 3);
     // logger.info("iterations " + iter);
     return err;
