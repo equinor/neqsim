@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.FileWriter;
 import java.io.PrintWriter;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
@@ -22,6 +23,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author benchmarking
  * @version 1.0
  */
+@Tag("slow")
 class TPFlashBenchmarkTest {
 
   /**

@@ -47,7 +47,12 @@ NeqSim implements the classical Michelsen flash algorithm with stability analysi
    - [4.1 Chemical Equilibrium Coupling](#41-chemical-equilibrium-coupling)
    - [4.2 Ion Handling in Stability Analysis](#42-ion-handling-in-stability-analysis)
    - [4.3 Aqueous Phase Management](#43-aqueous-phase-management)
-5. [References](#5-references)
+5. [Performance Optimizations](#5-performance-optimizations)
+   - [5.1 Fugacity Coefficient Cache](#51-fugacity-coefficient-cache)
+   - [5.2 EJML Matrix Operations](#52-ejml-matrix-operations)
+   - [5.3 Wilson K Early Exit](#53-wilson-k-early-exit)
+   - [5.4 Two-Stage Trial Strategy](#54-two-stage-trial-strategy)
+6. [References](#6-references)
 
 ---
 
@@ -295,10 +300,10 @@ public void sucsSubs() {
         system.getPhase(0).getComponent(i).setK(
             system.getPhase(1).getComponent(i).getFugacityCoefficient()
             / system.getPhase(0).getComponent(i).getFugacityCoefficient() * presdiff);
-        deviation += Math.abs(Math.log(system.getPhase(0).getComponent(i).getK()) 
+        deviation += Math.abs(Math.log(system.getPhase(0).getComponent(i).getK())
                             - Math.log(Kold));
     }
-    
+
     RachfordRice rachfordRice = new RachfordRice();
     system.setBeta(rachfordRice.calcBeta(system.getKvector(), system.getzvector()));
     system.calc_x_y();
@@ -333,7 +338,7 @@ public void accselerateSucsSubs() {
         prod2 += oldoldDeltalnK[i] * oldoldDeltalnK[i];
     }
     double lambda = prod1 / prod2;
-    
+
     for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
         lnK[i] += lambda / (1.0 - lambda) * deltalnK[i];
         system.getPhase(0).getComponent(i).setK(Math.exp(lnK[i]));
@@ -424,7 +429,7 @@ NeqSim implements a hybrid algorithm combining successive substitution with Newt
 
 2. **Iterate:**
    $$\ln W_i^{(n+1)} = d_i - \ln \phi_i(\mathbf{w}^{(n)})$$
-   
+
    Where $w_i = W_i / \sum_j W_j$ (normalized composition)
 
 3. **Accelerate** using DEM (every 7 iterations):
@@ -493,7 +498,7 @@ When `system.setMultiPhaseCheck(true)` is called, NeqSim uses the `TPmultiflash`
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │ STEP 1: ELECTROLYTE PREPROCESSING                                               │
 ├─────────────────────────────────────────────────────────────────────────────────┤
-│  IF system is chemical/electrolyte:                                             │
+│  IF system.hasIons() (any ionic components, not just chemical systems):         │
 │     • Store ionic component compositions: ionicZ[i] = z[i] for ions             │
 │     • Temporarily set ion z = 1e-100 (remove from stability analysis)           │
 │     • hasIons = true                                                            │
@@ -614,8 +619,15 @@ When `system.setMultiPhaseCheck(true)` is called, NeqSim uses the `TPmultiflash`
 └─────────────────────────────────────────────────────────────────────────────────┘
                                         ↓
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│ STEP 10: RECURSIVE STABILITY CHECK                                              │
+│ STEP 10: POST-FLASH STABILITY CHECK AND RECURSIVE RE-RUN                        │
 ├─────────────────────────────────────────────────────────────────────────────────┤
+│  After flash converges with 2 phases, check for a third phase:                 │
+│  IF multiPhaseCheck AND 2 ≤ numPhases < 3 AND NOT postFlashStabilityChecked:   │
+│     → postFlashStabilityChecked = true                                          │
+│     → stabilityAnalysisEnhanced()  [Wilson K-based additional check]            │
+│     → IF new phase found: re-run()  [recursive call]                           │
+│                                                                                 │
+│  After phase removal (β < βmin or trivial solutions):                          │
 │  IF hasRemovedPhase AND NOT secondTime:                                         │
 │     → secondTime = true                                                         │
 │     → stabilityAnalysis3()  [re-check stability]                               │
@@ -625,7 +637,7 @@ When `system.setMultiPhaseCheck(true)` is called, NeqSim uses the `TPmultiflash`
 
 ### 3.0.1 Stability Analysis Detailed Flow
 
-The `stabilityAnalysis()` method tests multiple trial phases to find instabilities:
+The `stabilityAnalysis()` method tests multiple trial phases to find instabilities. It proceeds in two stages: first **Wilson K-based trial phases** (fast, catch most VLE instabilities), then **pure-component trial phases** (slower, catch LLE and unusual splits).
 
 ```
 ╔═══════════════════════════════════════════════════════════════════════════════╗
@@ -638,13 +650,60 @@ The `stabilityAnalysis()` method tests multiple trial phases to find instabiliti
 │  • Clone system for trial phase calculations                                    │
 │  • Calculate reference chemical potentials:                                     │
 │       d[k] = ln(x[k]) + ln(φ[k])   for each component k                        │
-│  • Initialize logWi[j] = 1.0 for components with z > 1e-100                    │
-│  • Find heaviest and lightest hydrocarbon components                           │
+│  • Initialize logWi[j] = 0.0 for components with z > 1e-100                    │
+│  • Compute Wilson K-values for all valid (non-ionic, non-negligible) components │
 └─────────────────────────────────────────────────────────────────────────────────┘
                                         ↓
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│ COMPONENT SELECTION                                                             │
+│ STAGE 0: WILSON K EARLY EXIT (O2)                                               │
 ├─────────────────────────────────────────────────────────────────────────────────┤
+│  Calculate Wilson K for each valid component:                                   │
+│     K[i] = (Pc[i] / P) × exp[5.373 × (1 + ω[i]) × (1 - Tc[i]/T)]              │
+│                                                                                 │
+│  Track maxAbsLogK = max |ln(K[i])| across all valid components                 │
+│                                                                                 │
+│  IF maxAbsLogK < 0.01:                                                          │
+│     → All K ≈ 1.0 → system is near or above critical point                     │
+│     → Trivially stable, RETURN immediately                                      │
+│                                                                                 │
+│  This avoids expensive stability analysis for supercritical conditions.         │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                        ↓
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ STAGE 1: WILSON K-BASED TRIAL PHASES (O3)                                       │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  Test two trial phases using Wilson K-values as initialization:                 │
+│                                                                                 │
+│  Trial 0 — LIQUID-LIKE:    W[i] = z[i] / K[i]                                  │
+│     Heavy components (K << 1) are strongly enriched.                            │
+│     Detects liquid dropout from gas, water condensation.                        │
+│                                                                                 │
+│  Trial 1 — VAPOR-LIKE:     W[i] = K[i] × z[i]                                  │
+│     Light/volatile components are strongly enriched.                            │
+│     Detects vapor formation from liquid.                                        │
+│                                                                                 │
+│  FOR EACH TRIAL (0 and 1):                                                      │
+│  │   Set initial logWi[i] = ln(W[i])                                           │
+│  │   SSI loop (up to 50 iterations):                                            │
+│  │   │   clonedSystem.init(1,1) — compute fugacity coefficients                │
+│  │   │   logWi[i] = d[i] - ln(φ[i])                                            │
+│  │   │   Every 7th iteration: Wegstein/DEM acceleration                         │
+│  │   │      λ = Σ(ΔlnW^n × ΔlnW^{n-1}) / Σ(ΔlnW^{n-1})²                       │
+│  │   │      logWi += λ/(1-λ) × ΔlnW  (only if 0 < λ < 1)                       │
+│  │   │   Disable acceleration if error increases                               │
+│  │   Calculate tm = 1 - Σ exp(logWi)                                           │
+│  │   Trivial solution check: Σ|w - x_existing| < 1e-4                          │
+│  │   IF tm < -1e-8 AND NOT trivial AND converged:                               │
+│  │      → Add new phase, set composition from trial, RETURN                     │
+│  │                                                                              │
+│  IF both trials stable → proceed to pure-component trials                      │
+└─────────────────────────────────────────────────────────────────────────────────┘
+                                        ↓
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│ STAGE 2: PURE-COMPONENT TRIALS — COMPONENT SELECTION                            │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  Find heaviest and lightest hydrocarbon components (by molar mass)             │
+│                                                                                 │
 │  Components to test (loop j from Nc-1 down to 0):                              │
 │     SKIP if:                                                                    │
 │        • x[j] < 1e-100  (negligible)                                           │
@@ -683,11 +742,10 @@ The `stabilityAnalysis()` method tests multiple trial phases to find instabiliti
 │  │                                                                              │
 │  │   IF iter <= 150 (SSI phase):                                               │
 │  │   │                                                                          │
-│  │   │   IF iter % 7 == 0 AND useaccsubst (DEM acceleration):                  │
+│  │   │   IF iter % 5 == 0 AND iter > 5 AND useaccsubst (DEM acceleration):     │
 │  │   │   │   Calculate acceleration factor λ:                                  │
-│  │   │   │      λ = Σ(ΔlnW^n × ΔlnW^n-1 × (ΔlnW^n-1)²)                        │
-│  │   │   │          / Σ(ΔlnW^n-1)⁴                                            │
-│  │   │   │   Apply acceleration:                                               │
+│  │   │   │      λ = Σ(ΔlnW^n × ΔlnW^{n-1}) / Σ(ΔlnW^{n-1})²                   │
+│  │   │   │   Apply acceleration (only if 0 < λ < 1):                           │
 │  │   │   │      lnW[i] += λ/(1-λ) × ΔlnW[i]                                   │
 │  │   │   │                                                                      │
 │  │   │   ELSE (standard SSI):                                                  │
@@ -705,13 +763,14 @@ The `stabilityAnalysis()` method tests multiple trial phases to find instabiliti
 │  │   │   clonedSystem.init(3,1)  [compute fugacity derivatives]                │
 │  │   │   α[i] = 2√(W[j][i])                                                    │
 │  │   │                                                                          │
-│  │   │   Build objective function F and Jacobian J:                            │
+│  │   │   Build objective function F and Jacobian J using raw EJML               │
+│  │   │   (DMatrixRMaj, pre-allocated outside loop):                            │
 │  │   │      F[i] = √W[i] × (lnW[i] + ln(φ[i]) - d[i])                         │
 │  │   │      J[i,k] = δ[i,k] + √(W[i]×W[k]) × ∂ln(φ[i])/∂n[k]                  │
 │  │   │                                                                          │
-│  │   │   Solve Newton step:                                                    │
+│  │   │   Solve Newton step via CommonOps_DDRM.solve():                         │
 │  │   │      Δα = -(I + J)⁻¹ × F                                               │
-│  │   │      (with regularization fallback if singular)                         │
+│  │   │      (with regularization: add 0.1 to diagonal if singular)             │
 │  │   │                                                                          │
 │  │   │   Update:                                                               │
 │  │   │      α_new = α + Δα                                                     │
@@ -770,7 +829,10 @@ The `stabilityAnalysis()` method tests multiple trial phases to find instabiliti
 |-----------|-------|-------------|
 | `maxsucssubiter` | 150 | Maximum SSI iterations before Newton |
 | `maxiter` | 200 | Absolute maximum iterations |
-| DEM interval | 7 | Apply acceleration every 7th iteration |
+| Wilson K trial max iter | 50 | Max iterations for K-based trial phases |
+| Wilson K early exit | 0.01 | max\|ln(K)\| threshold for supercritical skip |
+| DEM interval (K trials) | 7 | Apply Wegstein acceleration every 7th iter |
+| DEM interval (pure-comp) | 5 | Apply DEM acceleration every 5th iter |
 | Convergence tolerance | 1e-9 | Error threshold for lnW convergence |
 | Instability threshold | -1e-8 | tm value indicating phase split |
 | Trivial solution threshold | 1e-4 | Composition difference to detect trivial |
@@ -781,7 +843,17 @@ The multiphase stability analysis in NeqSim is more sophisticated than the basic
 
 #### 3.0.2.1 Trial Phase Selection Strategy
 
-Instead of using only Wilson K-factor estimates, the multiphase stability analysis tests **component-seeded trial phases**:
+The stability analysis proceeds in two stages. First, **Wilson K-based trial phases** are tested (liquid-like $z/K$ and vapor-like $K \cdot z$) — these are fast and catch most VLE instabilities. If both K-based trials are stable, the algorithm falls through to **pure-component trial phases** which test for polarity-driven LLE and other unusual splits.
+
+**Stage 1: Wilson K-based trials** (see Section 3.0.1 flowchart for details):
+
+1. Compute Wilson K-values for all valid components
+2. If all $|\ln K_i| < 0.01$ (near-critical), return immediately — system is trivially stable
+3. Test liquid-like trial ($W_i = z_i / K_i$): enriches heavy components
+4. Test vapor-like trial ($W_i = K_i \cdot z_i$): enriches volatile components
+5. If either trial shows instability ($\text{tm} < -10^{-8}$), add phase and return
+
+**Stage 2: Pure-component trials** (fallback for cases K-based trials miss):
 
 1. **Pure component initialization**: For each component $j$, create a trial phase with:
    $$w_i^{(0)} = \begin{cases} 1.0 & \text{if } i = j \\ 10^{-12} & \text{if } i \neq j \end{cases}$$
@@ -789,7 +861,7 @@ Instead of using only Wilson K-factor estimates, the multiphase stability analys
 2. **Hydrocarbon optimization**: To reduce computational cost, only two hydrocarbon components are tested:
    - The **heaviest hydrocarbon** (highest molar mass)
    - The **lightest hydrocarbon** (lowest molar mass)
-   
+
    This captures both potential liquid-liquid separation (heavy components) and vapor formation (light components).
 
 3. **Non-hydrocarbon components**: All non-hydrocarbon components (water, CO₂, H₂S, etc.) are tested individually.
@@ -809,7 +881,7 @@ for (int j = system.getPhase(0).getNumberOfComponents() - 1; j >= 0; j--) {
     if (minimumGibbsEnergySystem.getPhase(0).getComponent(j).isHydrocarbon()
         && j != hydrocarbonTestCompNumb && j != lightTestCompNumb)
         continue;
-    
+
     // Perform stability test for this component...
 }
 ```
@@ -858,13 +930,13 @@ for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
 
 #### 3.0.2.4 Convergence Acceleration (DEM)
 
-Every 7 iterations, the Dominant Eigenvalue Method accelerates convergence:
+Every 5 iterations in pure-component trials (every 7 in Wilson K trials), the Dominant Eigenvalue Method accelerates convergence:
 
-$$\lambda = \frac{\sum_i (\Delta \ln W_i^{(n)}) \cdot (\Delta \ln W_i^{(n-1)}) \cdot (\Delta \ln W_i^{(n-1)})^2}{\sum_i (\Delta \ln W_i^{(n-1)})^4}$$
+$$\lambda = \frac{\sum_i (\Delta \ln W_i^{(n)}) \cdot (\Delta \ln W_i^{(n-1)})}{\sum_i (\Delta \ln W_i^{(n-1)})^2}$$
 
 $$\ln W_i^{\text{acc}} = \ln W_i^{(n)} + \frac{\lambda}{1 - \lambda} \Delta \ln W_i^{(n)}$$
 
-Acceleration is disabled if the error increases (indicating divergence):
+Acceleration is only applied when $0 < \lambda < 1$ (convergent regime) and $\sum (\Delta \ln W^{(n-1)})^2 > 10^{-20}$. It is disabled entirely if the error increases (indicating divergence):
 ```java
 if (iter > 2 && err > errOld) {
     useaccsubst = false;
@@ -881,13 +953,27 @@ $$F_i = \sqrt{W_i} \left[ \ln W_i + \ln \phi_i(\mathbf{w}) - d_i \right]$$
 **Jacobian with fugacity derivatives:**
 $$\frac{\partial F_i}{\partial \alpha_k} = \delta_{ik} + \sqrt{W_i W_k} \cdot \frac{\partial \ln \phi_i}{\partial n_k}$$
 
-**Newton update with regularization:**
-$$\boldsymbol{\alpha}^{(n+1)} = \boldsymbol{\alpha}^{(n)} - (\mathbf{I} + \mathbf{J})^{-1} \mathbf{F}$$
+**Newton update:**
+$$\boldsymbol{\alpha}^{(n+1)} = \boldsymbol{\alpha}^{(n)} - \mathbf{J}^{-1} \mathbf{F}$$
 
-The implementation includes robust fallbacks for singular matrices:
-1. Try with small regularization ($10^{-6} \cdot \mathbf{I}$)
-2. Try with larger regularization ($0.5 \cdot \mathbf{I}$)
-3. Use pseudo-inverse as last resort
+The implementation uses **raw EJML** (`DMatrixRMaj`) matrices pre-allocated outside the iteration loop to avoid GC pressure. The system is solved via `CommonOps_DDRM.solve()`:
+
+```java
+// Pre-allocate Newton matrices outside the iteration loop
+DMatrixRMaj newtonF = new DMatrixRMaj(nc, 1);
+DMatrixRMaj newtonJ = new DMatrixRMaj(nc, nc);
+DMatrixRMaj newtonDx = new DMatrixRMaj(nc, 1);
+
+// Solve J·dx = F
+boolean solved = CommonOps_DDRM.solve(newtonJ, newtonF, newtonDx);
+if (!solved) {
+    // Regularize: add 0.1 to diagonal and retry
+    for (int i = 0; i < nc; i++) {
+        newtonJ.add(i, i, 0.1);
+    }
+    solved = CommonOps_DDRM.solve(newtonJ, newtonF, newtonDx);
+}
+```
 
 #### 3.0.2.6 Trivial Solution Detection
 
@@ -924,13 +1010,13 @@ When an unstable stationary point is found ($\text{tm} < -10^{-8}$):
 if (tm[k] < -1e-8 && !(Double.isNaN(tm[k]))) {
     system.addPhase();
     unstabcomp = k;
-    
+
     // Set composition from stationary point
     for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
         system.getPhase(system.getNumberOfPhases() - 1).getComponent(i).setx(x[k][i]);
     }
     system.getPhases()[system.getNumberOfPhases() - 1].normalize();
-    
+
     // Set initial phase fraction
     multiPhaseTest = true;
     system.setBeta(system.getNumberOfPhases() - 1,
@@ -947,21 +1033,35 @@ NeqSim implements three stability analysis methods in `TPmultiflash`:
 
 | Method | Description | Use Case |
 |--------|-------------|----------|
-| `stabilityAnalysis()` | Single cloned system, optimized for performance | Primary method |
-| `stabilityAnalysis2()` | Multiple cloned systems (one per component) | Alternative for difficult cases |
+| `stabilityAnalysis()` | Wilson K trials + pure-component trials, single clone | Primary method — called first |
+| `stabilityAnalysisEnhanced()` | Wilson K + LLE polarity trials, tests all phases | After standard fails; also post-flash 3-phase check |
 | `stabilityAnalysis3()` | Re-run after phase removal | Post-processing verification |
 
 The main `run()` method orchestrates these:
 ```java
 if (doStabilityAnalysis) {
-    stabilityAnalysis();  // Primary stability check
+    stabilityAnalysis();  // Primary: K trials + pure-component trials
+    // If enhanced enabled and standard didn't find additional phases
+    if (system.doEnhancedMultiPhaseCheck() && !multiPhaseTest
+        && system.getNumberOfPhases() < 3) {
+        stabilityAnalysisEnhanced();  // Extended: K + LLE polarity trials
+    }
 }
 
 // ... phase equilibrium calculation ...
 
+// Post-flash: check for third phase (e.g., VLLE)
+if (system.doMultiPhaseCheck() && system.getNumberOfPhases() >= 2
+    && system.getNumberOfPhases() < 3 && !postFlashStabilityChecked) {
+    postFlashStabilityChecked = true;
+    stabilityAnalysisEnhanced();
+    if (newPhaseFound) run();  // Recursive call
+}
+
+// After phase removal: verify stability
 if (hasRemovedPhase && !secondTime) {
     secondTime = true;
-    stabilityAnalysis3();  // Re-check after phase removal
+    stabilityAnalysis3();
     run();  // Recursive call
 }
 ```
@@ -1062,11 +1162,12 @@ The enhanced stability analysis (`stabilityAnalysisEnhanced()`) addresses these 
 
 | Feature | Standard Analysis | Enhanced Analysis |
 |---------|-------------------|-------------------|
-| Initial guess | Pure component | Wilson K-values |
-| Trial types | Single | Vapor-like, Liquid-like, LLE |
+| Stage 1 | Wilson K trials (liquid-like z/K, vapor-like K·z) | Wilson K-values (same) |
+| Stage 2 initial guess | Pure component | Vapor-like, Liquid-like, LLE trial types |
 | Reference phase | Phase 0 only | All existing phases |
-| LLE detection | Component-based | Polarity perturbation |
-| Acceleration | DEM every 7 iterations | Wegstein every 5 iterations |
+| LLE detection | Component-based (pure comp) | Polarity perturbation (acentric factor) |
+| K-trial acceleration | Wegstein every 7 iterations | Wegstein every 5 iterations |
+| Pure-comp DEM | Every 5 iterations | N/A (no pure-comp fallback) |
 | Hydrocarbon filtering | Yes (only heaviest/lightest) | No (all components tested) |
 
 #### When to Enable Enhanced Stability Analysis
@@ -1134,29 +1235,47 @@ $$x_i^{(k)} = \frac{z_i}{E_i \phi_i^{(k)}}$$
 
 **NeqSim Implementation:**
 
+The `solveBeta()` method uses pre-allocated **EJML** matrices (`DMatrixRMaj`) for efficient Newton steps on the Q-function. The Hessian includes a small diagonal regularization ($10^{-3}$) for numerical stability:
+
 ```java
-// From TPmultiflash.java - calcQ() and solveBeta()
-public double calcQ() {
-    this.calcE();  // Calculate E_i
-    
-    // Compute gradient dQ/dβ
-    for (int k = 0; k < system.getNumberOfPhases(); k++) {
-        dQdbeta[k][0] = 1.0;
-        for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-            dQdbeta[k][0] -= multTerm[i] / system.getPhase(k).getComponent(i).getFugacityCoefficient();
-        }
-    }
-    
-    // Compute Hessian Q_matrix
-    for (int i = 0; i < system.getNumberOfPhases(); i++) {
-        for (int j = 0; j < system.getNumberOfPhases(); j++) {
-            Qmatrix[i][j] = 0.0;
-            for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
-                Qmatrix[i][j] += multTerm2[k] / (phi_j[k] * phi_i[k]);
+// From TPmultiflash.java - solveBeta()
+public double solveBeta() {
+    int numPhases = system.getNumberOfPhases();
+
+    // Pre-allocate EJML matrices (reused across iterations)
+    DMatrixRMaj gradVec = new DMatrixRMaj(numPhases, 1);
+    DMatrixRMaj hessianMat = new DMatrixRMaj(numPhases, numPhases);
+    DMatrixRMaj stepVec = new DMatrixRMaj(numPhases, 1);
+
+    double err = 1.0;
+    int iter = 1;
+    do {
+        iter++;
+        calcQ();  // Fills dQdbeta and Qmatrix
+
+        // Fill EJML matrices from calcQ results
+        for (int k = 0; k < numPhases; k++) {
+            gradVec.set(k, 0, dQdbeta[k][0]);
+            for (int j = 0; j < numPhases; j++) {
+                hessianMat.set(k, j, Qmatrix[k][j]);
             }
         }
-    }
-    return Q;
+
+        // Solve H·step = grad via raw EJML
+        CommonOps_DDRM.solve(hessianMat, gradVec, stepVec);
+
+        double damping = iter / (iter + 3.0);
+        for (int k = 0; k < numPhases; k++) {
+            double currBeta = betaArr[k] - damping * stepVec.get(k, 0);
+            // ... clamp to [βmin, 1-βmin] ...
+        }
+        system.normalizeBeta();
+        calcE();
+        setXY();
+        system.init(1);
+        err = NormOps_DDRM.normF(stepVec);
+    } while ((err > 1e-12 && iter < 50) || iter < 3);
+    return err;
 }
 ```
 
@@ -1199,15 +1318,16 @@ The complete workflow in `TPmultiflash.run()` is:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  1. PREPROCESSING                                           │
-│     - For electrolyte systems: temporarily remove ions      │
+│     - For systems with ions (hasIons()): remove ions        │
 │     - Store ionic compositions for later restoration        │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │  2. STABILITY ANALYSIS                                      │
-│     - Test component-seeded trial phases                    │
-│     - Use SSI + DEM acceleration + Newton fallback          │
-│     - If tm < -1e-8: add new phase, set multiPhaseTest=true │
+│     a. stabilityAnalysis() — K trials + pure-comp trials    │
+│     b. If enhanced enabled and no phase found:              │
+│        stabilityAnalysisEnhanced() — K + LLE trials         │
+│     - If tm < -1e-8: add phase, multiPhaseTest=true         │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -1217,7 +1337,7 @@ The complete workflow in `TPmultiflash.run()` is:
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  4. ION RESTORATION (electrolyte systems)                   │
+│  4. ION RESTORATION (systems with ions)                     │
 │     - Restore ions to aqueous phase(s) only                 │
 │     - Set ion x = 1e-50 in non-aqueous phases               │
 └─────────────────────────────────────────────────────────────┘
@@ -1229,9 +1349,17 @@ The complete workflow in `TPmultiflash.run()` is:
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │  6. PHASE SPLIT CALCULATION (if multiPhaseTest = true)      │
-│     - Q-function minimization with Newton's method          │
+│     - Q-function minimization with damped Newton (EJML)     │
+│     - fugCoeffCache avoids repeated virtual dispatch        │
 │     - Nested iteration with chemical equilibrium            │
 │     - Continue until convergence                            │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│  6b. POST-FLASH STABILITY CHECK (three-phase detection)     │
+│     - IF multiPhaseCheck AND 2 ≤ phases < 3:                │
+│       run stabilityAnalysisEnhanced() for third phase       │
+│     - If new phase found: recursive run()                   │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -1244,7 +1372,7 @@ The complete workflow in `TPmultiflash.run()` is:
 │  8. PHASE CLEANUP                                           │
 │     - Remove phases with β < βmin                           │
 │     - Detect and merge trivial solutions (same density)     │
-│     - ensureSingleAqueousPhase() for electrolytes           │
+│     - ensureSingleAqueousPhase() for systems with ions      │
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -1267,7 +1395,7 @@ private boolean seedAdditionalPhaseFromFeed() {
     // Only if multiphase check enabled and < 3 phases
     if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() >= 3)
         return false;
-    
+
     // Need aqueous phase but no gas phase
     boolean hasAqueous = false, hasGas = false;
     for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
@@ -1275,7 +1403,7 @@ private boolean seedAdditionalPhaseFromFeed() {
         if (type == PhaseType.AQUEOUS) hasAqueous = true;
     }
     if (!hasAqueous || hasGas) return false;
-    
+
     // Seed gas phase with feed composition
     system.addPhase();
     system.setPhaseType(phaseIndex, PhaseType.GAS);
@@ -1295,7 +1423,7 @@ When water is present but no aqueous phase exists:
 if (waterZ > 1.0e-6 && !system.hasPhaseType(PhaseType.AQUEOUS)) {
     system.addPhase();
     system.setPhaseType(aquPhaseIndex, PhaseType.AQUEOUS);
-    
+
     // Initialize with water-concentrated composition
     for (int comp = 0; comp < ncomp; comp++) {
         double x = 1.0e-16;
@@ -1355,17 +1483,22 @@ The chemical equilibrium solver uses:
 
 Ionic species present special challenges for stability analysis because they cannot exist in non-aqueous phases. NeqSim handles this by:
 
-1. **Temporarily removing ions** before stability analysis:
+1. **Temporarily removing ions** before stability analysis. Note that `hasIons()` is used instead of `isChemicalSystem()` to catch ions even when no chemical reactions are defined:
    ```java
-   if (system.isChemicalSystem()) {
+   boolean hasIons = system.hasIons();
+   if (hasIons) {
        ionicZ = new double[system.getPhase(0).getNumberOfComponents()];
        for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-           if (system.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+           if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+               || system.getPhase(0).getComponent(i).isIsIon()) {
                ionicZ[i] = system.getPhase(0).getComponent(i).getz();
-               // Temporarily set to near-zero
-               system.getPhase(phase).getComponent(i).setz(1e-100);
+               // Temporarily set to near-zero in all phases
+               for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+                   system.getPhase(phase).getComponent(i).setz(1e-100);
+               }
            }
        }
+       system.init(1);
    }
    ```
 
@@ -1400,11 +1533,11 @@ private void ensureSingleAqueousPhase() {
     if (!system.isChemicalSystem() || system.getNumberOfPhases() < 2) {
         return;
     }
-    
+
     // Find phase with highest aqueous component content
     int bestAqueousPhase = -1;
     double maxAqueousContent = 0.0;
-    
+
     for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
         double aqueousContent = 0.0;
         for (int comp = 0; comp < ncomp; comp++) {
@@ -1418,7 +1551,7 @@ private void ensureSingleAqueousPhase() {
             bestAqueousPhase = phase;
         }
     }
-    
+
     // Reclassify other phases as OIL
 }
 ```
@@ -1437,11 +1570,53 @@ if (waterZ > 1.0e-6 && !system.hasPhaseType(PhaseType.AQUEOUS)) {
 
 ---
 
-## 5. References
+## 5. Performance Optimizations
+
+The TP flash implementation includes several performance optimizations to reduce computational cost, particularly for multi-component systems.
+
+### 5.1 Fugacity Coefficient Cache
+
+The `calcE()` method populates a `fugCoeffCache` 2D array with fugacity coefficients for all phases and components. This avoids repeated virtual method dispatch on `getComponent(i).getFugacityCoefficient()` during the inner loops of `calcQ()` and `setXY()`:
+
+```java
+// Cache fugacity coefficients to avoid repeated virtual method dispatch
+fugCoeffCache = new double[numPhases][numComp];
+for (int k = 0; k < numPhases; k++) {
+    for (int i = 0; i < numComp; i++) {
+        fugCoeffCache[k][i] = system.getPhase(k).getComponent(i).getFugacityCoefficient();
+    }
+}
+```
+
+The cache is used in `setXY()` for phase composition updates and in `calcQ()` for gradient/Hessian computation.
+
+### 5.2 EJML Matrix Operations
+
+All matrix operations use the **EJML** (Efficient Java Matrix Library) with raw `DMatrixRMaj` types instead of the higher-level `SimpleMatrix` wrapper. Key uses:
+
+| Operation | Method | EJML Call |
+|-----------|--------|-----------|
+| Q-function Newton step | `solveBeta()` | `CommonOps_DDRM.solve()` |
+| Step norm computation | `solveBeta()` | `NormOps_DDRM.normF()` |
+| Stability Newton step | `stabilityAnalysis()` | `CommonOps_DDRM.solve()` |
+
+Matrices are pre-allocated outside iteration loops and reused to avoid GC pressure.
+
+### 5.3 Wilson K Early Exit
+
+Before running any trial phase iterations, the stability analysis computes Wilson K-values and checks if $\max|\ln K_i| < 0.01$. If all K-values are near unity, the system is near or above the critical point and the mixture is trivially stable — the expensive iterative analysis is skipped entirely.
+
+### 5.4 Two-Stage Trial Strategy
+
+The Wilson K-based trials (Stage 1) run with only 50 iterations and catch the majority of VLE instabilities. The more expensive pure-component trials (Stage 2, up to 200 iterations with potential Newton fallback) only execute when the K-based trials fail to find instability.
+
+---
+
+## 6. References
 
 ### Primary References
 
-1. **Michelsen, M. L.** (1982). "The isothermal flash problem. Part I. Stability." *Fluid Phase Equilibria*, 9(1), 1-19. 
+1. **Michelsen, M. L.** (1982). "The isothermal flash problem. Part I. Stability." *Fluid Phase Equilibria*, 9(1), 1-19.
    - Introduces the tangent plane distance criterion for stability analysis.
 
 2. **Michelsen, M. L.** (1982). "The isothermal flash problem. Part II. Phase-split calculation." *Fluid Phase Equilibria*, 9(1), 21-40.

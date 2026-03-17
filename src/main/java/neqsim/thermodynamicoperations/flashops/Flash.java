@@ -419,24 +419,26 @@ public abstract class Flash extends BaseOperation {
           }
           if (iterations % accelerateInterval == 0 && fNorm < fNormOld
               && !secondOrderStabilityAnalysis && acceleration) {
-            double vec1 = 0.0;
-
-            double vec2 = 0.0;
+            // DEM acceleration (Michelsen 1982b, Risnes et al. 1981)
+            // Dominant eigenvalue estimate: λ = (Δg_n · Δg_{n-1}) / (Δg_{n-1} · Δg_{n-1})
             double prod1 = 0.0;
             double prod2 = 0.0;
             for (i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-              vec1 = oldDeltalogWi[i] * oldoldDeltalogWi[i];
-              vec2 = Math.pow(oldoldDeltalogWi[i], 2.0);
-              prod1 += vec1 * vec2;
-              prod2 += vec2 * vec2;
+              prod1 += deltalogWi[i] * oldDeltalogWi[i];
+              prod2 += oldDeltalogWi[i] * oldDeltalogWi[i];
             }
 
-            double lambda = prod1 / prod2;
-            // logger.info("lambda " + lambda);
-            for (i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
-              logWi[i] += lambda / (1.0 - lambda) * deltalogWi[i];
-              error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
-              Wi[j][i] = safeExp(logWi[i]);
+            if (prod2 > 1e-20) {
+              double lambda = prod1 / prod2;
+              // Only accelerate if 0 < λ < 1 (convergent regime)
+              if (lambda > 0.0 && lambda < 1.0) {
+                double accelFactor = lambda / (1.0 - lambda);
+                for (i = 0; i < clonedSystem.getPhases()[0].getNumberOfComponents(); i++) {
+                  logWi[i] += accelFactor * deltalogWi[i];
+                  error[j] += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
+                  Wi[j][i] = safeExp(logWi[i]);
+                }
+              }
             }
             if (error[j] > olderror) {
               acceleration = false;
@@ -591,7 +593,8 @@ public abstract class Flash extends BaseOperation {
         logger.debug("Stability analysis did not converge: {}", ex.getMessage());
       }
     }
-    if (tm[0] > tmLimit && tm[1] > tmLimit || system.getPhase(0).getNumberOfComponents() == 1) {
+    if (tm[0] > tmLimit && tm[1] > tmLimit && !system.isChemicalSystem()
+        || system.getPhase(0).getNumberOfComponents() == 1) {
       // Standard analysis declares stable. Try amplified K-value trials with a
       // separate clone to catch near-critical instability that the standard
       // analysis misses (e.g. near the cricondenbar where Wilson K ≈ 1).

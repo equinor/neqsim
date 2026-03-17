@@ -3,6 +3,7 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
@@ -17,11 +18,12 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * @author ESOL
  */
+@Tag("slow")
 public class HydrateFormationTemperatureFlashTest {
 
   /**
    * Test hydrate formation temperature with electrolyte CPA, MEG inhibitor, and brine.
-   * 
+   *
    * This test uses the composition: - water: 0.494505 - MEG: 0.164835 - methane: 0.247253 - ethane:
    * 0.0164835 - propane: 0.010989 - i-butane: 0.00549451 - n-butane: 0.00549451 - Na+: 0.0274725 -
    * Cl-: 0.0274725
@@ -309,7 +311,7 @@ public class HydrateFormationTemperatureFlashTest {
 
   /**
    * Test performance of hydrate temperature calculation.
-   * 
+   *
    * This test verifies that hydrate temperature calculation completes quickly. The optimization
    * performs full stability analysis only once at the start to establish phase structure, then uses
    * fast flash calculations during temperature iterations. This reduces calculation time from ~60s
