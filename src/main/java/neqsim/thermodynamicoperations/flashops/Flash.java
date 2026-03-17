@@ -275,13 +275,15 @@ public abstract class Flash extends BaseOperation {
         testSystem.getPhase(1).getComponent(i).setx(Wi[i] / sumwTrial);
       }
 
-      // Successive substitution iteration
+      // Successive substitution iteration with DEM acceleration
       int maxiter = 100;
+      int accelInterval = 5;
       double err;
       Matrix f = new Matrix(numComp, 1);
       double fNorm = 1e10;
       double fNormOld;
       boolean converged = false;
+      double[] prevDelta = new double[numComp];
       for (int iter = 1; iter <= maxiter; iter++) {
         err = 0.0;
         System.arraycopy(logWi, 0, oldlogw, 0, numComp);
@@ -299,10 +301,40 @@ public abstract class Flash extends BaseOperation {
           }
         }
 
+        // Standard successive substitution step
         for (int i = 0; i < numComp; i++) {
           logWi[i] = d[i] - testSystem.getPhase(1).getComponent(i).getLogFugacityCoefficient();
-          err += Math.abs(logWi[i] - oldlogw[i]);
           Wi[i] = safeExp(logWi[i]);
+        }
+
+        // DEM acceleration every accelInterval steps
+        if (iter % accelInterval == 0 && fNorm < fNormOld && iter > accelInterval) {
+          double[] curDelta = new double[numComp];
+          for (int i = 0; i < numComp; i++) {
+            curDelta[i] = logWi[i] - oldlogw[i];
+          }
+          double dot1 = 0.0;
+          double dot2 = 0.0;
+          for (int i = 0; i < numComp; i++) {
+            dot1 += curDelta[i] * prevDelta[i];
+            dot2 += prevDelta[i] * prevDelta[i];
+          }
+          if (dot2 > 1e-20) {
+            double lambda = dot1 / dot2;
+            if (lambda > 0.0 && lambda < 1.0) {
+              double accelFactor = lambda / (1.0 - lambda);
+              for (int i = 0; i < numComp; i++) {
+                logWi[i] += accelFactor * curDelta[i];
+                Wi[i] = safeExp(logWi[i]);
+              }
+            }
+          }
+        }
+
+        // Track step delta for next acceleration
+        for (int i = 0; i < numComp; i++) {
+          prevDelta[i] = logWi[i] - oldlogw[i];
+          err += Math.abs(prevDelta[i]);
         }
 
         sumwTrial = 0.0;
@@ -317,12 +349,30 @@ public abstract class Flash extends BaseOperation {
           converged = true;
           break;
         }
+
+        // Early termination: if sum(Wi) is well below 1 after enough iterations,
+        // the system is clearly stable — no phase split. Skip remaining iterations.
+        if (iter > 5 && sumwTrial < 0.8) {
+          break;
+        }
       }
 
       // Compute tm = 1 - sum(Wi)
       double tmVal = 1.0;
       for (int i = 0; i < numComp; i++) {
         tmVal -= Wi[i];
+      }
+
+      // If first standard trial converged to clearly stable (tmVal > 0.1),
+      // skip the second standard trial — both directions agree on stability.
+      if (trial == 0 && converged && tmVal > 0.1) {
+        // Jump to perturbation trials if near-critical, otherwise done
+        if (useCompositionPerturbation) {
+          trial = 1; // Will increment to 2 on next loop iteration
+          continue;
+        } else {
+          break;
+        }
       }
 
       // Only accept instability if SS converged and tm is clearly negative.
@@ -663,7 +713,11 @@ public abstract class Flash extends BaseOperation {
       // Standard analysis declares stable. Try amplified K-value trials with a
       // separate clone to catch near-critical instability that the standard
       // analysis misses (e.g. near the cricondenbar where Wilson K ≈ 1).
-      boolean retryFoundInstability = amplifiedKStabilityRetry();
+      // Skip when both tm values are well above zero (clearly stable).
+      boolean retryFoundInstability = false;
+      if (tm[0] < 0.5 || tm[1] < 0.5) {
+        retryFoundInstability = amplifiedKStabilityRetry();
+      }
       if (retryFoundInstability) {
         // Retry found instability — set up the system for two-phase flash
         RachfordRice rachfordRice = new RachfordRice();
