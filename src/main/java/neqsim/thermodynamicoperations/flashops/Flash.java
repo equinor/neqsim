@@ -327,7 +327,10 @@ public abstract class Flash extends BaseOperation {
 
       // Only accept instability if SS converged and tm is clearly negative.
       // Non-converged results are unreliable and may give spurious instability.
-      if (converged && tmVal < -1e-4) {
+      // For composition-perturbation trials (trial >= 2), use a stricter threshold
+      // to avoid false near-critical splits where both phases have similar density.
+      double tmThreshold = (trial >= 2) ? -1e-2 : -1e-4;
+      if (converged && tmVal < tmThreshold) {
         // Verify non-trivial: trial composition different from feed
         double dot = 0.0;
         double nW = 0.0;
