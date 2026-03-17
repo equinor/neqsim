@@ -25,7 +25,7 @@ public class Units {
   }
 
   /** Constant <code>activeUnits</code> */
-  public static HashMap<String, UnitDescription> activeUnits = new HashMap<>();
+  public static volatile HashMap<String, UnitDescription> activeUnits = new HashMap<>();
   /** Constant <code>defaultUnits</code> */
   public static HashMap<String, UnitDescription> defaultUnits = new HashMap<>();
   /** Constant <code>metricUnits</code> */
@@ -115,7 +115,7 @@ public class Units {
    * activateSIUnits.
    * </p>
    */
-  public static void activateSIUnits() {
+  public static synchronized void activateSIUnits() {
     if (activeUnits.size() == 0) {
       new Units();
     }
@@ -127,7 +127,7 @@ public class Units {
    * activateFieldUnits.
    * </p>
    */
-  public static void activateFieldUnits() {
+  public static synchronized void activateFieldUnits() {
     if (activeUnits.size() == 0) {
       new Units();
     }
@@ -139,7 +139,7 @@ public class Units {
    * activateMetricUnits.
    * </p>
    */
-  public static void activateMetricUnits() {
+  public static synchronized void activateMetricUnits() {
     if (activeUnits.size() == 0) {
       new Units();
     }
@@ -151,7 +151,7 @@ public class Units {
    * activateDefaultUnits.
    * </p>
    */
-  public static void activateDefaultUnits() {
+  public static synchronized void activateDefaultUnits() {
     if (activeUnits.size() == 0) {
       new Units();
     }
@@ -166,7 +166,7 @@ public class Units {
    * @param name a {@link java.lang.String} object
    * @return a {@link java.lang.String} object
    */
-  public static String getSymbol(String name) {
+  public static synchronized String getSymbol(String name) {
     if (activeUnits.size() == 0) {
       new Units();
     }
@@ -181,7 +181,7 @@ public class Units {
    * @param name a {@link java.lang.String} object
    * @return a {@link java.lang.String} object
    */
-  public static String getSymbolName(String name) {
+  public static synchronized String getSymbolName(String name) {
     if (activeUnits.size() == 0) {
       new Units();
     }
@@ -197,7 +197,7 @@ public class Units {
    * @param symbol a {@link java.lang.String} object
    * @param symbolName a {@link java.lang.String} object
    */
-  public static void setUnit(String name, String symbol, String symbolName) {
+  public static synchronized void setUnit(String name, String symbol, String symbolName) {
     if (activeUnits.size() == 0) {
       new Units();
     }

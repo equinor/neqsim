@@ -31,7 +31,7 @@ public class FrictionTheoryViscosityMethod extends Viscosity
   public double[] Fc;
   public double[] omegaVisc;
   protected double[] chungE = new double[10];
-  static double TBPcorrection = 1.0;
+  static volatile double TBPcorrection = 1.0;
   private static final double CHUNG_A = 1.16145;
   private static final double CHUNG_B = 0.14874;
   private static final double CHUNG_C = 0.52487;

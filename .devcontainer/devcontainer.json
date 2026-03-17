@@ -1,36 +1,78 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.224.3/containers/java
+// NeqSim Development Container Configuration
+// For format details, see https://containers.dev/implementors/json_reference/
 {
-	"name": "Java",
+	"name": "NeqSim Dev",
 	"build": {
 		"dockerfile": "Dockerfile",
 		"args": {
-			// Update the VARIANT arg to pick a Java version: 11, 17
 			"VARIANT": "11",
-			// Options
 			"INSTALL_MAVEN": "true",
-			// --- ADD THIS LINE ---
-			"MAVEN_VERSION": "3.9.8", // Pinning to a specific, recent version
-			"INSTALL_GRADLE": "false",
-			"NODE_VERSION": "lts/*"
+			"MAVEN_VERSION": "3.9.8"
 		}
 	},
-	// Set *default* container specific settings.json values on container create.
+	// Add Python 3.12 for Jupyter notebook development with neqsim-python
+	"features": {
+		"ghcr.io/devcontainers/features/python:1": {
+			"version": "3.12",
+			"installJupyterlab": true
+		},
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "lts"
+		}
+	},
+	// Run after container creation: install neqsim-python and dev tools
+	"postCreateCommand": "pip install --user neqsim matplotlib pandas numpy python-docx && ./mvnw dependency:resolve",
 	"customizations": {
 		"vscode": {
-                        // Add the IDs of extensions you want installed when the container is created.
-                        "extensions": [
-                                "redhat.java",
-                                "vscjava.vscode-java-pack",
-                                "shengchen.vscode-checkstyle",
-                                "ms-vscode.test-adapter-converter",
-                                "mechatroner.rainbow-csv",
-                                "redhat.vscode-xml",
-                                "vscjava.vscode-java-test",
-                                "GitHub.copilot",
-                                "GitHub.copilot-chat",
-                                "janisdd.vscode-edit-csv"
-                        ]
-                }
-        }
+			"settings": {
+				// Java settings
+				"java.configuration.updateBuildConfiguration": "automatic",
+				"java.compile.nullAnalysis.mode": "automatic",
+				"java.format.settings.url": "neqsim_formatter.xml",
+				"java.checkstyle.configuration": "${workspaceFolder}/.config/checkstyle_neqsim.xml",
+				"java.test.defaultConfig": "default",
+				// Editor settings
+				"editor.formatOnSave": true,
+				"editor.rulers": [
+					120
+				],
+				"files.trimTrailingWhitespace": true,
+				// Copilot settings — auto-approve agent actions
+				"github.copilot.chat.agent.autoApprove": true,
+				"github.copilot.chat.autoCommit.enabled": false,
+				"github.copilot.chat.confirmEditGeneration": false,
+				"chat.agent.maxRequests": 2500,
+				// Terminal
+				"terminal.integrated.defaultProfile.linux": "bash",
+				// Python / Jupyter
+				"python.defaultInterpreterPath": "/usr/local/python/current/bin/python3",
+				"jupyter.notebookFileRoot": "${workspaceFolder}"
+			},
+			"extensions": [
+				// Java development
+				"redhat.java",
+				"vscjava.vscode-java-pack",
+				"vscjava.vscode-java-test",
+				"vscjava.vscode-maven",
+				"shengchen.vscode-checkstyle",
+				// AI / Copilot
+				"GitHub.copilot",
+				"GitHub.copilot-chat",
+				// Python / Jupyter
+				"ms-python.python",
+				"ms-toolsai.jupyter",
+				// Data / CSV
+				"mechatroner.rainbow-csv",
+				"janisdd.vscode-edit-csv",
+				// XML / Markdown
+				"redhat.vscode-xml",
+				"yzhang.markdown-all-in-one",
+				// Git
+				"mhutchie.git-graph",
+				"eamodio.gitlens",
+				// Utilities
+				"ms-vscode.test-adapter-converter"
+			]
+		}
+	}
 }

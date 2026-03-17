@@ -140,7 +140,7 @@ double dt = 1.0;  // 1 second time step
 
 for (int step = 0; step < 60; step++) {
     process.runTransient(dt, calcId);
-    
+
     if (step % 10 == 0) {
         System.out.printf("t=%d s, Level=%.3f m, P=%.2f bara%n",
             step, separator.getLiquidLevel(), separator.getPressure());
@@ -184,7 +184,7 @@ double dt = 1.0;
 
 while (t < tEnd) {
     process.runTransient(dt, calcId);
-    
+
     // Adjust time step based on rate of change
     double rateOfChange = Math.abs(separator.getLiquidLevel() - previousLevel) / dt;
     if (rateOfChange > 0.1) {
@@ -192,7 +192,7 @@ while (t < tEnd) {
     } else if (rateOfChange < 0.01) {
         dt = Math.min(10.0, dt * 1.5);  // Increase time step
     }
-    
+
     t += dt;
     previousLevel = separator.getLiquidLevel();
 }
@@ -343,6 +343,41 @@ controller.setReverseActing(true);   // Increase output to decrease PV
 controller.setReverseActing(false);  // Increase output to increase PV
 ```
 
+### System-Level Controller Registration
+
+In addition to attaching controllers to individual equipment, controllers can be registered directly on the `ProcessSystem`. During each `runTransient()` call, the system automatically scans and executes all registered controllers **after** all equipment has been stepped and **before** measurements are collected:
+
+```java
+// Register controllers at system level
+process.add(levelController);
+process.add(pressureController);
+
+// During runTransient(), execution order is:
+// 1. Equipment runTransient() (in insertion/graph order)
+// 2. System-level controller runTransient() (automatic scan)
+// 3. Measurement devices
+```
+
+This is useful when a controller is shared across multiple equipment or when you want a clear separation between the process model and the control layer. Controllers embedded on individual equipment (via `setController()`) continue to work as before — the system-level scan is additive.
+
+### Named Controller Map on Equipment
+
+Equipment supports multiple named controllers via a tag-based map:
+
+```java
+// Attach multiple controllers to one piece of equipment
+valve.addController("LC-100", levelController);
+valve.addController("PC-200", pressureController);
+
+// Retrieve by tag
+ControllerDeviceInterface lc = valve.getController("LC-100");
+
+// List all controllers on this equipment
+Collection<ControllerDeviceInterface> all = valve.getControllers();
+```
+
+See [Controllers](../process/controllers#named-controller-map) for full details.
+
 ---
 
 ## Pipeline Dynamics
@@ -368,7 +403,7 @@ pipeline.setFlowRegimeDetectionMethod("mechanistic");
 pipeline.setCalculateSteadyState(false);
 for (int step = 0; step < 600; step++) {
     pipeline.runTransient(1.0, id);
-    
+
     // Track slugs
     SlugTracker slugs = pipeline.getSlugTracker();
     System.out.println("Active slugs: " + slugs.getSlugCount());
@@ -427,7 +462,7 @@ double dt = 0.5;  // 0.5 second steps
 ArrayList<double[]> results = new ArrayList<>();
 for (double t = 0; t <= 900; t += dt) {
     blowdown.runTransient(dt, id);
-    
+
     results.add(new double[] {
         t,
         vessel.getPressure(),
@@ -447,13 +482,30 @@ System.out.println("Minimum temperature: " + minTemp + " °C");
 
 ### Fire Case Depressurization
 
-```java
-// Add heat input for fire case
-vessel.setHeatInput(1000000.0);  // 1 MW fire load
+Two fire models are available:
 
+**Constant Flux** — legacy model that adds heat directly to the gas energy balance:
+
+```java
+vessel.setFireCase(true);
+vessel.setFireHeatFlux(75.0, "kW/m2");    // API 521 pool fire
+vessel.setWettedSurfaceFraction(0.5);
+```
+
+**Stefan-Boltzmann** — physically correct model applying fire heat to the outer wall
+surface with radiation and convection:
+
+```java
+vessel.setFireType(FireType.SCANDPOWER_JET);  // 100 kW/m2 jet fire preset
+vessel.setWettedSurfaceFraction(1.0);
+```
+
+See [Vessel Depressurization - Fire Case Modeling](../process/equipment/vessel_depressurization.md#fire-case-modeling) for full details, presets, and custom parameters.
+
+```java
 for (double t = 0; t <= 900; t += dt) {
-    blowdown.runTransient(dt, id);
-    
+    vessel.runTransient(dt, id);
+
     // Check for two-phase relief (wetted surface)
     double liquidFraction = vessel.getLiquidVolumeFraction();
     if (liquidFraction > 0) {
@@ -552,10 +604,10 @@ double Ti = 100.0;  // 100 seconds >> 1 second
 ```java
 try (PrintWriter log = new PrintWriter("transient.csv")) {
     log.println("time,pressure,temperature,level,flow");
-    
+
     for (double t = 0; t < tEnd; t += dt) {
         process.runTransient(dt, id);
-        
+
         log.printf("%.1f,%.2f,%.2f,%.3f,%.1f%n",
             t,
             separator.getPressure(),
@@ -572,7 +624,7 @@ try (PrintWriter log = new PrintWriter("transient.csv")) {
 try {
     process.run();
     separator.setCalculateSteadyState(false);
-    
+
     for (int step = 0; step < 100; step++) {
         process.runTransient(dt, id);
     }
@@ -624,12 +676,12 @@ comp.startStartupSequence();
 
 for (int step = 0; step < 600; step++) {
     process.runTransient(0.5, id);
-    
+
     System.out.printf("t=%.1f s, Speed=%.0f RPM, State=%s%n",
         step * 0.5,
         comp.getSpeed(),
         comp.getState());
-        
+
     if (comp.getState() == CompressorState.RUNNING) {
         System.out.println("Startup complete at t=" + step * 0.5 + " s");
         break;

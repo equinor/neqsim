@@ -17,9 +17,30 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  /** Constant <code>referenceSystem</code>. */
-  public static SystemInterface referenceSystem =
-      new SystemSrkEos(273.0, ThermodynamicConstantsInterface.referencePressure);
+  /**
+   * Thread-local reference system to prevent race conditions when multiple threads
+   * calculate conductivity simultaneously. Each thread gets its own instance.
+   */
+  private static final ThreadLocal<SystemInterface> threadLocalReferenceSystem =
+      new ThreadLocal<SystemInterface>() {
+        @Override
+        protected SystemInterface initialValue() {
+          SystemInterface sys =
+              new SystemSrkEos(273.0, ThermodynamicConstantsInterface.referencePressure);
+          sys.addComponent("methane", 10.0);
+          sys.init(0);
+          return sys;
+        }
+      };
+
+  /**
+   * Gets the thread-local reference system.
+   *
+   * @return the reference system for the current thread
+   */
+  private static SystemInterface getReferenceSystem() {
+    return threadLocalReferenceSystem.get();
+  }
   double[] GVcoef = {-2.147621e5, 2.190461e5, -8.618097e4, 1.496099e4, -4.730660e2, -2.331178e2,
       3.778439e1, -2.320481, 5.311764e-2};
   double condRefA = -0.25276292;
@@ -45,15 +66,12 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
    */
   public PFCTConductivityMethodMod86(PhysicalProperties phase) {
     super(phase);
-    if (referenceSystem.getNumberOfMoles() < 1e-10) {
-      referenceSystem.addComponent("methane", 10.0);
-      referenceSystem.init(0);
-    }
   }
 
   /** {@inheritDoc} */
   @Override
   public double calcConductivity() {
+    SystemInterface referenceSystem = getReferenceSystem();
     double Pc0 = referenceSystem.getPhase(0).getComponent(0).getPC();
 
     double Tc0 = referenceSystem.getPhase(0).getComponent(0).getTC();
@@ -188,6 +206,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
    * @return a double
    */
   public double getRefComponentConductivity(double temp, double pres) {
+    SystemInterface referenceSystem = getReferenceSystem();
     referenceSystem.setTemperature(temp);
     referenceSystem.setPressure(pres);
     referenceSystem.init(1);
@@ -284,6 +303,7 @@ public class PFCTConductivityMethodMod86 extends Conductivity {
    * @return a double
    */
   public double calcMixLPViscosity() {
+    SystemInterface referenceSystem = getReferenceSystem();
     double Pc0 = referenceSystem.getPhase(0).getComponent(0).getPC();
 
     double Tc0 = referenceSystem.getPhase(0).getComponent(0).getTC();

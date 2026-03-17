@@ -9,6 +9,7 @@ Documentation for controllers, adjusters, recycles, and process logic in NeqSim.
 
 ## Table of Contents
 - [Overview](#overview)
+- [Named Controller Map](#named-controller-map)
 - [Adjusters](#adjusters)
 - [Recycles](#recycles)
 - [Setters](#setters)
@@ -32,6 +33,61 @@ Documentation for controllers, adjusters, recycles, and process logic in NeqSim.
 
 ---
 
+## Named Controller Map
+
+Equipment now supports **multiple named controllers** through a tag-based map, alongside the legacy single-controller API.
+
+### Attaching Multiple Controllers
+
+```java
+// Attach a level controller and a pressure controller to the same valve
+valve.addController("LC-100", levelController);
+valve.addController("PC-200", pressureController);
+```
+
+### Retrieving by Tag
+
+```java
+ControllerDeviceInterface lc = valve.getController("LC-100");
+ControllerDeviceInterface pc = valve.getController("PC-200");
+
+// Get all controllers on this equipment
+Collection<ControllerDeviceInterface> all = valve.getControllers();
+```
+
+### Backward Compatibility
+
+The legacy `setController()` method still works. When called, it also registers the controller in the named map using the controller's name as the key:
+
+```java
+// Old code — unchanged behavior
+valve.setController(myController);
+
+// Controller is also available via the named map
+valve.getController(myController.getName()); // returns myController
+```
+
+### System-Level Controller Registration
+
+Controllers can also be registered on the `ProcessSystem` itself. During transient simulation, `runTransient()` automatically scans and executes all system-level controllers after the equipment loop:
+
+```java
+ProcessSystem process = new ProcessSystem();
+process.add(feed);
+process.add(separator);
+process.add(valve);
+
+// Register controller at system level
+process.add(levelController);
+
+// During runTransient(), the controller is executed automatically
+process.runTransient(1.0, calcId);
+```
+
+This is in addition to controllers embedded on individual equipment, which continue to work as before.
+
+---
+
 ## Adjusters
 
 Adjusters modify one variable to achieve a target specification.
@@ -50,24 +106,24 @@ process.add(tempControl);
 
 ### Adjustable Variables
 
-| Equipment | Variable | Description |
-|-----------|----------|-------------|
-| Heater/Cooler | `"duty"` | Heat duty |
+| Equipment     | Variable           | Description        |
+| ------------- | ------------------ | ------------------ |
+| Heater/Cooler | `"duty"`           | Heat duty          |
 | Heater/Cooler | `"outTemperature"` | Outlet temperature |
-| Compressor | `"outletPressure"` | Discharge pressure |
-| Valve | `"outletPressure"` | Outlet pressure |
-| Splitter | `"splitFactor"` | Split ratio |
-| Stream | `"flowRate"` | Flow rate |
+| Compressor    | `"outletPressure"` | Discharge pressure |
+| Valve         | `"outletPressure"` | Outlet pressure    |
+| Splitter      | `"splitFactor"`    | Split ratio        |
+| Stream        | `"flowRate"`       | Flow rate          |
 
 ### Target Variables
 
-| Equipment | Variable | Description |
-|-----------|----------|-------------|
-| Stream | `"temperature"` | Temperature |
-| Stream | `"pressure"` | Pressure |
-| Stream | `"flowRate"` | Flow rate |
-| Stream | `"moleFraction"` | Component mole fraction |
-| Separator | `"liquidLevel"` | Liquid level |
+| Equipment | Variable         | Description             |
+| --------- | ---------------- | ----------------------- |
+| Stream    | `"temperature"`  | Temperature             |
+| Stream    | `"pressure"`     | Pressure                |
+| Stream    | `"flowRate"`     | Flow rate               |
+| Stream    | `"moleFraction"` | Component mole fraction |
+| Separator | `"liquidLevel"`  | Liquid level            |
 
 ### Example: Dew Point Control
 
@@ -247,11 +303,11 @@ levelControl.setAntiWindup(true);
 // Run transient with controllers
 for (double t = 0; t < 3600; t += 1.0) {
     process.runTransient();
-    
+
     double pv = levelControl.getProcessVariable();
     double sp = levelControl.getSetPoint();
     double out = levelControl.getOutput();
-    
+
     System.out.printf("%.1f, %.3f, %.3f, %.1f%n", t, pv, sp, out);
 }
 ```
@@ -361,7 +417,7 @@ for (double t = 0; t < 3600; t += 1.0) {
     if (Math.abs(t - 600) < 0.5) {
         feed.setFlowRate(1200.0, "kg/hr");
     }
-    
+
     process.runTransient();
 }
 ```
@@ -370,7 +426,10 @@ for (double t = 0; t < 3600; t += 1.0) {
 
 ## Related Documentation
 
-- [Process Package](./\) - Package overview
+- [ProcessSystem](processmodel/process_system) - Process system with named controllers and connections
+- [Dynamic Simulation Guide](../simulation/dynamic_simulation_guide) - Transient simulation with controller scan
+- [Dynamic Simulation Helper](dynamic-simulation) - Auto-instrument a process for dynamic simulation
+- [Process Package](index.md) - Package overview
 - [Equipment](equipment/) - Process equipment
 - [Alarm System](../safety/alarm_system_guide) - Alarms
 - [Process Logic Framework](../simulation/process_logic_framework) - Advanced logic

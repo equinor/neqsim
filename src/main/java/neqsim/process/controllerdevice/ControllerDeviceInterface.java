@@ -2,19 +2,19 @@ package neqsim.process.controllerdevice;
 
 import java.util.List;
 import java.util.UUID;
+import neqsim.process.ProcessElementInterface;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 
 /**
- * General contract for feedback controllers operating on measurement devices in
- * NeqSim. Implementations typically provide proportional-integral-derivative
- * (PID) control but the API is prepared for other regulators. The interface
- * exposes unit-aware set points and measurements, tuning parameters, auto
- * tuning hooks, gain scheduling and performance logging features.
+ * General contract for feedback controllers operating on measurement devices in NeqSim.
+ * Implementations typically provide proportional-integral-derivative (PID) control but the API is
+ * prepared for other regulators. The interface exposes unit-aware set points and measurements,
+ * tuning parameters, auto tuning hooks, gain scheduling and performance logging features.
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public interface ControllerDeviceInterface extends java.io.Serializable {
+public interface ControllerDeviceInterface extends ProcessElementInterface {
   /**
    * <p>
    * getMeasuredValue.
@@ -90,8 +90,7 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
    * setTransmitter.
    * </p>
    *
-   * @param device a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface}
-   *        object
+   * @param device a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface} object
    */
   public void setTransmitter(MeasurementDeviceInterface device);
 
@@ -232,8 +231,8 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
 
   /**
    * <p>
-   * Auto tune controller from an open-loop step response using process gain, time constant and
-   * dead time.
+   * Auto tune controller from an open-loop step response using process gain, time constant and dead
+   * time.
    * </p>
    *
    * @param processGain Process gain from step response
@@ -245,8 +244,8 @@ public interface ControllerDeviceInterface extends java.io.Serializable {
 
   /**
    * <p>
-   * Auto tune controller from an open-loop step response using process gain, time constant and
-   * dead time with optional derivative tuning.
+   * Auto tune controller from an open-loop step response using process gain, time constant and dead
+   * time with optional derivative tuning.
    * </p>
    *
    * @param processGain Process gain from step response

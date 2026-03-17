@@ -44,7 +44,7 @@ gas.setMixingRule("classic");
 // 2. Run flash at standard conditions
 ThermodynamicOperations ops = new ThermodynamicOperations(gas);
 ops.TPflash();
-gas.init(3);
+gas.initProperties(); // MANDATORY: initializes thermo + transport properties (init(3) alone misses transport props)
 
 // 3. Apply standard
 Standard_ISO6976 iso6976 = new Standard_ISO6976(gas);
@@ -69,5 +69,6 @@ double relDensity = iso6976.getValue("RelativeDensity");
 ## Sales Contract
 `neqsim.standards.salescontract` — for gas sales agreement compliance.
 
-## Java 8 Only
-No `var`, `List.of()`, or any Java 9+ syntax.
+## Shared Skills
+- Java 8 rules: See `neqsim-java8-rules` skill
+- API patterns: See `neqsim-api-patterns` skill for fluid/equipment usage

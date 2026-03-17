@@ -32,22 +32,22 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Create exporter
  * ReservoirCouplingExporter exporter = new ReservoirCouplingExporter(processSystem);
- * 
+ *
  * // Configure VFP table generation
  * exporter.setWellheadPressureRange(20.0, 100.0, 9); // 20-100 bara, 9 points
  * exporter.setGasRateRange(0.1e6, 10.0e6, 10); // 0.1-10 MSm3/d
  * exporter.setWaterCutRange(0.0, 0.95, 6); // 0-95% water cut
- * 
+ *
  * // Generate VFP tables
  * exporter.generateVfpProd("WELL-1", wellStream, 1);
- * 
+ *
  * // Export to file
  * exporter.exportToFile("vfp_tables.inc");
- * 
+ *
  * // Or get as string for E300 INCLUDE
  * String vfpKeywords = exporter.getEclipseKeywords();
  * }</pre>
@@ -767,14 +767,8 @@ public class ReservoirCouplingExporter implements Serializable {
   public void exportToFile(String filePath) throws IOException {
     logger.info("Exporting to file: {}", filePath);
 
-    BufferedWriter writer = null;
-    try {
-      writer = new BufferedWriter(new FileWriter(filePath));
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
       writer.write(getEclipseKeywords());
-    } finally {
-      if (writer != null) {
-        writer.close();
-      }
     }
   }
 

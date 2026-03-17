@@ -37,21 +37,21 @@ public class OptimizedVUflash extends Flash {
   Flash tpFlash;
 
   // Optimization parameters
-  private static final double MIN_PRESSURE = 0.1; // bar
-  private static final double MAX_PRESSURE = 1000.0; // bar
-  private static final double MIN_TEMPERATURE = 200.0; // K
-  private static final double MAX_TEMPERATURE = 1000.0; // K
+  private static final double MIN_PRESSURE = 0.01; // bar
+  private static final double MAX_PRESSURE = 2000.0; // bar
+  private static final double MIN_TEMPERATURE = 50.0; // K
+  private static final double MAX_TEMPERATURE = 5000.0; // K
   private static final double ADAPTIVE_TOL_FACTOR = 1e-8; // Base tolerance
   private static final double FAST_CONV_TOL = 1e-6; // Relaxed tolerance for fast convergence
   private static final double DERIVATIVE_THRESHOLD = 1e-12;
-  private static final int MAX_ITERATIONS = 50; // Reduced from 100
-  private static final double MIN_DAMPING = 0.1;
+  private static final int MAX_ITERATIONS = 100;
+  private static final double MIN_DAMPING = 0.05;
   private static final double MAX_DAMPING = 0.8;
 
-  // Performance tracking
-  private static double lastPressure = Double.NaN;
-  private static double lastTemperature = Double.NaN;
-  private static boolean isWellBehaved = true;
+  // Performance tracking - instance-level to avoid cross-contamination between different systems
+  private double lastPressure = Double.NaN;
+  private double lastTemperature = Double.NaN;
+  private boolean isWellBehaved = true;
 
   /**
    * Constructor for OptimizedVUflash.
@@ -202,13 +202,19 @@ public class OptimizedVUflash extends Flash {
         // Single TP flash per iteration
         tpFlash.run();
 
-        // Calculate convergence metrics
-        double presError = Math.abs((nyPres - oldPres) / nyPres);
-        double tempError = Math.abs((nyTemp - oldTemp) / nyTemp);
+        // Calculate convergence metrics - check BOTH iteration variable changes AND specification errors
+        double presError = Math.abs((nyPres - oldPres) / Math.max(nyPres, 0.1));
+        double tempError = Math.abs((nyTemp - oldTemp) / Math.max(nyTemp, 1.0));
         double totalError = presError + tempError;
 
-        // Early termination for excellent convergence
-        if (totalError < tolerance) {
+        // Also check actual volume and energy specification errors
+        double volErr = Math.abs((system.getVolume() - Vspec) / Vspec);
+        double hTarget = Uspec + system.getPressure() * Vspec;
+        double hErr = Math.abs((system.getEnthalpy() - hTarget)
+            / Math.max(Math.abs(hTarget), 1.0));
+
+        // Early termination only if BOTH iteration convergence AND specification errors are small
+        if (totalError < tolerance && volErr < 1e-6 && hErr < 1e-5) {
           isWellBehaved = true;
           break;
         }

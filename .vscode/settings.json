@@ -1,5 +1,7 @@
 {
-  "java.configuration.updateBuildConfiguration": "interactive",
+  // ─── Java Configuration ───
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.compile.nullAnalysis.mode": "automatic",
   "[java]": {
     "editor.defaultFormatter": "redhat.java",
     "editor.formatOnSave": true,
@@ -10,7 +12,14 @@
   "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
   "java.saveActions.organizeImports": true,
   "java.checkstyle.version": "10.18.1",
-  "java.checkstyle.configuration": "${workspaceFolder}/checkstyle_neqsim.xml",
+  "java.checkstyle.configuration": "${workspaceFolder}/.config/checkstyle_neqsim.xml",
+  "java.test.defaultConfig": "default",
+  "java.debug.settings.onBuildFailureProceed": true,
+  // ─── Editor ───
+  "editor.rulers": [
+    120
+  ],
+  "files.trimTrailingWhitespace": true,
   "[xml]": {
     "editor.tabSize": 4,
     "editor.insertSpaces": false
@@ -19,8 +28,20 @@
     "editor.tabSize": 4,
     "editor.insertSpaces": true
   },
+  // ─── Copilot Agent Configuration ───
+  // Auto-approve agent actions (file edits, terminal commands, etc.)
+  "github.copilot.chat.agent.autoApprove": true,
   "github.copilot.chat.autoCommit.enabled": false,
-  "github.copilot.chat.confirmEditGeneration": true,
+  "github.copilot.chat.confirmEditGeneration": false,
   "chat.agent.maxRequests": 2500,
-  "java.debug.settings.onBuildFailureProceed": true
+  // ─── Python / Jupyter ───
+  "python.defaultInterpreterPath": "/workspaces/neqsim/.venv/bin/python",
+  "jupyter.notebookFileRoot": "${workspaceFolder}",
+  // ─── Search Exclusions ───
+  "search.exclude": {
+    "**/target": true,
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/dependency-reduced-pom.xml": true
+  }
 }

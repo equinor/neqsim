@@ -218,6 +218,10 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
     double locP1 = P1 / 1000.0;
     double locP2 = P2 / 1000.0;
     double Qloc = Q * 3600.0;
+
+    // IEC 60534-2-1 requires Q at standard conditions (273.15 K, 101.325 kPa)
+    double Qloc_std = Qloc * (locP1 / P_STD_KPA) * (T_STD / T) / Z;
+
     double dP = locP1 - locP2;
     double x = dP / locP1;
 
@@ -225,12 +229,12 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
     double Y = Math.max(1.0 - x / (3.0 * Fgamma * getxT()), 2.0 / 3.0);
     boolean initialChoked = isChokedTurbulentG(x, Fgamma, getxT());
 
-    // Initial Kv calculation
+    // Initial Kv calculation (using standard volumetric flow per IEC 60534)
     double initialKv;
     if (initialChoked && isAllowChoked()) {
-      initialKv = Qloc / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / (getxT() * Fgamma));
+      initialKv = Qloc_std / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / (getxT() * Fgamma));
     } else {
-      initialKv = Qloc / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / x);
+      initialKv = Qloc_std / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / x);
     }
 
     if (getD1() == 0.0 || getD() == 0.0) {
@@ -274,9 +278,9 @@ public class ControlValveSizing_IEC_60534_full extends ControlValveSizing_IEC_60
 
         double newKv;
         if (choked && isAllowChoked()) {
-          newKv = Qloc / (N9 * FP * locP1 * Y) * Math.sqrt(MW * T * Z / (xTP * Fgamma));
+          newKv = Qloc_std / (N9 * FP * locP1 * Y) * Math.sqrt(MW * T * Z / (xTP * Fgamma));
         } else {
-          newKv = Qloc / (N9 * FP * locP1 * Y) * Math.sqrt(MW * T * Z / x);
+          newKv = Qloc_std / (N9 * FP * locP1 * Y) * Math.sqrt(MW * T * Z / x);
         }
 
         if (Math.abs(newKv - kv) / newKv < CONVERGENCE_TOLERANCE) {

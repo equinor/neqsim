@@ -37,11 +37,13 @@ import neqsim.thermo.system.SystemUMRPRUMCEos;
 /**
  * Builds a {@link ProcessSystem} from a JSON definition string.
  *
- * <p> Supports declarative definition of fluids, streams, and equipment with automatic stream
- * wiring by name reference. Designed for web API integration where clients submit JSON process
- * definitions and receive simulation results. </p>
+ * <p>
+ * Supports declarative definition of fluids, streams, and equipment with automatic stream wiring by
+ * name reference. Designed for web API integration where clients submit JSON process definitions
+ * and receive simulation results.
+ * </p>
  *
- * <h3>JSON Format:</h3>
+ * <h2>JSON Format:</h2>
  *
  * <pre>{@code { "fluid": { "model": "SRK", "temperature": 298.15, "pressure": 50.0, "mixingRule":
  * "classic", "components": { "methane": 0.85, "ethane": 0.10, "propane": 0.05 } }, "process": [ {

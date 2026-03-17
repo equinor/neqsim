@@ -336,7 +336,7 @@ public class TPmultiflash extends TPflash {
       }
     }
 
-    // Initialize logWi array (will be overwritten for each pure component trial)
+    // Initialize logWi array (will be overwritten for each trial)
     for (int j = 0; j < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); j++) {
       if (system.getPhase(0).getComponent(j).getz() > 1e-100) {
         logWi[j] = 0.0;
@@ -345,6 +345,185 @@ public class TPmultiflash extends TPflash {
       }
     }
 
+    // --- O2: Wilson K early exit + O3: K-value based trial phases ---
+    int numComp = system.getPhase(0).getNumberOfComponents();
+    double tempK = system.getTemperature();
+    double presBar = system.getPressure();
+    double[] wilsonK = new double[numComp];
+    double maxAbsLogK = 0.0;
+    boolean[] validComp = new boolean[numComp];
+
+    for (int i = 0; i < numComp; i++) {
+      double z = system.getPhase(0).getComponent(i).getz();
+      boolean isIon = system.getPhase(0).getComponent(i).getIonicCharge() != 0
+          || system.getPhase(0).getComponent(i).isIsIon();
+      validComp[i] = z > 1e-100 && !isIon;
+      if (validComp[i]) {
+        double tc = system.getPhase(0).getComponent(i).getTC();
+        double pc = system.getPhase(0).getComponent(i).getPC();
+        double omega = system.getPhase(0).getComponent(i).getAcentricFactor();
+        double kVal = (pc / presBar) * Math.exp(5.373 * (1.0 + omega) * (1.0 - tc / tempK));
+        wilsonK[i] = Math.max(kVal, 1e-20);
+        double absLogK = Math.abs(Math.log(wilsonK[i]));
+        if (absLogK > maxAbsLogK) {
+          maxAbsLogK = absLogK;
+        }
+      } else {
+        wilsonK[i] = 1.0;
+      }
+    }
+
+    // O2: Early exit — if all K ≈ 1.0 the system is near/above critical → trivially stable
+    if (maxAbsLogK < 0.01) {
+      system.normalizeBeta();
+      return;
+    }
+
+    // O3: Wilson K-based trial phases — liquid-like (z/K) first, then vapor-like (K·z)
+    // Liquid-like trial runs first because most multi-phase systems have liquid-driven
+    // instability (water dropout, heavy end fallout). Heavy components have K << 1,
+    // so z/K heavily enriches them, creating a trial similar to pure-component heavy trials.
+    for (int trial = 0; trial < 2; trial++) {
+      // Initialize trial composition from Wilson K
+      for (int i = 0; i < numComp; i++) {
+        if (validComp[i]) {
+          double z = system.getPhase(0).getComponent(i).getz();
+          // trial 0 = liquid-like (z/K), trial 1 = vapor-like (K*z)
+          double wVal = (trial == 0) ? z / wilsonK[i] : wilsonK[i] * z;
+          logWi[i] = Math.log(Math.max(wVal, 1e-100));
+        } else {
+          logWi[i] = -10000.0;
+        }
+      }
+      // Set trial phase composition (unnormalized, same as pure-component trials)
+      for (int i = 0; i < numComp; i++) {
+        if (clonedSystem.get(0).isPhase(1)) {
+          clonedSystem.get(0).getPhase(1).getComponent(i)
+              .setx(validComp[i] ? safeExp(logWi[i]) : 1e-50);
+        }
+      }
+
+      // Successive substitution with Wegstein acceleration (same as pure-component trials)
+      int iter = 0;
+      err = 1.0e10;
+      double errOld = 1.0e100;
+      boolean useAccel = true;
+      boolean trialInitFailed = false;
+      int maxiter = 50;
+      do {
+        errOld = err;
+        iter++;
+        err = 0;
+
+        for (int i = 0; i < numComp; i++) {
+          oldoldoldlogw[i] = oldoldlogw[i];
+          oldoldlogw[i] = oldlogw[i];
+          oldlogw[i] = logWi[i];
+          oldoldDeltalogWi[i] = oldoldlogw[i] - oldoldoldlogw[i];
+          oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
+        }
+        try {
+          clonedSystem.get(0).init(1, 1);
+        } catch (Exception ex) {
+          trialInitFailed = true;
+          break;
+        }
+        for (int i = 0; i < numComp; i++) {
+          if (validComp[i] && !Double.isInfinite(
+              clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient())) {
+            logWi[i] =
+                d[i] - clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient();
+          }
+          deltalogWi[i] = logWi[i] - oldlogw[i];
+          err += Math.abs(deltalogWi[i]);
+        }
+
+        // Wegstein acceleration every 7th iteration
+        if (iter % 7 == 0 && iter > 7 && useAccel && err < errOld) {
+          double prod1 = 0.0;
+          double prod2 = 0.0;
+          for (int i = 0; i < numComp; i++) {
+            if (validComp[i]) {
+              prod1 += deltalogWi[i] * oldDeltalogWi[i];
+              prod2 += oldDeltalogWi[i] * oldDeltalogWi[i];
+            }
+          }
+          if (prod2 > 1e-20) {
+            double lambda = prod1 / prod2;
+            if (lambda > 0.0 && lambda < 1.0) {
+              double accelFactor = lambda / (1.0 - lambda);
+              for (int i = 0; i < numComp; i++) {
+                if (validComp[i]) {
+                  logWi[i] += accelFactor * deltalogWi[i];
+                }
+              }
+            }
+          }
+        }
+        if (iter > 2 && err > errOld) {
+          useAccel = false;
+        }
+
+        // Update trial phase composition
+        for (int i = 0; i < numComp; i++) {
+          clonedSystem.get(0).getPhase(1).getComponent(i)
+              .setx(validComp[i] ? safeExp(logWi[i]) : 1e-50);
+        }
+      } while (!trialInitFailed && (Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
+
+      if (trialInitFailed) {
+        continue;
+      }
+
+      // Calculate tangent plane distance and check for instability
+      double tmVal = 1.0;
+      double xTrivialCheck0 = 0.0;
+      double xTrivialCheck1 = 0.0;
+      double[] xTrial = new double[numComp];
+      for (int i = 0; i < numComp; i++) {
+        if (validComp[i]) {
+          tmVal -= safeExp(logWi[i]);
+        }
+        xTrial[i] = clonedSystem.get(0).getPhase(1).getComponent(i).getx();
+        xTrivialCheck0 += Math.abs(xTrial[i] - system.getPhase(0).getComponent(i).getx());
+        xTrivialCheck1 += Math.abs(xTrial[i] - system.getPhase(1).getComponent(i).getx());
+      }
+
+      boolean isTrivial = Math.abs(xTrivialCheck0) < 1e-4 || Math.abs(xTrivialCheck1) < 1e-4;
+
+      if (!isTrivial && tmVal < -1e-8 && iter < maxiter) {
+        // Unstable — add new phase and return
+        system.addPhase();
+        int newPhaseIdx = system.getNumberOfPhases() - 1;
+        for (int i = 0; i < numComp; i++) {
+          system.getPhase(newPhaseIdx).getComponent(i).setx(xTrial[i]);
+        }
+        system.getPhases()[newPhaseIdx].normalize();
+        multiPhaseTest = true;
+        int dominantComp = 0;
+        double maxX = 0;
+        for (int i = 0; i < numComp; i++) {
+          if (xTrial[i] > maxX) {
+            maxX = xTrial[i];
+            dominantComp = i;
+          }
+        }
+        system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());
+        try {
+          system.init(1);
+        } catch (Exception ex) {
+          logger.warn("K-value trial addPhase init failed: " + ex.getMessage());
+          system.removePhaseKeepTotalComposition(newPhaseIdx);
+          multiPhaseTest = false;
+          return;
+        }
+        system.normalizeBeta();
+        return;
+      }
+    }
+
+    // --- Fallback: Pure-component trials for cases Wilson K trials miss ---
+    // (e.g., LLE detection where K-values don't capture polarity-driven splits)
     int hydrocarbonTestCompNumb = 0;
     int lightTestCompNumb = 0;
     double Mmax = 0;
@@ -431,45 +610,63 @@ public class TPmultiflash extends TPflash {
       int iter = 0;
       double errOld = 1.0e100;
       boolean useaccsubst = true;
+      boolean pureTrialInitFailed = false;
       int maxsucssubiter = 150;
       int maxiter = 200;
+
+      // Pre-allocate Newton matrices outside the iteration loop to avoid GC pressure
+      int nc = system.getPhase(0).getNumberOfComponents();
+      DMatrixRMaj newtonF = new DMatrixRMaj(nc, 1);
+      DMatrixRMaj newtonJ = new DMatrixRMaj(nc, nc);
+      DMatrixRMaj newtonDx = new DMatrixRMaj(nc, 1);
+
       do {
         errOld = err;
         iter++;
         err = 0;
 
         if (iter <= maxsucssubiter || !system.isImplementedCompositionDeriativesofFugacity()) {
-          if (iter % 7 == 0 && useaccsubst) {
-            double vec1 = 0.0;
-
-            double vec2 = 0.0;
+          // DEM acceleration every 5th iteration (Michelsen 1982b, Risnes et al. 1981)
+          // Uses dominant eigenvalue estimate: λ = (Δg_n · Δg_{n-1}) / (Δg_{n-1} · Δg_{n-1})
+          if (iter % 5 == 0 && iter > 5 && useaccsubst) {
             double prod1 = 0.0;
             double prod2 = 0.0;
-            for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              vec1 = oldDeltalogWi[i] * oldoldDeltalogWi[i];
-              vec2 = Math.pow(oldoldDeltalogWi[i], 2.0);
-              prod1 += vec1 * vec2;
-              prod2 += vec2 * vec2;
+            for (int i = 0; i < nc; i++) {
+              // Correct DEM formula: λ = Σ(Δg_n · Δg_{n-1}) / Σ(Δg_{n-1}²)
+              prod1 += deltalogWi[i] * oldDeltalogWi[i];
+              prod2 += oldDeltalogWi[i] * oldDeltalogWi[i];
             }
 
-            double lambda = prod1 / prod2;
-            // logger.info("lambda " + lambda);
-            for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              logWi[i] += lambda / (1.0 - lambda) * deltalogWi[i];
-              err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
-              Wi[j][i] = safeExp(logWi[i]);
+            if (prod2 > 1e-20) {
+              double lambda = prod1 / prod2;
+              // Only accelerate if 0 < λ < 1 (convergent regime)
+              if (lambda > 0.0 && lambda < 1.0) {
+                double accelFactor = lambda / (1.0 - lambda);
+                for (int i = 0; i < nc; i++) {
+                  logWi[i] += accelFactor * deltalogWi[i];
+                  Wi[j][i] = safeExp(logWi[i]);
+                }
+              }
+            }
+            // Must still update compositions after acceleration
+            for (int i = 0; i < nc; i++) {
+              err += Math.abs(logWi[i] - oldlogw[i]);
             }
           } else {
-            for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+            for (int i = 0; i < nc; i++) {
               oldoldoldlogw[i] = oldoldlogw[i];
               oldoldlogw[i] = oldlogw[i];
               oldlogw[i] = logWi[i];
               oldoldDeltalogWi[i] = oldoldlogw[i] - oldoldoldlogw[i];
               oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
             }
-            clonedSystem.get(0).init(1, 1);
-            for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              // oldlogw[i] = logWi[i];
+            try {
+              clonedSystem.get(0).init(1, 1);
+            } catch (Exception ex) {
+              pureTrialInitFailed = true;
+              break;
+            }
+            for (int i = 0; i < nc; i++) {
               if (!Double.isInfinite(
                   clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient())
                   && system.getPhase(0).getComponent(i).getx() > 1e-100) {
@@ -482,108 +679,76 @@ public class TPmultiflash extends TPflash {
               deltalogWi[i] = logWi[i] - oldlogw[i];
               err += Math.abs(logWi[i] - oldlogw[i]);
               Wi[j][i] = safeExp(logWi[i]);
-              useaccsubst = true;
             }
             if (iter > 2 && err > errOld) {
               useaccsubst = false;
             }
           }
         } else {
-          SimpleMatrix f = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(), 1);
-          SimpleMatrix df = null;
-          SimpleMatrix identitytimesConst = null;
-          // if (!secondOrderStabilityAnalysis) {
-          for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+          // Second-order (Newton) method using Michelsen's α-substitution
+          // α_i = 2√(W_i), which ensures W_i ≥ 0 (Michelsen 1982a)
+          for (int i = 0; i < nc; i++) {
             oldoldoldlogw[i] = oldoldlogw[i];
             oldoldlogw[i] = oldlogw[i];
             oldlogw[i] = logWi[i];
-            oldoldDeltalogWi[i] = oldoldlogw[i] - oldoldoldlogw[i];
-            oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
           }
-          clonedSystem.get(0).init(3, 1);
-          alpha = new double[clonedSystem.get(0).getPhases()[0].getNumberOfComponents()];
-          df = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(),
-              system.getPhases()[0].getNumberOfComponents());
-          identitytimesConst = SimpleMatrix.identity(system.getPhases()[0].getNumberOfComponents());
-          // ,
-          // system.getPhases()[0].getNumberOfComponents());
-          // secondOrderStabilityAnalysis = true;
-          // }
+          // Newton needs fugcoef + composition derivatives
+          try {
+            clonedSystem.get(0).init(3, 1);
+          } catch (Exception ex) {
+            pureTrialInitFailed = true;
+            break;
+          }
+          alpha = new double[nc];
 
-          for (int i = 0; i < clonedSystem.get(0).getPhases()[0].getNumberOfComponents(); i++) {
+          for (int i = 0; i < nc; i++) {
             alpha[i] = 2.0 * Math.sqrt(Wi[j][i]);
           }
 
-          for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+          // Build gradient and Jacobian using raw EJML (no SimpleMatrix allocation)
+          for (int i = 0; i < nc; i++) {
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-              f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
+              newtonF.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
                   + clonedSystem.get(0).getPhases()[1].getComponent(i).getLogFugacityCoefficient()
                   - d[i]));
+            } else {
+              newtonF.set(i, 0, 0.0);
             }
-            for (int k = 0; k < clonedSystem.get(0).getPhases()[0].getNumberOfComponents(); k++) {
+            for (int k = 0; k < nc; k++) {
               double kronDelt = (i == k) ? 1.0 : 0.0;
               if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-                df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
+                newtonJ.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
                     * clonedSystem.get(0).getPhases()[1].getComponent(i).getdfugdn(k));
-                // * clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
               } else {
-                df.set(i, k, 0);
-                // * clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                newtonJ.set(i, k, 0.0);
               }
             }
           }
 
-          // f.print(10, 10);
-          // df.print(10, 10);
-          SimpleMatrix dx = null;
-          try {
-            // Check if the determinant is close to zero
-            double determinant = df.determinant();
-            if (Math.abs(determinant) < 1e-10) {
-              logger.warn("Matrix is nearly singular. Determinant: " + determinant);
-              // Add a small regularization term to stabilize the solution
-              dx = df.plus(identitytimesConst.scale(1e-6)).solve(f).negative();
-            } else {
-              dx = df.plus(identitytimesConst).solve(f).negative();
+          // Solve J·dx = -f using raw EJML
+          boolean solved = CommonOps_DDRM.solve(newtonJ, newtonF, newtonDx);
+          if (!solved) {
+            // Regularize: add small diagonal and retry
+            for (int i = 0; i < nc; i++) {
+              newtonJ.add(i, i, 0.1);
             }
-          } catch (Exception e) {
-            logger.error("Error solving matrix equation: " + e.getMessage());
-            logger.debug("Attempting fallback with scaled regularization...");
-            try {
-              // Fallback: Add a larger regularization term and retry
-              dx = df.plus(identitytimesConst.scale(0.2)).solve(f).negative();
-            } catch (Exception ex) {
-              logger.error("Fallback matrix solve failed: " + ex.getMessage());
-              logger.debug("Attempting pseudo-inverse fallback...");
-              try {
-                DMatrixRMaj pinv = new DMatrixRMaj(df.numCols(), df.numRows());
-                CommonOps_DDRM.pinv(df.getDDRM(), pinv);
-                DMatrixRMaj result = new DMatrixRMaj(df.numCols(), 1);
-                CommonOps_DDRM.mult(pinv, f.getDDRM(), result);
-                dx = SimpleMatrix.wrap(result).negative();
-                logger.warn("Used pseudo-inverse matrix solve.");
-              } catch (Exception ex2) {
-                logger.error("Pseudo-inverse fallback failed: " + ex2.getMessage());
-                logger.warn("Setting dx to zero matrix as a last resort.");
-                dx = new SimpleMatrix(f.numRows(), f.numCols());
+            solved = CommonOps_DDRM.solve(newtonJ, newtonF, newtonDx);
+          }
+
+          if (solved) {
+            for (int i = 0; i < nc; i++) {
+              double alphaNew = alpha[i] - newtonDx.get(i, 0);
+              Wi[j][i] = Math.pow(alphaNew / 2.0, 2.0);
+              if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
+                logWi[i] = Math.log(Wi[j][i]);
               }
+              if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+                  || system.getPhase(0).getComponent(i).isIsIon()) {
+                logWi[i] = -1000.0;
+              }
+              err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
             }
           }
-
-          for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-            double alphaNew = alpha[i] + dx.get(i, 0);
-            Wi[j][i] = Math.pow(alphaNew / 2.0, 2.0);
-            if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-              logWi[i] = Math.log(Wi[j][i]);
-            }
-            if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-                || system.getPhase(0).getComponent(i).isIsIon()) {
-              logWi[i] = -1000.0;
-            }
-            err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
-          }
-
-          // logger.info("err newton " + err);
         }
         // logger.info("err: " + err);
 
@@ -596,7 +761,13 @@ public class TPmultiflash extends TPflash {
             clonedSystem.get(0).getPhase(1).getComponent(i).setx(1e-50);
           }
         }
-      } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
+      } while (!pureTrialInitFailed && (Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
+
+      if (pureTrialInitFailed) {
+        tm[j] = 10.0;
+        continue;
+      }
+
       // logger.info("err: " + err + " ITER " + iter);
       double xTrivialCheck0 = 0.0;
       double xTrivialCheck1 = 0.0;
@@ -640,7 +811,14 @@ public class TPmultiflash extends TPflash {
         multiPhaseTest = true;
         system.setBeta(system.getNumberOfPhases() - 1,
             system.getPhase(0).getComponent(unstabcomp).getz());
-        system.init(1);
+        try {
+          system.init(1);
+        } catch (Exception ex) {
+          logger.warn("stabilityAnalysis addPhase init failed: " + ex.getMessage());
+          system.removePhaseKeepTotalComposition(system.getNumberOfPhases() - 1);
+          multiPhaseTest = false;
+          return;
+        }
         system.normalizeBeta();
 
         // logger.info("STABILITY ANALYSIS: ");
@@ -811,7 +989,14 @@ public class TPmultiflash extends TPflash {
             oldDeltalogWi[i] = deltalogWi[i];
           }
 
-          clonedSystem.init(1, 1);
+          try {
+            clonedSystem.init(1, 1);
+          } catch (RuntimeException ex) {
+            // Molar volume calculation failed for this trial phase composition
+            // Skip this trial - it's not a physically meaningful phase
+            logger.debug("Enhanced stability trial init failed: " + ex.getMessage());
+            break;
+          }
 
           // Update logWi from fugacity coefficients
           for (int i = 0; i < numComponents; i++) {
@@ -906,7 +1091,14 @@ public class TPmultiflash extends TPflash {
             }
           }
           system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());
-          system.init(1);
+          try {
+            system.init(1);
+          } catch (Exception ex) {
+            logger.warn("Enhanced K-value trial addPhase init failed: " + ex.getMessage());
+            system.removePhaseKeepTotalComposition(newPhaseIdx);
+            multiPhaseTest = false;
+            return;
+          }
           system.normalizeBeta();
           return;
         }
@@ -1064,6 +1256,7 @@ public class TPmultiflash extends TPflash {
       int iter = 0;
       double errOld = 1.0e100;
       boolean useaccsubst = true;
+      boolean enhancedTrialInitFailed = false;
       int maxsucssubiter = 150;
       int maxiter = 200;
       do {
@@ -1100,7 +1293,12 @@ public class TPmultiflash extends TPflash {
               oldoldDeltalogWi[i] = oldoldlogw[i] - oldoldoldlogw[i];
               oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
             }
-            clonedSystem.get(0).init(1, 1);
+            try {
+              clonedSystem.get(0).init(1, 1);
+            } catch (Exception ex) {
+              enhancedTrialInitFailed = true;
+              break;
+            }
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
               // oldlogw[i] = logWi[i];
               if (!Double.isInfinite(
@@ -1133,7 +1331,12 @@ public class TPmultiflash extends TPflash {
             oldoldDeltalogWi[i] = oldoldlogw[i] - oldoldoldlogw[i];
             oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
           }
-          clonedSystem.get(0).init(3, 1);
+          try {
+            clonedSystem.get(0).init(3, 1);
+          } catch (Exception ex) {
+            enhancedTrialInitFailed = true;
+            break;
+          }
           alpha = new double[clonedSystem.get(0).getPhases()[0].getNumberOfComponents()];
           df = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(),
               system.getPhases()[0].getNumberOfComponents());
@@ -1236,7 +1439,14 @@ public class TPmultiflash extends TPflash {
             clonedSystem.get(0).getPhase(1).getComponent(i).setx(1e-50);
           }
         }
-      } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
+      } while (!enhancedTrialInitFailed && (Math.abs(err) > 1e-9 || err > errOld)
+          && iter < maxiter);
+
+      if (enhancedTrialInitFailed) {
+        tm[j] = 10.0;
+        continue;
+      }
+
       // logger.info("err: " + err + " ITER " + iter);
       double xTrivialCheck0 = 0.0;
       double xTrivialCheck1 = 0.0;
@@ -1280,7 +1490,15 @@ public class TPmultiflash extends TPflash {
         multiPhaseTest = true;
         system.setBeta(system.getNumberOfPhases() - 1,
             system.getPhase(0).getComponent(unstabcomp).getz());
-        system.init(1);
+        try {
+          system.init(1);
+        } catch (Exception ex) {
+          logger
+              .warn("stabilityAnalysisEnhanced pure-comp addPhase init failed: " + ex.getMessage());
+          system.removePhaseKeepTotalComposition(system.getNumberOfPhases() - 1);
+          multiPhaseTest = false;
+          return;
+        }
         system.normalizeBeta();
 
         // logger.info("STABILITY ANALYSIS: ");
@@ -1637,7 +1855,14 @@ public class TPmultiflash extends TPflash {
         multiPhaseTest = true;
         system.setBeta(system.getNumberOfPhases() - 1,
             system.getPhase(0).getComponent(unstabcomp).getz());
-        system.init(1);
+        try {
+          system.init(1);
+        } catch (Exception ex) {
+          logger.warn("stabilityAnalysis3 addPhase init failed: " + ex.getMessage());
+          system.removePhaseKeepTotalComposition(system.getNumberOfPhases() - 1);
+          multiPhaseTest = false;
+          return;
+        }
         system.normalizeBeta();
 
         // logger.info("STABILITY ANALYSIS: ");
@@ -1708,7 +1933,12 @@ public class TPmultiflash extends TPflash {
     double initialBeta = Math.max(1.0e-3, 1000.0 * phaseFractionMinimumLimit);
     system.setBeta(phaseIndex, initialBeta);
     system.normalizeBeta();
-    system.init(1);
+    try {
+      system.init(1);
+    } catch (Exception ex) {
+      logger.warn("seedGasPhase init failed: " + ex.getMessage());
+      return false;
+    }
     return true;
   }
 
@@ -1801,7 +2031,11 @@ public class TPmultiflash extends TPflash {
     }
 
     // Reinitialize - phase types will be recalculated based on new compositions
-    system.init(1);
+    try {
+      system.init(1);
+    } catch (Exception ex) {
+      logger.warn("ensureSingleAqueousPhase init failed: " + ex.getMessage());
+    }
   }
 
   private boolean seedHydrocarbonLiquidFromFeed() {
@@ -1875,7 +2109,12 @@ public class TPmultiflash extends TPflash {
     double initialBeta = Math.max(1.0e-5, 10.0 * phaseFractionMinimumLimit);
     system.setBeta(phaseIndex, initialBeta);
     system.normalizeBeta();
-    system.init(1);
+    try {
+      system.init(1);
+    } catch (Exception ex) {
+      logger.warn("seedAqueousPhase init failed: " + ex.getMessage());
+      return false;
+    }
     return true;
   }
 
@@ -1905,7 +2144,11 @@ public class TPmultiflash extends TPflash {
           }
         }
       }
-      system.init(1);
+      try {
+        system.init(1);
+      } catch (Exception ex) {
+        logger.warn("Ion-stripping init failed: " + ex.getMessage());
+      }
     }
 
     // system.setNumberOfPhases(system.getNumberOfPhases()+1);
@@ -1962,7 +2205,11 @@ public class TPmultiflash extends TPflash {
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
         system.getPhase(phase).normalize();
       }
-      system.init(1);
+      try {
+        system.init(1);
+      } catch (Exception ex) {
+        logger.warn("Ion-restore init failed: " + ex.getMessage());
+      }
     }
 
     // system.init(1);
@@ -2001,12 +2248,17 @@ public class TPmultiflash extends TPflash {
               xchem[i] = system.getPhase(aqueousPhaseNumber).getComponent(i).getx();
             }
 
-            system.init(1);
-            system.getChemicalReactionOperations().solveChemEq(aqueousPhaseNumber, 1);
+            try {
+              system.init(1);
+              system.getChemicalReactionOperations().solveChemEq(aqueousPhaseNumber, 1);
 
-            for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              chemdev +=
-                  Math.abs(xchem[i] - system.getPhase(aqueousPhaseNumber).getComponent(i).getx());
+              for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+                chemdev +=
+                    Math.abs(xchem[i] - system.getPhase(aqueousPhaseNumber).getComponent(i).getx());
+              }
+            } catch (Exception ex) {
+              logger.warn("Chemical equilibrium init failed: " + ex.getMessage());
+              chemdev = 0.0;
             }
           }
         }
@@ -2100,7 +2352,12 @@ public class TPmultiflash extends TPflash {
           double initialBeta = Math.max(1.0e-5, 10.0 * phaseFractionMinimumLimit);
           system.setBeta(aquPhaseIndex, initialBeta);
           system.normalizeBeta();
-          system.init(1);
+          try {
+            system.init(1);
+          } catch (Exception ex) {
+            logger.warn("Aqueous phase seeding init failed, removing phase: " + ex.getMessage());
+            system.removePhaseKeepTotalComposition(aquPhaseIndex);
+          }
           multiPhaseTest = true;
           doStabilityAnalysis = false;
         }

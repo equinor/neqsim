@@ -60,7 +60,7 @@ optimizer.setMaxFlow(500.0);
 // Find maximum flow rate
 double maxFlow = optimizer.findMaxFlowRate(
     50.0,   // inlet pressure
-    30.0,   // outlet pressure  
+    30.0,   // outlet pressure
     "bara"  // pressure unit
 );
 
@@ -123,7 +123,7 @@ Map<Double, Double> curve = optimizer.generateCapacityCurve(
 );
 
 // Result: Map<OutletPressure, MaxFlowRate>
-curve.forEach((pOut, flow) -> 
+curve.forEach((pOut, flow) ->
     System.out.println("P_out=" + pOut + " bara -> " + flow + " kg/hr")
 );
 ```
@@ -148,16 +148,16 @@ System.out.println("Converged: " + result.get("converged"));
 
 ## Configuration Options
 
-| Parameter | Method | Description | Default |
-|-----------|--------|-------------|---------|
-| Inlet Stream | `setInletStream()` | Stream where flow rate is adjusted | Required |
-| Outlet Stream | `setOutletStream()` | Stream where outlet pressure is measured | Required |
-| Flow Unit | `setFlowUnit()` | Unit for flow rate results | "kg/hr" |
-| Max Flow | `setMaxFlow()` | Upper bound for flow rate search | 1000.0 |
-| Min Flow | `setMinFlow()` | Lower bound for flow rate search | 0.0 |
-| Flow Tolerance | `setFlowTolerance()` | Binary search convergence tolerance | 0.1 |
-| Pressure Tolerance | `setPressureTolerance()` | Outlet pressure feasibility tolerance | 0.1 bara |
-| Minimum Surge Margin | `setMinSurgeMargin()` | Required distance from compressor surge | 0.1 (10%) |
+| Parameter                | Method                    | Description                                 | Default   |
+| ------------------------ | ------------------------- | ------------------------------------------- | --------- |
+| Inlet Stream             | `setInletStream()`        | Stream where flow rate is adjusted          | Required  |
+| Outlet Stream            | `setOutletStream()`       | Stream where outlet pressure is measured    | Required  |
+| Flow Unit                | `setFlowUnit()`           | Unit for flow rate results                  | "kg/hr"   |
+| Max Flow                 | `setMaxFlow()`            | Upper bound for flow rate search            | 1000.0    |
+| Min Flow                 | `setMinFlow()`            | Lower bound for flow rate search            | 0.0       |
+| Flow Tolerance           | `setFlowTolerance()`      | Binary search convergence tolerance         | 0.1       |
+| Pressure Tolerance       | `setPressureTolerance()`  | Outlet pressure feasibility tolerance       | 0.1 bara  |
+| Minimum Surge Margin     | `setMinSurgeMargin()`     | Required distance from compressor surge     | 0.1 (10%) |
 | Minimum Stonewall Margin | `setMinStonewallMargin()` | Required distance from compressor stonewall | 0.1 (10%) |
 
 ## Process Types
@@ -358,7 +358,7 @@ The `PressureBoundaryOptimizer` is **NOT** thread-safe. The underlying `ProcessS
 
 - [Compressors](equipment/compressors) - Centrifugal compressor documentation
 - [Pipelines](equipment/pipelines) - Pipeline documentation
-- [Process Equipment](./\) - Process equipment overview
+- [Process Equipment](equipment/index.md) - Process equipment overview
 
 ## Example: Complete Workflow
 
@@ -382,7 +382,7 @@ double[] outletP = generateRange(80, 150, 15); // 80-150 bara, 15 points
 LiftCurveTable table = optimizer.generateLiftCurveTable(inletP, outletP, "bara");
 
 // 4. Export results
-System.out.println("Feasible points: " + table.countFeasiblePoints() + 
+System.out.println("Feasible points: " + table.countFeasiblePoints() +
                    "/" + (inletP.length * outletP.length));
 
 // Save to file for Eclipse
@@ -394,10 +394,10 @@ Files.writeString(Path.of("lift_curve.json"), table.toJson());
 
 ## Troubleshooting
 
-| Issue | Possible Cause | Solution |
-|-------|----------------|----------|
-| All points infeasible | Pressure range too extreme | Reduce outlet pressure range |
-| Very slow generation | Grid too fine | Use coarser grid or parallel execution |
-| NaN flow rates | Process doesn't converge | Check fluid composition and EOS |
-| Power values missing | No compressors in process | Expected for simple valve systems |
+| Issue                 | Possible Cause             | Solution                               |
+| --------------------- | -------------------------- | -------------------------------------- |
+| All points infeasible | Pressure range too extreme | Reduce outlet pressure range           |
+| Very slow generation  | Grid too fine              | Use coarser grid or parallel execution |
+| NaN flow rates        | Process doesn't converge   | Check fluid composition and EOS        |
+| Power values missing  | No compressors in process  | Expected for simple valve systems      |
 

@@ -2170,12 +2170,13 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public double getDensity() {
+    double totalVolume = getVolume();
+    if (totalVolume == 0.0) {
+      return 0.0;
+    }
     double density = 0.0;
     for (int i = 0; i < numberOfPhases; i++) {
-      // Use the phase densities directly to avoid assumptions about the internal
-      // molar-volume scaling (some specialised phases, like the ammonia reference
-      // EOS, provide densities directly).
-      density += beta[phaseIndex[i]] * getPhase(i).getDensity();
+      density += getPhase(i).getVolume() / totalVolume * getPhase(i).getDensity();
     }
     return density;
   }
@@ -2184,9 +2185,13 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public double getDensity(String unit) {
     double density = 0;
+    double totalVolume = getVolume();
     for (int i = 0; i < getNumberOfPhases(); i++) {
-      density +=
-          getPhase(i).getVolume() / getVolume() * getPhase(i).getPhysicalProperties().getDensity();
+      double volFrac = getCorrectedVolumeFraction(i);
+      if (Double.isNaN(volFrac) || Double.isInfinite(volFrac)) {
+        volFrac = totalVolume > 0 ? getPhase(i).getVolume() / totalVolume : 0;
+      }
+      density += volFrac * getPhase(i).getPhysicalProperties().getDensity();
     }
     double refDensity = density; // density in kg/m3
     double conversionFactor = 1.0;
@@ -3733,17 +3738,17 @@ public abstract class SystemThermo implements SystemInterface {
       }
       if (type > 2) {
         for (int j = 0; j < numberOfComponents; j++) {
-          getPhase(phaseNum).getComponent(j).logfugcoefdT(getPhase(phaseNum));
-          getPhase(phaseNum).getComponent(j).logfugcoefdP(getPhase(phaseNum));
+          // dT/dP already computed in type > 1 block above — only compute dN here
           getPhase(phaseNum).getComponent(j).logfugcoefdN(getPhase(phaseNum));
         }
       }
     }
 
-    for (PhaseInterface tmpPhase : phaseArray) {
-      if (tmpPhase != null && tmpPhase.getType() == PhaseType.GAS) {
-        tmpPhase.setType(PhaseType.OIL);
-      }
+    // Only reclassify the initialized phase (not all phases).
+    // Phase 0 is the reference phase and is allowed to remain GAS.
+    // This is consistent with initAnalytic(type) which only reclassifies phases >= 1.
+    if (phaseNum >= 1 && getPhase(phaseNum).getType() == PhaseType.GAS) {
+      getPhase(phaseNum).setType(PhaseType.OIL);
     }
 
     this.isInitialized = true;
@@ -4306,14 +4311,16 @@ public abstract class SystemThermo implements SystemInterface {
   /** {@inheritDoc} */
   @Override
   public SystemInterface readObject(int ID) {
-    java.sql.ResultSet rs = null;
     SystemThermo tempSystem = null;
     neqsim.util.database.NeqSimBlobDatabase database =
         new neqsim.util.database.NeqSimBlobDatabase();
+    java.sql.Connection con = null;
+    java.sql.PreparedStatement ps = null;
+    java.sql.ResultSet rs = null;
     try {
-      java.sql.Connection con = database.openConnection();
+      con = database.openConnection();
       String sqlStr = "SELECT FLUID FROM fluid_blobdb WHERE ID=" + Integer.toString(ID);
-      java.sql.PreparedStatement ps = con.prepareStatement(sqlStr);
+      ps = con.prepareStatement(sqlStr);
       rs = ps.executeQuery();
 
       if (rs.next()) {
@@ -4326,6 +4333,15 @@ public abstract class SystemThermo implements SystemInterface {
       logger.error(ex.getMessage(), ex);
     } finally {
       try {
+        if (rs != null) {
+          rs.close();
+        }
+        if (ps != null) {
+          ps.close();
+        }
+        if (con != null) {
+          con.close();
+        }
         if (database.getStatement() != null) {
           database.getStatement().close();
         }
@@ -4565,12 +4581,12 @@ public abstract class SystemThermo implements SystemInterface {
 
     neqsim.util.database.NeqSimBlobDatabase database =
         new neqsim.util.database.NeqSimBlobDatabase();
-
+    java.sql.Connection con = null;
+    java.sql.PreparedStatement ps = null;
     try {
-      java.sql.Connection con = database.openConnection();
+      con = database.openConnection();
 
-      java.sql.PreparedStatement ps =
-          con.prepareStatement("REPLACE INTO fluid_blobdb (ID, FLUID) VALUES (?,?)");
+      ps = con.prepareStatement("REPLACE INTO fluid_blobdb (ID, FLUID) VALUES (?,?)");
       ps.setInt(1, ID);
       ps.setBlob(2, inpStream);
 
@@ -4586,6 +4602,12 @@ public abstract class SystemThermo implements SystemInterface {
       logger.error(ex.getMessage(), ex);
     } finally {
       try {
+        if (ps != null) {
+          ps.close();
+        }
+        if (con != null) {
+          con.close();
+        }
         if (database.getStatement() != null) {
           database.getStatement().close();
         }
@@ -5494,7 +5516,8 @@ public abstract class SystemThermo implements SystemInterface {
     }
     double density = 0.0;
     if (flowunit.equals("Am3/hr") || flowunit.equals("Am3/min") || flowunit.equals("gallons/min")
-        || flowunit.equals("Am3/sec")) {
+        || flowunit.equals("Am3/sec") || flowunit.equals("m3/hr") || flowunit.equals("m3/min")
+        || flowunit.equals("m3/sec") || flowunit.equals("m3/day")) {
       initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     }
 

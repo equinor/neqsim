@@ -20,6 +20,7 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.process.design.AutoSizeable;
+import neqsim.process.electricaldesign.compressor.CompressorElectricalDesign;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.capacity.CapacityConstraint;
@@ -142,6 +143,9 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
 
   CompressorMechanicalDesign mechanicalDesign;
 
+  CompressorElectricalDesign electricalDesign;
+  neqsim.process.instrumentdesign.compressor.CompressorInstrumentDesign instrumentDesign;
+
   /** Mechanical losses model for seal gas and bearing calculations. */
   private CompressorMechanicalLosses mechanicalLosses = null;
 
@@ -164,6 +168,8 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   public Compressor(String name) {
     super(name);
     initMechanicalDesign();
+    initElectricalDesign();
+    initInstrumentDesign();
     initializeCapacityConstraints();
   }
 
@@ -205,6 +211,31 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new CompressorMechanicalDesign(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public CompressorElectricalDesign getElectricalDesign() {
+    return electricalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initElectricalDesign() {
+    electricalDesign = new CompressorElectricalDesign(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public neqsim.process.instrumentdesign.compressor.CompressorInstrumentDesign getInstrumentDesign() {
+    return instrumentDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initInstrumentDesign() {
+    instrumentDesign =
+        new neqsim.process.instrumentdesign.compressor.CompressorInstrumentDesign(this);
   }
 
   /**
@@ -320,7 +351,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
     try {
-      this.outStream = inletStream.clone();
+      this.outStream = inletStream.clone(this.getName() + " out stream");
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -1659,7 +1690,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    * <p>
    * The CSV format is compatible with {@link CompressorChartReader} for loading:
    * </p>
-   * 
+   *
    * <pre>
    * speed;flow;head;polyEff
    * 2000.00;9598.75;33.36;78.30
@@ -1702,7 +1733,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    * The JSON format includes metadata (name, head unit, max design power) and is compatible with
    * {@link CompressorChartJsonReader} for loading:
    * </p>
-   * 
+   *
    * <pre>
    * {
    *   "compressorName": "Compressor Name",
@@ -1779,7 +1810,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    * <p>
    * The CSV format should match the output of {@link #saveCompressorChartToCsv(String)}:
    * </p>
-   * 
+   *
    * <pre>
    * speed;flow;head;polyEff
    * 2000.00;9598.75;33.36;78.30
@@ -2001,12 +2032,12 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
 
   /**
    * Calculate the distance to the stone wall (choke) limit.
-   * 
+   *
    * <p>
    * Returns a positive value indicating the percentage margin to stone wall. For example, 0.5 means
    * the stone wall is 50% above the current flow rate.
    * </p>
-   * 
+   *
    * <p>
    * For single speed compressors where the stone wall curve is not active, this method uses the
    * maximum flow point at the current speed. For multi-speed compressors, it uses the stone wall
@@ -4947,7 +4978,7 @@ public class Compressor extends TwoPortEquipment implements CompressorInterface,
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * Compressor comp = Compressor.builder("K-100").inletStream(feed).outletPressure(50.0, "bara")
    *     .polytropicEfficiency(0.75).speed(8000).build();

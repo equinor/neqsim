@@ -76,7 +76,7 @@ jobs:
           EOF
 
       - name: Upload artifact (for debugging)
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: security-metrics
           path: security-metrics.json

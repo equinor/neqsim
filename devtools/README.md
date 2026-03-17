@@ -51,4 +51,24 @@ for a full explanation of the architecture and internals.
 | File | Purpose |
 |------|---------|
 | `neqsim_dev_setup.py` | JVM bootstrap, class imports, compile + kernel restart |
-| `pyproject.toml` | Makes it pip-installable (`pip install -e devtools/`) |
+| `pyproject.toml` | Makes it pip-installable (`pip install -e devtools/`) || `new_task.py` | Create task-solving folders for the 4-step AI workflow |
+
+## Solving Engineering Tasks
+
+The `new_task.py` script creates structured task folders for the
+[AI-Supported Task Solving](../docs/development/TASK_SOLVING_GUIDE.md) workflow.
+
+**Recommended:** Use the `@solve.task` Copilot agent instead — it runs the
+script automatically and handles all 4 steps:
+
+```
+@solve.task JT cooling for rich gas at 100 bara
+```
+
+**Manual alternative:**
+
+```bash
+python devtools/new_task.py "JT cooling for rich gas" --type A
+python devtools/new_task.py --list    # list existing tasks
+python devtools/new_task.py --setup   # create task_solve/ without a task
+```

@@ -47,6 +47,21 @@ If you want the separator inventory to warm up from the calculated fire load, se
 separator (`separator.setDuty(fireResult.totalFireHeat())`) and call `separator.runTransient(...)`
 so the energy balance absorbs that heat during the timestep.
 
+## VesselDepressurization integrated S-B fire model
+
+For `VesselDepressurization` blowdown simulations, a built-in Stefan-Boltzmann fire model is
+available that applies fire heat at the outer wall boundary of the transient wall heat conduction
+solver. This is the recommended approach for vessel/tank fire depressurization cases because:
+
+- Fire heat goes through the wall (1-D conduction) before reaching the gas, producing physically
+  correct temperature profiles
+- Preset fire types cover common Scandpower and API 521 scenarios (`SCANDPOWER_JET`,
+  `SCANDPOWER_POOL`, `API_JET`, `API_POOL`)
+- Custom radiative and convective parameters are supported via `setSBFireParameters()`
+- Results match HydDown and Unisim behavior
+
+See [Vessel Depressurization - Stefan-Boltzmann Fire Model](../process/equipment/vessel_depressurization.md#stefan-boltzmann-fire-model) for full API reference and worked examples.
+
 ## Separator fire blowdown worked example
 The runnable `SeparatorFireDepressurizationExample` (`src/main/java/neqsim/process/util/example/SeparatorFireDepressurizationExample.java`)
 illustrates how to couple a separator depressurization to the flare with the fire utilities:

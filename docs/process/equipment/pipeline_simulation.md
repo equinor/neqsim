@@ -58,7 +58,7 @@ public interface PipeLineInterface extends ProcessEquipmentInterface {
     double getElevationChange();
     void setWallThickness(double thickness);
     double getWallThickness();
-    
+
     // Flow Properties
     double getVelocity();
     double getVelocity(String unit);
@@ -67,7 +67,7 @@ public interface PipeLineInterface extends ProcessEquipmentInterface {
     double getFrictionFactor();
     double getFlowRegime();
     String getFlowRegimeDescription();
-    
+
     // Pressure Drop
     double getPressureDrop();
     double getPressureDrop(String unit);
@@ -75,7 +75,7 @@ public interface PipeLineInterface extends ProcessEquipmentInterface {
     double getFrictionalPressureDrop();
     double getGravitationalPressureDrop();
     double getAccelerationalPressureDrop();
-    
+
     // Two-Phase Properties
     double getLiquidHoldup();
     double getGasVoidFraction();
@@ -83,7 +83,7 @@ public interface PipeLineInterface extends ProcessEquipmentInterface {
     double getMixtureVelocity();
     double getLiquidSuperficialVelocity();
     double getGasSuperficialVelocity();
-    
+
     // Heat Transfer
     void setOverallHeatTransferCoefficient(double U);
     double getOverallHeatTransferCoefficient();
@@ -91,7 +91,7 @@ public interface PipeLineInterface extends ProcessEquipmentInterface {
     double getAmbientTemperature();
     double getHeatLoss();
     double getHeatLoss(String unit);
-    
+
     // Profile Data
     double[] getPressureProfile();
     double[] getTemperatureProfile();
@@ -99,7 +99,7 @@ public interface PipeLineInterface extends ProcessEquipmentInterface {
     double[] getVelocityProfile();
     int getNumberOfNodes();
     void setNumberOfNodes(int nodes);
-    
+
     // Mechanical Design
     MechanicalDesign getMechanicalDesign();
     void initMechanicalDesign();
@@ -141,7 +141,7 @@ pipe.setDiameter(0.3, "m");
 pipe.run();
 
 // Temperature remains constant
-double dT = pipe.getOutletStream().getTemperature("C") 
+double dT = pipe.getOutletStream().getTemperature("C")
           - pipe.getInletStream().getTemperature("C");
 // dT ≈ 0 (adiabatic)
 ```
@@ -270,12 +270,12 @@ double slip = pipe.getSlipRatio();  // vg/vl
 
 The Beggs-Brill correlation identifies flow regimes:
 
-| Regime | Description | Typical Conditions |
-|--------|-------------|-------------------|
-| **Segregated** | Stratified flow, liquid at bottom | Low gas, low liquid velocity |
-| **Intermittent** | Slug/plug flow | Moderate velocities |
-| **Distributed** | Annular/mist flow | High gas velocity |
-| **Transition** | Between regimes | Boundary conditions |
+| Regime           | Description                       | Typical Conditions           |
+| ---------------- | --------------------------------- | ---------------------------- |
+| **Segregated**   | Stratified flow, liquid at bottom | Low gas, low liquid velocity |
+| **Intermittent** | Slug/plug flow                    | Moderate velocities          |
+| **Distributed**  | Annular/mist flow                 | High gas velocity            |
+| **Transition**   | Between regimes                   | Boundary conditions          |
 
 ```java
 PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("Pipe", inlet);
@@ -329,14 +329,14 @@ double heatLossMW = pipe.getHeatLoss("MW");
 
 ### Typical U-Values
 
-| Application | U-Value (W/m²K) |
-|-------------|-----------------|
-| Bare pipe in air | 10-25 |
-| Insulated pipe in air | 1-5 |
-| Buried pipe | 2-10 |
-| Subsea pipe (uninsulated) | 15-50 |
-| Subsea pipe (insulated) | 1-5 |
-| Pipe-in-pipe | 0.5-2 |
+| Application               | U-Value (W/m²K) |
+| ------------------------- | --------------- |
+| Bare pipe in air          | 10-25           |
+| Insulated pipe in air     | 1-5             |
+| Buried pipe               | 2-10            |
+| Subsea pipe (uninsulated) | 15-50           |
+| Subsea pipe (insulated)   | 1-5             |
+| Pipe-in-pipe              | 0.5-2           |
 
 ---
 
@@ -411,20 +411,20 @@ for (int i = 0; i < pipe.getNumberOfNodes(); i++) {
 ### Standard Pipe Sizes (API 5L)
 
 | NPS (inch) | OD (mm) | OD (m) |
-|------------|---------|--------|
-| 2" | 60.3 | 0.0603 |
-| 4" | 114.3 | 0.1143 |
-| 6" | 168.3 | 0.1683 |
-| 8" | 219.1 | 0.2191 |
-| 10" | 273.1 | 0.2731 |
-| 12" | 323.9 | 0.3239 |
-| 16" | 406.4 | 0.4064 |
-| 20" | 508.0 | 0.5080 |
-| 24" | 609.6 | 0.6096 |
-| 30" | 762.0 | 0.7620 |
-| 36" | 914.4 | 0.9144 |
-| 42" | 1066.8 | 1.0668 |
-| 48" | 1219.2 | 1.2192 |
+| ---------- | ------- | ------ |
+| 2"         | 60.3    | 0.0603 |
+| 4"         | 114.3   | 0.1143 |
+| 6"         | 168.3   | 0.1683 |
+| 8"         | 219.1   | 0.2191 |
+| 10"        | 273.1   | 0.2731 |
+| 12"        | 323.9   | 0.3239 |
+| 16"        | 406.4   | 0.4064 |
+| 20"        | 508.0   | 0.5080 |
+| 24"        | 609.6   | 0.6096 |
+| 30"        | 762.0   | 0.7620 |
+| 36"        | 914.4   | 0.9144 |
+| 42"        | 1066.8  | 1.0668 |
+| 48"        | 1219.2  | 1.2192 |
 
 ---
 
@@ -592,4 +592,4 @@ String json = design.toJson();
 - [Mechanical Design Standards](../mechanical_design_standards) - ASME, DNV, API standards
 - [Fluid Mechanics](../../fluidmechanics/) - Detailed flow modeling
 - [Valves](valves) - Flow control devices
-- [Equipment Index](./\) - All equipment types
+- [Equipment Index](index.md) - All equipment types

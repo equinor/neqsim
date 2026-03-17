@@ -8,7 +8,7 @@ description: Documentation for pipeline equipment in NeqSim.
 Documentation for pipeline equipment in NeqSim.
 
 > **📘 Comprehensive Documentation Available**
-> 
+>
 > For detailed documentation on all pipeline types, the `PipeLineInterface`, flow regime detection, heat transfer, profile methods, and complete examples, see:
 > - [Pipeline Simulation Guide](pipeline_simulation) - Complete simulation documentation
 > - [Pipeline Mechanical Design](../pipeline_mechanical_design) - Wall thickness, stress analysis, cost estimation
@@ -33,14 +33,14 @@ Documentation for pipeline equipment in NeqSim.
 **Location:** `neqsim.process.equipment.pipeline`
 
 **Classes:**
-| Class | Description | FIV | AutoSize |
-|-------|-------------|-----|----------|
-| `PipeBeggsAndBrills` | Beggs-Brill correlation | ✅ | ✅ |
-| `AdiabaticPipe` | Adiabatic pipe segment | ✅ | ✅ |
-| `OnePhasePipe` | Single-phase pipe | - | - |
-| `TwoPhasePipeLine` | Two-phase pipeline | - | - |
-| `TopsidePiping` | Topside/platform piping with service types and mechanical design | ✅ | ✅ |
-| `Riser` | Subsea risers (SCR, TTR, Flexible, Lazy-Wave) | - | - |
+| Class                | Description                                                      | FIV | AutoSize |
+| -------------------- | ---------------------------------------------------------------- | --- | -------- |
+| `PipeBeggsAndBrills` | Beggs-Brill correlation                                          | ✅   | ✅        |
+| `AdiabaticPipe`      | Adiabatic pipe segment                                           | ✅   | ✅        |
+| `OnePhasePipe`       | Single-phase pipe                                                | -   | -        |
+| `TwoPhasePipeLine`   | Two-phase pipeline                                               | -   | -        |
+| `TopsidePiping`      | Topside/platform piping with service types and mechanical design | ✅   | ✅        |
+| `Riser`              | Subsea risers (SCR, TTR, Flexible, Lazy-Wave)                    | -   | -        |
 
 For detailed pipe flow modeling, see also [Fluid Mechanics](../../fluidmechanics/).
 
@@ -114,16 +114,16 @@ The `TopsidePiping` class provides specialized modeling for offshore platform an
 
 ### Service Types
 
-| Type | Description | Velocity Factor |
-|------|-------------|-----------------|
-| `PROCESS_GAS` | Hydrocarbon gas | 1.0 |
-| `PROCESS_LIQUID` | Hydrocarbon liquid | 1.0 |
-| `MULTIPHASE` | Two-phase flow | 0.8 |
-| `STEAM` | Steam service | 1.2 |
-| `FLARE` | Flare headers | 1.5 |
-| `FUEL_GAS` | Fuel gas system | 0.9 |
-| `COOLING_WATER` | Cooling water | 1.0 |
-| `CHEMICAL_INJECTION` | Chemical injection | 0.8 |
+| Type                 | Description        | Velocity Factor |
+| -------------------- | ------------------ | --------------- |
+| `PROCESS_GAS`        | Hydrocarbon gas    | 1.0             |
+| `PROCESS_LIQUID`     | Hydrocarbon liquid | 1.0             |
+| `MULTIPHASE`         | Two-phase flow     | 0.8             |
+| `STEAM`              | Steam service      | 1.2             |
+| `FLARE`              | Flare headers      | 1.5             |
+| `FUEL_GAS`           | Fuel gas system    | 0.9             |
+| `COOLING_WATER`      | Cooling water      | 1.0             |
+| `CHEMICAL_INJECTION` | Chemical injection | 0.8             |
 
 ### Factory Methods
 
@@ -204,16 +204,16 @@ The `Riser` class provides specialized modeling for subsea risers with support f
 
 ### Riser Types
 
-| Type | Description | Key Features |
-|------|-------------|--------------|
+| Type                         | Description                     | Key Features                               |
+| ---------------------------- | ------------------------------- | ------------------------------------------ |
 | `STEEL_CATENARY_RISER` (SCR) | Free-hanging catenary from FPSO | Touchdown point stress, catenary mechanics |
-| `TOP_TENSIONED_RISER` (TTR) | Tensioned from platform | Stroke requirements, tension variation |
-| `FLEXIBLE_RISER` | Unbonded flexible pipe | Bend radius limits, fatigue |
-| `LAZY_WAVE` | SCR with buoyancy modules | Reduces touchdown stress |
-| `STEEP_WAVE` | Steep wave configuration | Compact footprint |
-| `HYBRID_RISER` | Jumper + tower riser | Deep water applications |
-| `FREE_STANDING` | Tower riser | Ultra-deep water |
-| `VERTICAL` | Vertical tensioned | TLP applications |
+| `TOP_TENSIONED_RISER` (TTR)  | Tensioned from platform         | Stroke requirements, tension variation     |
+| `FLEXIBLE_RISER`             | Unbonded flexible pipe          | Bend radius limits, fatigue                |
+| `LAZY_WAVE`                  | SCR with buoyancy modules       | Reduces touchdown stress                   |
+| `STEEP_WAVE`                 | Steep wave configuration        | Compact footprint                          |
+| `HYBRID_RISER`               | Jumper + tower riser            | Deep water applications                    |
+| `FREE_STANDING`              | Tower riser                     | Ultra-deep water                           |
+| `VERTICAL`                   | Vertical tensioned              | TLP applications                           |
 
 ### Factory Methods
 
@@ -320,14 +320,14 @@ boolean acceptable = design.isDesignAcceptable();
 
 Parameters are loaded from the NeqSim design database:
 
-| Standard | Parameters |
-|----------|------------|
+| Standard        | Parameters                                               |
+| --------------- | -------------------------------------------------------- |
 | **DNV-OS-F201** | Usage factor, safety class factors, DAF, max utilization |
-| **DNV-RP-F204** | Fatigue design factor, S-N curve parameters, SCF |
-| **DNV-RP-C203** | S-N curve parameters (seawater, air) |
-| **DNV-RP-C205** | Strouhal number, drag/lift/added mass coefficients |
-| **API RP 2RD** | Design factor, dynamic load factor |
-| **API RP 17B** | Min bend radius, max axial strain (flexible) |
+| **DNV-RP-F204** | Fatigue design factor, S-N curve parameters, SCF         |
+| **DNV-RP-C203** | S-N curve parameters (seawater, air)                     |
+| **DNV-RP-C205** | Strouhal number, drag/lift/added mass coefficients       |
+| **API RP 2RD**  | Design factor, dynamic load factor                       |
+| **API RP 17B**  | Min bend radius, max axial strain (flexible)             |
 
 ### JSON Export
 
@@ -345,11 +345,11 @@ String calcJson = calc.toJson();
 
 ### Friction Factor Correlations
 
-| Method | Application |
-|--------|-------------|
-| Beggs-Brill | Two-phase flow |
-| Moody | Single-phase turbulent |
-| Colebrook | Single-phase implicit |
+| Method      | Application            |
+| ----------- | ---------------------- |
+| Beggs-Brill | Two-phase flow         |
+| Moody       | Single-phase turbulent |
+| Colebrook   | Single-phase implicit  |
 
 ### Beggs-Brill Correlation
 
@@ -466,7 +466,7 @@ pipeline.setDiameter(0.2, "m");
 pipeline.setNumberOfNodes(50);
 pipeline.run();
 
-System.out.println("Inlet: " + inlet.getPressure("bara") + " bara, " + 
+System.out.println("Inlet: " + inlet.getPressure("bara") + " bara, " +
                    inlet.getTemperature("C") + " °C");
 System.out.println("Outlet: " + pipeline.getOutletStream().getPressure("bara") + " bara, " +
                    pipeline.getOutletStream().getTemperature("C") + " °C");
@@ -573,7 +573,7 @@ All pipeline types provide these FIV methods:
 // LOF - Likelihood of Failure (dimensionless)
 double lof = pipe.calculateLOF();
 
-// FRMS - RMS force per meter (N/m)  
+// FRMS - RMS force per meter (N/m)
 double frms = pipe.calculateFRMS();
 
 // Erosional velocity per API RP 14E
@@ -609,7 +609,7 @@ Map<String, CapacityConstraint> constraints = pipe.getCapacityConstraints();
 // Available constraints:
 // - velocity: actual vs erosional velocity
 // - LOF: Likelihood of Failure
-// - FRMS: RMS force per meter  
+// - FRMS: RMS force per meter
 // - pressureDrop: (AdiabaticPipe only)
 
 // Check if any limit exceeded
@@ -641,7 +641,7 @@ For detailed FIV documentation, see [Capacity Constraint Framework](../CAPACITY_
 
 ## Related Documentation
 
-- [Equipment Index](./\) - All equipment
+- [Equipment Index](index.md) - All equipment
 - [Fluid Mechanics](../../fluidmechanics/) - Detailed pipe flow
 - [Pipeline Mechanical Design](../pipeline_mechanical_design) - Wall thickness, stress, costs
 - [Riser Mechanical Design](../riser_mechanical_design) - Riser-specific design

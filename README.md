@@ -84,6 +84,31 @@ See the [NeqSim Java Wiki](https://github.com/equinor/neqsim/wiki) for how to us
 Additional pages are available in the [local wiki](docs/wiki/index.md).
 NeqSim can be built using the Maven build system (https://maven.apache.org/). All NeqSim build dependencies are given in the pom.xml file. Learn and ask questions in [Discussions for use and development of NeqSim](https://github.com/equinor/neqsim/discussions).
 
+## Solve Engineering Tasks with AI
+
+NeqSim includes an AI-assisted workflow for solving engineering tasks — from quick property lookups to full design studies — while simultaneously improving the toolbox.
+
+LLMs are excellent at engineering intent but hallucinate thermodynamics. NeqSim is exact on physics but blind to context. Together, they form a complete reasoning engine:
+
+![Separation of Concerns: Reasoning vs. Physics](docs/assets/images/separation_of_concerns.svg)
+
+**Fastest way to start** (requires VS Code + GitHub Copilot Chat):
+
+```
+@solve.task hydrate formation temperature for wet gas at 100 bara
+```
+
+The `@solve.task` agent creates a working folder, researches the topic, builds and runs a NeqSim simulation, validates results, and generates a Word report — all in one session.
+
+**Alternative** (script-based, no Copilot needed):
+
+```bash
+pip install -e devtools/
+python devtools/new_task.py "hydrate formation temperature" --type A
+```
+
+See the [step-by-step tutorial](docs/tutorials/solve-engineering-task.md) or the [full workflow reference](docs/development/TASK_SOLVING_GUIDE.md).
+
 ### Initial setup
 
 The NeqSim source code is downloaded by cloning the library to your local computer (alternatively fork it to your private repository). The following commands are dependent on a local installation of [GIT](https://git-scm.com/) and [Maven](https://maven.apache.org/).
@@ -116,9 +141,9 @@ The container image comes with Maven and the recommended extensions already inst
 
 ## Running the tests
 
-The test files are written in JUnit5 and placed in the [test directory](https://github.com/equinor/neqsim/tree/master/src/test). Test code should be written for all new code added to the project, and all tests have to pass before merging into the master branch.  
+The test files are written in JUnit5 and placed in the [test directory](https://github.com/equinor/neqsim/tree/master/src/test). Test code should be written for all new code added to the project, and all tests have to pass before merging into the master branch.
 
-Test coverage can be examined using [jacoco](https://www.eclemma.org/jacoco/) from maven.  
+Test coverage can be examined using [jacoco](https://www.eclemma.org/jacoco/) from maven.
 Generate a coverage report using `./mvnw jacoco:prepare-agent test install jacoco:report` and see results in target/site/jacoco/index.html.
 Run `./mvnw checkstyle:check` to verify that your code follows the project's formatting rules.
 > **Note**

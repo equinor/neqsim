@@ -12,14 +12,13 @@ import neqsim.process.costestimation.compressor.CompressorCostEstimate;
 import neqsim.process.costestimation.pipe.PipeCostEstimate;
 import neqsim.process.costestimation.pump.PumpCostEstimate;
 import neqsim.process.costestimation.valve.ValveCostEstimate;
-import neqsim.process.mechanicaldesign.MechanicalDesign;
-import neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign;
-import neqsim.process.mechanicaldesign.pump.PumpMechanicalDesign;
-import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign;
+import neqsim.process.mechanicaldesign.pump.PumpMechanicalDesign;
+import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 

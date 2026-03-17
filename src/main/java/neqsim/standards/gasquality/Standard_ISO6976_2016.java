@@ -131,9 +131,15 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
             logger.error(er.getMessage());
           }
           componentsNotDefinedByStandard
-              .add("this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
+              .add(this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
           logger.info("added component not specified by ISO6976constants2016 "
               + this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
+        }
+
+        if (dataSet == null) {
+          logger.error("No ISO6976 data found for component "
+              + this.thermoSystem.getPhase(0).getComponent(i).getName());
+          continue;
         }
 
         carbonNumber[i] = Integer.parseInt(dataSet.getString("numberOfCarbon"));

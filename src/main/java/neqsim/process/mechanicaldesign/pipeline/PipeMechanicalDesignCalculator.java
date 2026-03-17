@@ -20,7 +20,7 @@ import java.util.Map;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * PipeMechanicalDesignCalculator calc = new PipeMechanicalDesignCalculator();
  * calc.setDesignPressure(150.0); // bara
@@ -759,7 +759,6 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     // Allowable bending stress (typically 0.67 * SMYS)
     double allowableStress = 0.67 * smys * 1e6; // Pa
 
-    double wallThick = nominalWallThickness > 0 ? nominalWallThickness : minimumWallThickness;
     double E = youngsModulus * 1e6; // Pa
 
     // For U-loop: L = sqrt(3 * E * D * delta / allowableStress)

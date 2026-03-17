@@ -248,9 +248,29 @@ public abstract class Component implements ComponentInterface {
             // logger.info("no parameters in tempcomp -- trying comp.. " +
             // name);
             dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
-            dataSet.next();
+            if (!dataSet.next()) {
+              if (name.contains("_PC")) {
+                dataSet.close();
+                dataSet = database.getResultSet("SELECT * FROM comp WHERE name='default'");
+                if (!dataSet.next()) {
+                  throw new RuntimeException("Default component not found in database");
+                }
+              } else {
+                throw new RuntimeException(
+                    "Component " + name + " not found in comp database table");
+              }
+            }
           } catch (Exception e2) {
-            throw new RuntimeException(e2);
+            if (name.contains("_PC")) {
+              try {
+                dataSet.close();
+              } catch (Exception ignored) {
+              }
+              dataSet = database.getResultSet("SELECT * FROM comp WHERE name='default'");
+              dataSet.next();
+            } else {
+              throw new RuntimeException(e2);
+            }
           }
         }
 
@@ -765,7 +785,7 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getDiElectricConstant(double temperature) {
+  public double getDielectricConstant(double temperature) {
     return dielectricParameter[0] + dielectricParameter[1] / temperature
         + dielectricParameter[2] * temperature + dielectricParameter[3] * temperature * temperature
         + dielectricParameter[4] * Math.pow(temperature, 3.0);
@@ -773,7 +793,7 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getDiElectricConstantdT(double temperature) {
+  public double getDielectricConstantdT(double temperature) {
     return -dielectricParameter[1] / Math.pow(temperature, 2.0) + dielectricParameter[2]
         + 2.0 * dielectricParameter[3] * temperature
         + 3.0 * dielectricParameter[4] * Math.pow(temperature, 2.0);
@@ -781,7 +801,7 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getDiElectricConstantdTdT(double temperature) {
+  public double getDielectricConstantdTdT(double temperature) {
     return 2.0 * dielectricParameter[1] / Math.pow(temperature, 3.0) + 2.0 * dielectricParameter[3]
         + 6.0 * dielectricParameter[4] * Math.pow(temperature, 1.0);
   }
@@ -1455,7 +1475,9 @@ public abstract class Component implements ComponentInterface {
   @Override
   public void setAcentricFactor(double val) {
     acentricFactor = val;
-    getAttractiveTerm().init();
+    if (getAttractiveTerm() != null) {
+      getAttractiveTerm().init();
+    }
   }
 
   /** {@inheritDoc} */

@@ -18,16 +18,16 @@
 		<url>https://github.com/equinor/neqsim</url>
 	</scm>
 
-        <properties>
-                <revision>3.4.0</revision>
-                <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-                <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-                <sha1 />
-                <changelist />
-                <checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
-                <skipFlattening>false</skipFlattening>
-                <argLine></argLine>
-        </properties>
+	<properties>
+		<revision>3.5.0</revision>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<sha1 />
+		<changelist />
+		<checkstyle.config.location>.config/checkstyle_neqsim.xml</checkstyle.config.location>
+		<skipFlattening>false</skipFlattening>
+		<argLine></argLine>
+	</properties>
 	<licenses>
 		<license>
 			<name>The Apache Software License, Version 2.0</name>
@@ -61,12 +61,12 @@
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-api</artifactId>
-			<version>2.25.2</version>
+			<version>2.25.3</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-			<version>2.25.2</version>
+			<version>2.25.3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.thoughtworks.xstream</groupId>
@@ -128,19 +128,19 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.20.1</version>
+			<version>2.21.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.dataformat</groupId>
 			<artifactId>jackson-dataformat-yaml</artifactId>
-			<version>2.20.1</version>
+			<version>2.21.1</version>
 		</dependency>
 	</dependencies>
-        <profiles>
-                <profile>
-                        <id>release</id>
-                        <properties>
-                                <skipFlattening>true</skipFlattening>
+	<profiles>
+		<profile>
+			<id>release</id>
+			<properties>
+				<skipFlattening>true</skipFlattening>
 			</properties>
 			<build>
 				<plugins>
@@ -293,7 +293,7 @@
 					<compilerArgs>
 						<arg>-Xlint</arg>
 					</compilerArgs>
-					<showWarnings>true</showWarnings> 
+					<showWarnings>true</showWarnings>
 					Uncomment above to get compiler warnings -->
 				</configuration>
 			</plugin>
@@ -314,22 +314,30 @@
 					</execution>
 				</executions>
 			</plugin>
-                        <plugin>
-                                <artifactId>maven-surefire-plugin</artifactId>
-                                <configuration>
-                                        <!-- Preserve any Jacoco agent injection (${argLine}) and add required module opens for XStream reflection when running tests on JDK >= 17 -->
-                                        <argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
-                                </configuration>
-                                <version>3.5.4</version>
-                        </plugin>
-                        <plugin>
-                                <artifactId>maven-failsafe-plugin</artifactId>
-                                <version>3.5.4</version>
-                                <configuration>
-                                        <!-- Preserve any Jacoco agent injection (${argLine}) and add required module opens for XStream reflection when running integration tests on JDK >= 17 -->
-                                        <argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
-                                </configuration>
-                        </plugin>
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<!-- Preserve any Jacoco agent injection (${argLine}) and add required module
+					opens for XStream reflection when running tests on JDK >= 17 -->
+					<argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED
+						--add-opens=java.base/java.lang=ALL-UNNAMED
+						--add-opens=java.base/java.io=ALL-UNNAMED
+						--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
+				</configuration>
+				<version>3.5.4</version>
+			</plugin>
+			<plugin>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>3.5.4</version>
+				<configuration>
+					<!-- Preserve any Jacoco agent injection (${argLine}) and add required module
+					opens for XStream reflection when running integration tests on JDK >= 17 -->
+					<argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED
+						--add-opens=java.base/java.lang=ALL-UNNAMED
+						--add-opens=java.base/java.io=ALL-UNNAMED
+						--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
+				</configuration>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
@@ -350,7 +358,7 @@
 			<plugin>
 				<groupId>org.owasp</groupId>
 				<artifactId>dependency-check-maven</artifactId>
-				<version>12.1.9</version>
+				<version>12.2.0</version>
 				<reportSets>
 					<reportSet>
 						<reports>

@@ -32,5 +32,9 @@ Convert an engineering process description into working, runnable code. Produce 
 ## Equipment Library
 Separators, ThreePhaseSeparators, Compressors, Expanders, Pumps, Heaters, Coolers, HeatExchangers, ThrottlingValves, Mixers, Splitters, AdiabaticPipe, PipeBeggsAndBrills, DistillationColumn, Absorbers, Ejectors, Reactors, Membranes, Electrolyzers, Flares, Filters.
 
+## Shared Skills
+- Java 8 rules: See `neqsim-java8-rules` skill
+- API patterns: See `neqsim-api-patterns` skill for fluid/equipment usage
+
 ## API Verification
 ALWAYS read the actual class source to verify method signatures before using them. Do NOT assume API patterns — check constructors, method names, and parameter types.

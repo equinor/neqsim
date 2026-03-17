@@ -12,17 +12,16 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Verification test to ensure GERG-2008 caching optimizations don't change numerical results.
- * 
+ *
  * This test compares results from: 1. Fresh GERG-2008 model (no caching) 2. Cached GERG-2008 model
  * 3. Native SystemGERG2008Eos 4. SRK + GERG property lookup
- * 
+ *
  * All methods should produce identical results within numerical precision.
  *
  * @author esol
  */
 public class GERG2008ResultVerificationTest {
   private static final double TOLERANCE = 1e-8;
-  private static final double TOLERANCE_PERCENT = 0.0001; // 0.0001% for relative comparisons
 
   @BeforeEach
   void clearCache() {
@@ -252,13 +251,6 @@ public class GERG2008ResultVerificationTest {
 
     // Get GERG properties from SRK phase
     double[] srkGergProps = srkFluid.getPhase(0).getProperties_GERG2008();
-
-    // Get properties from native GERG
-    double gergDensity = gergFluid.getPhase(0).getDensity();
-    double gergEnthalpy = gergFluid.getPhase(0).getEnthalpy();
-    double gergEntropy = gergFluid.getPhase(0).getEntropy();
-    double gergCp = gergFluid.getPhase(0).getCp();
-    double gergZ = gergFluid.getPhase(0).getZ();
 
     // Get GERG properties directly for comparison
     double[] nativeGergProps = gergFluid.getPhase(0).getProperties_GERG2008();

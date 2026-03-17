@@ -38,7 +38,7 @@ package neqsim.pvtsimulation.util;
 public final class BlackOilCorrelations {
 
   /** Default unit system for new calculations. */
-  private static BlackOilUnits defaultUnits = BlackOilUnits.FIELD;
+  private static volatile BlackOilUnits defaultUnits = BlackOilUnits.FIELD;
 
   private BlackOilCorrelations() {
     // Utility class

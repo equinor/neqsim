@@ -986,11 +986,11 @@ public class ProcessSystemRunTransientTest extends neqsim.NeqSimTest {
     p.run();
 
     // Cv values calculated using IEC 60534 gas formula for gas valves
-    assertEquals(0.05433683266692145, valve1.getCv("SI"), 1e-3);
+    assertEquals(0.060974265551604845, valve1.getCv("SI"), 1e-3);
     assertEquals(0.08694025026544737, valve2.getCv("SI"), 1e-3);
     assertEquals(0.17384356582660165, valve3.getCv("SI"), 1e-3);
 
-    assertEquals(0.0628133785629612, valve1.getCv("US"), 1e-3);
+    assertEquals(0.0704862509776552, valve1.getCv("US"), 1e-3);
     assertEquals(0.10050292930685716, valve2.getCv("US"), 1e-3);
     assertEquals(0.20096316209555148, valve3.getCv("US"), 1e-3);
 

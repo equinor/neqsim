@@ -1812,6 +1812,27 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   }
 
   /**
+   * Convenience method to get the pH of the aqueous phase.
+   *
+   * <p>
+   * Returns the pH calculated from H3O+ activity in the aqueous phase if one exists. Returns
+   * {@link Double#NaN} if no aqueous phase is present. Delegates to
+   * {@link PhaseInterface#getpH()}.
+   * </p>
+   *
+   * @return pH of the aqueous phase, or NaN if no aqueous phase exists
+   */
+  public default double getpH() {
+    if (hasPhaseType("aqueous")) {
+      PhaseInterface aq = getPhaseOfType("aqueous");
+      if (aq != null) {
+        return aq.getpH();
+      }
+    }
+    return Double.NaN;
+  }
+
+  /**
    * method to calculate thermodynamic properties of the fluid. The temperature, pressure, number of
    * phases and composition of the phases will be used as basis for calculation.
    *
@@ -2925,7 +2946,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
 
   /**
    * Validate the thermodynamic system setup before use.
-   * 
+   *
    * <p>
    * Checks for common setup errors:
    * <ul>
@@ -2934,7 +2955,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * <li>Temperature and pressure in valid ranges</li>
    * <li>Composition normalized</li>
    * </ul>
-   * 
+   *
    * @return validation result with errors and warnings
    */
   public default neqsim.util.validation.ValidationResult validateSetup() {

@@ -1,6 +1,7 @@
 package neqsim.process.examples;
 
 import java.util.Map;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
@@ -11,6 +12,7 @@ import neqsim.process.processmodel.ProcessSystem;
 /**
  * Test to run production optimization with separator and scrubber design checks
  */
+@Tag("slow")
 public class ProductionOptimizationTest {
   @Test
   void testMaximizeProduction() {

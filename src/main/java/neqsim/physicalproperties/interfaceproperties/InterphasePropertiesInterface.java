@@ -7,6 +7,7 @@
 package neqsim.physicalproperties.interfaceproperties;
 
 import neqsim.physicalproperties.interfaceproperties.solidadsorption.AdsorptionInterface;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.IsothermType;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.SurfaceTensionInterface;
 
 /**
@@ -40,6 +41,13 @@ public interface InterphasePropertiesInterface extends Cloneable {
    * </p>
    */
   public void initAdsorption();
+
+  /**
+   * Initialize adsorption with a specified isotherm model type.
+   *
+   * @param type the isotherm type to use (DRA, LANGMUIR, BET, FREUNDLICH, SIPS)
+   */
+  public void initAdsorption(IsothermType type);
 
   /**
    * <p>

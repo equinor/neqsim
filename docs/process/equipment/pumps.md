@@ -22,10 +22,10 @@ Documentation for liquid pumping equipment in NeqSim.
 **Location:** `neqsim.process.equipment.pump`
 
 **Classes:**
-| Class | Description |
-|-------|-------------|
-| `Pump` | Centrifugal or positive displacement pump |
-| `PumpInterface` | Pump interface |
+| Class           | Description                               |
+| --------------- | ----------------------------------------- |
+| `Pump`          | Centrifugal or positive displacement pump |
+| `PumpInterface` | Pump interface                            |
 
 ---
 
@@ -242,6 +242,6 @@ System.out.println("Total pump power: " + totalPower + " kW");
 
 ## Related Documentation
 
-- [Equipment Index](./\) - All equipment
+- [Equipment Index](index.md) - All equipment
 - [Compressors](compressors) - Gas compression
 - [Separators](separators) - Phase separation

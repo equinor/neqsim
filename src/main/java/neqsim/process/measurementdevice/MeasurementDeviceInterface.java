@@ -1,11 +1,11 @@
 package neqsim.process.measurementdevice;
 
 import java.util.List;
+import neqsim.process.ProcessElementInterface;
 import neqsim.process.alarm.AlarmConfig;
 import neqsim.process.alarm.AlarmEvent;
 import neqsim.process.alarm.AlarmState;
 import neqsim.process.measurementdevice.online.OnlineSignal;
-import neqsim.util.NamedInterface;
 
 /**
  * <p>
@@ -15,7 +15,7 @@ import neqsim.util.NamedInterface;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public interface MeasurementDeviceInterface extends NamedInterface, java.io.Serializable {
+public interface MeasurementDeviceInterface extends ProcessElementInterface {
   /**
    * <p>
    * displayResult.

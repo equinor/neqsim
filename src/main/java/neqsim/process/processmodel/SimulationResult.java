@@ -11,16 +11,17 @@ import com.google.gson.JsonObject;
 /**
  * Structured result of a simulation build or execution.
  *
- * <p> Provides a standardized response format for web API integration including status, errors,
+ * <p>
+ * Provides a standardized response format for web API integration including status, errors,
  * warnings, and simulation results in JSON. Designed for external Python callers and web services.
  * </p>
  *
- * <h3>Success Response:</h3>
+ * <h2>Success Response:</h2>
  *
  * <pre>{@code { "status": "success", "processSystemName": "json-process", "report": { ... },
  * "warnings": [] } }</pre>
  *
- * <h3>Error Response:</h3>
+ * <h2>Error Response:</h2>
  *
  * <pre>{@code { "status": "error", "errors": [ { "code": "MISSING_INLET", "message": "Inlet
  * reference 'HP Sep' not found", "unit": "Compressor-1", "remediation": "Ensure referenced unit is

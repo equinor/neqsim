@@ -19,13 +19,25 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </p>
  *
  * <p>
- * A simplified gas scrubber model that is a vertical separator designed
- * primarily
- * for removing liquid droplets from gas streams. Unlike standard separators,
- * the
- * key performance metric is the K-value (Souders-Brown factor) rather than
- * liquid
- * retention time.
+ * A simplified gas scrubber model that is a vertical separator designed primarily for removing
+ * liquid droplets from gas streams. Unlike standard separators, the key performance metric is the
+ * K-value (Souders-Brown factor) rather than liquid retention time.
+ * </p>
+ *
+ * <h2>Capacity Utilization Setup</h2>
+ *
+ * <p>
+ * To get meaningful capacity utilization from {@link #getCapacityUtilization()}, set:
+ * </p>
+ * <ol>
+ * <li>{@link #setInternalDiameter(double)} — scrubber inner diameter [m]</li>
+ * <li>{@link #setDesignGasLoadFactor(double)} — design K-factor [m/s], typically 0.04–0.10 for
+ * vertical scrubbers</li>
+ * </ol>
+ *
+ * <p>
+ * The orientation is automatically set to "vertical" and the design liquid level fraction defaults
+ * to 0.1 (10%). For dry gas (no liquid phase), a default liquid density of 1000 kg/m³ is used.
  * </p>
  *
  * @author Even Solbraa
@@ -52,6 +64,7 @@ public class GasScrubberSimple extends Separator {
   public GasScrubberSimple(String name) {
     super(name);
     this.setOrientation("vertical");
+    this.setDesignLiquidLevelFraction(0.1);
     // Use only K-value constraint for gas scrubbers
     useGasScrubberConstraints();
   }
@@ -61,12 +74,13 @@ public class GasScrubberSimple extends Separator {
    * Constructor for GasScrubberSimple.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.Stream} object
    */
   public GasScrubberSimple(String name, StreamInterface inletStream) {
     super(name, inletStream);
     this.setOrientation("vertical");
+    this.setDesignLiquidLevelFraction(0.1);
     // Use only K-value constraint for gas scrubbers
     useGasScrubberConstraints();
   }
@@ -162,7 +176,8 @@ public class GasScrubberSimple extends Separator {
     }
     System.out.println("Ktot " + (1.0 - ktotal));
     double area = getInternalDiameter() * getInternalDiameter() / 4.0 * 3.14;
-    double gasVel = thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarVolume() / 1e5 / area;
+    double gasVel =
+        thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarVolume() / 1e5 / area;
     setLiquidCarryoverFraction(ktotal);
     return gasVel;
   }

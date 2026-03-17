@@ -43,12 +43,12 @@ At higher pressures, deviations from Henry's Law become significant, and equatio
 
 ### Typical Values
 
-| Condition | Rsw (Sm³/Sm³) |
-|-----------|---------------|
-| Shallow reservoir (50 bar, 50°C) | 0.5 - 1.0 |
-| Medium depth (150 bar, 80°C) | 1.5 - 3.0 |
-| Deep reservoir (300 bar, 120°C) | 3.0 - 6.0 |
-| CO₂-rich gas (100 bar, 50°C) | 5.0 - 15.0 |
+| Condition                        | Rsw (Sm³/Sm³) |
+| -------------------------------- | ------------- |
+| Shallow reservoir (50 bar, 50°C) | 0.5 - 1.0     |
+| Medium depth (150 bar, 80°C)     | 1.5 - 3.0     |
+| Deep reservoir (300 bar, 120°C)  | 3.0 - 6.0     |
+| CO₂-rich gas (100 bar, 50°C)     | 5.0 - 15.0    |
 
 ## Available Calculation Methods
 
@@ -83,12 +83,12 @@ where:
 
 #### Validity Range
 
-| Parameter | Range |
-|-----------|-------|
-| Temperature | 60-350°F (15-177°C) |
-| Pressure | 14.7-10,000 psia (1-690 bar) |
-| Salinity | 0-30 wt% NaCl |
-| Gas type | Methane (use with caution for other gases) |
+| Parameter   | Range                                      |
+| ----------- | ------------------------------------------ |
+| Temperature | 60-350°F (15-177°C)                        |
+| Pressure    | 14.7-10,000 psia (1-690 bar)               |
+| Salinity    | 0-30 wt% NaCl                              |
+| Gas type    | Methane (use with caution for other gases) |
 
 ### 2. Søreide-Whitson Method
 
@@ -113,12 +113,12 @@ with special binary interaction parameters for water-hydrocarbon pairs that acco
 
 #### Validity Range
 
-| Parameter | Range |
-|-----------|-------|
-| Temperature | 273-473 K (0-200°C) |
-| Pressure | 1-1000 bar |
-| Salinity | 0-6 mol/kg (0-26 wt% NaCl) |
-| Gas type | Any hydrocarbon mixture with CO₂, N₂, H₂S |
+| Parameter   | Range                                     |
+| ----------- | ----------------------------------------- |
+| Temperature | 273-473 K (0-200°C)                       |
+| Pressure    | 1-1000 bar                                |
+| Salinity    | 0-6 mol/kg (0-26 wt% NaCl)                |
+| Gas type    | Any hydrocarbon mixture with CO₂, N₂, H₂S |
 
 ### 3. Electrolyte CPA Method
 
@@ -141,12 +141,12 @@ where the last term accounts for hydrogen bonding associations.
 
 #### Validity Range
 
-| Parameter | Range |
-|-----------|-------|
-| Temperature | 273-473 K (0-200°C) |
-| Pressure | 1-1000 bar |
-| Salinity | 0-6 mol/kg NaCl equivalent |
-| Gas type | Any composition |
+| Parameter   | Range                      |
+| ----------- | -------------------------- |
+| Temperature | 273-473 K (0-200°C)        |
+| Pressure    | 1-1000 bar                 |
+| Salinity    | 0-6 mol/kg NaCl equivalent |
+| Gas type    | Any composition            |
 
 ## Usage Examples
 
@@ -181,7 +181,7 @@ rswCalc.runCalc();
 // Get results
 double[] rsw = rswCalc.getRsw();
 for (int i = 0; i < rsw.length; i++) {
-    System.out.printf("T=%.1f K, P=%.1f bar: Rsw = %.4f Sm³/Sm³%n", 
+    System.out.printf("T=%.1f K, P=%.1f bar: Rsw = %.4f Sm³/Sm³%n",
                       temperatures[i], pressures[i], rsw[i]);
 }
 ```
@@ -223,7 +223,7 @@ rswCalc.setCalculationMethod(SolutionGasWaterRatio.CalculationMethod.ELECTROLYTE
 for (int i = 0; i < salinities.length; i++) {
     rswCalc.setSalinity(salinities[i], "wt%");
     rswCalc.runCalc();
-    System.out.printf("%s (%.1f wt%% NaCl): Rsw = %.4f Sm³/Sm³%n", 
+    System.out.printf("%s (%.1f wt%% NaCl): Rsw = %.4f Sm³/Sm³%n",
                       waterTypes[i], salinities[i], rswCalc.getRsw(0));
 }
 ```
@@ -241,26 +241,26 @@ rswCalc.setSalinity(35000, "ppm");  // Parts per million
 
 ## Method Selection Guide
 
-| Scenario | Recommended Method | Reason |
-|----------|-------------------|--------|
-| Quick screening | McCain | Fast, simple |
-| Pure methane system | McCain | Optimized for CH₄ |
-| Multi-component gas | Søreide-Whitson | Accounts for composition |
-| CO₂-rich gas (>20% CO₂) | Søreide-Whitson or CPA | McCain underestimates |
-| High salinity (>5 wt%) | Electrolyte CPA | Best ion modeling |
-| Research/validation | Electrolyte CPA | Most rigorous |
-| Process simulation | Søreide-Whitson | Good balance |
+| Scenario                | Recommended Method     | Reason                   |
+| ----------------------- | ---------------------- | ------------------------ |
+| Quick screening         | McCain                 | Fast, simple             |
+| Pure methane system     | McCain                 | Optimized for CH₄        |
+| Multi-component gas     | Søreide-Whitson        | Accounts for composition |
+| CO₂-rich gas (>20% CO₂) | Søreide-Whitson or CPA | McCain underestimates    |
+| High salinity (>5 wt%)  | Electrolyte CPA        | Best ion modeling        |
+| Research/validation     | Electrolyte CPA        | Most rigorous            |
+| Process simulation      | Søreide-Whitson        | Good balance             |
 
 ## Comparison with Literature
 
 ### Methane Solubility in Pure Water
 
-| T (°C) | P (bar) | Literature (Sm³/Sm³) | McCain | Søreide-Whitson | CPA |
-|--------|---------|---------------------|--------|-----------------|-----|
-| 25 | 100 | 1.8-2.2 | 2.20 | 1.02 | 2.52 |
-| 50 | 100 | 1.5-1.8 | 1.78 | 1.03 | 1.94 |
-| 75 | 100 | 1.4-1.7 | 1.57 | 1.13 | 1.65 |
-| 100 | 100 | 1.5-1.8 | 1.59 | 1.31 | 1.52 |
+| T (°C) | P (bar) | Literature (Sm³/Sm³) | McCain | Søreide-Whitson | CPA  |
+| ------ | ------- | -------------------- | ------ | --------------- | ---- |
+| 25     | 100     | 1.8-2.2              | 2.20   | 1.02            | 2.52 |
+| 50     | 100     | 1.5-1.8              | 1.78   | 1.03            | 1.94 |
+| 75     | 100     | 1.4-1.7              | 1.57   | 1.13            | 1.65 |
+| 100    | 100     | 1.5-1.8              | 1.59   | 1.31            | 1.52 |
 
 ### Salinity Effect
 
@@ -268,12 +268,12 @@ The salting-out coefficient ($k_s$) represents the reduction in solubility per u
 
 $$\log_{10}\left(\frac{R_{sw,brine}}{R_{sw,pure}}\right) = -k_s \cdot m_{salt}$$
 
-| Method | Typical $k_s$ (L/mol) |
-|--------|----------------------|
-| McCain | 0.10-0.15 |
-| Søreide-Whitson | 0.12-0.18 |
-| Electrolyte CPA | 0.10-0.16 |
-| Experimental (Duan & Mao, 2006) | 0.11-0.14 |
+| Method                          | Typical $k_s$ (L/mol) |
+| ------------------------------- | --------------------- |
+| McCain                          | 0.10-0.15             |
+| Søreide-Whitson                 | 0.12-0.18             |
+| Electrolyte CPA                 | 0.10-0.16             |
+| Experimental (Duan & Mao, 2006) | 0.11-0.14             |
 
 ## API Reference
 
@@ -287,16 +287,16 @@ Creates a new Rsw calculator using the given thermodynamic system as the gas com
 
 ### Key Methods
 
-| Method | Description |
-|--------|-------------|
-| `setCalculationMethod(CalculationMethod method)` | Set calculation method (MCCAIN, SOREIDE_WHITSON, ELECTROLYTE_CPA) |
-| `setSalinity(double salinity)` | Set salinity in mol/kg water |
-| `setSalinity(double salinity, String unit)` | Set salinity with unit ("wt%", "ppm") |
-| `setTemperaturesAndPressures(double[] T, double[] P)` | Set calculation conditions |
-| `runCalc()` | Execute calculation |
-| `getRsw()` | Get array of calculated Rsw values |
-| `getRsw(int index)` | Get Rsw at specific index |
-| `calculateRsw(double T, double P)` | Single-point calculation |
+| Method                                                | Description                                                       |
+| ----------------------------------------------------- | ----------------------------------------------------------------- |
+| `setCalculationMethod(CalculationMethod method)`      | Set calculation method (MCCAIN, SOREIDE_WHITSON, ELECTROLYTE_CPA) |
+| `setSalinity(double salinity)`                        | Set salinity in mol/kg water                                      |
+| `setSalinity(double salinity, String unit)`           | Set salinity with unit ("wt%", "ppm")                             |
+| `setTemperaturesAndPressures(double[] T, double[] P)` | Set calculation conditions                                        |
+| `runCalc()`                                           | Execute calculation                                               |
+| `getRsw()`                                            | Get array of calculated Rsw values                                |
+| `getRsw(int index)`                                   | Get Rsw at specific index                                         |
+| `calculateRsw(double T, double P)`                    | Single-point calculation                                          |
 
 ### Calculation Methods Enum
 
@@ -322,7 +322,7 @@ public enum CalculationMethod {
 
 ## See Also
 
-- [PVT Simulation](./\) - PVT simulation overview
+- [PVT Simulation](index.md) - PVT simulation overview
 - [PVT Workflow](pvt_workflow) - End-to-end PVT workflow
 - [Electrolyte CPA Model](../thermo/ElectrolyteCPAModel) - CPA electrolyte model
 - [Thermodynamic Models](../thermo/thermodynamic_models) - Equation of state details

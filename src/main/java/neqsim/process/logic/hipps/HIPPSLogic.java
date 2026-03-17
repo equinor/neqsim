@@ -11,12 +11,12 @@ import neqsim.process.logic.sis.VotingLogic;
 
 /**
  * High Integrity Pressure Protection System (HIPPS) Logic.
- * 
+ *
  * <p>
  * HIPPS is a Safety Instrumented System (SIS) designed to prevent overpressure in process equipment
  * by rapidly closing isolation valves when pressure exceeds a safe limit. HIPPS acts as the first
  * line of defense before pressure relief devices or Emergency Shutdown (ESD) systems are activated.
- * 
+ *
  * <p>
  * Key features of HIPPS:
  * <ul>
@@ -27,18 +27,18 @@ import neqsim.process.logic.sis.VotingLogic;
  * <li>Avoids flaring/venting to atmosphere</li>
  * <li>Lower operating costs than continuous PSV operation</li>
  * </ul>
- * 
+ *
  * <p>
  * HIPPS typically operates at ~95% of maximum allowable operating pressure (MAOP), while ESD
  * operates at ~98% MAOP as a backup.
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * // Create HIPPS with 2oo3 voting for high reliability
  * HIPPSLogic hipps = new HIPPSLogic("HIPPS-101", VotingLogic.TWO_OUT_OF_THREE);
- * 
+ *
  * // Add pressure transmitters
  * hipps.addPressureSensor(
  *     new Detector("PT-101A", DetectorType.PRESSURE, AlarmLevel.HIGH_HIGH, 95.0, "bara"));
@@ -46,13 +46,13 @@ import neqsim.process.logic.sis.VotingLogic;
  *     new Detector("PT-101B", DetectorType.PRESSURE, AlarmLevel.HIGH_HIGH, 95.0, "bara"));
  * hipps.addPressureSensor(
  *     new Detector("PT-101C", DetectorType.PRESSURE, AlarmLevel.HIGH_HIGH, 95.0, "bara"));
- * 
+ *
  * // Link isolation valve
  * hipps.setIsolationValve(isolationValve);
- * 
+ *
  * // Optionally link to ESD for escalation
  * hipps.linkToEscalationLogic(esdLogic, 5.0); // Escalate to ESD after 5 seconds
- * 
+ *
  * // In simulation loop:
  * hipps.update(pressure1, pressure2, pressure3);
  * if (hipps.isTripped()) {
@@ -75,7 +75,6 @@ public class HIPPSLogic implements ProcessLogic {
   private LogicState state = LogicState.IDLE;
   private boolean isTripped = false;
   private boolean isOverridden = false;
-  private double tripTime = 0.0;
   private double timeSinceTrip = 0.0;
   private boolean escalated = false;
 
@@ -184,10 +183,16 @@ public class HIPPSLogic implements ProcessLogic {
       return;
     }
 
+    // Faulty sensors also degrade the voting group
+    if (bypassedCount + faultyCount > maxBypassedSensors) {
+      state = LogicState.FAILED;
+      return;
+    }
+
     // Count tripped sensors (excluding bypassed and faulty)
     int trippedCount = 0;
     for (Detector sensor : pressureSensors) {
-      if (sensor.isTripped()) {
+      if (!sensor.isBypassed() && !sensor.isFaulty() && sensor.isTripped()) {
         trippedCount++;
       }
     }

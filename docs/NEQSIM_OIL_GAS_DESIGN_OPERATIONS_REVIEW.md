@@ -5,8 +5,8 @@ description: NeqSim is a comprehensive Java-based thermodynamic and process simu
 
 # NeqSim Functionality Review for Oil & Gas Installation Design and Operations
 
-**Review Date:** January 31, 2026  
-**Version Reviewed:** NeqSim 3.3.0  
+**Review Date:** January 31, 2026
+**Version Reviewed:** NeqSim 3.4.0
 **Scope:** Onshore and Offshore Oil & Gas Installations
 
 ---
@@ -56,17 +56,17 @@ NeqSim is a comprehensive Java-based thermodynamic and process simulation toolki
 
 **Comprehensive Equipment Coverage:**
 
-| Category | Equipment Types | Maturity |
-|----------|-----------------|----------|
-| **Separators** | 2-phase, 3-phase, gas scrubbers, hydrocyclones | ★★★★★ |
-| **Compressors** | Centrifugal with performance charts, surge/stone wall, anti-surge | ★★★★★ |
-| **Heat Exchangers** | Shell & tube, multi-stream, air coolers, heaters/coolers | ★★★★☆ |
-| **Pumps** | Standard pumps, ESP (Electric Submersible Pump) | ★★★★☆ |
-| **Valves** | Control, safety/relief, HIPPS, ESD, PSD, blowdown, check | ★★★★★ |
-| **Distillation** | Tray columns, multiple solvers (direct, damped, inside-out) | ★★★★☆ |
-| **Pipelines** | Adiabatic pipe, Beggs & Brill, Two-Fluid transient, riser models | ★★★★★ |
-| **Reactors** | Gibbs reactors, furnace burners | ★★★☆☆ |
-| **Subsea** | Trees, manifolds, PLET/PLEM, jumpers, umbilicals | ★★★★☆ |
+| Category            | Equipment Types                                                   | Maturity |
+| ------------------- | ----------------------------------------------------------------- | -------- |
+| **Separators**      | 2-phase, 3-phase, gas scrubbers, hydrocyclones                    | ★★★★★    |
+| **Compressors**     | Centrifugal with performance charts, surge/stone wall, anti-surge | ★★★★★    |
+| **Heat Exchangers** | Shell & tube, multi-stream, air coolers, heaters/coolers          | ★★★★☆    |
+| **Pumps**           | Standard pumps, ESP (Electric Submersible Pump)                   | ★★★★☆    |
+| **Valves**          | Control, safety/relief, HIPPS, ESD, PSD, blowdown, check          | ★★★★★    |
+| **Distillation**    | Tray columns, multiple solvers (direct, damped, inside-out)       | ★★★★☆    |
+| **Pipelines**       | Adiabatic pipe, Beggs & Brill, Two-Fluid transient, riser models  | ★★★★★    |
+| **Reactors**        | Gibbs reactors, furnace burners                                   | ★★★☆☆    |
+| **Subsea**          | Trees, manifolds, PLET/PLEM, jumpers, umbilicals                  | ★★★★☆    |
 
 **Notable Features:**
 - Compressor performance charts with surge/stone wall curve generation
@@ -112,15 +112,15 @@ NeqSim is a comprehensive Java-based thermodynamic and process simulation toolki
 
 **Implemented Safety Features:**
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| **Depressurization/Blowdown** | Dynamic vessel blowdown with multiple thermodynamic modes | ★★★★★ |
-| **Fire Case Modeling** | API 521 pool fire, jet fire heat loads | ★★★★☆ |
-| **Relief Valve Sizing** | API 520/521 compliant PSV sizing | ★★★★☆ |
-| **HIPPS** | High Integrity Pressure Protection Systems | ★★★★☆ |
-| **ESD Valves** | Emergency shutdown valve modeling | ★★★★☆ |
-| **Safety Envelopes** | Hydrate, WAX, MDMT envelope calculations | ★★★★☆ |
-| **Risk Framework** | Monte Carlo, bow-tie, SIS/SIF integration | ★★★★☆ |
+| Feature                       | Description                                               | Status |
+| ----------------------------- | --------------------------------------------------------- | ------ |
+| **Depressurization/Blowdown** | Dynamic vessel blowdown with multiple thermodynamic modes | ★★★★★  |
+| **Fire Case Modeling**        | API 521 pool fire, jet fire heat loads                    | ★★★★☆  |
+| **Relief Valve Sizing**       | API 520/521 compliant PSV sizing                          | ★★★★☆  |
+| **HIPPS**                     | High Integrity Pressure Protection Systems                | ★★★★☆  |
+| **ESD Valves**                | Emergency shutdown valve modeling                         | ★★★★☆  |
+| **Safety Envelopes**          | Hydrate, WAX, MDMT envelope calculations                  | ★★★★☆  |
+| **Risk Framework**            | Monte Carlo, bow-tie, SIS/SIF integration                 | ★★★★☆  |
 
 **Advanced Risk Analysis:**
 - Dynamic risk simulation with transients
@@ -177,11 +177,11 @@ NeqSim is a comprehensive Java-based thermodynamic and process simulation toolki
 
 **Erosion-Corrosion Modeling:**
 
-| Feature | Class | Description |
-|---------|-------|-------------|
-| **API RP 14E** | `ManifoldMechanicalDesignCalculator` | Ve = C/√ρ with configurable C-factor |
-| **Velocity Checks** | `calculateErosionalVelocity()` | Gas, liquid, multiphase limits |
-| **Sand Effects** | Via C-factor adjustment | C=100 clean, C=125-150 with solids |
+| Feature             | Class                                | Description                          |
+| ------------------- | ------------------------------------ | ------------------------------------ |
+| **API RP 14E**      | `ManifoldMechanicalDesignCalculator` | Ve = C/√ρ with configurable C-factor |
+| **Velocity Checks** | `calculateErosionalVelocity()`       | Gas, liquid, multiphase limits       |
+| **Sand Effects**    | Via C-factor adjustment              | C=100 clean, C=125-150 with solids   |
 
 **Code Example:**
 ```java
@@ -259,12 +259,12 @@ boolean safe = actualV < ve * 0.8;  // 80% margin
 - **Well performance modeling** with multiple IPR models (Vogel, Fetkovich, Backpressure, Table)
 
 **Well Performance Capabilities:**
-| Feature | Description | Status |
-|---------|-------------|--------|
-| **IPR Models** | Production Index, Vogel, Fetkovich, Backpressure, Table | ✓ Implemented |
-| **Multi-Layer Wells** | Commingled production with individual layer contributions | ✓ Implemented |
-| **VFP Table Export** | VFPPROD/VFPINJ for Eclipse coupling | ✓ Implemented |
-| **Tubing Performance** | Integration with PipeBeggsAndBrills for VLP | ✓ Implemented |
+| Feature                | Description                                               | Status        |
+| ---------------------- | --------------------------------------------------------- | ------------- |
+| **IPR Models**         | Production Index, Vogel, Fetkovich, Backpressure, Table   | ✓ Implemented |
+| **Multi-Layer Wells**  | Commingled production with individual layer contributions | ✓ Implemented |
+| **VFP Table Export**   | VFPPROD/VFPINJ for Eclipse coupling                       | ✓ Implemented |
+| **Tubing Performance** | Integration with PipeBeggsAndBrills for VLP               | ✓ Implemented |
 
 **Code Location:** [src/main/java/neqsim/process/equipment/reservoir/WellFlow.java](../src/main/java/neqsim/process/equipment/reservoir/WellFlow.java)
 
@@ -314,19 +314,19 @@ boolean safe = actualV < ve * 0.8;  // 80% margin
 
 **Driver Modeling (Implemented):**
 
-| Driver Type | Class | Capabilities |
-|-------------|-------|--------------|
-| **Gas Turbine** | [GasTurbineDriver](../src/main/java/neqsim/process/equipment/compressor/driver/GasTurbineDriver.java) | Ambient derating (temp/altitude), part-load efficiency, fuel consumption |
-| **Electric Motor** | [ElectricMotorDriver](../src/main/java/neqsim/process/equipment/compressor/driver/ElectricMotorDriver.java) | VFD speed control, efficiency curves, power factor |
-| **Steam Turbine** | [SteamTurbineDriver](../src/main/java/neqsim/process/equipment/compressor/driver/SteamTurbineDriver.java) | Extraction/condensing, steam rate curves |
+| Driver Type        | Class                                                                                                       | Capabilities                                                             |
+| ------------------ | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **Gas Turbine**    | [GasTurbineDriver](../src/main/java/neqsim/process/equipment/compressor/driver/GasTurbineDriver.java)       | Ambient derating (temp/altitude), part-load efficiency, fuel consumption |
+| **Electric Motor** | [ElectricMotorDriver](../src/main/java/neqsim/process/equipment/compressor/driver/ElectricMotorDriver.java) | VFD speed control, efficiency curves, power factor                       |
+| **Steam Turbine**  | [SteamTurbineDriver](../src/main/java/neqsim/process/equipment/compressor/driver/SteamTurbineDriver.java)   | Extraction/condensing, steam rate curves                                 |
 
 **Condition Monitoring (Implemented):**
 
-| Feature | Class | Description |
-|---------|-------|-------------|
+| Feature                | Class                                                                                                               | Description                                    |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
 | **Vibration Analysis** | [FlowInducedVibrationAnalyser](../src/main/java/neqsim/process/measurementdevice/FlowInducedVibrationAnalyser.java) | LOF/FRMS methods, support arrangement modeling |
-| **Health Monitoring** | [ConditionBasedReliability](../src/main/java/neqsim/process/safety/risk/condition/ConditionBasedReliability.java) | Multi-indicator health index, RUL estimation |
-| **Degradation Models** | `DegradationModel` enum | Linear, Exponential, Weibull, ML-based |
+| **Health Monitoring**  | [ConditionBasedReliability](../src/main/java/neqsim/process/safety/risk/condition/ConditionBasedReliability.java)   | Multi-indicator health index, RUL estimation   |
+| **Degradation Models** | `DegradationModel` enum                                                                                             | Linear, Exponential, Weibull, ML-based         |
 
 **Condition Indicators Supported:**
 - Vibration (mm/s RMS)
@@ -347,14 +347,14 @@ boolean safe = actualV < ve * 0.8;  // 80% margin
 
 **Implemented Features:**
 
-| System | Class/Package | Capabilities | Status |
-|--------|---------------|--------------|--------|
-| **Flare Stack** | [FlareStack](../src/main/java/neqsim/process/equipment/flare/FlareStack.java) | Radiation modeling (Point Source, Chamberlain), tip backpressure, emissions | ★★★★☆ |
-| **Flare** | [Flare](../src/main/java/neqsim/process/equipment/flare/Flare.java) | Basic flare equipment, mass balance | ★★★☆☆ |
-| **Gas Turbine** | [GasTurbine](../src/main/java/neqsim/process/equipment/powergeneration/GasTurbine.java) | Power generation, fuel consumption, emissions | ★★★★☆ |
-| **Fuel Cell** | [FuelCell](../src/main/java/neqsim/process/equipment/powergeneration/FuelCell.java) | Hydrogen/natural gas fuel cells | ★★★☆☆ |
-| **Electrolyzer** | [Electrolyzer](../src/main/java/neqsim/process/equipment/powergeneration/Electrolyzer.java) | Water electrolysis for H2 production | ★★★☆☆ |
-| **Solar/Wind** | `powergeneration` package | Basic renewable energy models | ★★☆☆☆ |
+| System           | Class/Package                                                                               | Capabilities                                                                | Status |
+| ---------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ------ |
+| **Flare Stack**  | [FlareStack](../src/main/java/neqsim/process/equipment/flare/FlareStack.java)               | Radiation modeling (Point Source, Chamberlain), tip backpressure, emissions | ★★★★☆  |
+| **Flare**        | [Flare](../src/main/java/neqsim/process/equipment/flare/Flare.java)                         | Basic flare equipment, mass balance                                         | ★★★☆☆  |
+| **Gas Turbine**  | [GasTurbine](../src/main/java/neqsim/process/equipment/powergeneration/GasTurbine.java)     | Power generation, fuel consumption, emissions                               | ★★★★☆  |
+| **Fuel Cell**    | [FuelCell](../src/main/java/neqsim/process/equipment/powergeneration/FuelCell.java)         | Hydrogen/natural gas fuel cells                                             | ★★★☆☆  |
+| **Electrolyzer** | [Electrolyzer](../src/main/java/neqsim/process/equipment/powergeneration/Electrolyzer.java) | Water electrolysis for H2 production                                        | ★★★☆☆  |
+| **Solar/Wind**   | `powergeneration` package                                                                   | Basic renewable energy models                                               | ★★☆☆☆  |
 
 **Flare System Capabilities:**
 - **Radiation Models:** Point source (q = χᵣQ/4πR²) and Chamberlain line-source
@@ -407,12 +407,12 @@ boolean safe = actualV < ve * 0.8;  // 80% margin
 
 ### 4.1 High Priority (Critical for O&G Design/Operations)
 
-| Area | Improvement | Benefit | Status |
-|------|-------------|---------|--------|
-| **Erosion-Corrosion** | API RP 14E erosional velocity with sand | Pipeline/choke integrity | ✅ Implemented in ManifoldMechanicalDesignCalculator |
-| **Pipeline Network** | Network topology solver with looped systems | Required for gathering systems | ✅ Implemented (LoopedPipeNetwork) |
-| **Inhibitor Management** | Track MEG/TEG through system with losses | Flow assurance operations | ⚠️ Partial |
-| **Digital Twin Interface** | REST API / OPC-UA connector layer | Real-time operations | ⚠️ Partial |
+| Area                       | Improvement                                 | Benefit                        | Status                                              |
+| -------------------------- | ------------------------------------------- | ------------------------------ | --------------------------------------------------- |
+| **Erosion-Corrosion**      | API RP 14E erosional velocity with sand     | Pipeline/choke integrity       | ✅ Implemented in ManifoldMechanicalDesignCalculator |
+| **Pipeline Network**       | Network topology solver with looped systems | Required for gathering systems | ✅ Implemented (LoopedPipeNetwork)                   |
+| **Inhibitor Management**   | Track MEG/TEG through system with losses    | Flow assurance operations      | ⚠️ Partial                                           |
+| **Digital Twin Interface** | REST API / OPC-UA connector layer           | Real-time operations           | ⚠️ Partial                                           |
 
 **Erosion-Corrosion Implementation:**
 
@@ -430,23 +430,23 @@ double erosionalVelocity = calculator.calculateErosionalVelocity();
 
 ### 4.2 Medium Priority (Enhances Capability)
 
-| Area | Improvement | Benefit |
-|------|-------------|---------|
-| **FPSO Operations** | Motion effects on separation, riser slugging | Floating production design |
-| **Condition Monitoring** | Equipment health tracking, RUL estimation | Predictive maintenance |
-| **Well Performance** | IPR curves, artificial lift optimization | Production optimization |
-| **Scale Prediction** | CaCO₃, BaSO₄, etc. precipitation | Water handling |
-| **Crude Compatibility** | Blending stability predictions | Operations planning |
-| **Emissions Intensity** | CO₂/CH₄ per unit production tracking | ESG reporting |
+| Area                     | Improvement                                  | Benefit                    |
+| ------------------------ | -------------------------------------------- | -------------------------- |
+| **FPSO Operations**      | Motion effects on separation, riser slugging | Floating production design |
+| **Condition Monitoring** | Equipment health tracking, RUL estimation    | Predictive maintenance     |
+| **Well Performance**     | IPR curves, artificial lift optimization     | Production optimization    |
+| **Scale Prediction**     | CaCO₃, BaSO₄, etc. precipitation             | Water handling             |
+| **Crude Compatibility**  | Blending stability predictions               | Operations planning        |
+| **Emissions Intensity**  | CO₂/CH₄ per unit production tracking         | ESG reporting              |
 
 ### 4.3 Lower Priority (Nice-to-Have)
 
-| Area | Improvement | Benefit |
-|------|-------------|---------|
-| **Offshore Logistics** | Supply vessel, helicopter scheduling | OPEX estimation |
-| **Integrity Management** | Corrosion rate tracking, inspection planning | Asset integrity |
-| **Training Simulator** | OTS-compatible output format | Operator training |
-| **CO₂ Sequestration** | Injection well modeling | CCUS applications |
+| Area                     | Improvement                                  | Benefit           |
+| ------------------------ | -------------------------------------------- | ----------------- |
+| **Offshore Logistics**   | Supply vessel, helicopter scheduling         | OPEX estimation   |
+| **Integrity Management** | Corrosion rate tracking, inspection planning | Asset integrity   |
+| **Training Simulator**   | OTS-compatible output format                 | Operator training |
+| **CO₂ Sequestration**    | Injection well modeling                      | CCUS applications |
 
 ---
 
@@ -454,40 +454,40 @@ double erosionalVelocity = calculator.calculateErosionalVelocity();
 
 ### 5.1 Onshore Applications
 
-| Application | NeqSim Capability | Gap |
-|-------------|-------------------|-----|
-| **Gas Processing Plant** | ★★★★☆ Very Good | Amine regeneration could be improved |
-| **Oil Terminal** | ★★★★☆ Very Good | Tank mixing/blending limited |
-| **Refinery Integration** | ★★★☆☆ Good | Reactor modeling limited |
-| **Pipeline Network** | ★★★★☆ Very Good | Looped network solver implemented |
-| **Compression Station** | ★★★★★ Excellent | Well covered |
-| **Gas Gathering** | ★★★★☆ Very Good | Slug catcher sizing basic |
+| Application              | NeqSim Capability | Gap                                  |
+| ------------------------ | ----------------- | ------------------------------------ |
+| **Gas Processing Plant** | ★★★★☆ Very Good   | Amine regeneration could be improved |
+| **Oil Terminal**         | ★★★★☆ Very Good   | Tank mixing/blending limited         |
+| **Refinery Integration** | ★★★☆☆ Good        | Reactor modeling limited             |
+| **Pipeline Network**     | ★★★★☆ Very Good   | Looped network solver implemented    |
+| **Compression Station**  | ★★★★★ Excellent   | Well covered                         |
+| **Gas Gathering**        | ★★★★☆ Very Good   | Slug catcher sizing basic            |
 
 ### 5.2 Offshore Applications
 
-| Application | NeqSim Capability | Gap |
-|-------------|-------------------|-----|
-| **Fixed Platform** | ★★★★☆ Very Good | Minor gaps only |
-| **FPSO** | ★★★☆☆ Good | Motion effects, offloading |
-| **Subsea Production** | ★★★★☆ Very Good | TwoFluidPipe provides transient flow |
-| **TLP/Spar/Semi** | ★★★☆☆ Good | Motion effects |
-| **Subsea Tieback** | ★★★★☆ Very Good | Long-distance flow assurance |
-| **Gas Export** | ★★★★☆ Very Good | Mostly complete |
+| Application           | NeqSim Capability | Gap                                  |
+| --------------------- | ----------------- | ------------------------------------ |
+| **Fixed Platform**    | ★★★★☆ Very Good   | Minor gaps only                      |
+| **FPSO**              | ★★★☆☆ Good        | Motion effects, offloading           |
+| **Subsea Production** | ★★★★☆ Very Good   | TwoFluidPipe provides transient flow |
+| **TLP/Spar/Semi**     | ★★★☆☆ Good        | Motion effects                       |
+| **Subsea Tieback**    | ★★★★☆ Very Good   | Long-distance flow assurance         |
+| **Gas Export**        | ★★★★☆ Very Good   | Mostly complete                      |
 
 ---
 
 ## 6. COMPARISON WITH COMMERCIAL TOOLS
 
-| Feature Area | NeqSim | HYSYS/UniSim | OLGA/LedaFlow | PIPESIM |
-|--------------|--------|--------------|---------------|---------|
-| **Thermodynamics** | ★★★★★ | ★★★★★ | ★★★☆☆ | ★★★★☆ |
-| **Steady-State Process** | ★★★★☆ | ★★★★★ | ★★☆☆☆ | ★★★☆☆ |
-| **Transient Multiphase** | ★★★★☆ | ★★★☆☆ | ★★★★★ | ★★★★★ |
-| **Mechanical Design** | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ |
-| **Safety Analysis** | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★☆☆☆ |
-| **Cost Estimation** | ★★★★☆ | ★★★☆☆ | ★☆☆☆☆ | ★★☆☆☆ |
-| **Open Source/API** | ★★★★★ | ★★☆☆☆ | ★★☆☆☆ | ★★☆☆☆ |
-| **Python Integration** | ★★★★★ | ★★★☆☆ | ★★★☆☆ | ★★★☆☆ |
+| Feature Area             | NeqSim | HYSYS/UniSim | OLGA/LedaFlow | PIPESIM |
+| ------------------------ | ------ | ------------ | ------------- | ------- |
+| **Thermodynamics**       | ★★★★★  | ★★★★★        | ★★★☆☆         | ★★★★☆   |
+| **Steady-State Process** | ★★★★☆  | ★★★★★        | ★★☆☆☆         | ★★★☆☆   |
+| **Transient Multiphase** | ★★★★☆  | ★★★☆☆        | ★★★★★         | ★★★★★   |
+| **Mechanical Design**    | ★★★★☆  | ★★★☆☆        | ★★☆☆☆         | ★★★☆☆   |
+| **Safety Analysis**      | ★★★★☆  | ★★★☆☆        | ★★☆☆☆         | ★★☆☆☆   |
+| **Cost Estimation**      | ★★★★☆  | ★★★☆☆        | ★☆☆☆☆         | ★★☆☆☆   |
+| **Open Source/API**      | ★★★★★  | ★★☆☆☆        | ★★☆☆☆         | ★★☆☆☆   |
+| **Python Integration**   | ★★★★★  | ★★★☆☆        | ★★★☆☆         | ★★★☆☆   |
 
 **NeqSim Competitive Advantages:**
 1. Open source with full code access

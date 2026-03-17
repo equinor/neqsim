@@ -76,5 +76,6 @@ fluid.setMixingRule("classic");
 - Liquid carryover during gas blowdown
 - Two-phase relief capacity
 
-## Java 8 Only
-No `var`, `List.of()`, or any Java 9+ syntax.
+## Shared Skills
+- Java 8 rules: See `neqsim-java8-rules` skill
+- API patterns: See `neqsim-api-patterns` skill for fluid/equipment usage

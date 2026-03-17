@@ -47,13 +47,13 @@ java.io.Serializable
 
 ### Available Classes
 
-| Class | Description | Use Case |
-|-------|-------------|----------|
-| `Stream` | Standard process stream with full thermodynamic calculations | General material flows |
-| `StreamInterface` | Interface defining stream contract | Type declarations and polymorphism |
-| `NeqStream` | Stream without flash (uses existing phase split) | When phase equilibrium is known |
-| `VirtualStream` | Reference stream with property overrides | Branch flows, what-if scenarios |
-| `EnergyStream` | Heat/work duty carrier | Heat exchanger duties, compressor work |
+| Class             | Description                                                  | Use Case                               |
+| ----------------- | ------------------------------------------------------------ | -------------------------------------- |
+| `Stream`          | Standard process stream with full thermodynamic calculations | General material flows                 |
+| `StreamInterface` | Interface defining stream contract                           | Type declarations and polymorphism     |
+| `NeqStream`       | Stream without flash (uses existing phase split)             | When phase equilibrium is known        |
+| `VirtualStream`   | Reference stream with property overrides                     | Branch flows, what-if scenarios        |
+| `EnergyStream`    | Heat/work duty carrier                                       | Heat exchanger duties, compressor work |
 
 ---
 
@@ -172,15 +172,15 @@ The stream specification controls how flash calculations are performed.
 
 ### Available Specifications
 
-| Specification | Description | When to Use |
-|---------------|-------------|-------------|
-| `"TP"` | Temperature-Pressure flash (default) | Standard conditions |
-| `"PH"` | Pressure-Enthalpy flash | After isenthalpic processes |
-| `"dewP"` | Dew point temperature at given P | Condensation studies |
-| `"dewT"` | Dew point pressure at given T | Dew point analysis |
-| `"bubP"` | Bubble point temperature at given P | Evaporation studies |
-| `"bubT"` | Bubble point pressure at given T | Bubble point analysis |
-| `"gas quality"` | Constant phase fraction flash | Fixed vapor fraction |
+| Specification   | Description                          | When to Use                 |
+| --------------- | ------------------------------------ | --------------------------- |
+| `"TP"`          | Temperature-Pressure flash (default) | Standard conditions         |
+| `"PH"`          | Pressure-Enthalpy flash              | After isenthalpic processes |
+| `"dewP"`        | Dew point temperature at given P     | Condensation studies        |
+| `"dewT"`        | Dew point pressure at given T        | Dew point analysis          |
+| `"bubP"`        | Bubble point temperature at given P  | Evaporation studies         |
+| `"bubT"`        | Bubble point pressure at given T     | Bubble point analysis       |
+| `"gas quality"` | Constant phase fraction flash        | Fixed vapor fraction        |
 
 ### Using Specifications
 
@@ -232,24 +232,24 @@ double stdVolFlow = stream.getFlowRate("Sm3/day");
 
 ### Flow Rate Unit Reference
 
-| Unit | Description | Basis |
-|------|-------------|-------|
-| `"kg/sec"` | Kilograms per second | Mass |
-| `"kg/min"` | Kilograms per minute | Mass |
-| `"kg/hr"` | Kilograms per hour | Mass |
-| `"kg/day"` | Kilograms per day | Mass |
-| `"kmol/hr"` | Kilomoles per hour | Molar |
-| `"mole/sec"` | Moles per second | Molar |
-| `"mole/min"` | Moles per minute | Molar |
-| `"mole/hr"` | Moles per hour | Molar |
-| `"m3/sec"` | Actual m³/second | Volume |
-| `"m3/min"` | Actual m³/minute | Volume |
-| `"m3/hr"` | Actual m³/hour | Volume |
-| `"Sm3/sec"` | Standard m³/second | Std Volume |
-| `"Sm3/hr"` | Standard m³/hour | Std Volume |
-| `"Sm3/day"` | Standard m³/day | Std Volume |
-| `"MSm3/day"` | Million Sm³/day | Std Volume |
-| `"barrel/day"` | Oil barrels/day | Volume |
+| Unit           | Description          | Basis      |
+| -------------- | -------------------- | ---------- |
+| `"kg/sec"`     | Kilograms per second | Mass       |
+| `"kg/min"`     | Kilograms per minute | Mass       |
+| `"kg/hr"`      | Kilograms per hour   | Mass       |
+| `"kg/day"`     | Kilograms per day    | Mass       |
+| `"kmol/hr"`    | Kilomoles per hour   | Molar      |
+| `"mole/sec"`   | Moles per second     | Molar      |
+| `"mole/min"`   | Moles per minute     | Molar      |
+| `"mole/hr"`    | Moles per hour       | Molar      |
+| `"m3/sec"`     | Actual m³/second     | Volume     |
+| `"m3/min"`     | Actual m³/minute     | Volume     |
+| `"m3/hr"`      | Actual m³/hour       | Volume     |
+| `"Sm3/sec"`    | Standard m³/second   | Std Volume |
+| `"Sm3/hr"`     | Standard m³/hour     | Std Volume |
+| `"Sm3/day"`    | Standard m³/day      | Std Volume |
+| `"MSm3/day"`   | Million Sm³/day      | Std Volume |
+| `"barrel/day"` | Oil barrels/day      | Volume     |
 
 ### Accessing the Fluid System
 
@@ -302,13 +302,13 @@ double gasFraction = fluid.getPhase("gas").getBeta();  // Mole basis
 ```java
 if (fluid.hasPhaseType("gas")) {
     PhaseInterface gasPhase = fluid.getPhase("gas");
-    
+
     // Phase properties
     double gasDensity = gasPhase.getDensity("kg/m3");
     double gasViscosity = gasPhase.getViscosity("cP");
     double gasMW = gasPhase.getMolarMass("kg/kmol");
     double gasZ = gasPhase.getZ();  // Compressibility factor
-    
+
     // Component in phase
     double methaneInGas = gasPhase.getComponent("methane").getx();
 }
@@ -468,14 +468,14 @@ StreamInterface outputStream = altered.getOutletStream();
 
 ### Key Methods
 
-| Method | Description |
-|--------|-------------|
-| `setReferenceStream(stream)` | Set the source stream |
-| `setFlowRate(value, unit)` | Override flow rate |
-| `setTemperature(value, unit)` | Override temperature |
-| `setPressure(value, unit)` | Override pressure |
-| `setComposition(array, unit)` | Override composition |
-| `getOutletStream()` | Get the modified stream |
+| Method                        | Description             |
+| ----------------------------- | ----------------------- |
+| `setReferenceStream(stream)`  | Set the source stream   |
+| `setFlowRate(value, unit)`    | Override flow rate      |
+| `setTemperature(value, unit)` | Override temperature    |
+| `setPressure(value, unit)`    | Override pressure       |
+| `setComposition(array, unit)` | Override composition    |
+| `getOutletStream()`           | Get the modified stream |
 
 ---
 
@@ -699,14 +699,14 @@ SystemInterface fluid = wellStream.getFluid();
 System.out.println("Number of phases: " + fluid.getNumberOfPhases());
 
 if (fluid.hasPhaseType("gas")) {
-    double gasRate = fluid.getPhase("gas").getBeta() 
+    double gasRate = fluid.getPhase("gas").getBeta()
                    * wellStream.getFlowRate("kg/hr");
     System.out.println("Gas rate: " + gasRate + " kg/hr");
     System.out.println("Gas density: " + fluid.getPhase("gas").getDensity("kg/m3") + " kg/m³");
 }
 
 if (fluid.hasPhaseType("oil")) {
-    double oilRate = fluid.getPhase("oil").getBeta() 
+    double oilRate = fluid.getPhase("oil").getBeta()
                    * wellStream.getFlowRate("kg/hr");
     System.out.println("Oil rate: " + oilRate + " kg/hr");
     System.out.println("Oil API: " + fluid.getPhase("oil").getPhysicalProperties()
@@ -714,7 +714,7 @@ if (fluid.hasPhaseType("oil")) {
 }
 
 if (fluid.hasPhaseType("aqueous")) {
-    double waterRate = fluid.getPhase("aqueous").getBeta() 
+    double waterRate = fluid.getPhase("aqueous").getBeta()
                      * wellStream.getFlowRate("kg/hr");
     System.out.println("Water rate: " + waterRate + " kg/hr");
 }
@@ -839,7 +839,7 @@ For single-component systems from other streams, the stream automatically switch
 
 ```java
 // Single component from separator
-if (stream != null && thermoSystem.getNumberOfComponents() == 1 
+if (stream != null && thermoSystem.getNumberOfComponents() == 1
     && getSpecification().equals("TP")) {
     setSpecification("PH");  // Auto-switch for stability
 }
@@ -851,7 +851,7 @@ Streams track their last state to avoid unnecessary calculations:
 
 ```java
 // Implementation checks cached values
-if (temperature == lastTemperature 
+if (temperature == lastTemperature
     && pressure == lastPressure
     && flowRate == lastFlowRate
     && composition == lastComposition) {
@@ -904,7 +904,7 @@ StreamInterface processedFeed = process.getMeasurementDevice("Feed");
 
 ## Related Documentation
 
-- [Equipment Index](./\) - All process equipment
+- [Equipment Index](index.md) - All process equipment
 - [Mixers and Splitters](mixers_splitters) - Combining and dividing streams
 - [Separators](separators) - Phase separation equipment
 - [Heat Exchangers](heat_exchangers) - Thermal processing

@@ -66,14 +66,14 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
           "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT " + "FROM TechnicalRequirements_Process "
               + "WHERE COMPANY = '" + company + "' AND EQUIPMENTTYPE = '" + equipmentType + "'";
 
-      ResultSet rs = database.getResultSet(sql);
-      while (rs.next()) {
-        String specName = rs.getString("SPECIFICATION");
-        double maxValue = rs.getDouble("MAXVALUE");
+      try (ResultSet rs = database.getResultSet(sql)) {
+        while (rs.next()) {
+          String specName = rs.getString("SPECIFICATION");
+          double maxValue = rs.getDouble("MAXVALUE");
 
-        applyCompanyParameter(calc, specName, maxValue, null);
+          applyCompanyParameter(calc, specName, maxValue, null);
+        }
       }
-      rs.close();
     } catch (Exception ex) {
       logger.warn("Could not load company requirements for {}: {}", company, ex.getMessage());
     }
@@ -111,15 +111,15 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
           "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT, DESCRIPTION " + "FROM asme_standards "
               + "WHERE (EQUIPMENTTYPE = 'Manifold' OR EQUIPMENTTYPE = 'TopsidePiping')";
 
-      ResultSet rs = database.getResultSet(sql);
-      while (rs.next()) {
-        String spec = rs.getString("SPECIFICATION");
-        double minVal = rs.getDouble("MINVALUE");
-        double maxVal = rs.getDouble("MAXVALUE");
+      try (ResultSet rs = database.getResultSet(sql)) {
+        while (rs.next()) {
+          String spec = rs.getString("SPECIFICATION");
+          double minVal = rs.getDouble("MINVALUE");
+          double maxVal = rs.getDouble("MAXVALUE");
 
-        applyASMEParameter(calc, spec, minVal, maxVal);
+          applyASMEParameter(calc, spec, minVal, maxVal);
+        }
       }
-      rs.close();
     } catch (Exception ex) {
       logger.warn("Could not load ASME parameters: {}", ex.getMessage());
     }
@@ -138,15 +138,15 @@ public class ManifoldMechanicalDesignDataSource implements Serializable {
           + "AND (EQUIPMENTTYPE = 'Manifold' OR EQUIPMENTTYPE = 'Pipeline' "
           + "OR EQUIPMENTTYPE = 'SubseaEquipment')";
 
-      ResultSet rs = database.getResultSet(sql);
-      while (rs.next()) {
-        String spec = rs.getString("SPECIFICATION");
-        double minVal = rs.getDouble("MINVALUE");
-        double maxVal = rs.getDouble("MAXVALUE");
+      try (ResultSet rs = database.getResultSet(sql)) {
+        while (rs.next()) {
+          String spec = rs.getString("SPECIFICATION");
+          double minVal = rs.getDouble("MINVALUE");
+          double maxVal = rs.getDouble("MAXVALUE");
 
-        applyDNVParameter(calc, spec, minVal, maxVal);
+          applyDNVParameter(calc, spec, minVal, maxVal);
+        }
       }
-      rs.close();
     } catch (Exception ex) {
       logger.warn("Could not load DNV parameters: {}", ex.getMessage());
     }

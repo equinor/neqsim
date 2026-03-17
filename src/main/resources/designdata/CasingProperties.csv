@@ -1,0 +1,15 @@
+Grade,SMYS_MPa,SMTS_MPa,SMYS_psi,SMTS_psi,YieldRatio,Density_kg_m3,Standard,Description
+H40,276,414,40000,60000,0.667,7850,API 5CT,H40 - Low-strength conductor/surface casing
+J55,379,517,55000,75000,0.733,7850,API 5CT,J55 - Surface and intermediate casing
+K55,379,655,55000,95000,0.579,7850,API 5CT,K55 - Surface and intermediate casing
+N80,552,689,80000,100000,0.800,7850,API 5CT,N80 - Non-sour service casing
+L80,552,655,80000,95000,0.843,7850,API 5CT,L80 - Sour service (SSC resistant)
+C90,621,689,90000,100000,0.901,7850,API 5CT,C90 - Sour service casing
+C95,655,724,95000,105000,0.905,7850,API 5CT,C95 - Sour service casing
+T95,655,724,95000,105000,0.905,7850,API 5CT,T95 - Sour service casing
+P110,758,862,110000,125000,0.880,7850,API 5CT,P110 - High-strength production casing
+Q125,862,931,125000,135000,0.926,7850,API 5CT,Q125 - Ultra-high-strength casing
+13Cr-L80,552,655,80000,95000,0.843,7750,API 5CT,13Cr-L80 - CRA for CO2 service
+S13Cr,621,724,90000,105000,0.858,7750,API 5CT,Super 13Cr - Enhanced CRA
+22Cr,448,621,65000,90000,0.722,7800,API 5CRA,22Cr duplex - Severe corrosion
+25Cr,758,862,110000,125000,0.880,7800,API 5CRA,25Cr super duplex - Extreme corrosion
