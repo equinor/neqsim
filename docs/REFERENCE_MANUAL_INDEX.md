@@ -875,7 +875,6 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | **Task Solving Guide**             | [docs/development/TASK_SOLVING_GUIDE.md](development/TASK_SOLVING_GUIDE)                         | **Step-by-step workflow for solving engineering tasks**                               |
 | **Code Patterns**                  | [docs/development/CODE_PATTERNS.md](development/CODE_PATTERNS)                                   | **Copy-paste starters for common coding tasks**                                       |
 | **Task Log**                       | [docs/development/TASK_LOG.md](development/TASK_LOG)                                             | **Searchable log of all solved tasks**                                                |
-| **Copilot Automation**             | [docs/development/copilot_automation.md](development/copilot_automation)                         | **AI-assisted issue solving via GitHub Actions (copilot-solve, copilot-engineering)** |
 
 ### Chapter 50: Testing
 
