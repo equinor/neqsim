@@ -989,7 +989,14 @@ public class TPmultiflash extends TPflash {
             oldDeltalogWi[i] = deltalogWi[i];
           }
 
-          clonedSystem.init(1, 1);
+          try {
+            clonedSystem.init(1, 1);
+          } catch (RuntimeException ex) {
+            // Molar volume calculation failed for this trial phase composition
+            // Skip this trial - it's not a physically meaningful phase
+            logger.debug("Enhanced stability trial init failed: " + ex.getMessage());
+            break;
+          }
 
           // Update logWi from fugacity coefficients
           for (int i = 0; i < numComponents; i++) {
