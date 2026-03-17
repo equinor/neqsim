@@ -158,7 +158,18 @@ public abstract class Flash extends BaseOperation {
     // sumwVapor * sumwLiquid = K * (1/K) = 1. For multicomponent mixtures
     // near a phase boundary, this product is >> 1 due to K-value spread.
     // A threshold of 2.0 reliably discriminates the two cases.
-    if (sumwVapor * sumwLiquid < 2.0) {
+    // However, when Wilson K ≈ 1 for all components (very near-critical),
+    // sumwVapor * sumwLiquid can drop below 2.0 even for multicomponent
+    // mixtures. Detect this and skip the filter when K-values show no spread.
+    double maxLnK = 0.0;
+    for (int i = 0; i < numComp; i++) {
+      double zi = system.getPhase(0).getComponent(i).getz();
+      if (zi > 1e-100 && system.getPhase(0).getComponent(i).getIonicCharge() == 0) {
+        maxLnK = Math.max(maxLnK, Math.abs(Math.log(wilsonK[i])));
+      }
+    }
+    boolean wilsonKNearUnity = maxLnK < 0.5;
+    if (sumwVapor * sumwLiquid < 2.0 && !wilsonKNearUnity) {
       return false;
     }
 
@@ -175,37 +186,88 @@ public abstract class Flash extends BaseOperation {
     // reinitializes the original system after this method returns.
     SystemInterface testSystem = minimumGibbsEnergySystem;
 
-    // Try both vapor-like and liquid-like amplified trials
-    for (int trial = 0; trial < 2; trial++) {
+    // Determine if we need composition-perturbation trials.
+    // When Wilson K ≈ 1 for all components (near-critical), simple amplification
+    // of ln(K) ≈ 0 produces trivial initial guesses. In this case, use
+    // heavy/light component weighting to generate non-trivial trial compositions.
+    boolean useCompositionPerturbation = wilsonKNearUnity;
+
+    // Number of trials: 2 standard (amplified K vapor/liquid) + 2 perturbation
+    // (heavy-enriched / light-enriched) when near-critical
+    int numTrials = useCompositionPerturbation ? 4 : 2;
+
+    for (int trial = 0; trial < numTrials; trial++) {
       double[] Wi = new double[numComp];
       double[] logWi = new double[numComp];
       double[] oldlogw = new double[numComp];
 
-      // Initialize Wi with amplified Wilson K-values
       double sumwTrial = 0.0;
-      for (int i = 0; i < numComp; i++) {
-        double zi = testSystem.getPhase(0).getComponent(i).getz();
-        if (zi < 1e-100 || testSystem.getPhase(0).getComponent(i).getIonicCharge() != 0) {
-          Wi[i] = 1e-50;
+
+      if (trial < 2) {
+        // Standard amplified Wilson K-value trials
+        for (int i = 0; i < numComp; i++) {
+          double zi = testSystem.getPhase(0).getComponent(i).getz();
+          if (zi < 1e-100 || testSystem.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+            Wi[i] = 1e-50;
+            logWi[i] = Math.log(Wi[i]);
+            oldlogw[i] = logWi[i];
+            sumwTrial += Wi[i];
+            continue;
+          }
+          double tc = testSystem.getPhase(0).getComponent(i).getTC();
+          double pc = testSystem.getPhase(0).getComponent(i).getPC();
+          double omega = testSystem.getPhase(0).getComponent(i).getAcentricFactor();
+          double lnKwilson = Math.log(pc / presBar) + 5.373 * (1.0 + omega) * (1.0 - tc / tempK);
+          // Use stronger amplification factor (4.0 instead of 2.5) when near-critical
+          double ampFactor = useCompositionPerturbation ? 4.0 : 2.5;
+          double amplifiedLnK = ampFactor * lnKwilson;
+
+          if (trial == 0) {
+            Wi[i] = zi * Math.exp(amplifiedLnK);
+          } else {
+            Wi[i] = zi * Math.exp(-amplifiedLnK);
+          }
           logWi[i] = Math.log(Wi[i]);
           oldlogw[i] = logWi[i];
           sumwTrial += Wi[i];
-          continue;
         }
-        double tc = testSystem.getPhase(0).getComponent(i).getTC();
-        double pc = testSystem.getPhase(0).getComponent(i).getPC();
-        double omega = testSystem.getPhase(0).getComponent(i).getAcentricFactor();
-        double lnKwilson = Math.log(pc / presBar) + 5.373 * (1.0 + omega) * (1.0 - tc / tempK);
-        double amplifiedLnK = 2.5 * lnKwilson;
+      } else {
+        // Composition-perturbation trials for near-critical systems.
+        // Trial 2: heavy-enriched (weight by Tc — higher Tc components get more)
+        // Trial 3: light-enriched (weight by 1/Tc — lower Tc components get more)
+        double maxTc = 0.0;
+        for (int i = 0; i < numComp; i++) {
+          double tc = testSystem.getPhase(0).getComponent(i).getTC();
+          if (tc > maxTc) {
+            maxTc = tc;
+          }
+        }
+        if (maxTc < 1.0) {
+          maxTc = 1.0;
+        }
 
-        if (trial == 0) {
-          Wi[i] = zi * Math.exp(amplifiedLnK);
-        } else {
-          Wi[i] = zi * Math.exp(-amplifiedLnK);
+        for (int i = 0; i < numComp; i++) {
+          double zi = testSystem.getPhase(0).getComponent(i).getz();
+          if (zi < 1e-100 || testSystem.getPhase(0).getComponent(i).getIonicCharge() != 0) {
+            Wi[i] = 1e-50;
+            logWi[i] = Math.log(Wi[i]);
+            oldlogw[i] = logWi[i];
+            sumwTrial += Wi[i];
+            continue;
+          }
+          double tc = testSystem.getPhase(0).getComponent(i).getTC();
+          double tcNorm = tc / maxTc;
+          if (trial == 2) {
+            // Heavy-enriched: boost components with high Tc (liquid-like)
+            Wi[i] = zi * Math.pow(tcNorm, 3.0);
+          } else {
+            // Light-enriched: boost components with low Tc (vapor-like)
+            Wi[i] = zi * Math.pow(1.0 / (tcNorm + 0.01), 3.0);
+          }
+          logWi[i] = Math.log(Wi[i]);
+          oldlogw[i] = logWi[i];
+          sumwTrial += Wi[i];
         }
-        logWi[i] = Math.log(Wi[i]);
-        oldlogw[i] = logWi[i];
-        sumwTrial += Wi[i];
       }
 
       // Normalize and set trial composition on phase 1 of the test system
