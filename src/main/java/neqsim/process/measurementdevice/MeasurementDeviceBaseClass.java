@@ -48,6 +48,11 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
   private AlarmConfig alarmConfig;
   private final AlarmState alarmState = new AlarmState();
 
+  private String tag = "";
+  private InstrumentTagRole tagRole = InstrumentTagRole.VIRTUAL;
+  private double fieldValue = Double.NaN;
+  private boolean fieldValueSet = false;
+
   /**
    * Constructor for MeasurementDeviceBaseClass.
    *
@@ -255,6 +260,49 @@ public abstract class MeasurementDeviceBaseClass extends NamedBaseClass
    */
   public void setRandomSeed(long seed) {
     random = new Random(seed);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTag() {
+    return tag;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setTag(String tag) {
+    this.tag = tag != null ? tag : "";
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public InstrumentTagRole getTagRole() {
+    return tagRole;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setTagRole(InstrumentTagRole role) {
+    this.tagRole = role != null ? role : InstrumentTagRole.VIRTUAL;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getFieldValue() {
+    return fieldValue;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setFieldValue(double value) {
+    this.fieldValue = value;
+    this.fieldValueSet = !Double.isNaN(value);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean hasFieldValue() {
+    return fieldValueSet;
   }
 
   /** {@inheritDoc} */
