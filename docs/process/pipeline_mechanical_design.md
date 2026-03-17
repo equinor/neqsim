@@ -8,7 +8,7 @@ description: Comprehensive documentation for pipeline mechanical design in NeqSi
 Comprehensive documentation for pipeline mechanical design in NeqSim, including wall thickness calculations, stress analysis, cost estimation, and detailed design per industry standards.
 
 > **📘 See Also: Related Design Documentation**
-> 
+>
 > - [Topside Piping Design](topside_piping_design) - Topside/platform piping with velocity, support spacing, vibration (AIV/FIV), stress analysis per ASME B31.3
 > - [Riser Mechanical Design](riser_mechanical_design) - Riser design with catenary mechanics, VIV analysis, fatigue life per DNV-OS-F201
 
@@ -23,6 +23,7 @@ Comprehensive documentation for pipeline mechanical design in NeqSim, including 
 - [Weight and Buoyancy](#weight-and-buoyancy)
 - [Detailed Design Features](#detailed-design-features)
 - [Cost Estimation](#cost-estimation)
+- [Corrosion Analysis](#corrosion-analysis)
 - [JSON Reporting](#json-reporting)
 - [Database Integration](#database-integration)
 - [Examples](#examples)
@@ -58,6 +59,8 @@ The pipeline mechanical design system provides:
 PipelineMechanicalDesign extends MechanicalDesign
 ├── PipeMechanicalDesignCalculator (calculations)
 ├── PipelineMechanicalDesignDataSource (database)
+├── NorsokM506CorrosionRate (CO2 corrosion rate per NORSOK M-506)
+├── NorsokM001MaterialSelection (material selection per NORSOK M-001)
 └── MechanicalDesignResponse (JSON export)
 ```
 
@@ -67,11 +70,12 @@ PipelineMechanicalDesign extends MechanicalDesign
 1. Set design conditions (pressure, temperature)
 2. Select material grade and design code
 3. Load standards from database
-4. Calculate wall thickness
-5. Perform stress analysis
-6. Calculate weights and areas
-7. Estimate costs
-8. Export to JSON
+4. Run corrosion analysis (NORSOK M-506 rate + M-001 material/CA)
+5. Calculate wall thickness (includes corrosion allowance)
+6. Perform stress analysis
+7. Calculate weights and areas
+8. Estimate costs
+9. Export to JSON
 ```
 
 ---
@@ -496,7 +500,7 @@ double laborHours = calc.getTotalLaborManhours();
 List<Map<String, Object>> bom = calc.generateBillOfMaterials();
 
 for (Map<String, Object> item : bom) {
-    System.out.println(item.get("item") + ": " + item.get("quantity") + " " + 
+    System.out.println(item.get("item") + ": " + item.get("quantity") + " " +
                        item.get("unit") + " - $" + item.get("totalCost_USD"));
 }
 ```
@@ -523,7 +527,7 @@ String json = design.toJson();
   "designCode": "ASME_B31_8",
   "materialGrade": "X65",
   "pipelineLength_m": 50000.0,
-  
+
   "designParameters": {
     "designPressure_MPa": 15.0,
     "designPressure_bar": 150.0,
@@ -531,21 +535,21 @@ String json = design.toJson();
     "outerDiameter_mm": 508.0,
     "corrosionAllowance_mm": 3.0
   },
-  
+
   "materialProperties": {
     "smys_MPa": 448.0,
     "smts_MPa": 531.0,
     "youngsModulus_MPa": 207000.0,
     "steelDensity_kgm3": 7850.0
   },
-  
+
   "designFactors": {
     "designFactor_F": 0.60,
     "jointFactor_E": 1.0,
     "temperatureDerating_T": 1.0,
     "locationClass": 2
   },
-  
+
   "calculatedResults": {
     "minimumWallThickness_mm": 18.5,
     "maop_MPa": 14.2,
@@ -554,21 +558,21 @@ String json = design.toJson();
     "safetyMargin_percent": 40.8,
     "designIsSafe": true
   },
-  
+
   "weightAndBuoyancy": {
     "steelWeight_kgm": 185.0,
     "totalDryWeight_kgm": 210.0,
     "submergedWeight_kgm": 120.0,
     "totalPipelineWeight_kg": 10500000.0
   },
-  
+
   "detailedDesignResults": {
     "collapsePressure_MPa": 25.0,
     "propagationBucklingPressure_MPa": 8.5,
     "minimumBendRadius_m": 9.14,
     "allowableSpanLength_m": 45.0
   },
-  
+
   "costEstimation": {
     "steelMaterialCost_USD": 15750000.0,
     "coatingCost_USD": 2000000.0,
@@ -577,7 +581,7 @@ String json = design.toJson();
     "totalDirectCost_USD": 70000000.0,
     "totalProjectCost_USD": 91000000.0
   },
-  
+
   "laborEstimation": {
     "totalLaborManhours": 125000.0
   }
@@ -617,6 +621,52 @@ design.readDesignSpecifications();
 | `asme_standards` | ASME B31 requirements |
 | `dnv_iso_en_standards` | DNV/ISO/EN factors |
 | `norsok_standards` | NORSOK requirements |
+
+---
+
+## Corrosion Analysis
+
+`PipelineMechanicalDesign` integrates with the `neqsim.process.corrosion` package for CO2 corrosion rate prediction (NORSOK M-506) and material selection (NORSOK M-001).
+
+### Quick Usage
+
+```java
+PipelineMechanicalDesign design = (PipelineMechanicalDesign) pipe.getMechanicalDesign();
+design.setDesignLifeYears(25);
+design.setInhibitorEfficiency(0.0);
+design.runCorrosionAnalysis();
+
+double rate = design.getCorrosionRate();                     // mm/yr
+String material = design.getRecommendedMaterial();           // e.g. "Carbon steel (CS)"
+double ca = design.getRecommendedCorrosionAllowanceMm();     // mm
+```
+
+`runCorrosionAnalysis()` automatically extracts temperature, pressure, CO2/H2S mole fractions, flow velocity, and fluid properties from the pipeline's outlet stream. The resulting corrosion allowance is applied to the wall thickness calculator.
+
+### Pipeline Convenience Methods
+
+The `Pipeline` base class provides shortcut methods that delegate to `PipelineMechanicalDesign`:
+
+```java
+pipe.setDesignLifeYears(25);
+pipe.setInhibitorEfficiency(0.80);
+pipe.runCorrosionAnalysis();
+
+pipe.getCorrosionRate();                    // mm/yr
+pipe.getRecommendedMaterial();              // material grade
+pipe.getRecommendedCorrosionAllowanceMm();  // CA in mm
+```
+
+### Detailed Documentation
+
+See the [Corrosion Analysis Module](corrosion/) for full API reference:
+
+| Document | Description |
+|----------|-------------|
+| [Corrosion Module Overview](corrosion/) | Package overview and quick start |
+| [NORSOK M-506 API](corrosion/norsok_m506_corrosion_rate) | CO2 corrosion rate model |
+| [NORSOK M-001 API](corrosion/norsok_m001_material_selection) | Material selection |
+| [Pipeline Integration](corrosion/pipeline_corrosion_integration) | Integration workflow |
 
 ---
 

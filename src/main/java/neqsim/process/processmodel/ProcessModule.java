@@ -203,7 +203,12 @@ public class ProcessModule extends SimulationBaseClass {
         if (operationsIndex.contains(i)) {
           int index = operationsIndex.indexOf(i);
           ProcessSystem processSystem = addedUnitOperations.get(index);
-          processSystem.run(id);
+          // Use runWithProgress if a listener is set, otherwise run normally
+          if (processSystem.getProgressListener() != null) {
+            processSystem.runWithProgress(id);
+          } else {
+            processSystem.run(id);
+          }
         } else if (modulesIndex.contains(i)) {
           int index = modulesIndex.indexOf(i);
           addedModules.get(index).run(id);

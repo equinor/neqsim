@@ -83,6 +83,46 @@ This documentation is organized into the following sections:
 - Multi-objective Pareto optimization
 - External optimizer integration (Python/SciPy via `ProcessSimulationEvaluator`)
 
+### Corrosion Analysis ✨
+
+| Document | Description |
+|----------|-------------|
+| [corrosion/](corrosion/) | **Corrosion analysis module overview** — NORSOK M-506 CO2 corrosion rate + NORSOK M-001 material selection |
+| [corrosion/norsok_m506_corrosion_rate.md](corrosion/norsok_m506_corrosion_rate) | **NORSOK M-506 API** — CO2 corrosion rate prediction with fugacity, pH, correction factors |
+| [corrosion/norsok_m001_material_selection.md](corrosion/norsok_m001_material_selection) | **NORSOK M-001 API** — Material grade recommendation, sour service, chloride SCC |
+| [corrosion/pipeline_corrosion_integration.md](corrosion/pipeline_corrosion_integration) | **Pipeline integration** — Automated corrosion analysis from process simulation |
+
+### Electrical Design Documentation
+
+| Document | Description |
+|----------|-------------|
+| [electrical-design.md](electrical-design) | **Electrical design framework — motor sizing, VFD, cable, transformer, switchgear, hazardous area, equipment-specific designs, plant-wide load analysis** |
+
+### Dynamic Simulation
+
+| Document | Description |
+|----------|-------------|
+| [dynamic-simulation.md](dynamic-simulation) | **Dynamic simulation helper — auto-instruments a sized steady-state process with transmitters and PID controllers for transient simulation** |
+
+**Key Features:**
+- `DynamicProcessHelper` — one-call conversion from steady-state to dynamic
+- Auto-creates PT, LT, TT transmitters per equipment type
+- Auto-wires PID controllers (PC, LC, WLC) to downstream valves
+- Configurable PID tuning with sensible defaults
+- Convenience methods for flow and temperature control loops
+
+### Instrument Design Documentation
+
+| Document | Description |
+|----------|-------------|
+| [instrument-design.md](instrument-design) | **Instrument design framework — ISA-5.1 identification, SIL-rated safety instruments, I/O counting, DCS/SIS cabinet sizing, cost estimation, equipment-specific designs (separator, compressor, heat exchanger, pipeline, valve), plant-wide SystemInstrumentDesign** |
+
+**Key Features:**
+- Equipment-specific designs: Compressor, Pump, Separator, Heater/Cooler, Pipeline
+- `SystemElectricalDesign` for plant-wide load aggregation, transformer and generator sizing
+- IEC standards: 60034 (motors), 60502 (cables), 60076 (transformers), 61439 (switchgear)
+- `ProcessSystem.getSystemElectricalDesign()` for one-call plant electrical summary
+
 ### Mechanical Design Documentation
 
 | Document | Description |
@@ -90,7 +130,7 @@ This documentation is organized into the following sections:
 | [EQUIPMENT_DESIGN_PARAMETERS.md](EQUIPMENT_DESIGN_PARAMETERS) | **Equipment design parameters, autoSize vs MechanicalDesign guide** |
 | [mechanical_design_standards.md](mechanical_design_standards) | Design standards (NORSOK, ASME, API, DNV, etc.) |
 | [mechanical_design_database.md](mechanical_design_database) | Data sources, database schemas, and CSV configuration |
-| [pipeline_mechanical_design.md](pipeline_mechanical_design) | Pipeline mechanical design (wall thickness, stress, buckling) |
+| [pipeline_mechanical_design.md](pipeline_mechanical_design) | Pipeline mechanical design (wall thickness, stress, buckling, corrosion) |
 | [topside_piping_design.md](topside_piping_design) | **Topside piping design (velocity, support, vibration per ASME B31.3)** |
 | [riser_mechanical_design.md](riser_mechanical_design) | Riser design (catenary, VIV, fatigue per DNV-OS-F201) |
 | [well_mechanical_design.md](well_mechanical_design) | **Well casing/tubing design, barrier verification, cost estimation per NORSOK D-010, API 5CT** |

@@ -1133,7 +1133,7 @@ public class ProcessModel implements Runnable, Serializable {
             + (loaded != null ? loaded.getClass().getName() : "null"));
         return null;
       }
-    } catch (IOException e) {
+    } catch (Exception e) {
       logger.error("Failed to load ProcessModel from file: " + filename, e);
       return null;
     }
@@ -1199,7 +1199,7 @@ public class ProcessModel implements Runnable, Serializable {
         model.run();
         logger.info("ProcessModel loaded (binary) from: " + filename);
         return model;
-      } catch (IOException | ClassNotFoundException e) {
+      } catch (Exception e) {
         logger.error("Failed to load ProcessModel from: " + filename, e);
         return null;
       }

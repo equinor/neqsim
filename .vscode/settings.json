@@ -1,5 +1,4 @@
 {
- {
   // ─── Java Configuration ───
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.compile.nullAnalysis.mode": "automatic",
@@ -13,7 +12,7 @@
   "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
   "java.saveActions.organizeImports": true,
   "java.checkstyle.version": "10.18.1",
-  "java.checkstyle.configuration": "${workspaceFolder}/checkstyle_neqsim.xml",
+  "java.checkstyle.configuration": "${workspaceFolder}/.config/checkstyle_neqsim.xml",
   "java.test.defaultConfig": "default",
   "java.debug.settings.onBuildFailureProceed": true,
   // ─── Editor ───

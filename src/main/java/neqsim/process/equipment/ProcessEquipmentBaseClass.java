@@ -11,7 +11,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import neqsim.process.SimulationBaseClass;
@@ -41,6 +45,12 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   private ControllerDeviceInterface controller = null;
   ControllerDeviceInterface flowValveController = null;
   public boolean hasController = false;
+
+  /**
+   * Map of controller tag name to controller device. Supports multiple controllers per equipment.
+   */
+  private final Map<String, ControllerDeviceInterface> controllerMap =
+      new LinkedHashMap<String, ControllerDeviceInterface>();
   private String specification = "TP";
   public String[][] report = new String[0][0];
   public HashMap<String, String> properties = new HashMap<String, String>();
@@ -131,6 +141,12 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   public void setController(ControllerDeviceInterface controller) {
     this.controller = controller;
     hasController = controller != null;
+    if (controller != null) {
+      String tag = controller instanceof neqsim.util.NamedInterface
+          ? ((neqsim.util.NamedInterface) controller).getName()
+          : "default";
+      controllerMap.put(tag, controller);
+    }
   }
 
   /**
@@ -142,12 +158,43 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
    */
   public void setFlowValveController(ControllerDeviceInterface controller) {
     this.flowValveController = controller;
+    if (controller != null) {
+      String tag = controller instanceof neqsim.util.NamedInterface
+          ? ((neqsim.util.NamedInterface) controller).getName()
+          : "flowValve";
+      controllerMap.put(tag, controller);
+    }
   }
 
   /** {@inheritDoc} */
   @Override
   public ControllerDeviceInterface getController() {
     return controller;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addController(String tag, ControllerDeviceInterface controller) {
+    controllerMap.put(tag, controller);
+    if (this.controller == null) {
+      this.controller = controller;
+      hasController = true;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public ControllerDeviceInterface getController(String tag) {
+    return controllerMap.get(tag);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Collection<ControllerDeviceInterface> getControllers() {
+    if (controllerMap.isEmpty() && controller != null) {
+      return Collections.singletonList(controller);
+    }
+    return Collections.unmodifiableCollection(controllerMap.values());
   }
 
   /** {@inheritDoc} */
@@ -163,6 +210,10 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public void initElectricalDesign() {}
+
+  /** {@inheritDoc} */
+  @Override
+  public void initInstrumentDesign() {}
 
   /** {@inheritDoc} */
   @Override
@@ -317,8 +368,9 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     final int prime = 31;
     int result = 1;
     result = prime * result + Arrays.deepHashCode(report);
-    result = prime * result + Objects.hash(conditionAnalysisMessage, controller, energyStream,
-        flowValveController, hasController, isSetEnergyStream, name, properties, specification);
+    result = prime * result
+        + Objects.hash(conditionAnalysisMessage, controller, controllerMap, energyStream,
+            flowValveController, hasController, isSetEnergyStream, name, properties, specification);
     return result;
   }
 
@@ -337,6 +389,7 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass
     ProcessEquipmentBaseClass other = (ProcessEquipmentBaseClass) obj;
     return Objects.equals(conditionAnalysisMessage, other.conditionAnalysisMessage)
         && Objects.equals(controller, other.controller)
+        && Objects.equals(controllerMap, other.controllerMap)
         && Objects.equals(energyStream, other.energyStream)
         && Objects.equals(flowValveController, other.flowValveController)
         && hasController == other.hasController && isSetEnergyStream == other.isSetEnergyStream

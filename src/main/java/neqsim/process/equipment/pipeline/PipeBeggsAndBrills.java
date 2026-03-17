@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import com.google.gson.GsonBuilder;
+import neqsim.process.electricaldesign.pipeline.PipelineElectricalDesign;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.monitor.PipeBeggsBrillsResponse;
 import neqsim.process.util.report.ReportConfig;
@@ -54,7 +55,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <p>
  * Flow regime boundaries are defined by correlations L1-L4:
  * </p>
- * 
+ *
  * <pre>
  * L1 = 316 × λL^0.302
  * L2 = 0.0009252 × λL^(-2.4684)
@@ -66,7 +67,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <p>
  * Total pressure drop consists of three components:
  * </p>
- * 
+ *
  * <pre>
  * ΔP_total = ΔP_friction + ΔP_hydrostatic + ΔP_acceleration
  * </pre>
@@ -124,7 +125,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <p>
  * Heat transfer is calculated using the analytical NTU (Number of Transfer Units) method:
  * </p>
- * 
+ *
  * <pre>
  * NTU = U × A / (ṁ × Cp)
  * T_out = T_wall + (T_in - T_wall) × exp(-NTU)
@@ -150,10 +151,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <p>
  * The overall heat transfer coefficient includes thermal resistances in series:
  * </p>
- * 
+ *
  * <pre>
  * 1/U = 1/h_inner + R_wall + R_insulation + 1/h_outer
- * 
+ *
  * R_wall = r_i × ln(r_o/r_i) / k_wall
  * R_insulation = r_i × ln(r_ins/r_o) / k_ins
  * </pre>
@@ -194,19 +195,19 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * <h2>Usage Examples</h2>
  *
  * <h3>Example 1: Basic Horizontal Pipeline</h3>
- * 
+ *
  * <pre>{@code
  * // Create fluid system
  * SystemInterface fluid = new SystemSrkEos(303.15, 50.0);
  * fluid.addComponent("methane", 0.9);
  * fluid.addComponent("ethane", 0.1);
  * fluid.setMixingRule("classic");
- * 
+ *
  * // Create inlet stream
  * Stream inlet = new Stream("inlet", fluid);
  * inlet.setFlowRate(50000, "kg/hr");
  * inlet.run();
- * 
+ *
  * // Create pipeline
  * PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("pipeline", inlet);
  * pipe.setDiameter(0.2032); // 8 inch
@@ -214,13 +215,13 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * pipe.setElevation(0.0); // horizontal
  * pipe.setNumberOfIncrements(20);
  * pipe.run();
- * 
+ *
  * System.out.println("Pressure drop: " + pipe.getPressureDrop() + " bar");
  * System.out.println("Flow regime: " + pipe.getFlowRegime());
  * }</pre>
  *
  * <h3>Example 2: Pipeline with Heat Transfer</h3>
- * 
+ *
  * <pre>{@code
  * // Hot fluid in cold environment
  * PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("subsea_pipe", hotStream);
@@ -230,13 +231,13 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * pipe.setConstantSurfaceTemperature(5.0, "C"); // Sea temperature
  * pipe.setHeatTransferCoefficient(25.0); // W/(m²·K) - SPECIFIED_U mode
  * pipe.run();
- * 
+ *
  * System.out.println("Inlet T: " + pipe.getInletStream().getTemperature("C") + " °C");
  * System.out.println("Outlet T: " + pipe.getOutletStream().getTemperature("C") + " °C");
  * }</pre>
  *
  * <h3>Example 3: Detailed U-Value with Insulation</h3>
- * 
+ *
  * <pre>{@code
  * pipe.setConstantSurfaceTemperature(5.0, "C"); // Seawater
  * pipe.setOuterHeatTransferCoefficient(500.0); // Seawater forced convection
@@ -247,7 +248,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * }</pre>
  *
  * <h3>Example 4: Inclined Pipeline (Riser)</h3>
- * 
+ *
  * <pre>{@code
  * // Vertical riser
  * PipeBeggsAndBrills riser = new PipeBeggsAndBrills("riser", feedStream);
@@ -256,32 +257,32 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * riser.setElevation(500.0); // 500 m vertical rise
  * riser.setAngle(90.0); // Vertical
  * riser.run();
- * 
+ *
  * System.out.println("Hydrostatic head: " + riser.getSegmentPressure(0)
  *     - riser.getSegmentPressure(riser.getNumberOfIncrements()) + " bar");
  * }</pre>
  *
  * <h3>Example 5: Adiabatic with Joule-Thomson Effect</h3>
- * 
+ *
  * <pre>{@code
  * // High-pressure gas expansion
  * pipe.setHeatTransferMode(HeatTransferMode.ADIABATIC);
  * pipe.setIncludeJouleThomsonEffect(true);
  * pipe.run();
- * 
+ *
  * // For natural gas with ~20 bar pressure drop:
  * // Expected JT cooling: ~8-10 K
  * }</pre>
  *
  * <h3>Example 6: Calculate Flow Rate from Pressures</h3>
- * 
+ *
  * <pre>{@code
  * pipe.setCalculationMode(CalculationMode.CALCULATE_FLOW_RATE);
  * pipe.setSpecifiedOutletPressure(40.0, "bara"); // Target outlet pressure
  * pipe.setMaxFlowIterations(50);
  * pipe.setFlowConvergenceTolerance(1e-4);
  * pipe.run();
- * 
+ *
  * System.out.println("Calculated flow: " + pipe.getOutletStream().getFlowRate("kg/hr") + " kg/hr");
  * }</pre>
  *
@@ -500,6 +501,8 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
   // Number of pipe increments for calculations
   private int numberOfIncrements = 5;
 
+  PipelineElectricalDesign pipelineElectricalDesign;
+
   // Length of the pipe [m]
   private double totalLength = Double.NaN;
 
@@ -635,6 +638,21 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    */
   public PipeBeggsAndBrills(String name, StreamInterface inStream) {
     super(name, inStream);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public PipelineElectricalDesign getElectricalDesign() {
+    if (pipelineElectricalDesign == null) {
+      initElectricalDesign();
+    }
+    return pipelineElectricalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initElectricalDesign() {
+    pipelineElectricalDesign = new PipelineElectricalDesign(this);
   }
 
   /**
@@ -3076,11 +3094,11 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
    * <p>
    * The erosional velocity is calculated using the formula:
    * </p>
-   * 
+   *
    * <pre>
    * V_e = C / sqrt(rho_mix)
    * </pre>
-   * 
+   *
    * where C is typically 100-150 for continuous service.
    *
    * @param cFactor erosional C-factor (typically 100-150)

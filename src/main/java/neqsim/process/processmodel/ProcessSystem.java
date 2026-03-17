@@ -10,6 +10,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -21,8 +22,10 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.SimulationBaseClass;
+import neqsim.process.ProcessElementInterface;
 import neqsim.process.alarm.ProcessAlarmManager;
 import neqsim.process.conditionmonitor.ConditionMonitor;
+import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.EquipmentEnum;
 import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
@@ -81,6 +84,8 @@ public class ProcessSystem extends SimulationBaseClass {
   private List<ProcessEquipmentInterface> unitOperations = new ArrayList<>();
   List<MeasurementDeviceInterface> measurementDevices =
       new ArrayList<MeasurementDeviceInterface>(0);
+  List<ControllerDeviceInterface> controllerDevices = new ArrayList<ControllerDeviceInterface>(0);
+  private List<ProcessConnection> connections = new ArrayList<ProcessConnection>(0);
   private ProcessAlarmManager alarmManager = new ProcessAlarmManager();
   RecycleController recycleController = new RecycleController();
   private double timeStep = 1.0;
@@ -256,6 +261,86 @@ public class ProcessSystem extends SimulationBaseClass {
   public synchronized void add(MeasurementDeviceInterface measurementDevice) {
     measurementDevices.add(measurementDevice);
     alarmManager.register(measurementDevice);
+  }
+
+  /**
+   * Add a standalone controller device to the process system. Controllers added here participate in
+   * the explicit controller scan during {@code runTransient}.
+   *
+   * @param controllerDevice a {@link neqsim.process.controllerdevice.ControllerDeviceInterface}
+   *        object
+   */
+  public synchronized void add(ControllerDeviceInterface controllerDevice) {
+    controllerDevices.add(controllerDevice);
+  }
+
+  /**
+   * Returns an unmodifiable list of all process elements — equipment, measurement devices, and
+   * controllers — registered in this system.
+   *
+   * @return list of all {@link neqsim.process.ProcessElementInterface} objects
+   */
+  public List<ProcessElementInterface> getAllElements() {
+    List<ProcessElementInterface> all = new ArrayList<ProcessElementInterface>(
+        unitOperations.size() + measurementDevices.size() + controllerDevices.size());
+    all.addAll(unitOperations);
+    all.addAll(measurementDevices);
+    all.addAll(controllerDevices);
+    return all;
+  }
+
+  /**
+   * Returns the list of measurement devices registered in this process system.
+   *
+   * @return list of {@link MeasurementDeviceInterface} objects
+   */
+  public List<MeasurementDeviceInterface> getMeasurementDevices() {
+    return Collections.unmodifiableList(measurementDevices);
+  }
+
+  /**
+   * Returns the list of controller devices registered in this process system.
+   *
+   * @return list of {@link ControllerDeviceInterface} objects
+   */
+  public List<ControllerDeviceInterface> getControllerDevices() {
+    return Collections.unmodifiableList(controllerDevices);
+  }
+
+  /**
+   * Declares an explicit connection between two equipment ports. This is a metadata record; it does
+   * not create or wire stream objects. Interchange formats like DEXPI and topology analyses can
+   * query the connection list via {@link #getConnections()}.
+   *
+   * @param sourceEquipment name of upstream equipment
+   * @param sourcePort port name on source (e.g. "gasOut")
+   * @param targetEquipment name of downstream equipment
+   * @param targetPort port name on target (e.g. "inlet")
+   * @param type connection type
+   */
+  public void connect(String sourceEquipment, String sourcePort, String targetEquipment,
+      String targetPort, ProcessConnection.ConnectionType type) {
+    connections
+        .add(new ProcessConnection(sourceEquipment, sourcePort, targetEquipment, targetPort, type));
+  }
+
+  /**
+   * Declares a material connection between two equipment ports with default port names.
+   *
+   * @param sourceEquipment name of upstream equipment
+   * @param targetEquipment name of downstream equipment
+   */
+  public void connect(String sourceEquipment, String targetEquipment) {
+    connections.add(new ProcessConnection(sourceEquipment, targetEquipment));
+  }
+
+  /**
+   * Returns an unmodifiable view of the declared connections.
+   *
+   * @return unmodifiable list of {@link ProcessConnection} objects
+   */
+  public List<ProcessConnection> getConnections() {
+    return Collections.unmodifiableList(connections);
   }
 
   /**
@@ -774,18 +859,11 @@ public class ProcessSystem extends SimulationBaseClass {
    * <ul>
    * <li>For processes with adjusters: sequential execution (adjusters modify upstream variables and
    * read downstream targets, creating implicit feedback loops)</li>
-   * <li>For processes with recycles (no adjusters): hybrid execution - parallel for feed-forward
-   * sections, then sequential iteration for recycle sections</li>
-   * <li>For feed-forward processes (including those with multi-input equipment like Mixers and
-   * HeatExchangers): parallel execution using level-based partitioning</li>
+   * <li>For processes with recycles (no adjusters): sequential execution for full convergence</li>
+   * <li>For processes with multi-input equipment (Mixer, Manifold, HeatExchanger, etc.): sequential
+   * execution to ensure correct mass balance</li>
+   * <li>For simple feed-forward processes: parallel execution for maximum speed</li>
    * </ul>
-   *
-   * <p>
-   * Multi-input equipment (Mixer, HeatExchanger, Ejector, etc.) is handled safely by the
-   * level-based parallel execution: the graph places multi-input units at a level after all their
-   * inputs, and {@code groupNodesBySharedInputStreams()} prevents race conditions on shared
-   * streams.
-   * </p>
    *
    * @param id calculation identifier for tracking
    */
@@ -801,11 +879,14 @@ public class ProcessSystem extends SimulationBaseClass {
       // order, which may be carefully chosen for convergence in complex processes
       // (e.g. TEG dehydration with regen column and makeup).
       runSequential(id);
+    } else if (hasMultiInputEquipment()) {
+      // Process has multi-input equipment (Mixer, Manifold, HeatExchanger, etc.)
+      // These require sequential execution to ensure correct mass balance.
+      // Parallel execution can change the order in which input streams are processed.
+      runSequential(id);
     } else {
-      // Feed-forward process (may include multi-input equipment like Mixers,
-      // HeatExchangers, Ejectors, etc.) - use parallel execution for maximum speed.
-      // Level-based partitioning ensures multi-input units run after all inputs.
-      // groupNodesBySharedInputStreams() prevents race conditions on shared streams.
+      // Feed-forward process with single-input equipment only - use parallel execution.
+      // Units at the same level (no dependencies) run concurrently for maximum speed.
       try {
         runParallel(id);
       } catch (InterruptedException e) {
@@ -2011,6 +2092,16 @@ public class ProcessSystem extends SimulationBaseClass {
     // Note: Multiple iterations cause accumulation errors - run once per time step
     for (int i = 0; i < unitOperations.size(); i++) {
       unitOperations.get(i).runTransient(dt, id);
+    }
+
+    // Explicit controller scan phase: run standalone controllers registered via
+    // add(ControllerDeviceInterface). Equipment-embedded controllers already ran above
+    // inside each equipment's runTransient() for backward compatibility.
+    for (int i = 0; i < controllerDevices.size(); i++) {
+      ControllerDeviceInterface ctrl = controllerDevices.get(i);
+      if (ctrl.isActive()) {
+        ctrl.runTransient(ctrl.getResponse(), dt, id);
+      }
     }
 
     timeStepNumber++;
@@ -5275,5 +5366,37 @@ public class ProcessSystem extends SimulationBaseClass {
       elecDesign.calcDesign();
     }
     return elecDesign;
+  }
+
+  /**
+   * Create a system-level electrical design for the entire process.
+   *
+   * <p>
+   * Runs all equipment-level electrical designs and produces a plant-wide summary including utility
+   * loads, UPS loads, and main transformer/generator sizing.
+   * </p>
+   *
+   * @return the system electrical design with aggregated results
+   */
+  public neqsim.process.electricaldesign.system.SystemElectricalDesign getSystemElectricalDesign() {
+    neqsim.process.electricaldesign.system.SystemElectricalDesign systemDesign =
+        new neqsim.process.electricaldesign.system.SystemElectricalDesign(this);
+    systemDesign.calcDesign();
+    return systemDesign;
+  }
+
+  /**
+   * <p>
+   * Get a system-wide instrument design summary that aggregates instrument lists, I/O counts, DCS
+   * and SIS cabinet sizing, and cost estimates across all equipment in this process system.
+   * </p>
+   *
+   * @return the system instrument design with aggregated results
+   */
+  public neqsim.process.instrumentdesign.system.SystemInstrumentDesign getSystemInstrumentDesign() {
+    neqsim.process.instrumentdesign.system.SystemInstrumentDesign systemDesign =
+        new neqsim.process.instrumentdesign.system.SystemInstrumentDesign(this);
+    systemDesign.calcDesign();
+    return systemDesign;
   }
 }

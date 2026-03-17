@@ -14,6 +14,8 @@ description: "Copy-paste code patterns for every common NeqSim task. Covers flui
 - [Reading Properties](#reading-properties)
 - [Oil Characterization](#oil-characterization)
 - [Process Equipment](#process-equipment)
+- [Stream Introspection](#stream-introspection)
+- [Named Controllers and Connections](#named-controllers-and-connections)
 - [Complete Process Flowsheet](#complete-process-flowsheet)
 - [Recycle and Adjuster](#recycle-and-adjuster)
 - [PVT Simulations](#pvt-simulations)
@@ -283,6 +285,72 @@ pipe.setDiameter(0.508);       // meters (20 inch)
 pipe.setPipeWallRoughness(5e-5); // meters
 // After run:
 double outP = pipe.getOutletStream().getPressure("bara");
+```
+
+---
+
+## Stream Introspection
+
+Query inlet/outlet streams on any equipment without casting:
+
+```java
+// Works on any ProcessEquipmentInterface
+List<StreamInterface> inlets = equipment.getInletStreams();
+List<StreamInterface> outlets = equipment.getOutletStreams();
+
+// Example: walk the flowsheet
+for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+    System.out.printf("%-20s  in=%d  out=%d%n",
+        unit.getName(),
+        unit.getInletStreams().size(),
+        unit.getOutletStreams().size());
+}
+```
+
+| Equipment | Inlets | Outlets |
+|-----------|--------|---------|
+| TwoPortEquipment (Heater, Compressor, Valve, ...) | 1 | 1 |
+| Separator | N | 2 (gas, liquid) |
+| ThreePhaseSeparator | N | 3 (gas, oil, water) |
+| Mixer | N | 1 |
+| Splitter | 1 | N |
+
+---
+
+## Named Controllers and Connections
+
+### Multiple Controllers per Equipment
+
+```java
+// Attach by tag
+valve.addController("LC-100", levelController);
+valve.addController("PC-200", pressureController);
+
+// Retrieve by tag
+ControllerDeviceInterface lc = valve.getController("LC-100");
+
+// All controllers
+Collection<ControllerDeviceInterface> all = valve.getControllers();
+```
+
+### Explicit Connections (metadata for DEXPI / diagrams)
+
+```java
+process.connect(feed, separator, feed.getOutletStream(),
+    ProcessConnection.ConnectionType.MATERIAL, "Feed to HP Sep");
+
+// Simple form
+process.connect(separator, compressor);
+
+// Query
+List<ProcessConnection> conns = process.getConnections();
+```
+
+### Unified Element Query
+
+```java
+// All elements: equipment + measurements + controllers
+List<ProcessElementInterface> all = process.getAllElements();
 ```
 
 ---

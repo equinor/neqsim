@@ -1,5 +1,8 @@
 package neqsim.process.equipment.separator;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -83,9 +86,8 @@ public class ThreePhaseSeparator extends Separator {
    * Constructor for ThreePhaseSeparator.
    * </p>
    *
-   * @param name        a {@link java.lang.String} object
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *                    object
+   * @param name a {@link java.lang.String} object
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public ThreePhaseSeparator(String name, StreamInterface inletStream) {
     super(name, inletStream);
@@ -96,11 +98,11 @@ public class ThreePhaseSeparator extends Separator {
    * setEntrainment.
    * </p>
    *
-   * @param val             a double
-   * @param specType        a {@link java.lang.String} object
+   * @param val a double
+   * @param specType a {@link java.lang.String} object
    * @param specifiedStream a {@link java.lang.String} object
-   * @param phaseFrom       a {@link java.lang.String} object
-   * @param phaseTo         a {@link java.lang.String} object
+   * @param phaseFrom a {@link java.lang.String} object
+   * @param phaseTo a {@link java.lang.String} object
    */
   public void setEntrainment(double val, String specType, String specifiedStream, String phaseFrom,
       String phaseTo) {
@@ -161,6 +163,22 @@ public class ThreePhaseSeparator extends Separator {
    */
   public StreamInterface getOilOutStream() {
     return liquidOutStream;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    List<StreamInterface> outlets = new ArrayList<StreamInterface>(3);
+    if (gasOutStream != null) {
+      outlets.add(gasOutStream);
+    }
+    if (liquidOutStream != null) {
+      outlets.add(liquidOutStream);
+    }
+    if (waterOutStream != null) {
+      outlets.add(waterOutStream);
+    }
+    return Collections.unmodifiableList(outlets);
   }
 
   /**
@@ -545,7 +563,8 @@ public class ThreePhaseSeparator extends Separator {
 
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
         double dncomp = 0.0;
-        dncomp += inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
+        dncomp +=
+            inletStreamMixer.getOutletStream().getThermoSystem().getComponent(i).getNumberOfmoles();
         double dniOil = 0.0;
         double dniAqueous = 0.0;
         if (hasOil) {
@@ -800,8 +819,8 @@ public class ThreePhaseSeparator extends Separator {
    * {@inheritDoc}
    *
    * <p>
-   * For three-phase separator, oil retention time is calculated for the oil layer
-   * between the water-oil interface (NIL) and the oil surface (NLL).
+   * For three-phase separator, oil retention time is calculated for the oil layer between the
+   * water-oil interface (NIL) and the oil surface (NLL).
    * </p>
    */
   @Override
@@ -844,9 +863,8 @@ public class ThreePhaseSeparator extends Separator {
    * {@inheritDoc}
    *
    * <p>
-   * For three-phase separator, water retention time is calculated for the water
-   * layer
-   * below the water-oil interface (NIL).
+   * For three-phase separator, water retention time is calculated for the water layer below the
+   * water-oil interface (NIL).
    * </p>
    */
   @Override
@@ -882,9 +900,8 @@ public class ThreePhaseSeparator extends Separator {
   }
 
   /**
-   * Calculate the oil-water interface settling time.
-   * This is the time for oil droplets to rise through the water layer
-   * and water droplets to settle through the oil layer.
+   * Calculate the oil-water interface settling time. This is the time for oil droplets to rise
+   * through the water layer and water droplets to settle through the oil layer.
    *
    * @return interface settling time in minutes
    */
@@ -920,8 +937,8 @@ public class ThreePhaseSeparator extends Separator {
 
     // Stokes settling velocity for 150 µm water droplet in oil
     double dropletDiameter = 150e-6; // 150 µm
-    double settlingVelocity = 9.81 * Math.pow(dropletDiameter, 2) * (waterDensity - oilDensity)
-        / (18.0 * oilViscosity);
+    double settlingVelocity =
+        9.81 * Math.pow(dropletDiameter, 2) * (waterDensity - oilDensity) / (18.0 * oilViscosity);
 
     if (settlingVelocity <= 0) {
       return Double.POSITIVE_INFINITY;
@@ -957,8 +974,8 @@ public class ThreePhaseSeparator extends Separator {
     StringBuilder sb = new StringBuilder(super.getPerformanceSummary());
 
     double settlingTime = calcInterfaceSettlingTime();
-    sb.append(String.format("Interface settling time: %.1f min (min: 1.0 min) - %s%n",
-        settlingTime, settlingTime >= 1.0 ? "OK" : "BELOW MINIMUM"));
+    sb.append(String.format("Interface settling time: %.1f min (min: 1.0 min) - %s%n", settlingTime,
+        settlingTime >= 1.0 ? "OK" : "BELOW MINIMUM"));
 
     return sb.toString();
   }

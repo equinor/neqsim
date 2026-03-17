@@ -1,10 +1,15 @@
 package neqsim.process.equipment;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import neqsim.process.ProcessElementInterface;
 import neqsim.process.SimulationInterface;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.electricaldesign.ElectricalDesign;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.instrumentdesign.InstrumentDesign;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.process.util.report.ReportConfig;
@@ -18,7 +23,7 @@ import neqsim.process.util.report.ReportConfig.DetailLevel;
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public interface ProcessEquipmentInterface extends SimulationInterface {
+public interface ProcessEquipmentInterface extends ProcessElementInterface, SimulationInterface {
   /**
    * <p>
    * reportResults.
@@ -60,6 +65,20 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    */
   default ElectricalDesign getElectricalDesign() {
     return new ElectricalDesign(this);
+  }
+
+  /**
+   * Initialize an <code>instrumentDesign</code> for the equipment.
+   */
+  default void initInstrumentDesign() {}
+
+  /**
+   * Get an <code>instrumentDesign</code> for the equipment.
+   *
+   * @return a {@link neqsim.process.instrumentdesign.InstrumentDesign} object
+   */
+  default InstrumentDesign getInstrumentDesign() {
+    return new InstrumentDesign(this);
   }
 
   /**
@@ -124,6 +143,61 @@ public interface ProcessEquipmentInterface extends SimulationInterface {
    * @return a {@link neqsim.process.controllerdevice.ControllerDeviceInterface} object
    */
   public ControllerDeviceInterface getController();
+
+  /**
+   * Adds a controller to this equipment with the given tag name.
+   *
+   * @param tag a unique tag identifying the controller (e.g. "PC-101", "LC-101")
+   * @param controller a {@link neqsim.process.controllerdevice.ControllerDeviceInterface} object
+   */
+  public default void addController(String tag, ControllerDeviceInterface controller) {
+    setController(controller);
+  }
+
+  /**
+   * Gets a controller by tag name.
+   *
+   * @param tag the controller tag name
+   * @return the controller, or null if not found
+   */
+  public default ControllerDeviceInterface getController(String tag) {
+    return getController();
+  }
+
+  /**
+   * Gets all controllers attached to this equipment.
+   *
+   * @return unmodifiable collection of controllers
+   */
+  public default Collection<ControllerDeviceInterface> getControllers() {
+    ControllerDeviceInterface ctrl = getController();
+    if (ctrl != null) {
+      return Collections.singletonList(ctrl);
+    }
+    return Collections.emptyList();
+  }
+
+  /**
+   * Returns all inlet streams connected to this equipment. Subclasses override to report their
+   * specific inlets. Used by graph builders, DEXPI export, and auto-instrumentation to discover
+   * topology without {@code instanceof} checks.
+   *
+   * @return unmodifiable list of inlet streams (empty by default)
+   */
+  public default List<StreamInterface> getInletStreams() {
+    return Collections.emptyList();
+  }
+
+  /**
+   * Returns all outlet streams produced by this equipment. Subclasses override to report their
+   * specific outlets. Used by graph builders, DEXPI export, and auto-instrumentation to discover
+   * topology without {@code instanceof} checks.
+   *
+   * @return unmodifiable list of outlet streams (empty by default)
+   */
+  public default List<StreamInterface> getOutletStreams() {
+    return Collections.emptyList();
+  }
 
   /**
    * <p>

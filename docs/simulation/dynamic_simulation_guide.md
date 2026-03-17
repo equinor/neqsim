@@ -343,6 +343,41 @@ controller.setReverseActing(true);   // Increase output to decrease PV
 controller.setReverseActing(false);  // Increase output to increase PV
 ```
 
+### System-Level Controller Registration
+
+In addition to attaching controllers to individual equipment, controllers can be registered directly on the `ProcessSystem`. During each `runTransient()` call, the system automatically scans and executes all registered controllers **after** all equipment has been stepped and **before** measurements are collected:
+
+```java
+// Register controllers at system level
+process.add(levelController);
+process.add(pressureController);
+
+// During runTransient(), execution order is:
+// 1. Equipment runTransient() (in insertion/graph order)
+// 2. System-level controller runTransient() (automatic scan)
+// 3. Measurement devices
+```
+
+This is useful when a controller is shared across multiple equipment or when you want a clear separation between the process model and the control layer. Controllers embedded on individual equipment (via `setController()`) continue to work as before — the system-level scan is additive.
+
+### Named Controller Map on Equipment
+
+Equipment supports multiple named controllers via a tag-based map:
+
+```java
+// Attach multiple controllers to one piece of equipment
+valve.addController("LC-100", levelController);
+valve.addController("PC-200", pressureController);
+
+// Retrieve by tag
+ControllerDeviceInterface lc = valve.getController("LC-100");
+
+// List all controllers on this equipment
+Collection<ControllerDeviceInterface> all = valve.getControllers();
+```
+
+See [Controllers](../process/controllers#named-controller-map) for full details.
+
 ---
 
 ## Pipeline Dynamics

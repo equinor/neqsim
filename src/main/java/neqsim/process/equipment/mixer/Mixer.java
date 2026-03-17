@@ -5,6 +5,8 @@ import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import javax.swing.JDialog;
@@ -261,6 +263,21 @@ public class Mixer extends ProcessEquipmentBaseClass
   @Override
   public StreamInterface getOutletStream() {
     return mixedStream;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    return Collections.unmodifiableList(streams);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    if (mixedStream != null) {
+      return Collections.singletonList(mixedStream);
+    }
+    return Collections.emptyList();
   }
 
   /** {@inheritDoc} */

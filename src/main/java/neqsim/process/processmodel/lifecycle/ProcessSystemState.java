@@ -5,8 +5,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -42,7 +40,7 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * ProcessSystem process = new ProcessSystem();
  * // ... configure process ...
@@ -208,7 +206,8 @@ public class ProcessSystemState implements Serializable {
     updateChecksum();
 
     Gson gson = createGson();
-    try (FileWriter writer = new FileWriter(filePath)) {
+    try (OutputStreamWriter writer =
+        new OutputStreamWriter(new FileOutputStream(filePath), StandardCharsets.UTF_8)) {
       gson.toJson(this, writer);
     } catch (IOException e) {
       throw new RuntimeException("Failed to save state to file: " + filePath, e);
@@ -232,7 +231,8 @@ public class ProcessSystemState implements Serializable {
    */
   public static ProcessSystemState loadFromFile(String filePath) {
     Gson gson = createGson();
-    try (FileReader reader = new FileReader(filePath)) {
+    try (InputStreamReader reader =
+        new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8)) {
       ProcessSystemState state = gson.fromJson(reader, ProcessSystemState.class);
       return migrateIfNeeded(state, filePath);
     } catch (IOException e) {

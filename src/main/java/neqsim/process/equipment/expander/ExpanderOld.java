@@ -62,7 +62,7 @@ public class ExpanderOld extends TwoPortEquipment implements ExpanderInterface {
     this.inStream = inletStream;
 
     thermoSystem = inletStream.getThermoSystem().clone();
-    outStream = inletStream.clone();
+    outStream = inletStream.clone(this.getName() + " out stream");
   }
 
   /** {@inheritDoc} */

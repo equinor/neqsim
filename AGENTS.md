@@ -31,9 +31,16 @@ mvnw.cmd install                          # Windows
 NeqSim supports an AI-driven task-solving workflow. When asked to solve an
 engineering task (hydrate prediction, pipeline sizing, compressor design, etc.):
 
+### ⚠️ MANDATORY: All output goes to `task_solve/` folder
+
+**Every task MUST create a folder under `task_solve/` FIRST.** All deliverables
+(task_spec.md, notebooks, notes.md, results.json, figures/) are placed inside
+this folder. Never write task analysis files to `examples/`, docs, or the
+workspace root.
+
 ### Step-by-step
 
-1. **Create the task folder:**
+1. **Create the task folder (DO THIS FIRST — non-negotiable):**
    ```bash
    python devtools/new_task.py "your task title" --type B --author "Name"
    ```
@@ -45,9 +52,17 @@ engineering task (hydrate prediction, pipeline sizing, compressor design, etc.):
 
    **Step 1 — Scope & Research**
    - Fill `step1_scope_and_research/task_spec.md` (standards, methods, deliverables, acceptance criteria)
-   - Write research notes to `step1_scope_and_research/notes.md`
+   - Write **substantive** research notes to `step1_scope_and_research/notes.md` (no empty template sections)
    - Place literature papers, standards PDFs, and lab reports in `step1_scope_and_research/references/`
    - Summarise each document's key contributions in `notes.md` under "Literature & Reference Documents"
+
+   **Step 1.5 — Deep Analysis & Solution Design (MANDATORY for Standard/Comprehensive)**
+   - Write `step1_scope_and_research/analysis.md` with physics deep-dive, alternative
+     approaches, NeqSim capability assessment, solution architecture, and engineering
+     insight questions (5-10 questions the analysis must answer)
+   - Write `step1_scope_and_research/neqsim_improvements.md` with NIPs for every NeqSim
+     gap found — propose concrete Java classes with method signatures and test cases
+   - Compute order-of-magnitude estimates BEFORE running simulations
 
    **Step 2 — Analysis & Evaluation**
    - Create a Jupyter notebook in `step2_analysis/` using NeqSim
@@ -55,6 +70,10 @@ engineering task (hydrate prediction, pipeline sizing, compressor design, etc.):
    - Run all cells, validate results against acceptance criteria
    - **MANDATORY: Include detailed results table** with all key outputs and units
    - **MANDATORY: Include at least 2-3 matplotlib figures** (profiles, sensitivities, comparisons) with axis labels, units, titles, legends, and grids
+   - **MANDATORY: After EVERY figure, add a discussion markdown cell** with:
+     observation (what the figure shows with numbers), physical mechanism (why),
+     engineering implication (what it means for design), and recommendation
+     (specific action). Populate `figure_discussion` in results.json.
    - Save all figures to `figures/` as PNG (dpi=150, bbox_inches="tight")
    - **MANDATORY: Create a separate benchmark validation notebook** (`XX_benchmark_validation.ipynb`) comparing NeqSim results against independent reference data (NIST, textbook examples, published cases, industry benchmarks). Include at least 3 data points, a parity/deviation plot, and save `benchmark_validation` results to `results.json`
    - **MANDATORY: Create a separate uncertainty & risk notebook** (`XX_uncertainty_risk_analysis.ipynb`) that:
@@ -190,6 +209,12 @@ results = {
     "figure_captions": {
         # "plot.png": "Description of the figure"
     },
+    "figure_discussion": [
+        # {"figure": "plot.png", "title": "Plot Title",
+        #  "observation": "What the figure shows", "mechanism": "Why it happens",
+        #  "implication": "What it means for design", "recommendation": "Action to take",
+        #  "linked_results": ["key_result_name"], "insight_question_ref": "Q1"}
+    ],
     "equations": [
         # {"label": "Energy Balance", "latex": "Q = m C_p \\Delta T"}
     ],
@@ -249,6 +274,7 @@ The report generator auto-reads this file to populate Results and Validation sec
 - **validation**: Rendered as pass/fail table with color coding
 - **equations**: KaTeX in HTML, PNG images in Word
 - **figures**: Numbered captions from `figure_captions`
+- **figure_discussion**: Discussion blocks with observation, mechanism, implication, recommendation — rendered as a "Discussion" section (report) or inline in "Results and Discussion" (paper). Links figures to conclusions via traceability chain.
 - **tables**: Custom tables rendered in both HTML and Word with headers/rows
 - **references**: Numbered reference list rendered in the References section of the report
 - **uncertainty**: Monte Carlo results (P10/P50/P90, tornado data, probability of negative outcome) rendered as styled tables in the Uncertainty Analysis section
@@ -289,6 +315,45 @@ ProcessSystem process = new ProcessSystem();
 process.add(feed);
 process.add(sep);
 process.run();
+```
+
+### Stream introspection
+
+Every `ProcessEquipmentInterface` exposes its connected streams:
+
+```java
+List<StreamInterface> inlets = sep.getInletStreams();   // [feed]
+List<StreamInterface> outlets = sep.getOutletStreams();  // [gasOut, liquidOut]
+```
+
+### Named controllers
+
+Attach multiple controllers to any equipment by tag name:
+
+```java
+valve.addController("LC-100", levelController);
+valve.addController("PC-200", pressureController);
+ControllerDeviceInterface lc = valve.getController("LC-100");
+Map<String, ControllerDeviceInterface> all = valve.getControllers();
+```
+
+### Explicit connections
+
+Record typed connection metadata on a `ProcessSystem`:
+
+```java
+process.connect(feed, sep,
+    ProcessConnection.ConnectionType.MATERIAL, "Feed");
+List<ProcessConnection> conns = process.getConnections();
+```
+
+### Unified element query
+
+`ProcessElementInterface` is the common supertype for equipment, controllers,
+and measurement devices. Query all elements at once:
+
+```java
+List<ProcessElementInterface> all = process.getAllElements();
 ```
 
 ### Python (Jupyter) fluid
@@ -334,6 +399,8 @@ NORSOK D-010 (design factors, barriers), API RP 90 (annular pressure).
 |------|---------|
 | `src/main/java/neqsim/` | Main source (thermo, process, pvt, standards) |
 | `src/test/java/neqsim/` | JUnit 5 tests (mirrors src structure) |
+| `src/main/java/neqsim/process/equipment/` | ProcessEquipmentInterface, MultiPortEquipment, stream introspection |
+| `src/main/java/neqsim/process/processmodel/` | ProcessSystem, ProcessConnection, ProcessElementInterface |
 | `src/main/java/neqsim/process/mechanicaldesign/subsea/` | Well & SURF design, cost estimation |
 | `src/main/java/neqsim/process/equipment/subsea/` | SubseaWell, SubseaTree equipment |
 | `examples/notebooks/` | Jupyter notebook examples |

@@ -27,6 +27,72 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-03-14 — Fix IEC 60534 gas valve sizing: use standard volumetric flow (issue #1918)
+**Type:** D (Standards)
+**Keywords:** valve sizing, IEC 60534, Cv, Kv, gas valve, standard flow, actual flow, control valve, throttling valve, choked flow, N9
+**Solution:** src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534.java, src/main/java/neqsim/process/mechanicaldesign/valve/ControlValveSizing_IEC_60534_full.java, src/test/java/neqsim/process/mechanicaldesign/valve/ControlValveSizingTest.java
+**Notes:** Gas valve Cv was severely underestimated (~98% too low at 50 bara) because IEC 60534 equation was applied with actual volumetric flow instead of standard volumetric flow (273.15 K, 101.325 kPa). Fix: convert Q_actual to Q_std = Q_actual × (P₁/P_std) × (T_std/T₁) / Z before applying the IEC formula. Fixed in sizeControlValveGas(), calculateFlowRateFromKvAndValveOpeningGas(), and calculateValveOpeningFromFlowRateGas() in both base and _full classes. Added regression test matching Python fluids library result (Cv ≈ 16.2 for 10000 kg/hr methane at 50 bara). Liquid valves were not affected.
+
+### 2026-03-10 — Process architecture improvements: stream introspection, named controllers, connections, unified elements
+**Type:** E (Feature)
+**Keywords:** architecture, ProcessElementInterface, ProcessConnection, MultiPortEquipment, getInletStreams, getOutletStreams, controller map, named controllers, runTransient, controller scan, getAllElements, DEXPI, topology, stream introspection, connections
+**Solution:** src/main/java/neqsim/process/ProcessElementInterface.java, src/main/java/neqsim/process/equipment/MultiPortEquipment.java, src/main/java/neqsim/process/processmodel/ProcessConnection.java, src/main/java/neqsim/process/equipment/ProcessEquipmentInterface.java, src/main/java/neqsim/process/equipment/ProcessEquipmentBaseClass.java, src/test/java/neqsim/process/processmodel/ProcessArchitectureTest.java
+**Notes:** Six backward-compatible architecture improvements motivated by DEXPI integration friction. (1) Stream introspection: `getInletStreams()`/`getOutletStreams()` on ProcessEquipmentInterface with default empty lists; overridden in TwoPortEquipment, Separator, ThreePhaseSeparator, Mixer, Splitter — all return unmodifiable lists. (2) Named controller map: `addController(tag, ctrl)`, `getController(tag)`, `getControllers()` on ProcessEquipmentBaseClass alongside legacy `setController()`. (3) ProcessElementInterface: unified marker extending NamedInterface + Serializable; adopted by ProcessEquipmentInterface, MeasurementDeviceInterface, ControllerDeviceInterface. (4) Controller scan in runTransient: explicit loop over system-level controllerDevices after equipment loop. (5) ProcessConnection: typed connection metadata (MATERIAL/ENERGY/SIGNAL) with `ProcessSystem.connect()` and `getConnections()`. (6) MultiPortEquipment: abstract base class for multi-inlet/outlet equipment. 173 tests passing (14 architecture + 42 DEXPI + 117 core process). Documentation updated in process_system.md, extending_process_equipment.md, controllers.md, dynamic_simulation_guide.md, CODE_PATTERNS.md, CONTEXT.md.
+
+### 2026-03-10 — DEXPI review: multi-outlet nozzles, stream identity matching, namespace support
+**Type:** E (Feature)
+**Keywords:** DEXPI, multi-outlet, nozzle, separator, stream identity, connection, pass-through, namespace, absorber, stripper, column subtype, instrument rename, DexpiStreamUtils, DexpiXmlWriter, DexpiEquipmentFactory, DexpiSimulationBuilder
+**Solution:** src/main/java/neqsim/process/processmodel/dexpi/DexpiStreamUtils.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiXmlWriter.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiEquipmentFactory.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiSimulationBuilder.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiXmlReader.java
+**Notes:** Implemented all 11 recommendations from DEXPI code review. (1) DexpiStreamUtils: shared outlet-stream resolution utility replacing duplicated reflection-based code. (2) Reflection removal: outlet access via TwoPortEquipment/Separator casts instead of Method.invoke. (3) Multi-outlet nozzles: writer creates 2 outlet nozzles for Separator, 3 for ThreePhaseSeparator. (4) Stream identity matching: connections built by matching System.identityHashCode of inlet/outlet streams; registerPassThroughStreams handles wrapper Streams that delegate getFluid(). (5) Column subtype: DexpiEquipmentFactory detects "absorb"/"strip" in DEXPI class to configure condenser/reboiler flags. (6) Namespace-aware parsing: setNamespaceAware(boolean) on builder and reader. (7) Instrument renaming: applyAutoInstrumentation now calls setName() on transmitters and controllers (ControllerDeviceBaseClass cast). 4 new tests (cyclic topology, multi-outlet separator, 2 round-trip profile); 68 tests total, all passing.
+
+### 2026-03-10 — DEXPI round-trip export, cycle detection, and column support
+**Type:** E (Feature)
+**Keywords:** DEXPI, P&ID, round-trip, export, XML writer, connection, nozzle, reverse mapping, cycle detection, distillation column, simulation results, instrument wiring, DexpiXmlWriter, DexpiXmlWriterTest
+**Solution:** src/main/java/neqsim/process/processmodel/dexpi/DexpiXmlWriter.java, src/test/java/neqsim/process/processmodel/dexpi/DexpiXmlWriterTest.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiTopologyResolver.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiEquipmentFactory.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiSimulationBuilder.java
+**Notes:** Completed 7 round-trip (DEXPI↔NeqSim) improvements. DexpiXmlWriter gains Connection/Nozzle export (buildConnections, appendNozzle, appendConnectionSystem), native equipment reverse mapping (reverseMapComponentClass maps Separator→VesselForStorage, Compressor→CompressorUnit, etc.), and simulation results export (appendSimulationResults writes temperature/pressure/flow as GenericAttributes). DexpiTopologyResolver gains hasCycle() via DFS-based detection. DexpiEquipmentFactory gains createColumn() for DistillationColumn instantiation with NumberOfTrays and FeedTray sizing attributes. DexpiSimulationBuilder instrument tag wiring replaced setName() calls with logging-based tag association (ControllerDeviceInterface/MeasurementDeviceInterface lack setName). Fixed instanceof ordering bug: Cooler extends Heater, so Cooler must be checked before Heater in reverseMapComponentClass. 15 new tests (11 in DexpiXmlWriterTest, 2 cycle-detection, 2 column-creation); 64 tests total, all passing.
+
+### 2026-03-10 — DEXPI topology resolver, equipment factory, and simulation builder
+**Type:** E (Feature)
+**Keywords:** DEXPI, P&ID, topology, nozzle, connection, equipment factory, simulation builder, mapping loader, sizing, DexpiTopologyResolver, DexpiEquipmentFactory, DexpiSimulationBuilder, DexpiMappingLoader, GenericAttribute, Kahn, topological sort
+**Solution:** src/main/java/neqsim/process/processmodel/dexpi/DexpiTopologyResolver.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiEquipmentFactory.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiSimulationBuilder.java, src/main/java/neqsim/process/processmodel/dexpi/DexpiMappingLoader.java
+**Notes:** Resolved 7 critical gaps in DEXPI implementation. DexpiTopologyResolver parses Nozzle/Connection/Equipment XML elements into a directed graph, collapses inline piping components (valves, reducers) to equipment-level edges, and produces topological ordering via Kahn's algorithm. DexpiEquipmentFactory converts DexpiProcessUnit placeholders to real NeqSim equipment (Separator, Compressor, Pump, HeatExchanger, Heater, Cooler, Valve, Expander, Mixer, Splitter) with sizing attributes applied. DexpiSimulationBuilder is a fluent builder API: setFluidTemplate/setFeedPressure/setFeedTemperature/setFeedFlowRate/setAutoInstrument → build() returns runnable ProcessSystem. DexpiMappingLoader provides thread-safe cached loading of .properties mapping files from classpath. DexpiMetadata expanded with 10 sizing constants. DexpiProcessUnit gains sizingAttributes map and dexpiId. Equipment mapping expanded from ~30 to ~65 entries; piping component mapping from ~15 to ~28. 49 tests across 7 test classes (all passing).
+
+### 2026-03-10 — DynamicProcessHelper utility for steady-state to dynamic conversion
+**Type:** E (Feature)
+**Keywords:** dynamic, transient, simulation, DynamicProcessHelper, transmitter, PID, controller, instrument, auto-instrument, pressure, level, flow, temperature, control loop, PC, LC, FC, TC, runTransient, setCalculateSteadyState
+**Solution:** src/main/java/neqsim/process/util/DynamicProcessHelper.java, src/test/java/neqsim/process/util/DynamicProcessHelperTest.java, docs/process/dynamic-simulation.md
+**Notes:** Utility that converts a sized steady-state ProcessSystem into a dynamic simulation. Auto-creates transmitters (PT, LT, TT) and PID controllers (PC, LC, WLC) by scanning equipment and matching stream identity to downstream valves. Handles Separator, ThreePhaseSeparator, Compressor, Heater, Cooler. Convenience methods for addFlowController() and addTemperatureController(). Default PID tuning with per-type customization. Key gotcha: transmitters implement MeasurementDeviceInterface (NOT ProcessEquipmentInterface), so ProcessSystem.add(MeasurementDeviceInterface) must be used. 10 tests passing.
+
+### 2026-03-10 — Implement InstrumentDesign framework
+**Type:** E (Feature)
+**Keywords:** instrument, design, ISA, SIL, I/O, DCS, SIS, instrumentation, ISA-5.1, IEC 61508, IEC 61511, API 670, safety, compressor, separator, heat exchanger, pipeline, valve, tag number, cabinet sizing, cost estimation
+**Solution:** src/main/java/neqsim/process/instrumentdesign/
+**Notes:** Mirrors ElectricalDesign pattern. Base class InstrumentDesign with InstrumentSpecification (ISA-5.1 data sheets) and InstrumentList (I/O counting, cost aggregation, tag generation). Equipment-specific designs for separator (PT×2 + PSH + TT + LT×2 + LSH + LSLL + ZT×2; three-phase adds interface LT + water ZT), compressor (API 617/670 suite: ~18 instruments including VT×4 vibration probes, anti-surge FT/FCV, bearing TTs, lube oil PT/PSLL), heat exchanger (auto-detects shell-and-tube/air cooler/electric heater), pipeline (pig detection ZS×2, leak detection PSLL, metering FT), and valve (ZT + ZC; safety valves add XV + ZSO/ZSC). System-level SystemInstrumentDesign aggregates across ProcessSystem and sizes DCS (~16 ch/card, ~16 cards/cab), SIS (~8 ch/card, ~8 cards/cab), and marshalling cabinets. Integrated via ProcessEquipmentInterface.getInstrumentDesign() and ProcessSystem.getSystemInstrumentDesign(). 12 tests passing.
+
+### 2026-03-09 — H₂S/CO₂ Distribution Between Gas, Oil, Water — EOS Model Comparison
+**Type:** A (Property)
+**Keywords:** H2S, CO2, acid gas, distribution, solubility, water, oil, gas, produced water, brine, salinity, SRK, PR, CPA, electrolyte CPA, chemical reactions, three-phase, salting-out, pH, NACE MR0175, sour service, model selection, decision matrix, Duan Sun, Carroll Mather, Soreide Whitson, Monte Carlo, benchmark
+**Solution:** task_solve/2026-03-09_h2s_co2_distribution_gas_oil_water_produced_water_eos_comparison/
+**Notes:** Systematic comparison of 4 EOS models (SRK, PR, SRK-CPA, Electrolyte-CPA) across 10 scenarios for acid gas partitioning. Critical findings: (1) SRK/PR give near-zero CO₂ solubility in water — unsuitable for acid gas-water systems; (2) Only Electrolyte-CPA correctly predicts three phases (gas/oil/aqueous); (3) chemicalReactionInit() is mandatory for pH, salting-out, and ionic speciation; (4) H₂S shows retrograde solubility (max 60-70°C); (5) Water content is dominant sensitivity (1.42% swing in Monte Carlo). Benchmark: 5/5 tests PASS (13.8-25.0% deviation vs Duan & Sun 2003, Carroll & Mather 1991). Monte Carlo N=300: H₂S aqueous P10/P50/P90 = 0.51/0.92/1.35%. Decision matrix maps 12 applications to recommended models. 6 NIPs proposed (acid gas report, produced water builder, pH calculator, salting-out DB, compliance checker, model advisor).
+
+### 2026-03-09 — CO2 Corrosion Analyzer with Electrolyte CPA pH
+**Type:** E (Feature)
+**Keywords:** corrosion, CO2, pH, electrolyte CPA, de Waard-Milliams, NORSOK M-506, chemical reaction equilibrium, H3O+, carbonic acid, HCO3-, CCS, pipeline, corrosion rate, scale, FeCO3, inhibitor, brine, NaCl, severity, aqueous speciation
+**Solution:** `src/main/java/neqsim/pvtsimulation/flowassurance/CO2CorrosionAnalyzer.java`, `src/test/java/neqsim/pvtsimulation/flowassurance/CO2CorrosionAnalyzerTest.java`, `examples/notebooks/CO2_Corrosion_Analysis_ElectrolyteCPA.ipynb`
+**Notes:** Facade class coupling electrolyte CPA EOS (SystemElectrolyteCPAstatoil) with de Waard-Milliams corrosion model and ScalePredictionCalculator. Key insight: must call `chemicalReactionInit()` → `createDatabase(true)` → `setMixingRule(10)` → `init(0)` to enable aqueous chemical equilibrium (CO2 + 2H2O → HCO3- + H3O+). Without this, pH returns 7.0 (no H3O+ component). The analyzer auto-creates the electrolyte system, runs flash with chemical reactions, extracts rigorous pH from H3O+ activity, and feeds it into the corrosion model. Supports temperature/pressure sweeps, brine (Na+/Cl-), inhibitor efficiency, and JSON reporting. 12/12 tests passing.
+
+### 2026-03-09 — Water Solubility in Gas and Liquid CO2 Phase Behaviour
+**Type:** A (Property)
+**Keywords:** water, solubility, CO2, CPA, SRK, PR, equation of state, phase equilibrium, CCS, carbon capture, dehydration, pipeline, gas phase, liquid phase, supercritical, mutual solubility, Wiebe, Gaddy, Bamberger, Spycher, King, Song, Kobayashi, benchmark, validation, ISO 27913, ppmv, water content
+**Solution:** task_solve/2026-03-09_water_solubility_in_gas_and_liquid_co2_phase_behaviour/
+**Notes:** Investigated water solubility in CO2 across gas, liquid, and supercritical conditions (5-200 bar, 10-80 C) using CPA EOS (SystemSrkCPAstatoil, mixing rule 10). Key findings: gas-phase water content decreases with pressure (Raoult's law dilution), liquid CO2 has low solubility (1000-3000 ppmv), characteristic minimum at CO2 saturation pressure. Benchmark: 9/13 points within 30% tolerance, mean error 25.2%. CPA under-predicts at 60 C (40-50% error vs Bamberger data). CPA outperforms SRK/PR at high pressures. Monte Carlo (N=300): P10/P50/P90 = 2986/3616/4253 ppmv for CCS conditions — dehydration always required (100% exceed 500 ppmv ISO limit). Tornado: EOS model uncertainty dominates (1729 ppmv swing), then pressure (1068), then temperature (945). Overall risk: Medium (2 high, 3 medium, 2 low).
+
+### 2026-03-09 — Sulfur Deposition Analysis
+**Type:** B (Process)
+**Keywords:** sulfur, S8, deposition, desublimation, Joule-Thomson, JT cooling, backflow, letdown, valve, H2S, Draupner, pressure reduction, solid flash, GibbsReactor, SulfurDepositionAnalyser, preheating, mitigation
+**Solution:** task_solve/2026-03-09_draupner_backflow_letdown_sulfur_deposition_analysis/
+**Notes:** Analysed elemental sulfur deposition in a backflow letdown system (70→15 bara). JT cooling gives ~-20°C outlet (JT coeff 0.46-0.58 K/bar). 100% of Monte Carlo scenarios (N=300) produce solid S8. Primary mechanism is desublimation, not chemical reaction. Air ingress (O2) contributes via H2S oxidation at Gibbs equilibrium. Preheating helps but S8 solid persists even at 100°C preheat with >0.01 ppb S8 feed. Used SRK EOS, ThrottlingValve, TPSolidflash, GibbsReactor, SulfurDepositionAnalyser. 9/9 benchmarks PASS (JT coefficients within 15%, S8 solubility within literature order-of-magnitude). Overall risk: High (5 high, 4 medium, 1 low risks).
+
 ### 2026-03-08 — Mercury Removal in LNG Pre-Treatment — NeqSim Chemisorption Model
 **Type:** B (Process), F (Design)
 **Keywords:** mercury, Hg, removal, guard bed, chemisorption, CuS, sorbent, adsorber, NTU, Ergun, packed bed, LNG, pre-treatment, Snøhvit, HLNG, mass transfer zone, breakthrough, transient, bed lifetime, mechanical design, ASME VIII, cost estimation, CAPEX, OPEX, sorbent replacement, fuel gas strategy
@@ -122,6 +188,22 @@ description: "Chronological record of engineering tasks solved in the NeqSim rep
 - `CONTEXT.md` — 60-second orientation (repo map, patterns, constraints)
 - `TASK_SOLVING_GUIDE.md` — workflow for classifying and solving tasks
 - `TASK_LOG.md` — this file, persistent memory across sessions
+
+---
+
+### 2026-03-10 — Electrical design: equipment-specific classes and system integration
+**Type:** E (Feature)
+**Keywords:** electrical design, separator, heater, cooler, pipeline, heat tracing, cathodic protection, system electrical design, load list, transformer sizing, emergency generator
+**Solution:** `src/main/java/neqsim/process/electricaldesign/separator/SeparatorElectricalDesign.java`, `heatexchanger/HeatExchangerElectricalDesign.java`, `pipeline/PipelineElectricalDesign.java`, `system/SystemElectricalDesign.java`
+**Notes:**
+- Implemented Phases 2-3 of ELECTRICAL_DESIGN_PROPOSAL.md
+- SeparatorElectricalDesign: models control valves, instrumentation, lighting, optional heat tracing (no shaft power)
+- HeatExchangerElectricalDesign: auto-detects type (ELECTRIC_HEATER / AIR_COOLER / SHELL_AND_TUBE) from equipment class
+- PipelineElectricalDesign: heat tracing (W/m × length), cathodic protection, instrumentation
+- SystemElectricalDesign: plant-wide aggregation with utility/UPS loads, main transformer and emergency generator sizing
+- Integrated into Separator (eager init), Heater/Cooler (lazy init), AdiabaticPipe and PipeBeggsAndBrills (lazy init)
+- Added ProcessSystem.getSystemElectricalDesign() for one-call plant electrical summary
+- 24 unit tests all passing in ElectricalDesignTest
 
 ---
 

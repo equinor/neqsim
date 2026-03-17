@@ -11,6 +11,10 @@ Documentation for the ProcessSystem class in NeqSim.
 - [Overview](#overview)
 - [Creating a Process](#creating-a-process)
 - [Adding Equipment](#adding-equipment)
+- [Stream Introspection](#stream-introspection)
+- [Explicit Connections](#explicit-connections)
+- [Named Controllers](#named-controllers)
+- [Unified Element Model](#unified-element-model)
 - [Running Simulations](#running-simulations)
   - [Thread Safety: Shared Stream Handling](#thread-safety-shared-stream-handling)
 - [Results and Reporting](#results-and-reporting)
@@ -84,6 +88,186 @@ Stream stream2 = new Stream("Feed", fluid2);  // ERROR: Duplicate name!
 // Use unique names
 Stream stream1 = new Stream("Feed-1", fluid1);
 Stream stream2 = new Stream("Feed-2", fluid2);
+```
+
+---
+
+## Stream Introspection
+
+Every equipment class exposes its inlet and outlet streams through a uniform API. This allows tools, graph builders, and DEXPI exporters to discover the process topology without casting to specific equipment types.
+
+### Querying Streams
+
+```java
+// Works on any ProcessEquipmentInterface — no casting needed
+List<StreamInterface> inlets = equipment.getInletStreams();
+List<StreamInterface> outlets = equipment.getOutletStreams();
+
+System.out.println(equipment.getName() + " has "
+    + inlets.size() + " inlet(s) and "
+    + outlets.size() + " outlet(s)");
+```
+
+### Per-Equipment Behavior
+
+| Equipment | Inlets | Outlets |
+|-----------|--------|---------|
+| `Stream` (feed) | 0 | 0 (feed streams are boundary conditions) |
+| `TwoPortEquipment` (Heater, Compressor, Valve, Pipe, ...) | 1 | 1 |
+| `Separator` | N (via internal mixer) | 2 (gas, liquid) |
+| `ThreePhaseSeparator` | N (via internal mixer) | 3 (gas, oil, water) |
+| `Mixer` | N | 1 |
+| `Splitter` | 1 | N |
+
+### Example: Walk the Flowsheet
+
+```java
+ProcessSystem process = new ProcessSystem();
+// ... add equipment ...
+process.run();
+
+for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
+    List<StreamInterface> ins = unit.getInletStreams();
+    List<StreamInterface> outs = unit.getOutletStreams();
+    System.out.printf("%-20s  in=%d  out=%d%n",
+        unit.getName(), ins.size(), outs.size());
+}
+```
+
+The returned lists are **unmodifiable** — they are read-only views of the equipment's current connections. To change connections, use the equipment's own setters (e.g., `addStream()`, `setInletStream()`).
+
+---
+
+## Explicit Connections
+
+`ProcessSystem` can record explicit connection metadata between equipment. This is used by DEXPI import/export, diagram generation, and topology analysis.
+
+### Declaring Connections
+
+```java
+ProcessSystem process = new ProcessSystem();
+process.add(feed);
+process.add(separator);
+process.add(compressor);
+
+// Record that feed connects to separator, via a specific stream
+process.connect(feed, separator, feed.getOutletStream(),
+    ProcessConnection.ConnectionType.MATERIAL, "Feed to HP Sep");
+
+// Simple connection (defaults to MATERIAL type)
+process.connect(separator, compressor);
+```
+
+### Connection Types
+
+| Type | Description |
+|------|-------------|
+| `MATERIAL` | Process stream carrying fluid (default) |
+| `ENERGY` | Energy stream (heat duty, shaft power) |
+| `SIGNAL` | Instrument signal (controller, transmitter) |
+
+### Querying Connections
+
+```java
+List<ProcessConnection> connections = process.getConnections();
+
+for (ProcessConnection conn : connections) {
+    System.out.printf("%s -> %s [%s] %s%n",
+        conn.getSource().getName(),
+        conn.getTarget().getName(),
+        conn.getType(),
+        conn.getLabel());
+}
+```
+
+**Note:** Connections are metadata — they do not change how the simulation runs. The actual data flow is determined by stream references set on each equipment.
+
+---
+
+## Named Controllers
+
+Equipment supports **named controllers** alongside the legacy single-controller API. This allows multiple controllers to be attached to the same equipment and retrieved by tag.
+
+### Adding Multiple Controllers
+
+```java
+// Legacy API (still works, unchanged)
+valve.setController(levelController);
+
+// New named API — attach multiple controllers by tag
+valve.addController("LC-100", levelController);
+valve.addController("PC-200", pressureController);
+```
+
+### Retrieving Controllers
+
+```java
+// By tag
+ControllerDeviceInterface lc = valve.getController("LC-100");
+ControllerDeviceInterface pc = valve.getController("PC-200");
+
+// All controllers on this equipment
+Collection<ControllerDeviceInterface> all = valve.getControllers();
+System.out.println("Controllers: " + all.size());
+```
+
+### Backward Compatibility
+
+The legacy `setController()` method still works and also registers the controller in the named map (using the controller's name as the key). Existing code does not need any changes:
+
+```java
+// Old code — still works exactly as before
+valve.setController(myController);
+
+// The controller is now also accessible via the named map
+valve.getController(myController.getName()); // returns myController
+valve.getControllers();                      // returns [myController]
+```
+
+---
+
+## Unified Element Model
+
+All elements that can live inside a `ProcessSystem` — equipment, measurement devices, and controller devices — share a common marker interface: `ProcessElementInterface`.
+
+### Type Hierarchy
+
+```
+ProcessElementInterface (extends NamedInterface, Serializable)
+    ├── ProcessEquipmentInterface  — unit operations and streams
+    ├── MeasurementDeviceInterface — transmitters and sensors
+    └── ControllerDeviceInterface  — PID controllers
+```
+
+### Querying All Elements
+
+```java
+// Get everything in the process — equipment + measurements + controllers
+List<ProcessElementInterface> all = process.getAllElements();
+
+for (ProcessElementInterface elem : all) {
+    System.out.println(elem.getName() + " : " + elem.getClass().getSimpleName());
+}
+```
+
+This is useful for DEXPI export, diagram generation, and generic process analysis where you need a flat list of every element regardless of type.
+
+### Adding Controller Devices to ProcessSystem
+
+Controller devices can be registered directly on the ProcessSystem. During transient simulation, the system automatically scans and executes all registered controllers after the equipment loop:
+
+```java
+ProcessSystem process = new ProcessSystem();
+process.add(feed);
+process.add(separator);
+process.add(valve);
+
+// Register controller at system level
+process.add(levelController);
+
+// During runTransient(), controllers are executed automatically
+// after all equipment has been stepped
+process.runTransient(1.0, calcId);
 ```
 
 ---
@@ -294,7 +478,7 @@ Execution levels:
   Level 0 [PARALLEL]: feed TP setter, first stage oil reflux, LP stream temp controller
   Level 1 [PARALLEL]: 1st stage separator
   Level 2 [PARALLEL]: oil depres valve
-  Level 3 [PARALLEL]: 
+  Level 3 [PARALLEL]:
   --- Recycle Section Start (iterative) ---
   Level 4: oil heater second stage [RECYCLE]
   Level 5: 2nd stage separator [RECYCLE]
@@ -541,7 +725,7 @@ ValidationResult result = process.validateSetup();
 if (!result.isValid()) {
     System.out.println("Validation issues found:");
     System.out.println(result.getReport());
-    
+
     // Iterate through specific issues
     for (ValidationIssue issue : result.getIssues()) {
         System.out.println(issue.getSeverity() + ": " + issue.getMessage());
@@ -568,7 +752,7 @@ Map<String, ValidationResult> allResults = process.validateAll();
 for (Map.Entry<String, ValidationResult> entry : allResults.entrySet()) {
     String equipmentName = entry.getKey();
     ValidationResult equipResult = entry.getValue();
-    
+
     if (!equipResult.isValid()) {
         System.out.println(equipmentName + " has issues:");
         equipResult.getErrors().forEach(e -> System.out.println("  - " + e));
@@ -795,3 +979,6 @@ For full documentation on serialization options, see [Process Serialization Guid
 - [Process Serialization](../../simulation/process_serialization) - Save/load processes
 - [Graph Simulation](graph_simulation) - Graph-based execution
 - [Equipment Overview](../equipment/) - Process equipment
+- [Controllers](../controllers) - PID control and adjusters
+- [Dynamic Simulation Guide](../../simulation/dynamic_simulation_guide) - Transient simulation
+- [Extending Process Equipment](../../development/extending_process_equipment) - Custom equipment

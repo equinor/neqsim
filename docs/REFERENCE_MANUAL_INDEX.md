@@ -237,7 +237,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Document              | Path                                                                                                                       | Description               |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
 | ProcessModel Overview | [docs/process/processmodel/README.md](process/processmodel/)                                                               | Process system management |
-| ProcessSystem         | [docs/process/processmodel/process_system.md](process/processmodel/process_system)                                         | ProcessSystem class       |
+| ProcessSystem         | [docs/process/processmodel/process_system.md](process/processmodel/process_system)                                         | ProcessSystem class (connections, stream introspection, named controllers, unified elements) |
 | ProcessModel          | [docs/process/processmodel/process_model.md](process/processmodel/process_model)                                           | Multi-process models      |
 | ProcessModule         | [docs/process/processmodel/process_module.md](process/processmodel/process_module)                                         | Modular process units     |
 | Graph Simulation      | [docs/process/processmodel/graph_simulation.md](process/processmodel/graph_simulation)                                     | Graph-based simulation    |
@@ -432,11 +432,23 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 
 | Document                          | Path                                                                                                       | Description                                                                                                                      |
 | --------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| **Electrical Design Guide**       | [docs/process/electrical-design.md](process/electrical-design)                                             | **Comprehensive guide to electrical design: motor sizing (IEC 60034), VFD topology, cable sizing, transformer, switchgear, hazardous area, load list, power triangle** |
+| **Electrical Design Guide**       | [docs/process/electrical-design.md](process/electrical-design)                                             | **Comprehensive guide to electrical design: motor sizing (IEC 60034), VFD topology, cable sizing, transformer, switchgear, hazardous area, load list, equipment-specific designs (separator, heater/cooler, pipeline), plant-wide SystemElectricalDesign** |
 | **Compressor Electrical Design**  | [examples/notebooks/electrical/compressor_electrical_design.ipynb](../examples/notebooks/electrical/compressor_electrical_design.ipynb) | **Jupyter notebook: 2-stage compression electrical design with motor curves, power triangle, efficiency chain** |
 | **Process Plant Load List**       | [examples/notebooks/electrical/process_plant_load_list.ipynb](../examples/notebooks/electrical/process_plant_load_list.ipynb) | **Jupyter notebook: plant-wide electrical load list, demand/diversity factors, transformer sizing** |
 | **Motor & VFD Analysis**          | [examples/notebooks/electrical/motor_vfd_analysis.ipynb](../examples/notebooks/electrical/motor_vfd_analysis.ipynb) | **Jupyter notebook: motor efficiency classes IE1-IE4, VFD topology selection, harmonics, efficiency maps, cable sizing, hazardous area** |
 | **Power-from-Shore Feasibility**  | [examples/notebooks/electrical/power_from_shore_feasibility.ipynb](../examples/notebooks/electrical/power_from_shore_feasibility.ipynb) | **Jupyter notebook: submarine cable sizing, HVAC/HVDC, cost estimation, CO₂ comparison, regional analysis (Norway, UK, Brazil, GoM)** |
+
+### Chapter 25: Instrument Design
+
+| Document                          | Path                                                                                                       | Description                                                                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Instrument Design Guide**       | [docs/process/instrument-design.md](process/instrument-design)                                             | **Comprehensive guide to instrument design: ISA-5.1 identification, SIL-rated safety instruments, I/O counting, DCS/SIS cabinet sizing, cost estimation, equipment-specific designs (separator, compressor, heat exchanger, pipeline, valve), plant-wide SystemInstrumentDesign** |
+
+### Chapter 26: Dynamic Simulation
+
+| Document                          | Path                                                                                                       | Description                                                                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Dynamic Simulation Guide**      | [docs/process/dynamic-simulation.md](process/dynamic-simulation)                                           | **DynamicProcessHelper utility — auto-instruments a sized steady-state process with transmitters and PID controllers for transient simulation, configurable PID tuning, flow and temperature control loops** |
 
 ### Chapter 23b: Cost Estimation
 
@@ -453,6 +465,15 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Currency & Location             | [docs/process/COST_ESTIMATION_FRAMEWORK.md#currency-and-location-support](process/COST_ESTIMATION_FRAMEWORK#currency-and-location-support)   | Multi-currency and location factors                                                                         |
 | OPEX Estimation                 | [docs/process/COST_ESTIMATION_FRAMEWORK.md#operating-cost-opex-estimation](process/COST_ESTIMATION_FRAMEWORK#operating-cost-opex-estimation) | Operating cost calculation                                                                                  |
 | Financial Metrics               | [docs/process/COST_ESTIMATION_FRAMEWORK.md#financial-metrics](process/COST_ESTIMATION_FRAMEWORK#financial-metrics)                           | Payback, ROI, NPV calculations                                                                              |
+
+### Chapter 23c: Corrosion Analysis
+
+| Document                              | Path                                                                                                             | Description                                                                                                     |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Corrosion Module Overview**         | [docs/process/corrosion/index.md](process/corrosion/)                                                           | **Package overview, quick start, standards coverage for NORSOK M-506 and M-001**                                 |
+| **NORSOK M-506 Corrosion Rate**       | [docs/process/corrosion/norsok_m506_corrosion_rate.md](process/corrosion/norsok_m506_corrosion_rate)             | **CO2 corrosion rate prediction — fugacity, pH, correction factors, parameter sweeps, JSON reporting**           |
+| **NORSOK M-001 Material Selection**   | [docs/process/corrosion/norsok_m001_material_selection.md](process/corrosion/norsok_m001_material_selection)     | **Material grade recommendation — sweet/sour classification, CRA selection, chloride SCC, corrosion allowance** |
+| **Pipeline Corrosion Integration**    | [docs/process/corrosion/pipeline_corrosion_integration.md](process/corrosion/pipeline_corrosion_integration)     | **Automated corrosion analysis from process simulation — stream extraction, combined mechanical + corrosion**    |
 
 ### Chapter 24: Serialization & Persistence
 
@@ -770,7 +791,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 
 | Document        | Path                                                                           | Description     |
 | --------------- | ------------------------------------------------------------------------------ | --------------- |
-| DEXPI Reader    | [docs/integration/dexpi-reader.md](integration/dexpi-reader)                   | DEXPI reader    |
+| DEXPI P&ID Import, Export & Visualization | [docs/integration/dexpi-reader.md](integration/dexpi-reader) | DEXPI import/export/round-trip, ISO 10628 shapes, auto-layout, instruments, SIL markers, fail-position, mechanical design, stream table, drawing border, symbol legend, configurable layout, topology, equipment factory, simulation builder |
 | QRA Integration | [docs/integration/QRA_INTEGRATION_GUIDE.md](integration/QRA_INTEGRATION_GUIDE) | QRA integration |
 
 ### Chapter 47: Process Logic Framework
@@ -846,7 +867,7 @@ Extended risk analysis capabilities implementing P1-P7 priority improvements for
 | Development Overview               | [docs/development/README.md](development/)                                                       | Development overview                                                                  |
 | Contributing Structure             | [docs/development/contributing-structure.md](development/contributing-structure)                 | Contributing guidelines                                                               |
 | Developer Setup                    | [docs/development/DEVELOPER_SETUP.md](development/DEVELOPER_SETUP)                               | Developer setup                                                                       |
-| **Extending Process Equipment**    | [docs/development/extending_process_equipment.md](development/extending_process_equipment)       | **NEW: Add custom separators, reactors, unit operations**                             |
+| **Extending Process Equipment**    | [docs/development/extending_process_equipment.md](development/extending_process_equipment)       | **Add custom equipment, stream introspection, MultiPortEquipment base class**         |
 | **Extending Physical Properties**  | [docs/development/extending_physical_properties.md](development/extending_physical_properties)   | **NEW: Add viscosity, conductivity, diffusivity models**                              |
 | **Extending Thermodynamic Models** | [docs/development/extending_thermodynamic_models.md](development/extending_thermodynamic_models) | **NEW: Add custom equations of state**                                                |
 | **Python Extension Patterns**      | [docs/development/python_extension_patterns.md](development/python_extension_patterns)           | **NEW: Python integration, wrappers, JPype interfaces**                               |

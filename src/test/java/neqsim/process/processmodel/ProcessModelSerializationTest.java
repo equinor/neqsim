@@ -1,8 +1,10 @@
 package neqsim.process.processmodel;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.nio.file.Files;
@@ -34,9 +36,19 @@ public class ProcessModelSerializationTest {
 
   @AfterEach
   public void tearDown() throws Exception {
-    // Clean up temp files
+    // Clean up temp files - ignore errors from locked files on Windows
     if (tempDir != null) {
-      Files.walk(tempDir).sorted((a, b) -> -a.compareTo(b)).map(Path::toFile).forEach(File::delete);
+      try {
+        Files.walk(tempDir).sorted((a, b) -> -a.compareTo(b)).forEach(p -> {
+          try {
+            Files.deleteIfExists(p);
+          } catch (Exception ignored) {
+            // Best-effort cleanup
+          }
+        });
+      } catch (Exception ignored) {
+        // Best-effort cleanup
+      }
     }
   }
 
@@ -244,8 +256,10 @@ public class ProcessModelSerializationTest {
 
   @Test
   public void testLoadFromNeqsimReturnsNullForNonExistent() {
-    ProcessModel loaded = ProcessModel.loadFromNeqsim("non_existent_file.neqsim");
-    assertNotNull(loaded == null || loaded != null); // Should handle gracefully
+    ProcessModel loaded =
+        assertDoesNotThrow(() -> ProcessModel.loadFromNeqsim("non_existent_file.neqsim"),
+            "Should handle non-existent file gracefully");
+    assertNull(loaded, "Should return null for non-existent file");
   }
 
   @Test

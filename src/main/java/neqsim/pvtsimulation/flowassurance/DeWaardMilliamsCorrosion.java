@@ -100,6 +100,9 @@ public class DeWaardMilliamsCorrosion implements Serializable {
   /** Whether to apply flow velocity correction. */
   private boolean useFlowCorrection = true;
 
+  /** Elemental sulfur (S8) mass deposition rate on pipe wall in kg/(m2*yr). */
+  private double sulfurDepositionRate = 0.0;
+
   /**
    * Creates a new DeWaardMilliamsCorrosion with default parameters.
    */
@@ -195,6 +198,21 @@ public class DeWaardMilliamsCorrosion implements Serializable {
    */
   public void setGlycolFraction(double fraction) {
     this.glycolFraction = Math.max(0.0, Math.min(1.0, fraction));
+  }
+
+  /**
+   * Sets the elemental sulfur (S8) mass deposition rate on the pipe wall.
+   *
+   * <p>
+   * Elemental sulfur reacts directly with carbon steel: S8 + 8Fe = 8FeS. This provides an
+   * additional corrosion mechanism beyond CO2 and H2S. The reaction rate depends on the mass flux
+   * of sulfur particles reaching the wall.
+   * </p>
+   *
+   * @param rateKgM2Yr sulfur deposition rate in kg/(m2*yr)
+   */
+  public void setSulfurDepositionRate(double rateKgM2Yr) {
+    this.sulfurDepositionRate = Math.max(0.0, rateKgM2Yr);
   }
 
   /**
@@ -308,10 +326,147 @@ public class DeWaardMilliamsCorrosion implements Serializable {
   }
 
   /**
+   * Calculates the flow velocity correction factor.
+   *
+   * <p>
+   * At higher flow velocities, mass transfer of CO2 to the steel surface increases and protective
+   * scale (FeCO3) can be removed by wall shear stress. Based on the de Waard-Lotz flow-dependent
+   * factor using wall shear stress.
+   * </p>
+   *
+   * @return flow correction factor (greater than or equal to 1)
+   */
+  public double getFlowCorrectionFactor() {
+    if (flowVelocity <= 1.0) {
+      return 1.0;
+    }
+    // Enhanced mass transfer at higher velocity: f_flow ~ (v / v_ref)^0.8
+    // where v_ref = 1 m/s. Capped at factor of 5 per NORSOK M-506 guidance.
+    double factor = Math.pow(flowVelocity / 1.0, 0.8);
+    return Math.min(factor, 5.0);
+  }
+
+  /**
+   * Calculates the corrosion rate contribution from elemental sulfur (S8) deposition.
+   *
+   * <p>
+   * Elemental sulfur reacts directly with carbon steel: S8 + 8Fe = 8FeS + products. The corrosion
+   * rate depends on the mass flux of sulfur particles reaching the pipe wall. The stoichiometric
+   * ratio is 1 mol S8 (256.5 g) reacts with 8 mol Fe (447 g), giving a mass conversion factor of
+   * approximately 1.74 kg Fe corroded per kg S8 deposited.
+   * </p>
+   *
+   * @return sulfur-induced corrosion rate in mm/yr
+   */
+  public double getSulfurCorrosionRate() {
+    if (sulfurDepositionRate <= 0.0) {
+      return 0.0;
+    }
+    // Stoichiometry: S8 + 8Fe -> 8FeS
+    // MW_S8 = 256.5 g/mol, MW_Fe = 55.845 g/mol * 8 = 446.8 g
+    // Mass ratio: 446.8 / 256.5 = 1.74 kg Fe consumed per kg S8
+    double feMassLossRate = sulfurDepositionRate * 1.74; // kg/(m2*yr)
+    // Convert to mm/yr: thickness = mass / (density * area)
+    // rho_steel = 7850 kg/m3
+    double steelDensity = 7850.0;
+    return feMassLossRate / steelDensity * 1000.0; // mm/yr
+  }
+
+  /**
+   * Estimates the FeCO3 (siderite) scale formation tendency.
+   *
+   * <p>
+   * FeCO3 forms when the ionic product of Fe2+ and CO3-2 exceeds the solubility product. At higher
+   * temperatures (&gt; 60 C) and pH (&gt; 5), the scale is protective and slows corrosion.
+   * </p>
+   *
+   * @return FeCO3 saturation index estimate (greater than 1 indicates scale-forming conditions)
+   */
+  public double getFeCO3SaturationIndex() {
+    // Simplified Langelier-type saturation index for FeCO3
+    // Ksp_FeCO3 decreases with temperature (more scale forms at higher T)
+    // log10(Ksp) ~ -10.5 + 2000/T (approximate)
+    double T = temperatureC + 273.15;
+    double logKsp = -10.5 + 2000.0 / T;
+    // Approximate ionic product from pH and CO2 partial pressure
+    double logIP = 2.0 * (pH - 7.0) + Math.log10(Math.max(co2PartialPressure, 0.001));
+    // SI = log10(IP/Ksp)
+    return Math.pow(10, logIP - logKsp);
+  }
+
+  /**
+   * Estimates the FeS (iron sulfide) corrosion rate from H2S.
+   *
+   * <p>
+   * Uses the simplified Smith-de Waard sour corrosion model: ln(CR) = 7.96 - 2320/T + 0.67 *
+   * ln(pH2S) where CR is in mm/yr, T in K, pH2S in bar.
+   * </p>
+   *
+   * @return H2S/FeS corrosion rate in mm/yr
+   */
+  public double getFeSCorrosionRate() {
+    if (h2sPartialPressure <= 0.0) {
+      return 0.0;
+    }
+    double T = temperatureC + 273.15;
+    double lnRate = 7.96 - 2320.0 / T + 0.67 * Math.log(h2sPartialPressure);
+    double rate = Math.exp(lnRate);
+    return Math.min(rate, 100.0); // cap at 100 mm/yr
+  }
+
+  /**
+   * Returns the FeS scale morphology description based on temperature.
+   *
+   * <p>
+   * The morphology determines whether the FeS scale provides corrosion protection:
+   * </p>
+   * <ul>
+   * <li>Below 60 C: mackinawite (non-protective, porous)</li>
+   * <li>60-120 C: cubic FeS / troilite (partially protective)</li>
+   * <li>Above 120 C: pyrrhotite (protective, dense)</li>
+   * </ul>
+   *
+   * @return description of the FeS morphology and protectiveness
+   */
+  public String getFeSScaleMorphology() {
+    if (h2sPartialPressure <= 0.0 && sulfurDepositionRate <= 0.0) {
+      return "No FeS formation expected (no H2S or S8)";
+    }
+    if (temperatureC < 60.0) {
+      return "Mackinawite (non-protective, porous) - high corrosion risk";
+    } else if (temperatureC < 120.0) {
+      return "Cubic FeS / troilite (partially protective)";
+    } else {
+      return "Pyrrhotite (protective, dense) - reduced corrosion rate";
+    }
+  }
+
+  /**
+   * Returns a comprehensive corrosion assessment combining CO2, H2S, and S8 contributions.
+   *
+   * @return map of corrosion assessment results
+   */
+  public Map<String, Object> getComprehensiveAssessment() {
+    Map<String, Object> assessment = new LinkedHashMap<String, Object>();
+    assessment.put("co2CorrosionRate_mmyr", calculateBaselineRate());
+    assessment.put("co2CorrectedRate_mmyr", calculateCorrosionRate() - getSulfurCorrosionRate());
+    assessment.put("feSCorrosionRate_mmyr", getFeSCorrosionRate());
+    assessment.put("sulfurCorrosionRate_mmyr", getSulfurCorrosionRate());
+    assessment.put("totalCorrosionRate_mmyr", calculateCorrosionRate() + getFeSCorrosionRate());
+    assessment.put("isSourService", isSourService());
+    assessment.put("feCO3SaturationIndex", getFeCO3SaturationIndex());
+    assessment.put("feCO3ScaleForming", getFeCO3SaturationIndex() > 1.0);
+    assessment.put("feSMorphology", getFeSScaleMorphology());
+    assessment.put("severity", getCorrosionSeverity());
+    return assessment;
+  }
+
+  /**
    * Calculates the fully corrected corrosion rate.
    *
    * <p>
-   * The corrected rate is: Vcor_corrected = Vcor_base * f_pH * f_scale * f_glycol * (1 - IE)
+   * The corrected rate is: Vcor_corrected = Vcor_base * f_pH * f_scale * f_glycol * f_flow * (1 -
+   * IE) + Vcor_sulfur
    * </p>
    *
    * @return corrected corrosion rate in mm/yr
@@ -327,9 +482,15 @@ public class DeWaardMilliamsCorrosion implements Serializable {
       factor *= getScaleCorrectionFactor();
     }
     factor *= getGlycolCorrectionFactor();
+    if (useFlowCorrection) {
+      factor *= getFlowCorrectionFactor();
+    }
     factor *= (1.0 - inhibitorEfficiency);
 
-    return baseRate * factor;
+    double co2Rate = baseRate * factor;
+
+    // Add elemental sulfur corrosion contribution if present
+    return co2Rate + getSulfurCorrosionRate();
   }
 
   /**
@@ -431,6 +592,7 @@ public class DeWaardMilliamsCorrosion implements Serializable {
     conditions.put("pipeDiameter_m", pipeDiameter);
     conditions.put("inhibitorEfficiency", inhibitorEfficiency);
     conditions.put("glycolFraction", glycolFraction);
+    conditions.put("sulfurDepositionRate_kgm2yr", sulfurDepositionRate);
     result.put("conditions", conditions);
 
     // Results
@@ -439,11 +601,19 @@ public class DeWaardMilliamsCorrosion implements Serializable {
     rates.put("pHCorrectionFactor", getPHCorrectionFactor());
     rates.put("scaleCorrectionFactor", getScaleCorrectionFactor());
     rates.put("glycolCorrectionFactor", getGlycolCorrectionFactor());
+    rates.put("flowCorrectionFactor", getFlowCorrectionFactor());
     rates.put("inhibitorFactor", 1.0 - inhibitorEfficiency);
     rates.put("correctedRate_mmyr", calculateCorrosionRate());
     rates.put("severity", getCorrosionSeverity());
     rates.put("corrosionAllowance_25yr_mm", estimateCorrosionAllowance(25.0));
     rates.put("isSourService", isSourService());
+
+    // FeS and FeCO3 assessment
+    rates.put("feSCorrosionRate_mmyr", getFeSCorrosionRate());
+    rates.put("sulfurCorrosionRate_mmyr", getSulfurCorrosionRate());
+    rates.put("feCO3SaturationIndex", getFeCO3SaturationIndex());
+    rates.put("feCO3ScaleForming", getFeCO3SaturationIndex() > 1.0);
+    rates.put("feSMorphology", getFeSScaleMorphology());
     result.put("results", rates);
 
     // Model info

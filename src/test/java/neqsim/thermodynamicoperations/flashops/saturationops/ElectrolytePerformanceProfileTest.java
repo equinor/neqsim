@@ -2,6 +2,7 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
@@ -15,6 +16,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * @author ESOL
  */
+@Tag("slow")
 public class ElectrolytePerformanceProfileTest {
 
   /**

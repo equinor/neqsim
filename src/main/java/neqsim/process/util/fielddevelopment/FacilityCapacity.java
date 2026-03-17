@@ -38,11 +38,11 @@ import neqsim.process.util.optimizer.ProductionOptimizer.UtilizationRecord;
  * <h2>Bottleneck Analysis Concepts</h2>
  * <p>
  * The facility capacity is limited by the equipment with the highest utilization ratio:
- * 
+ *
  * <pre>
  * Utilization = Current Duty / Maximum Capacity
  * </pre>
- * 
+ *
  * The equipment with the highest utilization is the "bottleneck". Equipment with utilization above
  * a threshold (typically 80%) are "near-bottlenecks" that may become constraints if the current
  * bottleneck is relieved.
@@ -67,7 +67,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.UtilizationRecord;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * FacilityCapacity capacity = new FacilityCapacity(facilityProcess);
  *
@@ -882,6 +882,9 @@ public class FacilityCapacity implements Serializable {
 
   /**
    * Finds equipment by name in the facility.
+   *
+   * @param name the equipment name to search for
+   * @return the matching equipment, or null if not found
    */
   private ProcessEquipmentInterface findEquipment(String name) {
     for (ProcessEquipmentInterface equipment : facility.getUnitOperations()) {

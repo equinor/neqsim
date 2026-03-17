@@ -23,7 +23,7 @@
                 <revision>3.5.0</revision>
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                 <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-                <checkstyle.config.location>checkstyle_neqsim.xml</checkstyle.config.location>
+                <checkstyle.config.location>.config/checkstyle_neqsim.xml</checkstyle.config.location>
                 <skipFlattening>false</skipFlattening>
                 <argLine></argLine>
                 <!-- Exclude slow tests by default. Run with -DexcludedTestGroups= to include all tests -->
@@ -340,7 +340,7 @@
                                 <version>3.5.5</version>
                                 <configuration>
                                         <!-- Preserve any Jacoco agent injection (@{argLine}) and add required module opens for XStream reflection when running tests on JDK >= 11 -->
-                                        <argLine>@{argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
+                                        <argLine>@{argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
                                         <!-- Exclude slow tests by default. Run with -DincludeSlow=true to include them -->
                                         <excludedGroups>${excludedTestGroups}</excludedGroups>
                                 </configuration>
@@ -350,7 +350,7 @@
                                 <version>3.5.5</version>
                                 <configuration>
                                         <!-- Preserve any Jacoco agent injection (@{argLine}) and add required module opens for XStream reflection when running tests on JDK >= 11 -->
-                                        <argLine>@{argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED</argLine>
+                                        <argLine>@{argLine} --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
                                 </configuration>
                         </plugin>
 			<plugin>

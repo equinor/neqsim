@@ -888,7 +888,7 @@ public class Pipeline extends TwoPortEquipment
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * pipe.addFitting("90-degree elbow", 30.0);
    * pipe.addFitting("gate valve", 8.0);
@@ -942,7 +942,7 @@ public class Pipeline extends TwoPortEquipment
    * Convenience method for adding several fittings of the same type. For example, adding 6 elbows
    * with L/D = 30:
    * </p>
-   * 
+   *
    * <pre>
    * pipe.addFittings("90-degree elbow", 30.0, 6);
    * </pre>
@@ -1001,7 +1001,7 @@ public class Pipeline extends TwoPortEquipment
    * <p>
    * The equivalent length is calculated as:
    * </p>
-   * 
+   *
    * <pre>
    * L_eq = Σ(L/D)_i × D
    * </pre>
@@ -1025,7 +1025,7 @@ public class Pipeline extends TwoPortEquipment
    * The effective length includes both the physical pipe length and the equivalent length from all
    * fittings:
    * </p>
-   * 
+   *
    * <pre>
    * L_eff = L_physical + L_equivalent
    *       = L_physical + Σ(L/D)_i × D
@@ -1034,7 +1034,7 @@ public class Pipeline extends TwoPortEquipment
    * <p>
    * This effective length should be used in the Darcy-Weisbach equation:
    * </p>
-   * 
+   *
    * <pre>
    * ΔP = f × (L_eff / D) × (ρV² / 2)
    * </pre>
@@ -1308,6 +1308,103 @@ public class Pipeline extends TwoPortEquipment
   @Override
   public String generateMechanicalDesignReport() {
     return getMechanicalDesignCalculator().generateDesignReport();
+  }
+
+  // ============================================================================
+  // CORROSION ANALYSIS (NORSOK M-506 / M-001)
+  // ============================================================================
+
+  /**
+   * Run corrosion analysis using NORSOK M-506 and M-001 standards.
+   *
+   * <p>
+   * Automatically extracts temperature, pressure, fluid composition, and flow data from the
+   * pipeline's inlet stream and runs the corrosion rate model and material selection. The
+   * calculated corrosion allowance is applied to the mechanical design.
+   * </p>
+   *
+   * <p>
+   * Requires that the pipeline has been run (i.e., the inlet stream has valid fluid data).
+   * If the mechanical design has not been initialised, it will be created automatically.
+   * </p>
+   */
+  public void runCorrosionAnalysis() {
+    if (pipelineMechanicalDesign == null) {
+      initMechanicalDesign();
+    }
+    pipelineMechanicalDesign.runCorrosionAnalysis();
+  }
+
+  /**
+   * Set the design life used for corrosion allowance calculation.
+   *
+   * @param years design life in years (default 25)
+   */
+  public void setDesignLifeYears(double years) {
+    if (pipelineMechanicalDesign == null) {
+      initMechanicalDesign();
+    }
+    pipelineMechanicalDesign.setDesignLifeYears(years);
+  }
+
+  /**
+   * Set the corrosion inhibitor efficiency.
+   *
+   * @param efficiency inhibitor efficiency as a fraction 0.0 to 1.0
+   */
+  public void setInhibitorEfficiency(double efficiency) {
+    if (pipelineMechanicalDesign == null) {
+      initMechanicalDesign();
+    }
+    pipelineMechanicalDesign.setInhibitorEfficiency(efficiency);
+  }
+
+  /**
+   * Set the glycol weight fraction for glycol correction factor.
+   *
+   * @param fraction glycol weight fraction 0.0 to 1.0
+   */
+  public void setGlycolWeightFraction(double fraction) {
+    if (pipelineMechanicalDesign == null) {
+      initMechanicalDesign();
+    }
+    pipelineMechanicalDesign.setGlycolWeightFraction(fraction);
+  }
+
+  /**
+   * Get the calculated corrosion rate from the last corrosion analysis.
+   *
+   * @return corrosion rate in mm/year, or 0.0 if no analysis has been run
+   */
+  public double getCorrosionRate() {
+    if (pipelineMechanicalDesign == null) {
+      return 0.0;
+    }
+    return pipelineMechanicalDesign.getCorrosionRate();
+  }
+
+  /**
+   * Get the recommended material grade from the last corrosion analysis.
+   *
+   * @return recommended material grade string, or "Not evaluated" if no analysis has been run
+   */
+  public String getRecommendedMaterial() {
+    if (pipelineMechanicalDesign == null) {
+      return "Not evaluated";
+    }
+    return pipelineMechanicalDesign.getRecommendedMaterial();
+  }
+
+  /**
+   * Get the recommended corrosion allowance from the last corrosion analysis.
+   *
+   * @return corrosion allowance in mm, or 0.0 if no analysis has been run
+   */
+  public double getRecommendedCorrosionAllowanceMm() {
+    if (pipelineMechanicalDesign == null) {
+      return 0.0;
+    }
+    return pipelineMechanicalDesign.getRecommendedCorrosionAllowanceMm();
   }
 
   /** {@inheritDoc} */

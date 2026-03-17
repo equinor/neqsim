@@ -38,6 +38,10 @@ Flow assurance encompasses the prevention and remediation of:
 |-------|---------|---------|
 | `PipelineCooldownCalculator` | `neqsim.pvtsimulation.flowassurance` | Lumped-parameter pipeline shutdown cooldown |
 | `DeWaardMilliamsCorrosion` | `neqsim.pvtsimulation.flowassurance` | CO2 corrosion rate (de Waard-Milliams 1991) |
+
+> **Full NORSOK standard models:** For production-grade corrosion analysis per NORSOK M-506 and
+> material selection per NORSOK M-001, see the **[Corrosion Analysis Module](../../process/corrosion/)**
+> in `neqsim.process.corrosion`. These integrate directly with pipeline mechanical design.
 | `ScalePredictionCalculator` | `neqsim.pvtsimulation.flowassurance` | Saturation index for CaCO3, BaSO4, SrSO4, CaSO4, FeCO3 |
 | `WaxCurveCalculator` | `neqsim.pvtsimulation.flowassurance` | Wax fraction curves with monotonicity enforcement |
 
