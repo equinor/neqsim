@@ -58,7 +58,7 @@ Where $f_i(\rho)$ are linear functions of density.
 - **High undersaturation + Low density** = Severe risk
   - Light, gas-rich oils become significantly denser as pressure drops
   - Large solubility parameter change destabilizes asphaltenes
-  
+
 - **Low undersaturation + High density** = Low risk
   - Heavy oils change less during production
   - Asphaltenes more naturally stable
@@ -148,7 +148,7 @@ In-situ Density: 720.0 kg/m³
 Risk Assessment: MODERATE_PROBLEM
 Risk Index: 0.55
 
-Recommendation: Moderate asphaltene risk. 
+Recommendation: Moderate asphaltene risk.
 Consider preventive measures and monitoring plan.
 ```
 
@@ -168,13 +168,13 @@ double density = 720.0;
 // Pressure depletion scenario
 System.out.println("Pressure Depletion Analysis:");
 for (double pRes = 400.0; pRes >= 160.0; pRes -= 20.0) {
-    DeBoerAsphalteneScreening screening = 
+    DeBoerAsphalteneScreening screening =
         new DeBoerAsphalteneScreening(pRes, bubblePoint, density);
-    
+
     double deltaP = pRes - bubblePoint;
     String risk = screening.evaluateRisk();
-    
-    System.out.printf("P_res = %.0f bar, ΔP = %.0f bar: %s%n", 
+
+    System.out.printf("P_res = %.0f bar, ΔP = %.0f bar: %s%n",
                       pRes, deltaP, risk);
 }
 ```
@@ -225,10 +225,10 @@ for (int i = 0; i < samples.length; i++) {
     DeBoerAsphalteneScreening screening = new DeBoerAsphalteneScreening(
         samples[i][0], samples[i][1], samples[i][2]
     );
-    
+
     double deltaP = samples[i][0] - samples[i][1];
     String risk = screening.evaluateRisk();
-    
+
     System.out.printf("   %s   |  %5.0f   |   %5.0f   | %s%n",
         sampleNames[i], deltaP, samples[i][2], risk);
 }
@@ -262,6 +262,7 @@ fluid.setMixingRule("classic");
 // Flash to get density
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
+fluid.initProperties();
 
 // Get liquid density
 double density = fluid.getPhase("oil").getDensity("kg/m3");
@@ -324,17 +325,17 @@ System.out.println("======================================\n");
 int highRiskCount = 0;
 
 for (int i = 0; i < reservoirs.length; i++) {
-    DeBoerAsphalteneScreening screening = 
+    DeBoerAsphalteneScreening screening =
         new DeBoerAsphalteneScreening(pRes[i], pBub[i], rho[i]);
-    
+
     String risk = screening.evaluateRisk();
     double riskIndex = screening.calculateRiskIndex();
-    
+
     System.out.printf("Reservoir %s:%n", reservoirs[i]);
     System.out.printf("  P_res = %.0f bar, P_bub = %.0f bar, ρ = %.0f kg/m³%n",
                       pRes[i], pBub[i], rho[i]);
     System.out.printf("  Risk: %s (index: %.2f)%n%n", risk, riskIndex);
-    
+
     if (risk.equals("SEVERE_PROBLEM") || risk.equals("MODERATE_PROBLEM")) {
         highRiskCount++;
     }

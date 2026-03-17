@@ -9,9 +9,9 @@ Thermodynamic operations execute equilibrium and property tasks using a configur
 
 ## Flash Calculations
 - **`TPflash()`**: Calculates phase split at specified temperature and pressure. Run `initProperties()` afterward for density/viscosity.
-- **`PHflash(P, H)` and `PSflash(P, S)`**: Solve for temperature/phase split given enthalpy or entropy targets—useful for compressors and turbines.
-- **`TVflash(T, V)`**: Volume-constrained flash for fixed-volume cells.
-- **`UVflash(U, V)`**: Energy- and volume-constrained flash for transient simulations.
+- **`PHflash(H)` and `PSflash(S)`**: Solve for temperature/phase split given enthalpy or entropy targets—useful for compressors and turbines. Set the pressure on the fluid with `setPressure()` before calling these.
+- **`TVflash(V)`**: Volume-constrained flash—finds pressure at fixed temperature and total volume.
+- **`VUflash(V, U)`**: Volume- and internal-energy-constrained flash for transient simulations.
 
 ```java
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);

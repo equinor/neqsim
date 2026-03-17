@@ -385,6 +385,7 @@ fluid.setTemperature(90.0, "C");
 neqsim.thermodynamicoperations.ThermodynamicOperations ops =
     new neqsim.thermodynamicoperations.ThermodynamicOperations(fluid);
 ops.TPflash();
+fluid.initProperties();
 
 // Get results
 System.out.println("Number of phases: " + fluid.getNumberOfPhases());

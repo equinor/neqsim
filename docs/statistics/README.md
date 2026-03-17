@@ -99,8 +99,8 @@ double standardDeviation = 0.05;  // Experimental uncertainty
 double[] independentVariables = {300.0, 0.1};  // e.g., temperature, composition
 
 SampleValue sample = new SampleValue(
-    experimentalValue, 
-    standardDeviation, 
+    experimentalValue,
+    standardDeviation,
     independentVariables
 );
 ```
@@ -126,21 +126,21 @@ Functions extend `BaseFunction` or `LevenbergMarquardtFunction`:
 
 ```java
 public class MyObjectiveFunction extends LevenbergMarquardtFunction {
-    
+
     @Override
     public double calcValue(double[] dependentValues) {
         // params[0], params[1], ... are the fitting parameters
         // dependentValues are the independent variables (T, P, x, ...)
-        
+
         double T = dependentValues[0];
         double x = dependentValues[1];
-        
+
         // Calculate model prediction
         double predicted = params[0] * Math.exp(-params[1] / T) * x;
-        
+
         return predicted;
     }
-    
+
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
@@ -216,30 +216,30 @@ optimizer.runMonteCarloSimulation(100);  // 100 Monte Carlo runs
 
 ```java
 public class KijFittingFunction extends LevenbergMarquardtFunction {
-    
+
     @Override
     public double calcValue(double[] dependentValues) {
         double temperature = dependentValues[0];
         double pressure = dependentValues[1];
         double x_exp = dependentValues[2];  // Experimental composition
-        
+
         // Set up thermodynamic system
         system.setTemperature(temperature);
         system.setPressure(pressure);
-        
+
         // Set kij from fitting parameters
         ((PhaseEos) system.getPhase(0)).getMixingRule()
             .setBinaryInteractionParameter(0, 1, params[0]);
         ((PhaseEos) system.getPhase(1)).getMixingRule()
             .setBinaryInteractionParameter(0, 1, params[0]);
-        
+
         // Flash calculation
         thermoOps.TPflash();
-        
+
         // Return calculated liquid composition
         return system.getPhase(1).getComponent(0).getx();
     }
-    
+
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
@@ -251,23 +251,24 @@ public class KijFittingFunction extends LevenbergMarquardtFunction {
 
 ```java
 public class CPAFittingFunction extends LevenbergMarquardtFunction {
-    
+
     @Override
     public double calcValue(double[] dependentValues) {
         double T = dependentValues[0];
         double P = dependentValues[1];
-        
+
         // params[0] = epsilon (association energy)
         // params[1] = beta (association volume)
-        
+
         system.getComponent("water").setAssociationEnergy(params[0]);
         system.getComponent("water").setAssociationVolume(params[1]);
-        
+
         thermoOps.TPflash();
-        
+        system.initProperties();
+
         return system.getPhase(1).getDensity("kg/m3");
     }
-    
+
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

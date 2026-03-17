@@ -92,7 +92,7 @@ pipe = TwoFluidPipe("Flowline", inlet_stream)
 pipe.setLength(20000)
 pipe.setDiameter(0.25)
 pipe.setNumberOfSections(100)   # Computational cells
-pipe.setOuterTemperature(278.15)  # 5°C ambient
+pipe.setOuterTemperatures([278.15])  # 5°C ambient (array)
 
 process.add(pipe)
 process.run()
@@ -263,7 +263,7 @@ time = 0.0
 while time < t_end:
     pipe.runTransient(dt, run_id)
     time += dt
-    
+
     # Ramp up flow rate after 60 seconds
     if time > 60.0:
         inlet.setFlowRate(25.0, "kg/sec")
@@ -343,8 +343,7 @@ pipe.setDiameter(0.15)           # 150 mm (promotes slugging)
 pipe.setNumberOfSections(400)    # Fine grid for slug resolution
 
 # Enable Lagrangian slug tracking
-pipe.enableSlugTracking(True)
-pipe.setSlugDetectionThreshold(0.7)  # Holdup threshold for slug
+pipe.setEnableSlugTracking(True)
 
 # Set terrain to promote terrain-induced slugging
 elevations = []
@@ -363,12 +362,12 @@ pipe.run()
 run_id = str(uuid.uuid4())
 for step in range(600):  # 5 minutes @ 0.5s steps
     pipe.runTransient(0.5, run_id)
-    
+
     # Monitor slugs every 30 seconds
     if step % 60 == 0:
-        slug_count = pipe.getSlugCount()
-        avg_slug_length = pipe.getAverageSlugLength()
-        slug_frequency = pipe.getSlugFrequency()
+        slug_count = pipe.getSlugTracker().getSlugCount()
+        avg_slug_length = pipe.getSlugTracker().getAverageSlugLength()
+        slug_frequency = pipe.getSlugTracker().getSlugFrequency()
         print(f"Time: {step*0.5:.0f}s - Slugs: {slug_count}, "
               f"Avg length: {avg_slug_length:.1f}m, "
               f"Frequency: {slug_frequency:.3f} Hz")
@@ -463,13 +462,13 @@ dx = 25000 / num_sections
 elevations = []
 for i in range(num_sections):
     x = i * dx
-    
+
     # Start at platform (-50m), descend to seabed, undulations, rise to FPSO
-    
+
     # Riser down (0-500m)
     if x < 500:
         elev = -50 - (x / 500) * 300  # Descend 300m
-    
+
     # Seabed section with undulations (500m - 24000m)
     elif x < 24000:
         base = -350  # Base seabed depth
@@ -477,11 +476,11 @@ for i in range(num_sections):
         undulation = 20 * math.sin(x / 2000 * 2 * math.pi)  # ±20m
         valley = -40 * math.exp(-((x - 12000) / 3000)**2)   # Deep valley mid-pipe
         elev = base + undulation + valley
-    
+
     # Riser up (24000m - 25000m)
     else:
         elev = -350 + ((x - 24000) / 1000) * 340  # Rise to -10m
-    
+
     elevations.append(elev)
 
 pipe.setElevationProfile(elevations)
@@ -518,7 +517,7 @@ process.add(section1)
 
 # Section 2: Reduced diameter spur
 section2 = TwoFluidPipe("Spur Line", section1.getOutletStream())
-section2.setLength(8000)           # 8 km  
+section2.setLength(8000)           # 8 km
 section2.setDiameter(0.25)         # 250 mm
 section2.setNumberOfSections(80)
 process.add(section2)
@@ -566,8 +565,8 @@ pipe.setLength(30000)
 pipe.setDiameter(0.3)
 
 # Heat transfer
-pipe.setOuterTemperature(277.15)  # 4°C seawater
-pipe.setPipeHeatTransferCoefficient(10.0)  # W/m²K (overall U-value)
+pipe.setConstantSurfaceTemperature(4.0, "C")  # 4°C seawater
+pipe.setHeatTransferCoefficient(10.0)  # W/m²K (overall U-value)
 
 process.add(pipe)
 process.run()
@@ -581,14 +580,14 @@ print(f"Temperature drop: {inlet_T - outlet_T:.1f} °C")
 
 ```python
 # Higher insulation = lower U-value
-pipe.setPipeHeatTransferCoefficient(2.0)  # W/m²K (well insulated)
+pipe.setHeatTransferCoefficient(2.0)  # W/m²K (well insulated)
 ```
 
 ### Buried Pipeline
 
 ```python
-pipe.setOuterTemperature(283.15)  # 10°C soil temperature
-pipe.setPipeHeatTransferCoefficient(5.0)  # W/m²K (buried)
+pipe.setConstantSurfaceTemperature(10.0, "C")  # 10°C soil temperature
+pipe.setHeatTransferCoefficient(5.0)  # W/m²K (buried)
 ```
 
 ---
@@ -653,7 +652,7 @@ print(f"Flow regime: {flow_pattern}")
 pipe = TwoFluidPipe("Slugging Line", inlet_stream)
 pipe.setLength(5000)
 pipe.setDiameter(0.15)
-pipe.setNumberOfNodes(200)
+pipe.setNumberOfSections(200)
 
 process.add(pipe)
 process.run()
@@ -701,7 +700,7 @@ flowline1.setLength(5000)
 flowline1.setDiameter(0.2)
 process.add(flowline1)
 
-# Well 2 stream  
+# Well 2 stream
 well2 = Stream("Well-2", fluid2)
 well2.setFlowRate(20000, "kg/hr")
 process.add(well2)

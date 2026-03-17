@@ -333,11 +333,10 @@ process.run()
 ```python
 Adjuster = jneqsim.process.equipment.util.Adjuster
 
-# Adjust compressor outlet pressure to achieve target flow
+# Adjust compressor outlet pressure to achieve target gas volume flow
 adjuster = Adjuster("Adjust-1")
-adjuster.setAdjustedVariable(compressor, "outlet pressure")
-adjuster.setTargetVariable(outlet_stream, "flow rate", "kg/hr")
-adjuster.setTargetValue(5000)  # Target 5000 kg/hr
+adjuster.setAdjustedVariable(compressor, "pressure", "bara")
+adjuster.setTargetVariable(outlet_stream, "gasVolumeFlow", 5000.0, "Am3/hr")
 adjuster.setTolerance(1e-4)
 process.add(adjuster)
 

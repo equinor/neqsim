@@ -267,6 +267,7 @@ gas.setMixingRule("classic");
 
 ThermodynamicOperations ops = new ThermodynamicOperations(gas);
 ops.TPflash();
+gas.initProperties();
 
 // Initialize adsorption with specific model
 gas.getInterphaseProperties().initAdsorption();
