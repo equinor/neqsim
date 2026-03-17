@@ -37,6 +37,7 @@ This folder contains documentation for:
 | [Solve an Engineering Task](../tutorials/solve-engineering-task) | Hands-on tutorial: from blank screen to validated report |
 | [CODE_PATTERNS.md](CODE_PATTERNS) | Copy-paste code starters for every common task type |
 | [TASK_LOG.md](TASK_LOG) | Persistent memory — searchable log of all solved tasks |
+| [copilot_automation.md](copilot_automation) | **GitHub Actions: auto-assign Copilot to solve issues and engineering tasks** |
 
 Start with `CONTEXT.md` in the repo root for a 60-second orientation.
 
