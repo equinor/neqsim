@@ -255,7 +255,7 @@ fluid.addComponent("methane", 1.0);
 fluid.setMixingRule("classic");
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
-fluid.init(3);
+fluid.initProperties();
 System.out.println("Density: " + fluid.getDensity("kg/m3"));
 ```
 

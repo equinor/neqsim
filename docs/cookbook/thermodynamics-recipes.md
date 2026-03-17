@@ -100,9 +100,9 @@ print(f"Phases: {fluid.getNumberOfPhases()}")
 fluid.initProperties()
 H_initial = fluid.getEnthalpy("J")
 
-# Change pressure, calculate new T
-new_pressure = 30.0  # bara
-ops.PHflash(new_pressure * 1e5, H_initial)  # P in Pa!
+# Set new pressure, then flash at constant enthalpy
+fluid.setPressure(30.0, "bara")
+ops.PHflash(H_initial)
 
 print(f"New temperature: {fluid.getTemperature() - 273.15:.2f} °C")
 ```
@@ -114,9 +114,9 @@ print(f"New temperature: {fluid.getTemperature() - 273.15:.2f} °C")
 fluid.initProperties()
 S_initial = fluid.getEntropy("J/K")
 
-# Isentropic expansion
-new_pressure = 20.0  # bara
-ops.PSflash(new_pressure * 1e5, S_initial)
+# Set new pressure, then flash at constant entropy
+fluid.setPressure(20.0, "bara")
+ops.PSflash(S_initial)
 
 print(f"New temperature: {fluid.getTemperature() - 273.15:.2f} °C")
 ```
@@ -186,7 +186,7 @@ for i in range(fluid.getNumberOfComponents()):
     comp = fluid.getComponent(i)
     name = str(comp.getComponentName())
     z = comp.getz()  # Overall mole fraction
-    
+
     print(f"{name}: z={z:.4f}, Tc={comp.getTC():.1f} K, Pc={comp.getPC():.1f} bara")
 ```
 
@@ -257,8 +257,8 @@ print(f"Cricondentherm: {cricondentherm_T:.2f} °C at {cricondentherm_P:.2f} bar
 | **Heavy oil** | PR or CPA | `SystemPrEos`, `SystemSrkCPAstatoil` |
 | **CO₂ systems** | CPA | `SystemSrkCPAstatoil` |
 | **CO₂ + water** | CPA or Electrolyte-CPA | `SystemSrkCPAstatoil` |
-| **Natural gas (custody)** | GERG-2008 | `SystemGERG2008` |
-| **LNG** | GERG-2008 or PR | `SystemGERG2008`, `SystemPrEos` |
+| **Natural gas (custody)** | GERG-2008 | `SystemGERG2008Eos` |
+| **LNG** | GERG-2008 or PR | `SystemGERG2008Eos`, `SystemPrEos` |
 | **Aqueous systems** | CPA | `SystemSrkCPAstatoil` |
 | **Electrolytes** | Electrolyte-CPA | See electrolyte guide |
 
@@ -277,7 +277,7 @@ fluid = jneqsim.thermo.system.SystemPrEos(T, P)
 fluid = jneqsim.thermo.system.SystemSrkCPAstatoil(T, P)
 
 # For custody transfer (natural gas)
-fluid = jneqsim.thermo.system.SystemGERG2008(T, P)
+fluid = jneqsim.thermo.system.SystemGERG2008Eos(T, P)
 ```
 
 ---
@@ -290,9 +290,6 @@ fluid = jneqsim.thermo.system.SystemGERG2008(T, P)
 # Full fluid state as JSON
 json_str = fluid.toJson()
 print(json_str)
-
-# Component-specific JSON
-comp_json = fluid.getComponent(0).toJson()
 ```
 
 ### Export to Python Dictionary

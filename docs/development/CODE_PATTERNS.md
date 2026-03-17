@@ -120,7 +120,10 @@ ops.PSflash(entropy);
 
 // Phase envelope
 ops.calcPTphaseEnvelope();
-double[][] phaseEnvelope = ops.get2phaseTVPdata();
+double[] dewT = ops.get("dewT");
+double[] dewP = ops.get("dewP");
+double[] bubT = ops.get("bubT");
+double[] bubP = ops.get("bubP");
 ```
 
 ---
@@ -414,11 +417,10 @@ process.add(recycle);
 ### Adjuster (Match a Spec)
 
 ```java
-// Adjust one variable to match a target
-Adjuster adj = new Adjuster("water dew point adj");
-adj.setAdjustedVariable(tegStream, "flow rate", "kg/hr");  // what to vary
-adj.setTargetVariable(gasOut, "waterDewPointTemperature", "C"); // what to match
-adj.setTargetValue(-18.0);  // target value
+// Adjust flow to match a target outlet pressure
+Adjuster adj = new Adjuster("pressure adj");
+adj.setAdjustedVariable(stream1, "flow", "MSm3/day");  // what to vary
+adj.setTargetVariable(outletStream, "pressure", 50.0, "bara"); // target spec
 adj.setMaxAdjustmentSteps(50);
 process.add(adj);
 ```
