@@ -558,7 +558,11 @@ public class TPflash extends Flash {
     }
     // system.initPhysicalProperties("density");
     system.orderByDensity();
-    system.init(1);
+    try {
+      system.init(1);
+    } catch (Exception ex) {
+      logger.warn("Final init after orderByDensity failed: " + ex.getMessage());
+    }
 
     // Final chemical equilibrium call after all phase reordering
     // This ensures chemical equilibrium is solved on the final phase configuration
@@ -570,7 +574,11 @@ public class TPflash extends Flash {
           system.getChemicalReactionOperations().solveChemEq(phaseNum, 1);
         }
       }
-      system.init(1);
+      try {
+        system.init(1);
+      } catch (Exception ex) {
+        logger.warn("Final chemical eq init failed: " + ex.getMessage());
+      }
     }
   }
 

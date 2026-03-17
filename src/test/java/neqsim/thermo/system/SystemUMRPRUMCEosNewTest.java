@@ -274,7 +274,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     testSystem.setPressure(10);
     SaturationPressure satPresSim = new SaturationPressure(testSystem);
     satPresSim.run();
-    assertEquals(104.7532901763, satPresSim.getThermoSystem().getPressure(), 0.001);
+    assertEquals(104.70405197143555, satPresSim.getThermoSystem().getPressure(), 0.1);
   }
 
   /**

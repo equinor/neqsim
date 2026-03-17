@@ -681,7 +681,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
    * @throws Exception if calculation fails
    */
   @Test
-  @Disabled("Complex fluid with n-pentane/n-hexane + electrolytes causes molar volume NaN - needs separate investigation")
+  @Disabled("Complex fluid with n-pentane/n-hexane + electrolytes + MEG gives inaccurate hydrate temperature (49°C vs expected <35°C)")
   @DisplayName("test hydrate temperature - comprehensive offshore scenario")
   public void testHydrateTemperatureComprehensiveScenario() throws Exception {
     // Realistic offshore production fluid
