@@ -321,7 +321,8 @@
 					opens for XStream reflection when running tests on JDK >= 17 -->
 					<argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED
 						--add-opens=java.base/java.lang=ALL-UNNAMED
-						--add-opens=java.base/java.io=ALL-UNNAMED</argLine>
+						--add-opens=java.base/java.io=ALL-UNNAMED
+						--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
 				</configuration>
 				<version>3.5.4</version>
 			</plugin>
@@ -333,7 +334,8 @@
 					opens for XStream reflection when running integration tests on JDK >= 17 -->
 					<argLine>${argLine} --add-opens=java.base/java.util=ALL-UNNAMED
 						--add-opens=java.base/java.lang=ALL-UNNAMED
-						--add-opens=java.base/java.io=ALL-UNNAMED</argLine>
+						--add-opens=java.base/java.io=ALL-UNNAMED
+						--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
 				</configuration>
 			</plugin>
 			<plugin>
