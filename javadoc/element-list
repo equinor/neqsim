@@ -116,6 +116,7 @@ neqsim.process.calibration
 neqsim.process.conditionmonitor
 neqsim.process.controllerdevice
 neqsim.process.controllerdevice.structure
+neqsim.process.corrosion
 neqsim.process.costestimation
 neqsim.process.costestimation.absorber
 neqsim.process.costestimation.adsorber
@@ -133,6 +134,15 @@ neqsim.process.costestimation.tank
 neqsim.process.costestimation.valve
 neqsim.process.design
 neqsim.process.design.template
+neqsim.process.electricaldesign
+neqsim.process.electricaldesign.components
+neqsim.process.electricaldesign.compressor
+neqsim.process.electricaldesign.heatexchanger
+neqsim.process.electricaldesign.loadanalysis
+neqsim.process.electricaldesign.pipeline
+neqsim.process.electricaldesign.pump
+neqsim.process.electricaldesign.separator
+neqsim.process.electricaldesign.system
 neqsim.process.equipment
 neqsim.process.equipment.absorber
 neqsim.process.equipment.adsorber
@@ -185,6 +195,13 @@ neqsim.process.fielddevelopment.screening
 neqsim.process.fielddevelopment.subsea
 neqsim.process.fielddevelopment.tieback
 neqsim.process.fielddevelopment.workflow
+neqsim.process.instrumentdesign
+neqsim.process.instrumentdesign.compressor
+neqsim.process.instrumentdesign.heatexchanger
+neqsim.process.instrumentdesign.pipeline
+neqsim.process.instrumentdesign.separator
+neqsim.process.instrumentdesign.system
+neqsim.process.instrumentdesign.valve
 neqsim.process.integration.ml
 neqsim.process.logic
 neqsim.process.logic.action
@@ -209,6 +226,7 @@ neqsim.process.mechanicaldesign.designstandards
 neqsim.process.mechanicaldesign.distillation
 neqsim.process.mechanicaldesign.ejector
 neqsim.process.mechanicaldesign.expander
+neqsim.process.mechanicaldesign.filter
 neqsim.process.mechanicaldesign.heatexchanger
 neqsim.process.mechanicaldesign.manifold
 neqsim.process.mechanicaldesign.mixer
@@ -323,6 +341,7 @@ neqsim.util.annotation
 neqsim.util.database
 neqsim.util.exception
 neqsim.util.generator
+neqsim.util.nucleation
 neqsim.util.serialization
 neqsim.util.unit
 neqsim.util.util
