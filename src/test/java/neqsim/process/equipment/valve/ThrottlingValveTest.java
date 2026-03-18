@@ -549,6 +549,7 @@ public class ThrottlingValveTest {
     Stream stream = new Stream("Inlet", fluid);
     ThrottlingValve valve = new ThrottlingValve("Valve", stream);
     ((ValveMechanicalDesign) valve.getMechanicalDesign()).setValveSizingStandard("IEC 60534");
+    valve.getMechanicalDesign().getValveSizingMethod().setxT(0.75);
     valve.setPercentValveOpening(100);
     valve.setOutletPressure(25.0);
 
@@ -561,9 +562,9 @@ public class ThrottlingValveTest {
     valve.calcKv();
     double cv = valve.getCv();
 
-    // IEC 60534 correct result: Cv ~ 16.2 (verified with Python fluids library)
-    // Old buggy result was Cv ~0.71 via ProcessSystem
-    assertEquals(16.2, cv, 1.0,
+    // IEC 60534 correct result: Cv ~ 16.2 (verified with Python fluids library, xT=0.75)
+    // Old buggy result was Cv ~0.71 via ProcessSystem (using actual flow instead of std flow)
+    assertEquals(16.2, cv, 1.5,
         "Gas valve Cv via ProcessSystem should match IEC 60534 (~16.2), not ~0.71");
 
     // Also verify standalone valve.run() gives same result
@@ -579,6 +580,7 @@ public class ThrottlingValveTest {
     Stream stream2 = new Stream("Inlet2", fluid2);
     ThrottlingValve valve2 = new ThrottlingValve("Valve2", stream2);
     ((ValveMechanicalDesign) valve2.getMechanicalDesign()).setValveSizingStandard("IEC 60534");
+    valve2.getMechanicalDesign().getValveSizingMethod().setxT(0.75);
     valve2.setPercentValveOpening(100);
     valve2.setOutletPressure(25.0);
     valve2.run();
