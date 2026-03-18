@@ -133,8 +133,17 @@ double[] bubP = ops.get("bubP");
 ```java
 // CRITICAL: call initProperties() after flash — this initializes BOTH
 // thermodynamic properties (Cp, enthalpy, entropy) AND transport properties
-// (viscosity, thermal conductivity, density). Using init(3) alone will NOT
-// initialize transport properties — they will return zero!
+// (viscosity, thermal conductivity, density with volume correction).
+//
+// WHY THIS IS NEEDED: Flash calculations (TPflash, PHflash, PSflash) only solve
+// phase equilibrium (compositions, phase fractions, Z-factor). They do NOT compute
+// transport properties automatically — this is by design for performance, since
+// many internal NeqSim loops (stability analysis, phase envelope) only need
+// equilibrium results. Without initProperties(), getViscosity() and
+// getThermalConductivity() will return ZERO.
+//
+// NOTE: When using ProcessSystem.run(), initProperties() is called internally
+// by each equipment's run() method — no separate call needed for process streams.
 fluid.initProperties();
 
 // System-level

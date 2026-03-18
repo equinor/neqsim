@@ -69,6 +69,18 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
     if (name.equals("mole/sec") || name.equals("mol/sec") || name.equals("SI")
         || name.equals("mol")) {
       factor = 1.0;
+    } else if (name.equals("mole/min") || name.equals("mol/min")) {
+      factor = 1.0 / 60.0;
+    } else if (name.equals("mole/hr") || name.equals("mol/hr")) {
+      factor = 1.0 / 3600.0;
+    } else if (name.equals("kmole/sec") || name.equals("kmol/sec")) {
+      factor = 1000.0;
+    } else if (name.equals("kmole/min") || name.equals("kmol/min")) {
+      factor = 1000.0 / 60.0;
+    } else if (name.equals("kmole/hr") || name.equals("kmol/hr")) {
+      factor = 1000.0 / 3600.0;
+    } else if (name.equals("kmole/day") || name.equals("kmol/day")) {
+      factor = 1000.0 / (3600.0 * 24.0);
     } else if (name.equals("Nlitre/min")) {
       factor = 1.0 / 60.0 * mol_m3 / 1000.0;
     } else if (name.equals("Nlitre/sec")) {
@@ -111,9 +123,21 @@ public class RateUnit extends neqsim.util.unit.BaseUnit {
       factor = 1.0 / molarmass / (3600.0 * 24.0) * stddens;
     } else if (name.equals("gallons/min")) {
       factor = 1.0 / molarmass / 60.0 * stddens / 10.0 * 3.78541178;
+    } else if (name.equals("lb/hr")) {
+      factor = 1.0 / molarmass / 3600.0 / 2.20462262;
+    } else if (name.equals("lbmole/hr") || name.equals("lbmol/hr")) {
+      factor = 1000.0 / 2.20462262 / 3600.0;
+    } else if (name.equals("barrel/day") || name.equals("bbl/day")) {
+      factor = 1.0 / molarmass / (3600.0 * 24.0) / 2.20462262 / 0.068;
     } else {
-      throw new RuntimeException(
-          new InvalidInputException(this, "getConversionFactor", "unit", "not supported"));
+      throw new RuntimeException(new InvalidInputException(this, "getConversionFactor", "unit",
+          "'" + name + "' is not supported. Supported units: mole/sec, mol/sec, mole/min, "
+              + "mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, "
+              + "kmole/hr, kmol/hr, kmole/day, kmol/day, kg/sec, kg/min, kg/hr, kg/day, "
+              + "lb/hr, lbmole/hr, lbmol/hr, m3/sec, Am3/sec, m3/min, Am3/min, m3/hr, "
+              + "Am3/hr, m3/day, Am3/day, Sm3/sec, Sm3/min, Sm3/hr, Sm3/day, MSm3/day, "
+              + "MSm3/hr, idSm3/sec, idSm3/min, idSm3/hr, idSm3/day, Nlitre/min, "
+              + "Nlitre/sec, gallons/min, barrel/day, bbl/day"));
     }
 
     return factor;

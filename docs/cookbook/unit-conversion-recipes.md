@@ -56,26 +56,40 @@ P_psia = fluid.getPressure() * 14.504  # Manual conversion
 
 | Unit String | Description |
 |-------------|-------------|
-| `"kg/hr"` | Kilogram per hour |
 | `"kg/sec"` | Kilogram per second |
+| `"kg/min"` | Kilogram per minute |
+| `"kg/hr"` | Kilogram per hour |
 | `"kg/day"` | Kilogram per day |
-| `"mol/hr"` | Mole per hour |
-| `"mol/sec"` | Mole per second |
-| `"Am3/hr"` | Actual m³/hr |
+| `"mole/sec"` or `"mol/sec"` | Mole per second |
+| `"mole/min"` or `"mol/min"` | Mole per minute |
+| `"mole/hr"` or `"mol/hr"` | Mole per hour |
+| `"kmole/sec"` or `"kmol/sec"` | Kilomole per second |
+| `"kmole/min"` or `"kmol/min"` | Kilomole per minute |
+| `"kmole/hr"` or `"kmol/hr"` | Kilomole per hour |
+| `"kmole/day"` or `"kmol/day"` | Kilomole per day |
+| `"m3/hr"` or `"Am3/hr"` | Actual m³/hr |
 | `"Sm3/hr"` | Standard m³/hr |
 | `"Sm3/day"` | Standard m³/day |
 | `"MSm3/day"` | Million Sm³/day |
-| `"idSm3/hr"` | Ideal Sm³/hr |
+| `"MSm3/hr"` | Million Sm³/hr |
+| `"idSm3/hr"` | Ideal liquid Sm³/hr |
+| `"gallons/min"` | US gallons per minute |
+| `"barrel/day"` | Barrels per day |
+| `"lb/hr"` | Pounds per hour |
+| `"lbmole/hr"` | Pound-moles per hour |
 
 ```python
 # Setting flow
 stream.setFlowRate(10000, "kg/hr")
 stream.setFlowRate(5.0, "MSm3/day")  # 5 million Sm³/day
+stream.setFlowRate(45.36, "kmole/hr")  # Kilomoles per hour
+fluid.setTotalFlowRate(45.36, "mole/hr")  # Moles per hour
 
 # Getting flow
 mass_flow = stream.getFlowRate("kg/hr")
 vol_flow = stream.getFlowRate("Sm3/day")
 molar_flow = stream.getFlowRate("mol/hr")
+kmolar_flow = stream.getFlowRate("kmole/hr")
 ```
 
 ### Density Units

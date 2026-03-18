@@ -886,7 +886,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * method to return flow rate of fluid.
    *
    * @param flowunit Supported units are kg/sec, kg/min, kg/hr, kg/day, m3/sec, m3/min, m3/hr,
-   *        idSm3/hr, Sm3/sec, Sm3/hr, Sm3/day, MSm3/day, mole/sec, mole/min, mole/hr
+   *        idSm3/hr, Sm3/sec, Sm3/hr, Sm3/day, MSm3/day, MSm3/hr, mole/sec, mol/sec, mole/min,
+   *        mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr,
+   *        kmole/day, kmol/day, lbmole/hr, lb/hr, barrel/day, gallons/min
    * @return flow rate in specified unit
    */
   public double getFlowRate(String flowunit);
@@ -1816,8 +1818,7 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    *
    * <p>
    * Returns the pH calculated from H3O+ activity in the aqueous phase if one exists. Returns
-   * {@link Double#NaN} if no aqueous phase is present. Delegates to
-   * {@link PhaseInterface#getpH()}.
+   * {@link Double#NaN} if no aqueous phase is present. Delegates to {@link PhaseInterface#getpH()}.
    * </p>
    *
    * @return pH of the aqueous phase, or NaN if no aqueous phase exists
@@ -2525,8 +2526,9 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * </p>
    *
    * @param componentFlowRates an array of type double
-   * @param unit a {@link java.lang.String} object. Allowed units are: "mol/sec", "kmol/sec",
-   *        "kmol/hr", "mol/hr", "kg/hr", "kg/sec", "kmol/day"
+   * @param unit a {@link java.lang.String} object. Allowed units are: "mol/sec", "mole/sec",
+   *        "kmol/sec", "kmole/sec", "kmol/hr", "kmole/hr", "mol/hr", "mole/hr", "mol/min",
+   *        "mole/min", "kg/hr", "kg/sec", "kmol/day", "kmole/day" (case-insensitive)
    */
   public void setComponentFlowRates(double[] componentFlowRates, String unit);
 
@@ -2783,8 +2785,10 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
    * </p>
    *
    * @param flowRate a double
-   * @param flowunit a {@link java.lang.String} object. flow units are: kg/sec, kg/min, kg/hr
-   *        m3/sec, m3/min, m3/hr, mole/sec, mole/min, mole/hr, Sm3/hr, Sm3/day, idSm3/hr, idSm3/day
+   * @param flowunit a {@link java.lang.String} object. flow units are: kg/sec, kg/min, kg/hr,
+   *        kg/day, m3/sec, m3/min, m3/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr,
+   *        kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr, kmole/day, kmol/day,
+   *        Sm3/sec, Sm3/hr, Sm3/day, MSm3/day, MSm3/hr, idSm3/sec, idSm3/hr, idSm3/day
    */
   public void setTotalFlowRate(double flowRate, String flowunit);
 

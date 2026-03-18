@@ -2463,14 +2463,33 @@ public abstract class Component implements ComponentInterface {
       return getVoli() / 1.0e5 * 60.0;
     } else if (flowunit.equals("m3/hr")) {
       return getVoli() / 1.0e5 * 3600.0;
-    } else if (flowunit.equals("mole/sec")) {
+    } else if (flowunit.equals("mole/sec") || flowunit.equals("mol/sec")) {
       return numberOfMolesInPhase;
-    } else if (flowunit.equals("mole/min")) {
+    } else if (flowunit.equals("mole/min") || flowunit.equals("mol/min")) {
       return numberOfMolesInPhase * 60.0;
-    } else if (flowunit.equals("mole/hr")) {
+    } else if (flowunit.equals("mole/hr") || flowunit.equals("mol/hr")) {
       return numberOfMolesInPhase * 3600.0;
+    } else if (flowunit.equals("kmole/sec") || flowunit.equals("kmol/sec")) {
+      return numberOfMolesInPhase / 1000.0;
+    } else if (flowunit.equals("kmole/min") || flowunit.equals("kmol/min")) {
+      return numberOfMolesInPhase * 60.0 / 1000.0;
+    } else if (flowunit.equals("kmole/hr") || flowunit.equals("kmol/hr")) {
+      return numberOfMolesInPhase * 3600.0 / 1000.0;
+    } else if (flowunit.equals("kmole/day") || flowunit.equals("kmol/day")) {
+      return numberOfMolesInPhase * 3600.0 * 24.0 / 1000.0;
+    } else if (flowunit.equals("lbmole/hr") || flowunit.equals("lbmol/hr")) {
+      return numberOfMolesInPhase * 3600.0 / 1000.0 * 2.20462262;
+    } else if (flowunit.equals("lb/hr")) {
+      return numberOfMolesInPhase * getMolarMass() * 3600.0 * 2.20462262;
+    } else if (flowunit.equals("barrel/day") || flowunit.equals("bbl/day")) {
+      return numberOfMolesInPhase * getMolarMass() * 3600.0 * 24.0 * 2.20462262 * 0.068;
     } else {
-      throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
+      throw new RuntimeException(
+          "failed.. unit: " + flowunit + " not supported. Supported units: kg/sec, kg/min, "
+              + "kg/hr, tonnes/year, m3/sec, m3/min, m3/hr, mole/sec, mol/sec, mole/min, "
+              + "mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, "
+              + "kmole/hr, kmol/hr, kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, "
+              + "barrel/day, bbl/day");
     }
   }
 
@@ -2483,14 +2502,32 @@ public abstract class Component implements ComponentInterface {
       return numberOfMoles * getMolarMass() * 60.0;
     } else if (flowunit.equals("kg/hr")) {
       return numberOfMoles * getMolarMass() * 3600.0;
-    } else if (flowunit.equals("mole/sec")) {
+    } else if (flowunit.equals("mole/sec") || flowunit.equals("mol/sec")) {
       return numberOfMoles;
-    } else if (flowunit.equals("mole/min")) {
+    } else if (flowunit.equals("mole/min") || flowunit.equals("mol/min")) {
       return numberOfMoles * 60.0;
-    } else if (flowunit.equals("mole/hr")) {
+    } else if (flowunit.equals("mole/hr") || flowunit.equals("mol/hr")) {
       return numberOfMoles * 3600.0;
+    } else if (flowunit.equals("kmole/sec") || flowunit.equals("kmol/sec")) {
+      return numberOfMoles / 1000.0;
+    } else if (flowunit.equals("kmole/min") || flowunit.equals("kmol/min")) {
+      return numberOfMoles * 60.0 / 1000.0;
+    } else if (flowunit.equals("kmole/hr") || flowunit.equals("kmol/hr")) {
+      return numberOfMoles * 3600.0 / 1000.0;
+    } else if (flowunit.equals("kmole/day") || flowunit.equals("kmol/day")) {
+      return numberOfMoles * 3600.0 * 24.0 / 1000.0;
+    } else if (flowunit.equals("lbmole/hr") || flowunit.equals("lbmol/hr")) {
+      return numberOfMoles * 3600.0 / 1000.0 * 2.20462262;
+    } else if (flowunit.equals("lb/hr")) {
+      return numberOfMoles * getMolarMass() * 3600.0 * 2.20462262;
+    } else if (flowunit.equals("barrel/day") || flowunit.equals("bbl/day")) {
+      return numberOfMoles * getMolarMass() * 3600.0 * 24.0 * 2.20462262 * 0.068;
     } else {
-      throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
+      throw new RuntimeException(
+          "failed.. unit: " + flowunit + " not supported. Supported units: kg/sec, kg/min, "
+              + "kg/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, "
+              + "kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr, "
+              + "kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, barrel/day, bbl/day");
     }
   }
 
