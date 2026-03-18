@@ -119,10 +119,7 @@ public abstract class Flash extends BaseOperation {
     double tempK = system.getTemperature();
     double presBar = system.getPressure();
 
-    // Check if original stability analysis returned trivial solutions (both tm ≈ 0).
-    // In that case, bypass all pre-screening gates — we have no information about
-    // stability and must try harder.
-    boolean trivialSolution = (Math.abs(tm[0]) < 1e-12 && Math.abs(tm[1]) < 1e-12);
+    boolean trivialSolution = (Math.abs(tm[0]) < 1e-12) || (Math.abs(tm[1]) < 1e-12);
 
     // Pre-screening: only apply gates when NOT called due to trivial solution.
     // For trivial solutions, always run the full retry.
@@ -418,9 +415,7 @@ public abstract class Flash extends BaseOperation {
 
       // Only accept instability if SS converged and tm is clearly negative.
       // Non-converged results are unreliable and may give spurious instability.
-      // For composition-perturbation trials (trial >= 2), use a stricter threshold
-      // to avoid false near-critical splits where both phases have similar density.
-      double tmThreshold = (trial >= 2) ? -1e-2 : -1e-4;
+      double tmThreshold = -1e-4;
       if (converged && tmVal < tmThreshold) {
         // Verify non-trivial: trial composition different from feed
         double dot = 0.0;
