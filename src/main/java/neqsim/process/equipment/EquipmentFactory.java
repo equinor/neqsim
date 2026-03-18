@@ -17,7 +17,11 @@ import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.powergeneration.FuelCell;
 import neqsim.process.equipment.powergeneration.SolarPanel;
+import neqsim.process.equipment.powergeneration.OffshoreEnergySystem;
+import neqsim.process.equipment.powergeneration.WindFarm;
 import neqsim.process.equipment.powergeneration.WindTurbine;
+import neqsim.process.equipment.reactor.AmmoniaSynthesisReactor;
+import neqsim.process.equipment.subsea.SubseaPowerCable;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.ReservoirCVDsim;
 import neqsim.process.equipment.reservoir.ReservoirDiffLibsim;
@@ -77,6 +81,16 @@ public final class EquipmentFactory {
         return createEquipment(name, EquipmentEnum.BatteryStorage);
       case "solarpanel":
         return createEquipment(name, EquipmentEnum.SolarPanel);
+      case "windfarm":
+        return createEquipment(name, EquipmentEnum.WindFarm);
+      case "offshoreenergysystem":
+        return createEquipment(name, EquipmentEnum.OffshoreEnergySystem);
+      case "ammoniasynthesisreactor":
+      case "haberbosch":
+        return createEquipment(name, EquipmentEnum.AmmoniaSynthesisReactor);
+      case "subseapowercable":
+      case "powercable":
+        return createEquipment(name, EquipmentEnum.SubseaPowerCable);
       default:
         EquipmentEnum enumType = resolveEquipmentEnum(equipmentType);
         return createEquipment(name, enumType);
@@ -171,6 +185,14 @@ public final class EquipmentFactory {
         return new BatteryStorage(name);
       case SolarPanel:
         return new SolarPanel(name);
+      case WindFarm:
+        return new WindFarm(name);
+      case OffshoreEnergySystem:
+        return new OffshoreEnergySystem(name);
+      case AmmoniaSynthesisReactor:
+        return new AmmoniaSynthesisReactor(name);
+      case SubseaPowerCable:
+        return new SubseaPowerCable(name);
       default:
         throw new IllegalArgumentException(
             "Unsupported equipment type: " + equipmentType.name());
