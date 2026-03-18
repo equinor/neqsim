@@ -95,7 +95,9 @@ public interface StreamInterface extends ProcessEquipmentInterface {
    * </p>
    *
    * @param unit Supported units are kg/sec, kg/min, kg/hr, kg/day, m3/sec, m3/min, m3/hr, Sm3/sec,
-   *        Sm3/hr, Sm3/day, MSm3/day, mole/sec, mole/min, mole/hr
+   *        Sm3/hr, Sm3/day, MSm3/day, MSm3/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr,
+   *        mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr, kmole/day,
+   *        kmol/day, lbmole/hr, lb/hr, barrel/day, gallons/min
    * @return flow rate in specified unit
    */
   public default double getFlowRate(String unit) {

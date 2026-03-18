@@ -372,7 +372,7 @@ double zMethane = fluid.getComponent("methane").getz();
 // Mole fraction of methane in gas phase
 double xMethaneGas = fluid.getPhase("gas").getComponent("methane").getx();
 
-// Mole fraction of methane in oil phase  
+// Mole fraction of methane in oil phase
 double xMethaneOil = fluid.getPhase("oil").getComponent("methane").getx();
 ```
 
@@ -455,13 +455,15 @@ fluid.setPressure(725.0, "psia");     // 725 psi absolute
 
 | Method | Description | Supported Units |
 |--------|-------------|-----------------|
-| `setTotalFlowRate(value, unit)` | Set total flow | `"kg/sec"`, `"kg/min"`, `"kg/hr"`, `"kg/day"`, `"m3/sec"`, `"m3/min"`, `"m3/hr"`, `"Sm3/sec"`, `"Sm3/hr"`, `"Sm3/day"`, `"MSm3/day"`, `"mole/sec"`, `"mole/min"`, `"mole/hr"` |
+| `setTotalFlowRate(value, unit)` | Set total flow | `"kg/sec"`, `"kg/min"`, `"kg/hr"`, `"kg/day"`, `"m3/sec"`, `"m3/min"`, `"m3/hr"`, `"Sm3/sec"`, `"Sm3/hr"`, `"Sm3/day"`, `"MSm3/day"`, `"MSm3/hr"`, `"mole/sec"`, `"mol/sec"`, `"mole/min"`, `"mol/min"`, `"mole/hr"`, `"mol/hr"`, `"kmole/sec"`, `"kmol/sec"`, `"kmole/min"`, `"kmol/min"`, `"kmole/hr"`, `"kmol/hr"`, `"kmole/day"`, `"kmol/day"`, `"idSm3/hr"`, `"gallons/min"` |
 | `setFlowRate(value, unit)` | Set stream flow | Same as above |
 
 ```java
 fluid.setTotalFlowRate(1000.0, "kg/hr");   // Mass flow
 fluid.setTotalFlowRate(10000.0, "Sm3/hr"); // Standard volumetric flow
 fluid.setTotalFlowRate(50.0, "mole/sec");  // Molar flow
+fluid.setTotalFlowRate(45.36, "mole/hr");  // Molar flow per hour
+fluid.setTotalFlowRate(1.5, "kmole/hr");   // Kilomolar flow per hour
 ```
 
 #### Component Addition
@@ -697,7 +699,7 @@ double sigma = fluid.getInterfacialTension("gas", "oil");
 // Gas-water interfacial tension
 double sigmaGW = fluid.getInterfacialTension("gas", "aqueous");
 
-// Oil-water interfacial tension  
+// Oil-water interfacial tension
 double sigmaOW = fluid.getInterfacialTension("oil", "aqueous");
 ```
 
@@ -848,21 +850,21 @@ public class PropertyCalculationExample {
         fluid.addComponent("n-pentane", 0.02);
         fluid.addComponent("n-hexane", 0.01);
         fluid.setMixingRule("classic");
-        
+
         // 2. Run flash calculation
         ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
         ops.TPflash();
-        
+
         // 3. Initialize ALL properties
         fluid.initProperties();
-        
+
         // 4. Read fluid-level properties
         System.out.println("=== FLUID PROPERTIES ===");
         System.out.printf("Number of phases: %d%n", fluid.getNumberOfPhases());
         System.out.printf("Molar mass: %.4f kg/mol%n", fluid.getMolarMass());
         System.out.printf("Total enthalpy: %.2f J/mol%n", fluid.getEnthalpy("J/mol"));
         System.out.printf("Total entropy: %.4f J/molK%n", fluid.getEntropy("J/molK"));
-        
+
         // 5. Read phase properties
         for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
             System.out.printf("%n=== PHASE %d (%s) ===%n", i, fluid.getPhase(i).getType());
@@ -877,7 +879,7 @@ public class PropertyCalculationExample {
             System.out.printf("Viscosity: %.6f cP%n", fluid.getPhase(i).getViscosity("cP"));
             System.out.printf("Thermal conductivity: %.6f W/mK%n", fluid.getPhase(i).getThermalConductivity("W/mK"));
         }
-        
+
         // 6. Read component properties in gas phase
         if (fluid.hasPhaseType("gas")) {
             System.out.println("\n=== COMPONENT PROPERTIES (GAS PHASE) ===");
@@ -888,7 +890,7 @@ public class PropertyCalculationExample {
                 System.out.printf("%s: x=%.6f, phi=%.6f%n", name, x, fugCoeff);
             }
         }
-        
+
         // 7. Interfacial tension (if two phases)
         if (fluid.getNumberOfPhases() > 1) {
             System.out.println("\n=== INTERFACIAL PROPERTIES ===");
