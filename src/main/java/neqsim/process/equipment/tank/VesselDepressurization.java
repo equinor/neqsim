@@ -125,7 +125,14 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
     /** Discharge (blowdown). */
     DISCHARGE,
     /** Filling (pressurization). */
-    FILLING
+    FILLING,
+    /**
+     * Idle (no flow). The vessel holds its contents with zero mass flow while still
+     * exchanging heat with the ambient environment. Use this mode to simulate
+     * transport or storage phases where the tank is disconnected from supply and
+     * delivery lines.
+     */
+    IDLE
   }
 
   /**
@@ -1401,6 +1408,21 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Sets the initial wall temperature and re-initializes the wall model. Use this method to chain
+   * consecutive simulations (e.g. filling &rarr; transport &rarr; emptying) where the wall
+   * temperature at the start of one phase equals the wall temperature at the end of the previous
+   * phase.
+   *
+   * @param temperatureK Initial wall temperature [K]
+   */
+  public void setInitialWallTemperature(double temperatureK) {
+    this.wallTemperature = temperatureK;
+    this.gasWallTemperature = temperatureK;
+    this.liquidWallTemperature = temperatureK;
+    initializeWallModel();
+  }
+
+  /**
    * Gets the current mass in the vessel.
    *
    * @return Mass [kg]
@@ -1636,6 +1658,11 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
    * @return Mass flow rate [kg/s] (positive for discharge)
    */
   private double calculateMassFlowRate() {
+    // IDLE mode: no mass flow, only heat exchange with ambient
+    if (flowDirection == FlowDirection.IDLE) {
+      return 0.0;
+    }
+
     // If a fixed flow rate is specified, use it directly
     if (useFixedFlowRate) {
       return (flowDirection == FlowDirection.DISCHARGE) ? fixedMassFlowRate : -fixedMassFlowRate;
@@ -2352,7 +2379,10 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
         case ENERGY_BALANCE:
           // Full energy balance: U_new = U_old - mdot*h_out*dt + Q*dt
           double hOut;
-          if (flowDirection == FlowDirection.DISCHARGE) {
+          if (flowDirection == FlowDirection.IDLE) {
+            // IDLE: no mass flow, only heat exchange
+            hOut = 0.0;
+          } else if (flowDirection == FlowDirection.DISCHARGE) {
             // Gas leaving carries its own specific enthalpy
             hOut = initialH / initialMass;
           } else {
@@ -2844,7 +2874,7 @@ public class VesselDepressurization extends ProcessEquipmentBaseClass {
 
     for (double t = dt; t <= endTime + dt / 2; t += dt) {
       // Check target pressure stop condition
-      if (!Double.isNaN(targetPressure)) {
+      if (!Double.isNaN(targetPressure) && flowDirection != FlowDirection.IDLE) {
         double currentP = thermoSystem.getPressure() * 1e5;
         if (flowDirection == FlowDirection.FILLING && currentP >= targetPressure) {
           targetPressureReached = true;
