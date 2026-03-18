@@ -73,6 +73,37 @@ density = fluid.getPhase('gas').getDensity("kg/m3")
 
 ---
 
+## Why You Must Call `initProperties()` After Flash Calculations
+
+> **Important:** Flash calculations (`TPflash`, `PHflash`, `PSflash`, etc.) solve only for phase equilibrium — they determine phase compositions, phase fractions, and basic thermodynamic quantities (Z-factor, fugacities). They do **not** automatically calculate physical and transport properties such as viscosity, thermal conductivity, diffusion coefficients, or volume-corrected density.
+>
+> This is a deliberate design choice for **performance**: transport property calculations (which involve separate correlations for each phase) are computationally expensive, and many NeqSim workflows — iterative flash loops, phase envelope calculations, stability analysis — only need equilibrium results. Computing transport properties on every flash iteration would waste significant CPU time.
+>
+> **Always call `initProperties()` after a flash and before reading physical properties.** Without this call, methods like `getViscosity()`, `getThermalConductivity()`, and `getDensity()` (with volume correction) may return **zero** or incorrect values.
+
+```java
+// CORRECT — call initProperties() before reading transport/physical properties
+ops.TPflash();
+fluid.initProperties();  // Required! Initializes thermodynamic + transport properties
+
+double viscosity = fluid.getPhase("gas").getViscosity("cP");          // Works
+double thermalCond = fluid.getPhase("gas").getThermalConductivity("W/mK"); // Works
+double density = fluid.getPhase("gas").getDensity("kg/m3");           // Corrected density
+```
+
+```java
+// WRONG — reading transport properties without initProperties()
+ops.TPflash();
+// Missing initProperties() call!
+
+double viscosity = fluid.getPhase("gas").getViscosity("cP");          // Returns 0.0!
+double thermalCond = fluid.getPhase("gas").getThermalConductivity("W/mK"); // Returns 0.0!
+```
+
+> **Note:** When using `ProcessSystem.run()` for process simulations, `initProperties()` is called internally by each equipment's `run()` method, so you do not need to call it separately on streams obtained from process equipment.
+
+---
+
 ## Property Initialization Levels
 
 NeqSim uses the `init(int type)` method to calculate properties at different levels of detail. **This tiered approach is designed to optimize computational speed** - calculating all possible properties for every flash would be wasteful when you only need basic results.
